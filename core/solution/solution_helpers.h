@@ -19,9 +19,8 @@ class SeedExperimentFilter;
 void create_experiment(ScopeHistory* root_history);
 AbstractExperiment* create_experiment(std::ifstream& input_file);
 
-ScopeNode* reuse_existing();
-ScopeNode* existing_new_start(Scope* parent_scope,
-							  RunHelper& run_helper);
+ScopeNode* create_existing(Scope* parent_scope,
+						   RunHelper& run_helper);
 bool create_path(Scope* parent_scope,
 				 RunHelper& run_helper,
 				 std::vector<int>& step_types,
@@ -36,7 +35,6 @@ bool create_repeat(std::vector<ContextLayer>& context,
 				   std::vector<ScopeNode*>& existing_scopes,
 				   std::vector<ScopeNode*>& potential_scopes,
 				   std::vector<std::set<int>>& catch_throw_ids);
-
 
 void gather_possible_exits(std::vector<std::pair<int,AbstractNode*>>& possible_exits,
 						   std::vector<Scope*>& experiment_scope_context,

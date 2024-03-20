@@ -90,9 +90,16 @@ public:
 					   std::vector<double>& input_vals,
 					   BranchNodeHistory* history);
 
-	void random_activate(AbstractNode*& curr_node,
-						 std::vector<Scope*>& scope_context,
-						 std::vector<AbstractNode*>& node_context);
+	void random_existing_activate(AbstractNode*& curr_node,
+								  std::vector<Scope*>& scope_context,
+								  std::vector<AbstractNode*>& node_context,
+								  std::vector<AbstractNode*>& possible_nodes);
+	void inner_random_existing_activate(AbstractNode*& curr_node,
+										std::vector<Scope*>& scope_context,
+										std::vector<AbstractNode*>& node_context);
+	void random_path_activate(AbstractNode*& curr_node,
+							  std::vector<Scope*>& scope_context,
+							  std::vector<AbstractNode*>& node_context);
 	void random_exit_activate(AbstractNode*& curr_node,
 							  std::vector<Scope*>& scope_context,
 							  std::vector<AbstractNode*>& node_context,

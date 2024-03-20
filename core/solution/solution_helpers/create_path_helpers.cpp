@@ -31,16 +31,16 @@ bool create_path(Scope* parent_scope,
 	int random_throw_id = -1;
 	bool random_exceeded_limit = false;
 
-	parent_scope->random_activate(parent_scope->default_starting_node,
-								  scope_context,
-								  node_context,
-								  exit_depth,
-								  exit_node,
-								  random_curr_depth,
-								  random_throw_id,
-								  random_exceeded_limit,
-								  possible_scope_contexts,
-								  possible_node_contexts);
+	parent_scope->random_path_activate(parent_scope->default_starting_node,
+									   scope_context,
+									   node_context,
+									   exit_depth,
+									   exit_node,
+									   random_curr_depth,
+									   random_throw_id,
+									   random_exceeded_limit,
+									   possible_scope_contexts,
+									   possible_node_contexts);
 
 	if (possible_scope_contexts.size() == 0
 			|| random_exceeded_limit) {
@@ -75,9 +75,11 @@ bool create_path(Scope* parent_scope,
 
 			ScopeNode* original_scope_node = (ScopeNode*)possible_node_contexts[n_index].back();
 			ScopeNode* new_scope_node = new ScopeNode();
+			new_scope_node->scope = original_scope_node->scope;
 			new_scope_node->starting_node_id = original_scope_node->starting_node_id;
 			new_scope_node->starting_node = original_scope_node->starting_node;
-			new_scope_node->scope = original_scope_node->scope;
+			new_scope_node->exit_node_ids = original_scope_node->exit_node_ids;
+			new_scope_node->exit_nodes = original_scope_node->exit_nodes;
 			existing_scopes.push_back(new_scope_node);
 
 			potential_scopes.push_back(NULL);

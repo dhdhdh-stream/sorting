@@ -102,6 +102,13 @@ void Scope::verify_activate(AbstractNode* starting_node,
 			break;
 		}
 
+		if (context.size() > 1) {
+			ScopeNode* scope_node = (ScopeNode*)context[context.size()-2].node;
+			if (scope_node->exit_nodes.find(curr_node) != scope_node->exit_nodes.end()) {
+				break;
+			}
+		}
+
 		node_verify_activate_helper(curr_node,
 									problem,
 									context,

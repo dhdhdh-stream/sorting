@@ -89,7 +89,7 @@ void PassThroughExperiment::explore_create_activate(
 			new_num_steps = uniform_distribution(generator) + geometric_distribution(generator);
 		}
 
-		uniform_int_distribution<int> type_distribution(0, 3);
+		uniform_int_distribution<int> type_distribution(0, 2);
 		for (int s_index = 0; s_index < new_num_steps; s_index++) {
 			bool default_to_action = true;
 			int type = type_distribution(generator);
@@ -119,27 +119,13 @@ void PassThroughExperiment::explore_create_activate(
 				// existing_new_start
 				uniform_int_distribution<int> distribution(0, solution->scopes.size()-1);
 				Scope* scope = next(solution->scopes.begin(), distribution(generator))->second;
-				ScopeNode* new_scope_node = existing_new_start(scope,
-															   run_helper);
+				ScopeNode* new_scope_node = create_existing(scope,
+															run_helper);
 				if (new_scope_node != NULL) {
 					this->curr_step_types.push_back(STEP_TYPE_EXISTING_SCOPE);
 					this->curr_actions.push_back(NULL);
 
 					this->curr_existing_scopes.push_back(new_scope_node);
-
-					this->curr_potential_scopes.push_back(NULL);
-					this->curr_catch_throw_ids.push_back(set<int>());
-
-					default_to_action = false;
-				}
-			} else if (type == 2) {
-				// existing
-				ScopeNode* new_existing_scope_node = reuse_existing();
-				if (new_existing_scope_node != NULL) {
-					this->curr_step_types.push_back(STEP_TYPE_EXISTING_SCOPE);
-					this->curr_actions.push_back(NULL);
-
-					this->curr_existing_scopes.push_back(new_existing_scope_node);
 
 					this->curr_potential_scopes.push_back(NULL);
 					this->curr_catch_throw_ids.push_back(set<int>());
