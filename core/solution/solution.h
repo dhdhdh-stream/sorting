@@ -8,15 +8,19 @@
 #ifndef SOLUTION_H
 #define SOLUTION_H
 
-#include <map>
+#include <fstream>
 #include <vector>
 
 class Problem;
 class Scope;
 
 #if defined(MDEBUG) && MDEBUG
+const int IMPROVEMENTS_PER_RUN = 5;
+const int GENERATION_SIZE = 2;
 const int STARTING_NUM_DATAPOINTS = 10;
 #else
+const int IMPROVEMENTS_PER_RUN = 50;
+const int GENERATION_SIZE = 10;
 const int STARTING_NUM_DATAPOINTS = 1000;
 #endif /* MDEBUG */
 
@@ -26,10 +30,9 @@ class Solution {
 public:
 	int timestamp;
 
-	int scope_counter;
-	std::map<int, Scope*> scopes;
-
-	Scope* root;
+	std::vector<Scope*> scopes;
+	int curr_num_improvements;
+	int previous_generation_index;
 
 	int throw_counter;
 
@@ -63,8 +66,9 @@ public:
 	void load(std::string path,
 			  std::string name);
 
-	void success_reset();
-	void fail_reset();
+	void reset();
+
+	void increment();
 
 	#if defined(MDEBUG) && MDEBUG
 	void clear_verify();
@@ -72,8 +76,6 @@ public:
 
 	void save(std::string path,
 			  std::string name);
-
-	void remap();
 
 	void save_for_display(std::ofstream& output_file);
 };

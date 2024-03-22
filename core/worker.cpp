@@ -1,9 +1,3 @@
-/**
- * - TODO: to parallelize further:
- *   - have new instances that don't sync, but draw from existing
- *     - initially, they may be much worse, but if they ever become better, swap to
- */
-
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -67,23 +61,23 @@ int main(int argc, char* argv[]) {
 		vector<ContextLayer> context;
 		context.push_back(ContextLayer());
 
-		context.back().scope = solution->root;
+		context.back().scope = solution->scopes.back();
 		context.back().node = NULL;
 
-		ScopeHistory* root_history = new ScopeHistory(solution->root);
+		ScopeHistory* root_history = new ScopeHistory(solution->scopes.back());
 		context.back().scope_history = root_history;
 
 		// unused
 		int exit_depth = -1;
 		AbstractNode* exit_node = NULL;
 
-		solution->root->activate(solution->root->default_starting_node,
-								 problem,
-								 context,
-								 exit_depth,
-								 exit_node,
-								 run_helper,
-								 root_history);
+		solution->scopes.back()->activate(solution->scopes.back()->default_starting_node,
+										  problem,
+										  context,
+										  exit_depth,
+										  exit_node,
+										  run_helper,
+										  root_history);
 
 		if (run_helper.experiments_seen_order.size() == 0) {
 			if (!run_helper.exceeded_limit) {
@@ -200,7 +194,9 @@ int main(int argc, char* argv[]) {
 		delete problem;
 
 		if (is_success) {
-			solution->success_reset();
+			solution->reset();
+
+			solution->increment();
 
 			ifstream solution_save_file;
 			solution_save_file.open("workers/saves/main.txt");
@@ -237,11 +233,11 @@ int main(int argc, char* argv[]) {
 		} else if (is_fail) {
 			num_fails++;
 			cout << "num_fails: " << num_fails << endl << endl;
-			if (num_fails > NUM_FAILS_BEFORE_INCREASE) {
+			if (num_fails >= NUM_FAILS_BEFORE_INCREASE) {
 				cout << "fail_reset" << endl << endl;
 
 				num_fails = 0;
-				solution->fail_reset();
+				solution->reset();
 
 				solution->curr_num_datapoints *= 2;
 			}

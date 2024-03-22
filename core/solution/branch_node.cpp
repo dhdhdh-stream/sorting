@@ -45,15 +45,7 @@ void BranchNode::clear_verify() {
 }
 #endif /* MDEBUG */
 
-void BranchNode::success_reset() {
-	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
-		delete this->experiments[e_index];
-	}
-	this->experiments.clear();
-	this->experiment_types.clear();
-}
-
-void BranchNode::fail_reset() {
+void BranchNode::reset() {
 	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
 		delete this->experiments[e_index];
 	}
@@ -279,18 +271,6 @@ void BranchNode::link() {
 		this->branch_next_node = NULL;
 	} else {
 		this->branch_next_node = this->parent->nodes[this->branch_next_node_id];
-	}
-}
-
-void BranchNode::remap() {
-	for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
-		this->scope_context_ids[c_index] = this->scope_context[c_index]->id;
-	}
-
-	for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
-		for (int c_index = 0; c_index < (int)this->input_scope_contexts[i_index].size(); c_index++) {
-			this->input_scope_context_ids[i_index][c_index] = this->input_scope_contexts[i_index][c_index]->id;
-		}
 	}
 }
 

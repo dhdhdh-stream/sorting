@@ -21,14 +21,7 @@ ScopeNode::~ScopeNode() {
 	}
 }
 
-void ScopeNode::success_reset() {
-	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
-		delete this->experiments[e_index];
-	}
-	this->experiments.clear();
-}
-
-void ScopeNode::fail_reset() {
+void ScopeNode::reset() {
 	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
 		delete this->experiments[e_index];
 	}

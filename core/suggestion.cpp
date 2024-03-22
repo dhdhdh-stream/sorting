@@ -51,23 +51,23 @@ int main(int argc, char* argv[]) {
 		vector<ContextLayer> context;
 		context.push_back(ContextLayer());
 
-		context.back().scope = solution->root;
+		context.back().scope = solution->scopes.back();
 		context.back().node = NULL;
 
-		ScopeHistory* root_history = new ScopeHistory(solution->root);
+		ScopeHistory* root_history = new ScopeHistory(solution->scopes.back());
 		context.back().scope_history = root_history;
 
 		// unused
 		int exit_depth = -1;
 		AbstractNode* exit_node = NULL;
 
-		solution->root->activate(solution->root->default_starting_node,
-								 problem,
-								 context,
-								 exit_depth,
-								 exit_node,
-								 run_helper,
-								 root_history);
+		solution->scopes.back()->activate(solution->scopes.back()->default_starting_node,
+										  problem,
+										  context,
+										  exit_depth,
+										  exit_node,
+										  run_helper,
+										  root_history);
 
 		delete root_history;
 

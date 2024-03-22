@@ -1,6 +1,9 @@
-// TODO: need to chain BranchExperiments as well
-// - recognize when a sequence is safe to perform, even though doesn't direclty lead to improvement
-//   - but then followup makes things good
+/**
+ * TODO:
+ * - chain BranchExperiments as well
+ *   - recognize when a sequence is safe to perform, even though doesn't directly lead to improvement
+ *     - but then enables good followup
+ */
 
 #ifndef BRANCH_EXPERIMENT_H
 #define BRANCH_EXPERIMENT_H
@@ -72,8 +75,7 @@ public:
 
 	std::vector<int> step_types;
 	std::vector<ActionNode*> actions;
-	std::vector<ScopeNode*> existing_scopes;
-	std::vector<ScopeNode*> potential_scopes;
+	std::vector<ScopeNode*> scopes;
 	std::vector<std::set<int>> catch_throw_ids;
 	int exit_depth;
 	AbstractNode* exit_next_node;

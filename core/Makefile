@@ -15,7 +15,7 @@ HEADERS = ${SOURCES:.cpp=.h}
 OBJECTS = ${HEADERS:.h=.o}
 DEPENDS = ${OBJECTS:.o=.d}
 
-all: main viewer worker simple_init measure step_through suggestion combine
+all: main viewer worker simple_init measure step_through suggestion
 
 main: ${OBJECTS} main.o
 	${CXX} ${CXXFLAGS} ${OBJECTS} main.o -o main ${LIBS}
@@ -38,10 +38,7 @@ step_through: ${OBJECTS} step_through.o
 suggestion: ${OBJECTS} suggestion.o
 	${CXX} ${CXXFLAGS} ${OBJECTS} suggestion.o -o suggestion ${LIBS}
 
-combine: ${OBJECTS} combine.o
-	${CXX} ${CXXFLAGS} ${OBJECTS} combine.o -o combine ${LIBS}
-
--include ${DEPENDS} main.d viewer.d worker.d simple_init.d measure.d step_through.d suggestion.d combine.d
+-include ${DEPENDS} main.d viewer.d worker.d simple_init.d measure.d step_through.d suggestion.d
 
 clean:
 	rm -f ${OBJECTS} ${DEPENDS} \
@@ -51,5 +48,4 @@ clean:
 	simple_init.o simple_init.d simple_init \
 	measure.o measure.d measure \
 	step_through.o step_through.d step_through \
-	suggestion.o suggestion.d suggestion \
-	combine.o combine.d combine
+	suggestion.o suggestion.d suggestion

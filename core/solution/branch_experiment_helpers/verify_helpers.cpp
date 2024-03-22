@@ -125,10 +125,8 @@ void BranchExperiment::verify_activate(
 		} else {
 			if (this->step_types[0] == STEP_TYPE_ACTION) {
 				curr_node = this->actions[0];
-			} else if (this->step_types[0] == STEP_TYPE_EXISTING_SCOPE) {
-				curr_node = this->existing_scopes[0];
 			} else {
-				curr_node = this->potential_scopes[0];
+				curr_node = this->scopes[0];
 			}
 		}
 	} else {
@@ -208,10 +206,8 @@ void BranchExperiment::verify_backprop(double target_val,
 			for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {
 				if (this->step_types[s_index] == STEP_TYPE_ACTION) {
 					cout << " " << this->actions[s_index]->action.move;
-				} else if (this->step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
-					cout << " E";
 				} else {
-					cout << " P";
+					cout << " E";
 				}
 			}
 			cout << endl;

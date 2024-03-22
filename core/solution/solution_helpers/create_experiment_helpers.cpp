@@ -110,28 +110,30 @@ void create_experiment(ScopeHistory* root_history) {
 		 * - minimize context to generalize/maximize impact
 		 */
 
-		uniform_int_distribution<int> pass_through_distribution(0, 1);
-		if (pass_through_distribution(generator) == 0) {
-			PassThroughExperiment* new_pass_through_experiment = new PassThroughExperiment(
-				vector<Scope*>(possible_scope_contexts[rand_index].end() - context_size, possible_scope_contexts[rand_index].end()),
-				vector<AbstractNode*>(possible_node_contexts[rand_index].end() - context_size, possible_node_contexts[rand_index].end()),
-				false,
-				-1,
-				NULL);
+		if (possible_scope_contexts[rand_index][possible_scope_contexts[rand_index].size() - context_size] == solution->scopes.back()) {
+			uniform_int_distribution<int> pass_through_distribution(0, 1);
+			if (pass_through_distribution(generator) == 0) {
+				PassThroughExperiment* new_pass_through_experiment = new PassThroughExperiment(
+					vector<Scope*>(possible_scope_contexts[rand_index].end() - context_size, possible_scope_contexts[rand_index].end()),
+					vector<AbstractNode*>(possible_node_contexts[rand_index].end() - context_size, possible_node_contexts[rand_index].end()),
+					false,
+					-1,
+					NULL);
 
-			ActionNode* action_node = (ActionNode*)possible_node_contexts[rand_index].back();
-			action_node->experiments.push_back(new_pass_through_experiment);
-		} else {
-			BranchExperiment* new_branch_experiment = new BranchExperiment(
-				vector<Scope*>(possible_scope_contexts[rand_index].end() - context_size, possible_scope_contexts[rand_index].end()),
-				vector<AbstractNode*>(possible_node_contexts[rand_index].end() - context_size, possible_node_contexts[rand_index].end()),
-				false,
-				-1,
-				NULL,
-				false);
+				ActionNode* action_node = (ActionNode*)possible_node_contexts[rand_index].back();
+				action_node->experiments.push_back(new_pass_through_experiment);
+			} else {
+				BranchExperiment* new_branch_experiment = new BranchExperiment(
+					vector<Scope*>(possible_scope_contexts[rand_index].end() - context_size, possible_scope_contexts[rand_index].end()),
+					vector<AbstractNode*>(possible_node_contexts[rand_index].end() - context_size, possible_node_contexts[rand_index].end()),
+					false,
+					-1,
+					NULL,
+					false);
 
-			ActionNode* action_node = (ActionNode*)possible_node_contexts[rand_index].back();
-			action_node->experiments.push_back(new_branch_experiment);
+				ActionNode* action_node = (ActionNode*)possible_node_contexts[rand_index].back();
+				action_node->experiments.push_back(new_branch_experiment);
+			}
 		}
 	} else if (possible_node_contexts[rand_index].back()->type == NODE_TYPE_SCOPE) {
 		uniform_int_distribution<int> next_distribution(0, 1);
@@ -144,28 +146,30 @@ void create_experiment(ScopeHistory* root_history) {
 			}
 		}
 
-		uniform_int_distribution<int> pass_through_distribution(0, 1);
-		if (pass_through_distribution(generator) == 0) {
-			PassThroughExperiment* new_pass_through_experiment = new PassThroughExperiment(
-				vector<Scope*>(possible_scope_contexts[rand_index].end() - context_size, possible_scope_contexts[rand_index].end()),
-				vector<AbstractNode*>(possible_node_contexts[rand_index].end() - context_size, possible_node_contexts[rand_index].end()),
-				false,
-				possible_throw_id[rand_index],
-				NULL);
+		if (possible_scope_contexts[rand_index][possible_scope_contexts[rand_index].size() - context_size] == solution->scopes.back()) {
+			uniform_int_distribution<int> pass_through_distribution(0, 1);
+			if (pass_through_distribution(generator) == 0) {
+				PassThroughExperiment* new_pass_through_experiment = new PassThroughExperiment(
+					vector<Scope*>(possible_scope_contexts[rand_index].end() - context_size, possible_scope_contexts[rand_index].end()),
+					vector<AbstractNode*>(possible_node_contexts[rand_index].end() - context_size, possible_node_contexts[rand_index].end()),
+					false,
+					possible_throw_id[rand_index],
+					NULL);
 
-			ScopeNode* scope_node = (ScopeNode*)possible_node_contexts[rand_index].back();
-			scope_node->experiments.push_back(new_pass_through_experiment);
-		} else {
-			BranchExperiment* new_branch_experiment = new BranchExperiment(
-				vector<Scope*>(possible_scope_contexts[rand_index].end() - context_size, possible_scope_contexts[rand_index].end()),
-				vector<AbstractNode*>(possible_node_contexts[rand_index].end() - context_size, possible_node_contexts[rand_index].end()),
-				false,
-				possible_throw_id[rand_index],
-				NULL,
-				false);
+				ScopeNode* scope_node = (ScopeNode*)possible_node_contexts[rand_index].back();
+				scope_node->experiments.push_back(new_pass_through_experiment);
+			} else {
+				BranchExperiment* new_branch_experiment = new BranchExperiment(
+					vector<Scope*>(possible_scope_contexts[rand_index].end() - context_size, possible_scope_contexts[rand_index].end()),
+					vector<AbstractNode*>(possible_node_contexts[rand_index].end() - context_size, possible_node_contexts[rand_index].end()),
+					false,
+					possible_throw_id[rand_index],
+					NULL,
+					false);
 
-			ScopeNode* scope_node = (ScopeNode*)possible_node_contexts[rand_index].back();
-			scope_node->experiments.push_back(new_branch_experiment);
+				ScopeNode* scope_node = (ScopeNode*)possible_node_contexts[rand_index].back();
+				scope_node->experiments.push_back(new_branch_experiment);
+			}
 		}
 	} else {
 		uniform_int_distribution<int> next_distribution(0, 1);
@@ -178,37 +182,39 @@ void create_experiment(ScopeHistory* root_history) {
 			}
 		}
 
-		uniform_int_distribution<int> pass_through_distribution(0, 1);
-		if (pass_through_distribution(generator) == 0) {
-			PassThroughExperiment* new_pass_through_experiment = new PassThroughExperiment(
-				vector<Scope*>(possible_scope_contexts[rand_index].end() - context_size, possible_scope_contexts[rand_index].end()),
-				vector<AbstractNode*>(possible_node_contexts[rand_index].end() - context_size, possible_node_contexts[rand_index].end()),
-				possible_is_branch[rand_index],
-				-1,
-				NULL);
+		if (possible_scope_contexts[rand_index][possible_scope_contexts[rand_index].size() - context_size] == solution->scopes.back()) {
+			uniform_int_distribution<int> pass_through_distribution(0, 1);
+			if (pass_through_distribution(generator) == 0) {
+				PassThroughExperiment* new_pass_through_experiment = new PassThroughExperiment(
+					vector<Scope*>(possible_scope_contexts[rand_index].end() - context_size, possible_scope_contexts[rand_index].end()),
+					vector<AbstractNode*>(possible_node_contexts[rand_index].end() - context_size, possible_node_contexts[rand_index].end()),
+					possible_is_branch[rand_index],
+					-1,
+					NULL);
 
-			BranchNode* branch_node = (BranchNode*)possible_node_contexts[rand_index].back();
-			branch_node->experiments.push_back(new_pass_through_experiment);
-			if (possible_is_branch[rand_index]) {
-				branch_node->experiment_types.push_back(BRANCH_NODE_EXPERIMENT_TYPE_BRANCH);
+				BranchNode* branch_node = (BranchNode*)possible_node_contexts[rand_index].back();
+				branch_node->experiments.push_back(new_pass_through_experiment);
+				if (possible_is_branch[rand_index]) {
+					branch_node->experiment_types.push_back(BRANCH_NODE_EXPERIMENT_TYPE_BRANCH);
+				} else {
+					branch_node->experiment_types.push_back(BRANCH_NODE_EXPERIMENT_TYPE_ORIGINAL);
+				}
 			} else {
-				branch_node->experiment_types.push_back(BRANCH_NODE_EXPERIMENT_TYPE_ORIGINAL);
-			}
-		} else {
-			BranchExperiment* new_branch_experiment = new BranchExperiment(
-				vector<Scope*>(possible_scope_contexts[rand_index].end() - context_size, possible_scope_contexts[rand_index].end()),
-				vector<AbstractNode*>(possible_node_contexts[rand_index].end() - context_size, possible_node_contexts[rand_index].end()),
-				possible_is_branch[rand_index],
-				-1,
-				NULL,
-				false);
+				BranchExperiment* new_branch_experiment = new BranchExperiment(
+					vector<Scope*>(possible_scope_contexts[rand_index].end() - context_size, possible_scope_contexts[rand_index].end()),
+					vector<AbstractNode*>(possible_node_contexts[rand_index].end() - context_size, possible_node_contexts[rand_index].end()),
+					possible_is_branch[rand_index],
+					-1,
+					NULL,
+					false);
 
-			BranchNode* branch_node = (BranchNode*)possible_node_contexts[rand_index].back();
-			branch_node->experiments.push_back(new_branch_experiment);
-			if (possible_is_branch[rand_index]) {
-				branch_node->experiment_types.push_back(BRANCH_NODE_EXPERIMENT_TYPE_BRANCH);
-			} else {
-				branch_node->experiment_types.push_back(BRANCH_NODE_EXPERIMENT_TYPE_ORIGINAL);
+				BranchNode* branch_node = (BranchNode*)possible_node_contexts[rand_index].back();
+				branch_node->experiments.push_back(new_branch_experiment);
+				if (possible_is_branch[rand_index]) {
+					branch_node->experiment_types.push_back(BRANCH_NODE_EXPERIMENT_TYPE_BRANCH);
+				} else {
+					branch_node->experiment_types.push_back(BRANCH_NODE_EXPERIMENT_TYPE_ORIGINAL);
+				}
 			}
 		}
 	}
@@ -250,8 +256,7 @@ AbstractExperiment* create_experiment(ifstream& input_file) {
 
 	vector<int> step_types;
 	vector<ActionNode*> actions;
-	vector<ScopeNode*> existing_scopes;
-	vector<ScopeNode*> potential_scopes;
+	vector<ScopeNode*> scopes;
 	vector<set<int>> catch_throw_ids;
 	string num_steps_line = getline_helper(input_file);
 	int num_steps = stoi(num_steps_line);
@@ -263,8 +268,7 @@ AbstractExperiment* create_experiment(ifstream& input_file) {
 		new_action_node->action = Action(stoi(action_line));
 		actions.push_back(new_action_node);
 
-		existing_scopes.push_back(NULL);
-		potential_scopes.push_back(NULL);
+		scopes.push_back(NULL);
 		catch_throw_ids.push_back(set<int>());
 	}
 
@@ -293,8 +297,7 @@ AbstractExperiment* create_experiment(ifstream& input_file) {
 
 	new_branch_experiment->step_types = step_types;
 	new_branch_experiment->actions = actions;
-	new_branch_experiment->existing_scopes = existing_scopes;
-	new_branch_experiment->potential_scopes = potential_scopes;
+	new_branch_experiment->scopes = scopes;
 	new_branch_experiment->catch_throw_ids = catch_throw_ids;
 	new_branch_experiment->exit_depth = exit_depth;
 	new_branch_experiment->exit_next_node = exit_next_node;

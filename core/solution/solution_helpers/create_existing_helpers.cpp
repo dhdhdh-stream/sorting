@@ -54,7 +54,7 @@ ScopeNode* create_existing(Scope* parent_scope,
 	new_scope_node->starting_node_id = new_starting_node->id;
 	new_scope_node->starting_node = new_starting_node;
 
-	geometric_distribution<int> num_exits_distribution(0.5);
+	geometric_distribution<int> num_exits_distribution(0.33);
 	int num_exits = num_exits_distribution(generator);
 	if (num_exits > 0) {
 		if (starting_index != (int)possible_nodes.size()-1) {

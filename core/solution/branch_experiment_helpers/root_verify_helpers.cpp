@@ -117,10 +117,8 @@ void BranchExperiment::root_verify_activate(
 		} else {
 			if (this->step_types[0] == STEP_TYPE_ACTION) {
 				curr_node = this->actions[0];
-			} else if (this->step_types[0] == STEP_TYPE_EXISTING_SCOPE) {
-				curr_node = this->existing_scopes[0];
 			} else {
-				curr_node = this->potential_scopes[0];
+				curr_node = this->scopes[0];
 			}
 		}
 	} else {

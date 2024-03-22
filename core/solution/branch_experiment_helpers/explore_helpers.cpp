@@ -120,138 +120,94 @@ void BranchExperiment::explore_target_activate(AbstractNode*& curr_node,
 
 	history->existing_predicted_score = predicted_score;
 
-	bool is_repeat = false;
-	uniform_int_distribution<int> repeat_distribution(0, 3);
-	// if (this->throw_id == -1
-	// 		&& this->parent_experiment == NULL
-	// 		&& repeat_distribution(generator)) {
-	if (false) {
-		is_repeat = create_repeat(context,
-								  (int)this->scope_context.size(),
-								  this->step_types,
-								  this->actions,
-								  this->existing_scopes,
-								  this->potential_scopes,
-								  this->catch_throw_ids);
-		if (is_repeat) {
-			this->exit_depth = 0;
-			this->exit_next_node = curr_node;
-			this->exit_throw_id = -1;
-		}
-	}
+	vector<pair<int,AbstractNode*>> possible_exits;
+	gather_possible_exits(possible_exits,
+						  this->scope_context,
+						  this->node_context,
+						  this->is_branch,
+						  this->throw_id,
+						  run_helper);
 
-	if (!is_repeat) {
-		// exit
-		vector<pair<int,AbstractNode*>> possible_exits;
-		gather_possible_exits(possible_exits,
-							  this->scope_context,
-							  this->node_context,
-							  this->is_branch,
-							  this->throw_id,
-							  run_helper);
+	uniform_int_distribution<int> distribution(0, possible_exits.size()-1);
+	int random_index = distribution(generator);
+	this->exit_depth = possible_exits[random_index].first;
+	this->exit_next_node = possible_exits[random_index].second;
 
-		uniform_int_distribution<int> distribution(0, possible_exits.size()-1);
-		int random_index = distribution(generator);
-		this->exit_depth = possible_exits[random_index].first;
-		this->exit_next_node = possible_exits[random_index].second;
-
-		uniform_int_distribution<int> throw_distribution(0, 3);
-		if (throw_distribution(generator) == 0) {
-			uniform_int_distribution<int> reuse_existing_throw_distribution(0, 1);
-			if (reuse_existing_throw_distribution(generator) == 0) {
-				/**
-				 * - simply allow duplicates
-				 */
-				vector<int> possible_throw_ids;
-				for (int c_index = 0; c_index < (int)context.size()-1; c_index++) {
-					ScopeNode* scope_node = (ScopeNode*)context[c_index].node;
-					for (map<int, AbstractNode*>::iterator it = scope_node->catches.begin();
-							it != scope_node->catches.end(); it++) {
-						possible_throw_ids.push_back(it->first);
-					}
+	uniform_int_distribution<int> throw_distribution(0, 3);
+	if (throw_distribution(generator) == 0) {
+		uniform_int_distribution<int> reuse_existing_throw_distribution(0, 1);
+		if (reuse_existing_throw_distribution(generator) == 0) {
+			/**
+			 * - simply allow duplicates
+			 */
+			vector<int> possible_throw_ids;
+			for (int c_index = 0; c_index < (int)context.size()-1; c_index++) {
+				ScopeNode* scope_node = (ScopeNode*)context[c_index].node;
+				for (map<int, AbstractNode*>::iterator it = scope_node->catches.begin();
+						it != scope_node->catches.end(); it++) {
+					possible_throw_ids.push_back(it->first);
 				}
+			}
 
-				if (possible_throw_ids.size() > 0) {
-					uniform_int_distribution<int> possible_distribution(0, possible_throw_ids.size()-1);
-					this->exit_throw_id = possible_throw_ids[possible_distribution(generator)];
-				} else {
-					this->exit_throw_id = TEMP_THROW_ID;
-				}
+			if (possible_throw_ids.size() > 0) {
+				uniform_int_distribution<int> possible_distribution(0, possible_throw_ids.size()-1);
+				this->exit_throw_id = possible_throw_ids[possible_distribution(generator)];
 			} else {
 				this->exit_throw_id = TEMP_THROW_ID;
 			}
 		} else {
-			this->exit_throw_id = -1;
+			this->exit_throw_id = TEMP_THROW_ID;
 		}
+	} else {
+		this->exit_throw_id = -1;
+	}
 
-		// new path
-		int new_num_steps;
-		uniform_int_distribution<int> uniform_distribution(0, 1);
-		geometric_distribution<int> geometric_distribution(0.5);
-		if (this->exit_depth == 0
-				&& this->exit_next_node == curr_node) {
-			new_num_steps = 1 + uniform_distribution(generator) + geometric_distribution(generator);
-		} else {
-			new_num_steps = uniform_distribution(generator) + geometric_distribution(generator);
-		}
+	int new_num_steps;
+	uniform_int_distribution<int> uniform_distribution(0, 1);
+	geometric_distribution<int> geometric_distribution(0.5);
+	if (this->exit_depth == 0
+			&& this->exit_next_node == curr_node) {
+		new_num_steps = 1 + uniform_distribution(generator) + geometric_distribution(generator);
+	} else {
+		new_num_steps = uniform_distribution(generator) + geometric_distribution(generator);
+	}
 
-		// uniform_int_distribution<int> type_distribution(0, 2);
-		uniform_int_distribution<int> type_distribution(0, 3);
-		for (int s_index = 0; s_index < new_num_steps; s_index++) {
-			bool default_to_action = true;
-			int type = type_distribution(generator);
-			// if (type == 0) {
-			if (false) {
-				uniform_int_distribution<int> random_scope_distribution(0, 3);
-				if (random_scope_distribution(generator) == 0) {
-					uniform_int_distribution<int> distribution(0, solution->scopes.size()-1);
-					Scope* scope = next(solution->scopes.begin(), distribution(generator))->second;
-					default_to_action = !create_path(scope,
-													 run_helper,
-													 this->step_types,
-													 this->actions,
-													 this->existing_scopes,
-													 this->potential_scopes,
-													 this->catch_throw_ids);
-				} else {
-					default_to_action = !create_path(context[context.size() - this->scope_context.size()].scope,
-													 run_helper,
-													 this->step_types,
-													 this->actions,
-													 this->existing_scopes,
-													 this->potential_scopes,
-													 this->catch_throw_ids);
-				}
-			// } else if (type == 1) {
-			} else if (type != 0) {
-				uniform_int_distribution<int> distribution(0, solution->scopes.size()-1);
-				Scope* scope = next(solution->scopes.begin(), distribution(generator))->second;
-				ScopeNode* new_scope_node = create_existing(scope,
-															run_helper);
-				if (new_scope_node != NULL) {
-					this->step_types.push_back(STEP_TYPE_EXISTING_SCOPE);
-					this->actions.push_back(NULL);
-
-					this->existing_scopes.push_back(new_scope_node);
-
-					this->potential_scopes.push_back(NULL);
-					this->catch_throw_ids.push_back(set<int>());
-
-					default_to_action = false;
-				}
+	uniform_int_distribution<int> default_distribution(0, 3);
+	uniform_int_distribution<int> curr_scope_distribution(0, 2);
+	for (int s_index = 0; s_index < new_num_steps; s_index++) {
+		bool default_to_action = true;
+		if (default_distribution(generator) != 0) {
+			Scope* scope;
+			if (solution->previous_generation_index == -1
+					|| curr_scope_distribution(generator) == 0) {
+				scope = solution->scopes.back();
+			} else {
+				uniform_int_distribution<int> distribution(0, solution->previous_generation_index);
+				scope = solution->scopes[distribution(generator)];
 			}
+			ScopeNode* new_scope_node = create_existing(scope,
+														run_helper);
+			if (new_scope_node != NULL) {
+				this->step_types.push_back(STEP_TYPE_SCOPE);
+				this->actions.push_back(NULL);
 
-			if (default_to_action) {
-				this->step_types.push_back(STEP_TYPE_ACTION);
+				this->scopes.push_back(new_scope_node);
 
-				ActionNode* new_action_node = new ActionNode();
-				new_action_node->action = problem_type->random_action();
-				this->actions.push_back(new_action_node);
-
-				this->existing_scopes.push_back(NULL);
-				this->potential_scopes.push_back(NULL);
 				this->catch_throw_ids.push_back(set<int>());
+
+				default_to_action = false;
 			}
+		}
+
+		if (default_to_action) {
+			this->step_types.push_back(STEP_TYPE_ACTION);
+
+			ActionNode* new_action_node = new ActionNode();
+			new_action_node->action = problem_type->random_action();
+			this->actions.push_back(new_action_node);
+
+			this->scopes.push_back(NULL);
+			this->catch_throw_ids.push_back(set<int>());
 		}
 	}
 
@@ -271,20 +227,9 @@ void BranchExperiment::explore_target_activate(AbstractNode*& curr_node,
 				run_helper,
 				action_node_history);
 			delete action_node_history;
-		} else if (this->step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
-			ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(this->existing_scopes[s_index]);
-			this->existing_scopes[s_index]->activate(
-				curr_node,
-				problem,
-				context,
-				exit_depth,
-				exit_node,
-				run_helper,
-				scope_node_history);
-			delete scope_node_history;
 		} else {
-			ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(this->potential_scopes[s_index]);
-			this->potential_scopes[s_index]->activate(
+			ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(this->scopes[s_index]);
+			this->scopes[s_index]->activate(
 				curr_node,
 				problem,
 				context,
@@ -340,10 +285,8 @@ void BranchExperiment::explore_backprop(double target_val,
 			// for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {
 			// 	if (this->step_types[s_index] == STEP_TYPE_ACTION) {
 			// 		cout << " " << this->actions[s_index]->action.move;
-			// 	} else if (this->step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
-			// 		cout << " E" << this->existing_scopes[s_index]->scope->id;
 			// 	} else {
-			// 		cout << " P";
+			// 		cout << " E" << this->existing_scopes[s_index]->scope->id;
 			// 	}
 			// }
 			// cout << endl;
@@ -362,18 +305,10 @@ void BranchExperiment::explore_backprop(double target_val,
 					this->actions[s_index]->parent = this->scope_context.back();
 					this->actions[s_index]->id = this->scope_context.back()->node_counter;
 					this->scope_context.back()->node_counter++;
-				} else if (this->step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
-					this->existing_scopes[s_index]->parent = this->scope_context.back();
-					this->existing_scopes[s_index]->id = this->scope_context.back()->node_counter;
-					this->scope_context.back()->node_counter++;
 				} else {
-					this->potential_scopes[s_index]->parent = this->scope_context.back();
-					this->potential_scopes[s_index]->id = this->scope_context.back()->node_counter;
+					this->scopes[s_index]->parent = this->scope_context.back();
+					this->scopes[s_index]->id = this->scope_context.back()->node_counter;
 					this->scope_context.back()->node_counter++;
-
-					int new_scope_id = solution->scope_counter;
-					solution->scope_counter++;
-					this->potential_scopes[s_index]->scope->id = new_scope_id;
 				}
 			}
 
@@ -432,35 +367,23 @@ void BranchExperiment::explore_backprop(double target_val,
 					if (this->step_types[s_index+1] == STEP_TYPE_ACTION) {
 						next_node_id = this->actions[s_index+1]->id;
 						next_node = this->actions[s_index+1];
-					} else if (this->step_types[s_index+1] == STEP_TYPE_EXISTING_SCOPE) {
-						next_node_id = this->existing_scopes[s_index+1]->id;
-						next_node = this->existing_scopes[s_index+1];
 					} else {
-						next_node_id = this->potential_scopes[s_index+1]->id;
-						next_node = this->potential_scopes[s_index+1];
+						next_node_id = this->scopes[s_index+1]->id;
+						next_node = this->scopes[s_index+1];
 					}
 				}
 
 				if (this->step_types[s_index] == STEP_TYPE_ACTION) {
 					this->actions[s_index]->next_node_id = next_node_id;
 					this->actions[s_index]->next_node = next_node;
-				} else if (this->step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
-					this->existing_scopes[s_index]->next_node_id = next_node_id;
-					this->existing_scopes[s_index]->next_node = next_node;
-
-					for (set<int>::iterator it = this->catch_throw_ids[s_index].begin();
-							it != this->catch_throw_ids[s_index].end(); it++) {
-						this->existing_scopes[s_index]->catch_ids[*it] = next_node_id;
-						this->existing_scopes[s_index]->catches[*it] = next_node;
-					}
 				} else {
-					this->potential_scopes[s_index]->next_node_id = next_node_id;
-					this->potential_scopes[s_index]->next_node = next_node;
+					this->scopes[s_index]->next_node_id = next_node_id;
+					this->scopes[s_index]->next_node = next_node;
 
 					for (set<int>::iterator it = this->catch_throw_ids[s_index].begin();
 							it != this->catch_throw_ids[s_index].end(); it++) {
-						this->potential_scopes[s_index]->catch_ids[*it] = next_node_id;
-						this->potential_scopes[s_index]->catches[*it] = next_node;
+						this->scopes[s_index]->catch_ids[*it] = next_node_id;
+						this->scopes[s_index]->catches[*it] = next_node;
 					}
 				}
 			}
@@ -475,18 +398,14 @@ void BranchExperiment::explore_backprop(double target_val,
 			for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {
 				if (this->step_types[s_index] == STEP_TYPE_ACTION) {
 					delete this->actions[s_index];
-				} else if (this->step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
-					delete this->existing_scopes[s_index];
 				} else {
-					delete this->potential_scopes[s_index]->scope;
-					delete this->potential_scopes[s_index];
+					delete this->scopes[s_index];
 				}
 			}
 
 			this->step_types.clear();
 			this->actions.clear();
-			this->existing_scopes.clear();
-			this->potential_scopes.clear();
+			this->scopes.clear();
 			this->catch_throw_ids.clear();
 
 			this->state_iter++;

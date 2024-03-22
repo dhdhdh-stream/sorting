@@ -118,8 +118,7 @@ public:
 						  Metrics& metrics,
 						  ScopeNodeHistory* history);
 
-	void success_reset();
-	void fail_reset();
+	void reset();
 
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file);

@@ -31,52 +31,26 @@ void Scope::clear_verify() {
 }
 #endif /* MDEBUG */
 
-void Scope::success_reset() {
+void Scope::reset() {
 	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
 			it != this->nodes.end(); it++) {
 		switch (it->second->type) {
 		case NODE_TYPE_ACTION:
 			{
 				ActionNode* action_node = (ActionNode*)it->second;
-				action_node->success_reset();
+				action_node->reset();
 			}
 			break;
 		case NODE_TYPE_SCOPE:
 			{
 				ScopeNode* scope_node = (ScopeNode*)it->second;
-				scope_node->success_reset();
+				scope_node->reset();
 			}
 			break;
 		case NODE_TYPE_BRANCH:
 			{
 				BranchNode* branch_node = (BranchNode*)it->second;
-				branch_node->success_reset();
-			}
-			break;
-		}
-	}
-}
-
-void Scope::fail_reset() {
-	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
-			it != this->nodes.end(); it++) {
-		switch (it->second->type) {
-		case NODE_TYPE_ACTION:
-			{
-				ActionNode* action_node = (ActionNode*)it->second;
-				action_node->fail_reset();
-			}
-			break;
-		case NODE_TYPE_SCOPE:
-			{
-				ScopeNode* scope_node = (ScopeNode*)it->second;
-				scope_node->fail_reset();
-			}
-			break;
-		case NODE_TYPE_BRANCH:
-			{
-				BranchNode* branch_node = (BranchNode*)it->second;
-				branch_node->fail_reset();
+				branch_node->reset();
 			}
 			break;
 		}
@@ -156,16 +130,6 @@ void Scope::link() {
 	}
 
 	this->default_starting_node = this->nodes[this->default_starting_node_id];
-}
-
-void Scope::remap() {
-	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
-			it != this->nodes.end(); it++) {
-		if (it->second->type == NODE_TYPE_BRANCH) {
-			BranchNode* branch_node = (BranchNode*)it->second;
-			branch_node->remap();
-		}
-	}
 }
 
 void Scope::save_for_display(ofstream& output_file) {

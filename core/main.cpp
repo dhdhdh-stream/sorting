@@ -34,14 +34,14 @@ int main(int argc, char* argv[]) {
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
 
-	// problem_type = new Sorting();
-	problem_type = new Minesweeper();
+	problem_type = new Sorting();
+	// problem_type = new Minesweeper();
 
 	solution = new Solution();
-	// solution->init();
-	solution->load("", "main");
+	solution->init();
+	// solution->load("", "main");
 
-	// solution->save("", "main");
+	solution->save("", "main");
 
 	int num_fails = 0;
 
@@ -50,8 +50,8 @@ int main(int argc, char* argv[]) {
 	#endif /* MDEBUG */
 
 	while (true) {
-		// Problem* problem = new Sorting();
-		Problem* problem = new Minesweeper();
+		Problem* problem = new Sorting();
+		// Problem* problem = new Minesweeper();
 
 		RunHelper run_helper;
 
@@ -64,23 +64,23 @@ int main(int argc, char* argv[]) {
 		vector<ContextLayer> context;
 		context.push_back(ContextLayer());
 
-		context.back().scope = solution->root;
+		context.back().scope = solution->scopes.back();
 		context.back().node = NULL;
 
-		ScopeHistory* root_history = new ScopeHistory(solution->root);
+		ScopeHistory* root_history = new ScopeHistory(solution->scopes.back());
 		context.back().scope_history = root_history;
 
 		// unused
 		int exit_depth = -1;
 		AbstractNode* exit_node = NULL;
 
-		solution->root->activate(solution->root->default_starting_node,
-								 problem,
-								 context,
-								 exit_depth,
-								 exit_node,
-								 run_helper,
-								 root_history);
+		solution->scopes.back()->activate(solution->scopes.back()->default_starting_node,
+										  problem,
+										  context,
+										  exit_depth,
+										  exit_node,
+										  run_helper,
+										  root_history);
 
 		if (run_helper.experiments_seen_order.size() == 0) {
 			if (!run_helper.exceeded_limit) {
@@ -197,7 +197,7 @@ int main(int argc, char* argv[]) {
 		delete problem;
 
 		if (is_success) {
-			solution->success_reset();
+			solution->reset();
 
 			#if defined(MDEBUG) && MDEBUG
 			while (solution->verify_problems.size() > 0) {
@@ -251,13 +251,15 @@ int main(int argc, char* argv[]) {
 
 			solution->num_actions_limit = 20*solution->max_num_actions + 20;
 
-			// solution->timestamp = (unsigned)time(NULL);
-			// solution->save("", "main");
+			solution->increment();
 
-			// ofstream display_file;
-			// display_file.open("../display.txt");
-			// solution->save_for_display(display_file);
-			// display_file.close();
+			solution->timestamp = (unsigned)time(NULL);
+			solution->save("", "main");
+
+			ofstream display_file;
+			display_file.open("../display.txt");
+			solution->save_for_display(display_file);
+			display_file.close();
 
 			num_fails = 0;
 
@@ -265,11 +267,11 @@ int main(int argc, char* argv[]) {
 		} else if (is_fail) {
 			num_fails++;
 			cout << "num_fails: " << num_fails << endl << endl;
-			if (num_fails > NUM_FAILS_BEFORE_INCREASE) {
+			if (num_fails >= NUM_FAILS_BEFORE_INCREASE) {
 				cout << "fail_reset" << endl << endl;
 
 				num_fails = 0;
-				solution->fail_reset();
+				solution->reset();
 
 				solution->curr_num_datapoints *= 2;
 			}

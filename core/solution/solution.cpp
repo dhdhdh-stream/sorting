@@ -10,21 +10,17 @@ Solution::Solution() {
 }
 
 Solution::~Solution() {
-	for (map<int, Scope*>::iterator it = this->scopes.begin();
-			it != this->scopes.end(); it++) {
-		delete it->second;
+	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
+		delete this->scopes[s_index];
 	}
 }
 
 void Solution::init() {
 	this->timestamp = (unsigned)time(NULL);
 
-	this->scope_counter = 0;
-
 	Scope* starting_scope = new Scope();
-	starting_scope->id = this->scope_counter;
-	this->scope_counter++;
-	this->scopes[starting_scope->id] = starting_scope;
+	starting_scope->id = this->scopes.size();
+	this->scopes.push_back(starting_scope);
 
 	ActionNode* starting_noop_node = new ActionNode();
 	starting_noop_node->parent = starting_scope;
@@ -37,7 +33,8 @@ void Solution::init() {
 	starting_scope->default_starting_node = starting_noop_node;
 	starting_scope->node_counter = 1;
 
-	this->root = starting_scope;
+	this->curr_num_improvements = 0;
+	this->previous_generation_index = -1;
 
 	this->throw_counter = 0;
 
@@ -59,36 +56,28 @@ void Solution::load(string path,
 	getline(input_file, timestamp_line);
 	this->timestamp = stoi(timestamp_line);
 
-	string scope_counter_line;
-	getline(input_file, scope_counter_line);
-	this->scope_counter = stoi(scope_counter_line);
-
 	string num_scopes_line;
 	getline(input_file, num_scopes_line);
 	int num_scopes = stoi(num_scopes_line);
 	for (int s_index = 0; s_index < num_scopes; s_index++) {
-		string scope_id_line;
-		getline(input_file, scope_id_line);
-		int scope_id = stoi(scope_id_line);
-
 		Scope* scope = new Scope();
-
-		scope->id = scope_id;
-
-		this->scopes[scope_id] = scope;
+		scope->id = s_index;
+		this->scopes.push_back(scope);
 	}
-	for (map<int, Scope*>::iterator it = this->scopes.begin();
-			it != this->scopes.end(); it++) {
-		it->second->load(input_file);
+	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
+		this->scopes[s_index]->load(input_file);
 	}
-	for (map<int, Scope*>::iterator it = this->scopes.begin();
-			it != this->scopes.end(); it++) {
-		it->second->link();
+	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
+		this->scopes[s_index]->link();
 	}
 
-	string root_id_line;
-	getline(input_file, root_id_line);
-	this->root = this->scopes[stoi(root_id_line)];
+	string curr_num_improvements_line;
+	getline(input_file, curr_num_improvements_line);
+	this->curr_num_improvements = stoi(curr_num_improvements_line);
+
+	string previous_generation_index_line;
+	getline(input_file, previous_generation_index_line);
+	this->previous_generation_index = stoi(previous_generation_index_line);
 
 	string throw_counter_line;
 	getline(input_file, throw_counter_line);
@@ -117,9 +106,8 @@ void Solution::load(string path,
 
 #if defined(MDEBUG) && MDEBUG
 void Solution::clear_verify() {
-	for (map<int, Scope*>::iterator it = this->scopes.begin();
-			it != this->scopes.end(); it++) {
-		it->second->clear_verify();
+	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
+		this->scopes[s_index]->clear_verify();
 	}
 
 	this->verify_key = NULL;
@@ -127,17 +115,35 @@ void Solution::clear_verify() {
 }
 #endif /* MDEBUG */
 
-void Solution::success_reset() {
-	for (map<int, Scope*>::iterator it = this->scopes.begin();
-			it != this->scopes.end(); it++) {
-		it->second->success_reset();
+void Solution::reset() {
+	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
+		this->scopes[s_index]->reset();
 	}
 }
 
-void Solution::fail_reset() {
-	for (map<int, Scope*>::iterator it = this->scopes.begin();
-			it != this->scopes.end(); it++) {
-		it->second->fail_reset();
+void Solution::increment() {
+	this->curr_num_improvements++;
+	if (this->curr_num_improvements >= IMPROVEMENTS_PER_RUN) {
+		Scope* new_scope = new Scope();
+		new_scope->id = this->scopes.size();
+		this->scopes.push_back(new_scope);
+
+		ActionNode* starting_noop_node = new ActionNode();
+		starting_noop_node->parent = new_scope;
+		starting_noop_node->id = 0;
+		starting_noop_node->action = Action(ACTION_NOOP);
+		starting_noop_node->next_node_id = -1;
+		starting_noop_node->next_node = NULL;
+		new_scope->nodes[0] = starting_noop_node;
+		new_scope->default_starting_node_id = 0;
+		new_scope->default_starting_node = starting_noop_node;
+		new_scope->node_counter = 1;
+		
+		this->curr_num_improvements = 0;
+
+		if ((int)this->scopes.size() > this->previous_generation_index + GENERATION_SIZE) {
+			this->previous_generation_index += GENERATION_SIZE;
+		}
 	}
 }
 
@@ -148,19 +154,13 @@ void Solution::save(string path,
 
 	output_file << this->timestamp << endl;
 
-	output_file << this->scope_counter << endl;
-
 	output_file << this->scopes.size() << endl;
-	for (map<int, Scope*>::iterator it = this->scopes.begin();
-			it != this->scopes.end(); it++) {
-		output_file << it->first << endl;
-	}
-	for (map<int, Scope*>::iterator it = this->scopes.begin();
-			it != this->scopes.end(); it++) {
-		it->second->save(output_file);
+	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
+		this->scopes[s_index]->save(output_file);
 	}
 
-	output_file << this->root->id << endl;
+	output_file << this->curr_num_improvements << endl;
+	output_file << this->previous_generation_index << endl;
 
 	output_file << this->throw_counter << endl;
 
@@ -175,18 +175,9 @@ void Solution::save(string path,
 	rename(oldname.c_str(), newname.c_str());
 }
 
-void Solution::remap() {
-	for (map<int, Scope*>::iterator it = this->scopes.begin();
-			it != this->scopes.end(); it++) {
-		it->second->remap();
-	}
-}
-
 void Solution::save_for_display(ofstream& output_file) {
 	output_file << this->scopes.size() << endl;
-	for (map<int, Scope*>::iterator it = this->scopes.begin();
-			it != this->scopes.end(); it++) {
-		output_file << it->first << endl;
-		it->second->save_for_display(output_file);
+	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
+		this->scopes[s_index]->save_for_display(output_file);
 	}
 }

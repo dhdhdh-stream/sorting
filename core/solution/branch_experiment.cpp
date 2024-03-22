@@ -90,16 +90,9 @@ BranchExperiment::~BranchExperiment() {
 		}
 	}
 
-	for (int s_index = 0; s_index < (int)this->existing_scopes.size(); s_index++) {
-		if (this->existing_scopes[s_index] != NULL) {
-			delete this->existing_scopes[s_index];
-		}
-	}
-
-	for (int s_index = 0; s_index < (int)this->potential_scopes.size(); s_index++) {
-		if (this->potential_scopes[s_index] != NULL) {
-			delete this->potential_scopes[s_index]->scope;
-			delete this->potential_scopes[s_index];
+	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
+		if (this->scopes[s_index] != NULL) {
+			delete this->scopes[s_index];
 		}
 	}
 

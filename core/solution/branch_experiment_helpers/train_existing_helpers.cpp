@@ -402,18 +402,10 @@ void BranchExperiment::train_existing_backprop(double target_val,
 					this->actions[s_index]->parent = this->scope_context.back();
 					this->actions[s_index]->id = this->scope_context.back()->node_counter;
 					this->scope_context.back()->node_counter++;
-				} else if (this->step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
-					this->existing_scopes[s_index]->parent = this->scope_context.back();
-					this->existing_scopes[s_index]->id = this->scope_context.back()->node_counter;
-					this->scope_context.back()->node_counter++;
 				} else {
-					this->potential_scopes[s_index]->parent = this->scope_context.back();
-					this->potential_scopes[s_index]->id = this->scope_context.back()->node_counter;
+					this->scopes[s_index]->parent = this->scope_context.back();
+					this->scopes[s_index]->id = this->scope_context.back()->node_counter;
 					this->scope_context.back()->node_counter++;
-
-					int new_scope_id = solution->scope_counter;
-					solution->scope_counter++;
-					this->potential_scopes[s_index]->scope->id = new_scope_id;
 				}
 			}
 
@@ -472,35 +464,23 @@ void BranchExperiment::train_existing_backprop(double target_val,
 					if (this->step_types[s_index+1] == STEP_TYPE_ACTION) {
 						next_node_id = this->actions[s_index+1]->id;
 						next_node = this->actions[s_index+1];
-					} else if (this->step_types[s_index+1] == STEP_TYPE_EXISTING_SCOPE) {
-						next_node_id = this->existing_scopes[s_index+1]->id;
-						next_node = this->existing_scopes[s_index+1];
 					} else {
-						next_node_id = this->potential_scopes[s_index+1]->id;
-						next_node = this->potential_scopes[s_index+1];
+						next_node_id = this->scopes[s_index+1]->id;
+						next_node = this->scopes[s_index+1];
 					}
 				}
 
 				if (this->step_types[s_index] == STEP_TYPE_ACTION) {
 					this->actions[s_index]->next_node_id = next_node_id;
 					this->actions[s_index]->next_node = next_node;
-				} else if (this->step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
-					this->existing_scopes[s_index]->next_node_id = next_node_id;
-					this->existing_scopes[s_index]->next_node = next_node;
-
-					for (set<int>::iterator it = this->catch_throw_ids[s_index].begin();
-							it != this->catch_throw_ids[s_index].end(); it++) {
-						this->existing_scopes[s_index]->catch_ids[*it] = next_node_id;
-						this->existing_scopes[s_index]->catches[*it] = next_node;
-					}
 				} else {
-					this->potential_scopes[s_index]->next_node_id = next_node_id;
-					this->potential_scopes[s_index]->next_node = next_node;
+					this->scopes[s_index]->next_node_id = next_node_id;
+					this->scopes[s_index]->next_node = next_node;
 
 					for (set<int>::iterator it = this->catch_throw_ids[s_index].begin();
 							it != this->catch_throw_ids[s_index].end(); it++) {
-						this->potential_scopes[s_index]->catch_ids[*it] = next_node_id;
-						this->potential_scopes[s_index]->catches[*it] = next_node;
+						this->scopes[s_index]->catch_ids[*it] = next_node_id;
+						this->scopes[s_index]->catches[*it] = next_node;
 					}
 				}
 			}
