@@ -61,8 +61,7 @@ void BranchExperiment::measure_activate(
 		}
 	}
 
-	double existing_predicted_score = this->existing_average_score
-		+ this->original_bias * this->existing_score_standard_deviation;
+	double existing_predicted_score = this->existing_average_score;
 	for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
 		existing_predicted_score += input_vals[i_index] * this->existing_linear_weights[i_index];
 	}
@@ -117,19 +116,19 @@ void BranchExperiment::measure_activate(
 			run_helper.throw_id = -1;
 		}
 
-		if (this->best_step_types.size() == 0) {
+		if (this->step_types.size() == 0) {
 			if (this->exit_node != NULL) {
 				curr_node = this->exit_node;
 			} else {
-				curr_node = this->best_exit_next_node;
+				curr_node = this->exit_next_node;
 			}
 		} else {
-			if (this->best_step_types[0] == STEP_TYPE_ACTION) {
-				curr_node = this->best_actions[0];
-			} else if (this->best_step_types[0] == STEP_TYPE_EXISTING_SCOPE) {
-				curr_node = this->best_existing_scopes[0];
+			if (this->step_types[0] == STEP_TYPE_ACTION) {
+				curr_node = this->actions[0];
+			} else if (this->step_types[0] == STEP_TYPE_EXISTING_SCOPE) {
+				curr_node = this->existing_scopes[0];
 			} else {
-				curr_node = this->best_potential_scopes[0];
+				curr_node = this->potential_scopes[0];
 			}
 		}
 	} else {
@@ -179,6 +178,7 @@ void BranchExperiment::measure_backprop(double target_val,
 				cout << "BRANCH_EXPERIMENT_STATE_MEASURE fail" << endl;
 				cout << "this->existing_average_score: " << this->existing_average_score << endl;
 				cout << "this->combined_score: " << this->combined_score << endl;
+				cout << "this->existing_score_standard_deviation: " << this->existing_score_standard_deviation << endl;
 				cout << "combined_improvement_t_score: " << combined_improvement_t_score << endl;
 				cout << "branch_weight: " << branch_weight << endl;
 			}

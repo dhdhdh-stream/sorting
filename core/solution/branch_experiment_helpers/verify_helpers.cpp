@@ -61,8 +61,7 @@ void BranchExperiment::verify_activate(
 		}
 	}
 
-	double existing_predicted_score = this->existing_average_score
-		+ this->original_bias * this->existing_score_standard_deviation;
+	double existing_predicted_score = this->existing_average_score;
 	for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
 		existing_predicted_score += input_vals[i_index] * this->existing_linear_weights[i_index];
 	}
@@ -117,19 +116,19 @@ void BranchExperiment::verify_activate(
 			run_helper.throw_id = -1;
 		}
 
-		if (this->best_step_types.size() == 0) {
+		if (this->step_types.size() == 0) {
 			if (this->exit_node != NULL) {
 				curr_node = this->exit_node;
 			} else {
-				curr_node = this->best_exit_next_node;
+				curr_node = this->exit_next_node;
 			}
 		} else {
-			if (this->best_step_types[0] == STEP_TYPE_ACTION) {
-				curr_node = this->best_actions[0];
-			} else if (this->best_step_types[0] == STEP_TYPE_EXISTING_SCOPE) {
-				curr_node = this->best_existing_scopes[0];
+			if (this->step_types[0] == STEP_TYPE_ACTION) {
+				curr_node = this->actions[0];
+			} else if (this->step_types[0] == STEP_TYPE_EXISTING_SCOPE) {
+				curr_node = this->existing_scopes[0];
 			} else {
-				curr_node = this->best_potential_scopes[0];
+				curr_node = this->potential_scopes[0];
 			}
 		}
 	} else {
@@ -206,10 +205,10 @@ void BranchExperiment::verify_backprop(double target_val,
 			cout << "this->is_branch: " << this->is_branch << endl;
 			cout << "this->throw_id: " << this->throw_id << endl;
 			cout << "new explore path:";
-			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-					cout << " " << this->best_actions[s_index]->action.move;
-				} else if (this->best_step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
+			for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {
+				if (this->step_types[s_index] == STEP_TYPE_ACTION) {
+					cout << " " << this->actions[s_index]->action.move;
+				} else if (this->step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
 					cout << " E";
 				} else {
 					cout << " P";
@@ -217,13 +216,13 @@ void BranchExperiment::verify_backprop(double target_val,
 			}
 			cout << endl;
 
-			cout << "this->best_exit_depth: " << this->best_exit_depth << endl;
-			if (this->best_exit_next_node == NULL) {
-				cout << "this->best_exit_next_node->id: " << -1 << endl;
+			cout << "this->exit_depth: " << this->exit_depth << endl;
+			if (this->exit_next_node == NULL) {
+				cout << "this->exit_next_node->id: " << -1 << endl;
 			} else {
-				cout << "this->best_exit_next_node->id: " << this->best_exit_next_node->id << endl;
+				cout << "this->exit_next_node->id: " << this->exit_next_node->id << endl;
 			}
-			cout << "this->best_exit_throw_id: " << this->best_exit_throw_id << endl;
+			cout << "this->exit_throw_id: " << this->exit_throw_id << endl;
 
 			cout << "this->combined_score: " << this->combined_score << endl;
 			cout << "this->verify_existing_average_score: " << this->verify_existing_average_score << endl;

@@ -4,6 +4,15 @@
 // - then with 20, learn 10 more different for 20 changes each
 // - etc.
 
+// - hmm, but different tries can modify the same scope differently
+//   - can add a type of fuzzy match?
+//   - can freeze previous?
+//     - doesn't seem right
+//   - can focus on a very narrow spot, and cannot use previous scopes?
+//     - or maybe don't have to focus, just cannot use previous scopes
+//       - unless frozen?
+// - actually, with exits, answer is simply don't make changes where starting context is in previous scope
+
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -90,6 +99,195 @@ int main(int argc, char* argv[]) {
 	{
 		solution = new Solution();
 		solution->load("", "run_3");
+
+		for (map<int, Scope*>::iterator it = solution->scopes.begin();
+				it != solution->scopes.end(); it++) {
+			it->second->id = new_solution->scope_counter;
+			new_solution->scope_counter++;
+			new_solution->scopes[it->second->id] = it->second;
+		}
+		solution->scopes.clear();
+
+		if (solution->throw_counter > new_solution->throw_counter) {
+			new_solution->throw_counter = solution->throw_counter;
+		}
+
+		if (solution->max_depth > new_solution->max_depth) {
+			new_solution->max_depth = solution->max_depth;
+		}
+
+		if (solution->max_num_actions > new_solution->max_num_actions) {
+			new_solution->max_num_actions = solution->max_num_actions;
+		}
+
+		delete solution;
+	}
+
+	{
+		solution = new Solution();
+		solution->load("", "run_4");
+
+		for (map<int, Scope*>::iterator it = solution->scopes.begin();
+				it != solution->scopes.end(); it++) {
+			it->second->id = new_solution->scope_counter;
+			new_solution->scope_counter++;
+			new_solution->scopes[it->second->id] = it->second;
+		}
+		solution->scopes.clear();
+
+		if (solution->throw_counter > new_solution->throw_counter) {
+			new_solution->throw_counter = solution->throw_counter;
+		}
+
+		if (solution->max_depth > new_solution->max_depth) {
+			new_solution->max_depth = solution->max_depth;
+		}
+
+		if (solution->max_num_actions > new_solution->max_num_actions) {
+			new_solution->max_num_actions = solution->max_num_actions;
+		}
+
+		delete solution;
+	}
+
+	{
+		solution = new Solution();
+		solution->load("", "run_5");
+
+		for (map<int, Scope*>::iterator it = solution->scopes.begin();
+				it != solution->scopes.end(); it++) {
+			it->second->id = new_solution->scope_counter;
+			new_solution->scope_counter++;
+			new_solution->scopes[it->second->id] = it->second;
+		}
+		solution->scopes.clear();
+
+		if (solution->throw_counter > new_solution->throw_counter) {
+			new_solution->throw_counter = solution->throw_counter;
+		}
+
+		if (solution->max_depth > new_solution->max_depth) {
+			new_solution->max_depth = solution->max_depth;
+		}
+
+		if (solution->max_num_actions > new_solution->max_num_actions) {
+			new_solution->max_num_actions = solution->max_num_actions;
+		}
+
+		delete solution;
+	}
+
+	{
+		solution = new Solution();
+		solution->load("", "run_6");
+
+		for (map<int, Scope*>::iterator it = solution->scopes.begin();
+				it != solution->scopes.end(); it++) {
+			it->second->id = new_solution->scope_counter;
+			new_solution->scope_counter++;
+			new_solution->scopes[it->second->id] = it->second;
+		}
+		solution->scopes.clear();
+
+		if (solution->throw_counter > new_solution->throw_counter) {
+			new_solution->throw_counter = solution->throw_counter;
+		}
+
+		if (solution->max_depth > new_solution->max_depth) {
+			new_solution->max_depth = solution->max_depth;
+		}
+
+		if (solution->max_num_actions > new_solution->max_num_actions) {
+			new_solution->max_num_actions = solution->max_num_actions;
+		}
+
+		delete solution;
+	}
+
+	{
+		solution = new Solution();
+		solution->load("", "run_7");
+
+		for (map<int, Scope*>::iterator it = solution->scopes.begin();
+				it != solution->scopes.end(); it++) {
+			it->second->id = new_solution->scope_counter;
+			new_solution->scope_counter++;
+			new_solution->scopes[it->second->id] = it->second;
+		}
+		solution->scopes.clear();
+
+		if (solution->throw_counter > new_solution->throw_counter) {
+			new_solution->throw_counter = solution->throw_counter;
+		}
+
+		if (solution->max_depth > new_solution->max_depth) {
+			new_solution->max_depth = solution->max_depth;
+		}
+
+		if (solution->max_num_actions > new_solution->max_num_actions) {
+			new_solution->max_num_actions = solution->max_num_actions;
+		}
+
+		delete solution;
+	}
+
+	{
+		solution = new Solution();
+		solution->load("", "run_8");
+
+		for (map<int, Scope*>::iterator it = solution->scopes.begin();
+				it != solution->scopes.end(); it++) {
+			it->second->id = new_solution->scope_counter;
+			new_solution->scope_counter++;
+			new_solution->scopes[it->second->id] = it->second;
+		}
+		solution->scopes.clear();
+
+		if (solution->throw_counter > new_solution->throw_counter) {
+			new_solution->throw_counter = solution->throw_counter;
+		}
+
+		if (solution->max_depth > new_solution->max_depth) {
+			new_solution->max_depth = solution->max_depth;
+		}
+
+		if (solution->max_num_actions > new_solution->max_num_actions) {
+			new_solution->max_num_actions = solution->max_num_actions;
+		}
+
+		delete solution;
+	}
+
+	{
+		solution = new Solution();
+		solution->load("", "run_9");
+
+		for (map<int, Scope*>::iterator it = solution->scopes.begin();
+				it != solution->scopes.end(); it++) {
+			it->second->id = new_solution->scope_counter;
+			new_solution->scope_counter++;
+			new_solution->scopes[it->second->id] = it->second;
+		}
+		solution->scopes.clear();
+
+		if (solution->throw_counter > new_solution->throw_counter) {
+			new_solution->throw_counter = solution->throw_counter;
+		}
+
+		if (solution->max_depth > new_solution->max_depth) {
+			new_solution->max_depth = solution->max_depth;
+		}
+
+		if (solution->max_num_actions > new_solution->max_num_actions) {
+			new_solution->max_num_actions = solution->max_num_actions;
+		}
+
+		delete solution;
+	}
+
+	{
+		solution = new Solution();
+		solution->load("", "run_10");
 
 		for (map<int, Scope*>::iterator it = solution->scopes.begin();
 				it != solution->scopes.end(); it++) {

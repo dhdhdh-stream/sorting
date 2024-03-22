@@ -205,15 +205,6 @@ bool BranchExperiment::activate(AbstractNode*& curr_node,
 								 run_helper,
 								 history);
 				break;
-			case BRANCH_EXPERIMENT_STATE_RETRAIN_EXISTING:
-				retrain_existing_activate(curr_node,
-										  problem,
-										  context,
-										  exit_depth,
-										  exit_node,
-										  run_helper,
-										  history);
-				break;
 			case BRANCH_EXPERIMENT_STATE_TRAIN_NEW:
 				train_new_activate(curr_node,
 								   problem,
@@ -283,10 +274,6 @@ void BranchExperiment::backprop(double target_val,
 		explore_backprop(target_val,
 						 run_helper,
 						 branch_experiment_history);
-		break;
-	case BRANCH_EXPERIMENT_STATE_RETRAIN_EXISTING:
-		retrain_existing_backprop(target_val,
-								  branch_experiment_history);
 		break;
 	case BRANCH_EXPERIMENT_STATE_TRAIN_NEW:
 		train_new_backprop(target_val,

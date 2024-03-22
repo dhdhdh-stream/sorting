@@ -89,11 +89,13 @@ void PassThroughExperiment::explore_create_activate(
 			new_num_steps = uniform_distribution(generator) + geometric_distribution(generator);
 		}
 
-		uniform_int_distribution<int> type_distribution(0, 2);
+		// uniform_int_distribution<int> type_distribution(0, 2);
+		uniform_int_distribution<int> type_distribution(0, 3);
 		for (int s_index = 0; s_index < new_num_steps; s_index++) {
 			bool default_to_action = true;
 			int type = type_distribution(generator);
-			if (type == 0) {
+			// if (type == 0) {
+			if (false) {
 				// path
 				uniform_int_distribution<int> random_scope_distribution(0, 3);
 				if (random_scope_distribution(generator) == 0) {
@@ -115,7 +117,8 @@ void PassThroughExperiment::explore_create_activate(
 													 this->curr_potential_scopes,
 													 this->curr_catch_throw_ids);
 				}
-			} else if (type == 1) {
+			// } else if (type == 1) {
+			} else if (type != 0) {
 				// existing_new_start
 				uniform_int_distribution<int> distribution(0, solution->scopes.size()-1);
 				Scope* scope = next(solution->scopes.begin(), distribution(generator))->second;

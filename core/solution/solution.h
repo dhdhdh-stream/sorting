@@ -17,7 +17,7 @@ class Scope;
 #if defined(MDEBUG) && MDEBUG
 const int STARTING_NUM_DATAPOINTS = 10;
 #else
-const int STARTING_NUM_DATAPOINTS = 400;
+const int STARTING_NUM_DATAPOINTS = 1000;
 #endif /* MDEBUG */
 
 const int TEMP_THROW_ID = -2;

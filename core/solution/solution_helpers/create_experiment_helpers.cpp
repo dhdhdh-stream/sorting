@@ -248,24 +248,24 @@ AbstractExperiment* create_experiment(ifstream& input_file) {
 	string throw_id_line = getline_helper(input_file);
 	int throw_id = stoi(throw_id_line);
 
-	vector<int> best_step_types;
-	vector<ActionNode*> best_actions;
-	vector<ScopeNode*> best_existing_scopes;
-	vector<ScopeNode*> best_potential_scopes;
-	vector<set<int>> best_catch_throw_ids;
+	vector<int> step_types;
+	vector<ActionNode*> actions;
+	vector<ScopeNode*> existing_scopes;
+	vector<ScopeNode*> potential_scopes;
+	vector<set<int>> catch_throw_ids;
 	string num_steps_line = getline_helper(input_file);
 	int num_steps = stoi(num_steps_line);
 	for (int s_index = 0; s_index < num_steps; s_index++) {
-		best_step_types.push_back(STEP_TYPE_ACTION);
+		step_types.push_back(STEP_TYPE_ACTION);
 
 		string action_line = getline_helper(input_file);
 		ActionNode* new_action_node = new ActionNode();
 		new_action_node->action = Action(stoi(action_line));
-		best_actions.push_back(new_action_node);
+		actions.push_back(new_action_node);
 
-		best_existing_scopes.push_back(NULL);
-		best_potential_scopes.push_back(NULL);
-		best_catch_throw_ids.push_back(set<int>());
+		existing_scopes.push_back(NULL);
+		potential_scopes.push_back(NULL);
+		catch_throw_ids.push_back(set<int>());
 	}
 
 	string exit_depth_line = getline_helper(input_file);
@@ -291,14 +291,14 @@ AbstractExperiment* create_experiment(ifstream& input_file) {
 		NULL,
 		true);
 
-	new_branch_experiment->best_step_types = best_step_types;
-	new_branch_experiment->best_actions = best_actions;
-	new_branch_experiment->best_existing_scopes = best_existing_scopes;
-	new_branch_experiment->best_potential_scopes = best_potential_scopes;
-	new_branch_experiment->best_catch_throw_ids = best_catch_throw_ids;
-	new_branch_experiment->best_exit_depth = exit_depth;
-	new_branch_experiment->best_exit_next_node = exit_next_node;
-	new_branch_experiment->best_exit_throw_id = exit_throw_id;
+	new_branch_experiment->step_types = step_types;
+	new_branch_experiment->actions = actions;
+	new_branch_experiment->existing_scopes = existing_scopes;
+	new_branch_experiment->potential_scopes = potential_scopes;
+	new_branch_experiment->catch_throw_ids = catch_throw_ids;
+	new_branch_experiment->exit_depth = exit_depth;
+	new_branch_experiment->exit_next_node = exit_next_node;
+	new_branch_experiment->exit_throw_id = exit_throw_id;
 
 	if (node_context.back()->type == NODE_TYPE_ACTION) {
 		ActionNode* action_node = (ActionNode*)node_context.back();

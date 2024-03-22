@@ -66,8 +66,6 @@ BranchExperiment::BranchExperiment(vector<Scope*> scope_context,
 	this->state = BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING;
 	this->state_iter = 0;
 
-	this->best_surprise = 0.0;
-
 	this->branch_node = NULL;
 	this->exit_node = NULL;
 
@@ -86,22 +84,22 @@ BranchExperiment::~BranchExperiment() {
 		delete this->new_network;
 	}
 
-	for (int s_index = 0; s_index < (int)this->best_actions.size(); s_index++) {
-		if (this->best_actions[s_index] != NULL) {
-			delete this->best_actions[s_index];
+	for (int s_index = 0; s_index < (int)this->actions.size(); s_index++) {
+		if (this->actions[s_index] != NULL) {
+			delete this->actions[s_index];
 		}
 	}
 
-	for (int s_index = 0; s_index < (int)this->best_existing_scopes.size(); s_index++) {
-		if (this->best_existing_scopes[s_index] != NULL) {
-			delete this->best_existing_scopes[s_index];
+	for (int s_index = 0; s_index < (int)this->existing_scopes.size(); s_index++) {
+		if (this->existing_scopes[s_index] != NULL) {
+			delete this->existing_scopes[s_index];
 		}
 	}
 
-	for (int s_index = 0; s_index < (int)this->best_potential_scopes.size(); s_index++) {
-		if (this->best_potential_scopes[s_index] != NULL) {
-			delete this->best_potential_scopes[s_index]->scope;
-			delete this->best_potential_scopes[s_index];
+	for (int s_index = 0; s_index < (int)this->potential_scopes.size(); s_index++) {
+		if (this->potential_scopes[s_index] != NULL) {
+			delete this->potential_scopes[s_index]->scope;
+			delete this->potential_scopes[s_index];
 		}
 	}
 

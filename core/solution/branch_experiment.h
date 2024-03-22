@@ -1,3 +1,7 @@
+// TODO: need to chain BranchExperiments as well
+// - recognize when a sequence is safe to perform, even though doesn't direclty lead to improvement
+//   - but then followup makes things good
+
 #ifndef BRANCH_EXPERIMENT_H
 #define BRANCH_EXPERIMENT_H
 
@@ -20,26 +24,29 @@ class ScopeHistory;
 class ScopeNode;
 
 const int BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING = 0;
-const int BRANCH_EXPERIMENT_STATE_EXPLORE = 1;
 /**
- * - go to TRAIN_NEW from EXPLORE 
- *   - i.e., skip 1st RETRAIN_EXISTING
+ * - select first that is significant improvement
+ *   - don't select "best" as might not have been learned for actual best
+ *     - so may select lottery instead of actual best
  * 
- * - share sub_state_iter
+ * TODO: select multiple per TRAIN_EXISTING
  */
-const int BRANCH_EXPERIMENT_STATE_RETRAIN_EXISTING = 2;
-const int BRANCH_EXPERIMENT_STATE_TRAIN_NEW = 3;
-const int BRANCH_EXPERIMENT_STATE_MEASURE = 4;
-const int BRANCH_EXPERIMENT_STATE_VERIFY_1ST_EXISTING = 5;
-const int BRANCH_EXPERIMENT_STATE_VERIFY_1ST = 6;
-const int BRANCH_EXPERIMENT_STATE_VERIFY_2ND_EXISTING = 7;
-const int BRANCH_EXPERIMENT_STATE_VERIFY_2ND = 8;
+const int BRANCH_EXPERIMENT_STATE_EXPLORE = 1;
+const int BRANCH_EXPERIMENT_STATE_TRAIN_NEW = 2;
+/**
+ * - don't worry about retraining with new decision making
+ *   - more likely to cause thrasing than to actually be helpful
+ *   - simply hope that things work out, and if not, will be caught by MEASURE
+ */
+const int BRANCH_EXPERIMENT_STATE_MEASURE = 3;
+const int BRANCH_EXPERIMENT_STATE_VERIFY_1ST_EXISTING = 4;
+const int BRANCH_EXPERIMENT_STATE_VERIFY_1ST = 5;
+const int BRANCH_EXPERIMENT_STATE_VERIFY_2ND_EXISTING = 6;
+const int BRANCH_EXPERIMENT_STATE_VERIFY_2ND = 7;
 #if defined(MDEBUG) && MDEBUG
-const int BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY = 9;
+const int BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY = 8;
 #endif /* MDEBUG */
-const int BRANCH_EXPERIMENT_STATE_ROOT_VERIFY = 10;
-
-const int BRANCH_EXPERIMENT_TRAIN_ITERS = 4;
+const int BRANCH_EXPERIMENT_STATE_ROOT_VERIFY = 9;
 
 class BranchExperimentHistory;
 class BranchExperiment : public AbstractExperiment {
@@ -63,31 +70,19 @@ public:
 	double existing_average_misguess;
 	double existing_misguess_standard_deviation;
 
-	std::vector<int> curr_step_types;
-	std::vector<ActionNode*> curr_actions;
-	std::vector<ScopeNode*> curr_existing_scopes;
-	std::vector<ScopeNode*> curr_potential_scopes;
-	std::vector<std::set<int>> curr_catch_throw_ids;
-	int curr_exit_depth;
-	AbstractNode* curr_exit_next_node;
-	int curr_exit_throw_id;
-
-	double best_surprise;
-	std::vector<int> best_step_types;
-	std::vector<ActionNode*> best_actions;
-	std::vector<ScopeNode*> best_existing_scopes;
-	std::vector<ScopeNode*> best_potential_scopes;
-	std::vector<std::set<int>> best_catch_throw_ids;
-	int best_exit_depth;
-	AbstractNode* best_exit_next_node;
-	int best_exit_throw_id;
+	std::vector<int> step_types;
+	std::vector<ActionNode*> actions;
+	std::vector<ScopeNode*> existing_scopes;
+	std::vector<ScopeNode*> potential_scopes;
+	std::vector<std::set<int>> catch_throw_ids;
+	int exit_depth;
+	AbstractNode* exit_next_node;
+	int exit_throw_id;
 
 	BranchNode* branch_node;
 	ExitNode* exit_node;
 
 	double new_average_score;
-
-	double original_bias;
 
 	std::vector<double> new_linear_weights;
 	std::vector<std::vector<int>> new_network_input_indexes;
@@ -162,28 +157,6 @@ public:
 						  RunHelper& run_helper,
 						  BranchExperimentHistory* history);
 
-	void retrain_existing_activate(AbstractNode*& curr_node,
-								   Problem* problem,
-								   std::vector<ContextLayer>& context,
-								   int& exit_depth,
-								   AbstractNode*& exit_node,
-								   RunHelper& run_helper,
-								   BranchExperimentHistory* history);
-	void retrain_existing_target_activate(AbstractNode*& curr_node,
-										  Problem* problem,
-										  std::vector<ContextLayer>& context,
-										  int& exit_depth,
-										  AbstractNode*& exit_node,
-										  RunHelper& run_helper);
-	void retrain_existing_non_target_activate(AbstractNode*& curr_node,
-											  Problem* problem,
-											  std::vector<ContextLayer>& context,
-											  int& exit_depth,
-											  AbstractNode*& exit_node,
-											  RunHelper& run_helper);
-	void retrain_existing_backprop(double target_val,
-								   BranchExperimentHistory* history);
-
 	void train_new_activate(AbstractNode*& curr_node,
 							Problem* problem,
 							std::vector<ContextLayer>& context,
@@ -197,12 +170,6 @@ public:
 								   int& exit_depth,
 								   AbstractNode*& exit_node,
 								   RunHelper& run_helper);
-	void train_new_non_target_activate(AbstractNode*& curr_node,
-									   Problem* problem,
-									   std::vector<ContextLayer>& context,
-									   int& exit_depth,
-									   AbstractNode*& exit_node,
-									   RunHelper& run_helper);
 	void train_new_backprop(double target_val,
 							BranchExperimentHistory* history);
 

@@ -76,7 +76,7 @@ void PassThroughExperiment::verify_new_backprop(
 				&& rand()%2 == 0) {
 		#else
 		} else if (this->best_step_types.size() > 0
-				&& score_improvement_t_score > -0.2) {
+				&& score_improvement_t_score > -0.674) {
 		#endif /* MDEBUG */
 			this->new_is_better = false;
 
@@ -171,7 +171,7 @@ void PassThroughExperiment::verify_new_backprop(
 				&& rand()%2 == 0) {
 		#else
 		} else if (this->best_step_types.size() > 0
-				&& score_improvement_t_score > -0.2) {
+				&& score_improvement_t_score > -0.674) {
 		#endif /* MDEBUG */
 			this->state = PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT;
 			this->state_iter = 0;

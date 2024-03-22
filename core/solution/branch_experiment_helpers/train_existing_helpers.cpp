@@ -220,136 +220,173 @@ void BranchExperiment::train_existing_backprop(double target_val,
 			cout << "this->existing_misguess_standard_deviation: " << this->existing_misguess_standard_deviation << endl;
 		}
 
-		int num_new_input_indexes = min(NETWORK_INCREMENT_NUM_NEW, (int)possible_scope_contexts.size());
-		vector<vector<Scope*>> test_network_input_scope_contexts;
-		vector<vector<AbstractNode*>> test_network_input_node_contexts;
-		int test_network_input_max_depth = 0;
-		{
-			vector<int> remaining_indexes(possible_scope_contexts.size());
-			for (int p_index = 0; p_index < (int)possible_scope_contexts.size(); p_index++) {
-				remaining_indexes[p_index] = p_index;
-			}
-			for (int i_index = 0; i_index < num_new_input_indexes; i_index++) {
-				uniform_int_distribution<int> distribution(0, (int)remaining_indexes.size()-1);
-				int rand_index = distribution(generator);
-
-				test_network_input_scope_contexts.push_back(possible_scope_contexts[remaining_indexes[rand_index]]);
-				test_network_input_node_contexts.push_back(possible_node_contexts[remaining_indexes[rand_index]]);
-				if ((int)possible_scope_contexts[remaining_indexes[rand_index]].size() > test_network_input_max_depth) {
-					test_network_input_max_depth = (int)possible_scope_contexts[remaining_indexes[rand_index]].size();
-				}
-
-				remaining_indexes.erase(remaining_indexes.begin() + rand_index);
-			}
-		}
-
-		Network* test_network = new Network(num_new_input_indexes);
-
 		vector<vector<vector<double>>> network_inputs(num_instances);
-
-		for (int t_index = 0; t_index < num_new_input_indexes; t_index++) {
-			if (test_network_input_node_contexts[t_index].back()->type == NODE_TYPE_ACTION) {
-				ActionNode* action_node = (ActionNode*)test_network_input_node_contexts[t_index].back();
-				action_node->hook_indexes.push_back(t_index);
-				action_node->hook_scope_contexts.push_back(test_network_input_scope_contexts[t_index]);
-				action_node->hook_node_contexts.push_back(test_network_input_node_contexts[t_index]);
-			} else {
-				BranchNode* branch_node = (BranchNode*)test_network_input_node_contexts[t_index].back();
-				branch_node->hook_indexes.push_back(t_index);
-				branch_node->hook_scope_contexts.push_back(test_network_input_scope_contexts[t_index]);
-				branch_node->hook_node_contexts.push_back(test_network_input_node_contexts[t_index]);
-			}
-		}
-		for (int d_index = 0; d_index < num_instances; d_index++) {
-			vector<double> test_input_vals(num_new_input_indexes, 0.0);
+		int train_index = 0;
+		while (train_index < 3) {
+			vector<vector<Scope*>> possible_scope_contexts;
+			vector<vector<AbstractNode*>> possible_node_contexts;
 
 			vector<Scope*> scope_context;
 			vector<AbstractNode*> node_context;
-			input_vals_helper(0,
-							  test_network_input_max_depth,
-							  scope_context,
-							  node_context,
-							  test_input_vals,
-							  this->i_scope_histories[d_index]);
+			uniform_int_distribution<int> history_distribution(0, num_instances-1);
+			gather_possible_helper(scope_context,
+								   node_context,
+								   possible_scope_contexts,
+								   possible_node_contexts,
+								   this->i_scope_histories[history_distribution(generator)]);
 
-			network_inputs[d_index].push_back(test_input_vals);
-		}
-		for (int t_index = 0; t_index < num_new_input_indexes; t_index++) {
-			if (test_network_input_node_contexts[t_index].back()->type == NODE_TYPE_ACTION) {
-				ActionNode* action_node = (ActionNode*)test_network_input_node_contexts[t_index].back();
-				action_node->hook_indexes.clear();
-				action_node->hook_scope_contexts.clear();
-				action_node->hook_node_contexts.clear();
+			int num_new_input_indexes = min(NETWORK_INCREMENT_NUM_NEW, (int)possible_scope_contexts.size());
+			vector<vector<Scope*>> test_network_input_scope_contexts;
+			vector<vector<AbstractNode*>> test_network_input_node_contexts;
+			int test_network_input_max_depth = 0;
+			{
+				vector<int> remaining_indexes(possible_scope_contexts.size());
+				for (int p_index = 0; p_index < (int)possible_scope_contexts.size(); p_index++) {
+					remaining_indexes[p_index] = p_index;
+				}
+				for (int i_index = 0; i_index < num_new_input_indexes; i_index++) {
+					uniform_int_distribution<int> distribution(0, (int)remaining_indexes.size()-1);
+					int rand_index = distribution(generator);
+
+					test_network_input_scope_contexts.push_back(possible_scope_contexts[remaining_indexes[rand_index]]);
+					test_network_input_node_contexts.push_back(possible_node_contexts[remaining_indexes[rand_index]]);
+					if ((int)possible_scope_contexts[remaining_indexes[rand_index]].size() > test_network_input_max_depth) {
+						test_network_input_max_depth = (int)possible_scope_contexts[remaining_indexes[rand_index]].size();
+					}
+
+					remaining_indexes.erase(remaining_indexes.begin() + rand_index);
+				}
+			}
+
+			Network* test_network;
+			if (this->existing_network == NULL) {
+				test_network = new Network(num_new_input_indexes);
 			} else {
-				BranchNode* branch_node = (BranchNode*)test_network_input_node_contexts[t_index].back();
-				branch_node->hook_indexes.clear();
-				branch_node->hook_scope_contexts.clear();
-				branch_node->hook_node_contexts.clear();
-			}
-		}
+				test_network = new Network(this->existing_network);
 
-		train_network(network_inputs,
-					  network_target_vals,
-					  test_network_input_scope_contexts,
-					  test_network_input_node_contexts,
-					  test_network);
-
-		double average_misguess;
-		double misguess_standard_deviation;
-		measure_network(network_inputs,
-						network_target_vals,
-						test_network,
-						average_misguess,
-						misguess_standard_deviation);
-
-		#if defined(MDEBUG) && MDEBUG
-		if (rand()%3 == 0) {
-		#else
-		double improvement = this->existing_average_misguess - average_misguess;
-		double standard_deviation = min(this->existing_misguess_standard_deviation, misguess_standard_deviation);
-		double t_score = improvement / (standard_deviation / sqrt(num_instances * TEST_SAMPLES_PERCENTAGE));
-
-		if (t_score > 2.326) {
-		#endif /* MDEBUG */
-			vector<int> new_input_indexes;
-			for (int t_index = 0; t_index < (int)test_network_input_scope_contexts.size(); t_index++) {
-				int index = -1;
-				for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
-					if (test_network_input_scope_contexts[t_index] == this->input_scope_contexts[i_index]
-							&& test_network_input_node_contexts[t_index] == this->input_node_contexts[i_index]) {
-						index = i_index;
-						break;
-					}
+				uniform_int_distribution<int> increment_above_distribution(0, 3);
+				if (increment_above_distribution(generator) == 0) {
+					test_network->increment_above(num_new_input_indexes);
+				} else {
+					test_network->increment_side(num_new_input_indexes);
 				}
-				if (index == -1) {
-					this->input_scope_contexts.push_back(test_network_input_scope_contexts[t_index]);
-					this->input_node_contexts.push_back(test_network_input_node_contexts[t_index]);
-					if ((int)test_network_input_scope_contexts[t_index].size() > this->input_max_depth) {
-						this->input_max_depth = (int)test_network_input_scope_contexts[t_index].size();
-					}
+			}
 
-					this->existing_linear_weights.push_back(0.0);
-
-					index = this->input_scope_contexts.size()-1;
+			for (int t_index = 0; t_index < num_new_input_indexes; t_index++) {
+				if (test_network_input_node_contexts[t_index].back()->type == NODE_TYPE_ACTION) {
+					ActionNode* action_node = (ActionNode*)test_network_input_node_contexts[t_index].back();
+					action_node->hook_indexes.push_back(t_index);
+					action_node->hook_scope_contexts.push_back(test_network_input_scope_contexts[t_index]);
+					action_node->hook_node_contexts.push_back(test_network_input_node_contexts[t_index]);
+				} else {
+					BranchNode* branch_node = (BranchNode*)test_network_input_node_contexts[t_index].back();
+					branch_node->hook_indexes.push_back(t_index);
+					branch_node->hook_scope_contexts.push_back(test_network_input_scope_contexts[t_index]);
+					branch_node->hook_node_contexts.push_back(test_network_input_node_contexts[t_index]);
 				}
-				new_input_indexes.push_back(index);
 			}
-			this->existing_network_input_indexes.push_back(new_input_indexes);
+			for (int d_index = 0; d_index < num_instances; d_index++) {
+				vector<double> test_input_vals(num_new_input_indexes, 0.0);
 
-			if (this->existing_network != NULL) {
-				delete this->existing_network;
+				vector<Scope*> scope_context;
+				vector<AbstractNode*> node_context;
+				input_vals_helper(0,
+								  test_network_input_max_depth,
+								  scope_context,
+								  node_context,
+								  test_input_vals,
+								  this->i_scope_histories[d_index]);
+
+				network_inputs[d_index].push_back(test_input_vals);
 			}
-			this->existing_network = test_network;
-
-			this->existing_average_misguess = average_misguess;
-			this->existing_misguess_standard_deviation = misguess_standard_deviation;
-
-			if (this->skip_explore) {
-				cout << "this->existing_average_misguess: " << this->existing_average_misguess << endl;
-				cout << "this->existing_misguess_standard_deviation: " << this->existing_misguess_standard_deviation << endl;
+			for (int t_index = 0; t_index < num_new_input_indexes; t_index++) {
+				if (test_network_input_node_contexts[t_index].back()->type == NODE_TYPE_ACTION) {
+					ActionNode* action_node = (ActionNode*)test_network_input_node_contexts[t_index].back();
+					action_node->hook_indexes.clear();
+					action_node->hook_scope_contexts.clear();
+					action_node->hook_node_contexts.clear();
+				} else {
+					BranchNode* branch_node = (BranchNode*)test_network_input_node_contexts[t_index].back();
+					branch_node->hook_indexes.clear();
+					branch_node->hook_scope_contexts.clear();
+					branch_node->hook_node_contexts.clear();
+				}
 			}
-		} else {
-			delete test_network;
+
+			train_network(network_inputs,
+						  network_target_vals,
+						  test_network_input_scope_contexts,
+						  test_network_input_node_contexts,
+						  test_network);
+
+			double average_misguess;
+			double misguess_standard_deviation;
+			measure_network(network_inputs,
+							network_target_vals,
+							test_network,
+							average_misguess,
+							misguess_standard_deviation);
+
+			#if defined(MDEBUG) && MDEBUG
+			if (rand()%3 == 0) {
+			#else
+			double improvement = this->existing_average_misguess - average_misguess;
+			double standard_deviation = min(this->existing_misguess_standard_deviation, misguess_standard_deviation);
+			double t_score = improvement / (standard_deviation / sqrt(num_instances * TEST_SAMPLES_PERCENTAGE));
+
+			if (t_score > 1.645) {
+			#endif /* MDEBUG */
+				vector<int> new_input_indexes;
+				for (int t_index = 0; t_index < (int)test_network_input_scope_contexts.size(); t_index++) {
+					int index = -1;
+					for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
+						if (test_network_input_scope_contexts[t_index] == this->input_scope_contexts[i_index]
+								&& test_network_input_node_contexts[t_index] == this->input_node_contexts[i_index]) {
+							index = i_index;
+							break;
+						}
+					}
+					if (index == -1) {
+						this->input_scope_contexts.push_back(test_network_input_scope_contexts[t_index]);
+						this->input_node_contexts.push_back(test_network_input_node_contexts[t_index]);
+						if ((int)test_network_input_scope_contexts[t_index].size() > this->input_max_depth) {
+							this->input_max_depth = (int)test_network_input_scope_contexts[t_index].size();
+						}
+
+						this->existing_linear_weights.push_back(0.0);
+
+						index = this->input_scope_contexts.size()-1;
+					}
+					new_input_indexes.push_back(index);
+				}
+				this->existing_network_input_indexes.push_back(new_input_indexes);
+
+				if (this->existing_network != NULL) {
+					delete this->existing_network;
+				}
+				this->existing_network = test_network;
+
+				this->existing_average_misguess = average_misguess;
+				this->existing_misguess_standard_deviation = misguess_standard_deviation;
+
+				if (this->skip_explore) {
+					cout << "this->existing_average_misguess: " << this->existing_average_misguess << endl;
+					cout << "this->existing_misguess_standard_deviation: " << this->existing_misguess_standard_deviation << endl;
+				}
+
+				#if defined(MDEBUG) && MDEBUG
+				#else
+				train_index = 0;
+				#endif /* MDEBUG */
+			} else {
+				delete test_network;
+
+				for (int d_index = 0; d_index < num_instances; d_index++) {
+					network_inputs[d_index].pop_back();
+				}
+
+				train_index++;
+			}
 		}
 
 		this->o_target_val_histories.clear();
@@ -360,48 +397,48 @@ void BranchExperiment::train_existing_backprop(double target_val,
 		this->i_target_val_histories.clear();
 
 		if (this->skip_explore) {
-			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-					this->best_actions[s_index]->parent = this->scope_context.back();
-					this->best_actions[s_index]->id = this->scope_context.back()->node_counter;
+			for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {
+				if (this->step_types[s_index] == STEP_TYPE_ACTION) {
+					this->actions[s_index]->parent = this->scope_context.back();
+					this->actions[s_index]->id = this->scope_context.back()->node_counter;
 					this->scope_context.back()->node_counter++;
-				} else if (this->best_step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
-					this->best_existing_scopes[s_index]->parent = this->scope_context.back();
-					this->best_existing_scopes[s_index]->id = this->scope_context.back()->node_counter;
+				} else if (this->step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
+					this->existing_scopes[s_index]->parent = this->scope_context.back();
+					this->existing_scopes[s_index]->id = this->scope_context.back()->node_counter;
 					this->scope_context.back()->node_counter++;
 				} else {
-					this->best_potential_scopes[s_index]->parent = this->scope_context.back();
-					this->best_potential_scopes[s_index]->id = this->scope_context.back()->node_counter;
+					this->potential_scopes[s_index]->parent = this->scope_context.back();
+					this->potential_scopes[s_index]->id = this->scope_context.back()->node_counter;
 					this->scope_context.back()->node_counter++;
 
 					int new_scope_id = solution->scope_counter;
 					solution->scope_counter++;
-					this->best_potential_scopes[s_index]->scope->id = new_scope_id;
+					this->potential_scopes[s_index]->scope->id = new_scope_id;
 				}
 			}
 
 			int exit_node_id;
 			AbstractNode* exit_node;
-			if (this->best_exit_depth > 0
-					|| this->best_exit_throw_id != -1) {
+			if (this->exit_depth > 0
+					|| this->exit_throw_id != -1) {
 				ExitNode* new_exit_node = new ExitNode();
 				new_exit_node->parent = this->scope_context.back();
 				new_exit_node->id = this->scope_context.back()->node_counter;
 				this->scope_context.back()->node_counter++;
 
-				new_exit_node->exit_depth = this->best_exit_depth;
-				new_exit_node->next_node_parent = this->scope_context[this->scope_context.size()-1 - this->best_exit_depth];
-				if (this->best_exit_next_node == NULL) {
+				new_exit_node->exit_depth = this->exit_depth;
+				new_exit_node->next_node_parent = this->scope_context[this->scope_context.size()-1 - this->exit_depth];
+				if (this->exit_next_node == NULL) {
 					new_exit_node->next_node_id = -1;
 				} else {
-					new_exit_node->next_node_id = this->best_exit_next_node->id;
+					new_exit_node->next_node_id = this->exit_next_node->id;
 				}
-				new_exit_node->next_node = this->best_exit_next_node;
-				if (this->best_exit_throw_id == TEMP_THROW_ID) {
+				new_exit_node->next_node = this->exit_next_node;
+				if (this->exit_throw_id == TEMP_THROW_ID) {
 					new_exit_node->throw_id = solution->throw_counter;
 					solution->throw_counter++;
 				} else {
-					new_exit_node->throw_id = this->best_exit_throw_id;
+					new_exit_node->throw_id = this->exit_throw_id;
 				}
 
 				this->exit_node = new_exit_node;
@@ -409,12 +446,12 @@ void BranchExperiment::train_existing_backprop(double target_val,
 				exit_node_id = new_exit_node->id;
 				exit_node = new_exit_node;
 			} else {
-				if (this->best_exit_next_node == NULL) {
+				if (this->exit_next_node == NULL) {
 					exit_node_id = -1;
 				} else {
-					exit_node_id = this->best_exit_next_node->id;
+					exit_node_id = this->exit_next_node->id;
 				}
-				exit_node = this->best_exit_next_node;
+				exit_node = this->exit_next_node;
 			}
 
 			/**
@@ -425,45 +462,45 @@ void BranchExperiment::train_existing_backprop(double target_val,
 			this->branch_node->id = this->scope_context.back()->node_counter;
 			this->scope_context.back()->node_counter++;
 
-			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+			for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {
 				int next_node_id;
 				AbstractNode* next_node;
-				if (s_index == (int)this->best_step_types.size()-1) {
+				if (s_index == (int)this->step_types.size()-1) {
 					next_node_id = exit_node_id;
 					next_node = exit_node;
 				} else {
-					if (this->best_step_types[s_index+1] == STEP_TYPE_ACTION) {
-						next_node_id = this->best_actions[s_index+1]->id;
-						next_node = this->best_actions[s_index+1];
-					} else if (this->best_step_types[s_index+1] == STEP_TYPE_EXISTING_SCOPE) {
-						next_node_id = this->best_existing_scopes[s_index+1]->id;
-						next_node = this->best_existing_scopes[s_index+1];
+					if (this->step_types[s_index+1] == STEP_TYPE_ACTION) {
+						next_node_id = this->actions[s_index+1]->id;
+						next_node = this->actions[s_index+1];
+					} else if (this->step_types[s_index+1] == STEP_TYPE_EXISTING_SCOPE) {
+						next_node_id = this->existing_scopes[s_index+1]->id;
+						next_node = this->existing_scopes[s_index+1];
 					} else {
-						next_node_id = this->best_potential_scopes[s_index+1]->id;
-						next_node = this->best_potential_scopes[s_index+1];
+						next_node_id = this->potential_scopes[s_index+1]->id;
+						next_node = this->potential_scopes[s_index+1];
 					}
 				}
 
-				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-					this->best_actions[s_index]->next_node_id = next_node_id;
-					this->best_actions[s_index]->next_node = next_node;
-				} else if (this->best_step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
-					this->best_existing_scopes[s_index]->next_node_id = next_node_id;
-					this->best_existing_scopes[s_index]->next_node = next_node;
+				if (this->step_types[s_index] == STEP_TYPE_ACTION) {
+					this->actions[s_index]->next_node_id = next_node_id;
+					this->actions[s_index]->next_node = next_node;
+				} else if (this->step_types[s_index] == STEP_TYPE_EXISTING_SCOPE) {
+					this->existing_scopes[s_index]->next_node_id = next_node_id;
+					this->existing_scopes[s_index]->next_node = next_node;
 
-					for (set<int>::iterator it = this->best_catch_throw_ids[s_index].begin();
-							it != this->best_catch_throw_ids[s_index].end(); it++) {
-						this->best_existing_scopes[s_index]->catch_ids[*it] = next_node_id;
-						this->best_existing_scopes[s_index]->catches[*it] = next_node;
+					for (set<int>::iterator it = this->catch_throw_ids[s_index].begin();
+							it != this->catch_throw_ids[s_index].end(); it++) {
+						this->existing_scopes[s_index]->catch_ids[*it] = next_node_id;
+						this->existing_scopes[s_index]->catches[*it] = next_node;
 					}
 				} else {
-					this->best_potential_scopes[s_index]->next_node_id = next_node_id;
-					this->best_potential_scopes[s_index]->next_node = next_node;
+					this->potential_scopes[s_index]->next_node_id = next_node_id;
+					this->potential_scopes[s_index]->next_node = next_node;
 
-					for (set<int>::iterator it = this->best_catch_throw_ids[s_index].begin();
-							it != this->best_catch_throw_ids[s_index].end(); it++) {
-						this->best_potential_scopes[s_index]->catch_ids[*it] = next_node_id;
-						this->best_potential_scopes[s_index]->catches[*it] = next_node;
+					for (set<int>::iterator it = this->catch_throw_ids[s_index].begin();
+							it != this->catch_throw_ids[s_index].end(); it++) {
+						this->potential_scopes[s_index]->catch_ids[*it] = next_node_id;
+						this->potential_scopes[s_index]->catches[*it] = next_node;
 					}
 				}
 			}
