@@ -34,14 +34,14 @@ int main(int argc, char* argv[]) {
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
 
-	problem_type = new Sorting();
-	// problem_type = new Minesweeper();
+	// problem_type = new Sorting();
+	problem_type = new Minesweeper();
 
 	solution = new Solution();
-	solution->init();
-	// solution->load("", "main");
+	// solution->init();
+	solution->load("", "main");
 
-	solution->save("", "main");
+	// solution->save("", "main");
 
 	int num_fails = 0;
 
@@ -50,8 +50,8 @@ int main(int argc, char* argv[]) {
 	#endif /* MDEBUG */
 
 	while (true) {
-		Problem* problem = new Sorting();
-		// Problem* problem = new Minesweeper();
+		// Problem* problem = new Sorting();
+		Problem* problem = new Minesweeper();
 
 		RunHelper run_helper;
 
@@ -207,29 +207,30 @@ int main(int argc, char* argv[]) {
 				run_helper.verify_key = solution->verify_key;
 
 				run_helper.starting_run_seed = solution->verify_seeds[0];
+				cout << "run_helper.starting_run_seed: " << run_helper.starting_run_seed << endl;
 				run_helper.curr_run_seed = solution->verify_seeds[0];
 				solution->verify_seeds.erase(solution->verify_seeds.begin());
 
 				vector<ContextLayer> context;
 				context.push_back(ContextLayer());
 
-				context.back().scope = solution->root;
+				context.back().scope = solution->scopes.back();
 				context.back().node = NULL;
 
-				ScopeHistory* root_history = new ScopeHistory(solution->root);
+				ScopeHistory* root_history = new ScopeHistory(solution->scopes.back());
 				context.back().scope_history = root_history;
 
 				// unused
 				int exit_depth = -1;
 				AbstractNode* exit_node = NULL;
 
-				solution->root->verify_activate(solution->root->default_starting_node,
-												problem,
-												context,
-												exit_depth,
-												exit_node,
-												run_helper,
-												root_history);
+				solution->scopes.back()->verify_activate(solution->scopes.back()->default_starting_node,
+														 problem,
+														 context,
+														 exit_depth,
+														 exit_node,
+														 run_helper,
+														 root_history);
 
 				delete root_history;
 
@@ -253,13 +254,13 @@ int main(int argc, char* argv[]) {
 
 			solution->increment();
 
-			solution->timestamp = (unsigned)time(NULL);
-			solution->save("", "main");
+			// solution->timestamp = (unsigned)time(NULL);
+			// solution->save("", "main");
 
-			ofstream display_file;
-			display_file.open("../display.txt");
-			solution->save_for_display(display_file);
-			display_file.close();
+			// ofstream display_file;
+			// display_file.open("../display.txt");
+			// solution->save_for_display(display_file);
+			// display_file.close();
 
 			num_fails = 0;
 

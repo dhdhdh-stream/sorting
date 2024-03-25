@@ -25,8 +25,6 @@ public:
 	std::vector<std::vector<Scope*>> hook_scope_contexts;
 	std::vector<std::vector<AbstractNode*>> hook_node_contexts;
 
-	std::vector<AbstractExperiment*> experiments;
-
 	ActionNode();
 	~ActionNode();
 

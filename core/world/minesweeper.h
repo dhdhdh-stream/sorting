@@ -24,9 +24,10 @@ public:
 
 	bool hit_mine;
 
+	int num_actions;
+
 	Minesweeper();
 
-	int num_actions();
 	Action random_action();
 
 	double get_observation();

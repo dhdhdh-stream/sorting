@@ -136,7 +136,7 @@ void BranchNode::activate(AbstractNode*& curr_node,
 				curr_node = this->branch_next_node;
 
 				for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
-					if (this->experiment_types[e_index] == BRANCH_NODE_EXPERIMENT_TYPE_BRANCH) {
+					if (this->experiments[e_index]->is_branch) {
 						bool is_selected = this->experiments[e_index]->activate(
 							curr_node,
 							problem,
@@ -153,7 +153,7 @@ void BranchNode::activate(AbstractNode*& curr_node,
 				curr_node = this->original_next_node;
 
 				for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
-					if (this->experiment_types[e_index] == BRANCH_NODE_EXPERIMENT_TYPE_ORIGINAL) {
+					if (!this->experiments[e_index]->is_branch) {
 						bool is_selected = this->experiments[e_index]->activate(
 							curr_node,
 							problem,

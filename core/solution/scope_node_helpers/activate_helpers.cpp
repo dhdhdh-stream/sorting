@@ -49,36 +49,39 @@ void ScopeNode::activate(AbstractNode*& curr_node,
 		map<int, AbstractNode*>::iterator it = this->catches.find(run_helper.throw_id);
 		if (it != this->catches.end()) {
 			run_helper.throw_id = -1;
-
 			curr_node = it->second;
 		}
 		// else do nothing
 
 		for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
-			bool is_selected = this->experiments[e_index]->activate(
-				curr_node,
-				problem,
-				context,
-				exit_depth,
-				exit_node,
-				run_helper);
-			if (is_selected) {
-				return;
+			if (this->experiments[e_index]->throw_id == it->first) {
+				bool is_selected = this->experiments[e_index]->activate(
+					curr_node,
+					problem,
+					context,
+					exit_depth,
+					exit_node,
+					run_helper);
+				if (is_selected) {
+					return;
+				}
 			}
 		}
 	} else if (inner_exit_depth == -1) {
 		curr_node = this->next_node;
 
 		for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
-			bool is_selected = this->experiments[e_index]->activate(
-				curr_node,
-				problem,
-				context,
-				exit_depth,
-				exit_node,
-				run_helper);
-			if (is_selected) {
-				return;
+			if (this->experiments[e_index]->throw_id == -1) {
+				bool is_selected = this->experiments[e_index]->activate(
+					curr_node,
+					problem,
+					context,
+					exit_depth,
+					exit_node,
+					run_helper);
+				if (is_selected) {
+					return;
+				}
 			}
 		}
 	} else if (inner_exit_depth == 0) {

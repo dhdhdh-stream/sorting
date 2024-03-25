@@ -75,7 +75,11 @@ void PassThroughExperiment::finalize() {
 						new_branch_node->original_next_node_id = new_throw_node->id;
 						new_branch_node->original_next_node = new_throw_node;
 					} else {
-						new_branch_node->original_next_node_id = it->second->id;
+						if (it->second == NULL) {
+							new_branch_node->original_next_node_id = -1;
+						} else {
+							new_branch_node->original_next_node_id = it->second->id;
+						}
 						new_branch_node->original_next_node = it->second;
 					}
 				}
@@ -195,33 +199,11 @@ void PassThroughExperiment::finalize() {
 		}
 	}
 
-	if (this->node_context.back()->type == NODE_TYPE_ACTION) {
-		ActionNode* action_node = (ActionNode*)this->node_context.back();
-		int experiment_index;
-		for (int e_index = 0; e_index < (int)action_node->experiments.size(); e_index++) {
-			if (action_node->experiments[e_index] == this) {
-				experiment_index = e_index;
-			}
+	int experiment_index;
+	for (int e_index = 0; e_index < (int)this->node_context.back()->experiments.size(); e_index++) {
+		if (this->node_context.back()->experiments[e_index] == this) {
+			experiment_index = e_index;
 		}
-		action_node->experiments.erase(action_node->experiments.begin() + experiment_index);
-	} else if (this->node_context.back()->type == NODE_TYPE_SCOPE) {
-		ScopeNode* scope_node = (ScopeNode*)this->node_context.back();
-		int experiment_index;
-		for (int e_index = 0; e_index < (int)scope_node->experiments.size(); e_index++) {
-			if (scope_node->experiments[e_index] == this) {
-				experiment_index = e_index;
-			}
-		}
-		scope_node->experiments.erase(scope_node->experiments.begin() + experiment_index);
-	} else {
-		BranchNode* branch_node = (BranchNode*)this->node_context.back();
-		int experiment_index;
-		for (int e_index = 0; e_index < (int)branch_node->experiments.size(); e_index++) {
-			if (branch_node->experiments[e_index] == this) {
-				experiment_index = e_index;
-			}
-		}
-		branch_node->experiments.erase(branch_node->experiments.begin() + experiment_index);
-		branch_node->experiment_types.erase(branch_node->experiment_types.begin() + experiment_index);
 	}
+	this->node_context.back()->experiments.erase(this->node_context.back()->experiments.begin() + experiment_index);
 }

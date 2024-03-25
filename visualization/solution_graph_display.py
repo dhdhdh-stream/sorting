@@ -24,8 +24,6 @@ file = open('../display.txt')
 num_scopes = int(file.readline())
 
 for s_index in range(num_scopes):
-	scope_id = int(file.readline())
-
 	nodes = {}
 	num_nodes = int(file.readline())
 	for n_index in range(num_nodes):
@@ -77,10 +75,9 @@ for s_index in range(num_scopes):
 							  exit_node_id,
 							  exit_throw_id]
 
-	print(scope_id)
 	print(nodes)
 
-	scopes[scope_id] = nodes
+	scopes[s_index] = nodes
 
 file.close()
 

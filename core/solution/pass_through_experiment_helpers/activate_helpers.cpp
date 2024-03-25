@@ -14,9 +14,7 @@ bool PassThroughExperiment::activate(AbstractNode*& curr_node,
 									 AbstractNode*& exit_node,
 									 RunHelper& run_helper) {
 	bool matches_context = true;
-	if (run_helper.throw_id != this->throw_id) {
-		matches_context = false;
-	} else if (this->scope_context.size() > context.size()) {
+	if (this->scope_context.size() > context.size()) {
 		matches_context = false;
 	} else {
 		for (int c_index = 0; c_index < (int)this->scope_context.size()-1; c_index++) {

@@ -141,7 +141,7 @@ void Solution::increment() {
 		
 		this->curr_num_improvements = 0;
 
-		if ((int)this->scopes.size() > this->previous_generation_index + GENERATION_SIZE) {
+		if ((int)this->scopes.size() > this->previous_generation_index+1 + GENERATION_SIZE) {
 			this->previous_generation_index += GENERATION_SIZE;
 		}
 	}

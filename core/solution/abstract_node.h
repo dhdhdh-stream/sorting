@@ -2,7 +2,9 @@
 #define ABSTRACT_NODE_H
 
 #include <fstream>
+#include <vector>
 
+class AbstractExperiment;
 class Scope;
 
 const int NODE_TYPE_ACTION = 0;
@@ -16,6 +18,8 @@ public:
 
 	Scope* parent;
 	int id;
+
+	std::vector<AbstractExperiment*> experiments;
 
 	virtual ~AbstractNode() {};
 	virtual void save(std::ofstream& output_file) = 0;

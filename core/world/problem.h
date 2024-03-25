@@ -17,13 +17,11 @@ public:
 	int type;
 
 	/**
-	 * TODO:
 	 * - if want to keep track of runtime, track locally and increment on perform_action()
 	 */
 
 	virtual ~Problem() {};
 
-	virtual int num_actions() = 0;
 	virtual Action random_action() = 0;
 
 	virtual double get_observation() = 0;

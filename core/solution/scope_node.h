@@ -32,8 +32,6 @@ public:
 	std::map<int, int> catch_ids;
 	std::map<int, AbstractNode*> catches;
 
-	std::vector<AbstractExperiment*> experiments;
-
 	ScopeNode();
 	~ScopeNode();
 
