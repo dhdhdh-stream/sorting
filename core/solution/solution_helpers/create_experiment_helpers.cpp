@@ -111,8 +111,8 @@ void create_experiment(ScopeHistory* root_history) {
 			PassThroughExperiment* new_pass_through_experiment = new PassThroughExperiment(
 				vector<Scope*>(possible_scope_contexts[rand_index].end() - context_size, possible_scope_contexts[rand_index].end()),
 				vector<AbstractNode*>(possible_node_contexts[rand_index].end() - context_size, possible_node_contexts[rand_index].end()),
-				false,
-				-1,
+				possible_is_branch[rand_index],
+				possible_throw_id[rand_index],
 				NULL);
 
 			possible_node_contexts[rand_index].back()->experiments.push_back(new_pass_through_experiment);
@@ -120,8 +120,8 @@ void create_experiment(ScopeHistory* root_history) {
 			BranchExperiment* new_branch_experiment = new BranchExperiment(
 				vector<Scope*>(possible_scope_contexts[rand_index].end() - context_size, possible_scope_contexts[rand_index].end()),
 				vector<AbstractNode*>(possible_node_contexts[rand_index].end() - context_size, possible_node_contexts[rand_index].end()),
-				false,
-				-1,
+				possible_is_branch[rand_index],
+				possible_throw_id[rand_index],
 				NULL,
 				false);
 

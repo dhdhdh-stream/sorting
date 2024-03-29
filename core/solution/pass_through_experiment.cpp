@@ -1,5 +1,7 @@
 #include "pass_through_experiment.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_experiment.h"
 #include "constants.h"
@@ -60,6 +62,10 @@ PassThroughExperiment::PassThroughExperiment(vector<Scope*> scope_context,
 }
 
 PassThroughExperiment::~PassThroughExperiment() {
+	if (this->parent_experiment != NULL) {
+		cout << "inner delete" << endl;
+	}
+
 	for (int s_index = 0; s_index < (int)this->curr_actions.size(); s_index++) {
 		if (this->curr_actions[s_index] != NULL) {
 			delete this->curr_actions[s_index];

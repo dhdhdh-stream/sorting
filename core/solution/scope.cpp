@@ -71,6 +71,17 @@ void Scope::save(ofstream& output_file) {
 	}
 
 	output_file << this->default_starting_node_id << endl;
+
+	output_file << this->subscopes.size() << endl;
+	for (set<pair<int,set<int>>>::iterator it = this->subscopes.begin();
+			it != this->subscopes.end(); it++) {
+		output_file << it->first << endl;
+		output_file << it->second.size() << endl;
+		for (set<int>::iterator exit_it = it->second.begin();
+				exit_it != it->second.end(); exit_it++)  {
+			output_file << *exit_it << endl;
+		}
+	}
 }
 
 void Scope::load(ifstream& input_file) {
@@ -121,6 +132,26 @@ void Scope::load(ifstream& input_file) {
 	string default_starting_node_id_line;
 	getline(input_file, default_starting_node_id_line);
 	this->default_starting_node_id = stoi(default_starting_node_id_line);
+
+	string subscopes_size_line;
+	getline(input_file, subscopes_size_line);
+	int subscope_size = stoi(subscopes_size_line);
+	for (int s_index = 0; s_index < subscope_size; s_index++) {
+		string start_id_line;
+		getline(input_file, start_id_line);
+
+		string num_exit_ids_line;
+		getline(input_file, num_exit_ids_line);
+		int num_exit_ids = stoi(num_exit_ids_line);
+		set<int> exit_ids;
+		for (int e_index = 0; e_index < num_exit_ids; e_index++) {
+			string exit_id_line;
+			getline(input_file, exit_id_line);
+			exit_ids.insert(stoi(exit_id_line));
+		}
+
+		this->subscopes.insert({stoi(start_id_line), exit_ids});
+	}
 }
 
 void Scope::link() {

@@ -90,13 +90,13 @@ void Scope::step_through_activate(AbstractNode* starting_node,
 		string input_gate;
 		cin >> input_gate;
 
-		problem->print();
-		cout << "exceeded_limit" << endl;
 		cout << "context:" << endl;
 		for (int c_index = 0; c_index < (int)context.size()-1; c_index++) {
 			cout << c_index << ": " << context[c_index].scope->id << " " << context[c_index].node->id << endl;
 		}
 		cout << context.size()-1 << ": " << this->id << " -1" << endl;
+		problem->print();
+		cout << "exceeded_limit" << endl;
 
 		run_helper.exceeded_limit = true;
 		return;

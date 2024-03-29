@@ -19,6 +19,8 @@ using namespace std;
 
 const int NUM_FAILS_BEFORE_INCREASE = 100;
 
+int seed;
+
 default_random_engine generator;
 
 Problem* problem_type;
@@ -38,7 +40,7 @@ int main(int argc, char* argv[]) {
 
 	cout << "Starting..." << endl;
 
-	int seed = (unsigned)time(NULL);
+	seed = (unsigned)time(NULL);
 	srand(seed);
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
@@ -110,7 +112,7 @@ int main(int argc, char* argv[]) {
 					AbstractExperiment* experiment = pass_through_experiment_history->experiments_seen_order[e_index];
 					experiment->average_remaining_experiments_from_start =
 						0.9 * experiment->average_remaining_experiments_from_start
-						+ 0.1 * ((int)run_helper.experiments_seen_order.size()-1 - e_index
+						+ 0.1 * ((int)pass_through_experiment_history->experiments_seen_order.size()-1 - e_index
 							+ run_helper.experiment_histories[h_index+1]->experiment->average_remaining_experiments_from_start);
 				}
 			}
@@ -259,6 +261,8 @@ int main(int argc, char* argv[]) {
 
 					solution = new Solution();
 					solution->load("workers/", "main");
+
+					solution->save(path, name);
 
 					cout << "updated from main" << endl;
 

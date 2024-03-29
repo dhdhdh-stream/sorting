@@ -48,15 +48,15 @@ void ScopeNode::step_through_activate(AbstractNode*& curr_node,
 		string input_gate;
 		cin >> input_gate;
 
-		problem->print();
-		cout << "ScopeNode" << endl;
-		cout << "throw: " << run_helper.throw_id << endl;
 		cout << "context:" << endl;
 		context.back().node = this;
 		for (int c_index = 0; c_index < (int)context.size(); c_index++) {
 			cout << c_index << ": " << context[c_index].scope->id << " " << context[c_index].node->id << endl;
 		}
 		context.back().node = NULL;
+		problem->print();
+		cout << "ScopeNode" << endl;
+		cout << "throw: " << run_helper.throw_id << endl;
 
 		map<int, AbstractNode*>::iterator it = this->catches.find(run_helper.throw_id);
 		if (it != this->catches.end()) {
@@ -69,15 +69,15 @@ void ScopeNode::step_through_activate(AbstractNode*& curr_node,
 		string input_gate;
 		cin >> input_gate;
 
-		problem->print();
-		cout << "ScopeNode" << endl;
-		cout << "exit" << endl;
 		cout << "context:" << endl;
 		context.back().node = this;
 		for (int c_index = 0; c_index < (int)context.size(); c_index++) {
 			cout << c_index << ": " << context[c_index].scope->id << " " << context[c_index].node->id << endl;
 		}
 		context.back().node = NULL;
+		problem->print();
+		cout << "ScopeNode" << endl;
+		cout << "exit" << endl;
 
 		curr_node = this->next_node;
 	} else if (inner_exit_depth == 0) {

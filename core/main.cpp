@@ -19,7 +19,9 @@
 
 using namespace std;
 
-const int NUM_FAILS_BEFORE_INCREASE = 50;
+const int NUM_FAILS_BEFORE_INCREASE = 100;
+
+int seed;
 
 default_random_engine generator;
 
@@ -29,19 +31,20 @@ Solution* solution;
 int main(int argc, char* argv[]) {
 	cout << "Starting..." << endl;
 
-	int seed = (unsigned)time(NULL);
+	// seed = (unsigned)time(NULL);
+	seed = 1711570062;
 	srand(seed);
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
 
-	// problem_type = new Sorting();
-	problem_type = new Minesweeper();
+	problem_type = new Sorting();
+	// problem_type = new Minesweeper();
 
 	solution = new Solution();
-	// solution->init();
-	solution->load("", "main");
+	solution->init();
+	// solution->load("", "main");
 
-	// solution->save("", "main");
+	solution->save("", "main");
 
 	int num_fails = 0;
 
@@ -50,8 +53,8 @@ int main(int argc, char* argv[]) {
 	#endif /* MDEBUG */
 
 	while (true) {
-		// Problem* problem = new Sorting();
-		Problem* problem = new Minesweeper();
+		Problem* problem = new Sorting();
+		// Problem* problem = new Minesweeper();
 
 		RunHelper run_helper;
 
@@ -113,7 +116,7 @@ int main(int argc, char* argv[]) {
 					AbstractExperiment* experiment = pass_through_experiment_history->experiments_seen_order[e_index];
 					experiment->average_remaining_experiments_from_start =
 						0.9 * experiment->average_remaining_experiments_from_start
-						+ 0.1 * ((int)run_helper.experiments_seen_order.size()-1 - e_index
+						+ 0.1 * ((int)pass_through_experiment_history->experiments_seen_order.size()-1 - e_index
 							+ run_helper.experiment_histories[h_index+1]->experiment->average_remaining_experiments_from_start);
 				}
 			}
@@ -254,13 +257,13 @@ int main(int argc, char* argv[]) {
 
 			solution->increment();
 
-			// solution->timestamp = (unsigned)time(NULL);
-			// solution->save("", "main");
+			solution->timestamp = (unsigned)time(NULL);
+			solution->save("", "main");
 
-			// ofstream display_file;
-			// display_file.open("../display.txt");
-			// solution->save_for_display(display_file);
-			// display_file.close();
+			ofstream display_file;
+			display_file.open("../display.txt");
+			solution->save_for_display(display_file);
+			display_file.close();
 
 			num_fails = 0;
 

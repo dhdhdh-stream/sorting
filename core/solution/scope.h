@@ -13,6 +13,7 @@
 
 #include <fstream>
 #include <map>
+#include <set>
 #include <utility>
 #include <vector>
 
@@ -36,6 +37,8 @@ public:
 
 	int default_starting_node_id;
 	AbstractNode* default_starting_node;
+
+	std::set<std::pair<int, std::set<int>>> subscopes;
 
 	Scope();
 	~Scope();

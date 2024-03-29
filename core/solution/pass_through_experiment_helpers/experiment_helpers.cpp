@@ -228,7 +228,9 @@ void PassThroughExperiment::experiment_backprop(
 		double target_val,
 		RunHelper& run_helper,
 		PassThroughExperimentHistory* history) {
-	if (history->has_target) {
+	if (history->has_target
+			&& !run_helper.exceeded_limit
+			&& history->experiments_seen_order.size() == 0) {
 		vector<vector<Scope*>> possible_scope_contexts;
 		vector<vector<AbstractNode*>> possible_node_contexts;
 		vector<bool> possible_is_branch;
@@ -253,8 +255,8 @@ void PassThroughExperiment::experiment_backprop(
 			PassThroughExperiment* new_pass_through_experiment = new PassThroughExperiment(
 				possible_scope_contexts[rand_index],
 				possible_node_contexts[rand_index],
-				false,
-				-1,
+				possible_is_branch[rand_index],
+				possible_throw_id[rand_index],
 				this);
 
 			/**
@@ -265,8 +267,8 @@ void PassThroughExperiment::experiment_backprop(
 			BranchExperiment* new_branch_experiment = new BranchExperiment(
 				possible_scope_contexts[rand_index],
 				possible_node_contexts[rand_index],
-				false,
-				-1,
+				possible_is_branch[rand_index],
+				possible_throw_id[rand_index],
 				this,
 				false);
 

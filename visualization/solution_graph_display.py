@@ -115,6 +115,7 @@ graph = pydot.Dot(graph_type='digraph', strict=True)
 global_node_index = 0
 
 for scope_id in scopes:
+# for scope_id in [42]:
 	node_mappings = {}
 	for key in scopes[scope_id]:
 		node_index = global_node_index

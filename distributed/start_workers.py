@@ -81,7 +81,13 @@ while True:
 	for w_index in range(len(workers)):
 		rl, wl, xl = select.select([channels[w_index]],[],[],0.0)
 		if len(rl) > 0:
+			message = channels[w_index].recv(1024)
+
+			if len(message) == 0:
+				print('worker ' + workers[w_index][0] + ' failed');
+				exit(1)
+
 			print(workers[w_index][0])
-			print(channels[w_index].recv(1024))
+			print(message)
 
 	time.sleep(15)

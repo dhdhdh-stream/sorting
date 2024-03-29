@@ -2,6 +2,7 @@
 
 #include <iostream>
 
+#include "abstract_node.h"
 #include "globals.h"
 #include "scope.h"
 

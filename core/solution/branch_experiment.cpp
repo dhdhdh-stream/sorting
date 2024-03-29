@@ -1,5 +1,7 @@
 #include "branch_experiment.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
@@ -77,6 +79,10 @@ BranchExperiment::BranchExperiment(vector<Scope*> scope_context,
 }
 
 BranchExperiment::~BranchExperiment() {
+	if (this->parent_experiment != NULL) {
+		cout << "inner delete" << endl;
+	}
+
 	if (this->existing_network != NULL) {
 		delete this->existing_network;
 	}

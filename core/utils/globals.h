@@ -6,6 +6,8 @@
 class Problem;
 class Solution;
 
+extern int seed;
+
 extern std::default_random_engine generator;
 
 extern Problem* problem_type;

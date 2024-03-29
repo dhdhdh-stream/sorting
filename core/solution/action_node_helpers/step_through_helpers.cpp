@@ -21,15 +21,15 @@ void ActionNode::step_through_activate(AbstractNode*& curr_node,
 		string input_gate;
 		cin >> input_gate;
 
-		problem->print();
-		cout << "ActionNode" << endl;
-		cout << "this->action.move: " << this->action.move << endl;
 		cout << "context:" << endl;
 		context.back().node = this;
 		for (int c_index = 0; c_index < (int)context.size(); c_index++) {
 			cout << c_index << ": " << context[c_index].scope->id << " " << context[c_index].node->id << endl;
 		}
 		context.back().node = NULL;
+		problem->print();
+		cout << "ActionNode" << endl;
+		cout << "this->action.move: " << this->action.move << endl;
 	}
 
 	curr_node = this->next_node;

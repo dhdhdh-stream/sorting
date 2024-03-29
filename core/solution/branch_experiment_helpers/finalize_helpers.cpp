@@ -295,6 +295,10 @@ void BranchExperiment::new_branch() {
 			this->scope_context.back()->nodes[this->actions[s_index]->id] = this->actions[s_index];
 		} else {
 			this->scope_context.back()->nodes[this->scopes[s_index]->id] = this->scopes[s_index];
+
+			this->scopes[s_index]->scope->subscopes.insert(
+				{this->scopes[s_index]->starting_node_id,
+					this->scopes[s_index]->exit_node_ids});
 		}
 	}
 
@@ -440,6 +444,10 @@ void BranchExperiment::new_pass_through() {
 			this->scope_context.back()->nodes[this->actions[s_index]->id] = this->actions[s_index];
 		} else {
 			this->scope_context.back()->nodes[this->scopes[s_index]->id] = this->scopes[s_index];
+
+			this->scopes[s_index]->scope->subscopes.insert(
+				{this->scopes[s_index]->starting_node_id,
+					this->scopes[s_index]->exit_node_ids});
 		}
 	}
 

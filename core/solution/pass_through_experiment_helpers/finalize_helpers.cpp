@@ -179,6 +179,10 @@ void PassThroughExperiment::finalize() {
 				this->scope_context.back()->nodes[this->best_actions[s_index]->id] = this->best_actions[s_index];
 			} else {
 				this->scope_context.back()->nodes[this->best_scopes[s_index]->id] = this->best_scopes[s_index];
+
+				this->best_scopes[s_index]->scope->subscopes.insert(
+					{this->best_scopes[s_index]->starting_node_id,
+						this->best_scopes[s_index]->exit_node_ids});
 			}
 		}
 

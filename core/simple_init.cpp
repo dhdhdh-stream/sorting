@@ -10,6 +10,8 @@
 
 using namespace std;
 
+int seed;
+
 default_random_engine generator;
 
 Problem* problem_type;
@@ -18,7 +20,7 @@ Solution* solution;
 int main(int argc, char* argv[]) {
 	cout << "Starting..." << endl;
 
-	int seed = (unsigned)time(NULL);
+	seed = (unsigned)time(NULL);
 	srand(seed);
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;

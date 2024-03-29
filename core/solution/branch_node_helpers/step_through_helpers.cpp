@@ -123,15 +123,15 @@ void BranchNode::step_through_activate(AbstractNode*& curr_node,
 			string input_gate;
 			cin >> input_gate;
 
-			problem->print();
-			cout << "BranchNode" << endl;
-			cout << "is_branch: " << history->is_branch << endl;
 			cout << "context:" << endl;
 			context.back().node = this;
 			for (int c_index = 0; c_index < (int)context.size(); c_index++) {
 				cout << c_index << ": " << context[c_index].scope->id << " " << context[c_index].node->id << endl;
 			}
 			context.back().node = NULL;
+			problem->print();
+			cout << "BranchNode" << endl;
+			cout << "is_branch: " << history->is_branch << endl;
 
 			if (history->is_branch) {
 				curr_node = this->branch_next_node;

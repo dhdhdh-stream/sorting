@@ -54,7 +54,7 @@ void ScopeNode::activate(AbstractNode*& curr_node,
 		// else do nothing
 
 		for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
-			if (this->experiments[e_index]->throw_id == it->first) {
+			if (this->experiments[e_index]->throw_id == history->throw_id) {
 				bool is_selected = this->experiments[e_index]->activate(
 					curr_node,
 					problem,
