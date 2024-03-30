@@ -19,8 +19,12 @@ void Solution::init() {
 	this->timestamp = (unsigned)time(NULL);
 
 	Scope* starting_scope = new Scope();
-	starting_scope->id = this->scopes.size();
+	starting_scope->id = 0;
 	this->scopes.push_back(starting_scope);
+
+	starting_scope->parent_id = -1;
+	starting_scope->layer = 0;
+	starting_scope->num_improvements = 0;
 
 	ActionNode* starting_noop_node = new ActionNode();
 	starting_noop_node->parent = starting_scope;
@@ -33,8 +37,7 @@ void Solution::init() {
 	starting_scope->default_starting_node = starting_noop_node;
 	starting_scope->node_counter = 1;
 
-	this->curr_num_improvements = 0;
-	this->previous_generation_index = -1;
+	this->curr_scope_id = 0;
 
 	this->throw_counter = 0;
 
@@ -71,13 +74,9 @@ void Solution::load(string path,
 		this->scopes[s_index]->link();
 	}
 
-	string curr_num_improvements_line;
-	getline(input_file, curr_num_improvements_line);
-	this->curr_num_improvements = stoi(curr_num_improvements_line);
-
-	string previous_generation_index_line;
-	getline(input_file, previous_generation_index_line);
-	this->previous_generation_index = stoi(previous_generation_index_line);
+	string curr_scope_id_line;
+	getline(input_file, curr_scope_id_line);
+	this->curr_scope_id = stoi(curr_scope_id_line);
 
 	string throw_counter_line;
 	getline(input_file, throw_counter_line);
@@ -122,27 +121,84 @@ void Solution::reset() {
 }
 
 void Solution::increment() {
-	this->curr_num_improvements++;
-	if (this->curr_num_improvements >= IMPROVEMENTS_PER_RUN) {
-		Scope* new_scope = new Scope();
-		new_scope->id = this->scopes.size();
-		this->scopes.push_back(new_scope);
+	this->scopes[this->curr_scope_id]->num_improvements++;
 
-		ActionNode* starting_noop_node = new ActionNode();
-		starting_noop_node->parent = new_scope;
-		starting_noop_node->id = 0;
-		starting_noop_node->action = Action(ACTION_NOOP);
-		starting_noop_node->next_node_id = -1;
-		starting_noop_node->next_node = NULL;
-		new_scope->nodes[0] = starting_noop_node;
-		new_scope->default_starting_node_id = 0;
-		new_scope->default_starting_node = starting_noop_node;
-		new_scope->node_counter = 1;
-		
-		this->curr_num_improvements = 0;
+	int num_improvements_target = DEFAULT_NUM_IMPROVEMENTS;
+	for (int l_index = 0; l_index < this->scopes[this->curr_scope_id]->layer; l_index++) {
+		num_improvements_target *= 2;
+	}
+	if (this->scopes[this->curr_scope_id]->num_improvements >= num_improvements_target) {
+		Scope* curr_scope = this->scopes[this->curr_scope_id];
+		while (true) {
+			if (curr_scope->child_ids.size() < MAX_NUM_CHILDREN
+					|| curr_scope->num_improvements == 0) {
+				break;
+			}
 
-		if ((int)this->scopes.size() > this->previous_generation_index+1 + GENERATION_SIZE) {
-			this->previous_generation_index += GENERATION_SIZE;
+			if (curr_scope->parent_id == -1) {
+				Scope* new_ancestor = new Scope();
+				new_ancestor->id = this->scopes.size();
+				this->scopes.push_back(new_ancestor);
+
+				new_ancestor->parent_id = -1;
+				new_ancestor->child_ids.push_back(curr_scope->id);
+				new_ancestor->layer = curr_scope->layer+1;
+				new_ancestor->num_improvements = 0;
+
+				ActionNode* starting_noop_node = new ActionNode();
+				starting_noop_node->parent = new_ancestor;
+				starting_noop_node->id = 0;
+				starting_noop_node->action = Action(ACTION_NOOP);
+				starting_noop_node->next_node_id = -1;
+				starting_noop_node->next_node = NULL;
+				new_ancestor->nodes[0] = starting_noop_node;
+				new_ancestor->default_starting_node_id = 0;
+				new_ancestor->default_starting_node = starting_noop_node;
+				new_ancestor->node_counter = 1;
+
+				curr_scope->parent_id = new_ancestor->id;
+
+				curr_scope = new_ancestor;
+
+				break;
+			}
+
+			curr_scope = this->scopes[curr_scope->parent_id];
+		}
+
+		if ((int)curr_scope->child_ids.size() == MAX_NUM_CHILDREN
+				&& curr_scope->num_improvements == 0) {
+			this->curr_scope_id = curr_scope->id;
+		} else {
+			while (true) {
+				if (curr_scope->layer == 0) {
+					this->curr_scope_id = curr_scope->id;
+					break;
+				}
+
+				Scope* new_child = new Scope();
+				new_child->id = this->scopes.size();
+				this->scopes.push_back(new_child);
+
+				new_child->parent_id = curr_scope->id;
+				new_child->layer = curr_scope->layer-1;
+				new_child->num_improvements = 0;
+
+				ActionNode* starting_noop_node = new ActionNode();
+				starting_noop_node->parent = new_child;
+				starting_noop_node->id = 0;
+				starting_noop_node->action = Action(ACTION_NOOP);
+				starting_noop_node->next_node_id = -1;
+				starting_noop_node->next_node = NULL;
+				new_child->nodes[0] = starting_noop_node;
+				new_child->default_starting_node_id = 0;
+				new_child->default_starting_node = starting_noop_node;
+				new_child->node_counter = 1;
+
+				curr_scope->child_ids.push_back(new_child->id);
+
+				curr_scope = new_child;
+			}
 		}
 	}
 }
@@ -158,9 +214,7 @@ void Solution::save(string path,
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
 		this->scopes[s_index]->save(output_file);
 	}
-
-	output_file << this->curr_num_improvements << endl;
-	output_file << this->previous_generation_index << endl;
+	output_file << this->curr_scope_id << endl;
 
 	output_file << this->throw_counter << endl;
 

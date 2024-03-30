@@ -178,12 +178,12 @@ void BranchExperiment::explore_target_activate(AbstractNode*& curr_node,
 		bool default_to_action = true;
 		if (default_distribution(generator) != 0) {
 			Scope* scope;
-			if (solution->previous_generation_index == -1
+			if (solution->scopes[solution->curr_scope_id]->layer == 0
 					|| curr_scope_distribution(generator) == 0) {
-				scope = solution->scopes.back();
+				scope = solution->scopes[solution->curr_scope_id];
 			} else {
-				uniform_int_distribution<int> distribution(0, solution->previous_generation_index);
-				scope = solution->scopes[distribution(generator)];
+				uniform_int_distribution<int> child_distribution(0, MAX_NUM_CHILDREN-1);
+				scope = solution->scopes[solution->scopes[solution->curr_scope_id]->child_ids[distribution(generator)]];
 			}
 			ScopeNode* new_scope_node = create_existing(scope,
 														run_helper);

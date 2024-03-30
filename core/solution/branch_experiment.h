@@ -84,6 +84,9 @@ public:
 	BranchNode* branch_node;
 	ExitNode* exit_node;
 
+	/**
+	 * TODO: if better than existing and branch_weight < 0.1, then pass_through
+	 */
 	double new_average_score;
 
 	std::vector<double> new_linear_weights;

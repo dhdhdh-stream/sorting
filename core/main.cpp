@@ -31,8 +31,7 @@ Solution* solution;
 int main(int argc, char* argv[]) {
 	cout << "Starting..." << endl;
 
-	// seed = (unsigned)time(NULL);
-	seed = 1711570062;
+	seed = (unsigned)time(NULL);
 	srand(seed);
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
@@ -67,23 +66,24 @@ int main(int argc, char* argv[]) {
 		vector<ContextLayer> context;
 		context.push_back(ContextLayer());
 
-		context.back().scope = solution->scopes.back();
+		context.back().scope = solution->scopes[solution->curr_scope_id];
 		context.back().node = NULL;
 
-		ScopeHistory* root_history = new ScopeHistory(solution->scopes.back());
+		ScopeHistory* root_history = new ScopeHistory(solution->scopes[solution->curr_scope_id]);
 		context.back().scope_history = root_history;
 
 		// unused
 		int exit_depth = -1;
 		AbstractNode* exit_node = NULL;
 
-		solution->scopes.back()->activate(solution->scopes.back()->default_starting_node,
-										  problem,
-										  context,
-										  exit_depth,
-										  exit_node,
-										  run_helper,
-										  root_history);
+		solution->scopes[solution->curr_scope_id]->activate(
+			solution->scopes[solution->curr_scope_id]->default_starting_node,
+			problem,
+			context,
+			exit_depth,
+			exit_node,
+			run_helper,
+			root_history);
 
 		if (run_helper.experiments_seen_order.size() == 0) {
 			if (!run_helper.exceeded_limit) {
@@ -217,23 +217,24 @@ int main(int argc, char* argv[]) {
 				vector<ContextLayer> context;
 				context.push_back(ContextLayer());
 
-				context.back().scope = solution->scopes.back();
+				context.back().scope = solution->scopes[solution->curr_scope_id];
 				context.back().node = NULL;
 
-				ScopeHistory* root_history = new ScopeHistory(solution->scopes.back());
+				ScopeHistory* root_history = new ScopeHistory(solution->scopes[solution->curr_scope_id]);
 				context.back().scope_history = root_history;
 
 				// unused
 				int exit_depth = -1;
 				AbstractNode* exit_node = NULL;
 
-				solution->scopes.back()->verify_activate(solution->scopes.back()->default_starting_node,
-														 problem,
-														 context,
-														 exit_depth,
-														 exit_node,
-														 run_helper,
-														 root_history);
+				solution->scopes[solution->curr_scope_id]->verify_activate(
+					solution->scopes[solution->curr_scope_id]->default_starting_node,
+					problem,
+					context,
+					exit_depth,
+					exit_node,
+					run_helper,
+					root_history);
 
 				delete root_history;
 

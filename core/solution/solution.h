@@ -15,12 +15,8 @@ class Problem;
 class Scope;
 
 #if defined(MDEBUG) && MDEBUG
-const int IMPROVEMENTS_PER_RUN = 5;
-const int GENERATION_SIZE = 2;
 const int STARTING_NUM_DATAPOINTS = 10;
 #else
-const int IMPROVEMENTS_PER_RUN = 20;
-const int GENERATION_SIZE = 10;
 const int STARTING_NUM_DATAPOINTS = 1000;
 #endif /* MDEBUG */
 
@@ -31,8 +27,7 @@ public:
 	int timestamp;
 
 	std::vector<Scope*> scopes;
-	int curr_num_improvements;
-	int previous_generation_index;
+	int curr_scope_id;
 
 	int throw_counter;
 

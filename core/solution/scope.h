@@ -1,13 +1,3 @@
-/**
- * - the way "practice" works is:
- *   - scope shared between expensive instance and cheap instance
- *   - scope improved using cheap instances (i.e., practice)
- *   - benefits expensive instance
- * 
- * - exploring simply is trying random things
- *   - but the better explorer is the one who has more sophisticated things to try
- */
-
 #ifndef SCOPE_H
 #define SCOPE_H
 
@@ -26,11 +16,18 @@ class AbstractNodeHistory;
 class PassThroughExperimentHistory;
 class Problem;
 
+const int DEFAULT_NUM_IMPROVEMENTS = 20;
+const int MAX_NUM_CHILDREN = 5;
+
 class ScopeHistory;
 class Scope {
 public:
 	int id;
-	std::string name;
+
+	int parent_id;
+	std::vector<int> child_ids;
+	int layer;
+	int num_improvements;
 
 	int node_counter;
 	std::map<int, AbstractNode*> nodes;

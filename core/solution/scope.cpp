@@ -58,7 +58,13 @@ void Scope::reset() {
 }
 
 void Scope::save(ofstream& output_file) {
-	output_file << this->name << endl;
+	output_file << this->parent_id << endl;
+	output_file << this->child_ids.size() << endl;
+	for (int c_index = 0; c_index < (int)this->child_ids.size(); c_index++) {
+		output_file << this->child_ids[c_index] << endl;
+	}
+	output_file << this->layer << endl;
+	output_file << this->num_improvements << endl;
 
 	output_file << this->node_counter << endl;
 
@@ -85,7 +91,26 @@ void Scope::save(ofstream& output_file) {
 }
 
 void Scope::load(ifstream& input_file) {
-	getline(input_file, this->name);
+	string parent_id_line;
+	getline(input_file, parent_id_line);
+	this->parent_id = stoi(parent_id_line);
+
+	string num_child_ids_line;
+	getline(input_file, num_child_ids_line);
+	int num_child_ids = stoi(num_child_ids_line);
+	for (int c_index = 0; c_index < num_child_ids; c_index++) {
+		string child_id_line;
+		getline(input_file, child_id_line);
+		this->child_ids.push_back(stoi(child_id_line));
+	}
+
+	string layer_line;
+	getline(input_file, layer_line);
+	this->layer = stoi(layer_line);
+
+	string num_improvements_line;
+	getline(input_file, num_improvements_line);
+	this->num_improvements = stoi(num_improvements_line);
 
 	string node_counter_line;
 	getline(input_file, node_counter_line);
