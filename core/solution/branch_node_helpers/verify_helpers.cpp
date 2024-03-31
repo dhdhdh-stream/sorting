@@ -113,21 +113,21 @@ void BranchNode::verify_activate(AbstractNode*& curr_node,
 			}
 
 			if (this->verify_key == run_helper.verify_key) {
-				cout << "input_vals:" << endl;
-				for (int i_index = 0; i_index < (int)input_vals.size(); i_index++) {
-					cout << i_index << ": " << input_vals[i_index] << endl;
-				}
-				cout << "run_helper.curr_run_seed: " << run_helper.curr_run_seed << endl;
-				problem->print();
+				// cout << "input_vals:" << endl;
+				// for (int i_index = 0; i_index < (int)input_vals.size(); i_index++) {
+				// 	cout << i_index << ": " << input_vals[i_index] << endl;
+				// }
+				// cout << "run_helper.curr_run_seed: " << run_helper.curr_run_seed << endl;
+				// problem->print();
 
-				cout << "context scope" << endl;
-				for (int c_index = 0; c_index < (int)context.size()-1; c_index++) {
-					cout << c_index << ": " << context[c_index].scope->id << endl;
-				}
-				cout << "context node" << endl;
-				for (int c_index = 0; c_index < (int)context.size()-1; c_index++) {
-					cout << c_index << ": " << context[c_index].node->id << endl;
-				}
+				// cout << "context scope" << endl;
+				// for (int c_index = 0; c_index < (int)context.size()-1; c_index++) {
+				// 	cout << c_index << ": " << context[c_index].scope->id << endl;
+				// }
+				// cout << "context node" << endl;
+				// for (int c_index = 0; c_index < (int)context.size()-1; c_index++) {
+				// 	cout << c_index << ": " << context[c_index].node->id << endl;
+				// }
 
 				if (this->verify_original_scores[0] != original_score
 						|| this->verify_branch_scores[0] != branch_score) {
@@ -149,9 +149,9 @@ void BranchNode::verify_activate(AbstractNode*& curr_node,
 			} else {
 				history->is_branch = false;
 			}
-			if (this->verify_key == run_helper.verify_key) {
-				cout << "history->is_branch: " << history->is_branch << endl;
-			}
+			// if (this->verify_key == run_helper.verify_key) {
+			// 	cout << "history->is_branch: " << history->is_branch << endl;
+			// }
 			run_helper.curr_run_seed = xorshift(run_helper.curr_run_seed);
 
 			if (history->is_branch) {

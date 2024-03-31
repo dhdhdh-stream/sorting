@@ -1,5 +1,7 @@
 #include "solution.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "scope.h"
 
@@ -130,9 +132,11 @@ void Solution::increment() {
 	if (this->scopes[this->curr_scope_id]->num_improvements >= num_improvements_target) {
 		Scope* curr_scope = this->scopes[this->curr_scope_id];
 		while (true) {
-			if (curr_scope->child_ids.size() < MAX_NUM_CHILDREN
-					|| curr_scope->num_improvements == 0) {
-				break;
+			if (curr_scope->layer != 0) {
+				if (curr_scope->child_ids.size() < MAX_NUM_CHILDREN
+						|| curr_scope->num_improvements == 0) {
+					break;
+				}
 			}
 
 			if (curr_scope->parent_id == -1) {
@@ -166,8 +170,7 @@ void Solution::increment() {
 			curr_scope = this->scopes[curr_scope->parent_id];
 		}
 
-		if ((int)curr_scope->child_ids.size() == MAX_NUM_CHILDREN
-				&& curr_scope->num_improvements == 0) {
+		if ((int)curr_scope->child_ids.size() == MAX_NUM_CHILDREN) {
 			this->curr_scope_id = curr_scope->id;
 		} else {
 			while (true) {

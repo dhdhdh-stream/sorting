@@ -103,22 +103,22 @@ void BranchExperiment::capture_verify_activate(
 	this->verify_original_scores.push_back(existing_predicted_score);
 	this->verify_branch_scores.push_back(new_predicted_score);
 
-	cout << "input_vals:" << endl;
-	for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
-		cout << input_vals[i_index] << endl;
-	}
-	cout << "run_helper.starting_run_seed: " << run_helper.starting_run_seed << endl;
-	cout << "run_helper.curr_run_seed: " << run_helper.curr_run_seed << endl;
-	problem->print();
+	// cout << "input_vals:" << endl;
+	// for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
+	// 	cout << input_vals[i_index] << endl;
+	// }
+	// cout << "run_helper.starting_run_seed: " << run_helper.starting_run_seed << endl;
+	// cout << "run_helper.curr_run_seed: " << run_helper.curr_run_seed << endl;
+	// problem->print();
 
-	cout << "context scope" << endl;
-	for (int c_index = 0; c_index < (int)context.size()-1; c_index++) {
-		cout << c_index << ": " << context[c_index].scope->id << endl;
-	}
-	cout << "context node" << endl;
-	for (int c_index = 0; c_index < (int)context.size()-1; c_index++) {
-		cout << c_index << ": " << context[c_index].node->id << endl;
-	}
+	// cout << "context scope" << endl;
+	// for (int c_index = 0; c_index < (int)context.size()-1; c_index++) {
+	// 	cout << c_index << ": " << context[c_index].scope->id << endl;
+	// }
+	// cout << "context node" << endl;
+	// for (int c_index = 0; c_index < (int)context.size()-1; c_index++) {
+	// 	cout << c_index << ": " << context[c_index].node->id << endl;
+	// }
 
 	bool decision_is_branch;
 	if (run_helper.curr_run_seed%2 == 0) {
@@ -128,7 +128,7 @@ void BranchExperiment::capture_verify_activate(
 	}
 	run_helper.curr_run_seed = xorshift(run_helper.curr_run_seed);
 
-	cout << "decision_is_branch: " << decision_is_branch << endl;
+	// cout << "decision_is_branch: " << decision_is_branch << endl;
 
 	BranchNodeHistory* branch_node_history = new BranchNodeHistory(this->branch_node);
 	context.back().scope_history->node_histories.push_back(branch_node_history);

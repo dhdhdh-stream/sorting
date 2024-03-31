@@ -100,7 +100,8 @@ void PassThroughExperiment::explore_create_activate(
 					scope = solution->scopes[solution->curr_scope_id];
 				} else {
 					uniform_int_distribution<int> child_distribution(0, MAX_NUM_CHILDREN-1);
-					scope = solution->scopes[solution->scopes[solution->curr_scope_id]->child_ids[distribution(generator)]];
+					int scope_id = solution->scopes[solution->curr_scope_id]->child_ids[child_distribution(generator)];
+					scope = solution->scopes[scope_id];
 				}
 				ScopeNode* new_scope_node = create_existing(scope,
 															run_helper);

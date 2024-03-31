@@ -210,7 +210,7 @@ int main(int argc, char* argv[]) {
 				run_helper.verify_key = solution->verify_key;
 
 				run_helper.starting_run_seed = solution->verify_seeds[0];
-				cout << "run_helper.starting_run_seed: " << run_helper.starting_run_seed << endl;
+				// cout << "run_helper.starting_run_seed: " << run_helper.starting_run_seed << endl;
 				run_helper.curr_run_seed = solution->verify_seeds[0];
 				solution->verify_seeds.erase(solution->verify_seeds.begin());
 
