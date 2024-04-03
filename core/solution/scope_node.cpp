@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-#include "abstract_experiment.h"
+#include "experiment.h"
 #include "globals.h"
 #include "scope.h"
 #include "solution.h"

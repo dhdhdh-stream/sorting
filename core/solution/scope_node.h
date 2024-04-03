@@ -12,8 +12,6 @@
 #include "metrics.h"
 #include "run_helper.h"
 
-class AbstractExperiment;
-class AbstractExperimentHistory;
 class Problem;
 class Scope;
 
@@ -60,34 +58,6 @@ public:
 										int& random_curr_depth,
 										int& random_throw_id,
 										bool& random_exceeded_limit);
-	void random_path_activate(AbstractNode*& curr_node,
-							  std::vector<Scope*>& scope_context,
-							  std::vector<AbstractNode*>& node_context,
-							  int& inner_exit_depth,
-							  AbstractNode*& inner_exit_node,
-							  int& random_curr_depth,
-							  int& random_throw_id,
-							  bool& random_exceeded_limit,
-							  std::vector<std::vector<Scope*>>& possible_scope_contexts,
-							  std::vector<std::vector<AbstractNode*>>& possible_node_contexts);
-	void random_exit_activate(AbstractNode*& curr_node,
-							  std::vector<Scope*>& scope_context,
-							  std::vector<AbstractNode*>& node_context,
-							  int& inner_exit_depth,
-							  AbstractNode*& inner_exit_node,
-							  int& random_curr_depth,
-							  int& random_throw_id,
-							  bool& random_exceeded_limit,
-							  int curr_depth,
-							  std::vector<std::pair<int,AbstractNode*>>& possible_exits);
-	void inner_random_exit_activate(AbstractNode*& curr_node,
-									std::vector<Scope*>& scope_context,
-									std::vector<AbstractNode*>& node_context,
-									int& inner_exit_depth,
-									AbstractNode*& inner_exit_node,
-									int& random_curr_depth,
-									int& random_throw_id,
-									bool& random_exceeded_limit);
 
 	void step_through_activate(AbstractNode*& curr_node,
 							   Problem* problem,

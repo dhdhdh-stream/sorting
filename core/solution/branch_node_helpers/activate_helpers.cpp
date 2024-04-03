@@ -3,9 +3,8 @@
 #include <iostream>
 
 #include "action_node.h"
-#include "branch_experiment.h"
+#include "experiment.h"
 #include "network.h"
-#include "pass_through_experiment.h"
 #include "scope.h"
 #include "solution_helpers.h"
 #include "utilities.h"

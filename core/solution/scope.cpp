@@ -201,7 +201,7 @@ void Scope::save_for_display(ofstream& output_file) {
 ScopeHistory::ScopeHistory(Scope* scope) {
 	this->scope = scope;
 
-	this->pass_through_experiment_history = NULL;
+	this->experiment_history = NULL;
 }
 
 ScopeHistory::ScopeHistory(ScopeHistory* original) {
@@ -231,7 +231,7 @@ ScopeHistory::ScopeHistory(ScopeHistory* original) {
 		}
 	}
 
-	this->pass_through_experiment_history = NULL;
+	this->experiment_history = NULL;
 }
 
 ScopeHistory::~ScopeHistory() {

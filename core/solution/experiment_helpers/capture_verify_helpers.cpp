@@ -1,24 +1,35 @@
-#include "branch_experiment.h"
+#if defined(MDEBUG) && MDEBUG
+
+#include "experiment.h"
+
+#include <iostream>
 
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
 #include "exit_node.h"
+#include "globals.h"
 #include "network.h"
+#include "problem.h"
 #include "scope.h"
 #include "scope_node.h"
+#include "solution.h"
 #include "solution_helpers.h"
 #include "utilities.h"
 
 using namespace std;
 
-void BranchExperiment::root_verify_activate(
-		AbstractNode*& curr_node,
-		Problem* problem,
-		vector<ContextLayer>& context,
-		int& exit_depth,
-		AbstractNode*& exit_node,
-		RunHelper& run_helper) {
+void Experiment::capture_verify_activate(AbstractNode*& curr_node,
+										 Problem* problem,
+										 vector<ContextLayer>& context,
+										 int& exit_depth,
+										 AbstractNode*& exit_node,
+										 RunHelper& run_helper) {
+	if (this->verify_problems[this->state_iter] == NULL) {
+		this->verify_problems[this->state_iter] = problem->copy_and_reset();
+	}
+	this->verify_seeds[this->state_iter] = run_helper.starting_run_seed;
+
 	vector<double> input_vals(this->input_scope_contexts.size(), 0.0);
 	for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
 		if (this->input_node_contexts[i_index].back()->type == NODE_TYPE_ACTION) {
@@ -87,7 +98,26 @@ void BranchExperiment::root_verify_activate(
 		new_predicted_score += this->new_network->output->acti_vals[0];
 	}
 
-	#if defined(MDEBUG) && MDEBUG
+	this->verify_original_scores.push_back(existing_predicted_score);
+	this->verify_branch_scores.push_back(new_predicted_score);
+
+	// cout << "input_vals:" << endl;
+	// for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
+	// 	cout << input_vals[i_index] << endl;
+	// }
+	// cout << "run_helper.starting_run_seed: " << run_helper.starting_run_seed << endl;
+	// cout << "run_helper.curr_run_seed: " << run_helper.curr_run_seed << endl;
+	// problem->print();
+
+	// cout << "context scope" << endl;
+	// for (int c_index = 0; c_index < (int)context.size()-1; c_index++) {
+	// 	cout << c_index << ": " << context[c_index].scope->id << endl;
+	// }
+	// cout << "context node" << endl;
+	// for (int c_index = 0; c_index < (int)context.size()-1; c_index++) {
+	// 	cout << c_index << ": " << context[c_index].node->id << endl;
+	// }
+
 	bool decision_is_branch;
 	if (run_helper.curr_run_seed%2 == 0) {
 		decision_is_branch = true;
@@ -95,15 +125,10 @@ void BranchExperiment::root_verify_activate(
 		decision_is_branch = false;
 	}
 	run_helper.curr_run_seed = xorshift(run_helper.curr_run_seed);
-	#else
-	bool decision_is_branch = new_predicted_score > existing_predicted_score;
-	#endif /* MDEBUG */
 
-	BranchNodeHistory* branch_node_history = new BranchNodeHistory(this->branch_node);
-	context.back().scope_history->node_histories.push_back(branch_node_history);
+	// cout << "decision_is_branch: " << decision_is_branch << endl;
+
 	if (decision_is_branch) {
-		branch_node_history->is_branch = true;
-
 		if (this->throw_id != -1) {
 			run_helper.throw_id = -1;
 		}
@@ -121,7 +146,39 @@ void BranchExperiment::root_verify_activate(
 				curr_node = this->scopes[0];
 			}
 		}
-	} else {
-		branch_node_history->is_branch = false;
 	}
 }
+
+void Experiment::capture_verify_backprop() {
+	this->state_iter++;
+	if (this->state_iter >= NUM_VERIFY_SAMPLES) {
+		if (this->parent_experiment == NULL) {
+			this->result = EXPERIMENT_RESULT_SUCCESS;
+		} else {
+			vector<Experiment*> verify_experiments;
+			verify_experiments.insert(verify_experiments.begin(), this);
+			Experiment* curr_experiment = this->parent_experiment;
+			while (true) {
+				if (curr_experiment->parent_experiment == NULL) {
+					/**
+					 * - don't include root
+					 */
+					break;
+				} else {
+					verify_experiments.insert(verify_experiments.begin(), curr_experiment);
+					curr_experiment = curr_experiment->parent_experiment;
+				}
+			}
+
+			this->root_experiment->verify_experiments = verify_experiments;
+
+			this->root_experiment->o_target_val_histories.reserve(VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints);
+
+			this->root_experiment->state = EXPERIMENT_STATE_EXPERIMENT_VERIFY_1ST_EXISTING;
+
+			this->state = EXPERIMENT_STATE_ROOT_VERIFY;
+		}
+	}
+}
+
+#endif /* MDEBUG */

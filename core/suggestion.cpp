@@ -4,7 +4,7 @@
 #include <thread>
 #include <random>
 
-#include "abstract_experiment.h"
+#include "experiment.h"
 #include "action_node.h"
 #include "globals.h"
 #include "minesweeper.h"
@@ -41,7 +41,7 @@ int main(int argc, char* argv[]) {
 
 	ifstream suggestion_input_file;
 	suggestion_input_file.open("suggestion_input.txt");
-	AbstractExperiment* experiment = create_experiment(suggestion_input_file);
+	Experiment* experiment = create_experiment(suggestion_input_file);
 	suggestion_input_file.close();
 
 	while (true) {

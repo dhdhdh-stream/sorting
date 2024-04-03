@@ -1,6 +1,6 @@
 #include "action_node.h"
 
-#include "abstract_experiment.h"
+#include "experiment.h"
 #include "scope.h"
 
 using namespace std;

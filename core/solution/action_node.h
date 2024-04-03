@@ -9,7 +9,6 @@
 #include "context_layer.h"
 #include "run_helper.h"
 
-class AbstractExperiment;
 class Problem;
 class Scope;
 

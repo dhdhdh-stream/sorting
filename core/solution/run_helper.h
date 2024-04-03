@@ -3,8 +3,8 @@
 
 #include <vector>
 
-class AbstractExperiment;
-class AbstractExperimentHistory;
+class Experiment;
+class ExperimentHistory;
 
 class RunHelper {
 public:
@@ -20,9 +20,9 @@ public:
 	/**
 	 * - for starting experiments
 	 */
-	std::vector<AbstractExperiment*> experiments_seen_order;
+	std::vector<Experiment*> experiments_seen_order;
 
-	std::vector<AbstractExperimentHistory*> experiment_histories;
+	std::vector<ExperimentHistory*> experiment_histories;
 
 	#if defined(MDEBUG) && MDEBUG
 	void* verify_key;

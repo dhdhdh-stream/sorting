@@ -1,4 +1,4 @@
-#include "branch_experiment.h"
+#include "experiment.h"
 
 #include <cmath>
 #include <iostream>
@@ -18,13 +18,12 @@
 
 using namespace std;
 
-void BranchExperiment::measure_activate(
-		AbstractNode*& curr_node,
-		Problem* problem,
-		vector<ContextLayer>& context,
-		int& exit_depth,
-		AbstractNode*& exit_node,
-		RunHelper& run_helper) {
+void Experiment::measure_activate(AbstractNode*& curr_node,
+								  Problem* problem,
+								  vector<ContextLayer>& context,
+								  int& exit_depth,
+								  AbstractNode*& exit_node,
+								  RunHelper& run_helper) {
 	vector<double> input_vals(this->input_scope_contexts.size(), 0.0);
 	for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
 		if (this->input_node_contexts[i_index].back()->type == NODE_TYPE_ACTION) {
@@ -105,12 +104,8 @@ void BranchExperiment::measure_activate(
 	bool decision_is_branch = new_predicted_score > existing_predicted_score;
 	#endif /* MDEBUG */
 
-	BranchNodeHistory* branch_node_history = new BranchNodeHistory(this->branch_node);
-	context.back().scope_history->node_histories.push_back(branch_node_history);
 	if (decision_is_branch) {
 		this->branch_count++;
-
-		branch_node_history->is_branch = true;
 
 		if (this->throw_id != -1) {
 			run_helper.throw_id = -1;
@@ -131,37 +126,46 @@ void BranchExperiment::measure_activate(
 		}
 	} else {
 		this->original_count++;
-
-		branch_node_history->is_branch = false;
 	}
 }
 
-void BranchExperiment::measure_backprop(double target_val,
-										RunHelper& run_helper) {
+void Experiment::measure_backprop(double target_val,
+								  RunHelper& run_helper) {
 	this->combined_score += target_val;
 
 	this->state_iter++;
 	if (this->state_iter >= solution->curr_num_datapoints) {
 		this->combined_score /= solution->curr_num_datapoints;
 
-		double combined_improvement = this->combined_score - this->existing_average_score;
-		double combined_improvement_t_score = combined_improvement
-			/ (this->existing_score_standard_deviation / sqrt(solution->curr_num_datapoints));
-
-		double branch_weight = (double)this->branch_count / (double)(this->original_count + this->branch_count);
+		this->branch_weight = (double)this->branch_count / (double)(this->original_count + this->branch_count);
 
 		#if defined(MDEBUG) && MDEBUG
 		if (rand()%2 == 0) {
 		#else
-		if (branch_weight > 0.01 && combined_improvement_t_score > 1.960) {
+		double combined_improvement = this->combined_score - this->existing_average_score;
+		double combined_improvement_t_score = combined_improvement
+			/ (this->existing_score_standard_deviation / sqrt(solution->curr_num_datapoints));
+
+		if (this->new_is_better
+				&& this->branch_weight > 0.01
+				&& combined_improvement_t_score > 1.960) {
 		#endif /* MDEBUG */
-			if (this->skip_explore) {
-				cout << "BRANCH_EXPERIMENT_STATE_MEASURE success" << endl;
-				cout << "this->existing_average_score: " << this->existing_average_score << endl;
-				cout << "this->combined_score: " << this->combined_score << endl;
-				cout << "combined_improvement_t_score: " << combined_improvement_t_score << endl;
-				cout << "branch_weight: " << branch_weight << endl;
-			}
+			this->combined_score = 0.0;
+			this->original_count = 0;
+			this->branch_count = 0;
+
+			this->o_target_val_histories.reserve(VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints);
+
+			this->state = EXPERIMENT_STATE_VERIFY_1ST_EXISTING;
+			this->state_iter = 0;
+		#if defined(MDEBUG) && MDEBUG
+		} else if (this->step_types.size() > 0
+				&& rand()%4 == 0) {
+		#else
+		} else if (this->step_types.size() > 0
+				&& this->branch_weight > EXPERIMENT_MIN_BRANCH_WEIGHT) {
+		#endif /* MDEBUG */
+			this->new_is_better = false;
 
 			this->combined_score = 0.0;
 			this->original_count = 0;
@@ -169,19 +173,29 @@ void BranchExperiment::measure_backprop(double target_val,
 
 			this->o_target_val_histories.reserve(VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints);
 
-			this->state = BRANCH_EXPERIMENT_STATE_VERIFY_1ST_EXISTING;
+			this->state = EXPERIMENT_STATE_VERIFY_1ST_EXISTING;
 			this->state_iter = 0;
 		} else {
-			if (this->skip_explore) {
-				cout << "BRANCH_EXPERIMENT_STATE_MEASURE fail" << endl;
-				cout << "this->existing_average_score: " << this->existing_average_score << endl;
-				cout << "this->combined_score: " << this->combined_score << endl;
-				cout << "this->existing_score_standard_deviation: " << this->existing_score_standard_deviation << endl;
-				cout << "combined_improvement_t_score: " << combined_improvement_t_score << endl;
-				cout << "branch_weight: " << branch_weight << endl;
-			}
+			this->explore_iter++;
+			if (this->explore_iter < MAX_EXPLORE_TRIES) {
+				for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {
+					if (this->step_types[s_index] == STEP_TYPE_ACTION) {
+						delete this->actions[s_index];
+					} else {
+						delete this->scopes[s_index];
+					}
+				}
 
-			this->result = EXPERIMENT_RESULT_FAIL;
+				this->step_types.clear();
+				this->actions.clear();
+				this->scopes.clear();
+				this->catch_throw_ids.clear();
+
+				this->state = EXPERIMENT_STATE_EXPLORE_CREATE;
+				this->state_iter = 0;
+			} else {
+				this->result = EXPERIMENT_RESULT_FAIL;
+			}
 		}
 	}
 }

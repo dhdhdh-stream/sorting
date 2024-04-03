@@ -8,8 +8,6 @@
 #include "context_layer.h"
 #include "run_helper.h"
 
-class AbstractExperiment;
-class AbstractExperimentHistory;
 class Network;
 class Problem;
 class Scope;
@@ -90,17 +88,6 @@ public:
 	void inner_random_existing_activate(AbstractNode*& curr_node,
 										std::vector<Scope*>& scope_context,
 										std::vector<AbstractNode*>& node_context);
-	void random_path_activate(AbstractNode*& curr_node,
-							  std::vector<Scope*>& scope_context,
-							  std::vector<AbstractNode*>& node_context);
-	void random_exit_activate(AbstractNode*& curr_node,
-							  std::vector<Scope*>& scope_context,
-							  std::vector<AbstractNode*>& node_context,
-							  int curr_depth,
-							  std::vector<std::pair<int,AbstractNode*>>& possible_exits);
-	void inner_random_exit_activate(AbstractNode*& curr_node,
-									std::vector<Scope*>& scope_context,
-									std::vector<AbstractNode*>& node_context);
 
 	void step_through_activate(AbstractNode*& curr_node,
 							   Problem* problem,

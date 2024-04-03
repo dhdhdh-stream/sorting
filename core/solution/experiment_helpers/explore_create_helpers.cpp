@@ -1,6 +1,4 @@
-#include "pass_through_experiment.h"
-
-#include <iostream>
+#include "experiment.h"
 
 #include "action_node.h"
 #include "constants.h"
@@ -13,11 +11,10 @@
 
 using namespace std;
 
-void PassThroughExperiment::explore_create_activate(
-		AbstractNode*& curr_node,
-		vector<ContextLayer>& context,
-		RunHelper& run_helper,
-		PassThroughExperimentHistory* history) {
+void Experiment::explore_create_activate(AbstractNode*& curr_node,
+										 vector<ContextLayer>& context,
+										 RunHelper& run_helper,
+										 ExperimentHistory* history) {
 	history->instance_count++;
 
 	bool is_target = false;
@@ -37,19 +34,15 @@ void PassThroughExperiment::explore_create_activate(
 	if (is_target) {
 		history->has_target = true;
 
-		vector<pair<int,AbstractNode*>> possible_exits;
-		gather_possible_exits(possible_exits,
-							  this->scope_context,
-							  this->node_context,
-							  this->is_branch,
-							  this->throw_id,
-							  run_helper);
+		context[context.size() - this->scope_context.size()].scope_history->experiment_history = history;
 
-		uniform_int_distribution<int> distribution(0, possible_exits.size()-1);
-		int random_index = distribution(generator);
-		this->curr_exit_depth = possible_exits[random_index].first;
-		this->curr_exit_next_node = possible_exits[random_index].second;
+		for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
+			history->experiment_index.push_back(context[context.size() - this->scope_context.size() + c_index].scope_history->node_histories.size());
+		}
 
+		/**
+		 * - set this->exit_throw_id while still have full context
+		 */
 		uniform_int_distribution<int> throw_distribution(0, 3);
 		if (throw_distribution(generator) == 0) {
 			uniform_int_distribution<int> reuse_existing_throw_distribution(0, 1);
@@ -68,22 +61,59 @@ void PassThroughExperiment::explore_create_activate(
 
 				if (possible_throw_ids.size() > 0) {
 					uniform_int_distribution<int> possible_distribution(0, possible_throw_ids.size()-1);
-					this->curr_exit_throw_id = possible_throw_ids[possible_distribution(generator)];
+					this->exit_throw_id = possible_throw_ids[possible_distribution(generator)];
 				} else {
-					this->curr_exit_throw_id = TEMP_THROW_ID;
+					this->exit_throw_id = TEMP_THROW_ID;
 				}
 			} else {
-				this->curr_exit_throw_id = TEMP_THROW_ID;
+				this->exit_throw_id = TEMP_THROW_ID;
 			}
 		} else {
-			this->curr_exit_throw_id = -1;
+			this->exit_throw_id = -1;
 		}
+	}
+}
+
+void gather_possible_exits_helper(vector<int>& experiment_index,
+								  vector<pair<int,AbstractNode*>>& possible_exits,
+								  ScopeHistory* scope_history) {
+	if (experiment_index.size() > 1) {
+		ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)scope_history->node_histories[experiment_index[0]-1];
+
+		vector<int> inner_experiment_index(experiment_index.begin()+1, experiment_index.end());
+		gather_possible_exits_helper(inner_experiment_index,
+									 possible_exits,
+									 scope_node_history->scope_history);
+	}
+
+	for (int h_index = experiment_index[0]; h_index < (int)scope_history->node_histories.size(); h_index++) {
+		possible_exits.push_back({experiment_index.size()-1, scope_history->node_histories[h_index]->node});
+	}
+
+	possible_exits.push_back({experiment_index.size()-1, NULL});
+}
+
+void Experiment::explore_create_backprop(double target_val,
+										 RunHelper& run_helper) {
+	ExperimentHistory* history = run_helper.experiment_histories.back();
+
+	if (history->has_target
+			&& !run_helper.exceeded_limit) {
+		vector<pair<int,AbstractNode*>> possible_exits;
+
+		gather_possible_exits_helper(history->experiment_index,
+									 possible_exits,
+									 history->scope_history);
+
+		uniform_int_distribution<int> distribution(0, possible_exits.size()-1);
+		int random_index = distribution(generator);
+		this->exit_depth = possible_exits[random_index].first;
+		this->exit_next_node = possible_exits[random_index].second;
 
 		int new_num_steps;
 		uniform_int_distribution<int> uniform_distribution(0, 1);
 		geometric_distribution<int> geometric_distribution(0.5);
-		if (this->curr_exit_depth == 0
-				&& this->curr_exit_next_node == curr_node) {
+		if (random_index == 0) {
 			new_num_steps = 1 + uniform_distribution(generator) + geometric_distribution(generator);
 		} else {
 			new_num_steps = uniform_distribution(generator) + geometric_distribution(generator);
@@ -106,38 +136,29 @@ void PassThroughExperiment::explore_create_activate(
 				ScopeNode* new_scope_node = create_existing(scope,
 															run_helper);
 				if (new_scope_node != NULL) {
-					this->curr_step_types.push_back(STEP_TYPE_SCOPE);
-					this->curr_actions.push_back(NULL);
+					this->step_types.push_back(STEP_TYPE_SCOPE);
+					this->actions.push_back(NULL);
 
-					this->curr_scopes.push_back(new_scope_node);
+					this->scopes.push_back(new_scope_node);
 
-					this->curr_catch_throw_ids.push_back(set<int>());
+					this->catch_throw_ids.push_back(set<int>());
 
 					default_to_action = false;
 				}
 			}
 
 			if (default_to_action) {
-				this->curr_step_types.push_back(STEP_TYPE_ACTION);
+				this->step_types.push_back(STEP_TYPE_ACTION);
 
 				ActionNode* new_action_node = new ActionNode();
 				new_action_node->action = problem_type->random_action();
-				this->curr_actions.push_back(new_action_node);
+				this->actions.push_back(new_action_node);
 
-				this->curr_scopes.push_back(NULL);
-				this->curr_catch_throw_ids.push_back(set<int>());
+				this->scopes.push_back(NULL);
+				this->catch_throw_ids.push_back(set<int>());
 			}
 		}
-	}
-}
 
-void PassThroughExperiment::explore_create_backprop(
-		PassThroughExperimentHistory* history) {
-	if (history->has_target) {
-		this->state = PASS_THROUGH_EXPERIMENT_STATE_EXPLORE_MEASURE;
-		/**
-		 * - leave this->state_iter unchanged
-		 */
-		this->sub_state_iter = 0;
+		this->state = EXPERIMENT_STATE_EXPLORE_CREATE;
 	}
 }

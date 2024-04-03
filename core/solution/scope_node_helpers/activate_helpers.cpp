@@ -2,8 +2,7 @@
 
 #include <iostream>
 
-#include "branch_experiment.h"
-#include "pass_through_experiment.h"
+#include "experiment.h"
 #include "scope.h"
 
 using namespace std;

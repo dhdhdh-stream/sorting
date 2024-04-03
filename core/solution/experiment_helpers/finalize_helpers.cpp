@@ -1,4 +1,4 @@
-#include "branch_experiment.h"
+#include "experiment.h"
 
 #include <iostream>
 
@@ -13,12 +13,24 @@
 
 using namespace std;
 
-void BranchExperiment::finalize() {
+void Experiment::finalize() {
 	if (this->result == EXPERIMENT_RESULT_SUCCESS) {
-		if (this->original_count == 0) {
+		if (this->is_pass_through) {
 			new_pass_through();
 		} else {
 			new_branch();
+		}
+
+		for (int v_index = 0; v_index < (int)this->verify_experiments.size(); v_index++) {
+			this->verify_experiments[v_index]->result = EXPERIMENT_RESULT_SUCCESS;
+			this->verify_experiments[v_index]->finalize();
+			delete this->verify_experiments[v_index];
+		}
+	} else {
+		for (int c_index = 0; c_index < (int)this->child_experiments.size(); c_index++) {
+			this->child_experiments[c_index]->result = EXPERIMENT_RESULT_FAIL;
+			this->child_experiments[c_index]->finalize();
+			delete this->child_experiments[c_index];
 		}
 	}
 
@@ -31,7 +43,7 @@ void BranchExperiment::finalize() {
 	this->node_context.back()->experiments.erase(this->node_context.back()->experiments.begin() + experiment_index);
 }
 
-void BranchExperiment::new_branch() {
+void Experiment::new_branch() {
 	cout << "new_branch" << endl;
 
 	if (this->exit_node != NULL) {
@@ -308,7 +320,7 @@ void BranchExperiment::new_branch() {
 	this->exit_node = NULL;
 }
 
-void BranchExperiment::new_pass_through() {
+void Experiment::new_pass_through() {
 	cout << "new_pass_through" << endl;
 
 	if (this->exit_node != NULL) {

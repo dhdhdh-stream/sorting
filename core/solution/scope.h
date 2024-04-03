@@ -13,7 +13,7 @@
 
 class AbstractNode;
 class AbstractNodeHistory;
-class PassThroughExperimentHistory;
+class ExperimentHistory;
 class Problem;
 
 #if defined(MDEBUG) && MDEBUG
@@ -70,34 +70,6 @@ public:
 										int& random_curr_depth,
 										int& random_throw_id,
 										bool& random_exceeded_limit);
-	void random_path_activate(AbstractNode* starting_node,
-							  std::vector<Scope*>& scope_context,
-							  std::vector<AbstractNode*>& node_context,
-							  int& exit_depth,
-							  AbstractNode*& exit_node,
-							  int& random_curr_depth,
-							  int& random_throw_id,
-							  bool& random_exceeded_limit,
-							  std::vector<std::vector<Scope*>>& possible_scope_contexts,
-							  std::vector<std::vector<AbstractNode*>>& possible_node_contexts);
-	void random_exit_activate(AbstractNode* starting_node,
-							  std::vector<Scope*>& scope_context,
-							  std::vector<AbstractNode*>& node_context,
-							  int& exit_depth,
-							  AbstractNode*& exit_node,
-							  int& random_curr_depth,
-							  int& random_throw_id,
-							  bool& random_exceeded_limit,
-							  int curr_depth,
-							  std::vector<std::pair<int,AbstractNode*>>& possible_exits);
-	void inner_random_exit_activate(AbstractNode* starting_node,
-									std::vector<Scope*>& scope_context,
-									std::vector<AbstractNode*>& node_context,
-									int& exit_depth,
-									AbstractNode*& exit_node,
-									int& random_curr_depth,
-									int& random_throw_id,
-									bool& random_exceeded_limit);
 
 	void step_through_activate(AbstractNode* starting_node,
 							   Problem* problem,
@@ -142,7 +114,7 @@ public:
 
 	std::vector<AbstractNodeHistory*> node_histories;
 
-	PassThroughExperimentHistory* pass_through_experiment_history;
+	ExperimentHistory* experiment_history;
 
 	ScopeHistory(Scope* scope);
 	ScopeHistory(ScopeHistory* original);

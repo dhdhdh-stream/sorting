@@ -1,4 +1,4 @@
-#include "branch_experiment.h"
+#include "experiment.h"
 
 #include <iostream>
 /**
@@ -15,7 +15,6 @@
 #include "globals.h"
 #include "network.h"
 #include "nn_helpers.h"
-#include "pass_through_experiment.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
@@ -23,17 +22,18 @@
 
 using namespace std;
 
-void BranchExperiment::train_existing_activate(vector<ContextLayer>& context,
-											   RunHelper& run_helper,
-											   BranchExperimentHistory* history) {
+void Experiment::train_existing_activate(vector<ContextLayer>& context,
+										 RunHelper& run_helper,
+										 ExperimentHistory* history) {
 	this->i_scope_histories.push_back(new ScopeHistory(context[context.size() - this->scope_context.size()].scope_history));
 
 	history->instance_count++;
 }
 
-void BranchExperiment::train_existing_backprop(double target_val,
-											   RunHelper& run_helper,
-											   BranchExperimentHistory* history) {
+void Experiment::train_existing_backprop(double target_val,
+										 RunHelper& run_helper) {
+	ExperimentHistory* history = run_helper.experiment_histories.back();
+
 	this->o_target_val_histories.push_back(target_val);
 
 	for (int i_index = 0; i_index < (int)history->instance_count; i_index++) {
@@ -488,12 +488,14 @@ void BranchExperiment::train_existing_backprop(double target_val,
 			this->i_scope_histories.reserve(solution->curr_num_datapoints);
 			this->i_target_val_histories.reserve(solution->curr_num_datapoints);
 
-			this->state = BRANCH_EXPERIMENT_STATE_TRAIN_NEW;
+			this->state = EXPERIMENT_STATE_TRAIN_NEW;
 			this->state_iter = 0;
-			this->sub_state_iter = 0;
+			this->explore_iter = MAX_EXPLORE_TRIES;
+			this->experiment_iter = MAX_EXPERIMENT_NUM_EXPERIMENTS;
 		} else {
-			this->state = BRANCH_EXPERIMENT_STATE_EXPLORE;
+			this->state = EXPERIMENT_STATE_EXPLORE_CREATE;
 			this->state_iter = 0;
+			this->explore_iter = 0;
 		}
 	}
 }

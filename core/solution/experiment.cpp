@@ -1,4 +1,4 @@
-#include "branch_experiment.h"
+#include "experiment.h"
 
 #include <iostream>
 
@@ -8,7 +8,6 @@
 #include "exit_node.h"
 #include "globals.h"
 #include "network.h"
-#include "pass_through_experiment.h"
 #include "problem.h"
 #include "scope.h"
 #include "scope_node.h"
@@ -16,14 +15,12 @@
 
 using namespace std;
 
-BranchExperiment::BranchExperiment(vector<Scope*> scope_context,
-								   vector<AbstractNode*> node_context,
-								   bool is_branch,
-								   int throw_id,
-								   PassThroughExperiment* parent_experiment,
-								   bool skip_explore) {
-	this->type = EXPERIMENT_TYPE_BRANCH;
-
+Experiment::Experiment(vector<Scope*> scope_context,
+					   vector<AbstractNode*> node_context,
+					   bool is_branch,
+					   int throw_id,
+					   Experiment* parent_experiment,
+					   bool skip_explore) {
 	this->scope_context = scope_context;
 	this->node_context = node_context;
 	this->is_branch = is_branch;
@@ -33,7 +30,7 @@ BranchExperiment::BranchExperiment(vector<Scope*> scope_context,
 	if (this->parent_experiment != NULL) {
 		this->parent_experiment->child_experiments.push_back(this);
 
-		PassThroughExperiment* curr_experiment = this->parent_experiment;
+		Experiment* curr_experiment = this->parent_experiment;
 		while (true) {
 			if (curr_experiment->parent_experiment == NULL) {
 				break;
@@ -65,7 +62,7 @@ BranchExperiment::BranchExperiment(vector<Scope*> scope_context,
 	this->i_scope_histories.reserve(solution->curr_num_datapoints);
 	this->i_target_val_histories.reserve(solution->curr_num_datapoints);
 
-	this->state = BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING;
+	this->state = EXPERIMENT_STATE_TRAIN_EXISTING;
 	this->state_iter = 0;
 
 	this->branch_node = NULL;
@@ -78,7 +75,7 @@ BranchExperiment::BranchExperiment(vector<Scope*> scope_context,
 	this->result = EXPERIMENT_RESULT_NA;
 }
 
-BranchExperiment::~BranchExperiment() {
+Experiment::~Experiment() {
 	if (this->parent_experiment != NULL) {
 		cout << "inner delete" << endl;
 	}
@@ -121,10 +118,18 @@ BranchExperiment::~BranchExperiment() {
 	#endif /* MDEBUG */
 }
 
-BranchExperimentHistory::BranchExperimentHistory(BranchExperiment* experiment) {
+ExperimentHistory::ExperimentHistory(Experiment* experiment) {
 	this->experiment = experiment;
 
 	this->instance_count = 0;
 
 	this->has_target = false;
+
+	this->scope_history = NULL;
+}
+
+ExperimentHistory::~ExperimentHistory() {
+	if (this->scope_history != NULL) {
+		delete this->scope_history;
+	}
 }

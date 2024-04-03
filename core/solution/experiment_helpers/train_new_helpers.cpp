@@ -1,4 +1,4 @@
-#include "branch_experiment.h"
+#include "experiment.h"
 
 #include <cmath>
 #include <iostream>
@@ -13,7 +13,6 @@
 #include "globals.h"
 #include "network.h"
 #include "nn_helpers.h"
-#include "pass_through_experiment.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
@@ -22,14 +21,13 @@
 
 using namespace std;
 
-void BranchExperiment::train_new_activate(
-		AbstractNode*& curr_node,
-		Problem* problem,
-		vector<ContextLayer>& context,
-		int& exit_depth,
-		AbstractNode*& exit_node,
-		RunHelper& run_helper,
-		BranchExperimentHistory* history) {
+void Experiment::train_new_activate(AbstractNode*& curr_node,
+									Problem* problem,
+									vector<ContextLayer>& context,
+									int& exit_depth,
+									AbstractNode*& exit_node,
+									RunHelper& run_helper,
+									ExperimentHistory* history) {
 	history->instance_count++;
 
 	bool is_target = false;
@@ -58,7 +56,7 @@ void BranchExperiment::train_new_activate(
 	}
 }
 
-void BranchExperiment::train_new_target_activate(
+void Experiment::train_new_target_activate(
 		AbstractNode*& curr_node,
 		Problem* problem,
 		vector<ContextLayer>& context,
@@ -67,9 +65,9 @@ void BranchExperiment::train_new_target_activate(
 		RunHelper& run_helper) {
 	this->i_scope_histories.push_back(new ScopeHistory(context[context.size() - this->scope_context.size()].scope_history));
 
-	BranchNodeHistory* branch_node_history = new BranchNodeHistory(this->branch_node);
-	context.back().scope_history->node_histories.push_back(branch_node_history);
-	branch_node_history->is_branch = true;
+	/**
+	 * - don't need to add history for new branch_node
+	 */
 
 	if (this->throw_id != -1) {
 		run_helper.throw_id = -1;
@@ -90,8 +88,10 @@ void BranchExperiment::train_new_target_activate(
 	}
 }
 
-void BranchExperiment::train_new_backprop(double target_val,
-										  BranchExperimentHistory* history) {
+void Experiment::train_new_backprop(double target_val,
+									RunHelper& run_helper) {
+	ExperimentHistory* history = run_helper.experiment_histories.back();
+
 	this->average_instances_per_run = 0.9*this->average_instances_per_run + 0.1*history->instance_count;
 
 	if (history->has_target) {
@@ -387,7 +387,13 @@ void BranchExperiment::train_new_backprop(double target_val,
 			this->i_scope_histories.clear();
 			this->i_target_val_histories.clear();
 
-			this->state = BRANCH_EXPERIMENT_STATE_MEASURE;
+			this->new_is_better = true;
+
+			this->combined_score = 0.0;
+			this->original_count = 0;
+			this->branch_count = 0;
+
+			this->state = EXPERIMENT_STATE_MEASURE;
 			this->state_iter = 0;
 		}
 	}

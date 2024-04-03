@@ -5,8 +5,8 @@
 #include "action_node.h"
 #include "branch_node.h"
 #include "exit_node.h"
+#include "experiment.h"
 #include "globals.h"
-#include "pass_through_experiment.h"
 #include "scope_node.h"
 #include "solution.h"
 
@@ -124,8 +124,8 @@ void Scope::activate(AbstractNode* starting_node,
 							 history);
 	}
 
-	if (history->pass_through_experiment_history != NULL) {
-		history->pass_through_experiment_history->scope_history = new ScopeHistory(history);
+	if (history->experiment_history != NULL) {
+		history->experiment_history->scope_history = new ScopeHistory(history);
 	}
 
 	run_helper.curr_depth--;
