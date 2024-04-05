@@ -117,7 +117,7 @@ void Experiment::experiment_verify_activate(
 		}
 		run_helper.curr_run_seed = xorshift(run_helper.curr_run_seed);
 		#else
-		bool decision_is_branch = new_predicted_score > existing_predicted_score;
+		bool decision_is_branch = new_predicted_score >= existing_predicted_score;
 		#endif /* MDEBUG */
 
 		if (decision_is_branch) {

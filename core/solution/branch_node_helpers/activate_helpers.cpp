@@ -126,7 +126,7 @@ void BranchNode::activate(AbstractNode*& curr_node,
 			}
 			run_helper.curr_run_seed = xorshift(run_helper.curr_run_seed);
 			#else
-			if (branch_score > original_score) {
+			if (branch_score >= original_score) {
 				history->is_branch = true;
 			} else {
 				history->is_branch = false;

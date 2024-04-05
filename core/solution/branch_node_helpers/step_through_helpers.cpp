@@ -114,7 +114,7 @@ void BranchNode::step_through_activate(AbstractNode*& curr_node,
 				branch_score += this->branch_network->output->acti_vals[0];
 			}
 
-			if (branch_score > original_score) {
+			if (branch_score >= original_score) {
 				history->is_branch = true;
 			} else {
 				history->is_branch = false;

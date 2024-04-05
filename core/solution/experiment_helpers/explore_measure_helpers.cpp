@@ -159,7 +159,16 @@ void Experiment::explore_measure_backprop(double target_val,
 		#else
 		double curr_surprise = target_val - history->existing_predicted_score;
 
-		if (curr_surprise > this->existing_score_standard_deviation) {
+		bool select = false;
+		uniform_int_distribution<int> random_select_distribution(0, 9);
+		if (random_select_distribution(generator) == 0
+				&& curr_surprise >= 0.0) {
+			select = true;
+		} else if (curr_surprise >= this->existing_score_standard_deviation) {
+			select = true;
+		}
+
+		if (select) {
 		#endif /* MDEBUG */
 			// cout << "curr_surprise: " << curr_surprise << endl;
 

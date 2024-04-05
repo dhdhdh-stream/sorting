@@ -1,5 +1,6 @@
 # Python3
 
+import datetime
 import errno
 import os
 import paramiko
@@ -114,6 +115,8 @@ while True:
 					break
 
 	if updated:
+		print(datetime.datetime.now())
+
 		# simply use workers[0]
 		client = paramiko.SSHClient()
 		client.set_missing_host_key_policy(paramiko.AutoAddPolicy())

@@ -116,7 +116,7 @@ void Experiment::experiment_activate(AbstractNode*& curr_node,
 		}
 		run_helper.curr_run_seed = xorshift(run_helper.curr_run_seed);
 		#else
-		bool decision_is_branch = new_predicted_score > existing_predicted_score;
+		bool decision_is_branch = new_predicted_score >= existing_predicted_score;
 		#endif /* MDEBUG */
 
 		/**
@@ -341,11 +341,6 @@ void create_experiment_helper(vector<int>& experiment_index,
 
 void Experiment::experiment_backprop(double target_val,
 									 RunHelper& run_helper) {
-	// temp
-	if (this->child_experiments.size() > 20) {
-		throw invalid_argument("this->child_experiments.size() > 20");
-	}
-
 	ExperimentHistory* history = run_helper.experiment_histories.back();
 
 	if (history->has_target
