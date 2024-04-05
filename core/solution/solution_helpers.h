@@ -25,13 +25,6 @@ ScopeNode* create_existing(Scope* parent_scope,
  * - create one scope per run
  */
 
-void gather_possible_exits(std::vector<std::pair<int,AbstractNode*>>& possible_exits,
-						   std::vector<Scope*>& experiment_scope_context,
-						   std::vector<AbstractNode*>& experiment_node_context,
-						   bool experiment_is_branch,
-						   int experiment_throw_id,
-						   RunHelper& run_helper);
-
 void gather_possible_helper(std::vector<Scope*>& scope_context,
 							std::vector<AbstractNode*>& node_context,
 							std::vector<std::vector<Scope*>>& possible_scope_contexts,

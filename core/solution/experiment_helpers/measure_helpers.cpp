@@ -139,12 +139,30 @@ void Experiment::measure_backprop(double target_val,
 
 		this->branch_weight = (double)this->branch_count / (double)(this->original_count + this->branch_count);
 
+		if (this->branch_weight > PASS_THROUGH_BRANCH_WEIGHT
+				&& this->new_average_score >= this->existing_average_score) {
+			this->is_pass_through = true;
+		} else {
+			this->is_pass_through = false;
+		}
+
 		#if defined(MDEBUG) && MDEBUG
 		if (rand()%2 == 0) {
 		#else
 		double combined_improvement = this->combined_score - this->existing_average_score;
 		double combined_improvement_t_score = combined_improvement
 			/ (this->existing_score_standard_deviation / sqrt(solution->curr_num_datapoints));
+
+		double combined_branch_weight = 1.0;
+		Experiment* curr_experiment = this;
+		while (true) {
+			if (curr_experiment == NULL) {
+				break;
+			}
+
+			combined_branch_weight *= curr_experiment->branch_weight;
+			curr_experiment = curr_experiment->parent_experiment;
+		}
 
 		if (this->new_is_better
 				&& this->branch_weight > 0.01
@@ -163,7 +181,8 @@ void Experiment::measure_backprop(double target_val,
 				&& rand()%4 == 0) {
 		#else
 		} else if (this->step_types.size() > 0
-				&& this->branch_weight > EXPERIMENT_MIN_BRANCH_WEIGHT) {
+				&& this->combined_score >= this->verify_existing_average_score
+				&& combined_branch_weight > EXPERIMENT_COMBINED_MIN_BRANCH_WEIGHT) {
 		#endif /* MDEBUG */
 			this->new_is_better = false;
 
@@ -190,6 +209,22 @@ void Experiment::measure_backprop(double target_val,
 				this->actions.clear();
 				this->scopes.clear();
 				this->catch_throw_ids.clear();
+
+				if (this->branch_node != NULL) {
+					delete this->branch_node;
+					this->branch_node = NULL;
+				}
+				if (this->exit_node != NULL) {
+					delete this->exit_node;
+					this->exit_node = NULL;
+				}
+
+				this->new_linear_weights.clear();
+				this->new_network_input_indexes.clear();
+				if (this->new_network != NULL) {
+					delete this->new_network;
+					this->new_network = NULL;
+				}
 
 				this->state = EXPERIMENT_STATE_EXPLORE_CREATE;
 				this->state_iter = 0;

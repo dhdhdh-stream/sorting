@@ -3,8 +3,11 @@
 #include <iostream>
 
 #include "abstract_node.h"
+#include "constants.h"
 #include "globals.h"
 #include "scope.h"
+#include "scope_node.h"
+#include "solution.h"
 
 using namespace std;
 
@@ -156,43 +159,76 @@ bool Experiment::activate(AbstractNode*& curr_node,
 					break;
 				case EXPERIMENT_STATE_EXPERIMENT_VERIFY_1ST_EXISTING:
 				case EXPERIMENT_STATE_EXPERIMENT_VERIFY_2ND_EXISTING:
-					// do nothing either way
+					/**
+					 * - select root_experiment for proper comparison
+					 */
+					{
+						bool is_verify = false;
+						for (int e_index = 0; e_index < (int)this->root_experiment->verify_experiments.size(); e_index++) {
+							if (this->root_experiment->verify_experiments[e_index] == this) {
+								is_verify = true;
+								break;
+							}
+						}
+						if (is_verify) {
+							if (run_helper.experiment_histories.size() == 0) {
+								bool has_seen = false;
+								for (int e_index = 0; e_index < (int)run_helper.experiments_seen_order.size(); e_index++) {
+									if (run_helper.experiments_seen_order[e_index] == this->root_experiment) {
+										has_seen = true;
+										break;
+									}
+								}
+								if (!has_seen) {
+									double selected_probability = 1.0 / (1.0 + this->root_experiment->average_remaining_experiments_from_start);
+									uniform_real_distribution<double> distribution(0.0, 1.0);
+									if (distribution(generator) < selected_probability) {
+										run_helper.experiment_histories.push_back(new ExperimentHistory(this->root_experiment));
+									}
+									run_helper.experiments_seen_order.push_back(this->root_experiment);
+								}
+							}
+						}
+					}
+
 					break;
 				case EXPERIMENT_STATE_EXPERIMENT_VERIFY_1ST:
 				case EXPERIMENT_STATE_EXPERIMENT_VERIFY_2ND:
-					bool is_verify = false;
-					for (int e_index = 0; e_index < (int)this->root_experiment->verify_experiments.size(); e_index++) {
-						if (this->root_experiment->verify_experiments[e_index] == this) {
-							is_verify = true;
-							break;
-						}
-					}
-					if (is_verify) {
-						if (run_helper.experiment_histories.size() == 1
-								&& run_helper.experiment_histories[0]->experiment == this->root_experiment) {
-							/**
-							 * - don't append to run_helper.experiment_histories
-							 *   - let backprop occur on root
-							 * 
-							 * - leave history as NULL and special case EXPERIMENT
-							 */
-							is_selected = true;
-						} else if (run_helper.experiment_histories.size() == 0) {
-							bool has_seen = false;
-							for (int e_index = 0; e_index < (int)run_helper.experiments_seen_order.size(); e_index++) {
-								if (run_helper.experiments_seen_order[e_index] == this->root_experiment) {
-									has_seen = true;
-									break;
-								}
+					{
+						bool is_verify = false;
+						for (int e_index = 0; e_index < (int)this->root_experiment->verify_experiments.size(); e_index++) {
+							if (this->root_experiment->verify_experiments[e_index] == this) {
+								is_verify = true;
+								break;
 							}
-							if (!has_seen) {
-								double selected_probability = 1.0 / (1.0 + this->root_experiment->average_remaining_experiments_from_start);
-								uniform_real_distribution<double> distribution(0.0, 1.0);
-								if (distribution(generator) < selected_probability) {
-									run_helper.experiment_histories.push_back(new ExperimentHistory(this->root_experiment));
-									is_selected = true;
+						}
+						if (is_verify) {
+							if (run_helper.experiment_histories.size() == 1
+									&& run_helper.experiment_histories[0]->experiment == this->root_experiment) {
+								/**
+								 * - don't append to run_helper.experiment_histories
+								 *   - let backprop occur on root
+								 * 
+								 * - leave history as NULL and special case EXPERIMENT
+								 */
+								is_selected = true;
+							} else if (run_helper.experiment_histories.size() == 0) {
+								bool has_seen = false;
+								for (int e_index = 0; e_index < (int)run_helper.experiments_seen_order.size(); e_index++) {
+									if (run_helper.experiments_seen_order[e_index] == this->root_experiment) {
+										has_seen = true;
+										break;
+									}
 								}
-								run_helper.experiments_seen_order.push_back(this->root_experiment);
+								if (!has_seen) {
+									double selected_probability = 1.0 / (1.0 + this->root_experiment->average_remaining_experiments_from_start);
+									uniform_real_distribution<double> distribution(0.0, 1.0);
+									if (distribution(generator) < selected_probability) {
+										run_helper.experiment_histories.push_back(new ExperimentHistory(this->root_experiment));
+										is_selected = true;
+									}
+									run_helper.experiments_seen_order.push_back(this->root_experiment);
+								}
 							}
 						}
 					}
@@ -210,8 +246,7 @@ bool Experiment::activate(AbstractNode*& curr_node,
 										history);
 				break;
 			case EXPERIMENT_STATE_EXPLORE_CREATE:
-				explore_create_activate(curr_node,
-										context,
+				explore_create_activate(context,
 										run_helper,
 										history);
 				break;

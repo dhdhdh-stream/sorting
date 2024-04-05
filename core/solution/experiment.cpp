@@ -68,10 +68,6 @@ Experiment::Experiment(vector<Scope*> scope_context,
 	this->branch_node = NULL;
 	this->exit_node = NULL;
 
-	this->combined_score = 0.0;
-	this->original_count = 0;
-	this->branch_count = 0;
-
 	this->result = EXPERIMENT_RESULT_NA;
 }
 

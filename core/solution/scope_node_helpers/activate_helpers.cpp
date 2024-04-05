@@ -43,8 +43,12 @@ void ScopeNode::activate(AbstractNode*& curr_node,
 	context.back().node = NULL;
 
 	if (run_helper.exceeded_limit) {
+		history->normal_exit = false;
+
 		// do nothing
 	} else if (run_helper.throw_id != -1) {
+		history->normal_exit = false;
+
 		map<int, AbstractNode*>::iterator it = this->catches.find(run_helper.throw_id);
 		if (it != this->catches.end()) {
 			run_helper.throw_id = -1;
@@ -67,6 +71,8 @@ void ScopeNode::activate(AbstractNode*& curr_node,
 			}
 		}
 	} else if (inner_exit_depth == -1) {
+		history->normal_exit = true;
+
 		curr_node = this->next_node;
 
 		for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
@@ -84,8 +90,12 @@ void ScopeNode::activate(AbstractNode*& curr_node,
 			}
 		}
 	} else if (inner_exit_depth == 0) {
+		history->normal_exit = false;
+
 		curr_node = inner_exit_node;
 	} else {
+		history->normal_exit = false;
+
 		exit_depth = inner_exit_depth-1;
 		exit_node = inner_exit_node;
 	}

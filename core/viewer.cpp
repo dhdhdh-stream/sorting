@@ -32,6 +32,9 @@ int main(int argc, char* argv[]) {
 	solution = new Solution();
 	solution->load("", "main");
 
+	Scope* starting_scope = solution->scopes[solution->curr_scope_id];
+	// Scope* starting_scope = solution->scopes[6];
+
 	{
 		// Problem* problem = new Sorting();
 		Problem* problem = new Minesweeper();
@@ -41,18 +44,18 @@ int main(int argc, char* argv[]) {
 		vector<ContextLayer> context;
 		context.push_back(ContextLayer());
 
-		context.back().scope = solution->scopes[solution->curr_scope_id];
+		context.back().scope = starting_scope;
 		context.back().node = NULL;
 
-		ScopeHistory* root_history = new ScopeHistory(solution->scopes[solution->curr_scope_id]);
+		ScopeHistory* root_history = new ScopeHistory(starting_scope);
 		context.back().scope_history = root_history;
 
 		// unused
 		int exit_depth = -1;
 		AbstractNode* exit_node = NULL;
 
-		solution->scopes[solution->curr_scope_id]->activate(
-			solution->scopes[solution->curr_scope_id]->default_starting_node,
+		starting_scope->activate(
+			starting_scope->default_starting_node,
 			problem,
 			context,
 			exit_depth,

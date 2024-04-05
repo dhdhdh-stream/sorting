@@ -33,6 +33,14 @@ int main(int argc, char* argv[]) {
 	double sum_vals = 0.0;
 	Metrics metrics;
 
+	Scope* starting_scope = solution->scopes[solution->curr_scope_id];
+	// Scope* starting_scope = solution->scopes[6];
+
+	cout << "starting_scope->layer: " << starting_scope->layer << endl;
+	cout << "starting_scope->parent_id: " << starting_scope->parent_id << endl;
+	cout << "starting_scope->child_ids.size(): " << starting_scope->child_ids.size() << endl;
+	cout << "starting_scope->num_improvements: " << starting_scope->num_improvements << endl;
+
 	for (int i_index = 0; i_index < 2000; i_index++) {
 		// Problem* problem = new Sorting();
 		Problem* problem = new Minesweeper();
@@ -42,18 +50,18 @@ int main(int argc, char* argv[]) {
 		vector<ContextLayer> context;
 		context.push_back(ContextLayer());
 
-		context.back().scope = solution->scopes[solution->curr_scope_id];
+		context.back().scope = starting_scope;
 		context.back().node = NULL;
 
-		ScopeHistory* root_history = new ScopeHistory(solution->scopes[solution->curr_scope_id]);
+		ScopeHistory* root_history = new ScopeHistory(starting_scope);
 		context.back().scope_history = root_history;
 
 		// unused
 		int exit_depth = -1;
 		AbstractNode* exit_node = NULL;
 
-		solution->scopes[solution->curr_scope_id]->measure_activate(
-			solution->scopes[solution->curr_scope_id]->default_starting_node,
+		starting_scope->measure_activate(
+			starting_scope->default_starting_node,
 			problem,
 			context,
 			exit_depth,

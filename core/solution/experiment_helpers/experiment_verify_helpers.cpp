@@ -120,11 +120,7 @@ void Experiment::experiment_verify_activate(
 		bool decision_is_branch = new_predicted_score > existing_predicted_score;
 		#endif /* MDEBUG */
 
-		BranchNodeHistory* branch_node_history = new BranchNodeHistory(this->branch_node);
-		context.back().scope_history->node_histories.push_back(branch_node_history);
 		if (decision_is_branch) {
-			branch_node_history->is_branch = true;
-
 			if (this->throw_id != -1) {
 				run_helper.throw_id = -1;
 			}
@@ -142,8 +138,6 @@ void Experiment::experiment_verify_activate(
 					curr_node = this->scopes[0];
 				}
 			}
-		} else {
-			branch_node_history->is_branch = false;
 		}
 	}
 }
@@ -174,8 +168,20 @@ void Experiment::experiment_verify_backprop(
 			 * - leave this->experiment_iter unchanged
 			 */
 		} else {
+			double combined_branch_weight = 1.0;
+			Experiment* curr_experiment = this->verify_experiments.back();
+			while (true) {
+				if (curr_experiment == NULL) {
+					break;
+				}
+
+				combined_branch_weight *= curr_experiment->branch_weight;
+				curr_experiment = curr_experiment->parent_experiment;
+			}
+
 			if (this->verify_experiments.back()->step_types.size() > 0
-					&& this->verify_experiments.back()->branch_weight > EXPERIMENT_MIN_BRANCH_WEIGHT) {
+					&& this->verify_experiments.back()->combined_score >= this->verify_experiments.back()->verify_existing_average_score
+					&& combined_branch_weight > EXPERIMENT_COMBINED_MIN_BRANCH_WEIGHT) {
 				#if defined(MDEBUG) && MDEBUG
 				for (int p_index = 0; p_index < (int)this->verify_experiments.back()->verify_problems.size(); p_index++) {
 					delete this->verify_experiments.back()->verify_problems[p_index];
@@ -249,7 +255,7 @@ void Experiment::experiment_verify_backprop(
 			}
 		}
 	} else if (this->state_iter >= VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints) {
-		this->combined_score /= (VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints);
+		this->combined_score /= (VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints);
 
 		double combined_improvement = this->combined_score - this->verify_existing_average_score;
 		double combined_improvement_t_score = combined_improvement
@@ -299,8 +305,20 @@ void Experiment::experiment_verify_backprop(
 
 			this->result = EXPERIMENT_RESULT_SUCCESS;
 		} else {
+			double combined_branch_weight = 1.0;
+			Experiment* curr_experiment = this->verify_experiments.back();
+			while (true) {
+				if (curr_experiment == NULL) {
+					break;
+				}
+
+				combined_branch_weight *= curr_experiment->branch_weight;
+				curr_experiment = curr_experiment->parent_experiment;
+			}
+
 			if (this->verify_experiments.back()->step_types.size() > 0
-					&& this->verify_experiments.back()->branch_weight > EXPERIMENT_MIN_BRANCH_WEIGHT) {
+					&& this->verify_experiments.back()->combined_score >= this->verify_experiments.back()->verify_existing_average_score
+					&& combined_branch_weight > EXPERIMENT_COMBINED_MIN_BRANCH_WEIGHT) {
 				#if defined(MDEBUG) && MDEBUG
 				for (int p_index = 0; p_index < (int)this->verify_experiments.back()->verify_problems.size(); p_index++) {
 					delete this->verify_experiments.back()->verify_problems[p_index];

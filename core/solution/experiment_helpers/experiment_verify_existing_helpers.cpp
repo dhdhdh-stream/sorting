@@ -43,12 +43,10 @@ void Experiment::experiment_verify_existing_backprop(
 
 		this->o_target_val_histories.clear();
 
-		this->o_target_val_histories.reserve(VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints);
+		this->combined_score = 0.0;
 
 		this->state = EXPERIMENT_STATE_EXPERIMENT_VERIFY_1ST;
-		/**
-		 * - leave this->experiment_iter unchanged
-		 */
+		this->state_iter = 0;
 	} else if ((int)this->o_target_val_histories.size() >= VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints) {
 		double sum_scores = 0.0;
 		for (int d_index = 0; d_index < VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints; d_index++) {
@@ -67,11 +65,9 @@ void Experiment::experiment_verify_existing_backprop(
 
 		this->o_target_val_histories.clear();
 
-		this->o_target_val_histories.reserve(VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints);
+		this->combined_score = 0.0;
 
 		this->state = EXPERIMENT_STATE_EXPERIMENT_VERIFY_2ND;
-		/**
-		 * - leave this->experiment_iter unchanged
-		 */
+		this->state_iter = 0;
 	}
 }

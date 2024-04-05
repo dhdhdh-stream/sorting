@@ -117,11 +117,7 @@ void Experiment::root_verify_activate(AbstractNode*& curr_node,
 		bool decision_is_branch = new_predicted_score > existing_predicted_score;
 		#endif /* MDEBUG */
 
-		BranchNodeHistory* branch_node_history = new BranchNodeHistory(this->branch_node);
-		context.back().scope_history->node_histories.push_back(branch_node_history);
 		if (decision_is_branch) {
-			branch_node_history->is_branch = true;
-
 			if (this->throw_id != -1) {
 				run_helper.throw_id = -1;
 			}
@@ -139,8 +135,6 @@ void Experiment::root_verify_activate(AbstractNode*& curr_node,
 					curr_node = this->scopes[0];
 				}
 			}
-		} else {
-			branch_node_history->is_branch = false;
 		}
 	}
 }

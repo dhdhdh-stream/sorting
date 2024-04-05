@@ -42,8 +42,6 @@ void Experiment::verify_existing_backprop(double target_val,
 		this->o_target_val_histories.clear();
 
 		this->combined_score = 0.0;
-		this->original_count = 0;
-		this->branch_count = 0;
 
 		this->state = EXPERIMENT_STATE_VERIFY_1ST;
 		this->state_iter = 0;
@@ -66,8 +64,6 @@ void Experiment::verify_existing_backprop(double target_val,
 		this->o_target_val_histories.clear();
 
 		this->combined_score = 0.0;
-		this->original_count = 0;
-		this->branch_count = 0;
 
 		this->state = EXPERIMENT_STATE_VERIFY_2ND;
 		this->state_iter = 0;

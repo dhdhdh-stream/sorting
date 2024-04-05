@@ -122,6 +122,7 @@ ScopeNodeHistory::ScopeNodeHistory(ScopeNodeHistory* original) {
 
 	this->scope_history = new ScopeHistory(original->scope_history);
 
+	this->normal_exit = original->normal_exit;
 	this->throw_id = original->throw_id;
 }
 

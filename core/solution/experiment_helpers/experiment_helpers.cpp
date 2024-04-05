@@ -119,11 +119,12 @@ void Experiment::experiment_activate(AbstractNode*& curr_node,
 		bool decision_is_branch = new_predicted_score > existing_predicted_score;
 		#endif /* MDEBUG */
 
-		BranchNodeHistory* branch_node_history = new BranchNodeHistory(this->branch_node);
-		context.back().scope_history->node_histories.push_back(branch_node_history);
+		/**
+		 * - don't include branch_node history
+		 *   - can cause issues when chaining experiments
+		 *     - TODO: find good way to handle
+		 */
 		if (decision_is_branch) {
-			branch_node_history->is_branch = true;
-
 			if (this->throw_id != -1) {
 				run_helper.throw_id = -1;
 			}
@@ -141,8 +142,6 @@ void Experiment::experiment_activate(AbstractNode*& curr_node,
 					curr_node = this->scopes[0];
 				}
 			}
-		} else {
-			branch_node_history->is_branch = false;
 		}
 	}
 
@@ -220,10 +219,13 @@ void inner_create_experiment_helper(vector<Scope*>& scope_context,
 											   scope_node_history->scope_history);
 			}
 
-			possible_scope_contexts.push_back(scope_context);
-			possible_node_contexts.push_back(node_context);
-			possible_is_branch.push_back(false);
-			possible_throw_id.push_back(scope_node_history->throw_id);
+			if (scope_node_history->normal_exit
+					|| scope_node_history->throw_id != -1) {
+				possible_scope_contexts.push_back(scope_context);
+				possible_node_contexts.push_back(node_context);
+				possible_is_branch.push_back(false);
+				possible_throw_id.push_back(scope_node_history->throw_id);
+			}
 
 			node_context.back() = NULL;
 		} else {
@@ -310,10 +312,13 @@ void create_experiment_helper(vector<int>& experiment_index,
 											   scope_node_history->scope_history);
 			}
 
-			possible_scope_contexts.push_back(scope_context);
-			possible_node_contexts.push_back(node_context);
-			possible_is_branch.push_back(false);
-			possible_throw_id.push_back(scope_node_history->throw_id);
+			if (scope_node_history->normal_exit
+					|| scope_node_history->throw_id != -1) {
+				possible_scope_contexts.push_back(scope_context);
+				possible_node_contexts.push_back(node_context);
+				possible_is_branch.push_back(false);
+				possible_throw_id.push_back(scope_node_history->throw_id);
+			}
 
 			node_context.back() = NULL;
 		} else {
@@ -336,6 +341,11 @@ void create_experiment_helper(vector<int>& experiment_index,
 
 void Experiment::experiment_backprop(double target_val,
 									 RunHelper& run_helper) {
+	// temp
+	if (this->child_experiments.size() > 20) {
+		throw invalid_argument("this->child_experiments.size() > 20");
+	}
+
 	ExperimentHistory* history = run_helper.experiment_histories.back();
 
 	if (history->has_target
@@ -357,20 +367,22 @@ void Experiment::experiment_backprop(double target_val,
 								 possible_throw_id,
 								 history->scope_history);
 
-		uniform_int_distribution<int> possible_distribution(0, (int)possible_scope_contexts.size()-1);
-		int rand_index = possible_distribution(generator);
+		if (possible_scope_contexts.size() > 0) {
+			uniform_int_distribution<int> possible_distribution(0, (int)possible_scope_contexts.size()-1);
+			int rand_index = possible_distribution(generator);
 
-		Experiment* new_experiment = new Experiment(
-			possible_scope_contexts[rand_index],
-			possible_node_contexts[rand_index],
-			possible_is_branch[rand_index],
-			possible_throw_id[rand_index],
-			this,
-			false);
+			Experiment* new_experiment = new Experiment(
+				possible_scope_contexts[rand_index],
+				possible_node_contexts[rand_index],
+				possible_is_branch[rand_index],
+				possible_throw_id[rand_index],
+				this,
+				false);
 
-		/**
-		 * - insert at front to match finalize order
-		 */
-		possible_node_contexts[rand_index].back()->experiments.insert(possible_node_contexts[rand_index].back()->experiments.begin(), new_experiment);
+			/**
+			 * - insert at front to match finalize order
+			 */
+			possible_node_contexts[rand_index].back()->experiments.insert(possible_node_contexts[rand_index].back()->experiments.begin(), new_experiment);
+		}
 	}
 }

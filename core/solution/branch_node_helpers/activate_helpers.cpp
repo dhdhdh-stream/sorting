@@ -35,9 +35,11 @@ void BranchNode::activate(AbstractNode*& curr_node,
 		}
 	}
 
+	bool decision_is_branch;
 	if (matches_context) {
 		if (this->is_pass_through) {
 			curr_node = this->branch_next_node;
+			decision_is_branch = true;
 		} else {
 			BranchNodeHistory* history = new BranchNodeHistory(this);
 			node_histories.push_back(history);
@@ -133,41 +135,33 @@ void BranchNode::activate(AbstractNode*& curr_node,
 
 			if (history->is_branch) {
 				curr_node = this->branch_next_node;
-
-				for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
-					if (this->experiments[e_index]->is_branch) {
-						bool is_selected = this->experiments[e_index]->activate(
-							curr_node,
-							problem,
-							context,
-							exit_depth,
-							exit_node,
-							run_helper);
-						if (is_selected) {
-							return;
-						}
-					}
-				}
 			} else {
 				curr_node = this->original_next_node;
-
-				for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
-					if (!this->experiments[e_index]->is_branch) {
-						bool is_selected = this->experiments[e_index]->activate(
-							curr_node,
-							problem,
-							context,
-							exit_depth,
-							exit_node,
-							run_helper);
-						if (is_selected) {
-							return;
-						}
-					}
-				}
 			}
+
+			decision_is_branch = history->is_branch;
+			/**
+			 * - for experiments
+			 *   - experiment context may be less restrictive than branch node's
+			 */
 		}
 	} else {
 		curr_node = this->original_next_node;
+		decision_is_branch = false;
+	}
+
+	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
+		if (this->experiments[e_index]->is_branch == decision_is_branch) {
+			bool is_selected = this->experiments[e_index]->activate(
+				curr_node,
+				problem,
+				context,
+				exit_depth,
+				exit_node,
+				run_helper);
+			if (is_selected) {
+				return;
+			}
+		}
 	}
 }

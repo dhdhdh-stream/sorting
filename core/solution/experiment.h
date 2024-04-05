@@ -38,7 +38,7 @@ const int EXPERIMENT_STATE_VERIFY_1ST = 6;
 const int EXPERIMENT_STATE_VERIFY_2ND_EXISTING = 7;
 const int EXPERIMENT_STATE_VERIFY_2ND = 8;
 #if defined(MDEBUG) && MDEBUG
-const int EXPERIMENT_STATE_CAPTURE_VERIFY =9;
+const int EXPERIMENT_STATE_CAPTURE_VERIFY = 9;
 #endif /* MDEBUG */
 const int EXPERIMENT_STATE_ROOT_VERIFY = 10;
 const int EXPERIMENT_STATE_EXPERIMENT = 11;
@@ -49,7 +49,7 @@ const int EXPERIMENT_STATE_EXPERIMENT_VERIFY_2ND = 15;
 
 const int MAX_EXPLORE_TRIES = 4;
 
-const double EXPERIMENT_MIN_BRANCH_WEIGHT = 0.1;
+const double EXPERIMENT_COMBINED_MIN_BRANCH_WEIGHT = 0.05;
 const double PASS_THROUGH_BRANCH_WEIGHT = 0.9;
 
 const int MAX_EXPERIMENT_NUM_EXPERIMENTS = 20;
@@ -169,8 +169,7 @@ public:
 	void train_existing_backprop(double target_val,
 								 RunHelper& run_helper);
 
-	void explore_create_activate(AbstractNode*& curr_node,
-								 std::vector<ContextLayer>& context,
+	void explore_create_activate(std::vector<ContextLayer>& context,
 								 RunHelper& run_helper,
 								 ExperimentHistory* history);
 	void explore_create_backprop(double target_val,

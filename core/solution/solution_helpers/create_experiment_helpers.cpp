@@ -52,10 +52,13 @@ void create_experiment_helper(vector<Scope*>& scope_context,
 									 possible_throw_id,
 									 scope_node_history->scope_history);
 
-			possible_scope_contexts.push_back(scope_context);
-			possible_node_contexts.push_back(node_context);
-			possible_is_branch.push_back(false);
-			possible_throw_id.push_back(scope_node_history->throw_id);
+			if (scope_node_history->normal_exit
+					|| scope_node_history->throw_id != -1) {
+				possible_scope_contexts.push_back(scope_context);
+				possible_node_contexts.push_back(node_context);
+				possible_is_branch.push_back(false);
+				possible_throw_id.push_back(scope_node_history->throw_id);
+			}
 
 			node_context.back() = NULL;
 		} else {

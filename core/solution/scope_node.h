@@ -98,6 +98,7 @@ class ScopeNodeHistory : public AbstractNodeHistory {
 public:
 	ScopeHistory* scope_history;
 
+	bool normal_exit;
 	int throw_id;
 
 	ScopeNodeHistory(ScopeNode* node);
