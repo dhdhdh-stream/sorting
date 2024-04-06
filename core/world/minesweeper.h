@@ -28,9 +28,10 @@ public:
 
 	Minesweeper();
 
+	int num_obs();
 	Action random_action();
 
-	double get_observation();
+	std::vector<double> get_observations();
 	void perform_action(Action action);
 	double score_result();
 
@@ -39,6 +40,7 @@ public:
 	void print();
 
 private:
+	double get_observation_helper(int x, int y);
 	void reveal_helper(int x, int y);
 };
 

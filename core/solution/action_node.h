@@ -23,6 +23,7 @@ public:
 	std::vector<int> hook_indexes;
 	std::vector<std::vector<Scope*>> hook_scope_contexts;
 	std::vector<std::vector<AbstractNode*>> hook_node_contexts;
+	std::vector<int> hook_obs_indexes;
 
 	ActionNode();
 	~ActionNode();
@@ -56,7 +57,7 @@ public:
 
 class ActionNodeHistory : public AbstractNodeHistory {
 public:
-	double obs_snapshot;
+	std::vector<double> obs_snapshot;
 
 	ActionNodeHistory(ActionNode* node);
 	ActionNodeHistory(ActionNodeHistory* original);

@@ -15,7 +15,7 @@ void ActionNode::step_through_activate(AbstractNode*& curr_node,
 									   RunHelper& run_helper,
 									   ActionNodeHistory* history) {
 	problem->perform_action(this->action);
-	history->obs_snapshot = problem->get_observation();
+	history->obs_snapshot = problem->get_observations();
 
 	if (this->action.move != ACTION_NOOP) {
 		string input_gate;

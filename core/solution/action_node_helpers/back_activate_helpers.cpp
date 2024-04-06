@@ -26,7 +26,7 @@ void ActionNode::back_activate(vector<Scope*>& scope_context,
 		}
 
 		if (matches_context) {
-			input_vals[this->hook_indexes[h_index]] = history->obs_snapshot;
+			input_vals[this->hook_indexes[h_index]] = history->obs_snapshot[this->hook_obs_indexes[h_index]];
 		}
 	}
 }

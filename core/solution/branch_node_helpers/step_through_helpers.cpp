@@ -49,6 +49,7 @@ void BranchNode::step_through_activate(AbstractNode*& curr_node,
 							action_node->hook_indexes.push_back(i_index);
 							action_node->hook_scope_contexts.push_back(this->input_scope_contexts[i_index]);
 							action_node->hook_node_contexts.push_back(this->input_node_contexts[i_index]);
+							action_node->hook_obs_indexes.push_back(this->input_obs_indexes[i_index]);
 						} else {
 							BranchNode* branch_node = (BranchNode*)this->input_node_contexts[i_index].back();
 							branch_node->hook_indexes.push_back(i_index);
@@ -72,6 +73,7 @@ void BranchNode::step_through_activate(AbstractNode*& curr_node,
 							action_node->hook_indexes.clear();
 							action_node->hook_scope_contexts.clear();
 							action_node->hook_node_contexts.clear();
+							action_node->hook_obs_indexes.clear();
 						} else {
 							BranchNode* branch_node = (BranchNode*)this->input_node_contexts[i_index].back();
 							branch_node->hook_indexes.clear();

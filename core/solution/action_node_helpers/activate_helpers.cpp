@@ -19,7 +19,7 @@ void ActionNode::activate(AbstractNode*& curr_node,
 						  RunHelper& run_helper,
 						  ActionNodeHistory* history) {
 	problem->perform_action(this->action);
-	history->obs_snapshot = problem->get_observation();
+	history->obs_snapshot = problem->get_observations();
 
 	curr_node = this->next_node;
 

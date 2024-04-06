@@ -117,26 +117,47 @@ Minesweeper::Minesweeper() {
 	this->num_actions = 0;
 }
 
+int Minesweeper::num_obs() {
+	return 9;
+}
+
 Action Minesweeper::random_action() {
 	uniform_int_distribution<int> action_distribution(0, 5);
 	return Action(action_distribution(generator));
 }
 
-double Minesweeper::get_observation() {
-	if (this->current_x < 0
-			|| this->current_x > WIDTH-1
-			|| this->current_y < 0
-			|| this->current_y > HEIGHT-1) {
+double Minesweeper::get_observation_helper(int x, int y) {
+	if (x < 0
+			|| x > WIDTH-1
+			|| y < 0
+			|| y > HEIGHT-1) {
 		return -10.0;
 	} else {
-		if (this->revealed[this->current_x][this->current_y]) {
-			return this->world[this->current_x][this->current_y];
-		} else if (this->flagged[this->current_x][this->current_y]) {
+		if (this->revealed[x][y]) {
+			return this->world[x][y];
+		} else if (this->flagged[x][y]) {
 			return 10.0;
 		} else {
 			return -5.0;
 		}
 	}
+}
+
+vector<double> Minesweeper::get_observations() {
+	vector<double> obs;
+
+	obs.push_back(get_observation_helper(this->current_x, this->current_y));
+
+	obs.push_back(get_observation_helper(this->current_x-1, this->current_y+1));
+	obs.push_back(get_observation_helper(this->current_x, this->current_y+1));
+	obs.push_back(get_observation_helper(this->current_x+1, this->current_y+1));
+	obs.push_back(get_observation_helper(this->current_x+1, this->current_y));
+	obs.push_back(get_observation_helper(this->current_x+1, this->current_y-1));
+	obs.push_back(get_observation_helper(this->current_x, this->current_y-1));
+	obs.push_back(get_observation_helper(this->current_x-1, this->current_y-1));
+	obs.push_back(get_observation_helper(this->current_x-1, this->current_y));
+
+	return obs;
 }
 
 void Minesweeper::reveal_helper(int x, int y) {

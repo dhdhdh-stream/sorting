@@ -1,9 +1,3 @@
-/**
- * TODO:
- * - have secondary scores
- *   - so if primary score is only equal, not better, can still make progress on secondary
- */
-
 #ifndef PROBLEM_H
 #define PROBLEM_H
 
@@ -16,15 +10,12 @@ class Problem {
 public:
 	int type;
 
-	/**
-	 * - if want to keep track of runtime, track locally and increment on perform_action()
-	 */
-
 	virtual ~Problem() {};
 
+	virtual int num_obs() = 0;
 	virtual Action random_action() = 0;
 
-	virtual double get_observation() = 0;
+	virtual std::vector<double> get_observations() = 0;
 	virtual void perform_action(Action action) = 0;
 	virtual double score_result() = 0;
 

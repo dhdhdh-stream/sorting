@@ -18,9 +18,10 @@ public:
 
 	Sorting();
 
+	int num_obs();
 	Action random_action();
 
-	double get_observation();
+	std::vector<double> get_observations();
 	void perform_action(Action action);
 	double score_result();
 

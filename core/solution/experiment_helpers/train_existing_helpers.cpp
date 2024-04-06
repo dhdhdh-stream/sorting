@@ -74,6 +74,7 @@ void Experiment::train_existing_backprop(double target_val,
 
 		vector<vector<Scope*>> possible_scope_contexts;
 		vector<vector<AbstractNode*>> possible_node_contexts;
+		vector<int> possible_obs_indexes;
 
 		vector<Scope*> scope_context;
 		vector<AbstractNode*> node_context;
@@ -81,6 +82,7 @@ void Experiment::train_existing_backprop(double target_val,
 							   node_context,
 							   possible_scope_contexts,
 							   possible_node_contexts,
+							   possible_obs_indexes,
 							   this->i_scope_histories.back());
 		/**
 		 * - simply always use last ScopeHistory
@@ -99,6 +101,7 @@ void Experiment::train_existing_backprop(double target_val,
 
 				this->input_scope_contexts.push_back(possible_scope_contexts[remaining_indexes[rand_index]]);
 				this->input_node_contexts.push_back(possible_node_contexts[remaining_indexes[rand_index]]);
+				this->input_obs_indexes.push_back(possible_obs_indexes[rand_index]);
 				if ((int)possible_scope_contexts[remaining_indexes[rand_index]].size() > this->input_max_depth) {
 					this->input_max_depth = (int)possible_scope_contexts[remaining_indexes[rand_index]].size();
 				}
@@ -115,6 +118,7 @@ void Experiment::train_existing_backprop(double target_val,
 				action_node->hook_indexes.push_back(i_index);
 				action_node->hook_scope_contexts.push_back(this->input_scope_contexts[i_index]);
 				action_node->hook_node_contexts.push_back(this->input_node_contexts[i_index]);
+				action_node->hook_obs_indexes.push_back(this->input_obs_indexes[i_index]);
 			} else {
 				BranchNode* branch_node = (BranchNode*)this->input_node_contexts[i_index].back();
 				branch_node->hook_indexes.push_back(i_index);
@@ -144,6 +148,7 @@ void Experiment::train_existing_backprop(double target_val,
 				action_node->hook_indexes.clear();
 				action_node->hook_scope_contexts.clear();
 				action_node->hook_node_contexts.clear();
+				action_node->hook_obs_indexes.clear();
 			} else {
 				BranchNode* branch_node = (BranchNode*)this->input_node_contexts[i_index].back();
 				branch_node->hook_indexes.clear();
@@ -225,6 +230,7 @@ void Experiment::train_existing_backprop(double target_val,
 		while (train_index < 3) {
 			vector<vector<Scope*>> possible_scope_contexts;
 			vector<vector<AbstractNode*>> possible_node_contexts;
+			vector<int> possible_obs_indexes;
 
 			vector<Scope*> scope_context;
 			vector<AbstractNode*> node_context;
@@ -233,11 +239,13 @@ void Experiment::train_existing_backprop(double target_val,
 								   node_context,
 								   possible_scope_contexts,
 								   possible_node_contexts,
+								   possible_obs_indexes,
 								   this->i_scope_histories[history_distribution(generator)]);
 
 			int num_new_input_indexes = min(NETWORK_INCREMENT_NUM_NEW, (int)possible_scope_contexts.size());
 			vector<vector<Scope*>> test_network_input_scope_contexts;
 			vector<vector<AbstractNode*>> test_network_input_node_contexts;
+			vector<int> test_network_input_obs_indexes;
 			int test_network_input_max_depth = 0;
 			{
 				vector<int> remaining_indexes(possible_scope_contexts.size());
@@ -250,6 +258,7 @@ void Experiment::train_existing_backprop(double target_val,
 
 					test_network_input_scope_contexts.push_back(possible_scope_contexts[remaining_indexes[rand_index]]);
 					test_network_input_node_contexts.push_back(possible_node_contexts[remaining_indexes[rand_index]]);
+					test_network_input_obs_indexes.push_back(possible_obs_indexes[remaining_indexes[rand_index]]);
 					if ((int)possible_scope_contexts[remaining_indexes[rand_index]].size() > test_network_input_max_depth) {
 						test_network_input_max_depth = (int)possible_scope_contexts[remaining_indexes[rand_index]].size();
 					}
@@ -278,6 +287,7 @@ void Experiment::train_existing_backprop(double target_val,
 					action_node->hook_indexes.push_back(t_index);
 					action_node->hook_scope_contexts.push_back(test_network_input_scope_contexts[t_index]);
 					action_node->hook_node_contexts.push_back(test_network_input_node_contexts[t_index]);
+					action_node->hook_obs_indexes.push_back(test_network_input_obs_indexes[t_index]);
 				} else {
 					BranchNode* branch_node = (BranchNode*)test_network_input_node_contexts[t_index].back();
 					branch_node->hook_indexes.push_back(t_index);
@@ -305,6 +315,7 @@ void Experiment::train_existing_backprop(double target_val,
 					action_node->hook_indexes.clear();
 					action_node->hook_scope_contexts.clear();
 					action_node->hook_node_contexts.clear();
+					action_node->hook_obs_indexes.clear();
 				} else {
 					BranchNode* branch_node = (BranchNode*)test_network_input_node_contexts[t_index].back();
 					branch_node->hook_indexes.clear();
@@ -341,7 +352,8 @@ void Experiment::train_existing_backprop(double target_val,
 					int index = -1;
 					for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
 						if (test_network_input_scope_contexts[t_index] == this->input_scope_contexts[i_index]
-								&& test_network_input_node_contexts[t_index] == this->input_node_contexts[i_index]) {
+								&& test_network_input_node_contexts[t_index] == this->input_node_contexts[i_index]
+								&& test_network_input_obs_indexes[t_index] == this->input_obs_indexes[i_index]) {
 							index = i_index;
 							break;
 						}
@@ -349,6 +361,7 @@ void Experiment::train_existing_backprop(double target_val,
 					if (index == -1) {
 						this->input_scope_contexts.push_back(test_network_input_scope_contexts[t_index]);
 						this->input_node_contexts.push_back(test_network_input_node_contexts[t_index]);
+						this->input_obs_indexes.push_back(test_network_input_obs_indexes[t_index]);
 						if ((int)test_network_input_scope_contexts[t_index].size() > this->input_max_depth) {
 							this->input_max_depth = (int)test_network_input_scope_contexts[t_index].size();
 						}

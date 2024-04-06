@@ -88,6 +88,7 @@ void Experiment::new_branch() {
 				if ((int)this->input_scope_contexts[i_index].size() > this->branch_node->input_max_depth) {
 					this->branch_node->input_max_depth = (int)this->input_scope_contexts[i_index].size();
 				}
+				this->branch_node->input_obs_indexes.push_back(this->input_obs_indexes[i_index]);
 			}
 		}
 	}
@@ -111,6 +112,7 @@ void Experiment::new_branch() {
 				if ((int)this->input_scope_contexts[original_index].size() > this->branch_node->input_max_depth) {
 					this->branch_node->input_max_depth = (int)this->input_scope_contexts[original_index].size();
 				}
+				this->branch_node->input_obs_indexes.push_back(this->input_obs_indexes[original_index]);
 			}
 		}
 	}
@@ -133,6 +135,7 @@ void Experiment::new_branch() {
 				if ((int)this->input_scope_contexts[i_index].size() > this->branch_node->input_max_depth) {
 					this->branch_node->input_max_depth = (int)this->input_scope_contexts[i_index].size();
 				}
+				this->branch_node->input_obs_indexes.push_back(this->input_obs_indexes[i_index]);
 			}
 		}
 	}
@@ -156,6 +159,7 @@ void Experiment::new_branch() {
 				if ((int)this->input_scope_contexts[original_index].size() > this->branch_node->input_max_depth) {
 					this->branch_node->input_max_depth = (int)this->input_scope_contexts[original_index].size();
 				}
+				this->branch_node->input_obs_indexes.push_back(this->input_obs_indexes[original_index]);
 			}
 		}
 	}

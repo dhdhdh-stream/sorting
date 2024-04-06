@@ -20,16 +20,20 @@ Sorting::Sorting() {
 	this->current_world = this->initial_world;
 }
 
+int Sorting::num_obs() {
+	return 1;
+}
+
 Action Sorting::random_action() {
 	uniform_int_distribution<int> action_distribution(0, 2);
 	return Action(action_distribution(generator));
 }
 
-double Sorting::get_observation() {
+vector<double> Sorting::get_observations() {
 	if (this->current_pointer >= 0 && this->current_pointer < (int)this->current_world.size()) {
-		return this->current_world[this->current_pointer];
+		return vector<double>{this->current_world[this->current_pointer]};
 	} else {
-		return -10.0;
+		return vector<double>{-10.0};
 	}
 }
 

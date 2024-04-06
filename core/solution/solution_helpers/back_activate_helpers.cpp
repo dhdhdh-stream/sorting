@@ -4,6 +4,7 @@
 #include "branch_node.h"
 #include "constants.h"
 #include "globals.h"
+#include "problem.h"
 #include "scope.h"
 #include "scope_node.h"
 
@@ -13,6 +14,7 @@ void gather_possible_helper(vector<Scope*>& scope_context,
 							vector<AbstractNode*>& node_context,
 							vector<vector<Scope*>>& possible_scope_contexts,
 							vector<vector<AbstractNode*>>& possible_node_contexts,
+							vector<int>& possible_obs_indexes,
 							ScopeHistory* scope_history) {
 	scope_context.push_back(scope_history->scope);
 	node_context.push_back(NULL);
@@ -27,8 +29,11 @@ void gather_possible_helper(vector<Scope*>& scope_context,
 				if (h_index == 0 || action_node->action.move != ACTION_NOOP) {
 					node_context.back() = action_node;
 
-					possible_scope_contexts.push_back(scope_context);
-					possible_node_contexts.push_back(node_context);
+					for (int o_index = 0; o_index < problem_type->num_obs(); o_index++) {
+						possible_scope_contexts.push_back(scope_context);
+						possible_node_contexts.push_back(node_context);
+						possible_obs_indexes.push_back(o_index);
+					}
 
 					node_context.back() = NULL;
 				}
@@ -48,6 +53,7 @@ void gather_possible_helper(vector<Scope*>& scope_context,
 										   node_context,
 										   possible_scope_contexts,
 										   possible_node_contexts,
+										   possible_obs_indexes,
 										   scope_node_history->scope_history);
 				}
 
@@ -61,6 +67,7 @@ void gather_possible_helper(vector<Scope*>& scope_context,
 
 				possible_scope_contexts.push_back(scope_context);
 				possible_node_contexts.push_back(node_context);
+				possible_obs_indexes.push_back(-1);
 
 				node_context.back() = NULL;
 			}
