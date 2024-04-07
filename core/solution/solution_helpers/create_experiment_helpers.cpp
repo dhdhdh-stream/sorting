@@ -13,13 +13,13 @@
 
 using namespace std;
 
-void create_experiment_helper(vector<Scope*>& scope_context,
-							  vector<AbstractNode*>& node_context,
-							  vector<vector<Scope*>>& possible_scope_contexts,
-							  vector<vector<AbstractNode*>>& possible_node_contexts,
-							  vector<bool>& possible_is_branch,
-							  vector<int>& possible_throw_id,
-							  ScopeHistory* scope_history) {
+void create_detail_experiment_helper(vector<Scope*>& scope_context,
+									 vector<AbstractNode*>& node_context,
+									 vector<vector<Scope*>>& possible_scope_contexts,
+									 vector<vector<AbstractNode*>>& possible_node_contexts,
+									 vector<bool>& possible_is_branch,
+									 vector<int>& possible_throw_id,
+									 ScopeHistory* scope_history) {
 	scope_context.push_back(scope_history->scope);
 	node_context.push_back(NULL);
 
@@ -44,13 +44,82 @@ void create_experiment_helper(vector<Scope*>& scope_context,
 
 			node_context.back() = scope_node;
 
-			create_experiment_helper(scope_context,
-									 node_context,
-									 possible_scope_contexts,
-									 possible_node_contexts,
-									 possible_is_branch,
-									 possible_throw_id,
-									 scope_node_history->scope_history);
+			create_detail_experiment_helper(scope_context,
+											node_context,
+											possible_scope_contexts,
+											possible_node_contexts,
+											possible_is_branch,
+											possible_throw_id,
+											scope_node_history->scope_history);
+
+			if (scope_node_history->normal_exit
+					|| scope_node_history->throw_id != -1) {
+				possible_scope_contexts.push_back(scope_context);
+				possible_node_contexts.push_back(node_context);
+				possible_is_branch.push_back(false);
+				possible_throw_id.push_back(scope_node_history->throw_id);
+			}
+
+			node_context.back() = NULL;
+		} else {
+			BranchNodeHistory* branch_node_history = (BranchNodeHistory*)node_history;
+
+			node_context.back() = node_history->node;
+
+			possible_scope_contexts.push_back(scope_context);
+			possible_node_contexts.push_back(node_context);
+			possible_is_branch.push_back(branch_node_history->is_branch);
+			possible_throw_id.push_back(-1);
+
+			node_context.back() = NULL;
+		}
+	}
+
+	scope_context.pop_back();
+	node_context.pop_back();
+}
+
+void create_high_experiment_helper(vector<Scope*>& scope_context,
+								   vector<AbstractNode*>& node_context,
+								   vector<vector<Scope*>>& possible_scope_contexts,
+								   vector<vector<AbstractNode*>>& possible_node_contexts,
+								   vector<bool>& possible_is_branch,
+								   vector<int>& possible_throw_id,
+								   ScopeHistory* scope_history) {
+	scope_context.push_back(scope_history->scope);
+	node_context.push_back(NULL);
+
+	for (int h_index = 0; h_index < (int)scope_history->node_histories.size(); h_index++) {
+		AbstractNodeHistory* node_history = scope_history->node_histories[h_index];
+		if (node_history->node->type == NODE_TYPE_ACTION) {
+			ActionNodeHistory* action_node_history = (ActionNodeHistory*)node_history;
+			ActionNode* action_node = (ActionNode*)action_node_history->node;
+			if (h_index == 0 || action_node->action.move != ACTION_NOOP) {
+				node_context.back() = action_node;
+
+				possible_scope_contexts.push_back(scope_context);
+				possible_node_contexts.push_back(node_context);
+				possible_is_branch.push_back(false);
+				possible_throw_id.push_back(-1);
+
+				node_context.back() = NULL;
+			}
+		} else if (node_history->node->type == NODE_TYPE_SCOPE) {
+			ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)node_history;
+			ScopeNode* scope_node = (ScopeNode*)scope_node_history->node;
+
+			node_context.back() = scope_node;
+
+			uniform_int_distribution<int> inner_distribution(0, 1);
+			if (inner_distribution(generator) == 0) {
+				create_high_experiment_helper(scope_context,
+											  node_context,
+											  possible_scope_contexts,
+											  possible_node_contexts,
+											  possible_is_branch,
+											  possible_throw_id,
+											  scope_node_history->scope_history);
+			}
 
 			if (scope_node_history->normal_exit
 					|| scope_node_history->throw_id != -1) {
@@ -87,13 +156,24 @@ void create_experiment(ScopeHistory* root_history) {
 
 	vector<Scope*> scope_context;
 	vector<AbstractNode*> node_context;
-	create_experiment_helper(scope_context,
-							 node_context,
-							 possible_scope_contexts,
-							 possible_node_contexts,
-							 possible_is_branch,
-							 possible_throw_id,
-							 root_history);
+	uniform_int_distribution<int> type_distribution(0, 2);
+	if (type_distribution(generator) == 0) {
+		create_high_experiment_helper(scope_context,
+									  node_context,
+									  possible_scope_contexts,
+									  possible_node_contexts,
+									  possible_is_branch,
+									  possible_throw_id,
+									  root_history);
+	} else {
+		create_detail_experiment_helper(scope_context,
+										node_context,
+										possible_scope_contexts,
+										possible_node_contexts,
+										possible_is_branch,
+										possible_throw_id,
+										root_history);
+	}
 
 	uniform_int_distribution<int> possible_distribution(0, (int)possible_scope_contexts.size()-1);
 	int rand_index = possible_distribution(generator);

@@ -10,7 +10,8 @@ ACTION_RIGHT = 1
 ACTION_DOWN = 2
 ACTION_LEFT = 3
 ACTION_CLICK = 4
-ACTION_FLAG = 5;
+ACTION_FLAG = 5
+ACTION_DOUBLECLICK = 6
 
 NODE_TYPE_ACTION = 0
 NODE_TYPE_SCOPE = 1
@@ -108,6 +109,8 @@ def pretty_print_action(action):
 		result = 'CLICK'
 	elif action == 5:
 		result = 'FLAG'
+	elif action == 6:
+		result = 'DOUBLECLICK'
 	return result
 
 graph = pydot.Dot(graph_type='digraph', strict=True)
@@ -115,7 +118,7 @@ graph = pydot.Dot(graph_type='digraph', strict=True)
 global_node_index = 0
 
 for scope_id in scopes:
-# for scope_id in [42]:
+# for scope_id in [0]:
 	node_mappings = {}
 	for key in scopes[scope_id]:
 		node_index = global_node_index

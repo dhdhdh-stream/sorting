@@ -47,6 +47,9 @@ const int EXPERIMENT_STATE_EXPERIMENT_VERIFY_1ST = 13;
 const int EXPERIMENT_STATE_EXPERIMENT_VERIFY_2ND_EXISTING = 14;
 const int EXPERIMENT_STATE_EXPERIMENT_VERIFY_2ND = 15;
 
+const int EXPLORE_TYPE_GOOD = 0;
+const int EXPLORE_TYPE_NEUTRAL = 1;
+
 const int MAX_EXPLORE_TRIES = 4;
 
 const double EXPERIMENT_COMBINED_MIN_BRANCH_WEIGHT = 0.05;
@@ -94,6 +97,8 @@ public:
 	Network* existing_network;
 	double existing_average_misguess;
 	double existing_misguess_standard_deviation;
+
+	int explore_type;
 
 	std::vector<int> step_types;
 	std::vector<ActionNode*> actions;

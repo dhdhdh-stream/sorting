@@ -228,6 +228,13 @@ void Experiment::measure_backprop(double target_val,
 					this->new_network = NULL;
 				}
 
+				uniform_int_distribution<int> explore_distribution(0, 9);
+				if (explore_distribution(generator) == 0) {
+					this->explore_type = EXPLORE_TYPE_NEUTRAL;
+				} else {
+					this->explore_type = EXPLORE_TYPE_GOOD;
+				}
+
 				this->state = EXPERIMENT_STATE_EXPLORE_CREATE;
 				this->state_iter = 0;
 			} else {

@@ -189,12 +189,8 @@ void Experiment::verify_backprop(double target_val,
 				&& this->combined_score >= this->verify_existing_average_score
 				&& combined_branch_weight > EXPERIMENT_COMBINED_MIN_BRANCH_WEIGHT) {
 		#endif /* MDEBUG */
-			this->new_is_better = false;
-
-			this->o_target_val_histories.reserve(VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints);
-
-			this->state = EXPERIMENT_STATE_VERIFY_2ND_EXISTING;
-			this->state_iter = 0;
+			this->state = EXPERIMENT_STATE_EXPERIMENT;
+			this->experiment_iter = 0;
 		} else {
 			this->explore_iter++;
 			if (this->explore_iter < MAX_EXPLORE_TRIES) {
@@ -225,6 +221,13 @@ void Experiment::verify_backprop(double target_val,
 				if (this->new_network != NULL) {
 					delete this->new_network;
 					this->new_network = NULL;
+				}
+
+				uniform_int_distribution<int> explore_distribution(0, 9);
+				if (explore_distribution(generator) == 0) {
+					this->explore_type = EXPLORE_TYPE_NEUTRAL;
+				} else {
+					this->explore_type = EXPLORE_TYPE_GOOD;
 				}
 
 				this->state = EXPERIMENT_STATE_EXPLORE_CREATE;
@@ -402,6 +405,13 @@ void Experiment::verify_backprop(double target_val,
 				if (this->new_network != NULL) {
 					delete this->new_network;
 					this->new_network = NULL;
+				}
+
+				uniform_int_distribution<int> explore_distribution(0, 9);
+				if (explore_distribution(generator) == 0) {
+					this->explore_type = EXPLORE_TYPE_NEUTRAL;
+				} else {
+					this->explore_type = EXPLORE_TYPE_GOOD;
 				}
 
 				this->state = EXPERIMENT_STATE_EXPLORE_CREATE;

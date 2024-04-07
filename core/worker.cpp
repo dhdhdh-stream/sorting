@@ -119,6 +119,26 @@ int main(int argc, char* argv[]) {
 						0.9 * experiment->average_remaining_experiments_from_start
 						+ 0.1 * ((int)experiment_history->experiments_seen_order.size()-1 - e_index
 							+ run_helper.experiment_histories[h_index+1]->experiment->average_remaining_experiments_from_start);
+
+					if (experiment->parent_experiment != experiment_history->experiment) {
+						throw invalid_argument("experiment->parent_experiment != experiment_history->experiment");
+					}
+				}
+			}
+			{
+				/**
+				 * - non-empty if EXPERIMENT_STATE_EXPERIMENT
+				 */
+				ExperimentHistory* experiment_history = run_helper.experiment_histories.back();
+				for (int e_index = 0; e_index < (int)experiment_history->experiments_seen_order.size(); e_index++) {
+					Experiment* experiment = experiment_history->experiments_seen_order[e_index];
+					experiment->average_remaining_experiments_from_start =
+						0.9 * experiment->average_remaining_experiments_from_start
+						+ 0.1 * ((int)experiment_history->experiments_seen_order.size()-1 - e_index);
+
+					if (experiment->parent_experiment != experiment_history->experiment) {
+						throw invalid_argument("experiment->parent_experiment != experiment_history->experiment");
+					}
 				}
 			}
 

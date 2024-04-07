@@ -16,9 +16,9 @@
 using namespace std;
 
 #if defined(MDEBUG) && MDEBUG
-const int EXPLORE_ITERS = 2;
+const int EXPLORE_ITERS = 5;
 #else
-const int EXPLORE_ITERS = 200;
+const int EXPLORE_ITERS = 500;
 #endif /* MDEBUG */
 
 void Experiment::explore_measure_activate(AbstractNode*& curr_node,
@@ -162,8 +162,7 @@ void Experiment::explore_measure_backprop(double target_val,
 		double curr_surprise = target_val - history->existing_predicted_score;
 
 		bool select = false;
-		uniform_int_distribution<int> random_select_distribution(0, 9);
-		if (random_select_distribution(generator) == 0
+		if (this->explore_type == EXPLORE_TYPE_NEUTRAL
 				&& curr_surprise >= 0.0) {
 			select = true;
 		} else if (curr_surprise >= this->existing_score_standard_deviation) {

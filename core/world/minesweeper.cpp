@@ -122,7 +122,7 @@ int Minesweeper::num_obs() {
 }
 
 Action Minesweeper::random_action() {
-	uniform_int_distribution<int> action_distribution(0, 5);
+	uniform_int_distribution<int> action_distribution(0, 6);
 	return Action(action_distribution(generator));
 }
 
@@ -198,34 +198,100 @@ void Minesweeper::perform_action(Action action) {
 		return;
 	}
 
-	if (action.move == MINESWEEPER_ACTION_UP) {
-		if (this->current_y <= HEIGHT-1) {
+	switch (action.move) {
+	case MINESWEEPER_ACTION_UP:
+		if (this->current_y < HEIGHT-1) {
 			this->current_y++;
 		}
-	} else if (action.move == MINESWEEPER_ACTION_RIGHT) {
-		if (this->current_x <= WIDTH-1) {
+		break;
+	case MINESWEEPER_ACTION_RIGHT:
+		if (this->current_x < WIDTH-1) {
 			this->current_x++;
 		}
-	} else if (action.move == MINESWEEPER_ACTION_DOWN) {
-		if (this->current_y >= 0) {
+		break;
+	case MINESWEEPER_ACTION_DOWN:
+		if (this->current_y > 0) {
 			this->current_y--;
 		}
-	} else if (action.move == MINESWEEPER_ACTION_LEFT) {
-		if (this->current_x >= 0) {
+		break;
+	case MINESWEEPER_ACTION_LEFT:
+		if (this->current_x > 0) {
 			this->current_x--;
 		}
-	} else if (action.move == MINESWEEPER_ACTION_CLICK) {
+		break;
+	case MINESWEEPER_ACTION_CLICK:
 		reveal_helper(this->current_x, this->current_y);
-	} else if (action.move == MINESWEEPER_ACTION_FLAG) {
-		if (this->current_x >= 0
-				&& this->current_x <= WIDTH-1
-				&& this->current_y >= 0
-				&& this->current_y <= HEIGHT-1) {
-			if (!this->revealed[this->current_x][this->current_y]
-					&& !this->flagged[this->current_x][this->current_y]) {
-				this->flagged[this->current_x][this->current_y] = true;
+		break;
+	case MINESWEEPER_ACTION_FLAG:
+		if (!this->revealed[this->current_x][this->current_y]
+				&& !this->flagged[this->current_x][this->current_y]) {
+			this->flagged[this->current_x][this->current_y] = true;
+		}
+		break;
+	case MINESWEEPER_ACTION_DOUBLECLICK:
+		if (this->revealed[this->current_x][this->current_y]) {
+			int num_surrounding = 0;
+
+			if (this->current_x > 0 && this->current_y < HEIGHT-1) {
+				if (this->flagged[this->current_x-1][this->current_y+1]) {
+					num_surrounding++;
+				}
+			}
+
+			if (this->current_y < HEIGHT-1) {
+				if (this->flagged[this->current_x][this->current_y+1]) {
+					num_surrounding++;
+				}
+			}
+
+			if (this->current_x < WIDTH-1 && this->current_y < HEIGHT-1) {
+				if (this->flagged[this->current_x+1][this->current_y+1]) {
+					num_surrounding++;
+				}
+			}
+
+			if (this->current_x < WIDTH-1) {
+				if (this->flagged[this->current_x+1][this->current_y]) {
+					num_surrounding++;
+				}
+			}
+
+			if (this->current_x < WIDTH-1 && this->current_y > 0) {
+				if (this->flagged[this->current_x+1][this->current_y-1]) {
+					num_surrounding++;
+				}
+			}
+
+			if (this->current_y > 0) {
+				if (this->flagged[this->current_x][this->current_y-1]) {
+					num_surrounding++;
+				}
+			}
+
+			if (this->current_x > 0 && this->current_y > 0) {
+				if (this->flagged[this->current_x-1][this->current_y-1]) {
+					num_surrounding++;
+				}
+			}
+
+			if (this->current_x > 0) {
+				if (this->flagged[this->current_x-1][this->current_y]) {
+					num_surrounding++;
+				}
+			}
+
+			if (num_surrounding == this->revealed[this->current_x][this->current_y]) {
+				reveal_helper(this->current_x-1, this->current_y-1);
+				reveal_helper(this->current_x-1, this->current_y);
+				reveal_helper(this->current_x-1, this->current_y+1);
+				reveal_helper(this->current_x, this->current_y+1);
+				reveal_helper(this->current_x+1, this->current_y+1);
+				reveal_helper(this->current_x+1, this->current_y);
+				reveal_helper(this->current_x+1, this->current_y-1);
+				reveal_helper(this->current_x, this->current_y-1);
 			}
 		}
+		break;
 	}
 }
 

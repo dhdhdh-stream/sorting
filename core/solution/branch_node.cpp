@@ -72,6 +72,7 @@ void BranchNode::save(ofstream& output_file) {
 			output_file << this->input_scope_context_ids[i_index][c_index] << endl;
 			output_file << this->input_node_context_ids[i_index][c_index] << endl;
 		}
+		output_file << this->input_obs_indexes[i_index] << endl;
 	}
 
 	output_file << this->linear_original_input_indexes.size() << endl;
@@ -162,6 +163,10 @@ void BranchNode::load(ifstream& input_file) {
 		}
 		this->input_scope_context_ids.push_back(c_scope_context_ids);
 		this->input_node_context_ids.push_back(c_node_context_ids);
+
+		string obs_index_line;
+		getline(input_file, obs_index_line);
+		this->input_obs_indexes.push_back(stoi(obs_index_line));
 	}
 
 	string num_linear_original_inputs_line;

@@ -11,6 +11,7 @@ const int MINESWEEPER_ACTION_DOWN = 2;
 const int MINESWEEPER_ACTION_LEFT = 3;
 const int MINESWEEPER_ACTION_CLICK = 4;
 const int MINESWEEPER_ACTION_FLAG = 5;
+const int MINESWEEPER_ACTION_DOUBLECLICK = 6;
 
 class Minesweeper : public Problem {
 public:

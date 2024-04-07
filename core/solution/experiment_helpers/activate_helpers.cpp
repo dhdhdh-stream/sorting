@@ -91,6 +91,7 @@ bool Experiment::activate(AbstractNode*& curr_node,
 						}
 
 						if (ancestor_index == (int)run_helper.experiment_histories.size()) {
+							bool is_continue = true;
 							if (run_helper.experiment_histories.size() == 0) {
 								bool has_seen = false;
 								for (int e_index = 0; e_index < (int)run_helper.experiments_seen_order.size(); e_index++) {
@@ -103,24 +104,13 @@ bool Experiment::activate(AbstractNode*& curr_node,
 									double selected_probability = 1.0 / (1.0 + ancestors[0]->average_remaining_experiments_from_start);
 									uniform_real_distribution<double> distribution(0.0, 1.0);
 									if (distribution(generator) < selected_probability) {
-										run_helper.experiments_seen_order.push_back(ancestors[0]);
 										run_helper.experiment_histories.push_back(new ExperimentHistory(ancestors[0]));
-
-										for (int e_index = 1; e_index < (int)ancestors.size()-1; e_index++) {
-											ExperimentHistory* parent_experiment_history = run_helper.experiment_histories.back();
-											parent_experiment_history->experiments_seen_order.push_back(ancestors[e_index]);
-											run_helper.experiment_histories.push_back(new ExperimentHistory(ancestors[e_index]));
-										}
-
-										ExperimentHistory* parent_experiment_history = run_helper.experiment_histories.back();
-										parent_experiment_history->experiments_seen_order.push_back(this);
-										run_helper.experiment_histories.push_back(new ExperimentHistory(this));
-
-										history = run_helper.experiment_histories.back();
-										is_selected = true;
 									} else {
-										run_helper.experiments_seen_order.push_back(ancestors[0]);
+										is_continue = false;
 									}
+									run_helper.experiments_seen_order.push_back(ancestors[0]);
+								} else {
+									is_continue = false;
 								}
 							} else {
 								ExperimentHistory* ancestor_experiment_history = run_helper.experiment_histories.back();
@@ -131,27 +121,40 @@ bool Experiment::activate(AbstractNode*& curr_node,
 										break;
 									}
 								}
-
 								if (!has_seen) {
 									double selected_probability = 1.0 / (1.0 + ancestors[ancestor_index]->average_remaining_experiments_from_start);
 									uniform_real_distribution<double> distribution(0.0, 1.0);
 									if (distribution(generator) < selected_probability) {
-										for (int e_index = ancestor_index; e_index < (int)ancestors.size()-1; e_index++) {
-											ExperimentHistory* parent_experiment_history = run_helper.experiment_histories.back();
-											parent_experiment_history->experiments_seen_order.push_back(ancestors[e_index]);
-											run_helper.experiment_histories.push_back(new ExperimentHistory(ancestors[e_index]));
-										}
-
-										ExperimentHistory* parent_experiment_history = run_helper.experiment_histories.back();
-										parent_experiment_history->experiments_seen_order.push_back(this);
-										run_helper.experiment_histories.push_back(new ExperimentHistory(this));
-
-										history = run_helper.experiment_histories.back();
-										is_selected = true;
+										run_helper.experiment_histories.push_back(new ExperimentHistory(ancestors[ancestor_index]));
 									} else {
-										ancestor_experiment_history->experiments_seen_order.push_back(ancestors[ancestor_index]);
+										is_continue = false;
 									}
+									ancestor_experiment_history->experiments_seen_order.push_back(ancestors[ancestor_index]);
+								} else {
+									is_continue = false;
 								}
+							}
+
+							for (int e_index = ancestor_index+1; e_index < (int)ancestors.size(); e_index++) {
+								if (!is_continue) {
+									break;
+								}
+
+								ExperimentHistory* parent_experiment_history = run_helper.experiment_histories.back();
+
+								double selected_probability = 1.0 / (1.0 + ancestors[e_index]->average_remaining_experiments_from_start);
+								uniform_real_distribution<double> distribution(0.0, 1.0);
+								if (distribution(generator) < selected_probability) {
+									run_helper.experiment_histories.push_back(new ExperimentHistory(ancestors[e_index]));
+								} else {
+									is_continue = false;
+								}
+								parent_experiment_history->experiments_seen_order.push_back(ancestors[e_index]);
+							}
+
+							if (is_continue) {
+								history = run_helper.experiment_histories.back();
+								is_selected = true;
 							}
 						}
 					}

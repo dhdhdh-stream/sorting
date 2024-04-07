@@ -316,6 +316,7 @@ void Experiment::train_new_backprop(double target_val,
 							  network_target_vals,
 							  test_network_input_scope_contexts,
 							  test_network_input_node_contexts,
+							  test_network_input_obs_indexes,
 							  test_network);
 
 				double average_misguess;

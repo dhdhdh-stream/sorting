@@ -101,7 +101,7 @@ void Experiment::train_existing_backprop(double target_val,
 
 				this->input_scope_contexts.push_back(possible_scope_contexts[remaining_indexes[rand_index]]);
 				this->input_node_contexts.push_back(possible_node_contexts[remaining_indexes[rand_index]]);
-				this->input_obs_indexes.push_back(possible_obs_indexes[rand_index]);
+				this->input_obs_indexes.push_back(possible_obs_indexes[remaining_indexes[rand_index]]);
 				if ((int)possible_scope_contexts[remaining_indexes[rand_index]].size() > this->input_max_depth) {
 					this->input_max_depth = (int)possible_scope_contexts[remaining_indexes[rand_index]].size();
 				}
@@ -328,6 +328,7 @@ void Experiment::train_existing_backprop(double target_val,
 						  network_target_vals,
 						  test_network_input_scope_contexts,
 						  test_network_input_node_contexts,
+						  test_network_input_obs_indexes,
 						  test_network);
 
 			double average_misguess;
@@ -506,6 +507,13 @@ void Experiment::train_existing_backprop(double target_val,
 			this->explore_iter = MAX_EXPLORE_TRIES;
 			this->experiment_iter = MAX_EXPERIMENT_NUM_EXPERIMENTS;
 		} else {
+			uniform_int_distribution<int> explore_distribution(0, 9);
+			if (explore_distribution(generator) == 0) {
+				this->explore_type = EXPLORE_TYPE_NEUTRAL;
+			} else {
+				this->explore_type = EXPLORE_TYPE_GOOD;
+			}
+
 			this->state = EXPERIMENT_STATE_EXPLORE_CREATE;
 			this->state_iter = 0;
 			this->explore_iter = 0;

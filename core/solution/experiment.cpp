@@ -74,6 +74,8 @@ Experiment::Experiment(vector<Scope*> scope_context,
 Experiment::~Experiment() {
 	if (this->parent_experiment != NULL) {
 		cout << "inner delete" << endl;
+	} else {
+		cout << "outer delete" << endl;
 	}
 
 	if (this->existing_network != NULL) {

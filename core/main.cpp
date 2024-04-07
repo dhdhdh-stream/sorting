@@ -35,14 +35,14 @@ int main(int argc, char* argv[]) {
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
 
-	problem_type = new Sorting();
-	// problem_type = new Minesweeper();
+	// problem_type = new Sorting();
+	problem_type = new Minesweeper();
 
 	solution = new Solution();
-	solution->init();
-	// solution->load("", "main");
+	// solution->init();
+	solution->load("", "main");
 
-	solution->save("", "main");
+	// solution->save("", "main");
 
 	int num_fails = 0;
 
@@ -50,9 +50,11 @@ int main(int argc, char* argv[]) {
 	int run_index = 0;
 	#endif /* MDEBUG */
 
+	double hit_percent = 0.5;
+
 	while (true) {
-		Problem* problem = new Sorting();
-		// Problem* problem = new Minesweeper();
+		// Problem* problem = new Sorting();
+		Problem* problem = new Minesweeper();
 
 		RunHelper run_helper;
 
@@ -102,6 +104,8 @@ int main(int argc, char* argv[]) {
 		bool is_success = false;
 		bool is_fail = false;
 		if (run_helper.experiment_histories.size() > 0) {
+			hit_percent = 0.999*hit_percent + 0.001;
+
 			for (int e_index = 0; e_index < (int)run_helper.experiments_seen_order.size(); e_index++) {
 				Experiment* experiment = run_helper.experiments_seen_order[e_index];
 				experiment->average_remaining_experiments_from_start =
@@ -117,6 +121,18 @@ int main(int argc, char* argv[]) {
 						0.9 * experiment->average_remaining_experiments_from_start
 						+ 0.1 * ((int)experiment_history->experiments_seen_order.size()-1 - e_index
 							+ run_helper.experiment_histories[h_index+1]->experiment->average_remaining_experiments_from_start);
+				}
+			}
+			{
+				/**
+				 * - non-empty if EXPERIMENT_STATE_EXPERIMENT
+				 */
+				ExperimentHistory* experiment_history = run_helper.experiment_histories.back();
+				for (int e_index = 0; e_index < (int)experiment_history->experiments_seen_order.size(); e_index++) {
+					Experiment* experiment = experiment_history->experiments_seen_order[e_index];
+					experiment->average_remaining_experiments_from_start =
+						0.9 * experiment->average_remaining_experiments_from_start
+						+ 0.1 * ((int)experiment_history->experiments_seen_order.size()-1 - e_index);
 				}
 			}
 
@@ -188,6 +204,8 @@ int main(int argc, char* argv[]) {
 				delete run_helper.experiment_histories.back()->experiment;
 			}
 		} else {
+			hit_percent = 0.999*hit_percent + 0.0;
+
 			for (int e_index = 0; e_index < (int)run_helper.experiments_seen_order.size(); e_index++) {
 				Experiment* experiment = run_helper.experiments_seen_order[e_index];
 				experiment->average_remaining_experiments_from_start =
@@ -209,7 +227,7 @@ int main(int argc, char* argv[]) {
 				run_helper.verify_key = solution->verify_key;
 
 				run_helper.starting_run_seed = solution->verify_seeds[0];
-				// cout << "run_helper.starting_run_seed: " << run_helper.starting_run_seed << endl;
+				cout << "run_helper.starting_run_seed: " << run_helper.starting_run_seed << endl;
 				run_helper.curr_run_seed = solution->verify_seeds[0];
 				solution->verify_seeds.erase(solution->verify_seeds.begin());
 
@@ -257,17 +275,19 @@ int main(int argc, char* argv[]) {
 
 			solution->increment();
 
-			solution->timestamp = (unsigned)time(NULL);
-			solution->save("", "main");
+			// solution->timestamp = (unsigned)time(NULL);
+			// solution->save("", "main");
 
-			ofstream display_file;
-			display_file.open("../display.txt");
-			solution->save_for_display(display_file);
-			display_file.close();
+			// ofstream display_file;
+			// display_file.open("../display.txt");
+			// solution->save_for_display(display_file);
+			// display_file.close();
 
 			num_fails = 0;
 
 			solution->curr_num_datapoints = STARTING_NUM_DATAPOINTS;
+
+			cout << "hit_percent: " << hit_percent << endl;
 		} else if (is_fail) {
 			num_fails++;
 			cout << "num_fails: " << num_fails << endl << endl;
@@ -279,6 +299,8 @@ int main(int argc, char* argv[]) {
 
 				solution->curr_num_datapoints *= 2;
 			}
+
+			cout << "hit_percent: " << hit_percent << endl;
 		}
 
 		#if defined(MDEBUG) && MDEBUG
