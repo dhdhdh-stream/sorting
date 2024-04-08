@@ -163,7 +163,7 @@ void BranchExperiment::verify_backprop(double target_val,
 			/ (this->verify_existing_score_standard_deviation / sqrt(VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints));
 
 		double combined_branch_weight = 1.0;
-		AbstractExperiment* curr_experiment = this->verify_experiments.back();
+		AbstractExperiment* curr_experiment = this;
 		while (true) {
 			if (curr_experiment == NULL) {
 				break;
@@ -249,7 +249,7 @@ void BranchExperiment::verify_backprop(double target_val,
 			/ (this->verify_existing_score_standard_deviation / sqrt(VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints));
 
 		double combined_branch_weight = 1.0;
-		AbstractExperiment* curr_experiment = this->verify_experiments.back();
+		AbstractExperiment* curr_experiment = this;
 		while (true) {
 			if (curr_experiment == NULL) {
 				break;

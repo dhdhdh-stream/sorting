@@ -1,3 +1,7 @@
+// TODO: add mimicking
+// - human performs simple full run, so no decision making/variations
+//   - copy sequences, and try using them in different places
+
 #include <chrono>
 #include <iostream>
 #include <map>

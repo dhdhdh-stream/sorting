@@ -363,6 +363,7 @@ void BranchExperiment::experiment_verify_backprop(
 					#endif /* MDEBUG */
 
 					branch_experiment->state = BRANCH_EXPERIMENT_STATE_EXPERIMENT;
+					branch_experiment->root_state = ROOT_EXPERIMENT_STATE_EXPERIMENT;
 					branch_experiment->experiment_iter = 0;
 
 					to_experiment = true;
@@ -371,6 +372,7 @@ void BranchExperiment::experiment_verify_backprop(
 				PassThroughExperiment* pass_through_experiment = (PassThroughExperiment*)this->verify_experiments.back();
 				if (pass_through_experiment->best_step_types.size() > 0) {
 					pass_through_experiment->state = PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT;
+					pass_through_experiment->root_state = ROOT_EXPERIMENT_STATE_EXPERIMENT;
 					pass_through_experiment->experiment_iter = 0;
 
 					to_experiment = true;

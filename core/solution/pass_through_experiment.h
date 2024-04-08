@@ -152,11 +152,6 @@ public:
 
 	bool has_target;
 
-	std::vector<AbstractExperiment*> experiments_seen_order;
-
-	ScopeHistory* scope_history;
-	std::vector<int> experiment_index;
-
 	PassThroughExperimentHistory(PassThroughExperiment* experiment);
 	~PassThroughExperimentHistory();
 };
