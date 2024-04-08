@@ -9,8 +9,8 @@
 #include <thread>
 #include <random>
 
+#include "abstract_experiment.h"
 #include "action_node.h"
-#include "experiment.h"
 #include "globals.h"
 #include "minesweeper.h"
 #include "scope.h"
@@ -105,16 +105,16 @@ int main(int argc, char* argv[]) {
 		bool is_fail = false;
 		if (run_helper.experiment_histories.size() > 0) {
 			for (int e_index = 0; e_index < (int)run_helper.experiments_seen_order.size(); e_index++) {
-				Experiment* experiment = run_helper.experiments_seen_order[e_index];
+				AbstractExperiment* experiment = run_helper.experiments_seen_order[e_index];
 				experiment->average_remaining_experiments_from_start =
 					0.9 * experiment->average_remaining_experiments_from_start
 					+ 0.1 * ((int)run_helper.experiments_seen_order.size()-1 - e_index
 						+ run_helper.experiment_histories[0]->experiment->average_remaining_experiments_from_start);
 			}
 			for (int h_index = 0; h_index < (int)run_helper.experiment_histories.size()-1; h_index++) {
-				ExperimentHistory* experiment_history = run_helper.experiment_histories[h_index];
+				AbstractExperimentHistory* experiment_history = run_helper.experiment_histories[h_index];
 				for (int e_index = 0; e_index < (int)experiment_history->experiments_seen_order.size(); e_index++) {
-					Experiment* experiment = experiment_history->experiments_seen_order[e_index];
+					AbstractExperiment* experiment = experiment_history->experiments_seen_order[e_index];
 					experiment->average_remaining_experiments_from_start =
 						0.9 * experiment->average_remaining_experiments_from_start
 						+ 0.1 * ((int)experiment_history->experiments_seen_order.size()-1 - e_index
@@ -129,9 +129,9 @@ int main(int argc, char* argv[]) {
 				/**
 				 * - non-empty if EXPERIMENT_STATE_EXPERIMENT
 				 */
-				ExperimentHistory* experiment_history = run_helper.experiment_histories.back();
+				AbstractExperimentHistory* experiment_history = run_helper.experiment_histories.back();
 				for (int e_index = 0; e_index < (int)experiment_history->experiments_seen_order.size(); e_index++) {
-					Experiment* experiment = experiment_history->experiments_seen_order[e_index];
+					AbstractExperiment* experiment = experiment_history->experiments_seen_order[e_index];
 					experiment->average_remaining_experiments_from_start =
 						0.9 * experiment->average_remaining_experiments_from_start
 						+ 0.1 * ((int)experiment_history->experiments_seen_order.size()-1 - e_index);
@@ -151,7 +151,7 @@ int main(int argc, char* argv[]) {
 					run_helper.experiment_histories.back()->experiment->finalize();
 					delete run_helper.experiment_histories.back()->experiment;
 				} else {
-					Experiment* curr_experiment = run_helper.experiment_histories.back()->experiment->parent_experiment;
+					AbstractExperiment* curr_experiment = run_helper.experiment_histories.back()->experiment->parent_experiment;
 
 					curr_experiment->experiment_iter++;
 					int matching_index;
@@ -176,7 +176,7 @@ int main(int argc, char* argv[]) {
 						}
 
 						if (curr_experiment->experiment_iter >= target_count) {
-							Experiment* parent = curr_experiment->parent_experiment;
+							AbstractExperiment* parent = curr_experiment->parent_experiment;
 
 							if (parent != NULL) {
 								parent->experiment_iter++;
@@ -211,7 +211,7 @@ int main(int argc, char* argv[]) {
 			}
 		} else {
 			for (int e_index = 0; e_index < (int)run_helper.experiments_seen_order.size(); e_index++) {
-				Experiment* experiment = run_helper.experiments_seen_order[e_index];
+				AbstractExperiment* experiment = run_helper.experiments_seen_order[e_index];
 				experiment->average_remaining_experiments_from_start =
 					0.9 * experiment->average_remaining_experiments_from_start
 					+ 0.1 * ((int)run_helper.experiments_seen_order.size()-1 - e_index);

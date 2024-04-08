@@ -4,7 +4,7 @@
 #include <fstream>
 #include <vector>
 
-class Experiment;
+class AbstractExperiment;
 class Scope;
 
 const int NODE_TYPE_ACTION = 0;
@@ -19,7 +19,7 @@ public:
 	Scope* parent;
 	int id;
 
-	std::vector<Experiment*> experiments;
+	std::vector<AbstractExperiment*> experiments;
 
 	virtual ~AbstractNode() {};
 	virtual void save(std::ofstream& output_file) = 0;

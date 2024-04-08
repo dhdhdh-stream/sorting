@@ -1,22 +1,23 @@
-#include "experiment.h"
+#include "branch_experiment.h"
 
 #include <iostream>
 
 #include "abstract_node.h"
 #include "constants.h"
 #include "globals.h"
+#include "pass_through_experiment.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
 
 using namespace std;
 
-bool Experiment::activate(AbstractNode*& curr_node,
-						  Problem* problem,
-						  vector<ContextLayer>& context,
-						  int& exit_depth,
-						  AbstractNode*& exit_node,
-						  RunHelper& run_helper) {
+bool BranchExperiment::activate(AbstractNode*& curr_node,
+								Problem* problem,
+								vector<ContextLayer>& context,
+								int& exit_depth,
+								AbstractNode*& exit_node,
+								RunHelper& run_helper) {
 	bool matches_context = true;
 	if (this->scope_context.size() > context.size()) {
 		matches_context = false;
@@ -32,7 +33,7 @@ bool Experiment::activate(AbstractNode*& curr_node,
 
 	if (matches_context) {
 		bool is_selected = false;
-		ExperimentHistory* history = NULL;
+		BranchExperimentHistory* history = NULL;
 		int match_index = -1;
 		for (int e_index = 0; e_index < (int)run_helper.experiment_histories.size(); e_index++) {
 			if (run_helper.experiment_histories[e_index]->experiment == this) {
@@ -41,7 +42,7 @@ bool Experiment::activate(AbstractNode*& curr_node,
 			}
 		}
 		if (match_index != -1) {
-			history = run_helper.experiment_histories[match_index];
+			history = (BranchExperimentHistory*)run_helper.experiment_histories[match_index];
 			is_selected = true;
 		} else {
 			if (this->parent_experiment == NULL) {
@@ -57,7 +58,7 @@ bool Experiment::activate(AbstractNode*& curr_node,
 						double selected_probability = 1.0 / (1.0 + this->average_remaining_experiments_from_start);
 						uniform_real_distribution<double> distribution(0.0, 1.0);
 						if (distribution(generator) < selected_probability) {
-							history = new ExperimentHistory(this);
+							history = new BranchExperimentHistory(this);
 							run_helper.experiment_histories.push_back(history);
 							is_selected = true;
 						}
@@ -66,11 +67,11 @@ bool Experiment::activate(AbstractNode*& curr_node,
 					}
 				}
 			} else {
-				switch (this->root_experiment->state) {
-				case EXPERIMENT_STATE_EXPERIMENT:
+				switch (this->root_experiment->root_state) {
+				case ROOT_EXPERIMENT_STATE_EXPERIMENT:
 					{
-						vector<Experiment*> ancestors;
-						Experiment* curr_experiment = this;
+						vector<AbstractExperiment*> ancestors;
+						AbstractExperiment* curr_experiment = this;
 						while (true) {
 							ancestors.insert(ancestors.begin(), curr_experiment);
 
@@ -104,7 +105,13 @@ bool Experiment::activate(AbstractNode*& curr_node,
 									double selected_probability = 1.0 / (1.0 + ancestors[0]->average_remaining_experiments_from_start);
 									uniform_real_distribution<double> distribution(0.0, 1.0);
 									if (distribution(generator) < selected_probability) {
-										run_helper.experiment_histories.push_back(new ExperimentHistory(ancestors[0]));
+										if (ancestors[0]->type == EXPERIMENT_TYPE_BRANCH) {
+											BranchExperiment* branch_ancestor = (BranchExperiment*)ancestors[0];
+											run_helper.experiment_histories.push_back(new BranchExperimentHistory(branch_ancestor));
+										} else {
+											PassThroughExperiment* pass_through_ancestor = (PassThroughExperiment*)ancestors[0];
+											run_helper.experiment_histories.push_back(new PassThroughExperimentHistory(pass_through_ancestor));
+										}
 									} else {
 										is_continue = false;
 									}
@@ -113,7 +120,7 @@ bool Experiment::activate(AbstractNode*& curr_node,
 									is_continue = false;
 								}
 							} else {
-								ExperimentHistory* ancestor_experiment_history = run_helper.experiment_histories.back();
+								AbstractExperimentHistory* ancestor_experiment_history = run_helper.experiment_histories.back();
 								bool has_seen = false;
 								for (int e_index = 0; e_index < (int)ancestor_experiment_history->experiments_seen_order.size(); e_index++) {
 									if (ancestor_experiment_history->experiments_seen_order[e_index] == ancestors[ancestor_index]) {
@@ -125,7 +132,13 @@ bool Experiment::activate(AbstractNode*& curr_node,
 									double selected_probability = 1.0 / (1.0 + ancestors[ancestor_index]->average_remaining_experiments_from_start);
 									uniform_real_distribution<double> distribution(0.0, 1.0);
 									if (distribution(generator) < selected_probability) {
-										run_helper.experiment_histories.push_back(new ExperimentHistory(ancestors[ancestor_index]));
+										if (ancestors[ancestor_index]->type == EXPERIMENT_TYPE_BRANCH) {
+											BranchExperiment* branch_ancestor = (BranchExperiment*)ancestors[ancestor_index];
+											run_helper.experiment_histories.push_back(new BranchExperimentHistory(branch_ancestor));
+										} else {
+											PassThroughExperiment* pass_through_ancestor = (PassThroughExperiment*)ancestors[ancestor_index];
+											run_helper.experiment_histories.push_back(new PassThroughExperimentHistory(pass_through_ancestor));
+										}
 									} else {
 										is_continue = false;
 									}
@@ -140,12 +153,18 @@ bool Experiment::activate(AbstractNode*& curr_node,
 									break;
 								}
 
-								ExperimentHistory* parent_experiment_history = run_helper.experiment_histories.back();
+								AbstractExperimentHistory* parent_experiment_history = run_helper.experiment_histories.back();
 
 								double selected_probability = 1.0 / (1.0 + ancestors[e_index]->average_remaining_experiments_from_start);
 								uniform_real_distribution<double> distribution(0.0, 1.0);
 								if (distribution(generator) < selected_probability) {
-									run_helper.experiment_histories.push_back(new ExperimentHistory(ancestors[e_index]));
+									if (ancestors[e_index]->type == EXPERIMENT_TYPE_BRANCH) {
+										BranchExperiment* branch_ancestor = (BranchExperiment*)ancestors[e_index];
+										run_helper.experiment_histories.push_back(new BranchExperimentHistory(branch_ancestor));
+									} else {
+										PassThroughExperiment* pass_through_ancestor = (PassThroughExperiment*)ancestors[e_index];
+										run_helper.experiment_histories.push_back(new PassThroughExperimentHistory(pass_through_ancestor));
+									}
 								} else {
 									is_continue = false;
 								}
@@ -153,15 +172,15 @@ bool Experiment::activate(AbstractNode*& curr_node,
 							}
 
 							if (is_continue) {
-								history = run_helper.experiment_histories.back();
+								history = (BranchExperimentHistory*)run_helper.experiment_histories.back();
 								is_selected = true;
 							}
 						}
 					}
 
 					break;
-				case EXPERIMENT_STATE_EXPERIMENT_VERIFY_1ST_EXISTING:
-				case EXPERIMENT_STATE_EXPERIMENT_VERIFY_2ND_EXISTING:
+				case ROOT_EXPERIMENT_STATE_VERIFY_1ST_EXISTING:
+				case ROOT_EXPERIMENT_STATE_VERIFY_2ND_EXISTING:
 					/**
 					 * - select root_experiment for proper comparison
 					 */
@@ -186,7 +205,13 @@ bool Experiment::activate(AbstractNode*& curr_node,
 									double selected_probability = 1.0 / (1.0 + this->root_experiment->average_remaining_experiments_from_start);
 									uniform_real_distribution<double> distribution(0.0, 1.0);
 									if (distribution(generator) < selected_probability) {
-										run_helper.experiment_histories.push_back(new ExperimentHistory(this->root_experiment));
+										if (this->root_experiment->type == EXPERIMENT_TYPE_BRANCH) {
+											BranchExperiment* branch_root = (BranchExperiment*)this->root_experiment;
+											run_helper.experiment_histories.push_back(new BranchExperimentHistory(branch_root));
+										} else {
+											PassThroughExperiment* pass_through_root = (PassThroughExperiment*)this->root_experiment;
+											run_helper.experiment_histories.push_back(new PassThroughExperimentHistory(pass_through_root));
+										}
 									}
 									run_helper.experiments_seen_order.push_back(this->root_experiment);
 								}
@@ -195,8 +220,8 @@ bool Experiment::activate(AbstractNode*& curr_node,
 					}
 
 					break;
-				case EXPERIMENT_STATE_EXPERIMENT_VERIFY_1ST:
-				case EXPERIMENT_STATE_EXPERIMENT_VERIFY_2ND:
+				case ROOT_EXPERIMENT_STATE_VERIFY_1ST:
+				case ROOT_EXPERIMENT_STATE_VERIFY_2ND:
 					{
 						bool is_verify = false;
 						for (int e_index = 0; e_index < (int)this->root_experiment->verify_experiments.size(); e_index++) {
@@ -227,7 +252,13 @@ bool Experiment::activate(AbstractNode*& curr_node,
 									double selected_probability = 1.0 / (1.0 + this->root_experiment->average_remaining_experiments_from_start);
 									uniform_real_distribution<double> distribution(0.0, 1.0);
 									if (distribution(generator) < selected_probability) {
-										run_helper.experiment_histories.push_back(new ExperimentHistory(this->root_experiment));
+										if (this->root_experiment->type == EXPERIMENT_TYPE_BRANCH) {
+											BranchExperiment* branch_root = (BranchExperiment*)this->root_experiment;
+											run_helper.experiment_histories.push_back(new BranchExperimentHistory(branch_root));
+										} else {
+											PassThroughExperiment* pass_through_root = (PassThroughExperiment*)this->root_experiment;
+											run_helper.experiment_histories.push_back(new PassThroughExperimentHistory(pass_through_root));
+										}
 										is_selected = true;
 									}
 									run_helper.experiments_seen_order.push_back(this->root_experiment);
@@ -243,17 +274,17 @@ bool Experiment::activate(AbstractNode*& curr_node,
 
 		if (is_selected) {
 			switch (this->state) {
-			case EXPERIMENT_STATE_TRAIN_EXISTING:
+			case BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING:
 				train_existing_activate(context,
 										run_helper,
 										history);
 				break;
-			case EXPERIMENT_STATE_EXPLORE_CREATE:
+			case BRANCH_EXPERIMENT_STATE_EXPLORE_CREATE:
 				explore_create_activate(context,
 										run_helper,
 										history);
 				break;
-			case EXPERIMENT_STATE_EXPLORE_MEASURE:
+			case BRANCH_EXPERIMENT_STATE_EXPLORE_MEASURE:
 				explore_measure_activate(curr_node,
 										 problem,
 										 context,
@@ -262,7 +293,7 @@ bool Experiment::activate(AbstractNode*& curr_node,
 										 run_helper,
 										 history);
 				break;
-			case EXPERIMENT_STATE_TRAIN_NEW:
+			case BRANCH_EXPERIMENT_STATE_TRAIN_NEW:
 				train_new_activate(curr_node,
 								   problem,
 								   context,
@@ -271,7 +302,7 @@ bool Experiment::activate(AbstractNode*& curr_node,
 								   run_helper,
 								   history);
 				break;
-			case EXPERIMENT_STATE_MEASURE:
+			case BRANCH_EXPERIMENT_STATE_MEASURE:
 				measure_activate(curr_node,
 								 problem,
 								 context,
@@ -279,8 +310,8 @@ bool Experiment::activate(AbstractNode*& curr_node,
 								 exit_node,
 								 run_helper);
 				break;
-			case EXPERIMENT_STATE_VERIFY_1ST:
-			case EXPERIMENT_STATE_VERIFY_2ND:
+			case BRANCH_EXPERIMENT_STATE_VERIFY_1ST:
+			case BRANCH_EXPERIMENT_STATE_VERIFY_2ND:
 				verify_activate(curr_node,
 								problem,
 								context,
@@ -289,7 +320,7 @@ bool Experiment::activate(AbstractNode*& curr_node,
 								run_helper);
 				break;
 			#if defined(MDEBUG) && MDEBUG
-			case EXPERIMENT_STATE_CAPTURE_VERIFY:
+			case BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY:
 				capture_verify_activate(curr_node,
 										problem,
 										context,
@@ -298,7 +329,7 @@ bool Experiment::activate(AbstractNode*& curr_node,
 										run_helper);
 				break;
 			#endif /* MDEBUG */
-			case EXPERIMENT_STATE_ROOT_VERIFY:
+			case BRANCH_EXPERIMENT_STATE_ROOT_VERIFY:
 				root_verify_activate(curr_node,
 									 problem,
 									 context,
@@ -306,17 +337,22 @@ bool Experiment::activate(AbstractNode*& curr_node,
 									 exit_node,
 									 run_helper);
 				break;
-			case EXPERIMENT_STATE_EXPERIMENT:
-				experiment_activate(curr_node,
-									context,
-									run_helper,
-									history);
-				break;
-			case EXPERIMENT_STATE_EXPERIMENT_VERIFY_1ST:
-			case EXPERIMENT_STATE_EXPERIMENT_VERIFY_2ND:
-				experiment_verify_activate(curr_node,
-										   context,
-										   run_helper);
+			case BRANCH_EXPERIMENT_STATE_EXPERIMENT:
+				switch (this->root_state) {
+				case ROOT_EXPERIMENT_STATE_EXPERIMENT:
+					experiment_activate(curr_node,
+										context,
+										run_helper,
+										history);
+					break;
+				case ROOT_EXPERIMENT_STATE_VERIFY_1ST:
+				case ROOT_EXPERIMENT_STATE_VERIFY_2ND:
+					experiment_verify_activate(curr_node,
+											   context,
+											   run_helper);
+					break;
+				}
+
 				break;
 			}
 
@@ -329,57 +365,62 @@ bool Experiment::activate(AbstractNode*& curr_node,
 	}
 }
 
-void Experiment::backprop(double target_val,
-						  RunHelper& run_helper) {
+void BranchExperiment::backprop(double target_val,
+								RunHelper& run_helper) {
 	switch (this->state) {
-	case EXPERIMENT_STATE_TRAIN_EXISTING:
+	case BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING:
 		train_existing_backprop(target_val,
 								run_helper);
 		break;
-	case EXPERIMENT_STATE_EXPLORE_CREATE:
+	case BRANCH_EXPERIMENT_STATE_EXPLORE_CREATE:
 		explore_create_backprop(target_val,
 								run_helper);
 		break;
-	case EXPERIMENT_STATE_EXPLORE_MEASURE:
+	case BRANCH_EXPERIMENT_STATE_EXPLORE_MEASURE:
 		explore_measure_backprop(target_val,
 								 run_helper);
 		break;
-	case EXPERIMENT_STATE_TRAIN_NEW:
+	case BRANCH_EXPERIMENT_STATE_TRAIN_NEW:
 		train_new_backprop(target_val,
 						   run_helper);
 		break;
-	case EXPERIMENT_STATE_MEASURE:
+	case BRANCH_EXPERIMENT_STATE_MEASURE:
 		measure_backprop(target_val,
 						 run_helper);
 		break;
-	case EXPERIMENT_STATE_VERIFY_1ST_EXISTING:
-	case EXPERIMENT_STATE_VERIFY_2ND_EXISTING:
+	case BRANCH_EXPERIMENT_STATE_VERIFY_1ST_EXISTING:
+	case BRANCH_EXPERIMENT_STATE_VERIFY_2ND_EXISTING:
 		verify_existing_backprop(target_val,
 								 run_helper);
 		break;
-	case EXPERIMENT_STATE_VERIFY_1ST:
-	case EXPERIMENT_STATE_VERIFY_2ND:
+	case BRANCH_EXPERIMENT_STATE_VERIFY_1ST:
+	case BRANCH_EXPERIMENT_STATE_VERIFY_2ND:
 		verify_backprop(target_val,
 						run_helper);
 		break;
 	#if defined(MDEBUG) && MDEBUG
-	case EXPERIMENT_STATE_CAPTURE_VERIFY:
+	case BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY:
 		capture_verify_backprop();
 		break;
 	#endif /* MDEBUG */
-	case EXPERIMENT_STATE_EXPERIMENT:
-		experiment_backprop(target_val,
-							run_helper);
-		break;
-	case EXPERIMENT_STATE_EXPERIMENT_VERIFY_1ST_EXISTING:
-	case EXPERIMENT_STATE_EXPERIMENT_VERIFY_2ND_EXISTING:
-		experiment_verify_existing_backprop(target_val,
-											run_helper);
-		break;
-	case EXPERIMENT_STATE_EXPERIMENT_VERIFY_1ST:
-	case EXPERIMENT_STATE_EXPERIMENT_VERIFY_2ND:
-		experiment_verify_backprop(target_val,
-								   run_helper);
+	case BRANCH_EXPERIMENT_STATE_EXPERIMENT:
+		switch (this->root_state) {
+		case ROOT_EXPERIMENT_STATE_EXPERIMENT:
+			experiment_backprop(target_val,
+								run_helper);
+			break;
+		case ROOT_EXPERIMENT_STATE_VERIFY_1ST_EXISTING:
+		case ROOT_EXPERIMENT_STATE_VERIFY_2ND_EXISTING:
+			experiment_verify_existing_backprop(target_val,
+												run_helper);
+			break;
+		case ROOT_EXPERIMENT_STATE_VERIFY_1ST:
+		case ROOT_EXPERIMENT_STATE_VERIFY_2ND:
+			experiment_verify_backprop(target_val,
+									   run_helper);
+			break;
+		}
+
 		break;
 	}
 }

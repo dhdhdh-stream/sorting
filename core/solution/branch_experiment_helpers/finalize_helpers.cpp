@@ -1,4 +1,4 @@
-#include "experiment.h"
+#include "branch_experiment.h"
 
 #include <iostream>
 
@@ -13,7 +13,7 @@
 
 using namespace std;
 
-void Experiment::finalize() {
+void BranchExperiment::finalize() {
 	if (this->result == EXPERIMENT_RESULT_SUCCESS) {
 		if (this->is_pass_through) {
 			new_pass_through();
@@ -43,7 +43,7 @@ void Experiment::finalize() {
 	this->node_context.back()->experiments.erase(this->node_context.back()->experiments.begin() + experiment_index);
 }
 
-void Experiment::new_branch() {
+void BranchExperiment::new_branch() {
 	cout << "new_branch" << endl;
 
 	if (this->exit_node != NULL) {
@@ -324,7 +324,7 @@ void Experiment::new_branch() {
 	this->exit_node = NULL;
 }
 
-void Experiment::new_pass_through() {
+void BranchExperiment::new_pass_through() {
 	cout << "new_pass_through" << endl;
 
 	if (this->exit_node != NULL) {

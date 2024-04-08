@@ -1,4 +1,4 @@
-#include "experiment.h"
+#include "branch_experiment.h"
 
 #include <cmath>
 #include <iostream>
@@ -18,12 +18,12 @@
 
 using namespace std;
 
-void Experiment::measure_activate(AbstractNode*& curr_node,
-								  Problem* problem,
-								  vector<ContextLayer>& context,
-								  int& exit_depth,
-								  AbstractNode*& exit_node,
-								  RunHelper& run_helper) {
+void BranchExperiment::measure_activate(AbstractNode*& curr_node,
+										Problem* problem,
+										vector<ContextLayer>& context,
+										int& exit_depth,
+										AbstractNode*& exit_node,
+										RunHelper& run_helper) {
 	vector<double> input_vals(this->input_scope_contexts.size(), 0.0);
 	for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
 		if (this->input_node_contexts[i_index].back()->type == NODE_TYPE_ACTION) {
@@ -131,8 +131,8 @@ void Experiment::measure_activate(AbstractNode*& curr_node,
 	}
 }
 
-void Experiment::measure_backprop(double target_val,
-								  RunHelper& run_helper) {
+void BranchExperiment::measure_backprop(double target_val,
+										RunHelper& run_helper) {
 	this->combined_score += target_val;
 
 	this->state_iter++;
@@ -156,13 +156,16 @@ void Experiment::measure_backprop(double target_val,
 			/ (this->existing_score_standard_deviation / sqrt(solution->curr_num_datapoints));
 
 		double combined_branch_weight = 1.0;
-		Experiment* curr_experiment = this;
+		AbstractExperiment* curr_experiment = this;
 		while (true) {
 			if (curr_experiment == NULL) {
 				break;
 			}
 
-			combined_branch_weight *= curr_experiment->branch_weight;
+			if (curr_experiment->type == EXPERIMENT_TYPE_BRANCH) {
+				BranchExperiment* branch_experiment = (BranchExperiment*)curr_experiment;
+				combined_branch_weight *= branch_experiment->branch_weight;
+			}
 			curr_experiment = curr_experiment->parent_experiment;
 		}
 
@@ -176,7 +179,7 @@ void Experiment::measure_backprop(double target_val,
 
 			this->o_target_val_histories.reserve(VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints);
 
-			this->state = EXPERIMENT_STATE_VERIFY_1ST_EXISTING;
+			this->state = BRANCH_EXPERIMENT_STATE_VERIFY_1ST_EXISTING;
 			this->state_iter = 0;
 		#if defined(MDEBUG) && MDEBUG
 		} else if (this->step_types.size() > 0
@@ -184,7 +187,8 @@ void Experiment::measure_backprop(double target_val,
 		#else
 		} else if (this->step_types.size() > 0
 				&& this->combined_score >= this->verify_existing_average_score
-				&& combined_branch_weight > EXPERIMENT_COMBINED_MIN_BRANCH_WEIGHT) {
+				&& combined_branch_weight > EXPERIMENT_COMBINED_MIN_BRANCH_WEIGHT
+				&& !this->skip_explore) {
 		#endif /* MDEBUG */
 			this->new_is_better = false;
 
@@ -194,7 +198,7 @@ void Experiment::measure_backprop(double target_val,
 
 			this->o_target_val_histories.reserve(VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints);
 
-			this->state = EXPERIMENT_STATE_VERIFY_1ST_EXISTING;
+			this->state = BRANCH_EXPERIMENT_STATE_VERIFY_1ST_EXISTING;
 			this->state_iter = 0;
 		} else {
 			this->explore_iter++;
@@ -235,7 +239,7 @@ void Experiment::measure_backprop(double target_val,
 					this->explore_type = EXPLORE_TYPE_GOOD;
 				}
 
-				this->state = EXPERIMENT_STATE_EXPLORE_CREATE;
+				this->state = BRANCH_EXPERIMENT_STATE_EXPLORE_CREATE;
 				this->state_iter = 0;
 			} else {
 				this->result = EXPERIMENT_RESULT_FAIL;

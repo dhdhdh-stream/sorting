@@ -1,4 +1,4 @@
-#include "experiment.h"
+#include "branch_experiment.h"
 
 #include <iostream>
 
@@ -21,13 +21,14 @@ const int EXPLORE_ITERS = 5;
 const int EXPLORE_ITERS = 500;
 #endif /* MDEBUG */
 
-void Experiment::explore_measure_activate(AbstractNode*& curr_node,
-										  Problem* problem,
-										  vector<ContextLayer>& context,
-										  int& exit_depth,
-										  AbstractNode*& exit_node,
-										  RunHelper& run_helper,
-										  ExperimentHistory* history) {
+void BranchExperiment::explore_measure_activate(
+		AbstractNode*& curr_node,
+		Problem* problem,
+		vector<ContextLayer>& context,
+		int& exit_depth,
+		AbstractNode*& exit_node,
+		RunHelper& run_helper,
+		BranchExperimentHistory* history) {
 	history->instance_count++;
 
 	bool is_target = false;
@@ -151,9 +152,10 @@ void Experiment::explore_measure_activate(AbstractNode*& curr_node,
 	}
 }
 
-void Experiment::explore_measure_backprop(double target_val,
-										  RunHelper& run_helper) {
-	ExperimentHistory* history = run_helper.experiment_histories.back();
+void BranchExperiment::explore_measure_backprop(
+		double target_val,
+		RunHelper& run_helper) {
+	BranchExperimentHistory* history = (BranchExperimentHistory*)run_helper.experiment_histories.back();
 
 	if (history->has_target) {
 		#if defined(MDEBUG) && MDEBUG
@@ -293,7 +295,7 @@ void Experiment::explore_measure_backprop(double target_val,
 			this->i_scope_histories.reserve(solution->curr_num_datapoints);
 			this->i_target_val_histories.reserve(solution->curr_num_datapoints);
 
-			this->state = EXPERIMENT_STATE_TRAIN_NEW;
+			this->state = BRANCH_EXPERIMENT_STATE_TRAIN_NEW;
 			this->state_iter = 0;
 		} else {
 			for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {
@@ -314,7 +316,7 @@ void Experiment::explore_measure_backprop(double target_val,
 				this->result = EXPERIMENT_RESULT_FAIL;
 			}
 
-			this->state = EXPERIMENT_STATE_EXPLORE_CREATE;
+			this->state = BRANCH_EXPERIMENT_STATE_EXPLORE_CREATE;
 		}
 	}
 }

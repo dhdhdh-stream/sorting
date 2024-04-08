@@ -5,7 +5,7 @@
 #include "action_node.h"
 #include "branch_node.h"
 #include "exit_node.h"
-#include "experiment.h"
+#include "abstract_experiment.h"
 #include "globals.h"
 #include "scope_node.h"
 #include "solution.h"

@@ -1,6 +1,6 @@
 #if defined(MDEBUG) && MDEBUG
 
-#include "experiment.h"
+#include "branch_experiment.h"
 
 #include <iostream>
 
@@ -19,12 +19,12 @@
 
 using namespace std;
 
-void Experiment::capture_verify_activate(AbstractNode*& curr_node,
-										 Problem* problem,
-										 vector<ContextLayer>& context,
-										 int& exit_depth,
-										 AbstractNode*& exit_node,
-										 RunHelper& run_helper) {
+void BranchExperiment::capture_verify_activate(AbstractNode*& curr_node,
+											   Problem* problem,
+											   vector<ContextLayer>& context,
+											   int& exit_depth,
+											   AbstractNode*& exit_node,
+											   RunHelper& run_helper) {
 	if (this->verify_problems[this->state_iter] == NULL) {
 		this->verify_problems[this->state_iter] = problem->copy_and_reset();
 	}
@@ -151,15 +151,15 @@ void Experiment::capture_verify_activate(AbstractNode*& curr_node,
 	}
 }
 
-void Experiment::capture_verify_backprop() {
+void BranchExperiment::capture_verify_backprop() {
 	this->state_iter++;
 	if (this->state_iter >= NUM_VERIFY_SAMPLES) {
 		if (this->parent_experiment == NULL) {
 			this->result = EXPERIMENT_RESULT_SUCCESS;
 		} else {
-			vector<Experiment*> verify_experiments;
+			vector<AbstractExperiment*> verify_experiments;
 			verify_experiments.insert(verify_experiments.begin(), this);
-			Experiment* curr_experiment = this->parent_experiment;
+			AbstractExperiment* curr_experiment = this->parent_experiment;
 			while (true) {
 				if (curr_experiment->parent_experiment == NULL) {
 					/**
@@ -176,9 +176,9 @@ void Experiment::capture_verify_backprop() {
 
 			this->root_experiment->o_target_val_histories.reserve(VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints);
 
-			this->root_experiment->state = EXPERIMENT_STATE_EXPERIMENT_VERIFY_1ST_EXISTING;
+			this->root_experiment->root_state = ROOT_EXPERIMENT_STATE_VERIFY_1ST_EXISTING;
 
-			this->state = EXPERIMENT_STATE_ROOT_VERIFY;
+			this->state = BRANCH_EXPERIMENT_STATE_ROOT_VERIFY;
 		}
 	}
 }

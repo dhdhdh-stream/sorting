@@ -13,7 +13,7 @@
 
 class AbstractNode;
 class AbstractNodeHistory;
-class ExperimentHistory;
+class AbstractExperimentHistory;
 class Problem;
 
 #if defined(MDEBUG) && MDEBUG
@@ -114,7 +114,7 @@ public:
 
 	std::vector<AbstractNodeHistory*> node_histories;
 
-	ExperimentHistory* experiment_history;
+	AbstractExperimentHistory* experiment_history;
 
 	ScopeHistory(Scope* scope);
 	ScopeHistory(ScopeHistory* original);

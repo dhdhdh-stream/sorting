@@ -2,8 +2,8 @@
 
 #include <iostream>
 
+#include "abstract_experiment.h"
 #include "action_node.h"
-#include "experiment.h"
 #include "network.h"
 #include "scope.h"
 #include "solution_helpers.h"

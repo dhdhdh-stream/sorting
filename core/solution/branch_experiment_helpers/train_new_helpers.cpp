@@ -1,4 +1,4 @@
-#include "experiment.h"
+#include "branch_experiment.h"
 
 #include <cmath>
 #include <iostream>
@@ -21,13 +21,14 @@
 
 using namespace std;
 
-void Experiment::train_new_activate(AbstractNode*& curr_node,
-									Problem* problem,
-									vector<ContextLayer>& context,
-									int& exit_depth,
-									AbstractNode*& exit_node,
-									RunHelper& run_helper,
-									ExperimentHistory* history) {
+void BranchExperiment::train_new_activate(
+		AbstractNode*& curr_node,
+		Problem* problem,
+		vector<ContextLayer>& context,
+		int& exit_depth,
+		AbstractNode*& exit_node,
+		RunHelper& run_helper,
+		BranchExperimentHistory* history) {
 	history->instance_count++;
 
 	bool is_target = false;
@@ -56,7 +57,7 @@ void Experiment::train_new_activate(AbstractNode*& curr_node,
 	}
 }
 
-void Experiment::train_new_target_activate(
+void BranchExperiment::train_new_target_activate(
 		AbstractNode*& curr_node,
 		Problem* problem,
 		vector<ContextLayer>& context,
@@ -88,9 +89,10 @@ void Experiment::train_new_target_activate(
 	}
 }
 
-void Experiment::train_new_backprop(double target_val,
-									RunHelper& run_helper) {
-	ExperimentHistory* history = run_helper.experiment_histories.back();
+void BranchExperiment::train_new_backprop(
+		double target_val,
+		RunHelper& run_helper) {
+	BranchExperimentHistory* history = (BranchExperimentHistory*)run_helper.experiment_histories.back();
 
 	this->average_instances_per_run = 0.9*this->average_instances_per_run + 0.1*history->instance_count;
 
@@ -404,7 +406,7 @@ void Experiment::train_new_backprop(double target_val,
 			this->original_count = 0;
 			this->branch_count = 0;
 
-			this->state = EXPERIMENT_STATE_MEASURE;
+			this->state = BRANCH_EXPERIMENT_STATE_MEASURE;
 			this->state_iter = 0;
 		}
 	}

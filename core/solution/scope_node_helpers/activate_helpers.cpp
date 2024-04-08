@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-#include "experiment.h"
+#include "abstract_experiment.h"
 #include "scope.h"
 
 using namespace std;

@@ -1,4 +1,4 @@
-#include "experiment.h"
+#include "branch_experiment.h"
 
 #include <iostream>
 
@@ -14,9 +14,10 @@
 
 using namespace std;
 
-void Experiment::explore_create_activate(vector<ContextLayer>& context,
-										 RunHelper& run_helper,
-										 ExperimentHistory* history) {
+void BranchExperiment::explore_create_activate(
+		vector<ContextLayer>& context,
+		RunHelper& run_helper,
+		BranchExperimentHistory* history) {
 	history->instance_count++;
 
 	bool is_target = false;
@@ -76,16 +77,16 @@ void Experiment::explore_create_activate(vector<ContextLayer>& context,
 	}
 }
 
-void gather_possible_exits_helper(vector<int>& experiment_index,
-								  vector<pair<int,AbstractNode*>>& possible_exits,
-								  ScopeHistory* scope_history) {
+void branch_gather_possible_exits_helper(vector<int>& experiment_index,
+										 vector<pair<int,AbstractNode*>>& possible_exits,
+										 ScopeHistory* scope_history) {
 	if (experiment_index.size() > 1) {
 		ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)scope_history->node_histories[experiment_index[0]-1];
 
 		vector<int> inner_experiment_index(experiment_index.begin()+1, experiment_index.end());
-		gather_possible_exits_helper(inner_experiment_index,
-									 possible_exits,
-									 scope_node_history->scope_history);
+		branch_gather_possible_exits_helper(inner_experiment_index,
+											possible_exits,
+											scope_node_history->scope_history);
 	}
 
 	for (int h_index = experiment_index[0]; h_index < (int)scope_history->node_histories.size(); h_index++) {
@@ -95,17 +96,18 @@ void gather_possible_exits_helper(vector<int>& experiment_index,
 	possible_exits.push_back({experiment_index.size()-1, NULL});
 }
 
-void Experiment::explore_create_backprop(double target_val,
-										 RunHelper& run_helper) {
-	ExperimentHistory* history = run_helper.experiment_histories.back();
+void BranchExperiment::explore_create_backprop(
+		double target_val,
+		RunHelper& run_helper) {
+	BranchExperimentHistory* history = (BranchExperimentHistory*)run_helper.experiment_histories.back();
 
 	if (history->has_target
 			&& !run_helper.exceeded_limit) {
 		vector<pair<int,AbstractNode*>> possible_exits;
 
-		gather_possible_exits_helper(history->experiment_index,
-									 possible_exits,
-									 history->scope_history);
+		branch_gather_possible_exits_helper(history->experiment_index,
+											possible_exits,
+											history->scope_history);
 
 		if (possible_exits.size() > 0) {
 			uniform_int_distribution<int> distribution(0, possible_exits.size()-1);
@@ -162,7 +164,7 @@ void Experiment::explore_create_backprop(double target_val,
 				}
 			}
 
-			this->state = EXPERIMENT_STATE_EXPLORE_MEASURE;
+			this->state = BRANCH_EXPERIMENT_STATE_EXPLORE_MEASURE;
 		}
 	}
 }

@@ -1,4 +1,4 @@
-#include "experiment.h"
+#include "branch_experiment.h"
 
 #include <iostream>
 
@@ -15,12 +15,12 @@
 
 using namespace std;
 
-Experiment::Experiment(vector<Scope*> scope_context,
-					   vector<AbstractNode*> node_context,
-					   bool is_branch,
-					   int throw_id,
-					   Experiment* parent_experiment,
-					   bool skip_explore) {
+BranchExperiment::BranchExperiment(vector<Scope*> scope_context,
+								   vector<AbstractNode*> node_context,
+								   bool is_branch,
+								   int throw_id,
+								   AbstractExperiment* parent_experiment,
+								   bool skip_explore) {
 	this->scope_context = scope_context;
 	this->node_context = node_context;
 	this->is_branch = is_branch;
@@ -30,7 +30,7 @@ Experiment::Experiment(vector<Scope*> scope_context,
 	if (this->parent_experiment != NULL) {
 		this->parent_experiment->child_experiments.push_back(this);
 
-		Experiment* curr_experiment = this->parent_experiment;
+		AbstractExperiment* curr_experiment = this->parent_experiment;
 		while (true) {
 			if (curr_experiment->parent_experiment == NULL) {
 				break;
@@ -62,7 +62,7 @@ Experiment::Experiment(vector<Scope*> scope_context,
 	this->i_scope_histories.reserve(solution->curr_num_datapoints);
 	this->i_target_val_histories.reserve(solution->curr_num_datapoints);
 
-	this->state = EXPERIMENT_STATE_TRAIN_EXISTING;
+	this->state = BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING;
 	this->state_iter = 0;
 
 	this->branch_node = NULL;
@@ -71,7 +71,7 @@ Experiment::Experiment(vector<Scope*> scope_context,
 	this->result = EXPERIMENT_RESULT_NA;
 }
 
-Experiment::~Experiment() {
+BranchExperiment::~BranchExperiment() {
 	if (this->parent_experiment != NULL) {
 		cout << "inner delete" << endl;
 	} else {
@@ -116,7 +116,7 @@ Experiment::~Experiment() {
 	#endif /* MDEBUG */
 }
 
-ExperimentHistory::ExperimentHistory(Experiment* experiment) {
+BranchExperimentHistory::BranchExperimentHistory(BranchExperiment* experiment) {
 	this->experiment = experiment;
 
 	this->instance_count = 0;
@@ -126,7 +126,7 @@ ExperimentHistory::ExperimentHistory(Experiment* experiment) {
 	this->scope_history = NULL;
 }
 
-ExperimentHistory::~ExperimentHistory() {
+BranchExperimentHistory::~BranchExperimentHistory() {
 	if (this->scope_history != NULL) {
 		delete this->scope_history;
 	}

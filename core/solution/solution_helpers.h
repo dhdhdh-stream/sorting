@@ -9,15 +9,15 @@
 #include "context_layer.h"
 #include "run_helper.h"
 
+class AbstractExperiment;
 class AbstractNode;
 class ActionNode;
-class Experiment;
 class Scope;
 class ScopeHistory;
 class ScopeNode;
 
 void create_experiment(ScopeHistory* root_history);
-Experiment* create_experiment(std::ifstream& input_file);
+AbstractExperiment* create_experiment(std::ifstream& input_file);
 
 ScopeNode* create_existing(Scope* parent_scope,
 						   RunHelper& run_helper);

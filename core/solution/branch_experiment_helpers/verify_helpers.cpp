@@ -1,5 +1,6 @@
-#include "experiment.h"
+#include "branch_experiment.h"
 
+#include <cmath>
 #include <iostream>
 
 #include "action_node.h"
@@ -8,7 +9,6 @@
 #include "exit_node.h"
 #include "globals.h"
 #include "network.h"
-#include "problem.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
@@ -17,10 +17,12 @@
 
 using namespace std;
 
-void Experiment::experiment_verify_activate(
-		AbstractNode*& curr_node,
-		vector<ContextLayer>& context,
-		RunHelper& run_helper) {
+void BranchExperiment::verify_activate(AbstractNode*& curr_node,
+									   Problem* problem,
+									   vector<ContextLayer>& context,
+									   int& exit_depth,
+									   AbstractNode*& exit_node,
+									   RunHelper& run_helper) {
 	if (this->is_pass_through) {
 		if (this->throw_id != -1) {
 			run_helper.throw_id = -1;
@@ -144,116 +146,99 @@ void Experiment::experiment_verify_activate(
 	}
 }
 
-void Experiment::experiment_verify_backprop(
-		double target_val,
-		RunHelper& run_helper) {
+void BranchExperiment::verify_backprop(double target_val,
+									   RunHelper& run_helper) {
 	this->combined_score += target_val;
 
 	this->state_iter++;
-	if (this->state == EXPERIMENT_STATE_EXPERIMENT_VERIFY_1ST
+	if (this->state == BRANCH_EXPERIMENT_STATE_VERIFY_1ST
 			&& this->state_iter >= VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints) {
+		this->combined_score /= (VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints);
+
 		#if defined(MDEBUG) && MDEBUG
 		if (rand()%2 == 0) {
 		#else
-		this->combined_score /= (VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints);
-
 		double combined_improvement = this->combined_score - this->verify_existing_average_score;
 		double combined_improvement_t_score = combined_improvement
 			/ (this->verify_existing_score_standard_deviation / sqrt(VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints));
 
-		if (combined_improvement_t_score > 1.960) {
+		double combined_branch_weight = 1.0;
+		AbstractExperiment* curr_experiment = this->verify_experiments.back();
+		while (true) {
+			if (curr_experiment == NULL) {
+				break;
+			}
+
+			if (curr_experiment->type == EXPERIMENT_TYPE_BRANCH) {
+				BranchExperiment* branch_experiment = (BranchExperiment*)curr_experiment;
+				combined_branch_weight *= branch_experiment->branch_weight;
+			}
+			curr_experiment = curr_experiment->parent_experiment;
+		}
+
+		if (this->new_is_better
+				&& this->branch_weight > 0.01
+				&& combined_improvement_t_score > 1.960) {
 		#endif /* MDEBUG */
 			this->o_target_val_histories.reserve(VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints);
 
-			this->state = EXPERIMENT_STATE_EXPERIMENT_VERIFY_2ND_EXISTING;
-			/**
-			 * - leave this->experiment_iter unchanged
-			 */
+			this->state = BRANCH_EXPERIMENT_STATE_VERIFY_2ND_EXISTING;
+			this->state_iter = 0;
+		#if defined(MDEBUG) && MDEBUG
+		} else if (this->step_types.size() > 0
+				&& rand()%4 == 0) {
+		#else
+		} else if (this->step_types.size() > 0
+				&& this->combined_score >= this->verify_existing_average_score
+				&& combined_branch_weight > EXPERIMENT_COMBINED_MIN_BRANCH_WEIGHT
+				&& !this->skip_explore) {
+		#endif /* MDEBUG */
+			this->state = BRANCH_EXPERIMENT_STATE_EXPERIMENT;
+			this->root_state = ROOT_EXPERIMENT_STATE_EXPERIMENT;
+			this->experiment_iter = 0;
 		} else {
-			double combined_branch_weight = 1.0;
-			Experiment* curr_experiment = this->verify_experiments.back();
-			while (true) {
-				if (curr_experiment == NULL) {
-					break;
-				}
-
-				combined_branch_weight *= curr_experiment->branch_weight;
-				curr_experiment = curr_experiment->parent_experiment;
-			}
-
-			if (this->verify_experiments.back()->step_types.size() > 0
-					&& this->verify_experiments.back()->combined_score >= this->verify_experiments.back()->verify_existing_average_score
-					&& combined_branch_weight > EXPERIMENT_COMBINED_MIN_BRANCH_WEIGHT) {
-				#if defined(MDEBUG) && MDEBUG
-				for (int p_index = 0; p_index < (int)this->verify_experiments.back()->verify_problems.size(); p_index++) {
-					delete this->verify_experiments.back()->verify_problems[p_index];
-				}
-				this->verify_experiments.back()->verify_problems.clear();
-				this->verify_experiments.back()->verify_seeds.clear();
-				this->verify_experiments.back()->verify_original_scores.clear();
-				this->verify_experiments.back()->verify_branch_scores.clear();
-				/**
-				 * - simply rely on leaf experiment to verify
-				 */
-				#endif /* MDEBUG */
-
-				this->verify_experiments.back()->state = EXPERIMENT_STATE_EXPERIMENT;
-				this->verify_experiments.back()->experiment_iter = 0;
-			} else {
-				Experiment* curr_experiment = this->verify_experiments.back()->parent_experiment;
-
-				curr_experiment->experiment_iter++;
-				int matching_index;
-				for (int c_index = 0; c_index < (int)curr_experiment->child_experiments.size(); c_index++) {
-					if (curr_experiment->child_experiments[c_index] == this->verify_experiments.back()) {
-						matching_index = c_index;
-						break;
-					}
-				}
-				curr_experiment->child_experiments.erase(curr_experiment->child_experiments.begin() + matching_index);
-
-				this->verify_experiments.back()->result = EXPERIMENT_RESULT_FAIL;
-				this->verify_experiments.back()->finalize();
-				delete this->verify_experiments.back();
-
-				double target_count = (double)MAX_EXPERIMENT_NUM_EXPERIMENTS
-					* pow(0.5, this->verify_experiments.size());
-				while (true) {
-					if (curr_experiment->parent_experiment == NULL) {
-						break;
-					}
-
-					if (curr_experiment->experiment_iter >= target_count) {
-						Experiment* parent = curr_experiment->parent_experiment;
-
-						parent->experiment_iter++;
-						int matching_index;
-						for (int c_index = 0; c_index < (int)parent->child_experiments.size(); c_index++) {
-							if (parent->child_experiments[c_index] == curr_experiment) {
-								matching_index = c_index;
-								break;
-							}
-						}
-						parent->child_experiments.erase(parent->child_experiments.begin() + matching_index);
-
-						curr_experiment->result = EXPERIMENT_RESULT_FAIL;
-						curr_experiment->finalize();
-						delete curr_experiment;
-
-						curr_experiment = parent;
-						target_count *= 2.0;
+			this->explore_iter++;
+			if (this->explore_iter < MAX_EXPLORE_TRIES) {
+				for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {
+					if (this->step_types[s_index] == STEP_TYPE_ACTION) {
+						delete this->actions[s_index];
 					} else {
-						break;
+						delete this->scopes[s_index];
 					}
 				}
-			}
 
-			this->verify_experiments.clear();
+				this->step_types.clear();
+				this->actions.clear();
+				this->scopes.clear();
+				this->catch_throw_ids.clear();
 
-			if (this->experiment_iter >= MAX_EXPERIMENT_NUM_EXPERIMENTS) {
-				this->result = EXPERIMENT_RESULT_FAIL;
+				if (this->branch_node != NULL) {
+					delete this->branch_node;
+					this->branch_node = NULL;
+				}
+				if (this->exit_node != NULL) {
+					delete this->exit_node;
+					this->exit_node = NULL;
+				}
+
+				this->new_linear_weights.clear();
+				this->new_network_input_indexes.clear();
+				if (this->new_network != NULL) {
+					delete this->new_network;
+					this->new_network = NULL;
+				}
+
+				uniform_int_distribution<int> explore_distribution(0, 9);
+				if (explore_distribution(generator) == 0) {
+					this->explore_type = EXPLORE_TYPE_NEUTRAL;
+				} else {
+					this->explore_type = EXPLORE_TYPE_GOOD;
+				}
+
+				this->state = BRANCH_EXPERIMENT_STATE_EXPLORE_CREATE;
+				this->state_iter = 0;
 			} else {
-				this->state = EXPERIMENT_STATE_EXPERIMENT;
+				this->result = EXPERIMENT_RESULT_FAIL;
 			}
 		}
 	} else if (this->state_iter >= VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints) {
@@ -261,14 +246,31 @@ void Experiment::experiment_verify_backprop(
 
 		double combined_improvement = this->combined_score - this->verify_existing_average_score;
 		double combined_improvement_t_score = combined_improvement
-			/ (this->verify_existing_score_standard_deviation / sqrt(VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints));
+			/ (this->verify_existing_score_standard_deviation / sqrt(VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints));
+
+		double combined_branch_weight = 1.0;
+		AbstractExperiment* curr_experiment = this->verify_experiments.back();
+		while (true) {
+			if (curr_experiment == NULL) {
+				break;
+			}
+
+			if (curr_experiment->type == EXPERIMENT_TYPE_BRANCH) {
+				BranchExperiment* branch_experiment = (BranchExperiment*)curr_experiment;
+				combined_branch_weight *= branch_experiment->branch_weight;
+			}
+			curr_experiment = curr_experiment->parent_experiment;
+		}
 
 		#if defined(MDEBUG) && MDEBUG
 		if (rand()%2 == 0) {
 		#else
-		if (combined_improvement_t_score > 1.960) {
+		if (this->new_is_better
+				&& this->branch_weight > 0.01
+				&& combined_improvement_t_score > 1.960) {
 		#endif /* MDEBUG */
-			cout << "experiment success" << endl;
+			cout << "verify" << endl;
+			cout << "this->parent_experiment: " << this->parent_experiment << endl;
 			cout << "this->scope_context:" << endl;
 			for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
 				cout << c_index << ": " << this->scope_context[c_index]->id << endl;
@@ -299,98 +301,131 @@ void Experiment::experiment_verify_backprop(
 
 			cout << "this->combined_score: " << this->combined_score << endl;
 			cout << "this->verify_existing_average_score: " << this->verify_existing_average_score << endl;
+			cout << "this->verify_existing_score_standard_deviation: " << this->verify_existing_score_standard_deviation << endl;
 			cout << "combined_improvement_t_score: " << combined_improvement_t_score << endl;
 
-			/**
-			 * - also finalize this->verify_experiments in finalize()
-			 */
+			cout << "this->branch_weight: " << this->branch_weight << endl;
 
-			this->result = EXPERIMENT_RESULT_SUCCESS;
-		} else {
-			double combined_branch_weight = 1.0;
-			Experiment* curr_experiment = this->verify_experiments.back();
-			while (true) {
-				if (curr_experiment == NULL) {
-					break;
-				}
+			cout << endl;
 
-				combined_branch_weight *= curr_experiment->branch_weight;
-				curr_experiment = curr_experiment->parent_experiment;
-			}
-
-			if (this->verify_experiments.back()->step_types.size() > 0
-					&& this->verify_experiments.back()->combined_score >= this->verify_experiments.back()->verify_existing_average_score
-					&& combined_branch_weight > EXPERIMENT_COMBINED_MIN_BRANCH_WEIGHT) {
-				#if defined(MDEBUG) && MDEBUG
-				for (int p_index = 0; p_index < (int)this->verify_experiments.back()->verify_problems.size(); p_index++) {
-					delete this->verify_experiments.back()->verify_problems[p_index];
-				}
-				this->verify_experiments.back()->verify_problems.clear();
-				this->verify_experiments.back()->verify_seeds.clear();
-				this->verify_experiments.back()->verify_original_scores.clear();
-				this->verify_experiments.back()->verify_branch_scores.clear();
-				/**
-				 * - simply rely on leaf experiment to verify
-				 */
-				#endif /* MDEBUG */
-
-				this->verify_experiments.back()->state = EXPERIMENT_STATE_EXPERIMENT;
-				this->verify_experiments.back()->experiment_iter = 0;
-			} else {
-				Experiment* curr_experiment = this->verify_experiments.back()->parent_experiment;
-
-				curr_experiment->experiment_iter++;
-				int matching_index;
-				for (int c_index = 0; c_index < (int)curr_experiment->child_experiments.size(); c_index++) {
-					if (curr_experiment->child_experiments[c_index] == this->verify_experiments.back()) {
-						matching_index = c_index;
-						break;
+			#if defined(MDEBUG) && MDEBUG
+			if (this->is_pass_through) {
+				if (this->parent_experiment == NULL) {
+					this->result = EXPERIMENT_RESULT_SUCCESS;
+				} else {
+					vector<AbstractExperiment*> verify_experiments;
+					verify_experiments.insert(verify_experiments.begin(), this);
+					AbstractExperiment* curr_experiment = this->parent_experiment;
+					while (true) {
+						if (curr_experiment->parent_experiment == NULL) {
+							/**
+							 * - don't include root
+							 */
+							break;
+						} else {
+							verify_experiments.insert(verify_experiments.begin(), curr_experiment);
+							curr_experiment = curr_experiment->parent_experiment;
+						}
 					}
+
+					this->root_experiment->verify_experiments = verify_experiments;
+
+					this->root_experiment->o_target_val_histories.reserve(VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints);
+
+					this->root_experiment->root_state = ROOT_EXPERIMENT_STATE_VERIFY_1ST_EXISTING;
+
+					this->state = BRANCH_EXPERIMENT_STATE_ROOT_VERIFY;
 				}
-				curr_experiment->child_experiments.erase(curr_experiment->child_experiments.begin() + matching_index);
+			} else {
+				this->verify_problems = vector<Problem*>(NUM_VERIFY_SAMPLES, NULL);
+				this->verify_seeds = vector<unsigned long>(NUM_VERIFY_SAMPLES);
 
-				this->verify_experiments.back()->result = EXPERIMENT_RESULT_FAIL;
-				this->verify_experiments.back()->finalize();
-				delete this->verify_experiments.back();
-
-				double target_count = (double)MAX_EXPERIMENT_NUM_EXPERIMENTS
-					* pow(0.5, this->verify_experiments.size());
+				this->state = BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY;
+				this->state_iter = 0;
+			}
+			#else
+			if (this->parent_experiment == NULL) {
+				this->result = EXPERIMENT_RESULT_SUCCESS;
+			} else {
+				vector<AbstractExperiment*> verify_experiments;
+				verify_experiments.insert(verify_experiments.begin(), this);
+				AbstractExperiment* curr_experiment = this->parent_experiment;
 				while (true) {
 					if (curr_experiment->parent_experiment == NULL) {
+						/**
+						 * - don't include root
+						 */
 						break;
-					}
-
-					if (curr_experiment->experiment_iter >= target_count) {
-						Experiment* parent = curr_experiment->parent_experiment;
-
-						parent->experiment_iter++;
-						int matching_index;
-						for (int c_index = 0; c_index < (int)parent->child_experiments.size(); c_index++) {
-							if (parent->child_experiments[c_index] == curr_experiment) {
-								matching_index = c_index;
-								break;
-							}
-						}
-						parent->child_experiments.erase(parent->child_experiments.begin() + matching_index);
-
-						curr_experiment->result = EXPERIMENT_RESULT_FAIL;
-						curr_experiment->finalize();
-						delete curr_experiment;
-
-						curr_experiment = parent;
-						target_count *= 2.0;
 					} else {
-						break;
+						verify_experiments.insert(verify_experiments.begin(), curr_experiment);
+						curr_experiment = curr_experiment->parent_experiment;
 					}
 				}
+
+				this->root_experiment->verify_experiments = verify_experiments;
+
+				this->root_experiment->o_target_val_histories.reserve(VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints);
+
+				this->root_experiment->root_state = ROOT_EXPERIMENT_STATE_VERIFY_1ST_EXISTING;
+
+				this->state = BRANCH_EXPERIMENT_STATE_ROOT_VERIFY;
 			}
+			#endif /* MDEBUG */
+		#if defined(MDEBUG) && MDEBUG
+		} else if (this->step_types.size() > 0
+				&& rand()%4 == 0) {
+		#else
+		} else if (this->step_types.size() > 0
+				&& this->combined_score >= this->verify_existing_average_score
+				&& combined_branch_weight > EXPERIMENT_COMBINED_MIN_BRANCH_WEIGHT
+				&& !this->skip_explore) {
+		#endif /* MDEBUG */
+			this->state = BRANCH_EXPERIMENT_STATE_EXPERIMENT;
+			this->root_state = ROOT_EXPERIMENT_STATE_EXPERIMENT;
+			this->experiment_iter = 0;
+		} else {
+			this->explore_iter++;
+			if (this->explore_iter < MAX_EXPLORE_TRIES) {
+				for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {
+					if (this->step_types[s_index] == STEP_TYPE_ACTION) {
+						delete this->actions[s_index];
+					} else {
+						delete this->scopes[s_index];
+					}
+				}
 
-			this->verify_experiments.clear();
+				this->step_types.clear();
+				this->actions.clear();
+				this->scopes.clear();
+				this->catch_throw_ids.clear();
 
-			if (this->experiment_iter >= MAX_EXPERIMENT_NUM_EXPERIMENTS) {
-				this->result = EXPERIMENT_RESULT_FAIL;
+				if (this->branch_node != NULL) {
+					delete this->branch_node;
+					this->branch_node = NULL;
+				}
+				if (this->exit_node != NULL) {
+					delete this->exit_node;
+					this->exit_node = NULL;
+				}
+
+				this->new_linear_weights.clear();
+				this->new_network_input_indexes.clear();
+				if (this->new_network != NULL) {
+					delete this->new_network;
+					this->new_network = NULL;
+				}
+
+				uniform_int_distribution<int> explore_distribution(0, 9);
+				if (explore_distribution(generator) == 0) {
+					this->explore_type = EXPLORE_TYPE_NEUTRAL;
+				} else {
+					this->explore_type = EXPLORE_TYPE_GOOD;
+				}
+
+				this->state = BRANCH_EXPERIMENT_STATE_EXPLORE_CREATE;
+				this->state_iter = 0;
 			} else {
-				this->state = EXPERIMENT_STATE_EXPERIMENT;
+				this->result = EXPERIMENT_RESULT_FAIL;
 			}
 		}
 	}

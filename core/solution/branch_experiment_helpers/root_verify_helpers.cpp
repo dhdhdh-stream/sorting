@@ -1,4 +1,4 @@
-#include "experiment.h"
+#include "branch_experiment.h"
 
 #include "action_node.h"
 #include "branch_node.h"
@@ -12,12 +12,13 @@
 
 using namespace std;
 
-void Experiment::root_verify_activate(AbstractNode*& curr_node,
-									  Problem* problem,
-									  vector<ContextLayer>& context,
-									  int& exit_depth,
-									  AbstractNode*& exit_node,
-									  RunHelper& run_helper) {
+void BranchExperiment::root_verify_activate(
+		AbstractNode*& curr_node,
+		Problem* problem,
+		vector<ContextLayer>& context,
+		int& exit_depth,
+		AbstractNode*& exit_node,
+		RunHelper& run_helper) {
 	if (this->is_pass_through) {
 		if (this->throw_id != -1) {
 			run_helper.throw_id = -1;

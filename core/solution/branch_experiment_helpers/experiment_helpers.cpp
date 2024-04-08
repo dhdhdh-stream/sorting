@@ -1,4 +1,4 @@
-#include "experiment.h"
+#include "branch_experiment.h"
 
 #include <iostream>
 
@@ -8,6 +8,7 @@
 #include "exit_node.h"
 #include "globals.h"
 #include "network.h"
+#include "pass_through_experiment.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
@@ -16,10 +17,10 @@
 
 using namespace std;
 
-void Experiment::experiment_activate(AbstractNode*& curr_node,
-									 vector<ContextLayer>& context,
-									 RunHelper& run_helper,
-									 ExperimentHistory* history) {
+void BranchExperiment::experiment_activate(AbstractNode*& curr_node,
+										   vector<ContextLayer>& context,
+										   RunHelper& run_helper,
+										   BranchExperimentHistory* history) {
 	if (this->is_pass_through) {
 		if (this->throw_id != -1) {
 			run_helper.throw_id = -1;
@@ -148,7 +149,7 @@ void Experiment::experiment_activate(AbstractNode*& curr_node,
 	}
 
 	if (this->parent_experiment == NULL
-			|| this->root_experiment->state == EXPERIMENT_STATE_EXPERIMENT) {
+			|| this->root_experiment->root_state == ROOT_EXPERIMENT_STATE_EXPERIMENT) {
 		if (run_helper.experiment_histories.back() == history) {
 			history->instance_count++;
 
@@ -179,13 +180,13 @@ void Experiment::experiment_activate(AbstractNode*& curr_node,
 	}
 }
 
-void inner_create_experiment_helper(vector<Scope*>& scope_context,
-									vector<AbstractNode*>& node_context,
-									vector<vector<Scope*>>& possible_scope_contexts,
-									vector<vector<AbstractNode*>>& possible_node_contexts,
-									vector<bool>& possible_is_branch,
-									vector<int>& possible_throw_id,
-									ScopeHistory* scope_history) {
+void branch_inner_create_experiment_helper(vector<Scope*>& scope_context,
+										   vector<AbstractNode*>& node_context,
+										   vector<vector<Scope*>>& possible_scope_contexts,
+										   vector<vector<AbstractNode*>>& possible_node_contexts,
+										   vector<bool>& possible_is_branch,
+										   vector<int>& possible_throw_id,
+										   ScopeHistory* scope_history) {
 	scope_context.push_back(scope_history->scope);
 	node_context.push_back(NULL);
 
@@ -212,13 +213,14 @@ void inner_create_experiment_helper(vector<Scope*>& scope_context,
 
 			uniform_int_distribution<int> inner_distribution(0, 1);
 			if (inner_distribution(generator) == 0) {
-				inner_create_experiment_helper(scope_context,
-											   node_context,
-											   possible_scope_contexts,
-											   possible_node_contexts,
-											   possible_is_branch,
-											   possible_throw_id,
-											   scope_node_history->scope_history);
+				branch_inner_create_experiment_helper(
+					scope_context,
+					node_context,
+					possible_scope_contexts,
+					possible_node_contexts,
+					possible_is_branch,
+					possible_throw_id,
+					scope_node_history->scope_history);
 			}
 
 			if (scope_node_history->normal_exit
@@ -248,14 +250,14 @@ void inner_create_experiment_helper(vector<Scope*>& scope_context,
 	node_context.pop_back();
 }
 
-void create_experiment_helper(vector<int>& experiment_index,
-							  vector<Scope*>& scope_context,
-							  vector<AbstractNode*>& node_context,
-							  vector<vector<Scope*>>& possible_scope_contexts,
-							  vector<vector<AbstractNode*>>& possible_node_contexts,
-							  vector<bool>& possible_is_branch,
-							  vector<int>& possible_throw_id,
-							  ScopeHistory* scope_history) {
+void branch_create_experiment_helper(vector<int>& experiment_index,
+									 vector<Scope*>& scope_context,
+									 vector<AbstractNode*>& node_context,
+									 vector<vector<Scope*>>& possible_scope_contexts,
+									 vector<vector<AbstractNode*>>& possible_node_contexts,
+									 vector<bool>& possible_is_branch,
+									 vector<int>& possible_throw_id,
+									 ScopeHistory* scope_history) {
 	scope_context.push_back(scope_history->scope);
 	node_context.push_back(NULL);
 
@@ -265,14 +267,14 @@ void create_experiment_helper(vector<int>& experiment_index,
 		node_context.back() = scope_node_history->node;
 
 		vector<int> inner_experiment_index(experiment_index.begin()+1, experiment_index.end());
-		create_experiment_helper(inner_experiment_index,
-								 scope_context,
-								 node_context,
-								 possible_scope_contexts,
-								 possible_node_contexts,
-								 possible_is_branch,
-								 possible_throw_id,
-								 scope_node_history->scope_history);
+		branch_create_experiment_helper(inner_experiment_index,
+										scope_context,
+										node_context,
+										possible_scope_contexts,
+										possible_node_contexts,
+										possible_is_branch,
+										possible_throw_id,
+										scope_node_history->scope_history);
 
 		if (scope_node_history->normal_exit
 				|| scope_node_history->throw_id != -1) {
@@ -308,13 +310,14 @@ void create_experiment_helper(vector<int>& experiment_index,
 
 			uniform_int_distribution<int> inner_distribution(0, 1);
 			if (inner_distribution(generator) == 0) {
-				inner_create_experiment_helper(scope_context,
-											   node_context,
-											   possible_scope_contexts,
-											   possible_node_contexts,
-											   possible_is_branch,
-											   possible_throw_id,
-											   scope_node_history->scope_history);
+				branch_inner_create_experiment_helper(
+					scope_context,
+					node_context,
+					possible_scope_contexts,
+					possible_node_contexts,
+					possible_is_branch,
+					possible_throw_id,
+					scope_node_history->scope_history);
 			}
 
 			if (scope_node_history->normal_exit
@@ -344,9 +347,9 @@ void create_experiment_helper(vector<int>& experiment_index,
 	node_context.pop_back();
 }
 
-void Experiment::experiment_backprop(double target_val,
-									 RunHelper& run_helper) {
-	ExperimentHistory* history = run_helper.experiment_histories.back();
+void BranchExperiment::experiment_backprop(double target_val,
+										   RunHelper& run_helper) {
+	BranchExperimentHistory* history = (BranchExperimentHistory*)run_helper.experiment_histories.back();
 
 	if (history->has_target
 			&& !run_helper.exceeded_limit
@@ -358,41 +361,46 @@ void Experiment::experiment_backprop(double target_val,
 
 		vector<Scope*> scope_context;
 		vector<AbstractNode*> node_context;
-		create_experiment_helper(history->experiment_index,
-								 scope_context,
-								 node_context,
-								 possible_scope_contexts,
-								 possible_node_contexts,
-								 possible_is_branch,
-								 possible_throw_id,
-								 history->scope_history);
+		branch_create_experiment_helper(history->experiment_index,
+										scope_context,
+										node_context,
+										possible_scope_contexts,
+										possible_node_contexts,
+										possible_is_branch,
+										possible_throw_id,
+										history->scope_history);
 
 		if (possible_scope_contexts.size() > 0) {
 			uniform_int_distribution<int> possible_distribution(0, (int)possible_scope_contexts.size()-1);
 			int rand_index = possible_distribution(generator);
 
-			// temp
-			for (int e_index = 0; e_index < (int)this->child_experiments.size(); e_index++) {
-				if (possible_scope_contexts[rand_index] == this->child_experiments[e_index]->scope_context
-						&& possible_node_contexts[rand_index] == this->child_experiments[e_index]->node_context
-						&& possible_is_branch[rand_index] == this->child_experiments[e_index]->is_branch
-						&& possible_throw_id[rand_index] == this->child_experiments[e_index]->throw_id) {
-					throw invalid_argument("duplicate child_experiments");
-				}
+			uniform_int_distribution<int> experiment_type_distribution(0, 1);
+			if (experiment_type_distribution(generator) == 0) {
+				BranchExperiment* new_experiment = new BranchExperiment(
+					possible_scope_contexts[rand_index],
+					possible_node_contexts[rand_index],
+					possible_is_branch[rand_index],
+					possible_throw_id[rand_index],
+					this,
+					false);
+
+				/**
+				 * - insert at front to match finalize order
+				 */
+				possible_node_contexts[rand_index].back()->experiments.insert(possible_node_contexts[rand_index].back()->experiments.begin(), new_experiment);
+			} else {
+				PassThroughExperiment* new_experiment = new PassThroughExperiment(
+					possible_scope_contexts[rand_index],
+					possible_node_contexts[rand_index],
+					possible_is_branch[rand_index],
+					possible_throw_id[rand_index],
+					this);
+
+				/**
+				 * - insert at front to match finalize order
+				 */
+				possible_node_contexts[rand_index].back()->experiments.insert(possible_node_contexts[rand_index].back()->experiments.begin(), new_experiment);
 			}
-
-			Experiment* new_experiment = new Experiment(
-				possible_scope_contexts[rand_index],
-				possible_node_contexts[rand_index],
-				possible_is_branch[rand_index],
-				possible_throw_id[rand_index],
-				this,
-				false);
-
-			/**
-			 * - insert at front to match finalize order
-			 */
-			possible_node_contexts[rand_index].back()->experiments.insert(possible_node_contexts[rand_index].back()->experiments.begin(), new_experiment);
 		}
 	}
 }

@@ -1,6 +1,6 @@
 #include "run_helper.h"
 
-#include "experiment.h"
+#include "abstract_experiment.h"
 
 using namespace std;
 

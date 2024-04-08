@@ -3,10 +3,11 @@
 #include <iostream>
 
 #include "action_node.h"
+#include "branch_experiment.h"
 #include "branch_node.h"
 #include "constants.h"
-#include "experiment.h"
 #include "globals.h"
+#include "pass_through_experiment.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
@@ -187,15 +188,27 @@ void create_experiment(ScopeHistory* root_history) {
 	 * - minimize context to generalize/maximize impact
 	 */
 
-	Experiment* new_experiment = new Experiment(
-		vector<Scope*>(possible_scope_contexts[rand_index].end() - context_size, possible_scope_contexts[rand_index].end()),
-		vector<AbstractNode*>(possible_node_contexts[rand_index].end() - context_size, possible_node_contexts[rand_index].end()),
-		possible_is_branch[rand_index],
-		possible_throw_id[rand_index],
-		NULL,
-		false);
+	uniform_int_distribution<int> experiment_type_distribution(0, 1);
+	if (experiment_type_distribution(generator) == 0) {
+		BranchExperiment* new_experiment = new BranchExperiment(
+			vector<Scope*>(possible_scope_contexts[rand_index].end() - context_size, possible_scope_contexts[rand_index].end()),
+			vector<AbstractNode*>(possible_node_contexts[rand_index].end() - context_size, possible_node_contexts[rand_index].end()),
+			possible_is_branch[rand_index],
+			possible_throw_id[rand_index],
+			NULL,
+			false);
 
-	possible_node_contexts[rand_index].back()->experiments.push_back(new_experiment);
+		possible_node_contexts[rand_index].back()->experiments.push_back(new_experiment);
+	} else {
+		PassThroughExperiment* new_experiment = new PassThroughExperiment(
+			vector<Scope*>(possible_scope_contexts[rand_index].end() - context_size, possible_scope_contexts[rand_index].end()),
+			vector<AbstractNode*>(possible_node_contexts[rand_index].end() - context_size, possible_node_contexts[rand_index].end()),
+			possible_is_branch[rand_index],
+			possible_throw_id[rand_index],
+			NULL);
+
+		possible_node_contexts[rand_index].back()->experiments.push_back(new_experiment);
+	}
 }
 
 string getline_helper(std::ifstream& input_file) {
@@ -211,7 +224,7 @@ string getline_helper(std::ifstream& input_file) {
 /**
  * - for now, only actions
  */
-Experiment* create_experiment(ifstream& input_file) {
+AbstractExperiment* create_experiment(ifstream& input_file) {
 	vector<Scope*> scope_context;
 	vector<AbstractNode*> node_context;
 	string context_size_line = getline_helper(input_file);
@@ -265,7 +278,7 @@ Experiment* create_experiment(ifstream& input_file) {
 	string exit_throw_id_line = getline_helper(input_file);
 	int exit_throw_id = stoi(exit_throw_id_line);
 
-	Experiment* new_experiment = new Experiment(
+	BranchExperiment* new_experiment = new BranchExperiment(
 		scope_context,
 		node_context,
 		is_branch,
