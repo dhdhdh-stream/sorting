@@ -55,14 +55,14 @@ PassThroughExperiment::PassThroughExperiment(vector<Scope*> scope_context,
 
 	this->exit_node = NULL;
 
-	this->new_is_better = true;
-
 	this->result = EXPERIMENT_RESULT_NA;
 }
 
 PassThroughExperiment::~PassThroughExperiment() {
 	if (this->parent_experiment != NULL) {
-		cout << "inner delete" << endl;
+		cout << "inner delete " << this << endl;
+	} else {
+		cout << "outer delete " << this << endl;
 	}
 
 	for (int s_index = 0; s_index < (int)this->curr_actions.size(); s_index++) {

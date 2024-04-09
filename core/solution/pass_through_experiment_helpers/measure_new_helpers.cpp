@@ -48,7 +48,7 @@ void PassThroughExperiment::measure_new_backprop(
 		#if defined(MDEBUG) && MDEBUG
 		this->o_target_val_histories.clear();
 
-		if (rand()%4 == 0) {
+		if (rand()%2 == 0) {
 		#else
 		double sum_scores = 0.0;
 		for (int d_index = 0; d_index < solution->curr_num_datapoints; d_index++) {
@@ -58,29 +58,8 @@ void PassThroughExperiment::measure_new_backprop(
 
 		this->o_target_val_histories.clear();
 
-		double score_improvement = new_average_score - this->existing_average_score;
-		double score_improvement_t_score = score_improvement
-			/ (this->existing_score_standard_deviation / sqrt(solution->curr_num_datapoints));
-
-		if (score_improvement_t_score > 1.0 && score_improvement_t_score < 1.960) {
-			cout << "measure score_improvement_t_score: " << score_improvement_t_score << endl;
-		}
-
-		if (score_improvement_t_score > 1.960) {
+		if (new_average_score >= this->existing_average_score) {
 		#endif /* MDEBUG */
-			this->o_target_val_histories.reserve(VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints);
-
-			this->state = PASS_THROUGH_EXPERIMENT_STATE_VERIFY_1ST_EXISTING;
-			this->state_iter = 0;
-		#if defined(MDEBUG) && MDEBUG
-		} else if (this->best_step_types.size() > 0
-				&& rand()%2 == 0) {
-		#else
-		} else if (this->best_step_types.size() > 0
-				&& score_improvement_t_score > -0.674) {
-		#endif /* MDEBUG */
-			this->new_is_better = false;
-
 			this->o_target_val_histories.reserve(VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints);
 
 			this->state = PASS_THROUGH_EXPERIMENT_STATE_VERIFY_1ST_EXISTING;

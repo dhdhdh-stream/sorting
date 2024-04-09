@@ -400,8 +400,6 @@ void BranchExperiment::train_new_backprop(
 			this->i_scope_histories.clear();
 			this->i_target_val_histories.clear();
 
-			this->new_is_better = true;
-
 			this->combined_score = 0.0;
 			this->original_count = 0;
 			this->branch_count = 0;

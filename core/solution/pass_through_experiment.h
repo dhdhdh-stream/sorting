@@ -45,7 +45,6 @@ public:
 	int sub_state_iter;
 
 	double existing_average_score;
-	double existing_score_standard_deviation;
 
 	double curr_score;
 	std::vector<int> curr_step_types;
@@ -66,8 +65,6 @@ public:
 	int best_exit_throw_id;
 
 	ExitNode* exit_node;
-
-	bool new_is_better;
 
 	PassThroughExperiment(std::vector<Scope*> scope_context,
 						  std::vector<AbstractNode*> node_context,

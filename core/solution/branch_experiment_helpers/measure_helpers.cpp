@@ -148,64 +148,19 @@ void BranchExperiment::measure_backprop(double target_val,
 			this->is_pass_through = false;
 		}
 
-		#if defined(MDEBUG) && MDEBUG
-		if (rand()%2 == 0) {
-		#else
-		double combined_improvement = this->combined_score - this->existing_average_score;
-		double combined_improvement_t_score = combined_improvement
-			/ (this->existing_score_standard_deviation / sqrt(solution->curr_num_datapoints));
-
-		if (combined_improvement_t_score > 1.0 && combined_improvement_t_score < 1.960) {
-			cout << "measure combined_improvement_t_score: " << combined_improvement_t_score << endl;
-		}
-
 		if (this->skip_explore) {
 			cout << "this->combined_score: " << this->combined_score << endl;
 			cout << "this->existing_average_score: " << this->existing_average_score << endl;
 			cout << "this->branch_weight: " << this->branch_weight << endl;
-			cout << "combined_improvement_t_score: " << combined_improvement_t_score << endl;
 		}
 
-		double combined_branch_weight = 1.0;
-		AbstractExperiment* curr_experiment = this;
-		while (true) {
-			if (curr_experiment == NULL) {
-				break;
-			}
-
-			if (curr_experiment->type == EXPERIMENT_TYPE_BRANCH) {
-				BranchExperiment* branch_experiment = (BranchExperiment*)curr_experiment;
-				combined_branch_weight *= branch_experiment->branch_weight;
-			}
-			curr_experiment = curr_experiment->parent_experiment;
-		}
-
-		if (this->new_is_better
-				&& this->branch_weight > 0.01
-				&& combined_improvement_t_score > 1.960) {
-		#endif /* MDEBUG */
-			this->combined_score = 0.0;
-			this->original_count = 0;
-			this->branch_count = 0;
-
-			this->o_target_val_histories.reserve(VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints);
-
-			this->state = BRANCH_EXPERIMENT_STATE_VERIFY_1ST_EXISTING;
-			this->state_iter = 0;
 		#if defined(MDEBUG) && MDEBUG
-		} else if (this->best_step_types.size() > 0
-				&& rand()%4 == 0) {
+		if (rand()%2 == 0) {
 		#else
-		} else if (this->best_step_types.size() > 0
-				&& this->combined_score >= this->verify_existing_average_score
-				&& combined_branch_weight > EXPERIMENT_COMBINED_MIN_BRANCH_WEIGHT
-				&& !this->skip_explore) {
+		if (this->branch_weight > 0.01
+				&& this->combined_score >= this->existing_average_score) {
 		#endif /* MDEBUG */
-			this->new_is_better = false;
-
 			this->combined_score = 0.0;
-			this->original_count = 0;
-			this->branch_count = 0;
 
 			this->o_target_val_histories.reserve(VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints);
 

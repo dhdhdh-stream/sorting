@@ -158,14 +158,6 @@ void BranchExperiment::verify_backprop(double target_val,
 		#if defined(MDEBUG) && MDEBUG
 		if (rand()%2 == 0) {
 		#else
-		double combined_improvement = this->combined_score - this->verify_existing_average_score;
-		double combined_improvement_t_score = combined_improvement
-			/ (this->verify_existing_score_standard_deviation / sqrt(VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints));
-
-		if (combined_improvement_t_score > 1.0 && combined_improvement_t_score < 1.960) {
-			cout << "verify 1st combined_improvement_t_score: " << combined_improvement_t_score << endl;
-		}
-
 		double combined_branch_weight = 1.0;
 		AbstractExperiment* curr_experiment = this;
 		while (true) {
@@ -180,11 +172,8 @@ void BranchExperiment::verify_backprop(double target_val,
 			curr_experiment = curr_experiment->parent_experiment;
 		}
 
-		uniform_int_distribution<int> chain_distribution(0, 2);
-
-		if (this->new_is_better
-				&& this->branch_weight > 0.01
-				&& combined_improvement_t_score > 1.960) {
+		if (this->branch_weight > 0.01
+				&& this->combined_score > this->verify_existing_average_score) {
 		#endif /* MDEBUG */
 			this->o_target_val_histories.reserve(VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints);
 
@@ -195,10 +184,8 @@ void BranchExperiment::verify_backprop(double target_val,
 				&& rand()%4 == 0) {
 		#else
 		} else if (this->best_step_types.size() > 0
-				&& this->combined_score >= this->verify_existing_average_score
 				&& combined_branch_weight > EXPERIMENT_COMBINED_MIN_BRANCH_WEIGHT
-				&& !this->skip_explore
-				&& chain_distribution(generator) == 0) {
+				&& !this->skip_explore) {
 		#endif /* MDEBUG */
 			this->state = BRANCH_EXPERIMENT_STATE_EXPERIMENT;
 			this->root_state = ROOT_EXPERIMENT_STATE_EXPERIMENT;
@@ -258,14 +245,6 @@ void BranchExperiment::verify_backprop(double target_val,
 	} else if (this->state_iter >= VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints) {
 		this->combined_score /= (VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints);
 
-		double combined_improvement = this->combined_score - this->verify_existing_average_score;
-		double combined_improvement_t_score = combined_improvement
-			/ (this->verify_existing_score_standard_deviation / sqrt(VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints));
-
-		if (combined_improvement_t_score > 1.0 && combined_improvement_t_score < 1.960) {
-			cout << "verify 2nd combined_improvement_t_score: " << combined_improvement_t_score << endl;
-		}
-
 		double combined_branch_weight = 1.0;
 		AbstractExperiment* curr_experiment = this;
 		while (true) {
@@ -280,14 +259,11 @@ void BranchExperiment::verify_backprop(double target_val,
 			curr_experiment = curr_experiment->parent_experiment;
 		}
 
-		uniform_int_distribution<int> chain_distribution(0, 2);
-
 		#if defined(MDEBUG) && MDEBUG
 		if (rand()%2 == 0) {
 		#else
-		if (this->new_is_better
-				&& this->branch_weight > 0.01
-				&& combined_improvement_t_score > 1.960) {
+		if (this->branch_weight > 0.01
+				&& this->combined_score > this->verify_existing_average_score) {
 		#endif /* MDEBUG */
 			cout << "verify" << endl;
 			cout << "this->parent_experiment: " << this->parent_experiment << endl;
@@ -321,8 +297,6 @@ void BranchExperiment::verify_backprop(double target_val,
 
 			cout << "this->combined_score: " << this->combined_score << endl;
 			cout << "this->verify_existing_average_score: " << this->verify_existing_average_score << endl;
-			cout << "this->verify_existing_score_standard_deviation: " << this->verify_existing_score_standard_deviation << endl;
-			cout << "combined_improvement_t_score: " << combined_improvement_t_score << endl;
 
 			cout << "this->branch_weight: " << this->branch_weight << endl;
 
@@ -396,10 +370,8 @@ void BranchExperiment::verify_backprop(double target_val,
 				&& rand()%4 == 0) {
 		#else
 		} else if (this->best_step_types.size() > 0
-				&& this->combined_score >= this->verify_existing_average_score
 				&& combined_branch_weight > EXPERIMENT_COMBINED_MIN_BRANCH_WEIGHT
-				&& !this->skip_explore
-				&& chain_distribution(generator) == 0) {
+				&& !this->skip_explore) {
 		#endif /* MDEBUG */
 			this->state = BRANCH_EXPERIMENT_STATE_EXPERIMENT;
 			this->root_state = ROOT_EXPERIMENT_STATE_EXPERIMENT;

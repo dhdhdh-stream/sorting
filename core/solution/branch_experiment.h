@@ -115,9 +115,6 @@ public:
 	 * - don't reuse previous to not affect decision making
 	 */
 	double verify_existing_average_score;
-	double verify_existing_score_standard_deviation;
-
-	bool new_is_better;
 
 	bool is_pass_through;
 
