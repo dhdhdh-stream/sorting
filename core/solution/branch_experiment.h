@@ -46,6 +46,7 @@ const int BRANCH_EXPERIMENT_STATE_EXPERIMENT = 11;
 
 const int EXPLORE_TYPE_GOOD = 0;
 const int EXPLORE_TYPE_NEUTRAL = 1;
+const int EXPLORE_TYPE_BEST = 2;
 
 const int MAX_EXPLORE_TRIES = 4;
 
@@ -77,13 +78,22 @@ public:
 
 	int explore_type;
 
-	std::vector<int> step_types;
-	std::vector<ActionNode*> actions;
-	std::vector<ScopeNode*> scopes;
-	std::vector<std::set<int>> catch_throw_ids;
-	int exit_depth;
-	AbstractNode* exit_next_node;
-	int exit_throw_id;
+	std::vector<int> curr_step_types;
+	std::vector<ActionNode*> curr_actions;
+	std::vector<ScopeNode*> curr_scopes;
+	std::vector<std::set<int>> curr_catch_throw_ids;
+	int curr_exit_depth;
+	AbstractNode* curr_exit_next_node;
+	int curr_exit_throw_id;
+
+	double best_surprise;
+	std::vector<int> best_step_types;
+	std::vector<ActionNode*> best_actions;
+	std::vector<ScopeNode*> best_scopes;
+	std::vector<std::set<int>> best_catch_throw_ids;
+	int best_exit_depth;
+	AbstractNode* best_exit_next_node;
+	int best_exit_throw_id;
 
 	BranchNode* branch_node;
 	ExitNode* exit_node;

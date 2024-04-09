@@ -229,7 +229,8 @@ void Minesweeper::perform_action(Action action) {
 		}
 		break;
 	case MINESWEEPER_ACTION_DOUBLECLICK:
-		if (this->revealed[this->current_x][this->current_y]) {
+		if (this->revealed[this->current_x][this->current_y]
+				&& this->world[this->current_x][this->current_y] > 0) {
 			int num_surrounding = 0;
 
 			if (this->current_x > 0 && this->current_y < HEIGHT-1) {
@@ -280,15 +281,55 @@ void Minesweeper::perform_action(Action action) {
 				}
 			}
 
-			if (num_surrounding == this->revealed[this->current_x][this->current_y]) {
-				reveal_helper(this->current_x-1, this->current_y-1);
-				reveal_helper(this->current_x-1, this->current_y);
-				reveal_helper(this->current_x-1, this->current_y+1);
-				reveal_helper(this->current_x, this->current_y+1);
-				reveal_helper(this->current_x+1, this->current_y+1);
-				reveal_helper(this->current_x+1, this->current_y);
-				reveal_helper(this->current_x+1, this->current_y-1);
-				reveal_helper(this->current_x, this->current_y-1);
+			if (num_surrounding == this->world[this->current_x][this->current_y]) {
+				if (this->current_x > 0 && this->current_y > 0) {
+					if (!this->revealed[this->current_x-1][this->current_y-1]
+							&& !this->flagged[this->current_x-1][this->current_y-1]) {
+						reveal_helper(this->current_x-1, this->current_y-1);
+					}
+				}
+				if (this->current_x > 0) {
+					if (!this->revealed[this->current_x-1][this->current_y]
+							&& !this->flagged[this->current_x-1][this->current_y]) {
+						reveal_helper(this->current_x-1, this->current_y);
+					}
+				}
+				if (this->current_x > 0 && this->current_y < HEIGHT-1) {
+					if (!this->revealed[this->current_x-1][this->current_y+1]
+							&& !this->flagged[this->current_x-1][this->current_y+1]) {
+						reveal_helper(this->current_x-1, this->current_y+1);
+					}
+				}
+				if (this->current_y < HEIGHT-1) {
+					if (!this->revealed[this->current_x][this->current_y+1]
+							&& !this->flagged[this->current_x][this->current_y+1]) {
+						reveal_helper(this->current_x, this->current_y+1);
+					}
+				}
+				if (this->current_x < WIDTH-1 && this->current_y < HEIGHT-1) {
+					if (!this->revealed[this->current_x+1][this->current_y+1]
+							&& !this->flagged[this->current_x+1][this->current_y+1]) {
+						reveal_helper(this->current_x+1, this->current_y+1);
+					}
+				}
+				if (this->current_x < WIDTH-1) {
+					if (!this->revealed[this->current_x+1][this->current_y]
+							&& !this->flagged[this->current_x+1][this->current_y]) {
+						reveal_helper(this->current_x+1, this->current_y);
+					}
+				}
+				if (this->current_x < WIDTH-1 && this->current_y > 0) {
+					if (!this->revealed[this->current_x+1][this->current_y-1]
+							&& !this->flagged[this->current_x+1][this->current_y-1]) {
+						reveal_helper(this->current_x+1, this->current_y-1);
+					}
+				}
+				if (this->current_y > 0) {
+					if (!this->revealed[this->current_x][this->current_y-1]
+							&& !this->flagged[this->current_x][this->current_y-1]) {
+						reveal_helper(this->current_x, this->current_y-1);
+					}
+				}
 			}
 		}
 		break;

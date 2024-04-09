@@ -246,25 +246,25 @@ void BranchExperiment::new_branch() {
 		}
 	}
 
-	if (this->step_types.size() == 0) {
+	if (this->best_step_types.size() == 0) {
 		if (this->exit_node != NULL) {
 			this->branch_node->branch_next_node_id = this->exit_node->id;
 			this->branch_node->branch_next_node = this->exit_node;
 		} else {
-			if (this->exit_next_node == NULL) {
+			if (this->best_exit_next_node == NULL) {
 				this->branch_node->branch_next_node_id = -1;
 			} else {
-				this->branch_node->branch_next_node_id = this->exit_next_node->id;
+				this->branch_node->branch_next_node_id = this->best_exit_next_node->id;
 			}
-			this->branch_node->branch_next_node = this->exit_next_node;
+			this->branch_node->branch_next_node = this->best_exit_next_node;
 		}
 	} else {
-		if (this->step_types[0] == STEP_TYPE_ACTION) {
-			this->branch_node->branch_next_node_id = this->actions[0]->id;
-			this->branch_node->branch_next_node = this->actions[0];
+		if (this->best_step_types[0] == STEP_TYPE_ACTION) {
+			this->branch_node->branch_next_node_id = this->best_actions[0]->id;
+			this->branch_node->branch_next_node = this->best_actions[0];
 		} else {
-			this->branch_node->branch_next_node_id = this->scopes[0]->id;
-			this->branch_node->branch_next_node = this->scopes[0];
+			this->branch_node->branch_next_node_id = this->best_scopes[0]->id;
+			this->branch_node->branch_next_node = this->best_scopes[0];
 		}
 	}
 
@@ -306,20 +306,20 @@ void BranchExperiment::new_branch() {
 		}
 	}
 
-	for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {
-		if (this->step_types[s_index] == STEP_TYPE_ACTION) {
-			this->scope_context.back()->nodes[this->actions[s_index]->id] = this->actions[s_index];
+	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+			this->scope_context.back()->nodes[this->best_actions[s_index]->id] = this->best_actions[s_index];
 		} else {
-			this->scope_context.back()->nodes[this->scopes[s_index]->id] = this->scopes[s_index];
+			this->scope_context.back()->nodes[this->best_scopes[s_index]->id] = this->best_scopes[s_index];
 
-			this->scopes[s_index]->scope->subscopes.insert(
-				{this->scopes[s_index]->starting_node_id,
-					this->scopes[s_index]->exit_node_ids});
+			this->best_scopes[s_index]->scope->subscopes.insert(
+				{this->best_scopes[s_index]->starting_node_id,
+					this->best_scopes[s_index]->exit_node_ids});
 		}
 	}
 
-	this->actions.clear();
-	this->scopes.clear();
+	this->best_actions.clear();
+	this->best_scopes.clear();
 	this->branch_node = NULL;
 	this->exit_node = NULL;
 }
@@ -406,25 +406,25 @@ void BranchExperiment::new_pass_through() {
 		}
 	}
 
-	if (this->step_types.size() == 0) {
+	if (this->best_step_types.size() == 0) {
 		if (this->exit_node != NULL) {
 			this->branch_node->branch_next_node_id = this->exit_node->id;
 			this->branch_node->branch_next_node = this->exit_node;
 		} else {
-			if (this->exit_next_node == NULL) {
+			if (this->best_exit_next_node == NULL) {
 				this->branch_node->branch_next_node_id = -1;
 			} else {
-				this->branch_node->branch_next_node_id = this->exit_next_node->id;
+				this->branch_node->branch_next_node_id = this->best_exit_next_node->id;
 			}
-			this->branch_node->branch_next_node = this->exit_next_node;
+			this->branch_node->branch_next_node = this->best_exit_next_node;
 		}
 	} else {
-		if (this->step_types[0] == STEP_TYPE_ACTION) {
-			this->branch_node->branch_next_node_id = this->actions[0]->id;
-			this->branch_node->branch_next_node = this->actions[0];
+		if (this->best_step_types[0] == STEP_TYPE_ACTION) {
+			this->branch_node->branch_next_node_id = this->best_actions[0]->id;
+			this->branch_node->branch_next_node = this->best_actions[0];
 		} else {
-			this->branch_node->branch_next_node_id = this->scopes[0]->id;
-			this->branch_node->branch_next_node = this->scopes[0];
+			this->branch_node->branch_next_node_id = this->best_scopes[0]->id;
+			this->branch_node->branch_next_node = this->best_scopes[0];
 		}
 	}
 
@@ -455,20 +455,20 @@ void BranchExperiment::new_pass_through() {
 		}
 	}
 
-	for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {
-		if (this->step_types[s_index] == STEP_TYPE_ACTION) {
-			this->scope_context.back()->nodes[this->actions[s_index]->id] = this->actions[s_index];
+	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+			this->scope_context.back()->nodes[this->best_actions[s_index]->id] = this->best_actions[s_index];
 		} else {
-			this->scope_context.back()->nodes[this->scopes[s_index]->id] = this->scopes[s_index];
+			this->scope_context.back()->nodes[this->best_scopes[s_index]->id] = this->best_scopes[s_index];
 
-			this->scopes[s_index]->scope->subscopes.insert(
-				{this->scopes[s_index]->starting_node_id,
-					this->scopes[s_index]->exit_node_ids});
+			this->best_scopes[s_index]->scope->subscopes.insert(
+				{this->best_scopes[s_index]->starting_node_id,
+					this->best_scopes[s_index]->exit_node_ids});
 		}
 	}
 
-	this->actions.clear();
-	this->scopes.clear();
+	this->best_actions.clear();
+	this->best_scopes.clear();
 	this->branch_node = NULL;
 	this->exit_node = NULL;
 }

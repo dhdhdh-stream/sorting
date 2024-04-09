@@ -135,17 +135,17 @@ void BranchExperiment::capture_verify_activate(AbstractNode*& curr_node,
 			run_helper.throw_id = -1;
 		}
 
-		if (this->step_types.size() == 0) {
+		if (this->best_step_types.size() == 0) {
 			if (this->exit_node != NULL) {
 				curr_node = this->exit_node;
 			} else {
-				curr_node = this->exit_next_node;
+				curr_node = this->best_exit_next_node;
 			}
 		} else {
-			if (this->step_types[0] == STEP_TYPE_ACTION) {
-				curr_node = this->actions[0];
+			if (this->best_step_types[0] == STEP_TYPE_ACTION) {
+				curr_node = this->best_actions[0];
 			} else {
-				curr_node = this->scopes[0];
+				curr_node = this->best_scopes[0];
 			}
 		}
 	}

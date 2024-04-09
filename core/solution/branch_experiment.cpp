@@ -87,15 +87,27 @@ BranchExperiment::~BranchExperiment() {
 		delete this->new_network;
 	}
 
-	for (int s_index = 0; s_index < (int)this->actions.size(); s_index++) {
-		if (this->actions[s_index] != NULL) {
-			delete this->actions[s_index];
+	for (int s_index = 0; s_index < (int)this->curr_actions.size(); s_index++) {
+		if (this->curr_actions[s_index] != NULL) {
+			delete this->curr_actions[s_index];
 		}
 	}
 
-	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
-		if (this->scopes[s_index] != NULL) {
-			delete this->scopes[s_index];
+	for (int s_index = 0; s_index < (int)this->curr_scopes.size(); s_index++) {
+		if (this->curr_scopes[s_index] != NULL) {
+			delete this->curr_scopes[s_index];
+		}
+	}
+
+	for (int s_index = 0; s_index < (int)this->best_actions.size(); s_index++) {
+		if (this->best_actions[s_index] != NULL) {
+			delete this->best_actions[s_index];
+		}
+	}
+
+	for (int s_index = 0; s_index < (int)this->best_scopes.size(); s_index++) {
+		if (this->best_scopes[s_index] != NULL) {
+			delete this->best_scopes[s_index];
 		}
 	}
 

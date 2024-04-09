@@ -286,13 +286,13 @@ AbstractExperiment* create_experiment(ifstream& input_file) {
 		NULL,
 		true);
 
-	new_experiment->step_types = step_types;
-	new_experiment->actions = actions;
-	new_experiment->scopes = scopes;
-	new_experiment->catch_throw_ids = catch_throw_ids;
-	new_experiment->exit_depth = exit_depth;
-	new_experiment->exit_next_node = exit_next_node;
-	new_experiment->exit_throw_id = exit_throw_id;
+	new_experiment->best_step_types = step_types;
+	new_experiment->best_actions = actions;
+	new_experiment->best_scopes = scopes;
+	new_experiment->best_catch_throw_ids = catch_throw_ids;
+	new_experiment->best_exit_depth = exit_depth;
+	new_experiment->best_exit_next_node = exit_next_node;
+	new_experiment->best_exit_throw_id = exit_throw_id;
 
 	node_context.back()->experiments.push_back(new_experiment);
 

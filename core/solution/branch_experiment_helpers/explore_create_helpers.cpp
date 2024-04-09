@@ -64,15 +64,15 @@ void BranchExperiment::explore_create_activate(
 
 				if (possible_throw_ids.size() > 0) {
 					uniform_int_distribution<int> possible_distribution(0, possible_throw_ids.size()-1);
-					this->exit_throw_id = possible_throw_ids[possible_distribution(generator)];
+					this->curr_exit_throw_id = possible_throw_ids[possible_distribution(generator)];
 				} else {
-					this->exit_throw_id = TEMP_THROW_ID;
+					this->curr_exit_throw_id = TEMP_THROW_ID;
 				}
 			} else {
-				this->exit_throw_id = TEMP_THROW_ID;
+				this->curr_exit_throw_id = TEMP_THROW_ID;
 			}
 		} else {
-			this->exit_throw_id = -1;
+			this->curr_exit_throw_id = -1;
 		}
 	}
 }
@@ -112,8 +112,8 @@ void BranchExperiment::explore_create_backprop(
 		if (possible_exits.size() > 0) {
 			uniform_int_distribution<int> distribution(0, possible_exits.size()-1);
 			int random_index = distribution(generator);
-			this->exit_depth = possible_exits[random_index].first;
-			this->exit_next_node = possible_exits[random_index].second;
+			this->curr_exit_depth = possible_exits[random_index].first;
+			this->curr_exit_next_node = possible_exits[random_index].second;
 
 			int new_num_steps;
 			uniform_int_distribution<int> uniform_distribution(0, 1);
@@ -141,26 +141,26 @@ void BranchExperiment::explore_create_backprop(
 					ScopeNode* new_scope_node = create_existing(scope,
 																run_helper);
 					if (new_scope_node != NULL) {
-						this->step_types.push_back(STEP_TYPE_SCOPE);
-						this->actions.push_back(NULL);
+						this->curr_step_types.push_back(STEP_TYPE_SCOPE);
+						this->curr_actions.push_back(NULL);
 
-						this->scopes.push_back(new_scope_node);
+						this->curr_scopes.push_back(new_scope_node);
 
-						this->catch_throw_ids.push_back(set<int>());
+						this->curr_catch_throw_ids.push_back(set<int>());
 
 						default_to_action = false;
 					}
 				}
 
 				if (default_to_action) {
-					this->step_types.push_back(STEP_TYPE_ACTION);
+					this->curr_step_types.push_back(STEP_TYPE_ACTION);
 
 					ActionNode* new_action_node = new ActionNode();
 					new_action_node->action = problem_type->random_action();
-					this->actions.push_back(new_action_node);
+					this->curr_actions.push_back(new_action_node);
 
-					this->scopes.push_back(NULL);
-					this->catch_throw_ids.push_back(set<int>());
+					this->curr_scopes.push_back(NULL);
+					this->curr_catch_throw_ids.push_back(set<int>());
 				}
 			}
 

@@ -113,17 +113,17 @@ void BranchExperiment::measure_activate(AbstractNode*& curr_node,
 			run_helper.throw_id = -1;
 		}
 
-		if (this->step_types.size() == 0) {
+		if (this->best_step_types.size() == 0) {
 			if (this->exit_node != NULL) {
 				curr_node = this->exit_node;
 			} else {
-				curr_node = this->exit_next_node;
+				curr_node = this->best_exit_next_node;
 			}
 		} else {
-			if (this->step_types[0] == STEP_TYPE_ACTION) {
-				curr_node = this->actions[0];
+			if (this->best_step_types[0] == STEP_TYPE_ACTION) {
+				curr_node = this->best_actions[0];
 			} else {
-				curr_node = this->scopes[0];
+				curr_node = this->best_scopes[0];
 			}
 		}
 	} else {
@@ -155,6 +155,17 @@ void BranchExperiment::measure_backprop(double target_val,
 		double combined_improvement_t_score = combined_improvement
 			/ (this->existing_score_standard_deviation / sqrt(solution->curr_num_datapoints));
 
+		if (combined_improvement_t_score > 1.0 && combined_improvement_t_score < 1.960) {
+			cout << "measure combined_improvement_t_score: " << combined_improvement_t_score << endl;
+		}
+
+		if (this->skip_explore) {
+			cout << "this->combined_score: " << this->combined_score << endl;
+			cout << "this->existing_average_score: " << this->existing_average_score << endl;
+			cout << "this->branch_weight: " << this->branch_weight << endl;
+			cout << "combined_improvement_t_score: " << combined_improvement_t_score << endl;
+		}
+
 		double combined_branch_weight = 1.0;
 		AbstractExperiment* curr_experiment = this;
 		while (true) {
@@ -182,10 +193,10 @@ void BranchExperiment::measure_backprop(double target_val,
 			this->state = BRANCH_EXPERIMENT_STATE_VERIFY_1ST_EXISTING;
 			this->state_iter = 0;
 		#if defined(MDEBUG) && MDEBUG
-		} else if (this->step_types.size() > 0
+		} else if (this->best_step_types.size() > 0
 				&& rand()%4 == 0) {
 		#else
-		} else if (this->step_types.size() > 0
+		} else if (this->best_step_types.size() > 0
 				&& this->combined_score >= this->verify_existing_average_score
 				&& combined_branch_weight > EXPERIMENT_COMBINED_MIN_BRANCH_WEIGHT
 				&& !this->skip_explore) {
@@ -203,18 +214,18 @@ void BranchExperiment::measure_backprop(double target_val,
 		} else {
 			this->explore_iter++;
 			if (this->explore_iter < MAX_EXPLORE_TRIES) {
-				for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {
-					if (this->step_types[s_index] == STEP_TYPE_ACTION) {
-						delete this->actions[s_index];
+				for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+					if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+						delete this->best_actions[s_index];
 					} else {
-						delete this->scopes[s_index];
+						delete this->best_scopes[s_index];
 					}
 				}
 
-				this->step_types.clear();
-				this->actions.clear();
-				this->scopes.clear();
-				this->catch_throw_ids.clear();
+				this->best_step_types.clear();
+				this->best_actions.clear();
+				this->best_scopes.clear();
+				this->best_catch_throw_ids.clear();
 
 				if (this->branch_node != NULL) {
 					delete this->branch_node;
@@ -232,12 +243,19 @@ void BranchExperiment::measure_backprop(double target_val,
 					this->new_network = NULL;
 				}
 
-				uniform_int_distribution<int> explore_distribution(0, 9);
-				if (explore_distribution(generator) == 0) {
+				uniform_int_distribution<int> neutral_distribution(0, 9);
+				if (neutral_distribution(generator) == 0) {
 					this->explore_type = EXPLORE_TYPE_NEUTRAL;
 				} else {
-					this->explore_type = EXPLORE_TYPE_GOOD;
+					uniform_int_distribution<int> best_distribution(0, 1);
+					if (best_distribution(generator) == 0) {
+						this->explore_type = EXPLORE_TYPE_BEST;
+					} else {
+						this->explore_type = EXPLORE_TYPE_GOOD;
+					}
 				}
+
+				this->best_surprise = 0.0;
 
 				this->state = BRANCH_EXPERIMENT_STATE_EXPLORE_CREATE;
 				this->state_iter = 0;

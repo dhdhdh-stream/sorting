@@ -63,6 +63,10 @@ void PassThroughExperiment::verify_new_backprop(
 		double score_improvement_t_score = score_improvement
 			/ (this->existing_score_standard_deviation / sqrt(VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints));
 
+		if (score_improvement_t_score > 1.0 && score_improvement_t_score < 1.960) {
+			cout << "verify 1st score_improvement_t_score: " << score_improvement_t_score << endl;
+		}
+
 		if (score_improvement_t_score > 1.960) {
 		#endif /* MDEBUG */
 			this->o_target_val_histories.reserve(VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints);
@@ -97,6 +101,12 @@ void PassThroughExperiment::verify_new_backprop(
 		double score_improvement = new_average_score - this->existing_average_score;
 		double score_improvement_t_score = score_improvement
 			/ (this->existing_score_standard_deviation / sqrt(VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints));
+
+		if (score_improvement_t_score > 1.0 && score_improvement_t_score < 1.960) {
+			cout << "verify 2nd score_improvement_t_score: " << score_improvement_t_score << endl;
+		}
+
+		uniform_int_distribution<int> chain_distribution(0, 2);
 
 		#if defined(MDEBUG) && MDEBUG
 		if (rand()%2 == 0) {
@@ -167,7 +177,8 @@ void PassThroughExperiment::verify_new_backprop(
 				&& rand()%2 == 0) {
 		#else
 		} else if (this->best_step_types.size() > 0
-				&& score_improvement_t_score > -0.674) {
+				&& score_improvement_t_score > -0.674
+				&& chain_distribution(generator) == 0) {
 		#endif /* MDEBUG */
 			this->state = PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT;
 			this->root_state = ROOT_EXPERIMENT_STATE_EXPERIMENT;
