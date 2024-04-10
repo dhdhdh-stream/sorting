@@ -34,12 +34,12 @@ void PassThroughExperiment::measure_existing_backprop(
 		}
 	}
 
-	if ((int)this->o_target_val_histories.size() >= solution->curr_num_datapoints) {
+	if ((int)this->o_target_val_histories.size() >= NUM_DATAPOINTS) {
 		double sum_scores = 0.0;
-		for (int d_index = 0; d_index < solution->curr_num_datapoints; d_index++) {
+		for (int d_index = 0; d_index < NUM_DATAPOINTS; d_index++) {
 			sum_scores += this->o_target_val_histories[d_index];
 		}
-		this->existing_average_score = sum_scores / solution->curr_num_datapoints;
+		this->existing_average_score = sum_scores / NUM_DATAPOINTS;
 
 		this->o_target_val_histories.clear();
 

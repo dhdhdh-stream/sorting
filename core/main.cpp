@@ -22,8 +22,6 @@
 
 using namespace std;
 
-const int NUM_FAILS_BEFORE_INCREASE = 100;
-
 int seed;
 
 default_random_engine generator;
@@ -43,12 +41,10 @@ int main(int argc, char* argv[]) {
 	problem_type = new Minesweeper();
 
 	solution = new Solution();
-	// solution->init();
-	solution->load("", "main");
+	solution->init();
+	// solution->load("", "main");
 
-	// solution->save("", "main");
-
-	int num_fails = 0;
+	solution->save("", "main");
 
 	#if defined(MDEBUG) && MDEBUG
 	int run_index = 0;
@@ -105,8 +101,6 @@ int main(int argc, char* argv[]) {
 			target_val = -1.0;
 		}
 
-		bool is_success = false;
-		bool is_fail = false;
 		if (run_helper.experiment_histories.size() > 0) {
 			hit_percent = 0.999*hit_percent + 0.001;
 
@@ -145,8 +139,8 @@ int main(int argc, char* argv[]) {
 				run_helper);
 			if (run_helper.experiment_histories.back()->experiment->result == EXPERIMENT_RESULT_FAIL) {
 				if (run_helper.experiment_histories.size() == 1) {
-					is_fail = true;
-					run_helper.experiment_histories.back()->experiment->finalize();
+					Solution* empty = NULL;
+					run_helper.experiment_histories.back()->experiment->finalize(empty);
 					delete run_helper.experiment_histories.back()->experiment;
 				} else {
 					AbstractExperiment* curr_experiment = run_helper.experiment_histories.back()->experiment->parent_experiment;
@@ -162,14 +156,14 @@ int main(int argc, char* argv[]) {
 					curr_experiment->child_experiments.erase(curr_experiment->child_experiments.begin() + matching_index);
 
 					run_helper.experiment_histories.back()->experiment->result = EXPERIMENT_RESULT_FAIL;
-					run_helper.experiment_histories.back()->experiment->finalize();
+					Solution* empty = NULL;
+					run_helper.experiment_histories.back()->experiment->finalize(empty);
 					delete run_helper.experiment_histories.back()->experiment;
 
 					double target_count = (double)MAX_EXPERIMENT_NUM_EXPERIMENTS
 						* pow(0.5, run_helper.experiment_histories.size()-1);
 					while (true) {
 						if (curr_experiment == NULL) {
-							is_fail = true;
 							break;
 						}
 
@@ -189,7 +183,8 @@ int main(int argc, char* argv[]) {
 							}
 
 							curr_experiment->result = EXPERIMENT_RESULT_FAIL;
-							curr_experiment->finalize();
+							Solution* empty = NULL;
+							curr_experiment->finalize(empty);
 							delete curr_experiment;
 
 							curr_experiment = parent;
@@ -203,9 +198,79 @@ int main(int argc, char* argv[]) {
 				/**
 				 * - run_helper.experiment_histories.size() == 1
 				 */
-				is_success = true;
-				run_helper.experiment_histories.back()->experiment->finalize();
+				Solution* duplicate = new Solution();
+				duplicate->load("", "main");
+				run_helper.experiment_histories.back()->experiment->finalize(duplicate);
 				delete run_helper.experiment_histories.back()->experiment;
+
+				#if defined(MDEBUG) && MDEBUG
+				while (duplicate->verify_problems.size() > 0) {
+					Problem* problem = duplicate->verify_problems[0];
+
+					RunHelper run_helper;
+					run_helper.verify_key = duplicate->verify_key;
+
+					run_helper.starting_run_seed = duplicate->verify_seeds[0];
+					cout << "run_helper.starting_run_seed: " << run_helper.starting_run_seed << endl;
+					run_helper.curr_run_seed = duplicate->verify_seeds[0];
+					duplicate->verify_seeds.erase(duplicate->verify_seeds.begin());
+
+					vector<ContextLayer> context;
+					context.push_back(ContextLayer());
+
+					context.back().scope = duplicate->scopes[duplicate->curr_scope_id];
+					context.back().node = NULL;
+
+					ScopeHistory* root_history = new ScopeHistory(duplicate->scopes[duplicate->curr_scope_id]);
+					context.back().scope_history = root_history;
+
+					// unused
+					int exit_depth = -1;
+					AbstractNode* exit_node = NULL;
+
+					duplicate->scopes[duplicate->curr_scope_id]->verify_activate(
+						duplicate->scopes[duplicate->curr_scope_id]->default_starting_node,
+						problem,
+						context,
+						exit_depth,
+						exit_node,
+						run_helper,
+						root_history);
+
+					delete root_history;
+
+					delete duplicate->verify_problems[0];
+					duplicate->verify_problems.erase(duplicate->verify_problems.begin());
+				}
+				duplicate->clear_verify();
+				#endif /* MDEBUG */
+
+				delete solution;
+				solution = duplicate;
+
+				#if defined(MDEBUG) && MDEBUG
+				solution->depth_limit = solution->max_depth + 1;
+				#else
+				if (solution->max_depth < 50) {
+					solution->depth_limit = solution->max_depth + 10;
+				} else {
+					solution->depth_limit = (int)(1.2*(double)solution->max_depth);
+				}
+				#endif /* MDEBUG */
+
+				solution->num_actions_limit = 20*solution->max_num_actions + 20;
+
+				solution->increment();
+
+				solution->timestamp = (unsigned)time(NULL);
+				solution->save("", "main");
+
+				ofstream display_file;
+				display_file.open("../display.txt");
+				solution->save_for_display(display_file);
+				display_file.close();
+
+				cout << "hit_percent: " << hit_percent << endl;
 			}
 		} else {
 			hit_percent = 0.999*hit_percent + 0.0;
@@ -219,93 +284,6 @@ int main(int argc, char* argv[]) {
 		}
 
 		delete problem;
-
-		if (is_success) {
-			solution->reset();
-
-			#if defined(MDEBUG) && MDEBUG
-			while (solution->verify_problems.size() > 0) {
-				Problem* problem = solution->verify_problems[0];
-
-				RunHelper run_helper;
-				run_helper.verify_key = solution->verify_key;
-
-				run_helper.starting_run_seed = solution->verify_seeds[0];
-				cout << "run_helper.starting_run_seed: " << run_helper.starting_run_seed << endl;
-				run_helper.curr_run_seed = solution->verify_seeds[0];
-				solution->verify_seeds.erase(solution->verify_seeds.begin());
-
-				vector<ContextLayer> context;
-				context.push_back(ContextLayer());
-
-				context.back().scope = solution->scopes[solution->curr_scope_id];
-				context.back().node = NULL;
-
-				ScopeHistory* root_history = new ScopeHistory(solution->scopes[solution->curr_scope_id]);
-				context.back().scope_history = root_history;
-
-				// unused
-				int exit_depth = -1;
-				AbstractNode* exit_node = NULL;
-
-				solution->scopes[solution->curr_scope_id]->verify_activate(
-					solution->scopes[solution->curr_scope_id]->default_starting_node,
-					problem,
-					context,
-					exit_depth,
-					exit_node,
-					run_helper,
-					root_history);
-
-				delete root_history;
-
-				delete solution->verify_problems[0];
-				solution->verify_problems.erase(solution->verify_problems.begin());
-			}
-			solution->clear_verify();
-			#endif /* MDEBUG */
-
-			#if defined(MDEBUG) && MDEBUG
-			solution->depth_limit = solution->max_depth + 1;
-			#else
-			if (solution->max_depth < 50) {
-				solution->depth_limit = solution->max_depth + 10;
-			} else {
-				solution->depth_limit = (int)(1.2*(double)solution->max_depth);
-			}
-			#endif /* MDEBUG */
-
-			solution->num_actions_limit = 20*solution->max_num_actions + 20;
-
-			solution->increment();
-
-			// solution->timestamp = (unsigned)time(NULL);
-			// solution->save("", "main");
-
-			// ofstream display_file;
-			// display_file.open("../display.txt");
-			// solution->save_for_display(display_file);
-			// display_file.close();
-
-			num_fails = 0;
-
-			solution->curr_num_datapoints = STARTING_NUM_DATAPOINTS;
-
-			cout << "hit_percent: " << hit_percent << endl;
-		} else if (is_fail) {
-			num_fails++;
-			cout << "num_fails: " << num_fails << endl << endl;
-			if (num_fails >= NUM_FAILS_BEFORE_INCREASE) {
-				cout << "fail_reset" << endl << endl;
-
-				num_fails = 0;
-				solution->reset();
-
-				solution->curr_num_datapoints *= 2;
-			}
-
-			cout << "hit_percent: " << hit_percent << endl;
-		}
 
 		#if defined(MDEBUG) && MDEBUG
 		if (run_index%5000 == 0) {

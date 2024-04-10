@@ -21,28 +21,28 @@ void PassThroughExperiment::experiment_verify_existing_backprop(
 	}
 
 	if (this->root_state == ROOT_EXPERIMENT_STATE_VERIFY_1ST_EXISTING
-			&& (int)this->o_target_val_histories.size() >= VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints) {
+			&& (int)this->o_target_val_histories.size() >= VERIFY_1ST_NUM_DATAPOINTS) {
 		double sum_scores = 0.0;
-		for (int d_index = 0; d_index < VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints; d_index++) {
+		for (int d_index = 0; d_index < VERIFY_1ST_NUM_DATAPOINTS; d_index++) {
 			sum_scores += this->o_target_val_histories[d_index];
 		}
-		this->existing_average_score = sum_scores / (VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints);
+		this->existing_average_score = sum_scores / VERIFY_1ST_NUM_DATAPOINTS;
 
 		this->o_target_val_histories.clear();
 
-		this->o_target_val_histories.reserve(VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints);
+		this->o_target_val_histories.reserve(VERIFY_1ST_NUM_DATAPOINTS);
 
 		this->root_state = ROOT_EXPERIMENT_STATE_VERIFY_1ST;
-	} else if ((int)this->o_target_val_histories.size() >= VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints) {
+	} else if ((int)this->o_target_val_histories.size() >= VERIFY_2ND_NUM_DATAPOINTS) {
 		double sum_scores = 0.0;
-		for (int d_index = 0; d_index < VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints; d_index++) {
+		for (int d_index = 0; d_index < VERIFY_2ND_NUM_DATAPOINTS; d_index++) {
 			sum_scores += this->o_target_val_histories[d_index];
 		}
-		this->existing_average_score = sum_scores / (VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints);
+		this->existing_average_score = sum_scores / VERIFY_2ND_NUM_DATAPOINTS;
 
 		this->o_target_val_histories.clear();
 
-		this->o_target_val_histories.reserve(VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints);
+		this->o_target_val_histories.reserve(VERIFY_2ND_NUM_DATAPOINTS);
 
 		this->root_state = ROOT_EXPERIMENT_STATE_VERIFY_2ND;
 	}

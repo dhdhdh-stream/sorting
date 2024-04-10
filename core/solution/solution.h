@@ -11,13 +11,14 @@
 #include <fstream>
 #include <vector>
 
+class AbstractExperiment;
 class Problem;
 class Scope;
 
 #if defined(MDEBUG) && MDEBUG
-const int STARTING_NUM_DATAPOINTS = 10;
+const int NUM_DATAPOINTS = 10;
 #else
-const int STARTING_NUM_DATAPOINTS = 2000;
+const int NUM_DATAPOINTS = 2000;
 #endif /* MDEBUG */
 
 const int TEMP_THROW_ID = -2;
@@ -25,6 +26,7 @@ const int TEMP_THROW_ID = -2;
 class Solution {
 public:
 	int timestamp;
+	double curr_average_score;
 
 	std::vector<Scope*> scopes;
 	int curr_scope_id;
@@ -46,8 +48,6 @@ public:
 	int max_num_actions;
 	int num_actions_limit;
 
-	int curr_num_datapoints;
-
 	#if defined(MDEBUG) && MDEBUG
 	void* verify_key;
 	std::vector<Problem*> verify_problems;
@@ -60,8 +60,6 @@ public:
 	void init();
 	void load(std::string path,
 			  std::string name);
-
-	void reset();
 
 	void increment();
 

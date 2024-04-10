@@ -174,7 +174,7 @@ void BranchExperiment::capture_verify_backprop() {
 
 			this->root_experiment->verify_experiments = verify_experiments;
 
-			this->root_experiment->o_target_val_histories.reserve(VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints);
+			this->root_experiment->o_target_val_histories.reserve(VERIFY_1ST_NUM_DATAPOINTS);
 
 			this->root_experiment->root_state = ROOT_EXPERIMENT_STATE_VERIFY_1ST_EXISTING;
 

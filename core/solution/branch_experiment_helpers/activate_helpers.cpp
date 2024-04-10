@@ -295,7 +295,6 @@ bool BranchExperiment::activate(AbstractNode*& curr_node,
 				break;
 			case BRANCH_EXPERIMENT_STATE_TRAIN_NEW:
 				train_new_activate(curr_node,
-								   problem,
 								   context,
 								   exit_depth,
 								   exit_node,
@@ -304,7 +303,6 @@ bool BranchExperiment::activate(AbstractNode*& curr_node,
 				break;
 			case BRANCH_EXPERIMENT_STATE_MEASURE:
 				measure_activate(curr_node,
-								 problem,
 								 context,
 								 exit_depth,
 								 exit_node,
@@ -313,7 +311,6 @@ bool BranchExperiment::activate(AbstractNode*& curr_node,
 			case BRANCH_EXPERIMENT_STATE_VERIFY_1ST:
 			case BRANCH_EXPERIMENT_STATE_VERIFY_2ND:
 				verify_activate(curr_node,
-								problem,
 								context,
 								exit_depth,
 								exit_node,
@@ -331,7 +328,6 @@ bool BranchExperiment::activate(AbstractNode*& curr_node,
 			#endif /* MDEBUG */
 			case BRANCH_EXPERIMENT_STATE_ROOT_VERIFY:
 				root_verify_activate(curr_node,
-									 problem,
 									 context,
 									 exit_depth,
 									 exit_node,

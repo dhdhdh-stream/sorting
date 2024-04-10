@@ -140,7 +140,7 @@ public:
 	void experiment_verify_new_backprop(double target_val,
 										RunHelper& run_helper);
 
-	void finalize();
+	void finalize(Solution*& duplicate);
 };
 
 class PassThroughExperimentHistory : public AbstractExperimentHistory {

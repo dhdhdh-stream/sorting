@@ -44,7 +44,7 @@ PassThroughExperiment::PassThroughExperiment(vector<Scope*> scope_context,
 	this->average_remaining_experiments_from_start = 1.0;
 	this->average_instances_per_run = 1.0;
 
-	this->o_target_val_histories.reserve(solution->curr_num_datapoints);
+	this->o_target_val_histories.reserve(NUM_DATAPOINTS);
 
 	this->state = PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING;
 	this->state_iter = 0;

@@ -23,7 +23,6 @@ using namespace std;
 
 void BranchExperiment::train_new_activate(
 		AbstractNode*& curr_node,
-		Problem* problem,
 		vector<ContextLayer>& context,
 		int& exit_depth,
 		AbstractNode*& exit_node,
@@ -49,7 +48,6 @@ void BranchExperiment::train_new_activate(
 		history->has_target = true;
 
 		train_new_target_activate(curr_node,
-								  problem,
 								  context,
 								  exit_depth,
 								  exit_node,
@@ -59,7 +57,6 @@ void BranchExperiment::train_new_activate(
 
 void BranchExperiment::train_new_target_activate(
 		AbstractNode*& curr_node,
-		Problem* problem,
 		vector<ContextLayer>& context,
 		int& exit_depth,
 		AbstractNode*& exit_node,
@@ -99,14 +96,14 @@ void BranchExperiment::train_new_backprop(
 	if (history->has_target) {
 		this->i_target_val_histories.push_back(target_val);
 
-		if ((int)this->i_target_val_histories.size() >= solution->curr_num_datapoints) {
+		if ((int)this->i_target_val_histories.size() >= NUM_DATAPOINTS) {
 			double sum_scores = 0.0;
-			for (int d_index = 0; d_index < solution->curr_num_datapoints; d_index++) {
+			for (int d_index = 0; d_index < NUM_DATAPOINTS; d_index++) {
 				sum_scores += this->i_target_val_histories[d_index];
 			}
-			this->new_average_score = sum_scores / solution->curr_num_datapoints;
+			this->new_average_score = sum_scores / NUM_DATAPOINTS;
 
-			Eigen::MatrixXd inputs(solution->curr_num_datapoints, this->input_scope_contexts.size());
+			Eigen::MatrixXd inputs(NUM_DATAPOINTS, this->input_scope_contexts.size());
 
 			for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
 				if (this->input_node_contexts[i_index].back()->type == NODE_TYPE_ACTION) {
@@ -122,7 +119,7 @@ void BranchExperiment::train_new_backprop(
 					branch_node->hook_node_contexts.push_back(this->input_node_contexts[i_index]);
 				}
 			}
-			for (int d_index = 0; d_index < solution->curr_num_datapoints; d_index++) {
+			for (int d_index = 0; d_index < NUM_DATAPOINTS; d_index++) {
 				vector<double> input_vals(this->input_scope_contexts.size(), 0.0);
 
 				vector<Scope*> scope_context;
@@ -153,8 +150,8 @@ void BranchExperiment::train_new_backprop(
 				}
 			}
 
-			Eigen::VectorXd outputs(solution->curr_num_datapoints);
-			for (int d_index = 0; d_index < solution->curr_num_datapoints; d_index++) {
+			Eigen::VectorXd outputs(NUM_DATAPOINTS);
+			for (int d_index = 0; d_index < NUM_DATAPOINTS; d_index++) {
 				outputs(d_index) = this->i_target_val_histories[d_index] - this->new_average_score;
 			}
 
@@ -171,10 +168,10 @@ void BranchExperiment::train_new_backprop(
 			this->new_linear_weights = vector<double>(this->input_scope_contexts.size());
 			for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
 				double sum_impact_size = 0.0;
-				for (int d_index = 0; d_index < solution->curr_num_datapoints; d_index++) {
+				for (int d_index = 0; d_index < NUM_DATAPOINTS; d_index++) {
 					sum_impact_size += abs(inputs(d_index, i_index));
 				}
-				double average_impact = sum_impact_size / solution->curr_num_datapoints;
+				double average_impact = sum_impact_size / NUM_DATAPOINTS;
 				if (abs(weights(i_index)) * average_impact < WEIGHT_MIN_SCORE_IMPACT * this->existing_score_standard_deviation
 						|| abs(weights(i_index)) > LINEAR_MAX_WEIGHT) {
 					weights(i_index) = 0.0;
@@ -186,27 +183,27 @@ void BranchExperiment::train_new_backprop(
 
 			Eigen::VectorXd predicted_scores = inputs * weights;
 			Eigen::VectorXd diffs = outputs - predicted_scores;
-			vector<double> network_target_vals(solution->curr_num_datapoints);
-			for (int d_index = 0; d_index < solution->curr_num_datapoints; d_index++) {
+			vector<double> network_target_vals(NUM_DATAPOINTS);
+			for (int d_index = 0; d_index < NUM_DATAPOINTS; d_index++) {
 				network_target_vals[d_index] = diffs(d_index);
 			}
 
-			vector<double> misguesses(solution->curr_num_datapoints);
-			for (int d_index = 0; d_index < solution->curr_num_datapoints; d_index++) {
+			vector<double> misguesses(NUM_DATAPOINTS);
+			for (int d_index = 0; d_index < NUM_DATAPOINTS; d_index++) {
 				misguesses[d_index] = diffs(d_index) * diffs(d_index);
 			}
 
 			double sum_misguesses = 0.0;
-			for (int d_index = 0; d_index < solution->curr_num_datapoints; d_index++) {
+			for (int d_index = 0; d_index < NUM_DATAPOINTS; d_index++) {
 				sum_misguesses += misguesses[d_index];
 			}
-			this->new_average_misguess = sum_misguesses / solution->curr_num_datapoints;
+			this->new_average_misguess = sum_misguesses / NUM_DATAPOINTS;
 
 			double sum_misguess_variances = 0.0;
-			for (int d_index = 0; d_index < solution->curr_num_datapoints; d_index++) {
+			for (int d_index = 0; d_index < NUM_DATAPOINTS; d_index++) {
 				sum_misguess_variances += (misguesses[d_index] - this->new_average_misguess) * (misguesses[d_index] - this->new_average_misguess);
 			}
-			this->new_misguess_standard_deviation = sqrt(sum_misguess_variances / solution->curr_num_datapoints);
+			this->new_misguess_standard_deviation = sqrt(sum_misguess_variances / NUM_DATAPOINTS);
 			if (this->new_misguess_standard_deviation < MIN_STANDARD_DEVIATION) {
 				this->new_misguess_standard_deviation = MIN_STANDARD_DEVIATION;
 			}
@@ -216,7 +213,7 @@ void BranchExperiment::train_new_backprop(
 				cout << "this->new_misguess_standard_deviation: " << this->new_misguess_standard_deviation << endl;
 			}
 
-			vector<vector<vector<double>>> network_inputs(solution->curr_num_datapoints);
+			vector<vector<vector<double>>> network_inputs(NUM_DATAPOINTS);
 			int train_index = 0;
 			while (train_index < 3) {
 				vector<vector<Scope*>> possible_scope_contexts;
@@ -225,7 +222,7 @@ void BranchExperiment::train_new_backprop(
 
 				vector<Scope*> scope_context;
 				vector<AbstractNode*> node_context;
-				uniform_int_distribution<int> history_distribution(0, solution->curr_num_datapoints-1);
+				uniform_int_distribution<int> history_distribution(0, NUM_DATAPOINTS-1);
 				gather_possible_helper(scope_context,
 									   node_context,
 									   possible_scope_contexts,
@@ -285,7 +282,7 @@ void BranchExperiment::train_new_backprop(
 						branch_node->hook_node_contexts.push_back(test_network_input_node_contexts[t_index]);
 					}
 				}
-				for (int d_index = 0; d_index < solution->curr_num_datapoints; d_index++) {
+				for (int d_index = 0; d_index < NUM_DATAPOINTS; d_index++) {
 					vector<double> test_input_vals(num_new_input_indexes, 0.0);
 
 					vector<Scope*> scope_context;
@@ -386,7 +383,7 @@ void BranchExperiment::train_new_backprop(
 				} else {
 					delete test_network;
 
-					for (int d_index = 0; d_index < solution->curr_num_datapoints; d_index++) {
+					for (int d_index = 0; d_index < NUM_DATAPOINTS; d_index++) {
 						network_inputs[d_index].pop_back();
 					}
 

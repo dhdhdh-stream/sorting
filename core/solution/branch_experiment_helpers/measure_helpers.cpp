@@ -19,7 +19,6 @@
 using namespace std;
 
 void BranchExperiment::measure_activate(AbstractNode*& curr_node,
-										Problem* problem,
 										vector<ContextLayer>& context,
 										int& exit_depth,
 										AbstractNode*& exit_node,
@@ -136,8 +135,8 @@ void BranchExperiment::measure_backprop(double target_val,
 	this->combined_score += target_val;
 
 	this->state_iter++;
-	if (this->state_iter >= solution->curr_num_datapoints) {
-		this->combined_score /= solution->curr_num_datapoints;
+	if (this->state_iter >= NUM_DATAPOINTS) {
+		this->combined_score /= NUM_DATAPOINTS;
 
 		this->branch_weight = (double)this->branch_count / (double)(this->original_count + this->branch_count);
 
@@ -162,7 +161,7 @@ void BranchExperiment::measure_backprop(double target_val,
 		#endif /* MDEBUG */
 			this->combined_score = 0.0;
 
-			this->o_target_val_histories.reserve(VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints);
+			this->o_target_val_histories.reserve(VERIFY_1ST_NUM_DATAPOINTS);
 
 			this->state = BRANCH_EXPERIMENT_STATE_VERIFY_1ST_EXISTING;
 			this->state_iter = 0;
@@ -182,10 +181,6 @@ void BranchExperiment::measure_backprop(double target_val,
 				this->best_scopes.clear();
 				this->best_catch_throw_ids.clear();
 
-				if (this->branch_node != NULL) {
-					delete this->branch_node;
-					this->branch_node = NULL;
-				}
 				if (this->exit_node != NULL) {
 					delete this->exit_node;
 					this->exit_node = NULL;

@@ -45,13 +45,6 @@ void BranchNode::clear_verify() {
 }
 #endif /* MDEBUG */
 
-void BranchNode::reset() {
-	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
-		delete this->experiments[e_index];
-	}
-	this->experiments.clear();
-}
-
 void BranchNode::save(ofstream& output_file) {
 	output_file << this->scope_context.size() << endl;
 	for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {

@@ -14,7 +14,6 @@ using namespace std;
 
 void BranchExperiment::root_verify_activate(
 		AbstractNode*& curr_node,
-		Problem* problem,
 		vector<ContextLayer>& context,
 		int& exit_depth,
 		AbstractNode*& exit_node,

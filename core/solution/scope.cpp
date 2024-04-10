@@ -31,32 +31,6 @@ void Scope::clear_verify() {
 }
 #endif /* MDEBUG */
 
-void Scope::reset() {
-	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
-			it != this->nodes.end(); it++) {
-		switch (it->second->type) {
-		case NODE_TYPE_ACTION:
-			{
-				ActionNode* action_node = (ActionNode*)it->second;
-				action_node->reset();
-			}
-			break;
-		case NODE_TYPE_SCOPE:
-			{
-				ScopeNode* scope_node = (ScopeNode*)it->second;
-				scope_node->reset();
-			}
-			break;
-		case NODE_TYPE_BRANCH:
-			{
-				BranchNode* branch_node = (BranchNode*)it->second;
-				branch_node->reset();
-			}
-			break;
-		}
-	}
-}
-
 void Scope::save(ofstream& output_file) {
 	output_file << this->parent_id << endl;
 	output_file << this->child_ids.size() << endl;

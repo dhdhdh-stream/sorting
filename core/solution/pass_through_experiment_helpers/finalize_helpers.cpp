@@ -14,16 +14,19 @@
 
 using namespace std;
 
-void PassThroughExperiment::finalize() {
+void PassThroughExperiment::finalize(Solution*& duplicate) {
 	if (this->result == EXPERIMENT_RESULT_SUCCESS) {
+		Scope* duplicate_local_scope = duplicate->scopes[this->scope_context.back()->id];
+		AbstractNode* duplicate_explore_node = duplicate_local_scope->nodes[this->node_context.back()->id];
+
 		int start_node_id;
 		AbstractNode* start_node;
 		if (this->scope_context.size() > 1) {
 			BranchNode* new_branch_node = new BranchNode();
-			new_branch_node->parent = this->scope_context.back();
-			new_branch_node->id = this->scope_context.back()->node_counter;
-			this->scope_context.back()->node_counter++;
-			this->scope_context.back()->nodes[new_branch_node->id] = new_branch_node;
+			new_branch_node->parent = duplicate_local_scope;
+			new_branch_node->id = duplicate_local_scope->node_counter;
+			duplicate_local_scope->node_counter++;
+			duplicate_local_scope->nodes[new_branch_node->id] = new_branch_node;
 
 			new_branch_node->scope_context = this->scope_context;
 			for (int c_index = 0; c_index < (int)new_branch_node->scope_context.size(); c_index++) {
@@ -45,13 +48,13 @@ void PassThroughExperiment::finalize() {
 			new_branch_node->original_network = NULL;
 			new_branch_node->branch_network = NULL;
 
-			if (this->node_context.back()->type == NODE_TYPE_ACTION) {
-				ActionNode* action_node = (ActionNode*)this->node_context.back();
+			if (duplicate_explore_node->type == NODE_TYPE_ACTION) {
+				ActionNode* action_node = (ActionNode*)duplicate_explore_node;
 
 				new_branch_node->original_next_node_id = action_node->next_node_id;
 				new_branch_node->original_next_node = action_node->next_node;
-			} else if (this->node_context.back()->type == NODE_TYPE_SCOPE) {
-				ScopeNode* scope_node = (ScopeNode*)this->node_context.back();
+			} else if (duplicate_explore_node->type == NODE_TYPE_SCOPE) {
+				ScopeNode* scope_node = (ScopeNode*)duplicate_explore_node;
 
 				if (this->throw_id == -1) {
 					new_branch_node->original_next_node_id = scope_node->next_node_id;
@@ -60,11 +63,11 @@ void PassThroughExperiment::finalize() {
 					map<int, AbstractNode*>::iterator it = scope_node->catches.find(this->throw_id);
 					if (it == scope_node->catches.end()) {
 						ExitNode* new_throw_node = new ExitNode();
-						new_throw_node->parent = this->scope_context.back();
-						new_throw_node->id = this->scope_context.back()->node_counter;
-						this->scope_context.back()->node_counter++;
+						new_throw_node->parent = duplicate_local_scope;
+						new_throw_node->id = duplicate_local_scope->node_counter;
+						duplicate_local_scope->node_counter++;
 
-						this->scope_context.back()->nodes[new_throw_node->id] = new_throw_node;
+						duplicate_local_scope->nodes[new_throw_node->id] = new_throw_node;
 
 						new_throw_node->exit_depth = -1;
 						new_throw_node->next_node_parent = NULL;
@@ -84,7 +87,7 @@ void PassThroughExperiment::finalize() {
 					}
 				}
 			} else {
-				BranchNode* branch_node = (BranchNode*)this->node_context.back();
+				BranchNode* branch_node = (BranchNode*)duplicate_explore_node;
 
 				if (this->is_branch) {
 					new_branch_node->original_next_node_id = branch_node->branch_next_node_id;
@@ -127,10 +130,11 @@ void PassThroughExperiment::finalize() {
 				} else {
 					if (this->best_exit_next_node == NULL) {
 						start_node_id = -1;
+						start_node = NULL;
 					} else {
 						start_node_id = this->best_exit_next_node->id;
+						start_node = duplicate_local_scope->nodes[this->best_exit_next_node->id];
 					}
-					start_node = this->best_exit_next_node;
 				}
 			} else {
 				if (this->best_step_types[0] == STEP_TYPE_ACTION) {
@@ -143,13 +147,13 @@ void PassThroughExperiment::finalize() {
 			}
 		}
 
-		if (this->node_context.back()->type == NODE_TYPE_ACTION) {
-			ActionNode* action_node = (ActionNode*)this->node_context.back();
+		if (duplicate_explore_node->type == NODE_TYPE_ACTION) {
+			ActionNode* action_node = (ActionNode*)duplicate_explore_node;
 
 			action_node->next_node_id = start_node_id;
 			action_node->next_node = start_node;
-		} else if (this->node_context.back()->type == NODE_TYPE_SCOPE) {
-			ScopeNode* scope_node = (ScopeNode*)this->node_context.back();
+		} else if (duplicate_explore_node->type == NODE_TYPE_SCOPE) {
+			ScopeNode* scope_node = (ScopeNode*)duplicate_explore_node;
 
 			if (this->throw_id == -1) {
 				scope_node->next_node_id = start_node_id;
@@ -159,7 +163,7 @@ void PassThroughExperiment::finalize() {
 				scope_node->catches[this->throw_id] = start_node;
 			}
 		} else {
-			BranchNode* branch_node = (BranchNode*)this->node_context.back();
+			BranchNode* branch_node = (BranchNode*)duplicate_explore_node;
 
 			if (this->is_branch) {
 				branch_node->branch_next_node_id = start_node_id;
@@ -171,16 +175,17 @@ void PassThroughExperiment::finalize() {
 		}
 
 		if (this->exit_node != NULL) {
-			this->scope_context.back()->nodes[this->exit_node->id] = this->exit_node;
+			duplicate_local_scope->nodes[this->exit_node->id] = this->exit_node;
 		}
 
 		for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 			if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-				this->scope_context.back()->nodes[this->best_actions[s_index]->id] = this->best_actions[s_index];
+				duplicate_local_scope->nodes[this->best_actions[s_index]->id] = this->best_actions[s_index];
 			} else {
-				this->scope_context.back()->nodes[this->best_scopes[s_index]->id] = this->best_scopes[s_index];
+				duplicate_local_scope->nodes[this->best_scopes[s_index]->id] = this->best_scopes[s_index];
 
-				this->best_scopes[s_index]->scope->subscopes.insert(
+				Scope* duplicate_scope = duplicate->scopes[this->best_scopes[s_index]->scope->id];
+				duplicate_scope->subscopes.insert(
 					{this->best_scopes[s_index]->starting_node_id,
 						this->best_scopes[s_index]->exit_node_ids});
 			}
@@ -190,15 +195,20 @@ void PassThroughExperiment::finalize() {
 		this->best_scopes.clear();
 		this->exit_node = NULL;
 
+		duplicate->save("", "duplicate");
+		delete duplicate;
+		duplicate = new Solution();
+		duplicate->load("", "duplicate");
+
 		for (int v_index = 0; v_index < (int)this->verify_experiments.size(); v_index++) {
 			this->verify_experiments[v_index]->result = EXPERIMENT_RESULT_SUCCESS;
-			this->verify_experiments[v_index]->finalize();
+			this->verify_experiments[v_index]->finalize(duplicate);
 			delete this->verify_experiments[v_index];
 		}
 	} else {
 		for (int c_index = 0; c_index < (int)this->child_experiments.size(); c_index++) {
 			this->child_experiments[c_index]->result = EXPERIMENT_RESULT_FAIL;
-			this->child_experiments[c_index]->finalize();
+			this->child_experiments[c_index]->finalize(duplicate);
 			delete this->child_experiments[c_index];
 		}
 	}

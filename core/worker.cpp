@@ -55,8 +55,6 @@ int main(int argc, char* argv[]) {
 	solution = new Solution();
 	solution->load("workers/", "main");
 
-	int num_fails = 0;
-
 	auto start_time = chrono::high_resolution_clock::now();
 	while (true) {
 		// Problem* problem = new Sorting();
@@ -102,7 +100,7 @@ int main(int argc, char* argv[]) {
 		}
 
 		bool is_success = false;
-		bool is_fail = false;
+		Solution* duplicate = NULL;
 		if (run_helper.experiment_histories.size() > 0) {
 			for (int e_index = 0; e_index < (int)run_helper.experiments_seen_order.size(); e_index++) {
 				AbstractExperiment* experiment = run_helper.experiments_seen_order[e_index];
@@ -119,10 +117,6 @@ int main(int argc, char* argv[]) {
 						0.9 * experiment->average_remaining_experiments_from_start
 						+ 0.1 * ((int)experiment_history->experiments_seen_order.size()-1 - e_index
 							+ run_helper.experiment_histories[h_index+1]->experiment->average_remaining_experiments_from_start);
-
-					if (experiment->parent_experiment != experiment_history->experiment) {
-						throw invalid_argument("experiment->parent_experiment != experiment_history->experiment");
-					}
 				}
 			}
 			{
@@ -135,10 +129,6 @@ int main(int argc, char* argv[]) {
 					experiment->average_remaining_experiments_from_start =
 						0.9 * experiment->average_remaining_experiments_from_start
 						+ 0.1 * ((int)experiment_history->experiments_seen_order.size()-1 - e_index);
-
-					if (experiment->parent_experiment != experiment_history->experiment) {
-						throw invalid_argument("experiment->parent_experiment != experiment_history->experiment");
-					}
 				}
 			}
 
@@ -147,8 +137,8 @@ int main(int argc, char* argv[]) {
 				run_helper);
 			if (run_helper.experiment_histories.back()->experiment->result == EXPERIMENT_RESULT_FAIL) {
 				if (run_helper.experiment_histories.size() == 1) {
-					is_fail = true;
-					run_helper.experiment_histories.back()->experiment->finalize();
+					Solution* empty = NULL;
+					run_helper.experiment_histories.back()->experiment->finalize(empty);
 					delete run_helper.experiment_histories.back()->experiment;
 				} else {
 					AbstractExperiment* curr_experiment = run_helper.experiment_histories.back()->experiment->parent_experiment;
@@ -164,14 +154,14 @@ int main(int argc, char* argv[]) {
 					curr_experiment->child_experiments.erase(curr_experiment->child_experiments.begin() + matching_index);
 
 					run_helper.experiment_histories.back()->experiment->result = EXPERIMENT_RESULT_FAIL;
-					run_helper.experiment_histories.back()->experiment->finalize();
+					Solution* empty = NULL;
+					run_helper.experiment_histories.back()->experiment->finalize(empty);
 					delete run_helper.experiment_histories.back()->experiment;
 
 					double target_count = (double)MAX_EXPERIMENT_NUM_EXPERIMENTS
 						* pow(0.5, run_helper.experiment_histories.size()-1);
 					while (true) {
 						if (curr_experiment == NULL) {
-							is_fail = true;
 							break;
 						}
 
@@ -191,7 +181,8 @@ int main(int argc, char* argv[]) {
 							}
 
 							curr_experiment->result = EXPERIMENT_RESULT_FAIL;
-							curr_experiment->finalize();
+							Solution* empty = NULL;
+							curr_experiment->finalize(empty);
 							delete curr_experiment;
 
 							curr_experiment = parent;
@@ -206,7 +197,9 @@ int main(int argc, char* argv[]) {
 				 * - run_helper.experiment_histories.size() == 1
 				 */
 				is_success = true;
-				run_helper.experiment_histories.back()->experiment->finalize();
+				duplicate = new Solution();
+				duplicate->load("", "main");
+				run_helper.experiment_histories.back()->experiment->finalize(duplicate);
 				delete run_helper.experiment_histories.back()->experiment;
 			}
 		} else {
@@ -221,8 +214,6 @@ int main(int argc, char* argv[]) {
 		delete problem;
 
 		if (is_success) {
-			solution->reset();
-
 			solution->increment();
 
 			ifstream solution_save_file;
@@ -253,21 +244,6 @@ int main(int argc, char* argv[]) {
 				solution->timestamp = (unsigned)time(NULL);
 				solution->save(path, name);
 			}
-
-			num_fails = 0;
-
-			solution->curr_num_datapoints = STARTING_NUM_DATAPOINTS;
-		} else if (is_fail) {
-			num_fails++;
-			cout << "num_fails: " << num_fails << endl << endl;
-			if (num_fails >= NUM_FAILS_BEFORE_INCREASE) {
-				cout << "fail_reset" << endl << endl;
-
-				num_fails = 0;
-				solution->reset();
-
-				solution->curr_num_datapoints *= 2;
-			}
 		} else {
 			auto curr_time = chrono::high_resolution_clock::now();
 			auto time_diff = chrono::duration_cast<chrono::seconds>(curr_time - start_time);
@@ -290,8 +266,6 @@ int main(int argc, char* argv[]) {
 					solution->save(path, name);
 
 					cout << "updated from main" << endl;
-
-					num_fails = 0;
 				}
 
 				start_time = curr_time;

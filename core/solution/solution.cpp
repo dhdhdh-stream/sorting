@@ -19,6 +19,7 @@ Solution::~Solution() {
 
 void Solution::init() {
 	this->timestamp = (unsigned)time(NULL);
+	this->curr_average_score = -1.0;
 
 	Scope* starting_scope = new Scope();
 	starting_scope->id = 0;
@@ -48,8 +49,6 @@ void Solution::init() {
 
 	this->max_num_actions = 1;
 	this->num_actions_limit = 40;
-
-	this->curr_num_datapoints = STARTING_NUM_DATAPOINTS;
 }
 
 void Solution::load(string path,
@@ -60,6 +59,10 @@ void Solution::load(string path,
 	string timestamp_line;
 	getline(input_file, timestamp_line);
 	this->timestamp = stoi(timestamp_line);
+
+	string curr_average_score_line;
+	getline(input_file, curr_average_score_line);
+	this->curr_average_score = stod(curr_average_score_line);
 
 	string num_scopes_line;
 	getline(input_file, num_scopes_line);
@@ -101,8 +104,6 @@ void Solution::load(string path,
 	this->num_actions_limit = 20*this->max_num_actions + 20;
 
 	input_file.close();
-
-	this->curr_num_datapoints = STARTING_NUM_DATAPOINTS;
 }
 
 #if defined(MDEBUG) && MDEBUG
@@ -115,12 +116,6 @@ void Solution::clear_verify() {
 	this->verify_problems.clear();
 }
 #endif /* MDEBUG */
-
-void Solution::reset() {
-	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
-		this->scopes[s_index]->reset();
-	}
-}
 
 void Solution::increment() {
 	this->scopes[this->curr_scope_id]->num_improvements++;
@@ -212,6 +207,7 @@ void Solution::save(string path,
 	output_file.open(path + "saves/" + name + "_temp.txt");
 
 	output_file << this->timestamp << endl;
+	output_file << this->curr_average_score << endl;
 
 	output_file << this->scopes.size() << endl;
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {

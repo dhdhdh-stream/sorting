@@ -15,13 +15,6 @@ ActionNode::~ActionNode() {
 	}
 }
 
-void ActionNode::reset() {
-	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
-		delete this->experiments[e_index];
-	}
-	this->experiments.clear();
-}
-
 void ActionNode::save(ofstream& output_file) {
 	this->action.save(output_file);
 

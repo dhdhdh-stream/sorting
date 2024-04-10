@@ -44,23 +44,23 @@ void PassThroughExperiment::measure_new_backprop(
 		RunHelper& run_helper) {
 	this->o_target_val_histories.push_back(target_val);
 
-	if ((int)this->o_target_val_histories.size() >= solution->curr_num_datapoints) {
+	if ((int)this->o_target_val_histories.size() >= NUM_DATAPOINTS) {
 		#if defined(MDEBUG) && MDEBUG
 		this->o_target_val_histories.clear();
 
 		if (rand()%2 == 0) {
 		#else
 		double sum_scores = 0.0;
-		for (int d_index = 0; d_index < solution->curr_num_datapoints; d_index++) {
+		for (int d_index = 0; d_index < NUM_DATAPOINTS; d_index++) {
 			sum_scores += this->o_target_val_histories[d_index];
 		}
-		double new_average_score = sum_scores / solution->curr_num_datapoints;
+		double new_average_score = sum_scores / NUM_DATAPOINTS;
 
 		this->o_target_val_histories.clear();
 
 		if (new_average_score >= this->existing_average_score) {
 		#endif /* MDEBUG */
-			this->o_target_val_histories.reserve(VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints);
+			this->o_target_val_histories.reserve(VERIFY_1ST_NUM_DATAPOINTS);
 
 			this->state = PASS_THROUGH_EXPERIMENT_STATE_VERIFY_1ST_EXISTING;
 			this->state_iter = 0;

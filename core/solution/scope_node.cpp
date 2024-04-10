@@ -21,13 +21,6 @@ ScopeNode::~ScopeNode() {
 	}
 }
 
-void ScopeNode::reset() {
-	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
-		delete this->experiments[e_index];
-	}
-	this->experiments.clear();
-}
-
 void ScopeNode::save(ofstream& output_file) {
 	output_file << this->scope->id << endl;
 	output_file << this->starting_node_id << endl;

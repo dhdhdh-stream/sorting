@@ -19,12 +19,6 @@ class ScopeHistory;
 class ScopeNode;
 
 const int BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING = 0;
-/**
- * - select first that is significant improvement
- *   - don't select "best" as might not have been learned for actual best
- *     - so may select lottery instead of actual best
- * 
- */
 const int BRANCH_EXPERIMENT_STATE_EXPLORE_CREATE = 1;
 const int BRANCH_EXPERIMENT_STATE_EXPLORE_MEASURE = 2;
 const int BRANCH_EXPERIMENT_STATE_TRAIN_NEW = 3;
@@ -44,6 +38,11 @@ const int BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY = 9;
 const int BRANCH_EXPERIMENT_STATE_ROOT_VERIFY = 10;
 const int BRANCH_EXPERIMENT_STATE_EXPERIMENT = 11;
 
+/**
+ * - select first that is significant improvement
+ *   - don't select "best" as might not have been learned for actual best
+ *     - so may select lottery instead of actual best
+ */
 const int EXPLORE_TYPE_GOOD = 0;
 const int EXPLORE_TYPE_NEUTRAL = 1;
 const int EXPLORE_TYPE_BEST = 2;
@@ -95,7 +94,6 @@ public:
 	AbstractNode* best_exit_next_node;
 	int best_exit_throw_id;
 
-	BranchNode* branch_node;
 	ExitNode* exit_node;
 
 	double new_average_score;
@@ -168,14 +166,12 @@ public:
 								  RunHelper& run_helper);
 
 	void train_new_activate(AbstractNode*& curr_node,
-							Problem* problem,
 							std::vector<ContextLayer>& context,
 							int& exit_depth,
 							AbstractNode*& exit_node,
 							RunHelper& run_helper,
 							BranchExperimentHistory* history);
 	void train_new_target_activate(AbstractNode*& curr_node,
-								   Problem* problem,
 								   std::vector<ContextLayer>& context,
 								   int& exit_depth,
 								   AbstractNode*& exit_node,
@@ -184,7 +180,6 @@ public:
 							RunHelper& run_helper);
 
 	void measure_activate(AbstractNode*& curr_node,
-						  Problem* problem,
 						  std::vector<ContextLayer>& context,
 						  int& exit_depth,
 						  AbstractNode*& exit_node,
@@ -196,7 +191,6 @@ public:
 								  RunHelper& run_helper);
 
 	void verify_activate(AbstractNode*& curr_node,
-						 Problem* problem,
 						 std::vector<ContextLayer>& context,
 						 int& exit_depth,
 						 AbstractNode*& exit_node,
@@ -215,7 +209,6 @@ public:
 	#endif /* MDEBUG */
 
 	void root_verify_activate(AbstractNode*& curr_node,
-							  Problem* problem,
 							  std::vector<ContextLayer>& context,
 							  int& exit_depth,
 							  AbstractNode*& exit_node,
@@ -237,9 +230,9 @@ public:
 	void experiment_verify_backprop(double target_val,
 									RunHelper& run_helper);
 
-	void finalize();
-	void new_branch();
-	void new_pass_through();
+	void finalize(Solution*& duplicate);
+	void new_branch(Solution*& duplicate);
+	void new_pass_through(Solution*& duplicate);
 };
 
 class BranchExperimentHistory : public AbstractExperimentHistory {

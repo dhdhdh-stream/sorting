@@ -100,8 +100,6 @@ public:
 						  Metrics& metrics,
 						  ScopeHistory* history);
 
-	void reset();
-
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file);
 	void link();

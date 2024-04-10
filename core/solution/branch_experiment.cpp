@@ -60,14 +60,13 @@ BranchExperiment::BranchExperiment(vector<Scope*> scope_context,
 	this->existing_network = NULL;
 	this->new_network = NULL;
 
-	this->o_target_val_histories.reserve(solution->curr_num_datapoints);
-	this->i_scope_histories.reserve(solution->curr_num_datapoints);
-	this->i_target_val_histories.reserve(solution->curr_num_datapoints);
+	this->o_target_val_histories.reserve(NUM_DATAPOINTS);
+	this->i_scope_histories.reserve(NUM_DATAPOINTS);
+	this->i_target_val_histories.reserve(NUM_DATAPOINTS);
 
 	this->state = BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING;
 	this->state_iter = 0;
 
-	this->branch_node = NULL;
 	this->exit_node = NULL;
 
 	this->result = EXPERIMENT_RESULT_NA;
@@ -109,10 +108,6 @@ BranchExperiment::~BranchExperiment() {
 		if (this->best_scopes[s_index] != NULL) {
 			delete this->best_scopes[s_index];
 		}
-	}
-
-	if (this->branch_node != NULL) {
-		delete this->branch_node;
 	}
 
 	if (this->exit_node != NULL) {

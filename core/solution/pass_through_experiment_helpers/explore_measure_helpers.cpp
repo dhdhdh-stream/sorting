@@ -244,7 +244,7 @@ void PassThroughExperiment::explore_measure_backprop(
 					}
 				}
 
-				this->o_target_val_histories.reserve(solution->curr_num_datapoints);
+				this->o_target_val_histories.reserve(NUM_DATAPOINTS);
 
 				this->state = PASS_THROUGH_EXPERIMENT_STATE_MEASURE_NEW;
 				this->state_iter = 0;

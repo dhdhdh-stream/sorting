@@ -152,15 +152,15 @@ void BranchExperiment::experiment_verify_backprop(
 
 	this->state_iter++;
 	if (this->root_state == ROOT_EXPERIMENT_STATE_VERIFY_1ST
-			&& this->state_iter >= VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints) {
-		this->combined_score /= (VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints);
+			&& this->state_iter >= VERIFY_1ST_NUM_DATAPOINTS) {
+		this->combined_score /= VERIFY_1ST_NUM_DATAPOINTS;
 
 		#if defined(MDEBUG) && MDEBUG
 		if (rand()%2 == 0) {
 		#else
 		if (this->combined_score > this->verify_existing_average_score) {
 		#endif /* MDEBUG */
-			this->o_target_val_histories.reserve(VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints);
+			this->o_target_val_histories.reserve(VERIFY_2ND_NUM_DATAPOINTS);
 
 			this->root_state = ROOT_EXPERIMENT_STATE_VERIFY_2ND_EXISTING;
 			/**
@@ -230,7 +230,8 @@ void BranchExperiment::experiment_verify_backprop(
 				curr_experiment->child_experiments.erase(curr_experiment->child_experiments.begin() + matching_index);
 
 				this->verify_experiments.back()->result = EXPERIMENT_RESULT_FAIL;
-				this->verify_experiments.back()->finalize();
+				Solution* empty = NULL;
+				this->verify_experiments.back()->finalize(empty);
 				delete this->verify_experiments.back();
 
 				double target_count = (double)MAX_EXPERIMENT_NUM_EXPERIMENTS
@@ -254,7 +255,8 @@ void BranchExperiment::experiment_verify_backprop(
 						parent->child_experiments.erase(parent->child_experiments.begin() + matching_index);
 
 						curr_experiment->result = EXPERIMENT_RESULT_FAIL;
-						curr_experiment->finalize();
+						Solution* empty = NULL;
+						curr_experiment->finalize(empty);
 						delete curr_experiment;
 
 						curr_experiment = parent;
@@ -273,8 +275,8 @@ void BranchExperiment::experiment_verify_backprop(
 				this->root_state = ROOT_EXPERIMENT_STATE_EXPERIMENT;
 			}
 		}
-	} else if (this->state_iter >= VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints) {
-		this->combined_score /= (VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints);
+	} else if (this->state_iter >= VERIFY_2ND_NUM_DATAPOINTS) {
+		this->combined_score /= VERIFY_2ND_NUM_DATAPOINTS;
 
 		#if defined(MDEBUG) && MDEBUG
 		if (rand()%2 == 0) {
@@ -382,7 +384,8 @@ void BranchExperiment::experiment_verify_backprop(
 				curr_experiment->child_experiments.erase(curr_experiment->child_experiments.begin() + matching_index);
 
 				this->verify_experiments.back()->result = EXPERIMENT_RESULT_FAIL;
-				this->verify_experiments.back()->finalize();
+				Solution* empty = NULL;
+				this->verify_experiments.back()->finalize(empty);
 				delete this->verify_experiments.back();
 
 				double target_count = (double)MAX_EXPERIMENT_NUM_EXPERIMENTS
@@ -406,7 +409,8 @@ void BranchExperiment::experiment_verify_backprop(
 						parent->child_experiments.erase(parent->child_experiments.begin() + matching_index);
 
 						curr_experiment->result = EXPERIMENT_RESULT_FAIL;
-						curr_experiment->finalize();
+						Solution* empty = NULL;
+						curr_experiment->finalize(empty);
 						delete curr_experiment;
 
 						curr_experiment = parent;

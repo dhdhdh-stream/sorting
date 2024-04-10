@@ -377,14 +377,6 @@ void BranchExperiment::explore_measure_backprop(
 				exit_node = this->best_exit_next_node;
 			}
 
-			/**
-			 * - just need a placeholder for now
-			 */
-			this->branch_node = new BranchNode();
-			this->branch_node->parent = this->scope_context.back();
-			this->branch_node->id = this->scope_context.back()->node_counter;
-			this->scope_context.back()->node_counter++;
-
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 				int next_node_id;
 				AbstractNode* next_node;
@@ -416,8 +408,8 @@ void BranchExperiment::explore_measure_backprop(
 				}
 			}
 
-			this->i_scope_histories.reserve(solution->curr_num_datapoints);
-			this->i_target_val_histories.reserve(solution->curr_num_datapoints);
+			this->i_scope_histories.reserve(NUM_DATAPOINTS);
+			this->i_target_val_histories.reserve(NUM_DATAPOINTS);
 
 			this->state = BRANCH_EXPERIMENT_STATE_TRAIN_NEW;
 			this->state_iter = 0;

@@ -37,8 +37,6 @@ int main(int argc, char* argv[]) {
 	solution = new Solution();
 	solution->load("", "main");
 
-	solution->curr_num_datapoints = 4000;
-
 	ifstream suggestion_input_file;
 	suggestion_input_file.open("suggestion_input.txt");
 	AbstractExperiment* experiment = create_experiment(suggestion_input_file);
@@ -86,11 +84,14 @@ int main(int argc, char* argv[]) {
 				target_val,
 				run_helper);
 			if (experiment->result == EXPERIMENT_RESULT_FAIL) {
-				experiment->finalize();
+				Solution* empty = NULL;
+				experiment->finalize(empty);
 				delete experiment;
 				break;
 			} else if (experiment->result == EXPERIMENT_RESULT_SUCCESS) {
-				experiment->finalize();
+				Solution* duplicate = new Solution();
+				duplicate->load("", "main");
+				experiment->finalize(duplicate);
 				delete experiment;
 
 				solution->timestamp = (unsigned)time(NULL);

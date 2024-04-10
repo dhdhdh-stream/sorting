@@ -45,23 +45,23 @@ void PassThroughExperiment::verify_new_backprop(
 	this->o_target_val_histories.push_back(target_val);
 
 	if (this->state == PASS_THROUGH_EXPERIMENT_STATE_VERIFY_1ST_NEW
-			&& (int)this->o_target_val_histories.size() >= VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints) {
+			&& (int)this->o_target_val_histories.size() >= VERIFY_1ST_NUM_DATAPOINTS) {
 		#if defined(MDEBUG) && MDEBUG
 		this->o_target_val_histories.clear();
 
 		if (rand()%2 == 0) {
 		#else
 		double sum_scores = 0.0;
-		for (int d_index = 0; d_index < VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints; d_index++) {
+		for (int d_index = 0; d_index < VERIFY_1ST_NUM_DATAPOINTS; d_index++) {
 			sum_scores += this->o_target_val_histories[d_index];
 		}
-		double new_average_score = sum_scores / (VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints);
+		double new_average_score = sum_scores / VERIFY_1ST_NUM_DATAPOINTS;
 
 		this->o_target_val_histories.clear();
 
 		if (new_average_score > this->existing_average_score) {
 		#endif /* MDEBUG */
-			this->o_target_val_histories.reserve(VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints);
+			this->o_target_val_histories.reserve(VERIFY_2ND_NUM_DATAPOINTS);
 
 			this->state = PASS_THROUGH_EXPERIMENT_STATE_VERIFY_2ND_EXISTING;
 			this->state_iter = 0;
@@ -70,12 +70,12 @@ void PassThroughExperiment::verify_new_backprop(
 			this->root_state = ROOT_EXPERIMENT_STATE_EXPERIMENT;
 			this->experiment_iter = 0;
 		}
-	} else if ((int)this->o_target_val_histories.size() >= VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints) {
+	} else if ((int)this->o_target_val_histories.size() >= VERIFY_2ND_NUM_DATAPOINTS) {
 		double sum_scores = 0.0;
-		for (int d_index = 0; d_index < VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints; d_index++) {
+		for (int d_index = 0; d_index < VERIFY_2ND_NUM_DATAPOINTS; d_index++) {
 			sum_scores += this->o_target_val_histories[d_index];
 		}
-		double new_average_score = sum_scores / (VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints);
+		double new_average_score = sum_scores / VERIFY_2ND_NUM_DATAPOINTS;
 
 		this->o_target_val_histories.clear();
 
@@ -136,7 +136,7 @@ void PassThroughExperiment::verify_new_backprop(
 
 				this->root_experiment->verify_experiments = verify_experiments;
 
-				this->root_experiment->o_target_val_histories.reserve(VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints);
+				this->root_experiment->o_target_val_histories.reserve(VERIFY_1ST_NUM_DATAPOINTS);
 
 				this->root_experiment->root_state = ROOT_EXPERIMENT_STATE_VERIFY_1ST_EXISTING;
 

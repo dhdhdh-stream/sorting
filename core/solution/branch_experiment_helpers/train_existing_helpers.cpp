@@ -56,18 +56,18 @@ void BranchExperiment::train_existing_backprop(
 		}
 	}
 
-	if ((int)this->o_target_val_histories.size() >= solution->curr_num_datapoints) {
+	if ((int)this->o_target_val_histories.size() >= NUM_DATAPOINTS) {
 		double sum_scores = 0.0;
-		for (int d_index = 0; d_index < solution->curr_num_datapoints; d_index++) {
+		for (int d_index = 0; d_index < NUM_DATAPOINTS; d_index++) {
 			sum_scores += this->o_target_val_histories[d_index];
 		}
-		this->existing_average_score = sum_scores / solution->curr_num_datapoints;
+		this->existing_average_score = sum_scores / NUM_DATAPOINTS;
 
 		double sum_score_variance = 0.0;
-		for (int d_index = 0; d_index < solution->curr_num_datapoints; d_index++) {
+		for (int d_index = 0; d_index < NUM_DATAPOINTS; d_index++) {
 			sum_score_variance += (this->o_target_val_histories[d_index] - this->existing_average_score) * (this->o_target_val_histories[d_index] - this->existing_average_score);
 		}
-		this->existing_score_standard_deviation = sqrt(sum_score_variance / solution->curr_num_datapoints);
+		this->existing_score_standard_deviation = sqrt(sum_score_variance / NUM_DATAPOINTS);
 		if (this->existing_score_standard_deviation < MIN_STANDARD_DEVIATION) {
 			this->existing_score_standard_deviation = MIN_STANDARD_DEVIATION;
 		}
@@ -462,14 +462,6 @@ void BranchExperiment::train_existing_backprop(
 				exit_node = this->best_exit_next_node;
 			}
 
-			/**
-			 * - just need a placeholder for now
-			 */
-			this->branch_node = new BranchNode();
-			this->branch_node->parent = this->scope_context.back();
-			this->branch_node->id = this->scope_context.back()->node_counter;
-			this->scope_context.back()->node_counter++;
-
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 				int next_node_id;
 				AbstractNode* next_node;
@@ -501,8 +493,8 @@ void BranchExperiment::train_existing_backprop(
 				}
 			}
 
-			this->i_scope_histories.reserve(solution->curr_num_datapoints);
-			this->i_target_val_histories.reserve(solution->curr_num_datapoints);
+			this->i_scope_histories.reserve(NUM_DATAPOINTS);
+			this->i_target_val_histories.reserve(NUM_DATAPOINTS);
 
 			this->state = BRANCH_EXPERIMENT_STATE_TRAIN_NEW;
 			this->state_iter = 0;

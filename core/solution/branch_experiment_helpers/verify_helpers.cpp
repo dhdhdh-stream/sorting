@@ -18,7 +18,6 @@
 using namespace std;
 
 void BranchExperiment::verify_activate(AbstractNode*& curr_node,
-									   Problem* problem,
 									   vector<ContextLayer>& context,
 									   int& exit_depth,
 									   AbstractNode*& exit_node,
@@ -152,8 +151,8 @@ void BranchExperiment::verify_backprop(double target_val,
 
 	this->state_iter++;
 	if (this->state == BRANCH_EXPERIMENT_STATE_VERIFY_1ST
-			&& this->state_iter >= VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints) {
-		this->combined_score /= (VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints);
+			&& this->state_iter >= VERIFY_1ST_NUM_DATAPOINTS) {
+		this->combined_score /= VERIFY_1ST_NUM_DATAPOINTS;
 
 		#if defined(MDEBUG) && MDEBUG
 		if (rand()%2 == 0) {
@@ -175,7 +174,7 @@ void BranchExperiment::verify_backprop(double target_val,
 		if (this->branch_weight > 0.01
 				&& this->combined_score > this->verify_existing_average_score) {
 		#endif /* MDEBUG */
-			this->o_target_val_histories.reserve(VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints);
+			this->o_target_val_histories.reserve(VERIFY_2ND_NUM_DATAPOINTS);
 
 			this->state = BRANCH_EXPERIMENT_STATE_VERIFY_2ND_EXISTING;
 			this->state_iter = 0;
@@ -206,10 +205,6 @@ void BranchExperiment::verify_backprop(double target_val,
 				this->best_scopes.clear();
 				this->best_catch_throw_ids.clear();
 
-				if (this->branch_node != NULL) {
-					delete this->branch_node;
-					this->branch_node = NULL;
-				}
 				if (this->exit_node != NULL) {
 					delete this->exit_node;
 					this->exit_node = NULL;
@@ -242,8 +237,8 @@ void BranchExperiment::verify_backprop(double target_val,
 				this->result = EXPERIMENT_RESULT_FAIL;
 			}
 		}
-	} else if (this->state_iter >= VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints) {
-		this->combined_score /= (VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints);
+	} else if (this->state_iter >= VERIFY_2ND_NUM_DATAPOINTS) {
+		this->combined_score /= VERIFY_2ND_NUM_DATAPOINTS;
 
 		double combined_branch_weight = 1.0;
 		AbstractExperiment* curr_experiment = this;
@@ -324,7 +319,7 @@ void BranchExperiment::verify_backprop(double target_val,
 
 					this->root_experiment->verify_experiments = verify_experiments;
 
-					this->root_experiment->o_target_val_histories.reserve(VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints);
+					this->root_experiment->o_target_val_histories.reserve(VERIFY_1ST_NUM_DATAPOINTS);
 
 					this->root_experiment->root_state = ROOT_EXPERIMENT_STATE_VERIFY_1ST_EXISTING;
 
@@ -358,7 +353,7 @@ void BranchExperiment::verify_backprop(double target_val,
 
 				this->root_experiment->verify_experiments = verify_experiments;
 
-				this->root_experiment->o_target_val_histories.reserve(VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints);
+				this->root_experiment->o_target_val_histories.reserve(VERIFY_1ST_NUM_DATAPOINTS);
 
 				this->root_experiment->root_state = ROOT_EXPERIMENT_STATE_VERIFY_1ST_EXISTING;
 
@@ -392,10 +387,6 @@ void BranchExperiment::verify_backprop(double target_val,
 				this->best_scopes.clear();
 				this->best_catch_throw_ids.clear();
 
-				if (this->branch_node != NULL) {
-					delete this->branch_node;
-					this->branch_node = NULL;
-				}
 				if (this->exit_node != NULL) {
 					delete this->exit_node;
 					this->exit_node = NULL;

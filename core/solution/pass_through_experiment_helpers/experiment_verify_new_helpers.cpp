@@ -42,23 +42,23 @@ void PassThroughExperiment::experiment_verify_new_backprop(
 	this->o_target_val_histories.push_back(target_val);
 
 	if (this->root_state == ROOT_EXPERIMENT_STATE_VERIFY_1ST
-			&& (int)this->o_target_val_histories.size() >= VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints) {
+			&& (int)this->o_target_val_histories.size() >= VERIFY_1ST_NUM_DATAPOINTS) {
 		#if defined(MDEBUG) && MDEBUG
 		this->o_target_val_histories.clear();
 
 		if (rand()%2 == 0) {
 		#else
 		double sum_scores = 0.0;
-		for (int d_index = 0; d_index < VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints; d_index++) {
+		for (int d_index = 0; d_index < VERIFY_1ST_NUM_DATAPOINTS; d_index++) {
 			sum_scores += this->o_target_val_histories[d_index];
 		}
-		double new_average_score = sum_scores / (VERIFY_1ST_MULTIPLIER * solution->curr_num_datapoints);
+		double new_average_score = sum_scores / VERIFY_1ST_NUM_DATAPOINTS;
 
 		this->o_target_val_histories.clear();
 
 		if (new_average_score > this->existing_average_score) {
 		#endif /* MDEBUG */
-			this->o_target_val_histories.reserve(VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints);
+			this->o_target_val_histories.reserve(VERIFY_2ND_NUM_DATAPOINTS);
 
 			this->root_state = ROOT_EXPERIMENT_STATE_VERIFY_2ND_EXISTING;
 			/**
@@ -128,7 +128,8 @@ void PassThroughExperiment::experiment_verify_new_backprop(
 				curr_experiment->child_experiments.erase(curr_experiment->child_experiments.begin() + matching_index);
 
 				this->verify_experiments.back()->result = EXPERIMENT_RESULT_FAIL;
-				this->verify_experiments.back()->finalize();
+				Solution* empty = NULL;
+				this->verify_experiments.back()->finalize(empty);
 				delete this->verify_experiments.back();
 
 				double target_count = (double)MAX_EXPERIMENT_NUM_EXPERIMENTS
@@ -152,7 +153,8 @@ void PassThroughExperiment::experiment_verify_new_backprop(
 						parent->child_experiments.erase(parent->child_experiments.begin() + matching_index);
 
 						curr_experiment->result = EXPERIMENT_RESULT_FAIL;
-						curr_experiment->finalize();
+						Solution* empty = NULL;
+						curr_experiment->finalize(empty);
 						delete curr_experiment;
 
 						curr_experiment = parent;
@@ -171,12 +173,12 @@ void PassThroughExperiment::experiment_verify_new_backprop(
 				this->root_state = ROOT_EXPERIMENT_STATE_EXPERIMENT;
 			}
 		}
-	} else if ((int)this->o_target_val_histories.size() >= VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints) {
+	} else if ((int)this->o_target_val_histories.size() >= VERIFY_2ND_NUM_DATAPOINTS) {
 		double sum_scores = 0.0;
-		for (int d_index = 0; d_index < VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints; d_index++) {
+		for (int d_index = 0; d_index < VERIFY_2ND_NUM_DATAPOINTS; d_index++) {
 			sum_scores += this->o_target_val_histories[d_index];
 		}
-		double new_average_score = sum_scores / (VERIFY_2ND_MULTIPLIER * solution->curr_num_datapoints);
+		double new_average_score = sum_scores / VERIFY_2ND_NUM_DATAPOINTS;
 
 		this->o_target_val_histories.clear();
 
@@ -286,7 +288,8 @@ void PassThroughExperiment::experiment_verify_new_backprop(
 				curr_experiment->child_experiments.erase(curr_experiment->child_experiments.begin() + matching_index);
 
 				this->verify_experiments.back()->result = EXPERIMENT_RESULT_FAIL;
-				this->verify_experiments.back()->finalize();
+				Solution* empty = NULL;
+				this->verify_experiments.back()->finalize(empty);
 				delete this->verify_experiments.back();
 
 				double target_count = (double)MAX_EXPERIMENT_NUM_EXPERIMENTS
@@ -310,7 +313,8 @@ void PassThroughExperiment::experiment_verify_new_backprop(
 						parent->child_experiments.erase(parent->child_experiments.begin() + matching_index);
 
 						curr_experiment->result = EXPERIMENT_RESULT_FAIL;
-						curr_experiment->finalize();
+						Solution* empty = NULL;
+						curr_experiment->finalize(empty);
 						delete curr_experiment;
 
 						curr_experiment = parent;

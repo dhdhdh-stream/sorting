@@ -6,6 +6,7 @@
 
 class AbstractNode;
 class Problem;
+class Solution;
 
 const int EXPERIMENT_TYPE_BRANCH = 0;
 const int EXPERIMENT_TYPE_PASS_THROUGH = 1;
@@ -64,7 +65,7 @@ public:
 	virtual void backprop(double target_val,
 						  RunHelper& run_helper) = 0;
 
-	virtual void finalize() = 0;
+	virtual void finalize(Solution*& duplicate) = 0;
 	/**
 	 * - also set to NULL in parent
 	 */
