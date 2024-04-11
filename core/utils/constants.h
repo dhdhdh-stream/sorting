@@ -21,8 +21,13 @@ const double TEST_SAMPLES_PERCENTAGE = 0.3;
 
 const double WEIGHT_MIN_SCORE_IMPACT = 0.1;
 
+#if defined(MDEBUG) && MDEBUG
+const int VERIFY_1ST_NUM_DATAPOINTS = 2;
+const int VERIFY_2ND_NUM_DATAPOINTS = 2;
+#else
 const int VERIFY_1ST_NUM_DATAPOINTS = 4000;
 const int VERIFY_2ND_NUM_DATAPOINTS = 8000;
+#endif /* MDEBUG */
 
 const int NUM_VERIFY_SAMPLES = 10;
 

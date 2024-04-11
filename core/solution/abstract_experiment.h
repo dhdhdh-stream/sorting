@@ -65,7 +65,7 @@ public:
 	virtual void backprop(double target_val,
 						  RunHelper& run_helper) = 0;
 
-	virtual void finalize(Solution*& duplicate) = 0;
+	virtual void finalize(Solution* duplicate) = 0;
 	/**
 	 * - also set to NULL in parent
 	 */

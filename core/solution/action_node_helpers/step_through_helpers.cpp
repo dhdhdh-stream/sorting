@@ -5,7 +5,6 @@
 #include "globals.h"
 #include "problem.h"
 #include "scope.h"
-#include "solution.h"
 
 using namespace std;
 

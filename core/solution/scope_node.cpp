@@ -15,6 +15,19 @@ ScopeNode::ScopeNode() {
 	this->id = -1;
 }
 
+ScopeNode::ScopeNode(ScopeNode* original,
+					 Solution* parent_solution) {
+	this->type = NODE_TYPE_SCOPE;
+
+	this->scope = parent_solution->scopes[original->scope->id];
+	this->starting_node_id = original->starting_node_id;
+	this->exit_node_ids = original->exit_node_ids;
+
+	this->next_node_id = original->next_node_id;
+
+	this->catch_ids = original->catch_ids;
+}
+
 ScopeNode::~ScopeNode() {
 	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
 		delete this->experiments[e_index];
@@ -40,10 +53,11 @@ void ScopeNode::save(ofstream& output_file) {
 	}
 }
 
-void ScopeNode::load(ifstream& input_file) {
+void ScopeNode::load(ifstream& input_file,
+					 Solution* parent_solution) {
 	string scope_id_line;
 	getline(input_file, scope_id_line);
-	this->scope = solution->scopes[stoi(scope_id_line)];
+	this->scope = parent_solution->scopes[stoi(scope_id_line)];
 
 	string starting_node_id_line;
 	getline(input_file, starting_node_id_line);
@@ -76,7 +90,7 @@ void ScopeNode::load(ifstream& input_file) {
 	}
 }
 
-void ScopeNode::link() {
+void ScopeNode::link(Solution* parent_solution) {
 	this->starting_node = this->scope->nodes[this->starting_node_id];
 	for (set<int>::iterator it = this->exit_node_ids.begin();
 			it != this->exit_node_ids.end(); it++) {

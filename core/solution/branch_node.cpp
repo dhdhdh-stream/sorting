@@ -21,6 +21,51 @@ BranchNode::BranchNode() {
 	#endif /* MDEBUG */
 }
 
+BranchNode::BranchNode(BranchNode* original) {
+	this->type = NODE_TYPE_BRANCH;
+
+	this->scope_context_ids = original->scope_context_ids;
+	this->node_context_ids = original->node_context_ids;
+
+	this->input_max_depth = original->input_max_depth;
+
+	this->is_pass_through = original->is_pass_through;
+
+	this->original_average_score = original->original_average_score;
+	this->branch_average_score = original->branch_average_score;
+
+	this->input_scope_context_ids = original->input_scope_context_ids;
+	this->input_node_context_ids = original->input_node_context_ids;
+	this->input_obs_indexes = original->input_obs_indexes;
+
+	this->linear_original_input_indexes = original->linear_original_input_indexes;
+	this->linear_original_weights = original->linear_original_weights;
+
+	this->linear_branch_input_indexes = original->linear_branch_input_indexes;
+	this->linear_branch_weights = original->linear_branch_weights;
+
+	this->original_network_input_indexes = original->original_network_input_indexes;
+	if (original->original_network == NULL) {
+		this->original_network = NULL;
+	} else {
+		this->original_network = new Network(original->original_network);
+	}
+
+	this->branch_network_input_indexes = original->branch_network_input_indexes;
+	if (original->branch_network == NULL) {
+		this->branch_network = NULL;
+	} else {
+		this->branch_network = new Network(original->branch_network);
+	}
+
+	this->original_next_node_id = original->original_next_node_id;
+	this->branch_next_node_id = original->branch_next_node_id;
+
+	#if defined(MDEBUG) && MDEBUG
+	this->verify_key = NULL;
+	#endif /* MDEBUG */
+}
+
 BranchNode::~BranchNode() {
 	if (this->original_network != NULL) {
 		delete this->original_network;
@@ -239,9 +284,9 @@ void BranchNode::load(ifstream& input_file) {
 	this->branch_next_node_id = stoi(branch_next_node_id_line);
 }
 
-void BranchNode::link() {
+void BranchNode::link(Solution* parent_solution) {
 	for (int c_index = 0; c_index < (int)this->scope_context_ids.size(); c_index++) {
-		Scope* scope = solution->scopes[this->scope_context_ids[c_index]];
+		Scope* scope = parent_solution->scopes[this->scope_context_ids[c_index]];
 		this->scope_context.push_back(scope);
 		this->node_context.push_back(scope->nodes[this->node_context_ids[c_index]]);
 	}
@@ -250,7 +295,7 @@ void BranchNode::link() {
 		vector<Scope*> c_scope_context;
 		vector<AbstractNode*> c_node_context;
 		for (int c_index = 0; c_index < (int)this->input_scope_context_ids[i_index].size(); c_index++) {
-			Scope* scope = solution->scopes[this->input_scope_context_ids[i_index][c_index]];
+			Scope* scope = parent_solution->scopes[this->input_scope_context_ids[i_index][c_index]];
 			c_scope_context.push_back(scope);
 			c_node_context.push_back(scope->nodes[this->input_node_context_ids[i_index][c_index]]);
 		}

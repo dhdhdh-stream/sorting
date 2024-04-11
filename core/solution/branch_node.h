@@ -67,6 +67,7 @@ public:
 	#endif /* MDEBUG */
 
 	BranchNode();
+	BranchNode(BranchNode* original);
 	~BranchNode();
 
 	void activate(AbstractNode*& curr_node,
@@ -107,7 +108,7 @@ public:
 
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file);
-	void link();
+	void link(Solution* parent_solution);
 
 	void save_for_display(std::ofstream& output_file);
 };

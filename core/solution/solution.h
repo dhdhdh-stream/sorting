@@ -55,6 +55,8 @@ public:
 	#endif /* MDEBUG */
 
 	Solution();
+	// TODO: need to link after as well
+	Solution(Solution* original);
 	~Solution();
 
 	void init();

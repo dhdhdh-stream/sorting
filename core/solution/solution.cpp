@@ -11,6 +11,34 @@ Solution::Solution() {
 	// do nothing
 }
 
+Solution::Solution(Solution* original) {
+	this->timestamp = original->timestamp;
+	this->curr_average_score = original->curr_average_score;
+
+	for (int s_index = 0; s_index < (int)original->scopes.size(); s_index++) {
+		Scope* scope = new Scope();
+		scope->id = s_index;
+		this->scopes.push_back(scope);
+	}
+	for (int s_index = 0; s_index < (int)original->scopes.size(); s_index++) {
+		this->scopes[s_index]->copy_from(original->scopes[s_index],
+										 this);
+	}
+	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
+		this->scopes[s_index]->link(this);
+	}
+
+	this->curr_scope_id = original->curr_scope_id;
+
+	this->throw_counter = original->throw_counter;
+
+	this->max_depth = original->max_depth;
+	this->depth_limit = original->depth_limit;
+
+	this->max_num_actions = original->max_num_actions;
+	this->num_actions_limit = original->num_actions_limit;
+}
+
 Solution::~Solution() {
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
 		delete this->scopes[s_index];
@@ -73,10 +101,11 @@ void Solution::load(string path,
 		this->scopes.push_back(scope);
 	}
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
-		this->scopes[s_index]->load(input_file);
+		this->scopes[s_index]->load(input_file,
+									this);
 	}
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
-		this->scopes[s_index]->link();
+		this->scopes[s_index]->link(this);
 	}
 
 	string curr_scope_id_line;

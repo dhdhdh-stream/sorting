@@ -14,6 +14,7 @@
 
 class Problem;
 class Scope;
+class Solution;
 
 class ScopeNodeHistory;
 class ScopeNode : public AbstractNode {
@@ -31,6 +32,8 @@ public:
 	std::map<int, AbstractNode*> catches;
 
 	ScopeNode();
+	ScopeNode(ScopeNode* original,
+			  Solution* parent_solution);
 	~ScopeNode();
 
 	void activate(AbstractNode*& curr_node,
@@ -87,8 +90,9 @@ public:
 						  ScopeNodeHistory* history);
 
 	void save(std::ofstream& output_file);
-	void load(std::ifstream& input_file);
-	void link();
+	void load(std::ifstream& input_file,
+			  Solution* parent_solution);
+	void link(Solution* parent_solution);
 	void save_for_display(std::ofstream& output_file);
 };
 

@@ -5,6 +5,8 @@
 
 #include "abstract_node.h"
 
+class Solution;
+
 class ExitNode : public AbstractNode {
 public:
 	/**
@@ -20,11 +22,14 @@ public:
 	int throw_id;
 
 	ExitNode();
+	ExitNode(ExitNode* original,
+			 Solution* parent_solution);
 	~ExitNode();
 
 	void save(std::ofstream& output_file);
-	void load(std::ifstream& input_file);
-	void link();
+	void load(std::ifstream& input_file,
+			  Solution* parent_solution);
+	void link(Solution* parent_solution);
 	void save_for_display(std::ofstream& output_file);
 };
 

@@ -164,7 +164,7 @@ void BranchExperiment::explore_measure_backprop(
 		bool select = false;
 		if (this->explore_type == EXPLORE_TYPE_BEST) {
 			#if defined(MDEBUG) && MDEBUG
-			if (true) {
+			if (!run_helper.exceeded_limit) {
 			#else
 			if (curr_surprise > this->best_surprise) {
 			#endif /* MDEBUG */

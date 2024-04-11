@@ -115,6 +115,8 @@ void BranchNode::verify_activate(AbstractNode*& curr_node,
 			}
 
 			if (this->verify_key == run_helper.verify_key) {
+				cout << "this->id: " << this->id << endl;
+
 				cout << "input_vals:" << endl;
 				for (int i_index = 0; i_index < (int)input_vals.size(); i_index++) {
 					cout << i_index << ": " << input_vals[i_index] << endl;

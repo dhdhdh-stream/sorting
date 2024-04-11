@@ -230,9 +230,9 @@ public:
 	void experiment_verify_backprop(double target_val,
 									RunHelper& run_helper);
 
-	void finalize(Solution*& duplicate);
-	void new_branch(Solution*& duplicate);
-	void new_pass_through(Solution*& duplicate);
+	void finalize(Solution* duplicate);
+	void new_branch(Solution* duplicate);
+	void new_pass_through(Solution* duplicate);
 };
 
 class BranchExperimentHistory : public AbstractExperimentHistory {

@@ -15,6 +15,7 @@ class AbstractNode;
 class AbstractNodeHistory;
 class AbstractExperimentHistory;
 class Problem;
+class Solution;
 
 #if defined(MDEBUG) && MDEBUG
 const int DEFAULT_NUM_IMPROVEMENTS = 10;
@@ -101,8 +102,12 @@ public:
 						  ScopeHistory* history);
 
 	void save(std::ofstream& output_file);
-	void load(std::ifstream& input_file);
-	void link();
+	void load(std::ifstream& input_file,
+			  Solution* parent_solution);
+	void link(Solution* parent_solution);
+
+	void copy_from(Scope* original,
+				   Solution* parent_solution);
 
 	void save_for_display(std::ofstream& output_file);
 };

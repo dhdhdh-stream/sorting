@@ -37,8 +37,8 @@ int main(int argc, char* argv[]) {
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
 
-	// problem_type = new Sorting();
-	problem_type = new Minesweeper();
+	problem_type = new Sorting();
+	// problem_type = new Minesweeper();
 
 	solution = new Solution();
 	solution->init();
@@ -53,8 +53,8 @@ int main(int argc, char* argv[]) {
 	double hit_percent = 0.5;
 
 	while (true) {
-		// Problem* problem = new Sorting();
-		Problem* problem = new Minesweeper();
+		Problem* problem = new Sorting();
+		// Problem* problem = new Minesweeper();
 
 		RunHelper run_helper;
 
@@ -198,8 +198,7 @@ int main(int argc, char* argv[]) {
 				/**
 				 * - run_helper.experiment_histories.size() == 1
 				 */
-				Solution* duplicate = new Solution();
-				duplicate->load("", "main");
+				Solution* duplicate = new Solution(solution);
 				run_helper.experiment_histories.back()->experiment->finalize(duplicate);
 				delete run_helper.experiment_histories.back()->experiment;
 

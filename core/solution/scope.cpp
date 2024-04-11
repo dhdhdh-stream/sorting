@@ -64,7 +64,8 @@ void Scope::save(ofstream& output_file) {
 	}
 }
 
-void Scope::load(ifstream& input_file) {
+void Scope::load(ifstream& input_file,
+				 Solution* parent_solution) {
 	string parent_id_line;
 	getline(input_file, parent_id_line);
 	this->parent_id = stoi(parent_id_line);
@@ -111,7 +112,8 @@ void Scope::load(ifstream& input_file) {
 			ScopeNode* scope_node = new ScopeNode();
 			scope_node->parent = this;
 			scope_node->id = id;
-			scope_node->load(input_file);
+			scope_node->load(input_file,
+							 parent_solution);
 			this->nodes[scope_node->id] = scope_node;
 		} else if (type == NODE_TYPE_BRANCH) {
 			BranchNode* branch_node = new BranchNode();
@@ -123,7 +125,8 @@ void Scope::load(ifstream& input_file) {
 			ExitNode* exit_node = new ExitNode();
 			exit_node->parent = this;
 			exit_node->id = id;
-			exit_node->load(input_file);
+			exit_node->load(input_file,
+							parent_solution);
 			this->nodes[exit_node->id] = exit_node;
 		}
 	}
@@ -153,13 +156,71 @@ void Scope::load(ifstream& input_file) {
 	}
 }
 
-void Scope::link() {
+void Scope::link(Solution* parent_solution) {
 	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
 			it != this->nodes.end(); it++) {
-		it->second->link();
+		it->second->link(parent_solution);
 	}
 
 	this->default_starting_node = this->nodes[this->default_starting_node_id];
+}
+
+void Scope::copy_from(Scope* original,
+					  Solution* parent_solution) {
+	this->parent_id = original->parent_id;
+	this->child_ids = original->child_ids;
+	this->layer = original->layer;
+	this->num_improvements = original->num_improvements;
+
+	this->node_counter = original->node_counter;
+
+	for (map<int, AbstractNode*>::iterator it = original->nodes.begin();
+			it != original->nodes.end(); it++) {
+		switch (it->second->type) {
+		case NODE_TYPE_ACTION:
+			{
+				ActionNode* original_action_node = (ActionNode*)it->second;
+				ActionNode* new_action_node = new ActionNode(original_action_node);
+				new_action_node->parent = this;
+				new_action_node->id = it->first;
+				this->nodes[it->first] = new_action_node;
+			}
+			break;
+		case NODE_TYPE_SCOPE:
+			{
+				ScopeNode* original_scope_node = (ScopeNode*)it->second;
+				ScopeNode* new_scope_node = new ScopeNode(original_scope_node,
+														  parent_solution);
+				new_scope_node->parent = this;
+				new_scope_node->id = it->first;
+				this->nodes[it->first] = new_scope_node;
+			}
+			break;
+		case NODE_TYPE_BRANCH:
+			{
+				BranchNode* original_branch_node = (BranchNode*)it->second;
+				BranchNode* new_branch_node = new BranchNode(original_branch_node);
+				new_branch_node->parent = this;
+				new_branch_node->id = it->first;
+				this->nodes[it->first] = new_branch_node;
+			}
+			break;
+		case NODE_TYPE_EXIT:
+			{
+				ExitNode* original_exit_node = (ExitNode*)it->second;
+				ExitNode* new_exit_node = new ExitNode(original_exit_node,
+													   parent_solution);
+				new_exit_node->parent = this;
+				new_exit_node->id = it->first;
+				this->nodes[it->first] = new_exit_node;
+			}
+			break;
+		}
+	}
+
+	this->default_starting_node_id = original->default_starting_node_id;
+
+	this->subscopes = original->subscopes;
 }
 
 void Scope::save_for_display(ofstream& output_file) {
