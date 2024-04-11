@@ -31,22 +31,12 @@ if INCLUDE_EC2:
 
 solution_file = open('saves/main.txt', 'r')
 curr_id = int(solution_file.readline())
+curr_average_score = float(solution_file.readline())
 solution_file.close()
 
 while True:
-	updated = False
-
-	solution_file = open('saves/main.txt', 'r')
-	main_id = int(solution_file.readline())
-	solution_file.close()
-
-	if main_id > curr_id:
-		print('main updated')
-
-		curr_id = main_id
-
-		updated = True
-	else:
+	start_time = time.time()
+	while True:
 		for worker in workers:
 			client = paramiko.SSHClient()
 			client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -56,31 +46,27 @@ while True:
 
 			client_sftp = client.open_sftp()
 
-			try:
-				worker_solution_file = client_sftp.file('workers/' + worker[0] + '/saves/' + worker[0] + '.txt', 'r')
-				worker_curr_id = int(worker_solution_file.readline())
-				worker_solution_file.close()
+			for filename in client_sftp.listdir('workers/' + worker[0] + '/saves/'):
+				if filename.startswith('possible'):
+					client_sftp.get('workers/' + worker[0] + '/saves/' + filename, 'saves/temp.txt')
+					client_sftp.remove('workers/' + worker[0] + '/saves/' + filename)
 
-				if worker_curr_id > curr_id:
-					print(worker[0] + ' updated')
+					possible_file = open('saves/temp.txt', 'r')
+					possible_id = int(possible_file.readline())
+					possible_average_score = float(possible_file.readline())
+					possible_file.close()
 
-					client_sftp.get('workers/' + worker[0] + '/saves/' + worker[0] + '.txt',
-									'saves/main.txt')
+					if possible_average_score > curr_average_score:
+						os.rename('saves/temp.txt', 'saves/main.txt')
 
-					curr_id = worker_curr_id
-
-					updated = True
-
-			except IOError:
-				pass
+						curr_average_score = possible_average_score
+					else:
+						os.remove('saves/temp.txt')
 
 			client_sftp.close()
 			client.close()
 
-			if updated:
-				break
-
-		if not updated and INCLUDE_EC2:
+		if INCLUDE_EC2:
 			for worker in ec2_workers:
 				client = paramiko.SSHClient()
 				client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -90,20 +76,22 @@ while True:
 
 				client_sftp = client.open_sftp()
 
-				try:
-					worker_solution_file = client_sftp.file('workers/' + worker[0] + '/saves/' + worker[0] + '.txt', 'r')
-					worker_curr_id = int(worker_solution_file.readline())
-					worker_solution_file.close()
+				for filename in client_sftp.listdir('workers/' + worker[0] + '/saves/'):
+					if filename.startswith('possible'):
+						client_sftp.get('workers/' + worker[0] + '/saves/' + filename, 'saves/temp.txt')
+						client_sftp.remove('workers/' + worker[0] + '/saves/' + filename)
 
-					if worker_curr_id > curr_id:
-						print('ec2 ' + worker[0] + ' updated')
+						possible_file = open('saves/temp.txt', 'r')
+						possible_id = int(possible_file.readline())
+						possible_average_score = float(possible_file.readline())
+						possible_file.close()
 
-						client_sftp.get('workers/' + worker[0] + '/saves/' + worker[0] + '.txt',
-										'saves/main.txt')
+						if possible_average_score > curr_average_score:
+							os.rename('saves/temp.txt', 'saves/main.txt')
 
-						curr_id = worker_curr_id
-
-						updated = True
+							curr_average_score = possible_average_score
+						else:
+							os.remove('saves/temp.txt')
 
 				except IOError:
 					pass
@@ -111,8 +99,11 @@ while True:
 				client_sftp.close()
 				client.close()
 
-				if updated:
-					break
+		time.sleep(20)
+
+		curr_time = time.time()
+		if curr_time - start_time > 300:
+			break
 
 	if updated:
 		print(datetime.datetime.now())
@@ -159,10 +150,5 @@ while True:
 
 			ec2_client_sftp.close()
 			ec2_client.close()
-
-		# extra sleep to give workers time to update to help avoid a race condition
-		time.sleep(20)
-
-	time.sleep(20)
 
 print('Done')

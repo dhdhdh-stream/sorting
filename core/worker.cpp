@@ -1,8 +1,3 @@
-/**
- * TODO:
- * - potentially assign each worker its own scope, and preserve experiments through success
- */
-
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -31,12 +26,11 @@ Problem* problem_type;
 Solution* solution;
 
 int main(int argc, char* argv[]) {
-	if (argc != 3) {
-		cout << "Usage: ./worker [path] [name]" << endl;
+	if (argc != 2) {
+		cout << "Usage: ./worker [path]" << endl;
 		exit(1);
 	}
 	string path = argv[1];
-	string name = argv[2];
 
 	/**
 	 * - worker directories need to have already been created
@@ -99,8 +93,6 @@ int main(int argc, char* argv[]) {
 			target_val = -1.0;
 		}
 
-		bool is_success = false;
-		Solution* duplicate = NULL;
 		if (run_helper.experiment_histories.size() > 0) {
 			for (int e_index = 0; e_index < (int)run_helper.experiments_seen_order.size(); e_index++) {
 				AbstractExperiment* experiment = run_helper.experiments_seen_order[e_index];
@@ -196,11 +188,59 @@ int main(int argc, char* argv[]) {
 				/**
 				 * - run_helper.experiment_histories.size() == 1
 				 */
-				is_success = true;
-				duplicate = new Solution();
-				duplicate->load("", "main");
+				Solution* duplicate = new Solution(solution);
 				run_helper.experiment_histories.back()->experiment->finalize(duplicate);
 				delete run_helper.experiment_histories.back()->experiment;
+
+				double sum_vals = 0.0;
+				for (int i_index = 0; i_index < 2000; i_index++) {
+					// Problem* problem = new Sorting();
+					Problem* problem = new Minesweeper();
+
+					RunHelper run_helper;
+
+					vector<ContextLayer> context;
+					context.push_back(ContextLayer());
+
+					context.back().scope = duplicate->scopes[duplicate->curr_scope_id];
+					context.back().node = NULL;
+
+					ScopeHistory* root_history = new ScopeHistory(duplicate->scopes[duplicate->curr_scope_id]);
+					context.back().scope_history = root_history;
+
+					// unused
+					int exit_depth = -1;
+					AbstractNode* exit_node = NULL;
+
+					duplicate->scopes[duplicate->curr_scope_id]->activate(
+						duplicate->scopes[duplicate->curr_scope_id]->default_starting_node,
+						problem,
+						context,
+						exit_depth,
+						exit_node,
+						run_helper,
+						root_history);
+
+					delete root_history;
+
+					double target_val;
+					if (!run_helper.exceeded_limit) {
+						target_val = problem->score_result();
+					} else {
+						target_val = -1.0;
+					}
+					sum_vals += target_val;
+
+					delete problem;
+				}
+
+				duplicate->increment();
+
+				duplicate->timestamp = (unsigned)time(NULL);
+				duplicate->curr_average_score = sum_vals/2000.0;
+				duplicate->save(path, "possible_" + duplicate->timestamp);
+
+				delete duplicate;
 			}
 		} else {
 			for (int e_index = 0; e_index < (int)run_helper.experiments_seen_order.size(); e_index++) {
@@ -213,8 +253,10 @@ int main(int argc, char* argv[]) {
 
 		delete problem;
 
-		if (is_success) {
-			solution->increment();
+		auto curr_time = chrono::high_resolution_clock::now();
+		auto time_diff = chrono::duration_cast<chrono::seconds>(curr_time - start_time);
+		if (time_diff.count() >= 20) {
+			cout << "alive" << endl;
 
 			ifstream solution_save_file;
 			solution_save_file.open("workers/saves/main.txt");
@@ -229,47 +271,10 @@ int main(int argc, char* argv[]) {
 				solution = new Solution();
 				solution->load("workers/", "main");
 
-				solution->save(path, name);
-
 				cout << "updated from main" << endl;
-			} else {
-				if (solution->max_depth < 50) {
-					solution->depth_limit = solution->max_depth + 10;
-				} else {
-					solution->depth_limit = (int)(1.2*(double)solution->max_depth);
-				}
-
-				solution->num_actions_limit = 20*solution->max_num_actions + 20;
-
-				solution->timestamp = (unsigned)time(NULL);
-				solution->save(path, name);
 			}
-		} else {
-			auto curr_time = chrono::high_resolution_clock::now();
-			auto time_diff = chrono::duration_cast<chrono::seconds>(curr_time - start_time);
-			if (time_diff.count() >= 10) {
-				cout << "alive" << endl;
 
-				ifstream solution_save_file;
-				solution_save_file.open("workers/saves/main.txt");
-				string timestamp_line;
-				getline(solution_save_file, timestamp_line);
-				int curr_timestamp = stoi(timestamp_line);
-				solution_save_file.close();
-
-				if (curr_timestamp > solution->timestamp) {
-					delete solution;
-
-					solution = new Solution();
-					solution->load("workers/", "main");
-
-					solution->save(path, name);
-
-					cout << "updated from main" << endl;
-				}
-
-				start_time = curr_time;
-			}
+			start_time = curr_time;
 		}
 	}
 
