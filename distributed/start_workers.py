@@ -71,7 +71,7 @@ for w_index in range(len(workers)):
 	channel = transport.open_session()
 	channels.append(channel)
 
-	command = './workers/worker ' + 'workers/' + workers[w_index][0] + '/ ' + workers[w_index][0] + ' 2>&1'
+	command = './workers/worker ' + 'workers/' + workers[w_index][0] + '/ 2>&1'
 	print(command)
 	channel.exec_command(command)
 

@@ -331,7 +331,7 @@ void BranchExperiment::train_new_backprop(
 				#else
 				double improvement = this->new_average_misguess - average_misguess;
 				double standard_deviation = min(this->new_misguess_standard_deviation, misguess_standard_deviation);
-				double t_score = improvement / (standard_deviation / sqrt(solution->curr_num_datapoints * TEST_SAMPLES_PERCENTAGE));
+				double t_score = improvement / (standard_deviation / sqrt(NUM_DATAPOINTS * TEST_SAMPLES_PERCENTAGE));
 
 				if (t_score > 1.645) {
 				#endif /* MDEBUG */

@@ -84,8 +84,7 @@ int main(int argc, char* argv[]) {
 				target_val,
 				run_helper);
 			if (experiment->result == EXPERIMENT_RESULT_FAIL) {
-				Solution* empty = NULL;
-				experiment->finalize(empty);
+				experiment->finalize(NULL);
 				delete experiment;
 				break;
 			} else if (experiment->result == EXPERIMENT_RESULT_SUCCESS) {

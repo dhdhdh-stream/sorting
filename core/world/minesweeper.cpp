@@ -358,7 +358,7 @@ double Minesweeper::score_result() {
 	score += 0.01*(curr_revealed - this->starting_revealed);
 
 	if (this->num_actions > 20) {
-		score -= 0.0005*(this->num_actions-20);
+		score -= 0.0001*(this->num_actions-20);
 	}
 
 	if (this->hit_mine) {

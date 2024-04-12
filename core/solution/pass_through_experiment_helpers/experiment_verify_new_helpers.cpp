@@ -128,8 +128,7 @@ void PassThroughExperiment::experiment_verify_new_backprop(
 				curr_experiment->child_experiments.erase(curr_experiment->child_experiments.begin() + matching_index);
 
 				this->verify_experiments.back()->result = EXPERIMENT_RESULT_FAIL;
-				Solution* empty = NULL;
-				this->verify_experiments.back()->finalize(empty);
+				this->verify_experiments.back()->finalize(NULL);
 				delete this->verify_experiments.back();
 
 				double target_count = (double)MAX_EXPERIMENT_NUM_EXPERIMENTS
@@ -153,8 +152,7 @@ void PassThroughExperiment::experiment_verify_new_backprop(
 						parent->child_experiments.erase(parent->child_experiments.begin() + matching_index);
 
 						curr_experiment->result = EXPERIMENT_RESULT_FAIL;
-						Solution* empty = NULL;
-						curr_experiment->finalize(empty);
+						curr_experiment->finalize(NULL);
 						delete curr_experiment;
 
 						curr_experiment = parent;
@@ -288,8 +286,7 @@ void PassThroughExperiment::experiment_verify_new_backprop(
 				curr_experiment->child_experiments.erase(curr_experiment->child_experiments.begin() + matching_index);
 
 				this->verify_experiments.back()->result = EXPERIMENT_RESULT_FAIL;
-				Solution* empty = NULL;
-				this->verify_experiments.back()->finalize(empty);
+				this->verify_experiments.back()->finalize(NULL);
 				delete this->verify_experiments.back();
 
 				double target_count = (double)MAX_EXPERIMENT_NUM_EXPERIMENTS
@@ -313,8 +310,7 @@ void PassThroughExperiment::experiment_verify_new_backprop(
 						parent->child_experiments.erase(parent->child_experiments.begin() + matching_index);
 
 						curr_experiment->result = EXPERIMENT_RESULT_FAIL;
-						Solution* empty = NULL;
-						curr_experiment->finalize(empty);
+						curr_experiment->finalize(NULL);
 						delete curr_experiment;
 
 						curr_experiment = parent;

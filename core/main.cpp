@@ -139,8 +139,7 @@ int main(int argc, char* argv[]) {
 				run_helper);
 			if (run_helper.experiment_histories.back()->experiment->result == EXPERIMENT_RESULT_FAIL) {
 				if (run_helper.experiment_histories.size() == 1) {
-					Solution* empty = NULL;
-					run_helper.experiment_histories.back()->experiment->finalize(empty);
+					run_helper.experiment_histories.back()->experiment->finalize(NULL);
 					delete run_helper.experiment_histories.back()->experiment;
 				} else {
 					AbstractExperiment* curr_experiment = run_helper.experiment_histories.back()->experiment->parent_experiment;
@@ -156,8 +155,7 @@ int main(int argc, char* argv[]) {
 					curr_experiment->child_experiments.erase(curr_experiment->child_experiments.begin() + matching_index);
 
 					run_helper.experiment_histories.back()->experiment->result = EXPERIMENT_RESULT_FAIL;
-					Solution* empty = NULL;
-					run_helper.experiment_histories.back()->experiment->finalize(empty);
+					run_helper.experiment_histories.back()->experiment->finalize(NULL);
 					delete run_helper.experiment_histories.back()->experiment;
 
 					double target_count = (double)MAX_EXPERIMENT_NUM_EXPERIMENTS
@@ -183,8 +181,7 @@ int main(int argc, char* argv[]) {
 							}
 
 							curr_experiment->result = EXPERIMENT_RESULT_FAIL;
-							Solution* empty = NULL;
-							curr_experiment->finalize(empty);
+							curr_experiment->finalize(NULL);
 							delete curr_experiment;
 
 							curr_experiment = parent;

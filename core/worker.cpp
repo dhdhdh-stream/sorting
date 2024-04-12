@@ -129,8 +129,7 @@ int main(int argc, char* argv[]) {
 				run_helper);
 			if (run_helper.experiment_histories.back()->experiment->result == EXPERIMENT_RESULT_FAIL) {
 				if (run_helper.experiment_histories.size() == 1) {
-					Solution* empty = NULL;
-					run_helper.experiment_histories.back()->experiment->finalize(empty);
+					run_helper.experiment_histories.back()->experiment->finalize(NULL);
 					delete run_helper.experiment_histories.back()->experiment;
 				} else {
 					AbstractExperiment* curr_experiment = run_helper.experiment_histories.back()->experiment->parent_experiment;
@@ -146,8 +145,7 @@ int main(int argc, char* argv[]) {
 					curr_experiment->child_experiments.erase(curr_experiment->child_experiments.begin() + matching_index);
 
 					run_helper.experiment_histories.back()->experiment->result = EXPERIMENT_RESULT_FAIL;
-					Solution* empty = NULL;
-					run_helper.experiment_histories.back()->experiment->finalize(empty);
+					run_helper.experiment_histories.back()->experiment->finalize(NULL);
 					delete run_helper.experiment_histories.back()->experiment;
 
 					double target_count = (double)MAX_EXPERIMENT_NUM_EXPERIMENTS
@@ -173,8 +171,7 @@ int main(int argc, char* argv[]) {
 							}
 
 							curr_experiment->result = EXPERIMENT_RESULT_FAIL;
-							Solution* empty = NULL;
-							curr_experiment->finalize(empty);
+							curr_experiment->finalize(NULL);
 							delete curr_experiment;
 
 							curr_experiment = parent;
@@ -193,7 +190,7 @@ int main(int argc, char* argv[]) {
 				delete run_helper.experiment_histories.back()->experiment;
 
 				double sum_vals = 0.0;
-				for (int i_index = 0; i_index < 2000; i_index++) {
+				for (int i_index = 0; i_index < 4000; i_index++) {
 					// Problem* problem = new Sorting();
 					Problem* problem = new Minesweeper();
 
@@ -234,11 +231,13 @@ int main(int argc, char* argv[]) {
 					delete problem;
 				}
 
-				duplicate->increment();
+				double possible_average_score = sum_vals/4000.0;
+				cout << "possible_average_score: " << possible_average_score << endl;
 
+				duplicate->increment();
 				duplicate->timestamp = (unsigned)time(NULL);
-				duplicate->curr_average_score = sum_vals/2000.0;
-				duplicate->save(path, "possible_" + duplicate->timestamp);
+				duplicate->curr_average_score = possible_average_score;
+				duplicate->save(path, "possible_" + to_string(duplicate->timestamp));
 
 				delete duplicate;
 			}
