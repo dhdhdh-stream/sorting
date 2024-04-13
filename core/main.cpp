@@ -2,6 +2,8 @@
 // - human performs simple full run, so no decision making/variations
 //   - copy sequences, and try using them in different places
 
+// TODO: instead of exiting scope, exit to new end node which can be extended upon
+
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -258,7 +260,7 @@ int main(int argc, char* argv[]) {
 
 				solution->increment();
 
-				solution->timestamp = (unsigned)time(NULL);
+				solution->timestamp++;
 				solution->save("", "main");
 
 				ofstream display_file;

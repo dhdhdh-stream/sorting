@@ -21,7 +21,6 @@ class Solution;
 const int DEFAULT_NUM_IMPROVEMENTS = 10;
 const int MAX_NUM_CHILDREN = 2;
 #else
-// const int DEFAULT_NUM_IMPROVEMENTS = 20;
 const int DEFAULT_NUM_IMPROVEMENTS = 1000;
 const int MAX_NUM_CHILDREN = 5;
 #endif /* MDEBUG */

@@ -235,9 +235,9 @@ int main(int argc, char* argv[]) {
 				cout << "possible_average_score: " << possible_average_score << endl;
 
 				duplicate->increment();
-				duplicate->timestamp = (unsigned)time(NULL);
+				duplicate->timestamp++;
 				duplicate->curr_average_score = possible_average_score;
-				duplicate->save(path, "possible_" + to_string(duplicate->timestamp));
+				duplicate->save(path, "possible_" + to_string((unsigned)time(NULL)));
 
 				delete duplicate;
 			}

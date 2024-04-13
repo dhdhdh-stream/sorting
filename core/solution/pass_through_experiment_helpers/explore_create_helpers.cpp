@@ -47,7 +47,8 @@ void PassThroughExperiment::explore_create_activate(
 		 * - set this->exit_throw_id while still have full context
 		 */
 		uniform_int_distribution<int> throw_distribution(0, 3);
-		if (throw_distribution(generator) == 0) {
+		// if (throw_distribution(generator) == 0) {
+		if (false) {
 			uniform_int_distribution<int> reuse_existing_throw_distribution(0, 1);
 			if (reuse_existing_throw_distribution(generator) == 0) {
 				/**

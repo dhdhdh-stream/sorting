@@ -46,7 +46,7 @@ Solution::~Solution() {
 }
 
 void Solution::init() {
-	this->timestamp = (unsigned)time(NULL);
+	this->timestamp = 0;
 	this->curr_average_score = -1.0;
 
 	Scope* starting_scope = new Scope();

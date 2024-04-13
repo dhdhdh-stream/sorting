@@ -30,6 +30,9 @@ if INCLUDE_EC2:
 	ec2_workers_file.close()
 
 while True:
+	save_file = open('saves/main.txt', 'r')
+	curr_timestamp = int(save_file.readline())
+	save_file.close()
 	curr_average_score = -1.0
 
 	start_time = time.time()
@@ -51,11 +54,12 @@ while True:
 					client_sftp.remove('workers/' + worker[0] + '/saves/' + filename)
 
 					possible_file = open('saves/temp.txt', 'r')
-					possible_id = int(possible_file.readline())
+					possible_timestamp = int(possible_file.readline())
 					possible_average_score = float(possible_file.readline())
 					possible_file.close()
 
-					if possible_average_score > curr_average_score:
+					if possible_timestamp > curr_timestamp \
+							and possible_average_score > curr_average_score:
 						os.rename('saves/temp.txt', 'saves/main.txt')
 
 						print('updated')
@@ -85,11 +89,12 @@ while True:
 						client_sftp.remove('workers/' + worker[0] + '/saves/' + filename)
 
 						possible_file = open('saves/temp.txt', 'r')
-						possible_id = int(possible_file.readline())
+						possible_timestamp = int(possible_file.readline())
 						possible_average_score = float(possible_file.readline())
 						possible_file.close()
 
-						if possible_average_score > curr_average_score:
+						if possible_timestamp > curr_timestamp \
+								and possible_average_score > curr_average_score:
 							os.rename('saves/temp.txt', 'saves/main.txt')
 
 							print('updated')
