@@ -40,6 +40,8 @@ public:
 
 	int default_starting_node_id;
 	AbstractNode* default_starting_node;
+	int current_ending_node_id;
+	AbstractNode* current_ending_node;
 
 	std::set<std::pair<int, std::set<int>>> subscopes;
 
@@ -60,7 +62,6 @@ public:
 								  int& exit_depth,
 								  AbstractNode*& exit_node,
 								  int& random_curr_depth,
-								  int& random_throw_id,
 								  bool& random_exceeded_limit,
 								  std::vector<AbstractNode*>& possible_nodes);
 	void inner_random_existing_activate(AbstractNode* starting_node,
@@ -69,7 +70,6 @@ public:
 										int& exit_depth,
 										AbstractNode*& exit_node,
 										int& random_curr_depth,
-										int& random_throw_id,
 										bool& random_exceeded_limit);
 
 	void step_through_activate(AbstractNode* starting_node,

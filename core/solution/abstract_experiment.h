@@ -31,7 +31,6 @@ public:
 	std::vector<Scope*> scope_context;
 	std::vector<AbstractNode*> node_context;
 	bool is_branch;
-	int throw_id;
 
 	AbstractExperiment* parent_experiment;
 	AbstractExperiment* root_experiment;

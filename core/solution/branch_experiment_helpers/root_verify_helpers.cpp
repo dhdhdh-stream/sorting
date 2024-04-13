@@ -19,10 +19,6 @@ void BranchExperiment::root_verify_activate(
 		AbstractNode*& exit_node,
 		RunHelper& run_helper) {
 	if (this->is_pass_through) {
-		if (this->throw_id != -1) {
-			run_helper.throw_id = -1;
-		}
-
 		if (this->best_step_types.size() == 0) {
 			if (this->exit_node != NULL) {
 				curr_node = this->exit_node;
@@ -120,10 +116,6 @@ void BranchExperiment::root_verify_activate(
 		#endif /* MDEBUG */
 
 		if (decision_is_branch) {
-			if (this->throw_id != -1) {
-				run_helper.throw_id = -1;
-			}
-
 			if (this->best_step_types.size() == 0) {
 				if (this->exit_node != NULL) {
 					curr_node = this->exit_node;

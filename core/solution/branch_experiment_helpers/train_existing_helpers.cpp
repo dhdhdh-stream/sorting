@@ -427,8 +427,7 @@ void BranchExperiment::train_existing_backprop(
 
 			int exit_node_id;
 			AbstractNode* exit_node;
-			if (this->best_exit_depth > 0
-					|| this->best_exit_throw_id != -1) {
+			if (this->best_exit_depth > 0) {
 				ExitNode* new_exit_node = new ExitNode();
 				new_exit_node->parent = this->scope_context.back();
 				new_exit_node->id = this->scope_context.back()->node_counter;
@@ -436,18 +435,8 @@ void BranchExperiment::train_existing_backprop(
 
 				new_exit_node->exit_depth = this->best_exit_depth;
 				new_exit_node->next_node_parent = this->scope_context[this->scope_context.size()-1 - this->best_exit_depth];
-				if (this->best_exit_next_node == NULL) {
-					new_exit_node->next_node_id = -1;
-				} else {
-					new_exit_node->next_node_id = this->best_exit_next_node->id;
-				}
+				new_exit_node->next_node_id = this->best_exit_next_node->id;
 				new_exit_node->next_node = this->best_exit_next_node;
-				if (this->best_exit_throw_id == TEMP_THROW_ID) {
-					new_exit_node->throw_id = solution->throw_counter;
-					solution->throw_counter++;
-				} else {
-					new_exit_node->throw_id = this->best_exit_throw_id;
-				}
 
 				this->exit_node = new_exit_node;
 
@@ -455,11 +444,24 @@ void BranchExperiment::train_existing_backprop(
 				exit_node = new_exit_node;
 			} else {
 				if (this->best_exit_next_node == NULL) {
-					exit_node_id = -1;
+					ActionNode* new_ending_node = new ActionNode();
+					new_ending_node->parent = this->scope_context.back();
+					new_ending_node->id = this->scope_context.back()->node_counter;
+					this->scope_context.back()->node_counter++;
+
+					new_ending_node->action = Action(ACTION_NOOP);
+
+					new_ending_node->next_node_id = -1;
+					new_ending_node->next_node = NULL;
+
+					this->ending_node = new_ending_node;
+
+					exit_node_id = new_ending_node->id;
+					exit_node = new_ending_node;
 				} else {
 					exit_node_id = this->best_exit_next_node->id;
+					exit_node = this->best_exit_next_node;
 				}
-				exit_node = this->best_exit_next_node;
 			}
 
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
@@ -484,12 +486,6 @@ void BranchExperiment::train_existing_backprop(
 				} else {
 					this->best_scopes[s_index]->next_node_id = next_node_id;
 					this->best_scopes[s_index]->next_node = next_node;
-
-					for (set<int>::iterator it = this->best_catch_throw_ids[s_index].begin();
-							it != this->best_catch_throw_ids[s_index].end(); it++) {
-						this->best_scopes[s_index]->catch_ids[*it] = next_node_id;
-						this->best_scopes[s_index]->catches[*it] = next_node;
-					}
 				}
 			}
 

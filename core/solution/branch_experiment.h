@@ -80,21 +80,18 @@ public:
 	std::vector<int> curr_step_types;
 	std::vector<ActionNode*> curr_actions;
 	std::vector<ScopeNode*> curr_scopes;
-	std::vector<std::set<int>> curr_catch_throw_ids;
 	int curr_exit_depth;
 	AbstractNode* curr_exit_next_node;
-	int curr_exit_throw_id;
 
 	double best_surprise;
 	std::vector<int> best_step_types;
 	std::vector<ActionNode*> best_actions;
 	std::vector<ScopeNode*> best_scopes;
-	std::vector<std::set<int>> best_catch_throw_ids;
 	int best_exit_depth;
 	AbstractNode* best_exit_next_node;
-	int best_exit_throw_id;
 
 	ExitNode* exit_node;
+	ActionNode* ending_node;
 
 	double new_average_score;
 
@@ -129,7 +126,6 @@ public:
 	BranchExperiment(std::vector<Scope*> scope_context,
 					 std::vector<AbstractNode*> node_context,
 					 bool is_branch,
-					 int throw_id,
 					 AbstractExperiment* parent_experiment,
 					 bool skip_explore);
 	~BranchExperiment();

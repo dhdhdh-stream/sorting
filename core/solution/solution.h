@@ -21,8 +21,6 @@ const int NUM_DATAPOINTS = 10;
 const int NUM_DATAPOINTS = 2000;
 #endif /* MDEBUG */
 
-const int TEMP_THROW_ID = -2;
-
 class Solution {
 public:
 	int timestamp;

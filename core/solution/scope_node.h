@@ -28,9 +28,6 @@ public:
 	int next_node_id;
 	AbstractNode* next_node;
 
-	std::map<int, int> catch_ids;
-	std::map<int, AbstractNode*> catches;
-
 	ScopeNode();
 	ScopeNode(ScopeNode* original,
 			  Solution* parent_solution);
@@ -50,7 +47,6 @@ public:
 								  int& inner_exit_depth,
 								  AbstractNode*& inner_exit_node,
 								  int& random_curr_depth,
-								  int& random_throw_id,
 								  bool& random_exceeded_limit,
 								  std::vector<AbstractNode*>& possible_nodes);
 	void inner_random_existing_activate(AbstractNode*& curr_node,
@@ -59,7 +55,6 @@ public:
 										int& inner_exit_depth,
 										AbstractNode*& inner_exit_node,
 										int& random_curr_depth,
-										int& random_throw_id,
 										bool& random_exceeded_limit);
 
 	void step_through_activate(AbstractNode*& curr_node,
@@ -101,7 +96,6 @@ public:
 	ScopeHistory* scope_history;
 
 	bool normal_exit;
-	int throw_id;
 
 	ScopeNodeHistory(ScopeNode* node);
 	ScopeNodeHistory(ScopeNodeHistory* original);

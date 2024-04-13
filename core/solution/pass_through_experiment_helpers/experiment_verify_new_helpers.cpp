@@ -17,10 +17,6 @@ using namespace std;
 void PassThroughExperiment::experiment_verify_new_activate(
 		AbstractNode*& curr_node,
 		RunHelper& run_helper) {
-	if (this->throw_id != -1) {
-		run_helper.throw_id = -1;
-	}
-
 	if (this->best_step_types.size() == 0) {
 		if (this->exit_node != NULL) {
 			curr_node = this->exit_node;
@@ -195,7 +191,6 @@ void PassThroughExperiment::experiment_verify_new_backprop(
 				cout << c_index << ": " << this->node_context[c_index]->id << endl;
 			}
 			cout << "this->is_branch: " << this->is_branch << endl;
-			cout << "this->throw_id: " << this->throw_id << endl;
 			cout << "new explore path:";
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
@@ -212,7 +207,6 @@ void PassThroughExperiment::experiment_verify_new_backprop(
 			} else {
 				cout << "this->best_exit_next_node->id: " << this->best_exit_next_node->id << endl;
 			}
-			cout << "this->best_exit_throw_id: " << this->best_exit_throw_id << endl;
 
 			cout << "this->existing_average_score: " << this->existing_average_score << endl;
 			cout << "new_average_score: " << new_average_score << endl;

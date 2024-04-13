@@ -131,10 +131,6 @@ void BranchExperiment::capture_verify_activate(AbstractNode*& curr_node,
 	cout << "decision_is_branch: " << decision_is_branch << endl;
 
 	if (decision_is_branch) {
-		if (this->throw_id != -1) {
-			run_helper.throw_id = -1;
-		}
-
 		if (this->best_step_types.size() == 0) {
 			if (this->exit_node != NULL) {
 				curr_node = this->exit_node;

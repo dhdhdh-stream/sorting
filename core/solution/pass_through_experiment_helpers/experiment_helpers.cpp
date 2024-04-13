@@ -49,10 +49,6 @@ void PassThroughExperiment::experiment_activate(AbstractNode*& curr_node,
 		}
 	}
 
-	if (this->throw_id != -1) {
-		run_helper.throw_id = -1;
-	}
-
 	if (this->best_step_types.size() == 0) {
 		if (this->exit_node != NULL) {
 			curr_node = this->exit_node;
@@ -74,7 +70,6 @@ void pass_through_inner_create_experiment_helper(
 		vector<vector<Scope*>>& possible_scope_contexts,
 		vector<vector<AbstractNode*>>& possible_node_contexts,
 		vector<bool>& possible_is_branch,
-		vector<int>& possible_throw_id,
 		ScopeHistory* scope_history) {
 	scope_context.push_back(scope_history->scope);
 	node_context.push_back(NULL);
@@ -84,16 +79,14 @@ void pass_through_inner_create_experiment_helper(
 		if (node_history->node->type == NODE_TYPE_ACTION) {
 			ActionNodeHistory* action_node_history = (ActionNodeHistory*)node_history;
 			ActionNode* action_node = (ActionNode*)action_node_history->node;
-			if (h_index == 0 || action_node->action.move != ACTION_NOOP) {
-				node_context.back() = action_node;
 
-				possible_scope_contexts.push_back(scope_context);
-				possible_node_contexts.push_back(node_context);
-				possible_is_branch.push_back(false);
-				possible_throw_id.push_back(-1);
+			node_context.back() = action_node;
 
-				node_context.back() = NULL;
-			}
+			possible_scope_contexts.push_back(scope_context);
+			possible_node_contexts.push_back(node_context);
+			possible_is_branch.push_back(false);
+
+			node_context.back() = NULL;
 		} else if (node_history->node->type == NODE_TYPE_SCOPE) {
 			ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)node_history;
 			ScopeNode* scope_node = (ScopeNode*)scope_node_history->node;
@@ -108,16 +101,13 @@ void pass_through_inner_create_experiment_helper(
 					possible_scope_contexts,
 					possible_node_contexts,
 					possible_is_branch,
-					possible_throw_id,
 					scope_node_history->scope_history);
 			}
 
-			if (scope_node_history->normal_exit
-					|| scope_node_history->throw_id != -1) {
+			if (scope_node_history->normal_exit) {
 				possible_scope_contexts.push_back(scope_context);
 				possible_node_contexts.push_back(node_context);
 				possible_is_branch.push_back(false);
-				possible_throw_id.push_back(scope_node_history->throw_id);
 			}
 
 			node_context.back() = NULL;
@@ -129,7 +119,6 @@ void pass_through_inner_create_experiment_helper(
 			possible_scope_contexts.push_back(scope_context);
 			possible_node_contexts.push_back(node_context);
 			possible_is_branch.push_back(branch_node_history->is_branch);
-			possible_throw_id.push_back(-1);
 
 			node_context.back() = NULL;
 		}
@@ -145,7 +134,6 @@ void pass_through_create_experiment_helper(vector<int>& experiment_index,
 										   vector<vector<Scope*>>& possible_scope_contexts,
 										   vector<vector<AbstractNode*>>& possible_node_contexts,
 										   vector<bool>& possible_is_branch,
-										   vector<int>& possible_throw_id,
 										   ScopeHistory* scope_history) {
 	scope_context.push_back(scope_history->scope);
 	node_context.push_back(NULL);
@@ -162,15 +150,12 @@ void pass_through_create_experiment_helper(vector<int>& experiment_index,
 											  possible_scope_contexts,
 											  possible_node_contexts,
 											  possible_is_branch,
-											  possible_throw_id,
 											  scope_node_history->scope_history);
 
-		if (scope_node_history->normal_exit
-				|| scope_node_history->throw_id != -1) {
+		if (scope_node_history->normal_exit) {
 			possible_scope_contexts.push_back(scope_context);
 			possible_node_contexts.push_back(node_context);
 			possible_is_branch.push_back(false);
-			possible_throw_id.push_back(scope_node_history->throw_id);
 		}
 
 		node_context.back() = NULL;
@@ -187,7 +172,6 @@ void pass_through_create_experiment_helper(vector<int>& experiment_index,
 				possible_scope_contexts.push_back(scope_context);
 				possible_node_contexts.push_back(node_context);
 				possible_is_branch.push_back(false);
-				possible_throw_id.push_back(-1);
 
 				node_context.back() = NULL;
 			}
@@ -205,16 +189,13 @@ void pass_through_create_experiment_helper(vector<int>& experiment_index,
 					possible_scope_contexts,
 					possible_node_contexts,
 					possible_is_branch,
-					possible_throw_id,
 					scope_node_history->scope_history);
 			}
 
-			if (scope_node_history->normal_exit
-					|| scope_node_history->throw_id != -1) {
+			if (scope_node_history->normal_exit) {
 				possible_scope_contexts.push_back(scope_context);
 				possible_node_contexts.push_back(node_context);
 				possible_is_branch.push_back(false);
-				possible_throw_id.push_back(scope_node_history->throw_id);
 			}
 
 			node_context.back() = NULL;
@@ -226,7 +207,6 @@ void pass_through_create_experiment_helper(vector<int>& experiment_index,
 			possible_scope_contexts.push_back(scope_context);
 			possible_node_contexts.push_back(node_context);
 			possible_is_branch.push_back(branch_node_history->is_branch);
-			possible_throw_id.push_back(-1);
 
 			node_context.back() = NULL;
 		}
@@ -247,7 +227,6 @@ void PassThroughExperiment::experiment_backprop(
 		vector<vector<Scope*>> possible_scope_contexts;
 		vector<vector<AbstractNode*>> possible_node_contexts;
 		vector<bool> possible_is_branch;
-		vector<int> possible_throw_id;
 
 		vector<Scope*> scope_context;
 		vector<AbstractNode*> node_context;
@@ -257,7 +236,6 @@ void PassThroughExperiment::experiment_backprop(
 											  possible_scope_contexts,
 											  possible_node_contexts,
 											  possible_is_branch,
-											  possible_throw_id,
 											  history->scope_history);
 
 		if (possible_scope_contexts.size() > 0) {
@@ -270,7 +248,6 @@ void PassThroughExperiment::experiment_backprop(
 					possible_scope_contexts[rand_index],
 					possible_node_contexts[rand_index],
 					possible_is_branch[rand_index],
-					possible_throw_id[rand_index],
 					this,
 					false);
 
@@ -283,7 +260,6 @@ void PassThroughExperiment::experiment_backprop(
 					possible_scope_contexts[rand_index],
 					possible_node_contexts[rand_index],
 					possible_is_branch[rand_index],
-					possible_throw_id[rand_index],
 					this);
 
 				/**

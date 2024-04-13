@@ -10,10 +10,6 @@ using namespace std;
 void PassThroughExperiment::root_verify_activate(
 		AbstractNode*& curr_node,
 		RunHelper& run_helper) {
-	if (this->throw_id != -1) {
-		run_helper.throw_id = -1;
-	}
-
 	if (this->best_step_types.size() == 0) {
 		if (this->exit_node != NULL) {
 			curr_node = this->exit_node;

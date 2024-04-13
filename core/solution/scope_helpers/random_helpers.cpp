@@ -17,7 +17,6 @@ void node_random_existing_activate_helper(AbstractNode*& curr_node,
 										  int& exit_depth,
 										  AbstractNode*& exit_node,
 										  int& random_curr_depth,
-										  int& random_throw_id,
 										  bool& random_exceeded_limit,
 										  vector<AbstractNode*>& possible_nodes) {
 	switch (curr_node->type) {
@@ -40,7 +39,6 @@ void node_random_existing_activate_helper(AbstractNode*& curr_node,
 										   exit_depth,
 										   exit_node,
 										   random_curr_depth,
-										   random_throw_id,
 										   random_exceeded_limit,
 										   possible_nodes);
 		}
@@ -62,12 +60,8 @@ void node_random_existing_activate_helper(AbstractNode*& curr_node,
 
 			possible_nodes.push_back(node);
 
-			if (node->throw_id != -1) {
-				random_throw_id = node->throw_id;
-			} else {
-				exit_depth = node->exit_depth-1;
-				exit_node = node->next_node;
-			}
+			exit_depth = node->exit_depth-1;
+			exit_node = node->next_node;
 		}
 
 		break;
@@ -80,7 +74,6 @@ void Scope::random_existing_activate(AbstractNode* starting_node,
 									 int& exit_depth,
 									 AbstractNode*& exit_node,
 									 int& random_curr_depth,
-									 int& random_throw_id,
 									 bool& random_exceeded_limit,
 									 vector<AbstractNode*>& possible_nodes) {
 	if (random_curr_depth > solution->depth_limit) {
@@ -92,7 +85,6 @@ void Scope::random_existing_activate(AbstractNode* starting_node,
 	AbstractNode* curr_node = starting_node;
 	while (true) {
 		if (random_exceeded_limit
-				|| random_throw_id != -1
 				|| exit_depth != -1
 				|| curr_node == NULL) {
 			break;
@@ -111,7 +103,6 @@ void Scope::random_existing_activate(AbstractNode* starting_node,
 											 exit_depth,
 											 exit_node,
 											 random_curr_depth,
-											 random_throw_id,
 											 random_exceeded_limit,
 											 possible_nodes);
 	}
@@ -125,7 +116,6 @@ void node_inner_random_existing_activate_helper(AbstractNode*& curr_node,
 												int& exit_depth,
 												AbstractNode*& exit_node,
 												int& random_curr_depth,
-												int& random_throw_id,
 												bool& random_exceeded_limit) {
 	switch (curr_node->type) {
 	case NODE_TYPE_ACTION:
@@ -144,7 +134,6 @@ void node_inner_random_existing_activate_helper(AbstractNode*& curr_node,
 												 exit_depth,
 												 exit_node,
 												 random_curr_depth,
-												 random_throw_id,
 												 random_exceeded_limit);
 		}
 
@@ -161,12 +150,8 @@ void node_inner_random_existing_activate_helper(AbstractNode*& curr_node,
 	case NODE_TYPE_EXIT:
 		{
 			ExitNode* node = (ExitNode*)curr_node;
-			if (node->throw_id != -1) {
-				random_throw_id = node->throw_id;
-			} else {
-				exit_depth = node->exit_depth-1;
-				exit_node = node->next_node;
-			}
+			exit_depth = node->exit_depth-1;
+			exit_node = node->next_node;
 		}
 
 		break;
@@ -179,7 +164,6 @@ void Scope::inner_random_existing_activate(AbstractNode* starting_node,
 										   int& exit_depth,
 										   AbstractNode*& exit_node,
 										   int& random_curr_depth,
-										   int& random_throw_id,
 										   bool& random_exceeded_limit) {
 	if (random_curr_depth > solution->depth_limit) {
 		random_exceeded_limit = true;
@@ -190,7 +174,6 @@ void Scope::inner_random_existing_activate(AbstractNode* starting_node,
 	AbstractNode* curr_node = starting_node;
 	while (true) {
 		if (random_exceeded_limit
-				|| random_throw_id != -1
 				|| exit_depth != -1
 				|| curr_node == NULL) {
 			break;
@@ -209,7 +192,6 @@ void Scope::inner_random_existing_activate(AbstractNode* starting_node,
 												   exit_depth,
 												   exit_node,
 												   random_curr_depth,
-												   random_throw_id,
 												   random_exceeded_limit);
 	}
 

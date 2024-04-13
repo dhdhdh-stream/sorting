@@ -8,8 +8,6 @@ RunHelper::RunHelper() {
 	this->curr_depth = 0;
 	this->max_depth = 0;
 
-	this->throw_id = -1;
-
 	this->num_actions = 0;
 
 	this->exceeded_limit = false;

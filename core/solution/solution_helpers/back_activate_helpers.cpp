@@ -26,17 +26,16 @@ void gather_possible_helper(vector<Scope*>& scope_context,
 			{
 				ActionNodeHistory* action_node_history = (ActionNodeHistory*)node_history;
 				ActionNode* action_node = (ActionNode*)action_node_history->node;
-				if (h_index == 0 || action_node->action.move != ACTION_NOOP) {
-					node_context.back() = action_node;
 
-					for (int o_index = 0; o_index < problem_type->num_obs(); o_index++) {
-						possible_scope_contexts.push_back(scope_context);
-						possible_node_contexts.push_back(node_context);
-						possible_obs_indexes.push_back(o_index);
-					}
+				node_context.back() = action_node;
 
-					node_context.back() = NULL;
+				for (int o_index = 0; o_index < problem_type->num_obs(); o_index++) {
+					possible_scope_contexts.push_back(scope_context);
+					possible_node_contexts.push_back(node_context);
+					possible_obs_indexes.push_back(o_index);
 				}
+
+				node_context.back() = NULL;
 			}
 
 			break;

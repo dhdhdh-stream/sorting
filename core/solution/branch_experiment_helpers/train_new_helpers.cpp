@@ -67,10 +67,6 @@ void BranchExperiment::train_new_target_activate(
 	 * - don't need to add history for new branch_node
 	 */
 
-	if (this->throw_id != -1) {
-		run_helper.throw_id = -1;
-	}
-
 	if (this->best_step_types.size() == 0) {
 		if (this->exit_node != NULL) {
 			curr_node = this->exit_node;

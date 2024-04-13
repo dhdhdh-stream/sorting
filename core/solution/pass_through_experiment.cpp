@@ -15,14 +15,12 @@ using namespace std;
 PassThroughExperiment::PassThroughExperiment(vector<Scope*> scope_context,
 											 vector<AbstractNode*> node_context,
 											 bool is_branch,
-											 int throw_id,
 											 AbstractExperiment* parent_experiment) {
 	this->type = EXPERIMENT_TYPE_PASS_THROUGH;
 
 	this->scope_context = scope_context;
 	this->node_context = node_context;
 	this->is_branch = is_branch;
-	this->throw_id = throw_id;
 
 	this->parent_experiment = parent_experiment;
 	if (this->parent_experiment != NULL) {
@@ -54,6 +52,7 @@ PassThroughExperiment::PassThroughExperiment(vector<Scope*> scope_context,
 	this->best_score = numeric_limits<double>::lowest();
 
 	this->exit_node = NULL;
+	this->ending_node = NULL;
 
 	this->result = EXPERIMENT_RESULT_NA;
 }
@@ -91,6 +90,9 @@ PassThroughExperiment::~PassThroughExperiment() {
 
 	if (this->exit_node != NULL) {
 		delete this->exit_node;
+	}
+	if (this->ending_node != NULL) {
+		delete this->ending_node;
 	}
 }
 

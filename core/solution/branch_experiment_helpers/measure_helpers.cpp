@@ -108,10 +108,6 @@ void BranchExperiment::measure_activate(AbstractNode*& curr_node,
 	if (decision_is_branch) {
 		this->branch_count++;
 
-		if (this->throw_id != -1) {
-			run_helper.throw_id = -1;
-		}
-
 		if (this->best_step_types.size() == 0) {
 			if (this->exit_node != NULL) {
 				curr_node = this->exit_node;
@@ -179,11 +175,14 @@ void BranchExperiment::measure_backprop(double target_val,
 				this->best_step_types.clear();
 				this->best_actions.clear();
 				this->best_scopes.clear();
-				this->best_catch_throw_ids.clear();
 
 				if (this->exit_node != NULL) {
 					delete this->exit_node;
 					this->exit_node = NULL;
+				}
+				if (this->ending_node != NULL) {
+					delete this->ending_node;
+					this->ending_node = NULL;
 				}
 
 				this->new_linear_weights.clear();

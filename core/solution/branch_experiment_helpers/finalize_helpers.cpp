@@ -69,6 +69,13 @@ void BranchExperiment::new_branch(Solution* duplicate) {
 				this->exit_node->next_node->id];
 		}
 	}
+	if (this->ending_node != NULL) {
+		this->ending_node->parent = duplicate_local_scope;
+		duplicate_local_scope->nodes[this->ending_node->id] = this->ending_node;
+
+		duplicate_local_scope->current_ending_node_id = this->ending_node->id;
+		duplicate_local_scope->current_ending_node = this->ending_node;
+	}
 
 	BranchNode* new_branch_node = new BranchNode();
 	new_branch_node->parent = duplicate_local_scope;
@@ -272,36 +279,8 @@ void BranchExperiment::new_branch(Solution* duplicate) {
 	} else if (duplicate_explore_node->type == NODE_TYPE_SCOPE) {
 		ScopeNode* scope_node = (ScopeNode*)duplicate_explore_node;
 
-		if (this->throw_id == -1) {
-			new_branch_node->original_next_node_id = scope_node->next_node_id;
-			new_branch_node->original_next_node = scope_node->next_node;
-		} else {
-			map<int, AbstractNode*>::iterator it = scope_node->catches.find(this->throw_id);
-			if (it == scope_node->catches.end()) {
-				ExitNode* new_throw_node = new ExitNode();
-				new_throw_node->parent = duplicate_local_scope;
-				new_throw_node->id = duplicate_local_scope->node_counter;
-				duplicate_local_scope->node_counter++;
-
-				duplicate_local_scope->nodes[new_throw_node->id] = new_throw_node;
-
-				new_throw_node->exit_depth = -1;
-				new_throw_node->next_node_parent = NULL;
-				new_throw_node->next_node_id = -1;
-				new_throw_node->next_node = NULL;
-				new_throw_node->throw_id = this->throw_id;
-
-				new_branch_node->original_next_node_id = new_throw_node->id;
-				new_branch_node->original_next_node = new_throw_node;
-			} else {
-				if (it->second == NULL) {
-					new_branch_node->original_next_node_id = -1;
-				} else {
-					new_branch_node->original_next_node_id = it->second->id;
-				}
-				new_branch_node->original_next_node = it->second;
-			}
-		}
+		new_branch_node->original_next_node_id = scope_node->next_node_id;
+		new_branch_node->original_next_node = scope_node->next_node;
 	} else {
 		BranchNode* branch_node = (BranchNode*)duplicate_explore_node;
 
@@ -319,13 +298,8 @@ void BranchExperiment::new_branch(Solution* duplicate) {
 			new_branch_node->branch_next_node_id = this->exit_node->id;
 			new_branch_node->branch_next_node = this->exit_node;
 		} else {
-			if (this->best_exit_next_node == NULL) {
-				new_branch_node->branch_next_node_id = -1;
-				new_branch_node->branch_next_node = NULL;
-			} else {
-				new_branch_node->branch_next_node_id = this->best_exit_next_node->id;
-				new_branch_node->branch_next_node = duplicate_local_scope->nodes[this->best_exit_next_node->id];
-			}
+			new_branch_node->branch_next_node_id = this->best_exit_next_node->id;
+			new_branch_node->branch_next_node = duplicate_local_scope->nodes[this->best_exit_next_node->id];
 		}
 	} else {
 		if (this->best_step_types[0] == STEP_TYPE_ACTION) {
@@ -345,13 +319,8 @@ void BranchExperiment::new_branch(Solution* duplicate) {
 	} else if (duplicate_explore_node->type == NODE_TYPE_SCOPE) {
 		ScopeNode* scope_node = (ScopeNode*)duplicate_explore_node;
 
-		if (this->throw_id == -1) {
-			scope_node->next_node_id = new_branch_node->id;
-			scope_node->next_node = new_branch_node;
-		} else {
-			scope_node->catch_ids[this->throw_id] = new_branch_node->id;
-			scope_node->catches[this->throw_id] = new_branch_node;
-		}
+		scope_node->next_node_id = new_branch_node->id;
+		scope_node->next_node = new_branch_node;
 	} else {
 		BranchNode* branch_node = (BranchNode*)duplicate_explore_node;
 
@@ -400,13 +369,6 @@ void BranchExperiment::new_branch(Solution* duplicate) {
 				this->best_scopes.back()->next_node = duplicate_local_scope
 					->nodes[this->best_scopes.back()->next_node->id];
 			}
-
-			for (map<int, AbstractNode*>::iterator it = this->best_scopes.back()->catches.begin();
-					it != this->best_scopes.back()->catches.end(); it++) {
-				if (it->second != NULL) {
-					it->second = duplicate_local_scope->nodes[it->second->id];
-				}
-			}
 		}
 	}
 
@@ -440,6 +402,13 @@ void BranchExperiment::new_pass_through(Solution* duplicate) {
 			this->exit_node->next_node = this->exit_node->next_node_parent->nodes[
 				this->exit_node->next_node->id];
 		}
+	}
+	if (this->ending_node != NULL) {
+		this->ending_node->parent = duplicate_local_scope;
+		duplicate_local_scope->nodes[this->ending_node->id] = this->ending_node;
+
+		duplicate_local_scope->current_ending_node_id = this->ending_node->id;
+		duplicate_local_scope->current_ending_node = this->ending_node;
 	}
 
 	/**
@@ -487,36 +456,8 @@ void BranchExperiment::new_pass_through(Solution* duplicate) {
 	} else if (duplicate_explore_node->type == NODE_TYPE_SCOPE) {
 		ScopeNode* scope_node = (ScopeNode*)duplicate_explore_node;
 
-		if (this->throw_id == -1) {
-			new_branch_node->original_next_node_id = scope_node->next_node_id;
-			new_branch_node->original_next_node = scope_node->next_node;
-		} else {
-			map<int, AbstractNode*>::iterator it = scope_node->catches.find(this->throw_id);
-			if (it == scope_node->catches.end()) {
-				ExitNode* new_throw_node = new ExitNode();
-				new_throw_node->parent = duplicate_local_scope;
-				new_throw_node->id = duplicate_local_scope->node_counter;
-				duplicate_local_scope->node_counter++;
-
-				duplicate_local_scope->nodes[new_throw_node->id] = new_throw_node;
-
-				new_throw_node->exit_depth = -1;
-				new_throw_node->next_node_parent = NULL;
-				new_throw_node->next_node_id = -1;
-				new_throw_node->next_node = NULL;
-				new_throw_node->throw_id = this->throw_id;
-
-				new_branch_node->original_next_node_id = new_throw_node->id;
-				new_branch_node->original_next_node = new_throw_node;
-			} else {
-				if (it->second == NULL) {
-					new_branch_node->original_next_node_id = -1;
-				} else {
-					new_branch_node->original_next_node_id = it->second->id;
-				}
-				new_branch_node->original_next_node = it->second;
-			}
-		}
+		new_branch_node->original_next_node_id = scope_node->next_node_id;
+		new_branch_node->original_next_node = scope_node->next_node;
 	} else {
 		BranchNode* branch_node = (BranchNode*)duplicate_explore_node;
 
@@ -534,13 +475,8 @@ void BranchExperiment::new_pass_through(Solution* duplicate) {
 			new_branch_node->branch_next_node_id = this->exit_node->id;
 			new_branch_node->branch_next_node = this->exit_node;
 		} else {
-			if (this->best_exit_next_node == NULL) {
-				new_branch_node->branch_next_node_id = -1;
-				new_branch_node->branch_next_node = NULL;
-			} else {
-				new_branch_node->branch_next_node_id = this->best_exit_next_node->id;
-				new_branch_node->branch_next_node = duplicate_local_scope->nodes[this->best_exit_next_node->id];
-			}
+			new_branch_node->branch_next_node_id = this->best_exit_next_node->id;
+			new_branch_node->branch_next_node = duplicate_local_scope->nodes[this->best_exit_next_node->id];
 		}
 	} else {
 		if (this->best_step_types[0] == STEP_TYPE_ACTION) {
@@ -560,13 +496,8 @@ void BranchExperiment::new_pass_through(Solution* duplicate) {
 	} else if (duplicate_explore_node->type == NODE_TYPE_SCOPE) {
 		ScopeNode* scope_node = (ScopeNode*)duplicate_explore_node;
 
-		if (this->throw_id == -1) {
-			scope_node->next_node_id = new_branch_node->id;
-			scope_node->next_node = new_branch_node;
-		} else {
-			scope_node->catch_ids[this->throw_id] = new_branch_node->id;
-			scope_node->catches[this->throw_id] = new_branch_node;
-		}
+		scope_node->next_node_id = new_branch_node->id;
+		scope_node->next_node = new_branch_node;
 	} else {
 		BranchNode* branch_node = (BranchNode*)duplicate_explore_node;
 
@@ -614,13 +545,6 @@ void BranchExperiment::new_pass_through(Solution* duplicate) {
 			if (this->best_scopes.back()->next_node != NULL) {
 				this->best_scopes.back()->next_node = duplicate_local_scope
 					->nodes[this->best_scopes.back()->next_node->id];
-			}
-
-			for (map<int, AbstractNode*>::iterator it = this->best_scopes.back()->catches.begin();
-					it != this->best_scopes.back()->catches.end(); it++) {
-				if (it->second != NULL) {
-					it->second = duplicate_local_scope->nodes[it->second->id];
-				}
 			}
 		}
 	}

@@ -18,7 +18,6 @@ using namespace std;
 BranchExperiment::BranchExperiment(vector<Scope*> scope_context,
 								   vector<AbstractNode*> node_context,
 								   bool is_branch,
-								   int throw_id,
 								   AbstractExperiment* parent_experiment,
 								   bool skip_explore) {
 	this->type = EXPERIMENT_TYPE_BRANCH;
@@ -26,7 +25,6 @@ BranchExperiment::BranchExperiment(vector<Scope*> scope_context,
 	this->scope_context = scope_context;
 	this->node_context = node_context;
 	this->is_branch = is_branch;
-	this->throw_id = throw_id;
 
 	this->parent_experiment = parent_experiment;
 	if (this->parent_experiment != NULL) {

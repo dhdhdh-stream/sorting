@@ -19,8 +19,6 @@ public:
 	int next_node_id;
 	AbstractNode* next_node;
 
-	int throw_id;
-
 	ExitNode();
 	ExitNode(ExitNode* original,
 			 Solution* parent_solution);

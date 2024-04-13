@@ -36,35 +36,12 @@ void ScopeNode::step_through_activate(AbstractNode*& curr_node,
 									   run_helper,
 									   scope_history);
 
-	history->throw_id = run_helper.throw_id;
-
 	context.pop_back();
 
 	context.back().node = NULL;
 
 	if (run_helper.exceeded_limit) {
 		// do nothing
-	} else if (run_helper.throw_id != -1) {
-		string input_gate;
-		cin >> input_gate;
-
-		cout << "context:" << endl;
-		context.back().node = this;
-		for (int c_index = 0; c_index < (int)context.size(); c_index++) {
-			cout << c_index << ": " << context[c_index].scope->id << " " << context[c_index].node->id << endl;
-		}
-		context.back().node = NULL;
-		problem->print();
-		cout << "ScopeNode" << endl;
-		cout << "throw: " << run_helper.throw_id << endl;
-
-		map<int, AbstractNode*>::iterator it = this->catches.find(run_helper.throw_id);
-		if (it != this->catches.end()) {
-			run_helper.throw_id = -1;
-
-			curr_node = it->second;
-		}
-		// else do nothing
 	} else if (inner_exit_depth == -1) {
 		string input_gate;
 		cin >> input_gate;

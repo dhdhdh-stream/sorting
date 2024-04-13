@@ -23,10 +23,6 @@ void BranchExperiment::verify_activate(AbstractNode*& curr_node,
 									   AbstractNode*& exit_node,
 									   RunHelper& run_helper) {
 	if (this->is_pass_through) {
-		if (this->throw_id != -1) {
-			run_helper.throw_id = -1;
-		}
-
 		if (this->best_step_types.size() == 0) {
 			if (this->exit_node != NULL) {
 				curr_node = this->exit_node;
@@ -124,10 +120,6 @@ void BranchExperiment::verify_activate(AbstractNode*& curr_node,
 		#endif /* MDEBUG */
 
 		if (decision_is_branch) {
-			if (this->throw_id != -1) {
-				run_helper.throw_id = -1;
-			}
-
 			if (this->best_step_types.size() == 0) {
 				if (this->exit_node != NULL) {
 					curr_node = this->exit_node;
@@ -203,11 +195,14 @@ void BranchExperiment::verify_backprop(double target_val,
 				this->best_step_types.clear();
 				this->best_actions.clear();
 				this->best_scopes.clear();
-				this->best_catch_throw_ids.clear();
 
 				if (this->exit_node != NULL) {
 					delete this->exit_node;
 					this->exit_node = NULL;
+				}
+				if (this->ending_node != NULL) {
+					delete this->ending_node;
+					this->ending_node = NULL;
 				}
 
 				this->new_linear_weights.clear();
@@ -271,7 +266,6 @@ void BranchExperiment::verify_backprop(double target_val,
 				cout << c_index << ": " << this->node_context[c_index]->id << endl;
 			}
 			cout << "this->is_branch: " << this->is_branch << endl;
-			cout << "this->throw_id: " << this->throw_id << endl;
 			cout << "new explore path:";
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
@@ -288,7 +282,6 @@ void BranchExperiment::verify_backprop(double target_val,
 			} else {
 				cout << "this->best_exit_next_node->id: " << this->best_exit_next_node->id << endl;
 			}
-			cout << "this->best_exit_throw_id: " << this->best_exit_throw_id << endl;
 
 			cout << "this->combined_score: " << this->combined_score << endl;
 			cout << "this->verify_existing_average_score: " << this->verify_existing_average_score << endl;
@@ -385,11 +378,14 @@ void BranchExperiment::verify_backprop(double target_val,
 				this->best_step_types.clear();
 				this->best_actions.clear();
 				this->best_scopes.clear();
-				this->best_catch_throw_ids.clear();
 
 				if (this->exit_node != NULL) {
 					delete this->exit_node;
 					this->exit_node = NULL;
+				}
+				if (this->ending_node != NULL) {
+					delete this->ending_node;
+					this->ending_node = NULL;
 				}
 
 				this->new_linear_weights.clear();

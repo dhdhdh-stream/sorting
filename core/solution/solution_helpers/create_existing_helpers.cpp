@@ -47,7 +47,6 @@ ScopeNode* create_existing(Scope* parent_scope,
 		AbstractNode* exit_node = NULL;
 
 		int random_curr_depth = run_helper.curr_depth;
-		int random_throw_id = -1;
 		bool random_exceeded_limit = false;
 
 		parent_scope->random_existing_activate(parent_scope->default_starting_node,
@@ -56,7 +55,6 @@ ScopeNode* create_existing(Scope* parent_scope,
 											   exit_depth,
 											   exit_node,
 											   random_curr_depth,
-											   random_throw_id,
 											   random_exceeded_limit,
 											   possible_nodes);
 
@@ -96,7 +94,6 @@ ScopeNode* create_existing(Scope* parent_scope,
 			AbstractNode* exit_node = NULL;
 
 			int random_curr_depth = run_helper.curr_depth;
-			int random_throw_id = -1;
 			bool random_exceeded_limit = false;
 
 			parent_scope->random_existing_activate(new_starting_node,
@@ -105,7 +102,6 @@ ScopeNode* create_existing(Scope* parent_scope,
 												   exit_depth,
 												   exit_node,
 												   random_curr_depth,
-												   random_throw_id,
 												   random_exceeded_limit,
 												   possible_nodes);
 

@@ -11,8 +11,6 @@ public:
 	int curr_depth;
 	int max_depth;
 
-	int throw_id;
-
 	int num_actions;
 
 	bool exceeded_limit;

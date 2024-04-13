@@ -13,7 +13,6 @@ void ScopeNode::random_existing_activate(AbstractNode*& curr_node,
 										 int& exit_depth,
 										 AbstractNode*& exit_node,
 										 int& random_curr_depth,
-										 int& random_throw_id,
 										 bool& random_exceeded_limit,
 										 vector<AbstractNode*>& possible_nodes) {
 	possible_nodes.push_back(this);
@@ -32,7 +31,6 @@ void ScopeNode::random_existing_activate(AbstractNode*& curr_node,
 												inner_exit_depth,
 												inner_exit_node,
 												random_curr_depth,
-												random_throw_id,
 												random_exceeded_limit);
 
 	scope_context.pop_back();
@@ -42,13 +40,6 @@ void ScopeNode::random_existing_activate(AbstractNode*& curr_node,
 
 	if (random_exceeded_limit) {
 		// do nothing
-	} else if (random_throw_id != -1) {
-		map<int, AbstractNode*>::iterator it = this->catches.find(random_throw_id);
-		if (it != this->catches.end()) {
-			random_throw_id = -1;
-			curr_node = it->second;
-		}
-		// else do nothing
 	} else if (inner_exit_depth == -1) {
 		curr_node = this->next_node;
 	} else if (inner_exit_depth == 0) {
@@ -65,7 +56,6 @@ void ScopeNode::inner_random_existing_activate(AbstractNode*& curr_node,
 											   int& exit_depth,
 											   AbstractNode*& exit_node,
 											   int& random_curr_depth,
-											   int& random_throw_id,
 											   bool& random_exceeded_limit) {
 	node_context.back() = this;
 
@@ -81,7 +71,6 @@ void ScopeNode::inner_random_existing_activate(AbstractNode*& curr_node,
 												inner_exit_depth,
 												inner_exit_node,
 												random_curr_depth,
-												random_throw_id,
 												random_exceeded_limit);
 
 	scope_context.pop_back();
@@ -91,13 +80,6 @@ void ScopeNode::inner_random_existing_activate(AbstractNode*& curr_node,
 
 	if (random_exceeded_limit) {
 		// do nothing
-	} else if (random_throw_id != -1) {
-		map<int, AbstractNode*>::iterator it = this->catches.find(random_throw_id);
-		if (it != this->catches.end()) {
-			random_throw_id = -1;
-			curr_node = it->second;
-		}
-		// else do nothing
 	} else if (inner_exit_depth == -1) {
 		curr_node = this->next_node;
 	} else if (inner_exit_depth == 0) {

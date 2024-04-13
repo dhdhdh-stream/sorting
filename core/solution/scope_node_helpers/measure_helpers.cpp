@@ -37,22 +37,12 @@ void ScopeNode::measure_activate(AbstractNode*& curr_node,
 								  metrics,
 								  scope_history);
 
-	history->throw_id = run_helper.throw_id;
-
 	context.pop_back();
 
 	context.back().node = NULL;
 
 	if (run_helper.exceeded_limit) {
 		// do nothing
-	} else if (run_helper.throw_id != -1) {
-		map<int, AbstractNode*>::iterator it = this->catches.find(run_helper.throw_id);
-		if (it != this->catches.end()) {
-			run_helper.throw_id = -1;
-
-			curr_node = it->second;
-		}
-		// else do nothing
 	} else if (inner_exit_depth == -1) {
 		curr_node = this->next_node;
 	} else if (inner_exit_depth == 0) {

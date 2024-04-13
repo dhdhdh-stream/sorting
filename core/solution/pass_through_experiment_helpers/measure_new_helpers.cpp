@@ -20,10 +20,6 @@ void PassThroughExperiment::measure_new_activate(
 		int& exit_depth,
 		AbstractNode*& exit_node,
 		RunHelper& run_helper) {
-	if (this->throw_id != -1) {
-		run_helper.throw_id = -1;
-	}
-
 	if (this->best_step_types.size() == 0) {
 		if (this->exit_node != NULL) {
 			curr_node = this->exit_node;

@@ -27,10 +27,6 @@ void PassThroughExperiment::explore_measure_activate(
 		int& exit_depth,
 		AbstractNode*& exit_node,
 		RunHelper& run_helper) {
-	if (this->throw_id != -1) {
-		run_helper.throw_id = -1;
-	}
-
 	for (int s_index = 0; s_index < (int)this->curr_step_types.size(); s_index++) {
 		if (this->curr_step_types[s_index] == STEP_TYPE_ACTION) {
 			ActionNodeHistory* action_node_history = new ActionNodeHistory(this->curr_actions[s_index]);
@@ -55,22 +51,13 @@ void PassThroughExperiment::explore_measure_activate(
 				scope_node_history);
 			delete scope_node_history;
 		}
-
-		if (run_helper.throw_id != -1) {
-			this->curr_catch_throw_ids[s_index].insert(run_helper.throw_id);
-			run_helper.throw_id = -1;
-		}
 	}
 
-	if (this->curr_exit_throw_id != -1) {
-		run_helper.throw_id = this->curr_exit_throw_id;
+	if (this->curr_exit_depth == 0) {
+		curr_node = this->curr_exit_next_node;
 	} else {
-		if (this->curr_exit_depth == 0) {
-			curr_node = this->curr_exit_next_node;
-		} else {
-			exit_depth = this->curr_exit_depth-1;
-			exit_node = this->curr_exit_next_node;
-		}
+		exit_depth = this->curr_exit_depth-1;
+		exit_node = this->curr_exit_next_node;
 	}
 }
 
@@ -102,16 +89,13 @@ void PassThroughExperiment::explore_measure_backprop(
 			this->best_step_types = this->curr_step_types;
 			this->best_actions = this->curr_actions;
 			this->best_scopes = this->curr_scopes;
-			this->best_catch_throw_ids = this->curr_catch_throw_ids;
 			this->best_exit_depth = this->curr_exit_depth;
 			this->best_exit_next_node = this->curr_exit_next_node;
-			this->best_exit_throw_id = this->curr_exit_throw_id;
 
 			this->curr_score = 0.0;
 			this->curr_step_types.clear();
 			this->curr_actions.clear();
 			this->curr_scopes.clear();
-			this->curr_catch_throw_ids.clear();
 		} else {
 			for (int s_index = 0; s_index < (int)this->curr_step_types.size(); s_index++) {
 				if (this->curr_step_types[s_index] == STEP_TYPE_ACTION) {
@@ -125,7 +109,6 @@ void PassThroughExperiment::explore_measure_backprop(
 			this->curr_step_types.clear();
 			this->curr_actions.clear();
 			this->curr_scopes.clear();
-			this->curr_catch_throw_ids.clear();
 		}
 
 		this->state_iter++;
@@ -145,7 +128,6 @@ void PassThroughExperiment::explore_measure_backprop(
 				// 	cout << c_index << ": " << this->node_context[c_index]->id << endl;
 				// }
 				// cout << "this->is_branch: " << this->is_branch << endl;
-				// cout << "this->throw_id: " << this->throw_id << endl;
 				// cout << "new explore path:";
 				// for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 				// 	if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
@@ -162,7 +144,6 @@ void PassThroughExperiment::explore_measure_backprop(
 				// } else {
 				// 	cout << "this->best_exit_next_node->id: " << this->best_exit_next_node->id << endl;
 				// }
-				// cout << "this->best_exit_throw_id: " << this->best_exit_throw_id << endl;
 
 				for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 					if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
@@ -178,8 +159,7 @@ void PassThroughExperiment::explore_measure_backprop(
 
 				int exit_node_id;
 				AbstractNode* exit_node;
-				if (this->best_exit_depth > 0
-						|| this->best_exit_throw_id != -1) {
+				if (this->best_exit_depth > 0) {
 					ExitNode* new_exit_node = new ExitNode();
 					new_exit_node->parent = this->scope_context.back();
 					new_exit_node->id = this->scope_context.back()->node_counter;
@@ -187,18 +167,8 @@ void PassThroughExperiment::explore_measure_backprop(
 
 					new_exit_node->exit_depth = this->best_exit_depth;
 					new_exit_node->next_node_parent = this->scope_context[this->scope_context.size()-1 - this->best_exit_depth];
-					if (this->best_exit_next_node == NULL) {
-						new_exit_node->next_node_id = -1;
-					} else {
-						new_exit_node->next_node_id = this->best_exit_next_node->id;
-					}
+					new_exit_node->next_node_id = this->best_exit_next_node->id;
 					new_exit_node->next_node = this->best_exit_next_node;
-					if (this->best_exit_throw_id == TEMP_THROW_ID) {
-						new_exit_node->throw_id = solution->throw_counter;
-						solution->throw_counter++;
-					} else {
-						new_exit_node->throw_id = this->best_exit_throw_id;
-					}
 
 					this->exit_node = new_exit_node;
 
@@ -206,11 +176,24 @@ void PassThroughExperiment::explore_measure_backprop(
 					exit_node = new_exit_node;
 				} else {
 					if (this->best_exit_next_node == NULL) {
-						exit_node_id = -1;
+						ActionNode* new_ending_node = new ActionNode();
+						new_ending_node->parent = this->scope_context.back();
+						new_ending_node->id = this->scope_context.back()->node_counter;
+						this->scope_context.back()->node_counter++;
+
+						new_ending_node->action = Action(ACTION_NOOP);
+
+						new_ending_node->next_node_id = -1;
+						new_ending_node->next_node = NULL;
+
+						this->ending_node = new_ending_node;
+
+						exit_node_id = new_ending_node->id;
+						exit_node = new_ending_node;
 					} else {
 						exit_node_id = this->best_exit_next_node->id;
+						exit_node = this->best_exit_next_node;
 					}
-					exit_node = this->best_exit_next_node;
 				}
 
 				for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
@@ -235,12 +218,6 @@ void PassThroughExperiment::explore_measure_backprop(
 					} else if (this->best_step_types[s_index] == STEP_TYPE_SCOPE) {
 						this->best_scopes[s_index]->next_node_id = next_node_id;
 						this->best_scopes[s_index]->next_node = next_node;
-
-						for (set<int>::iterator it = this->best_catch_throw_ids[s_index].begin();
-								it != this->best_catch_throw_ids[s_index].end(); it++) {
-							this->best_scopes[s_index]->catch_ids[*it] = next_node_id;
-							this->best_scopes[s_index]->catches[*it] = next_node;
-						}
 					}
 				}
 
