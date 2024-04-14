@@ -274,19 +274,13 @@ bool PassThroughExperiment::activate(AbstractNode*& curr_node,
 			case PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING:
 				measure_existing_activate(history);
 				break;
-			case PASS_THROUGH_EXPERIMENT_STATE_EXPLORE_CREATE:
-				explore_create_activate(curr_node,
-										context,
-										run_helper,
-										history);
-				break;
-			case PASS_THROUGH_EXPERIMENT_STATE_EXPLORE_MEASURE:
-				explore_measure_activate(curr_node,
-										 problem,
-										 context,
-										 exit_depth,
-										 exit_node,
-										 run_helper);
+			case PASS_THROUGH_EXPERIMENT_STATE_EXPLORE:
+				explore_activate(curr_node,
+								 problem,
+								 context,
+								 exit_depth,
+								 exit_node,
+								 run_helper);
 				break;
 			case PASS_THROUGH_EXPERIMENT_STATE_MEASURE_NEW:
 				measure_new_activate(curr_node,
@@ -343,12 +337,9 @@ void PassThroughExperiment::backprop(double target_val,
 		measure_existing_backprop(target_val,
 								  run_helper);
 		break;
-	case PASS_THROUGH_EXPERIMENT_STATE_EXPLORE_CREATE:
-		explore_create_backprop(run_helper);
-		break;
-	case PASS_THROUGH_EXPERIMENT_STATE_EXPLORE_MEASURE:
-		explore_measure_backprop(target_val,
-								 run_helper);
+	case PASS_THROUGH_EXPERIMENT_STATE_EXPLORE:
+		explore_backprop(target_val,
+						 run_helper);
 		break;
 	case PASS_THROUGH_EXPERIMENT_STATE_MEASURE_NEW:
 		measure_new_backprop(target_val,

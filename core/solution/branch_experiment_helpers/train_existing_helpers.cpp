@@ -510,7 +510,7 @@ void BranchExperiment::train_existing_backprop(
 
 			this->best_surprise = 0.0;
 
-			this->state = BRANCH_EXPERIMENT_STATE_EXPLORE_CREATE;
+			this->state = BRANCH_EXPERIMENT_STATE_EXPLORE;
 			this->state_iter = 0;
 			this->explore_iter = 0;
 		}

@@ -226,7 +226,7 @@ void BranchExperiment::verify_backprop(double target_val,
 
 				this->best_surprise = 0.0;
 
-				this->state = BRANCH_EXPERIMENT_STATE_EXPLORE_CREATE;
+				this->state = BRANCH_EXPERIMENT_STATE_EXPLORE;
 				this->state_iter = 0;
 			} else {
 				this->result = EXPERIMENT_RESULT_FAIL;
@@ -409,7 +409,7 @@ void BranchExperiment::verify_backprop(double target_val,
 
 				this->best_surprise = 0.0;
 
-				this->state = BRANCH_EXPERIMENT_STATE_EXPLORE_CREATE;
+				this->state = BRANCH_EXPERIMENT_STATE_EXPLORE;
 				this->state_iter = 0;
 			} else {
 				this->result = EXPERIMENT_RESULT_FAIL;

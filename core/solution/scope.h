@@ -69,6 +69,22 @@ public:
 										AbstractNode*& exit_node,
 										int& random_curr_depth,
 										bool& random_exceeded_limit);
+	void random_exit_activate(AbstractNode* starting_node,
+							  std::vector<Scope*>& scope_context,
+							  std::vector<AbstractNode*>& node_context,
+							  int& exit_depth,
+							  AbstractNode*& exit_node,
+							  int& random_curr_depth,
+							  bool& random_exceeded_limit,
+							  int curr_depth,
+							  std::vector<std::pair<int,AbstractNode*>>& possible_exits);
+	void inner_random_exit_activate(AbstractNode* starting_node,
+									std::vector<Scope*>& scope_context,
+									std::vector<AbstractNode*>& node_context,
+									int& exit_depth,
+									AbstractNode*& exit_node,
+									int& random_curr_depth,
+									bool& random_exceeded_limit);
 
 	void step_through_activate(AbstractNode* starting_node,
 							   Problem* problem,

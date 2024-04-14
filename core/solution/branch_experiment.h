@@ -19,24 +19,23 @@ class ScopeHistory;
 class ScopeNode;
 
 const int BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING = 0;
-const int BRANCH_EXPERIMENT_STATE_EXPLORE_CREATE = 1;
-const int BRANCH_EXPERIMENT_STATE_EXPLORE_MEASURE = 2;
-const int BRANCH_EXPERIMENT_STATE_TRAIN_NEW = 3;
+const int BRANCH_EXPERIMENT_STATE_EXPLORE = 1;
+const int BRANCH_EXPERIMENT_STATE_TRAIN_NEW = 2;
 /**
  * - don't worry about retraining with new decision making
  *   - more likely to cause thrasing than to actually be helpful
  *   - simply hope that things work out, and if not, will be caught by MEASURE
  */
-const int BRANCH_EXPERIMENT_STATE_MEASURE = 4;
-const int BRANCH_EXPERIMENT_STATE_VERIFY_1ST_EXISTING = 5;
-const int BRANCH_EXPERIMENT_STATE_VERIFY_1ST = 6;
-const int BRANCH_EXPERIMENT_STATE_VERIFY_2ND_EXISTING = 7;
-const int BRANCH_EXPERIMENT_STATE_VERIFY_2ND = 8;
+const int BRANCH_EXPERIMENT_STATE_MEASURE = 3;
+const int BRANCH_EXPERIMENT_STATE_VERIFY_1ST_EXISTING = 4;
+const int BRANCH_EXPERIMENT_STATE_VERIFY_1ST = 5;
+const int BRANCH_EXPERIMENT_STATE_VERIFY_2ND_EXISTING = 6;
+const int BRANCH_EXPERIMENT_STATE_VERIFY_2ND = 7;
 #if defined(MDEBUG) && MDEBUG
-const int BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY = 9;
+const int BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY = 8;
 #endif /* MDEBUG */
-const int BRANCH_EXPERIMENT_STATE_ROOT_VERIFY = 10;
-const int BRANCH_EXPERIMENT_STATE_EXPERIMENT = 11;
+const int BRANCH_EXPERIMENT_STATE_ROOT_VERIFY = 9;
+const int BRANCH_EXPERIMENT_STATE_EXPERIMENT = 10;
 
 /**
  * - select first that is significant improvement
@@ -145,21 +144,15 @@ public:
 	void train_existing_backprop(double target_val,
 								 RunHelper& run_helper);
 
-	void explore_create_activate(std::vector<ContextLayer>& context,
-								 RunHelper& run_helper,
-								 BranchExperimentHistory* history);
-	void explore_create_backprop(double target_val,
-								 RunHelper& run_helper);
-
-	void explore_measure_activate(AbstractNode*& curr_node,
-								  Problem* problem,
-								  std::vector<ContextLayer>& context,
-								  int& exit_depth,
-								  AbstractNode*& exit_node,
-								  RunHelper& run_helper,
-								  BranchExperimentHistory* history);
-	void explore_measure_backprop(double target_val,
-								  RunHelper& run_helper);
+	void explore_activate(AbstractNode*& curr_node,
+						  Problem* problem,
+						  std::vector<ContextLayer>& context,
+						  int& exit_depth,
+						  AbstractNode*& exit_node,
+						  RunHelper& run_helper,
+						  BranchExperimentHistory* history);
+	void explore_backprop(double target_val,
+						  RunHelper& run_helper);
 
 	void train_new_activate(AbstractNode*& curr_node,
 							std::vector<ContextLayer>& context,

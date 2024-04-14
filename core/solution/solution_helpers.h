@@ -21,9 +21,14 @@ AbstractExperiment* create_experiment(std::ifstream& input_file);
 
 ScopeNode* create_existing(Scope* parent_scope,
 						   RunHelper& run_helper);
+
 /**
- * - create one scope per run
+ * - don't use actual run as might involve nodes not always reachable
  */
+void gather_possible_exits(std::vector<std::pair<int,AbstractNode*>>& possible_exits,
+						   std::vector<Scope*>& experiment_scope_context,
+						   std::vector<AbstractNode*>& experiment_node_context,
+						   bool experiment_is_branch);
 
 void gather_possible_helper(std::vector<Scope*>& scope_context,
 							std::vector<AbstractNode*>& node_context,

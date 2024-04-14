@@ -18,18 +18,14 @@ class ScopeHistory;
 class ScopeNode;
 
 const int PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING = 0;
-const int PASS_THROUGH_EXPERIMENT_STATE_EXPLORE_CREATE = 1;
-const int PASS_THROUGH_EXPERIMENT_STATE_EXPLORE_MEASURE = 2;
-/**
- * - share this->state_iter between EXPLORE_CREATE and EXPLORE_MEASURE
- */
-const int PASS_THROUGH_EXPERIMENT_STATE_MEASURE_NEW = 3;
-const int PASS_THROUGH_EXPERIMENT_STATE_VERIFY_1ST_EXISTING = 4;
-const int PASS_THROUGH_EXPERIMENT_STATE_VERIFY_1ST_NEW = 5;
-const int PASS_THROUGH_EXPERIMENT_STATE_VERIFY_2ND_EXISTING = 6;
-const int PASS_THROUGH_EXPERIMENT_STATE_VERIFY_2ND_NEW = 7;
-const int PASS_THROUGH_EXPERIMENT_STATE_ROOT_VERIFY = 8;
-const int PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT = 9;
+const int PASS_THROUGH_EXPERIMENT_STATE_EXPLORE = 1;
+const int PASS_THROUGH_EXPERIMENT_STATE_MEASURE_NEW = 2;
+const int PASS_THROUGH_EXPERIMENT_STATE_VERIFY_1ST_EXISTING = 3;
+const int PASS_THROUGH_EXPERIMENT_STATE_VERIFY_1ST_NEW = 4;
+const int PASS_THROUGH_EXPERIMENT_STATE_VERIFY_2ND_EXISTING = 5;
+const int PASS_THROUGH_EXPERIMENT_STATE_VERIFY_2ND_NEW = 6;
+const int PASS_THROUGH_EXPERIMENT_STATE_ROOT_VERIFY = 7;
+const int PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT = 8;
 
 #if defined(MDEBUG) && MDEBUG
 const int PASS_THROUGH_EXPERIMENT_EXPLORE_ITERS = 2;
@@ -82,20 +78,14 @@ public:
 	void measure_existing_backprop(double target_val,
 								   RunHelper& run_helper);
 
-	void explore_create_activate(AbstractNode*& curr_node,
-								 std::vector<ContextLayer>& context,
-								 RunHelper& run_helper,
-								 PassThroughExperimentHistory* history);
-	void explore_create_backprop(RunHelper& run_helper);
-
-	void explore_measure_activate(AbstractNode*& curr_node,
-								  Problem* problem,
-								  std::vector<ContextLayer>& context,
-								  int& exit_depth,
-								  AbstractNode*& exit_node,
-								  RunHelper& run_helper);
-	void explore_measure_backprop(double target_val,
-								  RunHelper& run_helper);
+	void explore_activate(AbstractNode*& curr_node,
+						  Problem* problem,
+						  std::vector<ContextLayer>& context,
+						  int& exit_depth,
+						  AbstractNode*& exit_node,
+						  RunHelper& run_helper);
+	void explore_backprop(double target_val,
+						  RunHelper& run_helper);
 
 	void measure_new_activate(AbstractNode*& curr_node,
 							  Problem* problem,
