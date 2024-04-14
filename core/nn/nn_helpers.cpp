@@ -41,6 +41,9 @@ void train_network(vector<vector<vector<double>>>& inputs,
 		network->backprop(error);
 	}
 
+	/**
+	 * TODO: normalize and let TRAIN_ITERS_BACK adjust
+	 */
 	vector<double> input_weights(num_new_inputs);
 	for (int i_index = 0; i_index < num_new_inputs; i_index++) {
 		double sum_vals = 0.0;

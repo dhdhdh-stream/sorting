@@ -72,9 +72,6 @@ void BranchExperiment::new_branch(Solution* duplicate) {
 	if (this->ending_node != NULL) {
 		this->ending_node->parent = duplicate_local_scope;
 		duplicate_local_scope->nodes[this->ending_node->id] = this->ending_node;
-
-		duplicate_local_scope->current_ending_node_id = this->ending_node->id;
-		duplicate_local_scope->current_ending_node = this->ending_node;
 	}
 
 	BranchNode* new_branch_node = new BranchNode();
@@ -274,8 +271,32 @@ void BranchExperiment::new_branch(Solution* duplicate) {
 	if (duplicate_explore_node->type == NODE_TYPE_ACTION) {
 		ActionNode* action_node = (ActionNode*)duplicate_explore_node;
 
-		new_branch_node->original_next_node_id = action_node->next_node_id;
-		new_branch_node->original_next_node = action_node->next_node;
+		if (action_node->next_node == NULL) {
+			/**
+			 * - ending node
+			 */
+			if (this->ending_node != NULL) {
+				new_branch_node->original_next_node_id = this->ending_node->id;
+				new_branch_node->original_next_node = this->ending_node;
+			} else {
+				ActionNode* new_ending_node = new ActionNode();
+				new_ending_node->parent = duplicate_local_scope;
+				new_ending_node->id = duplicate_local_scope->node_counter;
+				duplicate_local_scope->node_counter++;
+				duplicate_local_scope->nodes[new_ending_node->id] = new_ending_node;
+
+				new_ending_node->action = Action(ACTION_NOOP);
+
+				new_ending_node->next_node_id = -1;
+				new_ending_node->next_node = NULL;
+
+				new_branch_node->original_next_node_id = new_ending_node->id;
+				new_branch_node->original_next_node = new_ending_node;
+			}
+		} else {
+			new_branch_node->original_next_node_id = action_node->next_node_id;
+			new_branch_node->original_next_node = action_node->next_node;
+		}
 	} else if (duplicate_explore_node->type == NODE_TYPE_SCOPE) {
 		ScopeNode* scope_node = (ScopeNode*)duplicate_explore_node;
 
@@ -375,6 +396,7 @@ void BranchExperiment::new_branch(Solution* duplicate) {
 	this->best_actions.clear();
 	this->best_scopes.clear();
 	this->exit_node = NULL;
+	this->ending_node = NULL;
 
 	#if defined(MDEBUG) && MDEBUG
 	duplicate->verify_key = this;
@@ -406,9 +428,6 @@ void BranchExperiment::new_pass_through(Solution* duplicate) {
 	if (this->ending_node != NULL) {
 		this->ending_node->parent = duplicate_local_scope;
 		duplicate_local_scope->nodes[this->ending_node->id] = this->ending_node;
-
-		duplicate_local_scope->current_ending_node_id = this->ending_node->id;
-		duplicate_local_scope->current_ending_node = this->ending_node;
 	}
 
 	/**
@@ -451,8 +470,32 @@ void BranchExperiment::new_pass_through(Solution* duplicate) {
 	if (duplicate_explore_node->type == NODE_TYPE_ACTION) {
 		ActionNode* action_node = (ActionNode*)duplicate_explore_node;
 
-		new_branch_node->original_next_node_id = action_node->next_node_id;
-		new_branch_node->original_next_node = action_node->next_node;
+		if (action_node->next_node == NULL) {
+			/**
+			 * - ending node
+			 */
+			if (this->ending_node != NULL) {
+				new_branch_node->original_next_node_id = this->ending_node->id;
+				new_branch_node->original_next_node = this->ending_node;
+			} else {
+				ActionNode* new_ending_node = new ActionNode();
+				new_ending_node->parent = duplicate_local_scope;
+				new_ending_node->id = duplicate_local_scope->node_counter;
+				duplicate_local_scope->node_counter++;
+				duplicate_local_scope->nodes[new_ending_node->id] = new_ending_node;
+
+				new_ending_node->action = Action(ACTION_NOOP);
+
+				new_ending_node->next_node_id = -1;
+				new_ending_node->next_node = NULL;
+
+				new_branch_node->original_next_node_id = new_ending_node->id;
+				new_branch_node->original_next_node = new_ending_node;
+			}
+		} else {
+			new_branch_node->original_next_node_id = action_node->next_node_id;
+			new_branch_node->original_next_node = action_node->next_node;
+		}
 	} else if (duplicate_explore_node->type == NODE_TYPE_SCOPE) {
 		ScopeNode* scope_node = (ScopeNode*)duplicate_explore_node;
 
@@ -552,4 +595,5 @@ void BranchExperiment::new_pass_through(Solution* duplicate) {
 	this->best_actions.clear();
 	this->best_scopes.clear();
 	this->exit_node = NULL;
+	this->ending_node = NULL;
 }

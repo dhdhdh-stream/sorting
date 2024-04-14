@@ -2,8 +2,6 @@
 // - human performs simple full run, so no decision making/variations
 //   - copy sequences, and try using them in different places
 
-// TODO: instead of exiting scope, exit to new end node which can be extended upon
-
 #include <chrono>
 #include <iostream>
 #include <map>

@@ -48,6 +48,7 @@ void BranchExperiment::explore_create_activate(
 void branch_gather_possible_exits_helper(vector<int>& experiment_index,
 										 vector<pair<int,AbstractNode*>>& possible_exits,
 										 ScopeHistory* scope_history) {
+	// TODO: may reach what should not be reachable
 	if (experiment_index.size() > 1) {
 		ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)scope_history->node_histories[experiment_index[0]-1];
 
@@ -71,7 +72,8 @@ void BranchExperiment::explore_create_backprop(
 			&& !run_helper.exceeded_limit) {
 		vector<pair<int,AbstractNode*>> possible_exits;
 
-		if (this->scope_context.back()->current_ending_node == this->node_context.back()) {
+		if (this->node_context.back()->type == NODE_TYPE_ACTION
+				&& ((ActionNode*)this->node_context.back())->next_node == NULL) {
 			possible_exits.push_back({0, NULL});
 		}
 
@@ -79,57 +81,59 @@ void BranchExperiment::explore_create_backprop(
 											possible_exits,
 											history->scope_history);
 
-		uniform_int_distribution<int> distribution(0, possible_exits.size()-1);
-		int random_index = distribution(generator);
-		this->curr_exit_depth = possible_exits[random_index].first;
-		this->curr_exit_next_node = possible_exits[random_index].second;
+		if (possible_exits.size() > 0) {
+			uniform_int_distribution<int> distribution(0, possible_exits.size()-1);
+			int random_index = distribution(generator);
+			this->curr_exit_depth = possible_exits[random_index].first;
+			this->curr_exit_next_node = possible_exits[random_index].second;
 
-		int new_num_steps;
-		uniform_int_distribution<int> uniform_distribution(0, 1);
-		geometric_distribution<int> geometric_distribution(0.5);
-		if (random_index == 0) {
-			new_num_steps = 1 + uniform_distribution(generator) + geometric_distribution(generator);
-		} else {
-			new_num_steps = uniform_distribution(generator) + geometric_distribution(generator);
-		}
+			int new_num_steps;
+			uniform_int_distribution<int> uniform_distribution(0, 1);
+			geometric_distribution<int> geometric_distribution(0.5);
+			if (random_index == 0) {
+				new_num_steps = 1 + uniform_distribution(generator) + geometric_distribution(generator);
+			} else {
+				new_num_steps = uniform_distribution(generator) + geometric_distribution(generator);
+			}
 
-		uniform_int_distribution<int> default_distribution(0, 3);
-		uniform_int_distribution<int> curr_scope_distribution(0, 2);
-		for (int s_index = 0; s_index < new_num_steps; s_index++) {
-			bool default_to_action = true;
-			if (default_distribution(generator) != 0) {
-				Scope* scope;
-				if (solution->scopes[solution->curr_scope_id]->layer == 0
-						|| curr_scope_distribution(generator) == 0) {
-					scope = solution->scopes[solution->curr_scope_id];
-				} else {
-					uniform_int_distribution<int> child_distribution(0, MAX_NUM_CHILDREN-1);
-					int scope_id = solution->scopes[solution->curr_scope_id]->child_ids[child_distribution(generator)];
-					scope = solution->scopes[scope_id];
+			uniform_int_distribution<int> default_distribution(0, 3);
+			uniform_int_distribution<int> curr_scope_distribution(0, 2);
+			for (int s_index = 0; s_index < new_num_steps; s_index++) {
+				bool default_to_action = true;
+				if (default_distribution(generator) != 0) {
+					Scope* scope;
+					if (solution->scopes[solution->curr_scope_id]->layer == 0
+							|| curr_scope_distribution(generator) == 0) {
+						scope = solution->scopes[solution->curr_scope_id];
+					} else {
+						uniform_int_distribution<int> child_distribution(0, MAX_NUM_CHILDREN-1);
+						int scope_id = solution->scopes[solution->curr_scope_id]->child_ids[child_distribution(generator)];
+						scope = solution->scopes[scope_id];
+					}
+					ScopeNode* new_scope_node = create_existing(scope,
+																run_helper);
+					if (new_scope_node != NULL) {
+						this->curr_step_types.push_back(STEP_TYPE_SCOPE);
+						this->curr_actions.push_back(NULL);
+
+						this->curr_scopes.push_back(new_scope_node);
+
+						default_to_action = false;
+					}
 				}
-				ScopeNode* new_scope_node = create_existing(scope,
-															run_helper);
-				if (new_scope_node != NULL) {
-					this->curr_step_types.push_back(STEP_TYPE_SCOPE);
-					this->curr_actions.push_back(NULL);
 
-					this->curr_scopes.push_back(new_scope_node);
+				if (default_to_action) {
+					this->curr_step_types.push_back(STEP_TYPE_ACTION);
 
-					default_to_action = false;
+					ActionNode* new_action_node = new ActionNode();
+					new_action_node->action = problem_type->random_action();
+					this->curr_actions.push_back(new_action_node);
+
+					this->curr_scopes.push_back(NULL);
 				}
 			}
 
-			if (default_to_action) {
-				this->curr_step_types.push_back(STEP_TYPE_ACTION);
-
-				ActionNode* new_action_node = new ActionNode();
-				new_action_node->action = problem_type->random_action();
-				this->curr_actions.push_back(new_action_node);
-
-				this->curr_scopes.push_back(NULL);
-			}
+			this->state = BRANCH_EXPERIMENT_STATE_EXPLORE_MEASURE;
 		}
-
-		this->state = BRANCH_EXPERIMENT_STATE_EXPLORE_MEASURE;
 	}
 }

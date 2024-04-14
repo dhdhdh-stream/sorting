@@ -66,6 +66,7 @@ BranchExperiment::BranchExperiment(vector<Scope*> scope_context,
 	this->state_iter = 0;
 
 	this->exit_node = NULL;
+	this->ending_node = NULL;
 
 	this->result = EXPERIMENT_RESULT_NA;
 }

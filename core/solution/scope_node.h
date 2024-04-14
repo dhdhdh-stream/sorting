@@ -24,6 +24,11 @@ public:
 	AbstractNode* starting_node;
 	std::set<int> exit_node_ids;
 	std::set<AbstractNode*> exit_nodes;
+	/**
+	 * TODO:
+	 * - may cause fracturing as well
+	 *   - find good way to handle
+	 */
 
 	int next_node_id;
 	AbstractNode* next_node;

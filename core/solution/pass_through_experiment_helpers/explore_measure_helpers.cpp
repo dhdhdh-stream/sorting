@@ -170,6 +170,11 @@ void PassThroughExperiment::explore_measure_backprop(
 					new_exit_node->next_node_id = this->best_exit_next_node->id;
 					new_exit_node->next_node = this->best_exit_next_node;
 
+					// temp
+					if (new_exit_node->next_node_parent->id != new_exit_node->next_node->parent->id) {
+						throw invalid_argument("new_exit_node->next_node_parent->id != new_exit_node->next_node->parent->id");
+					}
+
 					this->exit_node = new_exit_node;
 
 					exit_node_id = new_exit_node->id;
@@ -193,6 +198,11 @@ void PassThroughExperiment::explore_measure_backprop(
 					} else {
 						exit_node_id = this->best_exit_next_node->id;
 						exit_node = this->best_exit_next_node;
+
+						// temp
+						if (this->best_exit_next_node->parent != this->scope_context.back()) {
+							throw invalid_argument("this->best_exit_next_node->parent != this->scope_context.back()");
+						}
 					}
 				}
 

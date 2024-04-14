@@ -40,8 +40,6 @@ public:
 
 	int default_starting_node_id;
 	AbstractNode* default_starting_node;
-	int current_ending_node_id;
-	AbstractNode* current_ending_node;
 
 	std::set<std::pair<int, std::set<int>>> subscopes;
 
