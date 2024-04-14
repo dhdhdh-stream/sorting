@@ -2,6 +2,8 @@
 // - human performs simple full run, so no decision making/variations
 //   - copy sequences, and try using them in different places
 
+// TODO: focus on changes made in place
+
 #include <chrono>
 #include <iostream>
 #include <map>

@@ -18,7 +18,7 @@
 
 using namespace std;
 
-void BranchExperiment::measure_activate(AbstractNode*& curr_node,
+bool BranchExperiment::measure_activate(AbstractNode*& curr_node,
 										vector<ContextLayer>& context,
 										int& exit_depth,
 										AbstractNode*& exit_node,
@@ -121,8 +121,12 @@ void BranchExperiment::measure_activate(AbstractNode*& curr_node,
 				curr_node = this->best_scopes[0];
 			}
 		}
+
+		return true;
 	} else {
 		this->original_count++;
+
+		return false;
 	}
 }
 

@@ -18,7 +18,7 @@
 
 using namespace std;
 
-void BranchExperiment::experiment_verify_activate(
+bool BranchExperiment::experiment_verify_activate(
 		AbstractNode*& curr_node,
 		vector<ContextLayer>& context,
 		RunHelper& run_helper) {
@@ -36,6 +36,8 @@ void BranchExperiment::experiment_verify_activate(
 				curr_node = this->best_scopes[0];
 			}
 		}
+
+		return true;
 	} else {
 		vector<double> input_vals(this->input_scope_contexts.size(), 0.0);
 		for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
@@ -133,6 +135,10 @@ void BranchExperiment::experiment_verify_activate(
 					curr_node = this->best_scopes[0];
 				}
 			}
+
+			return true;
+		} else {
+			return false;
 		}
 	}
 }

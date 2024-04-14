@@ -278,7 +278,8 @@ bool BranchExperiment::activate(AbstractNode*& curr_node,
 				train_existing_activate(context,
 										run_helper,
 										history);
-				break;
+
+				return false;
 			case BRANCH_EXPERIMENT_STATE_EXPLORE:
 				explore_activate(curr_node,
 								 problem,
@@ -287,7 +288,8 @@ bool BranchExperiment::activate(AbstractNode*& curr_node,
 								 exit_node,
 								 run_helper,
 								 history);
-				break;
+
+				return true;
 			case BRANCH_EXPERIMENT_STATE_TRAIN_NEW:
 				train_new_activate(curr_node,
 								   context,
@@ -295,65 +297,54 @@ bool BranchExperiment::activate(AbstractNode*& curr_node,
 								   exit_node,
 								   run_helper,
 								   history);
-				break;
+
+				return true;
 			case BRANCH_EXPERIMENT_STATE_MEASURE:
-				measure_activate(curr_node,
-								 context,
-								 exit_depth,
-								 exit_node,
-								 run_helper);
-				break;
-			case BRANCH_EXPERIMENT_STATE_VERIFY_1ST:
-			case BRANCH_EXPERIMENT_STATE_VERIFY_2ND:
-				verify_activate(curr_node,
-								context,
-								exit_depth,
-								exit_node,
-								run_helper);
-				break;
-			#if defined(MDEBUG) && MDEBUG
-			case BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY:
-				capture_verify_activate(curr_node,
-										problem,
+				return measure_activate(curr_node,
 										context,
 										exit_depth,
 										exit_node,
 										run_helper);
-				break;
+			case BRANCH_EXPERIMENT_STATE_VERIFY_1ST:
+			case BRANCH_EXPERIMENT_STATE_VERIFY_2ND:
+				return verify_activate(curr_node,
+									   context,
+									   exit_depth,
+									   exit_node,
+									   run_helper);
+			#if defined(MDEBUG) && MDEBUG
+			case BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY:
+				return capture_verify_activate(curr_node,
+											   problem,
+											   context,
+											   exit_depth,
+											   exit_node,
+											   run_helper);
 			#endif /* MDEBUG */
 			case BRANCH_EXPERIMENT_STATE_ROOT_VERIFY:
-				root_verify_activate(curr_node,
-									 context,
-									 exit_depth,
-									 exit_node,
-									 run_helper);
-				break;
+				return root_verify_activate(curr_node,
+											context,
+											exit_depth,
+											exit_node,
+											run_helper);
 			case BRANCH_EXPERIMENT_STATE_EXPERIMENT:
 				switch (this->root_state) {
 				case ROOT_EXPERIMENT_STATE_EXPERIMENT:
-					experiment_activate(curr_node,
-										context,
-										run_helper,
-										history);
-					break;
+					return experiment_activate(curr_node,
+											   context,
+											   run_helper,
+											   history);
 				case ROOT_EXPERIMENT_STATE_VERIFY_1ST:
 				case ROOT_EXPERIMENT_STATE_VERIFY_2ND:
-					experiment_verify_activate(curr_node,
-											   context,
-											   run_helper);
-					break;
+					return experiment_verify_activate(curr_node,
+													  context,
+													  run_helper);
 				}
-
-				break;
 			}
-
-			return true;
-		} else {
-			return false;
 		}
-	} else {
-		return false;
 	}
+
+	return false;
 }
 
 void BranchExperiment::backprop(double target_val,

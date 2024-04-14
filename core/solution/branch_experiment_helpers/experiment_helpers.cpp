@@ -17,10 +17,41 @@
 
 using namespace std;
 
-void BranchExperiment::experiment_activate(AbstractNode*& curr_node,
+bool BranchExperiment::experiment_activate(AbstractNode*& curr_node,
 										   vector<ContextLayer>& context,
 										   RunHelper& run_helper,
 										   BranchExperimentHistory* history) {
+	if (this->parent_experiment == NULL
+			|| this->root_experiment->root_state == ROOT_EXPERIMENT_STATE_EXPERIMENT) {
+		if (run_helper.experiment_histories.back() == history) {
+			history->instance_count++;
+
+			bool is_target = false;
+			if (!history->has_target) {
+				double target_probability;
+				if (history->instance_count > this->average_instances_per_run) {
+					target_probability = 0.5;
+				} else {
+					target_probability = 1.0 / (1.0 + 1.0 + (this->average_instances_per_run - history->instance_count));
+				}
+				uniform_real_distribution<double> distribution(0.0, 1.0);
+				if (distribution(generator) < target_probability) {
+					is_target = true;
+				}
+			}
+
+			if (is_target) {
+				history->has_target = true;
+
+				context[context.size() - this->scope_context.size()].scope_history->experiment_history = history;
+
+				for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
+					history->experiment_index.push_back(context[context.size() - this->scope_context.size() + c_index].scope_history->node_histories.size());
+				}
+			}
+		}
+	}
+
 	if (this->is_pass_through) {
 		if (this->best_step_types.size() == 0) {
 			if (this->exit_node != NULL) {
@@ -35,6 +66,8 @@ void BranchExperiment::experiment_activate(AbstractNode*& curr_node,
 				curr_node = this->best_scopes[0];
 			}
 		}
+
+		return true;
 	} else {
 		vector<double> input_vals(this->input_scope_contexts.size(), 0.0);
 		for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
@@ -137,37 +170,10 @@ void BranchExperiment::experiment_activate(AbstractNode*& curr_node,
 					curr_node = this->best_scopes[0];
 				}
 			}
-		}
-	}
 
-	if (this->parent_experiment == NULL
-			|| this->root_experiment->root_state == ROOT_EXPERIMENT_STATE_EXPERIMENT) {
-		if (run_helper.experiment_histories.back() == history) {
-			history->instance_count++;
-
-			bool is_target = false;
-			if (!history->has_target) {
-				double target_probability;
-				if (history->instance_count > this->average_instances_per_run) {
-					target_probability = 0.5;
-				} else {
-					target_probability = 1.0 / (1.0 + 1.0 + (this->average_instances_per_run - history->instance_count));
-				}
-				uniform_real_distribution<double> distribution(0.0, 1.0);
-				if (distribution(generator) < target_probability) {
-					is_target = true;
-				}
-			}
-
-			if (is_target) {
-				history->has_target = true;
-
-				context[context.size() - this->scope_context.size()].scope_history->experiment_history = history;
-
-				for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
-					history->experiment_index.push_back(context[context.size() - this->scope_context.size() + c_index].scope_history->node_histories.size());
-				}
-			}
+			return true;
+		} else {
+			return false;
 		}
 	}
 }

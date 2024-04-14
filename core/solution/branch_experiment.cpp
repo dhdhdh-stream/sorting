@@ -112,6 +112,9 @@ BranchExperiment::~BranchExperiment() {
 	if (this->exit_node != NULL) {
 		delete this->exit_node;
 	}
+	if (this->ending_node != NULL) {
+		delete this->ending_node;
+	}
 
 	for (int h_index = 0; h_index < (int)this->i_scope_histories.size(); h_index++) {
 		delete this->i_scope_histories[h_index];

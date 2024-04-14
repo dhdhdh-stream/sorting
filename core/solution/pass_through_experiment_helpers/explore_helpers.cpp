@@ -319,6 +319,8 @@ void PassThroughExperiment::explore_backprop(
 					this->curr_scopes.push_back(NULL);
 				}
 			}
+
+			this->sub_state_iter = 0;
 		}
 	}
 }
