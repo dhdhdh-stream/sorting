@@ -16,6 +16,8 @@ using namespace std;
 
 void PassThroughExperiment::finalize(Solution* duplicate) {
 	if (this->result == EXPERIMENT_RESULT_SUCCESS) {
+		duplicate->scopes[this->scope_context[0]->id]->num_improvements++;
+
 		Scope* duplicate_local_scope = duplicate->scopes[this->scope_context.back()->id];
 		AbstractNode* duplicate_explore_node = duplicate_local_scope->nodes[this->node_context.back()->id];
 
@@ -187,20 +189,7 @@ void PassThroughExperiment::finalize(Solution* duplicate) {
 				duplicate_local_scope->nodes[this->best_scopes[s_index]->id] = this->best_scopes[s_index];
 
 				Scope* duplicate_scope = duplicate->scopes[this->best_scopes[s_index]->scope->id];
-
 				this->best_scopes[s_index]->scope = duplicate_scope;
-				this->best_scopes[s_index]->starting_node = duplicate_scope->nodes[
-					this->best_scopes[s_index]->starting_node->id];
-				set<AbstractNode*> duplicate_exit_nodes;
-				for (set<AbstractNode*>::iterator it = this->best_scopes[s_index]->exit_nodes.begin();
-						it != this->best_scopes[s_index]->exit_nodes.end(); it++) {
-					duplicate_exit_nodes.insert(duplicate_scope->nodes[(*it)->id]);
-				}
-				this->best_scopes[s_index]->exit_nodes = duplicate_exit_nodes;
-
-				duplicate_scope->subscopes.insert(
-					{this->best_scopes[s_index]->starting_node_id,
-						this->best_scopes[s_index]->exit_node_ids});
 			}
 		}
 		if (this->best_step_types.size() > 0) {

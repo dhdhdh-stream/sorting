@@ -20,15 +20,6 @@ class ScopeNodeHistory;
 class ScopeNode : public AbstractNode {
 public:
 	Scope* scope;
-	int starting_node_id;
-	AbstractNode* starting_node;
-	std::set<int> exit_node_ids;
-	std::set<AbstractNode*> exit_nodes;
-	/**
-	 * TODO:
-	 * - may cause fracturing as well
-	 *   - find good way to handle
-	 */
 
 	int next_node_id;
 	AbstractNode* next_node;
@@ -46,21 +37,6 @@ public:
 				  RunHelper& run_helper,
 				  ScopeNodeHistory* history);
 
-	void random_existing_activate(AbstractNode*& curr_node,
-								  std::vector<Scope*>& scope_context,
-								  std::vector<AbstractNode*>& node_context,
-								  int& inner_exit_depth,
-								  AbstractNode*& inner_exit_node,
-								  int& random_curr_depth,
-								  bool& random_exceeded_limit,
-								  std::vector<AbstractNode*>& possible_nodes);
-	void inner_random_existing_activate(AbstractNode*& curr_node,
-										std::vector<Scope*>& scope_context,
-										std::vector<AbstractNode*>& node_context,
-										int& inner_exit_depth,
-										AbstractNode*& inner_exit_node,
-										int& random_curr_depth,
-										bool& random_exceeded_limit);
 	void random_exit_activate(AbstractNode*& curr_node,
 							  std::vector<Scope*>& scope_context,
 							  std::vector<AbstractNode*>& node_context,

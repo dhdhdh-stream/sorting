@@ -19,8 +19,7 @@ class ScopeNode;
 void create_experiment(ScopeHistory* root_history);
 AbstractExperiment* create_experiment(std::ifstream& input_file);
 
-ScopeNode* create_existing(Scope* parent_scope,
-						   RunHelper& run_helper);
+ScopeNode* create_existing();
 
 /**
  * - don't use actual run as might involve nodes not always reachable

@@ -2,8 +2,6 @@
 // - human performs simple full run, so no decision making/variations
 //   - copy sequences, and try using them in different places
 
-// TODO: focus on changes made in place
-
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -69,18 +67,17 @@ int main(int argc, char* argv[]) {
 		vector<ContextLayer> context;
 		context.push_back(ContextLayer());
 
-		context.back().scope = solution->scopes[solution->curr_scope_id];
+		context.back().scope = solution->scopes[0];
 		context.back().node = NULL;
 
-		ScopeHistory* root_history = new ScopeHistory(solution->scopes[solution->curr_scope_id]);
+		ScopeHistory* root_history = new ScopeHistory(solution->scopes[0]);
 		context.back().scope_history = root_history;
 
 		// unused
 		int exit_depth = -1;
 		AbstractNode* exit_node = NULL;
 
-		solution->scopes[solution->curr_scope_id]->activate(
-			solution->scopes[solution->curr_scope_id]->default_starting_node,
+		solution->scopes[0]->activate(
 			problem,
 			context,
 			exit_depth,
@@ -216,18 +213,17 @@ int main(int argc, char* argv[]) {
 					vector<ContextLayer> context;
 					context.push_back(ContextLayer());
 
-					context.back().scope = duplicate->scopes[duplicate->curr_scope_id];
+					context.back().scope = duplicate->scopes[0];
 					context.back().node = NULL;
 
-					ScopeHistory* root_history = new ScopeHistory(duplicate->scopes[duplicate->curr_scope_id]);
+					ScopeHistory* root_history = new ScopeHistory(duplicate->scopes[0]);
 					context.back().scope_history = root_history;
 
 					// unused
 					int exit_depth = -1;
 					AbstractNode* exit_node = NULL;
 
-					duplicate->scopes[duplicate->curr_scope_id]->verify_activate(
-						duplicate->scopes[duplicate->curr_scope_id]->default_starting_node,
+					duplicate->scopes[0]->verify_activate(
 						problem,
 						context,
 						exit_depth,
@@ -257,8 +253,6 @@ int main(int argc, char* argv[]) {
 				#endif /* MDEBUG */
 
 				solution->num_actions_limit = 20*solution->max_num_actions + 20;
-
-				solution->increment();
 
 				solution->timestamp++;
 				solution->save("", "main");

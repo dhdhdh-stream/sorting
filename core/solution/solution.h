@@ -9,6 +9,7 @@
 #define SOLUTION_H
 
 #include <fstream>
+#include <map>
 #include <vector>
 
 class AbstractExperiment;
@@ -26,10 +27,8 @@ public:
 	int timestamp;
 	double curr_average_score;
 
-	std::vector<Scope*> scopes;
-	int curr_scope_id;
-
-	int throw_counter;
+	int scope_counter;
+	std::map<int, Scope*> scopes;
 
 	/**
 	 * - max depth for run that concluded
@@ -53,15 +52,12 @@ public:
 	#endif /* MDEBUG */
 
 	Solution();
-	// TODO: need to link after as well
 	Solution(Solution* original);
 	~Solution();
 
 	void init();
 	void load(std::string path,
 			  std::string name);
-
-	void increment();
 
 	#if defined(MDEBUG) && MDEBUG
 	void clear_verify();

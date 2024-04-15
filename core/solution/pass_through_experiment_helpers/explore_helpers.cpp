@@ -284,21 +284,10 @@ void PassThroughExperiment::explore_backprop(
 			}
 
 			uniform_int_distribution<int> default_distribution(0, 3);
-			uniform_int_distribution<int> curr_scope_distribution(0, 2);
 			for (int s_index = 0; s_index < new_num_steps; s_index++) {
 				bool default_to_action = true;
 				if (default_distribution(generator) != 0) {
-					Scope* scope;
-					if (solution->scopes[solution->curr_scope_id]->layer == 0
-							|| curr_scope_distribution(generator) == 0) {
-						scope = solution->scopes[solution->curr_scope_id];
-					} else {
-						uniform_int_distribution<int> child_distribution(0, MAX_NUM_CHILDREN-1);
-						int scope_id = solution->scopes[solution->curr_scope_id]->child_ids[child_distribution(generator)];
-						scope = solution->scopes[scope_id];
-					}
-					ScopeNode* new_scope_node = create_existing(scope,
-																run_helper);
+					ScopeNode* new_scope_node = create_existing();
 					if (new_scope_node != NULL) {
 						this->curr_step_types.push_back(STEP_TYPE_SCOPE);
 						this->curr_actions.push_back(NULL);

@@ -36,18 +36,17 @@ int main(int argc, char* argv[]) {
 		vector<ContextLayer> context;
 		context.push_back(ContextLayer());
 
-		context.back().scope = solution->scopes[solution->curr_scope_id];
+		context.back().scope = solution->scopes[0];
 		context.back().node = NULL;
 
-		ScopeHistory* root_history = new ScopeHistory(solution->scopes[solution->curr_scope_id]);
+		ScopeHistory* root_history = new ScopeHistory(solution->scopes[0]);
 		context.back().scope_history = root_history;
 
 		// unused
 		int exit_depth = -1;
 		AbstractNode* exit_node = NULL;
 
-		solution->scopes[solution->curr_scope_id]->step_through_activate(
-			solution->scopes[solution->curr_scope_id]->default_starting_node,
+		solution->scopes[0]->step_through_activate(
 			problem,
 			context,
 			exit_depth,

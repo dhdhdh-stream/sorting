@@ -24,6 +24,10 @@ int Sorting::num_obs() {
 	return 1;
 }
 
+int Sorting::num_possible_actions() {
+	return 3;
+}
+
 Action Sorting::random_action() {
 	uniform_int_distribution<int> action_distribution(0, 2);
 	return Action(action_distribution(generator));

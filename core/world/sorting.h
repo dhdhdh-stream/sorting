@@ -19,6 +19,7 @@ public:
 	Sorting();
 
 	int num_obs();
+	int num_possible_actions();
 	Action random_action();
 
 	std::vector<double> get_observations();

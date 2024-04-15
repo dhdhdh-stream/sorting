@@ -28,8 +28,7 @@ void ScopeNode::measure_activate(AbstractNode*& curr_node,
 	int inner_exit_depth = -1;
 	AbstractNode* inner_exit_node = NULL;
 
-	this->scope->measure_activate(this->starting_node,
-								  problem,
+	this->scope->measure_activate(problem,
 								  context,
 								  inner_exit_depth,
 								  inner_exit_node,

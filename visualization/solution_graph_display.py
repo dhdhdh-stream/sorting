@@ -25,6 +25,8 @@ file = open('../display.txt')
 num_scopes = int(file.readline())
 
 for s_index in range(num_scopes):
+	scope_id = int(file.readline())
+
 	nodes = {}
 	num_nodes = int(file.readline())
 	for n_index in range(num_nodes):
@@ -39,13 +41,11 @@ for s_index in range(num_scopes):
 							  action,
 							  next_node_id]
 		elif node_type == NODE_TYPE_SCOPE:
-			starting_node_id = int(file.readline())
 			inner_scope_id = int(file.readline())
 
 			next_node_id = int(file.readline())
 
 			nodes[node_id] = [node_type,
-							  starting_node_id,
 							  inner_scope_id,
 							  next_node_id]
 		elif node_type == NODE_TYPE_BRANCH:
@@ -75,7 +75,7 @@ for s_index in range(num_scopes):
 
 	print(nodes)
 
-	scopes[s_index] = nodes
+	scopes[scope_id] = nodes
 
 file.close()
 
@@ -123,7 +123,7 @@ for scope_id in scopes:
 		if scopes[scope_id][key][0] == NODE_TYPE_ACTION:
 			graph.add_node(pydot.Node(node_index, label=str(scope_id) + ' ' + str(key) + '\n' + pretty_print_action(scopes[scope_id][key][1])))
 		elif scopes[scope_id][key][0] == NODE_TYPE_SCOPE:
-			graph.add_node(pydot.Node(node_index, label=str(scope_id) + ' ' + str(key) + '\n' + 'S ' + str(scopes[scope_id][key][2]) + ' ' + str(scopes[scope_id][key][1])))
+			graph.add_node(pydot.Node(node_index, label=str(scope_id) + ' ' + str(key) + '\n' + 'S ' + str(scopes[scope_id][key][1])))
 		elif scopes[scope_id][key][0] == NODE_TYPE_BRANCH:
 			if scopes[scope_id][key][2] == 1:
 				graph.add_node(pydot.Node(node_index, label=str(scope_id) + ' ' + str(key) + '\n' + 'P ' + str(scopes[scope_id][key][1])))
@@ -139,8 +139,8 @@ for scope_id in scopes:
 			if scopes[scope_id][key][2] != -1:
 				graph.add_edge(pydot.Edge(node_mappings[key], node_mappings[scopes[scope_id][key][2]]))
 		elif scopes[scope_id][key][0] == NODE_TYPE_SCOPE:
-			if scopes[scope_id][key][3] != -1:
-				graph.add_edge(pydot.Edge(node_mappings[key], node_mappings[scopes[scope_id][key][3]]))
+			if scopes[scope_id][key][2] != -1:
+				graph.add_edge(pydot.Edge(node_mappings[key], node_mappings[scopes[scope_id][key][2]]))
 		elif scopes[scope_id][key][0] == NODE_TYPE_BRANCH:
 			if scopes[scope_id][key][3] != -1:
 				graph.add_edge(pydot.Edge(node_mappings[key], node_mappings[scopes[scope_id][key][3]], style="dotted"))

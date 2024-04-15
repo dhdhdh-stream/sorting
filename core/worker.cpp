@@ -59,18 +59,17 @@ int main(int argc, char* argv[]) {
 		vector<ContextLayer> context;
 		context.push_back(ContextLayer());
 
-		context.back().scope = solution->scopes[solution->curr_scope_id];
+		context.back().scope = solution->scopes[0];
 		context.back().node = NULL;
 
-		ScopeHistory* root_history = new ScopeHistory(solution->scopes[solution->curr_scope_id]);
+		ScopeHistory* root_history = new ScopeHistory(solution->scopes[0]);
 		context.back().scope_history = root_history;
 
 		// unused
 		int exit_depth = -1;
 		AbstractNode* exit_node = NULL;
 
-		solution->scopes[solution->curr_scope_id]->activate(
-			solution->scopes[solution->curr_scope_id]->default_starting_node,
+		solution->scopes[0]->activate(
 			problem,
 			context,
 			exit_depth,
@@ -199,18 +198,17 @@ int main(int argc, char* argv[]) {
 					vector<ContextLayer> context;
 					context.push_back(ContextLayer());
 
-					context.back().scope = duplicate->scopes[duplicate->curr_scope_id];
+					context.back().scope = duplicate->scopes[0];
 					context.back().node = NULL;
 
-					ScopeHistory* root_history = new ScopeHistory(duplicate->scopes[duplicate->curr_scope_id]);
+					ScopeHistory* root_history = new ScopeHistory(duplicate->scopes[0]);
 					context.back().scope_history = root_history;
 
 					// unused
 					int exit_depth = -1;
 					AbstractNode* exit_node = NULL;
 
-					duplicate->scopes[duplicate->curr_scope_id]->activate(
-						duplicate->scopes[duplicate->curr_scope_id]->default_starting_node,
+					duplicate->scopes[0]->activate(
 						problem,
 						context,
 						exit_depth,
@@ -234,7 +232,6 @@ int main(int argc, char* argv[]) {
 				double possible_average_score = sum_vals/4000.0;
 				cout << "possible_average_score: " << possible_average_score << endl;
 
-				duplicate->increment();
 				duplicate->timestamp++;
 				duplicate->curr_average_score = possible_average_score;
 				duplicate->save(path, "possible_" + to_string((unsigned)time(NULL)));
