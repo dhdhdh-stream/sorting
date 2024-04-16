@@ -172,6 +172,13 @@ void BranchExperiment::measure_backprop(double target_val,
 					if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 						delete this->best_actions[s_index];
 					} else {
+						if (s_index == 0) {
+							map<int, Scope*>::iterator it = solution->scopes.find(this->best_scopes[s_index]->scope->id);
+							if (it == solution->scopes.end()) {
+								delete this->best_scopes[s_index]->scope;
+							}
+						}
+
 						delete this->best_scopes[s_index];
 					}
 				}

@@ -5,6 +5,7 @@
 #include <iostream>
 
 #include "action_node.h"
+#include "globals.h"
 #include "network.h"
 #include "problem.h"
 #include "scope.h"
@@ -140,6 +141,8 @@ void BranchNode::verify_activate(AbstractNode*& curr_node,
 
 					cout << "this->verify_branch_scores[0]: " << this->verify_branch_scores[0] << endl;
 					cout << "branch_score: " << branch_score << endl;
+
+					cout << "seed: " << seed << endl;
 
 					throw invalid_argument("branch node verify fail");
 				}

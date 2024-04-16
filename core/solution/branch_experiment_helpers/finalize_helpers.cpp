@@ -15,8 +15,6 @@ using namespace std;
 
 void BranchExperiment::finalize(Solution* duplicate) {
 	if (this->result == EXPERIMENT_RESULT_SUCCESS) {
-		duplicate->scopes[this->scope_context[0]->id]->num_improvements++;
-
 		if (this->is_pass_through) {
 			new_pass_through(duplicate);
 		} else {
@@ -366,7 +364,17 @@ void BranchExperiment::new_branch(Solution* duplicate) {
 
 			map<int, Scope*>::iterator it = duplicate->scopes.find(this->best_scopes[s_index]->scope->id);
 			if (it == duplicate->scopes.end()) {
-				duplicate->scopes[this->best_scopes[s_index]->scope->id] = this->best_scopes[s_index]->scope;
+				if (s_index == 0) {
+					for (map<int, AbstractNode*>::iterator it = this->best_scopes[s_index]->scope->nodes.begin();
+							it != this->best_scopes[s_index]->scope->nodes.end(); it++) {
+						if (it->second->type == NODE_TYPE_SCOPE) {
+							ScopeNode* scope_node = (ScopeNode*)it->second;
+							scope_node->scope = duplicate->scopes[scope_node->scope->id];
+						}
+					}
+
+					duplicate->scopes[this->best_scopes[s_index]->scope->id] = this->best_scopes[s_index]->scope;
+				}
 			} else {
 				this->best_scopes[s_index]->scope = it->second;
 			}
@@ -556,7 +564,17 @@ void BranchExperiment::new_pass_through(Solution* duplicate) {
 
 			map<int, Scope*>::iterator it = duplicate->scopes.find(this->best_scopes[s_index]->scope->id);
 			if (it == duplicate->scopes.end()) {
-				duplicate->scopes[this->best_scopes[s_index]->scope->id] = this->best_scopes[s_index]->scope;
+				if (s_index == 0) {
+					for (map<int, AbstractNode*>::iterator it = this->best_scopes[s_index]->scope->nodes.begin();
+							it != this->best_scopes[s_index]->scope->nodes.end(); it++) {
+						if (it->second->type == NODE_TYPE_SCOPE) {
+							ScopeNode* scope_node = (ScopeNode*)it->second;
+							scope_node->scope = duplicate->scopes[scope_node->scope->id];
+						}
+					}
+
+					duplicate->scopes[this->best_scopes[s_index]->scope->id] = this->best_scopes[s_index]->scope;
+				}
 			} else {
 				this->best_scopes[s_index]->scope = it->second;
 			}

@@ -11,8 +11,6 @@ using namespace std;
 
 Scope::Scope() {
 	this->id = -1;
-
-	this->num_improvements = 0;
 }
 
 Scope::~Scope() {
@@ -43,8 +41,6 @@ void Scope::save(ofstream& output_file) {
 		output_file << it->second->type << endl;
 		it->second->save(output_file);
 	}
-
-	output_file << this->num_improvements << endl;
 }
 
 void Scope::load(ifstream& input_file,
@@ -92,10 +88,6 @@ void Scope::load(ifstream& input_file,
 			this->nodes[exit_node->id] = exit_node;
 		}
 	}
-
-	string num_improvements_line;
-	getline(input_file, num_improvements_line);
-	this->num_improvements = stoi(num_improvements_line);
 }
 
 void Scope::link(Solution* parent_solution) {
@@ -152,8 +144,6 @@ void Scope::copy_from(Scope* original,
 			break;
 		}
 	}
-
-	this->num_improvements = original->num_improvements;
 }
 
 void Scope::save_for_display(ofstream& output_file) {

@@ -85,6 +85,8 @@ void BranchNode::clear_verify() {
 	this->verify_key = NULL;
 	if (this->verify_original_scores.size() > 0
 			|| this->verify_branch_scores.size() > 0) {
+		cout << "seed: " << seed << endl;
+
 		throw invalid_argument("branch node remaining verify");
 	}
 }

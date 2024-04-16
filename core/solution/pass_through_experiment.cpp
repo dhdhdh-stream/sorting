@@ -72,6 +72,13 @@ PassThroughExperiment::~PassThroughExperiment() {
 
 	for (int s_index = 0; s_index < (int)this->curr_scopes.size(); s_index++) {
 		if (this->curr_scopes[s_index] != NULL) {
+			if (s_index == 0) {
+				map<int, Scope*>::iterator it = solution->scopes.find(this->curr_scopes[s_index]->scope->id);
+				if (it == solution->scopes.end()) {
+					delete this->curr_scopes[s_index]->scope;
+				}
+			}
+
 			delete this->curr_scopes[s_index];
 		}
 	}
@@ -84,6 +91,13 @@ PassThroughExperiment::~PassThroughExperiment() {
 
 	for (int s_index = 0; s_index < (int)this->best_scopes.size(); s_index++) {
 		if (this->best_scopes[s_index] != NULL) {
+			if (s_index == 0) {
+				map<int, Scope*>::iterator it = solution->scopes.find(this->best_scopes[s_index]->scope->id);
+				if (it == solution->scopes.end()) {
+					delete this->best_scopes[s_index]->scope;
+				}
+			}
+
 			delete this->best_scopes[s_index];
 		}
 	}

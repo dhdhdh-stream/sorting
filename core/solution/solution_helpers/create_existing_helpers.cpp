@@ -10,13 +10,12 @@
 
 using namespace std;
 
-const int MIN_NUM_IMPROVEMENTS = 20;
-
 ScopeNode* create_existing() {
 	vector<Scope*> possible_scopes;
-	for (int s_index = 0; s_index < (int)solution->scopes.size(); s_index++) {
-		if (solution->scopes[s_index]->num_improvements >= MIN_NUM_IMPROVEMENTS) {
-			possible_scopes.push_back(solution->scopes[s_index]);
+	for (map<int, Scope*>::iterator it = solution->scopes.begin();
+			it != solution->scopes.end(); it++) {
+		if (it->second->id != 0) {
+			possible_scopes.push_back(it->second);
 		}
 	}
 

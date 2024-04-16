@@ -2,6 +2,7 @@
 
 #include <iostream>
 
+#include "abstract_experiment.h"
 #include "action_node.h"
 #include "scope.h"
 
@@ -31,6 +32,8 @@ Solution::Solution(Solution* original) {
 		it->second->link(this);
 	}
 
+	this->scope_counter = original->scope_counter;
+
 	this->max_depth = original->max_depth;
 	this->depth_limit = original->depth_limit;
 
@@ -39,6 +42,20 @@ Solution::Solution(Solution* original) {
 }
 
 Solution::~Solution() {
+	/**
+	 * - clear experiments first because of new scope check
+	 */
+	for (map<int, Scope*>::iterator it = this->scopes.begin();
+			it != this->scopes.end(); it++) {
+		for (map<int, AbstractNode*>::iterator node_it = it->second->nodes.begin();
+				node_it != it->second->nodes.end(); node_it++) {
+			for (int e_index = 0; e_index < (int)node_it->second->experiments.size(); e_index++) {
+				delete node_it->second->experiments[e_index];
+			}
+			node_it->second->experiments.clear();
+		}
+	}
+
 	for (map<int, Scope*>::iterator it = this->scopes.begin();
 			it != this->scopes.end(); it++) {
 		delete it->second;
@@ -106,6 +123,10 @@ void Solution::load(string path,
 		it->second->link(this);
 	}
 
+	string scope_counter_line;
+	getline(input_file, scope_counter_line);
+	this->scope_counter = stoi(scope_counter_line);
+
 	string max_depth_line;
 	getline(input_file, max_depth_line);
 	this->max_depth = stoi(max_depth_line);
@@ -127,8 +148,9 @@ void Solution::load(string path,
 
 #if defined(MDEBUG) && MDEBUG
 void Solution::clear_verify() {
-	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
-		this->scopes[s_index]->clear_verify();
+	for (map<int, Scope*>::iterator it = this->scopes.begin();
+			it != this->scopes.end(); it++) {
+		it->second->clear_verify();
 	}
 
 	this->verify_key = NULL;

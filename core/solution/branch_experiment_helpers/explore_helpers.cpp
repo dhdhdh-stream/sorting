@@ -194,13 +194,33 @@ void BranchExperiment::explore_activate(
 				}
 			}
 
-			ScopeNode* new_scope_node = new ScopeNode();
-			new_scope_node->scope = new_scope;
+			{
+				ScopeNode* new_scope_node = new ScopeNode();
+				new_scope_node->scope = new_scope;
 
-			this->curr_step_types.push_back(STEP_TYPE_SCOPE);
-			this->curr_actions.push_back(NULL);
+				this->curr_step_types.push_back(STEP_TYPE_SCOPE);
+				this->curr_actions.push_back(NULL);
 
-			this->curr_scopes.push_back(new_scope_node);
+				this->curr_scopes.push_back(new_scope_node);
+			}
+			{
+				ScopeNode* new_scope_node = new ScopeNode();
+				new_scope_node->scope = new_scope;
+
+				this->curr_step_types.push_back(STEP_TYPE_SCOPE);
+				this->curr_actions.push_back(NULL);
+
+				this->curr_scopes.push_back(new_scope_node);
+			}
+			{
+				ScopeNode* new_scope_node = new ScopeNode();
+				new_scope_node->scope = new_scope;
+
+				this->curr_step_types.push_back(STEP_TYPE_SCOPE);
+				this->curr_actions.push_back(NULL);
+
+				this->curr_scopes.push_back(new_scope_node);
+			}
 		} else {
 			vector<pair<int,AbstractNode*>> possible_exits;
 
@@ -337,6 +357,13 @@ void BranchExperiment::explore_backprop(
 					if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 						delete this->best_actions[s_index];
 					} else {
+						if (s_index == 0) {
+							map<int, Scope*>::iterator it = solution->scopes.find(this->best_scopes[s_index]->scope->id);
+							if (it == solution->scopes.end()) {
+								delete this->best_scopes[s_index]->scope;
+							}
+						}
+
 						delete this->best_scopes[s_index];
 					}
 				}
@@ -356,6 +383,13 @@ void BranchExperiment::explore_backprop(
 					if (this->curr_step_types[s_index] == STEP_TYPE_ACTION) {
 						delete this->curr_actions[s_index];
 					} else {
+						if (s_index == 0) {
+							map<int, Scope*>::iterator it = solution->scopes.find(this->curr_scopes[s_index]->scope->id);
+							if (it == solution->scopes.end()) {
+								delete this->curr_scopes[s_index]->scope;
+							}
+						}
+
 						delete this->curr_scopes[s_index];
 					}
 				}
@@ -379,6 +413,13 @@ void BranchExperiment::explore_backprop(
 					if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 						delete this->best_actions[s_index];
 					} else {
+						if (s_index == 0) {
+							map<int, Scope*>::iterator it = solution->scopes.find(this->best_scopes[s_index]->scope->id);
+							if (it == solution->scopes.end()) {
+								delete this->best_scopes[s_index]->scope;
+							}
+						}
+
 						delete this->best_scopes[s_index];
 					}
 				}
@@ -400,6 +441,13 @@ void BranchExperiment::explore_backprop(
 					if (this->curr_step_types[s_index] == STEP_TYPE_ACTION) {
 						delete this->curr_actions[s_index];
 					} else {
+						if (s_index == 0) {
+							map<int, Scope*>::iterator it = solution->scopes.find(this->curr_scopes[s_index]->scope->id);
+							if (it == solution->scopes.end()) {
+								delete this->curr_scopes[s_index]->scope;
+							}
+						}
+
 						delete this->curr_scopes[s_index];
 					}
 				}
@@ -418,6 +466,13 @@ void BranchExperiment::explore_backprop(
 					if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 						delete this->best_actions[s_index];
 					} else {
+						if (s_index == 0) {
+							map<int, Scope*>::iterator it = solution->scopes.find(this->best_scopes[s_index]->scope->id);
+							if (it == solution->scopes.end()) {
+								delete this->best_scopes[s_index]->scope;
+							}
+						}
+
 						delete this->best_scopes[s_index];
 					}
 				}
@@ -439,6 +494,13 @@ void BranchExperiment::explore_backprop(
 					if (this->curr_step_types[s_index] == STEP_TYPE_ACTION) {
 						delete this->curr_actions[s_index];
 					} else {
+						if (s_index == 0) {
+							map<int, Scope*>::iterator it = solution->scopes.find(this->curr_scopes[s_index]->scope->id);
+							if (it == solution->scopes.end()) {
+								delete this->curr_scopes[s_index]->scope;
+							}
+						}
+
 						delete this->curr_scopes[s_index];
 					}
 				}

@@ -36,6 +36,7 @@ while True:
 	curr_average_score = -1.0
 
 	start_time = time.time()
+	count = 0
 	while True:
 		for worker in workers:
 			client = paramiko.SSHClient()
@@ -58,13 +59,16 @@ while True:
 					possible_average_score = float(possible_file.readline())
 					possible_file.close()
 
-					if possible_timestamp > curr_timestamp \
-							and possible_average_score > curr_average_score:
-						os.rename('saves/temp.txt', 'saves/main.txt')
+					if possible_timestamp > curr_timestamp:
+						count += 1
+						if possible_average_score > curr_average_score:
+							os.rename('saves/temp.txt', 'saves/main.txt')
 
-						print('updated')
+							print('updated')
 
-						curr_average_score = possible_average_score
+							curr_average_score = possible_average_score
+						else:
+							os.remove('saves/temp.txt')
 					else:
 						os.remove('saves/temp.txt')
 
@@ -93,13 +97,16 @@ while True:
 						possible_average_score = float(possible_file.readline())
 						possible_file.close()
 
-						if possible_timestamp > curr_timestamp \
-								and possible_average_score > curr_average_score:
-							os.rename('saves/temp.txt', 'saves/main.txt')
+						if possible_timestamp > curr_timestamp:
+							count += 1
+							if possible_average_score > curr_average_score:
+								os.rename('saves/temp.txt', 'saves/main.txt')
 
-							print('updated')
+								print('updated')
 
-							curr_average_score = possible_average_score
+								curr_average_score = possible_average_score
+							else:
+								os.remove('saves/temp.txt')
 						else:
 							os.remove('saves/temp.txt')
 
@@ -107,7 +114,7 @@ while True:
 				client.close()
 
 		curr_time = time.time()
-		if curr_time - start_time > 300:
+		if count >= 10 and curr_time - start_time > 300:
 			break
 
 		time.sleep(20)

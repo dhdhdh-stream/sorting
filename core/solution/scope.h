@@ -25,8 +25,6 @@ public:
 	int node_counter;
 	std::map<int, AbstractNode*> nodes;
 
-	int num_improvements;
-
 	Scope();
 	~Scope();
 

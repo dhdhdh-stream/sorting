@@ -85,6 +85,8 @@ void Scope::activate(Problem* problem,
 					 AbstractNode*& exit_node,
 					 RunHelper& run_helper,
 					 ScopeHistory* history) {
+	// TODO: penalize on scope entry
+
 	if (run_helper.curr_depth > run_helper.max_depth) {
 		run_helper.max_depth = run_helper.curr_depth;
 	}
