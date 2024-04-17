@@ -90,11 +90,12 @@ void create_experiment(ScopeHistory* root_history) {
 	uniform_int_distribution<int> possible_distribution(0, (int)possible_scope_contexts.size()-1);
 	int rand_index = possible_distribution(generator);
 
-	geometric_distribution<int> context_size_distribution(0.5);
-	int context_size = 1 + context_size_distribution(generator);
-	if (context_size > (int)possible_scope_contexts[rand_index].size()) {
-		context_size = (int)possible_scope_contexts[rand_index].size();
-	}
+	int context_size = 1;
+	// geometric_distribution<int> context_size_distribution(0.5);
+	// int context_size = 1 + context_size_distribution(generator);
+	// if (context_size > (int)possible_scope_contexts[rand_index].size()) {
+	// 	context_size = (int)possible_scope_contexts[rand_index].size();
+	// }
 	/**
 	 * - minimize context to generalize/maximize impact
 	 */

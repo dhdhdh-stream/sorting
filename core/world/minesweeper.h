@@ -41,6 +41,9 @@ public:
 
 	void print();
 
+	int current_direction;
+	bool travel();
+
 private:
 	double get_observation_helper(int x, int y);
 	void reveal_helper(int x, int y);

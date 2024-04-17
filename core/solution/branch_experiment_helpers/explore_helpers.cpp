@@ -106,7 +106,8 @@ void BranchExperiment::explore_activate(
 		history->existing_predicted_score = predicted_score;
 
 		uniform_int_distribution<int> in_place_distribution(0, 1);
-		if (in_place_distribution(generator) == 0) {
+		// if (in_place_distribution(generator) == 0) {
+		if (false) {
 			this->curr_exit_depth = 0;
 			switch (this->node_context.back()->type) {
 			case NODE_TYPE_ACTION:

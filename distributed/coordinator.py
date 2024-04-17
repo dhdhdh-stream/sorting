@@ -48,7 +48,7 @@ while True:
 			client_sftp = client.open_sftp()
 
 			for filename in client_sftp.listdir('workers/' + worker[0] + '/saves/'):
-				if filename.startswith('possible'):
+				if filename.startswith('possible') and 'temp' not in filename:
 					print('workers/' + worker[0] + '/saves/' + filename)
 
 					client_sftp.get('workers/' + worker[0] + '/saves/' + filename, 'saves/temp.txt')
@@ -59,7 +59,7 @@ while True:
 					possible_average_score = float(possible_file.readline())
 					possible_file.close()
 
-					if possible_timestamp > curr_timestamp:
+					if possible_timestamp == curr_timestamp+1:
 						count += 1
 						if possible_average_score > curr_average_score:
 							os.rename('saves/temp.txt', 'saves/main.txt')
@@ -86,7 +86,7 @@ while True:
 				client_sftp = client.open_sftp()
 
 				for filename in client_sftp.listdir('workers/' + worker[0] + '/saves/'):
-					if filename.startswith('possible'):
+					if filename.startswith('possible') and 'temp' not in filename:
 						print('workers/' + worker[0] + '/saves/' + filename)
 
 						client_sftp.get('workers/' + worker[0] + '/saves/' + filename, 'saves/temp.txt')
@@ -97,7 +97,7 @@ while True:
 						possible_average_score = float(possible_file.readline())
 						possible_file.close()
 
-						if possible_timestamp > curr_timestamp:
+						if possible_timestamp == curr_timestamp+1:
 							count += 1
 							if possible_average_score > curr_average_score:
 								os.rename('saves/temp.txt', 'saves/main.txt')

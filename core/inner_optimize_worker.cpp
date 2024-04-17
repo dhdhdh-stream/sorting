@@ -30,10 +30,6 @@ int main(int argc, char* argv[]) {
 	}
 	string path = argv[1];
 
-	/**
-	 * - worker directories need to have already been created
-	 */
-
 	cout << "Starting..." << endl;
 
 	seed = (unsigned)time(NULL);
@@ -41,7 +37,6 @@ int main(int argc, char* argv[]) {
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
 
-	// problem_type = new Sorting();
 	problem_type = new Minesweeper();
 
 	solution = new Solution();
@@ -49,39 +44,55 @@ int main(int argc, char* argv[]) {
 
 	auto start_time = chrono::high_resolution_clock::now();
 	while (true) {
-		// Problem* problem = new Sorting();
-		Problem* problem = new Minesweeper();
+		Minesweeper* problem = new Minesweeper();
 
 		RunHelper run_helper;
 
-		vector<ContextLayer> context;
-		context.push_back(ContextLayer());
+		int num_steps = 0;
+		int target_steps = 3 + solution->timestamp/2;
 
-		context.back().scope = solution->scopes[0];
-		context.back().node = NULL;
+		while (true) {
+			vector<ContextLayer> context;
+			context.push_back(ContextLayer());
 
-		ScopeHistory* root_history = new ScopeHistory(solution->scopes[0]);
-		context.back().scope_history = root_history;
+			context.back().scope = solution->scopes[0];
+			context.back().node = NULL;
 
-		// unused
-		int exit_depth = -1;
-		AbstractNode* exit_node = NULL;
+			ScopeHistory* root_history = new ScopeHistory(solution->scopes[0]);
+			context.back().scope_history = root_history;
 
-		solution->scopes[0]->activate(
-			problem,
-			context,
-			exit_depth,
-			exit_node,
-			run_helper,
-			root_history);
+			// unused
+			int exit_depth = -1;
+			AbstractNode* exit_node = NULL;
 
-		if (run_helper.experiments_seen_order.size() == 0) {
-			if (!run_helper.exceeded_limit) {
-				create_experiment(root_history);
+			solution->scopes[0]->activate(
+				problem,
+				context,
+				exit_depth,
+				exit_node,
+				run_helper,
+				root_history);
+
+			if (run_helper.experiments_seen_order.size() == 0) {
+				if (!run_helper.exceeded_limit) {
+					if (rand()%10 == 0) {
+						create_experiment(root_history);
+					}
+				}
+			}
+
+			delete root_history;
+
+			num_steps++;
+			if (num_steps >= target_steps) {
+				break;
+			} else {
+				bool should_continue = problem->travel();
+				if (!should_continue) {
+					break;
+				}
 			}
 		}
-
-		delete root_history;
 
 		double target_val;
 		if (!run_helper.exceeded_limit) {
@@ -188,33 +199,47 @@ int main(int argc, char* argv[]) {
 
 				double sum_vals = 0.0;
 				for (int i_index = 0; i_index < 4000; i_index++) {
-					// Problem* problem = new Sorting();
-					Problem* problem = new Minesweeper();
+					Minesweeper* problem = new Minesweeper();
 
 					RunHelper run_helper;
 
-					vector<ContextLayer> context;
-					context.push_back(ContextLayer());
+					int num_steps = 0;
+					int target_steps = 3 + solution->timestamp/2;
 
-					context.back().scope = duplicate->scopes[0];
-					context.back().node = NULL;
+					while (true) {
+						vector<ContextLayer> context;
+						context.push_back(ContextLayer());
 
-					ScopeHistory* root_history = new ScopeHistory(duplicate->scopes[0]);
-					context.back().scope_history = root_history;
+						context.back().scope = duplicate->scopes[0];
+						context.back().node = NULL;
 
-					// unused
-					int exit_depth = -1;
-					AbstractNode* exit_node = NULL;
+						ScopeHistory* root_history = new ScopeHistory(duplicate->scopes[0]);
+						context.back().scope_history = root_history;
 
-					duplicate->scopes[0]->activate(
-						problem,
-						context,
-						exit_depth,
-						exit_node,
-						run_helper,
-						root_history);
+						// unused
+						int exit_depth = -1;
+						AbstractNode* exit_node = NULL;
 
-					delete root_history;
+						duplicate->scopes[0]->activate(
+							problem,
+							context,
+							exit_depth,
+							exit_node,
+							run_helper,
+							root_history);
+
+						delete root_history;
+
+						num_steps++;
+						if (num_steps >= target_steps) {
+							break;
+						} else {
+							bool should_continue = problem->travel();
+							if (!should_continue) {
+								break;
+							}
+						}
+					}
 
 					double target_val;
 					if (!run_helper.exceeded_limit) {

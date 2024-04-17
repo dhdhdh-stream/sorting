@@ -115,6 +115,8 @@ Minesweeper::Minesweeper() {
 	}
 
 	this->num_actions = 0;
+
+	this->current_direction = 0;
 }
 
 int Minesweeper::num_obs() {
@@ -426,4 +428,316 @@ void Minesweeper::print() {
 	cout << "current_y: " << this->current_y << endl;
 
 	cout << "num_actions: " << this->num_actions << endl;
+}
+
+const int DIRECTION_TOP = 0;
+const int DIRECTION_RIGHT = 1;
+const int DIRECTION_BOTTOM = 2;
+const int DIRECTION_LEFT = 3;
+
+bool Minesweeper::travel() {
+	bool is_empty = true;
+
+	if (this->current_x > 0 && this->current_y < HEIGHT-1) {
+		if (this->revealed[this->current_x-1][this->current_y+1]) {
+			is_empty = false;
+		}
+	}
+
+	if (this->current_y < HEIGHT-1) {
+		if (this->revealed[this->current_x][this->current_y+1]) {
+			is_empty = false;
+		}
+	}
+
+	if (this->current_x < WIDTH-1 && this->current_y < HEIGHT-1) {
+		if (this->revealed[this->current_x+1][this->current_y+1]) {
+			is_empty = false;
+		}
+	}
+
+	if (this->current_x < WIDTH-1) {
+		if (this->revealed[this->current_x+1][this->current_y]) {
+			is_empty = false;
+		}
+	}
+
+	if (this->current_x < WIDTH-1 && this->current_y > 0) {
+		if (this->revealed[this->current_x+1][this->current_y-1]) {
+			is_empty = false;
+		}
+	}
+
+	if (this->current_y > 0) {
+		if (this->revealed[this->current_x][this->current_y-1]) {
+			is_empty = false;
+		}
+	}
+
+	if (this->current_x > 0 && this->current_y > 0) {
+		if (this->revealed[this->current_x-1][this->current_y-1]) {
+			is_empty = false;
+		}
+	}
+
+	if (this->current_x > 0) {
+		if (this->revealed[this->current_x-1][this->current_y]) {
+			is_empty = false;
+		}
+	}
+
+	if (is_empty) {
+		return false;
+	} else {
+		vector<bool> possible_directions(4, false);
+
+		// top_left vs. top
+		if (this->current_x > 0 && this->current_y < HEIGHT-1) {
+			if (this->revealed[this->current_x-1][this->current_y+1]
+					&& !this->revealed[this->current_x][this->current_y+1]) {
+				possible_directions[DIRECTION_TOP] = true;
+			}
+			if (!this->revealed[this->current_x-1][this->current_y+1]
+					&& this->revealed[this->current_x][this->current_y+1]) {
+				possible_directions[DIRECTION_TOP] = true;
+			}
+		}
+
+		// top vs. top right
+		if (this->current_x < WIDTH-1 && this->current_y < HEIGHT-1) {
+			if ((this->revealed[this->current_x][this->current_y+1]
+						|| this->flagged[this->current_x][this->current_y+1])
+					&& !this->revealed[this->current_x+1][this->current_y+1]
+					&& !this->flagged[this->current_x+1][this->current_y+1]) {
+				possible_directions[DIRECTION_TOP] = true;
+			}
+			if (!this->revealed[this->current_x][this->current_y+1]
+					&& !this->flagged[this->current_x][this->current_y+1]
+					&& (this->revealed[this->current_x+1][this->current_y+1]
+						|| this->flagged[this->current_x+1][this->current_y+1])) {
+				possible_directions[DIRECTION_TOP] = true;
+			}
+		}
+
+		// top right vs. right
+		if (this->current_x < WIDTH-1 && this->current_y < HEIGHT-1) {
+			if ((this->revealed[this->current_x+1][this->current_y+1]
+						|| this->flagged[this->current_x+1][this->current_y+1])
+					&& !this->revealed[this->current_x+1][this->current_y]
+					&& !this->flagged[this->current_x+1][this->current_y]) {
+				possible_directions[DIRECTION_RIGHT] = true;
+			}
+			if (!this->revealed[this->current_x+1][this->current_y+1]
+					&& !this->flagged[this->current_x+1][this->current_y+1]
+					&& (this->revealed[this->current_x+1][this->current_y]
+						|| this->flagged[this->current_x+1][this->current_y])) {
+				possible_directions[DIRECTION_RIGHT] = true;
+			}
+		}
+
+		// right vs. bottom right
+		if (this->current_x < WIDTH-1 && this->current_y > 0) {
+			if ((this->revealed[this->current_x+1][this->current_y]
+						|| this->flagged[this->current_x+1][this->current_y])
+					&& !this->revealed[this->current_x+1][this->current_y-1]
+					&& !this->flagged[this->current_x+1][this->current_y-1]) {
+				possible_directions[DIRECTION_RIGHT] = true;
+			}
+			if (!this->revealed[this->current_x+1][this->current_y]
+					&& !this->flagged[this->current_x+1][this->current_y]
+					&& (this->revealed[this->current_x+1][this->current_y-1]
+						|| this->flagged[this->current_x+1][this->current_y-1])) {
+				possible_directions[DIRECTION_RIGHT] = true;
+			}
+		}
+
+		// bottom right vs. bottom
+		if (this->current_x < WIDTH-1 && this->current_y > 0) {
+			if ((this->revealed[this->current_x+1][this->current_y-1]
+						|| this->flagged[this->current_x+1][this->current_y-1])
+					&& !this->revealed[this->current_x][this->current_y-1]
+					&& !this->flagged[this->current_x][this->current_y-1]) {
+				possible_directions[DIRECTION_BOTTOM] = true;
+			}
+			if (!this->revealed[this->current_x+1][this->current_y-1]
+					&& !this->flagged[this->current_x+1][this->current_y-1]
+					&& (this->revealed[this->current_x][this->current_y-1]
+						|| this->flagged[this->current_x][this->current_y-1])) {
+				possible_directions[DIRECTION_BOTTOM] = true;
+			}
+		}
+
+		// bottom vs. bottom left
+		if (this->current_x > 0 && this->current_y > 0) {
+			if ((this->revealed[this->current_x][this->current_y-1]
+						|| this->flagged[this->current_x][this->current_y-1])
+					&& !this->revealed[this->current_x-1][this->current_y-1]
+					&& !this->flagged[this->current_x-1][this->current_y-1]) {
+				possible_directions[DIRECTION_BOTTOM] = true;
+			}
+			if (!this->revealed[this->current_x][this->current_y-1]
+					&& !this->flagged[this->current_x][this->current_y-1]
+					&& (this->revealed[this->current_x-1][this->current_y-1]
+						|| this->flagged[this->current_x-1][this->current_y-1])) {
+				possible_directions[DIRECTION_BOTTOM] = true;
+			}
+		}
+
+		// bottom left vs. left
+		if (this->current_x > 0 && this->current_y > 0) {
+			if ((this->revealed[this->current_x-1][this->current_y-1]
+						|| this->flagged[this->current_x-1][this->current_y-1])
+					&& !this->revealed[this->current_x-1][this->current_y]
+					&& !this->flagged[this->current_x-1][this->current_y]) {
+				possible_directions[DIRECTION_LEFT] = true;
+			}
+			if (!this->revealed[this->current_x-1][this->current_y-1]
+					&& !this->flagged[this->current_x-1][this->current_y-1]
+					&& (this->revealed[this->current_x-1][this->current_y]
+						|| this->flagged[this->current_x-1][this->current_y])) {
+				possible_directions[DIRECTION_LEFT] = true;
+			}
+		}
+
+		// left vs. top left
+		if (this->current_x > 0 && this->current_y < HEIGHT-1) {
+			if ((this->revealed[this->current_x-1][this->current_y]
+						|| this->flagged[this->current_x-1][this->current_y])
+					&& !this->revealed[this->current_x-1][this->current_y+1]
+					&& !this->flagged[this->current_x-1][this->current_y+1]) {
+				possible_directions[DIRECTION_LEFT] = true;
+			}
+			if (!this->revealed[this->current_x-1][this->current_y]
+					&& !this->flagged[this->current_x-1][this->current_y]
+					&& (this->revealed[this->current_x-1][this->current_y+1]
+						|| this->flagged[this->current_x-1][this->current_y+1])) {
+				possible_directions[DIRECTION_LEFT] = true;
+			}
+		}
+
+		bool has_possible = false;
+		for (int i = 0; i < 4; i++) {
+			if (possible_directions[i]) {
+				has_possible = true;
+			}
+		}
+
+		if (has_possible) {
+			switch (this->current_direction) {
+			case DIRECTION_TOP:
+				if (possible_directions[DIRECTION_TOP]) {
+					this->current_y++;
+				} else if (possible_directions[DIRECTION_RIGHT]) {
+					this->current_x++;
+					this->current_direction = DIRECTION_RIGHT;
+				} else if (possible_directions[DIRECTION_LEFT]) {
+					this->current_x--;
+					this->current_direction = DIRECTION_LEFT;
+				} else {
+					this->current_y--;
+					this->current_direction = DIRECTION_BOTTOM;
+				}
+				break;
+			case DIRECTION_RIGHT:
+				if (possible_directions[DIRECTION_RIGHT]) {
+					this->current_x++;
+				} else if (possible_directions[DIRECTION_BOTTOM]) {
+					this->current_y--;
+					this->current_direction = DIRECTION_BOTTOM;
+				} else if (possible_directions[DIRECTION_TOP]) {
+					this->current_y++;
+					this->current_direction = DIRECTION_TOP;
+				} else {
+					this->current_x--;
+					this->current_direction = DIRECTION_LEFT;
+				}
+				break;
+			case DIRECTION_BOTTOM:
+				if (possible_directions[DIRECTION_BOTTOM]) {
+					this->current_y--;
+				} else if (possible_directions[DIRECTION_LEFT]) {
+					this->current_x--;
+					this->current_direction = DIRECTION_LEFT;
+				} else if (possible_directions[DIRECTION_RIGHT]) {
+					this->current_x++;
+					this->current_direction = DIRECTION_RIGHT;
+				} else {
+					this->current_y++;
+					this->current_direction = DIRECTION_TOP;
+				}
+				break;
+			case DIRECTION_LEFT:
+				if (possible_directions[DIRECTION_LEFT]) {
+					this->current_x--;
+				} else if (possible_directions[DIRECTION_TOP]) {
+					this->current_y++;
+					this->current_direction = DIRECTION_TOP;
+				} else if (possible_directions[DIRECTION_BOTTOM]) {
+					this->current_y--;
+					this->current_direction = DIRECTION_BOTTOM;
+				} else {
+					this->current_x++;
+					this->current_direction = DIRECTION_RIGHT;
+				}
+				break;
+			}
+		} else {
+			switch (this->current_direction) {
+			case DIRECTION_TOP:
+				if (this->current_y < HEIGHT-1) {
+					this->current_y++;
+				} else {
+					if (this->current_x < WIDTH-1) {
+						this->current_x++;
+						this->current_direction = DIRECTION_RIGHT;
+					} else {
+						this->current_x--;
+						this->current_direction = DIRECTION_LEFT;
+					}
+				}
+				break;
+			case DIRECTION_RIGHT:
+				if (this->current_x < WIDTH-1) {
+					this->current_x++;
+				} else {
+					if (this->current_y > 0) {
+						this->current_y--;
+						this->current_direction = DIRECTION_BOTTOM;
+					} else {
+						this->current_y++;
+						this->current_direction = DIRECTION_TOP;
+					}
+				}
+				break;
+			case DIRECTION_BOTTOM:
+				if (this->current_y > 0) {
+					this->current_y--;
+				} else {
+					if (this->current_x > 0) {
+						this->current_x--;
+						this->current_direction = DIRECTION_LEFT;
+					} else {
+						this->current_x++;
+						this->current_direction = DIRECTION_RIGHT;
+					}
+				}
+				break;
+			case DIRECTION_LEFT:
+				if (this->current_x > 0) {
+					this->current_x--;
+				} else {
+					if (this->current_y < HEIGHT-1) {
+						this->current_y++;
+						this->current_direction = DIRECTION_TOP;
+					} else {
+						this->current_y--;
+						this->current_direction = DIRECTION_LEFT;
+					}
+				}
+				break;
+			}
+		}
+
+		return true;
+	}
 }

@@ -2,6 +2,26 @@
 // - human performs simple full run, so no decision making/variations
 //   - copy sequences, and try using them in different places
 
+// - for an action to be good, it has to be general
+//   - for it to be generally applied, it has to be good
+//     - chicken-and-egg problem
+// - so has to be kind of good, which makes it kind of be applied in more places, etc.
+//   - but if applied in wrong place, may destroy potential to be even more general/good
+//     - even worse, may prevent another action from being tried, meaning that better action may never be found
+// - so have to periodically restart
+//   - have to hope something kind of good is found
+//     - it then gets applied in places that synergize
+//       - etc.
+
+// - what about outer/traversal?
+//   - inner actions are a part of traversal
+//     - cannot simply replace as everything may change
+
+// - maybe stick to 1 solution but enable backtracking and Monte Carlo Tree Search?
+
+// TODO: curve follow and increment
+// - if inner, pick random direction
+
 #include <chrono>
 #include <iostream>
 #include <map>

@@ -84,8 +84,10 @@ void Solution::init() {
 	this->max_depth = 1;
 	this->depth_limit = 11;
 
-	this->max_num_actions = 1;
-	this->num_actions_limit = 40;
+	// this->max_num_actions = 1;
+	// this->num_actions_limit = 40;
+	this->max_num_actions = 5;
+	this->num_actions_limit = 120;
 }
 
 void Solution::load(string path,

@@ -50,7 +50,8 @@ void PassThroughExperiment::measure_existing_backprop(
 		this->o_target_val_histories.clear();
 
 		uniform_int_distribution<int> in_place_distribution(0, 1);
-		if (in_place_distribution(generator) == 0) {
+		// if (in_place_distribution(generator) == 0) {
+		if (false) {
 			this->curr_exit_depth = 0;
 			switch (this->node_context.back()->type) {
 			case NODE_TYPE_ACTION:
