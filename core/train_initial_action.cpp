@@ -41,10 +41,6 @@ int main(int argc, char* argv[]) {
 
 	solution->save("", "main");
 
-	#if defined(MDEBUG) && MDEBUG
-	int run_index = 0;
-	#endif /* MDEBUG */
-
 	double hit_percent = 0.5;
 
 	while (true) {
@@ -52,10 +48,17 @@ int main(int argc, char* argv[]) {
 
 		RunHelper run_helper;
 
-		int num_steps = 0;
-		int target_steps = 3 + solution->timestamp/2;
+		geometric_distribution<int> iter_distribution(0.5);
+		int num_iters = 1 + iter_distribution(generator);
 
-		while (true) {
+		for (int i_index = 0; i_index < num_iters; i_index++) {
+			geometric_distribution<int> num_actions_distribution(0.3);
+			int num_actions = num_actions_distribution(generator);
+			for (int a_index = 0; a_index < num_actions; a_index++) {
+				Action action = problem->random_action();
+				problem->perform_action(action);
+			}
+
 			vector<ContextLayer> context;
 			context.push_back(ContextLayer());
 
@@ -86,16 +89,6 @@ int main(int argc, char* argv[]) {
 			}
 
 			delete root_history;
-
-			num_steps++;
-			if (num_steps >= target_steps) {
-				break;
-			} else {
-				bool should_continue = problem->travel();
-				if (!should_continue) {
-					break;
-				}
-			}
 		}
 
 		double target_val;
