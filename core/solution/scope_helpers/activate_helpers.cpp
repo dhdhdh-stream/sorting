@@ -9,6 +9,7 @@
 #include "globals.h"
 #include "scope_node.h"
 #include "solution.h"
+#include "solution_helpers.h"
 
 using namespace std;
 
@@ -77,6 +78,12 @@ void node_activate_helper(AbstractNode*& curr_node,
 	if (run_helper.num_actions > solution->num_actions_limit) {
 		run_helper.exceeded_limit = true;
 	}
+
+	if (num_actions_until_experiment != -1) {
+		if (num_actions_until_experiment > 0) {
+			num_actions_until_experiment--;
+		}
+	}
 }
 
 void Scope::activate(Problem* problem,
@@ -85,8 +92,6 @@ void Scope::activate(Problem* problem,
 					 AbstractNode*& exit_node,
 					 RunHelper& run_helper,
 					 ScopeHistory* history) {
-	// TODO: penalize on scope entry
-
 	if (run_helper.curr_depth > run_helper.max_depth) {
 		run_helper.max_depth = run_helper.curr_depth;
 	}
@@ -102,6 +107,11 @@ void Scope::activate(Problem* problem,
 				|| exit_depth != -1
 				|| curr_node == NULL) {
 			break;
+		}
+
+		if (num_actions_until_experiment == 0) {
+			inner_experiment(problem,
+							 run_helper);
 		}
 
 		node_activate_helper(curr_node,

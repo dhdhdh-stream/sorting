@@ -26,6 +26,7 @@ class Solution {
 public:
 	int timestamp;
 	double curr_average_score;
+	double average_num_actions;
 
 	int scope_counter;
 	std::map<int, Scope*> scopes;

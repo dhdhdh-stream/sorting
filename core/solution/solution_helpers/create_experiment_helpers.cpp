@@ -42,12 +42,18 @@ void create_experiment_helper(vector<Scope*>& scope_context,
 
 			node_context.back() = scope_node;
 
-			create_experiment_helper(scope_context,
-									 node_context,
-									 possible_scope_contexts,
-									 possible_node_contexts,
-									 possible_is_branch,
-									 scope_node_history->scope_history);
+			/**
+			 * - bias towards outer/traversal
+			 */
+			uniform_int_distribution<int> inner_distribution(0, 1);
+			if (inner_distribution(generator) == 0) {
+				create_experiment_helper(scope_context,
+										 node_context,
+										 possible_scope_contexts,
+										 possible_node_contexts,
+										 possible_is_branch,
+										 scope_node_history->scope_history);
+			}
 
 			if (scope_node_history->normal_exit) {
 				possible_scope_contexts.push_back(scope_context);

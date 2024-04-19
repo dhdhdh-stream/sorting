@@ -23,6 +23,9 @@ default_random_engine generator;
 Problem* problem_type;
 Solution* solution;
 
+int num_actions_until_experiment = -1;
+bool eval_experiment;
+
 int main(int argc, char* argv[]) {
 	if (argc != 2) {
 		cout << "Usage: ./worker [path]" << endl;
@@ -42,10 +45,13 @@ int main(int argc, char* argv[]) {
 	solution = new Solution();
 	solution->load("workers/", "main");
 
-	double sum_num_actions = 0.0;
+	uniform_int_distribution<int> next_distribution(0, (int)solution->average_num_actions);
+	num_actions_until_experiment = 1 + next_distribution(generator);
+	eval_experiment = false;
 
-	for (int i_index = 0; i_index < 2000; i_index++) {
-		Problem* problem = new Minesweeper();
+	auto start_time = chrono::high_resolution_clock::now();
+	while (true) {
+		Minesweeper* problem = new Minesweeper();
 
 		RunHelper run_helper;
 
@@ -70,93 +76,6 @@ int main(int argc, char* argv[]) {
 			root_history);
 
 		delete root_history;
-
-		sum_num_actions += run_helper.num_actions;
-
-		delete problem;
-	}
-
-	double average_num_actions = sum_num_actions/2000;
-
-	uniform_int_distribution<int> exceed_distribution(0, 4);
-	uniform_int_distribution<int> num_actions_distribution(0, (int)average_num_actions);
-	geometric_distribution<int> tail_distribution(1.0/average_num_actions);
-
-	uniform_int_distribution<int> num_random_actions_distribution(0.3);
-
-	auto start_time = chrono::high_resolution_clock::now();
-	while (true) {
-		Minesweeper* problem = new Minesweeper();
-
-		RunHelper run_helper;
-
-		{
-			if (exceed_distribution(generator) == 0) {
-				run_helper.target_num_actions = (int)average_num_actions + tail_distribution(generator);
-			} else {
-				run_helper.target_num_actions = num_actions_distribution(generator);
-			}
-
-			vector<ContextLayer> context;
-			context.push_back(ContextLayer());
-
-			context.back().scope = solution->scopes[1];
-			context.back().node = NULL;
-
-			ScopeHistory* root_history = new ScopeHistory(solution->scopes[1]);
-			context.back().scope_history = root_history;
-
-			int exit_depth = -1;
-			AbstractNode* exit_node = NULL;
-
-			solution->scopes[1]->activate(
-				problem,
-				context,
-				exit_depth,
-				exit_node,
-				run_helper,
-				root_history);
-
-			delete root_history;
-		}
-
-		geometric_distribution<int> iter_distribution(0.5);
-		int num_iters = 1 + iter_distribution(generator);
-
-		for (int i_index = 0; i_index < num_iters; i_index++) {
-			run_helper.target_num_actions = -1;
-
-			vector<ContextLayer> context;
-			context.push_back(ContextLayer());
-
-			context.back().scope = solution->scopes[2];
-			context.back().node = NULL;
-
-			ScopeHistory* root_history = new ScopeHistory(solution->scopes[2]);
-			context.back().scope_history = root_history;
-
-			// unused
-			int exit_depth = -1;
-			AbstractNode* exit_node = NULL;
-
-			solution->scopes[2]->activate(
-				problem,
-				context,
-				exit_depth,
-				exit_node,
-				run_helper,
-				root_history);
-
-			if (run_helper.experiments_seen_order.size() == 0) {
-				if (!run_helper.exceeded_limit) {
-					if (rand()%2 == 0) {
-						create_experiment(root_history);
-					}
-				}
-			}
-
-			delete root_history;
-		}
 
 		double target_val;
 		if (!run_helper.exceeded_limit) {
@@ -261,69 +180,37 @@ int main(int argc, char* argv[]) {
 				run_helper.experiment_histories.back()->experiment->finalize(duplicate);
 				delete run_helper.experiment_histories.back()->experiment;
 
+				Solution* existing_solution = solution;
+				solution = duplicate;
+				eval_experiment = true;
+
 				double sum_vals = 0.0;
 				for (int i_index = 0; i_index < 4000; i_index++) {
 					Minesweeper* problem = new Minesweeper();
 
 					RunHelper run_helper;
 
-					{
-						if (exceed_distribution(generator) == 0) {
-							run_helper.target_num_actions = (int)average_num_actions + tail_distribution(generator);
-						} else {
-							run_helper.target_num_actions = num_actions_distribution(generator);
-						}
+					vector<ContextLayer> context;
+					context.push_back(ContextLayer());
 
-						vector<ContextLayer> context;
-						context.push_back(ContextLayer());
+					context.back().scope = solution->scopes[1];
+					context.back().node = NULL;
 
-						context.back().scope = solution->scopes[1];
-						context.back().node = NULL;
+					ScopeHistory* root_history = new ScopeHistory(solution->scopes[1]);
+					context.back().scope_history = root_history;
 
-						ScopeHistory* root_history = new ScopeHistory(solution->scopes[1]);
-						context.back().scope_history = root_history;
+					int exit_depth = -1;
+					AbstractNode* exit_node = NULL;
 
-						int exit_depth = -1;
-						AbstractNode* exit_node = NULL;
+					solution->scopes[1]->activate(
+						problem,
+						context,
+						exit_depth,
+						exit_node,
+						run_helper,
+						root_history);
 
-						solution->scopes[1]->activate(
-							problem,
-							context,
-							exit_depth,
-							exit_node,
-							run_helper,
-							root_history);
-
-						delete root_history;
-					}
-
-					geometric_distribution<int> iter_distribution(0.5);
-					int num_iters = 1 + iter_distribution(generator);
-
-					for (int i_index = 0; i_index < num_iters; i_index++) {
-						vector<ContextLayer> context;
-						context.push_back(ContextLayer());
-
-						context.back().scope = duplicate->scopes[2];
-						context.back().node = NULL;
-
-						ScopeHistory* root_history = new ScopeHistory(duplicate->scopes[2]);
-						context.back().scope_history = root_history;
-
-						// unused
-						int exit_depth = -1;
-						AbstractNode* exit_node = NULL;
-
-						duplicate->scopes[2]->activate(
-							problem,
-							context,
-							exit_depth,
-							exit_node,
-							run_helper,
-							root_history);
-
-						delete root_history;
-					}
+					delete root_history;
 
 					double target_val;
 					if (!run_helper.exceeded_limit) {
@@ -344,6 +231,9 @@ int main(int argc, char* argv[]) {
 				duplicate->save(path, "possible_" + to_string((unsigned)time(NULL)));
 
 				delete duplicate;
+
+				solution = existing_solution;
+				eval_experiment = false;
 			}
 		} else {
 			for (int e_index = 0; e_index < (int)run_helper.experiments_seen_order.size(); e_index++) {

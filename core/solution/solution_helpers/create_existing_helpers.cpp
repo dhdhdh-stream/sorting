@@ -10,13 +10,22 @@
 
 using namespace std;
 
-ScopeNode* create_existing() {
+ScopeNode* create_existing(Scope* experiment_scope) {
+	// vector<Scope*> possible_scopes;
+	// for (map<int, Scope*>::iterator it = solution->scopes.begin();
+	// 		it != solution->scopes.end(); it++) {
+	// 	if (it->second->id != 0) {
+	// 		possible_scopes.push_back(it->second);
+	// 	}
+	// }
 	vector<Scope*> possible_scopes;
-	for (map<int, Scope*>::iterator it = solution->scopes.begin();
-			it != solution->scopes.end(); it++) {
-		if (it->second->id != 0) {
-			possible_scopes.push_back(it->second);
-		}
+	if (experiment_scope->id == 2) {
+		possible_scopes = vector<Scope*>{solution->scopes[0]};
+	} else if (experiment_scope->id == 1) {
+		// possible_scopes = vector<Scope*>{solution->scopes[0], solution->scopes[2]};
+		possible_scopes = vector<Scope*>{solution->scopes[0]};
+	} else if (experiment_scope->id == 3) {
+		possible_scopes = vector<Scope*>{solution->scopes[0], solution->scopes[2]};
 	}
 
 	uniform_int_distribution<int> possible_distribution(0, possible_scopes.size() + problem_type->num_possible_actions() - 1);

@@ -56,6 +56,8 @@ class BranchExperiment : public AbstractExperiment {
 public:
 	bool skip_explore;
 
+	int num_instances_until_target;
+
 	int state;
 	int state_iter;
 	int explore_iter;

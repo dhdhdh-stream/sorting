@@ -12,6 +12,7 @@
 class AbstractExperiment;
 class AbstractNode;
 class ActionNode;
+class Problem;
 class Scope;
 class ScopeHistory;
 class ScopeNode;
@@ -19,7 +20,9 @@ class ScopeNode;
 void create_experiment(ScopeHistory* root_history);
 AbstractExperiment* create_experiment(std::ifstream& input_file);
 
-ScopeNode* create_existing();
+// TODO: add back random run and reuse existing sequence
+
+ScopeNode* create_existing(Scope* experiment_scope);
 
 /**
  * - don't use actual run as might involve nodes not always reachable
@@ -42,5 +45,8 @@ void input_vals_helper(int curr_depth,
 					   std::vector<AbstractNode*>& node_context,
 					   std::vector<double>& input_vals,
 					   ScopeHistory* scope_history);
+
+void inner_experiment(Problem* problem,
+					  RunHelper& run_helper);
 
 #endif /* SOLUTION_HELPERS_H */

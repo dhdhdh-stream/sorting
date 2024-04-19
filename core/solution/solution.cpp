@@ -15,6 +15,7 @@ Solution::Solution() {
 Solution::Solution(Solution* original) {
 	this->timestamp = original->timestamp;
 	this->curr_average_score = original->curr_average_score;
+	this->average_num_actions = original->average_num_actions;
 
 	for (map<int, Scope*>::iterator it = original->scopes.begin();
 			it != original->scopes.end(); it++) {
@@ -65,6 +66,7 @@ Solution::~Solution() {
 void Solution::init() {
 	this->timestamp = 0;
 	this->curr_average_score = -1.0;
+	this->average_num_actions = 0.0;
 
 	Scope* starting_scope = new Scope();
 	starting_scope->id = 0;
@@ -102,6 +104,10 @@ void Solution::load(string path,
 	string curr_average_score_line;
 	getline(input_file, curr_average_score_line);
 	this->curr_average_score = stod(curr_average_score_line);
+
+	string average_num_actions_line;
+	getline(input_file, average_num_actions_line);
+	this->average_num_actions = stod(average_num_actions_line);
 
 	string num_scopes_line;
 	getline(input_file, num_scopes_line);
@@ -167,6 +173,7 @@ void Solution::save(string path,
 
 	output_file << this->timestamp << endl;
 	output_file << this->curr_average_score << endl;
+	output_file << this->average_num_actions << endl;
 
 	output_file << this->scopes.size() << endl;
 	for (map<int, Scope*>::iterator it = this->scopes.begin();
