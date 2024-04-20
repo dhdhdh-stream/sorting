@@ -50,8 +50,6 @@ void PassThroughExperiment::finalize(Solution* duplicate) {
 			new_branch_node->original_average_score = 0.0;
 			new_branch_node->branch_average_score = 0.0;
 
-			new_branch_node->input_max_depth = 0;
-
 			new_branch_node->original_network = NULL;
 			new_branch_node->branch_network = NULL;
 

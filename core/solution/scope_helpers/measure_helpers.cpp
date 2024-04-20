@@ -36,8 +36,9 @@ void node_measure_activate_helper(AbstractNode*& curr_node,
 	case NODE_TYPE_SCOPE:
 		{
 			ScopeNode* node = (ScopeNode*)curr_node;
-			ScopeNodeHistory* node_history = new ScopeNodeHistory(node);
-			history->node_histories.push_back(node_history);
+			ScopeNodeHistory* node_history = new ScopeNodeHistory();
+			node_history->index = (int)history->node_histories.size();
+			history->node_histories[node] = node_history;
 			node->measure_activate(curr_node,
 								   problem,
 								   context,

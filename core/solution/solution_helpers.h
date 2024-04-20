@@ -39,13 +39,6 @@ void gather_possible_helper(std::vector<Scope*>& scope_context,
 							std::vector<int>& possible_obs_indexes,
 							ScopeHistory* scope_history);
 
-void input_vals_helper(int curr_depth,
-					   int max_depth,
-					   std::vector<Scope*>& scope_context,
-					   std::vector<AbstractNode*>& node_context,
-					   std::vector<double>& input_vals,
-					   ScopeHistory* scope_history);
-
 void inner_experiment(Problem* problem,
 					  RunHelper& run_helper);
 

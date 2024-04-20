@@ -91,7 +91,7 @@ class ScopeHistory {
 public:
 	Scope* scope;
 
-	std::vector<AbstractNodeHistory*> node_histories;
+	std::map<AbstractNode*, AbstractNodeHistory*> node_histories;
 
 	AbstractExperimentHistory* experiment_history;
 

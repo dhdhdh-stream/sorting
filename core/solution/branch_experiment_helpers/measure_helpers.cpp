@@ -25,39 +25,31 @@ bool BranchExperiment::measure_activate(AbstractNode*& curr_node,
 										RunHelper& run_helper) {
 	vector<double> input_vals(this->input_scope_contexts.size(), 0.0);
 	for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
-		if (this->input_node_contexts[i_index].back()->type == NODE_TYPE_ACTION) {
-			ActionNode* action_node = (ActionNode*)this->input_node_contexts[i_index].back();
-			action_node->hook_indexes.push_back(i_index);
-			action_node->hook_scope_contexts.push_back(this->input_scope_contexts[i_index]);
-			action_node->hook_node_contexts.push_back(this->input_node_contexts[i_index]);
-			action_node->hook_obs_indexes.push_back(this->input_obs_indexes[i_index]);
-		} else {
-			BranchNode* branch_node = (BranchNode*)this->input_node_contexts[i_index].back();
-			branch_node->hook_indexes.push_back(i_index);
-			branch_node->hook_scope_contexts.push_back(this->input_scope_contexts[i_index]);
-			branch_node->hook_node_contexts.push_back(this->input_node_contexts[i_index]);
-		}
-	}
-	vector<Scope*> scope_context;
-	vector<AbstractNode*> node_context;
-	input_vals_helper(0,
-					  this->input_max_depth,
-					  scope_context,
-					  node_context,
-					  input_vals,
-					  context[context.size() - this->scope_context.size()].scope_history);
-	for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
-		if (this->input_node_contexts[i_index].back()->type == NODE_TYPE_ACTION) {
-			ActionNode* action_node = (ActionNode*)this->input_node_contexts[i_index].back();
-			action_node->hook_indexes.clear();
-			action_node->hook_scope_contexts.clear();
-			action_node->hook_node_contexts.clear();
-			action_node->hook_obs_indexes.clear();
-		} else {
-			BranchNode* branch_node = (BranchNode*)this->input_node_contexts[i_index].back();
-			branch_node->hook_indexes.clear();
-			branch_node->hook_scope_contexts.clear();
-			branch_node->hook_node_contexts.clear();
+		int curr_layer = 0;
+		ScopeHistory* curr_scope_history = context[context.size() - this->scope_context.size()].scope_history;
+		while (true) {
+			map<AbstractNode*, AbstractNodeHistory*>::iterator it = curr_scope_history->node_histories.find(
+				this->input_node_contexts[i_index][curr_layer]);
+			if (it == curr_scope_history->node_histories.end()) {
+				break;
+			} else {
+				if (curr_layer == (int)this->input_scope_contexts[i_index].size()-1) {
+					if (it->first->type == NODE_TYPE_ACTION) {
+						ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
+						input_vals[i_index] = action_node_history->obs_snapshot[this->input_obs_indexes[i_index]];
+					} else {
+						BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
+						if (branch_node_history->is_branch) {
+							input_vals[i_index] = 1.0;
+						} else {
+							input_vals[i_index] = -1.0;
+						}
+					}
+				} else {
+					curr_layer++;
+					curr_scope_history = ((ScopeNodeHistory*)it->second)->scope_history;
+				}
+			}
 		}
 	}
 

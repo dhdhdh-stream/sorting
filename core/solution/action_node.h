@@ -2,6 +2,7 @@
 #define ACTION_NODE_H
 
 #include <fstream>
+#include <map>
 #include <vector>
 
 #include "abstract_node.h"
@@ -35,12 +36,7 @@ public:
 				  int& exit_depth,
 				  AbstractNode*& exit_node,
 				  RunHelper& run_helper,
-				  std::vector<AbstractNodeHistory*>& node_histories);
-
-	void back_activate(std::vector<Scope*>& scope_context,
-					   std::vector<AbstractNode*>& node_context,
-					   std::vector<double>& input_vals,
-					   ActionNodeHistory* history);
+				  std::map<AbstractNode*, AbstractNodeHistory*>& node_histories);
 
 	void step_through_activate(AbstractNode*& curr_node,
 							   Problem* problem,
@@ -58,7 +54,7 @@ class ActionNodeHistory : public AbstractNodeHistory {
 public:
 	std::vector<double> obs_snapshot;
 
-	ActionNodeHistory(ActionNode* node);
+	ActionNodeHistory();
 	ActionNodeHistory(ActionNodeHistory* original);
 };
 

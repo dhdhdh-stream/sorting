@@ -23,8 +23,9 @@ void node_step_through_activate_helper(AbstractNode*& curr_node,
 	case NODE_TYPE_ACTION:
 		{
 			ActionNode* node = (ActionNode*)curr_node;
-			ActionNodeHistory* node_history = new ActionNodeHistory(node);
-			history->node_histories.push_back(node_history);
+			ActionNodeHistory* node_history = new ActionNodeHistory();
+			node_history->index = (int)history->node_histories.size();
+			history->node_histories[node] = node_history;
 			node->step_through_activate(curr_node,
 										problem,
 										context,
@@ -36,8 +37,9 @@ void node_step_through_activate_helper(AbstractNode*& curr_node,
 	case NODE_TYPE_SCOPE:
 		{
 			ScopeNode* node = (ScopeNode*)curr_node;
-			ScopeNodeHistory* node_history = new ScopeNodeHistory(node);
-			history->node_histories.push_back(node_history);
+			ScopeNodeHistory* node_history = new ScopeNodeHistory();
+			node_history->index = (int)history->node_histories.size();
+			history->node_histories[node] = node_history;
 			node->step_through_activate(curr_node,
 										problem,
 										context,

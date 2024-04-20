@@ -74,53 +74,62 @@ void pass_through_inner_create_experiment_helper(
 	scope_context.push_back(scope_history->scope);
 	node_context.push_back(NULL);
 
-	for (int h_index = 0; h_index < (int)scope_history->node_histories.size(); h_index++) {
-		AbstractNodeHistory* node_history = scope_history->node_histories[h_index];
-		if (node_history->node->type == NODE_TYPE_ACTION) {
-			ActionNodeHistory* action_node_history = (ActionNodeHistory*)node_history;
-			ActionNode* action_node = (ActionNode*)action_node_history->node;
+	for (map<AbstractNode*, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
+			it != scope_history->node_histories.end(); it++) {
+		switch (it->first->type) {
+		case NODE_TYPE_ACTION:
+			{
+				node_context.back() = it->first;
 
-			node_context.back() = action_node;
-
-			possible_scope_contexts.push_back(scope_context);
-			possible_node_contexts.push_back(node_context);
-			possible_is_branch.push_back(false);
-
-			node_context.back() = NULL;
-		} else if (node_history->node->type == NODE_TYPE_SCOPE) {
-			ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)node_history;
-			ScopeNode* scope_node = (ScopeNode*)scope_node_history->node;
-
-			node_context.back() = scope_node;
-
-			uniform_int_distribution<int> inner_distribution(0, 1);
-			if (inner_distribution(generator) == 0) {
-				pass_through_inner_create_experiment_helper(
-					scope_context,
-					node_context,
-					possible_scope_contexts,
-					possible_node_contexts,
-					possible_is_branch,
-					scope_node_history->scope_history);
-			}
-
-			if (scope_node_history->normal_exit) {
 				possible_scope_contexts.push_back(scope_context);
 				possible_node_contexts.push_back(node_context);
 				possible_is_branch.push_back(false);
+
+				node_context.back() = NULL;
 			}
 
-			node_context.back() = NULL;
-		} else {
-			BranchNodeHistory* branch_node_history = (BranchNodeHistory*)node_history;
+			break;
+		case NODE_TYPE_SCOPE:
+			{
+				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)it->second;
 
-			node_context.back() = node_history->node;
+				node_context.back() = it->first;
 
-			possible_scope_contexts.push_back(scope_context);
-			possible_node_contexts.push_back(node_context);
-			possible_is_branch.push_back(branch_node_history->is_branch);
+				uniform_int_distribution<int> inner_distribution(0, 1);
+				if (inner_distribution(generator) == 0) {
+					pass_through_inner_create_experiment_helper(
+						scope_context,
+						node_context,
+						possible_scope_contexts,
+						possible_node_contexts,
+						possible_is_branch,
+						scope_node_history->scope_history);
+				}
 
-			node_context.back() = NULL;
+				if (scope_node_history->normal_exit) {
+					possible_scope_contexts.push_back(scope_context);
+					possible_node_contexts.push_back(node_context);
+					possible_is_branch.push_back(false);
+				}
+
+				node_context.back() = NULL;
+			}
+
+			break;
+		case NODE_TYPE_BRANCH:
+			{
+				BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
+
+				node_context.back() = it->first;
+
+				possible_scope_contexts.push_back(scope_context);
+				possible_node_contexts.push_back(node_context);
+				possible_is_branch.push_back(branch_node_history->is_branch);
+
+				node_context.back() = NULL;
+			}
+
+			break;
 		}
 	}
 
@@ -128,20 +137,23 @@ void pass_through_inner_create_experiment_helper(
 	node_context.pop_back();
 }
 
-void pass_through_create_experiment_helper(vector<int>& experiment_index,
-										   vector<Scope*>& scope_context,
-										   vector<AbstractNode*>& node_context,
-										   vector<vector<Scope*>>& possible_scope_contexts,
-										   vector<vector<AbstractNode*>>& possible_node_contexts,
-										   vector<bool>& possible_is_branch,
-										   ScopeHistory* scope_history) {
+void PassThroughExperiment::pass_through_create_experiment_helper(
+		vector<int>& experiment_index,
+		vector<Scope*>& scope_context,
+		vector<AbstractNode*>& node_context,
+		vector<vector<Scope*>>& possible_scope_contexts,
+		vector<vector<AbstractNode*>>& possible_node_contexts,
+		vector<bool>& possible_is_branch,
+		ScopeHistory* scope_history) {
 	scope_context.push_back(scope_history->scope);
 	node_context.push_back(NULL);
 
 	if (experiment_index.size() > 1) {
-		ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)scope_history->node_histories[experiment_index[0]-1];
+		AbstractNode* ancestor_scope_node = this->node_context[
+			this->scope_context.size() - experiment_index.size()];
+		ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)scope_history->node_histories[ancestor_scope_node];
 
-		node_context.back() = scope_node_history->node;
+		node_context.back() = ancestor_scope_node;
 
 		vector<int> inner_experiment_index(experiment_index.begin()+1, experiment_index.end());
 		pass_through_create_experiment_helper(inner_experiment_index,
@@ -161,54 +173,64 @@ void pass_through_create_experiment_helper(vector<int>& experiment_index,
 		node_context.back() = NULL;
 	}
 
-	for (int h_index = experiment_index[0]; h_index < (int)scope_history->node_histories.size(); h_index++) {
-		AbstractNodeHistory* node_history = scope_history->node_histories[h_index];
-		if (node_history->node->type == NODE_TYPE_ACTION) {
-			ActionNodeHistory* action_node_history = (ActionNodeHistory*)node_history;
-			ActionNode* action_node = (ActionNode*)action_node_history->node;
-			if (h_index == 0 || action_node->action.move != ACTION_NOOP) {
-				node_context.back() = action_node;
+	for (map<AbstractNode*, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
+			it != scope_history->node_histories.end(); it++) {
+		if (it->second->index >= experiment_index[0]) {
+			switch (it->first->type) {
+			case NODE_TYPE_ACTION:
+				{
+					node_context.back() = it->first;
 
-				possible_scope_contexts.push_back(scope_context);
-				possible_node_contexts.push_back(node_context);
-				possible_is_branch.push_back(false);
+					possible_scope_contexts.push_back(scope_context);
+					possible_node_contexts.push_back(node_context);
+					possible_is_branch.push_back(false);
 
-				node_context.back() = NULL;
+					node_context.back() = NULL;
+				}
+
+				break;
+			case NODE_TYPE_SCOPE:
+				{
+					ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)it->second;
+
+					node_context.back() = it->first;
+
+					// uniform_int_distribution<int> inner_distribution(0, 1);
+					// if (inner_distribution(generator) == 0) {
+					// 	pass_through_inner_create_experiment_helper(
+					// 		scope_context,
+					// 		node_context,
+					// 		possible_scope_contexts,
+					// 		possible_node_contexts,
+					// 		possible_is_branch,
+					// 		scope_node_history->scope_history);
+					// }
+
+					if (scope_node_history->normal_exit) {
+						possible_scope_contexts.push_back(scope_context);
+						possible_node_contexts.push_back(node_context);
+						possible_is_branch.push_back(false);
+					}
+
+					node_context.back() = NULL;
+				}
+
+				break;
+			case NODE_TYPE_BRANCH:
+				{
+					BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
+
+					node_context.back() = it->first;
+
+					possible_scope_contexts.push_back(scope_context);
+					possible_node_contexts.push_back(node_context);
+					possible_is_branch.push_back(branch_node_history->is_branch);
+
+					node_context.back() = NULL;
+				}
+
+				break;
 			}
-		} else if (node_history->node->type == NODE_TYPE_SCOPE) {
-			ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)node_history;
-			ScopeNode* scope_node = (ScopeNode*)scope_node_history->node;
-
-			node_context.back() = scope_node;
-
-			// uniform_int_distribution<int> inner_distribution(0, 1);
-			// if (inner_distribution(generator) == 0) {
-			// 	pass_through_inner_create_experiment_helper(
-			// 		scope_context,
-			// 		node_context,
-			// 		possible_scope_contexts,
-			// 		possible_node_contexts,
-			// 		possible_is_branch,
-			// 		scope_node_history->scope_history);
-			// }
-
-			if (scope_node_history->normal_exit) {
-				possible_scope_contexts.push_back(scope_context);
-				possible_node_contexts.push_back(node_context);
-				possible_is_branch.push_back(false);
-			}
-
-			node_context.back() = NULL;
-		} else {
-			BranchNodeHistory* branch_node_history = (BranchNodeHistory*)node_history;
-
-			node_context.back() = node_history->node;
-
-			possible_scope_contexts.push_back(scope_context);
-			possible_node_contexts.push_back(node_context);
-			possible_is_branch.push_back(branch_node_history->is_branch);
-
-			node_context.back() = NULL;
 		}
 	}
 

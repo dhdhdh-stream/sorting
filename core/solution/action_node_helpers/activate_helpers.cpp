@@ -16,7 +16,7 @@ void ActionNode::activate(AbstractNode*& curr_node,
 						  int& exit_depth,
 						  AbstractNode*& exit_node,
 						  RunHelper& run_helper,
-						  vector<AbstractNodeHistory*>& node_histories) {
+						  map<AbstractNode*, AbstractNodeHistory*>& node_histories) {
 	if (num_actions_until_experiment != -1
 			&& num_actions_after_experiment_to_skip > 0) {
 		num_actions_after_experiment_to_skip--;
@@ -28,8 +28,9 @@ void ActionNode::activate(AbstractNode*& curr_node,
 
 		curr_node = this->next_node;
 	} else {
-		ActionNodeHistory* history = new ActionNodeHistory(this);
-		node_histories.push_back(history);
+		ActionNodeHistory* history = new ActionNodeHistory();
+		history->index = (int)node_histories.size();
+		node_histories[this] = history;
 
 		problem->perform_action(this->action);
 		history->obs_snapshot = problem->get_observations();

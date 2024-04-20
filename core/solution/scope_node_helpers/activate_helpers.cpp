@@ -14,7 +14,7 @@ void ScopeNode::activate(AbstractNode*& curr_node,
 						 int& exit_depth,
 						 AbstractNode*& exit_node,
 						 RunHelper& run_helper,
-						 vector<AbstractNodeHistory*>& node_histories) {
+						 map<AbstractNode*, AbstractNodeHistory*>& node_histories) {
 	if (num_actions_until_experiment != -1
 			&& num_actions_after_experiment_to_skip > 0) {
 		num_actions_after_experiment_to_skip--;
@@ -26,8 +26,9 @@ void ScopeNode::activate(AbstractNode*& curr_node,
 
 		curr_node = this->next_node;
 	} else {
-		ScopeNodeHistory* history = new ScopeNodeHistory(this);
-		node_histories.push_back(history);
+		ScopeNodeHistory* history = new ScopeNodeHistory();
+		history->index = node_histories.size();
+		node_histories[this] = history;
 
 		context.back().node = this;
 

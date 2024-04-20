@@ -165,25 +165,25 @@ ScopeHistory::ScopeHistory(Scope* scope) {
 ScopeHistory::ScopeHistory(ScopeHistory* original) {
 	this->scope = original->scope;
 
-	for (int h_index = 0; h_index < (int)original->node_histories.size(); h_index++) {
-		AbstractNodeHistory* node_history = original->node_histories[h_index];
-		switch (node_history->node->type) {
+	for (map<AbstractNode*, AbstractNodeHistory*>::iterator it = original->node_histories.begin();
+			it != original->node_histories.end(); it++) {
+		switch (it->first->type) {
 		case NODE_TYPE_ACTION:
 			{
-				ActionNodeHistory* action_node_history = (ActionNodeHistory*)node_history;
-				this->node_histories.push_back(new ActionNodeHistory(action_node_history));
+				ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
+				this->node_histories[it->first] = action_node_history;
 			}
 			break;
 		case NODE_TYPE_SCOPE:
 			{
-				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)node_history;
-				this->node_histories.push_back(new ScopeNodeHistory(scope_node_history));
+				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)it->second;
+				this->node_histories[it->first] = scope_node_history;
 			}
 			break;
 		case NODE_TYPE_BRANCH:
 			{
-				BranchNodeHistory* branch_node_history = (BranchNodeHistory*)node_history;
-				this->node_histories.push_back(new BranchNodeHistory(branch_node_history));
+				BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
+				this->node_histories[it->first] = branch_node_history;
 			}
 			break;
 		}
@@ -193,7 +193,8 @@ ScopeHistory::ScopeHistory(ScopeHistory* original) {
 }
 
 ScopeHistory::~ScopeHistory() {
-	for (int h_index = 0; h_index < (int)this->node_histories.size(); h_index++) {
-		delete this->node_histories[h_index];
+	for (map<AbstractNode*, AbstractNodeHistory*>::iterator it = this->node_histories.begin();
+			it != this->node_histories.end(); it++) {
+		delete it->second;
 	}
 }

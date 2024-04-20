@@ -63,7 +63,6 @@ public:
 	std::vector<std::vector<Scope*>> input_scope_contexts;
 	std::vector<std::vector<AbstractNode*>> input_node_contexts;
 	std::vector<int> input_obs_indexes;
-	int input_max_depth;
 
 	std::vector<double> existing_linear_weights;
 	std::vector<std::vector<int>> existing_network_input_indexes;
@@ -206,6 +205,14 @@ public:
 							 BranchExperimentHistory* history);
 	void experiment_backprop(double target_val,
 							 RunHelper& run_helper);
+	void branch_create_experiment_helper(
+		std::vector<int>& experiment_index,
+		std::vector<Scope*>& scope_context,
+		std::vector<AbstractNode*>& node_context,
+		std::vector<std::vector<Scope*>>& possible_scope_contexts,
+		std::vector<std::vector<AbstractNode*>>& possible_node_contexts,
+		std::vector<bool>& possible_is_branch,
+		ScopeHistory* scope_history);
 
 	void experiment_verify_existing_backprop(double target_val,
 											 RunHelper& run_helper);

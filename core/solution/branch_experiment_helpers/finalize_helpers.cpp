@@ -102,7 +102,6 @@ void BranchExperiment::new_branch(Solution* duplicate) {
 	new_branch_node->original_average_score = this->existing_average_score;
 	new_branch_node->branch_average_score = this->new_average_score;
 
-	new_branch_node->input_max_depth = 0;
 	vector<int> input_mapping(this->input_scope_contexts.size(), -1);
 	for (int i_index = 0; i_index < (int)this->existing_linear_weights.size(); i_index++) {
 		if (this->existing_linear_weights[i_index] != 0.0) {
@@ -129,9 +128,6 @@ void BranchExperiment::new_branch(Solution* duplicate) {
 					node_context_ids.push_back(this->input_node_contexts[i_index][c_index]->id);
 				}
 				new_branch_node->input_node_context_ids.push_back(node_context_ids);
-				if ((int)this->input_scope_contexts[i_index].size() > new_branch_node->input_max_depth) {
-					new_branch_node->input_max_depth = (int)this->input_scope_contexts[i_index].size();
-				}
 				new_branch_node->input_obs_indexes.push_back(this->input_obs_indexes[i_index]);
 			}
 		}
@@ -162,9 +158,6 @@ void BranchExperiment::new_branch(Solution* duplicate) {
 					node_context_ids.push_back(this->input_node_contexts[original_index][c_index]->id);
 				}
 				new_branch_node->input_node_context_ids.push_back(node_context_ids);
-				if ((int)this->input_scope_contexts[original_index].size() > new_branch_node->input_max_depth) {
-					new_branch_node->input_max_depth = (int)this->input_scope_contexts[original_index].size();
-				}
 				new_branch_node->input_obs_indexes.push_back(this->input_obs_indexes[original_index]);
 			}
 		}
@@ -194,9 +187,6 @@ void BranchExperiment::new_branch(Solution* duplicate) {
 					node_context_ids.push_back(this->input_node_contexts[i_index][c_index]->id);
 				}
 				new_branch_node->input_node_context_ids.push_back(node_context_ids);
-				if ((int)this->input_scope_contexts[i_index].size() > new_branch_node->input_max_depth) {
-					new_branch_node->input_max_depth = (int)this->input_scope_contexts[i_index].size();
-				}
 				new_branch_node->input_obs_indexes.push_back(this->input_obs_indexes[i_index]);
 			}
 		}
@@ -227,9 +217,6 @@ void BranchExperiment::new_branch(Solution* duplicate) {
 					node_context_ids.push_back(this->input_node_contexts[original_index][c_index]->id);
 				}
 				new_branch_node->input_node_context_ids.push_back(node_context_ids);
-				if ((int)this->input_scope_contexts[original_index].size() > new_branch_node->input_max_depth) {
-					new_branch_node->input_max_depth = (int)this->input_scope_contexts[original_index].size();
-				}
 				new_branch_node->input_obs_indexes.push_back(this->input_obs_indexes[original_index]);
 			}
 		}
@@ -461,8 +448,6 @@ void BranchExperiment::new_pass_through(Solution* duplicate) {
 
 	new_branch_node->original_average_score = 0.0;
 	new_branch_node->branch_average_score = 0.0;
-
-	new_branch_node->input_max_depth = 0;
 
 	new_branch_node->original_network = NULL;
 	new_branch_node->branch_network = NULL;

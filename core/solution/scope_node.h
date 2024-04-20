@@ -35,7 +35,7 @@ public:
 				  int& exit_depth,
 				  AbstractNode*& exit_node,
 				  RunHelper& run_helper,
-				  std::vector<AbstractNodeHistory*>& node_histories);
+				  std::map<AbstractNode*, AbstractNodeHistory*>& node_histories);
 
 	void explore_activate(Problem* problem,
 						  std::vector<ContextLayer>& context,
@@ -98,7 +98,7 @@ public:
 
 	bool normal_exit;
 
-	ScopeNodeHistory(ScopeNode* node);
+	ScopeNodeHistory();
 	ScopeNodeHistory(ScopeNodeHistory* original);
 	~ScopeNodeHistory();
 };

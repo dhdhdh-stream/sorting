@@ -53,12 +53,12 @@ void ActionNode::save_for_display(ofstream& output_file) {
 	output_file << this->next_node_id << endl;
 }
 
-ActionNodeHistory::ActionNodeHistory(ActionNode* node) {
-	this->node = node;
+ActionNodeHistory::ActionNodeHistory() {
+	// do nothing
 }
 
 ActionNodeHistory::ActionNodeHistory(ActionNodeHistory* original) {
-	this->node = original->node;
+	this->index = original->index;
 
 	this->obs_snapshot = original->obs_snapshot;
 }

@@ -117,6 +117,14 @@ public:
 							 PassThroughExperimentHistory* history);
 	void experiment_backprop(double target_val,
 							 RunHelper& run_helper);
+	void pass_through_create_experiment_helper(
+		std::vector<int>& experiment_index,
+		std::vector<Scope*>& scope_context,
+		std::vector<AbstractNode*>& node_context,
+		std::vector<std::vector<Scope*>>& possible_scope_contexts,
+		std::vector<std::vector<AbstractNode*>>& possible_node_contexts,
+		std::vector<bool>& possible_is_branch,
+		ScopeHistory* scope_history);
 
 	void experiment_verify_existing_backprop(double target_val,
 											 RunHelper& run_helper);

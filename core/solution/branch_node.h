@@ -2,6 +2,7 @@
 #define BRANCH_NODE_H
 
 #include <fstream>
+#include <map>
 #include <vector>
 
 #include "abstract_node.h"
@@ -34,7 +35,6 @@ public:
 	std::vector<std::vector<int>> input_node_context_ids;
 	std::vector<std::vector<AbstractNode*>> input_node_contexts;
 	std::vector<int> input_obs_indexes;
-	int input_max_depth;
 
 	std::vector<int> linear_original_input_indexes;
 	std::vector<double> linear_original_weights;
@@ -76,12 +76,7 @@ public:
 				  int& exit_depth,
 				  AbstractNode*& exit_node,
 				  RunHelper& run_helper,
-				  std::vector<AbstractNodeHistory*>& node_histories);
-
-	void back_activate(std::vector<Scope*>& scope_context,
-					   std::vector<AbstractNode*>& node_context,
-					   std::vector<double>& input_vals,
-					   BranchNodeHistory* history);
+				  std::map<AbstractNode*, AbstractNodeHistory*>& node_histories);
 
 	void random_existing_activate(AbstractNode*& curr_node,
 								  std::vector<Scope*>& scope_context,
@@ -103,7 +98,7 @@ public:
 							   Problem* problem,
 							   std::vector<ContextLayer>& context,
 							   RunHelper& run_helper,
-							   std::vector<AbstractNodeHistory*>& node_histories);
+							   std::map<AbstractNode*, AbstractNodeHistory*>& node_histories);
 
 	#if defined(MDEBUG) && MDEBUG
 	void verify_activate(AbstractNode*& curr_node,
@@ -125,7 +120,7 @@ class BranchNodeHistory : public AbstractNodeHistory {
 public:
 	bool is_branch;
 
-	BranchNodeHistory(BranchNode* node);
+	BranchNodeHistory();
 	BranchNodeHistory(BranchNodeHistory* original);
 };
 
