@@ -1,17 +1,3 @@
-// TODO: actually, too difficult to find something that's good across all situations
-// - especially vs. existing
-//   - so just defaults to doing nothing
-
-// - probably have to build from existing
-//   - but how to make sure cut at the right spots?
-//     - i.e.:
-//       - good for branching
-//         - flexible, robust start; minimal, non-committing end
-//       - usable across multiple scenarios
-
-// - maybe arbitrarily select multiple points, and learn scope for multiple improvements?
-//   - then if improvement, new scope?
-
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -40,6 +26,7 @@ Problem* problem_type;
 Solution* solution;
 
 int num_actions_until_experiment = -1;
+int num_actions_after_experiment_to_skip = -1;
 bool eval_experiment;
 
 int main(int argc, char* argv[]) {
@@ -60,6 +47,8 @@ int main(int argc, char* argv[]) {
 	eval_experiment = false;
 
 	while (true) {
+		num_actions_after_experiment_to_skip = 0;
+
 		Minesweeper* problem = new Minesweeper();
 
 		RunHelper run_helper;

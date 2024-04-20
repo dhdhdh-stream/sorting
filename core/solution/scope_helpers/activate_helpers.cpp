@@ -24,30 +24,26 @@ void node_activate_helper(AbstractNode*& curr_node,
 	case NODE_TYPE_ACTION:
 		{
 			ActionNode* node = (ActionNode*)curr_node;
-			ActionNodeHistory* node_history = new ActionNodeHistory(node);
-			history->node_histories.push_back(node_history);
 			node->activate(curr_node,
 						   problem,
 						   context,
 						   exit_depth,
 						   exit_node,
 						   run_helper,
-						   node_history);
+						   history->node_histories);
 		}
 
 		break;
 	case NODE_TYPE_SCOPE:
 		{
 			ScopeNode* node = (ScopeNode*)curr_node;
-			ScopeNodeHistory* node_history = new ScopeNodeHistory(node);
-			history->node_histories.push_back(node_history);
 			node->activate(curr_node,
 						   problem,
 						   context,
 						   exit_depth,
 						   exit_node,
 						   run_helper,
-						   node_history);
+						   history->node_histories);
 		}
 
 		break;

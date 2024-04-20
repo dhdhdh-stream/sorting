@@ -35,7 +35,11 @@ public:
 				  int& exit_depth,
 				  AbstractNode*& exit_node,
 				  RunHelper& run_helper,
-				  ScopeNodeHistory* history);
+				  std::vector<AbstractNodeHistory*>& node_histories);
+
+	void explore_activate(Problem* problem,
+						  std::vector<ContextLayer>& context,
+						  RunHelper& run_helper);
 
 	void random_exit_activate(AbstractNode*& curr_node,
 							  std::vector<Scope*>& scope_context,

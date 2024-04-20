@@ -22,7 +22,6 @@ ScopeNode* create_existing(Scope* experiment_scope) {
 	if (experiment_scope->id == 2) {
 		possible_scopes = vector<Scope*>{solution->scopes[0]};
 	} else if (experiment_scope->id == 1) {
-		// possible_scopes = vector<Scope*>{solution->scopes[0], solution->scopes[2]};
 		possible_scopes = vector<Scope*>{solution->scopes[0]};
 	} else if (experiment_scope->id == 3) {
 		possible_scopes = vector<Scope*>{solution->scopes[0], solution->scopes[2]};

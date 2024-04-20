@@ -30,27 +30,12 @@ void PassThroughExperiment::explore_activate(
 		RunHelper& run_helper) {
 	for (int s_index = 0; s_index < (int)this->curr_step_types.size(); s_index++) {
 		if (this->curr_step_types[s_index] == STEP_TYPE_ACTION) {
-			ActionNodeHistory* action_node_history = new ActionNodeHistory(this->curr_actions[s_index]);
-			this->curr_actions[s_index]->activate(
-				curr_node,
-				problem,
-				context,
-				exit_depth,
-				exit_node,
-				run_helper,
-				action_node_history);
-			delete action_node_history;
+			problem->perform_action(this->curr_actions[s_index]->action);
 		} else {
-			ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(this->curr_scopes[s_index]);
-			this->curr_scopes[s_index]->activate(
-				curr_node,
+			this->curr_scopes[s_index]->explore_activate(
 				problem,
 				context,
-				exit_depth,
-				exit_node,
-				run_helper,
-				scope_node_history);
-			delete scope_node_history;
+				run_helper);
 		}
 	}
 

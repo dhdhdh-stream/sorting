@@ -35,7 +35,7 @@ public:
 				  int& exit_depth,
 				  AbstractNode*& exit_node,
 				  RunHelper& run_helper,
-				  ActionNodeHistory* history);
+				  std::vector<AbstractNodeHistory*>& node_histories);
 
 	void back_activate(std::vector<Scope*>& scope_context,
 					   std::vector<AbstractNode*>& node_context,

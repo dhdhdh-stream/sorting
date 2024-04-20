@@ -34,6 +34,9 @@
 // - traversal is narrow, so don't recurse in general?
 //   - yeah, maybe instead begin creating 2nd level action?
 
+// - maybe arbitrarily select multiple points, and learn scope for multiple improvements?
+//   - then if improvement, new scope?
+
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -62,6 +65,7 @@ Problem* problem_type;
 Solution* solution;
 
 int num_actions_until_experiment = -1;
+int num_actions_after_experiment_to_skip = -1;
 bool eval_experiment;
 
 int main(int argc, char* argv[]) {
@@ -103,11 +107,13 @@ int main(int argc, char* argv[]) {
 		context.push_back(ContextLayer());
 
 		// context.back().scope = solution->scopes[0];
-		context.back().scope = solution->scopes[1];
+		// context.back().scope = solution->scopes[1];
+		context.back().scope = solution->scopes[3];
 		context.back().node = NULL;
 
 		// ScopeHistory* root_history = new ScopeHistory(solution->scopes[0]);
-		ScopeHistory* root_history = new ScopeHistory(solution->scopes[1]);
+		// ScopeHistory* root_history = new ScopeHistory(solution->scopes[1]);
+		ScopeHistory* root_history = new ScopeHistory(solution->scopes[3]);
 		context.back().scope_history = root_history;
 
 		// unused
@@ -115,7 +121,8 @@ int main(int argc, char* argv[]) {
 		AbstractNode* exit_node = NULL;
 
 		// solution->scopes[0]->activate(
-		solution->scopes[1]->activate(
+		// solution->scopes[1]->activate(
+		solution->scopes[3]->activate(
 			problem,
 			context,
 			exit_depth,

@@ -22,6 +22,10 @@ default_random_engine generator;
 Problem* problem_type;
 Solution* solution;
 
+int num_actions_until_experiment = -1;
+int num_actions_after_experiment_to_skip = -1;
+bool eval_experiment;
+
 int main(int argc, char* argv[]) {
 	cout << "Starting..." << endl;
 
@@ -33,6 +37,7 @@ int main(int argc, char* argv[]) {
 	solution = new Solution();
 	// solution->load("", "initial_action");
 	solution->load("", "2nd_layer");
+	// solution->load("", "simple_initial_action");
 
 	Scope* new_scope = new Scope();
 	new_scope->id = solution->scope_counter;

@@ -186,27 +186,12 @@ void BranchExperiment::explore_activate(
 
 		for (int s_index = 0; s_index < (int)this->curr_step_types.size(); s_index++) {
 			if (this->curr_step_types[s_index] == STEP_TYPE_ACTION) {
-				ActionNodeHistory* action_node_history = new ActionNodeHistory(this->curr_actions[s_index]);
-				this->curr_actions[s_index]->activate(
-					curr_node,
-					problem,
-					context,
-					exit_depth,
-					exit_node,
-					run_helper,
-					action_node_history);
-				delete action_node_history;
+				problem->perform_action(this->curr_actions[s_index]->action);
 			} else {
-				ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(this->curr_scopes[s_index]);
-				this->curr_scopes[s_index]->activate(
-					curr_node,
+				this->curr_scopes[s_index]->explore_activate(
 					problem,
 					context,
-					exit_depth,
-					exit_node,
-					run_helper,
-					scope_node_history);
-				delete scope_node_history;
+					run_helper);
 			}
 		}
 
@@ -507,7 +492,7 @@ void BranchExperiment::explore_backprop(
 			this->i_scope_histories.reserve(NUM_DATAPOINTS);
 			this->i_target_val_histories.reserve(NUM_DATAPOINTS);
 
-			uniform_int_distribution<int> until_distribution(0, (int)this->average_instances_per_run);
+			uniform_int_distribution<int> until_distribution(0, (int)(this->average_instances_per_run-1.0)/2.0);
 			this->num_instances_until_target = 1 + until_distribution(generator);
 
 			this->state = BRANCH_EXPERIMENT_STATE_TRAIN_NEW;

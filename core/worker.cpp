@@ -23,6 +23,10 @@ default_random_engine generator;
 Problem* problem_type;
 Solution* solution;
 
+int num_actions_until_experiment = -1;
+int num_actions_after_experiment_to_skip = -1;
+bool eval_experiment;
+
 int main(int argc, char* argv[]) {
 	if (argc != 2) {
 		cout << "Usage: ./worker [path]" << endl;
@@ -57,17 +61,23 @@ int main(int argc, char* argv[]) {
 		vector<ContextLayer> context;
 		context.push_back(ContextLayer());
 
-		context.back().scope = solution->scopes[0];
+		// context.back().scope = solution->scopes[0];
+		// context.back().scope = solution->scopes[1];
+		context.back().scope = solution->scopes[3];
 		context.back().node = NULL;
 
-		ScopeHistory* root_history = new ScopeHistory(solution->scopes[0]);
+		// ScopeHistory* root_history = new ScopeHistory(solution->scopes[0]);
+		// ScopeHistory* root_history = new ScopeHistory(solution->scopes[1]);
+		ScopeHistory* root_history = new ScopeHistory(solution->scopes[3]);
 		context.back().scope_history = root_history;
 
 		// unused
 		int exit_depth = -1;
 		AbstractNode* exit_node = NULL;
 
-		solution->scopes[0]->activate(
+		// solution->scopes[0]->activate(
+		// solution->scopes[1]->activate(
+		solution->scopes[3]->activate(
 			problem,
 			context,
 			exit_depth,
@@ -187,6 +197,7 @@ int main(int argc, char* argv[]) {
 				delete run_helper.experiment_histories.back()->experiment;
 
 				double sum_vals = 0.0;
+				double sum_num_actions = 0.0;
 				for (int i_index = 0; i_index < 4000; i_index++) {
 					// Problem* problem = new Sorting();
 					Problem* problem = new Minesweeper();
@@ -196,17 +207,23 @@ int main(int argc, char* argv[]) {
 					vector<ContextLayer> context;
 					context.push_back(ContextLayer());
 
-					context.back().scope = duplicate->scopes[0];
+					// context.back().scope = duplicate->scopes[0];
+					// context.back().scope = duplicate->scopes[1];
+					context.back().scope = duplicate->scopes[3];
 					context.back().node = NULL;
 
-					ScopeHistory* root_history = new ScopeHistory(duplicate->scopes[0]);
+					// ScopeHistory* root_history = new ScopeHistory(duplicate->scopes[0]);
+					// ScopeHistory* root_history = new ScopeHistory(duplicate->scopes[1]);
+					ScopeHistory* root_history = new ScopeHistory(duplicate->scopes[3]);
 					context.back().scope_history = root_history;
 
 					// unused
 					int exit_depth = -1;
 					AbstractNode* exit_node = NULL;
 
-					duplicate->scopes[0]->activate(
+					// duplicate->scopes[0]->activate(
+					// duplicate->scopes[1]->activate(
+					duplicate->scopes[3]->activate(
 						problem,
 						context,
 						exit_depth,
@@ -224,6 +241,8 @@ int main(int argc, char* argv[]) {
 					}
 					sum_vals += target_val;
 
+					sum_num_actions += run_helper.num_actions;
+
 					delete problem;
 				}
 
@@ -232,6 +251,7 @@ int main(int argc, char* argv[]) {
 
 				duplicate->timestamp++;
 				duplicate->curr_average_score = possible_average_score;
+				duplicate->average_num_actions = sum_num_actions/4000.0;
 				duplicate->save(path, "possible_" + to_string((unsigned)time(NULL)));
 
 				delete duplicate;

@@ -16,22 +16,37 @@ void ActionNode::activate(AbstractNode*& curr_node,
 						  int& exit_depth,
 						  AbstractNode*& exit_node,
 						  RunHelper& run_helper,
-						  ActionNodeHistory* history) {
-	problem->perform_action(this->action);
-	history->obs_snapshot = problem->get_observations();
+						  vector<AbstractNodeHistory*>& node_histories) {
+	if (num_actions_until_experiment != -1
+			&& num_actions_after_experiment_to_skip > 0) {
+		num_actions_after_experiment_to_skip--;
 
-	curr_node = this->next_node;
+		num_actions_until_experiment++;
+		/**
+		 * - to cancel out later decrement
+		 */
 
-	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
-		bool is_selected = this->experiments[e_index]->activate(
-			curr_node,
-			problem,
-			context,
-			exit_depth,
-			exit_node,
-			run_helper);
-		if (is_selected) {
-			return;
+		curr_node = this->next_node;
+	} else {
+		ActionNodeHistory* history = new ActionNodeHistory(this);
+		node_histories.push_back(history);
+
+		problem->perform_action(this->action);
+		history->obs_snapshot = problem->get_observations();
+
+		curr_node = this->next_node;
+
+		for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
+			bool is_selected = this->experiments[e_index]->activate(
+				curr_node,
+				problem,
+				context,
+				exit_depth,
+				exit_node,
+				run_helper);
+			if (is_selected) {
+				return;
+			}
 		}
 	}
 }

@@ -21,11 +21,6 @@ class ScopeNode;
 const int BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING = 0;
 const int BRANCH_EXPERIMENT_STATE_EXPLORE = 1;
 const int BRANCH_EXPERIMENT_STATE_TRAIN_NEW = 2;
-/**
- * - don't worry about retraining with new decision making
- *   - more likely to cause thrasing than to actually be helpful
- *   - simply hope that things work out, and if not, will be caught by MEASURE
- */
 const int BRANCH_EXPERIMENT_STATE_MEASURE = 3;
 const int BRANCH_EXPERIMENT_STATE_VERIFY_1ST_EXISTING = 4;
 const int BRANCH_EXPERIMENT_STATE_VERIFY_1ST = 5;

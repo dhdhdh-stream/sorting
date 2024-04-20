@@ -24,6 +24,7 @@ Problem* problem_type;
 Solution* solution;
 
 int num_actions_until_experiment = -1;
+int num_actions_after_experiment_to_skip = -1;
 bool eval_experiment;
 
 int main(int argc, char* argv[]) {
@@ -51,6 +52,8 @@ int main(int argc, char* argv[]) {
 
 	auto start_time = chrono::high_resolution_clock::now();
 	while (true) {
+		num_actions_after_experiment_to_skip = 0;
+
 		Minesweeper* problem = new Minesweeper();
 
 		RunHelper run_helper;
@@ -186,6 +189,8 @@ int main(int argc, char* argv[]) {
 
 				double sum_vals = 0.0;
 				for (int i_index = 0; i_index < 4000; i_index++) {
+					num_actions_after_experiment_to_skip = 0;
+
 					Minesweeper* problem = new Minesweeper();
 
 					RunHelper run_helper;

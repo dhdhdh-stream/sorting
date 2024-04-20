@@ -23,6 +23,10 @@ default_random_engine generator;
 Problem* problem_type;
 Solution* solution;
 
+int num_actions_until_experiment = -1;
+int num_actions_after_experiment_to_skip = -1;
+bool eval_experiment;
+
 int main(int argc, char* argv[]) {
 	if (argc != 2) {
 		cout << "Usage: ./worker [path]" << endl;

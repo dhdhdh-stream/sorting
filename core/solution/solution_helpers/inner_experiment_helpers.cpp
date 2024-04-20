@@ -47,4 +47,6 @@ void inner_experiment(Problem* problem,
 
 	uniform_int_distribution<int> next_distribution(0, (int)solution->average_num_actions);
 	num_actions_until_experiment = 1 + next_distribution(generator);
+	geometric_distribution<int> skip_distribution(1.0/solution->average_num_actions * 4.0);
+	num_actions_after_experiment_to_skip = skip_distribution(generator);
 }
