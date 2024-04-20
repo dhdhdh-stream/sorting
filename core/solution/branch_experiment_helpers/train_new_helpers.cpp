@@ -98,6 +98,7 @@ void BranchExperiment::train_new_backprop(
 					map<AbstractNode*, AbstractNodeHistory*>::iterator it = curr_scope_history->node_histories.find(
 						this->input_node_contexts[i_index][curr_layer]);
 					if (it == curr_scope_history->node_histories.end()) {
+						inputs(d_index, i_index) = 0.0;
 						break;
 					} else {
 						if (curr_layer == (int)this->input_scope_contexts[i_index].size()-1) {
@@ -112,6 +113,7 @@ void BranchExperiment::train_new_backprop(
 									inputs(d_index, i_index) = -1.0;
 								}
 							}
+							break;
 						} else {
 							curr_layer++;
 							curr_scope_history = ((ScopeNodeHistory*)it->second)->scope_history;
@@ -262,6 +264,7 @@ void BranchExperiment::train_new_backprop(
 										test_input_vals[t_index] = -1.0;
 									}
 								}
+								break;
 							} else {
 								curr_layer++;
 								curr_scope_history = ((ScopeNodeHistory*)it->second)->scope_history;

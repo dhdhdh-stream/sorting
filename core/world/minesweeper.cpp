@@ -113,8 +113,6 @@ Minesweeper::Minesweeper() {
 			}
 		}
 	}
-
-	this->num_actions = 0;
 }
 
 int Minesweeper::num_obs() {
@@ -194,10 +192,6 @@ void Minesweeper::reveal_helper(int x, int y) {
 }
 
 void Minesweeper::perform_action(Action action) {
-	if (action.move != ACTION_NOOP) {
-		this->num_actions++;
-	}
-
 	if (this->hit_mine) {
 		return;
 	}
@@ -340,7 +334,7 @@ void Minesweeper::perform_action(Action action) {
 	}
 }
 
-double Minesweeper::score_result() {
+double Minesweeper::score_result(int num_decisions) {
 	int curr_revealed = 0;
 	double score = 1.0;
 	for (int x_index = 0; x_index < WIDTH; x_index++) {
@@ -361,8 +355,8 @@ double Minesweeper::score_result() {
 
 	score += 0.01*(curr_revealed - this->starting_revealed);
 
-	if (this->num_actions > 20) {
-		score -= 0.0003*(this->num_actions-20);
+	if (num_decisions > 5) {
+		score -= 0.002*(num_decisions-5);
 	}
 
 	if (this->hit_mine) {
@@ -424,6 +418,4 @@ void Minesweeper::print() {
 
 	cout << "current_x: " << this->current_x << endl;
 	cout << "current_y: " << this->current_y << endl;
-
-	cout << "num_actions: " << this->num_actions << endl;
 }

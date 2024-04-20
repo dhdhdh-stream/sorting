@@ -50,8 +50,8 @@ void BranchExperiment::train_existing_backprop(
 				solution->max_depth = run_helper.max_depth;
 			}
 
-			if (run_helper.num_actions > solution->max_num_actions) {
-				solution->max_num_actions = run_helper.num_actions;
+			if (run_helper.num_decisions > solution->max_num_decisions) {
+				solution->max_num_decisions = run_helper.num_decisions;
 			}
 		}
 	}
@@ -118,6 +118,7 @@ void BranchExperiment::train_existing_backprop(
 					map<AbstractNode*, AbstractNodeHistory*>::iterator it = curr_scope_history->node_histories.find(
 						this->input_node_contexts[i_index][curr_layer]);
 					if (it == curr_scope_history->node_histories.end()) {
+						inputs(d_index, i_index) = 0.0;
 						break;
 					} else {
 						if (curr_layer == (int)this->input_scope_contexts[i_index].size()-1) {
@@ -132,6 +133,7 @@ void BranchExperiment::train_existing_backprop(
 									inputs(d_index, i_index) = -1.0;
 								}
 							}
+							break;
 						} else {
 							curr_layer++;
 							curr_scope_history = ((ScopeNodeHistory*)it->second)->scope_history;
@@ -284,6 +286,7 @@ void BranchExperiment::train_existing_backprop(
 										test_input_vals[t_index] = -1.0;
 									}
 								}
+								break;
 							} else {
 								curr_layer++;
 								curr_scope_history = ((ScopeNodeHistory*)it->second)->scope_history;

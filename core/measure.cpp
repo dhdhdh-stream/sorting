@@ -1,6 +1,3 @@
-// TODO: swap vectors in history to maps and compare speed
-// TODO: penalize decision making, not number of nodes
-
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -50,23 +47,23 @@ int main(int argc, char* argv[]) {
 		vector<ContextLayer> context;
 		context.push_back(ContextLayer());
 
-		// context.back().scope = solution->scopes[0];
+		context.back().scope = solution->scopes[0];
 		// context.back().scope = solution->scopes[1];
-		context.back().scope = solution->scopes[3];
+		// context.back().scope = solution->scopes[3];
 		context.back().node = NULL;
 
-		// ScopeHistory* root_history = new ScopeHistory(solution->scopes[0]);
+		ScopeHistory* root_history = new ScopeHistory(solution->scopes[0]);
 		// ScopeHistory* root_history = new ScopeHistory(solution->scopes[1]);
-		ScopeHistory* root_history = new ScopeHistory(solution->scopes[3]);
+		// ScopeHistory* root_history = new ScopeHistory(solution->scopes[3]);
 		context.back().scope_history = root_history;
 
 		// unused
 		int exit_depth = -1;
 		AbstractNode* exit_node = NULL;
 
-		// solution->scopes[0]->measure_activate(
+		solution->scopes[0]->measure_activate(
 		// solution->scopes[1]->measure_activate(
-		solution->scopes[3]->measure_activate(
+		// solution->scopes[3]->measure_activate(
 			problem,
 			context,
 			exit_depth,
@@ -79,7 +76,7 @@ int main(int argc, char* argv[]) {
 
 		double target_val;
 		if (!run_helper.exceeded_limit) {
-			target_val = problem->score_result();
+			target_val = problem->score_result(run_helper.num_decisions);
 		} else {
 			target_val = -1.0;
 		}

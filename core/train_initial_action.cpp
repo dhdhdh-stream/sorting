@@ -97,7 +97,7 @@ int main(int argc, char* argv[]) {
 
 		double target_val;
 		if (!run_helper.exceeded_limit) {
-			target_val = problem->score_result();
+			target_val = problem->score_result(run_helper.num_decisions);
 		} else {
 			target_val = -1.0;
 		}
@@ -209,7 +209,7 @@ int main(int argc, char* argv[]) {
 					solution->depth_limit = (int)(1.2*(double)solution->max_depth);
 				}
 
-				solution->num_actions_limit = 20*solution->max_num_actions + 20;
+				solution->num_decisions_limit = 5*solution->max_num_decisions + 5;
 
 				solution->timestamp++;
 				solution->save("", "main");

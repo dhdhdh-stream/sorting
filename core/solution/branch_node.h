@@ -105,7 +105,7 @@ public:
 						 Problem* problem,
 						 std::vector<ContextLayer>& context,
 						 RunHelper& run_helper,
-						 std::vector<AbstractNodeHistory*>& node_histories);
+						 std::map<AbstractNode*, AbstractNodeHistory*>& node_histories);
 	void clear_verify();
 	#endif /* MDEBUG */
 

@@ -62,7 +62,7 @@ void Sorting::perform_action(Action action) {
 	}
 }
 
-double Sorting::score_result() {
+double Sorting::score_result(int num_decisions) {
 	vector<double> sorted_world = initial_world;
 	sort(sorted_world.begin(), sorted_world.end());
 

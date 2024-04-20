@@ -24,23 +24,22 @@ void node_verify_activate_helper(AbstractNode*& curr_node,
 	case NODE_TYPE_ACTION:
 		{
 			ActionNode* node = (ActionNode*)curr_node;
-			ActionNodeHistory* node_history = new ActionNodeHistory(node);
-			history->node_histories.push_back(node_history);
 			node->activate(curr_node,
 						   problem,
 						   context,
 						   exit_depth,
 						   exit_node,
 						   run_helper,
-						   node_history);
+						   history->node_histories);
 		}
 
 		break;
 	case NODE_TYPE_SCOPE:
 		{
 			ScopeNode* node = (ScopeNode*)curr_node;
-			ScopeNodeHistory* node_history = new ScopeNodeHistory(node);
-			history->node_histories.push_back(node_history);
+			ScopeNodeHistory* node_history = new ScopeNodeHistory();
+			node_history->index = (int)history->node_histories.size();
+			history->node_histories[node] = node_history;
 			node->verify_activate(curr_node,
 								  problem,
 								  context,
@@ -73,9 +72,6 @@ void node_verify_activate_helper(AbstractNode*& curr_node,
 	}
 
 	run_helper.num_actions++;
-	if (run_helper.num_actions > solution->num_actions_limit) {
-		run_helper.exceeded_limit = true;
-	}
 }
 
 void Scope::verify_activate(Problem* problem,

@@ -61,6 +61,7 @@ bool BranchExperiment::experiment_verify_activate(
 								input_vals[i_index] = -1.0;
 							}
 						}
+						break;
 					} else {
 						curr_layer++;
 						curr_scope_history = ((ScopeNodeHistory*)it->second)->scope_history;

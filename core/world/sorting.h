@@ -24,7 +24,7 @@ public:
 
 	std::vector<double> get_observations();
 	void perform_action(Action action);
-	double score_result();
+	double score_result(int num_decisions);
 
 	Problem* copy_and_reset();
 

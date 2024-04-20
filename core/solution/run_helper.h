@@ -11,6 +11,7 @@ public:
 	int curr_depth;
 	int max_depth;
 
+	int num_decisions;
 	int num_actions;
 
 	bool exceeded_limit;

@@ -41,10 +41,10 @@ public:
 	int depth_limit;
 
 	/**
-	 * - set limit to 20*max_num_actions+20
+	 * - set limit to 5*max_num_actions+5
 	 */
-	int max_num_actions;
-	int num_actions_limit;
+	int max_num_decisions;
+	int num_decisions_limit;
 
 	#if defined(MDEBUG) && MDEBUG
 	void* verify_key;

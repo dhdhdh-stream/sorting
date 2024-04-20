@@ -171,19 +171,19 @@ ScopeHistory::ScopeHistory(ScopeHistory* original) {
 		case NODE_TYPE_ACTION:
 			{
 				ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
-				this->node_histories[it->first] = action_node_history;
+				this->node_histories[it->first] = new ActionNodeHistory(action_node_history);
 			}
 			break;
 		case NODE_TYPE_SCOPE:
 			{
 				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)it->second;
-				this->node_histories[it->first] = scope_node_history;
+				this->node_histories[it->first] = new ScopeNodeHistory(scope_node_history);
 			}
 			break;
 		case NODE_TYPE_BRANCH:
 			{
 				BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
-				this->node_histories[it->first] = branch_node_history;
+				this->node_histories[it->first] = new BranchNodeHistory(branch_node_history);
 			}
 			break;
 		}

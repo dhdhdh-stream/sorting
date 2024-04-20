@@ -4,9 +4,11 @@
 
 #include "abstract_experiment.h"
 #include "action_node.h"
+#include "globals.h"
 #include "network.h"
 #include "scope.h"
 #include "scope_node.h"
+#include "solution.h"
 #include "solution_helpers.h"
 #include "utilities.h"
 
@@ -42,6 +44,12 @@ void BranchNode::activate(AbstractNode*& curr_node,
 			curr_node = this->branch_next_node;
 			decision_is_branch = true;
 		} else {
+			run_helper.num_decisions++;
+			if (run_helper.num_decisions > solution->num_decisions_limit) {
+				run_helper.exceeded_limit = true;
+				return;
+			}
+
 			BranchNodeHistory* history = new BranchNodeHistory();
 			history->index = (int)node_histories.size();
 			node_histories[this] = history;
@@ -68,6 +76,7 @@ void BranchNode::activate(AbstractNode*& curr_node,
 									input_vals[i_index] = -1.0;
 								}
 							}
+							break;
 						} else {
 							curr_layer++;
 							curr_scope_history = ((ScopeNodeHistory*)it->second)->scope_history;
