@@ -31,7 +31,7 @@ void train_network(vector<vector<vector<double>>>& inputs,
 	int num_new_inputs = (int)network->inputs.back()->acti_vals.size();
 
 	uniform_int_distribution<int> distribution(0, train_instances-1);
-	for (int iter_index = 0; iter_index < TRAIN_ITERS_FRONT; iter_index++) {
+	for (int iter_index = 0; iter_index < TRAIN_ITERS_FRONT-2000; iter_index++) {
 		int rand_index = distribution(generator);
 
 		network->activate(inputs[rand_index]);
@@ -41,53 +41,120 @@ void train_network(vector<vector<vector<double>>>& inputs,
 		network->backprop(error);
 	}
 
-	/**
-	 * TODO: compare against strongest signal overall instead of new
-	 */
-
-	vector<double> input_means(num_new_inputs);
-	for (int i_index = 0; i_index < num_new_inputs; i_index++) {
-		double sum_vals = 0.0;
-		for (int d_index = 0; d_index < train_instances; d_index++) {
-			sum_vals += inputs[d_index].back()[i_index];
+	vector<vector<double>> input_sums;
+	for (int i_index = 0; i_index < (int)network->hidden_inputs.back().size(); i_index++) {
+		Layer* layer;
+		if (network->hidden_inputs.back()[i_index].first) {
+			layer = network->inputs[network->hidden_inputs.back()[i_index].second];
+		} else {
+			layer = network->hiddens[network->hidden_inputs.back()[i_index].second];
 		}
-		input_means[i_index] = sum_vals / train_instances;
+		input_sums.push_back(vector<double>(layer->acti_vals.size(), 0.0));
 	}
 
-	vector<double> input_weights(num_new_inputs);
-	for (int i_index = 0; i_index < num_new_inputs; i_index++) {
-		double sum_vals = 0.0;
-		for (int d_index = 0; d_index < train_instances; d_index++) {
-			sum_vals += abs(inputs[d_index].back()[i_index] - input_means[i_index]);
+	for (int iter_index = 0; iter_index < 1000; iter_index++) {
+		int rand_index = distribution(generator);
+
+		network->activate(inputs[rand_index]);
+
+		for (int i_index = 0; i_index < (int)network->hidden_inputs.back().size(); i_index++) {
+			Layer* layer;
+			if (network->hidden_inputs.back()[i_index].first) {
+				layer = network->inputs[network->hidden_inputs.back()[i_index].second];
+			} else {
+				layer = network->hiddens[network->hidden_inputs.back()[i_index].second];
+			}
+			for (int a_index = 0; a_index < (int)layer->acti_vals.size(); a_index++) {
+				input_sums[i_index][a_index] += layer->acti_vals[a_index];
+			}
 		}
-		input_weights[i_index] = sum_vals / train_instances;
+
+		double error = target_vals[rand_index] - network->output->acti_vals[0];
+
+		network->backprop(error);
 	}
 
-	vector<double> input_impacts(num_new_inputs);
-	for (int i_index = 0; i_index < num_new_inputs; i_index++) {
-		double sum_impact = 0.0;
-		for (int n_index = 0; n_index < NETWORK_INCREMENT_HIDDEN_SIZE; n_index++) {
-			/**
-			 * - if NETWORK_INCREMENT_TYPE_SIDE, then only 1 layer
-			 * - if NETWORK_INCREMENT_TYPE_ABOVE, then last input layer is new
-			 */
-			sum_impact += abs(network->hiddens.back()->weights[n_index].back()[i_index]);
+	vector<vector<double>> input_means;
+	for (int i_index = 0; i_index < (int)input_sums.size(); i_index++) {
+		input_means.push_back(vector<double>());
+		for (int a_index = 0; a_index < (int)input_sums[i_index].size(); a_index++) {
+			input_means[i_index].push_back(input_sums[i_index][a_index] / 1000.0);
 		}
-		input_impacts[i_index] = sum_impact * input_weights[i_index];
+	}
+
+	vector<vector<double>> input_weights;
+	for (int i_index = 0; i_index < (int)network->hidden_inputs.back().size(); i_index++) {
+		Layer* layer;
+		if (network->hidden_inputs.back()[i_index].first) {
+			layer = network->inputs[network->hidden_inputs.back()[i_index].second];
+		} else {
+			layer = network->hiddens[network->hidden_inputs.back()[i_index].second];
+		}
+		input_weights.push_back(vector<double>(layer->acti_vals.size(), 0.0));
+	}
+
+	for (int iter_index = 0; iter_index < 1000; iter_index++) {
+		int rand_index = distribution(generator);
+
+		network->activate(inputs[rand_index]);
+
+		for (int i_index = 0; i_index < (int)network->hidden_inputs.back().size(); i_index++) {
+			Layer* layer;
+			if (network->hidden_inputs.back()[i_index].first) {
+				layer = network->inputs[network->hidden_inputs.back()[i_index].second];
+			} else {
+				layer = network->hiddens[network->hidden_inputs.back()[i_index].second];
+			}
+			for (int a_index = 0; a_index < (int)layer->acti_vals.size(); a_index++) {
+				input_weights[i_index][a_index] += abs(input_means[i_index][a_index] - layer->acti_vals[a_index]);
+			}
+		}
+
+		double error = target_vals[rand_index] - network->output->acti_vals[0];
+
+		network->backprop(error);
+	}
+
+	vector<vector<double>> input_impacts;
+	for (int i_index = 0; i_index < (int)network->hidden_inputs.back().size(); i_index++) {
+		Layer* layer;
+		if (network->hidden_inputs.back()[i_index].first) {
+			layer = network->inputs[network->hidden_inputs.back()[i_index].second];
+		} else {
+			layer = network->hiddens[network->hidden_inputs.back()[i_index].second];
+		}
+		input_impacts.push_back(vector<double>());
+		for (int a_index = 0; a_index < (int)layer->acti_vals.size(); a_index++) {
+			double sum_impact = 0.0;
+			for (int n_index = 0; n_index < NETWORK_INCREMENT_HIDDEN_SIZE; n_index++) {
+				sum_impact += abs(network->hiddens.back()->weights[n_index][i_index][a_index]);
+			}
+			input_impacts[i_index].push_back(sum_impact * input_weights[i_index][a_index]);
+		}
 	}
 
 	double max_impact = 0.0;
-	for (int i_index = 0; i_index < num_new_inputs; i_index++) {
-		if (input_impacts[i_index] > max_impact) {
-			max_impact = input_impacts[i_index];
+	for (int i_index = 0; i_index < (int)input_impacts.size(); i_index++) {
+		for (int a_index = 0; a_index < (int)input_impacts[i_index].size(); a_index++) {
+			if (input_impacts[i_index][a_index] > max_impact) {
+				max_impact = input_impacts[i_index][a_index];
+			}
 		}
 	}
 
+	/**
+	 * - don't worry about comparing against existing if increment_side
+	 *   - count on new being meaningful, and being caught by significant check if otherwise
+	 */
 	for (int i_index = num_new_inputs-1; i_index >= 0; i_index--) {
 		#if defined(MDEBUG) && MDEBUG
 		if (rand()%2 == 0) {
 		#else
-		if (input_impacts[i_index] < max_impact * NETWORK_INPUT_MIN_IMPACT) {
+		/**
+		 * - if NETWORK_INCREMENT_TYPE_SIDE, then only 1 layer
+		 * - if NETWORK_INCREMENT_TYPE_ABOVE, then last input layer is new
+		 */
+		if (input_impacts.back()[i_index] < max_impact * NETWORK_INPUT_MIN_IMPACT) {
 		#endif /* MDEBUG */
 			test_input_scope_contexts.erase(test_input_scope_contexts.begin() + i_index);
 			test_input_node_contexts.erase(test_input_node_contexts.begin() + i_index);

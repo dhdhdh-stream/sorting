@@ -48,10 +48,6 @@ public:
 	void increment_side(int input_size);
 	void increment_above(int input_size);
 
-	/**
-	 * TODO: cleanup network when inputs are removed
-	 */
-
 	void save(std::ofstream& output_file);
 };
 

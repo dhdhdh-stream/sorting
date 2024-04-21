@@ -299,6 +299,10 @@ void BranchExperiment::train_new_backprop(
 
 			if (t_score > 1.645) {
 			#endif /* MDEBUG */
+				optimize_network(network_inputs,
+								 network_target_vals,
+								 test_network);
+
 				vector<int> new_input_indexes;
 				for (int t_index = 0; t_index < (int)test_network_input_scope_contexts.size(); t_index++) {
 					int index = -1;
