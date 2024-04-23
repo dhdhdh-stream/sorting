@@ -80,10 +80,10 @@ int main(int argc, char* argv[]) {
 	problem_type = new Minesweeper();
 
 	solution = new Solution();
-	solution->init();
-	// solution->load("", "main");
+	// solution->init();
+	solution->load("", "main");
 
-	solution->save("", "main");
+	// solution->save("", "main");
 
 	#if defined(MDEBUG) && MDEBUG
 	int run_index = 0;
@@ -106,23 +106,26 @@ int main(int argc, char* argv[]) {
 		vector<ContextLayer> context;
 		context.push_back(ContextLayer());
 
-		context.back().scope = solution->scopes[0];
+		// context.back().scope = solution->scopes[0];
 		// context.back().scope = solution->scopes[1];
 		// context.back().scope = solution->scopes[3];
+		context.back().scope = solution->scopes[5];
 		context.back().node = NULL;
 
-		ScopeHistory* root_history = new ScopeHistory(solution->scopes[0]);
+		// ScopeHistory* root_history = new ScopeHistory(solution->scopes[0]);
 		// ScopeHistory* root_history = new ScopeHistory(solution->scopes[1]);
 		// ScopeHistory* root_history = new ScopeHistory(solution->scopes[3]);
+		ScopeHistory* root_history = new ScopeHistory(solution->scopes[5]);
 		context.back().scope_history = root_history;
 
 		// unused
 		int exit_depth = -1;
 		AbstractNode* exit_node = NULL;
 
-		solution->scopes[0]->activate(
+		// solution->scopes[0]->activate(
 		// solution->scopes[1]->activate(
 		// solution->scopes[3]->activate(
+		solution->scopes[5]->activate(
 			problem,
 			context,
 			exit_depth,
@@ -258,20 +261,23 @@ int main(int argc, char* argv[]) {
 					vector<ContextLayer> context;
 					context.push_back(ContextLayer());
 
-					context.back().scope = duplicate->scopes[0];
+					// context.back().scope = duplicate->scopes[0];
 					// context.back().scope = duplicate->scopes[1];
+					context.back().scope = duplicate->scopes[5];
 					context.back().node = NULL;
 
-					ScopeHistory* root_history = new ScopeHistory(duplicate->scopes[0]);
+					// ScopeHistory* root_history = new ScopeHistory(duplicate->scopes[0]);
 					// ScopeHistory* root_history = new ScopeHistory(duplicate->scopes[1]);
+					ScopeHistory* root_history = new ScopeHistory(duplicate->scopes[5]);
 					context.back().scope_history = root_history;
 
 					// unused
 					int exit_depth = -1;
 					AbstractNode* exit_node = NULL;
 
-					duplicate->scopes[0]->verify_activate(
+					// duplicate->scopes[0]->verify_activate(
 					// duplicate->scopes[1]->verify_activate(
+					duplicate->scopes[5]->verify_activate(
 						problem,
 						context,
 						exit_depth,
@@ -300,7 +306,7 @@ int main(int argc, char* argv[]) {
 				}
 				#endif /* MDEBUG */
 
-				solution->num_decisions_limit = 5*solution->max_num_decisions + 5;
+				solution->num_actions_limit = 20*solution->max_num_actions + 20;
 
 				solution->timestamp++;
 				solution->save("", "main");

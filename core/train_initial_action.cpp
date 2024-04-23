@@ -209,7 +209,7 @@ int main(int argc, char* argv[]) {
 					solution->depth_limit = (int)(1.2*(double)solution->max_depth);
 				}
 
-				solution->num_decisions_limit = 5*solution->max_num_decisions + 5;
+				solution->num_actions_limit = 20*solution->max_num_actions + 20;
 
 				solution->timestamp++;
 				solution->save("", "main");

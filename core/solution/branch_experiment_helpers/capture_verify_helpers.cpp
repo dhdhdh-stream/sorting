@@ -25,6 +25,8 @@ bool BranchExperiment::capture_verify_activate(AbstractNode*& curr_node,
 											   int& exit_depth,
 											   AbstractNode*& exit_node,
 											   RunHelper& run_helper) {
+	run_helper.num_decisions++;
+
 	if (this->verify_problems[this->state_iter] == NULL) {
 		this->verify_problems[this->state_iter] = problem->copy_and_reset();
 	}

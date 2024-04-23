@@ -19,8 +19,8 @@ void BranchExperiment::experiment_verify_existing_backprop(
 			solution->max_depth = run_helper.max_depth;
 		}
 
-		if (run_helper.num_decisions > solution->max_num_decisions) {
-			solution->max_num_decisions = run_helper.num_decisions;
+		if (run_helper.num_actions > solution->max_num_actions) {
+			solution->max_num_actions = run_helper.num_actions;
 		}
 	}
 

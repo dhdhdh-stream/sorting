@@ -42,7 +42,7 @@ int main(int argc, char* argv[]) {
 	solution = new Solution();
 	solution->load("", "main");
 
-	uniform_int_distribution<int> next_distribution(0, (int)solution->average_num_actions);
+	uniform_int_distribution<int> next_distribution(0, (int)(solution->average_num_actions/2.0));
 	num_actions_until_experiment = 1 + next_distribution(generator);
 	eval_experiment = false;
 
@@ -56,16 +56,19 @@ int main(int argc, char* argv[]) {
 		vector<ContextLayer> context;
 		context.push_back(ContextLayer());
 
-		context.back().scope = solution->scopes[1];
+		// context.back().scope = solution->scopes[1];
+		context.back().scope = solution->scopes[3];
 		context.back().node = NULL;
 
-		ScopeHistory* root_history = new ScopeHistory(solution->scopes[1]);
+		// ScopeHistory* root_history = new ScopeHistory(solution->scopes[1]);
+		ScopeHistory* root_history = new ScopeHistory(solution->scopes[3]);
 		context.back().scope_history = root_history;
 
 		int exit_depth = -1;
 		AbstractNode* exit_node = NULL;
 
-		solution->scopes[1]->activate(
+		// solution->scopes[1]->activate(
+		solution->scopes[3]->activate(
 			problem,
 			context,
 			exit_depth,
@@ -178,24 +181,26 @@ int main(int argc, char* argv[]) {
 				run_helper.experiment_histories.back()->experiment->finalize(duplicate);
 				delete run_helper.experiment_histories.back()->experiment;
 
-				delete solution;
-				solution = duplicate;
+				delete duplicate;
 
-				if (solution->max_depth < 50) {
-					solution->depth_limit = solution->max_depth + 10;
-				} else {
-					solution->depth_limit = (int)(1.2*(double)solution->max_depth);
-				}
+				// delete solution;
+				// solution = duplicate;
 
-				solution->num_decisions_limit = 5*solution->max_num_decisions + 5;
+				// if (solution->max_depth < 50) {
+				// 	solution->depth_limit = solution->max_depth + 10;
+				// } else {
+				// 	solution->depth_limit = (int)(1.2*(double)solution->max_depth);
+				// }
 
-				solution->timestamp++;
-				solution->save("", "main");
+				// solution->num_actions_limit = 20*solution->max_num_actions + 20;
 
-				ofstream display_file;
-				display_file.open("../display.txt");
-				solution->save_for_display(display_file);
-				display_file.close();
+				// solution->timestamp++;
+				// solution->save("", "main");
+
+				// ofstream display_file;
+				// display_file.open("../display.txt");
+				// solution->save_for_display(display_file);
+				// display_file.close();
 			}
 		} else {
 			for (int e_index = 0; e_index < (int)run_helper.experiments_seen_order.size(); e_index++) {

@@ -28,6 +28,8 @@ void BranchExperiment::train_new_activate(
 		AbstractNode*& exit_node,
 		RunHelper& run_helper,
 		BranchExperimentHistory* history) {
+	run_helper.num_decisions++;
+
 	this->num_instances_until_target--;
 	if (this->num_instances_until_target == 0) {
 		history->instance_count++;
@@ -302,6 +304,12 @@ void BranchExperiment::train_new_backprop(
 				optimize_network(network_inputs,
 								 network_target_vals,
 								 test_network);
+
+				measure_network(network_inputs,
+								network_target_vals,
+								test_network,
+								average_misguess,
+								misguess_standard_deviation);
 
 				vector<int> new_input_indexes;
 				for (int t_index = 0; t_index < (int)test_network_input_scope_contexts.size(); t_index++) {

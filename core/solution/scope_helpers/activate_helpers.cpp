@@ -71,6 +71,9 @@ void node_activate_helper(AbstractNode*& curr_node,
 	}
 
 	run_helper.num_actions++;
+	if (run_helper.num_actions > solution->num_actions_limit) {
+		run_helper.exceeded_limit = true;
+	}
 
 	if (num_actions_until_experiment != -1) {
 		if (num_actions_until_experiment > 0) {

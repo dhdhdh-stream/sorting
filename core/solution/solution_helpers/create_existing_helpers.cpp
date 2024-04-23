@@ -25,6 +25,10 @@ ScopeNode* create_existing(Scope* experiment_scope) {
 		possible_scopes = vector<Scope*>{solution->scopes[0]};
 	} else if (experiment_scope->id == 3) {
 		possible_scopes = vector<Scope*>{solution->scopes[0], solution->scopes[2]};
+	} else if (experiment_scope->id == 4) {
+		possible_scopes = vector<Scope*>{solution->scopes[0], solution->scopes[2]};
+	} else if (experiment_scope->id == 5) {
+		possible_scopes = vector<Scope*>{solution->scopes[0], solution->scopes[2], solution->scopes[4]};
 	}
 
 	uniform_int_distribution<int> possible_distribution(0, possible_scopes.size() + problem_type->num_possible_actions() - 1);

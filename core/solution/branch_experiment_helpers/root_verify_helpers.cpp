@@ -4,9 +4,11 @@
 #include "branch_node.h"
 #include "constants.h"
 #include "exit_node.h"
+#include "globals.h"
 #include "network.h"
 #include "scope.h"
 #include "scope_node.h"
+#include "solution.h"
 #include "solution_helpers.h"
 #include "utilities.h"
 
@@ -35,6 +37,8 @@ bool BranchExperiment::root_verify_activate(
 
 		return true;
 	} else {
+		run_helper.num_decisions++;
+
 		vector<double> input_vals(this->input_scope_contexts.size(), 0.0);
 		for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
 			int curr_layer = 0;

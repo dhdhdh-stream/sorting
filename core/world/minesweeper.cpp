@@ -356,7 +356,7 @@ double Minesweeper::score_result(int num_decisions) {
 	score += 0.01*(curr_revealed - this->starting_revealed);
 
 	if (num_decisions > 5) {
-		score -= 0.002*(num_decisions-5);
+		score -= 0.0002*(num_decisions-5);
 	}
 
 	if (this->hit_mine) {

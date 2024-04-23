@@ -45,10 +45,6 @@ void BranchNode::activate(AbstractNode*& curr_node,
 			decision_is_branch = true;
 		} else {
 			run_helper.num_decisions++;
-			if (run_helper.num_decisions > solution->num_decisions_limit) {
-				run_helper.exceeded_limit = true;
-				return;
-			}
 
 			BranchNodeHistory* history = new BranchNodeHistory();
 			history->index = (int)node_histories.size();

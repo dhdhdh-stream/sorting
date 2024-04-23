@@ -72,6 +72,9 @@ void node_verify_activate_helper(AbstractNode*& curr_node,
 	}
 
 	run_helper.num_actions++;
+	if (run_helper.num_actions > solution->num_actions_limit) {
+		run_helper.exceeded_limit = true;
+	}
 }
 
 void Scope::verify_activate(Problem* problem,

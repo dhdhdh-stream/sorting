@@ -1,3 +1,6 @@
+// TODO: try only starting from top layer?
+// - but probably no need this exact moment as everything likely leads to repeating scope[0] a few times
+
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -46,7 +49,7 @@ int main(int argc, char* argv[]) {
 	solution = new Solution();
 	solution->load("workers/", "main");
 
-	uniform_int_distribution<int> next_distribution(0, (int)solution->average_num_actions);
+	uniform_int_distribution<int> next_distribution(0, (int)(solution->average_num_actions/2.0));
 	num_actions_until_experiment = 1 + next_distribution(generator);
 	eval_experiment = false;
 
@@ -61,16 +64,19 @@ int main(int argc, char* argv[]) {
 		vector<ContextLayer> context;
 		context.push_back(ContextLayer());
 
-		context.back().scope = solution->scopes[1];
+		// context.back().scope = solution->scopes[1];
+		context.back().scope = solution->scopes[3];
 		context.back().node = NULL;
 
-		ScopeHistory* root_history = new ScopeHistory(solution->scopes[1]);
+		// ScopeHistory* root_history = new ScopeHistory(solution->scopes[1]);
+		ScopeHistory* root_history = new ScopeHistory(solution->scopes[3]);
 		context.back().scope_history = root_history;
 
 		int exit_depth = -1;
 		AbstractNode* exit_node = NULL;
 
-		solution->scopes[1]->activate(
+		// solution->scopes[1]->activate(
+		solution->scopes[3]->activate(
 			problem,
 			context,
 			exit_depth,
@@ -198,16 +204,19 @@ int main(int argc, char* argv[]) {
 					vector<ContextLayer> context;
 					context.push_back(ContextLayer());
 
-					context.back().scope = solution->scopes[1];
+					// context.back().scope = solution->scopes[1];
+					context.back().scope = solution->scopes[3];
 					context.back().node = NULL;
 
-					ScopeHistory* root_history = new ScopeHistory(solution->scopes[1]);
+					// ScopeHistory* root_history = new ScopeHistory(solution->scopes[1]);
+					ScopeHistory* root_history = new ScopeHistory(solution->scopes[3]);
 					context.back().scope_history = root_history;
 
 					int exit_depth = -1;
 					AbstractNode* exit_node = NULL;
 
-					solution->scopes[1]->activate(
+					// solution->scopes[1]->activate(
+					solution->scopes[3]->activate(
 						problem,
 						context,
 						exit_depth,

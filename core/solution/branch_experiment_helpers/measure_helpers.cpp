@@ -23,6 +23,8 @@ bool BranchExperiment::measure_activate(AbstractNode*& curr_node,
 										int& exit_depth,
 										AbstractNode*& exit_node,
 										RunHelper& run_helper) {
+	run_helper.num_decisions++;
+
 	vector<double> input_vals(this->input_scope_contexts.size(), 0.0);
 	for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
 		int curr_layer = 0;

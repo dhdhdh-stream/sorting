@@ -38,8 +38,8 @@ Solution::Solution(Solution* original) {
 	this->max_depth = original->max_depth;
 	this->depth_limit = original->depth_limit;
 
-	this->max_num_decisions = original->max_num_decisions;
-	this->num_decisions_limit = original->num_decisions_limit;
+	this->max_num_actions = original->max_num_actions;
+	this->num_actions_limit = original->num_actions_limit;
 }
 
 Solution::~Solution() {
@@ -86,8 +86,10 @@ void Solution::init() {
 	this->max_depth = 1;
 	this->depth_limit = 11;
 
-	this->max_num_decisions = 1;
-	this->num_decisions_limit = 10;
+	// this->max_num_actions = 1;
+	// this->num_actions_limit = 40;
+	this->max_num_actions = 5;
+	this->num_actions_limit = 120;
 }
 
 void Solution::load(string path,
@@ -143,11 +145,11 @@ void Solution::load(string path,
 		this->depth_limit = (int)(1.2*(double)this->max_depth);
 	}
 
-	string max_num_decisions_line;
-	getline(input_file, max_num_decisions_line);
-	this->max_num_decisions = stoi(max_num_decisions_line);
+	string max_num_actions_line;
+	getline(input_file, max_num_actions_line);
+	this->max_num_actions = stoi(max_num_actions_line);
 
-	this->num_decisions_limit = 5*this->max_num_decisions + 5;
+	this->num_actions_limit = 20*this->max_num_actions + 20;
 
 	input_file.close();
 }
@@ -187,7 +189,7 @@ void Solution::save(string path,
 
 	output_file << this->max_depth << endl;
 
-	output_file << this->max_num_decisions << endl;
+	output_file << this->max_num_actions << endl;
 
 	output_file.close();
 

@@ -50,8 +50,8 @@ void BranchExperiment::train_existing_backprop(
 				solution->max_depth = run_helper.max_depth;
 			}
 
-			if (run_helper.num_decisions > solution->max_num_decisions) {
-				solution->max_num_decisions = run_helper.num_decisions;
+			if (run_helper.num_actions > solution->max_num_actions) {
+				solution->max_num_actions = run_helper.num_actions;
 			}
 		}
 	}
@@ -324,6 +324,12 @@ void BranchExperiment::train_existing_backprop(
 				optimize_network(network_inputs,
 								 network_target_vals,
 								 test_network);
+
+				measure_network(network_inputs,
+								network_target_vals,
+								test_network,
+								average_misguess,
+								misguess_standard_deviation);
 
 				vector<int> new_input_indexes;
 				for (int t_index = 0; t_index < (int)test_network_input_scope_contexts.size(); t_index++) {

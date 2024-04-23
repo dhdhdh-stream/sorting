@@ -41,10 +41,6 @@ void BranchNode::step_through_activate(AbstractNode*& curr_node,
 			curr_node = this->branch_next_node;
 		} else {
 			run_helper.num_decisions++;
-			if (run_helper.num_decisions > solution->num_decisions_limit) {
-				run_helper.exceeded_limit = true;
-				return;
-			}
 
 			BranchNodeHistory* history = new BranchNodeHistory();
 			history->index = (int)node_histories.size();
