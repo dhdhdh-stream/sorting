@@ -30,6 +30,8 @@ void ScopeNode::explore_activate(Problem* problem,
 						  run_helper,
 						  scope_history);
 
+	delete scope_history;
+
 	context.pop_back();
 
 	context.back().node = NULL;

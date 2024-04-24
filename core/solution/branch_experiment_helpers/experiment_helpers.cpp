@@ -187,6 +187,18 @@ void branch_inner_create_experiment_helper(vector<Scope*>& scope_context,
 		switch (it->first->type) {
 		case NODE_TYPE_ACTION:
 			{
+				ActionNode* action_node = (ActionNode*)it->first;
+
+				if (action_node->action.move == ACTION_NOOP) {
+					map<int, AbstractNode*>::iterator it = action_node->parent->nodes.find(action_node->id);
+					if (it == action_node->parent->nodes.end()) {
+						/**
+						 * - new ending node edge case
+						 */
+						continue;
+					}
+				}
+
 				node_context.back() = it->first;
 
 				possible_scope_contexts.push_back(scope_context);
@@ -287,6 +299,18 @@ void BranchExperiment::branch_create_experiment_helper(
 			switch (it->first->type) {
 			case NODE_TYPE_ACTION:
 				{
+					ActionNode* action_node = (ActionNode*)it->first;
+
+					if (action_node->action.move == ACTION_NOOP) {
+						map<int, AbstractNode*>::iterator it = action_node->parent->nodes.find(action_node->id);
+						if (it == action_node->parent->nodes.end()) {
+							/**
+							 * - new ending node edge case
+							 */
+							continue;
+						}
+					}
+
 					node_context.back() = it->first;
 
 					possible_scope_contexts.push_back(scope_context);
