@@ -9,7 +9,6 @@
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
-#include "exit_node.h"
 #include "globals.h"
 #include "network.h"
 #include "nn_helpers.h"
@@ -24,8 +23,6 @@ using namespace std;
 void BranchExperiment::train_new_activate(
 		AbstractNode*& curr_node,
 		vector<ContextLayer>& context,
-		int& exit_depth,
-		AbstractNode*& exit_node,
 		RunHelper& run_helper,
 		BranchExperimentHistory* history) {
 	run_helper.num_decisions++;
@@ -36,8 +33,6 @@ void BranchExperiment::train_new_activate(
 
 		train_new_target_activate(curr_node,
 								  context,
-								  exit_depth,
-								  exit_node,
 								  run_helper);
 
 		uniform_int_distribution<int> until_distribution(0, (int)(this->average_instances_per_run-1.0)/2.0);
@@ -48,21 +43,15 @@ void BranchExperiment::train_new_activate(
 void BranchExperiment::train_new_target_activate(
 		AbstractNode*& curr_node,
 		vector<ContextLayer>& context,
-		int& exit_depth,
-		AbstractNode*& exit_node,
 		RunHelper& run_helper) {
-	this->i_scope_histories.push_back(new ScopeHistory(context[context.size() - this->scope_context.size()].scope_history));
+	this->i_scope_histories.push_back(new ScopeHistory(context.back().scope_history));
 
 	/**
 	 * - don't need to add history for new branch_node
 	 */
 
 	if (this->best_step_types.size() == 0) {
-		if (this->exit_node != NULL) {
-			curr_node = this->exit_node;
-		} else {
-			curr_node = this->best_exit_next_node;
-		}
+		curr_node = this->best_exit_next_node;
 	} else {
 		if (this->best_step_types[0] == STEP_TYPE_ACTION) {
 			curr_node = this->best_actions[0];
@@ -181,11 +170,6 @@ void BranchExperiment::train_new_backprop(
 		this->new_misguess_standard_deviation = sqrt(sum_misguess_variances / num_instances);
 		if (this->new_misguess_standard_deviation < MIN_STANDARD_DEVIATION) {
 			this->new_misguess_standard_deviation = MIN_STANDARD_DEVIATION;
-		}
-
-		if (this->skip_explore) {
-			cout << "this->new_average_misguess: " << this->new_average_misguess << endl;
-			cout << "this->new_misguess_standard_deviation: " << this->new_misguess_standard_deviation << endl;
 		}
 
 		vector<vector<vector<double>>> network_inputs(num_instances);
@@ -343,11 +327,6 @@ void BranchExperiment::train_new_backprop(
 
 				this->new_average_misguess = average_misguess;
 				this->new_misguess_standard_deviation = misguess_standard_deviation;
-
-				if (this->skip_explore) {
-					cout << "this->new_average_misguess: " << this->new_average_misguess << endl;
-					cout << "this->new_misguess_standard_deviation: " << this->new_misguess_standard_deviation << endl;
-				}
 
 				#if defined(MDEBUG) && MDEBUG
 				#else

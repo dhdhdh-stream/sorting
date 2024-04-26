@@ -12,6 +12,9 @@ RunHelper::RunHelper() {
 	this->num_actions = 0;
 
 	this->exceeded_limit = false;
+
+	this->num_actions_after_experiment_to_skip = 0;
+	this->eval_experiment = false;
 }
 
 RunHelper::~RunHelper() {

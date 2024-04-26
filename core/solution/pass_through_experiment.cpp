@@ -4,7 +4,6 @@
 
 #include "action_node.h"
 #include "constants.h"
-#include "exit_node.h"
 #include "globals.h"
 #include "scope.h"
 #include "scope_node.h"
@@ -12,8 +11,8 @@
 
 using namespace std;
 
-PassThroughExperiment::PassThroughExperiment(vector<Scope*> scope_context,
-											 vector<AbstractNode*> node_context,
+PassThroughExperiment::PassThroughExperiment(Scope* scope_context,
+											 AbstractNode* node_context,
 											 bool is_branch,
 											 AbstractExperiment* parent_experiment) {
 	this->type = EXPERIMENT_TYPE_PASS_THROUGH;
@@ -51,7 +50,6 @@ PassThroughExperiment::PassThroughExperiment(vector<Scope*> scope_context,
 
 	this->best_score = numeric_limits<double>::lowest();
 
-	this->exit_node = NULL;
 	this->ending_node = NULL;
 
 	this->result = EXPERIMENT_RESULT_NA;
@@ -72,13 +70,6 @@ PassThroughExperiment::~PassThroughExperiment() {
 
 	for (int s_index = 0; s_index < (int)this->curr_scopes.size(); s_index++) {
 		if (this->curr_scopes[s_index] != NULL) {
-			if (s_index == 0) {
-				map<int, Scope*>::iterator it = solution->scopes.find(this->curr_scopes[s_index]->scope->id);
-				if (it == solution->scopes.end()) {
-					delete this->curr_scopes[s_index]->scope;
-				}
-			}
-
 			delete this->curr_scopes[s_index];
 		}
 	}
@@ -91,20 +82,10 @@ PassThroughExperiment::~PassThroughExperiment() {
 
 	for (int s_index = 0; s_index < (int)this->best_scopes.size(); s_index++) {
 		if (this->best_scopes[s_index] != NULL) {
-			if (s_index == 0) {
-				map<int, Scope*>::iterator it = solution->scopes.find(this->best_scopes[s_index]->scope->id);
-				if (it == solution->scopes.end()) {
-					delete this->best_scopes[s_index]->scope;
-				}
-			}
-
 			delete this->best_scopes[s_index];
 		}
 	}
 
-	if (this->exit_node != NULL) {
-		delete this->exit_node;
-	}
 	if (this->ending_node != NULL) {
 		delete this->ending_node;
 	}

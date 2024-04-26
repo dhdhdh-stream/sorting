@@ -16,10 +16,6 @@ default_random_engine generator;
 Problem* problem_type;
 Solution* solution;
 
-int num_actions_until_experiment = -1;
-int num_actions_after_experiment_to_skip = -1;
-bool eval_experiment;
-
 int main(int argc, char* argv[]) {
 	cout << "Starting..." << endl;
 
@@ -48,16 +44,10 @@ int main(int argc, char* argv[]) {
 		ScopeHistory* root_history = new ScopeHistory(solution->scopes[1]);
 		context.back().scope_history = root_history;
 
-		// unused
-		int exit_depth = -1;
-		AbstractNode* exit_node = NULL;
-
 		// solution->scopes[0]->step_through_activate(
 		solution->scopes[1]->step_through_activate(
 			problem,
 			context,
-			exit_depth,
-			exit_node,
 			run_helper,
 			root_history);
 
@@ -66,6 +56,7 @@ int main(int argc, char* argv[]) {
 
 		problem->print();
 		cout << "Done" << endl;
+
 		double target_val;
 		if (!run_helper.exceeded_limit) {
 			target_val = problem->score_result(run_helper.num_decisions);

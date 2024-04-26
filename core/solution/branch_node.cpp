@@ -24,11 +24,6 @@ BranchNode::BranchNode() {
 BranchNode::BranchNode(BranchNode* original) {
 	this->type = NODE_TYPE_BRANCH;
 
-	this->scope_context_ids = original->scope_context_ids;
-	this->node_context_ids = original->node_context_ids;
-
-	this->is_pass_through = original->is_pass_through;
-
 	this->original_average_score = original->original_average_score;
 	this->branch_average_score = original->branch_average_score;
 
@@ -91,14 +86,6 @@ void BranchNode::clear_verify() {
 #endif /* MDEBUG */
 
 void BranchNode::save(ofstream& output_file) {
-	output_file << this->scope_context.size() << endl;
-	for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
-		output_file << this->scope_context_ids[c_index] << endl;
-		output_file << this->node_context_ids[c_index] << endl;
-	}
-
-	output_file << this->is_pass_through << endl;
-
 	output_file << this->original_average_score << endl;
 	output_file << this->branch_average_score << endl;
 
@@ -151,23 +138,6 @@ void BranchNode::save(ofstream& output_file) {
 }
 
 void BranchNode::load(ifstream& input_file) {
-	string branch_scope_context_size_line;
-	getline(input_file, branch_scope_context_size_line);
-	int branch_scope_context_size = stoi(branch_scope_context_size_line);
-	for (int c_index = 0; c_index < branch_scope_context_size; c_index++) {
-		string scope_context_id_line;
-		getline(input_file, scope_context_id_line);
-		this->scope_context_ids.push_back(stoi(scope_context_id_line));
-
-		string node_context_id_line;
-		getline(input_file, node_context_id_line);
-		this->node_context_ids.push_back(stoi(node_context_id_line));
-	}
-
-	string is_pass_through_line;
-	getline(input_file, is_pass_through_line);
-	this->is_pass_through = stoi(is_pass_through_line);
-
 	string original_average_score_line;
 	getline(input_file, original_average_score_line);
 	this->original_average_score = stod(original_average_score_line);
@@ -280,12 +250,6 @@ void BranchNode::load(ifstream& input_file) {
 }
 
 void BranchNode::link(Solution* parent_solution) {
-	for (int c_index = 0; c_index < (int)this->scope_context_ids.size(); c_index++) {
-		Scope* scope = parent_solution->scopes[this->scope_context_ids[c_index]];
-		this->scope_context.push_back(scope);
-		this->node_context.push_back(scope->nodes[this->node_context_ids[c_index]]);
-	}
-
 	for (int i_index = 0; i_index < (int)this->input_scope_context_ids.size(); i_index++) {
 		vector<Scope*> c_scope_context;
 		vector<AbstractNode*> c_node_context;
@@ -312,10 +276,6 @@ void BranchNode::link(Solution* parent_solution) {
 }
 
 void BranchNode::save_for_display(ofstream& output_file) {
-	output_file << this->scope_context_ids[0] << endl;
-
-	output_file << this->is_pass_through << endl;
-
 	output_file << this->original_next_node_id << endl;
 	output_file << this->branch_next_node_id << endl;
 }

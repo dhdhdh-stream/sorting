@@ -11,7 +11,6 @@
 class AbstractNode;
 class ActionNode;
 class BranchNode;
-class ExitNode;
 class Network;
 class Problem;
 class Scope;
@@ -49,8 +48,6 @@ const double PASS_THROUGH_BRANCH_WEIGHT = 0.9;
 class BranchExperimentHistory;
 class BranchExperiment : public AbstractExperiment {
 public:
-	bool skip_explore;
-
 	int num_instances_until_target;
 
 	int state;
@@ -75,17 +72,14 @@ public:
 	std::vector<int> curr_step_types;
 	std::vector<ActionNode*> curr_actions;
 	std::vector<ScopeNode*> curr_scopes;
-	int curr_exit_depth;
 	AbstractNode* curr_exit_next_node;
 
 	double best_surprise;
 	std::vector<int> best_step_types;
 	std::vector<ActionNode*> best_actions;
 	std::vector<ScopeNode*> best_scopes;
-	int best_exit_depth;
 	AbstractNode* best_exit_next_node;
 
-	ExitNode* exit_node;
 	ActionNode* ending_node;
 
 	double new_average_score;
@@ -118,18 +112,15 @@ public:
 	std::vector<double> verify_branch_scores;
 	#endif /* MDEBUG */
 
-	BranchExperiment(std::vector<Scope*> scope_context,
-					 std::vector<AbstractNode*> node_context,
+	BranchExperiment(Scope* scope_context,
+					 AbstractNode* node_context,
 					 bool is_branch,
-					 AbstractExperiment* parent_experiment,
-					 bool skip_explore);
+					 AbstractExperiment* parent_experiment);
 	~BranchExperiment();
 
 	bool activate(AbstractNode*& curr_node,
 				  Problem* problem,
 				  std::vector<ContextLayer>& context,
-				  int& exit_depth,
-				  AbstractNode*& exit_node,
 				  RunHelper& run_helper);
 	void backprop(double target_val,
 				  RunHelper& run_helper);
@@ -143,8 +134,6 @@ public:
 	void explore_activate(AbstractNode*& curr_node,
 						  Problem* problem,
 						  std::vector<ContextLayer>& context,
-						  int& exit_depth,
-						  AbstractNode*& exit_node,
 						  RunHelper& run_helper,
 						  BranchExperimentHistory* history);
 	void explore_backprop(double target_val,
@@ -152,22 +141,16 @@ public:
 
 	void train_new_activate(AbstractNode*& curr_node,
 							std::vector<ContextLayer>& context,
-							int& exit_depth,
-							AbstractNode*& exit_node,
 							RunHelper& run_helper,
 							BranchExperimentHistory* history);
 	void train_new_target_activate(AbstractNode*& curr_node,
 								   std::vector<ContextLayer>& context,
-								   int& exit_depth,
-								   AbstractNode*& exit_node,
 								   RunHelper& run_helper);
 	void train_new_backprop(double target_val,
 							RunHelper& run_helper);
 
 	bool measure_activate(AbstractNode*& curr_node,
 						  std::vector<ContextLayer>& context,
-						  int& exit_depth,
-						  AbstractNode*& exit_node,
 						  RunHelper& run_helper);
 	void measure_backprop(double target_val,
 						  RunHelper& run_helper);
@@ -177,8 +160,6 @@ public:
 
 	bool verify_activate(AbstractNode*& curr_node,
 						 std::vector<ContextLayer>& context,
-						 int& exit_depth,
-						 AbstractNode*& exit_node,
 						 RunHelper& run_helper);
 	void verify_backprop(double target_val,
 						 RunHelper& run_helper);
@@ -187,16 +168,12 @@ public:
 	bool capture_verify_activate(AbstractNode*& curr_node,
 								 Problem* problem,
 								 std::vector<ContextLayer>& context,
-								 int& exit_depth,
-								 AbstractNode*& exit_node,
 								 RunHelper& run_helper);
 	void capture_verify_backprop();
 	#endif /* MDEBUG */
 
 	bool root_verify_activate(AbstractNode*& curr_node,
 							  std::vector<ContextLayer>& context,
-							  int& exit_depth,
-							  AbstractNode*& exit_node,
 							  RunHelper& run_helper);
 
 	bool experiment_activate(AbstractNode*& curr_node,
@@ -205,14 +182,6 @@ public:
 							 BranchExperimentHistory* history);
 	void experiment_backprop(double target_val,
 							 RunHelper& run_helper);
-	void branch_create_experiment_helper(
-		std::vector<int>& experiment_index,
-		std::vector<Scope*>& scope_context,
-		std::vector<AbstractNode*>& node_context,
-		std::vector<std::vector<Scope*>>& possible_scope_contexts,
-		std::vector<std::vector<AbstractNode*>>& possible_node_contexts,
-		std::vector<bool>& possible_is_branch,
-		ScopeHistory* scope_history);
 
 	void experiment_verify_existing_backprop(double target_val,
 											 RunHelper& run_helper);

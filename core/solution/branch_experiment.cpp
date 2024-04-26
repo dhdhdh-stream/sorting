@@ -5,7 +5,6 @@
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
-#include "exit_node.h"
 #include "globals.h"
 #include "network.h"
 #include "problem.h"
@@ -15,11 +14,10 @@
 
 using namespace std;
 
-BranchExperiment::BranchExperiment(vector<Scope*> scope_context,
-								   vector<AbstractNode*> node_context,
+BranchExperiment::BranchExperiment(Scope* scope_context,
+								   AbstractNode* node_context,
 								   bool is_branch,
-								   AbstractExperiment* parent_experiment,
-								   bool skip_explore) {
+								   AbstractExperiment* parent_experiment) {
 	this->type = EXPERIMENT_TYPE_BRANCH;
 
 	this->scope_context = scope_context;
@@ -43,13 +41,7 @@ BranchExperiment::BranchExperiment(vector<Scope*> scope_context,
 		this->root_experiment = NULL;
 	}
 
-	this->skip_explore = skip_explore;
-
-	if (this->skip_explore) {
-		this->average_remaining_experiments_from_start = 0.0;
-	} else {
-		this->average_remaining_experiments_from_start = 1.0;
-	}
+	this->average_remaining_experiments_from_start = 1.0;
 	/**
 	 * - start with a 50% chance to bypass
 	 */
@@ -65,7 +57,6 @@ BranchExperiment::BranchExperiment(vector<Scope*> scope_context,
 	this->state = BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING;
 	this->state_iter = 0;
 
-	this->exit_node = NULL;
 	this->ending_node = NULL;
 
 	this->result = EXPERIMENT_RESULT_NA;
@@ -93,13 +84,6 @@ BranchExperiment::~BranchExperiment() {
 
 	for (int s_index = 0; s_index < (int)this->curr_scopes.size(); s_index++) {
 		if (this->curr_scopes[s_index] != NULL) {
-			if (s_index == 0) {
-				map<int, Scope*>::iterator it = solution->scopes.find(this->curr_scopes[s_index]->scope->id);
-				if (it == solution->scopes.end()) {
-					delete this->curr_scopes[s_index]->scope;
-				}
-			}
-
 			delete this->curr_scopes[s_index];
 		}
 	}
@@ -112,20 +96,10 @@ BranchExperiment::~BranchExperiment() {
 
 	for (int s_index = 0; s_index < (int)this->best_scopes.size(); s_index++) {
 		if (this->best_scopes[s_index] != NULL) {
-			if (s_index == 0) {
-				map<int, Scope*>::iterator it = solution->scopes.find(this->best_scopes[s_index]->scope->id);
-				if (it == solution->scopes.end()) {
-					delete this->best_scopes[s_index]->scope;
-				}
-			}
-
 			delete this->best_scopes[s_index];
 		}
 	}
 
-	if (this->exit_node != NULL) {
-		delete this->exit_node;
-	}
 	if (this->ending_node != NULL) {
 		delete this->ending_node;
 	}

@@ -49,49 +49,36 @@ void PassThroughExperiment::measure_existing_backprop(
 
 		this->o_target_val_histories.clear();
 
-		vector<pair<int,AbstractNode*>> possible_exits;
+		vector<AbstractNode*> possible_exits;
 
-		if (this->node_context.back()->type == NODE_TYPE_ACTION
-				&& ((ActionNode*)this->node_context.back())->next_node == NULL) {
-			possible_exits.push_back({0, NULL});
+		if (this->node_context->type == NODE_TYPE_ACTION
+				&& ((ActionNode*)this->node_context)->next_node == NULL) {
+			possible_exits.push_back(NULL);
 		}
 
-		gather_possible_exits(possible_exits,
-							  this->scope_context,
-							  this->node_context,
-							  this->is_branch);
-
-		if (possible_exits.size() == 0) {
-			switch (this->node_context.back()->type) {
-			case NODE_TYPE_ACTION:
-				{
-					ActionNode* action_node = (ActionNode*)this->node_context.back();
-					possible_exits.push_back({0, action_node->next_node});
-				}
-				break;
-			case NODE_TYPE_SCOPE:
-				{
-					ScopeNode* scope_node = (ScopeNode*)this->node_context.back();
-					possible_exits.push_back({0, scope_node->next_node});
-				}
-				break;
-			case NODE_TYPE_BRANCH:
-				{
-					BranchNode* branch_node = (BranchNode*)this->node_context.back();
-					if (this->is_branch) {
-						possible_exits.push_back({0, branch_node->branch_next_node});
-					} else {
-						possible_exits.push_back({0, branch_node->original_next_node});
-					}
-				}
-				break;
+		AbstractNode* starting_node;
+		if (this->node_context->type == NODE_TYPE_ACTION) {
+			ActionNode* action_node = (ActionNode*)this->node_context;
+			starting_node = action_node->next_node;
+		} else if (this->node_context->type == NODE_TYPE_SCOPE) {
+			ScopeNode* scope_node = (ScopeNode*)this->node_context;
+			starting_node = scope_node->next_node;
+		} else {
+			BranchNode* branch_node = (BranchNode*)this->node_context;
+			if (this->is_branch) {
+				starting_node = branch_node->branch_next_node;
+			} else {
+				starting_node = branch_node->original_next_node;
 			}
 		}
 
+		this->scope_context->random_exit_activate(
+			starting_node,
+			possible_exits);
+
 		uniform_int_distribution<int> distribution(0, possible_exits.size()-1);
 		int random_index = distribution(generator);
-		this->curr_exit_depth = possible_exits[random_index].first;
-		this->curr_exit_next_node = possible_exits[random_index].second;
+		this->curr_exit_next_node = possible_exits[random_index];
 
 		int new_num_steps;
 		uniform_int_distribution<int> uniform_distribution(0, 1);
@@ -106,7 +93,7 @@ void PassThroughExperiment::measure_existing_backprop(
 		for (int s_index = 0; s_index < new_num_steps; s_index++) {
 			bool default_to_action = true;
 			if (default_distribution(generator) != 0) {
-				ScopeNode* new_scope_node = create_existing(this->scope_context[0]);
+				ScopeNode* new_scope_node = create_existing();
 				if (new_scope_node != NULL) {
 					this->curr_step_types.push_back(STEP_TYPE_SCOPE);
 					this->curr_actions.push_back(NULL);

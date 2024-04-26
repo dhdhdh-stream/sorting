@@ -11,7 +11,6 @@
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
-#include "exit_node.h"
 #include "globals.h"
 #include "network.h"
 #include "nn_helpers.h"
@@ -26,7 +25,7 @@ void BranchExperiment::train_existing_activate(
 		vector<ContextLayer>& context,
 		RunHelper& run_helper,
 		BranchExperimentHistory* history) {
-	this->i_scope_histories.push_back(new ScopeHistory(context[context.size() - this->scope_context.size()].scope_history));
+	this->i_scope_histories.push_back(new ScopeHistory(context.back().scope_history));
 
 	history->instance_count++;
 }
@@ -206,11 +205,6 @@ void BranchExperiment::train_existing_backprop(
 			this->existing_misguess_standard_deviation = MIN_STANDARD_DEVIATION;
 		}
 
-		if (this->skip_explore) {
-			cout << "this->existing_average_misguess: " << this->existing_average_misguess << endl;
-			cout << "this->existing_misguess_standard_deviation: " << this->existing_misguess_standard_deviation << endl;
-		}
-
 		vector<vector<vector<double>>> network_inputs(num_instances);
 		int train_index = 0;
 		while (train_index < 3) {
@@ -363,11 +357,6 @@ void BranchExperiment::train_existing_backprop(
 				this->existing_average_misguess = average_misguess;
 				this->existing_misguess_standard_deviation = misguess_standard_deviation;
 
-				if (this->skip_explore) {
-					cout << "this->existing_average_misguess: " << this->existing_average_misguess << endl;
-					cout << "this->existing_misguess_standard_deviation: " << this->existing_misguess_standard_deviation << endl;
-				}
-
 				#if defined(MDEBUG) && MDEBUG
 				#else
 				train_index = 0;
@@ -390,107 +379,22 @@ void BranchExperiment::train_existing_backprop(
 		this->i_scope_histories.clear();
 		this->i_target_val_histories.clear();
 
-		if (this->skip_explore) {
-			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-					this->best_actions[s_index]->parent = this->scope_context.back();
-					this->best_actions[s_index]->id = this->scope_context.back()->node_counter;
-					this->scope_context.back()->node_counter++;
-				} else {
-					this->best_scopes[s_index]->parent = this->scope_context.back();
-					this->best_scopes[s_index]->id = this->scope_context.back()->node_counter;
-					this->scope_context.back()->node_counter++;
-				}
-			}
-
-			int exit_node_id;
-			AbstractNode* exit_node;
-			if (this->best_exit_depth > 0) {
-				ExitNode* new_exit_node = new ExitNode();
-				new_exit_node->parent = this->scope_context.back();
-				new_exit_node->id = this->scope_context.back()->node_counter;
-				this->scope_context.back()->node_counter++;
-
-				new_exit_node->exit_depth = this->best_exit_depth;
-				new_exit_node->next_node_parent = this->scope_context[this->scope_context.size()-1 - this->best_exit_depth];
-				new_exit_node->next_node_id = this->best_exit_next_node->id;
-				new_exit_node->next_node = this->best_exit_next_node;
-
-				this->exit_node = new_exit_node;
-
-				exit_node_id = new_exit_node->id;
-				exit_node = new_exit_node;
-			} else {
-				if (this->best_exit_next_node == NULL) {
-					ActionNode* new_ending_node = new ActionNode();
-					new_ending_node->parent = this->scope_context.back();
-					new_ending_node->id = this->scope_context.back()->node_counter;
-					this->scope_context.back()->node_counter++;
-
-					new_ending_node->action = Action(ACTION_NOOP);
-
-					new_ending_node->next_node_id = -1;
-					new_ending_node->next_node = NULL;
-
-					this->ending_node = new_ending_node;
-
-					exit_node_id = new_ending_node->id;
-					exit_node = new_ending_node;
-				} else {
-					exit_node_id = this->best_exit_next_node->id;
-					exit_node = this->best_exit_next_node;
-				}
-			}
-
-			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-				int next_node_id;
-				AbstractNode* next_node;
-				if (s_index == (int)this->best_step_types.size()-1) {
-					next_node_id = exit_node_id;
-					next_node = exit_node;
-				} else {
-					if (this->best_step_types[s_index+1] == STEP_TYPE_ACTION) {
-						next_node_id = this->best_actions[s_index+1]->id;
-						next_node = this->best_actions[s_index+1];
-					} else {
-						next_node_id = this->best_scopes[s_index+1]->id;
-						next_node = this->best_scopes[s_index+1];
-					}
-				}
-
-				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-					this->best_actions[s_index]->next_node_id = next_node_id;
-					this->best_actions[s_index]->next_node = next_node;
-				} else {
-					this->best_scopes[s_index]->next_node_id = next_node_id;
-					this->best_scopes[s_index]->next_node = next_node;
-				}
-			}
-
-			this->i_scope_histories.reserve(NUM_DATAPOINTS);
-			this->i_target_val_histories.reserve(NUM_DATAPOINTS);
-
-			this->state = BRANCH_EXPERIMENT_STATE_TRAIN_NEW;
-			this->state_iter = 0;
-			this->explore_iter = MAX_EXPLORE_TRIES;
+		uniform_int_distribution<int> neutral_distribution(0, 9);
+		if (neutral_distribution(generator) == 0) {
+			this->explore_type = EXPLORE_TYPE_NEUTRAL;
 		} else {
-			uniform_int_distribution<int> neutral_distribution(0, 9);
-			if (neutral_distribution(generator) == 0) {
-				this->explore_type = EXPLORE_TYPE_NEUTRAL;
+			uniform_int_distribution<int> best_distribution(0, 1);
+			if (best_distribution(generator) == 0) {
+				this->explore_type = EXPLORE_TYPE_BEST;
 			} else {
-				uniform_int_distribution<int> best_distribution(0, 1);
-				if (best_distribution(generator) == 0) {
-					this->explore_type = EXPLORE_TYPE_BEST;
-				} else {
-					this->explore_type = EXPLORE_TYPE_GOOD;
-				}
+				this->explore_type = EXPLORE_TYPE_GOOD;
 			}
-
-			this->best_surprise = 0.0;
-
-			this->state = BRANCH_EXPERIMENT_STATE_EXPLORE;
-			this->state_iter = 0;
-			this->explore_iter = 0;
 		}
+
+		this->best_surprise = 0.0;
+
+		this->state = BRANCH_EXPERIMENT_STATE_EXPLORE;
+		this->state_iter = 0;
+		this->explore_iter = 0;
 	}
 }

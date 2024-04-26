@@ -6,7 +6,6 @@
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
-#include "exit_node.h"
 #include "globals.h"
 #include "network.h"
 #include "scope.h"
@@ -19,16 +18,10 @@ using namespace std;
 
 bool BranchExperiment::verify_activate(AbstractNode*& curr_node,
 									   vector<ContextLayer>& context,
-									   int& exit_depth,
-									   AbstractNode*& exit_node,
 									   RunHelper& run_helper) {
 	if (this->is_pass_through) {
 		if (this->best_step_types.size() == 0) {
-			if (this->exit_node != NULL) {
-				curr_node = this->exit_node;
-			} else {
-				curr_node = this->best_exit_next_node;
-			}
+			curr_node = this->best_exit_next_node;
 		} else {
 			if (this->best_step_types[0] == STEP_TYPE_ACTION) {
 				curr_node = this->best_actions[0];
@@ -44,7 +37,7 @@ bool BranchExperiment::verify_activate(AbstractNode*& curr_node,
 		vector<double> input_vals(this->input_scope_contexts.size(), 0.0);
 		for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
 			int curr_layer = 0;
-			ScopeHistory* curr_scope_history = context[context.size() - this->scope_context.size()].scope_history;
+			ScopeHistory* curr_scope_history = context.back().scope_history;
 			while (true) {
 				map<AbstractNode*, AbstractNodeHistory*>::iterator it = curr_scope_history->node_histories.find(
 					this->input_node_contexts[i_index][curr_layer]);
@@ -118,11 +111,7 @@ bool BranchExperiment::verify_activate(AbstractNode*& curr_node,
 
 		if (decision_is_branch) {
 			if (this->best_step_types.size() == 0) {
-				if (this->exit_node != NULL) {
-					curr_node = this->exit_node;
-				} else {
-					curr_node = this->best_exit_next_node;
-				}
+				curr_node = this->best_exit_next_node;
 			} else {
 				if (this->best_step_types[0] == STEP_TYPE_ACTION) {
 					curr_node = this->best_actions[0];
@@ -176,8 +165,7 @@ void BranchExperiment::verify_backprop(double target_val,
 				&& rand()%4 == 0) {
 		#else
 		} else if (this->best_step_types.size() > 0
-				&& combined_branch_weight > EXPERIMENT_COMBINED_MIN_BRANCH_WEIGHT
-				&& !this->skip_explore) {
+				&& combined_branch_weight > EXPERIMENT_COMBINED_MIN_BRANCH_WEIGHT) {
 		#endif /* MDEBUG */
 			this->state = BRANCH_EXPERIMENT_STATE_EXPERIMENT;
 			this->root_state = ROOT_EXPERIMENT_STATE_EXPERIMENT;
@@ -189,13 +177,6 @@ void BranchExperiment::verify_backprop(double target_val,
 					if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 						delete this->best_actions[s_index];
 					} else {
-						if (s_index == 0) {
-							map<int, Scope*>::iterator it = solution->scopes.find(this->best_scopes[s_index]->scope->id);
-							if (it == solution->scopes.end()) {
-								delete this->best_scopes[s_index]->scope;
-							}
-						}
-
 						delete this->best_scopes[s_index];
 					}
 				}
@@ -204,10 +185,6 @@ void BranchExperiment::verify_backprop(double target_val,
 				this->best_actions.clear();
 				this->best_scopes.clear();
 
-				if (this->exit_node != NULL) {
-					delete this->exit_node;
-					this->exit_node = NULL;
-				}
 				if (this->ending_node != NULL) {
 					delete this->ending_node;
 					this->ending_node = NULL;
@@ -265,14 +242,8 @@ void BranchExperiment::verify_backprop(double target_val,
 		#endif /* MDEBUG */
 			cout << "verify" << endl;
 			cout << "this->parent_experiment: " << this->parent_experiment << endl;
-			cout << "this->scope_context:" << endl;
-			for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
-				cout << c_index << ": " << this->scope_context[c_index]->id << endl;
-			}
-			cout << "this->node_context:" << endl;
-			for (int c_index = 0; c_index < (int)this->node_context.size(); c_index++) {
-				cout << c_index << ": " << this->node_context[c_index]->id << endl;
-			}
+			cout << "this->scope_context->id: " << this->scope_context->id << endl;
+			cout << "this->node_context->id: " << this->node_context->id << endl;
 			cout << "this->is_branch: " << this->is_branch << endl;
 			cout << "new explore path:";
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
@@ -284,7 +255,6 @@ void BranchExperiment::verify_backprop(double target_val,
 			}
 			cout << endl;
 
-			cout << "this->best_exit_depth: " << this->best_exit_depth << endl;
 			if (this->best_exit_next_node == NULL) {
 				cout << "this->best_exit_next_node->id: " << -1 << endl;
 			} else {
@@ -366,8 +336,7 @@ void BranchExperiment::verify_backprop(double target_val,
 				&& rand()%4 == 0) {
 		#else
 		} else if (this->best_step_types.size() > 0
-				&& combined_branch_weight > EXPERIMENT_COMBINED_MIN_BRANCH_WEIGHT
-				&& !this->skip_explore) {
+				&& combined_branch_weight > EXPERIMENT_COMBINED_MIN_BRANCH_WEIGHT) {
 		#endif /* MDEBUG */
 			this->state = BRANCH_EXPERIMENT_STATE_EXPERIMENT;
 			this->root_state = ROOT_EXPERIMENT_STATE_EXPERIMENT;
@@ -379,13 +348,6 @@ void BranchExperiment::verify_backprop(double target_val,
 					if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 						delete this->best_actions[s_index];
 					} else {
-						if (s_index == 0) {
-							map<int, Scope*>::iterator it = solution->scopes.find(this->best_scopes[s_index]->scope->id);
-							if (it == solution->scopes.end()) {
-								delete this->best_scopes[s_index]->scope;
-							}
-						}
-
 						delete this->best_scopes[s_index];
 					}
 				}
@@ -394,10 +356,6 @@ void BranchExperiment::verify_backprop(double target_val,
 				this->best_actions.clear();
 				this->best_scopes.clear();
 
-				if (this->exit_node != NULL) {
-					delete this->exit_node;
-					this->exit_node = NULL;
-				}
 				if (this->ending_node != NULL) {
 					delete this->ending_node;
 					this->ending_node = NULL;

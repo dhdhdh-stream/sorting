@@ -6,7 +6,6 @@
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
-#include "exit_node.h"
 #include "globals.h"
 #include "network.h"
 #include "problem.h"
@@ -20,15 +19,13 @@ using namespace std;
 
 bool BranchExperiment::measure_activate(AbstractNode*& curr_node,
 										vector<ContextLayer>& context,
-										int& exit_depth,
-										AbstractNode*& exit_node,
 										RunHelper& run_helper) {
 	run_helper.num_decisions++;
 
 	vector<double> input_vals(this->input_scope_contexts.size(), 0.0);
 	for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
 		int curr_layer = 0;
-		ScopeHistory* curr_scope_history = context[context.size() - this->scope_context.size()].scope_history;
+		ScopeHistory* curr_scope_history = context.back().scope_history;
 		while (true) {
 			map<AbstractNode*, AbstractNodeHistory*>::iterator it = curr_scope_history->node_histories.find(
 				this->input_node_contexts[i_index][curr_layer]);
@@ -104,11 +101,7 @@ bool BranchExperiment::measure_activate(AbstractNode*& curr_node,
 		this->branch_count++;
 
 		if (this->best_step_types.size() == 0) {
-			if (this->exit_node != NULL) {
-				curr_node = this->exit_node;
-			} else {
-				curr_node = this->best_exit_next_node;
-			}
+			curr_node = this->best_exit_next_node;
 		} else {
 			if (this->best_step_types[0] == STEP_TYPE_ACTION) {
 				curr_node = this->best_actions[0];
@@ -142,12 +135,6 @@ void BranchExperiment::measure_backprop(double target_val,
 			this->is_pass_through = false;
 		}
 
-		if (this->skip_explore) {
-			cout << "this->combined_score: " << this->combined_score << endl;
-			cout << "this->existing_average_score: " << this->existing_average_score << endl;
-			cout << "this->branch_weight: " << this->branch_weight << endl;
-		}
-
 		#if defined(MDEBUG) && MDEBUG
 		if (rand()%2 == 0) {
 		#else
@@ -167,13 +154,6 @@ void BranchExperiment::measure_backprop(double target_val,
 					if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 						delete this->best_actions[s_index];
 					} else {
-						if (s_index == 0) {
-							map<int, Scope*>::iterator it = solution->scopes.find(this->best_scopes[s_index]->scope->id);
-							if (it == solution->scopes.end()) {
-								delete this->best_scopes[s_index]->scope;
-							}
-						}
-
 						delete this->best_scopes[s_index];
 					}
 				}
@@ -182,10 +162,6 @@ void BranchExperiment::measure_backprop(double target_val,
 				this->best_actions.clear();
 				this->best_scopes.clear();
 
-				if (this->exit_node != NULL) {
-					delete this->exit_node;
-					this->exit_node = NULL;
-				}
 				if (this->ending_node != NULL) {
 					delete this->ending_node;
 					this->ending_node = NULL;

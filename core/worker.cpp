@@ -23,10 +23,6 @@ default_random_engine generator;
 Problem* problem_type;
 Solution* solution;
 
-int num_actions_until_experiment = -1;
-int num_actions_after_experiment_to_skip = -1;
-bool eval_experiment;
-
 int main(int argc, char* argv[]) {
 	if (argc != 2) {
 		cout << "Usage: ./worker [path]" << endl;
@@ -61,33 +57,23 @@ int main(int argc, char* argv[]) {
 		vector<ContextLayer> context;
 		context.push_back(ContextLayer());
 
-		// context.back().scope = solution->scopes[0];
-		// context.back().scope = solution->scopes[1];
-		context.back().scope = solution->scopes[3];
+		context.back().scope = solution->current;
 		context.back().node = NULL;
 
-		// ScopeHistory* root_history = new ScopeHistory(solution->scopes[0]);
-		// ScopeHistory* root_history = new ScopeHistory(solution->scopes[1]);
-		ScopeHistory* root_history = new ScopeHistory(solution->scopes[3]);
+		ScopeHistory* root_history = new ScopeHistory(solution->current);
 		context.back().scope_history = root_history;
 
-		// unused
-		int exit_depth = -1;
-		AbstractNode* exit_node = NULL;
-
-		// solution->scopes[0]->activate(
-		// solution->scopes[1]->activate(
-		solution->scopes[3]->activate(
+		solution->current->activate(
 			problem,
 			context,
-			exit_depth,
-			exit_node,
 			run_helper,
 			root_history);
 
-		if (run_helper.experiments_seen_order.size() == 0) {
-			if (!run_helper.exceeded_limit) {
-				create_experiment(root_history);
+		if (solution->state == SOLUTION_STATE_TRAVERSE) {
+			if (run_helper.experiments_seen_order.size() == 0) {
+				if (!run_helper.exceeded_limit) {
+					create_experiment(root_history);
+				}
 			}
 		}
 
@@ -196,6 +182,12 @@ int main(int argc, char* argv[]) {
 				run_helper.experiment_histories.back()->experiment->finalize(duplicate);
 				delete run_helper.experiment_histories.back()->experiment;
 
+				Solution* existing_solution = solution;
+				solution = duplicate;
+				/**
+				 * - for generalize_helper() to behave correctly
+				 */
+
 				double sum_vals = 0.0;
 				double sum_num_actions = 0.0;
 				for (int i_index = 0; i_index < 4000; i_index++) {
@@ -204,30 +196,20 @@ int main(int argc, char* argv[]) {
 
 					RunHelper run_helper;
 
+					run_helper.eval_experiment = true;
+
 					vector<ContextLayer> context;
 					context.push_back(ContextLayer());
 
-					// context.back().scope = duplicate->scopes[0];
-					// context.back().scope = duplicate->scopes[1];
-					context.back().scope = duplicate->scopes[3];
+					context.back().scope = duplicate->current;
 					context.back().node = NULL;
 
-					// ScopeHistory* root_history = new ScopeHistory(duplicate->scopes[0]);
-					// ScopeHistory* root_history = new ScopeHistory(duplicate->scopes[1]);
-					ScopeHistory* root_history = new ScopeHistory(duplicate->scopes[3]);
+					ScopeHistory* root_history = new ScopeHistory(duplicate->current);
 					context.back().scope_history = root_history;
 
-					// unused
-					int exit_depth = -1;
-					AbstractNode* exit_node = NULL;
-
-					// duplicate->scopes[0]->activate(
-					// duplicate->scopes[1]->activate(
-					duplicate->scopes[3]->activate(
+					duplicate->current->activate(
 						problem,
 						context,
-						exit_depth,
-						exit_node,
 						run_helper,
 						root_history);
 
@@ -252,9 +234,14 @@ int main(int argc, char* argv[]) {
 				duplicate->timestamp++;
 				duplicate->curr_average_score = possible_average_score;
 				duplicate->average_num_actions = sum_num_actions/4000.0;
+
+				duplicate->increment();
+
 				duplicate->save(path, "possible_" + to_string((unsigned)time(NULL)));
 
 				delete duplicate;
+
+				solution = existing_solution;
 			}
 		} else {
 			for (int e_index = 0; e_index < (int)run_helper.experiments_seen_order.size(); e_index++) {

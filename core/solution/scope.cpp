@@ -4,7 +4,6 @@
 
 #include "action_node.h"
 #include "branch_node.h"
-#include "exit_node.h"
 #include "scope_node.h"
 
 using namespace std;
@@ -60,32 +59,35 @@ void Scope::load(ifstream& input_file,
 		string type_line;
 		getline(input_file, type_line);
 		int type = stoi(type_line);
-		if (type == NODE_TYPE_ACTION) {
-			ActionNode* action_node = new ActionNode();
-			action_node->parent = this;
-			action_node->id = id;
-			action_node->load(input_file);
-			this->nodes[action_node->id] = action_node;
-		} else if (type == NODE_TYPE_SCOPE) {
-			ScopeNode* scope_node = new ScopeNode();
-			scope_node->parent = this;
-			scope_node->id = id;
-			scope_node->load(input_file,
-							 parent_solution);
-			this->nodes[scope_node->id] = scope_node;
-		} else if (type == NODE_TYPE_BRANCH) {
-			BranchNode* branch_node = new BranchNode();
-			branch_node->parent = this;
-			branch_node->id = id;
-			branch_node->load(input_file);
-			this->nodes[branch_node->id] = branch_node;
-		} else {
-			ExitNode* exit_node = new ExitNode();
-			exit_node->parent = this;
-			exit_node->id = id;
-			exit_node->load(input_file,
-							parent_solution);
-			this->nodes[exit_node->id] = exit_node;
+		switch (type) {
+		case NODE_TYPE_ACTION:
+			{
+				ActionNode* action_node = new ActionNode();
+				action_node->parent = this;
+				action_node->id = id;
+				action_node->load(input_file);
+				this->nodes[action_node->id] = action_node;
+			}
+			break;
+		case NODE_TYPE_SCOPE:
+			{
+				ScopeNode* scope_node = new ScopeNode();
+				scope_node->parent = this;
+				scope_node->id = id;
+				scope_node->load(input_file,
+								 parent_solution);
+				this->nodes[scope_node->id] = scope_node;
+			}
+			break;
+		case NODE_TYPE_BRANCH:
+			{
+				BranchNode* branch_node = new BranchNode();
+				branch_node->parent = this;
+				branch_node->id = id;
+				branch_node->load(input_file);
+				this->nodes[branch_node->id] = branch_node;
+			}
+			break;
 		}
 	}
 }
@@ -130,16 +132,6 @@ void Scope::copy_from(Scope* original,
 				new_branch_node->parent = this;
 				new_branch_node->id = it->first;
 				this->nodes[it->first] = new_branch_node;
-			}
-			break;
-		case NODE_TYPE_EXIT:
-			{
-				ExitNode* original_exit_node = (ExitNode*)it->second;
-				ExitNode* new_exit_node = new ExitNode(original_exit_node,
-													   parent_solution);
-				new_exit_node->parent = this;
-				new_exit_node->id = it->first;
-				this->nodes[it->first] = new_exit_node;
 			}
 			break;
 		}

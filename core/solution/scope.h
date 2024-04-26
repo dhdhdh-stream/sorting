@@ -25,44 +25,29 @@ public:
 	int node_counter;
 	std::map<int, AbstractNode*> nodes;
 
+	// Eval* eval;
+
+	// EvalExperiment* eval_experiment;
+
 	Scope();
 	~Scope();
 
 	void activate(Problem* problem,
 				  std::vector<ContextLayer>& context,
-				  int& exit_depth,
-				  AbstractNode*& exit_node,
 				  RunHelper& run_helper,
 				  ScopeHistory* history);
 
 	void random_exit_activate(AbstractNode* starting_node,
-							  std::vector<Scope*>& scope_context,
-							  std::vector<AbstractNode*>& node_context,
-							  int& exit_depth,
-							  AbstractNode*& exit_node,
-							  int& random_curr_depth,
-							  bool& random_exceeded_limit,
-							  int curr_depth,
-							  std::vector<std::pair<int,AbstractNode*>>& possible_exits);
-	void inner_random_exit_activate(std::vector<Scope*>& scope_context,
-									std::vector<AbstractNode*>& node_context,
-									int& exit_depth,
-									AbstractNode*& exit_node,
-									int& random_curr_depth,
-									bool& random_exceeded_limit);
+							  std::vector<AbstractNode*>& possible_exits);
 
 	void step_through_activate(Problem* problem,
 							   std::vector<ContextLayer>& context,
-							   int& exit_depth,
-							   AbstractNode*& exit_node,
 							   RunHelper& run_helper,
 							   ScopeHistory* history);
 
 	#if defined(MDEBUG) && MDEBUG
 	void verify_activate(Problem* problem,
 						 std::vector<ContextLayer>& context,
-						 int& exit_depth,
-						 AbstractNode*& exit_node,
 						 RunHelper& run_helper,
 						 ScopeHistory* history);
 	void clear_verify();
@@ -70,8 +55,6 @@ public:
 
 	void measure_activate(Problem* problem,
 						  std::vector<ContextLayer>& context,
-						  int& exit_depth,
-						  AbstractNode*& exit_node,
 						  RunHelper& run_helper,
 						  Metrics& metrics,
 						  ScopeHistory* history);

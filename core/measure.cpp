@@ -19,10 +19,6 @@ default_random_engine generator;
 Problem* problem_type;
 Solution* solution;
 
-int num_actions_until_experiment = -1;
-int num_actions_after_experiment_to_skip = -1;
-bool eval_experiment;
-
 int main(int argc, char* argv[]) {
 	cout << "Starting..." << endl;
 
@@ -57,17 +53,11 @@ int main(int argc, char* argv[]) {
 		// ScopeHistory* root_history = new ScopeHistory(solution->scopes[3]);
 		context.back().scope_history = root_history;
 
-		// unused
-		int exit_depth = -1;
-		AbstractNode* exit_node = NULL;
-
 		solution->scopes[0]->measure_activate(
 		// solution->scopes[1]->measure_activate(
 		// solution->scopes[3]->measure_activate(
 			problem,
 			context,
-			exit_depth,
-			exit_node,
 			run_helper,
 			metrics,
 			root_history);

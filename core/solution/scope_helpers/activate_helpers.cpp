@@ -4,7 +4,6 @@
 
 #include "action_node.h"
 #include "branch_node.h"
-#include "exit_node.h"
 #include "abstract_experiment.h"
 #include "globals.h"
 #include "scope_node.h"
@@ -16,8 +15,6 @@ using namespace std;
 void node_activate_helper(AbstractNode*& curr_node,
 						  Problem* problem,
 						  vector<ContextLayer>& context,
-						  int& exit_depth,
-						  AbstractNode*& exit_node,
 						  RunHelper& run_helper,
 						  ScopeHistory* history) {
 	switch (curr_node->type) {
@@ -27,8 +24,6 @@ void node_activate_helper(AbstractNode*& curr_node,
 			node->activate(curr_node,
 						   problem,
 						   context,
-						   exit_depth,
-						   exit_node,
 						   run_helper,
 						   history->node_histories);
 		}
@@ -40,8 +35,6 @@ void node_activate_helper(AbstractNode*& curr_node,
 			node->activate(curr_node,
 						   problem,
 						   context,
-						   exit_depth,
-						   exit_node,
 						   run_helper,
 						   history->node_histories);
 		}
@@ -53,18 +46,8 @@ void node_activate_helper(AbstractNode*& curr_node,
 			node->activate(curr_node,
 						   problem,
 						   context,
-						   exit_depth,
-						   exit_node,
 						   run_helper,
 						   history->node_histories);
-		}
-
-		break;
-	case NODE_TYPE_EXIT:
-		{
-			ExitNode* node = (ExitNode*)curr_node;
-			exit_depth = node->exit_depth-1;
-			exit_node = node->next_node;
 		}
 
 		break;
@@ -75,17 +58,19 @@ void node_activate_helper(AbstractNode*& curr_node,
 		run_helper.exceeded_limit = true;
 	}
 
-	if (num_actions_until_experiment != -1) {
-		if (num_actions_until_experiment > 0) {
-			num_actions_until_experiment--;
+	if (solution->num_actions_until_experiment != -1) {
+		if (run_helper.num_actions_after_experiment_to_skip > 0) {
+			run_helper.num_actions_after_experiment_to_skip--;
+		} else {
+			if (solution->num_actions_until_experiment > 0) {
+				solution->num_actions_until_experiment--;
+			}
 		}
 	}
 }
 
 void Scope::activate(Problem* problem,
 					 vector<ContextLayer>& context,
-					 int& exit_depth,
-					 AbstractNode*& exit_node,
 					 RunHelper& run_helper,
 					 ScopeHistory* history) {
 	if (run_helper.curr_depth > run_helper.max_depth) {
@@ -100,23 +85,26 @@ void Scope::activate(Problem* problem,
 	AbstractNode* curr_node = this->nodes[0];
 	while (true) {
 		if (run_helper.exceeded_limit
-				|| exit_depth != -1
 				|| curr_node == NULL) {
 			break;
 		}
 
-		if (num_actions_until_experiment == 0) {
-			inner_experiment(problem,
-							 run_helper);
+		if (solution->num_actions_until_experiment == 0) {
+			generalize_helper(problem,
+							  run_helper);
 		}
 
 		node_activate_helper(curr_node,
 							 problem,
 							 context,
-							 exit_depth,
-							 exit_node,
 							 run_helper,
 							 history);
+
+		// if (this->eval_experiment != NULL) {
+		// 	this->eval_experiment->activate(problem,
+		// 									run_helper,
+		// 									history);
+		// }
 	}
 
 	if (history->experiment_history != NULL) {

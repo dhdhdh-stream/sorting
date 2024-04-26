@@ -11,17 +11,17 @@ public:
 	int curr_depth;
 	int max_depth;
 
+	bool exceeded_limit;
+
 	int num_decisions;
 	int num_actions;
 
-	bool exceeded_limit;
-
-	/**
-	 * - for starting experiments
-	 */
 	std::vector<AbstractExperiment*> experiments_seen_order;
 
 	std::vector<AbstractExperimentHistory*> experiment_histories;
+
+	int num_actions_after_experiment_to_skip;
+	bool eval_experiment;
 
 	#if defined(MDEBUG) && MDEBUG
 	void* verify_key;

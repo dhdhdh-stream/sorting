@@ -16,20 +16,9 @@ class Scope;
 class BranchNodeHistory;
 class BranchNode : public AbstractNode {
 public:
-	std::vector<int> scope_context_ids;
-	std::vector<Scope*> scope_context;
-	std::vector<int> node_context_ids;
-	std::vector<AbstractNode*> node_context;
-
-	bool is_pass_through;
-
 	double original_average_score;
 	double branch_average_score;
 
-	/**
-	 * - empty if input no longer accessible after create_scope()
-	 *   - TODO: clean instead
-	 */
 	std::vector<std::vector<int>> input_scope_context_ids;
 	std::vector<std::vector<Scope*>> input_scope_contexts;
 	std::vector<std::vector<int>> input_node_context_ids;
@@ -56,10 +45,6 @@ public:
 	int branch_next_node_id;
 	AbstractNode* branch_next_node;
 
-	std::vector<int> hook_indexes;
-	std::vector<std::vector<Scope*>> hook_scope_contexts;
-	std::vector<std::vector<AbstractNode*>> hook_node_contexts;
-
 	#if defined(MDEBUG) && MDEBUG
 	void* verify_key;
 	std::vector<double> verify_original_scores;
@@ -73,26 +58,8 @@ public:
 	void activate(AbstractNode*& curr_node,
 				  Problem* problem,
 				  std::vector<ContextLayer>& context,
-				  int& exit_depth,
-				  AbstractNode*& exit_node,
 				  RunHelper& run_helper,
 				  std::map<AbstractNode*, AbstractNodeHistory*>& node_histories);
-
-	void random_existing_activate(AbstractNode*& curr_node,
-								  std::vector<Scope*>& scope_context,
-								  std::vector<AbstractNode*>& node_context,
-								  std::vector<AbstractNode*>& possible_nodes);
-	void inner_random_existing_activate(AbstractNode*& curr_node,
-										std::vector<Scope*>& scope_context,
-										std::vector<AbstractNode*>& node_context);
-	void random_exit_activate(AbstractNode*& curr_node,
-							  std::vector<Scope*>& scope_context,
-							  std::vector<AbstractNode*>& node_context,
-							  int curr_depth,
-							  std::vector<std::pair<int,AbstractNode*>>& possible_exits);
-	void inner_random_exit_activate(AbstractNode*& curr_node,
-									std::vector<Scope*>& scope_context,
-									std::vector<AbstractNode*>& node_context);
 
 	void step_through_activate(AbstractNode*& curr_node,
 							   Problem* problem,

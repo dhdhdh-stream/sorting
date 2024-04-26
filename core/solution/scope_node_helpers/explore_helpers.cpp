@@ -20,13 +20,8 @@ void ScopeNode::explore_activate(Problem* problem,
 	ScopeHistory* scope_history = new ScopeHistory(this->scope);
 	context.back().scope_history = scope_history;
 
-	int inner_exit_depth = -1;
-	AbstractNode* inner_exit_node = NULL;
-
 	this->scope->activate(problem,
 						  context,
-						  inner_exit_depth,
-						  inner_exit_node,
 						  run_helper,
 						  scope_history);
 

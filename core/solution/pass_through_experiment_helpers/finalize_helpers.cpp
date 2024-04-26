@@ -7,7 +7,6 @@
 #include "branch_node.h"
 #include "constants.h"
 #include "globals.h"
-#include "exit_node.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
@@ -16,126 +15,21 @@ using namespace std;
 
 void PassThroughExperiment::finalize(Solution* duplicate) {
 	if (this->result == EXPERIMENT_RESULT_SUCCESS) {
-		Scope* duplicate_local_scope = duplicate->scopes[this->scope_context.back()->id];
-		AbstractNode* duplicate_explore_node = duplicate_local_scope->nodes[this->node_context.back()->id];
+		Scope* duplicate_local_scope = duplicate->scopes[this->scope_context->id];
+		AbstractNode* duplicate_explore_node = duplicate_local_scope->nodes[this->node_context->id];
 
 		int start_node_id;
 		AbstractNode* start_node;
-		if (this->scope_context.size() > 1) {
-			BranchNode* new_branch_node = new BranchNode();
-			new_branch_node->parent = duplicate_local_scope;
-			new_branch_node->id = duplicate_local_scope->node_counter;
-			duplicate_local_scope->node_counter++;
-			duplicate_local_scope->nodes[new_branch_node->id] = new_branch_node;
-
-			new_branch_node->scope_context = this->scope_context;
-			for (int c_index = 0; c_index < (int)new_branch_node->scope_context.size(); c_index++) {
-				new_branch_node->scope_context_ids.push_back(new_branch_node->scope_context[c_index]->id);
-			}
-			for (int c_index = 0; c_index < (int)new_branch_node->scope_context.size(); c_index++) {
-				new_branch_node->scope_context[c_index] = duplicate->scopes[new_branch_node->scope_context[c_index]->id];
-			}
-			new_branch_node->node_context = this->node_context;
-			new_branch_node->node_context.back() = new_branch_node;
-			for (int c_index = 0; c_index < (int)new_branch_node->node_context.size(); c_index++) {
-				new_branch_node->node_context_ids.push_back(new_branch_node->node_context[c_index]->id);
-			}
-			for (int c_index = 0; c_index < (int)new_branch_node->node_context.size()-1; c_index++) {
-				new_branch_node->node_context[c_index] = new_branch_node->scope_context[c_index]
-					->nodes[new_branch_node->node_context[c_index]->id];
-			}
-
-			new_branch_node->is_pass_through = true;
-
-			new_branch_node->original_average_score = 0.0;
-			new_branch_node->branch_average_score = 0.0;
-
-			new_branch_node->original_network = NULL;
-			new_branch_node->branch_network = NULL;
-
-			if (duplicate_explore_node->type == NODE_TYPE_ACTION) {
-				ActionNode* action_node = (ActionNode*)duplicate_explore_node;
-
-				if (action_node->next_node == NULL) {
-					/**
-					 * - ending node
-					 */
-					if (this->ending_node != NULL) {
-						new_branch_node->original_next_node_id = this->ending_node->id;
-						new_branch_node->original_next_node = this->ending_node;
-					} else {
-						ActionNode* new_ending_node = new ActionNode();
-						new_ending_node->parent = duplicate_local_scope;
-						new_ending_node->id = duplicate_local_scope->node_counter;
-						duplicate_local_scope->node_counter++;
-						duplicate_local_scope->nodes[new_ending_node->id] = new_ending_node;
-
-						new_ending_node->action = Action(ACTION_NOOP);
-
-						new_ending_node->next_node_id = -1;
-						new_ending_node->next_node = NULL;
-
-						new_branch_node->original_next_node_id = new_ending_node->id;
-						new_branch_node->original_next_node = new_ending_node;
-					}
-				} else {
-					new_branch_node->original_next_node_id = action_node->next_node_id;
-					new_branch_node->original_next_node = action_node->next_node;
-				}
-			} else if (duplicate_explore_node->type == NODE_TYPE_SCOPE) {
-				ScopeNode* scope_node = (ScopeNode*)duplicate_explore_node;
-
-				new_branch_node->original_next_node_id = scope_node->next_node_id;
-				new_branch_node->original_next_node = scope_node->next_node;
-			} else {
-				BranchNode* branch_node = (BranchNode*)duplicate_explore_node;
-
-				if (this->is_branch) {
-					new_branch_node->original_next_node_id = branch_node->branch_next_node_id;
-					new_branch_node->original_next_node = branch_node->branch_next_node;
-				} else {
-					new_branch_node->original_next_node_id = branch_node->original_next_node_id;
-					new_branch_node->original_next_node = branch_node->original_next_node;
-				}
-			}
-
-			if (this->best_step_types.size() == 0) {
-				if (this->exit_node != NULL) {
-					new_branch_node->branch_next_node_id = this->exit_node->id;
-					new_branch_node->branch_next_node = this->exit_node;
-				} else {
-					new_branch_node->branch_next_node_id = this->best_exit_next_node->id;
-					new_branch_node->branch_next_node = duplicate_local_scope->nodes[this->best_exit_next_node->id];
-				}
-			} else {
-				if (this->best_step_types[0] == STEP_TYPE_ACTION) {
-					new_branch_node->branch_next_node_id = this->best_actions[0]->id;
-					new_branch_node->branch_next_node = this->best_actions[0];
-				} else {
-					new_branch_node->branch_next_node_id = this->best_scopes[0]->id;
-					new_branch_node->branch_next_node = this->best_scopes[0];
-				}
-			}
-
-			start_node_id = new_branch_node->id;
-			start_node = new_branch_node;
+		if (this->best_step_types.size() == 0) {
+			start_node_id = this->best_exit_next_node->id;
+			start_node = duplicate_local_scope->nodes[this->best_exit_next_node->id];
 		} else {
-			if (this->best_step_types.size() == 0) {
-				if (this->exit_node != NULL) {
-					start_node_id = this->exit_node->id;
-					start_node = this->exit_node;
-				} else {
-					start_node_id = this->best_exit_next_node->id;
-					start_node = duplicate_local_scope->nodes[this->best_exit_next_node->id];
-				}
+			if (this->best_step_types[0] == STEP_TYPE_ACTION) {
+				start_node_id = this->best_actions[0]->id;
+				start_node = this->best_actions[0];
 			} else {
-				if (this->best_step_types[0] == STEP_TYPE_ACTION) {
-					start_node_id = this->best_actions[0]->id;
-					start_node = this->best_actions[0];
-				} else {
-					start_node_id = this->best_scopes[0]->id;
-					start_node = this->best_scopes[0];
-				}
+				start_node_id = this->best_scopes[0]->id;
+				start_node = this->best_scopes[0];
 			}
 		}
 
@@ -161,16 +55,6 @@ void PassThroughExperiment::finalize(Solution* duplicate) {
 			}
 		}
 
-		if (this->exit_node != NULL) {
-			this->exit_node->parent = duplicate_local_scope;
-			duplicate_local_scope->nodes[this->exit_node->id] = this->exit_node;
-
-			this->exit_node->next_node_parent = duplicate->scopes[this->exit_node->next_node_parent->id];
-			if (this->exit_node->next_node != NULL) {
-				this->exit_node->next_node = this->exit_node->next_node_parent->nodes[
-					this->exit_node->next_node->id];
-			}
-		}
 		if (this->ending_node != NULL) {
 			this->ending_node->parent = duplicate_local_scope;
 			duplicate_local_scope->nodes[this->ending_node->id] = this->ending_node;
@@ -184,22 +68,7 @@ void PassThroughExperiment::finalize(Solution* duplicate) {
 				this->best_scopes[s_index]->parent = duplicate_local_scope;
 				duplicate_local_scope->nodes[this->best_scopes[s_index]->id] = this->best_scopes[s_index];
 
-				map<int, Scope*>::iterator it = duplicate->scopes.find(this->best_scopes[s_index]->scope->id);
-				if (it == duplicate->scopes.end()) {
-					if (s_index == 0) {
-						for (map<int, AbstractNode*>::iterator it = this->best_scopes[s_index]->scope->nodes.begin();
-								it != this->best_scopes[s_index]->scope->nodes.end(); it++) {
-							if (it->second->type == NODE_TYPE_SCOPE) {
-								ScopeNode* scope_node = (ScopeNode*)it->second;
-								scope_node->scope = duplicate->scopes[scope_node->scope->id];
-							}
-						}
-
-						duplicate->scopes[this->best_scopes[s_index]->scope->id] = this->best_scopes[s_index]->scope;
-					}
-				} else {
-					this->best_scopes[s_index]->scope = it->second;
-				}
+				this->best_scopes[s_index]->scope = duplicate->scopes[this->best_scopes[s_index]->scope->id];
 			}
 		}
 		if (this->best_step_types.size() > 0) {
@@ -218,7 +87,6 @@ void PassThroughExperiment::finalize(Solution* duplicate) {
 
 		this->best_actions.clear();
 		this->best_scopes.clear();
-		this->exit_node = NULL;
 		this->ending_node = NULL;
 
 		for (int v_index = 0; v_index < (int)this->verify_experiments.size(); v_index++) {
@@ -246,10 +114,10 @@ void PassThroughExperiment::finalize(Solution* duplicate) {
 	}
 
 	int experiment_index;
-	for (int e_index = 0; e_index < (int)this->node_context.back()->experiments.size(); e_index++) {
-		if (this->node_context.back()->experiments[e_index] == this) {
+	for (int e_index = 0; e_index < (int)this->node_context->experiments.size(); e_index++) {
+		if (this->node_context->experiments[e_index] == this) {
 			experiment_index = e_index;
 		}
 	}
-	this->node_context.back()->experiments.erase(this->node_context.back()->experiments.begin() + experiment_index);
+	this->node_context->experiments.erase(this->node_context->experiments.begin() + experiment_index);
 }

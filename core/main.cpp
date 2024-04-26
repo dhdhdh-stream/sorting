@@ -1,41 +1,30 @@
 // TODO: add mimicking
 // - human performs simple full run, so no decision making/variations
 //   - copy sequences, and try using them in different places
+//   - or examine differences/branching offs
 
-// - for an action to be good, it has to be general
-//   - for it to be generally applied, it has to be good
-//     - chicken-and-egg problem
-// - so has to be kind of good, which makes it kind of be applied in more places, etc.
-//   - but if applied in wrong place, may destroy potential to be even more general/good
-//     - even worse, may prevent another action from being tried, meaning that better action may never be found
-// - so have to periodically restart
-//   - have to hope something kind of good is found
-//     - it then gets applied in places that synergize
-//       - etc.
+// - cannot rely on being able to complete a billions runs
+//   - have to create subgoals/subproblems which can be tackled multiple times even within a single run
+//     - hiearchy of goals/problems
 
-// - what about outer/traversal?
-//   - inner actions are a part of traversal
-//     - cannot simply replace as everything may change
+// - have to identify what is relevant to final success locally
+//   - and has to be robust to experimentation
 
-// - create basic actions by:
-//   - initially, randomly performing some actions, then experiment from there
-//     - can repeat this process in a single run a variable number of times
-//   - later, pick some narrow section of the solution, then randomly branch off from there
-//     - then, after training, compare against existing basic actions to see if meaningful
+// - maybe have eval sequence?
+//   - good eval sequence has to have minimal final impact while being good at predicting final score
 
-// - why need basic actions?
-//   - starting point for good generalization?
-//     - without, don't know what to abstract as something that's meaningful
+// - maybe eval both before and after
+//   - so don't eval explore sequence
+//     - intuitively, effects of sequence unpredictable, but can look at the before and after
 
-// - basic actions cannot recurse on themselves
-//   - but maybe can recurse on previous basic actions
-// - so also don't recurse on traversal
+// - maybe eval sequence per scope
+//   - with each based on the layer outside?
 
-// - traversal is narrow, so don't recurse in general?
-//   - yeah, maybe instead begin creating 2nd level action?
+// - to determine if eval sequence not significant impact, maybe randomly try everywhere
+//   - or at least randomly within its scope
 
-// - maybe arbitrarily select multiple points, and learn scope for multiple improvements?
-//   - then if improvement, new scope?
+// - can use history
+//   - though probably don't include initially
 
 #include <chrono>
 #include <iostream>
@@ -64,10 +53,6 @@ default_random_engine generator;
 Problem* problem_type;
 Solution* solution;
 
-int num_actions_until_experiment = -1;
-int num_actions_after_experiment_to_skip = -1;
-bool eval_experiment;
-
 int main(int argc, char* argv[]) {
 	cout << "Starting..." << endl;
 
@@ -89,8 +74,6 @@ int main(int argc, char* argv[]) {
 	int run_index = 0;
 	#endif /* MDEBUG */
 
-	double hit_percent = 0.5;
-
 	while (true) {
 		// Problem* problem = new Sorting();
 		Problem* problem = new Minesweeper();
@@ -106,36 +89,23 @@ int main(int argc, char* argv[]) {
 		vector<ContextLayer> context;
 		context.push_back(ContextLayer());
 
-		// context.back().scope = solution->scopes[0];
-		// context.back().scope = solution->scopes[1];
-		// context.back().scope = solution->scopes[3];
-		context.back().scope = solution->scopes[5];
+		context.back().scope = solution->current;
 		context.back().node = NULL;
 
-		// ScopeHistory* root_history = new ScopeHistory(solution->scopes[0]);
-		// ScopeHistory* root_history = new ScopeHistory(solution->scopes[1]);
-		// ScopeHistory* root_history = new ScopeHistory(solution->scopes[3]);
-		ScopeHistory* root_history = new ScopeHistory(solution->scopes[5]);
+		ScopeHistory* root_history = new ScopeHistory(solution->current);
 		context.back().scope_history = root_history;
 
-		// unused
-		int exit_depth = -1;
-		AbstractNode* exit_node = NULL;
-
-		// solution->scopes[0]->activate(
-		// solution->scopes[1]->activate(
-		// solution->scopes[3]->activate(
-		solution->scopes[5]->activate(
+		solution->current->activate(
 			problem,
 			context,
-			exit_depth,
-			exit_node,
 			run_helper,
 			root_history);
 
-		if (run_helper.experiments_seen_order.size() == 0) {
-			if (!run_helper.exceeded_limit) {
-				create_experiment(root_history);
+		if (solution->state == SOLUTION_STATE_TRAVERSE) {
+			if (run_helper.experiments_seen_order.size() == 0) {
+				if (!run_helper.exceeded_limit) {
+					create_experiment(root_history);
+				}
 			}
 		}
 
@@ -149,8 +119,6 @@ int main(int argc, char* argv[]) {
 		}
 
 		if (run_helper.experiment_histories.size() > 0) {
-			hit_percent = 0.999*hit_percent + 0.001;
-
 			for (int e_index = 0; e_index < (int)run_helper.experiments_seen_order.size(); e_index++) {
 				AbstractExperiment* experiment = run_helper.experiments_seen_order[e_index];
 				experiment->average_remaining_experiments_from_start =
@@ -261,27 +229,15 @@ int main(int argc, char* argv[]) {
 					vector<ContextLayer> context;
 					context.push_back(ContextLayer());
 
-					// context.back().scope = duplicate->scopes[0];
-					// context.back().scope = duplicate->scopes[1];
-					context.back().scope = duplicate->scopes[5];
+					context.back().scope = duplicate->current;
 					context.back().node = NULL;
 
-					// ScopeHistory* root_history = new ScopeHistory(duplicate->scopes[0]);
-					// ScopeHistory* root_history = new ScopeHistory(duplicate->scopes[1]);
-					ScopeHistory* root_history = new ScopeHistory(duplicate->scopes[5]);
+					ScopeHistory* root_history = new ScopeHistory(duplicate->current);
 					context.back().scope_history = root_history;
 
-					// unused
-					int exit_depth = -1;
-					AbstractNode* exit_node = NULL;
-
-					// duplicate->scopes[0]->verify_activate(
-					// duplicate->scopes[1]->verify_activate(
-					duplicate->scopes[5]->verify_activate(
+					duplicate->current->verify_activate(
 						problem,
 						context,
-						exit_depth,
-						exit_node,
 						run_helper,
 						root_history);
 
@@ -291,22 +247,11 @@ int main(int argc, char* argv[]) {
 					duplicate->verify_problems.erase(duplicate->verify_problems.begin());
 				}
 				duplicate->clear_verify();
-				#endif /* MDEBUG */
+
+				duplicate->increment();
 
 				delete solution;
 				solution = duplicate;
-
-				#if defined(MDEBUG) && MDEBUG
-				solution->depth_limit = solution->max_depth + 1;
-				#else
-				if (solution->max_depth < 50) {
-					solution->depth_limit = solution->max_depth + 10;
-				} else {
-					solution->depth_limit = (int)(1.2*(double)solution->max_depth);
-				}
-				#endif /* MDEBUG */
-
-				solution->num_actions_limit = 20*solution->max_num_actions + 20;
 
 				solution->timestamp++;
 				solution->save("", "main");
@@ -315,12 +260,11 @@ int main(int argc, char* argv[]) {
 				display_file.open("../display.txt");
 				solution->save_for_display(display_file);
 				display_file.close();
-
-				cout << "hit_percent: " << hit_percent << endl;
+				#else
+				delete duplicate;
+				#endif /* MDEBUG */
 			}
 		} else {
-			hit_percent = 0.999*hit_percent + 0.0;
-
 			for (int e_index = 0; e_index < (int)run_helper.experiments_seen_order.size(); e_index++) {
 				AbstractExperiment* experiment = run_helper.experiments_seen_order[e_index];
 				experiment->average_remaining_experiments_from_start =

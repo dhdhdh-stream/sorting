@@ -28,8 +28,8 @@ class AbstractExperiment {
 public:
 	int type;
 
-	std::vector<Scope*> scope_context;
-	std::vector<AbstractNode*> node_context;
+	Scope* scope_context;
+	AbstractNode* node_context;
 	bool is_branch;
 
 	AbstractExperiment* parent_experiment;
@@ -57,17 +57,12 @@ public:
 	virtual bool activate(AbstractNode*& curr_node,
 						  Problem* problem,
 						  std::vector<ContextLayer>& context,
-						  int& exit_depth,
-						  AbstractNode*& exit_node,
 						  RunHelper& run_helper) = 0;
 
 	virtual void backprop(double target_val,
 						  RunHelper& run_helper) = 0;
 
 	virtual void finalize(Solution* duplicate) = 0;
-	/**
-	 * - also set to NULL in parent
-	 */
 };
 
 class AbstractExperimentHistory {
@@ -77,7 +72,7 @@ public:
 	std::vector<AbstractExperiment*> experiments_seen_order;
 
 	ScopeHistory* scope_history;
-	std::vector<int> experiment_index;
+	int experiment_index;
 
 	virtual ~AbstractExperimentHistory() {};
 };

@@ -5,7 +5,6 @@
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
-#include "exit_node.h"
 #include "globals.h"
 #include "network.h"
 #include "pass_through_experiment.h"
@@ -24,11 +23,7 @@ bool BranchExperiment::experiment_verify_activate(
 		RunHelper& run_helper) {
 	if (this->is_pass_through) {
 		if (this->best_step_types.size() == 0) {
-			if (this->exit_node != NULL) {
-				curr_node = this->exit_node;
-			} else {
-				curr_node = this->best_exit_next_node;
-			}
+			curr_node = this->best_exit_next_node;
 		} else {
 			if (this->best_step_types[0] == STEP_TYPE_ACTION) {
 				curr_node = this->best_actions[0];
@@ -44,7 +39,7 @@ bool BranchExperiment::experiment_verify_activate(
 		vector<double> input_vals(this->input_scope_contexts.size(), 0.0);
 		for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
 			int curr_layer = 0;
-			ScopeHistory* curr_scope_history = context[context.size() - this->scope_context.size()].scope_history;
+			ScopeHistory* curr_scope_history = context.back().scope_history;
 			while (true) {
 				map<AbstractNode*, AbstractNodeHistory*>::iterator it = curr_scope_history->node_histories.find(
 					this->input_node_contexts[i_index][curr_layer]);
@@ -118,11 +113,7 @@ bool BranchExperiment::experiment_verify_activate(
 
 		if (decision_is_branch) {
 			if (this->best_step_types.size() == 0) {
-				if (this->exit_node != NULL) {
-					curr_node = this->exit_node;
-				} else {
-					curr_node = this->best_exit_next_node;
-				}
+				curr_node = this->best_exit_next_node;
 			} else {
 				if (this->best_step_types[0] == STEP_TYPE_ACTION) {
 					curr_node = this->best_actions[0];
@@ -275,14 +266,8 @@ void BranchExperiment::experiment_verify_backprop(
 		if (this->combined_score > this->verify_existing_average_score) {
 		#endif /* MDEBUG */
 			cout << "experiment success" << endl;
-			cout << "this->scope_context:" << endl;
-			for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
-				cout << c_index << ": " << this->scope_context[c_index]->id << endl;
-			}
-			cout << "this->node_context:" << endl;
-			for (int c_index = 0; c_index < (int)this->node_context.size(); c_index++) {
-				cout << c_index << ": " << this->node_context[c_index]->id << endl;
-			}
+			cout << "this->scope_context->id: " << this->scope_context->id << endl;
+			cout << "this->node_context->id: " << this->node_context->id << endl;
 			cout << "this->is_branch: " << this->is_branch << endl;
 			cout << "new explore path:";
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
@@ -294,7 +279,6 @@ void BranchExperiment::experiment_verify_backprop(
 			}
 			cout << endl;
 
-			cout << "this->best_exit_depth: " << this->best_exit_depth << endl;
 			if (this->best_exit_next_node == NULL) {
 				cout << "this->best_exit_next_node->id: " << -1 << endl;
 			} else {

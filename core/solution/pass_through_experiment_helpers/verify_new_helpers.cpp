@@ -5,7 +5,6 @@
 #include "action_node.h"
 #include "branch_experiment.h"
 #include "constants.h"
-#include "exit_node.h"
 #include "globals.h"
 #include "scope.h"
 #include "scope_node.h"
@@ -17,15 +16,9 @@ void PassThroughExperiment::verify_new_activate(
 		AbstractNode*& curr_node,
 		Problem* problem,
 		vector<ContextLayer>& context,
-		int& exit_depth,
-		AbstractNode*& exit_node,
 		RunHelper& run_helper) {
 	if (this->best_step_types.size() == 0) {
-		if (this->exit_node != NULL) {
-			curr_node = this->exit_node;
-		} else {
-			curr_node = this->best_exit_next_node;
-		}
+		curr_node = this->best_exit_next_node;
 	} else {
 		if (this->best_step_types[0] == STEP_TYPE_ACTION) {
 			curr_node = this->best_actions[0];
@@ -82,14 +75,8 @@ void PassThroughExperiment::verify_new_backprop(
 		#endif /* MDEBUG */
 			cout << "PassThrough" << endl;
 			cout << "this->parent_experiment: " << this->parent_experiment << endl;
-			cout << "this->scope_context:" << endl;
-			for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
-				cout << c_index << ": " << this->scope_context[c_index]->id << endl;
-			}
-			cout << "this->node_context:" << endl;
-			for (int c_index = 0; c_index < (int)this->node_context.size(); c_index++) {
-				cout << c_index << ": " << this->node_context[c_index]->id << endl;
-			}
+			cout << "this->scope_context->id: " << this->scope_context->id << endl;
+			cout << "this->node_context->id: " << this->node_context->id << endl;
 			cout << "this->is_branch: " << this->is_branch << endl;
 			cout << "new explore path:";
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
@@ -101,7 +88,6 @@ void PassThroughExperiment::verify_new_backprop(
 			}
 			cout << endl;
 
-			cout << "this->best_exit_depth: " << this->best_exit_depth << endl;
 			if (this->best_exit_next_node == NULL) {
 				cout << "this->best_exit_next_node->id: " << -1 << endl;
 			} else {

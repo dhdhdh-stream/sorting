@@ -4,9 +4,13 @@
 
 #include "abstract_experiment.h"
 #include "action_node.h"
+#include "globals.h"
 #include "scope.h"
 
 using namespace std;
+
+const int TRAVERSE_ITERS = 20;
+const int GENERALIZE_ITERS = 20;
 
 Solution::Solution() {
 	// do nothing
@@ -17,23 +21,25 @@ Solution::Solution(Solution* original) {
 	this->curr_average_score = original->curr_average_score;
 	this->average_num_actions = original->average_num_actions;
 
-	for (map<int, Scope*>::iterator it = original->scopes.begin();
-			it != original->scopes.end(); it++) {
+	this->current = new Scope();
+	this->current->id = -1;
+	for (int s_index = 0; s_index < (int)original->scopes.size(); s_index++) {
 		Scope* scope = new Scope();
-		scope->id = it->first;
-		this->scopes[it->first] = scope;
-	}
-	for (map<int, Scope*>::iterator it = this->scopes.begin();
-			it != this->scopes.end(); it++) {
-		it->second->copy_from(original->scopes[it->first],
-							  this);
-	}
-	for (map<int, Scope*>::iterator it = this->scopes.begin();
-			it != this->scopes.end(); it++) {
-		it->second->link(this);
+		scope->id = s_index;
+		this->scopes.push_back(scope);
 	}
 
-	this->scope_counter = original->scope_counter;
+	this->current->copy_from(original->current,
+							 this);
+	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
+		this->scopes[s_index]->copy_from(original->scopes[s_index],
+										 this);
+	}
+
+	this->current->link(this);
+	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
+		this->scopes[s_index]->link(this);
+	}
 
 	this->max_depth = original->max_depth;
 	this->depth_limit = original->depth_limit;
@@ -43,23 +49,9 @@ Solution::Solution(Solution* original) {
 }
 
 Solution::~Solution() {
-	/**
-	 * - clear experiments first because of new scope check
-	 */
-	for (map<int, Scope*>::iterator it = this->scopes.begin();
-			it != this->scopes.end(); it++) {
-		for (map<int, AbstractNode*>::iterator node_it = it->second->nodes.begin();
-				node_it != it->second->nodes.end(); node_it++) {
-			for (int e_index = 0; e_index < (int)node_it->second->experiments.size(); e_index++) {
-				delete node_it->second->experiments[e_index];
-			}
-			node_it->second->experiments.clear();
-		}
-	}
-
-	for (map<int, Scope*>::iterator it = this->scopes.begin();
-			it != this->scopes.end(); it++) {
-		delete it->second;
+	delete this->current;
+	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
+		delete this->scopes[s_index];
 	}
 }
 
@@ -68,28 +60,27 @@ void Solution::init() {
 	this->curr_average_score = -1.0;
 	this->average_num_actions = 0.0;
 
-	Scope* starting_scope = new Scope();
-	starting_scope->id = 0;
-	this->scopes[0] = starting_scope;
+	this->state = SOLUTION_STATE_TRAVERSE;
+	this->state_iter = 0;
+	this->num_actions_until_experiment = -1;
+
+	this->current = new Scope();
+	this->current->id = -1;
 
 	ActionNode* starting_noop_node = new ActionNode();
-	starting_noop_node->parent = starting_scope;
+	starting_noop_node->parent = this->current;
 	starting_noop_node->id = 0;
 	starting_noop_node->action = Action(ACTION_NOOP);
 	starting_noop_node->next_node_id = -1;
 	starting_noop_node->next_node = NULL;
-	starting_scope->nodes[0] = starting_noop_node;
-	starting_scope->node_counter = 1;
-
-	this->scope_counter = 1;
+	this->current->nodes[0] = starting_noop_node;
+	this->current->node_counter = 1;
 
 	this->max_depth = 1;
 	this->depth_limit = 11;
 
-	// this->max_num_actions = 1;
-	// this->num_actions_limit = 40;
-	this->max_num_actions = 5;
-	this->num_actions_limit = 120;
+	this->max_num_actions = 1;
+	this->num_actions_limit = 40;
 }
 
 void Solution::load(string path,
@@ -109,31 +100,44 @@ void Solution::load(string path,
 	getline(input_file, average_num_actions_line);
 	this->average_num_actions = stod(average_num_actions_line);
 
+	string state_line;
+	getline(input_file, state_line);
+	this->state = stoi(state_line);
+
+	string state_iter_line;
+	getline(input_file, state_iter_line);
+	this->state_iter = stoi(state_iter_line);
+
+	if (this->state == SOLUTION_STATE_TRAVERSE) {
+		this->num_actions_until_experiment = -1;
+	} else {
+		uniform_int_distribution<int> next_distribution(0, (int)(this->average_num_actions/2.0));
+		this->num_actions_until_experiment = 1 + next_distribution(generator);
+	}
+
 	string num_scopes_line;
 	getline(input_file, num_scopes_line);
 	int num_scopes = stoi(num_scopes_line);
+
+	this->current = new Scope();
+	this->current->id = -1;
 	for (int s_index = 0; s_index < num_scopes; s_index++) {
-		string id_line;
-		getline(input_file, id_line);
-		int scope_id = stoi(id_line);
-
 		Scope* scope = new Scope();
-		scope->id = scope_id;
-		this->scopes[scope_id] = scope;
-	}
-	for (map<int, Scope*>::iterator it = this->scopes.begin();
-			it != this->scopes.end(); it++) {
-		it->second->load(input_file,
-						 this);
-	}
-	for (map<int, Scope*>::iterator it = this->scopes.begin();
-			it != this->scopes.end(); it++) {
-		it->second->link(this);
+		scope->id = s_index;
+		this->scopes.push_back(scope);
 	}
 
-	string scope_counter_line;
-	getline(input_file, scope_counter_line);
-	this->scope_counter = stoi(scope_counter_line);
+	this->current->load(input_file,
+						this);
+	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
+		this->scopes[s_index]->load(input_file,
+									this);
+	}
+
+	this->current->link(this);
+	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
+		this->scopes[s_index]->link(this);
+	}
 
 	string max_depth_line;
 	getline(input_file, max_depth_line);
@@ -156,15 +160,56 @@ void Solution::load(string path,
 
 #if defined(MDEBUG) && MDEBUG
 void Solution::clear_verify() {
-	for (map<int, Scope*>::iterator it = this->scopes.begin();
-			it != this->scopes.end(); it++) {
-		it->second->clear_verify();
+	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
+		this->scopes[s_index]->clear_verify();
 	}
 
 	this->verify_key = NULL;
 	this->verify_problems.clear();
 }
 #endif /* MDEBUG */
+
+void Solution::increment() {
+	this->state_iter++;
+	if (this->state == SOLUTION_STATE_TRAVERSE
+			&& this->state_iter >= TRAVERSE_ITERS) {
+		Scope* new_scope = new Scope();
+		new_scope->id = this->scopes.size();
+		this->scopes.push_back(new_scope);
+
+		ActionNode* starting_noop_node = new ActionNode();
+		starting_noop_node->parent = new_scope;
+		starting_noop_node->id = 0;
+		starting_noop_node->action = Action(ACTION_NOOP);
+		starting_noop_node->next_node_id = -1;
+		starting_noop_node->next_node = NULL;
+		new_scope->nodes[0] = starting_noop_node;
+		new_scope->node_counter = 1;
+
+		this->state = SOLUTION_STATE_GENERALIZE;
+		this->state_iter = 0;
+		uniform_int_distribution<int> next_distribution(0, (int)(this->average_num_actions/2.0));
+		this->num_actions_until_experiment = 1 + next_distribution(generator);
+	} else if (this->state == SOLUTION_STATE_GENERALIZE
+			&& this->state_iter >= GENERALIZE_ITERS) {
+		delete this->current;
+		this->current = new Scope();
+		this->current->id = -1;
+
+		ActionNode* starting_noop_node = new ActionNode();
+		starting_noop_node->parent = this->current;
+		starting_noop_node->id = 0;
+		starting_noop_node->action = Action(ACTION_NOOP);
+		starting_noop_node->next_node_id = -1;
+		starting_noop_node->next_node = NULL;
+		this->current->nodes[0] = starting_noop_node;
+		this->current->node_counter = 1;
+
+		this->state = SOLUTION_STATE_TRAVERSE;
+		this->state_iter = 0;
+		this->num_actions_until_experiment = -1;
+	}
+}
 
 void Solution::save(string path,
 					string name) {
@@ -175,17 +220,15 @@ void Solution::save(string path,
 	output_file << this->curr_average_score << endl;
 	output_file << this->average_num_actions << endl;
 
-	output_file << this->scopes.size() << endl;
-	for (map<int, Scope*>::iterator it = this->scopes.begin();
-			it != this->scopes.end(); it++) {
-		output_file << it->first << endl;
-	}
-	for (map<int, Scope*>::iterator it = this->scopes.begin();
-			it != this->scopes.end(); it++) {
-		it->second->save(output_file);
-	}
+	output_file << this->state << endl;
+	output_file << this->state_iter << endl;
 
-	output_file << this->scope_counter << endl;
+	output_file << this->scopes.size() << endl;
+
+	this->current->save(output_file);
+	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
+		this->scopes[s_index]->save(output_file);
+	}
 
 	output_file << this->max_depth << endl;
 
@@ -199,10 +242,10 @@ void Solution::save(string path,
 }
 
 void Solution::save_for_display(ofstream& output_file) {
+	this->current->save_for_display(output_file);
+
 	output_file << this->scopes.size() << endl;
-	for (map<int, Scope*>::iterator it = this->scopes.begin();
-			it != this->scopes.end(); it++) {
-		output_file << it->first << endl;
-		it->second->save_for_display(output_file);
+	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
+		this->scopes[s_index]->save_for_display(output_file);
 	}
 }

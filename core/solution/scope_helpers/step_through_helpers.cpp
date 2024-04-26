@@ -4,7 +4,6 @@
 
 #include "action_node.h"
 #include "branch_node.h"
-#include "exit_node.h"
 #include "globals.h"
 #include "problem.h"
 #include "scope_node.h"
@@ -15,8 +14,6 @@ using namespace std;
 void node_step_through_activate_helper(AbstractNode*& curr_node,
 									   Problem* problem,
 									   vector<ContextLayer>& context,
-									   int& exit_depth,
-									   AbstractNode*& exit_node,
 									   RunHelper& run_helper,
 									   ScopeHistory* history) {
 	switch (curr_node->type) {
@@ -43,8 +40,6 @@ void node_step_through_activate_helper(AbstractNode*& curr_node,
 			node->step_through_activate(curr_node,
 										problem,
 										context,
-										exit_depth,
-										exit_node,
 										run_helper,
 										node_history);
 		}
@@ -61,14 +56,6 @@ void node_step_through_activate_helper(AbstractNode*& curr_node,
 		}
 
 		break;
-	case NODE_TYPE_EXIT:
-		{
-			ExitNode* node = (ExitNode*)curr_node;
-			exit_depth = node->exit_depth-1;
-			exit_node = node->next_node;
-		}
-
-		break;
 	}
 
 	run_helper.num_actions++;
@@ -79,8 +66,6 @@ void node_step_through_activate_helper(AbstractNode*& curr_node,
 
 void Scope::step_through_activate(Problem* problem,
 								  vector<ContextLayer>& context,
-								  int& exit_depth,
-								  AbstractNode*& exit_node,
 								  RunHelper& run_helper,
 								  ScopeHistory* history) {
 	if (run_helper.curr_depth > solution->depth_limit) {
@@ -103,7 +88,6 @@ void Scope::step_through_activate(Problem* problem,
 	AbstractNode* curr_node = this->nodes[0];
 	while (true) {
 		if (run_helper.exceeded_limit
-				|| exit_depth != -1
 				|| curr_node == NULL) {
 			break;
 		}
@@ -111,8 +95,6 @@ void Scope::step_through_activate(Problem* problem,
 		node_step_through_activate_helper(curr_node,
 										  problem,
 										  context,
-										  exit_depth,
-										  exit_node,
 										  run_helper,
 										  history);
 	}

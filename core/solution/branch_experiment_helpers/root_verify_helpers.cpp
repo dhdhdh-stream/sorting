@@ -3,7 +3,6 @@
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
-#include "exit_node.h"
 #include "globals.h"
 #include "network.h"
 #include "scope.h"
@@ -17,16 +16,10 @@ using namespace std;
 bool BranchExperiment::root_verify_activate(
 		AbstractNode*& curr_node,
 		vector<ContextLayer>& context,
-		int& exit_depth,
-		AbstractNode*& exit_node,
 		RunHelper& run_helper) {
 	if (this->is_pass_through) {
 		if (this->best_step_types.size() == 0) {
-			if (this->exit_node != NULL) {
-				curr_node = this->exit_node;
-			} else {
-				curr_node = this->best_exit_next_node;
-			}
+			curr_node = this->best_exit_next_node;
 		} else {
 			if (this->best_step_types[0] == STEP_TYPE_ACTION) {
 				curr_node = this->best_actions[0];
@@ -42,7 +35,7 @@ bool BranchExperiment::root_verify_activate(
 		vector<double> input_vals(this->input_scope_contexts.size(), 0.0);
 		for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
 			int curr_layer = 0;
-			ScopeHistory* curr_scope_history = context[context.size() - this->scope_context.size()].scope_history;
+			ScopeHistory* curr_scope_history = context.back().scope_history;
 			while (true) {
 				map<AbstractNode*, AbstractNodeHistory*>::iterator it = curr_scope_history->node_histories.find(
 					this->input_node_contexts[i_index][curr_layer]);
@@ -116,11 +109,7 @@ bool BranchExperiment::root_verify_activate(
 
 		if (decision_is_branch) {
 			if (this->best_step_types.size() == 0) {
-				if (this->exit_node != NULL) {
-					curr_node = this->exit_node;
-				} else {
-					curr_node = this->best_exit_next_node;
-				}
+				curr_node = this->best_exit_next_node;
 			} else {
 				if (this->best_step_types[0] == STEP_TYPE_ACTION) {
 					curr_node = this->best_actions[0];

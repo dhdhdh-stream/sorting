@@ -21,11 +21,6 @@ public:
 	int next_node_id;
 	AbstractNode* next_node;
 
-	std::vector<int> hook_indexes;
-	std::vector<std::vector<Scope*>> hook_scope_contexts;
-	std::vector<std::vector<AbstractNode*>> hook_node_contexts;
-	std::vector<int> hook_obs_indexes;
-
 	ActionNode();
 	ActionNode(ActionNode* original);
 	~ActionNode();
@@ -33,8 +28,6 @@ public:
 	void activate(AbstractNode*& curr_node,
 				  Problem* problem,
 				  std::vector<ContextLayer>& context,
-				  int& exit_depth,
-				  AbstractNode*& exit_node,
 				  RunHelper& run_helper,
 				  std::map<AbstractNode*, AbstractNodeHistory*>& node_histories);
 

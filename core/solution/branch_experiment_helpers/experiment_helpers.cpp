@@ -5,7 +5,6 @@
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
-#include "exit_node.h"
 #include "globals.h"
 #include "network.h"
 #include "pass_through_experiment.h"
@@ -43,22 +42,16 @@ bool BranchExperiment::experiment_activate(AbstractNode*& curr_node,
 			if (is_target) {
 				history->has_target = true;
 
-				context[context.size() - this->scope_context.size()].scope_history->experiment_history = history;
+				context.back().scope_history->experiment_history = history;
 
-				for (int c_index = 0; c_index < (int)this->scope_context.size(); c_index++) {
-					history->experiment_index.push_back(context[context.size() - this->scope_context.size() + c_index].scope_history->node_histories.size());
-				}
+				history->experiment_index = context.back().scope_history->node_histories.size();
 			}
 		}
 	}
 
 	if (this->is_pass_through) {
 		if (this->best_step_types.size() == 0) {
-			if (this->exit_node != NULL) {
-				curr_node = this->exit_node;
-			} else {
-				curr_node = this->best_exit_next_node;
-			}
+			curr_node = this->best_exit_next_node;
 		} else {
 			if (this->best_step_types[0] == STEP_TYPE_ACTION) {
 				curr_node = this->best_actions[0];
@@ -74,7 +67,7 @@ bool BranchExperiment::experiment_activate(AbstractNode*& curr_node,
 		vector<double> input_vals(this->input_scope_contexts.size(), 0.0);
 		for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
 			int curr_layer = 0;
-			ScopeHistory* curr_scope_history = context[context.size() - this->scope_context.size()].scope_history;
+			ScopeHistory* curr_scope_history = context.back().scope_history;
 			while (true) {
 				map<AbstractNode*, AbstractNodeHistory*>::iterator it = curr_scope_history->node_histories.find(
 					this->input_node_contexts[i_index][curr_layer]);
@@ -153,11 +146,7 @@ bool BranchExperiment::experiment_activate(AbstractNode*& curr_node,
 		 */
 		if (decision_is_branch) {
 			if (this->best_step_types.size() == 0) {
-				if (this->exit_node != NULL) {
-					curr_node = this->exit_node;
-				} else {
-					curr_node = this->best_exit_next_node;
-				}
+				curr_node = this->best_exit_next_node;
 			} else {
 				if (this->best_step_types[0] == STEP_TYPE_ACTION) {
 					curr_node = this->best_actions[0];
@@ -173,203 +162,6 @@ bool BranchExperiment::experiment_activate(AbstractNode*& curr_node,
 	}
 }
 
-void branch_inner_create_experiment_helper(vector<Scope*>& scope_context,
-										   vector<AbstractNode*>& node_context,
-										   vector<vector<Scope*>>& possible_scope_contexts,
-										   vector<vector<AbstractNode*>>& possible_node_contexts,
-										   vector<bool>& possible_is_branch,
-										   ScopeHistory* scope_history) {
-	scope_context.push_back(scope_history->scope);
-	node_context.push_back(NULL);
-
-	for (map<AbstractNode*, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
-			it != scope_history->node_histories.end(); it++) {
-		switch (it->first->type) {
-		case NODE_TYPE_ACTION:
-			{
-				ActionNode* action_node = (ActionNode*)it->first;
-
-				if (action_node->action.move == ACTION_NOOP) {
-					map<int, AbstractNode*>::iterator it = action_node->parent->nodes.find(action_node->id);
-					if (it == action_node->parent->nodes.end()) {
-						/**
-						 * - new ending node edge case
-						 */
-						continue;
-					}
-				}
-
-				node_context.back() = it->first;
-
-				possible_scope_contexts.push_back(scope_context);
-				possible_node_contexts.push_back(node_context);
-				possible_is_branch.push_back(false);
-
-				node_context.back() = NULL;
-			}
-
-			break;
-		case NODE_TYPE_SCOPE:
-			{
-				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)it->second;
-
-				node_context.back() = it->first;
-
-				uniform_int_distribution<int> inner_distribution(0, 1);
-				if (inner_distribution(generator) == 0) {
-					branch_inner_create_experiment_helper(
-						scope_context,
-						node_context,
-						possible_scope_contexts,
-						possible_node_contexts,
-						possible_is_branch,
-						scope_node_history->scope_history);
-				}
-
-				if (scope_node_history->normal_exit) {
-					possible_scope_contexts.push_back(scope_context);
-					possible_node_contexts.push_back(node_context);
-					possible_is_branch.push_back(false);
-				}
-
-				node_context.back() = NULL;
-			}
-
-			break;
-		case NODE_TYPE_BRANCH:
-			{
-				BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
-
-				node_context.back() = it->first;
-
-				possible_scope_contexts.push_back(scope_context);
-				possible_node_contexts.push_back(node_context);
-				possible_is_branch.push_back(branch_node_history->is_branch);
-
-				node_context.back() = NULL;
-			}
-
-			break;
-		}
-	}
-
-	scope_context.pop_back();
-	node_context.pop_back();
-}
-
-void BranchExperiment::branch_create_experiment_helper(
-		vector<int>& experiment_index,
-		vector<Scope*>& scope_context,
-		vector<AbstractNode*>& node_context,
-		vector<vector<Scope*>>& possible_scope_contexts,
-		vector<vector<AbstractNode*>>& possible_node_contexts,
-		vector<bool>& possible_is_branch,
-		ScopeHistory* scope_history) {
-	scope_context.push_back(scope_history->scope);
-	node_context.push_back(NULL);
-
-	if (experiment_index.size() > 1) {
-		AbstractNode* ancestor_scope_node = this->node_context[
-			this->scope_context.size() - experiment_index.size()];
-		ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)scope_history->node_histories[ancestor_scope_node];
-
-		node_context.back() = ancestor_scope_node;
-
-		vector<int> inner_experiment_index(experiment_index.begin()+1, experiment_index.end());
-		branch_create_experiment_helper(inner_experiment_index,
-										scope_context,
-										node_context,
-										possible_scope_contexts,
-										possible_node_contexts,
-										possible_is_branch,
-										scope_node_history->scope_history);
-
-		if (scope_node_history->normal_exit) {
-			possible_scope_contexts.push_back(scope_context);
-			possible_node_contexts.push_back(node_context);
-			possible_is_branch.push_back(false);
-		}
-
-		node_context.back() = NULL;
-	}
-
-	for (map<AbstractNode*, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
-			it != scope_history->node_histories.end(); it++) {
-		if (it->second->index >= experiment_index[0]) {
-			switch (it->first->type) {
-			case NODE_TYPE_ACTION:
-				{
-					ActionNode* action_node = (ActionNode*)it->first;
-
-					if (action_node->action.move == ACTION_NOOP) {
-						map<int, AbstractNode*>::iterator it = action_node->parent->nodes.find(action_node->id);
-						if (it == action_node->parent->nodes.end()) {
-							/**
-							 * - new ending node edge case
-							 */
-							continue;
-						}
-					}
-
-					node_context.back() = it->first;
-
-					possible_scope_contexts.push_back(scope_context);
-					possible_node_contexts.push_back(node_context);
-					possible_is_branch.push_back(false);
-
-					node_context.back() = NULL;
-				}
-
-				break;
-			case NODE_TYPE_SCOPE:
-				{
-					ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)it->second;
-
-					node_context.back() = it->first;
-
-					// uniform_int_distribution<int> inner_distribution(0, 1);
-					// if (inner_distribution(generator) == 0) {
-					// 	pass_through_inner_create_experiment_helper(
-					// 		scope_context,
-					// 		node_context,
-					// 		possible_scope_contexts,
-					// 		possible_node_contexts,
-					// 		possible_is_branch,
-					// 		scope_node_history->scope_history);
-					// }
-
-					if (scope_node_history->normal_exit) {
-						possible_scope_contexts.push_back(scope_context);
-						possible_node_contexts.push_back(node_context);
-						possible_is_branch.push_back(false);
-					}
-
-					node_context.back() = NULL;
-				}
-
-				break;
-			case NODE_TYPE_BRANCH:
-				{
-					BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
-
-					node_context.back() = it->first;
-
-					possible_scope_contexts.push_back(scope_context);
-					possible_node_contexts.push_back(node_context);
-					possible_is_branch.push_back(branch_node_history->is_branch);
-
-					node_context.back() = NULL;
-				}
-
-				break;
-			}
-		}
-	}
-
-	scope_context.pop_back();
-	node_context.pop_back();
-}
-
 void BranchExperiment::experiment_backprop(double target_val,
 										   RunHelper& run_helper) {
 	BranchExperimentHistory* history = (BranchExperimentHistory*)run_helper.experiment_histories.back();
@@ -377,49 +169,78 @@ void BranchExperiment::experiment_backprop(double target_val,
 	if (history->has_target
 			&& !run_helper.exceeded_limit
 			&& history->experiments_seen_order.size() == 0) {
-		vector<vector<Scope*>> possible_scope_contexts;
-		vector<vector<AbstractNode*>> possible_node_contexts;
+		vector<AbstractNode*> possible_node_contexts;
 		vector<bool> possible_is_branch;
 
-		vector<Scope*> scope_context;
-		vector<AbstractNode*> node_context;
-		branch_create_experiment_helper(history->experiment_index,
-										scope_context,
-										node_context,
-										possible_scope_contexts,
-										possible_node_contexts,
-										possible_is_branch,
-										history->scope_history);
+		for (map<AbstractNode*, AbstractNodeHistory*>::iterator it = history->scope_history->node_histories.begin();
+				it != history->scope_history->node_histories.end(); it++) {
+			if (it->second->index >= history->experiment_index) {
+				switch (it->first->type) {
+				case NODE_TYPE_ACTION:
+					{
+						ActionNode* action_node = (ActionNode*)it->first;
 
-		if (possible_scope_contexts.size() > 0) {
-			uniform_int_distribution<int> possible_distribution(0, (int)possible_scope_contexts.size()-1);
-			int rand_index = possible_distribution(generator);
+						if (action_node->action.move == ACTION_NOOP) {
+							map<int, AbstractNode*>::iterator it = action_node->parent->nodes.find(action_node->id);
+							if (it == action_node->parent->nodes.end()) {
+								/**
+								 * - new ending node edge case
+								 */
+								continue;
+							}
+						}
 
-			uniform_int_distribution<int> experiment_type_distribution(0, 1);
-			if (experiment_type_distribution(generator) == 0) {
-				BranchExperiment* new_experiment = new BranchExperiment(
-					possible_scope_contexts[rand_index],
-					possible_node_contexts[rand_index],
-					possible_is_branch[rand_index],
-					this,
-					false);
+						possible_node_contexts.push_back(it->first);
+						possible_is_branch.push_back(false);
+					}
 
-				/**
-				 * - insert at front to match finalize order
-				 */
-				possible_node_contexts[rand_index].back()->experiments.insert(possible_node_contexts[rand_index].back()->experiments.begin(), new_experiment);
-			} else {
-				PassThroughExperiment* new_experiment = new PassThroughExperiment(
-					possible_scope_contexts[rand_index],
-					possible_node_contexts[rand_index],
-					possible_is_branch[rand_index],
-					this);
+					break;
+				case NODE_TYPE_SCOPE:
+					{
+						possible_node_contexts.push_back(it->first);
+						possible_is_branch.push_back(false);
+					}
 
-				/**
-				 * - insert at front to match finalize order
-				 */
-				possible_node_contexts[rand_index].back()->experiments.insert(possible_node_contexts[rand_index].back()->experiments.begin(), new_experiment);
+					break;
+				case NODE_TYPE_BRANCH:
+					{
+						BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
+
+						possible_node_contexts.push_back(it->first);
+						possible_is_branch.push_back(branch_node_history->is_branch);
+					}
+
+					break;
+				}
 			}
+		}
+
+		uniform_int_distribution<int> possible_distribution(0, (int)possible_node_contexts.size()-1);
+		int rand_index = possible_distribution(generator);
+
+		uniform_int_distribution<int> experiment_type_distribution(0, 1);
+		if (experiment_type_distribution(generator) == 0) {
+			BranchExperiment* new_experiment = new BranchExperiment(
+				this->scope_context,
+				possible_node_contexts[rand_index],
+				possible_is_branch[rand_index],
+				this);
+
+			/**
+			 * - insert at front to match finalize order
+			 */
+			possible_node_contexts[rand_index]->experiments.insert(possible_node_contexts[rand_index]->experiments.begin(), new_experiment);
+		} else {
+			PassThroughExperiment* new_experiment = new PassThroughExperiment(
+				this->scope_context,
+				possible_node_contexts[rand_index],
+				possible_is_branch[rand_index],
+				this);
+
+			/**
+			 * - insert at front to match finalize order
+			 */
+			possible_node_contexts[rand_index]->experiments.insert(possible_node_contexts[rand_index]->experiments.begin(), new_experiment);
 		}
 	}
 }

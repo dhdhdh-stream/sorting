@@ -16,6 +16,9 @@ class AbstractExperiment;
 class Problem;
 class Scope;
 
+const int SOLUTION_STATE_TRAVERSE = 0;
+const int SOLUTION_STATE_GENERALIZE = 1;
+
 #if defined(MDEBUG) && MDEBUG
 const int NUM_DATAPOINTS = 10;
 #else
@@ -28,8 +31,12 @@ public:
 	double curr_average_score;
 	double average_num_actions;
 
-	int scope_counter;
-	std::map<int, Scope*> scopes;
+	int state;
+	int state_iter;
+	int num_actions_until_experiment;
+
+	Scope* current;
+	std::vector<Scope*> scopes;
 
 	/**
 	 * - max depth for run that concluded
@@ -63,6 +70,8 @@ public:
 	#if defined(MDEBUG) && MDEBUG
 	void clear_verify();
 	#endif /* MDEBUG */
+
+	void increment();
 
 	void save(std::string path,
 			  std::string name);
