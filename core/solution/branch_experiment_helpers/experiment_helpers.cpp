@@ -215,32 +215,37 @@ void BranchExperiment::experiment_backprop(double target_val,
 			}
 		}
 
-		uniform_int_distribution<int> possible_distribution(0, (int)possible_node_contexts.size()-1);
-		int rand_index = possible_distribution(generator);
+		/**
+		 * - possible to be empty due to ending node edge case
+		 */
+		if (possible_node_contexts.size() > 0) {
+			uniform_int_distribution<int> possible_distribution(0, (int)possible_node_contexts.size()-1);
+			int rand_index = possible_distribution(generator);
 
-		uniform_int_distribution<int> experiment_type_distribution(0, 1);
-		if (experiment_type_distribution(generator) == 0) {
-			BranchExperiment* new_experiment = new BranchExperiment(
-				this->scope_context,
-				possible_node_contexts[rand_index],
-				possible_is_branch[rand_index],
-				this);
+			uniform_int_distribution<int> experiment_type_distribution(0, 1);
+			if (experiment_type_distribution(generator) == 0) {
+				BranchExperiment* new_experiment = new BranchExperiment(
+					this->scope_context,
+					possible_node_contexts[rand_index],
+					possible_is_branch[rand_index],
+					this);
 
-			/**
-			 * - insert at front to match finalize order
-			 */
-			possible_node_contexts[rand_index]->experiments.insert(possible_node_contexts[rand_index]->experiments.begin(), new_experiment);
-		} else {
-			PassThroughExperiment* new_experiment = new PassThroughExperiment(
-				this->scope_context,
-				possible_node_contexts[rand_index],
-				possible_is_branch[rand_index],
-				this);
+				/**
+				 * - insert at front to match finalize order
+				 */
+				possible_node_contexts[rand_index]->experiments.insert(possible_node_contexts[rand_index]->experiments.begin(), new_experiment);
+			} else {
+				PassThroughExperiment* new_experiment = new PassThroughExperiment(
+					this->scope_context,
+					possible_node_contexts[rand_index],
+					possible_is_branch[rand_index],
+					this);
 
-			/**
-			 * - insert at front to match finalize order
-			 */
-			possible_node_contexts[rand_index]->experiments.insert(possible_node_contexts[rand_index]->experiments.begin(), new_experiment);
+				/**
+				 * - insert at front to match finalize order
+				 */
+				possible_node_contexts[rand_index]->experiments.insert(possible_node_contexts[rand_index]->experiments.begin(), new_experiment);
+			}
 		}
 	}
 }

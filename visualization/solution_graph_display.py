@@ -16,17 +16,48 @@ ACTION_DOUBLECLICK = 6
 NODE_TYPE_ACTION = 0
 NODE_TYPE_SCOPE = 1
 NODE_TYPE_BRANCH = 2
-NODE_TYPE_EXIT = 3
 
 scopes = {}
 
 file = open('../display.txt')
 
+nodes = {}
+num_nodes = int(file.readline())
+for n_index in range(num_nodes):
+	node_id = int(file.readline())
+	node_type = int(file.readline())
+	if node_type == NODE_TYPE_ACTION:
+		action = int(file.readline())
+
+		next_node_id = int(file.readline())
+
+		nodes[node_id] = [node_type,
+						  action,
+						  next_node_id]
+	elif node_type == NODE_TYPE_SCOPE:
+		inner_scope_id = int(file.readline())
+
+		next_node_id = int(file.readline())
+
+		nodes[node_id] = [node_type,
+						  inner_scope_id,
+						  next_node_id]
+	else:
+		# node_type == NODE_TYPE_BRANCH
+		original_next_node_id = int(file.readline())
+		branch_next_node_id = int(file.readline())
+
+		nodes[node_id] = [node_type,
+						  original_next_node_id,
+						  branch_next_node_id]
+
+print(nodes)
+
+scopes[-1] = nodes
+
 num_scopes = int(file.readline())
 
 for s_index in range(num_scopes):
-	scope_id = int(file.readline())
-
 	nodes = {}
 	num_nodes = int(file.readline())
 	for n_index in range(num_nodes):
@@ -48,34 +79,18 @@ for s_index in range(num_scopes):
 			nodes[node_id] = [node_type,
 							  inner_scope_id,
 							  next_node_id]
-		elif node_type == NODE_TYPE_BRANCH:
-			scope_context = int(file.readline())
-
-			is_pass_through = int(file.readline())
-
+		else:
+			# node_type == NODE_TYPE_BRANCH
 			original_next_node_id = int(file.readline())
 			branch_next_node_id = int(file.readline())
 
 			nodes[node_id] = [node_type,
-							  scope_context,
-							  is_pass_through,
 							  original_next_node_id,
 							  branch_next_node_id]
-		else:
-			# node_type == NODE_TYPE_EXIT
-			exit_depth = int(file.readline())
-
-			exit_node_parent_id = int(file.readline())
-			exit_node_id = int(file.readline())
-
-			nodes[node_id] = [node_type,
-							  exit_depth,
-							  exit_node_parent_id,
-							  exit_node_id]
 
 	print(nodes)
 
-	scopes[scope_id] = nodes
+	scopes[s_index] = nodes
 
 file.close()
 
@@ -124,14 +139,9 @@ for scope_id in scopes:
 			graph.add_node(pydot.Node(node_index, label=str(scope_id) + ' ' + str(key) + '\n' + pretty_print_action(scopes[scope_id][key][1])))
 		elif scopes[scope_id][key][0] == NODE_TYPE_SCOPE:
 			graph.add_node(pydot.Node(node_index, label=str(scope_id) + ' ' + str(key) + '\n' + 'S ' + str(scopes[scope_id][key][1])))
-		elif scopes[scope_id][key][0] == NODE_TYPE_BRANCH:
-			if scopes[scope_id][key][2] == 1:
-				graph.add_node(pydot.Node(node_index, label=str(scope_id) + ' ' + str(key) + '\n' + 'P ' + str(scopes[scope_id][key][1])))
-			else:
-				graph.add_node(pydot.Node(node_index, label=str(scope_id) + ' ' + str(key) + '\n' + 'C ' + str(scopes[scope_id][key][1])))
 		else:
-			# scopes[scope_id][key][0] == NODE_TYPE_EXIT
-			graph.add_node(pydot.Node(node_index, label=str(scope_id) + ' ' + str(key) + '\n' + 'E ' + str(scopes[scope_id][key][1]) + ' ' + str(scopes[scope_id][key][3])))
+			# scopes[scope_id][key][0] == NODE_TYPE_BRANCH
+			graph.add_node(pydot.Node(node_index, label=str(scope_id) + ' ' + str(key) + '\n'))
 		node_mappings[key] = node_index
 
 	for key in scopes[scope_id]:
@@ -141,11 +151,11 @@ for scope_id in scopes:
 		elif scopes[scope_id][key][0] == NODE_TYPE_SCOPE:
 			if scopes[scope_id][key][2] != -1:
 				graph.add_edge(pydot.Edge(node_mappings[key], node_mappings[scopes[scope_id][key][2]]))
-		elif scopes[scope_id][key][0] == NODE_TYPE_BRANCH:
-			if scopes[scope_id][key][3] != -1:
-				graph.add_edge(pydot.Edge(node_mappings[key], node_mappings[scopes[scope_id][key][3]], style="dotted"))
-			if scopes[scope_id][key][4] != -1:
-				graph.add_edge(pydot.Edge(node_mappings[key], node_mappings[scopes[scope_id][key][4]]))
-		# else scopes[scope_id][key][0] == NODE_TYPE_EXIT, do nothing
+		else:
+			# scopes[scope_id][key][0] == NODE_TYPE_EXIT
+			if scopes[scope_id][key][1] != -1:
+				graph.add_edge(pydot.Edge(node_mappings[key], node_mappings[scopes[scope_id][key][1]], style="dotted"))
+			if scopes[scope_id][key][2] != -1:
+				graph.add_edge(pydot.Edge(node_mappings[key], node_mappings[scopes[scope_id][key][2]]))
 
 graph.write_png('solution.png')

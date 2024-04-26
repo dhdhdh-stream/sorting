@@ -15,7 +15,12 @@ using namespace std;
 
 void PassThroughExperiment::finalize(Solution* duplicate) {
 	if (this->result == EXPERIMENT_RESULT_SUCCESS) {
-		Scope* duplicate_local_scope = duplicate->scopes[this->scope_context->id];
+		Scope* duplicate_local_scope;
+		if (this->scope_context->id == -1) {
+			duplicate_local_scope = duplicate->current;
+		} else {
+			duplicate_local_scope = duplicate->scopes[this->scope_context->id];
+		}
 		AbstractNode* duplicate_explore_node = duplicate_local_scope->nodes[this->node_context->id];
 
 		int start_node_id;

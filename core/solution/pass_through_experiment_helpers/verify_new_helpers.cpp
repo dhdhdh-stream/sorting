@@ -55,9 +55,13 @@ void PassThroughExperiment::verify_new_backprop(
 			this->state = PASS_THROUGH_EXPERIMENT_STATE_VERIFY_2ND_EXISTING;
 			this->state_iter = 0;
 		} else {
-			this->state = PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT;
-			this->root_state = ROOT_EXPERIMENT_STATE_EXPERIMENT;
-			this->experiment_iter = 0;
+			if (this->best_step_types.size() > 0) {
+				this->state = PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT;
+				this->root_state = ROOT_EXPERIMENT_STATE_EXPERIMENT;
+				this->experiment_iter = 0;
+			} else {
+				this->result = EXPERIMENT_RESULT_FAIL;
+			}
 		}
 	} else if ((int)this->o_target_val_histories.size() >= VERIFY_2ND_NUM_DATAPOINTS) {
 		double sum_scores = 0.0;
@@ -123,9 +127,13 @@ void PassThroughExperiment::verify_new_backprop(
 				this->state = PASS_THROUGH_EXPERIMENT_STATE_ROOT_VERIFY;
 			}
 		} else {
-			this->state = PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT;
-			this->root_state = ROOT_EXPERIMENT_STATE_EXPERIMENT;
-			this->experiment_iter = 0;
+			if (this->best_step_types.size() > 0) {
+				this->state = PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT;
+				this->root_state = ROOT_EXPERIMENT_STATE_EXPERIMENT;
+				this->experiment_iter = 0;
+			} else {
+				this->result = EXPERIMENT_RESULT_FAIL;
+			}
 		}
 	}
 }

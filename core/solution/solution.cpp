@@ -9,8 +9,13 @@
 
 using namespace std;
 
+#if defined(MDEBUG) && MDEBUG
+const int TRAVERSE_ITERS = 5;
+const int GENERALIZE_ITERS = 5;
+#else
 const int TRAVERSE_ITERS = 20;
 const int GENERALIZE_ITERS = 20;
+#endif /* MDEBUG */
 
 Solution::Solution() {
 	// do nothing
@@ -20,6 +25,10 @@ Solution::Solution(Solution* original) {
 	this->timestamp = original->timestamp;
 	this->curr_average_score = original->curr_average_score;
 	this->average_num_actions = original->average_num_actions;
+
+	this->state = original->state;
+	this->state_iter = original->state_iter;
+	this->num_actions_until_experiment = original->num_actions_until_experiment;
 
 	this->current = new Scope();
 	this->current->id = -1;
