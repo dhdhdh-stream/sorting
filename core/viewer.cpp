@@ -65,6 +65,9 @@ int main(int argc, char* argv[]) {
 
 		problem->print();
 
+		cout << "run_helper.num_actions: " << run_helper.num_actions << endl;
+		cout << "run_helper.num_decisions: " << run_helper.num_decisions << endl;
+
 		delete problem;
 	}
 

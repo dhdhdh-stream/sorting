@@ -25,7 +25,4 @@ void gather_possible_helper(std::vector<Scope*>& scope_context,
 							std::vector<int>& possible_obs_indexes,
 							ScopeHistory* scope_history);
 
-void generalize_helper(Problem* problem,
-					   RunHelper& run_helper);
-
 #endif /* SOLUTION_HELPERS_H */

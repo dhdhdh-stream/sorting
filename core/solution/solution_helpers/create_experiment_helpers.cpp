@@ -33,7 +33,8 @@ void create_experiment_helper(vector<Scope*>& possible_scope_contexts,
 			{
 				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)it->second;
 
-				if (solution->state == SOLUTION_STATE_TRAVERSE) {
+				if (solution->state == SOLUTION_STATE_TRAVERSE
+						&& solution->state_iter >= 5) {
 					create_experiment_helper(possible_scope_contexts,
 											 possible_node_contexts,
 											 possible_is_branch,

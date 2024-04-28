@@ -14,7 +14,7 @@ const int TRAVERSE_ITERS = 5;
 const int GENERALIZE_ITERS = 5;
 #else
 const int TRAVERSE_ITERS = 20;
-const int GENERALIZE_ITERS = 20;
+const int GENERALIZE_ITERS = 10;
 #endif /* MDEBUG */
 
 Solution::Solution() {
@@ -70,7 +70,14 @@ void Solution::init() {
 	this->average_num_actions = 0.0;
 
 	this->state = SOLUTION_STATE_TRAVERSE;
+	#if defined(MDEBUG) && MDEBUG
 	this->state_iter = 0;
+	#else
+	/**
+	 * - for initial, start at 10
+	 */
+	this->state_iter = 10;
+	#endif /* MDEBUG */
 	this->num_actions_until_experiment = -1;
 
 	this->current = new Scope();
@@ -120,7 +127,7 @@ void Solution::load(string path,
 	if (this->state == SOLUTION_STATE_TRAVERSE) {
 		this->num_actions_until_experiment = -1;
 	} else {
-		uniform_int_distribution<int> next_distribution(0, (int)(this->average_num_actions/2.0));
+		uniform_int_distribution<int> next_distribution(0, (int)(2.0 * this->average_num_actions));
 		this->num_actions_until_experiment = 1 + next_distribution(generator);
 	}
 
@@ -197,7 +204,7 @@ void Solution::increment() {
 
 		this->state = SOLUTION_STATE_GENERALIZE;
 		this->state_iter = 0;
-		uniform_int_distribution<int> next_distribution(0, (int)(this->average_num_actions/2.0));
+		uniform_int_distribution<int> next_distribution(0, (int)(2.0 * this->average_num_actions));
 		this->num_actions_until_experiment = 1 + next_distribution(generator);
 	} else if (this->state == SOLUTION_STATE_GENERALIZE
 			&& this->state_iter >= GENERALIZE_ITERS) {

@@ -75,6 +75,49 @@ int main(int argc, char* argv[]) {
 					create_experiment(root_history);
 				}
 			}
+		} else {
+			/**
+			 * - don't continue from end
+			 *   - may be more concerned with preventing error than making progress
+			 *   - end will just be a combination of basic actions and existing scopes anyways
+			 * - repeat to hopefully make ending good
+			 */
+			if (solution->num_actions_until_experiment == 0) {
+				solution->num_actions_until_experiment = -1;
+
+				geometric_distribution<int> iter_distribution(0.5);
+				int num_iters = 1 + iter_distribution(generator);
+				for (int i_index = 0; i_index < num_iters; i_index++) {
+					vector<ContextLayer> context;
+					context.push_back(ContextLayer());
+
+					context.back().scope = solution->scopes.back();
+					context.back().node = NULL;
+
+					ScopeHistory* generalize_history = new ScopeHistory(solution->scopes.back());
+					context.back().scope_history = generalize_history;
+
+					solution->scopes.back()->activate(
+						problem,
+						context,
+						run_helper,
+						generalize_history);
+
+					if (run_helper.experiments_seen_order.size() == 0) {
+						if (!run_helper.exceeded_limit) {
+							uniform_int_distribution<int> target_distribution(0, 1);
+							if (target_distribution(generator) == 0) {
+								create_experiment(generalize_history);
+							}
+						}
+					}
+
+					delete generalize_history;
+				}
+
+				uniform_int_distribution<int> next_distribution(0, (int)(2 * solution->average_num_actions));
+				solution->num_actions_until_experiment = 1 + next_distribution(generator);
+			}
 		}
 
 		delete root_history;
@@ -182,12 +225,6 @@ int main(int argc, char* argv[]) {
 				run_helper.experiment_histories.back()->experiment->finalize(duplicate);
 				delete run_helper.experiment_histories.back()->experiment;
 
-				Solution* existing_solution = solution;
-				solution = duplicate;
-				/**
-				 * - for generalize_helper() to behave correctly
-				 */
-
 				double sum_vals = 0.0;
 				double sum_num_actions = 0.0;
 				for (int i_index = 0; i_index < 4000; i_index++) {
@@ -195,8 +232,6 @@ int main(int argc, char* argv[]) {
 					Problem* problem = new Minesweeper();
 
 					RunHelper run_helper;
-
-					run_helper.eval_experiment = true;
 
 					vector<ContextLayer> context;
 					context.push_back(ContextLayer());
@@ -212,6 +247,45 @@ int main(int argc, char* argv[]) {
 						context,
 						run_helper,
 						root_history);
+
+					if (solution->state == SOLUTION_STATE_GENERALIZE) {
+						if (solution->num_actions_until_experiment == 0) {
+							solution->num_actions_until_experiment = -1;
+
+							geometric_distribution<int> iter_distribution(0.5);
+							int num_iters = 1 + iter_distribution(generator);
+							for (int i_index = 0; i_index < num_iters; i_index++) {
+								vector<ContextLayer> context;
+								context.push_back(ContextLayer());
+
+								context.back().scope = duplicate->scopes.back();
+								context.back().node = NULL;
+
+								ScopeHistory* generalize_history = new ScopeHistory(duplicate->scopes.back());
+								context.back().scope_history = generalize_history;
+
+								duplicate->scopes.back()->activate(
+									problem,
+									context,
+									run_helper,
+									generalize_history);
+
+								if (run_helper.experiments_seen_order.size() == 0) {
+									if (!run_helper.exceeded_limit) {
+										uniform_int_distribution<int> target_distribution(0, 1);
+										if (target_distribution(generator) == 0) {
+											create_experiment(generalize_history);
+										}
+									}
+								}
+
+								delete generalize_history;
+							}
+
+							uniform_int_distribution<int> next_distribution(0, (int)(2 * solution->average_num_actions));
+							solution->num_actions_until_experiment = 1 + next_distribution(generator);
+						}
+					}
 
 					delete root_history;
 
@@ -240,8 +314,6 @@ int main(int argc, char* argv[]) {
 				duplicate->save(path, "possible_" + to_string((unsigned)time(NULL)));
 
 				delete duplicate;
-
-				solution = existing_solution;
 			}
 		} else {
 			for (int e_index = 0; e_index < (int)run_helper.experiments_seen_order.size(); e_index++) {

@@ -12,6 +12,10 @@
 
 #include "layer.h"
 
+/**
+ * TODO:
+ * - optimize unneeded nodes away
+ */
 const int NETWORK_INCREMENT_HIDDEN_SIZE = 5;
 
 class Network {

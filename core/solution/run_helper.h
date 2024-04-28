@@ -20,9 +20,6 @@ public:
 
 	std::vector<AbstractExperimentHistory*> experiment_histories;
 
-	int num_actions_after_experiment_to_skip;
-	bool eval_experiment;
-
 	#if defined(MDEBUG) && MDEBUG
 	void* verify_key;
 	unsigned long starting_run_seed;

@@ -58,14 +58,8 @@ void node_activate_helper(AbstractNode*& curr_node,
 		run_helper.exceeded_limit = true;
 	}
 
-	if (solution->num_actions_until_experiment != -1) {
-		if (run_helper.num_actions_after_experiment_to_skip > 0) {
-			run_helper.num_actions_after_experiment_to_skip--;
-		} else {
-			if (solution->num_actions_until_experiment > 0) {
-				solution->num_actions_until_experiment--;
-			}
-		}
+	if (solution->num_actions_until_experiment > 0) {
+		solution->num_actions_until_experiment--;
 	}
 }
 
@@ -85,13 +79,9 @@ void Scope::activate(Problem* problem,
 	AbstractNode* curr_node = this->nodes[0];
 	while (true) {
 		if (run_helper.exceeded_limit
+				|| solution->num_actions_until_experiment == 0
 				|| curr_node == NULL) {
 			break;
-		}
-
-		if (solution->num_actions_until_experiment == 0) {
-			generalize_helper(problem,
-							  run_helper);
 		}
 
 		node_activate_helper(curr_node,
