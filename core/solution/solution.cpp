@@ -28,7 +28,9 @@ Solution::Solution(Solution* original) {
 
 	this->state = original->state;
 	this->state_iter = original->state_iter;
+
 	this->num_actions_until_experiment = original->num_actions_until_experiment;
+	this->num_actions_until_random = original->num_actions_until_random;
 
 	this->current = new Scope();
 	this->current->id = -1;
@@ -78,7 +80,9 @@ void Solution::init() {
 	 */
 	this->state_iter = 10;
 	#endif /* MDEBUG */
+
 	this->num_actions_until_experiment = -1;
+	this->num_actions_until_random = -1;
 
 	this->current = new Scope();
 	this->current->id = -1;
@@ -126,10 +130,11 @@ void Solution::load(string path,
 
 	if (this->state == SOLUTION_STATE_TRAVERSE) {
 		this->num_actions_until_experiment = -1;
-	} else {
+	} else if (this->state == SOLUTION_STATE_GENERALIZE) {
 		uniform_int_distribution<int> next_distribution(0, (int)(2.0 * this->average_num_actions));
 		this->num_actions_until_experiment = 1 + next_distribution(generator);
 	}
+	this->num_actions_until_random = -1;
 
 	string num_scopes_line;
 	getline(input_file, num_scopes_line);
@@ -204,8 +209,10 @@ void Solution::increment() {
 
 		this->state = SOLUTION_STATE_GENERALIZE;
 		this->state_iter = 0;
+
 		uniform_int_distribution<int> next_distribution(0, (int)(2.0 * this->average_num_actions));
 		this->num_actions_until_experiment = 1 + next_distribution(generator);
+		this->num_actions_until_random = -1;
 	} else if (this->state == SOLUTION_STATE_GENERALIZE
 			&& this->state_iter >= GENERALIZE_ITERS) {
 		delete this->current;
@@ -223,7 +230,9 @@ void Solution::increment() {
 
 		this->state = SOLUTION_STATE_TRAVERSE;
 		this->state_iter = 0;
+
 		this->num_actions_until_experiment = -1;
+		this->num_actions_until_random = -1;
 	}
 }
 

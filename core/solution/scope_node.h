@@ -25,8 +25,7 @@ public:
 	AbstractNode* next_node;
 
 	ScopeNode();
-	ScopeNode(ScopeNode* original,
-			  Solution* parent_solution);
+	ScopeNode(ScopeNode* original);
 	~ScopeNode();
 
 	void activate(AbstractNode*& curr_node,
@@ -64,6 +63,7 @@ public:
 	void load(std::ifstream& input_file,
 			  Solution* parent_solution);
 	void link(Solution* parent_solution);
+	void link();
 	void save_for_display(std::ofstream& output_file);
 };
 

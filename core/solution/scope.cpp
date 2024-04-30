@@ -42,8 +42,7 @@ void Scope::save(ofstream& output_file) {
 	}
 }
 
-void Scope::load(ifstream& input_file,
-				 Solution* parent_solution) {
+void Scope::load(ifstream& input_file) {
 	string node_counter_line;
 	getline(input_file, node_counter_line);
 	this->node_counter = stoi(node_counter_line);
@@ -74,8 +73,7 @@ void Scope::load(ifstream& input_file,
 				ScopeNode* scope_node = new ScopeNode();
 				scope_node->parent = this;
 				scope_node->id = id;
-				scope_node->load(input_file,
-								 parent_solution);
+				scope_node->load(input_file);
 				this->nodes[scope_node->id] = scope_node;
 			}
 			break;
@@ -96,6 +94,13 @@ void Scope::link(Solution* parent_solution) {
 	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
 			it != this->nodes.end(); it++) {
 		it->second->link(parent_solution);
+	}
+}
+
+void Scope::link() {
+	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
+			it != this->nodes.end(); it++) {
+		it->second->link();
 	}
 }
 
@@ -123,6 +128,34 @@ void Scope::copy_from(Scope* original,
 				new_scope_node->parent = this;
 				new_scope_node->id = it->first;
 				this->nodes[it->first] = new_scope_node;
+			}
+			break;
+		case NODE_TYPE_BRANCH:
+			{
+				BranchNode* original_branch_node = (BranchNode*)it->second;
+				BranchNode* new_branch_node = new BranchNode(original_branch_node);
+				new_branch_node->parent = this;
+				new_branch_node->id = it->first;
+				this->nodes[it->first] = new_branch_node;
+			}
+			break;
+		}
+	}
+}
+
+void Scope::copy_from(Scope* original) {
+	this->node_counter = original->node_counter;
+
+	for (map<int, AbstractNode*>::iterator it = original->nodes.begin();
+			it != original->nodes.end(); it++) {
+		switch (it->second->type) {
+		case NODE_TYPE_ACTION:
+			{
+				ActionNode* original_action_node = (ActionNode*)it->second;
+				ActionNode* new_action_node = new ActionNode(original_action_node);
+				new_action_node->parent = this;
+				new_action_node->id = it->first;
+				this->nodes[it->first] = new_action_node;
 			}
 			break;
 		case NODE_TYPE_BRANCH:

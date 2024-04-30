@@ -18,6 +18,7 @@ class Scope;
 
 const int SOLUTION_STATE_TRAVERSE = 0;
 const int SOLUTION_STATE_GENERALIZE = 1;
+const int SOLUTION_STATE_EVAL = 2;
 
 #if defined(MDEBUG) && MDEBUG
 const int NUM_DATAPOINTS = 10;
@@ -33,10 +34,14 @@ public:
 
 	int state;
 	int state_iter;
+
 	int num_actions_until_experiment;
+	int num_actions_until_random;
 
 	Scope* current;
 	std::vector<Scope*> scopes;
+
+	Eval* eval;
 
 	/**
 	 * - max depth for run that concluded

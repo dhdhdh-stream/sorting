@@ -193,7 +193,6 @@ void BranchExperiment::train_new_backprop(
 			vector<vector<Scope*>> test_network_input_scope_contexts;
 			vector<vector<AbstractNode*>> test_network_input_node_contexts;
 			vector<int> test_network_input_obs_indexes;
-			int test_network_input_max_depth = 0;
 
 			vector<int> remaining_indexes(possible_scope_contexts.size());
 			for (int p_index = 0; p_index < (int)possible_scope_contexts.size(); p_index++) {
@@ -206,9 +205,6 @@ void BranchExperiment::train_new_backprop(
 				test_network_input_scope_contexts.push_back(possible_scope_contexts[remaining_indexes[rand_index]]);
 				test_network_input_node_contexts.push_back(possible_node_contexts[remaining_indexes[rand_index]]);
 				test_network_input_obs_indexes.push_back(possible_obs_indexes[remaining_indexes[rand_index]]);
-				if ((int)possible_scope_contexts[remaining_indexes[rand_index]].size() > test_network_input_max_depth) {
-					test_network_input_max_depth = (int)possible_scope_contexts[remaining_indexes[rand_index]].size();
-				}
 
 				remaining_indexes.erase(remaining_indexes.begin() + rand_index);
 			}

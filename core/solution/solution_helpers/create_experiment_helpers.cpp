@@ -93,3 +93,23 @@ void create_experiment(ScopeHistory* root_history) {
 		possible_node_contexts[rand_index]->experiments.push_back(new_experiment);
 	}
 }
+
+void create_eval_experiment(ScopeHistory* root_history) {
+	vector<Scope*> possible_scope_contexts;
+	vector<AbstractNode*> possible_node_contexts;
+	vector<bool> possible_is_branch;
+
+	create_experiment_helper(possible_scope_contexts,
+							 possible_node_contexts,
+							 possible_is_branch,
+							 root_history);
+
+	uniform_int_distribution<int> possible_distribution(0, (int)possible_scope_contexts.size()-1);
+	int rand_index = possible_distribution(generator);
+
+	EvalExperiment* new_experiment = new EvalExperiment(
+		possible_node_contexts[rand_index],
+		possible_is_branch[rand_index]);
+
+	possible_node_contexts[rand_index]->experiments.push_back(new_experiment);
+}

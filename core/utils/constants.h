@@ -21,6 +21,8 @@ const double TEST_SAMPLES_PERCENTAGE = 0.3;
 
 const double WEIGHT_MIN_SCORE_IMPACT = 0.1;
 
+const double PASS_THROUGH_BRANCH_WEIGHT = 0.9;
+
 #if defined(MDEBUG) && MDEBUG
 const int VERIFY_1ST_NUM_DATAPOINTS = 2;
 const int VERIFY_2ND_NUM_DATAPOINTS = 2;

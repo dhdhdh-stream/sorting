@@ -281,6 +281,26 @@ void BranchNode::link(Solution* parent_solution) {
 	}
 }
 
+void BranchNode::link() {
+	for (int i_index = 0; i_index < (int)this->input_scope_context_ids.size(); i_index++) {
+		this->input_scope_contexts.push_back(vector<Scope*>{this->parent});
+		this->input_node_contexts.push_back(vector<AbstractNode*>{
+			this->parent->nodes[this->input_node_context_ids[i_index][0]]});
+	}
+
+	if (this->original_next_node_id == -1) {
+		this->original_next_node = NULL;
+	} else {
+		this->original_next_node = this->parent->nodes[this->original_next_node_id];
+	}
+
+	if (this->branch_next_node_id == -1) {
+		this->branch_next_node = NULL;
+	} else {
+		this->branch_next_node = this->parent->nodes[this->branch_next_node_id];
+	}
+}
+
 void BranchNode::save_for_display(ofstream& output_file) {
 	output_file << this->original_next_node_id << endl;
 	output_file << this->branch_next_node_id << endl;

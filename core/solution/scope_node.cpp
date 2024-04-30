@@ -55,6 +55,13 @@ void ScopeNode::link(Solution* parent_solution) {
 	}
 }
 
+/**
+ * - unused
+ */
+void ScopeNode::link() {
+	// do nothing
+}
+
 void ScopeNode::save_for_display(ofstream& output_file) {
 	output_file << this->scope->id << endl;
 

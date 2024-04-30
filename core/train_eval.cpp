@@ -1,29 +1,8 @@
-// TODO: add mimicking
-// - human performs simple full run, so no decision making/variations
-//   - copy sequences, and try using them in different places
-//   - or examine differences/branching offs
-// - need to be able to go from action sequence to matching scope
-
-// TODO: there are better actions to be found
-// - e.g., function inputs
-
 #include <chrono>
 #include <iostream>
 #include <map>
 #include <thread>
 #include <random>
-
-#include "abstract_experiment.h"
-#include "action_node.h"
-#include "globals.h"
-#include "minesweeper.h"
-#include "sorting.h"
-#include "scope.h"
-#include "scope_node.h"
-#include "solution.h"
-#include "solution_helpers.h"
-#include "sorting.h"
-#include "utilities.h"
 
 using namespace std;
 
@@ -51,21 +30,16 @@ int main(int argc, char* argv[]) {
 
 	solution->save("", "main");
 
-	#if defined(MDEBUG) && MDEBUG
-	int run_index = 0;
-	#endif /* MDEBUG */
+	solution->state = SOLUTION_STATE_EVAL;
+	solution->num_actions_until_experiment = -1;
+	uniform_int_distribution<int> next_distribution(0, (int)(2.0 * solution->average_num_actions));
+	solution->num_actions_until_random = 1 + next_distribution(generator);
 
 	while (true) {
 		// Problem* problem = new Sorting();
 		Problem* problem = new Minesweeper();
 
 		RunHelper run_helper;
-
-		#if defined(MDEBUG) && MDEBUG
-		run_helper.starting_run_seed = run_index;
-		run_helper.curr_run_seed = run_index;
-		run_index++;
-		#endif /* MDEBUG */
 
 		vector<ContextLayer> context;
 		context.push_back(ContextLayer());
@@ -82,58 +56,10 @@ int main(int argc, char* argv[]) {
 			run_helper,
 			root_history);
 
-		if (solution->state == SOLUTION_STATE_TRAVERSE) {
-			if (run_helper.experiments_seen_order.size() == 0) {
-				if (!run_helper.exceeded_limit) {
-					create_experiment(root_history);
-				}
-			}
-		} else {
-			/**
-			 * - don't continue from end
-			 *   - may be more concerned with preventing error than making progress
-			 *   - end will just be a combination of basic actions and existing scopes anyways
-			 * - repeat to hopefully make ending good
-			 */
-			if (solution->num_actions_until_experiment == 0) {
-				solution->num_actions_until_experiment = -1;
-
-				geometric_distribution<int> iter_distribution(0.5);
-				int num_iters = 1 + iter_distribution(generator);
-				for (int i_index = 0; i_index < num_iters; i_index++) {
-					vector<ContextLayer> context;
-					context.push_back(ContextLayer());
-
-					context.back().scope = solution->scopes.back();
-					context.back().node = NULL;
-
-					ScopeHistory* generalize_history = new ScopeHistory(solution->scopes.back());
-					context.back().scope_history = generalize_history;
-
-					solution->scopes.back()->activate(
-						problem,
-						context,
-						run_helper,
-						generalize_history);
-
-					if (run_helper.experiments_seen_order.size() == 0) {
-						if (!run_helper.exceeded_limit) {
-							uniform_int_distribution<int> target_distribution(0, 1);
-							if (target_distribution(generator) == 0) {
-								create_experiment(generalize_history);
-							}
-						}
-					}
-
-					delete generalize_history;
-				}
-
-				uniform_int_distribution<int> next_distribution(0, (int)(2 * solution->average_num_actions));
-				solution->num_actions_until_experiment = 1 + next_distribution(generator);
-			}
-		}
-
 		delete root_history;
+
+		solution->eval->experiment_activate(problem,
+											run_helper);
 
 		double target_val;
 		if (!run_helper.exceeded_limit) {
@@ -239,41 +165,6 @@ int main(int argc, char* argv[]) {
 				delete run_helper.experiment_histories.back()->experiment;
 
 				#if defined(MDEBUG) && MDEBUG
-				while (duplicate->verify_problems.size() > 0) {
-					Problem* problem = duplicate->verify_problems[0];
-
-					RunHelper run_helper;
-					run_helper.verify_key = duplicate->verify_key;
-
-					run_helper.starting_run_seed = duplicate->verify_seeds[0];
-					cout << "run_helper.starting_run_seed: " << run_helper.starting_run_seed << endl;
-					run_helper.curr_run_seed = duplicate->verify_seeds[0];
-					duplicate->verify_seeds.erase(duplicate->verify_seeds.begin());
-
-					vector<ContextLayer> context;
-					context.push_back(ContextLayer());
-
-					context.back().scope = duplicate->current;
-					context.back().node = NULL;
-
-					ScopeHistory* root_history = new ScopeHistory(duplicate->current);
-					context.back().scope_history = root_history;
-
-					duplicate->current->verify_activate(
-						problem,
-						context,
-						run_helper,
-						root_history);
-
-					delete root_history;
-
-					delete duplicate->verify_problems[0];
-					duplicate->verify_problems.erase(duplicate->verify_problems.begin());
-				}
-				duplicate->clear_verify();
-
-				duplicate->increment();
-
 				delete solution;
 				solution = duplicate;
 
@@ -298,14 +189,6 @@ int main(int argc, char* argv[]) {
 		}
 
 		delete problem;
-
-		#if defined(MDEBUG) && MDEBUG
-		if (run_index%5000 == 0) {
-			delete solution;
-			solution = new Solution();
-			solution->load("", "main");
-		}
-		#endif /* MDEBUG */
 	}
 
 	delete problem_type;

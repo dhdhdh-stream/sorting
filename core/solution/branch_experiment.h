@@ -43,7 +43,6 @@ const int EXPLORE_TYPE_BEST = 2;
 const int MAX_EXPLORE_TRIES = 4;
 
 const double EXPERIMENT_COMBINED_MIN_BRANCH_WEIGHT = 0.05;
-const double PASS_THROUGH_BRANCH_WEIGHT = 0.9;
 
 class BranchExperimentHistory;
 class BranchExperiment : public AbstractExperiment {
