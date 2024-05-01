@@ -1,5 +1,10 @@
 #include "eval_experiment.h"
 
+#include "action_node.h"
+#include "constants.h"
+#include "network.h"
+#include "scope.h"
+
 using namespace std;
 
 EvalExperiment::EvalExperiment(AbstractNode* node_context,

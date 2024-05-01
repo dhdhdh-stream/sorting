@@ -1,5 +1,9 @@
 #include "eval.h"
 
+#include "action_node.h"
+#include "network.h"
+#include "scope.h"
+
 using namespace std;
 
 Eval::Eval() {
@@ -121,7 +125,7 @@ void Eval::save(ofstream& output_file) {
 	output_file << this->average_score << endl;
 
 	output_file << this->input_node_contexts.size() << endl;
-	for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
+	for (int i_index = 0; i_index < (int)this->input_node_contexts.size(); i_index++) {
 		output_file << this->input_node_context_ids[i_index][0] << endl;
 		output_file << this->input_obs_indexes[i_index] << endl;
 	}

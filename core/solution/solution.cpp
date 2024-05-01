@@ -4,6 +4,7 @@
 
 #include "abstract_experiment.h"
 #include "action_node.h"
+#include "eval.h"
 #include "globals.h"
 #include "scope.h"
 
@@ -52,6 +53,8 @@ Solution::Solution(Solution* original) {
 		this->scopes[s_index]->link(this);
 	}
 
+	this->eval = new Eval(original->eval);
+
 	this->max_depth = original->max_depth;
 	this->depth_limit = original->depth_limit;
 
@@ -95,6 +98,9 @@ void Solution::init() {
 	starting_noop_node->next_node = NULL;
 	this->current->nodes[0] = starting_noop_node;
 	this->current->node_counter = 1;
+
+	this->eval = new Eval();
+	this->eval->init();
 
 	this->max_depth = 1;
 	this->depth_limit = 11;
@@ -148,17 +154,18 @@ void Solution::load(string path,
 		this->scopes.push_back(scope);
 	}
 
-	this->current->load(input_file,
-						this);
+	this->current->load(input_file);
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
-		this->scopes[s_index]->load(input_file,
-									this);
+		this->scopes[s_index]->load(input_file);
 	}
 
 	this->current->link(this);
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
 		this->scopes[s_index]->link(this);
 	}
+
+	this->eval = new Eval();
+	this->eval->load(input_file);
 
 	string max_depth_line;
 	getline(input_file, max_depth_line);
@@ -254,6 +261,8 @@ void Solution::save(string path,
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
 		this->scopes[s_index]->save(output_file);
 	}
+
+	this->eval->save(output_file);
 
 	output_file << this->max_depth << endl;
 

@@ -1,5 +1,15 @@
 #include "eval_experiment.h"
 
+#include <iostream>
+
+#include "action_node.h"
+#include "branch_node.h"
+#include "eval.h"
+#include "network.h"
+#include "scope.h"
+#include "scope_node.h"
+#include "solution.h"
+
 using namespace std;
 
 void EvalExperiment::finalize(Solution* duplicate) {
@@ -16,7 +26,7 @@ void EvalExperiment::finalize(Solution* duplicate) {
 		duplicate->eval->input_node_contexts.clear();
 		duplicate->eval->input_obs_indexes.clear();
 
-		vector<int> input_mapping(this->eval_input_scope_contexts.size(), -1);
+		vector<int> input_mapping(this->eval_input_node_contexts.size(), -1);
 		for (int i_index = 0; i_index < (int)this->eval_linear_weights.size(); i_index++) {
 			if (this->eval_linear_weights[i_index] != 0.0) {
 				if (input_mapping[i_index] == -1) {
@@ -26,7 +36,7 @@ void EvalExperiment::finalize(Solution* duplicate) {
 					duplicate->eval->input_node_contexts.push_back(
 						vector<AbstractNode*>{duplicate->eval->subscope->nodes[
 							this->eval_input_node_contexts[i_index][0]->id]});
-					duplicate->eval->input_obs_indexes.push_back(this->input_obs_indexes[i_index]);
+					duplicate->eval->input_obs_indexes.push_back(this->eval_input_obs_indexes[i_index]);
 				}
 			}
 		}
@@ -133,7 +143,7 @@ void EvalExperiment::new_branch(Solution* duplicate) {
 	new_branch_node->original_average_score = this->existing_average_score;
 	new_branch_node->branch_average_score = this->new_average_score;
 
-	vector<int> input_mapping(this->decision_input_scope_contexts.size(), -1);
+	vector<int> input_mapping(this->decision_input_node_contexts.size(), -1);
 	for (int i_index = 0; i_index < (int)this->existing_linear_weights.size(); i_index++) {
 		if (this->existing_linear_weights[i_index] != 0.0) {
 			if (input_mapping[i_index] == -1) {
@@ -233,7 +243,7 @@ void EvalExperiment::new_branch(Solution* duplicate) {
 	new_branch_node->branch_network = this->new_network;
 	this->new_network = NULL;
 
-	AbstractNode* duplicate_explore_node = duplicate->eval->scope->nodes[this->node_context->id];
+	AbstractNode* duplicate_explore_node = duplicate->eval->subscope->nodes[this->node_context->id];
 	if (duplicate_explore_node->type == NODE_TYPE_ACTION) {
 		ActionNode* action_node = (ActionNode*)duplicate_explore_node;
 
@@ -349,7 +359,7 @@ void EvalExperiment::new_pass_through(Solution* duplicate) {
 		start_node = this->actions[0];
 	}
 
-	AbstractNode* duplicate_explore_node = duplicate->eval->scope->nodes[this->node_context->id];
+	AbstractNode* duplicate_explore_node = duplicate->eval->subscope->nodes[this->node_context->id];
 	if (duplicate_explore_node->type == NODE_TYPE_ACTION) {
 		ActionNode* action_node = (ActionNode*)duplicate_explore_node;
 

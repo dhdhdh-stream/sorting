@@ -1,19 +1,37 @@
 #include "eval_experiment.h"
 
+#include <iostream>
+/**
+ * - stability issue with Eigen BDCSVD for small singular values
+ */
+#undef eigen_assert
+#define eigen_assert(x) if (!(x)) {throw std::invalid_argument("Eigen error");}
+#include <Eigen/Dense>
+
+#include "action_node.h"
+#include "branch_node.h"
+#include "constants.h"
+#include "globals.h"
+#include "network.h"
+#include "nn_helpers.h"
+#include "scope.h"
+#include "scope_node.h"
+#include "solution_helpers.h"
+
 using namespace std;
 
 void EvalExperiment::train_existing_helper(vector<double>& existing_target_vals) {
-	double sum_misguesses = 0.0;
+	double sum_scores = 0.0;
 	for (int d_index = 0; d_index < NUM_DATAPOINTS; d_index++) {
-		sum_misguesses += existing_target_vals[d_index];
+		sum_scores += existing_target_vals[d_index];
 	}
-	this->existing_average_score = sum_misguesses / NUM_DATAPOINTS;
+	this->existing_average_score = sum_scores / NUM_DATAPOINTS;
 
-	double sum_misguess_variance = 0.0;
+	double sum_score_variance = 0.0;
 	for (int d_index = 0; d_index < NUM_DATAPOINTS; d_index++) {
-		sum_misguess_variance += (existing_target_vals[d_index] - this->existing_average_score) * (existing_target_vals[d_index] - this->existing_average_score);
+		sum_score_variance += (existing_target_vals[d_index] - this->existing_average_score) * (existing_target_vals[d_index] - this->existing_average_score);
 	}
-	this->existing_score_standard_deviation = sqrt(sum_misguess_variance / NUM_DATAPOINTS);
+	this->existing_score_standard_deviation = sqrt(sum_score_variance / NUM_DATAPOINTS);
 	if (this->existing_score_standard_deviation < MIN_STANDARD_DEVIATION) {
 		this->existing_score_standard_deviation = MIN_STANDARD_DEVIATION;
 	}
@@ -279,7 +297,7 @@ void EvalExperiment::train_existing_helper(vector<double>& existing_target_vals)
 
 					this->existing_linear_weights.push_back(0.0);
 
-					index = this->input_node_contexts.size()-1;
+					index = this->decision_input_node_contexts.size()-1;
 				}
 				new_input_indexes.push_back(index);
 			}

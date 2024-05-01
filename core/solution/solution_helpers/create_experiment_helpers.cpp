@@ -6,6 +6,7 @@
 #include "branch_experiment.h"
 #include "branch_node.h"
 #include "constants.h"
+#include "eval_experiment.h"
 #include "globals.h"
 #include "pass_through_experiment.h"
 #include "scope.h"

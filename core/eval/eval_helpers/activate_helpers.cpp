@@ -1,5 +1,11 @@
 #include "eval.h"
 
+#include "action_node.h"
+#include "branch_node.h"
+#include "network.h"
+#include "scope.h"
+#include "scope_node.h"
+
 using namespace std;
 
 double Eval::activate(Problem* problem,
@@ -19,8 +25,8 @@ double Eval::activate(Problem* problem,
 		run_helper,
 		root_history);
 
-	vector<double> input_vals(this->input_scope_contexts.size(), 0.0);
-	for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
+	vector<double> input_vals(this->input_node_contexts.size(), 0.0);
+	for (int i_index = 0; i_index < (int)this->input_node_contexts.size(); i_index++) {
 		int curr_layer = 0;
 		ScopeHistory* curr_scope_history = root_history;
 		while (true) {
@@ -29,7 +35,7 @@ double Eval::activate(Problem* problem,
 			if (it == curr_scope_history->node_histories.end()) {
 				break;
 			} else {
-				if (curr_layer == (int)this->input_scope_contexts[i_index].size()-1) {
+				if (curr_layer == (int)this->input_node_contexts[i_index].size()-1) {
 					if (it->first->type == NODE_TYPE_ACTION) {
 						ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
 						input_vals[i_index] = action_node_history->obs_snapshot[this->input_obs_indexes[i_index]];

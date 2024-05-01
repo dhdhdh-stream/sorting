@@ -1,5 +1,24 @@
 #include "eval_experiment.h"
 
+#include <iostream>
+/**
+ * - stability issue with Eigen BDCSVD for small singular values
+ */
+#undef eigen_assert
+#define eigen_assert(x) if (!(x)) {throw std::invalid_argument("Eigen error");}
+#include <Eigen/Dense>
+
+#include "action_node.h"
+#include "branch_node.h"
+#include "constants.h"
+#include "globals.h"
+#include "network.h"
+#include "nn_helpers.h"
+#include "scope.h"
+#include "scope_node.h"
+#include "solution.h"
+#include "solution_helpers.h"
+
 using namespace std;
 
 void EvalExperiment::train_eval_helper(vector<double>& existing_target_vals,
@@ -379,7 +398,7 @@ void EvalExperiment::train_eval_helper(vector<double>& existing_target_vals,
 
 					this->eval_linear_weights.push_back(0.0);
 
-					index = this->input_node_contexts.size()-1;
+					index = this->eval_input_node_contexts.size()-1;
 				}
 				new_input_indexes.push_back(index);
 			}

@@ -1,13 +1,32 @@
 #include "eval_experiment.h"
 
+#include <iostream>
+/**
+ * - stability issue with Eigen BDCSVD for small singular values
+ */
+#undef eigen_assert
+#define eigen_assert(x) if (!(x)) {throw std::invalid_argument("Eigen error");}
+#include <Eigen/Dense>
+
+#include "action_node.h"
+#include "branch_node.h"
+#include "constants.h"
+#include "globals.h"
+#include "network.h"
+#include "nn_helpers.h"
+#include "scope.h"
+#include "scope_node.h"
+#include "solution.h"
+#include "solution_helpers.h"
+
 using namespace std;
 
 void EvalExperiment::train_new_helper(vector<double>& new_target_vals) {
-	double sum_misguesses = 0.0;
+	double sum_scores = 0.0;
 	for (int d_index = 0; d_index < NUM_DATAPOINTS; d_index++) {
-		sum_misguesses += new_target_vals[d_index];
+		sum_scores += new_target_vals[d_index];
 	}
-	this->new_average_score = sum_misguesses / NUM_DATAPOINTS;
+	this->new_average_score = sum_scores / NUM_DATAPOINTS;
 
 	Eigen::MatrixXd inputs(NUM_DATAPOINTS, this->decision_input_node_contexts.size());
 
@@ -109,7 +128,7 @@ void EvalExperiment::train_new_helper(vector<double>& new_target_vals) {
 		vector<vector<AbstractNode*>> possible_node_contexts;
 		vector<int> possible_obs_indexes;
 
-		uniform_int_distribution<int> history_distribution(0, (int)this->new_solution_scope_histories.size()-1);
+		uniform_int_distribution<int> history_distribution(0, (int)this->new_decision_scope_histories.size()-1);
 		int history_index = history_distribution(generator);
 
 		vector<Scope*> scope_context;
@@ -240,7 +259,7 @@ void EvalExperiment::train_new_helper(vector<double>& new_target_vals) {
 					this->existing_linear_weights.push_back(0.0);
 					this->new_linear_weights.push_back(0.0);
 
-					index = this->input_node_contexts.size()-1;
+					index = this->decision_input_node_contexts.size()-1;
 				}
 				new_input_indexes.push_back(index);
 			}

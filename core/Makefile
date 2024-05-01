@@ -2,12 +2,14 @@ CXX = g++
 CXXFLAGS = -g -std=c++17 -Wall -Werror -MMD \
 		   -DMDEBUG=1 \
 		   `pkg-config --cflags eigen3` \
+		   -Ieval \
 		   -Inn \
 		   -Isolution \
 		   -Iutils \
 		   -Iworld
 LIBS = -pthread
-SOURCES := $(shell find nn -name '*.cpp') \
+SOURCES := $(shell find eval -name '*.cpp') \
+		   $(shell find nn -name '*.cpp') \
 		   $(shell find solution -name '*.cpp') \
 		   $(shell find utils -name '*.cpp') \
 		   $(shell find world -name '*.cpp')
@@ -15,7 +17,7 @@ HEADERS = ${SOURCES:.cpp=.h}
 OBJECTS = ${HEADERS:.h=.o}
 DEPENDS = ${OBJECTS:.o=.d}
 
-all: main viewer worker simple_init measure step_through
+all: main viewer worker simple_init measure step_through train_eval train_eval_worker
 
 main: ${OBJECTS} main.o
 	${CXX} ${CXXFLAGS} ${OBJECTS} main.o -o main ${LIBS}
@@ -35,7 +37,13 @@ measure: ${OBJECTS} measure.o
 step_through: ${OBJECTS} step_through.o
 	${CXX} ${CXXFLAGS} ${OBJECTS} step_through.o -o step_through ${LIBS}
 
--include ${DEPENDS} main.d viewer.d worker.d simple_init.d measure.d step_through.d
+train_eval: ${OBJECTS} train_eval.o
+	${CXX} ${CXXFLAGS} ${OBJECTS} train_eval.o -o train_eval ${LIBS}
+
+train_eval_worker: ${OBJECTS} train_eval_worker.o
+	${CXX} ${CXXFLAGS} ${OBJECTS} train_eval_worker.o -o train_eval_worker ${LIBS}
+
+-include ${DEPENDS} main.d viewer.d worker.d simple_init.d measure.d step_through.d train_eval.d train_eval_worker.d
 
 clean:
 	rm -f ${OBJECTS} ${DEPENDS} \
@@ -44,4 +52,6 @@ clean:
 	worker.o worker.d worker \
 	simple_init.o simple_init.d simple_init \
 	measure.o measure.d measure \
-	step_through.o step_through.d step_through
+	step_through.o step_through.d step_through \
+	train_eval.o train_eval.d train_eval \
+	train_eval_worker.o train_eval_worker.d train_eval_worker

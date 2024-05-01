@@ -1,5 +1,14 @@
 #include "eval_experiment.h"
 
+#include "action_node.h"
+#include "branch_node.h"
+#include "constants.h"
+#include "eval.h"
+#include "globals.h"
+#include "problem.h"
+#include "scope.h"
+#include "solution.h"
+
 using namespace std;
 
 #if defined(MDEBUG) && MDEBUG
@@ -17,7 +26,7 @@ void EvalExperiment::explore_activate(
 		problem->perform_action(this->actions[a_index]->action);
 	}
 
-	curr_node = this->curr_exit_next_node;
+	curr_node = this->exit_next_node;
 }
 
 void EvalExperiment::explore_backprop(

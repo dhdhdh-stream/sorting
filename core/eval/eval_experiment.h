@@ -1,6 +1,19 @@
 #ifndef EVAL_EXPERIMENT_H
 #define EVAL_EXPERIMENT_H
 
+#include <vector>
+
+#include "abstract_experiment.h"
+#include "context_layer.h"
+#include "run_helper.h"
+
+class AbstractNode;
+class ActionNode;
+class Network;
+class Problem;
+class ScopeHistory;
+class Solution;
+
 const int EVAL_EXPERIMENT_STATE_CAPTURE_EXISTING = 0;
 const int EVAL_EXPERIMENT_STATE_EXPLORE = 1;
 const int EVAL_EXPERIMENT_STATE_CAPTURE_NEW = 2;
@@ -73,9 +86,76 @@ public:
 
 	bool is_pass_through;
 
+	EvalExperiment(AbstractNode* node_context,
+				   bool is_branch);
+	~EvalExperiment();
+
+	bool activate(AbstractNode*& curr_node,
+				  Problem* problem,
+				  std::vector<ContextLayer>& context,
+				  RunHelper& run_helper);
+	void back_activate(std::vector<ContextLayer>& context,
+					   EvalExperimentHistory* history);
+	void backprop(double target_val,
+				  RunHelper& run_helper);
+
+	void capture_existing_activate(std::vector<ContextLayer>& context,
+								   EvalExperimentHistory* history);
+	void capture_existing_back_activate(std::vector<ContextLayer>& context);
+	void capture_existing_backprop(double target_val,
+								   RunHelper& run_helper);
+
+	void explore_activate(AbstractNode*& curr_node,
+						  Problem* problem);
+	void explore_backprop(double target_val,
+						  RunHelper& run_helper);
+
+	void capture_new_activate(AbstractNode*& curr_node,
+							  Problem* problem,
+							  std::vector<ContextLayer>& context,
+							  EvalExperimentHistory* history);
+	void capture_new_back_activate(std::vector<ContextLayer>& context);
+	void capture_new_backprop(double target_val,
+							  RunHelper& run_helper);
+
+	void train_eval_helper(std::vector<double>& existing_target_vals,
+						   std::vector<double>& new_target_vals);
+	void train_existing_helper(std::vector<double>& existing_target_vals);
+	void train_new_helper(std::vector<double>& new_target_vals);
+
+	void measure_activate(AbstractNode*& curr_node,
+						  Problem* problem,
+						  std::vector<ContextLayer>& context,
+						  RunHelper& run_helper,
+						  EvalExperimentHistory* history);
+	void measure_back_activate(std::vector<ContextLayer>& context,
+							   EvalExperimentHistory* history);
+	void measure_backprop(double target_val,
+						  RunHelper& run_helper);
+
+	void verify_existing_activate(std::vector<ContextLayer>& context,
+								  EvalExperimentHistory* history);
+	void verify_existing_back_activate(std::vector<ContextLayer>& context,
+									   EvalExperimentHistory* history);
+	void verify_existing_backprop(double target_val,
+								  RunHelper& run_helper);
+
+	void verify_new_activate(AbstractNode*& curr_node,
+							 Problem* problem,
+							 std::vector<ContextLayer>& context,
+							 RunHelper& run_helper,
+							 EvalExperimentHistory* history);
+	void verify_new_back_activate(std::vector<ContextLayer>& context,
+								  EvalExperimentHistory* history);
+	void verify_new_backprop(double target_val,
+							 RunHelper& run_helper);
+
+	void finalize(Solution* duplicate);
+	void new_branch(Solution* duplicate);
+	void new_pass_through(Solution* duplicate);
 };
 
-class EvalExperimentHistory {
+class EvalExperimentHistory : public AbstractExperimentHistory {
 public:
 	std::vector<double> predicted_scores;
 

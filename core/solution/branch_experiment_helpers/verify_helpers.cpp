@@ -153,8 +153,7 @@ void BranchExperiment::verify_backprop(double target_val,
 			curr_experiment = curr_experiment->parent_experiment;
 		}
 
-		if (this->branch_weight > 0.01
-				&& this->combined_score > this->verify_existing_average_score) {
+		if (this->combined_score > this->verify_existing_average_score) {
 		#endif /* MDEBUG */
 			this->o_target_val_histories.reserve(VERIFY_2ND_NUM_DATAPOINTS);
 
@@ -237,8 +236,7 @@ void BranchExperiment::verify_backprop(double target_val,
 		#if defined(MDEBUG) && MDEBUG
 		if (rand()%2 == 0) {
 		#else
-		if (this->branch_weight > 0.01
-				&& this->combined_score > this->verify_existing_average_score) {
+		if (this->combined_score > this->verify_existing_average_score) {
 		#endif /* MDEBUG */
 			cout << "verify" << endl;
 			cout << "this->parent_experiment: " << this->parent_experiment << endl;

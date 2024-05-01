@@ -1,9 +1,22 @@
 #include "eval_experiment.h"
 
+#include "action_node.h"
+#include "branch_node.h"
+#include "constants.h"
+#include "network.h"
+#include "problem.h"
+#include "scope.h"
+#include "scope_node.h"
+#include "utilities.h"
+
 using namespace std;
 
 void EvalExperiment::measure_activate(
-		vector<ContextLayer>& context) {
+		AbstractNode*& curr_node,
+		Problem* problem,
+		vector<ContextLayer>& context,
+		RunHelper& run_helper,
+		EvalExperimentHistory* history) {
 	vector<double> input_vals(this->decision_input_node_contexts.size(), 0.0);
 	for (int i_index = 0; i_index < (int)this->decision_input_node_contexts.size(); i_index++) {
 		int curr_layer = 0;
@@ -86,7 +99,7 @@ void EvalExperiment::measure_activate(
 			problem->perform_action(this->actions[a_index]->action);
 		}
 
-		curr_node = this->curr_exit_next_node;
+		curr_node = this->exit_next_node;
 	} else {
 		this->original_count++;
 	}
@@ -158,9 +171,9 @@ void EvalExperiment::measure_backprop(double target_val,
 	if (this->state_iter >= NUM_DATAPOINTS) {
 		this->combined_misguess /= this->state_iter;
 
-		this->branch_weight = (double)this->branch_count / (double)(this->original_count + this->branch_count);
+		double branch_weight = (double)this->branch_count / (double)(this->original_count + this->branch_count);
 
-		if (this->branch_weight > PASS_THROUGH_BRANCH_WEIGHT
+		if (branch_weight > PASS_THROUGH_BRANCH_WEIGHT
 				&& this->new_average_score >= this->existing_average_score) {
 			this->is_pass_through = true;
 		} else {
@@ -170,10 +183,10 @@ void EvalExperiment::measure_backprop(double target_val,
 		#if defined(MDEBUG) && MDEBUG
 		if (rand()%2 == 0) {
 		#else
-		if (this->branch_weight > 0.01
+		if (branch_weight > 0.01
 				&& this->combined_misguess < this->original_average_misguess) {
 		#endif /* MDEBUG */
-			this->combined_misguess = 0.0;
+			this->original_average_misguess = 0.0;
 
 			this->state = EVAL_EXPERIMENT_STATE_VERIFY_1ST_EXISTING;
 			this->state_iter = 0;

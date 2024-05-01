@@ -7,6 +7,16 @@
 #ifndef EVAL_H
 #define EVAL_H
 
+#include <fstream>
+#include <vector>
+
+#include "run_helper.h"
+
+class AbstractNode;
+class Network;
+class Problem;
+class Scope;
+
 class Eval {
 public:
 	Scope* subscope;
@@ -27,7 +37,10 @@ public:
 	Eval(Eval* original);
 	~Eval();
 
-
+	double activate(Problem* problem,
+					RunHelper& run_helper);
+	void experiment_activate(Problem* problem,
+							 RunHelper& run_helper);
 
 	void init();
 	void load(std::ifstream& input_file);

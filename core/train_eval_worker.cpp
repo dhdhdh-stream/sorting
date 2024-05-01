@@ -9,13 +9,11 @@
 #include "eval.h"
 #include "globals.h"
 #include "minesweeper.h"
-#include "sorting.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
 #include "solution_helpers.h"
 #include "sorting.h"
-#include "utilities.h"
 
 using namespace std;
 
@@ -27,6 +25,16 @@ Problem* problem_type;
 Solution* solution;
 
 int main(int argc, char* argv[]) {
+	if (argc != 2) {
+		cout << "Usage: ./worker [path]" << endl;
+		exit(1);
+	}
+	string path = argv[1];
+
+	/**
+	 * - worker directories need to have already been created
+	 */
+
 	cout << "Starting..." << endl;
 
 	seed = (unsigned)time(NULL);
@@ -38,16 +46,14 @@ int main(int argc, char* argv[]) {
 	problem_type = new Minesweeper();
 
 	solution = new Solution();
-	solution->init();
-	// solution->load("", "main");
-
-	solution->save("", "main");
+	solution->load("workers/", "main");
 
 	solution->state = SOLUTION_STATE_EVAL;
 	solution->num_actions_until_experiment = -1;
 	uniform_int_distribution<int> next_distribution(0, (int)(2.0 * solution->average_num_actions));
 	solution->num_actions_until_random = 1 + next_distribution(generator);
 
+	auto start_time = chrono::high_resolution_clock::now();
 	while (true) {
 		// Problem* problem = new Sorting();
 		Problem* problem = new Minesweeper();
@@ -97,24 +103,64 @@ int main(int argc, char* argv[]) {
 				run_helper.experiment_histories.back()->experiment->finalize(NULL);
 				delete run_helper.experiment_histories.back()->experiment;
 			} else if (run_helper.experiment_histories.back()->experiment->result == EXPERIMENT_RESULT_SUCCESS) {
+				/**
+				 * - run_helper.experiment_histories.size() == 1
+				 */
 				Solution* duplicate = new Solution(solution);
 				run_helper.experiment_histories.back()->experiment->finalize(duplicate);
 				delete run_helper.experiment_histories.back()->experiment;
 
-				#if defined(MDEBUG) && MDEBUG
-				delete solution;
-				solution = duplicate;
+				double sum_vals = 0.0;
+				for (int i_index = 0; i_index < 4000; i_index++) {
+					// Problem* problem = new Sorting();
+					Problem* problem = new Minesweeper();
 
-				solution->timestamp++;
-				solution->save("", "main");
+					RunHelper run_helper;
 
-				ofstream display_file;
-				display_file.open("../display.txt");
-				solution->save_for_display(display_file);
-				display_file.close();
-				#else
+					vector<ContextLayer> context;
+					context.push_back(ContextLayer());
+
+					context.back().scope = duplicate->current;
+					context.back().node = NULL;
+
+					ScopeHistory* root_history = new ScopeHistory(duplicate->current);
+					context.back().scope_history = root_history;
+
+					duplicate->current->activate(
+						problem,
+						context,
+						run_helper,
+						root_history);
+
+					delete root_history;
+
+					double predicted_score = solution->eval->activate(problem,
+																	  run_helper);
+
+					double target_val;
+					if (!run_helper.exceeded_limit) {
+						target_val = problem->score_result(run_helper.num_decisions);
+					} else {
+						target_val = -1.0;
+					}
+
+					double misguess = (predicted_score - target_val) * (predicted_score - target_val);
+					sum_vals += -misguess;
+
+					delete problem;
+				}
+
+				double possible_average_score = sum_vals/4000.0;
+				cout << "possible_average_score: " << possible_average_score << endl;
+
+				duplicate->timestamp++;
+				duplicate->curr_average_score = possible_average_score;
+
+				duplicate->increment();
+
+				duplicate->save(path, "possible_" + to_string((unsigned)time(NULL)));
+
 				delete duplicate;
-				#endif /* MDEBUG */
 			}
 		} else {
 			for (int e_index = 0; e_index < (int)run_helper.experiments_seen_order.size(); e_index++) {
@@ -126,6 +172,30 @@ int main(int argc, char* argv[]) {
 		}
 
 		delete problem;
+
+		auto curr_time = chrono::high_resolution_clock::now();
+		auto time_diff = chrono::duration_cast<chrono::seconds>(curr_time - start_time);
+		if (time_diff.count() >= 20) {
+			cout << "alive" << endl;
+
+			ifstream solution_save_file;
+			solution_save_file.open("workers/saves/main.txt");
+			string timestamp_line;
+			getline(solution_save_file, timestamp_line);
+			int curr_timestamp = stoi(timestamp_line);
+			solution_save_file.close();
+
+			if (curr_timestamp > solution->timestamp) {
+				delete solution;
+
+				solution = new Solution();
+				solution->load("workers/", "main");
+
+				cout << "updated from main" << endl;
+			}
+
+			start_time = curr_time;
+		}
 	}
 
 	delete problem_type;

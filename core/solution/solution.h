@@ -13,18 +13,13 @@
 #include <vector>
 
 class AbstractExperiment;
+class Eval;
 class Problem;
 class Scope;
 
 const int SOLUTION_STATE_TRAVERSE = 0;
 const int SOLUTION_STATE_GENERALIZE = 1;
 const int SOLUTION_STATE_EVAL = 2;
-
-#if defined(MDEBUG) && MDEBUG
-const int NUM_DATAPOINTS = 10;
-#else
-const int NUM_DATAPOINTS = 2000;
-#endif /* MDEBUG */
 
 class Solution {
 public:
