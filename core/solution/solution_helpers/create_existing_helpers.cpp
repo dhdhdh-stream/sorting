@@ -31,3 +31,13 @@ ScopeNode* create_existing() {
 
 	return NULL;
 }
+
+InfoScopeNode* create_existing_info() {
+	uniform_int_distribution<int>possible_distribution(0, solution->info_scopes.size()-1);
+	int possible_index = possible_distribution(generator);
+
+	InfoScopeNode* new_scope_node = new InfoScopeNode();
+	new_scope_node->scope = solution->info_scopes[possible_index];
+
+	return new_scope_node;
+}

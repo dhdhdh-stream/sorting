@@ -42,12 +42,16 @@ public:
 	double existing_average_score;
 
 	double curr_score;
+	InfoScope* curr_info_scope;
+	bool curr_is_negate;
 	std::vector<int> curr_step_types;
 	std::vector<ActionNode*> curr_actions;
 	std::vector<ScopeNode*> curr_scopes;
 	AbstractNode* curr_exit_next_node;
 
 	double best_score;
+	InfoScope* best_info_scope;
+	bool best_is_negate;
 	std::vector<int> best_step_types;
 	std::vector<ActionNode*> best_actions;
 	std::vector<ScopeNode*> best_scopes;

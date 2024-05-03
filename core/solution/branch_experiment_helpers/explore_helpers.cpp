@@ -182,7 +182,6 @@ void BranchExperiment::explore_backprop(
 	BranchExperimentHistory* history = (BranchExperimentHistory*)run_helper.experiment_histories.back();
 
 	if (history->has_target) {
-		
 		double curr_surprise = target_val - history->existing_predicted_score;
 
 		bool select = false;
@@ -233,14 +232,6 @@ void BranchExperiment::explore_backprop(
 			#else
 			if (curr_surprise >= 0.0) {
 			#endif /* MDEBUG */
-				for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-					if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-						delete this->best_actions[s_index];
-					} else {
-						delete this->best_scopes[s_index];
-					}
-				}
-
 				this->best_surprise = curr_surprise;
 				this->best_step_types = this->curr_step_types;
 				this->best_actions = this->curr_actions;
@@ -271,14 +262,6 @@ void BranchExperiment::explore_backprop(
 			#else
 			if (curr_surprise >= this->existing_score_standard_deviation) {
 			#endif /* MDEBUG */
-				for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-					if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-						delete this->best_actions[s_index];
-					} else {
-						delete this->best_scopes[s_index];
-					}
-				}
-
 				this->best_surprise = curr_surprise;
 				this->best_step_types = this->curr_step_types;
 				this->best_actions = this->curr_actions;

@@ -53,13 +53,6 @@ public:
 						 ScopeNodeHistory* history);
 	#endif /* MDEBUG */
 
-	void measure_activate(AbstractNode*& curr_node,
-						  Problem* problem,
-						  std::vector<ContextLayer>& context,
-						  RunHelper& run_helper,
-						  Metrics& metrics,
-						  ScopeNodeHistory* history);
-
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file);
 	void link(Solution* parent_solution);

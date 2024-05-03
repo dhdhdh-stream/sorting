@@ -35,6 +35,7 @@ public:
 
 	Scope* current;
 	std::vector<Scope*> scopes;
+	std::vector<InfoScope*> info_scopes;
 
 	Eval* eval;
 

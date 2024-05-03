@@ -90,6 +90,8 @@ void EvalExperiment::explore_backprop(
 					new_action_node->action = problem_type->random_action();
 					this->actions.push_back(new_action_node);
 				}
+
+				this->sub_state_iter = 0;
 			}
 		}
 	} else if (this->sub_state_iter >= NUM_DATAPOINTS) {
@@ -154,6 +156,8 @@ void EvalExperiment::explore_backprop(
 					new_action_node->action = problem_type->random_action();
 					this->actions.push_back(new_action_node);
 				}
+
+				this->sub_state_iter = 0;
 			}
 		}
 	}

@@ -40,6 +40,11 @@ Solution::Solution(Solution* original) {
 		scope->id = s_index;
 		this->scopes.push_back(scope);
 	}
+	for (int i_index = 0; i_index < (int)original->info_scopes.size(); i_index++) {
+		InfoScope* scope = new InfoScope();
+		scope->id = i_index;
+		this->info_scopes.push_back(scope);
+	}
 
 	this->current->copy_from(original->current,
 							 this);
@@ -47,10 +52,17 @@ Solution::Solution(Solution* original) {
 		this->scopes[s_index]->copy_from(original->scopes[s_index],
 										 this);
 	}
+	for (int i_index = 0; i_index < (int)this->info_scopes.size(); i_index++) {
+		this->info_scopes[i_index]->copy_from(original->info_scopes[i_index],
+											  this);
+	}
 
 	this->current->link(this);
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
 		this->scopes[s_index]->link(this);
+	}
+	for (int i_index = 0; i_index < (int)this->info_scopes.size(); i_index++) {
+		this->info_scopes[i_index]->link(this);
 	}
 
 	this->eval = new Eval(original->eval);
@@ -66,6 +78,9 @@ Solution::~Solution() {
 	delete this->current;
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
 		delete this->scopes[s_index];
+	}
+	for (int i_index = 0; i_index < (int)this->info_scopes.size(); i_index++) {
+		delete this->info_scopes[i_index];
 	}
 }
 
@@ -146,6 +161,10 @@ void Solution::load(string path,
 	getline(input_file, num_scopes_line);
 	int num_scopes = stoi(num_scopes_line);
 
+	string num_info_scopes_line;
+	getline(input_file, num_info_scopes_line);
+	int num_info_scopes = stoi(num_info_scopes_line);
+
 	this->current = new Scope();
 	this->current->id = -1;
 	for (int s_index = 0; s_index < num_scopes; s_index++) {
@@ -153,15 +172,26 @@ void Solution::load(string path,
 		scope->id = s_index;
 		this->scopes.push_back(scope);
 	}
+	for (int i_index = 0; i_index < num_info_scopes; i_index++) {
+		InfoScope* scope = new InfoScope();
+		scope->id = i_index;
+		this->info_scopes.push_back(scope);
+	}
 
 	this->current->load(input_file);
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
 		this->scopes[s_index]->load(input_file);
 	}
+	for (int i_index = 0; i_index < (int)this->info_scopes.size(); i_index++) {
+		this->info_scopes[i_index]->load(input_file);
+	}
 
 	this->current->link(this);
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
 		this->scopes[s_index]->link(this);
+	}
+	for (int i_index = 0; i_index < (int)this->info_scopes.size(); i_index++) {
+		this->info_scopes[i_index]->link(this);
 	}
 
 	this->eval = new Eval();
@@ -256,10 +286,14 @@ void Solution::save(string path,
 	output_file << this->state_iter << endl;
 
 	output_file << this->scopes.size() << endl;
+	output_file << this->info_scopes.size() << endl;
 
 	this->current->save(output_file);
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
 		this->scopes[s_index]->save(output_file);
+	}
+	for (int i_index = 0; i_index < (int)this->info_scopes.size(); i_index++) {
+		this->info_scopes[i_index]->save(output_file);
 	}
 
 	this->eval->save(output_file);
@@ -275,6 +309,7 @@ void Solution::save(string path,
 	rename(oldname.c_str(), newname.c_str());
 }
 
+// TODO: info_scopes
 void Solution::save_for_display(ofstream& output_file) {
 	this->current->save_for_display(output_file);
 

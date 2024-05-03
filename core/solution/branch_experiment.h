@@ -31,15 +31,6 @@ const int BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY = 8;
 const int BRANCH_EXPERIMENT_STATE_ROOT_VERIFY = 9;
 const int BRANCH_EXPERIMENT_STATE_EXPERIMENT = 10;
 
-/**
- * - select first that is significant improvement
- *   - don't select "best" as might not have been learned for actual best
- *     - so may select lottery instead of actual best
- */
-const int EXPLORE_TYPE_GOOD = 0;
-const int EXPLORE_TYPE_NEUTRAL = 1;
-const int EXPLORE_TYPE_BEST = 2;
-
 const int MAX_EXPLORE_TRIES = 4;
 
 const double EXPERIMENT_COMBINED_MIN_BRANCH_WEIGHT = 0.05;

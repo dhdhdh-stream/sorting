@@ -7,6 +7,15 @@ const double MIN_STANDARD_DEVIATION = 0.00001;
 const int STEP_TYPE_ACTION = 0;
 const int STEP_TYPE_SCOPE = 1;
 
+/**
+ * - select first that is significant improvement
+ *   - don't select "best" as might not have been learned for actual best
+ *     - so may select lottery instead of actual best
+ */
+const int EXPLORE_TYPE_GOOD = 0;
+const int EXPLORE_TYPE_NEUTRAL = 1;
+const int EXPLORE_TYPE_BEST = 2;
+
 const int LINEAR_NUM_OBS = 50;
 const int NETWORK_INCREMENT_NUM_NEW = 10;
 

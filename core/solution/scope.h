@@ -49,25 +49,13 @@ public:
 	void clear_verify();
 	#endif /* MDEBUG */
 
-	void measure_activate(Problem* problem,
-						  std::vector<ContextLayer>& context,
-						  RunHelper& run_helper,
-						  Metrics& metrics,
-						  ScopeHistory* history);
-
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file);
 	void link(Solution* parent_solution);
-	/**
-	 * - for eval
-	 */
 	void link();
 
 	void copy_from(Scope* original,
 				   Solution* parent_solution);
-	/**
-	 * - for eval
-	 */
 	void copy_from(Scope* original);
 
 	void save_for_display(std::ofstream& output_file);

@@ -1,3 +1,7 @@
+// TODO: redo to learn score as well
+// - matching InfoBranchExperiment
+// - and add EvalPassThroughExperiment
+
 #ifndef EVAL_EXPERIMENT_H
 #define EVAL_EXPERIMENT_H
 

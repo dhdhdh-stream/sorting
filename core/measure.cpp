@@ -31,7 +31,6 @@ int main(int argc, char* argv[]) {
 	solution->load("", "main");
 
 	double sum_vals = 0.0;
-	Metrics metrics;
 
 	auto start_time = chrono::high_resolution_clock::now();
 	for (int i_index = 0; i_index < 2000; i_index++) {
@@ -49,11 +48,10 @@ int main(int argc, char* argv[]) {
 		ScopeHistory* root_history = new ScopeHistory(solution->current);
 		context.back().scope_history = root_history;
 
-		solution->current->measure_activate(
+		solution->current->activate(
 			problem,
 			context,
 			run_helper,
-			metrics,
 			root_history);
 
 		delete root_history;
@@ -67,11 +65,6 @@ int main(int argc, char* argv[]) {
 		sum_vals += target_val;
 
 		delete problem;
-	}
-
-	for (map<Scope*, int>::iterator it = metrics.scope_counts.begin();
-			it != metrics.scope_counts.end(); it++) {
-		cout << it->first->id << ": " << it->second << endl;
 	}
 
 	cout << "average score: " << sum_vals/2000 << endl;
