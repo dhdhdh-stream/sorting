@@ -31,10 +31,6 @@ const int BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY = 8;
 const int BRANCH_EXPERIMENT_STATE_ROOT_VERIFY = 9;
 const int BRANCH_EXPERIMENT_STATE_EXPERIMENT = 10;
 
-const int MAX_EXPLORE_TRIES = 4;
-
-const double EXPERIMENT_COMBINED_MIN_BRANCH_WEIGHT = 0.05;
-
 class BranchExperimentHistory;
 class BranchExperiment : public AbstractExperiment {
 public:
@@ -121,7 +117,7 @@ public:
 	void train_existing_backprop(double target_val,
 								 RunHelper& run_helper);
 
-	void explore_activate(AbstractNode*& curr_node,
+	bool explore_activate(AbstractNode*& curr_node,
 						  Problem* problem,
 						  std::vector<ContextLayer>& context,
 						  RunHelper& run_helper,
@@ -133,9 +129,6 @@ public:
 							std::vector<ContextLayer>& context,
 							RunHelper& run_helper,
 							BranchExperimentHistory* history);
-	void train_new_target_activate(AbstractNode*& curr_node,
-								   std::vector<ContextLayer>& context,
-								   RunHelper& run_helper);
 	void train_new_backprop(double target_val,
 							RunHelper& run_helper);
 

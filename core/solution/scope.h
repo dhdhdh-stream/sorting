@@ -8,7 +8,6 @@
 #include <vector>
 
 #include "context_layer.h"
-#include "metrics.h"
 #include "run_helper.h"
 
 class AbstractNode;

@@ -386,12 +386,12 @@ void BranchExperiment::train_existing_backprop(
 			uniform_int_distribution<int> best_distribution(0, 1);
 			if (best_distribution(generator) == 0) {
 				this->explore_type = EXPLORE_TYPE_BEST;
+
+				this->best_surprise = 0.0;
 			} else {
 				this->explore_type = EXPLORE_TYPE_GOOD;
 			}
 		}
-
-		this->best_surprise = 0.0;
 
 		this->state = BRANCH_EXPERIMENT_STATE_EXPLORE;
 		this->state_iter = 0;

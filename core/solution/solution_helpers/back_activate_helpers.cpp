@@ -60,11 +60,33 @@ void gather_possible_helper(vector<Scope*>& scope_context,
 			{
 				node_context.back() = it->first;
 
-				for (int o_index = 0; o_index < problem_type->num_obs(); o_index++) {
-					possible_scope_contexts.push_back(scope_context);
-					possible_node_contexts.push_back(node_context);
-					possible_obs_indexes.push_back(o_index);
-				}
+				possible_scope_contexts.push_back(scope_context);
+				possible_node_contexts.push_back(node_context);
+				possible_obs_indexes.push_back(-1);
+
+				node_context.back() = NULL;
+			}
+
+			break;
+		case NODE_TYPE_INFO_SCOPE:
+			{
+				node_context.back() = it->first;
+
+				possible_scope_contexts.push_back(scope_context);
+				possible_node_contexts.push_back(node_context);
+				possible_obs_indexes.push_back(-1);
+
+				node_context.back() = NULL;
+			}
+
+			break;
+		case NODE_TYPE_INFO_BRANCH:
+			{
+				node_context.back() = it->first;
+
+				possible_scope_contexts.push_back(scope_context);
+				possible_node_contexts.push_back(node_context);
+				possible_obs_indexes.push_back(-1);
 
 				node_context.back() = NULL;
 			}

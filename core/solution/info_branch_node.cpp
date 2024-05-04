@@ -1,5 +1,11 @@
 #include "info_branch_node.h"
 
+#include "abstract_experiment.h"
+#include "globals.h"
+#include "info_scope.h"
+#include "scope.h"
+#include "solution.h"
+
 using namespace std;
 
 InfoBranchNode::InfoBranchNode() {
@@ -10,7 +16,7 @@ InfoBranchNode::InfoBranchNode(InfoBranchNode* original,
 							   Solution* parent_solution) {
 	this->type = NODE_TYPE_INFO_BRANCH;
 
-	this->scope = parent_solution->info_scopes[original->scope->id]
+	this->scope = parent_solution->info_scopes[original->scope->id];
 
 	this->original_next_node_id = original->original_next_node_id;
 	this->branch_next_node_id = original->branch_next_node_id;

@@ -1,5 +1,11 @@
 #include "info_scope_node.h"
 
+#include "abstract_experiment.h"
+#include "globals.h"
+#include "info_scope.h"
+#include "scope.h"
+#include "solution.h"
+
 using namespace std;
 
 InfoScopeNode::InfoScopeNode() {
@@ -30,7 +36,7 @@ void InfoScopeNode::save(ofstream& output_file) {
 void InfoScopeNode::load(ifstream& input_file) {
 	string scope_id_line;
 	getline(input_file, scope_id_line);
-	this->scope = solution->scopes[stoi(scope_id_line)];
+	this->scope = solution->info_scopes[stoi(scope_id_line)];
 
 	string next_node_id_line;
 	getline(input_file, next_node_id_line);

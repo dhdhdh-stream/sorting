@@ -1,12 +1,14 @@
-#include "branch_experiment.h"
+#include "new_info_experiment.h"
 
 #include <cmath>
 #include <iostream>
 
 #include "action_node.h"
+#include "branch_experiment.h"
 #include "branch_node.h"
 #include "constants.h"
 #include "globals.h"
+#include "info_scope_node.h"
 #include "network.h"
 #include "scope.h"
 #include "scope_node.h"
@@ -16,9 +18,9 @@
 
 using namespace std;
 
-bool BranchExperiment::verify_activate(AbstractNode*& curr_node,
-									   vector<ContextLayer>& context,
-									   RunHelper& run_helper) {
+bool NewInfoExperiment::verify_activate(AbstractNode*& curr_node,
+										Problem* problem,
+										RunHelper& run_helper) {
 	if (this->is_pass_through) {
 		if (this->best_step_types.size() == 0) {
 			curr_node = this->best_exit_next_node;
@@ -34,39 +36,50 @@ bool BranchExperiment::verify_activate(AbstractNode*& curr_node,
 	} else {
 		run_helper.num_decisions++;
 
-		vector<double> input_vals(this->input_scope_contexts.size(), 0.0);
-		for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
-			int curr_layer = 0;
-			ScopeHistory* curr_scope_history = context.back().scope_history;
-			while (true) {
-				map<AbstractNode*, AbstractNodeHistory*>::iterator it = curr_scope_history->node_histories.find(
-					this->input_node_contexts[i_index][curr_layer]);
-				if (it == curr_scope_history->node_histories.end()) {
-					break;
-				} else {
-					if (curr_layer == (int)this->input_scope_contexts[i_index].size()-1) {
-						if (it->first->type == NODE_TYPE_ACTION) {
-							ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
-							input_vals[i_index] = action_node_history->obs_snapshot[this->input_obs_indexes[i_index]];
-						} else {
-							BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
-							if (branch_node_history->is_branch) {
-								input_vals[i_index] = 1.0;
-							} else {
-								input_vals[i_index] = -1.0;
-							}
-						}
-						break;
-					} else {
-						curr_layer++;
-						curr_scope_history = ((ScopeNodeHistory*)it->second)->scope_history;
+		vector<ContextLayer> inner_context;
+		inner_context.push_back(ContextLayer());
+
+		inner_context.back().scope = this->new_info_subscope;
+		inner_context.back().node = NULL;
+
+		ScopeHistory* scope_history = new ScopeHistory(this->new_info_subscope);
+		inner_context.back().scope_history = scope_history;
+
+		this->new_info_subscope->activate(problem,
+										  inner_context,
+										  run_helper,
+										  scope_history);
+
+		vector<double> input_vals(this->input_node_contexts.size(), 0.0);
+		for (int i_index = 0; i_index < (int)this->input_node_contexts.size(); i_index++) {
+			map<AbstractNode*, AbstractNodeHistory*>::iterator it = scope_history->node_histories.find(
+				this->input_node_contexts[i_index]);
+			if (it != scope_history->node_histories.end()) {
+				switch (this->input_node_contexts[i_index]->type) {
+				case NODE_TYPE_ACTION:
+					{
+						ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
+						input_vals[i_index] = action_node_history->obs_snapshot[this->input_obs_indexes[i_index]];
 					}
+					break;
+				case NODE_TYPE_INFO_SCOPE:
+					{
+						InfoScopeNodeHistory* info_scope_node_history = (InfoScopeNodeHistory*)it->second;
+						if (info_scope_node_history->is_positive) {
+							input_vals[i_index] = 1.0;
+						} else {
+							input_vals[i_index] = -1.0;
+						}
+					}
+					break;
 				}
 			}
 		}
 
+		delete scope_history;
+
 		double existing_predicted_score = this->existing_average_score;
-		for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
+		for (int i_index = 0; i_index < (int)this->input_node_contexts.size(); i_index++) {
 			existing_predicted_score += input_vals[i_index] * this->existing_linear_weights[i_index];
 		}
 		if (this->existing_network != NULL) {
@@ -82,7 +95,7 @@ bool BranchExperiment::verify_activate(AbstractNode*& curr_node,
 		}
 
 		double new_predicted_score = this->new_average_score;
-		for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
+		for (int i_index = 0; i_index < (int)this->input_node_contexts.size(); i_index++) {
 			new_predicted_score += input_vals[i_index] * this->new_linear_weights[i_index];
 		}
 		if (this->new_network != NULL) {
@@ -127,12 +140,12 @@ bool BranchExperiment::verify_activate(AbstractNode*& curr_node,
 	}
 }
 
-void BranchExperiment::verify_backprop(double target_val,
-									   RunHelper& run_helper) {
+void NewInfoExperiment::verify_backprop(double target_val,
+										RunHelper& run_helper) {
 	this->combined_score += target_val;
 
 	this->state_iter++;
-	if (this->state == BRANCH_EXPERIMENT_STATE_VERIFY_1ST
+	if (this->state == NEW_INFO_EXPERIMENT_STATE_VERIFY_1ST
 			&& this->state_iter >= VERIFY_1ST_NUM_DATAPOINTS) {
 		this->combined_score /= VERIFY_1ST_NUM_DATAPOINTS;
 
@@ -146,9 +159,19 @@ void BranchExperiment::verify_backprop(double target_val,
 				break;
 			}
 
-			if (curr_experiment->type == EXPERIMENT_TYPE_BRANCH) {
-				BranchExperiment* branch_experiment = (BranchExperiment*)curr_experiment;
-				combined_branch_weight *= branch_experiment->branch_weight;
+			switch (curr_experiment->type) {
+			case EXPERIMENT_TYPE_BRANCH:
+				{
+					BranchExperiment* branch_experiment = (BranchExperiment*)curr_experiment;
+					combined_branch_weight *= branch_experiment->branch_weight;
+				}
+				break;
+			case EXPERIMENT_TYPE_NEW_INFO:
+				{
+					NewInfoExperiment* new_info_experiment = (NewInfoExperiment*)curr_experiment;
+					combined_branch_weight *= new_info_experiment->branch_weight;
+				}
+				break;
 			}
 			curr_experiment = curr_experiment->parent_experiment;
 		}
@@ -157,7 +180,7 @@ void BranchExperiment::verify_backprop(double target_val,
 		#endif /* MDEBUG */
 			this->o_target_val_histories.reserve(VERIFY_2ND_NUM_DATAPOINTS);
 
-			this->state = BRANCH_EXPERIMENT_STATE_VERIFY_2ND_EXISTING;
+			this->state = NEW_INFO_EXPERIMENT_STATE_VERIFY_2ND_EXISTING;
 			this->state_iter = 0;
 		#if defined(MDEBUG) && MDEBUG
 		} else if (this->best_step_types.size() > 0
@@ -166,7 +189,7 @@ void BranchExperiment::verify_backprop(double target_val,
 		} else if (this->best_step_types.size() > 0
 				&& combined_branch_weight > EXPERIMENT_COMBINED_MIN_BRANCH_WEIGHT) {
 		#endif /* MDEBUG */
-			this->state = BRANCH_EXPERIMENT_STATE_EXPERIMENT;
+			this->state = NEW_INFO_EXPERIMENT_STATE_EXPERIMENT;
 			this->root_state = ROOT_EXPERIMENT_STATE_EXPERIMENT;
 			this->experiment_iter = 0;
 		} else {
@@ -210,7 +233,7 @@ void BranchExperiment::verify_backprop(double target_val,
 					}
 				}
 
-				this->state = BRANCH_EXPERIMENT_STATE_EXPLORE;
+				this->state = NEW_INFO_EXPERIMENT_STATE_EXPLORE_SEQUENCE;
 				this->state_iter = 0;
 			} else {
 				this->result = EXPERIMENT_RESULT_FAIL;
@@ -226,9 +249,19 @@ void BranchExperiment::verify_backprop(double target_val,
 				break;
 			}
 
-			if (curr_experiment->type == EXPERIMENT_TYPE_BRANCH) {
-				BranchExperiment* branch_experiment = (BranchExperiment*)curr_experiment;
-				combined_branch_weight *= branch_experiment->branch_weight;
+			switch (curr_experiment->type) {
+			case EXPERIMENT_TYPE_BRANCH:
+				{
+					BranchExperiment* branch_experiment = (BranchExperiment*)curr_experiment;
+					combined_branch_weight *= branch_experiment->branch_weight;
+				}
+				break;
+			case EXPERIMENT_TYPE_NEW_INFO:
+				{
+					NewInfoExperiment* new_info_experiment = (NewInfoExperiment*)curr_experiment;
+					combined_branch_weight *= new_info_experiment->branch_weight;
+				}
+				break;
 			}
 			curr_experiment = curr_experiment->parent_experiment;
 		}
@@ -238,6 +271,7 @@ void BranchExperiment::verify_backprop(double target_val,
 		#else
 		if (this->combined_score > this->verify_existing_average_score) {
 		#endif /* MDEBUG */
+			cout << "NewInfoExperiment" << endl;
 			cout << "verify" << endl;
 			cout << "this->parent_experiment: " << this->parent_experiment << endl;
 			cout << "this->scope_context->id: " << this->scope_context->id << endl;
@@ -266,42 +300,6 @@ void BranchExperiment::verify_backprop(double target_val,
 
 			cout << endl;
 
-			#if defined(MDEBUG) && MDEBUG
-			if (this->is_pass_through) {
-				if (this->parent_experiment == NULL) {
-					this->result = EXPERIMENT_RESULT_SUCCESS;
-				} else {
-					vector<AbstractExperiment*> verify_experiments;
-					verify_experiments.insert(verify_experiments.begin(), this);
-					AbstractExperiment* curr_experiment = this->parent_experiment;
-					while (true) {
-						if (curr_experiment->parent_experiment == NULL) {
-							/**
-							 * - don't include root
-							 */
-							break;
-						} else {
-							verify_experiments.insert(verify_experiments.begin(), curr_experiment);
-							curr_experiment = curr_experiment->parent_experiment;
-						}
-					}
-
-					this->root_experiment->verify_experiments = verify_experiments;
-
-					this->root_experiment->o_target_val_histories.reserve(VERIFY_1ST_NUM_DATAPOINTS);
-
-					this->root_experiment->root_state = ROOT_EXPERIMENT_STATE_VERIFY_1ST_EXISTING;
-
-					this->state = BRANCH_EXPERIMENT_STATE_ROOT_VERIFY;
-				}
-			} else {
-				this->verify_problems = vector<Problem*>(NUM_VERIFY_SAMPLES, NULL);
-				this->verify_seeds = vector<unsigned long>(NUM_VERIFY_SAMPLES);
-
-				this->state = BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY;
-				this->state_iter = 0;
-			}
-			#else
 			if (this->parent_experiment == NULL) {
 				this->result = EXPERIMENT_RESULT_SUCCESS;
 			} else {
@@ -326,9 +324,8 @@ void BranchExperiment::verify_backprop(double target_val,
 
 				this->root_experiment->root_state = ROOT_EXPERIMENT_STATE_VERIFY_1ST_EXISTING;
 
-				this->state = BRANCH_EXPERIMENT_STATE_ROOT_VERIFY;
+				this->state = NEW_INFO_EXPERIMENT_STATE_ROOT_VERIFY;
 			}
-			#endif /* MDEBUG */
 		#if defined(MDEBUG) && MDEBUG
 		} else if (this->best_step_types.size() > 0
 				&& rand()%4 == 0) {
@@ -336,7 +333,7 @@ void BranchExperiment::verify_backprop(double target_val,
 		} else if (this->best_step_types.size() > 0
 				&& combined_branch_weight > EXPERIMENT_COMBINED_MIN_BRANCH_WEIGHT) {
 		#endif /* MDEBUG */
-			this->state = BRANCH_EXPERIMENT_STATE_EXPERIMENT;
+			this->state = NEW_INFO_EXPERIMENT_STATE_EXPERIMENT;
 			this->root_state = ROOT_EXPERIMENT_STATE_EXPERIMENT;
 			this->experiment_iter = 0;
 		} else {
@@ -380,7 +377,7 @@ void BranchExperiment::verify_backprop(double target_val,
 					}
 				}
 
-				this->state = BRANCH_EXPERIMENT_STATE_EXPLORE;
+				this->state = NEW_INFO_EXPERIMENT_STATE_EXPLORE_SEQUENCE;
 				this->state_iter = 0;
 			} else {
 				this->result = EXPERIMENT_RESULT_FAIL;

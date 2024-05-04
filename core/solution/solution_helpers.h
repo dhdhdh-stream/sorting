@@ -9,6 +9,7 @@
 #include "run_helper.h"
 
 class AbstractNode;
+class InfoScopeNode;
 class Problem;
 class Scope;
 class ScopeHistory;
@@ -19,6 +20,8 @@ void create_eval_experiment(ScopeHistory* root_history);
 
 ScopeNode* create_existing();
 InfoScopeNode* create_existing_info();
+
+Scope* create_new_info_scope();
 
 void gather_possible_helper(std::vector<Scope*>& scope_context,
 							std::vector<AbstractNode*>& node_context,

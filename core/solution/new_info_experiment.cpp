@@ -1,21 +1,20 @@
-#include "pass_through_experiment.h"
+#include "new_info_experiment.h"
 
 #include <iostream>
 
 #include "action_node.h"
 #include "constants.h"
-#include "globals.h"
+#include "network.h"
 #include "scope.h"
 #include "scope_node.h"
-#include "solution.h"
 
 using namespace std;
 
-PassThroughExperiment::PassThroughExperiment(Scope* scope_context,
-											 AbstractNode* node_context,
-											 bool is_branch,
-											 AbstractExperiment* parent_experiment) {
-	this->type = EXPERIMENT_TYPE_PASS_THROUGH;
+NewInfoExperiment::NewInfoExperiment(Scope* scope_context,
+									 AbstractNode* node_context,
+									 bool is_branch,
+									 AbstractExperiment* parent_experiment) {
+	this->type = EXPERIMENT_TYPE_NEW_INFO;
 
 	this->scope_context = scope_context;
 	this->node_context = node_context;
@@ -39,27 +38,42 @@ PassThroughExperiment::PassThroughExperiment(Scope* scope_context,
 	}
 
 	this->average_remaining_experiments_from_start = 1.0;
+	/**
+	 * - start with a 50% chance to bypass
+	 */
 	this->average_instances_per_run = 1.0;
+
+	this->new_info_subscope = NULL;
+
+	this->existing_network = NULL;
+	this->new_network = NULL;
 
 	this->ending_node = NULL;
 
 	this->o_target_val_histories.reserve(NUM_DATAPOINTS);
 
-	this->state = PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING;
+	this->state = NEW_INFO_EXPERIMENT_STATE_MEASURE_EXISTING;
 	this->state_iter = 0;
-
-	this->curr_score = 0.0;
-
-	this->best_score = numeric_limits<double>::lowest();
 
 	this->result = EXPERIMENT_RESULT_NA;
 }
 
-PassThroughExperiment::~PassThroughExperiment() {
+NewInfoExperiment::~NewInfoExperiment() {
 	if (this->parent_experiment != NULL) {
-		cout << "inner delete " << this << endl;
+		cout << "inner delete" << endl;
 	} else {
-		cout << "outer delete " << this << endl;
+		cout << "outer delete" << endl;
+	}
+
+	if (this->new_info_subscope != NULL) {
+		delete this->new_info_subscope;
+	}
+
+	if (this->existing_network != NULL) {
+		delete this->existing_network;
+	}
+	if (this->new_network != NULL) {
+		delete this->new_network;
 	}
 
 	for (int s_index = 0; s_index < (int)this->curr_actions.size(); s_index++) {
@@ -89,10 +103,13 @@ PassThroughExperiment::~PassThroughExperiment() {
 	if (this->ending_node != NULL) {
 		delete this->ending_node;
 	}
+
+	for (int h_index = 0; h_index < (int)this->i_scope_histories.size(); h_index++) {
+		delete this->i_scope_histories[h_index];
+	}
 }
 
-PassThroughExperimentHistory::PassThroughExperimentHistory(
-		PassThroughExperiment* experiment) {
+NewInfoExperimentHistory::NewInfoExperimentHistory(NewInfoExperiment* experiment) {
 	this->experiment = experiment;
 
 	this->instance_count = 0;
@@ -102,7 +119,7 @@ PassThroughExperimentHistory::PassThroughExperimentHistory(
 	this->scope_history = NULL;
 }
 
-PassThroughExperimentHistory::~PassThroughExperimentHistory() {
+NewInfoExperimentHistory::~NewInfoExperimentHistory() {
 	if (this->scope_history != NULL) {
 		delete this->scope_history;
 	}

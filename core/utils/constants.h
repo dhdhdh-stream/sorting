@@ -16,6 +16,8 @@ const int EXPLORE_TYPE_GOOD = 0;
 const int EXPLORE_TYPE_NEUTRAL = 1;
 const int EXPLORE_TYPE_BEST = 2;
 
+const int MAX_EXPLORE_TRIES = 4;
+
 const int LINEAR_NUM_OBS = 50;
 const int NETWORK_INCREMENT_NUM_NEW = 10;
 
@@ -30,6 +32,7 @@ const double TEST_SAMPLES_PERCENTAGE = 0.3;
 
 const double WEIGHT_MIN_SCORE_IMPACT = 0.1;
 
+const double EXPERIMENT_COMBINED_MIN_BRANCH_WEIGHT = 0.05;
 const double PASS_THROUGH_BRANCH_WEIGHT = 0.9;
 
 #if defined(MDEBUG) && MDEBUG

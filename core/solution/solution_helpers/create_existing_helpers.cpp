@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "globals.h"
+#include "info_scope_node.h"
 #include "problem.h"
 #include "scope.h"
 #include "scope_node.h"

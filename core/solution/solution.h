@@ -14,6 +14,7 @@
 
 class AbstractExperiment;
 class Eval;
+class InfoScope;
 class Problem;
 class Scope;
 

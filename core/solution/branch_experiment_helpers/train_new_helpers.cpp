@@ -31,33 +31,20 @@ void BranchExperiment::train_new_activate(
 	if (this->num_instances_until_target == 0) {
 		history->instance_count++;
 
-		train_new_target_activate(curr_node,
-								  context,
-								  run_helper);
+		this->i_scope_histories.push_back(new ScopeHistory(context.back().scope_history));
 
-		uniform_int_distribution<int> until_distribution(0, (int)(this->average_instances_per_run-1.0)/2.0);
-		this->num_instances_until_target = 1 + until_distribution(generator);
-	}
-}
-
-void BranchExperiment::train_new_target_activate(
-		AbstractNode*& curr_node,
-		vector<ContextLayer>& context,
-		RunHelper& run_helper) {
-	this->i_scope_histories.push_back(new ScopeHistory(context.back().scope_history));
-
-	/**
-	 * - don't need to add history for new branch_node
-	 */
-
-	if (this->best_step_types.size() == 0) {
-		curr_node = this->best_exit_next_node;
-	} else {
-		if (this->best_step_types[0] == STEP_TYPE_ACTION) {
-			curr_node = this->best_actions[0];
+		if (this->best_step_types.size() == 0) {
+			curr_node = this->best_exit_next_node;
 		} else {
-			curr_node = this->best_scopes[0];
+			if (this->best_step_types[0] == STEP_TYPE_ACTION) {
+				curr_node = this->best_actions[0];
+			} else {
+				curr_node = this->best_scopes[0];
+			}
 		}
+
+		uniform_int_distribution<int> until_distribution(0, (int)this->average_instances_per_run-1.0);
+		this->num_instances_until_target = 1 + until_distribution(generator);
 	}
 }
 

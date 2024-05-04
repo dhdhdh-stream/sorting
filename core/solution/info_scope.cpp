@@ -1,5 +1,9 @@
 #include "info_scope.h"
 
+#include "abstract_node.h"
+#include "network.h"
+#include "scope.h"
+
 using namespace std;
 
 InfoScope::InfoScope() {

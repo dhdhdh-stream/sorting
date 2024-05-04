@@ -1,6 +1,31 @@
 #include "new_info_experiment.h"
 
+#include <iostream>
+/**
+ * - stability issue with Eigen BDCSVD for small singular values
+ */
+#undef eigen_assert
+#define eigen_assert(x) if (!(x)) {throw std::invalid_argument("Eigen error");}
+#include <Eigen/Dense>
+
+#include "action_node.h"
+#include "constants.h"
+#include "globals.h"
+#include "info_scope_node.h"
+#include "network.h"
+#include "nn_helpers.h"
+#include "scope.h"
+#include "solution_helpers.h"
+
 using namespace std;
+
+#if defined(MDEBUG) && MDEBUG
+const int INITIAL_NUM_SAMPLES_PER_ITER = 2;
+const int EXPLORE_ITERS = 2;
+#else
+const int INITIAL_NUM_SAMPLES_PER_ITER = 40;
+const int EXPLORE_ITERS = 100;
+#endif /* MDEBUG */
 
 void NewInfoExperiment::explore_info_activate(
 		AbstractNode*& curr_node,
@@ -9,29 +34,23 @@ void NewInfoExperiment::explore_info_activate(
 		NewInfoExperimentHistory* history) {
 	run_helper.num_decisions++;
 
-	this->num_instances_until_target--;
-	if (this->num_instances_until_target == 0) {
-		history->instance_count++;
+	history->instance_count++;
 
-		vector<ContextLayer> inner_context;
-		inner_context.push_back(this->new_info_subscope);
+	vector<ContextLayer> inner_context;
+	inner_context.push_back(ContextLayer());
 
-		inner_context.back().scope = this->new_info_subscope;
-		inner_context.back().node = NULL;
+	inner_context.back().scope = this->new_info_subscope;
+	inner_context.back().node = NULL;
 
-		ScopeHistory* scope_history = new ScopeHistory(this->new_info_subscope);
-		context.back().scope_history = scope_history;
+	ScopeHistory* scope_history = new ScopeHistory(this->new_info_subscope);
+	inner_context.back().scope_history = scope_history;
 
-		this->new_info_subscope->activate(problem,
-										  inner_context,
-										  run_helper,
-										  scope_history);
+	this->new_info_subscope->activate(problem,
+									  inner_context,
+									  run_helper,
+									  scope_history);
 
-		this->i_scope_histories.push_back(scope_history);
-
-		uniform_int_distribution<int> until_distribution(0, (int)this->average_instances_per_run-1.0);
-		this->num_instances_until_target = 1 + until_distribution(generator);
-	}
+	this->i_scope_histories.push_back(scope_history);
 }
 
 void NewInfoExperiment::explore_info_backprop(
@@ -39,16 +58,13 @@ void NewInfoExperiment::explore_info_backprop(
 		RunHelper& run_helper) {
 	NewInfoExperimentHistory* history = (NewInfoExperimentHistory*)run_helper.experiment_histories.back();
 
-	if (history->instance_count > 0) {
-		this->info_score += target_val - this->existing_average_score;
-
-		this->sub_state_iter++;
-	}
+	this->info_score += target_val - this->existing_average_score;
 
 	for (int h_index = 0; h_index < history->instance_count; h_index++) {
 		this->i_target_val_histories.push_back(target_val);
 	}
 
+	this->sub_state_iter++;
 	if (this->sub_state_iter == INITIAL_NUM_SAMPLES_PER_ITER) {
 		if (this->info_score < 0.0) {
 			delete this->new_info_subscope;
@@ -103,7 +119,7 @@ void NewInfoExperiment::explore_info_backprop(
 					uniform_int_distribution<int> distribution(0, (int)remaining_indexes.size()-1);
 					int rand_index = distribution(generator);
 
-					this->input_node_contexts.push_back(possible_node_contexts[remaining_indexes[rand_index]]);
+					this->input_node_contexts.push_back(possible_node_contexts[remaining_indexes[rand_index]].back());
 					this->input_obs_indexes.push_back(possible_obs_indexes[remaining_indexes[rand_index]]);
 
 					remaining_indexes.erase(remaining_indexes.begin() + rand_index);
@@ -114,32 +130,26 @@ void NewInfoExperiment::explore_info_backprop(
 
 			for (int d_index = 0; d_index < num_instances; d_index++) {
 				for (int i_index = 0; i_index < (int)this->input_node_contexts.size(); i_index++) {
-					int curr_layer = 0;
-					ScopeHistory* curr_scope_history = this->i_scope_histories[d_index];
-					while (true) {
-						map<AbstractNode*, AbstractNodeHistory*>::iterator it = curr_scope_history->node_histories.find(
-							this->input_node_contexts[i_index][curr_layer]);
-						if (it == curr_scope_history->node_histories.end()) {
-							inputs(d_index, i_index) = 0.0;
-							break;
-						} else {
-							if (curr_layer == (int)this->input_node_contexts[i_index].size()-1) {
-								if (it->first->type == NODE_TYPE_ACTION) {
-									ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
-									inputs(d_index, i_index) = action_node_history->obs_snapshot[this->input_obs_indexes[i_index]];
-								} else {
-									BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
-									if (branch_node_history->is_branch) {
-										inputs(d_index, i_index) = 1.0;
-									} else {
-										inputs(d_index, i_index) = -1.0;
-									}
-								}
-								break;
-							} else {
-								curr_layer++;
-								curr_scope_history = ((ScopeNodeHistory*)it->second)->scope_history;
+					map<AbstractNode*, AbstractNodeHistory*>::iterator it = this->i_scope_histories[d_index]->node_histories.find(
+						this->input_node_contexts[i_index]);
+					if (it != this->i_scope_histories[d_index]->node_histories.end()) {
+						switch (this->input_node_contexts[i_index]->type) {
+						case NODE_TYPE_ACTION:
+							{
+								ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
+								inputs(d_index, i_index) = action_node_history->obs_snapshot[this->input_obs_indexes[i_index]];
 							}
+							break;
+						case NODE_TYPE_INFO_SCOPE:
+							{
+								InfoScopeNodeHistory* info_scope_node_history = (InfoScopeNodeHistory*)it->second;
+								if (info_scope_node_history->is_positive) {
+									inputs(d_index, i_index) = 1.0;
+								} else {
+									inputs(d_index, i_index) = -1.0;
+								}
+							}
+							break;
 						}
 					}
 				}
@@ -263,31 +273,26 @@ void NewInfoExperiment::explore_info_backprop(
 				for (int d_index = 0; d_index < num_instances; d_index++) {
 					vector<double> test_input_vals(num_new_input_indexes, 0.0);
 					for (int t_index = 0; t_index < num_new_input_indexes; t_index++) {
-						int curr_layer = 0;
-						ScopeHistory* curr_scope_history = this->i_scope_histories[d_index];
-						while (true) {
-							map<AbstractNode*, AbstractNodeHistory*>::iterator it = curr_scope_history->node_histories.find(
-								test_network_input_node_contexts[t_index][curr_layer]);
-							if (it == curr_scope_history->node_histories.end()) {
-								break;
-							} else {
-								if (curr_layer == (int)test_network_input_scope_contexts[t_index].size()-1) {
-									if (it->first->type == NODE_TYPE_ACTION) {
-										ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
-										test_input_vals[t_index] = action_node_history->obs_snapshot[test_network_input_obs_indexes[t_index]];
-									} else {
-										BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
-										if (branch_node_history->is_branch) {
-											test_input_vals[t_index] = 1.0;
-										} else {
-											test_input_vals[t_index] = -1.0;
-										}
-									}
-									break;
-								} else {
-									curr_layer++;
-									curr_scope_history = ((ScopeNodeHistory*)it->second)->scope_history;
+						map<AbstractNode*, AbstractNodeHistory*>::iterator it = this->i_scope_histories[d_index]->node_histories.find(
+							test_network_input_node_contexts[t_index].back());
+						if (it != this->i_scope_histories[d_index]->node_histories.end()) {
+							switch (test_network_input_node_contexts[t_index].back()->type) {
+							case NODE_TYPE_ACTION:
+								{
+									ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
+									test_input_vals[t_index] = action_node_history->obs_snapshot[test_network_input_obs_indexes[t_index]];
 								}
+								break;
+							case NODE_TYPE_INFO_SCOPE:
+								{
+									InfoScopeNodeHistory* info_scope_node_history = (InfoScopeNodeHistory*)it->second;
+									if (info_scope_node_history->is_positive) {
+										test_input_vals[t_index] = 1.0;
+									} else {
+										test_input_vals[t_index] = -1.0;
+									}
+								}
+								break;
 							}
 						}
 					}
@@ -332,19 +337,19 @@ void NewInfoExperiment::explore_info_backprop(
 					for (int t_index = 0; t_index < (int)test_network_input_scope_contexts.size(); t_index++) {
 						int index = -1;
 						for (int i_index = 0; i_index < (int)this->input_node_contexts.size(); i_index++) {
-							if (test_network_input_node_contexts[t_index] == this->input_node_contexts[i_index]
+							if (test_network_input_node_contexts[t_index].back() == this->input_node_contexts[i_index]
 									&& test_network_input_obs_indexes[t_index] == this->input_obs_indexes[i_index]) {
 								index = i_index;
 								break;
 							}
 						}
 						if (index == -1) {
-							this->input_node_contexts.push_back(test_network_input_node_contexts[t_index]);
+							this->input_node_contexts.push_back(test_network_input_node_contexts[t_index].back());
 							this->input_obs_indexes.push_back(test_network_input_obs_indexes[t_index]);
 
 							this->existing_linear_weights.push_back(0.0);
 
-							index = this->input_scope_contexts.size()-1;
+							index = this->input_node_contexts.size()-1;
 						}
 						new_input_indexes.push_back(index);
 					}
@@ -379,11 +384,23 @@ void NewInfoExperiment::explore_info_backprop(
 			this->i_scope_histories.clear();
 			this->i_target_val_histories.clear();
 
-			this->i_scope_histories.reserve(NUM_DATAPOINTS);
-			this->i_target_val_histories.reserve(NUM_DATAPOINTS);
+			uniform_int_distribution<int> neutral_distribution(0, 9);
+			if (neutral_distribution(generator) == 0) {
+				this->explore_type = EXPLORE_TYPE_NEUTRAL;
+			} else {
+				uniform_int_distribution<int> best_distribution(0, 1);
+				if (best_distribution(generator) == 0) {
+					this->explore_type = EXPLORE_TYPE_BEST;
 
-			this->state = NEW_INFO_EXPERIMENT_STATE_TRAIN_NEW;
+					this->best_surprise = 0.0;
+				} else {
+					this->explore_type = EXPLORE_TYPE_GOOD;
+				}
+			}
+
+			this->state = NEW_INFO_EXPERIMENT_STATE_EXPLORE_SEQUENCE;
 			this->state_iter = 0;
+			this->explore_iter = 0;
 		} else {
 			delete this->new_info_subscope;
 			this->new_info_subscope = NULL;

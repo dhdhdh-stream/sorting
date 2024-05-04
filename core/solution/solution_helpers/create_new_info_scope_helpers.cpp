@@ -7,6 +7,13 @@
 
 #include "solution_helpers.h"
 
+#include "action_node.h"
+#include "constants.h"
+#include "globals.h"
+#include "info_scope_node.h"
+#include "problem.h"
+#include "scope.h"
+
 using namespace std;
 
 Scope* create_new_info_scope() {
@@ -15,7 +22,7 @@ Scope* create_new_info_scope() {
 	new_scope->node_counter = 0;
 
 	ActionNode* starting_noop_node = new ActionNode();
-	starting_noop_node->parent = this->current;
+	starting_noop_node->parent = new_scope;
 	starting_noop_node->id = new_scope->node_counter;
 	new_scope->node_counter++;
 	new_scope->nodes[starting_noop_node->id] = starting_noop_node;
@@ -34,9 +41,7 @@ Scope* create_new_info_scope() {
 				new_scope_node->parent = new_scope;
 				new_scope_node->id = new_scope->node_counter;
 				new_scope->node_counter++;
-				new_scope->nodes[new_scope_node->id] = new_scope_node
-
-				new_nodes.push_back(new_scope_node);
+				new_scope->nodes[new_scope_node->id] = new_scope_node;
 
 				default_to_action = false;
 			}
@@ -51,14 +56,12 @@ Scope* create_new_info_scope() {
 			new_scope->nodes[new_action_node->id] = new_action_node;
 
 			new_action_node->action = problem_type->random_action();
-
-			new_nodes.push_back(new_action_node);
 		}
 	}
 
 	if (new_num_steps > 0) {
 		ActionNode* ending_node = new ActionNode();
-		ending_node->parent = this->current;
+		ending_node->parent = new_scope;
 		ending_node->id = new_scope->node_counter;
 		new_scope->node_counter++;
 		new_scope->nodes[ending_node->id] = ending_node;

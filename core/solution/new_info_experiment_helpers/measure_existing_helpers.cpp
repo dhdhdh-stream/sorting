@@ -1,5 +1,9 @@
 #include "new_info_experiment.h"
 
+#include "constants.h"
+#include "globals.h"
+#include "solution_helpers.h"
+
 using namespace std;
 
 void NewInfoExperiment::measure_existing_activate(
@@ -34,16 +38,17 @@ void NewInfoExperiment::measure_existing_backprop(
 
 		this->o_target_val_histories.clear();
 
-		uniform_int_distribution<int> best_distribution(0, 1);
-		if (best_distribution(generator) == 0) {
-			this->explore_type = EXPLORE_TYPE_BEST;
+		this->info_score = 0.0;
+		this->new_info_subscope = create_new_info_scope();
 
-			this->best_sequence_surprise = 0.0;
-		} else {
-			this->explore_type = EXPLORE_TYPE_GOOD;
-		}
+		this->i_scope_histories.reserve(NUM_DATAPOINTS);
+		this->i_target_val_histories.reserve(NUM_DATAPOINTS);
 
-		this->state = NEW_INFO_EXPERIMENT_STATE_EXPLORE;
+		uniform_int_distribution<int> until_distribution(0, (int)this->average_instances_per_run-1.0);
+		this->num_instances_until_target = 1 + until_distribution(generator);
+
+		this->state = NEW_INFO_EXPERIMENT_STATE_EXPLORE_INFO;
 		this->state_iter = 0;
+		this->sub_state_iter = 0;
 	}
 }

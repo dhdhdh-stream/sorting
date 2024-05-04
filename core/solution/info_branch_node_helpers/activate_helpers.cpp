@@ -1,5 +1,9 @@
 #include "info_branch_node.h"
 
+#include "abstract_experiment.h"
+#include "info_scope.h"
+#include "utilities.h"
+
 using namespace std;
 
 void InfoBranchNode::activate(AbstractNode*& curr_node,

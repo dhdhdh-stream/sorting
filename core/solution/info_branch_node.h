@@ -6,6 +6,19 @@
 #ifndef INFO_BRANCH_NODE_H
 #define INFO_BRANCH_NODE_H
 
+#include <fstream>
+#include <map>
+#include <vector>
+
+#include "abstract_node.h"
+#include "context_layer.h"
+#include "run_helper.h"
+
+class InfoScope;
+class Problem;
+class ScopeHistory;
+class Solution;
+
 class InfoBranchNodeHistory;
 class InfoBranchNode : public AbstractNode {
 public:
@@ -18,7 +31,8 @@ public:
 	AbstractNode* branch_next_node;
 
 	InfoBranchNode();
-	InfoBranchNode(InfoBranchNode* original);
+	InfoBranchNode(InfoBranchNode* original,
+				   Solution* parent_solution);
 	~InfoBranchNode();
 
 	void activate(AbstractNode*& curr_node,
@@ -43,6 +57,7 @@ public:
 
 	InfoBranchNodeHistory();
 	InfoBranchNodeHistory(InfoBranchNodeHistory* original);
+	~InfoBranchNodeHistory();
 };
 
 #endif /* INFO_BRANCH_NODE_H */

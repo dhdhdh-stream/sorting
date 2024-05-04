@@ -1,5 +1,8 @@
 #include "info_scope_node.h"
 
+#include "abstract_experiment.h"
+#include "info_scope.h"
+
 using namespace std;
 
 void InfoScopeNode::activate(AbstractNode*& curr_node,

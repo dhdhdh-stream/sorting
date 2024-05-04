@@ -11,6 +11,7 @@
 
 class AbstractNode;
 class ActionNode;
+class InfoScope;
 class Problem;
 class Scope;
 class ScopeHistory;

@@ -6,6 +6,7 @@
 #include "action_node.h"
 #include "eval.h"
 #include "globals.h"
+#include "info_scope.h"
 #include "scope.h"
 
 using namespace std;

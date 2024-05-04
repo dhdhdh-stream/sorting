@@ -21,12 +21,14 @@ const int EXPLORE_ITERS = 5;
 const int EXPLORE_ITERS = 500;
 #endif /* MDEBUG */
 
-void BranchExperiment::explore_activate(
+bool BranchExperiment::explore_activate(
 		AbstractNode*& curr_node,
 		Problem* problem,
 		vector<ContextLayer>& context,
 		RunHelper& run_helper,
 		BranchExperimentHistory* history) {
+	run_helper.num_decisions++;
+
 	history->instance_count++;
 
 	bool is_target = false;
@@ -173,6 +175,10 @@ void BranchExperiment::explore_activate(
 		}
 
 		curr_node = this->curr_exit_next_node;
+
+		return true;
+	} else {
+		return false;
 	}
 }
 
@@ -232,7 +238,6 @@ void BranchExperiment::explore_backprop(
 			#else
 			if (curr_surprise >= 0.0) {
 			#endif /* MDEBUG */
-				this->best_surprise = curr_surprise;
 				this->best_step_types = this->curr_step_types;
 				this->best_actions = this->curr_actions;
 				this->best_scopes = this->curr_scopes;
@@ -262,7 +267,6 @@ void BranchExperiment::explore_backprop(
 			#else
 			if (curr_surprise >= this->existing_score_standard_deviation) {
 			#endif /* MDEBUG */
-				this->best_surprise = curr_surprise;
 				this->best_step_types = this->curr_step_types;
 				this->best_actions = this->curr_actions;
 				this->best_scopes = this->curr_scopes;
@@ -373,7 +377,7 @@ void BranchExperiment::explore_backprop(
 			this->i_scope_histories.reserve(NUM_DATAPOINTS);
 			this->i_target_val_histories.reserve(NUM_DATAPOINTS);
 
-			uniform_int_distribution<int> until_distribution(0, (int)(this->average_instances_per_run-1.0)/2.0);
+			uniform_int_distribution<int> until_distribution(0, (int)this->average_instances_per_run-1.0);
 			this->num_instances_until_target = 1 + until_distribution(generator);
 
 			this->state = BRANCH_EXPERIMENT_STATE_TRAIN_NEW;

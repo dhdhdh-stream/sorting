@@ -5,6 +5,18 @@
 #ifndef INFO_SCOPE_H
 #define INFO_SCOPE_H
 
+#include <fstream>
+#include <vector>
+
+#include "run_helper.h"
+
+class AbstractNode;
+class Network;
+class Problem;
+class Scope;
+class ScopeHistory;
+class Solution;
+
 const int INFO_SCOPE_STATE_NA = 0;
 const int INFO_SCOPE_STATE_DISABLED_NEGATIVE = 1;
 const int INFO_SCOPE_STATE_DISABLED_POSITIVE = 2;
@@ -17,21 +29,21 @@ public:
 
 	Scope* subscope;
 
-	double positive_average_score;
 	double negative_average_score;
+	double positive_average_score;
 
 	std::vector<AbstractNode*> input_node_contexts;
 	std::vector<int> input_obs_indexes;
 
-	std::vector<int> linear_positive_input_indexes;
-	std::vector<double> linear_positive_weights;
 	std::vector<int> linear_negative_input_indexes;
 	std::vector<double> linear_negative_weights;
+	std::vector<int> linear_positive_input_indexes;
+	std::vector<double> linear_positive_weights;
 
-	std::vector<std::vector<int>> positive_network_input_indexes;
-	Network* positive_network;
 	std::vector<std::vector<int>> negative_network_input_indexes;
 	Network* negative_network;
+	std::vector<std::vector<int>> positive_network_input_indexes;
+	Network* positive_network;
 
 	InfoScope();
 	~InfoScope();

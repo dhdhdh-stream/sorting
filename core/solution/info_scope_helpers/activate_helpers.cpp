@@ -1,5 +1,13 @@
 #include "info_scope.h"
 
+#include "action_node.h"
+#include "branch_node.h"
+#include "info_branch_node.h"
+#include "info_scope_node.h"
+#include "network.h"
+#include "scope.h"
+#include "utilities.h"
+
 using namespace std;
 
 void InfoScope::activate(Problem* problem,
@@ -31,7 +39,7 @@ void InfoScope::activate(Problem* problem,
 		for (int i_index = 0; i_index < (int)this->input_node_contexts.size(); i_index++) {
 			map<AbstractNode*, AbstractNodeHistory*>::iterator it = subscope_history->node_histories.find(
 				this->input_node_contexts[i_index]);
-			if (it != curr_scope_history->node_histories.end()) {
+			if (it != subscope_history->node_histories.end()) {
 				switch (this->input_node_contexts[i_index]->type) {
 				case NODE_TYPE_ACTION:
 					{
@@ -73,22 +81,6 @@ void InfoScope::activate(Problem* problem,
 			}
 		}
 
-		double positive_score = this->positive_average_score;
-		for (int i_index = 0; i_index < (int)this->linear_positive_input_indexes.size(); i_index++) {
-			positive_score += input_vals[this->linear_positive_input_indexes[i_index]] * this->linear_positive_weights[i_index];
-		}
-		if (this->positive_network != NULL) {
-			vector<vector<double>> positive_network_input_vals(this->positive_network_input_indexes.size());
-			for (int i_index = 0; i_index < (int)this->positive_network_input_indexes.size(); i_index++) {
-				positive_network_input_vals[i_index] = vector<double>(this->positive_network_input_indexes[i_index].size());
-				for (int v_index = 0; v_index < (int)this->positive_network_input_indexes[i_index].size(); v_index++) {
-					positive_network_input_vals[i_index][v_index] = input_vals[this->positive_network_input_indexes[i_index][v_index]];
-				}
-			}
-			this->positive_network->activate(positive_network_input_vals);
-			positive_score += this->positive_network->output->acti_vals[0];
-		}
-
 		double negative_score = this->negative_average_score;
 		for (int i_index = 0; i_index < (int)this->linear_negative_input_indexes.size(); i_index++) {
 			negative_score += input_vals[this->linear_negative_input_indexes[i_index]] * this->linear_negative_weights[i_index];
@@ -103,6 +95,22 @@ void InfoScope::activate(Problem* problem,
 			}
 			this->negative_network->activate(negative_network_input_vals);
 			negative_score += this->negative_network->output->acti_vals[0];
+		}
+
+		double positive_score = this->positive_average_score;
+		for (int i_index = 0; i_index < (int)this->linear_positive_input_indexes.size(); i_index++) {
+			positive_score += input_vals[this->linear_positive_input_indexes[i_index]] * this->linear_positive_weights[i_index];
+		}
+		if (this->positive_network != NULL) {
+			vector<vector<double>> positive_network_input_vals(this->positive_network_input_indexes.size());
+			for (int i_index = 0; i_index < (int)this->positive_network_input_indexes.size(); i_index++) {
+				positive_network_input_vals[i_index] = vector<double>(this->positive_network_input_indexes[i_index].size());
+				for (int v_index = 0; v_index < (int)this->positive_network_input_indexes[i_index].size(); v_index++) {
+					positive_network_input_vals[i_index][v_index] = input_vals[this->positive_network_input_indexes[i_index][v_index]];
+				}
+			}
+			this->positive_network->activate(positive_network_input_vals);
+			positive_score += this->positive_network->output->acti_vals[0];
 		}
 
 		#if defined(MDEBUG) && MDEBUG

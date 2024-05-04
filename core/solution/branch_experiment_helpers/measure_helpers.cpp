@@ -141,8 +141,6 @@ void BranchExperiment::measure_backprop(double target_val,
 		if (this->branch_weight > 0.01
 				&& this->combined_score >= this->existing_average_score) {
 		#endif /* MDEBUG */
-			this->combined_score = 0.0;
-
 			this->o_target_val_histories.reserve(VERIFY_1ST_NUM_DATAPOINTS);
 
 			this->state = BRANCH_EXPERIMENT_STATE_VERIFY_1ST_EXISTING;
@@ -181,12 +179,12 @@ void BranchExperiment::measure_backprop(double target_val,
 					uniform_int_distribution<int> best_distribution(0, 1);
 					if (best_distribution(generator) == 0) {
 						this->explore_type = EXPLORE_TYPE_BEST;
+
+						this->best_surprise = 0.0;
 					} else {
 						this->explore_type = EXPLORE_TYPE_GOOD;
 					}
 				}
-
-				this->best_surprise = 0.0;
 
 				this->state = BRANCH_EXPERIMENT_STATE_EXPLORE;
 				this->state_iter = 0;

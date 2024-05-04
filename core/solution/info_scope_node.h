@@ -1,6 +1,19 @@
 #ifndef INFO_SCOPE_NODE_H
 #define INFO_SCOPE_NODE_H
 
+#include <fstream>
+#include <map>
+#include <vector>
+
+#include "abstract_node.h"
+#include "context_layer.h"
+#include "run_helper.h"
+
+class InfoScope;
+class Problem;
+class ScopeHistory;
+class Solution;
+
 class InfoScopeNodeHistory;
 class InfoScopeNode : public AbstractNode {
 public:

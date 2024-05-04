@@ -9,7 +9,6 @@
 
 #include "abstract_node.h"
 #include "context_layer.h"
-#include "metrics.h"
 #include "run_helper.h"
 
 class Problem;

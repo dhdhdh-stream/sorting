@@ -50,14 +50,14 @@ BranchExperiment::BranchExperiment(Scope* scope_context,
 	this->existing_network = NULL;
 	this->new_network = NULL;
 
+	this->ending_node = NULL;
+
 	this->o_target_val_histories.reserve(NUM_DATAPOINTS);
 	this->i_scope_histories.reserve(NUM_DATAPOINTS);
 	this->i_target_val_histories.reserve(NUM_DATAPOINTS);
 
 	this->state = BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING;
 	this->state_iter = 0;
-
-	this->ending_node = NULL;
 
 	this->result = EXPERIMENT_RESULT_NA;
 }
