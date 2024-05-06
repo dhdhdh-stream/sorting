@@ -27,6 +27,9 @@ const int INFO_PASS_THROUGH_EXPERIMENT_STATE_VERIFY_1ST = 6;
 const int INFO_PASS_THROUGH_EXPERIMENT_STATE_VERIFY_2ND_EXISTING = 7;
 const int INFO_PASS_THROUGH_EXPERIMENT_STATE_VERIFY_2ND = 8;
 
+const double DISABLE_NEGATIVE_PERCENTAGE = 0.05;
+const double DISABLE_POSITIVE_PERCENTAGE = 0.95;
+
 class InfoPassThroughExperimentHistory;
 class InfoPassThroughExperiment : public AbstractExperiment {
 public:
@@ -73,6 +76,11 @@ public:
 	Network* positive_network;
 	double positive_average_misguess;
 	double positive_misguess_standard_deviation;
+
+	int negative_count;
+	int positive_count;
+
+	int new_state;
 
 	std::vector<ScopeHistory*> i_scope_histories;
 	std::vector<double> i_target_val_histories;

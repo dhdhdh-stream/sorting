@@ -17,6 +17,7 @@ InfoBranchNode::InfoBranchNode(InfoBranchNode* original,
 	this->type = NODE_TYPE_INFO_BRANCH;
 
 	this->scope = parent_solution->info_scopes[original->scope->id];
+	this->is_negate = original->is_negate;
 
 	this->original_next_node_id = original->original_next_node_id;
 	this->branch_next_node_id = original->branch_next_node_id;
@@ -30,6 +31,7 @@ InfoBranchNode::~InfoBranchNode() {
 
 void InfoBranchNode::save(ofstream& output_file) {
 	output_file << this->scope->id << endl;
+	output_file << this->is_negate << endl;
 
 	output_file << this->original_next_node_id << endl;
 	output_file << this->branch_next_node_id << endl;
@@ -39,6 +41,10 @@ void InfoBranchNode::load(ifstream& input_file) {
 	string scope_id_line;
 	getline(input_file, scope_id_line);
 	this->scope = solution->info_scopes[stoi(scope_id_line)];
+
+	string is_negate_line;
+	getline(input_file, is_negate_line);
+	this->is_negate = stoi(is_negate_line);
 
 	string original_next_node_id_line;
 	getline(input_file, original_next_node_id_line);
@@ -78,7 +84,10 @@ void InfoBranchNode::link() {
 }
 
 void InfoBranchNode::save_for_display(ofstream& output_file) {
+	output_file << this->scope->id << endl;
 
+	output_file << this->original_next_node_id << endl;
+	output_file << this->branch_next_node_id << endl;
 }
 
 InfoBranchNodeHistory::InfoBranchNodeHistory() {
@@ -86,6 +95,8 @@ InfoBranchNodeHistory::InfoBranchNodeHistory() {
 }
 
 InfoBranchNodeHistory::InfoBranchNodeHistory(InfoBranchNodeHistory* original) {
+	this->index = original->index;
+
 	/**
 	 * - don't copy scope_history
 	 */

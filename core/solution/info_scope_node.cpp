@@ -1,5 +1,7 @@
 #include "info_scope_node.h"
 
+#include <iostream>
+
 #include "abstract_experiment.h"
 #include "globals.h"
 #include "info_scope.h"
@@ -69,6 +71,8 @@ InfoScopeNodeHistory::InfoScopeNodeHistory() {
 }
 
 InfoScopeNodeHistory::InfoScopeNodeHistory(InfoScopeNodeHistory* original) {
+	this->index = original->index;
+
 	/**
 	 * - don't copy scope_history
 	 */

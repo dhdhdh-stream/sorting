@@ -1,5 +1,7 @@
 #include "info_scope.h"
 
+#include <iostream>
+
 #include "abstract_experiment.h"
 #include "action_node.h"
 #include "branch_node.h"

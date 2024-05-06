@@ -148,18 +148,24 @@ void InfoPassThroughExperiment::measure_back_activate(
 
 	#if defined(MDEBUG) && MDEBUG
 	if (run_helper.curr_run_seed%2 == 0) {
+		positive_count++;
 		result_is_positive = true;
 	} else {
+		negative_count++;
 		result_is_positive = false;
 	}
 	run_helper.curr_run_seed = xorshift(run_helper.curr_run_seed);
 	#else
 	if (positive_score >= negative_score) {
+		positive_count++;
 		result_is_positive = true;
 	} else {
+		negative_count++;
 		result_is_positive = false;
 	}
 	#endif /* MDEBUG */
+
+
 }
 
 void InfoPassThroughExperiment::measure_backprop(
@@ -171,6 +177,14 @@ void InfoPassThroughExperiment::measure_backprop(
 		#if defined(MDEBUG) && MDEBUG
 		this->o_target_val_histories.clear();
 
+		if (rand()%8 == 0) {
+			this->new_state = INFO_SCOPE_STATE_DISABLED_POSITIVE;
+		} else if (rand()%7 == 0) {
+			this->new_state = INFO_SCOPE_STATE_DISABLED_NEGATIVE;
+		} else {
+			this->new_state = INFO_SCOPE_STATE_NA;
+		}
+
 		if (rand()%2 == 0) {
 		#else
 		double sum_scores = 0.0;
@@ -180,6 +194,15 @@ void InfoPassThroughExperiment::measure_backprop(
 		double new_average_score = sum_scores / NUM_DATAPOINTS;
 
 		this->o_target_val_histories.clear();
+
+		double positive_weight = (double)this->positive_count / (double)(this->negative_count + this->positive_count);
+		if (positive_weight > DISABLE_POSITIVE_PERCENTAGE) {
+			this->new_state = INFO_SCOPE_STATE_DISABLED_POSITIVE;
+		} else if (positive_weight < DISABLE_NEGATIVE_PERCENTAGE) {
+			this->new_state = INFO_SCOPE_STATE_DISABLED_NEGATIVE;
+		} else {
+			this->new_state = INFO_SCOPE_STATE_NA;
+		}
 
 		if (new_average_score >= this->existing_average_score) {
 		#endif /* MDEBUG */

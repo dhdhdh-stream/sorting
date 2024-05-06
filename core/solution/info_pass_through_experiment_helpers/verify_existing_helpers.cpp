@@ -11,15 +11,13 @@ void InfoPassThroughExperiment::verify_existing_backprop(
 		RunHelper& run_helper) {
 	this->o_target_val_histories.push_back(target_val);
 
-	if (this->parent_experiment == NULL) {
-		if (!run_helper.exceeded_limit) {
-			if (run_helper.max_depth > solution->max_depth) {
-				solution->max_depth = run_helper.max_depth;
-			}
+	if (!run_helper.exceeded_limit) {
+		if (run_helper.max_depth > solution->max_depth) {
+			solution->max_depth = run_helper.max_depth;
+		}
 
-			if (run_helper.num_actions > solution->max_num_actions) {
-				solution->max_num_actions = run_helper.num_actions;
-			}
+		if (run_helper.num_actions > solution->max_num_actions) {
+			solution->max_num_actions = run_helper.num_actions;
 		}
 	}
 

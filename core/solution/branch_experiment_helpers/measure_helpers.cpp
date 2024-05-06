@@ -146,8 +146,12 @@ void BranchExperiment::measure_backprop(double target_val,
 
 		this->branch_weight = (double)this->branch_count / (double)(this->original_count + this->branch_count);
 
+		#if defined(MDEBUG) && MDEBUG
+		if (rand()%4 == 0) {
+		#else
 		if (this->branch_weight > PASS_THROUGH_BRANCH_WEIGHT
 				&& this->new_average_score >= this->existing_average_score) {
+		#endif
 			this->is_pass_through = true;
 		} else {
 			this->is_pass_through = false;

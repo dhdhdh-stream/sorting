@@ -26,15 +26,13 @@ void InfoPassThroughExperiment::measure_existing_backprop(
 
 	this->average_instances_per_run = 0.9*this->average_instances_per_run + 0.1*history->instance_count;
 
-	if (this->parent_experiment == NULL) {
-		if (!run_helper.exceeded_limit) {
-			if (run_helper.max_depth > solution->max_depth) {
-				solution->max_depth = run_helper.max_depth;
-			}
+	if (!run_helper.exceeded_limit) {
+		if (run_helper.max_depth > solution->max_depth) {
+			solution->max_depth = run_helper.max_depth;
+		}
 
-			if (run_helper.num_actions > solution->max_num_actions) {
-				solution->max_num_actions = run_helper.num_actions;
-			}
+		if (run_helper.num_actions > solution->max_num_actions) {
+			solution->max_num_actions = run_helper.num_actions;
 		}
 	}
 

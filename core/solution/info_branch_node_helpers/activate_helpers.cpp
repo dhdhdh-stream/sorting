@@ -1,5 +1,7 @@
 #include "info_branch_node.h"
 
+#include <iostream>
+
 #include "abstract_experiment.h"
 #include "info_scope.h"
 #include "utilities.h"
@@ -21,14 +23,6 @@ void InfoBranchNode::activate(AbstractNode*& curr_node,
 						  history->scope_history,
 						  inner_is_positive);
 
-	#if defined(MDEBUG) && MDEBUG
-	if (run_helper.curr_run_seed%2 == 0) {
-		history->is_branch = true;
-	} else {
-		history->is_branch = false;
-	}
-	run_helper.curr_run_seed = xorshift(run_helper.curr_run_seed);
-	#else
 	if (this->is_negate) {
 		if (inner_is_positive) {
 			history->is_branch = false;
@@ -42,7 +36,6 @@ void InfoBranchNode::activate(AbstractNode*& curr_node,
 			history->is_branch = false;
 		}
 	}
-	#endif /* MDEBUG */
 
 	if (history->is_branch) {
 		curr_node = this->branch_next_node;

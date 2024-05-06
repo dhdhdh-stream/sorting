@@ -375,6 +375,9 @@ void InfoPassThroughExperiment::train_positive_backprop(
 		this->i_scope_histories.clear();
 		this->i_target_val_histories.clear();
 
+		this->negative_count = 0;
+		this->positive_count = 0;
+
 		this->state = INFO_PASS_THROUGH_EXPERIMENT_STATE_MEASURE;
 		this->state_iter = 0;
 	}

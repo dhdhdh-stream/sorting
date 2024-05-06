@@ -12,7 +12,8 @@
 using namespace std;
 
 #if defined(MDEBUG) && MDEBUG
-const int TRAVERSE_ITERS = 5;
+// const int TRAVERSE_ITERS = 5;
+const int TRAVERSE_ITERS = 50000;
 const int GENERALIZE_ITERS = 5;
 #else
 const int TRAVERSE_ITERS = 20;
@@ -83,6 +84,8 @@ Solution::~Solution() {
 	for (int i_index = 0; i_index < (int)this->info_scopes.size(); i_index++) {
 		delete this->info_scopes[i_index];
 	}
+
+	delete this->eval;
 }
 
 void Solution::init() {

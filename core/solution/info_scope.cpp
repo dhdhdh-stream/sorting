@@ -1,5 +1,7 @@
 #include "info_scope.h"
 
+#include <iostream>
+
 #include "abstract_node.h"
 #include "network.h"
 #include "scope.h"

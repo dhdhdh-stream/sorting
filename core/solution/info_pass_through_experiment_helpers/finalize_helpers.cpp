@@ -1,10 +1,13 @@
 #include "info_pass_through_experiment.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "constants.h"
 #include "info_branch_node.h"
 #include "info_scope.h"
 #include "info_scope_node.h"
+#include "network.h"
 #include "scope.h"
 #include "solution.h"
 
@@ -16,6 +19,107 @@ void InfoPassThroughExperiment::finalize(Solution* duplicate) {
 			new_pass_through(duplicate);
 		} else {
 			new_branch(duplicate);
+		}
+
+		InfoScope* duplicate_info_scope = duplicate->info_scopes[this->info_scope_context->id];
+
+		duplicate_info_scope->state = this->new_state;
+
+		duplicate_info_scope->input_node_contexts.clear();
+		duplicate_info_scope->input_obs_indexes.clear();
+
+		duplicate_info_scope->linear_negative_input_indexes.clear();
+		duplicate_info_scope->linear_negative_weights.clear();
+		duplicate_info_scope->linear_positive_input_indexes.clear();
+		duplicate_info_scope->linear_positive_weights.clear();
+
+		duplicate_info_scope->negative_network_input_indexes.clear();
+		if (duplicate_info_scope->negative_network != NULL) {
+			delete duplicate_info_scope->negative_network;
+			duplicate_info_scope->negative_network = NULL;
+		}
+		duplicate_info_scope->positive_network_input_indexes.clear();
+		if (duplicate_info_scope->positive_network != NULL) {
+			delete duplicate_info_scope->positive_network;
+			duplicate_info_scope->positive_network = NULL;
+		}
+
+		if (this->new_state == INFO_SCOPE_STATE_NA) {
+			vector<int> input_mapping(this->input_node_contexts.size(), -1);
+			for (int i_index = 0; i_index < (int)this->negative_linear_weights.size(); i_index++) {
+				if (this->negative_linear_weights[i_index] != 0.0) {
+					if (input_mapping[i_index] == -1) {
+						input_mapping[i_index] = (int)duplicate_info_scope->input_node_contexts.size();
+						duplicate_info_scope->input_node_contexts.push_back(
+							duplicate_info_scope->subscope->nodes[this->input_node_contexts[i_index]->id]);
+						duplicate_info_scope->input_obs_indexes.push_back(this->input_obs_indexes[i_index]);
+					}
+				}
+			}
+			for (int i_index = 0; i_index < (int)this->negative_network_input_indexes.size(); i_index++) {
+				for (int v_index = 0; v_index < (int)this->negative_network_input_indexes[i_index].size(); v_index++) {
+					int original_index = this->negative_network_input_indexes[i_index][v_index];
+					if (input_mapping[original_index] == -1) {
+						input_mapping[original_index] = (int)duplicate_info_scope->input_node_contexts.size();
+						duplicate_info_scope->input_node_contexts.push_back(
+							duplicate_info_scope->subscope->nodes[this->input_node_contexts[original_index]->id]);
+						duplicate_info_scope->input_obs_indexes.push_back(this->input_obs_indexes[original_index]);
+					}
+				}
+			}
+			for (int i_index = 0; i_index < (int)this->positive_linear_weights.size(); i_index++) {
+				if (this->positive_linear_weights[i_index] != 0.0) {
+					if (input_mapping[i_index] == -1) {
+						input_mapping[i_index] = (int)duplicate_info_scope->input_node_contexts.size();
+						duplicate_info_scope->input_node_contexts.push_back(
+							duplicate_info_scope->subscope->nodes[this->input_node_contexts[i_index]->id]);
+						duplicate_info_scope->input_obs_indexes.push_back(this->input_obs_indexes[i_index]);
+					}
+				}
+			}
+			for (int i_index = 0; i_index < (int)this->positive_network_input_indexes.size(); i_index++) {
+				for (int v_index = 0; v_index < (int)this->positive_network_input_indexes[i_index].size(); v_index++) {
+					int original_index = this->positive_network_input_indexes[i_index][v_index];
+					if (input_mapping[original_index] == -1) {
+						input_mapping[original_index] = (int)duplicate_info_scope->input_node_contexts.size();
+						duplicate_info_scope->input_node_contexts.push_back(
+							duplicate_info_scope->subscope->nodes[this->input_node_contexts[original_index]->id]);
+						duplicate_info_scope->input_obs_indexes.push_back(this->input_obs_indexes[original_index]);
+					}
+				}
+			}
+
+			for (int i_index = 0; i_index < (int)this->negative_linear_weights.size(); i_index++) {
+				if (this->negative_linear_weights[i_index] != 0.0) {
+					duplicate_info_scope->linear_negative_input_indexes.push_back(input_mapping[i_index]);
+					duplicate_info_scope->linear_negative_weights.push_back(this->negative_linear_weights[i_index]);
+				}
+			}
+			for (int i_index = 0; i_index < (int)this->positive_linear_weights.size(); i_index++) {
+				if (this->positive_linear_weights[i_index] != 0.0) {
+					duplicate_info_scope->linear_positive_input_indexes.push_back(input_mapping[i_index]);
+					duplicate_info_scope->linear_positive_weights.push_back(this->positive_linear_weights[i_index]);
+				}
+			}
+
+			for (int i_index = 0; i_index < (int)this->negative_network_input_indexes.size(); i_index++) {
+				vector<int> input_indexes;
+				for (int v_index = 0; v_index < (int)this->negative_network_input_indexes[i_index].size(); v_index++) {
+					input_indexes.push_back(input_mapping[this->negative_network_input_indexes[i_index][v_index]]);
+				}
+				duplicate_info_scope->negative_network_input_indexes.push_back(input_indexes);
+			}
+			duplicate_info_scope->negative_network = this->negative_network;
+			this->negative_network = NULL;
+			for (int i_index = 0; i_index < (int)this->positive_network_input_indexes.size(); i_index++) {
+				vector<int> input_indexes;
+				for (int v_index = 0; v_index < (int)this->positive_network_input_indexes[i_index].size(); v_index++) {
+					input_indexes.push_back(input_mapping[this->positive_network_input_indexes[i_index][v_index]]);
+				}
+				duplicate_info_scope->positive_network_input_indexes.push_back(input_indexes);
+			}
+			duplicate_info_scope->positive_network = this->positive_network;
+			this->positive_network = NULL;
 		}
 	}
 
@@ -42,7 +146,7 @@ void InfoPassThroughExperiment::new_branch(Solution* duplicate) {
 	duplicate_local_scope->node_counter++;
 	duplicate_local_scope->nodes[new_branch_node->id] = new_branch_node;
 
-	new_branch_node->scope = this->info_scope;
+	new_branch_node->scope = duplicate->info_scopes[this->info_scope->id];
 	new_branch_node->is_negate = this->is_negate;
 
 	AbstractNode* duplicate_explore_node = duplicate_local_scope->nodes[this->node_context->id];

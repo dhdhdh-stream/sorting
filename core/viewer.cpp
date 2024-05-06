@@ -32,6 +32,8 @@ int main(int argc, char* argv[]) {
 	solution = new Solution();
 	solution->load("", "main");
 
+	solution->num_actions_until_experiment = -1;
+
 	{
 		// Problem* problem = new Sorting();
 		Problem* problem = new Minesweeper();

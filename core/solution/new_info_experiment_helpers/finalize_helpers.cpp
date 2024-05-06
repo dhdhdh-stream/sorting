@@ -8,6 +8,7 @@
 #include "globals.h"
 #include "info_branch_node.h"
 #include "info_scope.h"
+#include "info_scope_node.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
@@ -73,6 +74,18 @@ void NewInfoExperiment::new_branch(Solution* duplicate) {
 	InfoScope* new_info_scope = new InfoScope();
 	new_info_scope->id = duplicate->info_scopes.size();
 	duplicate->info_scopes.push_back(new_info_scope);
+
+	new_info_scope->state = INFO_SCOPE_STATE_NA;
+
+	for (map<int, AbstractNode*>::iterator it = this->new_info_subscope->nodes.begin();
+			it != this->new_info_subscope->nodes.end(); it++) {
+		if (it->second->type == NODE_TYPE_INFO_SCOPE) {
+			InfoScopeNode* info_scope_node = (InfoScopeNode*)it->second;
+			info_scope_node->scope = duplicate->info_scopes[info_scope_node->scope->id];
+		}
+	}
+
+	new_info_scope->subscope = this->new_info_subscope;
 
 	new_info_scope->negative_average_score = this->existing_average_score;
 	new_info_scope->positive_average_score = this->new_average_score;
@@ -311,6 +324,7 @@ void NewInfoExperiment::new_branch(Solution* duplicate) {
 		}
 	}
 
+	this->new_info_subscope = NULL;
 	this->best_actions.clear();
 	this->best_scopes.clear();
 	this->ending_node = NULL;

@@ -8,6 +8,7 @@
 #include "constants.h"
 #include "globals.h"
 #include "info_branch_node.h"
+#include "info_scope.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
@@ -74,7 +75,7 @@ void PassThroughExperiment::new_branch(Solution* duplicate) {
 	duplicate_local_scope->node_counter++;
 	duplicate_local_scope->nodes[new_branch_node->id] = new_branch_node;
 
-	new_branch_node->scope = this->best_info_scope;
+	new_branch_node->scope = duplicate->info_scopes[this->best_info_scope->id];
 	new_branch_node->is_negate = this->best_is_negate;
 
 	AbstractNode* duplicate_explore_node = duplicate_local_scope->nodes[this->node_context->id];

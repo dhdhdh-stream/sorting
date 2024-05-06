@@ -148,25 +148,38 @@ void PassThroughExperiment::experiment_backprop(
 			}
 		}
 
-		uniform_int_distribution<int> possible_distribution(0, (int)possible_node_contexts.size()-1);
-		int rand_index = possible_distribution(generator);
+		/**
+		 * - possible to be empty due to ending node edge case
+		 */
+		if (possible_node_contexts.size() > 0) {
+			uniform_int_distribution<int> possible_distribution(0, (int)possible_node_contexts.size()-1);
+			int rand_index = possible_distribution(generator);
 
-		uniform_int_distribution<int> branch_distribution(0, 3);
-		if (branch_distribution(generator) == 0) {
-			uniform_int_distribution<int> info_distribution(0, 1);
-			if (info_distribution(generator) == 0) {
-				NewInfoExperiment* new_experiment = new NewInfoExperiment(
-					this->scope_context,
-					possible_node_contexts[rand_index],
-					possible_is_branch[rand_index],
-					this);
+			uniform_int_distribution<int> branch_distribution(0, 3);
+			if (branch_distribution(generator) == 0) {
+				uniform_int_distribution<int> info_distribution(0, 1);
+				if (info_distribution(generator) == 0) {
+					NewInfoExperiment* new_experiment = new NewInfoExperiment(
+						this->scope_context,
+						possible_node_contexts[rand_index],
+						possible_is_branch[rand_index],
+						this);
 
-				/**
-				 * - insert at front to match finalize order
-				 */
-				possible_node_contexts[rand_index]->experiments.insert(possible_node_contexts[rand_index]->experiments.begin(), new_experiment);
+					/**
+					 * - insert at front to match finalize order
+					 */
+					possible_node_contexts[rand_index]->experiments.insert(possible_node_contexts[rand_index]->experiments.begin(), new_experiment);
+				} else {
+					BranchExperiment* new_experiment = new BranchExperiment(
+						this->scope_context,
+						possible_node_contexts[rand_index],
+						possible_is_branch[rand_index],
+						this);
+
+					possible_node_contexts[rand_index]->experiments.insert(possible_node_contexts[rand_index]->experiments.begin(), new_experiment);
+				}
 			} else {
-				BranchExperiment* new_experiment = new BranchExperiment(
+				PassThroughExperiment* new_experiment = new PassThroughExperiment(
 					this->scope_context,
 					possible_node_contexts[rand_index],
 					possible_is_branch[rand_index],
@@ -174,14 +187,6 @@ void PassThroughExperiment::experiment_backprop(
 
 				possible_node_contexts[rand_index]->experiments.insert(possible_node_contexts[rand_index]->experiments.begin(), new_experiment);
 			}
-		} else {
-			PassThroughExperiment* new_experiment = new PassThroughExperiment(
-				this->scope_context,
-				possible_node_contexts[rand_index],
-				possible_is_branch[rand_index],
-				this);
-
-			possible_node_contexts[rand_index]->experiments.insert(possible_node_contexts[rand_index]->experiments.begin(), new_experiment);
 		}
 	}
 }

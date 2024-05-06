@@ -270,15 +270,6 @@ int main(int argc, char* argv[]) {
 									run_helper,
 									generalize_history);
 
-								if (run_helper.experiments_seen_order.size() == 0) {
-									if (!run_helper.exceeded_limit) {
-										uniform_int_distribution<int> target_distribution(0, 1);
-										if (target_distribution(generator) == 0) {
-											create_experiment(generalize_history);
-										}
-									}
-								}
-
 								delete generalize_history;
 							}
 

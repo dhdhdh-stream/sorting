@@ -7,6 +7,13 @@
 // TODO: there are better actions to be found
 // - e.g., function inputs
 
+// TODO: perhaps after new action, instead of starting from scratch, try aggressively replacing existing solution
+// - or no, existing probably has too much nuance so cannot replace without temporarily hurting results
+//   - so then might as well restart from scratch
+
+// maybe track from which starting points/nodes new action seriously underperforms?
+// - then filter and focus on good spots?
+
 #include <chrono>
 #include <iostream>
 #include <map>
