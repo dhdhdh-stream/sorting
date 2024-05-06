@@ -55,15 +55,7 @@ void InfoPassThroughExperiment::verify_activate(
 		}
 	}
 
-	this->num_instances_until_target--;
-	if (this->num_instances_until_target == 0) {
-		history->instance_count++;
-
-		context.back().scope_history->info_experiment_history = history;
-
-		uniform_int_distribution<int> until_distribution(0, (int)this->average_instances_per_run-1.0);
-		this->num_instances_until_target = 1 + until_distribution(generator);
-	}
+	context.back().scope_history->info_experiment_history = history;
 }
 
 void InfoPassThroughExperiment::verify_back_activate(
@@ -214,9 +206,13 @@ void InfoPassThroughExperiment::verify_backprop(
 		if (new_average_score > this->existing_average_score) {
 		#endif /* MDEBUG */
 			cout << "InfoPassThrough" << endl;
+			cout << "this->info_scope_context->id: " << this->info_scope_context->id << endl;
 			cout << "this->scope_context->id: " << this->scope_context->id << endl;
 			cout << "this->node_context->id: " << this->node_context->id << endl;
 			cout << "this->is_branch: " << this->is_branch << endl;
+			if (this->info_scope != NULL) {
+				cout << "this->info_scope->id: " << this->info_scope->id << endl;
+			}
 			cout << "new explore path:";
 			for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {
 				if (this->step_types[s_index] == STEP_TYPE_ACTION) {
@@ -236,7 +232,19 @@ void InfoPassThroughExperiment::verify_backprop(
 			cout << "this->existing_average_score: " << this->existing_average_score << endl;
 			cout << "new_average_score: " << new_average_score << endl;
 
+			#if defined(MDEBUG) && MDEBUG
+			if (this->new_state == INFO_SCOPE_STATE_NA) {
+				this->verify_problems = vector<Problem*>(NUM_VERIFY_SAMPLES, NULL);
+				this->verify_seeds = vector<unsigned long>(NUM_VERIFY_SAMPLES);
+
+				this->state = INFO_PASS_THROUGH_EXPERIMENT_STATE_CAPTURE_VERIFY;
+				this->state_iter = 0;
+			} else {
+				this->result = EXPERIMENT_RESULT_SUCCESS;
+			}
+			#else
 			this->result = EXPERIMENT_RESULT_SUCCESS;
+			#endif /* MDEBUG */
 		} else {
 			this->result = EXPERIMENT_RESULT_FAIL;
 		}

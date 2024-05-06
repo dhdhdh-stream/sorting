@@ -300,6 +300,42 @@ void NewInfoExperiment::verify_backprop(double target_val,
 
 			cout << endl;
 
+			#if defined(MDEBUG) && MDEBUG
+			if (this->is_pass_through) {
+				if (this->parent_experiment == NULL) {
+					this->result = EXPERIMENT_RESULT_SUCCESS;
+				} else {
+					vector<AbstractExperiment*> verify_experiments;
+					verify_experiments.insert(verify_experiments.begin(), this);
+					AbstractExperiment* curr_experiment = this->parent_experiment;
+					while (true) {
+						if (curr_experiment->parent_experiment == NULL) {
+							/**
+							 * - don't include root
+							 */
+							break;
+						} else {
+							verify_experiments.insert(verify_experiments.begin(), curr_experiment);
+							curr_experiment = curr_experiment->parent_experiment;
+						}
+					}
+
+					this->root_experiment->verify_experiments = verify_experiments;
+
+					this->root_experiment->o_target_val_histories.reserve(VERIFY_1ST_NUM_DATAPOINTS);
+
+					this->root_experiment->root_state = ROOT_EXPERIMENT_STATE_VERIFY_1ST_EXISTING;
+
+					this->state = NEW_INFO_EXPERIMENT_STATE_ROOT_VERIFY;
+				}
+			} else {
+				this->verify_problems = vector<Problem*>(NUM_VERIFY_SAMPLES, NULL);
+				this->verify_seeds = vector<unsigned long>(NUM_VERIFY_SAMPLES);
+
+				this->state = NEW_INFO_EXPERIMENT_STATE_CAPTURE_VERIFY;
+				this->state_iter = 0;
+			}
+			#else
 			if (this->parent_experiment == NULL) {
 				this->result = EXPERIMENT_RESULT_SUCCESS;
 			} else {
@@ -326,6 +362,7 @@ void NewInfoExperiment::verify_backprop(double target_val,
 
 				this->state = NEW_INFO_EXPERIMENT_STATE_ROOT_VERIFY;
 			}
+			#endif /* MDEBUG */
 		#if defined(MDEBUG) && MDEBUG
 		} else if (this->best_step_types.size() > 0
 				&& rand()%4 == 0) {

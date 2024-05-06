@@ -25,8 +25,11 @@ const int NEW_INFO_EXPERIMENT_STATE_VERIFY_1ST_EXISTING = 5;
 const int NEW_INFO_EXPERIMENT_STATE_VERIFY_1ST = 6;
 const int NEW_INFO_EXPERIMENT_STATE_VERIFY_2ND_EXISTING = 7;
 const int NEW_INFO_EXPERIMENT_STATE_VERIFY_2ND = 8;
-const int NEW_INFO_EXPERIMENT_STATE_ROOT_VERIFY = 9;
-const int NEW_INFO_EXPERIMENT_STATE_EXPERIMENT = 10;
+#if defined(MDEBUG) && MDEBUG
+const int NEW_INFO_EXPERIMENT_STATE_CAPTURE_VERIFY = 9;
+#endif /* MDEBUG */
+const int NEW_INFO_EXPERIMENT_STATE_ROOT_VERIFY = 10;
+const int NEW_INFO_EXPERIMENT_STATE_EXPERIMENT = 11;
 
 class NewInfoExperimentHistory;
 class NewInfoExperiment : public AbstractExperiment {
@@ -88,6 +91,13 @@ public:
 	std::vector<ScopeHistory*> i_scope_histories;
 	std::vector<double> i_target_val_histories;
 
+	#if defined(MDEBUG) && MDEBUG
+	std::vector<Problem*> verify_problems;
+	std::vector<unsigned long> verify_seeds;
+	std::vector<double> verify_negative_scores;
+	std::vector<double> verify_positive_scores;
+	#endif /* MDEBUG */
+
 	NewInfoExperiment(Scope* scope_context,
 					  AbstractNode* node_context,
 					  bool is_branch,
@@ -141,6 +151,13 @@ public:
 						 RunHelper& run_helper);
 	void verify_backprop(double target_val,
 						 RunHelper& run_helper);
+
+	#if defined(MDEBUG) && MDEBUG
+	bool capture_verify_activate(AbstractNode*& curr_node,
+								 Problem* problem,
+								 RunHelper& run_helper);
+	void capture_verify_backprop();
+	#endif /* MDEBUG */
 
 	bool root_verify_activate(AbstractNode*& curr_node,
 							  Problem* problem,

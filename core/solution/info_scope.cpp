@@ -3,13 +3,16 @@
 #include <iostream>
 
 #include "abstract_node.h"
+#include "globals.h"
 #include "network.h"
 #include "scope.h"
 
 using namespace std;
 
 InfoScope::InfoScope() {
-	// do nothing
+	#if defined(MDEBUG) && MDEBUG
+	this->verify_key = NULL;
+	#endif /* MDEBUG */
 }
 
 InfoScope::~InfoScope() {
@@ -25,6 +28,18 @@ InfoScope::~InfoScope() {
 		delete this->negative_network;
 	}
 }
+
+#if defined(MDEBUG) && MDEBUG
+void InfoScope::clear_verify() {
+	this->verify_key = NULL;
+	if (this->verify_negative_scores.size() > 0
+			|| this->verify_positive_scores.size() > 0) {
+		cout << "seed: " << seed << endl;
+
+		throw invalid_argument("info scope remaining verify");
+	}
+}
+#endif /* MDEBUG */
 
 void InfoScope::save(ofstream& output_file) {
 	output_file << this->state << endl;
@@ -227,8 +242,4 @@ void InfoScope::copy_from(InfoScope* original,
 		this->positive_network = NULL;
 		this->negative_network = NULL;
 	}
-}
-
-void InfoScope::save_for_display(ofstream& output_file) {
-
 }

@@ -41,6 +41,14 @@ public:
 				  RunHelper& run_helper,
 				  std::map<AbstractNode*, AbstractNodeHistory*>& node_histories);
 
+	#if defined(MDEBUG) && MDEBUG
+	void verify_activate(AbstractNode*& curr_node,
+						 Problem* problem,
+						 std::vector<ContextLayer>& context,
+						 RunHelper& run_helper,
+						 std::map<AbstractNode*, AbstractNodeHistory*>& node_histories);
+	#endif /* MDEBUG */
+
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file);
 	void link(Solution* parent_solution);

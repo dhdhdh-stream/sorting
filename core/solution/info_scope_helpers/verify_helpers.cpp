@@ -1,3 +1,5 @@
+#if defined(MDEBUG) && MDEBUG
+
 #include "info_scope.h"
 
 #include <iostream>
@@ -5,19 +7,21 @@
 #include "abstract_experiment.h"
 #include "action_node.h"
 #include "branch_node.h"
+#include "globals.h"
 #include "info_branch_node.h"
 #include "info_pass_through_experiment.h"
 #include "info_scope_node.h"
 #include "network.h"
+#include "problem.h"
 #include "scope.h"
 #include "utilities.h"
 
 using namespace std;
 
-void InfoScope::activate(Problem* problem,
-						 RunHelper& run_helper,
-						 ScopeHistory*& subscope_history,
-						 bool& result_is_positive) {
+void InfoScope::verify_activate(Problem* problem,
+								RunHelper& run_helper,
+								ScopeHistory*& subscope_history,
+								bool& result_is_positive) {
 	if (this->state == INFO_SCOPE_STATE_DISABLED_NEGATIVE) {
 		subscope_history = NULL;
 		result_is_positive = false;
@@ -34,24 +38,12 @@ void InfoScope::activate(Problem* problem,
 		subscope_history = new ScopeHistory(this->subscope);
 		inner_context.back().scope_history = subscope_history;
 
-		this->subscope->activate(problem,
-								 inner_context,
-								 run_helper,
-								 subscope_history);
+		this->subscope->verify_activate(problem,
+										inner_context,
+										run_helper,
+										subscope_history);
 
 		run_helper.num_decisions++;
-
-		if (subscope_history->info_experiment_history != NULL) {
-			InfoPassThroughExperiment* info_pass_through_experiment = (InfoPassThroughExperiment*)subscope_history->info_experiment_history->experiment;
-			bool is_selected = info_pass_through_experiment->back_activate(
-				problem,
-				subscope_history,
-				result_is_positive,
-				run_helper);
-			if (is_selected) {
-				return;
-			}
-		}
 
 		vector<double> input_vals(this->input_node_contexts.size(), 0.0);
 		for (int i_index = 0; i_index < (int)this->input_node_contexts.size(); i_index++) {
@@ -131,6 +123,38 @@ void InfoScope::activate(Problem* problem,
 			positive_score += this->positive_network->output->acti_vals[0];
 		}
 
+		if (this->verify_key == run_helper.verify_key) {
+			cout << "run_helper.curr_run_seed: " << run_helper.curr_run_seed << endl;
+			problem->print();
+
+			cout << "subscope_history->node_histories" << endl;
+			for (map<AbstractNode*, AbstractNodeHistory*>::iterator it = subscope_history->node_histories.begin();
+					it != subscope_history->node_histories.end(); it++) {
+				cout << it->first->id << endl;
+			}
+
+			cout << "input_vals:" << endl;
+			for (int i_index = 0; i_index < (int)input_vals.size(); i_index++) {
+				cout << i_index << ": " << input_vals[i_index] << endl;
+			}
+
+			if (this->verify_negative_scores[0] != negative_score
+					|| this->verify_positive_scores[0] != positive_score) {
+				cout << "this->verify_negative_scores[0]: " << this->verify_negative_scores[0] << endl;
+				cout << "negative_score: " << negative_score << endl;
+
+				cout << "this->verify_positive_scores[0]: " << this->verify_positive_scores[0] << endl;
+				cout << "positive_score: " << positive_score << endl;
+
+				cout << "seed: " << seed << endl;
+
+				throw invalid_argument("info scope verify fail");
+			}
+
+			this->verify_negative_scores.erase(this->verify_negative_scores.begin());
+			this->verify_positive_scores.erase(this->verify_positive_scores.begin());
+		}
+
 		#if defined(MDEBUG) && MDEBUG
 		if (run_helper.curr_run_seed%2 == 0) {
 			result_is_positive = true;
@@ -147,3 +171,5 @@ void InfoScope::activate(Problem* problem,
 		#endif /* MDEBUG */
 	}
 }
+
+#endif /* MDEBUG */

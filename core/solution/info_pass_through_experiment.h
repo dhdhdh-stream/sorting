@@ -26,6 +26,9 @@ const int INFO_PASS_THROUGH_EXPERIMENT_STATE_VERIFY_1ST_EXISTING = 5;
 const int INFO_PASS_THROUGH_EXPERIMENT_STATE_VERIFY_1ST = 6;
 const int INFO_PASS_THROUGH_EXPERIMENT_STATE_VERIFY_2ND_EXISTING = 7;
 const int INFO_PASS_THROUGH_EXPERIMENT_STATE_VERIFY_2ND = 8;
+#if defined(MDEBUG) && MDEBUG
+const int INFO_PASS_THROUGH_EXPERIMENT_STATE_CAPTURE_VERIFY = 9;
+#endif /* MDEBUG */
 
 const double DISABLE_NEGATIVE_PERCENTAGE = 0.05;
 const double DISABLE_POSITIVE_PERCENTAGE = 0.95;
@@ -85,6 +88,13 @@ public:
 	std::vector<ScopeHistory*> i_scope_histories;
 	std::vector<double> i_target_val_histories;
 
+	#if defined(MDEBUG) && MDEBUG
+	std::vector<Problem*> verify_problems;
+	std::vector<unsigned long> verify_seeds;
+	std::vector<double> verify_negative_scores;
+	std::vector<double> verify_positive_scores;
+	#endif /* MDEBUG */
+
 	InfoPassThroughExperiment(InfoScope* info_scope_context,
 							  Scope* scope_context,
 							  AbstractNode* node_context,
@@ -95,7 +105,8 @@ public:
 				  Problem* problem,
 				  std::vector<ContextLayer>& context,
 				  RunHelper& run_helper);
-	bool back_activate(ScopeHistory*& subscope_history,
+	bool back_activate(Problem* problem,
+					   ScopeHistory*& subscope_history,
 					   bool& result_is_positive,
 					   RunHelper& run_helper);
 	void backprop(double target_val,
@@ -157,6 +168,19 @@ public:
 							  RunHelper& run_helper);
 	void verify_backprop(double target_val,
 						 RunHelper& run_helper);
+
+	#if defined(MDEBUG) && MDEBUG
+	void capture_verify_activate(AbstractNode*& curr_node,
+								 Problem* problem,
+								 std::vector<ContextLayer>& context,
+								 RunHelper& run_helper,
+								 InfoPassThroughExperimentHistory* history);
+	void capture_verify_back_activate(Problem* problem,
+									  ScopeHistory*& subscope_history,
+									  bool& result_is_positive,
+									  RunHelper& run_helper);
+	void capture_verify_backprop();
+	#endif /* MDEBUG */
 
 	void finalize(Solution* duplicate);
 	void new_branch(Solution* duplicate);

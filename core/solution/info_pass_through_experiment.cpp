@@ -6,6 +6,7 @@
 #include "constants.h"
 #include "info_scope_node.h"
 #include "network.h"
+#include "problem.h"
 #include "scope.h"
 
 using namespace std;
@@ -71,6 +72,12 @@ InfoPassThroughExperiment::~InfoPassThroughExperiment() {
 	for (int h_index = 0; h_index < (int)this->i_scope_histories.size(); h_index++) {
 		delete this->i_scope_histories[h_index];
 	}
+
+	#if defined(MDEBUG) && MDEBUG
+	for (int p_index = 0; p_index < (int)this->verify_problems.size(); p_index++) {
+		delete this->verify_problems[p_index];
+	}
+	#endif /* MDEBUG */
 }
 
 InfoPassThroughExperimentHistory::InfoPassThroughExperimentHistory(

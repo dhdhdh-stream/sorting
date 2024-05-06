@@ -59,22 +59,22 @@ void node_verify_activate_helper(AbstractNode*& curr_node,
 	case NODE_TYPE_INFO_SCOPE:
 		{
 			InfoScopeNode* node = (InfoScopeNode*)curr_node;
-			node->activate(curr_node,
-						   problem,
-						   context,
-						   run_helper,
-						   history->node_histories);
+			node->verify_activate(curr_node,
+								  problem,
+								  context,
+								  run_helper,
+								  history->node_histories);
 		}
 
 		break;
 	case NODE_TYPE_INFO_BRANCH:
 		{
 			InfoBranchNode* node = (InfoBranchNode*)curr_node;
-			node->activate(curr_node,
-						   problem,
-						   context,
-						   run_helper,
-						   history->node_histories);
+			node->verify_activate(curr_node,
+								  problem,
+								  context,
+								  run_helper,
+								  history->node_histories);
 		}
 
 		break;

@@ -12,11 +12,11 @@
 using namespace std;
 
 #if defined(MDEBUG) && MDEBUG
-// const int TRAVERSE_ITERS = 5;
-const int TRAVERSE_ITERS = 50000;
+const int TRAVERSE_ITERS = 5;
 const int GENERALIZE_ITERS = 5;
 #else
-const int TRAVERSE_ITERS = 20;
+// const int TRAVERSE_ITERS = 20;
+const int TRAVERSE_ITERS = 50000;
 const int GENERALIZE_ITERS = 10;
 #endif /* MDEBUG */
 
@@ -226,6 +226,10 @@ void Solution::clear_verify() {
 		this->scopes[s_index]->clear_verify();
 	}
 
+	for (int i_index = 0; i_index < (int)this->info_scopes.size(); i_index++) {
+		this->info_scopes[i_index]->clear_verify();
+	}
+
 	this->verify_key = NULL;
 	this->verify_problems.clear();
 }
@@ -313,12 +317,19 @@ void Solution::save(string path,
 	rename(oldname.c_str(), newname.c_str());
 }
 
-// TODO: info_scopes
 void Solution::save_for_display(ofstream& output_file) {
 	this->current->save_for_display(output_file);
 
 	output_file << this->scopes.size() << endl;
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
 		this->scopes[s_index]->save_for_display(output_file);
+	}
+
+	output_file << this->info_scopes.size() << endl;
+	for (int i_index = 0; i_index < (int)this->info_scopes.size(); i_index++) {
+		output_file << this->info_scopes[i_index]->state << endl;
+		if (this->info_scopes[i_index]->state == INFO_SCOPE_STATE_NA) {
+			this->info_scopes[i_index]->subscope->save_for_display(output_file);
+		}
 	}
 }

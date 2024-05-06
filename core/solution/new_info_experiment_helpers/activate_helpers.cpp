@@ -357,6 +357,12 @@ bool NewInfoExperiment::activate(AbstractNode*& curr_node,
 			return verify_activate(curr_node,
 								   problem,
 								   run_helper);
+		#if defined(MDEBUG) && MDEBUG
+		case NEW_INFO_EXPERIMENT_STATE_CAPTURE_VERIFY:
+			return capture_verify_activate(curr_node,
+										   problem,
+										   run_helper);
+		#endif /* MDEBUG */
 		case NEW_INFO_EXPERIMENT_STATE_ROOT_VERIFY:
 			return root_verify_activate(curr_node,
 										problem,
@@ -414,6 +420,11 @@ void NewInfoExperiment::backprop(double target_val,
 		verify_backprop(target_val,
 						run_helper);
 		break;
+	#if defined(MDEBUG) && MDEBUG
+	case NEW_INFO_EXPERIMENT_STATE_CAPTURE_VERIFY:
+		capture_verify_backprop();
+		break;
+	#endif /* MDEBUG */
 	case NEW_INFO_EXPERIMENT_STATE_EXPERIMENT:
 		switch (this->root_state) {
 		case ROOT_EXPERIMENT_STATE_EXPERIMENT:

@@ -328,6 +328,19 @@ void NewInfoExperiment::new_branch(Solution* duplicate) {
 	this->best_actions.clear();
 	this->best_scopes.clear();
 	this->ending_node = NULL;
+
+	#if defined(MDEBUG) && MDEBUG
+	if (solution->state == SOLUTION_STATE_TRAVERSE) {
+		duplicate->verify_key = this;
+		duplicate->verify_problems = this->verify_problems;
+		this->verify_problems.clear();
+		duplicate->verify_seeds = this->verify_seeds;
+
+		new_info_scope->verify_key = this;
+		new_info_scope->verify_negative_scores = this->verify_negative_scores;
+		new_info_scope->verify_positive_scores = this->verify_positive_scores;
+	}
+	#endif /* MDEBUG */
 }
 
 void NewInfoExperiment::new_pass_through(Solution* duplicate) {

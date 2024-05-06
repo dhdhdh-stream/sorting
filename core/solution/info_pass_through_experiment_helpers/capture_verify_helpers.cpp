@@ -1,24 +1,33 @@
+#if defined(MDEBUG) && MDEBUG
+
 #include "info_pass_through_experiment.h"
+
+#include <iostream>
 
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
-#include "globals.h"
 #include "info_branch_node.h"
 #include "info_scope.h"
 #include "info_scope_node.h"
 #include "network.h"
+#include "problem.h"
 #include "scope.h"
 #include "utilities.h"
 
 using namespace std;
 
-void InfoPassThroughExperiment::measure_activate(
+void InfoPassThroughExperiment::capture_verify_activate(
 		AbstractNode*& curr_node,
 		Problem* problem,
 		vector<ContextLayer>& context,
 		RunHelper& run_helper,
 		InfoPassThroughExperimentHistory* history) {
+	if (this->verify_problems[this->state_iter] == NULL) {
+		this->verify_problems[this->state_iter] = problem->copy_and_reset();
+	}
+	this->verify_seeds[this->state_iter] = run_helper.starting_run_seed;
+
 	if (this->info_scope == NULL) {
 		if (this->step_types.size() == 0) {
 			curr_node = this->exit_next_node;
@@ -56,7 +65,8 @@ void InfoPassThroughExperiment::measure_activate(
 	context.back().scope_history->info_experiment_history = history;
 }
 
-void InfoPassThroughExperiment::measure_back_activate(
+void InfoPassThroughExperiment::capture_verify_back_activate(
+		Problem* problem,
 		ScopeHistory*& subscope_history,
 		bool& result_is_positive,
 		RunHelper& run_helper) {
@@ -138,70 +148,38 @@ void InfoPassThroughExperiment::measure_back_activate(
 		positive_score += this->positive_network->output->acti_vals[0];
 	}
 
-	#if defined(MDEBUG) && MDEBUG
+	this->verify_negative_scores.push_back(negative_score);
+	this->verify_positive_scores.push_back(positive_score);
+
+	cout << "subscope_history->node_histories" << endl;
+	for (map<AbstractNode*, AbstractNodeHistory*>::iterator it = subscope_history->node_histories.begin();
+			it != subscope_history->node_histories.end(); it++) {
+		cout << it->first->id << endl;
+	}
+
+	cout << "input_vals:" << endl;
+	for (int i_index = 0; i_index < (int)input_vals.size(); i_index++) {
+		cout << i_index << ": " << input_vals[i_index] << endl;
+	}
+	cout << "negative_score: " << negative_score << endl;
+	cout << "positive_score: " << positive_score << endl;
+	cout << "run_helper.starting_run_seed: " << run_helper.starting_run_seed << endl;
+	cout << "run_helper.curr_run_seed: " << run_helper.curr_run_seed << endl;
+	problem->print();
+
 	if (run_helper.curr_run_seed%2 == 0) {
-		positive_count++;
 		result_is_positive = true;
 	} else {
-		negative_count++;
 		result_is_positive = false;
 	}
 	run_helper.curr_run_seed = xorshift(run_helper.curr_run_seed);
-	#else
-	if (positive_score >= negative_score) {
-		positive_count++;
-		result_is_positive = true;
-	} else {
-		negative_count++;
-		result_is_positive = false;
-	}
-	#endif /* MDEBUG */
 }
 
-void InfoPassThroughExperiment::measure_backprop(
-		double target_val,
-		RunHelper& run_helper) {
-	this->o_target_val_histories.push_back(target_val);
-
-	if ((int)this->o_target_val_histories.size() >= NUM_DATAPOINTS) {
-		#if defined(MDEBUG) && MDEBUG
-		this->o_target_val_histories.clear();
-
-		if (rand()%8 == 0) {
-			this->new_state = INFO_SCOPE_STATE_DISABLED_POSITIVE;
-		} else if (rand()%7 == 0) {
-			this->new_state = INFO_SCOPE_STATE_DISABLED_NEGATIVE;
-		} else {
-			this->new_state = INFO_SCOPE_STATE_NA;
-		}
-
-		if (rand()%2 == 0) {
-		#else
-		double sum_scores = 0.0;
-		for (int d_index = 0; d_index < NUM_DATAPOINTS; d_index++) {
-			sum_scores += this->o_target_val_histories[d_index];
-		}
-		double new_average_score = sum_scores / NUM_DATAPOINTS;
-
-		this->o_target_val_histories.clear();
-
-		double positive_weight = (double)this->positive_count / (double)(this->negative_count + this->positive_count);
-		if (positive_weight > DISABLE_POSITIVE_PERCENTAGE) {
-			this->new_state = INFO_SCOPE_STATE_DISABLED_POSITIVE;
-		} else if (positive_weight < DISABLE_NEGATIVE_PERCENTAGE) {
-			this->new_state = INFO_SCOPE_STATE_DISABLED_NEGATIVE;
-		} else {
-			this->new_state = INFO_SCOPE_STATE_NA;
-		}
-
-		if (new_average_score >= this->existing_average_score) {
-		#endif /* MDEBUG */
-			this->o_target_val_histories.reserve(VERIFY_1ST_NUM_DATAPOINTS);
-
-			this->state = INFO_PASS_THROUGH_EXPERIMENT_STATE_VERIFY_1ST_EXISTING;
-			this->state_iter = 0;
-		} else {
-			this->result = EXPERIMENT_RESULT_FAIL;
-		}
+void InfoPassThroughExperiment::capture_verify_backprop() {
+	this->state_iter++;
+	if (this->state_iter >= NUM_VERIFY_SAMPLES) {
+		this->result = EXPERIMENT_RESULT_SUCCESS;
 	}
 }
+
+#endif /* MDEBUG */

@@ -74,6 +74,15 @@ bool InfoPassThroughExperiment::activate(AbstractNode*& curr_node,
 							run_helper,
 							history);
 			break;
+		#if defined(MDEBUG) && MDEBUG
+		case INFO_PASS_THROUGH_EXPERIMENT_STATE_CAPTURE_VERIFY:
+			capture_verify_activate(curr_node,
+									problem,
+									context,
+									run_helper,
+									history);
+			break;
+		#endif /* MDEBUG */
 		}
 
 		return true;
@@ -83,6 +92,7 @@ bool InfoPassThroughExperiment::activate(AbstractNode*& curr_node,
 }
 
 bool InfoPassThroughExperiment::back_activate(
+		Problem* problem,
 		ScopeHistory*& subscope_history,
 		bool& result_is_positive,
 		RunHelper& run_helper) {
@@ -108,6 +118,14 @@ bool InfoPassThroughExperiment::back_activate(
 							 result_is_positive,
 							 run_helper);
 		return true;
+	#if defined(MDEBUG) && MDEBUG
+	case INFO_PASS_THROUGH_EXPERIMENT_STATE_CAPTURE_VERIFY:
+		capture_verify_back_activate(problem,
+									 subscope_history,
+									 result_is_positive,
+									 run_helper);
+		return true;
+	#endif /* MDEBUG */
 	}
 
 	return false;
@@ -146,5 +164,10 @@ void InfoPassThroughExperiment::backprop(double target_val,
 		verify_backprop(target_val,
 						run_helper);
 		break;
+	#if defined(MDEBUG) && MDEBUG
+	case INFO_PASS_THROUGH_EXPERIMENT_STATE_CAPTURE_VERIFY:
+		capture_verify_backprop();
+		break;
+	#endif /* MDEBUG */
 	}
 }

@@ -42,12 +42,14 @@ void info_create_experiment_helper(InfoScope* info_scope,
 				InfoScopeNode* info_scope_node = (InfoScopeNode*)it->first;
 				InfoScopeNodeHistory* info_scope_node_history = (InfoScopeNodeHistory*)it->second;
 
-				info_create_experiment_helper(info_scope_node->scope,
-											  possible_info_scope_contexts,
-											  possible_scope_contexts,
-											  possible_node_contexts,
-											  possible_is_branch,
-											  info_scope_node_history->scope_history);
+				if (info_scope_node_history->scope_history != NULL) {
+					info_create_experiment_helper(info_scope_node->scope,
+												  possible_info_scope_contexts,
+												  possible_scope_contexts,
+												  possible_node_contexts,
+												  possible_is_branch,
+												  info_scope_node_history->scope_history);
+				}
 
 				possible_info_scope_contexts.push_back(info_scope);
 				possible_scope_contexts.push_back(scope_history->scope);
@@ -61,12 +63,14 @@ void info_create_experiment_helper(InfoScope* info_scope,
 				InfoBranchNode* info_branch_node = (InfoBranchNode*)it->first;
 				InfoBranchNodeHistory* info_branch_node_history = (InfoBranchNodeHistory*)it->second;
 
-				info_create_experiment_helper(info_branch_node->scope,
-											  possible_info_scope_contexts,
-											  possible_scope_contexts,
-											  possible_node_contexts,
-											  possible_is_branch,
-											  info_branch_node_history->scope_history);
+				if (info_branch_node_history->scope_history != NULL) {
+					info_create_experiment_helper(info_branch_node->scope,
+												  possible_info_scope_contexts,
+												  possible_scope_contexts,
+												  possible_node_contexts,
+												  possible_is_branch,
+												  info_branch_node_history->scope_history);
+				}
 
 				possible_info_scope_contexts.push_back(info_scope);
 				possible_scope_contexts.push_back(scope_history->scope);
@@ -132,16 +136,19 @@ void create_experiment_helper(vector<InfoScope*>& possible_info_scope_contexts,
 				InfoBranchNode* info_branch_node = (InfoBranchNode*)it->first;
 				InfoBranchNodeHistory* info_branch_node_history = (InfoBranchNodeHistory*)it->second;
 
-				if (solution->state == SOLUTION_STATE_TRAVERSE
-						&& solution->state_iter >= 5) {
-					uniform_int_distribution<int> info_inner_distribution(0, 9);
-					if (info_inner_distribution(generator) == 0) {
-						info_create_experiment_helper(info_branch_node->scope,
-													  possible_info_scope_contexts,
-													  possible_scope_contexts,
-													  possible_node_contexts,
-													  possible_is_branch,
-													  info_branch_node_history->scope_history);
+				if (info_branch_node_history->scope_history != NULL) {
+					if (solution->state == SOLUTION_STATE_TRAVERSE
+							&& solution->state_iter >= 5) {
+						uniform_int_distribution<int> info_inner_distribution(0, 4);
+						// if (info_inner_distribution(generator) == 0) {
+						if (true) {
+							info_create_experiment_helper(info_branch_node->scope,
+														  possible_info_scope_contexts,
+														  possible_scope_contexts,
+														  possible_node_contexts,
+														  possible_is_branch,
+														  info_branch_node_history->scope_history);
+						}
 					}
 				}
 

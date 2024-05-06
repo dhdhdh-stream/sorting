@@ -46,6 +46,12 @@ public:
 	std::vector<std::vector<int>> positive_network_input_indexes;
 	Network* positive_network;
 
+	#if defined(MDEBUG) && MDEBUG
+	void* verify_key;
+	std::vector<double> verify_negative_scores;
+	std::vector<double> verify_positive_scores;
+	#endif /* MDEBUG */
+
 	InfoScope();
 	~InfoScope();
 
@@ -54,14 +60,20 @@ public:
 				  ScopeHistory*& subscope_history,
 				  bool& result_is_positive);
 
+	#if defined(MDEBUG) && MDEBUG
+	void verify_activate(Problem* problem,
+						 RunHelper& run_helper,
+						 ScopeHistory*& subscope_history,
+						 bool& result_is_positive);
+	void clear_verify();
+	#endif /* MDEBUG */
+
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file);
 	void link(Solution* parent_solution);
 
 	void copy_from(InfoScope* original,
 				   Solution* parent_solution);
-
-	void save_for_display(std::ofstream& output_file);
 };
 
 #endif /* INFO_SCOPE_H */

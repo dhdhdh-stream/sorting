@@ -24,15 +24,22 @@ void gather_possible_helper(vector<Scope*>& scope_context,
 		switch (it->first->type) {
 		case NODE_TYPE_ACTION:
 			{
-				node_context.back() = it->first;
+				ActionNode* action_node = (ActionNode*)it->first;
 
-				for (int o_index = 0; o_index < problem_type->num_obs(); o_index++) {
-					possible_scope_contexts.push_back(scope_context);
-					possible_node_contexts.push_back(node_context);
-					possible_obs_indexes.push_back(o_index);
+				if (action_node->next_node != NULL) {
+					node_context.back() = it->first;
+
+					for (int o_index = 0; o_index < problem_type->num_obs(); o_index++) {
+						possible_scope_contexts.push_back(scope_context);
+						possible_node_contexts.push_back(node_context);
+						possible_obs_indexes.push_back(o_index);
+					}
+
+					node_context.back() = NULL;
 				}
-
-				node_context.back() = NULL;
+				/**
+				 * - don't include potential new ending node for info experiments
+				 */
 			}
 
 			break;

@@ -4,6 +4,7 @@
 
 #include "action_node.h"
 #include "constants.h"
+#include "globals.h"
 #include "info_branch_node.h"
 #include "info_scope.h"
 #include "info_scope_node.h"
@@ -45,6 +46,9 @@ void InfoPassThroughExperiment::finalize(Solution* duplicate) {
 		}
 
 		if (this->new_state == INFO_SCOPE_STATE_NA) {
+			duplicate_info_scope->negative_average_score = this->negative_average_score;
+			duplicate_info_scope->positive_average_score = this->positive_average_score;
+
 			vector<int> input_mapping(this->input_node_contexts.size(), -1);
 			for (int i_index = 0; i_index < (int)this->negative_linear_weights.size(); i_index++) {
 				if (this->negative_linear_weights[i_index] != 0.0) {
@@ -120,6 +124,19 @@ void InfoPassThroughExperiment::finalize(Solution* duplicate) {
 			}
 			duplicate_info_scope->positive_network = this->positive_network;
 			this->positive_network = NULL;
+
+			#if defined(MDEBUG) && MDEBUG
+			if (solution->state == SOLUTION_STATE_TRAVERSE) {
+				duplicate->verify_key = this;
+				duplicate->verify_problems = this->verify_problems;
+				this->verify_problems.clear();
+				duplicate->verify_seeds = this->verify_seeds;
+
+				duplicate_info_scope->verify_key = this;
+				duplicate_info_scope->verify_negative_scores = this->verify_negative_scores;
+				duplicate_info_scope->verify_positive_scores = this->verify_positive_scores;
+			}
+			#endif /* MDEBUG */
 		}
 	}
 
