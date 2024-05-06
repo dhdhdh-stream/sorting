@@ -1,74 +1,90 @@
-#include "new_info_experiment.h"
+#include "info_pass_through_experiment.h"
 
-#include <cmath>
 #include <iostream>
+/**
+ * - stability issue with Eigen BDCSVD for small singular values
+ */
 #undef eigen_assert
 #define eigen_assert(x) if (!(x)) {throw std::invalid_argument("Eigen error");}
 #include <Eigen/Dense>
 
 #include "action_node.h"
-#include "branch_node.h"
 #include "constants.h"
 #include "globals.h"
+#include "info_branch_node.h"
+#include "info_scope.h"
 #include "info_scope_node.h"
 #include "network.h"
 #include "nn_helpers.h"
 #include "scope.h"
-#include "scope_node.h"
-#include "solution.h"
 #include "solution_helpers.h"
-#include "utilities.h"
 
 using namespace std;
 
-void NewInfoExperiment::train_new_activate(
+void InfoPassThroughExperiment::train_negative_activate(
 		AbstractNode*& curr_node,
 		Problem* problem,
+		vector<ContextLayer>& context,
 		RunHelper& run_helper,
-		NewInfoExperimentHistory* history) {
-	run_helper.num_decisions++;
+		InfoPassThroughExperimentHistory* history) {
+	if (this->info_scope == NULL) {
+		if (this->step_types.size() == 0) {
+			curr_node = this->exit_next_node;
+		} else {
+			if (this->step_types[0] == STEP_TYPE_ACTION) {
+				curr_node = this->actions[0];
+			} else {
+				curr_node = this->scopes[0];
+			}
+		}
+	} else {
+		ScopeHistory* inner_scope_history;
+		bool inner_is_positive;
+		this->info_scope->activate(problem,
+								   run_helper,
+								   inner_scope_history,
+								   inner_is_positive);
 
-	vector<ContextLayer> inner_context;
-	inner_context.push_back(ContextLayer());
+		delete inner_scope_history;
 
-	inner_context.back().scope = this->new_info_subscope;
-	inner_context.back().node = NULL;
-
-	ScopeHistory* scope_history = new ScopeHistory(this->new_info_subscope);
-	inner_context.back().scope_history = scope_history;
-
-	this->new_info_subscope->activate(problem,
-									  inner_context,
-									  run_helper,
-									  scope_history);
+		if ((this->is_negate && !inner_is_positive)
+				|| (!this->is_negate && inner_is_positive)) {
+			if (this->step_types.size() == 0) {
+				curr_node = this->exit_next_node;
+			} else {
+				if (this->step_types[0] == STEP_TYPE_ACTION) {
+					curr_node = this->actions[0];
+				} else {
+					curr_node = this->scopes[0];
+				}
+			}
+		}
+	}
 
 	this->num_instances_until_target--;
 	if (this->num_instances_until_target == 0) {
 		history->instance_count++;
 
-		this->i_scope_histories.push_back(scope_history);
-
-		if (this->best_step_types.size() == 0) {
-			curr_node = this->best_exit_next_node;
-		} else {
-			if (this->best_step_types[0] == STEP_TYPE_ACTION) {
-				curr_node = this->best_actions[0];
-			} else {
-				curr_node = this->best_scopes[0];
-			}
-		}
+		context.back().scope_history->info_experiment_history = history;
 
 		uniform_int_distribution<int> until_distribution(0, (int)this->average_instances_per_run-1.0);
 		this->num_instances_until_target = 1 + until_distribution(generator);
-	} else {
-		delete scope_history;
 	}
 }
 
-void NewInfoExperiment::train_new_backprop(
+void InfoPassThroughExperiment::train_negative_back_activate(
+		ScopeHistory*& subscope_history,
+		bool& result_is_positive,
+		RunHelper& run_helper) {
+	this->i_scope_histories.push_back(new ScopeHistory(subscope_history));
+
+	result_is_positive = false;
+}
+
+void InfoPassThroughExperiment::train_negative_backprop(
 		double target_val,
 		RunHelper& run_helper) {
-	NewInfoExperimentHistory* history = (NewInfoExperimentHistory*)run_helper.experiment_histories.back();
+	InfoPassThroughExperimentHistory* history = (InfoPassThroughExperimentHistory*)run_helper.experiment_histories.back();
 
 	for (int i_index = 0; i_index < (int)history->instance_count; i_index++) {
 		this->i_target_val_histories.push_back(target_val);
@@ -81,7 +97,47 @@ void NewInfoExperiment::train_new_backprop(
 		for (int d_index = 0; d_index < num_instances; d_index++) {
 			sum_scores += this->i_target_val_histories[d_index];
 		}
-		this->new_average_score = sum_scores / num_instances;
+		this->negative_average_score = sum_scores / num_instances;
+
+		vector<vector<Scope*>> possible_scope_contexts;
+		vector<vector<AbstractNode*>> possible_node_contexts;
+		vector<int> possible_obs_indexes;
+
+		vector<Scope*> scope_context;
+		vector<AbstractNode*> node_context;
+		gather_possible_helper(scope_context,
+							   node_context,
+							   possible_scope_contexts,
+							   possible_node_contexts,
+							   possible_obs_indexes,
+							   this->i_scope_histories.back());
+
+		int num_obs = min(LINEAR_NUM_OBS, (int)possible_node_contexts.size());
+		{
+			vector<int> remaining_indexes(possible_node_contexts.size());
+			for (int p_index = 0; p_index < (int)possible_node_contexts.size(); p_index++) {
+				remaining_indexes[p_index] = p_index;
+			}
+			for (int o_index = 0; o_index < num_obs; o_index++) {
+				uniform_int_distribution<int> distribution(0, (int)remaining_indexes.size()-1);
+				int rand_index = distribution(generator);
+
+				int index = -1;
+				for (int i_index = 0; i_index < (int)this->input_node_contexts.size(); i_index++) {
+					if (possible_node_contexts[remaining_indexes[rand_index]].back() == this->input_node_contexts[i_index]
+							&& possible_obs_indexes[remaining_indexes[rand_index]] == this->input_obs_indexes[i_index]) {
+						index = i_index;
+						break;
+					}
+				}
+				if (index == -1) {
+					this->input_node_contexts.push_back(possible_node_contexts[remaining_indexes[rand_index]].back());
+					this->input_obs_indexes.push_back(possible_obs_indexes[remaining_indexes[rand_index]]);
+				}
+
+				remaining_indexes.erase(remaining_indexes.begin() + rand_index);
+			}
+		}
 
 		Eigen::MatrixXd inputs(num_instances, this->input_node_contexts.size());
 
@@ -109,6 +165,16 @@ void NewInfoExperiment::train_new_backprop(
 							}
 						}
 						break;
+					case NODE_TYPE_INFO_BRANCH:
+						{
+							InfoBranchNodeHistory* info_branch_node_history = (InfoBranchNodeHistory*)it->second;
+							if (info_branch_node_history->is_branch) {
+								inputs(d_index, i_index) = 1.0;
+							} else {
+								inputs(d_index, i_index) = -1.0;
+							}
+						}
+						break;
 					}
 				}
 			}
@@ -116,7 +182,7 @@ void NewInfoExperiment::train_new_backprop(
 
 		Eigen::VectorXd outputs(num_instances);
 		for (int d_index = 0; d_index < num_instances; d_index++) {
-			outputs(d_index) = this->i_target_val_histories[d_index] - this->new_average_score;
+			outputs(d_index) = this->i_target_val_histories[d_index] - this->negative_average_score;
 		}
 
 		Eigen::VectorXd weights;
@@ -129,7 +195,7 @@ void NewInfoExperiment::train_new_backprop(
 				weights(i_index) = 0.0;
 			}
 		}
-		this->new_linear_weights = vector<double>(this->input_node_contexts.size());
+		this->negative_linear_weights = vector<double>(this->input_node_contexts.size());
 		for (int i_index = 0; i_index < (int)this->input_node_contexts.size(); i_index++) {
 			double sum_impact_size = 0.0;
 			for (int d_index = 0; d_index < num_instances; d_index++) {
@@ -142,7 +208,7 @@ void NewInfoExperiment::train_new_backprop(
 			} else {
 				weights(i_index) = trunc(1000000 * weights(i_index)) / 1000000;
 			}
-			this->new_linear_weights[i_index] = weights(i_index);
+			this->negative_linear_weights[i_index] = weights(i_index);
 		}
 
 		Eigen::VectorXd predicted_scores = inputs * weights;
@@ -161,15 +227,15 @@ void NewInfoExperiment::train_new_backprop(
 		for (int d_index = 0; d_index < num_instances; d_index++) {
 			sum_misguesses += misguesses[d_index];
 		}
-		this->new_average_misguess = sum_misguesses / num_instances;
+		this->negative_average_misguess = sum_misguesses / num_instances;
 
 		double sum_misguess_variances = 0.0;
 		for (int d_index = 0; d_index < num_instances; d_index++) {
-			sum_misguess_variances += (misguesses[d_index] - this->new_average_misguess) * (misguesses[d_index] - this->new_average_misguess);
+			sum_misguess_variances += (misguesses[d_index] - this->negative_average_misguess) * (misguesses[d_index] - this->negative_average_misguess);
 		}
-		this->new_misguess_standard_deviation = sqrt(sum_misguess_variances / num_instances);
-		if (this->new_misguess_standard_deviation < MIN_STANDARD_DEVIATION) {
-			this->new_misguess_standard_deviation = MIN_STANDARD_DEVIATION;
+		this->negative_misguess_standard_deviation = sqrt(sum_misguess_variances / num_instances);
+		if (this->negative_misguess_standard_deviation < MIN_STANDARD_DEVIATION) {
+			this->negative_misguess_standard_deviation = MIN_STANDARD_DEVIATION;
 		}
 
 		vector<vector<vector<double>>> network_inputs(num_instances);
@@ -193,27 +259,28 @@ void NewInfoExperiment::train_new_backprop(
 			vector<vector<Scope*>> test_network_input_scope_contexts;
 			vector<vector<AbstractNode*>> test_network_input_node_contexts;
 			vector<int> test_network_input_obs_indexes;
+			{
+				vector<int> remaining_indexes(possible_scope_contexts.size());
+				for (int p_index = 0; p_index < (int)possible_scope_contexts.size(); p_index++) {
+					remaining_indexes[p_index] = p_index;
+				}
+				for (int i_index = 0; i_index < num_new_input_indexes; i_index++) {
+					uniform_int_distribution<int> distribution(0, (int)remaining_indexes.size()-1);
+					int rand_index = distribution(generator);
 
-			vector<int> remaining_indexes(possible_scope_contexts.size());
-			for (int p_index = 0; p_index < (int)possible_scope_contexts.size(); p_index++) {
-				remaining_indexes[p_index] = p_index;
-			}
-			for (int i_index = 0; i_index < num_new_input_indexes; i_index++) {
-				uniform_int_distribution<int> distribution(0, (int)remaining_indexes.size()-1);
-				int rand_index = distribution(generator);
+					test_network_input_scope_contexts.push_back(possible_scope_contexts[remaining_indexes[rand_index]]);
+					test_network_input_node_contexts.push_back(possible_node_contexts[remaining_indexes[rand_index]]);
+					test_network_input_obs_indexes.push_back(possible_obs_indexes[remaining_indexes[rand_index]]);
 
-				test_network_input_scope_contexts.push_back(possible_scope_contexts[remaining_indexes[rand_index]]);
-				test_network_input_node_contexts.push_back(possible_node_contexts[remaining_indexes[rand_index]]);
-				test_network_input_obs_indexes.push_back(possible_obs_indexes[remaining_indexes[rand_index]]);
-
-				remaining_indexes.erase(remaining_indexes.begin() + rand_index);
+					remaining_indexes.erase(remaining_indexes.begin() + rand_index);
+				}
 			}
 
 			Network* test_network;
-			if (this->new_network == NULL) {
+			if (this->negative_network == NULL) {
 				test_network = new Network(num_new_input_indexes);
 			} else {
-				test_network = new Network(this->new_network);
+				test_network = new Network(this->negative_network);
 
 				uniform_int_distribution<int> increment_above_distribution(0, 3);
 				if (increment_above_distribution(generator) == 0) {
@@ -246,6 +313,16 @@ void NewInfoExperiment::train_new_backprop(
 								}
 							}
 							break;
+						case NODE_TYPE_INFO_BRANCH:
+							{
+								InfoBranchNodeHistory* info_branch_node_history = (InfoBranchNodeHistory*)it->second;
+								if (info_branch_node_history->is_branch) {
+									test_input_vals[t_index] = 1.0;
+								} else {
+									test_input_vals[t_index] = -1.0;
+								}
+							}
+							break;
 						}
 					}
 				}
@@ -270,8 +347,8 @@ void NewInfoExperiment::train_new_backprop(
 			#if defined(MDEBUG) && MDEBUG
 			if (rand()%3 == 0) {
 			#else
-			double improvement = this->new_average_misguess - average_misguess;
-			double standard_deviation = min(this->new_misguess_standard_deviation, misguess_standard_deviation);
+			double improvement = this->negative_average_misguess - average_misguess;
+			double standard_deviation = min(this->negative_misguess_standard_deviation, misguess_standard_deviation);
 			double t_score = improvement / (standard_deviation / sqrt(num_instances * TEST_SAMPLES_PERCENTAGE));
 
 			if (t_score > 1.645) {
@@ -300,22 +377,21 @@ void NewInfoExperiment::train_new_backprop(
 						this->input_node_contexts.push_back(test_network_input_node_contexts[t_index].back());
 						this->input_obs_indexes.push_back(test_network_input_obs_indexes[t_index]);
 
-						this->existing_linear_weights.push_back(0.0);
-						this->new_linear_weights.push_back(0.0);
+						this->negative_linear_weights.push_back(0.0);
 
 						index = this->input_node_contexts.size()-1;
 					}
 					new_input_indexes.push_back(index);
 				}
-				this->new_network_input_indexes.push_back(new_input_indexes);
+				this->negative_network_input_indexes.push_back(new_input_indexes);
 
-				if (this->new_network != NULL) {
-					delete this->new_network;
+				if (this->negative_network != NULL) {
+					delete this->negative_network;
 				}
-				this->new_network = test_network;
+				this->negative_network = test_network;
 
-				this->new_average_misguess = average_misguess;
-				this->new_misguess_standard_deviation = misguess_standard_deviation;
+				this->negative_average_misguess = average_misguess;
+				this->negative_misguess_standard_deviation = misguess_standard_deviation;
 
 				#if defined(MDEBUG) && MDEBUG
 				#else
@@ -338,11 +414,10 @@ void NewInfoExperiment::train_new_backprop(
 		this->i_scope_histories.clear();
 		this->i_target_val_histories.clear();
 
-		this->combined_score = 0.0;
-		this->original_count = 0;
-		this->branch_count = 0;
+		this->i_scope_histories.reserve(NUM_DATAPOINTS);
+		this->i_target_val_histories.reserve(NUM_DATAPOINTS);
 
-		this->state = NEW_INFO_EXPERIMENT_STATE_MEASURE;
+		this->state = INFO_PASS_THROUGH_EXPERIMENT_STATE_TRAIN_POSITIVE;
 		this->state_iter = 0;
 	}
 }

@@ -86,7 +86,6 @@ public:
 
 	void measure_new_activate(AbstractNode*& curr_node,
 							  Problem* problem,
-							  std::vector<ContextLayer>& context,
 							  RunHelper& run_helper);
 	void measure_new_backprop(double target_val,
 							  RunHelper& run_helper);
@@ -96,15 +95,16 @@ public:
 
 	void verify_new_activate(AbstractNode*& curr_node,
 							 Problem* problem,
-							 std::vector<ContextLayer>& context,
 							 RunHelper& run_helper);
 	void verify_new_backprop(double target_val,
 							 RunHelper& run_helper);
 
 	void root_verify_activate(AbstractNode*& curr_node,
+							  Problem* problem,
 							  RunHelper& run_helper);
 
 	void experiment_activate(AbstractNode*& curr_node,
+							 Problem* problem,
 							 std::vector<ContextLayer>& context,
 							 RunHelper& run_helper,
 							 PassThroughExperimentHistory* history);
@@ -115,11 +115,14 @@ public:
 											 RunHelper& run_helper);
 
 	void experiment_verify_new_activate(AbstractNode*& curr_node,
+										Problem* problem,
 										RunHelper& run_helper);
 	void experiment_verify_new_backprop(double target_val,
 										RunHelper& run_helper);
 
 	void finalize(Solution* duplicate);
+	void new_branch(Solution* duplicate);
+	void new_pass_through(Solution* duplicate);
 };
 
 class PassThroughExperimentHistory : public AbstractExperimentHistory {

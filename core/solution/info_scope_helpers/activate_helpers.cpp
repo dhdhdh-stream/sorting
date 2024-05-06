@@ -1,8 +1,10 @@
 #include "info_scope.h"
 
+#include "abstract_experiment.h"
 #include "action_node.h"
 #include "branch_node.h"
 #include "info_branch_node.h"
+#include "info_pass_through_experiment.h"
 #include "info_scope_node.h"
 #include "network.h"
 #include "scope.h"
@@ -15,8 +17,10 @@ void InfoScope::activate(Problem* problem,
 						 ScopeHistory*& subscope_history,
 						 bool& result_is_positive) {
 	if (this->state == INFO_SCOPE_STATE_DISABLED_NEGATIVE) {
+		subscope_history = NULL;
 		result_is_positive = false;
 	} else if (this->state == INFO_SCOPE_STATE_DISABLED_POSITIVE) {
+		subscope_history = NULL;
 		result_is_positive = true;
 	} else {
 		vector<ContextLayer> inner_context;
@@ -34,6 +38,17 @@ void InfoScope::activate(Problem* problem,
 								 subscope_history);
 
 		run_helper.num_decisions++;
+
+		if (subscope_history->info_experiment_history != NULL) {
+			InfoPassThroughExperiment* info_pass_through_experiment = (InfoPassThroughExperiment*)subscope_history->info_experiment_history->experiment;
+			bool is_selected = info_pass_through_experiment->back_activate(
+				subscope_history,
+				result_is_positive,
+				run_helper);
+			if (is_selected) {
+				return;
+			}
+		}
 
 		vector<double> input_vals(this->input_node_contexts.size(), 0.0);
 		for (int i_index = 0; i_index < (int)this->input_node_contexts.size(); i_index++) {

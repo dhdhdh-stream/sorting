@@ -10,6 +10,7 @@
 #include "branch_node.h"
 #include "constants.h"
 #include "globals.h"
+#include "info_branch_node.h"
 #include "network.h"
 #include "nn_helpers.h"
 #include "scope.h"
@@ -80,16 +81,33 @@ void BranchExperiment::train_new_backprop(
 						break;
 					} else {
 						if (curr_layer == (int)this->input_scope_contexts[i_index].size()-1) {
-							if (it->first->type == NODE_TYPE_ACTION) {
-								ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
-								inputs(d_index, i_index) = action_node_history->obs_snapshot[this->input_obs_indexes[i_index]];
-							} else {
-								BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
-								if (branch_node_history->is_branch) {
-									inputs(d_index, i_index) = 1.0;
-								} else {
-									inputs(d_index, i_index) = -1.0;
+							switch (it->first->type) {
+							case NODE_TYPE_ACTION:
+								{
+									ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
+									inputs(d_index, i_index) = action_node_history->obs_snapshot[this->input_obs_indexes[i_index]];
 								}
+								break;
+							case NODE_TYPE_BRANCH:
+								{
+									BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
+									if (branch_node_history->is_branch) {
+										inputs(d_index, i_index) = 1.0;
+									} else {
+										inputs(d_index, i_index) = -1.0;
+									}
+								}
+								break;
+							case NODE_TYPE_INFO_BRANCH:
+								{
+									InfoBranchNodeHistory* info_branch_node_history = (InfoBranchNodeHistory*)it->second;
+									if (info_branch_node_history->is_branch) {
+										inputs(d_index, i_index) = 1.0;
+									} else {
+										inputs(d_index, i_index) = -1.0;
+									}
+								}
+								break;
 							}
 							break;
 						} else {
@@ -222,16 +240,33 @@ void BranchExperiment::train_new_backprop(
 							break;
 						} else {
 							if (curr_layer == (int)test_network_input_scope_contexts[t_index].size()-1) {
-								if (it->first->type == NODE_TYPE_ACTION) {
-									ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
-									test_input_vals[t_index] = action_node_history->obs_snapshot[test_network_input_obs_indexes[t_index]];
-								} else {
-									BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
-									if (branch_node_history->is_branch) {
-										test_input_vals[t_index] = 1.0;
-									} else {
-										test_input_vals[t_index] = -1.0;
+								switch (it->first->type) {
+								case NODE_TYPE_ACTION:
+									{
+										ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
+										test_input_vals[t_index] = action_node_history->obs_snapshot[test_network_input_obs_indexes[t_index]];
 									}
+									break;
+								case NODE_TYPE_BRANCH:
+									{
+										BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
+										if (branch_node_history->is_branch) {
+											test_input_vals[t_index] = 1.0;
+										} else {
+											test_input_vals[t_index] = -1.0;
+										}
+									}
+									break;
+								case NODE_TYPE_INFO_BRANCH:
+									{
+										InfoBranchNodeHistory* info_branch_node_history = (InfoBranchNodeHistory*)it->second;
+										if (info_branch_node_history->is_branch) {
+											test_input_vals[t_index] = 1.0;
+										} else {
+											test_input_vals[t_index] = -1.0;
+										}
+									}
+									break;
 								}
 								break;
 							} else {

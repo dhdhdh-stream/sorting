@@ -6,6 +6,7 @@
 #include "branch_node.h"
 #include "constants.h"
 #include "globals.h"
+#include "info_branch_node.h"
 #include "network.h"
 #include "problem.h"
 #include "scope.h"
@@ -59,16 +60,33 @@ bool BranchExperiment::explore_activate(
 					break;
 				} else {
 					if (curr_layer == (int)this->input_scope_contexts[i_index].size()-1) {
-						if (it->first->type == NODE_TYPE_ACTION) {
-							ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
-							input_vals[i_index] = action_node_history->obs_snapshot[this->input_obs_indexes[i_index]];
-						} else {
-							BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
-							if (branch_node_history->is_branch) {
-								input_vals[i_index] = 1.0;
-							} else {
-								input_vals[i_index] = -1.0;
+						switch (it->first->type) {
+						case NODE_TYPE_ACTION:
+							{
+								ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
+								input_vals[i_index] = action_node_history->obs_snapshot[this->input_obs_indexes[i_index]];
 							}
+							break;
+						case NODE_TYPE_BRANCH:
+							{
+								BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
+								if (branch_node_history->is_branch) {
+									input_vals[i_index] = 1.0;
+								} else {
+									input_vals[i_index] = -1.0;
+								}
+							}
+							break;
+						case NODE_TYPE_INFO_BRANCH:
+							{
+								InfoBranchNodeHistory* info_branch_node_history = (InfoBranchNodeHistory*)it->second;
+								if (info_branch_node_history->is_branch) {
+									input_vals[i_index] = 1.0;
+								} else {
+									input_vals[i_index] = -1.0;
+								}
+							}
+							break;
 						}
 						break;
 					} else {
@@ -105,19 +123,39 @@ bool BranchExperiment::explore_activate(
 		}
 
 		AbstractNode* starting_node;
-		if (this->node_context->type == NODE_TYPE_ACTION) {
-			ActionNode* action_node = (ActionNode*)this->node_context;
-			starting_node = action_node->next_node;
-		} else if (this->node_context->type == NODE_TYPE_SCOPE) {
-			ScopeNode* scope_node = (ScopeNode*)this->node_context;
-			starting_node = scope_node->next_node;
-		} else {
-			BranchNode* branch_node = (BranchNode*)this->node_context;
-			if (this->is_branch) {
-				starting_node = branch_node->branch_next_node;
-			} else {
-				starting_node = branch_node->original_next_node;
+		switch (this->node_context->type) {
+		case NODE_TYPE_ACTION:
+			{
+				ActionNode* action_node = (ActionNode*)this->node_context;
+				starting_node = action_node->next_node;
 			}
+			break;
+		case NODE_TYPE_SCOPE:
+			{
+				ScopeNode* scope_node = (ScopeNode*)this->node_context;
+				starting_node = scope_node->next_node;
+			}
+			break;
+		case NODE_TYPE_BRANCH:
+			{
+				BranchNode* branch_node = (BranchNode*)this->node_context;
+				if (this->is_branch) {
+					starting_node = branch_node->branch_next_node;
+				} else {
+					starting_node = branch_node->original_next_node;
+				}
+			}
+			break;
+		case NODE_TYPE_INFO_BRANCH:
+			{
+				InfoBranchNode* info_branch_node = (InfoBranchNode*)this->node_context;
+				if (this->is_branch) {
+					starting_node = info_branch_node->branch_next_node;
+				} else {
+					starting_node = info_branch_node->original_next_node;
+				}
+			}
+			break;
 		}
 
 		this->scope_context->random_exit_activate(

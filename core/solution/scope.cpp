@@ -4,6 +4,8 @@
 
 #include "action_node.h"
 #include "branch_node.h"
+#include "info_branch_node.h"
+#include "info_scope_node.h"
 #include "scope_node.h"
 
 using namespace std;
@@ -86,6 +88,24 @@ void Scope::load(ifstream& input_file) {
 				this->nodes[branch_node->id] = branch_node;
 			}
 			break;
+		case NODE_TYPE_INFO_SCOPE:
+			{
+				InfoScopeNode* info_scope_node = new InfoScopeNode();
+				info_scope_node->parent = this;
+				info_scope_node->id = id;
+				info_scope_node->load(input_file);
+				this->nodes[info_scope_node->id] = info_scope_node;
+			}
+			break;
+		case NODE_TYPE_INFO_BRANCH:
+			{
+				InfoBranchNode* info_branch_node = new InfoBranchNode();
+				info_branch_node->parent = this;
+				info_branch_node->id = id;
+				info_branch_node->load(input_file);
+				this->nodes[info_branch_node->id] = info_branch_node;
+			}
+			break;
 		}
 	}
 }
@@ -137,6 +157,28 @@ void Scope::copy_from(Scope* original,
 				new_branch_node->parent = this;
 				new_branch_node->id = it->first;
 				this->nodes[it->first] = new_branch_node;
+			}
+			break;
+		case NODE_TYPE_INFO_SCOPE:
+			{
+				InfoScopeNode* original_info_scope_node = (InfoScopeNode*)it->second;
+				InfoScopeNode* new_info_scope_node = new InfoScopeNode(
+					original_info_scope_node,
+					parent_solution);
+				new_info_scope_node->parent = this;
+				new_info_scope_node->id = it->first;
+				this->nodes[it->first] = new_info_scope_node;
+			}
+			break;
+		case NODE_TYPE_INFO_BRANCH:
+			{
+				InfoBranchNode* original_info_branch_node = (InfoBranchNode*)it->second;
+				InfoBranchNode* new_info_branch_node = new InfoBranchNode(
+					original_info_branch_node,
+					parent_solution);
+				new_info_branch_node->parent = this;
+				new_info_branch_node->id = it->first;
+				this->nodes[it->first] = new_info_branch_node;
 			}
 			break;
 		}
@@ -209,6 +251,18 @@ ScopeHistory::ScopeHistory(ScopeHistory* original) {
 			{
 				BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
 				this->node_histories[it->first] = new BranchNodeHistory(branch_node_history);
+			}
+			break;
+		case NODE_TYPE_INFO_SCOPE:
+			{
+				InfoScopeNodeHistory* info_scope_node_history = (InfoScopeNodeHistory*)it->second;
+				this->node_histories[it->first] = new InfoScopeNodeHistory(info_scope_node_history);
+			}
+			break;
+		case NODE_TYPE_INFO_BRANCH:
+			{
+				InfoBranchNodeHistory* info_branch_node_history = (InfoBranchNodeHistory*)it->second;
+				this->node_histories[it->first] = new InfoBranchNodeHistory(info_branch_node_history);
 			}
 			break;
 		}

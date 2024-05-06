@@ -241,7 +241,7 @@ void NewInfoExperiment::experiment_backprop(double target_val,
 			uniform_int_distribution<int> possible_distribution(0, (int)possible_node_contexts.size()-1);
 			int rand_index = possible_distribution(generator);
 
-			uniform_int_distribution<int> branch_distribution(0, 2);
+			uniform_int_distribution<int> branch_distribution(0, 3);
 			if (branch_distribution(generator) == 0) {
 				uniform_int_distribution<int> info_distribution(0, 1);
 				if (info_distribution(generator) == 0) {

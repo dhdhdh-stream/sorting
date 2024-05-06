@@ -9,6 +9,7 @@
 #include "run_helper.h"
 
 class AbstractNode;
+class InfoScope;
 class InfoScopeNode;
 class Problem;
 class Scope;
@@ -19,7 +20,8 @@ void create_experiment(ScopeHistory* root_history);
 void create_eval_experiment(ScopeHistory* root_history);
 
 ScopeNode* create_existing();
-InfoScopeNode* create_existing_info();
+InfoScope* get_existing_info_scope();
+InfoScopeNode* create_existing_info_scope_node();
 
 Scope* create_new_info_scope();
 

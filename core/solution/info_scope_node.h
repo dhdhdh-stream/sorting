@@ -33,6 +33,9 @@ public:
 				  RunHelper& run_helper,
 				  std::map<AbstractNode*, AbstractNodeHistory*>& node_histories);
 
+	void explore_activate(Problem* problem,
+						  RunHelper& run_helper);
+
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file);
 	void link(Solution* parent_solution);

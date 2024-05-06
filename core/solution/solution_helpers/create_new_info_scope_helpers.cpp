@@ -32,22 +32,14 @@ Scope* create_new_info_scope() {
 	geometric_distribution<int> geometric_distribution(0.5);
 	int new_num_steps = uniform_distribution(generator) + geometric_distribution(generator);
 
-	uniform_int_distribution<int> default_distribution(0, 1);
 	for (int s_index = 0; s_index < new_num_steps; s_index++) {
-		bool default_to_action = true;
-		if (default_distribution(generator) != 0) {
-			InfoScopeNode* new_scope_node = create_existing_info();
-			if (new_scope_node != NULL) {
-				new_scope_node->parent = new_scope;
-				new_scope_node->id = new_scope->node_counter;
-				new_scope->node_counter++;
-				new_scope->nodes[new_scope_node->id] = new_scope_node;
-
-				default_to_action = false;
-			}
-		}
-
-		if (default_to_action) {
+		InfoScopeNode* new_scope_node = create_existing_info_scope_node();
+		if (new_scope_node != NULL) {
+			new_scope_node->parent = new_scope;
+			new_scope_node->id = new_scope->node_counter;
+			new_scope->node_counter++;
+			new_scope->nodes[new_scope_node->id] = new_scope_node;
+		} else {
 			ActionNode* new_action_node = new ActionNode();
 
 			new_action_node->parent = new_scope;

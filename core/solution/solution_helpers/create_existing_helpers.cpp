@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "globals.h"
+#include "info_scope.h"
 #include "info_scope_node.h"
 #include "problem.h"
 #include "scope.h"
@@ -33,12 +34,35 @@ ScopeNode* create_existing() {
 	return NULL;
 }
 
-InfoScopeNode* create_existing_info() {
-	uniform_int_distribution<int>possible_distribution(0, solution->info_scopes.size()-1);
-	int possible_index = possible_distribution(generator);
+InfoScope* get_existing_info_scope() {
+	uniform_int_distribution<int> null_distribution(0, 1);
+	if (null_distribution(generator) == 0) {
+		return NULL;
+	} else {
+		vector<InfoScope*> possible_info_scopes;
+		for (int i_index = 0; i_index < (int)solution->info_scopes.size(); i_index++) {
+			if (solution->info_scopes[i_index]->state == INFO_SCOPE_STATE_NA) {
+				possible_info_scopes.push_back(solution->info_scopes[i_index]);
+			}
+		}
 
-	InfoScopeNode* new_scope_node = new InfoScopeNode();
-	new_scope_node->scope = solution->info_scopes[possible_index];
+		if (possible_info_scopes.size() == 0) {
+			return NULL;
+		}
 
-	return new_scope_node;
+		uniform_int_distribution<int> possible_distribution(0, possible_info_scopes.size()-1);
+		return possible_info_scopes[possible_distribution(generator)];
+	}
+}
+
+InfoScopeNode* create_existing_info_scope_node() {
+	InfoScope* info_scope = get_existing_info_scope();
+	if (info_scope == NULL) {
+		return NULL;
+	} else {
+		InfoScopeNode* new_scope_node = new InfoScopeNode();
+		new_scope_node->scope = info_scope;
+
+		return new_scope_node;
+	}
 }

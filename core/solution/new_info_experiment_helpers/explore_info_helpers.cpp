@@ -132,7 +132,9 @@ void NewInfoExperiment::explore_info_backprop(
 				for (int i_index = 0; i_index < (int)this->input_node_contexts.size(); i_index++) {
 					map<AbstractNode*, AbstractNodeHistory*>::iterator it = this->i_scope_histories[d_index]->node_histories.find(
 						this->input_node_contexts[i_index]);
-					if (it != this->i_scope_histories[d_index]->node_histories.end()) {
+					if (it == this->i_scope_histories[d_index]->node_histories.end()) {
+						inputs(d_index, i_index) = 0.0;
+					} else {
 						switch (this->input_node_contexts[i_index]->type) {
 						case NODE_TYPE_ACTION:
 							{

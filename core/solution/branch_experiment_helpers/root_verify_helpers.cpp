@@ -4,6 +4,7 @@
 #include "branch_node.h"
 #include "constants.h"
 #include "globals.h"
+#include "info_branch_node.h"
 #include "network.h"
 #include "scope.h"
 #include "scope_node.h"
@@ -43,16 +44,33 @@ bool BranchExperiment::root_verify_activate(
 					break;
 				} else {
 					if (curr_layer == (int)this->input_scope_contexts[i_index].size()-1) {
-						if (it->first->type == NODE_TYPE_ACTION) {
-							ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
-							input_vals[i_index] = action_node_history->obs_snapshot[this->input_obs_indexes[i_index]];
-						} else {
-							BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
-							if (branch_node_history->is_branch) {
-								input_vals[i_index] = 1.0;
-							} else {
-								input_vals[i_index] = -1.0;
+						switch (it->first->type) {
+						case NODE_TYPE_ACTION:
+							{
+								ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
+								input_vals[i_index] = action_node_history->obs_snapshot[this->input_obs_indexes[i_index]];
 							}
+							break;
+						case NODE_TYPE_BRANCH:
+							{
+								BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
+								if (branch_node_history->is_branch) {
+									input_vals[i_index] = 1.0;
+								} else {
+									input_vals[i_index] = -1.0;
+								}
+							}
+							break;
+						case NODE_TYPE_INFO_BRANCH:
+							{
+								InfoBranchNodeHistory* info_branch_node_history = (InfoBranchNodeHistory*)it->second;
+								if (info_branch_node_history->is_branch) {
+									input_vals[i_index] = 1.0;
+								} else {
+									input_vals[i_index] = -1.0;
+								}
+							}
+							break;
 						}
 						break;
 					} else {

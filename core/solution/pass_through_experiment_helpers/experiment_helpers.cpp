@@ -7,6 +7,9 @@
 #include "branch_node.h"
 #include "constants.h"
 #include "globals.h"
+#include "info_branch_node.h"
+#include "info_scope.h"
+#include "new_info_experiment.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
@@ -14,6 +17,7 @@
 using namespace std;
 
 void PassThroughExperiment::experiment_activate(AbstractNode*& curr_node,
+												Problem* problem,
 												vector<ContextLayer>& context,
 												RunHelper& run_helper,
 												PassThroughExperimentHistory* history) {
@@ -46,13 +50,37 @@ void PassThroughExperiment::experiment_activate(AbstractNode*& curr_node,
 		}
 	}
 
-	if (this->best_step_types.size() == 0) {
-		curr_node = this->best_exit_next_node;
-	} else {
-		if (this->best_step_types[0] == STEP_TYPE_ACTION) {
-			curr_node = this->best_actions[0];
+	if (this->best_info_scope == NULL) {
+		if (this->best_step_types.size() == 0) {
+			curr_node = this->best_exit_next_node;
 		} else {
-			curr_node = this->best_scopes[0];
+			if (this->best_step_types[0] == STEP_TYPE_ACTION) {
+				curr_node = this->best_actions[0];
+			} else {
+				curr_node = this->best_scopes[0];
+			}
+		}
+	} else {
+		ScopeHistory* inner_scope_history;
+		bool inner_is_positive;
+		this->best_info_scope->activate(problem,
+										run_helper,
+										inner_scope_history,
+										inner_is_positive);
+
+		delete inner_scope_history;
+
+		if ((this->best_is_negate && !inner_is_positive)
+				|| (!this->best_is_negate && inner_is_positive)) {
+			if (this->best_step_types.size() == 0) {
+				curr_node = this->best_exit_next_node;
+			} else {
+				if (this->best_step_types[0] == STEP_TYPE_ACTION) {
+					curr_node = this->best_actions[0];
+				} else {
+					curr_node = this->best_scopes[0];
+				}
+			}
 		}
 	}
 }
@@ -107,6 +135,15 @@ void PassThroughExperiment::experiment_backprop(
 					}
 
 					break;
+				case NODE_TYPE_INFO_BRANCH:
+					{
+						InfoBranchNodeHistory* info_branch_node_history = (InfoBranchNodeHistory*)it->second;
+
+						possible_node_contexts.push_back(it->first);
+						possible_is_branch.push_back(info_branch_node_history->is_branch);
+					}
+
+					break;
 				}
 			}
 		}
@@ -114,18 +151,29 @@ void PassThroughExperiment::experiment_backprop(
 		uniform_int_distribution<int> possible_distribution(0, (int)possible_node_contexts.size()-1);
 		int rand_index = possible_distribution(generator);
 
-		uniform_int_distribution<int> experiment_type_distribution(0, 1);
-		if (experiment_type_distribution(generator) == 0) {
-			BranchExperiment* new_experiment = new BranchExperiment(
-				this->scope_context,
-				possible_node_contexts[rand_index],
-				possible_is_branch[rand_index],
-				this);
+		uniform_int_distribution<int> branch_distribution(0, 3);
+		if (branch_distribution(generator) == 0) {
+			uniform_int_distribution<int> info_distribution(0, 1);
+			if (info_distribution(generator) == 0) {
+				NewInfoExperiment* new_experiment = new NewInfoExperiment(
+					this->scope_context,
+					possible_node_contexts[rand_index],
+					possible_is_branch[rand_index],
+					this);
 
-			/**
-			 * - insert at front to match finalize order
-			 */
-			possible_node_contexts[rand_index]->experiments.insert(possible_node_contexts[rand_index]->experiments.begin(), new_experiment);
+				/**
+				 * - insert at front to match finalize order
+				 */
+				possible_node_contexts[rand_index]->experiments.insert(possible_node_contexts[rand_index]->experiments.begin(), new_experiment);
+			} else {
+				BranchExperiment* new_experiment = new BranchExperiment(
+					this->scope_context,
+					possible_node_contexts[rand_index],
+					possible_is_branch[rand_index],
+					this);
+
+				possible_node_contexts[rand_index]->experiments.insert(possible_node_contexts[rand_index]->experiments.begin(), new_experiment);
+			}
 		} else {
 			PassThroughExperiment* new_experiment = new PassThroughExperiment(
 				this->scope_context,
@@ -133,9 +181,6 @@ void PassThroughExperiment::experiment_backprop(
 				possible_is_branch[rand_index],
 				this);
 
-			/**
-			 * - insert at front to match finalize order
-			 */
 			possible_node_contexts[rand_index]->experiments.insert(possible_node_contexts[rand_index]->experiments.begin(), new_experiment);
 		}
 	}

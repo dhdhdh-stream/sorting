@@ -5,6 +5,7 @@
 #include "abstract_node.h"
 #include "branch_experiment.h"
 #include "globals.h"
+#include "new_info_experiment.h"
 #include "scope.h"
 
 using namespace std;
@@ -86,12 +87,25 @@ bool PassThroughExperiment::activate(AbstractNode*& curr_node,
 								double selected_probability = 1.0 / (1.0 + ancestors[0]->average_remaining_experiments_from_start);
 								uniform_real_distribution<double> distribution(0.0, 1.0);
 								if (distribution(generator) < selected_probability) {
-									if (ancestors[0]->type == EXPERIMENT_TYPE_BRANCH) {
-										BranchExperiment* branch_ancestor = (BranchExperiment*)ancestors[0];
-										run_helper.experiment_histories.push_back(new BranchExperimentHistory(branch_ancestor));
-									} else {
-										PassThroughExperiment* pass_through_ancestor = (PassThroughExperiment*)ancestors[0];
-										run_helper.experiment_histories.push_back(new PassThroughExperimentHistory(pass_through_ancestor));
+									switch (ancestors[0]->type) {
+									case EXPERIMENT_TYPE_BRANCH:
+										{
+											BranchExperiment* branch_ancestor = (BranchExperiment*)ancestors[0];
+											run_helper.experiment_histories.push_back(new BranchExperimentHistory(branch_ancestor));
+										}
+										break;
+									case EXPERIMENT_TYPE_PASS_THROUGH:
+										{
+											PassThroughExperiment* pass_through_ancestor = (PassThroughExperiment*)ancestors[0];
+											run_helper.experiment_histories.push_back(new PassThroughExperimentHistory(pass_through_ancestor));
+										}
+										break;
+									case EXPERIMENT_TYPE_NEW_INFO:
+										{
+											NewInfoExperiment* new_info_experiment = (NewInfoExperiment*)ancestors[0];
+											run_helper.experiment_histories.push_back(new NewInfoExperimentHistory(new_info_experiment));
+										}
+										break;
 									}
 								} else {
 									is_continue = false;
@@ -113,12 +127,25 @@ bool PassThroughExperiment::activate(AbstractNode*& curr_node,
 								double selected_probability = 1.0 / (1.0 + ancestors[ancestor_index]->average_remaining_experiments_from_start);
 								uniform_real_distribution<double> distribution(0.0, 1.0);
 								if (distribution(generator) < selected_probability) {
-									if (ancestors[ancestor_index]->type == EXPERIMENT_TYPE_BRANCH) {
-										BranchExperiment* branch_ancestor = (BranchExperiment*)ancestors[ancestor_index];
-										run_helper.experiment_histories.push_back(new BranchExperimentHistory(branch_ancestor));
-									} else {
-										PassThroughExperiment* pass_through_ancestor = (PassThroughExperiment*)ancestors[ancestor_index];
-										run_helper.experiment_histories.push_back(new PassThroughExperimentHistory(pass_through_ancestor));
+									switch (ancestors[ancestor_index]->type) {
+									case EXPERIMENT_TYPE_BRANCH:
+										{
+											BranchExperiment* branch_ancestor = (BranchExperiment*)ancestors[ancestor_index];
+											run_helper.experiment_histories.push_back(new BranchExperimentHistory(branch_ancestor));
+										}
+										break;
+									case EXPERIMENT_TYPE_PASS_THROUGH:
+										{
+											PassThroughExperiment* pass_through_ancestor = (PassThroughExperiment*)ancestors[ancestor_index];
+											run_helper.experiment_histories.push_back(new PassThroughExperimentHistory(pass_through_ancestor));
+										}
+										break;
+									case EXPERIMENT_TYPE_NEW_INFO:
+										{
+											NewInfoExperiment* new_info_ancestor = (NewInfoExperiment*)ancestors[ancestor_index];
+											run_helper.experiment_histories.push_back(new NewInfoExperimentHistory(new_info_ancestor));
+										}
+										break;
 									}
 								} else {
 									is_continue = false;
@@ -139,12 +166,25 @@ bool PassThroughExperiment::activate(AbstractNode*& curr_node,
 							double selected_probability = 1.0 / (1.0 + ancestors[e_index]->average_remaining_experiments_from_start);
 							uniform_real_distribution<double> distribution(0.0, 1.0);
 							if (distribution(generator) < selected_probability) {
-								if (ancestors[e_index]->type == EXPERIMENT_TYPE_BRANCH) {
-									BranchExperiment* branch_ancestor = (BranchExperiment*)ancestors[e_index];
-									run_helper.experiment_histories.push_back(new BranchExperimentHistory(branch_ancestor));
-								} else {
-									PassThroughExperiment* pass_through_ancestor = (PassThroughExperiment*)ancestors[e_index];
-									run_helper.experiment_histories.push_back(new PassThroughExperimentHistory(pass_through_ancestor));
+								switch (ancestors[e_index]->type) {
+								case EXPERIMENT_TYPE_BRANCH:
+									{
+										BranchExperiment* branch_ancestor = (BranchExperiment*)ancestors[e_index];
+										run_helper.experiment_histories.push_back(new BranchExperimentHistory(branch_ancestor));
+									}
+									break;
+								case EXPERIMENT_TYPE_PASS_THROUGH:
+									{
+										PassThroughExperiment* pass_through_ancestor = (PassThroughExperiment*)ancestors[e_index];
+										run_helper.experiment_histories.push_back(new PassThroughExperimentHistory(pass_through_ancestor));
+									}
+									break;
+								case EXPERIMENT_TYPE_NEW_INFO:
+									{
+										NewInfoExperiment* new_info_ancestor = (NewInfoExperiment*)ancestors[e_index];
+										run_helper.experiment_histories.push_back(new NewInfoExperimentHistory(new_info_ancestor));
+									}
+									break;
 								}
 							} else {
 								is_continue = false;
@@ -186,12 +226,25 @@ bool PassThroughExperiment::activate(AbstractNode*& curr_node,
 								double selected_probability = 1.0 / (1.0 + this->root_experiment->average_remaining_experiments_from_start);
 								uniform_real_distribution<double> distribution(0.0, 1.0);
 								if (distribution(generator) < selected_probability) {
-									if (this->root_experiment->type == EXPERIMENT_TYPE_BRANCH) {
-										BranchExperiment* branch_root = (BranchExperiment*)this->root_experiment;
-										run_helper.experiment_histories.push_back(new BranchExperimentHistory(branch_root));
-									} else {
-										PassThroughExperiment* pass_through_root = (PassThroughExperiment*)this->root_experiment;
-										run_helper.experiment_histories.push_back(new PassThroughExperimentHistory(pass_through_root));
+									switch (this->root_experiment->type) {
+									case EXPERIMENT_TYPE_BRANCH:
+										{
+											BranchExperiment* branch_root = (BranchExperiment*)this->root_experiment;
+											run_helper.experiment_histories.push_back(new BranchExperimentHistory(branch_root));
+										}
+										break;
+									case EXPERIMENT_TYPE_PASS_THROUGH:
+										{
+											PassThroughExperiment* pass_through_root = (PassThroughExperiment*)this->root_experiment;
+											run_helper.experiment_histories.push_back(new PassThroughExperimentHistory(pass_through_root));
+										}
+										break;
+									case EXPERIMENT_TYPE_NEW_INFO:
+										{
+											NewInfoExperiment* new_info_root = (NewInfoExperiment*)this->root_experiment;
+											run_helper.experiment_histories.push_back(new NewInfoExperimentHistory(new_info_root));
+										}
+										break;
 									}
 								}
 								run_helper.experiments_seen_order.push_back(this->root_experiment);
@@ -233,12 +286,25 @@ bool PassThroughExperiment::activate(AbstractNode*& curr_node,
 								double selected_probability = 1.0 / (1.0 + this->root_experiment->average_remaining_experiments_from_start);
 								uniform_real_distribution<double> distribution(0.0, 1.0);
 								if (distribution(generator) < selected_probability) {
-									if (this->root_experiment->type == EXPERIMENT_TYPE_BRANCH) {
-										BranchExperiment* branch_root = (BranchExperiment*)this->root_experiment;
-										run_helper.experiment_histories.push_back(new BranchExperimentHistory(branch_root));
-									} else {
-										PassThroughExperiment* pass_through_root = (PassThroughExperiment*)this->root_experiment;
-										run_helper.experiment_histories.push_back(new PassThroughExperimentHistory(pass_through_root));
+									switch (this->root_experiment->type) {
+									case EXPERIMENT_TYPE_BRANCH:
+										{
+											BranchExperiment* branch_root = (BranchExperiment*)this->root_experiment;
+											run_helper.experiment_histories.push_back(new BranchExperimentHistory(branch_root));
+										}
+										break;
+									case EXPERIMENT_TYPE_PASS_THROUGH:
+										{
+											PassThroughExperiment* pass_through_root = (PassThroughExperiment*)this->root_experiment;
+											run_helper.experiment_histories.push_back(new PassThroughExperimentHistory(pass_through_root));
+										}
+										break;
+									case EXPERIMENT_TYPE_NEW_INFO:
+										{
+											NewInfoExperiment* new_info_root = (NewInfoExperiment*)this->root_experiment;
+											run_helper.experiment_histories.push_back(new NewInfoExperimentHistory(new_info_root));
+										}
+										break;
 									}
 									is_selected = true;
 								}
@@ -267,24 +333,24 @@ bool PassThroughExperiment::activate(AbstractNode*& curr_node,
 		case PASS_THROUGH_EXPERIMENT_STATE_MEASURE_NEW:
 			measure_new_activate(curr_node,
 								 problem,
-								 context,
 								 run_helper);
 			break;
 		case PASS_THROUGH_EXPERIMENT_STATE_VERIFY_1ST_NEW:
 		case PASS_THROUGH_EXPERIMENT_STATE_VERIFY_2ND_NEW:
 			verify_new_activate(curr_node,
 								problem,
-								context,
 								run_helper);
 			break;
 		case PASS_THROUGH_EXPERIMENT_STATE_ROOT_VERIFY:
 			root_verify_activate(curr_node,
+								 problem,
 								 run_helper);
 			break;
 		case PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT:
 			switch (this->root_state) {
 			case ROOT_EXPERIMENT_STATE_EXPERIMENT:
 				experiment_activate(curr_node,
+									problem,
 									context,
 									run_helper,
 									history);
@@ -292,6 +358,7 @@ bool PassThroughExperiment::activate(AbstractNode*& curr_node,
 			case ROOT_EXPERIMENT_STATE_VERIFY_1ST:
 			case ROOT_EXPERIMENT_STATE_VERIFY_2ND:
 				experiment_verify_new_activate(curr_node,
+											   problem,
 											   run_helper);
 				break;
 			}

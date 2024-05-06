@@ -6,6 +6,8 @@
 #include "branch_node.h"
 #include "constants.h"
 #include "globals.h"
+#include "info_branch_node.h"
+#include "info_scope.h"
 #include "problem.h"
 #include "scope.h"
 #include "scope_node.h"
@@ -25,18 +27,45 @@ void PassThroughExperiment::explore_activate(
 		Problem* problem,
 		vector<ContextLayer>& context,
 		RunHelper& run_helper) {
-	for (int s_index = 0; s_index < (int)this->curr_step_types.size(); s_index++) {
-		if (this->curr_step_types[s_index] == STEP_TYPE_ACTION) {
-			problem->perform_action(this->curr_actions[s_index]->action);
-		} else {
-			this->curr_scopes[s_index]->explore_activate(
-				problem,
-				context,
-				run_helper);
+	if (this->curr_info_scope == NULL) {
+		for (int s_index = 0; s_index < (int)this->curr_step_types.size(); s_index++) {
+			if (this->curr_step_types[s_index] == STEP_TYPE_ACTION) {
+				problem->perform_action(this->curr_actions[s_index]->action);
+			} else {
+				this->curr_scopes[s_index]->explore_activate(
+					problem,
+					context,
+					run_helper);
+			}
+		}
+
+		curr_node = this->curr_exit_next_node;
+	} else {
+		ScopeHistory* inner_scope_history;
+		bool inner_is_positive;
+		this->curr_info_scope->activate(problem,
+										run_helper,
+										inner_scope_history,
+										inner_is_positive);
+
+		delete inner_scope_history;
+
+		if ((this->curr_is_negate && !inner_is_positive)
+				|| (!this->curr_is_negate && inner_is_positive)) {
+			for (int s_index = 0; s_index < (int)this->curr_step_types.size(); s_index++) {
+				if (this->curr_step_types[s_index] == STEP_TYPE_ACTION) {
+					problem->perform_action(this->curr_actions[s_index]->action);
+				} else {
+					this->curr_scopes[s_index]->explore_activate(
+						problem,
+						context,
+						run_helper);
+				}
+			}
+
+			curr_node = this->curr_exit_next_node;
 		}
 	}
-
-	curr_node = this->curr_exit_next_node;
 }
 
 void PassThroughExperiment::explore_backprop(
@@ -64,6 +93,8 @@ void PassThroughExperiment::explore_backprop(
 			}
 
 			this->best_score = curr_score;
+			this->best_info_scope = this->curr_info_scope;
+			this->best_is_negate = this->curr_is_negate;
 			this->best_step_types = this->curr_step_types;
 			this->best_actions = this->curr_actions;
 			this->best_scopes = this->curr_scopes;
@@ -190,19 +221,39 @@ void PassThroughExperiment::explore_backprop(
 			}
 
 			AbstractNode* starting_node;
-			if (this->node_context->type == NODE_TYPE_ACTION) {
-				ActionNode* action_node = (ActionNode*)this->node_context;
-				starting_node = action_node->next_node;
-			} else if (this->node_context->type == NODE_TYPE_SCOPE) {
-				ScopeNode* scope_node = (ScopeNode*)this->node_context;
-				starting_node = scope_node->next_node;
-			} else {
-				BranchNode* branch_node = (BranchNode*)this->node_context;
-				if (this->is_branch) {
-					starting_node = branch_node->branch_next_node;
-				} else {
-					starting_node = branch_node->original_next_node;
+			switch (this->node_context->type) {
+			case NODE_TYPE_ACTION:
+				{
+					ActionNode* action_node = (ActionNode*)this->node_context;
+					starting_node = action_node->next_node;
 				}
+				break;
+			case NODE_TYPE_SCOPE:
+				{
+					ScopeNode* scope_node = (ScopeNode*)this->node_context;
+					starting_node = scope_node->next_node;
+				}
+				break;
+			case NODE_TYPE_BRANCH:
+				{
+					BranchNode* branch_node = (BranchNode*)this->node_context;
+					if (this->is_branch) {
+						starting_node = branch_node->branch_next_node;
+					} else {
+						starting_node = branch_node->original_next_node;
+					}
+				}
+				break;
+			case NODE_TYPE_INFO_BRANCH:
+				{
+					InfoBranchNode* info_branch_node = (InfoBranchNode*)this->node_context;
+					if (this->is_branch) {
+						starting_node = info_branch_node->branch_next_node;
+					} else {
+						starting_node = info_branch_node->original_next_node;
+					}
+				}
+				break;
 			}
 
 			this->scope_context->random_exit_activate(
@@ -212,6 +263,10 @@ void PassThroughExperiment::explore_backprop(
 			uniform_int_distribution<int> distribution(0, possible_exits.size()-1);
 			int random_index = distribution(generator);
 			this->curr_exit_next_node = possible_exits[random_index];
+
+			this->curr_info_scope = get_existing_info_scope();
+			uniform_int_distribution<int> negate_distribution(0, 1);
+			this->curr_is_negate = negate_distribution(generator) == 0;
 
 			int new_num_steps;
 			uniform_int_distribution<int> uniform_distribution(0, 1);

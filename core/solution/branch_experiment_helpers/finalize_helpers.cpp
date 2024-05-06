@@ -6,6 +6,7 @@
 #include "branch_node.h"
 #include "constants.h"
 #include "globals.h"
+#include "info_branch_node.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
@@ -246,50 +247,73 @@ void BranchExperiment::new_branch(Solution* duplicate) {
 	this->new_network = NULL;
 
 	AbstractNode* duplicate_explore_node = duplicate_local_scope->nodes[this->node_context->id];
-	if (duplicate_explore_node->type == NODE_TYPE_ACTION) {
-		ActionNode* action_node = (ActionNode*)duplicate_explore_node;
+	switch (duplicate_explore_node->type) {
+	case NODE_TYPE_ACTION:
+		{
+			ActionNode* action_node = (ActionNode*)duplicate_explore_node;
 
-		if (action_node->next_node == NULL) {
-			/**
-			 * - ending node
-			 */
-			if (this->ending_node != NULL) {
-				new_branch_node->original_next_node_id = this->ending_node->id;
-				new_branch_node->original_next_node = this->ending_node;
+			if (action_node->next_node == NULL) {
+				/**
+				 * - ending node
+				 */
+				if (this->ending_node != NULL) {
+					new_branch_node->original_next_node_id = this->ending_node->id;
+					new_branch_node->original_next_node = this->ending_node;
+				} else {
+					ActionNode* new_ending_node = new ActionNode();
+					new_ending_node->parent = duplicate_local_scope;
+					new_ending_node->id = duplicate_local_scope->node_counter;
+					duplicate_local_scope->node_counter++;
+					duplicate_local_scope->nodes[new_ending_node->id] = new_ending_node;
+
+					new_ending_node->action = Action(ACTION_NOOP);
+
+					new_ending_node->next_node_id = -1;
+					new_ending_node->next_node = NULL;
+
+					new_branch_node->original_next_node_id = new_ending_node->id;
+					new_branch_node->original_next_node = new_ending_node;
+				}
 			} else {
-				ActionNode* new_ending_node = new ActionNode();
-				new_ending_node->parent = duplicate_local_scope;
-				new_ending_node->id = duplicate_local_scope->node_counter;
-				duplicate_local_scope->node_counter++;
-				duplicate_local_scope->nodes[new_ending_node->id] = new_ending_node;
-
-				new_ending_node->action = Action(ACTION_NOOP);
-
-				new_ending_node->next_node_id = -1;
-				new_ending_node->next_node = NULL;
-
-				new_branch_node->original_next_node_id = new_ending_node->id;
-				new_branch_node->original_next_node = new_ending_node;
+				new_branch_node->original_next_node_id = action_node->next_node_id;
+				new_branch_node->original_next_node = action_node->next_node;
 			}
-		} else {
-			new_branch_node->original_next_node_id = action_node->next_node_id;
-			new_branch_node->original_next_node = action_node->next_node;
 		}
-	} else if (duplicate_explore_node->type == NODE_TYPE_SCOPE) {
-		ScopeNode* scope_node = (ScopeNode*)duplicate_explore_node;
+		break;
+	case NODE_TYPE_SCOPE:
+		{
+			ScopeNode* scope_node = (ScopeNode*)duplicate_explore_node;
 
-		new_branch_node->original_next_node_id = scope_node->next_node_id;
-		new_branch_node->original_next_node = scope_node->next_node;
-	} else {
-		BranchNode* branch_node = (BranchNode*)duplicate_explore_node;
-
-		if (this->is_branch) {
-			new_branch_node->original_next_node_id = branch_node->branch_next_node_id;
-			new_branch_node->original_next_node = branch_node->branch_next_node;
-		} else {
-			new_branch_node->original_next_node_id = branch_node->original_next_node_id;
-			new_branch_node->original_next_node = branch_node->original_next_node;
+			new_branch_node->original_next_node_id = scope_node->next_node_id;
+			new_branch_node->original_next_node = scope_node->next_node;
 		}
+		break;
+	case NODE_TYPE_BRANCH:
+		{
+			BranchNode* branch_node = (BranchNode*)duplicate_explore_node;
+
+			if (this->is_branch) {
+				new_branch_node->original_next_node_id = branch_node->branch_next_node_id;
+				new_branch_node->original_next_node = branch_node->branch_next_node;
+			} else {
+				new_branch_node->original_next_node_id = branch_node->original_next_node_id;
+				new_branch_node->original_next_node = branch_node->original_next_node;
+			}
+		}
+		break;
+	case NODE_TYPE_INFO_BRANCH:
+		{
+			InfoBranchNode* info_branch_node = (InfoBranchNode*)duplicate_explore_node;
+
+			if (this->is_branch) {
+				new_branch_node->original_next_node_id = info_branch_node->branch_next_node_id;
+				new_branch_node->original_next_node = info_branch_node->branch_next_node;
+			} else {
+				new_branch_node->original_next_node_id = info_branch_node->original_next_node_id;
+				new_branch_node->original_next_node = info_branch_node->original_next_node;
+			}
+		}
+		break;
 	}
 
 	if (this->best_step_types.size() == 0) {
@@ -305,26 +329,49 @@ void BranchExperiment::new_branch(Solution* duplicate) {
 		}
 	}
 
-	if (duplicate_explore_node->type == NODE_TYPE_ACTION) {
-		ActionNode* action_node = (ActionNode*)duplicate_explore_node;
+	switch (duplicate_explore_node->type) {
+	case NODE_TYPE_ACTION:
+		{
+			ActionNode* action_node = (ActionNode*)duplicate_explore_node;
 
-		action_node->next_node_id = new_branch_node->id;
-		action_node->next_node = new_branch_node;
-	} else if (duplicate_explore_node->type == NODE_TYPE_SCOPE) {
-		ScopeNode* scope_node = (ScopeNode*)duplicate_explore_node;
-
-		scope_node->next_node_id = new_branch_node->id;
-		scope_node->next_node = new_branch_node;
-	} else {
-		BranchNode* branch_node = (BranchNode*)duplicate_explore_node;
-
-		if (this->is_branch) {
-			branch_node->branch_next_node_id = new_branch_node->id;
-			branch_node->branch_next_node = new_branch_node;
-		} else {
-			branch_node->original_next_node_id = new_branch_node->id;
-			branch_node->original_next_node = new_branch_node;
+			action_node->next_node_id = new_branch_node->id;
+			action_node->next_node = new_branch_node;
 		}
+		break;
+	case NODE_TYPE_SCOPE:
+		{
+			ScopeNode* scope_node = (ScopeNode*)duplicate_explore_node;
+
+			scope_node->next_node_id = new_branch_node->id;
+			scope_node->next_node = new_branch_node;
+		}
+		break;
+	case NODE_TYPE_BRANCH:
+		{
+			BranchNode* branch_node = (BranchNode*)duplicate_explore_node;
+
+			if (this->is_branch) {
+				branch_node->branch_next_node_id = new_branch_node->id;
+				branch_node->branch_next_node = new_branch_node;
+			} else {
+				branch_node->original_next_node_id = new_branch_node->id;
+				branch_node->original_next_node = new_branch_node;
+			}
+		}
+		break;
+	case NODE_TYPE_INFO_BRANCH:
+		{
+			InfoBranchNode* info_branch_node = (InfoBranchNode*)duplicate_explore_node;
+
+			if (this->is_branch) {
+				info_branch_node->branch_next_node_id = new_branch_node->id;
+				info_branch_node->branch_next_node = new_branch_node;
+			} else {
+				info_branch_node->original_next_node_id = new_branch_node->id;
+				info_branch_node->original_next_node = new_branch_node;
+			}
+		}
+		break;
 	}
 
 	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
@@ -396,26 +443,49 @@ void BranchExperiment::new_pass_through(Solution* duplicate) {
 		}
 	}
 
-	if (duplicate_explore_node->type == NODE_TYPE_ACTION) {
-		ActionNode* action_node = (ActionNode*)duplicate_explore_node;
+	switch (duplicate_explore_node->type) {
+	case NODE_TYPE_ACTION:
+		{
+			ActionNode* action_node = (ActionNode*)duplicate_explore_node;
 
-		action_node->next_node_id = start_node_id;
-		action_node->next_node = start_node;
-	} else if (duplicate_explore_node->type == NODE_TYPE_SCOPE) {
-		ScopeNode* scope_node = (ScopeNode*)duplicate_explore_node;
-
-		scope_node->next_node_id = start_node_id;
-		scope_node->next_node = start_node;
-	} else {
-		BranchNode* branch_node = (BranchNode*)duplicate_explore_node;
-
-		if (this->is_branch) {
-			branch_node->branch_next_node_id = start_node_id;
-			branch_node->branch_next_node = start_node;
-		} else {
-			branch_node->original_next_node_id = start_node_id;
-			branch_node->original_next_node = start_node;
+			action_node->next_node_id = start_node_id;
+			action_node->next_node = start_node;
 		}
+		break;
+	case NODE_TYPE_SCOPE:
+		{
+			ScopeNode* scope_node = (ScopeNode*)duplicate_explore_node;
+
+			scope_node->next_node_id = start_node_id;
+			scope_node->next_node = start_node;
+		}
+		break;
+	case NODE_TYPE_BRANCH:
+		{
+			BranchNode* branch_node = (BranchNode*)duplicate_explore_node;
+
+			if (this->is_branch) {
+				branch_node->branch_next_node_id = start_node_id;
+				branch_node->branch_next_node = start_node;
+			} else {
+				branch_node->original_next_node_id = start_node_id;
+				branch_node->original_next_node = start_node;
+			}
+		}
+		break;
+	case NODE_TYPE_INFO_BRANCH:
+		{
+			InfoBranchNode* info_branch_node = (InfoBranchNode*)duplicate_explore_node;
+
+			if (this->is_branch) {
+				info_branch_node->branch_next_node_id = start_node_id;
+				info_branch_node->branch_next_node = start_node;
+			} else {
+				info_branch_node->original_next_node_id = start_node_id;
+				info_branch_node->original_next_node = start_node;
+			}
+		}
+		break;
 	}
 
 	if (this->ending_node != NULL) {

@@ -6,7 +6,9 @@
 #include "branch_node.h"
 #include "constants.h"
 #include "globals.h"
+#include "info_branch_node.h"
 #include "network.h"
+#include "new_info_experiment.h"
 #include "pass_through_experiment.h"
 #include "scope.h"
 #include "scope_node.h"
@@ -75,16 +77,33 @@ bool BranchExperiment::experiment_activate(AbstractNode*& curr_node,
 					break;
 				} else {
 					if (curr_layer == (int)this->input_scope_contexts[i_index].size()-1) {
-						if (it->first->type == NODE_TYPE_ACTION) {
-							ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
-							input_vals[i_index] = action_node_history->obs_snapshot[this->input_obs_indexes[i_index]];
-						} else {
-							BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
-							if (branch_node_history->is_branch) {
-								input_vals[i_index] = 1.0;
-							} else {
-								input_vals[i_index] = -1.0;
+						switch (it->first->type) {
+						case NODE_TYPE_ACTION:
+							{
+								ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
+								input_vals[i_index] = action_node_history->obs_snapshot[this->input_obs_indexes[i_index]];
 							}
+							break;
+						case NODE_TYPE_BRANCH:
+							{
+								BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
+								if (branch_node_history->is_branch) {
+									input_vals[i_index] = 1.0;
+								} else {
+									input_vals[i_index] = -1.0;
+								}
+							}
+							break;
+						case NODE_TYPE_INFO_BRANCH:
+							{
+								InfoBranchNodeHistory* info_branch_node_history = (InfoBranchNodeHistory*)it->second;
+								if (info_branch_node_history->is_branch) {
+									input_vals[i_index] = 1.0;
+								} else {
+									input_vals[i_index] = -1.0;
+								}
+							}
+							break;
 						}
 						break;
 					} else {
@@ -211,6 +230,15 @@ void BranchExperiment::experiment_backprop(double target_val,
 					}
 
 					break;
+				case NODE_TYPE_INFO_BRANCH:
+					{
+						InfoBranchNodeHistory* info_branch_node_history = (InfoBranchNodeHistory*)it->second;
+
+						possible_node_contexts.push_back(it->first);
+						possible_is_branch.push_back(info_branch_node_history->is_branch);
+					}
+
+					break;
 				}
 			}
 		}
@@ -222,18 +250,29 @@ void BranchExperiment::experiment_backprop(double target_val,
 			uniform_int_distribution<int> possible_distribution(0, (int)possible_node_contexts.size()-1);
 			int rand_index = possible_distribution(generator);
 
-			uniform_int_distribution<int> experiment_type_distribution(0, 1);
-			if (experiment_type_distribution(generator) == 0) {
-				BranchExperiment* new_experiment = new BranchExperiment(
-					this->scope_context,
-					possible_node_contexts[rand_index],
-					possible_is_branch[rand_index],
-					this);
+			uniform_int_distribution<int> branch_distribution(0, 3);
+			if (branch_distribution(generator) == 0) {
+				uniform_int_distribution<int> info_distribution(0, 1);
+				if (info_distribution(generator) == 0) {
+					NewInfoExperiment* new_experiment = new NewInfoExperiment(
+						this->scope_context,
+						possible_node_contexts[rand_index],
+						possible_is_branch[rand_index],
+						this);
 
-				/**
-				 * - insert at front to match finalize order
-				 */
-				possible_node_contexts[rand_index]->experiments.insert(possible_node_contexts[rand_index]->experiments.begin(), new_experiment);
+					/**
+					 * - insert at front to match finalize order
+					 */
+					possible_node_contexts[rand_index]->experiments.insert(possible_node_contexts[rand_index]->experiments.begin(), new_experiment);
+				} else {
+					BranchExperiment* new_experiment = new BranchExperiment(
+						this->scope_context,
+						possible_node_contexts[rand_index],
+						possible_is_branch[rand_index],
+						this);
+
+					possible_node_contexts[rand_index]->experiments.insert(possible_node_contexts[rand_index]->experiments.begin(), new_experiment);
+				}
 			} else {
 				PassThroughExperiment* new_experiment = new PassThroughExperiment(
 					this->scope_context,
@@ -241,9 +280,6 @@ void BranchExperiment::experiment_backprop(double target_val,
 					possible_is_branch[rand_index],
 					this);
 
-				/**
-				 * - insert at front to match finalize order
-				 */
 				possible_node_contexts[rand_index]->experiments.insert(possible_node_contexts[rand_index]->experiments.begin(), new_experiment);
 			}
 		}

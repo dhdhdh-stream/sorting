@@ -8,6 +8,7 @@
 #include <fstream>
 #include <vector>
 
+#include "context_layer.h"
 #include "run_helper.h"
 
 class AbstractNode;
