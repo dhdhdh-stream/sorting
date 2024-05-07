@@ -103,7 +103,6 @@ void Scope::activate(Problem* problem,
 	AbstractNode* curr_node = this->nodes[0];
 	while (true) {
 		if (run_helper.exceeded_limit
-				|| solution->num_actions_until_experiment == 0
 				|| curr_node == NULL) {
 			break;
 		}

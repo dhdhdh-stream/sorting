@@ -15,6 +15,7 @@
 class AbstractExperiment;
 class Eval;
 class InfoScope;
+class NewActionTracker;
 class Problem;
 class Scope;
 
@@ -29,7 +30,6 @@ public:
 	double average_num_actions;
 
 	int state;
-	int state_iter;
 
 	int num_actions_until_experiment;
 	int num_actions_until_random;
@@ -39,6 +39,8 @@ public:
 	std::vector<InfoScope*> info_scopes;
 
 	Eval* eval;
+
+	NewActionTracker* new_action_tracker;
 
 	/**
 	 * - max depth for run that concluded

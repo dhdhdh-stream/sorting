@@ -4,6 +4,7 @@
 
 #include "abstract_experiment.h"
 #include "globals.h"
+#include "new_action_helpers.h"
 #include "problem.h"
 #include "scope.h"
 #include "solution.h"
@@ -34,5 +35,12 @@ void ActionNode::activate(AbstractNode*& curr_node,
 		if (is_selected) {
 			return;
 		}
+	}
+
+	if (solution->state == SOLUTION_STATE_GENERALIZE) {
+		new_action_activate(this,
+							curr_node,
+							problem,
+							run_helper);
 	}
 }

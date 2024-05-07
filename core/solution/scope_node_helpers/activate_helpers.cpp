@@ -4,7 +4,9 @@
 
 #include "abstract_experiment.h"
 #include "globals.h"
+#include "new_action_helpers.h"
 #include "scope.h"
+#include "solution.h"
 
 using namespace std;
 
@@ -50,5 +52,12 @@ void ScopeNode::activate(AbstractNode*& curr_node,
 				return;
 			}
 		}
+	}
+
+	if (solution->state == SOLUTION_STATE_GENERALIZE) {
+		new_action_activate(this,
+							curr_node,
+							problem,
+							run_helper);
 	}
 }

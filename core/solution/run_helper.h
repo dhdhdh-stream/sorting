@@ -5,6 +5,7 @@
 
 class AbstractExperiment;
 class AbstractExperimentHistory;
+class NewActionHistory;
 
 class RunHelper {
 public:
@@ -19,6 +20,8 @@ public:
 	std::vector<AbstractExperiment*> experiments_seen_order;
 
 	std::vector<AbstractExperimentHistory*> experiment_histories;
+
+	NewActionHistory* new_action_history;
 
 	#if defined(MDEBUG) && MDEBUG
 	void* verify_key;

@@ -5,6 +5,7 @@
 #include "globals.h"
 #include "info_branch_node.h"
 #include "info_scope_node.h"
+#include "new_action_tracker.h"
 #include "problem.h"
 #include "scope.h"
 #include "solution.h"
@@ -33,6 +34,21 @@ void InfoPassThroughExperiment::measure_existing_backprop(
 
 		if (run_helper.num_actions > solution->max_num_actions) {
 			solution->max_num_actions = run_helper.num_actions;
+		}
+	}
+
+	if (run_helper.new_action_history != NULL) {
+		for (int n_index = 0; n_index < (int)run_helper.new_action_history->existing_path_taken.size(); n_index++) {
+			NewActionNodeTracker* node_tracker = solution->new_action_tracker->node_trackers[
+				run_helper.new_action_history->existing_path_taken[n_index]];
+			node_tracker->existing_score += target_val;
+			node_tracker->existing_count++;
+		}
+		for (int n_index = 0; n_index < (int)run_helper.new_action_history->new_path_taken.size(); n_index++) {
+			NewActionNodeTracker* node_tracker = solution->new_action_tracker->node_trackers[
+				run_helper.new_action_history->new_path_taken[n_index]];
+			node_tracker->new_score += target_val;
+			node_tracker->new_count++;
 		}
 	}
 

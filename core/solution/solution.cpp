@@ -7,18 +7,11 @@
 #include "eval.h"
 #include "globals.h"
 #include "info_scope.h"
+#include "new_action_helpers.h"
+#include "new_action_tracker.h"
 #include "scope.h"
 
 using namespace std;
-
-#if defined(MDEBUG) && MDEBUG
-const int TRAVERSE_ITERS = 5;
-const int GENERALIZE_ITERS = 5;
-#else
-// const int TRAVERSE_ITERS = 20;
-const int TRAVERSE_ITERS = 50000;
-const int GENERALIZE_ITERS = 10;
-#endif /* MDEBUG */
 
 Solution::Solution() {
 	// do nothing
@@ -30,7 +23,6 @@ Solution::Solution(Solution* original) {
 	this->average_num_actions = original->average_num_actions;
 
 	this->state = original->state;
-	this->state_iter = original->state_iter;
 
 	this->num_actions_until_experiment = original->num_actions_until_experiment;
 	this->num_actions_until_random = original->num_actions_until_random;
@@ -69,6 +61,13 @@ Solution::Solution(Solution* original) {
 
 	this->eval = new Eval(original->eval);
 
+	if (original->new_action_tracker == NULL) {
+		this->new_action_tracker = NULL;
+	} else {
+		this->new_action_tracker = new NewActionTracker(original->new_action_tracker,
+														this);
+	}
+
 	this->max_depth = original->max_depth;
 	this->depth_limit = original->depth_limit;
 
@@ -86,6 +85,10 @@ Solution::~Solution() {
 	}
 
 	delete this->eval;
+
+	if (this->new_action_tracker != NULL) {
+		delete this->new_action_tracker;
+	}
 }
 
 void Solution::init() {
@@ -94,14 +97,6 @@ void Solution::init() {
 	this->average_num_actions = 0.0;
 
 	this->state = SOLUTION_STATE_TRAVERSE;
-	#if defined(MDEBUG) && MDEBUG
-	this->state_iter = 0;
-	#else
-	/**
-	 * - for initial, start at 10
-	 */
-	this->state_iter = 10;
-	#endif /* MDEBUG */
 
 	this->num_actions_until_experiment = -1;
 	this->num_actions_until_random = -1;
@@ -120,6 +115,8 @@ void Solution::init() {
 
 	this->eval = new Eval();
 	this->eval->init();
+
+	this->new_action_tracker = NULL;
 
 	this->max_depth = 1;
 	this->depth_limit = 11;
@@ -149,16 +146,7 @@ void Solution::load(string path,
 	getline(input_file, state_line);
 	this->state = stoi(state_line);
 
-	string state_iter_line;
-	getline(input_file, state_iter_line);
-	this->state_iter = stoi(state_iter_line);
-
-	if (this->state == SOLUTION_STATE_TRAVERSE) {
-		this->num_actions_until_experiment = -1;
-	} else if (this->state == SOLUTION_STATE_GENERALIZE) {
-		uniform_int_distribution<int> next_distribution(0, (int)(2.0 * this->average_num_actions));
-		this->num_actions_until_experiment = 1 + next_distribution(generator);
-	}
+	this->num_actions_until_experiment = -1;
 	this->num_actions_until_random = -1;
 
 	string num_scopes_line;
@@ -201,6 +189,13 @@ void Solution::load(string path,
 	this->eval = new Eval();
 	this->eval->load(input_file);
 
+	if (this->state == SOLUTION_STATE_GENERALIZE) {
+		this->new_action_tracker = new NewActionTracker();
+		this->new_action_tracker->load(input_file);
+	} else {
+		this->new_action_tracker = NULL;
+	}
+
 	string max_depth_line;
 	getline(input_file, max_depth_line);
 	this->max_depth = stoi(max_depth_line);
@@ -236,9 +231,8 @@ void Solution::clear_verify() {
 #endif /* MDEBUG */
 
 void Solution::increment() {
-	this->state_iter++;
 	if (this->state == SOLUTION_STATE_TRAVERSE
-			&& this->state_iter >= TRAVERSE_ITERS) {
+			&& this->current->nodes.size() >= NEW_ACTION_EXPERIMENT_MIN_NODES) {
 		Scope* new_scope = new Scope();
 		new_scope->id = this->scopes.size();
 		this->scopes.push_back(new_scope);
@@ -253,31 +247,28 @@ void Solution::increment() {
 		new_scope->node_counter = 1;
 
 		this->state = SOLUTION_STATE_GENERALIZE;
-		this->state_iter = 0;
 
-		uniform_int_distribution<int> next_distribution(0, (int)(2.0 * this->average_num_actions));
-		this->num_actions_until_experiment = 1 + next_distribution(generator);
-		this->num_actions_until_random = -1;
-	} else if (this->state == SOLUTION_STATE_GENERALIZE
-			&& this->state_iter >= GENERALIZE_ITERS) {
-		delete this->current;
-		this->current = new Scope();
-		this->current->id = -1;
+		setup_new_action();
+	} else if (this->state == SOLUTION_STATE_GENERALIZE) {
+		this->new_action_tracker->increment();
+		if (this->new_action_tracker->epoch_iter > NEW_ACTION_NUM_EPOCHS) {
+			delete this->current;
+			this->current = new Scope();
+			this->current->id = -1;
 
-		ActionNode* starting_noop_node = new ActionNode();
-		starting_noop_node->parent = this->current;
-		starting_noop_node->id = 0;
-		starting_noop_node->action = Action(ACTION_NOOP);
-		starting_noop_node->next_node_id = -1;
-		starting_noop_node->next_node = NULL;
-		this->current->nodes[0] = starting_noop_node;
-		this->current->node_counter = 1;
+			ActionNode* starting_noop_node = new ActionNode();
+			starting_noop_node->parent = this->current;
+			starting_noop_node->id = 0;
+			starting_noop_node->action = Action(ACTION_NOOP);
+			starting_noop_node->next_node_id = -1;
+			starting_noop_node->next_node = NULL;
+			this->current->nodes[0] = starting_noop_node;
+			this->current->node_counter = 1;
 
-		this->state = SOLUTION_STATE_TRAVERSE;
-		this->state_iter = 0;
+			this->state = SOLUTION_STATE_TRAVERSE;
 
-		this->num_actions_until_experiment = -1;
-		this->num_actions_until_random = -1;
+			this->num_actions_until_experiment = -1;
+		}
 	}
 }
 
@@ -291,7 +282,6 @@ void Solution::save(string path,
 	output_file << this->average_num_actions << endl;
 
 	output_file << this->state << endl;
-	output_file << this->state_iter << endl;
 
 	output_file << this->scopes.size() << endl;
 	output_file << this->info_scopes.size() << endl;
@@ -305,6 +295,10 @@ void Solution::save(string path,
 	}
 
 	this->eval->save(output_file);
+
+	if (this->state == SOLUTION_STATE_GENERALIZE) {
+		this->new_action_tracker->save(output_file);
+	}
 
 	output_file << this->max_depth << endl;
 

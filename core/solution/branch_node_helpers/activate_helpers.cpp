@@ -8,6 +8,7 @@
 #include "info_branch_node.h"
 #include "info_scope_node.h"
 #include "network.h"
+#include "new_action_helpers.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
@@ -149,5 +150,12 @@ void BranchNode::activate(AbstractNode*& curr_node,
 				return;
 			}
 		}
+	}
+
+	if (solution->state == SOLUTION_STATE_GENERALIZE) {
+		new_action_activate(this,
+							curr_node,
+							problem,
+							run_helper);
 	}
 }
