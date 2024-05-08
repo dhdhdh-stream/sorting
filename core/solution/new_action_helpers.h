@@ -5,8 +5,9 @@
 
 class AbstractNode;
 class Problem;
+class Solution;
 
-void setup_new_action();
+void setup_new_action(Solution* parent_solution);
 
 void new_action_activate(AbstractNode* experiment_node,
 						 AbstractNode*& curr_node,

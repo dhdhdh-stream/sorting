@@ -9,13 +9,23 @@ class AbstractNode;
 class Scope;
 class Solution;
 
-const int NEW_ACTION_EXPERIMENT_MIN_NODES = 50;
+#if defined(MDEBUG) && MDEBUG
+const int NEW_ACTION_EXPERIMENT_MIN_NODES = 20;
+
+const int NEW_ACTION_TRY_NODES = 4;
+
+const int NEW_ACTION_NUM_EPOCHS = 2;
+const int NEW_ACTION_MAX_FILTER_PER_EPOCH = 1;
+const int NEW_ACTION_IMPROVEMENTS_PER_EPOCH = 2;
+#else
+const int NEW_ACTION_EXPERIMENT_MIN_NODES = 60;
 
 const int NEW_ACTION_TRY_NODES = 20;
 
 const int NEW_ACTION_NUM_EPOCHS = 4;
 const int NEW_ACTION_MAX_FILTER_PER_EPOCH = 5;
-const int NEW_ACTION_IMPROVEMENTS_PER_EPOCH = 10;
+const int NEW_ACTION_IMPROVEMENTS_PER_EPOCH = 5;
+#endif /* MDEBUG */
 
 class NewActionNodeTracker {
 public:
@@ -49,10 +59,11 @@ public:
 	NewActionTracker();
 	NewActionTracker(NewActionTracker* original,
 					 Solution* parent_solution);
+	~NewActionTracker();
 
 	void increment();
 
-	void init();
+	void init(Solution* parent_solution);
 	void load(std::ifstream& input_file);
 
 	void save(std::ofstream& output_file);

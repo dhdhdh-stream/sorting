@@ -7,26 +7,33 @@
 
 using namespace std;
 
-void setup_new_action() {
-	solution->new_action_tracker = new NewActionTracker();
+void setup_new_action(Solution* parent_solution) {
+	parent_solution->new_action_tracker = new NewActionTracker();
+	parent_solution->new_action_tracker->init(parent_solution);
 
-	while (solution->new_action_tracker->node_trackers.size() < NEW_ACTION_TRY_NODES) {
+	while (parent_solution->new_action_tracker->node_trackers.size() < NEW_ACTION_TRY_NODES) {
 		vector<AbstractNode*> possible_nodes;
-		solution->current->random_exit_activate(
-			solution->current->nodes[0],
+		parent_solution->current->random_exit_activate(
+			parent_solution->current->nodes[0],
 			possible_nodes);
 
 		uniform_int_distribution<int> start_distribution(0, possible_nodes.size()-1);
 		int start_index = start_distribution(generator);
 
+		/**
+		 * TODO: potentially take into account branching
+		 */
 		map<AbstractNode*, NewActionNodeTracker*>::iterator it =
-			solution->new_action_tracker->node_trackers.find(possible_nodes[start_index]);
-		if (it == solution->new_action_tracker->node_trackers.end()) {
+			parent_solution->new_action_tracker->node_trackers.find(possible_nodes[start_index]);
+		if (it == parent_solution->new_action_tracker->node_trackers.end()) {
 			possible_nodes.push_back(NULL);
-			uniform_int_distribution<int> exit_distribution(start_index+1, possible_nodes.size()-1);
-			int exit_index = exit_distribution(generator);
+			geometric_distribution<int> exit_distribution(0.33);
+			int exit_index = start_index + 1 + exit_distribution(generator);
+			if (exit_index > (int)possible_nodes.size()-1) {
+				exit_index = (int)possible_nodes.size()-1;
+			}
 
-			solution->new_action_tracker->node_trackers[possible_nodes[start_index]] =
+			parent_solution->new_action_tracker->node_trackers[possible_nodes[start_index]] =
 				new NewActionNodeTracker(possible_nodes[exit_index]);
 		}
 	}

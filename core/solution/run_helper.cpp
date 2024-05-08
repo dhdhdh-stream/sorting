@@ -1,7 +1,9 @@
 #include "run_helper.h"
 
 #include "abstract_experiment.h"
+#include "globals.h"
 #include "new_action_tracker.h"
+#include "solution.h"
 
 using namespace std;
 
@@ -14,7 +16,11 @@ RunHelper::RunHelper() {
 
 	this->exceeded_limit = false;
 
-	this->new_action_history = NULL;
+	if (solution->state == SOLUTION_STATE_GENERALIZE) {
+		this->new_action_history = new NewActionHistory();
+	} else {
+		this->new_action_history = NULL;
+	}
 }
 
 RunHelper::~RunHelper() {

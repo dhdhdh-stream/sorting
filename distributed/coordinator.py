@@ -113,6 +113,9 @@ while True:
 				client_sftp.close()
 				client.close()
 
+		if count >= 40:
+			break
+
 		curr_time = time.time()
 		if count >= 10 and curr_time - start_time > 300:
 			break

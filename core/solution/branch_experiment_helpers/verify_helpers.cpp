@@ -188,16 +188,6 @@ void BranchExperiment::verify_backprop(double target_val,
 
 			this->state = BRANCH_EXPERIMENT_STATE_VERIFY_2ND_EXISTING;
 			this->state_iter = 0;
-		#if defined(MDEBUG) && MDEBUG
-		} else if (this->best_step_types.size() > 0
-				&& rand()%4 == 0) {
-		#else
-		} else if (this->best_step_types.size() > 0
-				&& combined_branch_weight > EXPERIMENT_COMBINED_MIN_BRANCH_WEIGHT) {
-		#endif /* MDEBUG */
-			this->state = BRANCH_EXPERIMENT_STATE_EXPERIMENT;
-			this->root_state = ROOT_EXPERIMENT_STATE_EXPERIMENT;
-			this->experiment_iter = 0;
 		} else {
 			this->explore_iter++;
 			if (this->explore_iter < MAX_EXPLORE_TRIES) {

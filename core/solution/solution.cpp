@@ -248,10 +248,10 @@ void Solution::increment() {
 
 		this->state = SOLUTION_STATE_GENERALIZE;
 
-		setup_new_action();
+		setup_new_action(this);
 	} else if (this->state == SOLUTION_STATE_GENERALIZE) {
 		this->new_action_tracker->increment();
-		if (this->new_action_tracker->epoch_iter > NEW_ACTION_NUM_EPOCHS) {
+		if (this->new_action_tracker->epoch_iter >= NEW_ACTION_NUM_EPOCHS) {
 			delete this->current;
 			this->current = new Scope();
 			this->current->id = -1;
@@ -266,6 +266,9 @@ void Solution::increment() {
 			this->current->node_counter = 1;
 
 			this->state = SOLUTION_STATE_TRAVERSE;
+
+			delete this->new_action_tracker;
+			this->new_action_tracker = NULL;
 
 			this->num_actions_until_experiment = -1;
 		}

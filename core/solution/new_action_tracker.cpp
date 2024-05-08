@@ -1,5 +1,7 @@
 #include "new_action_tracker.h"
 
+#include <iostream>
+
 #include "abstract_node.h"
 #include "globals.h"
 #include "scope.h"
@@ -27,6 +29,13 @@ NewActionTracker::NewActionTracker() {
 	// do nothing
 }
 
+NewActionTracker::~NewActionTracker() {
+	for (map<AbstractNode*, NewActionNodeTracker*>::iterator it = this->node_trackers.begin();
+			it != this->node_trackers.end(); it++) {
+		delete it->second;
+	}
+}
+
 NewActionTracker::NewActionTracker(NewActionTracker* original,
 								   Solution* parent_solution) {
 	this->epoch_iter = original->epoch_iter;
@@ -36,11 +45,16 @@ NewActionTracker::NewActionTracker(NewActionTracker* original,
 			it != original->node_trackers.end(); it++) {
 		AbstractNode* start_node = parent_solution->current->nodes[it->first->id];
 		if (it->second->exit_next_node == NULL) {
-			this->node_trackers[start_node] = NULL;
+			this->node_trackers[start_node] = new NewActionNodeTracker(NULL);
 		} else {
 			this->node_trackers[start_node] = new NewActionNodeTracker(
 				parent_solution->current->nodes[it->second->exit_next_node->id]);
 		}
+
+		this->node_trackers[start_node]->existing_score = it->second->existing_score;
+		this->node_trackers[start_node]->existing_count = it->second->existing_count;
+		this->node_trackers[start_node]->new_score = it->second->new_score;
+		this->node_trackers[start_node]->new_count = it->second->new_count;
 	}
 
 	this->num_actions_until_distribution = original->num_actions_until_distribution;
@@ -51,44 +65,43 @@ NewActionTracker::NewActionTracker(NewActionTracker* original,
 void NewActionTracker::increment() {
 	this->improvement_iter++;
 	if (this->improvement_iter >= NEW_ACTION_IMPROVEMENTS_PER_EPOCH) {
+		this->improvement_iter = 0;
 		this->epoch_iter++;
 
-		this->num_actions_until_distribution = uniform_int_distribution<int>(0,
-			(int)EPOCH_UNTIL_RATIOS[this->epoch_iter] * solution->average_num_actions-1.0);
-
-		if (this->epoch_iter < NEW_ACTION_NUM_EPOCHS) {
-			for (int f_index = 0; f_index < NEW_ACTION_MAX_FILTER_PER_EPOCH; f_index++) {
-				double max_impact = 0.0;
-				AbstractNode* max_node = NULL;
-				for (map<AbstractNode*, NewActionNodeTracker*>::iterator it = this->node_trackers.begin();
-						it != this->node_trackers.end(); it++) {
-					double existing_average_score = it->second->existing_score / it->second->existing_count;
-					double new_average_score = it->second->new_score / it->second->new_count;
-					double impact = existing_average_score - new_average_score;
-					if (impact > max_impact) {
-						max_impact = impact;
-						max_node = it->first;
-					}
-				}
-
-				if (max_node != NULL) {
-					delete this->node_trackers[max_node];
-					this->node_trackers.erase(max_node);
-				} else {
-					break;
+		for (int f_index = 0; f_index < NEW_ACTION_MAX_FILTER_PER_EPOCH; f_index++) {
+			double max_impact = 0.0;
+			AbstractNode* max_node = NULL;
+			for (map<AbstractNode*, NewActionNodeTracker*>::iterator it = this->node_trackers.begin();
+					it != this->node_trackers.end(); it++) {
+				double existing_average_score = it->second->existing_score / it->second->existing_count;
+				double new_average_score = it->second->new_score / it->second->new_count;
+				double impact = existing_average_score - new_average_score;
+				if (impact > max_impact) {
+					max_impact = impact;
+					max_node = it->first;
 				}
 			}
+
+			if (max_node != NULL) {
+				delete this->node_trackers[max_node];
+				this->node_trackers.erase(max_node);
+			} else {
+				break;
+			}
 		}
+
+		this->num_actions_until_distribution = uniform_int_distribution<int>(0,
+			(int)(EPOCH_UNTIL_RATIOS[this->epoch_iter] * solution->average_num_actions));
 	}
 }
 
-void NewActionTracker::init() {
+void NewActionTracker::init(Solution* parent_solution) {
 	this->epoch_iter = 0;
 	this->improvement_iter = 0;
 
-	this->num_actions_until_distribution = uniform_int_distribution<int>(0, (int)solution->average_num_actions-1.0);
+	this->num_actions_until_distribution = uniform_int_distribution<int>(0, (int)parent_solution->average_num_actions);
 
-	solution->num_actions_until_experiment = 1 + this->num_actions_until_distribution(generator);
+	parent_solution->num_actions_until_experiment = 1 + this->num_actions_until_distribution(generator);
 }
 
 void NewActionTracker::load(ifstream& input_file) {
@@ -120,7 +133,7 @@ void NewActionTracker::load(ifstream& input_file) {
 	}
 
 	this->num_actions_until_distribution = uniform_int_distribution<int>(0,
-		(int)EPOCH_UNTIL_RATIOS[this->epoch_iter] * solution->average_num_actions-1.0);
+		(int)(EPOCH_UNTIL_RATIOS[this->epoch_iter] * solution->average_num_actions));
 
 	solution->num_actions_until_experiment = 1 + this->num_actions_until_distribution(generator);
 }

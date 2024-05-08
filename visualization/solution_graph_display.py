@@ -91,6 +91,14 @@ for s_index in range(num_scopes):
 			nodes[node_id] = [node_type,
 							  action,
 							  next_node_id]
+		elif node_type == NODE_TYPE_SCOPE:
+			inner_scope_id = int(file.readline())
+
+			next_node_id = int(file.readline())
+
+			nodes[node_id] = [node_type,
+							  inner_scope_id,
+							  next_node_id]
 		elif node_type == NODE_TYPE_BRANCH:
 			original_next_node_id = int(file.readline())
 			branch_next_node_id = int(file.readline())
@@ -138,6 +146,14 @@ for i_index in range(num_info_scopes):
 
 				nodes[node_id] = [node_type,
 								  action,
+								  next_node_id]
+			elif node_type == NODE_TYPE_SCOPE:
+				inner_scope_id = int(file.readline())
+
+				next_node_id = int(file.readline())
+
+				nodes[node_id] = [node_type,
+								  inner_scope_id,
 								  next_node_id]
 			elif node_type == NODE_TYPE_BRANCH:
 				original_next_node_id = int(file.readline())

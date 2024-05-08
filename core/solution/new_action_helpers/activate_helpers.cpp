@@ -1,5 +1,7 @@
 #include "new_action_helpers.h"
 
+#include <iostream>
+
 #include "abstract_node.h"
 #include "globals.h"
 #include "new_action_tracker.h"
