@@ -33,10 +33,6 @@ for line in iter(lambda:stdout.readline(2048), ''):
 
 overall_client_sftp.put('worker', 'workers/worker')
 stdin, stdout, stderr = overall_client.exec_command('chmod +x workers/worker')
-# overall_client_sftp.put('train_initial_action_worker', 'workers/train_initial_action_worker')
-# stdin, stdout, stderr = overall_client.exec_command('chmod +x workers/train_initial_action_worker')
-# overall_client_sftp.put('train_second_action_worker', 'workers/train_second_action_worker')
-# stdin, stdout, stderr = overall_client.exec_command('chmod +x workers/train_second_action_worker')
 for line in iter(lambda:stdout.readline(2048), ''):
 	print(line, end='')
 
@@ -76,8 +72,6 @@ for w_index in range(len(workers)):
 	channels.append(channel)
 
 	command = './workers/worker ' + 'workers/' + workers[w_index][0] + '/ 2>&1'
-	# command = './workers/train_initial_action_worker ' + 'workers/' + workers[w_index][0] + '/ 2>&1'
-	# command = './workers/train_second_action_worker ' + 'workers/' + workers[w_index][0] + '/ 2>&1'
 	print(command)
 	channel.exec_command(command)
 
@@ -96,4 +90,4 @@ while True:
 			print(workers[w_index][0])
 			print(message)
 
-	time.sleep(15)
+	time.sleep(30)

@@ -1,3 +1,5 @@
+// TODO: keep track of number of improvements per scope, and train actions when reach threshold
+
 #ifndef NEW_ACTION_TRACKER_H
 #define NEW_ACTION_TRACKER_H
 

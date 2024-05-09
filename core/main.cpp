@@ -228,6 +228,8 @@ int main(int argc, char* argv[]) {
 
 				duplicate->increment();
 
+				duplicate->average_num_actions = duplicate->max_num_actions;
+
 				delete solution;
 				solution = duplicate;
 

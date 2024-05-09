@@ -104,8 +104,7 @@ void create_experiment_helper(vector<InfoScope*>& possible_info_scope_contexts,
 			{
 				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)it->second;
 
-				if (solution->state == SOLUTION_STATE_TRAVERSE
-						&& solution->current->nodes.size() > 20) {
+				if (solution->state == SOLUTION_STATE_TRAVERSE) {
 					create_experiment_helper(possible_info_scope_contexts,
 											 possible_scope_contexts,
 											 possible_node_contexts,
@@ -137,8 +136,7 @@ void create_experiment_helper(vector<InfoScope*>& possible_info_scope_contexts,
 				InfoBranchNodeHistory* info_branch_node_history = (InfoBranchNodeHistory*)it->second;
 
 				if (info_branch_node_history->scope_history != NULL) {
-					if (solution->state == SOLUTION_STATE_TRAVERSE
-							&& solution->current->nodes.size() > 20) {
+					if (solution->state == SOLUTION_STATE_TRAVERSE) {
 						uniform_int_distribution<int> info_inner_distribution(0, 4);
 						if (info_inner_distribution(generator) == 0) {
 							info_create_experiment_helper(info_branch_node->scope,

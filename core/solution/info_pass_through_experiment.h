@@ -1,3 +1,6 @@
+// TODO: need to change to trigger on info scope in general
+// - to make sure new positive/negative networks trained on correct distribution
+
 #ifndef INFO_PASS_THROUGH_EXPERIMENT_H
 #define INFO_PASS_THROUGH_EXPERIMENT_H
 
