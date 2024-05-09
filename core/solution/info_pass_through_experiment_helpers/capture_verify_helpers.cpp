@@ -61,8 +61,6 @@ void InfoPassThroughExperiment::capture_verify_activate(
 			}
 		}
 	}
-
-	context.back().scope_history->info_experiment_history = history;
 }
 
 void InfoPassThroughExperiment::capture_verify_back_activate(

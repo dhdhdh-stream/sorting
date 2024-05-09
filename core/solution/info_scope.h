@@ -46,6 +46,12 @@ public:
 	std::vector<std::vector<int>> positive_network_input_indexes;
 	Network* positive_network;
 
+	/**
+	 * - tie info experiments to scope instead of nodes
+	 *   - so that positive/negative networks are trained with correct distribution
+	 */
+	AbstractExperiment* experiment;
+
 	#if defined(MDEBUG) && MDEBUG
 	void* verify_key;
 	std::vector<double> verify_negative_scores;

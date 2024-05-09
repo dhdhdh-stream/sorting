@@ -140,6 +140,8 @@ void InfoPassThroughExperiment::finalize(Solution* duplicate) {
 		}
 	}
 
+	this->info_scope_context->experiment = NULL;
+
 	int experiment_index;
 	for (int e_index = 0; e_index < (int)this->node_context->experiments.size(); e_index++) {
 		if (this->node_context->experiments[e_index] == this) {

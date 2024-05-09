@@ -1,6 +1,3 @@
-// TODO: need to change to trigger on info scope in general
-// - to make sure new positive/negative networks trained on correct distribution
-
 #ifndef INFO_PASS_THROUGH_EXPERIMENT_H
 #define INFO_PASS_THROUGH_EXPERIMENT_H
 
@@ -104,6 +101,8 @@ public:
 							  bool is_branch);
 	~InfoPassThroughExperiment();
 
+	void info_scope_activate(RunHelper& run_helper);
+
 	bool activate(AbstractNode*& curr_node,
 				  Problem* problem,
 				  std::vector<ContextLayer>& context,
@@ -130,7 +129,7 @@ public:
 								 std::vector<ContextLayer>& context,
 								 RunHelper& run_helper,
 								 InfoPassThroughExperimentHistory* history);
-	void train_negative_back_activate(ScopeHistory*& subscope_history,
+	bool train_negative_back_activate(ScopeHistory*& subscope_history,
 									  bool& result_is_positive,
 									  RunHelper& run_helper);
 	void train_negative_backprop(double target_val,
@@ -141,7 +140,7 @@ public:
 								 std::vector<ContextLayer>& context,
 								 RunHelper& run_helper,
 								 InfoPassThroughExperimentHistory* history);
-	void train_positive_back_activate(ScopeHistory*& subscope_history,
+	bool train_positive_back_activate(ScopeHistory*& subscope_history,
 									  bool& result_is_positive,
 									  RunHelper& run_helper);
 	void train_positive_backprop(double target_val,

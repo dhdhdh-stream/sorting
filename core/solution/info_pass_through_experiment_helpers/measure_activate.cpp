@@ -52,8 +52,6 @@ void InfoPassThroughExperiment::measure_activate(
 			}
 		}
 	}
-
-	context.back().scope_history->info_experiment_history = history;
 }
 
 void InfoPassThroughExperiment::measure_back_activate(

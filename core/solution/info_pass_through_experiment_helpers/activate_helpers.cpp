@@ -4,17 +4,9 @@
 
 using namespace std;
 
-bool InfoPassThroughExperiment::activate(AbstractNode*& curr_node,
-										 Problem* problem,
-										 vector<ContextLayer>& context,
-										 RunHelper& run_helper) {
-	bool is_selected = false;
-	InfoPassThroughExperimentHistory* history = NULL;
-	if (run_helper.experiment_histories.size() == 1
-			&& run_helper.experiment_histories[0]->experiment == this) {
-		history = (InfoPassThroughExperimentHistory*)run_helper.experiment_histories[0];
-		is_selected = true;
-	} else if (run_helper.experiment_histories.size() == 0) {
+void InfoPassThroughExperiment::info_scope_activate(
+		RunHelper& run_helper) {
+	if (run_helper.experiment_histories.size() == 0) {
 		bool has_seen = false;
 		for (int e_index = 0; e_index < (int)run_helper.experiments_seen_order.size(); e_index++) {
 			if (run_helper.experiments_seen_order[e_index] == this) {
@@ -26,13 +18,24 @@ bool InfoPassThroughExperiment::activate(AbstractNode*& curr_node,
 			double selected_probability = 1.0 / (1.0 + this->average_remaining_experiments_from_start);
 			uniform_real_distribution<double> distribution(0.0, 1.0);
 			if (distribution(generator) < selected_probability) {
-				history = new InfoPassThroughExperimentHistory(this);
-				run_helper.experiment_histories.push_back(history);
-				is_selected = true;
+				run_helper.experiment_histories.push_back(new InfoPassThroughExperimentHistory(this));
 			}
 
 			run_helper.experiments_seen_order.push_back(this);
 		}
+	}
+}
+
+bool InfoPassThroughExperiment::activate(AbstractNode*& curr_node,
+										 Problem* problem,
+										 vector<ContextLayer>& context,
+										 RunHelper& run_helper) {
+	bool is_selected = false;
+	InfoPassThroughExperimentHistory* history = NULL;
+	if (run_helper.experiment_histories.size() == 1
+			&& run_helper.experiment_histories[0]->experiment == this) {
+		history = (InfoPassThroughExperimentHistory*)run_helper.experiment_histories[0];
+		is_selected = true;
 	}
 
 	if (is_selected) {
@@ -98,15 +101,13 @@ bool InfoPassThroughExperiment::back_activate(
 		RunHelper& run_helper) {
 	switch (this->state) {
 	case INFO_PASS_THROUGH_EXPERIMENT_STATE_TRAIN_NEGATIVE:
-		train_negative_back_activate(subscope_history,
-									 result_is_positive,
-									 run_helper);
-		return true;
+		return train_negative_back_activate(subscope_history,
+											result_is_positive,
+											run_helper);
 	case INFO_PASS_THROUGH_EXPERIMENT_STATE_TRAIN_POSITIVE:
-		train_positive_back_activate(subscope_history,
-									 result_is_positive,
-									 run_helper);
-		return true;
+		return train_positive_back_activate(subscope_history,
+											result_is_positive,
+											run_helper);
 	case INFO_PASS_THROUGH_EXPERIMENT_STATE_MEASURE:
 		measure_back_activate(subscope_history,
 							  result_is_positive,

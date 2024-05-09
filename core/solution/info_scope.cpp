@@ -10,6 +10,8 @@
 using namespace std;
 
 InfoScope::InfoScope() {
+	this->experiment = NULL;
+
 	#if defined(MDEBUG) && MDEBUG
 	this->verify_key = NULL;
 	#endif /* MDEBUG */
@@ -31,6 +33,8 @@ InfoScope::~InfoScope() {
 
 #if defined(MDEBUG) && MDEBUG
 void InfoScope::clear_verify() {
+	this->experiment = NULL;
+
 	this->verify_key = NULL;
 	if (this->verify_negative_scores.size() > 0
 			|| this->verify_positive_scores.size() > 0) {

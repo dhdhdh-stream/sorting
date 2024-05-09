@@ -68,8 +68,6 @@ public:
 
 	AbstractExperimentHistory* experiment_history;
 
-	AbstractExperimentHistory* info_experiment_history;
-
 	ScopeHistory(Scope* scope);
 	ScopeHistory(ScopeHistory* original);
 	~ScopeHistory();

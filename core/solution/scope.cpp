@@ -227,8 +227,6 @@ ScopeHistory::ScopeHistory(Scope* scope) {
 	this->scope = scope;
 
 	this->experiment_history = NULL;
-
-	this->info_experiment_history = NULL;
 }
 
 ScopeHistory::ScopeHistory(ScopeHistory* original) {

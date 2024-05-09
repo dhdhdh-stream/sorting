@@ -10,6 +10,7 @@
 #include "globals.h"
 #include "info_branch_node.h"
 #include "info_pass_through_experiment.h"
+#include "info_scope.h"
 #include "info_scope_node.h"
 #include "new_info_experiment.h"
 #include "pass_through_experiment.h"
@@ -42,7 +43,8 @@ void info_create_experiment_helper(InfoScope* info_scope,
 				InfoScopeNode* info_scope_node = (InfoScopeNode*)it->first;
 				InfoScopeNodeHistory* info_scope_node_history = (InfoScopeNodeHistory*)it->second;
 
-				if (info_scope_node_history->scope_history != NULL) {
+				if (info_scope_node->scope->state == INFO_SCOPE_STATE_NA
+						&& info_scope_node_history->scope_history != NULL) {
 					info_create_experiment_helper(info_scope_node->scope,
 												  possible_info_scope_contexts,
 												  possible_scope_contexts,
@@ -63,7 +65,8 @@ void info_create_experiment_helper(InfoScope* info_scope,
 				InfoBranchNode* info_branch_node = (InfoBranchNode*)it->first;
 				InfoBranchNodeHistory* info_branch_node_history = (InfoBranchNodeHistory*)it->second;
 
-				if (info_branch_node_history->scope_history != NULL) {
+				if (info_branch_node->scope->state == INFO_SCOPE_STATE_NA
+						&& info_branch_node_history->scope_history != NULL) {
 					info_create_experiment_helper(info_branch_node->scope,
 												  possible_info_scope_contexts,
 												  possible_scope_contexts,
@@ -135,7 +138,8 @@ void create_experiment_helper(vector<InfoScope*>& possible_info_scope_contexts,
 				InfoBranchNode* info_branch_node = (InfoBranchNode*)it->first;
 				InfoBranchNodeHistory* info_branch_node_history = (InfoBranchNodeHistory*)it->second;
 
-				if (info_branch_node_history->scope_history != NULL) {
+				if (info_branch_node->scope->state == INFO_SCOPE_STATE_NA
+						&& info_branch_node_history->scope_history != NULL) {
 					if (solution->state == SOLUTION_STATE_TRAVERSE) {
 						uniform_int_distribution<int> info_inner_distribution(0, 4);
 						if (info_inner_distribution(generator) == 0) {
@@ -212,6 +216,7 @@ void create_experiment(ScopeHistory* root_history) {
 			possible_node_contexts[rand_index],
 			possible_is_branch[rand_index]);
 
+		possible_info_scope_contexts[rand_index]->experiment = new_experiment;
 		possible_node_contexts[rand_index]->experiments.push_back(new_experiment);
 	}
 }

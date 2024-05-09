@@ -60,25 +60,29 @@ void InfoPassThroughExperiment::train_positive_activate(
 			}
 		}
 	}
+}
+
+bool InfoPassThroughExperiment::train_positive_back_activate(
+		ScopeHistory*& subscope_history,
+		bool& result_is_positive,
+		RunHelper& run_helper) {
+	InfoPassThroughExperimentHistory* history = (InfoPassThroughExperimentHistory*)run_helper.experiment_histories.back();
 
 	this->num_instances_until_target--;
 	if (this->num_instances_until_target == 0) {
 		history->instance_count++;
 
-		context.back().scope_history->info_experiment_history = history;
+		this->i_scope_histories.push_back(new ScopeHistory(subscope_history));
+
+		result_is_positive = true;
 
 		uniform_int_distribution<int> until_distribution(0, (int)this->average_instances_per_run-1.0);
 		this->num_instances_until_target = 1 + until_distribution(generator);
+
+		return true;
+	} else {
+		return false;
 	}
-}
-
-void InfoPassThroughExperiment::train_positive_back_activate(
-		ScopeHistory*& subscope_history,
-		bool& result_is_positive,
-		RunHelper& run_helper) {
-	this->i_scope_histories.push_back(new ScopeHistory(subscope_history));
-
-	result_is_positive = true;
 }
 
 void InfoPassThroughExperiment::train_positive_backprop(
