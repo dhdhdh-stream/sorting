@@ -23,6 +23,12 @@ const int SOLUTION_STATE_TRAVERSE = 0;
 const int SOLUTION_STATE_GENERALIZE = 1;
 const int SOLUTION_STATE_EVAL = 2;
 
+#if defined(MDEBUG) && MDEBUG
+const int SOLUTION_TRAVERSE_ITERS = 5;
+#else
+const int SOLUTION_TRAVERSE_ITERS = 20;
+#endif /* MDEBUG */
+
 class Solution {
 public:
 	int timestamp;
@@ -30,6 +36,7 @@ public:
 	double average_num_actions;
 
 	int state;
+	int state_iter;
 
 	int num_actions_until_experiment;
 	int num_actions_until_random;

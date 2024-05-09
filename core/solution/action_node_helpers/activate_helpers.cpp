@@ -39,6 +39,7 @@ void ActionNode::activate(AbstractNode*& curr_node,
 
 	if (solution->state == SOLUTION_STATE_GENERALIZE) {
 		new_action_activate(this,
+							false,
 							curr_node,
 							problem,
 							run_helper);

@@ -61,6 +61,7 @@ void InfoBranchNode::activate(AbstractNode*& curr_node,
 
 	if (solution->state == SOLUTION_STATE_GENERALIZE) {
 		new_action_activate(this,
+							history->is_branch,
 							curr_node,
 							problem,
 							run_helper);

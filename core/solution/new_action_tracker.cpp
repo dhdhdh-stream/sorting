@@ -16,7 +16,9 @@ const vector<double> EPOCH_UNTIL_RATIOS{
 	0.0
 };
 
-NewActionNodeTracker::NewActionNodeTracker(AbstractNode* exit_next_node) {
+NewActionNodeTracker::NewActionNodeTracker(bool is_branch,
+										   AbstractNode* exit_next_node) {
+	this->is_branch = is_branch;
 	this->exit_next_node = exit_next_node;
 
 	this->existing_score = 0.0;
@@ -45,9 +47,12 @@ NewActionTracker::NewActionTracker(NewActionTracker* original,
 			it != original->node_trackers.end(); it++) {
 		AbstractNode* start_node = parent_solution->current->nodes[it->first->id];
 		if (it->second->exit_next_node == NULL) {
-			this->node_trackers[start_node] = new NewActionNodeTracker(NULL);
+			this->node_trackers[start_node] = new NewActionNodeTracker(
+				it->second->is_branch,
+				NULL);
 		} else {
 			this->node_trackers[start_node] = new NewActionNodeTracker(
+				it->second->is_branch,
 				parent_solution->current->nodes[it->second->exit_next_node->id]);
 		}
 
@@ -121,13 +126,20 @@ void NewActionTracker::load(ifstream& input_file) {
 		getline(input_file, start_node_id_line);
 		AbstractNode* starting_node = solution->current->nodes[stoi(start_node_id_line)];
 
+		string is_branch_line;
+		getline(input_file, is_branch_line);
+		bool is_branch = stoi(is_branch_line);
+
 		string end_node_id_line;
 		getline(input_file, end_node_id_line);
 		int end_node_id = stoi(end_node_id_line);
 		if (end_node_id == -1) {
-			this->node_trackers[starting_node] = new NewActionNodeTracker(NULL);
+			this->node_trackers[starting_node] = new NewActionNodeTracker(
+				is_branch,
+				NULL);
 		} else {
 			this->node_trackers[starting_node] = new NewActionNodeTracker(
+				is_branch,
 				solution->current->nodes[end_node_id]);
 		}
 	}
@@ -146,6 +158,8 @@ void NewActionTracker::save(ofstream& output_file) {
 	for (map<AbstractNode*, NewActionNodeTracker*>::iterator it = this->node_trackers.begin();
 			it != this->node_trackers.end(); it++) {
 		output_file << it->first->id << endl;
+
+		output_file << it->second->is_branch << endl;
 
 		if (it->second->exit_next_node == NULL) {
 			output_file << -1 << endl;

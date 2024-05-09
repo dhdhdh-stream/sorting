@@ -10,16 +10,12 @@ class Scope;
 class Solution;
 
 #if defined(MDEBUG) && MDEBUG
-const int NEW_ACTION_EXPERIMENT_MIN_NODES = 20;
-
 const int NEW_ACTION_TRY_NODES = 4;
 
 const int NEW_ACTION_NUM_EPOCHS = 2;
 const int NEW_ACTION_MAX_FILTER_PER_EPOCH = 1;
 const int NEW_ACTION_IMPROVEMENTS_PER_EPOCH = 2;
 #else
-const int NEW_ACTION_EXPERIMENT_MIN_NODES = 60;
-
 const int NEW_ACTION_TRY_NODES = 20;
 
 const int NEW_ACTION_NUM_EPOCHS = 4;
@@ -29,6 +25,7 @@ const int NEW_ACTION_IMPROVEMENTS_PER_EPOCH = 5;
 
 class NewActionNodeTracker {
 public:
+	bool is_branch;
 	AbstractNode* exit_next_node;
 
 	/**
@@ -39,7 +36,8 @@ public:
 	double new_score;
 	double new_count;
 
-	NewActionNodeTracker(AbstractNode* exit_next_node);
+	NewActionNodeTracker(bool is_branch,
+						 AbstractNode* exit_next_node);
 };
 
 class NewActionTracker {

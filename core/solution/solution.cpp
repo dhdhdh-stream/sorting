@@ -23,6 +23,7 @@ Solution::Solution(Solution* original) {
 	this->average_num_actions = original->average_num_actions;
 
 	this->state = original->state;
+	this->state_iter = original->state_iter;
 
 	this->num_actions_until_experiment = original->num_actions_until_experiment;
 	this->num_actions_until_random = original->num_actions_until_random;
@@ -97,6 +98,7 @@ void Solution::init() {
 	this->average_num_actions = 0.0;
 
 	this->state = SOLUTION_STATE_TRAVERSE;
+	this->state_iter = 0;
 
 	this->num_actions_until_experiment = -1;
 	this->num_actions_until_random = -1;
@@ -145,6 +147,10 @@ void Solution::load(string path,
 	string state_line;
 	getline(input_file, state_line);
 	this->state = stoi(state_line);
+
+	string state_iter_line;
+	getline(input_file, state_iter_line);
+	this->state_iter = stoi(state_iter_line);
 
 	this->num_actions_until_experiment = -1;
 	this->num_actions_until_random = -1;
@@ -231,8 +237,9 @@ void Solution::clear_verify() {
 #endif /* MDEBUG */
 
 void Solution::increment() {
+	this->state_iter++;
 	if (this->state == SOLUTION_STATE_TRAVERSE
-			&& this->current->nodes.size() >= NEW_ACTION_EXPERIMENT_MIN_NODES) {
+			&& this->state_iter >= SOLUTION_TRAVERSE_ITERS) {
 		Scope* new_scope = new Scope();
 		new_scope->id = this->scopes.size();
 		this->scopes.push_back(new_scope);
@@ -252,20 +259,10 @@ void Solution::increment() {
 	} else if (this->state == SOLUTION_STATE_GENERALIZE) {
 		this->new_action_tracker->increment();
 		if (this->new_action_tracker->epoch_iter >= NEW_ACTION_NUM_EPOCHS) {
-			delete this->current;
-			this->current = new Scope();
-			this->current->id = -1;
-
-			ActionNode* starting_noop_node = new ActionNode();
-			starting_noop_node->parent = this->current;
-			starting_noop_node->id = 0;
-			starting_noop_node->action = Action(ACTION_NOOP);
-			starting_noop_node->next_node_id = -1;
-			starting_noop_node->next_node = NULL;
-			this->current->nodes[0] = starting_noop_node;
-			this->current->node_counter = 1;
+			add_new_action(this);
 
 			this->state = SOLUTION_STATE_TRAVERSE;
+			this->state_iter = 0;
 
 			delete this->new_action_tracker;
 			this->new_action_tracker = NULL;
@@ -285,6 +282,7 @@ void Solution::save(string path,
 	output_file << this->average_num_actions << endl;
 
 	output_file << this->state << endl;
+	output_file << this->state_iter << endl;
 
 	output_file << this->scopes.size() << endl;
 	output_file << this->info_scopes.size() << endl;
