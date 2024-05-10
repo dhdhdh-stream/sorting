@@ -38,7 +38,6 @@ public:
 	int state;
 	int state_iter;
 
-	int num_actions_until_experiment;
 	int num_actions_until_random;
 
 	Scope* current;

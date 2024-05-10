@@ -33,7 +33,8 @@ void add_new_action(Solution* parent_solution) {
 						it != parent_solution->current->nodes.end(); it++) {
 					if (it->second->type == NODE_TYPE_ACTION) {
 						ActionNode* action_node = (ActionNode*)it->second;
-						if (action_node->next_node == NULL) {
+						if (action_node->next_node == NULL
+								&& action_node != new_ending_node) {
 							action_node->next_node_id = new_ending_node->id;
 							action_node->next_node = new_ending_node;
 						}

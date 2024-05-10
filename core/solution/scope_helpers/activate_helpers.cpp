@@ -81,10 +81,6 @@ void node_activate_helper(AbstractNode*& curr_node,
 	if (run_helper.num_actions > solution->num_actions_limit) {
 		run_helper.exceeded_limit = true;
 	}
-
-	if (solution->num_actions_until_experiment > 0) {
-		solution->num_actions_until_experiment--;
-	}
 }
 
 void Scope::activate(Problem* problem,

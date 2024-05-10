@@ -25,7 +25,6 @@ Solution::Solution(Solution* original) {
 	this->state = original->state;
 	this->state_iter = original->state_iter;
 
-	this->num_actions_until_experiment = original->num_actions_until_experiment;
 	this->num_actions_until_random = original->num_actions_until_random;
 
 	this->current = new Scope();
@@ -100,7 +99,6 @@ void Solution::init() {
 	this->state = SOLUTION_STATE_TRAVERSE;
 	this->state_iter = 0;
 
-	this->num_actions_until_experiment = -1;
 	this->num_actions_until_random = -1;
 
 	this->current = new Scope();
@@ -152,7 +150,6 @@ void Solution::load(string path,
 	getline(input_file, state_iter_line);
 	this->state_iter = stoi(state_iter_line);
 
-	this->num_actions_until_experiment = -1;
 	this->num_actions_until_random = -1;
 
 	string num_scopes_line;
@@ -266,8 +263,6 @@ void Solution::increment() {
 
 			delete this->new_action_tracker;
 			this->new_action_tracker = NULL;
-
-			this->num_actions_until_experiment = -1;
 		}
 	}
 }

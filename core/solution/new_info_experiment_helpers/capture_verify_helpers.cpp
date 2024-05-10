@@ -2,6 +2,8 @@
 
 #include "new_info_experiment.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "constants.h"
 #include "info_scope_node.h"
@@ -100,6 +102,14 @@ bool NewInfoExperiment::capture_verify_activate(
 
 	this->verify_negative_scores.push_back(existing_predicted_score);
 	this->verify_positive_scores.push_back(new_predicted_score);
+
+	cout << "input_vals:" << endl;
+	for (int i_index = 0; i_index < (int)this->input_node_contexts.size(); i_index++) {
+		cout << input_vals[i_index] << endl;
+	}
+	cout << "run_helper.starting_run_seed: " << run_helper.starting_run_seed << endl;
+	cout << "run_helper.curr_run_seed: " << run_helper.curr_run_seed << endl;
+	problem->print();
 
 	bool decision_is_branch;
 	if (run_helper.curr_run_seed%2 == 0) {

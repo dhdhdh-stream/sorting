@@ -7,6 +7,7 @@
 #include "abstract_node.h"
 #include "globals.h"
 #include "minesweeper.h"
+#include "new_action_tracker.h"
 #include "scope.h"
 #include "solution.h"
 #include "solution_helpers.h"
@@ -32,7 +33,7 @@ int main(int argc, char* argv[]) {
 	solution = new Solution();
 	solution->load("", "main");
 
-	solution->num_actions_until_experiment = -1;
+	cout << "solution->average_num_actions: " << solution->average_num_actions << endl;
 
 	{
 		// Problem* problem = new Sorting();
@@ -71,6 +72,24 @@ int main(int argc, char* argv[]) {
 		cout << "run_helper.num_decisions: " << run_helper.num_decisions << endl;
 
 		delete problem;
+	}
+
+	if (solution->new_action_tracker != NULL) {
+		cout << "solution->new_action_tracker->epoch_iter: " << solution->new_action_tracker->epoch_iter << endl;
+		cout << "solution->new_action_tracker->improvement_iter: " << solution->new_action_tracker->improvement_iter << endl;
+
+		cout << "new action nodes:" << endl;
+		for (map<AbstractNode*, NewActionNodeTracker*>::iterator it = solution->new_action_tracker->node_trackers.begin();
+				it != solution->new_action_tracker->node_trackers.end(); it++) {
+			int exit_id;
+			if (it->second->exit_next_node == NULL) {
+				exit_id = -1;
+			} else {
+				exit_id = it->second->exit_next_node->id;
+			}
+
+			cout << it->first->id << " -> " << exit_id << endl;
+		}
 	}
 
 	ofstream display_file;

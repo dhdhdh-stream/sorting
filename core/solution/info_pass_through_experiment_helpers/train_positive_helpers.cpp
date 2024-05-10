@@ -182,27 +182,55 @@ void InfoPassThroughExperiment::train_positive_backprop(
 			network_target_vals[d_index] = diffs(d_index);
 		}
 
-		vector<double> misguesses(num_instances);
-		for (int d_index = 0; d_index < num_instances; d_index++) {
-			misguesses[d_index] = diffs(d_index) * diffs(d_index);
-		}
-
-		double sum_misguesses = 0.0;
-		for (int d_index = 0; d_index < num_instances; d_index++) {
-			sum_misguesses += misguesses[d_index];
-		}
-		this->positive_average_misguess = sum_misguesses / num_instances;
-
-		double sum_misguess_variances = 0.0;
-		for (int d_index = 0; d_index < num_instances; d_index++) {
-			sum_misguess_variances += (misguesses[d_index] - this->positive_average_misguess) * (misguesses[d_index] - this->positive_average_misguess);
-		}
-		this->positive_misguess_standard_deviation = sqrt(sum_misguess_variances / num_instances);
-		if (this->positive_misguess_standard_deviation < MIN_STANDARD_DEVIATION) {
-			this->positive_misguess_standard_deviation = MIN_STANDARD_DEVIATION;
-		}
-
 		vector<vector<vector<double>>> network_inputs(num_instances);
+		for (int d_index = 0; d_index < num_instances; d_index++) {
+			vector<vector<double>> network_input_vals(this->positive_network_input_indexes.size());
+			for (int i_index = 0; i_index < (int)this->positive_network_input_indexes.size(); i_index++) {
+				network_input_vals[i_index] = vector<double>(this->positive_network_input_indexes[i_index].size());
+				for (int v_index = 0; v_index < (int)this->positive_network_input_indexes[i_index].size(); v_index++) {
+					network_input_vals[i_index][v_index] = inputs(d_index, this->positive_network_input_indexes[i_index][v_index]);
+				}
+			}
+			network_inputs[d_index] = network_input_vals;
+		}
+
+		if (this->positive_network == NULL) {
+			vector<double> misguesses(num_instances);
+			for (int d_index = 0; d_index < num_instances; d_index++) {
+				misguesses[d_index] = diffs(d_index) * diffs(d_index);
+			}
+
+			double sum_misguesses = 0.0;
+			for (int d_index = 0; d_index < num_instances; d_index++) {
+				sum_misguesses += misguesses[d_index];
+			}
+			this->positive_average_misguess = sum_misguesses / num_instances;
+
+			double sum_misguess_variances = 0.0;
+			for (int d_index = 0; d_index < num_instances; d_index++) {
+				sum_misguess_variances += (misguesses[d_index] - this->positive_average_misguess) * (misguesses[d_index] - this->positive_average_misguess);
+			}
+			this->positive_misguess_standard_deviation = sqrt(sum_misguess_variances / num_instances);
+			if (this->positive_misguess_standard_deviation < MIN_STANDARD_DEVIATION) {
+				this->positive_misguess_standard_deviation = MIN_STANDARD_DEVIATION;
+			}
+		} else {
+			optimize_network(network_inputs,
+							 network_target_vals,
+							 this->positive_network);
+
+			double average_misguess;
+			double misguess_standard_deviation;
+			measure_network(network_inputs,
+							network_target_vals,
+							this->positive_network,
+							average_misguess,
+							misguess_standard_deviation);
+
+			this->positive_average_misguess = average_misguess;
+			this->positive_misguess_standard_deviation = misguess_standard_deviation;
+		}
+
 		int train_index = 0;
 		while (train_index < 3) {
 			vector<vector<Scope*>> possible_scope_contexts;

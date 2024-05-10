@@ -20,7 +20,9 @@ void new_action_activate(AbstractNode* experiment_node,
 		solution->new_action_tracker->node_trackers.find(experiment_node);
 	if (it != solution->new_action_tracker->node_trackers.end()) {
 		if (it->second->is_branch == is_branch) {
-			if (solution->num_actions_until_experiment == 0) {
+			uniform_int_distribution<int> select_distribution(0, 1);
+			if (run_helper.is_always_select
+					|| select_distribution(generator) == 0) {
 				run_helper.new_action_history->new_path_taken.push_back(experiment_node);
 
 				vector<ContextLayer> inner_context;
@@ -49,7 +51,7 @@ void new_action_activate(AbstractNode* experiment_node,
 
 				delete generalize_history;
 
-				solution->num_actions_until_experiment = 1 + solution->new_action_tracker->num_actions_until_distribution(generator);
+				curr_node = it->second->exit_next_node;
 			} else {
 				run_helper.new_action_history->existing_path_taken.push_back(experiment_node);
 			}

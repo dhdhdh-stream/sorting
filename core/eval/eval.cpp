@@ -17,11 +17,10 @@ Eval::Eval(Eval* original) {
 
 	this->average_score = original->average_score;
 
-	this->input_node_context_ids = original->input_node_context_ids;
 	this->input_obs_indexes = original->input_obs_indexes;
-	for (int i_index = 0; i_index < (int)this->input_node_context_ids.size(); i_index++) {
-		this->input_node_contexts.push_back(vector<AbstractNode*>{
-			this->subscope->nodes[this->input_node_context_ids[i_index][0]]});
+	for (int i_index = 0; i_index < (int)original->input_node_contexts.size(); i_index++) {
+		this->input_node_contexts.push_back(
+			this->subscope->nodes[original->input_node_contexts[i_index]->id]);
 	}
 
 	this->linear_input_indexes = original->linear_input_indexes;
@@ -77,7 +76,8 @@ void Eval::load(ifstream& input_file) {
 	for (int i_index = 0; i_index < num_inputs; i_index++) {
 		string node_context_id;
 		getline(input_file, node_context_id);
-		this->input_node_context_ids.push_back(vector<int>{stoi(node_context_id)});
+		this->input_node_contexts.push_back(
+			this->subscope->nodes[stoi(node_context_id)]);
 
 		string obs_index_line;
 		getline(input_file, obs_index_line);
@@ -126,7 +126,7 @@ void Eval::save(ofstream& output_file) {
 
 	output_file << this->input_node_contexts.size() << endl;
 	for (int i_index = 0; i_index < (int)this->input_node_contexts.size(); i_index++) {
-		output_file << this->input_node_context_ids[i_index][0] << endl;
+		output_file << this->input_node_contexts[i_index]->id << endl;
 		output_file << this->input_obs_indexes[i_index] << endl;
 	}
 

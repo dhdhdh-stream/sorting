@@ -176,6 +176,16 @@ void PassThroughExperiment::experiment_verify_new_backprop(
 					NewInfoExperiment* new_info_experiment = (NewInfoExperiment*)this->verify_experiments.back();
 					if (new_info_experiment->best_step_types.size() > 0
 							&& combined_branch_weight > EXPERIMENT_COMBINED_MIN_BRANCH_WEIGHT) {
+						#if defined(MDEBUG) && MDEBUG
+						for (int p_index = 0; p_index < (int)new_info_experiment->verify_problems.size(); p_index++) {
+							delete new_info_experiment->verify_problems[p_index];
+						}
+						new_info_experiment->verify_problems.clear();
+						new_info_experiment->verify_seeds.clear();
+						new_info_experiment->verify_negative_scores.clear();
+						new_info_experiment->verify_positive_scores.clear();
+						#endif /* MDEBUG */
+
 						new_info_experiment->state = NEW_INFO_EXPERIMENT_STATE_EXPERIMENT;
 						new_info_experiment->root_state = ROOT_EXPERIMENT_STATE_EXPERIMENT;
 						new_info_experiment->experiment_iter = 0;
@@ -379,6 +389,16 @@ void PassThroughExperiment::experiment_verify_new_backprop(
 					NewInfoExperiment* new_info_experiment = (NewInfoExperiment*)this->verify_experiments.back();
 					if (new_info_experiment->best_step_types.size() > 0
 							&& combined_branch_weight > EXPERIMENT_COMBINED_MIN_BRANCH_WEIGHT) {
+						#if defined(MDEBUG) && MDEBUG
+						for (int p_index = 0; p_index < (int)new_info_experiment->verify_problems.size(); p_index++) {
+							delete new_info_experiment->verify_problems[p_index];
+						}
+						new_info_experiment->verify_problems.clear();
+						new_info_experiment->verify_seeds.clear();
+						new_info_experiment->verify_negative_scores.clear();
+						new_info_experiment->verify_positive_scores.clear();
+						#endif /* MDEBUG */
+
 						new_info_experiment->state = NEW_INFO_EXPERIMENT_STATE_EXPERIMENT;
 						new_info_experiment->root_state = ROOT_EXPERIMENT_STATE_EXPERIMENT;
 						new_info_experiment->experiment_iter = 0;

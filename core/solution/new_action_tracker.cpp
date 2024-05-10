@@ -9,13 +9,6 @@
 
 using namespace std;
 
-const vector<double> EPOCH_UNTIL_RATIOS{
-	1.0,
-	0.5,
-	0.25,
-	0.0
-};
-
 NewActionNodeTracker::NewActionNodeTracker(bool is_branch,
 										   AbstractNode* exit_next_node) {
 	this->is_branch = is_branch;
@@ -61,52 +54,57 @@ NewActionTracker::NewActionTracker(NewActionTracker* original,
 		this->node_trackers[start_node]->new_score = it->second->new_score;
 		this->node_trackers[start_node]->new_count = it->second->new_count;
 	}
-
-	this->num_actions_until_distribution = original->num_actions_until_distribution;
-
-	parent_solution->num_actions_until_experiment = 1 + this->num_actions_until_distribution(generator);
 }
 
 void NewActionTracker::increment() {
+	// temp
+	for (map<AbstractNode*, NewActionNodeTracker*>::iterator it = this->node_trackers.begin();
+			it != this->node_trackers.end(); it++) {
+		double existing_average_score = it->second->existing_score / it->second->existing_count;
+		double new_average_score = it->second->new_score / it->second->new_count;
+		cout << "existing_average_score: " << existing_average_score << endl;
+		cout << "new_average_score: " << new_average_score << endl;
+	}
+
 	this->improvement_iter++;
 	if (this->improvement_iter >= NEW_ACTION_IMPROVEMENTS_PER_EPOCH) {
 		this->improvement_iter = 0;
 		this->epoch_iter++;
 
-		for (int f_index = 0; f_index < NEW_ACTION_MAX_FILTER_PER_EPOCH; f_index++) {
-			double max_impact = 0.0;
-			AbstractNode* max_node = NULL;
-			for (map<AbstractNode*, NewActionNodeTracker*>::iterator it = this->node_trackers.begin();
-					it != this->node_trackers.end(); it++) {
-				double existing_average_score = it->second->existing_score / it->second->existing_count;
-				double new_average_score = it->second->new_score / it->second->new_count;
-				double impact = existing_average_score - new_average_score;
-				if (impact > max_impact) {
-					max_impact = impact;
-					max_node = it->first;
+		if (this->epoch_iter < NEW_ACTION_NUM_EPOCHS) {
+			for (int f_index = 0; f_index < NEW_ACTION_MAX_FILTER_PER_EPOCH; f_index++) {
+				double max_impact = 0.0;
+				AbstractNode* max_node = NULL;
+				for (map<AbstractNode*, NewActionNodeTracker*>::iterator it = this->node_trackers.begin();
+						it != this->node_trackers.end(); it++) {
+					if (it->second->existing_count == 0) {
+						max_node = it->first;
+						break;
+					}
+
+					double existing_average_score = it->second->existing_score / it->second->existing_count;
+					double new_average_score = it->second->new_score / it->second->new_count;
+					double impact = existing_average_score - new_average_score;
+					if (impact > max_impact) {
+						max_impact = impact;
+						max_node = it->first;
+					}
+				}
+
+				if (max_node != NULL) {
+					delete this->node_trackers[max_node];
+					this->node_trackers.erase(max_node);
+				} else {
+					break;
 				}
 			}
-
-			if (max_node != NULL) {
-				delete this->node_trackers[max_node];
-				this->node_trackers.erase(max_node);
-			} else {
-				break;
-			}
 		}
-
-		this->num_actions_until_distribution = uniform_int_distribution<int>(0,
-			(int)(EPOCH_UNTIL_RATIOS[this->epoch_iter] * solution->average_num_actions));
 	}
 }
 
 void NewActionTracker::init(Solution* parent_solution) {
 	this->epoch_iter = 0;
 	this->improvement_iter = 0;
-
-	this->num_actions_until_distribution = uniform_int_distribution<int>(0, (int)parent_solution->average_num_actions);
-
-	parent_solution->num_actions_until_experiment = 1 + this->num_actions_until_distribution(generator);
 }
 
 void NewActionTracker::load(ifstream& input_file) {
@@ -143,11 +141,6 @@ void NewActionTracker::load(ifstream& input_file) {
 				solution->current->nodes[end_node_id]);
 		}
 	}
-
-	this->num_actions_until_distribution = uniform_int_distribution<int>(0,
-		(int)(EPOCH_UNTIL_RATIOS[this->epoch_iter] * solution->average_num_actions));
-
-	solution->num_actions_until_experiment = 1 + this->num_actions_until_distribution(generator);
 }
 
 void NewActionTracker::save(ofstream& output_file) {

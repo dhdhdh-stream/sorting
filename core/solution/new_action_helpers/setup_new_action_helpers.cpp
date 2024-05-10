@@ -1,6 +1,9 @@
 #include "new_action_helpers.h"
 
+#include "abstract_node.h"
 #include "globals.h"
+#include "info_branch_node.h"
+#include "info_scope.h"
 #include "new_action_tracker.h"
 #include "scope.h"
 #include "solution.h"
@@ -20,8 +23,37 @@ void setup_new_action(Solution* parent_solution) {
 		uniform_int_distribution<int> start_distribution(0, possible_nodes.size()-1);
 		int start_index = start_distribution(generator);
 
-		uniform_int_distribution<int> is_branch_distribution(0, 1);
-		bool is_branch = is_branch_distribution(generator) == 0;
+		bool is_branch;
+		if (possible_nodes[start_index]->type == NODE_TYPE_BRANCH) {
+			uniform_int_distribution<int> is_branch_distribution(0, 1);
+			is_branch = is_branch_distribution(generator) == 0;
+		} else if (possible_nodes[start_index]->type == NODE_TYPE_INFO_BRANCH) {
+			InfoBranchNode* info_branch_node = (InfoBranchNode*)possible_nodes[start_index];
+			switch (info_branch_node->scope->state) {
+			case INFO_SCOPE_STATE_NA:
+				{
+					uniform_int_distribution<int> is_branch_distribution(0, 1);
+					is_branch = is_branch_distribution(generator) == 0;
+				}
+				break;
+			case INFO_SCOPE_STATE_DISABLED_NEGATIVE:
+				if (info_branch_node->is_negate) {
+					is_branch = true;
+				} else {
+					is_branch = false;
+				}
+				break;
+			case INFO_SCOPE_STATE_DISABLED_POSITIVE:
+				if (info_branch_node->is_negate) {
+					is_branch = false;
+				} else {
+					is_branch = true;
+				}
+				break;
+			}
+		} else {
+			is_branch = false;
+		}
 
 		bool existing_match = false;
 		map<AbstractNode*, NewActionNodeTracker*>::iterator it =

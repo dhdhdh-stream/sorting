@@ -1,9 +1,7 @@
-#include "info_pass_through_experiment.h"
+#include "eval_pass_through_experiment.h"
 
+#include <cmath>
 #include <iostream>
-/**
- * - stability issue with Eigen BDCSVD for small singular values
- */
 #undef eigen_assert
 #define eigen_assert(x) if (!(x)) {throw std::invalid_argument("Eigen error");}
 #include <Eigen/Dense>
@@ -21,12 +19,10 @@
 
 using namespace std;
 
-void InfoPassThroughExperiment::train_negative_activate(
+void EvalPassThroughExperiment::train_new_activate(
 		AbstractNode*& curr_node,
 		Problem* problem,
-		vector<ContextLayer>& context,
-		RunHelper& run_helper,
-		InfoPassThroughExperimentHistory* history) {
+		RunHelper& run_helper) {
 	if (this->info_scope == NULL) {
 		if (this->step_types.size() == 0) {
 			curr_node = this->exit_next_node;
@@ -62,33 +58,19 @@ void InfoPassThroughExperiment::train_negative_activate(
 	}
 }
 
-bool InfoPassThroughExperiment::train_negative_back_activate(
+void EvalPassThroughExperiment::train_new_back_activate(
 		ScopeHistory*& subscope_history,
-		bool& result_is_positive,
 		RunHelper& run_helper) {
-	InfoPassThroughExperimentHistory* history = (InfoPassThroughExperimentHistory*)run_helper.experiment_histories.back();
+	EvalPassThroughExperimentHistory* history = (EvalPassThroughExperimentHistory*)run_helper.experiment_histories.back();
 
-	this->num_instances_until_target--;
-	if (this->num_instances_until_target == 0) {
-		history->instance_count++;
+	history->instance_count++;
 
-		this->i_scope_histories.push_back(new ScopeHistory(subscope_history));
-
-		result_is_positive = false;
-
-		uniform_int_distribution<int> until_distribution(0, (int)this->average_instances_per_run-1.0);
-		this->num_instances_until_target = 1 + until_distribution(generator);
-
-		return true;
-	} else {
-		return false;
-	}
+	this->i_scope_histories.push_back(new ScopeHistory(subscope_history));
 }
 
-void InfoPassThroughExperiment::train_negative_backprop(
-		double target_val,
-		RunHelper& run_helper) {
-	InfoPassThroughExperimentHistory* history = (InfoPassThroughExperimentHistory*)run_helper.experiment_histories.back();
+void EvalPassThroughExperiment::train_new_backprop(double target_val,
+												   RunHelper& run_helper) {
+	EvalPassThroughExperimentHistory* history = (EvalPassThroughExperimentHistory*)run_helper.experiment_histories.back();
 
 	for (int i_index = 0; i_index < (int)history->instance_count; i_index++) {
 		this->i_target_val_histories.push_back(target_val);
@@ -101,7 +83,7 @@ void InfoPassThroughExperiment::train_negative_backprop(
 		for (int d_index = 0; d_index < num_instances; d_index++) {
 			sum_scores += this->i_target_val_histories[d_index];
 		}
-		this->negative_average_score = sum_scores / num_instances;
+		this->new_average_score = sum_scores / num_instances;
 
 		vector<vector<Scope*>> possible_scope_contexts;
 		vector<vector<AbstractNode*>> possible_node_contexts;
@@ -186,7 +168,7 @@ void InfoPassThroughExperiment::train_negative_backprop(
 
 		Eigen::VectorXd outputs(num_instances);
 		for (int d_index = 0; d_index < num_instances; d_index++) {
-			outputs(d_index) = this->i_target_val_histories[d_index] - this->negative_average_score;
+			outputs(d_index) = this->i_target_val_histories[d_index] - this->new_average_score;
 		}
 
 		Eigen::VectorXd weights;
@@ -199,7 +181,7 @@ void InfoPassThroughExperiment::train_negative_backprop(
 				weights(i_index) = 0.0;
 			}
 		}
-		this->negative_linear_weights = vector<double>(this->input_node_contexts.size());
+		this->linear_weights = vector<double>(this->input_node_contexts.size());
 		for (int i_index = 0; i_index < (int)this->input_node_contexts.size(); i_index++) {
 			double sum_impact_size = 0.0;
 			for (int d_index = 0; d_index < num_instances; d_index++) {
@@ -212,7 +194,7 @@ void InfoPassThroughExperiment::train_negative_backprop(
 			} else {
 				weights(i_index) = trunc(1000000 * weights(i_index)) / 1000000;
 			}
-			this->negative_linear_weights[i_index] = weights(i_index);
+			this->linear_weights[i_index] = weights(i_index);
 		}
 
 		Eigen::VectorXd predicted_scores = inputs * weights;
@@ -224,17 +206,17 @@ void InfoPassThroughExperiment::train_negative_backprop(
 
 		vector<vector<vector<double>>> network_inputs(num_instances);
 		for (int d_index = 0; d_index < num_instances; d_index++) {
-			vector<vector<double>> network_input_vals(this->negative_network_input_indexes.size());
-			for (int i_index = 0; i_index < (int)this->negative_network_input_indexes.size(); i_index++) {
-				network_input_vals[i_index] = vector<double>(this->negative_network_input_indexes[i_index].size());
-				for (int v_index = 0; v_index < (int)this->negative_network_input_indexes[i_index].size(); v_index++) {
-					network_input_vals[i_index][v_index] = inputs(d_index, this->negative_network_input_indexes[i_index][v_index]);
+			vector<vector<double>> network_input_vals(this->network_input_indexes.size());
+			for (int i_index = 0; i_index < (int)this->network_input_indexes.size(); i_index++) {
+				network_input_vals[i_index] = vector<double>(this->network_input_indexes[i_index].size());
+				for (int v_index = 0; v_index < (int)this->network_input_indexes[i_index].size(); v_index++) {
+					network_input_vals[i_index][v_index] = inputs(d_index, this->network_input_indexes[i_index][v_index]);
 				}
 			}
 			network_inputs[d_index] = network_input_vals;
 		}
 
-		if (this->negative_network == NULL) {
+		if (this->network == NULL) {
 			vector<double> misguesses(num_instances);
 			for (int d_index = 0; d_index < num_instances; d_index++) {
 				misguesses[d_index] = diffs(d_index) * diffs(d_index);
@@ -244,31 +226,31 @@ void InfoPassThroughExperiment::train_negative_backprop(
 			for (int d_index = 0; d_index < num_instances; d_index++) {
 				sum_misguesses += misguesses[d_index];
 			}
-			this->negative_average_misguess = sum_misguesses / num_instances;
+			this->network_average_misguess = sum_misguesses / num_instances;
 
 			double sum_misguess_variances = 0.0;
 			for (int d_index = 0; d_index < num_instances; d_index++) {
-				sum_misguess_variances += (misguesses[d_index] - this->negative_average_misguess) * (misguesses[d_index] - this->negative_average_misguess);
+				sum_misguess_variances += (misguesses[d_index] - this->network_average_misguess) * (misguesses[d_index] - this->network_average_misguess);
 			}
-			this->negative_misguess_standard_deviation = sqrt(sum_misguess_variances / num_instances);
-			if (this->negative_misguess_standard_deviation < MIN_STANDARD_DEVIATION) {
-				this->negative_misguess_standard_deviation = MIN_STANDARD_DEVIATION;
+			this->network_misguess_standard_deviation = sqrt(sum_misguess_variances / num_instances);
+			if (this->network_misguess_standard_deviation < MIN_STANDARD_DEVIATION) {
+				this->network_misguess_standard_deviation = MIN_STANDARD_DEVIATION;
 			}
 		} else {
 			optimize_network(network_inputs,
 							 network_target_vals,
-							 this->negative_network);
+							 this->network);
 
 			double average_misguess;
 			double misguess_standard_deviation;
 			measure_network(network_inputs,
 							network_target_vals,
-							this->negative_network,
+							this->network,
 							average_misguess,
 							misguess_standard_deviation);
 
-			this->negative_average_misguess = average_misguess;
-			this->negative_misguess_standard_deviation = misguess_standard_deviation;
+			this->network_average_misguess = average_misguess;
+			this->network_misguess_standard_deviation = misguess_standard_deviation;
 		}
 
 		int train_index = 0;
@@ -309,10 +291,10 @@ void InfoPassThroughExperiment::train_negative_backprop(
 			}
 
 			Network* test_network;
-			if (this->negative_network == NULL) {
+			if (this->network == NULL) {
 				test_network = new Network(num_new_input_indexes);
 			} else {
-				test_network = new Network(this->negative_network);
+				test_network = new Network(this->network);
 
 				uniform_int_distribution<int> increment_above_distribution(0, 3);
 				if (increment_above_distribution(generator) == 0) {
@@ -379,8 +361,8 @@ void InfoPassThroughExperiment::train_negative_backprop(
 			#if defined(MDEBUG) && MDEBUG
 			if (rand()%3 == 0) {
 			#else
-			double improvement = this->negative_average_misguess - average_misguess;
-			double standard_deviation = min(this->negative_misguess_standard_deviation, misguess_standard_deviation);
+			double improvement = this->network_average_misguess - average_misguess;
+			double standard_deviation = min(this->network_misguess_standard_deviation, misguess_standard_deviation);
 			double t_score = improvement / (standard_deviation / sqrt(num_instances * TEST_SAMPLES_PERCENTAGE));
 
 			if (t_score > 1.645) {
@@ -409,21 +391,21 @@ void InfoPassThroughExperiment::train_negative_backprop(
 						this->input_node_contexts.push_back(test_network_input_node_contexts[t_index].back());
 						this->input_obs_indexes.push_back(test_network_input_obs_indexes[t_index]);
 
-						this->negative_linear_weights.push_back(0.0);
+						this->linear_weights.push_back(0.0);
 
 						index = this->input_node_contexts.size()-1;
 					}
 					new_input_indexes.push_back(index);
 				}
-				this->negative_network_input_indexes.push_back(new_input_indexes);
+				this->network_input_indexes.push_back(new_input_indexes);
 
-				if (this->negative_network != NULL) {
-					delete this->negative_network;
+				if (this->network != NULL) {
+					delete this->network;
 				}
-				this->negative_network = test_network;
+				this->network = test_network;
 
-				this->negative_average_misguess = average_misguess;
-				this->negative_misguess_standard_deviation = misguess_standard_deviation;
+				this->network_average_misguess = average_misguess;
+				this->network_misguess_standard_deviation = misguess_standard_deviation;
 
 				#if defined(MDEBUG) && MDEBUG
 				#else
@@ -446,10 +428,9 @@ void InfoPassThroughExperiment::train_negative_backprop(
 		this->i_scope_histories.clear();
 		this->i_target_val_histories.clear();
 
-		this->i_scope_histories.reserve(NUM_DATAPOINTS);
-		this->i_target_val_histories.reserve(NUM_DATAPOINTS);
+		this->misguess_histories.reserve(NUM_DATAPOINTS);
 
-		this->state = INFO_PASS_THROUGH_EXPERIMENT_STATE_TRAIN_POSITIVE;
+		this->state = EVAL_PASS_THROUGH_EXPERIMENT_STATE_MEASURE;
 		this->state_iter = 0;
 	}
 }

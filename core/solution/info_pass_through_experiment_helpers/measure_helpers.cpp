@@ -192,7 +192,7 @@ void InfoPassThroughExperiment::measure_backprop(
 			this->new_state = INFO_SCOPE_STATE_NA;
 		}
 
-		if (new_average_score >= this->existing_average_score) {
+		if (new_average_score > this->existing_average_score) {
 		#endif /* MDEBUG */
 			this->o_target_val_histories.reserve(VERIFY_1ST_NUM_DATAPOINTS);
 

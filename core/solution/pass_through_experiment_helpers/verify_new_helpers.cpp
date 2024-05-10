@@ -72,7 +72,7 @@ void PassThroughExperiment::verify_new_backprop(
 
 		this->o_target_val_histories.clear();
 
-		if (new_average_score > this->existing_average_score) {
+		if (new_average_score >= this->existing_average_score) {
 		#endif /* MDEBUG */
 			this->o_target_val_histories.reserve(VERIFY_2ND_NUM_DATAPOINTS);
 

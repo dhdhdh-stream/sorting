@@ -18,6 +18,12 @@ RunHelper::RunHelper() {
 
 	if (solution->state == SOLUTION_STATE_GENERALIZE) {
 		this->new_action_history = new NewActionHistory();
+		if (solution->new_action_tracker->epoch_iter == NEW_ACTION_NUM_EPOCHS-1) {
+			this->is_always_select = true;
+		} else {
+			uniform_int_distribution<int> distribution(0, 1);
+			this->is_always_select = distribution(generator) == 0;
+		}
 	} else {
 		this->new_action_history = NULL;
 	}

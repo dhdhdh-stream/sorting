@@ -1,7 +1,8 @@
-#include "info_pass_through_experiment.h"
+#include "eval_pass_through_experiment.h"
 
 #include "action_node.h"
 #include "constants.h"
+#include "eval.h"
 #include "globals.h"
 #include "info_branch_node.h"
 #include "info_scope.h"
@@ -9,6 +10,7 @@
 #include "network.h"
 #include "problem.h"
 #include "scope.h"
+#include "solution.h"
 #include "solution_helpers.h"
 
 using namespace std;
@@ -21,7 +23,7 @@ const int INITIAL_NUM_SAMPLES_PER_ITER = 40;
 const int EXPLORE_ITERS = 100;
 #endif /* MDEBUG */
 
-void InfoPassThroughExperiment::explore_activate(
+void EvalPassThroughExperiment::explore_activate(
 		AbstractNode*& curr_node,
 		Problem* problem,
 		RunHelper& run_helper) {
@@ -64,7 +66,7 @@ void InfoPassThroughExperiment::explore_activate(
 	}
 }
 
-void InfoPassThroughExperiment::explore_backprop(
+void EvalPassThroughExperiment::explore_backprop(
 		double target_val,
 		RunHelper& run_helper) {
 	this->new_score += target_val - this->existing_average_score;
@@ -226,28 +228,19 @@ void InfoPassThroughExperiment::explore_backprop(
 				}
 			}
 
-			this->input_node_contexts = this->info_scope_context->input_node_contexts;
-			this->input_obs_indexes = this->info_scope_context->input_obs_indexes;
+			this->input_node_contexts = solution->eval->input_node_contexts;
+			this->input_obs_indexes = solution->eval->input_obs_indexes;
 
-			this->negative_linear_weights = this->info_scope_context->linear_negative_weights;
-			this->negative_network_input_indexes = this->info_scope_context->negative_network_input_indexes;
-			if (this->info_scope_context->negative_network != NULL) {
-				this->negative_network = new Network(this->info_scope_context->negative_network);
-			}
-
-			this->positive_linear_weights = this->info_scope_context->linear_positive_weights;
-			this->positive_network_input_indexes = this->info_scope_context->positive_network_input_indexes;
-			if (this->info_scope_context->positive_network != NULL) {
-				this->positive_network = new Network(this->info_scope_context->positive_network);
+			this->linear_weights = solution->eval->linear_weights;
+			this->network_input_indexes = solution->eval->network_input_indexes;
+			if (solution->eval->network != NULL) {
+				this->network = new Network(solution->eval->network);
 			}
 
 			this->i_scope_histories.reserve(NUM_DATAPOINTS);
 			this->i_target_val_histories.reserve(NUM_DATAPOINTS);
 
-			uniform_int_distribution<int> until_distribution(0, (int)this->average_instances_per_run-1.0);
-			this->num_instances_until_target = 1 + until_distribution(generator);
-
-			this->state = INFO_PASS_THROUGH_EXPERIMENT_STATE_TRAIN_NEGATIVE;
+			this->state = EVAL_PASS_THROUGH_EXPERIMENT_STATE_TRAIN_NEW;
 			this->state_iter = 0;
 		} else {
 			for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {

@@ -1,7 +1,6 @@
 #include "eval.h"
 
-#include "eval_experiment.h"
-#include "globals.h"
+#include "eval_pass_through_experiment.h"
 #include "scope.h"
 #include "solution_helpers.h"
 
@@ -24,19 +23,16 @@ void Eval::experiment_activate(Problem* problem,
 		run_helper,
 		root_history);
 
-	if (root_history->experiment_history != NULL) {
-		EvalExperimentHistory* eval_experiment_history = (EvalExperimentHistory*)root_history->experiment_history;
-		EvalExperiment* eval_experiment = (EvalExperiment*)eval_experiment_history->experiment;
-		eval_experiment->back_activate(inner_context,
-									   eval_experiment_history);
-	}
+	run_helper.num_decisions++;
 
-	if (run_helper.experiments_seen_order.size() == 0) {
+	if (this->experiment != NULL) {
+		EvalPassThroughExperiment* eval_pass_through_experiment = (EvalPassThroughExperiment*)this->experiment;
+		eval_pass_through_experiment->back_activate(problem,
+													root_history,
+													run_helper);
+	} else {
 		if (!run_helper.exceeded_limit) {
-			uniform_int_distribution<int> target_distribution(0, 1);
-			if (target_distribution(generator) == 0) {
-				create_eval_experiment(root_history);
-			}
+			create_eval_experiment(root_history);
 		}
 	}
 

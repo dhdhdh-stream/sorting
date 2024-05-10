@@ -6,7 +6,7 @@
 #include "branch_experiment.h"
 #include "branch_node.h"
 #include "constants.h"
-#include "eval_experiment.h"
+#include "eval_pass_through_experiment.h"
 #include "globals.h"
 #include "info_branch_node.h"
 #include "info_pass_through_experiment.h"
@@ -236,7 +236,7 @@ void create_eval_experiment(ScopeHistory* root_history) {
 	uniform_int_distribution<int> possible_distribution(0, (int)possible_scope_contexts.size()-1);
 	int rand_index = possible_distribution(generator);
 
-	EvalExperiment* new_experiment = new EvalExperiment(
+	EvalPassThroughExperiment* new_experiment = new EvalPassThroughExperiment(
 		possible_node_contexts[rand_index],
 		possible_is_branch[rand_index]);
 

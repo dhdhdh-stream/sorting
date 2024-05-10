@@ -23,8 +23,7 @@ public:
 
 	double average_score;
 
-	std::vector<std::vector<int>> input_node_context_ids;
-	std::vector<std::vector<AbstractNode*>> input_node_contexts;
+	std::vector<AbstractNode*> input_node_contexts;
 	std::vector<int> input_obs_indexes;
 
 	std::vector<int> linear_input_indexes;
@@ -32,6 +31,13 @@ public:
 
 	std::vector<std::vector<int>> network_input_indexes;
 	Network* network;
+
+	AbstractExperiment* experiment;
+
+	#if defined(MDEBUG) && MDEBUG
+	void* verify_key;
+	std::vector<double> verify_scores;
+	#endif /* MDEBUG */
 
 	Eval();
 	Eval(Eval* original);
