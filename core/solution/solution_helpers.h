@@ -6,6 +6,7 @@
 #include <utility>
 #include <vector>
 
+#include "context_layer.h"
 #include "run_helper.h"
 
 class AbstractNode;
@@ -31,5 +32,10 @@ void gather_possible_helper(std::vector<Scope*>& scope_context,
 							std::vector<std::vector<AbstractNode*>>& possible_node_contexts,
 							std::vector<int>& possible_obs_indexes,
 							ScopeHistory* scope_history);
+
+void random_sequence(AbstractNode*& curr_node,
+					 Problem* problem,
+					 std::vector<ContextLayer>& context,
+					 RunHelper& run_helper);
 
 #endif /* SOLUTION_HELPERS_H */

@@ -1,5 +1,7 @@
 #include "eval_pass_through_experiment.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "constants.h"
 #include "eval.h"
@@ -74,21 +76,12 @@ void EvalPassThroughExperiment::finalize(Solution* duplicate) {
 		}
 		duplicate->eval->network = this->network;
 		this->network = NULL;
-
-		#if defined(MDEBUG) && MDEBUG
-		if (solution->state == SOLUTION_STATE_TRAVERSE) {
-			duplicate->verify_key = this;
-			duplicate->verify_problems = this->verify_problems;
-			this->verify_problems.clear();
-			duplicate->verify_seeds = this->verify_seeds;
-
-			duplicate->eval->verify_key = this;
-			duplicate->eval->verify_scores = this->verify_scores;
-		}
-		#endif /* MDEBUG */
 	}
 
-	duplicate->eval->experiment = NULL;
+	/**
+	 * - set to NULL in original
+	 */
+	solution->eval->experiment = NULL;
 
 	int experiment_index;
 	for (int e_index = 0; e_index < (int)this->node_context->experiments.size(); e_index++) {

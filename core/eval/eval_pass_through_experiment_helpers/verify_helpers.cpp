@@ -201,15 +201,7 @@ void EvalPassThroughExperiment::verify_backprop(
 			cout << "this->existing_average_misguess: " << this->existing_average_misguess << endl;
 			cout << "new_average_misguess: " << new_average_misguess << endl;
 
-			#if defined(MDEBUG) && MDEBUG
-			this->verify_problems = vector<Problem*>(NUM_VERIFY_SAMPLES, NULL);
-			this->verify_seeds = vector<unsigned long>(NUM_VERIFY_SAMPLES);
-
-			this->state = EVAL_PASS_THROUGH_EXPERIMENT_STATE_CAPTURE_VERIFY;
-			this->state_iter = 0;
-			#else
 			this->result = EXPERIMENT_RESULT_SUCCESS;
-			#endif /* MDEBUG */
 		} else {
 			this->result = EXPERIMENT_RESULT_FAIL;
 		}

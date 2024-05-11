@@ -4,10 +4,13 @@
 
 #include "action_node.h"
 #include "constants.h"
+#include "eval.h"
+#include "globals.h"
 #include "info_scope_node.h"
 #include "network.h"
 #include "problem.h"
 #include "scope.h"
+#include "solution.h"
 
 using namespace std;
 
@@ -16,6 +19,7 @@ EvalPassThroughExperiment::EvalPassThroughExperiment(
 		bool is_branch) {
 	this->type = EXPERIMENT_TYPE_EVAL_PASS_THROUGH;
 
+	this->scope_context = solution->eval->subscope;
 	this->node_context = node_context;
 	this->is_branch = is_branch;
 
@@ -24,16 +28,15 @@ EvalPassThroughExperiment::EvalPassThroughExperiment(
 	this->ending_node = NULL;
 
 	this->o_target_val_histories.reserve(NUM_DATAPOINTS);
-	this->misguess_histories.reserve(NUM_DATAPOINTS);
 
-	this->state = EVAL_PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING;
+	this->state = EVAL_PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING_SCORE;
 	this->state_iter = 0;
 
 	this->result = EXPERIMENT_RESULT_NA;
 }
 
 EvalPassThroughExperiment::~EvalPassThroughExperiment() {
-	cout << "outer delete" << endl;
+	cout << "outer delete " << this << endl;
 
 	if (this->network != NULL) {
 		delete this->network;
@@ -58,12 +61,6 @@ EvalPassThroughExperiment::~EvalPassThroughExperiment() {
 	for (int h_index = 0; h_index < (int)this->i_scope_histories.size(); h_index++) {
 		delete this->i_scope_histories[h_index];
 	}
-
-	#if defined(MDEBUG) && MDEBUG
-	for (int p_index = 0; p_index < (int)this->verify_problems.size(); p_index++) {
-		delete this->verify_problems[p_index];
-	}
-	#endif /* MDEBUG */
 }
 
 EvalPassThroughExperimentHistory::EvalPassThroughExperimentHistory(

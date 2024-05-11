@@ -73,7 +73,11 @@ void EvalPassThroughExperiment::explore_backprop(
 
 	this->sub_state_iter++;
 	if (this->sub_state_iter == INITIAL_NUM_SAMPLES_PER_ITER) {
+		#if defined(MDEBUG) && MDEBUG
+		if (rand()%2 == 0) {
+		#else
 		if (this->new_score < 0.0) {
+		#endif /* MDEBUG */
 			for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {
 				if (this->step_types[s_index] == STEP_TYPE_ACTION) {
 					delete this->actions[s_index];
@@ -168,7 +172,11 @@ void EvalPassThroughExperiment::explore_backprop(
 			}
 		}
 	} else if (this->sub_state_iter >= NUM_DATAPOINTS) {
+		#if defined(MDEBUG) && MDEBUG
+		if (rand()%2 == 0) {
+		#else
 		if (this->new_score >= 0.0) {
+		#endif /* MDEBUG */
 			for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {
 				if (this->step_types[s_index] == STEP_TYPE_ACTION) {
 					this->actions[s_index]->parent = this->scope_context;

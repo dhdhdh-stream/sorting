@@ -4,6 +4,7 @@
 #include <thread>
 #include <random>
 
+#include "eval.h"
 #include "globals.h"
 #include "minesweeper.h"
 #include "scope.h"
@@ -27,10 +28,18 @@ int main(int argc, char* argv[]) {
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
 
+	// problem_type = new Sorting();
+	problem_type = new Minesweeper();
+
 	solution = new Solution();
 	solution->load("", "main");
 
 	double sum_vals = 0.0;
+
+	// temp
+	solution->state = SOLUTION_STATE_EVAL;
+	uniform_int_distribution<int> next_distribution(0, (int)(2.0 * solution->average_num_actions));
+	solution->num_actions_until_random = 1 + next_distribution(generator);
 
 	auto start_time = chrono::high_resolution_clock::now();
 	for (int i_index = 0; i_index < 2000; i_index++) {
@@ -54,6 +63,12 @@ int main(int argc, char* argv[]) {
 			run_helper,
 			root_history);
 
+		double predicted_score;
+		if (solution->state == SOLUTION_STATE_EVAL) {
+			predicted_score = solution->eval->activate(problem,
+													   run_helper);
+		}
+
 		delete root_history;
 
 		double target_val;
@@ -62,7 +77,13 @@ int main(int argc, char* argv[]) {
 		} else {
 			target_val = -1.0;
 		}
-		sum_vals += target_val;
+
+		if (solution->state == SOLUTION_STATE_TRAVERSE) {
+			sum_vals += target_val;
+		} else if (solution->state == SOLUTION_STATE_EVAL) {
+			double misguess = (target_val - predicted_score) * (target_val - predicted_score);
+			sum_vals += -misguess;
+		}
 
 		delete problem;
 	}

@@ -117,13 +117,6 @@ void Scope::link(Solution* parent_solution) {
 	}
 }
 
-void Scope::link() {
-	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
-			it != this->nodes.end(); it++) {
-		it->second->link();
-	}
-}
-
 void Scope::copy_from(Scope* original,
 					  Solution* parent_solution) {
 	this->node_counter = original->node_counter;
@@ -179,34 +172,6 @@ void Scope::copy_from(Scope* original,
 				new_info_branch_node->parent = this;
 				new_info_branch_node->id = it->first;
 				this->nodes[it->first] = new_info_branch_node;
-			}
-			break;
-		}
-	}
-}
-
-void Scope::copy_from(Scope* original) {
-	this->node_counter = original->node_counter;
-
-	for (map<int, AbstractNode*>::iterator it = original->nodes.begin();
-			it != original->nodes.end(); it++) {
-		switch (it->second->type) {
-		case NODE_TYPE_ACTION:
-			{
-				ActionNode* original_action_node = (ActionNode*)it->second;
-				ActionNode* new_action_node = new ActionNode(original_action_node);
-				new_action_node->parent = this;
-				new_action_node->id = it->first;
-				this->nodes[it->first] = new_action_node;
-			}
-			break;
-		case NODE_TYPE_BRANCH:
-			{
-				BranchNode* original_branch_node = (BranchNode*)it->second;
-				BranchNode* new_branch_node = new BranchNode(original_branch_node);
-				new_branch_node->parent = this;
-				new_branch_node->id = it->first;
-				this->nodes[it->first] = new_branch_node;
 			}
 			break;
 		}

@@ -1,16 +1,23 @@
 #include "eval.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_node.h"
+#include "globals.h"
 #include "info_branch_node.h"
 #include "info_scope_node.h"
 #include "network.h"
 #include "scope.h"
+#include "solution.h"
 
 using namespace std;
 
 double Eval::activate(Problem* problem,
 					  RunHelper& run_helper) {
+	int existing_num_actions_until_random = solution->num_actions_until_random;
+	solution->num_actions_until_random = -1;
+
 	vector<ContextLayer> inner_context;
 	inner_context.push_back(ContextLayer());
 
@@ -81,6 +88,8 @@ double Eval::activate(Problem* problem,
 	}
 
 	delete root_history;
+
+	solution->num_actions_until_random = existing_num_actions_until_random;
 
 	return score;
 }

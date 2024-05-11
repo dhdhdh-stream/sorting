@@ -16,17 +16,15 @@ class Problem;
 class ScopeHistory;
 class Solution;
 
-const int EVAL_PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING = 0;
-const int EVAL_PASS_THROUGH_EXPERIMENT_STATE_EXPLORE = 1;
-const int EVAL_PASS_THROUGH_EXPERIMENT_STATE_TRAIN_NEW = 2;
-const int EVAL_PASS_THROUGH_EXPERIMENT_STATE_MEASURE = 3;
-const int EVAL_PASS_THROUGH_EXPERIMENT_STATE_VERIFY_1ST_EXISTING = 4;
-const int EVAL_PASS_THROUGH_EXPERIMENT_STATE_VERIFY_1ST = 5;
-const int EVAL_PASS_THROUGH_EXPERIMENT_STATE_VERIFY_2ND_EXISTING = 6;
-const int EVAL_PASS_THROUGH_EXPERIMENT_STATE_VERIFY_2ND = 7;
-#if defined(MDEBUG) && MDEBUG
-const int EVAL_PASS_THROUGH_EXPERIMENT_STATE_CAPTURE_VERIFY = 8;
-#endif /* MDEBUG */
+const int EVAL_PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING_SCORE = 0;
+const int EVAL_PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING = 1;
+const int EVAL_PASS_THROUGH_EXPERIMENT_STATE_EXPLORE = 2;
+const int EVAL_PASS_THROUGH_EXPERIMENT_STATE_TRAIN_NEW = 3;
+const int EVAL_PASS_THROUGH_EXPERIMENT_STATE_MEASURE = 4;
+const int EVAL_PASS_THROUGH_EXPERIMENT_STATE_VERIFY_1ST_EXISTING = 5;
+const int EVAL_PASS_THROUGH_EXPERIMENT_STATE_VERIFY_1ST = 6;
+const int EVAL_PASS_THROUGH_EXPERIMENT_STATE_VERIFY_2ND_EXISTING = 7;
+const int EVAL_PASS_THROUGH_EXPERIMENT_STATE_VERIFY_2ND = 8;
 
 class EvalPassThroughExperimentHistory;
 class EvalPassThroughExperiment : public AbstractExperiment {
@@ -65,12 +63,6 @@ public:
 	std::vector<ScopeHistory*> i_scope_histories;
 	std::vector<double> i_target_val_histories;
 
-	#if defined(MDEBUG) && MDEBUG
-	std::vector<Problem*> verify_problems;
-	std::vector<unsigned long> verify_seeds;
-	std::vector<double> verify_scores;
-	#endif /* MDEBUG */
-
 	EvalPassThroughExperiment(AbstractNode* node_context,
 							  bool is_branch);
 	~EvalPassThroughExperiment();
@@ -84,6 +76,9 @@ public:
 					   RunHelper& run_helper);
 	void backprop(double target_val,
 				  RunHelper& run_helper);
+
+	void measure_existing_score_backprop(double target_val,
+										 RunHelper& run_helper);
 
 	void measure_existing_back_activate(ScopeHistory*& subscope_history,
 										RunHelper& run_helper);
@@ -124,14 +119,6 @@ public:
 							  RunHelper& run_helper);
 	void verify_backprop(double target_val,
 						 RunHelper& run_helper);
-
-	#if defined(MDEBUG) && MDEBUG
-	void capture_verify_activate(AbstractNode*& curr_node,
-								 Problem* problem,
-								 RunHelper& run_helper);
-	void capture_verify_back_activate(ScopeHistory*& subscope_history);
-	void capture_verify_backprop();
-	#endif /* MDEBUG */
 
 	void finalize(Solution* duplicate);
 	void new_branch(Solution* duplicate);

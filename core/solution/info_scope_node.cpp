@@ -53,13 +53,6 @@ void InfoScopeNode::link(Solution* parent_solution) {
 	}
 }
 
-/**
- * - unused
- */
-void InfoScopeNode::link() {
-	// do nothing
-}
-
 void InfoScopeNode::save_for_display(ofstream& output_file) {
 	output_file << this->scope->id << endl;
 

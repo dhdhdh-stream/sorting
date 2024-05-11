@@ -103,10 +103,15 @@ void Scope::activate(Problem* problem,
 			break;
 		}
 
-		// if (this->is_improve_eval
-		// 		&& solution->num_actions_until == 0) {
-		// 	random_sequence(problem);
-		// }
+		if (solution->num_actions_until_random > 0) {
+			solution->num_actions_until_random--;
+			if (solution->num_actions_until_random == 0) {
+				random_sequence(curr_node,
+								problem,
+								context,
+								run_helper);
+			}
+		}
 
 		node_activate_helper(curr_node,
 							 problem,
@@ -118,10 +123,6 @@ void Scope::activate(Problem* problem,
 	if (history->experiment_history != NULL) {
 		history->experiment_history->scope_history = new ScopeHistory(history);
 	}
-
-	// if (this->is_improve_eval) {
-	// 	this->eval->experiment_activate();
-	// }
 
 	run_helper.curr_depth--;
 }

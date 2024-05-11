@@ -1,5 +1,7 @@
 #include "eval_pass_through_experiment.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "constants.h"
 #include "eval.h"
@@ -79,31 +81,13 @@ void EvalPassThroughExperiment::measure_existing_backprop(
 		RunHelper& run_helper) {
 	EvalPassThroughExperimentHistory* history = (EvalPassThroughExperimentHistory*)run_helper.experiment_histories.back();
 
-	this->o_target_val_histories.push_back(target_val);
-
 	for (int p_index = 0; p_index < (int)history->predicted_scores.size(); p_index++) {
 		double misguess = (target_val - history->predicted_scores[p_index]) * (target_val - history->predicted_scores[p_index]);
 		this->misguess_histories.push_back(misguess);
 	}
 
-	if ((int)this->o_target_val_histories.size() >= NUM_DATAPOINTS) {
-		double sum_scores = 0.0;
-		for (int d_index = 0; d_index < NUM_DATAPOINTS; d_index++) {
-			sum_scores += this->o_target_val_histories[d_index];
-		}
-		this->existing_average_score = sum_scores / NUM_DATAPOINTS;
-
-		double sum_score_variance = 0.0;
-		for (int d_index = 0; d_index < NUM_DATAPOINTS; d_index++) {
-			sum_score_variance += (this->o_target_val_histories[d_index] - this->existing_average_score) * (this->o_target_val_histories[d_index] - this->existing_average_score);
-		}
-		this->existing_score_standard_deviation = sqrt(sum_score_variance / NUM_DATAPOINTS);
-		if (this->existing_score_standard_deviation < MIN_STANDARD_DEVIATION) {
-			this->existing_score_standard_deviation = MIN_STANDARD_DEVIATION;
-		}
-
-		this->o_target_val_histories.clear();
-
+	this->state_iter++;
+	if (this->state_iter >= NUM_DATAPOINTS) {
 		int num_instances = (int)this->misguess_histories.size();
 
 		double sum_misguesses = 0.0;

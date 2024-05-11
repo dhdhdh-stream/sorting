@@ -6,11 +6,6 @@ bool EvalPassThroughExperiment::activate(AbstractNode*& curr_node,
 										 Problem* problem,
 										 vector<ContextLayer>& context,
 										 RunHelper& run_helper) {
-	if (run_helper.experiment_histories.size() == 0) {
-		run_helper.experiment_histories.push_back(new EvalPassThroughExperimentHistory(this));
-		run_helper.experiments_seen_order.push_back(this);
-	}
-
 	switch (this->state) {
 	case EVAL_PASS_THROUGH_EXPERIMENT_STATE_EXPLORE:
 		explore_activate(curr_node,
@@ -33,13 +28,6 @@ bool EvalPassThroughExperiment::activate(AbstractNode*& curr_node,
 						problem,
 						run_helper);
 		break;
-	#if defined(MDEBUG) && MDEBUG
-	case EVAL_PASS_THROUGH_EXPERIMENT_STATE_CAPTURE_VERIFY:
-		capture_verify_activate(curr_node,
-								problem,
-								run_helper);
-		break;
-	#endif /* MDEBUG */
 	}
 
 	return true;
@@ -71,17 +59,16 @@ void EvalPassThroughExperiment::back_activate(Problem* problem,
 		verify_back_activate(subscope_history,
 							 run_helper);
 		break;
-	#if defined(MDEBUG) && MDEBUG
-	case EVAL_PASS_THROUGH_EXPERIMENT_STATE_CAPTURE_VERIFY:
-		capture_verify_back_activate(subscope_history);
-		break;
-	#endif /* MDEBUG */
 	}
 }
 
 void EvalPassThroughExperiment::backprop(double target_val,
 										 RunHelper& run_helper) {
 	switch (this->state) {
+	case EVAL_PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING_SCORE:
+		measure_existing_score_backprop(target_val,
+										run_helper);
+		break;
 	case EVAL_PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING:
 		measure_existing_backprop(target_val,
 								  run_helper);
@@ -108,10 +95,5 @@ void EvalPassThroughExperiment::backprop(double target_val,
 		verify_backprop(target_val,
 						run_helper);
 		break;
-	#if defined(MDEBUG) && MDEBUG
-	case EVAL_PASS_THROUGH_EXPERIMENT_STATE_CAPTURE_VERIFY:
-		capture_verify_backprop();
-		break;
-	#endif /* MDEBUG */
 	}
 }

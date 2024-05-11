@@ -1,5 +1,7 @@
 #include "solution_helpers.h"
 
+#include <iostream>
+
 #include "context_layer.h"
 #include "globals.h"
 #include "problem.h"
@@ -32,12 +34,17 @@ void random_sequence(AbstractNode*& curr_node,
 					run_helper);
 				delete new_scope_node;
 
+				// cout << "new_scope_node->scope->id: " << new_scope_node->scope->id << endl;
+
 				default_to_action = false;
 			}
 		}
 
 		if (default_to_action) {
-			problem->perform_action(problem_type->random_action());
+			Action action = problem_type->random_action();
+			problem->perform_action(action);
+
+			// cout << "action.move: " << action.move << endl;
 		}
 	}
 

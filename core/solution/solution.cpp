@@ -59,7 +59,8 @@ Solution::Solution(Solution* original) {
 		this->info_scopes[i_index]->link(this);
 	}
 
-	this->eval = new Eval(original->eval);
+	this->eval = new Eval(original->eval,
+						  this);
 
 	if (original->new_action_tracker == NULL) {
 		this->new_action_tracker = NULL;
@@ -150,7 +151,12 @@ void Solution::load(string path,
 	getline(input_file, state_iter_line);
 	this->state_iter = stoi(state_iter_line);
 
-	this->num_actions_until_random = -1;
+	if (this->state == SOLUTION_STATE_TRAVERSE) {
+		this->num_actions_until_random = -1;
+	} else if (this->state == SOLUTION_STATE_EVAL) {
+		uniform_int_distribution<int> next_distribution(0, (int)(2.0 * this->average_num_actions));
+		this->num_actions_until_random = 1 + next_distribution(generator);
+	}
 
 	string num_scopes_line;
 	getline(input_file, num_scopes_line);
@@ -234,36 +240,47 @@ void Solution::clear_verify() {
 #endif /* MDEBUG */
 
 void Solution::increment() {
-	this->state_iter++;
-	if (this->state == SOLUTION_STATE_TRAVERSE
-			&& this->state_iter >= SOLUTION_TRAVERSE_ITERS) {
-		Scope* new_scope = new Scope();
-		new_scope->id = this->scopes.size();
-		this->scopes.push_back(new_scope);
+	// this->state_iter++;
+	// if (this->state == SOLUTION_STATE_TRAVERSE
+	// 		&& this->state_iter >= SOLUTION_TRAVERSE_ITERS) {
+	// 	Scope* new_scope = new Scope();
+	// 	new_scope->id = this->scopes.size();
+	// 	this->scopes.push_back(new_scope);
 
-		ActionNode* starting_noop_node = new ActionNode();
-		starting_noop_node->parent = new_scope;
-		starting_noop_node->id = 0;
-		starting_noop_node->action = Action(ACTION_NOOP);
-		starting_noop_node->next_node_id = -1;
-		starting_noop_node->next_node = NULL;
-		new_scope->nodes[0] = starting_noop_node;
-		new_scope->node_counter = 1;
+	// 	ActionNode* starting_noop_node = new ActionNode();
+	// 	starting_noop_node->parent = new_scope;
+	// 	starting_noop_node->id = 0;
+	// 	starting_noop_node->action = Action(ACTION_NOOP);
+	// 	starting_noop_node->next_node_id = -1;
+	// 	starting_noop_node->next_node = NULL;
+	// 	new_scope->nodes[0] = starting_noop_node;
+	// 	new_scope->node_counter = 1;
 
-		this->state = SOLUTION_STATE_GENERALIZE;
+	// 	this->state = SOLUTION_STATE_GENERALIZE;
 
-		setup_new_action(this);
-	} else if (this->state == SOLUTION_STATE_GENERALIZE) {
-		this->new_action_tracker->increment();
-		if (this->new_action_tracker->epoch_iter >= NEW_ACTION_NUM_EPOCHS) {
-			add_new_action(this);
+	// 	setup_new_action(this);
+	// } else if (this->state == SOLUTION_STATE_GENERALIZE) {
+	// 	this->new_action_tracker->increment();
+	// 	if (this->new_action_tracker->epoch_iter >= NEW_ACTION_NUM_EPOCHS) {
+	// 		add_new_action(this);
 
-			this->state = SOLUTION_STATE_TRAVERSE;
-			this->state_iter = 0;
+	// 		this->state = SOLUTION_STATE_TRAVERSE;
+	// 		this->state_iter = 0;
 
-			delete this->new_action_tracker;
-			this->new_action_tracker = NULL;
-		}
+	// 		delete this->new_action_tracker;
+	// 		this->new_action_tracker = NULL;
+	// 	}
+	// }
+
+	if (this->state == SOLUTION_STATE_TRAVERSE) {
+		this->state = SOLUTION_STATE_EVAL;
+
+		uniform_int_distribution<int> next_distribution(0, (int)(2.0 * this->average_num_actions));
+		this->num_actions_until_random = 1 + next_distribution(generator);
+	} else if (this->state == SOLUTION_STATE_EVAL) {
+		this->state = SOLUTION_STATE_TRAVERSE;
+
+		this->num_actions_until_random = -1;
 	}
 }
 
@@ -322,4 +339,6 @@ void Solution::save_for_display(ofstream& output_file) {
 			this->info_scopes[i_index]->subscope->save_for_display(output_file);
 		}
 	}
+
+	this->eval->subscope->save_for_display(output_file);
 }

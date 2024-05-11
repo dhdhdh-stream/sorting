@@ -5,6 +5,7 @@
 #include <random>
 
 #include "abstract_node.h"
+#include "eval.h"
 #include "globals.h"
 #include "minesweeper.h"
 #include "new_action_tracker.h"
@@ -30,10 +31,16 @@ int main(int argc, char* argv[]) {
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
 
+	// problem_type = new Sorting();
+	problem_type = new Minesweeper();
+
 	solution = new Solution();
 	solution->load("", "main");
 
-	cout << "solution->average_num_actions: " << solution->average_num_actions << endl;
+	// temp
+	solution->state = SOLUTION_STATE_EVAL;
+	uniform_int_distribution<int> next_distribution(0, (int)(2.0 * solution->average_num_actions));
+	solution->num_actions_until_random = 1 + next_distribution(generator);
 
 	{
 		// Problem* problem = new Sorting();
@@ -55,6 +62,15 @@ int main(int argc, char* argv[]) {
 			context,
 			run_helper,
 			root_history);
+
+		problem->print();
+
+		double predicted_score;
+		if (solution->state == SOLUTION_STATE_EVAL) {
+			predicted_score = solution->eval->activate(problem,
+													   run_helper);
+			cout << "predicted_score: " << predicted_score << endl;
+		}
 
 		delete root_history;
 

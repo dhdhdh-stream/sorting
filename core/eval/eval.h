@@ -16,6 +16,7 @@ class AbstractNode;
 class Network;
 class Problem;
 class Scope;
+class Solution;
 
 class Eval {
 public:
@@ -34,13 +35,9 @@ public:
 
 	AbstractExperiment* experiment;
 
-	#if defined(MDEBUG) && MDEBUG
-	void* verify_key;
-	std::vector<double> verify_scores;
-	#endif /* MDEBUG */
-
 	Eval();
-	Eval(Eval* original);
+	Eval(Eval* original,
+		 Solution* parent_solution);
 	~Eval();
 
 	double activate(Problem* problem,

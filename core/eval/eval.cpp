@@ -1,19 +1,24 @@
 #include "eval.h"
 
+#include <iostream>
+
 #include "action_node.h"
+#include "globals.h"
 #include "network.h"
 #include "scope.h"
 
 using namespace std;
 
 Eval::Eval() {
-	// do nothing
+	this->experiment = NULL;
 }
 
-Eval::Eval(Eval* original) {
+Eval::Eval(Eval* original,
+		   Solution* parent_solution) {
 	this->subscope = new Scope();
-	this->subscope->copy_from(original->subscope);
-	this->subscope->link();
+	this->subscope->copy_from(original->subscope,
+							  parent_solution);
+	this->subscope->link(parent_solution);
 
 	this->average_score = original->average_score;
 
@@ -32,6 +37,8 @@ Eval::Eval(Eval* original) {
 	} else {
 		this->network = new Network(original->network);
 	}
+
+	this->experiment = NULL;
 }
 
 Eval::~Eval() {
@@ -64,7 +71,7 @@ void Eval::load(ifstream& input_file) {
 	this->subscope = new Scope();
 	this->subscope->id = -1;
 	this->subscope->load(input_file);
-	this->subscope->link();
+	this->subscope->link(solution);
 
 	string average_score_line;
 	getline(input_file, average_score_line);

@@ -47,14 +47,6 @@ void ActionNode::link(Solution* parent_solution) {
 	}
 }
 
-void ActionNode::link() {
-	if (this->next_node_id == -1) {
-		this->next_node = NULL;
-	} else {
-		this->next_node = this->parent->nodes[this->next_node_id];
-	}
-}
-
 void ActionNode::save_for_display(ofstream& output_file) {
 	this->action.save(output_file);
 

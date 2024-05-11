@@ -6,6 +6,7 @@
 #include "branch_experiment.h"
 #include "branch_node.h"
 #include "constants.h"
+#include "eval.h"
 #include "eval_pass_through_experiment.h"
 #include "globals.h"
 #include "info_branch_node.h"
@@ -240,5 +241,6 @@ void create_eval_experiment(ScopeHistory* root_history) {
 		possible_node_contexts[rand_index],
 		possible_is_branch[rand_index]);
 
+	solution->eval->experiment = new_experiment;
 	possible_node_contexts[rand_index]->experiments.push_back(new_experiment);
 }

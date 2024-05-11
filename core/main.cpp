@@ -12,6 +12,7 @@
 
 #include "abstract_experiment.h"
 #include "action_node.h"
+#include "eval.h"
 #include "globals.h"
 #include "minesweeper.h"
 #include "new_action_tracker.h"
@@ -44,10 +45,10 @@ int main(int argc, char* argv[]) {
 	problem_type = new Minesweeper();
 
 	solution = new Solution();
-	// solution->init();
-	solution->load("", "main");
+	solution->init();
+	// solution->load("", "main");
 
-	// solution->save("", "main");
+	solution->save("", "main");
 
 	#if defined(MDEBUG) && MDEBUG
 	int run_index = 0;
@@ -86,6 +87,9 @@ int main(int argc, char* argv[]) {
 					create_experiment(root_history);
 				}
 			}
+		} else if (solution->state == SOLUTION_STATE_EVAL) {
+			solution->eval->experiment_activate(problem,
+												run_helper);
 		}
 
 		delete root_history;

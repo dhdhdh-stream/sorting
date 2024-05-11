@@ -185,6 +185,58 @@ for i_index in range(num_info_scopes):
 
 		info_scopes[i_index] = nodes
 
+if True:
+	nodes = {}
+	num_nodes = int(file.readline())
+	for n_index in range(num_nodes):
+		node_id = int(file.readline())
+		node_type = int(file.readline())
+		if node_type == NODE_TYPE_ACTION:
+			action = int(file.readline())
+
+			next_node_id = int(file.readline())
+
+			nodes[node_id] = [node_type,
+							  action,
+							  next_node_id]
+		elif node_type == NODE_TYPE_SCOPE:
+			inner_scope_id = int(file.readline())
+
+			next_node_id = int(file.readline())
+
+			nodes[node_id] = [node_type,
+							  inner_scope_id,
+							  next_node_id]
+		elif node_type == NODE_TYPE_BRANCH:
+			original_next_node_id = int(file.readline())
+			branch_next_node_id = int(file.readline())
+
+			nodes[node_id] = [node_type,
+							  original_next_node_id,
+							  branch_next_node_id]
+		elif node_type == NODE_TYPE_INFO_SCOPE:
+			inner_scope_id = int(file.readline())
+
+			next_node_id = int(file.readline())
+
+			nodes[node_id] = [node_type,
+							  inner_scope_id,
+							  next_node_id]
+		elif node_type == NODE_TYPE_INFO_BRANCH:
+			inner_scope_id = int(file.readline())
+
+			original_next_node_id = int(file.readline())
+			branch_next_node_id = int(file.readline())
+
+			nodes[node_id] = [node_type,
+							  inner_scope_id,
+							  original_next_node_id,
+							  branch_next_node_id]
+
+	print(nodes)
+
+	info_scopes[-1] = nodes
+
 file.close()
 
 # def pretty_print_action(action):

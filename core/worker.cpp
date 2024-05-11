@@ -6,6 +6,7 @@
 
 #include "abstract_experiment.h"
 #include "action_node.h"
+#include "eval.h"
 #include "globals.h"
 #include "minesweeper.h"
 #include "new_action_tracker.h"
@@ -76,6 +77,9 @@ int main(int argc, char* argv[]) {
 					create_experiment(root_history);
 				}
 			}
+		} else if (solution->state == SOLUTION_STATE_EVAL) {
+			solution->eval->experiment_activate(problem,
+												run_helper);
 		}
 
 		delete root_history;
@@ -209,6 +213,12 @@ int main(int argc, char* argv[]) {
 						run_helper,
 						root_history);
 
+					double predicted_score;
+					if (solution->state == SOLUTION_STATE_EVAL) {
+						predicted_score = solution->eval->activate(problem,
+																   run_helper);
+					}
+
 					delete root_history;
 
 					double target_val;
@@ -217,7 +227,13 @@ int main(int argc, char* argv[]) {
 					} else {
 						target_val = -1.0;
 					}
-					sum_vals += target_val;
+
+					if (solution->state == SOLUTION_STATE_TRAVERSE) {
+						sum_vals += target_val;
+					} else if (solution->state == SOLUTION_STATE_EVAL) {
+						double misguess = (target_val - predicted_score) * (target_val - predicted_score);
+						sum_vals += -misguess;
+					}
 
 					sum_num_actions += run_helper.num_actions;
 
