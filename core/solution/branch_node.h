@@ -61,6 +61,12 @@ public:
 				  RunHelper& run_helper,
 				  std::map<AbstractNode*, AbstractNodeHistory*>& node_histories);
 
+	void new_action_activate(AbstractNode*& curr_node,
+							 Problem* problem,
+							 std::vector<ContextLayer>& context,
+							 RunHelper& run_helper,
+							 std::map<AbstractNode*, AbstractNodeHistory*>& node_histories);
+
 	void step_through_activate(AbstractNode*& curr_node,
 							   Problem* problem,
 							   std::vector<ContextLayer>& context,

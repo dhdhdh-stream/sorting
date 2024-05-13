@@ -25,7 +25,7 @@ InfoBranchNode::InfoBranchNode(InfoBranchNode* original,
 
 InfoBranchNode::~InfoBranchNode() {
 	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
-		delete this->experiments[e_index];
+		this->experiments[e_index]->decrement(this);
 	}
 }
 

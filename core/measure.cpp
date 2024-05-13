@@ -51,13 +51,13 @@ int main(int argc, char* argv[]) {
 		vector<ContextLayer> context;
 		context.push_back(ContextLayer());
 
-		context.back().scope = solution->current;
+		context.back().scope = solution->scopes[0];
 		context.back().node = NULL;
 
-		ScopeHistory* root_history = new ScopeHistory(solution->current);
+		ScopeHistory* root_history = new ScopeHistory(solution->scopes[0]);
 		context.back().scope_history = root_history;
 
-		solution->current->activate(
+		solution->scopes[0]->activate(
 			problem,
 			context,
 			run_helper,

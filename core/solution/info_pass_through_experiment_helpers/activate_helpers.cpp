@@ -26,16 +26,20 @@ void InfoPassThroughExperiment::info_scope_activate(
 	}
 }
 
-bool InfoPassThroughExperiment::activate(AbstractNode*& curr_node,
+bool InfoPassThroughExperiment::activate(AbstractNode* experiment_node,
+										 bool is_branch,
+										 AbstractNode*& curr_node,
 										 Problem* problem,
 										 vector<ContextLayer>& context,
 										 RunHelper& run_helper) {
 	bool is_selected = false;
 	InfoPassThroughExperimentHistory* history = NULL;
-	if (run_helper.experiment_histories.size() == 1
-			&& run_helper.experiment_histories[0]->experiment == this) {
-		history = (InfoPassThroughExperimentHistory*)run_helper.experiment_histories[0];
-		is_selected = true;
+	if (is_branch == this->is_branch) {
+		if (run_helper.experiment_histories.size() == 1
+				&& run_helper.experiment_histories[0]->experiment == this) {
+			history = (InfoPassThroughExperimentHistory*)run_helper.experiment_histories[0];
+			is_selected = true;
+		}
 	}
 
 	if (is_selected) {

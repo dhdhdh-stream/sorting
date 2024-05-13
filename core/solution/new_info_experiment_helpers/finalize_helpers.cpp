@@ -51,6 +51,7 @@ void NewInfoExperiment::finalize(Solution* duplicate) {
 	for (int e_index = 0; e_index < (int)this->node_context->experiments.size(); e_index++) {
 		if (this->node_context->experiments[e_index] == this) {
 			experiment_index = e_index;
+			break;
 		}
 	}
 	this->node_context->experiments.erase(this->node_context->experiments.begin() + experiment_index);
@@ -59,12 +60,7 @@ void NewInfoExperiment::finalize(Solution* duplicate) {
 void NewInfoExperiment::new_branch(Solution* duplicate) {
 	cout << "new_branch" << endl;
 
-	Scope* duplicate_local_scope;
-	if (this->scope_context->id == -1) {
-		duplicate_local_scope = duplicate->current;
-	} else {
-		duplicate_local_scope = duplicate->scopes[this->scope_context->id];
-	}
+	Scope* duplicate_local_scope = duplicate->scopes[this->scope_context->id];
 
 	if (this->ending_node != NULL) {
 		this->ending_node->parent = duplicate_local_scope;
@@ -346,12 +342,7 @@ void NewInfoExperiment::new_branch(Solution* duplicate) {
 void NewInfoExperiment::new_pass_through(Solution* duplicate) {
 	cout << "new_pass_through" << endl;
 
-	Scope* duplicate_local_scope;
-	if (this->scope_context->id == -1) {
-		duplicate_local_scope = duplicate->current;
-	} else {
-		duplicate_local_scope = duplicate->scopes[this->scope_context->id];
-	}
+	Scope* duplicate_local_scope = duplicate->scopes[this->scope_context->id];
 	AbstractNode* duplicate_explore_node = duplicate_local_scope->nodes[this->node_context->id];
 
 	int start_node_id;

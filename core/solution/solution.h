@@ -5,6 +5,10 @@
  *       - as new changes may lead to better predictions
  */
 
+/**
+ * TODO: keep track of number of improvements per scope, and create ne action when threshold
+ */
+
 #ifndef SOLUTION_H
 #define SOLUTION_H
 
@@ -15,19 +19,11 @@
 class AbstractExperiment;
 class Eval;
 class InfoScope;
-class NewActionTracker;
 class Problem;
 class Scope;
 
 const int SOLUTION_STATE_TRAVERSE = 0;
-const int SOLUTION_STATE_GENERALIZE = 1;
-const int SOLUTION_STATE_EVAL = 2;
-
-#if defined(MDEBUG) && MDEBUG
-const int SOLUTION_TRAVERSE_ITERS = 5;
-#else
-const int SOLUTION_TRAVERSE_ITERS = 20;
-#endif /* MDEBUG */
+const int SOLUTION_STATE_EVAL = 1;
 
 class Solution {
 public:
@@ -40,13 +36,10 @@ public:
 
 	int num_actions_until_random;
 
-	Scope* current;
 	std::vector<Scope*> scopes;
 	std::vector<InfoScope*> info_scopes;
 
 	Eval* eval;
-
-	NewActionTracker* new_action_tracker;
 
 	/**
 	 * - max depth for run that concluded

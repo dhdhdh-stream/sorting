@@ -19,6 +19,10 @@ class ScopeHistory;
 class Solution;
 
 const int INFO_SCOPE_STATE_NA = 0;
+/**
+ * TODO: maybe infinite index rather than only binary
+ */
+
 const int INFO_SCOPE_STATE_DISABLED_NEGATIVE = 1;
 const int INFO_SCOPE_STATE_DISABLED_POSITIVE = 2;
 
@@ -65,6 +69,11 @@ public:
 				  RunHelper& run_helper,
 				  ScopeHistory*& subscope_history,
 				  bool& result_is_positive);
+
+	void new_action_activate(Problem* problem,
+							 RunHelper& run_helper,
+							 ScopeHistory*& subscope_history,
+							 bool& result_is_positive);
 
 	#if defined(MDEBUG) && MDEBUG
 	void verify_activate(Problem* problem,

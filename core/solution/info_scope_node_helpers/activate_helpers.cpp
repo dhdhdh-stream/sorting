@@ -5,7 +5,6 @@
 #include "abstract_experiment.h"
 #include "globals.h"
 #include "info_scope.h"
-#include "new_action_helpers.h"
 #include "solution.h"
 
 using namespace std;
@@ -29,6 +28,8 @@ void InfoScopeNode::activate(AbstractNode*& curr_node,
 	if (!run_helper.exceeded_limit) {
 		for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
 			bool is_selected = this->experiments[e_index]->activate(
+				this,
+				false,
 				curr_node,
 				problem,
 				context,
@@ -37,13 +38,5 @@ void InfoScopeNode::activate(AbstractNode*& curr_node,
 				return;
 			}
 		}
-	}
-
-	if (solution->state == SOLUTION_STATE_GENERALIZE) {
-		new_action_activate(this,
-							false,
-							curr_node,
-							problem,
-							run_helper);
 	}
 }

@@ -21,9 +21,6 @@ public:
 
 	std::vector<AbstractExperimentHistory*> experiment_histories;
 
-	NewActionHistory* new_action_history;
-	bool is_always_select;
-
 	#if defined(MDEBUG) && MDEBUG
 	void* verify_key;
 	unsigned long starting_run_seed;

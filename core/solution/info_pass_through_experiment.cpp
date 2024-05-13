@@ -80,6 +80,10 @@ InfoPassThroughExperiment::~InfoPassThroughExperiment() {
 	#endif /* MDEBUG */
 }
 
+void InfoPassThroughExperiment::decrement(AbstractNode* experiment_node) {
+	delete this;
+}
+
 InfoPassThroughExperimentHistory::InfoPassThroughExperimentHistory(
 		InfoPassThroughExperiment* experiment) {
 	this->experiment = experiment;

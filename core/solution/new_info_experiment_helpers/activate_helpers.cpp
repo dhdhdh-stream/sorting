@@ -13,7 +13,9 @@
 
 using namespace std;
 
-bool NewInfoExperiment::activate(AbstractNode*& curr_node,
+bool NewInfoExperiment::activate(AbstractNode* experiment_node,
+								 bool is_branch,
+								 AbstractNode*& curr_node,
 								 Problem* problem,
 								 vector<ContextLayer>& context,
 								 RunHelper& run_helper) {

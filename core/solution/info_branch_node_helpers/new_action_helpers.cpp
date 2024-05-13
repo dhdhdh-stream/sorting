@@ -1,5 +1,9 @@
 #include "info_branch_node.h"
 
+using namespace std;
+
+#include "info_branch_node.h"
+
 #include <iostream>
 
 #include "abstract_experiment.h"
@@ -10,20 +14,20 @@
 
 using namespace std;
 
-void InfoBranchNode::activate(AbstractNode*& curr_node,
-							  Problem* problem,
-							  vector<ContextLayer>& context,
-							  RunHelper& run_helper,
-							  map<AbstractNode*, AbstractNodeHistory*>& node_histories) {
+void InfoBranchNode::new_action_activate(AbstractNode*& curr_node,
+										 Problem* problem,
+										 vector<ContextLayer>& context,
+										 RunHelper& run_helper,
+										 map<AbstractNode*, AbstractNodeHistory*>& node_histories) {
 	InfoBranchNodeHistory* history = new InfoBranchNodeHistory();
 	history->index = node_histories.size();
 	node_histories[this] = history;
 
 	bool inner_is_positive;
-	this->scope->activate(problem,
-						  run_helper,
-						  history->scope_history,
-						  inner_is_positive);
+	this->scope->new_action_activate(problem,
+									 run_helper,
+									 history->scope_history,
+									 inner_is_positive);
 
 	if (this->is_negate) {
 		if (inner_is_positive) {
@@ -43,18 +47,5 @@ void InfoBranchNode::activate(AbstractNode*& curr_node,
 		curr_node = this->branch_next_node;
 	} else {
 		curr_node = this->original_next_node;
-	}
-
-	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
-		bool is_selected = this->experiments[e_index]->activate(
-			this,
-			history->is_branch,
-			curr_node,
-			problem,
-			context,
-			run_helper);
-		if (is_selected) {
-			return;
-		}
 	}
 }

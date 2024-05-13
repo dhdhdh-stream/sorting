@@ -35,6 +35,9 @@ const double WEIGHT_MIN_SCORE_IMPACT = 0.1;
 const double EXPERIMENT_COMBINED_MIN_BRANCH_WEIGHT = 0.05;
 const double PASS_THROUGH_BRANCH_WEIGHT = 0.9;
 
+/**
+ * TODO: can potentially reduce NUM_DATAPOINTS with eval?
+ */
 #if defined(MDEBUG) && MDEBUG
 const int NUM_DATAPOINTS = 10;
 const int VERIFY_1ST_NUM_DATAPOINTS = 2;

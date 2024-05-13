@@ -66,8 +66,11 @@ public:
 	EvalPassThroughExperiment(AbstractNode* node_context,
 							  bool is_branch);
 	~EvalPassThroughExperiment();
+	void decrement(AbstractNode* experiment_node);
 
-	bool activate(AbstractNode*& curr_node,
+	bool activate(AbstractNode* experiment_node,
+				  bool is_branch,
+				  AbstractNode*& curr_node,
 				  Problem* problem,
 				  std::vector<ContextLayer>& context,
 				  RunHelper& run_helper);

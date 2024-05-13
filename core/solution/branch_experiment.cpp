@@ -115,6 +115,10 @@ BranchExperiment::~BranchExperiment() {
 	#endif /* MDEBUG */
 }
 
+void BranchExperiment::decrement(AbstractNode* experiment_node) {
+	delete this;
+}
+
 BranchExperimentHistory::BranchExperimentHistory(BranchExperiment* experiment) {
 	this->experiment = experiment;
 

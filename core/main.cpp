@@ -15,7 +15,6 @@
 #include "eval.h"
 #include "globals.h"
 #include "minesweeper.h"
-#include "new_action_tracker.h"
 #include "sorting.h"
 #include "scope.h"
 #include "scope_node.h"
@@ -69,13 +68,13 @@ int main(int argc, char* argv[]) {
 		vector<ContextLayer> context;
 		context.push_back(ContextLayer());
 
-		context.back().scope = solution->current;
+		context.back().scope = solution->scopes[0];
 		context.back().node = NULL;
 
-		ScopeHistory* root_history = new ScopeHistory(solution->current);
+		ScopeHistory* root_history = new ScopeHistory(solution->scopes[0]);
 		context.back().scope_history = root_history;
 
-		solution->current->activate(
+		solution->scopes[0]->activate(
 			problem,
 			context,
 			run_helper,
@@ -255,21 +254,6 @@ int main(int argc, char* argv[]) {
 				experiment->average_remaining_experiments_from_start =
 					0.9 * experiment->average_remaining_experiments_from_start
 					+ 0.1 * ((int)run_helper.experiments_seen_order.size()-1 - e_index);
-			}
-
-			if (run_helper.new_action_history != NULL) {
-				for (int n_index = 0; n_index < (int)run_helper.new_action_history->existing_path_taken.size(); n_index++) {
-					NewActionNodeTracker* node_tracker = solution->new_action_tracker->node_trackers[
-						run_helper.new_action_history->existing_path_taken[n_index]];
-					node_tracker->existing_score += target_val;
-					node_tracker->existing_count++;
-				}
-				for (int n_index = 0; n_index < (int)run_helper.new_action_history->new_path_taken.size(); n_index++) {
-					NewActionNodeTracker* node_tracker = solution->new_action_tracker->node_trackers[
-						run_helper.new_action_history->new_path_taken[n_index]];
-					node_tracker->new_score += target_val;
-					node_tracker->new_count++;
-				}
 			}
 		}
 

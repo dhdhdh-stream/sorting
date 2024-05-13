@@ -49,6 +49,7 @@ void BranchExperiment::finalize(Solution* duplicate) {
 	for (int e_index = 0; e_index < (int)this->node_context->experiments.size(); e_index++) {
 		if (this->node_context->experiments[e_index] == this) {
 			experiment_index = e_index;
+			break;
 		}
 	}
 	this->node_context->experiments.erase(this->node_context->experiments.begin() + experiment_index);
@@ -57,12 +58,7 @@ void BranchExperiment::finalize(Solution* duplicate) {
 void BranchExperiment::new_branch(Solution* duplicate) {
 	cout << "new_branch" << endl;
 
-	Scope* duplicate_local_scope;
-	if (this->scope_context->id == -1) {
-		duplicate_local_scope = duplicate->current;
-	} else {
-		duplicate_local_scope = duplicate->scopes[this->scope_context->id];
-	}
+	Scope* duplicate_local_scope = duplicate->scopes[this->scope_context->id];
 
 	if (this->ending_node != NULL) {
 		this->ending_node->parent = duplicate_local_scope;
@@ -86,11 +82,7 @@ void BranchExperiment::new_branch(Solution* duplicate) {
 				new_branch_node->input_scope_contexts.push_back(this->input_scope_contexts[i_index]);
 				for (int c_index = 0; c_index < (int)new_branch_node->input_scope_contexts.back().size(); c_index++) {
 					int scope_id = new_branch_node->input_scope_contexts.back()[c_index]->id;
-					if (scope_id == -1) {
-						new_branch_node->input_scope_contexts.back()[c_index] = duplicate->current;
-					} else {
-						new_branch_node->input_scope_contexts.back()[c_index] = duplicate->scopes[scope_id];
-					}
+					new_branch_node->input_scope_contexts.back()[c_index] = duplicate->scopes[scope_id];
 				}
 				vector<int> scope_context_ids;
 				for (int c_index = 0; c_index < (int)this->input_scope_contexts[i_index].size(); c_index++) {
@@ -120,11 +112,7 @@ void BranchExperiment::new_branch(Solution* duplicate) {
 				new_branch_node->input_scope_contexts.push_back(this->input_scope_contexts[original_index]);
 				for (int c_index = 0; c_index < (int)new_branch_node->input_scope_contexts.back().size(); c_index++) {
 					int scope_id = new_branch_node->input_scope_contexts.back()[c_index]->id;
-					if (scope_id == -1) {
-						new_branch_node->input_scope_contexts.back()[c_index] = duplicate->current;
-					} else {
-						new_branch_node->input_scope_contexts.back()[c_index] = duplicate->scopes[scope_id];
-					}
+					new_branch_node->input_scope_contexts.back()[c_index] = duplicate->scopes[scope_id];
 				}
 				vector<int> scope_context_ids;
 				for (int c_index = 0; c_index < (int)this->input_scope_contexts[original_index].size(); c_index++) {
@@ -153,11 +141,7 @@ void BranchExperiment::new_branch(Solution* duplicate) {
 				new_branch_node->input_scope_contexts.push_back(this->input_scope_contexts[i_index]);
 				for (int c_index = 0; c_index < (int)new_branch_node->input_scope_contexts.back().size(); c_index++) {
 					int scope_id = new_branch_node->input_scope_contexts.back()[c_index]->id;
-					if (scope_id == -1) {
-						new_branch_node->input_scope_contexts.back()[c_index] = duplicate->current;
-					} else {
-						new_branch_node->input_scope_contexts.back()[c_index] = duplicate->scopes[scope_id];
-					}
+					new_branch_node->input_scope_contexts.back()[c_index] = duplicate->scopes[scope_id];
 				}
 				vector<int> scope_context_ids;
 				for (int c_index = 0; c_index < (int)this->input_scope_contexts[i_index].size(); c_index++) {
@@ -187,11 +171,7 @@ void BranchExperiment::new_branch(Solution* duplicate) {
 				new_branch_node->input_scope_contexts.push_back(this->input_scope_contexts[original_index]);
 				for (int c_index = 0; c_index < (int)new_branch_node->input_scope_contexts.back().size(); c_index++) {
 					int scope_id = new_branch_node->input_scope_contexts.back()[c_index]->id;
-					if (scope_id == -1) {
-						new_branch_node->input_scope_contexts.back()[c_index] = duplicate->current;
-					} else {
-						new_branch_node->input_scope_contexts.back()[c_index] = duplicate->scopes[scope_id];
-					}
+					new_branch_node->input_scope_contexts.back()[c_index] = duplicate->scopes[scope_id];
 				}
 				vector<int> scope_context_ids;
 				for (int c_index = 0; c_index < (int)this->input_scope_contexts[original_index].size(); c_index++) {
@@ -420,12 +400,7 @@ void BranchExperiment::new_branch(Solution* duplicate) {
 void BranchExperiment::new_pass_through(Solution* duplicate) {
 	cout << "new_pass_through" << endl;
 
-	Scope* duplicate_local_scope;
-	if (this->scope_context->id == -1) {
-		duplicate_local_scope = duplicate->current;
-	} else {
-		duplicate_local_scope = duplicate->scopes[this->scope_context->id];
-	}
+	Scope* duplicate_local_scope = duplicate->scopes[this->scope_context->id];
 	AbstractNode* duplicate_explore_node = duplicate_local_scope->nodes[this->node_context->id];
 
 	int start_node_id;

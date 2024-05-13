@@ -63,6 +63,10 @@ EvalPassThroughExperiment::~EvalPassThroughExperiment() {
 	}
 }
 
+void EvalPassThroughExperiment::decrement(AbstractNode* experiment_node) {
+	delete this;
+}
+
 EvalPassThroughExperimentHistory::EvalPassThroughExperimentHistory(
 		EvalPassThroughExperiment* experiment) {
 	this->experiment = experiment;

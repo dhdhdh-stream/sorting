@@ -33,6 +33,9 @@ void gather_possible_helper(std::vector<Scope*>& scope_context,
 							std::vector<int>& possible_obs_indexes,
 							ScopeHistory* scope_history);
 
+void create_new_action(AbstractNode*& starting_node,
+					   std::set<AbstractNode*>& included_nodes);
+
 void random_sequence(AbstractNode*& curr_node,
 					 Problem* problem,
 					 std::vector<ContextLayer>& context,

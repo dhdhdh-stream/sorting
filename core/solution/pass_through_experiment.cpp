@@ -91,6 +91,10 @@ PassThroughExperiment::~PassThroughExperiment() {
 	}
 }
 
+void PassThroughExperiment::decrement(AbstractNode* experiment_node) {
+	delete this;
+}
+
 PassThroughExperimentHistory::PassThroughExperimentHistory(
 		PassThroughExperiment* experiment) {
 	this->experiment = experiment;

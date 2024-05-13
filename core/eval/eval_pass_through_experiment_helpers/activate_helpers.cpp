@@ -2,35 +2,41 @@
 
 using namespace std;
 
-bool EvalPassThroughExperiment::activate(AbstractNode*& curr_node,
+bool EvalPassThroughExperiment::activate(AbstractNode* experiment_node,
+										 bool is_branch,
+										 AbstractNode*& curr_node,
 										 Problem* problem,
 										 vector<ContextLayer>& context,
 										 RunHelper& run_helper) {
-	switch (this->state) {
-	case EVAL_PASS_THROUGH_EXPERIMENT_STATE_EXPLORE:
-		explore_activate(curr_node,
-						 problem,
-						 run_helper);
-		break;
-	case EVAL_PASS_THROUGH_EXPERIMENT_STATE_TRAIN_NEW:
-		train_new_activate(curr_node,
-						   problem,
-						   run_helper);
-		break;
-	case EVAL_PASS_THROUGH_EXPERIMENT_STATE_MEASURE:
-		measure_activate(curr_node,
-						 problem,
-						 run_helper);
-		break;
-	case EVAL_PASS_THROUGH_EXPERIMENT_STATE_VERIFY_1ST:
-	case EVAL_PASS_THROUGH_EXPERIMENT_STATE_VERIFY_2ND:
-		verify_activate(curr_node,
-						problem,
-						run_helper);
-		break;
-	}
+	if (is_branch != this->is_branch) {
+		return false;
+	} else {
+		switch (this->state) {
+		case EVAL_PASS_THROUGH_EXPERIMENT_STATE_EXPLORE:
+			explore_activate(curr_node,
+							 problem,
+							 run_helper);
+			break;
+		case EVAL_PASS_THROUGH_EXPERIMENT_STATE_TRAIN_NEW:
+			train_new_activate(curr_node,
+							   problem,
+							   run_helper);
+			break;
+		case EVAL_PASS_THROUGH_EXPERIMENT_STATE_MEASURE:
+			measure_activate(curr_node,
+							 problem,
+							 run_helper);
+			break;
+		case EVAL_PASS_THROUGH_EXPERIMENT_STATE_VERIFY_1ST:
+		case EVAL_PASS_THROUGH_EXPERIMENT_STATE_VERIFY_2ND:
+			verify_activate(curr_node,
+							problem,
+							run_helper);
+			break;
+		}
 
-	return true;
+		return true;
+	}
 }
 
 void EvalPassThroughExperiment::back_activate(Problem* problem,

@@ -13,6 +13,7 @@
 #include "info_pass_through_experiment.h"
 #include "info_scope.h"
 #include "info_scope_node.h"
+#include "new_action_experiment.h"
 #include "new_info_experiment.h"
 #include "pass_through_experiment.h"
 #include "scope.h"
@@ -181,7 +182,7 @@ void create_experiment(ScopeHistory* root_history) {
 	int rand_index = possible_distribution(generator);
 
 	if (possible_info_scope_contexts[rand_index] == NULL) {
-		uniform_int_distribution<int> branch_distribution(0, 3);
+		uniform_int_distribution<int> branch_distribution(0, 4);
 		if (branch_distribution(generator) == 0) {
 			uniform_int_distribution<int> info_distribution(0, 1);
 			if (info_distribution(generator) == 0) {
@@ -202,13 +203,28 @@ void create_experiment(ScopeHistory* root_history) {
 				possible_node_contexts[rand_index]->experiments.push_back(new_experiment);
 			}
 		} else {
-			PassThroughExperiment* new_experiment = new PassThroughExperiment(
-				possible_scope_contexts[rand_index],
-				possible_node_contexts[rand_index],
-				possible_is_branch[rand_index],
-				NULL);
+			uniform_int_distribution<int> new_action_distribution(0, 1);
+			if (possible_scope_contexts[rand_index]->nodes.size() > 20
+					&& new_action_distribution(generator) == 0) {
+				NewActionExperiment* new_action_experiment = new NewActionExperiment(
+					possible_scope_contexts[rand_index],
+					possible_node_contexts[rand_index],
+					possible_is_branch[rand_index]);
 
-			possible_node_contexts[rand_index]->experiments.push_back(new_experiment);
+				if (new_action_experiment->result == EXPERIMENT_RESULT_FAIL) {
+					delete new_action_experiment;
+				} else {
+					possible_node_contexts[rand_index]->experiments.push_back(new_action_experiment);
+				}
+			} else {
+				PassThroughExperiment* new_experiment = new PassThroughExperiment(
+					possible_scope_contexts[rand_index],
+					possible_node_contexts[rand_index],
+					possible_is_branch[rand_index],
+					NULL);
+
+				possible_node_contexts[rand_index]->experiments.push_back(new_experiment);
+			}
 		}
 	} else {
 		InfoPassThroughExperiment* new_experiment = new InfoPassThroughExperiment(

@@ -116,6 +116,10 @@ NewInfoExperiment::~NewInfoExperiment() {
 	#endif /* MDEBUG */
 }
 
+void NewInfoExperiment::decrement(AbstractNode* experiment_node) {
+	delete this;
+}
+
 NewInfoExperimentHistory::NewInfoExperimentHistory(NewInfoExperiment* experiment) {
 	this->experiment = experiment;
 

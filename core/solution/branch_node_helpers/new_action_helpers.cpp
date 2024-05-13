@@ -1,26 +1,19 @@
 #include "branch_node.h"
 
-#include <iostream>
-
 #include "action_node.h"
-#include "globals.h"
 #include "info_branch_node.h"
 #include "info_scope_node.h"
 #include "network.h"
-#include "problem.h"
 #include "scope.h"
 #include "scope_node.h"
-#include "solution.h"
-#include "solution_helpers.h"
-#include "utilities.h"
 
 using namespace std;
 
-void BranchNode::step_through_activate(AbstractNode*& curr_node,
-									   Problem* problem,
-									   vector<ContextLayer>& context,
-									   RunHelper& run_helper,
-									   map<AbstractNode*, AbstractNodeHistory*>& node_histories) {
+void BranchNode::new_action_activate(AbstractNode*& curr_node,
+									 Problem* problem,
+									 vector<ContextLayer>& context,
+									 RunHelper& run_helper,
+									 map<AbstractNode*, AbstractNodeHistory*>& node_histories) {
 	run_helper.num_decisions++;
 
 	BranchNodeHistory* history = new BranchNodeHistory();
@@ -119,24 +112,20 @@ void BranchNode::step_through_activate(AbstractNode*& curr_node,
 		branch_score += this->branch_network->output->acti_vals[0];
 	}
 
+	#if defined(MDEBUG) && MDEBUG
+	if (run_helper.curr_run_seed%2 == 0) {
+		history->is_branch = true;
+	} else {
+		history->is_branch = false;
+	}
+	run_helper.curr_run_seed = xorshift(run_helper.curr_run_seed);
+	#else
 	if (branch_score >= original_score) {
 		history->is_branch = true;
 	} else {
 		history->is_branch = false;
 	}
-
-	string input_gate;
-	cin >> input_gate;
-
-	cout << "context:" << endl;
-	context.back().node = this;
-	for (int c_index = 0; c_index < (int)context.size(); c_index++) {
-		cout << c_index << ": " << context[c_index].scope->id << " " << context[c_index].node->id << endl;
-	}
-	context.back().node = NULL;
-	problem->print();
-	cout << "BranchNode" << endl;
-	cout << "is_branch: " << history->is_branch << endl;
+	#endif /* MDEBUG */
 
 	if (history->is_branch) {
 		curr_node = this->branch_next_node;

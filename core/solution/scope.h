@@ -35,6 +35,17 @@ public:
 	void random_exit_activate(AbstractNode* starting_node,
 							  std::vector<AbstractNode*>& possible_exits);
 
+	void new_action_activate(AbstractNode* starting_node,
+							 std::set<AbstractNode*>& included_nodes,
+							 Problem* problem,
+							 std::vector<ContextLayer>& context,
+							 RunHelper& run_helper,
+							 ScopeHistory* history);
+	void new_action_activate(Problem* problem,
+							 std::vector<ContextLayer>& context,
+							 RunHelper& run_helper,
+							 ScopeHistory* history);
+
 	void step_through_activate(Problem* problem,
 							   std::vector<ContextLayer>& context,
 							   RunHelper& run_helper,

@@ -8,6 +8,7 @@
 #include "globals.h"
 #include "info_branch_node.h"
 #include "info_scope_node.h"
+#include "new_action_experiment.h"
 #include "scope_node.h"
 #include "solution.h"
 #include "solution_helpers.h"
@@ -121,7 +122,18 @@ void Scope::activate(Problem* problem,
 	}
 
 	if (history->experiment_history != NULL) {
-		history->experiment_history->scope_history = new ScopeHistory(history);
+		switch (history->experiment_history->experiment->type) {
+		case EXPERIMENT_TYPE_BRANCH:
+		case EXPERIMENT_TYPE_PASS_THROUGH:
+		case EXPERIMENT_TYPE_NEW_INFO:
+			history->experiment_history->scope_history = new ScopeHistory(history);
+			break;
+		case EXPERIMENT_TYPE_NEW_ACTION:
+			NewActionExperimentHistory* new_action_experiment_history = (NewActionExperimentHistory*)history->experiment_history;
+			NewActionExperiment* new_action_experiment = (NewActionExperiment*)new_action_experiment_history->experiment;
+			new_action_experiment->back_activate(history,
+												 new_action_experiment_history);
+		}
 	}
 
 	run_helper.curr_depth--;

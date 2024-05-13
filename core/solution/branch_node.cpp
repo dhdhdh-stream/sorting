@@ -69,7 +69,7 @@ BranchNode::~BranchNode() {
 	}
 
 	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
-		delete this->experiments[e_index];
+		this->experiments[e_index]->decrement(this);
 	}
 }
 
@@ -254,13 +254,8 @@ void BranchNode::link(Solution* parent_solution) {
 		vector<Scope*> c_scope_context;
 		vector<AbstractNode*> c_node_context;
 		for (int c_index = 0; c_index < (int)this->input_scope_context_ids[i_index].size(); c_index++) {
-			Scope* scope;
 			int scope_id = this->input_scope_context_ids[i_index][c_index];
-			if (scope_id == -1) {
-				scope = parent_solution->current;
-			} else {
-				scope = parent_solution->scopes[scope_id];
-			}
+			Scope* scope = parent_solution->scopes[scope_id];
 			c_scope_context.push_back(scope);
 			c_node_context.push_back(scope->nodes[this->input_node_context_ids[i_index][c_index]]);
 		}

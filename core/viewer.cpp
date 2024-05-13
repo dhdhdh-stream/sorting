@@ -8,7 +8,6 @@
 #include "eval.h"
 #include "globals.h"
 #include "minesweeper.h"
-#include "new_action_tracker.h"
 #include "scope.h"
 #include "solution.h"
 #include "solution_helpers.h"
@@ -51,13 +50,13 @@ int main(int argc, char* argv[]) {
 		vector<ContextLayer> context;
 		context.push_back(ContextLayer());
 
-		context.back().scope = solution->current;
+		context.back().scope = solution->scopes[0];
 		context.back().node = NULL;
 
-		ScopeHistory* root_history = new ScopeHistory(solution->current);
+		ScopeHistory* root_history = new ScopeHistory(solution->scopes[0]);
 		context.back().scope_history = root_history;
 
-		solution->current->activate(
+		solution->scopes[0]->activate(
 			problem,
 			context,
 			run_helper,
@@ -88,24 +87,6 @@ int main(int argc, char* argv[]) {
 		cout << "run_helper.num_decisions: " << run_helper.num_decisions << endl;
 
 		delete problem;
-	}
-
-	if (solution->new_action_tracker != NULL) {
-		cout << "solution->new_action_tracker->epoch_iter: " << solution->new_action_tracker->epoch_iter << endl;
-		cout << "solution->new_action_tracker->improvement_iter: " << solution->new_action_tracker->improvement_iter << endl;
-
-		cout << "new action nodes:" << endl;
-		for (map<AbstractNode*, NewActionNodeTracker*>::iterator it = solution->new_action_tracker->node_trackers.begin();
-				it != solution->new_action_tracker->node_trackers.end(); it++) {
-			int exit_id;
-			if (it->second->exit_next_node == NULL) {
-				exit_id = -1;
-			} else {
-				exit_id = it->second->exit_next_node->id;
-			}
-
-			cout << it->first->id << " -> " << exit_id << endl;
-		}
 	}
 
 	ofstream display_file;

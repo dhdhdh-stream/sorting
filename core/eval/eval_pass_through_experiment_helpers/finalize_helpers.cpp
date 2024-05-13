@@ -87,6 +87,7 @@ void EvalPassThroughExperiment::finalize(Solution* duplicate) {
 	for (int e_index = 0; e_index < (int)this->node_context->experiments.size(); e_index++) {
 		if (this->node_context->experiments[e_index] == this) {
 			experiment_index = e_index;
+			break;
 		}
 	}
 	this->node_context->experiments.erase(this->node_context->experiments.begin() + experiment_index);
