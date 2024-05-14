@@ -1,5 +1,7 @@
 #include "new_action_experiment.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_node.h"
 #include "info_branch_node.h"
@@ -13,6 +15,8 @@ using namespace std;
 
 void NewActionExperiment::finalize(Solution* duplicate) {
 	if (this->result == EXPERIMENT_RESULT_SUCCESS) {
+		cout << "NewActionExperiment success" << endl;
+
 		Scope* new_scope = new Scope();
 		new_scope->id = duplicate->scopes.size();
 		duplicate->scopes.push_back(new_scope);
@@ -312,34 +316,42 @@ void NewActionExperiment::finalize(Solution* duplicate) {
 					new_branch_node->branch_average_score = original_branch_node->branch_average_score;
 
 					for (int i_index = 0; i_index < (int)original_branch_node->input_scope_contexts.size(); i_index++) {
-						map<AbstractNode*, AbstractNode*>::iterator it = node_mappings
-							.find(original_branch_node->input_node_contexts[i_index][0]);
-						if (it == node_mappings.end()) {
+						if (original_branch_node->input_scope_contexts[i_index].size() == 0) {
 							new_branch_node->input_scope_context_ids.push_back(vector<int>());
 							new_branch_node->input_scope_contexts.push_back(vector<Scope*>());
 							new_branch_node->input_node_context_ids.push_back(vector<int>());
 							new_branch_node->input_node_contexts.push_back(vector<AbstractNode*>());
 							new_branch_node->input_obs_indexes.push_back(-1);
 						} else {
-							new_branch_node->input_scope_context_ids.push_back(original_branch_node->input_scope_context_ids[i_index]);
-							new_branch_node->input_scope_context_ids[i_index][0] = new_scope->id;
+							map<AbstractNode*, AbstractNode*>::iterator it = node_mappings
+								.find(original_branch_node->input_node_contexts[i_index][0]);
+							if (it == node_mappings.end()) {
+								new_branch_node->input_scope_context_ids.push_back(vector<int>());
+								new_branch_node->input_scope_contexts.push_back(vector<Scope*>());
+								new_branch_node->input_node_context_ids.push_back(vector<int>());
+								new_branch_node->input_node_contexts.push_back(vector<AbstractNode*>());
+								new_branch_node->input_obs_indexes.push_back(-1);
+							} else {
+								new_branch_node->input_scope_context_ids.push_back(original_branch_node->input_scope_context_ids[i_index]);
+								new_branch_node->input_scope_context_ids[i_index][0] = new_scope->id;
 
-							new_branch_node->input_node_context_ids.push_back(original_branch_node->input_node_context_ids[i_index]);
-							new_branch_node->input_node_context_ids[i_index][0] = it->second->id;
+								new_branch_node->input_node_context_ids.push_back(original_branch_node->input_node_context_ids[i_index]);
+								new_branch_node->input_node_context_ids[i_index][0] = it->second->id;
 
-							vector<Scope*> scope_context;
-							vector<AbstractNode*> node_context;
-							for (int l_index = 0; l_index < (int)new_branch_node->input_scope_context_ids[i_index].size(); l_index++) {
-								Scope* duplicate_scope = duplicate->scopes[new_branch_node->input_scope_context_ids[i_index][l_index]];
-								AbstractNode* duplicate_node = duplicate_scope->nodes[new_branch_node->input_node_context_ids[i_index][l_index]];
+								vector<Scope*> scope_context;
+								vector<AbstractNode*> node_context;
+								for (int l_index = 0; l_index < (int)new_branch_node->input_scope_context_ids[i_index].size(); l_index++) {
+									Scope* duplicate_scope = duplicate->scopes[new_branch_node->input_scope_context_ids[i_index][l_index]];
+									AbstractNode* duplicate_node = duplicate_scope->nodes[new_branch_node->input_node_context_ids[i_index][l_index]];
 
-								scope_context.push_back(duplicate_scope);
-								node_context.push_back(duplicate_node);
+									scope_context.push_back(duplicate_scope);
+									node_context.push_back(duplicate_node);
+								}
+								new_branch_node->input_scope_contexts.push_back(scope_context);
+								new_branch_node->input_node_contexts.push_back(node_context);
+
+								new_branch_node->input_obs_indexes.push_back(original_branch_node->input_obs_indexes[i_index]);
 							}
-							new_branch_node->input_scope_contexts.push_back(scope_context);
-							new_branch_node->input_node_contexts.push_back(node_context);
-
-							new_branch_node->input_obs_indexes.push_back(original_branch_node->input_obs_indexes[i_index]);
 						}
 					}
 
@@ -409,70 +421,97 @@ void NewActionExperiment::finalize(Solution* duplicate) {
 			}
 		}
 
-		{
-			Scope* duplicate_local_scope = duplicate->scopes[this->scope_context->id];
-			for (int s_index = 0; s_index < (int)this->successful_location_starts.size(); s_index++) {
-				ScopeNode* new_scope_node = new ScopeNode();
-				new_scope_node->parent = duplicate_local_scope;
-				new_scope_node->id = duplicate_local_scope->node_counter;
-				duplicate_local_scope->node_counter++;
-				duplicate_local_scope->nodes[new_scope_node->id] = new_scope_node;
+		ActionNode* new_local_ending_node = NULL;
 
-				new_scope_node->scope = new_scope;
+		Scope* duplicate_local_scope = duplicate->scopes[this->scope_context->id];
+		for (int s_index = 0; s_index < (int)this->successful_location_starts.size(); s_index++) {
+			ScopeNode* new_scope_node = new ScopeNode();
+			new_scope_node->parent = duplicate_local_scope;
+			new_scope_node->id = duplicate_local_scope->node_counter;
+			duplicate_local_scope->node_counter++;
+			duplicate_local_scope->nodes[new_scope_node->id] = new_scope_node;
 
+			new_scope_node->scope = new_scope;
+
+			if (this->successful_location_exits[s_index] == NULL) {
+				if (new_local_ending_node == NULL) {
+					new_local_ending_node = new ActionNode();
+					new_local_ending_node->parent = duplicate_local_scope;
+					new_local_ending_node->id = duplicate_local_scope->node_counter;
+					duplicate_local_scope->node_counter++;
+					duplicate_local_scope->nodes[new_local_ending_node->id] = new_local_ending_node;
+
+					new_local_ending_node->action = Action(ACTION_NOOP);
+
+					new_local_ending_node->next_node_id = -1;
+					new_local_ending_node->next_node = NULL;
+
+					for (map<int, AbstractNode*>::iterator it = duplicate_local_scope->nodes.begin();
+							it != duplicate_local_scope->nodes.end(); it++) {
+						if (it->second->type == NODE_TYPE_ACTION) {
+							ActionNode* action_node = (ActionNode*)it->second;
+							if (action_node->next_node == NULL
+									&& action_node != new_local_ending_node) {
+								action_node->next_node_id = new_local_ending_node->id;
+								action_node->next_node = new_local_ending_node;
+							}
+						}
+					}
+				}
+
+				new_scope_node->next_node_id = new_local_ending_node->id;
+				new_scope_node->next_node = new_local_ending_node;
+			} else {
 				AbstractNode* duplicate_end_node = duplicate_local_scope->nodes[this->successful_location_exits[s_index]->id];
-				/**
-				 * - can't be NULL
-				 */
 				new_scope_node->next_node_id = duplicate_end_node->id;
 				new_scope_node->next_node = duplicate_end_node;
+			}
 
-				AbstractNode* duplicate_start_node = duplicate_local_scope
-					->nodes[this->successful_location_starts[s_index]->id];
-				switch (duplicate_start_node->type) {
-				case NODE_TYPE_ACTION:
-					{
-						ActionNode* action_node = (ActionNode*)duplicate_start_node;
+			AbstractNode* duplicate_start_node = duplicate_local_scope
+				->nodes[this->successful_location_starts[s_index]->id];
+			switch (duplicate_start_node->type) {
+			case NODE_TYPE_ACTION:
+				{
+					ActionNode* action_node = (ActionNode*)duplicate_start_node;
 
-						action_node->next_node_id = new_scope_node->id;
-						action_node->next_node = new_scope_node;
-					}
-					break;
-				case NODE_TYPE_SCOPE:
-					{
-						ScopeNode* scope_node = (ScopeNode*)duplicate_start_node;
-
-						scope_node->next_node_id = new_scope_node->id;
-						scope_node->next_node = new_scope_node;
-					}
-					break;
-				case NODE_TYPE_BRANCH:
-					{
-						BranchNode* branch_node = (BranchNode*)duplicate_start_node;
-
-						if (this->successful_location_is_branch[s_index]) {
-							branch_node->branch_next_node_id = new_scope_node->id;
-							branch_node->branch_next_node = new_scope_node;
-						} else {
-							branch_node->original_next_node_id = new_scope_node->id;
-							branch_node->original_next_node = new_scope_node;
-						}
-					}
-					break;
-				case NODE_TYPE_INFO_BRANCH:
-					{
-						InfoBranchNode* info_branch_node = (InfoBranchNode*)duplicate_start_node;
-
-						if (this->successful_location_is_branch[s_index]) {
-							info_branch_node->branch_next_node_id = new_scope_node->id;
-							info_branch_node->branch_next_node = new_scope_node;
-						} else {
-							info_branch_node->original_next_node_id = new_scope_node->id;
-							info_branch_node->original_next_node = new_scope_node;
-						}
-					}
-					break;
+					action_node->next_node_id = new_scope_node->id;
+					action_node->next_node = new_scope_node;
 				}
+				break;
+			case NODE_TYPE_SCOPE:
+				{
+					ScopeNode* scope_node = (ScopeNode*)duplicate_start_node;
+
+					scope_node->next_node_id = new_scope_node->id;
+					scope_node->next_node = new_scope_node;
+				}
+				break;
+			case NODE_TYPE_BRANCH:
+				{
+					BranchNode* branch_node = (BranchNode*)duplicate_start_node;
+
+					if (this->successful_location_is_branch[s_index]) {
+						branch_node->branch_next_node_id = new_scope_node->id;
+						branch_node->branch_next_node = new_scope_node;
+					} else {
+						branch_node->original_next_node_id = new_scope_node->id;
+						branch_node->original_next_node = new_scope_node;
+					}
+				}
+				break;
+			case NODE_TYPE_INFO_BRANCH:
+				{
+					InfoBranchNode* info_branch_node = (InfoBranchNode*)duplicate_start_node;
+
+					if (this->successful_location_is_branch[s_index]) {
+						info_branch_node->branch_next_node_id = new_scope_node->id;
+						info_branch_node->branch_next_node = new_scope_node;
+					} else {
+						info_branch_node->original_next_node_id = new_scope_node->id;
+						info_branch_node->original_next_node = new_scope_node;
+					}
+				}
+				break;
 			}
 		}
 	}

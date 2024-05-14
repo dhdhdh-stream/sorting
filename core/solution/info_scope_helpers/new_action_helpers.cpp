@@ -6,6 +6,7 @@
 #include "info_scope_node.h"
 #include "network.h"
 #include "scope.h"
+#include "utilities.h"
 
 using namespace std;
 

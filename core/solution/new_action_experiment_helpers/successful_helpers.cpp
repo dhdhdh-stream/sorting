@@ -9,7 +9,12 @@ void NewActionExperiment::successful_activate(
 		AbstractNode*& curr_node,
 		Problem* problem,
 		vector<ContextLayer>& context,
-		RunHelper& run_helper) {
+		RunHelper& run_helper,
+		NewActionExperimentHistory* history) {
+	if (history->test_location_index == -1) {
+		context.back().scope_history->experiment_history = history;
+	}
+
 	context.push_back(ContextLayer());
 
 	context.back().scope = this->scope_context;

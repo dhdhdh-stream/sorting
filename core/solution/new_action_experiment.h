@@ -29,7 +29,8 @@ const int NEW_ACTION_EXPERIMENT_MEASURE_NEW = 1;
  */
 
 #if defined(MDEBUG) && MDEBUG
-
+const int NEW_ACTION_NUM_GENERALIZE_TRIES = 10;
+const int NEW_ACTION_MIN_LOCATIONS = 2;
 #else
 const int NEW_ACTION_NUM_GENERALIZE_TRIES = 100;
 const int NEW_ACTION_MIN_LOCATIONS = 4;
@@ -87,13 +88,14 @@ public:
 	void test_backprop(double target_val,
 					   RunHelper& run_helper);
 
-	void add_new_test_location(ScopeHistory* scope_history);
-
 	void successful_activate(int location_index,
 							 AbstractNode*& curr_node,
 							 Problem* problem,
 							 std::vector<ContextLayer>& context,
-							 RunHelper& run_helper);
+							 RunHelper& run_helper,
+							 NewActionExperimentHistory* history);
+
+	void add_new_test_location(ScopeHistory* scope_history);
 
 	void finalize(Solution* duplicate);
 };

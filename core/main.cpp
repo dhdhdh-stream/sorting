@@ -44,10 +44,10 @@ int main(int argc, char* argv[]) {
 	problem_type = new Minesweeper();
 
 	solution = new Solution();
-	solution->init();
-	// solution->load("", "main");
+	// solution->init();
+	solution->load("", "main");
 
-	solution->save("", "main");
+	// solution->save("", "main");
 
 	#if defined(MDEBUG) && MDEBUG
 	int run_index = 0;
@@ -211,13 +211,13 @@ int main(int argc, char* argv[]) {
 					vector<ContextLayer> context;
 					context.push_back(ContextLayer());
 
-					context.back().scope = duplicate->current;
+					context.back().scope = duplicate->scopes[0];
 					context.back().node = NULL;
 
-					ScopeHistory* root_history = new ScopeHistory(duplicate->current);
+					ScopeHistory* root_history = new ScopeHistory(duplicate->scopes[0]);
 					context.back().scope_history = root_history;
 
-					duplicate->current->verify_activate(
+					duplicate->scopes[0]->verify_activate(
 						problem,
 						context,
 						run_helper,

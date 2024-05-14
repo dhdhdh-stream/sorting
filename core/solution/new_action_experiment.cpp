@@ -1,5 +1,7 @@
 #include "new_action_experiment.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_node.h"
 #include "globals.h"
@@ -16,6 +18,8 @@ const int CREATE_NEW_ACTION_NUM_TRIES = 30;
 NewActionExperiment::NewActionExperiment(Scope* scope_context,
 										 AbstractNode* node_context,
 										 bool is_branch) {
+	this->type = EXPERIMENT_TYPE_NEW_ACTION;
+
 	this->starting_node = NULL;
 	for (int t_index = 0; t_index < CREATE_NEW_ACTION_NUM_TRIES; t_index++) {
 		vector<AbstractNode*> possible_starting_nodes;
@@ -38,6 +42,9 @@ NewActionExperiment::NewActionExperiment(Scope* scope_context,
 				possible_nodes);
 
 			int num_following = 1 + following_distribution(generator);
+			if (1 + num_following > (int)possible_nodes.size()-1) {
+				num_following = (int)possible_nodes.size()-2;
+			}
 			for (int f_index = 0; f_index < num_following; f_index++) {
 				potential_included_nodes.insert(possible_nodes[1 + f_index]);
 			}

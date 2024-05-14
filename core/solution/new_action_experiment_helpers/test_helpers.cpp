@@ -1,5 +1,7 @@
 #include "new_action_experiment.h"
 
+#include <iostream>
+
 #include "abstract_node.h"
 #include "constants.h"
 #include "globals.h"
@@ -68,12 +70,16 @@ void NewActionExperiment::test_backprop(
 		this->test_location_new_counts[history->test_location_index]++;
 
 		if (this->test_location_new_counts[history->test_location_index] >= NUM_DATAPOINTS) {
+			#if defined(MDEBUG) && MDEBUG
+			if (rand()%2 == 0) {
+			#else
 			double existing_score = this->test_location_existing_scores[history->test_location_index]
 				/ this->test_location_existing_counts[history->test_location_index];
 			double new_score = this->test_location_new_scores[history->test_location_index]
 				/ this->test_location_new_counts[history->test_location_index];
 
 			if (new_score >= existing_score) {
+			#endif /* MDEBUG */
 				this->successful_location_starts.push_back(this->test_location_starts[history->test_location_index]);
 				this->successful_location_is_branch.push_back(this->test_location_is_branch[history->test_location_index]);
 				this->successful_location_exits.push_back(this->test_location_exits[history->test_location_index]);

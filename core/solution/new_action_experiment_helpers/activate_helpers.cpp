@@ -1,5 +1,7 @@
 #include "new_action_experiment.h"
 
+#include <iostream>
+
 #include "globals.h"
 
 using namespace std;
@@ -83,7 +85,8 @@ bool NewActionExperiment::activate(AbstractNode* experiment_node,
 								curr_node,
 								problem,
 								context,
-								run_helper);
+								run_helper,
+								history);
 
 			return true;
 		}
