@@ -4,6 +4,7 @@
 
 #include "action_node.h"
 #include "branch_node.h"
+#include "eval.h"
 #include "info_branch_node.h"
 #include "info_scope_node.h"
 #include "scope_node.h"
@@ -41,6 +42,12 @@ void Scope::save(ofstream& output_file) {
 		output_file << it->first << endl;
 		output_file << it->second->type << endl;
 		it->second->save(output_file);
+	}
+
+	output_file << this->average_num_actions << endl;
+
+	if (this->id != -1) {
+		this->eval->save(output_file);
 	}
 }
 
@@ -108,6 +115,19 @@ void Scope::load(ifstream& input_file) {
 			break;
 		}
 	}
+
+	string average_num_actions_line;
+	getline(input_file, average_num_actions_line);
+	this->average_num_actions = stod(average_num_actions_line);
+
+	if (this->id == -1) {
+		this->eval = NULL;
+	} else {
+		this->eval = new Eval(this);
+		this->eval->load(input_file);
+	}
+
+	this->num_actions_until_random = -1;
 }
 
 void Scope::link(Solution* parent_solution) {
@@ -175,6 +195,15 @@ void Scope::copy_from(Scope* original,
 			}
 			break;
 		}
+	}
+
+	this->average_num_actions = original->average_num_actions;
+
+	if (original->id == -1) {
+		this->eval = NULL;
+	} else {
+		this->eval = new Eval(original->eval,
+							  parent_solution);
 	}
 }
 

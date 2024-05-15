@@ -9,6 +9,7 @@
 
 class AbstractNode;
 class ActionNode;
+class Eval;
 class InfoScope;
 class InfoScopeNode;
 class Network;
@@ -29,6 +30,8 @@ const int EVAL_PASS_THROUGH_EXPERIMENT_STATE_VERIFY_2ND = 8;
 class EvalPassThroughExperimentHistory;
 class EvalPassThroughExperiment : public AbstractExperiment {
 public:
+	Eval* eval_context;
+
 	int state;
 	int state_iter;
 	int sub_state_iter;
@@ -63,7 +66,8 @@ public:
 	std::vector<ScopeHistory*> i_scope_histories;
 	std::vector<double> i_target_val_histories;
 
-	EvalPassThroughExperiment(AbstractNode* node_context,
+	EvalPassThroughExperiment(Eval* eval_context,
+							  AbstractNode* node_context,
 							  bool is_branch);
 	~EvalPassThroughExperiment();
 	void decrement(AbstractNode* experiment_node);

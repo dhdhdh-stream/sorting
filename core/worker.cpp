@@ -70,17 +70,6 @@ int main(int argc, char* argv[]) {
 			run_helper,
 			root_history);
 
-		if (solution->state == SOLUTION_STATE_TRAVERSE) {
-			if (run_helper.experiments_seen_order.size() == 0) {
-				if (!run_helper.exceeded_limit) {
-					create_experiment(root_history);
-				}
-			}
-		} else if (solution->state == SOLUTION_STATE_EVAL) {
-			solution->eval->experiment_activate(problem,
-												run_helper);
-		}
-
 		delete root_history;
 
 		double target_val;
@@ -190,7 +179,7 @@ int main(int argc, char* argv[]) {
 				solution = duplicate;
 
 				double sum_vals = 0.0;
-				double sum_num_actions = 0.0;
+				double val_count = 0;
 				for (int i_index = 0; i_index < 4000; i_index++) {
 					// Problem* problem = new Sorting();
 					Problem* problem = new Minesweeper();
@@ -206,17 +195,11 @@ int main(int argc, char* argv[]) {
 					ScopeHistory* root_history = new ScopeHistory(solution->scopes[0]);
 					context.back().scope_history = root_history;
 
-					solution->scopes[0]->activate(
+					solution->scopes[0]->measure_activate(
 						problem,
 						context,
 						run_helper,
 						root_history);
-
-					double predicted_score;
-					if (solution->state == SOLUTION_STATE_EVAL) {
-						predicted_score = solution->eval->activate(problem,
-																   run_helper);
-					}
 
 					delete root_history;
 
@@ -227,30 +210,27 @@ int main(int argc, char* argv[]) {
 						target_val = -1.0;
 					}
 
-					if (solution->state == SOLUTION_STATE_TRAVERSE) {
+					if (solution->explore_type == EXPLORE_TYPE_SCORE) {
 						sum_vals += target_val;
-					} else if (solution->state == SOLUTION_STATE_EVAL) {
-						double misguess = (target_val - predicted_score) * (target_val - predicted_score);
-						sum_vals += -misguess;
+						val_count++;
+					} else if (solution->explore_type == EXPLORE_TYPE_EVAL) {
+						for (int p_index = 0; p_index < (int)run_helper.predicted_scores.size(); p_index++) {
+							double misguess = (target_val - run_helper.predicted_scores[p_index]) * (target_val - run_helper.predicted_scores[p_index]);
+							sum_vals += -misguess;
+							val_count++;
+						}
 					}
-
-					sum_num_actions += run_helper.num_actions;
 
 					delete problem;
 				}
 
 				solution = existing_solution;
 
-				double possible_average_score = sum_vals/4000.0;
+				double possible_average_score = sum_vals/val_count;
 				cout << "possible_average_score: " << possible_average_score << endl;
 
 				duplicate->timestamp++;
 				duplicate->curr_average_score = possible_average_score;
-				if (solution->state == SOLUTION_STATE_TRAVERSE) {
-					duplicate->average_num_actions = sum_num_actions/4000.0;
-				}
-
-				duplicate->increment();
 
 				duplicate->save(path, "possible_" + to_string((unsigned)time(NULL)));
 

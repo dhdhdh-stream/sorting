@@ -21,6 +21,8 @@ public:
 
 	std::vector<AbstractExperimentHistory*> experiment_histories;
 
+	std::vector<double> predicted_scores;
+
 	#if defined(MDEBUG) && MDEBUG
 	void* verify_key;
 	unsigned long starting_run_seed;

@@ -13,6 +13,7 @@
 class AbstractNode;
 class AbstractNodeHistory;
 class AbstractExperimentHistory;
+class Eval;
 class Problem;
 class Solution;
 
@@ -23,6 +24,14 @@ public:
 
 	int node_counter;
 	std::map<int, AbstractNode*> nodes;
+
+	double average_num_actions;
+
+	Eval* eval;
+	int num_actions_until_random;
+	/**
+	 * - set by EvalExperiment
+	 */
 
 	Scope();
 	~Scope();
@@ -45,6 +54,11 @@ public:
 							 std::vector<ContextLayer>& context,
 							 RunHelper& run_helper,
 							 ScopeHistory* history);
+
+	void measure_activate(Problem* problem,
+						  std::vector<ContextLayer>& context,
+						  RunHelper& run_helper,
+						  ScopeHistory* history);
 
 	void step_through_activate(Problem* problem,
 							   std::vector<ContextLayer>& context,
@@ -75,7 +89,7 @@ public:
 
 	std::map<AbstractNode*, AbstractNodeHistory*> node_histories;
 
-	AbstractExperimentHistory* experiment_history;
+	AbstractExperiment* callback_experiment;
 
 	ScopeHistory(Scope* scope);
 	ScopeHistory(ScopeHistory* original);

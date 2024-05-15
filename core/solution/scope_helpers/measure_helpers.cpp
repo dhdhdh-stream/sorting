@@ -4,23 +4,21 @@
 
 #include "action_node.h"
 #include "branch_node.h"
-#include "abstract_experiment.h"
 #include "eval.h"
 #include "globals.h"
 #include "info_branch_node.h"
 #include "info_scope_node.h"
-#include "new_action_experiment.h"
 #include "scope_node.h"
 #include "solution.h"
 #include "solution_helpers.h"
 
 using namespace std;
 
-void node_activate_helper(AbstractNode*& curr_node,
-						  Problem* problem,
-						  vector<ContextLayer>& context,
-						  RunHelper& run_helper,
-						  ScopeHistory* history) {
+void measure_node_activate_helper(AbstractNode*& curr_node,
+								  Problem* problem,
+								  vector<ContextLayer>& context,
+								  RunHelper& run_helper,
+								  ScopeHistory* history) {
 	switch (curr_node->type) {
 	case NODE_TYPE_ACTION:
 		{
@@ -36,11 +34,11 @@ void node_activate_helper(AbstractNode*& curr_node,
 	case NODE_TYPE_SCOPE:
 		{
 			ScopeNode* node = (ScopeNode*)curr_node;
-			node->activate(curr_node,
-						   problem,
-						   context,
-						   run_helper,
-						   history->node_histories);
+			node->measure_activate(curr_node,
+								   problem,
+								   context,
+								   run_helper,
+								   history->node_histories);
 		}
 
 		break;
@@ -85,10 +83,10 @@ void node_activate_helper(AbstractNode*& curr_node,
 	}
 }
 
-void Scope::activate(Problem* problem,
-					 vector<ContextLayer>& context,
-					 RunHelper& run_helper,
-					 ScopeHistory* history) {
+void Scope::measure_activate(Problem* problem,
+							 vector<ContextLayer>& context,
+							 RunHelper& run_helper,
+							 ScopeHistory* history) {
 	if (run_helper.curr_depth > run_helper.max_depth) {
 		run_helper.max_depth = run_helper.curr_depth;
 	}
@@ -97,19 +95,6 @@ void Scope::activate(Problem* problem,
 		return;
 	}
 	run_helper.curr_depth++;
-
-	EvalHistory* eval_history;
-	if (solution->explore_id == this->id) {
-		if (solution->explore_type == EXPLORE_TYPE_SCORE) {
-			eval_history = new EvalHistory(this->eval);
-
-			this->eval->activate_start(problem,
-									   run_helper,
-									   eval_history);
-		} else {
-
-		}
-	}
 
 	AbstractNode* curr_node = this->nodes[0];
 	while (true) {
@@ -130,41 +115,18 @@ void Scope::activate(Problem* problem,
 			}
 		}
 
-		node_activate_helper(curr_node,
-							 problem,
-							 context,
-							 run_helper,
-							 history);
-	}
-
-	if (solution->explore_id == this->id) {
-		if (solution->explore_type == EXPLORE_TYPE_SCORE) {
-			this->eval->activate_end(problem,
+		measure_node_activate_helper(curr_node,
+									 problem,
+									 context,
 									 run_helper,
 									 history);
-		} else {
-
-		}
-	}
-
-	if (history->callback_experiment != NULL) {
-		switch (history->experiment_history->experiment->type) {
-		history->callback_experiment->back_activate(
-			history,
-			eval_history,
-			run_helper);
 	}
 
 	if (solution->explore_id == this->id) {
-		if (solution->explore_type == EXPLORE_TYPE_SCORE) {
-			if (run_helper.experiments_seen_order.size() == 0) {
-				if (!run_helper.exceeded_limit) {
-					create_experiment(history);
-				}
-			}
-		} else {
-			this->eval->experiment_activate(problem,
-											run_helper);
+		if (solution->explore_type == EXPLORE_TYPE_EVAL) {
+			double predicted_score = this->eval->activate(problem,
+														  run_helper);
+			run_helper.predicted_scores.push_back(predicted_score);
 		}
 	}
 

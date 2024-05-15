@@ -6,6 +6,7 @@
 #include "branch_node.h"
 #include "info_branch_node.h"
 #include "info_scope.h"
+#include "eval.h"
 #include "network.h"
 #include "scope.h"
 #include "scope_node.h"
@@ -420,6 +421,12 @@ void NewActionExperiment::finalize(Solution* duplicate) {
 				break;
 			}
 		}
+
+		new_scope->average_num_actions = 1.0;
+
+		new_scope->eval = new Eval(new_scope);
+		new_scope->eval->init();
+		new_scope->num_actions_until_random = -1;
 
 		ActionNode* new_local_ending_node = NULL;
 

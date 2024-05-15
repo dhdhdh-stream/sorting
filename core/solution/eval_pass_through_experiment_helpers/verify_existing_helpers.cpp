@@ -17,16 +17,16 @@ void EvalPassThroughExperiment::verify_existing_back_activate(
 		RunHelper& run_helper) {
 	EvalPassThroughExperimentHistory* history = (EvalPassThroughExperimentHistory*)run_helper.experiment_histories.back();
 
-	vector<double> input_vals(solution->eval->input_node_contexts.size(), 0.0);
-	for (int i_index = 0; i_index < (int)solution->eval->input_node_contexts.size(); i_index++) {
+	vector<double> input_vals(this->eval_context->input_node_contexts.size(), 0.0);
+	for (int i_index = 0; i_index < (int)this->eval_context->input_node_contexts.size(); i_index++) {
 		map<AbstractNode*, AbstractNodeHistory*>::iterator it = subscope_history->node_histories.find(
-			solution->eval->input_node_contexts[i_index]);
+			this->eval_context->input_node_contexts[i_index]);
 		if (it != subscope_history->node_histories.end()) {
-			switch (solution->eval->input_node_contexts[i_index]->type) {
+			switch (this->eval_context->input_node_contexts[i_index]->type) {
 			case NODE_TYPE_ACTION:
 				{
 					ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
-					input_vals[i_index] = action_node_history->obs_snapshot[solution->eval->input_obs_indexes[i_index]];
+					input_vals[i_index] = action_node_history->obs_snapshot[this->eval_context->input_obs_indexes[i_index]];
 				}
 				break;
 			case NODE_TYPE_INFO_SCOPE:
@@ -53,20 +53,20 @@ void EvalPassThroughExperiment::verify_existing_back_activate(
 		}
 	}
 
-	double score = solution->eval->average_score;
-	for (int i_index = 0; i_index < (int)solution->eval->linear_input_indexes.size(); i_index++) {
-		score += input_vals[solution->eval->linear_input_indexes[i_index]] * solution->eval->linear_weights[i_index];
+	double score = this->eval_context->average_score;
+	for (int i_index = 0; i_index < (int)this->eval_context->linear_input_indexes.size(); i_index++) {
+		score += input_vals[this->eval_context->linear_input_indexes[i_index]] * this->eval_context->linear_weights[i_index];
 	}
-	if (solution->eval->network != NULL) {
-		vector<vector<double>> network_input_vals(solution->eval->network_input_indexes.size());
-		for (int i_index = 0; i_index < (int)solution->eval->network_input_indexes.size(); i_index++) {
-			network_input_vals[i_index] = vector<double>(solution->eval->network_input_indexes[i_index].size());
-			for (int v_index = 0; v_index < (int)solution->eval->network_input_indexes[i_index].size(); v_index++) {
-				network_input_vals[i_index][v_index] = input_vals[solution->eval->network_input_indexes[i_index][v_index]];
+	if (this->eval_context->network != NULL) {
+		vector<vector<double>> network_input_vals(this->eval_context->network_input_indexes.size());
+		for (int i_index = 0; i_index < (int)this->eval_context->network_input_indexes.size(); i_index++) {
+			network_input_vals[i_index] = vector<double>(this->eval_context->network_input_indexes[i_index].size());
+			for (int v_index = 0; v_index < (int)this->eval_context->network_input_indexes[i_index].size(); v_index++) {
+				network_input_vals[i_index][v_index] = input_vals[this->eval_context->network_input_indexes[i_index][v_index]];
 			}
 		}
-		solution->eval->network->activate(network_input_vals);
-		score += solution->eval->network->output->acti_vals[0];
+		this->eval_context->network->activate(network_input_vals);
+		score += this->eval_context->network->output->acti_vals[0];
 	}
 
 	history->predicted_scores.push_back(score);

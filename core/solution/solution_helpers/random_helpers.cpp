@@ -16,8 +16,6 @@ void random_sequence(AbstractNode*& curr_node,
 					 Problem* problem,
 					 vector<ContextLayer>& context,
 					 RunHelper& run_helper) {
-	solution->num_actions_until_random = -1;
-
 	uniform_int_distribution<int> uniform_distribution(0, 1);
 	geometric_distribution<int> geometric_distribution(0.5);
 	int new_num_steps = uniform_distribution(generator) + geometric_distribution(generator);
@@ -54,7 +52,4 @@ void random_sequence(AbstractNode*& curr_node,
 		possible_exits);
 	uniform_int_distribution<int> distribution(0, possible_exits.size()-1);
 	curr_node = possible_exits[distribution(generator)];
-
-	uniform_int_distribution<int> next_distribution(0, (int)(2.0 * solution->average_num_actions));
-	solution->num_actions_until_random = 1 + next_distribution(generator);
 }

@@ -18,12 +18,6 @@ Solution::Solution() {
 Solution::Solution(Solution* original) {
 	this->timestamp = original->timestamp;
 	this->curr_average_score = original->curr_average_score;
-	this->average_num_actions = original->average_num_actions;
-
-	this->state = original->state;
-	this->state_iter = original->state_iter;
-
-	this->num_actions_until_random = original->num_actions_until_random;
 
 	for (int s_index = 0; s_index < (int)original->scopes.size(); s_index++) {
 		Scope* scope = new Scope();
@@ -52,9 +46,6 @@ Solution::Solution(Solution* original) {
 		this->info_scopes[i_index]->link(this);
 	}
 
-	this->eval = new Eval(original->eval,
-						  this);
-
 	this->max_depth = original->max_depth;
 	this->depth_limit = original->depth_limit;
 
@@ -69,19 +60,11 @@ Solution::~Solution() {
 	for (int i_index = 0; i_index < (int)this->info_scopes.size(); i_index++) {
 		delete this->info_scopes[i_index];
 	}
-
-	delete this->eval;
 }
 
 void Solution::init() {
 	this->timestamp = 0;
 	this->curr_average_score = -1.0;
-	this->average_num_actions = 0.0;
-
-	this->state = SOLUTION_STATE_TRAVERSE;
-	this->state_iter = 0;
-
-	this->num_actions_until_random = -1;
 
 	Scope* new_scope = new Scope();
 	new_scope->id = this->scopes.size();
@@ -96,8 +79,11 @@ void Solution::init() {
 	new_scope->nodes[0] = starting_noop_node;
 	new_scope->node_counter = 1;
 
-	this->eval = new Eval();
-	this->eval->init();
+	new_scope->average_num_actions = 1.0;
+
+	new_scope->eval = new Eval(new_scope);
+	new_scope->eval->init();
+	new_scope->num_actions_until_random = -1;
 
 	this->max_depth = 1;
 	this->depth_limit = 11;
@@ -118,25 +104,6 @@ void Solution::load(string path,
 	string curr_average_score_line;
 	getline(input_file, curr_average_score_line);
 	this->curr_average_score = stod(curr_average_score_line);
-
-	string average_num_actions_line;
-	getline(input_file, average_num_actions_line);
-	this->average_num_actions = stod(average_num_actions_line);
-
-	string state_line;
-	getline(input_file, state_line);
-	this->state = stoi(state_line);
-
-	string state_iter_line;
-	getline(input_file, state_iter_line);
-	this->state_iter = stoi(state_iter_line);
-
-	if (this->state == SOLUTION_STATE_TRAVERSE) {
-		this->num_actions_until_random = -1;
-	} else if (this->state == SOLUTION_STATE_EVAL) {
-		uniform_int_distribution<int> next_distribution(0, (int)(2.0 * this->average_num_actions));
-		this->num_actions_until_random = 1 + next_distribution(generator);
-	}
 
 	string num_scopes_line;
 	getline(input_file, num_scopes_line);
@@ -170,9 +137,6 @@ void Solution::load(string path,
 	for (int i_index = 0; i_index < (int)this->info_scopes.size(); i_index++) {
 		this->info_scopes[i_index]->link(this);
 	}
-
-	this->eval = new Eval();
-	this->eval->load(input_file);
 
 	string max_depth_line;
 	getline(input_file, max_depth_line);
@@ -208,21 +172,6 @@ void Solution::clear_verify() {
 }
 #endif /* MDEBUG */
 
-void Solution::increment() {
-	// do nothing
-
-	// if (this->state == SOLUTION_STATE_TRAVERSE) {
-	// 	this->state = SOLUTION_STATE_EVAL;
-
-	// 	uniform_int_distribution<int> next_distribution(0, (int)(2.0 * this->average_num_actions));
-	// 	this->num_actions_until_random = 1 + next_distribution(generator);
-	// } else if (this->state == SOLUTION_STATE_EVAL) {
-	// 	this->state = SOLUTION_STATE_TRAVERSE;
-
-	// 	this->num_actions_until_random = -1;
-	// }
-}
-
 void Solution::save(string path,
 					string name) {
 	ofstream output_file;
@@ -230,10 +179,6 @@ void Solution::save(string path,
 
 	output_file << this->timestamp << endl;
 	output_file << this->curr_average_score << endl;
-	output_file << this->average_num_actions << endl;
-
-	output_file << this->state << endl;
-	output_file << this->state_iter << endl;
 
 	output_file << this->scopes.size() << endl;
 	output_file << this->info_scopes.size() << endl;
@@ -244,8 +189,6 @@ void Solution::save(string path,
 	for (int i_index = 0; i_index < (int)this->info_scopes.size(); i_index++) {
 		this->info_scopes[i_index]->save(output_file);
 	}
-
-	this->eval->save(output_file);
 
 	output_file << this->max_depth << endl;
 
@@ -271,6 +214,4 @@ void Solution::save_for_display(ofstream& output_file) {
 			this->info_scopes[i_index]->subscope->save_for_display(output_file);
 		}
 	}
-
-	this->eval->subscope->save_for_display(output_file);
 }

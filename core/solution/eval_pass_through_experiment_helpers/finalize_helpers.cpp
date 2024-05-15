@@ -23,28 +23,30 @@ void EvalPassThroughExperiment::finalize(Solution* duplicate) {
 			new_branch(duplicate);
 		}
 
-		duplicate->eval->input_node_contexts.clear();
-		duplicate->eval->input_obs_indexes.clear();
+		Eval* duplicate_eval = duplicate->scopes[this->eval_context->parent_scope->id]->eval;
 
-		duplicate->eval->linear_input_indexes.clear();
-		duplicate->eval->linear_weights.clear();
+		duplicate_eval->input_node_contexts.clear();
+		duplicate_eval->input_obs_indexes.clear();
 
-		duplicate->eval->network_input_indexes.clear();
-		if (duplicate->eval->network != NULL) {
-			delete duplicate->eval->network;
-			duplicate->eval->network = NULL;
+		duplicate_eval->linear_input_indexes.clear();
+		duplicate_eval->linear_weights.clear();
+
+		duplicate_eval->network_input_indexes.clear();
+		if (duplicate_eval->network != NULL) {
+			delete duplicate_eval->network;
+			duplicate_eval->network = NULL;
 		}
 
-		duplicate->eval->average_score = this->new_average_score;
+		duplicate_eval->average_score = this->new_average_score;
 
 		vector<int> input_mapping(this->input_node_contexts.size(), -1);
 		for (int i_index = 0; i_index < (int)this->linear_weights.size(); i_index++) {
 			if (this->linear_weights[i_index] != 0.0) {
 				if (input_mapping[i_index] == -1) {
-					input_mapping[i_index] = (int)duplicate->eval->input_node_contexts.size();
-					duplicate->eval->input_node_contexts.push_back(
-						duplicate->eval->subscope->nodes[this->input_node_contexts[i_index]->id]);
-					duplicate->eval->input_obs_indexes.push_back(this->input_obs_indexes[i_index]);
+					input_mapping[i_index] = (int)duplicate_eval->input_node_contexts.size();
+					duplicate_eval->input_node_contexts.push_back(
+						duplicate_eval->subscope->nodes[this->input_node_contexts[i_index]->id]);
+					duplicate_eval->input_obs_indexes.push_back(this->input_obs_indexes[i_index]);
 				}
 			}
 		}
@@ -52,18 +54,18 @@ void EvalPassThroughExperiment::finalize(Solution* duplicate) {
 			for (int v_index = 0; v_index < (int)this->network_input_indexes[i_index].size(); v_index++) {
 				int original_index = this->network_input_indexes[i_index][v_index];
 				if (input_mapping[original_index] == -1) {
-					input_mapping[original_index] = (int)duplicate->eval->input_node_contexts.size();
-					duplicate->eval->input_node_contexts.push_back(
-						duplicate->eval->subscope->nodes[this->input_node_contexts[original_index]->id]);
-					duplicate->eval->input_obs_indexes.push_back(this->input_obs_indexes[original_index]);
+					input_mapping[original_index] = (int)duplicate_eval->input_node_contexts.size();
+					duplicate_eval->input_node_contexts.push_back(
+						duplicate_eval->subscope->nodes[this->input_node_contexts[original_index]->id]);
+					duplicate_eval->input_obs_indexes.push_back(this->input_obs_indexes[original_index]);
 				}
 			}
 		}
 
 		for (int i_index = 0; i_index < (int)this->linear_weights.size(); i_index++) {
 			if (this->linear_weights[i_index] != 0.0) {
-				duplicate->eval->linear_input_indexes.push_back(input_mapping[i_index]);
-				duplicate->eval->linear_weights.push_back(this->linear_weights[i_index]);
+				duplicate_eval->linear_input_indexes.push_back(input_mapping[i_index]);
+				duplicate_eval->linear_weights.push_back(this->linear_weights[i_index]);
 			}
 		}
 
@@ -72,16 +74,13 @@ void EvalPassThroughExperiment::finalize(Solution* duplicate) {
 			for (int v_index = 0; v_index < (int)this->network_input_indexes[i_index].size(); v_index++) {
 				input_indexes.push_back(input_mapping[this->network_input_indexes[i_index][v_index]]);
 			}
-			duplicate->eval->network_input_indexes.push_back(input_indexes);
+			duplicate_eval->network_input_indexes.push_back(input_indexes);
 		}
-		duplicate->eval->network = this->network;
+		duplicate_eval->network = this->network;
 		this->network = NULL;
 	}
 
-	/**
-	 * - set to NULL in original
-	 */
-	solution->eval->experiment = NULL;
+	this->eval_context->experiment = NULL;
 
 	int experiment_index;
 	for (int e_index = 0; e_index < (int)this->node_context->experiments.size(); e_index++) {
@@ -94,7 +93,8 @@ void EvalPassThroughExperiment::finalize(Solution* duplicate) {
 }
 
 void EvalPassThroughExperiment::new_branch(Solution* duplicate) {
-	Scope* duplicate_local_scope = duplicate->eval->subscope;
+	Eval* duplicate_eval = duplicate->scopes[this->eval_context->parent_scope->id]->eval;
+	Scope* duplicate_local_scope = duplicate_eval->subscope;
 
 	if (this->ending_node != NULL) {
 		this->ending_node->parent = duplicate_local_scope;
@@ -243,7 +243,8 @@ void EvalPassThroughExperiment::new_branch(Solution* duplicate) {
 }
 
 void EvalPassThroughExperiment::new_pass_through(Solution* duplicate) {
-	Scope* duplicate_local_scope = duplicate->eval->subscope;
+	Eval* duplicate_eval = duplicate->scopes[this->eval_context->parent_scope->id]->eval;
+	Scope* duplicate_local_scope = duplicate_eval->subscope;
 	AbstractNode* duplicate_explore_node = duplicate_local_scope->nodes[this->node_context->id];
 
 	int start_node_id;

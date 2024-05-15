@@ -15,11 +15,13 @@
 using namespace std;
 
 EvalPassThroughExperiment::EvalPassThroughExperiment(
+		Eval* eval_context,
 		AbstractNode* node_context,
 		bool is_branch) {
 	this->type = EXPERIMENT_TYPE_EVAL_PASS_THROUGH;
 
-	this->scope_context = solution->eval->subscope;
+	this->eval_context = eval_context;
+	this->scope_context = this->eval_context->subscope;
 	this->node_context = node_context;
 	this->is_branch = is_branch;
 

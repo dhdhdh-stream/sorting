@@ -26,9 +26,6 @@ void Eval::experiment_activate(Problem* problem,
 		}
 	}
 	if (run_subscope) {
-		int existing_num_actions_until_random = solution->num_actions_until_random;
-		solution->num_actions_until_random = -1;
-
 		vector<ContextLayer> inner_context;
 		inner_context.push_back(ContextLayer());
 
@@ -53,12 +50,11 @@ void Eval::experiment_activate(Problem* problem,
 														run_helper);
 		} else {
 			if (!run_helper.exceeded_limit) {
-				create_eval_experiment(root_history);
+				create_eval_experiment(this,
+									   root_history);
 			}
 		}
 
 		delete root_history;
-
-		solution->num_actions_until_random = existing_num_actions_until_random;
 	}
 }

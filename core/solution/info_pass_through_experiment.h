@@ -1,3 +1,10 @@
+/**
+ * - for InfoBranchExperiment, would need to:
+ *   - first learn positive/negative for branch
+ *   - then learn score/misguess for existing vs. branch
+ * - also will not be able to filter branch sequence well as not based on score
+ */
+
 #ifndef INFO_PASS_THROUGH_EXPERIMENT_H
 #define INFO_PASS_THROUGH_EXPERIMENT_H
 

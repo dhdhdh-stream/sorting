@@ -109,13 +109,11 @@ void create_experiment_helper(vector<InfoScope*>& possible_info_scope_contexts,
 			{
 				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)it->second;
 
-				if (solution->state == SOLUTION_STATE_TRAVERSE) {
-					create_experiment_helper(possible_info_scope_contexts,
-											 possible_scope_contexts,
-											 possible_node_contexts,
-											 possible_is_branch,
-											 scope_node_history->scope_history);
-				}
+				create_experiment_helper(possible_info_scope_contexts,
+										 possible_scope_contexts,
+										 possible_node_contexts,
+										 possible_is_branch,
+										 scope_node_history->scope_history);
 
 				possible_info_scope_contexts.push_back(NULL);
 				possible_scope_contexts.push_back(scope_history->scope);
@@ -142,16 +140,14 @@ void create_experiment_helper(vector<InfoScope*>& possible_info_scope_contexts,
 
 				if (info_branch_node->scope->state == INFO_SCOPE_STATE_NA
 						&& info_branch_node_history->scope_history != NULL) {
-					if (solution->state == SOLUTION_STATE_TRAVERSE) {
-						uniform_int_distribution<int> info_inner_distribution(0, 4);
-						if (info_inner_distribution(generator) == 0) {
-							info_create_experiment_helper(info_branch_node->scope,
-														  possible_info_scope_contexts,
-														  possible_scope_contexts,
-														  possible_node_contexts,
-														  possible_is_branch,
-														  info_branch_node_history->scope_history);
-						}
+					uniform_int_distribution<int> info_inner_distribution(0, 4);
+					if (info_inner_distribution(generator) == 0) {
+						info_create_experiment_helper(info_branch_node->scope,
+													  possible_info_scope_contexts,
+													  possible_scope_contexts,
+													  possible_node_contexts,
+													  possible_is_branch,
+													  info_branch_node_history->scope_history);
 					}
 				}
 
@@ -247,7 +243,8 @@ void create_experiment(ScopeHistory* root_history) {
 	}
 }
 
-void create_eval_experiment(ScopeHistory* root_history) {
+void create_eval_experiment(Eval* eval,
+							ScopeHistory* root_history) {
 	vector<InfoScope*> possible_info_scope_contexts;
 	vector<Scope*> possible_scope_contexts;
 	vector<AbstractNode*> possible_node_contexts;
@@ -263,9 +260,10 @@ void create_eval_experiment(ScopeHistory* root_history) {
 	int rand_index = possible_distribution(generator);
 
 	EvalPassThroughExperiment* new_experiment = new EvalPassThroughExperiment(
+		eval,
 		possible_node_contexts[rand_index],
 		possible_is_branch[rand_index]);
 
-	solution->eval->experiment = new_experiment;
+	eval->experiment = new_experiment;
 	possible_node_contexts[rand_index]->experiments.push_back(new_experiment);
 }

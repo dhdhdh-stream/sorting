@@ -82,5 +82,10 @@ Scope* create_new_info_scope() {
 		}
 	}
 
+	new_scope->average_num_actions = 1.0;
+
+	new_scope->eval = NULL;
+	new_scope->num_actions_until_random = -1;
+
 	return new_scope;
 }

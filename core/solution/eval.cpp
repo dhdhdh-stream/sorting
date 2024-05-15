@@ -6,15 +6,20 @@
 #include "globals.h"
 #include "network.h"
 #include "scope.h"
+#include "solution.h"
 
 using namespace std;
 
-Eval::Eval() {
+Eval::Eval(Scope* parent_scope) {
+	this->parent_scope = parent_scope;
+
 	this->experiment = NULL;
 }
 
 Eval::Eval(Eval* original,
 		   Solution* parent_solution) {
+	this->parent_scope = parent_solution->scopes[original->parent_scope->id];
+
 	this->subscope = new Scope();
 	this->subscope->copy_from(original->subscope,
 							  parent_solution);

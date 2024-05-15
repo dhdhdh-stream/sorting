@@ -36,11 +36,6 @@ int main(int argc, char* argv[]) {
 
 	double sum_vals = 0.0;
 
-	// temp
-	solution->state = SOLUTION_STATE_EVAL;
-	uniform_int_distribution<int> next_distribution(0, (int)(2.0 * solution->average_num_actions));
-	solution->num_actions_until_random = 1 + next_distribution(generator);
-
 	auto start_time = chrono::high_resolution_clock::now();
 	for (int i_index = 0; i_index < 2000; i_index++) {
 		// Problem* problem = new Sorting();
@@ -63,12 +58,6 @@ int main(int argc, char* argv[]) {
 			run_helper,
 			root_history);
 
-		double predicted_score;
-		if (solution->state == SOLUTION_STATE_EVAL) {
-			predicted_score = solution->eval->activate(problem,
-													   run_helper);
-		}
-
 		delete root_history;
 
 		double target_val;
@@ -78,12 +67,7 @@ int main(int argc, char* argv[]) {
 			target_val = -1.0;
 		}
 
-		if (solution->state == SOLUTION_STATE_TRAVERSE) {
-			sum_vals += target_val;
-		} else if (solution->state == SOLUTION_STATE_EVAL) {
-			double misguess = (target_val - predicted_score) * (target_val - predicted_score);
-			sum_vals += -misguess;
-		}
+		sum_vals += target_val;
 
 		delete problem;
 	}

@@ -5,10 +5,6 @@
  *       - as new changes may lead to better predictions
  */
 
-/**
- * TODO: keep track of number of improvements per scope, and create ne action when threshold
- */
-
 #ifndef SOLUTION_H
 #define SOLUTION_H
 
@@ -22,24 +18,16 @@ class InfoScope;
 class Problem;
 class Scope;
 
-const int SOLUTION_STATE_TRAVERSE = 0;
-const int SOLUTION_STATE_EVAL = 1;
+const int EXPLORE_TYPE_SCORE = 0;
+const int EXPLORE_TYPE_EVAL = 1;
 
 class Solution {
 public:
 	int timestamp;
 	double curr_average_score;
-	double average_num_actions;
-
-	int state;
-	int state_iter;
-
-	int num_actions_until_random;
 
 	std::vector<Scope*> scopes;
 	std::vector<InfoScope*> info_scopes;
-
-	Eval* eval;
 
 	/**
 	 * - max depth for run that concluded
@@ -55,6 +43,9 @@ public:
 	 */
 	int max_num_actions;
 	int num_actions_limit;
+
+	int explore_id;
+	int explore_type;
 
 	#if defined(MDEBUG) && MDEBUG
 	void* verify_key;
@@ -73,8 +64,6 @@ public:
 	#if defined(MDEBUG) && MDEBUG
 	void clear_verify();
 	#endif /* MDEBUG */
-
-	void increment();
 
 	void save(std::string path,
 			  std::string name);

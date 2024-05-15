@@ -236,13 +236,13 @@ void EvalPassThroughExperiment::explore_backprop(
 				}
 			}
 
-			this->input_node_contexts = solution->eval->input_node_contexts;
-			this->input_obs_indexes = solution->eval->input_obs_indexes;
+			this->input_node_contexts = this->eval_context->input_node_contexts;
+			this->input_obs_indexes = this->eval_context->input_obs_indexes;
 
-			this->linear_weights = solution->eval->linear_weights;
-			this->network_input_indexes = solution->eval->network_input_indexes;
-			if (solution->eval->network != NULL) {
-				this->network = new Network(solution->eval->network);
+			this->linear_weights = this->eval_context->linear_weights;
+			this->network_input_indexes = this->eval_context->network_input_indexes;
+			if (this->eval_context->network != NULL) {
+				this->network = new Network(this->eval_context->network);
 			}
 
 			this->i_scope_histories.reserve(NUM_DATAPOINTS);

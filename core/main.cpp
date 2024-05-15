@@ -1,8 +1,19 @@
 // TODO: add mimicking
 // - human performs simple full run, so no decision making/variations
+//   - save obs
 //   - copy sequences, and try using them in different places
 //   - or examine differences/branching offs
 // - need to be able to go from action sequence to matching scope
+// - maybe need multiple runs?
+//   - really not that much to do with a single run
+//     - perform exactly and hope good enough
+//     - but can easily fail because solution is sharp and doesn't have the fallback the original person has
+// - yeah, so have multiple runs, which shouldn't be that big of a problem
+//   - hopefully, representative ones
+// - initially, runs will look like a tree with branch really close to root
+//   - need to assume that there's repetition and try to change into a graph?
+//     - is it even worth to spend effort here?
+//       - probably, at the very least to transfer knowledge from humans
 
 #include <chrono>
 #include <iostream>
@@ -79,17 +90,6 @@ int main(int argc, char* argv[]) {
 			context,
 			run_helper,
 			root_history);
-
-		if (solution->state == SOLUTION_STATE_TRAVERSE) {
-			if (run_helper.experiments_seen_order.size() == 0) {
-				if (!run_helper.exceeded_limit) {
-					create_experiment(root_history);
-				}
-			}
-		} else if (solution->state == SOLUTION_STATE_EVAL) {
-			solution->eval->experiment_activate(problem,
-												run_helper);
-		}
 
 		delete root_history;
 

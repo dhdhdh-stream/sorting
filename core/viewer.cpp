@@ -36,11 +36,6 @@ int main(int argc, char* argv[]) {
 	solution = new Solution();
 	solution->load("", "main");
 
-	// temp
-	solution->state = SOLUTION_STATE_EVAL;
-	uniform_int_distribution<int> next_distribution(0, (int)(2.0 * solution->average_num_actions));
-	solution->num_actions_until_random = 1 + next_distribution(generator);
-
 	{
 		// Problem* problem = new Sorting();
 		Problem* problem = new Minesweeper();
@@ -63,13 +58,6 @@ int main(int argc, char* argv[]) {
 			root_history);
 
 		problem->print();
-
-		double predicted_score;
-		if (solution->state == SOLUTION_STATE_EVAL) {
-			predicted_score = solution->eval->activate(problem,
-													   run_helper);
-			cout << "predicted_score: " << predicted_score << endl;
-		}
 
 		delete root_history;
 

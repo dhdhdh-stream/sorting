@@ -111,6 +111,7 @@ public:
 				  Problem* problem,
 				  std::vector<ContextLayer>& context,
 				  RunHelper& run_helper);
+	void back_activate();
 	void backprop(double target_val,
 				  RunHelper& run_helper);
 
