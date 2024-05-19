@@ -5,6 +5,7 @@
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
+#include "eval.h"
 #include "globals.h"
 #include "info_branch_node.h"
 #include "network.h"
@@ -149,9 +150,17 @@ bool BranchExperiment::experiment_verify_activate(
 }
 
 void BranchExperiment::experiment_verify_backprop(
-		double target_val,
+		EvalHistory* eval_history,
+		Problem* problem,
+		vector<ContextLayer>& context,
 		RunHelper& run_helper) {
-	this->combined_score += target_val;
+	this->scope_context->eval->activate(problem,
+										run_helper,
+										eval_history->end_scope_history);
+	double predicted_impact = this->scope_context->eval->calc_vs(
+		run_helper,
+		eval_history);
+	this->combined_score += predicted_impact;
 
 	this->state_iter++;
 	if (this->root_state == ROOT_EXPERIMENT_STATE_VERIFY_1ST
@@ -163,7 +172,7 @@ void BranchExperiment::experiment_verify_backprop(
 		#else
 		if (this->combined_score > this->verify_existing_average_score) {
 		#endif /* MDEBUG */
-			this->o_target_val_histories.reserve(VERIFY_2ND_NUM_DATAPOINTS);
+			this->target_val_histories.reserve(VERIFY_2ND_NUM_DATAPOINTS);
 
 			this->root_state = ROOT_EXPERIMENT_STATE_VERIFY_2ND_EXISTING;
 			/**
@@ -188,12 +197,12 @@ void BranchExperiment::experiment_verify_backprop(
 								combined_branch_weight *= branch_experiment->branch_weight;
 							}
 							break;
-						case EXPERIMENT_TYPE_NEW_INFO:
-							{
-								NewInfoExperiment* new_info_experiment = (NewInfoExperiment*)curr_experiment;
-								combined_branch_weight *= new_info_experiment->branch_weight;
-							}
-							break;
+						// case EXPERIMENT_TYPE_NEW_INFO:
+						// 	{
+						// 		NewInfoExperiment* new_info_experiment = (NewInfoExperiment*)curr_experiment;
+						// 		combined_branch_weight *= new_info_experiment->branch_weight;
+						// 	}
+						// 	break;
 						}
 						curr_experiment = curr_experiment->parent_experiment;
 					}
@@ -222,65 +231,65 @@ void BranchExperiment::experiment_verify_backprop(
 					}
 				}
 				break;
-			case EXPERIMENT_TYPE_PASS_THROUGH:
-				{
-					PassThroughExperiment* pass_through_experiment = (PassThroughExperiment*)this->verify_experiments.back();
-					if (pass_through_experiment->best_step_types.size() > 0) {
-						pass_through_experiment->state = PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT;
-						pass_through_experiment->root_state = ROOT_EXPERIMENT_STATE_EXPERIMENT;
-						pass_through_experiment->experiment_iter = 0;
+			// case EXPERIMENT_TYPE_PASS_THROUGH:
+			// 	{
+			// 		PassThroughExperiment* pass_through_experiment = (PassThroughExperiment*)this->verify_experiments.back();
+			// 		if (pass_through_experiment->best_step_types.size() > 0) {
+			// 			pass_through_experiment->state = PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT;
+			// 			pass_through_experiment->root_state = ROOT_EXPERIMENT_STATE_EXPERIMENT;
+			// 			pass_through_experiment->experiment_iter = 0;
 
-						to_experiment = true;
-					}
-				}
-				break;
-			case EXPERIMENT_TYPE_NEW_INFO:
-				{
-					double combined_branch_weight = 1.0;
-					AbstractExperiment* curr_experiment = this->verify_experiments.back();
-					while (true) {
-						if (curr_experiment == NULL) {
-							break;
-						}
+			// 			to_experiment = true;
+			// 		}
+			// 	}
+			// 	break;
+			// case EXPERIMENT_TYPE_NEW_INFO:
+			// 	{
+			// 		double combined_branch_weight = 1.0;
+			// 		AbstractExperiment* curr_experiment = this->verify_experiments.back();
+			// 		while (true) {
+			// 			if (curr_experiment == NULL) {
+			// 				break;
+			// 			}
 
-						switch (curr_experiment->type) {
-						case EXPERIMENT_TYPE_BRANCH:
-							{
-								BranchExperiment* branch_experiment = (BranchExperiment*)curr_experiment;
-								combined_branch_weight *= branch_experiment->branch_weight;
-							}
-							break;
-						case EXPERIMENT_TYPE_NEW_INFO:
-							{
-								NewInfoExperiment* new_info_experiment = (NewInfoExperiment*)curr_experiment;
-								combined_branch_weight *= new_info_experiment->branch_weight;
-							}
-							break;
-						}
-						curr_experiment = curr_experiment->parent_experiment;
-					}
+			// 			switch (curr_experiment->type) {
+			// 			case EXPERIMENT_TYPE_BRANCH:
+			// 				{
+			// 					BranchExperiment* branch_experiment = (BranchExperiment*)curr_experiment;
+			// 					combined_branch_weight *= branch_experiment->branch_weight;
+			// 				}
+			// 				break;
+			// 			case EXPERIMENT_TYPE_NEW_INFO:
+			// 				{
+			// 					NewInfoExperiment* new_info_experiment = (NewInfoExperiment*)curr_experiment;
+			// 					combined_branch_weight *= new_info_experiment->branch_weight;
+			// 				}
+			// 				break;
+			// 			}
+			// 			curr_experiment = curr_experiment->parent_experiment;
+			// 		}
 
-					NewInfoExperiment* new_info_experiment = (NewInfoExperiment*)this->verify_experiments.back();
-					if (new_info_experiment->best_step_types.size() > 0
-							&& combined_branch_weight > EXPERIMENT_COMBINED_MIN_BRANCH_WEIGHT) {
-						#if defined(MDEBUG) && MDEBUG
-						for (int p_index = 0; p_index < (int)new_info_experiment->verify_problems.size(); p_index++) {
-							delete new_info_experiment->verify_problems[p_index];
-						}
-						new_info_experiment->verify_problems.clear();
-						new_info_experiment->verify_seeds.clear();
-						new_info_experiment->verify_negative_scores.clear();
-						new_info_experiment->verify_positive_scores.clear();
-						#endif /* MDEBUG */
+			// 		NewInfoExperiment* new_info_experiment = (NewInfoExperiment*)this->verify_experiments.back();
+			// 		if (new_info_experiment->best_step_types.size() > 0
+			// 				&& combined_branch_weight > EXPERIMENT_COMBINED_MIN_BRANCH_WEIGHT) {
+			// 			#if defined(MDEBUG) && MDEBUG
+			// 			for (int p_index = 0; p_index < (int)new_info_experiment->verify_problems.size(); p_index++) {
+			// 				delete new_info_experiment->verify_problems[p_index];
+			// 			}
+			// 			new_info_experiment->verify_problems.clear();
+			// 			new_info_experiment->verify_seeds.clear();
+			// 			new_info_experiment->verify_negative_scores.clear();
+			// 			new_info_experiment->verify_positive_scores.clear();
+			// 			#endif /* MDEBUG */
 
-						new_info_experiment->state = NEW_INFO_EXPERIMENT_STATE_EXPERIMENT;
-						new_info_experiment->root_state = ROOT_EXPERIMENT_STATE_EXPERIMENT;
-						new_info_experiment->experiment_iter = 0;
+			// 			new_info_experiment->state = NEW_INFO_EXPERIMENT_STATE_EXPERIMENT;
+			// 			new_info_experiment->root_state = ROOT_EXPERIMENT_STATE_EXPERIMENT;
+			// 			new_info_experiment->experiment_iter = 0;
 
-						to_experiment = true;
-					}
-				}
-				break;
+			// 			to_experiment = true;
+			// 		}
+			// 	}
+			// 	break;
 			}
 
 			if (!to_experiment) {
@@ -395,12 +404,12 @@ void BranchExperiment::experiment_verify_backprop(
 								combined_branch_weight *= branch_experiment->branch_weight;
 							}
 							break;
-						case EXPERIMENT_TYPE_NEW_INFO:
-							{
-								NewInfoExperiment* new_info_experiment = (NewInfoExperiment*)curr_experiment;
-								combined_branch_weight *= new_info_experiment->branch_weight;
-							}
-							break;
+						// case EXPERIMENT_TYPE_NEW_INFO:
+						// 	{
+						// 		NewInfoExperiment* new_info_experiment = (NewInfoExperiment*)curr_experiment;
+						// 		combined_branch_weight *= new_info_experiment->branch_weight;
+						// 	}
+						// 	break;
 						}
 						curr_experiment = curr_experiment->parent_experiment;
 					}
@@ -429,65 +438,65 @@ void BranchExperiment::experiment_verify_backprop(
 					}
 				}
 				break;
-			case EXPERIMENT_TYPE_PASS_THROUGH:
-				{
-					PassThroughExperiment* pass_through_experiment = (PassThroughExperiment*)this->verify_experiments.back();
-					if (pass_through_experiment->best_step_types.size() > 0) {
-						pass_through_experiment->state = PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT;
-						pass_through_experiment->root_state = ROOT_EXPERIMENT_STATE_EXPERIMENT;
-						pass_through_experiment->experiment_iter = 0;
+			// case EXPERIMENT_TYPE_PASS_THROUGH:
+			// 	{
+			// 		PassThroughExperiment* pass_through_experiment = (PassThroughExperiment*)this->verify_experiments.back();
+			// 		if (pass_through_experiment->best_step_types.size() > 0) {
+			// 			pass_through_experiment->state = PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT;
+			// 			pass_through_experiment->root_state = ROOT_EXPERIMENT_STATE_EXPERIMENT;
+			// 			pass_through_experiment->experiment_iter = 0;
 
-						to_experiment = true;
-					}
-				}
-				break;
-			case EXPERIMENT_TYPE_NEW_INFO:
-				{
-					double combined_branch_weight = 1.0;
-					AbstractExperiment* curr_experiment = this->verify_experiments.back();
-					while (true) {
-						if (curr_experiment == NULL) {
-							break;
-						}
+			// 			to_experiment = true;
+			// 		}
+			// 	}
+			// 	break;
+			// case EXPERIMENT_TYPE_NEW_INFO:
+			// 	{
+			// 		double combined_branch_weight = 1.0;
+			// 		AbstractExperiment* curr_experiment = this->verify_experiments.back();
+			// 		while (true) {
+			// 			if (curr_experiment == NULL) {
+			// 				break;
+			// 			}
 
-						switch (curr_experiment->type) {
-						case EXPERIMENT_TYPE_BRANCH:
-							{
-								BranchExperiment* branch_experiment = (BranchExperiment*)curr_experiment;
-								combined_branch_weight *= branch_experiment->branch_weight;
-							}
-							break;
-						case EXPERIMENT_TYPE_NEW_INFO:
-							{
-								NewInfoExperiment* new_info_experiment = (NewInfoExperiment*)curr_experiment;
-								combined_branch_weight *= new_info_experiment->branch_weight;
-							}
-							break;
-						}
-						curr_experiment = curr_experiment->parent_experiment;
-					}
+			// 			switch (curr_experiment->type) {
+			// 			case EXPERIMENT_TYPE_BRANCH:
+			// 				{
+			// 					BranchExperiment* branch_experiment = (BranchExperiment*)curr_experiment;
+			// 					combined_branch_weight *= branch_experiment->branch_weight;
+			// 				}
+			// 				break;
+			// 			case EXPERIMENT_TYPE_NEW_INFO:
+			// 				{
+			// 					NewInfoExperiment* new_info_experiment = (NewInfoExperiment*)curr_experiment;
+			// 					combined_branch_weight *= new_info_experiment->branch_weight;
+			// 				}
+			// 				break;
+			// 			}
+			// 			curr_experiment = curr_experiment->parent_experiment;
+			// 		}
 
-					NewInfoExperiment* new_info_experiment = (NewInfoExperiment*)this->verify_experiments.back();
-					if (new_info_experiment->best_step_types.size() > 0
-							&& combined_branch_weight > EXPERIMENT_COMBINED_MIN_BRANCH_WEIGHT) {
-						#if defined(MDEBUG) && MDEBUG
-						for (int p_index = 0; p_index < (int)new_info_experiment->verify_problems.size(); p_index++) {
-							delete new_info_experiment->verify_problems[p_index];
-						}
-						new_info_experiment->verify_problems.clear();
-						new_info_experiment->verify_seeds.clear();
-						new_info_experiment->verify_negative_scores.clear();
-						new_info_experiment->verify_positive_scores.clear();
-						#endif /* MDEBUG */
+			// 		NewInfoExperiment* new_info_experiment = (NewInfoExperiment*)this->verify_experiments.back();
+			// 		if (new_info_experiment->best_step_types.size() > 0
+			// 				&& combined_branch_weight > EXPERIMENT_COMBINED_MIN_BRANCH_WEIGHT) {
+			// 			#if defined(MDEBUG) && MDEBUG
+			// 			for (int p_index = 0; p_index < (int)new_info_experiment->verify_problems.size(); p_index++) {
+			// 				delete new_info_experiment->verify_problems[p_index];
+			// 			}
+			// 			new_info_experiment->verify_problems.clear();
+			// 			new_info_experiment->verify_seeds.clear();
+			// 			new_info_experiment->verify_negative_scores.clear();
+			// 			new_info_experiment->verify_positive_scores.clear();
+			// 			#endif /* MDEBUG */
 
-						new_info_experiment->state = NEW_INFO_EXPERIMENT_STATE_EXPERIMENT;
-						new_info_experiment->root_state = ROOT_EXPERIMENT_STATE_EXPERIMENT;
-						new_info_experiment->experiment_iter = 0;
+			// 			new_info_experiment->state = NEW_INFO_EXPERIMENT_STATE_EXPERIMENT;
+			// 			new_info_experiment->root_state = ROOT_EXPERIMENT_STATE_EXPERIMENT;
+			// 			new_info_experiment->experiment_iter = 0;
 
-						to_experiment = true;
-					}
-				}
-				break;
+			// 			to_experiment = true;
+			// 		}
+			// 	}
+			// 	break;
 			}
 
 			if (!to_experiment) {

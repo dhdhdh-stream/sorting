@@ -36,6 +36,14 @@ const double EXPERIMENT_COMBINED_MIN_BRANCH_WEIGHT = 0.05;
 const double PASS_THROUGH_BRANCH_WEIGHT = 0.9;
 
 /**
+ * - if scope activated more than MAX_INSTANCES_PER_RUN, restrict, and assume multiple explore/new doesn't harm eval accuracy too badly
+ *   - restrict to increase speed
+ */
+const int MAX_INSTANCES_PER_RUN = 10;
+
+const int MAX_NUM_ACTIONS_LIMIT_MULTIPLIER = 5;
+
+/**
  * TODO: can potentially reduce NUM_DATAPOINTS with eval?
  */
 #if defined(MDEBUG) && MDEBUG

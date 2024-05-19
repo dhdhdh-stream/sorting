@@ -25,10 +25,10 @@ void InfoScope::activate(Problem* problem,
 		subscope_history = NULL;
 		result_is_positive = true;
 	} else {
-		if (this->experiment != NULL) {
-			InfoPassThroughExperiment* info_pass_through_experiment = (InfoPassThroughExperiment*)this->experiment;
-			info_pass_through_experiment->info_scope_activate(run_helper);
-		}
+		// if (this->experiment != NULL) {
+		// 	InfoPassThroughExperiment* info_pass_through_experiment = (InfoPassThroughExperiment*)this->experiment;
+		// 	info_pass_through_experiment->info_scope_activate(run_helper);
+		// }
 
 		vector<ContextLayer> inner_context;
 		inner_context.push_back(ContextLayer());
@@ -46,20 +46,20 @@ void InfoScope::activate(Problem* problem,
 
 		run_helper.num_decisions++;
 
-		if (this->experiment != NULL) {
-			if (run_helper.experiment_histories.size() == 1
-					&& run_helper.experiment_histories[0]->experiment == this->experiment) {
-				InfoPassThroughExperiment* info_pass_through_experiment = (InfoPassThroughExperiment*)this->experiment;
-				bool is_selected = info_pass_through_experiment->back_activate(
-					problem,
-					subscope_history,
-					result_is_positive,
-					run_helper);
-				if (is_selected) {
-					return;
-				}
-			}
-		}
+		// if (this->experiment != NULL) {
+		// 	if (run_helper.experiment_histories.size() == 1
+		// 			&& run_helper.experiment_histories[0]->experiment == this->experiment) {
+		// 		InfoPassThroughExperiment* info_pass_through_experiment = (InfoPassThroughExperiment*)this->experiment;
+		// 		bool is_selected = info_pass_through_experiment->back_activate(
+		// 			problem,
+		// 			subscope_history,
+		// 			result_is_positive,
+		// 			run_helper);
+		// 		if (is_selected) {
+		// 			return;
+		// 		}
+		// 	}
+		// }
 
 		vector<double> input_vals(this->input_node_contexts.size(), 0.0);
 		for (int i_index = 0; i_index < (int)this->input_node_contexts.size(); i_index++) {

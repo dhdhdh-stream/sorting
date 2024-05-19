@@ -16,111 +16,129 @@
 
 using namespace std;
 
-void EvalPassThroughExperiment::measure_existing_back_activate(
-		ScopeHistory*& subscope_history,
-		RunHelper& run_helper) {
-	EvalPassThroughExperimentHistory* history = (EvalPassThroughExperimentHistory*)run_helper.experiment_histories.back();
-
-	vector<double> input_vals(this->eval_context->input_node_contexts.size(), 0.0);
-	for (int i_index = 0; i_index < (int)this->eval_context->input_node_contexts.size(); i_index++) {
-		map<AbstractNode*, AbstractNodeHistory*>::iterator it = subscope_history->node_histories.find(
-			this->eval_context->input_node_contexts[i_index]);
-		if (it != subscope_history->node_histories.end()) {
-			switch (this->eval_context->input_node_contexts[i_index]->type) {
-			case NODE_TYPE_ACTION:
-				{
-					ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
-					input_vals[i_index] = action_node_history->obs_snapshot[this->eval_context->input_obs_indexes[i_index]];
-				}
-				break;
-			case NODE_TYPE_INFO_SCOPE:
-				{
-					InfoScopeNodeHistory* info_scope_node_history = (InfoScopeNodeHistory*)it->second;
-					if (info_scope_node_history->is_positive) {
-						input_vals[i_index] = 1.0;
-					} else {
-						input_vals[i_index] = -1.0;
-					}
-				}
-				break;
-			case NODE_TYPE_INFO_BRANCH:
-				{
-					InfoBranchNodeHistory* info_branch_node_history = (InfoBranchNodeHistory*)it->second;
-					if (info_branch_node_history->is_branch) {
-						input_vals[i_index] = 1.0;
-					} else {
-						input_vals[i_index] = -1.0;
-					}
-				}
-				break;
-			}
-		}
-	}
-
-	double score = this->eval_context->average_score;
-	for (int i_index = 0; i_index < (int)this->eval_context->linear_input_indexes.size(); i_index++) {
-		score += input_vals[this->eval_context->linear_input_indexes[i_index]] * this->eval_context->linear_weights[i_index];
-	}
-	if (this->eval_context->network != NULL) {
-		vector<vector<double>> network_input_vals(this->eval_context->network_input_indexes.size());
-		for (int i_index = 0; i_index < (int)this->eval_context->network_input_indexes.size(); i_index++) {
-			network_input_vals[i_index] = vector<double>(this->eval_context->network_input_indexes[i_index].size());
-			for (int v_index = 0; v_index < (int)this->eval_context->network_input_indexes[i_index].size(); v_index++) {
-				network_input_vals[i_index][v_index] = input_vals[this->eval_context->network_input_indexes[i_index][v_index]];
-			}
-		}
-		this->eval_context->network->activate(network_input_vals);
-		score += this->eval_context->network->output->acti_vals[0];
-	}
-
-	history->predicted_scores.push_back(score);
-}
-
 void EvalPassThroughExperiment::measure_existing_backprop(
-		double target_val,
+		EvalHistory* eval_history,
+		Problem* problem,
+		vector<ContextLayer>& context,
 		RunHelper& run_helper) {
-	EvalPassThroughExperimentHistory* history = (EvalPassThroughExperimentHistory*)run_helper.experiment_histories.back();
+	EvalPassThroughExperimentHistory* history = (EvalPassThroughExperimentHistory*)run_helper.experiment_scope_history->experiment_histories.back();
 
-	for (int p_index = 0; p_index < (int)history->predicted_scores.size(); p_index++) {
-		double misguess = (target_val - history->predicted_scores[p_index]) * (target_val - history->predicted_scores[p_index]);
-		this->misguess_histories.push_back(misguess);
+	double starting_target_val;
+	if (context.size() == 1) {
+		starting_target_val = solution->curr_average_score;
+	} else {
+		starting_target_val = context[context.size()-2].scope->eval->calc_score(
+			run_helper,
+			history->outer_eval_history->start_scope_history);
 	}
 
-	this->state_iter++;
-	if (this->state_iter >= NUM_DATAPOINTS) {
-		int num_instances = (int)this->misguess_histories.size();
+	double starting_predicted_score = this->eval_context->calc_score(
+		run_helper,
+		eval_history->start_scope_history);
 
-		double sum_misguesses = 0.0;
-		for (int m_index = 0; m_index < num_instances; m_index++) {
-			sum_misguesses += this->misguess_histories[m_index];
+	double starting_misguess = (starting_target_val - starting_predicted_score) * (starting_target_val - starting_predicted_score);
+	this->score_misguess_histories.push_back(starting_misguess);
+
+	this->eval_context->activate(problem,
+								 run_helper,
+								 eval_history->end_scope_history);
+	double ending_predicted_score = this->eval_context->calc_score(
+		run_helper,
+		eval_history->end_scope_history);
+	double ending_predicted_vs = this->eval_context->calc_vs(
+		run_helper,
+		eval_history);
+	double ending_vs_predicted_score = starting_predicted_score + ending_predicted_vs;
+
+	double ending_target_val;
+	if (context.size() == 1) {
+		ending_target_val = problem->score_result(run_helper.num_decisions);
+	} else {
+		context[context.size()-2].scope->eval->activate(
+			problem,
+			run_helper,
+			history->outer_eval_history->end_scope_history);
+		double ending_target_vs = context[context.size()-2].scope->eval->calc_vs(
+			run_helper,
+			history->outer_eval_history);
+		ending_target_val = starting_target_val + ending_target_vs;
+	}
+
+	double ending_misguess = (ending_target_val - ending_predicted_score) * (ending_target_val - ending_predicted_score);
+	this->score_misguess_histories.push_back(ending_misguess);
+
+	double ending_vs_misguess = (ending_target_val - ending_vs_predicted_score) * (ending_target_val - ending_vs_predicted_score);
+	this->vs_misguess_histories.push_back(ending_vs_misguess);
+
+	if ((int)this->vs_misguess_histories.size() >= NUM_DATAPOINTS) {
+		double sum_score_misguesses = 0.0;
+		for (int m_index = 0; m_index < 2 * NUM_DATAPOINTS; m_index++) {
+			sum_score_misguesses += this->score_misguess_histories[m_index];
 		}
-		this->existing_average_misguess = sum_misguesses / num_instances;
+		this->existing_score_average_misguess = sum_score_misguesses / (2 * NUM_DATAPOINTS);
 
-		this->misguess_histories.clear();
-
-		vector<AbstractNode*> possible_exits;
-
-		if (this->node_context->type == NODE_TYPE_ACTION
-				&& ((ActionNode*)this->node_context)->next_node == NULL) {
-			possible_exits.push_back(NULL);
+		double sum_score_misguess_variance = 0.0;
+		for (int m_index = 0; m_index < 2 * NUM_DATAPOINTS; m_index++) {
+			sum_score_misguess_variance += (this->score_misguess_histories[m_index] - this->existing_score_average_misguess) * (this->score_misguess_histories[m_index] - this->existing_score_average_misguess);
 		}
+		this->existing_score_misguess_standard_deviation = sqrt(sum_score_misguess_variance / (2 * NUM_DATAPOINTS));
+		if (this->existing_score_misguess_standard_deviation < MIN_STANDARD_DEVIATION) {
+			this->existing_score_misguess_standard_deviation = MIN_STANDARD_DEVIATION;
+		}
+
+		this->score_misguess_histories.clear();
+
+		double sum_vs_misguesses = 0.0;
+		for (int m_index = 0; m_index < NUM_DATAPOINTS; m_index++) {
+			sum_vs_misguesses += this->vs_misguess_histories[m_index];
+		}
+		this->existing_vs_average_misguess = sum_vs_misguesses / NUM_DATAPOINTS;
+
+		double sum_vs_misguess_variance = 0.0;
+		for (int m_index = 0; m_index < NUM_DATAPOINTS; m_index++) {
+			sum_vs_misguess_variance += (this->vs_misguess_histories[m_index] - this->existing_vs_average_misguess) * (this->vs_misguess_histories[m_index] - this->existing_vs_average_misguess);
+		}
+		this->existing_vs_misguess_standard_deviation = sqrt(sum_vs_misguess_variance / NUM_DATAPOINTS);
+		if (this->existing_vs_misguess_standard_deviation < MIN_STANDARD_DEVIATION) {
+			this->existing_vs_misguess_standard_deviation = MIN_STANDARD_DEVIATION;
+		}
+
+		this->vs_misguess_histories.clear();
+
+		vector<AbstractNode*> possible_starts;
+		this->scope_context->random_exit_activate(
+			this->scope_context->nodes[0],
+			possible_starts);
+
+		uniform_int_distribution<int> start_distribution(0, possible_starts.size()-1);
+		this->node_context = possible_starts[start_distribution(generator)];
 
 		AbstractNode* starting_node;
 		switch (this->node_context->type) {
 		case NODE_TYPE_ACTION:
 			{
+				this->is_branch = false;
+
 				ActionNode* action_node = (ActionNode*)this->node_context;
 				starting_node = action_node->next_node;
 			}
 			break;
 		case NODE_TYPE_INFO_SCOPE:
 			{
+				this->is_branch = false;
+
 				InfoScopeNode* info_scope_node = (InfoScopeNode*)this->node_context;
 				starting_node = info_scope_node->next_node;
 			}
 			break;
 		case NODE_TYPE_INFO_BRANCH:
 			{
+				/**
+				 * TODO: set this->is_branch more accurately
+				 */
+				uniform_int_distribution<int> is_branch_distribution(0, 1);
+				this->is_branch = is_branch_distribution(generator);
+
 				InfoBranchNode* info_branch_node = (InfoBranchNode*)this->node_context;
 				if (this->is_branch) {
 					starting_node = info_branch_node->branch_next_node;
@@ -129,6 +147,15 @@ void EvalPassThroughExperiment::measure_existing_backprop(
 				}
 			}
 			break;
+		}
+
+		this->node_context->experiments.push_back(this);
+
+		vector<AbstractNode*> possible_exits;
+
+		if (this->node_context->type == NODE_TYPE_ACTION
+				&& ((ActionNode*)this->node_context)->next_node == NULL) {
+			possible_exits.push_back(NULL);
 		}
 
 		this->scope_context->random_exit_activate(

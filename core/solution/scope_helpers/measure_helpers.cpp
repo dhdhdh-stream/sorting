@@ -76,59 +76,68 @@ void measure_node_activate_helper(AbstractNode*& curr_node,
 
 		break;
 	}
-
-	run_helper.num_actions++;
-	if (run_helper.num_actions > solution->num_actions_limit) {
-		run_helper.exceeded_limit = true;
-	}
 }
 
 void Scope::measure_activate(Problem* problem,
 							 vector<ContextLayer>& context,
 							 RunHelper& run_helper,
 							 ScopeHistory* history) {
-	if (run_helper.curr_depth > run_helper.max_depth) {
-		run_helper.max_depth = run_helper.curr_depth;
-	}
-	if (run_helper.curr_depth > solution->depth_limit) {
-		run_helper.exceeded_limit = true;
-		return;
-	}
-	run_helper.curr_depth++;
+	if (solution->explore_id == this->id
+			&& solution->explore_type == EXPLORE_TYPE_EVAL) {
+		EvalHistory* eval_history = new EvalHistory(this->eval);
+		this->eval->activate(problem,
+							 run_helper,
+							 eval_history->start_scope_history);
+		double starting_predicted_score = this->eval->calc_score(
+			run_helper,
+			eval_history->start_scope_history);
+		run_helper.predicted_scores.push_back(starting_predicted_score);
 
-	AbstractNode* curr_node = this->nodes[0];
-	while (true) {
-		if (run_helper.exceeded_limit
-				|| curr_node == NULL) {
-			break;
-		}
+		AbstractNode* curr_node = this->nodes[0];
+		while (true) {
+			if (curr_node == NULL) {
+				break;
+			}
 
-		if (this->num_actions_until_random > 0) {
-			this->num_actions_until_random--;
-			if (this->num_actions_until_random == 0) {
-				this->num_actions_until_random = -1;
+			measure_node_activate_helper(curr_node,
+										 problem,
+										 context,
+										 run_helper,
+										 history);
 
-				random_sequence(curr_node,
-								problem,
-								context,
-								run_helper);
+			run_helper.num_actions++;
+			if (run_helper.num_actions > solution->num_actions_limit) {
+				break;
 			}
 		}
 
-		measure_node_activate_helper(curr_node,
-									 problem,
-									 context,
-									 run_helper,
-									 history);
-	}
+		this->eval->activate(problem,
+							 run_helper,
+							 eval_history->end_scope_history);
+		double predicted_vs = this->eval->calc_vs(
+			run_helper,
+			eval_history);
+		double ending_predicted_score = starting_predicted_score + predicted_vs;
+		run_helper.predicted_scores.push_back(ending_predicted_score);
 
-	if (solution->explore_id == this->id) {
-		if (solution->explore_type == EXPLORE_TYPE_EVAL) {
-			double predicted_score = this->eval->activate(problem,
-														  run_helper);
-			run_helper.predicted_scores.push_back(predicted_score);
+		delete eval_history;
+	} else {
+		AbstractNode* curr_node = this->nodes[0];
+		while (true) {
+			if (curr_node == NULL) {
+				break;
+			}
+
+			measure_node_activate_helper(curr_node,
+										 problem,
+										 context,
+										 run_helper,
+										 history);
+
+			run_helper.num_actions++;
+			if (run_helper.num_actions > solution->num_actions_limit) {
+				break;
+			}
 		}
 	}
-
-	run_helper.curr_depth--;
 }

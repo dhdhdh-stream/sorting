@@ -34,14 +34,14 @@ const int BRANCH_EXPERIMENT_STATE_EXPERIMENT = 10;
 class BranchExperimentHistory;
 class BranchExperiment : public AbstractExperiment {
 public:
-	int num_instances_until_target;
-
 	int state;
 	int state_iter;
 	int explore_iter;
 
 	double existing_average_score;
 	double existing_score_standard_deviation;
+
+	int existing_max_num_actions;
 
 	std::vector<std::vector<Scope*>> input_scope_contexts;
 	std::vector<std::vector<AbstractNode*>> input_node_contexts;
@@ -88,8 +88,7 @@ public:
 
 	bool is_pass_through;
 
-	std::vector<ScopeHistory*> i_scope_histories;
-	std::vector<double> i_target_val_histories;
+	std::vector<ScopeHistory*> scope_histories;
 
 	#if defined(MDEBUG) && MDEBUG
 	std::vector<Problem*> verify_problems;
@@ -111,14 +110,18 @@ public:
 				  Problem* problem,
 				  std::vector<ContextLayer>& context,
 				  RunHelper& run_helper);
-	void back_activate();
-	void backprop(double target_val,
+	void backprop(int starting_num_actions,
+				  EvalHistory* eval_history,
+				  Problem* problem,
+				  std::vector<ContextLayer>& context,
 				  RunHelper& run_helper);
 
 	void train_existing_activate(std::vector<ContextLayer>& context,
-								 RunHelper& run_helper,
-								 BranchExperimentHistory* history);
-	void train_existing_backprop(double target_val,
+								 RunHelper& run_helper);
+	void train_existing_backprop(int starting_num_actions,
+								 EvalHistory* eval_history,
+								 Problem* problem,
+								 std::vector<ContextLayer>& context,
 								 RunHelper& run_helper);
 
 	bool explore_activate(AbstractNode*& curr_node,
@@ -126,29 +129,39 @@ public:
 						  std::vector<ContextLayer>& context,
 						  RunHelper& run_helper,
 						  BranchExperimentHistory* history);
-	void explore_backprop(double target_val,
+	void explore_backprop(EvalHistory* eval_history,
+						  Problem* problem,
+						  std::vector<ContextLayer>& context,
 						  RunHelper& run_helper);
 
 	void train_new_activate(AbstractNode*& curr_node,
 							std::vector<ContextLayer>& context,
 							RunHelper& run_helper,
 							BranchExperimentHistory* history);
-	void train_new_backprop(double target_val,
+	void train_new_backprop(EvalHistory* eval_history,
+							Problem* problem,
+							std::vector<ContextLayer>& context,
 							RunHelper& run_helper);
 
 	bool measure_activate(AbstractNode*& curr_node,
 						  std::vector<ContextLayer>& context,
 						  RunHelper& run_helper);
-	void measure_backprop(double target_val,
+	void measure_backprop(EvalHistory* eval_history,
+						  Problem* problem,
+						  std::vector<ContextLayer>& context,
 						  RunHelper& run_helper);
 
-	void verify_existing_backprop(double target_val,
+	void verify_existing_backprop(EvalHistory* eval_history,
+								  Problem* problem,
+								  std::vector<ContextLayer>& context,
 								  RunHelper& run_helper);
 
 	bool verify_activate(AbstractNode*& curr_node,
 						 std::vector<ContextLayer>& context,
 						 RunHelper& run_helper);
-	void verify_backprop(double target_val,
+	void verify_backprop(EvalHistory* eval_history,
+						 Problem* problem,
+						 std::vector<ContextLayer>& context,
 						 RunHelper& run_helper);
 
 	#if defined(MDEBUG) && MDEBUG
@@ -167,16 +180,20 @@ public:
 							 std::vector<ContextLayer>& context,
 							 RunHelper& run_helper,
 							 BranchExperimentHistory* history);
-	void experiment_backprop(double target_val,
+	void experiment_backprop(std::vector<ContextLayer>& context,
 							 RunHelper& run_helper);
 
-	void experiment_verify_existing_backprop(double target_val,
+	void experiment_verify_existing_backprop(EvalHistory* eval_history,
+											 Problem* problem,
+											 std::vector<ContextLayer>& context,
 											 RunHelper& run_helper);
 
 	bool experiment_verify_activate(AbstractNode*& curr_node,
 									std::vector<ContextLayer>& context,
 									RunHelper& run_helper);
-	void experiment_verify_backprop(double target_val,
+	void experiment_verify_backprop(EvalHistory* eval_history,
+									Problem* problem,
+									std::vector<ContextLayer>& context,
 									RunHelper& run_helper);
 
 	void finalize(Solution* duplicate);
@@ -186,9 +203,6 @@ public:
 
 class BranchExperimentHistory : public AbstractExperimentHistory {
 public:
-	int instance_count;
-
-	bool has_target;
 	double existing_predicted_score;
 
 	BranchExperimentHistory(BranchExperiment* experiment);

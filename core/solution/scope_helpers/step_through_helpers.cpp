@@ -81,38 +81,15 @@ void node_step_through_activate_helper(AbstractNode*& curr_node,
 
 		break;
 	}
-
-	run_helper.num_actions++;
-	if (run_helper.num_actions > solution->num_actions_limit) {
-		run_helper.exceeded_limit = true;
-	}
 }
 
 void Scope::step_through_activate(Problem* problem,
 								  vector<ContextLayer>& context,
 								  RunHelper& run_helper,
 								  ScopeHistory* history) {
-	if (run_helper.curr_depth > solution->depth_limit) {
-		string input_gate;
-		cin >> input_gate;
-
-		cout << "context:" << endl;
-		for (int c_index = 0; c_index < (int)context.size()-1; c_index++) {
-			cout << c_index << ": " << context[c_index].scope->id << " " << context[c_index].node->id << endl;
-		}
-		cout << context.size()-1 << ": " << this->id << " -1" << endl;
-		problem->print();
-		cout << "exceeded_limit" << endl;
-
-		run_helper.exceeded_limit = true;
-		return;
-	}
-	run_helper.curr_depth++;
-
 	AbstractNode* curr_node = this->nodes[0];
 	while (true) {
-		if (run_helper.exceeded_limit
-				|| curr_node == NULL) {
+		if (curr_node == NULL) {
 			break;
 		}
 
@@ -121,7 +98,10 @@ void Scope::step_through_activate(Problem* problem,
 										  context,
 										  run_helper,
 										  history);
-	}
 
-	run_helper.curr_depth--;
+		run_helper.num_actions++;
+		if (run_helper.num_actions > solution->num_actions_limit) {
+			break;
+		}
+	}
 }

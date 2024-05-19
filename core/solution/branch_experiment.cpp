@@ -45,16 +45,14 @@ BranchExperiment::BranchExperiment(Scope* scope_context,
 	/**
 	 * - start with a 50% chance to bypass
 	 */
-	this->average_instances_per_run = 1.0;
 
 	this->existing_network = NULL;
 	this->new_network = NULL;
 
 	this->ending_node = NULL;
 
-	this->o_target_val_histories.reserve(NUM_DATAPOINTS);
-	this->i_scope_histories.reserve(NUM_DATAPOINTS);
-	this->i_target_val_histories.reserve(NUM_DATAPOINTS);
+	this->scope_histories.reserve(NUM_DATAPOINTS);
+	this->target_val_histories.reserve(NUM_DATAPOINTS);
 
 	this->state = BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING;
 	this->state_iter = 0;
@@ -104,8 +102,8 @@ BranchExperiment::~BranchExperiment() {
 		delete this->ending_node;
 	}
 
-	for (int h_index = 0; h_index < (int)this->i_scope_histories.size(); h_index++) {
-		delete this->i_scope_histories[h_index];
+	for (int h_index = 0; h_index < (int)this->scope_histories.size(); h_index++) {
+		delete this->scope_histories[h_index];
 	}
 
 	#if defined(MDEBUG) && MDEBUG
@@ -121,10 +119,6 @@ void BranchExperiment::decrement(AbstractNode* experiment_node) {
 
 BranchExperimentHistory::BranchExperimentHistory(BranchExperiment* experiment) {
 	this->experiment = experiment;
-
-	this->instance_count = 0;
-
-	this->has_target = false;
 
 	this->scope_history = NULL;
 }

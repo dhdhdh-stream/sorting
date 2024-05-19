@@ -22,10 +22,6 @@ const int EVAL_PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING = 1;
 const int EVAL_PASS_THROUGH_EXPERIMENT_STATE_EXPLORE = 2;
 const int EVAL_PASS_THROUGH_EXPERIMENT_STATE_TRAIN_NEW = 3;
 const int EVAL_PASS_THROUGH_EXPERIMENT_STATE_MEASURE = 4;
-const int EVAL_PASS_THROUGH_EXPERIMENT_STATE_VERIFY_1ST_EXISTING = 5;
-const int EVAL_PASS_THROUGH_EXPERIMENT_STATE_VERIFY_1ST = 6;
-const int EVAL_PASS_THROUGH_EXPERIMENT_STATE_VERIFY_2ND_EXISTING = 7;
-const int EVAL_PASS_THROUGH_EXPERIMENT_STATE_VERIFY_2ND = 8;
 
 class EvalPassThroughExperimentHistory;
 class EvalPassThroughExperiment : public AbstractExperiment {
@@ -38,7 +34,13 @@ public:
 
 	double existing_average_score;
 	double existing_score_standard_deviation;
-	double existing_average_misguess;
+
+	double existing_num_actions;
+
+	double existing_score_average_misguess;
+	double existing_score_misguess_standard_deviation;
+	double existing_vs_average_misguess;
+	double existing_vs_misguess_standard_deviation;
 
 	double new_score;
 	InfoScope* info_scope;
@@ -50,25 +52,38 @@ public:
 
 	ActionNode* ending_node;
 
-	double new_average_score;
+	double score_average_score;
 
-	std::vector<AbstractNode*> input_node_contexts;
-	std::vector<int> input_obs_indexes;
+	std::vector<AbstractNode*> score_input_node_contexts;
+	std::vector<int> score_input_obs_indexes;
 
-	std::vector<double> linear_weights;
-	std::vector<std::vector<int>> network_input_indexes;
-	Network* network;
-	double network_average_misguess;
-	double network_misguess_standard_deviation;
+	std::vector<double> score_linear_weights;
+	std::vector<std::vector<int>> score_network_input_indexes;
+	Network* score_network;
+	double score_network_average_misguess;
+	double score_network_misguess_standard_deviation;
 
-	std::vector<double> misguess_histories;
+	double vs_average_score;
 
-	std::vector<ScopeHistory*> i_scope_histories;
-	std::vector<double> i_target_val_histories;
+	std::vector<bool> vs_input_is_start;
+	std::vector<AbstractNode*> vs_input_node_contexts;
+	std::vector<int> vs_input_obs_indexes;
 
-	EvalPassThroughExperiment(Eval* eval_context,
-							  AbstractNode* node_context,
-							  bool is_branch);
+	std::vector<double> vs_linear_weights;
+	std::vector<std::vector<int>> vs_network_input_indexes;
+	Network* vs_network;
+	double vs_network_average_misguess;
+	double vs_network_misguess_standard_deviation;
+
+	std::vector<double> score_misguess_histories;
+	std::vector<double> vs_misguess_histories;
+
+	std::vector<ScopeHistory*> start_scope_histories;
+	std::vector<double> start_target_val_histories;
+	std::vector<ScopeHistory*> end_scope_histories;
+	std::vector<double> end_target_val_histories;
+
+	EvalPassThroughExperiment(Eval* eval_context);
 	~EvalPassThroughExperiment();
 	void decrement(AbstractNode* experiment_node);
 
@@ -78,54 +93,45 @@ public:
 				  Problem* problem,
 				  std::vector<ContextLayer>& context,
 				  RunHelper& run_helper);
-	void back_activate(Problem* problem,
-					   ScopeHistory*& subscope_history,
-					   RunHelper& run_helper);
-	void backprop(double target_val,
+	void backprop(int starting_num_actions,
+				  EvalHistory* eval_history,
+				  Problem* problem,
+				  std::vector<ContextLayer>& context,
 				  RunHelper& run_helper);
 
-	void measure_existing_score_backprop(double target_val,
+	void measure_existing_score_backprop(Problem* problem,
+										 std::vector<ContextLayer>& context,
 										 RunHelper& run_helper);
 
-	void measure_existing_back_activate(ScopeHistory*& subscope_history,
-										RunHelper& run_helper);
-	void measure_existing_backprop(double target_val,
+	void measure_existing_backprop(EvalHistory* eval_history,
+								   Problem* problem,
+								   std::vector<ContextLayer>& context,
 								   RunHelper& run_helper);
 
 	void explore_activate(AbstractNode*& curr_node,
 						  Problem* problem,
 						  RunHelper& run_helper);
-	void explore_backprop(double target_val,
+	void explore_backprop(Problem* problem,
+						  std::vector<ContextLayer>& context,
 						  RunHelper& run_helper);
 
 	void train_new_activate(AbstractNode*& curr_node,
 							Problem* problem,
 							RunHelper& run_helper);
-	void train_new_back_activate(ScopeHistory*& subscope_history,
-								 RunHelper& run_helper);
-	void train_new_backprop(double target_val,
+	void train_new_backprop(EvalHistory* eval_history,
+							Problem* problem,
+							std::vector<ContextLayer>& context,
 							RunHelper& run_helper);
+	void train_score();
+	void train_vs();
 
 	void measure_activate(AbstractNode*& curr_node,
 						  Problem* problem,
 						  RunHelper& run_helper);
-	void measure_back_activate(ScopeHistory*& subscope_history,
-							   RunHelper& run_helper);
-	void measure_backprop(double target_val,
+	void measure_backprop(EvalHistory* eval_history,
+						  Problem* problem,
+						  std::vector<ContextLayer>& context,
 						  RunHelper& run_helper);
-
-	void verify_existing_back_activate(ScopeHistory*& subscope_history,
-									   RunHelper& run_helper);
-	void verify_existing_backprop(double target_val,
-								  RunHelper& run_helper);
-
-	void verify_activate(AbstractNode*& curr_node,
-						 Problem* problem,
-						 RunHelper& run_helper);
-	void verify_back_activate(ScopeHistory*& subscope_history,
-							  RunHelper& run_helper);
-	void verify_backprop(double target_val,
-						 RunHelper& run_helper);
 
 	void finalize(Solution* duplicate);
 	void new_branch(Solution* duplicate);
@@ -134,9 +140,7 @@ public:
 
 class EvalPassThroughExperimentHistory : public AbstractExperimentHistory {
 public:
-	int instance_count;
-
-	std::vector<double> predicted_scores;
+	EvalHistory* outer_eval_history;
 
 	EvalPassThroughExperimentHistory(EvalPassThroughExperiment* experiment);
 };

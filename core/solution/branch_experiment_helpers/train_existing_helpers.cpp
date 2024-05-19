@@ -11,6 +11,7 @@
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
+#include "eval.h"
 #include "globals.h"
 #include "info_branch_node.h"
 #include "network.h"
@@ -24,55 +25,46 @@ using namespace std;
 
 void BranchExperiment::train_existing_activate(
 		vector<ContextLayer>& context,
-		RunHelper& run_helper,
-		BranchExperimentHistory* history) {
-	this->i_scope_histories.push_back(new ScopeHistory(context.back().scope_history));
-
-	history->instance_count++;
+		RunHelper& run_helper) {
+	if (context.back().scope_history == run_helper.experiment_scope_history) {
+		this->scope_histories.push_back(new ScopeHistory(context.back().scope_history));
+	}
 }
 
 void BranchExperiment::train_existing_backprop(
-		double target_val,
+		int starting_num_actions,
+		EvalHistory* eval_history,
+		Problem* problem,
+		vector<ContextLayer>& context,
 		RunHelper& run_helper) {
-	BranchExperimentHistory* history = (BranchExperimentHistory*)run_helper.experiment_histories.back();
-
-	this->o_target_val_histories.push_back(target_val);
-
-	for (int i_index = 0; i_index < (int)history->instance_count; i_index++) {
-		this->i_target_val_histories.push_back(target_val);
+	int num_actions = run_helper.num_actions - starting_num_actions;
+	if (num_actions > this->existing_max_num_actions) {
+		this->existing_max_num_actions = num_actions;
 	}
 
-	this->average_instances_per_run = 0.9*this->average_instances_per_run + 0.1*history->instance_count;
+	this->scope_context->eval->activate(problem,
+										run_helper,
+										eval_history->end_scope_history);
+	double predicted_impact = this->scope_context->eval->calc_vs(
+		run_helper,
+		eval_history);
+	this->target_val_histories.push_back(predicted_impact);
 
-	if (this->parent_experiment == NULL) {
-		if (!run_helper.exceeded_limit) {
-			if (run_helper.max_depth > solution->max_depth) {
-				solution->max_depth = run_helper.max_depth;
-			}
-
-			if (run_helper.num_actions > solution->max_num_actions) {
-				solution->max_num_actions = run_helper.num_actions;
-			}
-		}
-	}
-
-	if ((int)this->o_target_val_histories.size() >= NUM_DATAPOINTS) {
+	if ((int)this->target_val_histories.size() >= NUM_DATAPOINTS) {
 		double sum_scores = 0.0;
 		for (int d_index = 0; d_index < NUM_DATAPOINTS; d_index++) {
-			sum_scores += this->o_target_val_histories[d_index];
+			sum_scores += this->target_val_histories[d_index];
 		}
 		this->existing_average_score = sum_scores / NUM_DATAPOINTS;
 
 		double sum_score_variance = 0.0;
 		for (int d_index = 0; d_index < NUM_DATAPOINTS; d_index++) {
-			sum_score_variance += (this->o_target_val_histories[d_index] - this->existing_average_score) * (this->o_target_val_histories[d_index] - this->existing_average_score);
+			sum_score_variance += (this->target_val_histories[d_index] - this->existing_average_score) * (this->target_val_histories[d_index] - this->existing_average_score);
 		}
 		this->existing_score_standard_deviation = sqrt(sum_score_variance / NUM_DATAPOINTS);
 		if (this->existing_score_standard_deviation < MIN_STANDARD_DEVIATION) {
 			this->existing_score_standard_deviation = MIN_STANDARD_DEVIATION;
 		}
-
-		int num_instances = (int)this->i_target_val_histories.size();
 
 		vector<vector<Scope*>> possible_scope_contexts;
 		vector<vector<AbstractNode*>> possible_node_contexts;
@@ -85,7 +77,7 @@ void BranchExperiment::train_existing_backprop(
 							   possible_scope_contexts,
 							   possible_node_contexts,
 							   possible_obs_indexes,
-							   this->i_scope_histories.back());
+							   this->scope_histories.back());
 		/**
 		 * - simply always use last ScopeHistory
 		 */
@@ -108,12 +100,12 @@ void BranchExperiment::train_existing_backprop(
 			}
 		}
 
-		Eigen::MatrixXd inputs(num_instances, this->input_scope_contexts.size());
+		Eigen::MatrixXd inputs(NUM_DATAPOINTS, this->input_scope_contexts.size());
 
-		for (int d_index = 0; d_index < num_instances; d_index++) {
+		for (int d_index = 0; d_index < NUM_DATAPOINTS; d_index++) {
 			for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
 				int curr_layer = 0;
-				ScopeHistory* curr_scope_history = this->i_scope_histories[d_index];
+				ScopeHistory* curr_scope_history = this->scope_histories[d_index];
 				while (true) {
 					map<AbstractNode*, AbstractNodeHistory*>::iterator it = curr_scope_history->node_histories.find(
 						this->input_node_contexts[i_index][curr_layer]);
@@ -160,9 +152,9 @@ void BranchExperiment::train_existing_backprop(
 			}
 		}
 
-		Eigen::VectorXd outputs(num_instances);
-		for (int d_index = 0; d_index < num_instances; d_index++) {
-			outputs(d_index) = this->i_target_val_histories[d_index] - this->existing_average_score;
+		Eigen::VectorXd outputs(NUM_DATAPOINTS);
+		for (int d_index = 0; d_index < NUM_DATAPOINTS; d_index++) {
+			outputs(d_index) = this->target_val_histories[d_index] - this->existing_average_score;
 		}
 
 		Eigen::VectorXd weights;
@@ -183,10 +175,10 @@ void BranchExperiment::train_existing_backprop(
 			 *     - but provides more accurate score initially for training networks
 			 */
 			double sum_impact_size = 0.0;
-			for (int d_index = 0; d_index < num_instances; d_index++) {
+			for (int d_index = 0; d_index < NUM_DATAPOINTS; d_index++) {
 				sum_impact_size += abs(inputs(d_index, i_index));
 			}
-			double average_impact = sum_impact_size / num_instances;
+			double average_impact = sum_impact_size / NUM_DATAPOINTS;
 			if (abs(weights(i_index)) * average_impact < WEIGHT_MIN_SCORE_IMPACT * this->existing_score_standard_deviation
 					|| abs(weights(i_index)) > LINEAR_MAX_WEIGHT) {
 				weights(i_index) = 0.0;
@@ -198,32 +190,32 @@ void BranchExperiment::train_existing_backprop(
 
 		Eigen::VectorXd predicted_scores = inputs * weights;
 		Eigen::VectorXd diffs = outputs - predicted_scores;
-		vector<double> network_target_vals(num_instances);
-		for (int d_index = 0; d_index < num_instances; d_index++) {
+		vector<double> network_target_vals(NUM_DATAPOINTS);
+		for (int d_index = 0; d_index < NUM_DATAPOINTS; d_index++) {
 			network_target_vals[d_index] = diffs(d_index);
 		}
 
-		vector<double> misguesses(num_instances);
-		for (int d_index = 0; d_index < num_instances; d_index++) {
+		vector<double> misguesses(NUM_DATAPOINTS);
+		for (int d_index = 0; d_index < NUM_DATAPOINTS; d_index++) {
 			misguesses[d_index] = diffs(d_index) * diffs(d_index);
 		}
 
 		double sum_misguesses = 0.0;
-		for (int d_index = 0; d_index < num_instances; d_index++) {
+		for (int d_index = 0; d_index < NUM_DATAPOINTS; d_index++) {
 			sum_misguesses += misguesses[d_index];
 		}
-		this->existing_average_misguess = sum_misguesses / num_instances;
+		this->existing_average_misguess = sum_misguesses / NUM_DATAPOINTS;
 
 		double sum_misguess_variances = 0.0;
-		for (int d_index = 0; d_index < num_instances; d_index++) {
+		for (int d_index = 0; d_index < NUM_DATAPOINTS; d_index++) {
 			sum_misguess_variances += (misguesses[d_index] - this->existing_average_misguess) * (misguesses[d_index] - this->existing_average_misguess);
 		}
-		this->existing_misguess_standard_deviation = sqrt(sum_misguess_variances / num_instances);
+		this->existing_misguess_standard_deviation = sqrt(sum_misguess_variances / NUM_DATAPOINTS);
 		if (this->existing_misguess_standard_deviation < MIN_STANDARD_DEVIATION) {
 			this->existing_misguess_standard_deviation = MIN_STANDARD_DEVIATION;
 		}
 
-		vector<vector<vector<double>>> network_inputs(num_instances);
+		vector<vector<vector<double>>> network_inputs(NUM_DATAPOINTS);
 		int train_index = 0;
 		while (train_index < 3) {
 			vector<vector<Scope*>> possible_scope_contexts;
@@ -232,13 +224,13 @@ void BranchExperiment::train_existing_backprop(
 
 			vector<Scope*> scope_context;
 			vector<AbstractNode*> node_context;
-			uniform_int_distribution<int> history_distribution(0, num_instances-1);
+			uniform_int_distribution<int> history_distribution(0, NUM_DATAPOINTS-1);
 			gather_possible_helper(scope_context,
 								   node_context,
 								   possible_scope_contexts,
 								   possible_node_contexts,
 								   possible_obs_indexes,
-								   this->i_scope_histories[history_distribution(generator)]);
+								   this->scope_histories[history_distribution(generator)]);
 
 			int num_new_input_indexes = min(NETWORK_INCREMENT_NUM_NEW, (int)possible_scope_contexts.size());
 			vector<vector<Scope*>> test_network_input_scope_contexts;
@@ -275,11 +267,11 @@ void BranchExperiment::train_existing_backprop(
 				}
 			}
 
-			for (int d_index = 0; d_index < num_instances; d_index++) {
+			for (int d_index = 0; d_index < NUM_DATAPOINTS; d_index++) {
 				vector<double> test_input_vals(num_new_input_indexes, 0.0);
 				for (int t_index = 0; t_index < num_new_input_indexes; t_index++) {
 					int curr_layer = 0;
-					ScopeHistory* curr_scope_history = this->i_scope_histories[d_index];
+					ScopeHistory* curr_scope_history = this->scope_histories[d_index];
 					while (true) {
 						map<AbstractNode*, AbstractNodeHistory*>::iterator it = curr_scope_history->node_histories.find(
 							test_network_input_node_contexts[t_index][curr_layer]);
@@ -346,7 +338,7 @@ void BranchExperiment::train_existing_backprop(
 			#else
 			double improvement = this->existing_average_misguess - average_misguess;
 			double standard_deviation = min(this->existing_misguess_standard_deviation, misguess_standard_deviation);
-			double t_score = improvement / (standard_deviation / sqrt(num_instances * TEST_SAMPLES_PERCENTAGE));
+			double t_score = improvement / (standard_deviation / sqrt(NUM_DATAPOINTS * TEST_SAMPLES_PERCENTAGE));
 
 			if (t_score > 1.645) {
 			#endif /* MDEBUG */
@@ -399,7 +391,7 @@ void BranchExperiment::train_existing_backprop(
 			} else {
 				delete test_network;
 
-				for (int d_index = 0; d_index < num_instances; d_index++) {
+				for (int d_index = 0; d_index < NUM_DATAPOINTS; d_index++) {
 					network_inputs[d_index].pop_back();
 				}
 
@@ -407,12 +399,11 @@ void BranchExperiment::train_existing_backprop(
 			}
 		}
 
-		this->o_target_val_histories.clear();
-		for (int i_index = 0; i_index < (int)this->i_scope_histories.size(); i_index++) {
-			delete this->i_scope_histories[i_index];
+		for (int i_index = 0; i_index < (int)this->scope_histories.size(); i_index++) {
+			delete this->scope_histories[i_index];
 		}
-		this->i_scope_histories.clear();
-		this->i_target_val_histories.clear();
+		this->scope_histories.clear();
+		this->target_val_histories.clear();
 
 		uniform_int_distribution<int> neutral_distribution(0, 9);
 		if (neutral_distribution(generator) == 0) {

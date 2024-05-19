@@ -67,8 +67,26 @@ void EvalPassThroughExperiment::explore_activate(
 }
 
 void EvalPassThroughExperiment::explore_backprop(
-		double target_val,
+		Problem* problem,
+		vector<ContextLayer>& context,
 		RunHelper& run_helper) {
+	EvalPassThroughExperimentHistory* history = (EvalPassThroughExperimentHistory*)run_helper.experiment_scope_history->experiment_histories.back();
+
+	double target_val;
+	if (context.size() == 1) {
+		double starting_score = solution->curr_average_score;
+		double ending_score = problem->score_result(run_helper.num_decisions);
+		target_val = ending_score - starting_score;
+	} else {
+		context[context.size()-2].scope->eval->activate(
+			problem,
+			run_helper,
+			history->outer_eval_history->end_scope_history);
+		target_val = context[context.size()-2].scope->eval->calc_vs(
+			run_helper,
+			history->outer_eval_history);
+	}
+
 	this->new_score += target_val - this->existing_average_score;
 
 	this->sub_state_iter++;
@@ -78,6 +96,15 @@ void EvalPassThroughExperiment::explore_backprop(
 		#else
 		if (this->new_score < 0.0) {
 		#endif /* MDEBUG */
+			int experiment_index;
+			for (int e_index = 0; e_index < (int)this->node_context->experiments.size(); e_index++) {
+				if (this->node_context->experiments[e_index] == this) {
+					experiment_index = e_index;
+					break;
+				}
+			}
+			this->node_context->experiments.erase(this->node_context->experiments.begin() + experiment_index);
+
 			for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {
 				if (this->step_types[s_index] == STEP_TYPE_ACTION) {
 					delete this->actions[s_index];
@@ -94,29 +121,37 @@ void EvalPassThroughExperiment::explore_backprop(
 			if (this->state_iter >= EXPLORE_ITERS) {
 				this->result = EXPERIMENT_RESULT_FAIL;
 			} else {
-				vector<AbstractNode*> possible_exits;
+				vector<AbstractNode*> possible_starts;
+				this->scope_context->random_exit_activate(
+					this->scope_context->nodes[0],
+					possible_starts);
 
-				if (this->node_context->type == NODE_TYPE_ACTION
-						&& ((ActionNode*)this->node_context)->next_node == NULL) {
-					possible_exits.push_back(NULL);
-				}
+				uniform_int_distribution<int> start_distribution(0, possible_starts.size()-1);
+				this->node_context = possible_starts[start_distribution(generator)];
 
 				AbstractNode* starting_node;
 				switch (this->node_context->type) {
 				case NODE_TYPE_ACTION:
 					{
+						this->is_branch = false;
+
 						ActionNode* action_node = (ActionNode*)this->node_context;
 						starting_node = action_node->next_node;
 					}
 					break;
 				case NODE_TYPE_INFO_SCOPE:
 					{
+						this->is_branch = false;
+
 						InfoScopeNode* info_scope_node = (InfoScopeNode*)this->node_context;
 						starting_node = info_scope_node->next_node;
 					}
 					break;
 				case NODE_TYPE_INFO_BRANCH:
 					{
+						uniform_int_distribution<int> is_branch_distribution(0, 1);
+						this->is_branch = is_branch_distribution(generator);
+
 						InfoBranchNode* info_branch_node = (InfoBranchNode*)this->node_context;
 						if (this->is_branch) {
 							starting_node = info_branch_node->branch_next_node;
@@ -125,6 +160,15 @@ void EvalPassThroughExperiment::explore_backprop(
 						}
 					}
 					break;
+				}
+
+				this->node_context->experiments.push_back(this);
+
+				vector<AbstractNode*> possible_exits;
+
+				if (this->node_context->type == NODE_TYPE_ACTION
+						&& ((ActionNode*)this->node_context)->next_node == NULL) {
+					possible_exits.push_back(NULL);
 				}
 
 				this->scope_context->random_exit_activate(
@@ -236,21 +280,43 @@ void EvalPassThroughExperiment::explore_backprop(
 				}
 			}
 
-			this->input_node_contexts = this->eval_context->input_node_contexts;
-			this->input_obs_indexes = this->eval_context->input_obs_indexes;
+			uniform_int_distribution<int> new_distribution(0, 3);
+			if (!new_distribution(generator)) {
+				this->score_input_node_contexts = this->eval_context->score_input_node_contexts;
+				this->score_input_obs_indexes = this->eval_context->score_input_obs_indexes;
 
-			this->linear_weights = this->eval_context->linear_weights;
-			this->network_input_indexes = this->eval_context->network_input_indexes;
-			if (this->eval_context->network != NULL) {
-				this->network = new Network(this->eval_context->network);
+				this->score_network_input_indexes = this->eval_context->score_network_input_indexes;
+				if (this->eval_context->score_network != NULL) {
+					this->score_network = new Network(this->eval_context->score_network);
+				}
+
+				this->vs_input_is_start = this->eval_context->vs_input_is_start;
+				this->vs_input_node_contexts = this->eval_context->vs_input_node_contexts;
+				this->vs_input_obs_indexes = this->eval_context->vs_input_obs_indexes;
+
+				this->vs_network_input_indexes = this->eval_context->vs_network_input_indexes;
+				if (this->eval_context->vs_network != NULL) {
+					this->vs_network = new Network(this->eval_context->vs_network);
+				}
 			}
 
-			this->i_scope_histories.reserve(NUM_DATAPOINTS);
-			this->i_target_val_histories.reserve(NUM_DATAPOINTS);
+			this->start_scope_histories.reserve(NUM_DATAPOINTS);
+			this->start_target_val_histories.reserve(NUM_DATAPOINTS);
+			this->end_scope_histories.reserve(NUM_DATAPOINTS);
+			this->end_target_val_histories.reserve(NUM_DATAPOINTS);
 
 			this->state = EVAL_PASS_THROUGH_EXPERIMENT_STATE_TRAIN_NEW;
 			this->state_iter = 0;
 		} else {
+			int experiment_index;
+			for (int e_index = 0; e_index < (int)this->node_context->experiments.size(); e_index++) {
+				if (this->node_context->experiments[e_index] == this) {
+					experiment_index = e_index;
+					break;
+				}
+			}
+			this->node_context->experiments.erase(this->node_context->experiments.begin() + experiment_index);
+
 			for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {
 				if (this->step_types[s_index] == STEP_TYPE_ACTION) {
 					delete this->actions[s_index];
@@ -267,29 +333,40 @@ void EvalPassThroughExperiment::explore_backprop(
 			if (this->state_iter >= EXPLORE_ITERS) {
 				this->result = EXPERIMENT_RESULT_FAIL;
 			} else {
-				vector<AbstractNode*> possible_exits;
+				vector<AbstractNode*> possible_starts;
+				this->scope_context->random_exit_activate(
+					this->scope_context->nodes[0],
+					possible_starts);
 
-				if (this->node_context->type == NODE_TYPE_ACTION
-						&& ((ActionNode*)this->node_context)->next_node == NULL) {
-					possible_exits.push_back(NULL);
-				}
+				uniform_int_distribution<int> start_distribution(0, possible_starts.size()-1);
+				this->node_context = possible_starts[start_distribution(generator)];
 
 				AbstractNode* starting_node;
 				switch (this->node_context->type) {
 				case NODE_TYPE_ACTION:
 					{
+						this->is_branch = false;
+
 						ActionNode* action_node = (ActionNode*)this->node_context;
 						starting_node = action_node->next_node;
 					}
 					break;
 				case NODE_TYPE_INFO_SCOPE:
 					{
+						this->is_branch = false;
+
 						InfoScopeNode* info_scope_node = (InfoScopeNode*)this->node_context;
 						starting_node = info_scope_node->next_node;
 					}
 					break;
 				case NODE_TYPE_INFO_BRANCH:
 					{
+						/**
+						 * TODO: set this->is_branch more accurately
+						 */
+						uniform_int_distribution<int> is_branch_distribution(0, 1);
+						this->is_branch = is_branch_distribution(generator);
+
 						InfoBranchNode* info_branch_node = (InfoBranchNode*)this->node_context;
 						if (this->is_branch) {
 							starting_node = info_branch_node->branch_next_node;
@@ -298,6 +375,15 @@ void EvalPassThroughExperiment::explore_backprop(
 						}
 					}
 					break;
+				}
+
+				this->node_context->experiments.push_back(this);
+
+				vector<AbstractNode*> possible_exits;
+
+				if (this->node_context->type == NODE_TYPE_ACTION
+						&& ((ActionNode*)this->node_context)->next_node == NULL) {
+					possible_exits.push_back(NULL);
 				}
 
 				this->scope_context->random_exit_activate(

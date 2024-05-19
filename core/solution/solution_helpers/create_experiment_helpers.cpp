@@ -184,13 +184,13 @@ void create_experiment(ScopeHistory* root_history) {
 			switch (type_distribution(generator)) {
 			case 0:
 				{
-					NewInfoExperiment* new_experiment = new NewInfoExperiment(
-						possible_scope_contexts[rand_index],
-						possible_node_contexts[rand_index],
-						possible_is_branch[rand_index],
-						NULL);
+					// NewInfoExperiment* new_experiment = new NewInfoExperiment(
+					// 	possible_scope_contexts[rand_index],
+					// 	possible_node_contexts[rand_index],
+					// 	possible_is_branch[rand_index],
+					// 	NULL);
 
-					possible_node_contexts[rand_index]->experiments.push_back(new_experiment);
+					// possible_node_contexts[rand_index]->experiments.push_back(new_experiment);
 				}
 				break;
 			case 1:
@@ -210,60 +210,35 @@ void create_experiment(ScopeHistory* root_history) {
 				#else
 				if (possible_scope_contexts[rand_index]->nodes.size() > 20) {
 				#endif /* MDEBUG */
-					NewActionExperiment* new_action_experiment = new NewActionExperiment(
-						possible_scope_contexts[rand_index],
-						possible_node_contexts[rand_index],
-						possible_is_branch[rand_index]);
+					// NewActionExperiment* new_action_experiment = new NewActionExperiment(
+					// 	possible_scope_contexts[rand_index],
+					// 	possible_node_contexts[rand_index],
+					// 	possible_is_branch[rand_index]);
 
-					if (new_action_experiment->result == EXPERIMENT_RESULT_FAIL) {
-						delete new_action_experiment;
-					} else {
-						possible_node_contexts[rand_index]->experiments.push_back(new_action_experiment);
-					}
+					// if (new_action_experiment->result == EXPERIMENT_RESULT_FAIL) {
+					// 	delete new_action_experiment;
+					// } else {
+					// 	possible_node_contexts[rand_index]->experiments.push_back(new_action_experiment);
+					// }
 				}
 			}
 		} else {
-			PassThroughExperiment* new_experiment = new PassThroughExperiment(
-				possible_scope_contexts[rand_index],
-				possible_node_contexts[rand_index],
-				possible_is_branch[rand_index],
-				NULL);
+			// PassThroughExperiment* new_experiment = new PassThroughExperiment(
+			// 	possible_scope_contexts[rand_index],
+			// 	possible_node_contexts[rand_index],
+			// 	possible_is_branch[rand_index],
+			// 	NULL);
 
-			possible_node_contexts[rand_index]->experiments.push_back(new_experiment);
+			// possible_node_contexts[rand_index]->experiments.push_back(new_experiment);
 		}
 	} else {
-		InfoPassThroughExperiment* new_experiment = new InfoPassThroughExperiment(
-			possible_info_scope_contexts[rand_index],
-			possible_scope_contexts[rand_index],
-			possible_node_contexts[rand_index],
-			possible_is_branch[rand_index]);
+		// InfoPassThroughExperiment* new_experiment = new InfoPassThroughExperiment(
+		// 	possible_info_scope_contexts[rand_index],
+		// 	possible_scope_contexts[rand_index],
+		// 	possible_node_contexts[rand_index],
+		// 	possible_is_branch[rand_index]);
 
-		possible_info_scope_contexts[rand_index]->experiment = new_experiment;
-		possible_node_contexts[rand_index]->experiments.push_back(new_experiment);
+		// possible_info_scope_contexts[rand_index]->experiment = new_experiment;
+		// possible_node_contexts[rand_index]->experiments.push_back(new_experiment);
 	}
-}
-
-void create_eval_experiment(Eval* eval,
-							ScopeHistory* root_history) {
-	vector<InfoScope*> possible_info_scope_contexts;
-	vector<Scope*> possible_scope_contexts;
-	vector<AbstractNode*> possible_node_contexts;
-	vector<bool> possible_is_branch;
-
-	create_experiment_helper(possible_info_scope_contexts,
-							 possible_scope_contexts,
-							 possible_node_contexts,
-							 possible_is_branch,
-							 root_history);
-
-	uniform_int_distribution<int> possible_distribution(0, (int)possible_scope_contexts.size()-1);
-	int rand_index = possible_distribution(generator);
-
-	EvalPassThroughExperiment* new_experiment = new EvalPassThroughExperiment(
-		eval,
-		possible_node_contexts[rand_index],
-		possible_is_branch[rand_index]);
-
-	eval->experiment = new_experiment;
-	possible_node_contexts[rand_index]->experiments.push_back(new_experiment);
 }

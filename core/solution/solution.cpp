@@ -17,7 +17,7 @@ Solution::Solution() {
 
 Solution::Solution(Solution* original) {
 	this->timestamp = original->timestamp;
-	this->curr_average_score = original->curr_average_score;
+	this->timestamp_score = original->timestamp_score;
 
 	for (int s_index = 0; s_index < (int)original->scopes.size(); s_index++) {
 		Scope* scope = new Scope();
@@ -46,11 +46,15 @@ Solution::Solution(Solution* original) {
 		this->info_scopes[i_index]->link(this);
 	}
 
-	this->max_depth = original->max_depth;
-	this->depth_limit = original->depth_limit;
+	this->curr_average_score = original->curr_average_score;
 
 	this->max_num_actions = original->max_num_actions;
 	this->num_actions_limit = original->num_actions_limit;
+
+	uniform_int_distribution<int> explore_id_distribution(0, (int)solution->scopes.size()-1);
+	this->explore_id = explore_id_distribution(generator);
+	uniform_int_distribution<int> explore_type_distribution(0, 1);
+	this->explore_type = explore_type_distribution(generator);
 }
 
 Solution::~Solution() {
@@ -64,7 +68,7 @@ Solution::~Solution() {
 
 void Solution::init() {
 	this->timestamp = 0;
-	this->curr_average_score = -1.0;
+	this->timestamp_score = -1.0;
 
 	Scope* new_scope = new Scope();
 	new_scope->id = this->scopes.size();
@@ -79,14 +83,10 @@ void Solution::init() {
 	new_scope->nodes[0] = starting_noop_node;
 	new_scope->node_counter = 1;
 
-	new_scope->average_num_actions = 1.0;
-
 	new_scope->eval = new Eval(new_scope);
 	new_scope->eval->init();
-	new_scope->num_actions_until_random = -1;
 
-	this->max_depth = 1;
-	this->depth_limit = 11;
+	this->curr_average_score = 1.0;
 
 	this->max_num_actions = 1;
 	this->num_actions_limit = 40;
@@ -101,9 +101,9 @@ void Solution::load(string path,
 	getline(input_file, timestamp_line);
 	this->timestamp = stoi(timestamp_line);
 
-	string curr_average_score_line;
-	getline(input_file, curr_average_score_line);
-	this->curr_average_score = stod(curr_average_score_line);
+	string timestamp_score_line;
+	getline(input_file, timestamp_score_line);
+	this->timestamp_score = stod(timestamp_score_line);
 
 	string num_scopes_line;
 	getline(input_file, num_scopes_line);
@@ -138,15 +138,9 @@ void Solution::load(string path,
 		this->info_scopes[i_index]->link(this);
 	}
 
-	string max_depth_line;
-	getline(input_file, max_depth_line);
-	this->max_depth = stoi(max_depth_line);
-
-	if (this->max_depth < 50) {
-		this->depth_limit = this->max_depth + 10;
-	} else {
-		this->depth_limit = (int)(1.2*(double)this->max_depth);
-	}
+	string curr_average_score_line;
+	getline(input_file, curr_average_score_line);
+	this->curr_average_score = stod(curr_average_score_line);
 
 	string max_num_actions_line;
 	getline(input_file, max_num_actions_line);
@@ -178,7 +172,7 @@ void Solution::save(string path,
 	output_file.open(path + "saves/" + name + "_temp.txt");
 
 	output_file << this->timestamp << endl;
-	output_file << this->curr_average_score << endl;
+	output_file << this->timestamp_score << endl;
 
 	output_file << this->scopes.size() << endl;
 	output_file << this->info_scopes.size() << endl;
@@ -190,7 +184,7 @@ void Solution::save(string path,
 		this->info_scopes[i_index]->save(output_file);
 	}
 
-	output_file << this->max_depth << endl;
+	output_file << this->curr_average_score << endl;
 
 	output_file << this->max_num_actions << endl;
 

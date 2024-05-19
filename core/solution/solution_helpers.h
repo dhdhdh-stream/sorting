@@ -19,8 +19,6 @@ class ScopeHistory;
 class ScopeNode;
 
 void create_experiment(ScopeHistory* root_history);
-void create_eval_experiment(Eval* eval,
-							ScopeHistory* root_history);
 
 ScopeNode* create_existing();
 InfoScope* get_existing_info_scope();

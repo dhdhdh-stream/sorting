@@ -11,6 +11,7 @@
 #include "context_layer.h"
 #include "run_helper.h"
 
+class AbstractExperiment;
 class AbstractNode;
 class Network;
 class Problem;

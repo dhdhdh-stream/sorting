@@ -25,59 +25,120 @@ void EvalPassThroughExperiment::finalize(Solution* duplicate) {
 
 		Eval* duplicate_eval = duplicate->scopes[this->eval_context->parent_scope->id]->eval;
 
-		duplicate_eval->input_node_contexts.clear();
-		duplicate_eval->input_obs_indexes.clear();
+		duplicate_eval->score_input_node_contexts.clear();
+		duplicate_eval->score_input_obs_indexes.clear();
 
-		duplicate_eval->linear_input_indexes.clear();
-		duplicate_eval->linear_weights.clear();
+		duplicate_eval->score_linear_input_indexes.clear();
+		duplicate_eval->score_linear_weights.clear();
 
-		duplicate_eval->network_input_indexes.clear();
-		if (duplicate_eval->network != NULL) {
-			delete duplicate_eval->network;
-			duplicate_eval->network = NULL;
+		duplicate_eval->score_network_input_indexes.clear();
+		if (duplicate_eval->score_network != NULL) {
+			delete duplicate_eval->score_network;
+			duplicate_eval->score_network = NULL;
 		}
 
-		duplicate_eval->average_score = this->new_average_score;
+		duplicate_eval->score_average_score = this->score_average_score;
 
-		vector<int> input_mapping(this->input_node_contexts.size(), -1);
-		for (int i_index = 0; i_index < (int)this->linear_weights.size(); i_index++) {
-			if (this->linear_weights[i_index] != 0.0) {
-				if (input_mapping[i_index] == -1) {
-					input_mapping[i_index] = (int)duplicate_eval->input_node_contexts.size();
-					duplicate_eval->input_node_contexts.push_back(
-						duplicate_eval->subscope->nodes[this->input_node_contexts[i_index]->id]);
-					duplicate_eval->input_obs_indexes.push_back(this->input_obs_indexes[i_index]);
+		{
+			vector<int> input_mapping(this->score_input_node_contexts.size(), -1);
+			for (int i_index = 0; i_index < (int)this->score_linear_weights.size(); i_index++) {
+				if (this->score_linear_weights[i_index] != 0.0) {
+					if (input_mapping[i_index] == -1) {
+						input_mapping[i_index] = (int)duplicate_eval->score_input_node_contexts.size();
+						duplicate_eval->score_input_node_contexts.push_back(
+							duplicate_eval->subscope->nodes[this->score_input_node_contexts[i_index]->id]);
+						duplicate_eval->score_input_obs_indexes.push_back(this->score_input_obs_indexes[i_index]);
+					}
 				}
 			}
-		}
-		for (int i_index = 0; i_index < (int)this->network_input_indexes.size(); i_index++) {
-			for (int v_index = 0; v_index < (int)this->network_input_indexes[i_index].size(); v_index++) {
-				int original_index = this->network_input_indexes[i_index][v_index];
-				if (input_mapping[original_index] == -1) {
-					input_mapping[original_index] = (int)duplicate_eval->input_node_contexts.size();
-					duplicate_eval->input_node_contexts.push_back(
-						duplicate_eval->subscope->nodes[this->input_node_contexts[original_index]->id]);
-					duplicate_eval->input_obs_indexes.push_back(this->input_obs_indexes[original_index]);
+			for (int i_index = 0; i_index < (int)this->score_network_input_indexes.size(); i_index++) {
+				for (int v_index = 0; v_index < (int)this->score_network_input_indexes[i_index].size(); v_index++) {
+					int original_index = this->score_network_input_indexes[i_index][v_index];
+					if (input_mapping[original_index] == -1) {
+						input_mapping[original_index] = (int)duplicate_eval->score_input_node_contexts.size();
+						duplicate_eval->score_input_node_contexts.push_back(
+							duplicate_eval->subscope->nodes[this->score_input_node_contexts[original_index]->id]);
+						duplicate_eval->score_input_obs_indexes.push_back(this->score_input_obs_indexes[original_index]);
+					}
 				}
 			}
+
+			for (int i_index = 0; i_index < (int)this->score_linear_weights.size(); i_index++) {
+				if (this->score_linear_weights[i_index] != 0.0) {
+					duplicate_eval->score_linear_input_indexes.push_back(input_mapping[i_index]);
+					duplicate_eval->score_linear_weights.push_back(this->score_linear_weights[i_index]);
+				}
+			}
+
+			for (int i_index = 0; i_index < (int)this->score_network_input_indexes.size(); i_index++) {
+				vector<int> input_indexes;
+				for (int v_index = 0; v_index < (int)this->score_network_input_indexes[i_index].size(); v_index++) {
+					input_indexes.push_back(input_mapping[this->score_network_input_indexes[i_index][v_index]]);
+				}
+				duplicate_eval->score_network_input_indexes.push_back(input_indexes);
+			}
+			duplicate_eval->score_network = this->score_network;
+			this->score_network = NULL;
 		}
 
-		for (int i_index = 0; i_index < (int)this->linear_weights.size(); i_index++) {
-			if (this->linear_weights[i_index] != 0.0) {
-				duplicate_eval->linear_input_indexes.push_back(input_mapping[i_index]);
-				duplicate_eval->linear_weights.push_back(this->linear_weights[i_index]);
-			}
+		duplicate_eval->vs_input_is_start.clear();
+		duplicate_eval->vs_input_node_contexts.clear();
+		duplicate_eval->vs_input_obs_indexes.clear();
+
+		duplicate_eval->vs_linear_input_indexes.clear();
+		duplicate_eval->vs_linear_weights.clear();
+
+		duplicate_eval->vs_network_input_indexes.clear();
+		if (duplicate_eval->vs_network != NULL) {
+			delete duplicate_eval->vs_network;
+			duplicate_eval->vs_network = NULL;
 		}
 
-		for (int i_index = 0; i_index < (int)this->network_input_indexes.size(); i_index++) {
-			vector<int> input_indexes;
-			for (int v_index = 0; v_index < (int)this->network_input_indexes[i_index].size(); v_index++) {
-				input_indexes.push_back(input_mapping[this->network_input_indexes[i_index][v_index]]);
+		duplicate_eval->vs_average_score = this->vs_average_score;
+
+		{
+			vector<int> input_mapping(this->vs_input_node_contexts.size(), -1);
+			for (int i_index = 0; i_index < (int)this->vs_linear_weights.size(); i_index++) {
+				if (this->vs_linear_weights[i_index] != 0.0) {
+					if (input_mapping[i_index] == -1) {
+						input_mapping[i_index] = (int)duplicate_eval->vs_input_node_contexts.size();
+						duplicate_eval->vs_input_is_start.push_back(this->vs_input_is_start[i_index]);
+						duplicate_eval->vs_input_node_contexts.push_back(
+							duplicate_eval->subscope->nodes[this->vs_input_node_contexts[i_index]->id]);
+						duplicate_eval->vs_input_obs_indexes.push_back(this->vs_input_obs_indexes[i_index]);
+					}
+				}
 			}
-			duplicate_eval->network_input_indexes.push_back(input_indexes);
+			for (int i_index = 0; i_index < (int)this->vs_network_input_indexes.size(); i_index++) {
+				for (int v_index = 0; v_index < (int)this->vs_network_input_indexes[i_index].size(); v_index++) {
+					int original_index = this->vs_network_input_indexes[i_index][v_index];
+					if (input_mapping[original_index] == -1) {
+						input_mapping[original_index] = (int)duplicate_eval->vs_input_node_contexts.size();
+						duplicate_eval->vs_input_is_start.push_back(this->vs_input_is_start[original_index]);
+						duplicate_eval->vs_input_node_contexts.push_back(
+							duplicate_eval->subscope->nodes[this->vs_input_node_contexts[original_index]->id]);
+						duplicate_eval->vs_input_obs_indexes.push_back(this->vs_input_obs_indexes[original_index]);
+					}
+				}
+			}
+
+			for (int i_index = 0; i_index < (int)this->vs_linear_weights.size(); i_index++) {
+				if (this->vs_linear_weights[i_index] != 0.0) {
+					duplicate_eval->vs_linear_input_indexes.push_back(input_mapping[i_index]);
+					duplicate_eval->vs_linear_weights.push_back(this->vs_linear_weights[i_index]);
+				}
+			}
+
+			for (int i_index = 0; i_index < (int)this->vs_network_input_indexes.size(); i_index++) {
+				vector<int> input_indexes;
+				for (int v_index = 0; v_index < (int)this->vs_network_input_indexes[i_index].size(); v_index++) {
+					input_indexes.push_back(input_mapping[this->vs_network_input_indexes[i_index][v_index]]);
+				}
+				duplicate_eval->vs_network_input_indexes.push_back(input_indexes);
+			}
+			duplicate_eval->vs_network = this->vs_network;
+			this->vs_network = NULL;
 		}
-		duplicate_eval->network = this->network;
-		this->network = NULL;
 	}
 
 	this->eval_context->experiment = NULL;

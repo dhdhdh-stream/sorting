@@ -44,8 +44,6 @@ void Scope::save(ofstream& output_file) {
 		it->second->save(output_file);
 	}
 
-	output_file << this->average_num_actions << endl;
-
 	if (this->id != -1) {
 		this->eval->save(output_file);
 	}
@@ -116,18 +114,12 @@ void Scope::load(ifstream& input_file) {
 		}
 	}
 
-	string average_num_actions_line;
-	getline(input_file, average_num_actions_line);
-	this->average_num_actions = stod(average_num_actions_line);
-
 	if (this->id == -1) {
 		this->eval = NULL;
 	} else {
 		this->eval = new Eval(this);
 		this->eval->load(input_file);
 	}
-
-	this->num_actions_until_random = -1;
 }
 
 void Scope::link(Solution* parent_solution) {
@@ -197,8 +189,6 @@ void Scope::copy_from(Scope* original,
 		}
 	}
 
-	this->average_num_actions = original->average_num_actions;
-
 	if (original->id == -1) {
 		this->eval = NULL;
 	} else {
@@ -219,8 +209,6 @@ void Scope::save_for_display(ofstream& output_file) {
 
 ScopeHistory::ScopeHistory(Scope* scope) {
 	this->scope = scope;
-
-	this->experiment_history = NULL;
 }
 
 ScopeHistory::ScopeHistory(ScopeHistory* original) {
@@ -261,8 +249,6 @@ ScopeHistory::ScopeHistory(ScopeHistory* original) {
 			break;
 		}
 	}
-
-	this->experiment_history = NULL;
 }
 
 ScopeHistory::~ScopeHistory() {

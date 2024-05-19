@@ -3,34 +3,36 @@
 
 #include <vector>
 
-class AbstractExperiment;
-class AbstractExperimentHistory;
-class NewActionHistory;
+class Problem;
+class ScopeHistory;
+class Solution;
 
 class RunHelper {
 public:
-	int curr_depth;
-	int max_depth;
-
-	bool exceeded_limit;
-
 	int num_decisions;
 	int num_actions;
 
-	std::vector<AbstractExperiment*> experiments_seen_order;
+	/**
+	 * - set by experiment when exploring/new
+	 */
+	int num_actions_limit;
 
-	std::vector<AbstractExperimentHistory*> experiment_histories;
+	ScopeHistory* experiment_scope_history;
+
+	Solution* success_duplicate;
 
 	std::vector<double> predicted_scores;
 
 	#if defined(MDEBUG) && MDEBUG
-	void* verify_key;
-	unsigned long starting_run_seed;
 	unsigned long curr_run_seed;
+
+	Problem* problem_snapshot;
+	unsigned long run_seed_snapshot;
+
+	void* verify_key;
 	#endif /* MDEBUG */
 
 	RunHelper();
-	~RunHelper();
 };
 
 #endif /* RUN_HELPER_H */

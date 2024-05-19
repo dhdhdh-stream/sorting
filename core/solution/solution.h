@@ -3,6 +3,9 @@
  *   - even small changes can lead to unique outcomes and cannot predict what hasn't been tried
  *     - cannot even predict if something is familiar so no need to try further
  *       - as new changes may lead to better predictions
+ * 
+ * - as long as have freedom to fail, not much use for world modeling
+ *   - use world modeling when cost of failure is high, and have to explore along paths where there isn't risk of catastrophic failure
  */
 
 #ifndef SOLUTION_H
@@ -24,21 +27,19 @@ const int EXPLORE_TYPE_EVAL = 1;
 class Solution {
 public:
 	int timestamp;
-	double curr_average_score;
+	double timestamp_score;
 
 	std::vector<Scope*> scopes;
 	std::vector<InfoScope*> info_scopes;
 
-	/**
-	 * - max depth for run that concluded
-	 *   - set limit to max_depth+10/1.2*max_depth
-	 * 
-	 * - update on success for verify
-	 */
-	int max_depth;
-	int depth_limit;
+	double curr_average_score;
 
 	/**
+	 * - final overall fallback to prevent infinite loops
+	 *   - mainly prevent locally through experiments
+	 * 
+	 * - update on measure
+	 * 
 	 * - set limit to 20*max_num_actions+20
 	 */
 	int max_num_actions;
@@ -46,6 +47,10 @@ public:
 
 	int explore_id;
 	int explore_type;
+	/**
+	 * - measure on measure
+	 */
+	double explore_average_instances_per_run;
 
 	#if defined(MDEBUG) && MDEBUG
 	void* verify_key;

@@ -12,6 +12,7 @@
 
 class AbstractNode;
 class AbstractNodeHistory;
+class AbstractExperiment;
 class AbstractExperimentHistory;
 class Eval;
 class Problem;
@@ -25,13 +26,7 @@ public:
 	int node_counter;
 	std::map<int, AbstractNode*> nodes;
 
-	double average_num_actions;
-
 	Eval* eval;
-	int num_actions_until_random;
-	/**
-	 * - set by EvalExperiment
-	 */
 
 	Scope();
 	~Scope();
@@ -89,7 +84,9 @@ public:
 
 	std::map<AbstractNode*, AbstractNodeHistory*> node_histories;
 
-	AbstractExperiment* callback_experiment;
+	std::vector<AbstractExperiment*> experiments_seen_order;
+
+	std::vector<AbstractExperimentHistory*> experiment_histories;
 
 	ScopeHistory(Scope* scope);
 	ScopeHistory(ScopeHistory* original);

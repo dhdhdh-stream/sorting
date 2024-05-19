@@ -5,6 +5,7 @@
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
+#include "eval.h"
 #include "globals.h"
 #include "info_branch_node.h"
 #include "network.h"
@@ -30,25 +31,7 @@ bool BranchExperiment::explore_activate(
 		BranchExperimentHistory* history) {
 	run_helper.num_decisions++;
 
-	history->instance_count++;
-
-	bool is_target = false;
-	if (!history->has_target) {
-		double target_probability;
-		if (history->instance_count > this->average_instances_per_run) {
-			target_probability = 0.5;
-		} else {
-			target_probability = 1.0 / (1.0 + 1.0 + (this->average_instances_per_run - history->instance_count));
-		}
-		uniform_real_distribution<double> distribution(0.0, 1.0);
-		if (distribution(generator) < target_probability) {
-			is_target = true;
-		}
-	}
-
-	if (is_target) {
-		history->has_target = true;
-
+	if (context.back().scope_history == run_helper.experiment_scope_history) {
 		vector<double> input_vals(this->input_scope_contexts.size(), 0.0);
 		for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
 			int curr_layer = 0;
@@ -214,217 +197,230 @@ bool BranchExperiment::explore_activate(
 
 		curr_node = this->curr_exit_next_node;
 
+		run_helper.num_actions_limit = MAX_NUM_ACTIONS_LIMIT_MULTIPLIER * this->existing_max_num_actions;
+
 		return true;
-	} else {
+	}  else {
 		return false;
 	}
 }
 
 void BranchExperiment::explore_backprop(
-		double target_val,
+		EvalHistory* eval_history,
+		Problem* problem,
+		vector<ContextLayer>& context,
 		RunHelper& run_helper) {
-	BranchExperimentHistory* history = (BranchExperimentHistory*)run_helper.experiment_histories.back();
+	BranchExperimentHistory* history = (BranchExperimentHistory*)run_helper.experiment_scope_history->experiment_histories.back();
 
-	if (history->has_target) {
-		double curr_surprise = target_val - history->existing_predicted_score;
+	double curr_surprise;
+	if (run_helper.num_actions_limit > 0) {
+		this->scope_context->eval->activate(problem,
+											run_helper,
+											eval_history->end_scope_history);
+		double predicted_impact = this->scope_context->eval->calc_vs(
+			run_helper,
+			eval_history);
+		curr_surprise = predicted_impact - history->existing_predicted_score;
+	}
 
-		bool select = false;
-		if (this->explore_type == EXPLORE_TYPE_BEST) {
-			#if defined(MDEBUG) && MDEBUG
-			if (!run_helper.exceeded_limit) {
-			#else
-			if (curr_surprise > this->best_surprise) {
-			#endif /* MDEBUG */
-				for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-					if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-						delete this->best_actions[s_index];
-					} else {
-						delete this->best_scopes[s_index];
-					}
+	run_helper.num_actions_limit = -1;
+
+	bool select = false;
+	if (this->explore_type == EXPLORE_TYPE_BEST) {
+		#if defined(MDEBUG) && MDEBUG
+		if (run_helper.num_actions_limit > 0) {
+		#else
+		if (run_helper.num_actions_limit > 0
+				&& curr_surprise > this->best_surprise) {
+		#endif /* MDEBUG */
+			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+					delete this->best_actions[s_index];
+				} else {
+					delete this->best_scopes[s_index];
 				}
-
-				this->best_surprise = curr_surprise;
-				this->best_step_types = this->curr_step_types;
-				this->best_actions = this->curr_actions;
-				this->best_scopes = this->curr_scopes;
-				this->best_exit_next_node = this->curr_exit_next_node;
-
-				this->curr_step_types.clear();
-				this->curr_actions.clear();
-				this->curr_scopes.clear();
-			} else {
-				for (int s_index = 0; s_index < (int)this->curr_step_types.size(); s_index++) {
-					if (this->curr_step_types[s_index] == STEP_TYPE_ACTION) {
-						delete this->curr_actions[s_index];
-					} else {
-						delete this->curr_scopes[s_index];
-					}
-				}
-
-				this->curr_step_types.clear();
-				this->curr_actions.clear();
-				this->curr_scopes.clear();
 			}
 
-			if (this->state_iter == EXPLORE_ITERS-1
-					&& this->best_surprise > 0.0) {
-				select = true;
-			}
-		} else if (this->explore_type == EXPLORE_TYPE_NEUTRAL) {
-			#if defined(MDEBUG) && MDEBUG
-			if (!run_helper.exceeded_limit) {
-			#else
-			if (curr_surprise >= 0.0) {
-			#endif /* MDEBUG */
-				this->best_step_types = this->curr_step_types;
-				this->best_actions = this->curr_actions;
-				this->best_scopes = this->curr_scopes;
-				this->best_exit_next_node = this->curr_exit_next_node;
+			this->best_surprise = curr_surprise;
+			this->best_step_types = this->curr_step_types;
+			this->best_actions = this->curr_actions;
+			this->best_scopes = this->curr_scopes;
+			this->best_exit_next_node = this->curr_exit_next_node;
 
-				this->curr_step_types.clear();
-				this->curr_actions.clear();
-				this->curr_scopes.clear();
-
-				select = true;
-			} else {
-				for (int s_index = 0; s_index < (int)this->curr_step_types.size(); s_index++) {
-					if (this->curr_step_types[s_index] == STEP_TYPE_ACTION) {
-						delete this->curr_actions[s_index];
-					} else {
-						delete this->curr_scopes[s_index];
-					}
+			this->curr_step_types.clear();
+			this->curr_actions.clear();
+			this->curr_scopes.clear();
+		} else {
+			for (int s_index = 0; s_index < (int)this->curr_step_types.size(); s_index++) {
+				if (this->curr_step_types[s_index] == STEP_TYPE_ACTION) {
+					delete this->curr_actions[s_index];
+				} else {
+					delete this->curr_scopes[s_index];
 				}
-
-				this->curr_step_types.clear();
-				this->curr_actions.clear();
-				this->curr_scopes.clear();
 			}
-		} else if (this->explore_type == EXPLORE_TYPE_GOOD) {
-			#if defined(MDEBUG) && MDEBUG
-			if (!run_helper.exceeded_limit) {
-			#else
-			if (curr_surprise >= this->existing_score_standard_deviation) {
-			#endif /* MDEBUG */
-				this->best_step_types = this->curr_step_types;
-				this->best_actions = this->curr_actions;
-				this->best_scopes = this->curr_scopes;
-				this->best_exit_next_node = this->curr_exit_next_node;
 
-				this->curr_step_types.clear();
-				this->curr_actions.clear();
-				this->curr_scopes.clear();
+			this->curr_step_types.clear();
+			this->curr_actions.clear();
+			this->curr_scopes.clear();
+		}
 
-				select = true;
-			} else {
-				for (int s_index = 0; s_index < (int)this->curr_step_types.size(); s_index++) {
-					if (this->curr_step_types[s_index] == STEP_TYPE_ACTION) {
-						delete this->curr_actions[s_index];
-					} else {
-						delete this->curr_scopes[s_index];
-					}
+		if (this->state_iter == EXPLORE_ITERS-1
+				&& this->best_surprise > 0.0) {
+			select = true;
+		}
+	} else if (this->explore_type == EXPLORE_TYPE_NEUTRAL) {
+		#if defined(MDEBUG) && MDEBUG
+		if (run_helper.num_actions_limit > 0) {
+		#else
+		if (run_helper.num_actions_limit > 0
+				&& curr_surprise >= 0.0) {
+		#endif /* MDEBUG */
+			this->best_step_types = this->curr_step_types;
+			this->best_actions = this->curr_actions;
+			this->best_scopes = this->curr_scopes;
+			this->best_exit_next_node = this->curr_exit_next_node;
+
+			this->curr_step_types.clear();
+			this->curr_actions.clear();
+			this->curr_scopes.clear();
+
+			select = true;
+		} else {
+			for (int s_index = 0; s_index < (int)this->curr_step_types.size(); s_index++) {
+				if (this->curr_step_types[s_index] == STEP_TYPE_ACTION) {
+					delete this->curr_actions[s_index];
+				} else {
+					delete this->curr_scopes[s_index];
 				}
+			}
 
-				this->curr_step_types.clear();
-				this->curr_actions.clear();
-				this->curr_scopes.clear();
+			this->curr_step_types.clear();
+			this->curr_actions.clear();
+			this->curr_scopes.clear();
+		}
+	} else if (this->explore_type == EXPLORE_TYPE_GOOD) {
+		#if defined(MDEBUG) && MDEBUG
+		if (run_helper.num_actions_limit > 0) {
+		#else
+		if (run_helper.num_actions_limit > 0
+				&& curr_surprise >= this->existing_score_standard_deviation) {
+		#endif /* MDEBUG */
+			this->best_step_types = this->curr_step_types;
+			this->best_actions = this->curr_actions;
+			this->best_scopes = this->curr_scopes;
+			this->best_exit_next_node = this->curr_exit_next_node;
+
+			this->curr_step_types.clear();
+			this->curr_actions.clear();
+			this->curr_scopes.clear();
+
+			select = true;
+		} else {
+			for (int s_index = 0; s_index < (int)this->curr_step_types.size(); s_index++) {
+				if (this->curr_step_types[s_index] == STEP_TYPE_ACTION) {
+					delete this->curr_actions[s_index];
+				} else {
+					delete this->curr_scopes[s_index];
+				}
+			}
+
+			this->curr_step_types.clear();
+			this->curr_actions.clear();
+			this->curr_scopes.clear();
+		}
+	}
+
+	if (select) {
+		// cout << "curr_surprise: " << curr_surprise << endl;
+
+		// cout << "this->scope_context->id: " << this->scope_context->id << endl;
+		// cout << "this->node_context->id: " << this->node_context->id << endl;
+		// cout << "this->is_branch: " << this->is_branch << endl;
+		// cout << "new explore path:";
+		// for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {
+		// 	if (this->step_types[s_index] == STEP_TYPE_ACTION) {
+		// 		cout << " " << this->actions[s_index]->action.move;
+		// 	} else {
+		// 		cout << " E" << this->existing_scopes[s_index]->scope->id;
+		// 	}
+		// }
+		// cout << endl;
+
+		// if (this->exit_next_node == NULL) {
+		// 	cout << "this->exit_next_node->id: " << -1 << endl;
+		// } else {
+		// 	cout << "this->exit_next_node->id: " << this->exit_next_node->id << endl;
+		// }
+		// cout << endl;
+
+		for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+			if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+				this->best_actions[s_index]->parent = this->scope_context;
+				this->best_actions[s_index]->id = this->scope_context->node_counter;
+				this->scope_context->node_counter++;
+			} else {
+				this->best_scopes[s_index]->parent = this->scope_context;
+				this->best_scopes[s_index]->id = this->scope_context->node_counter;
+				this->scope_context->node_counter++;
 			}
 		}
 
-		if (select) {
-			// cout << "curr_surprise: " << curr_surprise << endl;
+		int exit_node_id;
+		AbstractNode* exit_node;
+		if (this->best_exit_next_node == NULL) {
+			ActionNode* new_ending_node = new ActionNode();
+			new_ending_node->parent = this->scope_context;
+			new_ending_node->id = this->scope_context->node_counter;
+			this->scope_context->node_counter++;
 
-			// cout << "this->scope_context->id: " << this->scope_context->id << endl;
-			// cout << "this->node_context->id: " << this->node_context->id << endl;
-			// cout << "this->is_branch: " << this->is_branch << endl;
-			// cout << "new explore path:";
-			// for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {
-			// 	if (this->step_types[s_index] == STEP_TYPE_ACTION) {
-			// 		cout << " " << this->actions[s_index]->action.move;
-			// 	} else {
-			// 		cout << " E" << this->existing_scopes[s_index]->scope->id;
-			// 	}
-			// }
-			// cout << endl;
+			new_ending_node->action = Action(ACTION_NOOP);
 
-			// if (this->exit_next_node == NULL) {
-			// 	cout << "this->exit_next_node->id: " << -1 << endl;
-			// } else {
-			// 	cout << "this->exit_next_node->id: " << this->exit_next_node->id << endl;
-			// }
-			// cout << endl;
+			new_ending_node->next_node_id = -1;
+			new_ending_node->next_node = NULL;
 
-			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-					this->best_actions[s_index]->parent = this->scope_context;
-					this->best_actions[s_index]->id = this->scope_context->node_counter;
-					this->scope_context->node_counter++;
-				} else {
-					this->best_scopes[s_index]->parent = this->scope_context;
-					this->best_scopes[s_index]->id = this->scope_context->node_counter;
-					this->scope_context->node_counter++;
-				}
-			}
+			this->ending_node = new_ending_node;
 
-			int exit_node_id;
-			AbstractNode* exit_node;
-			if (this->best_exit_next_node == NULL) {
-				ActionNode* new_ending_node = new ActionNode();
-				new_ending_node->parent = this->scope_context;
-				new_ending_node->id = this->scope_context->node_counter;
-				this->scope_context->node_counter++;
-
-				new_ending_node->action = Action(ACTION_NOOP);
-
-				new_ending_node->next_node_id = -1;
-				new_ending_node->next_node = NULL;
-
-				this->ending_node = new_ending_node;
-
-				exit_node_id = new_ending_node->id;
-				exit_node = new_ending_node;
-			} else {
-				exit_node_id = this->best_exit_next_node->id;
-				exit_node = this->best_exit_next_node;
-			}
-
-			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-				int next_node_id;
-				AbstractNode* next_node;
-				if (s_index == (int)this->best_step_types.size()-1) {
-					next_node_id = exit_node_id;
-					next_node = exit_node;
-				} else {
-					if (this->best_step_types[s_index+1] == STEP_TYPE_ACTION) {
-						next_node_id = this->best_actions[s_index+1]->id;
-						next_node = this->best_actions[s_index+1];
-					} else {
-						next_node_id = this->best_scopes[s_index+1]->id;
-						next_node = this->best_scopes[s_index+1];
-					}
-				}
-
-				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-					this->best_actions[s_index]->next_node_id = next_node_id;
-					this->best_actions[s_index]->next_node = next_node;
-				} else {
-					this->best_scopes[s_index]->next_node_id = next_node_id;
-					this->best_scopes[s_index]->next_node = next_node;
-				}
-			}
-
-			this->i_scope_histories.reserve(NUM_DATAPOINTS);
-			this->i_target_val_histories.reserve(NUM_DATAPOINTS);
-
-			uniform_int_distribution<int> until_distribution(0, (int)this->average_instances_per_run-1.0);
-			this->num_instances_until_target = 1 + until_distribution(generator);
-
-			this->state = BRANCH_EXPERIMENT_STATE_TRAIN_NEW;
-			this->state_iter = 0;
+			exit_node_id = new_ending_node->id;
+			exit_node = new_ending_node;
 		} else {
-			this->state_iter++;
-			if (this->state_iter >= EXPLORE_ITERS) {
-				this->result = EXPERIMENT_RESULT_FAIL;
+			exit_node_id = this->best_exit_next_node->id;
+			exit_node = this->best_exit_next_node;
+		}
+
+		for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+			int next_node_id;
+			AbstractNode* next_node;
+			if (s_index == (int)this->best_step_types.size()-1) {
+				next_node_id = exit_node_id;
+				next_node = exit_node;
+			} else {
+				if (this->best_step_types[s_index+1] == STEP_TYPE_ACTION) {
+					next_node_id = this->best_actions[s_index+1]->id;
+					next_node = this->best_actions[s_index+1];
+				} else {
+					next_node_id = this->best_scopes[s_index+1]->id;
+					next_node = this->best_scopes[s_index+1];
+				}
 			}
+
+			if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+				this->best_actions[s_index]->next_node_id = next_node_id;
+				this->best_actions[s_index]->next_node = next_node;
+			} else {
+				this->best_scopes[s_index]->next_node_id = next_node_id;
+				this->best_scopes[s_index]->next_node = next_node;
+			}
+		}
+
+		this->scope_histories.reserve(NUM_DATAPOINTS);
+		this->target_val_histories.reserve(NUM_DATAPOINTS);
+
+		this->state = BRANCH_EXPERIMENT_STATE_TRAIN_NEW;
+		this->state_iter = 0;
+	} else {
+		this->state_iter++;
+		if (this->state_iter >= EXPLORE_ITERS) {
+			this->result = EXPERIMENT_RESULT_FAIL;
 		}
 	}
 }

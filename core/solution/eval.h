@@ -1,8 +1,4 @@
 /**
- * - don't worry about history
- *   - if tied to scope, then won't be worrying about long past history
- *     - so simply also don't worry about recent history
- * 
  * - target_val is made up of that which is predictable and that which isn't
  *   - by using eval, will remove impact of that which isn't predictable
  *     - reducing variance, improving training
@@ -12,9 +8,6 @@
  * - run eval both at start and at end
  *   - to account for different possible starting points
  *     - greatly reducing variance
- *   - when training start, target_val is final target_val
- *   - when training end, target_val is diff between starting predicted score and final target_val
- *   - when making additions, add a sequence to start and a sequence to end together
  */
 
 #ifndef EVAL_H
@@ -25,6 +18,7 @@
 
 #include "run_helper.h"
 
+class AbstractExperiment;
 class AbstractNode;
 class Network;
 class Problem;
@@ -36,31 +30,38 @@ class Eval {
 public:
 	Scope* parent_scope;
 
-	Scope* start_subscope;
-	Scope* end_subscope;
+	Scope* subscope;
 
-	double start_average_score;
+	/**
+	 * - applies for both start and end (and between)
+	 */
+	double score_average_score;
 
-	std::vector<AbstractNode*> start_input_node_contexts;
-	std::vector<int> start_input_obs_indexes;
+	std::vector<AbstractNode*> score_input_node_contexts;
+	std::vector<int> score_input_obs_indexes;
 
-	std::vector<int> start_linear_input_indexes;
-	std::vector<double> start_linear_weights;
+	std::vector<int> score_linear_input_indexes;
+	std::vector<double> score_linear_weights;
 
-	std::vector<std::vector<int>> start_network_input_indexes;
-	Network* start_network;
+	std::vector<std::vector<int>> score_network_input_indexes;
+	Network* score_network;
 
-	double end_average_score;
+	/**
+	 * - difference between start and final
+	 *   - end not involved
+	 *   - for learning XORs
+	 */
+	double vs_average_score;
 
-	std::vector<bool> end_is_start;
-	std::vector<AbstractNode*> end_input_node_contexts;
-	std::vector<int> end_input_obs_indexes;
+	std::vector<bool> vs_input_is_start;
+	std::vector<AbstractNode*> vs_input_node_contexts;
+	std::vector<int> vs_input_obs_indexes;
 
-	std::vector<int> end_linear_input_indexes;
-	std::vector<double> end_linear_weights;
+	std::vector<int> vs_linear_input_indexes;
+	std::vector<double> vs_linear_weights;
 
-	std::vector<std::vector<int>> end_network_input_indexes;
-	Network* end_network;
+	std::vector<std::vector<int>> vs_network_input_indexes;
+	Network* vs_network;
 
 	AbstractExperiment* experiment;
 
@@ -69,17 +70,13 @@ public:
 		 Solution* parent_solution);
 	~Eval();
 
-	void activate_start(Problem* problem,
-						RunHelper& run_helper,
-						EvalHistory* history);
-	void activate_end(Problem* problem,
-					  RunHelper& run_helper,
-					  EvalHistory* history);
-	double calc_impact(RunHelper& run_helper,
-					   EvalHistory* history);
-
-	void experiment_activate(Problem* problem,
-							 RunHelper& run_helper);
+	void activate(Problem* problem,
+				  RunHelper& run_helper,
+				  ScopeHistory*& scope_history);
+	double calc_score(RunHelper& run_helper,
+					  ScopeHistory* scope_history);
+	double calc_vs(RunHelper& run_helper,
+				   EvalHistory* history);
 
 	void init();
 	void load(std::ifstream& input_file);
@@ -95,6 +92,7 @@ public:
 	ScopeHistory* end_scope_history;
 
 	EvalHistory(Eval* eval);
+	EvalHistory(EvalHistory* original);
 	~EvalHistory();
 };
 

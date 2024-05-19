@@ -5,6 +5,7 @@
 #include "context_layer.h"
 
 class AbstractNode;
+class EvalHistory;
 class Problem;
 class Solution;
 
@@ -40,7 +41,6 @@ public:
 	AbstractExperiment* root_experiment;
 
 	double average_remaining_experiments_from_start;
-	double average_instances_per_run;
 
 	int root_state;
 
@@ -54,7 +54,7 @@ public:
 
 	int result;
 
-	std::vector<double> o_target_val_histories;
+	std::vector<double> target_val_histories;
 
 	virtual ~AbstractExperiment() {};
 	virtual void decrement(AbstractNode* experiment_node) = 0;
@@ -65,10 +65,10 @@ public:
 						  Problem* problem,
 						  std::vector<ContextLayer>& context,
 						  RunHelper& run_helper) = 0;
-	virtual void back_activate(ScopeHistory* scope_history,
-							   EvalHistory* eval_history,
-							   RunHelper& run_helper);
-	virtual void backprop(double target_val,
+	virtual void backprop(int starting_num_actions,
+						  EvalHistory* eval_history,
+						  Problem* problem,
+						  std::vector<ContextLayer>& context,
 						  RunHelper& run_helper) = 0;
 
 	virtual void finalize(Solution* duplicate) = 0;

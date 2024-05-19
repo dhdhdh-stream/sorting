@@ -23,12 +23,13 @@ bool BranchExperiment::capture_verify_activate(AbstractNode*& curr_node,
 											   Problem* problem,
 											   vector<ContextLayer>& context,
 											   RunHelper& run_helper) {
-	run_helper.num_decisions++;
-
-	if (this->verify_problems[this->state_iter] == NULL) {
-		this->verify_problems[this->state_iter] = problem->copy_and_reset();
+	if (context.back().scope_history == run_helper.curr_experiment_scope_history) {
+		this->verify_problems[this->state_iter] = run_helper.problem_snapshot;
+		run_helper.problem_snapshot = NULL;
+		this->verify_seeds[this->state_iter] = run_helper.run_seed_snapshot;
 	}
-	this->verify_seeds[this->state_iter] = run_helper.starting_run_seed;
+
+	run_helper.num_decisions++;
 
 	vector<double> input_vals(this->input_scope_contexts.size(), 0.0);
 	for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
@@ -180,7 +181,7 @@ void BranchExperiment::capture_verify_backprop() {
 
 			this->root_experiment->verify_experiments = verify_experiments;
 
-			this->root_experiment->o_target_val_histories.reserve(VERIFY_1ST_NUM_DATAPOINTS);
+			this->root_experiment->target_val_histories.reserve(VERIFY_1ST_NUM_DATAPOINTS);
 
 			this->root_experiment->root_state = ROOT_EXPERIMENT_STATE_VERIFY_1ST_EXISTING;
 

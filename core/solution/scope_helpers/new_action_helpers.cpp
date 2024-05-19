@@ -70,11 +70,6 @@ void new_action_node_activate_helper(AbstractNode*& curr_node,
 
 		break;
 	}
-
-	run_helper.num_actions++;
-	if (run_helper.num_actions > solution->num_actions_limit) {
-		run_helper.exceeded_limit = true;
-	}
 }
 
 void Scope::new_action_activate(AbstractNode* starting_node,
@@ -83,20 +78,9 @@ void Scope::new_action_activate(AbstractNode* starting_node,
 								vector<ContextLayer>& context,
 								RunHelper& run_helper,
 								ScopeHistory* history) {
-	if (run_helper.curr_depth > run_helper.max_depth) {
-		run_helper.max_depth = run_helper.curr_depth;
-	}
-	if (run_helper.curr_depth > solution->depth_limit) {
-		run_helper.exceeded_limit = true;
-		return;
-	}
-	run_helper.curr_depth++;
-
-	AbstractNode* curr_node = this->nodes[0];
+	AbstractNode* curr_node = starting_node;
 	while (true) {
-		if (run_helper.exceeded_limit
-				|| curr_node == NULL
-				|| included_nodes.find(curr_node) == included_nodes.end()) {
+		if (curr_node == NULL) {
 			break;
 		}
 
@@ -105,28 +89,24 @@ void Scope::new_action_activate(AbstractNode* starting_node,
 										context,
 										run_helper,
 										history);
-	}
 
-	run_helper.curr_depth--;
+		if (included_nodes.find(curr_node) == included_nodes.end()) {
+			break;
+		}
+		run_helper.num_actions++;
+		if (run_helper.num_actions > solution->num_actions_limit) {
+			break;
+		}
+	}
 }
 
 void Scope::new_action_activate(Problem* problem,
 								vector<ContextLayer>& context,
 								RunHelper& run_helper,
 								ScopeHistory* history) {
-	if (run_helper.curr_depth > run_helper.max_depth) {
-		run_helper.max_depth = run_helper.curr_depth;
-	}
-	if (run_helper.curr_depth > solution->depth_limit) {
-		run_helper.exceeded_limit = true;
-		return;
-	}
-	run_helper.curr_depth++;
-
 	AbstractNode* curr_node = this->nodes[0];
 	while (true) {
-		if (run_helper.exceeded_limit
-				|| curr_node == NULL) {
+		if (curr_node == NULL) {
 			break;
 		}
 
@@ -135,7 +115,10 @@ void Scope::new_action_activate(Problem* problem,
 										context,
 										run_helper,
 										history);
-	}
 
-	run_helper.curr_depth--;
+		run_helper.num_actions++;
+		if (run_helper.num_actions > solution->num_actions_limit) {
+			break;
+		}
+	}
 }
