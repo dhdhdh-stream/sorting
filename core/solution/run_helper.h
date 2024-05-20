@@ -21,8 +21,6 @@ public:
 
 	Solution* success_duplicate;
 
-	std::vector<double> predicted_scores;
-
 	#if defined(MDEBUG) && MDEBUG
 	unsigned long curr_run_seed;
 

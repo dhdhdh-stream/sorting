@@ -23,7 +23,7 @@ bool BranchExperiment::verify_activate(AbstractNode*& curr_node,
 									   vector<ContextLayer>& context,
 									   RunHelper& run_helper) {
 	if (context.back().scope_history == run_helper.experiment_scope_history) {
-		run_helper.num_actions_limit = MAX_NUM_ACTIONS_LIMIT_MULTIPLIER * this->existing_max_num_actions;
+		run_helper.num_actions_limit = MAX_NUM_ACTIONS_LIMIT_MULTIPLIER * solution->explore_scope_max_num_actions;
 	}
 
 	if (this->is_pass_through) {

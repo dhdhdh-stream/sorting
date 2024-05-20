@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "context_layer.h"
+#include "metrics.h"
 #include "run_helper.h"
 
 class AbstractNode;
@@ -27,6 +28,11 @@ public:
 	std::map<int, AbstractNode*> nodes;
 
 	Eval* eval;
+
+	#if defined(MDEBUG) && MDEBUG
+	void* verify_key;
+	std::vector<int> verify_scope_history_sizes;
+	#endif /* MDEBUG */
 
 	Scope();
 	~Scope();
@@ -50,7 +56,8 @@ public:
 							 RunHelper& run_helper,
 							 ScopeHistory* history);
 
-	void measure_activate(Problem* problem,
+	void measure_activate(Metrics& metrics,
+						  Problem* problem,
 						  std::vector<ContextLayer>& context,
 						  RunHelper& run_helper,
 						  ScopeHistory* history);

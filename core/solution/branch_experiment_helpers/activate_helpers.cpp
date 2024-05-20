@@ -388,15 +388,13 @@ bool BranchExperiment::activate(AbstractNode* experiment_node,
 	return false;
 }
 
-void BranchExperiment::backprop(int starting_num_actions,
-								EvalHistory* eval_history,
+void BranchExperiment::backprop(EvalHistory* eval_history,
 								Problem* problem,
 								vector<ContextLayer>& context,
 								RunHelper& run_helper) {
 	switch (this->state) {
 	case BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING:
-		train_existing_backprop(starting_num_actions,
-								eval_history,
+		train_existing_backprop(eval_history,
 								problem,
 								context,
 								run_helper);

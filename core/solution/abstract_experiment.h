@@ -65,8 +65,7 @@ public:
 						  Problem* problem,
 						  std::vector<ContextLayer>& context,
 						  RunHelper& run_helper) = 0;
-	virtual void backprop(int starting_num_actions,
-						  EvalHistory* eval_history,
+	virtual void backprop(EvalHistory* eval_history,
 						  Problem* problem,
 						  std::vector<ContextLayer>& context,
 						  RunHelper& run_helper) = 0;

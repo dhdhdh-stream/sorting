@@ -5,6 +5,7 @@
 #include "action_node.h"
 #include "branch_node.h"
 #include "eval.h"
+#include "globals.h"
 #include "info_branch_node.h"
 #include "info_scope_node.h"
 #include "scope_node.h"
@@ -13,6 +14,10 @@ using namespace std;
 
 Scope::Scope() {
 	this->id = -1;
+
+	#if defined(MDEBUG) && MDEBUG
+	this->verify_key = NULL;
+	#endif /* MDEBUG */
 }
 
 Scope::~Scope() {
@@ -29,6 +34,13 @@ void Scope::clear_verify() {
 			BranchNode* branch_node = (BranchNode*)it->second;
 			branch_node->clear_verify();
 		}
+	}
+
+	this->verify_key = NULL;
+	if (this->verify_scope_history_sizes.size() > 0) {
+		cout << "seed: " << seed << endl;
+
+		throw invalid_argument("new scope remaining verify");
 	}
 }
 #endif /* MDEBUG */

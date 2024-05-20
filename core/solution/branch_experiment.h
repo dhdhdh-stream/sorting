@@ -41,8 +41,6 @@ public:
 	double existing_average_score;
 	double existing_score_standard_deviation;
 
-	int existing_max_num_actions;
-
 	std::vector<std::vector<Scope*>> input_scope_contexts;
 	std::vector<std::vector<AbstractNode*>> input_node_contexts;
 	std::vector<int> input_obs_indexes;
@@ -110,16 +108,14 @@ public:
 				  Problem* problem,
 				  std::vector<ContextLayer>& context,
 				  RunHelper& run_helper);
-	void backprop(int starting_num_actions,
-				  EvalHistory* eval_history,
+	void backprop(EvalHistory* eval_history,
 				  Problem* problem,
 				  std::vector<ContextLayer>& context,
 				  RunHelper& run_helper);
 
 	void train_existing_activate(std::vector<ContextLayer>& context,
 								 RunHelper& run_helper);
-	void train_existing_backprop(int starting_num_actions,
-								 EvalHistory* eval_history,
+	void train_existing_backprop(EvalHistory* eval_history,
 								 Problem* problem,
 								 std::vector<ContextLayer>& context,
 								 RunHelper& run_helper);

@@ -32,7 +32,7 @@ void BranchExperiment::train_new_activate(
 	if (context.back().scope_history == run_helper.experiment_scope_history) {
 		this->scope_histories.push_back(new ScopeHistory(context.back().scope_history));
 
-		run_helper.num_actions_limit = MAX_NUM_ACTIONS_LIMIT_MULTIPLIER * this->existing_max_num_actions;
+		run_helper.num_actions_limit = MAX_NUM_ACTIONS_LIMIT_MULTIPLIER * solution->explore_scope_max_num_actions;
 
 		if (this->best_step_types.size() == 0) {
 			curr_node = this->best_exit_next_node;

@@ -61,10 +61,10 @@ int main(int argc, char* argv[]) {
 		delete root_history;
 
 		double target_val;
-		if (!run_helper.exceeded_limit) {
-			target_val = problem->score_result(run_helper.num_decisions);
-		} else {
+		if (run_helper.num_actions > solution->num_actions_limit) {
 			target_val = -1.0;
+		} else {
+			target_val = problem->score_result(run_helper.num_decisions);
 		}
 
 		sum_vals += target_val;

@@ -24,6 +24,12 @@ class Scope;
 const int EXPLORE_TYPE_SCORE = 0;
 const int EXPLORE_TYPE_EVAL = 1;
 
+#if defined(MDEBUG) && MDEBUG
+const int MEASURE_ITERS = 10;
+#else
+const int MEASURE_ITERS = 2000;
+#endif /* MDEBUG */
+
 class Solution {
 public:
 	int timestamp;
@@ -51,6 +57,8 @@ public:
 	 * - measure on measure
 	 */
 	double explore_average_instances_per_run;
+	int explore_scope_max_num_actions;
+	double explore_scope_local_average_num_actions;
 
 	#if defined(MDEBUG) && MDEBUG
 	void* verify_key;

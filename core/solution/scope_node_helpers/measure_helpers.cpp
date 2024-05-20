@@ -9,7 +9,8 @@
 
 using namespace std;
 
-void ScopeNode::measure_activate(AbstractNode*& curr_node,
+void ScopeNode::measure_activate(Metrics& metrics,
+								 AbstractNode*& curr_node,
 								 Problem* problem,
 								 vector<ContextLayer>& context,
 								 RunHelper& run_helper,
@@ -29,7 +30,8 @@ void ScopeNode::measure_activate(AbstractNode*& curr_node,
 	history->scope_history = scope_history;
 	context.back().scope_history = scope_history;
 
-	this->scope->measure_activate(problem,
+	this->scope->measure_activate(metrics,
+								  problem,
 								  context,
 								  run_helper,
 								  scope_history);

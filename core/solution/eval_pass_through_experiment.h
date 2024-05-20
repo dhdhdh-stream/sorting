@@ -35,8 +35,6 @@ public:
 	double existing_average_score;
 	double existing_score_standard_deviation;
 
-	double existing_num_actions;
-
 	double existing_score_average_misguess;
 	double existing_score_misguess_standard_deviation;
 	double existing_vs_average_misguess;
@@ -93,8 +91,7 @@ public:
 				  Problem* problem,
 				  std::vector<ContextLayer>& context,
 				  RunHelper& run_helper);
-	void backprop(int starting_num_actions,
-				  EvalHistory* eval_history,
+	void backprop(EvalHistory* eval_history,
 				  Problem* problem,
 				  std::vector<ContextLayer>& context,
 				  RunHelper& run_helper);

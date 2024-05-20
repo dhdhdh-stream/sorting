@@ -197,7 +197,7 @@ bool BranchExperiment::explore_activate(
 
 		curr_node = this->curr_exit_next_node;
 
-		run_helper.num_actions_limit = MAX_NUM_ACTIONS_LIMIT_MULTIPLIER * this->existing_max_num_actions;
+		run_helper.num_actions_limit = MAX_NUM_ACTIONS_LIMIT_MULTIPLIER * solution->explore_scope_max_num_actions;
 
 		return true;
 	}  else {

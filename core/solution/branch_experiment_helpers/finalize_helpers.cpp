@@ -384,16 +384,14 @@ void BranchExperiment::new_branch(Solution* duplicate) {
 	this->ending_node = NULL;
 
 	#if defined(MDEBUG) && MDEBUG
-	if (solution->state == SOLUTION_STATE_TRAVERSE) {
-		duplicate->verify_key = this;
-		duplicate->verify_problems = this->verify_problems;
-		this->verify_problems.clear();
-		duplicate->verify_seeds = this->verify_seeds;
+	duplicate->verify_key = this;
+	duplicate->verify_problems = this->verify_problems;
+	this->verify_problems.clear();
+	duplicate->verify_seeds = this->verify_seeds;
 
-		new_branch_node->verify_key = this;
-		new_branch_node->verify_original_scores = this->verify_original_scores;
-		new_branch_node->verify_branch_scores = this->verify_branch_scores;
-	}
+	new_branch_node->verify_key = this;
+	new_branch_node->verify_original_scores = this->verify_original_scores;
+	new_branch_node->verify_branch_scores = this->verify_branch_scores;
 	#endif /* MDEBUG */
 }
 

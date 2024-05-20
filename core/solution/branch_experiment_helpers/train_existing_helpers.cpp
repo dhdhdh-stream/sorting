@@ -32,16 +32,10 @@ void BranchExperiment::train_existing_activate(
 }
 
 void BranchExperiment::train_existing_backprop(
-		int starting_num_actions,
 		EvalHistory* eval_history,
 		Problem* problem,
 		vector<ContextLayer>& context,
 		RunHelper& run_helper) {
-	int num_actions = run_helper.num_actions - starting_num_actions;
-	if (num_actions > this->existing_max_num_actions) {
-		this->existing_max_num_actions = num_actions;
-	}
-
 	this->scope_context->eval->activate(problem,
 										run_helper,
 										eval_history->end_scope_history);

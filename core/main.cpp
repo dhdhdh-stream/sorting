@@ -96,27 +96,30 @@ int main(int argc, char* argv[]) {
 		delete problem;
 
 		if (run_helper.success_duplicate != NULL) {
+			Solution* duplicate = run_helper.success_duplicate;
+			run_helper.success_duplicate = NULL;
+
 			#if defined(MDEBUG) && MDEBUG
-			while (run_helper.success_duplicate->verify_problems.size() > 0) {
-				Problem* problem = run_helper.success_duplicate->verify_problems[0];
+			while (duplicate->verify_problems.size() > 0) {
+				Problem* problem = duplicate->verify_problems[0];
 
 				RunHelper run_helper;
-				run_helper.verify_key = run_helper.success_duplicate->verify_key;
+				run_helper.verify_key = duplicate->verify_key;
 
-				run_helper.curr_run_seed = run_helper.success_duplicate->verify_seeds[0];
+				run_helper.curr_run_seed = duplicate->verify_seeds[0];
 				cout << "run_helper.curr_run_seed: " << run_helper.curr_run_seed << endl;
-				run_helper.success_duplicate->verify_seeds.erase(run_helper.success_duplicate->verify_seeds.begin());
+				duplicate->verify_seeds.erase(duplicate->verify_seeds.begin());
 
 				vector<ContextLayer> context;
 				context.push_back(ContextLayer());
 
-				context.back().scope = run_helper.success_duplicate->scopes[this->id];
+				context.back().scope = duplicate->scopes[this->id];
 				context.back().node = NULL;
 
-				ScopeHistory* root_history = new ScopeHistory(run_helper.success_duplicate->scopes[this->id]);
+				ScopeHistory* root_history = new ScopeHistory(duplicate->scopes[this->id]);
 				context.back().scope_history = root_history;
 
-				run_helper.success_duplicate->scopes[this->id]->verify_activate(
+				duplicate->scopes[this->id]->verify_activate(
 					problem,
 					context,
 					run_helper,
@@ -124,27 +127,92 @@ int main(int argc, char* argv[]) {
 
 				delete root_history;
 
-				delete run_helper.success_duplicate->verify_problems[0];
-				run_helper.success_duplicate->verify_problems.erase(run_helper.success_duplicate->verify_problems.begin());
+				delete duplicate->verify_problems[0];
+				duplicate->verify_problems.erase(duplicate->verify_problems.begin());
 			}
-			run_helper.success_duplicate->clear_verify();
+			duplicate->clear_verify();
+			#endif /* MDEBUG */
 
-			run_helper.success_duplicate->increment();
+			double sum_vals = 0.0;
+			double sum_timestamp_score = 0.0;
+			int timestamp_score_count = 0;
+			double sum_instances_per_run = 0;
+			double sum_local_num_actions = 0.0;
+			for (int i_index = 0; i_index < MEASURE_ITERS; i_index++) {
+				// Problem* problem = new Sorting();
+				Problem* problem = new Minesweeper();
 
-			run_helper.success_duplicate->average_num_actions = run_helper.success_duplicate->max_num_actions;
+				RunHelper run_helper;
+				Metrics metrics(solution->explore_id,
+								solution->explore_type,
+								duplicate->explore_id,
+								duplicate->explore_type);
 
+				vector<ContextLayer> context;
+				context.push_back(ContextLayer());
+
+				context.back().scope = duplicate->scopes[0];
+				context.back().node = NULL;
+
+				ScopeHistory* root_history = new ScopeHistory(duplicate->scopes[0]);
+				context.back().scope_history = root_history;
+
+				duplicate->scopes[0]->measure_activate(
+					metrics,
+					problem,
+					context,
+					run_helper,
+					root_history);
+
+				delete root_history;
+
+				double target_val;
+				if (run_helper.num_actions > duplicate->num_actions_limit) {
+					target_val = -1.0;
+				} else {
+					target_val = problem->score_result(run_helper.num_decisions);
+				}
+
+				sum_vals += target_val;
+				if (solution->explore_type == EXPLORE_TYPE_SCORE) {
+					sum_timestamp_score += target_val;
+					timestamp_score_count++;
+				} else {
+					for (int p_index = 0; p_index < (int)metrics.curr_predicted_scores.size(); p_index++) {
+						double misguess = (target_val - metrics.curr_predicted_scores[p_index]) * (target_val - metrics.curr_predicted_scores[p_index]);
+						sum_timestamp_score -= misguess;
+						timestamp_score_count++;
+					}
+				}
+				if (run_helper.num_actions > duplicate->max_num_actions) {
+					duplicate->max_num_actions = run_helper.num_actions;
+				}
+				sum_instances_per_run += metrics.next_num_instances;
+				if (metrics.next_max_num_actions > duplicate->explore_scope_max_num_actions) {
+					duplicate->explore_scope_max_num_actions = metrics.next_max_num_actions;
+				}
+				sum_local_num_actions += metrics.next_local_sum_num_actions;
+
+				delete problem;
+			}
+			duplicate->timestamp_score = sum_timestamp_score / timestamp_score_count;
+			duplicate->curr_average_score = sum_vals / MEASURE_ITERS;
+			duplicate->explore_average_instances_per_run = (double)sum_instances_per_run / (double)MEASURE_ITERS;
+			duplicate->explore_scope_local_average_num_actions = sum_local_num_actions / sum_instances_per_run;
+
+			#if defined(MDEBUG) && MDEBUG
 			delete solution;
-			solution = run_helper.success_duplicate;
+			solution = duplicate;
 
-			run_helper.success_duplicate->timestamp++;
-			run_helper.success_duplicate->save("", "main");
+			solution->timestamp++;
+			solution->save("", "main");
 
 			ofstream display_file;
 			display_file.open("../display.txt");
-			run_helper.success_duplicate->save_for_display(display_file);
+			solution->save_for_display(display_file);
 			display_file.close();
 			#else
-			delete run_helper.success_duplicate;
+			delete duplicate;
 			#endif /* MDEBUG */
 		}
 

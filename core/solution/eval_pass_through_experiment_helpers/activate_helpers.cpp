@@ -33,8 +33,7 @@ bool EvalPassThroughExperiment::activate(AbstractNode* experiment_node,
 	}
 }
 
-void EvalPassThroughExperiment::backprop(int starting_num_actions,
-										 EvalHistory* eval_history,
+void EvalPassThroughExperiment::backprop(EvalHistory* eval_history,
 										 Problem* problem,
 										 vector<ContextLayer>& context,
 										 RunHelper& run_helper) {

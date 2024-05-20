@@ -9,6 +9,7 @@
 
 #include "abstract_node.h"
 #include "context_layer.h"
+#include "metrics.h"
 #include "run_helper.h"
 
 class Problem;
@@ -44,7 +45,8 @@ public:
 							 RunHelper& run_helper,
 							 std::map<AbstractNode*, AbstractNodeHistory*>& node_histories);
 
-	void measure_activate(AbstractNode*& curr_node,
+	void measure_activate(Metrics& metrics,
+						  AbstractNode*& curr_node,
 						  Problem* problem,
 						  std::vector<ContextLayer>& context,
 						  RunHelper& run_helper,

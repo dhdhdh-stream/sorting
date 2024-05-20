@@ -178,9 +178,9 @@ void create_experiment(ScopeHistory* root_history) {
 	int rand_index = possible_distribution(generator);
 
 	if (possible_info_scope_contexts[rand_index] == NULL) {
-		uniform_int_distribution<int> expensive_distribution(0, 2);
+		uniform_int_distribution<int> expensive_distribution(0, 9);
 		if (expensive_distribution(generator) == 0) {
-			uniform_int_distribution<int> type_distribution(0, 2);
+			uniform_int_distribution<int> type_distribution(0, 1);
 			switch (type_distribution(generator)) {
 			case 0:
 				{
@@ -204,32 +204,35 @@ void create_experiment(ScopeHistory* root_history) {
 					possible_node_contexts[rand_index]->experiments.push_back(new_experiment);
 				}
 				break;
-			case 2:
+			}
+		} else {
+			uniform_int_distribution<int> pass_through_distribution(0, 3);
+			if (pass_through_distribution(generator) == 0) {
 				#if defined(MDEBUG) && MDEBUG
 				if (possible_scope_contexts[rand_index]->nodes.size() > 10) {
 				#else
 				if (possible_scope_contexts[rand_index]->nodes.size() > 20) {
 				#endif /* MDEBUG */
-					// NewActionExperiment* new_action_experiment = new NewActionExperiment(
-					// 	possible_scope_contexts[rand_index],
-					// 	possible_node_contexts[rand_index],
-					// 	possible_is_branch[rand_index]);
+					NewActionExperiment* new_action_experiment = new NewActionExperiment(
+						possible_scope_contexts[rand_index],
+						possible_node_contexts[rand_index],
+						possible_is_branch[rand_index]);
 
-					// if (new_action_experiment->result == EXPERIMENT_RESULT_FAIL) {
-					// 	delete new_action_experiment;
-					// } else {
-					// 	possible_node_contexts[rand_index]->experiments.push_back(new_action_experiment);
-					// }
+					if (new_action_experiment->result == EXPERIMENT_RESULT_FAIL) {
+						delete new_action_experiment;
+					} else {
+						possible_node_contexts[rand_index]->experiments.push_back(new_action_experiment);
+					}
 				}
-			}
-		} else {
-			// PassThroughExperiment* new_experiment = new PassThroughExperiment(
-			// 	possible_scope_contexts[rand_index],
-			// 	possible_node_contexts[rand_index],
-			// 	possible_is_branch[rand_index],
-			// 	NULL);
+			} else {
+				// PassThroughExperiment* new_experiment = new PassThroughExperiment(
+				// 	possible_scope_contexts[rand_index],
+				// 	possible_node_contexts[rand_index],
+				// 	possible_is_branch[rand_index],
+				// 	NULL);
 
-			// possible_node_contexts[rand_index]->experiments.push_back(new_experiment);
+				// possible_node_contexts[rand_index]->experiments.push_back(new_experiment);
+			}
 		}
 	} else {
 		// InfoPassThroughExperiment* new_experiment = new InfoPassThroughExperiment(

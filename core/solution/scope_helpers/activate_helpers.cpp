@@ -107,15 +107,11 @@ void Scope::activate(Problem* problem,
 		run_helper.experiment_scope_history = history;
 
 		EvalHistory* eval_history = new EvalHistory(this->eval);
-		int starting_num_actions;
-		uniform_int_distribution<int> random_distribution;
 		int num_actions_until_random = -1;
 		if (solution->explore_type == EXPLORE_TYPE_SCORE) {
 			this->eval->activate(problem,
 								 run_helper,
 								 eval_history->start_scope_history);
-
-			starting_num_actions = run_helper.num_actions;
 		} else {
 			if (this->eval->experiment != NULL) {
 				this->eval->experiment = new EvalPassThroughExperiment(this->eval);
@@ -137,14 +133,12 @@ void Scope::activate(Problem* problem,
 					experiment_history->outer_eval_history->start_scope_history);
 			}
 
-			starting_num_actions = run_helper.num_actions;
-
 			if (eval_pass_through_experiment->state != EVAL_PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING_SCORE) {
 				this->eval->activate(problem,
 									 run_helper,
 									 eval_history->start_scope_history);
 
-				random_distribution = uniform_int_distribution<int>(0, 2*(int)(eval_pass_through_experiment->existing_num_actions));
+				uniform_int_distribution<int> random_distribution = uniform_int_distribution<int>(0, 2*(int)(solution->explore_scope_local_average_num_actions));
 				num_actions_until_random = random_distribution(generator);
 			}
 		}
@@ -163,6 +157,7 @@ void Scope::activate(Problem* problem,
 									context,
 									run_helper);
 
+					uniform_int_distribution<int> random_distribution = uniform_int_distribution<int>(0, 2*(int)(solution->explore_scope_local_average_num_actions));
 					num_actions_until_random = random_distribution(generator);
 				}
 			}
@@ -224,7 +219,6 @@ void Scope::activate(Problem* problem,
 				}
 
 				history->experiment_histories.back()->experiment->backprop(
-					starting_num_actions,
 					eval_history,
 					problem,
 					context,

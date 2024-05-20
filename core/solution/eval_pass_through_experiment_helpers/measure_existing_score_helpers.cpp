@@ -34,8 +34,6 @@ void EvalPassThroughExperiment::measure_existing_score_backprop(
 
 	this->target_val_histories.push_back(target_val);
 
-	this->existing_num_actions += (int)run_helper.experiment_scope_history->node_histories.size();
-
 	if ((int)this->target_val_histories.size() >= NUM_DATAPOINTS) {
 		double sum_scores = 0.0;
 		for (int d_index = 0; d_index < NUM_DATAPOINTS; d_index++) {

@@ -13,7 +13,7 @@
 using namespace std;
 
 ScopeNode* create_existing() {
-	uniform_int_distribution<int> possible_distribution(0, solution->scopes.size() + problem_type->num_possible_actions() - 1);
+	uniform_int_distribution<int> possible_distribution(1, solution->scopes.size() + problem_type->num_possible_actions() - 1);
 	int possible_index = possible_distribution(generator);
 	if (possible_index < (int)solution->scopes.size()) {
 		ScopeNode* new_scope_node = new ScopeNode();
@@ -26,8 +26,8 @@ ScopeNode* create_existing() {
 }
 
 InfoScope* get_existing_info_scope() {
-	uniform_int_distribution<int> null_distribution(0, 1);
-	if (null_distribution(generator) == 0) {
+	uniform_int_distribution<int> non_null_distribution(0, 4);
+	if (!null_distribution(generator) == 0) {
 		return NULL;
 	} else {
 		vector<InfoScope*> possible_info_scopes;

@@ -53,8 +53,13 @@ Solution::Solution(Solution* original) {
 
 	uniform_int_distribution<int> explore_id_distribution(0, (int)solution->scopes.size()-1);
 	this->explore_id = explore_id_distribution(generator);
-	uniform_int_distribution<int> explore_type_distribution(0, 1);
-	this->explore_type = explore_type_distribution(generator);
+	if (this->scopes[this->explore_id]->eval->score_input_node_contexts.size() == 0) {
+		this->explore_type = EXPLORE_TYPE_EVAL;
+	} else {
+		uniform_int_distribution<int> explore_type_distribution(0, 1);
+		this->explore_type = explore_type_distribution(generator);
+	}
+	this->explore_scope_max_num_actions = 1;
 }
 
 Solution::~Solution() {
@@ -90,6 +95,12 @@ void Solution::init() {
 
 	this->max_num_actions = 1;
 	this->num_actions_limit = 40;
+
+	this->explore_id = 0;
+	this->explore_type = EXPLORE_TYPE_EVAL;
+	this->explore_average_instances_per_run = 1.0;
+	this->explore_scope_max_num_actions = 1;
+	this->explore_scope_local_average_num_actions = 1.0;
 }
 
 void Solution::load(string path,
@@ -148,6 +159,26 @@ void Solution::load(string path,
 
 	this->num_actions_limit = 20*this->max_num_actions + 20;
 
+	string explore_id_line;
+	getline(input_file, explore_id_line);
+	this->explore_id = stoi(explore_id_line);
+
+	string explore_type_line;
+	getline(input_file, explore_type_line);
+	this->explore_type = stoi(explore_type_line);
+
+	string explore_average_instances_per_run_line;
+	getline(input_file, explore_average_instances_per_run_line);
+	this->explore_average_instances_per_run = stod(explore_average_instances_per_run_line);
+
+	string explore_scope_max_num_actions_line;
+	getline(input_file, explore_scope_max_num_actions_line);
+	this->explore_scope_max_num_actions = stoi(explore_scope_max_num_actions_line);
+
+	string explore_scope_local_average_num_actions_line;
+	getline(input_file, explore_scope_local_average_num_actions_line);
+	this->explore_scope_local_average_num_actions = stod(explore_scope_local_average_num_actions_line);
+
 	input_file.close();
 }
 
@@ -187,6 +218,12 @@ void Solution::save(string path,
 	output_file << this->curr_average_score << endl;
 
 	output_file << this->max_num_actions << endl;
+
+	output_file << this->explore_id << endl;
+	output_file << this->explore_type << endl;
+	output_file << this->explore_average_instances_per_run << endl;
+	output_file << this->explore_scope_max_num_actions << endl;
+	output_file << this->explore_scope_local_average_num_actions << endl;
 
 	output_file.close();
 
