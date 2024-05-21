@@ -8,6 +8,10 @@
  * - run eval both at start and at end
  *   - to account for different possible starting points
  *     - greatly reducing variance
+ * 
+ * - eval is if completely stopped
+ *   - instead of if continue as normal which negates/destroys factors
+ *     - i.e., solution does something good, with a good signal - but not if compared to itself
  */
 
 #ifndef EVAL_H

@@ -81,7 +81,6 @@ int main(int argc, char* argv[]) {
 			while (true) {
 				double sum_timestamp_score = 0.0;
 				int timestamp_score_count = 0;
-				double sum_vals = 0.0;
 				double sum_instances_per_run = 0;
 				double sum_local_num_actions = 0.0;
 				int num_runs = 0;
@@ -113,16 +112,8 @@ int main(int argc, char* argv[]) {
 
 					delete root_history;
 
-					double target_val;
-					if (run_helper.num_actions > solution->num_actions_limit) {
-						target_val = -1.0;
-					} else {
-						target_val = problem->score_result(run_helper.num_decisions);
-					}
-
 					sum_timestamp_score += metrics.curr_sum_timestamp_score;
 					timestamp_score_count += metrics.curr_num_instances;
-					sum_vals += target_val;
 					if (run_helper.num_actions > duplicate->max_num_actions) {
 						duplicate->max_num_actions = run_helper.num_actions;
 					}
@@ -142,7 +133,6 @@ int main(int argc, char* argv[]) {
 
 				if (sum_instances_per_run > 0) {
 					duplicate->timestamp_score = sum_timestamp_score / timestamp_score_count;
-					duplicate->curr_average_score = sum_vals / num_runs;
 					duplicate->explore_average_instances_per_run = (double)sum_instances_per_run / (double)num_runs;
 					duplicate->explore_scope_local_average_num_actions = sum_local_num_actions / sum_instances_per_run;
 

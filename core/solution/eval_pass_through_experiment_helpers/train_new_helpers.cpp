@@ -63,13 +63,15 @@ void EvalPassThroughExperiment::train_new_backprop(
 
 	double starting_target_val;
 	if (context.size() == 1) {
-		starting_target_val = solution->curr_average_score;
+		/**
+		 * TODO: set to score if no actions were performed
+		 */
+		starting_target_val = 1.0;
 	} else {
 		starting_target_val = context[context.size()-2].scope->eval->calc_score(
 			run_helper,
 			history->outer_eval_history->start_scope_history);
 	}
-	this->start_target_val_histories.push_back(starting_target_val);
 
 	this->start_scope_histories.push_back(new ScopeHistory(eval_history->start_scope_history));
 
@@ -90,12 +92,11 @@ void EvalPassThroughExperiment::train_new_backprop(
 			history->outer_eval_history);
 		ending_target_val = starting_target_val + ending_target_vs;
 	}
-
 	this->end_target_val_histories.push_back(ending_target_val);
 
 	this->end_scope_histories.push_back(new ScopeHistory(eval_history->end_scope_history));
 
-	if ((int)this->start_target_val_histories.size() >= NUM_DATAPOINTS) {
+	if ((int)this->start_scope_histories.size() >= NUM_DATAPOINTS) {
 		train_score();
 
 		train_vs();
@@ -104,7 +105,6 @@ void EvalPassThroughExperiment::train_new_backprop(
 			delete this->start_scope_histories[i_index];
 		}
 		this->start_scope_histories.clear();
-		this->start_target_val_histories.clear();
 		for (int i_index = 0; i_index < (int)this->end_scope_histories.size(); i_index++) {
 			delete this->end_scope_histories[i_index];
 		}

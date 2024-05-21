@@ -157,9 +157,7 @@ void Scope::activate(Problem* problem,
 									problem,
 									context,
 									run_helper);
-
-					uniform_int_distribution<int> random_distribution = uniform_int_distribution<int>(0, 2*(int)(solution->explore_scope_local_average_num_actions));
-					num_actions_until_random = random_distribution(generator);
+					break;
 				}
 			}
 

@@ -77,7 +77,6 @@ public:
 	std::vector<double> vs_misguess_histories;
 
 	std::vector<ScopeHistory*> start_scope_histories;
-	std::vector<double> start_target_val_histories;
 	std::vector<ScopeHistory*> end_scope_histories;
 	std::vector<double> end_target_val_histories;
 

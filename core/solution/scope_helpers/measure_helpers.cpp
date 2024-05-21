@@ -132,7 +132,7 @@ void Scope::measure_activate(Metrics& metrics,
 			EvalHistory* outer_eval_history;
 			double starting_target_val;
 			if (context.size() == 1) {
-				starting_target_val = solution->curr_average_score;
+				starting_target_val = 1.0;
 			} else {
 				outer_eval_history = new EvalHistory(context[context.size()-2].scope->eval);
 				context[context.size()-2].scope->eval->activate(
@@ -152,9 +152,6 @@ void Scope::measure_activate(Metrics& metrics,
 				run_helper,
 				eval_history->start_scope_history);
 
-			double starting_misguess = (starting_target_val - starting_predicted_score) * (starting_target_val - starting_predicted_score);
-			metrics.curr_sum_timestamp_score -= starting_misguess;
-
 			uniform_int_distribution<int> random_distribution = uniform_int_distribution<int>(0, 2*(int)(solution->explore_scope_local_average_num_actions));
 			int num_actions_until_random = random_distribution(generator);
 
@@ -171,9 +168,7 @@ void Scope::measure_activate(Metrics& metrics,
 										problem,
 										context,
 										run_helper);
-
-						uniform_int_distribution<int> random_distribution = uniform_int_distribution<int>(0, 2*(int)(solution->explore_scope_local_average_num_actions));
-						num_actions_until_random = random_distribution(generator);
+						break;
 					}
 				}
 

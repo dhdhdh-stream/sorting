@@ -46,8 +46,6 @@ Solution::Solution(Solution* original) {
 		this->info_scopes[i_index]->link(this);
 	}
 
-	this->curr_average_score = original->curr_average_score;
-
 	this->max_num_actions = original->max_num_actions;
 	this->num_actions_limit = original->num_actions_limit;
 
@@ -96,8 +94,6 @@ void Solution::init() {
 
 	new_scope->eval = new Eval(new_scope);
 	new_scope->eval->init();
-
-	this->curr_average_score = 1.0;
 
 	this->max_num_actions = 1;
 	this->num_actions_limit = 40;
@@ -154,10 +150,6 @@ void Solution::load(string path,
 	for (int i_index = 0; i_index < (int)this->info_scopes.size(); i_index++) {
 		this->info_scopes[i_index]->link(this);
 	}
-
-	string curr_average_score_line;
-	getline(input_file, curr_average_score_line);
-	this->curr_average_score = stod(curr_average_score_line);
 
 	string max_num_actions_line;
 	getline(input_file, max_num_actions_line);
@@ -220,8 +212,6 @@ void Solution::save(string path,
 	for (int i_index = 0; i_index < (int)this->info_scopes.size(); i_index++) {
 		this->info_scopes[i_index]->save(output_file);
 	}
-
-	output_file << this->curr_average_score << endl;
 
 	output_file << this->max_num_actions << endl;
 

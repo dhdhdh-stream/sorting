@@ -74,7 +74,7 @@ void EvalPassThroughExperiment::explore_backprop(
 
 	double target_val;
 	if (context.size() == 1) {
-		double starting_score = solution->curr_average_score;
+		double starting_score = 1.0;
 		double ending_score = problem->score_result(run_helper.num_decisions);
 		target_val = ending_score - starting_score;
 	} else {
@@ -302,7 +302,6 @@ void EvalPassThroughExperiment::explore_backprop(
 			}
 
 			this->start_scope_histories.reserve(NUM_DATAPOINTS);
-			this->start_target_val_histories.reserve(NUM_DATAPOINTS);
 			this->end_scope_histories.reserve(NUM_DATAPOINTS);
 			this->end_target_val_histories.reserve(NUM_DATAPOINTS);
 

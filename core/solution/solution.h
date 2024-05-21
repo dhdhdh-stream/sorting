@@ -38,8 +38,6 @@ public:
 	std::vector<Scope*> scopes;
 	std::vector<InfoScope*> info_scopes;
 
-	double curr_average_score;
-
 	/**
 	 * - final overall fallback to prevent infinite loops
 	 *   - mainly prevent locally through experiments

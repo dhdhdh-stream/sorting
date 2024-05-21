@@ -66,7 +66,7 @@ void EvalPassThroughExperiment::measure_backprop(
 
 	double starting_target_val;
 	if (context.size() == 1) {
-		starting_target_val = solution->curr_average_score;
+		starting_target_val = 1.0;
 	} else {
 		starting_target_val = context[context.size()-2].scope->eval->calc_score(
 			run_helper,
@@ -137,9 +137,6 @@ void EvalPassThroughExperiment::measure_backprop(
 			starting_predicted_score += this->score_network->output->acti_vals[0];
 		}
 	}
-
-	double starting_misguess = (starting_target_val - starting_predicted_score) * (starting_target_val - starting_predicted_score);
-	this->score_misguess_histories.push_back(starting_misguess);
 
 	this->eval_context->activate(problem,
 								 run_helper,

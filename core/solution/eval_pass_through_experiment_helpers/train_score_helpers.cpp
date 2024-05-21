@@ -19,21 +19,11 @@
 using namespace std;
 
 void EvalPassThroughExperiment::train_score() {
-	vector<double> combined_target_val_histories;
-	vector<ScopeHistory*> combined_scope_histories;
-	for (int d_index = 0; d_index < NUM_DATAPOINTS; d_index++) {
-		combined_target_val_histories.push_back(this->start_target_val_histories[d_index]);
-		combined_scope_histories.push_back(this->start_scope_histories[d_index]);
-
-		combined_target_val_histories.push_back(this->end_target_val_histories[d_index]);
-		combined_scope_histories.push_back(this->end_scope_histories[d_index]);
-	}
-
 	double sum_scores = 0.0;
-	for (int d_index = 0; d_index < 2 * NUM_DATAPOINTS; d_index++) {
-		sum_scores += combined_target_val_histories[d_index];
+	for (int d_index = 0; d_index < NUM_DATAPOINTS; d_index++) {
+		sum_scores += this->end_target_val_histories[d_index];
 	}
-	this->score_average_score = sum_scores / (2 * NUM_DATAPOINTS);
+	this->score_average_score = sum_scores / NUM_DATAPOINTS;
 
 	vector<vector<Scope*>> possible_scope_contexts;
 	vector<vector<AbstractNode*>> possible_node_contexts;
@@ -41,13 +31,12 @@ void EvalPassThroughExperiment::train_score() {
 
 	vector<Scope*> scope_context;
 	vector<AbstractNode*> node_context;
-	uniform_int_distribution<int> history_distribution(0, 2 * NUM_DATAPOINTS - 1);
 	gather_possible_helper(scope_context,
 						   node_context,
 						   possible_scope_contexts,
 						   possible_node_contexts,
 						   possible_obs_indexes,
-						   combined_scope_histories[history_distribution(generator)]);
+						   this->end_scope_histories.back());
 
 	int num_obs = min(LINEAR_NUM_OBS, (int)possible_node_contexts.size());
 	{
@@ -76,13 +65,13 @@ void EvalPassThroughExperiment::train_score() {
 		}
 	}
 
-	Eigen::MatrixXd inputs(2 * NUM_DATAPOINTS, this->score_input_node_contexts.size());
+	Eigen::MatrixXd inputs(NUM_DATAPOINTS, this->score_input_node_contexts.size());
 
-	for (int d_index = 0; d_index < 2 * NUM_DATAPOINTS; d_index++) {
+	for (int d_index = 0; d_index < NUM_DATAPOINTS; d_index++) {
 		for (int i_index = 0; i_index < (int)this->score_input_node_contexts.size(); i_index++) {
-			map<AbstractNode*, AbstractNodeHistory*>::iterator it = combined_scope_histories[d_index]->node_histories.find(
+			map<AbstractNode*, AbstractNodeHistory*>::iterator it = this->end_scope_histories[d_index]->node_histories.find(
 				this->score_input_node_contexts[i_index]);
-			if (it == combined_scope_histories[d_index]->node_histories.end()) {
+			if (it == this->end_scope_histories[d_index]->node_histories.end()) {
 				inputs(d_index, i_index) = 0.0;
 			} else {
 				switch (this->score_input_node_contexts[i_index]->type) {
@@ -117,9 +106,9 @@ void EvalPassThroughExperiment::train_score() {
 		}
 	}
 
-	Eigen::VectorXd outputs(2 * NUM_DATAPOINTS);
-	for (int d_index = 0; d_index < 2 * NUM_DATAPOINTS; d_index++) {
-		outputs(d_index) = combined_target_val_histories[d_index] - this->score_average_score;
+	Eigen::VectorXd outputs(NUM_DATAPOINTS);
+	for (int d_index = 0; d_index < NUM_DATAPOINTS; d_index++) {
+		outputs(d_index) = this->end_target_val_histories[d_index] - this->score_average_score;
 	}
 
 	Eigen::VectorXd weights;
@@ -135,10 +124,10 @@ void EvalPassThroughExperiment::train_score() {
 	this->score_linear_weights = vector<double>(this->score_input_node_contexts.size());
 	for (int i_index = 0; i_index < (int)this->score_input_node_contexts.size(); i_index++) {
 		double sum_impact_size = 0.0;
-		for (int d_index = 0; d_index < 2 * NUM_DATAPOINTS; d_index++) {
+		for (int d_index = 0; d_index < NUM_DATAPOINTS; d_index++) {
 			sum_impact_size += abs(inputs(d_index, i_index));
 		}
-		double average_impact = sum_impact_size / (2 * NUM_DATAPOINTS);
+		double average_impact = sum_impact_size / NUM_DATAPOINTS;
 		if (abs(weights(i_index)) * average_impact < WEIGHT_MIN_SCORE_IMPACT * this->existing_score_standard_deviation
 				|| abs(weights(i_index)) > LINEAR_MAX_WEIGHT) {
 			weights(i_index) = 0.0;
@@ -150,13 +139,13 @@ void EvalPassThroughExperiment::train_score() {
 
 	Eigen::VectorXd predicted_scores = inputs * weights;
 	Eigen::VectorXd diffs = outputs - predicted_scores;
-	vector<double> network_target_vals(2 * NUM_DATAPOINTS);
-	for (int d_index = 0; d_index < 2 * NUM_DATAPOINTS; d_index++) {
+	vector<double> network_target_vals(NUM_DATAPOINTS);
+	for (int d_index = 0; d_index < NUM_DATAPOINTS; d_index++) {
 		network_target_vals[d_index] = diffs(d_index);
 	}
 
-	vector<vector<vector<double>>> network_inputs(2 * NUM_DATAPOINTS);
-	for (int d_index = 0; d_index < 2 * NUM_DATAPOINTS; d_index++) {
+	vector<vector<vector<double>>> network_inputs(NUM_DATAPOINTS);
+	for (int d_index = 0; d_index < NUM_DATAPOINTS; d_index++) {
 		vector<vector<double>> network_input_vals(this->score_network_input_indexes.size());
 		for (int i_index = 0; i_index < (int)this->score_network_input_indexes.size(); i_index++) {
 			network_input_vals[i_index] = vector<double>(this->score_network_input_indexes[i_index].size());
@@ -168,22 +157,22 @@ void EvalPassThroughExperiment::train_score() {
 	}
 
 	if (this->score_network == NULL) {
-		vector<double> misguesses(2 * NUM_DATAPOINTS);
-		for (int d_index = 0; d_index < 2 * NUM_DATAPOINTS; d_index++) {
+		vector<double> misguesses(NUM_DATAPOINTS);
+		for (int d_index = 0; d_index < NUM_DATAPOINTS; d_index++) {
 			misguesses[d_index] = diffs(d_index) * diffs(d_index);
 		}
 
 		double sum_misguesses = 0.0;
-		for (int d_index = 0; d_index < 2 * NUM_DATAPOINTS; d_index++) {
+		for (int d_index = 0; d_index < NUM_DATAPOINTS; d_index++) {
 			sum_misguesses += misguesses[d_index];
 		}
-		this->score_network_average_misguess = sum_misguesses / (2 * NUM_DATAPOINTS);
+		this->score_network_average_misguess = sum_misguesses / NUM_DATAPOINTS;
 
 		double sum_misguess_variances = 0.0;
-		for (int d_index = 0; d_index < 2 * NUM_DATAPOINTS; d_index++) {
+		for (int d_index = 0; d_index < NUM_DATAPOINTS; d_index++) {
 			sum_misguess_variances += (misguesses[d_index] - this->score_network_average_misguess) * (misguesses[d_index] - this->score_network_average_misguess);
 		}
-		this->score_network_misguess_standard_deviation = sqrt(sum_misguess_variances / (2 * NUM_DATAPOINTS));
+		this->score_network_misguess_standard_deviation = sqrt(sum_misguess_variances / NUM_DATAPOINTS);
 		if (this->score_network_misguess_standard_deviation < MIN_STANDARD_DEVIATION) {
 			this->score_network_misguess_standard_deviation = MIN_STANDARD_DEVIATION;
 		}
@@ -212,13 +201,13 @@ void EvalPassThroughExperiment::train_score() {
 
 		vector<Scope*> scope_context;
 		vector<AbstractNode*> node_context;
-		uniform_int_distribution<int> history_distribution(0, 2 * NUM_DATAPOINTS - 1);
+		uniform_int_distribution<int> history_distribution(0, NUM_DATAPOINTS - 1);
 		gather_possible_helper(scope_context,
 							   node_context,
 							   possible_scope_contexts,
 							   possible_node_contexts,
 							   possible_obs_indexes,
-							   combined_scope_histories[history_distribution(generator)]);
+							   this->end_scope_histories[history_distribution(generator)]);
 
 		int num_new_input_indexes = min(NETWORK_INCREMENT_NUM_NEW, (int)possible_scope_contexts.size());
 		vector<vector<Scope*>> test_network_input_scope_contexts;
@@ -255,12 +244,12 @@ void EvalPassThroughExperiment::train_score() {
 			}
 		}
 
-		for (int d_index = 0; d_index < 2 * NUM_DATAPOINTS; d_index++) {
+		for (int d_index = 0; d_index < NUM_DATAPOINTS; d_index++) {
 			vector<double> test_input_vals(num_new_input_indexes, 0.0);
 			for (int t_index = 0; t_index < num_new_input_indexes; t_index++) {
-				map<AbstractNode*, AbstractNodeHistory*>::iterator it = combined_scope_histories[d_index]->node_histories.find(
+				map<AbstractNode*, AbstractNodeHistory*>::iterator it = this->end_scope_histories[d_index]->node_histories.find(
 					test_network_input_node_contexts[t_index].back());
-				if (it != combined_scope_histories[d_index]->node_histories.end()) {
+				if (it != this->end_scope_histories[d_index]->node_histories.end()) {
 					switch (test_network_input_node_contexts[t_index].back()->type) {
 					case NODE_TYPE_ACTION:
 						{
@@ -314,7 +303,7 @@ void EvalPassThroughExperiment::train_score() {
 		#else
 		double improvement = this->score_network_average_misguess - average_misguess;
 		double standard_deviation = min(this->score_network_misguess_standard_deviation, misguess_standard_deviation);
-		double t_score = improvement / (standard_deviation / sqrt(2 * NUM_DATAPOINTS * TEST_SAMPLES_PERCENTAGE));
+		double t_score = improvement / (standard_deviation / sqrt(NUM_DATAPOINTS * TEST_SAMPLES_PERCENTAGE));
 
 		if (t_score > 1.645) {
 		#endif /* MDEBUG */
@@ -365,7 +354,7 @@ void EvalPassThroughExperiment::train_score() {
 		} else {
 			delete test_network;
 
-			for (int d_index = 0; d_index < 2 * NUM_DATAPOINTS; d_index++) {
+			for (int d_index = 0; d_index < NUM_DATAPOINTS; d_index++) {
 				network_inputs[d_index].pop_back();
 			}
 

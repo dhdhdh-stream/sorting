@@ -25,7 +25,7 @@ void EvalPassThroughExperiment::measure_existing_backprop(
 
 	double starting_target_val;
 	if (context.size() == 1) {
-		starting_target_val = solution->curr_average_score;
+		starting_target_val = 1.0;
 	} else {
 		starting_target_val = context[context.size()-2].scope->eval->calc_score(
 			run_helper,
@@ -35,9 +35,6 @@ void EvalPassThroughExperiment::measure_existing_backprop(
 	double starting_predicted_score = this->eval_context->calc_score(
 		run_helper,
 		eval_history->start_scope_history);
-
-	double starting_misguess = (starting_target_val - starting_predicted_score) * (starting_target_val - starting_predicted_score);
-	this->score_misguess_histories.push_back(starting_misguess);
 
 	this->eval_context->activate(problem,
 								 run_helper,
@@ -70,18 +67,18 @@ void EvalPassThroughExperiment::measure_existing_backprop(
 	double ending_vs_misguess = (ending_target_val - ending_vs_predicted_score) * (ending_target_val - ending_vs_predicted_score);
 	this->vs_misguess_histories.push_back(ending_vs_misguess);
 
-	if ((int)this->vs_misguess_histories.size() >= NUM_DATAPOINTS) {
+	if ((int)this->score_misguess_histories.size() >= NUM_DATAPOINTS) {
 		double sum_score_misguesses = 0.0;
-		for (int m_index = 0; m_index < 2 * NUM_DATAPOINTS; m_index++) {
+		for (int m_index = 0; m_index < NUM_DATAPOINTS; m_index++) {
 			sum_score_misguesses += this->score_misguess_histories[m_index];
 		}
-		this->existing_score_average_misguess = sum_score_misguesses / (2 * NUM_DATAPOINTS);
+		this->existing_score_average_misguess = sum_score_misguesses / NUM_DATAPOINTS;
 
 		double sum_score_misguess_variance = 0.0;
-		for (int m_index = 0; m_index < 2 * NUM_DATAPOINTS; m_index++) {
+		for (int m_index = 0; m_index < NUM_DATAPOINTS; m_index++) {
 			sum_score_misguess_variance += (this->score_misguess_histories[m_index] - this->existing_score_average_misguess) * (this->score_misguess_histories[m_index] - this->existing_score_average_misguess);
 		}
-		this->existing_score_misguess_standard_deviation = sqrt(sum_score_misguess_variance / (2 * NUM_DATAPOINTS));
+		this->existing_score_misguess_standard_deviation = sqrt(sum_score_misguess_variance / NUM_DATAPOINTS);
 		if (this->existing_score_misguess_standard_deviation < MIN_STANDARD_DEVIATION) {
 			this->existing_score_misguess_standard_deviation = MIN_STANDARD_DEVIATION;
 		}
