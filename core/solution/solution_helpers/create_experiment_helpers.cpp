@@ -208,22 +208,22 @@ void create_experiment(ScopeHistory* root_history) {
 		} else {
 			uniform_int_distribution<int> pass_through_distribution(0, 3);
 			if (pass_through_distribution(generator) == 0) {
-				#if defined(MDEBUG) && MDEBUG
-				if (possible_scope_contexts[rand_index]->nodes.size() > 10) {
-				#else
-				if (possible_scope_contexts[rand_index]->nodes.size() > 20) {
-				#endif /* MDEBUG */
-					NewActionExperiment* new_action_experiment = new NewActionExperiment(
-						possible_scope_contexts[rand_index],
-						possible_node_contexts[rand_index],
-						possible_is_branch[rand_index]);
+				// #if defined(MDEBUG) && MDEBUG
+				// if (possible_scope_contexts[rand_index]->nodes.size() > 10) {
+				// #else
+				// if (possible_scope_contexts[rand_index]->nodes.size() > 20) {
+				// #endif /* MDEBUG */
+				// 	NewActionExperiment* new_action_experiment = new NewActionExperiment(
+				// 		possible_scope_contexts[rand_index],
+				// 		possible_node_contexts[rand_index],
+				// 		possible_is_branch[rand_index]);
 
-					if (new_action_experiment->result == EXPERIMENT_RESULT_FAIL) {
-						delete new_action_experiment;
-					} else {
-						possible_node_contexts[rand_index]->experiments.push_back(new_action_experiment);
-					}
-				}
+				// 	if (new_action_experiment->result == EXPERIMENT_RESULT_FAIL) {
+				// 		delete new_action_experiment;
+				// 	} else {
+				// 		possible_node_contexts[rand_index]->experiments.push_back(new_action_experiment);
+				// 	}
+				// }
 			} else {
 				// PassThroughExperiment* new_experiment = new PassThroughExperiment(
 				// 	possible_scope_contexts[rand_index],

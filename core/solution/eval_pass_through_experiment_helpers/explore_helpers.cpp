@@ -104,6 +104,7 @@ void EvalPassThroughExperiment::explore_backprop(
 				}
 			}
 			this->node_context->experiments.erase(this->node_context->experiments.begin() + experiment_index);
+			this->node_context = NULL;
 
 			for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {
 				if (this->step_types[s_index] == STEP_TYPE_ACTION) {
@@ -316,6 +317,7 @@ void EvalPassThroughExperiment::explore_backprop(
 				}
 			}
 			this->node_context->experiments.erase(this->node_context->experiments.begin() + experiment_index);
+			this->node_context = NULL;
 
 			for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {
 				if (this->step_types[s_index] == STEP_TYPE_ACTION) {

@@ -2,6 +2,7 @@
 
 #include <iostream>
 
+#include "abstract_experiment.h"
 #include "action_node.h"
 #include "globals.h"
 #include "network.h"
@@ -73,6 +74,10 @@ Eval::~Eval() {
 	}
 	if (this->vs_network != NULL) {
 		delete this->vs_network;
+	}
+
+	if (this->experiment != NULL) {
+		delete this->experiment;
 	}
 }
 

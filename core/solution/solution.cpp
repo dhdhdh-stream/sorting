@@ -51,13 +51,19 @@ Solution::Solution(Solution* original) {
 	this->max_num_actions = original->max_num_actions;
 	this->num_actions_limit = original->num_actions_limit;
 
-	uniform_int_distribution<int> explore_id_distribution(0, (int)solution->scopes.size()-1);
+	uniform_int_distribution<int> explore_id_distribution(0, (int)this->scopes.size()-1);
 	this->explore_id = explore_id_distribution(generator);
-	if (this->scopes[this->explore_id]->eval->score_input_node_contexts.size() == 0) {
-		this->explore_type = EXPLORE_TYPE_EVAL;
+	// if (this->scopes[this->explore_id]->eval->score_input_node_contexts.size() == 0) {
+	// 	this->explore_type = EXPLORE_TYPE_EVAL;
+	// } else {
+	// 	uniform_int_distribution<int> explore_type_distribution(0, 1);
+	// 	this->explore_type = explore_type_distribution(generator);
+	// }
+	// temp
+	if (original->explore_type == EXPLORE_TYPE_EVAL) {
+		this->explore_type = EXPLORE_TYPE_SCORE;
 	} else {
-		uniform_int_distribution<int> explore_type_distribution(0, 1);
-		this->explore_type = explore_type_distribution(generator);
+		this->explore_type = EXPLORE_TYPE_EVAL;
 	}
 	this->explore_scope_max_num_actions = 1;
 }

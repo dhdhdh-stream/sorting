@@ -33,7 +33,7 @@ while True:
 	save_file = open('saves/main.txt', 'r')
 	curr_timestamp = int(save_file.readline())
 	save_file.close()
-	curr_average_score = -1.0
+	curr_average_score = float('-inf')
 
 	start_time = time.time()
 	count = 0
@@ -118,6 +118,8 @@ while True:
 
 		curr_time = time.time()
 		if count >= 10 and curr_time - start_time > 300:
+			break
+		if count >= 1 and curr_time - start_time > 1200:
 			break
 
 		time.sleep(20)

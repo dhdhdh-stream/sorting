@@ -27,6 +27,7 @@ public:
 	double score_result(int num_decisions);
 
 	Problem* copy_and_reset();
+	Problem* copy_snapshot();
 
 	void print();
 };

@@ -2,6 +2,7 @@
 
 #include <iostream>
 
+#include "abstract_experiment.h"
 #include "action_node.h"
 #include "branch_node.h"
 #include "eval.h"
@@ -23,6 +24,10 @@ Scope::Scope() {
 Scope::~Scope() {
 	for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {
 		delete this->nodes[n_index];
+	}
+
+	if (this->id != -1) {
+		delete this->eval;
 	}
 }
 
@@ -217,6 +222,10 @@ void Scope::save_for_display(ofstream& output_file) {
 		output_file << it->second->type << endl;
 		it->second->save_for_display(output_file);
 	}
+
+	if (this->id != -1) {
+		this->eval->subscope->save_for_display(output_file);
+	}
 }
 
 ScopeHistory::ScopeHistory(Scope* scope) {
@@ -267,5 +276,9 @@ ScopeHistory::~ScopeHistory() {
 	for (map<AbstractNode*, AbstractNodeHistory*>::iterator it = this->node_histories.begin();
 			it != this->node_histories.end(); it++) {
 		delete it->second;
+	}
+
+	for (int h_index = 0; h_index < (int)this->experiment_histories.size(); h_index++) {
+		delete this->experiment_histories[h_index];
 	}
 }

@@ -26,7 +26,8 @@ void gather_possible_helper(vector<Scope*>& scope_context,
 			{
 				ActionNode* action_node = (ActionNode*)it->first;
 
-				if (action_node->next_node != NULL) {
+				if (it->second->index == 0
+						|| action_node->next_node != NULL) {
 					node_context.back() = it->first;
 
 					for (int o_index = 0; o_index < problem_type->num_obs(); o_index++) {

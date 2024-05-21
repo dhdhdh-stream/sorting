@@ -6,6 +6,7 @@
 
 #include "action_node.h"
 #include "branch_node.h"
+#include "eval.h"
 #include "globals.h"
 #include "info_branch_node.h"
 #include "info_scope_node.h"
@@ -79,27 +80,23 @@ void node_verify_activate_helper(AbstractNode*& curr_node,
 
 		break;
 	}
-
-	run_helper.num_actions++;
-	if (run_helper.num_actions > solution->num_actions_limit) {
-		run_helper.exceeded_limit = true;
-	}
 }
 
 void Scope::verify_activate(Problem* problem,
 							vector<ContextLayer>& context,
 							RunHelper& run_helper,
 							ScopeHistory* history) {
-	if (run_helper.curr_depth > solution->depth_limit) {
-		run_helper.exceeded_limit = true;
-		return;
+	if (context.size() == 1) {
+		EvalHistory* eval_history = new EvalHistory(this->eval);
+		this->eval->activate(problem,
+							 run_helper,
+							 eval_history->start_scope_history);
+		delete eval_history;
 	}
-	run_helper.curr_depth++;
 
 	AbstractNode* curr_node = this->nodes[0];
 	while (true) {
-		if (run_helper.exceeded_limit
-				|| curr_node == NULL) {
+		if (curr_node == NULL) {
 			break;
 		}
 
@@ -108,6 +105,11 @@ void Scope::verify_activate(Problem* problem,
 									context,
 									run_helper,
 									history);
+
+		run_helper.num_actions++;
+		if (run_helper.num_actions > solution->num_actions_limit) {
+			break;
+		}
 	}
 
 	if (this->verify_key == run_helper.verify_key) {
@@ -116,8 +118,6 @@ void Scope::verify_activate(Problem* problem,
 		}
 		this->verify_scope_history_sizes.erase(this->verify_scope_history_sizes.begin());
 	}
-
-	run_helper.curr_depth--;
 }
 
 #endif /* MDEBUG */

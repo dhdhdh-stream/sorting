@@ -27,7 +27,7 @@ ScopeNode* create_existing() {
 
 InfoScope* get_existing_info_scope() {
 	uniform_int_distribution<int> non_null_distribution(0, 4);
-	if (!null_distribution(generator) == 0) {
+	if (!non_null_distribution(generator) == 0) {
 		return NULL;
 	} else {
 		vector<InfoScope*> possible_info_scopes;

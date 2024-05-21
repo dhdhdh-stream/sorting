@@ -92,6 +92,17 @@ Problem* Sorting::copy_and_reset() {
 	return new_problem;
 }
 
+Problem* Sorting::copy_snapshot() {
+	Sorting* new_problem = new Sorting();
+
+	new_problem->initial_world = this->initial_world;
+
+	new_problem->current_world = this->current_world;
+	new_problem->current_pointer = this->current_pointer;
+
+	return new_problem;
+}
+
 void Sorting::print() {
 	cout << "initial world:";
 	for (int i = 0; i < (int)this->initial_world.size(); i++) {

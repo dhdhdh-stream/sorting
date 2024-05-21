@@ -6,6 +6,7 @@
 #include "branch_node.h"
 #include "globals.h"
 #include "info_branch_node.h"
+#include "problem.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
@@ -140,6 +141,10 @@ NewActionExperiment::NewActionExperiment(Scope* scope_context,
 
 		this->average_remaining_experiments_from_start = 1.0;
 
+		/**
+		 * - already added to node_context.experiments
+		 */
+
 		this->state = NEW_ACTION_EXPERIMENT_STATE_EXPLORE;
 		this->generalize_iter = -1;
 
@@ -147,6 +152,14 @@ NewActionExperiment::NewActionExperiment(Scope* scope_context,
 	} else {
 		this->result = EXPERIMENT_RESULT_FAIL;
 	}
+}
+
+NewActionExperiment::~NewActionExperiment() {
+	#if defined(MDEBUG) && MDEBUG
+	for (int p_index = 0; p_index < (int)this->verify_problems.size(); p_index++) {
+		delete this->verify_problems[p_index];
+	}
+	#endif /* MDEBUG */
 }
 
 void NewActionExperiment::decrement(AbstractNode* experiment_node) {

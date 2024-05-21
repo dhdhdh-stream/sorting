@@ -477,6 +477,7 @@ void NewActionExperiment::finalize(Solution* duplicate) {
 				new_scope_node->next_node = new_local_ending_node;
 			} else {
 				AbstractNode* duplicate_end_node = duplicate_local_scope->nodes[this->successful_location_exits[s_index]->id];
+
 				new_scope_node->next_node_id = duplicate_end_node->id;
 				new_scope_node->next_node = duplicate_end_node;
 			}

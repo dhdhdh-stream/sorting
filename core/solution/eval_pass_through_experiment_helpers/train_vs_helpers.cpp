@@ -317,7 +317,7 @@ void EvalPassThroughExperiment::train_vs() {
 							   possible_obs_indexes,
 							   gather_scope_history);
 
-		int num_new_input_indexes = min(NETWORK_INCREMENT_NUM_NEW/2, (int)possible_scope_contexts.size());
+		int num_new_input_indexes = min(NETWORK_INCREMENT_NUM_NEW, 2 * (int)possible_scope_contexts.size());
 		vector<bool> test_network_input_is_start;
 		vector<AbstractNode*> test_network_input_node_contexts;
 		vector<int> test_network_input_obs_indexes;
@@ -326,7 +326,7 @@ void EvalPassThroughExperiment::train_vs() {
 			for (int p_index = 0; p_index < (int)possible_scope_contexts.size(); p_index++) {
 				remaining_indexes[p_index] = p_index;
 			}
-			for (int i_index = 0; i_index < num_new_input_indexes; i_index++) {
+			for (int i_index = 0; i_index < num_new_input_indexes / 2; i_index++) {
 				uniform_int_distribution<int> distribution(0, (int)remaining_indexes.size()-1);
 				int rand_index = distribution(generator);
 

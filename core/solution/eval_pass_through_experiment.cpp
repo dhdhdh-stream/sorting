@@ -20,6 +20,7 @@ EvalPassThroughExperiment::EvalPassThroughExperiment(
 
 	this->eval_context = eval_context;
 	this->scope_context = this->eval_context->subscope;
+	this->node_context = NULL;
 
 	this->score_network = NULL;
 	this->vs_network = NULL;
@@ -66,6 +67,8 @@ EvalPassThroughExperiment::~EvalPassThroughExperiment() {
 	for (int h_index = 0; h_index < (int)this->end_scope_histories.size(); h_index++) {
 		delete this->end_scope_histories[h_index];
 	}
+
+	this->eval_context->experiment = NULL;
 }
 
 void EvalPassThroughExperiment::decrement(AbstractNode* experiment_node) {
@@ -75,4 +78,12 @@ void EvalPassThroughExperiment::decrement(AbstractNode* experiment_node) {
 EvalPassThroughExperimentHistory::EvalPassThroughExperimentHistory(
 		EvalPassThroughExperiment* experiment) {
 	this->experiment = experiment;
+
+	this->outer_eval_history = NULL;
+}
+
+EvalPassThroughExperimentHistory::~EvalPassThroughExperimentHistory() {
+	if (this->outer_eval_history != NULL) {
+		delete this->outer_eval_history;
+	}
 }

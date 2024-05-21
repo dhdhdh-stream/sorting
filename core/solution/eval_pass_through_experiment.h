@@ -140,6 +140,7 @@ public:
 	EvalHistory* outer_eval_history;
 
 	EvalPassThroughExperimentHistory(EvalPassThroughExperiment* experiment);
+	~EvalPassThroughExperimentHistory();
 };
 
 #endif /* EVAL_PASS_THROUGH_EXPERIMENT_H */

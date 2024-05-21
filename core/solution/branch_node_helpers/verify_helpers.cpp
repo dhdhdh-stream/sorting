@@ -129,6 +129,7 @@ void BranchNode::verify_activate(AbstractNode*& curr_node,
 			cout << i_index << ": " << input_vals[i_index] << endl;
 		}
 		cout << "run_helper.curr_run_seed: " << run_helper.curr_run_seed << endl;
+		cout << "run_helper.run_seed_snapshot: " << run_helper.run_seed_snapshot << endl;
 		problem->print();
 
 		cout << "context scope" << endl;

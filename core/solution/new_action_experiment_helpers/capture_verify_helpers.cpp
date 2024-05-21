@@ -2,6 +2,8 @@
 
 #include "new_action_experiment.h"
 
+#include "constants.h"
+#include "problem.h"
 #include "scope.h"
 
 using namespace std;
@@ -14,9 +16,10 @@ void NewActionExperiment::capture_verify_activate(
 		RunHelper& run_helper,
 		NewActionExperimentHistory* history) {
 	if (this->verify_problems[this->state_iter] == NULL) {
-		this->verify_problems[this->state_iter] = problem->copy_and_reset();
+		this->verify_problems[this->state_iter] = run_helper.problem_snapshot;
+		run_helper.problem_snapshot = NULL;
+		this->verify_seeds[this->state_iter] = run_helper.run_seed_snapshot;
 	}
-	this->verify_seeds[this->state_iter] = run_helper.starting_run_seed;
 
 	context.push_back(ContextLayer());
 

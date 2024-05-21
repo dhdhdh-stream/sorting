@@ -15,6 +15,7 @@
 #include "info_branch_node.h"
 #include "info_scope_node.h"
 #include "new_action_experiment.h"
+#include "problem.h"
 #include "scope_node.h"
 #include "solution.h"
 #include "solution_helpers.h"
@@ -100,7 +101,7 @@ void Scope::activate(Problem* problem,
 	}
 	if (is_selected) {
 		#if defined(MDEBUG) && MDEBUG
-		run_helper.problem_snapshot = new Problem(problem);
+		run_helper.problem_snapshot = problem->copy_snapshot();
 		run_helper.run_seed_snapshot = run_helper.curr_run_seed;
 		#endif /* MDEBUG */
 
@@ -113,7 +114,7 @@ void Scope::activate(Problem* problem,
 								 run_helper,
 								 eval_history->start_scope_history);
 		} else {
-			if (this->eval->experiment != NULL) {
+			if (this->eval->experiment == NULL) {
 				this->eval->experiment = new EvalPassThroughExperiment(this->eval);
 			}
 			EvalPassThroughExperiment* eval_pass_through_experiment = (EvalPassThroughExperiment*)this->eval->experiment;

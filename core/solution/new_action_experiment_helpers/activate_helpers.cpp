@@ -16,36 +16,38 @@ bool NewActionExperiment::activate(AbstractNode* experiment_node,
 	bool has_match = false;
 	bool is_test;
 	int location_index;
-	for (int t_index = 0; t_index < (int)this->test_location_starts.size(); t_index++) {
-		if (this->test_location_starts[t_index] == experiment_node
-				&& this->test_location_is_branch[t_index] == is_branch) {
-			has_match = true;
-			is_test = true;
-			location_index = t_index;
-			break;
-		}
-	}
-	if (!has_match) {
-		for (int s_index = 0; s_index < (int)this->successful_location_starts.size(); s_index++) {
-			if (this->successful_location_starts[s_index] == experiment_node
-					&& this->successful_location_is_branch[s_index] == is_branch) {
+	if (run_helper.experiment_scope_history != NULL) {
+		for (int t_index = 0; t_index < (int)this->test_location_starts.size(); t_index++) {
+			if (this->test_location_starts[t_index] == experiment_node
+					&& this->test_location_is_branch[t_index] == is_branch) {
 				has_match = true;
-				is_test = false;
-				location_index = s_index;
+				is_test = true;
+				location_index = t_index;
 				break;
+			}
+		}
+		if (!has_match) {
+			for (int s_index = 0; s_index < (int)this->successful_location_starts.size(); s_index++) {
+				if (this->successful_location_starts[s_index] == experiment_node
+						&& this->successful_location_is_branch[s_index] == is_branch) {
+					has_match = true;
+					is_test = false;
+					location_index = s_index;
+					break;
+				}
 			}
 		}
 	}
 
 	bool is_selected = false;
 	NewActionExperimentHistory* history = NULL;
-	if (has_match
-			&& run_helper.experiment_scope_history != NULL) {
+	if (has_match) {
 		if (run_helper.experiment_scope_history->experiment_histories.size() == 1
 				&& run_helper.experiment_scope_history->experiment_histories[0]->experiment == this) {
 			history = (NewActionExperimentHistory*)run_helper.experiment_scope_history->experiment_histories[0];
 			is_selected = true;
-		} else if (run_helper.experiment_scope_history->experiment_histories.size() == 0) {
+		} else if (run_helper.experiment_scope_history->scope->id == this->scope_context->id
+				&& run_helper.experiment_scope_history->experiment_histories.size() == 0) {
 			bool has_seen = false;
 			for (int e_index = 0; e_index < (int)run_helper.experiment_scope_history->experiments_seen_order.size(); e_index++) {
 				if (run_helper.experiment_scope_history->experiments_seen_order[e_index] == this) {

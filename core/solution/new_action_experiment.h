@@ -77,6 +77,7 @@ public:
 	NewActionExperiment(Scope* scope_context,
 						AbstractNode* node_context,
 						bool is_branch);
+	~NewActionExperiment();
 	void decrement(AbstractNode* experiment_node);
 
 	bool activate(AbstractNode* experiment_node,

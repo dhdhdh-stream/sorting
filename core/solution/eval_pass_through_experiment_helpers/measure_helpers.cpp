@@ -347,6 +347,9 @@ void EvalPassThroughExperiment::measure_backprop(
 
 		this->vs_misguess_histories.clear();
 
+		#if defined(MDEBUG) && MDEBUG
+		if (rand()%2 == 0) {
+		#else
 		double score_improvement = this->existing_score_average_misguess - new_score_average_misguess;
 		double score_standard_deviation = min(this->existing_score_misguess_standard_deviation, new_score_misguess_standard_deviation);
 		double score_t_score = score_improvement / (score_standard_deviation / sqrt(2 * NUM_DATAPOINTS));
@@ -357,6 +360,7 @@ void EvalPassThroughExperiment::measure_backprop(
 
 		if ((score_t_score > 1.645 && vs_t_score >= 0.0)
 				|| (score_t_score >= 0.0 && vs_t_score > 1.645)) {
+		#endif /* MDEBUG */
 			cout << "EvalPassThrough" << endl;
 			cout << "this->scope_context->id: " << this->scope_context->id << endl;
 			cout << "this->node_context->id: " << this->node_context->id << endl;

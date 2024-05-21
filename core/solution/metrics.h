@@ -8,7 +8,8 @@ public:
 	int curr_explore_id;
 	int curr_explore_type;
 
-	std::vector<double> curr_predicted_scores;
+	double curr_sum_timestamp_score;
+	int curr_num_instances;
 
 	int next_explore_id;
 	int next_explore_type;
@@ -23,6 +24,9 @@ public:
 			int next_explore_type) {
 		this->curr_explore_id = curr_explore_id;
 		this->curr_explore_type = curr_explore_type;
+
+		this->curr_sum_timestamp_score = 0.0;
+		this->curr_num_instances = 0;
 
 		this->next_explore_id = next_explore_id;
 		this->next_explore_type = next_explore_type;

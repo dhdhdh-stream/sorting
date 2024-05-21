@@ -23,7 +23,7 @@ bool BranchExperiment::capture_verify_activate(AbstractNode*& curr_node,
 											   Problem* problem,
 											   vector<ContextLayer>& context,
 											   RunHelper& run_helper) {
-	if (context.back().scope_history == run_helper.curr_experiment_scope_history) {
+	if (context.back().scope_history == run_helper.experiment_scope_history) {
 		this->verify_problems[this->state_iter] = run_helper.problem_snapshot;
 		run_helper.problem_snapshot = NULL;
 		this->verify_seeds[this->state_iter] = run_helper.run_seed_snapshot;
@@ -118,7 +118,7 @@ bool BranchExperiment::capture_verify_activate(AbstractNode*& curr_node,
 	for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
 		cout << input_vals[i_index] << endl;
 	}
-	cout << "run_helper.starting_run_seed: " << run_helper.starting_run_seed << endl;
+	cout << "run_helper.run_seed_snapshot: " << run_helper.run_seed_snapshot << endl;
 	cout << "run_helper.curr_run_seed: " << run_helper.curr_run_seed << endl;
 	problem->print();
 

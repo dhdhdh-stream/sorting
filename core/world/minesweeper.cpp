@@ -104,15 +104,6 @@ Minesweeper::Minesweeper() {
 	this->hit_mine = false;
 
 	reveal_helper(STARTING_X, STARTING_Y);
-
-	this->starting_revealed = 0;
-	for (int x_index = 0; x_index < WIDTH; x_index++) {
-		for (int y_index = 0; y_index < HEIGHT; y_index++) {
-			if (this->revealed[x_index][y_index]) {
-				this->starting_revealed++;
-			}
-		}
-	}
 }
 
 int Minesweeper::num_obs() {
@@ -135,12 +126,29 @@ double Minesweeper::get_observation_helper(int x, int y) {
 			|| y > HEIGHT-1) {
 		return -10.0;
 	} else {
-		if (this->revealed[x][y]) {
-			return this->world[x][y];
-		} else if (this->flagged[x][y]) {
-			return 10.0;
+		if (this->hit_mine) {
+			if (this->revealed[x][y]) {
+				return this->world[x][y];
+			} else if (this->flagged[x][y]) {
+				if (this->world[x][y] == -1) {
+					return -2.0;
+					/**
+					 * - probably not impactful as eval will learn from -2.0 signal instead of 10.0
+					 */
+				} else {
+					return 10.0;
+				}
+			} else {
+				return -5.0;
+			}
 		} else {
-			return -5.0;
+			if (this->revealed[x][y]) {
+				return this->world[x][y];
+			} else if (this->flagged[x][y]) {
+				return 10.0;
+			} else {
+				return -5.0;
+			}
 		}
 	}
 }
@@ -347,13 +355,13 @@ double Minesweeper::score_result(int num_decisions) {
 				if (this->world[x_index][y_index] != -1) {
 					score -= 1.0;
 				} else {
-					score += 0.1;
+					score += 0.2;
 				}
 			}
 		}
 	}
 
-	score += 0.01*(curr_revealed - this->starting_revealed);
+	score += 0.01*curr_revealed;
 
 	if (num_decisions > 5) {
 		score -= 0.0002*(num_decisions-5);
@@ -382,7 +390,18 @@ Problem* Minesweeper::copy_and_reset() {
 
 	new_problem->reveal_helper(STARTING_X, STARTING_Y);
 
-	new_problem->starting_revealed = this->starting_revealed;
+	return new_problem;
+}
+
+Problem* Minesweeper::copy_snapshot() {
+	Minesweeper* new_problem = new Minesweeper();
+
+	new_problem->world = this->world;
+	new_problem->revealed = this->revealed;
+	new_problem->flagged = this->flagged;
+	new_problem->current_x = this->current_x;
+	new_problem->current_y = this->current_y;
+	new_problem->hit_mine = this->hit_mine;
 
 	return new_problem;
 }

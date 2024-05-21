@@ -15,4 +15,9 @@ RunHelper::RunHelper() {
 	this->experiment_scope_history = NULL;
 
 	this->success_duplicate = NULL;
+
+	#if defined(MDEBUG) && MDEBUG
+	this->problem_snapshot = NULL;
+	this->run_seed_snapshot = 0;
+	#endif /* MDEBUG */
 }

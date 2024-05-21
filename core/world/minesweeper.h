@@ -21,8 +21,6 @@ public:
 	int current_x;
 	int current_y;
 
-	int starting_revealed;
-
 	bool hit_mine;
 
 	Minesweeper();
@@ -36,6 +34,7 @@ public:
 	double score_result(int num_decisions);
 
 	Problem* copy_and_reset();
+	Problem* copy_snapshot();
 
 	void print();
 

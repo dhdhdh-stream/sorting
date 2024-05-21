@@ -223,8 +223,6 @@ void BranchExperiment::explore_backprop(
 		curr_surprise = predicted_impact - history->existing_predicted_score;
 	}
 
-	run_helper.num_actions_limit = -1;
-
 	bool select = false;
 	if (this->explore_type == EXPLORE_TYPE_BEST) {
 		#if defined(MDEBUG) && MDEBUG
@@ -329,6 +327,8 @@ void BranchExperiment::explore_backprop(
 			this->curr_scopes.clear();
 		}
 	}
+
+	run_helper.num_actions_limit = -1;
 
 	if (select) {
 		// cout << "curr_surprise: " << curr_surprise << endl;
