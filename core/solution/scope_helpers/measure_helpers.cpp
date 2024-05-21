@@ -132,7 +132,7 @@ void Scope::measure_activate(Metrics& metrics,
 			EvalHistory* outer_eval_history;
 			double starting_target_val;
 			if (context.size() == 1) {
-				starting_target_val = 1.0;
+				starting_target_val = 1.46;
 			} else {
 				outer_eval_history = new EvalHistory(context[context.size()-2].scope->eval);
 				context[context.size()-2].scope->eval->activate(

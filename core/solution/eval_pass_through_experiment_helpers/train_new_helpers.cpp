@@ -66,7 +66,7 @@ void EvalPassThroughExperiment::train_new_backprop(
 		/**
 		 * TODO: set to score if no actions were performed
 		 */
-		starting_target_val = 1.0;
+		starting_target_val = 1.46;
 	} else {
 		starting_target_val = context[context.size()-2].scope->eval->calc_score(
 			run_helper,

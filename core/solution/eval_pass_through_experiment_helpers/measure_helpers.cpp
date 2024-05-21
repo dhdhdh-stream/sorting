@@ -66,7 +66,7 @@ void EvalPassThroughExperiment::measure_backprop(
 
 	double starting_target_val;
 	if (context.size() == 1) {
-		starting_target_val = 1.0;
+		starting_target_val = 1.46;
 	} else {
 		starting_target_val = context[context.size()-2].scope->eval->calc_score(
 			run_helper,
@@ -311,16 +311,16 @@ void EvalPassThroughExperiment::measure_backprop(
 
 	if ((int)this->vs_misguess_histories.size() >= NUM_DATAPOINTS) {
 		double sum_score_misguesses = 0.0;
-		for (int m_index = 0; m_index < 2 * NUM_DATAPOINTS; m_index++) {
+		for (int m_index = 0; m_index < NUM_DATAPOINTS; m_index++) {
 			sum_score_misguesses += this->score_misguess_histories[m_index];
 		}
-		double new_score_average_misguess = sum_score_misguesses / (2 * NUM_DATAPOINTS);
+		double new_score_average_misguess = sum_score_misguesses / NUM_DATAPOINTS;
 
 		double sum_score_misguess_variance = 0.0;
-		for (int m_index = 0; m_index < 2 * NUM_DATAPOINTS; m_index++) {
+		for (int m_index = 0; m_index < NUM_DATAPOINTS; m_index++) {
 			sum_score_misguess_variance += (this->score_misguess_histories[m_index] - this->existing_score_average_misguess) * (this->score_misguess_histories[m_index] - this->existing_score_average_misguess);
 		}
-		double new_score_misguess_standard_deviation = sqrt(sum_score_misguess_variance / (2 * NUM_DATAPOINTS));
+		double new_score_misguess_standard_deviation = sqrt(sum_score_misguess_variance / NUM_DATAPOINTS);
 		if (new_score_misguess_standard_deviation < MIN_STANDARD_DEVIATION) {
 			new_score_misguess_standard_deviation = MIN_STANDARD_DEVIATION;
 		}
@@ -349,7 +349,7 @@ void EvalPassThroughExperiment::measure_backprop(
 		#else
 		double score_improvement = this->existing_score_average_misguess - new_score_average_misguess;
 		double score_standard_deviation = min(this->existing_score_misguess_standard_deviation, new_score_misguess_standard_deviation);
-		double score_t_score = score_improvement / (score_standard_deviation / sqrt(2 * NUM_DATAPOINTS));
+		double score_t_score = score_improvement / (score_standard_deviation / sqrt(NUM_DATAPOINTS));
 
 		double vs_improvement = this->existing_vs_average_misguess - new_vs_average_misguess;
 		double vs_standard_deviation = min(this->existing_vs_misguess_standard_deviation, new_vs_misguess_standard_deviation);

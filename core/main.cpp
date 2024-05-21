@@ -15,6 +15,23 @@
 //     - is it even worth to spend effort here?
 //       - probably, at the very least to transfer knowledge from humans
 
+// - impossible for eval to be robust against all possible sequences?
+//   - detect if reached unfamiliar spot and avoid?
+//   - so also can't run eval from every spot in a sequence?
+//     - maybe tie eval to specific spots?
+//       - eval kind of like the opposite of info scopes?
+//         - but info scopes meant for reuse, but eval would be like the exact opposite?
+//       - but goal is to have eval divorced from specific sequences
+//         - but can be tied to contexts
+//         - but maybe sequence leaves context
+
+// - maybe don't vs, but simply directly compare start and back
+//   - can't find XORs, but potentially much more robust against sequences?
+
+// - potentially have orientation sequence in front of eval?
+
+// - maybe have key sequence at start, then use key to orient at end
+
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -55,10 +72,10 @@ int main(int argc, char* argv[]) {
 	problem_type = new Minesweeper();
 
 	solution = new Solution();
-	// solution->init();
-	solution->load("", "main");
+	solution->init();
+	// solution->load("", "main");
 
-	// solution->save("", "main");
+	solution->save("", "main");
 
 	#if defined(MDEBUG) && MDEBUG
 	int run_index = 0;

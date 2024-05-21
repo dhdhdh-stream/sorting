@@ -25,7 +25,7 @@ void EvalPassThroughExperiment::measure_existing_backprop(
 
 	double starting_target_val;
 	if (context.size() == 1) {
-		starting_target_val = 1.0;
+		starting_target_val = 1.46;
 	} else {
 		starting_target_val = context[context.size()-2].scope->eval->calc_score(
 			run_helper,

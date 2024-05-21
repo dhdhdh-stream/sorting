@@ -74,7 +74,7 @@ void EvalPassThroughExperiment::explore_backprop(
 
 	double target_val;
 	if (context.size() == 1) {
-		double starting_score = 1.0;
+		double starting_score = 1.46;
 		double ending_score = problem->score_result(run_helper.num_decisions);
 		target_val = ending_score - starting_score;
 	} else {
