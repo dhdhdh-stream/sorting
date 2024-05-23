@@ -41,6 +41,11 @@ public:
 				  std::vector<ContextLayer>& context,
 				  RunHelper& run_helper,
 				  ScopeHistory* history);
+	void activate(AbstractNode* starting_node,
+				  Problem* problem,
+				  std::vector<ContextLayer>& context,
+				  RunHelper& run_helper,
+				  ScopeHistory* history);
 
 	void random_exit_activate(AbstractNode* starting_node,
 							  std::vector<AbstractNode*>& possible_exits);

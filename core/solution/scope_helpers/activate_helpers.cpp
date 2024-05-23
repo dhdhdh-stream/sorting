@@ -111,37 +111,38 @@ void Scope::activate(Problem* problem,
 		int num_actions_until_random = -1;
 		if (solution->explore_type == EXPLORE_TYPE_SCORE) {
 			this->eval->activate(problem,
+								 context,
 								 run_helper,
-								 eval_history->start_scope_history);
+								 eval_history);
 		} else {
-			if (this->eval->experiment == NULL) {
-				this->eval->experiment = new EvalPassThroughExperiment(this->eval);
-			}
-			EvalPassThroughExperiment* eval_pass_through_experiment = (EvalPassThroughExperiment*)this->eval->experiment;
-			history->experiments_seen_order.push_back(eval_pass_through_experiment);
-			EvalPassThroughExperimentHistory* experiment_history = new EvalPassThroughExperimentHistory(eval_pass_through_experiment);
-			history->experiment_histories.push_back(experiment_history);
+			// if (this->eval->experiment == NULL) {
+			// 	this->eval->experiment = new EvalPassThroughExperiment(this->eval);
+			// }
+			// EvalPassThroughExperiment* eval_pass_through_experiment = (EvalPassThroughExperiment*)this->eval->experiment;
+			// history->experiments_seen_order.push_back(eval_pass_through_experiment);
+			// EvalPassThroughExperimentHistory* experiment_history = new EvalPassThroughExperimentHistory(eval_pass_through_experiment);
+			// history->experiment_histories.push_back(experiment_history);
 
-			/**
-			 * - in base case, only have access to final score (and starting average)
-			 *   - so simply don't evaluate eval sequence without scope sequence
-			 */
-			if (context.size() != 1) {
-				experiment_history->outer_eval_history = new EvalHistory(context[context.size()-2].scope->eval);
-				context[context.size()-2].scope->eval->activate(
-					problem,
-					run_helper,
-					experiment_history->outer_eval_history->start_scope_history);
-			}
+			// /**
+			//  * - in base case, only have access to final score (and starting average)
+			//  *   - so simply don't evaluate eval sequence without scope sequence
+			//  */
+			// if (context.size() != 1) {
+			// 	experiment_history->outer_eval_history = new EvalHistory(context[context.size()-2].scope->eval);
+			// 	context[context.size()-2].scope->eval->activate(
+			// 		problem,
+			// 		run_helper,
+			// 		experiment_history->outer_eval_history->start_scope_history);
+			// }
 
-			if (eval_pass_through_experiment->state != EVAL_PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING_SCORE) {
-				this->eval->activate(problem,
-									 run_helper,
-									 eval_history->start_scope_history);
+			// if (eval_pass_through_experiment->state != EVAL_PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING_SCORE) {
+			// 	this->eval->activate(problem,
+			// 						 run_helper,
+			// 						 eval_history->start_scope_history);
 
-				uniform_int_distribution<int> random_distribution = uniform_int_distribution<int>(0, 2*(int)(solution->explore_scope_local_average_num_actions));
-				num_actions_until_random = random_distribution(generator);
-			}
+			// 	uniform_int_distribution<int> random_distribution = uniform_int_distribution<int>(0, 2*(int)(solution->explore_scope_local_average_num_actions));
+			// 	num_actions_until_random = random_distribution(generator);
+			// }
 		}
 
 		AbstractNode* curr_node = this->nodes[0];
@@ -329,6 +330,36 @@ void Scope::activate(Problem* problem,
 				if (run_helper.num_actions_limit == 0) {
 					break;
 				}
+			}
+		}
+	}
+}
+
+void Scope::activate(AbstractNode* starting_node,
+					 Problem* problem,
+					 vector<ContextLayer>& context,
+					 RunHelper& run_helper,
+					 ScopeHistory* history) {
+	AbstractNode* curr_node = starting_node;
+	while (true) {
+		if (curr_node == NULL) {
+			break;
+		}
+
+		node_activate_helper(curr_node,
+							 problem,
+							 context,
+							 run_helper,
+							 history);
+
+		run_helper.num_actions++;
+		if (run_helper.num_actions > solution->num_actions_limit) {
+			break;
+		}
+		if (run_helper.num_actions_limit > 0) {
+			run_helper.num_actions_limit--;
+			if (run_helper.num_actions_limit == 0) {
+				break;
 			}
 		}
 	}

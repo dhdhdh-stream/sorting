@@ -34,38 +34,32 @@ class Eval {
 public:
 	Scope* parent_scope;
 
+	/**
+	 * - contains nodes for:
+	 *   - start orientation
+	 *     - starting at 0
+	 *   - start eval
+	 *     - starting at 1
+	 *   - end orientation
+	 *     - starting at 2
+	 *   - end eval
+	 *     - starting at 3
+	 * 
+	 * - new scopes can be created on orientation
+	 *   - but they will have ids and their own evals and be handled normally
+	 */
 	Scope* subscope;
 
-	/**
-	 * - applies for both start and end (and between)
-	 */
-	double score_average_score;
+	double average_score;
 
-	std::vector<AbstractNode*> score_input_node_contexts;
-	std::vector<int> score_input_obs_indexes;
+	std::vector<AbstractNode*> input_node_contexts;
+	std::vector<int> input_obs_indexes;
 
-	std::vector<int> score_linear_input_indexes;
-	std::vector<double> score_linear_weights;
+	std::vector<int> linear_input_indexes;
+	std::vector<double> linear_weights;
 
-	std::vector<std::vector<int>> score_network_input_indexes;
-	Network* score_network;
-
-	/**
-	 * - difference between start and final
-	 *   - end not involved
-	 *   - for learning XORs
-	 */
-	double vs_average_score;
-
-	std::vector<bool> vs_input_is_start;
-	std::vector<AbstractNode*> vs_input_node_contexts;
-	std::vector<int> vs_input_obs_indexes;
-
-	std::vector<int> vs_linear_input_indexes;
-	std::vector<double> vs_linear_weights;
-
-	std::vector<std::vector<int>> vs_network_input_indexes;
-	Network* vs_network;
+	std::vector<std::vector<int>> network_input_indexes;
+	Network* network;
 
 	AbstractExperiment* experiment;
 
@@ -74,13 +68,13 @@ public:
 		 Solution* parent_solution);
 	~Eval();
 
-	void activate(Problem* problem,
-				  RunHelper& run_helper,
-				  ScopeHistory*& scope_history);
-	double calc_score(RunHelper& run_helper,
-					  ScopeHistory* scope_history);
-	double calc_vs(RunHelper& run_helper,
-				   EvalHistory* history);
+	void activate_start(Problem* problem,
+						RunHelper& run_helper,
+						EvalHistory* history);
+	void activate_end(Problem* problem,
+					  RunHelper& run_helper,
+					  EvalHistory* history);
+	double calc_impact(EvalHistory* history);
 
 	void init();
 	void load(std::ifstream& input_file);
@@ -92,8 +86,10 @@ class EvalHistory {
 public:
 	Eval* eval;
 
-	ScopeHistory* start_scope_history;
-	ScopeHistory* end_scope_history;
+	ScopeHistory* scope_history;
+	int start_eval_index;
+	int end_orientation_index;
+	int end_eval_index;
 
 	EvalHistory(Eval* eval);
 	EvalHistory(EvalHistory* original);

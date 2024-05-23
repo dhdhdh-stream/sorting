@@ -106,3 +106,63 @@ void gather_possible_helper(vector<Scope*>& scope_context,
 	scope_context.pop_back();
 	node_context.pop_back();
 }
+
+void gather_eval_possible_helper(vector<AbstractNode*>& possible_node_contexts,
+								 vector<int>& possible_obs_indexes,
+								 EvalHistory* eval_history) {
+	for (map<AbstractNode*, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
+			it != scope_history->node_histories.end(); it++) {
+		if ((it->second->index >= eval_history->start_eval_index
+					&& it->second->index < eval_history->end_orientation_index)
+				|| it->second->index >= eval_history->end_eval_index) {
+			switch (it->first->type) {
+			case NODE_TYPE_ACTION:
+				{
+					ActionNode* action_node = (ActionNode*)it->first;
+
+					if (it->second->index == 0
+							|| action_node->next_node != NULL) {
+						node_context.back() = it->first;
+
+						for (int o_index = 0; o_index < problem_type->num_obs(); o_index++) {
+							possible_scope_contexts.push_back(scope_context);
+							possible_node_contexts.push_back(node_context);
+							possible_obs_indexes.push_back(o_index);
+						}
+
+						node_context.back() = NULL;
+					}
+					/**
+					 * - don't include potential new ending node for info experiments
+					 */
+				}
+
+				break;
+			case NODE_TYPE_INFO_SCOPE:
+				{
+					node_context.back() = it->first;
+
+					possible_scope_contexts.push_back(scope_context);
+					possible_node_contexts.push_back(node_context);
+					possible_obs_indexes.push_back(-1);
+
+					node_context.back() = NULL;
+				}
+
+				break;
+			case NODE_TYPE_INFO_BRANCH:
+				{
+					node_context.back() = it->first;
+
+					possible_scope_contexts.push_back(scope_context);
+					possible_node_contexts.push_back(node_context);
+					possible_obs_indexes.push_back(-1);
+
+					node_context.back() = NULL;
+				}
+
+				break;
+			}
+		}
+	}
+}
