@@ -11,6 +11,7 @@
 
 class AbstractNode;
 class Eval;
+class EvalHistory;
 class InfoScope;
 class InfoScopeNode;
 class Problem;
@@ -19,6 +20,7 @@ class ScopeHistory;
 class ScopeNode;
 
 void create_experiment(ScopeHistory* root_history);
+void create_eval_experiment(EvalHistory* eval_history);
 
 ScopeNode* create_existing();
 InfoScope* get_existing_info_scope();

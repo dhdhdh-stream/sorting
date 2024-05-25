@@ -15,6 +15,7 @@ const int EXPERIMENT_TYPE_EVAL_PASS_THROUGH = 2;
 const int EXPERIMENT_TYPE_NEW_INFO = 3;
 const int EXPERIMENT_TYPE_INFO_PASS_THROUGH = 4;
 const int EXPERIMENT_TYPE_NEW_ACTION = 5;
+const int EXPERIMENT_TYPE_ORIENTATION = 6;
 
 const int ROOT_EXPERIMENT_STATE_EXPERIMENT = 0;
 const int ROOT_EXPERIMENT_STATE_VERIFY_1ST_EXISTING = 1;
@@ -65,7 +66,8 @@ public:
 						  Problem* problem,
 						  std::vector<ContextLayer>& context,
 						  RunHelper& run_helper) = 0;
-	virtual void backprop(EvalHistory* eval_history,
+	virtual void backprop(EvalHistory* outer_eval_history,
+						  EvalHistory* eval_history,
 						  Problem* problem,
 						  std::vector<ContextLayer>& context,
 						  RunHelper& run_helper) = 0;

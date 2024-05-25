@@ -191,7 +191,6 @@ void train_network(vector<vector<vector<double>>>& inputs,
 
 void train_network(vector<vector<vector<double>>>& inputs,
 				   vector<double>& target_vals,
-				   vector<bool>& test_input_is_start,
 				   vector<AbstractNode*>& test_input_node_contexts,
 				   vector<int>& test_input_obs_indexes,
 				   Network* network) {
@@ -325,7 +324,6 @@ void train_network(vector<vector<vector<double>>>& inputs,
 		 */
 		if (input_impacts.back()[i_index] < max_impact * NETWORK_INPUT_MIN_IMPACT) {
 		#endif /* MDEBUG */
-			test_input_is_start.erase(test_input_is_start.begin() + i_index);
 			test_input_node_contexts.erase(test_input_node_contexts.begin() + i_index);
 			test_input_obs_indexes.erase(test_input_obs_indexes.begin() + i_index);
 

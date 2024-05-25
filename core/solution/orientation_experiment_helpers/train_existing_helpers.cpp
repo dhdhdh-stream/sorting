@@ -1,5 +1,25 @@
 #include "orientation_experiment.h"
 
+#include <cmath>
+#include <iostream>
+#undef eigen_assert
+#define eigen_assert(x) if (!(x)) {throw std::invalid_argument("Eigen error");}
+#include <Eigen/Dense>
+
+#include "action_node.h"
+#include "branch_node.h"
+#include "constants.h"
+#include "eval.h"
+#include "globals.h"
+#include "info_branch_node.h"
+#include "info_scope_node.h"
+#include "network.h"
+#include "nn_helpers.h"
+#include "problem.h"
+#include "scope.h"
+#include "scope_node.h"
+#include "solution_helpers.h"
+
 using namespace std;
 
 void OrientationExperiment::train_existing_activate(
@@ -9,25 +29,16 @@ void OrientationExperiment::train_existing_activate(
 }
 
 void OrientationExperiment::train_existing_backprop(
+		EvalHistory* outer_eval_history,
 		EvalHistory* eval_history,
 		Problem* problem,
+		vector<ContextLayer>& context,
 		RunHelper& run_helper) {
-	OrientationExperimentHistory* history = (OrientationExperimentHistory*)run_helper.experiment_scope_history->experiment_histories.back();
-
-	this->eval_context->activate_end(problem,
-									 run_helper,
-									 eval_history);
-	
 	double target_impact;
 	if (context.size() == 1) {
 		target_impact = problem->score_result(run_helper.num_decisions);
 	} else {
-		context[context.size()-2].scope->eval->activate_end(
-			problem,
-			run_helper,
-			history->outer_eval_history);
-		target_impact = context[context.size()-2].scope->eval->calc_impact(
-			history->outer_eval_history);
+		target_impact = context[context.size()-2].scope->eval->calc_impact(outer_eval_history);
 	}
 
 	double existing_predicted_impact = this->eval_context->calc_impact(eval_history);

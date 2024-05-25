@@ -1,27 +1,27 @@
+#if defined(MDEBUG) && MDEBUG
+
 #include "orientation_experiment.h"
 
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
-#include "eval.h"
-#include "globals.h"
 #include "info_branch_node.h"
 #include "info_scope_node.h"
 #include "network.h"
-#include "problem.h"
 #include "scope.h"
 #include "scope_node.h"
-#include "solution.h"
 #include "utilities.h"
 
 using namespace std;
 
-bool OrientationExperiment::measure_activate(
+bool OrientationExperiment::capture_verify_activate(
 		AbstractNode*& curr_node,
 		Problem* problem,
 		vector<ContextLayer>& context,
 		RunHelper& run_helper) {
-	run_helper.num_actions_limit = MAX_NUM_ACTIONS_LIMIT_MULTIPLIER * solution->explore_scope_max_num_actions;
+	this->verify_problems[this->state_iter] = run_helper.problem_snapshot;
+	run_helper.problem_snapshot = NULL;
+	this->verify_seeds[this->state_iter] = run_helper.run_seed_snapshot;
 
 	run_helper.num_decisions++;
 
@@ -115,7 +115,9 @@ bool OrientationExperiment::measure_activate(
 		new_predicted_score += this->new_network->output->acti_vals[0];
 	}
 
-	#if defined(MDEBUG) && MDEBUG
+	this->verify_original_scores.push_back(existing_predicted_score);
+	this->verify_branch_scores.push_back(new_predicted_score);
+
 	bool decision_is_branch;
 	if (run_helper.curr_run_seed%2 == 0) {
 		decision_is_branch = true;
@@ -123,13 +125,8 @@ bool OrientationExperiment::measure_activate(
 		decision_is_branch = false;
 	}
 	run_helper.curr_run_seed = xorshift(run_helper.curr_run_seed);
-	#else
-	bool decision_is_branch = new_predicted_score >= existing_predicted_score;
-	#endif /* MDEBUG */
 
 	if (decision_is_branch) {
-		this->branch_count++;
-
 		if (this->step_types.size() == 0) {
 			curr_node = this->exit_next_node;
 		} else {
@@ -142,67 +139,15 @@ bool OrientationExperiment::measure_activate(
 
 		return true;
 	} else {
-		this->original_count++;
-
 		return false;
 	}
 }
 
-void OrientationExperiment::measure_backprop(
-		EvalHistory* outer_eval_history,
-		EvalHistory* eval_history,
-		Problem* problem,
-		vector<ContextLayer>& context,
-		RunHelper& run_helper) {
-	if (run_helper.num_actions_limit == 0) {
-		run_helper.num_actions_limit = -1;
-
-		this->result = EXPERIMENT_RESULT_FAIL;
-	} else {
-		double target_impact;
-		if (context.size() == 1) {
-			target_impact = problem->score_result(run_helper.num_decisions);
-		} else {
-			target_impact = context[context.size()-2].scope->eval->calc_impact(outer_eval_history);
-		}
-
-		double combined_predicted_impact = this->eval_context->calc_impact(eval_history);
-
-		double combined_misguess = (target_impact - combined_predicted_impact) * (target_impact - combined_predicted_impact);
-		this->combined_score += combined_misguess;
-
-		run_helper.num_actions_limit = -1;
-
-		this->state_iter++;
-		if (this->state_iter >= NUM_DATAPOINTS) {
-			this->combined_score /= NUM_DATAPOINTS;
-
-			this->branch_weight = (double)this->branch_count / (double)(this->original_count + this->branch_count);
-
-			#if defined(MDEBUG) && MDEBUG
-			if (rand()%4 == 0) {
-			#else
-			if (this->branch_weight > PASS_THROUGH_BRANCH_WEIGHT
-					&& this->new_average_score >= this->existing_average_score) {
-			#endif
-				this->is_pass_through = true;
-			} else {
-				this->is_pass_through = false;
-			}
-
-			#if defined(MDEBUG) && MDEBUG
-			if (rand()%2 == 0) {
-			#else
-			if (this->branch_weight > 0.01
-					&& this->combined_score >= this->existing_average_score) {
-			#endif /* MDEBUG */
-				this->target_val_histories.reserve(VERIFY_1ST_NUM_DATAPOINTS);
-
-				this->state = ORIENTATION_EXPERIMENT_STATE_VERIFY_1ST_EXISTING;
-				this->state_iter = 0;
-			} else {
-				this->result = EXPERIMENT_RESULT_FAIL;
-			}
-		}
+void OrientationExperiment::capture_verify_backprop() {
+	this->state_iter++;
+	if (this->state_iter >= NUM_VERIFY_SAMPLES) {
+		this->result = EXPERIMENT_RESULT_SUCCESS;
 	}
 }
+
+#endif /* MDEBUG */

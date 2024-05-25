@@ -1,5 +1,18 @@
 #include "orientation_experiment.h"
 
+#include "action_node.h"
+#include "branch_node.h"
+#include "constants.h"
+#include "eval.h"
+#include "globals.h"
+#include "info_branch_node.h"
+#include "info_scope_node.h"
+#include "network.h"
+#include "problem.h"
+#include "scope.h"
+#include "scope_node.h"
+#include "solution.h"
+
 using namespace std;
 
 void OrientationExperiment::explore_misguess_activate(
@@ -8,6 +21,8 @@ void OrientationExperiment::explore_misguess_activate(
 		vector<ContextLayer>& context,
 		RunHelper& run_helper,
 		OrientationExperimentHistory* history) {
+	run_helper.num_actions_limit = MAX_NUM_ACTIONS_LIMIT_MULTIPLIER * solution->explore_scope_max_num_actions;
+
 	run_helper.num_decisions++;
 
 	vector<double> input_vals(this->input_scope_contexts.size(), 0.0);
@@ -185,33 +200,26 @@ void OrientationExperiment::explore_misguess_activate(
 	}
 
 	curr_node = this->exit_next_node;
-
-	run_helper.num_actions_limit = MAX_NUM_ACTIONS_LIMIT_MULTIPLIER * solution->explore_scope_max_num_actions;
 }
 
 void OrientationExperiment::explore_misguess_backprop(
+		EvalHistory* outer_eval_history,
 		EvalHistory* eval_history,
 		Problem* problem,
 		vector<ContextLayer>& context,
 		RunHelper& run_helper) {
+	#if defined(MDEBUG) && MDEBUG
+	if (run_helper.num_actions_limit > 0) {
+	#else
 	OrientationExperimentHistory* history = (OrientationExperimentHistory*)run_helper.experiment_scope_history->experiment_histories.back();
 
 	double curr_surprise;
 	if (run_helper.num_actions_limit > 0) {
-		this->eval_context->activate_end(problem,
-										 run_helper,
-										 eval_history);
-
 		double target_impact;
 		if (context.size() == 1) {
 			target_impact = problem->score_result(run_helper.num_decisions);
 		} else {
-			context[context.size()-2].scope->eval->activate_end(
-				problem,
-				run_helper,
-				history->outer_eval_history);
-			target_impact = context[context.size()-2].scope->eval->calc_impact(
-				history->outer_eval_history);
+			target_impact = context[context.size()-2].scope->eval->calc_impact(outer_eval_history);
 		}
 
 		double new_predicted_impact = this->eval_context->calc_impact(eval_history);
@@ -220,31 +228,28 @@ void OrientationExperiment::explore_misguess_backprop(
 		curr_surprise = history->existing_predicted_score - new_misguess;
 	}
 
-	#if defined(MDEBUG) && MDEBUG
-	if (run_helper.num_actions_limit > 0) {
-	#else
 	if (run_helper.num_actions_limit > 0
 			&& curr_surprise >= this->existing_score_standard_deviation) {
 	#endif /* MDEBUG */
-		this->new_score = 0.0;
+		this->target_val_histories.reserve(NUM_DATAPOINTS);
 
-		this->state = ORIENTATION_EXPERIMENT_STATE_EXPLORE_SCORE;
+		this->state = ORIENTATION_EXPERIMENT_STATE_EXPLORE_IMPACT;
 		this->state_iter = 0;
 	} else {
-		for (int s_index = 0; s_index < (int)this->curr_step_types.size(); s_index++) {
-			if (this->curr_step_types[s_index] == STEP_TYPE_ACTION) {
-				delete this->curr_actions[s_index];
+		for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {
+			if (this->step_types[s_index] == STEP_TYPE_ACTION) {
+				delete this->actions[s_index];
 			} else {
-				delete this->curr_scopes[s_index];
+				delete this->scopes[s_index];
 			}
 		}
 
-		this->curr_step_types.clear();
-		this->curr_actions.clear();
-		this->curr_scopes.clear();
+		this->step_types.clear();
+		this->actions.clear();
+		this->scopes.clear();
 
-		this->state_iter++;
-		if (this->state_iter >= EXPLORE_ITERS) {
+		this->explore_iter++;
+		if (this->explore_iter >= ORIENTATION_EXPERIMENT_EXPLORE_ITERS) {
 			this->result = EXPERIMENT_RESULT_FAIL;
 		}
 	}

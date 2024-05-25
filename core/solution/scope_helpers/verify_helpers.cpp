@@ -86,14 +86,6 @@ void Scope::verify_activate(Problem* problem,
 							vector<ContextLayer>& context,
 							RunHelper& run_helper,
 							ScopeHistory* history) {
-	if (context.size() == 1) {
-		EvalHistory* eval_history = new EvalHistory(this->eval);
-		this->eval->activate(problem,
-							 run_helper,
-							 eval_history->start_scope_history);
-		delete eval_history;
-	}
-
 	AbstractNode* curr_node = this->nodes[0];
 	while (true) {
 		if (curr_node == NULL) {

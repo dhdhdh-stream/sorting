@@ -15,7 +15,6 @@ void train_network(std::vector<std::vector<std::vector<double>>>& inputs,
 				   Network* network);
 void train_network(std::vector<std::vector<std::vector<double>>>& inputs,
 				   std::vector<double>& target_vals,
-				   std::vector<bool>& test_input_is_start,
 				   std::vector<AbstractNode*>& test_input_node_contexts,
 				   std::vector<int>& test_input_obs_indexes,
 				   Network* network);

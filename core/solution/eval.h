@@ -61,8 +61,6 @@ public:
 	std::vector<std::vector<int>> network_input_indexes;
 	Network* network;
 
-	AbstractExperiment* experiment;
-
 	Eval(Scope* parent_scope);
 	Eval(Eval* original,
 		 Solution* parent_solution);

@@ -15,6 +15,7 @@
 #include "info_scope_node.h"
 #include "new_action_experiment.h"
 #include "new_info_experiment.h"
+#include "orientation_experiment.h"
 #include "pass_through_experiment.h"
 #include "scope.h"
 #include "scope_node.h"
@@ -195,13 +196,13 @@ void create_experiment(ScopeHistory* root_history) {
 				break;
 			case 1:
 				{
-					BranchExperiment* new_experiment = new BranchExperiment(
-						possible_scope_contexts[rand_index],
-						possible_node_contexts[rand_index],
-						possible_is_branch[rand_index],
-						NULL);
+					// BranchExperiment* new_experiment = new BranchExperiment(
+					// 	possible_scope_contexts[rand_index],
+					// 	possible_node_contexts[rand_index],
+					// 	possible_is_branch[rand_index],
+					// 	NULL);
 
-					possible_node_contexts[rand_index]->experiments.push_back(new_experiment);
+					// possible_node_contexts[rand_index]->experiments.push_back(new_experiment);
 				}
 				break;
 			}
@@ -243,5 +244,142 @@ void create_experiment(ScopeHistory* root_history) {
 
 		// possible_info_scope_contexts[rand_index]->experiment = new_experiment;
 		// possible_node_contexts[rand_index]->experiments.push_back(new_experiment);
+	}
+}
+
+void orientation_create_experiment_helper(vector<AbstractNode*>& possible_node_contexts,
+										  vector<bool>& possible_is_branch,
+										  EvalHistory* eval_history) {
+	for (map<AbstractNode*, AbstractNodeHistory*>::iterator it = eval_history->scope_history->node_histories.begin();
+			it != eval_history->scope_history->node_histories.end(); it++) {
+		if (it->second->index < eval_history->start_eval_index
+				|| (it->second->index >= eval_history->end_orientation_index
+					&& it->second->index < eval_history->end_eval_index)) {
+			switch (it->first->type) {
+			case NODE_TYPE_ACTION:
+				{
+					possible_node_contexts.push_back(it->first);
+					possible_is_branch.push_back(false);
+				}
+
+				break;
+			case NODE_TYPE_SCOPE:
+				{
+					/**
+					 * - TODO: recurse into scope
+					 */
+
+					possible_node_contexts.push_back(it->first);
+					possible_is_branch.push_back(false);
+				}
+
+				break;
+			case NODE_TYPE_BRANCH:
+				{
+					BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
+
+					possible_node_contexts.push_back(it->first);
+					possible_is_branch.push_back(branch_node_history->is_branch);
+				}
+
+				break;
+			case NODE_TYPE_INFO_BRANCH:
+				{
+					InfoBranchNodeHistory* info_branch_node_history = (InfoBranchNodeHistory*)it->second;
+
+					/**
+					 * - TODO: recurse into scope
+					 */
+
+					possible_node_contexts.push_back(it->first);
+					possible_is_branch.push_back(info_branch_node_history->is_branch);
+				}
+
+				break;
+			}
+		}
+	}
+}
+
+void eval_create_experiment_helper(vector<AbstractNode*>& possible_node_contexts,
+								   vector<bool>& possible_is_branch,
+								   EvalHistory* eval_history) {
+	for (map<AbstractNode*, AbstractNodeHistory*>::iterator it = eval_history->scope_history->node_histories.begin();
+			it != eval_history->scope_history->node_histories.end(); it++) {
+		if ((it->second->index >= eval_history->start_eval_index
+					&& it->second->index < eval_history->end_orientation_index)
+				|| it->second->index >= eval_history->end_eval_index) {
+			switch (it->first->type) {
+			case NODE_TYPE_ACTION:
+				{
+					possible_node_contexts.push_back(it->first);
+					possible_is_branch.push_back(false);
+				}
+
+				break;
+			case NODE_TYPE_INFO_SCOPE:
+				{
+					possible_node_contexts.push_back(it->first);
+					possible_is_branch.push_back(false);
+				}
+
+				break;
+			case NODE_TYPE_INFO_BRANCH:
+				{
+					InfoBranchNodeHistory* info_branch_node_history = (InfoBranchNodeHistory*)it->second;
+
+					/**
+					 * - TODO: recurse into scope
+					 */
+
+					possible_node_contexts.push_back(it->first);
+					possible_is_branch.push_back(info_branch_node_history->is_branch);
+				}
+
+				break;
+			}
+		}
+	}
+}
+
+void create_eval_experiment(EvalHistory* eval_history) {
+	Eval* eval = eval_history->eval;
+
+	uniform_int_distribution<int> eval_distribution(0, 1);
+	if (eval->input_node_contexts.size() == 0
+			|| eval_distribution(generator) == 0) {
+		vector<AbstractNode*> possible_node_contexts;
+		vector<bool> possible_is_branch;
+
+		eval_create_experiment_helper(possible_node_contexts,
+									  possible_is_branch,
+									  eval_history);
+
+		uniform_int_distribution<int> possible_distribution(0, (int)possible_node_contexts.size()-1);
+		int rand_index = possible_distribution(generator);
+
+		EvalPassThroughExperiment* new_experiment = new EvalPassThroughExperiment(
+			eval,
+			possible_node_contexts[rand_index],
+			possible_is_branch[rand_index]);
+
+		possible_node_contexts[rand_index]->experiments.push_back(new_experiment);
+	} else {
+		vector<AbstractNode*> possible_node_contexts;
+		vector<bool> possible_is_branch;
+
+		orientation_create_experiment_helper(possible_node_contexts,
+											 possible_is_branch,
+											 eval_history);
+
+		uniform_int_distribution<int> possible_distribution(0, (int)possible_node_contexts.size()-1);
+		int rand_index = possible_distribution(generator);
+
+		OrientationExperiment* new_experiment = new OrientationExperiment(
+			eval,
+			possible_node_contexts[rand_index],
+			possible_is_branch[rand_index]);
+
+		possible_node_contexts[rand_index]->experiments.push_back(new_experiment);
 	}
 }

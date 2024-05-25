@@ -17,6 +17,8 @@ public:
 	int next_num_instances;
 	int next_max_num_actions;
 	double next_local_sum_num_actions;
+	std::vector<double> next_impacts;
+	std::vector<double> next_misguesses;
 
 	Metrics(int curr_explore_id,
 			int curr_explore_type,

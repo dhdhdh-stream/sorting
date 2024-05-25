@@ -57,8 +57,10 @@ public:
 	double explore_average_instances_per_run;
 	int explore_scope_max_num_actions;
 	double explore_scope_local_average_num_actions;
-	// TODO: add
 	double explore_scope_average_impact;
+	double explore_scope_impact_standard_deviation;
+	double explore_scope_average_misguess;
+	double explore_scope_misguess_standard_deviation;
 
 	#if defined(MDEBUG) && MDEBUG
 	void* verify_key;

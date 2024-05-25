@@ -1,5 +1,14 @@
 #include "orientation_experiment.h"
 
+#include "action_node.h"
+#include "constants.h"
+#include "eval.h"
+#include "globals.h"
+#include "problem.h"
+#include "scope.h"
+#include "scope_node.h"
+#include "solution.h"
+
 using namespace std;
 
 #if defined(MDEBUG) && MDEBUG
@@ -13,6 +22,8 @@ void OrientationExperiment::explore_impact_activate(
 		Problem* problem,
 		vector<ContextLayer>& context,
 		RunHelper& run_helper) {
+	run_helper.num_actions_limit = MAX_NUM_ACTIONS_LIMIT_MULTIPLIER * solution->explore_scope_max_num_actions;
+
 	this->scope_histories.push_back(new ScopeHistory(context.back().scope_history));
 
 	for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {
@@ -21,35 +32,26 @@ void OrientationExperiment::explore_impact_activate(
 		} else {
 			this->scopes[s_index]->explore_activate(
 				problem,
+				context,
 				run_helper);
 		}
 	}
 
 	curr_node = this->exit_next_node;
-
-	run_helper.num_actions_limit = MAX_NUM_ACTIONS_LIMIT_MULTIPLIER * solution->explore_scope_max_num_actions;
 }
 
 void OrientationExperiment::explore_impact_backprop(
+		EvalHistory* outer_eval_history,
 		EvalHistory* eval_history,
 		Problem* problem,
 		vector<ContextLayer>& context,
 		RunHelper& run_helper) {
 	if (run_helper.num_actions_limit > 0) {
-		this->eval_context->activate_end(problem,
-										 run_helper,
-										 eval_history);
-
 		double target_impact;
 		if (context.size() == 1) {
 			target_impact = problem->score_result(run_helper.num_decisions);
 		} else {
-			context[context.size()-2].scope->eval->activate_end(
-				problem,
-				run_helper,
-				history->outer_eval_history);
-			target_impact = context[context.size()-2].scope->eval->calc_impact(
-				history->outer_eval_history);
+			target_impact = context[context.size()-2].scope->eval->calc_impact(outer_eval_history);
 		}
 
 		this->target_val_histories.push_back(target_impact);
@@ -86,7 +88,7 @@ void OrientationExperiment::explore_impact_backprop(
 				this->target_val_histories.clear();
 
 				this->explore_iter++;
-				if (this->explore_iter >= EXPLORE_ITERS) {
+				if (this->explore_iter >= ORIENTATION_EXPERIMENT_EXPLORE_ITERS) {
 					this->result = EXPERIMENT_RESULT_FAIL;
 				} else {
 					this->state = ORIENTATION_EXPERIMENT_STATE_EXPLORE_MISGUESS;
@@ -165,6 +167,10 @@ void OrientationExperiment::explore_impact_backprop(
 
 				train_new();
 
+				this->combined_score = 0.0;
+				this->original_count = 0;
+				this->branch_count = 0;
+
 				this->state = ORIENTATION_EXPERIMENT_STATE_MEASURE;
 				this->state_iter = 0;
 			} else {
@@ -187,7 +193,7 @@ void OrientationExperiment::explore_impact_backprop(
 				this->target_val_histories.clear();
 
 				this->explore_iter++;
-				if (this->explore_iter >= EXPLORE_ITERS) {
+				if (this->explore_iter >= ORIENTATION_EXPERIMENT_EXPLORE_ITERS) {
 					this->result = EXPERIMENT_RESULT_FAIL;
 				} else {
 					this->state = ORIENTATION_EXPERIMENT_STATE_EXPLORE_MISGUESS;
@@ -195,17 +201,17 @@ void OrientationExperiment::explore_impact_backprop(
 			}
 		}
 	} else {
-		for (int s_index = 0; s_index < (int)this->curr_step_types.size(); s_index++) {
-			if (this->curr_step_types[s_index] == STEP_TYPE_ACTION) {
-				delete this->curr_actions[s_index];
+		for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {
+			if (this->step_types[s_index] == STEP_TYPE_ACTION) {
+				delete this->actions[s_index];
 			} else {
-				delete this->curr_scopes[s_index];
+				delete this->scopes[s_index];
 			}
 		}
 
-		this->curr_step_types.clear();
-		this->curr_actions.clear();
-		this->curr_scopes.clear();
+		this->step_types.clear();
+		this->actions.clear();
+		this->scopes.clear();
 
 		for (int h_index = 0; h_index < (int)this->scope_histories.size(); h_index++) {
 			delete this->scope_histories[h_index];
@@ -214,7 +220,7 @@ void OrientationExperiment::explore_impact_backprop(
 		this->target_val_histories.clear();
 
 		this->explore_iter++;
-		if (this->explore_iter >= EXPLORE_ITERS) {
+		if (this->explore_iter >= ORIENTATION_EXPERIMENT_EXPLORE_ITERS) {
 			this->result = EXPERIMENT_RESULT_FAIL;
 		} else {
 			this->state = ORIENTATION_EXPERIMENT_STATE_EXPLORE_MISGUESS;

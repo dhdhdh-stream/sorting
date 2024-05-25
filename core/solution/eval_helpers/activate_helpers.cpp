@@ -1,5 +1,11 @@
 #include "eval.h"
 
+#include "action_node.h"
+#include "info_branch_node.h"
+#include "info_scope_node.h"
+#include "network.h"
+#include "scope.h"
+
 using namespace std;
 
 void Eval::activate_start(Problem* problem,
@@ -11,7 +17,7 @@ void Eval::activate_start(Problem* problem,
 	inner_context.back().scope = this->subscope;
 	inner_context.back().node = NULL;
 
-	context.back().scope_history = history->scope_history;
+	inner_context.back().scope_history = history->scope_history;
 
 	this->subscope->activate(this->subscope->nodes[0],
 							 problem,
@@ -19,7 +25,7 @@ void Eval::activate_start(Problem* problem,
 							 run_helper,
 							 history->scope_history);
 
-	history->start_eval_index = history->scope_history->nodes.size();
+	history->start_eval_index = history->scope_history->node_histories.size();
 
 	this->subscope->activate(this->subscope->nodes[1],
 							 problem,
@@ -37,9 +43,9 @@ void Eval::activate_end(Problem* problem,
 	inner_context.back().scope = this->subscope;
 	inner_context.back().node = NULL;
 
-	context.back().scope_history = history->scope_history;
+	inner_context.back().scope_history = history->scope_history;
 
-	history->end_orientation_index = history->scope_history->nodes.size();
+	history->end_orientation_index = history->scope_history->node_histories.size();
 
 	this->subscope->activate(this->subscope->nodes[2],
 							 problem,
@@ -47,7 +53,7 @@ void Eval::activate_end(Problem* problem,
 							 run_helper,
 							 history->scope_history);
 
-	history->end_eval_index = history->scope_history->nodes.size();
+	history->end_eval_index = history->scope_history->node_histories.size();
 
 	this->subscope->activate(this->subscope->nodes[3],
 							 problem,
@@ -57,8 +63,6 @@ void Eval::activate_end(Problem* problem,
 }
 
 double Eval::calc_impact(EvalHistory* history) {
-	run_helper.num_decisions++;
-
 	vector<double> input_vals(this->input_node_contexts.size(), 0.0);
 	for (int i_index = 0; i_index < (int)this->input_node_contexts.size(); i_index++) {
 		map<AbstractNode*, AbstractNodeHistory*>::iterator it = history->scope_history->node_histories.find(this->input_node_contexts[i_index]);

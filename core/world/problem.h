@@ -3,13 +3,8 @@
 
 #include "action.h"
 
-const int PROBLEM_TYPE_SORTING = 0;
-const int PROBLEM_TYPE_MINESWEEPER = 1;
-
 class Problem {
 public:
-	int type;
-
 	virtual ~Problem() {};
 
 	virtual int num_obs() = 0;
@@ -20,7 +15,6 @@ public:
 	virtual void perform_action(Action action) = 0;
 	virtual double score_result(int num_decisions) = 0;
 
-	virtual Problem* copy_and_reset() = 0;
 	virtual Problem* copy_snapshot() = 0;
 
 	virtual void print() = 0;

@@ -1,5 +1,23 @@
 #include "orientation_experiment.h"
 
+#include <cmath>
+#include <iostream>
+#undef eigen_assert
+#define eigen_assert(x) if (!(x)) {throw std::invalid_argument("Eigen error");}
+#include <Eigen/Dense>
+
+#include "action_node.h"
+#include "branch_node.h"
+#include "constants.h"
+#include "globals.h"
+#include "info_branch_node.h"
+#include "info_scope_node.h"
+#include "network.h"
+#include "nn_helpers.h"
+#include "scope.h"
+#include "scope_node.h"
+#include "solution_helpers.h"
+
 using namespace std;
 
 void OrientationExperiment::train_new() {

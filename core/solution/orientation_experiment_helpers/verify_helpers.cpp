@@ -1,5 +1,7 @@
 #include "orientation_experiment.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
@@ -16,7 +18,7 @@
 
 using namespace std;
 
-bool OrientationExperiment::measure_activate(
+bool OrientationExperiment::verify_activate(
 		AbstractNode*& curr_node,
 		Problem* problem,
 		vector<ContextLayer>& context,
@@ -128,8 +130,6 @@ bool OrientationExperiment::measure_activate(
 	#endif /* MDEBUG */
 
 	if (decision_is_branch) {
-		this->branch_count++;
-
 		if (this->step_types.size() == 0) {
 			curr_node = this->exit_next_node;
 		} else {
@@ -142,13 +142,11 @@ bool OrientationExperiment::measure_activate(
 
 		return true;
 	} else {
-		this->original_count++;
-
 		return false;
 	}
 }
 
-void OrientationExperiment::measure_backprop(
+void OrientationExperiment::verify_backprop(
 		EvalHistory* outer_eval_history,
 		EvalHistory* eval_history,
 		Problem* problem,
@@ -174,32 +172,71 @@ void OrientationExperiment::measure_backprop(
 		run_helper.num_actions_limit = -1;
 
 		this->state_iter++;
-		if (this->state_iter >= NUM_DATAPOINTS) {
-			this->combined_score /= NUM_DATAPOINTS;
-
-			this->branch_weight = (double)this->branch_count / (double)(this->original_count + this->branch_count);
-
-			#if defined(MDEBUG) && MDEBUG
-			if (rand()%4 == 0) {
-			#else
-			if (this->branch_weight > PASS_THROUGH_BRANCH_WEIGHT
-					&& this->new_average_score >= this->existing_average_score) {
-			#endif
-				this->is_pass_through = true;
-			} else {
-				this->is_pass_through = false;
-			}
+		if (this->state == ORIENTATION_EXPERIMENT_STATE_VERIFY_1ST
+				&& this->state_iter >= VERIFY_1ST_NUM_DATAPOINTS) {
+			this->combined_score /= VERIFY_1ST_NUM_DATAPOINTS;
 
 			#if defined(MDEBUG) && MDEBUG
 			if (rand()%2 == 0) {
 			#else
-			if (this->branch_weight > 0.01
-					&& this->combined_score >= this->existing_average_score) {
+			if (this->combined_score >= this->verify_existing_average_score) {
 			#endif /* MDEBUG */
-				this->target_val_histories.reserve(VERIFY_1ST_NUM_DATAPOINTS);
+				this->target_val_histories.reserve(VERIFY_2ND_NUM_DATAPOINTS);
 
-				this->state = ORIENTATION_EXPERIMENT_STATE_VERIFY_1ST_EXISTING;
+				this->state = ORIENTATION_EXPERIMENT_STATE_VERIFY_2ND_EXISTING;
 				this->state_iter = 0;
+			} else {
+				this->result = EXPERIMENT_RESULT_FAIL;
+			}
+		} else if (this->state_iter >= VERIFY_2ND_NUM_DATAPOINTS) {
+			this->combined_score /= VERIFY_2ND_NUM_DATAPOINTS;
+
+			#if defined(MDEBUG) && MDEBUG
+			if (rand()%2 == 0) {
+			#else
+			if (this->combined_score > this->verify_existing_average_score) {
+			#endif /* MDEBUG */
+				cout << "OrientationExperiment" << endl;
+				cout << "verify" << endl;
+				cout << "this->scope_context->id: " << this->scope_context->id << endl;
+				cout << "this->node_context->id: " << this->node_context->id << endl;
+				cout << "this->is_branch: " << this->is_branch << endl;
+				cout << "new explore path:";
+				for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {
+					if (this->step_types[s_index] == STEP_TYPE_ACTION) {
+						cout << " " << this->actions[s_index]->action.move;
+					} else {
+						cout << " E";
+					}
+				}
+				cout << endl;
+
+				if (this->exit_next_node == NULL) {
+					cout << "this->exit_next_node->id: " << -1 << endl;
+				} else {
+					cout << "this->exit_next_node->id: " << this->exit_next_node->id << endl;
+				}
+
+				cout << "this->combined_score: " << this->combined_score << endl;
+				cout << "this->verify_existing_average_score: " << this->verify_existing_average_score << endl;
+
+				cout << "this->branch_weight: " << this->branch_weight << endl;
+
+				cout << endl;
+
+				#if defined(MDEBUG) && MDEBUG
+				if (this->is_pass_through) {
+					this->result = EXPERIMENT_RESULT_SUCCESS;
+				} else {
+					this->verify_problems = vector<Problem*>(NUM_VERIFY_SAMPLES, NULL);
+					this->verify_seeds = vector<unsigned long>(NUM_VERIFY_SAMPLES);
+
+					this->state = ORIENTATION_EXPERIMENT_STATE_CAPTURE_VERIFY;
+					this->state_iter = 0;
+				}
+				#else
+				this->result = EXPERIMENT_RESULT_SUCCESS;
+				#endif /* MDEBUG */
 			} else {
 				this->result = EXPERIMENT_RESULT_FAIL;
 			}

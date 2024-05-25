@@ -22,8 +22,6 @@
 // - maybe start training eval after sequence begins to have an identity?
 //   - initially use outer/truth
 
-// TODO: practice problem: how far did object move
-
 #include <chrono>
 #include <iostream>
 #include <map>
