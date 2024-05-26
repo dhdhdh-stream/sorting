@@ -154,6 +154,11 @@ int main(int argc, char* argv[]) {
 					Problem* problem = new Minesweeper();
 
 					RunHelper run_helper;
+					#if defined(MDEBUG) && MDEBUG
+					run_helper.curr_run_seed = run_index;
+					run_index++;
+					#endif /* MDEBUG */
+
 					Metrics metrics(solution->explore_id,
 									solution->explore_type,
 									duplicate->explore_id,

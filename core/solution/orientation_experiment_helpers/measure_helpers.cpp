@@ -1,5 +1,7 @@
 #include "orientation_experiment.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
@@ -183,7 +185,7 @@ void OrientationExperiment::measure_backprop(
 			if (rand()%4 == 0) {
 			#else
 			if (this->branch_weight > PASS_THROUGH_BRANCH_WEIGHT
-					&& this->new_average_score >= this->existing_average_score) {
+					&& this->new_average_score <= this->existing_average_score) {
 			#endif
 				this->is_pass_through = true;
 			} else {
@@ -194,7 +196,7 @@ void OrientationExperiment::measure_backprop(
 			if (rand()%2 == 0) {
 			#else
 			if (this->branch_weight > 0.01
-					&& this->combined_score >= this->existing_average_score) {
+					&& this->combined_score <= this->existing_average_score) {
 			#endif /* MDEBUG */
 				this->target_val_histories.reserve(VERIFY_1ST_NUM_DATAPOINTS);
 

@@ -17,7 +17,7 @@
 using namespace std;
 
 Scope* create_new_info_scope() {
-	Scope* new_scope = new Scope();
+	Scope* new_scope = new Scope(NULL);
 
 	new_scope->node_counter = 0;
 

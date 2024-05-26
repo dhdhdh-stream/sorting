@@ -119,18 +119,10 @@ void gather_eval_possible_helper(vector<AbstractNode*>& possible_node_contexts,
 			switch (it->first->type) {
 			case NODE_TYPE_ACTION:
 				{
-					ActionNode* action_node = (ActionNode*)it->first;
-
-					if (it->second->index == 0
-							|| action_node->next_node != NULL) {
-						for (int o_index = 0; o_index < problem_type->num_obs(); o_index++) {
-							possible_node_contexts.push_back(it->first);
-							possible_obs_indexes.push_back(o_index);
-						}
+					for (int o_index = 0; o_index < problem_type->num_obs(); o_index++) {
+						possible_node_contexts.push_back(it->first);
+						possible_obs_indexes.push_back(o_index);
 					}
-					/**
-					 * - don't include potential new ending node for info experiments
-					 */
 				}
 
 				break;

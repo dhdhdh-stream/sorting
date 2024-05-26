@@ -5,11 +5,12 @@
 #include <random>
 
 #include "abstract_experiment.h"
+#include "action_node.h"
 #include "distance.h"
 #include "eval.h"
 #include "globals.h"
-#include "problem.h"
 #include "scope.h"
+#include "scope_node.h"
 #include "solution.h"
 #include "solution_helpers.h"
 
@@ -23,6 +24,16 @@ Problem* problem_type;
 Solution* solution;
 
 int main(int argc, char* argv[]) {
+	if (argc != 2) {
+		cout << "Usage: ./worker [path]" << endl;
+		exit(1);
+	}
+	string path = argv[1];
+
+	/**
+	 * - worker directories need to have already been created
+	 */
+
 	cout << "Starting..." << endl;
 
 	seed = (unsigned)time(NULL);
@@ -33,24 +44,13 @@ int main(int argc, char* argv[]) {
 	problem_type = new Distance();
 
 	solution = new Solution();
-	// solution->init();
-	solution->load("", "main");
+	solution->load("workers/", "main");
 
-	// solution->save("", "main");
-
-	#if defined(MDEBUG) && MDEBUG
-	int run_index = 0;
-	#endif /* MDEBUG */
-
+	auto start_time = chrono::high_resolution_clock::now();
 	while (true) {
 		Problem* problem = new Distance();
 
 		RunHelper run_helper;
-
-		#if defined(MDEBUG) && MDEBUG
-		run_helper.curr_run_seed = run_index;
-		run_index++;
-		#endif /* MDEBUG */
 
 		vector<ContextLayer> context;
 		context.push_back(ContextLayer());
@@ -60,11 +60,6 @@ int main(int argc, char* argv[]) {
 
 		ScopeHistory* root_history = new ScopeHistory(solution->scopes[0]);
 		context.back().scope_history = root_history;
-
-		#if defined(MDEBUG) && MDEBUG
-		run_helper.problem_snapshot = problem->copy_snapshot();
-		run_helper.run_seed_snapshot = run_helper.curr_run_seed;
-		#endif /* MDEBUG */
 
 		run_helper.experiment_scope_history = root_history;
 
@@ -111,44 +106,6 @@ int main(int argc, char* argv[]) {
 					root_history->experiment_histories.back()->experiment->finalize(duplicate);
 					delete root_history->experiment_histories.back()->experiment;
 
-					#if defined(MDEBUG) && MDEBUG
-					while (duplicate->verify_problems.size() > 0) {
-						Problem* problem = duplicate->verify_problems[0];
-
-						RunHelper run_helper;
-						run_helper.verify_key = duplicate->verify_key;
-
-						run_helper.curr_run_seed = duplicate->verify_seeds[0];
-						cout << "run_helper.curr_run_seed: " << run_helper.curr_run_seed << endl;
-						/**
-						 * - also set to enable easy catching
-						 */
-						run_helper.run_seed_snapshot = duplicate->verify_seeds[0];
-						duplicate->verify_seeds.erase(duplicate->verify_seeds.begin());
-
-						vector<ContextLayer> context;
-						context.push_back(ContextLayer());
-
-						context.back().scope = duplicate->scopes[solution->explore_id];
-						context.back().node = NULL;
-
-						ScopeHistory* root_history = new ScopeHistory(duplicate->scopes[solution->explore_id]);
-						context.back().scope_history = root_history;
-
-						duplicate->scopes[solution->explore_id]->verify_activate(
-							problem,
-							context,
-							run_helper,
-							root_history);
-
-						delete root_history;
-
-						delete duplicate->verify_problems[0];
-						duplicate->verify_problems.erase(duplicate->verify_problems.begin());
-					}
-					duplicate->clear_verify();
-					#endif /* MDEBUG */
-
 					while (true) {
 						double sum_timestamp_score = 0.0;
 						int timestamp_score_count = 0;
@@ -161,10 +118,6 @@ int main(int argc, char* argv[]) {
 							Problem* problem = new Distance();
 
 							RunHelper run_helper;
-							#if defined(MDEBUG) && MDEBUG
-							run_helper.curr_run_seed = run_index;
-							run_index++;
-							#endif /* MDEBUG */
 
 							Metrics metrics(solution->explore_id,
 											solution->explore_type,
@@ -248,20 +201,11 @@ int main(int argc, char* argv[]) {
 						}
 					}
 
-					#if defined(MDEBUG) && MDEBUG
-					delete solution;
-					solution = duplicate;
+					duplicate->timestamp++;
 
-					solution->timestamp++;
-					solution->save("", "main");
+					duplicate->save(path, "possible_" + to_string((unsigned)time(NULL)));
 
-					ofstream display_file;
-					display_file.open("../display.txt");
-					solution->save_for_display(display_file);
-					display_file.close();
-					#else
 					delete duplicate;
-					#endif /* MDEBUG */
 				}
 			} else {
 				for (int e_index = 0; e_index < (int)root_history->experiments_seen_order.size(); e_index++) {
@@ -275,24 +219,33 @@ int main(int argc, char* argv[]) {
 
 		delete eval_history;
 
-		#if defined(MDEBUG) && MDEBUG
-		if (run_helper.problem_snapshot != NULL) {
-			delete run_helper.problem_snapshot;
-			run_helper.problem_snapshot = NULL;
-		}
-		#endif /* MDEBUG */
-
 		delete root_history;
 
 		delete problem;
 
-		#if defined(MDEBUG) && MDEBUG
-		if (run_index%2000 == 0) {
-			delete solution;
-			solution = new Solution();
-			solution->load("", "main");
+		auto curr_time = chrono::high_resolution_clock::now();
+		auto time_diff = chrono::duration_cast<chrono::seconds>(curr_time - start_time);
+		if (time_diff.count() >= 20) {
+			cout << "alive" << endl;
+
+			ifstream solution_save_file;
+			solution_save_file.open("workers/saves/main.txt");
+			string timestamp_line;
+			getline(solution_save_file, timestamp_line);
+			int curr_timestamp = stoi(timestamp_line);
+			solution_save_file.close();
+
+			if (curr_timestamp > solution->timestamp) {
+				delete solution;
+
+				solution = new Solution();
+				solution->load("workers/", "main");
+
+				cout << "updated from main" << endl;
+			}
+
+			start_time = curr_time;
 		}
-		#endif /* MDEBUG */
 	}
 
 	delete problem_type;

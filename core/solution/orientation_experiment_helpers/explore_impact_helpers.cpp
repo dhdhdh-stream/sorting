@@ -1,5 +1,7 @@
 #include "orientation_experiment.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "constants.h"
 #include "eval.h"
@@ -54,20 +56,21 @@ void OrientationExperiment::explore_impact_backprop(
 			target_impact = context[context.size()-2].scope->eval->calc_impact(outer_eval_history);
 		}
 
-		this->target_val_histories.push_back(target_impact);
+		new_score += target_impact;
+
+		double new_predicted_impact = this->eval_context->calc_impact(eval_history);
+
+		double new_misguess = (target_impact - new_predicted_impact) * (target_impact - new_predicted_impact);
+		this->target_val_histories.push_back(new_misguess);
 
 		this->state_iter++;
 		if (this->state_iter == INITIAL_NUM_SAMPLES_PER_ITER) {
 			#if defined(MDEBUG) && MDEBUG
 			if (rand()%2 == 0) {
 			#else
-			double sum_impacts = 0.0;
-			for (int i_index = 0; i_index < INITIAL_NUM_SAMPLES_PER_ITER; i_index++) {
-				sum_impacts += this->target_val_histories[i_index];
-			}
-			double average_new_impact = sum_impacts / INITIAL_NUM_SAMPLES_PER_ITER;
-
-			if (average_new_impact < 0.0) {
+			cout << "new_score / INITIAL_NUM_SAMPLES_PER_ITER: " << new_score / INITIAL_NUM_SAMPLES_PER_ITER << endl;
+			cout << "solution->explore_scope_average_impact: " << solution->explore_scope_average_impact << endl;
+			if (new_score / INITIAL_NUM_SAMPLES_PER_ITER < solution->explore_scope_average_impact) {
 			#endif /* MDEBUG */
 				for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {
 					if (this->step_types[s_index] == STEP_TYPE_ACTION) {
@@ -98,13 +101,9 @@ void OrientationExperiment::explore_impact_backprop(
 			#if defined(MDEBUG) && MDEBUG
 			if (rand()%2 == 0) {
 			#else
-			double sum_impacts = 0.0;
-			for (int i_index = 0; i_index < INITIAL_NUM_SAMPLES_PER_ITER; i_index++) {
-				sum_impacts += this->target_val_histories[i_index];
-			}
-			double average_new_impact = sum_impacts / INITIAL_NUM_SAMPLES_PER_ITER;
-
-			if (average_new_impact >= 0.0) {
+			cout << "new_score / NUM_DATAPOINTS: " << new_score / NUM_DATAPOINTS << endl;
+			cout << "solution->explore_scope_average_impact: " << solution->explore_scope_average_impact << endl;
+			if (new_score / NUM_DATAPOINTS >= solution->explore_scope_average_impact) {
 			#endif /* MDEBUG */
 				for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {
 					if (this->step_types[s_index] == STEP_TYPE_ACTION) {
@@ -171,6 +170,7 @@ void OrientationExperiment::explore_impact_backprop(
 				this->original_count = 0;
 				this->branch_count = 0;
 
+				cout << "ORIENTATION_EXPERIMENT_STATE_MEASURE" << endl;
 				this->state = ORIENTATION_EXPERIMENT_STATE_MEASURE;
 				this->state_iter = 0;
 			} else {

@@ -13,7 +13,8 @@
 
 using namespace std;
 
-Scope::Scope() {
+Scope::Scope(Eval* parent_eval) {
+	this->parent_eval = parent_eval;
 	this->id = -1;
 
 	#if defined(MDEBUG) && MDEBUG

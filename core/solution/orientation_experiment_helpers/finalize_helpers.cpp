@@ -5,6 +5,7 @@
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
+#include "eval.h"
 #include "info_branch_node.h"
 #include "scope.h"
 #include "scope_node.h"
@@ -34,7 +35,8 @@ void OrientationExperiment::finalize(Solution* duplicate) {
 void OrientationExperiment::new_branch(Solution* duplicate) {
 	cout << "new_branch" << endl;
 
-	Scope* duplicate_local_scope = duplicate->scopes[this->scope_context->id];
+	Eval* duplicate_eval = duplicate->scopes[this->eval_context->parent_scope->id]->eval;
+	Scope* duplicate_local_scope = duplicate_eval->subscope;
 
 	if (this->ending_node != NULL) {
 		this->ending_node->parent = duplicate_local_scope;
@@ -58,7 +60,11 @@ void OrientationExperiment::new_branch(Solution* duplicate) {
 				new_branch_node->input_scope_contexts.push_back(this->input_scope_contexts[i_index]);
 				for (int c_index = 0; c_index < (int)new_branch_node->input_scope_contexts.back().size(); c_index++) {
 					int scope_id = new_branch_node->input_scope_contexts.back()[c_index]->id;
-					new_branch_node->input_scope_contexts.back()[c_index] = duplicate->scopes[scope_id];
+					if (scope_id == -1) {
+						new_branch_node->input_scope_contexts.back()[c_index] = duplicate_local_scope;
+					} else {
+						new_branch_node->input_scope_contexts.back()[c_index] = duplicate->scopes[scope_id];
+					}
 				}
 				vector<int> scope_context_ids;
 				for (int c_index = 0; c_index < (int)this->input_scope_contexts[i_index].size(); c_index++) {
@@ -88,7 +94,11 @@ void OrientationExperiment::new_branch(Solution* duplicate) {
 				new_branch_node->input_scope_contexts.push_back(this->input_scope_contexts[original_index]);
 				for (int c_index = 0; c_index < (int)new_branch_node->input_scope_contexts.back().size(); c_index++) {
 					int scope_id = new_branch_node->input_scope_contexts.back()[c_index]->id;
-					new_branch_node->input_scope_contexts.back()[c_index] = duplicate->scopes[scope_id];
+					if (scope_id == -1) {
+						new_branch_node->input_scope_contexts.back()[c_index] = duplicate_local_scope;
+					} else {
+						new_branch_node->input_scope_contexts.back()[c_index] = duplicate->scopes[scope_id];
+					}
 				}
 				vector<int> scope_context_ids;
 				for (int c_index = 0; c_index < (int)this->input_scope_contexts[original_index].size(); c_index++) {
@@ -117,7 +127,11 @@ void OrientationExperiment::new_branch(Solution* duplicate) {
 				new_branch_node->input_scope_contexts.push_back(this->input_scope_contexts[i_index]);
 				for (int c_index = 0; c_index < (int)new_branch_node->input_scope_contexts.back().size(); c_index++) {
 					int scope_id = new_branch_node->input_scope_contexts.back()[c_index]->id;
-					new_branch_node->input_scope_contexts.back()[c_index] = duplicate->scopes[scope_id];
+					if (scope_id == -1) {
+						new_branch_node->input_scope_contexts.back()[c_index] = duplicate_local_scope;
+					} else {
+						new_branch_node->input_scope_contexts.back()[c_index] = duplicate->scopes[scope_id];
+					}
 				}
 				vector<int> scope_context_ids;
 				for (int c_index = 0; c_index < (int)this->input_scope_contexts[i_index].size(); c_index++) {
@@ -147,7 +161,11 @@ void OrientationExperiment::new_branch(Solution* duplicate) {
 				new_branch_node->input_scope_contexts.push_back(this->input_scope_contexts[original_index]);
 				for (int c_index = 0; c_index < (int)new_branch_node->input_scope_contexts.back().size(); c_index++) {
 					int scope_id = new_branch_node->input_scope_contexts.back()[c_index]->id;
-					new_branch_node->input_scope_contexts.back()[c_index] = duplicate->scopes[scope_id];
+					if (scope_id == -1) {
+						new_branch_node->input_scope_contexts.back()[c_index] = duplicate_local_scope;
+					} else {
+						new_branch_node->input_scope_contexts.back()[c_index] = duplicate->scopes[scope_id];
+					}
 				}
 				vector<int> scope_context_ids;
 				for (int c_index = 0; c_index < (int)this->input_scope_contexts[original_index].size(); c_index++) {
@@ -374,7 +392,8 @@ void OrientationExperiment::new_branch(Solution* duplicate) {
 void OrientationExperiment::new_pass_through(Solution* duplicate) {
 	cout << "new_pass_through" << endl;
 
-	Scope* duplicate_local_scope = duplicate->scopes[this->scope_context->id];
+	Eval* duplicate_eval = duplicate->scopes[this->eval_context->parent_scope->id]->eval;
+	Scope* duplicate_local_scope = duplicate_eval->subscope;
 	AbstractNode* duplicate_explore_node = duplicate_local_scope->nodes[this->node_context->id];
 
 	int start_node_id;

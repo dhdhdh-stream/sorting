@@ -22,6 +22,7 @@ class Solution;
 class ScopeHistory;
 class Scope {
 public:
+	Eval* parent_eval;
 	int id;
 
 	int node_counter;
@@ -34,7 +35,7 @@ public:
 	std::vector<int> verify_scope_history_sizes;
 	#endif /* MDEBUG */
 
-	Scope();
+	Scope(Eval* parent_eval);
 	~Scope();
 
 	void activate(Problem* problem,

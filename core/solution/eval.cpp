@@ -19,7 +19,7 @@ Eval::Eval(Eval* original,
 		   Solution* parent_solution) {
 	this->parent_scope = parent_solution->scopes[original->parent_scope->id];
 
-	this->subscope = new Scope();
+	this->subscope = new Scope(this);
 	this->subscope->copy_from(original->subscope,
 							  parent_solution);
 	this->subscope->link(parent_solution);
@@ -52,17 +52,51 @@ Eval::~Eval() {
 }
 
 void Eval::init() {
-	this->subscope = new Scope();
+	this->subscope = new Scope(this);
 	this->subscope->id = -1;
 
-	ActionNode* starting_noop_node = new ActionNode();
-	starting_noop_node->parent = this->subscope;
-	starting_noop_node->id = 0;
-	starting_noop_node->action = Action(ACTION_NOOP);
-	starting_noop_node->next_node_id = -1;
-	starting_noop_node->next_node = NULL;
-	this->subscope->nodes[0] = starting_noop_node;
-	this->subscope->node_counter = 1;
+	this->subscope->node_counter = 0;
+
+	{
+		ActionNode* starting_noop_node = new ActionNode();
+		starting_noop_node->parent = this->subscope;
+		starting_noop_node->id = this->subscope->node_counter;
+		this->subscope->node_counter++;
+		starting_noop_node->action = Action(ACTION_NOOP);
+		starting_noop_node->next_node_id = -1;
+		starting_noop_node->next_node = NULL;
+		this->subscope->nodes[starting_noop_node->id] = starting_noop_node;
+	}
+	{
+		ActionNode* starting_noop_node = new ActionNode();
+		starting_noop_node->parent = this->subscope;
+		starting_noop_node->id = this->subscope->node_counter;
+		this->subscope->node_counter++;
+		starting_noop_node->action = Action(ACTION_NOOP);
+		starting_noop_node->next_node_id = -1;
+		starting_noop_node->next_node = NULL;
+		this->subscope->nodes[starting_noop_node->id] = starting_noop_node;
+	}
+	{
+		ActionNode* starting_noop_node = new ActionNode();
+		starting_noop_node->parent = this->subscope;
+		starting_noop_node->id = this->subscope->node_counter;
+		this->subscope->node_counter++;
+		starting_noop_node->action = Action(ACTION_NOOP);
+		starting_noop_node->next_node_id = -1;
+		starting_noop_node->next_node = NULL;
+		this->subscope->nodes[starting_noop_node->id] = starting_noop_node;
+	}
+	{
+		ActionNode* starting_noop_node = new ActionNode();
+		starting_noop_node->parent = this->subscope;
+		starting_noop_node->id = this->subscope->node_counter;
+		this->subscope->node_counter++;
+		starting_noop_node->action = Action(ACTION_NOOP);
+		starting_noop_node->next_node_id = -1;
+		starting_noop_node->next_node = NULL;
+		this->subscope->nodes[starting_noop_node->id] = starting_noop_node;
+	}
 
 	this->average_score = 0.0;
 
@@ -70,7 +104,7 @@ void Eval::init() {
 }
 
 void Eval::load(ifstream& input_file) {
-	this->subscope = new Scope();
+	this->subscope = new Scope(this);
 	this->subscope->id = -1;
 	this->subscope->load(input_file);
 	this->subscope->link(solution);
@@ -167,10 +201,11 @@ EvalHistory::EvalHistory(EvalHistory* original) {
 	this->eval = original->eval;
 
 	this->scope_history = new ScopeHistory(original->scope_history);
+	this->start_eval_index = original->start_eval_index;
+	this->end_orientation_index = original->end_orientation_index;
+	this->end_eval_index = original->end_eval_index;
 }
 
 EvalHistory::~EvalHistory() {
-	if (this->scope_history != NULL) {
-		delete this->scope_history;
-	}
+	delete this->scope_history;
 }

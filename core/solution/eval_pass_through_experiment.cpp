@@ -27,6 +27,11 @@ EvalPassThroughExperiment::EvalPassThroughExperiment(
 	this->node_context = node_context;
 	this->is_branch = is_branch;
 
+	this->average_remaining_experiments_from_start = 1.0;
+	/**
+	 * - start with a 50% chance to bypass
+	 */
+
 	this->network = NULL;
 
 	this->ending_node = NULL;

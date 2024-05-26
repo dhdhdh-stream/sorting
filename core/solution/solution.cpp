@@ -20,7 +20,7 @@ Solution::Solution(Solution* original) {
 	this->timestamp_score = original->timestamp_score;
 
 	for (int s_index = 0; s_index < (int)original->scopes.size(); s_index++) {
-		Scope* scope = new Scope();
+		Scope* scope = new Scope(NULL);
 		scope->id = s_index;
 		this->scopes.push_back(scope);
 	}
@@ -49,20 +49,16 @@ Solution::Solution(Solution* original) {
 	this->max_num_actions = original->max_num_actions;
 	this->num_actions_limit = original->num_actions_limit;
 
-	uniform_int_distribution<int> explore_id_distribution(0, (int)this->scopes.size()-1);
-	this->explore_id = explore_id_distribution(generator);
+	// uniform_int_distribution<int> explore_id_distribution(0, (int)this->scopes.size()-1);
+	// this->explore_id = explore_id_distribution(generator);
 	// if (this->scopes[this->explore_id]->eval->score_input_node_contexts.size() == 0) {
 	// 	this->explore_type = EXPLORE_TYPE_EVAL;
 	// } else {
 	// 	uniform_int_distribution<int> explore_type_distribution(0, 1);
 	// 	this->explore_type = explore_type_distribution(generator);
 	// }
-	// temp
-	if (original->explore_type == EXPLORE_TYPE_EVAL) {
-		this->explore_type = EXPLORE_TYPE_SCORE;
-	} else {
-		this->explore_type = EXPLORE_TYPE_EVAL;
-	}
+	this->explore_id = 0;
+	this->explore_type = EXPLORE_TYPE_EVAL;
 	this->explore_scope_max_num_actions = 1;
 }
 
@@ -79,7 +75,7 @@ void Solution::init() {
 	this->timestamp = 0;
 	this->timestamp_score = -1.0;
 
-	Scope* new_scope = new Scope();
+	Scope* new_scope = new Scope(NULL);
 	new_scope->id = this->scopes.size();
 	this->scopes.push_back(new_scope);
 
@@ -103,6 +99,11 @@ void Solution::init() {
 	this->explore_average_instances_per_run = 1.0;
 	this->explore_scope_max_num_actions = 1;
 	this->explore_scope_local_average_num_actions = 1.0;
+	// TODO: add initialization
+	this->explore_scope_average_impact = 0.0;
+	this->explore_scope_impact_standard_deviation = 2.0;
+	this->explore_scope_average_misguess = 100.0;
+	this->explore_scope_misguess_standard_deviation = 2.0;
 }
 
 void Solution::load(string path,
@@ -127,7 +128,7 @@ void Solution::load(string path,
 	int num_info_scopes = stoi(num_info_scopes_line);
 
 	for (int s_index = 0; s_index < num_scopes; s_index++) {
-		Scope* scope = new Scope();
+		Scope* scope = new Scope(NULL);
 		scope->id = s_index;
 		this->scopes.push_back(scope);
 	}
@@ -177,6 +178,22 @@ void Solution::load(string path,
 	getline(input_file, explore_scope_local_average_num_actions_line);
 	this->explore_scope_local_average_num_actions = stod(explore_scope_local_average_num_actions_line);
 
+	string explore_scope_average_impact_line;
+	getline(input_file, explore_scope_average_impact_line);
+	this->explore_scope_average_impact = stod(explore_scope_average_impact_line);
+
+	string explore_scope_impact_standard_deviation_line;
+	getline(input_file, explore_scope_impact_standard_deviation_line);
+	this->explore_scope_impact_standard_deviation = stod(explore_scope_impact_standard_deviation_line);
+
+	string explore_scope_average_misguess_line;
+	getline(input_file, explore_scope_average_misguess_line);
+	this->explore_scope_average_misguess = stod(explore_scope_average_misguess_line);
+
+	string explore_scope_misguess_standard_deviation_line;
+	getline(input_file, explore_scope_misguess_standard_deviation_line);
+	this->explore_scope_misguess_standard_deviation = stod(explore_scope_misguess_standard_deviation_line);
+
 	input_file.close();
 }
 
@@ -220,6 +237,10 @@ void Solution::save(string path,
 	output_file << this->explore_average_instances_per_run << endl;
 	output_file << this->explore_scope_max_num_actions << endl;
 	output_file << this->explore_scope_local_average_num_actions << endl;
+	output_file << this->explore_scope_average_impact << endl;
+	output_file << this->explore_scope_impact_standard_deviation << endl;
+	output_file << this->explore_scope_average_misguess << endl;
+	output_file << this->explore_scope_misguess_standard_deviation << endl;
 
 	output_file.close();
 

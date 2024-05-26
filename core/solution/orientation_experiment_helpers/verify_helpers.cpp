@@ -177,9 +177,10 @@ void OrientationExperiment::verify_backprop(
 			this->combined_score /= VERIFY_1ST_NUM_DATAPOINTS;
 
 			#if defined(MDEBUG) && MDEBUG
-			if (rand()%2 == 0) {
+			// if (rand()%2 == 0) {
+			if (true) {
 			#else
-			if (this->combined_score >= this->verify_existing_average_score) {
+			if (this->combined_score <= this->verify_existing_average_score) {
 			#endif /* MDEBUG */
 				this->target_val_histories.reserve(VERIFY_2ND_NUM_DATAPOINTS);
 
@@ -192,9 +193,10 @@ void OrientationExperiment::verify_backprop(
 			this->combined_score /= VERIFY_2ND_NUM_DATAPOINTS;
 
 			#if defined(MDEBUG) && MDEBUG
-			if (rand()%2 == 0) {
+			// if (rand()%2 == 0) {
+			if (true) {
 			#else
-			if (this->combined_score > this->verify_existing_average_score) {
+			if (this->combined_score < this->verify_existing_average_score) {
 			#endif /* MDEBUG */
 				cout << "OrientationExperiment" << endl;
 				cout << "verify" << endl;

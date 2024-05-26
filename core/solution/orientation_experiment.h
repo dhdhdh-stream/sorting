@@ -66,6 +66,7 @@ public:
 	double existing_average_misguess;
 	double existing_misguess_standard_deviation;
 
+	double new_score;
 	std::vector<int> step_types;
 	std::vector<ActionNode*> actions;
 	std::vector<ScopeNode*> scopes;

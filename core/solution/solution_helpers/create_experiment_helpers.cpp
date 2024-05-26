@@ -346,7 +346,10 @@ void create_eval_experiment(EvalHistory* eval_history) {
 	Eval* eval = eval_history->eval;
 
 	uniform_int_distribution<int> eval_distribution(0, 1);
-	if (eval->input_node_contexts.size() == 0
+	/**
+	 * - assume eval->average_score == 0.0 means not initialized
+	 */
+	if (eval->average_score == 0.0
 			|| eval_distribution(generator) == 0) {
 		vector<AbstractNode*> possible_node_contexts;
 		vector<bool> possible_is_branch;

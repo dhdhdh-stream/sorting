@@ -1,5 +1,7 @@
 #include "orientation_experiment.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
@@ -229,10 +231,14 @@ void OrientationExperiment::explore_misguess_backprop(
 	}
 
 	if (run_helper.num_actions_limit > 0
-			&& curr_surprise >= this->existing_score_standard_deviation) {
+			&& curr_surprise >= solution->explore_scope_misguess_standard_deviation) {
 	#endif /* MDEBUG */
 		this->target_val_histories.reserve(NUM_DATAPOINTS);
+		this->scope_histories.reserve(NUM_DATAPOINTS);
 
+		this->new_score = 0.0;
+
+		cout << "ORIENTATION_EXPERIMENT_STATE_EXPLORE_IMPACT" << endl;
 		this->state = ORIENTATION_EXPERIMENT_STATE_EXPLORE_IMPACT;
 		this->state_iter = 0;
 	} else {
