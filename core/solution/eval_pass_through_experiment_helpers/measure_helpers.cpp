@@ -161,6 +161,13 @@ void EvalPassThroughExperiment::measure_backprop(
 		double misguess_standard_deviation = min(solution->explore_scope_misguess_standard_deviation, new_misguess_standard_deviation);
 		double misguess_t_score = misguess_improvement / (misguess_standard_deviation / sqrt(NUM_DATAPOINTS));
 
+		cout << "EvalPassThrough" << endl;
+		cout << "solution->explore_scope_average_misguess: " << solution->explore_scope_average_misguess << endl;
+		cout << "new_average_misguess: " << new_average_misguess << endl;
+		cout << "solution->explore_scope_misguess_standard_deviation: " << solution->explore_scope_misguess_standard_deviation << endl;
+		cout << "new_misguess_standard_deviation: " << new_misguess_standard_deviation << endl;
+		cout << "misguess_t_score: " << misguess_t_score << endl;
+
 		if (misguess_t_score > 1.645) {
 		#endif /* MDEBUG */
 			cout << "EvalPassThrough" << endl;

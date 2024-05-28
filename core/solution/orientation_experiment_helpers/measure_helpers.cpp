@@ -195,6 +195,10 @@ void OrientationExperiment::measure_backprop(
 			#if defined(MDEBUG) && MDEBUG
 			if (rand()%2 == 0) {
 			#else
+			cout << "OrientationExperiment" << endl;
+			cout << "this->combined_score: " << this->combined_score << endl;
+			cout << "this->existing_average_score: " << this->existing_average_score << endl;
+
 			if (this->branch_weight > 0.01
 					&& this->combined_score <= this->existing_average_score) {
 			#endif /* MDEBUG */

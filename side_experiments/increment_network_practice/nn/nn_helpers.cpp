@@ -15,10 +15,11 @@ const int OPTIMIZE_ITERS = 30;
 #else
 const int TRAIN_ITERS_FRONT = 200000;
 const int TRAIN_ITERS_BACK = 100000;
-const int OPTIMIZE_ITERS = 100000;
+const int OPTIMIZE_ITERS = 100000;	// better
+// const int OPTIMIZE_ITERS = 50000;	// doesn't remove unneeded well enough
 #endif /* MDEBUG */
 
-const double NETWORK_INPUT_MIN_IMPACT = 0.1;
+const double NETWORK_INPUT_MIN_IMPACT = 0.2;
 
 void train_network(vector<vector<double>>& inputs,
 				   vector<double>& target_vals,
@@ -39,6 +40,9 @@ void train_network(vector<vector<double>>& inputs,
 		network->backprop(error);
 	}
 
+	/**
+	 * - with limited number of datapoints, can be difficult to seperate irrelevant inputs
+	 */
 	vector<double> input_impacts(num_inputs);
 	for (int i_index = 0; i_index < num_inputs; i_index++) {
 		double input_sum = 0.0;
@@ -61,6 +65,10 @@ void train_network(vector<vector<double>>& inputs,
 		sum_weights += abs(network->output->weights[0][0][i_index]);
 
 		input_impacts[i_index] = input_normalized_mean * sum_weights;
+
+		// cout << "test_input_indexes[i_index]: " << test_input_indexes[i_index] << endl;
+		// cout << "input_normalized_mean: " << input_normalized_mean << endl;
+		// cout << "sum_weights: " << sum_weights << endl;
 	}
 
 	double max_impact = 0.0;
@@ -74,7 +82,8 @@ void train_network(vector<vector<double>>& inputs,
 		#if defined(MDEBUG) && MDEBUG
 		if (rand()%2 == 0) {
 		#else
-		if (input_impacts[i_index] < max_impact * NETWORK_INPUT_MIN_IMPACT) {
+		if (false) {
+		// if (input_impacts[i_index] < max_impact * NETWORK_INPUT_MIN_IMPACT) {
 		#endif /* MDEBUG */
 			test_input_indexes.erase(test_input_indexes.begin() + i_index);
 

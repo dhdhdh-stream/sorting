@@ -24,10 +24,7 @@ public:
 	void activate(std::vector<double>& input_vals);
 	void backprop(double error);
 
-	/**
-	 * - num_new_inputs can be 0
-	 */
-	void increment(int num_new_inputs);
+	void increment(int new_num_inputs);
 };
 
 #endif /* NETWORK_H */

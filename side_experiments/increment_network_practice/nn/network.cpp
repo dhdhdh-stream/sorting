@@ -21,6 +21,7 @@ Network::Network() {
 	this->output->input_layers.push_back(this->hiddens[0]);
 
 	this->epoch_iter = 0;
+	this->hidden_average_max_updates = vector<double>{0.0};
 	this->output_average_max_update = 0.0;
 }
 
@@ -122,8 +123,8 @@ void Network::backprop(double error) {
 	}
 }
 
-void Network::increment(int num_new_inputs) {
-	for (int i_index = 0; i_index < num_new_inputs; i_index++) {
+void Network::increment(int new_num_inputs) {
+	while ((int)this->input->acti_vals.size() < new_num_inputs) {
 		this->input->acti_vals.push_back(0.0);
 		this->input->errors.push_back(0.0);
 	}
