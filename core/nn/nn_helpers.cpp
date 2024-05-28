@@ -393,7 +393,7 @@ void optimize_network(vector<vector<vector<double>>>& inputs,
 	int train_instances = (1.0 - TEST_SAMPLES_PERCENTAGE) * inputs.size();
 
 	uniform_int_distribution<int> distribution(0, train_instances-1);
-	for (int iter_index = 0; iter_index < TRAIN_ITERS_FRONT; iter_index++) {
+	for (int iter_index = 0; iter_index < OPTIMIZE_ITERS; iter_index++) {
 		int rand_index = distribution(generator);
 
 		network->activate(inputs[rand_index]);
