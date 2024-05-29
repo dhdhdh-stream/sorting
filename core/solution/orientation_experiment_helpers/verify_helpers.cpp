@@ -85,7 +85,10 @@ bool OrientationExperiment::verify_activate(
 		}
 	}
 	this->existing_network->activate(existing_input_vals);
+	#if defined(MDEBUG) && MDEBUG
+	#else
 	double existing_predicted_score = this->existing_network->output->acti_vals[0];
+	#endif /* MDEBUG */
 
 	vector<double> new_input_vals(this->new_input_scope_contexts.size(), 0.0);
 	for (int i_index = 0; i_index < (int)this->new_input_scope_contexts.size(); i_index++) {
@@ -145,7 +148,10 @@ bool OrientationExperiment::verify_activate(
 		}
 	}
 	this->new_network->activate(new_input_vals);
+	#if defined(MDEBUG) && MDEBUG
+	#else
 	double new_predicted_score = this->new_network->output->acti_vals[0];
+	#endif /* MDEBUG */
 
 	#if defined(MDEBUG) && MDEBUG
 	bool decision_is_branch;
@@ -202,29 +208,11 @@ void OrientationExperiment::verify_backprop(
 		run_helper.num_actions_limit = -1;
 
 		this->state_iter++;
-		if (this->state == ORIENTATION_EXPERIMENT_STATE_VERIFY_1ST
-				&& this->state_iter >= VERIFY_1ST_NUM_DATAPOINTS) {
-			this->combined_score /= VERIFY_1ST_NUM_DATAPOINTS;
+		if (this->state_iter >= VERIFY_NUM_DATAPOINTS) {
+			this->combined_score /= VERIFY_NUM_DATAPOINTS;
 
 			#if defined(MDEBUG) && MDEBUG
-			// if (rand()%2 == 0) {
-			if (true) {
-			#else
-			if (this->combined_score <= this->existing_average_score) {
-			#endif /* MDEBUG */
-				this->target_val_histories.reserve(VERIFY_2ND_NUM_DATAPOINTS);
-
-				this->state = ORIENTATION_EXPERIMENT_STATE_VERIFY_2ND_EXISTING;
-				this->state_iter = 0;
-			} else {
-				this->result = EXPERIMENT_RESULT_FAIL;
-			}
-		} else if (this->state_iter >= VERIFY_2ND_NUM_DATAPOINTS) {
-			this->combined_score /= VERIFY_2ND_NUM_DATAPOINTS;
-
-			#if defined(MDEBUG) && MDEBUG
-			// if (rand()%2 == 0) {
-			if (true) {
+			if (rand()%2 == 0) {
 			#else
 			if (this->combined_score < this->existing_average_score) {
 			#endif /* MDEBUG */

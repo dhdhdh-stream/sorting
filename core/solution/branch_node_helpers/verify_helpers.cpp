@@ -156,10 +156,6 @@ void BranchNode::verify_activate(AbstractNode*& curr_node,
 	if (this->verify_key == run_helper.verify_key) {
 		cout << "this->id: " << this->id << endl;
 
-		cout << "input_vals:" << endl;
-		for (int i_index = 0; i_index < (int)input_vals.size(); i_index++) {
-			cout << i_index << ": " << input_vals[i_index] << endl;
-		}
 		cout << "run_helper.curr_run_seed: " << run_helper.curr_run_seed << endl;
 		cout << "run_helper.run_seed_snapshot: " << run_helper.run_seed_snapshot << endl;
 		problem->print();

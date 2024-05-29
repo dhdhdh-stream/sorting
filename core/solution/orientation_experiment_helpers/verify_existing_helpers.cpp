@@ -25,32 +25,18 @@ void OrientationExperiment::verify_existing_backprop(
 	double existing_misguess = (target_impact - existing_predicted_impact) * (target_impact - existing_predicted_impact);
 	this->target_val_histories.push_back(existing_misguess);
 
-	if (this->state == ORIENTATION_EXPERIMENT_STATE_VERIFY_1ST_EXISTING
-			&& (int)this->target_val_histories.size() >= VERIFY_1ST_NUM_DATAPOINTS) {
+	if ((int)this->target_val_histories.size() >= VERIFY_NUM_DATAPOINTS) {
 		double sum_scores = 0.0;
-		for (int d_index = 0; d_index < VERIFY_1ST_NUM_DATAPOINTS; d_index++) {
+		for (int d_index = 0; d_index < VERIFY_NUM_DATAPOINTS; d_index++) {
 			sum_scores += this->target_val_histories[d_index];
 		}
-		this->existing_average_score = sum_scores / VERIFY_1ST_NUM_DATAPOINTS;
+		this->existing_average_score = sum_scores / VERIFY_NUM_DATAPOINTS;
 
 		this->target_val_histories.clear();
 
 		this->combined_score = 0.0;
 
-		this->state = ORIENTATION_EXPERIMENT_STATE_VERIFY_1ST;
-		this->state_iter = 0;
-	} else if ((int)this->target_val_histories.size() >= VERIFY_2ND_NUM_DATAPOINTS) {
-		double sum_scores = 0.0;
-		for (int d_index = 0; d_index < VERIFY_2ND_NUM_DATAPOINTS; d_index++) {
-			sum_scores += this->target_val_histories[d_index];
-		}
-		this->existing_average_score = sum_scores / VERIFY_2ND_NUM_DATAPOINTS;
-
-		this->target_val_histories.clear();
-
-		this->combined_score = 0.0;
-
-		this->state = ORIENTATION_EXPERIMENT_STATE_VERIFY_2ND;
+		this->state = ORIENTATION_EXPERIMENT_STATE_VERIFY;
 		this->state_iter = 0;
 	}
 }

@@ -68,8 +68,6 @@ void OrientationExperiment::explore_impact_backprop(
 			#if defined(MDEBUG) && MDEBUG
 			if (rand()%2 == 0) {
 			#else
-			cout << "new_score / INITIAL_NUM_SAMPLES_PER_ITER: " << new_score / INITIAL_NUM_SAMPLES_PER_ITER << endl;
-			cout << "solution->explore_scope_average_impact: " << solution->explore_scope_average_impact << endl;
 			if (new_score / INITIAL_NUM_SAMPLES_PER_ITER < solution->explore_scope_average_impact) {
 			#endif /* MDEBUG */
 				for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {
@@ -101,8 +99,6 @@ void OrientationExperiment::explore_impact_backprop(
 			#if defined(MDEBUG) && MDEBUG
 			if (rand()%2 == 0) {
 			#else
-			cout << "new_score / NUM_DATAPOINTS: " << new_score / NUM_DATAPOINTS << endl;
-			cout << "solution->explore_scope_average_impact: " << solution->explore_scope_average_impact << endl;
 			if (new_score / NUM_DATAPOINTS >= solution->explore_scope_average_impact) {
 			#endif /* MDEBUG */
 				for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {
@@ -170,7 +166,6 @@ void OrientationExperiment::explore_impact_backprop(
 				this->original_count = 0;
 				this->branch_count = 0;
 
-				cout << "ORIENTATION_EXPERIMENT_STATE_MEASURE" << endl;
 				this->state = ORIENTATION_EXPERIMENT_STATE_MEASURE;
 				this->state_iter = 0;
 			} else {

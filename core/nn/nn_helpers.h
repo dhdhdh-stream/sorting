@@ -1,3 +1,6 @@
+// TODO: problem might be too sharp to solve straight up
+// - perhaps first try clustering/unsupervised learning to break the problem down a bit
+
 #ifndef NN_HELPERS_H
 #define NN_HELPERS_H
 

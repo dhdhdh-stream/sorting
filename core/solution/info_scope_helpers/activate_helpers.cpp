@@ -107,7 +107,10 @@ void InfoScope::activate(Problem* problem,
 			}
 		}
 		this->negative_network->activate(negative_input_vals);
+		#if defined(MDEBUG) && MDEBUG
+		#else
 		double negative_score = this->negative_network->output->acti_vals[0];
+		#endif /* MDEBUG */
 
 		vector<double> positive_input_vals(this->positive_input_node_contexts.size(), 0.0);
 		for (int i_index = 0; i_index < (int)this->positive_input_node_contexts.size(); i_index++) {
@@ -155,7 +158,10 @@ void InfoScope::activate(Problem* problem,
 			}
 		}
 		this->positive_network->activate(positive_input_vals);
+		#if defined(MDEBUG) && MDEBUG
+		#else
 		double positive_score = this->positive_network->output->acti_vals[0];
+		#endif /* MDEBUG */
 
 		#if defined(MDEBUG) && MDEBUG
 		if (run_helper.curr_run_seed%2 == 0) {

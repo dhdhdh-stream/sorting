@@ -224,7 +224,6 @@ void OrientationExperiment::explore_misguess_backprop(
 
 		this->new_score = 0.0;
 
-		cout << "ORIENTATION_EXPERIMENT_STATE_EXPLORE_IMPACT" << endl;
 		this->state = ORIENTATION_EXPERIMENT_STATE_EXPLORE_IMPACT;
 		this->state_iter = 0;
 	} else {

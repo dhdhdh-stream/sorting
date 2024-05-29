@@ -74,6 +74,8 @@ void EvalPassThroughExperiment::train_new() {
 						misguess_standard_deviation);
 	}
 
+	cout << "starting this->input_node_contexts.size(): " << this->input_node_contexts.size() << endl;
+
 	int train_index = 0;
 	while (train_index < 3) {
 		vector<AbstractNode*> test_input_node_contexts = this->input_node_contexts;
@@ -179,6 +181,9 @@ void EvalPassThroughExperiment::train_new() {
 						test_average_misguess,
 						test_misguess_standard_deviation);
 
+		cout << "test_average_misguess: " << test_average_misguess << endl;
+		cout << "test_misguess_standard_deviation: " << test_misguess_standard_deviation << endl;
+
 		bool is_select = false;
 		if (this->network == NULL) {
 			is_select = true;
@@ -197,6 +202,7 @@ void EvalPassThroughExperiment::train_new() {
 		}
 
 		if (is_select) {
+			cout << "select" << endl;
 			int original_input_size = (int)this->input_node_contexts.size();
 			int test_input_size = (int)test_input_node_contexts.size();
 
@@ -267,6 +273,8 @@ void EvalPassThroughExperiment::train_new() {
 					this->network = remove_test_network;
 				}
 			}
+
+			cout << "updated this->input_node_contexts.size(): " << this->input_node_contexts.size() << endl;
 
 			#if defined(MDEBUG) && MDEBUG
 			#else

@@ -64,8 +64,7 @@ bool OrientationExperiment::activate(AbstractNode* experiment_node,
 									problem,
 									context,
 									run_helper);
-		case ORIENTATION_EXPERIMENT_STATE_VERIFY_1ST:
-		case ORIENTATION_EXPERIMENT_STATE_VERIFY_2ND:
+		case ORIENTATION_EXPERIMENT_STATE_VERIFY:
 			return verify_activate(curr_node,
 								   problem,
 								   context,
@@ -117,16 +116,14 @@ void OrientationExperiment::backprop(EvalHistory* outer_eval_history,
 						 context,
 						 run_helper);
 		break;
-	case ORIENTATION_EXPERIMENT_STATE_VERIFY_1ST_EXISTING:
-	case ORIENTATION_EXPERIMENT_STATE_VERIFY_2ND_EXISTING:
+	case ORIENTATION_EXPERIMENT_STATE_VERIFY_EXISTING:
 		verify_existing_backprop(outer_eval_history,
 								 eval_history,
 								 problem,
 								 context,
 								 run_helper);
 		break;
-	case ORIENTATION_EXPERIMENT_STATE_VERIFY_1ST:
-	case ORIENTATION_EXPERIMENT_STATE_VERIFY_2ND:
+	case ORIENTATION_EXPERIMENT_STATE_VERIFY:
 		verify_backprop(outer_eval_history,
 						eval_history,
 						problem,

@@ -81,7 +81,10 @@ void BranchNode::new_action_activate(AbstractNode*& curr_node,
 		}
 	}
 	this->original_network->activate(original_input_vals);
+	#if defined(MDEBUG) && MDEBUG
+	#else
 	double original_score = this->original_network->output->acti_vals[0];
+	#endif /* MDEBUG */
 
 	vector<double> branch_input_vals(this->branch_input_scope_contexts.size(), 0.0);
 	for (int i_index = 0; i_index < (int)this->branch_input_scope_contexts.size(); i_index++) {
@@ -143,7 +146,10 @@ void BranchNode::new_action_activate(AbstractNode*& curr_node,
 		}
 	}
 	this->branch_network->activate(branch_input_vals);
+	#if defined(MDEBUG) && MDEBUG
+	#else
 	double branch_score = this->branch_network->output->acti_vals[0];
+	#endif /* MDEBUG */
 
 	#if defined(MDEBUG) && MDEBUG
 	if (run_helper.curr_run_seed%2 == 0) {

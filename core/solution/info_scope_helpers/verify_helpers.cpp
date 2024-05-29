@@ -151,11 +151,6 @@ void InfoScope::verify_activate(Problem* problem,
 				cout << it->first->id << endl;
 			}
 
-			cout << "input_vals:" << endl;
-			for (int i_index = 0; i_index < (int)input_vals.size(); i_index++) {
-				cout << i_index << ": " << input_vals[i_index] << endl;
-			}
-
 			if (this->verify_negative_scores[0] != negative_score
 					|| this->verify_positive_scores[0] != positive_score) {
 				cout << "this->verify_negative_scores[0]: " << this->verify_negative_scores[0] << endl;

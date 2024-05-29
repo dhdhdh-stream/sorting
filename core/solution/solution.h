@@ -27,7 +27,7 @@ const int EXPLORE_TYPE_EVAL = 1;
 #if defined(MDEBUG) && MDEBUG
 const int MEASURE_ITERS = 10;
 #else
-const int MEASURE_ITERS = 2000;
+const int MEASURE_ITERS = 4000;
 #endif /* MDEBUG */
 
 class Solution {
