@@ -31,7 +31,7 @@ void OrientationExperiment::verify_existing_backprop(
 		for (int d_index = 0; d_index < VERIFY_1ST_NUM_DATAPOINTS; d_index++) {
 			sum_scores += this->target_val_histories[d_index];
 		}
-		this->verify_existing_average_score = sum_scores / VERIFY_1ST_NUM_DATAPOINTS;
+		this->existing_average_score = sum_scores / VERIFY_1ST_NUM_DATAPOINTS;
 
 		this->target_val_histories.clear();
 
@@ -44,7 +44,7 @@ void OrientationExperiment::verify_existing_backprop(
 		for (int d_index = 0; d_index < VERIFY_2ND_NUM_DATAPOINTS; d_index++) {
 			sum_scores += this->target_val_histories[d_index];
 		}
-		this->verify_existing_average_score = sum_scores / VERIFY_2ND_NUM_DATAPOINTS;
+		this->existing_average_score = sum_scores / VERIFY_2ND_NUM_DATAPOINTS;
 
 		this->target_val_histories.clear();
 

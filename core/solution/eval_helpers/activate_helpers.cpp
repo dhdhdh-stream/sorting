@@ -97,22 +97,8 @@ double Eval::calc_impact(EvalHistory* history) {
 			}
 		}
 	}
-
-	double score = this->average_score;
-	for (int i_index = 0; i_index < (int)this->linear_input_indexes.size(); i_index++) {
-		score += input_vals[this->linear_input_indexes[i_index]] * this->linear_weights[i_index];
-	}
-	if (this->network != NULL) {
-		vector<vector<double>> network_input_vals(this->network_input_indexes.size());
-		for (int i_index = 0; i_index < (int)this->network_input_indexes.size(); i_index++) {
-			network_input_vals[i_index] = vector<double>(this->network_input_indexes[i_index].size());
-			for (int v_index = 0; v_index < (int)this->network_input_indexes[i_index].size(); v_index++) {
-				network_input_vals[i_index][v_index] = input_vals[this->network_input_indexes[i_index][v_index]];
-			}
-		}
-		this->network->activate(network_input_vals);
-		score += this->network->output->acti_vals[0];
-	}
+	this->network->activate(input_vals);
+	double score = this->network->output->acti_vals[0];
 
 	return score;
 }

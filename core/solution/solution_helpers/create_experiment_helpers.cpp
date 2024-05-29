@@ -349,7 +349,7 @@ void create_eval_experiment(EvalHistory* eval_history) {
 	/**
 	 * - assume eval->average_score == 0.0 means not initialized
 	 */
-	if (eval->average_score == 0.0
+	if (eval->network == NULL
 			|| eval_distribution(generator) == 0) {
 		vector<AbstractNode*> possible_node_contexts;
 		vector<bool> possible_is_branch;

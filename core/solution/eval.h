@@ -50,15 +50,8 @@ public:
 	 */
 	Scope* subscope;
 
-	double average_score;
-
 	std::vector<AbstractNode*> input_node_contexts;
 	std::vector<int> input_obs_indexes;
-
-	std::vector<int> linear_input_indexes;
-	std::vector<double> linear_weights;
-
-	std::vector<std::vector<int>> network_input_indexes;
 	Network* network;
 
 	Eval(Scope* parent_scope);

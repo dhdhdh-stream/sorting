@@ -270,11 +270,9 @@ void EvalPassThroughExperiment::explore_backprop(
 
 			uniform_int_distribution<int> new_distribution(0, 3);
 			if (!new_distribution(generator)) {
-				this->input_node_contexts = this->eval_context->input_node_contexts;
-				this->input_obs_indexes = this->eval_context->input_obs_indexes;
-
-				this->network_input_indexes = this->eval_context->network_input_indexes;
 				if (this->eval_context->network != NULL) {
+					this->input_node_contexts = this->eval_context->input_node_contexts;
+					this->input_obs_indexes = this->eval_context->input_obs_indexes;
 					this->network = new Network(this->eval_context->network);
 				}
 			}

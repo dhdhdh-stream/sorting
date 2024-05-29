@@ -10,60 +10,44 @@
 
 using namespace std;
 
-Layer::Layer(int type,
-			 int num_nodes) {
+Layer::Layer(int type) {
 	this->type = type;
-
-	for (int n_index = 0; n_index < num_nodes; n_index++) {
-		this->acti_vals.push_back(0.0);
-		this->errors.push_back(0.0);
-	}
 }
 
-Layer::~Layer() {
-	// do nothing
-}
-
-void Layer::setup_weights_full() {
+void Layer::update_structure() {
 	uniform_real_distribution<double> distribution(-0.01, 0.01);
 	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
-		vector<vector<double>> node_weights;
-		vector<vector<double>> node_weight_updates;
+		if ((int)this->weights.size() < n_index+1) {
+			this->weights.push_back(vector<vector<double>>());
+		}
+		if ((int)this->constants.size() < n_index+1) {
+			this->constants.push_back(0.0);
+		}
+		if ((int)this->weight_updates.size() < n_index+1) {
+			this->weight_updates.push_back(vector<vector<double>>());
+		}
+		if ((int)this->constant_updates.size() < n_index+1) {
+			this->constant_updates.push_back(0.0);
+		}
 
 		for (int l_index = 0; l_index < (int)this->input_layers.size(); l_index++) {
-			int layer_size = (int)this->input_layers[l_index]->acti_vals.size();
-
-			vector<double> layer_weights;
-			vector<double> layer_weight_updates;
-			for (int ln_index = 0; ln_index < layer_size; ln_index++) {
-				layer_weights.push_back(distribution(generator));
-				layer_weight_updates.push_back(0.0);
+			if ((int)this->weights[n_index].size() < l_index+1) {
+				this->weights[n_index].push_back(vector<double>());
 			}
-			node_weights.push_back(layer_weights);
-			node_weight_updates.push_back(layer_weight_updates);
+			if ((int)this->weight_updates[n_index].size() < l_index+1) {
+				this->weight_updates[n_index].push_back(vector<double>());
+			}
+
+			int layer_size = (int)this->input_layers[l_index]->acti_vals.size();
+			for (int ln_index = 0; ln_index < layer_size; ln_index++) {
+				if ((int)this->weights[n_index][l_index].size() < ln_index+1) {
+					this->weights[n_index][l_index].push_back(distribution(generator));
+				}
+				if ((int)this->weight_updates[n_index][l_index].size() < ln_index+1) {
+					this->weight_updates[n_index][l_index].push_back(0.0);
+				}
+			}
 		}
-
-		this->weights.push_back(node_weights);
-		this->constants.push_back(distribution(generator));
-		this->weight_updates.push_back(node_weight_updates);
-		this->constant_updates.push_back(0.0);
-	}
-}
-
-void Layer::add_input(Layer* layer) {
-	this->input_layers.push_back(layer);
-
-	int layer_size = (int)layer->acti_vals.size();
-	uniform_real_distribution<double> distribution(-0.01, 0.01);
-	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
-		vector<double> layer_weights;
-		vector<double> layer_weight_updates;
-		for (int ln_index = 0; ln_index < layer_size; ln_index++) {
-			layer_weights.push_back(distribution(generator));
-			layer_weight_updates.push_back(0.0);
-		}
-		this->weights[n_index].push_back(layer_weights);
-		this->weight_updates[n_index].push_back(layer_weight_updates);
 	}
 }
 
@@ -300,6 +284,13 @@ void Layer::update_weights(double learning_rate) {
 						*learning_rate;
 		this->constant_updates[n_index] = 0.0;
 		this->constants[n_index] += update;
+	}
+}
+
+void Layer::remove_input(int index) {
+	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
+		this->weights[n_index][0].erase(this->weights[n_index][0].begin() + index);
+		this->weight_updates[n_index][0].erase(this->weight_updates[n_index][0].begin() + index);
 	}
 }
 

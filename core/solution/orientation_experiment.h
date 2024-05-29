@@ -54,17 +54,11 @@ public:
 	int explore_iter;
 
 	double existing_average_score;
-	double existing_score_standard_deviation;
 
-	std::vector<std::vector<Scope*>> input_scope_contexts;
-	std::vector<std::vector<AbstractNode*>> input_node_contexts;
-	std::vector<int> input_obs_indexes;
-
-	std::vector<double> existing_linear_weights;
-	std::vector<std::vector<int>> existing_network_input_indexes;
+	std::vector<std::vector<Scope*>> existing_input_scope_contexts;
+	std::vector<std::vector<AbstractNode*>> existing_input_node_contexts;
+	std::vector<int> existing_input_obs_indexes;
 	Network* existing_network;
-	double existing_average_misguess;
-	double existing_misguess_standard_deviation;
 
 	double new_score;
 	std::vector<int> step_types;
@@ -76,18 +70,15 @@ public:
 
 	double new_average_score;
 
-	std::vector<double> new_linear_weights;
-	std::vector<std::vector<int>> new_network_input_indexes;
+	std::vector<std::vector<Scope*>> new_input_scope_contexts;
+	std::vector<std::vector<AbstractNode*>> new_input_node_contexts;
+	std::vector<int> new_input_obs_indexes;
 	Network* new_network;
-	double new_average_misguess;
-	double new_misguess_standard_deviation;
 
 	double combined_score;
 	int original_count;
 	int branch_count;
 	double branch_weight;
-
-	double verify_existing_average_score;
 
 	bool is_pass_through;
 

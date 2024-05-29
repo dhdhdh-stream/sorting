@@ -18,7 +18,6 @@ const int EXPLORE_TYPE_BEST = 2;
 
 const int MAX_EXPLORE_TRIES = 4;
 
-const int LINEAR_NUM_OBS = 50;
 const int NETWORK_INCREMENT_NUM_NEW = 10;
 
 /**

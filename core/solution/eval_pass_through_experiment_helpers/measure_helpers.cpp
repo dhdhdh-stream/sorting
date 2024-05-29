@@ -116,21 +116,8 @@ void EvalPassThroughExperiment::measure_backprop(
 		}
 	}
 
-	double predicted_impact = this->average_score;
-	for (int i_index = 0; i_index < (int)this->input_node_contexts.size(); i_index++) {
-		predicted_impact += input_vals[i_index] * this->linear_weights[i_index];
-	}
-	if (this->network != NULL) {
-		vector<vector<double>> network_input_vals(this->network_input_indexes.size());
-		for (int i_index = 0; i_index < (int)this->network_input_indexes.size(); i_index++) {
-			network_input_vals[i_index] = vector<double>(this->network_input_indexes[i_index].size());
-			for (int v_index = 0; v_index < (int)this->network_input_indexes[i_index].size(); v_index++) {
-				network_input_vals[i_index][v_index] = input_vals[this->network_input_indexes[i_index][v_index]];
-			}
-		}
-		this->network->activate(network_input_vals);
-		predicted_impact += this->network->output->acti_vals[0];
-	}
+	this->network->activate(input_vals);
+	double predicted_impact = this->network->output->acti_vals[0];
 
 	double misguess = (target_impact - predicted_impact) * (target_impact - predicted_impact);
 	this->misguess_histories.push_back(misguess);

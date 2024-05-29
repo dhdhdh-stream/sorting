@@ -38,16 +38,9 @@ public:
 
 	ActionNode* ending_node;
 
-	double average_score;
-
 	std::vector<AbstractNode*> input_node_contexts;
 	std::vector<int> input_obs_indexes;
-
-	std::vector<double> linear_weights;
-	std::vector<std::vector<int>> network_input_indexes;
 	Network* network;
-	double network_average_misguess;
-	double network_misguess_standard_deviation;
 
 	std::vector<EvalHistory*> eval_histories;
 

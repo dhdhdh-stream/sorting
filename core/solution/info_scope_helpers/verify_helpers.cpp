@@ -45,25 +45,25 @@ void InfoScope::verify_activate(Problem* problem,
 
 		run_helper.num_decisions++;
 
-		vector<double> input_vals(this->input_node_contexts.size(), 0.0);
-		for (int i_index = 0; i_index < (int)this->input_node_contexts.size(); i_index++) {
+		vector<double> negative_input_vals(this->negative_input_node_contexts.size(), 0.0);
+		for (int i_index = 0; i_index < (int)this->negative_input_node_contexts.size(); i_index++) {
 			map<AbstractNode*, AbstractNodeHistory*>::iterator it = subscope_history->node_histories.find(
-				this->input_node_contexts[i_index]);
+				this->negative_input_node_contexts[i_index]);
 			if (it != subscope_history->node_histories.end()) {
-				switch (this->input_node_contexts[i_index]->type) {
+				switch (this->negative_input_node_contexts[i_index]->type) {
 				case NODE_TYPE_ACTION:
 					{
 						ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
-						input_vals[i_index] = action_node_history->obs_snapshot[this->input_obs_indexes[i_index]];
+						negative_input_vals[i_index] = action_node_history->obs_snapshot[this->negative_input_obs_indexes[i_index]];
 					}
 					break;
 				case NODE_TYPE_BRANCH:
 					{
 						BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
 						if (branch_node_history->is_branch) {
-							input_vals[i_index] = 1.0;
+							negative_input_vals[i_index] = 1.0;
 						} else {
-							input_vals[i_index] = -1.0;
+							negative_input_vals[i_index] = -1.0;
 						}
 					}
 					break;
@@ -71,9 +71,9 @@ void InfoScope::verify_activate(Problem* problem,
 					{
 						InfoScopeNodeHistory* info_scope_node_history = (InfoScopeNodeHistory*)it->second;
 						if (info_scope_node_history->is_positive) {
-							input_vals[i_index] = 1.0;
+							negative_input_vals[i_index] = 1.0;
 						} else {
-							input_vals[i_index] = -1.0;
+							negative_input_vals[i_index] = -1.0;
 						}
 					}
 					break;
@@ -81,47 +81,65 @@ void InfoScope::verify_activate(Problem* problem,
 					{
 						InfoBranchNodeHistory* info_branch_node_history = (InfoBranchNodeHistory*)it->second;
 						if (info_branch_node_history->is_branch) {
-							input_vals[i_index] = 1.0;
+							negative_input_vals[i_index] = 1.0;
 						} else {
-							input_vals[i_index] = -1.0;
+							negative_input_vals[i_index] = -1.0;
 						}
 					}
 					break;
 				}
 			}
 		}
+		this->negative_network->activate(negative_input_vals);
+		double negative_score = this->negative_network->output->acti_vals[0];
 
-		double negative_score = this->negative_average_score;
-		for (int i_index = 0; i_index < (int)this->linear_negative_input_indexes.size(); i_index++) {
-			negative_score += input_vals[this->linear_negative_input_indexes[i_index]] * this->linear_negative_weights[i_index];
-		}
-		if (this->negative_network != NULL) {
-			vector<vector<double>> negative_network_input_vals(this->negative_network_input_indexes.size());
-			for (int i_index = 0; i_index < (int)this->negative_network_input_indexes.size(); i_index++) {
-				negative_network_input_vals[i_index] = vector<double>(this->negative_network_input_indexes[i_index].size());
-				for (int v_index = 0; v_index < (int)this->negative_network_input_indexes[i_index].size(); v_index++) {
-					negative_network_input_vals[i_index][v_index] = input_vals[this->negative_network_input_indexes[i_index][v_index]];
+		vector<double> positive_input_vals(this->positive_input_node_contexts.size(), 0.0);
+		for (int i_index = 0; i_index < (int)this->positive_input_node_contexts.size(); i_index++) {
+			map<AbstractNode*, AbstractNodeHistory*>::iterator it = subscope_history->node_histories.find(
+				this->positive_input_node_contexts[i_index]);
+			if (it != subscope_history->node_histories.end()) {
+				switch (this->positive_input_node_contexts[i_index]->type) {
+				case NODE_TYPE_ACTION:
+					{
+						ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
+						positive_input_vals[i_index] = action_node_history->obs_snapshot[this->positive_input_obs_indexes[i_index]];
+					}
+					break;
+				case NODE_TYPE_BRANCH:
+					{
+						BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
+						if (branch_node_history->is_branch) {
+							positive_input_vals[i_index] = 1.0;
+						} else {
+							positive_input_vals[i_index] = -1.0;
+						}
+					}
+					break;
+				case NODE_TYPE_INFO_SCOPE:
+					{
+						InfoScopeNodeHistory* info_scope_node_history = (InfoScopeNodeHistory*)it->second;
+						if (info_scope_node_history->is_positive) {
+							positive_input_vals[i_index] = 1.0;
+						} else {
+							positive_input_vals[i_index] = -1.0;
+						}
+					}
+					break;
+				case NODE_TYPE_INFO_BRANCH:
+					{
+						InfoBranchNodeHistory* info_branch_node_history = (InfoBranchNodeHistory*)it->second;
+						if (info_branch_node_history->is_branch) {
+							positive_input_vals[i_index] = 1.0;
+						} else {
+							positive_input_vals[i_index] = -1.0;
+						}
+					}
+					break;
 				}
 			}
-			this->negative_network->activate(negative_network_input_vals);
-			negative_score += this->negative_network->output->acti_vals[0];
 		}
-
-		double positive_score = this->positive_average_score;
-		for (int i_index = 0; i_index < (int)this->linear_positive_input_indexes.size(); i_index++) {
-			positive_score += input_vals[this->linear_positive_input_indexes[i_index]] * this->linear_positive_weights[i_index];
-		}
-		if (this->positive_network != NULL) {
-			vector<vector<double>> positive_network_input_vals(this->positive_network_input_indexes.size());
-			for (int i_index = 0; i_index < (int)this->positive_network_input_indexes.size(); i_index++) {
-				positive_network_input_vals[i_index] = vector<double>(this->positive_network_input_indexes[i_index].size());
-				for (int v_index = 0; v_index < (int)this->positive_network_input_indexes[i_index].size(); v_index++) {
-					positive_network_input_vals[i_index][v_index] = input_vals[this->positive_network_input_indexes[i_index][v_index]];
-				}
-			}
-			this->positive_network->activate(positive_network_input_vals);
-			positive_score += this->positive_network->output->acti_vals[0];
-		}
+		this->positive_network->activate(positive_input_vals);
+		double positive_score = this->positive_network->output->acti_vals[0];
 
 		if (this->verify_key == run_helper.verify_key) {
 			cout << "run_helper.curr_run_seed: " << run_helper.curr_run_seed << endl;

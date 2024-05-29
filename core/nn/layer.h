@@ -23,11 +23,9 @@ public:
 	std::vector<std::vector<std::vector<double>>> weight_updates;
 	std::vector<double> constant_updates;
 
-	Layer(int type, int num_nodes);
-	~Layer();
-	
-	void setup_weights_full();
-	void add_input(Layer* layer);
+	Layer(int type);
+
+	void update_structure();
 
 	void copy_weights_from(Layer* original);
 	void load_weights_from(std::ifstream& input_file);
@@ -36,6 +34,11 @@ public:
 	void backprop();
 	void get_max_update(double& max_update_size);
 	void update_weights(double learning_rate);
+
+	/**
+	 * - always remove from input_layers[0]
+	 */
+	void remove_input(int index);
 
 	void save_weights(std::ofstream& output_file);
 };

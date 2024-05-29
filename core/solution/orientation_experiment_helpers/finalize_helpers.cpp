@@ -49,173 +49,74 @@ void OrientationExperiment::new_branch(Solution* duplicate) {
 	duplicate_local_scope->node_counter++;
 	duplicate_local_scope->nodes[new_branch_node->id] = new_branch_node;
 
-	new_branch_node->original_average_score = this->existing_average_score;
-	new_branch_node->branch_average_score = this->new_average_score;
+	for (int i_index = 0; i_index < (int)this->existing_input_scope_contexts.size(); i_index++) {
+		vector<int> scope_context_ids;
+		for (int c_index = 0; c_index < (int)this->existing_input_scope_contexts[i_index].size(); c_index++) {
+			scope_context_ids.push_back(this->existing_input_scope_contexts[i_index][c_index]->id);
+		}
+		new_branch_node->original_input_scope_context_ids.push_back(scope_context_ids);
 
-	vector<int> input_mapping(this->input_scope_contexts.size(), -1);
-	for (int i_index = 0; i_index < (int)this->existing_linear_weights.size(); i_index++) {
-		if (this->existing_linear_weights[i_index] != 0.0) {
-			if (input_mapping[i_index] == -1) {
-				input_mapping[i_index] = (int)new_branch_node->input_scope_contexts.size();
-				new_branch_node->input_scope_contexts.push_back(this->input_scope_contexts[i_index]);
-				for (int c_index = 0; c_index < (int)new_branch_node->input_scope_contexts.back().size(); c_index++) {
-					int scope_id = new_branch_node->input_scope_contexts.back()[c_index]->id;
-					if (scope_id == -1) {
-						new_branch_node->input_scope_contexts.back()[c_index] = duplicate_local_scope;
-					} else {
-						new_branch_node->input_scope_contexts.back()[c_index] = duplicate->scopes[scope_id];
-					}
-				}
-				vector<int> scope_context_ids;
-				for (int c_index = 0; c_index < (int)this->input_scope_contexts[i_index].size(); c_index++) {
-					scope_context_ids.push_back(this->input_scope_contexts[i_index][c_index]->id);
-				}
-				new_branch_node->input_scope_context_ids.push_back(scope_context_ids);
-				new_branch_node->input_node_contexts.push_back(this->input_node_contexts[i_index]);
-				for (int c_index = 0; c_index < (int)new_branch_node->input_node_contexts.back().size(); c_index++) {
-					new_branch_node->input_node_contexts.back()[c_index] =
-						new_branch_node->input_scope_contexts.back()[c_index]
-							->nodes[new_branch_node->input_node_contexts.back()[c_index]->id];
-				}
-				vector<int> node_context_ids;
-				for (int c_index = 0; c_index < (int)this->input_node_contexts[i_index].size(); c_index++) {
-					node_context_ids.push_back(this->input_node_contexts[i_index][c_index]->id);
-				}
-				new_branch_node->input_node_context_ids.push_back(node_context_ids);
-				new_branch_node->input_obs_indexes.push_back(this->input_obs_indexes[i_index]);
+		vector<Scope*> scope_context;
+		for (int c_index = 0; c_index < (int)this->existing_input_scope_contexts[i_index].size(); c_index++) {
+			int scope_id = this->existing_input_scope_contexts[i_index][c_index]->id;
+			if (scope_id == -1) {
+				scope_context.push_back(duplicate_local_scope);
+			} else {
+				scope_context.push_back(duplicate->scopes[scope_id]);
 			}
 		}
-	}
-	for (int i_index = 0; i_index < (int)this->existing_network_input_indexes.size(); i_index++) {
-		for (int v_index = 0; v_index < (int)this->existing_network_input_indexes[i_index].size(); v_index++) {
-			int original_index = this->existing_network_input_indexes[i_index][v_index];
-			if (input_mapping[original_index] == -1) {
-				input_mapping[original_index] = (int)new_branch_node->input_scope_contexts.size();
-				new_branch_node->input_scope_contexts.push_back(this->input_scope_contexts[original_index]);
-				for (int c_index = 0; c_index < (int)new_branch_node->input_scope_contexts.back().size(); c_index++) {
-					int scope_id = new_branch_node->input_scope_contexts.back()[c_index]->id;
-					if (scope_id == -1) {
-						new_branch_node->input_scope_contexts.back()[c_index] = duplicate_local_scope;
-					} else {
-						new_branch_node->input_scope_contexts.back()[c_index] = duplicate->scopes[scope_id];
-					}
-				}
-				vector<int> scope_context_ids;
-				for (int c_index = 0; c_index < (int)this->input_scope_contexts[original_index].size(); c_index++) {
-					scope_context_ids.push_back(this->input_scope_contexts[original_index][c_index]->id);
-				}
-				new_branch_node->input_scope_context_ids.push_back(scope_context_ids);
-				new_branch_node->input_node_contexts.push_back(this->input_node_contexts[original_index]);
-				for (int c_index = 0; c_index < (int)new_branch_node->input_node_contexts.back().size(); c_index++) {
-					new_branch_node->input_node_contexts.back()[c_index] =
-						new_branch_node->input_scope_contexts.back()[c_index]
-							->nodes[new_branch_node->input_node_contexts.back()[c_index]->id];
-				}
-				vector<int> node_context_ids;
-				for (int c_index = 0; c_index < (int)this->input_node_contexts[original_index].size(); c_index++) {
-					node_context_ids.push_back(this->input_node_contexts[original_index][c_index]->id);
-				}
-				new_branch_node->input_node_context_ids.push_back(node_context_ids);
-				new_branch_node->input_obs_indexes.push_back(this->input_obs_indexes[original_index]);
-			}
-		}
-	}
-	for (int i_index = 0; i_index < (int)this->new_linear_weights.size(); i_index++) {
-		if (this->new_linear_weights[i_index] != 0.0) {
-			if (input_mapping[i_index] == -1) {
-				input_mapping[i_index] = (int)new_branch_node->input_scope_contexts.size();
-				new_branch_node->input_scope_contexts.push_back(this->input_scope_contexts[i_index]);
-				for (int c_index = 0; c_index < (int)new_branch_node->input_scope_contexts.back().size(); c_index++) {
-					int scope_id = new_branch_node->input_scope_contexts.back()[c_index]->id;
-					if (scope_id == -1) {
-						new_branch_node->input_scope_contexts.back()[c_index] = duplicate_local_scope;
-					} else {
-						new_branch_node->input_scope_contexts.back()[c_index] = duplicate->scopes[scope_id];
-					}
-				}
-				vector<int> scope_context_ids;
-				for (int c_index = 0; c_index < (int)this->input_scope_contexts[i_index].size(); c_index++) {
-					scope_context_ids.push_back(this->input_scope_contexts[i_index][c_index]->id);
-				}
-				new_branch_node->input_scope_context_ids.push_back(scope_context_ids);
-				new_branch_node->input_node_contexts.push_back(this->input_node_contexts[i_index]);
-				for (int c_index = 0; c_index < (int)new_branch_node->input_node_contexts.back().size(); c_index++) {
-					new_branch_node->input_node_contexts.back()[c_index] =
-						new_branch_node->input_scope_contexts.back()[c_index]
-							->nodes[new_branch_node->input_node_contexts.back()[c_index]->id];
-				}
-				vector<int> node_context_ids;
-				for (int c_index = 0; c_index < (int)this->input_node_contexts[i_index].size(); c_index++) {
-					node_context_ids.push_back(this->input_node_contexts[i_index][c_index]->id);
-				}
-				new_branch_node->input_node_context_ids.push_back(node_context_ids);
-				new_branch_node->input_obs_indexes.push_back(this->input_obs_indexes[i_index]);
-			}
-		}
-	}
-	for (int i_index = 0; i_index < (int)this->new_network_input_indexes.size(); i_index++) {
-		for (int v_index = 0; v_index < (int)this->new_network_input_indexes[i_index].size(); v_index++) {
-			int original_index = this->new_network_input_indexes[i_index][v_index];
-			if (input_mapping[original_index] == -1) {
-				input_mapping[original_index] = (int)new_branch_node->input_scope_contexts.size();
-				new_branch_node->input_scope_contexts.push_back(this->input_scope_contexts[original_index]);
-				for (int c_index = 0; c_index < (int)new_branch_node->input_scope_contexts.back().size(); c_index++) {
-					int scope_id = new_branch_node->input_scope_contexts.back()[c_index]->id;
-					if (scope_id == -1) {
-						new_branch_node->input_scope_contexts.back()[c_index] = duplicate_local_scope;
-					} else {
-						new_branch_node->input_scope_contexts.back()[c_index] = duplicate->scopes[scope_id];
-					}
-				}
-				vector<int> scope_context_ids;
-				for (int c_index = 0; c_index < (int)this->input_scope_contexts[original_index].size(); c_index++) {
-					scope_context_ids.push_back(this->input_scope_contexts[original_index][c_index]->id);
-				}
-				new_branch_node->input_scope_context_ids.push_back(scope_context_ids);
-				new_branch_node->input_node_contexts.push_back(this->input_node_contexts[original_index]);
-				for (int c_index = 0; c_index < (int)new_branch_node->input_node_contexts.back().size(); c_index++) {
-					new_branch_node->input_node_contexts.back()[c_index] =
-						new_branch_node->input_scope_contexts.back()[c_index]
-							->nodes[new_branch_node->input_node_contexts.back()[c_index]->id];
-				}
-				vector<int> node_context_ids;
-				for (int c_index = 0; c_index < (int)this->input_node_contexts[original_index].size(); c_index++) {
-					node_context_ids.push_back(this->input_node_contexts[original_index][c_index]->id);
-				}
-				new_branch_node->input_node_context_ids.push_back(node_context_ids);
-				new_branch_node->input_obs_indexes.push_back(this->input_obs_indexes[original_index]);
-			}
-		}
-	}
+		new_branch_node->original_input_scope_contexts.push_back(scope_context);
 
-	for (int i_index = 0; i_index < (int)this->existing_linear_weights.size(); i_index++) {
-		if (this->existing_linear_weights[i_index] != 0.0) {
-			new_branch_node->linear_original_input_indexes.push_back(input_mapping[i_index]);
-			new_branch_node->linear_original_weights.push_back(this->existing_linear_weights[i_index]);
+		vector<int> node_context_ids;
+		for (int c_index = 0; c_index < (int)this->existing_input_node_contexts[i_index].size(); c_index++) {
+			node_context_ids.push_back(this->existing_input_node_contexts[i_index][c_index]->id);
 		}
-	}
-	for (int i_index = 0; i_index < (int)this->new_linear_weights.size(); i_index++) {
-		if (this->new_linear_weights[i_index] != 0.0) {
-			new_branch_node->linear_branch_input_indexes.push_back(input_mapping[i_index]);
-			new_branch_node->linear_branch_weights.push_back(this->new_linear_weights[i_index]);
-		}
-	}
+		new_branch_node->original_input_node_context_ids.push_back(node_context_ids);
 
-	for (int i_index = 0; i_index < (int)this->existing_network_input_indexes.size(); i_index++) {
-		vector<int> input_indexes;
-		for (int v_index = 0; v_index < (int)this->existing_network_input_indexes[i_index].size(); v_index++) {
-			input_indexes.push_back(input_mapping[this->existing_network_input_indexes[i_index][v_index]]);
+		vector<AbstractNode*> node_context;
+		for (int c_index = 0; c_index < (int)this->existing_input_node_contexts[i_index].size(); c_index++) {
+			node_context.push_back(new_branch_node->original_input_scope_contexts[i_index][c_index]
+				->nodes[this->existing_input_node_contexts[i_index][c_index]->id]);
 		}
-		new_branch_node->original_network_input_indexes.push_back(input_indexes);
+		new_branch_node->original_input_node_contexts.push_back(node_context);
+
+		new_branch_node->original_input_obs_indexes.push_back(this->existing_input_obs_indexes[i_index]);
 	}
 	new_branch_node->original_network = this->existing_network;
 	this->existing_network = NULL;
-	for (int i_index = 0; i_index < (int)this->new_network_input_indexes.size(); i_index++) {
-		vector<int> input_indexes;
-		for (int v_index = 0; v_index < (int)this->new_network_input_indexes[i_index].size(); v_index++) {
-			input_indexes.push_back(input_mapping[this->new_network_input_indexes[i_index][v_index]]);
+
+	for (int i_index = 0; i_index < (int)this->new_input_scope_contexts.size(); i_index++) {
+		vector<int> scope_context_ids;
+		for (int c_index = 0; c_index < (int)this->new_input_scope_contexts[i_index].size(); c_index++) {
+			scope_context_ids.push_back(this->new_input_scope_contexts[i_index][c_index]->id);
 		}
-		new_branch_node->branch_network_input_indexes.push_back(input_indexes);
+		new_branch_node->branch_input_scope_context_ids.push_back(scope_context_ids);
+
+		vector<Scope*> scope_context;
+		for (int c_index = 0; c_index < (int)this->new_input_scope_contexts[i_index].size(); c_index++) {
+			int scope_id = this->new_input_scope_contexts[i_index][c_index]->id;
+			if (scope_id == -1) {
+				scope_context.push_back(duplicate_local_scope);
+			} else {
+				scope_context.push_back(duplicate->scopes[scope_id]);
+			}
+		}
+		new_branch_node->branch_input_scope_contexts.push_back(scope_context);
+
+		vector<int> node_context_ids;
+		for (int c_index = 0; c_index < (int)this->new_input_node_contexts[i_index].size(); c_index++) {
+			node_context_ids.push_back(this->new_input_node_contexts[i_index][c_index]->id);
+		}
+		new_branch_node->branch_input_node_context_ids.push_back(node_context_ids);
+
+		vector<AbstractNode*> node_context;
+		for (int c_index = 0; c_index < (int)this->new_input_node_contexts[i_index].size(); c_index++) {
+			node_context.push_back(new_branch_node->branch_input_scope_contexts[i_index][c_index]
+				->nodes[this->new_input_node_contexts[i_index][c_index]->id]);
+		}
+		new_branch_node->branch_input_node_contexts.push_back(node_context);
+
+		new_branch_node->branch_input_obs_indexes.push_back(this->new_input_obs_indexes[i_index]);
 	}
 	new_branch_node->branch_network = this->new_network;
 	this->new_network = NULL;

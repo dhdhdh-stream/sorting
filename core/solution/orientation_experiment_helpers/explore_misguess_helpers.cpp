@@ -27,22 +27,22 @@ void OrientationExperiment::explore_misguess_activate(
 
 	run_helper.num_decisions++;
 
-	vector<double> input_vals(this->input_scope_contexts.size(), 0.0);
-	for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
+	vector<double> input_vals(this->existing_input_scope_contexts.size(), 0.0);
+	for (int i_index = 0; i_index < (int)this->existing_input_scope_contexts.size(); i_index++) {
 		int curr_layer = 0;
 		ScopeHistory* curr_scope_history = context.back().scope_history;
 		while (true) {
 			map<AbstractNode*, AbstractNodeHistory*>::iterator it = curr_scope_history->node_histories.find(
-				this->input_node_contexts[i_index][curr_layer]);
+				this->existing_input_node_contexts[i_index][curr_layer]);
 			if (it == curr_scope_history->node_histories.end()) {
 				break;
 			} else {
-				if (curr_layer == (int)this->input_scope_contexts[i_index].size()-1) {
+				if (curr_layer == (int)this->existing_input_scope_contexts[i_index].size()-1) {
 					switch (it->first->type) {
 					case NODE_TYPE_ACTION:
 						{
 							ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
-							input_vals[i_index] = action_node_history->obs_snapshot[this->input_obs_indexes[i_index]];
+							input_vals[i_index] = action_node_history->obs_snapshot[this->existing_input_obs_indexes[i_index]];
 						}
 						break;
 					case NODE_TYPE_BRANCH:
@@ -84,22 +84,8 @@ void OrientationExperiment::explore_misguess_activate(
 			}
 		}
 	}
-
-	double predicted_score = this->existing_average_score;
-	for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
-		predicted_score += input_vals[i_index] * this->existing_linear_weights[i_index];
-	}
-	if (this->existing_network != NULL) {
-		vector<vector<double>> network_input_vals(this->existing_network_input_indexes.size());
-		for (int i_index = 0; i_index < (int)this->existing_network_input_indexes.size(); i_index++) {
-			network_input_vals[i_index] = vector<double>(this->existing_network_input_indexes[i_index].size());
-			for (int s_index = 0; s_index < (int)this->existing_network_input_indexes[i_index].size(); s_index++) {
-				network_input_vals[i_index][s_index] = input_vals[this->existing_network_input_indexes[i_index][s_index]];
-			}
-		}
-		this->existing_network->activate(network_input_vals);
-		predicted_score += this->existing_network->output->acti_vals[0];
-	}
+	this->existing_network->activate(input_vals);
+	double predicted_score = this->existing_network->output->acti_vals[0];
 
 	history->existing_predicted_score = predicted_score;
 

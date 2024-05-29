@@ -35,20 +35,12 @@ public:
 
 	Scope* subscope;
 
-	double negative_average_score;
-	double positive_average_score;
-
-	std::vector<AbstractNode*> input_node_contexts;
-	std::vector<int> input_obs_indexes;
-
-	std::vector<int> linear_negative_input_indexes;
-	std::vector<double> linear_negative_weights;
-	std::vector<int> linear_positive_input_indexes;
-	std::vector<double> linear_positive_weights;
-
-	std::vector<std::vector<int>> negative_network_input_indexes;
+	std::vector<AbstractNode*> negative_input_node_contexts;
+	std::vector<int> negative_input_obs_indexes;
 	Network* negative_network;
-	std::vector<std::vector<int>> positive_network_input_indexes;
+
+	std::vector<AbstractNode*> positive_input_node_contexts;
+	std::vector<int> positive_input_obs_indexes;
 	Network* positive_network;
 
 	/**
