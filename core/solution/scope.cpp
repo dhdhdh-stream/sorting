@@ -5,17 +5,19 @@
 #include "abstract_experiment.h"
 #include "action_node.h"
 #include "branch_node.h"
-#include "eval.h"
 #include "globals.h"
 #include "info_branch_node.h"
 #include "info_scope_node.h"
+#include "network.h"
 #include "scope_node.h"
+#include "solution.h"
 
 using namespace std;
 
-Scope::Scope(Eval* parent_eval) {
-	this->parent_eval = parent_eval;
+Scope::Scope() {
 	this->id = -1;
+
+	this->eval_network = NULL;
 
 	#if defined(MDEBUG) && MDEBUG
 	this->verify_key = NULL;
@@ -27,8 +29,8 @@ Scope::~Scope() {
 		delete this->nodes[n_index];
 	}
 
-	if (this->id != -1) {
-		delete this->eval;
+	if (this->eval_network != NULL) {
+		delete this->eval_network;
 	}
 }
 
@@ -62,8 +64,20 @@ void Scope::save(ofstream& output_file) {
 		it->second->save(output_file);
 	}
 
-	if (this->id != -1) {
-		this->eval->save(output_file);
+	bool network_is_null = this->eval_network == NULL;
+	output_file << network_is_null << endl;
+	if (!network_is_null) {
+		output_file << this->eval_input_scope_contexts.size() << endl;
+		for (int i_index = 0; i_index < (int)this->eval_input_scope_contexts.size(); i_index++) {
+			output_file << this->eval_input_scope_contexts[i_index].size() << endl;
+			for (int c_index = 0; c_index < (int)this->eval_input_scope_contexts[i_index].size(); c_index++) {
+				output_file << this->eval_input_scope_context_ids[i_index][c_index] << endl;
+				output_file << this->eval_input_node_context_ids[i_index][c_index] << endl;
+			}
+			output_file << this->eval_input_obs_indexes[i_index] << endl;
+		}
+
+		this->eval_network->save(output_file);
 	}
 }
 
@@ -132,11 +146,37 @@ void Scope::load(ifstream& input_file) {
 		}
 	}
 
-	if (this->id == -1) {
-		this->eval = NULL;
-	} else {
-		this->eval = new Eval(this);
-		this->eval->load(input_file);
+	string network_is_null_line;
+	getline(input_file, network_is_null_line);
+	bool network_is_null = stoi(network_is_null_line);
+	if (!network_is_null) {
+		string eval_num_inputs_line;
+		getline(input_file, eval_num_inputs_line);
+		int eval_num_inputs = stoi(eval_num_inputs_line);
+		for (int i_index = 0; i_index < eval_num_inputs; i_index++) {
+			string context_size_line;
+			getline(input_file, context_size_line);
+			int context_size = stoi(context_size_line);
+			vector<int> c_scope_context_ids;
+			vector<int> c_node_context_ids;
+			for (int c_index = 0; c_index < context_size; c_index++) {
+				string scope_context_id;
+				getline(input_file, scope_context_id);
+				c_scope_context_ids.push_back(stoi(scope_context_id));
+
+				string node_context_id;
+				getline(input_file, node_context_id);
+				c_node_context_ids.push_back(stoi(node_context_id));
+			}
+			this->eval_input_scope_context_ids.push_back(c_scope_context_ids);
+			this->eval_input_node_context_ids.push_back(c_node_context_ids);
+
+			string obs_index_line;
+			getline(input_file, obs_index_line);
+			this->eval_input_obs_indexes.push_back(stoi(obs_index_line));
+		}
+
+		this->eval_network = new Network(input_file);
 	}
 }
 
@@ -144,6 +184,19 @@ void Scope::link(Solution* parent_solution) {
 	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
 			it != this->nodes.end(); it++) {
 		it->second->link(parent_solution);
+	}
+
+	for (int i_index = 0; i_index < (int)this->eval_input_scope_context_ids.size(); i_index++) {
+		vector<Scope*> c_scope_context;
+		vector<AbstractNode*> c_node_context;
+		for (int c_index = 0; c_index < (int)this->eval_input_scope_context_ids[i_index].size(); c_index++) {
+			int scope_id = this->eval_input_scope_context_ids[i_index][c_index];
+			Scope* scope = parent_solution->scopes[scope_id];
+			c_scope_context.push_back(scope);
+			c_node_context.push_back(scope->nodes[this->eval_input_node_context_ids[i_index][c_index]]);
+		}
+		this->eval_input_scope_contexts.push_back(c_scope_context);
+		this->eval_input_node_contexts.push_back(c_node_context);
 	}
 }
 
@@ -207,12 +260,10 @@ void Scope::copy_from(Scope* original,
 		}
 	}
 
-	if (original->id == -1) {
-		this->eval = NULL;
-	} else {
-		this->eval = new Eval(original->eval,
-							  parent_solution);
-	}
+	this->eval_input_scope_context_ids = original->eval_input_scope_context_ids;
+	this->eval_input_node_context_ids = original->eval_input_node_context_ids;
+	this->eval_input_obs_indexes = original->eval_input_obs_indexes;
+	this->eval_network = new Network(original->eval_network);
 }
 
 void Scope::save_for_display(ofstream& output_file) {
@@ -223,14 +274,12 @@ void Scope::save_for_display(ofstream& output_file) {
 		output_file << it->second->type << endl;
 		it->second->save_for_display(output_file);
 	}
-
-	if (this->id != -1) {
-		this->eval->subscope->save_for_display(output_file);
-	}
 }
 
 ScopeHistory::ScopeHistory(Scope* scope) {
 	this->scope = scope;
+
+	this->callback_experiment_history = NULL;
 }
 
 ScopeHistory::ScopeHistory(ScopeHistory* original) {
@@ -277,9 +326,5 @@ ScopeHistory::~ScopeHistory() {
 	for (map<AbstractNode*, AbstractNodeHistory*>::iterator it = this->node_histories.begin();
 			it != this->node_histories.end(); it++) {
 		delete it->second;
-	}
-
-	for (int h_index = 0; h_index < (int)this->experiment_histories.size(); h_index++) {
-		delete this->experiment_histories[h_index];
 	}
 }

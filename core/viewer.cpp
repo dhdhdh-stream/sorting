@@ -5,7 +5,6 @@
 #include <random>
 
 #include "abstract_node.h"
-#include "eval.h"
 #include "globals.h"
 #include "minesweeper.h"
 #include "scope.h"

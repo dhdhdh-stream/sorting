@@ -4,6 +4,12 @@
 const double MIN_WEIGHT = 0.00001;
 const double MIN_STANDARD_DEVIATION = 0.00001;
 
+const int SCORE_TYPE_LOCAL = 0;
+const int SCORE_TYPE_ALL = 1;
+const int SCORE_TYPE_FINAL = 2;
+
+const int FINAL_MIN_NUM_RUNS = 200;
+
 const int STEP_TYPE_ACTION = 0;
 const int STEP_TYPE_SCOPE = 1;
 
@@ -29,28 +35,21 @@ const double LINEAR_MAX_WEIGHT = 100.0;
 
 const double TEST_SAMPLES_PERCENTAGE = 0.3;
 
-const double WEIGHT_MIN_SCORE_IMPACT = 0.1;
-
 const double EXPERIMENT_COMBINED_MIN_BRANCH_WEIGHT = 0.05;
 const double PASS_THROUGH_BRANCH_WEIGHT = 0.9;
 
-/**
- * - if scope activated more than MAX_INSTANCES_PER_RUN, restrict, and assume multiple explore/new doesn't harm eval accuracy too badly
- *   - restrict to increase speed
- */
-const int MAX_INSTANCES_PER_RUN = 10;
-
-const int MAX_NUM_ACTIONS_LIMIT_MULTIPLIER = 5;
-
-/**
- * TODO: can potentially reduce NUM_DATAPOINTS with eval?
- */
 #if defined(MDEBUG) && MDEBUG
 const int NUM_DATAPOINTS = 10;
 const int VERIFY_NUM_DATAPOINTS = 10;
 #else
 const int NUM_DATAPOINTS = 4000;
 const int VERIFY_NUM_DATAPOINTS = 8000;
+#endif /* MDEBUG */
+
+#if defined(MDEBUG) && MDEBUG
+const int MEASURE_ITERS = 10;
+#else
+const int MEASURE_ITERS = 4000;
 #endif /* MDEBUG */
 
 const int NUM_VERIFY_SAMPLES = 10;

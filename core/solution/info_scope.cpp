@@ -72,7 +72,7 @@ void InfoScope::load(ifstream& input_file) {
 	this->state = stoi(state_line);
 
 	if (this->state == INFO_SCOPE_STATE_NA) {
-		this->subscope = new Scope(NULL);
+		this->subscope = new Scope();
 		this->subscope->load(input_file);
 
 		string positive_num_inputs_line;
@@ -119,7 +119,7 @@ void InfoScope::copy_from(InfoScope* original,
 						  Solution* parent_solution) {
 	this->state = original->state;
 	if (this->state == INFO_SCOPE_STATE_NA) {
-		this->subscope = new Scope(NULL);
+		this->subscope = new Scope();
 		this->subscope->copy_from(original->subscope,
 								  parent_solution);
 

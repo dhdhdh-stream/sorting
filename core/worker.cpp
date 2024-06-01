@@ -6,7 +6,8 @@
 
 #include "abstract_experiment.h"
 #include "action_node.h"
-#include "eval.h"
+#include "constants.h"
+#include "eval_helpers.h"
 #include "globals.h"
 #include "minesweeper.h"
 #include "scope.h"
@@ -70,29 +71,132 @@ int main(int argc, char* argv[]) {
 			run_helper,
 			root_history);
 
+		if (run_helper.experiments_seen_order.size() == 0) {
+			if (run_helper.num_actions <= solution->num_actions_limit) {
+				create_experiment(root_history);
+			}
+		}
+
 		delete root_history;
 
-		delete problem;
+		double target_val;
+		if (run_helper.num_actions <= solution->num_actions_limit) {
+			target_val = problem->score_result(run_helper.num_decisions);
+		} else {
+			target_val = -1.0;
+		}
 
-		if (run_helper.success_duplicate != NULL) {
-			Solution* duplicate = run_helper.success_duplicate;
-			run_helper.success_duplicate = NULL;
+		if (run_helper.experiment_histories.size() > 0) {
+			for (int e_index = 0; e_index < (int)run_helper.experiments_seen_order.size(); e_index++) {
+				AbstractExperiment* experiment = run_helper.experiments_seen_order[e_index];
+				experiment->average_remaining_experiments_from_start =
+					0.9 * experiment->average_remaining_experiments_from_start
+					+ 0.1 * ((int)run_helper.experiments_seen_order.size()-1 - e_index
+						+ run_helper.experiment_histories[0]->experiment->average_remaining_experiments_from_start);
+			}
+			for (int h_index = 0; h_index < (int)run_helper.experiment_histories.size()-1; h_index++) {
+				AbstractExperimentHistory* experiment_history = run_helper.experiment_histories[h_index];
+				for (int e_index = 0; e_index < (int)experiment_history->experiments_seen_order.size(); e_index++) {
+					AbstractExperiment* experiment = experiment_history->experiments_seen_order[e_index];
+					experiment->average_remaining_experiments_from_start =
+						0.9 * experiment->average_remaining_experiments_from_start
+						+ 0.1 * ((int)experiment_history->experiments_seen_order.size()-1 - e_index
+							+ run_helper.experiment_histories[h_index+1]->experiment->average_remaining_experiments_from_start);
+				}
+			}
+			{
+				/**
+				 * - non-empty if EXPERIMENT_STATE_EXPERIMENT
+				 */
+				AbstractExperimentHistory* experiment_history = run_helper.experiment_histories.back();
+				for (int e_index = 0; e_index < (int)experiment_history->experiments_seen_order.size(); e_index++) {
+					AbstractExperiment* experiment = experiment_history->experiments_seen_order[e_index];
+					experiment->average_remaining_experiments_from_start =
+						0.9 * experiment->average_remaining_experiments_from_start
+						+ 0.1 * ((int)experiment_history->experiments_seen_order.size()-1 - e_index);
+				}
+			}
 
-			while (true) {
-				double sum_timestamp_score = 0.0;
-				int timestamp_score_count = 0;
-				double sum_instances_per_run = 0;
-				double sum_local_num_actions = 0.0;
-				int num_runs = 0;
-				while (true) {
+			run_helper.experiment_histories.back()->experiment->backprop(
+				target_val,
+				run_helper);
+			if (run_helper.experiment_histories.back()->experiment->result == EXPERIMENT_RESULT_FAIL) {
+				if (run_helper.experiment_histories.size() == 1) {
+					run_helper.experiment_histories.back()->experiment->finalize(NULL);
+					delete run_helper.experiment_histories.back()->experiment;
+				} else {
+					AbstractExperiment* curr_experiment = run_helper.experiment_histories.back()->experiment->parent_experiment;
+
+					curr_experiment->experiment_iter++;
+					int matching_index;
+					for (int c_index = 0; c_index < (int)curr_experiment->child_experiments.size(); c_index++) {
+						if (curr_experiment->child_experiments[c_index] == run_helper.experiment_histories.back()->experiment) {
+							matching_index = c_index;
+							break;
+						}
+					}
+					curr_experiment->child_experiments.erase(curr_experiment->child_experiments.begin() + matching_index);
+
+					run_helper.experiment_histories.back()->experiment->result = EXPERIMENT_RESULT_FAIL;
+					run_helper.experiment_histories.back()->experiment->finalize(NULL);
+					delete run_helper.experiment_histories.back()->experiment;
+
+					double target_count = (double)MAX_EXPERIMENT_NUM_EXPERIMENTS
+						* pow(0.5, run_helper.experiment_histories.size()-1);
+					while (true) {
+						if (curr_experiment == NULL) {
+							break;
+						}
+
+						if (curr_experiment->experiment_iter >= target_count) {
+							AbstractExperiment* parent = curr_experiment->parent_experiment;
+
+							if (parent != NULL) {
+								parent->experiment_iter++;
+								int matching_index;
+								for (int c_index = 0; c_index < (int)parent->child_experiments.size(); c_index++) {
+									if (parent->child_experiments[c_index] == curr_experiment) {
+										matching_index = c_index;
+										break;
+									}
+								}
+								parent->child_experiments.erase(parent->child_experiments.begin() + matching_index);
+							}
+
+							curr_experiment->result = EXPERIMENT_RESULT_FAIL;
+							curr_experiment->finalize(NULL);
+							delete curr_experiment;
+
+							curr_experiment = parent;
+							target_count *= 2.0;
+						} else {
+							break;
+						}
+					}
+				}
+			} else if (run_helper.experiment_histories.back()->experiment->result == EXPERIMENT_RESULT_SUCCESS) {
+				/**
+				 * - history->experiment_histories.size() == 1
+				 */
+				int experiment_scope_id = run_helper.experiment_histories.back()->experiment->scope_context->id;
+
+				Solution* duplicate = new Solution(solution);
+				run_helper.experiment_histories.back()->experiment->finalize(duplicate);
+				delete run_helper.experiment_histories.back()->experiment;
+
+				Scope* experiment_scope = duplicate->scopes[experiment_scope_id];
+
+				double sum_score = 0.0;
+				vector<ScopeHistory*> scope_histories;
+				vector<double> target_val_histories;
+				for (int iter_index = 0; iter_index < MEASURE_ITERS; iter_index++) {
 					// Problem* problem = new Sorting();
 					Problem* problem = new Minesweeper();
 
 					RunHelper run_helper;
-					Metrics metrics(solution->explore_id,
-									solution->explore_type,
-									duplicate->explore_id,
-									duplicate->explore_type);
+
+					Metrics metrics;
+					metrics.experiment_scope = experiment_scope;
 
 					vector<ContextLayer> context;
 					context.push_back(ContextLayer());
@@ -112,50 +216,47 @@ int main(int argc, char* argv[]) {
 
 					delete root_history;
 
-					sum_timestamp_score += metrics.curr_sum_timestamp_score;
-					timestamp_score_count += metrics.curr_num_instances;
-					if (run_helper.num_actions > duplicate->max_num_actions) {
-						duplicate->max_num_actions = run_helper.num_actions;
+					double target_val;
+					if (run_helper.num_actions <= solution->num_actions_limit) {
+						target_val = problem->score_result(run_helper.num_decisions);
+					} else {
+						target_val = -1.0;
 					}
-					sum_instances_per_run += metrics.next_num_instances;
-					if (metrics.next_max_num_actions > duplicate->explore_scope_max_num_actions) {
-						duplicate->explore_scope_max_num_actions = metrics.next_max_num_actions;
+
+					sum_score += target_val;
+
+					for (int h_index = 0; h_index < (int)metrics.scope_histories.size(); h_index++) {
+						scope_histories.push_back(metrics.scope_histories[h_index]);
+						target_val_histories.push_back(target_val);
 					}
-					sum_local_num_actions += metrics.next_local_sum_num_actions;
-					num_runs++;
 
 					delete problem;
-
-					if (timestamp_score_count > MEASURE_ITERS) {
-						break;
-					}
 				}
 
-				if (sum_instances_per_run > 0) {
-					duplicate->timestamp_score = sum_timestamp_score / timestamp_score_count;
-					duplicate->explore_average_instances_per_run = (double)sum_instances_per_run / (double)num_runs;
-					duplicate->explore_scope_local_average_num_actions = sum_local_num_actions / sum_instances_per_run;
+				update_eval(experiment_scope,
+							scope_histories,
+							target_val_histories);
 
-					break;
-				} else {
-					uniform_int_distribution<int> explore_id_distribution(0, (int)duplicate->scopes.size()-1);
-					duplicate->explore_id = explore_id_distribution(generator);
-					if (duplicate->scopes[duplicate->explore_id]->eval->score_input_node_contexts.size() == 0) {
-						duplicate->explore_type = EXPLORE_TYPE_EVAL;
-					} else {
-						uniform_int_distribution<int> explore_type_distribution(0, 1);
-						duplicate->explore_type = explore_type_distribution(generator);
-					}
-					duplicate->explore_scope_max_num_actions = 1;
-				}
+				duplicate->average_score = sum_score / MEASURE_ITERS;
+
+				cout << "duplicate->average_score: " << duplicate->average_score << endl;
+
+				duplicate->timestamp++;
+
+				duplicate->save(path, "possible_" + to_string((unsigned)time(NULL)));
+
+				delete duplicate;
 			}
-
-			duplicate->timestamp++;
-
-			duplicate->save(path, "possible_" + to_string((unsigned)time(NULL)));
-
-			delete duplicate;
+		} else {
+			for (int e_index = 0; e_index < (int)run_helper.experiments_seen_order.size(); e_index++) {
+				AbstractExperiment* experiment = run_helper.experiments_seen_order[e_index];
+				experiment->average_remaining_experiments_from_start =
+					0.9 * experiment->average_remaining_experiments_from_start
+					+ 0.1 * ((int)run_helper.experiments_seen_order.size()-1 - e_index);
+			}
 		}
+
+		delete problem;
 
 		auto curr_time = chrono::high_resolution_clock::now();
 		auto time_diff = chrono::duration_cast<chrono::seconds>(curr_time - start_time);

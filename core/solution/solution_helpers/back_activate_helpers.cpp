@@ -3,7 +3,6 @@
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
-#include "eval.h"
 #include "globals.h"
 #include "problem.h"
 #include "scope.h"
@@ -106,41 +105,4 @@ void gather_possible_helper(vector<Scope*>& scope_context,
 
 	scope_context.pop_back();
 	node_context.pop_back();
-}
-
-void gather_eval_possible_helper(vector<AbstractNode*>& possible_node_contexts,
-								 vector<int>& possible_obs_indexes,
-								 EvalHistory* eval_history) {
-	for (map<AbstractNode*, AbstractNodeHistory*>::iterator it = eval_history->scope_history->node_histories.begin();
-			it != eval_history->scope_history->node_histories.end(); it++) {
-		if ((it->second->index >= eval_history->start_eval_index
-					&& it->second->index < eval_history->end_orientation_index)
-				|| it->second->index >= eval_history->end_eval_index) {
-			switch (it->first->type) {
-			case NODE_TYPE_ACTION:
-				{
-					for (int o_index = 0; o_index < problem_type->num_obs(); o_index++) {
-						possible_node_contexts.push_back(it->first);
-						possible_obs_indexes.push_back(o_index);
-					}
-				}
-
-				break;
-			case NODE_TYPE_INFO_SCOPE:
-				{
-					possible_node_contexts.push_back(it->first);
-					possible_obs_indexes.push_back(-1);
-				}
-
-				break;
-			case NODE_TYPE_INFO_BRANCH:
-				{
-					possible_node_contexts.push_back(it->first);
-					possible_obs_indexes.push_back(-1);
-				}
-
-				break;
-			}
-		}
-	}
 }

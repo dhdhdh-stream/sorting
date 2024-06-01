@@ -3,7 +3,6 @@
 #include <iostream>
 
 #include "abstract_experiment.h"
-#include "eval.h"
 #include "globals.h"
 #include "network.h"
 #include "scope.h"
@@ -166,12 +165,7 @@ void BranchNode::link(Solution* parent_solution) {
 		vector<AbstractNode*> c_node_context;
 		for (int c_index = 0; c_index < (int)this->original_input_scope_context_ids[i_index].size(); c_index++) {
 			int scope_id = this->original_input_scope_context_ids[i_index][c_index];
-			Scope* scope;
-			if (scope_id == -1) {
-				scope = this->parent->parent_eval->subscope;
-			} else {
-				scope = parent_solution->scopes[scope_id];
-			}
+			Scope* scope = parent_solution->scopes[scope_id];
 			c_scope_context.push_back(scope);
 			c_node_context.push_back(scope->nodes[this->original_input_node_context_ids[i_index][c_index]]);
 		}
@@ -184,12 +178,7 @@ void BranchNode::link(Solution* parent_solution) {
 		vector<AbstractNode*> c_node_context;
 		for (int c_index = 0; c_index < (int)this->branch_input_scope_context_ids[i_index].size(); c_index++) {
 			int scope_id = this->branch_input_scope_context_ids[i_index][c_index];
-			Scope* scope;
-			if (scope_id == -1) {
-				scope = this->parent->parent_eval->subscope;
-			} else {
-				scope = parent_solution->scopes[scope_id];
-			}
+			Scope* scope = parent_solution->scopes[scope_id];
 			c_scope_context.push_back(scope);
 			c_node_context.push_back(scope->nodes[this->branch_input_node_context_ids[i_index][c_index]]);
 		}

@@ -21,46 +21,21 @@ class InfoScope;
 class Problem;
 class Scope;
 
-const int EXPLORE_TYPE_SCORE = 0;
-const int EXPLORE_TYPE_EVAL = 1;
-
-#if defined(MDEBUG) && MDEBUG
-const int MEASURE_ITERS = 10;
-#else
-const int MEASURE_ITERS = 4000;
-#endif /* MDEBUG */
-
 class Solution {
 public:
 	int timestamp;
-	double timestamp_score;
+	double average_score;
 
 	std::vector<Scope*> scopes;
 	std::vector<InfoScope*> info_scopes;
 
 	/**
-	 * - final overall fallback to prevent infinite loops
-	 *   - mainly prevent locally through experiments
-	 * 
 	 * - update on measure
 	 * 
 	 * - set limit to 20*max_num_actions+20
 	 */
 	int max_num_actions;
 	int num_actions_limit;
-
-	int explore_id;
-	int explore_type;
-	/**
-	 * - measure on measure
-	 */
-	double explore_average_instances_per_run;
-	int explore_scope_max_num_actions;
-	double explore_scope_local_average_num_actions;
-	double explore_scope_average_impact;
-	double explore_scope_impact_standard_deviation;
-	double explore_scope_average_misguess;
-	double explore_scope_misguess_standard_deviation;
 
 	#if defined(MDEBUG) && MDEBUG
 	void* verify_key;

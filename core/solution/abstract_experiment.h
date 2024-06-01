@@ -5,23 +5,18 @@
 #include "context_layer.h"
 
 class AbstractNode;
-class EvalHistory;
 class Problem;
 class Solution;
 
 const int EXPERIMENT_TYPE_BRANCH = 0;
 const int EXPERIMENT_TYPE_PASS_THROUGH = 1;
-const int EXPERIMENT_TYPE_EVAL_PASS_THROUGH = 2;
-const int EXPERIMENT_TYPE_NEW_INFO = 3;
-const int EXPERIMENT_TYPE_INFO_PASS_THROUGH = 4;
-const int EXPERIMENT_TYPE_NEW_ACTION = 5;
-const int EXPERIMENT_TYPE_ORIENTATION = 6;
+const int EXPERIMENT_TYPE_NEW_INFO = 2;
+const int EXPERIMENT_TYPE_INFO_PASS_THROUGH = 3;
+const int EXPERIMENT_TYPE_NEW_ACTION = 4;
 
 const int ROOT_EXPERIMENT_STATE_EXPERIMENT = 0;
-const int ROOT_EXPERIMENT_STATE_VERIFY_1ST_EXISTING = 1;
-const int ROOT_EXPERIMENT_STATE_VERIFY_1ST = 2;
-const int ROOT_EXPERIMENT_STATE_VERIFY_2ND_EXISTING = 3;
-const int ROOT_EXPERIMENT_STATE_VERIFY_2ND = 4;
+const int ROOT_EXPERIMENT_STATE_VERIFY_EXISTING = 1;
+const int ROOT_EXPERIMENT_STATE_VERIFY = 2;
 
 const int MAX_EXPERIMENT_NUM_EXPERIMENTS = 20;
 
@@ -37,11 +32,13 @@ public:
 	Scope* scope_context;
 	AbstractNode* node_context;
 	bool is_branch;
+	int score_type;
 
 	AbstractExperiment* parent_experiment;
 	AbstractExperiment* root_experiment;
 
 	double average_remaining_experiments_from_start;
+	double average_instances_per_run;
 
 	int root_state;
 
@@ -66,10 +63,9 @@ public:
 						  Problem* problem,
 						  std::vector<ContextLayer>& context,
 						  RunHelper& run_helper) = 0;
-	virtual void backprop(EvalHistory* outer_eval_history,
-						  EvalHistory* eval_history,
-						  Problem* problem,
-						  std::vector<ContextLayer>& context,
+	virtual void back_activate(std::vector<ContextLayer>& context,
+							   RunHelper& run_helper) = 0;
+	virtual void backprop(double target_val,
 						  RunHelper& run_helper) = 0;
 
 	virtual void finalize(Solution* duplicate) = 0;
@@ -79,10 +75,12 @@ class AbstractExperimentHistory {
 public:
 	AbstractExperiment* experiment;
 
-	std::vector<AbstractExperiment*> experiments_seen_order;
+	std::vector<std::vector<double>> starting_predicted_scores;
+	std::vector<std::vector<double>> ending_predicted_scores;
 
-	ScopeHistory* scope_history;
 	int experiment_index;
+
+	std::vector<AbstractExperiment*> experiments_seen_order;
 
 	virtual ~AbstractExperimentHistory() {};
 };

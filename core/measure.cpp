@@ -4,7 +4,6 @@
 #include <thread>
 #include <random>
 
-#include "eval.h"
 #include "globals.h"
 #include "minesweeper.h"
 #include "scope.h"

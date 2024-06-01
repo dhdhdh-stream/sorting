@@ -1,428 +1,409 @@
-// #include "branch_experiment.h"
+#include "branch_experiment.h"
 
-// #include <cmath>
-// #include <iostream>
-// #undef eigen_assert
-// #define eigen_assert(x) if (!(x)) {throw std::invalid_argument("Eigen error");}
-// #include <Eigen/Dense>
+#include <cmath>
+#include <iostream>
 
-// #include "action_node.h"
-// #include "branch_node.h"
-// #include "constants.h"
-// #include "eval.h"
-// #include "globals.h"
-// #include "info_branch_node.h"
-// #include "network.h"
-// #include "nn_helpers.h"
-// #include "scope.h"
-// #include "scope_node.h"
-// #include "solution.h"
-// #include "solution_helpers.h"
-// #include "utilities.h"
+#include "action_node.h"
+#include "branch_node.h"
+#include "constants.h"
+#include "eval_helpers.h"
+#include "globals.h"
+#include "info_branch_node.h"
+#include "info_scope_node.h"
+#include "network.h"
+#include "nn_helpers.h"
+#include "scope.h"
+#include "scope_node.h"
+#include "solution.h"
+#include "solution_helpers.h"
+#include "utilities.h"
 
-// using namespace std;
+using namespace std;
 
-// void BranchExperiment::train_new_activate(
-// 		AbstractNode*& curr_node,
-// 		vector<ContextLayer>& context,
-// 		RunHelper& run_helper,
-// 		BranchExperimentHistory* history) {
-// 	run_helper.num_decisions++;
+void BranchExperiment::train_new_activate(
+		AbstractNode*& curr_node,
+		vector<ContextLayer>& context,
+		RunHelper& run_helper,
+		BranchExperimentHistory* history) {
+	run_helper.num_decisions++;
 
-// 	if (context.back().scope_history == run_helper.experiment_scope_history) {
-// 		this->scope_histories.push_back(new ScopeHistory(context.back().scope_history));
+	this->num_instances_until_target--;
+	if (this->num_instances_until_target == 0) {
+		this->scope_histories.push_back(new ScopeHistory(context.back().scope_history));
 
-// 		run_helper.num_actions_limit = MAX_NUM_ACTIONS_LIMIT_MULTIPLIER * solution->explore_scope_max_num_actions;
+		switch (this->score_type) {
+		case SCORE_TYPE_LOCAL:
+			{
+				double starting_predicted_score = calc_score(context.back().scope_history);
+				history->starting_predicted_scores.push_back(vector<double>(starting_predicted_score));
+				history->ending_predicted_scores.push_back(vector<double>(1));
+				context.back().scope_history->callback_experiment_history = history;
+				context.back().scope_history->callback_experiment_indexes.push_back(
+					(int)history->starting_predicted_scores.size()-1);
+				context.back().scope_history->callback_experiment_layers.push_back(0);
+			}
+			break;
+		case SCORE_TYPE_ALL:
+			history->starting_predicted_scores.push_back(vector<double>(context.size()));
+			history->ending_predicted_scores.push_back(vector<double>(context.size()));
+			for (int l_index = 0; l_index < (int)context.size(); l_index++) {
+				double starting_predicted_score = calc_score(
+					context[l_index].scope_history);
+				history->starting_predicted_scores.back()[l_index] = starting_predicted_score;
 
-// 		if (this->best_step_types.size() == 0) {
-// 			curr_node = this->best_exit_next_node;
-// 		} else {
-// 			if (this->best_step_types[0] == STEP_TYPE_ACTION) {
-// 				curr_node = this->best_actions[0];
-// 			} else {
-// 				curr_node = this->best_scopes[0];
-// 			}
-// 		}
-// 	}
-// }
+				context[l_index].scope_history->callback_experiment_history = history;
+				context[l_index].scope_history->callback_experiment_indexes.push_back(
+					(int)history->starting_predicted_scores.size()-1);
+				context[l_index].scope_history->callback_experiment_layers.push_back(l_index);
+			}
+			break;
+		case SCORE_TYPE_FINAL:
+			history->starting_predicted_scores.push_back(vector<double>());
+			history->ending_predicted_scores.push_back(vector<double>());
+			break;
+		}
 
-// void BranchExperiment::train_new_backprop(
-// 		EvalHistory* eval_history,
-// 		Problem* problem,
-// 		vector<ContextLayer>& context,
-// 		RunHelper& run_helper) {
-// 	if (run_helper.num_actions_limit == 0) {
-// 		run_helper.num_actions_limit = -1;
+		if (this->best_step_types.size() == 0) {
+			curr_node = this->best_exit_next_node;
+		} else {
+			if (this->best_step_types[0] == STEP_TYPE_ACTION) {
+				curr_node = this->best_actions[0];
+			} else {
+				curr_node = this->best_scopes[0];
+			}
+		}
 
-// 		this->explore_iter++;
-// 		if (this->explore_iter < MAX_EXPLORE_TRIES) {
-// 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-// 				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-// 					delete this->best_actions[s_index];
-// 				} else {
-// 					delete this->best_scopes[s_index];
-// 				}
-// 			}
+		uniform_int_distribution<int> until_distribution(0, (int)this->average_instances_per_run-1.0);
+		this->num_instances_until_target = 1 + until_distribution(generator);
+	}
+}
 
-// 			this->best_step_types.clear();
-// 			this->best_actions.clear();
-// 			this->best_scopes.clear();
+void BranchExperiment::train_new_back_activate(
+		vector<ContextLayer>& context,
+		RunHelper& run_helper) {
+	BranchExperimentHistory* history = (BranchExperimentHistory*)run_helper.experiment_histories.back();
 
-// 			if (this->ending_node != NULL) {
-// 				delete this->ending_node;
-// 				this->ending_node = NULL;
-// 			}
+	double ending_predicted_score;
+	if (run_helper.num_actions > solution->num_actions_limit) {
+		ending_predicted_score = -1.0;
+	} else {
+		ending_predicted_score = calc_score(context.back().scope_history);
+	}
+	for (int i_index = 0; i_index < (int)context.back().scope_history->callback_experiment_indexes.size(); i_index++) {
+		history->ending_predicted_scores[context.back().scope_history->callback_experiment_indexes[i_index]]
+			[context.back().scope_history->callback_experiment_layers[i_index]] = ending_predicted_score;
+	}
+}
 
-// 			this->new_linear_weights.clear();
-// 			this->new_network_input_indexes.clear();
-// 			if (this->new_network != NULL) {
-// 				delete this->new_network;
-// 				this->new_network = NULL;
-// 			}
+void BranchExperiment::train_new_backprop(
+		double target_val,
+		RunHelper& run_helper) {
+	BranchExperimentHistory* history = (BranchExperimentHistory*)run_helper.experiment_histories.back();
 
-// 			uniform_int_distribution<int> neutral_distribution(0, 9);
-// 			if (neutral_distribution(generator) == 0) {
-// 				this->explore_type = EXPLORE_TYPE_NEUTRAL;
-// 			} else {
-// 				uniform_int_distribution<int> best_distribution(0, 1);
-// 				if (best_distribution(generator) == 0) {
-// 					this->explore_type = EXPLORE_TYPE_BEST;
+	switch (this->score_type) {
+	case SCORE_TYPE_LOCAL:
+		for (int i_index = 0; i_index < (int)history->starting_predicted_scores.size(); i_index++) {
+			this->target_val_histories.push_back(history->ending_predicted_scores[i_index][0]
+				- history->starting_predicted_scores[i_index][0]);
+		}
+		break;
+	case SCORE_TYPE_ALL:
+		{
+			double final_score = target_val - solution->average_score;
+			for (int i_index = 0; i_index < (int)history->starting_predicted_scores.size(); i_index++) {
+				double sum_score = 0.0;
+				for (int l_index = 0; l_index < (int)history->starting_predicted_scores[i_index].size(); l_index++) {
+					sum_score += history->ending_predicted_scores[i_index][l_index]
+						- history->starting_predicted_scores[i_index][l_index];
+				}
+				sum_score += final_score;
+				this->target_val_histories.push_back(sum_score);
+			}
+		}
+		break;
+	case SCORE_TYPE_FINAL:
+		{
+			double final_score = target_val - solution->average_score;
+			for (int i_index = 0; i_index < (int)history->starting_predicted_scores.size(); i_index++) {
+				this->target_val_histories.push_back(final_score);
+			}
+		}
+		break;
+	}
 
-// 					this->best_surprise = 0.0;
-// 				} else {
-// 					this->explore_type = EXPLORE_TYPE_GOOD;
-// 				}
-// 			}
+	this->state_iter++;
+	bool is_done = false;
+	if (this->score_type == SCORE_TYPE_FINAL) {
+		if (this->state_iter >= FINAL_MIN_NUM_RUNS
+				&& (int)this->target_val_histories.size() >= NUM_DATAPOINTS) {
+			is_done = true;
+		}
+	} else {
+		if ((int)this->target_val_histories.size() >= NUM_DATAPOINTS) {
+			is_done = true;
+		}
+	}
+	if (is_done) {
+		int num_instances = (int)this->target_val_histories.size();
 
-// 			this->state = BRANCH_EXPERIMENT_STATE_EXPLORE;
-// 			this->state_iter = 0;
-// 		} else {
-// 			this->result = EXPERIMENT_RESULT_FAIL;
-// 		}
-// 	} else {
-// 		this->scope_context->eval->activate(problem,
-// 											run_helper,
-// 											eval_history->end_scope_history);
-// 		double predicted_impact = this->scope_context->eval->calc_vs(
-// 			run_helper,
-// 			eval_history);
-// 		this->target_val_histories.push_back(predicted_impact);
+		double sum_scores = 0.0;
+		for (int d_index = 0; d_index < num_instances; d_index++) {
+			sum_scores += this->target_val_histories[d_index];
+		}
+		this->new_average_score = sum_scores / num_instances;
 
-// 		run_helper.num_actions_limit = -1;
+		vector<vector<double>> inputs(num_instances);
+		double average_misguess;
+		double misguess_standard_deviation;
 
-// 		if ((int)this->target_val_histories.size() >= NUM_DATAPOINTS) {
-// 			double sum_scores = 0.0;
-// 			for (int d_index = 0; d_index < NUM_DATAPOINTS; d_index++) {
-// 				sum_scores += this->target_val_histories[d_index];
-// 			}
-// 			this->new_average_score = sum_scores / NUM_DATAPOINTS;
+		int train_index = 0;
+		while (train_index < 3) {
+			vector<vector<Scope*>> test_input_scope_contexts = this->new_input_scope_contexts;
+			vector<vector<AbstractNode*>> test_input_node_contexts = this->new_input_node_contexts;
+			vector<int> test_input_obs_indexes = this->new_input_obs_indexes;
 
-// 			Eigen::MatrixXd inputs(NUM_DATAPOINTS, this->input_scope_contexts.size());
+			vector<vector<Scope*>> possible_scope_contexts;
+			vector<vector<AbstractNode*>> possible_node_contexts;
+			vector<int> possible_obs_indexes;
 
-// 			for (int d_index = 0; d_index < NUM_DATAPOINTS; d_index++) {
-// 				for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
-// 					int curr_layer = 0;
-// 					ScopeHistory* curr_scope_history = this->scope_histories[d_index];
-// 					while (true) {
-// 						map<AbstractNode*, AbstractNodeHistory*>::iterator it = curr_scope_history->node_histories.find(
-// 							this->input_node_contexts[i_index][curr_layer]);
-// 						if (it == curr_scope_history->node_histories.end()) {
-// 							inputs(d_index, i_index) = 0.0;
-// 							break;
-// 						} else {
-// 							if (curr_layer == (int)this->input_scope_contexts[i_index].size()-1) {
-// 								switch (it->first->type) {
-// 								case NODE_TYPE_ACTION:
-// 									{
-// 										ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
-// 										inputs(d_index, i_index) = action_node_history->obs_snapshot[this->input_obs_indexes[i_index]];
-// 									}
-// 									break;
-// 								case NODE_TYPE_BRANCH:
-// 									{
-// 										BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
-// 										if (branch_node_history->is_branch) {
-// 											inputs(d_index, i_index) = 1.0;
-// 										} else {
-// 											inputs(d_index, i_index) = -1.0;
-// 										}
-// 									}
-// 									break;
-// 								case NODE_TYPE_INFO_BRANCH:
-// 									{
-// 										InfoBranchNodeHistory* info_branch_node_history = (InfoBranchNodeHistory*)it->second;
-// 										if (info_branch_node_history->is_branch) {
-// 											inputs(d_index, i_index) = 1.0;
-// 										} else {
-// 											inputs(d_index, i_index) = -1.0;
-// 										}
-// 									}
-// 									break;
-// 								}
-// 								break;
-// 							} else {
-// 								curr_layer++;
-// 								curr_scope_history = ((ScopeNodeHistory*)it->second)->scope_history;
-// 							}
-// 						}
-// 					}
-// 				}
-// 			}
+			vector<Scope*> scope_context;
+			vector<AbstractNode*> node_context;
+			uniform_int_distribution<int> history_distribution(0, num_instances-1);
+			gather_possible_helper(scope_context,
+								   node_context,
+								   possible_scope_contexts,
+								   possible_node_contexts,
+								   possible_obs_indexes,
+								   this->scope_histories[history_distribution(generator)]);
 
-// 			Eigen::VectorXd outputs(NUM_DATAPOINTS);
-// 			for (int d_index = 0; d_index < NUM_DATAPOINTS; d_index++) {
-// 				outputs(d_index) = this->target_val_histories[d_index] - this->new_average_score;
-// 			}
+			vector<int> remaining_indexes(possible_node_contexts.size());
+			for (int p_index = 0; p_index < (int)possible_node_contexts.size(); p_index++) {
+				remaining_indexes[p_index] = p_index;
+			}
+			int num_new_input = 0;
+			while (true) {
+				uniform_int_distribution<int> distribution(0, (int)remaining_indexes.size()-1);
+				int rand_index = distribution(generator);
 
-// 			Eigen::VectorXd weights;
-// 			try {
-// 				weights = inputs.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(outputs);
-// 			} catch (std::invalid_argument &e) {
-// 				cout << "Eigen error" << endl;
-// 				weights = Eigen::VectorXd(this->input_scope_contexts.size());
-// 				for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
-// 					weights(i_index) = 0.0;
-// 				}
-// 			}
-// 			this->new_linear_weights = vector<double>(this->input_scope_contexts.size());
-// 			for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
-// 				double sum_impact_size = 0.0;
-// 				for (int d_index = 0; d_index < NUM_DATAPOINTS; d_index++) {
-// 					sum_impact_size += abs(inputs(d_index, i_index));
-// 				}
-// 				double average_impact = sum_impact_size / NUM_DATAPOINTS;
-// 				if (abs(weights(i_index)) * average_impact < WEIGHT_MIN_SCORE_IMPACT * this->existing_score_standard_deviation
-// 						|| abs(weights(i_index)) > LINEAR_MAX_WEIGHT) {
-// 					weights(i_index) = 0.0;
-// 				} else {
-// 					weights(i_index) = trunc(1000000 * weights(i_index)) / 1000000;
-// 				}
-// 				this->new_linear_weights[i_index] = weights(i_index);
-// 			}
+				bool contains = false;
+				for (int i_index = 0; i_index < (int)test_input_node_contexts.size(); i_index++) {
+					if (possible_scope_contexts[remaining_indexes[rand_index]] == test_input_scope_contexts[i_index]
+							&& possible_node_contexts[remaining_indexes[rand_index]] == test_input_node_contexts[i_index]
+							&& possible_obs_indexes[remaining_indexes[rand_index]] == test_input_obs_indexes[i_index]) {
+						contains = true;
+						break;
+					}
+				}
+				if (!contains) {
+					test_input_scope_contexts.push_back(possible_scope_contexts[remaining_indexes[rand_index]]);
+					test_input_node_contexts.push_back(possible_node_contexts[remaining_indexes[rand_index]]);
+					test_input_obs_indexes.push_back(possible_obs_indexes[remaining_indexes[rand_index]]);
+					num_new_input++;
+				}
 
-// 			Eigen::VectorXd predicted_scores = inputs * weights;
-// 			Eigen::VectorXd diffs = outputs - predicted_scores;
-// 			vector<double> network_target_vals(NUM_DATAPOINTS);
-// 			for (int d_index = 0; d_index < NUM_DATAPOINTS; d_index++) {
-// 				network_target_vals[d_index] = diffs(d_index);
-// 			}
+				remaining_indexes.erase(remaining_indexes.begin() + rand_index);
 
-// 			vector<double> misguesses(NUM_DATAPOINTS);
-// 			for (int d_index = 0; d_index < NUM_DATAPOINTS; d_index++) {
-// 				misguesses[d_index] = diffs(d_index) * diffs(d_index);
-// 			}
+				if (num_new_input >= NETWORK_INCREMENT_NUM_NEW
+						|| remaining_indexes.size() == 0) {
+					break;
+				}
+			}
 
-// 			double sum_misguesses = 0.0;
-// 			for (int d_index = 0; d_index < NUM_DATAPOINTS; d_index++) {
-// 				sum_misguesses += misguesses[d_index];
-// 			}
-// 			this->new_average_misguess = sum_misguesses / NUM_DATAPOINTS;
+			Network* test_network;
+			if (this->new_network == NULL) {
+				test_network = new Network();
+			} else {
+				test_network = new Network(this->new_network);
+			}
+			test_network->increment((int)test_input_node_contexts.size());
 
-// 			double sum_misguess_variances = 0.0;
-// 			for (int d_index = 0; d_index < NUM_DATAPOINTS; d_index++) {
-// 				sum_misguess_variances += (misguesses[d_index] - this->new_average_misguess) * (misguesses[d_index] - this->new_average_misguess);
-// 			}
-// 			this->new_misguess_standard_deviation = sqrt(sum_misguess_variances / NUM_DATAPOINTS);
-// 			if (this->new_misguess_standard_deviation < MIN_STANDARD_DEVIATION) {
-// 				this->new_misguess_standard_deviation = MIN_STANDARD_DEVIATION;
-// 			}
+			vector<vector<double>> test_inputs = inputs;
+			for (int d_index = 0; d_index < num_instances; d_index++) {
+				test_inputs[d_index].reserve((int)test_input_node_contexts.size());
+				for (int t_index = (int)this->new_input_node_contexts.size(); t_index < (int)test_input_node_contexts.size(); t_index++) {
+					int curr_layer = 0;
+					ScopeHistory* curr_scope_history = this->scope_histories[d_index];
+					while (true) {
+						map<AbstractNode*, AbstractNodeHistory*>::iterator it = curr_scope_history->node_histories.find(
+							test_input_node_contexts[t_index][curr_layer]);
+						if (it == curr_scope_history->node_histories.end()) {
+							test_inputs[d_index].push_back(0.0);
+							break;
+						} else {
+							if (curr_layer == (int)test_input_scope_contexts[t_index].size()-1) {
+								switch (it->first->type) {
+								case NODE_TYPE_ACTION:
+									{
+										ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
+										test_inputs[d_index].push_back(action_node_history->obs_snapshot[test_input_obs_indexes[t_index]]);
+									}
+									break;
+								case NODE_TYPE_BRANCH:
+									{
+										BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
+										if (branch_node_history->is_branch) {
+											test_inputs[d_index].push_back(1.0);
+										} else {
+											test_inputs[d_index].push_back(-1.0);
+										}
+									}
+									break;
+								case NODE_TYPE_INFO_SCOPE:
+									{
+										InfoScopeNodeHistory* info_scope_node_history = (InfoScopeNodeHistory*)it->second;
+										if (info_scope_node_history->is_positive) {
+											test_inputs[d_index].push_back(1.0);
+										} else {
+											test_inputs[d_index].push_back(-1.0);
+										}
+									}
+									break;
+								case NODE_TYPE_INFO_BRANCH:
+									{
+										InfoBranchNodeHistory* info_branch_node_history = (InfoBranchNodeHistory*)it->second;
+										if (info_branch_node_history->is_branch) {
+											test_inputs[d_index].push_back(1.0);
+										} else {
+											test_inputs[d_index].push_back(-1.0);
+										}
+									}
+									break;
+								}
+								break;
+							} else {
+								curr_layer++;
+								curr_scope_history = ((ScopeNodeHistory*)it->second)->scope_history;
+							}
+						}
+					}
+				}
+			}
 
-// 			vector<vector<vector<double>>> network_inputs(NUM_DATAPOINTS);
-// 			int train_index = 0;
-// 			while (train_index < 3) {
-// 				vector<vector<Scope*>> possible_scope_contexts;
-// 				vector<vector<AbstractNode*>> possible_node_contexts;
-// 				vector<int> possible_obs_indexes;
+			train_network(test_inputs,
+						  this->target_val_histories,
+						  test_network);
 
-// 				vector<Scope*> scope_context;
-// 				vector<AbstractNode*> node_context;
-// 				uniform_int_distribution<int> history_distribution(0, NUM_DATAPOINTS-1);
-// 				gather_possible_helper(scope_context,
-// 									   node_context,
-// 									   possible_scope_contexts,
-// 									   possible_node_contexts,
-// 									   possible_obs_indexes,
-// 									   this->scope_histories[history_distribution(generator)]);
+			double test_average_misguess;
+			double test_misguess_standard_deviation;
+			measure_network(test_inputs,
+							this->target_val_histories,
+							test_network,
+							test_average_misguess,
+							test_misguess_standard_deviation);
 
-// 				int num_new_input_indexes = min(NETWORK_INCREMENT_NUM_NEW, (int)possible_scope_contexts.size());
-// 				vector<vector<Scope*>> test_network_input_scope_contexts;
-// 				vector<vector<AbstractNode*>> test_network_input_node_contexts;
-// 				vector<int> test_network_input_obs_indexes;
+			bool is_select = false;
+			if (this->new_network == NULL) {
+				is_select = true;
+			} else {
+				#if defined(MDEBUG) && MDEBUG
+				if (rand()%3 == 0) {
+				#else
+				double improvement = average_misguess - test_average_misguess;
+				double standard_deviation = min(misguess_standard_deviation, test_misguess_standard_deviation);
+				double t_score = improvement / (standard_deviation / sqrt(num_instances * TEST_SAMPLES_PERCENTAGE));
 
-// 				vector<int> remaining_indexes(possible_scope_contexts.size());
-// 				for (int p_index = 0; p_index < (int)possible_scope_contexts.size(); p_index++) {
-// 					remaining_indexes[p_index] = p_index;
-// 				}
-// 				for (int i_index = 0; i_index < num_new_input_indexes; i_index++) {
-// 					uniform_int_distribution<int> distribution(0, (int)remaining_indexes.size()-1);
-// 					int rand_index = distribution(generator);
+				if (t_score > 1.645) {
+				#endif /* MDEBUG */
+					is_select = true;
+				}
+			}
 
-// 					test_network_input_scope_contexts.push_back(possible_scope_contexts[remaining_indexes[rand_index]]);
-// 					test_network_input_node_contexts.push_back(possible_node_contexts[remaining_indexes[rand_index]]);
-// 					test_network_input_obs_indexes.push_back(possible_obs_indexes[remaining_indexes[rand_index]]);
+			if (is_select) {
+				int original_input_size = (int)this->new_input_node_contexts.size();
+				int test_input_size = (int)test_input_node_contexts.size();
 
-// 					remaining_indexes.erase(remaining_indexes.begin() + rand_index);
-// 				}
+				average_misguess = test_average_misguess;
+				misguess_standard_deviation = test_misguess_standard_deviation;
 
-// 				Network* test_network;
-// 				if (this->new_network == NULL) {
-// 					test_network = new Network(num_new_input_indexes);
-// 				} else {
-// 					test_network = new Network(this->new_network);
+				this->new_input_scope_contexts = test_input_scope_contexts;
+				this->new_input_node_contexts = test_input_node_contexts;
+				this->new_input_obs_indexes = test_input_obs_indexes;
 
-// 					uniform_int_distribution<int> increment_above_distribution(0, 3);
-// 					if (increment_above_distribution(generator) == 0) {
-// 						test_network->increment_above(num_new_input_indexes);
-// 					} else {
-// 						test_network->increment_side(num_new_input_indexes);
-// 					}
-// 				}
+				if (this->new_network != NULL) {
+					delete this->new_network;
+				}
+				this->new_network = test_network;
 
-// 				for (int d_index = 0; d_index < NUM_DATAPOINTS; d_index++) {
-// 					vector<double> test_input_vals(num_new_input_indexes, 0.0);
-// 					for (int t_index = 0; t_index < num_new_input_indexes; t_index++) {
-// 						int curr_layer = 0;
-// 						ScopeHistory* curr_scope_history = this->scope_histories[d_index];
-// 						while (true) {
-// 							map<AbstractNode*, AbstractNodeHistory*>::iterator it = curr_scope_history->node_histories.find(
-// 								test_network_input_node_contexts[t_index][curr_layer]);
-// 							if (it == curr_scope_history->node_histories.end()) {
-// 								break;
-// 							} else {
-// 								if (curr_layer == (int)test_network_input_scope_contexts[t_index].size()-1) {
-// 									switch (it->first->type) {
-// 									case NODE_TYPE_ACTION:
-// 										{
-// 											ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
-// 											test_input_vals[t_index] = action_node_history->obs_snapshot[test_network_input_obs_indexes[t_index]];
-// 										}
-// 										break;
-// 									case NODE_TYPE_BRANCH:
-// 										{
-// 											BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
-// 											if (branch_node_history->is_branch) {
-// 												test_input_vals[t_index] = 1.0;
-// 											} else {
-// 												test_input_vals[t_index] = -1.0;
-// 											}
-// 										}
-// 										break;
-// 									case NODE_TYPE_INFO_BRANCH:
-// 										{
-// 											InfoBranchNodeHistory* info_branch_node_history = (InfoBranchNodeHistory*)it->second;
-// 											if (info_branch_node_history->is_branch) {
-// 												test_input_vals[t_index] = 1.0;
-// 											} else {
-// 												test_input_vals[t_index] = -1.0;
-// 											}
-// 										}
-// 										break;
-// 									}
-// 									break;
-// 								} else {
-// 									curr_layer++;
-// 									curr_scope_history = ((ScopeNodeHistory*)it->second)->scope_history;
-// 								}
-// 							}
-// 						}
-// 					}
-// 					network_inputs[d_index].push_back(test_input_vals);
-// 				}
+				inputs = test_inputs;
 
-// 				train_network(network_inputs,
-// 							  network_target_vals,
-// 							  test_network_input_scope_contexts,
-// 							  test_network_input_node_contexts,
-// 							  test_network_input_obs_indexes,
-// 							  test_network);
+				for (int i_index = test_input_size-1; i_index >= original_input_size; i_index--) {
+					vector<vector<Scope*>> remove_test_input_scope_contexts = this->new_input_scope_contexts;
+					vector<vector<AbstractNode*>> remove_test_input_node_contexts = this->new_input_node_contexts;
+					vector<int> remove_test_input_obs_indexes = this->new_input_obs_indexes;
 
-// 				double average_misguess;
-// 				double misguess_standard_deviation;
-// 				measure_network(network_inputs,
-// 								network_target_vals,
-// 								test_network,
-// 								average_misguess,
-// 								misguess_standard_deviation);
+					remove_test_input_scope_contexts.erase(remove_test_input_scope_contexts.begin() + i_index);
+					remove_test_input_node_contexts.erase(remove_test_input_node_contexts.begin() + i_index);
+					remove_test_input_obs_indexes.erase(remove_test_input_obs_indexes.begin() + i_index);
 
-// 				#if defined(MDEBUG) && MDEBUG
-// 				if (rand()%3 == 0) {
-// 				#else
-// 				double improvement = this->new_average_misguess - average_misguess;
-// 				double standard_deviation = min(this->new_misguess_standard_deviation, misguess_standard_deviation);
-// 				double t_score = improvement / (standard_deviation / sqrt(NUM_DATAPOINTS * TEST_SAMPLES_PERCENTAGE));
+					Network* remove_test_network = new Network(this->new_network);
 
-// 				if (t_score > 1.645) {
-// 				#endif /* MDEBUG */
-// 					optimize_network(network_inputs,
-// 									 network_target_vals,
-// 									 test_network);
+					remove_test_network->input->acti_vals.erase(remove_test_network->input->acti_vals.begin() + i_index);
+					remove_test_network->input->errors.erase(remove_test_network->input->errors.begin() + i_index);
 
-// 					measure_network(network_inputs,
-// 									network_target_vals,
-// 									test_network,
-// 									average_misguess,
-// 									misguess_standard_deviation);
+					for (int l_index = 0; l_index < (int)remove_test_network->hiddens.size(); l_index++) {
+						remove_test_network->hiddens[l_index]->remove_input(i_index);
+					}
+					remove_test_network->output->remove_input(i_index);
 
-// 					vector<int> new_input_indexes;
-// 					for (int t_index = 0; t_index < (int)test_network_input_scope_contexts.size(); t_index++) {
-// 						int index = -1;
-// 						for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
-// 							if (test_network_input_scope_contexts[t_index] == this->input_scope_contexts[i_index]
-// 									&& test_network_input_node_contexts[t_index] == this->input_node_contexts[i_index]
-// 									&& test_network_input_obs_indexes[t_index] == this->input_obs_indexes[i_index]) {
-// 								index = i_index;
-// 								break;
-// 							}
-// 						}
-// 						if (index == -1) {
-// 							this->input_scope_contexts.push_back(test_network_input_scope_contexts[t_index]);
-// 							this->input_node_contexts.push_back(test_network_input_node_contexts[t_index]);
-// 							this->input_obs_indexes.push_back(test_network_input_obs_indexes[t_index]);
+					vector<vector<double>> remove_test_inputs = inputs;
 
-// 							this->existing_linear_weights.push_back(0.0);
-// 							this->new_linear_weights.push_back(0.0);
+					for (int d_index = 0; d_index < num_instances; d_index++) {
+						remove_test_inputs[d_index].erase(remove_test_inputs[d_index].begin() + i_index);
+					}
 
-// 							index = this->input_scope_contexts.size()-1;
-// 						}
-// 						new_input_indexes.push_back(index);
-// 					}
-// 					this->new_network_input_indexes.push_back(new_input_indexes);
+					optimize_network(remove_test_inputs,
+									 this->target_val_histories,
+									 remove_test_network);
 
-// 					if (this->new_network != NULL) {
-// 						delete this->new_network;
-// 					}
-// 					this->new_network = test_network;
+					double remove_test_average_misguess;
+					double remove_test_misguess_standard_deviation;
+					measure_network(remove_test_inputs,
+									this->target_val_histories,
+									remove_test_network,
+									remove_test_average_misguess,
+									remove_test_misguess_standard_deviation);
 
-// 					this->new_average_misguess = average_misguess;
-// 					this->new_misguess_standard_deviation = misguess_standard_deviation;
+					double remove_improvement = average_misguess - remove_test_average_misguess;
+					double remove_standard_deviation = min(misguess_standard_deviation, remove_test_misguess_standard_deviation);
+					double remove_t_score = remove_improvement / (remove_standard_deviation / sqrt(num_instances * TEST_SAMPLES_PERCENTAGE));
 
-// 					#if defined(MDEBUG) && MDEBUG
-// 					#else
-// 					train_index = 0;
-// 					#endif /* MDEBUG */
-// 				} else {
-// 					delete test_network;
+					if (remove_t_score > -0.674) {
+						this->new_input_scope_contexts = remove_test_input_scope_contexts;
+						this->new_input_node_contexts = remove_test_input_node_contexts;
+						this->new_input_obs_indexes = remove_test_input_obs_indexes;
 
-// 					for (int d_index = 0; d_index < NUM_DATAPOINTS; d_index++) {
-// 						network_inputs[d_index].pop_back();
-// 					}
+						delete this->new_network;
+						this->new_network = remove_test_network;
 
-// 					train_index++;
-// 				}
-// 			}
+						inputs = remove_test_inputs;
+					} else {
+						delete remove_test_network;
+					}
+				}
 
-// 			for (int i_index = 0; i_index < (int)this->scope_histories.size(); i_index++) {
-// 				delete this->scope_histories[i_index];
-// 			}
-// 			this->scope_histories.clear();
-// 			this->target_val_histories.clear();
+				#if defined(MDEBUG) && MDEBUG
+				#else
+				train_index = 0;
+				#endif /* MDEBUG */
+			} else {
+				delete test_network;
 
-// 			this->combined_score = 0.0;
-// 			this->original_count = 0;
-// 			this->branch_count = 0;
+				train_index++;
+			}
+		}
 
-// 			this->state = BRANCH_EXPERIMENT_STATE_MEASURE;
-// 			this->state_iter = 0;
-// 		}
-// 	}
-// }
+		for (int i_index = 0; i_index < (int)this->scope_histories.size(); i_index++) {
+			delete this->scope_histories[i_index];
+		}
+		this->scope_histories.clear();
+		this->target_val_histories.clear();
+
+		this->combined_score = 0.0;
+		this->original_count = 0;
+		this->branch_count = 0;
+
+		this->state = BRANCH_EXPERIMENT_STATE_MEASURE;
+		this->state_iter = 0;
+		this->sub_state_iter = 0;
+	}
+}

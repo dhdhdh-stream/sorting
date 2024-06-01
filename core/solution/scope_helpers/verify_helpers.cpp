@@ -104,7 +104,7 @@ void Scope::verify_activate(Problem* problem,
 		}
 	}
 
-	if (this->verify_key == run_helper.verify_key) {
+	if (this->verify_key == solution.verify_key) {
 		if ((int)history->node_histories.size() != this->verify_scope_history_sizes[0]) {
 			throw invalid_argument("new scope verify fail");
 		}

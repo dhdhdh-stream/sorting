@@ -15,35 +15,34 @@ class AbstractNode;
 class AbstractNodeHistory;
 class AbstractExperiment;
 class AbstractExperimentHistory;
-class Eval;
+class Network;
 class Problem;
 class Solution;
 
 class ScopeHistory;
 class Scope {
 public:
-	Eval* parent_eval;
 	int id;
 
 	int node_counter;
 	std::map<int, AbstractNode*> nodes;
 
-	Eval* eval;
+	std::vector<std::vector<int>> eval_input_scope_context_ids;
+	std::vector<std::vector<Scope*>> eval_input_scope_contexts;
+	std::vector<std::vector<int>> eval_input_node_context_ids;
+	std::vector<std::vector<AbstractNode*>> eval_input_node_contexts;
+	std::vector<int> eval_input_obs_indexes;
+	Network* eval_network;
 
 	#if defined(MDEBUG) && MDEBUG
 	void* verify_key;
 	std::vector<int> verify_scope_history_sizes;
 	#endif /* MDEBUG */
 
-	Scope(Eval* parent_eval);
+	Scope();
 	~Scope();
 
 	void activate(Problem* problem,
-				  std::vector<ContextLayer>& context,
-				  RunHelper& run_helper,
-				  ScopeHistory* history);
-	void activate(AbstractNode* starting_node,
-				  Problem* problem,
 				  std::vector<ContextLayer>& context,
 				  RunHelper& run_helper,
 				  ScopeHistory* history);
@@ -97,9 +96,9 @@ public:
 
 	std::map<AbstractNode*, AbstractNodeHistory*> node_histories;
 
-	std::vector<AbstractExperiment*> experiments_seen_order;
-
-	std::vector<AbstractExperimentHistory*> experiment_histories;
+	AbstractExperimentHistory* callback_experiment_history;
+	std::vector<int> callback_experiment_indexes;
+	std::vector<int> callback_experiment_layers;
 
 	ScopeHistory(Scope* scope);
 	ScopeHistory(ScopeHistory* original);

@@ -10,13 +10,7 @@ public:
 	Scope* scope;
 	AbstractNode* node;
 
-	int num_actions;
-
 	ScopeHistory* scope_history;
-
-	ContextLayer() {
-		this->num_actions = 0;
-	}
 };
 
 #endif /* CONTEXT_LAYER_H */
