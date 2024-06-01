@@ -144,7 +144,6 @@ void Solution::clear_verify() {
 		this->info_scopes[i_index]->clear_verify();
 	}
 
-	this->verify_key = NULL;
 	this->verify_problems.clear();
 }
 #endif /* MDEBUG */

@@ -263,7 +263,11 @@ void Scope::copy_from(Scope* original,
 	this->eval_input_scope_context_ids = original->eval_input_scope_context_ids;
 	this->eval_input_node_context_ids = original->eval_input_node_context_ids;
 	this->eval_input_obs_indexes = original->eval_input_obs_indexes;
-	this->eval_network = new Network(original->eval_network);
+	if (original->eval_network == NULL) {
+		this->eval_network = NULL;
+	} else {
+		this->eval_network = new Network(original->eval_network);
+	}
 }
 
 void Scope::save_for_display(ofstream& output_file) {

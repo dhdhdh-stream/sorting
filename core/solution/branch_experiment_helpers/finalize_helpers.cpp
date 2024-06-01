@@ -293,20 +293,22 @@ void BranchExperiment::new_branch(Solution* duplicate) {
 		}
 	}
 
+	#if defined(MDEBUG) && MDEBUG
+	if (this->verify_problems.size() > 0) {
+		duplicate->verify_problems = this->verify_problems;
+		this->verify_problems.clear();
+		duplicate->verify_seeds = this->verify_seeds;
+
+		this->branch_node->verify_key = this;
+		this->branch_node->verify_original_scores = this->verify_original_scores;
+		this->branch_node->verify_branch_scores = this->verify_branch_scores;
+	}
+	#endif /* MDEBUG */
+
 	this->best_actions.clear();
 	this->best_scopes.clear();
 	this->ending_node = NULL;
-
-	#if defined(MDEBUG) && MDEBUG
-	duplicate->verify_key = this;
-	duplicate->verify_problems = this->verify_problems;
-	this->verify_problems.clear();
-	duplicate->verify_seeds = this->verify_seeds;
-
-	new_branch_node->verify_key = this;
-	new_branch_node->verify_original_scores = this->verify_original_scores;
-	new_branch_node->verify_branch_scores = this->verify_branch_scores;
-	#endif /* MDEBUG */
+	this->branch_node = NULL;
 }
 
 void BranchExperiment::new_pass_through(Solution* duplicate) {

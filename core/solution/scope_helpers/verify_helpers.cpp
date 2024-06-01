@@ -6,7 +6,6 @@
 
 #include "action_node.h"
 #include "branch_node.h"
-#include "eval.h"
 #include "globals.h"
 #include "info_branch_node.h"
 #include "info_scope_node.h"
@@ -104,7 +103,7 @@ void Scope::verify_activate(Problem* problem,
 		}
 	}
 
-	if (this->verify_key == solution.verify_key) {
+	if (this->verify_key != NULL) {
 		if ((int)history->node_histories.size() != this->verify_scope_history_sizes[0]) {
 			throw invalid_argument("new scope verify fail");
 		}

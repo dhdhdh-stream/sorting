@@ -27,7 +27,7 @@ void BranchExperiment::train_existing_activate(
 	case SCORE_TYPE_LOCAL:
 		{
 			double starting_predicted_score = calc_score(context.back().scope_history);
-			history->starting_predicted_scores.push_back(vector<double>(starting_predicted_score));
+			history->starting_predicted_scores.push_back(vector<double>{starting_predicted_score});
 			history->ending_predicted_scores.push_back(vector<double>(1));
 			context.back().scope_history->callback_experiment_history = history;
 			context.back().scope_history->callback_experiment_indexes.push_back(

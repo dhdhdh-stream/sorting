@@ -54,10 +54,12 @@ bool BranchExperiment::explore_activate(
 		case SCORE_TYPE_LOCAL:
 			{
 				double starting_predicted_score = calc_score(context.back().scope_history);
-				history->starting_predicted_scores.push_back(vector<double>(starting_predicted_score));
+				history->starting_predicted_scores.push_back(vector<double>{starting_predicted_score});
 				history->ending_predicted_scores.push_back(vector<double>(1));
 				context.back().scope_history->callback_experiment_history = history;
-				context.back().scope_history->callback_experiment_indexes.push_back(0);
+				context.back().scope_history->callback_experiment_indexes.push_back(
+					(int)history->starting_predicted_scores.size()-1);
+				context.back().scope_history->callback_experiment_layers.push_back(0);
 			}
 			break;
 		case SCORE_TYPE_ALL:
@@ -71,6 +73,7 @@ bool BranchExperiment::explore_activate(
 				context[l_index].scope_history->callback_experiment_history = history;
 				context[l_index].scope_history->callback_experiment_indexes.push_back(
 					(int)history->starting_predicted_scores.size()-1);
+				context[l_index].scope_history->callback_experiment_layers.push_back(l_index);
 			}
 			break;
 		case SCORE_TYPE_FINAL:
@@ -266,11 +269,11 @@ void BranchExperiment::explore_backprop(
 				- history->starting_predicted_scores[0][0];
 			break;
 		case SCORE_TYPE_ALL:
+			final_score = target_val - solution->average_score;
 			for (int l_index = 0; l_index < (int)history->starting_predicted_scores[0].size(); l_index++) {
 				final_score += history->ending_predicted_scores[0][l_index]
 					- history->starting_predicted_scores[0][l_index];
 			}
-			final_score += target_val - solution->average_score;
 			break;
 		case SCORE_TYPE_FINAL:
 			final_score = target_val - solution->average_score;

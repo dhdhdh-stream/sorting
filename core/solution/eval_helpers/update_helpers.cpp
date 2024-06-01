@@ -1,6 +1,7 @@
 #include "eval_helpers.h"
 
 #include <cmath>
+#include <iostream>
 
 #include "action_node.h"
 #include "branch_node.h"
@@ -33,7 +34,9 @@ void update_eval(Scope* parent_scope,
 				while (true) {
 					map<AbstractNode*, AbstractNodeHistory*>::iterator it = curr_scope_history->node_histories.find(
 						parent_scope->eval_input_node_contexts[i_index][curr_layer]);
-					if (it != curr_scope_history->node_histories.end()) {
+					if (it == curr_scope_history->node_histories.end()) {
+						break;
+					} else {
 						if (curr_layer == (int)parent_scope->eval_input_scope_contexts[i_index].size()-1) {
 							switch (it->first->type) {
 							case NODE_TYPE_ACTION:
@@ -334,5 +337,25 @@ void update_eval(Scope* parent_scope,
 
 			train_index++;
 		}
+	}
+
+	parent_scope->eval_input_scope_context_ids.clear();
+	parent_scope->eval_input_node_context_ids.clear();
+	for (int i_index = 0; i_index < (int)parent_scope->eval_input_scope_contexts.size(); i_index++) {
+		vector<int> scope_context_ids(parent_scope->eval_input_scope_contexts[i_index].size());
+		for (int v_index = 0; v_index < (int)parent_scope->eval_input_scope_contexts[i_index].size(); v_index++) {
+			scope_context_ids[v_index] = parent_scope->eval_input_scope_contexts[i_index][v_index]->id;
+		}
+		parent_scope->eval_input_scope_context_ids.push_back(scope_context_ids);
+
+		vector<int> node_context_ids(parent_scope->eval_input_node_contexts[i_index].size());
+		for (int v_index = 0; v_index < (int)parent_scope->eval_input_node_contexts[i_index].size(); v_index++) {
+			node_context_ids[v_index] = parent_scope->eval_input_node_contexts[i_index][v_index]->id;
+		}
+		parent_scope->eval_input_node_context_ids.push_back(node_context_ids);
+	}
+
+	for (int h_index = 0; h_index < (int)scope_histories.size(); h_index++) {
+		delete scope_histories[h_index];
 	}
 }

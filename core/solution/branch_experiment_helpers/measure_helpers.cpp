@@ -29,7 +29,7 @@ bool BranchExperiment::measure_activate(AbstractNode*& curr_node,
 	case SCORE_TYPE_LOCAL:
 		{
 			double starting_predicted_score = calc_score(context.back().scope_history);
-			history->starting_predicted_scores.push_back(vector<double>(starting_predicted_score));
+			history->starting_predicted_scores.push_back(vector<double>{starting_predicted_score});
 			history->ending_predicted_scores.push_back(vector<double>(1));
 			context.back().scope_history->callback_experiment_history = history;
 			context.back().scope_history->callback_experiment_indexes.push_back(
@@ -105,7 +105,10 @@ bool BranchExperiment::measure_activate(AbstractNode*& curr_node,
 		}
 	}
 	this->existing_network->activate(existing_input_vals);
+	#if defined(MDEBUG) && MDEBUG
+	#else
 	double existing_predicted_score = this->existing_network->output->acti_vals[0];
+	#endif /* MDEBUG */
 
 	vector<double> new_input_vals(this->new_input_scope_contexts.size(), 0.0);
 	for (int i_index = 0; i_index < (int)this->new_input_scope_contexts.size(); i_index++) {
@@ -155,7 +158,10 @@ bool BranchExperiment::measure_activate(AbstractNode*& curr_node,
 		}
 	}
 	this->new_network->activate(new_input_vals);
+	#if defined(MDEBUG) && MDEBUG
+	#else
 	double new_predicted_score = this->new_network->output->acti_vals[0];
+	#endif /* MDEBUG */
 
 	#if defined(MDEBUG) && MDEBUG
 	bool decision_is_branch;

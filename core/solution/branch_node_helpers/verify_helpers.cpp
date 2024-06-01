@@ -153,11 +153,11 @@ void BranchNode::verify_activate(AbstractNode*& curr_node,
 	this->branch_network->activate(branch_input_vals);
 	double branch_score = this->branch_network->output->acti_vals[0];
 
-	if (this->verify_key == run_helper.verify_key) {
+	if (this->verify_key != NULL) {
 		cout << "this->id: " << this->id << endl;
 
+		cout << "run_helper.starting_run_seed: " << run_helper.starting_run_seed << endl;
 		cout << "run_helper.curr_run_seed: " << run_helper.curr_run_seed << endl;
-		cout << "run_helper.run_seed_snapshot: " << run_helper.run_seed_snapshot << endl;
 		problem->print();
 
 		cout << "context scope" << endl;
@@ -191,7 +191,7 @@ void BranchNode::verify_activate(AbstractNode*& curr_node,
 	} else {
 		history->is_branch = false;
 	}
-	if (this->verify_key == run_helper.verify_key) {
+	if (this->verify_key != NULL) {
 		cout << "history->is_branch: " << history->is_branch << endl;
 	}
 	run_helper.curr_run_seed = xorshift(run_helper.curr_run_seed);

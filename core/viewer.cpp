@@ -5,6 +5,7 @@
 #include <random>
 
 #include "abstract_node.h"
+#include "eval_helpers.h"
 #include "globals.h"
 #include "minesweeper.h"
 #include "scope.h"
@@ -56,7 +57,9 @@ int main(int argc, char* argv[]) {
 			run_helper,
 			root_history);
 
-		problem->print();
+		// double predicted_score = calc_score(root_history);
+		double predicted_score = calc_score_w_drop(root_history);
+		cout << "predicted_score: " << predicted_score << endl;
 
 		delete root_history;
 

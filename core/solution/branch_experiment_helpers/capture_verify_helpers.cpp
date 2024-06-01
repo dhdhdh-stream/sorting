@@ -133,11 +133,7 @@ bool BranchExperiment::capture_verify_activate(AbstractNode*& curr_node,
 	this->verify_original_scores.push_back(existing_predicted_score);
 	this->verify_branch_scores.push_back(new_predicted_score);
 
-	cout << "input_vals:" << endl;
-	for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
-		cout << input_vals[i_index] << endl;
-	}
-	cout << "run_helper.run_seed_snapshot: " << run_helper.run_seed_snapshot << endl;
+	cout << "run_helper.starting_run_seed: " << run_helper.starting_run_seed << endl;
 	cout << "run_helper.curr_run_seed: " << run_helper.curr_run_seed << endl;
 	problem->print();
 

@@ -38,7 +38,6 @@ public:
 	int num_actions_limit;
 
 	#if defined(MDEBUG) && MDEBUG
-	void* verify_key;
 	std::vector<Problem*> verify_problems;
 	std::vector<unsigned long> verify_seeds;
 	#endif /* MDEBUG */

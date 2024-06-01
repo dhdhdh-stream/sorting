@@ -212,8 +212,6 @@ int main(int argc, char* argv[]) {
 					Problem* problem = duplicate->verify_problems[0];
 
 					RunHelper run_helper;
-					run_helper.verify_key = duplicate->verify_key;
-
 					run_helper.starting_run_seed = duplicate->verify_seeds[0];
 					cout << "run_helper.starting_run_seed: " << run_helper.starting_run_seed << endl;
 					run_helper.curr_run_seed = duplicate->verify_seeds[0];
