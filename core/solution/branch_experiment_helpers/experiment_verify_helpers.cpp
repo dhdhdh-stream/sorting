@@ -229,7 +229,7 @@ void BranchExperiment::experiment_verify_backprop(
 			sum_score += history->normalized_scores[i_index][l_index];
 		}
 		sum_score += final_normalized_score;
-		this->combined_score += final_normalized_score;
+		this->combined_score += sum_score;
 		this->state_iter++;
 	}
 
