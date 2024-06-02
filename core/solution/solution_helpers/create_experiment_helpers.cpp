@@ -205,7 +205,7 @@ void create_experiment(ScopeHistory* root_history) {
 			}
 		} else {
 			uniform_int_distribution<int> pass_through_distribution(0, 3);
-			if (pass_through_distribution(generator) == 0) {
+			if (pass_through_distribution(generator) != 0) {
 				#if defined(MDEBUG) && MDEBUG
 				if (possible_scope_contexts[rand_index]->nodes.size() > 10) {
 				#else

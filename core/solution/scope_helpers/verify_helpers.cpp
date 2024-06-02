@@ -104,7 +104,13 @@ void Scope::verify_activate(Problem* problem,
 	}
 
 	if (this->verify_key != NULL) {
+		cout << "run_helper.starting_run_seed: " << run_helper.starting_run_seed << endl;
+		cout << "run_helper.curr_run_seed: " << run_helper.curr_run_seed << endl;
+
 		if ((int)history->node_histories.size() != this->verify_scope_history_sizes[0]) {
+			cout << "history->node_histories.size(): " << history->node_histories.size() << endl;
+			cout << "this->verify_scope_history_sizes[0]: " << this->verify_scope_history_sizes[0] << endl;
+
 			throw invalid_argument("new scope verify fail");
 		}
 		this->verify_scope_history_sizes.erase(this->verify_scope_history_sizes.begin());

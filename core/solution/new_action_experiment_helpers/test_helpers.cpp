@@ -28,9 +28,9 @@ void NewActionExperiment::test_activate(
 		NewActionExperimentHistory* history) {
 	history->test_location_index = location_index;
 
-	history->starting_predicted_scores.push_back(vector<double>(context.size(), 0.0));
-	history->normalized_scores.push_back(vector<double>(context.size(), 0.0));
-	for (int l_index = 0; l_index < (int)context.size(); l_index++) {
+	history->starting_predicted_scores.push_back(vector<double>(context.size()-1, 0.0));
+	history->normalized_scores.push_back(vector<double>(context.size()-1, 0.0));
+	for (int l_index = 0; l_index < (int)context.size()-1; l_index++) {
 		if (context[l_index].scope->eval_network != NULL) {
 			double starting_predicted_score = calc_score(context[l_index].scope_history);
 			history->starting_predicted_scores.back()[l_index] = starting_predicted_score;
@@ -41,6 +41,10 @@ void NewActionExperiment::test_activate(
 			context[l_index].scope_history->callback_experiment_layers.push_back(l_index);
 		}
 	}
+	/**
+	 * - don't include local scope for NewActionExperiment
+	 *   - multiple new actions may stress eval too much
+	 */
 
 	switch (this->test_location_states[location_index]) {
 	case NEW_ACTION_EXPERIMENT_MEASURE_NEW:
@@ -59,6 +63,11 @@ void NewActionExperiment::test_activate(
 												 context,
 												 run_helper,
 												 scope_history);
+
+		/**
+		 * - increment properly mainly for MDEBUG
+		 */
+		run_helper.num_actions += 2;
 
 		delete scope_history;
 
@@ -173,40 +182,6 @@ void NewActionExperiment::test_backprop(
 						 */
 					} else {
 						this->generalize_iter++;
-						if (this->generalize_iter >= NEW_ACTION_NUM_GENERALIZE_TRIES) {
-							if (this->successful_location_starts.size() >= NEW_ACTION_MIN_LOCATIONS) {
-								#if defined(MDEBUG) && MDEBUG
-								for (int t_index = 0; t_index < (int)this->test_location_starts.size(); t_index++) {
-									int experiment_index;
-									for (int e_index = 0; e_index < (int)this->test_location_starts[t_index]->experiments.size(); e_index++) {
-										if (this->test_location_starts[t_index]->experiments[e_index] == this) {
-											experiment_index = e_index;
-											break;
-										}
-									}
-									this->test_location_starts[t_index]->experiments.erase(this->test_location_starts[t_index]->experiments.begin() + experiment_index);
-								}
-								this->test_location_starts.clear();
-								this->test_location_is_branch.clear();
-								this->test_location_exits.clear();
-								this->test_location_states.clear();
-								this->test_location_existing_scores.clear();
-								this->test_location_existing_counts.clear();
-								this->test_location_new_scores.clear();
-								this->test_location_new_counts.clear();
-
-								this->verify_problems = vector<Problem*>(NUM_VERIFY_SAMPLES, NULL);
-								this->verify_seeds = vector<unsigned long>(NUM_VERIFY_SAMPLES);
-
-								this->state = NEW_ACTION_EXPERIMENT_STATE_CAPTURE_VERIFY;
-								this->state_iter = 0;
-								#else
-								this->result = EXPERIMENT_RESULT_SUCCESS;
-								#endif /* MDEBUG */
-							} else {
-								this->result = EXPERIMENT_RESULT_FAIL;
-							}
-						}
 					}
 				}
 			}
@@ -291,40 +266,6 @@ void NewActionExperiment::test_backprop(
 					 */
 				} else {
 					this->generalize_iter++;
-					if (this->generalize_iter >= NEW_ACTION_NUM_GENERALIZE_TRIES) {
-						if (this->successful_location_starts.size() >= NEW_ACTION_MIN_LOCATIONS) {
-							#if defined(MDEBUG) && MDEBUG
-							for (int t_index = 0; t_index < (int)this->test_location_starts.size(); t_index++) {
-								int experiment_index;
-								for (int e_index = 0; e_index < (int)this->test_location_starts[t_index]->experiments.size(); e_index++) {
-									if (this->test_location_starts[t_index]->experiments[e_index] == this) {
-										experiment_index = e_index;
-										break;
-									}
-								}
-								this->test_location_starts[t_index]->experiments.erase(this->test_location_starts[t_index]->experiments.begin() + experiment_index);
-							}
-							this->test_location_starts.clear();
-							this->test_location_is_branch.clear();
-							this->test_location_exits.clear();
-							this->test_location_states.clear();
-							this->test_location_existing_scores.clear();
-							this->test_location_existing_counts.clear();
-							this->test_location_new_scores.clear();
-							this->test_location_new_counts.clear();
-
-							this->verify_problems = vector<Problem*>(NUM_VERIFY_SAMPLES, NULL);
-							this->verify_seeds = vector<unsigned long>(NUM_VERIFY_SAMPLES);
-
-							this->state = NEW_ACTION_EXPERIMENT_STATE_CAPTURE_VERIFY;
-							this->state_iter = 0;
-							#else
-							this->result = EXPERIMENT_RESULT_SUCCESS;
-							#endif /* MDEBUG */
-						} else {
-							this->result = EXPERIMENT_RESULT_FAIL;
-						}
-					}
 				}
 			}
 		}

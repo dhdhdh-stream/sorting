@@ -27,10 +27,7 @@ public:
 	int node_counter;
 	std::map<int, AbstractNode*> nodes;
 
-	std::vector<std::vector<int>> eval_input_scope_context_ids;
-	std::vector<std::vector<Scope*>> eval_input_scope_contexts;
-	std::vector<std::vector<int>> eval_input_node_context_ids;
-	std::vector<std::vector<AbstractNode*>> eval_input_node_contexts;
+	std::vector<AbstractNode*> eval_input_node_contexts;
 	std::vector<int> eval_input_obs_indexes;
 	Network* eval_network;
 	double eval_score_standard_deviation;

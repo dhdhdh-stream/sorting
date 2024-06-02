@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+#include "abstract_node.h"
+#include "constants.h"
 #include "globals.h"
 #include "scope.h"
 
@@ -134,6 +136,42 @@ void NewActionExperiment::backprop(double target_val,
 			test_backprop(target_val,
 						  run_helper);
 		}
+
+		if (this->generalize_iter >= NEW_ACTION_NUM_GENERALIZE_TRIES) {
+			if (this->successful_location_starts.size() >= NEW_ACTION_MIN_LOCATIONS) {
+				#if defined(MDEBUG) && MDEBUG
+				for (int t_index = 0; t_index < (int)this->test_location_starts.size(); t_index++) {
+					int experiment_index;
+					for (int e_index = 0; e_index < (int)this->test_location_starts[t_index]->experiments.size(); e_index++) {
+						if (this->test_location_starts[t_index]->experiments[e_index] == this) {
+							experiment_index = e_index;
+							break;
+						}
+					}
+					this->test_location_starts[t_index]->experiments.erase(this->test_location_starts[t_index]->experiments.begin() + experiment_index);
+				}
+				this->test_location_starts.clear();
+				this->test_location_is_branch.clear();
+				this->test_location_exits.clear();
+				this->test_location_states.clear();
+				this->test_location_existing_scores.clear();
+				this->test_location_existing_counts.clear();
+				this->test_location_new_scores.clear();
+				this->test_location_new_counts.clear();
+
+				this->verify_problems = vector<Problem*>(NUM_VERIFY_SAMPLES, NULL);
+				this->verify_seeds = vector<unsigned long>(NUM_VERIFY_SAMPLES);
+
+				this->state = NEW_ACTION_EXPERIMENT_STATE_CAPTURE_VERIFY;
+				this->state_iter = 0;
+				#else
+				this->result = EXPERIMENT_RESULT_SUCCESS;
+				#endif /* MDEBUG */
+			} else {
+				this->result = EXPERIMENT_RESULT_FAIL;
+			}
+		}
+
 		break;
 	#if defined(MDEBUG) && MDEBUG
 	case NEW_ACTION_EXPERIMENT_STATE_CAPTURE_VERIFY:

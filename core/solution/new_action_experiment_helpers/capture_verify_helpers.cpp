@@ -1,5 +1,7 @@
 #if defined(MDEBUG) && MDEBUG
 
+#include <iostream>
+
 #include "new_action_experiment.h"
 
 #include "constants.h"
@@ -35,7 +37,12 @@ void NewActionExperiment::capture_verify_activate(
 											 run_helper,
 											 scope_history);
 
+	run_helper.num_actions += 2;
+
 	this->verify_scope_history_sizes.push_back((int)scope_history->node_histories.size()+2);
+
+	cout << "run_helper.starting_run_seed: " << run_helper.starting_run_seed << endl;
+	cout << "run_helper.curr_run_seed: " << run_helper.curr_run_seed << endl;
 
 	delete scope_history;
 
@@ -45,9 +52,11 @@ void NewActionExperiment::capture_verify_activate(
 }
 
 void NewActionExperiment::capture_verify_backprop() {
-	this->state_iter++;
-	if (this->state_iter >= NUM_VERIFY_SAMPLES) {
-		this->result = EXPERIMENT_RESULT_SUCCESS;
+	if (this->verify_problems[this->state_iter] != NULL) {
+		this->state_iter++;
+		if (this->state_iter >= NUM_VERIFY_SAMPLES) {
+			this->result = EXPERIMENT_RESULT_SUCCESS;
+		}
 	}
 }
 

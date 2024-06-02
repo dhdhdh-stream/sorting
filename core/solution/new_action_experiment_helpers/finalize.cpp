@@ -451,7 +451,6 @@ void NewActionExperiment::finalize(Solution* duplicate) {
 		}
 
 		#if defined(MDEBUG) && MDEBUG
-		duplicate->verify_key = this;
 		duplicate->verify_problems = this->verify_problems;
 		this->verify_problems.clear();
 		duplicate->verify_seeds = this->verify_seeds;

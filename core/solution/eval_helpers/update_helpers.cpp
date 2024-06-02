@@ -1,3 +1,8 @@
+/**
+ * - only include nodes in local scope
+ *   - only used as a guide anyways, so not worth it otherwise
+ */
+
 #include "eval_helpers.h"
 
 #include <algorithm>
@@ -12,16 +17,53 @@
 #include "info_scope_node.h"
 #include "network.h"
 #include "nn_helpers.h"
+#include "problem.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution_helpers.h"
 
 using namespace std;
 
+void gather_eval_possible_helper(vector<AbstractNode*>& possible_node_contexts,
+								 vector<int>& possible_obs_indexes,
+								 ScopeHistory* scope_history) {
+	for (map<AbstractNode*, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
+			it != scope_history->node_histories.end(); it++) {
+		switch (it->first->type) {
+		case NODE_TYPE_ACTION:
+			for (int o_index = 0; o_index < problem_type->num_obs(); o_index++) {
+				possible_node_contexts.push_back(it->first);
+				possible_obs_indexes.push_back(o_index);
+			}
+
+			break;
+		case NODE_TYPE_BRANCH:
+			possible_node_contexts.push_back(it->first);
+			possible_obs_indexes.push_back(-1);
+
+			break;
+		case NODE_TYPE_INFO_SCOPE:
+			possible_node_contexts.push_back(it->first);
+			possible_obs_indexes.push_back(-1);
+
+			break;
+		case NODE_TYPE_INFO_BRANCH:
+			possible_node_contexts.push_back(it->first);
+			possible_obs_indexes.push_back(-1);
+
+			break;
+		}
+	}
+}
+
 void update_eval(Scope* parent_scope,
 				 vector<ScopeHistory*>& scope_histories,
 				 vector<double>& target_val_histories) {
+	#if defined(MDEBUG) && MDEBUG
+	int shuffle_seed = 0;
+	#else
 	int shuffle_seed = (unsigned)time(NULL);
+	#endif /* MDEBUG */
 	{
 		default_random_engine shuffler(shuffle_seed);
 		shuffle(scope_histories.begin(), scope_histories.end(), shuffler);
@@ -40,58 +82,46 @@ void update_eval(Scope* parent_scope,
 		for (int d_index = 0; d_index < num_instances; d_index++) {
 			vector<double> d_inputs(parent_scope->eval_input_node_contexts.size(), 0.0);
 			for (int i_index = 0; i_index < (int)parent_scope->eval_input_node_contexts.size(); i_index++) {
-				int curr_layer = 0;
-				ScopeHistory* curr_scope_history = scope_histories[d_index];
-				while (true) {
-					map<AbstractNode*, AbstractNodeHistory*>::iterator it = curr_scope_history->node_histories.find(
-						parent_scope->eval_input_node_contexts[i_index][curr_layer]);
-					if (it == curr_scope_history->node_histories.end()) {
-						break;
-					} else {
-						if (curr_layer == (int)parent_scope->eval_input_scope_contexts[i_index].size()-1) {
-							switch (it->first->type) {
-							case NODE_TYPE_ACTION:
-								{
-									ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
-									d_inputs[i_index] = action_node_history->obs_snapshot[parent_scope->eval_input_obs_indexes[i_index]];
-								}
-								break;
-							case NODE_TYPE_BRANCH:
-								{
-									BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
-									if (branch_node_history->is_branch) {
-										d_inputs[i_index] = 1.0;
-									} else {
-										d_inputs[i_index] = -1.0;
-									}
-								}
-								break;
-							case NODE_TYPE_INFO_SCOPE:
-								{
-									InfoScopeNodeHistory* info_scope_node_history = (InfoScopeNodeHistory*)it->second;
-									if (info_scope_node_history->is_positive) {
-										d_inputs[i_index] = 1.0;
-									} else {
-										d_inputs[i_index] = -1.0;
-									}
-								}
-								break;
-							case NODE_TYPE_INFO_BRANCH:
-								{
-									InfoBranchNodeHistory* info_branch_node_history = (InfoBranchNodeHistory*)it->second;
-									if (info_branch_node_history->is_branch) {
-										d_inputs[i_index] = 1.0;
-									} else {
-										d_inputs[i_index] = -1.0;
-									}
-								}
-								break;
-							}
-							break;
-						} else {
-							curr_layer++;
-							curr_scope_history = ((ScopeNodeHistory*)it->second)->scope_history;
+				map<AbstractNode*, AbstractNodeHistory*>::iterator it = scope_histories[d_index]->node_histories.find(
+					parent_scope->eval_input_node_contexts[i_index]);
+				if (it != scope_histories[d_index]->node_histories.end()) {
+					switch (it->first->type) {
+					case NODE_TYPE_ACTION:
+						{
+							ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
+							d_inputs[i_index] = action_node_history->obs_snapshot[parent_scope->eval_input_obs_indexes[i_index]];
 						}
+						break;
+					case NODE_TYPE_BRANCH:
+						{
+							BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
+							if (branch_node_history->is_branch) {
+								d_inputs[i_index] = 1.0;
+							} else {
+								d_inputs[i_index] = -1.0;
+							}
+						}
+						break;
+					case NODE_TYPE_INFO_SCOPE:
+						{
+							InfoScopeNodeHistory* info_scope_node_history = (InfoScopeNodeHistory*)it->second;
+							if (info_scope_node_history->is_positive) {
+								d_inputs[i_index] = 1.0;
+							} else {
+								d_inputs[i_index] = -1.0;
+							}
+						}
+						break;
+					case NODE_TYPE_INFO_BRANCH:
+						{
+							InfoBranchNodeHistory* info_branch_node_history = (InfoBranchNodeHistory*)it->second;
+							if (info_branch_node_history->is_branch) {
+								d_inputs[i_index] = 1.0;
+							} else {
+								d_inputs[i_index] = -1.0;
+							}
+						}
+						break;
 					}
 				}
 			}
@@ -112,23 +142,16 @@ void update_eval(Scope* parent_scope,
 
 	int train_index = 0;
 	while (train_index < 3) {
-		vector<vector<Scope*>> test_input_scope_contexts = parent_scope->eval_input_scope_contexts;
-		vector<vector<AbstractNode*>> test_input_node_contexts = parent_scope->eval_input_node_contexts;
+		vector<AbstractNode*> test_input_node_contexts = parent_scope->eval_input_node_contexts;
 		vector<int> test_input_obs_indexes = parent_scope->eval_input_obs_indexes;
 
-		vector<vector<Scope*>> possible_scope_contexts;
-		vector<vector<AbstractNode*>> possible_node_contexts;
+		vector<AbstractNode*> possible_node_contexts;
 		vector<int> possible_obs_indexes;
 
-		vector<Scope*> scope_context;
-		vector<AbstractNode*> node_context;
 		uniform_int_distribution<int> history_distribution(0, num_instances-1);
-		gather_possible_helper(scope_context,
-							   node_context,
-							   possible_scope_contexts,
-							   possible_node_contexts,
-							   possible_obs_indexes,
-							   scope_histories[history_distribution(generator)]);
+		gather_eval_possible_helper(possible_node_contexts,
+									possible_obs_indexes,
+									scope_histories[history_distribution(generator)]);
 
 		vector<int> remaining_indexes(possible_node_contexts.size());
 		for (int p_index = 0; p_index < (int)possible_node_contexts.size(); p_index++) {
@@ -141,15 +164,13 @@ void update_eval(Scope* parent_scope,
 
 			bool contains = false;
 			for (int i_index = 0; i_index < (int)test_input_node_contexts.size(); i_index++) {
-				if (possible_scope_contexts[remaining_indexes[rand_index]] == test_input_scope_contexts[i_index]
-						&& possible_node_contexts[remaining_indexes[rand_index]] == test_input_node_contexts[i_index]
+				if (possible_node_contexts[remaining_indexes[rand_index]] == test_input_node_contexts[i_index]
 						&& possible_obs_indexes[remaining_indexes[rand_index]] == test_input_obs_indexes[i_index]) {
 					contains = true;
 					break;
 				}
 			}
 			if (!contains) {
-				test_input_scope_contexts.push_back(possible_scope_contexts[remaining_indexes[rand_index]]);
 				test_input_node_contexts.push_back(possible_node_contexts[remaining_indexes[rand_index]]);
 				test_input_obs_indexes.push_back(possible_obs_indexes[remaining_indexes[rand_index]]);
 				num_new_input++;
@@ -175,59 +196,48 @@ void update_eval(Scope* parent_scope,
 		for (int d_index = 0; d_index < num_instances; d_index++) {
 			test_inputs[d_index].reserve((int)test_input_node_contexts.size());
 			for (int t_index = (int)parent_scope->eval_input_node_contexts.size(); t_index < (int)test_input_node_contexts.size(); t_index++) {
-				int curr_layer = 0;
-				ScopeHistory* curr_scope_history = scope_histories[d_index];
-				while (true) {
-					map<AbstractNode*, AbstractNodeHistory*>::iterator it = curr_scope_history->node_histories.find(
-						test_input_node_contexts[t_index][curr_layer]);
-					if (it == curr_scope_history->node_histories.end()) {
-						test_inputs[d_index].push_back(0.0);
-						break;
-					} else {
-						if (curr_layer == (int)test_input_scope_contexts[t_index].size()-1) {
-							switch (it->first->type) {
-							case NODE_TYPE_ACTION:
-								{
-									ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
-									test_inputs[d_index].push_back(action_node_history->obs_snapshot[test_input_obs_indexes[t_index]]);
-								}
-								break;
-							case NODE_TYPE_BRANCH:
-								{
-									BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
-									if (branch_node_history->is_branch) {
-										test_inputs[d_index].push_back(1.0);
-									} else {
-										test_inputs[d_index].push_back(-1.0);
-									}
-								}
-								break;
-							case NODE_TYPE_INFO_SCOPE:
-								{
-									InfoScopeNodeHistory* info_scope_node_history = (InfoScopeNodeHistory*)it->second;
-									if (info_scope_node_history->is_positive) {
-										test_inputs[d_index].push_back(1.0);
-									} else {
-										test_inputs[d_index].push_back(-1.0);
-									}
-								}
-								break;
-							case NODE_TYPE_INFO_BRANCH:
-								{
-									InfoBranchNodeHistory* info_branch_node_history = (InfoBranchNodeHistory*)it->second;
-									if (info_branch_node_history->is_branch) {
-										test_inputs[d_index].push_back(1.0);
-									} else {
-										test_inputs[d_index].push_back(-1.0);
-									}
-								}
-								break;
-							}
-							break;
-						} else {
-							curr_layer++;
-							curr_scope_history = ((ScopeNodeHistory*)it->second)->scope_history;
+				map<AbstractNode*, AbstractNodeHistory*>::iterator it = scope_histories[d_index]->node_histories.find(
+					test_input_node_contexts[t_index]);
+				if (it == scope_histories[d_index]->node_histories.end()) {
+					test_inputs[d_index].push_back(0.0);
+				} else {
+					switch (it->first->type) {
+					case NODE_TYPE_ACTION:
+						{
+							ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
+							test_inputs[d_index].push_back(action_node_history->obs_snapshot[test_input_obs_indexes[t_index]]);
 						}
+						break;
+					case NODE_TYPE_BRANCH:
+						{
+							BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
+							if (branch_node_history->is_branch) {
+								test_inputs[d_index].push_back(1.0);
+							} else {
+								test_inputs[d_index].push_back(-1.0);
+							}
+						}
+						break;
+					case NODE_TYPE_INFO_SCOPE:
+						{
+							InfoScopeNodeHistory* info_scope_node_history = (InfoScopeNodeHistory*)it->second;
+							if (info_scope_node_history->is_positive) {
+								test_inputs[d_index].push_back(1.0);
+							} else {
+								test_inputs[d_index].push_back(-1.0);
+							}
+						}
+						break;
+					case NODE_TYPE_INFO_BRANCH:
+						{
+							InfoBranchNodeHistory* info_branch_node_history = (InfoBranchNodeHistory*)it->second;
+							if (info_branch_node_history->is_branch) {
+								test_inputs[d_index].push_back(1.0);
+							} else {
+								test_inputs[d_index].push_back(-1.0);
+							}
+						}
+						break;
 					}
 				}
 			}
@@ -271,7 +281,6 @@ void update_eval(Scope* parent_scope,
 			average_misguess = test_average_misguess;
 			misguess_standard_deviation = test_misguess_standard_deviation;
 
-			parent_scope->eval_input_scope_contexts = test_input_scope_contexts;
 			parent_scope->eval_input_node_contexts = test_input_node_contexts;
 			parent_scope->eval_input_obs_indexes = test_input_obs_indexes;
 
@@ -289,11 +298,9 @@ void update_eval(Scope* parent_scope,
 			 * - removes both irrelevant as well as duplicates
 			 */
 			for (int i_index = test_input_size-1; i_index >= original_input_size; i_index--) {
-				vector<vector<Scope*>> remove_test_input_scope_contexts = parent_scope->eval_input_scope_contexts;
-				vector<vector<AbstractNode*>> remove_test_input_node_contexts = parent_scope->eval_input_node_contexts;
+				vector<AbstractNode*> remove_test_input_node_contexts = parent_scope->eval_input_node_contexts;
 				vector<int> remove_test_input_obs_indexes = parent_scope->eval_input_obs_indexes;
 
-				remove_test_input_scope_contexts.erase(remove_test_input_scope_contexts.begin() + i_index);
 				remove_test_input_node_contexts.erase(remove_test_input_node_contexts.begin() + i_index);
 				remove_test_input_obs_indexes.erase(remove_test_input_obs_indexes.begin() + i_index);
 
@@ -332,7 +339,6 @@ void update_eval(Scope* parent_scope,
 				double remove_t_score = remove_improvement / (remove_standard_deviation / sqrt(num_instances * TEST_SAMPLES_PERCENTAGE));
 
 				if (remove_t_score > -0.674) {
-					parent_scope->eval_input_scope_contexts = remove_test_input_scope_contexts;
 					parent_scope->eval_input_node_contexts = remove_test_input_node_contexts;
 					parent_scope->eval_input_obs_indexes = remove_test_input_obs_indexes;
 
@@ -355,22 +361,6 @@ void update_eval(Scope* parent_scope,
 
 			train_index++;
 		}
-	}
-
-	parent_scope->eval_input_scope_context_ids.clear();
-	parent_scope->eval_input_node_context_ids.clear();
-	for (int i_index = 0; i_index < (int)parent_scope->eval_input_scope_contexts.size(); i_index++) {
-		vector<int> scope_context_ids(parent_scope->eval_input_scope_contexts[i_index].size());
-		for (int v_index = 0; v_index < (int)parent_scope->eval_input_scope_contexts[i_index].size(); v_index++) {
-			scope_context_ids[v_index] = parent_scope->eval_input_scope_contexts[i_index][v_index]->id;
-		}
-		parent_scope->eval_input_scope_context_ids.push_back(scope_context_ids);
-
-		vector<int> node_context_ids(parent_scope->eval_input_node_contexts[i_index].size());
-		for (int v_index = 0; v_index < (int)parent_scope->eval_input_node_contexts[i_index].size(); v_index++) {
-			node_context_ids[v_index] = parent_scope->eval_input_node_contexts[i_index][v_index]->id;
-		}
-		parent_scope->eval_input_node_context_ids.push_back(node_context_ids);
 	}
 
 	for (int h_index = 0; h_index < (int)scope_histories.size(); h_index++) {

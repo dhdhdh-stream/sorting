@@ -274,6 +274,10 @@ int main(int argc, char* argv[]) {
 
 					delete root_history;
 
+					if (run_helper.num_actions > duplicate->max_num_actions) {
+						duplicate->max_num_actions = run_helper.num_actions;
+					}
+
 					double target_val;
 					if (run_helper.num_actions <= solution->num_actions_limit) {
 						target_val = problem->score_result(run_helper.num_decisions);
@@ -312,6 +316,8 @@ int main(int argc, char* argv[]) {
 				#if defined(MDEBUG) && MDEBUG
 				delete solution;
 				solution = duplicate;
+
+				solution->num_actions_limit = 2*solution->max_num_actions + 10;
 
 				solution->timestamp++;
 				solution->save("", "main");

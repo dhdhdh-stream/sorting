@@ -11,6 +11,10 @@ void NewActionExperiment::successful_activate(
 		vector<ContextLayer>& context,
 		RunHelper& run_helper,
 		NewActionExperimentHistory* history) {
+	if (history->test_location_index == -1) {
+		context.back().scope_history->callback_experiment_history = history;
+	}
+
 	context.push_back(ContextLayer());
 
 	context.back().scope = this->scope_context;
@@ -25,6 +29,11 @@ void NewActionExperiment::successful_activate(
 											 context,
 											 run_helper,
 											 scope_history);
+
+	/**
+	 * - increment properly mainly for MDEBUG
+	 */
+	run_helper.num_actions += 2;
 
 	delete scope_history;
 

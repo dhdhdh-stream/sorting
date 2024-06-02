@@ -135,7 +135,11 @@ void Solution::load(string path,
 	getline(input_file, max_num_actions_line);
 	this->max_num_actions = stoi(max_num_actions_line);
 
+	#if defined(MDEBUG) && MDEBUG
+	this->num_actions_limit = 2*this->max_num_actions + 10;
+	#else
 	this->num_actions_limit = 20*this->max_num_actions + 20;
+	#endif /* MDEBUG */
 
 	input_file.close();
 }

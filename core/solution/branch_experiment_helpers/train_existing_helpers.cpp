@@ -77,7 +77,11 @@ void BranchExperiment::train_existing_backprop(
 	this->average_instances_per_run = 0.9*this->average_instances_per_run + 0.1*(int)history->starting_predicted_scores.size();
 
 	if ((int)this->target_val_histories.size() >= NUM_DATAPOINTS) {
+		#if defined(MDEBUG) && MDEBUG
+		int shuffle_seed = run_helper.starting_run_seed;
+		#else
 		int shuffle_seed = (unsigned)time(NULL);
+		#endif /* MDEBUG */
 		{
 			default_random_engine shuffler(shuffle_seed);
 			shuffle(this->scope_histories.begin(), this->scope_histories.end(), shuffler);
