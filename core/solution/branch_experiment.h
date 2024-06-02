@@ -36,7 +36,6 @@ public:
 
 	int state;
 	int state_iter;
-	int sub_state_iter;
 	int explore_iter;
 
 	double existing_average_score;
@@ -89,7 +88,6 @@ public:
 	BranchExperiment(Scope* scope_context,
 					 AbstractNode* node_context,
 					 bool is_branch,
-					 int score_type,
 					 AbstractExperiment* parent_experiment);
 	~BranchExperiment();
 	void decrement(AbstractNode* experiment_node);

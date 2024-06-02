@@ -91,6 +91,50 @@ void measure_network(vector<vector<double>>& inputs,
 	}
 }
 
+void measure_network(vector<vector<double>>& inputs,
+					 vector<double>& target_vals,
+					 Network* network,
+					 double& average_misguess,
+					 double& misguess_standard_deviation,
+					 double& eval_score_standard_deviation) {
+	int train_instances = (1.0 - TEST_SAMPLES_PERCENTAGE) * inputs.size();
+	int test_instances = inputs.size() - train_instances;
+
+	vector<double> predicted_outputs(test_instances);
+	for (int d_index = 0; d_index < test_instances; d_index++) {
+		network->activate(inputs[train_instances + d_index]);
+		predicted_outputs[d_index] = network->output->acti_vals[0];
+	}
+
+	double sum_misguess = 0.0;
+	for (int d_index = 0; d_index < test_instances; d_index++) {
+		sum_misguess += (target_vals[train_instances + d_index] - predicted_outputs[d_index]) * (target_vals[train_instances + d_index] - predicted_outputs[d_index]);
+	}
+	average_misguess = sum_misguess / test_instances;
+
+	double sum_misguess_variance = 0.0;
+	for (int d_index = 0; d_index < test_instances; d_index++) {
+		double curr_misguess = (target_vals[train_instances + d_index] - predicted_outputs[d_index]) * (target_vals[train_instances + d_index] - predicted_outputs[d_index]);
+		sum_misguess_variance += (curr_misguess - average_misguess) * (curr_misguess - average_misguess);
+	}
+	misguess_standard_deviation = sqrt(sum_misguess_variance / test_instances);
+	if (misguess_standard_deviation < MIN_STANDARD_DEVIATION) {
+		misguess_standard_deviation = MIN_STANDARD_DEVIATION;
+	}
+
+	double sum_predicted_score = 0.0;
+	for (int d_index = 0; d_index < test_instances; d_index++) {
+		sum_predicted_score += predicted_outputs[d_index];
+	}
+	double predicted_average_score = sum_predicted_score / test_instances;
+
+	double sum_predicted_score_variance = 0.0;
+	for (int d_index = 0; d_index < test_instances; d_index++) {
+		sum_predicted_score_variance += (predicted_outputs[d_index] - predicted_average_score) * (predicted_outputs[d_index] - predicted_average_score);
+	}
+	eval_score_standard_deviation = sqrt(sum_predicted_score_variance / test_instances);
+}
+
 void optimize_network(vector<vector<double>>& inputs,
 					  vector<double>& target_vals,
 					  Network* network) {

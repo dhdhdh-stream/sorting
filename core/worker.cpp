@@ -186,7 +186,7 @@ int main(int argc, char* argv[]) {
 
 				Scope* experiment_scope = duplicate->scopes[experiment_scope_id];
 
-				double sum_score = 0.0;
+				vector<double> o_target_val_histories;
 				vector<ScopeHistory*> scope_histories;
 				vector<double> target_val_histories;
 				for (int iter_index = 0; iter_index < MEASURE_ITERS; iter_index++) {
@@ -223,7 +223,7 @@ int main(int argc, char* argv[]) {
 						target_val = -1.0;
 					}
 
-					sum_score += target_val;
+					o_target_val_histories.push_back(target_val);
 
 					for (int h_index = 0; h_index < (int)metrics.scope_histories.size(); h_index++) {
 						scope_histories.push_back(metrics.scope_histories[h_index]);
@@ -237,7 +237,17 @@ int main(int argc, char* argv[]) {
 							scope_histories,
 							target_val_histories);
 
+				double sum_score = 0.0;
+				for (int d_index = 0; d_index < MEASURE_ITERS; d_index++) {
+					sum_score += o_target_val_histories[d_index];
+				}
 				duplicate->average_score = sum_score / MEASURE_ITERS;
+
+				double sum_variance = 0.0;
+				for (int d_index = 0; d_index < MEASURE_ITERS; d_index++) {
+					sum_variance += (o_target_val_histories[d_index] - duplicate->average_score) * (o_target_val_histories[d_index] - duplicate->average_score);
+				}
+				duplicate->score_standard_deviation = sqrt(sum_variance / MEASURE_ITERS);
 
 				cout << "duplicate->average_score: " << duplicate->average_score << endl;
 

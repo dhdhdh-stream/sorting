@@ -25,6 +25,7 @@ class Solution {
 public:
 	int timestamp;
 	double average_score;
+	double score_standard_deviation;
 
 	std::vector<Scope*> scopes;
 	std::vector<InfoScope*> info_scopes;

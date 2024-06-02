@@ -17,6 +17,7 @@ Solution::Solution() {
 Solution::Solution(Solution* original) {
 	this->timestamp = original->timestamp;
 	this->average_score = original->average_score;
+	this->score_standard_deviation = original->score_standard_deviation;
 
 	for (int s_index = 0; s_index < (int)original->scopes.size(); s_index++) {
 		Scope* scope = new Scope();
@@ -61,6 +62,7 @@ Solution::~Solution() {
 void Solution::init() {
 	this->timestamp = 0;
 	this->average_score = -1.0;
+	this->score_standard_deviation = 1.0;
 
 	Scope* new_scope = new Scope();
 	new_scope->id = this->scopes.size();
@@ -91,6 +93,10 @@ void Solution::load(string path,
 	string average_score_line;
 	getline(input_file, average_score_line);
 	this->average_score = stod(average_score_line);
+
+	string score_standard_deviation_line;
+	getline(input_file, score_standard_deviation_line);
+	this->score_standard_deviation = stod(score_standard_deviation_line);
 
 	string num_scopes_line;
 	getline(input_file, num_scopes_line);
@@ -155,6 +161,7 @@ void Solution::save(string path,
 
 	output_file << this->timestamp << endl;
 	output_file << this->average_score << endl;
+	output_file << this->score_standard_deviation << endl;
 
 	output_file << this->scopes.size() << endl;
 	output_file << this->info_scopes.size() << endl;

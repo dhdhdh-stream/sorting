@@ -5,6 +5,7 @@
 #include "action_node.h"
 #include "branch_node.h"
 #include "abstract_experiment.h"
+#include "eval_helpers.h"
 #include "globals.h"
 #include "info_branch_node.h"
 #include "info_scope_node.h"

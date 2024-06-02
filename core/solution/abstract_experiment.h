@@ -32,7 +32,6 @@ public:
 	Scope* scope_context;
 	AbstractNode* node_context;
 	bool is_branch;
-	int score_type;
 
 	AbstractExperiment* parent_experiment;
 	AbstractExperiment* root_experiment;
@@ -76,7 +75,7 @@ public:
 	AbstractExperiment* experiment;
 
 	std::vector<std::vector<double>> starting_predicted_scores;
-	std::vector<std::vector<double>> ending_predicted_scores;
+	std::vector<std::vector<double>> normalized_scores;
 
 	int experiment_index;
 

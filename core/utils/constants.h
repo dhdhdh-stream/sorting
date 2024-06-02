@@ -4,12 +4,6 @@
 const double MIN_WEIGHT = 0.00001;
 const double MIN_STANDARD_DEVIATION = 0.00001;
 
-const int SCORE_TYPE_LOCAL = 0;
-const int SCORE_TYPE_ALL = 1;
-const int SCORE_TYPE_FINAL = 2;
-
-const int FINAL_MIN_NUM_RUNS = 200;
-
 const int STEP_TYPE_ACTION = 0;
 const int STEP_TYPE_SCOPE = 1;
 
@@ -42,8 +36,8 @@ const double PASS_THROUGH_BRANCH_WEIGHT = 0.9;
 const int NUM_DATAPOINTS = 10;
 const int VERIFY_NUM_DATAPOINTS = 10;
 #else
-const int NUM_DATAPOINTS = 4000;
-const int VERIFY_NUM_DATAPOINTS = 8000;
+const int NUM_DATAPOINTS = 2000;
+const int VERIFY_NUM_DATAPOINTS = 4000;
 #endif /* MDEBUG */
 
 #if defined(MDEBUG) && MDEBUG

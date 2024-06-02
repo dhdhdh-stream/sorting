@@ -33,6 +33,7 @@ public:
 	std::vector<std::vector<AbstractNode*>> eval_input_node_contexts;
 	std::vector<int> eval_input_obs_indexes;
 	Network* eval_network;
+	double eval_score_standard_deviation;
 
 	#if defined(MDEBUG) && MDEBUG
 	void* verify_key;

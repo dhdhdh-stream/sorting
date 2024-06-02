@@ -1,5 +1,6 @@
 #include "eval_helpers.h"
 
+#include <algorithm>
 #include <cmath>
 #include <iostream>
 
@@ -20,6 +21,16 @@ using namespace std;
 void update_eval(Scope* parent_scope,
 				 vector<ScopeHistory*>& scope_histories,
 				 vector<double>& target_val_histories) {
+	int shuffle_seed = (unsigned)time(NULL);
+	{
+		default_random_engine shuffler(shuffle_seed);
+		shuffle(scope_histories.begin(), scope_histories.end(), shuffler);
+	}
+	{
+		default_random_engine shuffler(shuffle_seed);
+		shuffle(target_val_histories.begin(), target_val_histories.end(), shuffler);
+	}
+
 	int num_instances = (int)scope_histories.size();
 
 	vector<vector<double>> inputs(num_instances);
@@ -95,7 +106,8 @@ void update_eval(Scope* parent_scope,
 						target_val_histories,
 						parent_scope->eval_network,
 						average_misguess,
-						misguess_standard_deviation);
+						misguess_standard_deviation,
+						parent_scope->eval_score_standard_deviation);
 	}
 
 	int train_index = 0;
@@ -227,11 +239,13 @@ void update_eval(Scope* parent_scope,
 
 		double test_average_misguess;
 		double test_misguess_standard_deviation;
+		double test_eval_score_standard_deviation;
 		measure_network(test_inputs,
 						target_val_histories,
 						test_network,
 						test_average_misguess,
-						test_misguess_standard_deviation);
+						test_misguess_standard_deviation,
+						test_eval_score_standard_deviation);
 
 		bool is_select = false;
 		if (parent_scope->eval_network == NULL) {
@@ -265,6 +279,7 @@ void update_eval(Scope* parent_scope,
 				delete parent_scope->eval_network;
 			}
 			parent_scope->eval_network = test_network;
+			parent_scope->eval_score_standard_deviation = test_eval_score_standard_deviation;
 
 			inputs = test_inputs;
 
@@ -304,11 +319,13 @@ void update_eval(Scope* parent_scope,
 
 				double remove_test_average_misguess;
 				double remove_test_misguess_standard_deviation;
+				double remove_test_eval_score_standard_deviation;
 				measure_network(remove_test_inputs,
 								target_val_histories,
 								remove_test_network,
 								remove_test_average_misguess,
-								remove_test_misguess_standard_deviation);
+								remove_test_misguess_standard_deviation,
+								remove_test_eval_score_standard_deviation);
 
 				double remove_improvement = average_misguess - remove_test_average_misguess;
 				double remove_standard_deviation = min(misguess_standard_deviation, remove_test_misguess_standard_deviation);
@@ -321,6 +338,7 @@ void update_eval(Scope* parent_scope,
 
 					delete parent_scope->eval_network;
 					parent_scope->eval_network = remove_test_network;
+					parent_scope->eval_score_standard_deviation = remove_test_eval_score_standard_deviation;
 
 					inputs = remove_test_inputs;
 				} else {

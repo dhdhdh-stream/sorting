@@ -176,14 +176,6 @@ void create_experiment(ScopeHistory* root_history) {
 	int rand_index = possible_distribution(generator);
 
 	if (possible_info_scope_contexts[rand_index] == NULL) {
-		int score_type;
-		if (possible_scope_contexts[rand_index]->eval_network == NULL) {
-			score_type = SCORE_TYPE_FINAL;
-		} else {
-			uniform_int_distribution<int> score_type_distribution(0, 2);
-			score_type = score_type_distribution(generator);
-		}
-
 		uniform_int_distribution<int> expensive_distribution(0, 9);
 		if (expensive_distribution(generator) == 0) {
 			uniform_int_distribution<int> type_distribution(0, 1);
@@ -205,7 +197,6 @@ void create_experiment(ScopeHistory* root_history) {
 						possible_scope_contexts[rand_index],
 						possible_node_contexts[rand_index],
 						possible_is_branch[rand_index],
-						score_type,
 						NULL);
 
 					possible_node_contexts[rand_index]->experiments.push_back(new_experiment);

@@ -23,24 +23,11 @@ bool BranchExperiment::verify_activate(AbstractNode*& curr_node,
 									   vector<ContextLayer>& context,
 									   RunHelper& run_helper,
 									   BranchExperimentHistory* history) {
-	switch (this->score_type) {
-	case SCORE_TYPE_LOCAL:
-		{
-			double starting_predicted_score = calc_score(context.back().scope_history);
-			history->starting_predicted_scores.push_back(vector<double>{starting_predicted_score});
-			history->ending_predicted_scores.push_back(vector<double>(1));
-			context.back().scope_history->callback_experiment_history = history;
-			context.back().scope_history->callback_experiment_indexes.push_back(
-				(int)history->starting_predicted_scores.size()-1);
-			context.back().scope_history->callback_experiment_layers.push_back(0);
-		}
-		break;
-	case SCORE_TYPE_ALL:
-		history->starting_predicted_scores.push_back(vector<double>(context.size()));
-		history->ending_predicted_scores.push_back(vector<double>(context.size()));
-		for (int l_index = 0; l_index < (int)context.size(); l_index++) {
-			double starting_predicted_score = calc_score(
-				context[l_index].scope_history);
+	history->starting_predicted_scores.push_back(vector<double>(context.size(), 0.0));
+	history->normalized_scores.push_back(vector<double>(context.size(), 0.0));
+	for (int l_index = 0; l_index < (int)context.size(); l_index++) {
+		if (context[l_index].scope->eval_network != NULL) {
+			double starting_predicted_score = calc_score(context[l_index].scope_history);
 			history->starting_predicted_scores.back()[l_index] = starting_predicted_score;
 
 			context[l_index].scope_history->callback_experiment_history = history;
@@ -48,11 +35,6 @@ bool BranchExperiment::verify_activate(AbstractNode*& curr_node,
 				(int)history->starting_predicted_scores.size()-1);
 			context[l_index].scope_history->callback_experiment_layers.push_back(l_index);
 		}
-		break;
-	case SCORE_TYPE_FINAL:
-		history->starting_predicted_scores.push_back(vector<double>());
-		history->ending_predicted_scores.push_back(vector<double>());
-		break;
 	}
 
 	if (this->is_pass_through) {
@@ -218,8 +200,11 @@ void BranchExperiment::verify_back_activate(
 		ending_predicted_score = calc_score(context.back().scope_history);
 	}
 	for (int i_index = 0; i_index < (int)context.back().scope_history->callback_experiment_indexes.size(); i_index++) {
-		history->ending_predicted_scores[context.back().scope_history->callback_experiment_indexes[i_index]]
-			[context.back().scope_history->callback_experiment_layers[i_index]] = ending_predicted_score;
+		double predicted_score = ending_predicted_score
+			- history->starting_predicted_scores[context.back().scope_history->callback_experiment_indexes[i_index]]
+				[context.back().scope_history->callback_experiment_layers[i_index]];
+		history->normalized_scores[context.back().scope_history->callback_experiment_indexes[i_index]]
+			[context.back().scope_history->callback_experiment_layers[i_index]] = predicted_score / context.back().scope->eval_score_standard_deviation;
 	}
 }
 
@@ -228,54 +213,19 @@ void BranchExperiment::verify_backprop(
 		RunHelper& run_helper) {
 	BranchExperimentHistory* history = (BranchExperimentHistory*)run_helper.experiment_histories.back();
 
-	switch (this->score_type) {
-	case SCORE_TYPE_LOCAL:
-		for (int i_index = 0; i_index < (int)history->starting_predicted_scores.size(); i_index++) {
-			this->combined_score += history->ending_predicted_scores[i_index][0]
-				- history->starting_predicted_scores[i_index][0];
-			this->sub_state_iter++;
+	double final_normalized_score = (target_val - solution->average_score) / solution->score_standard_deviation;
+	for (int i_index = 0; i_index < (int)history->starting_predicted_scores.size(); i_index++) {
+		double sum_score = 0.0;
+		for (int l_index = 0; l_index < (int)history->starting_predicted_scores[i_index].size(); l_index++) {
+			sum_score += history->normalized_scores[i_index][l_index];
 		}
-		break;
-	case SCORE_TYPE_ALL:
-		{
-			double final_score = target_val - solution->average_score;
-			for (int i_index = 0; i_index < (int)history->starting_predicted_scores.size(); i_index++) {
-				double sum_score = 0.0;
-				for (int l_index = 0; l_index < (int)history->starting_predicted_scores[i_index].size(); l_index++) {
-					sum_score += history->ending_predicted_scores[i_index][l_index]
-						- history->starting_predicted_scores[i_index][l_index];
-				}
-				sum_score += final_score;
-				this->combined_score += sum_score;
-				this->sub_state_iter++;
-			}
-		}
-		break;
-	case SCORE_TYPE_FINAL:
-		{
-			double final_score = target_val - solution->average_score;
-			for (int i_index = 0; i_index < (int)history->starting_predicted_scores.size(); i_index++) {
-				this->combined_score += final_score;
-				this->sub_state_iter++;
-			}
-		}
-		break;
+		sum_score += final_normalized_score;
+		this->combined_score += final_normalized_score;
+		this->state_iter++;
 	}
 
-	this->state_iter++;
-	bool is_done = false;
-	if (this->score_type == SCORE_TYPE_FINAL) {
-		if (this->state_iter >= FINAL_MIN_NUM_RUNS
-				&& this->sub_state_iter >= VERIFY_NUM_DATAPOINTS) {
-			is_done = true;
-		}
-	} else {
-		if (this->sub_state_iter >= VERIFY_NUM_DATAPOINTS) {
-			is_done = true;
-		}
-	}
-	if (is_done) {
-		this->combined_score /= this->sub_state_iter;
+	if (this->state_iter >= VERIFY_NUM_DATAPOINTS) {
+		this->combined_score /= this->state_iter;
 
 		double combined_branch_weight = 1.0;
 		AbstractExperiment* curr_experiment = this;
