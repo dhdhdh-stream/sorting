@@ -16,6 +16,7 @@ class Problem;
 class Scope;
 class ScopeHistory;
 class ScopeNode;
+class Solution;
 
 void create_experiment(ScopeHistory* root_history);
 
@@ -34,5 +35,8 @@ void gather_possible_helper(std::vector<Scope*>& scope_context,
 
 void create_new_action(AbstractNode*& starting_node,
 					   std::set<AbstractNode*>& included_nodes);
+
+void clean_scope(Scope* scope,
+				 Solution* parent_solution);
 
 #endif /* SOLUTION_HELPERS_H */

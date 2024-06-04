@@ -216,23 +216,15 @@ void NewActionExperiment::finalize(Solution* duplicate) {
 				BranchNode* original_branch_node = (BranchNode*)this->starting_node;
 				BranchNode* new_branch_node = (BranchNode*)node_mappings[original_branch_node];
 
-				for (int i_index = 0; i_index < (int)original_branch_node->original_input_scope_contexts.size(); i_index++) {
-					new_branch_node->original_input_scope_context_ids.push_back(vector<int>());
-					new_branch_node->original_input_scope_contexts.push_back(vector<Scope*>());
-					new_branch_node->original_input_node_context_ids.push_back(vector<int>());
-					new_branch_node->original_input_node_contexts.push_back(vector<AbstractNode*>());
-					new_branch_node->original_input_obs_indexes.push_back(-1);
-				}
-				for (int i_index = 0; i_index < (int)original_branch_node->branch_input_scope_contexts.size(); i_index++) {
-					new_branch_node->branch_input_scope_context_ids.push_back(vector<int>());
-					new_branch_node->branch_input_scope_contexts.push_back(vector<Scope*>());
-					new_branch_node->branch_input_node_context_ids.push_back(vector<int>());
-					new_branch_node->branch_input_node_contexts.push_back(vector<AbstractNode*>());
-					new_branch_node->branch_input_obs_indexes.push_back(-1);
+				new_branch_node->original_network = new Network(original_branch_node->original_network);
+				for (int i_index = (int)original_branch_node->original_input_scope_contexts.size()-1; i_index >= 0; i_index--) {
+					new_branch_node->original_network->remove_input(i_index);
 				}
 
-				new_branch_node->original_network = new Network(original_branch_node->original_network);
 				new_branch_node->branch_network = new Network(original_branch_node->branch_network);
+				for (int i_index = (int)original_branch_node->branch_input_scope_contexts.size()-1; i_index >= 0; i_index--) {
+					new_branch_node->branch_network->remove_input(i_index);
+				}
 
 				map<AbstractNode*, AbstractNode*>::iterator original_it = node_mappings
 					.find(original_branch_node->original_next_node);
@@ -320,87 +312,75 @@ void NewActionExperiment::finalize(Solution* duplicate) {
 					BranchNode* original_branch_node = (BranchNode*)(*node_it);
 					BranchNode* new_branch_node = (BranchNode*)node_mappings[original_branch_node];
 
-					for (int i_index = 0; i_index < (int)original_branch_node->original_input_scope_contexts.size(); i_index++) {
-						if (original_branch_node->original_input_scope_contexts[i_index].size() == 0) {
-							new_branch_node->original_input_scope_context_ids.push_back(vector<int>());
-							new_branch_node->original_input_scope_contexts.push_back(vector<Scope*>());
-							new_branch_node->original_input_node_context_ids.push_back(vector<int>());
-							new_branch_node->original_input_node_contexts.push_back(vector<AbstractNode*>());
-							new_branch_node->original_input_obs_indexes.push_back(-1);
-						} else {
-							map<AbstractNode*, AbstractNode*>::iterator it = node_mappings
-								.find(original_branch_node->original_input_node_contexts[i_index][0]);
-							if (it == node_mappings.end()) {
-								new_branch_node->original_input_scope_context_ids.push_back(vector<int>());
-								new_branch_node->original_input_scope_contexts.push_back(vector<Scope*>());
-								new_branch_node->original_input_node_context_ids.push_back(vector<int>());
-								new_branch_node->original_input_node_contexts.push_back(vector<AbstractNode*>());
-								new_branch_node->original_input_obs_indexes.push_back(-1);
-							} else {
-								new_branch_node->original_input_scope_context_ids.push_back(original_branch_node->original_input_scope_context_ids[i_index]);
-								new_branch_node->original_input_scope_context_ids[i_index][0] = new_scope->id;
-
-								new_branch_node->original_input_node_context_ids.push_back(original_branch_node->original_input_node_context_ids[i_index]);
-								new_branch_node->original_input_node_context_ids[i_index][0] = it->second->id;
-
-								vector<Scope*> scope_context;
-								vector<AbstractNode*> node_context;
-								for (int l_index = 0; l_index < (int)new_branch_node->original_input_scope_context_ids[i_index].size(); l_index++) {
-									Scope* duplicate_scope = duplicate->scopes[new_branch_node->original_input_scope_context_ids[i_index][l_index]];
-									AbstractNode* duplicate_node = duplicate_scope->nodes[new_branch_node->original_input_node_context_ids[i_index][l_index]];
-
-									scope_context.push_back(duplicate_scope);
-									node_context.push_back(duplicate_node);
-								}
-								new_branch_node->original_input_scope_contexts.push_back(scope_context);
-								new_branch_node->original_input_node_contexts.push_back(node_context);
-
-								new_branch_node->original_input_obs_indexes.push_back(original_branch_node->original_input_obs_indexes[i_index]);
-							}
-						}
-					}
-					for (int i_index = 0; i_index < (int)original_branch_node->branch_input_scope_contexts.size(); i_index++) {
-						if (original_branch_node->branch_input_scope_contexts[i_index].size() == 0) {
-							new_branch_node->branch_input_scope_context_ids.push_back(vector<int>());
-							new_branch_node->branch_input_scope_contexts.push_back(vector<Scope*>());
-							new_branch_node->branch_input_node_context_ids.push_back(vector<int>());
-							new_branch_node->branch_input_node_contexts.push_back(vector<AbstractNode*>());
-							new_branch_node->branch_input_obs_indexes.push_back(-1);
-						} else {
-							map<AbstractNode*, AbstractNode*>::iterator it = node_mappings
-								.find(original_branch_node->branch_input_node_contexts[i_index][0]);
-							if (it == node_mappings.end()) {
-								new_branch_node->branch_input_scope_context_ids.push_back(vector<int>());
-								new_branch_node->branch_input_scope_contexts.push_back(vector<Scope*>());
-								new_branch_node->branch_input_node_context_ids.push_back(vector<int>());
-								new_branch_node->branch_input_node_contexts.push_back(vector<AbstractNode*>());
-								new_branch_node->branch_input_obs_indexes.push_back(-1);
-							} else {
-								new_branch_node->branch_input_scope_context_ids.push_back(original_branch_node->branch_input_scope_context_ids[i_index]);
-								new_branch_node->branch_input_scope_context_ids[i_index][0] = new_scope->id;
-
-								new_branch_node->branch_input_node_context_ids.push_back(original_branch_node->branch_input_node_context_ids[i_index]);
-								new_branch_node->branch_input_node_context_ids[i_index][0] = it->second->id;
-
-								vector<Scope*> scope_context;
-								vector<AbstractNode*> node_context;
-								for (int l_index = 0; l_index < (int)new_branch_node->branch_input_scope_context_ids[i_index].size(); l_index++) {
-									Scope* duplicate_scope = duplicate->scopes[new_branch_node->branch_input_scope_context_ids[i_index][l_index]];
-									AbstractNode* duplicate_node = duplicate_scope->nodes[new_branch_node->branch_input_node_context_ids[i_index][l_index]];
-
-									scope_context.push_back(duplicate_scope);
-									node_context.push_back(duplicate_node);
-								}
-								new_branch_node->branch_input_scope_contexts.push_back(scope_context);
-								new_branch_node->branch_input_node_contexts.push_back(node_context);
-
-								new_branch_node->branch_input_obs_indexes.push_back(original_branch_node->branch_input_obs_indexes[i_index]);
-							}
-						}
-					}
-
 					new_branch_node->original_network = new Network(original_branch_node->original_network);
+					for (int i_index = (int)original_branch_node->original_input_scope_contexts.size()-1; i_index >= 0; i_index--) {
+						map<AbstractNode*, AbstractNode*>::iterator it = node_mappings
+							.find(original_branch_node->original_input_node_contexts[i_index][0]);
+						if (it == node_mappings.end()) {
+							new_branch_node->original_network->remove_input(i_index);
+						} else {
+							new_branch_node->original_input_scope_context_ids.insert(
+								new_branch_node->original_input_scope_context_ids.begin(),
+								original_branch_node->original_input_scope_context_ids[i_index]);
+							new_branch_node->original_input_scope_context_ids[0][0] = new_scope->id;
+
+							new_branch_node->original_input_node_context_ids.insert(
+								new_branch_node->original_input_node_context_ids.begin(),
+								original_branch_node->original_input_node_context_ids[i_index]);
+							new_branch_node->original_input_node_context_ids[0][0] = it->second->id;
+
+							vector<Scope*> scope_context;
+							vector<AbstractNode*> node_context;
+							for (int l_index = 0; l_index < (int)new_branch_node->original_input_scope_context_ids[0].size(); l_index++) {
+								Scope* duplicate_scope = duplicate->scopes[new_branch_node->original_input_scope_context_ids[0][l_index]];
+								AbstractNode* duplicate_node = duplicate_scope->nodes[new_branch_node->original_input_node_context_ids[0][l_index]];
+
+								scope_context.push_back(duplicate_scope);
+								node_context.push_back(duplicate_node);
+							}
+							new_branch_node->original_input_scope_contexts.insert(new_branch_node->original_input_scope_contexts.begin(), scope_context);
+							new_branch_node->original_input_node_contexts.insert(new_branch_node->original_input_node_contexts.begin(), node_context);
+
+							new_branch_node->original_input_obs_indexes.insert(
+								new_branch_node->original_input_obs_indexes.begin(),
+								original_branch_node->original_input_obs_indexes[i_index]);
+						}
+					}
+
 					new_branch_node->branch_network = new Network(original_branch_node->branch_network);
+					for (int i_index = (int)original_branch_node->branch_input_scope_contexts.size()-1; i_index >= 0; i_index--) {
+						map<AbstractNode*, AbstractNode*>::iterator it = node_mappings
+							.find(original_branch_node->branch_input_node_contexts[i_index][0]);
+						if (it == node_mappings.end()) {
+							new_branch_node->branch_network->remove_input(i_index);
+						} else {
+							new_branch_node->branch_input_scope_context_ids.insert(
+								new_branch_node->branch_input_scope_context_ids.begin(),
+								original_branch_node->branch_input_scope_context_ids[i_index]);
+							new_branch_node->branch_input_scope_context_ids[0][0] = new_scope->id;
+
+							new_branch_node->branch_input_node_context_ids.insert(
+								new_branch_node->branch_input_node_context_ids.begin(),
+								original_branch_node->branch_input_node_context_ids[i_index]);
+							new_branch_node->branch_input_node_context_ids[0][0] = it->second->id;
+
+							vector<Scope*> scope_context;
+							vector<AbstractNode*> node_context;
+							for (int l_index = 0; l_index < (int)new_branch_node->branch_input_scope_context_ids[0].size(); l_index++) {
+								Scope* duplicate_scope = duplicate->scopes[new_branch_node->branch_input_scope_context_ids[0][l_index]];
+								AbstractNode* duplicate_node = duplicate_scope->nodes[new_branch_node->branch_input_node_context_ids[0][l_index]];
+
+								scope_context.push_back(duplicate_scope);
+								node_context.push_back(duplicate_node);
+							}
+							new_branch_node->branch_input_scope_contexts.insert(new_branch_node->branch_input_scope_contexts.begin(), scope_context);
+							new_branch_node->branch_input_node_contexts.insert(new_branch_node->branch_input_node_contexts.begin(), node_context);
+
+							new_branch_node->branch_input_obs_indexes.insert(
+								new_branch_node->branch_input_obs_indexes.begin(),
+								original_branch_node->branch_input_obs_indexes[i_index]);
+						}
+					}
 
 					map<AbstractNode*, AbstractNode*>::iterator original_it = node_mappings
 						.find(original_branch_node->original_next_node);

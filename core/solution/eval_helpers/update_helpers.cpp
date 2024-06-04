@@ -305,17 +305,9 @@ void update_eval(Scope* parent_scope,
 				remove_test_input_obs_indexes.erase(remove_test_input_obs_indexes.begin() + i_index);
 
 				Network* remove_test_network = new Network(parent_scope->eval_network);
-
-				remove_test_network->input->acti_vals.erase(remove_test_network->input->acti_vals.begin() + i_index);
-				remove_test_network->input->errors.erase(remove_test_network->input->errors.begin() + i_index);
-
-				for (int l_index = 0; l_index < (int)remove_test_network->hiddens.size(); l_index++) {
-					remove_test_network->hiddens[l_index]->remove_input(i_index);
-				}
-				remove_test_network->output->remove_input(i_index);
+				remove_test_network->remove_input(i_index);
 
 				vector<vector<double>> remove_test_inputs = inputs;
-
 				for (int d_index = 0; d_index < num_instances; d_index++) {
 					remove_test_inputs[d_index].erase(remove_test_inputs[d_index].begin() + i_index);
 				}

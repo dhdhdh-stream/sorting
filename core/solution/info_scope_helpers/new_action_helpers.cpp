@@ -30,10 +30,10 @@ void InfoScope::new_action_activate(Problem* problem,
 		subscope_history = new ScopeHistory(this->subscope);
 		inner_context.back().scope_history = subscope_history;
 
-		this->subscope->new_action_activate(problem,
-											inner_context,
-											run_helper,
-											subscope_history);
+		this->subscope->activate(problem,
+								 inner_context,
+								 run_helper,
+								 subscope_history);
 
 		run_helper.num_decisions++;
 

@@ -201,100 +201,153 @@ void BranchExperiment::measure_back_activate(
 void BranchExperiment::measure_backprop(
 		double target_val,
 		RunHelper& run_helper) {
-	BranchExperimentHistory* history = (BranchExperimentHistory*)run_helper.experiment_histories.back();
+	if (run_helper.num_actions > solution->num_actions_limit) {
+		this->explore_iter++;
+		if (this->explore_iter < MAX_EXPLORE_TRIES) {
+			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+					delete this->best_actions[s_index];
+				} else {
+					delete this->best_scopes[s_index];
+				}
+			}
 
-	double final_normalized_score = (target_val - solution->average_score) / solution->score_standard_deviation;
-	for (int i_index = 0; i_index < (int)history->starting_predicted_scores.size(); i_index++) {
-		double sum_score = 0.0;
-		for (int l_index = 0; l_index < (int)history->starting_predicted_scores[i_index].size(); l_index++) {
-			sum_score += history->normalized_scores[i_index][l_index];
-		}
-		sum_score += final_normalized_score;
-		this->combined_score += sum_score;
-		this->state_iter++;
-	}
+			this->best_step_types.clear();
+			this->best_actions.clear();
+			this->best_scopes.clear();
 
-	if (this->state_iter >= NUM_DATAPOINTS) {
-		this->combined_score /= this->state_iter;
+			if (this->ending_node != NULL) {
+				delete this->ending_node;
+				this->ending_node = NULL;
+			}
+			if (this->branch_node != NULL) {
+				delete this->branch_node;
+				this->branch_node = NULL;
+			}
 
-		this->branch_weight = (double)this->branch_count / (double)(this->original_count + this->branch_count);
+			this->new_input_scope_contexts.clear();
+			this->new_input_node_contexts.clear();
+			this->new_input_obs_indexes.clear();
+			if (this->new_network != NULL) {
+				delete this->new_network;
+				this->new_network = NULL;
+			}
 
-		#if defined(MDEBUG) && MDEBUG
-		if (rand()%4 == 0) {
-		#else
-		if (this->branch_weight > PASS_THROUGH_BRANCH_WEIGHT
-				&& this->new_average_score >= this->existing_average_score) {
-		#endif
-			this->is_pass_through = true;
-		} else {
-			this->is_pass_through = false;
+			uniform_int_distribution<int> neutral_distribution(0, 9);
+			if (neutral_distribution(generator) == 0) {
+				this->explore_type = EXPLORE_TYPE_NEUTRAL;
+			} else {
+				uniform_int_distribution<int> best_distribution(0, 1);
+				if (best_distribution(generator) == 0) {
+					this->explore_type = EXPLORE_TYPE_BEST;
 
-			this->branch_node = new BranchNode();
-			this->branch_node->parent = this->scope_context;
-			this->branch_node->id = this->scope_context->node_counter;
-			this->scope_context->node_counter++;
-		}
+					this->best_surprise = 0.0;
+				} else {
+					this->explore_type = EXPLORE_TYPE_GOOD;
+				}
+			}
 
-		#if defined(MDEBUG) && MDEBUG
-		if (rand()%2 == 0) {
-		#else
-		if (this->branch_weight > 0.01
-				&& this->combined_score >= this->existing_average_score) {
-		#endif /* MDEBUG */
-			this->target_val_histories.reserve(VERIFY_NUM_DATAPOINTS);
-
-			this->state = BRANCH_EXPERIMENT_STATE_VERIFY_EXISTING;
+			this->state = BRANCH_EXPERIMENT_STATE_EXPLORE;
 			this->state_iter = 0;
 		} else {
-			this->explore_iter++;
-			if (this->explore_iter < MAX_EXPLORE_TRIES) {
-				for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-					if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-						delete this->best_actions[s_index];
-					} else {
-						delete this->best_scopes[s_index];
-					}
-				}
+			this->result = EXPERIMENT_RESULT_FAIL;
+		}
+	} else {
+		BranchExperimentHistory* history = (BranchExperimentHistory*)run_helper.experiment_histories.back();
 
-				this->best_step_types.clear();
-				this->best_actions.clear();
-				this->best_scopes.clear();
+		double final_normalized_score = (target_val - solution->average_score) / solution->score_standard_deviation;
+		for (int i_index = 0; i_index < (int)history->starting_predicted_scores.size(); i_index++) {
+			double sum_score = 0.0;
+			for (int l_index = 0; l_index < (int)history->starting_predicted_scores[i_index].size(); l_index++) {
+				sum_score += history->normalized_scores[i_index][l_index];
+			}
+			double final_score = sum_score / (int)history->starting_predicted_scores.size() + final_normalized_score;
+			this->combined_score += final_score;
+			this->state_iter++;
+		}
 
-				if (this->ending_node != NULL) {
-					delete this->ending_node;
-					this->ending_node = NULL;
-				}
-				if (this->branch_node != NULL) {
-					delete this->branch_node;
-					this->branch_node = NULL;
-				}
+		if (this->state_iter >= NUM_DATAPOINTS) {
+			this->combined_score /= this->state_iter;
 
-				this->new_input_scope_contexts.clear();
-				this->new_input_node_contexts.clear();
-				this->new_input_obs_indexes.clear();
-				if (this->new_network != NULL) {
-					delete this->new_network;
-					this->new_network = NULL;
-				}
+			this->branch_weight = (double)this->branch_count / (double)(this->original_count + this->branch_count);
 
-				uniform_int_distribution<int> neutral_distribution(0, 9);
-				if (neutral_distribution(generator) == 0) {
-					this->explore_type = EXPLORE_TYPE_NEUTRAL;
-				} else {
-					uniform_int_distribution<int> best_distribution(0, 1);
-					if (best_distribution(generator) == 0) {
-						this->explore_type = EXPLORE_TYPE_BEST;
+			#if defined(MDEBUG) && MDEBUG
+			if (rand()%4 == 0) {
+			#else
+			if (this->branch_weight > PASS_THROUGH_BRANCH_WEIGHT
+					&& this->new_average_score >= this->existing_average_score) {
+			#endif
+				this->is_pass_through = true;
+			} else {
+				this->is_pass_through = false;
 
-						this->best_surprise = 0.0;
-					} else {
-						this->explore_type = EXPLORE_TYPE_GOOD;
-					}
-				}
+				this->branch_node = new BranchNode();
+				this->branch_node->parent = this->scope_context;
+				this->branch_node->id = this->scope_context->node_counter;
+				this->scope_context->node_counter++;
+			}
 
-				this->state = BRANCH_EXPERIMENT_STATE_EXPLORE;
+			#if defined(MDEBUG) && MDEBUG
+			if (rand()%2 == 0) {
+			#else
+			if (this->branch_weight > 0.01
+					&& this->combined_score >= this->existing_average_score) {
+			#endif /* MDEBUG */
+				this->target_val_histories.reserve(VERIFY_NUM_DATAPOINTS);
+
+				this->state = BRANCH_EXPERIMENT_STATE_VERIFY_EXISTING;
 				this->state_iter = 0;
 			} else {
-				this->result = EXPERIMENT_RESULT_FAIL;
+				this->explore_iter++;
+				if (this->explore_iter < MAX_EXPLORE_TRIES) {
+					for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+						if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+							delete this->best_actions[s_index];
+						} else {
+							delete this->best_scopes[s_index];
+						}
+					}
+
+					this->best_step_types.clear();
+					this->best_actions.clear();
+					this->best_scopes.clear();
+
+					if (this->ending_node != NULL) {
+						delete this->ending_node;
+						this->ending_node = NULL;
+					}
+					if (this->branch_node != NULL) {
+						delete this->branch_node;
+						this->branch_node = NULL;
+					}
+
+					this->new_input_scope_contexts.clear();
+					this->new_input_node_contexts.clear();
+					this->new_input_obs_indexes.clear();
+					if (this->new_network != NULL) {
+						delete this->new_network;
+						this->new_network = NULL;
+					}
+
+					uniform_int_distribution<int> neutral_distribution(0, 9);
+					if (neutral_distribution(generator) == 0) {
+						this->explore_type = EXPLORE_TYPE_NEUTRAL;
+					} else {
+						uniform_int_distribution<int> best_distribution(0, 1);
+						if (best_distribution(generator) == 0) {
+							this->explore_type = EXPLORE_TYPE_BEST;
+
+							this->best_surprise = 0.0;
+						} else {
+							this->explore_type = EXPLORE_TYPE_GOOD;
+						}
+					}
+
+					this->state = BRANCH_EXPERIMENT_STATE_EXPLORE;
+					this->state_iter = 0;
+				} else {
+					this->result = EXPERIMENT_RESULT_FAIL;
+				}
 			}
 		}
 	}

@@ -186,6 +186,9 @@ int main(int argc, char* argv[]) {
 
 				Scope* experiment_scope = duplicate->scopes[experiment_scope_id];
 
+				clean_scope(experiment_scope,
+							duplicate);
+
 				vector<double> o_target_val_histories;
 				vector<ScopeHistory*> scope_histories;
 				vector<double> target_val_histories;
@@ -237,10 +240,6 @@ int main(int argc, char* argv[]) {
 					delete problem;
 				}
 
-				update_eval(experiment_scope,
-							scope_histories,
-							target_val_histories);
-
 				double sum_score = 0.0;
 				for (int d_index = 0; d_index < MEASURE_ITERS; d_index++) {
 					sum_score += o_target_val_histories[d_index];
@@ -252,8 +251,15 @@ int main(int argc, char* argv[]) {
 					sum_variance += (o_target_val_histories[d_index] - duplicate->average_score) * (o_target_val_histories[d_index] - duplicate->average_score);
 				}
 				duplicate->score_standard_deviation = sqrt(sum_variance / MEASURE_ITERS);
+				if (duplicate->score_standard_deviation < MIN_STANDARD_DEVIATION) {
+					duplicate->score_standard_deviation = MIN_STANDARD_DEVIATION;
+				}
 
 				cout << "duplicate->average_score: " << duplicate->average_score << endl;
+
+				update_eval(experiment_scope,
+							scope_histories,
+							target_val_histories);
 
 				duplicate->timestamp++;
 

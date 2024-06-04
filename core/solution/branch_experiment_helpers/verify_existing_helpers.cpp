@@ -1,5 +1,7 @@
 #include "branch_experiment.h"
 
+#include <iostream>
+
 #include "constants.h"
 #include "eval_helpers.h"
 #include "globals.h"
@@ -57,8 +59,8 @@ void BranchExperiment::verify_existing_backprop(
 		for (int l_index = 0; l_index < (int)history->starting_predicted_scores[i_index].size(); l_index++) {
 			sum_score += history->normalized_scores[i_index][l_index];
 		}
-		sum_score += final_normalized_score;
-		this->target_val_histories.push_back(sum_score);
+		double final_score = sum_score / (int)history->starting_predicted_scores.size() + final_normalized_score;
+		this->target_val_histories.push_back(final_score);
 	}
 
 	if ((int)this->target_val_histories.size() >= VERIFY_NUM_DATAPOINTS) {

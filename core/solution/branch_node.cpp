@@ -64,6 +64,49 @@ void BranchNode::clear_verify() {
 }
 #endif /* MDEBUG */
 
+void BranchNode::clean_node(int scope_id,
+							int node_id) {
+	for (int i_index = this->original_input_scope_contexts.size()-1; i_index >= 0; i_index--) {
+		bool has_match = false;
+		for (int l_index = 0; l_index < (int)this->original_input_scope_contexts[i_index].size(); l_index++) {
+			if (this->original_input_scope_context_ids[i_index][l_index] == scope_id
+					&& this->original_input_node_context_ids[i_index][l_index] == node_id) {
+				has_match = true;
+				break;
+			}
+		}
+
+		if (has_match) {
+			this->original_input_scope_context_ids.erase(this->original_input_scope_context_ids.begin() + i_index);
+			this->original_input_scope_contexts.erase(this->original_input_scope_contexts.begin() + i_index);
+			this->original_input_node_context_ids.erase(this->original_input_node_context_ids.begin() + i_index);
+			this->original_input_node_contexts.erase(this->original_input_node_contexts.begin() + i_index);
+			this->original_input_obs_indexes.erase(this->original_input_obs_indexes.begin() + i_index);
+			this->original_network->remove_input(i_index);
+		}
+	}
+
+	for (int i_index = this->branch_input_scope_contexts.size()-1; i_index >= 0; i_index--) {
+		bool has_match = false;
+		for (int l_index = 0; l_index < (int)this->branch_input_scope_contexts[i_index].size(); l_index++) {
+			if (this->branch_input_scope_context_ids[i_index][l_index] == scope_id
+					&& this->branch_input_node_context_ids[i_index][l_index] == node_id) {
+				has_match = true;
+				break;
+			}
+		}
+
+		if (has_match) {
+			this->branch_input_scope_context_ids.erase(this->branch_input_scope_context_ids.begin() + i_index);
+			this->branch_input_scope_contexts.erase(this->branch_input_scope_contexts.begin() + i_index);
+			this->branch_input_node_context_ids.erase(this->branch_input_node_context_ids.begin() + i_index);
+			this->branch_input_node_contexts.erase(this->branch_input_node_contexts.begin() + i_index);
+			this->branch_input_obs_indexes.erase(this->branch_input_obs_indexes.begin() + i_index);
+			this->branch_network->remove_input(i_index);
+		}
+	}
+}
+
 void BranchNode::save(ofstream& output_file) {
 	output_file << this->original_input_scope_contexts.size() << endl;
 	for (int i_index = 0; i_index < (int)this->original_input_scope_contexts.size(); i_index++) {

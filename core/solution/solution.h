@@ -55,6 +55,10 @@ public:
 	void clear_verify();
 	#endif /* MDEBUG */
 
+	// TODO: also add for info_scopes
+	void clean_node(int scope_id,
+					int node_id);
+
 	void save(std::string path,
 			  std::string name);
 

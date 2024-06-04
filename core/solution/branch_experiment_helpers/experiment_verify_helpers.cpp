@@ -228,8 +228,8 @@ void BranchExperiment::experiment_verify_backprop(
 		for (int l_index = 0; l_index < (int)history->starting_predicted_scores[i_index].size(); l_index++) {
 			sum_score += history->normalized_scores[i_index][l_index];
 		}
-		sum_score += final_normalized_score;
-		this->combined_score += sum_score;
+		double final_score = sum_score / (int)history->starting_predicted_scores.size() + final_normalized_score;
+		this->combined_score += final_score;
 		this->state_iter++;
 	}
 

@@ -54,10 +54,6 @@ public:
 							 std::vector<ContextLayer>& context,
 							 RunHelper& run_helper,
 							 ScopeHistory* history);
-	void new_action_activate(Problem* problem,
-							 std::vector<ContextLayer>& context,
-							 RunHelper& run_helper,
-							 ScopeHistory* history);
 
 	void measure_activate(Metrics& metrics,
 						  Problem* problem,
@@ -77,6 +73,9 @@ public:
 						 ScopeHistory* history);
 	void clear_verify();
 	#endif /* MDEBUG */
+
+	void clean_node(int scope_id,
+					int node_id);
 
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file);

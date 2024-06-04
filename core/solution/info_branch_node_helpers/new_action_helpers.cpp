@@ -24,10 +24,10 @@ void InfoBranchNode::new_action_activate(AbstractNode*& curr_node,
 	node_histories[this] = history;
 
 	bool inner_is_positive;
-	this->scope->new_action_activate(problem,
-									 run_helper,
-									 history->scope_history,
-									 inner_is_positive);
+	this->scope->activate(problem,
+						  run_helper,
+						  history->scope_history,
+						  inner_is_positive);
 
 	if (this->is_negate) {
 		if (inner_is_positive) {

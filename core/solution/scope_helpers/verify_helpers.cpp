@@ -111,6 +111,9 @@ void Scope::verify_activate(Problem* problem,
 			cout << "history->node_histories.size(): " << history->node_histories.size() << endl;
 			cout << "this->verify_scope_history_sizes[0]: " << this->verify_scope_history_sizes[0] << endl;
 
+			cout << "run_helper.num_actions: " << run_helper.num_actions << endl;
+			cout << "solution->num_actions_limit: " << solution->num_actions_limit << endl;
+
 			throw invalid_argument("new scope verify fail");
 		}
 		this->verify_scope_history_sizes.erase(this->verify_scope_history_sizes.begin());

@@ -13,10 +13,10 @@ void InfoScopeNode::new_action_activate(AbstractNode*& curr_node,
 	history->index = node_histories.size();
 	node_histories[this] = history;
 
-	this->scope->new_action_activate(problem,
-									 run_helper,
-									 history->scope_history,
-									 history->is_positive);
+	this->scope->activate(problem,
+						  run_helper,
+						  history->scope_history,
+						  history->is_positive);
 
 	curr_node = this->next_node;
 }

@@ -207,6 +207,9 @@ int main(int argc, char* argv[]) {
 
 				Scope* experiment_scope = duplicate->scopes[experiment_scope_id];
 
+				clean_scope(experiment_scope,
+							duplicate);
+
 				#if defined(MDEBUG) && MDEBUG
 				while (duplicate->verify_problems.size() > 0) {
 					Problem* problem = duplicate->verify_problems[0];
@@ -295,10 +298,6 @@ int main(int argc, char* argv[]) {
 					delete problem;
 				}
 
-				update_eval(experiment_scope,
-							scope_histories,
-							target_val_histories);
-
 				double sum_score = 0.0;
 				for (int d_index = 0; d_index < MEASURE_ITERS; d_index++) {
 					sum_score += o_target_val_histories[d_index];
@@ -310,8 +309,15 @@ int main(int argc, char* argv[]) {
 					sum_variance += (o_target_val_histories[d_index] - duplicate->average_score) * (o_target_val_histories[d_index] - duplicate->average_score);
 				}
 				duplicate->score_standard_deviation = sqrt(sum_variance / MEASURE_ITERS);
+				if (duplicate->score_standard_deviation < MIN_STANDARD_DEVIATION) {
+					duplicate->score_standard_deviation = MIN_STANDARD_DEVIATION;
+				}
 
 				cout << "duplicate->average_score: " << duplicate->average_score << endl;
+
+				update_eval(experiment_scope,
+							scope_histories,
+							target_val_histories);
 
 				#if defined(MDEBUG) && MDEBUG
 				delete solution;
@@ -320,7 +326,7 @@ int main(int argc, char* argv[]) {
 				solution->num_actions_limit = 2*solution->max_num_actions + 10;
 
 				solution->timestamp++;
-				solution->save("", "main");
+				// solution->save("", "main");
 
 				ofstream display_file;
 				display_file.open("../display.txt");
@@ -341,13 +347,13 @@ int main(int argc, char* argv[]) {
 
 		delete problem;
 
-		#if defined(MDEBUG) && MDEBUG
-		if (run_index%2000 == 0) {
-			delete solution;
-			solution = new Solution();
-			solution->load("", "main");
-		}
-		#endif /* MDEBUG */
+		// #if defined(MDEBUG) && MDEBUG
+		// if (run_index%2000 == 0) {
+		// 	delete solution;
+		// 	solution = new Solution();
+		// 	solution->load("", "main");
+		// }
+		// #endif /* MDEBUG */
 	}
 
 	delete problem_type;

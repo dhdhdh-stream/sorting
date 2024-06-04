@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+#include "globals.h"
+
 using namespace std;
 
 const double NETWORK_TARGET_MAX_UPDATE = 0.01;
@@ -182,10 +184,14 @@ void Network::increment(int new_num_inputs) {
 		this->input->errors.push_back(0.0);
 	}
 
-	for (int n_index = 0; n_index < INCREMENT_BASE_SIZE; n_index++) {
-		this->hiddens[0]->acti_vals.push_back(0.0);
-		this->hiddens[0]->errors.push_back(0.0);
+	uniform_int_distribution<int> add_nodes_distribution(0, 4);
+	if (add_nodes_distribution(generator) == 0) {
+		for (int n_index = 0; n_index < INCREMENT_BASE_SIZE; n_index++) {
+			this->hiddens[0]->acti_vals.push_back(0.0);
+			this->hiddens[0]->errors.push_back(0.0);
+		}
 	}
+
 	this->hiddens[0]->update_structure();
 
 	for (int l_index = 1; l_index < (int)this->hiddens.size(); l_index++) {
@@ -212,6 +218,16 @@ void Network::increment(int new_num_inputs) {
 	}
 
 	this->output->update_structure();
+}
+
+void Network::remove_input(int index) {
+	this->input->acti_vals.erase(this->input->acti_vals.begin() + index);
+	this->input->errors.erase(this->input->errors.begin() + index);
+
+	for (int l_index = 0; l_index < (int)this->hiddens.size(); l_index++) {
+		this->hiddens[l_index]->remove_input(index);
+	}
+	this->output->remove_input(index);
 }
 
 void Network::save(ofstream& output_file) {

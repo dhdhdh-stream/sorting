@@ -82,18 +82,23 @@ void NewActionExperiment::test_back_activate(
 		RunHelper& run_helper) {
 	NewActionExperimentHistory* history = (NewActionExperimentHistory*)run_helper.experiment_histories.back();
 
-	double ending_predicted_score;
-	if (run_helper.num_actions > solution->num_actions_limit) {
-		ending_predicted_score = -1.0;
-	} else {
-		ending_predicted_score = calc_score(context.back().scope_history);
-	}
-	for (int i_index = 0; i_index < (int)context.back().scope_history->callback_experiment_indexes.size(); i_index++) {
-		double predicted_score = ending_predicted_score
-			- history->starting_predicted_scores[context.back().scope_history->callback_experiment_indexes[i_index]]
-				[context.back().scope_history->callback_experiment_layers[i_index]];
-		history->normalized_scores[context.back().scope_history->callback_experiment_indexes[i_index]]
-			[context.back().scope_history->callback_experiment_layers[i_index]] = predicted_score / context.back().scope->eval_score_standard_deviation;
+	/**
+	 * - possible for hook to be created by successful_activate()
+	 */
+	if (context.back().scope->eval_network != NULL) {
+		double ending_predicted_score;
+		if (run_helper.num_actions > solution->num_actions_limit) {
+			ending_predicted_score = -1.0;
+		} else {
+			ending_predicted_score = calc_score(context.back().scope_history);
+		}
+		for (int i_index = 0; i_index < (int)context.back().scope_history->callback_experiment_indexes.size(); i_index++) {
+			double predicted_score = ending_predicted_score
+				- history->starting_predicted_scores[context.back().scope_history->callback_experiment_indexes[i_index]]
+					[context.back().scope_history->callback_experiment_layers[i_index]];
+			history->normalized_scores[context.back().scope_history->callback_experiment_indexes[i_index]]
+				[context.back().scope_history->callback_experiment_layers[i_index]] = predicted_score / context.back().scope->eval_score_standard_deviation;
+		}
 	}
 }
 
@@ -102,68 +107,185 @@ void NewActionExperiment::test_backprop(
 		RunHelper& run_helper) {
 	NewActionExperimentHistory* history = (NewActionExperimentHistory*)run_helper.experiment_histories.back();
 
-	switch (this->test_location_states[history->test_location_index]) {
-	case NEW_ACTION_EXPERIMENT_MEASURE_EXISTING:
-		{
-			double final_normalized_score = (target_val - solution->average_score) / solution->score_standard_deviation;
-			for (int i_index = 0; i_index < (int)history->starting_predicted_scores.size(); i_index++) {
-				double sum_score = 0.0;
-				for (int l_index = 0; l_index < (int)history->starting_predicted_scores[i_index].size(); l_index++) {
-					sum_score += history->normalized_scores[i_index][l_index];
-				}
-				sum_score += final_normalized_score;
-				this->test_location_existing_scores[history->test_location_index] += sum_score;
-				this->test_location_existing_counts[history->test_location_index]++;
-			}
-
-			if (this->test_location_existing_counts[history->test_location_index] >= NEW_ACTION_NUM_DATAPOINTS) {
-				this->test_location_states[history->test_location_index] = NEW_ACTION_EXPERIMENT_MEASURE_NEW;
+	if (run_helper.num_actions > solution->num_actions_limit) {
+		int experiment_index;
+		for (int e_index = 0; e_index < (int)this->test_location_starts[history->test_location_index]->experiments.size(); e_index++) {
+			if (this->test_location_starts[history->test_location_index]->experiments[e_index] == this) {
+				experiment_index = e_index;
+				break;
 			}
 		}
+		this->test_location_starts[history->test_location_index]->experiments.erase(
+			this->test_location_starts[history->test_location_index]->experiments.begin() + experiment_index);
+		/**
+		 * - can simply remove first
+		 */
 
-		break;
-	case NEW_ACTION_EXPERIMENT_MEASURE_NEW:
-		{
-			double final_normalized_score = (target_val - solution->average_score) / solution->score_standard_deviation;
-			for (int i_index = 0; i_index < (int)history->starting_predicted_scores.size(); i_index++) {
-				double sum_score = 0.0;
-				for (int l_index = 0; l_index < (int)history->starting_predicted_scores[i_index].size(); l_index++) {
-					sum_score += history->normalized_scores[i_index][l_index];
+		this->test_location_starts.erase(this->test_location_starts.begin() + history->test_location_index);
+		this->test_location_is_branch.erase(this->test_location_is_branch.begin() + history->test_location_index);
+		this->test_location_exits.erase(this->test_location_exits.begin() + history->test_location_index);
+		this->test_location_states.erase(this->test_location_states.begin() + history->test_location_index);
+		this->test_location_existing_scores.erase(this->test_location_existing_scores.begin() + history->test_location_index);
+		this->test_location_existing_counts.erase(this->test_location_existing_counts.begin() + history->test_location_index);
+		this->test_location_new_scores.erase(this->test_location_new_scores.begin() + history->test_location_index);
+		this->test_location_new_counts.erase(this->test_location_new_counts.begin() + history->test_location_index);
+
+		if (this->generalize_iter == -1
+				&& this->successful_location_starts.size() == 0) {
+			this->result = EXPERIMENT_RESULT_FAIL;
+			/**
+			 * - only continue if first succeeds
+			 */
+		} else {
+			this->generalize_iter++;
+		}
+	} else {
+		switch (this->test_location_states[history->test_location_index]) {
+		case NEW_ACTION_EXPERIMENT_MEASURE_EXISTING:
+			{
+				double final_normalized_score = (target_val - solution->average_score) / solution->score_standard_deviation;
+				for (int i_index = 0; i_index < (int)history->starting_predicted_scores.size(); i_index++) {
+					double sum_score = 0.0;
+					for (int l_index = 0; l_index < (int)history->starting_predicted_scores[i_index].size(); l_index++) {
+						sum_score += history->normalized_scores[i_index][l_index];
+					}
+					double final_score = sum_score / (int)history->starting_predicted_scores.size() + final_normalized_score;
+					this->test_location_existing_scores[history->test_location_index] += final_score;
+					this->test_location_existing_counts[history->test_location_index]++;
 				}
-				sum_score += final_normalized_score;
-				this->test_location_new_scores[history->test_location_index] += sum_score;
-				this->test_location_new_counts[history->test_location_index]++;
+
+				if (this->test_location_existing_counts[history->test_location_index] >= NEW_ACTION_NUM_DATAPOINTS) {
+					this->test_location_states[history->test_location_index] = NEW_ACTION_EXPERIMENT_MEASURE_NEW;
+				}
 			}
 
-			if (this->test_location_new_counts[history->test_location_index] >= NEW_ACTION_NUM_DATAPOINTS) {
-				#if defined(MDEBUG) && MDEBUG
-				if (rand()%2 == 0) {
-				#else
-				double existing_score = this->test_location_existing_scores[history->test_location_index]
-					/ this->test_location_existing_counts[history->test_location_index];
-				double new_score = this->test_location_new_scores[history->test_location_index]
-					/ this->test_location_new_counts[history->test_location_index];
+			break;
+		case NEW_ACTION_EXPERIMENT_MEASURE_NEW:
+			{
+				double final_normalized_score = (target_val - solution->average_score) / solution->score_standard_deviation;
+				for (int i_index = 0; i_index < (int)history->starting_predicted_scores.size(); i_index++) {
+					double sum_score = 0.0;
+					for (int l_index = 0; l_index < (int)history->starting_predicted_scores[i_index].size(); l_index++) {
+						sum_score += history->normalized_scores[i_index][l_index];
+					}
+					double final_score = sum_score / (int)history->starting_predicted_scores.size() + final_normalized_score;
+					this->test_location_new_scores[history->test_location_index] += final_score;
+					this->test_location_new_counts[history->test_location_index]++;
+				}
 
-				if (new_score >= existing_score) {
-				#endif /* MDEBUG */
-					this->test_location_existing_scores[history->test_location_index] = 0.0;
-					this->test_location_existing_counts[history->test_location_index] = 0;
-					this->test_location_new_scores[history->test_location_index] = 0.0;
-					this->test_location_new_counts[history->test_location_index] = 0;
-					this->test_location_states[history->test_location_index] = NEW_ACTION_EXPERIMENT_VERIFY_EXISTING;
-				} else {
-					int experiment_index;
-					for (int e_index = 0; e_index < (int)this->test_location_starts[history->test_location_index]->experiments.size(); e_index++) {
-						if (this->test_location_starts[history->test_location_index]->experiments[e_index] == this) {
-							experiment_index = e_index;
-							break;
+				if (this->test_location_new_counts[history->test_location_index] >= NEW_ACTION_NUM_DATAPOINTS) {
+					#if defined(MDEBUG) && MDEBUG
+					if (rand()%2 == 0) {
+					#else
+					double existing_score = this->test_location_existing_scores[history->test_location_index]
+						/ this->test_location_existing_counts[history->test_location_index];
+					double new_score = this->test_location_new_scores[history->test_location_index]
+						/ this->test_location_new_counts[history->test_location_index];
+
+					if (new_score >= existing_score) {
+					#endif /* MDEBUG */
+						this->test_location_existing_scores[history->test_location_index] = 0.0;
+						this->test_location_existing_counts[history->test_location_index] = 0;
+						this->test_location_new_scores[history->test_location_index] = 0.0;
+						this->test_location_new_counts[history->test_location_index] = 0;
+						this->test_location_states[history->test_location_index] = NEW_ACTION_EXPERIMENT_VERIFY_EXISTING;
+					} else {
+						int experiment_index;
+						for (int e_index = 0; e_index < (int)this->test_location_starts[history->test_location_index]->experiments.size(); e_index++) {
+							if (this->test_location_starts[history->test_location_index]->experiments[e_index] == this) {
+								experiment_index = e_index;
+								break;
+							}
+						}
+						this->test_location_starts[history->test_location_index]->experiments.erase(
+							this->test_location_starts[history->test_location_index]->experiments.begin() + experiment_index);
+						/**
+						 * - can simply remove first
+						 */
+
+						this->test_location_starts.erase(this->test_location_starts.begin() + history->test_location_index);
+						this->test_location_is_branch.erase(this->test_location_is_branch.begin() + history->test_location_index);
+						this->test_location_exits.erase(this->test_location_exits.begin() + history->test_location_index);
+						this->test_location_states.erase(this->test_location_states.begin() + history->test_location_index);
+						this->test_location_existing_scores.erase(this->test_location_existing_scores.begin() + history->test_location_index);
+						this->test_location_existing_counts.erase(this->test_location_existing_counts.begin() + history->test_location_index);
+						this->test_location_new_scores.erase(this->test_location_new_scores.begin() + history->test_location_index);
+						this->test_location_new_counts.erase(this->test_location_new_counts.begin() + history->test_location_index);
+
+						if (this->generalize_iter == -1
+								&& this->successful_location_starts.size() == 0) {
+							this->result = EXPERIMENT_RESULT_FAIL;
+							/**
+							 * - only continue if first succeeds
+							 */
+						} else {
+							this->generalize_iter++;
 						}
 					}
-					this->test_location_starts[history->test_location_index]->experiments.erase(
-						this->test_location_starts[history->test_location_index]->experiments.begin() + experiment_index);
-					/**
-					 * - can simply remove first
-					 */
+				}
+			}
+
+			break;
+		case NEW_ACTION_EXPERIMENT_VERIFY_EXISTING:
+			{
+				double final_normalized_score = (target_val - solution->average_score) / solution->score_standard_deviation;
+				for (int i_index = 0; i_index < (int)history->starting_predicted_scores.size(); i_index++) {
+					double sum_score = 0.0;
+					for (int l_index = 0; l_index < (int)history->starting_predicted_scores[i_index].size(); l_index++) {
+						sum_score += history->normalized_scores[i_index][l_index];
+					}
+					double final_score = sum_score / (int)history->starting_predicted_scores.size() + final_normalized_score;
+					this->test_location_existing_scores[history->test_location_index] += final_score;
+					this->test_location_existing_counts[history->test_location_index]++;
+				}
+
+				if (this->test_location_existing_counts[history->test_location_index] >= NEW_ACTION_VERIFY_NUM_DATAPOINTS) {
+					this->test_location_states[history->test_location_index] = NEW_ACTION_EXPERIMENT_VERIFY_NEW;
+				}
+			}
+
+			break;
+		case NEW_ACTION_EXPERIMENT_VERIFY_NEW:
+			{
+				double final_normalized_score = (target_val - solution->average_score) / solution->score_standard_deviation;
+				for (int i_index = 0; i_index < (int)history->starting_predicted_scores.size(); i_index++) {
+					double sum_score = 0.0;
+					for (int l_index = 0; l_index < (int)history->starting_predicted_scores[i_index].size(); l_index++) {
+						sum_score += history->normalized_scores[i_index][l_index];
+					}
+					double final_score = sum_score / (int)history->starting_predicted_scores.size() + final_normalized_score;
+					this->test_location_new_scores[history->test_location_index] += final_score;
+					this->test_location_new_counts[history->test_location_index]++;
+				}
+
+				if (this->test_location_new_counts[history->test_location_index] >= NEW_ACTION_VERIFY_NUM_DATAPOINTS) {
+					#if defined(MDEBUG) && MDEBUG
+					if (rand()%2 == 0) {
+					#else
+					double existing_score = this->test_location_existing_scores[history->test_location_index]
+						/ this->test_location_existing_counts[history->test_location_index];
+					double new_score = this->test_location_new_scores[history->test_location_index]
+						/ this->test_location_new_counts[history->test_location_index];
+
+					if (new_score >= existing_score) {
+					#endif /* MDEBUG */
+						this->successful_location_starts.push_back(this->test_location_starts[history->test_location_index]);
+						this->successful_location_is_branch.push_back(this->test_location_is_branch[history->test_location_index]);
+						this->successful_location_exits.push_back(this->test_location_exits[history->test_location_index]);
+					} else {
+						int experiment_index;
+						for (int e_index = 0; e_index < (int)this->test_location_starts[history->test_location_index]->experiments.size(); e_index++) {
+							if (this->test_location_starts[history->test_location_index]->experiments[e_index] == this) {
+								experiment_index = e_index;
+								break;
+							}
+						}
+						this->test_location_starts[history->test_location_index]->experiments.erase(
+							this->test_location_starts[history->test_location_index]->experiments.begin() + experiment_index);
+						/**
+						 * - can simply remove first
+						 */
+					}
 
 					this->test_location_starts.erase(this->test_location_starts.begin() + history->test_location_index);
 					this->test_location_is_branch.erase(this->test_location_is_branch.begin() + history->test_location_index);
@@ -185,91 +307,8 @@ void NewActionExperiment::test_backprop(
 					}
 				}
 			}
+
+			break;
 		}
-
-		break;
-	case NEW_ACTION_EXPERIMENT_VERIFY_EXISTING:
-		{
-			double final_normalized_score = (target_val - solution->average_score) / solution->score_standard_deviation;
-			for (int i_index = 0; i_index < (int)history->starting_predicted_scores.size(); i_index++) {
-				double sum_score = 0.0;
-				for (int l_index = 0; l_index < (int)history->starting_predicted_scores[i_index].size(); l_index++) {
-					sum_score += history->normalized_scores[i_index][l_index];
-				}
-				sum_score += final_normalized_score;
-				this->test_location_existing_scores[history->test_location_index] += sum_score;
-				this->test_location_existing_counts[history->test_location_index]++;
-			}
-
-			if (this->test_location_existing_counts[history->test_location_index] >= NEW_ACTION_VERIFY_NUM_DATAPOINTS) {
-				this->test_location_states[history->test_location_index] = NEW_ACTION_EXPERIMENT_VERIFY_NEW;
-			}
-		}
-
-		break;
-	case NEW_ACTION_EXPERIMENT_VERIFY_NEW:
-		{
-			double final_normalized_score = (target_val - solution->average_score) / solution->score_standard_deviation;
-			for (int i_index = 0; i_index < (int)history->starting_predicted_scores.size(); i_index++) {
-				double sum_score = 0.0;
-				for (int l_index = 0; l_index < (int)history->starting_predicted_scores[i_index].size(); l_index++) {
-					sum_score += history->normalized_scores[i_index][l_index];
-				}
-				sum_score += final_normalized_score;
-				this->test_location_new_scores[history->test_location_index] += sum_score;
-				this->test_location_new_counts[history->test_location_index]++;
-			}
-
-			if (this->test_location_new_counts[history->test_location_index] >= NEW_ACTION_VERIFY_NUM_DATAPOINTS) {
-				#if defined(MDEBUG) && MDEBUG
-				if (rand()%2 == 0) {
-				#else
-				double existing_score = this->test_location_existing_scores[history->test_location_index]
-					/ this->test_location_existing_counts[history->test_location_index];
-				double new_score = this->test_location_new_scores[history->test_location_index]
-					/ this->test_location_new_counts[history->test_location_index];
-
-				if (new_score >= existing_score) {
-				#endif /* MDEBUG */
-					this->successful_location_starts.push_back(this->test_location_starts[history->test_location_index]);
-					this->successful_location_is_branch.push_back(this->test_location_is_branch[history->test_location_index]);
-					this->successful_location_exits.push_back(this->test_location_exits[history->test_location_index]);
-				} else {
-					int experiment_index;
-					for (int e_index = 0; e_index < (int)this->test_location_starts[history->test_location_index]->experiments.size(); e_index++) {
-						if (this->test_location_starts[history->test_location_index]->experiments[e_index] == this) {
-							experiment_index = e_index;
-							break;
-						}
-					}
-					this->test_location_starts[history->test_location_index]->experiments.erase(
-						this->test_location_starts[history->test_location_index]->experiments.begin() + experiment_index);
-					/**
-					 * - can simply remove first
-					 */
-				}
-
-				this->test_location_starts.erase(this->test_location_starts.begin() + history->test_location_index);
-				this->test_location_is_branch.erase(this->test_location_is_branch.begin() + history->test_location_index);
-				this->test_location_exits.erase(this->test_location_exits.begin() + history->test_location_index);
-				this->test_location_states.erase(this->test_location_states.begin() + history->test_location_index);
-				this->test_location_existing_scores.erase(this->test_location_existing_scores.begin() + history->test_location_index);
-				this->test_location_existing_counts.erase(this->test_location_existing_counts.begin() + history->test_location_index);
-				this->test_location_new_scores.erase(this->test_location_new_scores.begin() + history->test_location_index);
-				this->test_location_new_counts.erase(this->test_location_new_counts.begin() + history->test_location_index);
-
-				if (this->generalize_iter == -1
-						&& this->successful_location_starts.size() == 0) {
-					this->result = EXPERIMENT_RESULT_FAIL;
-					/**
-					 * - only continue if first succeeds
-					 */
-				} else {
-					this->generalize_iter++;
-				}
-			}
-		}
-
-		break;
 	}
 }

@@ -172,6 +172,7 @@ public:
 							 BranchExperimentHistory* history);
 	void experiment_back_activate(std::vector<ContextLayer>& context,
 								  RunHelper& run_helper);
+	void experiment_backprop(RunHelper& run_helper);
 
 	void experiment_verify_existing_activate(std::vector<ContextLayer>& context,
 											 BranchExperimentHistory* history);

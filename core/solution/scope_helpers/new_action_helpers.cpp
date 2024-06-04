@@ -1,5 +1,7 @@
 #include "scope.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_node.h"
 #include "globals.h"
@@ -93,29 +95,6 @@ void Scope::new_action_activate(AbstractNode* starting_node,
 		if (included_nodes.find(curr_node) == included_nodes.end()) {
 			break;
 		}
-		run_helper.num_actions++;
-		if (run_helper.num_actions > solution->num_actions_limit) {
-			break;
-		}
-	}
-}
-
-void Scope::new_action_activate(Problem* problem,
-								vector<ContextLayer>& context,
-								RunHelper& run_helper,
-								ScopeHistory* history) {
-	AbstractNode* curr_node = this->nodes[0];
-	while (true) {
-		if (curr_node == NULL) {
-			break;
-		}
-
-		new_action_node_activate_helper(curr_node,
-										problem,
-										context,
-										run_helper,
-										history);
-
 		run_helper.num_actions++;
 		if (run_helper.num_actions > solution->num_actions_limit) {
 			break;

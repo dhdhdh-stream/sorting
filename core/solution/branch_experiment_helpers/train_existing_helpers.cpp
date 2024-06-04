@@ -70,8 +70,8 @@ void BranchExperiment::train_existing_backprop(
 		for (int l_index = 0; l_index < (int)history->starting_predicted_scores[i_index].size(); l_index++) {
 			sum_score += history->normalized_scores[i_index][l_index];
 		}
-		sum_score += final_normalized_score;
-		this->target_val_histories.push_back(sum_score);
+		double final_score = sum_score / (int)history->starting_predicted_scores.size() + final_normalized_score;
+		this->target_val_histories.push_back(final_score);
 	}
 
 	this->average_instances_per_run = 0.9*this->average_instances_per_run + 0.1*(int)history->starting_predicted_scores.size();
@@ -292,17 +292,9 @@ void BranchExperiment::train_existing_backprop(
 					remove_test_input_obs_indexes.erase(remove_test_input_obs_indexes.begin() + i_index);
 
 					Network* remove_test_network = new Network(this->existing_network);
-
-					remove_test_network->input->acti_vals.erase(remove_test_network->input->acti_vals.begin() + i_index);
-					remove_test_network->input->errors.erase(remove_test_network->input->errors.begin() + i_index);
-
-					for (int l_index = 0; l_index < (int)remove_test_network->hiddens.size(); l_index++) {
-						remove_test_network->hiddens[l_index]->remove_input(i_index);
-					}
-					remove_test_network->output->remove_input(i_index);
+					remove_test_network->remove_input(i_index);
 
 					vector<vector<double>> remove_test_inputs = inputs;
-
 					for (int d_index = 0; d_index < num_instances; d_index++) {
 						remove_test_inputs[d_index].erase(remove_test_inputs[d_index].begin() + i_index);
 					}

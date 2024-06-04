@@ -24,10 +24,10 @@ void ScopeNode::new_action_activate(AbstractNode*& curr_node,
 	history->scope_history = scope_history;
 	context.back().scope_history = scope_history;
 
-	this->scope->new_action_activate(problem,
-									 context,
-									 run_helper,
-									 scope_history);
+	this->scope->activate(problem,
+						  context,
+						  run_helper,
+						  scope_history);
 
 	context.pop_back();
 

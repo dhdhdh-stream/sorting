@@ -53,6 +53,27 @@ void Scope::clear_verify() {
 }
 #endif /* MDEBUG */
 
+void Scope::clean_node(int scope_id,
+					   int node_id) {
+	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
+			it != this->nodes.end(); it++) {
+		if (it->second->type == NODE_TYPE_BRANCH) {
+			BranchNode* branch_node = (BranchNode*)it->second;
+			branch_node->clean_node(scope_id, node_id);
+		}
+	}
+
+	if (this->id == scope_id) {
+		for (int i_index = this->eval_input_node_contexts.size()-1; i_index >= 0; i_index--) {
+			if (this->eval_input_node_contexts[i_index]->id == node_id) {
+				this->eval_input_node_contexts.erase(this->eval_input_node_contexts.begin() + i_index);
+				this->eval_input_obs_indexes.erase(this->eval_input_obs_indexes.begin() + i_index);
+				this->eval_network->remove_input(i_index);
+			}
+		}
+	}
+}
+
 void Scope::save(ofstream& output_file) {
 	output_file << this->node_counter << endl;
 

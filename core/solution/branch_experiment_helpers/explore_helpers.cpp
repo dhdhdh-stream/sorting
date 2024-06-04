@@ -247,19 +247,25 @@ void BranchExperiment::explore_backprop(
 	BranchExperimentHistory* history = (BranchExperimentHistory*)run_helper.experiment_histories.back();
 
 	if (history->has_target) {
-		double final_score = (target_val - solution->average_score) / solution->score_standard_deviation;
-		for (int l_index = 0; l_index < (int)history->starting_predicted_scores[0].size(); l_index++) {
-			final_score += history->normalized_scores[0][l_index];
-		}
+		double curr_surprise;
+		if (run_helper.num_actions <= solution->num_actions_limit) {
+			double final_normalized_score = (target_val - solution->average_score) / solution->score_standard_deviation;
+			double sum_score = 0.0;
+			for (int l_index = 0; l_index < (int)history->starting_predicted_scores[0].size(); l_index++) {
+				sum_score += history->normalized_scores[0][l_index];
+			}
+			double final_score = sum_score / (int)history->starting_predicted_scores.size() + final_normalized_score;
 
-		double curr_surprise = final_score - history->existing_predicted_score;
+			curr_surprise = final_score - history->existing_predicted_score;
+		}
 
 		bool select = false;
 		if (this->explore_type == EXPLORE_TYPE_BEST) {
 			#if defined(MDEBUG) && MDEBUG
 			if (run_helper.num_actions <= solution->num_actions_limit) {
 			#else
-			if (curr_surprise > this->best_surprise) {
+			if (run_helper.num_actions <= solution->num_actions_limit
+					&& curr_surprise > this->best_surprise) {
 			#endif /* MDEBUG */
 				for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 					if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
@@ -300,7 +306,8 @@ void BranchExperiment::explore_backprop(
 			#if defined(MDEBUG) && MDEBUG
 			if (run_helper.num_actions <= solution->num_actions_limit) {
 			#else
-			if (curr_surprise >= 0.0) {
+			if (run_helper.num_actions <= solution->num_actions_limit
+					&& curr_surprise >= 0.0) {
 			#endif /* MDEBUG */
 				this->best_step_types = this->curr_step_types;
 				this->best_actions = this->curr_actions;
@@ -329,7 +336,8 @@ void BranchExperiment::explore_backprop(
 			#if defined(MDEBUG) && MDEBUG
 			if (run_helper.num_actions <= solution->num_actions_limit) {
 			#else
-			if (curr_surprise >= this->existing_score_standard_deviation) {
+			if (run_helper.num_actions <= solution->num_actions_limit
+					&& curr_surprise >= this->existing_score_standard_deviation) {
 			#endif /* MDEBUG */
 				this->best_step_types = this->curr_step_types;
 				this->best_actions = this->curr_actions;

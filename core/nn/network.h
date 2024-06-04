@@ -27,6 +27,8 @@ public:
 
 	void increment(int new_num_inputs);
 
+	void remove_input(int index);
+
 	void save(std::ofstream& output_file);
 };
 
