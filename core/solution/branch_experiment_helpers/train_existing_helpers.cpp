@@ -100,10 +100,10 @@ void BranchExperiment::train_existing_backprop(
 		this->existing_average_score = sum_scores / num_instances;
 
 		double sum_score_variance = 0.0;
-		for (int d_index = 0; d_index < NUM_DATAPOINTS; d_index++) {
+		for (int d_index = 0; d_index < num_instances; d_index++) {
 			sum_score_variance += (this->target_val_histories[d_index] - this->existing_average_score) * (this->target_val_histories[d_index] - this->existing_average_score);
 		}
-		this->existing_score_standard_deviation = sqrt(sum_score_variance / NUM_DATAPOINTS);
+		this->existing_score_standard_deviation = sqrt(sum_score_variance / num_instances);
 		if (this->existing_score_standard_deviation < MIN_STANDARD_DEVIATION) {
 			this->existing_score_standard_deviation = MIN_STANDARD_DEVIATION;
 		}

@@ -64,9 +64,9 @@ BranchExperiment::BranchExperiment(Scope* scope_context,
 
 BranchExperiment::~BranchExperiment() {
 	if (this->parent_experiment != NULL) {
-		cout << "inner delete" << endl;
+		cout << "BranchExperiment inner delete" << endl;
 	} else {
-		cout << "outer delete" << endl;
+		cout << "BranchExperiment outer delete" << endl;
 	}
 
 	if (this->existing_network != NULL) {

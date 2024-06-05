@@ -179,12 +179,20 @@ int main(int argc, char* argv[]) {
 				 * - history->experiment_histories.size() == 1
 				 */
 				int experiment_scope_id = run_helper.experiment_histories.back()->experiment->scope_context->id;
+				int new_scope_id = -1;
+				if (run_helper.experiment_histories.back()->experiment->type == EXPERIMENT_TYPE_NEW_ACTION) {
+					new_scope_id = (int)solution->scopes.size();
+				}
 
 				Solution* duplicate = new Solution(solution);
 				run_helper.experiment_histories.back()->experiment->finalize(duplicate);
 				delete run_helper.experiment_histories.back()->experiment;
 
 				Scope* experiment_scope = duplicate->scopes[experiment_scope_id];
+				Scope* new_scope = NULL;
+				if (new_scope_id != -1) {
+					new_scope = duplicate->scopes[new_scope_id];
+				}
 
 				clean_scope(experiment_scope,
 							duplicate);
@@ -192,6 +200,9 @@ int main(int argc, char* argv[]) {
 				vector<double> o_target_val_histories;
 				vector<ScopeHistory*> scope_histories;
 				vector<double> target_val_histories;
+				vector<ScopeHistory*> new_scope_histories;
+				vector<double> new_target_val_histories;
+				int max_num_actions = 0;
 				for (int iter_index = 0; iter_index < MEASURE_ITERS; iter_index++) {
 					// Problem* problem = new Sorting();
 					Problem* problem = new Minesweeper();
@@ -200,6 +211,7 @@ int main(int argc, char* argv[]) {
 
 					Metrics metrics;
 					metrics.experiment_scope = experiment_scope;
+					metrics.new_scope = new_scope;
 
 					vector<ContextLayer> context;
 					context.push_back(ContextLayer());
@@ -219,8 +231,8 @@ int main(int argc, char* argv[]) {
 
 					delete root_history;
 
-					if (run_helper.num_actions > duplicate->max_num_actions) {
-						duplicate->max_num_actions = run_helper.num_actions;
+					if (run_helper.num_actions > max_num_actions) {
+						max_num_actions = run_helper.num_actions;
 					}
 
 					double target_val;
@@ -235,6 +247,10 @@ int main(int argc, char* argv[]) {
 					for (int h_index = 0; h_index < (int)metrics.scope_histories.size(); h_index++) {
 						scope_histories.push_back(metrics.scope_histories[h_index]);
 						target_val_histories.push_back(target_val);
+					}
+					for (int h_index = 0; h_index < (int)metrics.new_scope_histories.size(); h_index++) {
+						new_scope_histories.push_back(metrics.new_scope_histories[h_index]);
+						new_target_val_histories.push_back(target_val);
 					}
 
 					delete problem;
@@ -255,11 +271,18 @@ int main(int argc, char* argv[]) {
 					duplicate->score_standard_deviation = MIN_STANDARD_DEVIATION;
 				}
 
+				duplicate->max_num_actions = max_num_actions;
+
 				cout << "duplicate->average_score: " << duplicate->average_score << endl;
 
 				update_eval(experiment_scope,
 							scope_histories,
 							target_val_histories);
+				if (new_scope != NULL) {
+					update_eval(new_scope,
+								new_scope_histories,
+								new_target_val_histories);
+				}
 
 				duplicate->timestamp++;
 

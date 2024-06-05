@@ -91,16 +91,16 @@ void Scope::verify_activate(Problem* problem,
 			break;
 		}
 
+		run_helper.num_actions++;
+		if (run_helper.num_actions > solution->num_actions_limit) {
+			break;
+		}
+
 		node_verify_activate_helper(curr_node,
 									problem,
 									context,
 									run_helper,
 									history);
-
-		run_helper.num_actions++;
-		if (run_helper.num_actions > solution->num_actions_limit) {
-			break;
-		}
 	}
 
 	if (this->verify_key != NULL) {

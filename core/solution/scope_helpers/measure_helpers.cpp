@@ -91,20 +91,23 @@ void Scope::measure_activate(Metrics& metrics,
 			break;
 		}
 
+		run_helper.num_actions++;
+		if (run_helper.num_actions > solution->num_actions_limit) {
+			break;
+		}
+
 		measure_node_activate_helper(curr_node,
 									 metrics,
 									 problem,
 									 context,
 									 run_helper,
 									 history);
-
-		run_helper.num_actions++;
-		if (run_helper.num_actions > solution->num_actions_limit) {
-			break;
-		}
 	}
 
 	if (metrics.experiment_scope == this) {
 		metrics.scope_histories.push_back(new ScopeHistory(history));
+	}
+	if (metrics.new_scope == this) {
+		metrics.new_scope_histories.push_back(new ScopeHistory(history));
 	}
 }

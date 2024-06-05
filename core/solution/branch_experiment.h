@@ -1,3 +1,5 @@
+// TODO: can also have info scope
+
 #ifndef BRANCH_EXPERIMENT_H
 #define BRANCH_EXPERIMENT_H
 

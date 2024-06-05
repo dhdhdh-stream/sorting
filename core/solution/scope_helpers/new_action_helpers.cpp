@@ -86,6 +86,11 @@ void Scope::new_action_activate(AbstractNode* starting_node,
 			break;
 		}
 
+		run_helper.num_actions++;
+		if (run_helper.num_actions > solution->num_actions_limit) {
+			break;
+		}
+
 		new_action_node_activate_helper(curr_node,
 										problem,
 										context,
@@ -93,10 +98,6 @@ void Scope::new_action_activate(AbstractNode* starting_node,
 										history);
 
 		if (included_nodes.find(curr_node) == included_nodes.end()) {
-			break;
-		}
-		run_helper.num_actions++;
-		if (run_helper.num_actions > solution->num_actions_limit) {
 			break;
 		}
 	}

@@ -28,9 +28,9 @@ void NewActionExperiment::test_activate(
 		NewActionExperimentHistory* history) {
 	history->test_location_index = location_index;
 
-	history->starting_predicted_scores.push_back(vector<double>(context.size()-1, 0.0));
-	history->normalized_scores.push_back(vector<double>(context.size()-1, 0.0));
-	for (int l_index = 0; l_index < (int)context.size()-1; l_index++) {
+	history->starting_predicted_scores.push_back(vector<double>(context.size(), 0.0));
+	history->normalized_scores.push_back(vector<double>(context.size(), 0.0));
+	for (int l_index = 0; l_index < (int)context.size(); l_index++) {
 		if (context[l_index].scope->eval_network != NULL) {
 			double starting_predicted_score = calc_score(context[l_index].scope_history);
 			history->starting_predicted_scores.back()[l_index] = starting_predicted_score;
@@ -41,10 +41,6 @@ void NewActionExperiment::test_activate(
 			context[l_index].scope_history->callback_experiment_layers.push_back(l_index);
 		}
 	}
-	/**
-	 * - don't include local scope for NewActionExperiment
-	 *   - multiple new actions may stress eval too much
-	 */
 
 	switch (this->test_location_states[location_index]) {
 	case NEW_ACTION_EXPERIMENT_MEASURE_NEW:

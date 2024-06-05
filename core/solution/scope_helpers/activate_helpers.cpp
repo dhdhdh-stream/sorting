@@ -91,16 +91,16 @@ void Scope::activate(Problem* problem,
 			break;
 		}
 
+		run_helper.num_actions++;
+		if (run_helper.num_actions > solution->num_actions_limit) {
+			break;
+		}
+
 		node_activate_helper(curr_node,
 							 problem,
 							 context,
 							 run_helper,
 							 history);
-
-		run_helper.num_actions++;
-		if (run_helper.num_actions > solution->num_actions_limit) {
-			break;
-		}
 	}
 
 	if (history->callback_experiment_history != NULL) {

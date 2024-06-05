@@ -86,27 +86,27 @@ NewActionExperiment::NewActionExperiment(Scope* scope_context,
 			possible_exits.push_back(NULL);
 		}
 
-		AbstractNode* starting_node;
+		AbstractNode* random_start_node;
 		switch (node_context->type) {
 		case NODE_TYPE_ACTION:
 			{
 				ActionNode* action_node = (ActionNode*)node_context;
-				starting_node = action_node->next_node;
+				random_start_node = action_node->next_node;
 			}
 			break;
 		case NODE_TYPE_SCOPE:
 			{
 				ScopeNode* scope_node = (ScopeNode*)node_context;
-				starting_node = scope_node->next_node;
+				random_start_node = scope_node->next_node;
 			}
 			break;
 		case NODE_TYPE_BRANCH:
 			{
 				BranchNode* branch_node = (BranchNode*)node_context;
 				if (is_branch) {
-					starting_node = branch_node->branch_next_node;
+					random_start_node = branch_node->branch_next_node;
 				} else {
-					starting_node = branch_node->original_next_node;
+					random_start_node = branch_node->original_next_node;
 				}
 			}
 			break;
@@ -114,20 +114,23 @@ NewActionExperiment::NewActionExperiment(Scope* scope_context,
 			{
 				InfoBranchNode* info_branch_node = (InfoBranchNode*)node_context;
 				if (is_branch) {
-					starting_node = info_branch_node->branch_next_node;
+					random_start_node = info_branch_node->branch_next_node;
 				} else {
-					starting_node = info_branch_node->original_next_node;
+					random_start_node = info_branch_node->original_next_node;
 				}
 			}
 			break;
 		}
 
 		this->scope_context->random_exit_activate(
-			starting_node,
+			random_start_node,
 			possible_exits);
 
-		uniform_int_distribution<int> distribution(0, possible_exits.size()-1);
-		int random_index = distribution(generator);
+		geometric_distribution<int> exit_distribution(0.3);
+		int random_index = exit_distribution(generator);
+		if (random_index > (int)possible_exits.size()-1) {
+			random_index = (int)possible_exits.size()-1;
+		}
 		AbstractNode* exit_next_node = possible_exits[random_index];
 
 		this->test_location_starts.push_back(node_context);
