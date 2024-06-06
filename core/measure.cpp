@@ -34,6 +34,7 @@ int main(int argc, char* argv[]) {
 	solution->load("", "main");
 
 	double sum_vals = 0.0;
+	int max_num_actions = 0;
 
 	auto start_time = chrono::high_resolution_clock::now();
 	for (int i_index = 0; i_index < 2000; i_index++) {
@@ -60,10 +61,14 @@ int main(int argc, char* argv[]) {
 		delete root_history;
 
 		double target_val;
-		if (run_helper.num_actions > solution->num_actions_limit) {
+		if (run_helper.exceeded_limit) {
 			target_val = -1.0;
 		} else {
 			target_val = problem->score_result(run_helper.num_decisions);
+		}
+
+		if (run_helper.num_actions > max_num_actions) {
+			max_num_actions = run_helper.num_actions;
 		}
 
 		sum_vals += target_val;
@@ -72,6 +77,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	cout << "average score: " << sum_vals/2000 << endl;
+	cout << "max_num_actions: " << max_num_actions << endl;
 
 	auto curr_time = chrono::high_resolution_clock::now();
 	auto time_diff = chrono::duration_cast<chrono::milliseconds>(curr_time - start_time);

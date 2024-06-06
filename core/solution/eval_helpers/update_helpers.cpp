@@ -59,19 +59,9 @@ void gather_eval_possible_helper(vector<AbstractNode*>& possible_node_contexts,
 void update_eval(Scope* parent_scope,
 				 vector<ScopeHistory*>& scope_histories,
 				 vector<double>& target_val_histories) {
-	#if defined(MDEBUG) && MDEBUG
-	int shuffle_seed = 0;
-	#else
-	int shuffle_seed = (unsigned)time(NULL);
-	#endif /* MDEBUG */
-	{
-		default_random_engine shuffler(shuffle_seed);
-		shuffle(scope_histories.begin(), scope_histories.end(), shuffler);
-	}
-	{
-		default_random_engine shuffler(shuffle_seed);
-		shuffle(target_val_histories.begin(), target_val_histories.end(), shuffler);
-	}
+	default_random_engine generator_copy = generator;
+	shuffle(scope_histories.begin(), scope_histories.end(), generator);
+	shuffle(target_val_histories.begin(), target_val_histories.end(), generator_copy);
 
 	int num_instances = (int)scope_histories.size();
 

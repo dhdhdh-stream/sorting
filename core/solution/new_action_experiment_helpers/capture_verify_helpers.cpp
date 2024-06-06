@@ -30,12 +30,13 @@ void NewActionExperiment::capture_verify_activate(
 	ScopeHistory* scope_history = new ScopeHistory(this->scope_context);
 	context.back().scope_history = scope_history;
 
-	this->scope_context->new_action_activate(this->starting_node,
-											 this->included_nodes,
-											 problem,
-											 context,
-											 run_helper,
-											 scope_history);
+	this->scope_context->new_action_capture_verify_activate(
+		this->starting_node,
+		this->included_nodes,
+		problem,
+		context,
+		run_helper,
+		scope_history);
 
 	run_helper.num_actions += 2;
 

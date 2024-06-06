@@ -91,20 +91,14 @@ void create_experiment_helper(vector<InfoScope*>& possible_info_scope_contexts,
 							  vector<AbstractNode*>& possible_node_contexts,
 							  vector<bool>& possible_is_branch,
 							  ScopeHistory* scope_history) {
-	uniform_int_distribution<int> include_distribution(0, (int)scope_history->scope->nodes.size()-1);
-
 	for (map<AbstractNode*, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
 			it != scope_history->node_histories.end(); it++) {
 		switch (it->first->type) {
 		case NODE_TYPE_ACTION:
-			{
-				if (include_distribution(generator) == 0) {
-					possible_info_scope_contexts.push_back(NULL);
-					possible_scope_contexts.push_back(scope_history->scope);
-					possible_node_contexts.push_back(it->first);
-					possible_is_branch.push_back(false);
-				}
-			}
+			possible_info_scope_contexts.push_back(NULL);
+			possible_scope_contexts.push_back(scope_history->scope);
+			possible_node_contexts.push_back(it->first);
+			possible_is_branch.push_back(false);
 
 			break;
 		case NODE_TYPE_SCOPE:
@@ -117,25 +111,21 @@ void create_experiment_helper(vector<InfoScope*>& possible_info_scope_contexts,
 										 possible_is_branch,
 										 scope_node_history->scope_history);
 
-				if (include_distribution(generator) == 0) {
-					possible_info_scope_contexts.push_back(NULL);
-					possible_scope_contexts.push_back(scope_history->scope);
-					possible_node_contexts.push_back(it->first);
-					possible_is_branch.push_back(false);
-				}
+				possible_info_scope_contexts.push_back(NULL);
+				possible_scope_contexts.push_back(scope_history->scope);
+				possible_node_contexts.push_back(it->first);
+				possible_is_branch.push_back(false);
 			}
 
 			break;
 		case NODE_TYPE_BRANCH:
 			{
-				if (include_distribution(generator) == 0) {
-					BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
+				BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
 
-					possible_info_scope_contexts.push_back(NULL);
-					possible_scope_contexts.push_back(scope_history->scope);
-					possible_node_contexts.push_back(it->first);
-					possible_is_branch.push_back(branch_node_history->is_branch);
-				}
+				possible_info_scope_contexts.push_back(NULL);
+				possible_scope_contexts.push_back(scope_history->scope);
+				possible_node_contexts.push_back(it->first);
+				possible_is_branch.push_back(branch_node_history->is_branch);
 			}
 
 			break;
@@ -157,12 +147,10 @@ void create_experiment_helper(vector<InfoScope*>& possible_info_scope_contexts,
 					}
 				}
 
-				if (include_distribution(generator) == 0) {
-					possible_info_scope_contexts.push_back(NULL);
-					possible_scope_contexts.push_back(scope_history->scope);
-					possible_node_contexts.push_back(it->first);
-					possible_is_branch.push_back(info_branch_node_history->is_branch);
-				}
+				possible_info_scope_contexts.push_back(NULL);
+				possible_scope_contexts.push_back(scope_history->scope);
+				possible_node_contexts.push_back(it->first);
+				possible_is_branch.push_back(info_branch_node_history->is_branch);
 			}
 
 			break;

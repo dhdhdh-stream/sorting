@@ -138,7 +138,7 @@ void Solution::load(string path,
 	#if defined(MDEBUG) && MDEBUG
 	this->num_actions_limit = 2*this->max_num_actions + 10;
 	#else
-	this->num_actions_limit = 20*this->max_num_actions + 20;
+	this->num_actions_limit = 10*this->max_num_actions + 10;
 	#endif /* MDEBUG */
 
 	input_file.close();

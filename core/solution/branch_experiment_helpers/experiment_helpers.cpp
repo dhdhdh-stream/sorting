@@ -196,7 +196,7 @@ bool BranchExperiment::experiment_activate(AbstractNode*& curr_node,
 void BranchExperiment::experiment_back_activate(
 		vector<ContextLayer>& context,
 		RunHelper& run_helper) {
-	if (run_helper.num_actions <= solution->num_actions_limit
+	if (!run_helper.exceeded_limit
 			&& run_helper.experiment_histories.back()->experiment == this) {
 		BranchExperimentHistory* history = (BranchExperimentHistory*)run_helper.experiment_histories.back();
 		if (history->experiments_seen_order.size() == 0) {
@@ -300,7 +300,7 @@ void BranchExperiment::experiment_back_activate(
 }
 
 void BranchExperiment::experiment_backprop(RunHelper& run_helper) {
-	if (run_helper.num_actions > solution->num_actions_limit) {
+	if (run_helper.exceeded_limit) {
 		this->result = EXPERIMENT_RESULT_FAIL;
 	}
 }

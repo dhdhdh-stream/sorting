@@ -67,7 +67,7 @@ void BranchExperiment::train_new_back_activate(
 	BranchExperimentHistory* history = (BranchExperimentHistory*)run_helper.experiment_histories.back();
 
 	double ending_predicted_score;
-	if (run_helper.num_actions > solution->num_actions_limit) {
+	if (run_helper.exceeded_limit) {
 		ending_predicted_score = -1.0;
 	} else {
 		ending_predicted_score = calc_score(context.back().scope_history);
@@ -84,9 +84,15 @@ void BranchExperiment::train_new_back_activate(
 void BranchExperiment::train_new_backprop(
 		double target_val,
 		RunHelper& run_helper) {
-	if (run_helper.num_actions > solution->num_actions_limit) {
+	if (run_helper.exceeded_limit) {
 		this->explore_iter++;
 		if (this->explore_iter < MAX_EXPLORE_TRIES) {
+			for (int i_index = 0; i_index < (int)this->scope_histories.size(); i_index++) {
+				delete this->scope_histories[i_index];
+			}
+			this->scope_histories.clear();
+			this->target_val_histories.clear();
+
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 					delete this->best_actions[s_index];
@@ -149,19 +155,9 @@ void BranchExperiment::train_new_backprop(
 		}
 
 		if ((int)this->target_val_histories.size() >= NUM_DATAPOINTS) {
-			#if defined(MDEBUG) && MDEBUG
-			int shuffle_seed = run_helper.starting_run_seed;
-			#else
-			int shuffle_seed = (unsigned)time(NULL);
-			#endif /* MDEBUG */
-			{
-				default_random_engine shuffler(shuffle_seed);
-				shuffle(this->scope_histories.begin(), this->scope_histories.end(), shuffler);
-			}
-			{
-				default_random_engine shuffler(shuffle_seed);
-				shuffle(this->target_val_histories.begin(), this->target_val_histories.end(), shuffler);
-			}
+			default_random_engine generator_copy = generator;
+			shuffle(this->scope_histories.begin(), this->scope_histories.end(), generator);
+			shuffle(this->target_val_histories.begin(), this->target_val_histories.end(), generator_copy);
 
 			int num_instances = (int)this->target_val_histories.size();
 

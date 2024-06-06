@@ -13,7 +13,7 @@
 
 using namespace std;
 
-const int NEW_ACTION_MIN_NUM_NODES = 3;
+const int NEW_ACTION_MIN_NUM_NODES = 4;
 const int CREATE_NEW_ACTION_NUM_TRIES = 30;
 
 NewActionExperiment::NewActionExperiment(Scope* scope_context,
@@ -158,8 +158,6 @@ NewActionExperiment::NewActionExperiment(Scope* scope_context,
 }
 
 NewActionExperiment::~NewActionExperiment() {
-	cout << "outer delete" << endl;
-
 	#if defined(MDEBUG) && MDEBUG
 	for (int p_index = 0; p_index < (int)this->verify_problems.size(); p_index++) {
 		delete this->verify_problems[p_index];

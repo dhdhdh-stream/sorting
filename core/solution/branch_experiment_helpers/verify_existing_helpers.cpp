@@ -34,7 +34,7 @@ void BranchExperiment::verify_existing_back_activate(
 	BranchExperimentHistory* history = (BranchExperimentHistory*)run_helper.experiment_histories.back();
 
 	double ending_predicted_score;
-	if (run_helper.num_actions > solution->num_actions_limit) {
+	if (run_helper.exceeded_limit) {
 		ending_predicted_score = -1.0;
 	} else {
 		ending_predicted_score = calc_score(context.back().scope_history);
@@ -64,11 +64,13 @@ void BranchExperiment::verify_existing_backprop(
 	}
 
 	if ((int)this->target_val_histories.size() >= VERIFY_NUM_DATAPOINTS) {
+		int num_instances = (int)this->target_val_histories.size();
+
 		double sum_scores = 0.0;
-		for (int d_index = 0; d_index < VERIFY_NUM_DATAPOINTS; d_index++) {
+		for (int d_index = 0; d_index < num_instances; d_index++) {
 			sum_scores += this->target_val_histories[d_index];
 		}
-		this->existing_average_score = sum_scores / VERIFY_NUM_DATAPOINTS;
+		this->existing_average_score = sum_scores / num_instances;
 
 		this->target_val_histories.clear();
 

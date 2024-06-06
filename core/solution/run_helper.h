@@ -26,6 +26,8 @@ class Solution;
 
 class RunHelper {
 public:
+	bool exceeded_limit;
+
 	int num_decisions;
 	int num_actions;
 

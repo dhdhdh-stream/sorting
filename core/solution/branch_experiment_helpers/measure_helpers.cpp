@@ -184,7 +184,7 @@ void BranchExperiment::measure_back_activate(
 	BranchExperimentHistory* history = (BranchExperimentHistory*)run_helper.experiment_histories.back();
 
 	double ending_predicted_score;
-	if (run_helper.num_actions > solution->num_actions_limit) {
+	if (run_helper.exceeded_limit) {
 		ending_predicted_score = -1.0;
 	} else {
 		ending_predicted_score = calc_score(context.back().scope_history);
@@ -201,7 +201,7 @@ void BranchExperiment::measure_back_activate(
 void BranchExperiment::measure_backprop(
 		double target_val,
 		RunHelper& run_helper) {
-	if (run_helper.num_actions > solution->num_actions_limit) {
+	if (run_helper.exceeded_limit) {
 		this->explore_iter++;
 		if (this->explore_iter < MAX_EXPLORE_TRIES) {
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {

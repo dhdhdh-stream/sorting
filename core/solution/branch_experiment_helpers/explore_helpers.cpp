@@ -227,7 +227,7 @@ void BranchExperiment::explore_back_activate(
 	BranchExperimentHistory* history = (BranchExperimentHistory*)run_helper.experiment_histories.back();
 
 	double ending_predicted_score;
-	if (run_helper.num_actions > solution->num_actions_limit) {
+	if (run_helper.exceeded_limit) {
 		ending_predicted_score = -1.0;
 	} else {
 		ending_predicted_score = calc_score(context.back().scope_history);
@@ -248,7 +248,7 @@ void BranchExperiment::explore_backprop(
 
 	if (history->has_target) {
 		double curr_surprise;
-		if (run_helper.num_actions <= solution->num_actions_limit) {
+		if (!run_helper.exceeded_limit) {
 			double final_normalized_score = (target_val - solution->average_score) / solution->score_standard_deviation;
 			double sum_score = 0.0;
 			for (int l_index = 0; l_index < (int)history->starting_predicted_scores[0].size(); l_index++) {
@@ -262,9 +262,9 @@ void BranchExperiment::explore_backprop(
 		bool select = false;
 		if (this->explore_type == EXPLORE_TYPE_BEST) {
 			#if defined(MDEBUG) && MDEBUG
-			if (run_helper.num_actions <= solution->num_actions_limit) {
+			if (!run_helper.exceeded_limit) {
 			#else
-			if (run_helper.num_actions <= solution->num_actions_limit
+			if (!run_helper.exceeded_limit
 					&& curr_surprise > this->best_surprise) {
 			#endif /* MDEBUG */
 				for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
@@ -304,9 +304,9 @@ void BranchExperiment::explore_backprop(
 			}
 		} else if (this->explore_type == EXPLORE_TYPE_NEUTRAL) {
 			#if defined(MDEBUG) && MDEBUG
-			if (run_helper.num_actions <= solution->num_actions_limit) {
+			if (!run_helper.exceeded_limit) {
 			#else
-			if (run_helper.num_actions <= solution->num_actions_limit
+			if (!run_helper.exceeded_limit
 					&& curr_surprise >= 0.0) {
 			#endif /* MDEBUG */
 				this->best_step_types = this->curr_step_types;
@@ -334,9 +334,9 @@ void BranchExperiment::explore_backprop(
 			}
 		} else if (this->explore_type == EXPLORE_TYPE_GOOD) {
 			#if defined(MDEBUG) && MDEBUG
-			if (run_helper.num_actions <= solution->num_actions_limit) {
+			if (!run_helper.exceeded_limit) {
 			#else
-			if (run_helper.num_actions <= solution->num_actions_limit
+			if (!run_helper.exceeded_limit
 					&& curr_surprise >= this->existing_score_standard_deviation) {
 			#endif /* MDEBUG */
 				this->best_step_types = this->curr_step_types;

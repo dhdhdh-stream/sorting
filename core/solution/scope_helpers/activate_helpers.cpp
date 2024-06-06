@@ -85,6 +85,14 @@ void Scope::activate(Problem* problem,
 					 vector<ContextLayer>& context,
 					 RunHelper& run_helper,
 					 ScopeHistory* history) {
+	/**
+	 * - simply try to prevent recursion for now
+	 */
+	if (context.size() > solution->scopes.size() + 1) {
+		run_helper.exceeded_limit = true;
+		return;
+	}
+
 	AbstractNode* curr_node = this->nodes[0];
 	while (true) {
 		if (curr_node == NULL) {
@@ -93,6 +101,7 @@ void Scope::activate(Problem* problem,
 
 		run_helper.num_actions++;
 		if (run_helper.num_actions > solution->num_actions_limit) {
+			run_helper.exceeded_limit = true;
 			break;
 		}
 

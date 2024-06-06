@@ -244,6 +244,14 @@ void NewActionExperiment::finalize(Solution* duplicate) {
 					new_branch_node->branch_next_node_id = branch_it->second->id;
 					new_branch_node->branch_next_node = branch_it->second;
 				}
+
+				#if defined(MDEBUG) && MDEBUG
+				new_branch_node->verify_key = this;
+				new_branch_node->verify_original_scores = original_branch_node->verify_original_scores;
+				original_branch_node->verify_original_scores.clear();
+				new_branch_node->verify_branch_scores = original_branch_node->verify_branch_scores;
+				original_branch_node->verify_branch_scores.clear();
+				#endif /* MDEBUG */
 			}
 			break;
 		case NODE_TYPE_INFO_BRANCH:
@@ -400,6 +408,14 @@ void NewActionExperiment::finalize(Solution* duplicate) {
 						new_branch_node->branch_next_node_id = branch_it->second->id;
 						new_branch_node->branch_next_node = branch_it->second;
 					}
+
+					#if defined(MDEBUG) && MDEBUG
+					new_branch_node->verify_key = this;
+					new_branch_node->verify_original_scores = original_branch_node->verify_original_scores;
+					original_branch_node->verify_original_scores.clear();
+					new_branch_node->verify_branch_scores = original_branch_node->verify_branch_scores;
+					original_branch_node->verify_branch_scores.clear();
+					#endif /* MDEBUG */
 				}
 				break;
 			case NODE_TYPE_INFO_BRANCH:

@@ -33,7 +33,7 @@ public:
 	/**
 	 * - update on measure
 	 * 
-	 * - set limit to 20*max_num_actions+20
+	 * - set limit to 10*max_num_actions+10
 	 */
 	int max_num_actions;
 	int num_actions_limit;

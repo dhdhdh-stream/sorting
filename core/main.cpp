@@ -93,7 +93,7 @@ int main(int argc, char* argv[]) {
 			root_history);
 
 		if (run_helper.experiments_seen_order.size() == 0) {
-			if (run_helper.num_actions <= solution->num_actions_limit) {
+			if (!run_helper.exceeded_limit) {
 				create_experiment(root_history);
 			}
 		}
@@ -101,11 +101,23 @@ int main(int argc, char* argv[]) {
 		delete root_history;
 
 		double target_val;
-		if (run_helper.num_actions <= solution->num_actions_limit) {
+		if (!run_helper.exceeded_limit) {
 			target_val = problem->score_result(run_helper.num_decisions);
 		} else {
 			target_val = -1.0;
 		}
+
+		delete problem;
+
+		#if defined(MDEBUG) && MDEBUG
+		if (run_index%2000 == 0) {
+			delete solution;
+			solution = new Solution();
+			solution->load("", "main");
+
+			continue;
+		}
+		#endif /* MDEBUG */
 
 		if (run_helper.experiment_histories.size() > 0) {
 			for (int e_index = 0; e_index < (int)run_helper.experiments_seen_order.size(); e_index++) {
@@ -257,6 +269,9 @@ int main(int argc, char* argv[]) {
 				vector<ScopeHistory*> new_scope_histories;
 				vector<double> new_target_val_histories;
 				int max_num_actions = 0;
+				#if defined(MDEBUG) && MDEBUG
+				bool early_exit = false;
+				#endif /* MDEBUG */
 				for (int iter_index = 0; iter_index < MEASURE_ITERS; iter_index++) {
 					// Problem* problem = new Sorting();
 					Problem* problem = new Minesweeper();
@@ -294,7 +309,7 @@ int main(int argc, char* argv[]) {
 					}
 
 					double target_val;
-					if (run_helper.num_actions <= solution->num_actions_limit) {
+					if (!run_helper.exceeded_limit) {
 						target_val = problem->score_result(run_helper.num_decisions);
 					} else {
 						target_val = -1.0;
@@ -312,7 +327,33 @@ int main(int argc, char* argv[]) {
 					}
 
 					delete problem;
+
+					#if defined(MDEBUG) && MDEBUG
+					if (run_index%2000 == 0) {
+						early_exit = true;
+						break;
+					}
+					#endif /* MDEBUG */
 				}
+
+				#if defined(MDEBUG) && MDEBUG
+				if (early_exit) {
+					for (int h_index = 0; h_index < (int)scope_histories.size(); h_index++) {
+						delete scope_histories[h_index];
+					}
+					for (int h_index = 0; h_index < (int)new_scope_histories.size(); h_index++) {
+						delete new_scope_histories[h_index];
+					}
+
+					delete duplicate;
+
+					delete solution;
+					solution = new Solution();
+					solution->load("", "main");
+
+					continue;
+				}
+				#endif /* MDEBUG */
 
 				double sum_score = 0.0;
 				for (int d_index = 0; d_index < MEASURE_ITERS; d_index++) {
@@ -337,9 +378,11 @@ int main(int argc, char* argv[]) {
 							scope_histories,
 							target_val_histories);
 				if (new_scope != NULL) {
-					update_eval(new_scope,
-								new_scope_histories,
-								new_target_val_histories);
+					if (new_scope_histories.size() > 0) {
+						update_eval(new_scope,
+									new_scope_histories,
+									new_target_val_histories);
+					}
 				}
 
 				#if defined(MDEBUG) && MDEBUG
@@ -367,16 +410,6 @@ int main(int argc, char* argv[]) {
 					+ 0.1 * ((int)run_helper.experiments_seen_order.size()-1 - e_index);
 			}
 		}
-
-		delete problem;
-
-		// #if defined(MDEBUG) && MDEBUG
-		// if (run_index%2000 == 0) {
-		// 	delete solution;
-		// 	solution = new Solution();
-		// 	solution->load("", "main");
-		// }
-		// #endif /* MDEBUG */
 	}
 
 	delete problem_type;

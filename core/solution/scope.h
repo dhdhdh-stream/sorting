@@ -67,6 +67,13 @@ public:
 							   ScopeHistory* history);
 
 	#if defined(MDEBUG) && MDEBUG
+	void new_action_capture_verify_activate(
+		AbstractNode* starting_node,
+		std::set<AbstractNode*>& included_nodes,
+		Problem* problem,
+		std::vector<ContextLayer>& context,
+		RunHelper& run_helper,
+		ScopeHistory* history);
 	void verify_activate(Problem* problem,
 						 std::vector<ContextLayer>& context,
 						 RunHelper& run_helper,

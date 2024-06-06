@@ -45,7 +45,7 @@ void BranchExperiment::train_existing_back_activate(
 	BranchExperimentHistory* history = (BranchExperimentHistory*)run_helper.experiment_histories.back();
 
 	double ending_predicted_score;
-	if (run_helper.num_actions > solution->num_actions_limit) {
+	if (run_helper.exceeded_limit) {
 		ending_predicted_score = -1.0;
 	} else {
 		ending_predicted_score = calc_score(context.back().scope_history);
@@ -77,19 +77,9 @@ void BranchExperiment::train_existing_backprop(
 	this->average_instances_per_run = 0.9*this->average_instances_per_run + 0.1*(int)history->starting_predicted_scores.size();
 
 	if ((int)this->target_val_histories.size() >= NUM_DATAPOINTS) {
-		#if defined(MDEBUG) && MDEBUG
-		int shuffle_seed = run_helper.starting_run_seed;
-		#else
-		int shuffle_seed = (unsigned)time(NULL);
-		#endif /* MDEBUG */
-		{
-			default_random_engine shuffler(shuffle_seed);
-			shuffle(this->scope_histories.begin(), this->scope_histories.end(), shuffler);
-		}
-		{
-			default_random_engine shuffler(shuffle_seed);
-			shuffle(this->target_val_histories.begin(), this->target_val_histories.end(), shuffler);
-		}
+		default_random_engine generator_copy = generator;
+		shuffle(this->scope_histories.begin(), this->scope_histories.end(), generator);
+		shuffle(this->target_val_histories.begin(), this->target_val_histories.end(), generator_copy);
 
 		int num_instances = (int)this->target_val_histories.size();
 

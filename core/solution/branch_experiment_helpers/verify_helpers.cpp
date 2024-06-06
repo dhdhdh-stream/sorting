@@ -194,7 +194,7 @@ void BranchExperiment::verify_back_activate(
 	BranchExperimentHistory* history = (BranchExperimentHistory*)run_helper.experiment_histories.back();
 
 	double ending_predicted_score;
-	if (run_helper.num_actions > solution->num_actions_limit) {
+	if (run_helper.exceeded_limit) {
 		ending_predicted_score = -1.0;
 	} else {
 		ending_predicted_score = calc_score(context.back().scope_history);
@@ -211,7 +211,7 @@ void BranchExperiment::verify_back_activate(
 void BranchExperiment::verify_backprop(
 		double target_val,
 		RunHelper& run_helper) {
-	if (run_helper.num_actions > solution->num_actions_limit) {
+	if (run_helper.exceeded_limit) {
 		if (this->is_pass_through) {
 			this->is_pass_through = false;
 

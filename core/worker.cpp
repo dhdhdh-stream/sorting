@@ -72,7 +72,7 @@ int main(int argc, char* argv[]) {
 			root_history);
 
 		if (run_helper.experiments_seen_order.size() == 0) {
-			if (run_helper.num_actions <= solution->num_actions_limit) {
+			if (!run_helper.exceeded_limit) {
 				create_experiment(root_history);
 			}
 		}
@@ -80,10 +80,38 @@ int main(int argc, char* argv[]) {
 		delete root_history;
 
 		double target_val;
-		if (run_helper.num_actions <= solution->num_actions_limit) {
+		if (!run_helper.exceeded_limit) {
 			target_val = problem->score_result(run_helper.num_decisions);
 		} else {
 			target_val = -1.0;
+		}
+
+		delete problem;
+
+		auto curr_time = chrono::high_resolution_clock::now();
+		auto time_diff = chrono::duration_cast<chrono::seconds>(curr_time - start_time);
+		if (time_diff.count() >= 20) {
+			start_time = curr_time;
+
+			cout << "alive" << endl;
+
+			ifstream solution_save_file;
+			solution_save_file.open("workers/saves/main.txt");
+			string timestamp_line;
+			getline(solution_save_file, timestamp_line);
+			int curr_timestamp = stoi(timestamp_line);
+			solution_save_file.close();
+
+			if (curr_timestamp > solution->timestamp) {
+				delete solution;
+
+				solution = new Solution();
+				solution->load("workers/", "main");
+
+				cout << "updated from main" << endl;
+
+				continue;
+			}
 		}
 
 		if (run_helper.experiment_histories.size() > 0) {
@@ -203,6 +231,7 @@ int main(int argc, char* argv[]) {
 				vector<ScopeHistory*> new_scope_histories;
 				vector<double> new_target_val_histories;
 				int max_num_actions = 0;
+				bool early_exit = false;
 				for (int iter_index = 0; iter_index < MEASURE_ITERS; iter_index++) {
 					// Problem* problem = new Sorting();
 					Problem* problem = new Minesweeper();
@@ -236,7 +265,7 @@ int main(int argc, char* argv[]) {
 					}
 
 					double target_val;
-					if (run_helper.num_actions <= solution->num_actions_limit) {
+					if (!run_helper.exceeded_limit) {
 						target_val = problem->score_result(run_helper.num_decisions);
 					} else {
 						target_val = -1.0;
@@ -254,6 +283,46 @@ int main(int argc, char* argv[]) {
 					}
 
 					delete problem;
+
+					auto curr_time = chrono::high_resolution_clock::now();
+					auto time_diff = chrono::duration_cast<chrono::seconds>(curr_time - start_time);
+					if (time_diff.count() >= 20) {
+						start_time = curr_time;
+
+						cout << "alive" << endl;
+
+						ifstream solution_save_file;
+						solution_save_file.open("workers/saves/main.txt");
+						string timestamp_line;
+						getline(solution_save_file, timestamp_line);
+						int curr_timestamp = stoi(timestamp_line);
+						solution_save_file.close();
+
+						if (curr_timestamp > solution->timestamp) {
+							early_exit = true;
+							break;
+						}
+					}
+				}
+
+				if (early_exit) {
+					for (int h_index = 0; h_index < (int)scope_histories.size(); h_index++) {
+						delete scope_histories[h_index];
+					}
+					for (int h_index = 0; h_index < (int)new_scope_histories.size(); h_index++) {
+						delete new_scope_histories[h_index];
+					}
+
+					delete duplicate;
+
+					delete solution;
+
+					solution = new Solution();
+					solution->load("workers/", "main");
+
+					cout << "updated from main" << endl;
+
+					continue;
 				}
 
 				double sum_score = 0.0;
@@ -279,14 +348,18 @@ int main(int argc, char* argv[]) {
 							scope_histories,
 							target_val_histories);
 				if (new_scope != NULL) {
-					update_eval(new_scope,
-								new_scope_histories,
-								new_target_val_histories);
+					if (new_scope_histories.size() > 0) {
+						update_eval(new_scope,
+									new_scope_histories,
+									new_target_val_histories);
+
+						duplicate->timestamp++;
+						duplicate->save(path, "possible_" + to_string((unsigned)time(NULL)));
+					}
+				} else {
+					duplicate->timestamp++;
+					duplicate->save(path, "possible_" + to_string((unsigned)time(NULL)));
 				}
-
-				duplicate->timestamp++;
-
-				duplicate->save(path, "possible_" + to_string((unsigned)time(NULL)));
 
 				delete duplicate;
 			}
@@ -297,32 +370,6 @@ int main(int argc, char* argv[]) {
 					0.9 * experiment->average_remaining_experiments_from_start
 					+ 0.1 * ((int)run_helper.experiments_seen_order.size()-1 - e_index);
 			}
-		}
-
-		delete problem;
-
-		auto curr_time = chrono::high_resolution_clock::now();
-		auto time_diff = chrono::duration_cast<chrono::seconds>(curr_time - start_time);
-		if (time_diff.count() >= 20) {
-			cout << "alive" << endl;
-
-			ifstream solution_save_file;
-			solution_save_file.open("workers/saves/main.txt");
-			string timestamp_line;
-			getline(solution_save_file, timestamp_line);
-			int curr_timestamp = stoi(timestamp_line);
-			solution_save_file.close();
-
-			if (curr_timestamp > solution->timestamp) {
-				delete solution;
-
-				solution = new Solution();
-				solution->load("workers/", "main");
-
-				cout << "updated from main" << endl;
-			}
-
-			start_time = curr_time;
 		}
 	}
 
