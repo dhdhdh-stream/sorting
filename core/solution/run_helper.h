@@ -20,6 +20,7 @@
 
 class AbstractExperiment;
 class AbstractExperimentHistory;
+class AbstractNode;
 class Problem;
 class ScopeHistory;
 class Solution;
@@ -30,6 +31,9 @@ public:
 
 	int num_decisions;
 	int num_actions;
+
+	AbstractNode* explore_node;
+	bool explore_is_branch;
 
 	std::vector<AbstractExperiment*> experiments_seen_order;
 	std::vector<AbstractExperimentHistory*> experiment_histories;

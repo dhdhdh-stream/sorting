@@ -12,22 +12,9 @@ void ScopeNode::explore_activate(Problem* problem,
 								 RunHelper& run_helper) {
 	context.back().node = this;
 
-	context.push_back(ContextLayer());
-
-	context.back().scope = this->scope;
-	context.back().node = NULL;
-
-	ScopeHistory* scope_history = new ScopeHistory(this->scope);
-	context.back().scope_history = scope_history;
-
 	this->scope->activate(problem,
 						  context,
-						  run_helper,
-						  scope_history);
-
-	delete scope_history;
-
-	context.pop_back();
+						  run_helper);
 
 	context.back().node = NULL;
 }

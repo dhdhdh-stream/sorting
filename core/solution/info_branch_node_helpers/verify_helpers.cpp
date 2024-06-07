@@ -22,7 +22,6 @@ void InfoBranchNode::verify_activate(AbstractNode*& curr_node,
 	bool inner_is_positive;
 	this->scope->verify_activate(problem,
 								 run_helper,
-								 history->scope_history,
 								 inner_is_positive);
 
 	if (this->is_negate) {

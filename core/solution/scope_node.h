@@ -75,11 +75,10 @@ public:
 
 class ScopeNodeHistory : public AbstractNodeHistory {
 public:
-	ScopeHistory* scope_history;
+	std::vector<double> obs_snapshot;
 
 	ScopeNodeHistory();
 	ScopeNodeHistory(ScopeNodeHistory* original);
-	~ScopeNodeHistory();
 };
 
 #endif /* SCOPE_NODE_H */

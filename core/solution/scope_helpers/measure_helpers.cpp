@@ -83,12 +83,19 @@ void measure_node_activate_helper(AbstractNode*& curr_node,
 void Scope::measure_activate(Metrics& metrics,
 							 Problem* problem,
 							 vector<ContextLayer>& context,
-							 RunHelper& run_helper,
-							 ScopeHistory* history) {
+							 RunHelper& run_helper) {
 	if (context.size() > solution->scopes.size() + 1) {
 		run_helper.exceeded_limit = true;
 		return;
 	}
+
+	context.push_back(ContextLayer());
+
+	context.back().scope = this;
+	context.back().node = NULL;
+
+	ScopeHistory* history = new ScopeHistory(this);
+	context.back().scope_history = history;
 
 	AbstractNode* curr_node = this->nodes[0];
 	while (true) {
@@ -116,4 +123,8 @@ void Scope::measure_activate(Metrics& metrics,
 	if (metrics.new_scope == this) {
 		metrics.new_scope_histories.push_back(new ScopeHistory(history));
 	}
+
+	delete history;
+
+	context.pop_back();
 }

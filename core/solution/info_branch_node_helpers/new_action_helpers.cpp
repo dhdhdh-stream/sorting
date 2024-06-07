@@ -26,7 +26,6 @@ void InfoBranchNode::new_action_activate(AbstractNode*& curr_node,
 	bool inner_is_positive;
 	this->scope->activate(problem,
 						  run_helper,
-						  history->scope_history,
 						  inner_is_positive);
 
 	if (this->is_negate) {

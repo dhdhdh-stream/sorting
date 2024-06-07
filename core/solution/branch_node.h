@@ -16,17 +16,13 @@ class Scope;
 class BranchNodeHistory;
 class BranchNode : public AbstractNode {
 public:
-	std::vector<std::vector<int>> original_input_scope_context_ids;
-	std::vector<std::vector<Scope*>> original_input_scope_contexts;
-	std::vector<std::vector<int>> original_input_node_context_ids;
-	std::vector<std::vector<AbstractNode*>> original_input_node_contexts;
+	std::vector<int> original_input_node_context_ids;
+	std::vector<AbstractNode*> original_input_node_contexts;
 	std::vector<int> original_input_obs_indexes;
 	Network* original_network;
 
-	std::vector<std::vector<int>> branch_input_scope_context_ids;
-	std::vector<std::vector<Scope*>> branch_input_scope_contexts;
-	std::vector<std::vector<int>> branch_input_node_context_ids;
-	std::vector<std::vector<AbstractNode*>> branch_input_node_contexts;
+	std::vector<int> branch_input_node_context_ids;
+	std::vector<AbstractNode*> branch_input_node_contexts;
 	std::vector<int> branch_input_obs_indexes;
 	Network* branch_network;
 
@@ -83,8 +79,7 @@ public:
 	void clear_verify();
 	#endif /* MDEBUG */
 
-	void clean_node(int scope_id,
-					int node_id);
+	void clean_node(int node_id);
 
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file);

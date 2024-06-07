@@ -48,29 +48,16 @@ void NewActionExperiment::test_activate(
 	case NEW_ACTION_EXPERIMENT_MEASURE_NEW:
 	case NEW_ACTION_EXPERIMENT_VERIFY_1ST_NEW:
 	case NEW_ACTION_EXPERIMENT_VERIFY_2ND_NEW:
-		context.push_back(ContextLayer());
-
-		context.back().scope = this->scope_context;
-		context.back().node = NULL;
-
-		ScopeHistory* scope_history = new ScopeHistory(this->scope_context);
-		context.back().scope_history = scope_history;
-
 		this->scope_context->new_action_activate(this->starting_node,
 												 this->included_nodes,
 												 problem,
 												 context,
-												 run_helper,
-												 scope_history);
+												 run_helper);
 
 		/**
 		 * - increment properly mainly for MDEBUG
 		 */
 		run_helper.num_actions += 2;
-
-		delete scope_history;
-
-		context.pop_back();
 
 		curr_node = this->test_location_exits[location_index];
 	}

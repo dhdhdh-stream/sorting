@@ -58,13 +58,10 @@ public:
 
 class InfoScopeNodeHistory : public AbstractNodeHistory {
 public:
-	ScopeHistory* scope_history;
-
 	bool is_positive;
 
 	InfoScopeNodeHistory();
 	InfoScopeNodeHistory(InfoScopeNodeHistory* original);
-	~InfoScopeNodeHistory();
 };
 
 #endif /* INFO_SCOPE_NODE_H */

@@ -43,8 +43,7 @@ public:
 	double existing_average_score;
 	double existing_score_standard_deviation;
 
-	std::vector<std::vector<Scope*>> existing_input_scope_contexts;
-	std::vector<std::vector<AbstractNode*>> existing_input_node_contexts;
+	std::vector<AbstractNode*> existing_input_node_contexts;
 	std::vector<int> existing_input_obs_indexes;
 	Network* existing_network;
 
@@ -66,8 +65,7 @@ public:
 
 	double new_average_score;
 
-	std::vector<std::vector<Scope*>> new_input_scope_contexts;
-	std::vector<std::vector<AbstractNode*>> new_input_node_contexts;
+	std::vector<AbstractNode*> new_input_node_contexts;
 	std::vector<int> new_input_obs_indexes;
 	Network* new_network;
 

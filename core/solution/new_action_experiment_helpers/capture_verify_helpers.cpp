@@ -22,32 +22,14 @@ void NewActionExperiment::capture_verify_activate(
 	}
 	this->verify_seeds[this->state_iter] = run_helper.starting_run_seed;
 
-	context.push_back(ContextLayer());
-
-	context.back().scope = this->scope_context;
-	context.back().node = NULL;
-
-	ScopeHistory* scope_history = new ScopeHistory(this->scope_context);
-	context.back().scope_history = scope_history;
-
 	this->scope_context->new_action_capture_verify_activate(
 		this->starting_node,
 		this->included_nodes,
 		problem,
 		context,
-		run_helper,
-		scope_history);
+		run_helper);
 
 	run_helper.num_actions += 2;
-
-	this->verify_scope_history_sizes.push_back((int)scope_history->node_histories.size()+2);
-
-	cout << "run_helper.starting_run_seed: " << run_helper.starting_run_seed << endl;
-	cout << "run_helper.curr_run_seed: " << run_helper.curr_run_seed << endl;
-
-	delete scope_history;
-
-	context.pop_back();
 
 	curr_node = this->successful_location_exits[location_index];
 }

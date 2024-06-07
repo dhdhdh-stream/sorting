@@ -74,9 +74,5 @@ ScopeNodeHistory::ScopeNodeHistory() {
 ScopeNodeHistory::ScopeNodeHistory(ScopeNodeHistory* original) {
 	this->index = original->index;
 
-	this->scope_history = new ScopeHistory(original->scope_history);
-}
-
-ScopeNodeHistory::~ScopeNodeHistory() {
-	delete this->scope_history;
+	this->obs_snapshot = original->obs_snapshot;
 }

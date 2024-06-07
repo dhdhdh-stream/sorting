@@ -22,39 +22,46 @@ void InfoBranchNode::activate(AbstractNode*& curr_node,
 	bool inner_is_positive;
 	this->scope->activate(problem,
 						  run_helper,
-						  history->scope_history,
 						  inner_is_positive);
 
-	if (this->is_negate) {
-		if (inner_is_positive) {
-			history->is_branch = false;
+	if (!run_helper.exceeded_limit) {
+		if (this->is_negate) {
+			if (inner_is_positive) {
+				history->is_branch = false;
+			} else {
+				history->is_branch = true;
+			}
 		} else {
-			history->is_branch = true;
+			if (inner_is_positive) {
+				history->is_branch = true;
+			} else {
+				history->is_branch = false;
+			}
 		}
-	} else {
-		if (inner_is_positive) {
-			history->is_branch = true;
+
+		if (history->is_branch) {
+			curr_node = this->branch_next_node;
 		} else {
-			history->is_branch = false;
+			curr_node = this->original_next_node;
 		}
-	}
 
-	if (history->is_branch) {
-		curr_node = this->branch_next_node;
-	} else {
-		curr_node = this->original_next_node;
-	}
+		for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
+			bool is_selected = this->experiments[e_index]->activate(
+				this,
+				history->is_branch,
+				curr_node,
+				problem,
+				context,
+				run_helper);
+			if (is_selected) {
+				return;
+			}
+		}
 
-	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
-		bool is_selected = this->experiments[e_index]->activate(
-			this,
-			history->is_branch,
-			curr_node,
-			problem,
-			context,
-			run_helper);
-		if (is_selected) {
-			return;
+		uniform_int_distribution<int> swap_distribution(0, run_helper.num_actions-1);
+		if (swap_distribution(generator) == 0) {
+			run_helper.explore_node = this;
+			run_helper.explore_is_branch = history->is_branch;
 		}
 	}
 }

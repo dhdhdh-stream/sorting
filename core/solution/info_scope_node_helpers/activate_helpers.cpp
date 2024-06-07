@@ -20,12 +20,11 @@ void InfoScopeNode::activate(AbstractNode*& curr_node,
 
 	this->scope->activate(problem,
 						  run_helper,
-						  history->scope_history,
 						  history->is_positive);
 
-	curr_node = this->next_node;
-
 	if (!run_helper.exceeded_limit) {
+		curr_node = this->next_node;
+
 		for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
 			bool is_selected = this->experiments[e_index]->activate(
 				this,
@@ -37,6 +36,12 @@ void InfoScopeNode::activate(AbstractNode*& curr_node,
 			if (is_selected) {
 				return;
 			}
+		}
+
+		uniform_int_distribution<int> swap_distribution(0, run_helper.num_actions-1);
+		if (swap_distribution(generator) == 0) {
+			run_helper.explore_node = this;
+			run_helper.explore_is_branch = false;
 		}
 	}
 }

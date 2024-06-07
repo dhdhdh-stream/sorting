@@ -45,15 +45,3 @@ InfoScope* get_existing_info_scope() {
 		return possible_info_scopes[possible_distribution(generator)];
 	}
 }
-
-InfoScopeNode* create_existing_info_scope_node() {
-	InfoScope* info_scope = get_existing_info_scope();
-	if (info_scope == NULL) {
-		return NULL;
-	} else {
-		InfoScopeNode* new_scope_node = new InfoScopeNode();
-		new_scope_node->scope = info_scope;
-
-		return new_scope_node;
-	}
-}

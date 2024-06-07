@@ -21,6 +21,7 @@ void ActionNode::activate(AbstractNode*& curr_node,
 	node_histories[this] = history;
 
 	problem->perform_action(this->action);
+
 	history->obs_snapshot = problem->get_observations();
 
 	curr_node = this->next_node;
@@ -36,5 +37,11 @@ void ActionNode::activate(AbstractNode*& curr_node,
 		if (is_selected) {
 			return;
 		}
+	}
+
+	uniform_int_distribution<int> swap_distribution(0, run_helper.num_actions-1);
+	if (swap_distribution(generator) == 0) {
+		run_helper.explore_node = this;
+		run_helper.explore_is_branch = false;
 	}
 }

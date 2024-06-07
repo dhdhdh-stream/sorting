@@ -14,23 +14,13 @@ void ScopeNode::step_through_activate(AbstractNode*& curr_node,
 									  ScopeNodeHistory* history) {
 	context.back().node = this;
 
-	context.push_back(ContextLayer());
-
-	context.back().scope = this->scope;
-	context.back().node = NULL;
-
-	ScopeHistory* scope_history = new ScopeHistory(this->scope);
-	history->scope_history = scope_history;
-	context.back().scope_history = scope_history;
-
 	this->scope->step_through_activate(problem,
 									   context,
-									   run_helper,
-									   scope_history);
-
-	context.pop_back();
+									   run_helper);
 
 	context.back().node = NULL;
+
+	history->obs_snapshot = problem->get_observations();
 
 	string input_gate;
 	cin >> input_gate;

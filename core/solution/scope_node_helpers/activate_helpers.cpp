@@ -4,6 +4,7 @@
 
 #include "abstract_experiment.h"
 #include "globals.h"
+#include "problem.h"
 #include "scope.h"
 #include "solution.h"
 
@@ -14,29 +15,18 @@ void ScopeNode::activate(AbstractNode*& curr_node,
 						 vector<ContextLayer>& context,
 						 RunHelper& run_helper,
 						 map<AbstractNode*, AbstractNodeHistory*>& node_histories) {
-	ScopeNodeHistory* history = new ScopeNodeHistory();
-	history->index = node_histories.size();
-	node_histories[this] = history;
-
 	context.back().node = this;
-
-	context.push_back(ContextLayer());
-
-	context.back().scope = this->scope;
-	context.back().node = NULL;
-
-	ScopeHistory* scope_history = new ScopeHistory(this->scope);
-	history->scope_history = scope_history;
-	context.back().scope_history = scope_history;
 
 	this->scope->activate(problem,
 						  context,
-						  run_helper,
-						  scope_history);
-
-	context.pop_back();
+						  run_helper);
 
 	context.back().node = NULL;
+
+	ScopeNodeHistory* history = new ScopeNodeHistory();
+	history->index = node_histories.size();
+	node_histories[this] = history;
+	history->obs_snapshot = problem->get_observations();
 
 	curr_node = this->next_node;
 
@@ -52,6 +42,12 @@ void ScopeNode::activate(AbstractNode*& curr_node,
 			if (is_selected) {
 				return;
 			}
+		}
+
+		uniform_int_distribution<int> swap_distribution(0, run_helper.num_actions-1);
+		if (swap_distribution(generator) == 0) {
+			run_helper.explore_node = this;
+			run_helper.explore_is_branch = false;
 		}
 	}
 }

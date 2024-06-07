@@ -78,12 +78,19 @@ void Scope::new_action_activate(AbstractNode* starting_node,
 								set<AbstractNode*>& included_nodes,
 								Problem* problem,
 								vector<ContextLayer>& context,
-								RunHelper& run_helper,
-								ScopeHistory* history) {
+								RunHelper& run_helper) {
 	if (context.size() > solution->scopes.size() + 1) {
 		run_helper.exceeded_limit = true;
 		return;
 	}
+
+	context.push_back(ContextLayer());
+
+	context.back().scope = this;
+	context.back().node = NULL;
+
+	ScopeHistory* history = new ScopeHistory(this);
+	context.back().scope_history = history;
 
 	AbstractNode* curr_node = starting_node;
 	while (true) {
@@ -107,6 +114,10 @@ void Scope::new_action_activate(AbstractNode* starting_node,
 			break;
 		}
 	}
+
+	delete history;
+
+	context.pop_back();
 }
 
 #if defined(MDEBUG) && MDEBUG
@@ -179,12 +190,19 @@ void Scope::new_action_capture_verify_activate(
 		set<AbstractNode*>& included_nodes,
 		Problem* problem,
 		vector<ContextLayer>& context,
-		RunHelper& run_helper,
-		ScopeHistory* history) {
+		RunHelper& run_helper) {
 	if (context.size() > solution->scopes.size() + 1) {
 		run_helper.exceeded_limit = true;
 		return;
 	}
+
+	context.push_back(ContextLayer());
+
+	context.back().scope = this;
+	context.back().node = NULL;
+
+	ScopeHistory* history = new ScopeHistory(this);
+	context.back().scope_history = history;
 
 	AbstractNode* curr_node = starting_node;
 	while (true) {
@@ -209,5 +227,9 @@ void Scope::new_action_capture_verify_activate(
 			break;
 		}
 	}
+
+	delete history;
+
+	context.pop_back();
 }
 #endif /* MDEBUG */

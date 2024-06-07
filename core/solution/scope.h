@@ -32,18 +32,12 @@ public:
 	Network* eval_network;
 	double eval_score_standard_deviation;
 
-	#if defined(MDEBUG) && MDEBUG
-	void* verify_key;
-	std::vector<int> verify_scope_history_sizes;
-	#endif /* MDEBUG */
-
 	Scope();
 	~Scope();
 
 	void activate(Problem* problem,
 				  std::vector<ContextLayer>& context,
-				  RunHelper& run_helper,
-				  ScopeHistory* history);
+				  RunHelper& run_helper);
 
 	void random_exit_activate(AbstractNode* starting_node,
 							  std::vector<AbstractNode*>& possible_exits);
@@ -52,19 +46,16 @@ public:
 							 std::set<AbstractNode*>& included_nodes,
 							 Problem* problem,
 							 std::vector<ContextLayer>& context,
-							 RunHelper& run_helper,
-							 ScopeHistory* history);
+							 RunHelper& run_helper);
 
 	void measure_activate(Metrics& metrics,
 						  Problem* problem,
 						  std::vector<ContextLayer>& context,
-						  RunHelper& run_helper,
-						  ScopeHistory* history);
+						  RunHelper& run_helper);
 
 	void step_through_activate(Problem* problem,
 							   std::vector<ContextLayer>& context,
-							   RunHelper& run_helper,
-							   ScopeHistory* history);
+							   RunHelper& run_helper);
 
 	#if defined(MDEBUG) && MDEBUG
 	void new_action_capture_verify_activate(
@@ -72,17 +63,14 @@ public:
 		std::set<AbstractNode*>& included_nodes,
 		Problem* problem,
 		std::vector<ContextLayer>& context,
-		RunHelper& run_helper,
-		ScopeHistory* history);
+		RunHelper& run_helper);
 	void verify_activate(Problem* problem,
 						 std::vector<ContextLayer>& context,
-						 RunHelper& run_helper,
-						 ScopeHistory* history);
+						 RunHelper& run_helper);
 	void clear_verify();
 	#endif /* MDEBUG */
 
-	void clean_node(int scope_id,
-					int node_id);
+	void clean_node(int node_id);
 
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file);

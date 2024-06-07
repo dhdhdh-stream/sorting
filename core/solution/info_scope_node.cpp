@@ -60,22 +60,11 @@ void InfoScopeNode::save_for_display(ofstream& output_file) {
 }
 
 InfoScopeNodeHistory::InfoScopeNodeHistory() {
-	this->scope_history = NULL;
+	// do nothing
 }
 
 InfoScopeNodeHistory::InfoScopeNodeHistory(InfoScopeNodeHistory* original) {
 	this->index = original->index;
 
-	/**
-	 * - don't copy scope_history
-	 */
-	this->scope_history = NULL;
-
 	this->is_positive = original->is_positive;
-}
-
-InfoScopeNodeHistory::~InfoScopeNodeHistory() {
-	if (this->scope_history != NULL) {
-		delete this->scope_history;
-	}
 }

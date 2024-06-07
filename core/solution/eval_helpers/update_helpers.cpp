@@ -24,38 +24,6 @@
 
 using namespace std;
 
-void gather_eval_possible_helper(vector<AbstractNode*>& possible_node_contexts,
-								 vector<int>& possible_obs_indexes,
-								 ScopeHistory* scope_history) {
-	for (map<AbstractNode*, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
-			it != scope_history->node_histories.end(); it++) {
-		switch (it->first->type) {
-		case NODE_TYPE_ACTION:
-			for (int o_index = 0; o_index < problem_type->num_obs(); o_index++) {
-				possible_node_contexts.push_back(it->first);
-				possible_obs_indexes.push_back(o_index);
-			}
-
-			break;
-		case NODE_TYPE_BRANCH:
-			possible_node_contexts.push_back(it->first);
-			possible_obs_indexes.push_back(-1);
-
-			break;
-		case NODE_TYPE_INFO_SCOPE:
-			possible_node_contexts.push_back(it->first);
-			possible_obs_indexes.push_back(-1);
-
-			break;
-		case NODE_TYPE_INFO_BRANCH:
-			possible_node_contexts.push_back(it->first);
-			possible_obs_indexes.push_back(-1);
-
-			break;
-		}
-	}
-}
-
 void update_eval(Scope* parent_scope,
 				 vector<ScopeHistory*>& scope_histories,
 				 vector<double>& target_val_histories) {
@@ -80,6 +48,12 @@ void update_eval(Scope* parent_scope,
 						{
 							ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
 							d_inputs[i_index] = action_node_history->obs_snapshot[parent_scope->eval_input_obs_indexes[i_index]];
+						}
+						break;
+					case NODE_TYPE_SCOPE:
+						{
+							ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)it->second;
+							d_inputs[i_index] = scope_node_history->obs_snapshot[parent_scope->eval_input_obs_indexes[i_index]];
 						}
 						break;
 					case NODE_TYPE_BRANCH:
@@ -139,9 +113,9 @@ void update_eval(Scope* parent_scope,
 		vector<int> possible_obs_indexes;
 
 		uniform_int_distribution<int> history_distribution(0, num_instances-1);
-		gather_eval_possible_helper(possible_node_contexts,
-									possible_obs_indexes,
-									scope_histories[history_distribution(generator)]);
+		gather_possible_helper(possible_node_contexts,
+							   possible_obs_indexes,
+							   scope_histories[history_distribution(generator)]);
 
 		vector<int> remaining_indexes(possible_node_contexts.size());
 		for (int p_index = 0; p_index < (int)possible_node_contexts.size(); p_index++) {
@@ -196,6 +170,12 @@ void update_eval(Scope* parent_scope,
 						{
 							ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
 							test_inputs[d_index].push_back(action_node_history->obs_snapshot[test_input_obs_indexes[t_index]]);
+						}
+						break;
+					case NODE_TYPE_SCOPE:
+						{
+							ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)it->second;
+							test_inputs[d_index].push_back(scope_node_history->obs_snapshot[test_input_obs_indexes[t_index]]);
 						}
 						break;
 					case NODE_TYPE_BRANCH:
@@ -265,6 +245,8 @@ void update_eval(Scope* parent_scope,
 		}
 
 		if (is_select) {
+			cout << "s" << endl;
+
 			int original_input_size = (int)parent_scope->eval_input_node_contexts.size();
 			int test_input_size = (int)test_input_node_contexts.size();
 
@@ -343,6 +325,8 @@ void update_eval(Scope* parent_scope,
 
 			train_index++;
 		}
+
+		cout << "i" << endl;
 	}
 
 	for (int h_index = 0; h_index < (int)scope_histories.size(); h_index++) {

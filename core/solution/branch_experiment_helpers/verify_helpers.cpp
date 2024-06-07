@@ -52,50 +52,44 @@ bool BranchExperiment::verify_activate(AbstractNode*& curr_node,
 	} else {
 		run_helper.num_decisions++;
 
-		vector<double> existing_input_vals(this->existing_input_scope_contexts.size(), 0.0);
-		for (int i_index = 0; i_index < (int)this->existing_input_scope_contexts.size(); i_index++) {
-			int curr_layer = 0;
-			ScopeHistory* curr_scope_history = context.back().scope_history;
-			while (true) {
-				map<AbstractNode*, AbstractNodeHistory*>::iterator it = curr_scope_history->node_histories.find(
-					this->existing_input_node_contexts[i_index][curr_layer]);
-				if (it == curr_scope_history->node_histories.end()) {
-					break;
-				} else {
-					if (curr_layer == (int)this->existing_input_scope_contexts[i_index].size()-1) {
-						switch (it->first->type) {
-						case NODE_TYPE_ACTION:
-							{
-								ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
-								existing_input_vals[i_index] = action_node_history->obs_snapshot[this->existing_input_obs_indexes[i_index]];
-							}
-							break;
-						case NODE_TYPE_BRANCH:
-							{
-								BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
-								if (branch_node_history->is_branch) {
-									existing_input_vals[i_index] = 1.0;
-								} else {
-									existing_input_vals[i_index] = -1.0;
-								}
-							}
-							break;
-						case NODE_TYPE_INFO_BRANCH:
-							{
-								InfoBranchNodeHistory* info_branch_node_history = (InfoBranchNodeHistory*)it->second;
-								if (info_branch_node_history->is_branch) {
-									existing_input_vals[i_index] = 1.0;
-								} else {
-									existing_input_vals[i_index] = -1.0;
-								}
-							}
-							break;
-						}
-						break;
-					} else {
-						curr_layer++;
-						curr_scope_history = ((ScopeNodeHistory*)it->second)->scope_history;
+		vector<double> existing_input_vals(this->existing_input_node_contexts.size(), 0.0);
+		for (int i_index = 0; i_index < (int)this->existing_input_node_contexts.size(); i_index++) {
+			map<AbstractNode*, AbstractNodeHistory*>::iterator it = context.back().scope_history->node_histories.find(
+				this->existing_input_node_contexts[i_index]);
+			if (it != context.back().scope_history->node_histories.end()) {
+				switch (it->first->type) {
+				case NODE_TYPE_ACTION:
+					{
+						ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
+						existing_input_vals[i_index] = action_node_history->obs_snapshot[this->existing_input_obs_indexes[i_index]];
 					}
+					break;
+				case NODE_TYPE_SCOPE:
+					{
+						ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)it->second;
+						existing_input_vals[i_index] = scope_node_history->obs_snapshot[this->existing_input_obs_indexes[i_index]];
+					}
+					break;
+				case NODE_TYPE_BRANCH:
+					{
+						BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
+						if (branch_node_history->is_branch) {
+							existing_input_vals[i_index] = 1.0;
+						} else {
+							existing_input_vals[i_index] = -1.0;
+						}
+					}
+					break;
+				case NODE_TYPE_INFO_BRANCH:
+					{
+						InfoBranchNodeHistory* info_branch_node_history = (InfoBranchNodeHistory*)it->second;
+						if (info_branch_node_history->is_branch) {
+							existing_input_vals[i_index] = 1.0;
+						} else {
+							existing_input_vals[i_index] = -1.0;
+						}
+					}
+					break;
 				}
 			}
 		}
@@ -105,50 +99,44 @@ bool BranchExperiment::verify_activate(AbstractNode*& curr_node,
 		double existing_predicted_score = this->existing_network->output->acti_vals[0];
 		#endif /* MDEBUG */
 
-		vector<double> new_input_vals(this->new_input_scope_contexts.size(), 0.0);
-		for (int i_index = 0; i_index < (int)this->new_input_scope_contexts.size(); i_index++) {
-			int curr_layer = 0;
-			ScopeHistory* curr_scope_history = context.back().scope_history;
-			while (true) {
-				map<AbstractNode*, AbstractNodeHistory*>::iterator it = curr_scope_history->node_histories.find(
-					this->new_input_node_contexts[i_index][curr_layer]);
-				if (it == curr_scope_history->node_histories.end()) {
-					break;
-				} else {
-					if (curr_layer == (int)this->new_input_scope_contexts[i_index].size()-1) {
-						switch (it->first->type) {
-						case NODE_TYPE_ACTION:
-							{
-								ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
-								new_input_vals[i_index] = action_node_history->obs_snapshot[this->new_input_obs_indexes[i_index]];
-							}
-							break;
-						case NODE_TYPE_BRANCH:
-							{
-								BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
-								if (branch_node_history->is_branch) {
-									new_input_vals[i_index] = 1.0;
-								} else {
-									new_input_vals[i_index] = -1.0;
-								}
-							}
-							break;
-						case NODE_TYPE_INFO_BRANCH:
-							{
-								InfoBranchNodeHistory* info_branch_node_history = (InfoBranchNodeHistory*)it->second;
-								if (info_branch_node_history->is_branch) {
-									new_input_vals[i_index] = 1.0;
-								} else {
-									new_input_vals[i_index] = -1.0;
-								}
-							}
-							break;
-						}
-						break;
-					} else {
-						curr_layer++;
-						curr_scope_history = ((ScopeNodeHistory*)it->second)->scope_history;
+		vector<double> new_input_vals(this->new_input_node_contexts.size(), 0.0);
+		for (int i_index = 0; i_index < (int)this->new_input_node_contexts.size(); i_index++) {
+			map<AbstractNode*, AbstractNodeHistory*>::iterator it = context.back().scope_history->node_histories.find(
+				this->new_input_node_contexts[i_index]);
+			if (it != context.back().scope_history->node_histories.end()) {
+				switch (it->first->type) {
+				case NODE_TYPE_ACTION:
+					{
+						ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
+						new_input_vals[i_index] = action_node_history->obs_snapshot[this->new_input_obs_indexes[i_index]];
 					}
+					break;
+				case NODE_TYPE_SCOPE:
+					{
+						ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)it->second;
+						new_input_vals[i_index] = scope_node_history->obs_snapshot[this->new_input_obs_indexes[i_index]];
+					}
+					break;
+				case NODE_TYPE_BRANCH:
+					{
+						BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
+						if (branch_node_history->is_branch) {
+							new_input_vals[i_index] = 1.0;
+						} else {
+							new_input_vals[i_index] = -1.0;
+						}
+					}
+					break;
+				case NODE_TYPE_INFO_BRANCH:
+					{
+						InfoBranchNodeHistory* info_branch_node_history = (InfoBranchNodeHistory*)it->second;
+						if (info_branch_node_history->is_branch) {
+							new_input_vals[i_index] = 1.0;
+						} else {
+							new_input_vals[i_index] = -1.0;
+						}
+					}
+					break;
 				}
 			}
 		}
@@ -248,7 +236,6 @@ void BranchExperiment::verify_backprop(
 					this->branch_node = NULL;
 				}
 
-				this->new_input_scope_contexts.clear();
 				this->new_input_node_contexts.clear();
 				this->new_input_obs_indexes.clear();
 				if (this->new_network != NULL) {
@@ -447,7 +434,6 @@ void BranchExperiment::verify_backprop(
 						this->branch_node = NULL;
 					}
 
-					this->new_input_scope_contexts.clear();
 					this->new_input_node_contexts.clear();
 					this->new_input_obs_indexes.clear();
 					if (this->new_network != NULL) {

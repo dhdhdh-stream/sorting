@@ -57,27 +57,17 @@ int main(int argc, char* argv[]) {
 		RunHelper run_helper;
 
 		vector<ContextLayer> context;
-		context.push_back(ContextLayer());
-
-		context.back().scope = solution->scopes[0];
-		context.back().node = NULL;
-
-		ScopeHistory* root_history = new ScopeHistory(solution->scopes[0]);
-		context.back().scope_history = root_history;
-
 		solution->scopes[0]->activate(
 			problem,
 			context,
-			run_helper,
-			root_history);
+			run_helper);
 
 		if (run_helper.experiments_seen_order.size() == 0) {
 			if (!run_helper.exceeded_limit) {
-				create_experiment(root_history);
+				create_experiment(run_helper.explore_node,
+								  run_helper.explore_is_branch);
 			}
 		}
-
-		delete root_history;
 
 		double target_val;
 		if (!run_helper.exceeded_limit) {
@@ -222,8 +212,7 @@ int main(int argc, char* argv[]) {
 					new_scope = duplicate->scopes[new_scope_id];
 				}
 
-				clean_scope(experiment_scope,
-							duplicate);
+				clean_scope(experiment_scope);
 
 				vector<double> o_target_val_histories;
 				vector<ScopeHistory*> scope_histories;
@@ -243,22 +232,11 @@ int main(int argc, char* argv[]) {
 					metrics.new_scope = new_scope;
 
 					vector<ContextLayer> context;
-					context.push_back(ContextLayer());
-
-					context.back().scope = duplicate->scopes[0];
-					context.back().node = NULL;
-
-					ScopeHistory* root_history = new ScopeHistory(duplicate->scopes[0]);
-					context.back().scope_history = root_history;
-
 					duplicate->scopes[0]->measure_activate(
 						metrics,
 						problem,
 						context,
-						run_helper,
-						root_history);
-
-					delete root_history;
+						run_helper);
 
 					if (run_helper.num_actions > max_num_actions) {
 						max_num_actions = run_helper.num_actions;

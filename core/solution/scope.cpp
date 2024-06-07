@@ -18,10 +18,6 @@ Scope::Scope() {
 	this->id = -1;
 
 	this->eval_network = NULL;
-
-	#if defined(MDEBUG) && MDEBUG
-	this->verify_key = NULL;
-	#endif /* MDEBUG */
 }
 
 Scope::~Scope() {
@@ -43,33 +39,23 @@ void Scope::clear_verify() {
 			branch_node->clear_verify();
 		}
 	}
-
-	this->verify_key = NULL;
-	if (this->verify_scope_history_sizes.size() > 0) {
-		cout << "seed: " << seed << endl;
-
-		throw invalid_argument("new scope remaining verify");
-	}
 }
 #endif /* MDEBUG */
 
-void Scope::clean_node(int scope_id,
-					   int node_id) {
+void Scope::clean_node(int node_id) {
 	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
 			it != this->nodes.end(); it++) {
 		if (it->second->type == NODE_TYPE_BRANCH) {
 			BranchNode* branch_node = (BranchNode*)it->second;
-			branch_node->clean_node(scope_id, node_id);
+			branch_node->clean_node(node_id);
 		}
 	}
 
-	if (this->id == scope_id) {
-		for (int i_index = this->eval_input_node_contexts.size()-1; i_index >= 0; i_index--) {
-			if (this->eval_input_node_contexts[i_index]->id == node_id) {
-				this->eval_input_node_contexts.erase(this->eval_input_node_contexts.begin() + i_index);
-				this->eval_input_obs_indexes.erase(this->eval_input_obs_indexes.begin() + i_index);
-				this->eval_network->remove_input(i_index);
-			}
+	for (int i_index = this->eval_input_node_contexts.size()-1; i_index >= 0; i_index--) {
+		if (this->eval_input_node_contexts[i_index]->id == node_id) {
+			this->eval_input_node_contexts.erase(this->eval_input_node_contexts.begin() + i_index);
+			this->eval_input_obs_indexes.erase(this->eval_input_obs_indexes.begin() + i_index);
+			this->eval_network->remove_input(i_index);
 		}
 	}
 }

@@ -20,7 +20,6 @@ void InfoScopeNode::verify_activate(AbstractNode*& curr_node,
 
 	this->scope->verify_activate(problem,
 								 run_helper,
-								 history->scope_history,
 								 history->is_positive);
 
 	curr_node = this->next_node;

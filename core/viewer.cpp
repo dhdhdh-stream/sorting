@@ -43,24 +43,13 @@ int main(int argc, char* argv[]) {
 		RunHelper run_helper;
 
 		vector<ContextLayer> context;
-		context.push_back(ContextLayer());
-
-		context.back().scope = solution->scopes[0];
-		context.back().node = NULL;
-
-		ScopeHistory* root_history = new ScopeHistory(solution->scopes[0]);
-		context.back().scope_history = root_history;
-
 		solution->scopes[0]->activate(
 			problem,
 			context,
-			run_helper,
-			root_history);
-
-		delete root_history;
+			run_helper);
 
 		double target_val;
-		if (!run_helper.exceeded_limit) {
+		if (run_helper.exceeded_limit) {
 			target_val = -1.0;
 		} else {
 			target_val = problem->score_result(run_helper.num_decisions);

@@ -34,22 +34,10 @@ int main(int argc, char* argv[]) {
 		RunHelper run_helper;
 
 		vector<ContextLayer> context;
-		context.push_back(ContextLayer());
-
-		// context.back().scope = solution->scopes[0];
-		context.back().scope = solution->scopes[1];
-		context.back().node = NULL;
-
-		// ScopeHistory* root_history = new ScopeHistory(solution->scopes[0]);
-		ScopeHistory* root_history = new ScopeHistory(solution->scopes[1]);
-		context.back().scope_history = root_history;
-
-		// solution->scopes[0]->step_through_activate(
-		solution->scopes[1]->step_through_activate(
+		solution->scopes[0]->step_through_activate(
 			problem,
 			context,
-			run_helper,
-			root_history);
+			run_helper);
 
 		string input_gate;
 		cin >> input_gate;
@@ -64,8 +52,6 @@ int main(int argc, char* argv[]) {
 			target_val = problem->score_result(run_helper.num_decisions);
 		}
 		cout << "target_val: " << target_val << endl;
-
-		delete root_history;
 
 		delete problem;
 	}

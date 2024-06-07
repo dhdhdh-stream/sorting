@@ -114,14 +114,6 @@ void BranchExperiment::train_new_backprop(
 				this->branch_node = NULL;
 			}
 
-			this->new_input_scope_contexts.clear();
-			this->new_input_node_contexts.clear();
-			this->new_input_obs_indexes.clear();
-			if (this->new_network != NULL) {
-				delete this->new_network;
-				this->new_network = NULL;
-			}
-
 			uniform_int_distribution<int> neutral_distribution(0, 9);
 			if (neutral_distribution(generator) == 0) {
 				this->explore_type = EXPLORE_TYPE_NEUTRAL;
@@ -173,21 +165,14 @@ void BranchExperiment::train_new_backprop(
 
 			int train_index = 0;
 			while (train_index < 3) {
-				vector<vector<Scope*>> test_input_scope_contexts = this->new_input_scope_contexts;
-				vector<vector<AbstractNode*>> test_input_node_contexts = this->new_input_node_contexts;
+				vector<AbstractNode*> test_input_node_contexts = this->new_input_node_contexts;
 				vector<int> test_input_obs_indexes = this->new_input_obs_indexes;
 
-				vector<vector<Scope*>> possible_scope_contexts;
-				vector<vector<AbstractNode*>> possible_node_contexts;
+				vector<AbstractNode*> possible_node_contexts;
 				vector<int> possible_obs_indexes;
 
-				vector<Scope*> scope_context;
-				vector<AbstractNode*> node_context;
 				uniform_int_distribution<int> history_distribution(0, num_instances-1);
-				gather_possible_helper(scope_context,
-									   node_context,
-									   possible_scope_contexts,
-									   possible_node_contexts,
+				gather_possible_helper(possible_node_contexts,
 									   possible_obs_indexes,
 									   this->scope_histories[history_distribution(generator)]);
 
@@ -202,15 +187,13 @@ void BranchExperiment::train_new_backprop(
 
 					bool contains = false;
 					for (int i_index = 0; i_index < (int)test_input_node_contexts.size(); i_index++) {
-						if (possible_scope_contexts[remaining_indexes[rand_index]] == test_input_scope_contexts[i_index]
-								&& possible_node_contexts[remaining_indexes[rand_index]] == test_input_node_contexts[i_index]
+						if (possible_node_contexts[remaining_indexes[rand_index]] == test_input_node_contexts[i_index]
 								&& possible_obs_indexes[remaining_indexes[rand_index]] == test_input_obs_indexes[i_index]) {
 							contains = true;
 							break;
 						}
 					}
 					if (!contains) {
-						test_input_scope_contexts.push_back(possible_scope_contexts[remaining_indexes[rand_index]]);
 						test_input_node_contexts.push_back(possible_node_contexts[remaining_indexes[rand_index]]);
 						test_input_obs_indexes.push_back(possible_obs_indexes[remaining_indexes[rand_index]]);
 						num_new_input++;
@@ -236,59 +219,54 @@ void BranchExperiment::train_new_backprop(
 				for (int d_index = 0; d_index < num_instances; d_index++) {
 					test_inputs[d_index].reserve((int)test_input_node_contexts.size());
 					for (int t_index = (int)this->new_input_node_contexts.size(); t_index < (int)test_input_node_contexts.size(); t_index++) {
-						int curr_layer = 0;
-						ScopeHistory* curr_scope_history = this->scope_histories[d_index];
-						while (true) {
-							map<AbstractNode*, AbstractNodeHistory*>::iterator it = curr_scope_history->node_histories.find(
-								test_input_node_contexts[t_index][curr_layer]);
-							if (it == curr_scope_history->node_histories.end()) {
-								test_inputs[d_index].push_back(0.0);
-								break;
-							} else {
-								if (curr_layer == (int)test_input_scope_contexts[t_index].size()-1) {
-									switch (it->first->type) {
-									case NODE_TYPE_ACTION:
-										{
-											ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
-											test_inputs[d_index].push_back(action_node_history->obs_snapshot[test_input_obs_indexes[t_index]]);
-										}
-										break;
-									case NODE_TYPE_BRANCH:
-										{
-											BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
-											if (branch_node_history->is_branch) {
-												test_inputs[d_index].push_back(1.0);
-											} else {
-												test_inputs[d_index].push_back(-1.0);
-											}
-										}
-										break;
-									case NODE_TYPE_INFO_SCOPE:
-										{
-											InfoScopeNodeHistory* info_scope_node_history = (InfoScopeNodeHistory*)it->second;
-											if (info_scope_node_history->is_positive) {
-												test_inputs[d_index].push_back(1.0);
-											} else {
-												test_inputs[d_index].push_back(-1.0);
-											}
-										}
-										break;
-									case NODE_TYPE_INFO_BRANCH:
-										{
-											InfoBranchNodeHistory* info_branch_node_history = (InfoBranchNodeHistory*)it->second;
-											if (info_branch_node_history->is_branch) {
-												test_inputs[d_index].push_back(1.0);
-											} else {
-												test_inputs[d_index].push_back(-1.0);
-											}
-										}
-										break;
-									}
-									break;
-								} else {
-									curr_layer++;
-									curr_scope_history = ((ScopeNodeHistory*)it->second)->scope_history;
+						map<AbstractNode*, AbstractNodeHistory*>::iterator it = this->scope_histories[d_index]->node_histories.find(
+							test_input_node_contexts[t_index]);
+						if (it == this->scope_histories[d_index]->node_histories.end()) {
+							test_inputs[d_index].push_back(0.0);
+						} else {
+							switch (it->first->type) {
+							case NODE_TYPE_ACTION:
+								{
+									ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
+									test_inputs[d_index].push_back(action_node_history->obs_snapshot[test_input_obs_indexes[t_index]]);
 								}
+								break;
+							case NODE_TYPE_SCOPE:
+								{
+									ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)it->second;
+									test_inputs[d_index].push_back(scope_node_history->obs_snapshot[test_input_obs_indexes[t_index]]);
+								}
+								break;
+							case NODE_TYPE_BRANCH:
+								{
+									BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
+									if (branch_node_history->is_branch) {
+										test_inputs[d_index].push_back(1.0);
+									} else {
+										test_inputs[d_index].push_back(-1.0);
+									}
+								}
+								break;
+							case NODE_TYPE_INFO_SCOPE:
+								{
+									InfoScopeNodeHistory* info_scope_node_history = (InfoScopeNodeHistory*)it->second;
+									if (info_scope_node_history->is_positive) {
+										test_inputs[d_index].push_back(1.0);
+									} else {
+										test_inputs[d_index].push_back(-1.0);
+									}
+								}
+								break;
+							case NODE_TYPE_INFO_BRANCH:
+								{
+									InfoBranchNodeHistory* info_branch_node_history = (InfoBranchNodeHistory*)it->second;
+									if (info_branch_node_history->is_branch) {
+										test_inputs[d_index].push_back(1.0);
+									} else {
+										test_inputs[d_index].push_back(-1.0);
+									}
+								}
+								break;
 							}
 						}
 					}
@@ -324,13 +302,14 @@ void BranchExperiment::train_new_backprop(
 				}
 
 				if (is_select) {
+					cout << "s" << endl;
+
 					int original_input_size = (int)this->new_input_node_contexts.size();
 					int test_input_size = (int)test_input_node_contexts.size();
 
 					average_misguess = test_average_misguess;
 					misguess_standard_deviation = test_misguess_standard_deviation;
 
-					this->new_input_scope_contexts = test_input_scope_contexts;
 					this->new_input_node_contexts = test_input_node_contexts;
 					this->new_input_obs_indexes = test_input_obs_indexes;
 
@@ -342,11 +321,9 @@ void BranchExperiment::train_new_backprop(
 					inputs = test_inputs;
 
 					for (int i_index = test_input_size-1; i_index >= original_input_size; i_index--) {
-						vector<vector<Scope*>> remove_test_input_scope_contexts = this->new_input_scope_contexts;
-						vector<vector<AbstractNode*>> remove_test_input_node_contexts = this->new_input_node_contexts;
+						vector<AbstractNode*> remove_test_input_node_contexts = this->new_input_node_contexts;
 						vector<int> remove_test_input_obs_indexes = this->new_input_obs_indexes;
 
-						remove_test_input_scope_contexts.erase(remove_test_input_scope_contexts.begin() + i_index);
 						remove_test_input_node_contexts.erase(remove_test_input_node_contexts.begin() + i_index);
 						remove_test_input_obs_indexes.erase(remove_test_input_obs_indexes.begin() + i_index);
 
@@ -375,7 +352,6 @@ void BranchExperiment::train_new_backprop(
 						double remove_t_score = remove_improvement / (remove_standard_deviation / sqrt(num_instances * TEST_SAMPLES_PERCENTAGE));
 
 						if (remove_t_score > -0.674) {
-							this->new_input_scope_contexts = remove_test_input_scope_contexts;
 							this->new_input_node_contexts = remove_test_input_node_contexts;
 							this->new_input_obs_indexes = remove_test_input_obs_indexes;
 
@@ -397,6 +373,8 @@ void BranchExperiment::train_new_backprop(
 
 					train_index++;
 				}
+
+				cout << "i" << endl;
 			}
 
 			for (int i_index = 0; i_index < (int)this->scope_histories.size(); i_index++) {

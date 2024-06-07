@@ -158,13 +158,6 @@ void Solution::clear_verify() {
 }
 #endif /* MDEBUG */
 
-void Solution::clean_node(int scope_id,
-						  int node_id) {
-	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
-		this->scopes[s_index]->clean_node(scope_id, node_id);
-	}
-}
-
 void Solution::save(string path,
 					string name) {
 	ofstream output_file;
