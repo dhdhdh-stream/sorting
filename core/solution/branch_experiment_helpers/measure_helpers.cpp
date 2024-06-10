@@ -248,13 +248,15 @@ void BranchExperiment::measure_backprop(
 			for (int l_index = 0; l_index < (int)history->starting_predicted_scores[i_index].size(); l_index++) {
 				sum_score += history->normalized_scores[i_index][l_index];
 			}
-			double final_score = sum_score / (int)history->starting_predicted_scores.size() + final_normalized_score;
+			double final_score = sum_score / (int)history->starting_predicted_scores[i_index].size() + final_normalized_score;
 			this->combined_score += final_score;
-			this->state_iter++;
+			this->sub_state_iter++;
 		}
 
-		if (this->state_iter >= NUM_DATAPOINTS) {
-			this->combined_score /= this->state_iter;
+		this->state_iter++;
+		if (this->sub_state_iter >= NUM_DATAPOINTS
+				&& this->state_iter >= MIN_NUM_TRUTH_DATAPOINTS) {
+			this->combined_score /= this->sub_state_iter;
 
 			this->branch_weight = (double)this->branch_count / (double)(this->original_count + this->branch_count);
 

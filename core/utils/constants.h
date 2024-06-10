@@ -34,9 +34,11 @@ const double PASS_THROUGH_BRANCH_WEIGHT = 0.9;
 
 #if defined(MDEBUG) && MDEBUG
 const int NUM_DATAPOINTS = 10;
+const int MIN_NUM_TRUTH_DATAPOINTS = 10;
 const int VERIFY_NUM_DATAPOINTS = 10;
 #else
-const int NUM_DATAPOINTS = 2000;
+const int NUM_DATAPOINTS = 4000;
+const int MIN_NUM_TRUTH_DATAPOINTS = 200;
 const int VERIFY_NUM_DATAPOINTS = 4000;
 #endif /* MDEBUG */
 

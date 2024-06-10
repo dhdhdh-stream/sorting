@@ -107,12 +107,14 @@ void NewActionExperiment::test_backprop(
 					for (int l_index = 0; l_index < (int)history->starting_predicted_scores[i_index].size(); l_index++) {
 						sum_score += history->normalized_scores[i_index][l_index];
 					}
-					double final_score = sum_score / (int)history->starting_predicted_scores.size() + final_normalized_score;
+					double final_score = sum_score / (int)history->starting_predicted_scores[i_index].size() + final_normalized_score;
 					this->test_location_existing_scores[history->test_location_index] += final_score;
 					this->test_location_existing_counts[history->test_location_index]++;
 				}
+				this->test_location_existing_truth_counts[history->test_location_index]++;
 
-				if (this->test_location_existing_counts[history->test_location_index] >= NEW_ACTION_NUM_DATAPOINTS) {
+				if (this->test_location_existing_counts[history->test_location_index] >= NEW_ACTION_NUM_DATAPOINTS
+						&& this->test_location_existing_truth_counts[history->test_location_index] >= MIN_NUM_TRUTH_DATAPOINTS) {
 					this->test_location_states[history->test_location_index] = NEW_ACTION_EXPERIMENT_MEASURE_NEW;
 				}
 			}
@@ -126,12 +128,14 @@ void NewActionExperiment::test_backprop(
 					for (int l_index = 0; l_index < (int)history->starting_predicted_scores[i_index].size(); l_index++) {
 						sum_score += history->normalized_scores[i_index][l_index];
 					}
-					double final_score = sum_score / (int)history->starting_predicted_scores.size() + final_normalized_score;
+					double final_score = sum_score / (int)history->starting_predicted_scores[i_index].size() + final_normalized_score;
 					this->test_location_new_scores[history->test_location_index] += final_score;
 					this->test_location_new_counts[history->test_location_index]++;
 				}
+				this->test_location_new_truth_counts[history->test_location_index]++;
 
-				if (this->test_location_new_counts[history->test_location_index] >= NEW_ACTION_NUM_DATAPOINTS) {
+				if (this->test_location_new_counts[history->test_location_index] >= NEW_ACTION_NUM_DATAPOINTS
+						&& this->test_location_new_truth_counts[history->test_location_index] >= MIN_NUM_TRUTH_DATAPOINTS) {
 					#if defined(MDEBUG) && MDEBUG
 					if (rand()%2 == 0) {
 					#else
@@ -144,8 +148,10 @@ void NewActionExperiment::test_backprop(
 					#endif /* MDEBUG */
 						this->test_location_existing_scores[history->test_location_index] = 0.0;
 						this->test_location_existing_counts[history->test_location_index] = 0;
+						this->test_location_existing_truth_counts[history->test_location_index] = 0;
 						this->test_location_new_scores[history->test_location_index] = 0.0;
 						this->test_location_new_counts[history->test_location_index] = 0;
+						this->test_location_new_truth_counts[history->test_location_index] = 0;
 						this->test_location_states[history->test_location_index] = NEW_ACTION_EXPERIMENT_VERIFY_1ST_EXISTING;
 					} else {
 						is_fail = true;
@@ -162,12 +168,14 @@ void NewActionExperiment::test_backprop(
 					for (int l_index = 0; l_index < (int)history->starting_predicted_scores[i_index].size(); l_index++) {
 						sum_score += history->normalized_scores[i_index][l_index];
 					}
-					double final_score = sum_score / (int)history->starting_predicted_scores.size() + final_normalized_score;
+					double final_score = sum_score / (int)history->starting_predicted_scores[i_index].size() + final_normalized_score;
 					this->test_location_existing_scores[history->test_location_index] += final_score;
 					this->test_location_existing_counts[history->test_location_index]++;
 				}
+				this->test_location_existing_truth_counts[history->test_location_index]++;
 
-				if (this->test_location_existing_counts[history->test_location_index] >= NEW_ACTION_VERIFY_1ST_NUM_DATAPOINTS) {
+				if (this->test_location_existing_counts[history->test_location_index] >= NEW_ACTION_VERIFY_1ST_NUM_DATAPOINTS
+						&& this->test_location_existing_truth_counts[history->test_location_index] >= MIN_NUM_TRUTH_DATAPOINTS) {
 					this->test_location_states[history->test_location_index] = NEW_ACTION_EXPERIMENT_VERIFY_1ST_NEW;
 				}
 			}
@@ -181,12 +189,14 @@ void NewActionExperiment::test_backprop(
 					for (int l_index = 0; l_index < (int)history->starting_predicted_scores[i_index].size(); l_index++) {
 						sum_score += history->normalized_scores[i_index][l_index];
 					}
-					double final_score = sum_score / (int)history->starting_predicted_scores.size() + final_normalized_score;
+					double final_score = sum_score / (int)history->starting_predicted_scores[i_index].size() + final_normalized_score;
 					this->test_location_new_scores[history->test_location_index] += final_score;
 					this->test_location_new_counts[history->test_location_index]++;
 				}
+				this->test_location_new_truth_counts[history->test_location_index]++;
 
-				if (this->test_location_new_counts[history->test_location_index] >= NEW_ACTION_VERIFY_1ST_NUM_DATAPOINTS) {
+				if (this->test_location_new_counts[history->test_location_index] >= NEW_ACTION_VERIFY_1ST_NUM_DATAPOINTS
+						&& this->test_location_new_truth_counts[history->test_location_index] >= MIN_NUM_TRUTH_DATAPOINTS) {
 					#if defined(MDEBUG) && MDEBUG
 					if (rand()%2 == 0) {
 					#else
@@ -199,8 +209,10 @@ void NewActionExperiment::test_backprop(
 					#endif /* MDEBUG */
 						this->test_location_existing_scores[history->test_location_index] = 0.0;
 						this->test_location_existing_counts[history->test_location_index] = 0;
+						this->test_location_existing_truth_counts[history->test_location_index] = 0;
 						this->test_location_new_scores[history->test_location_index] = 0.0;
 						this->test_location_new_counts[history->test_location_index] = 0;
+						this->test_location_new_truth_counts[history->test_location_index] = 0;
 						this->test_location_states[history->test_location_index] = NEW_ACTION_EXPERIMENT_VERIFY_2ND_EXISTING;
 					} else {
 						is_fail = true;
@@ -217,12 +229,14 @@ void NewActionExperiment::test_backprop(
 					for (int l_index = 0; l_index < (int)history->starting_predicted_scores[i_index].size(); l_index++) {
 						sum_score += history->normalized_scores[i_index][l_index];
 					}
-					double final_score = sum_score / (int)history->starting_predicted_scores.size() + final_normalized_score;
+					double final_score = sum_score / (int)history->starting_predicted_scores[i_index].size() + final_normalized_score;
 					this->test_location_existing_scores[history->test_location_index] += final_score;
 					this->test_location_existing_counts[history->test_location_index]++;
 				}
+				this->test_location_existing_truth_counts[history->test_location_index]++;
 
-				if (this->test_location_existing_counts[history->test_location_index] >= NEW_ACTION_VERIFY_2ND_NUM_DATAPOINTS) {
+				if (this->test_location_existing_counts[history->test_location_index] >= NEW_ACTION_VERIFY_2ND_NUM_DATAPOINTS
+						&& this->test_location_existing_truth_counts[history->test_location_index] >= MIN_NUM_TRUTH_DATAPOINTS) {
 					this->test_location_states[history->test_location_index] = NEW_ACTION_EXPERIMENT_VERIFY_2ND_NEW;
 				}
 			}
@@ -236,12 +250,14 @@ void NewActionExperiment::test_backprop(
 					for (int l_index = 0; l_index < (int)history->starting_predicted_scores[i_index].size(); l_index++) {
 						sum_score += history->normalized_scores[i_index][l_index];
 					}
-					double final_score = sum_score / (int)history->starting_predicted_scores.size() + final_normalized_score;
+					double final_score = sum_score / (int)history->starting_predicted_scores[i_index].size() + final_normalized_score;
 					this->test_location_new_scores[history->test_location_index] += final_score;
 					this->test_location_new_counts[history->test_location_index]++;
 				}
+				this->test_location_new_truth_counts[history->test_location_index]++;
 
-				if (this->test_location_new_counts[history->test_location_index] >= NEW_ACTION_VERIFY_2ND_NUM_DATAPOINTS) {
+				if (this->test_location_new_counts[history->test_location_index] >= NEW_ACTION_VERIFY_2ND_NUM_DATAPOINTS
+						&& this->test_location_new_truth_counts[history->test_location_index] >= MIN_NUM_TRUTH_DATAPOINTS) {
 					#if defined(MDEBUG) && MDEBUG
 					if (rand()%2 == 0) {
 					#else
@@ -262,8 +278,10 @@ void NewActionExperiment::test_backprop(
 						this->test_location_states.erase(this->test_location_states.begin() + history->test_location_index);
 						this->test_location_existing_scores.erase(this->test_location_existing_scores.begin() + history->test_location_index);
 						this->test_location_existing_counts.erase(this->test_location_existing_counts.begin() + history->test_location_index);
+						this->test_location_existing_truth_counts.erase(this->test_location_existing_truth_counts.begin() + history->test_location_index);
 						this->test_location_new_scores.erase(this->test_location_new_scores.begin() + history->test_location_index);
 						this->test_location_new_counts.erase(this->test_location_new_counts.begin() + history->test_location_index);
+						this->test_location_new_truth_counts.erase(this->test_location_new_truth_counts.begin() + history->test_location_index);
 
 						if (this->generalize_iter == -1
 								&& this->successful_location_starts.size() == 0) {
@@ -304,8 +322,10 @@ void NewActionExperiment::test_backprop(
 		this->test_location_states.erase(this->test_location_states.begin() + history->test_location_index);
 		this->test_location_existing_scores.erase(this->test_location_existing_scores.begin() + history->test_location_index);
 		this->test_location_existing_counts.erase(this->test_location_existing_counts.begin() + history->test_location_index);
+		this->test_location_existing_truth_counts.erase(this->test_location_existing_truth_counts.begin() + history->test_location_index);
 		this->test_location_new_scores.erase(this->test_location_new_scores.begin() + history->test_location_index);
 		this->test_location_new_counts.erase(this->test_location_new_counts.begin() + history->test_location_index);
+		this->test_location_new_truth_counts.erase(this->test_location_new_truth_counts.begin() + history->test_location_index);
 
 		if (this->generalize_iter == -1
 				&& this->successful_location_starts.size() == 0) {

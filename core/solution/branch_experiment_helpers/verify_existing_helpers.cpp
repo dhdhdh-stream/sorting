@@ -59,11 +59,13 @@ void BranchExperiment::verify_existing_backprop(
 		for (int l_index = 0; l_index < (int)history->starting_predicted_scores[i_index].size(); l_index++) {
 			sum_score += history->normalized_scores[i_index][l_index];
 		}
-		double final_score = sum_score / (int)history->starting_predicted_scores.size() + final_normalized_score;
+		double final_score = sum_score / (int)history->starting_predicted_scores[i_index].size() + final_normalized_score;
 		this->target_val_histories.push_back(final_score);
 	}
 
-	if ((int)this->target_val_histories.size() >= VERIFY_NUM_DATAPOINTS) {
+	this->state_iter++;
+	if ((int)this->target_val_histories.size() >= VERIFY_NUM_DATAPOINTS
+			&& this->state_iter >= MIN_NUM_TRUTH_DATAPOINTS) {
 		int num_instances = (int)this->target_val_histories.size();
 
 		double sum_scores = 0.0;
@@ -78,5 +80,6 @@ void BranchExperiment::verify_existing_backprop(
 
 		this->state = BRANCH_EXPERIMENT_STATE_VERIFY;
 		this->state_iter = 0;
+		this->sub_state_iter = 0;
 	}
 }

@@ -22,9 +22,9 @@ void InfoScopeNode::activate(AbstractNode*& curr_node,
 						  run_helper,
 						  history->is_positive);
 
-	if (!run_helper.exceeded_limit) {
-		curr_node = this->next_node;
+	curr_node = this->next_node;
 
+	if (!run_helper.exceeded_limit) {
 		for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
 			bool is_selected = this->experiments[e_index]->activate(
 				this,
@@ -37,11 +37,13 @@ void InfoScopeNode::activate(AbstractNode*& curr_node,
 				return;
 			}
 		}
+	}
 
-		uniform_int_distribution<int> swap_distribution(0, run_helper.num_actions-1);
-		if (swap_distribution(generator) == 0) {
-			run_helper.explore_node = this;
-			run_helper.explore_is_branch = false;
+	if (run_helper.experiments_seen_order.size() == 0) {
+		map<Scope*, set<pair<AbstractNode*,bool>>>::iterator scope_it = run_helper.nodes_seen.find(this->parent);
+		if (scope_it == run_helper.nodes_seen.end()) {
+			scope_it = run_helper.nodes_seen.insert({this->parent, set<pair<AbstractNode*,bool>>()}).first;
 		}
+		scope_it->second.insert({this, false});
 	}
 }

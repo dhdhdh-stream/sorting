@@ -38,6 +38,7 @@ public:
 
 	int state;
 	int state_iter;
+	int sub_state_iter;
 	int explore_iter;
 
 	double existing_average_score;

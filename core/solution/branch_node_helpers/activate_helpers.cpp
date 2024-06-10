@@ -175,9 +175,11 @@ void BranchNode::activate(AbstractNode*& curr_node,
 		}
 	}
 
-	uniform_int_distribution<int> swap_distribution(0, run_helper.num_actions-1);
-	if (swap_distribution(generator) == 0) {
-		run_helper.explore_node = this;
-		run_helper.explore_is_branch = history->is_branch;
+	if (run_helper.experiments_seen_order.size() == 0) {
+		map<Scope*, set<pair<AbstractNode*,bool>>>::iterator scope_it = run_helper.nodes_seen.find(this->parent);
+		if (scope_it == run_helper.nodes_seen.end()) {
+			scope_it = run_helper.nodes_seen.insert({this->parent, set<pair<AbstractNode*,bool>>()}).first;
+		}
+		scope_it->second.insert({this, history->is_branch});
 	}
 }

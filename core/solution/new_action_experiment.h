@@ -55,8 +55,10 @@ public:
 	std::vector<int> test_location_states;
 	std::vector<double> test_location_existing_scores;
 	std::vector<int> test_location_existing_counts;
+	std::vector<int> test_location_existing_truth_counts;
 	std::vector<double> test_location_new_scores;
 	std::vector<int> test_location_new_counts;
+	std::vector<int> test_location_new_truth_counts;
 
 	/**
 	 * - add when experimenting and pop if fail

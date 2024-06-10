@@ -18,8 +18,7 @@ class ScopeHistory;
 class ScopeNode;
 class Solution;
 
-void create_experiment(AbstractNode* explore_node,
-					   bool explore_is_branch);
+void create_experiment(RunHelper& run_helper);
 
 ScopeNode* create_existing();
 InfoScope* get_existing_info_scope();

@@ -1,19 +1,18 @@
-// TODO: add mimicking
-// - human performs simple full run, so no decision making/variations
-//   - save obs
-//   - copy sequences, and try using them in different places
-//   - or examine differences/branching offs
-// - need to be able to go from action sequence to matching scope
-// - maybe need multiple runs?
-//   - really not that much to do with a single run
-//     - perform exactly and hope good enough
-//     - but can easily fail because solution is sharp and doesn't have the fallback the original person has
-// - yeah, so have multiple runs, which shouldn't be that big of a problem
-//   - hopefully, representative ones
-// - initially, runs will look like a tree with branch really close to root
-//   - need to assume that there's repetition and try to change into a graph?
-//     - is it even worth to spend effort here?
-//       - probably, at the very least to transfer knowledge from humans
+/**
+ * - humans teach incrementally
+ *   - start by sharing most common sequence along with when to apply in general
+ *     - so initial sequence may not perfectly match when to apply
+ *   - then gradually add branches sequence by sequence along with when those apply
+ * 
+ * - requires shared actions/vocabulary
+ * 
+ * - so in order to learn from humans:
+ *   - would need to learn actions/vocabulary
+ *     - so would need to learn all the sequences/branches and decision making for those actions
+ *       - and repeat recursively
+ */
+
+// TODO: try adding back full history
 
 #include <chrono>
 #include <iostream>
@@ -56,10 +55,10 @@ int main(int argc, char* argv[]) {
 	problem_type = new Minesweeper();
 
 	solution = new Solution();
-	solution->init();
-	// solution->load("", "main");
+	// solution->init();
+	solution->load("", "main");
 
-	solution->save("", "main");
+	// solution->save("", "main");
 
 	#if defined(MDEBUG) && MDEBUG
 	int run_index = 0;
@@ -85,8 +84,7 @@ int main(int argc, char* argv[]) {
 
 		if (run_helper.experiments_seen_order.size() == 0) {
 			if (!run_helper.exceeded_limit) {
-				create_experiment(run_helper.explore_node,
-								  run_helper.explore_is_branch);
+				create_experiment(run_helper);
 			}
 		}
 
@@ -359,7 +357,7 @@ int main(int argc, char* argv[]) {
 				solution->num_actions_limit = 2*solution->max_num_actions + 10;
 
 				solution->timestamp++;
-				solution->save("", "main");
+				// solution->save("", "main");
 
 				ofstream display_file;
 				display_file.open("../display.txt");

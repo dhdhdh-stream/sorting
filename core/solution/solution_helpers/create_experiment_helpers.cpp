@@ -20,8 +20,15 @@
 
 using namespace std;
 
-void create_experiment(AbstractNode* explore_node,
-					   bool explore_is_branch) {
+void create_experiment(RunHelper& run_helper) {
+	uniform_int_distribution<int> scope_distribution(0, run_helper.nodes_seen.size()-1);
+	map<Scope*, set<pair<AbstractNode*,bool>>>::iterator scope_it =
+		next(run_helper.nodes_seen.begin(), scope_distribution(generator));
+	uniform_int_distribution<int> node_distribution(0, scope_it->second.size()-1);
+	set<pair<AbstractNode*,bool>>::iterator it = next(scope_it->second.begin(), node_distribution(generator));
+	AbstractNode* explore_node = it->first;
+	bool explore_is_branch = it->second;
+
 	// if (explore_node->parent->parent_info_scope == NULL) {
 		uniform_int_distribution<int> expensive_distribution(0, 9);
 		if (expensive_distribution(generator) == 0) {
@@ -53,11 +60,7 @@ void create_experiment(AbstractNode* explore_node,
 		} else {
 			uniform_int_distribution<int> pass_through_distribution(0, 3);
 			if (pass_through_distribution(generator) != 0) {
-				#if defined(MDEBUG) && MDEBUG
-				if (explore_node->parent->nodes.size() > 10) {
-				#else
 				if (explore_node->parent->nodes.size() > 20) {
-				#endif /* MDEBUG */
 					NewActionExperiment* new_action_experiment = new NewActionExperiment(
 						explore_node->parent,
 						explore_node,

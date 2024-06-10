@@ -64,8 +64,7 @@ int main(int argc, char* argv[]) {
 
 		if (run_helper.experiments_seen_order.size() == 0) {
 			if (!run_helper.exceeded_limit) {
-				create_experiment(run_helper.explore_node,
-								  run_helper.explore_is_branch);
+				create_experiment(run_helper);
 			}
 		}
 
@@ -326,18 +325,13 @@ int main(int argc, char* argv[]) {
 							scope_histories,
 							target_val_histories);
 				if (new_scope != NULL) {
-					if (new_scope_histories.size() > 0) {
-						update_eval(new_scope,
-									new_scope_histories,
-									new_target_val_histories);
-
-						duplicate->timestamp++;
-						duplicate->save(path, "possible_" + to_string((unsigned)time(NULL)));
-					}
-				} else {
-					duplicate->timestamp++;
-					duplicate->save(path, "possible_" + to_string((unsigned)time(NULL)));
+					update_eval(new_scope,
+								new_scope_histories,
+								new_target_val_histories);
 				}
+
+				duplicate->timestamp++;
+				duplicate->save(path, "possible_" + to_string((unsigned)time(NULL)));
 
 				delete duplicate;
 			}

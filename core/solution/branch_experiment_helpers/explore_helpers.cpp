@@ -248,7 +248,7 @@ void BranchExperiment::explore_backprop(
 			for (int l_index = 0; l_index < (int)history->starting_predicted_scores[0].size(); l_index++) {
 				sum_score += history->normalized_scores[0][l_index];
 			}
-			double final_score = sum_score / (int)history->starting_predicted_scores.size() + final_normalized_score;
+			double final_score = sum_score / (int)history->starting_predicted_scores[0].size() + final_normalized_score;
 
 			curr_surprise = final_score - history->existing_predicted_score;
 		}

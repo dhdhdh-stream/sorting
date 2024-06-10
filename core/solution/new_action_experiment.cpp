@@ -13,7 +13,7 @@
 
 using namespace std;
 
-const int NEW_ACTION_MIN_NUM_NODES = 4;
+const int NEW_ACTION_MIN_NUM_NODES = 3;
 const int CREATE_NEW_ACTION_NUM_TRIES = 30;
 
 NewActionExperiment::NewActionExperiment(Scope* scope_context,
@@ -68,7 +68,7 @@ NewActionExperiment::NewActionExperiment(Scope* scope_context,
 				break;
 			}
 		}
-		if (potential_included_nodes.size() >= NEW_ACTION_MIN_NUM_NODES) {
+		if (num_meaningful_nodes >= NEW_ACTION_MIN_NUM_NODES) {
 			this->starting_node = potential_starting_node;
 			this->included_nodes = potential_included_nodes;
 
@@ -126,12 +126,8 @@ NewActionExperiment::NewActionExperiment(Scope* scope_context,
 			random_start_node,
 			possible_exits);
 
-		geometric_distribution<int> exit_distribution(0.3);
-		int random_index = exit_distribution(generator);
-		if (random_index > (int)possible_exits.size()-1) {
-			random_index = (int)possible_exits.size()-1;
-		}
-		AbstractNode* exit_next_node = possible_exits[random_index];
+		uniform_int_distribution<int> exit_distribution(0, possible_exits.size()-1);
+		AbstractNode* exit_next_node = possible_exits[exit_distribution(generator)];
 
 		this->test_location_starts.push_back(node_context);
 		this->test_location_is_branch.push_back(is_branch);
@@ -139,8 +135,10 @@ NewActionExperiment::NewActionExperiment(Scope* scope_context,
 		this->test_location_states.push_back(NEW_ACTION_EXPERIMENT_MEASURE_EXISTING);
 		this->test_location_existing_scores.push_back(0.0);
 		this->test_location_existing_counts.push_back(0);
+		this->test_location_existing_truth_counts.push_back(0);
 		this->test_location_new_scores.push_back(0.0);
 		this->test_location_new_counts.push_back(0);
+		this->test_location_new_truth_counts.push_back(0);
 
 		this->average_remaining_experiments_from_start = 1.0;
 

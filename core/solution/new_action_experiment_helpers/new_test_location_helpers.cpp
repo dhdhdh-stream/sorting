@@ -119,13 +119,9 @@ void NewActionExperiment::add_new_test_location(ScopeHistory* scope_history) {
 		if (possible_start_indexes[start_index] == (int)node_sequence.size()-1) {
 			exit_node = NULL;
 		} else {
-			geometric_distribution exit_distribution(0.3);
-			int exit_index = possible_start_indexes[start_index] + 1 + exit_distribution(generator);
-			if (exit_index > (int)node_sequence.size()-1) {
-				exit_node = node_sequence.back();
-			} else {
-				exit_node = node_sequence[exit_index];
-			}
+			uniform_int_distribution<int> exit_distribution(
+				possible_start_indexes[start_index] + 1, (int)node_sequence.size()-1);
+			exit_node = node_sequence[exit_distribution(generator)];
 		}
 
 		this->test_location_starts.push_back(possible_starts[start_index]);
@@ -134,8 +130,10 @@ void NewActionExperiment::add_new_test_location(ScopeHistory* scope_history) {
 		this->test_location_states.push_back(NEW_ACTION_EXPERIMENT_MEASURE_EXISTING);
 		this->test_location_existing_scores.push_back(0.0);
 		this->test_location_existing_counts.push_back(0);
+		this->test_location_existing_truth_counts.push_back(0);
 		this->test_location_new_scores.push_back(0.0);
 		this->test_location_new_counts.push_back(0);
+		this->test_location_new_truth_counts.push_back(0);
 
 		this->average_remaining_experiments_from_start = 1.0;
 

@@ -16,12 +16,16 @@
 #ifndef RUN_HELPER_H
 #define RUN_HELPER_H
 
+#include <map>
+#include <set>
+#include <utility>
 #include <vector>
 
 class AbstractExperiment;
 class AbstractExperimentHistory;
 class AbstractNode;
 class Problem;
+class Scope;
 class ScopeHistory;
 class Solution;
 
@@ -32,8 +36,11 @@ public:
 	int num_decisions;
 	int num_actions;
 
-	AbstractNode* explore_node;
-	bool explore_is_branch;
+	/**
+	 * - choose randomly rather than proportional to use
+	 *   - proportional biases towards lower layers, but upper layers may be just as impactful
+	 */
+	std::map<Scope*, std::set<std::pair<AbstractNode*,bool>>> nodes_seen;
 
 	std::vector<AbstractExperiment*> experiments_seen_order;
 	std::vector<AbstractExperimentHistory*> experiment_histories;
