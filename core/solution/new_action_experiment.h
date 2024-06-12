@@ -39,6 +39,8 @@ const int NEW_ACTION_NUM_GENERALIZE_TRIES = 300;
 const int NEW_ACTION_MIN_LOCATIONS = 3;
 #endif /* MDEBUG */
 
+// TODO: add scope nodes for success so can chain
+
 class NewActionExperimentHistory;
 class NewActionExperiment : public AbstractExperiment {
 public:

@@ -308,15 +308,6 @@ int main(int argc, char* argv[]) {
 				}
 				duplicate->average_score = sum_score / MEASURE_ITERS;
 
-				double sum_variance = 0.0;
-				for (int d_index = 0; d_index < MEASURE_ITERS; d_index++) {
-					sum_variance += (o_target_val_histories[d_index] - duplicate->average_score) * (o_target_val_histories[d_index] - duplicate->average_score);
-				}
-				duplicate->score_standard_deviation = sqrt(sum_variance / MEASURE_ITERS);
-				if (duplicate->score_standard_deviation < MIN_STANDARD_DEVIATION) {
-					duplicate->score_standard_deviation = MIN_STANDARD_DEVIATION;
-				}
-
 				duplicate->max_num_actions = max_num_actions;
 
 				cout << "duplicate->average_score: " << duplicate->average_score << endl;

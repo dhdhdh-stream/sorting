@@ -30,16 +30,12 @@ void NewActionExperiment::test_activate(
 		NewActionExperimentHistory* history) {
 	history->test_location_index = location_index;
 
-	history->starting_predicted_scores.push_back(vector<double>(context.size(), 0.0));
-	history->normalized_scores.push_back(vector<double>(context.size(), 0.0));
+	history->predicted_scores.push_back(vector<double>(context.size(), 0.0));
 	for (int l_index = 0; l_index < (int)context.size(); l_index++) {
 		if (context[l_index].scope->eval_network != NULL) {
-			double starting_predicted_score = calc_score(context[l_index].scope_history);
-			history->starting_predicted_scores.back()[l_index] = starting_predicted_score;
-
 			context[l_index].scope_history->callback_experiment_history = history;
 			context[l_index].scope_history->callback_experiment_indexes.push_back(
-				(int)history->starting_predicted_scores.size()-1);
+				(int)history->predicted_scores.size()-1);
 			context[l_index].scope_history->callback_experiment_layers.push_back(l_index);
 		}
 	}
@@ -72,18 +68,15 @@ void NewActionExperiment::test_back_activate(
 	 * - possible for hook to be created by successful_activate()
 	 */
 	if (context.back().scope->eval_network != NULL) {
-		double ending_predicted_score;
+		double predicted_score;
 		if (run_helper.exceeded_limit) {
-			ending_predicted_score = -1.0;
+			predicted_score = -1.0;
 		} else {
-			ending_predicted_score = calc_score(context.back().scope_history);
+			predicted_score = calc_score(context.back().scope_history);
 		}
 		for (int i_index = 0; i_index < (int)context.back().scope_history->callback_experiment_indexes.size(); i_index++) {
-			double predicted_score = ending_predicted_score
-				- history->starting_predicted_scores[context.back().scope_history->callback_experiment_indexes[i_index]]
-					[context.back().scope_history->callback_experiment_layers[i_index]];
-			history->normalized_scores[context.back().scope_history->callback_experiment_indexes[i_index]]
-				[context.back().scope_history->callback_experiment_layers[i_index]] = predicted_score / context.back().scope->eval_score_standard_deviation;
+			history->predicted_scores[context.back().scope_history->callback_experiment_indexes[i_index]]
+				[context.back().scope_history->callback_experiment_layers[i_index]] = predicted_score;
 		}
 	}
 }
@@ -101,13 +94,12 @@ void NewActionExperiment::test_backprop(
 		switch (this->test_location_states[history->test_location_index]) {
 		case NEW_ACTION_EXPERIMENT_MEASURE_EXISTING:
 			{
-				double final_normalized_score = (target_val - solution->average_score) / solution->score_standard_deviation;
-				for (int i_index = 0; i_index < (int)history->starting_predicted_scores.size(); i_index++) {
+				for (int i_index = 0; i_index < (int)history->predicted_scores.size(); i_index++) {
 					double sum_score = 0.0;
-					for (int l_index = 0; l_index < (int)history->starting_predicted_scores[i_index].size(); l_index++) {
-						sum_score += history->normalized_scores[i_index][l_index];
+					for (int l_index = 0; l_index < (int)history->predicted_scores[i_index].size(); l_index++) {
+						sum_score += history->predicted_scores[i_index][l_index];
 					}
-					double final_score = sum_score / (int)history->starting_predicted_scores[i_index].size() + final_normalized_score;
+					double final_score = (sum_score / (int)history->predicted_scores[i_index].size() + target_val) / 2.0;
 					this->test_location_existing_scores[history->test_location_index] += final_score;
 					this->test_location_existing_counts[history->test_location_index]++;
 				}
@@ -122,13 +114,12 @@ void NewActionExperiment::test_backprop(
 			break;
 		case NEW_ACTION_EXPERIMENT_MEASURE_NEW:
 			{
-				double final_normalized_score = (target_val - solution->average_score) / solution->score_standard_deviation;
-				for (int i_index = 0; i_index < (int)history->starting_predicted_scores.size(); i_index++) {
+				for (int i_index = 0; i_index < (int)history->predicted_scores.size(); i_index++) {
 					double sum_score = 0.0;
-					for (int l_index = 0; l_index < (int)history->starting_predicted_scores[i_index].size(); l_index++) {
-						sum_score += history->normalized_scores[i_index][l_index];
+					for (int l_index = 0; l_index < (int)history->predicted_scores[i_index].size(); l_index++) {
+						sum_score += history->predicted_scores[i_index][l_index];
 					}
-					double final_score = sum_score / (int)history->starting_predicted_scores[i_index].size() + final_normalized_score;
+					double final_score = (sum_score / (int)history->predicted_scores[i_index].size() + target_val) / 2.0;
 					this->test_location_new_scores[history->test_location_index] += final_score;
 					this->test_location_new_counts[history->test_location_index]++;
 				}
@@ -162,13 +153,12 @@ void NewActionExperiment::test_backprop(
 			break;
 		case NEW_ACTION_EXPERIMENT_VERIFY_1ST_EXISTING:
 			{
-				double final_normalized_score = (target_val - solution->average_score) / solution->score_standard_deviation;
-				for (int i_index = 0; i_index < (int)history->starting_predicted_scores.size(); i_index++) {
+				for (int i_index = 0; i_index < (int)history->predicted_scores.size(); i_index++) {
 					double sum_score = 0.0;
-					for (int l_index = 0; l_index < (int)history->starting_predicted_scores[i_index].size(); l_index++) {
-						sum_score += history->normalized_scores[i_index][l_index];
+					for (int l_index = 0; l_index < (int)history->predicted_scores[i_index].size(); l_index++) {
+						sum_score += history->predicted_scores[i_index][l_index];
 					}
-					double final_score = sum_score / (int)history->starting_predicted_scores[i_index].size() + final_normalized_score;
+					double final_score = (sum_score / (int)history->predicted_scores[i_index].size() + target_val) / 2.0;
 					this->test_location_existing_scores[history->test_location_index] += final_score;
 					this->test_location_existing_counts[history->test_location_index]++;
 				}
@@ -183,13 +173,12 @@ void NewActionExperiment::test_backprop(
 			break;
 		case NEW_ACTION_EXPERIMENT_VERIFY_1ST_NEW:
 			{
-				double final_normalized_score = (target_val - solution->average_score) / solution->score_standard_deviation;
-				for (int i_index = 0; i_index < (int)history->starting_predicted_scores.size(); i_index++) {
+				for (int i_index = 0; i_index < (int)history->predicted_scores.size(); i_index++) {
 					double sum_score = 0.0;
-					for (int l_index = 0; l_index < (int)history->starting_predicted_scores[i_index].size(); l_index++) {
-						sum_score += history->normalized_scores[i_index][l_index];
+					for (int l_index = 0; l_index < (int)history->predicted_scores[i_index].size(); l_index++) {
+						sum_score += history->predicted_scores[i_index][l_index];
 					}
-					double final_score = sum_score / (int)history->starting_predicted_scores[i_index].size() + final_normalized_score;
+					double final_score = (sum_score / (int)history->predicted_scores[i_index].size() + target_val) / 2.0;
 					this->test_location_new_scores[history->test_location_index] += final_score;
 					this->test_location_new_counts[history->test_location_index]++;
 				}
@@ -223,13 +212,12 @@ void NewActionExperiment::test_backprop(
 			break;
 		case NEW_ACTION_EXPERIMENT_VERIFY_2ND_EXISTING:
 			{
-				double final_normalized_score = (target_val - solution->average_score) / solution->score_standard_deviation;
-				for (int i_index = 0; i_index < (int)history->starting_predicted_scores.size(); i_index++) {
+				for (int i_index = 0; i_index < (int)history->predicted_scores.size(); i_index++) {
 					double sum_score = 0.0;
-					for (int l_index = 0; l_index < (int)history->starting_predicted_scores[i_index].size(); l_index++) {
-						sum_score += history->normalized_scores[i_index][l_index];
+					for (int l_index = 0; l_index < (int)history->predicted_scores[i_index].size(); l_index++) {
+						sum_score += history->predicted_scores[i_index][l_index];
 					}
-					double final_score = sum_score / (int)history->starting_predicted_scores[i_index].size() + final_normalized_score;
+					double final_score = (sum_score / (int)history->predicted_scores[i_index].size() + target_val) / 2.0;
 					this->test_location_existing_scores[history->test_location_index] += final_score;
 					this->test_location_existing_counts[history->test_location_index]++;
 				}
@@ -244,13 +232,12 @@ void NewActionExperiment::test_backprop(
 			break;
 		case NEW_ACTION_EXPERIMENT_VERIFY_2ND_NEW:
 			{
-				double final_normalized_score = (target_val - solution->average_score) / solution->score_standard_deviation;
-				for (int i_index = 0; i_index < (int)history->starting_predicted_scores.size(); i_index++) {
+				for (int i_index = 0; i_index < (int)history->predicted_scores.size(); i_index++) {
 					double sum_score = 0.0;
-					for (int l_index = 0; l_index < (int)history->starting_predicted_scores[i_index].size(); l_index++) {
-						sum_score += history->normalized_scores[i_index][l_index];
+					for (int l_index = 0; l_index < (int)history->predicted_scores[i_index].size(); l_index++) {
+						sum_score += history->predicted_scores[i_index][l_index];
 					}
-					double final_score = sum_score / (int)history->starting_predicted_scores[i_index].size() + final_normalized_score;
+					double final_score = (sum_score / (int)history->predicted_scores[i_index].size() + target_val) / 2.0;
 					this->test_location_new_scores[history->test_location_index] += final_score;
 					this->test_location_new_counts[history->test_location_index]++;
 				}

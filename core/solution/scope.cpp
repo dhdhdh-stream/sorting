@@ -81,8 +81,6 @@ void Scope::save(ofstream& output_file) {
 		}
 
 		this->eval_network->save(output_file);
-
-		output_file << this->eval_score_standard_deviation << endl;
 	}
 }
 
@@ -169,10 +167,6 @@ void Scope::load(ifstream& input_file) {
 		}
 
 		this->eval_network = new Network(input_file);
-
-		string eval_score_standard_deviation_line;
-		getline(input_file, eval_score_standard_deviation_line);
-		this->eval_score_standard_deviation = stod(eval_score_standard_deviation_line);
 	}
 }
 
@@ -253,7 +247,6 @@ void Scope::copy_from(Scope* original,
 	} else {
 		this->eval_network = new Network(original->eval_network);
 	}
-	this->eval_score_standard_deviation = original->eval_score_standard_deviation;
 }
 
 void Scope::save_for_display(ofstream& output_file) {

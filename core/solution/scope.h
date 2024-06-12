@@ -30,7 +30,11 @@ public:
 	std::vector<AbstractNode*> eval_input_node_contexts;
 	std::vector<int> eval_input_obs_indexes;
 	Network* eval_network;
-	double eval_score_standard_deviation;
+	/**
+	 * - not valid for every point in scope, only the end
+	 *   - would be extremely expensive to keep updated
+	 *     - addressed by train existing anyways
+	 */
 
 	Scope();
 	~Scope();

@@ -124,30 +124,27 @@ double Minesweeper::get_observation_helper(int x, int y) {
 			|| x > WIDTH-1
 			|| y < 0
 			|| y > HEIGHT-1) {
-		return -10.0;
+		return -20.0;
 	} else {
 		if (this->hit_mine) {
 			if (this->revealed[x][y]) {
-				return this->world[x][y];
+				return 1.0 + this->world[x][y];
 			} else if (this->flagged[x][y]) {
-				if (this->world[x][y] == -1) {
-					return -2.0;
-					/**
-					 * - probably not impactful as eval will learn from -2.0 signal instead of 10.0
-					 */
+				if (this->world[x][y] != -1) {
+					return -5.0;
 				} else {
-					return 10.0;
+					return 20.0;
 				}
 			} else {
-				return -5.0;
+				return -10.0;
 			}
 		} else {
 			if (this->revealed[x][y]) {
-				return this->world[x][y];
+				return 1.0 + this->world[x][y];
 			} else if (this->flagged[x][y]) {
-				return 10.0;
+				return 20.0;
 			} else {
-				return -5.0;
+				return -10.0;
 			}
 		}
 	}

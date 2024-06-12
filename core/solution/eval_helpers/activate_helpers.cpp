@@ -31,11 +31,6 @@ double calc_score(ScopeHistory* scope_history) {
 			case NODE_TYPE_SCOPE:
 				{
 					ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)it->second;
-					// temp
-					if (scope_node_history->obs_snapshot.size() == 0) {
-						cout << "it->first->parent->id: " << it->first->parent->id << endl;
-						cout << "it->first->id: " << it->first->id << endl;
-					}
 					input_vals[i_index] = scope_node_history->obs_snapshot[scope->eval_input_obs_indexes[i_index]];
 				}
 				break;

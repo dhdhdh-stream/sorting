@@ -47,6 +47,11 @@ public:
 	std::vector<AbstractNode*> existing_input_node_contexts;
 	std::vector<int> existing_input_obs_indexes;
 	Network* existing_network;
+	/**
+	 * - when removing, don't worry about whether removing early or near
+	 *   - either can be good, leading to different follow-ups
+	 *   - difficult to control when also trying to remove inputs
+	 */
 
 	int explore_type;
 

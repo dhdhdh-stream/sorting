@@ -74,8 +74,7 @@ class AbstractExperimentHistory {
 public:
 	AbstractExperiment* experiment;
 
-	std::vector<std::vector<double>> starting_predicted_scores;
-	std::vector<std::vector<double>> normalized_scores;
+	std::vector<std::vector<double>> predicted_scores;
 
 	int experiment_index;
 
