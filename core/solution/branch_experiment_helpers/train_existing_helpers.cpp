@@ -208,9 +208,9 @@ void BranchExperiment::train_existing_backprop(
 					}
 				}
 
-				train_network(test_inputs,
-							  this->target_val_histories,
-							  test_network);
+				train_w_drop_network(test_inputs,
+									 this->target_val_histories,
+									 test_network);
 
 				double test_average_misguess;
 				double test_misguess_standard_deviation;
@@ -271,9 +271,9 @@ void BranchExperiment::train_existing_backprop(
 							remove_test_inputs[d_index].erase(remove_test_inputs[d_index].begin() + i_index);
 						}
 
-						optimize_network(remove_test_inputs,
-										 this->target_val_histories,
-										 remove_test_network);
+						optimize_w_drop_network(remove_test_inputs,
+												this->target_val_histories,
+												remove_test_network);
 
 						double remove_test_average_misguess;
 						double remove_test_misguess_standard_deviation;

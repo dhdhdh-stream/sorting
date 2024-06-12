@@ -201,10 +201,6 @@ void BranchExperiment::measure_backprop(
 				delete this->ending_node;
 				this->ending_node = NULL;
 			}
-			if (this->branch_node != NULL) {
-				delete this->branch_node;
-				this->branch_node = NULL;
-			}
 
 			this->new_input_node_contexts.clear();
 			this->new_input_obs_indexes.clear();
@@ -253,22 +249,6 @@ void BranchExperiment::measure_backprop(
 			this->branch_weight = (double)this->branch_count / (double)(this->original_count + this->branch_count);
 
 			#if defined(MDEBUG) && MDEBUG
-			if (rand()%4 == 0) {
-			#else
-			if (this->branch_weight > PASS_THROUGH_BRANCH_WEIGHT
-					&& this->new_average_score >= this->existing_average_score) {
-			#endif
-				this->is_pass_through = true;
-			} else {
-				this->is_pass_through = false;
-
-				this->branch_node = new BranchNode();
-				this->branch_node->parent = this->scope_context;
-				this->branch_node->id = this->scope_context->node_counter;
-				this->scope_context->node_counter++;
-			}
-
-			#if defined(MDEBUG) && MDEBUG
 			if (rand()%2 == 0) {
 			#else
 			if (this->branch_weight > 0.01
@@ -279,6 +259,22 @@ void BranchExperiment::measure_backprop(
 				this->state = BRANCH_EXPERIMENT_STATE_VERIFY_EXISTING;
 				this->state_iter = 0;
 			} else {
+				#if defined(MDEBUG) && MDEBUG
+				if (rand()%4 == 0) {
+				#else
+				if (this->branch_weight > PASS_THROUGH_BRANCH_WEIGHT
+						&& this->new_average_score >= this->existing_average_score) {
+				#endif
+					this->is_pass_through = true;
+				} else {
+					this->is_pass_through = false;
+
+					this->branch_node = new BranchNode();
+					this->branch_node->parent = this->scope_context;
+					this->branch_node->id = this->scope_context->node_counter;
+					this->scope_context->node_counter++;
+				}
+
 				this->explore_iter++;
 				if (this->explore_iter < MAX_EXPLORE_TRIES) {
 					for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
@@ -296,10 +292,6 @@ void BranchExperiment::measure_backprop(
 					if (this->ending_node != NULL) {
 						delete this->ending_node;
 						this->ending_node = NULL;
-					}
-					if (this->branch_node != NULL) {
-						delete this->branch_node;
-						this->branch_node = NULL;
 					}
 
 					this->new_input_node_contexts.clear();

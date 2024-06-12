@@ -104,10 +104,6 @@ void BranchExperiment::train_new_backprop(
 				delete this->ending_node;
 				this->ending_node = NULL;
 			}
-			if (this->branch_node != NULL) {
-				delete this->branch_node;
-				this->branch_node = NULL;
-			}
 
 			uniform_int_distribution<int> neutral_distribution(0, 9);
 			if (neutral_distribution(generator) == 0) {
@@ -269,9 +265,9 @@ void BranchExperiment::train_new_backprop(
 						}
 					}
 
-					train_network(test_inputs,
-								  this->target_val_histories,
-								  test_network);
+					train_w_drop_network(test_inputs,
+										 this->target_val_histories,
+										 test_network);
 
 					double test_average_misguess;
 					double test_misguess_standard_deviation;
@@ -332,9 +328,9 @@ void BranchExperiment::train_new_backprop(
 								remove_test_inputs[d_index].erase(remove_test_inputs[d_index].begin() + i_index);
 							}
 
-							optimize_network(remove_test_inputs,
-											 this->target_val_histories,
-											 remove_test_network);
+							optimize_w_drop_network(remove_test_inputs,
+													this->target_val_histories,
+													remove_test_network);
 
 							double remove_test_average_misguess;
 							double remove_test_misguess_standard_deviation;

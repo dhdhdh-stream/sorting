@@ -106,12 +106,12 @@ bool BranchExperiment::activate(AbstractNode* experiment_node,
 										// 		run_helper.experiment_histories.push_back(new PassThroughExperimentHistory(pass_through_ancestor));
 										// 	}
 										// 	break;
-										// case EXPERIMENT_TYPE_NEW_INFO:
-										// 	{
-										// 		NewInfoExperiment* new_info_experiment = (NewInfoExperiment*)ancestors[0];
-										// 		run_helper.experiment_histories.push_back(new NewInfoExperimentHistory(new_info_experiment));
-										// 	}
-										// 	break;
+										case EXPERIMENT_TYPE_NEW_INFO:
+											{
+												NewInfoExperiment* new_info_experiment = (NewInfoExperiment*)ancestors[0];
+												run_helper.experiment_histories.push_back(new NewInfoExperimentHistory(new_info_experiment));
+											}
+											break;
 										}
 									} else {
 										is_continue = false;
@@ -146,12 +146,12 @@ bool BranchExperiment::activate(AbstractNode* experiment_node,
 										// 		run_helper.experiment_histories.push_back(new PassThroughExperimentHistory(pass_through_ancestor));
 										// 	}
 										// 	break;
-										// case EXPERIMENT_TYPE_NEW_INFO:
-										// 	{
-										// 		NewInfoExperiment* new_info_ancestor = (NewInfoExperiment*)ancestors[ancestor_index];
-										// 		run_helper.experiment_histories.push_back(new NewInfoExperimentHistory(new_info_ancestor));
-										// 	}
-										// 	break;
+										case EXPERIMENT_TYPE_NEW_INFO:
+											{
+												NewInfoExperiment* new_info_ancestor = (NewInfoExperiment*)ancestors[ancestor_index];
+												run_helper.experiment_histories.push_back(new NewInfoExperimentHistory(new_info_ancestor));
+											}
+											break;
 										}
 									} else {
 										is_continue = false;
@@ -185,12 +185,12 @@ bool BranchExperiment::activate(AbstractNode* experiment_node,
 									// 		run_helper.experiment_histories.push_back(new PassThroughExperimentHistory(pass_through_ancestor));
 									// 	}
 									// 	break;
-									// case EXPERIMENT_TYPE_NEW_INFO:
-									// 	{
-									// 		NewInfoExperiment* new_info_ancestor = (NewInfoExperiment*)ancestors[e_index];
-									// 		run_helper.experiment_histories.push_back(new NewInfoExperimentHistory(new_info_ancestor));
-									// 	}
-									// 	break;
+									case EXPERIMENT_TYPE_NEW_INFO:
+										{
+											NewInfoExperiment* new_info_ancestor = (NewInfoExperiment*)ancestors[e_index];
+											run_helper.experiment_histories.push_back(new NewInfoExperimentHistory(new_info_ancestor));
+										}
+										break;
 									}
 								} else {
 									is_continue = false;
@@ -244,12 +244,12 @@ bool BranchExperiment::activate(AbstractNode* experiment_node,
 										// 		run_helper.experiment_histories.push_back(new PassThroughExperimentHistory(pass_through_root));
 										// 	}
 										// 	break;
-										// case EXPERIMENT_TYPE_NEW_INFO:
-										// 	{
-										// 		NewInfoExperiment* new_info_root = (NewInfoExperiment*)this->root_experiment;
-										// 		run_helper.experiment_histories.push_back(new NewInfoExperimentHistory(new_info_root));
-										// 	}
-										// 	break;
+										case EXPERIMENT_TYPE_NEW_INFO:
+											{
+												NewInfoExperiment* new_info_root = (NewInfoExperiment*)this->root_experiment;
+												run_helper.experiment_histories.push_back(new NewInfoExperimentHistory(new_info_root));
+											}
+											break;
 										}
 									}
 									run_helper.experiments_seen_order.push_back(this->root_experiment);
@@ -303,12 +303,12 @@ bool BranchExperiment::activate(AbstractNode* experiment_node,
 										// 		run_helper.experiment_histories.push_back(new PassThroughExperimentHistory(pass_through_root));
 										// 	}
 										// 	break;
-										// case EXPERIMENT_TYPE_NEW_INFO:
-										// 	{
-										// 		NewInfoExperiment* new_info_root = (NewInfoExperiment*)this->root_experiment;
-										// 		run_helper.experiment_histories.push_back(new NewInfoExperimentHistory(new_info_root));
-										// 	}
-										// 	break;
+										case EXPERIMENT_TYPE_NEW_INFO:
+											{
+												NewInfoExperiment* new_info_root = (NewInfoExperiment*)this->root_experiment;
+												run_helper.experiment_histories.push_back(new NewInfoExperimentHistory(new_info_root));
+											}
+											break;
 										}
 										is_selected = true;
 									}

@@ -23,7 +23,7 @@ void create_experiment(RunHelper& run_helper);
 ScopeNode* create_existing();
 InfoScope* get_existing_info_scope();
 
-InfoScope* create_new_info_scope();
+Scope* create_new_info_subscope();
 
 void gather_possible_helper(std::vector<AbstractNode*>& possible_node_contexts,
 							std::vector<int>& possible_obs_indexes,

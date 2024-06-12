@@ -266,12 +266,12 @@ void BranchExperiment::experiment_verify_backprop(
 								combined_branch_weight *= branch_experiment->branch_weight;
 							}
 							break;
-						// case EXPERIMENT_TYPE_NEW_INFO:
-						// 	{
-						// 		NewInfoExperiment* new_info_experiment = (NewInfoExperiment*)curr_experiment;
-						// 		combined_branch_weight *= new_info_experiment->branch_weight;
-						// 	}
-						// 	break;
+						case EXPERIMENT_TYPE_NEW_INFO:
+							{
+								NewInfoExperiment* new_info_experiment = (NewInfoExperiment*)curr_experiment;
+								combined_branch_weight *= new_info_experiment->branch_weight;
+							}
+							break;
 						}
 						curr_experiment = curr_experiment->parent_experiment;
 					}
@@ -312,53 +312,53 @@ void BranchExperiment::experiment_verify_backprop(
 			// 		}
 			// 	}
 			// 	break;
-			// case EXPERIMENT_TYPE_NEW_INFO:
-			// 	{
-			// 		double combined_branch_weight = 1.0;
-			// 		AbstractExperiment* curr_experiment = this->verify_experiments.back();
-			// 		while (true) {
-			// 			if (curr_experiment == NULL) {
-			// 				break;
-			// 			}
+			case EXPERIMENT_TYPE_NEW_INFO:
+				{
+					double combined_branch_weight = 1.0;
+					AbstractExperiment* curr_experiment = this->verify_experiments.back();
+					while (true) {
+						if (curr_experiment == NULL) {
+							break;
+						}
 
-			// 			switch (curr_experiment->type) {
-			// 			case EXPERIMENT_TYPE_BRANCH:
-			// 				{
-			// 					BranchExperiment* branch_experiment = (BranchExperiment*)curr_experiment;
-			// 					combined_branch_weight *= branch_experiment->branch_weight;
-			// 				}
-			// 				break;
-			// 			case EXPERIMENT_TYPE_NEW_INFO:
-			// 				{
-			// 					NewInfoExperiment* new_info_experiment = (NewInfoExperiment*)curr_experiment;
-			// 					combined_branch_weight *= new_info_experiment->branch_weight;
-			// 				}
-			// 				break;
-			// 			}
-			// 			curr_experiment = curr_experiment->parent_experiment;
-			// 		}
+						switch (curr_experiment->type) {
+						case EXPERIMENT_TYPE_BRANCH:
+							{
+								BranchExperiment* branch_experiment = (BranchExperiment*)curr_experiment;
+								combined_branch_weight *= branch_experiment->branch_weight;
+							}
+							break;
+						case EXPERIMENT_TYPE_NEW_INFO:
+							{
+								NewInfoExperiment* new_info_experiment = (NewInfoExperiment*)curr_experiment;
+								combined_branch_weight *= new_info_experiment->branch_weight;
+							}
+							break;
+						}
+						curr_experiment = curr_experiment->parent_experiment;
+					}
 
-			// 		NewInfoExperiment* new_info_experiment = (NewInfoExperiment*)this->verify_experiments.back();
-			// 		if (new_info_experiment->best_step_types.size() > 0
-			// 				&& combined_branch_weight > EXPERIMENT_COMBINED_MIN_BRANCH_WEIGHT) {
-			// 			#if defined(MDEBUG) && MDEBUG
-			// 			for (int p_index = 0; p_index < (int)new_info_experiment->verify_problems.size(); p_index++) {
-			// 				delete new_info_experiment->verify_problems[p_index];
-			// 			}
-			// 			new_info_experiment->verify_problems.clear();
-			// 			new_info_experiment->verify_seeds.clear();
-			// 			new_info_experiment->verify_negative_scores.clear();
-			// 			new_info_experiment->verify_positive_scores.clear();
-			// 			#endif /* MDEBUG */
+					NewInfoExperiment* new_info_experiment = (NewInfoExperiment*)this->verify_experiments.back();
+					if (new_info_experiment->best_step_types.size() > 0
+							&& combined_branch_weight > EXPERIMENT_COMBINED_MIN_BRANCH_WEIGHT) {
+						#if defined(MDEBUG) && MDEBUG
+						for (int p_index = 0; p_index < (int)new_info_experiment->verify_problems.size(); p_index++) {
+							delete new_info_experiment->verify_problems[p_index];
+						}
+						new_info_experiment->verify_problems.clear();
+						new_info_experiment->verify_seeds.clear();
+						new_info_experiment->verify_negative_scores.clear();
+						new_info_experiment->verify_positive_scores.clear();
+						#endif /* MDEBUG */
 
-			// 			new_info_experiment->state = NEW_INFO_EXPERIMENT_STATE_EXPERIMENT;
-			// 			new_info_experiment->root_state = ROOT_EXPERIMENT_STATE_EXPERIMENT;
-			// 			new_info_experiment->experiment_iter = 0;
+						new_info_experiment->state = NEW_INFO_EXPERIMENT_STATE_EXPERIMENT;
+						new_info_experiment->root_state = ROOT_EXPERIMENT_STATE_EXPERIMENT;
+						new_info_experiment->experiment_iter = 0;
 
-			// 			to_experiment = true;
-			// 		}
-			// 	}
-			// 	break;
+						to_experiment = true;
+					}
+				}
+				break;
 			}
 
 			if (!to_experiment) {

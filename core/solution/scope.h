@@ -61,6 +61,10 @@ public:
 							   std::vector<ContextLayer>& context,
 							   RunHelper& run_helper);
 
+	void info_activate(Problem* problem,
+					   RunHelper& run_helper,
+					   ScopeHistory*& scope_history);
+
 	#if defined(MDEBUG) && MDEBUG
 	void new_action_capture_verify_activate(
 		AbstractNode* starting_node,
@@ -71,6 +75,11 @@ public:
 	void verify_activate(Problem* problem,
 						 std::vector<ContextLayer>& context,
 						 RunHelper& run_helper);
+
+	void info_verify_activate(Problem* problem,
+							  RunHelper& run_helper,
+							  ScopeHistory*& scope_history);
+
 	void clear_verify();
 	#endif /* MDEBUG */
 

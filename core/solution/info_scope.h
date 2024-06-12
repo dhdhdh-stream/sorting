@@ -62,10 +62,6 @@ public:
 				  RunHelper& run_helper,
 				  bool& result_is_positive);
 
-	void new_action_activate(Problem* problem,
-							 RunHelper& run_helper,
-							 bool& result_is_positive);
-
 	#if defined(MDEBUG) && MDEBUG
 	void verify_activate(Problem* problem,
 						 RunHelper& run_helper,

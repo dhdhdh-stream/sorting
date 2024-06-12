@@ -288,12 +288,12 @@ void BranchExperiment::verify_backprop(
 						combined_branch_weight *= branch_experiment->branch_weight;
 					}
 					break;
-				// case EXPERIMENT_TYPE_NEW_INFO:
-				// 	{
-				// 		NewInfoExperiment* new_info_experiment = (NewInfoExperiment*)curr_experiment;
-				// 		combined_branch_weight *= new_info_experiment->branch_weight;
-				// 	}
-				// 	break;
+				case EXPERIMENT_TYPE_NEW_INFO:
+					{
+						NewInfoExperiment* new_info_experiment = (NewInfoExperiment*)curr_experiment;
+						combined_branch_weight *= new_info_experiment->branch_weight;
+					}
+					break;
 				}
 				curr_experiment = curr_experiment->parent_experiment;
 			}
