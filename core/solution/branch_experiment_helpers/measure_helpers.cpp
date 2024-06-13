@@ -236,7 +236,7 @@ void BranchExperiment::measure_backprop(
 			for (int l_index = 0; l_index < (int)history->predicted_scores[i_index].size(); l_index++) {
 				sum_score += history->predicted_scores[i_index][l_index];
 			}
-			double final_score = (sum_score / (int)history->predicted_scores[i_index].size() + target_val) / 2.0;
+			double final_score = (sum_score / (int)history->predicted_scores[i_index].size() + target_val - solution->average_score) / 2.0;
 			this->combined_score += final_score;
 			this->sub_state_iter++;
 		}
@@ -254,11 +254,6 @@ void BranchExperiment::measure_backprop(
 			if (this->branch_weight > 0.01
 					&& this->combined_score >= this->existing_average_score) {
 			#endif /* MDEBUG */
-				this->target_val_histories.reserve(VERIFY_NUM_DATAPOINTS);
-
-				this->state = BRANCH_EXPERIMENT_STATE_VERIFY_EXISTING;
-				this->state_iter = 0;
-			} else {
 				#if defined(MDEBUG) && MDEBUG
 				if (rand()%4 == 0) {
 				#else
@@ -275,6 +270,11 @@ void BranchExperiment::measure_backprop(
 					this->scope_context->node_counter++;
 				}
 
+				this->target_val_histories.reserve(VERIFY_NUM_DATAPOINTS);
+
+				this->state = BRANCH_EXPERIMENT_STATE_VERIFY_EXISTING;
+				this->state_iter = 0;
+			} else {
 				this->explore_iter++;
 				if (this->explore_iter < MAX_EXPLORE_TRIES) {
 					for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {

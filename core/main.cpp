@@ -197,13 +197,16 @@ int main(int argc, char* argv[]) {
 				/**
 				 * - history->experiment_histories.size() == 1
 				 */
+				Solution* duplicate = new Solution(solution);
+
 				int experiment_scope_id = run_helper.experiment_histories.back()->experiment->scope_context->id;
 				int new_scope_id = -1;
 				if (run_helper.experiment_histories.back()->experiment->type == EXPERIMENT_TYPE_NEW_ACTION) {
 					new_scope_id = (int)solution->scopes.size();
+
+					duplicate->next_possible_new_scope_timestamp += MIN_ITERS_BEFORE_NEXT_NEW_SCOPE;
 				}
 
-				Solution* duplicate = new Solution(solution);
 				run_helper.experiment_histories.back()->experiment->finalize(duplicate);
 				delete run_helper.experiment_histories.back()->experiment;
 
@@ -230,6 +233,9 @@ int main(int argc, char* argv[]) {
 						problem,
 						context,
 						run_helper);
+
+					cout << "run_helper.num_actions: " << run_helper.num_actions << endl;
+					cout << "solution->num_actions_limit: " << solution->num_actions_limit << endl;
 
 					delete duplicate->verify_problems[0];
 					duplicate->verify_problems.erase(duplicate->verify_problems.begin());
@@ -328,12 +334,14 @@ int main(int argc, char* argv[]) {
 
 				cout << "duplicate->average_score: " << duplicate->average_score << endl;
 
-				update_eval(experiment_scope,
+				update_eval(duplicate,
+							experiment_scope,
 							scope_histories,
 							target_val_histories);
 				if (new_scope != NULL) {
 					if (new_scope_histories.size() > 0) {
-						update_eval(new_scope,
+						update_eval(duplicate,
+									new_scope,
 									new_scope_histories,
 									new_target_val_histories);
 					}

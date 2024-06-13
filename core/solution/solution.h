@@ -6,6 +6,12 @@
  * 
  * - as long as have freedom to fail, not much use for world modeling
  *   - use world modeling when cost of failure is high, and have to explore along paths where there isn't risk of catastrophic failure
+ * 
+ * TODO:
+ * - is sensitive to initial conditions
+ *   - commits to paths greedily/randomly
+ *     - if better path is not simple and cannot be generalized to, then will not be found
+ *       - needs diversity
  */
 
 #ifndef SOLUTION_H
@@ -25,6 +31,10 @@ class Solution {
 public:
 	int timestamp;
 	double average_score;
+	/**
+	 * - remember to always normalize to improve learning
+	 */
+	int next_possible_new_scope_timestamp;
 
 	std::vector<Scope*> scopes;
 	std::vector<InfoScope*> info_scopes;

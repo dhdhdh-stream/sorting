@@ -1,6 +1,9 @@
 #include "new_action_experiment.h"
 
+#include <iostream>
+
 #include "scope.h"
+#include "scope_node.h"
 
 using namespace std;
 
@@ -15,16 +18,5 @@ void NewActionExperiment::successful_activate(
 		context.back().scope_history->callback_experiment_history = history;
 	}
 
-	this->scope_context->new_action_activate(this->starting_node,
-											 this->included_nodes,
-											 problem,
-											 context,
-											 run_helper);
-
-	/**
-	 * - increment properly mainly for MDEBUG
-	 */
-	run_helper.num_actions += 2;
-
-	curr_node = this->successful_location_exits[location_index];
+	curr_node = this->successful_scope_nodes[location_index];
 }

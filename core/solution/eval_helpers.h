@@ -13,10 +13,12 @@
 
 class Scope;
 class ScopeHistory;
+class Solution;
 
 double calc_score(ScopeHistory* scope_history);
 
-void update_eval(Scope* parent_scope,
+void update_eval(Solution* parent_solution,
+				 Scope* parent_scope,
 				 std::vector<ScopeHistory*>& scope_histories,
 				 std::vector<double>& target_val_histories);
 

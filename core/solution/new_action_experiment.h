@@ -17,6 +17,7 @@ class AbstractNode;
 class Problem;
 class Scope;
 class ScopeHistory;
+class ScopeNode;
 class Solution;
 
 const int NEW_ACTION_EXPERIMENT_STATE_EXPLORE = 0;
@@ -39,8 +40,6 @@ const int NEW_ACTION_NUM_GENERALIZE_TRIES = 300;
 const int NEW_ACTION_MIN_LOCATIONS = 3;
 #endif /* MDEBUG */
 
-// TODO: add scope nodes for success so can chain
-
 class NewActionExperimentHistory;
 class NewActionExperiment : public AbstractExperiment {
 public:
@@ -48,8 +47,7 @@ public:
 	int state_iter;
 	int generalize_iter;
 
-	AbstractNode* starting_node;
-	std::set<AbstractNode*> included_nodes;
+	Scope* new_scope;
 
 	std::vector<AbstractNode*> test_location_starts;
 	std::vector<bool> test_location_is_branch;
@@ -69,7 +67,7 @@ public:
 	 */
 	std::vector<AbstractNode*> successful_location_starts;
 	std::vector<bool> successful_location_is_branch;
-	std::vector<AbstractNode*> successful_location_exits;
+	std::vector<ScopeNode*> successful_scope_nodes;
 
 	#if defined(MDEBUG) && MDEBUG
 	std::vector<Problem*> verify_problems;

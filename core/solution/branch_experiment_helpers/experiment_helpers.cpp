@@ -254,16 +254,16 @@ void BranchExperiment::experiment_back_activate(
 				if (branch_distribution(generator) == 0) {
 					uniform_int_distribution<int> info_distribution(0, 1);
 					if (info_distribution(generator) == 0) {
-						NewInfoExperiment* new_experiment = new NewInfoExperiment(
-							this->scope_context,
-							possible_node_contexts[rand_index],
-							possible_is_branch[rand_index],
-							this);
+						// NewInfoExperiment* new_experiment = new NewInfoExperiment(
+						// 	this->scope_context,
+						// 	possible_node_contexts[rand_index],
+						// 	possible_is_branch[rand_index],
+						// 	this);
 
-						/**
-						 * - insert at front to match finalize order
-						 */
-						possible_node_contexts[rand_index]->experiments.insert(possible_node_contexts[rand_index]->experiments.begin(), new_experiment);
+						// /**
+						//  * - insert at front to match finalize order
+						//  */
+						// possible_node_contexts[rand_index]->experiments.insert(possible_node_contexts[rand_index]->experiments.begin(), new_experiment);
 					} else {
 						BranchExperiment* new_experiment = new BranchExperiment(
 							this->scope_context,

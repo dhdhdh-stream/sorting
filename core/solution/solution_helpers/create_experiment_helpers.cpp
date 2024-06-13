@@ -1,3 +1,9 @@
+/**
+ * - aggressively look to create new actions
+ *   - waiting causes fracturing, making future improvement more difficult
+ *   - but after creating, give time to adjust
+ */
+
 #include "solution_helpers.h"
 
 #include <iostream>
@@ -29,8 +35,21 @@ void create_experiment(RunHelper& run_helper) {
 	AbstractNode* explore_node = it->first;
 	bool explore_is_branch = it->second;
 
-	uniform_int_distribution<int> expensive_distribution(0, 9);
-	if (expensive_distribution(generator) == 0) {
+	uniform_int_distribution<int> branch_distribution(0, (int)explore_node->parent->nodes.size()-1);
+	if (solution->timestamp >= solution->next_possible_new_scope_timestamp
+			&& explore_node->parent->nodes.size() > 10
+			&& branch_distribution(generator) != 0) {
+		NewActionExperiment* new_action_experiment = new NewActionExperiment(
+			explore_node->parent,
+			explore_node,
+			explore_is_branch);
+
+		if (new_action_experiment->result == EXPERIMENT_RESULT_FAIL) {
+			delete new_action_experiment;
+		} else {
+			explore_node->experiments.push_back(new_action_experiment);
+		}
+	} else {
 		BranchExperiment* new_experiment = new BranchExperiment(
 			explore_node->parent,
 			explore_node,
@@ -38,19 +57,6 @@ void create_experiment(RunHelper& run_helper) {
 			NULL);
 
 		explore_node->experiments.push_back(new_experiment);
-	} else {
-		if (explore_node->parent->nodes.size() > 20) {
-			NewActionExperiment* new_action_experiment = new NewActionExperiment(
-				explore_node->parent,
-				explore_node,
-				explore_is_branch);
-
-			if (new_action_experiment->result == EXPERIMENT_RESULT_FAIL) {
-				delete new_action_experiment;
-			} else {
-				explore_node->experiments.push_back(new_action_experiment);
-			}
-		}
 	}
 
 	// // if (explore_node->parent->parent_info_scope == NULL) {
@@ -84,7 +90,7 @@ void create_experiment(RunHelper& run_helper) {
 	// 	} else {
 	// 		uniform_int_distribution<int> pass_through_distribution(0, 3);
 	// 		if (pass_through_distribution(generator) != 0) {
-	// 			if (explore_node->parent->nodes.size() > 20) {
+	// 			if (explore_node->parent->nodes.size() > 10) {
 	// 				NewActionExperiment* new_action_experiment = new NewActionExperiment(
 	// 					explore_node->parent,
 	// 					explore_node,

@@ -231,11 +231,6 @@ void NewInfoExperiment::measure_backprop(double target_val,
 			if (this->branch_weight > 0.01
 					&& this->combined_score >= this->existing_average_score) {
 			#endif /* MDEBUG */
-				this->target_val_histories.reserve(VERIFY_NUM_DATAPOINTS);
-
-				this->state = NEW_INFO_EXPERIMENT_STATE_VERIFY_EXISTING;
-				this->state_iter = 0;
-			} else {
 				if (this->branch_weight > PASS_THROUGH_BRANCH_WEIGHT
 						&& this->new_average_score >= this->existing_average_score) {
 					this->is_pass_through = true;
@@ -248,6 +243,11 @@ void NewInfoExperiment::measure_backprop(double target_val,
 					this->scope_context->node_counter++;
 				}
 
+				this->target_val_histories.reserve(VERIFY_NUM_DATAPOINTS);
+
+				this->state = NEW_INFO_EXPERIMENT_STATE_VERIFY_EXISTING;
+				this->state_iter = 0;
+			} else {
 				this->explore_iter++;
 				if (this->explore_iter < MAX_EXPLORE_TRIES) {
 					for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {

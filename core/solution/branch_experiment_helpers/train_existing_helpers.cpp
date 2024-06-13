@@ -64,7 +64,7 @@ void BranchExperiment::train_existing_backprop(
 		for (int l_index = 0; l_index < (int)history->predicted_scores[i_index].size(); l_index++) {
 			sum_score += history->predicted_scores[i_index][l_index];
 		}
-		double final_score = (sum_score / (int)history->predicted_scores[i_index].size() + target_val) / 2.0;
+		double final_score = (sum_score / (int)history->predicted_scores[i_index].size() + target_val - solution->average_score) / 2.0;
 		this->target_val_histories.push_back(final_score);
 	}
 

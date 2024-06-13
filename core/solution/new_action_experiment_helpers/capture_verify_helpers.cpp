@@ -7,6 +7,7 @@
 #include "constants.h"
 #include "problem.h"
 #include "scope.h"
+#include "scope_node.h"
 
 using namespace std;
 
@@ -22,16 +23,21 @@ void NewActionExperiment::capture_verify_activate(
 	}
 	this->verify_seeds[this->state_iter] = run_helper.starting_run_seed;
 
-	this->scope_context->new_action_capture_verify_activate(
-		this->starting_node,
-		this->included_nodes,
-		problem,
-		context,
-		run_helper);
+	curr_node = this->successful_scope_nodes[location_index];
+	while (true) {
+		ScopeNode* curr_scope_node = (ScopeNode*)curr_node;
 
-	run_helper.num_actions += 2;
+		curr_scope_node->new_action_capture_verify_activate(
+			curr_node,
+			problem,
+			context,
+			run_helper);
 
-	curr_node = this->successful_location_exits[location_index];
+		if (curr_node == NULL
+				|| this->scope_context->nodes.find(curr_node->id) != this->scope_context->nodes.end()) {
+			break;
+		}
+	}
 }
 
 void NewActionExperiment::capture_verify_backprop() {

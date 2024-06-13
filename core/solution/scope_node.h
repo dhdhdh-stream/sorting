@@ -39,12 +39,6 @@ public:
 						  std::vector<ContextLayer>& context,
 						  RunHelper& run_helper);
 
-	void new_action_activate(AbstractNode*& curr_node,
-							 Problem* problem,
-							 std::vector<ContextLayer>& context,
-							 RunHelper& run_helper,
-							 std::map<AbstractNode*, AbstractNodeHistory*>& node_histories);
-
 	void measure_activate(Metrics& metrics,
 						  AbstractNode*& curr_node,
 						  Problem* problem,
@@ -64,6 +58,11 @@ public:
 						 std::vector<ContextLayer>& context,
 						 RunHelper& run_helper,
 						 ScopeNodeHistory* history);
+
+	void new_action_capture_verify_activate(AbstractNode*& curr_node,
+											Problem* problem,
+											std::vector<ContextLayer>& context,
+											RunHelper& run_helper);
 	#endif /* MDEBUG */
 
 	void save(std::ofstream& output_file);

@@ -128,7 +128,11 @@ double Minesweeper::get_observation_helper(int x, int y) {
 	} else {
 		if (this->hit_mine) {
 			if (this->revealed[x][y]) {
-				return 1.0 + this->world[x][y];
+				if (this->world[x][y] == -1) {
+					return -3.0;
+				} else {
+					return 1.0 + this->world[x][y];
+				}
 			} else if (this->flagged[x][y]) {
 				if (this->world[x][y] != -1) {
 					return -5.0;

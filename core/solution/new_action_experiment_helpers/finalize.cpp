@@ -14,398 +14,56 @@
 using namespace std;
 
 void NewActionExperiment::finalize(Solution* duplicate) {
+	for (int t_index = 0; t_index < (int)this->test_location_starts.size(); t_index++) {
+		int experiment_index;
+		for (int e_index = 0; e_index < (int)this->test_location_starts[t_index]->experiments.size(); e_index++) {
+			if (this->test_location_starts[t_index]->experiments[e_index] == this) {
+				experiment_index = e_index;
+				break;
+			}
+		}
+		this->test_location_starts[t_index]->experiments.erase(this->test_location_starts[t_index]->experiments.begin() + experiment_index);
+	}
+	for (int s_index = 0; s_index < (int)this->successful_location_starts.size(); s_index++) {
+		int experiment_index;
+		for (int e_index = 0; e_index < (int)this->successful_location_starts[s_index]->experiments.size(); e_index++) {
+			if (this->successful_location_starts[s_index]->experiments[e_index] == this) {
+				experiment_index = e_index;
+				break;
+			}
+		}
+		this->successful_location_starts[s_index]->experiments.erase(this->successful_location_starts[s_index]->experiments.begin() + experiment_index);
+	}
+
 	if (this->result == EXPERIMENT_RESULT_SUCCESS) {
 		cout << "NewActionExperiment success" << endl;
 
-		Scope* new_scope = new Scope();
-		new_scope->id = duplicate->scopes.size();
-		duplicate->scopes.push_back(new_scope);
+		this->new_scope->id = duplicate->scopes.size();
+		duplicate->scopes.push_back(this->new_scope);
 
-		new_scope->node_counter = 0;
-
-		ActionNode* starting_noop_node = new ActionNode();
-		starting_noop_node->parent = new_scope;
-		starting_noop_node->id = new_scope->node_counter;
-		new_scope->node_counter++;
-		starting_noop_node->action = Action(ACTION_NOOP);
-		new_scope->nodes[starting_noop_node->id] = starting_noop_node;
-
-		map<AbstractNode*, AbstractNode*> node_mappings;
-
-		switch (this->starting_node->type) {
-		case NODE_TYPE_ACTION:
-			{
-				ActionNode* original_action_node = (ActionNode*)this->starting_node;
-
-				ActionNode* new_action_node = new ActionNode();
-				new_action_node->parent = new_scope;
-				new_action_node->id = new_scope->node_counter;
-				new_scope->node_counter++;
-				new_scope->nodes[new_action_node->id] = new_action_node;
-
-				new_action_node->action = original_action_node->action;
-
-				node_mappings[original_action_node] = new_action_node;
-			}
-			break;
-		case NODE_TYPE_SCOPE:
-			{
-				ScopeNode* original_scope_node = (ScopeNode*)this->starting_node;
-
-				ScopeNode* new_scope_node = new ScopeNode();
-				new_scope_node->parent = new_scope;
-				new_scope_node->id = new_scope->node_counter;
-				new_scope->node_counter++;
-				new_scope->nodes[new_scope_node->id] = new_scope_node;
-
-				new_scope_node->scope = duplicate->scopes[original_scope_node->scope->id];
-
-				node_mappings[original_scope_node] = new_scope_node;
-			}
-			break;
-		case NODE_TYPE_BRANCH:
-			{
-				BranchNode* original_branch_node = (BranchNode*)this->starting_node;
-
-				BranchNode* new_branch_node = new BranchNode();
-				new_branch_node->parent = new_scope;
-				new_branch_node->id = new_scope->node_counter;
-				new_scope->node_counter++;
-				new_scope->nodes[new_branch_node->id] = new_branch_node;
-
-				/**
-				 * - add inputs after
-				 */
-
-				node_mappings[original_branch_node] = new_branch_node;
-			}
-			break;
-		case NODE_TYPE_INFO_BRANCH:
-			{
-				InfoBranchNode* original_info_branch_node = (InfoBranchNode*)this->starting_node;
-
-				InfoBranchNode* new_info_branch_node = new InfoBranchNode();
-				new_info_branch_node->parent = new_scope;
-				new_info_branch_node->id = new_scope->node_counter;
-				new_scope->node_counter++;
-				new_scope->nodes[new_info_branch_node->id] = new_info_branch_node;
-
-				new_info_branch_node->scope = duplicate->info_scopes[original_info_branch_node->scope->id];
-				new_info_branch_node->is_negate = original_info_branch_node->is_negate;
-
-				node_mappings[original_info_branch_node] = new_info_branch_node;
-			}
-			break;
-		}
-		for (set<AbstractNode*>::iterator node_it = this->included_nodes.begin();
-				node_it != this->included_nodes.end(); node_it++) {
-			switch ((*node_it)->type) {
-			case NODE_TYPE_ACTION:
-				{
-					ActionNode* original_action_node = (ActionNode*)(*node_it);
-
-					ActionNode* new_action_node = new ActionNode();
-					new_action_node->parent = new_scope;
-					new_action_node->id = new_scope->node_counter;
-					new_scope->node_counter++;
-					new_scope->nodes[new_action_node->id] = new_action_node;
-
-					new_action_node->action = original_action_node->action;
-
-					node_mappings[original_action_node] = new_action_node;
-				}
-				break;
+		for (map<int, AbstractNode*>::iterator it = this->new_scope->nodes.begin();
+				it != this->new_scope->nodes.end(); it++) {
+			switch (it->second->type) {
 			case NODE_TYPE_SCOPE:
 				{
-					ScopeNode* original_scope_node = (ScopeNode*)(*node_it);
-
-					ScopeNode* new_scope_node = new ScopeNode();
-					new_scope_node->parent = new_scope;
-					new_scope_node->id = new_scope->node_counter;
-					new_scope->node_counter++;
-					new_scope->nodes[new_scope_node->id] = new_scope_node;
-
-					new_scope_node->scope = duplicate->scopes[original_scope_node->scope->id];
-
-					node_mappings[original_scope_node] = new_scope_node;
+					ScopeNode* scope_node = (ScopeNode*)it->second;
+					scope_node->scope = duplicate->scopes[scope_node->scope->id];
 				}
 				break;
+			#if defined(MDEBUG) && MDEBUG
 			case NODE_TYPE_BRANCH:
 				{
-					BranchNode* original_branch_node = (BranchNode*)(*node_it);
-
-					BranchNode* new_branch_node = new BranchNode();
-					new_branch_node->parent = new_scope;
-					new_branch_node->id = new_scope->node_counter;
-					new_scope->node_counter++;
-					new_scope->nodes[new_branch_node->id] = new_branch_node;
-
-					/**
-					 * - add inputs after
-					 */
-
-					node_mappings[original_branch_node] = new_branch_node;
+					BranchNode* branch_node = (BranchNode*)it->second;
+					branch_node->verify_key = this;
 				}
 				break;
+			#endif /* MDEBUG */
 			case NODE_TYPE_INFO_BRANCH:
 				{
-					InfoBranchNode* original_info_branch_node = (InfoBranchNode*)(*node_it);
-
-					InfoBranchNode* new_info_branch_node = new InfoBranchNode();
-					new_info_branch_node->parent = new_scope;
-					new_info_branch_node->id = new_scope->node_counter;
-					new_scope->node_counter++;
-					new_scope->nodes[new_info_branch_node->id] = new_info_branch_node;
-
-					new_info_branch_node->scope = duplicate->info_scopes[original_info_branch_node->scope->id];
-					new_info_branch_node->is_negate = original_info_branch_node->is_negate;
-
-					node_mappings[original_info_branch_node] = new_info_branch_node;
-				}
-				break;
-			}
-		}
-
-		starting_noop_node->next_node_id = node_mappings[this->starting_node]->id;
-		starting_noop_node->next_node = node_mappings[this->starting_node];
-
-		ActionNode* new_ending_node = new ActionNode();
-		new_ending_node->parent = new_scope;
-		new_ending_node->id = new_scope->node_counter;
-		new_scope->node_counter++;
-		new_ending_node->action = Action(ACTION_NOOP);
-		new_scope->nodes[new_ending_node->id] = new_ending_node;
-		new_ending_node->next_node_id = -1;
-		new_ending_node->next_node = NULL;
-
-		switch (this->starting_node->type) {
-		case NODE_TYPE_ACTION:
-			{
-				ActionNode* original_action_node = (ActionNode*)this->starting_node;
-				ActionNode* new_action_node = (ActionNode*)node_mappings[original_action_node];
-
-				map<AbstractNode*, AbstractNode*>::iterator it = node_mappings
-					.find(original_action_node->next_node);
-				if (it == node_mappings.end()) {
-					new_action_node->next_node_id = new_ending_node->id;
-					new_action_node->next_node = new_ending_node;
-				} else {
-					new_action_node->next_node_id = it->second->id;
-					new_action_node->next_node = it->second;
-				}
-			}
-			break;
-		case NODE_TYPE_SCOPE:
-			{
-				ScopeNode* original_scope_node = (ScopeNode*)this->starting_node;
-				ScopeNode* new_scope_node = (ScopeNode*)node_mappings[original_scope_node];
-
-				map<AbstractNode*, AbstractNode*>::iterator it = node_mappings
-					.find(original_scope_node->next_node);
-				if (it == node_mappings.end()) {
-					new_scope_node->next_node_id = new_ending_node->id;
-					new_scope_node->next_node = new_ending_node;
-				} else {
-					new_scope_node->next_node_id = it->second->id;
-					new_scope_node->next_node = it->second;
-				}
-			}
-			break;
-		case NODE_TYPE_BRANCH:
-			{
-				BranchNode* original_branch_node = (BranchNode*)this->starting_node;
-				BranchNode* new_branch_node = (BranchNode*)node_mappings[original_branch_node];
-
-				new_branch_node->original_network = new Network(original_branch_node->original_network);
-				for (int i_index = (int)original_branch_node->original_input_node_contexts.size()-1; i_index >= 0; i_index--) {
-					new_branch_node->original_network->remove_input(i_index);
+					InfoBranchNode* info_branch_node = (InfoBranchNode*)it->second;
+					info_branch_node->scope = duplicate->info_scopes[info_branch_node->scope->id];
 				}
 
-				new_branch_node->branch_network = new Network(original_branch_node->branch_network);
-				for (int i_index = (int)original_branch_node->branch_input_node_contexts.size()-1; i_index >= 0; i_index--) {
-					new_branch_node->branch_network->remove_input(i_index);
-				}
-
-				map<AbstractNode*, AbstractNode*>::iterator original_it = node_mappings
-					.find(original_branch_node->original_next_node);
-				if (original_it == node_mappings.end()) {
-					new_branch_node->original_next_node_id = new_ending_node->id;
-					new_branch_node->original_next_node = new_ending_node;
-				} else {
-					new_branch_node->original_next_node_id = original_it->second->id;
-					new_branch_node->original_next_node = original_it->second;
-				}
-				map<AbstractNode*, AbstractNode*>::iterator branch_it = node_mappings
-					.find(original_branch_node->branch_next_node);
-				if (branch_it == node_mappings.end()) {
-					new_branch_node->branch_next_node_id = new_ending_node->id;
-					new_branch_node->branch_next_node = new_ending_node;
-				} else {
-					new_branch_node->branch_next_node_id = branch_it->second->id;
-					new_branch_node->branch_next_node = branch_it->second;
-				}
-
-				#if defined(MDEBUG) && MDEBUG
-				new_branch_node->verify_key = this;
-				new_branch_node->verify_original_scores = original_branch_node->verify_original_scores;
-				original_branch_node->verify_original_scores.clear();
-				new_branch_node->verify_branch_scores = original_branch_node->verify_branch_scores;
-				original_branch_node->verify_branch_scores.clear();
-				#endif /* MDEBUG */
-			}
-			break;
-		case NODE_TYPE_INFO_BRANCH:
-			{
-				InfoBranchNode* original_info_branch_node = (InfoBranchNode*)this->starting_node;
-				InfoBranchNode* new_info_branch_node = (InfoBranchNode*)node_mappings[original_info_branch_node];
-
-				map<AbstractNode*, AbstractNode*>::iterator original_it = node_mappings
-					.find(original_info_branch_node->original_next_node);
-				if (original_it == node_mappings.end()) {
-					new_info_branch_node->original_next_node_id = new_ending_node->id;
-					new_info_branch_node->original_next_node = new_ending_node;
-				} else {
-					new_info_branch_node->original_next_node_id = original_it->second->id;
-					new_info_branch_node->original_next_node = original_it->second;
-				}
-				map<AbstractNode*, AbstractNode*>::iterator branch_it = node_mappings
-					.find(original_info_branch_node->branch_next_node);
-				if (branch_it == node_mappings.end()) {
-					new_info_branch_node->branch_next_node_id = new_ending_node->id;
-					new_info_branch_node->branch_next_node = new_ending_node;
-				} else {
-					new_info_branch_node->branch_next_node_id = branch_it->second->id;
-					new_info_branch_node->branch_next_node = branch_it->second;
-				}
-			}
-			break;
-		}
-		for (set<AbstractNode*>::iterator node_it = this->included_nodes.begin();
-				node_it != this->included_nodes.end(); node_it++) {
-			switch ((*node_it)->type) {
-			case NODE_TYPE_ACTION:
-				{
-					ActionNode* original_action_node = (ActionNode*)(*node_it);
-					ActionNode* new_action_node = (ActionNode*)node_mappings[original_action_node];
-
-					map<AbstractNode*, AbstractNode*>::iterator it = node_mappings
-						.find(original_action_node->next_node);
-					if (it == node_mappings.end()) {
-						new_action_node->next_node_id = new_ending_node->id;
-						new_action_node->next_node = new_ending_node;
-					} else {
-						new_action_node->next_node_id = it->second->id;
-						new_action_node->next_node = it->second;
-					}
-				}
-				break;
-			case NODE_TYPE_SCOPE:
-				{
-					ScopeNode* original_scope_node = (ScopeNode*)(*node_it);
-					ScopeNode* new_scope_node = (ScopeNode*)node_mappings[original_scope_node];
-
-					map<AbstractNode*, AbstractNode*>::iterator it = node_mappings
-						.find(original_scope_node->next_node);
-					if (it == node_mappings.end()) {
-						new_scope_node->next_node_id = new_ending_node->id;
-						new_scope_node->next_node = new_ending_node;
-					} else {
-						new_scope_node->next_node_id = it->second->id;
-						new_scope_node->next_node = it->second;
-					}
-				}
-				break;
-			case NODE_TYPE_BRANCH:
-				{
-					BranchNode* original_branch_node = (BranchNode*)(*node_it);
-					BranchNode* new_branch_node = (BranchNode*)node_mappings[original_branch_node];
-
-					new_branch_node->original_network = new Network(original_branch_node->original_network);
-					for (int i_index = (int)original_branch_node->original_input_node_contexts.size()-1; i_index >= 0; i_index--) {
-						map<AbstractNode*, AbstractNode*>::iterator it = node_mappings
-							.find(original_branch_node->original_input_node_contexts[i_index]);
-						if (it == node_mappings.end()) {
-							new_branch_node->original_network->remove_input(i_index);
-						} else {
-							new_branch_node->original_input_node_context_ids.insert(
-								new_branch_node->original_input_node_context_ids.begin(), it->second->id);
-							new_branch_node->original_input_node_contexts.insert(
-								new_branch_node->original_input_node_contexts.begin(), it->second);
-							new_branch_node->original_input_obs_indexes.insert(
-								new_branch_node->original_input_obs_indexes.begin(),
-								original_branch_node->original_input_obs_indexes[i_index]);
-						}
-					}
-
-					new_branch_node->branch_network = new Network(original_branch_node->branch_network);
-					for (int i_index = (int)original_branch_node->branch_input_node_contexts.size()-1; i_index >= 0; i_index--) {
-						map<AbstractNode*, AbstractNode*>::iterator it = node_mappings
-							.find(original_branch_node->branch_input_node_contexts[i_index]);
-						if (it == node_mappings.end()) {
-							new_branch_node->branch_network->remove_input(i_index);
-						} else {
-							new_branch_node->branch_input_node_context_ids.insert(
-								new_branch_node->branch_input_node_context_ids.begin(), it->second->id);
-							new_branch_node->branch_input_node_contexts.insert(
-								new_branch_node->branch_input_node_contexts.begin(), it->second);
-							new_branch_node->branch_input_obs_indexes.insert(
-								new_branch_node->branch_input_obs_indexes.begin(),
-								original_branch_node->branch_input_obs_indexes[i_index]);
-						}
-					}
-
-					map<AbstractNode*, AbstractNode*>::iterator original_it = node_mappings
-						.find(original_branch_node->original_next_node);
-					if (original_it == node_mappings.end()) {
-						new_branch_node->original_next_node_id = new_ending_node->id;
-						new_branch_node->original_next_node = new_ending_node;
-					} else {
-						new_branch_node->original_next_node_id = original_it->second->id;
-						new_branch_node->original_next_node = original_it->second;
-					}
-					map<AbstractNode*, AbstractNode*>::iterator branch_it = node_mappings
-						.find(original_branch_node->branch_next_node);
-					if (branch_it == node_mappings.end()) {
-						new_branch_node->branch_next_node_id = new_ending_node->id;
-						new_branch_node->branch_next_node = new_ending_node;
-					} else {
-						new_branch_node->branch_next_node_id = branch_it->second->id;
-						new_branch_node->branch_next_node = branch_it->second;
-					}
-
-					#if defined(MDEBUG) && MDEBUG
-					new_branch_node->verify_key = this;
-					new_branch_node->verify_original_scores = original_branch_node->verify_original_scores;
-					original_branch_node->verify_original_scores.clear();
-					new_branch_node->verify_branch_scores = original_branch_node->verify_branch_scores;
-					original_branch_node->verify_branch_scores.clear();
-					#endif /* MDEBUG */
-				}
-				break;
-			case NODE_TYPE_INFO_BRANCH:
-				{
-					InfoBranchNode* original_info_branch_node = (InfoBranchNode*)(*node_it);
-					InfoBranchNode* new_info_branch_node = (InfoBranchNode*)node_mappings[original_info_branch_node];
-
-					map<AbstractNode*, AbstractNode*>::iterator original_it = node_mappings
-						.find(original_info_branch_node->original_next_node);
-					if (original_it == node_mappings.end()) {
-						new_info_branch_node->original_next_node_id = new_ending_node->id;
-						new_info_branch_node->original_next_node = new_ending_node;
-					} else {
-						new_info_branch_node->original_next_node_id = original_it->second->id;
-						new_info_branch_node->original_next_node = original_it->second;
-					}
-					map<AbstractNode*, AbstractNode*>::iterator branch_it = node_mappings
-						.find(original_info_branch_node->branch_next_node);
-					if (branch_it == node_mappings.end()) {
-						new_info_branch_node->branch_next_node_id = new_ending_node->id;
-						new_info_branch_node->branch_next_node = new_ending_node;
-					} else {
-						new_info_branch_node->branch_next_node_id = branch_it->second->id;
-						new_info_branch_node->branch_next_node = branch_it->second;
-					}
-				}
 				break;
 			}
 		}
@@ -420,15 +78,11 @@ void NewActionExperiment::finalize(Solution* duplicate) {
 
 		Scope* duplicate_local_scope = duplicate->scopes[this->scope_context->id];
 		for (int s_index = 0; s_index < (int)this->successful_location_starts.size(); s_index++) {
-			ScopeNode* new_scope_node = new ScopeNode();
+			ScopeNode* new_scope_node = this->successful_scope_nodes[s_index];
 			new_scope_node->parent = duplicate_local_scope;
-			new_scope_node->id = duplicate_local_scope->node_counter;
-			duplicate_local_scope->node_counter++;
 			duplicate_local_scope->nodes[new_scope_node->id] = new_scope_node;
 
-			new_scope_node->scope = new_scope;
-
-			if (this->successful_location_exits[s_index] == NULL) {
+			if (new_scope_node->next_node == NULL) {
 				if (new_local_ending_node == NULL) {
 					new_local_ending_node = new ActionNode();
 					new_local_ending_node->parent = duplicate_local_scope;
@@ -457,7 +111,7 @@ void NewActionExperiment::finalize(Solution* duplicate) {
 				new_scope_node->next_node_id = new_local_ending_node->id;
 				new_scope_node->next_node = new_local_ending_node;
 			} else {
-				AbstractNode* duplicate_end_node = duplicate_local_scope->nodes[this->successful_location_exits[s_index]->id];
+				AbstractNode* duplicate_end_node = duplicate_local_scope->nodes[new_scope_node->next_node->id];
 
 				new_scope_node->next_node_id = duplicate_end_node->id;
 				new_scope_node->next_node = duplicate_end_node;
@@ -510,26 +164,8 @@ void NewActionExperiment::finalize(Solution* duplicate) {
 				break;
 			}
 		}
-	}
+		this->successful_scope_nodes.clear();
 
-	for (int t_index = 0; t_index < (int)this->test_location_starts.size(); t_index++) {
-		int experiment_index;
-		for (int e_index = 0; e_index < (int)this->test_location_starts[t_index]->experiments.size(); e_index++) {
-			if (this->test_location_starts[t_index]->experiments[e_index] == this) {
-				experiment_index = e_index;
-				break;
-			}
-		}
-		this->test_location_starts[t_index]->experiments.erase(this->test_location_starts[t_index]->experiments.begin() + experiment_index);
-	}
-	for (int s_index = 0; s_index < (int)this->successful_location_starts.size(); s_index++) {
-		int experiment_index;
-		for (int e_index = 0; e_index < (int)this->successful_location_starts[s_index]->experiments.size(); e_index++) {
-			if (this->successful_location_starts[s_index]->experiments[e_index] == this) {
-				experiment_index = e_index;
-				break;
-			}
-		}
-		this->successful_location_starts[s_index]->experiments.erase(this->successful_location_starts[s_index]->experiments.begin() + experiment_index);
+		this->new_scope = NULL;
 	}
 }
