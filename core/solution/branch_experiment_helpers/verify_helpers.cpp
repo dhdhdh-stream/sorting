@@ -9,6 +9,7 @@
 #include "eval_helpers.h"
 #include "globals.h"
 #include "info_branch_node.h"
+#include "info_scope.h"
 #include "network.h"
 #include "new_info_experiment.h"
 #include "scope.h"
@@ -20,6 +21,7 @@
 using namespace std;
 
 bool BranchExperiment::verify_activate(AbstractNode*& curr_node,
+									   Problem* problem,
 									   vector<ContextLayer>& context,
 									   RunHelper& run_helper,
 									   BranchExperimentHistory* history) {
@@ -155,13 +157,33 @@ bool BranchExperiment::verify_activate(AbstractNode*& curr_node,
 		#endif /* MDEBUG */
 
 		if (decision_is_branch) {
-			if (this->best_step_types.size() == 0) {
-				curr_node = this->best_exit_next_node;
-			} else {
-				if (this->best_step_types[0] == STEP_TYPE_ACTION) {
-					curr_node = this->best_actions[0];
+			if (this->best_info_scope == NULL) {
+				if (this->best_step_types.size() == 0) {
+					curr_node = this->best_exit_next_node;
 				} else {
-					curr_node = this->best_scopes[0];
+					if (this->best_step_types[0] == STEP_TYPE_ACTION) {
+						curr_node = this->best_actions[0];
+					} else {
+						curr_node = this->best_scopes[0];
+					}
+				}
+			} else {
+				bool inner_is_positive;
+				this->best_info_scope->activate(problem,
+												run_helper,
+												inner_is_positive);
+
+				if ((this->best_is_negate && !inner_is_positive)
+						|| (!this->best_is_negate && inner_is_positive)) {
+					if (this->best_step_types.size() == 0) {
+						curr_node = this->best_exit_next_node;
+					} else {
+						if (this->best_step_types[0] == STEP_TYPE_ACTION) {
+							curr_node = this->best_actions[0];
+						} else {
+							curr_node = this->best_scopes[0];
+						}
+					}
 				}
 			}
 
@@ -227,6 +249,10 @@ void BranchExperiment::verify_backprop(
 				if (this->branch_node != NULL) {
 					delete this->branch_node;
 					this->branch_node = NULL;
+				}
+				if (this->info_branch_node != NULL) {
+					delete this->info_branch_node;
+					this->info_branch_node = NULL;
 				}
 
 				this->new_input_node_contexts.clear();
@@ -426,6 +452,10 @@ void BranchExperiment::verify_backprop(
 					if (this->branch_node != NULL) {
 						delete this->branch_node;
 						this->branch_node = NULL;
+					}
+					if (this->info_branch_node != NULL) {
+						delete this->info_branch_node;
+						this->info_branch_node = NULL;
 					}
 
 					this->new_input_node_contexts.clear();

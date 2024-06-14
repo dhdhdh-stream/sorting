@@ -10,6 +10,7 @@
 #include "eval_helpers.h"
 #include "globals.h"
 #include "info_branch_node.h"
+#include "info_scope.h"
 #include "info_scope_node.h"
 #include "network.h"
 #include "nn_helpers.h"
@@ -23,6 +24,7 @@ using namespace std;
 
 void BranchExperiment::train_new_activate(
 		AbstractNode*& curr_node,
+		Problem* problem,
 		vector<ContextLayer>& context,
 		RunHelper& run_helper,
 		BranchExperimentHistory* history) {
@@ -44,13 +46,33 @@ void BranchExperiment::train_new_activate(
 			}
 		}
 
-		if (this->best_step_types.size() == 0) {
-			curr_node = this->best_exit_next_node;
-		} else {
-			if (this->best_step_types[0] == STEP_TYPE_ACTION) {
-				curr_node = this->best_actions[0];
+		if (this->best_info_scope == NULL) {
+			if (this->best_step_types.size() == 0) {
+				curr_node = this->best_exit_next_node;
 			} else {
-				curr_node = this->best_scopes[0];
+				if (this->best_step_types[0] == STEP_TYPE_ACTION) {
+					curr_node = this->best_actions[0];
+				} else {
+					curr_node = this->best_scopes[0];
+				}
+			}
+		} else {
+			bool inner_is_positive;
+			this->best_info_scope->activate(problem,
+											run_helper,
+											inner_is_positive);
+
+			if ((this->best_is_negate && !inner_is_positive)
+					|| (!this->best_is_negate && inner_is_positive)) {
+				if (this->best_step_types.size() == 0) {
+					curr_node = this->best_exit_next_node;
+				} else {
+					if (this->best_step_types[0] == STEP_TYPE_ACTION) {
+						curr_node = this->best_actions[0];
+					} else {
+						curr_node = this->best_scopes[0];
+					}
+				}
 			}
 		}
 

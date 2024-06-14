@@ -341,6 +341,7 @@ bool BranchExperiment::activate(AbstractNode* experiment_node,
 			break;
 		case BRANCH_EXPERIMENT_STATE_TRAIN_NEW:
 			train_new_activate(curr_node,
+							   problem,
 							   context,
 							   run_helper,
 							   history);
@@ -348,6 +349,7 @@ bool BranchExperiment::activate(AbstractNode* experiment_node,
 			break;
 		case BRANCH_EXPERIMENT_STATE_MEASURE:
 			result = measure_activate(curr_node,
+									  problem,
 									  context,
 									  run_helper,
 									  history);
@@ -359,6 +361,7 @@ bool BranchExperiment::activate(AbstractNode* experiment_node,
 			break;
 		case BRANCH_EXPERIMENT_STATE_VERIFY:
 			result = verify_activate(curr_node,
+									 problem,
 									 context,
 									 run_helper,
 									 history);
@@ -373,6 +376,7 @@ bool BranchExperiment::activate(AbstractNode* experiment_node,
 		#endif /* MDEBUG */
 		case BRANCH_EXPERIMENT_STATE_ROOT_VERIFY:
 			result = root_verify_activate(curr_node,
+										  problem,
 										  context,
 										  run_helper);
 			break;
@@ -380,6 +384,7 @@ bool BranchExperiment::activate(AbstractNode* experiment_node,
 			switch (this->root_state) {
 			case ROOT_EXPERIMENT_STATE_EXPERIMENT:
 				result = experiment_activate(curr_node,
+											 problem,
 											 context,
 											 run_helper,
 											 history);
@@ -391,6 +396,7 @@ bool BranchExperiment::activate(AbstractNode* experiment_node,
 				break;
 			case ROOT_EXPERIMENT_STATE_VERIFY:
 				result = experiment_verify_activate(curr_node,
+													problem,
 													context,
 													run_helper,
 													history);

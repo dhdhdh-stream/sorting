@@ -24,3 +24,14 @@ ScopeNode* create_existing() {
 
 	return NULL;
 }
+
+InfoScope* get_existing_info_scope() {
+	uniform_int_distribution<int> non_null_distribution(0, 3);
+	if (solution->info_scopes.size() == 0
+			|| non_null_distribution(generator) != 0) {
+		return NULL;
+	} else {
+		uniform_int_distribution<int> info_scope_distribution(0, (int)solution->info_scopes.size()-1);
+		return solution->info_scopes[info_scope_distribution(generator)];
+	}
+}

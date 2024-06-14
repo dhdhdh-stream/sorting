@@ -7,6 +7,7 @@
 #include "constants.h"
 #include "globals.h"
 #include "info_branch_node.h"
+#include "info_scope.h"
 #include "network.h"
 #include "new_info_experiment.h"
 #include "pass_through_experiment.h"
@@ -19,19 +20,47 @@
 using namespace std;
 
 bool BranchExperiment::experiment_activate(AbstractNode*& curr_node,
+										   Problem* problem,
 										   vector<ContextLayer>& context,
 										   RunHelper& run_helper,
 										   BranchExperimentHistory* history) {
 	bool result;
 
 	if (this->is_pass_through) {
-		if (this->best_step_types.size() == 0) {
-			curr_node = this->best_exit_next_node;
-		} else {
-			if (this->best_step_types[0] == STEP_TYPE_ACTION) {
-				curr_node = this->best_actions[0];
+		if (this->best_info_scope == NULL) {
+			if (this->best_step_types.size() == 0) {
+				curr_node = this->best_exit_next_node;
 			} else {
-				curr_node = this->best_scopes[0];
+				if (this->best_step_types[0] == STEP_TYPE_ACTION) {
+					curr_node = this->best_actions[0];
+				} else {
+					curr_node = this->best_scopes[0];
+				}
+			}
+		} else {
+			bool inner_is_positive;
+			this->best_info_scope->activate(problem,
+											run_helper,
+											inner_is_positive);
+
+			InfoBranchNodeHistory* info_branch_node_history = new InfoBranchNodeHistory();
+			info_branch_node_history->index = context.back().scope_history->node_histories.size();
+			context.back().scope_history->node_histories[this->info_branch_node] = info_branch_node_history;
+			if ((this->best_is_negate && !inner_is_positive)
+					|| (!this->best_is_negate && inner_is_positive)) {
+				info_branch_node_history->is_branch = true;
+
+				if (this->best_step_types.size() == 0) {
+					curr_node = this->best_exit_next_node;
+				} else {
+					if (this->best_step_types[0] == STEP_TYPE_ACTION) {
+						curr_node = this->best_actions[0];
+					} else {
+						curr_node = this->best_scopes[0];
+					}
+				}
+			} else {
+				info_branch_node_history->is_branch = false;
 			}
 		}
 
@@ -151,13 +180,40 @@ bool BranchExperiment::experiment_activate(AbstractNode*& curr_node,
 		if (decision_is_branch) {
 			branch_node_history->is_branch = true;
 
-			if (this->best_step_types.size() == 0) {
-				curr_node = this->best_exit_next_node;
-			} else {
-				if (this->best_step_types[0] == STEP_TYPE_ACTION) {
-					curr_node = this->best_actions[0];
+			if (this->best_info_scope == NULL) {
+				if (this->best_step_types.size() == 0) {
+					curr_node = this->best_exit_next_node;
 				} else {
-					curr_node = this->best_scopes[0];
+					if (this->best_step_types[0] == STEP_TYPE_ACTION) {
+						curr_node = this->best_actions[0];
+					} else {
+						curr_node = this->best_scopes[0];
+					}
+				}
+			} else {
+				bool inner_is_positive;
+				this->best_info_scope->activate(problem,
+												run_helper,
+												inner_is_positive);
+
+				InfoBranchNodeHistory* info_branch_node_history = new InfoBranchNodeHistory();
+				info_branch_node_history->index = context.back().scope_history->node_histories.size();
+				context.back().scope_history->node_histories[this->info_branch_node] = info_branch_node_history;
+				if ((this->best_is_negate && !inner_is_positive)
+						|| (!this->best_is_negate && inner_is_positive)) {
+					info_branch_node_history->is_branch = true;
+
+					if (this->best_step_types.size() == 0) {
+						curr_node = this->best_exit_next_node;
+					} else {
+						if (this->best_step_types[0] == STEP_TYPE_ACTION) {
+							curr_node = this->best_actions[0];
+						} else {
+							curr_node = this->best_scopes[0];
+						}
+					}
+				} else {
+					info_branch_node_history->is_branch = false;
 				}
 			}
 

@@ -8,6 +8,7 @@
 #include "eval_helpers.h"
 #include "globals.h"
 #include "info_branch_node.h"
+#include "info_scope.h"
 #include "network.h"
 #include "problem.h"
 #include "scope.h"
@@ -157,6 +158,15 @@ bool BranchExperiment::explore_activate(
 		int random_index = distribution(generator);
 		this->curr_exit_next_node = possible_exits[random_index];
 
+		this->curr_info_scope = get_existing_info_scope();
+		if (this->curr_info_scope != NULL) {
+			bool inner_is_positive;
+			this->curr_info_scope->activate(problem,
+											run_helper,
+											inner_is_positive);
+			this->curr_is_negate = inner_is_positive;
+		}
+
 		int new_num_steps;
 		uniform_int_distribution<int> uniform_distribution(0, 1);
 		geometric_distribution<int> geometric_distribution(0.5);
@@ -262,6 +272,8 @@ void BranchExperiment::explore_backprop(
 				}
 
 				this->best_surprise = curr_surprise;
+				this->best_info_scope = this->curr_info_scope;
+				this->best_is_negate = this->curr_is_negate;
 				this->best_step_types = this->curr_step_types;
 				this->best_actions = this->curr_actions;
 				this->best_scopes = this->curr_scopes;
@@ -295,6 +307,8 @@ void BranchExperiment::explore_backprop(
 			if (!run_helper.exceeded_limit
 					&& curr_surprise >= 0.0) {
 			#endif /* MDEBUG */
+				this->best_info_scope = this->curr_info_scope;
+				this->best_is_negate = this->curr_is_negate;
 				this->best_step_types = this->curr_step_types;
 				this->best_actions = this->curr_actions;
 				this->best_scopes = this->curr_scopes;
@@ -325,6 +339,8 @@ void BranchExperiment::explore_backprop(
 			if (!run_helper.exceeded_limit
 					&& curr_surprise >= this->existing_score_standard_deviation) {
 			#endif /* MDEBUG */
+				this->best_info_scope = this->curr_info_scope;
+				this->best_is_negate = this->curr_is_negate;
 				this->best_step_types = this->curr_step_types;
 				this->best_actions = this->curr_actions;
 				this->best_scopes = this->curr_scopes;

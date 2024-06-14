@@ -12,6 +12,7 @@
 #include "network.h"
 #include "nn_helpers.h"
 #include "scope.h"
+#include "solution.h"
 #include "solution_helpers.h"
 
 using namespace std;
@@ -122,7 +123,7 @@ void NewInfoExperiment::explore_info_backprop(
 			for (int l_index = 0; l_index < (int)history->predicted_scores[i_index].size(); l_index++) {
 				sum_score += history->predicted_scores[i_index][l_index];
 			}
-			double final_score = (sum_score / (int)history->predicted_scores[i_index].size() + target_val) / 2.0;
+			double final_score = (sum_score / (int)history->predicted_scores[i_index].size() + target_val - solution->average_score) / 2.0;
 
 			this->info_score += final_score - this->existing_average_score;
 

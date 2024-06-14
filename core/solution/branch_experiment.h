@@ -1,5 +1,3 @@
-// TODO: can also have info scope
-
 #ifndef BRANCH_EXPERIMENT_H
 #define BRANCH_EXPERIMENT_H
 
@@ -13,6 +11,8 @@
 class AbstractNode;
 class ActionNode;
 class BranchNode;
+class InfoBranchNode;
+class InfoScope;
 class Network;
 class Problem;
 class Scope;
@@ -55,12 +55,16 @@ public:
 
 	int explore_type;
 
+	InfoScope* curr_info_scope;
+	bool curr_is_negate;
 	std::vector<int> curr_step_types;
 	std::vector<ActionNode*> curr_actions;
 	std::vector<ScopeNode*> curr_scopes;
 	AbstractNode* curr_exit_next_node;
 
 	double best_surprise;
+	InfoScope* best_info_scope;
+	bool best_is_negate;
 	std::vector<int> best_step_types;
 	std::vector<ActionNode*> best_actions;
 	std::vector<ScopeNode*> best_scopes;
@@ -68,6 +72,7 @@ public:
 
 	ActionNode* ending_node;
 	BranchNode* branch_node;
+	InfoBranchNode* info_branch_node;
 
 	double new_average_score;
 
@@ -127,6 +132,7 @@ public:
 						  RunHelper& run_helper);
 
 	void train_new_activate(AbstractNode*& curr_node,
+							Problem* problem,
 							std::vector<ContextLayer>& context,
 							RunHelper& run_helper,
 							BranchExperimentHistory* history);
@@ -136,6 +142,7 @@ public:
 							RunHelper& run_helper);
 
 	bool measure_activate(AbstractNode*& curr_node,
+						  Problem* problem,
 						  std::vector<ContextLayer>& context,
 						  RunHelper& run_helper,
 						  BranchExperimentHistory* history);
@@ -152,6 +159,7 @@ public:
 								  RunHelper& run_helper);
 
 	bool verify_activate(AbstractNode*& curr_node,
+						 Problem* problem,
 						 std::vector<ContextLayer>& context,
 						 RunHelper& run_helper,
 						 BranchExperimentHistory* history);
@@ -169,10 +177,12 @@ public:
 	#endif /* MDEBUG */
 
 	bool root_verify_activate(AbstractNode*& curr_node,
+							  Problem* problem,
 							  std::vector<ContextLayer>& context,
 							  RunHelper& run_helper);
 
 	bool experiment_activate(AbstractNode*& curr_node,
+							 Problem* problem,
 							 std::vector<ContextLayer>& context,
 							 RunHelper& run_helper,
 							 BranchExperimentHistory* history);
@@ -188,6 +198,7 @@ public:
 											 RunHelper& run_helper);
 
 	bool experiment_verify_activate(AbstractNode*& curr_node,
+									Problem* problem,
 									std::vector<ContextLayer>& context,
 									RunHelper& run_helper,
 									BranchExperimentHistory* history);
@@ -199,6 +210,7 @@ public:
 	void finalize(Solution* duplicate);
 	void new_branch(Solution* duplicate);
 	void new_pass_through(Solution* duplicate);
+	void new_existing_info(Solution* duplicate);
 };
 
 class BranchExperimentHistory : public AbstractExperimentHistory {
