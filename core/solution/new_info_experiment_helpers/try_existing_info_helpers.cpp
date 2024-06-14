@@ -92,14 +92,22 @@ void NewInfoExperiment::try_existing_info_backprop(double target_val,
 		this->state_iter++;
 		if (this->state_iter == EXISTING_INFO_TRUTH_NUM_DATAPOINTS
 				&& this->sub_state_iter >= EXISTING_INFO_NUM_DATAPOINTS) {
+			#if defined(MDEBUG) && MDEBUG
+			if (false) {
+			#else
 			double average_score = this->combined_score / this->sub_state_iter;
 			if (average_score < this->existing_average_score) {
+			#endif /* MDEBUG */
 				is_fail = true;
 			}
 		} else if (this->state_iter == EXISTING_INFO_VERIFY_TRUTH_NUM_DATAPOINTS
 				&& this->sub_state_iter >= EXISTING_INFO_VERIFY_NUM_DATAPOINTS) {
+			#if defined(MDEBUG) && MDEBUG
+			if (rand()%((int)solution->info_scopes.size()*2) == 0) {
+			#else
 			double average_score = this->combined_score / this->sub_state_iter;
 			if (average_score < this->existing_average_score) {
+			#endif /* MDEBUG */
 				is_fail = true;
 			}
 		}
@@ -115,14 +123,22 @@ void NewInfoExperiment::try_existing_info_backprop(double target_val,
 
 			if (this->sub_state_iter == EXISTING_INFO_NUM_DATAPOINTS
 					&& this->state_iter >= EXISTING_INFO_TRUTH_NUM_DATAPOINTS) {
+				#if defined(MDEBUG) && MDEBUG
+				if (false) {
+				#else
 				double average_score = this->combined_score / this->sub_state_iter;
 				if (average_score < this->existing_average_score) {
+				#endif /* MDEBUG */
 					is_fail = true;
 				}
 			} else if (this->sub_state_iter == EXISTING_INFO_VERIFY_NUM_DATAPOINTS
 					&& this->state_iter >= EXISTING_INFO_VERIFY_TRUTH_NUM_DATAPOINTS) {
+				#if defined(MDEBUG) && MDEBUG
+				if (rand()%((int)solution->info_scopes.size()*2) == 0) {
+				#else
 				double average_score = this->combined_score / this->sub_state_iter;
 				if (average_score < this->existing_average_score) {
+				#endif /* MDEBUG */
 					is_fail = true;
 				}
 			}

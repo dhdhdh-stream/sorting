@@ -146,6 +146,8 @@ void InfoScope::activate(Problem* problem,
 	double positive_score = this->positive_network->output->acti_vals[0];
 	#endif /* MDEBUG */
 
+	delete scope_history;
+
 	#if defined(MDEBUG) && MDEBUG
 	if (run_helper.curr_run_seed%2 == 0) {
 		result_is_positive = true;

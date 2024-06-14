@@ -152,8 +152,11 @@ void BranchExperiment::train_new_backprop(
 			this->new_average_score = sum_scores / num_instances;
 
 			vector<vector<double>> inputs(num_instances);
+			#if defined(MDEBUG) && MDEBUG
+			#else
 			double average_misguess;
 			double misguess_standard_deviation;
+			#endif /* MDEBUG */
 
 			int train_index = 0;
 			while (train_index < 3) {
@@ -300,8 +303,11 @@ void BranchExperiment::train_new_backprop(
 						int original_input_size = (int)this->new_input_node_contexts.size();
 						int test_input_size = (int)test_input_node_contexts.size();
 
+						#if defined(MDEBUG) && MDEBUG
+						#else
 						average_misguess = test_average_misguess;
 						misguess_standard_deviation = test_misguess_standard_deviation;
+						#endif /* MDEBUG */
 
 						this->new_input_node_contexts = test_input_node_contexts;
 						this->new_input_obs_indexes = test_input_obs_indexes;
@@ -340,11 +346,15 @@ void BranchExperiment::train_new_backprop(
 											remove_test_average_misguess,
 											remove_test_misguess_standard_deviation);
 
+							#if defined(MDEBUG) && MDEBUG
+							if (rand()%2 == 0) {
+							#else
 							double remove_improvement = average_misguess - remove_test_average_misguess;
 							double remove_standard_deviation = min(misguess_standard_deviation, remove_test_misguess_standard_deviation);
 							double remove_t_score = remove_improvement / (remove_standard_deviation / sqrt(num_instances * TEST_SAMPLES_PERCENTAGE));
 
 							if (remove_t_score > -0.674) {
+							#endif /* MDEBUG */
 								this->new_input_node_contexts = remove_test_input_node_contexts;
 								this->new_input_obs_indexes = remove_test_input_obs_indexes;
 

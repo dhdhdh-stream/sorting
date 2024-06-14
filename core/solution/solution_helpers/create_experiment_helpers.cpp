@@ -35,28 +35,50 @@ void create_experiment(RunHelper& run_helper) {
 	AbstractNode* explore_node = it->first;
 	bool explore_is_branch = it->second;
 
-	uniform_int_distribution<int> branch_distribution(0, (int)explore_node->parent->nodes.size()-1);
-	if (solution->timestamp >= solution->next_possible_new_scope_timestamp
-			&& explore_node->parent->nodes.size() > 10
-			&& branch_distribution(generator) != 0) {
-		NewActionExperiment* new_action_experiment = new NewActionExperiment(
-			explore_node->parent,
-			explore_node,
-			explore_is_branch);
+	if (explore_node->parent->id != -1) {
+		uniform_int_distribution<int> non_new_distribution(0, (int)explore_node->parent->nodes.size()-1);
+		if (solution->timestamp >= solution->next_possible_new_scope_timestamp
+				&& explore_node->parent->nodes.size() > 10
+				&& non_new_distribution(generator) != 0) {
+			NewActionExperiment* new_action_experiment = new NewActionExperiment(
+				explore_node->parent,
+				explore_node,
+				explore_is_branch);
 
-		if (new_action_experiment->result == EXPERIMENT_RESULT_FAIL) {
-			delete new_action_experiment;
+			if (new_action_experiment->result == EXPERIMENT_RESULT_FAIL) {
+				delete new_action_experiment;
+			} else {
+				explore_node->experiments.push_back(new_action_experiment);
+			}
 		} else {
-			explore_node->experiments.push_back(new_action_experiment);
+			uniform_int_distribution<int> type_distribution(0, 1);
+			switch (type_distribution(generator)) {
+			case 0:
+				{
+					NewInfoExperiment* new_experiment = new NewInfoExperiment(
+						explore_node->parent,
+						explore_node,
+						explore_is_branch,
+						NULL);
+
+					explore_node->experiments.push_back(new_experiment);
+				}
+				break;
+			case 1:
+				{
+					BranchExperiment* new_experiment = new BranchExperiment(
+						explore_node->parent,
+						explore_node,
+						explore_is_branch,
+						NULL);
+
+					explore_node->experiments.push_back(new_experiment);
+				}
+				break;
+			}
 		}
 	} else {
-		BranchExperiment* new_experiment = new BranchExperiment(
-			explore_node->parent,
-			explore_node,
-			explore_is_branch,
-			NULL);
-
-		explore_node->experiments.push_back(new_experiment);
+		
 	}
 
 	// // if (explore_node->parent->parent_info_scope == NULL) {

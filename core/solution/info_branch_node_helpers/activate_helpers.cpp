@@ -24,27 +24,27 @@ void InfoBranchNode::activate(AbstractNode*& curr_node,
 						  run_helper,
 						  inner_is_positive);
 
+	if (this->is_negate) {
+		if (inner_is_positive) {
+			history->is_branch = false;
+		} else {
+			history->is_branch = true;
+		}
+	} else {
+		if (inner_is_positive) {
+			history->is_branch = true;
+		} else {
+			history->is_branch = false;
+		}
+	}
+
+	if (history->is_branch) {
+		curr_node = this->branch_next_node;
+	} else {
+		curr_node = this->original_next_node;
+	}
+
 	if (!run_helper.exceeded_limit) {
-		if (this->is_negate) {
-			if (inner_is_positive) {
-				history->is_branch = false;
-			} else {
-				history->is_branch = true;
-			}
-		} else {
-			if (inner_is_positive) {
-				history->is_branch = true;
-			} else {
-				history->is_branch = false;
-			}
-		}
-
-		if (history->is_branch) {
-			curr_node = this->branch_next_node;
-		} else {
-			curr_node = this->original_next_node;
-		}
-
 		for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
 			bool is_selected = this->experiments[e_index]->activate(
 				this,

@@ -1,5 +1,7 @@
 #include "new_info_experiment.h"
 
+#include <iostream>
+
 #include "constants.h"
 #include "eval_helpers.h"
 #include "globals.h"
@@ -13,8 +15,6 @@ void NewInfoExperiment::measure_existing_activate(
 		vector<ContextLayer>& context,
 		NewInfoExperimentHistory* history) {
 	history->instance_count++;
-
-	this->scope_histories.push_back(new ScopeHistory(context.back().scope_history));
 
 	history->predicted_scores.push_back(vector<double>(context.size(), 0.0));
 	for (int l_index = 0; l_index < (int)context.size(); l_index++) {

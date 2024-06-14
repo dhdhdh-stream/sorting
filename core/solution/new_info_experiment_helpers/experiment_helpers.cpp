@@ -73,7 +73,7 @@ bool NewInfoExperiment::experiment_activate(AbstractNode*& curr_node,
 		} else {
 			run_helper.num_decisions++;
 
-			ScopeHistory* scope_history = new ScopeHistory(this->new_info_subscope);
+			ScopeHistory* scope_history;
 			this->new_info_subscope->info_activate(problem,
 												   run_helper,
 												   scope_history);

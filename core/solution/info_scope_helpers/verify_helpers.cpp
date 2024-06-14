@@ -125,6 +125,8 @@ void InfoScope::verify_activate(Problem* problem,
 	this->positive_network->activate(positive_input_vals);
 	double positive_score = this->positive_network->output->acti_vals[0];
 
+	delete scope_history;
+
 	if (this->verify_key != NULL) {
 		cout << "run_helper.curr_run_seed: " << run_helper.curr_run_seed << endl;
 		problem->print();

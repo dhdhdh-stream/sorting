@@ -87,47 +87,72 @@ void NewInfoExperiment::explore_info_backprop(
 	} else {
 		NewInfoExperimentHistory* history = (NewInfoExperimentHistory*)run_helper.experiment_histories.back();
 
-		double sum_score = 0.0;
-		for (int l_index = 0; l_index < (int)history->predicted_scores[0].size(); l_index++) {
-			sum_score += history->predicted_scores[0][l_index];
-		}
-		double final_score = (sum_score / (int)history->predicted_scores[0].size() + target_val) / 2.0;
-
-		this->info_score += final_score - this->existing_average_score;
 		this->sub_state_iter++;
 		if (this->sub_state_iter == INITIAL_NUM_TRUTH_PER_ITER
 				&& (int)this->target_val_histories.size() >= INITIAL_NUM_SAMPLES_PER_ITER) {
+			#if defined(MDEBUG) && MDEBUG
+			if (false) {
+			#else
 			if (this->info_score < 0.0) {
+			#endif /* MDEBUG */
 				is_fail = true;
 			}
 		} else if (this->sub_state_iter == VERIFY_1ST_NUM_TRUTH_PER_ITER
 				&& (int)this->target_val_histories.size() >= VERIFY_1ST_NUM_SAMPLES_PER_ITER) {
+			#if defined(MDEBUG) && MDEBUG
+			if (false) {
+			#else
 			if (this->info_score < 0.0) {
+			#endif /* MDEBUG */
 				is_fail = true;
 			}
 		} else if (this->sub_state_iter == VERIFY_2ND_NUM_TRUTH_PER_ITER
 				&& (int)this->target_val_histories.size() >= VERIFY_2ND_NUM_SAMPLES_PER_ITER) {
+			#if defined(MDEBUG) && MDEBUG
+			if (rand()%2 == 0) {
+			#else
 			if (this->info_score < 0.0) {
+			#endif /* MDEBUG */
 				is_fail = true;
 			}
 		}
 
-		for (int h_index = 0; h_index < history->instance_count; h_index++) {
+		for (int i_index = 0; i_index < (int)history->predicted_scores.size(); i_index++) {
+			double sum_score = 0.0;
+			for (int l_index = 0; l_index < (int)history->predicted_scores[i_index].size(); l_index++) {
+				sum_score += history->predicted_scores[i_index][l_index];
+			}
+			double final_score = (sum_score / (int)history->predicted_scores[i_index].size() + target_val) / 2.0;
+
+			this->info_score += final_score - this->existing_average_score;
+
 			this->target_val_histories.push_back(final_score);
 
 			if ((int)this->target_val_histories.size() == INITIAL_NUM_SAMPLES_PER_ITER
 					&& this->sub_state_iter >= INITIAL_NUM_TRUTH_PER_ITER) {
+				#if defined(MDEBUG) && MDEBUG
+				if (false) {
+				#else
 				if (this->info_score < 0.0) {
+				#endif /* MDEBUG */
 					is_fail = true;
 				}
 			} else if ((int)this->target_val_histories.size() == VERIFY_1ST_NUM_SAMPLES_PER_ITER
 					&& this->sub_state_iter >= VERIFY_1ST_NUM_TRUTH_PER_ITER) {
+				#if defined(MDEBUG) && MDEBUG
+				if (false) {
+				#else
 				if (this->info_score < 0.0) {
+				#endif /* MDEBUG */
 					is_fail = true;
 				}
 			} else if ((int)this->target_val_histories.size() == VERIFY_2ND_NUM_SAMPLES_PER_ITER
 					&& this->sub_state_iter >= VERIFY_2ND_NUM_TRUTH_PER_ITER) {
+				#if defined(MDEBUG) && MDEBUG
+				if (rand()%2 == 0) {
+				#else
 				if (this->info_score < 0.0) {
+				#endif /* MDEBUG */
 					is_fail = true;
 				}
 			}
@@ -165,8 +190,11 @@ void NewInfoExperiment::explore_info_backprop(
 		int num_instances = (int)this->target_val_histories.size();
 
 		vector<vector<double>> inputs(num_instances);
+		#if defined(MDEBUG) && MDEBUG
+		#else
 		double average_misguess;
 		double misguess_standard_deviation;
+		#endif /* MDEBUG */
 
 		int train_index = 0;
 		while (train_index < 3) {
@@ -287,8 +315,11 @@ void NewInfoExperiment::explore_info_backprop(
 					int original_input_size = (int)this->existing_input_node_contexts.size();
 					int test_input_size = (int)test_input_node_contexts.size();
 
+					#if defined(MDEBUG) && MDEBUG
+					#else
 					average_misguess = test_average_misguess;
 					misguess_standard_deviation = test_misguess_standard_deviation;
+					#endif /* MDEBUG */
 
 					this->existing_input_node_contexts = test_input_node_contexts;
 					this->existing_input_obs_indexes = test_input_obs_indexes;
@@ -327,11 +358,15 @@ void NewInfoExperiment::explore_info_backprop(
 										remove_test_average_misguess,
 										remove_test_misguess_standard_deviation);
 
+						#if defined(MDEBUG) && MDEBUG
+						if (rand()%2 == 0) {
+						#else
 						double remove_improvement = average_misguess - remove_test_average_misguess;
 						double remove_standard_deviation = min(misguess_standard_deviation, remove_test_misguess_standard_deviation);
 						double remove_t_score = remove_improvement / (remove_standard_deviation / sqrt(num_instances * TEST_SAMPLES_PERCENTAGE));
 
 						if (remove_t_score > -0.674) {
+						#endif /* MDEBUG */
 							this->existing_input_node_contexts = remove_test_input_node_contexts;
 							this->existing_input_obs_indexes = remove_test_input_obs_indexes;
 

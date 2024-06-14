@@ -50,6 +50,6 @@ const int MEASURE_ITERS = 4000;
 
 const int NUM_VERIFY_SAMPLES = 10;
 
-const int MIN_ITERS_BEFORE_NEXT_NEW_SCOPE = 7;
+const int MIN_ITERS_BEFORE_NEXT_NEW_SCOPE = 6;
 
 #endif /* CONSTANTS_H */
