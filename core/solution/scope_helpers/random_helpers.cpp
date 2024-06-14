@@ -67,35 +67,11 @@ void node_random_exit_activate_helper(AbstractNode*& curr_node,
 
 			possible_exits.push_back(curr_node);
 
-			switch (node->scope->state) {
-			case INFO_SCOPE_STATE_NA:
-				{
-					uniform_int_distribution<int> distribution(0, 1);
-					if (distribution(generator) == 0) {
-						curr_node = node->branch_next_node;
-					} else {
-						curr_node = node->original_next_node;
-					}
-				}
-				break;
-			case INFO_SCOPE_STATE_DISABLED_NEGATIVE:
-				{
-					if (node->is_negate) {
-						curr_node = node->branch_next_node;
-					} else {
-						curr_node = node->original_next_node;
-					}
-				}
-				break;
-			case INFO_SCOPE_STATE_DISABLED_POSITIVE:
-				{
-					if (node->is_negate) {
-						curr_node = node->original_next_node;
-					} else {
-						curr_node = node->branch_next_node;
-					}
-				}
-				break;
+			uniform_int_distribution<int> distribution(0, 1);
+			if (distribution(generator) == 0) {
+				curr_node = node->branch_next_node;
+			} else {
+				curr_node = node->original_next_node;
 			}
 		}
 

@@ -14,12 +14,18 @@ using namespace std;
 
 #if defined(MDEBUG) && MDEBUG
 const int NEW_ACTION_NUM_DATAPOINTS = 10;
+const int NEW_ACTION_TRUTH_NUM_DATAPOINTS = 2;
 const int NEW_ACTION_VERIFY_1ST_NUM_DATAPOINTS = 10;
+const int NEW_ACTION_VERIFY_1ST_TRUTH_NUM_DATAPOINTS = 2;
 const int NEW_ACTION_VERIFY_2ND_NUM_DATAPOINTS = 10;
+const int NEW_ACTION_VERIFY_2ND_TRUTH_NUM_DATAPOINTS = 2;
 #else
 const int NEW_ACTION_NUM_DATAPOINTS = 100;
+const int NEW_ACTION_TRUTH_NUM_DATAPOINTS = 5;
 const int NEW_ACTION_VERIFY_1ST_NUM_DATAPOINTS = 500;
+const int NEW_ACTION_VERIFY_1ST_TRUTH_NUM_DATAPOINTS = 25;
 const int NEW_ACTION_VERIFY_2ND_NUM_DATAPOINTS = 2000;
+const int NEW_ACTION_VERIFY_2ND_TRUTH_NUM_DATAPOINTS = 100;
 #endif /* MDEBUG */
 
 void NewActionExperiment::test_activate(
@@ -100,7 +106,7 @@ void NewActionExperiment::test_backprop(
 				this->test_location_existing_truth_counts[history->test_location_index]++;
 
 				if (this->test_location_existing_counts[history->test_location_index] >= NEW_ACTION_NUM_DATAPOINTS
-						&& this->test_location_existing_truth_counts[history->test_location_index] >= MIN_NUM_TRUTH_DATAPOINTS) {
+						&& this->test_location_existing_truth_counts[history->test_location_index] >= NEW_ACTION_TRUTH_NUM_DATAPOINTS) {
 					this->test_location_states[history->test_location_index] = NEW_ACTION_EXPERIMENT_MEASURE_NEW;
 				}
 			}
@@ -120,7 +126,7 @@ void NewActionExperiment::test_backprop(
 				this->test_location_new_truth_counts[history->test_location_index]++;
 
 				if (this->test_location_new_counts[history->test_location_index] >= NEW_ACTION_NUM_DATAPOINTS
-						&& this->test_location_new_truth_counts[history->test_location_index] >= MIN_NUM_TRUTH_DATAPOINTS) {
+						&& this->test_location_new_truth_counts[history->test_location_index] >= NEW_ACTION_TRUTH_NUM_DATAPOINTS) {
 					#if defined(MDEBUG) && MDEBUG
 					if (rand()%2 == 0) {
 					#else
@@ -159,7 +165,7 @@ void NewActionExperiment::test_backprop(
 				this->test_location_existing_truth_counts[history->test_location_index]++;
 
 				if (this->test_location_existing_counts[history->test_location_index] >= NEW_ACTION_VERIFY_1ST_NUM_DATAPOINTS
-						&& this->test_location_existing_truth_counts[history->test_location_index] >= MIN_NUM_TRUTH_DATAPOINTS) {
+						&& this->test_location_existing_truth_counts[history->test_location_index] >= NEW_ACTION_VERIFY_1ST_TRUTH_NUM_DATAPOINTS) {
 					this->test_location_states[history->test_location_index] = NEW_ACTION_EXPERIMENT_VERIFY_1ST_NEW;
 				}
 			}
@@ -179,7 +185,7 @@ void NewActionExperiment::test_backprop(
 				this->test_location_new_truth_counts[history->test_location_index]++;
 
 				if (this->test_location_new_counts[history->test_location_index] >= NEW_ACTION_VERIFY_1ST_NUM_DATAPOINTS
-						&& this->test_location_new_truth_counts[history->test_location_index] >= MIN_NUM_TRUTH_DATAPOINTS) {
+						&& this->test_location_new_truth_counts[history->test_location_index] >= NEW_ACTION_VERIFY_1ST_TRUTH_NUM_DATAPOINTS) {
 					#if defined(MDEBUG) && MDEBUG
 					if (rand()%2 == 0) {
 					#else
@@ -218,7 +224,7 @@ void NewActionExperiment::test_backprop(
 				this->test_location_existing_truth_counts[history->test_location_index]++;
 
 				if (this->test_location_existing_counts[history->test_location_index] >= NEW_ACTION_VERIFY_2ND_NUM_DATAPOINTS
-						&& this->test_location_existing_truth_counts[history->test_location_index] >= MIN_NUM_TRUTH_DATAPOINTS) {
+						&& this->test_location_existing_truth_counts[history->test_location_index] >= NEW_ACTION_VERIFY_2ND_TRUTH_NUM_DATAPOINTS) {
 					this->test_location_states[history->test_location_index] = NEW_ACTION_EXPERIMENT_VERIFY_2ND_NEW;
 				}
 			}
@@ -238,7 +244,7 @@ void NewActionExperiment::test_backprop(
 				this->test_location_new_truth_counts[history->test_location_index]++;
 
 				if (this->test_location_new_counts[history->test_location_index] >= NEW_ACTION_VERIFY_2ND_NUM_DATAPOINTS
-						&& this->test_location_new_truth_counts[history->test_location_index] >= MIN_NUM_TRUTH_DATAPOINTS) {
+						&& this->test_location_new_truth_counts[history->test_location_index] >= NEW_ACTION_VERIFY_2ND_TRUTH_NUM_DATAPOINTS) {
 					#if defined(MDEBUG) && MDEBUG
 					if (rand()%2 == 0) {
 					#else

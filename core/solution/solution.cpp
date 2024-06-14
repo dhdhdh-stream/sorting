@@ -194,9 +194,6 @@ void Solution::save_for_display(ofstream& output_file) {
 
 	output_file << this->info_scopes.size() << endl;
 	for (int i_index = 0; i_index < (int)this->info_scopes.size(); i_index++) {
-		output_file << this->info_scopes[i_index]->state << endl;
-		if (this->info_scopes[i_index]->state == INFO_SCOPE_STATE_NA) {
-			this->info_scopes[i_index]->subscope->save_for_display(output_file);
-		}
+		this->info_scopes[i_index]->subscope->save_for_display(output_file);
 	}
 }

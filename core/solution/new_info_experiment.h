@@ -10,6 +10,7 @@
 class AbstractNode;
 class ActionNode;
 class InfoBranchNode;
+class InfoScope;
 class Network;
 class Problem;
 class Scope;
@@ -22,13 +23,14 @@ const int NEW_INFO_EXPERIMENT_STATE_EXPLORE_INFO = 1;
 const int NEW_INFO_EXPERIMENT_STATE_EXPLORE_SEQUENCE = 2;
 const int NEW_INFO_EXPERIMENT_STATE_TRAIN_NEW = 3;
 const int NEW_INFO_EXPERIMENT_STATE_MEASURE = 4;
-const int NEW_INFO_EXPERIMENT_STATE_VERIFY_EXISTING = 5;
-const int NEW_INFO_EXPERIMENT_STATE_VERIFY = 6;
+const int NEW_INFO_EXPERIMENT_STATE_TRY_EXISTING_INFO = 5;
+const int NEW_INFO_EXPERIMENT_STATE_VERIFY_EXISTING = 6;
+const int NEW_INFO_EXPERIMENT_STATE_VERIFY = 7;
 #if defined(MDEBUG) && MDEBUG
-const int NEW_INFO_EXPERIMENT_STATE_CAPTURE_VERIFY = 7;
+const int NEW_INFO_EXPERIMENT_STATE_CAPTURE_VERIFY = 8;
 #endif /* MDEBUG */
-const int NEW_INFO_EXPERIMENT_STATE_ROOT_VERIFY = 8;
-const int NEW_INFO_EXPERIMENT_STATE_EXPERIMENT = 9;
+const int NEW_INFO_EXPERIMENT_STATE_ROOT_VERIFY = 9;
+const int NEW_INFO_EXPERIMENT_STATE_EXPERIMENT = 10;
 
 class NewInfoExperimentHistory;
 class NewInfoExperiment : public AbstractExperiment {
@@ -78,6 +80,10 @@ public:
 	double branch_weight;
 
 	bool is_pass_through;
+
+	bool use_existing;
+	int existing_info_scope_index;
+	bool existing_is_negate;
 
 	std::vector<ScopeHistory*> scope_histories;
 
@@ -153,6 +159,16 @@ public:
 	void measure_backprop(double target_val,
 						  RunHelper& run_helper);
 
+	bool try_existing_info_activate(AbstractNode*& curr_node,
+									Problem* problem,
+									std::vector<ContextLayer>& context,
+									RunHelper& run_helper,
+									NewInfoExperimentHistory* history);
+	void try_existing_info_back_activate(std::vector<ContextLayer>& context,
+										 RunHelper& run_helper);
+	void try_existing_info_backprop(double target_val,
+									RunHelper& run_helper);
+
 	void verify_existing_activate(std::vector<ContextLayer>& context,
 								  NewInfoExperimentHistory* history);
 	void verify_existing_back_activate(std::vector<ContextLayer>& context,
@@ -210,6 +226,7 @@ public:
 	void finalize(Solution* duplicate);
 	void new_branch(Solution* duplicate);
 	void new_pass_through(Solution* duplicate);
+	void new_existing(Solution* duplicate);
 };
 
 class NewInfoExperimentHistory : public AbstractExperimentHistory {

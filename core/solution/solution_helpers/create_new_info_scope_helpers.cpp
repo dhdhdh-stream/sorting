@@ -27,9 +27,7 @@ Scope* create_new_info_subscope() {
 
 	vector<InfoScope*> possible_info_scopes;
 	for (int i_index = 0; i_index < (int)solution->info_scopes.size(); i_index++) {
-		if (solution->info_scopes[i_index]->state == INFO_SCOPE_STATE_NA) {
-			possible_info_scopes.push_back(solution->info_scopes[i_index]);
-		}
+		possible_info_scopes.push_back(solution->info_scopes[i_index]);
 	}
 	if (possible_info_scopes.size() > 0) {
 		/**

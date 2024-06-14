@@ -24,24 +24,3 @@ ScopeNode* create_existing() {
 
 	return NULL;
 }
-
-InfoScope* get_existing_info_scope() {
-	uniform_int_distribution<int> non_null_distribution(0, 4);
-	if (!non_null_distribution(generator) == 0) {
-		return NULL;
-	} else {
-		vector<InfoScope*> possible_info_scopes;
-		for (int i_index = 0; i_index < (int)solution->info_scopes.size(); i_index++) {
-			if (solution->info_scopes[i_index]->state == INFO_SCOPE_STATE_NA) {
-				possible_info_scopes.push_back(solution->info_scopes[i_index]);
-			}
-		}
-
-		if (possible_info_scopes.size() == 0) {
-			return NULL;
-		}
-
-		uniform_int_distribution<int> possible_distribution(0, possible_info_scopes.size()-1);
-		return possible_info_scopes[possible_distribution(generator)];
-	}
-}

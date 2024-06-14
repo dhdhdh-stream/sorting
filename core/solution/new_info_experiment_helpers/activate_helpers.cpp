@@ -359,6 +359,12 @@ bool NewInfoExperiment::activate(AbstractNode* experiment_node,
 									context,
 									run_helper,
 									history);
+		case NEW_INFO_EXPERIMENT_STATE_TRY_EXISTING_INFO:
+			return try_existing_info_activate(curr_node,
+											  problem,
+											  context,
+											  run_helper,
+											  history);
 		case NEW_INFO_EXPERIMENT_STATE_VERIFY_EXISTING:
 			verify_existing_activate(context,
 									 history);
@@ -429,6 +435,10 @@ void NewInfoExperiment::back_activate(vector<ContextLayer>& context,
 		measure_back_activate(context,
 							  run_helper);
 		break;
+	case NEW_INFO_EXPERIMENT_STATE_TRY_EXISTING_INFO:
+		try_existing_info_back_activate(context,
+										run_helper);
+		break;
 	case NEW_INFO_EXPERIMENT_STATE_VERIFY_EXISTING:
 		verify_existing_back_activate(context,
 									  run_helper);
@@ -479,6 +489,10 @@ void NewInfoExperiment::backprop(double target_val,
 	case NEW_INFO_EXPERIMENT_STATE_MEASURE:
 		measure_backprop(target_val,
 						 run_helper);
+		break;
+	case NEW_INFO_EXPERIMENT_STATE_TRY_EXISTING_INFO:
+		try_existing_info_backprop(target_val,
+								   run_helper);
 		break;
 	case NEW_INFO_EXPERIMENT_STATE_VERIFY_EXISTING:
 		verify_existing_backprop(target_val,

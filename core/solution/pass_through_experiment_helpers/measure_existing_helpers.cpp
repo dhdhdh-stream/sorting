@@ -101,6 +101,8 @@
 // 		int random_index = distribution(generator);
 // 		this->curr_exit_next_node = possible_exits[random_index];
 
+		// TOOD: add
+		// uniform_int_distribution<int> non_null_distribution(0, 4);
 // 		this->curr_info_scope = get_existing_info_scope();
 // 		uniform_int_distribution<int> negate_distribution(0, 1);
 // 		this->curr_is_negate = negate_distribution(generator) == 0;

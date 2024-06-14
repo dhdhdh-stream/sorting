@@ -1,5 +1,7 @@
 /**
  * - when used as ScopeNode, +1.0 if positive, -1.0 if negative
+ * 
+ * - TODO: maybe infinite index rather than only binary
  */
 
 #ifndef INFO_SCOPE_H
@@ -19,19 +21,9 @@ class Scope;
 class ScopeHistory;
 class Solution;
 
-const int INFO_SCOPE_STATE_NA = 0;
-/**
- * TODO: maybe infinite index rather than only binary
- */
-
-const int INFO_SCOPE_STATE_DISABLED_NEGATIVE = 1;
-const int INFO_SCOPE_STATE_DISABLED_POSITIVE = 2;
-
 class InfoScope {
 public:
 	int id;
-
-	int state;
 
 	Scope* subscope;
 

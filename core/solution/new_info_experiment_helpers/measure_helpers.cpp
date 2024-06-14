@@ -234,6 +234,11 @@ void NewInfoExperiment::measure_backprop(double target_val,
 				if (this->branch_weight > PASS_THROUGH_BRANCH_WEIGHT
 						&& this->new_average_score >= this->existing_average_score) {
 					this->is_pass_through = true;
+
+					this->target_val_histories.reserve(VERIFY_NUM_DATAPOINTS);
+
+					this->state = NEW_INFO_EXPERIMENT_STATE_VERIFY_EXISTING;
+					this->state_iter = 0;
 				} else {
 					this->is_pass_through = false;
 
@@ -241,12 +246,25 @@ void NewInfoExperiment::measure_backprop(double target_val,
 					this->branch_node->parent = this->scope_context;
 					this->branch_node->id = this->scope_context->node_counter;
 					this->scope_context->node_counter++;
+
+					if (solution->info_scopes.size() > 0) {
+						this->existing_info_scope_index = 0;
+						this->existing_is_negate = false;
+
+						this->combined_score = 0.0;
+
+						this->state = NEW_INFO_EXPERIMENT_STATE_TRY_EXISTING_INFO;
+						this->state_iter = 0;
+						this->sub_state_iter = 0;
+					} else {
+						this->use_existing = false;
+
+						this->target_val_histories.reserve(VERIFY_NUM_DATAPOINTS);
+
+						this->state = NEW_INFO_EXPERIMENT_STATE_VERIFY_EXISTING;
+						this->state_iter = 0;
+					}
 				}
-
-				this->target_val_histories.reserve(VERIFY_NUM_DATAPOINTS);
-
-				this->state = NEW_INFO_EXPERIMENT_STATE_VERIFY_EXISTING;
-				this->state_iter = 0;
 			} else {
 				this->explore_iter++;
 				if (this->explore_iter < MAX_EXPLORE_TRIES) {

@@ -20,9 +20,9 @@ using namespace std;
 const int INITIAL_NUM_SAMPLES_PER_ITER = 2;
 const int INITIAL_NUM_TRUTH_PER_ITER = 2;
 const int VERIFY_1ST_NUM_SAMPLES_PER_ITER = 5;
-const int VERIFY_1ST_NUM_TRUTH_PER_ITER = 5;
+const int VERIFY_1ST_NUM_TRUTH_PER_ITER = 2;
 const int VERIFY_2ND_NUM_SAMPLES_PER_ITER = 10;
-const int VERIFY_2ND_NUM_TRUTH_PER_ITER = 10;
+const int VERIFY_2ND_NUM_TRUTH_PER_ITER = 2;
 const int EXPLORE_ITERS = 2;
 #else
 const int INITIAL_NUM_SAMPLES_PER_ITER = 100;
@@ -95,6 +95,22 @@ void NewInfoExperiment::explore_info_backprop(
 
 		this->info_score += final_score - this->existing_average_score;
 		this->sub_state_iter++;
+		if (this->sub_state_iter == INITIAL_NUM_TRUTH_PER_ITER
+				&& (int)this->target_val_histories.size() >= INITIAL_NUM_SAMPLES_PER_ITER) {
+			if (this->info_score < 0.0) {
+				is_fail = true;
+			}
+		} else if (this->sub_state_iter == VERIFY_1ST_NUM_TRUTH_PER_ITER
+				&& (int)this->target_val_histories.size() >= VERIFY_1ST_NUM_SAMPLES_PER_ITER) {
+			if (this->info_score < 0.0) {
+				is_fail = true;
+			}
+		} else if (this->sub_state_iter == VERIFY_2ND_NUM_TRUTH_PER_ITER
+				&& (int)this->target_val_histories.size() >= VERIFY_2ND_NUM_SAMPLES_PER_ITER) {
+			if (this->info_score < 0.0) {
+				is_fail = true;
+			}
+		}
 
 		for (int h_index = 0; h_index < history->instance_count; h_index++) {
 			this->target_val_histories.push_back(final_score);
