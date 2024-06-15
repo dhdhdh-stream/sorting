@@ -100,12 +100,12 @@ bool BranchExperiment::activate(AbstractNode* experiment_node,
 												run_helper.experiment_histories.push_back(new BranchExperimentHistory(branch_ancestor));
 											}
 											break;
-										// case EXPERIMENT_TYPE_PASS_THROUGH:
-										// 	{
-										// 		PassThroughExperiment* pass_through_ancestor = (PassThroughExperiment*)ancestors[0];
-										// 		run_helper.experiment_histories.push_back(new PassThroughExperimentHistory(pass_through_ancestor));
-										// 	}
-										// 	break;
+										case EXPERIMENT_TYPE_PASS_THROUGH:
+											{
+												PassThroughExperiment* pass_through_ancestor = (PassThroughExperiment*)ancestors[0];
+												run_helper.experiment_histories.push_back(new PassThroughExperimentHistory(pass_through_ancestor));
+											}
+											break;
 										case EXPERIMENT_TYPE_NEW_INFO:
 											{
 												NewInfoExperiment* new_info_experiment = (NewInfoExperiment*)ancestors[0];
@@ -140,12 +140,12 @@ bool BranchExperiment::activate(AbstractNode* experiment_node,
 												run_helper.experiment_histories.push_back(new BranchExperimentHistory(branch_ancestor));
 											}
 											break;
-										// case EXPERIMENT_TYPE_PASS_THROUGH:
-										// 	{
-										// 		PassThroughExperiment* pass_through_ancestor = (PassThroughExperiment*)ancestors[ancestor_index];
-										// 		run_helper.experiment_histories.push_back(new PassThroughExperimentHistory(pass_through_ancestor));
-										// 	}
-										// 	break;
+										case EXPERIMENT_TYPE_PASS_THROUGH:
+											{
+												PassThroughExperiment* pass_through_ancestor = (PassThroughExperiment*)ancestors[ancestor_index];
+												run_helper.experiment_histories.push_back(new PassThroughExperimentHistory(pass_through_ancestor));
+											}
+											break;
 										case EXPERIMENT_TYPE_NEW_INFO:
 											{
 												NewInfoExperiment* new_info_ancestor = (NewInfoExperiment*)ancestors[ancestor_index];
@@ -179,12 +179,12 @@ bool BranchExperiment::activate(AbstractNode* experiment_node,
 											run_helper.experiment_histories.push_back(new BranchExperimentHistory(branch_ancestor));
 										}
 										break;
-									// case EXPERIMENT_TYPE_PASS_THROUGH:
-									// 	{
-									// 		PassThroughExperiment* pass_through_ancestor = (PassThroughExperiment*)ancestors[e_index];
-									// 		run_helper.experiment_histories.push_back(new PassThroughExperimentHistory(pass_through_ancestor));
-									// 	}
-									// 	break;
+									case EXPERIMENT_TYPE_PASS_THROUGH:
+										{
+											PassThroughExperiment* pass_through_ancestor = (PassThroughExperiment*)ancestors[e_index];
+											run_helper.experiment_histories.push_back(new PassThroughExperimentHistory(pass_through_ancestor));
+										}
+										break;
 									case EXPERIMENT_TYPE_NEW_INFO:
 										{
 											NewInfoExperiment* new_info_ancestor = (NewInfoExperiment*)ancestors[e_index];
@@ -238,12 +238,12 @@ bool BranchExperiment::activate(AbstractNode* experiment_node,
 												run_helper.experiment_histories.push_back(new BranchExperimentHistory(branch_root));
 											}
 											break;
-										// case EXPERIMENT_TYPE_PASS_THROUGH:
-										// 	{
-										// 		PassThroughExperiment* pass_through_root = (PassThroughExperiment*)this->root_experiment;
-										// 		run_helper.experiment_histories.push_back(new PassThroughExperimentHistory(pass_through_root));
-										// 	}
-										// 	break;
+										case EXPERIMENT_TYPE_PASS_THROUGH:
+											{
+												PassThroughExperiment* pass_through_root = (PassThroughExperiment*)this->root_experiment;
+												run_helper.experiment_histories.push_back(new PassThroughExperimentHistory(pass_through_root));
+											}
+											break;
 										case EXPERIMENT_TYPE_NEW_INFO:
 											{
 												NewInfoExperiment* new_info_root = (NewInfoExperiment*)this->root_experiment;
@@ -297,12 +297,12 @@ bool BranchExperiment::activate(AbstractNode* experiment_node,
 												run_helper.experiment_histories.push_back(new BranchExperimentHistory(branch_root));
 											}
 											break;
-										// case EXPERIMENT_TYPE_PASS_THROUGH:
-										// 	{
-										// 		PassThroughExperiment* pass_through_root = (PassThroughExperiment*)this->root_experiment;
-										// 		run_helper.experiment_histories.push_back(new PassThroughExperimentHistory(pass_through_root));
-										// 	}
-										// 	break;
+										case EXPERIMENT_TYPE_PASS_THROUGH:
+											{
+												PassThroughExperiment* pass_through_root = (PassThroughExperiment*)this->root_experiment;
+												run_helper.experiment_histories.push_back(new PassThroughExperimentHistory(pass_through_root));
+											}
+											break;
 										case EXPERIMENT_TYPE_NEW_INFO:
 											{
 												NewInfoExperiment* new_info_root = (NewInfoExperiment*)this->root_experiment;

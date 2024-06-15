@@ -228,9 +228,29 @@ bool BranchExperiment::experiment_activate(AbstractNode*& curr_node,
 	if (this->parent_experiment == NULL
 			|| this->root_experiment->root_state == ROOT_EXPERIMENT_STATE_EXPERIMENT) {
 		if (run_helper.experiment_histories.back() == history) {
-			history->experiment_index = context.back().scope_history->node_histories.size();
+			history->instance_count++;
 
-			context.back().scope_history->callback_experiment_history = history;
+			bool is_target = false;
+			if (!history->has_target) {
+				double target_probability;
+				if (history->instance_count > this->average_instances_per_run) {
+					target_probability = 0.5;
+				} else {
+					target_probability = 1.0 / (1.0 + 1.0 + (this->average_instances_per_run - history->instance_count));
+				}
+				uniform_real_distribution<double> distribution(0.0, 1.0);
+				if (distribution(generator) < target_probability) {
+					is_target = true;
+				}
+			}
+
+			if (is_target) {
+				history->has_target = true;
+
+				context.back().scope_history->callback_experiment_history = history;
+
+				history->experiment_index = context.back().scope_history->node_histories.size();
+			}
 		}
 	}
 
@@ -330,13 +350,13 @@ void BranchExperiment::experiment_back_activate(
 						possible_node_contexts[rand_index]->experiments.insert(possible_node_contexts[rand_index]->experiments.begin(), new_experiment);
 					}
 				} else {
-					// PassThroughExperiment* new_experiment = new PassThroughExperiment(
-					// 	this->scope_context,
-					// 	possible_node_contexts[rand_index],
-					// 	possible_is_branch[rand_index],
-					// 	this);
+					PassThroughExperiment* new_experiment = new PassThroughExperiment(
+						this->scope_context,
+						possible_node_contexts[rand_index],
+						possible_is_branch[rand_index],
+						this);
 
-					// possible_node_contexts[rand_index]->experiments.insert(possible_node_contexts[rand_index]->experiments.begin(), new_experiment);
+					possible_node_contexts[rand_index]->experiments.insert(possible_node_contexts[rand_index]->experiments.begin(), new_experiment);
 				}
 			}
 		}
