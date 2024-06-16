@@ -119,9 +119,6 @@ void NewActionExperiment::back_activate(vector<ContextLayer>& context,
 	case NEW_ACTION_EXPERIMENT_STATE_EXPLORE:
 		if (history->test_location_index == -1) {
 			add_new_test_location(context.back().scope_history);
-		} else {
-			test_back_activate(context,
-							   run_helper);
 		}
 		break;
 	}
