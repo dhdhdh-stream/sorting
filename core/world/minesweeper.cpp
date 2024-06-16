@@ -106,19 +106,6 @@ Minesweeper::Minesweeper() {
 	reveal_helper(STARTING_X, STARTING_Y);
 }
 
-int Minesweeper::num_obs() {
-	return 9;
-}
-
-int Minesweeper::num_possible_actions() {
-	return 7;
-}
-
-Action Minesweeper::random_action() {
-	uniform_int_distribution<int> action_distribution(0, 6);
-	return Action(action_distribution(generator));
-}
-
 double Minesweeper::get_observation_helper(int x, int y) {
 	if (x < 0
 			|| x > WIDTH-1
@@ -438,4 +425,21 @@ void Minesweeper::print() {
 
 	cout << "current_x: " << this->current_x << endl;
 	cout << "current_y: " << this->current_y << endl;
+}
+
+Problem* TypeMinesweeper::get_problem() {
+	return new Minesweeper();
+}
+
+int TypeMinesweeper::num_obs() {
+	return 9;
+}
+
+int TypeMinesweeper::num_possible_actions() {
+	return 7;
+}
+
+Action TypeMinesweeper::random_action() {
+	uniform_int_distribution<int> action_distribution(0, 6);
+	return Action(action_distribution(generator));
 }

@@ -83,14 +83,9 @@ void NewInfoExperiment::new_branch(Solution* duplicate) {
 
 	new_info_scope->subscope = this->new_info_subscope;
 
-	new_info_scope->negative_input_node_contexts = this->existing_input_node_contexts;
-	new_info_scope->negative_input_obs_indexes = this->existing_input_obs_indexes;
-	new_info_scope->negative_network = this->existing_network;
-	this->existing_network = NULL;
-
-	new_info_scope->positive_input_node_contexts = this->new_input_node_contexts;
-	new_info_scope->positive_input_obs_indexes = this->new_input_obs_indexes;
-	new_info_scope->positive_network = this->new_network;
+	new_info_scope->input_node_contexts = this->new_input_node_contexts;
+	new_info_scope->input_obs_indexes = this->new_input_obs_indexes;
+	new_info_scope->network = this->new_network;
 	this->new_network = NULL;
 
 	this->branch_node->parent = duplicate_local_scope;
@@ -236,6 +231,8 @@ void NewInfoExperiment::new_branch(Solution* duplicate) {
 			duplicate_local_scope->nodes[this->best_scopes[s_index]->id] = this->best_scopes[s_index];
 
 			this->best_scopes[s_index]->scope = duplicate->scopes[this->best_scopes[s_index]->scope->id];
+
+			duplicate_local_scope->scopes_used.insert(this->best_scopes[s_index]->scope->id);
 		}
 	}
 	if (this->best_step_types.size() > 0) {
@@ -258,8 +255,7 @@ void NewInfoExperiment::new_branch(Solution* duplicate) {
 	duplicate->verify_seeds = this->verify_seeds;
 
 	new_info_scope->verify_key = this;
-	new_info_scope->verify_negative_scores = this->verify_negative_scores;
-	new_info_scope->verify_positive_scores = this->verify_positive_scores;
+	new_info_scope->verify_scores = this->verify_scores;
 	#endif /* MDEBUG */
 
 	this->new_info_subscope = NULL;
@@ -349,6 +345,8 @@ void NewInfoExperiment::new_pass_through(Solution* duplicate) {
 			duplicate_local_scope->nodes[this->best_scopes[s_index]->id] = this->best_scopes[s_index];
 
 			this->best_scopes[s_index]->scope = duplicate->scopes[this->best_scopes[s_index]->scope->id];
+
+			duplicate_local_scope->scopes_used.insert(this->best_scopes[s_index]->scope->id);
 		}
 	}
 	if (this->best_step_types.size() > 0) {
@@ -523,6 +521,8 @@ void NewInfoExperiment::new_existing(Solution* duplicate) {
 			duplicate_local_scope->nodes[this->best_scopes[s_index]->id] = this->best_scopes[s_index];
 
 			this->best_scopes[s_index]->scope = duplicate->scopes[this->best_scopes[s_index]->scope->id];
+
+			duplicate_local_scope->scopes_used.insert(this->best_scopes[s_index]->scope->id);
 		}
 	}
 	if (this->best_step_types.size() > 0) {

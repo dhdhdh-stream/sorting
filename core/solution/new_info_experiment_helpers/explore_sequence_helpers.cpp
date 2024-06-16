@@ -81,11 +81,7 @@ bool NewInfoExperiment::explore_sequence_activate(
 				case NODE_TYPE_INFO_SCOPE:
 					{
 						InfoScopeNodeHistory* info_scope_node_history = (InfoScopeNodeHistory*)it->second;
-						if (info_scope_node_history->is_positive) {
-							input_vals[i_index] = 1.0;
-						} else {
-							input_vals[i_index] = -1.0;
-						}
+						input_vals[i_index] = info_scope_node_history->score;
 					}
 					break;
 				}
@@ -94,7 +90,7 @@ bool NewInfoExperiment::explore_sequence_activate(
 		this->existing_network->activate(input_vals);
 		double predicted_score = this->existing_network->output->acti_vals[0];
 
-		history->existing_predicted_score = predicted_score;
+		history->existing_predicted_scores.push_back(predicted_score);
 
 		delete scope_history;
 
@@ -162,7 +158,7 @@ bool NewInfoExperiment::explore_sequence_activate(
 		for (int s_index = 0; s_index < new_num_steps; s_index++) {
 			bool default_to_action = true;
 			if (default_distribution(generator) != 0) {
-				ScopeNode* new_scope_node = create_existing();
+				ScopeNode* new_scope_node = create_existing(this->scope_context);
 				if (new_scope_node != NULL) {
 					this->curr_step_types.push_back(STEP_TYPE_SCOPE);
 					this->curr_actions.push_back(NULL);
@@ -236,7 +232,7 @@ void NewInfoExperiment::explore_sequence_backprop(
 			}
 			double final_score = (sum_score / (int)history->predicted_scores[0].size() + target_val - solution->average_score) / 2.0;
 
-			curr_surprise = final_score - history->existing_predicted_score;
+			curr_surprise = final_score - history->existing_predicted_scores[0];
 		}
 
 		bool select = false;

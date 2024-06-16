@@ -22,8 +22,12 @@ int seed;
 
 default_random_engine generator;
 
-Problem* problem_type;
+ProblemType* problem_type;
 Solution* solution;
+
+#if defined(MDEBUG) && MDEBUG
+int run_index = 0;
+#endif /* MDEBUG */
 
 int main(int argc, char* argv[]) {
 	if (argc != 2) {
@@ -43,16 +47,16 @@ int main(int argc, char* argv[]) {
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
 
-	// problem_type = new Sorting();
-	problem_type = new Minesweeper();
+	// problem_type = new TypeSorting();
+	problem_type = new TypeMinesweeper();
 
 	solution = new Solution();
 	solution->load("workers/", "main");
+	update_eval();
 
 	auto start_time = chrono::high_resolution_clock::now();
 	while (true) {
-		// Problem* problem = new Sorting();
-		Problem* problem = new Minesweeper();
+		Problem* problem = problem_type->get_problem();
 
 		RunHelper run_helper;
 
@@ -96,8 +100,8 @@ int main(int argc, char* argv[]) {
 
 				solution = new Solution();
 				solution->load("workers/", "main");
-
 				cout << "updated from main" << endl;
+				update_eval();
 
 				continue;
 			}
@@ -197,10 +201,9 @@ int main(int argc, char* argv[]) {
 				 */
 				Solution* duplicate = new Solution(solution);
 
-				int experiment_scope_id = run_helper.experiment_histories.back()->experiment->scope_context->id;
-				int new_scope_id = -1;
+				duplicate->last_updated_scope_id = run_helper.experiment_histories.back()->experiment->scope_context->id;
 				if (run_helper.experiment_histories.back()->experiment->type == EXPERIMENT_TYPE_NEW_ACTION) {
-					new_scope_id = (int)solution->scopes.size();
+					duplicate->last_new_scope_id = (int)solution->scopes.size();
 
 					duplicate->next_possible_new_scope_timestamp = duplicate->timestamp
 						+ 1 + duplicate->scopes.size() + MIN_ITERS_BEFORE_NEXT_NEW_SCOPE;
@@ -209,34 +212,19 @@ int main(int argc, char* argv[]) {
 				run_helper.experiment_histories.back()->experiment->finalize(duplicate);
 				delete run_helper.experiment_histories.back()->experiment;
 
-				Scope* experiment_scope = duplicate->scopes[experiment_scope_id];
-				Scope* new_scope = NULL;
-				if (new_scope_id != -1) {
-					new_scope = duplicate->scopes[new_scope_id];
-				}
-
+				Scope* experiment_scope = duplicate->scopes[duplicate->last_updated_scope_id];
 				clean_scope(experiment_scope);
 
-				vector<double> o_target_val_histories;
-				vector<ScopeHistory*> scope_histories;
-				vector<double> target_val_histories;
-				vector<ScopeHistory*> new_scope_histories;
-				vector<double> new_target_val_histories;
+				vector<double> target_vals;
 				int max_num_actions = 0;
 				bool early_exit = false;
 				for (int iter_index = 0; iter_index < MEASURE_ITERS; iter_index++) {
-					// Problem* problem = new Sorting();
-					Problem* problem = new Minesweeper();
+					Problem* problem = problem_type->get_problem();
 
 					RunHelper run_helper;
 
-					Metrics metrics;
-					metrics.experiment_scope = experiment_scope;
-					metrics.new_scope = new_scope;
-
 					vector<ContextLayer> context;
-					duplicate->scopes[0]->measure_activate(
-						metrics,
+					duplicate->scopes[0]->activate(
 						problem,
 						context,
 						run_helper);
@@ -252,16 +240,7 @@ int main(int argc, char* argv[]) {
 						target_val = -1.0;
 					}
 
-					o_target_val_histories.push_back(target_val);
-
-					for (int h_index = 0; h_index < (int)metrics.scope_histories.size(); h_index++) {
-						scope_histories.push_back(metrics.scope_histories[h_index]);
-						target_val_histories.push_back(target_val);
-					}
-					for (int h_index = 0; h_index < (int)metrics.new_scope_histories.size(); h_index++) {
-						new_scope_histories.push_back(metrics.new_scope_histories[h_index]);
-						new_target_val_histories.push_back(target_val);
-					}
+					target_vals.push_back(target_val);
 
 					delete problem;
 
@@ -287,45 +266,27 @@ int main(int argc, char* argv[]) {
 				}
 
 				if (early_exit) {
-					for (int h_index = 0; h_index < (int)scope_histories.size(); h_index++) {
-						delete scope_histories[h_index];
-					}
-					for (int h_index = 0; h_index < (int)new_scope_histories.size(); h_index++) {
-						delete new_scope_histories[h_index];
-					}
-
 					delete duplicate;
 
 					delete solution;
 
 					solution = new Solution();
 					solution->load("workers/", "main");
-
 					cout << "updated from main" << endl;
+					update_eval();
 
 					continue;
 				}
 
 				double sum_score = 0.0;
 				for (int d_index = 0; d_index < MEASURE_ITERS; d_index++) {
-					sum_score += o_target_val_histories[d_index];
+					sum_score += target_vals[d_index];
 				}
 				duplicate->average_score = sum_score / MEASURE_ITERS;
 
 				duplicate->max_num_actions = max_num_actions;
 
 				cout << "duplicate->average_score: " << duplicate->average_score << endl;
-
-				update_eval(duplicate,
-							experiment_scope,
-							scope_histories,
-							target_val_histories);
-				if (new_scope != NULL) {
-					update_eval(duplicate,
-								new_scope,
-								new_scope_histories,
-								new_target_val_histories);
-				}
 
 				duplicate->timestamp++;
 				duplicate->save(path, "possible_" + to_string((unsigned)time(NULL)));

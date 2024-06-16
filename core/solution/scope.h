@@ -36,6 +36,11 @@ public:
 	 *     - addressed by train existing anyways
 	 */
 
+	/**
+	 * - used mainly to help prevent recursion during explore
+	 */
+	std::set<int> scopes_used;
+
 	Scope();
 	~Scope();
 

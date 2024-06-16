@@ -18,9 +18,12 @@ void InfoScopeNode::activate(AbstractNode*& curr_node,
 	history->index = node_histories.size();
 	node_histories[this] = history;
 
+	double inner_score;
 	this->scope->activate(problem,
 						  run_helper,
-						  history->is_positive);
+						  inner_score);
+
+	history->score = inner_score;
 
 	curr_node = this->next_node;
 

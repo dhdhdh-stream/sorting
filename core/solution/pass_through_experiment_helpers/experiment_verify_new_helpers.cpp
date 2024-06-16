@@ -44,18 +44,18 @@ void PassThroughExperiment::experiment_verify_new_activate(
 			}
 		}
 	} else {
-		bool inner_is_positive;
+		double inner_score;
 		this->best_info_scope->activate(problem,
 										run_helper,
-										inner_is_positive);
+										inner_score);
 
 		InfoBranchNodeHistory* info_branch_node_history = new InfoBranchNodeHistory();
+		info_branch_node_history->score = inner_score;
 		info_branch_node_history->index = context.back().scope_history->node_histories.size();
 		context.back().scope_history->node_histories[this->info_branch_node] = info_branch_node_history;
-		if ((this->best_is_negate && !inner_is_positive)
-				|| (!this->best_is_negate && inner_is_positive)) {
-			info_branch_node_history->is_branch = true;
 
+		if ((this->best_is_negate && inner_score < 0.0)
+				|| (!this->best_is_negate && inner_score >= 0.0)) {
 			if (this->best_step_types.size() == 0) {
 				curr_node = this->best_exit_next_node;
 			} else {
@@ -65,8 +65,6 @@ void PassThroughExperiment::experiment_verify_new_activate(
 					curr_node = this->best_scopes[0];
 				}
 			}
-		} else {
-			info_branch_node_history->is_branch = false;
 		}
 	}
 }
@@ -186,8 +184,7 @@ void PassThroughExperiment::experiment_verify_new_backprop(
 						}
 						branch_experiment->verify_problems.clear();
 						branch_experiment->verify_seeds.clear();
-						branch_experiment->verify_original_scores.clear();
-						branch_experiment->verify_branch_scores.clear();
+						branch_experiment->verify_scores.clear();
 						/**
 						 * - simply rely on leaf experiment to verify
 						 */
@@ -248,8 +245,7 @@ void PassThroughExperiment::experiment_verify_new_backprop(
 						}
 						new_info_experiment->verify_problems.clear();
 						new_info_experiment->verify_seeds.clear();
-						new_info_experiment->verify_negative_scores.clear();
-						new_info_experiment->verify_positive_scores.clear();
+						new_info_experiment->verify_scores.clear();
 						#endif /* MDEBUG */
 
 						new_info_experiment->state = NEW_INFO_EXPERIMENT_STATE_EXPERIMENT;

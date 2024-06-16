@@ -23,6 +23,7 @@ const int NEW_INFO_EXPERIMENT_STATE_EXPLORE_INFO = 1;
 const int NEW_INFO_EXPERIMENT_STATE_EXPLORE_SEQUENCE = 2;
 const int NEW_INFO_EXPERIMENT_STATE_TRAIN_NEW = 3;
 const int NEW_INFO_EXPERIMENT_STATE_MEASURE = 4;
+// TODO: add verify
 const int NEW_INFO_EXPERIMENT_STATE_TRY_EXISTING_INFO = 5;
 const int NEW_INFO_EXPERIMENT_STATE_VERIFY_EXISTING = 6;
 const int NEW_INFO_EXPERIMENT_STATE_VERIFY = 7;
@@ -90,8 +91,7 @@ public:
 	#if defined(MDEBUG) && MDEBUG
 	std::vector<Problem*> verify_problems;
 	std::vector<unsigned long> verify_seeds;
-	std::vector<double> verify_negative_scores;
-	std::vector<double> verify_positive_scores;
+	std::vector<double> verify_scores;
 	#endif /* MDEBUG */
 
 	NewInfoExperiment(Scope* scope_context,
@@ -234,7 +234,8 @@ public:
 	int instance_count;
 
 	bool has_target;
-	double existing_predicted_score;
+
+	std::vector<double> existing_predicted_scores;
 
 	NewInfoExperimentHistory(NewInfoExperiment* experiment);
 };

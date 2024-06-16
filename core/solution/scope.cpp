@@ -82,6 +82,11 @@ void Scope::save(ofstream& output_file) {
 
 		this->eval_network->save(output_file);
 	}
+
+	output_file << this->scopes_used.size() << endl;
+	for (set<int>::iterator it = this->scopes_used.begin(); it != this->scopes_used.end(); it++) {
+		output_file << *it << endl;
+	}
 }
 
 void Scope::load(ifstream& input_file) {
@@ -168,6 +173,15 @@ void Scope::load(ifstream& input_file) {
 
 		this->eval_network = new Network(input_file);
 	}
+
+	string scopes_used_size_line;
+	getline(input_file, scopes_used_size_line);
+	int scopes_used_size = stoi(scopes_used_size_line);
+	for (int s_index = 0; s_index < scopes_used_size; s_index++) {
+		string scope_id_line;
+		getline(input_file, scope_id_line);
+		this->scopes_used.insert(stoi(scope_id_line));
+	}
 }
 
 void Scope::link(Solution* parent_solution) {
@@ -247,6 +261,8 @@ void Scope::copy_from(Scope* original,
 	} else {
 		this->eval_network = new Network(original->eval_network);
 	}
+
+	this->scopes_used = original->scopes_used;
 }
 
 void Scope::save_for_display(ofstream& output_file) {

@@ -17,9 +17,6 @@ class Solution;
 
 double calc_score(ScopeHistory* scope_history);
 
-void update_eval(Solution* parent_solution,
-				 Scope* parent_scope,
-				 std::vector<ScopeHistory*>& scope_histories,
-				 std::vector<double>& target_val_histories);
+void update_eval();
 
 #endif /* EVAL_HELPERS_H */

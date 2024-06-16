@@ -12,14 +12,26 @@
 
 using namespace std;
 
-ScopeNode* create_existing() {
-	uniform_int_distribution<int> possible_distribution(1, solution->scopes.size() + problem_type->num_possible_actions() - 1);
-	int possible_index = possible_distribution(generator);
-	if (possible_index < (int)solution->scopes.size()) {
-		ScopeNode* new_scope_node = new ScopeNode();
-		new_scope_node->scope = solution->scopes[possible_index];
+ScopeNode* create_existing(Scope* parent_scope) {
+	uniform_int_distribution<int> allow_any_distribution(0, 9);
+	if (allow_any_distribution(generator) == 0) {
+		uniform_int_distribution<int> possible_distribution(1, solution->scopes.size() + problem_type->num_possible_actions() - 1);
+		int possible_index = possible_distribution(generator);
+		if (possible_index < (int)solution->scopes.size()) {
+			ScopeNode* new_scope_node = new ScopeNode();
+			new_scope_node->scope = solution->scopes[possible_index];
 
-		return new_scope_node;
+			return new_scope_node;
+		}
+	} else {
+		uniform_int_distribution<int> possible_distribution(0, parent_scope->scopes_used.size() + problem_type->num_possible_actions() - 1);
+		int possible_index = possible_distribution(generator);
+		if (possible_index < (int)parent_scope->scopes_used.size()) {
+			ScopeNode* new_scope_node = new ScopeNode();
+			new_scope_node->scope = solution->scopes[*next(parent_scope->scopes_used.begin(), possible_index)];
+
+			return new_scope_node;
+		}
 	}
 
 	return NULL;

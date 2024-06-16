@@ -20,13 +20,12 @@
 
 using namespace std;
 
-void update_eval(Solution* parent_solution,
-				 Scope* parent_scope,
-				 vector<ScopeHistory*>& scope_histories,
-				 vector<double>& target_val_histories) {
+void update_eval_helper(Scope* parent_scope,
+						vector<ScopeHistory*>& scope_histories,
+						vector<double>& target_val_histories) {
 	vector<double> target_vals(target_val_histories.size());
 	for (int d_index = 0; d_index < (int)target_val_histories.size(); d_index++) {
-		target_vals[d_index] = target_val_histories[d_index] - parent_solution->average_score;
+		target_vals[d_index] = target_val_histories[d_index] - solution->average_score;
 	}
 
 	default_random_engine generator_copy = generator;
@@ -61,31 +60,13 @@ void update_eval(Solution* parent_solution,
 					case NODE_TYPE_BRANCH:
 						{
 							BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
-							if (branch_node_history->is_branch) {
-								d_inputs[i_index] = 1.0;
-							} else {
-								d_inputs[i_index] = -1.0;
-							}
-						}
-						break;
-					case NODE_TYPE_INFO_SCOPE:
-						{
-							InfoScopeNodeHistory* info_scope_node_history = (InfoScopeNodeHistory*)it->second;
-							if (info_scope_node_history->is_positive) {
-								d_inputs[i_index] = 1.0;
-							} else {
-								d_inputs[i_index] = -1.0;
-							}
+							d_inputs[i_index] = branch_node_history->score;
 						}
 						break;
 					case NODE_TYPE_INFO_BRANCH:
 						{
 							InfoBranchNodeHistory* info_branch_node_history = (InfoBranchNodeHistory*)it->second;
-							if (info_branch_node_history->is_branch) {
-								d_inputs[i_index] = 1.0;
-							} else {
-								d_inputs[i_index] = -1.0;
-							}
+							d_inputs[i_index] = info_branch_node_history->score;
 						}
 						break;
 					}
@@ -183,31 +164,13 @@ void update_eval(Solution* parent_solution,
 						case NODE_TYPE_BRANCH:
 							{
 								BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
-								if (branch_node_history->is_branch) {
-									test_inputs[d_index].push_back(1.0);
-								} else {
-									test_inputs[d_index].push_back(-1.0);
-								}
-							}
-							break;
-						case NODE_TYPE_INFO_SCOPE:
-							{
-								InfoScopeNodeHistory* info_scope_node_history = (InfoScopeNodeHistory*)it->second;
-								if (info_scope_node_history->is_positive) {
-									test_inputs[d_index].push_back(1.0);
-								} else {
-									test_inputs[d_index].push_back(-1.0);
-								}
+								test_inputs[d_index].push_back(branch_node_history->score);
 							}
 							break;
 						case NODE_TYPE_INFO_BRANCH:
 							{
 								InfoBranchNodeHistory* info_branch_node_history = (InfoBranchNodeHistory*)it->second;
-								if (info_branch_node_history->is_branch) {
-									test_inputs[d_index].push_back(1.0);
-								} else {
-									test_inputs[d_index].push_back(-1.0);
-								}
+								test_inputs[d_index].push_back(info_branch_node_history->score);
 							}
 							break;
 						}
@@ -334,5 +297,76 @@ void update_eval(Solution* parent_solution,
 
 	for (int h_index = 0; h_index < (int)scope_histories.size(); h_index++) {
 		delete scope_histories[h_index];
+	}
+}
+
+void update_eval() {
+	if (solution->last_updated_scope_id != -1
+			|| solution->last_new_scope_id != -1) {
+		Scope* last_update_scope;
+		if (solution->last_updated_scope_id != -1) {
+			last_update_scope = solution->scopes[solution->last_updated_scope_id];
+		} else {
+			last_update_scope = NULL;
+		}
+
+		Scope* last_new_scope;
+		if (solution->last_new_scope_id != -1) {
+			last_new_scope = solution->scopes[solution->last_new_scope_id];
+		} else {
+			last_new_scope = NULL;
+		}
+
+		vector<ScopeHistory*> scope_histories;
+		vector<double> target_val_histories;
+		vector<ScopeHistory*> new_scope_histories;
+		vector<double> new_target_val_histories;
+		for (int iter_index = 0; iter_index < MEASURE_ITERS; iter_index++) {
+			Problem* problem = problem_type->get_problem();
+
+			RunHelper run_helper;
+			#if defined(MDEBUG) && MDEBUG
+			run_helper.curr_run_seed = run_index;
+			run_index++;
+			#endif /* MDEBUG */
+
+			Metrics metrics;
+			metrics.experiment_scope = last_update_scope;
+			metrics.new_scope = last_new_scope;
+
+			vector<ContextLayer> context;
+			solution->scopes[0]->measure_activate(
+				metrics,
+				problem,
+				context,
+				run_helper);
+
+			double target_val;
+			if (!run_helper.exceeded_limit) {
+				target_val = problem->score_result(run_helper.num_decisions);
+			} else {
+				target_val = -1.0;
+			}
+
+			for (int h_index = 0; h_index < (int)metrics.scope_histories.size(); h_index++) {
+				scope_histories.push_back(metrics.scope_histories[h_index]);
+				target_val_histories.push_back(target_val);
+			}
+			for (int h_index = 0; h_index < (int)metrics.new_scope_histories.size(); h_index++) {
+				new_scope_histories.push_back(metrics.new_scope_histories[h_index]);
+				new_target_val_histories.push_back(target_val);
+			}
+
+			delete problem;
+		}
+
+		update_eval_helper(last_update_scope,
+						   scope_histories,
+						   target_val_histories);
+		if (last_new_scope != NULL) {
+			update_eval_helper(last_new_scope,
+							   new_scope_histories,
+							   new_target_val_histories);
+		}
 	}
 }

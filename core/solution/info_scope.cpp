@@ -18,17 +18,9 @@ InfoScope::InfoScope() {
 }
 
 InfoScope::~InfoScope() {
-	if (this->subscope != NULL) {
-		delete this->subscope;
-	}
+	delete this->subscope;
 
-	if (this->positive_network != NULL) {
-		delete this->positive_network;
-	}
-
-	if (this->negative_network != NULL) {
-		delete this->negative_network;
-	}
+	delete this->network;
 }
 
 #if defined(MDEBUG) && MDEBUG
@@ -36,8 +28,7 @@ void InfoScope::clear_verify() {
 	this->experiment = NULL;
 
 	this->verify_key = NULL;
-	if (this->verify_negative_scores.size() > 0
-			|| this->verify_positive_scores.size() > 0) {
+	if (this->verify_scores.size() > 0) {
 		cout << "seed: " << seed << endl;
 
 		throw invalid_argument("info scope remaining verify");
@@ -48,52 +39,31 @@ void InfoScope::clear_verify() {
 void InfoScope::save(ofstream& output_file) {
 	this->subscope->save(output_file);
 
-	output_file << this->positive_input_node_contexts.size() << endl;
-	for (int i_index = 0; i_index < (int)this->positive_input_node_contexts.size(); i_index++) {
-		output_file << this->positive_input_node_contexts[i_index]->id << endl;
-		output_file << this->positive_input_obs_indexes[i_index] << endl;
+	output_file << this->input_node_contexts.size() << endl;
+	for (int i_index = 0; i_index < (int)this->input_node_contexts.size(); i_index++) {
+		output_file << this->input_node_contexts[i_index]->id << endl;
+		output_file << this->input_obs_indexes[i_index] << endl;
 	}
-	this->positive_network->save(output_file);
-
-	output_file << this->negative_input_node_contexts.size() << endl;
-	for (int i_index = 0; i_index < (int)this->negative_input_node_contexts.size(); i_index++) {
-		output_file << this->negative_input_node_contexts[i_index]->id << endl;
-		output_file << this->negative_input_obs_indexes[i_index] << endl;
-	}
-	this->negative_network->save(output_file);
+	this->network->save(output_file);
 }
 
 void InfoScope::load(ifstream& input_file) {
 	this->subscope = new Scope();
 	this->subscope->load(input_file);
 
-	string positive_num_inputs_line;
-	getline(input_file, positive_num_inputs_line);
-	int positive_num_inputs = stoi(positive_num_inputs_line);
-	for (int i_index = 0; i_index < positive_num_inputs; i_index++) {
+	string num_inputs_line;
+	getline(input_file, num_inputs_line);
+	int num_inputs = stoi(num_inputs_line);
+	for (int i_index = 0; i_index < num_inputs; i_index++) {
 		string node_context_id_line;
 		getline(input_file, node_context_id_line);
-		this->positive_input_node_contexts.push_back(this->subscope->nodes[stoi(node_context_id_line)]);
+		this->input_node_contexts.push_back(this->subscope->nodes[stoi(node_context_id_line)]);
 
 		string obs_index_line;
 		getline(input_file, obs_index_line);
-		this->positive_input_obs_indexes.push_back(stoi(obs_index_line));
+		this->input_obs_indexes.push_back(stoi(obs_index_line));
 	}
-	this->positive_network = new Network(input_file);
-
-	string negative_num_inputs_line;
-	getline(input_file, negative_num_inputs_line);
-	int negative_num_inputs = stoi(negative_num_inputs_line);
-	for (int i_index = 0; i_index < negative_num_inputs; i_index++) {
-		string node_context_id_line;
-		getline(input_file, node_context_id_line);
-		this->negative_input_node_contexts.push_back(this->subscope->nodes[stoi(node_context_id_line)]);
-
-		string obs_index_line;
-		getline(input_file, obs_index_line);
-		this->negative_input_obs_indexes.push_back(stoi(obs_index_line));
-	}
-	this->negative_network = new Network(input_file);
+	this->network = new Network(input_file);
 }
 
 void InfoScope::link(Solution* parent_solution) {
@@ -106,17 +76,10 @@ void InfoScope::copy_from(InfoScope* original,
 	this->subscope->copy_from(original->subscope,
 							  parent_solution);
 
-	for (int i_index = 0; i_index < (int)original->positive_input_node_contexts.size(); i_index++) {
-		this->positive_input_node_contexts.push_back(this->subscope->nodes[
-			original->positive_input_node_contexts[i_index]->id]);
+	for (int i_index = 0; i_index < (int)original->input_node_contexts.size(); i_index++) {
+		this->input_node_contexts.push_back(this->subscope->nodes[
+			original->input_node_contexts[i_index]->id]);
 	}
-	this->positive_input_obs_indexes = original->positive_input_obs_indexes;
-	this->positive_network = new Network(original->positive_network);
-
-	for (int i_index = 0; i_index < (int)original->negative_input_node_contexts.size(); i_index++) {
-		this->negative_input_node_contexts.push_back(this->subscope->nodes[
-			original->negative_input_node_contexts[i_index]->id]);
-	}
-	this->negative_input_obs_indexes = original->negative_input_obs_indexes;
-	this->negative_network = new Network(original->negative_network);
+	this->input_obs_indexes = original->input_obs_indexes;
+	this->network = new Network(original->network);
 }

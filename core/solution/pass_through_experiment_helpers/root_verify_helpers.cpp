@@ -23,13 +23,13 @@ void PassThroughExperiment::root_verify_activate(
 			}
 		}
 	} else {
-		bool inner_is_positive;
+		double inner_score;
 		this->best_info_scope->activate(problem,
 										run_helper,
-										inner_is_positive);
+										inner_score);
 
-		if ((this->best_is_negate && !inner_is_positive)
-				|| (!this->best_is_negate && inner_is_positive)) {
+		if ((this->best_is_negate && inner_score < 0.0)
+				|| (!this->best_is_negate && inner_score >= 0.0)) {
 			if (this->best_step_types.size() == 0) {
 				curr_node = this->best_exit_next_node;
 			} else {

@@ -282,6 +282,8 @@ void BranchExperiment::new_branch(Solution* duplicate) {
 			duplicate_local_scope->nodes[this->best_scopes[s_index]->id] = this->best_scopes[s_index];
 
 			this->best_scopes[s_index]->scope = duplicate->scopes[this->best_scopes[s_index]->scope->id];
+
+			duplicate_local_scope->scopes_used.insert(this->best_scopes[s_index]->scope->id);
 		}
 	}
 	if (this->best_step_types.size() > 0) {
@@ -298,24 +300,14 @@ void BranchExperiment::new_branch(Solution* duplicate) {
 		}
 	}
 
-	for (int i_index = 0; i_index < (int)this->existing_input_node_contexts.size(); i_index++) {
-		this->branch_node->original_input_node_context_ids.push_back(
-			this->existing_input_node_contexts[i_index]->id);
-		this->branch_node->original_input_node_contexts.push_back(
-			duplicate_local_scope->nodes[this->existing_input_node_contexts[i_index]->id]);
-		this->branch_node->original_input_obs_indexes.push_back(this->existing_input_obs_indexes[i_index]);
-	}
-	this->branch_node->original_network = this->existing_network;
-	this->existing_network = NULL;
-
 	for (int i_index = 0; i_index < (int)this->new_input_node_contexts.size(); i_index++) {
-		this->branch_node->branch_input_node_context_ids.push_back(
+		this->branch_node->input_node_context_ids.push_back(
 			this->new_input_node_contexts[i_index]->id);
-		this->branch_node->branch_input_node_contexts.push_back(
+		this->branch_node->input_node_contexts.push_back(
 			duplicate_local_scope->nodes[this->new_input_node_contexts[i_index]->id]);
-		this->branch_node->branch_input_obs_indexes.push_back(this->new_input_obs_indexes[i_index]);
+		this->branch_node->input_obs_indexes.push_back(this->new_input_obs_indexes[i_index]);
 	}
-	this->branch_node->branch_network = this->new_network;
+	this->branch_node->network = this->new_network;
 	this->new_network = NULL;
 
 	#if defined(MDEBUG) && MDEBUG
@@ -325,8 +317,7 @@ void BranchExperiment::new_branch(Solution* duplicate) {
 		duplicate->verify_seeds = this->verify_seeds;
 
 		this->branch_node->verify_key = this;
-		this->branch_node->verify_original_scores = this->verify_original_scores;
-		this->branch_node->verify_branch_scores = this->verify_branch_scores;
+		this->branch_node->verify_scores = this->verify_scores;
 	}
 	#endif /* MDEBUG */
 
@@ -417,6 +408,8 @@ void BranchExperiment::new_pass_through(Solution* duplicate) {
 			duplicate_local_scope->nodes[this->best_scopes[s_index]->id] = this->best_scopes[s_index];
 
 			this->best_scopes[s_index]->scope = duplicate->scopes[this->best_scopes[s_index]->scope->id];
+
+			duplicate_local_scope->scopes_used.insert(this->best_scopes[s_index]->scope->id);
 		}
 	}
 	if (this->best_step_types.size() > 0) {
@@ -591,6 +584,8 @@ void BranchExperiment::new_existing_info(Solution* duplicate) {
 			duplicate_local_scope->nodes[this->best_scopes[s_index]->id] = this->best_scopes[s_index];
 
 			this->best_scopes[s_index]->scope = duplicate->scopes[this->best_scopes[s_index]->scope->id];
+
+			duplicate_local_scope->scopes_used.insert(this->best_scopes[s_index]->scope->id);
 		}
 	}
 	if (this->best_step_types.size() > 0) {

@@ -58,13 +58,10 @@ public:
 
 class InfoBranchNodeHistory : public AbstractNodeHistory {
 public:
-	ScopeHistory* scope_history;
-
-	bool is_branch;
+	double score;
 
 	InfoBranchNodeHistory();
 	InfoBranchNodeHistory(InfoBranchNodeHistory* original);
-	~InfoBranchNodeHistory();
 };
 
 #endif /* INFO_BRANCH_NODE_H */

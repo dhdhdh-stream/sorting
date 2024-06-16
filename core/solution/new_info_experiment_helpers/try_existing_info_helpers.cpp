@@ -31,11 +31,11 @@ bool NewInfoExperiment::try_existing_info_activate(
 		vector<ContextLayer>& context,
 		RunHelper& run_helper,
 		NewInfoExperimentHistory* history) {
-	bool inner_is_positive;
+	double inner_score;
 	solution->info_scopes[this->existing_info_scope_index]->activate(
 		problem,
 		run_helper,
-		inner_is_positive);
+		inner_score);
 
 	history->predicted_scores.push_back(vector<double>(context.size(), 0.0));
 	for (int l_index = 0; l_index < (int)context.size(); l_index++) {
@@ -47,8 +47,8 @@ bool NewInfoExperiment::try_existing_info_activate(
 		}
 	}
 
-	if ((this->existing_is_negate && !inner_is_positive)
-			|| (!this->existing_is_negate && inner_is_positive)) {
+	if ((this->existing_is_negate && inner_score < 0.0)
+			|| (!this->existing_is_negate && inner_score >= 0.0)) {
 		if (this->best_step_types.size() == 0) {
 			curr_node = this->best_exit_next_node;
 		} else {

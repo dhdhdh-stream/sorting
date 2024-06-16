@@ -7,8 +7,8 @@ using namespace std;
 
 void InfoScopeNode::explore_activate(Problem* problem,
 									 RunHelper& run_helper) {
-	bool inner_is_positive;
+	double inner_score;
 	this->scope->activate(problem,
 						  run_helper,
-						  inner_is_positive);
+						  inner_score);
 }

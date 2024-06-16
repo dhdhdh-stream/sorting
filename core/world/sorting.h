@@ -18,10 +18,6 @@ public:
 
 	Sorting();
 
-	int num_obs();
-	int num_possible_actions();
-	Action random_action();
-
 	std::vector<double> get_observations();
 	void perform_action(Action action);
 	double score_result(int num_decisions);
@@ -30,6 +26,15 @@ public:
 	Problem* copy_snapshot();
 
 	void print();
+};
+
+class TypeSorting : public ProblemType {
+public:
+	Problem* get_problem();
+
+	int num_obs();
+	int num_possible_actions();
+	Action random_action();
 };
 
 #endif /* SORTING_H */

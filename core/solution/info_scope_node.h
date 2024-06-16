@@ -52,7 +52,7 @@ public:
 
 class InfoScopeNodeHistory : public AbstractNodeHistory {
 public:
-	bool is_positive;
+	double score;
 
 	InfoScopeNodeHistory();
 	InfoScopeNodeHistory(InfoScopeNodeHistory* original);

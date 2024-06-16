@@ -16,8 +16,12 @@ int seed;
 
 default_random_engine generator;
 
-Problem* problem_type;
+ProblemType* problem_type;
 Solution* solution;
+
+#if defined(MDEBUG) && MDEBUG
+int run_index = 0;
+#endif /* MDEBUG */
 
 int main(int argc, char* argv[]) {
 	cout << "Starting..." << endl;
@@ -27,8 +31,8 @@ int main(int argc, char* argv[]) {
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
 
-	// problem_type = new Sorting();
-	problem_type = new Minesweeper();
+	// problem_type = new TypeSorting();
+	problem_type = new TypeMinesweeper();
 
 	solution = new Solution();
 	solution->load("", "main");
@@ -38,8 +42,7 @@ int main(int argc, char* argv[]) {
 
 	auto start_time = chrono::high_resolution_clock::now();
 	for (int i_index = 0; i_index < 2000; i_index++) {
-		// Problem* problem = new Sorting();
-		Problem* problem = new Minesweeper();
+		Problem* problem = problem_type->get_problem();
 
 		RunHelper run_helper;
 

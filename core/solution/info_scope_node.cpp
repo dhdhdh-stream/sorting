@@ -66,5 +66,5 @@ InfoScopeNodeHistory::InfoScopeNodeHistory() {
 InfoScopeNodeHistory::InfoScopeNodeHistory(InfoScopeNodeHistory* original) {
 	this->index = original->index;
 
-	this->is_positive = original->is_positive;
+	this->score = original->score;
 }

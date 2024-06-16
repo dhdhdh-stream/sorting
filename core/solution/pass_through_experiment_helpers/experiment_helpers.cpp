@@ -32,18 +32,18 @@ void PassThroughExperiment::experiment_activate(AbstractNode*& curr_node,
 			}
 		}
 	} else {
-		bool inner_is_positive;
+		double inner_score;
 		this->best_info_scope->activate(problem,
 										run_helper,
-										inner_is_positive);
+										inner_score);
 
 		InfoBranchNodeHistory* info_branch_node_history = new InfoBranchNodeHistory();
+		info_branch_node_history->score = inner_score;
 		info_branch_node_history->index = context.back().scope_history->node_histories.size();
 		context.back().scope_history->node_histories[this->info_branch_node] = info_branch_node_history;
-		if ((this->best_is_negate && !inner_is_positive)
-				|| (!this->best_is_negate && inner_is_positive)) {
-			info_branch_node_history->is_branch = true;
 
+		if ((this->best_is_negate && inner_score < 0.0)
+				|| (!this->best_is_negate && inner_score >= 0.0)) {
 			if (this->best_step_types.size() == 0) {
 				curr_node = this->best_exit_next_node;
 			} else {
@@ -53,8 +53,6 @@ void PassThroughExperiment::experiment_activate(AbstractNode*& curr_node,
 					curr_node = this->best_scopes[0];
 				}
 			}
-		} else {
-			info_branch_node_history->is_branch = false;
 		}
 	}
 
@@ -133,16 +131,21 @@ void PassThroughExperiment::experiment_back_activate(
 							BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
 
 							possible_node_contexts.push_back(it->first);
-							possible_is_branch.push_back(branch_node_history->is_branch);
+							possible_is_branch.push_back(branch_node_history->score >= 0.0);
 						}
 
 						break;
 					case NODE_TYPE_INFO_BRANCH:
 						{
 							InfoBranchNodeHistory* info_branch_node_history = (InfoBranchNodeHistory*)it->second;
+							InfoBranchNode* info_branch_node = (InfoBranchNode*)it->first;
 
 							possible_node_contexts.push_back(it->first);
-							possible_is_branch.push_back(info_branch_node_history->is_branch);
+							if (info_branch_node->is_negate) {
+								possible_is_branch.push_back(info_branch_node_history->score < 0.0);
+							} else {
+								possible_is_branch.push_back(info_branch_node_history->score >= 0.0);
+							}
 						}
 
 						break;

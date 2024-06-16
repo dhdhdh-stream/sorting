@@ -117,14 +117,13 @@ while True:
 			break
 
 		curr_time = time.time()
-		if count >= 10 and curr_time - start_time > 300:
-			break
-		if count >= 1 and curr_time - start_time > 1200:
+		if count >= 20 and curr_time - start_time > 300:
 			break
 
 		time.sleep(20)
 
 	print(datetime.datetime.now())
+	print(curr_average_score)
 
 	# simply use workers[0]
 	client = paramiko.SSHClient()
@@ -168,5 +167,7 @@ while True:
 
 		ec2_client_sftp.close()
 		ec2_client.close()
+
+	time.sleep(20)
 
 print('Done')

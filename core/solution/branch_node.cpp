@@ -13,8 +13,7 @@ using namespace std;
 BranchNode::BranchNode() {
 	this->type = NODE_TYPE_BRANCH;
 
-	this->original_network = NULL;
-	this->branch_network = NULL;
+	this->network = NULL;
 
 	#if defined(MDEBUG) && MDEBUG
 	this->verify_key = NULL;
@@ -24,13 +23,9 @@ BranchNode::BranchNode() {
 BranchNode::BranchNode(BranchNode* original) {
 	this->type = NODE_TYPE_BRANCH;
 
-	this->original_input_node_context_ids = original->original_input_node_context_ids;
-	this->original_input_obs_indexes = original->original_input_obs_indexes;
-	this->original_network = new Network(original->original_network);
-
-	this->branch_input_node_context_ids = original->branch_input_node_context_ids;
-	this->branch_input_obs_indexes = original->branch_input_obs_indexes;
-	this->branch_network = new Network(original->branch_network);
+	this->input_node_context_ids = original->input_node_context_ids;
+	this->input_obs_indexes = original->input_obs_indexes;
+	this->network = new Network(original->network);
 
 	this->original_next_node_id = original->original_next_node_id;
 	this->branch_next_node_id = original->branch_next_node_id;
@@ -41,9 +36,7 @@ BranchNode::BranchNode(BranchNode* original) {
 }
 
 BranchNode::~BranchNode() {
-	delete this->original_network;
-
-	delete this->branch_network;
+	delete this->network;
 
 	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
 		this->experiments[e_index]->decrement(this);
@@ -53,8 +46,7 @@ BranchNode::~BranchNode() {
 #if defined(MDEBUG) && MDEBUG
 void BranchNode::clear_verify() {
 	this->verify_key = NULL;
-	if (this->verify_original_scores.size() > 0
-			|| this->verify_branch_scores.size() > 0) {
+	if (this->verify_scores.size() > 0) {
 		cout << "seed: " << seed << endl;
 
 		throw invalid_argument("branch node remaining verify");
@@ -63,72 +55,42 @@ void BranchNode::clear_verify() {
 #endif /* MDEBUG */
 
 void BranchNode::clean_node(int node_id) {
-	for (int i_index = this->original_input_node_contexts.size()-1; i_index >= 0; i_index--) {
-		if (this->original_input_node_context_ids[i_index] == node_id) {
-			this->original_input_node_context_ids.erase(this->original_input_node_context_ids.begin() + i_index);
-			this->original_input_node_contexts.erase(this->original_input_node_contexts.begin() + i_index);
-			this->original_input_obs_indexes.erase(this->original_input_obs_indexes.begin() + i_index);
-			this->original_network->remove_input(i_index);
-		}
-	}
-
-	for (int i_index = this->branch_input_node_contexts.size()-1; i_index >= 0; i_index--) {
-		if (this->branch_input_node_context_ids[i_index] == node_id) {
-			this->branch_input_node_context_ids.erase(this->branch_input_node_context_ids.begin() + i_index);
-			this->branch_input_node_contexts.erase(this->branch_input_node_contexts.begin() + i_index);
-			this->branch_input_obs_indexes.erase(this->branch_input_obs_indexes.begin() + i_index);
-			this->branch_network->remove_input(i_index);
+	for (int i_index = this->input_node_contexts.size()-1; i_index >= 0; i_index--) {
+		if (this->input_node_context_ids[i_index] == node_id) {
+			this->input_node_context_ids.erase(this->input_node_context_ids.begin() + i_index);
+			this->input_node_contexts.erase(this->input_node_contexts.begin() + i_index);
+			this->input_obs_indexes.erase(this->input_obs_indexes.begin() + i_index);
+			this->network->remove_input(i_index);
 		}
 	}
 }
 
 void BranchNode::save(ofstream& output_file) {
-	output_file << this->original_input_node_contexts.size() << endl;
-	for (int i_index = 0; i_index < (int)this->original_input_node_contexts.size(); i_index++) {
-		output_file << this->original_input_node_context_ids[i_index] << endl;
-		output_file << this->original_input_obs_indexes[i_index] << endl;
+	output_file << this->input_node_contexts.size() << endl;
+	for (int i_index = 0; i_index < (int)this->input_node_contexts.size(); i_index++) {
+		output_file << this->input_node_context_ids[i_index] << endl;
+		output_file << this->input_obs_indexes[i_index] << endl;
 	}
-	this->original_network->save(output_file);
-
-	output_file << this->branch_input_node_contexts.size() << endl;
-	for (int i_index = 0; i_index < (int)this->branch_input_node_contexts.size(); i_index++) {
-		output_file << this->branch_input_node_context_ids[i_index] << endl;
-		output_file << this->branch_input_obs_indexes[i_index] << endl;
-	}
-	this->branch_network->save(output_file);
+	this->network->save(output_file);
 
 	output_file << this->original_next_node_id << endl;
 	output_file << this->branch_next_node_id << endl;
 }
 
 void BranchNode::load(ifstream& input_file) {
-	string original_num_inputs_line;
-	getline(input_file, original_num_inputs_line);
-	int original_num_inputs = stoi(original_num_inputs_line);
-	for (int i_index = 0; i_index < original_num_inputs; i_index++) {
+	string num_inputs_line;
+	getline(input_file, num_inputs_line);
+	int num_inputs = stoi(num_inputs_line);
+	for (int i_index = 0; i_index < num_inputs; i_index++) {
 		string node_context_id;
 		getline(input_file, node_context_id);
-		this->original_input_node_context_ids.push_back(stoi(node_context_id));
+		this->input_node_context_ids.push_back(stoi(node_context_id));
 
 		string obs_index_line;
 		getline(input_file, obs_index_line);
-		this->original_input_obs_indexes.push_back(stoi(obs_index_line));
+		this->input_obs_indexes.push_back(stoi(obs_index_line));
 	}
-	this->original_network = new Network(input_file);
-
-	string branch_num_inputs_line;
-	getline(input_file, branch_num_inputs_line);
-	int branch_num_inputs = stoi(branch_num_inputs_line);
-	for (int i_index = 0; i_index < branch_num_inputs; i_index++) {
-		string node_context_id;
-		getline(input_file, node_context_id);
-		this->branch_input_node_context_ids.push_back(stoi(node_context_id));
-
-		string obs_index_line;
-		getline(input_file, obs_index_line);
-		this->branch_input_obs_indexes.push_back(stoi(obs_index_line));
-	}
-	this->branch_network = new Network(input_file);
+	this->network = new Network(input_file);
 
 	string original_next_node_id_line;
 	getline(input_file, original_next_node_id_line);
@@ -140,14 +102,9 @@ void BranchNode::load(ifstream& input_file) {
 }
 
 void BranchNode::link(Solution* parent_solution) {
-	for (int i_index = 0; i_index < (int)this->original_input_node_context_ids.size(); i_index++) {
-		this->original_input_node_contexts.push_back(this->parent->nodes[
-			this->original_input_node_context_ids[i_index]]);
-	}
-
-	for (int i_index = 0; i_index < (int)this->branch_input_node_context_ids.size(); i_index++) {
-		this->branch_input_node_contexts.push_back(this->parent->nodes[
-			this->branch_input_node_context_ids[i_index]]);
+	for (int i_index = 0; i_index < (int)this->input_node_context_ids.size(); i_index++) {
+		this->input_node_contexts.push_back(this->parent->nodes[
+			this->input_node_context_ids[i_index]]);
 	}
 
 	if (this->original_next_node_id == -1) {
@@ -175,5 +132,5 @@ BranchNodeHistory::BranchNodeHistory() {
 BranchNodeHistory::BranchNodeHistory(BranchNodeHistory* original) {
 	this->index = original->index;
 
-	this->is_branch = original->is_branch;
+	this->score = original->score;
 }

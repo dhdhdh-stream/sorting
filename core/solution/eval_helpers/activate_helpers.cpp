@@ -37,31 +37,13 @@ double calc_score(ScopeHistory* scope_history) {
 			case NODE_TYPE_BRANCH:
 				{
 					BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
-					if (branch_node_history->is_branch) {
-						input_vals[i_index] = 1.0;
-					} else {
-						input_vals[i_index] = -1.0;
-					}
-				}
-				break;
-			case NODE_TYPE_INFO_SCOPE:
-				{
-					InfoScopeNodeHistory* info_scope_node_history = (InfoScopeNodeHistory*)it->second;
-					if (info_scope_node_history->is_positive) {
-						input_vals[i_index] = 1.0;
-					} else {
-						input_vals[i_index] = -1.0;
-					}
+					input_vals[i_index] = branch_node_history->score;
 				}
 				break;
 			case NODE_TYPE_INFO_BRANCH:
 				{
 					InfoBranchNodeHistory* info_branch_node_history = (InfoBranchNodeHistory*)it->second;
-					if (info_branch_node_history->is_branch) {
-						input_vals[i_index] = 1.0;
-					} else {
-						input_vals[i_index] = -1.0;
-					}
+					input_vals[i_index] = info_branch_node_history->score;
 				}
 				break;
 			}

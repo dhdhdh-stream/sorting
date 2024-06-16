@@ -14,8 +14,12 @@ int seed;
 
 default_random_engine generator;
 
-Problem* problem_type;
+ProblemType* problem_type;
 Solution* solution;
+
+#if defined(MDEBUG) && MDEBUG
+int run_index = 0;
+#endif /* MDEBUG */
 
 int main(int argc, char* argv[]) {
 	cout << "Starting..." << endl;

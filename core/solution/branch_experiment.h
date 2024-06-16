@@ -47,11 +47,6 @@ public:
 	std::vector<AbstractNode*> existing_input_node_contexts;
 	std::vector<int> existing_input_obs_indexes;
 	Network* existing_network;
-	/**
-	 * - when removing, don't worry about whether removing early or near
-	 *   - either can be good, leading to different follow-ups
-	 *   - difficult to control when also trying to remove inputs
-	 */
 
 	int explore_type;
 
@@ -92,8 +87,7 @@ public:
 	#if defined(MDEBUG) && MDEBUG
 	std::vector<Problem*> verify_problems;
 	std::vector<unsigned long> verify_seeds;
-	std::vector<double> verify_original_scores;
-	std::vector<double> verify_branch_scores;
+	std::vector<double> verify_scores;
 	#endif /* MDEBUG */
 
 	BranchExperiment(Scope* scope_context,
@@ -218,7 +212,8 @@ public:
 	int instance_count;
 
 	bool has_target;
-	double existing_predicted_score;
+
+	std::vector<double> existing_predicted_scores;
 
 	BranchExperimentHistory(BranchExperiment* experiment);
 };

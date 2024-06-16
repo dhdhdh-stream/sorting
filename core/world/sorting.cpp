@@ -20,19 +20,6 @@ Sorting::Sorting() {
 	this->current_world = this->initial_world;
 }
 
-int Sorting::num_obs() {
-	return 1;
-}
-
-int Sorting::num_possible_actions() {
-	return 3;
-}
-
-Action Sorting::random_action() {
-	uniform_int_distribution<int> action_distribution(0, 2);
-	return Action(action_distribution(generator));
-}
-
 vector<double> Sorting::get_observations() {
 	if (this->current_pointer >= 0 && this->current_pointer < (int)this->current_world.size()) {
 		return vector<double>{this->current_world[this->current_pointer]};
@@ -117,4 +104,21 @@ void Sorting::print() {
 	cout << endl;
 
 	cout << "pointer: " << this->current_pointer << endl;
+}
+
+Problem* TypeSorting::get_problem() {
+	return new Sorting();
+}
+
+int TypeSorting::num_obs() {
+	return 1;
+}
+
+int TypeSorting::num_possible_actions() {
+	return 3;
+}
+
+Action TypeSorting::random_action() {
+	uniform_int_distribution<int> action_distribution(0, 2);
+	return Action(action_distribution(generator));
 }

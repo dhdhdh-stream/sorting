@@ -179,31 +179,13 @@ void BranchExperiment::train_existing_backprop(
 							case NODE_TYPE_BRANCH:
 								{
 									BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
-									if (branch_node_history->is_branch) {
-										test_inputs[d_index].push_back(1.0);
-									} else {
-										test_inputs[d_index].push_back(-1.0);
-									}
-								}
-								break;
-							case NODE_TYPE_INFO_SCOPE:
-								{
-									InfoScopeNodeHistory* info_scope_node_history = (InfoScopeNodeHistory*)it->second;
-									if (info_scope_node_history->is_positive) {
-										test_inputs[d_index].push_back(1.0);
-									} else {
-										test_inputs[d_index].push_back(-1.0);
-									}
+									test_inputs[d_index].push_back(branch_node_history->score);
 								}
 								break;
 							case NODE_TYPE_INFO_BRANCH:
 								{
 									InfoBranchNodeHistory* info_branch_node_history = (InfoBranchNodeHistory*)it->second;
-									if (info_branch_node_history->is_branch) {
-										test_inputs[d_index].push_back(1.0);
-									} else {
-										test_inputs[d_index].push_back(-1.0);
-									}
+									test_inputs[d_index].push_back(info_branch_node_history->score);
 								}
 								break;
 							}

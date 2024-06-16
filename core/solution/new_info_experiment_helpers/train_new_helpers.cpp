@@ -49,6 +49,32 @@ void NewInfoExperiment::train_new_activate(
 			}
 		}
 
+		vector<double> input_vals(this->existing_input_node_contexts.size(), 0.0);
+		for (int i_index = 0; i_index < (int)this->existing_input_node_contexts.size(); i_index++) {
+			map<AbstractNode*, AbstractNodeHistory*>::iterator it = scope_history->node_histories.find(
+				this->existing_input_node_contexts[i_index]);
+			if (it != scope_history->node_histories.end()) {
+				switch (this->existing_input_node_contexts[i_index]->type) {
+				case NODE_TYPE_ACTION:
+					{
+						ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
+						input_vals[i_index] = action_node_history->obs_snapshot[this->existing_input_obs_indexes[i_index]];
+					}
+					break;
+				case NODE_TYPE_INFO_SCOPE:
+					{
+						InfoScopeNodeHistory* info_scope_node_history = (InfoScopeNodeHistory*)it->second;
+						input_vals[i_index] = info_scope_node_history->score;
+					}
+					break;
+				}
+			}
+		}
+		this->existing_network->activate(input_vals);
+		double predicted_score = this->existing_network->output->acti_vals[0];
+
+		history->existing_predicted_scores.push_back(predicted_score);
+
 		if (this->best_step_types.size() == 0) {
 			curr_node = this->best_exit_next_node;
 		} else {
@@ -140,7 +166,10 @@ void NewInfoExperiment::train_new_backprop(
 				sum_score += history->predicted_scores[i_index][l_index];
 			}
 			double final_score = (sum_score / (int)history->predicted_scores[i_index].size() + target_val - solution->average_score) / 2.0;
-			this->target_val_histories.push_back(final_score);
+
+			double surprise = final_score - history->existing_predicted_scores[i_index];
+
+			this->target_val_histories.push_back(surprise);
 		}
 
 		this->state_iter++;
@@ -237,11 +266,7 @@ void NewInfoExperiment::train_new_backprop(
 								case NODE_TYPE_INFO_SCOPE:
 									{
 										InfoScopeNodeHistory* info_scope_node_history = (InfoScopeNodeHistory*)it->second;
-										if (info_scope_node_history->is_positive) {
-											test_inputs[d_index].push_back(1.0);
-										} else {
-											test_inputs[d_index].push_back(-1.0);
-										}
+										test_inputs[d_index].push_back(info_scope_node_history->score);
 									}
 									break;
 								}

@@ -269,11 +269,7 @@ void NewInfoExperiment::explore_info_backprop(
 							case NODE_TYPE_INFO_SCOPE:
 								{
 									InfoScopeNodeHistory* info_scope_node_history = (InfoScopeNodeHistory*)it->second;
-									if (info_scope_node_history->is_positive) {
-										test_inputs[d_index].push_back(1.0);
-									} else {
-										test_inputs[d_index].push_back(-1.0);
-									}
+									test_inputs[d_index].push_back(info_scope_node_history->score);
 								}
 								break;
 							}

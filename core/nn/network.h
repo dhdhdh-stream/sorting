@@ -28,6 +28,11 @@ public:
 	void increment(int new_num_inputs);
 
 	void remove_input(int index);
+	/**
+	 * - when removing, don't worry about whether removing early or near
+	 *   - either can be good, leading to different follow-ups
+	 *   - difficult to control when also trying to remove inputs
+	 */
 
 	void save(std::ofstream& output_file);
 };

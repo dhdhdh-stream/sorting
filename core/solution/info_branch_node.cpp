@@ -77,22 +77,11 @@ void InfoBranchNode::save_for_display(ofstream& output_file) {
 }
 
 InfoBranchNodeHistory::InfoBranchNodeHistory() {
-	this->scope_history = NULL;
+	// do nothing
 }
 
 InfoBranchNodeHistory::InfoBranchNodeHistory(InfoBranchNodeHistory* original) {
 	this->index = original->index;
 
-	/**
-	 * - don't copy scope_history
-	 */
-	this->scope_history = NULL;
-
-	this->is_branch = original->is_branch;
-}
-
-InfoBranchNodeHistory::~InfoBranchNodeHistory() {
-	if (this->scope_history != NULL) {
-		delete this->scope_history;
-	}
+	this->score = original->score;
 }

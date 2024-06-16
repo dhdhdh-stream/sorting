@@ -208,6 +208,8 @@ void PassThroughExperiment::new_branch(Solution* duplicate) {
 			duplicate_local_scope->nodes[this->best_scopes[s_index]->id] = this->best_scopes[s_index];
 
 			this->best_scopes[s_index]->scope = duplicate->scopes[this->best_scopes[s_index]->scope->id];
+
+			duplicate_local_scope->scopes_used.insert(this->best_scopes[s_index]->scope->id);
 		}
 	}
 	if (this->best_step_types.size() > 0) {
@@ -308,6 +310,8 @@ void PassThroughExperiment::new_pass_through(Solution* duplicate) {
 			duplicate_local_scope->nodes[this->best_scopes[s_index]->id] = this->best_scopes[s_index];
 
 			this->best_scopes[s_index]->scope = duplicate->scopes[this->best_scopes[s_index]->scope->id];
+
+			duplicate_local_scope->scopes_used.insert(this->best_scopes[s_index]->scope->id);
 		}
 	}
 	if (this->best_step_types.size() > 0) {

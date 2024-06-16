@@ -82,21 +82,13 @@ bool BranchExperiment::explore_activate(
 				case NODE_TYPE_BRANCH:
 					{
 						BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
-						if (branch_node_history->is_branch) {
-							input_vals[i_index] = 1.0;
-						} else {
-							input_vals[i_index] = -1.0;
-						}
+						input_vals[i_index] = branch_node_history->score;
 					}
 					break;
 				case NODE_TYPE_INFO_BRANCH:
 					{
 						InfoBranchNodeHistory* info_branch_node_history = (InfoBranchNodeHistory*)it->second;
-						if (info_branch_node_history->is_branch) {
-							input_vals[i_index] = 1.0;
-						} else {
-							input_vals[i_index] = -1.0;
-						}
+						input_vals[i_index] = info_branch_node_history->score;
 					}
 					break;
 				}
@@ -105,7 +97,7 @@ bool BranchExperiment::explore_activate(
 		this->existing_network->activate(input_vals);
 		double predicted_score = this->existing_network->output->acti_vals[0];
 
-		history->existing_predicted_score = predicted_score;
+		history->existing_predicted_scores.push_back(predicted_score);
 
 		vector<AbstractNode*> possible_exits;
 
@@ -160,11 +152,15 @@ bool BranchExperiment::explore_activate(
 
 		this->curr_info_scope = get_existing_info_scope();
 		if (this->curr_info_scope != NULL) {
-			bool inner_is_positive;
+			double inner_score;
 			this->curr_info_scope->activate(problem,
 											run_helper,
-											inner_is_positive);
-			this->curr_is_negate = inner_is_positive;
+											inner_score);
+			if (inner_score >= 0.0) {
+				this->curr_is_negate = false;
+			} else {
+				this->curr_is_negate = true;
+			}
 		}
 
 		int new_num_steps;
@@ -180,7 +176,7 @@ bool BranchExperiment::explore_activate(
 		for (int s_index = 0; s_index < new_num_steps; s_index++) {
 			bool default_to_action = true;
 			if (default_distribution(generator) != 0) {
-				ScopeNode* new_scope_node = create_existing();
+				ScopeNode* new_scope_node = create_existing(this->scope_context);
 				if (new_scope_node != NULL) {
 					this->curr_step_types.push_back(STEP_TYPE_SCOPE);
 					this->curr_actions.push_back(NULL);
@@ -252,7 +248,7 @@ void BranchExperiment::explore_backprop(
 			}
 			double final_score = (sum_score / (int)history->predicted_scores[0].size() + target_val - solution->average_score) / 2.0;
 
-			curr_surprise = final_score - history->existing_predicted_score;
+			curr_surprise = final_score - history->existing_predicted_scores[0];
 		}
 
 		bool select = false;

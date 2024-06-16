@@ -48,6 +48,8 @@ void NewActionExperiment::finalize(Solution* duplicate) {
 				{
 					ScopeNode* scope_node = (ScopeNode*)it->second;
 					scope_node->scope = duplicate->scopes[scope_node->scope->id];
+
+					this->new_scope->scopes_used.insert(scope_node->scope->id);
 				}
 				break;
 			#if defined(MDEBUG) && MDEBUG
@@ -77,6 +79,9 @@ void NewActionExperiment::finalize(Solution* duplicate) {
 		ActionNode* new_local_ending_node = NULL;
 
 		Scope* duplicate_local_scope = duplicate->scopes[this->scope_context->id];
+
+		duplicate_local_scope->scopes_used.insert(this->new_scope->id);
+
 		for (int s_index = 0; s_index < (int)this->successful_location_starts.size(); s_index++) {
 			ScopeNode* new_scope_node = this->successful_scope_nodes[s_index];
 			new_scope_node->parent = duplicate_local_scope;

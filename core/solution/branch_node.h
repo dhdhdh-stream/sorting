@@ -16,15 +16,10 @@ class Scope;
 class BranchNodeHistory;
 class BranchNode : public AbstractNode {
 public:
-	std::vector<int> original_input_node_context_ids;
-	std::vector<AbstractNode*> original_input_node_contexts;
-	std::vector<int> original_input_obs_indexes;
-	Network* original_network;
-
-	std::vector<int> branch_input_node_context_ids;
-	std::vector<AbstractNode*> branch_input_node_contexts;
-	std::vector<int> branch_input_obs_indexes;
-	Network* branch_network;
+	std::vector<int> input_node_context_ids;
+	std::vector<AbstractNode*> input_node_contexts;
+	std::vector<int> input_obs_indexes;
+	Network* network;
 
 	/**
 	 * - don't randomize decisions
@@ -38,8 +33,7 @@ public:
 
 	#if defined(MDEBUG) && MDEBUG
 	void* verify_key;
-	std::vector<double> verify_original_scores;
-	std::vector<double> verify_branch_scores;
+	std::vector<double> verify_scores;
 	#endif /* MDEBUG */
 
 	BranchNode();
@@ -85,7 +79,7 @@ public:
 
 class BranchNodeHistory : public AbstractNodeHistory {
 public:
-	bool is_branch;
+	double score;
 
 	BranchNodeHistory();
 	BranchNodeHistory(BranchNodeHistory* original);

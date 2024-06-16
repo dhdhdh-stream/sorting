@@ -36,6 +36,9 @@ public:
 	 */
 	int next_possible_new_scope_timestamp;
 
+	int last_updated_scope_id;
+	int last_new_scope_id;
+
 	std::vector<Scope*> scopes;
 	std::vector<InfoScope*> info_scopes;
 

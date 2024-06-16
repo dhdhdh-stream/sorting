@@ -19,6 +19,9 @@ Solution::Solution(Solution* original) {
 	this->average_score = original->average_score;
 	this->next_possible_new_scope_timestamp = original->next_possible_new_scope_timestamp;
 
+	this->last_updated_scope_id = -1;
+	this->last_new_scope_id = -1;
+
 	for (int s_index = 0; s_index < (int)original->scopes.size(); s_index++) {
 		Scope* scope = new Scope();
 		scope->id = s_index;
@@ -64,6 +67,9 @@ void Solution::init() {
 	this->average_score = -1.0;
 	this->next_possible_new_scope_timestamp = 0;
 
+	this->last_updated_scope_id = 0;
+	this->last_new_scope_id = -1;
+
 	Scope* new_scope = new Scope();
 	new_scope->id = this->scopes.size();
 	this->scopes.push_back(new_scope);
@@ -97,6 +103,14 @@ void Solution::load(string path,
 	string next_possible_new_scope_timestamp_line;
 	getline(input_file, next_possible_new_scope_timestamp_line);
 	this->next_possible_new_scope_timestamp = stoi(next_possible_new_scope_timestamp_line);
+
+	string last_updated_scope_id_line;
+	getline(input_file, last_updated_scope_id_line);
+	this->last_updated_scope_id = stoi(last_updated_scope_id_line);
+
+	string last_new_scope_id_line;
+	getline(input_file, last_new_scope_id_line);
+	this->last_new_scope_id = stoi(last_new_scope_id_line);
 
 	string num_scopes_line;
 	getline(input_file, num_scopes_line);
@@ -166,6 +180,9 @@ void Solution::save(string path,
 	output_file << this->timestamp << endl;
 	output_file << this->average_score << endl;
 	output_file << this->next_possible_new_scope_timestamp << endl;
+
+	output_file << this->last_updated_scope_id << endl;
+	output_file << this->last_new_scope_id << endl;
 
 	output_file << this->scopes.size() << endl;
 	output_file << this->info_scopes.size() << endl;

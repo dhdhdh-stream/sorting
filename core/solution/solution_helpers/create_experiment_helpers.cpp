@@ -51,97 +51,51 @@ void create_experiment(RunHelper& run_helper) {
 				explore_node->experiments.push_back(new_action_experiment);
 			}
 		} else {
-			uniform_int_distribution<int> type_distribution(0, 1);
-			switch (type_distribution(generator)) {
-			case 0:
-				{
-					NewInfoExperiment* new_experiment = new NewInfoExperiment(
-						explore_node->parent,
-						explore_node,
-						explore_is_branch,
-						NULL);
+			uniform_int_distribution<int> branch_distribution(0, 2);
+			if (branch_distribution(generator) == 0) {
+				uniform_int_distribution<int> type_distribution(0, 1);
+				switch (type_distribution(generator)) {
+				case 0:
+					{
+						NewInfoExperiment* new_experiment = new NewInfoExperiment(
+							explore_node->parent,
+							explore_node,
+							explore_is_branch,
+							NULL);
 
-					explore_node->experiments.push_back(new_experiment);
-				}
-				break;
-			case 1:
-				{
-					BranchExperiment* new_experiment = new BranchExperiment(
-						explore_node->parent,
-						explore_node,
-						explore_is_branch,
-						NULL);
+						explore_node->experiments.push_back(new_experiment);
+					}
+					break;
+				case 1:
+					{
+						BranchExperiment* new_experiment = new BranchExperiment(
+							explore_node->parent,
+							explore_node,
+							explore_is_branch,
+							NULL);
 
-					explore_node->experiments.push_back(new_experiment);
+						explore_node->experiments.push_back(new_experiment);
+					}
+					break;
 				}
-				break;
+			} else {
+				PassThroughExperiment* new_experiment = new PassThroughExperiment(
+					explore_node->parent,
+					explore_node,
+					explore_is_branch,
+					NULL);
+
+				explore_node->experiments.push_back(new_experiment);
 			}
 		}
 	} else {
-		
+		// InfoPassThroughExperiment* new_experiment = new InfoPassThroughExperiment(
+		// 	possible_info_scope_contexts[rand_index],
+		// 	possible_scope_contexts[rand_index],
+		// 	possible_node_contexts[rand_index],
+		// 	possible_is_branch[rand_index]);
+
+		// possible_info_scope_contexts[rand_index]->experiment = new_experiment;
+		// possible_node_contexts[rand_index]->experiments.push_back(new_experiment);
 	}
-
-	// // if (explore_node->parent->parent_info_scope == NULL) {
-	// 	uniform_int_distribution<int> expensive_distribution(0, 9);
-	// 	if (expensive_distribution(generator) == 0) {
-	// 		uniform_int_distribution<int> type_distribution(0, 1);
-	// 		switch (type_distribution(generator)) {
-	// 		case 0:
-	// 			{
-	// 				// NewInfoExperiment* new_experiment = new NewInfoExperiment(
-	// 				// 	possible_scope_contexts[rand_index],
-	// 				// 	possible_node_contexts[rand_index],
-	// 				// 	possible_is_branch[rand_index],
-	// 				// 	NULL);
-
-	// 				// possible_node_contexts[rand_index]->experiments.push_back(new_experiment);
-	// 			}
-	// 			break;
-	// 		case 1:
-	// 			{
-	// 				BranchExperiment* new_experiment = new BranchExperiment(
-	// 					explore_node->parent,
-	// 					explore_node,
-	// 					explore_is_branch,
-	// 					NULL);
-
-	// 				explore_node->experiments.push_back(new_experiment);
-	// 			}
-	// 			break;
-	// 		}
-	// 	} else {
-	// 		uniform_int_distribution<int> pass_through_distribution(0, 3);
-	// 		if (pass_through_distribution(generator) != 0) {
-	// 			if (explore_node->parent->nodes.size() > 10) {
-	// 				NewActionExperiment* new_action_experiment = new NewActionExperiment(
-	// 					explore_node->parent,
-	// 					explore_node,
-	// 					explore_is_branch);
-
-	// 				if (new_action_experiment->result == EXPERIMENT_RESULT_FAIL) {
-	// 					delete new_action_experiment;
-	// 				} else {
-	// 					explore_node->experiments.push_back(new_action_experiment);
-	// 				}
-	// 			}
-	// 		} else {
-	// 			// PassThroughExperiment* new_experiment = new PassThroughExperiment(
-	// 			// 	possible_scope_contexts[rand_index],
-	// 			// 	possible_node_contexts[rand_index],
-	// 			// 	possible_is_branch[rand_index],
-	// 			// 	NULL);
-
-	// 			// possible_node_contexts[rand_index]->experiments.push_back(new_experiment);
-	// 		}
-	// 	}
-	// // } else {
-	// // 	InfoPassThroughExperiment* new_experiment = new InfoPassThroughExperiment(
-	// // 		possible_info_scope_contexts[rand_index],
-	// // 		possible_scope_contexts[rand_index],
-	// // 		possible_node_contexts[rand_index],
-	// // 		possible_is_branch[rand_index]);
-
-	// // 	possible_info_scope_contexts[rand_index]->experiment = new_experiment;
-	// // 	possible_node_contexts[rand_index]->experiments.push_back(new_experiment);
-	// // }
 }

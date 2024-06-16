@@ -54,10 +54,12 @@ void NewActionExperiment::add_new_test_location(ScopeHistory* scope_history) {
 			{
 				BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
 
+				bool is_branch = branch_node_history->score >= 0.0;
+
 				bool has_match = false;
 				for (int t_index = 0; t_index < (int)this->test_location_starts.size(); t_index++) {
 					if (this->test_location_starts[t_index] == it->first
-							&& this->test_location_is_branch[t_index] == branch_node_history->is_branch) {
+							&& this->test_location_is_branch[t_index] == is_branch) {
 						has_match = true;
 						break;
 					}
@@ -65,7 +67,7 @@ void NewActionExperiment::add_new_test_location(ScopeHistory* scope_history) {
 				if (!has_match) {
 					for (int s_index = 0; s_index < (int)this->successful_location_starts.size(); s_index++) {
 						if (this->successful_location_starts[s_index] == it->first
-								&& this->successful_location_is_branch[s_index] == branch_node_history->is_branch) {
+								&& this->successful_location_is_branch[s_index] == is_branch) {
 							has_match = true;
 							break;
 						}
@@ -74,18 +76,26 @@ void NewActionExperiment::add_new_test_location(ScopeHistory* scope_history) {
 				if (!has_match) {
 					possible_starts.push_back(it->first);
 					possible_start_indexes.push_back(it->second->index);
-					possible_is_branch.push_back(branch_node_history->is_branch);
+					possible_is_branch.push_back(is_branch);
 				}
 			}
 			break;
 		case NODE_TYPE_INFO_BRANCH:
 			{
 				InfoBranchNodeHistory* info_branch_node_history = (InfoBranchNodeHistory*)it->second;
+				InfoBranchNode* info_branch_node = (InfoBranchNode*)it->first;
+
+				bool is_branch;
+				if (info_branch_node->is_negate) {
+					is_branch = info_branch_node_history->score < 0.0;
+				} else {
+					is_branch = info_branch_node_history->score >= 0.0;
+				}
 
 				bool has_match = false;
 				for (int t_index = 0; t_index < (int)this->test_location_starts.size(); t_index++) {
 					if (this->test_location_starts[t_index] == it->first
-							&& this->test_location_is_branch[t_index] == info_branch_node_history->is_branch) {
+							&& this->test_location_is_branch[t_index] == is_branch) {
 						has_match = true;
 						break;
 					}
@@ -93,7 +103,7 @@ void NewActionExperiment::add_new_test_location(ScopeHistory* scope_history) {
 				if (!has_match) {
 					for (int s_index = 0; s_index < (int)this->successful_location_starts.size(); s_index++) {
 						if (this->successful_location_starts[s_index] == it->first
-								&& this->successful_location_is_branch[s_index] == info_branch_node_history->is_branch) {
+								&& this->successful_location_is_branch[s_index] == is_branch) {
 							has_match = true;
 							break;
 						}
@@ -102,7 +112,7 @@ void NewActionExperiment::add_new_test_location(ScopeHistory* scope_history) {
 				if (!has_match) {
 					possible_starts.push_back(it->first);
 					possible_start_indexes.push_back(it->second->index);
-					possible_is_branch.push_back(info_branch_node_history->is_branch);
+					possible_is_branch.push_back(is_branch);
 				}
 			}
 			break;

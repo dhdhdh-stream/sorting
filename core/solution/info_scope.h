@@ -1,6 +1,4 @@
 /**
- * - when used as ScopeNode, +1.0 if positive, -1.0 if negative
- * 
  * - TODO: maybe infinite index rather than only binary
  */
 
@@ -27,13 +25,9 @@ public:
 
 	Scope* subscope;
 
-	std::vector<AbstractNode*> negative_input_node_contexts;
-	std::vector<int> negative_input_obs_indexes;
-	Network* negative_network;
-
-	std::vector<AbstractNode*> positive_input_node_contexts;
-	std::vector<int> positive_input_obs_indexes;
-	Network* positive_network;
+	std::vector<AbstractNode*> input_node_contexts;
+	std::vector<int> input_obs_indexes;
+	Network* network;
 
 	/**
 	 * - tie info experiments to scope instead of nodes
@@ -43,8 +37,7 @@ public:
 
 	#if defined(MDEBUG) && MDEBUG
 	void* verify_key;
-	std::vector<double> verify_negative_scores;
-	std::vector<double> verify_positive_scores;
+	std::vector<double> verify_scores;
 	#endif /* MDEBUG */
 
 	InfoScope();
@@ -52,12 +45,12 @@ public:
 
 	void activate(Problem* problem,
 				  RunHelper& run_helper,
-				  bool& result_is_positive);
+				  double& inner_score);
 
 	#if defined(MDEBUG) && MDEBUG
 	void verify_activate(Problem* problem,
 						 RunHelper& run_helper,
-						 bool& result_is_positive);
+						 double& inner_score);
 	void clear_verify();
 	#endif /* MDEBUG */
 
