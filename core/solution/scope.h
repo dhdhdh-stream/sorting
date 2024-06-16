@@ -7,6 +7,7 @@
 #include <utility>
 #include <vector>
 
+#include "abstract_scope.h"
 #include "context_layer.h"
 #include "metrics.h"
 #include "run_helper.h"
@@ -19,14 +20,8 @@ class Network;
 class Problem;
 class Solution;
 
-class ScopeHistory;
-class Scope {
+class Scope : public AbstractScope {
 public:
-	int id;
-
-	int node_counter;
-	std::map<int, AbstractNode*> nodes;
-
 	std::vector<AbstractNode*> eval_input_node_contexts;
 	std::vector<int> eval_input_obs_indexes;
 	Network* eval_network;
@@ -66,10 +61,6 @@ public:
 							   std::vector<ContextLayer>& context,
 							   RunHelper& run_helper);
 
-	void info_activate(Problem* problem,
-					   RunHelper& run_helper,
-					   ScopeHistory*& scope_history);
-
 	#if defined(MDEBUG) && MDEBUG
 	void new_action_capture_verify_activate(Problem* problem,
 											std::vector<ContextLayer>& context,
@@ -77,11 +68,6 @@ public:
 	void verify_activate(Problem* problem,
 						 std::vector<ContextLayer>& context,
 						 RunHelper& run_helper);
-
-	void info_verify_activate(Problem* problem,
-							  RunHelper& run_helper,
-							  ScopeHistory*& scope_history);
-
 	void clear_verify();
 	#endif /* MDEBUG */
 
@@ -97,19 +83,16 @@ public:
 	void save_for_display(std::ofstream& output_file);
 };
 
-class ScopeHistory {
+class ScopeHistory : public AbstractScopeHistory {
 public:
-	Scope* scope;
-
-	std::map<AbstractNode*, AbstractNodeHistory*> node_histories;
-
 	AbstractExperimentHistory* callback_experiment_history;
 	std::vector<int> callback_experiment_indexes;
 	std::vector<int> callback_experiment_layers;
 
 	ScopeHistory(Scope* scope);
-	ScopeHistory(ScopeHistory* original);
 	~ScopeHistory();
+
+	AbstractScopeHistory* deep_copy();
 };
 
 #endif /* SCOPE_H */

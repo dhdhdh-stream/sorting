@@ -14,7 +14,7 @@
 using namespace std;
 
 double calc_score(ScopeHistory* scope_history) {
-	Scope* scope = scope_history->scope;
+	Scope* scope = (Scope*)scope_history->scope;
 
 	vector<double> input_vals(scope->eval_input_node_contexts.size(), 0.0);
 	for (int i_index = 0; i_index < (int)scope->eval_input_node_contexts.size(); i_index++) {

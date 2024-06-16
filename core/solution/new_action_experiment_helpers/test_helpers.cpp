@@ -2,6 +2,9 @@
  * - don't use eval
  *   - becomes increasingly inaccurate with more successes
  *     - especially with chaining
+ * 
+ * - TODO: or at least try not using local eval
+ *   - perhaps exclude local eval in general
  */
 
 #include "new_action_experiment.h"

@@ -118,7 +118,8 @@ void NewActionExperiment::back_activate(vector<ContextLayer>& context,
 	switch (this->state) {
 	case NEW_ACTION_EXPERIMENT_STATE_EXPLORE:
 		if (history->test_location_index == -1) {
-			add_new_test_location(context.back().scope_history);
+			ScopeHistory* scope_history = (ScopeHistory*)context.back().scope_history;
+			add_new_test_location(scope_history);
 		}
 		break;
 	}
@@ -154,10 +155,8 @@ void NewActionExperiment::backprop(double target_val,
 				this->test_location_states.clear();
 				this->test_location_existing_scores.clear();
 				this->test_location_existing_counts.clear();
-				this->test_location_existing_truth_counts.clear();
 				this->test_location_new_scores.clear();
 				this->test_location_new_counts.clear();
-				this->test_location_new_truth_counts.clear();
 
 				this->verify_problems = vector<Problem*>(NUM_VERIFY_SAMPLES, NULL);
 				this->verify_seeds = vector<unsigned long>(NUM_VERIFY_SAMPLES);

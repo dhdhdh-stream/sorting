@@ -58,8 +58,8 @@ bool NewInfoExperiment::root_verify_activate(
 		} else {
 			run_helper.num_decisions++;
 
-			ScopeHistory* scope_history;
-			this->new_info_subscope->info_activate(problem,
+			AbstractScopeHistory* scope_history;
+			this->new_info_scope->explore_activate(problem,
 												   run_helper,
 												   scope_history);
 

@@ -24,8 +24,8 @@
 class AbstractExperiment;
 class AbstractExperimentHistory;
 class AbstractNode;
+class AbstractScope;
 class Problem;
-class Scope;
 class ScopeHistory;
 class Solution;
 
@@ -40,7 +40,7 @@ public:
 	 * - choose randomly rather than proportional to use
 	 *   - proportional biases towards lower layers, but upper layers may be just as impactful
 	 */
-	std::map<Scope*, std::set<std::pair<AbstractNode*,bool>>> nodes_seen;
+	std::map<AbstractScope*, std::set<std::pair<AbstractNode*,bool>>> nodes_seen;
 
 	std::vector<AbstractExperiment*> experiments_seen_order;
 	std::vector<AbstractExperimentHistory*> experiment_histories;

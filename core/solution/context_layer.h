@@ -2,15 +2,15 @@
 #define CONTEXT_LAYER_H
 
 class AbstractNode;
-class Scope;
-class ScopeHistory;
+class AbstractScope;
+class AbstractScopeHistory;
 
 class ContextLayer {
 public:
-	Scope* scope;
+	AbstractScope* scope;
 	AbstractNode* node;
 
-	ScopeHistory* scope_history;
+	AbstractScopeHistory* scope_history;
 };
 
 #endif /* CONTEXT_LAYER_H */

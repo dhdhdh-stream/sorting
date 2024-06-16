@@ -18,7 +18,7 @@ const int PARENT_SCOPE_MIN_NUM_NODES = 8;
 const int NEW_ACTION_MIN_NUM_NODES = 3;
 const int CREATE_NEW_ACTION_NUM_TRIES = 50;
 
-NewActionExperiment::NewActionExperiment(Scope* scope_context,
+NewActionExperiment::NewActionExperiment(AbstractScope* scope_context,
 										 AbstractNode* node_context,
 										 bool is_branch) {
 	this->type = EXPERIMENT_TYPE_NEW_ACTION;
@@ -484,7 +484,8 @@ NewActionExperiment::NewActionExperiment(Scope* scope_context,
 			break;
 		}
 
-		this->scope_context->random_exit_activate(
+		Scope* parent_scope = (Scope*)this->scope_context;
+		parent_scope->random_exit_activate(
 			random_start_node,
 			possible_exits);
 

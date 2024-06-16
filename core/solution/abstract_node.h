@@ -5,7 +5,7 @@
 #include <vector>
 
 class AbstractExperiment;
-class Scope;
+class AbstractScope;
 class Solution;
 
 const int NODE_TYPE_ACTION = 0;
@@ -18,7 +18,7 @@ class AbstractNode {
 public:
 	int type;
 
-	Scope* parent;
+	AbstractScope* parent;
 	int id;
 
 	std::vector<AbstractExperiment*> experiments;

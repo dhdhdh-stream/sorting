@@ -5,6 +5,7 @@
 #include "context_layer.h"
 
 class AbstractNode;
+class AbstractScope;
 class Problem;
 class Solution;
 
@@ -29,7 +30,7 @@ class AbstractExperiment {
 public:
 	int type;
 
-	Scope* scope_context;
+	AbstractScope* scope_context;
 	AbstractNode* node_context;
 	bool is_branch;
 

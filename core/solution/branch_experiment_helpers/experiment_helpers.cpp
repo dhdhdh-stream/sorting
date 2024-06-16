@@ -183,7 +183,8 @@ bool BranchExperiment::experiment_activate(AbstractNode*& curr_node,
 			if (is_target) {
 				history->has_target = true;
 
-				context.back().scope_history->callback_experiment_history = history;
+				ScopeHistory* scope_history = (ScopeHistory*)context.back().scope_history;
+				scope_history->callback_experiment_history = history;
 
 				history->experiment_index = context.back().scope_history->node_histories.size();
 			}

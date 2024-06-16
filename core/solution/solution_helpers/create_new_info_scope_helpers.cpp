@@ -11,8 +11,8 @@
 
 using namespace std;
 
-Scope* create_new_info_subscope() {
-	Scope* new_scope = new Scope();
+InfoScope* create_new_info_scope() {
+	InfoScope* new_scope = new InfoScope();
 
 	new_scope->node_counter = 0;
 

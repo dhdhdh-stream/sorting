@@ -73,7 +73,7 @@ public:
 	std::vector<int> verify_scope_history_sizes;
 	#endif /* MDEBUG */
 
-	NewActionExperiment(Scope* scope_context,
+	NewActionExperiment(AbstractScope* scope_context,
 						AbstractNode* node_context,
 						bool is_branch);
 	~NewActionExperiment();

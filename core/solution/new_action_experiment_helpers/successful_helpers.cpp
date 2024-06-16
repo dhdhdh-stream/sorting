@@ -15,7 +15,8 @@ void NewActionExperiment::successful_activate(
 		RunHelper& run_helper,
 		NewActionExperimentHistory* history) {
 	if (history->test_location_index == -1) {
-		context.back().scope_history->callback_experiment_history = history;
+		ScopeHistory* scope_history = (ScopeHistory*)context.back().scope_history;
+		scope_history->callback_experiment_history = history;
 	}
 
 	curr_node = this->successful_scope_nodes[location_index];

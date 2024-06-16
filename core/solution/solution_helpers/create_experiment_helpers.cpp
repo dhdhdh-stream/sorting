@@ -28,7 +28,7 @@ using namespace std;
 
 void create_experiment(RunHelper& run_helper) {
 	uniform_int_distribution<int> scope_distribution(0, run_helper.nodes_seen.size()-1);
-	map<Scope*, set<pair<AbstractNode*,bool>>>::iterator scope_it =
+	map<AbstractScope*, set<pair<AbstractNode*,bool>>>::iterator scope_it =
 		next(run_helper.nodes_seen.begin(), scope_distribution(generator));
 	uniform_int_distribution<int> node_distribution(0, scope_it->second.size()-1);
 	set<pair<AbstractNode*,bool>>::iterator it = next(scope_it->second.begin(), node_distribution(generator));

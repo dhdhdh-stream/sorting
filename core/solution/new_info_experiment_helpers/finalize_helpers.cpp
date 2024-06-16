@@ -69,19 +69,16 @@ void NewInfoExperiment::new_branch(Solution* duplicate) {
 		duplicate_local_scope->nodes[this->ending_node->id] = this->ending_node;
 	}
 
-	InfoScope* new_info_scope = new InfoScope();
-	new_info_scope->id = duplicate->info_scopes.size();
+	this->new_info_scope->id = duplicate->info_scopes.size();
 	duplicate->info_scopes.push_back(new_info_scope);
 
-	for (map<int, AbstractNode*>::iterator it = this->new_info_subscope->nodes.begin();
-			it != this->new_info_subscope->nodes.end(); it++) {
+	for (map<int, AbstractNode*>::iterator it = this->new_info_scope->nodes.begin();
+			it != this->new_info_scope->nodes.end(); it++) {
 		if (it->second->type == NODE_TYPE_INFO_SCOPE) {
 			InfoScopeNode* info_scope_node = (InfoScopeNode*)it->second;
 			info_scope_node->scope = duplicate->info_scopes[info_scope_node->scope->id];
 		}
 	}
-
-	new_info_scope->subscope = this->new_info_subscope;
 
 	new_info_scope->input_node_contexts = this->new_input_node_contexts;
 	new_info_scope->input_obs_indexes = this->new_input_obs_indexes;
@@ -258,7 +255,7 @@ void NewInfoExperiment::new_branch(Solution* duplicate) {
 	new_info_scope->verify_scores = this->verify_scores;
 	#endif /* MDEBUG */
 
-	this->new_info_subscope = NULL;
+	this->new_info_scope = NULL;
 	this->best_actions.clear();
 	this->best_scopes.clear();
 	this->ending_node = NULL;

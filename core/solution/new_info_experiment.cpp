@@ -5,6 +5,7 @@
 #include "action_node.h"
 #include "constants.h"
 #include "info_branch_node.h"
+#include "info_scope.h"
 #include "network.h"
 #include "problem.h"
 #include "scope.h"
@@ -12,7 +13,7 @@
 
 using namespace std;
 
-NewInfoExperiment::NewInfoExperiment(Scope* scope_context,
+NewInfoExperiment::NewInfoExperiment(AbstractScope* scope_context,
 									 AbstractNode* node_context,
 									 bool is_branch,
 									 AbstractExperiment* parent_experiment) {
@@ -45,7 +46,7 @@ NewInfoExperiment::NewInfoExperiment(Scope* scope_context,
 	 */
 	this->average_instances_per_run = 1.0;
 
-	this->new_info_subscope = NULL;
+	this->new_info_scope = NULL;
 
 	this->existing_network = NULL;
 	this->new_network = NULL;
@@ -68,8 +69,8 @@ NewInfoExperiment::~NewInfoExperiment() {
 		cout << "outer delete" << endl;
 	}
 
-	if (this->new_info_subscope != NULL) {
-		delete this->new_info_subscope;
+	if (this->new_info_scope != NULL) {
+		delete this->new_info_scope;
 	}
 
 	if (this->existing_network != NULL) {

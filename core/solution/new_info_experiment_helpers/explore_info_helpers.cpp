@@ -8,6 +8,7 @@
 #include "eval_helpers.h"
 #include "globals.h"
 #include "info_branch_node.h"
+#include "info_scope.h"
 #include "info_scope_node.h"
 #include "network.h"
 #include "nn_helpers.h"
@@ -43,8 +44,8 @@ void NewInfoExperiment::explore_info_activate(
 		NewInfoExperimentHistory* history) {
 	run_helper.num_decisions++;
 
-	ScopeHistory* scope_history;
-	this->new_info_subscope->info_activate(problem,
+	AbstractScopeHistory* scope_history;
+	this->new_info_scope->explore_activate(problem,
 										   run_helper,
 										   scope_history);
 
@@ -52,11 +53,13 @@ void NewInfoExperiment::explore_info_activate(
 
 	history->predicted_scores.push_back(vector<double>(context.size(), 0.0));
 	for (int l_index = 0; l_index < (int)context.size(); l_index++) {
-		if (context[l_index].scope->eval_network != NULL) {
-			context[l_index].scope_history->callback_experiment_history = history;
-			context[l_index].scope_history->callback_experiment_indexes.push_back(
+		Scope* scope = (Scope*)context[l_index].scope;
+		ScopeHistory* scope_history = (ScopeHistory*)context[l_index].scope_history;
+		if (scope->eval_network != NULL) {
+			scope_history->callback_experiment_history = history;
+			scope_history->callback_experiment_indexes.push_back(
 				(int)history->predicted_scores.size()-1);
-			context[l_index].scope_history->callback_experiment_layers.push_back(l_index);
+			scope_history->callback_experiment_layers.push_back(l_index);
 		}
 	}
 }
@@ -66,15 +69,17 @@ void NewInfoExperiment::explore_info_back_activate(
 		RunHelper& run_helper) {
 	NewInfoExperimentHistory* history = (NewInfoExperimentHistory*)run_helper.experiment_histories.back();
 
+	ScopeHistory* scope_history = (ScopeHistory*)context.back().scope_history;
+
 	double predicted_score;
 	if (run_helper.exceeded_limit) {
 		predicted_score = -1.0;
 	} else {
-		predicted_score = calc_score(context.back().scope_history);
+		predicted_score = calc_score(scope_history);
 	}
-	for (int i_index = 0; i_index < (int)context.back().scope_history->callback_experiment_indexes.size(); i_index++) {
-		history->predicted_scores[context.back().scope_history->callback_experiment_indexes[i_index]]
-			[context.back().scope_history->callback_experiment_layers[i_index]] = predicted_score;
+	for (int i_index = 0; i_index < (int)scope_history->callback_experiment_indexes.size(); i_index++) {
+		history->predicted_scores[scope_history->callback_experiment_indexes[i_index]]
+			[scope_history->callback_experiment_layers[i_index]] = predicted_score;
 	}
 }
 
@@ -161,8 +166,8 @@ void NewInfoExperiment::explore_info_backprop(
 	}
 
 	if (is_fail) {
-		delete this->new_info_subscope;
-		this->new_info_subscope = NULL;
+		delete this->new_info_scope;
+		this->new_info_scope = NULL;
 
 		for (int h_index = 0; h_index < (int)this->scope_histories.size(); h_index++) {
 			delete this->scope_histories[h_index];
@@ -175,7 +180,7 @@ void NewInfoExperiment::explore_info_backprop(
 			this->result = EXPERIMENT_RESULT_FAIL;
 		} else {
 			this->info_score = 0.0;
-			this->new_info_subscope = create_new_info_subscope();
+			this->new_info_scope = create_new_info_scope();
 
 			this->scope_histories.reserve(NUM_DATAPOINTS);
 			this->target_val_histories.reserve(NUM_DATAPOINTS);

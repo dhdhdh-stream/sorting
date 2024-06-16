@@ -23,7 +23,6 @@ const int NEW_INFO_EXPERIMENT_STATE_EXPLORE_INFO = 1;
 const int NEW_INFO_EXPERIMENT_STATE_EXPLORE_SEQUENCE = 2;
 const int NEW_INFO_EXPERIMENT_STATE_TRAIN_NEW = 3;
 const int NEW_INFO_EXPERIMENT_STATE_MEASURE = 4;
-// TODO: add verify
 const int NEW_INFO_EXPERIMENT_STATE_TRY_EXISTING_INFO = 5;
 const int NEW_INFO_EXPERIMENT_STATE_VERIFY_EXISTING = 6;
 const int NEW_INFO_EXPERIMENT_STATE_VERIFY = 7;
@@ -47,7 +46,7 @@ public:
 	double existing_score_standard_deviation;
 
 	double info_score;
-	Scope* new_info_subscope;
+	InfoScope* new_info_scope;
 
 	int explore_type;
 
@@ -86,7 +85,7 @@ public:
 	int existing_info_scope_index;
 	bool existing_is_negate;
 
-	std::vector<ScopeHistory*> scope_histories;
+	std::vector<AbstractScopeHistory*> scope_histories;
 
 	#if defined(MDEBUG) && MDEBUG
 	std::vector<Problem*> verify_problems;
@@ -94,7 +93,7 @@ public:
 	std::vector<double> verify_scores;
 	#endif /* MDEBUG */
 
-	NewInfoExperiment(Scope* scope_context,
+	NewInfoExperiment(AbstractScope* scope_context,
 					  AbstractNode* node_context,
 					  bool is_branch,
 					  AbstractExperiment* parent_experiment);

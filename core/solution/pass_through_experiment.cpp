@@ -12,7 +12,7 @@
 
 using namespace std;
 
-PassThroughExperiment::PassThroughExperiment(Scope* scope_context,
+PassThroughExperiment::PassThroughExperiment(AbstractScope* scope_context,
 											 AbstractNode* node_context,
 											 bool is_branch,
 											 AbstractExperiment* parent_experiment) {

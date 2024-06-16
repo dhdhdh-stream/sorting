@@ -12,7 +12,7 @@ using namespace std;
 
 void gather_possible_helper(vector<AbstractNode*>& possible_node_contexts,
 							vector<int>& possible_obs_indexes,
-							ScopeHistory* scope_history) {
+							AbstractScopeHistory* scope_history) {
 	for (map<AbstractNode*, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
 			it != scope_history->node_histories.end(); it++) {
 		switch (it->first->type) {

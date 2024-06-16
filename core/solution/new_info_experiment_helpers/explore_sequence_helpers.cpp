@@ -8,6 +8,7 @@
 #include "eval_helpers.h"
 #include "globals.h"
 #include "info_branch_node.h"
+#include "info_scope.h"
 #include "info_scope_node.h"
 #include "network.h"
 #include "problem.h"
@@ -32,8 +33,8 @@ bool NewInfoExperiment::explore_sequence_activate(
 		NewInfoExperimentHistory* history) {
 	run_helper.num_decisions++;
 
-	ScopeHistory* scope_history;
-	this->new_info_subscope->info_activate(problem,
+	AbstractScopeHistory* scope_history;
+	this->new_info_scope->explore_activate(problem,
 										   run_helper,
 										   scope_history);
 
@@ -58,11 +59,13 @@ bool NewInfoExperiment::explore_sequence_activate(
 
 		history->predicted_scores.push_back(vector<double>(context.size(), 0.0));
 		for (int l_index = 0; l_index < (int)context.size(); l_index++) {
-			if (context[l_index].scope->eval_network != NULL) {
-				context[l_index].scope_history->callback_experiment_history = history;
-				context[l_index].scope_history->callback_experiment_indexes.push_back(
+			Scope* scope = (Scope*)context[l_index].scope;
+			ScopeHistory* scope_history = (ScopeHistory*)context[l_index].scope_history;
+			if (scope->eval_network != NULL) {
+				scope_history->callback_experiment_history = history;
+				scope_history->callback_experiment_indexes.push_back(
 					(int)history->predicted_scores.size()-1);
-				context[l_index].scope_history->callback_experiment_layers.push_back(l_index);
+				scope_history->callback_experiment_layers.push_back(l_index);
 			}
 		}
 
@@ -93,6 +96,8 @@ bool NewInfoExperiment::explore_sequence_activate(
 		history->existing_predicted_scores.push_back(predicted_score);
 
 		delete scope_history;
+
+		Scope* parent_scope = (Scope*)this->scope_context;
 
 		vector<AbstractNode*> possible_exits;
 
@@ -137,7 +142,7 @@ bool NewInfoExperiment::explore_sequence_activate(
 			break;
 		}
 
-		this->scope_context->random_exit_activate(
+		parent_scope->random_exit_activate(
 			starting_node,
 			possible_exits);
 
@@ -158,7 +163,7 @@ bool NewInfoExperiment::explore_sequence_activate(
 		for (int s_index = 0; s_index < new_num_steps; s_index++) {
 			bool default_to_action = true;
 			if (default_distribution(generator) != 0) {
-				ScopeNode* new_scope_node = create_existing(this->scope_context);
+				ScopeNode* new_scope_node = create_existing(parent_scope);
 				if (new_scope_node != NULL) {
 					this->curr_step_types.push_back(STEP_TYPE_SCOPE);
 					this->curr_actions.push_back(NULL);
@@ -206,15 +211,17 @@ void NewInfoExperiment::explore_sequence_back_activate(
 		RunHelper& run_helper) {
 	NewInfoExperimentHistory* history = (NewInfoExperimentHistory*)run_helper.experiment_histories.back();
 
+	ScopeHistory* scope_history = (ScopeHistory*)context.back().scope_history;
+
 	double predicted_score;
 	if (run_helper.exceeded_limit) {
 		predicted_score = -1.0;
 	} else {
-		predicted_score = calc_score(context.back().scope_history);
+		predicted_score = calc_score(scope_history);
 	}
-	for (int i_index = 0; i_index < (int)context.back().scope_history->callback_experiment_indexes.size(); i_index++) {
-		history->predicted_scores[context.back().scope_history->callback_experiment_indexes[i_index]]
-			[context.back().scope_history->callback_experiment_layers[i_index]] = predicted_score;
+	for (int i_index = 0; i_index < (int)scope_history->callback_experiment_indexes.size(); i_index++) {
+		history->predicted_scores[scope_history->callback_experiment_indexes[i_index]]
+			[scope_history->callback_experiment_layers[i_index]] = predicted_score;
 	}
 }
 

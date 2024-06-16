@@ -15,6 +15,8 @@
 using namespace std;
 
 Scope::Scope() {
+	this->type = SCOPE_TYPE_SCOPE;
+
 	this->id = -1;
 
 	this->eval_network = NULL;
@@ -281,49 +283,51 @@ ScopeHistory::ScopeHistory(Scope* scope) {
 	this->callback_experiment_history = NULL;
 }
 
-ScopeHistory::ScopeHistory(ScopeHistory* original) {
-	this->scope = original->scope;
-
-	for (map<AbstractNode*, AbstractNodeHistory*>::iterator it = original->node_histories.begin();
-			it != original->node_histories.end(); it++) {
-		switch (it->first->type) {
-		case NODE_TYPE_ACTION:
-			{
-				ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
-				this->node_histories[it->first] = new ActionNodeHistory(action_node_history);
-			}
-			break;
-		case NODE_TYPE_SCOPE:
-			{
-				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)it->second;
-				this->node_histories[it->first] = new ScopeNodeHistory(scope_node_history);
-			}
-			break;
-		case NODE_TYPE_BRANCH:
-			{
-				BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
-				this->node_histories[it->first] = new BranchNodeHistory(branch_node_history);
-			}
-			break;
-		case NODE_TYPE_INFO_SCOPE:
-			{
-				InfoScopeNodeHistory* info_scope_node_history = (InfoScopeNodeHistory*)it->second;
-				this->node_histories[it->first] = new InfoScopeNodeHistory(info_scope_node_history);
-			}
-			break;
-		case NODE_TYPE_INFO_BRANCH:
-			{
-				InfoBranchNodeHistory* info_branch_node_history = (InfoBranchNodeHistory*)it->second;
-				this->node_histories[it->first] = new InfoBranchNodeHistory(info_branch_node_history);
-			}
-			break;
-		}
-	}
-}
-
 ScopeHistory::~ScopeHistory() {
 	for (map<AbstractNode*, AbstractNodeHistory*>::iterator it = this->node_histories.begin();
 			it != this->node_histories.end(); it++) {
 		delete it->second;
 	}
+}
+
+AbstractScopeHistory* ScopeHistory::deep_copy() {
+	ScopeHistory* new_scope_history = new ScopeHistory((Scope*)this->scope);
+
+	for (map<AbstractNode*, AbstractNodeHistory*>::iterator it = this->node_histories.begin();
+			it != this->node_histories.end(); it++) {
+		switch (it->first->type) {
+		case NODE_TYPE_ACTION:
+			{
+				ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
+				new_scope_history->node_histories[it->first] = new ActionNodeHistory(action_node_history);
+			}
+			break;
+		case NODE_TYPE_SCOPE:
+			{
+				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)it->second;
+				new_scope_history->node_histories[it->first] = new ScopeNodeHistory(scope_node_history);
+			}
+			break;
+		case NODE_TYPE_BRANCH:
+			{
+				BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
+				new_scope_history->node_histories[it->first] = new BranchNodeHistory(branch_node_history);
+			}
+			break;
+		case NODE_TYPE_INFO_SCOPE:
+			{
+				InfoScopeNodeHistory* info_scope_node_history = (InfoScopeNodeHistory*)it->second;
+				new_scope_history->node_histories[it->first] = new InfoScopeNodeHistory(info_scope_node_history);
+			}
+			break;
+		case NODE_TYPE_INFO_BRANCH:
+			{
+				InfoBranchNodeHistory* info_branch_node_history = (InfoBranchNodeHistory*)it->second;
+				new_scope_history->node_histories[it->first] = new InfoBranchNodeHistory(info_branch_node_history);
+			}
+			break;
+		}
+	}
+
+	return new_scope_history;
 }

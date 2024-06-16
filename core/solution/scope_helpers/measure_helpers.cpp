@@ -118,10 +118,10 @@ void Scope::measure_activate(Metrics& metrics,
 	}
 
 	if (metrics.experiment_scope == this) {
-		metrics.scope_histories.push_back(new ScopeHistory(history));
+		metrics.scope_histories.push_back(history->deep_copy());
 	}
 	if (metrics.new_scope == this) {
-		metrics.new_scope_histories.push_back(new ScopeHistory(history));
+		metrics.new_scope_histories.push_back(history->deep_copy());
 	}
 
 	delete history;

@@ -13,11 +13,13 @@ void PassThroughExperiment::verify_existing_activate(
 		PassThroughExperimentHistory* history) {
 	history->predicted_scores.push_back(vector<double>(context.size(), 0.0));
 	for (int l_index = 0; l_index < (int)context.size(); l_index++) {
-		if (context[l_index].scope->eval_network != NULL) {
-			context[l_index].scope_history->callback_experiment_history = history;
-			context[l_index].scope_history->callback_experiment_indexes.push_back(
+		Scope* scope = (Scope*)context[l_index].scope;
+		ScopeHistory* scope_history = (ScopeHistory*)context[l_index].scope_history;
+		if (scope->eval_network != NULL) {
+			scope_history->callback_experiment_history = history;
+			scope_history->callback_experiment_indexes.push_back(
 				(int)history->predicted_scores.size()-1);
-			context[l_index].scope_history->callback_experiment_layers.push_back(l_index);
+			scope_history->callback_experiment_layers.push_back(l_index);
 		}
 	}
 }
@@ -27,15 +29,17 @@ void PassThroughExperiment::verify_existing_back_activate(
 		RunHelper& run_helper) {
 	PassThroughExperimentHistory* history = (PassThroughExperimentHistory*)run_helper.experiment_histories.back();
 
+	ScopeHistory* scope_history = (ScopeHistory*)context.back().scope_history;
+
 	double predicted_score;
 	if (run_helper.exceeded_limit) {
 		predicted_score = -1.0;
 	} else {
-		predicted_score = calc_score(context.back().scope_history);
+		predicted_score = calc_score(scope_history);
 	}
-	for (int i_index = 0; i_index < (int)context.back().scope_history->callback_experiment_indexes.size(); i_index++) {
-		history->predicted_scores[context.back().scope_history->callback_experiment_indexes[i_index]]
-			[context.back().scope_history->callback_experiment_layers[i_index]] = predicted_score;
+	for (int i_index = 0; i_index < (int)scope_history->callback_experiment_indexes.size(); i_index++) {
+		history->predicted_scores[scope_history->callback_experiment_indexes[i_index]]
+			[scope_history->callback_experiment_layers[i_index]] = predicted_score;
 	}
 }
 

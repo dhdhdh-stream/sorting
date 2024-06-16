@@ -6,6 +6,7 @@
 
 #include "action_node.h"
 #include "constants.h"
+#include "info_scope.h"
 #include "info_scope_node.h"
 #include "network.h"
 #include "problem.h"
@@ -26,8 +27,8 @@ bool NewInfoExperiment::capture_verify_activate(
 	}
 	this->verify_seeds[this->state_iter] = run_helper.starting_run_seed;
 
-	ScopeHistory* scope_history;
-	this->new_info_subscope->info_activate(problem,
+	AbstractScopeHistory* scope_history;
+	this->new_info_scope->explore_activate(problem,
 										   run_helper,
 										   scope_history);
 

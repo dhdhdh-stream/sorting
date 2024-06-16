@@ -61,7 +61,7 @@ public:
 	ActionNode* ending_node;
 	InfoBranchNode* info_branch_node;
 
-	PassThroughExperiment(Scope* scope_context,
+	PassThroughExperiment(AbstractScope* scope_context,
 						  AbstractNode* node_context,
 						  bool is_branch,
 						  AbstractExperiment* parent_experiment);

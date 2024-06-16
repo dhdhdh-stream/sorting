@@ -23,11 +23,11 @@ void create_experiment(RunHelper& run_helper);
 ScopeNode* create_existing(Scope* parent_scope);
 InfoScope* get_existing_info_scope();
 
-Scope* create_new_info_subscope();
+InfoScope* create_new_info_scope();
 
 void gather_possible_helper(std::vector<AbstractNode*>& possible_node_contexts,
 							std::vector<int>& possible_obs_indexes,
-							ScopeHistory* scope_history);
+							AbstractScopeHistory* scope_history);
 
 void create_new_action(AbstractNode*& starting_node,
 					   std::set<AbstractNode*>& included_nodes);

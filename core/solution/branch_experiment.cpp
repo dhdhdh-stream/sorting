@@ -15,7 +15,7 @@
 
 using namespace std;
 
-BranchExperiment::BranchExperiment(Scope* scope_context,
+BranchExperiment::BranchExperiment(AbstractScope* scope_context,
 								   AbstractNode* node_context,
 								   bool is_branch,
 								   AbstractExperiment* parent_experiment) {

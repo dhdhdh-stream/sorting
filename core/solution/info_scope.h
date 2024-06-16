@@ -8,6 +8,7 @@
 #include <fstream>
 #include <vector>
 
+#include "abstract_scope.h"
 #include "context_layer.h"
 #include "run_helper.h"
 
@@ -15,16 +16,10 @@ class AbstractExperiment;
 class AbstractNode;
 class Network;
 class Problem;
-class Scope;
-class ScopeHistory;
 class Solution;
 
-class InfoScope {
+class InfoScope : public AbstractScope {
 public:
-	int id;
-
-	Scope* subscope;
-
 	std::vector<AbstractNode*> input_node_contexts;
 	std::vector<int> input_obs_indexes;
 	Network* network;
@@ -47,6 +42,10 @@ public:
 				  RunHelper& run_helper,
 				  double& inner_score);
 
+	void explore_activate(Problem* problem,
+						  RunHelper& run_helper,
+						  AbstractScopeHistory*& history);
+
 	#if defined(MDEBUG) && MDEBUG
 	void verify_activate(Problem* problem,
 						 RunHelper& run_helper,
@@ -60,6 +59,16 @@ public:
 
 	void copy_from(InfoScope* original,
 				   Solution* parent_solution);
+
+	void save_for_display(std::ofstream& output_file);
+};
+
+class InfoScopeHistory : public AbstractScopeHistory {
+public:
+	InfoScopeHistory(InfoScope* scope);
+	~InfoScopeHistory();
+
+	AbstractScopeHistory* deep_copy();
 };
 
 #endif /* INFO_SCOPE_H */

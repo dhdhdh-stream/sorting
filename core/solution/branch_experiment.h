@@ -82,7 +82,7 @@ public:
 
 	bool is_pass_through;
 
-	std::vector<ScopeHistory*> scope_histories;
+	std::vector<AbstractScopeHistory*> scope_histories;
 
 	#if defined(MDEBUG) && MDEBUG
 	std::vector<Problem*> verify_problems;
@@ -90,7 +90,7 @@ public:
 	std::vector<double> verify_scores;
 	#endif /* MDEBUG */
 
-	BranchExperiment(Scope* scope_context,
+	BranchExperiment(AbstractScope* scope_context,
 					 AbstractNode* node_context,
 					 bool is_branch,
 					 AbstractExperiment* parent_experiment);

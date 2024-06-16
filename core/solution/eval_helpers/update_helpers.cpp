@@ -21,7 +21,7 @@
 using namespace std;
 
 void update_eval_helper(Scope* parent_scope,
-						vector<ScopeHistory*>& scope_histories,
+						vector<AbstractScopeHistory*>& scope_histories,
 						vector<double>& target_val_histories) {
 	vector<double> target_vals(target_val_histories.size());
 	for (int d_index = 0; d_index < (int)target_val_histories.size(); d_index++) {
@@ -317,9 +317,9 @@ void update_eval() {
 			last_new_scope = NULL;
 		}
 
-		vector<ScopeHistory*> scope_histories;
+		vector<AbstractScopeHistory*> scope_histories;
 		vector<double> target_val_histories;
-		vector<ScopeHistory*> new_scope_histories;
+		vector<AbstractScopeHistory*> new_scope_histories;
 		vector<double> new_target_val_histories;
 		for (int iter_index = 0; iter_index < MEASURE_ITERS; iter_index++) {
 			Problem* problem = problem_type->get_problem();
