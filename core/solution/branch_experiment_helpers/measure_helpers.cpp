@@ -27,8 +27,8 @@ bool BranchExperiment::measure_activate(AbstractNode*& curr_node,
 										BranchExperimentHistory* history) {
 	run_helper.num_decisions++;
 
-	history->predicted_scores.push_back(vector<double>(context.size(), 0.0));
-	for (int l_index = 0; l_index < (int)context.size(); l_index++) {
+	history->predicted_scores.push_back(vector<double>(context.size()-1, 0.0));
+	for (int l_index = 0; l_index < (int)context.size()-1; l_index++) {
 		Scope* scope = (Scope*)context[l_index].scope;
 		ScopeHistory* scope_history = (ScopeHistory*)context[l_index].scope_history;
 		if (scope->eval_network != NULL) {
@@ -109,8 +109,31 @@ bool BranchExperiment::measure_activate(AbstractNode*& curr_node,
 											run_helper,
 											inner_score);
 
-			if ((this->best_is_negate && inner_score < 0.0)
-					|| (!this->best_is_negate && inner_score >= 0.0)) {
+			bool is_branch;
+			#if defined(MDEBUG) && MDEBUG
+			if (run_helper.curr_run_seed%2 == 0) {
+				is_branch = true;
+			} else {
+				is_branch = false;
+			}
+			run_helper.curr_run_seed = xorshift(run_helper.curr_run_seed);
+			#else
+			if (this->best_is_negate) {
+				if (inner_score >= 0.0) {
+					is_branch = false;
+				} else {
+					is_branch = true;
+				}
+			} else {
+				if (inner_score >= 0.0) {
+					is_branch = true;
+				} else {
+					is_branch = false;
+				}
+			}
+			#endif /* MDEBUG */
+
+			if (is_branch) {
 				if (this->best_step_types.size() == 0) {
 					curr_node = this->best_exit_next_node;
 				} else {
@@ -207,7 +230,8 @@ void BranchExperiment::measure_backprop(
 			for (int l_index = 0; l_index < (int)history->predicted_scores[i_index].size(); l_index++) {
 				sum_score += history->predicted_scores[i_index][l_index];
 			}
-			double final_score = (sum_score / (int)history->predicted_scores[i_index].size() + target_val - solution->average_score) / 2.0;
+			sum_score += target_val - solution->average_score;
+			double final_score = sum_score / ((int)history->predicted_scores[i_index].size() + 1);
 			this->combined_score += final_score;
 			this->sub_state_iter++;
 		}

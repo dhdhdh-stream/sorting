@@ -48,8 +48,31 @@ bool BranchExperiment::experiment_activate(AbstractNode*& curr_node,
 			info_branch_node_history->index = context.back().scope_history->node_histories.size();
 			context.back().scope_history->node_histories[this->info_branch_node] = info_branch_node_history;
 
-			if ((this->best_is_negate && inner_score < 0.0)
-					|| (!this->best_is_negate && inner_score >= 0.0)) {
+			bool is_branch;
+			#if defined(MDEBUG) && MDEBUG
+			if (run_helper.curr_run_seed%2 == 0) {
+				is_branch = true;
+			} else {
+				is_branch = false;
+			}
+			run_helper.curr_run_seed = xorshift(run_helper.curr_run_seed);
+			#else
+			if (this->best_is_negate) {
+				if (inner_score >= 0.0) {
+					is_branch = false;
+				} else {
+					is_branch = true;
+				}
+			} else {
+				if (inner_score >= 0.0) {
+					is_branch = true;
+				} else {
+					is_branch = false;
+				}
+			}
+			#endif /* MDEBUG */
+
+			if (is_branch) {
 				if (this->best_step_types.size() == 0) {
 					curr_node = this->best_exit_next_node;
 				} else {
@@ -141,8 +164,31 @@ bool BranchExperiment::experiment_activate(AbstractNode*& curr_node,
 				info_branch_node_history->index = context.back().scope_history->node_histories.size();
 				context.back().scope_history->node_histories[this->info_branch_node] = info_branch_node_history;
 
-				if ((this->best_is_negate && inner_score < 0.0)
-						|| (!this->best_is_negate && inner_score >= 0.0)) {
+				bool is_branch;
+				#if defined(MDEBUG) && MDEBUG
+				if (run_helper.curr_run_seed%2 == 0) {
+					is_branch = true;
+				} else {
+					is_branch = false;
+				}
+				run_helper.curr_run_seed = xorshift(run_helper.curr_run_seed);
+				#else
+				if (this->best_is_negate) {
+					if (inner_score >= 0.0) {
+						is_branch = false;
+					} else {
+						is_branch = true;
+					}
+				} else {
+					if (inner_score >= 0.0) {
+						is_branch = true;
+					} else {
+						is_branch = false;
+					}
+				}
+				#endif /* MDEBUG */
+
+				if (is_branch) {
 					if (this->best_step_types.size() == 0) {
 						curr_node = this->best_exit_next_node;
 					} else {

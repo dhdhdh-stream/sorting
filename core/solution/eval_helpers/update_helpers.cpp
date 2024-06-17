@@ -326,6 +326,7 @@ void update_eval() {
 
 			RunHelper run_helper;
 			#if defined(MDEBUG) && MDEBUG
+			run_helper.starting_run_seed = run_index;
 			run_helper.curr_run_seed = run_index;
 			run_index++;
 			#endif /* MDEBUG */

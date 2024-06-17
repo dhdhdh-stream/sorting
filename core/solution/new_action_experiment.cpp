@@ -498,8 +498,10 @@ NewActionExperiment::NewActionExperiment(AbstractScope* scope_context,
 		this->test_location_states.push_back(NEW_ACTION_EXPERIMENT_MEASURE_EXISTING);
 		this->test_location_existing_scores.push_back(0.0);
 		this->test_location_existing_counts.push_back(0);
+		this->test_location_existing_truth_counts.push_back(0);
 		this->test_location_new_scores.push_back(0.0);
 		this->test_location_new_counts.push_back(0);
+		this->test_location_new_truth_counts.push_back(0);
 
 		this->average_remaining_experiments_from_start = 1.0;
 

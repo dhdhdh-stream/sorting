@@ -4,6 +4,10 @@
  *     - leads to better decision making and quicker progress
  *   - gives scopes identity, pushing improvements to be in the same direction
  *     - i.e., prevents thrashing
+ * 
+ * - don't use local eval, only higher layers
+ *   - higher layers won't have missing sections due to explore
+ *     - (unless recursion, which should hopefully be being prevented)
  */
 
 #ifndef EVAL_HELPERS_H

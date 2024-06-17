@@ -55,8 +55,10 @@ public:
 	std::vector<int> test_location_states;
 	std::vector<double> test_location_existing_scores;
 	std::vector<int> test_location_existing_counts;
+	std::vector<int> test_location_existing_truth_counts;
 	std::vector<double> test_location_new_scores;
 	std::vector<int> test_location_new_counts;
+	std::vector<int> test_location_new_truth_counts;
 
 	/**
 	 * - add when experimenting and pop if fail
@@ -96,6 +98,8 @@ public:
 					   std::vector<ContextLayer>& context,
 					   RunHelper& run_helper,
 					   NewActionExperimentHistory* history);
+	void test_back_activate(std::vector<ContextLayer>& context,
+							RunHelper& run_helper);
 	void test_backprop(double target_val,
 					   RunHelper& run_helper);
 

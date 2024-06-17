@@ -21,8 +21,8 @@ void PassThroughExperiment::measure_existing_activate(
 		PassThroughExperimentHistory* history) {
 	history->instance_count++;
 
-	history->predicted_scores.push_back(vector<double>(context.size(), 0.0));
-	for (int l_index = 0; l_index < (int)context.size(); l_index++) {
+	history->predicted_scores.push_back(vector<double>(context.size()-1, 0.0));
+	for (int l_index = 0; l_index < (int)context.size()-1; l_index++) {
 		Scope* scope = (Scope*)context[l_index].scope;
 		ScopeHistory* scope_history = (ScopeHistory*)context[l_index].scope_history;
 		if (scope->eval_network != NULL) {
@@ -63,7 +63,8 @@ void PassThroughExperiment::measure_existing_backprop(
 		for (int l_index = 0; l_index < (int)history->predicted_scores[i_index].size(); l_index++) {
 			sum_score += history->predicted_scores[i_index][l_index];
 		}
-		double final_score = (sum_score / (int)history->predicted_scores[i_index].size() + target_val - solution->average_score) / 2.0;
+		sum_score += target_val - solution->average_score;
+		double final_score = sum_score / ((int)history->predicted_scores[i_index].size() + 1);
 		this->target_val_histories.push_back(final_score);
 	}
 

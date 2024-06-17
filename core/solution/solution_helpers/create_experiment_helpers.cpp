@@ -35,7 +35,7 @@ void create_experiment(RunHelper& run_helper) {
 	AbstractNode* explore_node = it->first;
 	bool explore_is_branch = it->second;
 
-	if (explore_node->parent->id != -1) {
+	if (explore_node->parent->type == SCOPE_TYPE_SCOPE) {
 		uniform_int_distribution<int> non_new_distribution(0, (int)explore_node->parent->nodes.size()-1);
 		if (solution->timestamp >= solution->next_possible_new_scope_timestamp
 				&& explore_node->parent->nodes.size() > 10

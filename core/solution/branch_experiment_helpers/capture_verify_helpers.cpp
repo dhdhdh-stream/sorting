@@ -109,8 +109,19 @@ bool BranchExperiment::capture_verify_activate(AbstractNode*& curr_node,
 											run_helper,
 											inner_score);
 
-			if ((this->best_is_negate && inner_score < 0.0)
-					|| (!this->best_is_negate && inner_score >= 0.0)) {
+			bool is_branch;
+			if (run_helper.curr_run_seed%2 == 0) {
+				is_branch = true;
+			} else {
+				is_branch = false;
+			}
+			run_helper.curr_run_seed = xorshift(run_helper.curr_run_seed);
+
+			cout << "inner_score: " << inner_score << endl;
+			cout << "this->best_is_negate: " << this->best_is_negate << endl;
+			cout << "is_branch: " << is_branch << endl;
+
+			if (is_branch) {
 				if (this->best_step_types.size() == 0) {
 					curr_node = this->best_exit_next_node;
 				} else {

@@ -247,12 +247,14 @@ void NewInfoExperiment::new_branch(Solution* duplicate) {
 	}
 
 	#if defined(MDEBUG) && MDEBUG
-	duplicate->verify_problems = this->verify_problems;
-	this->verify_problems.clear();
-	duplicate->verify_seeds = this->verify_seeds;
+	if (this->verify_problems.size() > 0) {
+		duplicate->verify_problems = this->verify_problems;
+		this->verify_problems.clear();
+		duplicate->verify_seeds = this->verify_seeds;
 
-	new_info_scope->verify_key = this;
-	new_info_scope->verify_scores = this->verify_scores;
+		new_info_scope->verify_key = this;
+		new_info_scope->verify_scores = this->verify_scores;
+	}
 	#endif /* MDEBUG */
 
 	this->new_info_scope = NULL;

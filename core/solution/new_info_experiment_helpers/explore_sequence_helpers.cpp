@@ -57,8 +57,8 @@ bool NewInfoExperiment::explore_sequence_activate(
 	if (is_target) {
 		history->has_target = true;
 
-		history->predicted_scores.push_back(vector<double>(context.size(), 0.0));
-		for (int l_index = 0; l_index < (int)context.size(); l_index++) {
+		history->predicted_scores.push_back(vector<double>(context.size()-1, 0.0));
+		for (int l_index = 0; l_index < (int)context.size()-1; l_index++) {
 			Scope* scope = (Scope*)context[l_index].scope;
 			ScopeHistory* scope_history = (ScopeHistory*)context[l_index].scope_history;
 			if (scope->eval_network != NULL) {
@@ -237,7 +237,8 @@ void NewInfoExperiment::explore_sequence_backprop(
 			for (int l_index = 0; l_index < (int)history->predicted_scores[0].size(); l_index++) {
 				sum_score += history->predicted_scores[0][l_index];
 			}
-			double final_score = (sum_score / (int)history->predicted_scores[0].size() + target_val - solution->average_score) / 2.0;
+			sum_score += target_val - solution->average_score;
+			double final_score = sum_score / ((int)history->predicted_scores[0].size() + 1);
 
 			curr_surprise = final_score - history->existing_predicted_scores[0];
 		}
