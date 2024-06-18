@@ -12,6 +12,7 @@ using namespace std;
 void PassThroughExperiment::root_verify_activate(
 		AbstractNode*& curr_node,
 		Problem* problem,
+		vector<ContextLayer>& context,
 		RunHelper& run_helper) {
 	if (this->best_info_scope == NULL) {
 		if (this->best_step_types.size() == 0) {
@@ -24,34 +25,26 @@ void PassThroughExperiment::root_verify_activate(
 			}
 		}
 	} else {
-		double inner_score;
+		bool is_positive;
 		this->best_info_scope->activate(problem,
+										context,
 										run_helper,
-										inner_score);
+										is_positive);
 
 		bool is_branch;
-		#if defined(MDEBUG) && MDEBUG
-		if (run_helper.curr_run_seed%2 == 0) {
-			is_branch = true;
-		} else {
-			is_branch = false;
-		}
-		run_helper.curr_run_seed = xorshift(run_helper.curr_run_seed);
-		#else
 		if (this->best_is_negate) {
-			if (inner_score >= 0.0) {
+			if (is_positive) {
 				is_branch = false;
 			} else {
 				is_branch = true;
 			}
 		} else {
-			if (inner_score >= 0.0) {
+			if (is_positive) {
 				is_branch = true;
 			} else {
 				is_branch = false;
 			}
 		}
-		#endif /* MDEBUG */
 
 		if (is_branch) {
 			if (this->best_step_types.size() == 0) {

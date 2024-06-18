@@ -21,7 +21,7 @@ class Solution;
 void create_experiment(RunHelper& run_helper);
 
 ScopeNode* create_existing(Scope* parent_scope);
-InfoScope* get_existing_info_scope();
+InfoScope* get_existing_info_scope(Scope* parent_scope);
 
 InfoScope* create_new_info_scope();
 

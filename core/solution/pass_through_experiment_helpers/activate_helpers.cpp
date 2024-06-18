@@ -355,6 +355,7 @@ bool PassThroughExperiment::activate(AbstractNode* experiment_node,
 		case PASS_THROUGH_EXPERIMENT_STATE_ROOT_VERIFY:
 			root_verify_activate(curr_node,
 								 problem,
+								 context,
 								 run_helper);
 			break;
 		case PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT:

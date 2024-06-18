@@ -11,7 +11,6 @@
 #include "globals.h"
 #include "info_branch_node.h"
 #include "info_scope.h"
-#include "info_scope_node.h"
 #include "network.h"
 #include "nn_helpers.h"
 #include "scope.h"
@@ -75,7 +74,11 @@ void BranchExperiment::train_new_activate(
 				case NODE_TYPE_INFO_BRANCH:
 					{
 						InfoBranchNodeHistory* info_branch_node_history = (InfoBranchNodeHistory*)it->second;
-						input_vals[i_index] = info_branch_node_history->score;
+						if (info_branch_node_history->is_branch) {
+							input_vals[i_index] = 1.0;
+						} else {
+							input_vals[i_index] = -1.0;
+						}
 					}
 					break;
 				}
@@ -97,34 +100,26 @@ void BranchExperiment::train_new_activate(
 				}
 			}
 		} else {
-			double inner_score;
+			bool is_positive;
 			this->best_info_scope->activate(problem,
+											context,
 											run_helper,
-											inner_score);
+											is_positive);
 
 			bool is_branch;
-			#if defined(MDEBUG) && MDEBUG
-			if (run_helper.curr_run_seed%2 == 0) {
-				is_branch = true;
-			} else {
-				is_branch = false;
-			}
-			run_helper.curr_run_seed = xorshift(run_helper.curr_run_seed);
-			#else
 			if (this->best_is_negate) {
-				if (inner_score >= 0.0) {
+				if (is_positive) {
 					is_branch = false;
 				} else {
 					is_branch = true;
 				}
 			} else {
-				if (inner_score >= 0.0) {
+				if (is_positive) {
 					is_branch = true;
 				} else {
 					is_branch = false;
 				}
 			}
-			#endif /* MDEBUG */
 
 			if (is_branch) {
 				if (this->best_step_types.size() == 0) {
@@ -215,12 +210,14 @@ void BranchExperiment::train_new_backprop(
 		BranchExperimentHistory* history = (BranchExperimentHistory*)run_helper.experiment_histories.back();
 
 		for (int i_index = 0; i_index < (int)history->predicted_scores.size(); i_index++) {
-			double sum_score = 0.0;
-			for (int l_index = 0; l_index < (int)history->predicted_scores[i_index].size(); l_index++) {
-				sum_score += history->predicted_scores[i_index][l_index];
+			double final_score = target_val - solution->average_score;
+			if (history->predicted_scores[i_index].size() > 0) {
+				double sum_score = 0.0;
+				for (int l_index = 0; l_index < (int)history->predicted_scores[i_index].size(); l_index++) {
+					sum_score += history->predicted_scores[i_index][l_index];
+				}
+				final_score += sum_score / (int)history->predicted_scores[i_index].size();
 			}
-			sum_score += target_val - solution->average_score;
-			double final_score = sum_score / ((int)history->predicted_scores[i_index].size() + 1);
 
 			double surprise = final_score - history->existing_predicted_scores[i_index];
 
@@ -333,7 +330,11 @@ void BranchExperiment::train_new_backprop(
 								case NODE_TYPE_INFO_BRANCH:
 									{
 										InfoBranchNodeHistory* info_branch_node_history = (InfoBranchNodeHistory*)it->second;
-										test_inputs[d_index].push_back(info_branch_node_history->score);
+										if (info_branch_node_history->is_branch) {
+											test_inputs[d_index].push_back(1.0);
+										} else {
+											test_inputs[d_index].push_back(-1.0);
+										}
 									}
 									break;
 								}

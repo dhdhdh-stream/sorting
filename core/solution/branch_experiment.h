@@ -50,6 +50,9 @@ public:
 
 	int explore_type;
 
+	/**
+	 * TODO: chain InfoScopes
+	 */
 	InfoScope* curr_info_scope;
 	bool curr_is_negate;
 	std::vector<int> curr_step_types;

@@ -74,7 +74,8 @@ int main(int argc, char* argv[]) {
 
 		double target_val;
 		if (!run_helper.exceeded_limit) {
-			target_val = problem->score_result(run_helper.num_decisions);
+			target_val = problem->score_result(run_helper.num_decisions,
+											   run_helper.num_actions);
 		} else {
 			target_val = -1.0;
 		}
@@ -235,7 +236,8 @@ int main(int argc, char* argv[]) {
 
 					double target_val;
 					if (!run_helper.exceeded_limit) {
-						target_val = problem->score_result(run_helper.num_decisions);
+						target_val = problem->score_result(run_helper.num_decisions,
+														   run_helper.num_actions);
 					} else {
 						target_val = -1.0;
 					}

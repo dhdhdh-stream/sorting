@@ -7,7 +7,6 @@
 #include "branch_node.h"
 #include "globals.h"
 #include "info_branch_node.h"
-#include "info_scope_node.h"
 #include "network.h"
 #include "scope_node.h"
 #include "solution.h"
@@ -89,6 +88,11 @@ void Scope::save(ofstream& output_file) {
 	for (set<int>::iterator it = this->scopes_used.begin(); it != this->scopes_used.end(); it++) {
 		output_file << *it << endl;
 	}
+
+	output_file << this->info_scopes_used.size() << endl;
+	for (set<int>::iterator it = this->info_scopes_used.begin(); it != this->info_scopes_used.end(); it++) {
+		output_file << *it << endl;
+	}
 }
 
 void Scope::load(ifstream& input_file) {
@@ -135,15 +139,6 @@ void Scope::load(ifstream& input_file) {
 				this->nodes[branch_node->id] = branch_node;
 			}
 			break;
-		case NODE_TYPE_INFO_SCOPE:
-			{
-				InfoScopeNode* info_scope_node = new InfoScopeNode();
-				info_scope_node->parent = this;
-				info_scope_node->id = id;
-				info_scope_node->load(input_file);
-				this->nodes[info_scope_node->id] = info_scope_node;
-			}
-			break;
 		case NODE_TYPE_INFO_BRANCH:
 			{
 				InfoBranchNode* info_branch_node = new InfoBranchNode();
@@ -183,6 +178,15 @@ void Scope::load(ifstream& input_file) {
 		string scope_id_line;
 		getline(input_file, scope_id_line);
 		this->scopes_used.insert(stoi(scope_id_line));
+	}
+
+	string info_scopes_used_size_line;
+	getline(input_file, info_scopes_used_size_line);
+	int info_scopes_used_size = stoi(info_scopes_used_size_line);
+	for (int s_index = 0; s_index < info_scopes_used_size; s_index++) {
+		string scope_id_line;
+		getline(input_file, scope_id_line);
+		this->info_scopes_used.insert(stoi(scope_id_line));
 	}
 }
 
@@ -228,17 +232,6 @@ void Scope::copy_from(Scope* original,
 				this->nodes[it->first] = new_branch_node;
 			}
 			break;
-		case NODE_TYPE_INFO_SCOPE:
-			{
-				InfoScopeNode* original_info_scope_node = (InfoScopeNode*)it->second;
-				InfoScopeNode* new_info_scope_node = new InfoScopeNode(
-					original_info_scope_node,
-					parent_solution);
-				new_info_scope_node->parent = this;
-				new_info_scope_node->id = it->first;
-				this->nodes[it->first] = new_info_scope_node;
-			}
-			break;
 		case NODE_TYPE_INFO_BRANCH:
 			{
 				InfoBranchNode* original_info_branch_node = (InfoBranchNode*)it->second;
@@ -265,6 +258,7 @@ void Scope::copy_from(Scope* original,
 	}
 
 	this->scopes_used = original->scopes_used;
+	this->info_scopes_used = original->info_scopes_used;
 }
 
 void Scope::save_for_display(ofstream& output_file) {
@@ -312,12 +306,6 @@ AbstractScopeHistory* ScopeHistory::deep_copy() {
 			{
 				BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
 				new_scope_history->node_histories[it->first] = new BranchNodeHistory(branch_node_history);
-			}
-			break;
-		case NODE_TYPE_INFO_SCOPE:
-			{
-				InfoScopeNodeHistory* info_scope_node_history = (InfoScopeNodeHistory*)it->second;
-				new_scope_history->node_histories[it->first] = new InfoScopeNodeHistory(info_scope_node_history);
 			}
 			break;
 		case NODE_TYPE_INFO_BRANCH:

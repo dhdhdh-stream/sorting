@@ -35,9 +35,15 @@ const int NEW_ACTION_EXPERIMENT_VERIFY_2ND_NEW = 5;
 #if defined(MDEBUG) && MDEBUG
 const int NEW_ACTION_NUM_GENERALIZE_TRIES = 10;
 const int NEW_ACTION_MIN_LOCATIONS = 2;
+const int NEW_ACTION_MAX_LOCATIONS = 3;
 #else
 const int NEW_ACTION_NUM_GENERALIZE_TRIES = 300;
 const int NEW_ACTION_MIN_LOCATIONS = 3;
+const int NEW_ACTION_MAX_LOCATIONS = 5;
+/**
+ * - limit to prevent changes from being too large
+ *   - which can destroy eval
+ */
 #endif /* MDEBUG */
 
 class NewActionExperimentHistory;

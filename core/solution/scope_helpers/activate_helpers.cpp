@@ -8,7 +8,6 @@
 #include "eval_helpers.h"
 #include "globals.h"
 #include "info_branch_node.h"
-#include "info_scope_node.h"
 #include "new_action_experiment.h"
 #include "problem.h"
 #include "scope_node.h"
@@ -48,17 +47,6 @@ void node_activate_helper(AbstractNode*& curr_node,
 	case NODE_TYPE_BRANCH:
 		{
 			BranchNode* node = (BranchNode*)curr_node;
-			node->activate(curr_node,
-						   problem,
-						   context,
-						   run_helper,
-						   history->node_histories);
-		}
-
-		break;
-	case NODE_TYPE_INFO_SCOPE:
-		{
-			InfoScopeNode* node = (InfoScopeNode*)curr_node;
 			node->activate(curr_node,
 						   problem,
 						   context,

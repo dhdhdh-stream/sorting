@@ -32,11 +32,12 @@ bool NewInfoExperiment::try_existing_info_activate(
 		vector<ContextLayer>& context,
 		RunHelper& run_helper,
 		NewInfoExperimentHistory* history) {
-	double inner_score;
+	bool is_positive;
 	solution->info_scopes[this->existing_info_scope_index]->activate(
 		problem,
+		context,
 		run_helper,
-		inner_score);
+		is_positive);
 
 	history->predicted_scores.push_back(vector<double>(context.size()-1, 0.0));
 	for (int l_index = 0; l_index < (int)context.size()-1; l_index++) {
@@ -51,28 +52,19 @@ bool NewInfoExperiment::try_existing_info_activate(
 	}
 
 	bool is_branch;
-	#if defined(MDEBUG) && MDEBUG
-	if (run_helper.curr_run_seed%2 == 0) {
-		is_branch = true;
-	} else {
-		is_branch = false;
-	}
-	run_helper.curr_run_seed = xorshift(run_helper.curr_run_seed);
-	#else
 	if (this->existing_is_negate) {
-		if (inner_score >= 0.0) {
+		if (is_positive) {
 			is_branch = false;
 		} else {
 			is_branch = true;
 		}
 	} else {
-		if (inner_score >= 0.0) {
+		if (is_positive) {
 			is_branch = true;
 		} else {
 			is_branch = false;
 		}
 	}
-	#endif /* MDEBUG */
 
 	if (is_branch) {
 		if (this->best_step_types.size() == 0) {
@@ -143,12 +135,14 @@ void NewInfoExperiment::try_existing_info_backprop(double target_val,
 		}
 
 		for (int i_index = 0; i_index < (int)history->predicted_scores.size(); i_index++) {
-			double sum_score = 0.0;
-			for (int l_index = 0; l_index < (int)history->predicted_scores[i_index].size(); l_index++) {
-				sum_score += history->predicted_scores[i_index][l_index];
+			double final_score = target_val - solution->average_score;
+			if (history->predicted_scores[i_index].size() > 0) {
+				double sum_score = 0.0;
+				for (int l_index = 0; l_index < (int)history->predicted_scores[i_index].size(); l_index++) {
+					sum_score += history->predicted_scores[i_index][l_index];
+				}
+				final_score += sum_score / (int)history->predicted_scores[i_index].size();
 			}
-			sum_score += target_val - solution->average_score;
-			double final_score = sum_score / ((int)history->predicted_scores[i_index].size() + 1);
 			this->combined_score += final_score;
 			this->sub_state_iter++;
 

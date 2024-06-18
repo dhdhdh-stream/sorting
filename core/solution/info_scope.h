@@ -39,17 +39,20 @@ public:
 	~InfoScope();
 
 	void activate(Problem* problem,
+				  std::vector<ContextLayer>& context,
 				  RunHelper& run_helper,
-				  double& inner_score);
+				  bool& is_positive);
 
 	void explore_activate(Problem* problem,
+						  std::vector<ContextLayer>& context,
 						  RunHelper& run_helper,
 						  AbstractScopeHistory*& history);
 
 	#if defined(MDEBUG) && MDEBUG
 	void verify_activate(Problem* problem,
+						 std::vector<ContextLayer>& context,
 						 RunHelper& run_helper,
-						 double& inner_score);
+						 bool& is_positive);
 	void clear_verify();
 	#endif /* MDEBUG */
 

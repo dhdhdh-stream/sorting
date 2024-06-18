@@ -8,7 +8,6 @@
 #include "globals.h"
 #include "info_branch_node.h"
 #include "info_scope.h"
-#include "info_scope_node.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
@@ -72,13 +71,7 @@ void NewInfoExperiment::new_branch(Solution* duplicate) {
 	this->new_info_scope->id = duplicate->info_scopes.size();
 	duplicate->info_scopes.push_back(new_info_scope);
 
-	for (map<int, AbstractNode*>::iterator it = this->new_info_scope->nodes.begin();
-			it != this->new_info_scope->nodes.end(); it++) {
-		if (it->second->type == NODE_TYPE_INFO_SCOPE) {
-			InfoScopeNode* info_scope_node = (InfoScopeNode*)it->second;
-			info_scope_node->scope = duplicate->info_scopes[info_scope_node->scope->id];
-		}
-	}
+	duplicate_local_scope->info_scopes_used.insert(this->new_info_scope->id);
 
 	new_info_scope->input_node_contexts = this->new_input_node_contexts;
 	new_info_scope->input_obs_indexes = this->new_input_obs_indexes;
@@ -382,6 +375,8 @@ void NewInfoExperiment::new_existing(Solution* duplicate) {
 
 	this->branch_node->scope = duplicate->info_scopes[this->existing_info_scope_index];
 	this->branch_node->is_negate = this->existing_is_negate;
+
+	duplicate_local_scope->info_scopes_used.insert(this->existing_info_scope_index);
 
 	AbstractNode* duplicate_explore_node = duplicate_local_scope->nodes[this->node_context->id];
 	switch (duplicate_explore_node->type) {

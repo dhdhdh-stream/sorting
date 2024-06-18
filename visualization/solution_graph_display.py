@@ -16,8 +16,7 @@ ACTION_DOUBLECLICK = 6
 NODE_TYPE_ACTION = 0
 NODE_TYPE_SCOPE = 1
 NODE_TYPE_BRANCH = 2
-NODE_TYPE_INFO_SCOPE = 3
-NODE_TYPE_INFO_BRANCH = 4
+NODE_TYPE_INFO_BRANCH = 3
 
 scopes = {}
 info_scopes = {}
@@ -55,14 +54,6 @@ for s_index in range(num_scopes):
 			nodes[node_id] = [node_type,
 							  original_next_node_id,
 							  branch_next_node_id]
-		elif node_type == NODE_TYPE_INFO_SCOPE:
-			inner_scope_id = int(file.readline())
-
-			next_node_id = int(file.readline())
-
-			nodes[node_id] = [node_type,
-							  inner_scope_id,
-							  next_node_id]
 		elif node_type == NODE_TYPE_INFO_BRANCH:
 			inner_scope_id = int(file.readline())
 
@@ -109,14 +100,6 @@ for i_index in range(num_info_scopes):
 			nodes[node_id] = [node_type,
 							  original_next_node_id,
 							  branch_next_node_id]
-		elif node_type == NODE_TYPE_INFO_SCOPE:
-			inner_scope_id = int(file.readline())
-
-			next_node_id = int(file.readline())
-
-			nodes[node_id] = [node_type,
-							  inner_scope_id,
-							  next_node_id]
 		elif node_type == NODE_TYPE_INFO_BRANCH:
 			inner_scope_id = int(file.readline())
 
@@ -181,8 +164,6 @@ for scope_id in scopes:
 			graph.add_node(pydot.Node(node_index, label=str(scope_id) + ' ' + str(key) + '\n' + 'S ' + str(scopes[scope_id][key][1])))
 		elif scopes[scope_id][key][0] == NODE_TYPE_BRANCH:
 			graph.add_node(pydot.Node(node_index, label=str(scope_id) + ' ' + str(key) + '\n'))
-		elif scopes[scope_id][key][0] == NODE_TYPE_INFO_SCOPE:
-			graph.add_node(pydot.Node(node_index, label=str(scope_id) + ' ' + str(key) + '\n' + 'IS ' + str(scopes[scope_id][key][1])))
 		elif scopes[scope_id][key][0] == NODE_TYPE_INFO_BRANCH:
 			graph.add_node(pydot.Node(node_index, label=str(scope_id) + ' ' + str(key) + '\n' + 'IB ' + str(scopes[scope_id][key][1])))
 		node_mappings[key] = node_index
@@ -197,9 +178,6 @@ for scope_id in scopes:
 		elif scopes[scope_id][key][0] == NODE_TYPE_BRANCH:
 			if scopes[scope_id][key][1] != -1:
 				graph.add_edge(pydot.Edge(node_mappings[key], node_mappings[scopes[scope_id][key][1]], style="dotted"))
-			if scopes[scope_id][key][2] != -1:
-				graph.add_edge(pydot.Edge(node_mappings[key], node_mappings[scopes[scope_id][key][2]]))
-		elif scopes[scope_id][key][0] == NODE_TYPE_INFO_SCOPE:
 			if scopes[scope_id][key][2] != -1:
 				graph.add_edge(pydot.Edge(node_mappings[key], node_mappings[scopes[scope_id][key][2]]))
 		elif scopes[scope_id][key][0] == NODE_TYPE_INFO_BRANCH:
@@ -220,8 +198,6 @@ for scope_id in info_scopes:
 			graph.add_node(pydot.Node(node_index, label=str(scope_id) + ' ' + str(key) + '\n' + 'S ' + str(info_scopes[scope_id][key][1])))
 		elif info_scopes[scope_id][key][0] == NODE_TYPE_BRANCH:
 			graph.add_node(pydot.Node(node_index, label=str(scope_id) + ' ' + str(key) + '\n'))
-		elif info_scopes[scope_id][key][0] == NODE_TYPE_INFO_SCOPE:
-			graph.add_node(pydot.Node(node_index, label=str(scope_id) + ' ' + str(key) + '\n' + 'IS ' + str(info_scopes[scope_id][key][1])))
 		elif info_scopes[scope_id][key][0] == NODE_TYPE_INFO_BRANCH:
 			graph.add_node(pydot.Node(node_index, label=str(scope_id) + ' ' + str(key) + '\n' + 'IB ' + str(info_scopes[scope_id][key][1])))
 		node_mappings[key] = node_index
@@ -236,9 +212,6 @@ for scope_id in info_scopes:
 		elif info_scopes[scope_id][key][0] == NODE_TYPE_BRANCH:
 			if info_scopes[scope_id][key][1] != -1:
 				graph.add_edge(pydot.Edge(node_mappings[key], node_mappings[info_scopes[scope_id][key][1]], style="dotted"))
-			if info_scopes[scope_id][key][2] != -1:
-				graph.add_edge(pydot.Edge(node_mappings[key], node_mappings[info_scopes[scope_id][key][2]]))
-		elif info_scopes[scope_id][key][0] == NODE_TYPE_INFO_SCOPE:
 			if info_scopes[scope_id][key][2] != -1:
 				graph.add_edge(pydot.Edge(node_mappings[key], node_mappings[info_scopes[scope_id][key][2]]))
 		elif info_scopes[scope_id][key][0] == NODE_TYPE_INFO_BRANCH:

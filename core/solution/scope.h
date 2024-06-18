@@ -35,6 +35,7 @@ public:
 	 * - used mainly to help prevent recursion during explore
 	 */
 	std::set<int> scopes_used;
+	std::set<int> info_scopes_used;
 
 	Scope();
 	~Scope();

@@ -10,7 +10,6 @@
 #include "globals.h"
 #include "info_branch_node.h"
 #include "info_scope.h"
-#include "info_scope_node.h"
 #include "network.h"
 #include "problem.h"
 #include "scope.h"
@@ -31,6 +30,7 @@ bool NewInfoExperiment::measure_activate(
 
 	AbstractScopeHistory* scope_history;
 	this->new_info_scope->explore_activate(problem,
+										   context,
 										   run_helper,
 										   scope_history);
 
@@ -51,20 +51,8 @@ bool NewInfoExperiment::measure_activate(
 		map<AbstractNode*, AbstractNodeHistory*>::iterator it = scope_history->node_histories.find(
 			this->new_input_node_contexts[i_index]);
 		if (it != scope_history->node_histories.end()) {
-			switch (this->new_input_node_contexts[i_index]->type) {
-			case NODE_TYPE_ACTION:
-				{
-					ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
-					new_input_vals[i_index] = action_node_history->obs_snapshot[this->new_input_obs_indexes[i_index]];
-				}
-				break;
-			case NODE_TYPE_INFO_SCOPE:
-				{
-					InfoScopeNodeHistory* info_scope_node_history = (InfoScopeNodeHistory*)it->second;
-					new_input_vals[i_index] = info_scope_node_history->score;
-				}
-				break;
-			}
+			ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
+			new_input_vals[i_index] = action_node_history->obs_snapshot[this->new_input_obs_indexes[i_index]];
 		}
 	}
 	this->new_network->activate(new_input_vals);
@@ -179,12 +167,14 @@ void NewInfoExperiment::measure_backprop(double target_val,
 		NewInfoExperimentHistory* history = (NewInfoExperimentHistory*)run_helper.experiment_histories.back();
 
 		for (int i_index = 0; i_index < (int)history->predicted_scores.size(); i_index++) {
-			double sum_score = 0.0;
-			for (int l_index = 0; l_index < (int)history->predicted_scores[i_index].size(); l_index++) {
-				sum_score += history->predicted_scores[i_index][l_index];
+			double final_score = target_val - solution->average_score;
+			if (history->predicted_scores[i_index].size() > 0) {
+				double sum_score = 0.0;
+				for (int l_index = 0; l_index < (int)history->predicted_scores[i_index].size(); l_index++) {
+					sum_score += history->predicted_scores[i_index][l_index];
+				}
+				final_score += sum_score / (int)history->predicted_scores[i_index].size();
 			}
-			sum_score += target_val - solution->average_score;
-			double final_score = sum_score / ((int)history->predicted_scores[i_index].size() + 1);
 			this->combined_score += final_score;
 			this->sub_state_iter++;
 		}

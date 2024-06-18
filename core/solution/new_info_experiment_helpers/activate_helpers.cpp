@@ -380,11 +380,13 @@ bool NewInfoExperiment::activate(AbstractNode* experiment_node,
 		case NEW_INFO_EXPERIMENT_STATE_CAPTURE_VERIFY:
 			return capture_verify_activate(curr_node,
 										   problem,
+										   context,
 										   run_helper);
 		#endif /* MDEBUG */
 		case NEW_INFO_EXPERIMENT_STATE_ROOT_VERIFY:
 			return root_verify_activate(curr_node,
 										problem,
+										context,
 										run_helper);
 		case NEW_INFO_EXPERIMENT_STATE_EXPERIMENT:
 			switch (this->root_state) {

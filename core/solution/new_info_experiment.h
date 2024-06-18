@@ -188,12 +188,14 @@ public:
 	#if defined(MDEBUG) && MDEBUG
 	bool capture_verify_activate(AbstractNode*& curr_node,
 								 Problem* problem,
+								 std::vector<ContextLayer>& context,
 								 RunHelper& run_helper);
 	void capture_verify_backprop();
 	#endif /* MDEBUG */
 
 	bool root_verify_activate(AbstractNode*& curr_node,
 							  Problem* problem,
+							  std::vector<ContextLayer>& context,
 							  RunHelper& run_helper);
 
 	bool experiment_activate(AbstractNode*& curr_node,

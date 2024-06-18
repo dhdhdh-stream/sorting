@@ -64,6 +64,8 @@ void NewActionExperiment::finalize(Solution* duplicate) {
 				{
 					InfoBranchNode* info_branch_node = (InfoBranchNode*)it->second;
 					info_branch_node->scope = duplicate->info_scopes[info_branch_node->scope->id];
+
+					this->new_scope->info_scopes_used.insert(info_branch_node->scope->id);
 				}
 
 				break;

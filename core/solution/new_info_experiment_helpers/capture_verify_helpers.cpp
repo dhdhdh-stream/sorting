@@ -7,7 +7,6 @@
 #include "action_node.h"
 #include "constants.h"
 #include "info_scope.h"
-#include "info_scope_node.h"
 #include "network.h"
 #include "problem.h"
 #include "scope.h"
@@ -19,6 +18,7 @@ using namespace std;
 bool NewInfoExperiment::capture_verify_activate(
 		AbstractNode*& curr_node,
 		Problem* problem,
+		vector<ContextLayer>& context,
 		RunHelper& run_helper) {
 	run_helper.num_decisions++;
 
@@ -29,6 +29,7 @@ bool NewInfoExperiment::capture_verify_activate(
 
 	AbstractScopeHistory* scope_history;
 	this->new_info_scope->explore_activate(problem,
+										   context,
 										   run_helper,
 										   scope_history);
 
@@ -37,20 +38,8 @@ bool NewInfoExperiment::capture_verify_activate(
 		map<AbstractNode*, AbstractNodeHistory*>::iterator it = scope_history->node_histories.find(
 			this->new_input_node_contexts[i_index]);
 		if (it != scope_history->node_histories.end()) {
-			switch (this->new_input_node_contexts[i_index]->type) {
-			case NODE_TYPE_ACTION:
-				{
-					ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
-					new_input_vals[i_index] = action_node_history->obs_snapshot[this->new_input_obs_indexes[i_index]];
-				}
-				break;
-			case NODE_TYPE_INFO_SCOPE:
-				{
-					InfoScopeNodeHistory* info_scope_node_history = (InfoScopeNodeHistory*)it->second;
-					new_input_vals[i_index] = info_scope_node_history->score;
-				}
-				break;
-			}
+			ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
+			new_input_vals[i_index] = action_node_history->obs_snapshot[this->new_input_obs_indexes[i_index]];
 		}
 	}
 	this->new_network->activate(new_input_vals);

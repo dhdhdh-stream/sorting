@@ -9,7 +9,6 @@
 #include "globals.h"
 #include "info_branch_node.h"
 #include "info_scope.h"
-#include "info_scope_node.h"
 #include "network.h"
 #include "pass_through_experiment.h"
 #include "scope.h"
@@ -41,42 +40,34 @@ bool NewInfoExperiment::experiment_activate(AbstractNode*& curr_node,
 		result = true;
 	} else {
 		if (this->use_existing) {
-			double inner_score;
+			bool is_positive;
 			solution->info_scopes[this->existing_info_scope_index]->activate(
 				problem,
+				context,
 				run_helper,
-				inner_score);
-
-			InfoBranchNodeHistory* info_branch_node_history = new InfoBranchNodeHistory();
-			info_branch_node_history->score = inner_score;
-			info_branch_node_history->index = context.back().scope_history->node_histories.size();
-			context.back().scope_history->node_histories[this->branch_node] = info_branch_node_history;
+				is_positive);
 
 			bool is_branch;
-			#if defined(MDEBUG) && MDEBUG
-			if (run_helper.curr_run_seed%2 == 0) {
-				is_branch = true;
-			} else {
-				is_branch = false;
-			}
-			run_helper.curr_run_seed = xorshift(run_helper.curr_run_seed);
-			#else
 			if (this->existing_is_negate) {
-				if (inner_score >= 0.0) {
+				if (is_positive) {
 					is_branch = false;
 				} else {
 					is_branch = true;
 				}
 			} else {
-				if (inner_score >= 0.0) {
+				if (is_positive) {
 					is_branch = true;
 				} else {
 					is_branch = false;
 				}
 			}
-			#endif /* MDEBUG */
 
+			InfoBranchNodeHistory* branch_node_history = new InfoBranchNodeHistory();
+			branch_node_history->index = context.back().scope_history->node_histories.size();
+			context.back().scope_history->node_histories[this->branch_node] = branch_node_history;
 			if (is_branch) {
+				branch_node_history->is_branch = true;
+
 				if (this->best_step_types.size() == 0) {
 					curr_node = this->best_exit_next_node;
 				} else {
@@ -89,6 +80,8 @@ bool NewInfoExperiment::experiment_activate(AbstractNode*& curr_node,
 
 				result = true;
 			} else {
+				branch_node_history->is_branch = false;
+
 				result = false;
 			}
 		} else {
@@ -96,6 +89,7 @@ bool NewInfoExperiment::experiment_activate(AbstractNode*& curr_node,
 
 			AbstractScopeHistory* scope_history;
 			this->new_info_scope->explore_activate(problem,
+												   context,
 												   run_helper,
 												   scope_history);
 
@@ -104,24 +98,15 @@ bool NewInfoExperiment::experiment_activate(AbstractNode*& curr_node,
 				map<AbstractNode*, AbstractNodeHistory*>::iterator it = scope_history->node_histories.find(
 					this->new_input_node_contexts[i_index]);
 				if (it != scope_history->node_histories.end()) {
-					switch (this->new_input_node_contexts[i_index]->type) {
-					case NODE_TYPE_ACTION:
-						{
-							ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
-							new_input_vals[i_index] = action_node_history->obs_snapshot[this->new_input_obs_indexes[i_index]];
-						}
-						break;
-					case NODE_TYPE_INFO_SCOPE:
-						{
-							InfoScopeNodeHistory* info_scope_node_history = (InfoScopeNodeHistory*)it->second;
-							new_input_vals[i_index] = info_scope_node_history->score;
-						}
-						break;
-					}
+					ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
+					new_input_vals[i_index] = action_node_history->obs_snapshot[this->new_input_obs_indexes[i_index]];
 				}
 			}
 			this->new_network->activate(new_input_vals);
+			#if defined(MDEBUG) && MDEBUG
+			#else
 			double new_predicted_score = this->new_network->output->acti_vals[0];
+			#endif /* MDEBUG */
 
 			delete scope_history;
 
@@ -137,12 +122,12 @@ bool NewInfoExperiment::experiment_activate(AbstractNode*& curr_node,
 			bool decision_is_branch = new_predicted_score >= 0.0;
 			#endif /* MDEBUG */
 
-			InfoBranchNodeHistory* info_branch_node_history = new InfoBranchNodeHistory();
-			info_branch_node_history->score = new_predicted_score;
-			info_branch_node_history->index = context.back().scope_history->node_histories.size();
-			context.back().scope_history->node_histories[this->branch_node] = info_branch_node_history;
-
+			InfoBranchNodeHistory* branch_node_history = new InfoBranchNodeHistory();
+			branch_node_history->index = context.back().scope_history->node_histories.size();
+			context.back().scope_history->node_histories[this->branch_node] = branch_node_history;
 			if (decision_is_branch) {
+				branch_node_history->is_branch = true;
+
 				if (this->best_step_types.size() == 0) {
 					curr_node = this->best_exit_next_node;
 				} else {
@@ -155,6 +140,8 @@ bool NewInfoExperiment::experiment_activate(AbstractNode*& curr_node,
 
 				result = true;
 			} else {
+				branch_node_history->is_branch = false;
+
 				result = false;
 			}
 		}
@@ -245,14 +232,9 @@ void NewInfoExperiment::experiment_back_activate(
 					case NODE_TYPE_INFO_BRANCH:
 						{
 							InfoBranchNodeHistory* info_branch_node_history = (InfoBranchNodeHistory*)it->second;
-							InfoBranchNode* info_branch_node = (InfoBranchNode*)it->first;
 
 							possible_node_contexts.push_back(it->first);
-							if (info_branch_node->is_negate) {
-								possible_is_branch.push_back(info_branch_node_history->score < 0.0);
-							} else {
-								possible_is_branch.push_back(info_branch_node_history->score >= 0.0);
-							}
+							possible_is_branch.push_back(info_branch_node_history->is_branch);
 						}
 
 						break;

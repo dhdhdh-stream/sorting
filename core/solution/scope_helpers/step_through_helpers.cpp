@@ -6,7 +6,6 @@
 #include "branch_node.h"
 #include "globals.h"
 #include "info_branch_node.h"
-#include "info_scope_node.h"
 #include "problem.h"
 #include "scope_node.h"
 #include "solution.h"
@@ -55,17 +54,6 @@ void node_step_through_activate_helper(AbstractNode*& curr_node,
 										context,
 										run_helper,
 										history->node_histories);
-		}
-
-		break;
-	case NODE_TYPE_INFO_SCOPE:
-		{
-			InfoScopeNode* node = (InfoScopeNode*)curr_node;
-			node->activate(curr_node,
-						   problem,
-						   context,
-						   run_helper,
-						   history->node_histories);
 		}
 
 		break;

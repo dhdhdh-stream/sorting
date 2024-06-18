@@ -26,12 +26,6 @@ const int PASS_THROUGH_EXPERIMENT_STATE_VERIFY_NEW = 4;
 const int PASS_THROUGH_EXPERIMENT_STATE_ROOT_VERIFY = 5;
 const int PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT = 6;
 
-#if defined(MDEBUG) && MDEBUG
-const int PASS_THROUGH_EXPERIMENT_EXPLORE_ITERS = 2;
-#else
-const int PASS_THROUGH_EXPERIMENT_EXPLORE_ITERS = 100;
-#endif /* MDEBUG */
-
 class PassThroughExperimentHistory;
 class PassThroughExperiment : public AbstractExperiment {
 public:
@@ -125,6 +119,7 @@ public:
 
 	void root_verify_activate(AbstractNode*& curr_node,
 							  Problem* problem,
+							  std::vector<ContextLayer>& context,
 							  RunHelper& run_helper);
 
 	void experiment_activate(AbstractNode*& curr_node,

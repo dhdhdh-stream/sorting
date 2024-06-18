@@ -9,7 +9,6 @@
 #include "globals.h"
 #include "info_branch_node.h"
 #include "info_scope.h"
-#include "info_scope_node.h"
 #include "network.h"
 #include "problem.h"
 #include "scope.h"
@@ -35,6 +34,7 @@ bool NewInfoExperiment::explore_sequence_activate(
 
 	AbstractScopeHistory* scope_history;
 	this->new_info_scope->explore_activate(problem,
+										   context,
 										   run_helper,
 										   scope_history);
 
@@ -74,20 +74,8 @@ bool NewInfoExperiment::explore_sequence_activate(
 			map<AbstractNode*, AbstractNodeHistory*>::iterator it = scope_history->node_histories.find(
 				this->existing_input_node_contexts[i_index]);
 			if (it != scope_history->node_histories.end()) {
-				switch (this->existing_input_node_contexts[i_index]->type) {
-				case NODE_TYPE_ACTION:
-					{
-						ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
-						input_vals[i_index] = action_node_history->obs_snapshot[this->existing_input_obs_indexes[i_index]];
-					}
-					break;
-				case NODE_TYPE_INFO_SCOPE:
-					{
-						InfoScopeNodeHistory* info_scope_node_history = (InfoScopeNodeHistory*)it->second;
-						input_vals[i_index] = info_scope_node_history->score;
-					}
-					break;
-				}
+				ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
+				input_vals[i_index] = action_node_history->obs_snapshot[this->existing_input_obs_indexes[i_index]];
 			}
 		}
 		this->existing_network->activate(input_vals);
@@ -233,12 +221,14 @@ void NewInfoExperiment::explore_sequence_backprop(
 	if (history->has_target) {
 		double curr_surprise;
 		if (!run_helper.exceeded_limit) {
-			double sum_score = 0.0;
-			for (int l_index = 0; l_index < (int)history->predicted_scores[0].size(); l_index++) {
-				sum_score += history->predicted_scores[0][l_index];
+			double final_score = target_val - solution->average_score;
+			if (history->predicted_scores[0].size() > 0) {
+				double sum_score = 0.0;
+				for (int l_index = 0; l_index < (int)history->predicted_scores[0].size(); l_index++) {
+					sum_score += history->predicted_scores[0][l_index];
+				}
+				final_score += sum_score / (int)history->predicted_scores[0].size();
 			}
-			sum_score += target_val - solution->average_score;
-			double final_score = sum_score / ((int)history->predicted_scores[0].size() + 1);
 
 			curr_surprise = final_score - history->existing_predicted_scores[0];
 		}

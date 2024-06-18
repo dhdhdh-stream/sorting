@@ -9,7 +9,6 @@
 #include "constants.h"
 #include "globals.h"
 #include "info_branch_node.h"
-#include "info_scope_node.h"
 #include "network.h"
 #include "nn_helpers.h"
 #include "problem.h"
@@ -66,7 +65,11 @@ void update_eval_helper(Scope* parent_scope,
 					case NODE_TYPE_INFO_BRANCH:
 						{
 							InfoBranchNodeHistory* info_branch_node_history = (InfoBranchNodeHistory*)it->second;
-							d_inputs[i_index] = info_branch_node_history->score;
+							if (info_branch_node_history->is_branch) {
+								d_inputs[i_index] = 1.0;
+							} else {
+								d_inputs[i_index] = -1.0;
+							}
 						}
 						break;
 					}
@@ -170,7 +173,11 @@ void update_eval_helper(Scope* parent_scope,
 						case NODE_TYPE_INFO_BRANCH:
 							{
 								InfoBranchNodeHistory* info_branch_node_history = (InfoBranchNodeHistory*)it->second;
-								test_inputs[d_index].push_back(info_branch_node_history->score);
+								if (info_branch_node_history->is_branch) {
+									test_inputs[d_index].push_back(1.0);
+								} else {
+									test_inputs[d_index].push_back(-1.0);
+								}
 							}
 							break;
 						}
@@ -344,7 +351,8 @@ void update_eval() {
 
 			double target_val;
 			if (!run_helper.exceeded_limit) {
-				target_val = problem->score_result(run_helper.num_decisions);
+				target_val = problem->score_result(run_helper.num_decisions,
+												   run_helper.num_actions);
 			} else {
 				target_val = -1.0;
 			}

@@ -19,38 +19,27 @@ void InfoBranchNode::activate(AbstractNode*& curr_node,
 	history->index = node_histories.size();
 	node_histories[this] = history;
 
-	double inner_score;
+	bool is_positive;
 	this->scope->activate(problem,
+						  context,
 						  run_helper,
-						  inner_score);
+						  is_positive);
 
-	history->score = inner_score;
-
-	bool is_branch;
-	#if defined(MDEBUG) && MDEBUG
-	if (run_helper.curr_run_seed%2 == 0) {
-		is_branch = true;
-	} else {
-		is_branch = false;
-	}
-	run_helper.curr_run_seed = xorshift(run_helper.curr_run_seed);
-	#else
 	if (this->is_negate) {
-		if (history->score >= 0.0) {
-			is_branch = false;
+		if (is_positive) {
+			history->is_branch = false;
 		} else {
-			is_branch = true;
+			history->is_branch = true;
 		}
 	} else {
-		if (history->score >= 0.0) {
-			is_branch = true;
+		if (is_positive) {
+			history->is_branch = true;
 		} else {
-			is_branch = false;
+			history->is_branch = false;
 		}
 	}
-	#endif /* MDEBUG */
 
-	if (is_branch) {
+	if (history->is_branch) {
 		curr_node = this->branch_next_node;
 	} else {
 		curr_node = this->original_next_node;
@@ -60,7 +49,7 @@ void InfoBranchNode::activate(AbstractNode*& curr_node,
 		for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
 			bool is_selected = this->experiments[e_index]->activate(
 				this,
-				is_branch,
+				history->is_branch,
 				curr_node,
 				problem,
 				context,
@@ -76,6 +65,6 @@ void InfoBranchNode::activate(AbstractNode*& curr_node,
 		if (scope_it == run_helper.nodes_seen.end()) {
 			scope_it = run_helper.nodes_seen.insert({this->parent, set<pair<AbstractNode*,bool>>()}).first;
 		}
-		scope_it->second.insert({this, is_branch});
+		scope_it->second.insert({this, history->is_branch});
 	}
 }

@@ -16,7 +16,6 @@
 #include "info_branch_node.h"
 #include "info_pass_through_experiment.h"
 #include "info_scope.h"
-#include "info_scope_node.h"
 #include "new_action_experiment.h"
 #include "new_info_experiment.h"
 #include "pass_through_experiment.h"

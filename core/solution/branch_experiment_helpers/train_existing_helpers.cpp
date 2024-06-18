@@ -9,7 +9,6 @@
 #include "eval_helpers.h"
 #include "globals.h"
 #include "info_branch_node.h"
-#include "info_scope_node.h"
 #include "network.h"
 #include "nn_helpers.h"
 #include "scope.h"
@@ -64,12 +63,14 @@ void BranchExperiment::train_existing_backprop(
 	BranchExperimentHistory* history = (BranchExperimentHistory*)run_helper.experiment_histories.back();
 
 	for (int i_index = 0; i_index < (int)history->predicted_scores.size(); i_index++) {
-		double sum_score = 0.0;
-		for (int l_index = 0; l_index < (int)history->predicted_scores[i_index].size(); l_index++) {
-			sum_score += history->predicted_scores[i_index][l_index];
+		double final_score = target_val - solution->average_score;
+		if (history->predicted_scores[i_index].size() > 0) {
+			double sum_score = 0.0;
+			for (int l_index = 0; l_index < (int)history->predicted_scores[i_index].size(); l_index++) {
+				sum_score += history->predicted_scores[i_index][l_index];
+			}
+			final_score += sum_score / (int)history->predicted_scores[i_index].size();
 		}
-		sum_score += target_val - solution->average_score;
-		double final_score = sum_score / ((int)history->predicted_scores[i_index].size() + 1);
 		this->target_val_histories.push_back(final_score);
 	}
 
@@ -190,7 +191,11 @@ void BranchExperiment::train_existing_backprop(
 							case NODE_TYPE_INFO_BRANCH:
 								{
 									InfoBranchNodeHistory* info_branch_node_history = (InfoBranchNodeHistory*)it->second;
-									test_inputs[d_index].push_back(info_branch_node_history->score);
+									if (info_branch_node_history->is_branch) {
+										test_inputs[d_index].push_back(1.0);
+									} else {
+										test_inputs[d_index].push_back(-1.0);
+									}
 								}
 								break;
 							}

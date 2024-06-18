@@ -5,7 +5,6 @@
 #include "constants.h"
 #include "globals.h"
 #include "info_scope.h"
-#include "info_scope_node.h"
 #include "network.h"
 #include "scope.h"
 #include "scope_node.h"
@@ -18,6 +17,7 @@ using namespace std;
 bool NewInfoExperiment::root_verify_activate(
 		AbstractNode*& curr_node,
 		Problem* problem,
+		vector<ContextLayer>& context,
 		RunHelper& run_helper) {
 	if (this->is_pass_through) {
 		if (this->best_step_types.size() == 0) {
@@ -33,35 +33,27 @@ bool NewInfoExperiment::root_verify_activate(
 		return true;
 	} else {
 		if (this->use_existing) {
-			double inner_score;
+			bool is_positive;
 			solution->info_scopes[this->existing_info_scope_index]->activate(
 				problem,
+				context,
 				run_helper,
-				inner_score);
+				is_positive);
 
 			bool is_branch;
-			#if defined(MDEBUG) && MDEBUG
-			if (run_helper.curr_run_seed%2 == 0) {
-				is_branch = true;
-			} else {
-				is_branch = false;
-			}
-			run_helper.curr_run_seed = xorshift(run_helper.curr_run_seed);
-			#else
 			if (this->existing_is_negate) {
-				if (inner_score >= 0.0) {
+				if (is_positive) {
 					is_branch = false;
 				} else {
 					is_branch = true;
 				}
 			} else {
-				if (inner_score >= 0.0) {
+				if (is_positive) {
 					is_branch = true;
 				} else {
 					is_branch = false;
 				}
 			}
-			#endif /* MDEBUG */
 
 			if (is_branch) {
 				if (this->best_step_types.size() == 0) {
@@ -83,6 +75,7 @@ bool NewInfoExperiment::root_verify_activate(
 
 			AbstractScopeHistory* scope_history;
 			this->new_info_scope->explore_activate(problem,
+												   context,
 												   run_helper,
 												   scope_history);
 
@@ -91,20 +84,8 @@ bool NewInfoExperiment::root_verify_activate(
 				map<AbstractNode*, AbstractNodeHistory*>::iterator it = scope_history->node_histories.find(
 					this->new_input_node_contexts[i_index]);
 				if (it != scope_history->node_histories.end()) {
-					switch (this->new_input_node_contexts[i_index]->type) {
-					case NODE_TYPE_ACTION:
-						{
-							ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
-							new_input_vals[i_index] = action_node_history->obs_snapshot[this->new_input_obs_indexes[i_index]];
-						}
-						break;
-					case NODE_TYPE_INFO_SCOPE:
-						{
-							InfoScopeNodeHistory* info_scope_node_history = (InfoScopeNodeHistory*)it->second;
-							new_input_vals[i_index] = info_scope_node_history->score;
-						}
-						break;
-					}
+					ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
+					new_input_vals[i_index] = action_node_history->obs_snapshot[this->new_input_obs_indexes[i_index]];
 				}
 			}
 			this->new_network->activate(new_input_vals);

@@ -90,7 +90,11 @@ bool BranchExperiment::explore_activate(
 				case NODE_TYPE_INFO_BRANCH:
 					{
 						InfoBranchNodeHistory* info_branch_node_history = (InfoBranchNodeHistory*)it->second;
-						input_vals[i_index] = info_branch_node_history->score;
+						if (info_branch_node_history->is_branch) {
+							input_vals[i_index] = 1.0;
+						} else {
+							input_vals[i_index] = -1.0;
+						}
 					}
 					break;
 				}
@@ -154,13 +158,14 @@ bool BranchExperiment::explore_activate(
 		int random_index = distribution(generator);
 		this->curr_exit_next_node = possible_exits[random_index];
 
-		this->curr_info_scope = get_existing_info_scope();
+		this->curr_info_scope = get_existing_info_scope(parent_scope);
 		if (this->curr_info_scope != NULL) {
-			double inner_score;
+			bool is_positive;
 			this->curr_info_scope->activate(problem,
+											context,
 											run_helper,
-											inner_score);
-			if (inner_score >= 0.0) {
+											is_positive);
+			if (is_positive) {
 				this->curr_is_negate = false;
 			} else {
 				this->curr_is_negate = true;
@@ -248,12 +253,14 @@ void BranchExperiment::explore_backprop(
 	if (history->has_target) {
 		double curr_surprise;
 		if (!run_helper.exceeded_limit) {
-			double sum_score = 0.0;
-			for (int l_index = 0; l_index < (int)history->predicted_scores[0].size(); l_index++) {
-				sum_score += history->predicted_scores[0][l_index];
+			double final_score = target_val - solution->average_score;
+			if (history->predicted_scores[0].size() > 0) {
+				double sum_score = 0.0;
+				for (int l_index = 0; l_index < (int)history->predicted_scores[0].size(); l_index++) {
+					sum_score += history->predicted_scores[0][l_index];
+				}
+				final_score += sum_score / (int)history->predicted_scores[0].size();
 			}
-			sum_score += target_val - solution->average_score;
-			double final_score = sum_score / ((int)history->predicted_scores[0].size() + 1);
 
 			curr_surprise = final_score - history->existing_predicted_scores[0];
 		}

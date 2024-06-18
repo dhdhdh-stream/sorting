@@ -49,12 +49,14 @@ void NewInfoExperiment::verify_existing_backprop(
 	NewInfoExperimentHistory* history = (NewInfoExperimentHistory*)run_helper.experiment_histories.back();
 
 	for (int i_index = 0; i_index < (int)history->predicted_scores.size(); i_index++) {
-		double sum_score = 0.0;
-		for (int l_index = 0; l_index < (int)history->predicted_scores[i_index].size(); l_index++) {
-			sum_score += history->predicted_scores[i_index][l_index];
+		double final_score = target_val - solution->average_score;
+		if (history->predicted_scores[i_index].size() > 0) {
+			double sum_score = 0.0;
+			for (int l_index = 0; l_index < (int)history->predicted_scores[i_index].size(); l_index++) {
+				sum_score += history->predicted_scores[i_index][l_index];
+			}
+			final_score += sum_score / (int)history->predicted_scores[i_index].size();
 		}
-		sum_score += target_val - solution->average_score;
-		double final_score = sum_score / ((int)history->predicted_scores[i_index].size() + 1);
 		this->target_val_histories.push_back(final_score);
 	}
 

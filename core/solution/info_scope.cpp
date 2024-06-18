@@ -5,7 +5,6 @@
 #include "abstract_node.h"
 #include "action_node.h"
 #include "globals.h"
-#include "info_scope_node.h"
 #include "network.h"
 
 using namespace std;
@@ -52,7 +51,6 @@ void InfoScope::save(ofstream& output_file) {
 	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
 			it != this->nodes.end(); it++) {
 		output_file << it->first << endl;
-		output_file << it->second->type << endl;
 		it->second->save(output_file);
 	}
 
@@ -77,29 +75,11 @@ void InfoScope::load(ifstream& input_file) {
 		getline(input_file, id_line);
 		int id = stoi(id_line);
 
-		string type_line;
-		getline(input_file, type_line);
-		int type = stoi(type_line);
-		switch (type) {
-		case NODE_TYPE_ACTION:
-			{
-				ActionNode* action_node = new ActionNode();
-				action_node->parent = this;
-				action_node->id = id;
-				action_node->load(input_file);
-				this->nodes[action_node->id] = action_node;
-			}
-			break;
-		case NODE_TYPE_INFO_SCOPE:
-			{
-				InfoScopeNode* info_scope_node = new InfoScopeNode();
-				info_scope_node->parent = this;
-				info_scope_node->id = id;
-				info_scope_node->load(input_file);
-				this->nodes[info_scope_node->id] = info_scope_node;
-			}
-			break;
-		}
+		ActionNode* action_node = new ActionNode();
+		action_node->parent = this;
+		action_node->id = id;
+		action_node->load(input_file);
+		this->nodes[action_node->id] = action_node;
 	}
 
 	string num_inputs_line;
@@ -130,28 +110,11 @@ void InfoScope::copy_from(InfoScope* original,
 
 	for (map<int, AbstractNode*>::iterator it = original->nodes.begin();
 			it != original->nodes.end(); it++) {
-		switch (it->second->type) {
-		case NODE_TYPE_ACTION:
-			{
-				ActionNode* original_action_node = (ActionNode*)it->second;
-				ActionNode* new_action_node = new ActionNode(original_action_node);
-				new_action_node->parent = this;
-				new_action_node->id = it->first;
-				this->nodes[it->first] = new_action_node;
-			}
-			break;
-		case NODE_TYPE_INFO_SCOPE:
-			{
-				InfoScopeNode* original_info_scope_node = (InfoScopeNode*)it->second;
-				InfoScopeNode* new_info_scope_node = new InfoScopeNode(
-					original_info_scope_node,
-					parent_solution);
-				new_info_scope_node->parent = this;
-				new_info_scope_node->id = it->first;
-				this->nodes[it->first] = new_info_scope_node;
-			}
-			break;
-		}
+		ActionNode* original_action_node = (ActionNode*)it->second;
+		ActionNode* new_action_node = new ActionNode(original_action_node);
+		new_action_node->parent = this;
+		new_action_node->id = it->first;
+		this->nodes[it->first] = new_action_node;
 	}
 
 	for (int i_index = 0; i_index < (int)original->input_node_contexts.size(); i_index++) {
@@ -188,20 +151,8 @@ AbstractScopeHistory* InfoScopeHistory::deep_copy() {
 
 	for (map<AbstractNode*, AbstractNodeHistory*>::iterator it = this->node_histories.begin();
 			it != this->node_histories.end(); it++) {
-		switch (it->first->type) {
-		case NODE_TYPE_ACTION:
-			{
-				ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
-				new_scope_history->node_histories[it->first] = new ActionNodeHistory(action_node_history);
-			}
-			break;
-		case NODE_TYPE_INFO_SCOPE:
-			{
-				InfoScopeNodeHistory* info_scope_node_history = (InfoScopeNodeHistory*)it->second;
-				new_scope_history->node_histories[it->first] = new InfoScopeNodeHistory(info_scope_node_history);
-			}
-			break;
-		}
+		ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
+		new_scope_history->node_histories[it->first] = new ActionNodeHistory(action_node_history);
 	}
 
 	return new_scope_history;

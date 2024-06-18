@@ -10,7 +10,6 @@
 #include "eval_helpers.h"
 #include "globals.h"
 #include "info_scope.h"
-#include "info_scope_node.h"
 #include "network.h"
 #include "nn_helpers.h"
 #include "scope.h"
@@ -31,6 +30,7 @@ void NewInfoExperiment::train_new_activate(
 
 	AbstractScopeHistory* scope_history;
 	this->new_info_scope->explore_activate(problem,
+										   context,
 										   run_helper,
 										   scope_history);
 
@@ -57,20 +57,8 @@ void NewInfoExperiment::train_new_activate(
 			map<AbstractNode*, AbstractNodeHistory*>::iterator it = scope_history->node_histories.find(
 				this->existing_input_node_contexts[i_index]);
 			if (it != scope_history->node_histories.end()) {
-				switch (this->existing_input_node_contexts[i_index]->type) {
-				case NODE_TYPE_ACTION:
-					{
-						ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
-						input_vals[i_index] = action_node_history->obs_snapshot[this->existing_input_obs_indexes[i_index]];
-					}
-					break;
-				case NODE_TYPE_INFO_SCOPE:
-					{
-						InfoScopeNodeHistory* info_scope_node_history = (InfoScopeNodeHistory*)it->second;
-						input_vals[i_index] = info_scope_node_history->score;
-					}
-					break;
-				}
+				ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
+				input_vals[i_index] = action_node_history->obs_snapshot[this->existing_input_obs_indexes[i_index]];
 			}
 		}
 		this->existing_network->activate(input_vals);
@@ -166,12 +154,14 @@ void NewInfoExperiment::train_new_backprop(
 		NewInfoExperimentHistory* history = (NewInfoExperimentHistory*)run_helper.experiment_histories.back();
 
 		for (int i_index = 0; i_index < (int)history->predicted_scores.size(); i_index++) {
-			double sum_score = 0.0;
-			for (int l_index = 0; l_index < (int)history->predicted_scores[i_index].size(); l_index++) {
-				sum_score += history->predicted_scores[i_index][l_index];
+			double final_score = target_val - solution->average_score;
+			if (history->predicted_scores[i_index].size() > 0) {
+				double sum_score = 0.0;
+				for (int l_index = 0; l_index < (int)history->predicted_scores[i_index].size(); l_index++) {
+					sum_score += history->predicted_scores[i_index][l_index];
+				}
+				final_score += sum_score / (int)history->predicted_scores[i_index].size();
 			}
-			sum_score += target_val - solution->average_score;
-			double final_score = sum_score / ((int)history->predicted_scores[i_index].size() + 1);
 
 			double surprise = final_score - history->existing_predicted_scores[i_index];
 
@@ -262,20 +252,8 @@ void NewInfoExperiment::train_new_backprop(
 							if (it == this->scope_histories[d_index]->node_histories.end()) {
 								test_inputs[d_index].push_back(0.0);
 							} else {
-								switch (it->first->type) {
-								case NODE_TYPE_ACTION:
-									{
-										ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
-										test_inputs[d_index].push_back(action_node_history->obs_snapshot[test_input_obs_indexes[t_index]]);
-									}
-									break;
-								case NODE_TYPE_INFO_SCOPE:
-									{
-										InfoScopeNodeHistory* info_scope_node_history = (InfoScopeNodeHistory*)it->second;
-										test_inputs[d_index].push_back(info_scope_node_history->score);
-									}
-									break;
-								}
+								ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
+								test_inputs[d_index].push_back(action_node_history->obs_snapshot[test_input_obs_indexes[t_index]]);
 							}
 						}
 					}

@@ -139,7 +139,8 @@ void NewActionExperiment::backprop(double target_val,
 						  run_helper);
 		}
 
-		if (this->generalize_iter >= NEW_ACTION_NUM_GENERALIZE_TRIES) {
+		if (this->generalize_iter >= NEW_ACTION_NUM_GENERALIZE_TRIES
+				|| this->successful_location_starts.size() >= NEW_ACTION_MAX_LOCATIONS) {
 			if (this->successful_location_starts.size() >= NEW_ACTION_MIN_LOCATIONS) {
 				#if defined(MDEBUG) && MDEBUG
 				for (int t_index = 0; t_index < (int)this->test_location_starts.size(); t_index++) {

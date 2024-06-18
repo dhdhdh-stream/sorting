@@ -330,7 +330,8 @@ void Minesweeper::perform_action(Action action) {
 	}
 }
 
-double Minesweeper::score_result(int num_decisions) {
+double Minesweeper::score_result(int num_decisions,
+								 int num_actions) {
 	int curr_revealed = 0;
 	double score = 1.0;
 	for (int x_index = 0; x_index < WIDTH; x_index++) {
@@ -353,6 +354,9 @@ double Minesweeper::score_result(int num_decisions) {
 
 	if (num_decisions > 5) {
 		score -= 0.0002*(num_decisions-5);
+	}
+	if (num_actions > 40) {
+		score -= 0.000005*(num_actions-40);
 	}
 
 	if (this->hit_mine) {

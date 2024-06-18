@@ -101,12 +101,14 @@ void NewActionExperiment::test_backprop(
 		case NEW_ACTION_EXPERIMENT_MEASURE_EXISTING:
 			{
 				for (int i_index = 0; i_index < (int)history->predicted_scores.size(); i_index++) {
-					double sum_score = 0.0;
-					for (int l_index = 0; l_index < (int)history->predicted_scores[i_index].size(); l_index++) {
-						sum_score += history->predicted_scores[i_index][l_index];
+					double final_score = target_val - solution->average_score;
+					if (history->predicted_scores[i_index].size() > 0) {
+						double sum_score = 0.0;
+						for (int l_index = 0; l_index < (int)history->predicted_scores[i_index].size(); l_index++) {
+							sum_score += history->predicted_scores[i_index][l_index];
+						}
+						final_score += sum_score / (int)history->predicted_scores[i_index].size();
 					}
-					sum_score += target_val - solution->average_score;
-					double final_score = sum_score / ((int)history->predicted_scores[i_index].size() + 1);
 					this->test_location_existing_scores[history->test_location_index] += final_score;
 					this->test_location_existing_counts[history->test_location_index]++;
 				}
@@ -122,12 +124,14 @@ void NewActionExperiment::test_backprop(
 		case NEW_ACTION_EXPERIMENT_MEASURE_NEW:
 			{
 				for (int i_index = 0; i_index < (int)history->predicted_scores.size(); i_index++) {
-					double sum_score = 0.0;
-					for (int l_index = 0; l_index < (int)history->predicted_scores[i_index].size(); l_index++) {
-						sum_score += history->predicted_scores[i_index][l_index];
+					double final_score = target_val - solution->average_score;
+					if (history->predicted_scores[i_index].size() > 0) {
+						double sum_score = 0.0;
+						for (int l_index = 0; l_index < (int)history->predicted_scores[i_index].size(); l_index++) {
+							sum_score += history->predicted_scores[i_index][l_index];
+						}
+						final_score += sum_score / (int)history->predicted_scores[i_index].size();
 					}
-					sum_score += target_val - solution->average_score;
-					double final_score = sum_score / ((int)history->predicted_scores[i_index].size() + 1);
 					this->test_location_new_scores[history->test_location_index] += final_score;
 					this->test_location_new_counts[history->test_location_index]++;
 				}
@@ -162,12 +166,14 @@ void NewActionExperiment::test_backprop(
 		case NEW_ACTION_EXPERIMENT_VERIFY_1ST_EXISTING:
 			{
 				for (int i_index = 0; i_index < (int)history->predicted_scores.size(); i_index++) {
-					double sum_score = 0.0;
-					for (int l_index = 0; l_index < (int)history->predicted_scores[i_index].size(); l_index++) {
-						sum_score += history->predicted_scores[i_index][l_index];
+					double final_score = target_val - solution->average_score;
+					if (history->predicted_scores[i_index].size() > 0) {
+						double sum_score = 0.0;
+						for (int l_index = 0; l_index < (int)history->predicted_scores[i_index].size(); l_index++) {
+							sum_score += history->predicted_scores[i_index][l_index];
+						}
+						final_score += sum_score / (int)history->predicted_scores[i_index].size();
 					}
-					sum_score += target_val - solution->average_score;
-					double final_score = sum_score / ((int)history->predicted_scores[i_index].size() + 1);
 					this->test_location_existing_scores[history->test_location_index] += final_score;
 					this->test_location_existing_counts[history->test_location_index]++;
 				}
@@ -183,12 +189,14 @@ void NewActionExperiment::test_backprop(
 		case NEW_ACTION_EXPERIMENT_VERIFY_1ST_NEW:
 			{
 				for (int i_index = 0; i_index < (int)history->predicted_scores.size(); i_index++) {
-					double sum_score = 0.0;
-					for (int l_index = 0; l_index < (int)history->predicted_scores[i_index].size(); l_index++) {
-						sum_score += history->predicted_scores[i_index][l_index];
+					double final_score = target_val - solution->average_score;
+					if (history->predicted_scores[i_index].size() > 0) {
+						double sum_score = 0.0;
+						for (int l_index = 0; l_index < (int)history->predicted_scores[i_index].size(); l_index++) {
+							sum_score += history->predicted_scores[i_index][l_index];
+						}
+						final_score += sum_score / (int)history->predicted_scores[i_index].size();
 					}
-					sum_score += target_val - solution->average_score;
-					double final_score = sum_score / ((int)history->predicted_scores[i_index].size() + 1);
 					this->test_location_new_scores[history->test_location_index] += final_score;
 					this->test_location_new_counts[history->test_location_index]++;
 				}
@@ -223,12 +231,14 @@ void NewActionExperiment::test_backprop(
 		case NEW_ACTION_EXPERIMENT_VERIFY_2ND_EXISTING:
 			{
 				for (int i_index = 0; i_index < (int)history->predicted_scores.size(); i_index++) {
-					double sum_score = 0.0;
-					for (int l_index = 0; l_index < (int)history->predicted_scores[i_index].size(); l_index++) {
-						sum_score += history->predicted_scores[i_index][l_index];
+					double final_score = target_val - solution->average_score;
+					if (history->predicted_scores[i_index].size() > 0) {
+						double sum_score = 0.0;
+						for (int l_index = 0; l_index < (int)history->predicted_scores[i_index].size(); l_index++) {
+							sum_score += history->predicted_scores[i_index][l_index];
+						}
+						final_score += sum_score / (int)history->predicted_scores[i_index].size();
 					}
-					sum_score += target_val - solution->average_score;
-					double final_score = sum_score / ((int)history->predicted_scores[i_index].size() + 1);
 					this->test_location_existing_scores[history->test_location_index] += final_score;
 					this->test_location_existing_counts[history->test_location_index]++;
 				}
@@ -244,12 +254,14 @@ void NewActionExperiment::test_backprop(
 		case NEW_ACTION_EXPERIMENT_VERIFY_2ND_NEW:
 			{
 				for (int i_index = 0; i_index < (int)history->predicted_scores.size(); i_index++) {
-					double sum_score = 0.0;
-					for (int l_index = 0; l_index < (int)history->predicted_scores[i_index].size(); l_index++) {
-						sum_score += history->predicted_scores[i_index][l_index];
+					double final_score = target_val - solution->average_score;
+					if (history->predicted_scores[i_index].size() > 0) {
+						double sum_score = 0.0;
+						for (int l_index = 0; l_index < (int)history->predicted_scores[i_index].size(); l_index++) {
+							sum_score += history->predicted_scores[i_index][l_index];
+						}
+						final_score += sum_score / (int)history->predicted_scores[i_index].size();
 					}
-					sum_score += target_val - solution->average_score;
-					double final_score = sum_score / ((int)history->predicted_scores[i_index].size() + 1);
 					this->test_location_new_scores[history->test_location_index] += final_score;
 					this->test_location_new_counts[history->test_location_index]++;
 				}

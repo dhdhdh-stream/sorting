@@ -19,22 +19,27 @@ void InfoBranchNode::verify_activate(AbstractNode*& curr_node,
 	history->index = node_histories.size();
 	node_histories[this] = history;
 
-	double inner_score;
+	bool is_positive;
 	this->scope->verify_activate(problem,
+								 context,
 								 run_helper,
-								 inner_score);
+								 is_positive);
 
-	history->score = inner_score;
-
-	bool is_branch;
-	if (run_helper.curr_run_seed%2 == 0) {
-		is_branch = true;
+	if (this->is_negate) {
+		if (is_positive) {
+			history->is_branch = false;
+		} else {
+			history->is_branch = true;
+		}
 	} else {
-		is_branch = false;
+		if (is_positive) {
+			history->is_branch = true;
+		} else {
+			history->is_branch = false;
+		}
 	}
-	run_helper.curr_run_seed = xorshift(run_helper.curr_run_seed);
 
-	if (is_branch) {
+	if (history->is_branch) {
 		curr_node = this->branch_next_node;
 	} else {
 		curr_node = this->original_next_node;

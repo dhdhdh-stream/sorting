@@ -7,7 +7,6 @@
 #include "globals.h"
 #include "info_branch_node.h"
 #include "info_scope.h"
-#include "info_scope_node.h"
 #include "scope_node.h"
 #include "solution.h"
 
@@ -48,16 +47,6 @@ void node_random_exit_activate_helper(AbstractNode*& curr_node,
 			} else {
 				curr_node = node->original_next_node;
 			}
-		}
-
-		break;
-	case NODE_TYPE_INFO_SCOPE:
-		{
-			InfoScopeNode* node = (InfoScopeNode*)curr_node;
-
-			possible_exits.push_back(curr_node);
-
-			curr_node = node->next_node;
 		}
 
 		break;

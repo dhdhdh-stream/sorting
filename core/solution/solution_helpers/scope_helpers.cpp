@@ -5,7 +5,6 @@
 #include "action_node.h"
 #include "branch_node.h"
 #include "info_branch_node.h"
-#include "info_scope_node.h"
 #include "network.h"
 #include "scope.h"
 #include "scope_node.h"
@@ -39,12 +38,6 @@ void clean_scope(Scope* scope) {
 					BranchNode* branch_node = (BranchNode*)it->second;
 					next_node_ids.insert(branch_node->original_next_node_id);
 					next_node_ids.insert(branch_node->branch_next_node_id);
-				}
-				break;
-			case NODE_TYPE_INFO_SCOPE:
-				{
-					InfoScopeNode* info_scope_node = (InfoScopeNode*)it->second;
-					next_node_ids.insert(info_scope_node->next_node_id);
 				}
 				break;
 			case NODE_TYPE_INFO_BRANCH:

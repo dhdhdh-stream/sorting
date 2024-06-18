@@ -83,5 +83,5 @@ InfoBranchNodeHistory::InfoBranchNodeHistory() {
 InfoBranchNodeHistory::InfoBranchNodeHistory(InfoBranchNodeHistory* original) {
 	this->index = original->index;
 
-	this->score = original->score;
+	this->is_branch = original->is_branch;
 }

@@ -58,7 +58,11 @@ public:
 
 class InfoBranchNodeHistory : public AbstractNodeHistory {
 public:
-	double score;
+	/**
+	 * - only save bool instead of score
+	 *   - removes dependencies, making it easier to swap/experiment
+	 */
+	bool is_branch;
 
 	InfoBranchNodeHistory();
 	InfoBranchNodeHistory(InfoBranchNodeHistory* original);

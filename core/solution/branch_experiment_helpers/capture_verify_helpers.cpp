@@ -58,7 +58,11 @@ bool BranchExperiment::capture_verify_activate(AbstractNode*& curr_node,
 			case NODE_TYPE_INFO_BRANCH:
 				{
 					InfoBranchNodeHistory* info_branch_node_history = (InfoBranchNodeHistory*)it->second;
-					new_input_vals[i_index] = info_branch_node_history->score;
+					if (info_branch_node_history->is_branch) {
+						new_input_vals[i_index] = 1.0;
+					} else {
+						new_input_vals[i_index] = -1.0;
+					}
 				}
 				break;
 			}
@@ -104,22 +108,26 @@ bool BranchExperiment::capture_verify_activate(AbstractNode*& curr_node,
 				}
 			}
 		} else {
-			double inner_score;
+			bool is_positive;
 			this->best_info_scope->activate(problem,
+											context,
 											run_helper,
-											inner_score);
+											is_positive);
 
 			bool is_branch;
-			if (run_helper.curr_run_seed%2 == 0) {
-				is_branch = true;
+			if (this->best_is_negate) {
+				if (is_positive) {
+					is_branch = false;
+				} else {
+					is_branch = true;
+				}
 			} else {
-				is_branch = false;
+				if (is_positive) {
+					is_branch = true;
+				} else {
+					is_branch = false;
+				}
 			}
-			run_helper.curr_run_seed = xorshift(run_helper.curr_run_seed);
-
-			cout << "inner_score: " << inner_score << endl;
-			cout << "this->best_is_negate: " << this->best_is_negate << endl;
-			cout << "is_branch: " << is_branch << endl;
 
 			if (is_branch) {
 				if (this->best_step_types.size() == 0) {

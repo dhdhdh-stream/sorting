@@ -6,7 +6,6 @@
 #include "branch_node.h"
 #include "globals.h"
 #include "info_branch_node.h"
-#include "info_scope_node.h"
 #include "network.h"
 #include "scope.h"
 #include "scope_node.h"
@@ -43,7 +42,11 @@ double calc_score(ScopeHistory* scope_history) {
 			case NODE_TYPE_INFO_BRANCH:
 				{
 					InfoBranchNodeHistory* info_branch_node_history = (InfoBranchNodeHistory*)it->second;
-					input_vals[i_index] = info_branch_node_history->score;
+					if (info_branch_node_history->is_branch) {
+						input_vals[i_index] = 1.0;
+					} else {
+						input_vals[i_index] = -1.0;
+					}
 				}
 				break;
 			}

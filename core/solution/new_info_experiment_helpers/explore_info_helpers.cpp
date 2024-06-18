@@ -9,7 +9,6 @@
 #include "globals.h"
 #include "info_branch_node.h"
 #include "info_scope.h"
-#include "info_scope_node.h"
 #include "network.h"
 #include "nn_helpers.h"
 #include "scope.h"
@@ -46,6 +45,7 @@ void NewInfoExperiment::explore_info_activate(
 
 	AbstractScopeHistory* scope_history;
 	this->new_info_scope->explore_activate(problem,
+										   context,
 										   run_helper,
 										   scope_history);
 
@@ -124,12 +124,14 @@ void NewInfoExperiment::explore_info_backprop(
 		}
 
 		for (int i_index = 0; i_index < (int)history->predicted_scores.size(); i_index++) {
-			double sum_score = 0.0;
-			for (int l_index = 0; l_index < (int)history->predicted_scores[i_index].size(); l_index++) {
-				sum_score += history->predicted_scores[i_index][l_index];
+			double final_score = target_val - solution->average_score;
+			if (history->predicted_scores[i_index].size() > 0) {
+				double sum_score = 0.0;
+				for (int l_index = 0; l_index < (int)history->predicted_scores[i_index].size(); l_index++) {
+					sum_score += history->predicted_scores[i_index][l_index];
+				}
+				final_score += sum_score / (int)history->predicted_scores[i_index].size();
 			}
-			sum_score += target_val - solution->average_score;
-			double final_score = sum_score / ((int)history->predicted_scores[i_index].size() + 1);
 
 			this->info_score += final_score - this->existing_average_score;
 
@@ -265,20 +267,8 @@ void NewInfoExperiment::explore_info_backprop(
 						if (it == this->scope_histories[d_index]->node_histories.end()) {
 							test_inputs[d_index].push_back(0.0);
 						} else {
-							switch (it->first->type) {
-							case NODE_TYPE_ACTION:
-								{
-									ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
-									test_inputs[d_index].push_back(action_node_history->obs_snapshot[test_input_obs_indexes[t_index]]);
-								}
-								break;
-							case NODE_TYPE_INFO_SCOPE:
-								{
-									InfoScopeNodeHistory* info_scope_node_history = (InfoScopeNodeHistory*)it->second;
-									test_inputs[d_index].push_back(info_scope_node_history->score);
-								}
-								break;
-							}
+							ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
+							test_inputs[d_index].push_back(action_node_history->obs_snapshot[test_input_obs_indexes[t_index]]);
 						}
 					}
 				}

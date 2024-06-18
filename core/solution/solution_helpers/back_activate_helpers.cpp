@@ -25,7 +25,6 @@ void gather_possible_helper(vector<AbstractNode*>& possible_node_contexts,
 
 			break;
 		case NODE_TYPE_BRANCH:
-		case NODE_TYPE_INFO_SCOPE:
 		case NODE_TYPE_INFO_BRANCH:
 			possible_node_contexts.push_back(it->first);
 			possible_obs_indexes.push_back(-1);

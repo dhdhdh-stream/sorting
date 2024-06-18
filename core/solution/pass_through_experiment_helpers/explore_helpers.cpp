@@ -19,6 +19,24 @@
 using namespace std;
 
 #if defined(MDEBUG) && MDEBUG
+const int INITIAL_NUM_SAMPLES_PER_ITER = 2;
+const int INITIAL_NUM_TRUTH_PER_ITER = 2;
+const int VERIFY_1ST_NUM_SAMPLES_PER_ITER = 5;
+const int VERIFY_1ST_NUM_TRUTH_PER_ITER = 2;
+const int VERIFY_2ND_NUM_SAMPLES_PER_ITER = 10;
+const int VERIFY_2ND_NUM_TRUTH_PER_ITER = 2;
+const int EXPLORE_ITERS = 2;
+#else
+const int INITIAL_NUM_SAMPLES_PER_ITER = 100;
+const int INITIAL_NUM_TRUTH_PER_ITER = 5;
+const int VERIFY_1ST_NUM_SAMPLES_PER_ITER = 500;
+const int VERIFY_1ST_NUM_TRUTH_PER_ITER = 25;
+const int VERIFY_2ND_NUM_SAMPLES_PER_ITER = 2000;
+const int VERIFY_2ND_NUM_TRUTH_PER_ITER = 100;
+const int EXPLORE_ITERS = 100;
+#endif /* MDEBUG */
+
+#if defined(MDEBUG) && MDEBUG
 const int NUM_SAMPLES_PER_ITER = 2;
 #else
 const int NUM_SAMPLES_PER_ITER = 40;
@@ -56,34 +74,26 @@ void PassThroughExperiment::explore_activate(
 
 		curr_node = this->curr_exit_next_node;
 	} else {
-		double inner_score;
+		bool is_positive;
 		this->curr_info_scope->activate(problem,
+										context,
 										run_helper,
-										inner_score);
+										is_positive);
 
 		bool is_branch;
-		#if defined(MDEBUG) && MDEBUG
-		if (run_helper.curr_run_seed%2 == 0) {
-			is_branch = true;
-		} else {
-			is_branch = false;
-		}
-		run_helper.curr_run_seed = xorshift(run_helper.curr_run_seed);
-		#else
 		if (this->curr_is_negate) {
-			if (inner_score >= 0.0) {
+			if (is_positive) {
 				is_branch = false;
 			} else {
 				is_branch = true;
 			}
 		} else {
-			if (inner_score >= 0.0) {
+			if (is_positive) {
 				is_branch = true;
 			} else {
 				is_branch = false;
 			}
 		}
-		#endif /* MDEBUG */
 
 		if (is_branch) {
 			for (int s_index = 0; s_index < (int)this->curr_step_types.size(); s_index++) {
@@ -124,8 +134,89 @@ void PassThroughExperiment::explore_back_activate(
 void PassThroughExperiment::explore_backprop(
 		double target_val,
 		RunHelper& run_helper) {
-	bool is_next = false;
+	bool is_fail = false;
+
 	if (run_helper.exceeded_limit) {
+		is_fail = true;
+	} else {
+		PassThroughExperimentHistory* history = (PassThroughExperimentHistory*)run_helper.experiment_histories.back();
+
+		this->state_iter++;
+		if (this->state_iter == INITIAL_NUM_TRUTH_PER_ITER
+				&& this->sub_state_iter >= INITIAL_NUM_SAMPLES_PER_ITER) {
+			#if defined(MDEBUG) && MDEBUG
+			if (false) {
+			#else
+			if (this->curr_score < 0.0) {
+			#endif /* MDEBUG */
+				is_fail = true;
+			}
+		} else if (this->state_iter == VERIFY_1ST_NUM_TRUTH_PER_ITER
+				&& this->sub_state_iter >= VERIFY_1ST_NUM_SAMPLES_PER_ITER) {
+			#if defined(MDEBUG) && MDEBUG
+			if (false) {
+			#else
+			if (this->curr_score < 0.0) {
+			#endif /* MDEBUG */
+				is_fail = true;
+			}
+		} else if (this->state_iter == VERIFY_2ND_NUM_TRUTH_PER_ITER
+				&& this->sub_state_iter >= VERIFY_2ND_NUM_SAMPLES_PER_ITER) {
+			#if defined(MDEBUG) && MDEBUG
+			if (rand()%2 == 0) {
+			#else
+			if (this->curr_score < 0.0) {
+			#endif /* MDEBUG */
+				is_fail = true;
+			}
+		}
+
+		for (int i_index = 0; i_index < (int)history->predicted_scores.size(); i_index++) {
+			double final_score = target_val - solution->average_score;
+			if (history->predicted_scores[i_index].size() > 0) {
+				double sum_score = 0.0;
+				for (int l_index = 0; l_index < (int)history->predicted_scores[i_index].size(); l_index++) {
+					sum_score += history->predicted_scores[i_index][l_index];
+				}
+				final_score += sum_score / (int)history->predicted_scores[i_index].size();
+			}
+
+			this->curr_score += final_score - this->existing_average_score;
+			this->sub_state_iter++;
+
+			if (this->sub_state_iter == INITIAL_NUM_SAMPLES_PER_ITER
+					&& this->state_iter >= INITIAL_NUM_TRUTH_PER_ITER) {
+				#if defined(MDEBUG) && MDEBUG
+				if (false) {
+				#else
+				if (this->curr_score < 0.0) {
+				#endif /* MDEBUG */
+					is_fail = true;
+				}
+			} else if (this->sub_state_iter == VERIFY_1ST_NUM_SAMPLES_PER_ITER
+					&& this->state_iter >= VERIFY_1ST_NUM_TRUTH_PER_ITER) {
+				#if defined(MDEBUG) && MDEBUG
+				if (false) {
+				#else
+				if (this->curr_score < 0.0) {
+				#endif /* MDEBUG */
+					is_fail = true;
+				}
+			} else if (this->sub_state_iter == VERIFY_2ND_NUM_SAMPLES_PER_ITER
+					&& this->state_iter >= VERIFY_2ND_NUM_TRUTH_PER_ITER) {
+				#if defined(MDEBUG) && MDEBUG
+				if (rand()%2 == 0) {
+				#else
+				if (this->curr_score < 0.0) {
+				#endif /* MDEBUG */
+					is_fail = true;
+				}
+			}
+		}
+	}
+
+	bool is_next = false;
+	if (is_fail) {
 		for (int s_index = 0; s_index < (int)this->curr_step_types.size(); s_index++) {
 			if (this->curr_step_types[s_index] == STEP_TYPE_ACTION) {
 				delete this->curr_actions[s_index];
@@ -140,72 +231,35 @@ void PassThroughExperiment::explore_backprop(
 		this->curr_scopes.clear();
 
 		is_next = true;
-	} else {
-		PassThroughExperimentHistory* history = (PassThroughExperimentHistory*)run_helper.experiment_histories.back();
-
-		for (int i_index = 0; i_index < (int)history->predicted_scores.size(); i_index++) {
-			double sum_score = 0.0;
-			for (int l_index = 0; l_index < (int)history->predicted_scores[i_index].size(); l_index++) {
-				sum_score += history->predicted_scores[i_index][l_index];
-			}
-			sum_score += target_val - solution->average_score;
-			double final_score = sum_score / ((int)history->predicted_scores[i_index].size() + 1);
-
-			this->curr_score += final_score - this->existing_average_score;
-			this->sub_state_iter++;
-		}
-
-		this->state_iter++;
-		if (this->sub_state_iter >= NUM_SAMPLES_PER_ITER
-				&& this->state_iter >= MIN_NUM_TRUTH_DATAPOINTS) {
-			this->curr_score /= this->sub_state_iter;
-			#if defined(MDEBUG) && MDEBUG
-			if (rand()%2 == 0) {
-			#else
-			if (this->curr_score > this->best_score) {
-			#endif /* MDEBUG */
-				for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-					if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-						delete this->best_actions[s_index];
-					} else {
-						delete this->best_scopes[s_index];
-					}
-				}
-
-				this->best_score = curr_score;
-				this->best_info_scope = this->curr_info_scope;
-				this->best_is_negate = this->curr_is_negate;
-				this->best_step_types = this->curr_step_types;
-				this->best_actions = this->curr_actions;
-				this->best_scopes = this->curr_scopes;
-				this->best_exit_next_node = this->curr_exit_next_node;
-
-				this->curr_score = 0.0;
-				this->curr_step_types.clear();
-				this->curr_actions.clear();
-				this->curr_scopes.clear();
+	} else if (this->sub_state_iter >= VERIFY_2ND_NUM_SAMPLES_PER_ITER
+			&& this->state_iter >= VERIFY_2ND_NUM_TRUTH_PER_ITER) {
+		for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+			if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+				delete this->best_actions[s_index];
 			} else {
-				for (int s_index = 0; s_index < (int)this->curr_step_types.size(); s_index++) {
-					if (this->curr_step_types[s_index] == STEP_TYPE_ACTION) {
-						delete this->curr_actions[s_index];
-					} else {
-						delete this->curr_scopes[s_index];
-					}
-				}
-
-				this->curr_score = 0.0;
-				this->curr_step_types.clear();
-				this->curr_actions.clear();
-				this->curr_scopes.clear();
+				delete this->best_scopes[s_index];
 			}
-
-			is_next = true;
 		}
+
+		this->best_score = curr_score;
+		this->best_info_scope = this->curr_info_scope;
+		this->best_is_negate = this->curr_is_negate;
+		this->best_step_types = this->curr_step_types;
+		this->best_actions = this->curr_actions;
+		this->best_scopes = this->curr_scopes;
+		this->best_exit_next_node = this->curr_exit_next_node;
+
+		this->curr_score = 0.0;
+		this->curr_step_types.clear();
+		this->curr_actions.clear();
+		this->curr_scopes.clear();
+
+		is_next = true;
 	}
 
 	if (is_next) {
 		this->explore_iter++;
-		if (this->explore_iter >= PASS_THROUGH_EXPERIMENT_EXPLORE_ITERS) {
+		if (this->explore_iter >= EXPLORE_ITERS) {
 			#if defined(MDEBUG) && MDEBUG
 			if (this->best_score != numeric_limits<double>::lowest()) {
 			#else
@@ -290,9 +344,17 @@ void PassThroughExperiment::explore_backprop(
 					}
 				}
 
+				if (this->best_info_scope != NULL) {
+					this->info_branch_node = new InfoBranchNode();
+					this->info_branch_node->parent = this->scope_context;
+					this->info_branch_node->id = this->scope_context->node_counter;
+					this->scope_context->node_counter++;
+				}
+
 				this->target_val_histories.reserve(NUM_DATAPOINTS);
 
-				this->state = PASS_THROUGH_EXPERIMENT_STATE_MEASURE_NEW;
+				// this->state = PASS_THROUGH_EXPERIMENT_STATE_MEASURE_NEW;
+				this->state = PASS_THROUGH_EXPERIMENT_STATE_VERIFY_EXISTING;
 				this->state_iter = 0;
 			} else {
 				this->result = EXPERIMENT_RESULT_FAIL;
@@ -351,7 +413,7 @@ void PassThroughExperiment::explore_backprop(
 			int random_index = distribution(generator);
 			this->curr_exit_next_node = possible_exits[random_index];
 
-			this->curr_info_scope = get_existing_info_scope();
+			this->curr_info_scope = get_existing_info_scope(parent_scope);
 			uniform_int_distribution<int> negate_distribution(0, 1);
 			this->curr_is_negate = negate_distribution(generator) == 0;
 

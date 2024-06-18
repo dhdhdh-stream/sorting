@@ -8,7 +8,6 @@
 #include "globals.h"
 #include "info_branch_node.h"
 #include "info_pass_through_experiment.h"
-#include "info_scope_node.h"
 #include "network.h"
 #include "scope.h"
 #include "solution.h"
@@ -16,53 +15,22 @@
 
 using namespace std;
 
-void node_activate_helper(AbstractNode*& curr_node,
-						  Problem* problem,
-						  vector<ContextLayer>& context,
-						  RunHelper& run_helper,
-						  InfoScopeHistory* history) {
-	switch (curr_node->type) {
-	case NODE_TYPE_ACTION:
-		{
-			ActionNode* node = (ActionNode*)curr_node;
-			node->activate(curr_node,
-						   problem,
-						   context,
-						   run_helper,
-						   history->node_histories);
-		}
-
-		break;
-	case NODE_TYPE_INFO_SCOPE:
-		{
-			InfoScopeNode* node = (InfoScopeNode*)curr_node;
-			node->activate(curr_node,
-						   problem,
-						   context,
-						   run_helper,
-						   history->node_histories);
-		}
-
-		break;
-	}
-}
-
 void InfoScope::activate(Problem* problem,
+						 vector<ContextLayer>& context,
 						 RunHelper& run_helper,
-						 double& inner_score) {
+						 bool& is_positive) {
 	// if (this->experiment != NULL) {
 	// 	InfoPassThroughExperiment* info_pass_through_experiment = (InfoPassThroughExperiment*)this->experiment;
 	// 	info_pass_through_experiment->info_scope_activate(run_helper);
 	// }
 
-	vector<ContextLayer> inner_context;
-	inner_context.push_back(ContextLayer());
+	context.push_back(ContextLayer());
 
-	inner_context.back().scope = this;
-	inner_context.back().node = NULL;
+	context.back().scope = this;
+	context.back().node = NULL;
 
 	InfoScopeHistory* history = new InfoScopeHistory(this);
-	inner_context.back().scope_history = history;
+	context.back().scope_history = history;
 
 	AbstractNode* curr_node = this->nodes[0];
 	while (true) {
@@ -76,11 +44,12 @@ void InfoScope::activate(Problem* problem,
 			break;
 		}
 
-		node_activate_helper(curr_node,
-							 problem,
-							 inner_context,
-							 run_helper,
-							 history);
+		ActionNode* node = (ActionNode*)curr_node;
+		node->activate(curr_node,
+					   problem,
+					   context,
+					   run_helper,
+					   history->node_histories);
 	}
 
 	run_helper.num_decisions++;
@@ -105,24 +74,32 @@ void InfoScope::activate(Problem* problem,
 		map<AbstractNode*, AbstractNodeHistory*>::iterator it = history->node_histories.find(
 			this->input_node_contexts[i_index]);
 		if (it != history->node_histories.end()) {
-			switch (this->input_node_contexts[i_index]->type) {
-			case NODE_TYPE_ACTION:
-				{
-					ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
-					input_vals[i_index] = action_node_history->obs_snapshot[this->input_obs_indexes[i_index]];
-				}
-				break;
-			case NODE_TYPE_INFO_SCOPE:
-				{
-					InfoScopeNodeHistory* info_scope_node_history = (InfoScopeNodeHistory*)it->second;
-					input_vals[i_index] = info_scope_node_history->score;
-				}
-				break;
-			}
+			ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
+			input_vals[i_index] = action_node_history->obs_snapshot[this->input_obs_indexes[i_index]];
 		}
 	}
 	this->network->activate(input_vals);
-	inner_score = this->network->output->acti_vals[0];
+	#if defined(MDEBUG) && MDEBUG
+	#else
+	double score = this->network->output->acti_vals[0];
+	#endif /* MDEBUG */
+
+	#if defined(MDEBUG) && MDEBUG
+	if (run_helper.curr_run_seed%2 == 0) {
+		is_positive = true;
+	} else {
+		is_positive = false;
+	}
+	run_helper.curr_run_seed = xorshift(run_helper.curr_run_seed);
+	#else
+	if (score >= 0.0) {
+		is_positive = true;
+	} else {
+		is_positive = false;
+	}
+	#endif /* MDEBUG */
 
 	delete history;
+
+	context.pop_back();
 }
