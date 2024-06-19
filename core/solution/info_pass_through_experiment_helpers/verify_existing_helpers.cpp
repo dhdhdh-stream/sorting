@@ -1,52 +1,84 @@
-// #include "info_pass_through_experiment.h"
+#include "info_pass_through_experiment.h"
 
-// #include "constants.h"
-// #include "globals.h"
-// #include "solution.h"
+#include "constants.h"
+#include "eval_helpers.h"
+#include "globals.h"
+#include "scope.h"
+#include "solution.h"
 
-// using namespace std;
+using namespace std;
 
-// void InfoPassThroughExperiment::verify_existing_backprop(
-// 		double target_val,
-// 		RunHelper& run_helper) {
-// 	this->o_target_val_histories.push_back(target_val);
+void InfoPassThroughExperiment::verify_existing_info_back_activate(
+		std::vector<ContextLayer>& context,
+		RunHelper& run_helper) {
+	InfoPassThroughExperimentHistory* history = (InfoPassThroughExperimentHistory*)run_helper.experiment_histories.back();
 
-// 	if (!run_helper.exceeded_limit) {
-// 		if (run_helper.max_depth > solution->max_depth) {
-// 			solution->max_depth = run_helper.max_depth;
-// 		}
+	history->predicted_scores.push_back(vector<double>(context.size()-1, 0.0));
+	for (int l_index = 0; l_index < (int)context.size()-1; l_index++) {
+		Scope* scope = (Scope*)context[l_index].scope;
+		ScopeHistory* scope_history = (ScopeHistory*)context[l_index].scope_history;
+		if (scope->eval_network != NULL) {
+			scope_history->callback_experiment_history = history;
+			scope_history->callback_experiment_indexes.push_back(
+				(int)history->predicted_scores.size()-1);
+			scope_history->callback_experiment_layers.push_back(l_index);
+		}
+	}
+}
 
-// 		if (run_helper.num_actions > solution->max_num_actions) {
-// 			solution->max_num_actions = run_helper.num_actions;
-// 		}
-// 	}
+void InfoPassThroughExperiment::verify_existing_back_activate(
+		vector<ContextLayer>& context,
+		RunHelper& run_helper) {
+	InfoPassThroughExperimentHistory* history = (InfoPassThroughExperimentHistory*)run_helper.experiment_histories.back();
 
-// 	if (this->state == INFO_PASS_THROUGH_EXPERIMENT_STATE_VERIFY_1ST_EXISTING
-// 			&& (int)this->o_target_val_histories.size() >= VERIFY_1ST_NUM_DATAPOINTS) {
-// 		double sum_scores = 0.0;
-// 		for (int d_index = 0; d_index < VERIFY_1ST_NUM_DATAPOINTS; d_index++) {
-// 			sum_scores += this->o_target_val_histories[d_index];
-// 		}
-// 		this->existing_average_score = sum_scores / VERIFY_1ST_NUM_DATAPOINTS;
+	ScopeHistory* scope_history = (ScopeHistory*)context.back().scope_history;
 
-// 		this->o_target_val_histories.clear();
+	double predicted_score;
+	if (run_helper.exceeded_limit) {
+		predicted_score = -1.0;
+	} else {
+		predicted_score = calc_score(scope_history);
+	}
+	for (int i_index = 0; i_index < (int)scope_history->callback_experiment_indexes.size(); i_index++) {
+		history->predicted_scores[scope_history->callback_experiment_indexes[i_index]]
+			[scope_history->callback_experiment_layers[i_index]] = predicted_score;
+	}
+}
 
-// 		this->o_target_val_histories.reserve(VERIFY_1ST_NUM_DATAPOINTS);
+void InfoPassThroughExperiment::verify_existing_backprop(
+		double target_val,
+		RunHelper& run_helper) {
+	InfoPassThroughExperimentHistory* history = (InfoPassThroughExperimentHistory*)run_helper.experiment_histories.back();
 
-// 		this->state = INFO_PASS_THROUGH_EXPERIMENT_STATE_VERIFY_1ST;
-// 		this->state_iter = 0;
-// 	} else if ((int)this->o_target_val_histories.size() >= VERIFY_2ND_NUM_DATAPOINTS) {
-// 		double sum_scores = 0.0;
-// 		for (int d_index = 0; d_index < VERIFY_2ND_NUM_DATAPOINTS; d_index++) {
-// 			sum_scores += this->o_target_val_histories[d_index];
-// 		}
-// 		this->existing_average_score = sum_scores / VERIFY_2ND_NUM_DATAPOINTS;
+	for (int i_index = 0; i_index < (int)history->predicted_scores.size(); i_index++) {
+		double final_score = target_val - solution->average_score;
+		if (history->predicted_scores[i_index].size() > 0) {
+			double sum_score = 0.0;
+			for (int l_index = 0; l_index < (int)history->predicted_scores[i_index].size(); l_index++) {
+				sum_score += history->predicted_scores[i_index][l_index];
+			}
+			final_score += sum_score / (int)history->predicted_scores[i_index].size();
+		}
+		this->target_val_histories.push_back(final_score);
+	}
 
-// 		this->o_target_val_histories.clear();
+	this->state_iter++;
+	if ((int)this->target_val_histories.size() >= NUM_DATAPOINTS
+			&& this->state_iter >= MIN_NUM_TRUTH_DATAPOINTS) {
+		int num_instances = (int)this->target_val_histories.size();
 
-// 		this->o_target_val_histories.reserve(VERIFY_2ND_NUM_DATAPOINTS);
+		double sum_scores = 0.0;
+		for (int d_index = 0; d_index < num_instances; d_index++) {
+			sum_scores += this->target_val_histories[d_index];
+		}
+		this->existing_average_score = sum_scores / num_instances;
 
-// 		this->state = INFO_PASS_THROUGH_EXPERIMENT_STATE_VERIFY_2ND;
-// 		this->state_iter = 0;
-// 	}
-// }
+		this->target_val_histories.clear();
+
+		this->combined_score = 0.0;
+
+		this->state = INFO_PASS_THROUGH_EXPERIMENT_STATE_VERIFY;
+		this->state_iter = 0;
+		this->sub_state_iter = 0;
+	}
+}

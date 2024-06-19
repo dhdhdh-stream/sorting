@@ -1,205 +1,134 @@
-// #include "info_pass_through_experiment.h"
+#include "info_pass_through_experiment.h"
 
-// #include "action_node.h"
-// #include "branch_node.h"
-// #include "constants.h"
-// #include "globals.h"
-// #include "info_branch_node.h"
-// #include "info_scope.h"
-// #include "info_scope_node.h"
-// #include "network.h"
-// #include "scope.h"
-// #include "utilities.h"
+#include "action_node.h"
+#include "branch_node.h"
+#include "constants.h"
+#include "eval_helpers.h"
+#include "globals.h"
+#include "info_branch_node.h"
+#include "info_scope.h"
+#include "network.h"
+#include "scope.h"
+#include "solution.h"
+#include "utilities.h"
 
-// using namespace std;
+using namespace std;
 
-// void InfoPassThroughExperiment::measure_activate(
-// 		AbstractNode*& curr_node,
-// 		Problem* problem,
-// 		vector<ContextLayer>& context,
-// 		RunHelper& run_helper,
-// 		InfoPassThroughExperimentHistory* history) {
-// 	if (this->info_scope == NULL) {
-// 		if (this->step_types.size() == 0) {
-// 			curr_node = this->exit_next_node;
-// 		} else {
-// 			if (this->step_types[0] == STEP_TYPE_ACTION) {
-// 				curr_node = this->actions[0];
-// 			} else {
-// 				curr_node = this->scopes[0];
-// 			}
-// 		}
-// 	} else {
-// 		ScopeHistory* inner_scope_history;
-// 		bool inner_is_positive;
-// 		this->info_scope->activate(problem,
-// 								   run_helper,
-// 								   inner_scope_history,
-// 								   inner_is_positive);
+void InfoPassThroughExperiment::measure_activate(
+		AbstractNode*& curr_node) {
+	if (this->actions.size() == 0) {
+		curr_node = this->exit_next_node;
+	} else {
+		curr_node = this->actions[0];
+	}
+}
 
-// 		delete inner_scope_history;
+void InfoPassThroughExperiment::measure_info_back_activate(
+		vector<ContextLayer>& context,
+		RunHelper& run_helper,
+		bool& is_positive) {
+	InfoPassThroughExperimentHistory* history = (InfoPassThroughExperimentHistory*)run_helper.experiment_histories.back();
 
-// 		if ((this->is_negate && !inner_is_positive)
-// 				|| (!this->is_negate && inner_is_positive)) {
-// 			if (this->step_types.size() == 0) {
-// 				curr_node = this->exit_next_node;
-// 			} else {
-// 				if (this->step_types[0] == STEP_TYPE_ACTION) {
-// 					curr_node = this->actions[0];
-// 				} else {
-// 					curr_node = this->scopes[0];
-// 				}
-// 			}
-// 		}
-// 	}
-// }
+	history->predicted_scores.push_back(vector<double>(context.size()-1, 0.0));
+	for (int l_index = 0; l_index < (int)context.size()-1; l_index++) {
+		Scope* scope = (Scope*)context[l_index].scope;
+		ScopeHistory* scope_history = (ScopeHistory*)context[l_index].scope_history;
+		if (scope->eval_network != NULL) {
+			scope_history->callback_experiment_history = history;
+			scope_history->callback_experiment_indexes.push_back(
+				(int)history->predicted_scores.size()-1);
+			scope_history->callback_experiment_layers.push_back(l_index);
+		}
+	}
 
-// void InfoPassThroughExperiment::measure_back_activate(
-// 		ScopeHistory*& subscope_history,
-// 		bool& result_is_positive,
-// 		RunHelper& run_helper) {
-// 	vector<double> input_vals(this->input_node_contexts.size(), 0.0);
-// 	for (int i_index = 0; i_index < (int)this->input_node_contexts.size(); i_index++) {
-// 		map<AbstractNode*, AbstractNodeHistory*>::iterator it = subscope_history->node_histories.find(
-// 			this->input_node_contexts[i_index]);
-// 		if (it != subscope_history->node_histories.end()) {
-// 			switch (this->input_node_contexts[i_index]->type) {
-// 			case NODE_TYPE_ACTION:
-// 				{
-// 					ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
-// 					input_vals[i_index] = action_node_history->obs_snapshot[this->input_obs_indexes[i_index]];
-// 				}
-// 				break;
-// 			case NODE_TYPE_BRANCH:
-// 				{
-// 					BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
-// 					if (branch_node_history->is_branch) {
-// 						input_vals[i_index] = 1.0;
-// 					} else {
-// 						input_vals[i_index] = -1.0;
-// 					}
-// 				}
-// 				break;
-// 			case NODE_TYPE_INFO_SCOPE:
-// 				{
-// 					InfoScopeNodeHistory* info_scope_node_history = (InfoScopeNodeHistory*)it->second;
-// 					if (info_scope_node_history->is_positive) {
-// 						input_vals[i_index] = 1.0;
-// 					} else {
-// 						input_vals[i_index] = -1.0;
-// 					}
-// 				}
-// 				break;
-// 			case NODE_TYPE_INFO_BRANCH:
-// 				{
-// 					InfoBranchNodeHistory* info_branch_node_history = (InfoBranchNodeHistory*)it->second;
-// 					if (info_branch_node_history->is_branch) {
-// 						input_vals[i_index] = 1.0;
-// 					} else {
-// 						input_vals[i_index] = -1.0;
-// 					}
-// 				}
-// 				break;
-// 			}
-// 		}
-// 	}
+	vector<double> new_input_vals(this->new_input_node_contexts.size(), 0.0);
+	for (int i_index = 0; i_index < (int)this->new_input_node_contexts.size(); i_index++) {
+		map<AbstractNode*, AbstractNodeHistory*>::iterator it = context.back().scope_history->node_histories.find(
+			this->new_input_node_contexts[i_index]);
+		if (it != context.back().scope_history->node_histories.end()) {
+			ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
+			new_input_vals[i_index] = action_node_history->obs_snapshot[this->new_input_obs_indexes[i_index]];
+		}
+	}
+	this->new_network->activate(new_input_vals);
+	#if defined(MDEBUG) && MDEBUG
+	#else
+	double new_predicted_score = this->new_network->output->acti_vals[0];
+	#endif /* MDEBUG */
 
-// 	double negative_score = this->negative_average_score;
-// 	for (int i_index = 0; i_index < (int)this->input_node_contexts.size(); i_index++) {
-// 		negative_score += input_vals[i_index] * this->negative_linear_weights[i_index];
-// 	}
-// 	if (this->negative_network != NULL) {
-// 		vector<vector<double>> negative_network_input_vals(this->negative_network_input_indexes.size());
-// 		for (int i_index = 0; i_index < (int)this->negative_network_input_indexes.size(); i_index++) {
-// 			negative_network_input_vals[i_index] = vector<double>(this->negative_network_input_indexes[i_index].size());
-// 			for (int v_index = 0; v_index < (int)this->negative_network_input_indexes[i_index].size(); v_index++) {
-// 				negative_network_input_vals[i_index][v_index] = input_vals[this->negative_network_input_indexes[i_index][v_index]];
-// 			}
-// 		}
-// 		this->negative_network->activate(negative_network_input_vals);
-// 		negative_score += this->negative_network->output->acti_vals[0];
-// 	}
+	#if defined(MDEBUG) && MDEBUG
+	if (run_helper.curr_run_seed%2 == 0) {
+		is_positive = true;
+	} else {
+		is_positive = false;
+	}
+	run_helper.curr_run_seed = xorshift(run_helper.curr_run_seed);
+	#else
+	if (new_predicted_score >= 0.0) {
+		is_positive = true;
+	} else {
+		is_positive = false;
+	}
+	#endif /* MDEBUG */
+}
 
-// 	double positive_score = this->positive_average_score;
-// 	for (int i_index = 0; i_index < (int)this->input_node_contexts.size(); i_index++) {
-// 		positive_score += input_vals[i_index] * this->positive_linear_weights[i_index];
-// 	}
-// 	if (this->positive_network != NULL) {
-// 		vector<vector<double>> positive_network_input_vals(this->positive_network_input_indexes.size());
-// 		for (int i_index = 0; i_index < (int)this->positive_network_input_indexes.size(); i_index++) {
-// 			positive_network_input_vals[i_index] = vector<double>(this->positive_network_input_indexes[i_index].size());
-// 			for (int v_index = 0; v_index < (int)this->positive_network_input_indexes[i_index].size(); v_index++) {
-// 				positive_network_input_vals[i_index][v_index] = input_vals[this->positive_network_input_indexes[i_index][v_index]];
-// 			}
-// 		}
-// 		this->positive_network->activate(positive_network_input_vals);
-// 		positive_score += this->positive_network->output->acti_vals[0];
-// 	}
+void InfoPassThroughExperiment::measure_back_activate(
+		vector<ContextLayer>& context,
+		RunHelper& run_helper) {
+	InfoPassThroughExperimentHistory* history = (InfoPassThroughExperimentHistory*)run_helper.experiment_histories.back();
 
-// 	#if defined(MDEBUG) && MDEBUG
-// 	if (run_helper.curr_run_seed%2 == 0) {
-// 		positive_count++;
-// 		result_is_positive = true;
-// 	} else {
-// 		negative_count++;
-// 		result_is_positive = false;
-// 	}
-// 	run_helper.curr_run_seed = xorshift(run_helper.curr_run_seed);
-// 	#else
-// 	if (positive_score >= negative_score) {
-// 		positive_count++;
-// 		result_is_positive = true;
-// 	} else {
-// 		negative_count++;
-// 		result_is_positive = false;
-// 	}
-// 	#endif /* MDEBUG */
-// }
+	ScopeHistory* scope_history = (ScopeHistory*)context.back().scope_history;
 
-// void InfoPassThroughExperiment::measure_backprop(
-// 		double target_val,
-// 		RunHelper& run_helper) {
-// 	this->o_target_val_histories.push_back(target_val);
+	double predicted_score;
+	if (run_helper.exceeded_limit) {
+		predicted_score = -1.0;
+	} else {
+		predicted_score = calc_score(scope_history);
+	}
+	for (int i_index = 0; i_index < (int)scope_history->callback_experiment_indexes.size(); i_index++) {
+		history->predicted_scores[scope_history->callback_experiment_indexes[i_index]]
+			[scope_history->callback_experiment_layers[i_index]] = predicted_score;
+	}
+}
 
-// 	if ((int)this->o_target_val_histories.size() >= NUM_DATAPOINTS) {
-// 		#if defined(MDEBUG) && MDEBUG
-// 		this->o_target_val_histories.clear();
+void InfoPassThroughExperiment::measure_backprop(
+		double target_val,
+		RunHelper& run_helper) {
+	if (run_helper.exceeded_limit) {
+		this->result = EXPERIMENT_RESULT_FAIL;
+	} else {
+		InfoPassThroughExperimentHistory* history = (InfoPassThroughExperimentHistory*)run_helper.experiment_histories.back();
 
-// 		if (rand()%8 == 0) {
-// 			this->new_state = INFO_SCOPE_STATE_DISABLED_POSITIVE;
-// 		} else if (rand()%7 == 0) {
-// 			this->new_state = INFO_SCOPE_STATE_DISABLED_NEGATIVE;
-// 		} else {
-// 			this->new_state = INFO_SCOPE_STATE_NA;
-// 		}
+		for (int i_index = 0; i_index < (int)history->predicted_scores.size(); i_index++) {
+			double final_score = target_val - solution->average_score;
+			if (history->predicted_scores[i_index].size() > 0) {
+				double sum_score = 0.0;
+				for (int l_index = 0; l_index < (int)history->predicted_scores[i_index].size(); l_index++) {
+					sum_score += history->predicted_scores[i_index][l_index];
+				}
+				final_score += sum_score / (int)history->predicted_scores[i_index].size();
+			}
+			this->combined_score += final_score;
+			this->sub_state_iter++;
+		}
 
-// 		if (rand()%2 == 0) {
-// 		#else
-// 		double sum_scores = 0.0;
-// 		for (int d_index = 0; d_index < NUM_DATAPOINTS; d_index++) {
-// 			sum_scores += this->o_target_val_histories[d_index];
-// 		}
-// 		double new_average_score = sum_scores / NUM_DATAPOINTS;
+		this->state_iter++;
+		if (this->sub_state_iter >= NUM_DATAPOINTS
+				&& this->state_iter >= MIN_NUM_TRUTH_DATAPOINTS) {
+			this->combined_score /= this->sub_state_iter;
 
-// 		this->o_target_val_histories.clear();
+			#if defined(MDEBUG) && MDEBUG
+			if (rand()%2 == 0) {
+			#else
+			if (this->combined_score > this->existing_average_score) {
+			#endif /* MDEBUG */
+				this->target_val_histories.reserve(VERIFY_NUM_DATAPOINTS);
 
-// 		double positive_weight = (double)this->positive_count / (double)(this->negative_count + this->positive_count);
-// 		if (positive_weight > DISABLE_POSITIVE_PERCENTAGE) {
-// 			this->new_state = INFO_SCOPE_STATE_DISABLED_POSITIVE;
-// 		} else if (positive_weight < DISABLE_NEGATIVE_PERCENTAGE) {
-// 			this->new_state = INFO_SCOPE_STATE_DISABLED_NEGATIVE;
-// 		} else {
-// 			this->new_state = INFO_SCOPE_STATE_NA;
-// 		}
-
-// 		if (new_average_score > this->existing_average_score) {
-// 		#endif /* MDEBUG */
-// 			this->o_target_val_histories.reserve(VERIFY_1ST_NUM_DATAPOINTS);
-
-// 			this->state = INFO_PASS_THROUGH_EXPERIMENT_STATE_VERIFY_1ST_EXISTING;
-// 			this->state_iter = 0;
-// 		} else {
-// 			this->result = EXPERIMENT_RESULT_FAIL;
-// 		}
-// 	}
-// }
+				this->state = INFO_PASS_THROUGH_EXPERIMENT_STATE_VERIFY_EXISTING;
+				this->state_iter = 0;
+			} else {
+				this->result = EXPERIMENT_RESULT_FAIL;
+			}
+		}
+	}
+}

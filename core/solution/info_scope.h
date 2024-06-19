@@ -43,6 +43,9 @@ public:
 				  RunHelper& run_helper,
 				  bool& is_positive);
 
+	void random_exit_activate(AbstractNode* starting_node,
+							  std::vector<AbstractNode*>& possible_exits);
+
 	void explore_activate(Problem* problem,
 						  std::vector<ContextLayer>& context,
 						  RunHelper& run_helper,

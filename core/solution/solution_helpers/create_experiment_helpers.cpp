@@ -88,13 +88,14 @@ void create_experiment(RunHelper& run_helper) {
 			}
 		}
 	} else {
-		// InfoPassThroughExperiment* new_experiment = new InfoPassThroughExperiment(
-		// 	possible_info_scope_contexts[rand_index],
-		// 	possible_scope_contexts[rand_index],
-		// 	possible_node_contexts[rand_index],
-		// 	possible_is_branch[rand_index]);
+		InfoScope* explore_scope = (InfoScope*)explore_node->parent;
 
-		// possible_info_scope_contexts[rand_index]->experiment = new_experiment;
-		// possible_node_contexts[rand_index]->experiments.push_back(new_experiment);
+		InfoPassThroughExperiment* new_experiment = new InfoPassThroughExperiment(
+			explore_scope,
+			explore_node,
+			explore_is_branch);
+
+		explore_scope->experiment = new_experiment;
+		explore_node->experiments.push_back(new_experiment);
 	}
 }
