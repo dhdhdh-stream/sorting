@@ -102,6 +102,8 @@ int main(int argc, char* argv[]) {
 			solution = new Solution();
 			solution->load("", "main");
 
+			update_eval();
+
 			continue;
 		}
 		#endif /* MDEBUG */
@@ -200,19 +202,29 @@ int main(int argc, char* argv[]) {
 				 */
 				Solution* duplicate = new Solution(solution);
 
-				duplicate->last_updated_scope_id = run_helper.experiment_histories.back()->experiment->scope_context->id;
-				if (run_helper.experiment_histories.back()->experiment->type == EXPERIMENT_TYPE_NEW_ACTION) {
-					duplicate->last_new_scope_id = (int)solution->scopes.size();
+				int last_updated_info_scope_id = -1;
+				if (run_helper.experiment_histories.back()->experiment->type == EXPERIMENT_TYPE_INFO_PASS_THROUGH) {
+					last_updated_info_scope_id = run_helper.experiment_histories.back()->experiment->scope_context->id;
+				} else {
+					duplicate->last_updated_scope_id = run_helper.experiment_histories.back()->experiment->scope_context->id;
+					if (run_helper.experiment_histories.back()->experiment->type == EXPERIMENT_TYPE_NEW_ACTION) {
+						duplicate->last_new_scope_id = (int)solution->scopes.size();
 
-					duplicate->next_possible_new_scope_timestamp = duplicate->timestamp
-						+ 1 + duplicate->scopes.size() + MIN_ITERS_BEFORE_NEXT_NEW_SCOPE;
+						duplicate->next_possible_new_scope_timestamp = duplicate->timestamp
+							+ 1 + duplicate->scopes.size() + MIN_ITERS_BEFORE_NEXT_NEW_SCOPE;
+					}
 				}
 
 				run_helper.experiment_histories.back()->experiment->finalize(duplicate);
 				delete run_helper.experiment_histories.back()->experiment;
 
-				Scope* experiment_scope = duplicate->scopes[duplicate->last_updated_scope_id];
-				clean_scope(experiment_scope);
+				if (last_updated_info_scope_id != -1) {
+					InfoScope* info_scope = duplicate->info_scopes[last_updated_info_scope_id];
+					clean_info_scope(info_scope);
+				} else {
+					Scope* experiment_scope = duplicate->scopes[duplicate->last_updated_scope_id];
+					clean_scope(experiment_scope);
+				}
 
 				#if defined(MDEBUG) && MDEBUG
 				while (duplicate->verify_problems.size() > 0) {
@@ -291,6 +303,8 @@ int main(int argc, char* argv[]) {
 					delete solution;
 					solution = new Solution();
 					solution->load("", "main");
+
+					update_eval();
 
 					continue;
 				}

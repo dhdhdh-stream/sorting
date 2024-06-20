@@ -58,6 +58,7 @@ public:
 	PassThroughExperiment(AbstractScope* scope_context,
 						  AbstractNode* node_context,
 						  bool is_branch,
+						  int score_type,
 						  AbstractExperiment* parent_experiment);
 	~PassThroughExperiment();
 	void decrement(AbstractNode* experiment_node);

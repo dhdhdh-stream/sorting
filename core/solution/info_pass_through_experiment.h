@@ -70,7 +70,7 @@ public:
 
 	InfoPassThroughExperiment(AbstractScope* scope_context,
 							  AbstractNode* node_context,
-							  bool is_branch);
+							  int score_type);
 	~InfoPassThroughExperiment();
 	void decrement(AbstractNode* experiment_node);
 

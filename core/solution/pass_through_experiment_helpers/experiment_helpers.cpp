@@ -182,6 +182,7 @@ void PassThroughExperiment::experiment_back_activate(
 							this->scope_context,
 							possible_node_contexts[rand_index],
 							possible_is_branch[rand_index],
+							this->score_type,
 							this);
 
 						/**
@@ -193,6 +194,7 @@ void PassThroughExperiment::experiment_back_activate(
 							this->scope_context,
 							possible_node_contexts[rand_index],
 							possible_is_branch[rand_index],
+							this->score_type,
 							this);
 
 						possible_node_contexts[rand_index]->experiments.insert(possible_node_contexts[rand_index]->experiments.begin(), new_experiment);
@@ -202,6 +204,7 @@ void PassThroughExperiment::experiment_back_activate(
 						this->scope_context,
 						possible_node_contexts[rand_index],
 						possible_is_branch[rand_index],
+						this->score_type,
 						this);
 
 					possible_node_contexts[rand_index]->experiments.insert(possible_node_contexts[rand_index]->experiments.begin(), new_experiment);

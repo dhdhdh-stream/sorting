@@ -15,12 +15,14 @@ using namespace std;
 PassThroughExperiment::PassThroughExperiment(AbstractScope* scope_context,
 											 AbstractNode* node_context,
 											 bool is_branch,
+											 int score_type,
 											 AbstractExperiment* parent_experiment) {
 	this->type = EXPERIMENT_TYPE_PASS_THROUGH;
 
 	this->scope_context = scope_context;
 	this->node_context = node_context;
 	this->is_branch = is_branch;
+	this->score_type = score_type;
 
 	this->parent_experiment = parent_experiment;
 	if (this->parent_experiment != NULL) {

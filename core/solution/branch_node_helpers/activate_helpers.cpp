@@ -102,9 +102,9 @@ void BranchNode::activate(AbstractNode*& curr_node,
 	}
 
 	if (run_helper.experiments_seen_order.size() == 0) {
-		map<AbstractScope*, set<pair<AbstractNode*,bool>>>::iterator scope_it = run_helper.nodes_seen.find(this->parent);
-		if (scope_it == run_helper.nodes_seen.end()) {
-			scope_it = run_helper.nodes_seen.insert({this->parent, set<pair<AbstractNode*,bool>>()}).first;
+		map<Scope*, set<pair<AbstractNode*,bool>>>::iterator scope_it = run_helper.scope_nodes_seen.find((Scope*)this->parent);
+		if (scope_it == run_helper.scope_nodes_seen.end()) {
+			scope_it = run_helper.scope_nodes_seen.insert({(Scope*)this->parent, set<pair<AbstractNode*,bool>>()}).first;
 		}
 		scope_it->second.insert({this, is_branch});
 	}

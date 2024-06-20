@@ -31,9 +31,6 @@ class Solution {
 public:
 	int timestamp;
 	double average_score;
-	/**
-	 * - remember to always normalize to improve learning
-	 */
 	int next_possible_new_scope_timestamp;
 
 	int last_updated_scope_id;
@@ -49,6 +46,10 @@ public:
 	 */
 	int max_num_actions;
 	int num_actions_limit;
+
+	// temp
+	std::vector<int> score_type_counts;
+	std::vector<double> score_type_impacts;
 
 	#if defined(MDEBUG) && MDEBUG
 	std::vector<Problem*> verify_problems;

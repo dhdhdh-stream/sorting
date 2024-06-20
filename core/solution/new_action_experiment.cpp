@@ -20,9 +20,13 @@ const int CREATE_NEW_ACTION_NUM_TRIES = 50;
 
 NewActionExperiment::NewActionExperiment(AbstractScope* scope_context,
 										 AbstractNode* node_context,
-										 bool is_branch) {
+										 bool is_branch,
+										 int score_type) {
 	this->type = EXPERIMENT_TYPE_NEW_ACTION;
 
+	/**
+	 * TODO: select based on scopes_used
+	 */
 	std::vector<Scope*> possible_scopes;
 	for (int s_index = 0; s_index < (int)solution->scopes.size(); s_index++) {
 		if (solution->scopes[s_index]->nodes.size() > PARENT_SCOPE_MIN_NUM_NODES) {
@@ -440,6 +444,7 @@ NewActionExperiment::NewActionExperiment(AbstractScope* scope_context,
 
 	if (this->new_scope != NULL) {
 		this->scope_context = scope_context;
+		this->score_type = score_type;
 
 		vector<AbstractNode*> possible_exits;
 

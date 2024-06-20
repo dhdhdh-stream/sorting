@@ -64,6 +64,10 @@ void InfoScope::activate(Problem* problem,
 				run_helper,
 				is_positive);
 			if (is_selected) {
+				delete history;
+
+				context.pop_back();
+
 				return;
 			}
 		}

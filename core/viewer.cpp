@@ -68,6 +68,13 @@ int main(int argc, char* argv[]) {
 		delete problem;
 	}
 
+	// temp
+	for (int i = 0; i < 3; i++) {
+		cout << i << endl;
+		cout << "count: " << solution->score_type_counts[i] << endl;
+		cout << "impacts: " << solution->score_type_impacts[i] << endl;
+	}
+
 	ofstream display_file;
 	display_file.open("../display.txt");
 	solution->save_for_display(display_file);

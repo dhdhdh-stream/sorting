@@ -26,15 +26,45 @@
 using namespace std;
 
 void create_experiment(RunHelper& run_helper) {
-	uniform_int_distribution<int> scope_distribution(0, run_helper.nodes_seen.size()-1);
-	map<AbstractScope*, set<pair<AbstractNode*,bool>>>::iterator scope_it =
-		next(run_helper.nodes_seen.begin(), scope_distribution(generator));
-	uniform_int_distribution<int> node_distribution(0, scope_it->second.size()-1);
-	set<pair<AbstractNode*,bool>>::iterator it = next(scope_it->second.begin(), node_distribution(generator));
-	AbstractNode* explore_node = it->first;
-	bool explore_is_branch = it->second;
+	uniform_int_distribution<int> info_distribution(0, 19);
+	if (run_helper.info_scope_nodes_seen.size() > 0
+			&& info_distribution(generator) == 0) {
+		uniform_int_distribution<int> scope_distribution(0, run_helper.info_scope_nodes_seen.size()-1);
+		map<InfoScope*, set<AbstractNode*>>::iterator scope_it =
+			next(run_helper.info_scope_nodes_seen.begin(), scope_distribution(generator));
+		uniform_int_distribution<int> node_distribution(0, scope_it->second.size()-1);
+		set<AbstractNode*>::iterator it = next(scope_it->second.begin(), node_distribution(generator));
+		AbstractNode* explore_node = *it;
 
-	if (explore_node->parent->type == SCOPE_TYPE_SCOPE) {
+		uniform_int_distribution<int> score_type_distribution(0, 2);
+		int score_type = score_type_distribution(generator);
+
+		InfoScope* explore_scope = (InfoScope*)explore_node->parent;
+
+		InfoPassThroughExperiment* new_experiment = new InfoPassThroughExperiment(
+			explore_scope,
+			explore_node,
+			score_type);
+
+		explore_scope->experiment = new_experiment;
+		explore_node->experiments.push_back(new_experiment);
+	} else {
+		uniform_int_distribution<int> scope_distribution(0, run_helper.scope_nodes_seen.size()-1);
+		map<Scope*, set<pair<AbstractNode*,bool>>>::iterator scope_it =
+			next(run_helper.scope_nodes_seen.begin(), scope_distribution(generator));
+		uniform_int_distribution<int> node_distribution(0, scope_it->second.size()-1);
+		set<pair<AbstractNode*,bool>>::iterator it = next(scope_it->second.begin(), node_distribution(generator));
+		AbstractNode* explore_node = it->first;
+		bool explore_is_branch = it->second;
+
+		int score_type;
+		if (explore_node->parent->id == 0) {
+			score_type = SCORE_TYPE_TRUTH;
+		} else {
+			uniform_int_distribution<int> score_type_distribution(0, 2);
+			score_type = score_type_distribution(generator);
+		}
+
 		uniform_int_distribution<int> non_new_distribution(0, (int)explore_node->parent->nodes.size()-1);
 		if (solution->timestamp >= solution->next_possible_new_scope_timestamp
 				&& explore_node->parent->nodes.size() > 10
@@ -42,7 +72,8 @@ void create_experiment(RunHelper& run_helper) {
 			NewActionExperiment* new_action_experiment = new NewActionExperiment(
 				explore_node->parent,
 				explore_node,
-				explore_is_branch);
+				explore_is_branch,
+				score_type);
 
 			if (new_action_experiment->result == EXPERIMENT_RESULT_FAIL) {
 				delete new_action_experiment;
@@ -60,6 +91,7 @@ void create_experiment(RunHelper& run_helper) {
 							explore_node->parent,
 							explore_node,
 							explore_is_branch,
+							score_type,
 							NULL);
 
 						explore_node->experiments.push_back(new_experiment);
@@ -71,6 +103,7 @@ void create_experiment(RunHelper& run_helper) {
 							explore_node->parent,
 							explore_node,
 							explore_is_branch,
+							score_type,
 							NULL);
 
 						explore_node->experiments.push_back(new_experiment);
@@ -82,20 +115,11 @@ void create_experiment(RunHelper& run_helper) {
 					explore_node->parent,
 					explore_node,
 					explore_is_branch,
+					score_type,
 					NULL);
 
 				explore_node->experiments.push_back(new_experiment);
 			}
 		}
-	} else {
-		InfoScope* explore_scope = (InfoScope*)explore_node->parent;
-
-		InfoPassThroughExperiment* new_experiment = new InfoPassThroughExperiment(
-			explore_scope,
-			explore_node,
-			explore_is_branch);
-
-		explore_scope->experiment = new_experiment;
-		explore_node->experiments.push_back(new_experiment);
 	}
 }

@@ -202,19 +202,32 @@ int main(int argc, char* argv[]) {
 				 */
 				Solution* duplicate = new Solution(solution);
 
-				duplicate->last_updated_scope_id = run_helper.experiment_histories.back()->experiment->scope_context->id;
-				if (run_helper.experiment_histories.back()->experiment->type == EXPERIMENT_TYPE_NEW_ACTION) {
-					duplicate->last_new_scope_id = (int)solution->scopes.size();
+				int last_updated_info_scope_id = -1;
+				if (run_helper.experiment_histories.back()->experiment->type == EXPERIMENT_TYPE_INFO_PASS_THROUGH) {
+					last_updated_info_scope_id = run_helper.experiment_histories.back()->experiment->scope_context->id;
+				} else {
+					duplicate->last_updated_scope_id = run_helper.experiment_histories.back()->experiment->scope_context->id;
+					if (run_helper.experiment_histories.back()->experiment->type == EXPERIMENT_TYPE_NEW_ACTION) {
+						duplicate->last_new_scope_id = (int)solution->scopes.size();
 
-					duplicate->next_possible_new_scope_timestamp = duplicate->timestamp
-						+ 1 + duplicate->scopes.size() + MIN_ITERS_BEFORE_NEXT_NEW_SCOPE;
+						duplicate->next_possible_new_scope_timestamp = duplicate->timestamp
+							+ 1 + duplicate->scopes.size() + MIN_ITERS_BEFORE_NEXT_NEW_SCOPE;
+					}
 				}
+
+				// temp
+				int experiment_score_type = run_helper.experiment_histories.back()->experiment->score_type;
 
 				run_helper.experiment_histories.back()->experiment->finalize(duplicate);
 				delete run_helper.experiment_histories.back()->experiment;
 
-				Scope* experiment_scope = duplicate->scopes[duplicate->last_updated_scope_id];
-				clean_scope(experiment_scope);
+				if (last_updated_info_scope_id != -1) {
+					InfoScope* info_scope = duplicate->info_scopes[last_updated_info_scope_id];
+					clean_info_scope(info_scope);
+				} else {
+					Scope* experiment_scope = duplicate->scopes[duplicate->last_updated_scope_id];
+					clean_scope(experiment_scope);
+				}
 
 				vector<double> target_vals;
 				int max_num_actions = 0;
@@ -289,6 +302,13 @@ int main(int argc, char* argv[]) {
 				duplicate->max_num_actions = max_num_actions;
 
 				cout << "duplicate->average_score: " << duplicate->average_score << endl;
+
+				// temp
+				if (duplicate->last_updated_scope_id != 0) {
+					duplicate->score_type_counts[experiment_score_type]++;
+					double experiment_improvement = duplicate->average_score - solution->average_score;
+					duplicate->score_type_impacts[experiment_score_type] += experiment_improvement;
+				}
 
 				duplicate->timestamp++;
 				duplicate->save(path, "possible_" + to_string((unsigned)time(NULL)));

@@ -44,6 +44,16 @@ void InfoScope::clear_verify() {
 }
 #endif /* MDEBUG */
 
+void InfoScope::clean_node(int node_id) {
+	for (int i_index = this->input_node_contexts.size()-1; i_index >= 0; i_index--) {
+		if (this->input_node_contexts[i_index]->id == node_id) {
+			this->input_node_contexts.erase(this->input_node_contexts.begin() + i_index);
+			this->input_obs_indexes.erase(this->input_obs_indexes.begin() + i_index);
+			this->network->remove_input(i_index);
+		}
+	}
+}
+
 void InfoScope::save(ofstream& output_file) {
 	output_file << this->node_counter << endl;
 

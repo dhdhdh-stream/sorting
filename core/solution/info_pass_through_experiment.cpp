@@ -13,12 +13,12 @@ using namespace std;
 InfoPassThroughExperiment::InfoPassThroughExperiment(
 		AbstractScope* scope_context,
 		AbstractNode* node_context,
-		bool is_branch) {
+		int score_type) {
 	this->type = EXPERIMENT_TYPE_INFO_PASS_THROUGH;
 
 	this->scope_context = scope_context;
 	this->node_context = node_context;
-	this->is_branch = is_branch;
+	this->score_type = score_type;
 
 	this->average_remaining_experiments_from_start = 1.0;
 	/**

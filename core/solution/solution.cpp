@@ -51,6 +51,10 @@ Solution::Solution(Solution* original) {
 
 	this->max_num_actions = original->max_num_actions;
 	this->num_actions_limit = original->num_actions_limit;
+
+	// temp
+	this->score_type_counts = original->score_type_counts;
+	this->score_type_impacts = original->score_type_impacts;
 }
 
 Solution::~Solution() {
@@ -85,6 +89,10 @@ void Solution::init() {
 
 	this->max_num_actions = 1;
 	this->num_actions_limit = 40;
+
+	// temp
+	this->score_type_counts = vector<int>(3, 0);
+	this->score_type_impacts = vector<double>(3, 0.0);
 }
 
 void Solution::load(string path,
@@ -155,6 +163,17 @@ void Solution::load(string path,
 	this->num_actions_limit = 10*this->max_num_actions + 10;
 	#endif /* MDEBUG */
 
+	// temp
+	for (int i = 0; i < 3; i++) {
+		string count_line;
+		getline(input_file, count_line);
+		this->score_type_counts.push_back(stoi(count_line));
+
+		string impact_line;
+		getline(input_file, impact_line);
+		this->score_type_impacts.push_back(stod(impact_line));
+	}
+
 	input_file.close();
 }
 
@@ -195,6 +214,12 @@ void Solution::save(string path,
 	}
 
 	output_file << this->max_num_actions << endl;
+
+	// temp
+	for (int i = 0; i < 3; i++) {
+		output_file << this->score_type_counts[i] << endl;
+		output_file << this->score_type_impacts[i] << endl;
+	}
 
 	output_file.close();
 

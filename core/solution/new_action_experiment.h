@@ -83,7 +83,8 @@ public:
 
 	NewActionExperiment(AbstractScope* scope_context,
 						AbstractNode* node_context,
-						bool is_branch);
+						bool is_branch,
+						int score_type);
 	~NewActionExperiment();
 	void decrement(AbstractNode* experiment_node);
 

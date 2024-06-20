@@ -5,6 +5,7 @@
 #include "action_node.h"
 #include "branch_node.h"
 #include "info_branch_node.h"
+#include "info_scope.h"
 #include "network.h"
 #include "scope.h"
 #include "scope_node.h"
@@ -48,6 +49,39 @@ void clean_scope(Scope* scope) {
 				}
 				break;
 			}
+		}
+
+		map<int, AbstractNode*>::iterator it = scope->nodes.begin();
+		while (it != scope->nodes.end()) {
+			set<int>::iterator needed_it = next_node_ids.find(it->first);
+			if (needed_it == next_node_ids.end()) {
+				removed_node = true;
+
+				scope->clean_node(it->first);
+
+				delete it->second;
+				it = scope->nodes.erase(it);
+			} else {
+				it++;
+			}
+		}
+
+		if (!removed_node) {
+			break;
+		}
+	}
+}
+
+void clean_info_scope(InfoScope* scope) {
+	while (true) {
+		bool removed_node = false;
+
+		set<int> next_node_ids;
+		next_node_ids.insert(0);
+		for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
+				it != scope->nodes.end(); it++) {
+			ActionNode* action_node = (ActionNode*)it->second;
+			next_node_ids.insert(action_node->next_node_id);
 		}
 
 		map<int, AbstractNode*>::iterator it = scope->nodes.begin();

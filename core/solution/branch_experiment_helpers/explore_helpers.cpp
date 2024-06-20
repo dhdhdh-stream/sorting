@@ -51,16 +51,33 @@ bool BranchExperiment::explore_activate(
 	if (is_target) {
 		history->has_target = true;
 
-		history->predicted_scores.push_back(vector<double>(context.size()-1, 0.0));
-		for (int l_index = 0; l_index < (int)context.size()-1; l_index++) {
-			Scope* scope = (Scope*)context[l_index].scope;
-			ScopeHistory* scope_history = (ScopeHistory*)context[l_index].scope_history;
-			if (scope->eval_network != NULL) {
+		switch (this->score_type) {
+		case SCORE_TYPE_TRUTH:
+			history->predicted_scores.push_back(vector<double>());
+			break;
+		case SCORE_TYPE_ALL:
+			history->predicted_scores.push_back(vector<double>(context.size()-1));
+			for (int l_index = 0; l_index < (int)context.size()-1; l_index++) {
+				ScopeHistory* scope_history = (ScopeHistory*)context[l_index].scope_history;
+
 				scope_history->callback_experiment_history = history;
 				scope_history->callback_experiment_indexes.push_back(
 					(int)history->predicted_scores.size()-1);
 				scope_history->callback_experiment_layers.push_back(l_index);
 			}
+			break;
+		case SCORE_TYPE_LOCAL:
+			{
+				history->predicted_scores.push_back(vector<double>(1));
+
+				ScopeHistory* scope_history = (ScopeHistory*)context[context.size()-2].scope_history;
+
+				scope_history->callback_experiment_history = history;
+				scope_history->callback_experiment_indexes.push_back(
+					(int)history->predicted_scores.size()-1);
+				scope_history->callback_experiment_layers.push_back(0);
+			}
+			break;
 		}
 
 		vector<double> input_vals(this->existing_input_node_contexts.size(), 0.0);
@@ -253,13 +270,23 @@ void BranchExperiment::explore_backprop(
 	if (history->has_target) {
 		double curr_surprise;
 		if (!run_helper.exceeded_limit) {
-			double final_score = target_val - solution->average_score;
-			if (history->predicted_scores[0].size() > 0) {
-				double sum_score = 0.0;
-				for (int l_index = 0; l_index < (int)history->predicted_scores[0].size(); l_index++) {
-					sum_score += history->predicted_scores[0][l_index];
+			double final_score;
+			switch (this->score_type) {
+			case SCORE_TYPE_TRUTH:
+				final_score = target_val - solution->average_score;
+				break;
+			case SCORE_TYPE_ALL:
+				{
+					double sum_score = target_val - solution->average_score;
+					for (int l_index = 0; l_index < (int)history->predicted_scores[0].size(); l_index++) {
+						sum_score += history->predicted_scores[0][l_index];
+					}
+					final_score = sum_score / ((int)history->predicted_scores[0].size() + 1);
 				}
-				final_score += sum_score / (int)history->predicted_scores[0].size();
+				break;
+			case SCORE_TYPE_LOCAL:
+				final_score = history->predicted_scores[0][0];
+				break;
 			}
 
 			curr_surprise = final_score - history->existing_predicted_scores[0];

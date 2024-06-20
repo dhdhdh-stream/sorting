@@ -40,10 +40,18 @@ void ActionNode::activate(AbstractNode*& curr_node,
 	}
 
 	if (run_helper.experiments_seen_order.size() == 0) {
-		map<AbstractScope*, set<pair<AbstractNode*,bool>>>::iterator scope_it = run_helper.nodes_seen.find(this->parent);
-		if (scope_it == run_helper.nodes_seen.end()) {
-			scope_it = run_helper.nodes_seen.insert({this->parent, set<pair<AbstractNode*,bool>>()}).first;
+		if (this->parent->type == SCOPE_TYPE_SCOPE) {
+			map<Scope*, set<pair<AbstractNode*,bool>>>::iterator scope_it = run_helper.scope_nodes_seen.find((Scope*)this->parent);
+			if (scope_it == run_helper.scope_nodes_seen.end()) {
+				scope_it = run_helper.scope_nodes_seen.insert({(Scope*)this->parent, set<pair<AbstractNode*,bool>>()}).first;
+			}
+			scope_it->second.insert({this, false});
+		} else {
+			map<InfoScope*, set<AbstractNode*>>::iterator scope_it = run_helper.info_scope_nodes_seen.find((InfoScope*)this->parent);
+			if (scope_it == run_helper.info_scope_nodes_seen.end()) {
+				scope_it = run_helper.info_scope_nodes_seen.insert({(InfoScope*)this->parent, set<AbstractNode*>()}).first;
+			}
+			scope_it->second.insert({this});
 		}
-		scope_it->second.insert({this, false});
 	}
 }

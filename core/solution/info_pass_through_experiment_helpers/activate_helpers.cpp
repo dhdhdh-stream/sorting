@@ -32,7 +32,8 @@ bool InfoPassThroughExperiment::activate(AbstractNode* experiment_node,
 										 Problem* problem,
 										 vector<ContextLayer>& context,
 										 RunHelper& run_helper) {
-	if (run_helper.experiment_histories.back()->experiment == this) {
+	if (run_helper.experiment_histories.size() == 1
+			&& run_helper.experiment_histories.back()->experiment == this) {
 		InfoPassThroughExperimentHistory* history = (InfoPassThroughExperimentHistory*)run_helper.experiment_histories.back();
 
 		switch (this->state) {

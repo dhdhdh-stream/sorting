@@ -39,16 +39,33 @@ bool InfoPassThroughExperiment::train_existing_info_back_activate(
 
 		this->scope_histories.push_back(context.back().scope_history->deep_copy());
 
-		history->predicted_scores.push_back(vector<double>(context.size()-1, 0.0));
-		for (int l_index = 0; l_index < (int)context.size()-1; l_index++) {
-			Scope* scope = (Scope*)context[l_index].scope;
-			ScopeHistory* scope_history = (ScopeHistory*)context[l_index].scope_history;
-			if (scope->eval_network != NULL) {
+		switch (this->score_type) {
+		case SCORE_TYPE_TRUTH:
+			history->predicted_scores.push_back(vector<double>());
+			break;
+		case SCORE_TYPE_ALL:
+			history->predicted_scores.push_back(vector<double>(context.size()-1));
+			for (int l_index = 0; l_index < (int)context.size()-1; l_index++) {
+				ScopeHistory* scope_history = (ScopeHistory*)context[l_index].scope_history;
+
 				scope_history->callback_experiment_history = history;
 				scope_history->callback_experiment_indexes.push_back(
 					(int)history->predicted_scores.size()-1);
 				scope_history->callback_experiment_layers.push_back(l_index);
 			}
+			break;
+		case SCORE_TYPE_LOCAL:
+			{
+				history->predicted_scores.push_back(vector<double>(1));
+
+				ScopeHistory* scope_history = (ScopeHistory*)context[context.size()-2].scope_history;
+
+				scope_history->callback_experiment_history = history;
+				scope_history->callback_experiment_indexes.push_back(
+					(int)history->predicted_scores.size()-1);
+				scope_history->callback_experiment_layers.push_back(0);
+			}
+			break;
 		}
 
 		is_positive = false;
@@ -84,14 +101,25 @@ void InfoPassThroughExperiment::train_existing_backprop(
 	InfoPassThroughExperimentHistory* history = (InfoPassThroughExperimentHistory*)run_helper.experiment_histories.back();
 
 	for (int i_index = 0; i_index < (int)history->predicted_scores.size(); i_index++) {
-		double final_score = target_val - solution->average_score;
-		if (history->predicted_scores[i_index].size() > 0) {
-			double sum_score = 0.0;
-			for (int l_index = 0; l_index < (int)history->predicted_scores[i_index].size(); l_index++) {
-				sum_score += history->predicted_scores[i_index][l_index];
+		double final_score;
+		switch (this->score_type) {
+		case SCORE_TYPE_TRUTH:
+			final_score = target_val - solution->average_score;
+			break;
+		case SCORE_TYPE_ALL:
+			{
+				double sum_score = target_val - solution->average_score;
+				for (int l_index = 0; l_index < (int)history->predicted_scores[i_index].size(); l_index++) {
+					sum_score += history->predicted_scores[i_index][l_index];
+				}
+				final_score = sum_score / ((int)history->predicted_scores[i_index].size() + 1);
 			}
-			final_score += sum_score / (int)history->predicted_scores[i_index].size();
+			break;
+		case SCORE_TYPE_LOCAL:
+			final_score = history->predicted_scores[i_index][0];
+			break;
 		}
+
 		this->target_val_histories.push_back(final_score);
 	}
 

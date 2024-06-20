@@ -33,5 +33,6 @@ void create_new_action(AbstractNode*& starting_node,
 					   std::set<AbstractNode*>& included_nodes);
 
 void clean_scope(Scope* scope);
+void clean_info_scope(InfoScope* scope);
 
 #endif /* SOLUTION_HELPERS_H */
