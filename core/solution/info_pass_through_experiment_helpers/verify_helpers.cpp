@@ -46,18 +46,6 @@ void InfoPassThroughExperiment::verify_info_back_activate(
 			scope_history->callback_experiment_layers.push_back(l_index);
 		}
 		break;
-	case SCORE_TYPE_LOCAL:
-		{
-			history->predicted_scores.push_back(vector<double>(1));
-
-			ScopeHistory* scope_history = (ScopeHistory*)context[context.size()-2].scope_history;
-
-			scope_history->callback_experiment_history = history;
-			scope_history->callback_experiment_indexes.push_back(
-				(int)history->predicted_scores.size()-1);
-			scope_history->callback_experiment_layers.push_back(0);
-		}
-		break;
 	}
 
 	vector<double> new_input_vals(this->new_input_node_contexts.size(), 0.0);
@@ -132,9 +120,6 @@ void InfoPassThroughExperiment::verify_backprop(
 					}
 					final_score = sum_score / ((int)history->predicted_scores[i_index].size() + 1);
 				}
-				break;
-			case SCORE_TYPE_LOCAL:
-				final_score = history->predicted_scores[i_index][0];
 				break;
 			}
 

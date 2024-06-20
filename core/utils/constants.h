@@ -6,10 +6,10 @@ const double MIN_STANDARD_DEVIATION = 0.00001;
 
 /**
  * - eval networks can be unstable, so may need only truth to make progress
+ *   - only truth also better at driving unexpected innovation
  */
 const int SCORE_TYPE_TRUTH = 0;
 const int SCORE_TYPE_ALL = 1;
-const int SCORE_TYPE_LOCAL = 2;
 
 const int STEP_TYPE_ACTION = 0;
 const int STEP_TYPE_SCOPE = 1;

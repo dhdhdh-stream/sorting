@@ -36,7 +36,7 @@ void create_experiment(RunHelper& run_helper) {
 		set<AbstractNode*>::iterator it = next(scope_it->second.begin(), node_distribution(generator));
 		AbstractNode* explore_node = *it;
 
-		uniform_int_distribution<int> score_type_distribution(0, 2);
+		uniform_int_distribution<int> score_type_distribution(0, 1);
 		int score_type = score_type_distribution(generator);
 
 		InfoScope* explore_scope = (InfoScope*)explore_node->parent;
@@ -61,7 +61,7 @@ void create_experiment(RunHelper& run_helper) {
 		if (explore_node->parent->id == 0) {
 			score_type = SCORE_TYPE_TRUTH;
 		} else {
-			uniform_int_distribution<int> score_type_distribution(0, 2);
+			uniform_int_distribution<int> score_type_distribution(0, 1);
 			score_type = score_type_distribution(generator);
 		}
 
