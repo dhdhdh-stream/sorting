@@ -10,6 +10,7 @@
 #include "scope_node.h"
 #include "solution.h"
 #include "solution_helpers.h"
+#include "solution_set.h"
 
 using namespace std;
 
@@ -72,6 +73,8 @@ void Scope::measure_activate(Metrics& metrics,
 							 Problem* problem,
 							 vector<ContextLayer>& context,
 							 RunHelper& run_helper) {
+	Solution* solution = solution_set->solutions[solution_set->curr_solution_index];
+
 	if (context.size() > solution->scopes.size() + 1) {
 		run_helper.exceeded_limit = true;
 		return;

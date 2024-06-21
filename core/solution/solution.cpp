@@ -15,9 +15,7 @@ Solution::Solution() {
 }
 
 Solution::Solution(Solution* original) {
-	this->timestamp = original->timestamp;
-	this->average_score = original->average_score;
-	this->next_possible_new_scope_timestamp = original->next_possible_new_scope_timestamp;
+	this->generation = original->generation;
 
 	this->last_updated_scope_id = -1;
 	this->last_new_scope_id = -1;
@@ -51,10 +49,6 @@ Solution::Solution(Solution* original) {
 
 	this->max_num_actions = original->max_num_actions;
 	this->num_actions_limit = original->num_actions_limit;
-
-	// temp
-	this->score_type_counts = original->score_type_counts;
-	this->score_type_impacts = original->score_type_impacts;
 }
 
 Solution::~Solution() {
@@ -67,10 +61,6 @@ Solution::~Solution() {
 }
 
 void Solution::init() {
-	this->timestamp = 0;
-	this->average_score = -1.0;
-	this->next_possible_new_scope_timestamp = 0;
-
 	this->last_updated_scope_id = 0;
 	this->last_new_scope_id = -1;
 
@@ -89,28 +79,12 @@ void Solution::init() {
 
 	this->max_num_actions = 1;
 	this->num_actions_limit = 40;
-
-	// temp
-	this->score_type_counts = vector<int>(3, 0);
-	this->score_type_impacts = vector<double>(3, 0.0);
 }
 
-void Solution::load(string path,
-					string name) {
-	ifstream input_file;
-	input_file.open(path + "saves/" + name + ".txt");
-
-	string timestamp_line;
-	getline(input_file, timestamp_line);
-	this->timestamp = stoi(timestamp_line);
-
-	string average_score_line;
-	getline(input_file, average_score_line);
-	this->average_score = stod(average_score_line);
-
-	string next_possible_new_scope_timestamp_line;
-	getline(input_file, next_possible_new_scope_timestamp_line);
-	this->next_possible_new_scope_timestamp = stoi(next_possible_new_scope_timestamp_line);
+void Solution::load(ifstream& input_file) {
+	string generation_line;
+	getline(input_file, generation_line);
+	this->generation = stoi(generation_line);
 
 	string last_updated_scope_id_line;
 	getline(input_file, last_updated_scope_id_line);
@@ -140,7 +114,8 @@ void Solution::load(string path,
 	}
 
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
-		this->scopes[s_index]->load(input_file);
+		this->scopes[s_index]->load(input_file,
+									this);
 	}
 	for (int i_index = 0; i_index < (int)this->info_scopes.size(); i_index++) {
 		this->info_scopes[i_index]->load(input_file);
@@ -162,19 +137,6 @@ void Solution::load(string path,
 	#else
 	this->num_actions_limit = 10*this->max_num_actions + 10;
 	#endif /* MDEBUG */
-
-	// temp
-	for (int i = 0; i < 3; i++) {
-		string count_line;
-		getline(input_file, count_line);
-		this->score_type_counts.push_back(stoi(count_line));
-
-		string impact_line;
-		getline(input_file, impact_line);
-		this->score_type_impacts.push_back(stod(impact_line));
-	}
-
-	input_file.close();
 }
 
 #if defined(MDEBUG) && MDEBUG
@@ -191,14 +153,33 @@ void Solution::clear_verify() {
 }
 #endif /* MDEBUG */
 
-void Solution::save(string path,
-					string name) {
-	ofstream output_file;
-	output_file.open(path + "saves/" + name + "_temp.txt");
+void Solution::merge_and_delete(Solution* original_solution) {
+	for (int s_index = 1; s_index < (int)original_solution->scopes.size(); s_index++) {
+		original_solution->scopes[s_index]->id = (int)this->scopes.size();
+		this->scopes.push_back(original_solution->scopes[s_index]);
+	}
+	for (int s_index = 0; s_index < (int)original_solution->info_scopes.size(); s_index++) {
+		original_solution->info_scopes[s_index]->id = (int)this->info_scopes.size();
+		this->info_scopes.push_back(original_solution->info_scopes[s_index]);
+	}
 
-	output_file << this->timestamp << endl;
-	output_file << this->average_score << endl;
-	output_file << this->next_possible_new_scope_timestamp << endl;
+	delete this->scopes[0];
+
+	this->scopes.clear();
+	this->info_scopes.clear();
+
+	if (original_solution->max_num_actions > this->max_num_actions) {
+		this->max_num_actions = original_solution->max_num_actions;
+	}
+	if (original_solution->num_actions_limit > this->num_actions_limit) {
+		this->num_actions_limit = original_solution->num_actions_limit;
+	}
+
+	delete original_solution;
+}
+
+void Solution::save(ofstream& output_file) {
+	output_file << this->generation << endl;
 
 	output_file << this->last_updated_scope_id << endl;
 	output_file << this->last_new_scope_id << endl;
@@ -214,18 +195,6 @@ void Solution::save(string path,
 	}
 
 	output_file << this->max_num_actions << endl;
-
-	// temp
-	for (int i = 0; i < 3; i++) {
-		output_file << this->score_type_counts[i] << endl;
-		output_file << this->score_type_impacts[i] << endl;
-	}
-
-	output_file.close();
-
-	string oldname = path + "saves/" + name + "_temp.txt";
-	string newname = path + "saves/" + name + ".txt";
-	rename(oldname.c_str(), newname.c_str());
 }
 
 void Solution::save_for_display(ofstream& output_file) {

@@ -11,6 +11,7 @@
 #include "network.h"
 #include "scope.h"
 #include "solution.h"
+#include "solution_set.h"
 #include "utilities.h"
 
 using namespace std;
@@ -19,6 +20,8 @@ void InfoScope::activate(Problem* problem,
 						 vector<ContextLayer>& context,
 						 RunHelper& run_helper,
 						 bool& is_positive) {
+	Solution* solution = solution_set->solutions[solution_set->curr_solution_index];
+
 	if (this->experiment != NULL) {
 		InfoPassThroughExperiment* info_pass_through_experiment = (InfoPassThroughExperiment*)this->experiment;
 		info_pass_through_experiment->info_pre_activate(run_helper);

@@ -22,6 +22,7 @@
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
+#include "solution_set.h"
 
 using namespace std;
 
@@ -66,7 +67,7 @@ void create_experiment(RunHelper& run_helper) {
 		}
 
 		uniform_int_distribution<int> non_new_distribution(0, (int)explore_node->parent->nodes.size()-1);
-		if (solution->timestamp >= solution->next_possible_new_scope_timestamp
+		if (solution_set->timestamp >= solution_set->next_possible_new_scope_timestamp
 				&& explore_node->parent->nodes.size() > 10
 				&& non_new_distribution(generator) != 0) {
 			NewActionExperiment* new_action_experiment = new NewActionExperiment(

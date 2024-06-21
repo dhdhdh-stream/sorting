@@ -66,7 +66,8 @@ public:
 	#endif /* MDEBUG */
 
 	void save(std::ofstream& output_file);
-	void load(std::ifstream& input_file);
+	void load(std::ifstream& input_file,
+			  Solution* parent_solution);
 	void link(Solution* parent_solution);
 	void link();
 	void save_for_display(std::ofstream& output_file);

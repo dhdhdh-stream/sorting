@@ -7,9 +7,11 @@
 #include "branch_node.h"
 #include "globals.h"
 #include "info_branch_node.h"
+#include "info_scope.h"
 #include "network.h"
 #include "scope_node.h"
 #include "solution.h"
+#include "solution_set.h"
 
 using namespace std;
 
@@ -85,17 +87,18 @@ void Scope::save(ofstream& output_file) {
 	}
 
 	output_file << this->scopes_used.size() << endl;
-	for (set<int>::iterator it = this->scopes_used.begin(); it != this->scopes_used.end(); it++) {
-		output_file << *it << endl;
+	for (set<Scope*>::iterator it = this->scopes_used.begin(); it != this->scopes_used.end(); it++) {
+		output_file << (*it)->id << endl;
 	}
 
 	output_file << this->info_scopes_used.size() << endl;
-	for (set<int>::iterator it = this->info_scopes_used.begin(); it != this->info_scopes_used.end(); it++) {
-		output_file << *it << endl;
+	for (set<InfoScope*>::iterator it = this->info_scopes_used.begin(); it != this->info_scopes_used.end(); it++) {
+		output_file << (*it)->id << endl;
 	}
 }
 
-void Scope::load(ifstream& input_file) {
+void Scope::load(ifstream& input_file,
+				 Solution* parent_solution) {
 	string node_counter_line;
 	getline(input_file, node_counter_line);
 	this->node_counter = stoi(node_counter_line);
@@ -126,7 +129,8 @@ void Scope::load(ifstream& input_file) {
 				ScopeNode* scope_node = new ScopeNode();
 				scope_node->parent = this;
 				scope_node->id = id;
-				scope_node->load(input_file);
+				scope_node->load(input_file,
+								 parent_solution);
 				this->nodes[scope_node->id] = scope_node;
 			}
 			break;
@@ -144,7 +148,8 @@ void Scope::load(ifstream& input_file) {
 				InfoBranchNode* info_branch_node = new InfoBranchNode();
 				info_branch_node->parent = this;
 				info_branch_node->id = id;
-				info_branch_node->load(input_file);
+				info_branch_node->load(input_file,
+									   parent_solution);
 				this->nodes[info_branch_node->id] = info_branch_node;
 			}
 			break;
@@ -177,7 +182,7 @@ void Scope::load(ifstream& input_file) {
 	for (int s_index = 0; s_index < scopes_used_size; s_index++) {
 		string scope_id_line;
 		getline(input_file, scope_id_line);
-		this->scopes_used.insert(stoi(scope_id_line));
+		this->scopes_used.insert(parent_solution->scopes[stoi(scope_id_line)]);
 	}
 
 	string info_scopes_used_size_line;
@@ -186,7 +191,7 @@ void Scope::load(ifstream& input_file) {
 	for (int s_index = 0; s_index < info_scopes_used_size; s_index++) {
 		string scope_id_line;
 		getline(input_file, scope_id_line);
-		this->info_scopes_used.insert(stoi(scope_id_line));
+		this->info_scopes_used.insert(parent_solution->info_scopes[stoi(scope_id_line)]);
 	}
 }
 

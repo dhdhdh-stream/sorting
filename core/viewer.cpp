@@ -11,6 +11,7 @@
 #include "scope.h"
 #include "solution.h"
 #include "solution_helpers.h"
+#include "solution_set.h"
 #include "sorting.h"
 
 using namespace std;
@@ -20,7 +21,7 @@ int seed;
 default_random_engine generator;
 
 ProblemType* problem_type;
-Solution* solution;
+SolutionSet* solution_set;
 
 #if defined(MDEBUG) && MDEBUG
 int run_index = 0;
@@ -37,8 +38,10 @@ int main(int argc, char* argv[]) {
 	// problem_type = new TypeSorting();
 	problem_type = new TypeMinesweeper();
 
-	solution = new Solution();
-	solution->load("", "main");
+	solution_set = new SolutionSet();
+	solution_set->load("", "main");
+
+	Solution* solution = solution_set->solutions[solution_set->curr_solution_index];
 
 	{
 		Problem* problem = problem_type->get_problem();
@@ -69,10 +72,10 @@ int main(int argc, char* argv[]) {
 	}
 
 	// temp
-	for (int i = 0; i < 3; i++) {
+	for (int i = 0; i < 2; i++) {
 		cout << i << endl;
-		cout << "count: " << solution->score_type_counts[i] << endl;
-		cout << "impacts: " << solution->score_type_impacts[i] << endl;
+		cout << "count: " << solution_set->score_type_counts[i] << endl;
+		cout << "impacts: " << solution_set->score_type_impacts[i] << endl;
 	}
 
 	ofstream display_file;

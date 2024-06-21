@@ -13,6 +13,7 @@
 #include "scope_node.h"
 #include "solution.h"
 #include "solution_helpers.h"
+#include "solution_set.h"
 
 using namespace std;
 
@@ -72,6 +73,8 @@ void node_activate_helper(AbstractNode*& curr_node,
 void Scope::activate(Problem* problem,
 					 vector<ContextLayer>& context,
 					 RunHelper& run_helper) {
+	Solution* solution = solution_set->solutions[solution_set->curr_solution_index];
+
 	/**
 	 * - simply try to prevent recursion for now
 	 */

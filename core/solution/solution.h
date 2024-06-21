@@ -6,12 +6,6 @@
  * 
  * - as long as have freedom to fail, not much use for world modeling
  *   - use world modeling when cost of failure is high, and have to explore along paths where there isn't risk of catastrophic failure
- * 
- * TODO:
- * - is sensitive to initial conditions
- *   - commits to paths greedily/randomly
- *     - if better path is not simple and cannot be generalized to, then will not be found
- *       - needs diversity
  */
 
 #ifndef SOLUTION_H
@@ -29,9 +23,7 @@ class Scope;
 
 class Solution {
 public:
-	int timestamp;
-	double average_score;
-	int next_possible_new_scope_timestamp;
+	int generation;
 
 	int last_updated_scope_id;
 	int last_new_scope_id;
@@ -47,10 +39,6 @@ public:
 	int max_num_actions;
 	int num_actions_limit;
 
-	// temp
-	std::vector<int> score_type_counts;
-	std::vector<double> score_type_impacts;
-
 	#if defined(MDEBUG) && MDEBUG
 	std::vector<Problem*> verify_problems;
 	std::vector<unsigned long> verify_seeds;
@@ -61,15 +49,15 @@ public:
 	~Solution();
 
 	void init();
-	void load(std::string path,
-			  std::string name);
+	void load(std::ifstream& input_file);
 
 	#if defined(MDEBUG) && MDEBUG
 	void clear_verify();
 	#endif /* MDEBUG */
 
-	void save(std::string path,
-			  std::string name);
+	void merge_and_delete(Solution* original_solution);
+
+	void save(std::ofstream& output_file);
 
 	void save_for_display(std::ofstream& output_file);
 };

@@ -8,6 +8,7 @@
 #include "minesweeper.h"
 #include "scope.h"
 #include "solution.h"
+#include "solution_set.h"
 #include "sorting.h"
 
 using namespace std;
@@ -17,7 +18,7 @@ int seed;
 default_random_engine generator;
 
 ProblemType* problem_type;
-Solution* solution;
+SolutionSet* solution_set;
 
 #if defined(MDEBUG) && MDEBUG
 int run_index = 0;
@@ -34,8 +35,10 @@ int main(int argc, char* argv[]) {
 	// problem_type = new TypeSorting();
 	problem_type = new TypeMinesweeper();
 
-	solution = new Solution();
-	solution->load("", "main");
+	solution_set = new SolutionSet();
+	solution_set->load("", "main");
+
+	Solution* solution = solution_set->solutions[solution_set->curr_solution_index];
 
 	double sum_vals = 0.0;
 	int max_num_actions = 0;
@@ -81,7 +84,7 @@ int main(int argc, char* argv[]) {
 	solution->save_for_display(display_file);
 	display_file.close();
 
-	delete solution;
+	delete solution_set;
 
 	cout << "Done" << endl;
 }

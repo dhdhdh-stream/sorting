@@ -71,7 +71,7 @@ void NewInfoExperiment::new_branch(Solution* duplicate) {
 	this->new_info_scope->id = duplicate->info_scopes.size();
 	duplicate->info_scopes.push_back(new_info_scope);
 
-	duplicate_local_scope->info_scopes_used.insert(this->new_info_scope->id);
+	duplicate_local_scope->info_scopes_used.insert(duplicate->info_scopes[this->new_info_scope->id]);
 
 	new_info_scope->input_node_contexts = this->new_input_node_contexts;
 	new_info_scope->input_obs_indexes = this->new_input_obs_indexes;
@@ -222,7 +222,7 @@ void NewInfoExperiment::new_branch(Solution* duplicate) {
 
 			this->best_scopes[s_index]->scope = duplicate->scopes[this->best_scopes[s_index]->scope->id];
 
-			duplicate_local_scope->scopes_used.insert(this->best_scopes[s_index]->scope->id);
+			duplicate_local_scope->scopes_used.insert(duplicate->scopes[this->best_scopes[s_index]->scope->id]);
 		}
 	}
 	if (this->best_step_types.size() > 0) {
@@ -338,7 +338,7 @@ void NewInfoExperiment::new_pass_through(Solution* duplicate) {
 
 			this->best_scopes[s_index]->scope = duplicate->scopes[this->best_scopes[s_index]->scope->id];
 
-			duplicate_local_scope->scopes_used.insert(this->best_scopes[s_index]->scope->id);
+			duplicate_local_scope->scopes_used.insert(duplicate->scopes[this->best_scopes[s_index]->scope->id]);
 		}
 	}
 	if (this->best_step_types.size() > 0) {
@@ -376,7 +376,7 @@ void NewInfoExperiment::new_existing(Solution* duplicate) {
 	this->branch_node->scope = duplicate->info_scopes[this->existing_info_scope_index];
 	this->branch_node->is_negate = this->existing_is_negate;
 
-	duplicate_local_scope->info_scopes_used.insert(this->existing_info_scope_index);
+	duplicate_local_scope->info_scopes_used.insert(duplicate->info_scopes[this->existing_info_scope_index]);
 
 	AbstractNode* duplicate_explore_node = duplicate_local_scope->nodes[this->node_context->id];
 	switch (duplicate_explore_node->type) {
@@ -516,7 +516,7 @@ void NewInfoExperiment::new_existing(Solution* duplicate) {
 
 			this->best_scopes[s_index]->scope = duplicate->scopes[this->best_scopes[s_index]->scope->id];
 
-			duplicate_local_scope->scopes_used.insert(this->best_scopes[s_index]->scope->id);
+			duplicate_local_scope->scopes_used.insert(duplicate->scopes[this->best_scopes[s_index]->scope->id]);
 		}
 	}
 	if (this->best_step_types.size() > 0) {

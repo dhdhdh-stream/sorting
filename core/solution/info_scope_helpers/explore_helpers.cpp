@@ -3,6 +3,7 @@
 #include "action_node.h"
 #include "globals.h"
 #include "solution.h"
+#include "solution_set.h"
 
 using namespace std;
 
@@ -10,6 +11,8 @@ void InfoScope::explore_activate(Problem* problem,
 								 vector<ContextLayer>& context,
 								 RunHelper& run_helper,
 								 AbstractScopeHistory*& history) {
+	Solution* solution = solution_set->solutions[solution_set->curr_solution_index];
+
 	context.push_back(ContextLayer());
 
 	context.back().scope = this;

@@ -34,8 +34,8 @@ public:
 	/**
 	 * - used mainly to help prevent recursion during explore
 	 */
-	std::set<int> scopes_used;
-	std::set<int> info_scopes_used;
+	std::set<Scope*> scopes_used;
+	std::set<InfoScope*> info_scopes_used;
 
 	Scope();
 	~Scope();
@@ -75,7 +75,8 @@ public:
 	void clean_node(int node_id);
 
 	void save(std::ofstream& output_file);
-	void load(std::ifstream& input_file);
+	void load(std::ifstream& input_file,
+			  Solution* parent_solution);
 	void link(Solution* parent_solution);
 
 	void copy_from(Scope* original,

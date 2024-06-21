@@ -11,6 +11,7 @@
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
+#include "solution_set.h"
 
 using namespace std;
 
@@ -23,6 +24,8 @@ NewActionExperiment::NewActionExperiment(AbstractScope* scope_context,
 										 bool is_branch,
 										 int score_type) {
 	this->type = EXPERIMENT_TYPE_NEW_ACTION;
+
+	Solution* solution = solution_set->solutions[solution_set->curr_solution_index];
 
 	/**
 	 * TODO: select based on scopes_used

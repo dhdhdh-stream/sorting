@@ -16,6 +16,7 @@
 #include "scope_node.h"
 #include "solution.h"
 #include "solution_helpers.h"
+#include "solution_set.h"
 #include "utilities.h"
 
 using namespace std;
@@ -175,11 +176,11 @@ void NewInfoExperiment::measure_backprop(double target_val,
 			double final_score;
 			switch (this->score_type) {
 			case SCORE_TYPE_TRUTH:
-				final_score = target_val - solution->average_score;
+				final_score = target_val - solution_set->average_score;
 				break;
 			case SCORE_TYPE_ALL:
 				{
-					double sum_score = target_val - solution->average_score;
+					double sum_score = target_val - solution_set->average_score;
 					for (int l_index = 0; l_index < (int)history->predicted_scores[i_index].size(); l_index++) {
 						sum_score += history->predicted_scores[i_index][l_index];
 					}
@@ -221,6 +222,7 @@ void NewInfoExperiment::measure_backprop(double target_val,
 					this->branch_node->id = this->scope_context->node_counter;
 					this->scope_context->node_counter++;
 
+					Solution* solution = solution_set->solutions[solution_set->curr_solution_index];
 					if (solution->info_scopes.size() > 0) {
 						this->existing_info_scope_index = 0;
 						this->existing_is_negate = false;

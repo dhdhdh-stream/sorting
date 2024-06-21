@@ -7,6 +7,7 @@
 
 #include "globals.h"
 #include "solution.h"
+#include "solution_set.h"
 
 using namespace std;
 
@@ -15,7 +16,7 @@ int seed;
 default_random_engine generator;
 
 ProblemType* problem_type;
-Solution* solution;
+SolutionSet* solution_set;
 
 #if defined(MDEBUG) && MDEBUG
 int run_index = 0;
@@ -29,17 +30,19 @@ int main(int argc, char* argv[]) {
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
 
-	solution = new Solution();
-	solution->init();
+	solution_set = new SolutionSet();
+	solution_set->init();
 
-	solution->save("", "main");
+	solution_set->save("", "main");
+
+	Solution* solution = solution_set->solutions[solution_set->curr_solution_index];
 
 	ofstream display_file;
 	display_file.open("../display.txt");
 	solution->save_for_display(display_file);
 	display_file.close();
 
-	delete solution;
+	delete solution_set;
 
 	cout << "Done" << endl;
 }

@@ -5,6 +5,7 @@
 #include "info_scope.h"
 #include "scope.h"
 #include "solution.h"
+#include "solution_set.h"
 
 using namespace std;
 
@@ -37,10 +38,11 @@ void InfoBranchNode::save(ofstream& output_file) {
 	output_file << this->branch_next_node_id << endl;
 }
 
-void InfoBranchNode::load(ifstream& input_file) {
+void InfoBranchNode::load(ifstream& input_file,
+						  Solution* parent_solution) {
 	string scope_id_line;
 	getline(input_file, scope_id_line);
-	this->scope = solution->info_scopes[stoi(scope_id_line)];
+	this->scope = parent_solution->info_scopes[stoi(scope_id_line)];
 
 	string is_negate_line;
 	getline(input_file, is_negate_line);

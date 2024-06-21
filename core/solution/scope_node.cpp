@@ -6,6 +6,7 @@
 #include "globals.h"
 #include "scope.h"
 #include "solution.h"
+#include "solution_set.h"
 
 using namespace std;
 
@@ -36,10 +37,11 @@ void ScopeNode::save(ofstream& output_file) {
 	output_file << this->next_node_id << endl;
 }
 
-void ScopeNode::load(ifstream& input_file) {
+void ScopeNode::load(ifstream& input_file,
+					 Solution* parent_solution) {
 	string scope_id_line;
 	getline(input_file, scope_id_line);
-	this->scope = solution->scopes[stoi(scope_id_line)];
+	this->scope = parent_solution->scopes[stoi(scope_id_line)];
 
 	string next_node_id_line;
 	getline(input_file, next_node_id_line);

@@ -10,6 +10,7 @@
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
+#include "solution_set.h"
 #include "utilities.h"
 
 using namespace std;
@@ -33,6 +34,7 @@ bool NewInfoExperiment::try_existing_info_activate(
 		RunHelper& run_helper,
 		NewInfoExperimentHistory* history) {
 	bool is_positive;
+	Solution* solution = solution_set->solutions[solution_set->curr_solution_index];
 	solution->info_scopes[this->existing_info_scope_index]->activate(
 		problem,
 		context,
@@ -111,6 +113,8 @@ void NewInfoExperiment::try_existing_info_backprop(double target_val,
 												   RunHelper& run_helper) {
 	bool is_fail = false;
 
+	Solution* solution = solution_set->solutions[solution_set->curr_solution_index];
+
 	if (run_helper.exceeded_limit) {
 		is_fail = true;
 	} else {
@@ -143,11 +147,11 @@ void NewInfoExperiment::try_existing_info_backprop(double target_val,
 			double final_score;
 			switch (this->score_type) {
 			case SCORE_TYPE_TRUTH:
-				final_score = target_val - solution->average_score;
+				final_score = target_val - solution_set->average_score;
 				break;
 			case SCORE_TYPE_ALL:
 				{
-					double sum_score = target_val - solution->average_score;
+					double sum_score = target_val - solution_set->average_score;
 					for (int l_index = 0; l_index < (int)history->predicted_scores[i_index].size(); l_index++) {
 						sum_score += history->predicted_scores[i_index][l_index];
 					}

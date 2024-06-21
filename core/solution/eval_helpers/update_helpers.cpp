@@ -16,6 +16,7 @@
 #include "scope_node.h"
 #include "solution.h"
 #include "solution_helpers.h"
+#include "solution_set.h"
 
 using namespace std;
 
@@ -24,7 +25,7 @@ void update_eval_helper(Scope* parent_scope,
 						vector<double>& target_val_histories) {
 	vector<double> target_vals(target_val_histories.size());
 	for (int d_index = 0; d_index < (int)target_val_histories.size(); d_index++) {
-		target_vals[d_index] = target_val_histories[d_index] - solution->average_score;
+		target_vals[d_index] = target_val_histories[d_index] - solution_set->average_score;
 	}
 
 	default_random_engine generator_copy = generator;
@@ -308,6 +309,7 @@ void update_eval_helper(Scope* parent_scope,
 }
 
 void update_eval() {
+	Solution* solution = solution_set->solutions[solution_set->curr_solution_index];
 	if (solution->last_updated_scope_id != -1
 			|| solution->last_new_scope_id != -1) {
 		Scope* last_update_scope;

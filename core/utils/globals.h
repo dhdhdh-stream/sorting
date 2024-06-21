@@ -4,14 +4,14 @@
 #include <random>
 
 class ProblemType;
-class Solution;
+class SolutionSet;
 
 extern int seed;
 
 extern std::default_random_engine generator;
 
 extern ProblemType* problem_type;
-extern Solution* solution;
+extern SolutionSet* solution_set;
 
 #if defined(MDEBUG) && MDEBUG
 extern int run_index;

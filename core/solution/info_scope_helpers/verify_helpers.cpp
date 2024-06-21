@@ -14,6 +14,7 @@
 #include "problem.h"
 #include "scope.h"
 #include "solution.h"
+#include "solution_set.h"
 #include "utilities.h"
 
 using namespace std;
@@ -22,6 +23,8 @@ void InfoScope::verify_activate(Problem* problem,
 								vector<ContextLayer>& context,
 								RunHelper& run_helper,
 								bool& is_positive) {
+	Solution* solution = solution_set->solutions[solution_set->curr_solution_index];
+
 	context.push_back(ContextLayer());
 
 	context.back().scope = this;

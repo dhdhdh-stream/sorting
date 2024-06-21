@@ -14,6 +14,7 @@
 #include "scope_node.h"
 #include "solution.h"
 #include "solution_helpers.h"
+#include "solution_set.h"
 #include "sorting.h"
 
 using namespace std;
@@ -23,7 +24,7 @@ int seed;
 default_random_engine generator;
 
 ProblemType* problem_type;
-Solution* solution;
+SolutionSet* solution_set;
 
 #if defined(MDEBUG) && MDEBUG
 int run_index = 0;
@@ -50,8 +51,8 @@ int main(int argc, char* argv[]) {
 	// problem_type = new TypeSorting();
 	problem_type = new TypeMinesweeper();
 
-	solution = new Solution();
-	solution->load("workers/", "main");
+	solution_set = new SolutionSet();
+	solution_set->load("workers/", "main");
 	update_eval();
 
 	auto start_time = chrono::high_resolution_clock::now();
@@ -61,6 +62,7 @@ int main(int argc, char* argv[]) {
 		RunHelper run_helper;
 
 		vector<ContextLayer> context;
+		Solution* solution = solution_set->solutions[solution_set->curr_solution_index];
 		solution->scopes[0]->activate(
 			problem,
 			context,
@@ -96,11 +98,11 @@ int main(int argc, char* argv[]) {
 			int curr_timestamp = stoi(timestamp_line);
 			solution_save_file.close();
 
-			if (curr_timestamp > solution->timestamp) {
-				delete solution;
+			if (curr_timestamp > solution_set->timestamp) {
+				delete solution_set;
 
-				solution = new Solution();
-				solution->load("workers/", "main");
+				solution_set = new SolutionSet();
+				solution_set->load("workers/", "main");
 				cout << "updated from main" << endl;
 				update_eval();
 
@@ -200,32 +202,33 @@ int main(int argc, char* argv[]) {
 				/**
 				 * - history->experiment_histories.size() == 1
 				 */
-				Solution* duplicate = new Solution(solution);
+				SolutionSet* duplicate = new SolutionSet(solution_set);
+				Solution* duplicate_solution = duplicate->solutions[duplicate->curr_solution_index];
 
 				int last_updated_info_scope_id = -1;
 				if (run_helper.experiment_histories.back()->experiment->type == EXPERIMENT_TYPE_INFO_PASS_THROUGH) {
 					last_updated_info_scope_id = run_helper.experiment_histories.back()->experiment->scope_context->id;
 				} else {
-					duplicate->last_updated_scope_id = run_helper.experiment_histories.back()->experiment->scope_context->id;
+					duplicate_solution->last_updated_scope_id = run_helper.experiment_histories.back()->experiment->scope_context->id;
 					if (run_helper.experiment_histories.back()->experiment->type == EXPERIMENT_TYPE_NEW_ACTION) {
-						duplicate->last_new_scope_id = (int)solution->scopes.size();
+						duplicate_solution->last_new_scope_id = (int)duplicate_solution->scopes.size();
 
 						duplicate->next_possible_new_scope_timestamp = duplicate->timestamp
-							+ 1 + duplicate->scopes.size() + MIN_ITERS_BEFORE_NEXT_NEW_SCOPE;
+							+ 1 + duplicate_solution->scopes.size() + MIN_ITERS_BEFORE_NEXT_NEW_SCOPE;
 					}
 				}
 
 				// temp
 				int experiment_score_type = run_helper.experiment_histories.back()->experiment->score_type;
 
-				run_helper.experiment_histories.back()->experiment->finalize(duplicate);
+				run_helper.experiment_histories.back()->experiment->finalize(duplicate_solution);
 				delete run_helper.experiment_histories.back()->experiment;
 
 				if (last_updated_info_scope_id != -1) {
-					InfoScope* info_scope = duplicate->info_scopes[last_updated_info_scope_id];
+					InfoScope* info_scope = duplicate_solution->info_scopes[last_updated_info_scope_id];
 					clean_info_scope(info_scope);
 				} else {
-					Scope* experiment_scope = duplicate->scopes[duplicate->last_updated_scope_id];
+					Scope* experiment_scope = duplicate_solution->scopes[duplicate_solution->last_updated_scope_id];
 					clean_scope(experiment_scope);
 				}
 
@@ -238,7 +241,7 @@ int main(int argc, char* argv[]) {
 					RunHelper run_helper;
 
 					vector<ContextLayer> context;
-					duplicate->scopes[0]->activate(
+					duplicate_solution->scopes[0]->activate(
 						problem,
 						context,
 						run_helper);
@@ -273,7 +276,7 @@ int main(int argc, char* argv[]) {
 						int curr_timestamp = stoi(timestamp_line);
 						solution_save_file.close();
 
-						if (curr_timestamp > solution->timestamp) {
+						if (curr_timestamp > solution_set->timestamp) {
 							early_exit = true;
 							break;
 						}
@@ -283,10 +286,10 @@ int main(int argc, char* argv[]) {
 				if (early_exit) {
 					delete duplicate;
 
-					delete solution;
+					delete solution_set;
 
-					solution = new Solution();
-					solution->load("workers/", "main");
+					solution_set = new SolutionSet();
+					solution_set->load("workers/", "main");
 					cout << "updated from main" << endl;
 					update_eval();
 
@@ -299,18 +302,21 @@ int main(int argc, char* argv[]) {
 				}
 				duplicate->average_score = sum_score / MEASURE_ITERS;
 
-				duplicate->max_num_actions = max_num_actions;
+				duplicate_solution->max_num_actions = max_num_actions;
 
 				cout << "duplicate->average_score: " << duplicate->average_score << endl;
 
 				// temp
-				if (duplicate->last_updated_scope_id != 0) {
+				if (duplicate_solution->last_updated_scope_id != 0) {
 					duplicate->score_type_counts[experiment_score_type]++;
-					double experiment_improvement = duplicate->average_score - solution->average_score;
+					double experiment_improvement = duplicate->average_score - solution_set->average_score;
 					duplicate->score_type_impacts[experiment_score_type] += experiment_improvement;
 				}
 
 				duplicate->timestamp++;
+
+				duplicate->increment();
+
 				duplicate->save(path, "possible_" + to_string((unsigned)time(NULL)));
 
 				delete duplicate;
@@ -326,7 +332,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	delete problem_type;
-	delete solution;
+	delete solution_set;
 
 	cout << "Done" << endl;
 }

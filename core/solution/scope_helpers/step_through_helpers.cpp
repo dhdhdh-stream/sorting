@@ -9,6 +9,7 @@
 #include "problem.h"
 #include "scope_node.h"
 #include "solution.h"
+#include "solution_set.h"
 
 using namespace std;
 
@@ -74,6 +75,8 @@ void node_step_through_activate_helper(AbstractNode*& curr_node,
 void Scope::step_through_activate(Problem* problem,
 								  vector<ContextLayer>& context,
 								  RunHelper& run_helper) {
+	Solution* solution = solution_set->solutions[solution_set->curr_solution_index];
+
 	if (context.size() > solution->scopes.size() + 1) {
 		run_helper.exceeded_limit = true;
 		return;
