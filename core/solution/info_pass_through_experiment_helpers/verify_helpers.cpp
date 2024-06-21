@@ -140,7 +140,6 @@ void InfoPassThroughExperiment::verify_backprop(
 				cout << "InfoPassThrough" << endl;
 				cout << "this->scope_context->id: " << this->scope_context->id << endl;
 				cout << "this->node_context->id: " << this->node_context->id << endl;
-				cout << "this->is_branch: " << this->is_branch << endl;
 				cout << "new explore path:";
 				for (int s_index = 0; s_index < (int)this->actions.size(); s_index++) {
 					cout << " " << this->actions[s_index]->action.move;

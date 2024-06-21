@@ -262,8 +262,14 @@ void Scope::copy_from(Scope* original,
 		this->eval_network = new Network(original->eval_network);
 	}
 
-	this->scopes_used = original->scopes_used;
-	this->info_scopes_used = original->info_scopes_used;
+	for (set<Scope*>::iterator it = original->scopes_used.begin();
+			it != original->scopes_used.end(); it++) {
+		this->scopes_used.insert(parent_solution->scopes[(*it)->id]);
+	}
+	for (set<InfoScope*>::iterator it = original->info_scopes_used.begin();
+			it != original->info_scopes_used.end(); it++) {
+		this->info_scopes_used.insert(parent_solution->info_scopes[(*it)->id]);
+	}
 }
 
 void Scope::save_for_display(ofstream& output_file) {

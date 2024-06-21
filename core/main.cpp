@@ -60,6 +60,8 @@ int main(int argc, char* argv[]) {
 	solution_set = new SolutionSet();
 	solution_set->init();
 	// solution_set->load("", "main");
+
+	solution_set->increment();
 	update_eval();
 
 	solution_set->save("", "main");
@@ -104,6 +106,7 @@ int main(int argc, char* argv[]) {
 			solution_set = new SolutionSet();
 			solution_set->load("", "main");
 
+			solution_set->increment();
 			update_eval();
 
 			continue;
@@ -307,6 +310,7 @@ int main(int argc, char* argv[]) {
 					solution_set = new SolutionSet();
 					solution_set->load("", "main");
 
+					solution_set->increment();
 					update_eval();
 
 					continue;
@@ -320,26 +324,24 @@ int main(int argc, char* argv[]) {
 				duplicate->average_score = sum_score / MEASURE_ITERS;
 
 				duplicate_solution->max_num_actions = max_num_actions;
-
-				cout << "duplicate->average_score: " << duplicate->average_score << endl;
-
-				duplicate->timestamp++;
-
-				duplicate->increment();
-
-				#if defined(MDEBUG) && MDEBUG
-				delete solution_set;
-				solution_set = duplicate;
-
 				duplicate_solution->num_actions_limit = 2*duplicate_solution->max_num_actions + 10;
 
-				solution_set->save("", "main");
+				cout << "duplicate->average_score: " << duplicate->average_score << endl;
 
 				ofstream display_file;
 				display_file.open("../display.txt");
 				duplicate_solution->save_for_display(display_file);
 				display_file.close();
 
+				duplicate->timestamp++;
+
+				#if defined(MDEBUG) && MDEBUG
+				delete solution_set;
+				solution_set = duplicate;
+
+				solution_set->save("", "main");
+
+				solution_set->increment();
 				update_eval();
 				#else
 				delete duplicate;

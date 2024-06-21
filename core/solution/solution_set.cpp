@@ -106,7 +106,11 @@ void SolutionSet::load(string path,
 }
 
 void SolutionSet::increment() {
+	#if defined(MDEBUG) && MDEBUG
+	if (rand()%4 == 0) {
+	#else
 	if (this->average_score > this->best_average_score) {
+	#endif /* MDEBUG */
 		this->best_average_score = this->average_score;
 		this->best_timestamp = this->timestamp;
 	} else {
@@ -145,6 +149,12 @@ void SolutionSet::increment() {
 				solution->generation = 0;
 				this->solutions.push_back(solution);
 			}
+
+			this->average_score = -1.0;
+			this->next_possible_new_scope_timestamp = this->timestamp;
+
+			this->best_average_score = -1.0;
+			this->best_timestamp = this->timestamp;
 		}
 	}
 }

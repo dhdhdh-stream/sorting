@@ -53,6 +53,8 @@ int main(int argc, char* argv[]) {
 
 	solution_set = new SolutionSet();
 	solution_set->load("workers/", "main");
+
+	solution_set->increment();
 	update_eval();
 
 	auto start_time = chrono::high_resolution_clock::now();
@@ -104,6 +106,8 @@ int main(int argc, char* argv[]) {
 				solution_set = new SolutionSet();
 				solution_set->load("workers/", "main");
 				cout << "updated from main" << endl;
+
+				solution_set->increment();
 				update_eval();
 
 				continue;
@@ -291,6 +295,8 @@ int main(int argc, char* argv[]) {
 					solution_set = new SolutionSet();
 					solution_set->load("workers/", "main");
 					cout << "updated from main" << endl;
+
+					solution_set->increment();
 					update_eval();
 
 					continue;
@@ -314,8 +320,6 @@ int main(int argc, char* argv[]) {
 				}
 
 				duplicate->timestamp++;
-
-				duplicate->increment();
 
 				duplicate->save(path, "possible_" + to_string((unsigned)time(NULL)));
 

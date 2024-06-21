@@ -6,7 +6,7 @@
 
 class Solution;
 
-const int STALL_BEFORE_NEW = 5;
+const int STALL_BEFORE_NEW = 4;
 
 const int MERGE_SIZE = 4;
 

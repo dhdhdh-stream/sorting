@@ -163,10 +163,10 @@ void Solution::merge_and_delete(Solution* original_solution) {
 		this->info_scopes.push_back(original_solution->info_scopes[s_index]);
 	}
 
-	delete this->scopes[0];
+	delete original_solution->scopes[0];
 
-	this->scopes.clear();
-	this->info_scopes.clear();
+	original_solution->scopes.clear();
+	original_solution->info_scopes.clear();
 
 	if (original_solution->max_num_actions > this->max_num_actions) {
 		this->max_num_actions = original_solution->max_num_actions;
