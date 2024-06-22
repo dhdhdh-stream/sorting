@@ -31,12 +31,6 @@ public:
 				  RunHelper& run_helper,
 				  std::map<AbstractNode*, AbstractNodeHistory*>& node_histories);
 
-	void step_through_activate(AbstractNode*& curr_node,
-							   Problem* problem,
-							   std::vector<ContextLayer>& context,
-							   RunHelper& run_helper,
-							   ActionNodeHistory* history);
-
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file);
 	void link(Solution* parent_solution);

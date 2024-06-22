@@ -431,6 +431,48 @@ void Minesweeper::print() {
 	cout << "current_y: " << this->current_y << endl;
 }
 
+void Minesweeper::print_obs_helper(int x, int y) {
+	if (x < 0
+			|| x > WIDTH-1
+			|| y < 0
+			|| y > HEIGHT-1) {
+		cout << "B";
+	} else {
+		if (this->revealed[x][y]) {
+			if (this->world[x][y] == -1) {
+				cout << "X";
+			} else {
+				cout << this->world[x][y];
+			}
+		} else if (this->flagged[x][y]) {
+			if (this->world[x][y] == -1) {
+				cout << "F";
+			} else {
+				cout << "M";
+			}
+		} else {
+			cout << "-";
+		}
+	}
+}
+
+void Minesweeper::print_obs() {
+	print_obs_helper(this->current_x-1, this->current_y+1);
+	print_obs_helper(this->current_x, this->current_y+1);
+	print_obs_helper(this->current_x+1, this->current_y+1);
+	cout << endl;
+
+	print_obs_helper(this->current_x-1, this->current_y);
+	print_obs_helper(this->current_x, this->current_y);
+	print_obs_helper(this->current_x+1, this->current_y);
+	cout << endl;
+
+	print_obs_helper(this->current_x-1, this->current_y-1);
+	print_obs_helper(this->current_x, this->current_y-1);
+	print_obs_helper(this->current_x+1, this->current_y-1);
+	cout << endl;
+}
+
 Problem* TypeMinesweeper::get_problem() {
 	return new Minesweeper();
 }

@@ -129,6 +129,10 @@ void SolutionSet::increment() {
 			}
 
 			if (is_merge) {
+				/**
+				 * TODO: clean unused scopes
+				 */
+
 				Solution* solution = new Solution();
 				solution->init();
 				for (int s_index = 0; s_index < MERGE_SIZE; s_index++) {

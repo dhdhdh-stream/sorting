@@ -1,3 +1,7 @@
+/**
+ * TODO: can be real, have multiple components, etc.
+ */
+
 #ifndef ACTION_H
 #define ACTION_H
 
