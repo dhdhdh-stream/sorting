@@ -34,7 +34,6 @@ public:
 	Problem* copy_snapshot();
 
 	void print();
-	void print_obs();
 
 private:
 	double get_observation_helper(int x, int y);

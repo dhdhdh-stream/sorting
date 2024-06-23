@@ -42,7 +42,7 @@ void PassThroughExperiment::experiment_verify_existing_back_activate(
 	if (run_helper.exceeded_limit) {
 		predicted_score = -1.0;
 	} else {
-		predicted_score = calc_score(scope_history);
+		predicted_score = calc_score(scope_history) / (int)scope_history->callback_experiment_indexes.size();
 	}
 	for (int i_index = 0; i_index < (int)scope_history->callback_experiment_indexes.size(); i_index++) {
 		history->predicted_scores[scope_history->callback_experiment_indexes[i_index]]
@@ -59,11 +59,11 @@ void PassThroughExperiment::experiment_verify_existing_backprop(
 		double final_score;
 		switch (this->score_type) {
 		case SCORE_TYPE_TRUTH:
-			final_score = target_val - solution_set->average_score;
+			final_score = (target_val - solution_set->average_score) / (int)history->predicted_scores.size();
 			break;
 		case SCORE_TYPE_ALL:
 			{
-				double sum_score = target_val - solution_set->average_score;
+				double sum_score = (target_val - solution_set->average_score) / (int)history->predicted_scores.size();
 				for (int l_index = 0; l_index < (int)history->predicted_scores[i_index].size(); l_index++) {
 					sum_score += history->predicted_scores[i_index][l_index];
 				}

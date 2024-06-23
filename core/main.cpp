@@ -12,6 +12,41 @@
  *       - and repeat recursively
  */
 
+// TODO: found solutions follow edge until none remaining?
+// - local optima
+//   - difficult to escape from
+//     - another good solution in an opposite direction would not save things either
+
+// - need to somehow find empty spots?
+//   - but rare
+//     - a lot of empty spots are not actionable
+//       - ones that are may be too scattered
+//         - no simple sequence to gather
+
+// - maybe explore boundaries of the problem?
+//   - spending time exploring in many instances will be detrimental
+//     - but in other instances may be necessary?
+
+// - if can create a map of the problem, then can better evaluate and figure out what to do
+
+// - once solution created and hit local optima, then can evaluate what sequences preserve
+//   - and can use to gather information
+//     - then can even use to create logic?
+//       - what is needed with what
+//       - what negates what
+//       - what combinations are equal to what combinations
+
+// - can even begin optimizing
+//   - what exact actions are needed
+//     - can remove to know
+
+// - can learn observations
+//   - what exactly do you see given what
+//     - exact value and variance
+
+// - then once know what is safe to do, can really travel far and return
+//   - and while far away, begin exploring again
+
 #include <chrono>
 #include <iostream>
 #include <map>

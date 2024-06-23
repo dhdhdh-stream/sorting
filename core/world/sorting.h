@@ -27,7 +27,6 @@ public:
 	Problem* copy_snapshot();
 
 	void print();
-	void print_obs();
 };
 
 class TypeSorting : public ProblemType {

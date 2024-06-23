@@ -130,7 +130,10 @@ void SolutionSet::increment() {
 
 			if (is_merge) {
 				/**
-				 * TODO: clean unused scopes
+				 * - TODO: instead, try multiple runs
+				 *   - don't delete previous solutions, but use to build multiple new
+				 * 
+				 * - TODO: clean unused scopes
 				 */
 
 				Solution* solution = new Solution();
