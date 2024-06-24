@@ -139,6 +139,14 @@ void Solution::load(ifstream& input_file) {
 	#endif /* MDEBUG */
 }
 
+void Solution::clean_node(int scope_id,
+						  int node_id) {
+	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
+		this->scopes[s_index]->clean_node(scope_id,
+										  node_id);
+	}
+}
+
 #if defined(MDEBUG) && MDEBUG
 void Solution::clear_verify() {
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {

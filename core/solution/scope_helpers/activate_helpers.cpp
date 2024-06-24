@@ -72,7 +72,8 @@ void node_activate_helper(AbstractNode*& curr_node,
 
 void Scope::activate(Problem* problem,
 					 vector<ContextLayer>& context,
-					 RunHelper& run_helper) {
+					 RunHelper& run_helper,
+					 ScopeHistory* history) {
 	Solution* solution = solution_set->solutions[solution_set->curr_solution_index];
 
 	/**
@@ -88,7 +89,6 @@ void Scope::activate(Problem* problem,
 	context.back().scope = this;
 	context.back().node = NULL;
 
-	ScopeHistory* history = new ScopeHistory(this);
 	context.back().scope_history = history;
 
 	AbstractNode* curr_node = this->nodes[0];
@@ -115,8 +115,6 @@ void Scope::activate(Problem* problem,
 			context,
 			run_helper);
 	}
-
-	delete history;
 
 	context.pop_back();
 }

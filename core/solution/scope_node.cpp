@@ -76,5 +76,9 @@ ScopeNodeHistory::ScopeNodeHistory() {
 ScopeNodeHistory::ScopeNodeHistory(ScopeNodeHistory* original) {
 	this->index = original->index;
 
-	this->obs_snapshot = original->obs_snapshot;
+	this->scope_history = original->scope_history->deep_copy();
+}
+
+ScopeNodeHistory::~ScopeNodeHistory() {
+	delete this->scope_history;
 }

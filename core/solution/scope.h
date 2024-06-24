@@ -20,9 +20,13 @@ class Network;
 class Problem;
 class Solution;
 
+class ScopeHistory;
 class Scope : public AbstractScope {
 public:
-	std::vector<AbstractNode*> eval_input_node_contexts;
+	std::vector<std::vector<int>> eval_input_scope_context_ids;
+	std::vector<std::vector<AbstractScope*>> eval_input_scope_contexts;
+	std::vector<std::vector<int>> eval_input_node_context_ids;
+	std::vector<std::vector<AbstractNode*>> eval_input_node_contexts;
 	std::vector<int> eval_input_obs_indexes;
 	Network* eval_network;
 	/**
@@ -42,7 +46,8 @@ public:
 
 	void activate(Problem* problem,
 				  std::vector<ContextLayer>& context,
-				  RunHelper& run_helper);
+				  RunHelper& run_helper,
+				  ScopeHistory* history);
 
 	void random_exit_activate(AbstractNode* starting_node,
 							  std::vector<AbstractNode*>& possible_exits);
@@ -51,24 +56,29 @@ public:
 							 std::set<AbstractNode*>& included_nodes,
 							 Problem* problem,
 							 std::vector<ContextLayer>& context,
-							 RunHelper& run_helper);
+							 RunHelper& run_helper,
+							 ScopeHistory* history);
 
 	void measure_activate(Metrics& metrics,
 						  Problem* problem,
 						  std::vector<ContextLayer>& context,
-						  RunHelper& run_helper);
+						  RunHelper& run_helper,
+						  ScopeHistory* history);
 
 	#if defined(MDEBUG) && MDEBUG
 	void new_action_capture_verify_activate(Problem* problem,
 											std::vector<ContextLayer>& context,
-											RunHelper& run_helper);
+											RunHelper& run_helper,
+											ScopeHistory* history);
 	void verify_activate(Problem* problem,
 						 std::vector<ContextLayer>& context,
-						 RunHelper& run_helper);
+						 RunHelper& run_helper,
+						 ScopeHistory* history);
 	void clear_verify();
 	#endif /* MDEBUG */
 
-	void clean_node(int node_id);
+	void clean_node(int scope_id,
+					int node_id);
 
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file,

@@ -302,11 +302,33 @@ void BranchExperiment::new_branch(Solution* duplicate) {
 		}
 	}
 
-	for (int i_index = 0; i_index < (int)this->new_input_node_contexts.size(); i_index++) {
-		this->branch_node->input_node_context_ids.push_back(
-			this->new_input_node_contexts[i_index]->id);
-		this->branch_node->input_node_contexts.push_back(
-			duplicate_local_scope->nodes[this->new_input_node_contexts[i_index]->id]);
+	for (int i_index = 0; i_index < (int)this->new_input_scope_contexts.size(); i_index++) {
+		vector<int> scope_context_ids;
+		for (int c_index = 0; c_index < (int)this->new_input_scope_contexts[i_index].size(); c_index++) {
+			scope_context_ids.push_back(this->new_input_scope_contexts[i_index][c_index]->id);
+		}
+		this->branch_node->input_scope_context_ids.push_back(scope_context_ids);
+
+		vector<AbstractScope*> scope_context;
+		for (int c_index = 0; c_index < (int)this->new_input_scope_contexts[i_index].size(); c_index++) {
+			int scope_id = this->new_input_scope_contexts[i_index][c_index]->id;
+			scope_context.push_back(duplicate->scopes[scope_id]);
+		}
+		this->branch_node->input_scope_contexts.push_back(scope_context);
+
+		vector<int> node_context_ids;
+		for (int c_index = 0; c_index < (int)this->new_input_node_contexts[i_index].size(); c_index++) {
+			node_context_ids.push_back(this->new_input_node_contexts[i_index][c_index]->id);
+		}
+		this->branch_node->input_node_context_ids.push_back(node_context_ids);
+
+		vector<AbstractNode*> node_context;
+		for (int c_index = 0; c_index < (int)this->new_input_node_contexts[i_index].size(); c_index++) {
+			node_context.push_back(this->branch_node->input_scope_contexts[i_index][c_index]
+				->nodes[this->new_input_node_contexts[i_index][c_index]->id]);
+		}
+		this->branch_node->input_node_contexts.push_back(node_context);
+
 		this->branch_node->input_obs_indexes.push_back(this->new_input_obs_indexes[i_index]);
 	}
 	this->branch_node->network = this->new_network;

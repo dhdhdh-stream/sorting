@@ -18,17 +18,19 @@ void ScopeNode::measure_activate(Metrics& metrics,
 								 map<AbstractNode*, AbstractNodeHistory*>& node_histories) {
 	context.back().node = this;
 
+	ScopeHistory* scope_history = new ScopeHistory(this->scope);
 	this->scope->measure_activate(metrics,
 								  problem,
 								  context,
-								  run_helper);
+								  run_helper,
+								  scope_history);
 
 	context.back().node = NULL;
 
 	ScopeNodeHistory* history = new ScopeNodeHistory();
 	history->index = node_histories.size();
 	node_histories[this] = history;
-	history->obs_snapshot = problem->get_observations();
+	history->scope_history = scope_history;
 
 	curr_node = this->next_node;
 }

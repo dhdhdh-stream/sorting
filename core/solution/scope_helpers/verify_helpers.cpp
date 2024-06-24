@@ -72,7 +72,8 @@ void node_verify_activate_helper(AbstractNode*& curr_node,
 
 void Scope::verify_activate(Problem* problem,
 							vector<ContextLayer>& context,
-							RunHelper& run_helper) {
+							RunHelper& run_helper,
+							ScopeHistory* history) {
 	Solution* solution = solution_set->solutions[solution_set->curr_solution_index];
 
 	if (context.size() > solution->scopes.size() + 1) {
@@ -85,7 +86,6 @@ void Scope::verify_activate(Problem* problem,
 	context.back().scope = this;
 	context.back().node = NULL;
 
-	ScopeHistory* history = new ScopeHistory(this);
 	context.back().scope_history = history;
 
 	AbstractNode* curr_node = this->nodes[0];
@@ -106,8 +106,6 @@ void Scope::verify_activate(Problem* problem,
 									run_helper,
 									history);
 	}
-
-	delete history;
 
 	context.pop_back();
 }

@@ -13,7 +13,8 @@
 
 using namespace std;
 
-void clean_scope(Scope* scope) {
+void clean_scope(Scope* scope,
+				 Solution* parent_solution) {
 	while (true) {
 		bool removed_node = false;
 
@@ -57,7 +58,8 @@ void clean_scope(Scope* scope) {
 			if (needed_it == next_node_ids.end()) {
 				removed_node = true;
 
-				scope->clean_node(it->first);
+				parent_solution->clean_node(scope->id,
+											it->first);
 
 				delete it->second;
 				it = scope->nodes.erase(it);

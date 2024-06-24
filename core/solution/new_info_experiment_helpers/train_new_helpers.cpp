@@ -12,6 +12,7 @@
 #include "info_scope.h"
 #include "network.h"
 #include "nn_helpers.h"
+#include "problem.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution_helpers.h"
@@ -208,9 +209,14 @@ void NewInfoExperiment::train_new_backprop(
 				vector<int> possible_obs_indexes;
 
 				uniform_int_distribution<int> history_distribution(0, num_instances-1);
-				gather_possible_helper(possible_node_contexts,
-									   possible_obs_indexes,
-									   this->scope_histories[history_distribution(generator)]);
+				AbstractScopeHistory* scope_history = this->scope_histories[history_distribution(generator)];
+				for (map<AbstractNode*, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
+						it != scope_history->node_histories.end(); it++) {
+					for (int o_index = 0; o_index < problem_type->num_obs(); o_index++) {
+						possible_node_contexts.push_back(it->first);
+						possible_obs_indexes.push_back(o_index);
+					}
+				}
 
 				if (possible_node_contexts.size() > 0) {
 					vector<AbstractNode*> test_input_node_contexts = this->new_input_node_contexts;

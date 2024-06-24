@@ -107,9 +107,11 @@ void SolutionSet::load(string path,
 
 void SolutionSet::increment() {
 	#if defined(MDEBUG) && MDEBUG
-	if (rand()%4 == 0) {
+	// if (rand()%4 == 0) {
+	if (true) {
 	#else
-	if (this->average_score > this->best_average_score) {
+	// if (this->average_score > this->best_average_score) {
+	if (true) {
 	#endif /* MDEBUG */
 		this->best_average_score = this->average_score;
 		this->best_timestamp = this->timestamp;

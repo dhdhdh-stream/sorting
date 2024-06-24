@@ -52,14 +52,27 @@ void NewActionExperiment::finalize(Solution* duplicate) {
 					this->new_scope->scopes_used.insert(duplicate->scopes[scope_node->scope->id]);
 				}
 				break;
-			#if defined(MDEBUG) && MDEBUG
 			case NODE_TYPE_BRANCH:
 				{
 					BranchNode* branch_node = (BranchNode*)it->second;
+
+					for (int i_index = 0; i_index < (int)branch_node->input_scope_contexts.size(); i_index++) {
+						branch_node->input_scope_context_ids[i_index][0] = this->new_scope->id;
+
+						for (int l_index = 1; l_index < (int)branch_node->input_scope_contexts[i_index].size(); l_index++) {
+							AbstractScope* duplicate_scope = duplicate->scopes[branch_node->input_scope_context_ids[i_index][l_index]];
+							AbstractNode* duplicate_node = duplicate_scope->nodes[branch_node->input_node_context_ids[i_index][l_index]];
+
+							branch_node->input_scope_contexts[i_index][l_index] = duplicate_scope;
+							branch_node->input_node_contexts[i_index][l_index] = duplicate_node;
+						}
+					}
+
+					#if defined(MDEBUG) && MDEBUG
 					branch_node->verify_key = this;
+					#endif /* MDEBUG */
 				}
 				break;
-			#endif /* MDEBUG */
 			case NODE_TYPE_INFO_BRANCH:
 				{
 					InfoBranchNode* info_branch_node = (InfoBranchNode*)it->second;

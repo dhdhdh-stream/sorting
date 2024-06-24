@@ -51,6 +51,9 @@ public:
 	void init();
 	void load(std::ifstream& input_file);
 
+	void clean_node(int scope_id,
+					int node_id);
+
 	#if defined(MDEBUG) && MDEBUG
 	void clear_verify();
 	#endif /* MDEBUG */

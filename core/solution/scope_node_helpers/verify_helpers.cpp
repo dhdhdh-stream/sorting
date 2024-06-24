@@ -16,13 +16,15 @@ void ScopeNode::verify_activate(AbstractNode*& curr_node,
 								ScopeNodeHistory* history) {
 	context.back().node = this;
 
+	ScopeHistory* scope_history = new ScopeHistory(this->scope);
 	this->scope->verify_activate(problem,
 								 context,
-								 run_helper);
+								 run_helper,
+								 scope_history);
 
 	context.back().node = NULL;
 
-	history->obs_snapshot = problem->get_observations();
+	history->scope_history = scope_history;
 
 	curr_node = this->next_node;
 }

@@ -58,9 +58,12 @@ void NewActionExperiment::test_activate(
 	case NEW_ACTION_EXPERIMENT_MEASURE_NEW:
 	case NEW_ACTION_EXPERIMENT_VERIFY_1ST_NEW:
 	case NEW_ACTION_EXPERIMENT_VERIFY_2ND_NEW:
+		ScopeHistory* scope_history = new ScopeHistory(this->new_scope);
 		this->new_scope->activate(problem,
 								  context,
-								  run_helper);
+								  run_helper,
+								  scope_history);
+		delete scope_history;
 
 		curr_node = this->test_location_exits[location_index];
 	}

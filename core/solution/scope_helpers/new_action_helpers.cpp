@@ -72,7 +72,8 @@ void new_action_capture_verify_node_activate_helper(
 void Scope::new_action_capture_verify_activate(
 		Problem* problem,
 		vector<ContextLayer>& context,
-		RunHelper& run_helper) {
+		RunHelper& run_helper,
+		ScopeHistory* history) {
 	Solution* solution = solution_set->solutions[solution_set->curr_solution_index];
 
 	if (context.size() > solution->scopes.size() + 1) {
@@ -85,7 +86,6 @@ void Scope::new_action_capture_verify_activate(
 	context.back().scope = this;
 	context.back().node = NULL;
 
-	ScopeHistory* history = new ScopeHistory(this);
 	context.back().scope_history = history;
 
 	AbstractNode* curr_node = this->nodes[0];
@@ -107,8 +107,6 @@ void Scope::new_action_capture_verify_activate(
 			run_helper,
 			history);
 	}
-
-	delete history;
 
 	context.pop_back();
 }

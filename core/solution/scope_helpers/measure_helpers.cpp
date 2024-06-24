@@ -72,7 +72,8 @@ void measure_node_activate_helper(AbstractNode*& curr_node,
 void Scope::measure_activate(Metrics& metrics,
 							 Problem* problem,
 							 vector<ContextLayer>& context,
-							 RunHelper& run_helper) {
+							 RunHelper& run_helper,
+							 ScopeHistory* history) {
 	Solution* solution = solution_set->solutions[solution_set->curr_solution_index];
 
 	if (context.size() > solution->scopes.size() + 1) {
@@ -85,7 +86,6 @@ void Scope::measure_activate(Metrics& metrics,
 	context.back().scope = this;
 	context.back().node = NULL;
 
-	ScopeHistory* history = new ScopeHistory(this);
 	context.back().scope_history = history;
 
 	AbstractNode* curr_node = this->nodes[0];
@@ -114,8 +114,6 @@ void Scope::measure_activate(Metrics& metrics,
 	if (metrics.new_scope == this) {
 		metrics.new_scope_histories.push_back(history->deep_copy());
 	}
-
-	delete history;
 
 	context.pop_back();
 }

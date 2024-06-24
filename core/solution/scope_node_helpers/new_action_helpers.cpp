@@ -17,15 +17,18 @@ void ScopeNode::new_action_capture_verify_activate(
 		RunHelper& run_helper) {
 	context.back().node = this;
 
+	ScopeHistory* scope_history = new ScopeHistory(this->scope);
 	this->scope->new_action_capture_verify_activate(problem,
 													context,
-													run_helper);
+													run_helper,
+													scope_history);
 
 	context.back().node = NULL;
 
 	/**
 	 * - don't bother with history
 	 */
+	delete scope_history;
 
 	curr_node = this->next_node;
 

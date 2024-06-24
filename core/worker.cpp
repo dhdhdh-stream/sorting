@@ -65,10 +65,13 @@ int main(int argc, char* argv[]) {
 
 		vector<ContextLayer> context;
 		Solution* solution = solution_set->solutions[solution_set->curr_solution_index];
+		ScopeHistory* scope_history = new ScopeHistory(solution->scopes[0]);
 		solution->scopes[0]->activate(
 			problem,
 			context,
-			run_helper);
+			run_helper,
+			scope_history);
+		delete scope_history;
 
 		if (run_helper.experiments_seen_order.size() == 0) {
 			if (!run_helper.exceeded_limit) {
@@ -233,7 +236,8 @@ int main(int argc, char* argv[]) {
 					clean_info_scope(info_scope);
 				} else {
 					Scope* experiment_scope = duplicate_solution->scopes[duplicate_solution->last_updated_scope_id];
-					clean_scope(experiment_scope);
+					clean_scope(experiment_scope,
+								duplicate_solution);
 				}
 
 				vector<double> target_vals;
@@ -245,10 +249,13 @@ int main(int argc, char* argv[]) {
 					RunHelper run_helper;
 
 					vector<ContextLayer> context;
+					ScopeHistory* scope_history = new ScopeHistory(duplicate_solution->scopes[0]);
 					duplicate_solution->scopes[0]->activate(
 						problem,
 						context,
-						run_helper);
+						run_helper,
+						scope_history);
+					delete scope_history;
 
 					if (run_helper.num_actions > max_num_actions) {
 						max_num_actions = run_helper.num_actions;
