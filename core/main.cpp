@@ -47,6 +47,35 @@
 // - then once know what is safe to do, can really travel far and return
 //   - and while far away, begin exploring again
 
+// - to determine if solution stays the same, measure misguess
+//   - guess every observations and result
+
+// - basically, what are all the transformations you can do while the solution stays the same
+
+// - if ob can be gathered from multiple places, but need at least 1:
+//   - can essentially keep any spot, but can pad before and behind
+
+// - add swaps too
+
+// - so then chaining basically turns into:
+//   - have starting solution
+//     - apply a bunch of transformations
+//       - then try to branch off from there
+
+// - transformations will let you go much further then solution scopes
+
+// - for misguess, scale by standard deviation
+//   - don't really care about things that aren't able to be predicted
+//   - really care about things that can be predicted accurately
+//     - if that changes, then solution changed
+
+// - can use back to predict front?
+//   - though would have to be careful about identity function
+
+// - can use transformations to help remove possibilities during explore
+
+// - first reduce to minimum viable
+
 #include <chrono>
 #include <iostream>
 #include <map>
