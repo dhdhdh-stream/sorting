@@ -20,11 +20,10 @@ class ScopeNode;
 
 const int PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING = 0;
 const int PASS_THROUGH_EXPERIMENT_STATE_EXPLORE = 1;
-const int PASS_THROUGH_EXPERIMENT_STATE_MEASURE_NEW = 2;
-const int PASS_THROUGH_EXPERIMENT_STATE_VERIFY_EXISTING = 3;
-const int PASS_THROUGH_EXPERIMENT_STATE_VERIFY_NEW = 4;
-const int PASS_THROUGH_EXPERIMENT_STATE_ROOT_VERIFY = 5;
-const int PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT = 6;
+const int PASS_THROUGH_EXPERIMENT_STATE_VERIFY_EXISTING = 2;
+const int PASS_THROUGH_EXPERIMENT_STATE_VERIFY_NEW = 3;
+const int PASS_THROUGH_EXPERIMENT_STATE_ROOT_VERIFY = 4;
+const int PASS_THROUGH_EXPERIMENT_STATE_EXPERIMENT = 5;
 
 class PassThroughExperimentHistory;
 class PassThroughExperiment : public AbstractExperiment {
@@ -42,6 +41,7 @@ public:
 	std::vector<int> curr_step_types;
 	std::vector<ActionNode*> curr_actions;
 	std::vector<ScopeNode*> curr_scopes;
+	AbstractNode* curr_pre_exit_node;
 	AbstractNode* curr_exit_next_node;
 
 	double best_score;
@@ -50,9 +50,9 @@ public:
 	std::vector<int> best_step_types;
 	std::vector<ActionNode*> best_actions;
 	std::vector<ScopeNode*> best_scopes;
+	AbstractNode* best_pre_exit_node;
 	AbstractNode* best_exit_next_node;
 
-	ActionNode* ending_node;
 	InfoBranchNode* info_branch_node;
 
 	PassThroughExperiment(AbstractScope* scope_context,

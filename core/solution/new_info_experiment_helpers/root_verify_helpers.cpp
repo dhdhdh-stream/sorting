@@ -15,7 +15,7 @@
 
 using namespace std;
 
-bool NewInfoExperiment::root_verify_activate(
+void NewInfoExperiment::root_verify_activate(
 		AbstractNode*& curr_node,
 		Problem* problem,
 		vector<ContextLayer>& context,
@@ -30,8 +30,6 @@ bool NewInfoExperiment::root_verify_activate(
 				curr_node = this->best_scopes[0];
 			}
 		}
-
-		return true;
 	} else {
 		if (this->use_existing) {
 			bool is_positive;
@@ -67,10 +65,6 @@ bool NewInfoExperiment::root_verify_activate(
 						curr_node = this->best_scopes[0];
 					}
 				}
-
-				return true;
-			} else {
-				return false;
 			}
 		} else {
 			run_helper.num_decisions++;
@@ -120,10 +114,6 @@ bool NewInfoExperiment::root_verify_activate(
 						curr_node = this->best_scopes[0];
 					}
 				}
-
-				return true;
-			} else {
-				return false;
 			}
 		}
 	}

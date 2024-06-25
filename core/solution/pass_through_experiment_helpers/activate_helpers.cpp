@@ -334,13 +334,6 @@ bool PassThroughExperiment::activate(AbstractNode* experiment_node,
 							 run_helper,
 							 history);
 			break;
-		case PASS_THROUGH_EXPERIMENT_STATE_MEASURE_NEW:
-			measure_new_activate(curr_node,
-								 problem,
-								 context,
-								 run_helper,
-								 history);
-			break;
 		case PASS_THROUGH_EXPERIMENT_STATE_VERIFY_EXISTING:
 			verify_existing_activate(context,
 									 history);
@@ -400,10 +393,6 @@ void PassThroughExperiment::back_activate(vector<ContextLayer>& context,
 		explore_back_activate(context,
 							  run_helper);
 		break;
-	case PASS_THROUGH_EXPERIMENT_STATE_MEASURE_NEW:
-		measure_new_back_activate(context,
-								  run_helper);
-		break;
 	case PASS_THROUGH_EXPERIMENT_STATE_VERIFY_EXISTING:
 		verify_existing_back_activate(context,
 									  run_helper);
@@ -442,10 +431,6 @@ void PassThroughExperiment::backprop(double target_val,
 	case PASS_THROUGH_EXPERIMENT_STATE_EXPLORE:
 		explore_backprop(target_val,
 						 run_helper);
-		break;
-	case PASS_THROUGH_EXPERIMENT_STATE_MEASURE_NEW:
-		measure_new_backprop(target_val,
-							 run_helper);
 		break;
 	case PASS_THROUGH_EXPERIMENT_STATE_VERIFY_EXISTING:
 		verify_existing_backprop(target_val,

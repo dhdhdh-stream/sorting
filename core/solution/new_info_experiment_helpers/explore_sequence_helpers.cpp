@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "action_node.h"
+#include "branch_end_node.h"
 #include "branch_node.h"
 #include "constants.h"
 #include "eval_helpers.h"
@@ -24,7 +25,7 @@ const int EXPLORE_ITERS = 5;
 const int EXPLORE_ITERS = 500;
 #endif /* MDEBUG */
 
-bool NewInfoExperiment::explore_sequence_activate(
+void NewInfoExperiment::explore_sequence_activate(
 		AbstractNode*& curr_node,
 		Problem* problem,
 		vector<ContextLayer>& context,
@@ -88,59 +89,19 @@ bool NewInfoExperiment::explore_sequence_activate(
 
 		history->existing_predicted_scores.push_back(predicted_score);
 
-		delete scope_history;
-
 		Scope* parent_scope = (Scope*)this->scope_context;
 
+		vector<AbstractNode*> possible_pre_exits;
 		vector<AbstractNode*> possible_exits;
-
-		if (this->node_context->type == NODE_TYPE_ACTION
-				&& ((ActionNode*)this->node_context)->next_node == NULL) {
-			possible_exits.push_back(NULL);
-		}
-
-		AbstractNode* starting_node;
-		switch (this->node_context->type) {
-		case NODE_TYPE_ACTION:
-			{
-				ActionNode* action_node = (ActionNode*)this->node_context;
-				starting_node = action_node->next_node;
-			}
-			break;
-		case NODE_TYPE_SCOPE:
-			{
-				ScopeNode* scope_node = (ScopeNode*)this->node_context;
-				starting_node = scope_node->next_node;
-			}
-			break;
-		case NODE_TYPE_BRANCH:
-			{
-				BranchNode* branch_node = (BranchNode*)this->node_context;
-				if (this->is_branch) {
-					starting_node = branch_node->branch_next_node;
-				} else {
-					starting_node = branch_node->original_next_node;
-				}
-			}
-			break;
-		case NODE_TYPE_INFO_BRANCH:
-			{
-				InfoBranchNode* info_branch_node = (InfoBranchNode*)this->node_context;
-				if (this->is_branch) {
-					starting_node = info_branch_node->branch_next_node;
-				} else {
-					starting_node = info_branch_node->original_next_node;
-				}
-			}
-			break;
-		}
-
 		parent_scope->random_exit_activate(
-			starting_node,
+			this->node_context,
+			this->is_branch,
+			possible_pre_exits,
 			possible_exits);
 
 		uniform_int_distribution<int> distribution(0, possible_exits.size()-1);
 		int random_index = distribution(generator);
+		this->curr_pre_exit_node = possible_pre_exits[random_index];
 		this->curr_exit_next_node = possible_exits[random_index];
 
 		int new_num_steps;
@@ -190,13 +151,9 @@ bool NewInfoExperiment::explore_sequence_activate(
 		}
 
 		curr_node = this->curr_exit_next_node;
-
-		return true;
-	} else {
-		delete scope_history;
-
-		return false;
 	}
+
+	delete scope_history;
 }
 
 void NewInfoExperiment::explore_sequence_back_activate(
@@ -265,6 +222,7 @@ void NewInfoExperiment::explore_sequence_backprop(
 				this->best_step_types = this->curr_step_types;
 				this->best_actions = this->curr_actions;
 				this->best_scopes = this->curr_scopes;
+				this->best_pre_exit_node = this->curr_pre_exit_node;
 				this->best_exit_next_node = this->curr_exit_next_node;
 
 				this->curr_step_types.clear();
@@ -298,6 +256,7 @@ void NewInfoExperiment::explore_sequence_backprop(
 				this->best_step_types = this->curr_step_types;
 				this->best_actions = this->curr_actions;
 				this->best_scopes = this->curr_scopes;
+				this->best_pre_exit_node = this->curr_pre_exit_node;
 				this->best_exit_next_node = this->curr_exit_next_node;
 
 				this->curr_step_types.clear();
@@ -328,6 +287,7 @@ void NewInfoExperiment::explore_sequence_backprop(
 				this->best_step_types = this->curr_step_types;
 				this->best_actions = this->curr_actions;
 				this->best_scopes = this->curr_scopes;
+				this->best_pre_exit_node = this->curr_pre_exit_node;
 				this->best_exit_next_node = this->curr_exit_next_node;
 
 				this->curr_step_types.clear();
@@ -363,34 +323,17 @@ void NewInfoExperiment::explore_sequence_backprop(
 				}
 			}
 
-			int exit_node_id;
-			AbstractNode* exit_node;
-			if (this->best_exit_next_node == NULL) {
-				ActionNode* new_ending_node = new ActionNode();
-				new_ending_node->parent = this->scope_context;
-				new_ending_node->id = this->scope_context->node_counter;
-				this->scope_context->node_counter++;
-
-				new_ending_node->action = Action(ACTION_NOOP);
-
-				new_ending_node->next_node_id = -1;
-				new_ending_node->next_node = NULL;
-
-				this->ending_node = new_ending_node;
-
-				exit_node_id = new_ending_node->id;
-				exit_node = new_ending_node;
-			} else {
-				exit_node_id = this->best_exit_next_node->id;
-				exit_node = this->best_exit_next_node;
-			}
-
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 				int next_node_id;
 				AbstractNode* next_node;
 				if (s_index == (int)this->best_step_types.size()-1) {
-					next_node_id = exit_node_id;
-					next_node = exit_node;
+					if (this->best_exit_next_node == NULL) {
+						next_node_id = -1;
+						next_node = NULL;
+					} else {
+						next_node_id = this->best_exit_next_node->id;
+						next_node = this->best_exit_next_node;
+					}
 				} else {
 					if (this->best_step_types[s_index+1] == STEP_TYPE_ACTION) {
 						next_node_id = this->best_actions[s_index+1]->id;

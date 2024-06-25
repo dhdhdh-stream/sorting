@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "action_node.h"
+#include "branch_end_node.h"
 #include "branch_node.h"
 #include "constants.h"
 #include "eval_helpers.h"
@@ -100,55 +101,17 @@ void PassThroughExperiment::measure_existing_backprop(
 
 		Scope* parent_scope = (Scope*)this->scope_context;
 
+		vector<AbstractNode*> possible_pre_exits;
 		vector<AbstractNode*> possible_exits;
-
-		if (this->node_context->type == NODE_TYPE_ACTION
-				&& ((ActionNode*)this->node_context)->next_node == NULL) {
-			possible_exits.push_back(NULL);
-		}
-
-		AbstractNode* starting_node;
-		switch (this->node_context->type) {
-		case NODE_TYPE_ACTION:
-			{
-				ActionNode* action_node = (ActionNode*)this->node_context;
-				starting_node = action_node->next_node;
-			}
-			break;
-		case NODE_TYPE_SCOPE:
-			{
-				ScopeNode* scope_node = (ScopeNode*)this->node_context;
-				starting_node = scope_node->next_node;
-			}
-			break;
-		case NODE_TYPE_BRANCH:
-			{
-				BranchNode* branch_node = (BranchNode*)this->node_context;
-				if (this->is_branch) {
-					starting_node = branch_node->branch_next_node;
-				} else {
-					starting_node = branch_node->original_next_node;
-				}
-			}
-			break;
-		case NODE_TYPE_INFO_BRANCH:
-			{
-				InfoBranchNode* info_branch_node = (InfoBranchNode*)this->node_context;
-				if (this->is_branch) {
-					starting_node = info_branch_node->branch_next_node;
-				} else {
-					starting_node = info_branch_node->original_next_node;
-				}
-			}
-			break;
-		}
-
 		parent_scope->random_exit_activate(
-			starting_node,
+			this->node_context,
+			this->is_branch,
+			possible_pre_exits,
 			possible_exits);
 
 		uniform_int_distribution<int> distribution(0, possible_exits.size()-1);
 		int random_index = distribution(generator);
+		this->curr_pre_exit_node = possible_pre_exits[random_index];
 		this->curr_exit_next_node = possible_exits[random_index];
 
 		this->curr_info_scope = get_existing_info_scope(parent_scope);

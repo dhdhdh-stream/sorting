@@ -329,89 +329,95 @@ bool NewInfoExperiment::activate(AbstractNode* experiment_node,
 		case NEW_INFO_EXPERIMENT_STATE_MEASURE_EXISTING:
 			measure_existing_activate(context,
 									  history);
-
-			return false;
+			break;
 		case NEW_INFO_EXPERIMENT_STATE_EXPLORE_INFO:
 			explore_info_activate(curr_node,
 								  problem,
 								  context,
 								  run_helper,
 								  history);
-
-			return false;
+			break;
 		case NEW_INFO_EXPERIMENT_STATE_EXPLORE_SEQUENCE:
-			return explore_sequence_activate(curr_node,
-											 problem,
-											 context,
-											 run_helper,
-											 history);
+			explore_sequence_activate(curr_node,
+									  problem,
+									  context,
+									  run_helper,
+									  history);
+			break;
 		case NEW_INFO_EXPERIMENT_STATE_TRAIN_NEW:
 			train_new_activate(curr_node,
 							   problem,
 							   context,
 							   run_helper,
 							   history);
-
-			return true;
+			break;
 		case NEW_INFO_EXPERIMENT_STATE_MEASURE:
-			return measure_activate(curr_node,
+			measure_activate(curr_node,
+							 problem,
+							 context,
+							 run_helper,
+							 history);
+			break;
+		case NEW_INFO_EXPERIMENT_STATE_TRY_EXISTING_INFO:
+			try_existing_info_activate(curr_node,
+									   problem,
+									   context,
+									   run_helper,
+									   history);
+			break;
+		case NEW_INFO_EXPERIMENT_STATE_VERIFY_EXISTING:
+			verify_existing_activate(context,
+									 history);
+			break;
+		case NEW_INFO_EXPERIMENT_STATE_VERIFY:
+			verify_activate(curr_node,
+							problem,
+							context,
+							run_helper,
+							history);
+			break;
+		#if defined(MDEBUG) && MDEBUG
+		case NEW_INFO_EXPERIMENT_STATE_CAPTURE_VERIFY:
+			capture_verify_activate(curr_node,
+									problem,
+									context,
+									run_helper);
+			break;
+		#endif /* MDEBUG */
+		case NEW_INFO_EXPERIMENT_STATE_ROOT_VERIFY:
+			root_verify_activate(curr_node,
+								 problem,
+								 context,
+								 run_helper);
+			break;
+		case NEW_INFO_EXPERIMENT_STATE_EXPERIMENT:
+			switch (this->root_state) {
+			case ROOT_EXPERIMENT_STATE_EXPERIMENT:
+				experiment_activate(curr_node,
 									problem,
 									context,
 									run_helper,
 									history);
-		case NEW_INFO_EXPERIMENT_STATE_TRY_EXISTING_INFO:
-			return try_existing_info_activate(curr_node,
-											  problem,
-											  context,
-											  run_helper,
-											  history);
-		case NEW_INFO_EXPERIMENT_STATE_VERIFY_EXISTING:
-			verify_existing_activate(context,
-									 history);
-
-			return false;
-		case NEW_INFO_EXPERIMENT_STATE_VERIFY:
-			return verify_activate(curr_node,
-								   problem,
-								   context,
-								   run_helper,
-								   history);
-		#if defined(MDEBUG) && MDEBUG
-		case NEW_INFO_EXPERIMENT_STATE_CAPTURE_VERIFY:
-			return capture_verify_activate(curr_node,
-										   problem,
-										   context,
-										   run_helper);
-		#endif /* MDEBUG */
-		case NEW_INFO_EXPERIMENT_STATE_ROOT_VERIFY:
-			return root_verify_activate(curr_node,
-										problem,
-										context,
-										run_helper);
-		case NEW_INFO_EXPERIMENT_STATE_EXPERIMENT:
-			switch (this->root_state) {
-			case ROOT_EXPERIMENT_STATE_EXPERIMENT:
-				return experiment_activate(curr_node,
+				break;
+			case ROOT_EXPERIMENT_STATE_VERIFY_EXISTING:
+				experiment_verify_existing_activate(context,
+													history);
+				break;
+			case ROOT_EXPERIMENT_STATE_VERIFY:
+				experiment_verify_activate(curr_node,
 										   problem,
 										   context,
 										   run_helper,
 										   history);
-			case ROOT_EXPERIMENT_STATE_VERIFY_EXISTING:
-				experiment_verify_existing_activate(context,
-													history);
-
-				return false;
-			case ROOT_EXPERIMENT_STATE_VERIFY:
-				return experiment_verify_activate(curr_node,
-												  problem,
-												  context,
-												  run_helper,
-												  history);
+				break;
 			}
+			break;
 		}
-	}
 
-	return false;
+		return true;
+	} else {
+		return false;
+	}
 }
 
 void NewInfoExperiment::back_activate(vector<ContextLayer>& context,

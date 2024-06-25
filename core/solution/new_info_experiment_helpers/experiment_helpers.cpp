@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "action_node.h"
+#include "branch_end_node.h"
 #include "branch_experiment.h"
 #include "branch_node.h"
 #include "constants.h"
@@ -20,13 +21,11 @@
 
 using namespace std;
 
-bool NewInfoExperiment::experiment_activate(AbstractNode*& curr_node,
+void NewInfoExperiment::experiment_activate(AbstractNode*& curr_node,
 											Problem* problem,
 											vector<ContextLayer>& context,
 											RunHelper& run_helper,
 											NewInfoExperimentHistory* history) {
-	bool result;
-
 	if (this->is_pass_through) {
 		if (this->best_step_types.size() == 0) {
 			curr_node = this->best_exit_next_node;
@@ -37,8 +36,6 @@ bool NewInfoExperiment::experiment_activate(AbstractNode*& curr_node,
 				curr_node = this->best_scopes[0];
 			}
 		}
-
-		result = true;
 	} else {
 		if (this->use_existing) {
 			bool is_positive;
@@ -79,12 +76,8 @@ bool NewInfoExperiment::experiment_activate(AbstractNode*& curr_node,
 						curr_node = this->best_scopes[0];
 					}
 				}
-
-				result = true;
 			} else {
 				branch_node_history->is_branch = false;
-
-				result = false;
 			}
 		} else {
 			run_helper.num_decisions++;
@@ -139,12 +132,8 @@ bool NewInfoExperiment::experiment_activate(AbstractNode*& curr_node,
 						curr_node = this->best_scopes[0];
 					}
 				}
-
-				result = true;
 			} else {
 				branch_node_history->is_branch = false;
-
-				result = false;
 			}
 		}
 	}
@@ -178,8 +167,6 @@ bool NewInfoExperiment::experiment_activate(AbstractNode*& curr_node,
 			}
 		}
 	}
-
-	return result;
 }
 
 void NewInfoExperiment::experiment_back_activate(
@@ -197,25 +184,8 @@ void NewInfoExperiment::experiment_back_activate(
 				if (it->second->index >= history->experiment_index) {
 					switch (it->first->type) {
 					case NODE_TYPE_ACTION:
-						{
-							ActionNode* action_node = (ActionNode*)it->first;
-
-							if (action_node->action.move == ACTION_NOOP) {
-								map<int, AbstractNode*>::iterator it = action_node->parent->nodes.find(action_node->id);
-								if (it == action_node->parent->nodes.end()) {
-									/**
-									 * - new ending node edge case
-									 */
-									continue;
-								}
-							}
-
-							possible_node_contexts.push_back(it->first);
-							possible_is_branch.push_back(false);
-						}
-
-						break;
 					case NODE_TYPE_SCOPE:
+					case NODE_TYPE_BRANCH_END:
 						{
 							possible_node_contexts.push_back(it->first);
 							possible_is_branch.push_back(false);
@@ -244,9 +214,6 @@ void NewInfoExperiment::experiment_back_activate(
 				}
 			}
 
-			/**
-			 * - possible to be empty due to ending node edge case
-			 */
 			if (possible_node_contexts.size() > 0) {
 				uniform_int_distribution<int> possible_distribution(0, (int)possible_node_contexts.size()-1);
 				int rand_index = possible_distribution(generator);

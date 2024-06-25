@@ -324,20 +324,18 @@ bool BranchExperiment::activate(AbstractNode* experiment_node,
 		}
 	}
 
-	bool result = false;
 	if (is_selected) {
 		switch (this->state) {
 		case BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING:
 			train_existing_activate(context,
 									history);
-			result = false;
 			break;
 		case BRANCH_EXPERIMENT_STATE_EXPLORE:
-			result = explore_activate(curr_node,
-									  problem,
-									  context,
-									  run_helper,
-									  history);
+			explore_activate(curr_node,
+							 problem,
+							 context,
+							 run_helper,
+							 history);
 			break;
 		case BRANCH_EXPERIMENT_STATE_TRAIN_NEW:
 			train_new_activate(curr_node,
@@ -345,68 +343,67 @@ bool BranchExperiment::activate(AbstractNode* experiment_node,
 							   context,
 							   run_helper,
 							   history);
-			result = true;
 			break;
 		case BRANCH_EXPERIMENT_STATE_MEASURE:
-			result = measure_activate(curr_node,
-									  problem,
-									  context,
-									  run_helper,
-									  history);
+			measure_activate(curr_node,
+							 problem,
+							 context,
+							 run_helper,
+							 history);
 			break;
 		case BRANCH_EXPERIMENT_STATE_VERIFY_EXISTING:
 			verify_existing_activate(context,
 									 history);
-			result = false;
 			break;
 		case BRANCH_EXPERIMENT_STATE_VERIFY:
-			result = verify_activate(curr_node,
-									 problem,
-									 context,
-									 run_helper,
-									 history);
+			verify_activate(curr_node,
+							problem,
+							context,
+							run_helper,
+							history);
 			break;
 		#if defined(MDEBUG) && MDEBUG
 		case BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY:
-			result = capture_verify_activate(curr_node,
-											 problem,
-											 context,
-											 run_helper);
+			capture_verify_activate(curr_node,
+									problem,
+									context,
+									run_helper);
 			break;
 		#endif /* MDEBUG */
 		case BRANCH_EXPERIMENT_STATE_ROOT_VERIFY:
-			result = root_verify_activate(curr_node,
-										  problem,
-										  context,
-										  run_helper);
+			root_verify_activate(curr_node,
+								 problem,
+								 context,
+								 run_helper);
 			break;
 		case BRANCH_EXPERIMENT_STATE_EXPERIMENT:
 			switch (this->root_state) {
 			case ROOT_EXPERIMENT_STATE_EXPERIMENT:
-				result = experiment_activate(curr_node,
-											 problem,
-											 context,
-											 run_helper,
-											 history);
+				experiment_activate(curr_node,
+									problem,
+									context,
+									run_helper,
+									history);
 				break;
 			case ROOT_EXPERIMENT_STATE_VERIFY_EXISTING:
 				experiment_verify_existing_activate(context,
 													history);
-				result = false;
 				break;
 			case ROOT_EXPERIMENT_STATE_VERIFY:
-				result = experiment_verify_activate(curr_node,
-													problem,
-													context,
-													run_helper,
-													history);
+				experiment_verify_activate(curr_node,
+										   problem,
+										   context,
+										   run_helper,
+										   history);
 				break;
 			}
 			break;
 		}
-	}
 
-	return result;
+		return true;
+	} else {
+		return false;
+	}
 }
 
 void BranchExperiment::back_activate(vector<ContextLayer>& context,

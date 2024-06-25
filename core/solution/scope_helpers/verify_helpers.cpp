@@ -5,6 +5,7 @@
 #include <iostream>
 
 #include "action_node.h"
+#include "branch_end_node.h"
 #include "branch_node.h"
 #include "globals.h"
 #include "info_branch_node.h"
@@ -64,6 +65,17 @@ void node_verify_activate_helper(AbstractNode*& curr_node,
 								  context,
 								  run_helper,
 								  history->node_histories);
+		}
+
+		break;
+	case NODE_TYPE_BRANCH_END:
+		{
+			BranchEndNode* node = (BranchEndNode*)curr_node;
+			node->activate(curr_node,
+						   problem,
+						   context,
+						   run_helper,
+						   history->node_histories);
 		}
 
 		break;

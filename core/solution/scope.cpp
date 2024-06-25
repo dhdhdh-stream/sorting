@@ -4,6 +4,7 @@
 
 #include "abstract_experiment.h"
 #include "action_node.h"
+#include "branch_end_node.h"
 #include "branch_node.h"
 #include "globals.h"
 #include "info_branch_node.h"
@@ -171,6 +172,15 @@ void Scope::load(ifstream& input_file,
 				this->nodes[info_branch_node->id] = info_branch_node;
 			}
 			break;
+		case NODE_TYPE_BRANCH_END:
+			{
+				BranchEndNode* branch_end_node = new BranchEndNode();
+				branch_end_node->parent = this;
+				branch_end_node->id = id;
+				branch_end_node->load(input_file);
+				this->nodes[branch_end_node->id] = branch_end_node;
+			}
+			break;
 		}
 	}
 
@@ -290,6 +300,15 @@ void Scope::copy_from(Scope* original,
 				new_info_branch_node->parent = this;
 				new_info_branch_node->id = it->first;
 				this->nodes[it->first] = new_info_branch_node;
+			}
+			break;
+		case NODE_TYPE_BRANCH_END:
+			{
+				BranchEndNode* original_branch_end_node = (BranchEndNode*)it->second;
+				BranchEndNode* new_branch_end_node = new BranchEndNode(original_branch_end_node);
+				new_branch_end_node->parent = this;
+				new_branch_end_node->id = it->first;
+				this->nodes[it->first] = new_branch_end_node;
 			}
 			break;
 		}

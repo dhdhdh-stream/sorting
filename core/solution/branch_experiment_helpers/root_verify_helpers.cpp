@@ -15,58 +15,21 @@
 
 using namespace std;
 
-bool BranchExperiment::root_verify_activate(
+void BranchExperiment::root_verify_activate(
 		AbstractNode*& curr_node,
 		Problem* problem,
 		vector<ContextLayer>& context,
 		RunHelper& run_helper) {
 	if (this->is_pass_through) {
-		if (this->best_info_scope == NULL) {
-			if (this->best_step_types.size() == 0) {
-				curr_node = this->best_exit_next_node;
-			} else {
-				if (this->best_step_types[0] == STEP_TYPE_ACTION) {
-					curr_node = this->best_actions[0];
-				} else {
-					curr_node = this->best_scopes[0];
-				}
-			}
+		if (this->best_step_types.size() == 0) {
+			curr_node = this->best_exit_next_node;
 		} else {
-			bool is_positive;
-			this->best_info_scope->activate(problem,
-											context,
-											run_helper,
-											is_positive);
-
-			bool is_branch;
-			if (this->best_is_negate) {
-				if (is_positive) {
-					is_branch = false;
-				} else {
-					is_branch = true;
-				}
+			if (this->best_step_types[0] == STEP_TYPE_ACTION) {
+				curr_node = this->best_actions[0];
 			} else {
-				if (is_positive) {
-					is_branch = true;
-				} else {
-					is_branch = false;
-				}
-			}
-
-			if (is_branch) {
-				if (this->best_step_types.size() == 0) {
-					curr_node = this->best_exit_next_node;
-				} else {
-					if (this->best_step_types[0] == STEP_TYPE_ACTION) {
-						curr_node = this->best_actions[0];
-					} else {
-						curr_node = this->best_scopes[0];
-					}
-				}
+				curr_node = this->best_scopes[0];
 			}
 		}
-
-		return true;
 	} else {
 		run_helper.num_decisions++;
 
@@ -132,54 +95,15 @@ bool BranchExperiment::root_verify_activate(
 		#endif /* MDEBUG */
 
 		if (decision_is_branch) {
-			if (this->best_info_scope == NULL) {
-				if (this->best_step_types.size() == 0) {
-					curr_node = this->best_exit_next_node;
-				} else {
-					if (this->best_step_types[0] == STEP_TYPE_ACTION) {
-						curr_node = this->best_actions[0];
-					} else {
-						curr_node = this->best_scopes[0];
-					}
-				}
+			if (this->best_step_types.size() == 0) {
+				curr_node = this->best_exit_next_node;
 			} else {
-				bool is_positive;
-				this->best_info_scope->activate(problem,
-												context,
-												run_helper,
-												is_positive);
-
-				bool is_branch;
-				if (this->best_is_negate) {
-					if (is_positive) {
-						is_branch = false;
-					} else {
-						is_branch = true;
-					}
+				if (this->best_step_types[0] == STEP_TYPE_ACTION) {
+					curr_node = this->best_actions[0];
 				} else {
-					if (is_positive) {
-						is_branch = true;
-					} else {
-						is_branch = false;
-					}
-				}
-
-				if (is_branch) {
-					if (this->best_step_types.size() == 0) {
-						curr_node = this->best_exit_next_node;
-					} else {
-						if (this->best_step_types[0] == STEP_TYPE_ACTION) {
-							curr_node = this->best_actions[0];
-						} else {
-							curr_node = this->best_scopes[0];
-						}
-					}
+					curr_node = this->best_scopes[0];
 				}
 			}
-
-			return true;
-		} else {
-			return false;
 		}
 	}
 }

@@ -100,48 +100,13 @@ void BranchExperiment::train_new_activate(
 
 		history->existing_predicted_scores.push_back(predicted_score);
 
-		if (this->best_info_scope == NULL) {
-			if (this->best_step_types.size() == 0) {
-				curr_node = this->best_exit_next_node;
-			} else {
-				if (this->best_step_types[0] == STEP_TYPE_ACTION) {
-					curr_node = this->best_actions[0];
-				} else {
-					curr_node = this->best_scopes[0];
-				}
-			}
+		if (this->best_step_types.size() == 0) {
+			curr_node = this->best_exit_next_node;
 		} else {
-			bool is_positive;
-			this->best_info_scope->activate(problem,
-											context,
-											run_helper,
-											is_positive);
-
-			bool is_branch;
-			if (this->best_is_negate) {
-				if (is_positive) {
-					is_branch = false;
-				} else {
-					is_branch = true;
-				}
+			if (this->best_step_types[0] == STEP_TYPE_ACTION) {
+				curr_node = this->best_actions[0];
 			} else {
-				if (is_positive) {
-					is_branch = true;
-				} else {
-					is_branch = false;
-				}
-			}
-
-			if (is_branch) {
-				if (this->best_step_types.size() == 0) {
-					curr_node = this->best_exit_next_node;
-				} else {
-					if (this->best_step_types[0] == STEP_TYPE_ACTION) {
-						curr_node = this->best_actions[0];
-					} else {
-						curr_node = this->best_scopes[0];
-					}
-				}
+				curr_node = this->best_scopes[0];
 			}
 		}
 
@@ -192,11 +157,6 @@ void BranchExperiment::train_new_backprop(
 			this->best_step_types.clear();
 			this->best_actions.clear();
 			this->best_scopes.clear();
-
-			if (this->ending_node != NULL) {
-				delete this->ending_node;
-				this->ending_node = NULL;
-			}
 
 			uniform_int_distribution<int> neutral_distribution(0, 9);
 			if (neutral_distribution(generator) == 0) {

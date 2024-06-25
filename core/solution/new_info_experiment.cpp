@@ -53,7 +53,6 @@ NewInfoExperiment::NewInfoExperiment(AbstractScope* scope_context,
 	this->existing_network = NULL;
 	this->new_network = NULL;
 
-	this->ending_node = NULL;
 	this->branch_node = NULL;
 
 	this->target_val_histories.reserve(NUM_DATAPOINTS);
@@ -106,9 +105,6 @@ NewInfoExperiment::~NewInfoExperiment() {
 		}
 	}
 
-	if (this->ending_node != NULL) {
-		delete this->ending_node;
-	}
 	if (this->branch_node != NULL) {
 		delete this->branch_node;
 	}

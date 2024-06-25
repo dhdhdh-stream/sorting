@@ -44,7 +44,6 @@ PassThroughExperiment::PassThroughExperiment(AbstractScope* scope_context,
 	this->average_remaining_experiments_from_start = 1.0;
 	this->average_instances_per_run = 1.0;
 
-	this->ending_node = NULL;
 	this->info_branch_node = NULL;
 
 	this->target_val_histories.reserve(NUM_DATAPOINTS);
@@ -84,9 +83,6 @@ PassThroughExperiment::~PassThroughExperiment() {
 		}
 	}
 
-	if (this->ending_node != NULL) {
-		delete this->ending_node;
-	}
 	if (this->info_branch_node != NULL) {
 		delete this->info_branch_node;
 	}

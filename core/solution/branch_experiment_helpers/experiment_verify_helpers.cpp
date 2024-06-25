@@ -21,7 +21,7 @@
 
 using namespace std;
 
-bool BranchExperiment::experiment_verify_activate(
+void BranchExperiment::experiment_verify_activate(
 		AbstractNode*& curr_node,
 		Problem* problem,
 		vector<ContextLayer>& context,
@@ -45,59 +45,15 @@ bool BranchExperiment::experiment_verify_activate(
 	}
 
 	if (this->is_pass_through) {
-		if (this->best_info_scope == NULL) {
-			if (this->best_step_types.size() == 0) {
-				curr_node = this->best_exit_next_node;
-			} else {
-				if (this->best_step_types[0] == STEP_TYPE_ACTION) {
-					curr_node = this->best_actions[0];
-				} else {
-					curr_node = this->best_scopes[0];
-				}
-			}
+		if (this->best_step_types.size() == 0) {
+			curr_node = this->best_exit_next_node;
 		} else {
-			bool is_positive;
-			this->best_info_scope->activate(problem,
-											context,
-											run_helper,
-											is_positive);
-
-			bool is_branch;
-			if (this->best_is_negate) {
-				if (is_positive) {
-					is_branch = false;
-				} else {
-					is_branch = true;
-				}
+			if (this->best_step_types[0] == STEP_TYPE_ACTION) {
+				curr_node = this->best_actions[0];
 			} else {
-				if (is_positive) {
-					is_branch = true;
-				} else {
-					is_branch = false;
-				}
-			}
-
-			InfoBranchNodeHistory* info_branch_node_history = new InfoBranchNodeHistory();
-			info_branch_node_history->index = context.back().scope_history->node_histories.size();
-			context.back().scope_history->node_histories[this->info_branch_node] = info_branch_node_history;
-			if (is_branch) {
-				info_branch_node_history->is_branch = true;
-
-				if (this->best_step_types.size() == 0) {
-					curr_node = this->best_exit_next_node;
-				} else {
-					if (this->best_step_types[0] == STEP_TYPE_ACTION) {
-						curr_node = this->best_actions[0];
-					} else {
-						curr_node = this->best_scopes[0];
-					}
-				}
-			} else {
-				info_branch_node_history->is_branch = false;
+				curr_node = this->best_scopes[0];
 			}
 		}
-
-		return true;
 	} else {
 		run_helper.num_decisions++;
 
@@ -165,60 +121,15 @@ bool BranchExperiment::experiment_verify_activate(
 		context.back().scope_history->node_histories[this->branch_node] = branch_node_history;
 
 		if (decision_is_branch) {
-			if (this->best_info_scope == NULL) {
-				if (this->best_step_types.size() == 0) {
-					curr_node = this->best_exit_next_node;
-				} else {
-					if (this->best_step_types[0] == STEP_TYPE_ACTION) {
-						curr_node = this->best_actions[0];
-					} else {
-						curr_node = this->best_scopes[0];
-					}
-				}
+			if (this->best_step_types.size() == 0) {
+				curr_node = this->best_exit_next_node;
 			} else {
-				bool is_positive;
-				this->best_info_scope->activate(problem,
-												context,
-												run_helper,
-												is_positive);
-
-				if (this->best_is_negate) {
-					if (is_positive) {
-						is_branch = false;
-					} else {
-						is_branch = true;
-					}
+				if (this->best_step_types[0] == STEP_TYPE_ACTION) {
+					curr_node = this->best_actions[0];
 				} else {
-					if (is_positive) {
-						is_branch = true;
-					} else {
-						is_branch = false;
-					}
-				}
-
-				InfoBranchNodeHistory* info_branch_node_history = new InfoBranchNodeHistory();
-				info_branch_node_history->index = context.back().scope_history->node_histories.size();
-				context.back().scope_history->node_histories[this->info_branch_node] = info_branch_node_history;
-				if (is_branch) {
-					info_branch_node_history->is_branch = true;
-
-					if (this->best_step_types.size() == 0) {
-						curr_node = this->best_exit_next_node;
-					} else {
-						if (this->best_step_types[0] == STEP_TYPE_ACTION) {
-							curr_node = this->best_actions[0];
-						} else {
-							curr_node = this->best_scopes[0];
-						}
-					}
-				} else {
-					info_branch_node_history->is_branch = false;
+					curr_node = this->best_scopes[0];
 				}
 			}
-
-			return true;
-		} else {
-			return false;
 		}
 	}
 }

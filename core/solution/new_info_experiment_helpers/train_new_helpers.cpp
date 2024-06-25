@@ -132,11 +132,6 @@ void NewInfoExperiment::train_new_backprop(
 			this->best_actions.clear();
 			this->best_scopes.clear();
 
-			if (this->ending_node != NULL) {
-				delete this->ending_node;
-				this->ending_node = NULL;
-			}
-
 			uniform_int_distribution<int> neutral_distribution(0, 9);
 			if (neutral_distribution(generator) == 0) {
 				this->explore_type = EXPLORE_TYPE_NEUTRAL;

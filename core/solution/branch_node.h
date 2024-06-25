@@ -9,6 +9,7 @@
 #include "context_layer.h"
 #include "run_helper.h"
 
+class BranchEndNode;
 class Network;
 class Problem;
 class Scope;
@@ -27,6 +28,9 @@ public:
 	 * - don't randomize decisions
 	 *   - small variations in obs may lead to random-like behavior anyways
 	 */
+
+	int branch_end_node_id;
+	BranchEndNode* branch_end_node;
 
 	int original_next_node_id;
 	AbstractNode* original_next_node;

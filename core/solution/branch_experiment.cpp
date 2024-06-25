@@ -53,9 +53,7 @@ BranchExperiment::BranchExperiment(AbstractScope* scope_context,
 	this->existing_network = NULL;
 	this->new_network = NULL;
 
-	this->ending_node = NULL;
 	this->branch_node = NULL;
-	this->info_branch_node = NULL;
 
 	this->scope_histories.reserve(NUM_DATAPOINTS);
 	this->target_val_histories.reserve(NUM_DATAPOINTS);
@@ -98,14 +96,8 @@ BranchExperiment::~BranchExperiment() {
 		}
 	}
 
-	if (this->ending_node != NULL) {
-		delete this->ending_node;
-	}
 	if (this->branch_node != NULL) {
 		delete this->branch_node;
-	}
-	if (this->info_branch_node != NULL) {
-		delete this->info_branch_node;
 	}
 
 	for (int h_index = 0; h_index < (int)this->scope_histories.size(); h_index++) {

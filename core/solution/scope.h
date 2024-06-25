@@ -49,7 +49,11 @@ public:
 				  RunHelper& run_helper,
 				  ScopeHistory* history);
 
-	void random_exit_activate(AbstractNode* starting_node,
+	void random_activate(AbstractNode* starting_node,
+						 std::vector<AbstractNode*>& possible_nodes);
+	void random_exit_activate(AbstractNode* node_context,
+							  bool is_branch,
+							  std::vector<AbstractNode*>& possible_pre_exits,
 							  std::vector<AbstractNode*>& possible_exits);
 
 	void new_action_activate(AbstractNode* starting_node,

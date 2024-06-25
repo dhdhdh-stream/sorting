@@ -28,6 +28,8 @@ BranchNode::BranchNode(BranchNode* original) {
 	this->input_obs_indexes = original->input_obs_indexes;
 	this->network = new Network(original->network);
 
+	this->branch_end_node_id = original->branch_end_node_id;
+
 	this->original_next_node_id = original->original_next_node_id;
 	this->branch_next_node_id = original->branch_next_node_id;
 
@@ -90,6 +92,8 @@ void BranchNode::save(ofstream& output_file) {
 	}
 	this->network->save(output_file);
 
+	output_file << this->branch_end_node_id << endl;
+
 	output_file << this->original_next_node_id << endl;
 	output_file << this->branch_next_node_id << endl;
 }
@@ -122,6 +126,10 @@ void BranchNode::load(ifstream& input_file) {
 	}
 	this->network = new Network(input_file);
 
+	string branch_end_node_id_line;
+	getline(input_file, branch_end_node_id_line);
+	this->branch_end_node_id = stoi(branch_end_node_id_line);
+
 	string original_next_node_id_line;
 	getline(input_file, original_next_node_id_line);
 	this->original_next_node_id = stoi(original_next_node_id_line);
@@ -144,6 +152,8 @@ void BranchNode::link(Solution* parent_solution) {
 		this->input_scope_contexts.push_back(c_scope_context);
 		this->input_node_contexts.push_back(c_node_context);
 	}
+
+	this->branch_end_node = (BranchEndNode*)this->parent->nodes[this->branch_end_node_id];
 
 	if (this->original_next_node_id == -1) {
 		this->original_next_node = NULL;

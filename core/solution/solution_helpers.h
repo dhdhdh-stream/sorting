@@ -31,6 +31,8 @@ void gather_possible_helper(std::vector<AbstractScope*>& scope_context,
 							std::vector<std::vector<AbstractNode*>>& possible_node_contexts,
 							std::vector<int>& possible_obs_indexes,
 							AbstractScopeHistory* scope_history);
+void gather_new_action_included_nodes(AbstractNode* starting_node,
+									  std::vector<AbstractNode*>& included_nodes);
 
 void create_new_action(AbstractNode*& starting_node,
 					   std::set<AbstractNode*>& included_nodes);

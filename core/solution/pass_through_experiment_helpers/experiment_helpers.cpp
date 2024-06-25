@@ -120,25 +120,8 @@ void PassThroughExperiment::experiment_back_activate(
 				if (it->second->index >= history->experiment_index) {
 					switch (it->first->type) {
 					case NODE_TYPE_ACTION:
-						{
-							ActionNode* action_node = (ActionNode*)it->first;
-
-							if (action_node->action.move == ACTION_NOOP) {
-								map<int, AbstractNode*>::iterator it = action_node->parent->nodes.find(action_node->id);
-								if (it == action_node->parent->nodes.end()) {
-									/**
-									 * - new ending node edge case
-									 */
-									continue;
-								}
-							}
-
-							possible_node_contexts.push_back(it->first);
-							possible_is_branch.push_back(false);
-						}
-
-						break;
 					case NODE_TYPE_SCOPE:
+					case NODE_TYPE_BRANCH_END:
 						{
 							possible_node_contexts.push_back(it->first);
 							possible_is_branch.push_back(false);
