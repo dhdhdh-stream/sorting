@@ -1,8 +1,6 @@
-// TODO: scale by error, so not dominated by bad obs
-
 /**
- * - i[3] + i[4] = i[6]
- * - i[11] + i[13] = i[16]
+ * - i[3]/i[5] + i[4]/i[7] = i[6]/i[8]
+ * - i[11]/i[12] + i[13]/i[14] = i[16]
  */
 
 #include <chrono>
@@ -38,7 +36,13 @@ int main(int argc, char* argv[]) {
 			vals[i] = rand()%11 - 5;
 		}
 
+		vals[5] = vals[3];
+		vals[7] = vals[4];
 		vals[6] = vals[3] + vals[4];
+		vals[8] = vals[6];
+
+		vals[12] = vals[11];
+		vals[14] = vals[13];
 		vals[16] = vals[11] + vals[13];
 
 		vector<bool> is_output(20);
@@ -116,7 +120,13 @@ int main(int argc, char* argv[]) {
 			vals[i] = rand()%11 - 5;
 		}
 
+		vals[5] = vals[3];
+		vals[7] = vals[4];
 		vals[6] = vals[3] + vals[4];
+		vals[8] = vals[6];
+
+		vals[12] = vals[11];
+		vals[14] = vals[13];
 		vals[16] = vals[11] + vals[13];
 
 		vector<bool> is_output(20, false);
@@ -147,7 +157,13 @@ int main(int argc, char* argv[]) {
 			vals[i] = rand()%11 - 5;
 		}
 
+		vals[5] = vals[3];
+		vals[7] = vals[4];
 		vals[6] = vals[3] + vals[4];
+		vals[8] = vals[6];
+
+		vals[12] = vals[11];
+		vals[14] = vals[13];
 		vals[16] = vals[11] + vals[13];
 
 		vector<bool> is_output(20, false);

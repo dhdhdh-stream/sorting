@@ -1,5 +1,7 @@
 #include "all_to_all_network.h"
 
+#include <iostream>
+
 using namespace std;
 
 const double NETWORK_TARGET_MAX_UPDATE = 0.01;
@@ -11,9 +13,15 @@ AllToAllNetwork::AllToAllNetwork() {
 		this->input->acti_vals.push_back(0.0);
 		this->input->errors.push_back(0.0);
 	}
+	this->is_output_input = new Layer(LINEAR_LAYER);
+	for (int i_index = 0; i_index < 20; i_index++) {
+		this->is_output_input->acti_vals.push_back(0.0);
+		this->is_output_input->errors.push_back(0.0);
+	}
 
 	this->input_to_hidden = new Layer(LEAKY_LAYER);
 	this->input_to_hidden->input_layers.push_back(this->input);
+	this->input_to_hidden->input_layers.push_back(this->is_output_input);
 	for (int n_index = 0; n_index < 40; n_index++) {
 		this->input_to_hidden->acti_vals.push_back(0.0);
 		this->input_to_hidden->errors.push_back(0.0);
@@ -44,6 +52,8 @@ AllToAllNetwork::AllToAllNetwork() {
 	}
 	this->output->update_structure();
 
+	this->output_average_errors = vector<double>(20, 1.0);
+
 	this->epoch_iter = 0;
 	this->input_to_hidden_average_max_update = 0.0;
 	this->hidden_average_max_update = 0.0;
@@ -53,15 +63,24 @@ AllToAllNetwork::AllToAllNetwork() {
 
 AllToAllNetwork::~AllToAllNetwork() {
 	delete this->input;
+	delete this->is_output_input;
 	delete this->input_to_hidden;
 	delete this->hidden;
 	delete this->hidden_to_output;
 	delete this->output;
 }
 
-void AllToAllNetwork::activate(vector<double>& input_vals) {
+void AllToAllNetwork::activate(vector<double>& input_vals,
+							   vector<bool>& is_output) {
 	for (int i_index = 0; i_index < (int)input_vals.size(); i_index++) {
 		this->input->acti_vals[i_index] = input_vals[i_index];
+	}
+	for (int i_index = 0; i_index < (int)is_output.size(); i_index++) {
+		if (is_output[i_index]) {
+			this->is_output_input->acti_vals[i_index] = 1.0;
+		} else {
+			this->is_output_input->acti_vals[i_index] = -1.0;
+		}
 	}
 	this->input_to_hidden->activate();
 	this->hidden->activate();
@@ -69,9 +88,16 @@ void AllToAllNetwork::activate(vector<double>& input_vals) {
 	this->output->activate();
 }
 
-void AllToAllNetwork::backprop(vector<double>& errors) {
+void AllToAllNetwork::backprop(vector<double>& errors,
+							   vector<bool>& is_output) {
 	for (int e_index = 0; e_index < (int)errors.size(); e_index++) {
-		this->output->errors[e_index] = errors[e_index];
+		if (is_output[e_index]) {
+			this->output->errors[e_index] = errors[e_index] / this->output_average_errors[e_index];
+
+			this->output_average_errors[e_index] = 0.99*this->output_average_errors[e_index] + 0.01*abs(errors[e_index]);
+		} else {
+			this->output->errors[e_index] = 0.0;
+		}
 	}
 	this->output->backprop();
 	this->hidden_to_output->backprop();
