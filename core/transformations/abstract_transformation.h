@@ -22,11 +22,13 @@ const int TRANSFORMATION_TYPE_MOVE = 1;
 
 // - then, a transformation is a rearrangement followed by a bunch of additions
 
-// - currently, solution very bad at gathering information
-//   - a lot of it is within scopes
-//   - so bad at early exits
+// - need to learn everything from everything
+//   - super expensive
+//     - maybe try learning together
+//       - but hide inputs when trying to predict with other inputs
+//         - can go sections, even not continuous, at a time
 
-// - don't save scope histories, but can pass requests for input in?
+// - need to normalize errors going backwards, so all obs weighted equally
 
 class AbstractTransformation {
 public:

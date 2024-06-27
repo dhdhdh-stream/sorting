@@ -1,6 +1,9 @@
 /**
  * - having branch ends/more restrictive structure makes solutions significantly easier to describe
  *   - so may better match how humans work/what is correct?
+ * 
+ * - makes progress slightly slower than without, and more easily stuck in local optima?
+ *   - but enables better transformations, which is what's needed to break local optimas
  */
 
 #ifndef BRANCH_END_NODE_H
