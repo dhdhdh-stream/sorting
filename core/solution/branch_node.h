@@ -10,6 +10,7 @@
 #include "run_helper.h"
 
 class BranchEndNode;
+class FamiliarityNetwork;
 class Network;
 class Problem;
 class Scope;
@@ -17,12 +18,21 @@ class Scope;
 class BranchNodeHistory;
 class BranchNode : public AbstractNode {
 public:
+	/**
+	 * TODO: try normalizing input
+	 */
 	std::vector<std::vector<int>> input_scope_context_ids;
 	std::vector<std::vector<AbstractScope*>> input_scope_contexts;
 	std::vector<std::vector<int>> input_node_context_ids;
 	std::vector<std::vector<AbstractNode*>> input_node_contexts;
 	std::vector<int> input_obs_indexes;
 	Network* network;
+
+	std::vector<FamiliarityNetwork*> familiarity_networks;
+	std::vector<double> input_means;
+	std::vector<double> input_standard_deviations;
+	std::vector<double> familiarity_average_misguesses;
+	std::vector<double> familiarity_misguess_standard_deviations;
 
 	/**
 	 * - don't randomize decisions

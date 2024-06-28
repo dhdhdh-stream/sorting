@@ -10,6 +10,7 @@
 #include "run_helper.h"
 
 class AbstractNode;
+class BranchNode;
 class InfoScope;
 class InfoScopeNode;
 class Problem;
@@ -40,5 +41,12 @@ void create_new_action(AbstractNode*& starting_node,
 void clean_scope(Scope* scope,
 				 Solution* parent_solution);
 void clean_info_scope(InfoScope* scope);
+
+void add_branch_node_familiarity(BranchNode* branch_node,
+								 std::vector<ScopeHistory*>& scope_histories);
+void add_eval_familiarity(Scope* scope,
+						  std::vector<ScopeHistory*>& scope_histories);
+void measure_familiarity(Scope* scope,
+						 std::vector<ScopeHistory*>& scope_histories);
 
 #endif /* SOLUTION_HELPERS_H */

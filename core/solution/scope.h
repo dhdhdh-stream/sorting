@@ -16,6 +16,7 @@ class AbstractNode;
 class AbstractNodeHistory;
 class AbstractExperiment;
 class AbstractExperimentHistory;
+class FamiliarityNetwork;
 class Network;
 class Problem;
 class Solution;
@@ -33,6 +34,17 @@ public:
 	 * - not valid for every point in scope, only the end
 	 *   - would be extremely expensive to keep updated
 	 *     - addressed by train existing anyways
+	 */
+
+	std::vector<FamiliarityNetwork*> familiarity_networks;
+	std::vector<double> input_means;
+	std::vector<double> input_standard_deviations;
+	std::vector<double> familiarity_average_misguesses;
+	std::vector<double> familiarity_misguess_standard_deviations;
+	/**
+	 * - use familiarity to find changes that leave existing solution unaffected
+	 *   - i.e., changes that return to origin
+	 *     - such changes are more likely to be useful elsewhere
 	 */
 
 	/**

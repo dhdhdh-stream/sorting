@@ -23,6 +23,11 @@ public:
 	~Network();
 
 	void activate(std::vector<double>& input_vals);
+	/**
+	 * - don't worry about whether input is on
+	 *   - makes it difficult to remove inputs
+	 *     - input becomes a proxy for the branch it's on, rather than the value itself
+	 */
 	void backprop(double error);
 
 	void increment(int new_num_inputs);
