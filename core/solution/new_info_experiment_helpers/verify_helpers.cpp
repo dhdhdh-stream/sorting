@@ -21,7 +21,7 @@
 
 using namespace std;
 
-void NewInfoExperiment::verify_activate(AbstractNode*& curr_node,
+bool NewInfoExperiment::verify_activate(AbstractNode*& curr_node,
 										Problem* problem,
 										vector<ContextLayer>& context,
 										RunHelper& run_helper,
@@ -53,6 +53,8 @@ void NewInfoExperiment::verify_activate(AbstractNode*& curr_node,
 				curr_node = this->best_scopes[0];
 			}
 		}
+
+		return true;
 	} else {
 		if (this->use_existing) {
 			bool is_positive;
@@ -88,6 +90,10 @@ void NewInfoExperiment::verify_activate(AbstractNode*& curr_node,
 						curr_node = this->best_scopes[0];
 					}
 				}
+
+				return true;
+			} else {
+				return false;
 			}
 		} else {
 			run_helper.num_decisions++;
@@ -137,6 +143,10 @@ void NewInfoExperiment::verify_activate(AbstractNode*& curr_node,
 						curr_node = this->best_scopes[0];
 					}
 				}
+
+				return true;
+			} else {
+				return false;
 			}
 		}
 	}
@@ -191,6 +201,10 @@ void NewInfoExperiment::verify_backprop(double target_val,
 				this->best_actions.clear();
 				this->best_scopes.clear();
 
+				if (this->ending_node != NULL) {
+					delete this->ending_node;
+					this->ending_node = NULL;
+				}
 				if (this->branch_node != NULL) {
 					delete this->branch_node;
 					this->branch_node = NULL;
@@ -398,6 +412,10 @@ void NewInfoExperiment::verify_backprop(double target_val,
 					this->best_actions.clear();
 					this->best_scopes.clear();
 
+					if (this->ending_node != NULL) {
+						delete this->ending_node;
+						this->ending_node = NULL;
+					}
 					if (this->branch_node != NULL) {
 						delete this->branch_node;
 						this->branch_node = NULL;

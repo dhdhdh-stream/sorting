@@ -4,9 +4,7 @@
 
 #include "abstract_experiment.h"
 #include "action_node.h"
-#include "branch_end_node.h"
 #include "branch_node.h"
-#include "familiarity_network.h"
 #include "globals.h"
 #include "info_branch_node.h"
 #include "info_scope.h"
@@ -75,10 +73,6 @@ void Scope::clean_node(int scope_id,
 			this->eval_input_node_contexts.erase(this->eval_input_node_contexts.begin() + i_index);
 			this->eval_input_obs_indexes.erase(this->eval_input_obs_indexes.begin() + i_index);
 			this->eval_network->remove_input(i_index);
-
-			/**
-			 * TODO: familiarity
-			 */
 		}
 	}
 }
@@ -108,18 +102,6 @@ void Scope::save(ofstream& output_file) {
 		}
 
 		this->eval_network->save(output_file);
-	}
-
-	/**
-	 * - to signal if familiarity_networks is empty
-	 */
-	output_file << this->familiarity_networks.size() << endl;
-	for (int i_index = 0; i_index < (int)this->familiarity_networks.size(); i_index++) {
-		this->familiarity_networks[i_index]->save(output_file);
-		output_file << this->input_means[i_index] << endl;
-		output_file << this->input_standard_deviations[i_index] << endl;
-		output_file << this->familiarity_average_misguesses[i_index] << endl;
-		output_file << this->familiarity_misguess_standard_deviations[i_index] << endl;
 	}
 
 	output_file << this->scopes_used.size() << endl;
@@ -189,15 +171,6 @@ void Scope::load(ifstream& input_file,
 				this->nodes[info_branch_node->id] = info_branch_node;
 			}
 			break;
-		case NODE_TYPE_BRANCH_END:
-			{
-				BranchEndNode* branch_end_node = new BranchEndNode();
-				branch_end_node->parent = this;
-				branch_end_node->id = id;
-				branch_end_node->load(input_file);
-				this->nodes[branch_end_node->id] = branch_end_node;
-			}
-			break;
 		}
 	}
 
@@ -232,29 +205,6 @@ void Scope::load(ifstream& input_file,
 		}
 
 		this->eval_network = new Network(input_file);
-	}
-
-	string familiarity_networks_size_line;
-	getline(input_file, familiarity_networks_size_line);
-	int familiarity_networks_size = stoi(familiarity_networks_size_line);
-	for (int i_index = 0; i_index < familiarity_networks_size; i_index++) {
-		this->familiarity_networks.push_back(new FamiliarityNetwork(input_file));
-
-		string input_mean_line;
-		getline(input_file, input_mean_line);
-		this->input_means.push_back(stod(input_mean_line));
-
-		string input_standard_deviation_line;
-		getline(input_file, input_standard_deviation_line);
-		this->input_standard_deviations.push_back(stod(input_standard_deviation_line));
-
-		string familiarity_average_misguess_line;
-		getline(input_file, familiarity_average_misguess_line);
-		this->familiarity_average_misguesses.push_back(stod(familiarity_average_misguess_line));
-
-		string familiarity_misguess_standard_deviation_line;
-		getline(input_file, familiarity_misguess_standard_deviation_line);
-		this->familiarity_misguess_standard_deviations.push_back(stod(familiarity_misguess_standard_deviation_line));
 	}
 
 	string scopes_used_size_line;
@@ -342,15 +292,6 @@ void Scope::copy_from(Scope* original,
 				this->nodes[it->first] = new_info_branch_node;
 			}
 			break;
-		case NODE_TYPE_BRANCH_END:
-			{
-				BranchEndNode* original_branch_end_node = (BranchEndNode*)it->second;
-				BranchEndNode* new_branch_end_node = new BranchEndNode(original_branch_end_node);
-				new_branch_end_node->parent = this;
-				new_branch_end_node->id = it->first;
-				this->nodes[it->first] = new_branch_end_node;
-			}
-			break;
 		}
 	}
 
@@ -362,14 +303,6 @@ void Scope::copy_from(Scope* original,
 	} else {
 		this->eval_network = new Network(original->eval_network);
 	}
-
-	for (int i_index = 0; i_index < (int)original->familiarity_networks.size(); i_index++) {
-		this->familiarity_networks.push_back(new FamiliarityNetwork(original->familiarity_networks[i_index]));
-	}
-	this->input_means = original->input_means;
-	this->input_standard_deviations = original->input_standard_deviations;
-	this->familiarity_average_misguesses = original->familiarity_average_misguesses;
-	this->familiarity_misguess_standard_deviations = original->familiarity_misguess_standard_deviations;
 
 	for (set<Scope*>::iterator it = original->scopes_used.begin();
 			it != original->scopes_used.end(); it++) {

@@ -30,25 +30,25 @@ void create_experiment(RunHelper& run_helper) {
 	uniform_int_distribution<int> info_distribution(0, 19);
 	if (run_helper.info_scope_nodes_seen.size() > 0
 			&& info_distribution(generator) == 0) {
-		// uniform_int_distribution<int> scope_distribution(0, run_helper.info_scope_nodes_seen.size()-1);
-		// map<InfoScope*, set<AbstractNode*>>::iterator scope_it =
-		// 	next(run_helper.info_scope_nodes_seen.begin(), scope_distribution(generator));
-		// uniform_int_distribution<int> node_distribution(0, scope_it->second.size()-1);
-		// set<AbstractNode*>::iterator it = next(scope_it->second.begin(), node_distribution(generator));
-		// AbstractNode* explore_node = *it;
+		uniform_int_distribution<int> scope_distribution(0, run_helper.info_scope_nodes_seen.size()-1);
+		map<InfoScope*, set<AbstractNode*>>::iterator scope_it =
+			next(run_helper.info_scope_nodes_seen.begin(), scope_distribution(generator));
+		uniform_int_distribution<int> node_distribution(0, scope_it->second.size()-1);
+		set<AbstractNode*>::iterator it = next(scope_it->second.begin(), node_distribution(generator));
+		AbstractNode* explore_node = *it;
 
-		// uniform_int_distribution<int> score_type_distribution(0, 1);
-		// int score_type = score_type_distribution(generator);
+		uniform_int_distribution<int> score_type_distribution(0, 1);
+		int score_type = score_type_distribution(generator);
 
-		// InfoScope* explore_scope = (InfoScope*)explore_node->parent;
+		InfoScope* explore_scope = (InfoScope*)explore_node->parent;
 
-		// InfoPassThroughExperiment* new_experiment = new InfoPassThroughExperiment(
-		// 	explore_scope,
-		// 	explore_node,
-		// 	score_type);
+		InfoPassThroughExperiment* new_experiment = new InfoPassThroughExperiment(
+			explore_scope,
+			explore_node,
+			score_type);
 
-		// explore_scope->experiment = new_experiment;
-		// explore_node->experiments.push_back(new_experiment);
+		explore_scope->experiment = new_experiment;
+		explore_node->experiments.push_back(new_experiment);
 	} else {
 		uniform_int_distribution<int> scope_distribution(0, run_helper.scope_nodes_seen.size()-1);
 		map<Scope*, set<pair<AbstractNode*,bool>>>::iterator scope_it =
@@ -70,35 +70,34 @@ void create_experiment(RunHelper& run_helper) {
 		if (solution_set->timestamp >= solution_set->next_possible_new_scope_timestamp
 				&& explore_node->parent->nodes.size() > 10
 				&& non_new_distribution(generator) != 0) {
-			// NewActionExperiment* new_action_experiment = new NewActionExperiment(
-			// 	explore_node->parent,
-			// 	explore_node,
-			// 	explore_is_branch,
-			// 	score_type);
+			NewActionExperiment* new_action_experiment = new NewActionExperiment(
+				explore_node->parent,
+				explore_node,
+				explore_is_branch,
+				score_type);
 
-			// if (new_action_experiment->result == EXPERIMENT_RESULT_FAIL) {
-			// 	delete new_action_experiment;
-			// } else {
-			// 	explore_node->experiments.push_back(new_action_experiment);
-			// }
+			if (new_action_experiment->result == EXPERIMENT_RESULT_FAIL) {
+				delete new_action_experiment;
+			} else {
+				explore_node->experiments.push_back(new_action_experiment);
+			}
 		} else {
 			uniform_int_distribution<int> branch_distribution(0, 2);
-			// if (branch_distribution(generator) == 0) {
-			if (false) {
+			if (branch_distribution(generator) == 0) {
 				uniform_int_distribution<int> type_distribution(0, 1);
 				switch (type_distribution(generator)) {
 				case 0:
-					// {
-					// 	NewInfoExperiment* new_experiment = new NewInfoExperiment(
-					// 		explore_node->parent,
-					// 		explore_node,
-					// 		explore_is_branch,
-					// 		score_type,
-					// 		NULL);
+					{
+						NewInfoExperiment* new_experiment = new NewInfoExperiment(
+							explore_node->parent,
+							explore_node,
+							explore_is_branch,
+							score_type,
+							NULL);
 
-					// 	explore_node->experiments.push_back(new_experiment);
-					// }
-					// break;
+						explore_node->experiments.push_back(new_experiment);
+					}
+					break;
 				case 1:
 					{
 						BranchExperiment* new_experiment = new BranchExperiment(

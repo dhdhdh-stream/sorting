@@ -21,7 +21,7 @@
 
 using namespace std;
 
-void NewInfoExperiment::measure_activate(
+bool NewInfoExperiment::measure_activate(
 		AbstractNode*& curr_node,
 		Problem* problem,
 		vector<ContextLayer>& context,
@@ -93,8 +93,12 @@ void NewInfoExperiment::measure_activate(
 				curr_node = this->best_scopes[0];
 			}
 		}
+
+		return true;
 	} else {
 		this->original_count++;
+
+		return false;
 	}
 }
 
@@ -133,6 +137,11 @@ void NewInfoExperiment::measure_backprop(double target_val,
 			this->best_step_types.clear();
 			this->best_actions.clear();
 			this->best_scopes.clear();
+
+			if (this->ending_node != NULL) {
+				delete this->ending_node;
+				this->ending_node = NULL;
+			}
 
 			this->new_input_node_contexts.clear();
 			this->new_input_obs_indexes.clear();
@@ -246,6 +255,11 @@ void NewInfoExperiment::measure_backprop(double target_val,
 					this->best_step_types.clear();
 					this->best_actions.clear();
 					this->best_scopes.clear();
+
+					if (this->ending_node != NULL) {
+						delete this->ending_node;
+						this->ending_node = NULL;
+					}
 
 					this->new_input_node_contexts.clear();
 					this->new_input_obs_indexes.clear();

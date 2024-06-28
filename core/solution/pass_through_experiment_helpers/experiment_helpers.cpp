@@ -120,8 +120,25 @@ void PassThroughExperiment::experiment_back_activate(
 				if (it->second->index >= history->experiment_index) {
 					switch (it->first->type) {
 					case NODE_TYPE_ACTION:
+						{
+							ActionNode* action_node = (ActionNode*)it->first;
+
+							if (action_node->action.move == ACTION_NOOP) {
+								map<int, AbstractNode*>::iterator it = action_node->parent->nodes.find(action_node->id);
+								if (it == action_node->parent->nodes.end()) {
+									/**
+									 * - new ending node edge case
+									 */
+									continue;
+								}
+							}
+
+							possible_node_contexts.push_back(it->first);
+							possible_is_branch.push_back(false);
+						}
+
+						break;
 					case NODE_TYPE_SCOPE:
-					case NODE_TYPE_BRANCH_END:
 						{
 							possible_node_contexts.push_back(it->first);
 							possible_is_branch.push_back(false);
@@ -158,11 +175,9 @@ void PassThroughExperiment::experiment_back_activate(
 				int rand_index = possible_distribution(generator);
 
 				uniform_int_distribution<int> branch_distribution(0, 3);
-				// if (branch_distribution(generator) == 0) {
-				if (false) {
+				if (branch_distribution(generator) == 0) {
 					uniform_int_distribution<int> info_distribution(0, 1);
-					// if (info_distribution(generator) == 0) {
-					if (false) {
+					if (info_distribution(generator) == 0) {
 						NewInfoExperiment* new_experiment = new NewInfoExperiment(
 							this->scope_context,
 							possible_node_contexts[rand_index],

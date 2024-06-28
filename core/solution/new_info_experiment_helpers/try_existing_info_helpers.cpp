@@ -27,7 +27,7 @@ const int EXISTING_INFO_VERIFY_NUM_DATAPOINTS = 2000;
 const int EXISTING_INFO_VERIFY_TRUTH_NUM_DATAPOINTS = 100;
 #endif /* MDEBUG */
 
-void NewInfoExperiment::try_existing_info_activate(
+bool NewInfoExperiment::try_existing_info_activate(
 		AbstractNode*& curr_node,
 		Problem* problem,
 		vector<ContextLayer>& context,
@@ -83,6 +83,10 @@ void NewInfoExperiment::try_existing_info_activate(
 				curr_node = this->best_scopes[0];
 			}
 		}
+
+		return true;
+	} else {
+		return false;
 	}
 }
 

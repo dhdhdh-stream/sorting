@@ -15,7 +15,7 @@
 
 using namespace std;
 
-void NewInfoExperiment::capture_verify_activate(
+bool NewInfoExperiment::capture_verify_activate(
 		AbstractNode*& curr_node,
 		Problem* problem,
 		vector<ContextLayer>& context,
@@ -71,6 +71,10 @@ void NewInfoExperiment::capture_verify_activate(
 				curr_node = this->best_scopes[0];
 			}
 		}
+
+		return true;
+	} else {
+		return false;
 	}
 }
 

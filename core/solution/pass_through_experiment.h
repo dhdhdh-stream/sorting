@@ -41,7 +41,6 @@ public:
 	std::vector<int> curr_step_types;
 	std::vector<ActionNode*> curr_actions;
 	std::vector<ScopeNode*> curr_scopes;
-	AbstractNode* curr_pre_exit_node;
 	AbstractNode* curr_exit_next_node;
 
 	double best_score;
@@ -50,9 +49,9 @@ public:
 	std::vector<int> best_step_types;
 	std::vector<ActionNode*> best_actions;
 	std::vector<ScopeNode*> best_scopes;
-	AbstractNode* best_pre_exit_node;
 	AbstractNode* best_exit_next_node;
 
+	ActionNode* ending_node;
 	InfoBranchNode* info_branch_node;
 
 	PassThroughExperiment(AbstractScope* scope_context,
@@ -90,16 +89,6 @@ public:
 							   RunHelper& run_helper);
 	void explore_backprop(double target_val,
 						  RunHelper& run_helper);
-
-	void measure_new_activate(AbstractNode*& curr_node,
-							  Problem* problem,
-							  std::vector<ContextLayer>& context,
-							  RunHelper& run_helper,
-							  PassThroughExperimentHistory* history);
-	void measure_new_back_activate(std::vector<ContextLayer>& context,
-								   RunHelper& run_helper);
-	void measure_new_backprop(double target_val,
-							  RunHelper& run_helper);
 
 	void verify_existing_activate(std::vector<ContextLayer>& context,
 								  PassThroughExperimentHistory* history);

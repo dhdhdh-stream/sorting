@@ -1,5 +1,3 @@
-// TODO: restrict branches to be contained
-
 /**
  * - humans teach incrementally
  *   - start by sharing most common sequence along with when to apply in general
@@ -14,69 +12,13 @@
  *       - and repeat recursively
  */
 
-// TODO: found solutions follow edge until none remaining?
-// - local optima
-//   - difficult to escape from
-//     - another good solution in an opposite direction would not save things either
+// even with transformations, still need good in-place scope as followup to get good score
+// - and good in-place scope would probably work well without transformations anyways
+//   - so good in-place scopes are the key
 
-// - need to somehow find empty spots?
-//   - but rare
-//     - a lot of empty spots are not actionable
-//       - ones that are may be too scattered
-//         - no simple sequence to gather
-
-// - maybe explore boundaries of the problem?
-//   - spending time exploring in many instances will be detrimental
-//     - but in other instances may be necessary?
-
-// - if can create a map of the problem, then can better evaluate and figure out what to do
-
-// - once solution created and hit local optima, then can evaluate what sequences preserve
-//   - and can use to gather information
-//     - then can even use to create logic?
-//       - what is needed with what
-//       - what negates what
-//       - what combinations are equal to what combinations
-
-// - can even begin optimizing
-//   - what exact actions are needed
-//     - can remove to know
-
-// - can learn observations
-//   - what exactly do you see given what
-//     - exact value and variance
-
-// - then once know what is safe to do, can really travel far and return
-//   - and while far away, begin exploring again
-
-// - to determine if solution stays the same, measure misguess
-//   - guess every observations and result
-
-// - basically, what are all the transformations you can do while the solution stays the same
-
-// - if ob can be gathered from multiple places, but need at least 1:
-//   - can essentially keep any spot, but can pad before and behind
-
-// - add swaps too
-
-// - so then chaining basically turns into:
-//   - have starting solution
-//     - apply a bunch of transformations
-//       - then try to branch off from there
-
-// - transformations will let you go much further then solution scopes
-
-// - for misguess, scale by standard deviation
-//   - don't really care about things that aren't able to be predicted
-//   - really care about things that can be predicted accurately
-//     - if that changes, then solution changed
-
-// - can use back to predict front?
-//   - though would have to be careful about identity function
-
-// - can use transformations to help remove possibilities during explore
-
-// - first reduce to minimum viable
+// maybe separate in place scopes
+// - only use by themselves and only in place
+//   - don't chain initially
 
 #include <chrono>
 #include <iostream>

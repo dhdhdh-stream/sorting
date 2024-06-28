@@ -20,8 +20,6 @@ InfoBranchNode::InfoBranchNode(InfoBranchNode* original,
 	this->scope = parent_solution->info_scopes[original->scope->id];
 	this->is_negate = original->is_negate;
 
-	this->branch_end_node_id = original->branch_end_node_id;
-
 	this->original_next_node_id = original->original_next_node_id;
 	this->branch_next_node_id = original->branch_next_node_id;
 }
@@ -35,8 +33,6 @@ InfoBranchNode::~InfoBranchNode() {
 void InfoBranchNode::save(ofstream& output_file) {
 	output_file << this->scope->id << endl;
 	output_file << this->is_negate << endl;
-
-	output_file << this->branch_end_node_id << endl;
 
 	output_file << this->original_next_node_id << endl;
 	output_file << this->branch_next_node_id << endl;
@@ -52,10 +48,6 @@ void InfoBranchNode::load(ifstream& input_file,
 	getline(input_file, is_negate_line);
 	this->is_negate = stoi(is_negate_line);
 
-	string branch_end_node_id_line;
-	getline(input_file, branch_end_node_id_line);
-	this->branch_end_node_id = stoi(branch_end_node_id_line);
-
 	string original_next_node_id_line;
 	getline(input_file, original_next_node_id_line);
 	this->original_next_node_id = stoi(original_next_node_id_line);
@@ -66,8 +58,6 @@ void InfoBranchNode::load(ifstream& input_file,
 }
 
 void InfoBranchNode::link(Solution* parent_solution) {
-	this->branch_end_node = (BranchEndNode*)this->parent->nodes[this->branch_end_node_id];
-
 	if (this->original_next_node_id == -1) {
 		this->original_next_node = NULL;
 	} else {

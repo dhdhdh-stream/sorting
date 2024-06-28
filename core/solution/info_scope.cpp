@@ -140,6 +140,7 @@ void InfoScope::save_for_display(ofstream& output_file) {
 	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
 			it != this->nodes.end(); it++) {
 		output_file << it->first << endl;
+		output_file << it->second->type << endl;
 		it->second->save_for_display(output_file);
 	}
 }

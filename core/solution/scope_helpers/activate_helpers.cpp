@@ -3,7 +3,6 @@
 #include <iostream>
 
 #include "action_node.h"
-#include "branch_end_node.h"
 #include "branch_node.h"
 #include "abstract_experiment.h"
 #include "eval_helpers.h"
@@ -60,17 +59,6 @@ void node_activate_helper(AbstractNode*& curr_node,
 	case NODE_TYPE_INFO_BRANCH:
 		{
 			InfoBranchNode* node = (InfoBranchNode*)curr_node;
-			node->activate(curr_node,
-						   problem,
-						   context,
-						   run_helper,
-						   history->node_histories);
-		}
-
-		break;
-	case NODE_TYPE_BRANCH_END:
-		{
-			BranchEndNode* node = (BranchEndNode*)curr_node;
 			node->activate(curr_node,
 						   problem,
 						   context,

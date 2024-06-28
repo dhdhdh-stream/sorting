@@ -3,7 +3,6 @@
 #include <iostream>
 
 #include "action_node.h"
-#include "branch_end_node.h"
 #include "branch_node.h"
 #include "info_branch_node.h"
 #include "info_scope.h"
@@ -48,12 +47,6 @@ void clean_scope(Scope* scope,
 					InfoBranchNode* info_branch_node = (InfoBranchNode*)it->second;
 					next_node_ids.insert(info_branch_node->original_next_node_id);
 					next_node_ids.insert(info_branch_node->branch_next_node_id);
-				}
-				break;
-			case NODE_TYPE_BRANCH_END:
-				{
-					BranchEndNode* branch_end_node = (BranchEndNode*)it->second;
-					next_node_ids.insert(branch_end_node->next_node_id);
 				}
 				break;
 			}

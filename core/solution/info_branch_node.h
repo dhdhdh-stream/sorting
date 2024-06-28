@@ -14,7 +14,6 @@
 #include "context_layer.h"
 #include "run_helper.h"
 
-class BranchEndNode;
 class InfoScope;
 class Problem;
 class ScopeHistory;
@@ -25,9 +24,6 @@ class InfoBranchNode : public AbstractNode {
 public:
 	InfoScope* scope;
 	bool is_negate;
-
-	int branch_end_node_id;
-	BranchEndNode* branch_end_node;
 
 	int original_next_node_id;
 	AbstractNode* original_next_node;

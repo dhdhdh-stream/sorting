@@ -16,7 +16,6 @@ class AbstractNode;
 class AbstractNodeHistory;
 class AbstractExperiment;
 class AbstractExperimentHistory;
-class FamiliarityNetwork;
 class Network;
 class Problem;
 class Solution;
@@ -36,34 +35,6 @@ public:
 	 *     - addressed by train existing anyways
 	 */
 
-	std::vector<FamiliarityNetwork*> familiarity_networks;
-	std::vector<double> input_means;
-	std::vector<double> input_standard_deviations;
-	std::vector<double> familiarity_average_misguesses;
-	std::vector<double> familiarity_misguess_standard_deviations;
-	/**
-	 * - use familiarity to find changes that leave existing solution unaffected
-	 *   - i.e., changes that return to origin
-	 *     - such changes are more likely to be useful elsewhere
-	 */
-
-	// transformations less important
-	// - in-place scopes more important?
-
-	// a lot of solutions that are tested are in place to begin with
-
-	// when not in place, unclear if good/bad
-
-	// also, if changes aren't a particular form, then might delete factors so even in place changes don't look like it
-
-	// even with transformations, still need good in-place scope as followup to get good score
-	// - and good in-place scope would probably work well without transformations anyways
-	//   - so good in-place scopes are the key
-
-	// maybe separate in place scopes
-	// - only use by themselves and only in place
-	//   - don't chain initially
-
 	/**
 	 * - used mainly to help prevent recursion during explore
 	 */
@@ -78,11 +49,7 @@ public:
 				  RunHelper& run_helper,
 				  ScopeHistory* history);
 
-	void random_activate(AbstractNode* starting_node,
-						 std::vector<AbstractNode*>& possible_nodes);
-	void random_exit_activate(AbstractNode* node_context,
-							  bool is_branch,
-							  std::vector<AbstractNode*>& possible_pre_exits,
+	void random_exit_activate(AbstractNode* starting_node,
 							  std::vector<AbstractNode*>& possible_exits);
 
 	void new_action_activate(AbstractNode* starting_node,

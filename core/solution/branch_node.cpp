@@ -3,7 +3,6 @@
 #include <iostream>
 
 #include "abstract_experiment.h"
-#include "familiarity_network.h"
 #include "globals.h"
 #include "network.h"
 #include "scope.h"
@@ -29,12 +28,6 @@ BranchNode::BranchNode(BranchNode* original) {
 	this->input_obs_indexes = original->input_obs_indexes;
 	this->network = new Network(original->network);
 
-	/**
-	 * TODO: familiarity
-	 */
-
-	this->branch_end_node_id = original->branch_end_node_id;
-
 	this->original_next_node_id = original->original_next_node_id;
 	this->branch_next_node_id = original->branch_next_node_id;
 
@@ -45,10 +38,6 @@ BranchNode::BranchNode(BranchNode* original) {
 
 BranchNode::~BranchNode() {
 	delete this->network;
-
-	for (int i_index = 0; i_index < (int)this->familiarity_networks.size(); i_index++) {
-		delete this->familiarity_networks[i_index];
-	}
 
 	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
 		this->experiments[e_index]->decrement(this);
@@ -85,10 +74,6 @@ void BranchNode::clean_node(int scope_id,
 			this->input_node_contexts.erase(this->input_node_contexts.begin() + i_index);
 			this->input_obs_indexes.erase(this->input_obs_indexes.begin() + i_index);
 			this->network->remove_input(i_index);
-
-			/**
-			 * TODO: familiarity
-			 */
 		}
 	}
 }
@@ -104,20 +89,6 @@ void BranchNode::save(ofstream& output_file) {
 		output_file << this->input_obs_indexes[i_index] << endl;
 	}
 	this->network->save(output_file);
-
-	/**
-	 * - to signal if familiarity_networks is empty
-	 */
-	output_file << this->familiarity_networks.size() << endl;
-	for (int i_index = 0; i_index < (int)this->familiarity_networks.size(); i_index++) {
-		this->familiarity_networks[i_index]->save(output_file);
-		output_file << this->input_means[i_index] << endl;
-		output_file << this->input_standard_deviations[i_index] << endl;
-		output_file << this->familiarity_average_misguesses[i_index] << endl;
-		output_file << this->familiarity_misguess_standard_deviations[i_index] << endl;
-	}
-
-	output_file << this->branch_end_node_id << endl;
 
 	output_file << this->original_next_node_id << endl;
 	output_file << this->branch_next_node_id << endl;
@@ -151,33 +122,6 @@ void BranchNode::load(ifstream& input_file) {
 	}
 	this->network = new Network(input_file);
 
-	string familiarity_networks_size_line;
-	getline(input_file, familiarity_networks_size_line);
-	int familiarity_networks_size = stoi(familiarity_networks_size_line);
-	for (int i_index = 0; i_index < familiarity_networks_size; i_index++) {
-		this->familiarity_networks.push_back(new FamiliarityNetwork(input_file));
-
-		string input_mean_line;
-		getline(input_file, input_mean_line);
-		this->input_means.push_back(stod(input_mean_line));
-
-		string input_standard_deviation_line;
-		getline(input_file, input_standard_deviation_line);
-		this->input_standard_deviations.push_back(stod(input_standard_deviation_line));
-
-		string familiarity_average_misguess_line;
-		getline(input_file, familiarity_average_misguess_line);
-		this->familiarity_average_misguesses.push_back(stod(familiarity_average_misguess_line));
-
-		string familiarity_misguess_standard_deviation_line;
-		getline(input_file, familiarity_misguess_standard_deviation_line);
-		this->familiarity_misguess_standard_deviations.push_back(stod(familiarity_misguess_standard_deviation_line));
-	}
-
-	string branch_end_node_id_line;
-	getline(input_file, branch_end_node_id_line);
-	this->branch_end_node_id = stoi(branch_end_node_id_line);
-
 	string original_next_node_id_line;
 	getline(input_file, original_next_node_id_line);
 	this->original_next_node_id = stoi(original_next_node_id_line);
@@ -200,8 +144,6 @@ void BranchNode::link(Solution* parent_solution) {
 		this->input_scope_contexts.push_back(c_scope_context);
 		this->input_node_contexts.push_back(c_node_context);
 	}
-
-	this->branch_end_node = (BranchEndNode*)this->parent->nodes[this->branch_end_node_id];
 
 	if (this->original_next_node_id == -1) {
 		this->original_next_node = NULL;
