@@ -45,6 +45,46 @@ FamiliarityNetwork::FamiliarityNetwork(int num_inputs) {
 	this->output_average_max_update = 0.0;
 }
 
+FamiliarityNetwork::FamiliarityNetwork(FamiliarityNetwork* original) {
+	this->input = new Layer(LINEAR_LAYER);
+	for (int i_index = 0; i_index < (int)original->input->acti_vals.size(); i_index++) {
+		this->input->acti_vals.push_back(0.0);
+		this->input->errors.push_back(0.0);
+	}
+
+	this->hidden_0 = new Layer(LEAKY_LAYER);
+	for (int n_index = 0; n_index < HIDDEN_0_SIZE; n_index++) {
+		this->hidden_0->acti_vals.push_back(0.0);
+		this->hidden_0->errors.push_back(0.0);
+	}
+	this->hidden_0->input_layers.push_back(this->input);
+	this->hidden_0->update_structure();
+	this->hidden_0->copy_weights_from(original->hidden_0);
+
+	this->hidden_1 = new Layer(LEAKY_LAYER);
+	for (int n_index = 0; n_index < HIDDEN_1_SIZE; n_index++) {
+		this->hidden_1->acti_vals.push_back(0.0);
+		this->hidden_1->errors.push_back(0.0);
+	}
+	this->hidden_1->input_layers.push_back(this->input);
+	this->hidden_1->input_layers.push_back(this->hidden_0);
+	this->hidden_1->update_structure();
+	this->hidden_1->copy_weights_from(original->hidden_1);
+
+	this->output = new Layer(LINEAR_LAYER);
+	this->output->acti_vals.push_back(0.0);
+	this->output->errors.push_back(0.0);
+	this->output->input_layers.push_back(this->hidden_0);
+	this->output->input_layers.push_back(this->hidden_1);
+	this->output->update_structure();
+	this->output->copy_weights_from(original->output);
+
+	this->epoch_iter = 0;
+	this->hidden_0_average_max_update = 0.0;
+	this->hidden_1_average_max_update = 0.0;
+	this->output_average_max_update = 0.0;
+}
+
 FamiliarityNetwork::FamiliarityNetwork(ifstream& input_file) {
 	string input_size_line;
 	getline(input_file, input_size_line);

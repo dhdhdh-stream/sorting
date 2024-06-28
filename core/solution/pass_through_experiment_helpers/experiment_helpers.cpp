@@ -158,9 +158,11 @@ void PassThroughExperiment::experiment_back_activate(
 				int rand_index = possible_distribution(generator);
 
 				uniform_int_distribution<int> branch_distribution(0, 3);
-				if (branch_distribution(generator) == 0) {
+				// if (branch_distribution(generator) == 0) {
+				if (false) {
 					uniform_int_distribution<int> info_distribution(0, 1);
-					if (info_distribution(generator) == 0) {
+					// if (info_distribution(generator) == 0) {
+					if (false) {
 						NewInfoExperiment* new_experiment = new NewInfoExperiment(
 							this->scope_context,
 							possible_node_contexts[rand_index],

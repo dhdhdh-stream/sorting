@@ -47,6 +47,23 @@ public:
 	 *     - such changes are more likely to be useful elsewhere
 	 */
 
+	// transformations less important
+	// - in-place scopes more important?
+
+	// a lot of solutions that are tested are in place to begin with
+
+	// when not in place, unclear if good/bad
+
+	// also, if changes aren't a particular form, then might delete factors so even in place changes don't look like it
+
+	// even with transformations, still need good in-place scope as followup to get good score
+	// - and good in-place scope would probably work well without transformations anyways
+	//   - so good in-place scopes are the key
+
+	// maybe separate in place scopes
+	// - only use by themselves and only in place
+	//   - don't chain initially
+
 	/**
 	 * - used mainly to help prevent recursion during explore
 	 */

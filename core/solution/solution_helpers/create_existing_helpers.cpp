@@ -40,21 +40,23 @@ ScopeNode* create_existing(Scope* parent_scope) {
 }
 
 InfoScope* get_existing_info_scope(Scope* parent_scope) {
-	Solution* solution = solution_set->solutions[solution_set->curr_solution_index];
+	return NULL;
 
-	uniform_int_distribution<int> non_null_distribution(0, 4);
-	if (solution->info_scopes.size() == 0
-			|| non_null_distribution(generator) != 0) {
-		return NULL;
-	} else {
-		uniform_int_distribution<int> allow_any_distribution(0, 4);
-		if (parent_scope->info_scopes_used.size() == 0
-				|| allow_any_distribution(generator) == 0) {
-			uniform_int_distribution<int> info_scope_distribution(0, (int)solution->info_scopes.size()-1);
-			return solution->info_scopes[info_scope_distribution(generator)];
-		} else {
-			uniform_int_distribution<int> possible_distribution(0, parent_scope->info_scopes_used.size()-1);
-			return *next(parent_scope->info_scopes_used.begin(), possible_distribution(generator));
-		}
-	}
+	// Solution* solution = solution_set->solutions[solution_set->curr_solution_index];
+
+	// uniform_int_distribution<int> non_null_distribution(0, 4);
+	// if (solution->info_scopes.size() == 0
+	// 		|| non_null_distribution(generator) != 0) {
+	// 	return NULL;
+	// } else {
+	// 	uniform_int_distribution<int> allow_any_distribution(0, 4);
+	// 	if (parent_scope->info_scopes_used.size() == 0
+	// 			|| allow_any_distribution(generator) == 0) {
+	// 		uniform_int_distribution<int> info_scope_distribution(0, (int)solution->info_scopes.size()-1);
+	// 		return solution->info_scopes[info_scope_distribution(generator)];
+	// 	} else {
+	// 		uniform_int_distribution<int> possible_distribution(0, parent_scope->info_scopes_used.size()-1);
+	// 		return *next(parent_scope->info_scopes_used.begin(), possible_distribution(generator));
+	// 	}
+	// }
 }

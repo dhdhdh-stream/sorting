@@ -196,7 +196,8 @@ void BranchExperiment::experiment_back_activate(
 				uniform_int_distribution<int> branch_distribution(0, 3);
 				if (branch_distribution(generator) == 0) {
 					uniform_int_distribution<int> info_distribution(0, 1);
-					if (info_distribution(generator) == 0) {
+					// if (info_distribution(generator) == 0) {
+					if (false) {
 						NewInfoExperiment* new_experiment = new NewInfoExperiment(
 							this->scope_context,
 							possible_node_contexts[rand_index],

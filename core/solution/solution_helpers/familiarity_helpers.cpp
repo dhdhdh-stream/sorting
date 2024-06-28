@@ -2,10 +2,12 @@
 
 #include <algorithm>
 #include <cmath>
+#include <iostream>
 
 #include "abstract_scope.h"
 #include "action_node.h"
 #include "branch_node.h"
+#include "constants.h"
 #include "familiarity_network.h"
 #include "globals.h"
 #include "info_branch_node.h"
@@ -86,6 +88,9 @@ void add_branch_node_familiarity(BranchNode* branch_node,
 			sum_variance += (branch_node->input_means[i_index] - input_vals[d_index][i_index]) * (branch_node->input_means[i_index] - input_vals[d_index][i_index]);
 		}
 		branch_node->input_standard_deviations[i_index] = sqrt(sum_variance / num_instances);
+		if (branch_node->input_standard_deviations[i_index] < MIN_STANDARD_DEVIATION) {
+			branch_node->input_standard_deviations[i_index] = MIN_STANDARD_DEVIATION;
+		}
 
 		FamiliarityNetwork* network = new FamiliarityNetwork((int)branch_node->input_scope_contexts.size() - 1);
 		branch_node->familiarity_networks[i_index] = network;
@@ -185,6 +190,9 @@ void add_eval_familiarity(Scope* scope,
 			sum_variance += (scope->input_means[i_index] - input_vals[d_index][i_index]) * (scope->input_means[i_index] - input_vals[d_index][i_index]);
 		}
 		scope->input_standard_deviations[i_index] = sqrt(sum_variance / num_instances);
+		if (scope->input_standard_deviations[i_index] < MIN_STANDARD_DEVIATION) {
+			scope->input_standard_deviations[i_index] = MIN_STANDARD_DEVIATION;
+		}
 
 		FamiliarityNetwork* network = new FamiliarityNetwork((int)scope->eval_input_scope_contexts.size() - 1);
 		scope->familiarity_networks[i_index] = network;
@@ -214,7 +222,7 @@ void add_eval_familiarity(Scope* scope,
 }
 
 void measure_familiarity(Scope* scope,
-						 vector<ScopeHistory*>& scope_histories) {
+						 vector<AbstractScopeHistory*>& scope_histories) {
 	vector<double> new_sum_misguesses(scope->eval_input_scope_contexts.size(), 0.0);
 
 	int num_instances = (int)scope_histories.size();
@@ -276,7 +284,26 @@ void measure_familiarity(Scope* scope,
 			double predicted_score = scope->familiarity_networks[i_index]->output->acti_vals[0];
 
 			double misguess = (target_val - predicted_score) * (target_val - predicted_score);
-			new_sum_misguesses[i_index] += misguess;
+			
+			double normalized_misguess = abs(misguess - scope->familiarity_average_misguesses[i_index])
+				/ scope->familiarity_misguess_standard_deviations[i_index];
+
+			new_sum_misguesses[i_index] += normalized_misguess;
 		}
+	}
+
+	for (int i_index = 0; i_index < (int)scope->eval_input_scope_contexts.size(); i_index++) {
+		new_sum_misguesses[i_index] /= num_instances;
+	}
+
+	// temp
+	for (int i_index = 0; i_index < (int)scope->eval_input_scope_contexts.size(); i_index++) {
+		cout << i_index << endl;
+		cout << "scope->input_means[i_index]: " << scope->input_means[i_index] << endl;
+		cout << "scope->input_standard_deviations[i_index]: " << scope->input_standard_deviations[i_index] << endl;
+		cout << "scope->familiarity_average_misguesses[i_index]: " << scope->familiarity_average_misguesses[i_index] << endl;
+		cout << "scope->familiarity_misguess_standard_deviations[i_index]: " << scope->familiarity_misguess_standard_deviations[i_index] << endl;
+		cout << "new_sum_misguesses: " << new_sum_misguesses[i_index] << endl;
+		cout << endl;
 	}
 }

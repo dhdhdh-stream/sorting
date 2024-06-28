@@ -127,7 +127,8 @@ void BranchExperiment::explore_activate(
 			possible_exits);
 
 		uniform_int_distribution<int> distribution(0, possible_exits.size()-1);
-		int random_index = distribution(generator);
+		// int random_index = distribution(generator);
+		int random_index = 0;
 		this->curr_pre_exit_node = possible_pre_exits[random_index];
 		this->curr_exit_next_node = possible_exits[random_index];
 
