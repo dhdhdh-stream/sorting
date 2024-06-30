@@ -51,7 +51,7 @@ public:
 						 Problem* problem,
 						 std::vector<ContextLayer>& context,
 						 RunHelper& run_helper,
-						 ScopeNodeHistory* history);
+						 std::map<AbstractNode*, AbstractNodeHistory*>& node_histories);
 
 	void new_action_capture_verify_activate(AbstractNode*& curr_node,
 											Problem* problem,

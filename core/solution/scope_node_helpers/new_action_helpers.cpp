@@ -15,7 +15,13 @@ void ScopeNode::new_action_capture_verify_activate(
 		Problem* problem,
 		vector<ContextLayer>& context,
 		RunHelper& run_helper) {
+	if (run_helper.scope_node_ancestors.find(this) != run_helper.scope_node_ancestors.end()) {
+		run_helper.exceeded_limit = true;
+		return;
+	}
+
 	context.back().node = this;
+	run_helper.scope_node_ancestors.insert(this);
 
 	ScopeHistory* scope_history = new ScopeHistory(this->scope);
 	this->scope->new_action_capture_verify_activate(problem,
@@ -24,6 +30,7 @@ void ScopeNode::new_action_capture_verify_activate(
 													scope_history);
 
 	context.back().node = NULL;
+	run_helper.scope_node_ancestors.erase(this);
 
 	/**
 	 * - don't bother with history

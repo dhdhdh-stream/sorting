@@ -29,6 +29,7 @@ class InfoScope;
 class Problem;
 class Scope;
 class ScopeHistory;
+class ScopeNode;
 class Solution;
 
 class RunHelper {
@@ -37,6 +38,15 @@ public:
 
 	int num_decisions;
 	int num_actions;
+
+	std::set<AbstractNode*> branch_node_ancestors;
+	/**
+	 * - to help enable recursion
+	 */
+	std::set<ScopeNode*> scope_node_ancestors;
+	/**
+	 * - to prevent unbounded recursion
+	 */
 
 	/**
 	 * - choose randomly rather than proportional to use

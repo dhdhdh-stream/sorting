@@ -14,10 +14,5 @@ void NewActionExperiment::successful_activate(
 		vector<ContextLayer>& context,
 		RunHelper& run_helper,
 		NewActionExperimentHistory* history) {
-	if (history->test_location_index == -1) {
-		ScopeHistory* scope_history = (ScopeHistory*)context.back().scope_history;
-		scope_history->callback_experiment_history = history;
-	}
-
 	curr_node = this->successful_scope_nodes[location_index];
 }

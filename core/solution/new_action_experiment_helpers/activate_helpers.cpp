@@ -6,9 +6,39 @@
 #include "constants.h"
 #include "globals.h"
 #include "scope.h"
+#include "scope_node.h"
 #include "solution.h"
 
 using namespace std;
+
+void NewActionExperiment::pre_activate(vector<ContextLayer>& context,
+									   RunHelper& run_helper) {
+	if (run_helper.experiment_histories.size() == 0) {
+		bool has_seen = false;
+		for (int e_index = 0; e_index < (int)run_helper.experiments_seen_order.size(); e_index++) {
+			if (run_helper.experiments_seen_order[e_index] == this) {
+				has_seen = true;
+				break;
+			}
+		}
+		if (!has_seen) {
+			double selected_probability = 1.0 / (1.0 + this->average_remaining_experiments_from_start);
+			uniform_real_distribution<double> distribution(0.0, 1.0);
+			if (distribution(generator) < selected_probability) {
+				NewActionExperimentHistory* history = new NewActionExperimentHistory(this);
+				run_helper.experiment_histories.push_back(history);
+
+				/**
+				 * TODO: assign callback proportional to number of instances
+				 */
+				ScopeHistory* scope_history = (ScopeHistory*)context.back().scope_history;
+				scope_history->callback_experiment_history = history;
+			}
+
+			run_helper.experiments_seen_order.push_back(this);
+		}
+	}
+}
 
 bool NewActionExperiment::activate(AbstractNode* experiment_node,
 								   bool is_branch,
@@ -16,95 +46,71 @@ bool NewActionExperiment::activate(AbstractNode* experiment_node,
 								   Problem* problem,
 								   vector<ContextLayer>& context,
 								   RunHelper& run_helper) {
-	bool has_match = false;
-	bool is_test;
-	int location_index;
-	for (int t_index = 0; t_index < (int)this->test_location_starts.size(); t_index++) {
-		if (this->test_location_starts[t_index] == experiment_node
-				&& this->test_location_is_branch[t_index] == is_branch) {
-			has_match = true;
-			is_test = true;
-			location_index = t_index;
-			break;
-		}
-	}
-	if (!has_match) {
-		for (int s_index = 0; s_index < (int)this->successful_location_starts.size(); s_index++) {
-			if (this->successful_location_starts[s_index] == experiment_node
-					&& this->successful_location_is_branch[s_index] == is_branch) {
+	if (run_helper.experiment_histories.size() == 1
+			&& run_helper.experiment_histories.back()->experiment == this) {
+		bool has_match = false;
+		bool is_test;
+		int location_index;
+		for (int t_index = 0; t_index < (int)this->test_location_starts.size(); t_index++) {
+			if (this->test_location_starts[t_index] == experiment_node
+					&& this->test_location_is_branch[t_index] == is_branch) {
 				has_match = true;
-				is_test = false;
-				location_index = s_index;
+				is_test = true;
+				location_index = t_index;
 				break;
 			}
 		}
-	}
-
-	bool is_selected = false;
-	NewActionExperimentHistory* history = NULL;
-	if (has_match) {
-		if (run_helper.experiment_histories.size() == 1
-				&& run_helper.experiment_histories[0]->experiment == this) {
-			history = (NewActionExperimentHistory*)run_helper.experiment_histories[0];
-			is_selected = true;
-		} else if (run_helper.experiment_histories.size() == 0) {
-			bool has_seen = false;
-			for (int e_index = 0; e_index < (int)run_helper.experiments_seen_order.size(); e_index++) {
-				if (run_helper.experiments_seen_order[e_index] == this) {
-					has_seen = true;
+		if (!has_match) {
+			for (int s_index = 0; s_index < (int)this->successful_location_starts.size(); s_index++) {
+				if (this->successful_location_starts[s_index] == experiment_node
+						&& this->successful_location_is_branch[s_index] == is_branch) {
+					has_match = true;
+					is_test = false;
+					location_index = s_index;
 					break;
 				}
 			}
-			if (!has_seen) {
-				double selected_probability = 1.0 / (1.0 + this->average_remaining_experiments_from_start);
-				uniform_real_distribution<double> distribution(0.0, 1.0);
-				if (distribution(generator) < selected_probability) {
-					history = new NewActionExperimentHistory(this);
-					run_helper.experiment_histories.push_back(history);
-					is_selected = true;
-				}
-
-				run_helper.experiments_seen_order.push_back(this);
-			}
 		}
-	}
 
-	if (is_selected) {
-		switch (this->state) {
-		case NEW_ACTION_EXPERIMENT_STATE_EXPLORE:
-			if (is_test) {
-				if (history->test_location_index == -1
-						|| history->test_location_index == location_index) {
-					test_activate(location_index,
-								  curr_node,
-								  problem,
-								  context,
-								  run_helper,
-								  history);
+		if (has_match) {
+			NewActionExperimentHistory* history = (NewActionExperimentHistory*)run_helper.experiment_histories[0];
 
-					return true;
+			switch (this->state) {
+			case NEW_ACTION_EXPERIMENT_STATE_EXPLORE:
+				if (is_test) {
+					if (history->test_location_index == -1
+							|| history->test_location_index == location_index) {
+						test_activate(location_index,
+									  curr_node,
+									  problem,
+									  context,
+									  run_helper,
+									  history);
+
+						return true;
+					} else {
+						return false;
+					}
 				} else {
-					return false;
+					successful_activate(location_index,
+										curr_node,
+										problem,
+										context,
+										run_helper,
+										history);
+					return true;
 				}
-			} else {
-				successful_activate(location_index,
-									curr_node,
-									problem,
-									context,
-									run_helper,
-									history);
+			#if defined(MDEBUG) && MDEBUG
+			case NEW_ACTION_EXPERIMENT_STATE_CAPTURE_VERIFY:
+				capture_verify_activate(location_index,
+										curr_node,
+										problem,
+										context,
+										run_helper,
+										history);
 				return true;
+			#endif /* MDEBUG */
 			}
-		#if defined(MDEBUG) && MDEBUG
-		case NEW_ACTION_EXPERIMENT_STATE_CAPTURE_VERIFY:
-			capture_verify_activate(location_index,
-									curr_node,
-									problem,
-									context,
-									run_helper,
-									history);
-			return true;
-		#endif /* MDEBUG */
 		}
 	}
 
@@ -163,6 +169,10 @@ void NewActionExperiment::backprop(double target_val,
 				this->test_location_new_scores.clear();
 				this->test_location_new_counts.clear();
 				this->test_location_new_truth_counts.clear();
+				for (int t_index = 0; t_index < (int)this->test_scope_nodes.size(); t_index++) {
+					delete this->test_scope_nodes[t_index];
+				}
+				this->test_scope_nodes.clear();
 
 				this->verify_problems = vector<Problem*>(NUM_VERIFY_SAMPLES, NULL);
 				this->verify_seeds = vector<unsigned long>(NUM_VERIFY_SAMPLES);

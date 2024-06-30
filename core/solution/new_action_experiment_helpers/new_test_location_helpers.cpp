@@ -22,92 +22,94 @@ void NewActionExperiment::add_new_test_location(ScopeHistory* scope_history) {
 			it != scope_history->node_histories.end(); it++) {
 		node_sequence[it->second->index] = it->first;
 
-		switch (it->first->type) {
-		case NODE_TYPE_ACTION:
-		case NODE_TYPE_SCOPE:
-			{
-				bool has_match = false;
-				for (int t_index = 0; t_index < (int)this->test_location_starts.size(); t_index++) {
-					if (this->test_location_starts[t_index] == it->first
-							&& this->test_location_is_branch[t_index] == false) {
-						has_match = true;
-						break;
-					}
-				}
-				if (!has_match) {
-					for (int s_index = 0; s_index < (int)this->successful_location_starts.size(); s_index++) {
-						if (this->successful_location_starts[s_index] == it->first
-								&& this->successful_location_is_branch[s_index] == false) {
+		if (it->second->index <= (int)(0.8*((int)scope_history->node_histories.size()-1))) {
+			switch (it->first->type) {
+			case NODE_TYPE_ACTION:
+			case NODE_TYPE_SCOPE:
+				{
+					bool has_match = false;
+					for (int t_index = 0; t_index < (int)this->test_location_starts.size(); t_index++) {
+						if (this->test_location_starts[t_index] == it->first
+								&& this->test_location_is_branch[t_index] == false) {
 							has_match = true;
 							break;
 						}
 					}
-				}
-				if (!has_match) {
-					possible_starts.push_back(it->first);
-					possible_start_indexes.push_back(it->second->index);
-					possible_is_branch.push_back(false);
-				}
-			}
-			break;
-		case NODE_TYPE_BRANCH:
-			{
-				BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
-
-				bool is_branch = branch_node_history->score >= 0.0;
-
-				bool has_match = false;
-				for (int t_index = 0; t_index < (int)this->test_location_starts.size(); t_index++) {
-					if (this->test_location_starts[t_index] == it->first
-							&& this->test_location_is_branch[t_index] == is_branch) {
-						has_match = true;
-						break;
+					if (!has_match) {
+						for (int s_index = 0; s_index < (int)this->successful_location_starts.size(); s_index++) {
+							if (this->successful_location_starts[s_index] == it->first
+									&& this->successful_location_is_branch[s_index] == false) {
+								has_match = true;
+								break;
+							}
+						}
+					}
+					if (!has_match) {
+						possible_starts.push_back(it->first);
+						possible_start_indexes.push_back(it->second->index);
+						possible_is_branch.push_back(false);
 					}
 				}
-				if (!has_match) {
-					for (int s_index = 0; s_index < (int)this->successful_location_starts.size(); s_index++) {
-						if (this->successful_location_starts[s_index] == it->first
-								&& this->successful_location_is_branch[s_index] == is_branch) {
+				break;
+			case NODE_TYPE_BRANCH:
+				{
+					BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
+
+					bool is_branch = branch_node_history->score >= 0.0;
+
+					bool has_match = false;
+					for (int t_index = 0; t_index < (int)this->test_location_starts.size(); t_index++) {
+						if (this->test_location_starts[t_index] == it->first
+								&& this->test_location_is_branch[t_index] == is_branch) {
 							has_match = true;
 							break;
 						}
 					}
-				}
-				if (!has_match) {
-					possible_starts.push_back(it->first);
-					possible_start_indexes.push_back(it->second->index);
-					possible_is_branch.push_back(is_branch);
-				}
-			}
-			break;
-		case NODE_TYPE_INFO_BRANCH:
-			{
-				InfoBranchNodeHistory* info_branch_node_history = (InfoBranchNodeHistory*)it->second;
-
-				bool has_match = false;
-				for (int t_index = 0; t_index < (int)this->test_location_starts.size(); t_index++) {
-					if (this->test_location_starts[t_index] == it->first
-							&& this->test_location_is_branch[t_index] == info_branch_node_history->is_branch) {
-						has_match = true;
-						break;
+					if (!has_match) {
+						for (int s_index = 0; s_index < (int)this->successful_location_starts.size(); s_index++) {
+							if (this->successful_location_starts[s_index] == it->first
+									&& this->successful_location_is_branch[s_index] == is_branch) {
+								has_match = true;
+								break;
+							}
+						}
+					}
+					if (!has_match) {
+						possible_starts.push_back(it->first);
+						possible_start_indexes.push_back(it->second->index);
+						possible_is_branch.push_back(is_branch);
 					}
 				}
-				if (!has_match) {
-					for (int s_index = 0; s_index < (int)this->successful_location_starts.size(); s_index++) {
-						if (this->successful_location_starts[s_index] == it->first
-								&& this->successful_location_is_branch[s_index] == info_branch_node_history->is_branch) {
+				break;
+			case NODE_TYPE_INFO_BRANCH:
+				{
+					InfoBranchNodeHistory* info_branch_node_history = (InfoBranchNodeHistory*)it->second;
+
+					bool has_match = false;
+					for (int t_index = 0; t_index < (int)this->test_location_starts.size(); t_index++) {
+						if (this->test_location_starts[t_index] == it->first
+								&& this->test_location_is_branch[t_index] == info_branch_node_history->is_branch) {
 							has_match = true;
 							break;
 						}
 					}
+					if (!has_match) {
+						for (int s_index = 0; s_index < (int)this->successful_location_starts.size(); s_index++) {
+							if (this->successful_location_starts[s_index] == it->first
+									&& this->successful_location_is_branch[s_index] == info_branch_node_history->is_branch) {
+								has_match = true;
+								break;
+							}
+						}
+					}
+					if (!has_match) {
+						possible_starts.push_back(it->first);
+						possible_start_indexes.push_back(it->second->index);
+						possible_is_branch.push_back(info_branch_node_history->is_branch);
+					}
 				}
-				if (!has_match) {
-					possible_starts.push_back(it->first);
-					possible_start_indexes.push_back(it->second->index);
-					possible_is_branch.push_back(info_branch_node_history->is_branch);
-				}
+				break;
 			}
-			break;
 		}
 	}
 
@@ -136,6 +138,7 @@ void NewActionExperiment::add_new_test_location(ScopeHistory* scope_history) {
 		this->test_location_new_scores.push_back(0.0);
 		this->test_location_new_counts.push_back(0);
 		this->test_location_new_truth_counts.push_back(0);
+		this->test_scope_nodes.push_back(new ScopeNode());
 
 		this->average_remaining_experiments_from_start = 1.0;
 

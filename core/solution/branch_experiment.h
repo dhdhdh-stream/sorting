@@ -69,9 +69,9 @@ public:
 	std::vector<ScopeNode*> best_scopes;
 	AbstractNode* best_exit_next_node;
 
-	ActionNode* ending_node;
 	BranchNode* branch_node;
 	InfoBranchNode* info_branch_node;
+	ActionNode* ending_node;
 
 	double new_average_score;
 
@@ -131,7 +131,7 @@ public:
 	void explore_backprop(double target_val,
 						  RunHelper& run_helper);
 
-	void train_new_activate(AbstractNode*& curr_node,
+	bool train_new_activate(AbstractNode*& curr_node,
 							Problem* problem,
 							std::vector<ContextLayer>& context,
 							RunHelper& run_helper,

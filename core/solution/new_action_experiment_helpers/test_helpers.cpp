@@ -58,12 +58,21 @@ void NewActionExperiment::test_activate(
 	case NEW_ACTION_EXPERIMENT_MEASURE_NEW:
 	case NEW_ACTION_EXPERIMENT_VERIFY_1ST_NEW:
 	case NEW_ACTION_EXPERIMENT_VERIFY_2ND_NEW:
+		if (run_helper.scope_node_ancestors.find(this->test_scope_nodes[location_index]) != run_helper.scope_node_ancestors.end()) {
+			run_helper.exceeded_limit = true;
+			return;
+		}
+
+		run_helper.scope_node_ancestors.insert(this->test_scope_nodes[location_index]);
+
 		ScopeHistory* scope_history = new ScopeHistory(this->new_scope);
 		this->new_scope->activate(problem,
 								  context,
 								  run_helper,
 								  scope_history);
 		delete scope_history;
+
+		run_helper.scope_node_ancestors.erase(this->test_scope_nodes[location_index]);
 
 		curr_node = this->test_location_exits[location_index];
 	}
@@ -335,7 +344,7 @@ void NewActionExperiment::test_backprop(
 
 					if (new_score >= existing_score) {
 					#endif /* MDEBUG */
-						ScopeNode* new_scope_node = new ScopeNode();
+						ScopeNode* new_scope_node = this->test_scope_nodes[history->test_location_index];
 						new_scope_node->parent = this->scope_context;
 						new_scope_node->id = this->scope_context->node_counter;
 						this->scope_context->node_counter++;
@@ -364,6 +373,7 @@ void NewActionExperiment::test_backprop(
 						this->test_location_new_scores.erase(this->test_location_new_scores.begin() + history->test_location_index);
 						this->test_location_new_counts.erase(this->test_location_new_counts.begin() + history->test_location_index);
 						this->test_location_new_truth_counts.erase(this->test_location_new_truth_counts.begin() + history->test_location_index);
+						this->test_scope_nodes.erase(this->test_scope_nodes.begin() + history->test_location_index);
 
 						if (this->generalize_iter == -1
 								&& this->successful_location_starts.size() == 0) {
@@ -408,6 +418,8 @@ void NewActionExperiment::test_backprop(
 		this->test_location_new_scores.erase(this->test_location_new_scores.begin() + history->test_location_index);
 		this->test_location_new_counts.erase(this->test_location_new_counts.begin() + history->test_location_index);
 		this->test_location_new_truth_counts.erase(this->test_location_new_truth_counts.begin() + history->test_location_index);
+		delete this->test_scope_nodes[history->test_location_index];
+		this->test_scope_nodes.erase(this->test_scope_nodes.begin() + history->test_location_index);
 
 		if (this->generalize_iter == -1
 				&& this->successful_location_starts.size() == 0) {

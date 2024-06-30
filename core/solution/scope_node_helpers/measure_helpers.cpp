@@ -16,7 +16,13 @@ void ScopeNode::measure_activate(Metrics& metrics,
 								 vector<ContextLayer>& context,
 								 RunHelper& run_helper,
 								 map<AbstractNode*, AbstractNodeHistory*>& node_histories) {
+	if (run_helper.scope_node_ancestors.find(this) != run_helper.scope_node_ancestors.end()) {
+		run_helper.exceeded_limit = true;
+		return;
+	}
+
 	context.back().node = this;
+	run_helper.scope_node_ancestors.insert(this);
 
 	ScopeHistory* scope_history = new ScopeHistory(this->scope);
 	this->scope->measure_activate(metrics,
@@ -26,6 +32,7 @@ void ScopeNode::measure_activate(Metrics& metrics,
 								  scope_history);
 
 	context.back().node = NULL;
+	run_helper.scope_node_ancestors.erase(this);
 
 	ScopeNodeHistory* history = new ScopeNodeHistory();
 	history->index = node_histories.size();

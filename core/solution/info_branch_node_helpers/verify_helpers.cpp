@@ -15,34 +15,40 @@ void InfoBranchNode::verify_activate(AbstractNode*& curr_node,
 									 vector<ContextLayer>& context,
 									 RunHelper& run_helper,
 									 map<AbstractNode*, AbstractNodeHistory*>& node_histories) {
-	InfoBranchNodeHistory* history = new InfoBranchNodeHistory();
-	history->index = node_histories.size();
-	node_histories[this] = history;
-
-	bool is_positive;
-	this->scope->verify_activate(problem,
-								 context,
-								 run_helper,
-								 is_positive);
-
-	if (this->is_negate) {
-		if (is_positive) {
-			history->is_branch = false;
-		} else {
-			history->is_branch = true;
-		}
-	} else {
-		if (is_positive) {
-			history->is_branch = true;
-		} else {
-			history->is_branch = false;
-		}
-	}
-
-	if (history->is_branch) {
-		curr_node = this->branch_next_node;
-	} else {
+	if (run_helper.branch_node_ancestors.find(this) != run_helper.branch_node_ancestors.end()) {
 		curr_node = this->original_next_node;
+	} else {
+		run_helper.branch_node_ancestors.insert(this);
+
+		InfoBranchNodeHistory* history = new InfoBranchNodeHistory();
+		history->index = node_histories.size();
+		node_histories[this] = history;
+
+		bool is_positive;
+		this->scope->verify_activate(problem,
+									 context,
+									 run_helper,
+									 is_positive);
+
+		if (this->is_negate) {
+			if (is_positive) {
+				history->is_branch = false;
+			} else {
+				history->is_branch = true;
+			}
+		} else {
+			if (is_positive) {
+				history->is_branch = true;
+			} else {
+				history->is_branch = false;
+			}
+		}
+
+		if (history->is_branch) {
+			curr_node = this->branch_next_node;
+		} else {
+			curr_node = this->original_next_node;
+		}
 	}
 }
 

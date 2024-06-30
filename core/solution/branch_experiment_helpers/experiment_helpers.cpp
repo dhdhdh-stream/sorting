@@ -27,7 +27,9 @@ bool BranchExperiment::experiment_activate(AbstractNode*& curr_node,
 	bool result;
 
 	if (this->is_pass_through) {
-		if (this->best_info_scope == NULL) {
+		if (this->best_info_scope != NULL) {
+			curr_node = this->info_branch_node;
+		} else {
 			if (this->best_step_types.size() == 0) {
 				curr_node = this->best_exit_next_node;
 			} else {
@@ -37,154 +39,84 @@ bool BranchExperiment::experiment_activate(AbstractNode*& curr_node,
 					curr_node = this->best_scopes[0];
 				}
 			}
-		} else {
-			bool is_positive;
-			this->best_info_scope->activate(problem,
-											context,
-											run_helper,
-											is_positive);
-
-			bool is_branch;
-			if (this->best_is_negate) {
-				if (is_positive) {
-					is_branch = false;
-				} else {
-					is_branch = true;
-				}
-			} else {
-				if (is_positive) {
-					is_branch = true;
-				} else {
-					is_branch = false;
-				}
-			}
-
-			InfoBranchNodeHistory* info_branch_node_history = new InfoBranchNodeHistory();
-			info_branch_node_history->index = context.back().scope_history->node_histories.size();
-			context.back().scope_history->node_histories[this->info_branch_node] = info_branch_node_history;
-			if (is_branch) {
-				info_branch_node_history->is_branch = true;
-
-				if (this->best_step_types.size() == 0) {
-					curr_node = this->best_exit_next_node;
-				} else {
-					if (this->best_step_types[0] == STEP_TYPE_ACTION) {
-						curr_node = this->best_actions[0];
-					} else {
-						curr_node = this->best_scopes[0];
-					}
-				}
-			} else {
-				info_branch_node_history->is_branch = false;
-			}
 		}
 
 		result = true;
 	} else {
-		run_helper.num_decisions++;
+		if (run_helper.branch_node_ancestors.find(this->branch_node) != run_helper.branch_node_ancestors.end()) {
+			result = false;
+		} else {
+			run_helper.branch_node_ancestors.insert(this->branch_node);
 
-		vector<double> new_input_vals(this->new_input_scope_contexts.size(), 0.0);
-		for (int i_index = 0; i_index < (int)this->new_input_scope_contexts.size(); i_index++) {
-			int curr_layer = 0;
-			AbstractScopeHistory* curr_scope_history = context.back().scope_history;
-			while (true) {
-				map<AbstractNode*, AbstractNodeHistory*>::iterator it = curr_scope_history->node_histories.find(
-					this->new_input_node_contexts[i_index][curr_layer]);
-				if (it == curr_scope_history->node_histories.end()) {
-					break;
-				} else {
-					if (curr_layer == (int)this->new_input_scope_contexts[i_index].size()-1) {
-						switch (it->first->type) {
-						case NODE_TYPE_ACTION:
-							{
-								ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
-								new_input_vals[i_index] = action_node_history->obs_snapshot[this->new_input_obs_indexes[i_index]];
-							}
-							break;
-						case NODE_TYPE_BRANCH:
-							{
-								BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
-								new_input_vals[i_index] = branch_node_history->score;
-							}
-							break;
-						case NODE_TYPE_INFO_BRANCH:
-							{
-								InfoBranchNodeHistory* info_branch_node_history = (InfoBranchNodeHistory*)it->second;
-								if (info_branch_node_history->is_branch) {
-									new_input_vals[i_index] = 1.0;
-								} else {
-									new_input_vals[i_index] = -1.0;
-								}
-							}
-							break;
-						}
+			run_helper.num_decisions++;
+
+			vector<double> new_input_vals(this->new_input_scope_contexts.size(), 0.0);
+			for (int i_index = 0; i_index < (int)this->new_input_scope_contexts.size(); i_index++) {
+				int curr_layer = 0;
+				AbstractScopeHistory* curr_scope_history = context.back().scope_history;
+				while (true) {
+					map<AbstractNode*, AbstractNodeHistory*>::iterator it = curr_scope_history->node_histories.find(
+						this->new_input_node_contexts[i_index][curr_layer]);
+					if (it == curr_scope_history->node_histories.end()) {
 						break;
 					} else {
-						curr_layer++;
-						curr_scope_history = ((ScopeNodeHistory*)it->second)->scope_history;
+						if (curr_layer == (int)this->new_input_scope_contexts[i_index].size()-1) {
+							switch (it->first->type) {
+							case NODE_TYPE_ACTION:
+								{
+									ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
+									new_input_vals[i_index] = action_node_history->obs_snapshot[this->new_input_obs_indexes[i_index]];
+								}
+								break;
+							case NODE_TYPE_BRANCH:
+								{
+									BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
+									new_input_vals[i_index] = branch_node_history->score;
+								}
+								break;
+							case NODE_TYPE_INFO_BRANCH:
+								{
+									InfoBranchNodeHistory* info_branch_node_history = (InfoBranchNodeHistory*)it->second;
+									if (info_branch_node_history->is_branch) {
+										new_input_vals[i_index] = 1.0;
+									} else {
+										new_input_vals[i_index] = -1.0;
+									}
+								}
+								break;
+							}
+							break;
+						} else {
+							curr_layer++;
+							curr_scope_history = ((ScopeNodeHistory*)it->second)->scope_history;
+						}
 					}
 				}
 			}
-		}
-		this->new_network->activate(new_input_vals);
-		double new_predicted_score = this->new_network->output->acti_vals[0];
+			this->new_network->activate(new_input_vals);
+			double new_predicted_score = this->new_network->output->acti_vals[0];
 
-		#if defined(MDEBUG) && MDEBUG
-		bool decision_is_branch;
-		if (run_helper.curr_run_seed%2 == 0) {
-			decision_is_branch = true;
-		} else {
-			decision_is_branch = false;
-		}
-		run_helper.curr_run_seed = xorshift(run_helper.curr_run_seed);
-		#else
-		bool decision_is_branch = new_predicted_score >= 0.0;
-		#endif /* MDEBUG */
-
-		BranchNodeHistory* branch_node_history = new BranchNodeHistory();
-		branch_node_history->score = new_predicted_score;
-		branch_node_history->index = context.back().scope_history->node_histories.size();
-		context.back().scope_history->node_histories[this->branch_node] = branch_node_history;
-
-		if (decision_is_branch) {
-			if (this->best_info_scope == NULL) {
-				if (this->best_step_types.size() == 0) {
-					curr_node = this->best_exit_next_node;
-				} else {
-					if (this->best_step_types[0] == STEP_TYPE_ACTION) {
-						curr_node = this->best_actions[0];
-					} else {
-						curr_node = this->best_scopes[0];
-					}
-				}
+			#if defined(MDEBUG) && MDEBUG
+			bool decision_is_branch;
+			if (run_helper.curr_run_seed%2 == 0) {
+				decision_is_branch = true;
 			} else {
-				bool is_positive;
-				this->best_info_scope->activate(problem,
-												context,
-												run_helper,
-												is_positive);
+				decision_is_branch = false;
+			}
+			run_helper.curr_run_seed = xorshift(run_helper.curr_run_seed);
+			#else
+			bool decision_is_branch = new_predicted_score >= 0.0;
+			#endif /* MDEBUG */
 
-				bool is_branch;
-				if (this->best_is_negate) {
-					if (is_positive) {
-						is_branch = false;
-					} else {
-						is_branch = true;
-					}
+			BranchNodeHistory* branch_node_history = new BranchNodeHistory();
+			branch_node_history->score = new_predicted_score;
+			branch_node_history->index = context.back().scope_history->node_histories.size();
+			context.back().scope_history->node_histories[this->branch_node] = branch_node_history;
+
+			if (decision_is_branch) {
+				if (this->best_info_scope != NULL) {
+					curr_node = this->info_branch_node;
 				} else {
-					if (is_positive) {
-						is_branch = true;
-					} else {
-						is_branch = false;
-					}
-				}
-
-				InfoBranchNodeHistory* info_branch_node_history = new InfoBranchNodeHistory();
-				info_branch_node_history->index = context.back().scope_history->node_histories.size();
-				context.back().scope_history->node_histories[this->info_branch_node] = info_branch_node_history;
-				if (is_branch) {
-					info_branch_node_history->is_branch = true;
-
 					if (this->best_step_types.size() == 0) {
 						curr_node = this->best_exit_next_node;
 					} else {
@@ -194,14 +126,12 @@ bool BranchExperiment::experiment_activate(AbstractNode*& curr_node,
 							curr_node = this->best_scopes[0];
 						}
 					}
-				} else {
-					info_branch_node_history->is_branch = false;
 				}
-			}
 
-			result = true;
-		} else {
-			result = false;
+				result = true;
+			} else {
+				result = false;
+			}
 		}
 	}
 

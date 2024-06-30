@@ -4,6 +4,7 @@
 #include "branch_node.h"
 #include "constants.h"
 #include "globals.h"
+#include "info_branch_node.h"
 #include "info_scope.h"
 #include "network.h"
 #include "scope.h"
@@ -33,6 +34,16 @@ bool NewInfoExperiment::root_verify_activate(
 
 		return true;
 	} else {
+		if (run_helper.branch_node_ancestors.find(this->branch_node) != run_helper.branch_node_ancestors.end()) {
+			return false;
+		}
+
+		run_helper.branch_node_ancestors.insert(this->branch_node);
+
+		InfoBranchNodeHistory* branch_node_history = new InfoBranchNodeHistory();
+		branch_node_history->index = context.back().scope_history->node_histories.size();
+		context.back().scope_history->node_histories[this->branch_node] = branch_node_history;
+
 		if (this->use_existing) {
 			bool is_positive;
 			Solution* solution = solution_set->solutions[solution_set->curr_solution_index];

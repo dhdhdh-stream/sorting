@@ -6,6 +6,7 @@
 #include "constants.h"
 #include "eval_helpers.h"
 #include "globals.h"
+#include "info_branch_node.h"
 #include "info_scope.h"
 #include "scope.h"
 #include "scope_node.h"
@@ -33,6 +34,16 @@ bool NewInfoExperiment::try_existing_info_activate(
 		vector<ContextLayer>& context,
 		RunHelper& run_helper,
 		NewInfoExperimentHistory* history) {
+	if (run_helper.branch_node_ancestors.find(this->branch_node) != run_helper.branch_node_ancestors.end()) {
+		return false;
+	}
+
+	run_helper.branch_node_ancestors.insert(this->branch_node);
+
+	InfoBranchNodeHistory* branch_node_history = new InfoBranchNodeHistory();
+	branch_node_history->index = context.back().scope_history->node_histories.size();
+	context.back().scope_history->node_histories[this->branch_node] = branch_node_history;
+
 	bool is_positive;
 	Solution* solution = solution_set->solutions[solution_set->curr_solution_index];
 	solution->info_scopes[this->existing_info_scope_index]->activate(

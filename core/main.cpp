@@ -20,6 +20,8 @@
 // - only use by themselves and only in place
 //   - don't chain initially
 
+// what if don't get score without returning to origin?
+
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -57,8 +59,7 @@ int run_index = 0;
 int main(int argc, char* argv[]) {
 	cout << "Starting..." << endl;
 
-	// seed = (unsigned)time(NULL);
-	seed = 1719215510;
+	seed = (unsigned)time(NULL);
 	srand(seed);
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;

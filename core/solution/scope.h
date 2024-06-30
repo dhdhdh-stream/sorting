@@ -17,6 +17,7 @@ class AbstractNodeHistory;
 class AbstractExperiment;
 class AbstractExperimentHistory;
 class Network;
+class NewActionExperiment;
 class Problem;
 class Solution;
 
@@ -35,11 +36,14 @@ public:
 	 *     - addressed by train existing anyways
 	 */
 
-	/**
-	 * - used mainly to help prevent recursion during explore
-	 */
 	std::set<Scope*> scopes_used;
 	std::set<InfoScope*> info_scopes_used;
+
+	/**
+	 * - tie NewActionExperiment to scope instead of node
+	 *   - so that can be tried throughout entire scope
+	 */
+	NewActionExperiment* new_action_experiment;
 
 	Scope();
 	~Scope();

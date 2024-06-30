@@ -61,8 +61,8 @@ public:
 	std::vector<ScopeNode*> best_scopes;
 	AbstractNode* best_exit_next_node;
 
-	ActionNode* ending_node;
 	InfoBranchNode* branch_node;
+	ActionNode* ending_node;
 
 	std::vector<AbstractNode*> existing_input_node_contexts;
 	std::vector<int> existing_input_obs_indexes;
@@ -139,7 +139,7 @@ public:
 	void explore_sequence_backprop(double target_val,
 								   RunHelper& run_helper);
 
-	void train_new_activate(AbstractNode*& curr_node,
+	bool train_new_activate(AbstractNode*& curr_node,
 							Problem* problem,
 							std::vector<ContextLayer>& context,
 							RunHelper& run_helper,

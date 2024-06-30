@@ -43,7 +43,9 @@ bool BranchExperiment::verify_activate(AbstractNode*& curr_node,
 	}
 
 	if (this->is_pass_through) {
-		if (this->best_info_scope == NULL) {
+		if (this->best_info_scope != NULL) {
+			curr_node = this->info_branch_node;
+		} else {
 			if (this->best_step_types.size() == 0) {
 				curr_node = this->best_exit_next_node;
 			} else {
@@ -53,43 +55,21 @@ bool BranchExperiment::verify_activate(AbstractNode*& curr_node,
 					curr_node = this->best_scopes[0];
 				}
 			}
-		} else {
-			bool is_positive;
-			this->best_info_scope->activate(problem,
-											context,
-											run_helper,
-											is_positive);
-
-			if (this->best_is_negate) {
-				if (is_positive) {
-					is_branch = false;
-				} else {
-					is_branch = true;
-				}
-			} else {
-				if (is_positive) {
-					is_branch = true;
-				} else {
-					is_branch = false;
-				}
-			}
-
-			if (is_branch) {
-				if (this->best_step_types.size() == 0) {
-					curr_node = this->best_exit_next_node;
-				} else {
-					if (this->best_step_types[0] == STEP_TYPE_ACTION) {
-						curr_node = this->best_actions[0];
-					} else {
-						curr_node = this->best_scopes[0];
-					}
-				}
-			}
 		}
 
 		return true;
 	} else {
+		if (run_helper.branch_node_ancestors.find(this->branch_node) != run_helper.branch_node_ancestors.end()) {
+			return false;
+		}
+
+		run_helper.branch_node_ancestors.insert(this->branch_node);
+
 		run_helper.num_decisions++;
+
+		BranchNodeHistory* branch_node_history = new BranchNodeHistory();
+		branch_node_history->index = context.back().scope_history->node_histories.size();
+		context.back().scope_history->node_histories[this->branch_node] = branch_node_history;
 
 		vector<double> new_input_vals(this->new_input_scope_contexts.size(), 0.0);
 		for (int i_index = 0; i_index < (int)this->new_input_scope_contexts.size(); i_index++) {
@@ -153,7 +133,9 @@ bool BranchExperiment::verify_activate(AbstractNode*& curr_node,
 		#endif /* MDEBUG */
 
 		if (decision_is_branch) {
-			if (this->best_info_scope == NULL) {
+			if (this->best_info_scope != NULL) {
+				curr_node = this->info_branch_node;
+			} else {
 				if (this->best_step_types.size() == 0) {
 					curr_node = this->best_exit_next_node;
 				} else {
@@ -161,39 +143,6 @@ bool BranchExperiment::verify_activate(AbstractNode*& curr_node,
 						curr_node = this->best_actions[0];
 					} else {
 						curr_node = this->best_scopes[0];
-					}
-				}
-			} else {
-				bool is_positive;
-				this->best_info_scope->activate(problem,
-												context,
-												run_helper,
-												is_positive);
-
-				bool is_branch;
-				if (this->best_is_negate) {
-					if (is_positive) {
-						is_branch = false;
-					} else {
-						is_branch = true;
-					}
-				} else {
-					if (is_positive) {
-						is_branch = true;
-					} else {
-						is_branch = false;
-					}
-				}
-
-				if (is_branch) {
-					if (this->best_step_types.size() == 0) {
-						curr_node = this->best_exit_next_node;
-					} else {
-						if (this->best_step_types[0] == STEP_TYPE_ACTION) {
-							curr_node = this->best_actions[0];
-						} else {
-							curr_node = this->best_scopes[0];
-						}
 					}
 				}
 			}
@@ -231,11 +180,6 @@ void BranchExperiment::verify_backprop(
 		if (this->is_pass_through) {
 			this->is_pass_through = false;
 
-			this->branch_node = new BranchNode();
-			this->branch_node->parent = this->scope_context;
-			this->branch_node->id = this->scope_context->node_counter;
-			this->scope_context->node_counter++;
-
 			this->target_val_histories.reserve(VERIFY_NUM_DATAPOINTS);
 
 			this->state = BRANCH_EXPERIMENT_STATE_VERIFY_EXISTING;
@@ -255,17 +199,15 @@ void BranchExperiment::verify_backprop(
 				this->best_actions.clear();
 				this->best_scopes.clear();
 
-				if (this->ending_node != NULL) {
-					delete this->ending_node;
-					this->ending_node = NULL;
-				}
-				if (this->branch_node != NULL) {
-					delete this->branch_node;
-					this->branch_node = NULL;
-				}
+				delete this->branch_node;
+				this->branch_node = NULL;
 				if (this->info_branch_node != NULL) {
 					delete this->info_branch_node;
 					this->info_branch_node = NULL;
+				}
+				if (this->ending_node != NULL) {
+					delete this->ending_node;
+					this->ending_node = NULL;
 				}
 
 				this->new_input_scope_contexts.clear();
@@ -470,17 +412,15 @@ void BranchExperiment::verify_backprop(
 					this->best_actions.clear();
 					this->best_scopes.clear();
 
-					if (this->ending_node != NULL) {
-						delete this->ending_node;
-						this->ending_node = NULL;
-					}
-					if (this->branch_node != NULL) {
-						delete this->branch_node;
-						this->branch_node = NULL;
-					}
+					delete this->branch_node;
+					this->branch_node = NULL;
 					if (this->info_branch_node != NULL) {
 						delete this->info_branch_node;
 						this->info_branch_node = NULL;
+					}
+					if (this->ending_node != NULL) {
+						delete this->ending_node;
+						this->ending_node = NULL;
 					}
 
 					this->new_input_scope_contexts.clear();

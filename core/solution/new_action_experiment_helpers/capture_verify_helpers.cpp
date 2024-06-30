@@ -33,7 +33,8 @@ void NewActionExperiment::capture_verify_activate(
 			context,
 			run_helper);
 
-		if (curr_node == NULL
+		if (run_helper.exceeded_limit
+				|| curr_node == NULL
 				|| this->scope_context->nodes.find(curr_node->id) != this->scope_context->nodes.end()) {
 			break;
 		}

@@ -66,8 +66,11 @@ void create_experiment(RunHelper& run_helper) {
 			score_type = score_type_distribution(generator);
 		}
 
+		Scope* explore_scope = (Scope*)explore_node->parent;
+
 		uniform_int_distribution<int> non_new_distribution(0, (int)explore_node->parent->nodes.size()-1);
 		if (solution_set->timestamp >= solution_set->next_possible_new_scope_timestamp
+				&& explore_scope->new_action_experiment == NULL
 				&& explore_node->parent->nodes.size() > 10
 				&& non_new_distribution(generator) != 0) {
 			NewActionExperiment* new_action_experiment = new NewActionExperiment(
@@ -79,6 +82,7 @@ void create_experiment(RunHelper& run_helper) {
 			if (new_action_experiment->result == EXPERIMENT_RESULT_FAIL) {
 				delete new_action_experiment;
 			} else {
+				explore_scope->new_action_experiment = new_action_experiment;
 				explore_node->experiments.push_back(new_action_experiment);
 			}
 		} else {

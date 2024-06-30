@@ -530,6 +530,7 @@ NewActionExperiment::NewActionExperiment(AbstractScope* scope_context,
 		this->test_location_new_scores.push_back(0.0);
 		this->test_location_new_counts.push_back(0);
 		this->test_location_new_truth_counts.push_back(0);
+		this->test_scope_nodes.push_back(new ScopeNode());
 
 		this->average_remaining_experiments_from_start = 1.0;
 
@@ -549,6 +550,10 @@ NewActionExperiment::NewActionExperiment(AbstractScope* scope_context,
 NewActionExperiment::~NewActionExperiment() {
 	if (this->new_scope != NULL) {
 		delete this->new_scope;
+	}
+
+	for (int t_index = 0; t_index < (int)this->test_scope_nodes.size(); t_index++) {
+		delete this->test_scope_nodes[t_index];
 	}
 
 	for (int s_index = 0; s_index < (int)this->successful_scope_nodes.size(); s_index++) {

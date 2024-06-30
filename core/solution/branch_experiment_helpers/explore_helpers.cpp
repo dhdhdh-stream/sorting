@@ -451,6 +451,93 @@ void BranchExperiment::explore_backprop(
 				exit_node = this->best_exit_next_node;
 			}
 
+			this->branch_node = new BranchNode();
+			this->branch_node->parent = this->scope_context;
+			this->branch_node->id = this->scope_context->node_counter;
+			this->scope_context->node_counter++;
+
+			if (this->best_info_scope != NULL) {
+				this->info_branch_node = new InfoBranchNode();
+				this->info_branch_node->parent = this->scope_context;
+				this->info_branch_node->id = this->scope_context->node_counter;
+				this->scope_context->node_counter++;
+
+				this->info_branch_node->scope = this->best_info_scope;
+				this->info_branch_node->is_negate = this->best_is_negate;
+
+				switch (this->node_context->type) {
+				case NODE_TYPE_ACTION:
+					{
+						ActionNode* action_node = (ActionNode*)this->node_context;
+						if (action_node->next_node == NULL) {
+							if (this->ending_node == NULL) {
+								ActionNode* new_ending_node = new ActionNode();
+								new_ending_node->parent = this->scope_context;
+								new_ending_node->id = this->scope_context->node_counter;
+								this->scope_context->node_counter++;
+
+								new_ending_node->action = Action(ACTION_NOOP);
+
+								new_ending_node->next_node_id = -1;
+								new_ending_node->next_node = NULL;
+
+								this->ending_node = new_ending_node;
+							}
+							this->info_branch_node->original_next_node_id = this->ending_node->id;
+							this->info_branch_node->original_next_node = this->ending_node;
+						} else {
+							this->info_branch_node->original_next_node_id = action_node->next_node_id;
+							this->info_branch_node->original_next_node = action_node->next_node;
+						}
+					}
+					break;
+				case NODE_TYPE_SCOPE:
+					{
+						ScopeNode* scope_node = (ScopeNode*)this->node_context;
+						this->info_branch_node->original_next_node_id = scope_node->next_node_id;
+						this->info_branch_node->original_next_node = scope_node->next_node;
+					}
+					break;
+				case NODE_TYPE_BRANCH:
+					{
+						BranchNode* branch_node = (BranchNode*)this->node_context;
+						if (this->is_branch) {
+							this->info_branch_node->original_next_node_id = branch_node->branch_next_node_id;
+							this->info_branch_node->original_next_node = branch_node->branch_next_node;
+						} else {
+							this->info_branch_node->original_next_node_id = branch_node->original_next_node_id;
+							this->info_branch_node->original_next_node = branch_node->original_next_node;
+						}
+					}
+					break;
+				case NODE_TYPE_INFO_BRANCH:
+					{
+						InfoBranchNode* info_branch_node = (InfoBranchNode*)this->node_context;
+						if (this->is_branch) {
+							this->info_branch_node->original_next_node_id = info_branch_node->branch_next_node_id;
+							this->info_branch_node->original_next_node = info_branch_node->branch_next_node;
+						} else {
+							this->info_branch_node->original_next_node_id = info_branch_node->original_next_node_id;
+							this->info_branch_node->original_next_node = info_branch_node->original_next_node;
+						}
+					}
+					break;
+				}
+
+				if (this->best_step_types.size() == 0) {
+					this->info_branch_node->branch_next_node_id = this->best_exit_next_node->id;
+					this->info_branch_node->branch_next_node = this->best_exit_next_node;
+				} else {
+					if (this->best_step_types[0] == STEP_TYPE_ACTION) {
+						this->info_branch_node->branch_next_node_id = this->best_actions[0]->id;
+						this->info_branch_node->branch_next_node = this->best_actions[0];
+					} else {
+						this->info_branch_node->branch_next_node_id = this->best_scopes[0]->id;
+						this->info_branch_node->branch_next_node = this->best_scopes[0];
+					}
+				}
+			}
+
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 				int next_node_id;
 				AbstractNode* next_node;

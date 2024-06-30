@@ -14,6 +14,9 @@
 using namespace std;
 
 void NewActionExperiment::finalize(Solution* duplicate) {
+	Scope* parent_scope = (Scope*)this->scope_context;
+	parent_scope->new_action_experiment = NULL;
+
 	for (int t_index = 0; t_index < (int)this->test_location_starts.size(); t_index++) {
 		int experiment_index;
 		for (int e_index = 0; e_index < (int)this->test_location_starts[t_index]->experiments.size(); e_index++) {

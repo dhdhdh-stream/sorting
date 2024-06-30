@@ -65,6 +65,7 @@ public:
 	std::vector<double> test_location_new_scores;
 	std::vector<int> test_location_new_counts;
 	std::vector<int> test_location_new_truth_counts;
+	std::vector<ScopeNode*> test_scope_nodes;
 
 	/**
 	 * - add when experimenting and pop if fail
@@ -87,6 +88,9 @@ public:
 						int score_type);
 	~NewActionExperiment();
 	void decrement(AbstractNode* experiment_node);
+
+	void pre_activate(std::vector<ContextLayer>& context,
+					  RunHelper& run_helper);
 
 	bool activate(AbstractNode* experiment_node,
 				  bool is_branch,

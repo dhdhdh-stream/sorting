@@ -332,41 +332,46 @@ void Minesweeper::perform_action(Action action) {
 
 double Minesweeper::score_result(int num_decisions,
 								 int num_actions) {
-	int curr_revealed = 0;
-	double score = 1.0;
-	for (int x_index = 0; x_index < WIDTH; x_index++) {
-		for (int y_index = 0; y_index < HEIGHT; y_index++) {
-			if (this->revealed[x_index][y_index]) {
-				if (this->world[x_index][y_index] != -1) {
-					curr_revealed++;
-				}
-			} else if (this->flagged[x_index][y_index]) {
-				if (this->world[x_index][y_index] != -1) {
-					score -= 1.0;
-				} else {
-					score += 0.2;
+	if (this->current_x != STARTING_X
+			|| this->current_y != STARTING_Y) {
+		return 0.0;
+	} else {
+		int curr_revealed = 0;
+		double score = 1.0;
+		for (int x_index = 0; x_index < WIDTH; x_index++) {
+			for (int y_index = 0; y_index < HEIGHT; y_index++) {
+				if (this->revealed[x_index][y_index]) {
+					if (this->world[x_index][y_index] != -1) {
+						curr_revealed++;
+					}
+				} else if (this->flagged[x_index][y_index]) {
+					if (this->world[x_index][y_index] != -1) {
+						score -= 1.0;
+					} else {
+						score += 0.2;
+					}
 				}
 			}
 		}
-	}
 
-	score += 0.01*curr_revealed;
+		score += 0.01*curr_revealed;
 
-	if (num_decisions > 5) {
-		score -= 0.0002*(num_decisions-5);
-	}
-	if (num_actions > 40) {
-		score -= 0.000005*(num_actions-40);
-	}
+		if (num_decisions > 5) {
+			score -= 0.0002*(num_decisions-5);
+		}
+		if (num_actions > 40) {
+			score -= 0.000005*(num_actions-40);
+		}
 
-	if (this->hit_mine) {
-		score -= 1.0;
-	}
-	if (score < 0.0) {
-		score = 0.0;
-	}
+		if (this->hit_mine) {
+			score -= 1.0;
+		}
+		if (score < 0.0) {
+			score = 0.0;
+		}
 
-	return score;
+		return score;
+	}
 }
 
 Problem* Minesweeper::copy_and_reset() {

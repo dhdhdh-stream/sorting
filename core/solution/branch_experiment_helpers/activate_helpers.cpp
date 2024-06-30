@@ -340,12 +340,11 @@ bool BranchExperiment::activate(AbstractNode* experiment_node,
 									  history);
 			break;
 		case BRANCH_EXPERIMENT_STATE_TRAIN_NEW:
-			train_new_activate(curr_node,
-							   problem,
-							   context,
-							   run_helper,
-							   history);
-			result = true;
+			result = train_new_activate(curr_node,
+										problem,
+										context,
+										run_helper,
+										history);
 			break;
 		case BRANCH_EXPERIMENT_STATE_MEASURE:
 			result = measure_activate(curr_node,

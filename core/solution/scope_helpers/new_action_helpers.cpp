@@ -76,11 +76,6 @@ void Scope::new_action_capture_verify_activate(
 		ScopeHistory* history) {
 	Solution* solution = solution_set->solutions[solution_set->curr_solution_index];
 
-	if (context.size() > solution->scopes.size() + 1) {
-		run_helper.exceeded_limit = true;
-		return;
-	}
-
 	context.push_back(ContextLayer());
 
 	context.back().scope = this;
@@ -106,6 +101,20 @@ void Scope::new_action_capture_verify_activate(
 			context,
 			run_helper,
 			history);
+
+		if (run_helper.exceeded_limit) {
+			break;
+		}
+	}
+
+	for (map<AbstractNode*, AbstractNodeHistory*>::iterator it = history->node_histories.begin();
+			it != history->node_histories.end(); it++) {
+		switch (it->first->type) {
+		case NODE_TYPE_BRANCH:
+		case NODE_TYPE_INFO_BRANCH:
+			run_helper.branch_node_ancestors.erase(it->first);
+			break;
+		}
 	}
 
 	context.pop_back();

@@ -6,6 +6,7 @@
 
 #include "action_node.h"
 #include "constants.h"
+#include "info_branch_node.h"
 #include "info_scope.h"
 #include "network.h"
 #include "problem.h"
@@ -20,12 +21,22 @@ bool NewInfoExperiment::capture_verify_activate(
 		Problem* problem,
 		vector<ContextLayer>& context,
 		RunHelper& run_helper) {
-	run_helper.num_decisions++;
-
 	if (this->verify_problems[this->state_iter] == NULL) {
 		this->verify_problems[this->state_iter] = problem->copy_and_reset();
 	}
 	this->verify_seeds[this->state_iter] = run_helper.starting_run_seed;
+
+	if (run_helper.branch_node_ancestors.find(this->branch_node) != run_helper.branch_node_ancestors.end()) {
+		return false;
+	}
+
+	run_helper.branch_node_ancestors.insert(this->branch_node);
+
+	run_helper.num_decisions++;
+
+	InfoBranchNodeHistory* branch_node_history = new InfoBranchNodeHistory();
+	branch_node_history->index = context.back().scope_history->node_histories.size();
+	context.back().scope_history->node_histories[this->branch_node] = branch_node_history;
 
 	AbstractScopeHistory* scope_history;
 	this->new_info_scope->explore_activate(problem,

@@ -56,6 +56,16 @@ bool NewInfoExperiment::verify_activate(AbstractNode*& curr_node,
 
 		return true;
 	} else {
+		if (run_helper.branch_node_ancestors.find(this->branch_node) != run_helper.branch_node_ancestors.end()) {
+			return false;
+		}
+
+		run_helper.branch_node_ancestors.insert(this->branch_node);
+
+		InfoBranchNodeHistory* branch_node_history = new InfoBranchNodeHistory();
+		branch_node_history->index = context.back().scope_history->node_histories.size();
+		context.back().scope_history->node_histories[this->branch_node] = branch_node_history;
+
 		if (this->use_existing) {
 			bool is_positive;
 			Solution* solution = solution_set->solutions[solution_set->curr_solution_index];
@@ -201,13 +211,11 @@ void NewInfoExperiment::verify_backprop(double target_val,
 				this->best_actions.clear();
 				this->best_scopes.clear();
 
+				delete this->branch_node;
+				this->branch_node = NULL;
 				if (this->ending_node != NULL) {
 					delete this->ending_node;
 					this->ending_node = NULL;
-				}
-				if (this->branch_node != NULL) {
-					delete this->branch_node;
-					this->branch_node = NULL;
 				}
 
 				this->new_input_node_contexts.clear();
@@ -412,13 +420,11 @@ void NewInfoExperiment::verify_backprop(double target_val,
 					this->best_actions.clear();
 					this->best_scopes.clear();
 
+					delete this->branch_node;
+					this->branch_node = NULL;
 					if (this->ending_node != NULL) {
 						delete this->ending_node;
 						this->ending_node = NULL;
-					}
-					if (this->branch_node != NULL) {
-						delete this->branch_node;
-						this->branch_node = NULL;
 					}
 
 					this->new_input_node_contexts.clear();

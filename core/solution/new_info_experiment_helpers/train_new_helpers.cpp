@@ -9,6 +9,7 @@
 #include "constants.h"
 #include "eval_helpers.h"
 #include "globals.h"
+#include "info_branch_node.h"
 #include "info_scope.h"
 #include "network.h"
 #include "nn_helpers.h"
@@ -21,13 +22,23 @@
 
 using namespace std;
 
-void NewInfoExperiment::train_new_activate(
+bool NewInfoExperiment::train_new_activate(
 		AbstractNode*& curr_node,
 		Problem* problem,
 		vector<ContextLayer>& context,
 		RunHelper& run_helper,
 		NewInfoExperimentHistory* history) {
+	if (run_helper.branch_node_ancestors.find(this->branch_node) != run_helper.branch_node_ancestors.end()) {
+		return false;
+	}
+
+	run_helper.branch_node_ancestors.insert(this->branch_node);
+
 	run_helper.num_decisions++;
+
+	InfoBranchNodeHistory* branch_node_history = new InfoBranchNodeHistory();
+	branch_node_history->index = context.back().scope_history->node_histories.size();
+	context.back().scope_history->node_histories[this->branch_node] = branch_node_history;
 
 	AbstractScopeHistory* scope_history;
 	this->new_info_scope->explore_activate(problem,
@@ -37,8 +48,6 @@ void NewInfoExperiment::train_new_activate(
 
 	this->num_instances_until_target--;
 	if (this->num_instances_until_target == 0) {
-		history->instance_count++;
-
 		this->scope_histories.push_back(scope_history);
 
 		switch (this->score_type) {
@@ -84,8 +93,12 @@ void NewInfoExperiment::train_new_activate(
 
 		uniform_int_distribution<int> until_distribution(0, (int)this->average_instances_per_run-1.0);
 		this->num_instances_until_target = 1 + until_distribution(generator);
+
+		return true;
 	} else {
 		delete scope_history;
+
+		return false;
 	}
 }
 
@@ -132,6 +145,8 @@ void NewInfoExperiment::train_new_backprop(
 			this->best_actions.clear();
 			this->best_scopes.clear();
 
+			delete this->branch_node;
+			this->branch_node = NULL;
 			if (this->ending_node != NULL) {
 				delete this->ending_node;
 				this->ending_node = NULL;

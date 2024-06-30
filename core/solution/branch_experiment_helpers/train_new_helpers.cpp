@@ -21,20 +21,31 @@
 
 using namespace std;
 
-void BranchExperiment::train_new_activate(
+bool BranchExperiment::train_new_activate(
 		AbstractNode*& curr_node,
 		Problem* problem,
 		vector<ContextLayer>& context,
 		RunHelper& run_helper,
 		BranchExperimentHistory* history) {
+	if (run_helper.branch_node_ancestors.find(this->branch_node) != run_helper.branch_node_ancestors.end()) {
+		return false;
+	}
+
+	run_helper.branch_node_ancestors.insert(this->branch_node);
+
 	run_helper.num_decisions++;
 
 	this->num_instances_until_target--;
+
 	if (this->num_instances_until_target == 0) {
-		history->instance_count++;
-
 		this->scope_histories.push_back(context.back().scope_history->deep_copy());
+	}
 
+	BranchNodeHistory* branch_node_history = new BranchNodeHistory();
+	branch_node_history->index = context.back().scope_history->node_histories.size();
+	context.back().scope_history->node_histories[this->branch_node] = branch_node_history;
+
+	if (this->num_instances_until_target == 0) {
 		switch (this->score_type) {
 		case SCORE_TYPE_TRUTH:
 			history->predicted_scores.push_back(vector<double>());
@@ -100,7 +111,9 @@ void BranchExperiment::train_new_activate(
 
 		history->existing_predicted_scores.push_back(predicted_score);
 
-		if (this->best_info_scope == NULL) {
+		if (this->best_info_scope != NULL) {
+			curr_node = this->info_branch_node;
+		} else {
 			if (this->best_step_types.size() == 0) {
 				curr_node = this->best_exit_next_node;
 			} else {
@@ -110,43 +123,14 @@ void BranchExperiment::train_new_activate(
 					curr_node = this->best_scopes[0];
 				}
 			}
-		} else {
-			bool is_positive;
-			this->best_info_scope->activate(problem,
-											context,
-											run_helper,
-											is_positive);
-
-			bool is_branch;
-			if (this->best_is_negate) {
-				if (is_positive) {
-					is_branch = false;
-				} else {
-					is_branch = true;
-				}
-			} else {
-				if (is_positive) {
-					is_branch = true;
-				} else {
-					is_branch = false;
-				}
-			}
-
-			if (is_branch) {
-				if (this->best_step_types.size() == 0) {
-					curr_node = this->best_exit_next_node;
-				} else {
-					if (this->best_step_types[0] == STEP_TYPE_ACTION) {
-						curr_node = this->best_actions[0];
-					} else {
-						curr_node = this->best_scopes[0];
-					}
-				}
-			}
 		}
 
 		uniform_int_distribution<int> until_distribution(0, (int)this->average_instances_per_run-1.0);
 		this->num_instances_until_target = 1 + until_distribution(generator);
+
+		return true;
+	} else {
+		return false;
 	}
 }
 
@@ -193,6 +177,12 @@ void BranchExperiment::train_new_backprop(
 			this->best_actions.clear();
 			this->best_scopes.clear();
 
+			delete this->branch_node;
+			this->branch_node = NULL;
+			if (this->info_branch_node != NULL) {
+				delete this->info_branch_node;
+				this->info_branch_node = NULL;
+			}
 			if (this->ending_node != NULL) {
 				delete this->ending_node;
 				this->ending_node = NULL;

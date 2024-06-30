@@ -15,7 +15,7 @@ using namespace std;
 ScopeNode* create_existing(Scope* parent_scope) {
 	Solution* solution = solution_set->solutions[solution_set->curr_solution_index];
 
-	uniform_int_distribution<int> allow_any_distribution(0, 9);
+	uniform_int_distribution<int> allow_any_distribution(0, 3);
 	if (allow_any_distribution(generator) == 0) {
 		uniform_int_distribution<int> possible_distribution(1, solution->scopes.size() + problem_type->num_possible_actions() - 1);
 		int possible_index = possible_distribution(generator);
@@ -47,7 +47,7 @@ InfoScope* get_existing_info_scope(Scope* parent_scope) {
 			|| non_null_distribution(generator) != 0) {
 		return NULL;
 	} else {
-		uniform_int_distribution<int> allow_any_distribution(0, 4);
+		uniform_int_distribution<int> allow_any_distribution(0, 3);
 		if (parent_scope->info_scopes_used.size() == 0
 				|| allow_any_distribution(generator) == 0) {
 			uniform_int_distribution<int> info_scope_distribution(0, (int)solution->info_scopes.size()-1);

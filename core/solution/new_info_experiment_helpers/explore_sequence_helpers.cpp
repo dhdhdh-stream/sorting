@@ -385,6 +385,11 @@ void NewInfoExperiment::explore_sequence_backprop(
 				exit_node = this->best_exit_next_node;
 			}
 
+			this->branch_node = new InfoBranchNode();
+			this->branch_node->parent = this->scope_context;
+			this->branch_node->id = this->scope_context->node_counter;
+			this->scope_context->node_counter++;
+
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 				int next_node_id;
 				AbstractNode* next_node;

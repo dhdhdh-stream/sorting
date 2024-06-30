@@ -21,6 +21,8 @@ Scope::Scope() {
 	this->id = -1;
 
 	this->eval_network = NULL;
+
+	this->new_action_experiment = NULL;
 }
 
 Scope::~Scope() {

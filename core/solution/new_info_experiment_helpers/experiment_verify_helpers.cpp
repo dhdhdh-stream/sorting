@@ -58,6 +58,12 @@ bool NewInfoExperiment::experiment_verify_activate(
 
 		return true;
 	} else {
+		if (run_helper.branch_node_ancestors.find(this->branch_node) != run_helper.branch_node_ancestors.end()) {
+			return false;
+		}
+
+		run_helper.branch_node_ancestors.insert(this->branch_node);
+
 		if (this->use_existing) {
 			bool is_positive;
 			Solution* solution = solution_set->solutions[solution_set->curr_solution_index];

@@ -346,13 +346,11 @@ bool NewInfoExperiment::activate(AbstractNode* experiment_node,
 											 run_helper,
 											 history);
 		case NEW_INFO_EXPERIMENT_STATE_TRAIN_NEW:
-			train_new_activate(curr_node,
-							   problem,
-							   context,
-							   run_helper,
-							   history);
-
-			return true;
+			return train_new_activate(curr_node,
+									  problem,
+									  context,
+									  run_helper,
+									  history);
 		case NEW_INFO_EXPERIMENT_STATE_MEASURE:
 			return measure_activate(curr_node,
 									problem,
