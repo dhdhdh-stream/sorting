@@ -57,6 +57,11 @@ int main(int argc, char* argv[]) {
 		}
 	}
 
+	double target_val = problem->score_result(0, 0);
+	sample.result = target_val;
+
+	cout << "target_val: " << target_val << endl;
+
 	sample.save();
 
 	cout << "Done" << endl;

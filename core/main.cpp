@@ -49,6 +49,11 @@
 //   - clean/simplify original samples
 //     - look for new common sequences
 
+// add back seed experiment
+// - predict if path good with full obs
+//   - then reduce path until still good enough to be positive
+//     - then look for path back
+
 #include <chrono>
 #include <iostream>
 #include <map>

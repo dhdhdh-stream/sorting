@@ -25,6 +25,13 @@ NewActionExperiment::NewActionExperiment(AbstractScope* scope_context,
 										 int score_type) {
 	this->type = EXPERIMENT_TYPE_NEW_ACTION;
 
+	uniform_int_distribution<int> type_distribution(0, 2);
+	if (type_distribution(generator) == 0) {
+		this->new_action_experiment_type = NEW_ACTION_EXPERIMENT_TYPE_ANY;
+	} else {
+		this->new_action_experiment_type = NEW_ACTION_EXPERIMENT_TYPE_IN_PLACE;
+	}
+
 	Solution* solution = solution_set->solutions[solution_set->curr_solution_index];
 
 	/**
@@ -512,13 +519,18 @@ NewActionExperiment::NewActionExperiment(AbstractScope* scope_context,
 			break;
 		}
 
-		Scope* parent_scope = (Scope*)this->scope_context;
-		parent_scope->random_exit_activate(
-			random_start_node,
-			possible_exits);
+		AbstractNode* exit_next_node;
+		if (this->new_action_experiment_type == NEW_ACTION_EXPERIMENT_TYPE_IN_PLACE) {
+			exit_next_node = random_start_node;
+		} else {
+			Scope* parent_scope = (Scope*)this->scope_context;
+			parent_scope->random_exit_activate(
+				random_start_node,
+				possible_exits);
 
-		uniform_int_distribution<int> exit_distribution(0, possible_exits.size()-1);
-		AbstractNode* exit_next_node = possible_exits[exit_distribution(generator)];
+			uniform_int_distribution<int> exit_distribution(0, possible_exits.size()-1);
+			exit_next_node = possible_exits[exit_distribution(generator)];
+		}
 
 		this->test_location_starts.push_back(node_context);
 		this->test_location_is_branch.push_back(is_branch);

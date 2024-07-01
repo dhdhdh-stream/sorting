@@ -22,7 +22,14 @@ void NewActionExperiment::add_new_test_location(ScopeHistory* scope_history) {
 			it != scope_history->node_histories.end(); it++) {
 		node_sequence[it->second->index] = it->first;
 
-		if (it->second->index <= (int)(0.8*((int)scope_history->node_histories.size()-1))) {
+		bool can_be_selected;
+		if (this->new_action_experiment_type == NEW_ACTION_EXPERIMENT_TYPE_IN_PLACE) {
+			can_be_selected = it->second->index <= (int)(0.8*((int)scope_history->node_histories.size()-1));
+		} else {
+			can_be_selected = true;
+		}
+
+		if (can_be_selected) {
 			switch (it->first->type) {
 			case NODE_TYPE_ACTION:
 			case NODE_TYPE_SCOPE:
@@ -120,12 +127,16 @@ void NewActionExperiment::add_new_test_location(ScopeHistory* scope_history) {
 		int start_index = start_distribution(generator);
 
 		AbstractNode* exit_node;
-		if (possible_start_indexes[start_index] == (int)node_sequence.size()-1) {
-			exit_node = NULL;
+		if (this->new_action_experiment_type == NEW_ACTION_EXPERIMENT_TYPE_IN_PLACE) {
+			exit_node = node_sequence[possible_start_indexes[start_index] + 1];
 		} else {
-			uniform_int_distribution<int> exit_distribution(
-				possible_start_indexes[start_index] + 1, (int)node_sequence.size()-1);
-			exit_node = node_sequence[exit_distribution(generator)];
+			if (possible_start_indexes[start_index] == (int)node_sequence.size()-1) {
+				exit_node = NULL;
+			} else {
+				uniform_int_distribution<int> exit_distribution(
+					possible_start_indexes[start_index] + 1, (int)node_sequence.size()-1);
+				exit_node = node_sequence[exit_distribution(generator)];
+			}
 		}
 
 		this->test_location_starts.push_back(possible_starts[start_index]);

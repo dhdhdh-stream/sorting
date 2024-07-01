@@ -1,3 +1,15 @@
+/**
+ * - wider field of view makes progress significantly easier
+ *   - instead of needing to find:
+ *     - good to-and-back information gather
+ *     - good action
+ *   - just need good action
+ * 
+ * TODO:
+ * - if see entire board, can use convolutional NN to localize
+ *   - include through time as well
+ */
+
 #ifndef MINESWEEPER_H
 #define MINESWEEPER_H
 

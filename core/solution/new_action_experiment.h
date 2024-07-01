@@ -46,9 +46,14 @@ const int NEW_ACTION_MAX_LOCATIONS = 5;
  */
 #endif /* MDEBUG */
 
+const int NEW_ACTION_EXPERIMENT_TYPE_IN_PLACE = 0;
+const int NEW_ACTION_EXPERIMENT_TYPE_ANY = 1;
+
 class NewActionExperimentHistory;
 class NewActionExperiment : public AbstractExperiment {
 public:
+	int new_action_experiment_type;
+
 	int state;
 	int state_iter;
 	int generalize_iter;
