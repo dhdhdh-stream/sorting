@@ -78,6 +78,14 @@ void BranchNode::clean_node(int scope_id,
 	}
 }
 
+void BranchNode::update_structure() {
+	for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
+		for (int l_index = 0; l_index < (int)this->input_scope_contexts[i_index].size(); l_index++) {
+			this->input_scope_context_ids[i_index][l_index] = this->input_scope_contexts[i_index][l_index]->id;
+		}
+	}
+}
+
 void BranchNode::save(ofstream& output_file) {
 	output_file << this->input_scope_contexts.size() << endl;
 	for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {

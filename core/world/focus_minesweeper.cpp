@@ -1,9 +1,10 @@
-#include "minesweeper.h"
+#include "focus_minesweeper.h"
 
 #include <algorithm>
 #include <iostream>
 
 #include "globals.h"
+#include "minesweeper.h"
 
 using namespace std;
 
@@ -13,7 +14,7 @@ const int NUM_MINES = 10;
 const int STARTING_X = 4;
 const int STARTING_Y = 4;
 
-Minesweeper::Minesweeper() {
+FocusMinesweeper::FocusMinesweeper() {
 	while (true) {
 		this->world = vector<vector<int>>(WIDTH, vector<int>(HEIGHT, 0));
 		int num_mines = 0;
@@ -106,7 +107,7 @@ Minesweeper::Minesweeper() {
 	reveal_helper(STARTING_X, STARTING_Y);
 }
 
-double Minesweeper::get_observation_helper(int x, int y) {
+double FocusMinesweeper::get_observation_helper(int x, int y) {
 	if (x < 0
 			|| x > WIDTH-1
 			|| y < 0
@@ -141,24 +142,15 @@ double Minesweeper::get_observation_helper(int x, int y) {
 	}
 }
 
-vector<double> Minesweeper::get_observations() {
+vector<double> FocusMinesweeper::get_observations() {
 	vector<double> obs;
 
 	obs.push_back(get_observation_helper(this->current_x, this->current_y));
 
-	obs.push_back(get_observation_helper(this->current_x-1, this->current_y+1));
-	obs.push_back(get_observation_helper(this->current_x, this->current_y+1));
-	obs.push_back(get_observation_helper(this->current_x+1, this->current_y+1));
-	obs.push_back(get_observation_helper(this->current_x+1, this->current_y));
-	obs.push_back(get_observation_helper(this->current_x+1, this->current_y-1));
-	obs.push_back(get_observation_helper(this->current_x, this->current_y-1));
-	obs.push_back(get_observation_helper(this->current_x-1, this->current_y-1));
-	obs.push_back(get_observation_helper(this->current_x-1, this->current_y));
-
 	return obs;
 }
 
-void Minesweeper::reveal_helper(int x, int y) {
+void FocusMinesweeper::reveal_helper(int x, int y) {
 	if (x < 0
 			|| x > WIDTH-1
 			|| y < 0
@@ -187,29 +179,29 @@ void Minesweeper::reveal_helper(int x, int y) {
 	}
 }
 
-void Minesweeper::perform_action(Action action) {
+void FocusMinesweeper::perform_action(Action action) {
 	if (this->hit_mine) {
 		return;
 	}
 
 	switch (action.move) {
 	case MINESWEEPER_ACTION_UP:
-		if (this->current_y < HEIGHT-1) {
+		if (this->current_y < HEIGHT) {
 			this->current_y++;
 		}
 		break;
 	case MINESWEEPER_ACTION_RIGHT:
-		if (this->current_x < WIDTH-1) {
+		if (this->current_x < WIDTH) {
 			this->current_x++;
 		}
 		break;
 	case MINESWEEPER_ACTION_DOWN:
-		if (this->current_y > 0) {
+		if (this->current_y >= 0) {
 			this->current_y--;
 		}
 		break;
 	case MINESWEEPER_ACTION_LEFT:
-		if (this->current_x > 0) {
+		if (this->current_x >= 0) {
 			this->current_x--;
 		}
 		break;
@@ -217,111 +209,121 @@ void Minesweeper::perform_action(Action action) {
 		reveal_helper(this->current_x, this->current_y);
 		break;
 	case MINESWEEPER_ACTION_FLAG:
-		if (!this->revealed[this->current_x][this->current_y]
-				&& !this->flagged[this->current_x][this->current_y]) {
-			this->flagged[this->current_x][this->current_y] = true;
+		if (this->current_x >= 0
+				&& this->current_x < WIDTH
+				&& this->current_y >= 0
+				&& this->current_y < HEIGHT) {
+			if (!this->revealed[this->current_x][this->current_y]
+					&& !this->flagged[this->current_x][this->current_y]) {
+				this->flagged[this->current_x][this->current_y] = true;
+			}
 		}
 		break;
 	case MINESWEEPER_ACTION_DOUBLECLICK:
-		if (this->revealed[this->current_x][this->current_y]
-				&& this->world[this->current_x][this->current_y] > 0) {
-			int num_surrounding = 0;
+		if (this->current_x >= 0
+				&& this->current_x < WIDTH
+				&& this->current_y >= 0
+				&& this->current_y < HEIGHT) {
+			if (this->revealed[this->current_x][this->current_y]
+					&& this->world[this->current_x][this->current_y] > 0) {
+				int num_surrounding = 0;
 
-			if (this->current_x > 0 && this->current_y < HEIGHT-1) {
-				if (this->flagged[this->current_x-1][this->current_y+1]) {
-					num_surrounding++;
-				}
-			}
-
-			if (this->current_y < HEIGHT-1) {
-				if (this->flagged[this->current_x][this->current_y+1]) {
-					num_surrounding++;
-				}
-			}
-
-			if (this->current_x < WIDTH-1 && this->current_y < HEIGHT-1) {
-				if (this->flagged[this->current_x+1][this->current_y+1]) {
-					num_surrounding++;
-				}
-			}
-
-			if (this->current_x < WIDTH-1) {
-				if (this->flagged[this->current_x+1][this->current_y]) {
-					num_surrounding++;
-				}
-			}
-
-			if (this->current_x < WIDTH-1 && this->current_y > 0) {
-				if (this->flagged[this->current_x+1][this->current_y-1]) {
-					num_surrounding++;
-				}
-			}
-
-			if (this->current_y > 0) {
-				if (this->flagged[this->current_x][this->current_y-1]) {
-					num_surrounding++;
-				}
-			}
-
-			if (this->current_x > 0 && this->current_y > 0) {
-				if (this->flagged[this->current_x-1][this->current_y-1]) {
-					num_surrounding++;
-				}
-			}
-
-			if (this->current_x > 0) {
-				if (this->flagged[this->current_x-1][this->current_y]) {
-					num_surrounding++;
-				}
-			}
-
-			if (num_surrounding == this->world[this->current_x][this->current_y]) {
-				if (this->current_x > 0 && this->current_y > 0) {
-					if (!this->revealed[this->current_x-1][this->current_y-1]
-							&& !this->flagged[this->current_x-1][this->current_y-1]) {
-						reveal_helper(this->current_x-1, this->current_y-1);
-					}
-				}
-				if (this->current_x > 0) {
-					if (!this->revealed[this->current_x-1][this->current_y]
-							&& !this->flagged[this->current_x-1][this->current_y]) {
-						reveal_helper(this->current_x-1, this->current_y);
-					}
-				}
 				if (this->current_x > 0 && this->current_y < HEIGHT-1) {
-					if (!this->revealed[this->current_x-1][this->current_y+1]
-							&& !this->flagged[this->current_x-1][this->current_y+1]) {
-						reveal_helper(this->current_x-1, this->current_y+1);
+					if (this->flagged[this->current_x-1][this->current_y+1]) {
+						num_surrounding++;
 					}
 				}
+
 				if (this->current_y < HEIGHT-1) {
-					if (!this->revealed[this->current_x][this->current_y+1]
-							&& !this->flagged[this->current_x][this->current_y+1]) {
-						reveal_helper(this->current_x, this->current_y+1);
+					if (this->flagged[this->current_x][this->current_y+1]) {
+						num_surrounding++;
 					}
 				}
+
 				if (this->current_x < WIDTH-1 && this->current_y < HEIGHT-1) {
-					if (!this->revealed[this->current_x+1][this->current_y+1]
-							&& !this->flagged[this->current_x+1][this->current_y+1]) {
-						reveal_helper(this->current_x+1, this->current_y+1);
+					if (this->flagged[this->current_x+1][this->current_y+1]) {
+						num_surrounding++;
 					}
 				}
+
 				if (this->current_x < WIDTH-1) {
-					if (!this->revealed[this->current_x+1][this->current_y]
-							&& !this->flagged[this->current_x+1][this->current_y]) {
-						reveal_helper(this->current_x+1, this->current_y);
+					if (this->flagged[this->current_x+1][this->current_y]) {
+						num_surrounding++;
 					}
 				}
+
 				if (this->current_x < WIDTH-1 && this->current_y > 0) {
-					if (!this->revealed[this->current_x+1][this->current_y-1]
-							&& !this->flagged[this->current_x+1][this->current_y-1]) {
-						reveal_helper(this->current_x+1, this->current_y-1);
+					if (this->flagged[this->current_x+1][this->current_y-1]) {
+						num_surrounding++;
 					}
 				}
+
 				if (this->current_y > 0) {
-					if (!this->revealed[this->current_x][this->current_y-1]
-							&& !this->flagged[this->current_x][this->current_y-1]) {
-						reveal_helper(this->current_x, this->current_y-1);
+					if (this->flagged[this->current_x][this->current_y-1]) {
+						num_surrounding++;
+					}
+				}
+
+				if (this->current_x > 0 && this->current_y > 0) {
+					if (this->flagged[this->current_x-1][this->current_y-1]) {
+						num_surrounding++;
+					}
+				}
+
+				if (this->current_x > 0) {
+					if (this->flagged[this->current_x-1][this->current_y]) {
+						num_surrounding++;
+					}
+				}
+
+				if (num_surrounding == this->world[this->current_x][this->current_y]) {
+					if (this->current_x > 0 && this->current_y > 0) {
+						if (!this->revealed[this->current_x-1][this->current_y-1]
+								&& !this->flagged[this->current_x-1][this->current_y-1]) {
+							reveal_helper(this->current_x-1, this->current_y-1);
+						}
+					}
+					if (this->current_x > 0) {
+						if (!this->revealed[this->current_x-1][this->current_y]
+								&& !this->flagged[this->current_x-1][this->current_y]) {
+							reveal_helper(this->current_x-1, this->current_y);
+						}
+					}
+					if (this->current_x > 0 && this->current_y < HEIGHT-1) {
+						if (!this->revealed[this->current_x-1][this->current_y+1]
+								&& !this->flagged[this->current_x-1][this->current_y+1]) {
+							reveal_helper(this->current_x-1, this->current_y+1);
+						}
+					}
+					if (this->current_y < HEIGHT-1) {
+						if (!this->revealed[this->current_x][this->current_y+1]
+								&& !this->flagged[this->current_x][this->current_y+1]) {
+							reveal_helper(this->current_x, this->current_y+1);
+						}
+					}
+					if (this->current_x < WIDTH-1 && this->current_y < HEIGHT-1) {
+						if (!this->revealed[this->current_x+1][this->current_y+1]
+								&& !this->flagged[this->current_x+1][this->current_y+1]) {
+							reveal_helper(this->current_x+1, this->current_y+1);
+						}
+					}
+					if (this->current_x < WIDTH-1) {
+						if (!this->revealed[this->current_x+1][this->current_y]
+								&& !this->flagged[this->current_x+1][this->current_y]) {
+							reveal_helper(this->current_x+1, this->current_y);
+						}
+					}
+					if (this->current_x < WIDTH-1 && this->current_y > 0) {
+						if (!this->revealed[this->current_x+1][this->current_y-1]
+								&& !this->flagged[this->current_x+1][this->current_y-1]) {
+							reveal_helper(this->current_x+1, this->current_y-1);
+						}
+					}
+					if (this->current_y > 0) {
+						if (!this->revealed[this->current_x][this->current_y-1]
+								&& !this->flagged[this->current_x][this->current_y-1]) {
+							reveal_helper(this->current_x, this->current_y-1);
+						}
 					}
 				}
 			}
@@ -330,7 +332,7 @@ void Minesweeper::perform_action(Action action) {
 	}
 }
 
-double Minesweeper::score_result(int num_decisions,
+double FocusMinesweeper::score_result(int num_decisions,
 								 int num_actions) {
 	if (this->current_x != STARTING_X
 			|| this->current_y != STARTING_Y) {
@@ -374,8 +376,8 @@ double Minesweeper::score_result(int num_decisions,
 	}
 }
 
-Problem* Minesweeper::copy_and_reset() {
-	Minesweeper* new_problem = new Minesweeper();
+Problem* FocusMinesweeper::copy_and_reset() {
+	FocusMinesweeper* new_problem = new FocusMinesweeper();
 
 	new_problem->world = this->world;
 
@@ -390,8 +392,8 @@ Problem* Minesweeper::copy_and_reset() {
 	return new_problem;
 }
 
-Problem* Minesweeper::copy_snapshot() {
-	Minesweeper* new_problem = new Minesweeper();
+Problem* FocusMinesweeper::copy_snapshot() {
+	FocusMinesweeper* new_problem = new FocusMinesweeper();
 
 	new_problem->world = this->world;
 	new_problem->revealed = this->revealed;
@@ -403,7 +405,7 @@ Problem* Minesweeper::copy_snapshot() {
 	return new_problem;
 }
 
-void Minesweeper::print() {
+void FocusMinesweeper::print() {
 	for (int y_index = HEIGHT-1; y_index >= 0; y_index--) {
 		for (int x_index = 0; x_index < WIDTH; x_index++) {
 			if (this->revealed[x_index][y_index]) {
@@ -436,11 +438,11 @@ void Minesweeper::print() {
 	cout << "current_y: " << this->current_y << endl;
 }
 
-Problem* TypeMinesweeper::get_problem() {
-	return new Minesweeper();
+Problem* TypeFocusMinesweeper::get_problem() {
+	return new FocusMinesweeper();
 }
 
-void Minesweeper::print_obs_helper(int x, int y) {
+void FocusMinesweeper::print_obs_helper(int x, int y) {
 	if (x < 0
 			|| x > WIDTH-1
 			|| y < 0
@@ -465,32 +467,20 @@ void Minesweeper::print_obs_helper(int x, int y) {
 	}
 }
 
-void Minesweeper::print_obs() {
-	print_obs_helper(this->current_x-1, this->current_y+1);
-	print_obs_helper(this->current_x, this->current_y+1);
-	print_obs_helper(this->current_x+1, this->current_y+1);
-	cout << endl;
-
-	print_obs_helper(this->current_x-1, this->current_y);
+void FocusMinesweeper::print_obs() {
 	print_obs_helper(this->current_x, this->current_y);
-	print_obs_helper(this->current_x+1, this->current_y);
-	cout << endl;
-
-	print_obs_helper(this->current_x-1, this->current_y-1);
-	print_obs_helper(this->current_x, this->current_y-1);
-	print_obs_helper(this->current_x+1, this->current_y-1);
 	cout << endl;
 }
 
-int TypeMinesweeper::num_obs() {
-	return 9;
+int TypeFocusMinesweeper::num_obs() {
+	return 1;
 }
 
-int TypeMinesweeper::num_possible_actions() {
+int TypeFocusMinesweeper::num_possible_actions() {
 	return 7;
 }
 
-Action TypeMinesweeper::random_action() {
+Action TypeFocusMinesweeper::random_action() {
 	uniform_int_distribution<int> action_distribution(0, 6);
 	return Action(action_distribution(generator));
 }

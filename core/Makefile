@@ -1,12 +1,14 @@
 CXX = g++
 CXXFLAGS = -g -std=c++17 -Wall -Werror -MMD \
 		   -DMDEBUG=0 \
+		   -Imimic \
 		   -Inn \
 		   -Isolution \
 		   -Iutils \
 		   -Iworld
 LIBS = -pthread
-SOURCES := $(shell find nn -name '*.cpp') \
+SOURCES := $(shell find mimic -name '*.cpp') \
+		   $(shell find nn -name '*.cpp') \
 		   $(shell find solution -name '*.cpp') \
 		   $(shell find utils -name '*.cpp') \
 		   $(shell find world -name '*.cpp')
@@ -14,7 +16,7 @@ HEADERS = ${SOURCES:.cpp=.h}
 OBJECTS = ${HEADERS:.h=.o}
 DEPENDS = ${OBJECTS:.o=.d}
 
-all: main viewer worker simple_init measure
+all: main viewer worker simple_init measure capture_sample
 
 main: ${OBJECTS} main.o
 	${CXX} ${CXXFLAGS} ${OBJECTS} main.o -o main ${LIBS}
@@ -31,7 +33,10 @@ simple_init: ${OBJECTS} simple_init.o
 measure: ${OBJECTS} measure.o
 	${CXX} ${CXXFLAGS} ${OBJECTS} measure.o -o measure ${LIBS}
 
--include ${DEPENDS} main.d viewer.d worker.d simple_init.d measure.d
+capture_sample: ${OBJECTS} capture_sample.o
+	${CXX} ${CXXFLAGS} ${OBJECTS} capture_sample.o -o capture_sample ${LIBS}
+
+-include ${DEPENDS} main.d viewer.d worker.d simple_init.d measure.d capture_sample.d
 
 clean:
 	rm -f ${OBJECTS} ${DEPENDS} \
@@ -39,4 +44,5 @@ clean:
 	viewer.o viewer.d viewer \
 	worker.o worker.d worker \
 	simple_init.o simple_init.d simple_init \
-	measure.o measure.d measure
+	measure.o measure.d measure \
+	capture_sample.o capture_sample.d capture_sample

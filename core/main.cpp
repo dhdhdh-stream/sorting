@@ -59,6 +59,7 @@
 #include "action_node.h"
 #include "constants.h"
 #include "eval_helpers.h"
+#include "focus_minesweeper.h"
 #include "globals.h"
 #include "minesweeper.h"
 #include "sorting.h"
@@ -90,16 +91,17 @@ int main(int argc, char* argv[]) {
 	cout << "Seed: " << seed << endl;
 
 	// problem_type = new TypeSorting();
-	problem_type = new TypeMinesweeper();
+	// problem_type = new TypeMinesweeper();
+	problem_type = new TypeFocusMinesweeper();
 
 	solution_set = new SolutionSet();
-	solution_set->init();
-	// solution_set->load("", "main");
+	// solution_set->init();
+	solution_set->load("", "main");
 
 	solution_set->increment();
 	update_eval();
 
-	solution_set->save("", "main");
+	// solution_set->save("", "main");
 
 	run_index = 0;
 
@@ -389,7 +391,7 @@ int main(int argc, char* argv[]) {
 				delete solution_set;
 				solution_set = duplicate;
 
-				solution_set->save("", "main");
+				// solution_set->save("", "main");
 
 				solution_set->increment();
 				update_eval();

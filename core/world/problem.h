@@ -16,6 +16,7 @@ public:
 	virtual Problem* copy_snapshot() = 0;
 
 	virtual void print() = 0;
+	virtual void print_obs() = 0;
 };
 
 class ProblemType {

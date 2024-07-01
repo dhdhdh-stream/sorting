@@ -54,14 +54,17 @@ void PassThroughExperiment::explore_activate(
 		history->predicted_scores.push_back(vector<double>());
 		break;
 	case SCORE_TYPE_ALL:
-		history->predicted_scores.push_back(vector<double>(context.size()-1));
+		history->predicted_scores.push_back(vector<double>(context.size()-1, 0.0));
 		for (int l_index = 0; l_index < (int)context.size()-1; l_index++) {
 			ScopeHistory* scope_history = (ScopeHistory*)context[l_index].scope_history;
+			Scope* scope = (Scope*)scope_history->scope;
 
-			scope_history->callback_experiment_history = history;
-			scope_history->callback_experiment_indexes.push_back(
-				(int)history->predicted_scores.size()-1);
-			scope_history->callback_experiment_layers.push_back(l_index);
+			if (scope->eval_network != NULL) {
+				scope_history->callback_experiment_history = history;
+				scope_history->callback_experiment_indexes.push_back(
+					(int)history->predicted_scores.size()-1);
+				scope_history->callback_experiment_layers.push_back(l_index);
+			}
 		}
 		break;
 	}

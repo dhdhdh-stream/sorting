@@ -107,6 +107,10 @@ void Sorting::print() {
 	cout << "pointer: " << this->current_pointer << endl;
 }
 
+void Sorting::print_obs() {
+	cout << this->current_world[this->current_pointer] << endl;
+}
+
 Problem* TypeSorting::get_problem() {
 	return new Sorting();
 }

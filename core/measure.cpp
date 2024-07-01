@@ -4,6 +4,7 @@
 #include <thread>
 #include <random>
 
+#include "focus_minesweeper.h"
 #include "globals.h"
 #include "minesweeper.h"
 #include "scope.h"
@@ -31,7 +32,8 @@ int main(int argc, char* argv[]) {
 	cout << "Seed: " << seed << endl;
 
 	// problem_type = new TypeSorting();
-	problem_type = new TypeMinesweeper();
+	// problem_type = new TypeMinesweeper();
+	problem_type = new TypeFocusMinesweeper();
 
 	solution_set = new SolutionSet();
 	solution_set->load("", "main");

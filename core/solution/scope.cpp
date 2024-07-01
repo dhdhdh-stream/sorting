@@ -79,6 +79,26 @@ void Scope::clean_node(int scope_id,
 	}
 }
 
+void Scope::update_structure() {
+	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
+			it != this->nodes.end(); it++) {
+		switch (it->second->type) {
+		case NODE_TYPE_BRANCH:
+			{
+				BranchNode* branch_node = (BranchNode*)it->second;
+				branch_node->update_structure();
+			}
+			break;
+		}
+	}
+
+	for (int i_index = 0; i_index < (int)this->eval_input_scope_contexts.size(); i_index++) {
+		for (int l_index = 0; l_index < (int)this->eval_input_scope_contexts[i_index].size(); l_index++) {
+			this->eval_input_scope_context_ids[i_index][l_index] = this->eval_input_scope_contexts[i_index][l_index]->id;
+		}
+	}
+}
+
 void Scope::save(ofstream& output_file) {
 	output_file << this->node_counter << endl;
 

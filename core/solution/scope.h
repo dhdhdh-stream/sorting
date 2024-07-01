@@ -81,6 +81,8 @@ public:
 	void clean_node(int scope_id,
 					int node_id);
 
+	void update_structure();
+
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file,
 			  Solution* parent_solution);
