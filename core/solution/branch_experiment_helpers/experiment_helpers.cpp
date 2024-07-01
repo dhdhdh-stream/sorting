@@ -44,7 +44,7 @@ bool BranchExperiment::experiment_activate(AbstractNode*& curr_node,
 		result = true;
 	} else {
 		if (run_helper.branch_node_ancestors.find(this->branch_node) != run_helper.branch_node_ancestors.end()) {
-			result = false;
+			return false;
 		} else {
 			run_helper.branch_node_ancestors.insert(this->branch_node);
 

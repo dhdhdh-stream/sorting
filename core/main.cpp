@@ -22,6 +22,33 @@
 
 // what if don't get score without returning to origin?
 
+// definitely need mimicking somehow to be meaningfully fast enough
+
+// - difficulty with mimicking is:
+//   - raw action sequences extremely long, needed actions may be extremely long
+//     - samples only capture fragment of the true variation
+//       - don't see paths not taken
+//       - each particular sequence likely never works again because problems are not exactly alike
+//   - no breakdown of the action sequences
+//     - don't know where concepts begin and end
+//       - don't know what is a part of what
+
+// have to mix with own experimentation to fill in gaps, realize actual solution
+
+// maybe start by picking up common sequences
+
+// - if problem cannot be easily learned incrementally, then someone has to create subproblems
+//   - otherwise, cannot be learned by mimicking
+//     - i.e, if any good score requires a thousand details to be done correctly, then not going to increment into that
+//       - need to know how to get the details correct beforehand
+// - so assume that bits and pieces are useful incrementally
+//   - and can be tried from start immediately
+
+// once learned when to try which sequences:
+// - merge into a single action
+//   - clean/simplify original samples
+//     - look for new common sequences
+
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -52,9 +79,7 @@ default_random_engine generator;
 ProblemType* problem_type;
 SolutionSet* solution_set;
 
-#if defined(MDEBUG) && MDEBUG
-int run_index = 0;
-#endif /* MDEBUG */
+int run_index;
 
 int main(int argc, char* argv[]) {
 	cout << "Starting..." << endl;
@@ -76,6 +101,8 @@ int main(int argc, char* argv[]) {
 
 	solution_set->save("", "main");
 
+	run_index = 0;
+
 	while (true) {
 		Problem* problem = problem_type->get_problem();
 
@@ -84,8 +111,11 @@ int main(int argc, char* argv[]) {
 		#if defined(MDEBUG) && MDEBUG
 		run_helper.starting_run_seed = run_index;
 		run_helper.curr_run_seed = run_index;
-		run_index++;
 		#endif /* MDEBUG */
+		run_index++;
+		if (run_index%10000 == 0) {
+			cout << "run_index: " << run_index << endl;
+		}
 
 		vector<ContextLayer> context;
 		Solution* solution = solution_set->solutions[solution_set->curr_solution_index];

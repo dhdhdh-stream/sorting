@@ -20,9 +20,7 @@ default_random_engine generator;
 ProblemType* problem_type;
 SolutionSet* solution_set;
 
-#if defined(MDEBUG) && MDEBUG
-int run_index = 0;
-#endif /* MDEBUG */
+int run_index;
 
 int main(int argc, char* argv[]) {
 	cout << "Starting..." << endl;

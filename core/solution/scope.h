@@ -36,9 +36,6 @@ public:
 	 *     - addressed by train existing anyways
 	 */
 
-	std::set<Scope*> scopes_used;
-	std::set<InfoScope*> info_scopes_used;
-
 	/**
 	 * - tie NewActionExperiment to scope instead of node
 	 *   - so that can be tried throughout entire scope

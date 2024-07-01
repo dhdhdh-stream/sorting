@@ -76,10 +76,24 @@ void PassThroughExperiment::explore_activate(
 					context,
 					run_helper);
 			}
+
+			if (run_helper.exceeded_limit) {
+				break;
+			}
 		}
 
 		curr_node = this->curr_exit_next_node;
 	} else {
+		if (run_helper.branch_node_ancestors.find(this->info_branch_node) != run_helper.branch_node_ancestors.end()) {
+			return;
+		}
+
+		run_helper.branch_node_ancestors.insert(this->info_branch_node);
+
+		InfoBranchNodeHistory* info_branch_node_history = new InfoBranchNodeHistory();
+		info_branch_node_history->index = context.back().scope_history->node_histories.size();
+		context.back().scope_history->node_histories[this->info_branch_node] = info_branch_node_history;
+
 		bool is_positive;
 		this->curr_info_scope->activate(problem,
 										context,
@@ -110,6 +124,10 @@ void PassThroughExperiment::explore_activate(
 						problem,
 						context,
 						run_helper);
+				}
+
+				if (run_helper.exceeded_limit) {
+					break;
 				}
 			}
 
@@ -358,7 +376,6 @@ void PassThroughExperiment::explore_backprop(
 				}
 
 				if (this->best_info_scope != NULL) {
-					this->info_branch_node = new InfoBranchNode();
 					this->info_branch_node->parent = this->scope_context;
 					this->info_branch_node->id = this->scope_context->node_counter;
 					this->scope_context->node_counter++;

@@ -7,6 +7,7 @@
 #include "constants.h"
 #include "eval_helpers.h"
 #include "globals.h"
+#include "info_branch_node.h"
 #include "info_scope.h"
 #include "scope.h"
 #include "scope_node.h"
@@ -49,6 +50,16 @@ void PassThroughExperiment::verify_new_activate(
 			}
 		}
 	} else {
+		if (run_helper.branch_node_ancestors.find(this->info_branch_node) != run_helper.branch_node_ancestors.end()) {
+			return;
+		}
+
+		run_helper.branch_node_ancestors.insert(this->info_branch_node);
+
+		InfoBranchNodeHistory* info_branch_node_history = new InfoBranchNodeHistory();
+		info_branch_node_history->index = context.back().scope_history->node_histories.size();
+		context.back().scope_history->node_histories[this->info_branch_node] = info_branch_node_history;
+
 		bool is_positive;
 		this->best_info_scope->activate(problem,
 										context,

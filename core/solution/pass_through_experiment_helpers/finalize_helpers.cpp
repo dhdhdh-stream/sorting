@@ -71,8 +71,6 @@ void PassThroughExperiment::new_branch(Solution* duplicate) {
 	this->info_branch_node->scope = duplicate->info_scopes[this->best_info_scope->id];
 	this->info_branch_node->is_negate = this->best_is_negate;
 
-	duplicate_local_scope->info_scopes_used.insert(duplicate->info_scopes[this->best_info_scope->id]);
-
 	AbstractNode* duplicate_explore_node = duplicate_local_scope->nodes[this->node_context->id];
 	switch (duplicate_explore_node->type) {
 	case NODE_TYPE_ACTION:
@@ -210,8 +208,6 @@ void PassThroughExperiment::new_branch(Solution* duplicate) {
 			duplicate_local_scope->nodes[this->best_scopes[s_index]->id] = this->best_scopes[s_index];
 
 			this->best_scopes[s_index]->scope = duplicate->scopes[this->best_scopes[s_index]->scope->id];
-
-			duplicate_local_scope->scopes_used.insert(duplicate->scopes[this->best_scopes[s_index]->scope->id]);
 		}
 	}
 	if (this->best_step_types.size() > 0) {
@@ -312,8 +308,6 @@ void PassThroughExperiment::new_pass_through(Solution* duplicate) {
 			duplicate_local_scope->nodes[this->best_scopes[s_index]->id] = this->best_scopes[s_index];
 
 			this->best_scopes[s_index]->scope = duplicate->scopes[this->best_scopes[s_index]->scope->id];
-
-			duplicate_local_scope->scopes_used.insert(duplicate->scopes[this->best_scopes[s_index]->scope->id]);
 		}
 	}
 	if (this->best_step_types.size() > 0) {

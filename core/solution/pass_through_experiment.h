@@ -51,8 +51,8 @@ public:
 	std::vector<ScopeNode*> best_scopes;
 	AbstractNode* best_exit_next_node;
 
-	ActionNode* ending_node;
 	InfoBranchNode* info_branch_node;
+	ActionNode* ending_node;
 
 	PassThroughExperiment(AbstractScope* scope_context,
 						  AbstractNode* node_context,

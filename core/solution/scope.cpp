@@ -105,16 +105,6 @@ void Scope::save(ofstream& output_file) {
 
 		this->eval_network->save(output_file);
 	}
-
-	output_file << this->scopes_used.size() << endl;
-	for (set<Scope*>::iterator it = this->scopes_used.begin(); it != this->scopes_used.end(); it++) {
-		output_file << (*it)->id << endl;
-	}
-
-	output_file << this->info_scopes_used.size() << endl;
-	for (set<InfoScope*>::iterator it = this->info_scopes_used.begin(); it != this->info_scopes_used.end(); it++) {
-		output_file << (*it)->id << endl;
-	}
 }
 
 void Scope::load(ifstream& input_file,
@@ -208,24 +198,6 @@ void Scope::load(ifstream& input_file,
 
 		this->eval_network = new Network(input_file);
 	}
-
-	string scopes_used_size_line;
-	getline(input_file, scopes_used_size_line);
-	int scopes_used_size = stoi(scopes_used_size_line);
-	for (int s_index = 0; s_index < scopes_used_size; s_index++) {
-		string scope_id_line;
-		getline(input_file, scope_id_line);
-		this->scopes_used.insert(parent_solution->scopes[stoi(scope_id_line)]);
-	}
-
-	string info_scopes_used_size_line;
-	getline(input_file, info_scopes_used_size_line);
-	int info_scopes_used_size = stoi(info_scopes_used_size_line);
-	for (int s_index = 0; s_index < info_scopes_used_size; s_index++) {
-		string scope_id_line;
-		getline(input_file, scope_id_line);
-		this->info_scopes_used.insert(parent_solution->info_scopes[stoi(scope_id_line)]);
-	}
 }
 
 void Scope::link(Solution* parent_solution) {
@@ -304,15 +276,6 @@ void Scope::copy_from(Scope* original,
 		this->eval_network = NULL;
 	} else {
 		this->eval_network = new Network(original->eval_network);
-	}
-
-	for (set<Scope*>::iterator it = original->scopes_used.begin();
-			it != original->scopes_used.end(); it++) {
-		this->scopes_used.insert(parent_solution->scopes[(*it)->id]);
-	}
-	for (set<InfoScope*>::iterator it = original->info_scopes_used.begin();
-			it != original->info_scopes_used.end(); it++) {
-		this->info_scopes_used.insert(parent_solution->info_scopes[(*it)->id]);
 	}
 }
 

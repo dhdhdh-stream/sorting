@@ -23,9 +23,7 @@ default_random_engine generator;
 ProblemType* problem_type;
 SolutionSet* solution_set;
 
-#if defined(MDEBUG) && MDEBUG
-int run_index = 0;
-#endif /* MDEBUG */
+int run_index;
 
 int main(int argc, char* argv[]) {
 	cout << "Starting..." << endl;
@@ -40,6 +38,8 @@ int main(int argc, char* argv[]) {
 
 	solution_set = new SolutionSet();
 	solution_set->load("", "main");
+
+	cout << "solution_set->solutions.size(): " << solution_set->solutions.size() << endl;
 
 	Solution* solution = solution_set->solutions[solution_set->curr_solution_index];
 
