@@ -37,12 +37,6 @@ const int VERIFY_2ND_NUM_TRUTH_PER_ITER = 100;
 const int EXPLORE_ITERS = 100;
 #endif /* MDEBUG */
 
-#if defined(MDEBUG) && MDEBUG
-const int NUM_SAMPLES_PER_ITER = 2;
-#else
-const int NUM_SAMPLES_PER_ITER = 40;
-#endif /* MDEBUG */
-
 void PassThroughExperiment::explore_activate(
 		AbstractNode*& curr_node,
 		Problem* problem,

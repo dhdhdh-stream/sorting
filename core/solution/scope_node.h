@@ -38,6 +38,10 @@ public:
 	void explore_activate(Problem* problem,
 						  std::vector<ContextLayer>& context,
 						  RunHelper& run_helper);
+	void explore_activate(Problem* problem,
+						  std::vector<ContextLayer>& context,
+						  RunHelper& run_helper,
+						  std::map<AbstractNode*, AbstractNodeHistory*>& node_histories);
 
 	void measure_activate(Metrics& metrics,
 						  AbstractNode*& curr_node,
