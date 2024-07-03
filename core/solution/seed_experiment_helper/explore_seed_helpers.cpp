@@ -1,5 +1,7 @@
 #include "seed_experiment.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
@@ -118,9 +120,12 @@ void SeedExperiment::explore_seed_activate(
 		int random_index = distribution(generator);
 		this->curr_seed_exit_next_node = possible_exits[random_index];
 
-		uniform_int_distribution<int> uniform_distribution(0, 1);
-		geometric_distribution<int> geometric_distribution(0.5);
-		int new_num_steps = 1 + uniform_distribution(generator) + geometric_distribution(generator);
+		// uniform_int_distribution<int> uniform_distribution(0, 1);
+		// geometric_distribution<int> geometric_distribution(0.5);
+		// int new_num_steps = 1 + uniform_distribution(generator) + geometric_distribution(generator);
+
+		geometric_distribution<int> geometric_distribution(0.3);
+		int new_num_steps = 1 + geometric_distribution(generator);
 
 		uniform_int_distribution<int> default_distribution(0, 3);
 		for (int s_index = 0; s_index < new_num_steps; s_index++) {
@@ -246,8 +251,13 @@ void SeedExperiment::explore_seed_backprop(
 			this->curr_seed_scopes.clear();
 		}
 
+		#if defined(MDEBUG) && MDEBUG
+		if (this->state_iter == SEED_EXPLORE_ITERS-1
+				&& rand()%2 == 0) {
+		#else
 		if (this->state_iter == SEED_EXPLORE_ITERS-1
 				&& this->best_seed_surprise > 0.0) {
+		#endif /* MDEBUG */
 			for (int s_index = 0; s_index < (int)this->best_seed_step_types.size(); s_index++) {
 				if (this->best_seed_step_types[s_index] == STEP_TYPE_ACTION) {
 					this->best_seed_actions[s_index]->parent = this->scope_context;

@@ -93,6 +93,8 @@ void SeedExperiment::measure_existing_backprop(
 
 		this->target_val_histories.clear();
 
+		this->best_seed_surprise = 0.0;
+
 		this->state = SEED_EXPERIMENT_STATE_EXPLORE_SEED;
 		this->state_iter = 0;
 	}

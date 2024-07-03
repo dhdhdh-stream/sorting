@@ -47,6 +47,7 @@ void SeedExperiment::new_branch(Solution* duplicate) {
 		new_ending_node->parent = duplicate_local_scope;
 		new_ending_node->id = duplicate_local_scope->node_counter;
 		duplicate_local_scope->node_counter++;
+		duplicate_local_scope->nodes[new_ending_node->id] = new_ending_node;
 
 		new_ending_node->action = Action(ACTION_NOOP);
 
@@ -150,6 +151,18 @@ void SeedExperiment::new_branch(Solution* duplicate) {
 			duplicate_local_scope->nodes[this->best_seed_scopes[s_index]->id] = this->best_seed_scopes[s_index];
 
 			this->best_seed_scopes[s_index]->scope = duplicate->scopes[this->best_seed_scopes[s_index]->scope->id];
+		}
+	}
+
+	for (int s_index = 0; s_index < (int)this->best_back_step_types.size(); s_index++) {
+		if (this->best_back_step_types[s_index] == STEP_TYPE_ACTION) {
+			this->best_back_actions[s_index]->parent = duplicate_local_scope;
+			this->best_back_actions[s_index]->id = duplicate_local_scope->node_counter;
+			duplicate_local_scope->node_counter++;
+		} else {
+			this->best_back_scopes[s_index]->parent = duplicate_local_scope;
+			this->best_back_scopes[s_index]->id = duplicate_local_scope->node_counter;
+			duplicate_local_scope->node_counter++;
 		}
 	}
 
@@ -372,6 +385,7 @@ void SeedExperiment::new_pass_through(Solution* duplicate) {
 		new_ending_node->parent = duplicate_local_scope;
 		new_ending_node->id = duplicate_local_scope->node_counter;
 		duplicate_local_scope->node_counter++;
+		duplicate_local_scope->nodes[new_ending_node->id] = new_ending_node;
 
 		new_ending_node->action = Action(ACTION_NOOP);
 

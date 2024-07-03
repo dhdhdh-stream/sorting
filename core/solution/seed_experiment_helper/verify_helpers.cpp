@@ -13,6 +13,7 @@
 #include "scope.h"
 #include "scope_node.h"
 #include "solution_set.h"
+#include "utilities.h"
 
 using namespace std;
 
@@ -58,7 +59,7 @@ void SeedExperiment::verify_activate(AbstractNode*& curr_node,
 
 		curr_node = this->best_seed_exit_next_node;
 	} else {
-		for (int s_index = 0; s_index < this->branch_index; s_index++) {
+		for (int s_index = 0; s_index < this->branch_index+1; s_index++) {
 			if (this->best_seed_step_types[s_index] == STEP_TYPE_ACTION) {
 				this->best_seed_actions[s_index]->explore_activate(
 					problem,
@@ -118,9 +119,24 @@ void SeedExperiment::verify_activate(AbstractNode*& curr_node,
 			}
 		}
 		this->new_network->activate(new_input_vals);
+		#if defined(MDEBUG) && MDEBUG
+		#else
 		double new_predicted_score = this->new_network->output->acti_vals[0];
+		#endif /* MDEBUG */
 
-		if (new_predicted_score < 0.0) {
+		#if defined(MDEBUG) && MDEBUG
+		bool decision_is_branch;
+		if (run_helper.curr_run_seed%2 == 0) {
+			decision_is_branch = true;
+		} else {
+			decision_is_branch = false;
+		}
+		run_helper.curr_run_seed = xorshift(run_helper.curr_run_seed);
+		#else
+		bool decision_is_branch = new_predicted_score >= 0.0;
+		#endif /* MDEBUG */
+
+		if (!decision_is_branch) {
 			for (int s_index = 0; s_index < (int)this->best_back_step_types.size(); s_index++) {
 				if (this->best_back_step_types[s_index] == STEP_TYPE_ACTION) {
 					problem->perform_action(this->best_back_actions[s_index]->action);
@@ -138,7 +154,7 @@ void SeedExperiment::verify_activate(AbstractNode*& curr_node,
 
 			curr_node = this->best_back_exit_next_node;
 		} else {
-			for (int s_index = this->branch_index; s_index < (int)this->best_seed_step_types.size(); s_index++) {
+			for (int s_index = this->branch_index+1; s_index < (int)this->best_seed_step_types.size(); s_index++) {
 				if (this->best_seed_step_types[s_index] == STEP_TYPE_ACTION) {
 					this->best_seed_actions[s_index]->explore_activate(
 						problem,

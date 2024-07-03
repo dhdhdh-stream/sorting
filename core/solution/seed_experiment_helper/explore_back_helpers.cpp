@@ -1,5 +1,7 @@
 #include "seed_experiment.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
@@ -12,25 +14,22 @@
 #include "scope_node.h"
 #include "solution_helpers.h"
 #include "solution_set.h"
+#include "utilities.h"
 
 using namespace std;
 
 #if defined(MDEBUG) && MDEBUG
 const int INITIAL_NUM_SAMPLES_PER_ITER = 2;
 const int INITIAL_NUM_TRUTH_PER_ITER = 2;
-const int VERIFY_1ST_NUM_SAMPLES_PER_ITER = 5;
-const int VERIFY_1ST_NUM_TRUTH_PER_ITER = 2;
-const int VERIFY_2ND_NUM_SAMPLES_PER_ITER = 10;
-const int VERIFY_2ND_NUM_TRUTH_PER_ITER = 2;
+const int VERIFY_NUM_SAMPLES_PER_ITER = 10;
+const int VERIFY_NUM_TRUTH_PER_ITER = 2;
 const int BACK_EXPLORE_ITERS = 2;
 #else
 const int INITIAL_NUM_SAMPLES_PER_ITER = 100;
 const int INITIAL_NUM_TRUTH_PER_ITER = 5;
-const int VERIFY_1ST_NUM_SAMPLES_PER_ITER = 500;
-const int VERIFY_1ST_NUM_TRUTH_PER_ITER = 25;
-const int VERIFY_2ND_NUM_SAMPLES_PER_ITER = 2000;
-const int VERIFY_2ND_NUM_TRUTH_PER_ITER = 100;
-const int BACK_EXPLORE_ITERS = 100;
+const int VERIFY_NUM_SAMPLES_PER_ITER = 1000;
+const int VERIFY_NUM_TRUTH_PER_ITER = 50;
+const int BACK_EXPLORE_ITERS = 500;
 #endif /* MDEBUG */
 
 void SeedExperiment::explore_back_activate(
@@ -39,7 +38,7 @@ void SeedExperiment::explore_back_activate(
 		vector<ContextLayer>& context,
 		RunHelper& run_helper,
 		SeedExperimentHistory* history) {
-	for (int s_index = 0; s_index < this->branch_index; s_index++) {
+	for (int s_index = 0; s_index < this->branch_index+1; s_index++) {
 		if (this->best_seed_step_types[s_index] == STEP_TYPE_ACTION) {
 			this->best_seed_actions[s_index]->explore_activate(
 				problem,
@@ -53,106 +52,46 @@ void SeedExperiment::explore_back_activate(
 		}
 	}
 
-	vector<double> new_input_vals(this->new_input_scope_contexts.size(), 0.0);
-	for (int i_index = 0; i_index < (int)this->new_input_scope_contexts.size(); i_index++) {
-		int curr_layer = 0;
-		AbstractScopeHistory* curr_scope_history = context.back().scope_history;
-		while (true) {
-			map<AbstractNode*, AbstractNodeHistory*>::iterator it = curr_scope_history->node_histories.find(
-				this->new_input_node_contexts[i_index][curr_layer]);
-			if (it == curr_scope_history->node_histories.end()) {
-				break;
-			} else {
-				if (curr_layer == (int)this->new_input_scope_contexts[i_index].size()-1) {
-					switch (it->first->type) {
-					case NODE_TYPE_ACTION:
-						{
-							ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
-							new_input_vals[i_index] = action_node_history->obs_snapshot[this->new_input_obs_indexes[i_index]];
-						}
-						break;
-					case NODE_TYPE_BRANCH:
-						{
-							BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
-							new_input_vals[i_index] = branch_node_history->score;
-						}
-						break;
-					case NODE_TYPE_INFO_BRANCH:
-						{
-							InfoBranchNodeHistory* info_branch_node_history = (InfoBranchNodeHistory*)it->second;
-							if (info_branch_node_history->is_branch) {
-								new_input_vals[i_index] = 1.0;
-							} else {
-								new_input_vals[i_index] = -1.0;
-							}
-						}
-						break;
-					}
-					break;
-				} else {
-					curr_layer++;
-					curr_scope_history = ((ScopeNodeHistory*)it->second)->scope_history;
-				}
+	/**
+	 * - don't select based on new_network
+	 *   - changes distribution of problems, making it difficult to compare against existing_average_score
+	 */
+	switch (this->score_type) {
+	case SCORE_TYPE_TRUTH:
+		history->predicted_scores.push_back(vector<double>());
+		break;
+	case SCORE_TYPE_ALL:
+		history->predicted_scores.push_back(vector<double>(context.size()-1, 0.0));
+		for (int l_index = 0; l_index < (int)context.size()-1; l_index++) {
+			ScopeHistory* scope_history = (ScopeHistory*)context[l_index].scope_history;
+			Scope* scope = (Scope*)scope_history->scope;
+
+			if (scope->eval_network != NULL) {
+				scope_history->callback_experiment_history = history;
+				scope_history->callback_experiment_indexes.push_back(
+					(int)history->predicted_scores.size()-1);
+				scope_history->callback_experiment_layers.push_back(l_index);
 			}
 		}
+		break;
 	}
-	this->new_network->activate(new_input_vals);
-	double new_predicted_score = this->new_network->output->acti_vals[0];
 
-	if (new_predicted_score < 0.0) {
-		switch (this->score_type) {
-		case SCORE_TYPE_TRUTH:
-			history->predicted_scores.push_back(vector<double>());
-			break;
-		case SCORE_TYPE_ALL:
-			history->predicted_scores.push_back(vector<double>(context.size()-1, 0.0));
-			for (int l_index = 0; l_index < (int)context.size()-1; l_index++) {
-				ScopeHistory* scope_history = (ScopeHistory*)context[l_index].scope_history;
-				Scope* scope = (Scope*)scope_history->scope;
+	for (int s_index = 0; s_index < (int)this->curr_back_step_types.size(); s_index++) {
+		if (this->curr_back_step_types[s_index] == STEP_TYPE_ACTION) {
+			problem->perform_action(this->curr_back_actions[s_index]->action);
+		} else {
+			this->curr_back_scopes[s_index]->explore_activate(
+				problem,
+				context,
+				run_helper);
+		}
 
-				if (scope->eval_network != NULL) {
-					scope_history->callback_experiment_history = history;
-					scope_history->callback_experiment_indexes.push_back(
-						(int)history->predicted_scores.size()-1);
-					scope_history->callback_experiment_layers.push_back(l_index);
-				}
-			}
+		if (run_helper.exceeded_limit) {
 			break;
 		}
-
-		for (int s_index = 0; s_index < (int)this->curr_back_step_types.size(); s_index++) {
-			if (this->curr_back_step_types[s_index] == STEP_TYPE_ACTION) {
-				problem->perform_action(this->curr_back_actions[s_index]->action);
-			} else {
-				this->curr_back_scopes[s_index]->explore_activate(
-					problem,
-					context,
-					run_helper);
-			}
-
-			if (run_helper.exceeded_limit) {
-				break;
-			}
-		}
-
-		curr_node = this->curr_back_exit_next_node;
-	} else {
-		for (int s_index = this->branch_index; s_index < (int)this->best_seed_step_types.size(); s_index++) {
-			if (this->best_seed_step_types[s_index] == STEP_TYPE_ACTION) {
-				this->best_seed_actions[s_index]->explore_activate(
-					problem,
-					context.back().scope_history->node_histories);
-			} else {
-				this->best_seed_scopes[s_index]->explore_activate(
-					problem,
-					context,
-					run_helper,
-					context.back().scope_history->node_histories);
-			}
-		}
-
-		curr_node = this->best_seed_exit_next_node;
 	}
+
+	curr_node = this->curr_back_exit_next_node;
 }
 
 void SeedExperiment::explore_back_back_activate(
@@ -194,19 +133,10 @@ void SeedExperiment::explore_back_backprop(
 			#endif /* MDEBUG */
 				is_fail = true;
 			}
-		} else if (this->state_iter == VERIFY_1ST_NUM_TRUTH_PER_ITER
-				&& this->sub_state_iter >= VERIFY_1ST_NUM_SAMPLES_PER_ITER) {
+		} else if (this->state_iter == VERIFY_NUM_TRUTH_PER_ITER
+				&& this->sub_state_iter >= VERIFY_NUM_SAMPLES_PER_ITER) {
 			#if defined(MDEBUG) && MDEBUG
 			if (false) {
-			#else
-			if (this->curr_back_score < 0.0) {
-			#endif /* MDEBUG */
-				is_fail = true;
-			}
-		} else if (this->state_iter == VERIFY_2ND_NUM_TRUTH_PER_ITER
-				&& this->sub_state_iter >= VERIFY_2ND_NUM_SAMPLES_PER_ITER) {
-			#if defined(MDEBUG) && MDEBUG
-			if (rand()%2 == 0) {
 			#else
 			if (this->curr_back_score < 0.0) {
 			#endif /* MDEBUG */
@@ -243,19 +173,10 @@ void SeedExperiment::explore_back_backprop(
 				#endif /* MDEBUG */
 					is_fail = true;
 				}
-			} else if (this->sub_state_iter == VERIFY_1ST_NUM_SAMPLES_PER_ITER
-					&& this->state_iter >= VERIFY_1ST_NUM_TRUTH_PER_ITER) {
+			} else if (this->sub_state_iter == VERIFY_NUM_SAMPLES_PER_ITER
+					&& this->state_iter >= VERIFY_NUM_TRUTH_PER_ITER) {
 				#if defined(MDEBUG) && MDEBUG
 				if (false) {
-				#else
-				if (this->curr_back_score < 0.0) {
-				#endif /* MDEBUG */
-					is_fail = true;
-				}
-			} else if (this->sub_state_iter == VERIFY_2ND_NUM_SAMPLES_PER_ITER
-					&& this->state_iter >= VERIFY_2ND_NUM_TRUTH_PER_ITER) {
-				#if defined(MDEBUG) && MDEBUG
-				if (rand()%2 == 0) {
 				#else
 				if (this->curr_back_score < 0.0) {
 				#endif /* MDEBUG */
@@ -281,8 +202,8 @@ void SeedExperiment::explore_back_backprop(
 		this->curr_back_scopes.clear();
 
 		is_next = true;
-	} else if (this->sub_state_iter >= VERIFY_2ND_NUM_SAMPLES_PER_ITER
-			&& this->state_iter >= VERIFY_2ND_NUM_TRUTH_PER_ITER) {
+	} else if (this->sub_state_iter >= VERIFY_NUM_SAMPLES_PER_ITER
+			&& this->state_iter >= VERIFY_NUM_TRUTH_PER_ITER) {
 		for (int s_index = 0; s_index < (int)this->best_back_step_types.size(); s_index++) {
 			if (this->best_back_step_types[s_index] == STEP_TYPE_ACTION) {
 				delete this->best_back_actions[s_index];
@@ -375,9 +296,12 @@ void SeedExperiment::explore_back_backprop(
 			int random_index = distribution(generator);
 			this->curr_back_exit_next_node = possible_exits[random_index];
 
-			uniform_int_distribution<int> uniform_distribution(0, 1);
-			geometric_distribution<int> geometric_distribution(0.5);
-			int new_num_steps = uniform_distribution(generator) + geometric_distribution(generator);
+			// uniform_int_distribution<int> uniform_distribution(0, 1);
+			// geometric_distribution<int> geometric_distribution(0.5);
+			// int new_num_steps = uniform_distribution(generator) + geometric_distribution(generator);
+
+			geometric_distribution<int> geometric_distribution(0.3);
+			int new_num_steps = geometric_distribution(generator);
 
 			uniform_int_distribution<int> default_distribution(0, 3);
 			for (int s_index = 0; s_index < new_num_steps; s_index++) {

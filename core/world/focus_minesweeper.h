@@ -1,20 +1,3 @@
-/**
- * - reducing field of vision might actually lead to better results
- *   - with wide field of vision, can make decision without moving
- *     - so recursion does nothing
- *   - with narrow field of vision, have to move before making decision
- *     - so can recurse after move, now affecting somewhere new
- */
-
-// very difficult to make any progress
-// - wide field of view much much easier to make progress
-
-// yeah, so maybe requiring going back to origin not good
-// - when every scope needs to go back to origin, pretty much requires recursion to make good progress
-// - not to mention that it doesn't necessarily make sense to begin with
-
-// - find other ways of creating in place actions
-
 #ifndef FOCUS_MINESWEEPER_H
 #define FOCUS_MINESWEEPER_H
 

@@ -21,6 +21,7 @@
 #include "pass_through_experiment.h"
 #include "scope.h"
 #include "scope_node.h"
+#include "seed_experiment.h"
 #include "solution.h"
 #include "solution_set.h"
 
@@ -87,9 +88,11 @@ void create_experiment(RunHelper& run_helper) {
 			}
 		} else {
 			uniform_int_distribution<int> branch_distribution(0, 2);
-			if (branch_distribution(generator) == 0) {
-				uniform_int_distribution<int> type_distribution(0, 1);
-				switch (type_distribution(generator)) {
+			// if (branch_distribution(generator) == 0) {
+			if (true) {
+				uniform_int_distribution<int> type_distribution(0, 2);
+				// switch (type_distribution(generator)) {
+				switch (2) {
 				case 0:
 					{
 						NewInfoExperiment* new_experiment = new NewInfoExperiment(
@@ -110,6 +113,17 @@ void create_experiment(RunHelper& run_helper) {
 							explore_is_branch,
 							score_type,
 							NULL);
+
+						explore_node->experiments.push_back(new_experiment);
+					}
+					break;
+				case 2:
+					{
+						SeedExperiment* new_experiment = new SeedExperiment(
+							explore_node->parent,
+							explore_node,
+							explore_is_branch,
+							score_type);
 
 						explore_node->experiments.push_back(new_experiment);
 					}

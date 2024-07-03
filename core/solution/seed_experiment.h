@@ -1,3 +1,8 @@
+/**
+ * - better than branch experiment, but still difficult?
+ *   - seed not only has to be good, but has to include all information needed on path
+ */
+
 #ifndef SEED_EXPERIMENT_H
 #define SEED_EXPERIMENT_H
 

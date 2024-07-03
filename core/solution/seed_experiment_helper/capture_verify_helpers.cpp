@@ -12,6 +12,7 @@
 #include "problem.h"
 #include "scope.h"
 #include "scope_node.h"
+#include "utilities.h"
 
 using namespace std;
 
@@ -24,7 +25,7 @@ void SeedExperiment::capture_verify_activate(AbstractNode*& curr_node,
 	}
 	this->verify_seeds[this->state_iter] = run_helper.starting_run_seed;
 
-	for (int s_index = 0; s_index < this->branch_index; s_index++) {
+	for (int s_index = 0; s_index < this->branch_index+1; s_index++) {
 		if (this->best_seed_step_types[s_index] == STEP_TYPE_ACTION) {
 			this->best_seed_actions[s_index]->explore_activate(
 				problem,
@@ -92,7 +93,15 @@ void SeedExperiment::capture_verify_activate(AbstractNode*& curr_node,
 	cout << "run_helper.curr_run_seed: " << run_helper.curr_run_seed << endl;
 	problem->print();
 
-	if (new_predicted_score < 0.0) {
+	bool decision_is_branch;
+	if (run_helper.curr_run_seed%2 == 0) {
+		decision_is_branch = true;
+	} else {
+		decision_is_branch = false;
+	}
+	run_helper.curr_run_seed = xorshift(run_helper.curr_run_seed);
+
+	if (!decision_is_branch) {
 		for (int s_index = 0; s_index < (int)this->best_back_step_types.size(); s_index++) {
 			if (this->best_back_step_types[s_index] == STEP_TYPE_ACTION) {
 				problem->perform_action(this->best_back_actions[s_index]->action);
@@ -110,7 +119,7 @@ void SeedExperiment::capture_verify_activate(AbstractNode*& curr_node,
 
 		curr_node = this->best_back_exit_next_node;
 	} else {
-		for (int s_index = this->branch_index; s_index < (int)this->best_seed_step_types.size(); s_index++) {
+		for (int s_index = this->branch_index+1; s_index < (int)this->best_seed_step_types.size(); s_index++) {
 			if (this->best_seed_step_types[s_index] == STEP_TYPE_ACTION) {
 				this->best_seed_actions[s_index]->explore_activate(
 					problem,

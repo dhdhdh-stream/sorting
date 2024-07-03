@@ -387,6 +387,25 @@ void SeedExperiment::train_new_backprop(
 			}
 		}
 
+		#if defined(MDEBUG) && MDEBUG
+		int positive_count;
+		int negative_count;
+		uniform_int_distribution<int> distribution(0, 7);
+		switch (distribution(generator)) {
+		case 0:
+			positive_count = 0;
+			negative_count = 1;
+			break;
+		case 1:
+			positive_count = 1;
+			negative_count = 0;
+			break;
+		default:
+			positive_count = 1;
+			negative_count = 1;
+			break;
+		}
+		#else
 		int train_instances = (1.0 - TEST_SAMPLES_PERCENTAGE) * inputs.size();
 		int test_instances = inputs.size() - train_instances;
 		int positive_count = 0;
@@ -399,6 +418,7 @@ void SeedExperiment::train_new_backprop(
 				negative_count++;
 			}
 		}
+		#endif /* MDEBUG */
 		if (positive_count == 0) {
 			this->result = EXPERIMENT_RESULT_FAIL;
 		} else if (negative_count == 0) {
@@ -410,7 +430,7 @@ void SeedExperiment::train_new_backprop(
 			this->state_iter = 0;
 			this->sub_state_iter = 0;
 		} else {
-			this->is_pass_through = true;
+			this->is_pass_through = false;
 
 			this->branch_index = -1;
 			for (int s_index = 0; s_index < (int)this->best_seed_step_types.size(); s_index++) {
