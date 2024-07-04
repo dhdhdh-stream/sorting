@@ -49,6 +49,35 @@
 //   - clean/simplify original samples
 //     - look for new common sequences
 
+// if recursion found, can try repeating inwards
+// - can even try repeating inwards as part of explore sequence
+
+// try building up global 2d, 3d, nd, map of obs, then analyze with convolutional NN
+// - otherwise, will likely be trapped local
+
+// maybe for minesweeper, initially like 7d due to number of actions?
+
+// can practice with global minesweeper with unseen squares initially covered
+
+// currently, doesn't really care about path
+// - node vals are treated as-is
+// - but if modelled 2d, 3d, etc., then can analyze better from a global perspective
+//   - different branches go different directions in space
+
+// - initially, see X
+// - then perform action sequence, and see value correlated with X
+//   - what are the possibilities?:
+//     - went back to X, but the world changed
+//       - if went back to X, then should be able to do the same thing and get similar result
+//     - arrived at new location whose obs is related to X
+//       - if at new location, then repeating should eventually lead to drastically different outcome
+//     - (also gray area where went back to same spot in one way, but not in another)
+//       - i.e., physicially the same location, but time has passed
+//         - so there are different aspects to the world
+//           - and are affected differently by different actions
+//             - independent
+//           - but they combine together to generate obs
+
 #include <chrono>
 #include <iostream>
 #include <map>

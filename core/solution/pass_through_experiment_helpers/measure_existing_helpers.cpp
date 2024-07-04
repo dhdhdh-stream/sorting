@@ -193,6 +193,9 @@ void PassThroughExperiment::measure_existing_backprop(
 			}
 		}
 
+		this->original_count = 0;
+		this->branch_count = 0;
+
 		this->state = PASS_THROUGH_EXPERIMENT_STATE_EXPLORE;
 		this->state_iter = 0;
 		this->sub_state_iter = 0;

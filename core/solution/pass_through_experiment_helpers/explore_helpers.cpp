@@ -113,6 +113,8 @@ void PassThroughExperiment::explore_activate(
 		}
 
 		if (is_branch) {
+			this->branch_count++;
+
 			for (int s_index = 0; s_index < (int)this->curr_step_types.size(); s_index++) {
 				if (this->curr_step_types[s_index] == STEP_TYPE_ACTION) {
 					problem->perform_action(this->curr_actions[s_index]->action);
@@ -129,6 +131,8 @@ void PassThroughExperiment::explore_activate(
 			}
 
 			curr_node = this->curr_exit_next_node;
+		} else {
+			this->original_count++;
 		}
 	}
 }
@@ -289,9 +293,11 @@ void PassThroughExperiment::explore_backprop(
 		this->explore_iter++;
 		if (this->explore_iter >= EXPLORE_ITERS) {
 			#if defined(MDEBUG) && MDEBUG
-			if (this->best_score != numeric_limits<double>::lowest()) {
+			if (this->branch_count > 0
+					&& this->best_score != numeric_limits<double>::lowest()) {
 			#else
-			if (this->best_score >= 0.0) {
+			if (this->branch_count > 0
+					&& this->best_score >= 0.0) {
 			#endif /* MDEBUG */
 				// cout << "PassThrough" << endl;
 				// cout << "this->scope_context->id: " << this->scope_context->id << endl;
@@ -477,6 +483,9 @@ void PassThroughExperiment::explore_backprop(
 					this->curr_scopes.push_back(NULL);
 				}
 			}
+
+			this->original_count = 0;
+			this->branch_count = 0;
 
 			this->state_iter = 0;
 			this->sub_state_iter = 0;

@@ -95,6 +95,11 @@ void BranchNode::verify_activate(AbstractNode*& curr_node,
 				cout << c_index << ": " << context[c_index].node->id << endl;
 			}
 
+			cout << "input_vals:" << endl;
+			for (int i_index = 0; i_index < (int)input_vals.size(); i_index++) {
+				cout << i_index << ": " << input_vals[i_index] << endl;
+			}
+
 			if (this->verify_scores[0] != history->score) {
 				cout << "this->verify_scores[0]: " << this->verify_scores[0] << endl;
 				cout << "history->score: " << history->score << endl;

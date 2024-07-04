@@ -90,7 +90,8 @@ void create_experiment(RunHelper& run_helper) {
 			uniform_int_distribution<int> branch_distribution(0, 2);
 			// if (branch_distribution(generator) == 0) {
 			if (true) {
-				uniform_int_distribution<int> type_distribution(0, 2);
+				// uniform_int_distribution<int> type_distribution(0, 2);
+				uniform_int_distribution<int> type_distribution(0, 1);
 				// switch (type_distribution(generator)) {
 				switch (2) {
 				case 0:

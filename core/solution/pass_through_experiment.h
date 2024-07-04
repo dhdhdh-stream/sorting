@@ -43,6 +43,12 @@ public:
 	std::vector<ScopeNode*> curr_scopes;
 	AbstractNode* curr_exit_next_node;
 
+	/**
+	 * - to prevent edge case where branch_count is 0 causing experiment to be soft-locked
+	 */
+	int original_count;
+	int branch_count;
+
 	double best_score;
 	InfoScope* best_info_scope;
 	bool best_is_negate;

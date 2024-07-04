@@ -102,6 +102,11 @@ bool BranchExperiment::capture_verify_activate(AbstractNode*& curr_node,
 		cout << c_index << ": " << context[c_index].node->id << endl;
 	}
 
+	cout << "new_input_vals:" << endl;
+	for (int i_index = 0; i_index < (int)new_input_vals.size(); i_index++) {
+		cout << i_index << ": " << new_input_vals[i_index] << endl;
+	}
+
 	bool decision_is_branch;
 	if (run_helper.curr_run_seed%2 == 0) {
 		decision_is_branch = true;

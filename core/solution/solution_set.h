@@ -1,3 +1,7 @@
+/**
+ * TODO: possible for significant gains to come from outer/overall scope, which should be saved
+ */
+
 #ifndef SOLUTION_SET_H
 #define SOLUTION_SET_H
 

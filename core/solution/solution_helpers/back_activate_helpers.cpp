@@ -25,10 +25,23 @@ void gather_possible_helper(vector<AbstractScope*>& scope_context,
 
 		switch (it->first->type) {
 		case NODE_TYPE_ACTION:
-			for (int o_index = 0; o_index < problem_type->num_obs(); o_index++) {
-				possible_scope_contexts.push_back(scope_context);
-				possible_node_contexts.push_back(node_context);
-				possible_obs_indexes.push_back(o_index);
+			{
+				ActionNode* action_node = (ActionNode*)it->first;
+
+				/**
+				 * - new ending node edge case
+				 *   - don't include because not seen on original path during experiment
+				 * 
+				 * - actual actions cannot be ACTION_NOOP
+				 */
+				if (action_node->action.move != ACTION_NOOP
+						|| action_node->parent->nodes.find(action_node->id) != action_node->parent->nodes.end()) {
+					for (int o_index = 0; o_index < problem_type->num_obs(); o_index++) {
+						possible_scope_contexts.push_back(scope_context);
+						possible_node_contexts.push_back(node_context);
+						possible_obs_indexes.push_back(o_index);
+					}
+				}
 			}
 
 			break;
