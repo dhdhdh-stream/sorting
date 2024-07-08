@@ -1,0 +1,41 @@
+#include "branch_experiment.h"
+
+#include <iostream>
+
+using namespace std;
+
+void BranchExperiment::verify_existing_activate(
+		BranchExperimentHistory* history) {
+	history->instance_count++;
+}
+
+void BranchExperiment::verify_existing_backprop(
+		double target_val,
+		RunHelper& run_helper) {
+	BranchExperimentHistory* history = (BranchExperimentHistory*)run_helper.experiment_histories.back();
+
+	for (int i_index = 0; i_index < history->instance_count; i_index++) {
+		double final_score = (target_val - solution_set->average_score) / history->instance_count;
+		this->target_val_histories.push_back(final_score);
+	}
+
+	this->state_iter++;
+	if ((int)this->target_val_histories.size() >= VERIFY_NUM_DATAPOINTS
+			&& this->state_iter >= MIN_NUM_TRUTH_DATAPOINTS) {
+		int num_instances = (int)this->target_val_histories.size();
+
+		double sum_scores = 0.0;
+		for (int d_index = 0; d_index < num_instances; d_index++) {
+			sum_scores += this->target_val_histories[d_index];
+		}
+		this->existing_average_score = sum_scores / num_instances;
+
+		this->target_val_histories.clear();
+
+		this->combined_score = 0.0;
+
+		this->state = BRANCH_EXPERIMENT_STATE_VERIFY;
+		this->state_iter = 0;
+		this->sub_state_iter = 0;
+	}
+}

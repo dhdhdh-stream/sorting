@@ -39,14 +39,6 @@ bool BranchExperiment::train_new_activate(
 
 	if (this->num_instances_until_target == 0) {
 		this->scope_histories.push_back(context.back().scope_history->deep_copy());
-
-		// temp
-		for (map<AbstractNode*, AbstractNodeHistory*>::iterator it = this->scope_histories.back()->node_histories.begin();
-				it != this->scope_histories.back()->node_histories.end(); it++) {
-			if (it->first == this->branch_node) {
-				throw invalid_argument("it->first == this->branch_node");
-			}
-		}
 	}
 
 	BranchNodeHistory* branch_node_history = new BranchNodeHistory();
@@ -203,16 +195,6 @@ void BranchExperiment::train_new_backprop(
 	this->state_iter++;
 	if ((int)this->target_val_histories.size() >= NUM_DATAPOINTS
 			&& this->state_iter >= MIN_NUM_TRUTH_DATAPOINTS) {
-		// temp
-		for (int h_index = 0; h_index < (int)this->scope_histories.size(); h_index++) {
-			for (map<AbstractNode*, AbstractNodeHistory*>::iterator it = this->scope_histories[h_index]->node_histories.begin();
-					it != this->scope_histories[h_index]->node_histories.end(); it++) {
-				if (it->first == this->branch_node) {
-					throw invalid_argument("after it->first == this->branch_node");
-				}
-			}
-		}
-
 		default_random_engine generator_copy = generator;
 		shuffle(this->scope_histories.begin(), this->scope_histories.end(), generator);
 		shuffle(this->target_val_histories.begin(), this->target_val_histories.end(), generator_copy);

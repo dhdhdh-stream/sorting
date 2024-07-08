@@ -32,9 +32,6 @@ void gather_possible_helper(std::vector<AbstractScope*>& scope_context,
 							std::vector<int>& possible_obs_indexes,
 							AbstractScopeHistory* scope_history);
 
-void create_new_action(AbstractNode*& starting_node,
-					   std::set<AbstractNode*>& included_nodes);
-
 void clean_scope(Scope* scope,
 				 Solution* parent_solution);
 void clean_info_scope(InfoScope* scope);

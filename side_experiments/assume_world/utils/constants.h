@@ -4,13 +4,6 @@
 const double MIN_WEIGHT = 0.00001;
 const double MIN_STANDARD_DEVIATION = 0.00001;
 
-/**
- * - eval networks can be unstable, so may need only truth to make progress
- *   - only truth also better at driving unexpected innovation
- */
-const int SCORE_TYPE_TRUTH = 0;
-const int SCORE_TYPE_ALL = 1;
-
 const int STEP_TYPE_ACTION = 0;
 const int STEP_TYPE_SCOPE = 1;
 
@@ -25,12 +18,7 @@ const int EXPLORE_TYPE_BEST = 2;
 
 const int MAX_EXPLORE_TRIES = 4;
 
-const int NETWORK_INCREMENT_NUM_NEW = 10;
-
 const double TEST_SAMPLES_PERCENTAGE = 0.2;
-
-const double EXPERIMENT_COMBINED_MIN_BRANCH_WEIGHT = 0.05;
-const double PASS_THROUGH_BRANCH_WEIGHT = 0.9;
 
 #if defined(MDEBUG) && MDEBUG
 const int NUM_DATAPOINTS = 10;
