@@ -2,6 +2,13 @@
 
 #include <iostream>
 
+#include "action_node.h"
+#include "branch_node.h"
+#include "constants.h"
+#include "globals.h"
+#include "new_action_experiment.h"
+#include "scope_node.h"
+
 using namespace std;
 
 void node_activate_helper(AbstractNode*& curr_node,
@@ -45,8 +52,6 @@ void node_activate_helper(AbstractNode*& curr_node,
 void Scope::activate(Problem* problem,
 					 vector<ContextLayer>& context,
 					 RunHelper& run_helper) {
-	Solution* solution = solution_set->solutions[solution_set->curr_solution_index];
-
 	context.push_back(ContextLayer());
 
 	context.back().scope = this;
@@ -83,7 +88,7 @@ void Scope::activate(Problem* problem,
 	}
 
 	if (run_helper.experiments_seen_order.size() == 0) {
-		uniform_int_distribution<int> select_distribution(0, num_actions-1);
+		uniform_int_distribution<int> select_distribution(0, run_helper.num_actions-1);
 		int select_index = select_distribution(generator);
 		if (select_index < (int)context.back().nodes_seen.size()) {
 			run_helper.selected_node = context.back().nodes_seen[select_index];

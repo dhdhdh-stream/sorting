@@ -4,6 +4,16 @@
 #include <cmath>
 #include <iostream>
 
+#include "action_node.h"
+#include "branch_node.h"
+#include "constants.h"
+#include "globals.h"
+#include "minesweeper.h"
+#include "network.h"
+#include "nn_helpers.h"
+#include "scope_node.h"
+#include "solution_set.h"
+
 using namespace std;
 
 bool BranchExperiment::train_new_activate(
@@ -17,13 +27,12 @@ bool BranchExperiment::train_new_activate(
 	}
 
 	run_helper.branch_node_ancestors.insert(this->branch_node);
-	context.back().branch_nodes_seen.push_back(this->branch_node);
 
 	run_helper.num_analyze += (1 + 2*this->analyze_size) * (1 + 2*this->analyze_size);
 
 	this->num_instances_until_target--;
 	if (this->num_instances_until_target == 0) {
-		vector<vector<int>> input_vals(1 + 2*this->analyze_size);
+		vector<vector<double>> input_vals(1 + 2*this->analyze_size);
 		for (int x_index = 0; x_index < 1 + 2*this->analyze_size; x_index++) {
 			input_vals[x_index] = vector<double>(1 + 2*this->analyze_size);
 		}
@@ -42,6 +51,9 @@ bool BranchExperiment::train_new_activate(
 
 		this->existing_network->activate(input_vals);
 		history->existing_predicted_scores.push_back(this->existing_network->output->acti_vals[0]);
+
+		run_helper.num_actions++;
+		context.back().nodes_seen.push_back({this->branch_node, true});
 
 		if (this->best_step_types.size() == 0) {
 			curr_node = this->best_exit_next_node;
@@ -67,12 +79,12 @@ void BranchExperiment::train_new_backprop(
 		RunHelper& run_helper) {
 	BranchExperimentHistory* history = (BranchExperimentHistory*)run_helper.experiment_histories.back();
 
-	for (int i_index = 0; i_index < (int)history->existing_predicted_scores.size(); i_index++) {
+	for (int i_index = 0; i_index < history->instance_count; i_index++) {
 		double final_score;
 		if (run_helper.exceeded_limit) {
 			final_score = -10.0;
 		} else {
-			final_score = (target_val - solution_set->average_score) / (int)history->predicted_scores.size();
+			final_score = (target_val - solution_set->average_score) / history->instance_count;
 		}
 
 		double surprise = final_score - history->existing_predicted_scores[i_index];

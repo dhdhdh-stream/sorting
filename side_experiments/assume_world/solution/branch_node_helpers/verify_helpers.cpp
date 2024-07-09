@@ -5,10 +5,13 @@
 #include <iostream>
 
 #include "globals.h"
+#include "minesweeper.h"
 #include "network.h"
 #include "problem.h"
+#include "scope.h"
 #include "solution.h"
 #include "solution_helpers.h"
+#include "solution_set.h"
 #include "utilities.h"
 
 using namespace std;
@@ -16,8 +19,7 @@ using namespace std;
 void BranchNode::verify_activate(AbstractNode*& curr_node,
 								 Problem* problem,
 								 vector<ContextLayer>& context,
-								 RunHelper& run_helper,
-								 map<AbstractNode*, AbstractNodeHistory*>& node_histories) {
+								 RunHelper& run_helper) {
 	if (run_helper.branch_node_ancestors.find(this) != run_helper.branch_node_ancestors.end()) {
 		curr_node = this->original_next_node;
 	} else {
@@ -25,7 +27,7 @@ void BranchNode::verify_activate(AbstractNode*& curr_node,
 
 		run_helper.num_analyze += (1 + 2*this->analyze_size) * (1 + 2*this->analyze_size);
 
-		vector<vector<int>> input_vals(1 + 2*this->analyze_size);
+		vector<vector<double>> input_vals(1 + 2*this->analyze_size);
 		for (int x_index = 0; x_index < 1 + 2*this->analyze_size; x_index++) {
 			input_vals[x_index] = vector<double>(1 + 2*this->analyze_size);
 		}
@@ -58,11 +60,6 @@ void BranchNode::verify_activate(AbstractNode*& curr_node,
 				cout << c_index << ": " << context[c_index].node->id << endl;
 			}
 
-			cout << "input_vals:" << endl;
-			for (int i_index = 0; i_index < (int)input_vals.size(); i_index++) {
-				cout << i_index << ": " << input_vals[i_index] << endl;
-			}
-
 			if (this->verify_scores[0] != score) {
 				cout << "this->verify_scores[0]: " << this->verify_scores[0] << endl;
 				cout << "score: " << score << endl;
@@ -93,6 +90,7 @@ void BranchNode::verify_activate(AbstractNode*& curr_node,
 		}
 
 		run_helper.num_actions++;
+		Solution* solution = solution_set->solutions[solution_set->curr_solution_index];
 		if (run_helper.num_actions > solution->num_actions_limit) {
 			run_helper.exceeded_limit = true;
 			return;

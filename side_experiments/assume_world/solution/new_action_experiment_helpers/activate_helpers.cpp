@@ -2,6 +2,10 @@
 
 #include <iostream>
 
+#include "constants.h"
+#include "globals.h"
+#include "scope_node.h"
+
 using namespace std;
 
 void NewActionExperiment::pre_activate(vector<ContextLayer>& context,

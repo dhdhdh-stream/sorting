@@ -2,6 +2,11 @@
 
 #include <iostream>
 
+#include "action_node.h"
+#include "branch_node.h"
+#include "scope.h"
+#include "scope_node.h"
+
 using namespace std;
 
 void clean_scope(Scope* scope) {

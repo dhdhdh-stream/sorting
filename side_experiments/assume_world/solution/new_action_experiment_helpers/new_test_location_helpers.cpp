@@ -6,7 +6,6 @@
 #include "branch_node.h"
 #include "constants.h"
 #include "globals.h"
-#include "info_branch_node.h"
 #include "scope.h"
 #include "scope_node.h"
 
@@ -63,7 +62,7 @@ void NewActionExperiment::add_new_test_location(NewActionExperimentHistory* hist
 			} else {
 				uniform_int_distribution<int> exit_distribution(
 					possible_start_indexes[start_index] + 1, (int)history->selected_nodes_seen.size()-1);
-				exit_node = history->selected_nodes_seen[exit_distribution(generator)];
+				exit_node = history->selected_nodes_seen[exit_distribution(generator)].first;
 			}
 		}
 

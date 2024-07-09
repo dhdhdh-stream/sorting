@@ -4,6 +4,16 @@
 #include <thread>
 #include <random>
 
+#include "abstract_experiment.h"
+#include "constants.h"
+#include "globals.h"
+#include "minesweeper.h"
+#include "problem.h"
+#include "scope.h"
+#include "solution.h"
+#include "solution_helpers.h"
+#include "solution_set.h"
+
 using namespace std;
 
 int seed;
@@ -64,7 +74,7 @@ int main(int argc, char* argv[]) {
 
 		double target_val;
 		if (!run_helper.exceeded_limit) {
-			target_val = problem->score_result(run_helper.num_decisions,
+			target_val = problem->score_result(run_helper.num_analyze,
 											   run_helper.num_actions);
 		} else {
 			target_val = -1.0;
@@ -118,8 +128,7 @@ int main(int argc, char* argv[]) {
 				delete run_helper.experiment_histories.back()->experiment;
 
 				Scope* experiment_scope = duplicate_solution->scopes[duplicate_solution->last_updated_scope_id];
-				clean_scope(experiment_scope,
-							duplicate_solution);
+				clean_scope(experiment_scope);
 
 				#if defined(MDEBUG) && MDEBUG
 				while (duplicate_solution->verify_problems.size() > 0) {
@@ -132,13 +141,10 @@ int main(int argc, char* argv[]) {
 					duplicate_solution->verify_seeds.erase(duplicate_solution->verify_seeds.begin());
 
 					vector<ContextLayer> context;
-					ScopeHistory* scope_history = new ScopeHistory(duplicate_solution->scopes[0]);
 					duplicate_solution->scopes[0]->verify_activate(
 						problem,
 						context,
-						run_helper,
-						scope_history);
-					delete scope_history;
+						run_helper);
 
 					cout << "run_helper.num_actions: " << run_helper.num_actions << endl;
 					cout << "duplicate_solution->num_actions_limit: " << duplicate_solution->num_actions_limit << endl;
@@ -165,13 +171,10 @@ int main(int argc, char* argv[]) {
 					#endif /* MDEBUG */
 
 					vector<ContextLayer> context;
-					ScopeHistory* scope_history = new ScopeHistory(duplicate_solution->scopes[0]);
 					duplicate_solution->scopes[0]->activate(
 						problem,
 						context,
-						run_helper,
-						scope_history);
-					delete scope_history;
+						run_helper);
 
 					if (run_helper.num_actions > max_num_actions) {
 						max_num_actions = run_helper.num_actions;
@@ -179,7 +182,7 @@ int main(int argc, char* argv[]) {
 
 					double target_val;
 					if (!run_helper.exceeded_limit) {
-						target_val = problem->score_result(run_helper.num_decisions,
+						target_val = problem->score_result(run_helper.num_analyze,
 														   run_helper.num_actions);
 					} else {
 						target_val = -1.0;

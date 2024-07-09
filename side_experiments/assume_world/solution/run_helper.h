@@ -1,6 +1,14 @@
 #ifndef RUN_HELPER_H
 #define RUN_HELPER_H
 
+#include <set>
+#include <vector>
+
+class AbstractExperiment;
+class AbstractExperimentHistory;
+class AbstractNode;
+class ScopeNode;
+
 class RunHelper {
 public:
 	bool exceeded_limit;

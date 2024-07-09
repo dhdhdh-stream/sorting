@@ -1,9 +1,19 @@
 #ifndef BRANCH_EXPERIMENT_H
 #define BRANCH_EXPERIMENT_H
 
+#include <vector>
+
 #include "abstract_experiment.h"
 #include "context_layer.h"
 #include "run_helper.h"
+
+class AbstractNode;
+class ActionNode;
+class Network;
+class Problem;
+class Scope;
+class ScopeNode;
+class Solution;
 
 const int BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING = 0;
 const int BRANCH_EXPERIMENT_STATE_EXPLORE = 1;
@@ -25,6 +35,8 @@ public:
 	int sub_state_iter;
 	int explore_iter;
 
+	double average_instances_per_run;
+
 	int num_instances_until_target;
 
 	double existing_average_score;
@@ -39,10 +51,14 @@ public:
 	std::vector<ScopeNode*> curr_scopes;
 	AbstractNode* curr_exit_next_node;
 
+	double best_surprise;
 	std::vector<int> best_step_types;
 	std::vector<ActionNode*> best_actions;
 	std::vector<ScopeNode*> best_scopes;
 	AbstractNode* best_exit_next_node;
+
+	BranchNode* branch_node;
+	ActionNode* ending_node;
 
 	Network* new_network;
 
@@ -62,7 +78,7 @@ public:
 	std::vector<double> verify_scores;
 	#endif /* MDEBUG */
 
-	BranchExperiment(AbstractScope* scope_context,
+	BranchExperiment(Scope* scope_context,
 					 AbstractNode* node_context,
 					 bool is_branch);
 	~BranchExperiment();
@@ -77,7 +93,7 @@ public:
 	void backprop(double target_val,
 				  RunHelper& run_helper);
 
-	void train_existing_activate(std::vector<ContextLayer>& context,
+	void train_existing_activate(Problem* problem,
 								 BranchExperimentHistory* history);
 	void train_existing_backprop(double target_val,
 								 RunHelper& run_helper);
@@ -106,8 +122,7 @@ public:
 	void measure_backprop(double target_val,
 						  RunHelper& run_helper);
 
-	void verify_existing_activate(std::vector<ContextLayer>& context,
-								  BranchExperimentHistory* history);
+	void verify_existing_activate(BranchExperimentHistory* history);
 	void verify_existing_backprop(double target_val,
 								  RunHelper& run_helper);
 
@@ -130,7 +145,7 @@ public:
 	void finalize(Solution* duplicate);
 	void new_branch(Solution* duplicate);
 	void new_pass_through(Solution* duplicate);
-}
+};
 
 class BranchExperimentHistory : public AbstractExperimentHistory {
 public:

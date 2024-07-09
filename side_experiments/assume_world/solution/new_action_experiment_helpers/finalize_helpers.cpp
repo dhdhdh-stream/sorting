@@ -4,8 +4,6 @@
 
 #include "action_node.h"
 #include "branch_node.h"
-#include "info_branch_node.h"
-#include "info_scope.h"
 #include "network.h"
 #include "scope.h"
 #include "scope_node.h"

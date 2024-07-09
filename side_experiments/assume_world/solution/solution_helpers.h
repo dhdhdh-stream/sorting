@@ -3,6 +3,7 @@
 
 #include "run_helper.h"
 
+class Scope;
 class ScopeNode;
 
 void create_experiment(RunHelper& run_helper);

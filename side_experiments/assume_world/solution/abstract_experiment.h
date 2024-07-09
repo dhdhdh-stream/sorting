@@ -1,8 +1,15 @@
 #ifndef ABSTRACT_EXPERIMENT_H
 #define ABSTRACT_EXPERIMENT_H
 
+#include <vector>
+
 #include "run_helper.h"
 #include "context_layer.h"
+
+class AbstractNode;
+class Problem;
+class Scope;
+class Solution;
 
 const int EXPERIMENT_TYPE_BRANCH = 0;
 const int EXPERIMENT_TYPE_PASS_THROUGH = 1;
@@ -17,12 +24,11 @@ class AbstractExperiment {
 public:
 	int type;
 
-	AbstractScope* scope_context;
+	Scope* scope_context;
 	AbstractNode* node_context;
 	bool is_branch;
 
 	double average_remaining_experiments_from_start;
-	double average_instances_per_run;
 
 	int result;
 

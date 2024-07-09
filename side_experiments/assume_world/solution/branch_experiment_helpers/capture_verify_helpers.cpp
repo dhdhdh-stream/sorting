@@ -4,6 +4,16 @@
 
 #include <iostream>
 
+#include "action_node.h"
+#include "branch_node.h"
+#include "constants.h"
+#include "minesweeper.h"
+#include "network.h"
+#include "problem.h"
+#include "scope.h"
+#include "scope_node.h"
+#include "utilities.h"
+
 using namespace std;
 
 bool BranchExperiment::capture_verify_activate(AbstractNode*& curr_node,
@@ -20,11 +30,10 @@ bool BranchExperiment::capture_verify_activate(AbstractNode*& curr_node,
 	}
 
 	run_helper.branch_node_ancestors.insert(this->branch_node);
-	context.back().branch_nodes_seen.push_back(this->branch_node);
 
 	run_helper.num_analyze += (1 + 2*this->analyze_size) * (1 + 2*this->analyze_size);
 
-	vector<vector<int>> input_vals(1 + 2*this->analyze_size);
+	vector<vector<double>> input_vals(1 + 2*this->analyze_size);
 	for (int x_index = 0; x_index < 1 + 2*this->analyze_size; x_index++) {
 		input_vals[x_index] = vector<double>(1 + 2*this->analyze_size);
 	}
@@ -56,11 +65,6 @@ bool BranchExperiment::capture_verify_activate(AbstractNode*& curr_node,
 		cout << c_index << ": " << context[c_index].node->id << endl;
 	}
 
-	cout << "new_input_vals:" << endl;
-	for (int i_index = 0; i_index < (int)new_input_vals.size(); i_index++) {
-		cout << i_index << ": " << new_input_vals[i_index] << endl;
-	}
-
 	bool decision_is_branch;
 	if (run_helper.curr_run_seed%2 == 0) {
 		decision_is_branch = true;
@@ -70,6 +74,9 @@ bool BranchExperiment::capture_verify_activate(AbstractNode*& curr_node,
 	run_helper.curr_run_seed = xorshift(run_helper.curr_run_seed);
 
 	cout << "decision_is_branch: " << decision_is_branch << endl;
+
+	run_helper.num_actions++;
+	context.back().nodes_seen.push_back({this->branch_node, decision_is_branch});
 
 	if (decision_is_branch) {
 		if (this->best_step_types.size() == 0) {

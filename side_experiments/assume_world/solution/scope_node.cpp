@@ -61,17 +61,3 @@ void ScopeNode::save_for_display(ofstream& output_file) {
 
 	output_file << this->next_node_id << endl;
 }
-
-ScopeNodeHistory::ScopeNodeHistory() {
-	// do nothing
-}
-
-ScopeNodeHistory::ScopeNodeHistory(ScopeNodeHistory* original) {
-	this->index = original->index;
-
-	this->scope_history = original->scope_history->deep_copy();
-}
-
-ScopeNodeHistory::~ScopeNodeHistory() {
-	delete this->scope_history;
-}

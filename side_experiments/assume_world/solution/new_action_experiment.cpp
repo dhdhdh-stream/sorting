@@ -18,7 +18,7 @@ const int PARENT_SCOPE_MIN_NUM_NODES = 8;
 const int NEW_ACTION_MIN_NUM_NODES = 3;
 const int CREATE_NEW_ACTION_NUM_TRIES = 50;
 
-NewActionExperiment::NewActionExperiment(AbstractScope* scope_context,
+NewActionExperiment::NewActionExperiment(Scope* scope_context,
 										 AbstractNode* node_context,
 										 bool is_branch) {
 	this->type = EXPERIMENT_TYPE_NEW_ACTION;
@@ -237,7 +237,6 @@ NewActionExperiment::NewActionExperiment(AbstractScope* scope_context,
 
 	if (this->new_scope != NULL) {
 		this->scope_context = scope_context;
-		this->score_type = score_type;
 
 		vector<AbstractNode*> possible_exits;
 

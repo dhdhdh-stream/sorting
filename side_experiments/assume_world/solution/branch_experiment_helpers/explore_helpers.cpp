@@ -2,6 +2,18 @@
 
 #include <iostream>
 
+#include "action_node.h"
+#include "branch_node.h"
+#include "constants.h"
+#include "globals.h"
+#include "minesweeper.h"
+#include "network.h"
+#include "problem.h"
+#include "scope.h"
+#include "scope_node.h"
+#include "solution_helpers.h"
+#include "solution_set.h"
+
 using namespace std;
 
 #if defined(MDEBUG) && MDEBUG
@@ -37,7 +49,7 @@ bool BranchExperiment::explore_activate(
 	if (is_target) {
 		history->has_target = true;
 
-		vector<vector<int>> input_vals(1 + 2*this->analyze_size);
+		vector<vector<double>> input_vals(1 + 2*this->analyze_size);
 		for (int x_index = 0; x_index < 1 + 2*this->analyze_size; x_index++) {
 			input_vals[x_index] = vector<double>(1 + 2*this->analyze_size);
 		}
@@ -112,7 +124,7 @@ bool BranchExperiment::explore_activate(
 		for (int s_index = 0; s_index < new_num_steps; s_index++) {
 			bool default_to_action = true;
 			if (default_distribution(generator) != 0) {
-				ScopeNode* new_scope_node = create_existing(parent_scope);
+				ScopeNode* new_scope_node = create_existing();
 				if (new_scope_node != NULL) {
 					this->curr_step_types.push_back(STEP_TYPE_SCOPE);
 					this->curr_actions.push_back(NULL);

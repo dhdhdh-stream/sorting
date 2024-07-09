@@ -2,6 +2,13 @@
 
 #include <iostream>
 
+#include "action_node.h"
+#include "branch_node.h"
+#include "constants.h"
+#include "scope.h"
+#include "scope_node.h"
+#include "solution.h"
+
 using namespace std;
 
 void BranchExperiment::finalize(Solution* duplicate) {

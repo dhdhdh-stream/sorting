@@ -1,5 +1,13 @@
 #include "branch_node.h"
 
+#include "abstract_experiment.h"
+#include "globals.h"
+#include "minesweeper.h"
+#include "network.h"
+#include "solution.h"
+#include "solution_set.h"
+#include "utilities.h"
+
 using namespace std;
 
 void BranchNode::activate(AbstractNode*& curr_node,
@@ -13,7 +21,7 @@ void BranchNode::activate(AbstractNode*& curr_node,
 
 		run_helper.num_analyze += (1 + 2*this->analyze_size) * (1 + 2*this->analyze_size);
 
-		vector<vector<int>> input_vals(1 + 2*this->analyze_size);
+		vector<vector<double>> input_vals(1 + 2*this->analyze_size);
 		for (int x_index = 0; x_index < 1 + 2*this->analyze_size; x_index++) {
 			input_vals[x_index] = vector<double>(1 + 2*this->analyze_size);
 		}
@@ -52,6 +60,7 @@ void BranchNode::activate(AbstractNode*& curr_node,
 		}
 
 		run_helper.num_actions++;
+		Solution* solution = solution_set->solutions[solution_set->curr_solution_index];
 		if (run_helper.num_actions > solution->num_actions_limit) {
 			run_helper.exceeded_limit = true;
 			return;

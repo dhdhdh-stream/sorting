@@ -14,7 +14,7 @@
 
 using namespace std;
 
-BranchExperiment::BranchExperiment(AbstractScope* scope_context,
+BranchExperiment::BranchExperiment(Scope* scope_context,
 								   AbstractNode* node_context,
 								   bool is_branch) {
 	this->type = EXPERIMENT_TYPE_BRANCH;
@@ -22,6 +22,10 @@ BranchExperiment::BranchExperiment(AbstractScope* scope_context,
 	this->scope_context = scope_context;
 	this->node_context = node_context;
 	this->is_branch = is_branch;
+
+	uniform_int_distribution<int> front_distribution(0, 1);
+	geometric_distribution<int> back_distribution(0.5);
+	this->analyze_size = front_distribution(generator) + back_distribution(generator);
 
 	this->average_remaining_experiments_from_start = 1.0;
 	/**

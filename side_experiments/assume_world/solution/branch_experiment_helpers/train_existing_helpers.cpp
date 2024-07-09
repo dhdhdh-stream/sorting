@@ -1,7 +1,15 @@
 #include "branch_experiment.h"
 
 #include <algorithm>
+#include <cmath>
 #include <iostream>
+
+#include "constants.h"
+#include "globals.h"
+#include "minesweeper.h"
+#include "network.h"
+#include "nn_helpers.h"
+#include "solution_set.h"
 
 using namespace std;
 
@@ -10,7 +18,7 @@ void BranchExperiment::train_existing_activate(
 		BranchExperimentHistory* history) {
 	history->instance_count++;
 
-	vector<vector<int>> input_vals(1 + 2*this->analyze_size);
+	vector<vector<double>> input_vals(1 + 2*this->analyze_size);
 	for (int x_index = 0; x_index < 1 + 2*this->analyze_size; x_index++) {
 		input_vals[x_index] = vector<double>(1 + 2*this->analyze_size);
 	}

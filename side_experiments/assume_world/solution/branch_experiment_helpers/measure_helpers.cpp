@@ -3,6 +3,16 @@
 #include <cmath>
 #include <iostream>
 
+#include "action_node.h"
+#include "branch_node.h"
+#include "constants.h"
+#include "globals.h"
+#include "minesweeper.h"
+#include "network.h"
+#include "scope_node.h"
+#include "solution_set.h"
+#include "utilities.h"
+
 using namespace std;
 
 bool BranchExperiment::measure_activate(AbstractNode*& curr_node,
@@ -15,13 +25,12 @@ bool BranchExperiment::measure_activate(AbstractNode*& curr_node,
 	}
 
 	run_helper.branch_node_ancestors.insert(this->branch_node);
-	context.back().branch_nodes_seen.push_back(this->branch_node);
 
 	history->instance_count++;
 
 	run_helper.num_analyze += (1 + 2*this->analyze_size) * (1 + 2*this->analyze_size);
 
-	vector<vector<int>> input_vals(1 + 2*this->analyze_size);
+	vector<vector<double>> input_vals(1 + 2*this->analyze_size);
 	for (int x_index = 0; x_index < 1 + 2*this->analyze_size; x_index++) {
 		input_vals[x_index] = vector<double>(1 + 2*this->analyze_size);
 	}
@@ -48,6 +57,9 @@ bool BranchExperiment::measure_activate(AbstractNode*& curr_node,
 	#else
 	bool decision_is_branch = this->new_network->output->acti_vals[0] >= 0.0;
 	#endif /* MDEBUG */
+
+	run_helper.num_actions++;
+	context.back().nodes_seen.push_back({this->branch_node, decision_is_branch});
 
 	if (decision_is_branch) {
 		this->branch_count++;

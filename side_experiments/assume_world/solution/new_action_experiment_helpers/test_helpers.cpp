@@ -2,6 +2,11 @@
 
 #include <iostream>
 
+#include "globals.h"
+#include "scope.h"
+#include "scope_node.h"
+#include "solution_set.h"
+
 using namespace std;
 
 #if defined(MDEBUG) && MDEBUG

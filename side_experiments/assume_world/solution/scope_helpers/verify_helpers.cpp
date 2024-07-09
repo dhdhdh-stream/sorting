@@ -16,8 +16,7 @@ using namespace std;
 void node_verify_activate_helper(AbstractNode*& curr_node,
 								 Problem* problem,
 								 vector<ContextLayer>& context,
-								 RunHelper& run_helper,
-								 ScopeHistory* history) {
+								 RunHelper& run_helper) {
 	switch (curr_node->type) {
 	case NODE_TYPE_ACTION:
 		{
@@ -25,8 +24,7 @@ void node_verify_activate_helper(AbstractNode*& curr_node,
 			node->activate(curr_node,
 						   problem,
 						   context,
-						   run_helper,
-						   history->node_histories);
+						   run_helper);
 		}
 
 		break;
@@ -36,8 +34,7 @@ void node_verify_activate_helper(AbstractNode*& curr_node,
 			node->verify_activate(curr_node,
 								  problem,
 								  context,
-								  run_helper,
-								  history->node_histories);
+								  run_helper);
 		}
 
 		break;
@@ -47,8 +44,7 @@ void node_verify_activate_helper(AbstractNode*& curr_node,
 			node->verify_activate(curr_node,
 								  problem,
 								  context,
-								  run_helper,
-								  history->node_histories);
+								  run_helper);
 		}
 
 		break;
@@ -58,8 +54,6 @@ void node_verify_activate_helper(AbstractNode*& curr_node,
 void Scope::verify_activate(Problem* problem,
 							vector<ContextLayer>& context,
 							RunHelper& run_helper) {
-	Solution* solution = solution_set->solutions[solution_set->curr_solution_index];
-
 	context.push_back(ContextLayer());
 
 	context.back().scope = this;

@@ -1,7 +1,18 @@
 #ifndef NEW_ACTION_EXPERIMENT_H
 #define NEW_ACTION_EXPERIMENT_H
 
+#include <utility>
 #include <vector>
+
+#include "abstract_experiment.h"
+#include "context_layer.h"
+#include "run_helper.h"
+
+class AbstractNode;
+class Problem;
+class Scope;
+class ScopeNode;
+class Solution;
 
 const int NEW_ACTION_EXPERIMENT_STATE_EXPLORE = 0;
 #if defined(MDEBUG) && MDEBUG
@@ -61,10 +72,9 @@ public:
 	std::vector<int> verify_scope_history_sizes;
 	#endif /* MDEBUG */
 
-	NewActionExperiment(AbstractScope* scope_context,
+	NewActionExperiment(Scope* scope_context,
 						AbstractNode* node_context,
-						bool is_branch,
-						int score_type);
+						bool is_branch);
 	~NewActionExperiment();
 	void decrement(AbstractNode* experiment_node);
 
@@ -77,6 +87,8 @@ public:
 				  Problem* problem,
 				  std::vector<ContextLayer>& context,
 				  RunHelper& run_helper);
+	void back_activate(std::vector<ContextLayer>& context,
+					   RunHelper& run_helper);
 	void backprop(double target_val,
 				  RunHelper& run_helper);
 

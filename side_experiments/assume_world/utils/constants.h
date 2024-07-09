@@ -18,8 +18,6 @@ const int EXPLORE_TYPE_BEST = 2;
 
 const int MAX_EXPLORE_TRIES = 4;
 
-const double TEST_SAMPLES_PERCENTAGE = 0.2;
-
 #if defined(MDEBUG) && MDEBUG
 const int NUM_DATAPOINTS = 10;
 const int MIN_NUM_TRUTH_DATAPOINTS = 10;

@@ -58,7 +58,7 @@ bool BranchExperiment::activate(AbstractNode* experiment_node,
 	if (is_selected) {
 		switch (this->state) {
 		case BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING:
-			train_existing_activate(context,
+			train_existing_activate(problem,
 									history);
 			result = false;
 			break;
@@ -84,8 +84,7 @@ bool BranchExperiment::activate(AbstractNode* experiment_node,
 									  history);
 			break;
 		case BRANCH_EXPERIMENT_STATE_VERIFY_EXISTING:
-			verify_existing_activate(context,
-									 history);
+			verify_existing_activate(history);
 			result = false;
 			break;
 		case BRANCH_EXPERIMENT_STATE_VERIFY:

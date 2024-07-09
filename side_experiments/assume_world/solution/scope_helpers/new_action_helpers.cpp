@@ -57,8 +57,6 @@ void Scope::new_action_capture_verify_activate(
 		Problem* problem,
 		vector<ContextLayer>& context,
 		RunHelper& run_helper) {
-	Solution* solution = solution_set->solutions[solution_set->curr_solution_index];
-
 	context.push_back(ContextLayer());
 
 	context.back().scope = this;
