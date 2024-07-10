@@ -185,23 +185,27 @@ void Minesweeper::perform_action(Action action) {
 
 	switch (action.move) {
 	case MINESWEEPER_ACTION_UP:
-		if (this->current_y < HEIGHT) {
-			this->current_y++;
+		this->current_y += action.distance;
+		if (this->current_y > HEIGHT-1) {
+			this->current_y = HEIGHT-1;
 		}
 		break;
 	case MINESWEEPER_ACTION_RIGHT:
-		if (this->current_x < WIDTH) {
-			this->current_x++;
+		this->current_x += action.distance;
+		if (this->current_x > WIDTH-1) {
+			this->current_x = WIDTH-1;
 		}
 		break;
 	case MINESWEEPER_ACTION_DOWN:
-		if (this->current_y >= 0) {
-			this->current_y--;
+		this->current_y -= action.distance;
+		if (this->current_y < 0) {
+			this->current_y = 0;
 		}
 		break;
 	case MINESWEEPER_ACTION_LEFT:
-		if (this->current_x >= 0) {
-			this->current_x--;
+		this->current_x -= action.distance;
+		if (this->current_x < 0) {
+			this->current_x = 0;
 		}
 		break;
 	case MINESWEEPER_ACTION_CLICK:
@@ -442,5 +446,6 @@ int TypeMinesweeper::num_possible_actions() {
 
 Action TypeMinesweeper::random_action() {
 	uniform_int_distribution<int> action_distribution(0, 6);
-	return Action(action_distribution(generator));
+	geometric_distribution<int> distance_distribution(0.4);
+	return Action(action_distribution(generator), 1 + distance_distribution(generator));
 }

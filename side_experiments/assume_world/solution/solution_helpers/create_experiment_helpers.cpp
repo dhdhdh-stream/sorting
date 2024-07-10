@@ -40,7 +40,8 @@ void create_experiment(RunHelper& run_helper) {
 		}
 	} else {
 		uniform_int_distribution<int> branch_distribution(0, 3);
-		if (branch_distribution(generator) == 0) {
+		// if (branch_distribution(generator) == 0) {
+		if (true) {
 			BranchExperiment* new_experiment = new BranchExperiment(
 				explore_node->parent,
 				explore_node,

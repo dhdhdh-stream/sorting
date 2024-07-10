@@ -25,11 +25,11 @@ const int BRANCH_EXPERIMENT_STATE_VERIFY = 5;
 const int BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY = 6;
 #endif /* MDEBUG */
 
+const int EXISTING_ANALYZE_SIZE = 5;
+
 class BranchExperimentHistory;
 class BranchExperiment : public AbstractExperiment {
 public:
-	int analyze_size;
-
 	int state;
 	int state_iter;
 	int sub_state_iter;
@@ -60,6 +60,9 @@ public:
 	BranchNode* branch_node;
 	ActionNode* ending_node;
 
+	double new_average_score;
+
+	int new_analyze_size;
 	Network* new_network;
 
 	double combined_score;

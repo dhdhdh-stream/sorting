@@ -28,7 +28,7 @@ bool BranchExperiment::explore_activate(
 		vector<ContextLayer>& context,
 		RunHelper& run_helper,
 		BranchExperimentHistory* history) {
-	run_helper.num_analyze += (1 + 2*this->analyze_size) * (1 + 2*this->analyze_size);
+	run_helper.num_analyze += (1 + 2*EXISTING_ANALYZE_SIZE) * (1 + 2*EXISTING_ANALYZE_SIZE);
 
 	history->instance_count++;
 
@@ -49,15 +49,15 @@ bool BranchExperiment::explore_activate(
 	if (is_target) {
 		history->has_target = true;
 
-		vector<vector<double>> input_vals(1 + 2*this->analyze_size);
-		for (int x_index = 0; x_index < 1 + 2*this->analyze_size; x_index++) {
-			input_vals[x_index] = vector<double>(1 + 2*this->analyze_size);
+		vector<vector<double>> input_vals(1 + 2*EXISTING_ANALYZE_SIZE);
+		for (int x_index = 0; x_index < 1 + 2*EXISTING_ANALYZE_SIZE; x_index++) {
+			input_vals[x_index] = vector<double>(1 + 2*EXISTING_ANALYZE_SIZE);
 		}
 
 		Minesweeper* minesweeper = (Minesweeper*)problem;
-		for (int x_index = -this->analyze_size; x_index < this->analyze_size+1; x_index++) {
-			for (int y_index = -this->analyze_size; y_index < this->analyze_size+1; y_index++) {
-				input_vals[x_index + this->analyze_size][y_index + this->analyze_size]
+		for (int x_index = -EXISTING_ANALYZE_SIZE; x_index < EXISTING_ANALYZE_SIZE+1; x_index++) {
+			for (int y_index = -EXISTING_ANALYZE_SIZE; y_index < EXISTING_ANALYZE_SIZE+1; y_index++) {
+				input_vals[x_index + EXISTING_ANALYZE_SIZE][y_index + EXISTING_ANALYZE_SIZE]
 					= minesweeper->get_observation_helper(
 						minesweeper->current_x + x_index,
 						minesweeper->current_y + y_index);
@@ -300,7 +300,7 @@ void BranchExperiment::explore_backprop(
 				new_ending_node->id = this->scope_context->node_counter;
 				this->scope_context->node_counter++;
 
-				new_ending_node->action = Action(ACTION_NOOP);
+				new_ending_node->action = Action(ACTION_NOOP, 0);
 
 				new_ending_node->next_node_id = -1;
 				new_ending_node->next_node = NULL;

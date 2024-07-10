@@ -100,7 +100,7 @@ NewActionExperiment::NewActionExperiment(Scope* scope_context,
 			starting_noop_node->parent = this->new_scope;
 			starting_noop_node->id = this->new_scope->node_counter;
 			this->new_scope->node_counter++;
-			starting_noop_node->action = Action(ACTION_NOOP);
+			starting_noop_node->action = Action(ACTION_NOOP, 0);
 			this->new_scope->nodes[starting_noop_node->id] = starting_noop_node;
 
 			map<AbstractNode*, AbstractNode*> node_mappings;
@@ -163,7 +163,7 @@ NewActionExperiment::NewActionExperiment(Scope* scope_context,
 			new_ending_node->parent = this->new_scope;
 			new_ending_node->id = this->new_scope->node_counter;
 			this->new_scope->node_counter++;
-			new_ending_node->action = Action(ACTION_NOOP);
+			new_ending_node->action = Action(ACTION_NOOP, 0);
 			this->new_scope->nodes[new_ending_node->id] = new_ending_node;
 			new_ending_node->next_node_id = -1;
 			new_ending_node->next_node = NULL;

@@ -88,7 +88,8 @@ void Scope::activate(Problem* problem,
 	}
 
 	if (run_helper.experiments_seen_order.size() == 0) {
-		uniform_int_distribution<int> select_distribution(0, run_helper.num_actions-1);
+		run_helper.selected_count += (int)context.back().nodes_seen.size();
+		uniform_int_distribution<int> select_distribution(0, run_helper.selected_count-1);
 		int select_index = select_distribution(generator);
 		if (select_index < (int)context.back().nodes_seen.size()) {
 			run_helper.selected_node = context.back().nodes_seen[select_index];

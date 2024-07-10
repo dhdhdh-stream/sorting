@@ -63,7 +63,7 @@ void BranchExperiment::new_branch(Solution* duplicate) {
 					duplicate_local_scope->node_counter++;
 					duplicate_local_scope->nodes[new_ending_node->id] = new_ending_node;
 
-					new_ending_node->action = Action(ACTION_NOOP);
+					new_ending_node->action = Action(ACTION_NOOP, 0);
 
 					new_ending_node->next_node_id = -1;
 					new_ending_node->next_node = NULL;
@@ -170,7 +170,7 @@ void BranchExperiment::new_branch(Solution* duplicate) {
 		}
 	}
 
-	this->branch_node->analyze_size = this->analyze_size;
+	this->branch_node->analyze_size = this->new_analyze_size;
 	this->branch_node->network = this->new_network;
 	this->new_network = NULL;
 

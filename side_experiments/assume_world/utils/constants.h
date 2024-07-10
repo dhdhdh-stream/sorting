@@ -18,6 +18,8 @@ const int EXPLORE_TYPE_BEST = 2;
 
 const int MAX_EXPLORE_TRIES = 4;
 
+const double PASS_THROUGH_BRANCH_WEIGHT = 0.9;
+
 #if defined(MDEBUG) && MDEBUG
 const int NUM_DATAPOINTS = 10;
 const int MIN_NUM_TRUTH_DATAPOINTS = 10;

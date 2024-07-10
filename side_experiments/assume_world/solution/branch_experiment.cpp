@@ -25,7 +25,7 @@ BranchExperiment::BranchExperiment(Scope* scope_context,
 
 	uniform_int_distribution<int> front_distribution(0, 1);
 	geometric_distribution<int> back_distribution(0.5);
-	this->analyze_size = front_distribution(generator) + back_distribution(generator);
+	this->new_analyze_size = front_distribution(generator) + back_distribution(generator);
 
 	this->average_remaining_experiments_from_start = 1.0;
 	/**

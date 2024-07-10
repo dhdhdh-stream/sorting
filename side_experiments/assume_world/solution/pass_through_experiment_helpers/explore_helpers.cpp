@@ -204,7 +204,7 @@ void PassThroughExperiment::explore_backprop(
 					new_ending_node->id = this->scope_context->node_counter;
 					this->scope_context->node_counter++;
 
-					new_ending_node->action = Action(ACTION_NOOP);
+					new_ending_node->action = Action(ACTION_NOOP, 0);
 
 					new_ending_node->next_node_id = -1;
 					new_ending_node->next_node = NULL;

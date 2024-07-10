@@ -18,15 +18,15 @@ void BranchExperiment::train_existing_activate(
 		BranchExperimentHistory* history) {
 	history->instance_count++;
 
-	vector<vector<double>> input_vals(1 + 2*this->analyze_size);
-	for (int x_index = 0; x_index < 1 + 2*this->analyze_size; x_index++) {
-		input_vals[x_index] = vector<double>(1 + 2*this->analyze_size);
+	vector<vector<double>> input_vals(1 + 2*EXISTING_ANALYZE_SIZE);
+	for (int x_index = 0; x_index < 1 + 2*EXISTING_ANALYZE_SIZE; x_index++) {
+		input_vals[x_index] = vector<double>(1 + 2*EXISTING_ANALYZE_SIZE);
 	}
 
 	Minesweeper* minesweeper = (Minesweeper*)problem;
-	for (int x_index = -this->analyze_size; x_index < this->analyze_size+1; x_index++) {
-		for (int y_index = -this->analyze_size; y_index < this->analyze_size+1; y_index++) {
-			input_vals[x_index + this->analyze_size][y_index + this->analyze_size]
+	for (int x_index = -EXISTING_ANALYZE_SIZE; x_index < EXISTING_ANALYZE_SIZE+1; x_index++) {
+		for (int y_index = -EXISTING_ANALYZE_SIZE; y_index < EXISTING_ANALYZE_SIZE+1; y_index++) {
+			input_vals[x_index + EXISTING_ANALYZE_SIZE][y_index + EXISTING_ANALYZE_SIZE]
 				= minesweeper->get_observation_helper(
 					minesweeper->current_x + x_index,
 					minesweeper->current_y + y_index);
@@ -51,10 +51,6 @@ void BranchExperiment::train_existing_backprop(
 	this->state_iter++;
 	if ((int)this->target_val_histories.size() >= NUM_DATAPOINTS
 			&& this->state_iter >= MIN_NUM_TRUTH_DATAPOINTS) {
-		default_random_engine generator_copy = generator;
-		shuffle(this->obs_histories.begin(), this->obs_histories.end(), generator);
-		shuffle(this->target_val_histories.begin(), this->target_val_histories.end(), generator_copy);
-
 		int num_instances = (int)this->target_val_histories.size();
 
 		double sum_scores = 0.0;
@@ -72,7 +68,11 @@ void BranchExperiment::train_existing_backprop(
 			this->existing_score_standard_deviation = MIN_STANDARD_DEVIATION;
 		}
 
-		this->existing_network = new Network(this->analyze_size);
+		default_random_engine generator_copy = generator;
+		shuffle(this->obs_histories.begin(), this->obs_histories.end(), generator);
+		shuffle(this->target_val_histories.begin(), this->target_val_histories.end(), generator_copy);
+
+		this->existing_network = new Network(EXISTING_ANALYZE_SIZE);
 		train_network(this->obs_histories,
 					  this->target_val_histories,
 					  this->existing_network);

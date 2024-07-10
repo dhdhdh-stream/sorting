@@ -55,7 +55,7 @@ void Solution::init() {
 	ActionNode* starting_noop_node = new ActionNode();
 	starting_noop_node->parent = new_scope;
 	starting_noop_node->id = 0;
-	starting_noop_node->action = Action(ACTION_NOOP);
+	starting_noop_node->action = Action(ACTION_NOOP, 0);
 	starting_noop_node->next_node_id = -1;
 	starting_noop_node->next_node = NULL;
 	new_scope->nodes[0] = starting_noop_node;

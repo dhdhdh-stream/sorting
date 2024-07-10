@@ -25,6 +25,7 @@ public:
 	 * - to prevent unbounded recursion
 	 */
 
+	int selected_count;
 	std::pair<AbstractNode*,bool> selected_node;
 
 	std::vector<AbstractExperiment*> experiments_seen_order;

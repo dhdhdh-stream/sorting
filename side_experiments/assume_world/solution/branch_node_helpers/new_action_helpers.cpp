@@ -19,8 +19,9 @@ void BranchNode::new_action_capture_verify_activate(
 		Problem* problem,
 		vector<ContextLayer>& context,
 		RunHelper& run_helper) {
+	bool is_branch;
 	if (run_helper.branch_node_ancestors.find(this) != run_helper.branch_node_ancestors.end()) {
-		curr_node = this->original_next_node;
+		is_branch = false;
 	} else {
 		run_helper.branch_node_ancestors.insert(this);
 
@@ -48,19 +49,12 @@ void BranchNode::new_action_capture_verify_activate(
 		cout << "run_helper.curr_run_seed: " << run_helper.curr_run_seed << endl;
 		problem->print();
 
-		bool is_branch;
 		if (run_helper.curr_run_seed%2 == 0) {
 			is_branch = true;
 		} else {
 			is_branch = false;
 		}
 		run_helper.curr_run_seed = xorshift(run_helper.curr_run_seed);
-
-		if (is_branch) {
-			curr_node = this->branch_next_node;
-		} else {
-			curr_node = this->original_next_node;
-		}
 
 		run_helper.num_actions++;
 		Solution* solution = solution_set->solutions[solution_set->curr_solution_index];
@@ -69,6 +63,12 @@ void BranchNode::new_action_capture_verify_activate(
 			return;
 		}
 		context.back().nodes_seen.push_back({this, is_branch});
+	}
+
+	if (is_branch) {
+		curr_node = this->branch_next_node;
+	} else {
+		curr_node = this->original_next_node;
 	}
 }
 

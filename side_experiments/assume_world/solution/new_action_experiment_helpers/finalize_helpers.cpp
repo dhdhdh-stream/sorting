@@ -51,15 +51,14 @@ void NewActionExperiment::finalize(Solution* duplicate) {
 					scope_node->scope = duplicate->scopes[scope_node->scope->id];
 				}
 				break;
+			#if defined(MDEBUG) && MDEBUG
 			case NODE_TYPE_BRANCH:
 				{
 					BranchNode* branch_node = (BranchNode*)it->second;
-
-					#if defined(MDEBUG) && MDEBUG
 					branch_node->verify_key = this;
-					#endif /* MDEBUG */
 				}
 				break;
+			#endif /* MDEBUG */
 			}
 		}
 
@@ -86,7 +85,7 @@ void NewActionExperiment::finalize(Solution* duplicate) {
 					duplicate_local_scope->node_counter++;
 					duplicate_local_scope->nodes[new_local_ending_node->id] = new_local_ending_node;
 
-					new_local_ending_node->action = Action(ACTION_NOOP);
+					new_local_ending_node->action = Action(ACTION_NOOP, 0);
 
 					new_local_ending_node->next_node_id = -1;
 					new_local_ending_node->next_node = NULL;

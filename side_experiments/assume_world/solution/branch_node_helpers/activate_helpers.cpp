@@ -1,5 +1,7 @@
 #include "branch_node.h"
 
+#include <iostream>
+
 #include "abstract_experiment.h"
 #include "globals.h"
 #include "minesweeper.h"
@@ -14,8 +16,9 @@ void BranchNode::activate(AbstractNode*& curr_node,
 						  Problem* problem,
 						  vector<ContextLayer>& context,
 						  RunHelper& run_helper) {
+	bool is_branch;
 	if (run_helper.branch_node_ancestors.find(this) != run_helper.branch_node_ancestors.end()) {
-		curr_node = this->original_next_node;
+		is_branch = false;
 	} else {
 		run_helper.branch_node_ancestors.insert(this);
 
@@ -37,7 +40,6 @@ void BranchNode::activate(AbstractNode*& curr_node,
 		}
 		this->network->activate(input_vals);
 
-		bool is_branch;
 		#if defined(MDEBUG) && MDEBUG
 		if (run_helper.curr_run_seed%2 == 0) {
 			is_branch = true;
@@ -53,12 +55,6 @@ void BranchNode::activate(AbstractNode*& curr_node,
 		}
 		#endif /* MDEBUG */
 
-		if (is_branch) {
-			curr_node = this->branch_next_node;
-		} else {
-			curr_node = this->original_next_node;
-		}
-
 		run_helper.num_actions++;
 		Solution* solution = solution_set->solutions[solution_set->curr_solution_index];
 		if (run_helper.num_actions > solution->num_actions_limit) {
@@ -66,18 +62,24 @@ void BranchNode::activate(AbstractNode*& curr_node,
 			return;
 		}
 		context.back().nodes_seen.push_back({this, is_branch});
+	}
 
-		for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
-			bool is_selected = this->experiments[e_index]->activate(
-				this,
-				is_branch,
-				curr_node,
-				problem,
-				context,
-				run_helper);
-			if (is_selected) {
-				return;
-			}
+	if (is_branch) {
+		curr_node = this->branch_next_node;
+	} else {
+		curr_node = this->original_next_node;
+	}
+
+	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
+		bool is_selected = this->experiments[e_index]->activate(
+			this,
+			is_branch,
+			curr_node,
+			problem,
+			context,
+			run_helper);
+		if (is_selected) {
+			return;
 		}
 	}
 }
