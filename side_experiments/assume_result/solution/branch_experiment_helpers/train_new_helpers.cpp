@@ -31,9 +31,8 @@ bool BranchExperiment::train_new_activate(
 
 	run_helper.num_analyze += (1 + 2*this->new_analyze_size) * (1 + 2*this->new_analyze_size);
 
-	// this->num_instances_until_target--;
-	// if (this->num_instances_until_target == 0) {
-	if (true) {
+	this->num_instances_until_target--;
+	if (this->num_instances_until_target == 0) {
 		history->instance_count++;
 
 		history->existing_predicted_scores.push_back(run_helper.result);
@@ -68,8 +67,8 @@ bool BranchExperiment::train_new_activate(
 			}
 		}
 
-		// uniform_int_distribution<int> until_distribution(0, (int)this->scope_context->average_instances_per_run-1.0);
-		// this->num_instances_until_target = 1 + until_distribution(generator);
+		uniform_int_distribution<int> until_distribution(0, (int)this->scope_context->average_instances_per_run-1);
+		this->num_instances_until_target = 1 + until_distribution(generator);
 
 		return true;
 	} else {

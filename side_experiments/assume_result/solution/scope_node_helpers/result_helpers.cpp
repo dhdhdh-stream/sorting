@@ -9,10 +9,10 @@
 
 using namespace std;
 
-void ScopeNode::measure_activate(AbstractNode*& curr_node,
-								 Problem* problem,
-								 vector<ContextLayer>& context,
-								 RunHelper& run_helper) {
+void ScopeNode::result_activate(AbstractNode*& curr_node,
+								Problem* problem,
+								vector<ContextLayer>& context,
+								RunHelper& run_helper) {
 	if (run_helper.scope_node_ancestors.find(this) != run_helper.scope_node_ancestors.end()) {
 		run_helper.exceeded_limit = true;
 		return;
@@ -21,9 +21,9 @@ void ScopeNode::measure_activate(AbstractNode*& curr_node,
 	context.back().node = this;
 	run_helper.scope_node_ancestors.insert(this);
 
-	this->scope->measure_activate(problem,
-								  context,
-								  run_helper);
+	this->scope->result_activate(problem,
+								 context,
+								 run_helper);
 
 	context.back().node = NULL;
 	run_helper.scope_node_ancestors.erase(this);

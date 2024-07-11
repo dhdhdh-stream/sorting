@@ -30,10 +30,9 @@ bool BranchExperiment::explore_activate(
 		BranchExperimentHistory* history) {
 	run_helper.num_analyze += (1 + 2*this->new_analyze_size) * (1 + 2*this->new_analyze_size);
 
-	// this->num_instances_until_target--;
-	// if (!history->has_target
-	// 		&& this->num_instances_until_target == 0) {
-	if (true) {
+	this->num_instances_until_target--;
+	if (!history->has_target
+			&& this->num_instances_until_target == 0) {
 		history->has_target = true;
 
 		history->existing_predicted_scores.push_back(run_helper.result);
@@ -140,8 +139,8 @@ void BranchExperiment::explore_backprop(
 		RunHelper& run_helper) {
 	BranchExperimentHistory* history = (BranchExperimentHistory*)run_helper.experiment_histories.back();
 
-	// uniform_int_distribution<int> until_distribution(0, (int)this->scope_context->average_instances_per_run-1.0);
-	// this->num_instances_until_target = 1 + until_distribution(generator);
+	uniform_int_distribution<int> until_distribution(0, (int)this->scope_context->average_instances_per_run-1);
+	this->num_instances_until_target = 1 + until_distribution(generator);
 
 	if (history->has_target) {
 		double curr_surprise = target_val - history->existing_predicted_scores[0];
@@ -289,8 +288,8 @@ void BranchExperiment::explore_backprop(
 			this->obs_histories.reserve(NUM_DATAPOINTS);
 			this->target_val_histories.reserve(NUM_DATAPOINTS);
 
-			// uniform_int_distribution<int> until_distribution(0, (int)this->scope_context->average_instances_per_run-1.0);
-			// this->num_instances_until_target = 1 + until_distribution(generator);
+			uniform_int_distribution<int> until_distribution(0, (int)this->scope_context->average_instances_per_run-1);
+			this->num_instances_until_target = 1 + until_distribution(generator);
 
 			this->state = BRANCH_EXPERIMENT_STATE_TRAIN_NEW;
 			this->state_iter = 0;

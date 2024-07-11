@@ -9,10 +9,10 @@
 
 using namespace std;
 
-void ActionNode::measure_activate(AbstractNode*& curr_node,
-								  Problem* problem,
-								  vector<ContextLayer>& context,
-								  RunHelper& run_helper) {
+void ActionNode::result_activate(AbstractNode*& curr_node,
+								 Problem* problem,
+								 vector<ContextLayer>& context,
+								 RunHelper& run_helper) {
 	problem->perform_action(this->action);
 
 	curr_node = this->next_node;

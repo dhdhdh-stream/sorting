@@ -11,10 +11,10 @@
 
 using namespace std;
 
-void BranchNode::measure_activate(AbstractNode*& curr_node,
-								  Problem* problem,
-								  vector<ContextLayer>& context,
-								  RunHelper& run_helper) {
+void BranchNode::result_activate(AbstractNode*& curr_node,
+								 Problem* problem,
+								 vector<ContextLayer>& context,
+								 RunHelper& run_helper) {
 	bool is_branch;
 	if (run_helper.branch_node_ancestors.find(this) != run_helper.branch_node_ancestors.end()) {
 		is_branch = false;

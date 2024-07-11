@@ -45,9 +45,14 @@ public:
 	void random_exit_activate(AbstractNode* starting_node,
 							  std::vector<AbstractNode*>& possible_exits);
 
+	void result_activate(Problem* problem,
+						 std::vector<ContextLayer>& context,
+						 RunHelper& run_helper);
+
 	void measure_activate(Problem* problem,
 						  std::vector<ContextLayer>& context,
-						  RunHelper& run_helper);
+						  RunHelper& run_helper,
+						  std::vector<int>& scope_counts);
 
 	#if defined(MDEBUG) && MDEBUG
 	void new_action_capture_verify_activate(Problem* problem,

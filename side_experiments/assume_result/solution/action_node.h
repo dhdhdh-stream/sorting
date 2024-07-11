@@ -29,10 +29,10 @@ public:
 				  std::vector<ContextLayer>& context,
 				  RunHelper& run_helper);
 
-	void measure_activate(AbstractNode*& curr_node,
-						  Problem* problem,
-						  std::vector<ContextLayer>& context,
-						  RunHelper& run_helper);
+	void result_activate(AbstractNode*& curr_node,
+						 Problem* problem,
+						 std::vector<ContextLayer>& context,
+						 RunHelper& run_helper);
 
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file);

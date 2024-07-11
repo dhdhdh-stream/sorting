@@ -1,3 +1,16 @@
+// TODO: maybe save location? and can return?
+// - like, add hardcoded position
+//   - scope saves starting position, and return to start is a possible action
+
+// in general, mark locations of interest?
+// - and have ways of travelling back?
+
+// travel back to previous history spot
+// - maybe have:
+//   - pre decision possibility
+//   - post decision possibility
+//   - post sequence possibility
+
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -36,12 +49,12 @@ int main(int argc, char* argv[]) {
 	problem_type = new TypeMinesweeper();
 
 	solution_set = new SolutionSet();
-	solution_set->init();
-	// solution_set->load("", "main");
+	// solution_set->init();
+	solution_set->load("", "main");
 
 	solution_set->increment();
 
-	solution_set->save("", "main");
+	// solution_set->save("", "main");
 
 	run_index = 0;
 
@@ -49,8 +62,6 @@ int main(int argc, char* argv[]) {
 		Problem* problem = problem_type->get_problem();
 
 		RunHelper run_helper;
-
-		run_helper.result = get_existing_result(problem);
 
 		#if defined(MDEBUG) && MDEBUG
 		run_helper.starting_run_seed = run_index;
@@ -60,6 +71,8 @@ int main(int argc, char* argv[]) {
 		if (run_index%10000 == 0) {
 			cout << "run_index: " << run_index << endl;
 		}
+
+		run_helper.result = get_existing_result(problem);
 
 		vector<ContextLayer> context;
 		Solution* solution = solution_set->solutions[solution_set->curr_solution_index];
@@ -158,6 +171,7 @@ int main(int argc, char* argv[]) {
 				#endif /* MDEBUG */
 
 				vector<double> target_vals;
+				vector<int> scope_counts(duplicate_solution->scopes.size(), 0);
 				int max_num_actions = 0;
 				#if defined(MDEBUG) && MDEBUG
 				bool early_exit = false;
@@ -173,10 +187,11 @@ int main(int argc, char* argv[]) {
 					#endif /* MDEBUG */
 
 					vector<ContextLayer> context;
-					duplicate_solution->scopes[0]->activate(
+					duplicate_solution->scopes[0]->measure_activate(
 						problem,
 						context,
-						run_helper);
+						run_helper,
+						scope_counts);
 
 					if (run_helper.num_actions > max_num_actions) {
 						max_num_actions = run_helper.num_actions;
@@ -200,6 +215,10 @@ int main(int argc, char* argv[]) {
 						break;
 					}
 					#endif /* MDEBUG */
+				}
+
+				for (int s_index = 0; s_index < (int)duplicate_solution->scopes.size(); s_index++) {
+					duplicate_solution->scopes[s_index]->average_instances_per_run = (double)scope_counts[s_index] / MEASURE_ITERS;
 				}
 
 				#if defined(MDEBUG) && MDEBUG
@@ -238,7 +257,7 @@ int main(int argc, char* argv[]) {
 				delete solution_set;
 				solution_set = duplicate;
 
-				solution_set->save("", "main");
+				// solution_set->save("", "main");
 
 				solution_set->increment();
 				#else

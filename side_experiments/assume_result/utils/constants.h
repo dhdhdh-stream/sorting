@@ -18,11 +18,9 @@ const int EXPLORE_TYPE_BEST = 1;
 #if defined(MDEBUG) && MDEBUG
 const int NUM_DATAPOINTS = 10;
 const int MIN_NUM_TRUTH_DATAPOINTS = 10;
-const int VERIFY_NUM_DATAPOINTS = 10;
 #else
-const int NUM_DATAPOINTS = 400;
-const int MIN_NUM_TRUTH_DATAPOINTS = 100;
-const int VERIFY_NUM_DATAPOINTS = 400;
+const int NUM_DATAPOINTS = 1000;
+const int MIN_NUM_TRUTH_DATAPOINTS = 400;
 #endif /* MDEBUG */
 
 #if defined(MDEBUG) && MDEBUG

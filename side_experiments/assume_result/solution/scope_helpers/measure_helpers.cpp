@@ -10,18 +10,19 @@
 
 using namespace std;
 
-void node_measure_activate_helper(AbstractNode*& curr_node,
-								  Problem* problem,
-								  vector<ContextLayer>& context,
-								  RunHelper& run_helper) {
+void node_activate_helper(AbstractNode*& curr_node,
+						  Problem* problem,
+						  vector<ContextLayer>& context,
+						  RunHelper& run_helper,
+						  vector<int>& scope_counts) {
 	switch (curr_node->type) {
 	case NODE_TYPE_ACTION:
 		{
 			ActionNode* node = (ActionNode*)curr_node;
-			node->measure_activate(curr_node,
-								   problem,
-								   context,
-								   run_helper);
+			node->activate(curr_node,
+						   problem,
+						   context,
+						   run_helper);
 		}
 
 		break;
@@ -31,17 +32,18 @@ void node_measure_activate_helper(AbstractNode*& curr_node,
 			node->measure_activate(curr_node,
 								   problem,
 								   context,
-								   run_helper);
+								   run_helper,
+								   scope_counts);
 		}
 
 		break;
 	case NODE_TYPE_BRANCH:
 		{
 			BranchNode* node = (BranchNode*)curr_node;
-			node->measure_activate(curr_node,
-								   problem,
-								   context,
-								   run_helper);
+			node->activate(curr_node,
+						   problem,
+						   context,
+						   run_helper);
 		}
 
 		break;
@@ -50,7 +52,10 @@ void node_measure_activate_helper(AbstractNode*& curr_node,
 
 void Scope::measure_activate(Problem* problem,
 							 vector<ContextLayer>& context,
-							 RunHelper& run_helper) {
+							 RunHelper& run_helper,
+							 vector<int>& scope_counts) {
+	scope_counts[this->id]++;
+
 	context.push_back(ContextLayer());
 
 	context.back().scope = this;
@@ -62,13 +67,23 @@ void Scope::measure_activate(Problem* problem,
 			break;
 		}
 
-		node_measure_activate_helper(curr_node,
-									 problem,
-									 context,
-									 run_helper);
+		node_activate_helper(curr_node,
+							 problem,
+							 context,
+							 run_helper,
+							 scope_counts);
 
 		if (run_helper.exceeded_limit) {
 			break;
+		}
+	}
+
+	if (run_helper.experiments_seen_order.size() == 0) {
+		run_helper.selected_count += (int)context.back().nodes_seen.size();
+		uniform_int_distribution<int> select_distribution(0, run_helper.selected_count-1);
+		int select_index = select_distribution(generator);
+		if (select_index < (int)context.back().nodes_seen.size()) {
+			run_helper.selected_node = context.back().nodes_seen[select_index];
 		}
 	}
 

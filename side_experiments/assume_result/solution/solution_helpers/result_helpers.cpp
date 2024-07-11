@@ -13,9 +13,14 @@ double get_existing_result(Problem* original_problem) {
 
 	RunHelper run_helper;
 
+	#if defined(MDEBUG) && MDEBUG
+	run_helper.starting_run_seed = run_index;
+	run_helper.curr_run_seed = run_index;
+	#endif /* MDEBUG */
+
 	vector<ContextLayer> context;
 	Solution* solution = solution_set->solutions[solution_set->curr_solution_index];
-	solution->scopes[0]->measure_activate(
+	solution->scopes[0]->result_activate(
 			copy_problem,
 			context,
 			run_helper);

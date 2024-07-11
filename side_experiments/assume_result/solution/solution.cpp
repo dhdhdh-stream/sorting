@@ -60,6 +60,7 @@ void Solution::init() {
 	starting_noop_node->next_node = NULL;
 	new_scope->nodes[0] = starting_noop_node;
 	new_scope->node_counter = 1;
+	new_scope->average_instances_per_run = 1.0;
 
 	this->max_num_actions = 1;
 	this->num_actions_limit = 40;
