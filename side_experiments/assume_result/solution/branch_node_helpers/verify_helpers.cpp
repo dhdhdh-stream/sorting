@@ -90,6 +90,7 @@ void BranchNode::verify_activate(AbstractNode*& curr_node,
 			return;
 		}
 		context.back().nodes_seen.push_back({this, is_branch});
+		context.back().location_history[this] = {minesweeper->current_x, minesweeper->current_y};
 	}
 
 	if (is_branch) {

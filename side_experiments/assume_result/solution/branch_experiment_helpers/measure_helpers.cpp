@@ -9,6 +9,7 @@
 #include "globals.h"
 #include "minesweeper.h"
 #include "network.h"
+#include "return_node.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution_set.h"
@@ -68,8 +69,10 @@ bool BranchExperiment::measure_activate(AbstractNode*& curr_node,
 		} else {
 			if (this->best_step_types[0] == STEP_TYPE_ACTION) {
 				curr_node = this->best_actions[0];
-			} else {
+			} else if (this->best_step_types[0] == STEP_TYPE_SCOPE) {
 				curr_node = this->best_scopes[0];
+			} else {
+				curr_node = this->best_returns[0];
 			}
 		}
 
@@ -110,8 +113,10 @@ void BranchExperiment::measure_backprop(
 				for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 					if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 						cout << " " << this->best_actions[s_index]->action.move;
-					} else {
+					} else if (this->best_step_types[s_index] == STEP_TYPE_SCOPE) {
 						cout << " E";
+					} else {
+						cout << " R";
 					}
 				}
 				cout << endl;

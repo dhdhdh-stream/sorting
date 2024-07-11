@@ -5,6 +5,7 @@
 #include "action_node.h"
 #include "branch_node.h"
 #include "globals.h"
+#include "return_node.h"
 #include "scope_node.h"
 #include "solution.h"
 
@@ -45,6 +46,16 @@ void node_random_exit_activate_helper(AbstractNode*& curr_node,
 			} else {
 				curr_node = node->original_next_node;
 			}
+		}
+
+		break;
+	case NODE_TYPE_RETURN:
+		{
+			ReturnNode* node = (ReturnNode*)curr_node;
+
+			possible_exits.push_back(curr_node);
+
+			curr_node = node->next_node;
 		}
 
 		break;

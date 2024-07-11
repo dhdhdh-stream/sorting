@@ -4,6 +4,7 @@
 
 #include "action_node.h"
 #include "branch_node.h"
+#include "return_node.h"
 #include "scope.h"
 #include "scope_node.h"
 
@@ -35,6 +36,12 @@ void clean_scope(Scope* scope) {
 					BranchNode* branch_node = (BranchNode*)it->second;
 					next_node_ids.insert(branch_node->original_next_node_id);
 					next_node_ids.insert(branch_node->branch_next_node_id);
+				}
+				break;
+			case NODE_TYPE_RETURN:
+				{
+					ReturnNode* return_node = (ReturnNode*)it->second;
+					next_node_ids.insert(return_node->next_node_id);
 				}
 				break;
 			}

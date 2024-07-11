@@ -7,6 +7,7 @@
 #include "branch_node.h"
 #include "globals.h"
 #include "network.h"
+#include "return_node.h"
 #include "scope_node.h"
 #include "solution.h"
 #include "solution_set.h"
@@ -97,6 +98,15 @@ void Scope::load(ifstream& input_file,
 				this->nodes[branch_node->id] = branch_node;
 			}
 			break;
+		case NODE_TYPE_RETURN:
+			{
+				ReturnNode* return_node = new ReturnNode();
+				return_node->parent = this;
+				return_node->id = id;
+				return_node->load(input_file);
+				this->nodes[return_node->id] = return_node;
+			}
+			break;
 		}
 	}
 
@@ -145,6 +155,15 @@ void Scope::copy_from(Scope* original,
 				new_branch_node->parent = this;
 				new_branch_node->id = it->first;
 				this->nodes[it->first] = new_branch_node;
+			}
+			break;
+		case NODE_TYPE_RETURN:
+			{
+				ReturnNode* original_return_node = (ReturnNode*)it->second;
+				ReturnNode* new_return_node = new ReturnNode(original_return_node);
+				new_return_node->parent = this;
+				new_return_node->id = it->first;
+				this->nodes[it->first] = new_return_node;
 			}
 			break;
 		}

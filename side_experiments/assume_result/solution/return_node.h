@@ -1,32 +1,34 @@
-#ifndef ACTION_NODE_H
-#define ACTION_NODE_H
+#ifndef RETURN_NODE_H
+#define RETURN_NODE_H
 
 #include <fstream>
-#include <map>
 #include <vector>
 
 #include "abstract_node.h"
-#include "action.h"
 #include "context_layer.h"
 #include "run_helper.h"
 
 class Problem;
 
-class ActionNode : public AbstractNode {
+class ReturnNode : public AbstractNode {
 public:
-	Action action;
+	int previous_location_id;
+	AbstractNode* previous_location;
 
 	int next_node_id;
 	AbstractNode* next_node;
 
-	ActionNode();
-	ActionNode(ActionNode* original);
-	~ActionNode();
+	ReturnNode();
+	ReturnNode(ReturnNode* original);
+	~ReturnNode();
 
 	void activate(AbstractNode*& curr_node,
 				  Problem* problem,
 				  std::vector<ContextLayer>& context,
 				  RunHelper& run_helper);
+
+	void explore_activate(Problem* problem,
+						  std::vector<ContextLayer>& context);
 
 	void result_activate(AbstractNode*& curr_node,
 						 Problem* problem,
@@ -39,4 +41,4 @@ public:
 	void save_for_display(std::ofstream& output_file);
 };
 
-#endif /* ACTION_NODE_H */
+#endif /* RETURN_NODE_H */

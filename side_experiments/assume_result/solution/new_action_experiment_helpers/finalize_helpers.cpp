@@ -5,6 +5,7 @@
 #include "action_node.h"
 #include "branch_node.h"
 #include "network.h"
+#include "return_node.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
@@ -142,6 +143,14 @@ void NewActionExperiment::finalize(Solution* duplicate) {
 						branch_node->original_next_node_id = new_scope_node->id;
 						branch_node->original_next_node = new_scope_node;
 					}
+				}
+				break;
+			case NODE_TYPE_RETURN:
+				{
+					ReturnNode* return_node = (ReturnNode*)duplicate_start_node;
+
+					return_node->next_node_id = new_scope_node->id;
+					return_node->next_node = new_scope_node;
 				}
 				break;
 			}

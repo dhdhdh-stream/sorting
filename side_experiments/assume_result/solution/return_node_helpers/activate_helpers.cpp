@@ -1,6 +1,4 @@
-#include "action_node.h"
-
-#include <iostream>
+#include "return_node.h"
 
 #include "abstract_experiment.h"
 #include "globals.h"
@@ -11,13 +9,19 @@
 
 using namespace std;
 
-void ActionNode::activate(AbstractNode*& curr_node,
+void ReturnNode::activate(AbstractNode*& curr_node,
 						  Problem* problem,
 						  vector<ContextLayer>& context,
 						  RunHelper& run_helper) {
-	problem->perform_action(this->action);
-
-	curr_node = this->next_node;
+	if (this->previous_location != NULL) {
+		map<AbstractNode*, pair<int,int>>::iterator it
+			= context.back().location_history.find(this->previous_location);
+		if (it != context.back().location_history.end()) {
+			Minesweeper* minesweeper = (Minesweeper*)problem;
+			minesweeper->current_x = it->second.first;
+			minesweeper->current_y = it->second.second;
+		}
+	}
 
 	run_helper.num_actions++;
 	Solution* solution = solution_set->solutions[solution_set->curr_solution_index];

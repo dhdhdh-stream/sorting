@@ -10,6 +10,7 @@
 class AbstractNode;
 class ActionNode;
 class Problem;
+class ReturnNode;
 class Scope;
 class ScopeNode;
 class Solution;
@@ -29,12 +30,14 @@ public:
 	std::vector<int> curr_step_types;
 	std::vector<ActionNode*> curr_actions;
 	std::vector<ScopeNode*> curr_scopes;
+	std::vector<ReturnNode*> curr_returns;
 	AbstractNode* curr_exit_next_node;
 
 	double best_score;
 	std::vector<int> best_step_types;
 	std::vector<ActionNode*> best_actions;
 	std::vector<ScopeNode*> best_scopes;
+	std::vector<ReturnNode*> best_returns;
 	AbstractNode* best_exit_next_node;
 
 	ActionNode* ending_node;

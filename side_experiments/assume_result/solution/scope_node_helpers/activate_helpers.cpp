@@ -4,6 +4,7 @@
 
 #include "abstract_experiment.h"
 #include "globals.h"
+#include "minesweeper.h"
 #include "scope.h"
 #include "solution.h"
 #include "solution_set.h"
@@ -38,6 +39,8 @@ void ScopeNode::activate(AbstractNode*& curr_node,
 		return;
 	}
 	context.back().nodes_seen.push_back({this, false});
+	Minesweeper* minesweeper = (Minesweeper*)problem;
+	context.back().location_history[this] = {minesweeper->current_x, minesweeper->current_y};
 
 	if (!run_helper.exceeded_limit) {
 		for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {

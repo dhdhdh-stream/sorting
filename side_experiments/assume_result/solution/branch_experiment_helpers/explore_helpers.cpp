@@ -9,6 +9,7 @@
 #include "minesweeper.h"
 #include "network.h"
 #include "problem.h"
+#include "return_node.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution_helpers.h"
@@ -70,6 +71,12 @@ bool BranchExperiment::explore_activate(
 				}
 			}
 			break;
+		case NODE_TYPE_RETURN:
+			{
+				ReturnNode* return_node = (ReturnNode*)this->node_context;
+				starting_node = return_node->next_node;
+			}
+			break;
 		}
 
 		parent_scope->random_exit_activate(
@@ -100,6 +107,8 @@ bool BranchExperiment::explore_activate(
 
 					this->curr_scopes.push_back(new_scope_node);
 
+					this->curr_returns.push_back(NULL);
+
 					default_to_action = false;
 				}
 			}
@@ -112,17 +121,37 @@ bool BranchExperiment::explore_activate(
 				this->curr_actions.push_back(new_action_node);
 
 				this->curr_scopes.push_back(NULL);
+				this->curr_returns.push_back(NULL);
 			}
+		}
+
+		uniform_int_distribution<int> return_distribution(0, 3);
+		if (return_distribution(generator) == 0) {
+			ReturnNode* new_return_node = new ReturnNode();
+			uniform_int_distribution<int> location_distribution(0, context.back().location_history.size()-1);
+			AbstractNode* previous_location = (*next(context.back().location_history.begin(), location_distribution(generator))).first;
+			new_return_node->previous_location_id = previous_location->id;
+			new_return_node->previous_location = previous_location;
+
+			uniform_int_distribution<int> step_distribution(0, new_num_steps);
+			int step_index = step_distribution(generator);
+			this->curr_actions.insert(this->curr_actions.begin() + step_index, NULL);
+			this->curr_scopes.insert(this->curr_scopes.begin() + step_index, NULL);
+			this->curr_returns.insert(this->curr_returns.begin() + step_index, new_return_node);
 		}
 
 		for (int s_index = 0; s_index < (int)this->curr_step_types.size(); s_index++) {
 			if (this->curr_step_types[s_index] == STEP_TYPE_ACTION) {
 				problem->perform_action(this->curr_actions[s_index]->action);
-			} else {
+			} else if (this->curr_step_types[s_index] == STEP_TYPE_SCOPE) {
 				this->curr_scopes[s_index]->explore_activate(
 					problem,
 					context,
 					run_helper);
+			} else {
+				this->curr_returns[s_index]->explore_activate(
+					problem,
+					context);
 			}
 		}
 
@@ -156,8 +185,10 @@ void BranchExperiment::explore_backprop(
 				for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 					if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 						delete this->best_actions[s_index];
-					} else {
+					} else if (this->best_step_types[s_index] == STEP_TYPE_SCOPE) {
 						delete this->best_scopes[s_index];
+					} else {
+						delete this->best_returns[s_index];
 					}
 				}
 
@@ -165,23 +196,28 @@ void BranchExperiment::explore_backprop(
 				this->best_step_types = this->curr_step_types;
 				this->best_actions = this->curr_actions;
 				this->best_scopes = this->curr_scopes;
+				this->best_returns = this->curr_returns;
 				this->best_exit_next_node = this->curr_exit_next_node;
 
 				this->curr_step_types.clear();
 				this->curr_actions.clear();
 				this->curr_scopes.clear();
+				this->curr_returns.clear();
 			} else {
 				for (int s_index = 0; s_index < (int)this->curr_step_types.size(); s_index++) {
 					if (this->curr_step_types[s_index] == STEP_TYPE_ACTION) {
 						delete this->curr_actions[s_index];
-					} else {
+					} else if (this->curr_step_types[s_index] == STEP_TYPE_SCOPE) {
 						delete this->curr_scopes[s_index];
+					} else {
+						delete this->curr_returns[s_index];
 					}
 				}
 
 				this->curr_step_types.clear();
 				this->curr_actions.clear();
 				this->curr_scopes.clear();
+				this->curr_returns.clear();
 			}
 
 			if (this->state_iter == EXPLORE_ITERS-1
@@ -198,25 +234,30 @@ void BranchExperiment::explore_backprop(
 				this->best_step_types = this->curr_step_types;
 				this->best_actions = this->curr_actions;
 				this->best_scopes = this->curr_scopes;
+				this->best_returns = this->curr_returns;
 				this->best_exit_next_node = this->curr_exit_next_node;
 
 				this->curr_step_types.clear();
 				this->curr_actions.clear();
 				this->curr_scopes.clear();
+				this->curr_returns.clear();
 
 				select = true;
 			} else {
 				for (int s_index = 0; s_index < (int)this->curr_step_types.size(); s_index++) {
 					if (this->curr_step_types[s_index] == STEP_TYPE_ACTION) {
 						delete this->curr_actions[s_index];
-					} else {
+					} else if (this->curr_step_types[s_index] == STEP_TYPE_SCOPE) {
 						delete this->curr_scopes[s_index];
+					} else {
+						delete this->curr_returns[s_index];
 					}
 				}
 
 				this->curr_step_types.clear();
 				this->curr_actions.clear();
 				this->curr_scopes.clear();
+				this->curr_returns.clear();
 			}
 		}
 
@@ -226,9 +267,13 @@ void BranchExperiment::explore_backprop(
 					this->best_actions[s_index]->parent = this->scope_context;
 					this->best_actions[s_index]->id = this->scope_context->node_counter;
 					this->scope_context->node_counter++;
-				} else {
+				} else if (this->best_step_types[s_index] == STEP_TYPE_SCOPE) {
 					this->best_scopes[s_index]->parent = this->scope_context;
 					this->best_scopes[s_index]->id = this->scope_context->node_counter;
+					this->scope_context->node_counter++;
+				} else {
+					this->best_returns[s_index]->parent = this->scope_context;
+					this->best_returns[s_index]->id = this->scope_context->node_counter;
 					this->scope_context->node_counter++;
 				}
 			}
@@ -270,18 +315,24 @@ void BranchExperiment::explore_backprop(
 					if (this->best_step_types[s_index+1] == STEP_TYPE_ACTION) {
 						next_node_id = this->best_actions[s_index+1]->id;
 						next_node = this->best_actions[s_index+1];
-					} else {
+					} else if (this->best_step_types[s_index+1] == STEP_TYPE_SCOPE) {
 						next_node_id = this->best_scopes[s_index+1]->id;
 						next_node = this->best_scopes[s_index+1];
+					} else {
+						next_node_id = this->best_returns[s_index+1]->id;
+						next_node = this->best_returns[s_index+1];
 					}
 				}
 
 				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 					this->best_actions[s_index]->next_node_id = next_node_id;
 					this->best_actions[s_index]->next_node = next_node;
-				} else {
+				} else if (this->best_step_types[s_index] == STEP_TYPE_SCOPE) {
 					this->best_scopes[s_index]->next_node_id = next_node_id;
 					this->best_scopes[s_index]->next_node = next_node;
+				} else {
+					this->best_returns[s_index]->next_node_id = next_node_id;
+					this->best_returns[s_index]->next_node = next_node;
 				}
 			}
 

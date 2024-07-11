@@ -5,6 +5,7 @@
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
+#include "return_node.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
@@ -94,6 +95,14 @@ void BranchExperiment::new_branch(Solution* duplicate) {
 			}
 		}
 		break;
+	case NODE_TYPE_RETURN:
+		{
+			ReturnNode* return_node = (ReturnNode*)duplicate_explore_node;
+
+			this->branch_node->original_next_node_id = return_node->next_node_id;
+			this->branch_node->original_next_node = return_node->next_node;
+		}
+		break;
 	}
 
 	if (this->best_step_types.size() == 0) {
@@ -103,9 +112,12 @@ void BranchExperiment::new_branch(Solution* duplicate) {
 		if (this->best_step_types[0] == STEP_TYPE_ACTION) {
 			this->branch_node->branch_next_node_id = this->best_actions[0]->id;
 			this->branch_node->branch_next_node = this->best_actions[0];
-		} else {
+		} else if (this->best_step_types[0] == STEP_TYPE_SCOPE) {
 			this->branch_node->branch_next_node_id = this->best_scopes[0]->id;
 			this->branch_node->branch_next_node = this->best_scopes[0];
+		} else {
+			this->branch_node->branch_next_node_id = this->best_returns[0]->id;
+			this->branch_node->branch_next_node = this->best_returns[0];
 		}
 	}
 
@@ -139,29 +151,48 @@ void BranchExperiment::new_branch(Solution* duplicate) {
 			}
 		}
 		break;
+	case NODE_TYPE_RETURN:
+		{
+			ReturnNode* return_node = (ReturnNode*)duplicate_explore_node;
+
+			return_node->next_node_id = this->branch_node->id;
+			return_node->next_node = this->branch_node;
+		}
+		break;
 	}
 
 	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 			this->best_actions[s_index]->parent = duplicate_local_scope;
 			duplicate_local_scope->nodes[this->best_actions[s_index]->id] = this->best_actions[s_index];
-		} else {
+		} else if (this->best_step_types[s_index] == STEP_TYPE_SCOPE) {
 			this->best_scopes[s_index]->parent = duplicate_local_scope;
 			duplicate_local_scope->nodes[this->best_scopes[s_index]->id] = this->best_scopes[s_index];
 
 			this->best_scopes[s_index]->scope = duplicate->scopes[this->best_scopes[s_index]->scope->id];
+		} else {
+			this->best_returns[s_index]->parent = duplicate_local_scope;
+			duplicate_local_scope->nodes[this->best_returns[s_index]->id] = this->best_returns[s_index];
+
+			this->best_returns[s_index]->previous_location = duplicate_local_scope->nodes[
+				this->best_returns[s_index]->previous_location_id];
 		}
 	}
 	if (this->best_step_types.size() > 0) {
 		if (this->best_step_types.back() == STEP_TYPE_ACTION) {
 			if (this->best_actions.back()->next_node != NULL) {
 				this->best_actions.back()->next_node = duplicate_local_scope
-					->nodes[this->best_actions.back()->next_node->id];
+					->nodes[this->best_actions.back()->next_node_id];
 			}
-		} else {
+		} else if (this->best_step_types.back() == STEP_TYPE_SCOPE) {
 			if (this->best_scopes.back()->next_node != NULL) {
 				this->best_scopes.back()->next_node = duplicate_local_scope
-					->nodes[this->best_scopes.back()->next_node->id];
+					->nodes[this->best_scopes.back()->next_node_id];
+			}
+		} else {
+			if (this->best_returns.back()->next_node != NULL) {
+				this->best_returns.back()->next_node = duplicate_local_scope
+					->nodes[this->best_returns.back()->next_node_id];
 			}
 		}
 	}
@@ -183,6 +214,7 @@ void BranchExperiment::new_branch(Solution* duplicate) {
 
 	this->best_actions.clear();
 	this->best_scopes.clear();
+	this->best_returns.clear();
 	this->ending_node = NULL;
 	this->branch_node = NULL;
 }

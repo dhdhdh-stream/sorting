@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "globals.h"
+#include "minesweeper.h"
 #include "scope.h"
 #include "solution.h"
 #include "solution_set.h"
@@ -39,4 +40,6 @@ void ScopeNode::measure_activate(AbstractNode*& curr_node,
 		return;
 	}
 	context.back().nodes_seen.push_back({this, false});
+	Minesweeper* minesweeper = (Minesweeper*)problem;
+	context.back().location_history[this] = {minesweeper->current_x, minesweeper->current_y};
 }

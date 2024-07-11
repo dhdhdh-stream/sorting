@@ -8,6 +8,7 @@
 #include "globals.h"
 #include "network.h"
 #include "problem.h"
+#include "return_node.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
@@ -75,6 +76,12 @@ BranchExperiment::~BranchExperiment() {
 		}
 	}
 
+	for (int s_index = 0; s_index < (int)this->curr_returns.size(); s_index++) {
+		if (this->curr_returns[s_index] != NULL) {
+			delete this->curr_returns[s_index];
+		}
+	}
+
 	for (int s_index = 0; s_index < (int)this->best_actions.size(); s_index++) {
 		if (this->best_actions[s_index] != NULL) {
 			delete this->best_actions[s_index];
@@ -84,6 +91,12 @@ BranchExperiment::~BranchExperiment() {
 	for (int s_index = 0; s_index < (int)this->best_scopes.size(); s_index++) {
 		if (this->best_scopes[s_index] != NULL) {
 			delete this->best_scopes[s_index];
+		}
+	}
+
+	for (int s_index = 0; s_index < (int)this->best_returns.size(); s_index++) {
+		if (this->best_returns[s_index] != NULL) {
+			delete this->best_returns[s_index];
 		}
 	}
 

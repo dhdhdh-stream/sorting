@@ -84,8 +84,10 @@ bool BranchExperiment::capture_verify_activate(AbstractNode*& curr_node,
 		} else {
 			if (this->best_step_types[0] == STEP_TYPE_ACTION) {
 				curr_node = this->best_actions[0];
-			} else {
+			} else if (this->best_step_types[0] == STEP_TYPE_SCOPE) {
 				curr_node = this->best_scopes[0];
+			} else {
+				curr_node = this->best_returns[0];
 			}
 		}
 

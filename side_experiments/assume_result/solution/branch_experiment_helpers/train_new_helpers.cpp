@@ -11,6 +11,7 @@
 #include "minesweeper.h"
 #include "network.h"
 #include "nn_helpers.h"
+#include "return_node.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution_set.h"
@@ -62,8 +63,10 @@ bool BranchExperiment::train_new_activate(
 		} else {
 			if (this->best_step_types[0] == STEP_TYPE_ACTION) {
 				curr_node = this->best_actions[0];
-			} else {
+			} else if (this->best_step_types[0] == STEP_TYPE_SCOPE) {
 				curr_node = this->best_scopes[0];
+			} else {
+				curr_node = this->best_returns[0];
 			}
 		}
 

@@ -7,6 +7,7 @@
 #include "globals.h"
 #include "network.h"
 #include "problem.h"
+#include "return_node.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
@@ -153,6 +154,19 @@ NewActionExperiment::NewActionExperiment(Scope* scope_context,
 						node_mappings[original_branch_node] = new_branch_node;
 					}
 					break;
+				case NODE_TYPE_RETURN:
+					{
+						ReturnNode* original_return_node = (ReturnNode*)(*node_it);
+
+						ReturnNode* new_return_node = new ReturnNode();
+						new_return_node->parent = this->new_scope;
+						new_return_node->id = this->new_scope->node_counter;
+						this->new_scope->node_counter++;
+						this->new_scope->nodes[new_return_node->id] = new_return_node;
+
+						node_mappings[original_return_node] = new_return_node;
+					}
+					break;
 				}
 			}
 
@@ -228,6 +242,36 @@ NewActionExperiment::NewActionExperiment(Scope* scope_context,
 						}
 					}
 					break;
+				case NODE_TYPE_RETURN:
+					{
+						ReturnNode* original_return_node = (ReturnNode*)(*node_it);
+						ReturnNode* new_return_node = (ReturnNode*)node_mappings[original_return_node];
+
+						{
+							map<AbstractNode*, AbstractNode*>::iterator it = node_mappings
+								.find(original_return_node->previous_location);
+							if (it == node_mappings.end()) {
+								new_return_node->previous_location_id = -1;
+								new_return_node->previous_location = NULL;
+							} else {
+								new_return_node->previous_location_id = it->second->id;
+								new_return_node->previous_location = it->second;
+							}
+						}
+
+						{
+							map<AbstractNode*, AbstractNode*>::iterator it = node_mappings
+								.find(original_return_node->next_node);
+							if (it == node_mappings.end()) {
+								new_return_node->next_node_id = new_ending_node->id;
+								new_return_node->next_node = new_ending_node;
+							} else {
+								new_return_node->next_node_id = it->second->id;
+								new_return_node->next_node = it->second;
+							}
+						}
+					}
+					break;
 				}
 			}
 
@@ -267,6 +311,12 @@ NewActionExperiment::NewActionExperiment(Scope* scope_context,
 				} else {
 					random_start_node = branch_node->original_next_node;
 				}
+			}
+			break;
+		case NODE_TYPE_RETURN:
+			{
+				ReturnNode* return_node = (ReturnNode*)node_context;
+				random_start_node = return_node->next_node;
 			}
 			break;
 		}

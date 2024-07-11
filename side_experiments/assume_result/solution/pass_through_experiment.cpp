@@ -7,6 +7,7 @@
 #include "constants.h"
 #include "globals.h"
 #include "problem.h"
+#include "return_node.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
@@ -27,89 +28,13 @@ PassThroughExperiment::PassThroughExperiment(Scope* scope_context,
 
 	this->ending_node = NULL;
 
-	this->target_val_histories.reserve(NUM_DATAPOINTS);
-
-	vector<AbstractNode*> possible_exits;
-
-	if (this->node_context->type == NODE_TYPE_ACTION
-			&& ((ActionNode*)this->node_context)->next_node == NULL) {
-		possible_exits.push_back(NULL);
-	}
-
-	AbstractNode* starting_node;
-	switch (this->node_context->type) {
-	case NODE_TYPE_ACTION:
-		{
-			ActionNode* action_node = (ActionNode*)this->node_context;
-			starting_node = action_node->next_node;
-		}
-		break;
-	case NODE_TYPE_SCOPE:
-		{
-			ScopeNode* scope_node = (ScopeNode*)this->node_context;
-			starting_node = scope_node->next_node;
-		}
-		break;
-	case NODE_TYPE_BRANCH:
-		{
-			BranchNode* branch_node = (BranchNode*)this->node_context;
-			if (this->is_branch) {
-				starting_node = branch_node->branch_next_node;
-			} else {
-				starting_node = branch_node->original_next_node;
-			}
-		}
-		break;
-	}
-
-	this->scope_context->random_exit_activate(
-		starting_node,
-		possible_exits);
-
-	uniform_int_distribution<int> distribution(0, possible_exits.size()-1);
-	int random_index = distribution(generator);
-	this->curr_exit_next_node = possible_exits[random_index];
-
-	int new_num_steps;
-	uniform_int_distribution<int> uniform_distribution(0, 1);
-	geometric_distribution<int> geometric_distribution(0.5);
-	if (random_index == 0) {
-		new_num_steps = 1 + uniform_distribution(generator) + geometric_distribution(generator);
-	} else {
-		new_num_steps = uniform_distribution(generator) + geometric_distribution(generator);
-	}
-
-	uniform_int_distribution<int> default_distribution(0, 3);
-	for (int s_index = 0; s_index < new_num_steps; s_index++) {
-		bool default_to_action = true;
-		if (default_distribution(generator) != 0) {
-			ScopeNode* new_scope_node = create_existing();
-			if (new_scope_node != NULL) {
-				this->curr_step_types.push_back(STEP_TYPE_SCOPE);
-				this->curr_actions.push_back(NULL);
-
-				this->curr_scopes.push_back(new_scope_node);
-
-				default_to_action = false;
-			}
-		}
-
-		if (default_to_action) {
-			this->curr_step_types.push_back(STEP_TYPE_ACTION);
-
-			ActionNode* new_action_node = new ActionNode();
-			new_action_node->action = problem_type->random_action();
-			this->curr_actions.push_back(new_action_node);
-
-			this->curr_scopes.push_back(NULL);
-		}
-	}
-
 	this->curr_score = 0.0;
 	this->best_score = numeric_limits<double>::lowest();
 
-	this->state_iter = 0;
-	this->sub_state_iter = 0;
+	this->target_val_histories.reserve(NUM_DATAPOINTS);
+
+	this->state_iter = -1;
+	this->sub_state_iter = -1;
 	this->explore_iter = 0;
 
 	this->result = EXPERIMENT_RESULT_NA;
@@ -128,6 +53,12 @@ PassThroughExperiment::~PassThroughExperiment() {
 		}
 	}
 
+	for (int s_index = 0; s_index < (int)this->curr_returns.size(); s_index++) {
+		if (this->curr_returns[s_index] != NULL) {
+			delete this->curr_returns[s_index];
+		}
+	}
+
 	for (int s_index = 0; s_index < (int)this->best_actions.size(); s_index++) {
 		if (this->best_actions[s_index] != NULL) {
 			delete this->best_actions[s_index];
@@ -137,6 +68,12 @@ PassThroughExperiment::~PassThroughExperiment() {
 	for (int s_index = 0; s_index < (int)this->best_scopes.size(); s_index++) {
 		if (this->best_scopes[s_index] != NULL) {
 			delete this->best_scopes[s_index];
+		}
+	}
+
+	for (int s_index = 0; s_index < (int)this->best_returns.size(); s_index++) {
+		if (this->best_returns[s_index] != NULL) {
+			delete this->best_returns[s_index];
 		}
 	}
 

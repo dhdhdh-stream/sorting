@@ -2,7 +2,6 @@
 
 #include <iostream>
 
-#include "abstract_experiment.h"
 #include "scope.h"
 
 using namespace std;

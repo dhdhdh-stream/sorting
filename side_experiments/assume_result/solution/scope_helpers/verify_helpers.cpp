@@ -7,6 +7,7 @@
 #include "action_node.h"
 #include "branch_node.h"
 #include "globals.h"
+#include "return_node.h"
 #include "scope_node.h"
 #include "solution.h"
 #include "solution_set.h"
@@ -45,6 +46,16 @@ void node_verify_activate_helper(AbstractNode*& curr_node,
 								  problem,
 								  context,
 								  run_helper);
+		}
+
+		break;
+	case NODE_TYPE_RETURN:
+		{
+			ReturnNode* node = (ReturnNode*)curr_node;
+			node->activate(curr_node,
+						   problem,
+						   context,
+						   run_helper);
 		}
 
 		break;
