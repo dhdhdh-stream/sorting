@@ -38,6 +38,19 @@ void Scope::clear_verify() {
 }
 #endif /* MDEBUG */
 
+void Scope::clean_node(int node_id) {
+	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
+			it != this->nodes.end(); it++) {
+		if (it->second->type == NODE_TYPE_RETURN) {
+			ReturnNode* return_node = (ReturnNode*)it->second;
+			if (return_node->previous_location_id == node_id) {
+				return_node->previous_location_id = -1;
+				return_node->previous_location = NULL;
+			}
+		}
+	}
+}
+
 void Scope::save(ofstream& output_file) {
 	output_file << this->node_counter << endl;
 

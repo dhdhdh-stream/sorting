@@ -64,6 +64,8 @@ public:
 	void clear_verify();
 	#endif /* MDEBUG */
 
+	void clean_node(int node_id);
+
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file,
 			  Solution* parent_solution);

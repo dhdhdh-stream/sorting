@@ -1,15 +1,53 @@
-// TODO: maybe save location? and can return?
-// - like, add hardcoded position
-//   - scope saves starting position, and return to start is a possible action
-
-// in general, mark locations of interest?
-// - and have ways of travelling back?
-
-// travel back to previous history spot
+// TODO: travel back to previous history spot
 // - maybe have:
 //   - pre decision possibility
 //   - post decision possibility
 //   - post sequence possibility
+
+// try have spot in world model
+// - rather than being centered
+//   - or try solving like AlphaGo
+
+// if assume result, don't need as many threads?
+// - can simply constantly take first success
+
+// perhaps explore everywhere?
+// - rather than committing to specific spots?
+
+// having global perspective doesn't make it easy to affect it from local scope
+// - have to also act globally?
+//   - minesweeper can be solved greedily if have world
+
+// problems where having global perspective is still hard include go, chess, Rubik's cube, etc.
+// - existing solutions for go, chess bootstrapped off of humans?
+//   - or at least Monte-Carlo Tree Search plus problem can be solved greedily?
+
+// instead of RNN for world model, maybe try attention instead
+// - so not based on naive locality
+//   - so correlate each location with each other location before processing?
+//     - then each location's value is replaced by a weighted sum of every locations' value
+//     - so input becomes broad groups of correlated values?
+// - though attention is used when there are a wide variety of possibilities at each spot
+//   - i.e., giant word vectors
+//   - my locations are just doubles?
+
+// combinations of actions are orthogonal to world model, and both are needed
+// - world model to eliminate redundant information
+//   - may also guide exploration and decision making?
+// - but actions may cause permanent changes to the world, and specific sequences of actions may be needed to reach good outcomes
+
+// right now, not even taking advantage of global data
+// - just using world model to eliminate duplicates
+// - which is probably why not always getting best result
+//   - can't see spots that are still missing, doesn't know whether has already succeeded
+
+// measure actions, scopes, etc., taken
+
+// try single thread always update
+
+// perhaps use world to learn eval and existing, still use obs for new?
+
+// experiment with even distribution relative to scopes for explore nodes
 
 #include <chrono>
 #include <iostream>

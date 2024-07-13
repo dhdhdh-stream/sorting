@@ -1,5 +1,7 @@
 #include "return_node.h"
 
+#include <iostream>
+
 #include "abstract_experiment.h"
 #include "globals.h"
 #include "minesweeper.h"
@@ -22,6 +24,8 @@ void ReturnNode::activate(AbstractNode*& curr_node,
 			minesweeper->current_y = it->second.second;
 		}
 	}
+
+	curr_node = this->next_node;
 
 	run_helper.num_actions++;
 	Solution* solution = solution_set->solutions[solution_set->curr_solution_index];

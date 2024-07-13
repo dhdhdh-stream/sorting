@@ -36,8 +36,6 @@ bool BranchExperiment::explore_activate(
 			&& this->num_instances_until_target == 0) {
 		history->has_target = true;
 
-		history->existing_predicted_scores.push_back(run_helper.result);
-
 		Scope* parent_scope = (Scope*)this->scope_context;
 
 		vector<AbstractNode*> possible_exits;
@@ -135,6 +133,7 @@ bool BranchExperiment::explore_activate(
 
 			uniform_int_distribution<int> step_distribution(0, new_num_steps);
 			int step_index = step_distribution(generator);
+			this->curr_step_types.insert(this->curr_step_types.begin() + step_index, STEP_TYPE_RETURN);
 			this->curr_actions.insert(this->curr_actions.begin() + step_index, NULL);
 			this->curr_scopes.insert(this->curr_scopes.begin() + step_index, NULL);
 			this->curr_returns.insert(this->curr_returns.begin() + step_index, new_return_node);
@@ -172,7 +171,7 @@ void BranchExperiment::explore_backprop(
 	this->num_instances_until_target = 1 + until_distribution(generator);
 
 	if (history->has_target) {
-		double curr_surprise = target_val - history->existing_predicted_scores[0];
+		double curr_surprise = target_val - run_helper.result;
 
 		bool select = false;
 		if (this->explore_type == EXPLORE_TYPE_BEST) {

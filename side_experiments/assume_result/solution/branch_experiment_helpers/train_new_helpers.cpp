@@ -24,19 +24,18 @@ bool BranchExperiment::train_new_activate(
 		vector<ContextLayer>& context,
 		RunHelper& run_helper,
 		BranchExperimentHistory* history) {
+	this->num_instances_until_target--;
+
 	if (run_helper.branch_node_ancestors.find(this->branch_node) != run_helper.branch_node_ancestors.end()) {
 		return false;
 	}
 
-	run_helper.branch_node_ancestors.insert(this->branch_node);
-
 	run_helper.num_analyze += (1 + 2*this->new_analyze_size) * (1 + 2*this->new_analyze_size);
 
-	this->num_instances_until_target--;
-	if (this->num_instances_until_target == 0) {
-		history->instance_count++;
+	if (this->num_instances_until_target <= 0) {
+		run_helper.branch_node_ancestors.insert(this->branch_node);
 
-		history->existing_predicted_scores.push_back(run_helper.result);
+		history->instance_count++;
 
 		Minesweeper* minesweeper = (Minesweeper*)problem;
 		vector<vector<double>> new_input_vals(1 + 2*this->new_analyze_size);
@@ -85,7 +84,7 @@ void BranchExperiment::train_new_backprop(
 	BranchExperimentHistory* history = (BranchExperimentHistory*)run_helper.experiment_histories.back();
 
 	for (int i_index = 0; i_index < history->instance_count; i_index++) {
-		double surprise = (target_val - history->existing_predicted_scores[i_index]) / history->instance_count;
+		double surprise = (target_val - run_helper.result) / history->instance_count;
 		this->target_val_histories.push_back(surprise);
 	}
 

@@ -24,8 +24,6 @@ void BranchNode::verify_activate(AbstractNode*& curr_node,
 	if (run_helper.branch_node_ancestors.find(this) != run_helper.branch_node_ancestors.end()) {
 		is_branch = false;
 	} else {
-		run_helper.branch_node_ancestors.insert(this);
-
 		run_helper.num_analyze += (1 + 2*this->analyze_size) * (1 + 2*this->analyze_size);
 
 		vector<vector<double>> input_vals(1 + 2*this->analyze_size);
@@ -94,6 +92,8 @@ void BranchNode::verify_activate(AbstractNode*& curr_node,
 	}
 
 	if (is_branch) {
+		run_helper.branch_node_ancestors.insert(this);
+
 		curr_node = this->branch_next_node;
 	} else {
 		curr_node = this->original_next_node;

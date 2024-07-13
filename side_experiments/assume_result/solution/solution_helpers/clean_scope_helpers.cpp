@@ -53,6 +53,8 @@ void clean_scope(Scope* scope) {
 			if (needed_it == next_node_ids.end()) {
 				removed_node = true;
 
+				scope->clean_node(it->first);
+
 				delete it->second;
 				it = scope->nodes.erase(it);
 			} else {

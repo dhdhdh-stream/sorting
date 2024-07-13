@@ -22,8 +22,10 @@ void create_experiment(RunHelper& run_helper) {
 
 	Scope* explore_scope = (Scope*)explore_node->parent;
 
-	uniform_int_distribution<int> non_new_distribution(0, (int)explore_node->parent->nodes.size()-1);
-	if (solution_set->timestamp >= solution_set->next_possible_new_scope_timestamp
+	// uniform_int_distribution<int> non_new_distribution(0, (int)explore_node->parent->nodes.size()-1);
+	uniform_int_distribution<int> non_new_distribution(0, 4);
+	// if (solution_set->timestamp >= solution_set->next_possible_new_scope_timestamp
+	if (true
 			&& explore_scope->new_action_experiment == NULL
 			&& explore_node->parent->nodes.size() > 10
 			&& non_new_distribution(generator) != 0) {
@@ -39,7 +41,7 @@ void create_experiment(RunHelper& run_helper) {
 			explore_node->experiments.push_back(new_action_experiment);
 		}
 	} else {
-		uniform_int_distribution<int> branch_distribution(0, 3);
+		uniform_int_distribution<int> branch_distribution(0, 1);
 		if (branch_distribution(generator) == 0) {
 			BranchExperiment* new_experiment = new BranchExperiment(
 				explore_node->parent,

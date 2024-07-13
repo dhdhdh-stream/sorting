@@ -22,6 +22,8 @@ void ReturnNode::result_activate(AbstractNode*& curr_node,
 		}
 	}
 
+	curr_node = this->next_node;
+
 	run_helper.num_actions++;
 	Solution* solution = solution_set->solutions[solution_set->curr_solution_index];
 	if (run_helper.num_actions > solution->num_actions_limit) {

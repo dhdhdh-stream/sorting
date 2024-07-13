@@ -10,6 +10,7 @@
 #include "minesweeper.h"
 #include "network.h"
 #include "problem.h"
+#include "return_node.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "utilities.h"
@@ -28,8 +29,6 @@ bool BranchExperiment::capture_verify_activate(AbstractNode*& curr_node,
 	if (run_helper.branch_node_ancestors.find(this->branch_node) != run_helper.branch_node_ancestors.end()) {
 		return false;
 	}
-
-	run_helper.branch_node_ancestors.insert(this->branch_node);
 
 	run_helper.num_analyze += (1 + 2*this->new_analyze_size) * (1 + 2*this->new_analyze_size);
 
@@ -79,6 +78,8 @@ bool BranchExperiment::capture_verify_activate(AbstractNode*& curr_node,
 	context.back().nodes_seen.push_back({this->branch_node, decision_is_branch});
 
 	if (decision_is_branch) {
+		run_helper.branch_node_ancestors.insert(this->branch_node);
+
 		if (this->best_step_types.size() == 0) {
 			curr_node = this->best_exit_next_node;
 		} else {

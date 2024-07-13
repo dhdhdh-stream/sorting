@@ -26,8 +26,6 @@ bool BranchExperiment::measure_activate(AbstractNode*& curr_node,
 		return false;
 	}
 
-	run_helper.branch_node_ancestors.insert(this->branch_node);
-
 	history->instance_count++;
 
 	run_helper.num_analyze += (1 + 2*this->new_analyze_size) * (1 + 2*this->new_analyze_size);
@@ -64,6 +62,8 @@ bool BranchExperiment::measure_activate(AbstractNode*& curr_node,
 	context.back().nodes_seen.push_back({this->branch_node, decision_is_branch});
 
 	if (decision_is_branch) {
+		run_helper.branch_node_ancestors.insert(this->branch_node);
+
 		if (this->best_step_types.size() == 0) {
 			curr_node = this->best_exit_next_node;
 		} else {
@@ -106,6 +106,7 @@ void BranchExperiment::measure_backprop(
 			#else
 			if (this->combined_score > 0.0) {
 			#endif /* MDEBUG */
+				cout << "BranchExperiment" << endl;
 				cout << "this->scope_context->id: " << this->scope_context->id << endl;
 				cout << "this->node_context->id: " << this->node_context->id << endl;
 				cout << "this->is_branch: " << this->is_branch << endl;

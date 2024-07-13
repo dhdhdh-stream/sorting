@@ -338,6 +338,7 @@ void Minesweeper::perform_action(Action action) {
 double Minesweeper::score_result(int num_analyze,
 								 int num_actions) {
 	int curr_revealed = 0;
+	int num_mines = 0;
 	double score = 1.0;
 	for (int x_index = 0; x_index < WIDTH; x_index++) {
 		for (int y_index = 0; y_index < HEIGHT; y_index++) {
@@ -349,10 +350,17 @@ double Minesweeper::score_result(int num_analyze,
 				if (this->world[x_index][y_index] != -1) {
 					score -= 1.0;
 				} else {
+					num_mines++;
 					score += 0.2;
 				}
 			}
 		}
+	}
+
+	if (curr_revealed == 71
+			&& num_mines == 10
+			&& !this->hit_mine) {
+		score += 10.0;
 	}
 
 	score += 0.01*curr_revealed;

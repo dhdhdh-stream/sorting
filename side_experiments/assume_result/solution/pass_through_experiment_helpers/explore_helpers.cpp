@@ -27,11 +27,11 @@ const int VERIFY_2ND_NUM_TRUTH_PER_ITER = 2;
 const int EXPLORE_ITERS = 2;
 #else
 const int INITIAL_NUM_SAMPLES_PER_ITER = 50;
-const int INITIAL_NUM_TRUTH_PER_ITER = 5;
+const int INITIAL_NUM_TRUTH_PER_ITER = 20;
 const int VERIFY_1ST_NUM_SAMPLES_PER_ITER = 250;
-const int VERIFY_1ST_NUM_TRUTH_PER_ITER = 25;
+const int VERIFY_1ST_NUM_TRUTH_PER_ITER = 100;
 const int VERIFY_2ND_NUM_SAMPLES_PER_ITER = 1000;
-const int VERIFY_2ND_NUM_TRUTH_PER_ITER = 100;
+const int VERIFY_2ND_NUM_TRUTH_PER_ITER = 400;
 const int EXPLORE_ITERS = 100;
 #endif /* MDEBUG */
 
@@ -137,6 +137,7 @@ void PassThroughExperiment::explore_activate(
 
 			uniform_int_distribution<int> step_distribution(0, new_num_steps);
 			int step_index = step_distribution(generator);
+			this->curr_step_types.insert(this->curr_step_types.begin() + step_index, STEP_TYPE_RETURN);
 			this->curr_actions.insert(this->curr_actions.begin() + step_index, NULL);
 			this->curr_scopes.insert(this->curr_scopes.begin() + step_index, NULL);
 			this->curr_returns.insert(this->curr_returns.begin() + step_index, new_return_node);

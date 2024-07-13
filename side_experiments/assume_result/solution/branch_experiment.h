@@ -143,8 +143,6 @@ public:
 
 	bool has_target;
 
-	std::vector<double> existing_predicted_scores;
-
 	BranchExperimentHistory(BranchExperiment* experiment);
 };
 
