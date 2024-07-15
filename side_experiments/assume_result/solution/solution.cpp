@@ -50,16 +50,27 @@ void Solution::init() {
 
 	Scope* new_scope = new Scope();
 	new_scope->id = this->scopes.size();
+	new_scope->node_counter = 0;
 	this->scopes.push_back(new_scope);
 
 	ActionNode* starting_noop_node = new ActionNode();
 	starting_noop_node->parent = new_scope;
-	starting_noop_node->id = 0;
+	starting_noop_node->id = new_scope->node_counter;
+	new_scope->node_counter++;
 	starting_noop_node->action = Action(ACTION_NOOP, 0);
 	starting_noop_node->next_node_id = -1;
 	starting_noop_node->next_node = NULL;
-	new_scope->nodes[0] = starting_noop_node;
-	new_scope->node_counter = 1;
+	new_scope->nodes[starting_noop_node->id] = starting_noop_node;
+
+	ActionNode* back_starting_noop_node = new ActionNode();
+	back_starting_noop_node->parent = new_scope;
+	back_starting_noop_node->id = new_scope->node_counter;
+	new_scope->node_counter++;
+	back_starting_noop_node->action = Action(ACTION_NOOP, 0);
+	back_starting_noop_node->next_node_id = -1;
+	back_starting_noop_node->next_node = NULL;
+	new_scope->nodes[back_starting_noop_node->id] = back_starting_noop_node;
+
 	new_scope->average_instances_per_run = 1.0;
 
 	this->max_num_actions = 1;

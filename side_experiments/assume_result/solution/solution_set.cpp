@@ -14,7 +14,6 @@ SolutionSet::SolutionSet() {
 SolutionSet::SolutionSet(SolutionSet* original) {
 	this->timestamp = original->timestamp;
 	this->average_score = original->average_score;
-	this->next_possible_new_scope_timestamp = original->next_possible_new_scope_timestamp;
 
 	this->best_average_score = original->best_average_score;
 	this->best_timestamp = original->best_timestamp;
@@ -34,7 +33,6 @@ SolutionSet::~SolutionSet() {
 void SolutionSet::init() {
 	this->timestamp = 0;
 	this->average_score = -1.0;
-	this->next_possible_new_scope_timestamp = 0;
 
 	this->best_average_score = -1.0;
 	this->best_timestamp = 0;
@@ -58,10 +56,6 @@ void SolutionSet::load(string path,
 	string average_score_line;
 	getline(input_file, average_score_line);
 	this->average_score = stod(average_score_line);
-
-	string next_possible_new_scope_timestamp_line;
-	getline(input_file, next_possible_new_scope_timestamp_line);
-	this->next_possible_new_scope_timestamp = stoi(next_possible_new_scope_timestamp_line);
 
 	string best_average_score_line;
 	getline(input_file, best_average_score_line);
@@ -142,7 +136,6 @@ void SolutionSet::increment() {
 			}
 
 			this->average_score = -1.0;
-			this->next_possible_new_scope_timestamp = this->timestamp;
 
 			this->best_average_score = -1.0;
 			this->best_timestamp = this->timestamp;
@@ -157,7 +150,6 @@ void SolutionSet::save(string path,
 
 	output_file << this->timestamp << endl;
 	output_file << this->average_score << endl;
-	output_file << this->next_possible_new_scope_timestamp << endl;
 
 	output_file << this->best_average_score << endl;
 	output_file << this->best_timestamp << endl;

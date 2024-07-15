@@ -18,7 +18,14 @@ Network::Network(int analyze_size) {
 	}
 
 	this->hidden = new Layer(LEAKY_LAYER);
-	int hidden_size = (analyze_size + 1) * (analyze_size + 1);
+	int hidden_size;
+	if (analyze_size == 0) {
+		hidden_size = 2;
+	} else if (analyze_size == 1) {
+		hidden_size = 4;
+	} else {
+		hidden_size = 10;
+	}
 	for (int h_index = 0; h_index < hidden_size; h_index++) {
 		this->hidden->acti_vals.push_back(0.0);
 		this->hidden->errors.push_back(0.0);
@@ -29,7 +36,6 @@ Network::Network(int analyze_size) {
 	this->output = new Layer(LINEAR_LAYER);
 	this->output->acti_vals.push_back(0.0);
 	this->output->errors.push_back(0.0);
-	this->output->input_layers.push_back(this->input);
 	this->output->input_layers.push_back(this->hidden);
 	this->output->update_structure();
 
@@ -57,7 +63,6 @@ Network::Network(Network* original) {
 	this->output = new Layer(LINEAR_LAYER);
 	this->output->acti_vals.push_back(0.0);
 	this->output->errors.push_back(0.0);
-	this->output->input_layers.push_back(this->input);
 	this->output->input_layers.push_back(this->hidden);
 	this->output->update_structure();
 	this->output->copy_weights_from(original->output);
@@ -91,7 +96,6 @@ Network::Network(ifstream& input_file) {
 	this->output = new Layer(LINEAR_LAYER);
 	this->output->acti_vals.push_back(0.0);
 	this->output->errors.push_back(0.0);
-	this->output->input_layers.push_back(this->input);
 	this->output->input_layers.push_back(this->hidden);
 	this->output->update_structure();
 

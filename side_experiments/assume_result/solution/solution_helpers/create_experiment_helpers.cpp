@@ -17,17 +17,17 @@
 using namespace std;
 
 void create_experiment(RunHelper& run_helper) {
-	AbstractNode* explore_node = run_helper.selected_node.first;
-	bool explore_is_branch = run_helper.selected_node.second;
+	uniform_int_distribution<int> explore_node_distribution(0, run_helper.nodes_seen.size()-1);
+	int explore_node_index = explore_node_distribution(generator);
+	set<pair<AbstractNode*,bool>>::iterator it = next(run_helper.nodes_seen.begin(), explore_node_index);
+	AbstractNode* explore_node = (*it).first;
+	bool explore_is_branch = (*it).second;
 
 	Scope* explore_scope = (Scope*)explore_node->parent;
 
-	// uniform_int_distribution<int> non_new_distribution(0, (int)explore_node->parent->nodes.size()-1);
 	uniform_int_distribution<int> non_new_distribution(0, 4);
-	// if (solution_set->timestamp >= solution_set->next_possible_new_scope_timestamp
-	if (true
-			&& explore_scope->new_action_experiment == NULL
-			&& explore_node->parent->nodes.size() > 10
+	if (explore_scope->new_action_experiment == NULL
+			&& explore_node->parent->nodes.size() > 15
 			&& non_new_distribution(generator) != 0) {
 		NewActionExperiment* new_action_experiment = new NewActionExperiment(
 			explore_node->parent,

@@ -1,3 +1,10 @@
+/**
+ * - very useful?
+ *   - makes exploring deeper much easier where there is return node after
+ */
+
+// TODO: try adding return branch nodes as well
+
 #ifndef RETURN_NODE_H
 #define RETURN_NODE_H
 

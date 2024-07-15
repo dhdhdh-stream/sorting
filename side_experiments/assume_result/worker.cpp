@@ -134,9 +134,6 @@ int main(int argc, char* argv[]) {
 				duplicate_solution->last_updated_scope_id = run_helper.experiment_histories.back()->experiment->scope_context->id;
 				if (run_helper.experiment_histories.back()->experiment->type == EXPERIMENT_TYPE_NEW_ACTION) {
 					duplicate_solution->last_new_scope_id = (int)duplicate_solution->scopes.size();
-
-					duplicate->next_possible_new_scope_timestamp = duplicate->timestamp
-						+ 1 + duplicate_solution->scopes.size() + MIN_ITERS_BEFORE_NEXT_NEW_SCOPE;
 				}
 
 				run_helper.experiment_histories.back()->experiment->finalize(duplicate_solution);

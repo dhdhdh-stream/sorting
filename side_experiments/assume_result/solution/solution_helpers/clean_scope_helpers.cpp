@@ -16,6 +16,7 @@ void clean_scope(Scope* scope) {
 
 		set<int> next_node_ids;
 		next_node_ids.insert(0);
+		next_node_ids.insert(1);
 		for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
 				it != scope->nodes.end(); it++) {
 			switch (it->second->type) {

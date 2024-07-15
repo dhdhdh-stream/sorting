@@ -6,6 +6,7 @@
 #include "branch_node.h"
 #include "constants.h"
 #include "globals.h"
+#include "minesweeper.h"
 #include "return_node.h"
 #include "scope_node.h"
 
@@ -87,6 +88,41 @@ void Scope::result_activate(Problem* problem,
 		AbstractNode* node = context.back().nodes_seen[b_index].first;
 		if (node->type == NODE_TYPE_BRANCH) {
 			run_helper.branch_node_ancestors.erase(node);
+		}
+	}
+
+	context.back().nodes_seen.clear();
+
+	if (!run_helper.exceeded_limit) {
+		{
+			map<AbstractNode*, pair<int,int>>::iterator it
+				= context.back().location_history.find(this->nodes[0]);
+			Minesweeper* minesweeper = (Minesweeper*)problem;
+			minesweeper->current_x = it->second.first;
+			minesweeper->current_y = it->second.second;
+		}
+
+		curr_node = this->nodes[1];
+		while (true) {
+			if (curr_node == NULL) {
+				break;
+			}
+
+			node_result_activate_helper(curr_node,
+										problem,
+										context,
+										run_helper);
+
+			if (run_helper.exceeded_limit) {
+				break;
+			}
+		}
+
+		for (int b_index = 0; b_index < (int)context.back().nodes_seen.size(); b_index++) {
+			AbstractNode* node = context.back().nodes_seen[b_index].first;
+			if (node->type == NODE_TYPE_BRANCH) {
+				run_helper.branch_node_ancestors.erase(node);
+			}
 		}
 	}
 

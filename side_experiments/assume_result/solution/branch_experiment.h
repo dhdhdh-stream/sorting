@@ -1,3 +1,14 @@
+/**
+ * - assuming result doesn't help BranchExperiment as much
+ *   - may be succeeding due to butterfly effect
+ *     - impact/reasoning so far away and difficult that no different than noise for analyze
+ *       - remember that many problems are not easily analyzeable from a glance
+ *         - need algorithms
+ * 
+ * - but don't constrain eval either
+ *   - it may be butterfly effect far away, but local might still give info
+ */
+
 #ifndef BRANCH_EXPERIMENT_H
 #define BRANCH_EXPERIMENT_H
 

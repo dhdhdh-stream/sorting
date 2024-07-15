@@ -25,7 +25,7 @@ BranchExperiment::BranchExperiment(Scope* scope_context,
 	this->is_branch = is_branch;
 
 	uniform_int_distribution<int> front_distribution(0, 1);
-	geometric_distribution<int> back_distribution(0.7);
+	geometric_distribution<int> back_distribution(0.5);
 	this->new_analyze_size = front_distribution(generator) + back_distribution(generator);
 
 	this->average_remaining_experiments_from_start = 1.0;
@@ -38,13 +38,13 @@ BranchExperiment::BranchExperiment(Scope* scope_context,
 	this->ending_node = NULL;
 	this->branch_node = NULL;
 
-	uniform_int_distribution<int> best_distribution(0, 1);
-	if (best_distribution(generator) == 0) {
+	uniform_int_distribution<int> good_distribution(0, 3);
+	if (good_distribution(generator) == 0) {
+		this->explore_type = EXPLORE_TYPE_GOOD;
+	} else {
 		this->explore_type = EXPLORE_TYPE_BEST;
 
 		this->best_surprise = 0.0;
-	} else {
-		this->explore_type = EXPLORE_TYPE_GOOD;
 	}
 
 	this->obs_histories.reserve(NUM_DATAPOINTS);

@@ -4,50 +4,17 @@
 //   - post decision possibility
 //   - post sequence possibility
 
-// try have spot in world model
-// - rather than being centered
-//   - or try solving like AlphaGo
-
-// if assume result, don't need as many threads?
-// - can simply constantly take first success
-
-// perhaps explore everywhere?
-// - rather than committing to specific spots?
-
-// having global perspective doesn't make it easy to affect it from local scope
-// - have to also act globally?
-//   - minesweeper can be solved greedily if have world
-
-// problems where having global perspective is still hard include go, chess, Rubik's cube, etc.
-// - existing solutions for go, chess bootstrapped off of humans?
-//   - or at least Monte-Carlo Tree Search plus problem can be solved greedily?
-
-// instead of RNN for world model, maybe try attention instead
-// - so not based on naive locality
-//   - so correlate each location with each other location before processing?
-//     - then each location's value is replaced by a weighted sum of every locations' value
-//     - so input becomes broad groups of correlated values?
-// - though attention is used when there are a wide variety of possibilities at each spot
-//   - i.e., giant word vectors
-//   - my locations are just doubles?
-
 // combinations of actions are orthogonal to world model, and both are needed
 // - world model to eliminate redundant information
 //   - may also guide exploration and decision making?
 // - but actions may cause permanent changes to the world, and specific sequences of actions may be needed to reach good outcomes
 
-// right now, not even taking advantage of global data
-// - just using world model to eliminate duplicates
-// - which is probably why not always getting best result
-//   - can't see spots that are still missing, doesn't know whether has already succeeded
+// maybe after a pass, reverse engineer to determine what would happen if a different choice was made
+// - use world model from the future to predict what would happen in the past
 
-// measure actions, scopes, etc., taken
-
-// try single thread always update
-
-// perhaps use world to learn eval and existing, still use obs for new?
-
-// experiment with even distribution relative to scopes for explore nodes
+// add loop nodes
+// - check local scope if hit before and break if have
+//   - but if have, also clear seen, so on outer loop, will loop again
 
 #include <chrono>
 #include <iostream>
@@ -172,9 +139,6 @@ int main(int argc, char* argv[]) {
 				duplicate_solution->last_updated_scope_id = run_helper.experiment_histories.back()->experiment->scope_context->id;
 				if (run_helper.experiment_histories.back()->experiment->type == EXPERIMENT_TYPE_NEW_ACTION) {
 					duplicate_solution->last_new_scope_id = (int)duplicate_solution->scopes.size();
-
-					duplicate->next_possible_new_scope_timestamp = duplicate->timestamp
-						+ 1 + duplicate_solution->scopes.size() + MIN_ITERS_BEFORE_NEXT_NEW_SCOPE;
 				}
 
 				run_helper.experiment_histories.back()->experiment->finalize(duplicate_solution);

@@ -83,12 +83,15 @@ void BranchExperiment::train_new_backprop(
 		RunHelper& run_helper) {
 	BranchExperimentHistory* history = (BranchExperimentHistory*)run_helper.experiment_histories.back();
 
-	for (int i_index = 0; i_index < history->instance_count; i_index++) {
-		double surprise = (target_val - run_helper.result) / history->instance_count;
-		this->target_val_histories.push_back(surprise);
+	if (history->instance_count > 0) {
+		for (int i_index = 0; i_index < history->instance_count; i_index++) {
+			double surprise = (target_val - run_helper.result) / history->instance_count;
+			this->target_val_histories.push_back(surprise);
+		}
+
+		this->state_iter++;
 	}
 
-	this->state_iter++;
 	if ((int)this->target_val_histories.size() >= NUM_DATAPOINTS
 			&& this->state_iter >= MIN_NUM_TRUTH_DATAPOINTS) {
 		int num_instances = (int)this->target_val_histories.size();

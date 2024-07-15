@@ -38,6 +38,9 @@ void ScopeNode::activate(AbstractNode*& curr_node,
 		run_helper.exceeded_limit = true;
 		return;
 	}
+	if (run_helper.experiments_seen_order.size() == 0) {
+		run_helper.nodes_seen.insert({this, false});
+	}
 	context.back().nodes_seen.push_back({this, false});
 	Minesweeper* minesweeper = (Minesweeper*)problem;
 	context.back().location_history[this] = {minesweeper->current_x, minesweeper->current_y};

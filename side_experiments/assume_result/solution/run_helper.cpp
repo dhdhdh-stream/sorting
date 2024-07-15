@@ -11,8 +11,6 @@ RunHelper::RunHelper() {
 
 	this->num_analyze = 0;
 	this->num_actions = 0;
-
-	this->selected_count = 0;
 }
 
 RunHelper::~RunHelper() {

@@ -18,7 +18,6 @@ class SolutionSet {
 public:
 	int timestamp;
 	double average_score;
-	int next_possible_new_scope_timestamp;
 
 	double best_average_score;
 	int best_timestamp;

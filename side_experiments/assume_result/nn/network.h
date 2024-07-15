@@ -2,6 +2,11 @@
  * TODO:
  * - convolution as analyze gets larger
  *   - everytime layer reaches 7x7, add another layer
+ * 
+ * - even if world fully visible, may be too complex to analyze with a glance
+ *   - whether for eval, or for guessing the impact of complex actions
+ *   - so is always just best effort
+ *     - and limits the impact of world modeling
  */
 
 #ifndef NETWORK_H

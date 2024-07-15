@@ -1,3 +1,9 @@
+/**
+ * - without sigmoid/tanh to squash values, can be difficult to hit targets exactly
+ *   - but target may be composed of multiple signals, some of which may be more relevant than others
+ *     - so cannot simply convert target to 1.0 vs. -1.0
+ */
+
 #include "nn_helpers.h"
 
 #include <iostream>
@@ -23,8 +29,16 @@ void train_network(vector<vector<vector<double>>>& inputs,
 
 		network->activate(inputs[rand_index]);
 
-		double error = target_vals[rand_index] - network->output->acti_vals[0];
-
-		network->backprop(error);
+		if (target_vals[rand_index] > 0.0) {
+			if (network->output->acti_vals[0] < target_vals[rand_index]) {
+				double error = target_vals[rand_index] - network->output->acti_vals[0];
+				network->backprop(error);
+			}
+		} else if (target_vals[rand_index] < 0.0) {
+			if (network->output->acti_vals[0] > target_vals[rand_index]) {
+				double error = target_vals[rand_index] - network->output->acti_vals[0];
+				network->backprop(error);
+			}
+		}
 	}
 }
