@@ -90,14 +90,10 @@ void Scope::measure_activate(Problem* problem,
 		}
 	}
 
-	for (int b_index = 0; b_index < (int)context.back().nodes_seen.size(); b_index++) {
-		AbstractNode* node = context.back().nodes_seen[b_index].first;
-		if (node->type == NODE_TYPE_BRANCH) {
-			run_helper.branch_node_ancestors.erase(node);
-		}
+	for (int b_index = 0; b_index < (int)context.back().branch_nodes_seen.size(); b_index++) {
+		run_helper.branch_node_ancestors.erase(context.back().branch_nodes_seen[b_index]);
 	}
-
-	context.back().nodes_seen.clear();
+	context.back().branch_nodes_seen.clear();
 
 	if (!run_helper.exceeded_limit) {
 		{
@@ -125,14 +121,9 @@ void Scope::measure_activate(Problem* problem,
 			}
 		}
 
-		for (int b_index = 0; b_index < (int)context.back().nodes_seen.size(); b_index++) {
-			AbstractNode* node = context.back().nodes_seen[b_index].first;
-			if (node->type == NODE_TYPE_BRANCH) {
-				run_helper.branch_node_ancestors.erase(node);
-			}
+		for (int b_index = 0; b_index < (int)context.back().branch_nodes_seen.size(); b_index++) {
+			run_helper.branch_node_ancestors.erase(context.back().branch_nodes_seen[b_index]);
 		}
-
-		context.back().nodes_seen.clear();
 	}
 
 	context.pop_back();

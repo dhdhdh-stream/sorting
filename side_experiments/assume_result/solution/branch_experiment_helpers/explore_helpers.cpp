@@ -29,12 +29,23 @@ bool BranchExperiment::explore_activate(
 		vector<ContextLayer>& context,
 		RunHelper& run_helper,
 		BranchExperimentHistory* history) {
+	run_helper.num_actions++;
+
 	run_helper.num_analyze += (1 + 2*this->new_analyze_size) * (1 + 2*this->new_analyze_size);
 
 	this->num_instances_until_target--;
 	if (!history->has_target
 			&& this->num_instances_until_target == 0) {
 		history->has_target = true;
+
+		uniform_int_distribution<int> use_previous_location_distribution(0, 4);
+		if (use_previous_location_distribution(generator) == 0) {
+			uniform_int_distribution<int> location_distribution(0, context.back().location_history.size()-1);
+			AbstractNode* previous_location = (*next(context.back().location_history.begin(), location_distribution(generator))).first;
+			this->curr_previous_location = previous_location;
+		} else {
+			this->curr_previous_location = NULL;
+		}
 
 		Scope* parent_scope = (Scope*)this->scope_context;
 
@@ -139,18 +150,34 @@ bool BranchExperiment::explore_activate(
 			this->curr_returns.insert(this->curr_returns.begin() + step_index, new_return_node);
 		}
 
-		for (int s_index = 0; s_index < (int)this->curr_step_types.size(); s_index++) {
-			if (this->curr_step_types[s_index] == STEP_TYPE_ACTION) {
-				problem->perform_action(this->curr_actions[s_index]->action);
-			} else if (this->curr_step_types[s_index] == STEP_TYPE_SCOPE) {
-				this->curr_scopes[s_index]->explore_activate(
-					problem,
-					context,
-					run_helper);
-			} else {
-				this->curr_returns[s_index]->explore_activate(
-					problem,
-					context);
+		bool location_match = true;
+		map<AbstractNode*, pair<int,int>>::iterator location_it;
+		if (this->curr_previous_location != NULL) {
+			location_it = context.back().location_history.find(this->curr_previous_location);
+			if (location_it == context.back().location_history.end()) {
+				location_match = false;
+			}
+		}
+		if (location_match) {
+			if (this->curr_previous_location != NULL) {
+				Minesweeper* minesweeper = (Minesweeper*)problem;
+				minesweeper->current_x = location_it->second.first;
+				minesweeper->current_y = location_it->second.second;
+			}
+
+			for (int s_index = 0; s_index < (int)this->curr_step_types.size(); s_index++) {
+				if (this->curr_step_types[s_index] == STEP_TYPE_ACTION) {
+					problem->perform_action(this->curr_actions[s_index]->action);
+				} else if (this->curr_step_types[s_index] == STEP_TYPE_SCOPE) {
+					this->curr_scopes[s_index]->explore_activate(
+						problem,
+						context,
+						run_helper);
+				} else {
+					this->curr_returns[s_index]->explore_activate(
+						problem,
+						context);
+				}
 			}
 		}
 
@@ -192,6 +219,7 @@ void BranchExperiment::explore_backprop(
 				}
 
 				this->best_surprise = curr_surprise;
+				this->best_previous_location = this->curr_previous_location;
 				this->best_step_types = this->curr_step_types;
 				this->best_actions = this->curr_actions;
 				this->best_scopes = this->curr_scopes;
@@ -231,6 +259,7 @@ void BranchExperiment::explore_backprop(
 					&& curr_surprise > 0.0) {
 			#endif /* MDEBUG */
 				this->best_step_types = this->curr_step_types;
+				this->best_previous_location = this->curr_previous_location;
 				this->best_actions = this->curr_actions;
 				this->best_scopes = this->curr_scopes;
 				this->best_returns = this->curr_returns;

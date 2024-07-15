@@ -3,8 +3,6 @@
  *   - makes exploring deeper much easier where there is return node after
  */
 
-// TODO: try adding return branch nodes as well
-
 #ifndef RETURN_NODE_H
 #define RETURN_NODE_H
 
@@ -19,6 +17,9 @@ class Problem;
 
 class ReturnNode : public AbstractNode {
 public:
+	/**
+	 * TODO: can use locations from subscope as well
+	 */
 	int previous_location_id;
 	AbstractNode* previous_location;
 

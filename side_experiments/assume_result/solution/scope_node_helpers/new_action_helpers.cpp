@@ -42,7 +42,6 @@ void ScopeNode::new_action_capture_verify_activate(
 		run_helper.exceeded_limit = true;
 		return;
 	}
-	context.back().nodes_seen.push_back({this, false});
 	Minesweeper* minesweeper = (Minesweeper*)problem;
 	context.back().location_history[this] = {minesweeper->current_x, minesweeper->current_y};
 

@@ -167,7 +167,11 @@ NewActionExperiment::NewActionExperiment(Scope* scope_context,
 						this->new_scope->nodes[new_branch_node->id] = new_branch_node;
 
 						new_branch_node->analyze_size = original_branch_node->analyze_size;
-						new_branch_node->network = new Network(original_branch_node->network);
+						if (new_branch_node->analyze_size == -1) {
+							new_branch_node->network = NULL;
+						} else {
+							new_branch_node->network = new Network(original_branch_node->network);
+						}
 
 						node_mappings[original_branch_node] = new_branch_node;
 					}
@@ -244,6 +248,18 @@ NewActionExperiment::NewActionExperiment(Scope* scope_context,
 					{
 						BranchNode* original_branch_node = (BranchNode*)(*node_it);
 						BranchNode* new_branch_node = (BranchNode*)node_mappings[original_branch_node];
+
+						{
+							map<AbstractNode*, AbstractNode*>::iterator it = node_mappings
+								.find(original_branch_node->previous_location);
+							if (it == node_mappings.end()) {
+								new_branch_node->previous_location_id = -1;
+								new_branch_node->previous_location = NULL;
+							} else {
+								new_branch_node->previous_location_id = it->second->id;
+								new_branch_node->previous_location = it->second;
+							}
+						}
 
 						map<AbstractNode*, AbstractNode*>::iterator original_it = node_mappings
 							.find(original_branch_node->original_next_node);

@@ -5,6 +5,7 @@
 #include "abstract_experiment.h"
 #include "globals.h"
 #include "minesweeper.h"
+#include "new_action_experiment.h"
 #include "scope.h"
 #include "solution.h"
 #include "solution_set.h"
@@ -40,8 +41,10 @@ void ScopeNode::activate(AbstractNode*& curr_node,
 	}
 	if (run_helper.experiments_seen_order.size() == 0) {
 		run_helper.nodes_seen.insert({this, false});
+	} else if (run_helper.experiment_histories.size() == 1
+			&& run_helper.experiment_histories.back()->experiment == this->parent->new_action_experiment) {
+		context.back().nodes_seen.push_back({this, false});
 	}
-	context.back().nodes_seen.push_back({this, false});
 	Minesweeper* minesweeper = (Minesweeper*)problem;
 	context.back().location_history[this] = {minesweeper->current_x, minesweeper->current_y};
 

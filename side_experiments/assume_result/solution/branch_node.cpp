@@ -23,8 +23,14 @@ BranchNode::BranchNode() {
 BranchNode::BranchNode(BranchNode* original) {
 	this->type = NODE_TYPE_BRANCH;
 
+	this->previous_location_id = original->previous_location_id;
+
 	this->analyze_size = original->analyze_size;
-	this->network = new Network(original->network);
+	if (this->analyze_size == -1) {
+		this->network = NULL;
+	} else {
+		this->network = new Network(original->network);
+	}
 
 	this->original_next_node_id = original->original_next_node_id;
 	this->branch_next_node_id = original->branch_next_node_id;
@@ -35,7 +41,9 @@ BranchNode::BranchNode(BranchNode* original) {
 }
 
 BranchNode::~BranchNode() {
-	delete this->network;
+	if (this->network != NULL) {
+		delete this->network;
+	}
 
 	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
 		this->experiments[e_index]->decrement(this);
@@ -54,18 +62,28 @@ void BranchNode::clear_verify() {
 #endif /* MDEBUG */
 
 void BranchNode::save(ofstream& output_file) {
+	output_file << this->previous_location_id << endl;
+
 	output_file << this->analyze_size << endl;
-	this->network->save(output_file);
+	if (this->analyze_size != -1) {
+		this->network->save(output_file);
+	}
 
 	output_file << this->original_next_node_id << endl;
 	output_file << this->branch_next_node_id << endl;
 }
 
 void BranchNode::load(ifstream& input_file) {
+	string previous_location_id_line;
+	getline(input_file, previous_location_id_line);
+	this->previous_location_id = stoi(previous_location_id_line);
+
 	string analyze_size_line;
 	getline(input_file, analyze_size_line);
 	this->analyze_size = stoi(analyze_size_line);
-	this->network = new Network(input_file);
+	if (this->analyze_size != -1) {
+		this->network = new Network(input_file);
+	}
 
 	string original_next_node_id_line;
 	getline(input_file, original_next_node_id_line);
@@ -77,6 +95,12 @@ void BranchNode::load(ifstream& input_file) {
 }
 
 void BranchNode::link(Solution* parent_solution) {
+	if (this->previous_location_id == -1) {
+		this->previous_location = NULL;
+	} else {
+		this->previous_location = this->parent->nodes[this->previous_location_id];
+	}
+
 	if (this->original_next_node_id == -1) {
 		this->original_next_node = NULL;
 	} else {

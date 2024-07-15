@@ -197,6 +197,9 @@ void BranchExperiment::new_branch(Solution* duplicate) {
 		}
 	}
 
+	this->branch_node->previous_location_id = this->best_previous_location->id;
+	this->branch_node->previous_location = duplicate_local_scope->nodes[this->best_previous_location->id];
+
 	this->branch_node->analyze_size = this->new_analyze_size;
 	this->branch_node->network = this->new_network;
 	this->new_network = NULL;

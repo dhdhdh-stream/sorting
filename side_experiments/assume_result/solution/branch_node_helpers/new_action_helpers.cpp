@@ -19,58 +19,80 @@ void BranchNode::new_action_capture_verify_activate(
 		Problem* problem,
 		vector<ContextLayer>& context,
 		RunHelper& run_helper) {
+	Minesweeper* minesweeper = (Minesweeper*)problem;
+
+	bool location_match = true;
+	map<AbstractNode*, pair<int,int>>::iterator location_it;
+	if (this->previous_location != NULL) {
+		location_it = context.back().location_history.find(this->previous_location);
+		if (location_it == context.back().location_history.end()) {
+			location_match = false;
+		}
+	}
+
 	bool is_branch;
-	if (run_helper.branch_node_ancestors.find(this) != run_helper.branch_node_ancestors.end()) {
+	if (run_helper.branch_node_ancestors.find(this) != run_helper.branch_node_ancestors.end()
+			|| !location_match
+			|| (this->previous_location == NULL && this->analyze_size == -1)) {
 		is_branch = false;
 	} else {
-		run_helper.num_analyze += (1 + 2*this->analyze_size) * (1 + 2*this->analyze_size);
-
-		vector<vector<double>> input_vals(1 + 2*this->analyze_size);
-		for (int x_index = 0; x_index < 1 + 2*this->analyze_size; x_index++) {
-			input_vals[x_index] = vector<double>(1 + 2*this->analyze_size);
-		}
-
-		Minesweeper* minesweeper = (Minesweeper*)problem;
-		for (int x_index = -this->analyze_size; x_index < this->analyze_size+1; x_index++) {
-			for (int y_index = -this->analyze_size; y_index < this->analyze_size+1; y_index++) {
-				input_vals[x_index + this->analyze_size][y_index + this->analyze_size]
-					= minesweeper->get_observation_helper(
-						minesweeper->current_x + x_index,
-						minesweeper->current_y + y_index);
-			}
-		}
-		this->network->activate(input_vals);
-
-		this->verify_scores.push_back(this->network->output->acti_vals[0]);
-
-		cout << "run_helper.starting_run_seed: " << run_helper.starting_run_seed << endl;
-		cout << "run_helper.curr_run_seed: " << run_helper.curr_run_seed << endl;
-		problem->print();
-
-		if (run_helper.curr_run_seed%2 == 0) {
+		if (this->analyze_size == -1) {
 			is_branch = true;
 		} else {
-			is_branch = false;
-		}
-		run_helper.curr_run_seed = xorshift(run_helper.curr_run_seed);
+			run_helper.num_analyze += (1 + 2*this->analyze_size) * (1 + 2*this->analyze_size);
 
-		run_helper.num_actions++;
-		Solution* solution = solution_set->solutions[solution_set->curr_solution_index];
-		if (run_helper.num_actions > solution->num_actions_limit) {
-			run_helper.exceeded_limit = true;
-			return;
+			vector<vector<double>> input_vals(1 + 2*this->analyze_size);
+			for (int x_index = 0; x_index < 1 + 2*this->analyze_size; x_index++) {
+				input_vals[x_index] = vector<double>(1 + 2*this->analyze_size);
+			}
+
+			Minesweeper* minesweeper = (Minesweeper*)problem;
+			for (int x_index = -this->analyze_size; x_index < this->analyze_size+1; x_index++) {
+				for (int y_index = -this->analyze_size; y_index < this->analyze_size+1; y_index++) {
+					input_vals[x_index + this->analyze_size][y_index + this->analyze_size]
+						= minesweeper->get_observation_helper(
+							minesweeper->current_x + x_index,
+							minesweeper->current_y + y_index);
+				}
+			}
+			this->network->activate(input_vals);
+
+			this->verify_scores.push_back(this->network->output->acti_vals[0]);
+
+			cout << "run_helper.starting_run_seed: " << run_helper.starting_run_seed << endl;
+			cout << "run_helper.curr_run_seed: " << run_helper.curr_run_seed << endl;
+			problem->print();
+
+			if (run_helper.curr_run_seed%2 == 0) {
+				is_branch = true;
+			} else {
+				is_branch = false;
+			}
+			run_helper.curr_run_seed = xorshift(run_helper.curr_run_seed);
 		}
-		context.back().nodes_seen.push_back({this, is_branch});
-		context.back().location_history[this] = {minesweeper->current_x, minesweeper->current_y};
 	}
 
 	if (is_branch) {
 		run_helper.branch_node_ancestors.insert(this);
+		context.back().branch_nodes_seen.push_back(this);
+
+		if (this->previous_location != NULL) {
+			minesweeper->current_x = location_it->second.first;
+			minesweeper->current_y = location_it->second.second;
+		}
 
 		curr_node = this->branch_next_node;
 	} else {
 		curr_node = this->original_next_node;
 	}
+
+	run_helper.num_actions++;
+	Solution* solution = solution_set->solutions[solution_set->curr_solution_index];
+	if (run_helper.num_actions > solution->num_actions_limit) {
+		run_helper.exceeded_limit = true;
+		return;
+	}
+	context.back().location_history[this] = {minesweeper->current_x, minesweeper->current_y};
 }
 
 #endif /* MDEBUG */

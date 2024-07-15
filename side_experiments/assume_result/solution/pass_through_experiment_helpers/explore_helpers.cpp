@@ -6,6 +6,7 @@
 #include "branch_node.h"
 #include "constants.h"
 #include "globals.h"
+#include "minesweeper.h"
 #include "problem.h"
 #include "return_node.h"
 #include "scope.h"
@@ -42,6 +43,15 @@ void PassThroughExperiment::explore_activate(
 		RunHelper& run_helper,
 		PassThroughExperimentHistory* history) {
 	if (this->state_iter == -1) {
+		uniform_int_distribution<int> use_previous_location_distribution(0, 4);
+		if (use_previous_location_distribution(generator) == 0) {
+			uniform_int_distribution<int> location_distribution(0, context.back().location_history.size()-1);
+			AbstractNode* previous_location = (*next(context.back().location_history.begin(), location_distribution(generator))).first;
+			this->curr_previous_location = previous_location;
+		} else {
+			this->curr_previous_location = NULL;
+		}
+
 		vector<AbstractNode*> possible_exits;
 
 		if (this->node_context->type == NODE_TYPE_ACTION
@@ -147,20 +157,36 @@ void PassThroughExperiment::explore_activate(
 		this->sub_state_iter = 0;
 	}
 
-	history->instance_count++;
+	bool location_match = true;
+	map<AbstractNode*, pair<int,int>>::iterator location_it;
+	if (this->curr_previous_location != NULL) {
+		location_it = context.back().location_history.find(this->curr_previous_location);
+		if (location_it == context.back().location_history.end()) {
+			location_match = false;
+		}
+	}
+	if (location_match) {
+		history->instance_count++;
 
-	for (int s_index = 0; s_index < (int)this->curr_step_types.size(); s_index++) {
-		if (this->curr_step_types[s_index] == STEP_TYPE_ACTION) {
-			problem->perform_action(this->curr_actions[s_index]->action);
-		} else if (this->curr_step_types[s_index] == STEP_TYPE_SCOPE) {
-			this->curr_scopes[s_index]->explore_activate(
-				problem,
-				context,
-				run_helper);
-		} else {
-			this->curr_returns[s_index]->explore_activate(
-				problem,
-				context);
+		if (this->curr_previous_location != NULL) {
+			Minesweeper* minesweeper = (Minesweeper*)problem;
+			minesweeper->current_x = location_it->second.first;
+			minesweeper->current_y = location_it->second.second;
+		}
+
+		for (int s_index = 0; s_index < (int)this->curr_step_types.size(); s_index++) {
+			if (this->curr_step_types[s_index] == STEP_TYPE_ACTION) {
+				problem->perform_action(this->curr_actions[s_index]->action);
+			} else if (this->curr_step_types[s_index] == STEP_TYPE_SCOPE) {
+				this->curr_scopes[s_index]->explore_activate(
+					problem,
+					context,
+					run_helper);
+			} else {
+				this->curr_returns[s_index]->explore_activate(
+					problem,
+					context);
+			}
 		}
 	}
 
@@ -275,6 +301,7 @@ void PassThroughExperiment::explore_backprop(
 		}
 
 		this->best_score = curr_score;
+		this->best_previous_location = this->curr_previous_location;
 		this->best_step_types = this->curr_step_types;
 		this->best_actions = this->curr_actions;
 		this->best_scopes = this->curr_scopes;
