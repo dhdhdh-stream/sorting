@@ -43,18 +43,9 @@ void NewActionExperiment::test_activate(
 	case NEW_ACTION_EXPERIMENT_MEASURE_NEW:
 	case NEW_ACTION_EXPERIMENT_VERIFY_1ST_NEW:
 	case NEW_ACTION_EXPERIMENT_VERIFY_2ND_NEW:
-		if (run_helper.scope_node_ancestors.find(this->test_scope_nodes[location_index]) != run_helper.scope_node_ancestors.end()) {
-			run_helper.exceeded_limit = true;
-			return;
-		}
-
-		run_helper.scope_node_ancestors.insert(this->test_scope_nodes[location_index]);
-
 		this->new_scope->activate(problem,
 								  context,
 								  run_helper);
-
-		run_helper.scope_node_ancestors.erase(this->test_scope_nodes[location_index]);
 
 		curr_node = this->test_location_exits[location_index];
 	}

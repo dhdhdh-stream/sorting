@@ -40,11 +40,15 @@ void node_random_exit_activate_helper(AbstractNode*& curr_node,
 
 			possible_exits.push_back(curr_node);
 
-			uniform_int_distribution<int> distribution(0, 1);
-			if (distribution(generator) == 0) {
-				curr_node = node->branch_next_node;
-			} else {
+			if (node->is_loop) {
 				curr_node = node->original_next_node;
+			} else {
+				uniform_int_distribution<int> distribution(0, 1);
+				if (distribution(generator) == 0) {
+					curr_node = node->branch_next_node;
+				} else {
+					curr_node = node->original_next_node;
+				}
 			}
 		}
 

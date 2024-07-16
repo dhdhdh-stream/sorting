@@ -52,6 +52,7 @@ public:
 	std::vector<ActionNode*> curr_actions;
 	std::vector<ScopeNode*> curr_scopes;
 	std::vector<ReturnNode*> curr_returns;
+	bool curr_is_loop;
 	AbstractNode* curr_exit_next_node;
 
 	double best_surprise;
@@ -60,6 +61,7 @@ public:
 	std::vector<ActionNode*> best_actions;
 	std::vector<ScopeNode*> best_scopes;
 	std::vector<ReturnNode*> best_returns;
+	bool best_is_loop;
 	AbstractNode* best_exit_next_node;
 
 	BranchNode* branch_node;

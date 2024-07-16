@@ -35,6 +35,8 @@ public:
 	 */
 	NewActionExperiment* new_action_experiment;
 
+	std::set<int> scope_ids_used;
+
 	Scope();
 	~Scope();
 

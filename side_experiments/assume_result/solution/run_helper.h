@@ -18,15 +18,6 @@ public:
 	int num_analyze;
 	int num_actions;
 
-	std::set<AbstractNode*> branch_node_ancestors;
-	/**
-	 * - to help enable recursion
-	 */
-	std::set<ScopeNode*> scope_node_ancestors;
-	/**
-	 * - to prevent unbounded recursion
-	 */
-
 	std::set<std::pair<AbstractNode*,bool>> nodes_seen;
 
 	std::vector<AbstractExperiment*> experiments_seen_order;

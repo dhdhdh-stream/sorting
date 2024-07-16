@@ -2,6 +2,7 @@
 #define CONTEXT_LAYER_H
 
 #include <map>
+#include <set>
 #include <utility>
 #include <vector>
 
@@ -15,7 +16,7 @@ public:
 	Scope* scope;
 	AbstractNode* node;
 
-	std::vector<AbstractNode*> branch_nodes_seen;
+	std::set<AbstractNode*> loop_nodes_seen;
 	std::map<AbstractNode*, std::pair<int,int>> location_history;
 
 	/**

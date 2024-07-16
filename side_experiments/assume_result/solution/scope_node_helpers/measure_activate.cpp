@@ -15,13 +15,7 @@ void ScopeNode::measure_activate(AbstractNode*& curr_node,
 								 vector<ContextLayer>& context,
 								 RunHelper& run_helper,
 								 vector<int>& scope_counts) {
-	if (run_helper.scope_node_ancestors.find(this) != run_helper.scope_node_ancestors.end()) {
-		run_helper.exceeded_limit = true;
-		return;
-	}
-
 	context.back().node = this;
-	run_helper.scope_node_ancestors.insert(this);
 
 	this->scope->measure_activate(problem,
 								  context,
@@ -29,7 +23,6 @@ void ScopeNode::measure_activate(AbstractNode*& curr_node,
 								  scope_counts);
 
 	context.back().node = NULL;
-	run_helper.scope_node_ancestors.erase(this);
 
 	curr_node = this->next_node;
 

@@ -64,6 +64,13 @@ void node_activate_helper(AbstractNode*& curr_node,
 void Scope::activate(Problem* problem,
 					 vector<ContextLayer>& context,
 					 RunHelper& run_helper) {
+	for (int l_index = 0; l_index < (int)context.size(); l_index++) {
+		if (context[l_index].scope == this) {
+			run_helper.exceeded_limit = true;
+			return;
+		}
+	}
+
 	context.push_back(ContextLayer());
 
 	context.back().scope = this;
@@ -104,11 +111,6 @@ void Scope::activate(Problem* problem,
 	}
 	context.back().nodes_seen.clear();
 
-	for (int b_index = 0; b_index < (int)context.back().branch_nodes_seen.size(); b_index++) {
-		run_helper.branch_node_ancestors.erase(context.back().branch_nodes_seen[b_index]);
-	}
-	context.back().branch_nodes_seen.clear();
-
 	if (!run_helper.exceeded_limit) {
 		{
 			map<AbstractNode*, pair<int,int>>::iterator it
@@ -142,10 +144,6 @@ void Scope::activate(Problem* problem,
 					context,
 					run_helper);
 			}
-		}
-
-		for (int b_index = 0; b_index < (int)context.back().branch_nodes_seen.size(); b_index++) {
-			run_helper.branch_node_ancestors.erase(context.back().branch_nodes_seen[b_index]);
 		}
 	}
 

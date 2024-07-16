@@ -28,11 +28,17 @@ bool BranchExperiment::train_new_activate(
 
 	this->num_instances_until_target--;
 
-	if (run_helper.branch_node_ancestors.find(this->branch_node) != run_helper.branch_node_ancestors.end()) {
-		return false;
-	}
-
 	if (this->num_instances_until_target <= 0) {
+		bool can_loop = true;
+		if (this->best_is_loop) {
+			set<AbstractNode*>::iterator loop_start_it = context.back().loop_nodes_seen.find(this->branch_node);
+			if (loop_start_it != context.back().loop_nodes_seen.end()) {
+				can_loop = false;
+
+				context.back().loop_nodes_seen.erase(loop_start_it);
+			}
+		}
+
 		bool location_match = true;
 		map<AbstractNode*, pair<int,int>>::iterator location_it;
 		if (this->best_previous_location != NULL) {
@@ -41,19 +47,11 @@ bool BranchExperiment::train_new_activate(
 				location_match = false;
 			}
 		}
-		if (location_match) {
+
+		if (location_match && can_loop) {
 			history->instance_count++;
 
 			run_helper.num_analyze += (1 + 2*this->new_analyze_size) * (1 + 2*this->new_analyze_size);
-
-			if (this->best_previous_location != NULL) {
-				Minesweeper* minesweeper = (Minesweeper*)problem;
-				minesweeper->current_x = location_it->second.first;
-				minesweeper->current_y = location_it->second.second;
-			}
-
-			run_helper.branch_node_ancestors.insert(this->branch_node);
-			context.back().branch_nodes_seen.push_back(this->branch_node);
 
 			Minesweeper* minesweeper = (Minesweeper*)problem;
 			vector<vector<double>> new_input_vals(1 + 2*this->new_analyze_size);
@@ -71,6 +69,16 @@ bool BranchExperiment::train_new_activate(
 			}
 
 			this->obs_histories.push_back(new_input_vals);
+
+			if (this->best_previous_location != NULL) {
+				Minesweeper* minesweeper = (Minesweeper*)problem;
+				minesweeper->current_x = location_it->second.first;
+				minesweeper->current_y = location_it->second.second;
+			}
+
+			if (this->curr_is_loop) {
+				context.back().loop_nodes_seen.insert(this->branch_node);
+			}
 
 			if (this->best_step_types.size() == 0) {
 				curr_node = this->best_exit_next_node;

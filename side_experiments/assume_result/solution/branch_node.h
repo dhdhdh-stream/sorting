@@ -14,8 +14,7 @@ class Solution;
 
 class BranchNode : public AbstractNode {
 public:
-	int previous_location_id;
-	AbstractNode* previous_location;
+	bool is_stub;
 
 	/**
 	 * - with loops, no need for recursion
@@ -23,8 +22,10 @@ public:
 	 * - when selecting, based on nodes_seen, so can be from later
 	 *   - but should not be a big deal if so
 	 */
-	int start_node_id;
-	AbstractNode* start_node;
+	bool is_loop;
+
+	int previous_location_id;
+	AbstractNode* previous_location;
 
 	int analyze_size;
 	Network* network;

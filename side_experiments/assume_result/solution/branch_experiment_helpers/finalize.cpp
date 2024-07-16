@@ -197,8 +197,17 @@ void BranchExperiment::new_branch(Solution* duplicate) {
 		}
 	}
 
-	this->branch_node->previous_location_id = this->best_previous_location->id;
-	this->branch_node->previous_location = duplicate_local_scope->nodes[this->best_previous_location->id];
+	this->branch_node->is_stub = false;
+
+	this->branch_node->is_loop = this->best_is_loop;
+
+	if (this->best_previous_location == NULL) {
+		this->branch_node->previous_location_id = -1;
+		this->branch_node->previous_location = NULL;
+	} else {
+		this->branch_node->previous_location_id = this->best_previous_location->id;
+		this->branch_node->previous_location = duplicate_local_scope->nodes[this->best_previous_location->id];
+	}
 
 	this->branch_node->analyze_size = this->new_analyze_size;
 	this->branch_node->network = this->new_network;

@@ -35,8 +35,11 @@ BranchExperiment::BranchExperiment(Scope* scope_context,
 
 	this->new_network = NULL;
 
+	this->branch_node = new BranchNode();
+	this->branch_node->parent = this->scope_context;
+	this->branch_node->id = this->scope_context->node_counter;
+	this->scope_context->node_counter++;
 	this->ending_node = NULL;
-	this->branch_node = NULL;
 
 	uniform_int_distribution<int> good_distribution(0, 3);
 	if (good_distribution(generator) == 0) {

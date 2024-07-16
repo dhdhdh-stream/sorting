@@ -28,10 +28,6 @@ bool BranchExperiment::capture_verify_activate(AbstractNode*& curr_node,
 
 	run_helper.num_actions++;
 
-	if (run_helper.branch_node_ancestors.find(this->branch_node) != run_helper.branch_node_ancestors.end()) {
-		return false;
-	}
-
 	bool location_match = true;
 	map<AbstractNode*, pair<int,int>>::iterator location_it;
 	if (this->curr_previous_location != NULL) {
@@ -86,9 +82,6 @@ bool BranchExperiment::capture_verify_activate(AbstractNode*& curr_node,
 		cout << "decision_is_branch: " << decision_is_branch << endl;
 
 		if (decision_is_branch) {
-			run_helper.branch_node_ancestors.insert(this->branch_node);
-			context.back().branch_nodes_seen.push_back(this->branch_node);
-
 			if (this->best_step_types.size() == 0) {
 				curr_node = this->best_exit_next_node;
 			} else {

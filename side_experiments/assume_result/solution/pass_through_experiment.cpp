@@ -26,6 +26,10 @@ PassThroughExperiment::PassThroughExperiment(Scope* scope_context,
 
 	this->average_remaining_experiments_from_start = 1.0;
 
+	this->branch_node = new BranchNode();
+	this->branch_node->parent = this->scope_context;
+	this->branch_node->id = this->scope_context->node_counter;
+	this->scope_context->node_counter++;
 	this->ending_node = NULL;
 
 	this->curr_score = 0.0;
@@ -77,6 +81,9 @@ PassThroughExperiment::~PassThroughExperiment() {
 		}
 	}
 
+	if (this->branch_node != NULL) {
+		delete this->branch_node;
+	}
 	if (this->ending_node != NULL) {
 		delete this->ending_node;
 	}
