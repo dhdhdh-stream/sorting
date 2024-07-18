@@ -143,7 +143,6 @@ int main(int argc, char* argv[]) {
 				clean_scope(experiment_scope);
 
 				vector<double> target_vals;
-				vector<int> scope_counts(duplicate_solution->scopes.size(), 0);
 				int max_num_actions = 0;
 				bool early_exit = false;
 				for (int iter_index = 0; iter_index < MEASURE_ITERS; iter_index++) {
@@ -155,8 +154,7 @@ int main(int argc, char* argv[]) {
 					duplicate_solution->scopes[0]->measure_activate(
 						problem,
 						context,
-						run_helper,
-						scope_counts);
+						run_helper);
 
 					if (run_helper.num_actions > max_num_actions) {
 						max_num_actions = run_helper.num_actions;
@@ -210,7 +208,13 @@ int main(int argc, char* argv[]) {
 				}
 
 				for (int s_index = 0; s_index < (int)duplicate_solution->scopes.size(); s_index++) {
-					duplicate_solution->scopes[s_index]->average_instances_per_run = (double)scope_counts[s_index] / MEASURE_ITERS;
+					for (map<int, AbstractNode*>::iterator it = duplicate_solution->scopes[s_index]->nodes.begin();
+							it != duplicate_solution->scopes[s_index]->nodes.end(); it++) {
+						it->second->average_instances_per_run /= MEASURE_ITERS;
+						if (it->second->average_instances_per_run < 1.0) {
+							it->second->average_instances_per_run = 1.0;
+						}
+					}
 				}
 
 				double sum_score = 0.0;

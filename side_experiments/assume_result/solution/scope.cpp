@@ -41,12 +41,35 @@ void Scope::clear_verify() {
 void Scope::clean_node(int node_id) {
 	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
 			it != this->nodes.end(); it++) {
-		if (it->second->type == NODE_TYPE_RETURN) {
-			ReturnNode* return_node = (ReturnNode*)it->second;
-			if (return_node->previous_location_id == node_id) {
-				return_node->previous_location_id = -1;
-				return_node->previous_location = NULL;
+		switch (it->second->type) {
+		case NODE_TYPE_BRANCH:
+			{
+				BranchNode* branch_node = (BranchNode*)it->second;
+				if (branch_node->previous_location_id == node_id) {
+					branch_node->is_stub = true;
+
+					branch_node->is_loop = false;
+
+					branch_node->previous_location_id = -1;
+					branch_node->previous_location = NULL;
+
+					branch_node->analyze_size = -1;
+					if (branch_node->network != NULL) {
+						delete branch_node->network;
+						branch_node->network = NULL;
+					}
+				}
 			}
+			break;
+		case NODE_TYPE_RETURN:
+			{
+				ReturnNode* return_node = (ReturnNode*)it->second;
+				if (return_node->previous_location_id == node_id) {
+					return_node->previous_location_id = -1;
+					return_node->previous_location = NULL;
+				}
+			}
+			break;
 		}
 	}
 }
@@ -61,8 +84,6 @@ void Scope::save(ofstream& output_file) {
 		output_file << it->second->type << endl;
 		it->second->save(output_file);
 	}
-
-	output_file << this->average_instances_per_run << endl;
 }
 
 void Scope::load(ifstream& input_file,
@@ -124,10 +145,6 @@ void Scope::load(ifstream& input_file,
 			break;
 		}
 	}
-
-	string average_instances_per_run_line;
-	getline(input_file, average_instances_per_run_line);
-	this->average_instances_per_run = stod(average_instances_per_run_line);
 }
 
 void Scope::link(Solution* parent_solution) {
@@ -185,8 +202,6 @@ void Scope::copy_from(Scope* original,
 			break;
 		}
 	}
-
-	this->average_instances_per_run = original->average_instances_per_run;
 }
 
 void Scope::save_for_display(ofstream& output_file) {

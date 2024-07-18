@@ -69,7 +69,7 @@ void NewActionExperiment::finalize(Solution* duplicate) {
 		duplicate->verify_seeds = this->verify_seeds;
 		#endif /* MDEBUG */
 
-		// ActionNode* new_local_ending_node = NULL;
+		ActionNode* new_local_ending_node = NULL;
 
 		Scope* duplicate_local_scope = duplicate->scopes[this->scope_context->id];
 
@@ -79,35 +79,33 @@ void NewActionExperiment::finalize(Solution* duplicate) {
 			duplicate_local_scope->nodes[new_scope_node->id] = new_scope_node;
 
 			if (new_scope_node->next_node == NULL) {
-				throw invalid_argument("new_scope_node->next_node == NULL");
+				if (new_local_ending_node == NULL) {
+					new_local_ending_node = new ActionNode();
+					new_local_ending_node->parent = duplicate_local_scope;
+					new_local_ending_node->id = duplicate_local_scope->node_counter;
+					duplicate_local_scope->node_counter++;
+					duplicate_local_scope->nodes[new_local_ending_node->id] = new_local_ending_node;
 
-				// if (new_local_ending_node == NULL) {
-				// 	new_local_ending_node = new ActionNode();
-				// 	new_local_ending_node->parent = duplicate_local_scope;
-				// 	new_local_ending_node->id = duplicate_local_scope->node_counter;
-				// 	duplicate_local_scope->node_counter++;
-				// 	duplicate_local_scope->nodes[new_local_ending_node->id] = new_local_ending_node;
+					new_local_ending_node->action = Action(ACTION_NOOP, 0);
 
-				// 	new_local_ending_node->action = Action(ACTION_NOOP, 0);
+					new_local_ending_node->next_node_id = -1;
+					new_local_ending_node->next_node = NULL;
 
-				// 	new_local_ending_node->next_node_id = -1;
-				// 	new_local_ending_node->next_node = NULL;
+					for (map<int, AbstractNode*>::iterator it = duplicate_local_scope->nodes.begin();
+							it != duplicate_local_scope->nodes.end(); it++) {
+						if (it->second->type == NODE_TYPE_ACTION) {
+							ActionNode* action_node = (ActionNode*)it->second;
+							if (action_node->next_node == NULL
+									&& action_node != new_local_ending_node) {
+								action_node->next_node_id = new_local_ending_node->id;
+								action_node->next_node = new_local_ending_node;
+							}
+						}
+					}
+				}
 
-				// 	for (map<int, AbstractNode*>::iterator it = duplicate_local_scope->nodes.begin();
-				// 			it != duplicate_local_scope->nodes.end(); it++) {
-				// 		if (it->second->type == NODE_TYPE_ACTION) {
-				// 			ActionNode* action_node = (ActionNode*)it->second;
-				// 			if (action_node->next_node == NULL
-				// 					&& action_node != new_local_ending_node) {
-				// 				action_node->next_node_id = new_local_ending_node->id;
-				// 				action_node->next_node = new_local_ending_node;
-				// 			}
-				// 		}
-				// 	}
-				// }
-
-				// new_scope_node->next_node_id = new_local_ending_node->id;
-				// new_scope_node->next_node = new_local_ending_node;
+				new_scope_node->next_node_id = new_local_ending_node->id;
+				new_scope_node->next_node = new_local_ending_node;
 			} else {
 				AbstractNode* duplicate_end_node = duplicate_local_scope->nodes[new_scope_node->next_node->id];
 

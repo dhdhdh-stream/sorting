@@ -91,31 +91,5 @@ void Scope::result_activate(Problem* problem,
 		}
 	}
 
-	if (!run_helper.exceeded_limit) {
-		{
-			map<AbstractNode*, pair<int,int>>::iterator it
-				= context.back().location_history.find(this->nodes[0]);
-			Minesweeper* minesweeper = (Minesweeper*)problem;
-			minesweeper->current_x = it->second.first;
-			minesweeper->current_y = it->second.second;
-		}
-
-		curr_node = this->nodes[1];
-		while (true) {
-			if (curr_node == NULL) {
-				break;
-			}
-
-			node_result_activate_helper(curr_node,
-										problem,
-										context,
-										run_helper);
-
-			if (run_helper.exceeded_limit) {
-				break;
-			}
-		}
-	}
-
 	context.pop_back();
 }

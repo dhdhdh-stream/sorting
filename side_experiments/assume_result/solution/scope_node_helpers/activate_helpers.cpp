@@ -33,7 +33,12 @@ void ScopeNode::activate(AbstractNode*& curr_node,
 		return;
 	}
 	if (run_helper.experiments_seen_order.size() == 0) {
-		run_helper.nodes_seen.insert({this, false});
+		map<pair<AbstractNode*,bool>, int>::iterator it = run_helper.nodes_seen.find({this, false});
+		if (it == run_helper.nodes_seen.end()) {
+			run_helper.nodes_seen[{this, false}] = 1;
+		} else {
+			it->second++;
+		}
 	} else if (run_helper.experiment_histories.size() == 1
 			&& run_helper.experiment_histories.back()->experiment == this->parent->new_action_experiment) {
 		context.back().nodes_seen.push_back({this, false});

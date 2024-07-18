@@ -22,6 +22,8 @@ public:
 
 	std::vector<AbstractExperiment*> experiments;
 
+	double average_instances_per_run;
+
 	virtual ~AbstractNode() {};
 
 	virtual void save(std::ofstream& output_file) = 0;

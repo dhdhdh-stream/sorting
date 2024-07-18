@@ -14,6 +14,8 @@ ScopeNode::ScopeNode() {
 	this->type = NODE_TYPE_SCOPE;
 
 	this->id = -1;
+
+	this->average_instances_per_run = 0.0;
 }
 
 ScopeNode::ScopeNode(ScopeNode* original,
@@ -23,6 +25,8 @@ ScopeNode::ScopeNode(ScopeNode* original,
 	this->scope = parent_solution->scopes[original->scope->id];
 
 	this->next_node_id = original->next_node_id;
+
+	this->average_instances_per_run = 0.0;
 }
 
 ScopeNode::~ScopeNode() {
@@ -35,6 +39,8 @@ void ScopeNode::save(ofstream& output_file) {
 	output_file << this->scope->id << endl;
 
 	output_file << this->next_node_id << endl;
+
+	output_file << this->average_instances_per_run << endl;
 }
 
 void ScopeNode::load(ifstream& input_file,
@@ -46,6 +52,10 @@ void ScopeNode::load(ifstream& input_file,
 	string next_node_id_line;
 	getline(input_file, next_node_id_line);
 	this->next_node_id = stoi(next_node_id_line);
+
+	string average_instances_per_run_line;
+	getline(input_file, average_instances_per_run_line);
+	this->average_instances_per_run = stod(average_instances_per_run_line);
 }
 
 void ScopeNode::link(Solution* parent_solution) {

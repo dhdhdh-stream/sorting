@@ -60,18 +60,8 @@ void Solution::init() {
 	starting_noop_node->action = Action(ACTION_NOOP, 0);
 	starting_noop_node->next_node_id = -1;
 	starting_noop_node->next_node = NULL;
+	starting_noop_node->average_instances_per_run = 1.0;
 	new_scope->nodes[starting_noop_node->id] = starting_noop_node;
-
-	ActionNode* back_starting_noop_node = new ActionNode();
-	back_starting_noop_node->parent = new_scope;
-	back_starting_noop_node->id = new_scope->node_counter;
-	new_scope->node_counter++;
-	back_starting_noop_node->action = Action(ACTION_NOOP, 0);
-	back_starting_noop_node->next_node_id = -1;
-	back_starting_noop_node->next_node = NULL;
-	new_scope->nodes[back_starting_noop_node->id] = back_starting_noop_node;
-
-	new_scope->average_instances_per_run = 1.0;
 
 	this->max_num_actions = 1;
 	this->num_actions_limit = 40;

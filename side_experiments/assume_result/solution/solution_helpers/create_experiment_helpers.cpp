@@ -17,17 +17,39 @@
 using namespace std;
 
 void create_experiment(RunHelper& run_helper) {
-	uniform_int_distribution<int> explore_node_distribution(0, run_helper.nodes_seen.size()-1);
-	int explore_node_index = explore_node_distribution(generator);
-	set<pair<AbstractNode*,bool>>::iterator it = next(run_helper.nodes_seen.begin(), explore_node_index);
-	AbstractNode* explore_node = (*it).first;
-	bool explore_is_branch = (*it).second;
+	AbstractNode* explore_node;
+	bool explore_is_branch;
+	uniform_int_distribution<int> even_distribution(0, 1);
+	if (even_distribution(generator) == 0) {
+		uniform_int_distribution<int> explore_node_distribution(0, run_helper.nodes_seen.size()-1);
+		int explore_node_index = explore_node_distribution(generator);
+		map<pair<AbstractNode*,bool>, int>::iterator it = next(run_helper.nodes_seen.begin(), explore_node_index);
+		explore_node = it->first.first;
+		explore_is_branch = it->first.second;
+	} else {
+		int sum_count = 0;
+		for (map<pair<AbstractNode*,bool>, int>::iterator it = run_helper.nodes_seen.begin();
+				it != run_helper.nodes_seen.end(); it++) {
+			sum_count += it->second;
+		}
+		uniform_int_distribution<int> random_distribution(1, sum_count);
+		int random_index = random_distribution(generator);
+		for (map<pair<AbstractNode*,bool>, int>::iterator it = run_helper.nodes_seen.begin();
+				it != run_helper.nodes_seen.end(); it++) {
+			random_index -= it->second;
+			if (random_index <= 0) {
+				explore_node = it->first.first;
+				explore_is_branch = it->first.second;
+				break;
+			}
+		}
+	}
 
 	Scope* explore_scope = (Scope*)explore_node->parent;
 
-	uniform_int_distribution<int> non_new_distribution(0, 4);
+	uniform_int_distribution<int> non_new_distribution(0, 7);
 	if (explore_scope->new_action_experiment == NULL
-			&& explore_node->parent->nodes.size() > 15
+			&& explore_node->parent->nodes.size() > 10
 			&& non_new_distribution(generator) != 0) {
 		NewActionExperiment* new_action_experiment = new NewActionExperiment(
 			explore_node->parent,

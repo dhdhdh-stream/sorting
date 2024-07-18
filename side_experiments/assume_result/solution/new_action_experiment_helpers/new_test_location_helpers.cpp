@@ -16,8 +16,7 @@ void NewActionExperiment::add_new_test_location(NewActionExperimentHistory* hist
 	if (this->new_action_experiment_type == NEW_ACTION_EXPERIMENT_TYPE_IN_PLACE) {
 		max_index = (int)(0.8*((int)history->selected_nodes_seen.size()-1));
 	} else {
-		// max_index = (int)history->selected_nodes_seen.size();
-		max_index = (int)history->selected_nodes_seen.size()-1;
+		max_index = (int)history->selected_nodes_seen.size();
 	}
 
 	vector<AbstractNode*> possible_starts;

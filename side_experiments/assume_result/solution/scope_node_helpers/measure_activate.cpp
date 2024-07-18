@@ -13,14 +13,12 @@ using namespace std;
 void ScopeNode::measure_activate(AbstractNode*& curr_node,
 								 Problem* problem,
 								 vector<ContextLayer>& context,
-								 RunHelper& run_helper,
-								 vector<int>& scope_counts) {
+								 RunHelper& run_helper) {
 	context.back().node = this;
 
 	this->scope->measure_activate(problem,
 								  context,
-								  run_helper,
-								  scope_counts);
+								  run_helper);
 
 	context.back().node = NULL;
 

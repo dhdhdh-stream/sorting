@@ -43,8 +43,9 @@ void PassThroughExperiment::explore_activate(
 		RunHelper& run_helper,
 		PassThroughExperimentHistory* history) {
 	if (this->state_iter == -1) {
-		uniform_int_distribution<int> use_previous_location_distribution(0, 4);
-		if (use_previous_location_distribution(generator) == 0) {
+		uniform_int_distribution<int> use_previous_location_distribution(0, 3);
+		// if (use_previous_location_distribution(generator) == 0) {
+		if (false) {
 			uniform_int_distribution<int> location_distribution(0, context.back().location_history.size()-1);
 			AbstractNode* previous_location = (*next(context.back().location_history.begin(), location_distribution(generator))).first;
 			this->curr_previous_location = previous_location;
@@ -53,8 +54,9 @@ void PassThroughExperiment::explore_activate(
 		}
 
 		int new_num_steps;
-		uniform_int_distribution<int> loop_distribution(0, 3);
-		if (loop_distribution(generator) == 0) {
+		uniform_int_distribution<int> loop_distribution(0, 4);
+		// if (loop_distribution(generator) == 0) {
+		if (false) {
 			this->curr_is_loop = true;
 
 			uniform_int_distribution<int> past_distribution(0, context.back().location_history.size()-1);
@@ -151,8 +153,9 @@ void PassThroughExperiment::explore_activate(
 			}
 		}
 
-		uniform_int_distribution<int> return_distribution(0, 3);
-		if (return_distribution(generator) == 0) {
+		geometric_distribution<int> return_distribution(0.75);
+		int num_returns = return_distribution(generator);
+		for (int r_index = 0; r_index < num_returns; r_index++) {
 			ReturnNode* new_return_node = new ReturnNode();
 			uniform_int_distribution<int> location_distribution(0, context.back().location_history.size()-1);
 			AbstractNode* previous_location = (*next(context.back().location_history.begin(), location_distribution(generator))).first;

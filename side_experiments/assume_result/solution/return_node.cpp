@@ -7,6 +7,8 @@ using namespace std;
 
 ReturnNode::ReturnNode() {
 	this->type = NODE_TYPE_RETURN;
+
+	this->average_instances_per_run = 0.0;
 }
 
 ReturnNode::ReturnNode(ReturnNode* original) {
@@ -15,6 +17,8 @@ ReturnNode::ReturnNode(ReturnNode* original) {
 	this->previous_location_id = original->previous_location_id;
 
 	this->next_node_id = original->next_node_id;
+
+	this->average_instances_per_run = 0.0;
 }
 
 ReturnNode::~ReturnNode() {
@@ -27,6 +31,8 @@ void ReturnNode::save(ofstream& output_file) {
 	output_file << this->previous_location_id << endl;
 
 	output_file << this->next_node_id << endl;
+
+	output_file << this->average_instances_per_run << endl;
 }
 
 void ReturnNode::load(ifstream& input_file) {
@@ -37,6 +43,10 @@ void ReturnNode::load(ifstream& input_file) {
 	string next_node_id_line;
 	getline(input_file, next_node_id_line);
 	this->next_node_id = stoi(next_node_id_line);
+
+	string average_instances_per_run_line;
+	getline(input_file, average_instances_per_run_line);
+	this->average_instances_per_run = stod(average_instances_per_run_line);
 }
 
 void ReturnNode::link(Solution* parent_solution) {

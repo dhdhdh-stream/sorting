@@ -1,6 +1,10 @@
 /**
- * - very useful?
+ * - definitely needed
  *   - makes exploring deeper much easier where there is return node after
+ *   - makes it easy to traverse large distances
+ *     - otherwise, can easily get stuck in local maxima
+ * 
+ * TODO: only add nodes to location_history when needed
  */
 
 #ifndef RETURN_NODE_H

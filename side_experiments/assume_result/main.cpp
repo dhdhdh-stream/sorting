@@ -1,9 +1,3 @@
-// TODO: travel back to previous history spot
-// - maybe have:
-//   - pre decision possibility
-//   - post decision possibility
-//   - post sequence possibility
-
 // combinations of actions are orthogonal to world model, and both are needed
 // - world model to eliminate redundant information
 //   - may also guide exploration and decision making?
@@ -12,9 +6,16 @@
 // maybe after a pass, reverse engineer to determine what would happen if a different choice was made
 // - use world model from the future to predict what would happen in the past
 
-// add loop nodes
-// - check local scope if hit before and break if have
-//   - but if have, also clear seen, so on outer loop, will loop again
+// perhaps mimicking is based off of world model
+// - world model to make things Markov
+//   - then can align someone else's actions
+
+// maybe loops bad?
+// - makes it difficult to generalize?
+//   - and always having return node encourages pushing deeper?
+
+// perhaps recursion was the key?
+// - to make the huge changes needed to cross local optimas
 
 #include <chrono>
 #include <iostream>
@@ -23,6 +24,7 @@
 #include <random>
 
 #include "abstract_experiment.h"
+#include "abstract_node.h"
 #include "constants.h"
 #include "globals.h"
 #include "minesweeper.h"
@@ -173,7 +175,6 @@ int main(int argc, char* argv[]) {
 				#endif /* MDEBUG */
 
 				vector<double> target_vals;
-				vector<int> scope_counts(duplicate_solution->scopes.size(), 0);
 				int max_num_actions = 0;
 				#if defined(MDEBUG) && MDEBUG
 				bool early_exit = false;
@@ -192,8 +193,7 @@ int main(int argc, char* argv[]) {
 					duplicate_solution->scopes[0]->measure_activate(
 						problem,
 						context,
-						run_helper,
-						scope_counts);
+						run_helper);
 
 					if (run_helper.num_actions > max_num_actions) {
 						max_num_actions = run_helper.num_actions;
@@ -220,7 +220,13 @@ int main(int argc, char* argv[]) {
 				}
 
 				for (int s_index = 0; s_index < (int)duplicate_solution->scopes.size(); s_index++) {
-					duplicate_solution->scopes[s_index]->average_instances_per_run = (double)scope_counts[s_index] / MEASURE_ITERS;
+					for (map<int, AbstractNode*>::iterator it = duplicate_solution->scopes[s_index]->nodes.begin();
+							it != duplicate_solution->scopes[s_index]->nodes.end(); it++) {
+						it->second->average_instances_per_run /= MEASURE_ITERS;
+						if (it->second->average_instances_per_run < 1.0) {
+							it->second->average_instances_per_run = 1.0;
+						}
+					}
 				}
 
 				#if defined(MDEBUG) && MDEBUG

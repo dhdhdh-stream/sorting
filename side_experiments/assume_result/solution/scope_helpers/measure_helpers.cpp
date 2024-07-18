@@ -12,11 +12,10 @@
 
 using namespace std;
 
-void node_activate_helper(AbstractNode*& curr_node,
-						  Problem* problem,
-						  vector<ContextLayer>& context,
-						  RunHelper& run_helper,
-						  vector<int>& scope_counts) {
+void node_measure_activate_helper(AbstractNode*& curr_node,
+								  Problem* problem,
+								  vector<ContextLayer>& context,
+								  RunHelper& run_helper) {
 	switch (curr_node->type) {
 	case NODE_TYPE_ACTION:
 		{
@@ -34,8 +33,7 @@ void node_activate_helper(AbstractNode*& curr_node,
 			node->measure_activate(curr_node,
 								   problem,
 								   context,
-								   run_helper,
-								   scope_counts);
+								   run_helper);
 		}
 
 		break;
@@ -64,16 +62,13 @@ void node_activate_helper(AbstractNode*& curr_node,
 
 void Scope::measure_activate(Problem* problem,
 							 vector<ContextLayer>& context,
-							 RunHelper& run_helper,
-							 vector<int>& scope_counts) {
+							 RunHelper& run_helper) {
 	for (int l_index = 0; l_index < (int)context.size(); l_index++) {
 		if (context[l_index].scope == this) {
 			run_helper.exceeded_limit = true;
 			return;
 		}
 	}
-
-	scope_counts[this->id]++;
 
 	context.push_back(ContextLayer());
 
@@ -86,41 +81,15 @@ void Scope::measure_activate(Problem* problem,
 			break;
 		}
 
-		node_activate_helper(curr_node,
-							 problem,
-							 context,
-							 run_helper,
-							 scope_counts);
+		curr_node->average_instances_per_run += 1.0;
+
+		node_measure_activate_helper(curr_node,
+									 problem,
+									 context,
+									 run_helper);
 
 		if (run_helper.exceeded_limit) {
 			break;
-		}
-	}
-
-	if (!run_helper.exceeded_limit) {
-		{
-			map<AbstractNode*, pair<int,int>>::iterator it
-				= context.back().location_history.find(this->nodes[0]);
-			Minesweeper* minesweeper = (Minesweeper*)problem;
-			minesweeper->current_x = it->second.first;
-			minesweeper->current_y = it->second.second;
-		}
-
-		curr_node = this->nodes[1];
-		while (true) {
-			if (curr_node == NULL) {
-				break;
-			}
-
-			node_activate_helper(curr_node,
-								 problem,
-								 context,
-								 run_helper,
-								 scope_counts);
-
-			if (run_helper.exceeded_limit) {
-				break;
-			}
 		}
 	}
 

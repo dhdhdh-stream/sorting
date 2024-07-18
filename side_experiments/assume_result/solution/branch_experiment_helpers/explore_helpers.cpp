@@ -38,8 +38,9 @@ bool BranchExperiment::explore_activate(
 			&& this->num_instances_until_target == 0) {
 		history->has_target = true;
 
-		uniform_int_distribution<int> use_previous_location_distribution(0, 4);
-		if (use_previous_location_distribution(generator) == 0) {
+		uniform_int_distribution<int> use_previous_location_distribution(0, 3);
+		// if (use_previous_location_distribution(generator) == 0) {
+		if (false) {
 			uniform_int_distribution<int> location_distribution(0, context.back().location_history.size()-1);
 			AbstractNode* previous_location = (*next(context.back().location_history.begin(), location_distribution(generator))).first;
 			this->curr_previous_location = previous_location;
@@ -48,8 +49,9 @@ bool BranchExperiment::explore_activate(
 		}
 
 		int new_num_steps;
-		uniform_int_distribution<int> loop_distribution(0, 3);
-		if (loop_distribution(generator) == 0) {
+		uniform_int_distribution<int> loop_distribution(0, 4);
+		// if (loop_distribution(generator) == 0) {
+		if (false) {
 			this->curr_is_loop = true;
 
 			uniform_int_distribution<int> past_distribution(0, context.back().location_history.size()-1);
@@ -59,6 +61,8 @@ bool BranchExperiment::explore_activate(
 			geometric_distribution<int> geometric_distribution(0.5);
 			new_num_steps = uniform_distribution(generator) + geometric_distribution(generator);
 		} else {
+			this->curr_is_loop = false;
+
 			vector<AbstractNode*> possible_exits;
 
 			if (this->node_context->type == NODE_TYPE_ACTION
@@ -144,8 +148,9 @@ bool BranchExperiment::explore_activate(
 			}
 		}
 
-		uniform_int_distribution<int> return_distribution(0, 3);
-		if (return_distribution(generator) == 0) {
+		geometric_distribution<int> return_distribution(0.75);
+		int num_returns = return_distribution(generator);
+		for (int r_index = 0; r_index < num_returns; r_index++) {
 			ReturnNode* new_return_node = new ReturnNode();
 			uniform_int_distribution<int> location_distribution(0, context.back().location_history.size()-1);
 			AbstractNode* previous_location = (*next(context.back().location_history.begin(), location_distribution(generator))).first;
@@ -219,7 +224,7 @@ void BranchExperiment::explore_backprop(
 		RunHelper& run_helper) {
 	BranchExperimentHistory* history = (BranchExperimentHistory*)run_helper.experiment_histories.back();
 
-	uniform_int_distribution<int> until_distribution(0, (int)this->scope_context->average_instances_per_run-1);
+	uniform_int_distribution<int> until_distribution(0, (int)this->node_context->average_instances_per_run-1);
 	this->num_instances_until_target = 1 + until_distribution(generator);
 
 	if (history->has_target) {
@@ -389,7 +394,7 @@ void BranchExperiment::explore_backprop(
 			this->obs_histories.reserve(NUM_DATAPOINTS);
 			this->target_val_histories.reserve(NUM_DATAPOINTS);
 
-			uniform_int_distribution<int> until_distribution(0, (int)this->scope_context->average_instances_per_run-1);
+			uniform_int_distribution<int> until_distribution(0, 2*((int)this->node_context->average_instances_per_run-1));
 			this->num_instances_until_target = 1 + until_distribution(generator);
 
 			this->state = BRANCH_EXPERIMENT_STATE_TRAIN_NEW;

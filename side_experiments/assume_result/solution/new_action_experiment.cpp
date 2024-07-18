@@ -24,14 +24,6 @@ NewActionExperiment::NewActionExperiment(Scope* scope_context,
 										 bool is_branch) {
 	this->type = EXPERIMENT_TYPE_NEW_ACTION;
 
-	// temp
-	if (node_context->type == NODE_TYPE_ACTION
-			&& ((ActionNode*)node_context)->next_node == NULL) {
-		this->new_scope = NULL;
-		this->result = EXPERIMENT_RESULT_FAIL;
-		return;
-	}
-
 	uniform_int_distribution<int> type_distribution(0, 2);
 	if (type_distribution(generator) == 0) {
 		this->new_action_experiment_type = NEW_ACTION_EXPERIMENT_TYPE_ANY;
@@ -57,9 +49,6 @@ NewActionExperiment::NewActionExperiment(Scope* scope_context,
 		parent_scope->random_exit_activate(
 			parent_scope->nodes[0],
 			possible_starting_nodes);
-		parent_scope->random_exit_activate(
-			parent_scope->nodes[1],
-			possible_starting_nodes);
 
 		uniform_int_distribution<int> start_distribution(0, possible_starting_nodes.size()-1);
 		AbstractNode* potential_starting_node = possible_starting_nodes[start_distribution(generator)];
@@ -68,22 +57,14 @@ NewActionExperiment::NewActionExperiment(Scope* scope_context,
 		int num_runs = 1 + run_distribution(generator);
 
 		set<AbstractNode*> potential_included_nodes;
-		potential_included_nodes.insert(potential_starting_node);
 
 		geometric_distribution<int> following_distribution(0.3);
 		for (int r_index = 0; r_index < num_runs; r_index++) {
-			vector<AbstractNode*> possible_nodes;
-			parent_scope->random_exit_activate(
-				potential_starting_node,
-				possible_nodes);
-
 			int num_following = 1 + following_distribution(generator);
-			if (1 + num_following > (int)possible_nodes.size()-1) {
-				num_following = (int)possible_nodes.size()-2;
-			}
-			for (int f_index = 0; f_index < num_following; f_index++) {
-				potential_included_nodes.insert(possible_nodes[1 + f_index]);
-			}
+			parent_scope->random_continue(
+				potential_starting_node,
+				num_following,
+				potential_included_nodes);
 		}
 
 		int num_meaningful_nodes = 0;
@@ -114,13 +95,6 @@ NewActionExperiment::NewActionExperiment(Scope* scope_context,
 			this->new_scope->node_counter++;
 			starting_noop_node->action = Action(ACTION_NOOP, 0);
 			this->new_scope->nodes[starting_noop_node->id] = starting_noop_node;
-
-			ActionNode* back_starting_noop_node = new ActionNode();
-			back_starting_noop_node->parent = this->new_scope;
-			back_starting_noop_node->id = this->new_scope->node_counter;
-			this->new_scope->node_counter++;
-			back_starting_noop_node->action = Action(ACTION_NOOP, 0);
-			this->new_scope->nodes[back_starting_noop_node->id] = back_starting_noop_node;
 
 			map<AbstractNode*, AbstractNode*> node_mappings;
 			for (set<AbstractNode*>::iterator node_it = potential_included_nodes.begin();
@@ -185,13 +159,8 @@ NewActionExperiment::NewActionExperiment(Scope* scope_context,
 				}
 			}
 
-			// starting_noop_node->next_node_id = node_mappings[potential_starting_node]->id;
-			// starting_noop_node->next_node = node_mappings[potential_starting_node];
-
-			starting_noop_node->next_node_id = -1;
-			starting_noop_node->next_node = NULL;
-			back_starting_noop_node->next_node_id = node_mappings[potential_starting_node]->id;
-			back_starting_noop_node->next_node = node_mappings[potential_starting_node];
+			starting_noop_node->next_node_id = node_mappings[potential_starting_node]->id;
+			starting_noop_node->next_node = node_mappings[potential_starting_node];
 
 			ActionNode* new_ending_node = new ActionNode();
 			new_ending_node->parent = this->new_scope;

@@ -15,6 +15,8 @@ BranchNode::BranchNode() {
 
 	this->network = NULL;
 
+	this->average_instances_per_run = 0.0;
+
 	#if defined(MDEBUG) && MDEBUG
 	this->verify_key = NULL;
 	#endif /* MDEBUG */
@@ -38,6 +40,8 @@ BranchNode::BranchNode(BranchNode* original) {
 
 	this->original_next_node_id = original->original_next_node_id;
 	this->branch_next_node_id = original->branch_next_node_id;
+
+	this->average_instances_per_run = 0.0;
 
 	#if defined(MDEBUG) && MDEBUG
 	this->verify_key = NULL;
@@ -79,6 +83,8 @@ void BranchNode::save(ofstream& output_file) {
 
 	output_file << this->original_next_node_id << endl;
 	output_file << this->branch_next_node_id << endl;
+
+	output_file << this->average_instances_per_run << endl;
 }
 
 void BranchNode::load(ifstream& input_file) {
@@ -108,6 +114,10 @@ void BranchNode::load(ifstream& input_file) {
 	string branch_next_node_id_line;
 	getline(input_file, branch_next_node_id_line);
 	this->branch_next_node_id = stoi(branch_next_node_id_line);
+
+	string average_instances_per_run_line;
+	getline(input_file, average_instances_per_run_line);
+	this->average_instances_per_run = stod(average_instances_per_run_line);
 }
 
 void BranchNode::link(Solution* parent_solution) {
@@ -131,6 +141,8 @@ void BranchNode::link(Solution* parent_solution) {
 }
 
 void BranchNode::save_for_display(ofstream& output_file) {
+	output_file << this->previous_location_id << endl;
+
 	output_file << this->analyze_size << endl;
 
 	output_file << this->original_next_node_id << endl;

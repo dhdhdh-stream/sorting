@@ -81,9 +81,6 @@ void Scope::activate(Problem* problem,
 												  run_helper);
 	}
 
-	uniform_int_distribution<int> new_action_location_distribution(0, 1);
-	bool new_action_is_front = new_action_location_distribution(generator) == 0;
-
 	AbstractNode* curr_node = this->nodes[0];
 	while (true) {
 		if (curr_node == NULL) {
@@ -100,50 +97,12 @@ void Scope::activate(Problem* problem,
 		}
 	}
 
-	if (this->new_action_experiment != NULL
-			&& new_action_is_front) {
+	if (this->new_action_experiment != NULL) {
 		if (run_helper.experiment_histories.size() == 1
 				&& run_helper.experiment_histories.back()->experiment == this->new_action_experiment) {
 			this->new_action_experiment->back_activate(
 				context,
 				run_helper);
-		}
-	}
-	context.back().nodes_seen.clear();
-
-	if (!run_helper.exceeded_limit) {
-		{
-			map<AbstractNode*, pair<int,int>>::iterator it
-				= context.back().location_history.find(this->nodes[0]);
-			Minesweeper* minesweeper = (Minesweeper*)problem;
-			minesweeper->current_x = it->second.first;
-			minesweeper->current_y = it->second.second;
-		}
-
-		curr_node = this->nodes[1];
-		while (true) {
-			if (curr_node == NULL) {
-				break;
-			}
-
-			node_activate_helper(curr_node,
-								 problem,
-								 context,
-								 run_helper);
-
-			if (run_helper.exceeded_limit) {
-				break;
-			}
-		}
-
-		if (this->new_action_experiment != NULL
-				&& !new_action_is_front) {
-			if (run_helper.experiment_histories.size() == 1
-					&& run_helper.experiment_histories.back()->experiment == this->new_action_experiment) {
-				this->new_action_experiment->back_activate(
-					context,
-					run_helper);
-			}
 		}
 	}
 

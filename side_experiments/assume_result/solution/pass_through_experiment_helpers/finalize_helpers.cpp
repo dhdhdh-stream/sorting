@@ -42,6 +42,7 @@ void PassThroughExperiment::new_branch(Solution* duplicate) {
 		duplicate_local_scope->nodes[this->ending_node->id] = this->ending_node;
 	}
 
+	this->branch_node->parent = duplicate_local_scope;
 	duplicate_local_scope->nodes[this->branch_node->id] = this->branch_node;
 
 	AbstractNode* duplicate_explore_node = duplicate_local_scope->nodes[this->node_context->id];
