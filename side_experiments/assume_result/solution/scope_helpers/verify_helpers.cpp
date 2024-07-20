@@ -66,17 +66,18 @@ void node_verify_activate_helper(AbstractNode*& curr_node,
 void Scope::verify_activate(Problem* problem,
 							vector<ContextLayer>& context,
 							RunHelper& run_helper) {
-	for (int l_index = 0; l_index < (int)context.size(); l_index++) {
-		if (context[l_index].scope == this) {
-			run_helper.exceeded_limit = true;
-			return;
-		}
-	}
-
 	context.push_back(ContextLayer());
 
 	context.back().scope = this;
 	context.back().node = NULL;
+
+	if (context.size() > 1) {
+		context.back().branch_node_ancestors = context[context.size()-2].branch_node_ancestors;
+		for (set<AbstractNode*>::iterator it = context[context.size()-2].branch_nodes_seen.begin();
+				it != context[context.size()-2].branch_nodes_seen.end(); it++) {
+			context.back().branch_node_ancestors.insert(*it);
+		}
+	}
 
 	AbstractNode* curr_node = this->nodes[0];
 	while (true) {

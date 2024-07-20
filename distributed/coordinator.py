@@ -59,6 +59,7 @@ while True:
 					possible_average_score = float(possible_file.readline())
 					possible_file.close()
 
+					# TODO: potentially remove timestamp check so will keep great runs that finished after increment
 					if possible_timestamp == curr_timestamp+1:
 						count += 1
 						if possible_average_score > curr_average_score:
@@ -117,6 +118,7 @@ while True:
 			break
 
 		curr_time = time.time()
+		# count needs to be reasonably large as experiments use low samples so may not be positive
 		if count >= 20 and curr_time - start_time > 300:
 			break
 

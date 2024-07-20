@@ -23,7 +23,8 @@ void BranchNode::new_action_capture_verify_activate(
 
 	bool is_branch;
 	map<AbstractNode*, pair<int,int>>::iterator location_it;
-	if (this->is_stub) {
+	if (this->is_stub
+			|| context.back().branch_node_ancestors.find(this) != context.back().branch_node_ancestors.end()) {
 		is_branch = false;
 	} else {
 		bool can_loop = true;
@@ -84,6 +85,8 @@ void BranchNode::new_action_capture_verify_activate(
 	}
 
 	if (is_branch) {
+		context.back().branch_nodes_seen.insert(this);
+
 		if (this->previous_location != NULL) {
 			minesweeper->current_x = location_it->second.first;
 			minesweeper->current_y = location_it->second.second;

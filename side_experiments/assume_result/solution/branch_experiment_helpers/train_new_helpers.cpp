@@ -28,6 +28,10 @@ bool BranchExperiment::train_new_activate(
 
 	this->num_instances_until_target--;
 
+	if (context.back().branch_node_ancestors.find(this->branch_node) != context.back().branch_node_ancestors.end()) {
+		return false;
+	}
+
 	if (this->num_instances_until_target <= 0) {
 		bool can_loop = true;
 		if (this->best_is_loop) {
@@ -69,6 +73,8 @@ bool BranchExperiment::train_new_activate(
 			}
 
 			this->obs_histories.push_back(new_input_vals);
+
+			context.back().branch_nodes_seen.insert(this->branch_node);
 
 			if (this->best_previous_location != NULL) {
 				Minesweeper* minesweeper = (Minesweeper*)problem;

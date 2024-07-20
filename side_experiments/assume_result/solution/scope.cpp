@@ -121,8 +121,6 @@ void Scope::load(ifstream& input_file,
 				scope_node->load(input_file,
 								 parent_solution);
 				this->nodes[scope_node->id] = scope_node;
-
-				this->scope_ids_used.insert(scope_node->scope->id);
 			}
 			break;
 		case NODE_TYPE_BRANCH:
@@ -178,8 +176,6 @@ void Scope::copy_from(Scope* original,
 				new_scope_node->parent = this;
 				new_scope_node->id = it->first;
 				this->nodes[it->first] = new_scope_node;
-
-				this->scope_ids_used.insert(new_scope_node->scope->id);
 			}
 			break;
 		case NODE_TYPE_BRANCH:

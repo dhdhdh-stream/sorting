@@ -15,7 +15,6 @@
 
 using namespace std;
 
-const int PARENT_SCOPE_MIN_NUM_NODES = 8;
 const int NEW_ACTION_MIN_NUM_NODES = 3;
 const int CREATE_NEW_ACTION_NUM_TRIES = 50;
 
@@ -31,23 +30,11 @@ NewActionExperiment::NewActionExperiment(Scope* scope_context,
 		this->new_action_experiment_type = NEW_ACTION_EXPERIMENT_TYPE_IN_PLACE;
 	}
 
-	Solution* solution = solution_set->solutions[solution_set->curr_solution_index];
-
-	std::vector<Scope*> possible_scopes;
-	for (int s_index = 0; s_index < (int)solution->scopes.size(); s_index++) {
-		if (solution->scopes[s_index]->nodes.size() > PARENT_SCOPE_MIN_NUM_NODES) {
-			possible_scopes.push_back(solution->scopes[s_index]);
-		}
-	}
-	uniform_int_distribution<int> random_scope_distribution(0, possible_scopes.size()-1);
-
 	this->new_scope = NULL;
 	for (int t_index = 0; t_index < CREATE_NEW_ACTION_NUM_TRIES; t_index++) {
-		Scope* parent_scope = possible_scopes[random_scope_distribution(generator)];
-
 		vector<AbstractNode*> possible_starting_nodes;
-		parent_scope->random_exit_activate(
-			parent_scope->nodes[0],
+		scope_context->random_exit_activate(
+			scope_context->nodes[0],
 			possible_starting_nodes);
 
 		uniform_int_distribution<int> start_distribution(0, possible_starting_nodes.size()-1);
@@ -61,7 +48,7 @@ NewActionExperiment::NewActionExperiment(Scope* scope_context,
 		geometric_distribution<int> following_distribution(0.3);
 		for (int r_index = 0; r_index < num_runs; r_index++) {
 			int num_following = 1 + following_distribution(generator);
-			parent_scope->random_continue(
+			scope_context->random_continue(
 				potential_starting_node,
 				num_following,
 				potential_included_nodes);
@@ -358,8 +345,7 @@ NewActionExperiment::NewActionExperiment(Scope* scope_context,
 		if (this->new_action_experiment_type == NEW_ACTION_EXPERIMENT_TYPE_IN_PLACE) {
 			exit_next_node = random_start_node;
 		} else {
-			Scope* parent_scope = (Scope*)this->scope_context;
-			parent_scope->random_exit_activate(
+			this->scope_context->random_exit_activate(
 				random_start_node,
 				possible_exits);
 

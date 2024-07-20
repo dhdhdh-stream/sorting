@@ -1,5 +1,5 @@
 /**
- * - definitely needed
+ * - definitely needed?
  *   - makes exploring deeper much easier where there is return node after
  *   - makes it easy to traverse large distances
  *     - otherwise, can easily get stuck in local maxima

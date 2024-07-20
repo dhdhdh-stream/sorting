@@ -8,6 +8,7 @@
 
 #include <fstream>
 #include <map>
+#include <random>
 #include <set>
 #include <utility>
 #include <vector>
@@ -32,8 +33,6 @@ public:
 	 *   - so that can be tried throughout entire scope
 	 */
 	NewActionExperiment* new_action_experiment;
-
-	std::set<int> scope_ids_used;
 
 	Scope();
 	~Scope();

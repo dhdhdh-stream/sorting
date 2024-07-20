@@ -24,6 +24,10 @@ bool BranchExperiment::measure_activate(AbstractNode*& curr_node,
 										BranchExperimentHistory* history) {
 	run_helper.num_actions++;
 
+	if (context.back().branch_node_ancestors.find(this->branch_node) != context.back().branch_node_ancestors.end()) {
+		return false;
+	}
+
 	bool can_loop = true;
 	if (this->curr_is_loop) {
 		set<AbstractNode*>::iterator loop_start_it = context.back().loop_nodes_seen.find(this->branch_node);
@@ -77,6 +81,8 @@ bool BranchExperiment::measure_activate(AbstractNode*& curr_node,
 		#endif /* MDEBUG */
 
 		if (decision_is_branch) {
+			context.back().branch_nodes_seen.insert(this->branch_node);
+
 			if (this->curr_previous_location != NULL) {
 				Minesweeper* minesweeper = (Minesweeper*)problem;
 				minesweeper->current_x = location_it->second.first;

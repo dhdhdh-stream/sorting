@@ -9,7 +9,7 @@ class ScopeNode;
 
 void create_experiment(RunHelper& run_helper);
 
-ScopeNode* create_existing(Scope* parent_scope);
+ScopeNode* create_existing();
 
 void clean_scope(Scope* scope);
 

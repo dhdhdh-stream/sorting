@@ -6,6 +6,7 @@
 #include "action_node.h"
 #include "globals.h"
 #include "scope.h"
+#include "scope_node.h"
 
 using namespace std;
 
@@ -48,23 +49,156 @@ void Solution::init() {
 	this->last_updated_scope_id = 0;
 	this->last_new_scope_id = -1;
 
-	Scope* new_scope = new Scope();
-	new_scope->id = this->scopes.size();
-	new_scope->node_counter = 0;
-	this->scopes.push_back(new_scope);
+	/**
+	 * - good to start with extra scopes/structure
+	 *   - as scopes[0] will not be reused
+	 */
 
-	ActionNode* starting_noop_node = new ActionNode();
-	starting_noop_node->parent = new_scope;
-	starting_noop_node->id = new_scope->node_counter;
-	new_scope->node_counter++;
-	starting_noop_node->action = Action(ACTION_NOOP, 0);
-	starting_noop_node->next_node_id = -1;
-	starting_noop_node->next_node = NULL;
-	starting_noop_node->average_instances_per_run = 1.0;
-	new_scope->nodes[starting_noop_node->id] = starting_noop_node;
+	Scope* base = new Scope();
+	base->id = this->scopes.size();
+	base->node_counter = 0;
+	this->scopes.push_back(base);
 
-	this->max_num_actions = 1;
-	this->num_actions_limit = 40;
+	Scope* first_layer = new Scope();
+	first_layer->id = this->scopes.size();
+	first_layer->node_counter = 0;
+	this->scopes.push_back(first_layer);
+
+	Scope* second_layer = new Scope();
+	second_layer->id = this->scopes.size();
+	second_layer->node_counter = 0;
+	this->scopes.push_back(second_layer);
+
+	{
+		ActionNode* starting_noop_node = new ActionNode();
+		starting_noop_node->parent = second_layer;
+		starting_noop_node->id = second_layer->node_counter;
+		second_layer->node_counter++;
+		starting_noop_node->action = Action(ACTION_NOOP, 0);
+		starting_noop_node->next_node_id = -1;
+		starting_noop_node->next_node = NULL;
+		starting_noop_node->average_instances_per_run = 9.0;
+		second_layer->nodes[starting_noop_node->id] = starting_noop_node;
+	}
+
+	{
+		ActionNode* starting_noop_node = new ActionNode();
+		starting_noop_node->parent = first_layer;
+		starting_noop_node->id = first_layer->node_counter;
+		first_layer->node_counter++;
+		starting_noop_node->action = Action(ACTION_NOOP, 0);
+		starting_noop_node->average_instances_per_run = 3.0;
+		first_layer->nodes[starting_noop_node->id] = starting_noop_node;
+
+		ScopeNode* first_scope_node = new ScopeNode();
+		first_scope_node->parent = first_layer;
+		first_scope_node->id = first_layer->node_counter;
+		first_layer->node_counter++;
+		first_scope_node->scope = second_layer;
+		first_scope_node->average_instances_per_run = 3.0;
+		first_layer->nodes[first_scope_node->id] = first_scope_node;
+
+		ScopeNode* second_scope_node = new ScopeNode();
+		second_scope_node->parent = first_layer;
+		second_scope_node->id = first_layer->node_counter;
+		first_layer->node_counter++;
+		second_scope_node->scope = second_layer;
+		second_scope_node->average_instances_per_run = 3.0;
+		first_layer->nodes[second_scope_node->id] = second_scope_node;
+
+		ScopeNode* third_scope_node = new ScopeNode();
+		third_scope_node->parent = first_layer;
+		third_scope_node->id = first_layer->node_counter;
+		first_layer->node_counter++;
+		third_scope_node->scope = second_layer;
+		third_scope_node->average_instances_per_run = 3.0;
+		first_layer->nodes[third_scope_node->id] = third_scope_node;
+
+		ActionNode* ending_node = new ActionNode();
+		ending_node->parent = first_layer;
+		ending_node->id = first_layer->node_counter;
+		first_layer->node_counter++;
+		ending_node->action = Action(ACTION_NOOP, 0);
+		ending_node->average_instances_per_run = 3.0;
+		first_layer->nodes[ending_node->id] = ending_node;
+
+		starting_noop_node->next_node_id = first_scope_node->id;
+		starting_noop_node->next_node = first_scope_node;
+
+		first_scope_node->next_node_id = second_scope_node->id;
+		first_scope_node->next_node = second_scope_node;
+
+		second_scope_node->next_node_id = third_scope_node->id;
+		second_scope_node->next_node = third_scope_node;
+
+		third_scope_node->next_node_id = ending_node->id;
+		third_scope_node->next_node = ending_node;
+
+		ending_node->next_node_id = -1;
+		ending_node->next_node = NULL;
+	}
+
+	{
+		ActionNode* starting_noop_node = new ActionNode();
+		starting_noop_node->parent = base;
+		starting_noop_node->id = base->node_counter;
+		base->node_counter++;
+		starting_noop_node->action = Action(ACTION_NOOP, 0);
+		starting_noop_node->average_instances_per_run = 1.0;
+		base->nodes[starting_noop_node->id] = starting_noop_node;
+
+		ScopeNode* first_scope_node = new ScopeNode();
+		first_scope_node->parent = base;
+		first_scope_node->id = base->node_counter;
+		base->node_counter++;
+		first_scope_node->scope = first_layer;
+		first_scope_node->average_instances_per_run = 1.0;
+		base->nodes[first_scope_node->id] = first_scope_node;
+
+		ScopeNode* second_scope_node = new ScopeNode();
+		second_scope_node->parent = base;
+		second_scope_node->id = base->node_counter;
+		base->node_counter++;
+		second_scope_node->scope = first_layer;
+		second_scope_node->average_instances_per_run = 1.0;
+		base->nodes[second_scope_node->id] = second_scope_node;
+
+		ScopeNode* third_scope_node = new ScopeNode();
+		third_scope_node->parent = base;
+		third_scope_node->id = base->node_counter;
+		base->node_counter++;
+		third_scope_node->scope = first_layer;
+		third_scope_node->average_instances_per_run = 1.0;
+		base->nodes[third_scope_node->id] = third_scope_node;
+
+		ActionNode* ending_node = new ActionNode();
+		ending_node->parent = base;
+		ending_node->id = base->node_counter;
+		base->node_counter++;
+		ending_node->action = Action(ACTION_NOOP, 0);
+		ending_node->average_instances_per_run = 1.0;
+		base->nodes[ending_node->id] = ending_node;
+
+		starting_noop_node->next_node_id = first_scope_node->id;
+		starting_noop_node->next_node = first_scope_node;
+
+		first_scope_node->next_node_id = second_scope_node->id;
+		first_scope_node->next_node = second_scope_node;
+
+		second_scope_node->next_node_id = third_scope_node->id;
+		second_scope_node->next_node = third_scope_node;
+
+		third_scope_node->next_node_id = ending_node->id;
+		third_scope_node->next_node = ending_node;
+
+		ending_node->next_node_id = -1;
+		ending_node->next_node = NULL;
+	}
+
+	// this->max_num_actions = 1;
+	this->max_num_actions = 9;
+	// this->num_actions_limit = 40;
+	this->num_actions_limit = 400;
 }
 
 void Solution::load(ifstream& input_file) {
