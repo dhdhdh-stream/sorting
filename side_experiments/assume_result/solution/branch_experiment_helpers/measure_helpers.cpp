@@ -24,8 +24,19 @@ bool BranchExperiment::measure_activate(AbstractNode*& curr_node,
 										BranchExperimentHistory* history) {
 	run_helper.num_actions++;
 
-	if (context.back().branch_node_ancestors.find(this->branch_node) != context.back().branch_node_ancestors.end()) {
-		return false;
+	bool context_match = true;
+	if (this->scope_context_ids.size() > 0) {
+		if (context.size() < this->scope_context_ids.size()+1) {
+			context_match = false;
+		} else {
+			for (int c_index = 0; c_index < (int)this->scope_context_ids.size(); c_index++) {
+				if (context[context.size()-2-c_index].scope->id != this->scope_context_ids[c_index]
+						|| context[context.size()-2-c_index].node->id != this->node_context_ids[c_index]) {
+					context_match = false;
+					break;
+				}
+			}
+		}
 	}
 
 	bool can_loop = true;
@@ -47,7 +58,7 @@ bool BranchExperiment::measure_activate(AbstractNode*& curr_node,
 		}
 	}
 
-	if (location_match && can_loop) {
+	if (context_match && location_match && can_loop) {
 		history->instance_count++;
 
 		run_helper.num_analyze += (1 + 2*this->new_analyze_size) * (1 + 2*this->new_analyze_size);
@@ -81,8 +92,6 @@ bool BranchExperiment::measure_activate(AbstractNode*& curr_node,
 		#endif /* MDEBUG */
 
 		if (decision_is_branch) {
-			context.back().branch_nodes_seen.insert(this->branch_node);
-
 			if (this->curr_previous_location != NULL) {
 				Minesweeper* minesweeper = (Minesweeper*)problem;
 				minesweeper->current_x = location_it->second.first;
@@ -116,7 +125,35 @@ void BranchExperiment::measure_backprop(
 		double target_val,
 		RunHelper& run_helper) {
 	if (run_helper.exceeded_limit) {
-		this->result = EXPERIMENT_RESULT_FAIL;
+		if (this->explore_type == EXPLORE_TYPE_GOOD
+				|| this->scope_context_ids.size() > 0
+				|| this->best_scope_context_ids.size() == 0) {
+			this->result = EXPERIMENT_RESULT_FAIL;
+		} else {
+			delete this->new_network;
+			this->new_network = NULL;
+
+			geometric_distribution<int> context_distribution(0.5);
+			int context_size = 1 + context_distribution(generator);
+			if (context_size > (int)this->best_scope_context_ids.size()) {
+				context_size = (int)this->best_scope_context_ids.size();
+			}
+			this->scope_context_ids = vector<int>(
+				this->best_scope_context_ids.begin(),
+				this->best_scope_context_ids.begin() + context_size);
+			this->node_context_ids = vector<int>(
+				this->best_node_context_ids.begin(),
+				this->best_node_context_ids.begin() + context_size);
+
+			this->obs_histories.reserve(NUM_DATAPOINTS);
+			this->target_val_histories.reserve(NUM_DATAPOINTS);
+
+			uniform_int_distribution<int> until_distribution(0, 2*((int)this->node_context->average_instances_per_run-1));
+			this->num_instances_until_target = 1 + until_distribution(generator);
+
+			this->state = BRANCH_EXPERIMENT_STATE_TRAIN_NEW;
+			this->state_iter = 0;
+		}
 	} else {
 		BranchExperimentHistory* history = (BranchExperimentHistory*)run_helper.experiment_histories.back();
 
@@ -172,7 +209,35 @@ void BranchExperiment::measure_backprop(
 				this->result = EXPERIMENT_RESULT_SUCCESS;
 				#endif /* MDEBUG */
 			} else {
-				this->result = EXPERIMENT_RESULT_FAIL;
+				if (this->explore_type == EXPLORE_TYPE_GOOD
+						|| this->scope_context_ids.size() > 0
+						|| this->best_scope_context_ids.size() == 0) {
+					this->result = EXPERIMENT_RESULT_FAIL;
+				} else {
+					delete this->new_network;
+					this->new_network = NULL;
+
+					geometric_distribution<int> context_distribution(0.5);
+					int context_size = 1 + context_distribution(generator);
+					if (context_size > (int)this->best_scope_context_ids.size()) {
+						context_size = (int)this->best_scope_context_ids.size();
+					}
+					this->scope_context_ids = vector<int>(
+						this->best_scope_context_ids.begin(),
+						this->best_scope_context_ids.begin() + context_size);
+					this->node_context_ids = vector<int>(
+						this->best_node_context_ids.begin(),
+						this->best_node_context_ids.begin() + context_size);
+
+					this->obs_histories.reserve(NUM_DATAPOINTS);
+					this->target_val_histories.reserve(NUM_DATAPOINTS);
+
+					uniform_int_distribution<int> until_distribution(0, 2*((int)this->node_context->average_instances_per_run-1));
+					this->num_instances_until_target = 1 + until_distribution(generator);
+
+					this->state = BRANCH_EXPERIMENT_STATE_TRAIN_NEW;
+					this->state_iter = 0;
+				}
 			}
 		}
 	}

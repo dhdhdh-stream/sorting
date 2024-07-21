@@ -50,8 +50,8 @@ bool BranchExperiment::explore_activate(
 
 		int new_num_steps;
 		uniform_int_distribution<int> loop_distribution(0, 4);
-		// if (loop_distribution(generator) == 0) {
-		if (false) {
+		if (this->scope_context->id != 0
+				&& loop_distribution(generator) == 0) {
 			this->curr_is_loop = true;
 
 			uniform_int_distribution<int> past_distribution(0, context.back().location_history.size()-1);
@@ -165,6 +165,13 @@ bool BranchExperiment::explore_activate(
 			this->curr_returns.insert(this->curr_returns.begin() + step_index, new_return_node);
 		}
 
+		for (int c_index = 0; c_index < (int)context.size()-1; c_index++) {
+			this->curr_scope_context_ids.insert(this->curr_scope_context_ids.begin(),
+				context[c_index].scope->id);
+			this->curr_node_context_ids.insert(this->curr_node_context_ids.begin(),
+				context[c_index].node->id);
+		}
+
 		bool can_loop = true;
 		if (this->curr_is_loop) {
 			set<AbstractNode*>::iterator loop_start_it = context.back().loop_nodes_seen.find(this->branch_node);
@@ -197,7 +204,9 @@ bool BranchExperiment::explore_activate(
 
 			for (int s_index = 0; s_index < (int)this->curr_step_types.size(); s_index++) {
 				if (this->curr_step_types[s_index] == STEP_TYPE_ACTION) {
-					problem->perform_action(this->curr_actions[s_index]->action);
+					this->curr_actions[s_index]->explore_activate(
+						problem,
+						run_helper);
 				} else if (this->curr_step_types[s_index] == STEP_TYPE_SCOPE) {
 					this->curr_scopes[s_index]->explore_activate(
 						problem,
@@ -206,7 +215,8 @@ bool BranchExperiment::explore_activate(
 				} else {
 					this->curr_returns[s_index]->explore_activate(
 						problem,
-						context);
+						context,
+						run_helper);
 				}
 			}
 		}
@@ -256,11 +266,15 @@ void BranchExperiment::explore_backprop(
 				this->best_returns = this->curr_returns;
 				this->best_is_loop = this->curr_is_loop;
 				this->best_exit_next_node = this->curr_exit_next_node;
+				this->best_scope_context_ids = this->curr_scope_context_ids;
+				this->best_node_context_ids = this->curr_node_context_ids;
 
 				this->curr_step_types.clear();
 				this->curr_actions.clear();
 				this->curr_scopes.clear();
 				this->curr_returns.clear();
+				this->curr_scope_context_ids.clear();
+				this->curr_node_context_ids.clear();
 			} else {
 				for (int s_index = 0; s_index < (int)this->curr_step_types.size(); s_index++) {
 					if (this->curr_step_types[s_index] == STEP_TYPE_ACTION) {
@@ -276,6 +290,8 @@ void BranchExperiment::explore_backprop(
 				this->curr_actions.clear();
 				this->curr_scopes.clear();
 				this->curr_returns.clear();
+				this->curr_scope_context_ids.clear();
+				this->curr_node_context_ids.clear();
 			}
 
 			if (this->state_iter == EXPLORE_ITERS-1
@@ -296,11 +312,15 @@ void BranchExperiment::explore_backprop(
 				this->best_returns = this->curr_returns;
 				this->best_is_loop = this->curr_is_loop;
 				this->best_exit_next_node = this->curr_exit_next_node;
+				this->best_scope_context_ids = this->curr_scope_context_ids;
+				this->best_node_context_ids = this->curr_node_context_ids;
 
 				this->curr_step_types.clear();
 				this->curr_actions.clear();
 				this->curr_scopes.clear();
 				this->curr_returns.clear();
+				this->curr_scope_context_ids.clear();
+				this->curr_node_context_ids.clear();
 
 				select = true;
 			} else {
@@ -318,6 +338,8 @@ void BranchExperiment::explore_backprop(
 				this->curr_actions.clear();
 				this->curr_scopes.clear();
 				this->curr_returns.clear();
+				this->curr_scope_context_ids.clear();
+				this->curr_node_context_ids.clear();
 			}
 		}
 

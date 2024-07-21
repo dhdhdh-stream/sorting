@@ -5,6 +5,7 @@
 #include "globals.h"
 #include "minesweeper.h"
 #include "network.h"
+#include "scope.h"
 #include "solution.h"
 #include "solution_set.h"
 #include "utilities.h"
@@ -19,10 +20,24 @@ void BranchNode::result_activate(AbstractNode*& curr_node,
 
 	bool is_branch;
 	map<AbstractNode*, pair<int,int>>::iterator location_it;
-	if (this->is_stub
-			|| context.back().branch_node_ancestors.find(this) != context.back().branch_node_ancestors.end()) {
+	if (this->is_stub) {
 		is_branch = false;
 	} else {
+		bool context_match = true;
+		if (this->scope_context_ids.size() > 0) {
+			if (context.size() < this->scope_context_ids.size()+1) {
+				context_match = false;
+			} else {
+				for (int c_index = 0; c_index < (int)this->scope_context_ids.size(); c_index++) {
+					if (context[context.size()-2-c_index].scope->id != this->scope_context_ids[c_index]
+							|| context[context.size()-2-c_index].node->id != this->node_context_ids[c_index]) {
+						context_match = false;
+						break;
+					}
+				}
+			}
+		}
+
 		bool can_loop = true;
 		if (this->is_loop) {
 			set<AbstractNode*>::iterator loop_start_it = context.back().loop_nodes_seen.find(this);
@@ -41,7 +56,7 @@ void BranchNode::result_activate(AbstractNode*& curr_node,
 			}
 		}
 
-		if (!location_match || !can_loop) {
+		if (!context_match || !location_match || !can_loop) {
 			is_branch = false;
 		} else {
 			if (this->analyze_size == -1) {
@@ -83,8 +98,6 @@ void BranchNode::result_activate(AbstractNode*& curr_node,
 	}
 
 	if (is_branch) {
-		context.back().branch_nodes_seen.insert(this);
-
 		if (this->previous_location_id != -1) {
 			minesweeper->current_x = location_it->second.first;
 			minesweeper->current_y = location_it->second.second;

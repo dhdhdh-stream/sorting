@@ -40,7 +40,8 @@ public:
 				  RunHelper& run_helper);
 
 	void explore_activate(Problem* problem,
-						  std::vector<ContextLayer>& context);
+						  std::vector<ContextLayer>& context,
+						  RunHelper& run_helper);
 
 	void result_activate(AbstractNode*& curr_node,
 						 Problem* problem,

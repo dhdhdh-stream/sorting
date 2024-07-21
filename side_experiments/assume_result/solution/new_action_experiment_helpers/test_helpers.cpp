@@ -17,12 +17,12 @@ const int NEW_ACTION_VERIFY_1ST_TRUTH_NUM_DATAPOINTS = 2;
 const int NEW_ACTION_VERIFY_2ND_NUM_DATAPOINTS = 10;
 const int NEW_ACTION_VERIFY_2ND_TRUTH_NUM_DATAPOINTS = 2;
 #else
-const int NEW_ACTION_NUM_DATAPOINTS = 20;
-const int NEW_ACTION_TRUTH_NUM_DATAPOINTS = 5;
-const int NEW_ACTION_VERIFY_1ST_NUM_DATAPOINTS = 100;
-const int NEW_ACTION_VERIFY_1ST_TRUTH_NUM_DATAPOINTS = 25;
-const int NEW_ACTION_VERIFY_2ND_NUM_DATAPOINTS = 400;
-const int NEW_ACTION_VERIFY_2ND_TRUTH_NUM_DATAPOINTS = 100;
+const int NEW_ACTION_NUM_DATAPOINTS = 100;
+const int NEW_ACTION_TRUTH_NUM_DATAPOINTS = 20;
+const int NEW_ACTION_VERIFY_1ST_NUM_DATAPOINTS = 500;
+const int NEW_ACTION_VERIFY_1ST_TRUTH_NUM_DATAPOINTS = 100;
+const int NEW_ACTION_VERIFY_2ND_NUM_DATAPOINTS = 2000;
+const int NEW_ACTION_VERIFY_2ND_TRUTH_NUM_DATAPOINTS = 400;
 #endif /* MDEBUG */
 
 void NewActionExperiment::test_activate(
@@ -43,9 +43,26 @@ void NewActionExperiment::test_activate(
 	case NEW_ACTION_EXPERIMENT_MEASURE_NEW:
 	case NEW_ACTION_EXPERIMENT_VERIFY_1ST_NEW:
 	case NEW_ACTION_EXPERIMENT_VERIFY_2ND_NEW:
+		ScopeNode* new_scope_node = this->test_scope_nodes[location_index];
+
+		for (int l_index = (int)context.size()-2; l_index >= 0; l_index--) {
+			ScopeNode* previous_scope_node = (ScopeNode*)context[l_index].node;
+			if (previous_scope_node == new_scope_node) {
+				curr_node = this->test_location_exits[location_index];
+				return;
+			} else if (context[l_index].scope == this->new_scope
+					&& previous_scope_node->index > new_scope_node->index) {
+				break;
+			}
+		}
+
+		context.back().node = new_scope_node;
+
 		this->new_scope->activate(problem,
 								  context,
 								  run_helper);
+
+		context.back().node = NULL;
 
 		curr_node = this->test_location_exits[location_index];
 	}

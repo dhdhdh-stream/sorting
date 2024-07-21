@@ -5,7 +5,8 @@
 using namespace std;
 
 void ReturnNode::explore_activate(Problem* problem,
-								  vector<ContextLayer>& context) {
+								  vector<ContextLayer>& context,
+								  RunHelper& run_helper) {
 	if (this->previous_location != NULL) {
 		map<AbstractNode*, pair<int,int>>::iterator it
 			= context.back().location_history.find(this->previous_location);
@@ -15,4 +16,6 @@ void ReturnNode::explore_activate(Problem* problem,
 			minesweeper->current_y = it->second.second;
 		}
 	}
+
+	run_helper.num_actions++;
 }

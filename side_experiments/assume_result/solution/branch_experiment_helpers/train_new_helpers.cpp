@@ -28,11 +28,22 @@ bool BranchExperiment::train_new_activate(
 
 	this->num_instances_until_target--;
 
-	if (context.back().branch_node_ancestors.find(this->branch_node) != context.back().branch_node_ancestors.end()) {
-		return false;
-	}
-
 	if (this->num_instances_until_target <= 0) {
+		bool context_match = true;
+		if (this->scope_context_ids.size() > 0) {
+			if (context.size() < this->scope_context_ids.size()+1) {
+				context_match = false;
+			} else {
+				for (int c_index = 0; c_index < (int)this->scope_context_ids.size(); c_index++) {
+					if (context[context.size()-2-c_index].scope->id != this->scope_context_ids[c_index]
+							|| context[context.size()-2-c_index].node->id != this->node_context_ids[c_index]) {
+						context_match = false;
+						break;
+					}
+				}
+			}
+		}
+
 		bool can_loop = true;
 		if (this->best_is_loop) {
 			set<AbstractNode*>::iterator loop_start_it = context.back().loop_nodes_seen.find(this->branch_node);
@@ -52,7 +63,7 @@ bool BranchExperiment::train_new_activate(
 			}
 		}
 
-		if (location_match && can_loop) {
+		if (context_match && location_match && can_loop) {
 			history->instance_count++;
 
 			run_helper.num_analyze += (1 + 2*this->new_analyze_size) * (1 + 2*this->new_analyze_size);
@@ -73,8 +84,6 @@ bool BranchExperiment::train_new_activate(
 			}
 
 			this->obs_histories.push_back(new_input_vals);
-
-			context.back().branch_nodes_seen.insert(this->branch_node);
 
 			if (this->best_previous_location != NULL) {
 				Minesweeper* minesweeper = (Minesweeper*)problem;

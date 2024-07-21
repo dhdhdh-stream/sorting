@@ -17,8 +17,7 @@ using namespace std;
 void PassThroughExperiment::finalize(Solution* duplicate) {
 	if (this->result == EXPERIMENT_RESULT_SUCCESS) {
 		if (this->best_previous_location != NULL
-				|| this->best_is_loop
-				|| this->best_guard_exceeded) {
+				|| this->best_is_loop) {
 			new_branch(duplicate);
 		} else {
 			new_pass_through(duplicate);

@@ -15,8 +15,6 @@ class Scope;
 class ScopeNode;
 class Solution;
 
-const int PASS_THROUGH_EXPERIMENT_STATE_EXPLORE = 0;
-
 class PassThroughExperimentHistory;
 class PassThroughExperiment : public AbstractExperiment {
 public:
@@ -34,7 +32,6 @@ public:
 	std::vector<ReturnNode*> curr_returns;
 	bool curr_is_loop;
 	AbstractNode* curr_exit_next_node;
-	bool curr_guard_exceeded;
 
 	double best_score;
 	AbstractNode* best_previous_location;
@@ -44,7 +41,6 @@ public:
 	std::vector<ReturnNode*> best_returns;
 	bool best_is_loop;
 	AbstractNode* best_exit_next_node;
-	bool best_guard_exceeded;
 
 	BranchNode* branch_node;
 	ActionNode* ending_node;

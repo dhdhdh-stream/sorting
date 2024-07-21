@@ -19,11 +19,6 @@ public:
 	int num_analyze;
 	int num_actions;
 
-	std::set<ScopeNode*> scope_node_ancestors;
-	/**
-	 * - to prevent unbounded recursion
-	 */
-
 	std::map<std::pair<AbstractNode*,bool>, int> nodes_seen;
 
 	std::vector<AbstractExperiment*> experiments_seen_order;

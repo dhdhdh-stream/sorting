@@ -23,6 +23,7 @@ ScopeNode::ScopeNode(ScopeNode* original,
 	this->type = NODE_TYPE_SCOPE;
 
 	this->scope = parent_solution->scopes[original->scope->id];
+	this->index = original->index;
 
 	this->next_node_id = original->next_node_id;
 
@@ -37,6 +38,7 @@ ScopeNode::~ScopeNode() {
 
 void ScopeNode::save(ofstream& output_file) {
 	output_file << this->scope->id << endl;
+	output_file << this->index << endl;
 
 	output_file << this->next_node_id << endl;
 
@@ -48,6 +50,10 @@ void ScopeNode::load(ifstream& input_file,
 	string scope_id_line;
 	getline(input_file, scope_id_line);
 	this->scope = parent_solution->scopes[stoi(scope_id_line)];
+
+	string index_line;
+	getline(input_file, index_line);
+	this->index = stoi(index_line);
 
 	string next_node_id_line;
 	getline(input_file, next_node_id_line);

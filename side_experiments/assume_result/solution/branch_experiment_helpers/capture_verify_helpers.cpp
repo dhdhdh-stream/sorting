@@ -28,8 +28,19 @@ bool BranchExperiment::capture_verify_activate(AbstractNode*& curr_node,
 
 	run_helper.num_actions++;
 
-	if (context.back().branch_node_ancestors.find(this->branch_node) != context.back().branch_node_ancestors.end()) {
-		return false;
+	bool context_match = true;
+	if (this->scope_context_ids.size() > 0) {
+		if (context.size() < this->scope_context_ids.size()+1) {
+			context_match = false;
+		} else {
+			for (int c_index = 0; c_index < (int)this->scope_context_ids.size(); c_index++) {
+				if (context[context.size()-2-c_index].scope->id != this->scope_context_ids[c_index]
+						|| context[context.size()-2-c_index].node->id != this->node_context_ids[c_index]) {
+					context_match = false;
+					break;
+				}
+			}
+		}
 	}
 
 	bool can_loop = true;
@@ -51,7 +62,7 @@ bool BranchExperiment::capture_verify_activate(AbstractNode*& curr_node,
 		}
 	}
 
-	if (location_match && can_loop) {
+	if (context_match && location_match && can_loop) {
 		run_helper.num_analyze += (1 + 2*this->new_analyze_size) * (1 + 2*this->new_analyze_size);
 
 		vector<vector<double>> input_vals(1 + 2*this->new_analyze_size);
@@ -97,8 +108,6 @@ bool BranchExperiment::capture_verify_activate(AbstractNode*& curr_node,
 		cout << "decision_is_branch: " << decision_is_branch << endl;
 
 		if (decision_is_branch) {
-			context.back().branch_nodes_seen.insert(this->branch_node);
-
 			if (this->curr_previous_location != NULL) {
 				Minesweeper* minesweeper = (Minesweeper*)problem;
 				minesweeper->current_x = location_it->second.first;

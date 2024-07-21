@@ -74,14 +74,6 @@ void Scope::new_action_capture_verify_activate(
 	context.back().scope = this;
 	context.back().node = NULL;
 
-	if (context.size() > 1) {
-		context.back().branch_node_ancestors = context[context.size()-2].branch_node_ancestors;
-		for (set<AbstractNode*>::iterator it = context[context.size()-2].branch_nodes_seen.begin();
-				it != context[context.size()-2].branch_nodes_seen.end(); it++) {
-			context.back().branch_node_ancestors.insert(*it);
-		}
-	}
-
 	AbstractNode* curr_node = this->nodes[0];
 	while (true) {
 		if (curr_node == NULL) {

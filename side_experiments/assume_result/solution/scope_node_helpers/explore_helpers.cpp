@@ -9,18 +9,27 @@ using namespace std;
 void ScopeNode::explore_activate(Problem* problem,
 								 vector<ContextLayer>& context,
 								 RunHelper& run_helper) {
-	if (run_helper.scope_node_ancestors.find(this) != run_helper.scope_node_ancestors.end()) {
-		run_helper.exceeded_limit = true;
-		return;
+	bool previously_seen = false;
+	for (int l_index = (int)context.size()-2; l_index >= 0; l_index--) {
+		ScopeNode* previous_scope_node = (ScopeNode*)context[l_index].node;
+		if (previous_scope_node == this) {
+			previously_seen = true;
+			break;
+		} else if (context[l_index].scope == this->scope
+				&& previous_scope_node->index > this->index) {
+			break;
+		}
 	}
 
-	context.back().node = this;
-	run_helper.scope_node_ancestors.insert(this);
+	if (!previously_seen) {
+		context.back().node = this;
 
-	this->scope->activate(problem,
-						  context,
-						  run_helper);
+		this->scope->activate(problem,
+							  context,
+							  run_helper);
 
-	context.back().node = NULL;
-	run_helper.scope_node_ancestors.erase(this);
+		context.back().node = NULL;
+	}
+
+	run_helper.num_actions++;
 }

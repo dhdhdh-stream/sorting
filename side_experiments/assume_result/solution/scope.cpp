@@ -17,6 +17,8 @@ using namespace std;
 Scope::Scope() {
 	this->id = -1;
 
+	this->scope_node_index = 0;
+
 	this->new_action_experiment = NULL;
 }
 
@@ -84,6 +86,8 @@ void Scope::save(ofstream& output_file) {
 		output_file << it->second->type << endl;
 		it->second->save(output_file);
 	}
+
+	output_file << this->scope_node_index << endl;
 }
 
 void Scope::load(ifstream& input_file,
@@ -143,6 +147,10 @@ void Scope::load(ifstream& input_file,
 			break;
 		}
 	}
+
+	string scope_node_index_line;
+	getline(input_file, scope_node_index_line);
+	this->scope_node_index = stoi(scope_node_index_line);
 }
 
 void Scope::link(Solution* parent_solution) {
@@ -198,6 +206,8 @@ void Scope::copy_from(Scope* original,
 			break;
 		}
 	}
+
+	this->scope_node_index = original->scope_node_index;
 }
 
 void Scope::save_for_display(ofstream& output_file) {

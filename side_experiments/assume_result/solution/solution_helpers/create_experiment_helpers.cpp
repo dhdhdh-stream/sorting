@@ -53,7 +53,17 @@ void create_experiment(RunHelper& run_helper) {
 
 		Scope* explore_scope = (Scope*)explore_node->parent;
 
-		uniform_int_distribution<int> non_new_distribution(0, 4);
+		uniform_int_distribution<int> non_new_distribution;
+		if (explore_scope->id == 0) {
+			non_new_distribution = uniform_int_distribution<int>(0, 19);
+		} else {
+			non_new_distribution = uniform_int_distribution<int>(0, 4);
+		}
+		/**
+		 * - extra likelihood for NewActionExperiment for scopes[0] so effort can be reused
+		 *   - also why loops not allowed for scopes[0]
+		 */
+
 		if (explore_scope->new_action_experiment == NULL
 				&& explore_node->parent->nodes.size() > 10
 				&& non_new_distribution(generator) != 0) {

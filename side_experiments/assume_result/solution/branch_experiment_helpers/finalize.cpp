@@ -199,6 +199,9 @@ void BranchExperiment::new_branch(Solution* duplicate) {
 
 	this->branch_node->is_stub = false;
 
+	this->branch_node->scope_context_ids = this->scope_context_ids;
+	this->branch_node->node_context_ids = this->node_context_ids;
+
 	this->branch_node->is_loop = this->best_is_loop;
 
 	if (this->best_previous_location == NULL) {

@@ -9,13 +9,8 @@
 // perhaps mimicking is based off of world model
 // - world model to make things Markov
 //   - then can align someone else's actions
-
-// maybe loops bad?
-// - makes it difficult to generalize?
-//   - and always having return node encourages pushing deeper?
-
-// perhaps recursion was the key?
-// - to make the huge changes needed to cross local optimas
+//   - learn Markov actions based on world model
+//     - then when incorporating, check against learned model to see if something different should be done, and can explore down that path
 
 #include <chrono>
 #include <iostream>

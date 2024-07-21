@@ -18,6 +18,10 @@ class Solution;
 class ScopeNode : public AbstractNode {
 public:
 	Scope* scope;
+	int index;
+	/**
+	 * - to guard against infinite recursion
+	 */
 
 	int next_node_id;
 	AbstractNode* next_node;

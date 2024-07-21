@@ -55,8 +55,8 @@ void PassThroughExperiment::explore_activate(
 
 		int new_num_steps;
 		uniform_int_distribution<int> loop_distribution(0, 4);
-		// if (loop_distribution(generator) == 0) {
-		if (false) {
+		if (this->scope_context->id != 0
+				&& loop_distribution(generator) == 0) {
 			this->curr_is_loop = true;
 
 			uniform_int_distribution<int> past_distribution(0, context.back().location_history.size()-1);
@@ -170,15 +170,8 @@ void PassThroughExperiment::explore_activate(
 			this->curr_returns.insert(this->curr_returns.begin() + step_index, new_return_node);
 		}
 
-		this->curr_guard_exceeded = false;
-
 		this->state_iter = 0;
 		this->sub_state_iter = 0;
-	}
-
-	if (this->curr_guard_exceeded
-			&& context.back().branch_node_ancestors.find(this->branch_node) != context.back().branch_node_ancestors.end()) {
-		return;
 	}
 
 	bool can_loop = true;
@@ -203,10 +196,6 @@ void PassThroughExperiment::explore_activate(
 	if (location_match && can_loop) {
 		history->instance_count++;
 
-		if (this->curr_guard_exceeded) {
-			context.back().branch_nodes_seen.insert(this->branch_node);
-		}
-
 		if (this->curr_previous_location != NULL) {
 			Minesweeper* minesweeper = (Minesweeper*)problem;
 			minesweeper->current_x = location_it->second.first;
@@ -219,7 +208,9 @@ void PassThroughExperiment::explore_activate(
 
 		for (int s_index = 0; s_index < (int)this->curr_step_types.size(); s_index++) {
 			if (this->curr_step_types[s_index] == STEP_TYPE_ACTION) {
-				problem->perform_action(this->curr_actions[s_index]->action);
+				this->curr_actions[s_index]->explore_activate(
+					problem,
+					run_helper);
 			} else if (this->curr_step_types[s_index] == STEP_TYPE_SCOPE) {
 				this->curr_scopes[s_index]->explore_activate(
 					problem,
@@ -228,7 +219,8 @@ void PassThroughExperiment::explore_activate(
 			} else {
 				this->curr_returns[s_index]->explore_activate(
 					problem,
-					context);
+					context,
+					run_helper);
 			}
 		}
 	}
@@ -242,14 +234,7 @@ void PassThroughExperiment::explore_backprop(
 	bool is_fail = false;
 
 	if (run_helper.exceeded_limit) {
-		if (this->curr_guard_exceeded) {
-			is_fail = true;
-		} else {
-			this->curr_guard_exceeded = true;
-
-			this->state_iter = 0;
-			this->sub_state_iter = 0;
-		}
+		is_fail = true;
 	} else {
 		PassThroughExperimentHistory* history = (PassThroughExperimentHistory*)run_helper.experiment_histories.back();
 
@@ -358,7 +343,6 @@ void PassThroughExperiment::explore_backprop(
 		this->best_returns = this->curr_returns;
 		this->best_is_loop = this->curr_is_loop;
 		this->best_exit_next_node = this->curr_exit_next_node;
-		this->best_guard_exceeded = this->curr_guard_exceeded;
 
 		this->curr_score = 0.0;
 		this->curr_step_types.clear();
@@ -461,7 +445,6 @@ void PassThroughExperiment::explore_backprop(
 					}
 				}
 				cout << endl;
-				cout << "this->best_guard_exceeded: " << this->best_guard_exceeded << endl;
 
 				cout << "this->best_score: " << this->best_score << endl;
 

@@ -19,6 +19,8 @@ ScopeNode* create_existing() {
 	if (possible_index < (int)solution->scopes.size()) {
 		ScopeNode* new_scope_node = new ScopeNode();
 		new_scope_node->scope = solution->scopes[possible_index];
+		new_scope_node->index = solution->scopes[possible_index]->scope_node_index;
+		solution->scopes[possible_index]->scope_node_index++;
 
 		return new_scope_node;
 	}
