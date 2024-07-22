@@ -200,7 +200,8 @@ NewActionExperiment::NewActionExperiment(Scope* scope_context,
 						BranchNode* new_branch_node = (BranchNode*)node_mappings[original_branch_node];
 
 						bool is_stub = false;
-						if (original_branch_node->is_stub) {
+						if (original_branch_node->is_stub
+								|| original_branch_node->scope_context_ids.size() > 0) {
 							is_stub = true;
 						}
 

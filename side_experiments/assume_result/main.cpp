@@ -12,6 +12,28 @@
 //   - learn Markov actions based on world model
 //     - then when incorporating, check against learned model to see if something different should be done, and can explore down that path
 
+// - bottleneck can occur when not efficient enough
+//   - it takes too many decisions to do something halfway
+//     - and then not worth it to do things completely
+// - fixing things early means causing duplicate effort later
+//   - need to fix things early, then adjust later?
+
+// - or maybe track 2 scores:
+//   - true score, and solution cost
+//     - then true score takes priority
+
+// - ultimately, issue is repeating effort
+//   - both travel and decision making
+
+// - the tiling is off?
+//   - can't remove without impacting elsewhere, can't add without too much duplicate?
+
+// - have to take one step backwards to go two steps forwards sometimes
+//   - maybe randomly delete paths until actions drop below a certain percentage and rebuild?
+//     - delete by jumping forwards
+
+// - maybe randomly try cutting 50 times, and try rebuilding from best cut
+
 #include <chrono>
 #include <iostream>
 #include <map>

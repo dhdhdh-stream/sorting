@@ -64,6 +64,13 @@ void node_activate_helper(AbstractNode*& curr_node,
 void Scope::activate(Problem* problem,
 					 vector<ContextLayer>& context,
 					 RunHelper& run_helper) {
+	for (int c_index = 0; c_index < (int)context.size(); c_index++) {
+		if (context[c_index].scope == this) {
+			run_helper.exceeded_limit = true;
+			return;
+		}
+	}
+
 	context.push_back(ContextLayer());
 
 	context.back().scope = this;

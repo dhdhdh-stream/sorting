@@ -50,8 +50,9 @@ bool BranchExperiment::explore_activate(
 
 		int new_num_steps;
 		uniform_int_distribution<int> loop_distribution(0, 4);
-		if (this->scope_context->id != 0
-				&& loop_distribution(generator) == 0) {
+		// if (this->scope_context->id != 0
+		// 		&& loop_distribution(generator) == 0) {
+		if (false) {
 			this->curr_is_loop = true;
 
 			uniform_int_distribution<int> past_distribution(0, context.back().location_history.size()-1);

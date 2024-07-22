@@ -125,9 +125,11 @@ void BranchExperiment::measure_backprop(
 		double target_val,
 		RunHelper& run_helper) {
 	if (run_helper.exceeded_limit) {
+		uniform_int_distribution<int> use_context_distribution(0, 3);
 		if (this->explore_type == EXPLORE_TYPE_GOOD
 				|| this->scope_context_ids.size() > 0
-				|| this->best_scope_context_ids.size() == 0) {
+				|| this->best_scope_context_ids.size() == 0
+				|| use_context_distribution(generator) != 0) {
 			this->result = EXPERIMENT_RESULT_FAIL;
 		} else {
 			delete this->new_network;
@@ -209,9 +211,11 @@ void BranchExperiment::measure_backprop(
 				this->result = EXPERIMENT_RESULT_SUCCESS;
 				#endif /* MDEBUG */
 			} else {
+				uniform_int_distribution<int> use_context_distribution(0, 3);
 				if (this->explore_type == EXPLORE_TYPE_GOOD
 						|| this->scope_context_ids.size() > 0
-						|| this->best_scope_context_ids.size() == 0) {
+						|| this->best_scope_context_ids.size() == 0
+						|| use_context_distribution(generator) != 0) {
 					this->result = EXPERIMENT_RESULT_FAIL;
 				} else {
 					delete this->new_network;
