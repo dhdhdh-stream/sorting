@@ -27,9 +27,6 @@ BranchNode::BranchNode(BranchNode* original) {
 
 	this->is_stub = original->is_stub;
 
-	this->scope_context_ids = original->scope_context_ids;
-	this->node_context_ids = original->node_context_ids;
-
 	this->is_loop = original->is_loop;
 
 	this->previous_location_id = original->previous_location_id;
@@ -75,12 +72,6 @@ void BranchNode::clear_verify() {
 void BranchNode::save(ofstream& output_file) {
 	output_file << this->is_stub << endl;
 
-	output_file << this->scope_context_ids.size() << endl;
-	for (int c_index = 0; c_index < (int)this->scope_context_ids.size(); c_index++) {
-		output_file << this->scope_context_ids[c_index] << endl;
-		output_file << this->node_context_ids[c_index] << endl;
-	}
-
 	output_file << this->is_loop << endl;
 
 	output_file << this->previous_location_id << endl;
@@ -100,19 +91,6 @@ void BranchNode::load(ifstream& input_file) {
 	string is_stub_line;
 	getline(input_file, is_stub_line);
 	this->is_stub = stoi(is_stub_line);
-
-	string scope_context_ids_size_line;
-	getline(input_file, scope_context_ids_size_line);
-	int scope_context_ids_size = stoi(scope_context_ids_size_line);
-	for (int c_index = 0; c_index < scope_context_ids_size; c_index++) {
-		string scope_context_id_line;
-		getline(input_file, scope_context_id_line);
-		this->scope_context_ids.push_back(stoi(scope_context_id_line));
-
-		string node_context_id_line;
-		getline(input_file, node_context_id_line);
-		this->node_context_ids.push_back(stoi(node_context_id_line));
-	}
 
 	string is_loop_line;
 	getline(input_file, is_loop_line);

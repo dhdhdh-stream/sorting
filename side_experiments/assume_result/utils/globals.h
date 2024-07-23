@@ -4,14 +4,14 @@
 #include <random>
 
 class ProblemType;
-class SolutionSet;
+class Solution;
 
 extern int seed;
 
 extern std::default_random_engine generator;
 
 extern ProblemType* problem_type;
-extern SolutionSet* solution_set;
+extern Solution* solution;
 
 extern int run_index;
 

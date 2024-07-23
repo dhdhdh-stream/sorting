@@ -10,7 +10,7 @@
 #include "return_node.h"
 #include "scope_node.h"
 #include "solution.h"
-#include "solution_set.h"
+#include "solution_helpers.h"
 
 using namespace std;
 
@@ -40,26 +40,62 @@ void Scope::clear_verify() {
 }
 #endif /* MDEBUG */
 
+void Scope::clean() {
+	map<int, AbstractNode*>::iterator it = this->nodes.begin();
+	while (it != this->nodes.end()) {
+		switch (it->second->type) {
+		case NODE_TYPE_BRANCH:
+			{
+				BranchNode* branch_node = (BranchNode*)it->second;
+				if (branch_node->is_stub) {
+					clean_scope_node_helper(this,
+											branch_node,
+											branch_node->original_next_node);
+
+					delete it->second;
+					it = this->nodes.erase(it);
+
+					continue;
+				}
+			}
+			break;
+		case NODE_TYPE_RETURN:
+			{
+				ReturnNode* return_node = (ReturnNode*)it->second;
+				if (return_node->previous_location_id == -1) {
+					clean_scope_node_helper(this,
+											return_node,
+											return_node->next_node);
+
+					delete it->second;
+					it = this->nodes.erase(it);
+
+					continue;
+				}
+			}
+			break;
+		}
+
+		it++;
+	}
+}
+
 void Scope::clean_node(int node_id) {
-	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
-			it != this->nodes.end(); it++) {
+	map<int, AbstractNode*>::iterator it = this->nodes.begin();
+	while (it != this->nodes.end()) {
 		switch (it->second->type) {
 		case NODE_TYPE_BRANCH:
 			{
 				BranchNode* branch_node = (BranchNode*)it->second;
 				if (branch_node->previous_location_id == node_id) {
-					branch_node->is_stub = true;
+					clean_scope_node_helper(this,
+											branch_node,
+											branch_node->original_next_node);
 
-					branch_node->is_loop = false;
+					delete it->second;
+					it = this->nodes.erase(it);
 
-					branch_node->previous_location_id = -1;
-					branch_node->previous_location = NULL;
-
-					branch_node->analyze_size = -1;
-					if (branch_node->network != NULL) {
-						delete branch_node->network;
-						branch_node->network = NULL;
-					}
+					continue;
 				}
 			}
 			break;
@@ -67,12 +103,20 @@ void Scope::clean_node(int node_id) {
 			{
 				ReturnNode* return_node = (ReturnNode*)it->second;
 				if (return_node->previous_location_id == node_id) {
-					return_node->previous_location_id = -1;
-					return_node->previous_location = NULL;
+					clean_scope_node_helper(this,
+											return_node,
+											return_node->next_node);
+
+					delete it->second;
+					it = this->nodes.erase(it);
+
+					continue;
 				}
 			}
 			break;
 		}
+
+		it++;
 	}
 }
 

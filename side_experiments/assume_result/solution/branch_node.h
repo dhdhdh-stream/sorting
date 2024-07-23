@@ -17,18 +17,6 @@ public:
 	bool is_stub;
 
 	/**
-	 * - to overcome bottlenecks where:
-	 *   - scope is applied to too many different situations
-	 *     - lots of possible improvements but each individually rare
-	 *       - cost of making decisions greater than gain, so no progress made
-	 * 
-	 * TODO: situation also occurs from branching in earlier part of scope
-	 * TODO: add clean
-	 */
-	std::vector<int> scope_context_ids;
-	std::vector<int> node_context_ids;
-
-	/**
 	 * - basically jump statements
 	 *   - can be useful, but should be used sparingly
 	 *     - can make generalization harder?

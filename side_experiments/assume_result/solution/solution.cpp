@@ -4,21 +4,24 @@
 
 #include "abstract_experiment.h"
 #include "action_node.h"
+#include "branch_node.h"
 #include "globals.h"
+#include "return_node.h"
 #include "scope.h"
 #include "scope_node.h"
+#include "solution_helpers.h"
 
 using namespace std;
+
+const double TRIM_PERCENTAGE = 0.2;
 
 Solution::Solution() {
 	// do nothing
 }
 
 Solution::Solution(Solution* original) {
-	this->generation = original->generation;
-
-	this->last_updated_scope_id = -1;
-	this->last_new_scope_id = -1;
+	this->timestamp = original->timestamp;
+	this->average_score = original->average_score;
 
 	for (int s_index = 0; s_index < (int)original->scopes.size(); s_index++) {
 		Scope* scope = new Scope();
@@ -46,8 +49,8 @@ Solution::~Solution() {
 }
 
 void Solution::init() {
-	this->last_updated_scope_id = 0;
-	this->last_new_scope_id = -1;
+	this->timestamp = 0;
+	this->average_score = -1.0;
 
 	/**
 	 * - even though scopes[0] will not be reused, still good to start with:
@@ -75,18 +78,18 @@ void Solution::init() {
 	this->num_actions_limit = 40;
 }
 
-void Solution::load(ifstream& input_file) {
-	string generation_line;
-	getline(input_file, generation_line);
-	this->generation = stoi(generation_line);
+void Solution::load(string path,
+					string name) {
+	ifstream input_file;
+	input_file.open(path + "saves/" + name + ".txt");
 
-	string last_updated_scope_id_line;
-	getline(input_file, last_updated_scope_id_line);
-	this->last_updated_scope_id = stoi(last_updated_scope_id_line);
+	string timestamp_line;
+	getline(input_file, timestamp_line);
+	this->timestamp = stoi(timestamp_line);
 
-	string last_new_scope_id_line;
-	getline(input_file, last_new_scope_id_line);
-	this->last_new_scope_id = stoi(last_new_scope_id_line);
+	string average_score_line;
+	getline(input_file, average_score_line);
+	this->average_score = stod(average_score_line);
 
 	string num_scopes_line;
 	getline(input_file, num_scopes_line);
@@ -116,6 +119,8 @@ void Solution::load(ifstream& input_file) {
 	#else
 	this->num_actions_limit = 10*this->max_num_actions + 10;
 	#endif /* MDEBUG */
+
+	input_file.close();
 }
 
 #if defined(MDEBUG) && MDEBUG
@@ -128,30 +133,152 @@ void Solution::clear_verify() {
 }
 #endif /* MDEBUG */
 
-void Solution::merge_and_delete(Solution* original_solution) {
-	for (int s_index = 1; s_index < (int)original_solution->scopes.size(); s_index++) {
-		original_solution->scopes[s_index]->id = (int)this->scopes.size();
-		this->scopes.push_back(original_solution->scopes[s_index]);
-	}
-	delete original_solution->scopes[0];
+void Solution::clean() {
+	for (int s_index = (int)this->scopes.size()-1; s_index >= 0; s_index--) {
+		bool still_used = false;
+		for (int is_index = 0; is_index < (int)this->scopes.size()-1; is_index++) {
+			if (s_index != is_index) {
+				for (map<int, AbstractNode*>::iterator it = this->scopes[is_index]->nodes.begin();
+						it != this->scopes[is_index]->nodes.end(); it++) {
+					if (it->second->type == NODE_TYPE_SCOPE) {
+						ScopeNode* scope_node = (ScopeNode*)it->second;
+						if (scope_node->scope == this->scopes[s_index]) {
+							still_used = true;
+							break;
+						}
+					}
+				}
+			}
 
-	original_solution->scopes.clear();
+			if (still_used) {
+				break;
+			}
+		}
 
-	if (original_solution->max_num_actions > this->max_num_actions) {
-		this->max_num_actions = original_solution->max_num_actions;
-	}
-	if (original_solution->num_actions_limit > this->num_actions_limit) {
-		this->num_actions_limit = original_solution->num_actions_limit;
+		if (!still_used) {
+			delete this->scopes[s_index];
+			this->scopes.erase(this->scopes.begin() + s_index);
+		}
 	}
 
-	delete original_solution;
+	for (int s_index = (int)this->scopes.size()-1; s_index >= 0; s_index--) {
+		if (this->scopes[s_index]->nodes.size() <= 3) {
+			ActionNode* start_node = (ActionNode*)this->scopes[s_index]->nodes[0];
+			if (start_node->next_node->type == NODE_TYPE_ACTION) {
+				ActionNode* action_node = (ActionNode*)start_node->next_node;
+				if (action_node->action.move == ACTION_NOOP) {
+					clean_scope_node(this->scopes[s_index]);
+				} else {
+					clean_scope_node(this->scopes[s_index],
+									 action_node->action);
+				}
+			} else if (start_node->next_node->type == NODE_TYPE_SCOPE) {
+				ScopeNode* scope_node = (ScopeNode*)start_node->next_node;
+				clean_scope_node(this->scopes[s_index],
+								 scope_node->scope);
+			} else {
+				clean_scope_node(this->scopes[s_index]);
+			}
+
+			delete this->scopes[s_index];
+			this->scopes.erase(this->scopes.begin() + s_index);
+		}
+	}
 }
 
-void Solution::save(ofstream& output_file) {
-	output_file << this->generation << endl;
+void Solution::random_trim() {
+	int starting_num_nodes = 0;
+	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
+		starting_num_nodes += (this->scopes[s_index]->nodes.size() - 2);
+	}
 
-	output_file << this->last_updated_scope_id << endl;
-	output_file << this->last_new_scope_id << endl;
+	while (true) {
+		uniform_int_distribution<int> scope_distribution(0, this->scopes.size()-1);
+		Scope* scope = this->scopes[scope_distribution(generator)];
+		uniform_int_distribution<int> node_distribution(0, scope->nodes.size()-1);
+		AbstractNode* node = next(scope->nodes.begin(), node_distribution(generator))->second;
+		switch (node->type) {
+		case NODE_TYPE_ACTION:
+			{
+				ActionNode* action_node = (ActionNode*)node;
+				if (action_node->id != 0 && action_node->next_node != NULL) {
+					clean_scope_node_helper(scope,
+											action_node,
+											action_node->next_node);
+
+					scope->clean_node(action_node->id);
+
+					scope->nodes.erase(action_node->id);
+					delete action_node;
+				}
+			}
+			break;
+		case NODE_TYPE_SCOPE:
+			{
+				ScopeNode* scope_node = (ScopeNode*)node;
+
+				clean_scope_node_helper(scope,
+										scope_node,
+										scope_node->next_node);
+
+				scope->clean_node(scope_node->id);
+
+				scope->nodes.erase(scope_node->id);
+				delete scope_node;
+			}
+			break;
+		case NODE_TYPE_BRANCH:
+			{
+				BranchNode* branch_node = (BranchNode*)node;
+
+				uniform_int_distribution<int> branch_distribution(0, 1);
+				if (branch_distribution(generator) == 0) {
+					clean_scope_node_helper(scope,
+											branch_node,
+											branch_node->branch_next_node);
+				} else {
+					clean_scope_node_helper(scope,
+											branch_node,
+											branch_node->original_next_node);
+				}
+
+				scope->nodes.erase(branch_node->id);
+				delete branch_node;
+			}
+			break;
+		case NODE_TYPE_RETURN:
+			{
+				ReturnNode* return_node = (ReturnNode*)node;
+
+				clean_scope_node_helper(scope,
+										return_node,
+										return_node->next_node);
+
+				scope->nodes.erase(return_node->id);
+				delete return_node;
+			}
+			break;
+		}
+
+		clean();
+
+		int curr_num_nodes = 0;
+		for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
+			curr_num_nodes += (this->scopes[s_index]->nodes.size() - 2);
+		}
+		if (curr_num_nodes <= (1.0 - TRIM_PERCENTAGE) * starting_num_nodes) {
+			break;
+		}
+	}
+}
+
+void Solution::save(string path,
+					string name) {
+	ofstream output_file;
+	output_file.open(path + "saves/" + name + "_temp.txt");
+
+	output_file << this->timestamp << endl;
+	output_file << this->average_score << endl;
 
 	output_file << this->scopes.size() << endl;
 
@@ -160,6 +287,12 @@ void Solution::save(ofstream& output_file) {
 	}
 
 	output_file << this->max_num_actions << endl;
+
+	output_file.close();
+
+	string oldname = path + "saves/" + name + "_temp.txt";
+	string newname = path + "saves/" + name + ".txt";
+	rename(oldname.c_str(), newname.c_str());
 }
 
 void Solution::save_for_display(ofstream& output_file) {

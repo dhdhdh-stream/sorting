@@ -11,7 +11,6 @@
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
-#include "solution_set.h"
 
 using namespace std;
 
@@ -200,8 +199,7 @@ NewActionExperiment::NewActionExperiment(Scope* scope_context,
 						BranchNode* new_branch_node = (BranchNode*)node_mappings[original_branch_node];
 
 						bool is_stub = false;
-						if (original_branch_node->is_stub
-								|| original_branch_node->scope_context_ids.size() > 0) {
+						if (original_branch_node->is_stub) {
 							is_stub = true;
 						}
 
@@ -296,6 +294,8 @@ NewActionExperiment::NewActionExperiment(Scope* scope_context,
 					break;
 				}
 			}
+
+			new_scope->clean();
 
 			break;
 		}

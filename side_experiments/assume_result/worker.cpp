@@ -13,7 +13,6 @@
 #include "scope_node.h"
 #include "solution.h"
 #include "solution_helpers.h"
-#include "solution_set.h"
 
 using namespace std;
 
@@ -22,7 +21,7 @@ int seed;
 default_random_engine generator;
 
 ProblemType* problem_type;
-SolutionSet* solution_set;
+Solution* solution;
 
 int run_index;
 
@@ -46,10 +45,8 @@ int main(int argc, char* argv[]) {
 
 	problem_type = new TypeMinesweeper();
 
-	solution_set = new SolutionSet();
-	solution_set->load("workers/", "main");
-
-	solution_set->increment();
+	solution = new Solution();
+	solution->load("workers/", "main");
 
 	auto start_time = chrono::high_resolution_clock::now();
 	while (true) {
@@ -60,7 +57,6 @@ int main(int argc, char* argv[]) {
 		run_helper.result = get_existing_result(problem);
 
 		vector<ContextLayer> context;
-		Solution* solution = solution_set->solutions[solution_set->curr_solution_index];
 		solution->scopes[0]->activate(
 			problem,
 			context,
@@ -96,14 +92,12 @@ int main(int argc, char* argv[]) {
 			int curr_timestamp = stoi(timestamp_line);
 			solution_save_file.close();
 
-			if (curr_timestamp > solution_set->timestamp) {
-				delete solution_set;
+			if (curr_timestamp > solution->timestamp) {
+				delete solution;
 
-				solution_set = new SolutionSet();
-				solution_set->load("workers/", "main");
+				solution = new Solution();
+				solution->load("workers/", "main");
 				cout << "updated from main" << endl;
-
-				solution_set->increment();
 
 				continue;
 			}
@@ -128,19 +122,16 @@ int main(int argc, char* argv[]) {
 				/**
 				 * - history->experiment_histories.size() == 1
 				 */
-				SolutionSet* duplicate = new SolutionSet(solution_set);
-				Solution* duplicate_solution = duplicate->solutions[duplicate->curr_solution_index];
+				Solution* duplicate = new Solution(solution);
 
-				duplicate_solution->last_updated_scope_id = run_helper.experiment_histories.back()->experiment->scope_context->id;
-				if (run_helper.experiment_histories.back()->experiment->type == EXPERIMENT_TYPE_NEW_ACTION) {
-					duplicate_solution->last_new_scope_id = (int)duplicate_solution->scopes.size();
-				}
+				int last_updated_scope_id = run_helper.experiment_histories.back()->experiment->scope_context->id;
 
-				run_helper.experiment_histories.back()->experiment->finalize(duplicate_solution);
+				run_helper.experiment_histories.back()->experiment->finalize(duplicate);
 				delete run_helper.experiment_histories.back()->experiment;
 
-				Scope* experiment_scope = duplicate_solution->scopes[duplicate_solution->last_updated_scope_id];
+				Scope* experiment_scope = duplicate->scopes[last_updated_scope_id];
 				clean_scope(experiment_scope);
+				duplicate->clean();
 
 				vector<double> target_vals;
 				int max_num_actions = 0;
@@ -151,7 +142,7 @@ int main(int argc, char* argv[]) {
 					RunHelper run_helper;
 
 					vector<ContextLayer> context;
-					duplicate_solution->scopes[0]->measure_activate(
+					duplicate->scopes[0]->measure_activate(
 						problem,
 						context,
 						run_helper);
@@ -186,7 +177,7 @@ int main(int argc, char* argv[]) {
 						int curr_timestamp = stoi(timestamp_line);
 						solution_save_file.close();
 
-						if (curr_timestamp > solution_set->timestamp) {
+						if (curr_timestamp > solution->timestamp) {
 							early_exit = true;
 							break;
 						}
@@ -196,20 +187,18 @@ int main(int argc, char* argv[]) {
 				if (early_exit) {
 					delete duplicate;
 
-					delete solution_set;
+					delete solution;
 
-					solution_set = new SolutionSet();
-					solution_set->load("workers/", "main");
+					solution = new Solution();
+					solution->load("workers/", "main");
 					cout << "updated from main" << endl;
-
-					solution_set->increment();
 
 					continue;
 				}
 
-				for (int s_index = 0; s_index < (int)duplicate_solution->scopes.size(); s_index++) {
-					for (map<int, AbstractNode*>::iterator it = duplicate_solution->scopes[s_index]->nodes.begin();
-							it != duplicate_solution->scopes[s_index]->nodes.end(); it++) {
+				for (int s_index = 0; s_index < (int)duplicate->scopes.size(); s_index++) {
+					for (map<int, AbstractNode*>::iterator it = duplicate->scopes[s_index]->nodes.begin();
+							it != duplicate->scopes[s_index]->nodes.end(); it++) {
 						it->second->average_instances_per_run /= MEASURE_ITERS;
 						if (it->second->average_instances_per_run < 1.0) {
 							it->second->average_instances_per_run = 1.0;
@@ -223,7 +212,7 @@ int main(int argc, char* argv[]) {
 				}
 				duplicate->average_score = sum_score / MEASURE_ITERS;
 
-				duplicate_solution->max_num_actions = max_num_actions;
+				duplicate->max_num_actions = max_num_actions;
 
 				cout << "duplicate->average_score: " << duplicate->average_score << endl;
 
@@ -244,7 +233,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	delete problem_type;
-	delete solution_set;
+	delete solution;
 
 	cout << "Done" << endl;
 }

@@ -54,8 +54,6 @@ public:
 	std::vector<ReturnNode*> curr_returns;
 	bool curr_is_loop;
 	AbstractNode* curr_exit_next_node;
-	std::vector<int> curr_scope_context_ids;
-	std::vector<int> curr_node_context_ids;
 
 	double best_surprise;
 	AbstractNode* best_previous_location;
@@ -65,14 +63,9 @@ public:
 	std::vector<ReturnNode*> best_returns;
 	bool best_is_loop;
 	AbstractNode* best_exit_next_node;
-	std::vector<int> best_scope_context_ids;
-	std::vector<int> best_node_context_ids;
 
 	BranchNode* branch_node;
 	ActionNode* ending_node;
-
-	std::vector<int> scope_context_ids;
-	std::vector<int> node_context_ids;
 
 	double new_average_score;
 

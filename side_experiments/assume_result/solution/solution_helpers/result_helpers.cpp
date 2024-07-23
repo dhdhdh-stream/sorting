@@ -4,7 +4,6 @@
 #include "problem.h"
 #include "scope.h"
 #include "solution.h"
-#include "solution_set.h"
 
 using namespace std;
 
@@ -19,7 +18,6 @@ double get_existing_result(Problem* original_problem) {
 	#endif /* MDEBUG */
 
 	vector<ContextLayer> context;
-	Solution* solution = solution_set->solutions[solution_set->curr_solution_index];
 	solution->scopes[0]->result_activate(
 			copy_problem,
 			context,

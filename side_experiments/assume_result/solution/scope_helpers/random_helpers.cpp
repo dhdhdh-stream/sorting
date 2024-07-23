@@ -47,7 +47,6 @@ void Scope::random_exit_activate(AbstractNode* starting_node,
 				possible_exits.push_back(curr_node);
 
 				if (node->is_stub
-						|| node->scope_context_ids.size() > 0
 						|| node->is_loop) {
 					curr_node = node->original_next_node;
 				} else {

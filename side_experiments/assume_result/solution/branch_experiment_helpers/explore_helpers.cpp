@@ -13,7 +13,6 @@
 #include "scope.h"
 #include "scope_node.h"
 #include "solution_helpers.h"
-#include "solution_set.h"
 
 using namespace std;
 
@@ -166,13 +165,6 @@ bool BranchExperiment::explore_activate(
 			this->curr_returns.insert(this->curr_returns.begin() + step_index, new_return_node);
 		}
 
-		for (int c_index = 0; c_index < (int)context.size()-1; c_index++) {
-			this->curr_scope_context_ids.insert(this->curr_scope_context_ids.begin(),
-				context[c_index].scope->id);
-			this->curr_node_context_ids.insert(this->curr_node_context_ids.begin(),
-				context[c_index].node->id);
-		}
-
 		bool can_loop = true;
 		if (this->curr_is_loop) {
 			set<AbstractNode*>::iterator loop_start_it = context.back().loop_nodes_seen.find(this->branch_node);
@@ -267,15 +259,11 @@ void BranchExperiment::explore_backprop(
 				this->best_returns = this->curr_returns;
 				this->best_is_loop = this->curr_is_loop;
 				this->best_exit_next_node = this->curr_exit_next_node;
-				this->best_scope_context_ids = this->curr_scope_context_ids;
-				this->best_node_context_ids = this->curr_node_context_ids;
 
 				this->curr_step_types.clear();
 				this->curr_actions.clear();
 				this->curr_scopes.clear();
 				this->curr_returns.clear();
-				this->curr_scope_context_ids.clear();
-				this->curr_node_context_ids.clear();
 			} else {
 				for (int s_index = 0; s_index < (int)this->curr_step_types.size(); s_index++) {
 					if (this->curr_step_types[s_index] == STEP_TYPE_ACTION) {
@@ -291,8 +279,6 @@ void BranchExperiment::explore_backprop(
 				this->curr_actions.clear();
 				this->curr_scopes.clear();
 				this->curr_returns.clear();
-				this->curr_scope_context_ids.clear();
-				this->curr_node_context_ids.clear();
 			}
 
 			if (this->state_iter == EXPLORE_ITERS-1
@@ -313,15 +299,11 @@ void BranchExperiment::explore_backprop(
 				this->best_returns = this->curr_returns;
 				this->best_is_loop = this->curr_is_loop;
 				this->best_exit_next_node = this->curr_exit_next_node;
-				this->best_scope_context_ids = this->curr_scope_context_ids;
-				this->best_node_context_ids = this->curr_node_context_ids;
 
 				this->curr_step_types.clear();
 				this->curr_actions.clear();
 				this->curr_scopes.clear();
 				this->curr_returns.clear();
-				this->curr_scope_context_ids.clear();
-				this->curr_node_context_ids.clear();
 
 				select = true;
 			} else {
@@ -339,8 +321,6 @@ void BranchExperiment::explore_backprop(
 				this->curr_actions.clear();
 				this->curr_scopes.clear();
 				this->curr_returns.clear();
-				this->curr_scope_context_ids.clear();
-				this->curr_node_context_ids.clear();
 			}
 		}
 

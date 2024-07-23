@@ -9,7 +9,6 @@
 #include "problem.h"
 #include "scope.h"
 #include "solution.h"
-#include "solution_set.h"
 
 using namespace std;
 
@@ -30,7 +29,6 @@ void ReturnNode::activate(AbstractNode*& curr_node,
 	curr_node = this->next_node;
 
 	run_helper.num_actions++;
-	Solution* solution = solution_set->solutions[solution_set->curr_solution_index];
 	if (run_helper.num_actions > solution->num_actions_limit) {
 		run_helper.exceeded_limit = true;
 		return;
@@ -46,8 +44,6 @@ void ReturnNode::activate(AbstractNode*& curr_node,
 			&& run_helper.experiment_histories.back()->experiment == this->parent->new_action_experiment) {
 		context.back().nodes_seen.push_back({this, false});
 	}
-	Minesweeper* minesweeper = (Minesweeper*)problem;
-	context.back().location_history[this] = {minesweeper->current_x, minesweeper->current_y};
 
 	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
 		bool is_selected = this->experiments[e_index]->activate(

@@ -28,21 +28,6 @@ bool BranchExperiment::capture_verify_activate(AbstractNode*& curr_node,
 
 	run_helper.num_actions++;
 
-	bool context_match = true;
-	if (this->scope_context_ids.size() > 0) {
-		if (context.size() < this->scope_context_ids.size()+1) {
-			context_match = false;
-		} else {
-			for (int c_index = 0; c_index < (int)this->scope_context_ids.size(); c_index++) {
-				if (context[context.size()-2-c_index].scope->id != this->scope_context_ids[c_index]
-						|| context[context.size()-2-c_index].node->id != this->node_context_ids[c_index]) {
-					context_match = false;
-					break;
-				}
-			}
-		}
-	}
-
 	bool can_loop = true;
 	if (this->curr_is_loop) {
 		set<AbstractNode*>::iterator loop_start_it = context.back().loop_nodes_seen.find(this->branch_node);
@@ -62,7 +47,7 @@ bool BranchExperiment::capture_verify_activate(AbstractNode*& curr_node,
 		}
 	}
 
-	if (context_match && location_match && can_loop) {
+	if (location_match && can_loop) {
 		run_helper.num_analyze += (1 + 2*this->new_analyze_size) * (1 + 2*this->new_analyze_size);
 
 		vector<vector<double>> input_vals(1 + 2*this->new_analyze_size);

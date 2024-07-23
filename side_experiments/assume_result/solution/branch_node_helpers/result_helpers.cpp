@@ -7,7 +7,6 @@
 #include "network.h"
 #include "scope.h"
 #include "solution.h"
-#include "solution_set.h"
 #include "utilities.h"
 
 using namespace std;
@@ -23,21 +22,6 @@ void BranchNode::result_activate(AbstractNode*& curr_node,
 	if (this->is_stub) {
 		is_branch = false;
 	} else {
-		bool context_match = true;
-		if (this->scope_context_ids.size() > 0) {
-			if (context.size() < this->scope_context_ids.size()+1) {
-				context_match = false;
-			} else {
-				for (int c_index = 0; c_index < (int)this->scope_context_ids.size(); c_index++) {
-					if (context[context.size()-2-c_index].scope->id != this->scope_context_ids[c_index]
-							|| context[context.size()-2-c_index].node->id != this->node_context_ids[c_index]) {
-						context_match = false;
-						break;
-					}
-				}
-			}
-		}
-
 		bool can_loop = true;
 		if (this->is_loop) {
 			set<AbstractNode*>::iterator loop_start_it = context.back().loop_nodes_seen.find(this);
@@ -56,7 +40,7 @@ void BranchNode::result_activate(AbstractNode*& curr_node,
 			}
 		}
 
-		if (!context_match || !location_match || !can_loop) {
+		if (!location_match || !can_loop) {
 			is_branch = false;
 		} else {
 			if (this->analyze_size == -1) {
@@ -113,10 +97,8 @@ void BranchNode::result_activate(AbstractNode*& curr_node,
 	}
 
 	run_helper.num_actions++;
-	Solution* solution = solution_set->solutions[solution_set->curr_solution_index];
 	if (run_helper.num_actions > solution->num_actions_limit) {
 		run_helper.exceeded_limit = true;
 		return;
 	}
-	context.back().location_history[this] = {minesweeper->current_x, minesweeper->current_y};
 }

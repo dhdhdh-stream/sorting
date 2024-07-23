@@ -13,7 +13,6 @@
 #include "scope_node.h"
 #include "solution.h"
 #include "solution_helpers.h"
-#include "solution_set.h"
 #include "utilities.h"
 
 using namespace std;

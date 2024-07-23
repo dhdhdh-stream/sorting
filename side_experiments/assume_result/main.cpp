@@ -49,7 +49,6 @@
 #include "scope.h"
 #include "solution.h"
 #include "solution_helpers.h"
-#include "solution_set.h"
 
 using namespace std;
 
@@ -58,7 +57,7 @@ int seed;
 default_random_engine generator;
 
 ProblemType* problem_type;
-SolutionSet* solution_set;
+Solution* solution;
 
 int run_index;
 
@@ -72,13 +71,11 @@ int main(int argc, char* argv[]) {
 
 	problem_type = new TypeMinesweeper();
 
-	solution_set = new SolutionSet();
-	// solution_set->init();
-	solution_set->load("", "main");
+	solution = new Solution();
+	// solution->init();
+	solution->load("", "main");
 
-	solution_set->increment();
-
-	// solution_set->save("", "main");
+	// solution->save("", "main");
 
 	run_index = 0;
 
@@ -99,7 +96,6 @@ int main(int argc, char* argv[]) {
 		run_helper.result = get_existing_result(problem);
 
 		vector<ContextLayer> context;
-		Solution* solution = solution_set->solutions[solution_set->curr_solution_index];
 		solution->scopes[0]->activate(
 			problem,
 			context,
@@ -123,11 +119,9 @@ int main(int argc, char* argv[]) {
 
 		#if defined(MDEBUG) && MDEBUG
 		if (run_index%2000 == 0) {
-			delete solution_set;
-			solution_set = new SolutionSet();
-			solution_set->load("", "main");
-
-			solution_set->increment();
+			delete solution;
+			solution = new Solution();
+			solution->load("", "main");
 
 			continue;
 		}
@@ -152,43 +146,40 @@ int main(int argc, char* argv[]) {
 				/**
 				 * - history->experiment_histories.size() == 1
 				 */
-				SolutionSet* duplicate = new SolutionSet(solution_set);
-				Solution* duplicate_solution = duplicate->solutions[duplicate->curr_solution_index];
+				Solution* duplicate = new Solution(solution);
 
-				duplicate_solution->last_updated_scope_id = run_helper.experiment_histories.back()->experiment->scope_context->id;
-				if (run_helper.experiment_histories.back()->experiment->type == EXPERIMENT_TYPE_NEW_ACTION) {
-					duplicate_solution->last_new_scope_id = (int)duplicate_solution->scopes.size();
-				}
+				int last_updated_scope_id = run_helper.experiment_histories.back()->experiment->scope_context->id;
 
-				run_helper.experiment_histories.back()->experiment->finalize(duplicate_solution);
+				run_helper.experiment_histories.back()->experiment->finalize(duplicate);
 				delete run_helper.experiment_histories.back()->experiment;
 
-				Scope* experiment_scope = duplicate_solution->scopes[duplicate_solution->last_updated_scope_id];
+				Scope* experiment_scope = duplicate->scopes[last_updated_scope_id];
 				clean_scope(experiment_scope);
+				duplicate->clean();
 
 				#if defined(MDEBUG) && MDEBUG
-				while (duplicate_solution->verify_problems.size() > 0) {
-					Problem* problem = duplicate_solution->verify_problems[0];
+				while (duplicate->verify_problems.size() > 0) {
+					Problem* problem = duplicate->verify_problems[0];
 
 					RunHelper run_helper;
-					run_helper.starting_run_seed = duplicate_solution->verify_seeds[0];
+					run_helper.starting_run_seed = duplicate->verify_seeds[0];
 					cout << "run_helper.starting_run_seed: " << run_helper.starting_run_seed << endl;
-					run_helper.curr_run_seed = duplicate_solution->verify_seeds[0];
-					duplicate_solution->verify_seeds.erase(duplicate_solution->verify_seeds.begin());
+					run_helper.curr_run_seed = duplicate->verify_seeds[0];
+					duplicate->verify_seeds.erase(duplicate->verify_seeds.begin());
 
 					vector<ContextLayer> context;
-					duplicate_solution->scopes[0]->verify_activate(
+					duplicate->scopes[0]->verify_activate(
 						problem,
 						context,
 						run_helper);
 
 					cout << "run_helper.num_actions: " << run_helper.num_actions << endl;
-					cout << "duplicate_solution->num_actions_limit: " << duplicate_solution->num_actions_limit << endl;
+					cout << "duplicate->num_actions_limit: " << duplicate->num_actions_limit << endl;
 
-					delete duplicate_solution->verify_problems[0];
-					duplicate_solution->verify_problems.erase(duplicate_solution->verify_problems.begin());
+					delete duplicate->verify_problems[0];
+					duplicate->verify_problems.erase(duplicate->verify_problems.begin());
 				}
-				duplicate_solution->clear_verify();
+				duplicate->clear_verify();
 				#endif /* MDEBUG */
 
 				vector<double> target_vals;
@@ -207,7 +198,7 @@ int main(int argc, char* argv[]) {
 					#endif /* MDEBUG */
 
 					vector<ContextLayer> context;
-					duplicate_solution->scopes[0]->measure_activate(
+					duplicate->scopes[0]->measure_activate(
 						problem,
 						context,
 						run_helper);
@@ -236,9 +227,9 @@ int main(int argc, char* argv[]) {
 					#endif /* MDEBUG */
 				}
 
-				for (int s_index = 0; s_index < (int)duplicate_solution->scopes.size(); s_index++) {
-					for (map<int, AbstractNode*>::iterator it = duplicate_solution->scopes[s_index]->nodes.begin();
-							it != duplicate_solution->scopes[s_index]->nodes.end(); it++) {
+				for (int s_index = 0; s_index < (int)duplicate->scopes.size(); s_index++) {
+					for (map<int, AbstractNode*>::iterator it = duplicate->scopes[s_index]->nodes.begin();
+							it != duplicate->scopes[s_index]->nodes.end(); it++) {
 						it->second->average_instances_per_run /= MEASURE_ITERS;
 						if (it->second->average_instances_per_run < 1.0) {
 							it->second->average_instances_per_run = 1.0;
@@ -250,11 +241,9 @@ int main(int argc, char* argv[]) {
 				if (early_exit) {
 					delete duplicate;
 
-					delete solution_set;
-					solution_set = new SolutionSet();
-					solution_set->load("", "main");
-
-					solution_set->increment();
+					delete solution;
+					solution = new Solution();
+					solution->load("", "main");
 
 					continue;
 				}
@@ -266,25 +255,23 @@ int main(int argc, char* argv[]) {
 				}
 				duplicate->average_score = sum_score / MEASURE_ITERS;
 
-				duplicate_solution->max_num_actions = max_num_actions;
-				duplicate_solution->num_actions_limit = 2*duplicate_solution->max_num_actions + 10;
+				duplicate->max_num_actions = max_num_actions;
+				duplicate->num_actions_limit = 2*duplicate->max_num_actions + 10;
 
 				cout << "duplicate->average_score: " << duplicate->average_score << endl;
 
 				ofstream display_file;
 				display_file.open("../display.txt");
-				duplicate_solution->save_for_display(display_file);
+				duplicate->save_for_display(display_file);
 				display_file.close();
 
 				duplicate->timestamp++;
 
 				#if defined(MDEBUG) && MDEBUG
-				delete solution_set;
-				solution_set = duplicate;
+				delete solution;
+				solution = duplicate;
 
-				// solution_set->save("", "main");
-
-				solution_set->increment();
+				// solution->save("", "main");
 				#else
 				delete duplicate;
 				#endif /* MDEBUG */
@@ -300,7 +287,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	delete problem_type;
-	delete solution_set;
+	delete solution;
 
 	cout << "Done" << endl;
 }

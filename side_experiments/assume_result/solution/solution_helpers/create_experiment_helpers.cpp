@@ -12,7 +12,6 @@
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
-#include "solution_set.h"
 
 using namespace std;
 

@@ -25,10 +25,8 @@ class Scope;
 
 class Solution {
 public:
-	int generation;
-
-	int last_updated_scope_id;
-	int last_new_scope_id;
+	int timestamp;
+	double average_score;
 
 	std::vector<Scope*> scopes;
 
@@ -45,15 +43,18 @@ public:
 	~Solution();
 
 	void init();
-	void load(std::ifstream& input_file);
+	void load(std::string path,
+			  std::string name);
 
 	#if defined(MDEBUG) && MDEBUG
 	void clear_verify();
 	#endif /* MDEBUG */
 
-	void merge_and_delete(Solution* original_solution);
+	void clean();
+	void random_trim();
 
-	void save(std::ofstream& output_file);
+	void save(std::string path,
+			  std::string name);
 
 	void save_for_display(std::ofstream& output_file);
 };

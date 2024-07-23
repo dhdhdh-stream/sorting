@@ -8,7 +8,6 @@
 #include "minesweeper.h"
 #include "scope.h"
 #include "solution.h"
-#include "solution_set.h"
 
 using namespace std;
 
@@ -17,7 +16,7 @@ int seed;
 default_random_engine generator;
 
 ProblemType* problem_type;
-SolutionSet* solution_set;
+Solution* solution;
 
 int run_index;
 
@@ -31,10 +30,8 @@ int main(int argc, char* argv[]) {
 
 	problem_type = new TypeMinesweeper();
 
-	solution_set = new SolutionSet();
-	solution_set->load("", "main");
-
-	Solution* solution = solution_set->solutions[solution_set->curr_solution_index];
+	solution = new Solution();
+	solution->load("", "main");
 
 	double sum_vals = 0.0;
 	int max_num_actions = 0;
@@ -80,7 +77,7 @@ int main(int argc, char* argv[]) {
 	solution->save_for_display(display_file);
 	display_file.close();
 
-	delete solution_set;
+	delete solution;
 
 	cout << "Done" << endl;
 }
