@@ -8,6 +8,7 @@ class AbstractNode;
 class Problem;
 class Scope;
 class ScopeNode;
+class Solution;
 
 void create_experiment(RunHelper& run_helper);
 
@@ -18,10 +19,13 @@ void clean_branch_node(Scope* scope);
 void clean_scope_node_helper(Scope* scope,
 							 AbstractNode* original_node,
 							 AbstractNode* new_node);
-void clean_scope_node(Scope* to_remove);
-void clean_scope_node(Scope* to_remove,
+void clean_scope_node(Solution* parent_solution,
+					  Scope* to_remove);
+void clean_scope_node(Solution* parent_solution,
+					  Scope* to_remove,
 					  Action to_replace);
-void clean_scope_node(Scope* to_remove,
+void clean_scope_node(Solution* parent_solution,
+					  Scope* to_remove,
 					  Scope* to_replace);
 
 double get_existing_result(Problem* original_problem);

@@ -11,15 +11,23 @@
 using namespace std;
 
 ScopeNode* create_existing() {
-	uniform_int_distribution<int> possible_distribution(1, solution->scopes.size() + problem_type->num_possible_actions() - 1);
-	int possible_index = possible_distribution(generator);
-	if (possible_index < (int)solution->scopes.size()) {
-		ScopeNode* new_scope_node = new ScopeNode();
-		new_scope_node->scope = solution->scopes[possible_index];
-		new_scope_node->index = solution->scopes[possible_index]->scope_node_index;
-		solution->scopes[possible_index]->scope_node_index++;
+	/**
+	 * - always give raw actions a large weight
+	 *   - existing scopes often learned to avoid certain patterns
+	 *     - which can prevent innovation
+	 */
+	uniform_int_distribution<int> default_distribution(0, 1);
+	if (default_distribution(generator) != 0) {
+		uniform_int_distribution<int> possible_distribution(1, solution->scopes.size() + problem_type->num_possible_actions() - 1);
+		int possible_index = possible_distribution(generator);
+		if (possible_index < (int)solution->scopes.size()) {
+			ScopeNode* new_scope_node = new ScopeNode();
+			new_scope_node->scope = solution->scopes[possible_index];
+			new_scope_node->index = solution->scopes[possible_index]->scope_node_index;
+			solution->scopes[possible_index]->scope_node_index++;
 
-		return new_scope_node;
+			return new_scope_node;
+		}
 	}
 
 	return NULL;

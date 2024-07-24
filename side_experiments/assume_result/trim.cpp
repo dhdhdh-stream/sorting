@@ -4,6 +4,7 @@
 #include <thread>
 #include <random>
 
+#include "abstract_node.h"
 #include "constants.h"
 #include "globals.h"
 #include "minesweeper.h"
@@ -21,6 +22,7 @@ Solution* solution;
 
 int run_index;
 
+const int TRIM_EPOCHS = 2;
 const int TRIM_TRIES = 50;
 
 int main(int argc, char* argv[]) {
@@ -38,53 +40,146 @@ int main(int argc, char* argv[]) {
 
 	solution->save("", "checkpoint");
 
-	Solution* best_trim = NULL;
-	double best_score;
-	for (int t_index = 0; t_index < TRIM_TRIES; t_index++) {
-		Solution* duplicate = new Solution(solution);
-		duplicate->random_trim();
+	int starting_num_nodes = 0;
+	for (int s_index = 0; s_index < (int)solution->scopes.size(); s_index++) {
+		starting_num_nodes += (solution->scopes[s_index]->nodes.size() - 2);
+	}
+	cout << "starting_num_nodes: " << starting_num_nodes << endl;
 
-		double sum_score = 0.0;
-		for (int iter_index = 0; iter_index < MEASURE_ITERS; iter_index++) {
-			Problem* problem = problem_type->get_problem();
+	Solution* curr_solution = solution;
 
-			RunHelper run_helper;
+	for (int e_index = 0; e_index < TRIM_EPOCHS; e_index++) {
+		Solution* best_trim = NULL;
+		double best_score;
+		for (int t_index = 0; t_index < TRIM_TRIES; t_index++) {
+			Solution* duplicate = new Solution(curr_solution);
+			duplicate->random_trim();
 
-			vector<ContextLayer> context;
-			duplicate->scopes[0]->measure_activate(
-				problem,
-				context,
-				run_helper);
+			double sum_score = 0.0;
+			bool exceeded_limit = false;
+			for (int iter_index = 0; iter_index < MEASURE_ITERS; iter_index++) {
+				Problem* problem = problem_type->get_problem();
 
-			double target_val;
-			if (!run_helper.exceeded_limit) {
-				target_val = problem->score_result(run_helper.num_analyze,
-												   run_helper.num_actions);
-			} else {
-				target_val = -1.0;
+				RunHelper run_helper;
+
+				#if defined(MDEBUG) && MDEBUG
+				run_helper.starting_run_seed = run_index;
+				run_helper.curr_run_seed = run_index;
+				#endif /* MDEBUG */
+				run_index++;
+
+				vector<ContextLayer> context;
+				duplicate->scopes[0]->measure_activate(
+					problem,
+					context,
+					run_helper);
+
+				double target_val;
+				if (!run_helper.exceeded_limit) {
+					target_val = problem->score_result(run_helper.num_analyze,
+													   run_helper.num_actions);
+
+					delete problem;
+
+					sum_score += target_val;
+				} else {
+					delete problem;
+
+					exceeded_limit = true;
+
+					break;
+				}
 			}
 
-			sum_score += target_val;
+			if (exceeded_limit) {
+				cout << "exceeded_limit" << endl;
+			} else {
+				double average_score = sum_score / MEASURE_ITERS;
 
-			delete problem;
+				cout << "average_score: " << average_score << endl;
+
+				if (best_trim == NULL
+						|| average_score > best_score) {
+					if (best_trim != NULL) {
+						delete best_trim;
+					}
+					best_trim = duplicate;
+					best_score = average_score;
+				} else {
+					delete duplicate;
+				}
+			}
 		}
 
-		double average_score = sum_score / MEASURE_ITERS;
+		int ending_num_nodes = 0;
+		for (int s_index = 0; s_index < (int)best_trim->scopes.size(); s_index++) {
+			ending_num_nodes += (best_trim->scopes[s_index]->nodes.size() - 2);
+		}
+		cout << "ending_num_nodes: " << ending_num_nodes << endl;
 
-		if (best_trim == NULL
-				|| average_score > best_score) {
-			if (best_trim != NULL) {
-				delete best_trim;
+		curr_solution = best_trim;
+	}
+
+	vector<double> target_vals;
+	int max_num_actions = 0;
+	for (int iter_index = 0; iter_index < MEASURE_ITERS; iter_index++) {
+		Problem* problem = problem_type->get_problem();
+
+		RunHelper run_helper;
+
+		vector<ContextLayer> context;
+		curr_solution->scopes[0]->measure_activate(
+			problem,
+			context,
+			run_helper);
+
+		if (run_helper.num_actions > max_num_actions) {
+			max_num_actions = run_helper.num_actions;
+		}
+
+		double target_val;
+		if (!run_helper.exceeded_limit) {
+			target_val = problem->score_result(run_helper.num_analyze,
+											   run_helper.num_actions);
+		} else {
+			target_val = -1.0;
+		}
+
+		target_vals.push_back(target_val);
+
+		delete problem;
+	}
+
+	for (int s_index = 0; s_index < (int)curr_solution->scopes.size(); s_index++) {
+		for (map<int, AbstractNode*>::iterator it = curr_solution->scopes[s_index]->nodes.begin();
+				it != curr_solution->scopes[s_index]->nodes.end(); it++) {
+			it->second->average_instances_per_run /= MEASURE_ITERS;
+			if (it->second->average_instances_per_run < 1.0) {
+				it->second->average_instances_per_run = 1.0;
 			}
-			best_trim = duplicate;
-			best_score = average_score;
 		}
 	}
 
-	best_trim->save("", "main");
+	double sum_score = 0.0;
+	for (int d_index = 0; d_index < MEASURE_ITERS; d_index++) {
+		sum_score += target_vals[d_index];
+	}
+	curr_solution->average_score = sum_score / MEASURE_ITERS;
 
-	delete best_trim;
+	curr_solution->max_num_actions = max_num_actions;
 
+	curr_solution->timestamp++;
+
+	curr_solution->save("", "main");
+
+	ofstream display_file;
+	display_file.open("../display.txt");
+	curr_solution->save_for_display(display_file);
+	display_file.close();
+
+	delete curr_solution;
+
+	delete problem_type;
 	delete solution;
 
 	cout << "Done" << endl;

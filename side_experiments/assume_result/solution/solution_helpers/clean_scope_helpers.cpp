@@ -4,7 +4,6 @@
 
 #include "action_node.h"
 #include "branch_node.h"
-#include "globals.h"
 #include "return_node.h"
 #include "scope.h"
 #include "scope_node.h"
@@ -220,21 +219,22 @@ void clean_scope_node_helper(Scope* scope,
 	}
 }
 
-void clean_scope_node(Scope* to_remove) {
-	for (int s_index = 0; s_index < (int)solution->scopes.size(); s_index++) {
-		map<int, AbstractNode*>::iterator it = solution->scopes[s_index]->nodes.begin();
-		while (it != solution->scopes[s_index]->nodes.end()) {
+void clean_scope_node(Solution* parent_solution,
+					  Scope* to_remove) {
+	for (int s_index = 0; s_index < (int)parent_solution->scopes.size(); s_index++) {
+		map<int, AbstractNode*>::iterator it = parent_solution->scopes[s_index]->nodes.begin();
+		while (it != parent_solution->scopes[s_index]->nodes.end()) {
 			if (it->second->type == NODE_TYPE_SCOPE) {
 				ScopeNode* scope_node = (ScopeNode*)it->second;
 				if (scope_node->scope == to_remove) {
-					clean_scope_node_helper(solution->scopes[s_index],
+					clean_scope_node_helper(parent_solution->scopes[s_index],
 											scope_node,
 											scope_node->next_node);
 
-					solution->scopes[s_index]->clean_node(it->first);
+					parent_solution->scopes[s_index]->clean_node(it->first);
 
 					delete it->second;
-					it = solution->scopes[s_index]->nodes.erase(it);
+					it = parent_solution->scopes[s_index]->nodes.erase(it);
 
 					continue;
 				}
@@ -245,31 +245,32 @@ void clean_scope_node(Scope* to_remove) {
 	}
 }
 
-void clean_scope_node(Scope* to_remove,
+void clean_scope_node(Solution* parent_solution,
+					  Scope* to_remove,
 					  Action to_replace) {
-	for (int s_index = 0; s_index < (int)solution->scopes.size(); s_index++) {
-		map<int, AbstractNode*>::iterator it = solution->scopes[s_index]->nodes.begin();
-		while (it != solution->scopes[s_index]->nodes.end()) {
+	for (int s_index = 0; s_index < (int)parent_solution->scopes.size(); s_index++) {
+		map<int, AbstractNode*>::iterator it = parent_solution->scopes[s_index]->nodes.begin();
+		while (it != parent_solution->scopes[s_index]->nodes.end()) {
 			if (it->second->type == NODE_TYPE_SCOPE) {
 				ScopeNode* scope_node = (ScopeNode*)it->second;
 				if (scope_node->scope == to_remove) {
 					ActionNode* new_action_node = new ActionNode();
-					new_action_node->parent = solution->scopes[s_index];
-					new_action_node->id = solution->scopes[s_index]->node_counter;
-					solution->scopes[s_index]->node_counter++;
+					new_action_node->parent = parent_solution->scopes[s_index];
+					new_action_node->id = parent_solution->scopes[s_index]->node_counter;
+					parent_solution->scopes[s_index]->node_counter++;
 					new_action_node->action = to_replace;
 					new_action_node->next_node_id = scope_node->next_node_id;
 					new_action_node->next_node = scope_node->next_node;
-					solution->scopes[s_index]->nodes[new_action_node->id] = new_action_node;
+					parent_solution->scopes[s_index]->nodes[new_action_node->id] = new_action_node;
 
-					clean_scope_node_helper(solution->scopes[s_index],
+					clean_scope_node_helper(parent_solution->scopes[s_index],
 											scope_node,
 											new_action_node);
 
-					solution->scopes[s_index]->clean_node(it->first);
+					parent_solution->scopes[s_index]->clean_node(it->first);
 
 					delete it->second;
-					it = solution->scopes[s_index]->nodes.erase(it);
+					it = parent_solution->scopes[s_index]->nodes.erase(it);
 
 					continue;
 				}
@@ -280,33 +281,34 @@ void clean_scope_node(Scope* to_remove,
 	}
 }
 
-void clean_scope_node(Scope* to_remove,
+void clean_scope_node(Solution* parent_solution,
+					  Scope* to_remove,
 					  Scope* to_replace) {
-	for (int s_index = 0; s_index < (int)solution->scopes.size(); s_index++) {
-		map<int, AbstractNode*>::iterator it = solution->scopes[s_index]->nodes.begin();
-		while (it != solution->scopes[s_index]->nodes.end()) {
+	for (int s_index = 0; s_index < (int)parent_solution->scopes.size(); s_index++) {
+		map<int, AbstractNode*>::iterator it = parent_solution->scopes[s_index]->nodes.begin();
+		while (it != parent_solution->scopes[s_index]->nodes.end()) {
 			if (it->second->type == NODE_TYPE_SCOPE) {
 				ScopeNode* scope_node = (ScopeNode*)it->second;
 				if (scope_node->scope == to_remove) {
 					ScopeNode* new_scope_node = new ScopeNode();
-					new_scope_node->parent = solution->scopes[s_index];
-					new_scope_node->id = solution->scopes[s_index]->node_counter;
-					solution->scopes[s_index]->node_counter++;
+					new_scope_node->parent = parent_solution->scopes[s_index];
+					new_scope_node->id = parent_solution->scopes[s_index]->node_counter;
+					parent_solution->scopes[s_index]->node_counter++;
 					new_scope_node->scope = to_replace;
 					new_scope_node->index = to_replace->scope_node_index;
 					to_replace->scope_node_index++;
 					new_scope_node->next_node_id = scope_node->next_node_id;
 					new_scope_node->next_node = scope_node->next_node;
-					solution->scopes[s_index]->nodes[new_scope_node->id] = new_scope_node;
+					parent_solution->scopes[s_index]->nodes[new_scope_node->id] = new_scope_node;
 
-					clean_scope_node_helper(solution->scopes[s_index],
+					clean_scope_node_helper(parent_solution->scopes[s_index],
 											scope_node,
 											new_scope_node);
 
-					solution->scopes[s_index]->clean_node(it->first);
+					parent_solution->scopes[s_index]->clean_node(it->first);
 
 					delete it->second;
-					it = solution->scopes[s_index]->nodes.erase(it);
+					it = parent_solution->scopes[s_index]->nodes.erase(it);
 
 					continue;
 				}

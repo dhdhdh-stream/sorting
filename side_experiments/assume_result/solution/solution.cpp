@@ -13,7 +13,7 @@
 
 using namespace std;
 
-const double TRIM_PERCENTAGE = 0.2;
+const double TRIM_PERCENTAGE = 0.1;
 
 Solution::Solution() {
 	// do nothing
@@ -134,9 +134,9 @@ void Solution::clear_verify() {
 #endif /* MDEBUG */
 
 void Solution::clean() {
-	for (int s_index = (int)this->scopes.size()-1; s_index >= 0; s_index--) {
+	for (int s_index = (int)this->scopes.size()-1; s_index >= 1; s_index--) {
 		bool still_used = false;
-		for (int is_index = 0; is_index < (int)this->scopes.size()-1; is_index++) {
+		for (int is_index = 0; is_index < (int)this->scopes.size(); is_index++) {
 			if (s_index != is_index) {
 				for (map<int, AbstractNode*>::iterator it = this->scopes[is_index]->nodes.begin();
 						it != this->scopes[is_index]->nodes.end(); it++) {
@@ -161,28 +161,36 @@ void Solution::clean() {
 		}
 	}
 
-	for (int s_index = (int)this->scopes.size()-1; s_index >= 0; s_index--) {
+	for (int s_index = (int)this->scopes.size()-1; s_index >= 1; s_index--) {
 		if (this->scopes[s_index]->nodes.size() <= 3) {
 			ActionNode* start_node = (ActionNode*)this->scopes[s_index]->nodes[0];
 			if (start_node->next_node->type == NODE_TYPE_ACTION) {
 				ActionNode* action_node = (ActionNode*)start_node->next_node;
 				if (action_node->action.move == ACTION_NOOP) {
-					clean_scope_node(this->scopes[s_index]);
+					clean_scope_node(this,
+									 this->scopes[s_index]);
 				} else {
-					clean_scope_node(this->scopes[s_index],
+					clean_scope_node(this,
+									 this->scopes[s_index],
 									 action_node->action);
 				}
 			} else if (start_node->next_node->type == NODE_TYPE_SCOPE) {
 				ScopeNode* scope_node = (ScopeNode*)start_node->next_node;
-				clean_scope_node(this->scopes[s_index],
+				clean_scope_node(this,
+								 this->scopes[s_index],
 								 scope_node->scope);
 			} else {
-				clean_scope_node(this->scopes[s_index]);
+				clean_scope_node(this,
+								 this->scopes[s_index]);
 			}
 
 			delete this->scopes[s_index];
 			this->scopes.erase(this->scopes.begin() + s_index);
 		}
+	}
+
+	for (int s_index = 1; s_index < (int)this->scopes.size(); s_index++) {
+		this->scopes[s_index]->id = s_index;
 	}
 }
 
@@ -193,68 +201,92 @@ void Solution::random_trim() {
 	}
 
 	while (true) {
-		uniform_int_distribution<int> scope_distribution(0, this->scopes.size()-1);
-		Scope* scope = this->scopes[scope_distribution(generator)];
-		uniform_int_distribution<int> node_distribution(0, scope->nodes.size()-1);
-		AbstractNode* node = next(scope->nodes.begin(), node_distribution(generator))->second;
-		switch (node->type) {
+		vector<Scope*> possible_scopes;
+		vector<AbstractNode*> possible_nodes;
+		for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
+			for (map<int, AbstractNode*>::iterator it = this->scopes[s_index]->nodes.begin();
+					it != this->scopes[s_index]->nodes.end(); it++) {
+				switch (it->second->type) {
+				case NODE_TYPE_ACTION:
+					{
+						ActionNode* action_node = (ActionNode*)it->second;
+						if (action_node->id != 0 && action_node->next_node != NULL) {
+							possible_scopes.push_back(this->scopes[s_index]);
+							possible_nodes.push_back(it->second);
+						}
+					}
+					break;
+				case NODE_TYPE_SCOPE:
+				case NODE_TYPE_BRANCH:
+				case NODE_TYPE_RETURN:
+					possible_scopes.push_back(this->scopes[s_index]);
+					possible_nodes.push_back(it->second);
+					break;
+				}
+			}
+		}
+
+		uniform_int_distribution<int> random_distribution(0, possible_scopes.size()-1);
+		int random_index = random_distribution(generator);
+		switch (possible_nodes[random_index]->type) {
 		case NODE_TYPE_ACTION:
 			{
-				ActionNode* action_node = (ActionNode*)node;
-				if (action_node->id != 0 && action_node->next_node != NULL) {
-					clean_scope_node_helper(scope,
-											action_node,
-											action_node->next_node);
+				ActionNode* action_node = (ActionNode*)possible_nodes[random_index];
 
-					scope->clean_node(action_node->id);
+				clean_scope_node_helper(possible_scopes[random_index],
+										action_node,
+										action_node->next_node);
 
-					scope->nodes.erase(action_node->id);
-					delete action_node;
-				}
+				possible_scopes[random_index]->clean_node(action_node->id);
+
+				possible_scopes[random_index]->nodes.erase(action_node->id);
+				delete action_node;
 			}
 			break;
 		case NODE_TYPE_SCOPE:
 			{
-				ScopeNode* scope_node = (ScopeNode*)node;
+				ScopeNode* scope_node = (ScopeNode*)possible_nodes[random_index];
 
-				clean_scope_node_helper(scope,
+				clean_scope_node_helper(possible_scopes[random_index],
 										scope_node,
 										scope_node->next_node);
 
-				scope->clean_node(scope_node->id);
+				possible_scopes[random_index]->clean_node(scope_node->id);
 
-				scope->nodes.erase(scope_node->id);
+				possible_scopes[random_index]->nodes.erase(scope_node->id);
 				delete scope_node;
 			}
 			break;
 		case NODE_TYPE_BRANCH:
 			{
-				BranchNode* branch_node = (BranchNode*)node;
+				BranchNode* branch_node = (BranchNode*)possible_nodes[random_index];
 
 				uniform_int_distribution<int> branch_distribution(0, 1);
 				if (branch_distribution(generator) == 0) {
-					clean_scope_node_helper(scope,
+					clean_scope_node_helper(possible_scopes[random_index],
 											branch_node,
 											branch_node->branch_next_node);
 				} else {
-					clean_scope_node_helper(scope,
+					clean_scope_node_helper(possible_scopes[random_index],
 											branch_node,
 											branch_node->original_next_node);
 				}
 
-				scope->nodes.erase(branch_node->id);
+				possible_scopes[random_index]->nodes.erase(branch_node->id);
 				delete branch_node;
+
+				clean_scope(possible_scopes[random_index]);
 			}
 			break;
 		case NODE_TYPE_RETURN:
 			{
-				ReturnNode* return_node = (ReturnNode*)node;
+				ReturnNode* return_node = (ReturnNode*)possible_nodes[random_index];
 
-				clean_scope_node_helper(scope,
+				clean_scope_node_helper(possible_scopes[random_index],
 										return_node,
 										return_node->next_node);
 
-				scope->nodes.erase(return_node->id);
+				possible_scopes[random_index]->nodes.erase(return_node->id);
 				delete return_node;
 			}
 			break;

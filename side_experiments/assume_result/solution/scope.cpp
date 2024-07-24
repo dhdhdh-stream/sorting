@@ -78,6 +78,8 @@ void Scope::clean() {
 
 		it++;
 	}
+
+	clean_branch_node(this);
 }
 
 void Scope::clean_node(int node_id) {
