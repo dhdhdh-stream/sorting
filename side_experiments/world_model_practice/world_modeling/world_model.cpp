@@ -1,5 +1,10 @@
 #include "world_model.h"
 
+#include <cmath>
+
+#include "constants.h"
+#include "world_state.h"
+
 using namespace std;
 
 const double NEW_PENALTY = 2.0;
@@ -11,7 +16,16 @@ double adjusted_sigmoid(double x) {
 	return exp(3-1.5*x) / (1 + exp(3-1.5*x));
 }
 
+WorldModel::WorldModel() {
+	WorldState* starting_state = new WorldState();
+	starting_state->id = (int)this->states.size();
+	this->states.push_back(starting_state);
+	starting_state->state = 1;
+	starting_state->estimated_x = 0.0;
+	starting_state->estimated_y = 0.0;
 
+	this->curr_state_index = 0;
+}
 
 WorldModel::WorldModel(WorldModel* original) {
 	for (int s_index = 0; s_index < (int)original->states.size(); s_index++) {
@@ -62,13 +76,13 @@ void WorldModel::next_probabilities(int action,
 						if (distance < 5.0) {
 							WorldModel* possibility = new WorldModel(this);
 							possibility->travel(action,
-												s_index);
+												is_index);
 							next.push_back(possibility);
 							next_probabilities.push_back(adjusted_sigmoid(distance));
 						}
 
 						if (distance <= 1.0) {
-							has_close_match = true;
+							o_has_close_match = true;
 						}
 					}
 				}
@@ -102,7 +116,15 @@ void WorldModel::next_probabilities(int action,
 		}
 	}
 
-
+	if (!has_close_match) {
+		WorldModel* possibility = new WorldModel(this);
+		possibility->travel_new(action,
+								new_obs,
+								predicted_x,
+								predicted_y);
+		next.push_back(possibility);
+		next_probabilities.push_back(adjusted_sigmoid(NEW_PENALTY));
+	}
 }
 
 void WorldModel::travel(int action,
@@ -139,6 +161,39 @@ void WorldModel::travel(int action,
 	}
 
 	this->curr_state_index = next_state_index;
+}
+
+void WorldModel::travel_new(int action,
+							int new_state,
+							double predicted_x,
+							double predicted_y) {
+	WorldState* world_state = new WorldState();
+	world_state->id = (int)this->states.size();
+	this->states.push_back(world_state);
+	world_state->state = new_state;
+	world_state->estimated_x = predicted_x;
+	world_state->estimated_y = predicted_y;
+
+	switch (action) {
+	case ACTION_LEFT:
+		this->states[this->curr_state_index]->evidence[world_state->id] = {-1.0, 0.0};
+		world_state->evidence[this->curr_state_index] = {1.0, 0.0};
+		break;
+	case ACTION_UP:
+		this->states[this->curr_state_index]->evidence[world_state->id] = {0.0, 1.0};
+		world_state->evidence[this->curr_state_index] = {0.0, -1.0};
+		break;
+	case ACTION_RIGHT:
+		this->states[this->curr_state_index]->evidence[world_state->id] = {1.0, 0.0};
+		world_state->evidence[this->curr_state_index] = {-1.0, 0.0};
+		break;
+	case ACTION_DOWN:
+		this->states[this->curr_state_index]->evidence[world_state->id] = {0.0, -1.0};
+		world_state->evidence[this->curr_state_index] = {0.0, 1.0};
+		break;
+	}
+
+	this->curr_state_index = world_state->id;
 }
 
 void WorldModel::rebalance_helper(int state_index,
@@ -199,17 +254,17 @@ void WorldModel::rebalance_helper(int state_index,
 					}
 				}
 			}
-		}
 
-		if (new_x != this->states[it->first]->estimated_x
-				|| new_y != this->states[it->first]->estimated_y) {
-			moved_nodes[it->first] = true;
+			if (new_x != this->states[it->first]->estimated_x
+					|| new_y != this->states[it->first]->estimated_y) {
+				moved_nodes[it->first] = true;
 
-			this->states[it->first]->estimated_x = new_x;
-			this->states[it->first]->estimated_y = new_y;
+				this->states[it->first]->estimated_x = new_x;
+				this->states[it->first]->estimated_y = new_y;
 
-			rebalance_helper(it->first,
-							 moved_nodes);
+				rebalance_helper(it->first,
+								 moved_nodes);
+			}
 		}
 	}
 }
@@ -242,7 +297,7 @@ bool WorldModel::equals(WorldModel* rhs) {
 		return false;
 	}
 
-	if (this->curr_state->id != rhs->curr_state->id) {
+	if (this->curr_state_index != rhs->curr_state_index) {
 		return false;
 	}
 
@@ -256,4 +311,6 @@ bool WorldModel::equals(WorldModel* rhs) {
 			return false;
 		}
 	}
+
+	return true;
 }

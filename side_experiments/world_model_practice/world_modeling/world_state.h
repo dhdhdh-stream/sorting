@@ -7,6 +7,9 @@
 #ifndef WORLD_STATE_H
 #define WORLD_STATE_H
 
+#include <map>
+#include <utility>
+
 class WorldState {
 public:
 	int id;

@@ -5,6 +5,10 @@
 #ifndef WORLD_MODEL_H
 #define WORLD_MODEL_H
 
+#include <vector>
+
+class WorldState;
+
 class WorldModel {
 public:
 	std::vector<WorldState*> states;
@@ -28,9 +32,10 @@ public:
 					double predicted_y);
 
 	void rebalance();
+	void rebalance_helper(int state_index,
+						  std::vector<bool>& moved_nodes);
 
 	bool equals(WorldModel* rhs);
-
 };
 
 #endif /* WORLD_MODEL_H */
