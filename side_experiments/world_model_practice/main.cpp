@@ -4,6 +4,7 @@
  *   - or at least structure of world model fixed
  *     - obs can change
  *       - and help with localization
+ * - perhaps mix of permanent and temporary
  * 
  * - or, there are actions that can be taken that greatly, greatly reduce uncertainty
  *   - do those need to be learned?
@@ -15,6 +16,8 @@
  * - maybe if too much uncertainty (in actions and obs), simply cannot make world model?
  *   - too easy to lose way to known, too hard to identify within known
  *   - so have to assume world is somewhat sane?
+ *   - or at least, the features have to be bigger
+ *     - like, actions and obs can both be uncertain, but feature so big that on average there will still be good data
  * 
  * - or at least, maybe large parts of the world can be uncertain, but there are signposts
  *   - areas which are clearly distinct
@@ -36,6 +39,15 @@
  * 
  * - with world model, can directly head to locations
  *   - don't need nodes to return to
+ * 
+ * - perhaps traveling to location is a subproblem?
+ * 
+ * TODO: don't try to localize through individual squares, but based on regions
+ * - though can mix in some sharp features
+ * - maybe gradually build out like a Markov model?
+ *   - probability of travelling between states
+ *     - initially, few distinct states
+ *       - but gradually, duplicate-ish states that represent distance
  */
 
 #include <chrono>
