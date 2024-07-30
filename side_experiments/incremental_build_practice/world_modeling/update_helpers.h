@@ -4,7 +4,6 @@
 #include <vector>
 
 class WorldModel;
-class WorldTruth;
 
 void update(WorldModel* world_model,
 			std::vector<std::vector<double>>& obs,

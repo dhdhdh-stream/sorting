@@ -9,7 +9,10 @@
 
 using namespace std;
 
-const int UPDATE_NUM_RUNS = 50;
+/**
+ * - WorldModel gradually built up, so don't need as many update runs
+ */
+const int UPDATE_NUM_RUNS = 20;
 
 void process_run(WorldModel* world_model,
 				 vector<double>& obs,

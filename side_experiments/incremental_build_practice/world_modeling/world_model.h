@@ -12,7 +12,10 @@ public:
 	std::vector<double> starting_likelihood;
 
 	WorldModel();
+	WorldModel(WorldModel* original);
 	~WorldModel();
+
+	void split_state(int state_index);
 };
 
 #endif /* WORLD_MODEL_H */
