@@ -12,6 +12,11 @@
 //   - learn Markov actions based on world model
 //     - then when incorporating, check against learned model to see if something different should be done, and can explore down that path
 
+// maybe benefit from return is:
+// - allows changes to be made that benefits follow-up
+//   - but can still return to original spot after follow-up
+// without return, can only extend at end, where can include return
+
 #include <chrono>
 #include <iostream>
 #include <map>
