@@ -1,3 +1,7 @@
+/**
+ * TODO: maybe build up from perfect accuracy?
+ */
+
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -30,9 +34,34 @@ int main(int argc, char* argv[]) {
 	double curr_misguess = measure_model(curr_model);
 	cout << "curr_misguess: " << curr_misguess << endl;
 
-	for (int iter_index = 0; iter_index < 4; iter_index++) {
+	for (int iter_index = 0; iter_index < 50; iter_index++) {
+		cout << "iter_index: " << iter_index << endl;
+
+		// TODO: visualization
+
 		WorldModel* best_model = curr_model;
 		double best_misguess = curr_misguess;
+
+		// w/ extra training
+		{
+			WorldModel* next_model = new WorldModel(curr_model);
+
+			train_model(next_model);
+
+			double next_misguess = measure_model(next_model);
+			cout << "next_misguess: " << next_misguess << endl;
+
+			if (next_misguess < best_misguess) {
+				if (best_model != curr_model) {
+					delete best_model;
+				}
+				best_model = next_model;
+				best_misguess = next_misguess;
+			} else {
+				delete next_model;
+			}
+		}
+
 		for (int s_index = 0; s_index < (int)curr_model->states.size(); s_index++) {
 			WorldModel* next_model = new WorldModel(curr_model);
 			next_model->split_state(s_index);

@@ -44,12 +44,14 @@ void train_model(WorldModel* world_model) {
 
 double measure_model(WorldModel* world_model) {
 	double sum_misguess = 0.0;
+	int sun_num_actions = 0;
 	uniform_int_distribution<int> num_actions_distribution(1, 100);
 	uniform_int_distribution<int> action_distribution(0, 3);
 	for (int r_index = 0; r_index < MEASURE_NUM_RUNS; r_index++) {
 		WorldTruth world_truth;
 
 		int num_actions = num_actions_distribution(generator);
+		sun_num_actions += num_actions;
 
 		vector<double> state_likelihood = world_model->starting_likelihood;
 
@@ -93,5 +95,5 @@ double measure_model(WorldModel* world_model) {
 		}
 	}
 
-	return sum_misguess;
+	return sum_misguess / sun_num_actions;
 }
