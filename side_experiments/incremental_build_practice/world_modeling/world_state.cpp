@@ -28,3 +28,13 @@ void WorldState::split_state(int state_index) {
 		this->transitions[a_index].push_back(original_transition * new_likelihood / sum_likelihood);
 	}
 }
+
+void WorldState::save_for_display(ofstream& output_file) {
+	output_file << this->average_val << endl;
+
+	for (int a_index = 0; a_index < NUM_ACTIONS; a_index++) {
+		for (int s_index = 0; s_index < (int)this->transitions[a_index].size(); s_index++) {
+			output_file << this->transitions[a_index][s_index] << endl;
+		}
+	}
+}

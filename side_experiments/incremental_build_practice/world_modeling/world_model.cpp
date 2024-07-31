@@ -84,3 +84,10 @@ void WorldModel::split_state(int state_index) {
 		this->starting_likelihood.push_back(original_starting * new_likelihood / sum_likelihood);
 	}
 }
+
+void WorldModel::save_for_display(ofstream& output_file) {
+	output_file << this->states.size() << endl;
+	for (int s_index = 0; s_index < (int)this->states.size(); s_index++) {
+		this->states[s_index]->save_for_display(output_file);
+	}
+}

@@ -34,10 +34,9 @@ int main(int argc, char* argv[]) {
 	double curr_misguess = measure_model(curr_model);
 	cout << "curr_misguess: " << curr_misguess << endl;
 
-	for (int iter_index = 0; iter_index < 50; iter_index++) {
+	// for (int iter_index = 0; iter_index < 50; iter_index++) {
+	for (int iter_index = 0; iter_index < 2; iter_index++) {
 		cout << "iter_index: " << iter_index << endl;
-
-		// TODO: visualization
 
 		WorldModel* best_model = curr_model;
 		double best_misguess = curr_misguess;
@@ -88,6 +87,11 @@ int main(int argc, char* argv[]) {
 			curr_misguess = best_misguess;
 		}
 	}
+
+	ofstream output_file;
+	output_file.open("display.txt");
+	curr_model->save_for_display(output_file);
+	output_file.close();
 
 	delete curr_model;
 

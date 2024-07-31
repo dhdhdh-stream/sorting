@@ -1,6 +1,7 @@
 #ifndef WORLD_MODEL_H
 #define WORLD_MODEL_H
 
+#include <fstream>
 #include <vector>
 
 class WorldState;
@@ -16,6 +17,8 @@ public:
 	~WorldModel();
 
 	void split_state(int state_index);
+
+	void save_for_display(std::ofstream& output_file);
 };
 
 #endif /* WORLD_MODEL_H */
