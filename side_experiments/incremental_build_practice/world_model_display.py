@@ -42,7 +42,7 @@ graph = pydot.Dot(graph_type='digraph', strict=True)
 global_node_index = 0
 
 for s_index in range(num_states):
-	graph.add_node(pydot.Node(global_node_index, label=str(states[s_index][0])))
+	graph.add_node(pydot.Node(global_node_index, label=str(s_index) + '\n' + str(states[s_index][0])))
 	global_node_index += 1
 
 for s_index in range(num_states):

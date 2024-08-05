@@ -1,6 +1,14 @@
 /**
  * TODO: maybe build up from perfect accuracy?
+ * - maybe repeat sequences and look for repeat obs?
+ *   - but what about when there's uncertainty?
+ * 
+ * - if able to handle uncertainty, then might miss things that can be more easily found through exact match?
+ *   - like, if there's a cycle to the uncertainty?
  */
+
+// maybe have unknown state that can always go to?
+// - limits punishment, but also limits gain
 
 #include <chrono>
 #include <iostream>
@@ -28,14 +36,17 @@ int main(int argc, char* argv[]) {
 	cout << "Seed: " << seed << endl;
 
 	WorldModel* curr_model = new WorldModel();
+	// ifstream input_file;
+	// input_file.open("save.txt");
+	// WorldModel* curr_model = new WorldModel(input_file);
+	// input_file.close();
 
 	train_model(curr_model);
 
 	double curr_misguess = measure_model(curr_model);
 	cout << "curr_misguess: " << curr_misguess << endl;
 
-	// for (int iter_index = 0; iter_index < 50; iter_index++) {
-	for (int iter_index = 0; iter_index < 2; iter_index++) {
+	for (int iter_index = 0; iter_index < 20; iter_index++) {
 		cout << "iter_index: " << iter_index << endl;
 
 		WorldModel* best_model = curr_model;
@@ -86,12 +97,21 @@ int main(int argc, char* argv[]) {
 			curr_model = best_model;
 			curr_misguess = best_misguess;
 		}
-	}
 
-	ofstream output_file;
-	output_file.open("display.txt");
-	curr_model->save_for_display(output_file);
-	output_file.close();
+		{
+			ofstream output_file;
+			output_file.open("save.txt");
+			curr_model->save(output_file);
+			output_file.close();
+		}
+
+		{
+			ofstream output_file;
+			output_file.open("display.txt");
+			curr_model->save_for_display(output_file);
+			output_file.close();
+		}
+	}
 
 	delete curr_model;
 

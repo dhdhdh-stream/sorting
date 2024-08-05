@@ -14,10 +14,12 @@ public:
 
 	WorldModel();
 	WorldModel(WorldModel* original);
+	WorldModel(std::ifstream& input_file);
 	~WorldModel();
 
 	void split_state(int state_index);
 
+	void save(std::ofstream& output_file);
 	void save_for_display(std::ofstream& output_file);
 };
 

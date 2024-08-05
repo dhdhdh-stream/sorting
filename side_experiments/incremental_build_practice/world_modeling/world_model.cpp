@@ -60,6 +60,22 @@ WorldModel::WorldModel(WorldModel* original) {
 	this->starting_likelihood = original->starting_likelihood;
 }
 
+WorldModel::WorldModel(ifstream& input_file) {
+	string num_states_line;
+	getline(input_file, num_states_line);
+	int num_states = stoi(num_states_line);
+
+	for (int s_index = 0; s_index < num_states; s_index++) {
+		this->states.push_back(new WorldState(input_file));
+	}
+
+	for (int s_index = 0; s_index < num_states; s_index++) {
+		string likelihood_line;
+		getline(input_file, likelihood_line);
+		this->starting_likelihood.push_back(stod(likelihood_line));
+	}
+}
+
 WorldModel::~WorldModel() {
 	for (int s_index = 0; s_index < (int)this->states.size(); s_index++) {
 		delete this->states[s_index];
@@ -72,6 +88,9 @@ void WorldModel::split_state(int state_index) {
 		this->states[s_index]->split_state(state_index);
 	}
 
+	// this->states[state_index]->shuffle();
+	// this->states.back()->shuffle();
+
 	{
 		uniform_real_distribution<double> distribution(0.0, 1.0);
 		double original_likelihood = distribution(generator);
@@ -82,6 +101,18 @@ void WorldModel::split_state(int state_index) {
 
 		this->starting_likelihood[state_index] = original_starting * original_likelihood / sum_likelihood;
 		this->starting_likelihood.push_back(original_starting * new_likelihood / sum_likelihood);
+	}
+}
+
+void WorldModel::save(ofstream& output_file) {
+	output_file << this->states.size() << endl;
+
+	for (int s_index = 0; s_index < (int)this->states.size(); s_index++) {
+		this->states[s_index]->save(output_file);
+	}
+
+	for (int s_index = 0; s_index < (int)this->states.size(); s_index++) {
+		output_file << this->starting_likelihood[s_index] << endl;
 	}
 }
 

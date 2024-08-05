@@ -10,10 +10,8 @@
 
 using namespace std;
 
-// const int TRAIN_NUM_RUNS = 1000;
-const int TRAIN_NUM_RUNS = 100;
-// const int MEASURE_NUM_RUNS = 100;
-const int MEASURE_NUM_RUNS = 10;
+const int TRAIN_NUM_RUNS = 1000;
+const int MEASURE_NUM_RUNS = 100;
 
 void train_model(WorldModel* world_model) {
 	vector<vector<double>> obs;
