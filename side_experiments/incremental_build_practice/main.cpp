@@ -1,14 +1,7 @@
 /**
- * TODO: maybe build up from perfect accuracy?
- * - maybe repeat sequences and look for repeat obs?
- *   - but what about when there's uncertainty?
- * 
- * - if able to handle uncertainty, then might miss things that can be more easily found through exact match?
- *   - like, if there's a cycle to the uncertainty?
+ * TODO:
+ * - if there are too many things going on within a state, cannot be simply split in one go?
  */
-
-// maybe have unknown state that can always go to?
-// - limits punishment, but also limits gain
 
 #include <chrono>
 #include <iostream>

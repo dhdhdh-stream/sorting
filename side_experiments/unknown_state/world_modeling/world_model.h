@@ -12,6 +12,8 @@ public:
 
 	std::vector<double> starting_likelihood;
 
+	double curr_unknown_misguess;
+
 	WorldModel();
 	WorldModel(WorldModel* original);
 	WorldModel(std::ifstream& input_file);

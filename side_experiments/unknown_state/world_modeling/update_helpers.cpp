@@ -1,6 +1,7 @@
 #include "update_helpers.h"
 
 #include <cmath>
+#include <iostream>
 
 #include "constants.h"
 #include "world_model.h"
@@ -8,8 +9,6 @@
 #include "world_truth.h"
 
 using namespace std;
-
-const double UNKNOWN_MATCH_LIKELIHOOD = 0.8;
 
 const int UPDATE_NUM_RUNS = 30;
 
@@ -57,16 +56,16 @@ void process_run(WorldModel* world_model,
 		}
 
 		{
-			double unknown_likelihood = forward_unknown_likelihoods.back() * UNKNOWN_MATCH_LIKELIHOOD;
+			double unknown_likelihood = forward_unknown_likelihoods.back() * (1.0 - world_model->curr_unknown_misguess);
 			for (int end_index = 0; end_index < (int)world_model->states.size(); end_index++) {
 				curr_from_unknown_likelihood[end_index] = unknown_likelihood
-					* 0.2 / (int)world_model->states.size();
+					* (1.0 - UNKNOWN_TO_UNKNOWN_TRANSITION) / (int)world_model->states.size();
 
 				sum_likelihood += curr_from_unknown_likelihood[end_index];
 			}
 
 			{
-				curr_unknown_to_unknown_likelihood = unknown_likelihood * 0.8;
+				curr_unknown_to_unknown_likelihood = unknown_likelihood * UNKNOWN_TO_UNKNOWN_TRANSITION;
 
 				sum_likelihood += curr_unknown_to_unknown_likelihood;
 			}
@@ -141,16 +140,16 @@ void process_run(WorldModel* world_model,
 		{
 			for (int end_index = 0; end_index < (int)world_model->states.size(); end_index++) {
 				curr_from_unknown_likelihood[end_index] = backward_unknown_likelihoods[0]
-					* UNKNOWN_MATCH_LIKELIHOOD
-					* 0.2 / (int)world_model->states.size();
+					* (1.0 - world_model->curr_unknown_misguess)
+					* (1.0 - UNKNOWN_TO_UNKNOWN_TRANSITION) / (int)world_model->states.size();
 
 				sum_likelihood += curr_from_unknown_likelihood[end_index];
 			}
 
 			{
 				curr_unknown_to_unknown_likelihood = backward_unknown_likelihoods[0]
-					* UNKNOWN_MATCH_LIKELIHOOD
-					* 0.8;
+					* (1.0 - world_model->curr_unknown_misguess)
+					* UNKNOWN_TO_UNKNOWN_TRANSITION;
 
 				sum_likelihood += curr_unknown_to_unknown_likelihood;
 			}
@@ -300,13 +299,25 @@ void update(WorldModel* world_model,
 
 				sum_likelihood += sum_unknown_transitions[a_index][start_index];
 
-				for (int end_index = 0; end_index < (int)world_model->states.size(); end_index++) {
-					world_model->states[start_index]->transitions[a_index][end_index]
-						= sum_transitions[a_index][start_index][end_index] / sum_likelihood;
-				}
+				double unknown_percentage = sum_unknown_transitions[a_index][start_index] / sum_likelihood;
+				if (unknown_percentage > MAX_UNKNOWN_TRANSITION) {
+					double known_percentage = 1.0 - unknown_percentage;
+					double scale = (1.0 - MAX_UNKNOWN_TRANSITION) / known_percentage;
 
-				world_model->states[start_index]->unknown_transitions[a_index]
-					= sum_unknown_transitions[a_index][start_index] / sum_likelihood;
+					for (int end_index = 0; end_index < (int)world_model->states.size(); end_index++) {
+						world_model->states[start_index]->transitions[a_index][end_index]
+							= sum_transitions[a_index][start_index][end_index] / sum_likelihood * scale;
+					}
+
+					world_model->states[start_index]->unknown_transitions[a_index] = MAX_UNKNOWN_TRANSITION;
+				} else {
+					for (int end_index = 0; end_index < (int)world_model->states.size(); end_index++) {
+						world_model->states[start_index]->transitions[a_index][end_index]
+							= sum_transitions[a_index][start_index][end_index] / sum_likelihood;
+					}
+
+					world_model->states[start_index]->unknown_transitions[a_index] = unknown_percentage;
+				}
 			}
 		}
 
