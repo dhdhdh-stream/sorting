@@ -1,6 +1,16 @@
 /**
  * TODO:
  * - if there are too many things going on within a state, cannot be simply split in one go?
+ * 
+ * - maybe need to think in terms of sequences?
+ *   - from entering to exiting a state, if a sequence gives a result more consistent than Markov, then state can be added?
+ * 
+ * - reason why so difficult to clearly identify 0.0 states is that can spend lots of time wandering within 0.0?
+ *   - whereas for 1.0, will likely quickly enter and exit
+ *     - more reason to think in terms of sequences
+ * 
+ * - but can't be each step in sequence is new state because may be duplicate
+ *   - maybe have merge?
  */
 
 #include <chrono>

@@ -88,11 +88,45 @@ void WorldModel::split_state(int state_index) {
 		this->states[s_index]->split_state(state_index);
 	}
 
-	// this->states[state_index]->shuffle();
-	// this->states.back()->shuffle();
+	uniform_real_distribution<double> distribution(0.0, 1.0);
+
+	/**
+	 * - with random likelihood, some transitions now need to go to other state
+	 * 
+	 * TODO: though may represent disjointed states?
+	 */
+	{
+		for (int a_index = 0; a_index < NUM_ACTIONS; a_index++) {
+			double original_likelihood = distribution(generator);
+			double new_likelihood = distribution(generator);
+			double sum_likelihood = original_likelihood + new_likelihood;
+
+			double scale = original_likelihood / sum_likelihood;
+
+			for (int s_index = 0; s_index < (int)this->states.size(); s_index++) {
+				this->states[state_index]->transitions[a_index][s_index] *= scale;
+			}
+
+			this->states[state_index]->transitions[a_index].back() += new_likelihood / sum_likelihood;
+		}
+	}
+	{
+		for (int a_index = 0; a_index < NUM_ACTIONS; a_index++) {
+			double original_likelihood = distribution(generator);
+			double new_likelihood = distribution(generator);
+			double sum_likelihood = original_likelihood + new_likelihood;
+
+			double scale = original_likelihood / sum_likelihood;
+
+			for (int s_index = 0; s_index < (int)this->states.size(); s_index++) {
+				this->states.back()->transitions[a_index][s_index] *= scale;
+			}
+
+			this->states.back()->transitions[a_index][state_index] += new_likelihood / sum_likelihood;
+		}
+	}
 
 	{
-		uniform_real_distribution<double> distribution(0.0, 1.0);
 		double original_likelihood = distribution(generator);
 		double new_likelihood = distribution(generator);
 		double sum_likelihood = original_likelihood + new_likelihood;
