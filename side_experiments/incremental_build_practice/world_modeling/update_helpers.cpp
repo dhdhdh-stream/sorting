@@ -12,7 +12,6 @@ using namespace std;
 /**
  * - WorldModel gradually built up, so don't need as many update runs?
  */
-// const int UPDATE_NUM_RUNS = 30;
 const int UPDATE_NUM_RUNS = 50;
 
 void process_run(WorldModel* world_model,
@@ -180,6 +179,92 @@ void update(WorldModel* world_model,
 						= sum_transitions[a_index][start_index][end_index] / sum_start;
 				}
 			}
+		}
+
+		for (int s_index = 0; s_index < (int)world_model->states.size(); s_index++) {
+			world_model->states[s_index]->average_val = sum_obs[s_index] / sum_counts[s_index];
+		}
+
+		{
+			double sum_likelihood = 0.0;
+			for (int s_index = 0; s_index < (int)world_model->states.size(); s_index++) {
+				sum_likelihood += sum_starting[s_index];
+			}
+
+			for (int s_index = 0; s_index < (int)world_model->states.size(); s_index++) {
+				world_model->starting_likelihood[s_index] = sum_starting[s_index] / sum_likelihood;
+			}
+		}
+	}
+}
+
+void update(WorldModel* world_model,
+			vector<vector<double>>& obs,
+			vector<vector<int>>& actions,
+			int starting_state_index,
+			vector<int>& new_state_indexes,
+			int ending_state_index,
+			int starting_action,
+			vector<int>& new_actions,
+			int ending_action) {
+	for (int iter_index = 0; iter_index < UPDATE_NUM_RUNS; iter_index++) {
+		vector<vector<vector<double>>> sum_transitions(4);
+		for (int a_index = 0; a_index < 4; a_index++) {
+			sum_transitions[a_index] = vector<vector<double>>(world_model->states.size());
+			for (int s_index = 0; s_index < (int)world_model->states.size(); s_index++) {
+				sum_transitions[a_index][s_index] = vector<double>(world_model->states.size(), 0.0);
+			}
+		}
+
+		vector<double> sum_obs(world_model->states.size(), 0.0);
+		vector<double> sum_counts(world_model->states.size(), 0.0);
+
+		vector<double> sum_starting(world_model->states.size(), 0.0);
+
+		for (int r_index = 0; r_index < (int)obs.size(); r_index++) {
+			process_run(world_model,
+						obs[r_index],
+						actions[r_index],
+						sum_transitions,
+						sum_obs,
+						sum_counts,
+						sum_starting);
+		}
+
+		for (int start_index = 0; start_index < (int)world_model->states.size(); start_index++) {
+			for (int a_index = 0; a_index < 4; a_index++) {
+				double sum_start = 0.0;
+				for (int end_index = 0; end_index < (int)world_model->states.size(); end_index++) {
+					sum_start += sum_transitions[a_index][start_index][end_index];
+				}
+
+				for (int end_index = 0; end_index < (int)world_model->states.size(); end_index++) {
+					world_model->states[start_index]->transitions[a_index][end_index]
+						= sum_transitions[a_index][start_index][end_index] / sum_start;
+				}
+			}
+		}
+
+		{
+			for (int s_index = 0; s_index < (int)world_model->states.size(); s_index++) {
+				world_model->states[starting_state_index]->transitions[starting_action][s_index] *= 0.1;
+			}
+
+			world_model->states[starting_state_index]->transitions[starting_action][new_state_indexes[0]] += 0.9;
+		}
+		for (int n_index = 0; n_index < (int)new_state_indexes.size()-1; n_index++) {
+			for (int s_index = 0; s_index < (int)world_model->states.size(); s_index++) {
+				world_model->states[new_state_indexes[n_index]]->transitions[new_actions[n_index]][s_index] *= 0.1;
+			}
+
+			world_model->states[new_state_indexes[n_index]]->transitions[new_actions[n_index]][new_state_indexes[n_index+1]] += 0.9;
+		}
+		{
+			for (int s_index = 0; s_index < (int)world_model->states.size(); s_index++) {
+				world_model->states[new_state_indexes.back()]->transitions[ending_action][s_index] *= 0.1;
+			}
+
+			world_model->states[new_state_indexes.back()]->transitions[ending_action][ending_state_index] += 0.9;
 		}
 
 		for (int s_index = 0; s_index < (int)world_model->states.size(); s_index++) {

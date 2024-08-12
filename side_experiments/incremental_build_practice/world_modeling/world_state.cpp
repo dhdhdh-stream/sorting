@@ -49,6 +49,32 @@ void WorldState::split_state(int state_index) {
 	}
 }
 
+void WorldState::split_state(int state_index,
+							 int num_split) {
+	uniform_real_distribution<double> distribution(0.0, 1.0);
+	for (int a_index = 0; a_index < NUM_ACTIONS; a_index++) {
+		double sum_likelihood = 0.0;
+
+		double original_likelihood = distribution(generator);
+		sum_likelihood += original_likelihood;
+
+		vector<double> new_likelihoods(num_split);
+		for (int s_index = 0; s_index < num_split; s_index++) {
+			new_likelihoods[s_index] = distribution(generator);
+
+			sum_likelihood += new_likelihoods[s_index];
+		}
+
+		double original_transition = this->transitions[a_index][state_index];
+
+		this->transitions[a_index][state_index] = original_transition * original_likelihood / sum_likelihood;
+
+		for (int s_index = 0; s_index < num_split; s_index++) {
+			this->transitions[a_index].push_back(original_transition * new_likelihoods[s_index] / sum_likelihood);
+		}
+	}
+}
+
 void WorldState::save(ofstream& output_file) {
 	output_file << this->average_val << endl;
 

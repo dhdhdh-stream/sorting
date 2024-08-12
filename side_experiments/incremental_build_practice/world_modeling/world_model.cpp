@@ -138,6 +138,71 @@ void WorldModel::split_state(int state_index) {
 	}
 }
 
+void WorldModel::add_path(int original_state_index,
+						  int starting_state_index,
+						  vector<int>& new_state_indexes,
+						  int ending_state_index,
+						  int starting_action,
+						  vector<int>& actions,
+						  int ending_action) {
+	int new_num_states = (int)actions.size() + 1;
+
+	for (int n_index = 0; n_index < new_num_states; n_index++) {
+		new_state_indexes.push_back((int)this->states.size());
+		this->states.push_back(new WorldState(this->states[original_state_index]));
+	}
+	for (int s_index = 0; s_index < (int)this->states.size(); s_index++) {
+		this->states[s_index]->split_state(original_state_index,
+										   new_num_states);
+	}
+
+	{
+		for (int s_index = 0; s_index < (int)this->states.size(); s_index++) {
+			this->states[starting_state_index]->transitions[starting_action][s_index] *= 0.1;
+		}
+
+		this->states[starting_state_index]->transitions[starting_action][new_state_indexes[0]] += 0.9;
+	}
+	for (int n_index = 0; n_index < (int)new_state_indexes.size()-1; n_index++) {
+		for (int s_index = 0; s_index < (int)this->states.size(); s_index++) {
+			this->states[new_state_indexes[n_index]]->transitions[actions[n_index]][s_index] *= 0.1;
+		}
+
+		this->states[new_state_indexes[n_index]]->transitions[actions[n_index]][new_state_indexes[n_index+1]] += 0.9;
+	}
+	{
+		for (int s_index = 0; s_index < (int)this->states.size(); s_index++) {
+			this->states[new_state_indexes.back()]->transitions[ending_action][s_index] *= 0.1;
+		}
+
+		this->states[new_state_indexes.back()]->transitions[ending_action][ending_state_index] += 0.9;
+	}
+
+	uniform_real_distribution<double> distribution(0.0, 1.0);
+
+	{
+		double sum_likelihood = 0.0;
+
+		double original_likelihood = distribution(generator);
+		sum_likelihood += original_likelihood;
+
+		vector<double> new_likelihoods(new_num_states);
+		for (int s_index = 0; s_index < new_num_states; s_index++) {
+			new_likelihoods[s_index] = distribution(generator);
+
+			sum_likelihood += new_likelihoods[s_index];
+		}
+
+		double original_starting = this->starting_likelihood[original_state_index];
+
+		this->starting_likelihood[original_state_index] = original_starting * original_likelihood / sum_likelihood;
+
+		for (int s_index = 0; s_index < new_num_states; s_index++) {
+			this->starting_likelihood.push_back(original_starting * new_likelihoods[s_index] / sum_likelihood);
+		}
+	}
+}
+
 void WorldModel::save(ofstream& output_file) {
 	output_file << this->states.size() << endl;
 

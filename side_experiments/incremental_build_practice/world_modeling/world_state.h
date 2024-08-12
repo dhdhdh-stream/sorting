@@ -15,6 +15,8 @@ public:
 	WorldState(std::ifstream& input_file);
 
 	void split_state(int state_index);
+	void split_state(int state_index,
+					 int num_split);
 
 	void save(std::ofstream& output_file);
 	void save_for_display(std::ofstream& output_file);
