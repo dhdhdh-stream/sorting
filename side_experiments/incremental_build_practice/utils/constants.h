@@ -3,9 +3,9 @@
 
 const int NUM_ACTIONS = 4;
 
-const int ACTION_LEFT = 0;
-const int ACTION_UP = 1;
-const int ACTION_RIGHT = 2;
-const int ACTION_DOWN = 3;
+const int ACTION_UP = 0;
+const int ACTION_RIGHT = 1;
+const int ACTION_DOWN = 2;
+const int ACTION_LEFT = 3;
 
 #endif /* CONSTANTS_H */

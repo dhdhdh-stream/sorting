@@ -1,5 +1,7 @@
 #include "world_model.h"
 
+#include <iostream>
+
 #include "constants.h"
 #include "globals.h"
 #include "world_state.h"

@@ -4,6 +4,7 @@
 #include <thread>
 #include <random>
 
+#include "constants.h"
 #include "run_helpers.h"
 #include "world_model.h"
 #include "world_state.h"
@@ -28,11 +29,25 @@ int main(int argc, char* argv[]) {
 	// WorldModel* curr_model = new WorldModel(input_file);
 	// input_file.close();
 
+	// ifstream input_file;
+	// input_file.open("save.txt");
+	// WorldModel* curr_model = new WorldModel(input_file);
+	// input_file.close();
+
 	ifstream input_file;
-	input_file.open("save.txt");
+	input_file.open("snapshot.txt");
 	WorldModel* curr_model = new WorldModel(input_file);
 	input_file.close();
-	curr_model->split_state(6);
+
+	vector<int> new_state_indexes;
+	vector<int> new_actions{ACTION_LEFT};
+	curr_model->add_path(7,
+						 4,
+						 new_state_indexes,
+						 1,
+						 ACTION_DOWN,
+						 new_actions,
+						 ACTION_UP);
 
 	{
 		ofstream output_file;

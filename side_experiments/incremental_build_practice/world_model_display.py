@@ -49,12 +49,12 @@ for s_index in range(num_states):
 	for a_index in range(NUM_ACTIONS):
 		for is_index in range(num_states):
 			if states[s_index][1][a_index][is_index] > 0.5:
-				graph.add_node(pydot.Node(global_node_index, label=pretty_print_action(a_index)))
+				graph.add_node(pydot.Node(global_node_index, label=pretty_print_action(a_index) + '\n' + str(states[s_index][1][a_index][is_index])))
 				graph.add_edge(pydot.Edge(s_index, global_node_index))
 				graph.add_edge(pydot.Edge(global_node_index, is_index))
 				global_node_index += 1
 			elif states[s_index][1][a_index][is_index] > 0.2:
-				graph.add_node(pydot.Node(global_node_index, label=pretty_print_action(a_index)))
+				graph.add_node(pydot.Node(global_node_index, label=pretty_print_action(a_index) + '\n' + str(states[s_index][1][a_index][is_index])))
 				graph.add_edge(pydot.Edge(s_index, global_node_index, style="dotted"))
 				graph.add_edge(pydot.Edge(global_node_index, is_index, style="dotted"))
 				global_node_index += 1

@@ -31,12 +31,12 @@ WorldTruth::WorldTruth() {
 		}
 	}
 
-	// this->curr_x = 1;
-	// this->curr_y = 1;
+	this->curr_x = 1;
+	this->curr_y = 1;
 
-	uniform_int_distribution<int> coord_distribution(0, 3);
-	this->curr_x = coord_distribution(generator);
-	this->curr_y = coord_distribution(generator);
+	// uniform_int_distribution<int> coord_distribution(0, 3);
+	// this->curr_x = coord_distribution(generator);
+	// this->curr_y = coord_distribution(generator);
 
 	// for (int x_index = 0; x_index < WORLD_X; x_index++) {
 	// 	for (int y_index = 0; y_index < WORLD_Y; y_index++) {
