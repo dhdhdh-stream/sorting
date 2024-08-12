@@ -13,6 +13,8 @@ WorldState::WorldState(WorldState* original) {
 	this->average_val = original->average_val;
 
 	this->transitions = original->transitions;
+
+	this->fixed_transitions = original->fixed_transitions;
 }
 
 WorldState::WorldState(ifstream& input_file) {
@@ -32,6 +34,25 @@ WorldState::WorldState(ifstream& input_file) {
 			getline(input_file, likelihood_line);
 			this->transitions[a_index][s_index] = stod(likelihood_line);
 		}
+	}
+
+	string num_fixed_line;
+	getline(input_file, num_fixed_line);
+	int num_fixed = stoi(num_fixed_line);
+	for (int f_index = 0; f_index < num_fixed; f_index++) {
+		string action_line;
+		getline(input_file, action_line);
+		int action = stoi(action_line);
+
+		string state_index_line;
+		getline(input_file, state_index_line);
+		int state_index = stoi(state_index_line);
+
+		string likelihood_line;
+		getline(input_file, likelihood_line);
+		double likelihood = stod(likelihood_line);
+
+		this->fixed_transitions.push_back({action, {state_index, likelihood}});
 	}
 }
 
@@ -75,6 +96,19 @@ void WorldState::split_state(int state_index,
 	}
 }
 
+void WorldState::apply_fixed() {
+	for (int f_index = 0; f_index < (int)this->fixed_transitions.size(); f_index++) {
+		int action = this->fixed_transitions[f_index].first;
+		double scale = 1.0 - this->fixed_transitions[f_index].second.second;
+		for (int s_index = 0; s_index < (int)this->transitions[action].size(); s_index++) {
+			this->transitions[action][s_index] *= scale;
+		}
+
+		this->transitions[action][this->fixed_transitions[f_index].second.first] +=
+			this->fixed_transitions[f_index].second.second;
+	}
+}
+
 void WorldState::save(ofstream& output_file) {
 	output_file << this->average_val << endl;
 
@@ -84,6 +118,13 @@ void WorldState::save(ofstream& output_file) {
 		for (int s_index = 0; s_index < (int)this->transitions[a_index].size(); s_index++) {
 			output_file << this->transitions[a_index][s_index] << endl;
 		}
+	}
+
+	output_file << this->fixed_transitions.size() << endl;
+	for (int f_index = 0; f_index < (int)this->fixed_transitions.size(); f_index++) {
+		output_file << this->fixed_transitions[f_index].first << endl;
+		output_file << this->fixed_transitions[f_index].second.first << endl;
+		output_file << this->fixed_transitions[f_index].second.second << endl;
 	}
 }
 

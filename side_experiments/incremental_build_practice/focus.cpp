@@ -83,13 +83,7 @@ int main(int argc, char* argv[]) {
 	// 					 new_actions,
 	// 					 ACTION_UP);
 
-	// train_model(curr_model,
-	// 			4,
-	// 			new_state_indexes,
-	// 			1,
-	// 			ACTION_DOWN,
-	// 			new_actions,
-	// 			ACTION_UP);
+	// train_model(curr_model);
 
 	// vector<int> new_state_indexes;
 	// vector<int> new_actions{ACTION_RIGHT, ACTION_UP};
@@ -101,13 +95,7 @@ int main(int argc, char* argv[]) {
 	// 					 new_actions,
 	// 					 ACTION_LEFT);
 
-	// train_model(curr_model,
-	// 			4,
-	// 			new_state_indexes,
-	// 			4,
-	// 			ACTION_DOWN,
-	// 			new_actions,
-	// 			ACTION_LEFT);
+	// train_model(curr_model);
 
 	{
 		vector<int> new_state_indexes;
@@ -120,13 +108,7 @@ int main(int argc, char* argv[]) {
 							 new_actions,
 							 ACTION_UP);
 
-		train_model(curr_model,
-					4,
-					new_state_indexes,
-					4,
-					ACTION_DOWN,
-					new_actions,
-					ACTION_UP);
+		train_model(curr_model);
 	}
 
 	{
@@ -140,13 +122,7 @@ int main(int argc, char* argv[]) {
 							 new_actions,
 							 ACTION_UP);
 
-		train_model(curr_model,
-					2,
-					new_state_indexes,
-					2,
-					ACTION_DOWN,
-					new_actions,
-					ACTION_UP);
+		train_model(curr_model);
 	}
 
 	double curr_misguess = measure_model(curr_model);

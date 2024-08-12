@@ -158,27 +158,11 @@ void WorldModel::add_path(int original_state_index,
 										   new_num_states);
 	}
 
-	{
-		for (int s_index = 0; s_index < (int)this->states.size(); s_index++) {
-			this->states[starting_state_index]->transitions[starting_action][s_index] *= 0.1;
-		}
-
-		this->states[starting_state_index]->transitions[starting_action][new_state_indexes[0]] += 0.9;
-	}
+	this->states[starting_state_index]->fixed_transitions.push_back({starting_action, {new_state_indexes[0], 0.9}});
 	for (int n_index = 0; n_index < (int)new_state_indexes.size()-1; n_index++) {
-		for (int s_index = 0; s_index < (int)this->states.size(); s_index++) {
-			this->states[new_state_indexes[n_index]]->transitions[actions[n_index]][s_index] *= 0.1;
-		}
-
-		this->states[new_state_indexes[n_index]]->transitions[actions[n_index]][new_state_indexes[n_index+1]] += 0.9;
+		this->states[new_state_indexes[n_index]]->fixed_transitions.push_back({actions[n_index], {new_state_indexes[n_index+1], 0.9}});
 	}
-	{
-		for (int s_index = 0; s_index < (int)this->states.size(); s_index++) {
-			this->states[new_state_indexes.back()]->transitions[ending_action][s_index] *= 0.1;
-		}
-
-		this->states[new_state_indexes.back()]->transitions[ending_action][ending_state_index] += 0.9;
-	}
+	this->states[new_state_indexes.back()]->fixed_transitions.push_back({ending_action, {ending_state_index, 0.9}});
 
 	uniform_real_distribution<double> distribution(0.0, 1.0);
 
