@@ -20,7 +20,10 @@ public:
 	void split_state(int state_index,
 					 int num_split);
 
-	void apply_fixed();
+	/**
+	 * - also enforces fixed transitions
+	 */
+	void sanitize();
 
 	void save(std::ofstream& output_file);
 	void save_for_display(std::ofstream& output_file);

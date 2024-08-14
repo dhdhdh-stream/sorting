@@ -182,7 +182,7 @@ void update(WorldModel* world_model,
 		}
 
 		for (int s_index = 0; s_index < (int)world_model->states.size(); s_index++) {
-			world_model->states[s_index]->apply_fixed();
+			world_model->states[s_index]->sanitize();
 		}
 
 		for (int s_index = 0; s_index < (int)world_model->states.size(); s_index++) {
@@ -197,6 +197,10 @@ void update(WorldModel* world_model,
 
 			for (int s_index = 0; s_index < (int)world_model->states.size(); s_index++) {
 				world_model->starting_likelihood[s_index] = sum_starting[s_index] / sum_likelihood;
+
+				if (abs(world_model->starting_likelihood[s_index]) < MIN_WEIGHT) {
+					world_model->starting_likelihood[s_index] = 0.0;
+				}
 			}
 		}
 	}

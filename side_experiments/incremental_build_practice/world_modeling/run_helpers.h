@@ -9,4 +9,6 @@ void train_model(WorldModel* world_model);
 
 double measure_model(WorldModel* world_model);
 
+void examine_run(WorldModel* world_model);
+
 #endif /* RUN_HELPERS_H */

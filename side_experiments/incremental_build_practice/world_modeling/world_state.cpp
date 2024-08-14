@@ -96,7 +96,7 @@ void WorldState::split_state(int state_index,
 	}
 }
 
-void WorldState::apply_fixed() {
+void WorldState::sanitize() {
 	for (int f_index = 0; f_index < (int)this->fixed_transitions.size(); f_index++) {
 		int action = this->fixed_transitions[f_index].first;
 		double scale = 1.0 - this->fixed_transitions[f_index].second.second;
@@ -106,6 +106,14 @@ void WorldState::apply_fixed() {
 
 		this->transitions[action][this->fixed_transitions[f_index].second.first] +=
 			this->fixed_transitions[f_index].second.second;
+	}
+
+	for (int a_index = 0; a_index < NUM_ACTIONS; a_index++) {
+		for (int s_index = 0; s_index < (int)this->transitions[a_index].size(); s_index++) {
+			if (abs(this->transitions[a_index][s_index]) < MIN_WEIGHT) {
+				this->transitions[a_index][s_index] = 0.0;
+			}
+		}
 	}
 }
 

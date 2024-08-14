@@ -158,11 +158,14 @@ void WorldModel::add_path(int original_state_index,
 										   new_num_states);
 	}
 
-	this->states[starting_state_index]->fixed_transitions.push_back({starting_action, {new_state_indexes[0], 0.9}});
+	this->states[starting_state_index]->fixed_transitions.push_back({starting_action, {new_state_indexes[0], 0.99}});
+	this->states[starting_state_index]->sanitize();
 	for (int n_index = 0; n_index < (int)new_state_indexes.size()-1; n_index++) {
-		this->states[new_state_indexes[n_index]]->fixed_transitions.push_back({actions[n_index], {new_state_indexes[n_index+1], 0.9}});
+		this->states[new_state_indexes[n_index]]->fixed_transitions.push_back({actions[n_index], {new_state_indexes[n_index+1], 0.99}});
+		this->states[new_state_indexes[n_index]]->sanitize();
 	}
-	this->states[new_state_indexes.back()]->fixed_transitions.push_back({ending_action, {ending_state_index, 0.9}});
+	this->states[new_state_indexes.back()]->fixed_transitions.push_back({ending_action, {ending_state_index, 0.99}});
+	this->states[new_state_indexes.back()]->sanitize();
 
 	uniform_real_distribution<double> distribution(0.0, 1.0);
 

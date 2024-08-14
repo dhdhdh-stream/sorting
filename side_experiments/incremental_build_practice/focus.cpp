@@ -69,7 +69,7 @@ int main(int argc, char* argv[]) {
 	// }
 
 	ifstream input_file;
-	input_file.open("snapshot_t2.txt");
+	input_file.open("snapshot.txt");
 	WorldModel* curr_model = new WorldModel(input_file);
 	input_file.close();
 
@@ -100,33 +100,125 @@ int main(int argc, char* argv[]) {
 	{
 		vector<int> new_state_indexes;
 		vector<int> new_actions;
-		curr_model->add_path(9,
+		curr_model->add_path(8,
+							 2,
+							 new_state_indexes,
+							 2,
+							 ACTION_RIGHT,
+							 new_actions,
+							 ACTION_LEFT);
+	}
+
+	{
+		vector<int> new_state_indexes;
+		vector<int> new_actions;
+		curr_model->add_path(8,
+							 3,
+							 new_state_indexes,
+							 3,
+							 ACTION_RIGHT,
+							 new_actions,
+							 ACTION_LEFT);
+	}
+
+	{
+		vector<int> new_state_indexes;
+		vector<int> new_actions;
+		curr_model->add_path(6,
+							 2,
+							 new_state_indexes,
+							 2,
+							 ACTION_DOWN,
+							 new_actions,
+							 ACTION_UP);
+	}
+
+	{
+		vector<int> new_state_indexes;
+		vector<int> new_actions;
+		curr_model->add_path(6,
 							 4,
 							 new_state_indexes,
 							 4,
 							 ACTION_DOWN,
 							 new_actions,
 							 ACTION_UP);
+	}
 
-		train_model(curr_model);
+	{
+		vector<int> new_state_indexes;
+		vector<int> new_actions;
+		curr_model->add_path(1,
+							 0,
+							 new_state_indexes,
+							 0,
+							 ACTION_UP,
+							 new_actions,
+							 ACTION_DOWN);
+	}
+
+	{
+		vector<int> new_state_indexes;
+		vector<int> new_actions;
+		curr_model->add_path(1,
+							 3,
+							 new_state_indexes,
+							 3,
+							 ACTION_UP,
+							 new_actions,
+							 ACTION_DOWN);
 	}
 
 	{
 		vector<int> new_state_indexes;
 		vector<int> new_actions;
 		curr_model->add_path(9,
-							 2,
+							 0,
 							 new_state_indexes,
-							 2,
-							 ACTION_DOWN,
+							 0,
+							 ACTION_LEFT,
 							 new_actions,
-							 ACTION_UP);
-
-		train_model(curr_model);
+							 ACTION_RIGHT);
 	}
 
-	double curr_misguess = measure_model(curr_model);
-	cout << "curr_misguess: " << curr_misguess << endl;
+	{
+		vector<int> new_state_indexes;
+		vector<int> new_actions;
+		curr_model->add_path(9,
+							 4,
+							 new_state_indexes,
+							 4,
+							 ACTION_LEFT,
+							 new_actions,
+							 ACTION_RIGHT);
+	}
+
+	curr_model->states[3]->fixed_transitions.push_back({ACTION_DOWN, {2, 0.99}});
+	curr_model->states[2]->fixed_transitions.push_back({ACTION_UP, {3, 0.99}});
+
+	curr_model->states[2]->fixed_transitions.push_back({ACTION_LEFT, {4, 0.99}});
+	curr_model->states[4]->fixed_transitions.push_back({ACTION_RIGHT, {2, 0.99}});
+
+	curr_model->states[4]->fixed_transitions.push_back({ACTION_UP, {0, 0.99}});
+	curr_model->states[0]->fixed_transitions.push_back({ACTION_DOWN, {4, 0.99}});
+
+	curr_model->states[0]->fixed_transitions.push_back({ACTION_RIGHT, {3, 0.99}});
+	curr_model->states[3]->fixed_transitions.push_back({ACTION_LEFT, {0, 0.99}});
+
+	train_model(curr_model);
+	train_model(curr_model);
+
+	{
+		double curr_misguess = measure_model(curr_model);
+		cout << "curr_misguess: " << curr_misguess << endl;
+	}
+
+	{
+		ofstream output_file;
+		output_file.open("save.txt");
+		curr_model->save(output_file);
+		output_file.close();
+	}
 
 	{
 		ofstream output_file;
