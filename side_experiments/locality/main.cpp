@@ -36,7 +36,7 @@ int main(int argc, char* argv[]) {
 	double curr_misguess = measure_model(curr_model);
 	cout << "curr_misguess: " << curr_misguess << endl;
 
-	for (int iter_index = 0; iter_index < 100; iter_index++) {
+	for (int iter_index = 0; iter_index < 300; iter_index++) {
 		cout << "iter_index: " << iter_index << endl;
 
 		WorldModel* best_model = curr_model;

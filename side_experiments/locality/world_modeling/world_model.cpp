@@ -62,10 +62,15 @@ WorldModel::~WorldModel() {
 	}
 }
 
+/**
+ * TODO:
+ * - add transitions from other states
+ */
 void WorldModel::random_change() {
+	uniform_int_distribution<int> new_state_distribution(0, 4);
+	uniform_int_distribution<int> remove_distribution(0, 4);
 	uniform_int_distribution<int> state_distribution(0, (int)this->states.size()-1);
 	uniform_int_distribution<int> action_distribution(0, NUM_ACTIONS-1);
-	uniform_int_distribution<int> new_state_distribution(0, 4);
 	uniform_real_distribution<double> distribution(0.0, 1.0);
 	while (true) {
 		if (new_state_distribution(generator) == 0) {
@@ -107,29 +112,44 @@ void WorldModel::random_change() {
 
 			break;
 		} else {
-			int starting_state_index = state_distribution(generator);
-			int ending_state_index = state_distribution(generator);
-			int action = action_distribution(generator);
+			if (remove_distribution(generator)) {
+				int starting_state_index = state_distribution(generator);
+				int action = action_distribution(generator);
+				if (this->states[starting_state_index]->transitions[action].size() > 1) {
+					uniform_int_distribution<int> transition_distribution(1, this->states[starting_state_index]->transitions[action].size()-1);
+					int transition_index = transition_distribution(generator);
 
-			bool has_existing = false;
-			for (int t_index = 0; t_index < (int)this->states[starting_state_index]->transitions[action].size(); t_index++) {
-				if (this->states[starting_state_index]->transitions[action][t_index].first == ending_state_index) {
-					has_existing = true;
+					this->states[starting_state_index]->transitions[action].erase(
+						this->states[starting_state_index]->transitions[action].begin() + transition_index);
+
 					break;
 				}
-			}
+				// TODO: can remove connection to self as well
+			} else {
+				int starting_state_index = state_distribution(generator);
+				int ending_state_index = state_distribution(generator);
+				int action = action_distribution(generator);
 
-			if (!has_existing) {
-				double new_likelihood = distribution(generator);
-				double scale = 1.0 - new_likelihood;
-
+				bool has_existing = false;
 				for (int t_index = 0; t_index < (int)this->states[starting_state_index]->transitions[action].size(); t_index++) {
-					this->states[starting_state_index]->transitions[action][t_index].second *= scale;
+					if (this->states[starting_state_index]->transitions[action][t_index].first == ending_state_index) {
+						has_existing = true;
+						break;
+					}
 				}
 
-				this->states[starting_state_index]->transitions[action].push_back({ending_state_index, new_likelihood});
+				if (!has_existing) {
+					double new_likelihood = distribution(generator);
+					double scale = 1.0 - new_likelihood;
 
-				break;
+					for (int t_index = 0; t_index < (int)this->states[starting_state_index]->transitions[action].size(); t_index++) {
+						this->states[starting_state_index]->transitions[action][t_index].second *= scale;
+					}
+
+					this->states[starting_state_index]->transitions[action].push_back({ending_state_index, new_likelihood});
+
+					break;
+				}
 			}
 		}
 	}

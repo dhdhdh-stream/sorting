@@ -1,6 +1,7 @@
 #include "update_helpers.h"
 
 #include <cmath>
+#include <iostream>
 
 #include "constants.h"
 #include "world_model.h"
@@ -83,18 +84,20 @@ void process_run(WorldModel* world_model,
 
 	for (int o_index = 0; o_index < (int)obs.size(); o_index++) {
 		for (int s_index = 0; s_index < (int)world_model->states.size(); s_index++) {
-			double sum_likelihood = 0.0;
-			for (int t_index = 0; t_index < (int)world_model->states[s_index]->transitions[actions[o_index]].size(); t_index++) {
-				int end_state_index = world_model->states[s_index]->transitions[actions[o_index]][t_index].first;
-				sum_likelihood += state_probabilities[o_index+1][end_state_index];
-			}
+			if (state_probabilities[o_index][s_index] > 0.0) {
+				double sum_likelihood = 0.0;
+				for (int t_index = 0; t_index < (int)world_model->states[s_index]->transitions[actions[o_index]].size(); t_index++) {
+					int end_state_index = world_model->states[s_index]->transitions[actions[o_index]][t_index].first;
+					sum_likelihood += state_probabilities[o_index+1][end_state_index];
+				}
 
-			for (int t_index = 0; t_index < (int)world_model->states[s_index]->transitions[actions[o_index]].size(); t_index++) {
-				int end_state_index = world_model->states[s_index]->transitions[actions[o_index]][t_index].first;
-				sum_transitions[actions[o_index]][s_index][end_state_index]
-					= state_probabilities[o_index+1][end_state_index]
-						/ sum_likelihood
-						* state_probabilities[o_index][s_index];
+				for (int t_index = 0; t_index < (int)world_model->states[s_index]->transitions[actions[o_index]].size(); t_index++) {
+					int end_state_index = world_model->states[s_index]->transitions[actions[o_index]][t_index].first;
+					sum_transitions[actions[o_index]][s_index][t_index]
+						+= state_probabilities[o_index+1][end_state_index]
+							/ sum_likelihood
+							* state_probabilities[o_index][s_index];
+				}
 			}
 		}
 	}
@@ -146,19 +149,26 @@ void update(WorldModel* world_model,
 				for (int t_index = 0; t_index < (int)world_model->states[s_index]->transitions[a_index].size(); t_index++) {
 					sum_likelihood += sum_transitions[a_index][s_index][t_index];
 				}
-				for (int t_index = 0; t_index < (int)world_model->states[s_index]->transitions[a_index].size(); t_index++) {
-					world_model->states[s_index]->transitions[a_index][t_index].second
-						= sum_transitions[a_index][s_index][t_index] / sum_likelihood;
+				/**
+				 * - in case state + action combination never hit(?)
+				 */
+				if (sum_likelihood != 0.0) {
+					for (int t_index = 0; t_index < (int)world_model->states[s_index]->transitions[a_index].size(); t_index++) {
+						world_model->states[s_index]->transitions[a_index][t_index].second
+							= sum_transitions[a_index][s_index][t_index] / sum_likelihood;
 
-					if (abs(world_model->states[s_index]->transitions[a_index][t_index].second) < MIN_WEIGHT) {
-						world_model->states[s_index]->transitions[a_index][t_index].second = 0.0;
+						if (abs(world_model->states[s_index]->transitions[a_index][t_index].second) < MIN_WEIGHT) {
+							world_model->states[s_index]->transitions[a_index][t_index].second = 0.0;
+						}
 					}
 				}
 			}
 		}
 
 		for (int s_index = 0; s_index < (int)world_model->states.size(); s_index++) {
-			world_model->states[s_index]->average_val = sum_obs[s_index] / sum_counts[s_index];
+			if (sum_counts[s_index] != 0.0) {
+				world_model->states[s_index]->average_val = sum_obs[s_index] / sum_counts[s_index];
+			}
 		}
 
 		{

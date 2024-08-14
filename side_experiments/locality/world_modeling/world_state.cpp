@@ -1,5 +1,7 @@
 #include "world_state.h"
 
+#include <iostream>
+
 #include "constants.h"
 #include "globals.h"
 
@@ -17,7 +19,7 @@ void WorldState::forward(double obs,
 		* (1.0 - abs(obs - this->average_val));
 	for (int t_index = 0; t_index < (int)this->transitions[action].size(); t_index++) {
 		int state_index = this->transitions[action][t_index].first;
-		int transition_likelihood = this->transitions[action][t_index].second;
+		double transition_likelihood = this->transitions[action][t_index].second;
 		next_likelihoods[state_index] += state_likelihood * transition_likelihood;
 	}
 }
@@ -28,7 +30,7 @@ void WorldState::backward(vector<double>& curr_likelihoods,
 						  vector<double>& next_likelihoods) {
 	for (int t_index = 0; t_index < (int)this->transitions[action].size(); t_index++) {
 		int state_index = this->transitions[action][t_index].first;
-		int transition_likelihood = this->transitions[action][t_index].second;
+		double transition_likelihood = this->transitions[action][t_index].second;
 		next_likelihoods[this->id] += curr_likelihoods[state_index]
 			* transition_likelihood
 			* (1.0 - abs(obs - this->average_val));
