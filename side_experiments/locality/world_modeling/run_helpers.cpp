@@ -56,6 +56,7 @@ double measure_model(WorldModel* world_model) {
 		sum_num_actions += num_actions;
 
 		vector<double> curr_likelihoods = world_model->starting_likelihood;
+		double curr_unknown_likelihood = 0.0;
 
 		for (int a_index = 0; a_index < num_actions; a_index++) {
 			double obs = world_truth.vals[world_truth.curr_x][world_truth.curr_y];
@@ -63,28 +64,39 @@ double measure_model(WorldModel* world_model) {
 			for (int s_index = 0; s_index < (int)world_model->states.size(); s_index++) {
 				sum_misguess += curr_likelihoods[s_index] * abs(obs - world_model->states[s_index]->average_val);
 			}
+			sum_misguess += curr_unknown_likelihood * 0.5;
 
 			int action = action_distribution(generator);
 			world_truth.move(action);
 
 			vector<double> next_likelihoods(world_model->states.size(), 0.0);
+			double next_unknown_likelihood = 0.0;
 
 			for (int s_index = 0; s_index < (int)world_model->states.size(); s_index++) {
 				world_model->states[s_index]->forward(obs,
 													  curr_likelihoods,
 													  action,
-													  next_likelihoods);
+													  next_likelihoods,
+													  next_unknown_likelihood);
+			}
+			{
+				double unknown_state_likelihood = curr_unknown_likelihood;
+				next_unknown_likelihood += unknown_state_likelihood;
 			}
 
 			double sum_likelihood = 0.0;
 			for (int s_index = 0; s_index < (int)world_model->states.size(); s_index++) {
 				sum_likelihood += next_likelihoods[s_index];
 			}
+			sum_likelihood += next_unknown_likelihood;
+
 			for (int s_index = 0; s_index < (int)world_model->states.size(); s_index++) {
 				next_likelihoods[s_index] /= sum_likelihood;
 			}
+			next_unknown_likelihood /= sum_likelihood;
 
 			curr_likelihoods = next_likelihoods;
+			curr_unknown_likelihood = next_unknown_likelihood;
 		}
 	}
 

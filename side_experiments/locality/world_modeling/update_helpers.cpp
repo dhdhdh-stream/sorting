@@ -21,48 +21,77 @@ void process_run(WorldModel* world_model,
 				 vector<double>& sum_starting) {
 	vector<vector<double>> forward_likelihoods;
 	forward_likelihoods.push_back(world_model->starting_likelihood);
+
+	vector<double> forward_unknown_likelihoods;
+	forward_unknown_likelihoods.push_back(0.0);
+
 	for (int o_index = 0; o_index < (int)obs.size(); o_index++) {
 		vector<double> next_likelihoods(world_model->states.size(), 0.0);
+		double next_unknown_likelihood = 0.0;
 
 		for (int s_index = 0; s_index < (int)world_model->states.size(); s_index++) {
 			world_model->states[s_index]->forward(obs[o_index],
 												  forward_likelihoods.back(),
 												  actions[o_index],
-												  next_likelihoods);
+												  next_likelihoods,
+												  next_unknown_likelihood);
+		}
+		{
+			double unknown_state_likelihood = forward_unknown_likelihoods.back();
+			next_unknown_likelihood += unknown_state_likelihood;
 		}
 
 		double sum_likelihood = 0.0;
 		for (int s_index = 0; s_index < (int)world_model->states.size(); s_index++) {
 			sum_likelihood += next_likelihoods[s_index];
 		}
+		sum_likelihood += next_unknown_likelihood;
+
 		for (int s_index = 0; s_index < (int)world_model->states.size(); s_index++) {
 			next_likelihoods[s_index] /= sum_likelihood;
 		}
+		next_unknown_likelihood /= sum_likelihood;
 
 		forward_likelihoods.push_back(next_likelihoods);
+		forward_unknown_likelihoods.push_back(next_unknown_likelihood);
 	}
 
 	vector<vector<double>> backward_likelihoods;
 	backward_likelihoods.insert(backward_likelihoods.begin(), vector<double>(world_model->states.size(), 1.0));
+
+	vector<double> backward_unknown_likelihoods;
+	backward_unknown_likelihoods.insert(backward_unknown_likelihoods.begin(), 1.0);
+
 	for (int o_index = (int)obs.size()-1; o_index >= 0; o_index--) {
 		vector<double> next_likelihoods(world_model->states.size(), 0.0);
+		double next_unknown_likelihood = 0.0;
 
 		for (int s_index = 0; s_index < (int)world_model->states.size(); s_index++) {
 			world_model->states[s_index]->backward(backward_likelihoods[0],
+												   backward_unknown_likelihoods[0],
 												   actions[o_index],
 												   obs[o_index],
 												   next_likelihoods);
+		}
+		{
+			double unknown_state_likelihood = backward_unknown_likelihoods[0];
+			next_unknown_likelihood += unknown_state_likelihood
+				* 0.5;
 		}
 
 		double sum_likelihood = 0.0;
 		for (int s_index = 0; s_index < (int)world_model->states.size(); s_index++) {
 			sum_likelihood += next_likelihoods[s_index];
 		}
+		sum_likelihood += next_unknown_likelihood;
+
 		for (int s_index = 0; s_index < (int)world_model->states.size(); s_index++) {
 			next_likelihoods[s_index] /= sum_likelihood;
 		}
+		next_unknown_likelihood /= sum_likelihood;
 
 		backward_likelihoods.insert(backward_likelihoods.begin(), next_likelihoods);
+		backward_unknown_likelihoods.insert(backward_unknown_likelihoods.begin(), next_unknown_likelihood);
 	}
 
 	vector<vector<double>> state_probabilities(obs.size() + 1);
@@ -77,7 +106,11 @@ void process_run(WorldModel* world_model,
 
 		vector<double> curr_probabilities(world_model->states.size());
 		for (int s_index = 0; s_index < (int)world_model->states.size(); s_index++) {
-			curr_probabilities[s_index] = curr_likelihood[s_index] / sum_likelihood;
+			if (sum_likelihood == 0.0) {
+				curr_probabilities[s_index] = 0.0;
+			} else {
+				curr_probabilities[s_index] = curr_likelihood[s_index] / sum_likelihood;
+			}
 		}
 		state_probabilities[o_index] = curr_probabilities;
 	}
@@ -87,12 +120,12 @@ void process_run(WorldModel* world_model,
 			if (state_probabilities[o_index][s_index] > 0.0) {
 				double sum_likelihood = 0.0;
 				for (int t_index = 0; t_index < (int)world_model->states[s_index]->transitions[actions[o_index]].size(); t_index++) {
-					int end_state_index = world_model->states[s_index]->transitions[actions[o_index]][t_index].first;
+					int end_state_index = world_model->states[s_index]->transitions[actions[o_index]][t_index].first->id;
 					sum_likelihood += state_probabilities[o_index+1][end_state_index];
 				}
 
 				for (int t_index = 0; t_index < (int)world_model->states[s_index]->transitions[actions[o_index]].size(); t_index++) {
-					int end_state_index = world_model->states[s_index]->transitions[actions[o_index]][t_index].first;
+					int end_state_index = world_model->states[s_index]->transitions[actions[o_index]][t_index].first->id;
 					sum_transitions[actions[o_index]][s_index][t_index]
 						+= state_probabilities[o_index+1][end_state_index]
 							/ sum_likelihood
@@ -177,11 +210,26 @@ void update(WorldModel* world_model,
 				sum_likelihood += sum_starting[s_index];
 			}
 
-			for (int s_index = 0; s_index < (int)world_model->states.size(); s_index++) {
-				world_model->starting_likelihood[s_index] = sum_starting[s_index] / sum_likelihood;
+			/**
+			 * - if sequence too long and unknown dominates, then sum_likelihood can effectively become 0.0
+			 *   - if so, leave starting as-is
+			 */
+			if (sum_likelihood != 0.0) {
+				/**
+				 * - always leave states[0] with a minimum starting_likelihood percentage
+				 */
+				if (sum_starting[0] / sum_likelihood < 1.0 / world_model->states.size()) {
+					double added_likelihood = sum_likelihood / world_model->states.size();
+					sum_starting[0] += added_likelihood;
+					sum_likelihood += added_likelihood;
+				}
 
-				if (abs(world_model->starting_likelihood[s_index]) < MIN_WEIGHT) {
-					world_model->starting_likelihood[s_index] = 0.0;
+				for (int s_index = 0; s_index < (int)world_model->states.size(); s_index++) {
+					world_model->starting_likelihood[s_index] = sum_starting[s_index] / sum_likelihood;
+
+					if (abs(world_model->starting_likelihood[s_index]) < MIN_WEIGHT) {
+						world_model->starting_likelihood[s_index] = 0.0;
+					}
 				}
 			}
 		}

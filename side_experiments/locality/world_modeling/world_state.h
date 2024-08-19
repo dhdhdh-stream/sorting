@@ -4,21 +4,26 @@
 #include <fstream>
 #include <vector>
 
+class WorldModel;
+
 class WorldState {
 public:
+	WorldModel* parent;
 	int id;
 
 	double average_val;
 
-	std::vector<std::vector<std::pair<int,double>>> transitions;
+	std::vector<std::vector<std::pair<WorldState*,double>>> transitions;
 
 	WorldState();
 
 	void forward(double obs,
 				 std::vector<double>& curr_likelihoods,
 				 int action,
-				 std::vector<double>& next_likelihoods);
+				 std::vector<double>& next_likelihoods,
+				 double& next_unknown_likelihood);
 	void backward(std::vector<double>& curr_likelihoods,
+				  double curr_unknown_likelihood,
 				  int action,
 				  double obs,
 				  std::vector<double>& next_likelihoods);
