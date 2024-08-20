@@ -1,21 +1,3 @@
-/**
- * 2 3
- * 0 1
- */
-
-/**
- * - updating average_val makes things converge
- *   - with each cycle, the value gets sharper and sharper
- *     - pushing the uncertainty into the transitions
- * 
- * - but if any transitions missing, then average_val will carry the uncertainty
- */
-
-/**
- * - maybe simply allow transitions between nearby states
- *   - and maybe clean if unneeded afterwards?
- */
-
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -33,9 +15,6 @@ using namespace std;
 int seed;
 
 default_random_engine generator;
-
-const int TRIES_PER_ITER = 20;
-const int CHANGES_PER_TRY = 5;
 
 int main(int argc, char* argv[]) {
 	cout << "Starting..." << endl;
@@ -62,11 +41,9 @@ int main(int argc, char* argv[]) {
 	{
 		curr_model->states[0]->transitions[ACTION_UP].push_back({curr_model->states[2], 0.5});
 		curr_model->states[0]->transitions[ACTION_UP].push_back({curr_model->states[0], 0.5});
-		// curr_model->states[0]->transitions[ACTION_UP].push_back({curr_model->states[2], 1.0});
 
 		curr_model->states[0]->transitions[ACTION_RIGHT].push_back({curr_model->states[1], 0.5});
 		curr_model->states[0]->transitions[ACTION_RIGHT].push_back({curr_model->states[0], 0.5});
-		// curr_model->states[0]->transitions[ACTION_RIGHT].push_back({curr_model->states[1], 1.0});
 
 		curr_model->states[0]->transitions[ACTION_DOWN].push_back({curr_model->states[0], 1.0});
 
@@ -76,7 +53,6 @@ int main(int argc, char* argv[]) {
 	{
 		curr_model->states[1]->transitions[ACTION_UP].push_back({curr_model->states[3], 0.5});
 		curr_model->states[1]->transitions[ACTION_UP].push_back({curr_model->states[1], 0.5});
-		// curr_model->states[1]->transitions[ACTION_UP].push_back({curr_model->states[3], 1.0});
 
 		curr_model->states[1]->transitions[ACTION_RIGHT].push_back({curr_model->states[1], 1.0});
 
@@ -84,19 +60,16 @@ int main(int argc, char* argv[]) {
 
 		curr_model->states[1]->transitions[ACTION_LEFT].push_back({curr_model->states[0], 0.5});
 		curr_model->states[1]->transitions[ACTION_LEFT].push_back({curr_model->states[1], 0.5});
-		// curr_model->states[1]->transitions[ACTION_LEFT].push_back({curr_model->states[0], 1.0});
 	}
 
 	{
 		curr_model->states[2]->transitions[ACTION_UP].push_back({curr_model->states[2], 1.0});
 
-		// curr_model->states[2]->transitions[ACTION_RIGHT].push_back({curr_model->states[3], 0.5});
-		// curr_model->states[2]->transitions[ACTION_RIGHT].push_back({curr_model->states[2], 0.5});
-		curr_model->states[2]->transitions[ACTION_RIGHT].push_back({curr_model->states[3], 1.0});
+		curr_model->states[2]->transitions[ACTION_RIGHT].push_back({curr_model->states[3], 0.5});
+		curr_model->states[2]->transitions[ACTION_RIGHT].push_back({curr_model->states[2], 0.5});
 
 		curr_model->states[2]->transitions[ACTION_DOWN].push_back({curr_model->states[0], 0.5});
 		curr_model->states[2]->transitions[ACTION_DOWN].push_back({curr_model->states[2], 0.5});
-		// curr_model->states[2]->transitions[ACTION_DOWN].push_back({curr_model->states[0], 1.0});
 
 		curr_model->states[2]->transitions[ACTION_LEFT].push_back({curr_model->states[2], 1.0});
 	}
@@ -106,13 +79,11 @@ int main(int argc, char* argv[]) {
 
 		curr_model->states[3]->transitions[ACTION_RIGHT].push_back({curr_model->states[3], 1.0});
 
-		// curr_model->states[3]->transitions[ACTION_DOWN].push_back({curr_model->states[1], 0.5});
-		// curr_model->states[3]->transitions[ACTION_DOWN].push_back({curr_model->states[3], 0.5});
-		curr_model->states[3]->transitions[ACTION_DOWN].push_back({curr_model->states[1], 1.0});
+		curr_model->states[3]->transitions[ACTION_DOWN].push_back({curr_model->states[1], 0.5});
+		curr_model->states[3]->transitions[ACTION_DOWN].push_back({curr_model->states[3], 0.5});
 
-		// curr_model->states[3]->transitions[ACTION_LEFT].push_back({curr_model->states[2], 0.5});
-		// curr_model->states[3]->transitions[ACTION_LEFT].push_back({curr_model->states[3], 0.5});
-		curr_model->states[3]->transitions[ACTION_LEFT].push_back({curr_model->states[2], 1.0});
+		curr_model->states[3]->transitions[ACTION_LEFT].push_back({curr_model->states[2], 0.5});
+		curr_model->states[3]->transitions[ACTION_LEFT].push_back({curr_model->states[3], 0.5});
 	}
 
 	curr_model->starting_likelihood = vector<double>(4, 0.25);

@@ -9,6 +9,8 @@ public:
 	int curr_x;
 	int curr_y;
 
+	std::vector<int> action_queue;
+
 	WorldTruth();
 
 	void move(int action);
