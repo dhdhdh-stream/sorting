@@ -1,6 +1,20 @@
 /**
- * - with fixed transitions, commits too hard to local optima?
- *   - maybe always have transition to unknown?
+ * - maybe construct from sequences?
+ */
+
+/**
+ * - there needs to be better reason to split state or to merge state
+ * 
+ * - can't be merge for immediate gain, but cause future confusion
+ * 
+ * - and determining whether split is good can't rely on baum-welch
+ * 
+ * - whether states are the same or should be split really should come down to one thing:
+ *   - if a sequence is performed, do they tend to look the same or not
+ *     - some situations start different, but average out to be similar over time
+ *     - some situations start similar, but diverge later
+ *       - stuff that depends on count/exact distance
+ *     - some situations different throughout
  */
 
 #include <chrono>
@@ -21,7 +35,7 @@ int seed;
 default_random_engine generator;
 
 const int TRIES_PER_ITER = 20;
-const int CHANGES_PER_TRY = 10;
+const int CHANGES_PER_TRY = 5;
 
 int main(int argc, char* argv[]) {
 	cout << "Starting..." << endl;
