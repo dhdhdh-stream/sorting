@@ -13,18 +13,7 @@ public:
 	std::vector<double> starting_likelihood;
 
 	WorldModel();
-	WorldModel(WorldModel* original);
-	WorldModel(std::ifstream& input_file);
 	~WorldModel();
-
-	void init();
-
-	void clean();
-
-	void random_change();
-
-	void save(std::ofstream& output_file);
-	void save_for_display(std::ofstream& output_file);
 };
 
 #endif /* WORLD_MODEL_H */

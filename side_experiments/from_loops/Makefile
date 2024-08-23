@@ -10,13 +10,13 @@ HEADERS = ${SOURCES:.cpp=.h}
 OBJECTS = ${HEADERS:.h=.o}
 DEPENDS = ${OBJECTS:.o=.d}
 
-all: test_sharp
+all: main
 
-test_sharp: ${OBJECTS} test_sharp.o
-	${CXX} ${CXXFLAGS} ${OBJECTS} test_sharp.o -o test_sharp ${LIBS}
+main: ${OBJECTS} main.o
+	${CXX} ${CXXFLAGS} ${OBJECTS} main.o -o main ${LIBS}
 
--include ${DEPENDS} test_sharp.d
+-include ${DEPENDS} main.d
 
 clean:
 	rm -f ${OBJECTS} ${DEPENDS} \
-	test_sharp.o test_sharp.d test_sharp
+	main.o main.d main

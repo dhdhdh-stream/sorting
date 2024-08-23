@@ -1,19 +1,19 @@
 #ifndef WORLD_STATE_H
 #define WORLD_STATE_H
 
-#include <fstream>
 #include <vector>
-
-class WorldModel;
 
 class WorldState {
 public:
-	WorldModel* parent;
 	int id;
 
+	/**
+	 * - initialize to overall average_val and average_standard_deviation
+	 */
 	double average_val;
+	double average_standard_deviation;
 
-	std::vector<std::vector<std::pair<WorldState*,double>>> transitions;
+	std::vector<std::vector<double>> transitions;
 
 	WorldState();
 
@@ -25,13 +25,6 @@ public:
 				  int action,
 				  double obs,
 				  std::vector<double>& next_likelihoods);
-
-	void save(std::ofstream& output_file);
-	void load(std::ifstream& input_file);
-
-	void copy_from(WorldState* original);
-
-	void save_for_display(std::ofstream& output_file);
 };
 
 #endif /* WORLD_STATE_H */
