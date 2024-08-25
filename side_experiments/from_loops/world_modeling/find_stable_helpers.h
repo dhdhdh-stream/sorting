@@ -1,3 +1,9 @@
+/**
+ * - relearn for each "world"
+ * 
+ * TODO: learn what's shared between worlds?
+ */
+
 #ifndef FIND_STABLE_HELPERS_H
 #define FIND_STABLE_HELPERS_H
 

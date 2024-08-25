@@ -1,6 +1,7 @@
 #ifndef WORLD_STATE_H
 #define WORLD_STATE_H
 
+#include <fstream>
 #include <vector>
 
 class WorldState {
@@ -13,7 +14,7 @@ public:
 	double average_val;
 	double average_standard_deviation;
 
-	std::vector<std::vector<double>> transitions;
+	std::vector<std::vector<std::pair<int,double>>> transitions;
 
 	WorldState();
 
@@ -25,6 +26,14 @@ public:
 				  int action,
 				  double obs,
 				  std::vector<double>& next_likelihoods);
+
+	void transition_step(std::vector<double>& curr_likelihoods,
+						 int action,
+						 std::vector<double>& next_likelihoods);
+	void obs_step(std::vector<double>& curr_likelihoods,
+				  double obs);
+
+	void save_for_display(std::ofstream& output_file);
 };
 
 #endif /* WORLD_STATE_H */
