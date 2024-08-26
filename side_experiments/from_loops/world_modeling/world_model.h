@@ -25,6 +25,8 @@ public:
 	 */
 	std::vector<double> starting_likelihood;
 
+	std::vector<std::vector<int>> travel_map;
+
 	WorldModel();
 	~WorldModel();
 

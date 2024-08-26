@@ -1,5 +1,6 @@
 #include "localize_helpers.h"
 
+#include <iostream>
 #include <vector>
 
 #include "constants.h"
@@ -13,7 +14,7 @@ using namespace std;
 const int LOCALIZE_STEPS = 5;
 const double SUCCESS_PROBABILITY = 0.7;
 
-void localize_helper(WorldTruth* world_truth,
+bool localize_helper(WorldTruth* world_truth,
 					 WorldModel* world_model,
 					 vector<vector<double>>& likelihoods,
 					 vector<double>& obs,
@@ -65,15 +66,21 @@ void localize_helper(WorldTruth* world_truth,
 	for (int s_index = 0; s_index < (int)world_model->states.size(); s_index++) {
 		sum_likelihood += next_likelihoods[s_index];
 	}
+	if (sum_likelihood == 0.0) {
+		return false;
+	}
 	for (int s_index = 0; s_index < (int)world_model->states.size(); s_index++) {
 		next_likelihoods[s_index] /= sum_likelihood;
 	}
 
 	likelihoods.push_back(next_likelihoods);
+
+	return true;
 }
 
 bool localize(WorldTruth* world_truth,
-			  WorldModel* world_model) {
+			  WorldModel* world_model,
+			  vector<int>& unknown_actions) {
 	vector<vector<double>> likelihoods;
 
 	vector<double> obs;
@@ -100,6 +107,9 @@ bool localize(WorldTruth* world_truth,
 
 			sum_likelihood += starting_likelihood[s_index];
 		}
+		if (sum_likelihood == 0.0) {
+			return false;
+		}
 		for (int s_index = 0; s_index < (int)world_model->states.size(); s_index++) {
 			starting_likelihood[s_index] /= sum_likelihood;
 		}
@@ -107,11 +117,17 @@ bool localize(WorldTruth* world_truth,
 	}
 
 	for (int i_index = 0; i_index < LOCALIZE_STEPS; i_index++) {
-		localize_helper(world_truth,
-						world_model,
-						likelihoods,
-						obs,
-						actions);
+		bool can_continue = localize_helper(
+			world_truth,
+			world_model,
+			likelihoods,
+			obs,
+			actions);
+		if (!can_continue) {
+			unknown_actions.insert(unknown_actions.end(),
+				actions.begin(), actions.end());
+			return false;
+		}
 	}
 
 	vector<int> most_likely_path;
@@ -149,6 +165,12 @@ bool localize(WorldTruth* world_truth,
 		most_likely_path.insert(most_likely_path.begin(), highest_state_index);
 	}
 
+	cout << "most_likely_path:";
+	for (int i_index = 0; i_index < (int)most_likely_path.size(); i_index++) {
+		cout << " " << most_likely_path[i_index];
+	}
+	cout << endl;
+
 	vector<double> path_likelihoods;
 	for (int i_index = 0; i_index < (int)most_likely_path.size(); i_index++) {
 		WorldState* state = world_model->states[most_likely_path[i_index]];
@@ -183,9 +205,13 @@ bool localize(WorldTruth* world_truth,
 	}
 	double average_likelihood = sum_likelihoods / path_likelihoods.size();
 
+	cout << "average_likelihood: " << average_likelihood << endl;
+
 	if (average_likelihood > SUCCESS_PROBABILITY) {
 		return true;
 	} else {
+		unknown_actions.insert(unknown_actions.end(),
+			actions.begin(), actions.end());
 		return false;
 	}
 }
