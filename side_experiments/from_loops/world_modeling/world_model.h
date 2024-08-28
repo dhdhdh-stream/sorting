@@ -3,7 +3,7 @@
  *   - everything is an object
  *     - like, if on a ship traveling the sea, will be multiple "worlds" to track anyways
  * 
- * - all states/paths added must loop back to self
+ * - all states/paths added must loop back to self?
  *   - as must be repeatable to be added
  *     - and in order to be repeatable, must loop back to self
  */
@@ -24,6 +24,8 @@ public:
 	 * TODO: remove
 	 */
 	std::vector<double> starting_likelihood;
+
+	std::vector<double> current_likelihood;
 
 	std::vector<std::vector<int>> travel_map;
 

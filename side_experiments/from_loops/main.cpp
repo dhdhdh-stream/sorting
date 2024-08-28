@@ -13,6 +13,9 @@
  * - need to be prepared to randomly enter into the unknown
  * 
  * - also, explore into unknown instead of random
+ * 
+ * - maybe when trying to localize, once action sequence hits certain length, don't bother remembering
+ *   - just be glad returned to known?
  */
 
 /**

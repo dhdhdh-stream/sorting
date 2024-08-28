@@ -28,6 +28,23 @@ const double REPETITION_MAX_RATIO = 0.1;
  * - don't let number of states equal sequence length
  *   - e.g., should be 1 state if true corner, should be infinite if edge instead
  * - start from 1 and go up?
+ * 
+ * - each step could also be randomly selected from multiple states?
+ *   - could also be multiple paths?
+ *     - then if each path has different lengths, this won't work?
+ * 
+ * - maybe don't look for sequences in areas of low variance?
+ *   - sequence must include at least 1 thing sharp
+ *     - then maybe states are these points of high contrast?
+ * - can only identify motion when there are points of high contrast
+ *   - otherwise, cannot know whether same value or stayed in place
+ *     - maybe after moving enough times, will know?
+ *       - but perhaps better to find high contrast point, and map relative to it
+ * 
+ * - have key sequences/obs
+ *   - even if sequence doesn't reliably hit obs, can still be useful even with uncertainty?
+ *     - define coordinate relative to key spots
+ *     - like if confused/unlucky, can still think at right location even if key sequence doesn't fully match
  */
 WorldModel* find_stable(WorldTruth* world_truth) {
 	vector<double> random_obs;
