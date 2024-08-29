@@ -10,6 +10,7 @@
 #ifndef WORLD_TRUTH_H
 #define WORLD_TRUTH_H
 
+#include <fstream>
 #include <vector>
 
 class WorldTruth {
@@ -29,6 +30,9 @@ public:
 
 	double get_obs();
 	void move(int action);
+
+	void save(std::ofstream& output_file);
+	void load(std::ifstream& input_file);
 };
 
 #endif /* WORLD_TRUTH_H */

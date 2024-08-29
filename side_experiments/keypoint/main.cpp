@@ -4,8 +4,10 @@
 #include <thread>
 #include <random>
 
-#include "key_point.h"
-#include "key_point_helpers.h"
+#include "keypoint.h"
+#include "keypoint_helpers.h"
+#include "world_model.h"
+#include "world_model_helpers.h"
 #include "world_truth.h"
 
 using namespace std;
@@ -17,21 +19,22 @@ default_random_engine generator;
 int main(int argc, char* argv[]) {
 	cout << "Starting..." << endl;
 
-	// seed = (unsigned)time(NULL);
-	seed = 1724809896;
+	seed = (unsigned)time(NULL);
 	srand(seed);
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
 
 	WorldTruth* world_truth = new WorldTruth();
 
-	cout << "world_truth->world_size: " << world_truth->world_size << endl;
-	cout << "world_truth->obj_x_vel: " << world_truth->obj_x_vel << endl;
-	cout << "world_truth->obj_y_vel: " << world_truth->obj_y_vel << endl;
+	WorldModel* world_model = new WorldModel();
 
-	KeyPoint* key_point;
-	while (true) {
-		KeyPoint* potential = create_potential_key_point(world_truth);
+	while (world_model->keypoints.size() < 10) {
+		Keypoint* potential = create_potential_keypoint(world_truth);
+
+		if (potential_keypoint_is_duplicate(world_model, potential)) {
+			delete potential;
+			continue;
+		}
 
 		cout << "potential->obs:";
 		for (int o_index = 0; o_index < (int)potential->obs.size(); o_index++) {
@@ -60,17 +63,25 @@ int main(int argc, char* argv[]) {
 				path_actions);
 
 			if (verify_unique_success) {
-				key_point = potential;
+				int new_keypoint_index = world_model->keypoints.size();
+				world_model->keypoints.push_back(potential);
+				for (int p_index = 0; p_index < (int)path_actions.size(); p_index++) {
+					world_model->path_actions.push_back(path_actions[p_index]);
+					world_model->path_obs.push_back(path_obs[p_index]);
+					world_model->path_start_indexes.push_back(new_keypoint_index);
+					world_model->path_end_indexes.push_back(new_keypoint_index);
+					world_model->path_success_likelihoods.push_back(0.0);
+				}
 
-				cout << "key_point->obs:";
-				for (int o_index = 0; o_index < (int)key_point->obs.size(); o_index++) {
-					cout << " " << key_point->obs[o_index];
+				cout << "potential->obs:";
+				for (int o_index = 0; o_index < (int)potential->obs.size(); o_index++) {
+					cout << " " << potential->obs[o_index];
 				}
 				cout << endl;
 
-				cout << "key_point->actions:";
-				for (int a_index = 0; a_index < (int)key_point->actions.size(); a_index++) {
-					cout << " " << key_point->actions[a_index];
+				cout << "potential->actions:";
+				for (int a_index = 0; a_index < (int)potential->actions.size(); a_index++) {
+					cout << " " << potential->actions[a_index];
 				}
 				cout << endl;
 
@@ -82,8 +93,6 @@ int main(int argc, char* argv[]) {
 					}
 					cout << endl;
 				}
-
-				break;
 			} else {
 				delete potential;
 			}
@@ -92,7 +101,13 @@ int main(int argc, char* argv[]) {
 		}
 	}
 
-	delete key_point;
+	ofstream output_file;
+	output_file.open("save.txt");
+	world_truth->save(output_file);
+	world_model->save(output_file);
+	output_file.close();
+
+	delete world_model;
 	delete world_truth;
 
 	cout << "Done" << endl;

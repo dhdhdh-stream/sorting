@@ -1,36 +1,38 @@
-#include "key_point_helpers.h"
+#include "keypoint_helpers.h"
 
 #include <iostream>
 
 #include "constants.h"
 #include "globals.h"
-#include "key_point.h"
+#include "keypoint.h"
 #include "world_truth.h"
 
 using namespace std;
 
-const int KEY_POINT_SEQUENCE_LENGTH = 5;
+const int KEYPOINT_SEQUENCE_LENGTH = 5;
 /**
  * - length should be long enough to handle any delay
  */
 
-const int NUM_CANDIDATES = 40;
+const int NUM_CANDIDATES = 20;
 
 const int UNKNOWN_ACTIONS = 10;
 
-const int NUM_PATHS_TO_GATHER = 10;
+const int CONSECUTIVE_FIND_FAILURES_ALLOWED = 40000;
+
+const int NUM_PATHS_TO_GATHER = 12;
 const int MAX_PATH_LENGTH = 30;
 const int GATHER_PATHS_MAX_TRIES = 500;
 
 const int PATH_REPEAT_SUCCESSES_NEEDED = 5;
 const int CONSECUTIVE_REPEAT_FAILURES_ALLOWED = 20;
 
-const int VERIFY_ITERS_PER_START = 1000;
+const int VERIFY_ITERS_PER_START = 100;
 
-KeyPoint* create_potential_key_point(WorldTruth* world_truth) {
-	vector<int> actions(KEY_POINT_SEQUENCE_LENGTH);
+Keypoint* create_potential_keypoint(WorldTruth* world_truth) {
+	vector<int> actions(KEYPOINT_SEQUENCE_LENGTH);
 	uniform_int_distribution<int> action_distribution(0, NUM_ACTIONS-1);
-	for (int a_index = 0; a_index < KEY_POINT_SEQUENCE_LENGTH; a_index++) {
+	for (int a_index = 0; a_index < KEYPOINT_SEQUENCE_LENGTH; a_index++) {
 		actions[a_index] = action_distribution(generator);
 	}
 
@@ -43,7 +45,7 @@ KeyPoint* create_potential_key_point(WorldTruth* world_truth) {
 
 		vector<double> curr_obs;
 		curr_obs.push_back(world_truth->get_obs());
-		for (int a_index = 0; a_index < KEY_POINT_SEQUENCE_LENGTH; a_index++) {
+		for (int a_index = 0; a_index < KEYPOINT_SEQUENCE_LENGTH; a_index++) {
 			world_truth->move(actions[a_index]);
 
 			curr_obs.push_back(world_truth->get_obs());
@@ -60,13 +62,38 @@ KeyPoint* create_potential_key_point(WorldTruth* world_truth) {
 		}
 	}
 
-	return new KeyPoint(best_obs,
-						actions);
+	Keypoint* new_keypoint = new Keypoint();
+	new_keypoint->obs = best_obs;
+	new_keypoint->actions = actions;
+
+	return new_keypoint;
+}
+
+bool find_paths_for_potential_is_duplicate_helpers(
+		vector<int>& unknown_actions,
+		vector<vector<int>>& path_actions) {
+	for (int p_index = 0; p_index < (int)path_actions.size(); p_index++) {
+		if (path_actions[p_index].size() == unknown_actions.size()) {
+			bool is_match = true;
+			for (int a_index = 0; a_index < (int)unknown_actions.size(); a_index++) {
+				if (path_actions[p_index][a_index] != unknown_actions[a_index]) {
+					is_match = false;
+					break;
+				}
+			}
+
+			if (is_match) {
+				return true;
+			}
+		}
+	}
+
+	return false;
 }
 
 bool find_paths_for_potential_verify_helpers(
 		WorldTruth* world_truth,
-		KeyPoint* potential,
+		Keypoint* potential,
 		vector<int>& actions) {
 	uniform_int_distribution<int> action_distribution(0, NUM_ACTIONS-1);
 	uniform_int_distribution<int> unknown_distribution(0, 9);
@@ -106,12 +133,13 @@ bool find_paths_for_potential_verify_helpers(
 }
 
 bool find_paths_for_potential(WorldTruth* world_truth,
-							  KeyPoint* potential,
+							  Keypoint* potential,
 							  vector<vector<double>>& path_obs,
 							  vector<vector<int>>& path_actions) {
 	uniform_int_distribution<int> action_distribution(0, NUM_ACTIONS-1);
 	uniform_int_distribution<int> unknown_distribution(0, 9);
 	for (int t_index = 0; t_index < GATHER_PATHS_MAX_TRIES; t_index++) {
+		int fail_count = 0;
 		while (true) {
 			int num_initial_unknown = unknown_distribution(generator);
 			for (int a_index = 0; a_index < num_initial_unknown; a_index++) {
@@ -123,16 +151,17 @@ bool find_paths_for_potential(WorldTruth* world_truth,
 			if (is_match) {
 				break;
 			}
+
+			fail_count++;
+			if (fail_count > CONSECUTIVE_FIND_FAILURES_ALLOWED) {
+				return false;
+			}
 		}
 
 		vector<double> unknown_obs;
 		vector<int> unknown_actions;
 
 		while (true) {
-			/**
-			 * TODO: remove duplicates
-			 */
-
 			int num_explore_unknown = unknown_distribution(generator);
 			for (int a_index = 0; a_index < num_explore_unknown; a_index++) {
 				unknown_obs.push_back(world_truth->get_obs());
@@ -147,14 +176,20 @@ bool find_paths_for_potential(WorldTruth* world_truth,
 											 unknown_obs);
 
 			if (is_match) {
-				bool verify_is_success = find_paths_for_potential_verify_helpers(
-					world_truth,
-					potential,
-					unknown_actions);
+				bool is_duplicate = find_paths_for_potential_is_duplicate_helpers(
+					unknown_actions,
+					path_actions);
 
-				if (verify_is_success) {
-					path_obs.push_back(unknown_obs);
-					path_actions.push_back(unknown_actions);
+				if (!is_duplicate) {
+					bool verify_is_success = find_paths_for_potential_verify_helpers(
+						world_truth,
+						potential,
+						unknown_actions);
+
+					if (verify_is_success) {
+						path_obs.push_back(unknown_obs);
+						path_actions.push_back(unknown_actions);
+					}
 				}
 
 				break;
@@ -177,7 +212,7 @@ bool find_paths_for_potential(WorldTruth* world_truth,
  *     - as edge case will be removed
  */
 bool verify_potential_uniqueness(WorldTruth* world_truth,
-								 KeyPoint* potential,
+								 Keypoint* potential,
 								 vector<vector<int>>& path_actions) {
 	uniform_int_distribution<int> action_distribution(0, NUM_ACTIONS-1);
 	uniform_int_distribution<int> unknown_distribution(0, 9);
@@ -235,8 +270,13 @@ bool verify_potential_uniqueness(WorldTruth* world_truth,
 
 		for (int p_index = 0; p_index < (int)path_actions.size(); p_index++) {
 			double curr_ratio = (double)success_counts[p_index] / (double)VERIFY_ITERS_PER_START;
-			double t_score = abs(success_ratio - curr_ratio) / (standard_deviation / sqrt(VERIFY_ITERS_PER_START));
+			double t_score = abs(success_ratio - curr_ratio) / (standard_deviation / sqrt((double)VERIFY_ITERS_PER_START));
 			if (t_score > 3.09) {
+				cout << "success_counts:" << endl;
+				for (int p_index = 0; p_index < (int)path_actions.size(); p_index++) {
+					cout << p_index << ": " << success_counts[p_index] << endl;
+				}
+				cout << "p_index: " << p_index << endl;
 				cout << "t_score: " << t_score << endl;
 				return false;
 			}

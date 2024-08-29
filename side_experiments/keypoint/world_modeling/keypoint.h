@@ -2,16 +2,18 @@
  * TODO:
  * - to handle variation, identify keypoints which are at the same location
  *   - then find commonalities and merge
+ * - merge match for multiple KeyPoints
  */
 
-#ifndef KEY_POINT_H
-#define KEY_POINT_H
+#ifndef KEYPOINT_H
+#define KEYPOINT_H
 
+#include <fstream>
 #include <vector>
 
 class WorldTruth;
 
-class KeyPoint {
+class Keypoint {
 public:
 	std::vector<double> obs;
 	std::vector<int> actions;
@@ -19,13 +21,15 @@ public:
 	 * - actions.size() == obs.size() + 1
 	 */
 
-	KeyPoint(std::vector<double> obs,
-			 std::vector<int> actions);
+	Keypoint();
 
 	bool match(WorldTruth* world_truth);
 	bool match(WorldTruth* world_truth,
 			   std::vector<int>& unknown_actions,
 			   std::vector<double>& unknown_obs);
+
+	void save(std::ofstream& output_file);
+	void load(std::ifstream& input_file);
 };
 
-#endif /* KEY_POINT_H */
+#endif /* KEYPOINT_H */

@@ -105,3 +105,58 @@ void WorldTruth::move(int action) {
 	this->action_queue.erase(this->action_queue.begin());
 	this->action_queue.push_back(action);
 }
+
+void WorldTruth::save(ofstream& output_file) {
+	output_file << this->world_size << endl;
+	output_file << this->curr_x << endl;
+	output_file << this->curr_y << endl;
+
+	output_file << this->obj_x << endl;
+	output_file << this->obj_y << endl;
+	output_file << this->obj_x_vel << endl;
+	output_file << this->obj_y_vel << endl;
+
+	output_file << this->action_queue.size() << endl;
+	for (int a_index = 0; a_index < (int)this->action_queue.size(); a_index++) {
+		output_file << this->action_queue[a_index] << endl;
+	}
+}
+
+void WorldTruth::load(ifstream& input_file) {
+	string world_size_line;
+	getline(input_file, world_size_line);
+	this->world_size = stoi(world_size_line);
+
+	string curr_x_line;
+	getline(input_file, curr_x_line);
+	this->curr_x = stoi(curr_x_line);
+
+	string curr_y_line;
+	getline(input_file, curr_y_line);
+	this->curr_y = stoi(curr_y_line);
+
+	string obj_x_line;
+	getline(input_file, obj_x_line);
+	this->obj_x = stoi(obj_x_line);
+
+	string obj_y_line;
+	getline(input_file, obj_y_line);
+	this->obj_y = stoi(obj_y_line);
+
+	string obj_x_vel_line;
+	getline(input_file, obj_x_vel_line);
+	this->obj_x_vel = stoi(obj_x_vel_line);
+
+	string obj_y_vel_line;
+	getline(input_file, obj_y_vel_line);
+	this->obj_y_vel = stoi(obj_y_vel_line);
+
+	string action_queue_length_line;
+	getline(input_file, action_queue_length_line);
+	int action_queue_length = stoi(action_queue_length_line);
+	for (int a_index = 0; a_index < action_queue_length; a_index++) {
+		string action_line;
+		getline(input_file, action_line);
+		this->action_queue.push_back(stoi(action_line));
+	}
+}
