@@ -27,7 +27,7 @@ const int GATHER_PATHS_MAX_TRIES = 500;
 const int PATH_REPEAT_SUCCESSES_NEEDED = 5;
 const int CONSECUTIVE_REPEAT_FAILURES_ALLOWED = 20;
 
-const int VERIFY_ITERS_PER_START = 100;
+const int VERIFY_ITERS_PER_START = 200;
 
 Keypoint* create_potential_keypoint(WorldTruth* world_truth) {
 	vector<int> actions(KEYPOINT_SEQUENCE_LENGTH);
@@ -210,6 +210,8 @@ bool find_paths_for_potential(WorldTruth* world_truth,
  * - if unique, then path success likelihood should be constant
  *   - if not and counter path taken, success likelihood should increase
  *     - as edge case will be removed
+ * 
+ * TODO: cannot distinguish between unique and if duplicates in a loop
  */
 bool verify_potential_uniqueness(WorldTruth* world_truth,
 								 Keypoint* potential,

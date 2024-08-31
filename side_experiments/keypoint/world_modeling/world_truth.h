@@ -28,6 +28,8 @@ public:
 
 	WorldTruth();
 
+	void init();
+
 	double get_obs();
 	void move(int action);
 

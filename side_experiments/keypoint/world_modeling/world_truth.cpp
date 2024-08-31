@@ -8,6 +8,10 @@
 using namespace std;
 
 WorldTruth::WorldTruth() {
+	// do nothing
+}
+
+void WorldTruth::init() {
 	uniform_int_distribution<int> world_size_distribution(5, 7);
 	this->world_size = world_size_distribution(generator);
 

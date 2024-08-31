@@ -1,3 +1,16 @@
+/**
+ * TODO: what about if one input controls the direction, and another input advances or backs up?
+ * - now all of a sudden, actions don't have a fixed impact on the world
+ *   - but depends on state
+ * 
+ * - BTW, spinning around is modular, but going forwards/backwards is not really
+ * 
+ * - even in 2D, like if control a spotlight
+ * 
+ * - keep in mind that goal is to be able to save location, then return to location
+ *   - "location" can have many aspects, and returning in one aspect may mean being unable to return in another
+ */
+
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -25,6 +38,7 @@ int main(int argc, char* argv[]) {
 	cout << "Seed: " << seed << endl;
 
 	WorldTruth* world_truth = new WorldTruth();
+	world_truth->init();
 
 	WorldModel* world_model = new WorldModel();
 
