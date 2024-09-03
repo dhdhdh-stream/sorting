@@ -16,8 +16,16 @@
 class WorldTruth {
 public:
 	int world_size;
+	/**
+	 * - orientation marker at (1, 1)
+	 */
 	int curr_x;
 	int curr_y;
+	int curr_direction;
+	/**
+	 * - makes it difficult to travel far
+	 *   - so difficult to find unique keypoints
+	 */
 
 	int obj_x;
 	int obj_y;

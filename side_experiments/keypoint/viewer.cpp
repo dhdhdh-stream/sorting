@@ -68,6 +68,7 @@ int main(int argc, char* argv[]) {
 
 			cout << "world_truth->curr_x: " << world_truth->curr_x << endl;
 			cout << "world_truth->curr_y: " << world_truth->curr_y << endl;
+			cout << "world_truth->curr_direction: " << world_truth->curr_direction << endl;
 			cout << "world_truth->action_queue:";
 			for (int a_index = 0; a_index < (int)world_truth->action_queue.size(); a_index++) {
 				cout << " " << world_truth->action_queue[a_index];

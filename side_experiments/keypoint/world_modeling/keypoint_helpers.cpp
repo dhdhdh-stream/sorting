@@ -9,20 +9,20 @@
 
 using namespace std;
 
-const int KEYPOINT_SEQUENCE_LENGTH = 5;
+const int KEYPOINT_SEQUENCE_LENGTH = 10;
 /**
  * - length should be long enough to handle any delay
  */
 
 const int NUM_CANDIDATES = 20;
 
-const int UNKNOWN_ACTIONS = 10;
+const int UNKNOWN_ACTIONS = 20;
 
-const int CONSECUTIVE_FIND_FAILURES_ALLOWED = 40000;
+const int CONSECUTIVE_FIND_FAILURES_ALLOWED = 100000;
 
 const int NUM_PATHS_TO_GATHER = 12;
-const int MAX_PATH_LENGTH = 30;
-const int GATHER_PATHS_MAX_TRIES = 500;
+const int MAX_PATH_LENGTH = 80;
+const int GATHER_PATHS_MAX_TRIES = 10000;
 
 const int PATH_REPEAT_SUCCESSES_NEEDED = 5;
 const int CONSECUTIVE_REPEAT_FAILURES_ALLOWED = 20;
@@ -38,7 +38,8 @@ Keypoint* create_potential_keypoint(WorldTruth* world_truth) {
 
 	vector<double> best_obs;
 	double best_contrast = 0.0;
-	for (int c_index = 0; c_index < NUM_CANDIDATES; c_index++) {
+	int candidate_index = 0;
+	while (true) {
 		for (int a_index = 0; a_index < UNKNOWN_ACTIONS; a_index++) {
 			world_truth->move(action_distribution(generator));
 		}
@@ -59,6 +60,13 @@ Keypoint* create_potential_keypoint(WorldTruth* world_truth) {
 		if (curr_contrast > best_contrast) {
 			best_obs = curr_obs;
 			best_contrast = curr_contrast;
+		}
+
+		if (curr_contrast > 0.0) {
+			candidate_index++;
+			if (candidate_index >= NUM_CANDIDATES) {
+				break;
+			}
 		}
 	}
 
@@ -154,6 +162,7 @@ bool find_paths_for_potential(WorldTruth* world_truth,
 
 			fail_count++;
 			if (fail_count > CONSECUTIVE_FIND_FAILURES_ALLOWED) {
+				cout << "CONSECUTIVE_FIND_FAILURES_ALLOWED exceeded" << endl;
 				return false;
 			}
 		}
@@ -202,6 +211,8 @@ bool find_paths_for_potential(WorldTruth* world_truth,
 			return true;
 		}
 	}
+
+	cout << "GATHER_PATHS_MAX_TRIES exceeded" << endl;
 
 	return false;
 }

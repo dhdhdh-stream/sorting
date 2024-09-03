@@ -71,6 +71,15 @@ int main(int argc, char* argv[]) {
 			path_actions);
 
 		if (find_paths_success) {
+			cout << "paths:" << endl;
+			for (int p_index = 0; p_index < (int)path_actions.size(); p_index++) {
+				cout << p_index << ":";
+				for (int a_index = 0; a_index < (int)path_actions[p_index].size(); a_index++) {
+					cout << " " << path_actions[p_index][a_index];
+				}
+				cout << endl;
+			}
+
 			bool verify_unique_success = verify_potential_uniqueness(
 				world_truth,
 				potential,

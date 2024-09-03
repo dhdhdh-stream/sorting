@@ -7,6 +7,11 @@
 
 using namespace std;
 
+const int DIRECTION_UP = 0;
+const int DIRECTION_LEFT = 1;
+const int DIRECTION_DOWN = 2;
+const int DIRECTION_RIGHT = 3;
+
 WorldTruth::WorldTruth() {
 	// do nothing
 }
@@ -18,6 +23,9 @@ void WorldTruth::init() {
 	uniform_int_distribution<int> starting_distribution(0, this->world_size-1);
 	this->curr_x = starting_distribution(generator);
 	this->curr_y = starting_distribution(generator);
+
+	uniform_int_distribution<int> direction_distribution(0, 3);
+	this->curr_direction = direction_distribution(generator);
 
 	uniform_int_distribution<int> obj_starting_distribution(1, this->world_size-2);
 	this->obj_x = obj_starting_distribution(generator);
@@ -35,6 +43,9 @@ double WorldTruth::get_obs() {
 	if (this->curr_x == this->obj_x
 			&& this->curr_y == this->obj_y) {
 		return 2.0;
+	} else if (this->curr_x == 1
+			&& this->curr_y == 1) {
+		return -1.0;
 	} else if (this->curr_x == 0
 			|| this->curr_x == this->world_size-1
 			|| this->curr_y == 0
@@ -48,32 +59,46 @@ double WorldTruth::get_obs() {
 void WorldTruth::move(int action) {
 	uniform_int_distribution<int> stay_distribution(0, 9);
 	switch (this->action_queue[0]) {
-	case ACTION_LEFT:
-		if (this->curr_x > 0) {
-			if (stay_distribution(generator) != 0) {
-				this->curr_x--;
-			}
+	case ACTION_TURN_LEFT:
+		if (stay_distribution(generator) != 0) {
+			this->curr_direction = (this->curr_direction - 1 + 4) % 4;
 		}
 		break;
-	case ACTION_UP:
-		if (this->curr_y < this->world_size-1) {
-			if (stay_distribution(generator) != 0) {
-				this->curr_y++;
-			}
+	case ACTION_TURN_RIGHT:
+		if (stay_distribution(generator) != 0) {
+			this->curr_direction = (this->curr_direction + 1) % 4;
 		}
 		break;
-	case ACTION_RIGHT:
-		if (this->curr_x < this->world_size-1) {
-			if (stay_distribution(generator) != 0) {
-				this->curr_x++;
+	case ACTION_STEP:
+		switch (this->curr_direction) {
+		case DIRECTION_UP:
+			if (this->curr_y < this->world_size-1) {
+				if (stay_distribution(generator) != 0) {
+					this->curr_y++;
+				}
 			}
-		}
-		break;
-	case ACTION_DOWN:
-		if (this->curr_y > 0) {
-			if (stay_distribution(generator) != 0) {
-				this->curr_y--;
+			break;
+		case DIRECTION_LEFT:
+			if (this->curr_x > 0) {
+				if (stay_distribution(generator) != 0) {
+					this->curr_x--;
+				}
 			}
+			break;
+		case DIRECTION_DOWN:
+			if (this->curr_y > 0) {
+				if (stay_distribution(generator) != 0) {
+					this->curr_y--;
+				}
+			}
+			break;
+		case DIRECTION_RIGHT:
+			if (this->curr_x < this->world_size-1) {
+				if (stay_distribution(generator) != 0) {
+					this->curr_x++;
+				}
+			}
+			break;
 		}
 		break;
 	}
@@ -114,6 +139,7 @@ void WorldTruth::save(ofstream& output_file) {
 	output_file << this->world_size << endl;
 	output_file << this->curr_x << endl;
 	output_file << this->curr_y << endl;
+	output_file << this->curr_direction << endl;
 
 	output_file << this->obj_x << endl;
 	output_file << this->obj_y << endl;
@@ -138,6 +164,10 @@ void WorldTruth::load(ifstream& input_file) {
 	string curr_y_line;
 	getline(input_file, curr_y_line);
 	this->curr_y = stoi(curr_y_line);
+
+	string curr_direction_line;
+	getline(input_file, curr_direction_line);
+	this->curr_direction = stoi(curr_direction_line);
 
 	string obj_x_line;
 	getline(input_file, obj_x_line);
