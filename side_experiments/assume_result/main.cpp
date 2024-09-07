@@ -1,21 +1,12 @@
-// combinations of actions are orthogonal to world model, and both are needed
-// - world model to eliminate redundant information
-//   - may also guide exploration and decision making?
-// - but actions may cause permanent changes to the world, and specific sequences of actions may be needed to reach good outcomes
-
-// maybe after a pass, reverse engineer to determine what would happen if a different choice was made
-// - use world model from the future to predict what would happen in the past
-
-// perhaps mimicking is based off of world model
-// - world model to make things Markov
-//   - then can align someone else's actions
-//   - learn Markov actions based on world model
-//     - then when incorporating, check against learned model to see if something different should be done, and can explore down that path
-
-// maybe benefit from return is:
-// - allows changes to be made that benefits follow-up
-//   - but can still return to original spot after follow-up
-// without return, can only extend at end, where can include return
+/**
+ * - world model is not about predictions
+ *   - but simply about what is located where, and what is moving where
+ *   - in humans, built naturally using optical flow/sensor fusion?
+ * 
+ * - world model enables localization
+ *   - helps maintain identity/integrity of long solutions
+ *     - breaks down solution into modular segments
+ */
 
 #include <chrono>
 #include <iostream>
@@ -55,10 +46,10 @@ int main(int argc, char* argv[]) {
 	problem_type = new TypeMinesweeper();
 
 	solution = new Solution();
-	// solution->init();
-	solution->load("", "main");
+	solution->init();
+	// solution->load("", "main");
 
-	// solution->save("", "main");
+	solution->save("", "main");
 
 	run_index = 0;
 
@@ -254,7 +245,7 @@ int main(int argc, char* argv[]) {
 				delete solution;
 				solution = duplicate;
 
-				// solution->save("", "main");
+				solution->save("", "main");
 				#else
 				delete duplicate;
 				#endif /* MDEBUG */

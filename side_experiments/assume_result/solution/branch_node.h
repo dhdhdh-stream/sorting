@@ -14,22 +14,6 @@ class Solution;
 
 class BranchNode : public AbstractNode {
 public:
-	bool is_stub;
-
-	/**
-	 * - basically jump statements
-	 *   - can be useful, but should be used sparingly
-	 *     - can make generalization harder?
-	 *   - not a huge cost to include
-	 * 
-	 * - when selecting, based on nodes_seen, so can be from later
-	 *   - but should not be a big deal if so
-	 */
-	bool is_loop;
-
-	int previous_location_id;
-	AbstractNode* previous_location;
-
 	int analyze_size;
 	Network* network;
 

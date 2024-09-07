@@ -1,3 +1,8 @@
+/**
+ * TODO: don't track node history, but rather location history?
+ * - using relative location
+ */
+
 #ifndef BRANCH_NODE_H
 #define BRANCH_NODE_H
 

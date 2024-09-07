@@ -5,7 +5,6 @@
 #include "info_scope.h"
 #include "scope.h"
 #include "solution.h"
-#include "solution_set.h"
 
 using namespace std;
 

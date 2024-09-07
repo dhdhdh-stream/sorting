@@ -10,73 +10,9 @@
  *   - would need to learn actions/vocabulary
  *     - so would need to learn all the sequences/branches and decision making for those actions
  *       - and repeat recursively
+ * 
+ * TODO: add mimicking using world modeling/optical flow
  */
-
-// even with transformations, still need good in-place scope as followup to get good score
-// - and good in-place scope would probably work well without transformations anyways
-//   - so good in-place scopes are the key
-
-// maybe separate in place scopes
-// - only use by themselves and only in place
-//   - don't chain initially
-
-// what if don't get score without returning to origin?
-
-// definitely need mimicking somehow to be meaningfully fast enough
-
-// - difficulty with mimicking is:
-//   - raw action sequences extremely long, needed actions may be extremely long
-//     - samples only capture fragment of the true variation
-//       - don't see paths not taken
-//       - each particular sequence likely never works again because problems are not exactly alike
-//   - no breakdown of the action sequences
-//     - don't know where concepts begin and end
-//       - don't know what is a part of what
-
-// have to mix with own experimentation to fill in gaps, realize actual solution
-
-// maybe start by picking up common sequences
-
-// - if problem cannot be easily learned incrementally, then someone has to create subproblems
-//   - otherwise, cannot be learned by mimicking
-//     - i.e, if any good score requires a thousand details to be done correctly, then not going to increment into that
-//       - need to know how to get the details correct beforehand
-// - so assume that bits and pieces are useful incrementally
-//   - and can be tried from start immediately
-
-// once learned when to try which sequences:
-// - merge into a single action
-//   - clean/simplify original samples
-//     - look for new common sequences
-
-// if recursion found, can try repeating inwards
-// - can even try repeating inwards as part of explore sequence
-
-// try building up global 2d, 3d, nd, map of obs, then analyze with convolutional NN
-// - otherwise, will likely be trapped local
-
-// maybe for minesweeper, initially like 7d due to number of actions?
-
-// can practice with global minesweeper with unseen squares initially covered
-
-// currently, doesn't really care about path
-// - node vals are treated as-is
-// - but if modelled 2d, 3d, etc., then can analyze better from a global perspective
-//   - different branches go different directions in space
-
-// - initially, see X
-// - then perform action sequence, and see value correlated with X
-//   - what are the possibilities?:
-//     - went back to X, but the world changed
-//       - if went back to X, then should be able to do the same thing and get similar result
-//     - arrived at new location whose obs is related to X
-//       - if at new location, then repeating should eventually lead to drastically different outcome
-//     - (also gray area where went back to same spot in one way, but not in another)
-//       - i.e., physicially the same location, but time has passed
-//         - so there are different aspects to the world
-//           - and are affected differently by different actions
-//             - independent
-//           - but they combine together to generate obs
 
 #include <chrono>
 #include <iostream>
@@ -88,7 +24,6 @@
 #include "action_node.h"
 #include "constants.h"
 #include "eval_helpers.h"
-#include "focus_minesweeper.h"
 #include "globals.h"
 #include "minesweeper.h"
 #include "sorting.h"
@@ -96,7 +31,6 @@
 #include "scope_node.h"
 #include "solution.h"
 #include "solution_helpers.h"
-#include "solution_set.h"
 #include "sorting.h"
 #include "utilities.h"
 
@@ -107,7 +41,7 @@ int seed;
 default_random_engine generator;
 
 ProblemType* problem_type;
-SolutionSet* solution_set;
+Solution* solution;
 
 int run_index;
 
@@ -120,17 +54,15 @@ int main(int argc, char* argv[]) {
 	cout << "Seed: " << seed << endl;
 
 	// problem_type = new TypeSorting();
-	// problem_type = new TypeMinesweeper();
-	problem_type = new TypeFocusMinesweeper();
+	problem_type = new TypeMinesweeper();
 
-	solution_set = new SolutionSet();
-	// solution_set->init();
-	solution_set->load("", "main");
+	solution = new Solution();
+	// solution->init();
+	solution->load("", "main");
 
-	solution_set->increment();
 	update_eval();
 
-	// solution_set->save("", "main");
+	// solution->save("", "main");
 
 	run_index = 0;
 
@@ -149,7 +81,6 @@ int main(int argc, char* argv[]) {
 		}
 
 		vector<ContextLayer> context;
-		Solution* solution = solution_set->solutions[solution_set->curr_solution_index];
 		ScopeHistory* scope_history = new ScopeHistory(solution->scopes[0]);
 		solution->scopes[0]->activate(
 			problem,
@@ -176,11 +107,10 @@ int main(int argc, char* argv[]) {
 
 		#if defined(MDEBUG) && MDEBUG
 		if (run_index%2000 == 0) {
-			delete solution_set;
-			solution_set = new SolutionSet();
-			solution_set->load("", "main");
+			delete solution;
+			solution = new Solution();
+			solution->load("", "main");
 
-			solution_set->increment();
 			update_eval();
 
 			continue;
@@ -279,47 +209,43 @@ int main(int argc, char* argv[]) {
 				/**
 				 * - history->experiment_histories.size() == 1
 				 */
-				SolutionSet* duplicate = new SolutionSet(solution_set);
-				Solution* duplicate_solution = duplicate->solutions[duplicate->curr_solution_index];
+				Solution* duplicate = new Solution(solution);
 
 				int last_updated_info_scope_id = -1;
 				if (run_helper.experiment_histories.back()->experiment->type == EXPERIMENT_TYPE_INFO_PASS_THROUGH) {
 					last_updated_info_scope_id = run_helper.experiment_histories.back()->experiment->scope_context->id;
 				} else {
-					duplicate_solution->last_updated_scope_id = run_helper.experiment_histories.back()->experiment->scope_context->id;
+					duplicate->last_updated_scope_id = run_helper.experiment_histories.back()->experiment->scope_context->id;
 					if (run_helper.experiment_histories.back()->experiment->type == EXPERIMENT_TYPE_NEW_ACTION) {
-						duplicate_solution->last_new_scope_id = (int)duplicate_solution->scopes.size();
-
-						duplicate->next_possible_new_scope_timestamp = duplicate->timestamp
-							+ 1 + duplicate_solution->scopes.size() + MIN_ITERS_BEFORE_NEXT_NEW_SCOPE;
+						duplicate->last_new_scope_id = (int)duplicate->scopes.size();
 					}
 				}
 
-				run_helper.experiment_histories.back()->experiment->finalize(duplicate_solution);
+				run_helper.experiment_histories.back()->experiment->finalize(duplicate);
 				delete run_helper.experiment_histories.back()->experiment;
 
 				if (last_updated_info_scope_id != -1) {
-					InfoScope* info_scope = duplicate_solution->info_scopes[last_updated_info_scope_id];
+					InfoScope* info_scope = duplicate->info_scopes[last_updated_info_scope_id];
 					clean_info_scope(info_scope);
 				} else {
-					Scope* experiment_scope = duplicate_solution->scopes[duplicate_solution->last_updated_scope_id];
+					Scope* experiment_scope = duplicate->scopes[duplicate->last_updated_scope_id];
 					clean_scope(experiment_scope,
-								duplicate_solution);
+								duplicate);
 				}
 
 				#if defined(MDEBUG) && MDEBUG
-				while (duplicate_solution->verify_problems.size() > 0) {
-					Problem* problem = duplicate_solution->verify_problems[0];
+				while (duplicate->verify_problems.size() > 0) {
+					Problem* problem = duplicate->verify_problems[0];
 
 					RunHelper run_helper;
-					run_helper.starting_run_seed = duplicate_solution->verify_seeds[0];
+					run_helper.starting_run_seed = duplicate->verify_seeds[0];
 					cout << "run_helper.starting_run_seed: " << run_helper.starting_run_seed << endl;
-					run_helper.curr_run_seed = duplicate_solution->verify_seeds[0];
-					duplicate_solution->verify_seeds.erase(duplicate_solution->verify_seeds.begin());
+					run_helper.curr_run_seed = duplicate->verify_seeds[0];
+					duplicate->verify_seeds.erase(duplicate->verify_seeds.begin());
 
 					vector<ContextLayer> context;
-					ScopeHistory* scope_history = new ScopeHistory(duplicate_solution->scopes[0]);
-					duplicate_solution->scopes[0]->verify_activate(
+					ScopeHistory* scope_history = new ScopeHistory(duplicate->scopes[0]);
+					duplicate->scopes[0]->verify_activate(
 						problem,
 						context,
 						run_helper,
@@ -327,12 +253,12 @@ int main(int argc, char* argv[]) {
 					delete scope_history;
 
 					cout << "run_helper.num_actions: " << run_helper.num_actions << endl;
-					cout << "duplicate_solution->num_actions_limit: " << duplicate_solution->num_actions_limit << endl;
+					cout << "duplicate->num_actions_limit: " << duplicate->num_actions_limit << endl;
 
-					delete duplicate_solution->verify_problems[0];
-					duplicate_solution->verify_problems.erase(duplicate_solution->verify_problems.begin());
+					delete duplicate->verify_problems[0];
+					duplicate->verify_problems.erase(duplicate->verify_problems.begin());
 				}
-				duplicate_solution->clear_verify();
+				duplicate->clear_verify();
 				#endif /* MDEBUG */
 
 				vector<double> target_vals;
@@ -351,8 +277,8 @@ int main(int argc, char* argv[]) {
 					#endif /* MDEBUG */
 
 					vector<ContextLayer> context;
-					ScopeHistory* scope_history = new ScopeHistory(duplicate_solution->scopes[0]);
-					duplicate_solution->scopes[0]->activate(
+					ScopeHistory* scope_history = new ScopeHistory(duplicate->scopes[0]);
+					duplicate->scopes[0]->activate(
 						problem,
 						context,
 						run_helper,
@@ -387,11 +313,10 @@ int main(int argc, char* argv[]) {
 				if (early_exit) {
 					delete duplicate;
 
-					delete solution_set;
-					solution_set = new SolutionSet();
-					solution_set->load("", "main");
+					delete solution;
+					solution = new Solution();
+					solution->load("", "main");
 
-					solution_set->increment();
 					update_eval();
 
 					continue;
@@ -404,25 +329,24 @@ int main(int argc, char* argv[]) {
 				}
 				duplicate->average_score = sum_score / MEASURE_ITERS;
 
-				duplicate_solution->max_num_actions = max_num_actions;
-				duplicate_solution->num_actions_limit = 2*duplicate_solution->max_num_actions + 10;
+				duplicate->max_num_actions = max_num_actions;
+				duplicate->num_actions_limit = 2*duplicate->max_num_actions + 10;
 
 				cout << "duplicate->average_score: " << duplicate->average_score << endl;
 
 				ofstream display_file;
 				display_file.open("../display.txt");
-				duplicate_solution->save_for_display(display_file);
+				duplicate->save_for_display(display_file);
 				display_file.close();
 
 				duplicate->timestamp++;
 
 				#if defined(MDEBUG) && MDEBUG
-				delete solution_set;
-				solution_set = duplicate;
+				delete solution;
+				solution = duplicate;
 
-				// solution_set->save("", "main");
+				// solution->save("", "main");
 
-				solution_set->increment();
 				update_eval();
 				#else
 				delete duplicate;
@@ -439,7 +363,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	delete problem_type;
-	delete solution_set;
+	delete solution;
 
 	cout << "Done" << endl;
 }

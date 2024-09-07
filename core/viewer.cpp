@@ -6,13 +6,11 @@
 
 #include "abstract_node.h"
 #include "eval_helpers.h"
-#include "focus_minesweeper.h"
 #include "globals.h"
 #include "minesweeper.h"
 #include "scope.h"
 #include "solution.h"
 #include "solution_helpers.h"
-#include "solution_set.h"
 #include "sorting.h"
 
 using namespace std;
@@ -22,7 +20,7 @@ int seed;
 default_random_engine generator;
 
 ProblemType* problem_type;
-SolutionSet* solution_set;
+Solution* solution;
 
 int run_index;
 
@@ -35,15 +33,10 @@ int main(int argc, char* argv[]) {
 	cout << "Seed: " << seed << endl;
 
 	// problem_type = new TypeSorting();
-	// problem_type = new TypeMinesweeper();
-	problem_type = new TypeFocusMinesweeper();
+	problem_type = new TypeMinesweeper();
 
-	solution_set = new SolutionSet();
-	solution_set->load("", "main");
-
-	cout << "solution_set->solutions.size(): " << solution_set->solutions.size() << endl;
-
-	Solution* solution = solution_set->solutions[solution_set->curr_solution_index];
+	solution = new Solution();
+	solution->load("", "main");
 
 	{
 		Problem* problem = problem_type->get_problem();
@@ -74,13 +67,6 @@ int main(int argc, char* argv[]) {
 		cout << "run_helper.num_decisions: " << run_helper.num_decisions << endl;
 
 		delete problem;
-	}
-
-	// temp
-	for (int i = 0; i < 2; i++) {
-		cout << i << endl;
-		cout << "count: " << solution_set->score_type_counts[i] << endl;
-		cout << "impacts: " << solution_set->score_type_impacts[i] << endl;
 	}
 
 	ofstream display_file;

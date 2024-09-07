@@ -42,86 +42,64 @@ void PassThroughExperiment::explore_activate(
 		RunHelper& run_helper,
 		PassThroughExperimentHistory* history) {
 	if (this->state_iter == -1) {
-		uniform_int_distribution<int> use_previous_location_distribution(0, 3);
-		// if (use_previous_location_distribution(generator) == 0) {
-		if (false) {
-			uniform_int_distribution<int> location_distribution(0, context.back().location_history.size()-1);
-			AbstractNode* previous_location = (*next(context.back().location_history.begin(), location_distribution(generator))).first;
-			this->curr_previous_location = previous_location;
-		} else {
-			this->curr_previous_location = NULL;
+		vector<AbstractNode*> possible_exits;
+
+		if (this->node_context->type == NODE_TYPE_ACTION
+				&& ((ActionNode*)this->node_context)->next_node == NULL) {
+			possible_exits.push_back(NULL);
 		}
 
+		AbstractNode* starting_node;
+		switch (this->node_context->type) {
+		case NODE_TYPE_ACTION:
+			{
+				ActionNode* action_node = (ActionNode*)this->node_context;
+				starting_node = action_node->next_node;
+			}
+			break;
+		case NODE_TYPE_SCOPE:
+			{
+				ScopeNode* scope_node = (ScopeNode*)this->node_context;
+				starting_node = scope_node->next_node;
+			}
+			break;
+		case NODE_TYPE_BRANCH:
+			{
+				BranchNode* branch_node = (BranchNode*)this->node_context;
+				if (this->is_branch) {
+					starting_node = branch_node->branch_next_node;
+				} else {
+					starting_node = branch_node->original_next_node;
+				}
+			}
+			break;
+		case NODE_TYPE_RETURN:
+			{
+				ReturnNode* return_node = (ReturnNode*)this->node_context;
+				if (this->is_branch) {
+					starting_node = return_node->passed_next_node;
+				} else {
+					starting_node = return_node->skipped_next_node;
+				}
+			}
+			break;
+		}
+
+		this->scope_context->random_exit_activate(
+			starting_node,
+			possible_exits);
+
+		uniform_int_distribution<int> distribution(0, possible_exits.size()-1);
+		int random_index = distribution(generator);
+		this->curr_exit_next_node = possible_exits[random_index];
+
 		int new_num_steps;
-		uniform_int_distribution<int> loop_distribution(0, 4);
-		// if (this->scope_context->id != 0
-		// 		&& loop_distribution(generator) == 0) {
-		if (false) {
-			this->curr_is_loop = true;
-
-			uniform_int_distribution<int> past_distribution(0, context.back().location_history.size()-1);
-			this->curr_exit_next_node = (*next(context.back().location_history.begin(), past_distribution(generator))).first;
-
-			uniform_int_distribution<int> uniform_distribution(0, 1);
-			geometric_distribution<int> geometric_distribution(0.5);
-			new_num_steps = uniform_distribution(generator) + geometric_distribution(generator);
+		uniform_int_distribution<int> uniform_distribution(0, 1);
+		geometric_distribution<int> geo_distribution(0.5);
+		if (random_index == 0) {
+			new_num_steps = 1 + uniform_distribution(generator) + geo_distribution(generator);
 		} else {
-			this->curr_is_loop = false;
-
-			vector<AbstractNode*> possible_exits;
-
-			if (this->node_context->type == NODE_TYPE_ACTION
-					&& ((ActionNode*)this->node_context)->next_node == NULL) {
-				possible_exits.push_back(NULL);
-			}
-
-			AbstractNode* starting_node;
-			switch (this->node_context->type) {
-			case NODE_TYPE_ACTION:
-				{
-					ActionNode* action_node = (ActionNode*)this->node_context;
-					starting_node = action_node->next_node;
-				}
-				break;
-			case NODE_TYPE_SCOPE:
-				{
-					ScopeNode* scope_node = (ScopeNode*)this->node_context;
-					starting_node = scope_node->next_node;
-				}
-				break;
-			case NODE_TYPE_BRANCH:
-				{
-					BranchNode* branch_node = (BranchNode*)this->node_context;
-					if (this->is_branch) {
-						starting_node = branch_node->branch_next_node;
-					} else {
-						starting_node = branch_node->original_next_node;
-					}
-				}
-				break;
-			case NODE_TYPE_RETURN:
-				{
-					ReturnNode* return_node = (ReturnNode*)this->node_context;
-					starting_node = return_node->next_node;
-				}
-				break;
-			}
-
-			this->scope_context->random_exit_activate(
-				starting_node,
-				possible_exits);
-
-			uniform_int_distribution<int> distribution(0, possible_exits.size()-1);
-			int random_index = distribution(generator);
-			this->curr_exit_next_node = possible_exits[random_index];
-
-			uniform_int_distribution<int> uniform_distribution(0, 1);
-			geometric_distribution<int> geometric_distribution(0.5);
-			if (random_index == 0) {
-				new_num_steps = 1 + uniform_distribution(generator) + geometric_distribution(generator);
-			} else {
-				new_num_steps = uniform_distribution(generator) + geometric_distribution(generator);
-			}
+			new_num_steps = uniform_distribution(generator) + geo_distribution(generator);
 		}
 
 		uniform_int_distribution<int> default_distribution(0, 3);
@@ -174,54 +152,23 @@ void PassThroughExperiment::explore_activate(
 		this->sub_state_iter = 0;
 	}
 
-	bool can_loop = true;
-	if (this->curr_is_loop) {
-		set<AbstractNode*>::iterator loop_start_it = context.back().loop_nodes_seen.find(this->branch_node);
-		if (loop_start_it != context.back().loop_nodes_seen.end()) {
-			can_loop = false;
+	history->instance_count++;
 
-			context.back().loop_nodes_seen.erase(loop_start_it);
-		}
-	}
-
-	bool location_match = true;
-	map<AbstractNode*, pair<int,int>>::iterator location_it;
-	if (this->curr_previous_location != NULL) {
-		location_it = context.back().location_history.find(this->curr_previous_location);
-		if (location_it == context.back().location_history.end()) {
-			location_match = false;
-		}
-	}
-
-	if (location_match && can_loop) {
-		history->instance_count++;
-
-		if (this->curr_previous_location != NULL) {
-			Minesweeper* minesweeper = (Minesweeper*)problem;
-			minesweeper->current_x = location_it->second.first;
-			minesweeper->current_y = location_it->second.second;
-		}
-
-		if (this->curr_is_loop) {
-			context.back().loop_nodes_seen.insert(this->branch_node);
-		}
-
-		for (int s_index = 0; s_index < (int)this->curr_step_types.size(); s_index++) {
-			if (this->curr_step_types[s_index] == STEP_TYPE_ACTION) {
-				this->curr_actions[s_index]->explore_activate(
-					problem,
-					run_helper);
-			} else if (this->curr_step_types[s_index] == STEP_TYPE_SCOPE) {
-				this->curr_scopes[s_index]->explore_activate(
-					problem,
-					context,
-					run_helper);
-			} else {
-				this->curr_returns[s_index]->explore_activate(
-					problem,
-					context,
-					run_helper);
-			}
+	for (int s_index = 0; s_index < (int)this->curr_step_types.size(); s_index++) {
+		if (this->curr_step_types[s_index] == STEP_TYPE_ACTION) {
+			this->curr_actions[s_index]->explore_activate(
+				problem,
+				run_helper);
+		} else if (this->curr_step_types[s_index] == STEP_TYPE_SCOPE) {
+			this->curr_scopes[s_index]->explore_activate(
+				problem,
+				context,
+				run_helper);
+		} else {
+			this->curr_returns[s_index]->explore_activate(
+				problem,
+				context,
+				run_helper);
 		}
 	}
 
@@ -336,12 +283,10 @@ void PassThroughExperiment::explore_backprop(
 		}
 
 		this->best_score = curr_score;
-		this->best_previous_location = this->curr_previous_location;
 		this->best_step_types = this->curr_step_types;
 		this->best_actions = this->curr_actions;
 		this->best_scopes = this->curr_scopes;
 		this->best_returns = this->curr_returns;
-		this->best_is_loop = this->curr_is_loop;
 		this->best_exit_next_node = this->curr_exit_next_node;
 
 		this->curr_score = 0.0;
@@ -425,8 +370,10 @@ void PassThroughExperiment::explore_backprop(
 						this->best_scopes[s_index]->next_node_id = next_node_id;
 						this->best_scopes[s_index]->next_node = next_node;
 					} else {
-						this->best_returns[s_index]->next_node_id = next_node_id;
-						this->best_returns[s_index]->next_node = next_node;
+						this->best_returns[s_index]->passed_next_node_id = next_node_id;
+						this->best_returns[s_index]->passed_next_node = next_node;
+						this->best_returns[s_index]->skipped_next_node_id = next_node_id;
+						this->best_returns[s_index]->skipped_next_node = next_node;
 					}
 				}
 

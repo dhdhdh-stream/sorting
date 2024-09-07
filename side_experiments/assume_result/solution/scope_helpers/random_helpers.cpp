@@ -46,16 +46,11 @@ void Scope::random_exit_activate(AbstractNode* starting_node,
 
 				possible_exits.push_back(curr_node);
 
-				if (node->is_stub
-						|| node->is_loop) {
-					curr_node = node->original_next_node;
+				uniform_int_distribution<int> distribution(0, 1);
+				if (distribution(generator) == 0) {
+					curr_node = node->branch_next_node;
 				} else {
-					uniform_int_distribution<int> distribution(0, 1);
-					if (distribution(generator) == 0) {
-						curr_node = node->branch_next_node;
-					} else {
-						curr_node = node->original_next_node;
-					}
+					curr_node = node->original_next_node;
 				}
 			}
 
@@ -66,7 +61,12 @@ void Scope::random_exit_activate(AbstractNode* starting_node,
 
 				possible_exits.push_back(curr_node);
 
-				curr_node = node->next_node;
+				uniform_int_distribution<int> distribution(0, 1);
+				if (distribution(generator) == 0) {
+					curr_node = node->passed_next_node;
+				} else {
+					curr_node = node->skipped_next_node;
+				}
 			}
 
 			break;
@@ -110,15 +110,11 @@ void Scope::random_continue(AbstractNode* starting_node,
 
 				potential_included_nodes.insert(curr_node);
 
-				if (node->is_stub) {
-					curr_node = node->original_next_node;
+				uniform_int_distribution<int> distribution(0, 1);
+				if (distribution(generator) == 0) {
+					curr_node = node->branch_next_node;
 				} else {
-					uniform_int_distribution<int> distribution(0, 1);
-					if (distribution(generator) == 0) {
-						curr_node = node->branch_next_node;
-					} else {
-						curr_node = node->original_next_node;
-					}
+					curr_node = node->original_next_node;
 				}
 			}
 
@@ -129,7 +125,12 @@ void Scope::random_continue(AbstractNode* starting_node,
 
 				potential_included_nodes.insert(curr_node);
 
-				curr_node = node->next_node;
+				uniform_int_distribution<int> distribution(0, 1);
+				if (distribution(generator) == 0) {
+					curr_node = node->passed_next_node;
+				} else {
+					curr_node = node->skipped_next_node;
+				}
 			}
 
 			break;

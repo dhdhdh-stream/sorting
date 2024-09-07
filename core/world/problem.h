@@ -3,12 +3,19 @@
 
 #include "action.h"
 
+class ProblemLocation {
+public:
+	virtual ~ProblemLocation() {};
+};
+
 class Problem {
 public:
 	virtual ~Problem() {};
 
 	virtual std::vector<double> get_observations() = 0;
+	virtual ProblemLocation* get_location() = 0;
 	virtual void perform_action(Action action) = 0;
+	virtual void return_to_location(ProblemLocation* location) = 0;
 	virtual double score_result(int num_decisions,
 								int num_actions) = 0;
 

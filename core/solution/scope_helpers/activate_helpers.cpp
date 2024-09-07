@@ -13,7 +13,6 @@
 #include "scope_node.h"
 #include "solution.h"
 #include "solution_helpers.h"
-#include "solution_set.h"
 
 using namespace std;
 
@@ -74,8 +73,6 @@ void Scope::activate(Problem* problem,
 					 vector<ContextLayer>& context,
 					 RunHelper& run_helper,
 					 ScopeHistory* history) {
-	Solution* solution = solution_set->solutions[solution_set->curr_solution_index];
-
 	context.push_back(ContextLayer());
 
 	context.back().scope = this;

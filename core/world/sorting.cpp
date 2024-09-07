@@ -28,6 +28,12 @@ vector<double> Sorting::get_observations() {
 	}
 }
 
+ProblemLocation* Sorting::get_location() {
+	SortingLocation* location = new SortingLocation();
+	location->loc = this->current_pointer;
+	return location;
+}
+
 void Sorting::perform_action(Action action) {
 	if (action.move == SORTING_ACTION_LEFT) {
 		if (this->current_pointer >= 0) {
@@ -47,6 +53,11 @@ void Sorting::perform_action(Action action) {
 			this->current_world[this->current_pointer-1] += -1.0;
 		}
 	}
+}
+
+void Sorting::return_to_location(ProblemLocation* location) {
+	SortingLocation* sorting_location = (SortingLocation*)location;
+	this->current_pointer = sorting_location->loc;
 }
 
 double Sorting::score_result(int num_decisions,

@@ -23,7 +23,8 @@ class Scope;
 
 class Solution {
 public:
-	int generation;
+	int timestamp;
+	double average_score;
 
 	int last_updated_scope_id;
 	int last_new_scope_id;
@@ -49,7 +50,8 @@ public:
 	~Solution();
 
 	void init();
-	void load(std::ifstream& input_file);
+	void load(std::string path,
+			  std::string name);
 
 	void clean_node(int scope_id,
 					int node_id);
@@ -58,9 +60,8 @@ public:
 	void clear_verify();
 	#endif /* MDEBUG */
 
-	void merge_and_delete(Solution* original_solution);
-
-	void save(std::ofstream& output_file);
+	void save(std::string path,
+			  std::string name);
 
 	void save_for_display(std::ofstream& output_file);
 };

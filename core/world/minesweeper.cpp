@@ -158,6 +158,13 @@ vector<double> Minesweeper::get_observations() {
 	return obs;
 }
 
+ProblemLocation* Minesweeper::get_location() {
+	MinesweeperLocation* location = new MinesweeperLocation();
+	location->loc_x = this->current_x;
+	location->loc_y = this->current_y;
+	return location;
+}
+
 void Minesweeper::reveal_helper(int x, int y) {
 	if (x < 0
 			|| x > WIDTH-1
@@ -328,6 +335,12 @@ void Minesweeper::perform_action(Action action) {
 		}
 		break;
 	}
+}
+
+void Minesweeper::return_to_location(ProblemLocation* location) {
+	MinesweeperLocation* minesweeper_location = (MinesweeperLocation*)location;
+	this->current_x = minesweeper_location->loc_x;
+	this->current_y = minesweeper_location->loc_y;
 }
 
 double Minesweeper::score_result(int num_decisions,

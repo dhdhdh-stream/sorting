@@ -42,7 +42,8 @@ void clean_scope(Scope* scope) {
 			case NODE_TYPE_RETURN:
 				{
 					ReturnNode* return_node = (ReturnNode*)it->second;
-					next_node_ids.insert(return_node->next_node_id);
+					next_node_ids.insert(return_node->passed_next_node_id);
+					next_node_ids.insert(return_node->skipped_next_node_id);
 				}
 				break;
 			}
@@ -115,9 +116,13 @@ void clean_branch_node(Scope* scope) {
 						case NODE_TYPE_RETURN:
 							{
 								ReturnNode* node = (ReturnNode*)inner_it->second;
-								if (node->next_node == branch_node) {
-									node->next_node_id = branch_node->original_next_node_id;
-									node->next_node = branch_node->original_next_node;
+								if (node->passed_next_node == branch_node) {
+									node->passed_next_node_id = branch_node->original_next_node_id;
+									node->passed_next_node = branch_node->original_next_node;
+								}
+								if (node->skipped_next_node == branch_node) {
+									node->skipped_next_node_id = branch_node->original_next_node_id;
+									node->skipped_next_node = branch_node->original_next_node;
 								}
 							}
 							break;
@@ -204,13 +209,33 @@ void clean_scope_node_helper(Scope* scope,
 		case NODE_TYPE_RETURN:
 			{
 				ReturnNode* node = (ReturnNode*)it->second;
-				if (node->next_node == original_node) {
+				
+				if (node->previous_location == original_node) {
 					if (new_node == NULL) {
-						node->next_node_id = -1;
-						node->next_node = NULL;
+						node->previous_location_id = -1;
+						node->previous_location = NULL;
 					} else {
-						node->next_node_id = new_node->id;
-						node->next_node = new_node;
+						node->previous_location_id = new_node->id;
+						node->previous_location = new_node;
+					}
+				}
+
+				if (node->passed_next_node == original_node) {
+					if (new_node == NULL) {
+						node->passed_next_node_id = -1;
+						node->passed_next_node = NULL;
+					} else {
+						node->passed_next_node_id = new_node->id;
+						node->passed_next_node = new_node;
+					}
+				}
+				if (node->skipped_next_node == original_node) {
+					if (new_node == NULL) {
+						node->skipped_next_node_id = -1;
+						node->skipped_next_node = NULL;
+					} else {
+						node->skipped_next_node_id = new_node->id;
+						node->skipped_next_node = new_node;
 					}
 				}
 			}

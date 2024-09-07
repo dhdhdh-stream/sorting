@@ -16,6 +16,7 @@ void ReturnNode::activate(AbstractNode*& curr_node,
 						  Problem* problem,
 						  vector<ContextLayer>& context,
 						  RunHelper& run_helper) {
+	bool is_branch = false;
 	if (this->previous_location != NULL) {
 		map<AbstractNode*, pair<int,int>>::iterator it
 			= context.back().location_history.find(this->previous_location);
@@ -23,10 +24,16 @@ void ReturnNode::activate(AbstractNode*& curr_node,
 			Minesweeper* minesweeper = (Minesweeper*)problem;
 			minesweeper->current_x = it->second.first;
 			minesweeper->current_y = it->second.second;
+
+			is_branch = true;
 		}
 	}
 
-	curr_node = this->next_node;
+	if (is_branch) {
+		curr_node = this->passed_next_node;
+	} else {
+		curr_node = this->skipped_next_node;
+	}
 
 	run_helper.num_actions++;
 	if (run_helper.num_actions > solution->num_actions_limit) {
@@ -36,19 +43,19 @@ void ReturnNode::activate(AbstractNode*& curr_node,
 	if (run_helper.experiments_seen_order.size() == 0) {
 		map<pair<AbstractNode*,bool>, int>::iterator it = run_helper.nodes_seen.find({this, false});
 		if (it == run_helper.nodes_seen.end()) {
-			run_helper.nodes_seen[{this, false}] = 1;
+			run_helper.nodes_seen[{this, is_branch}] = 1;
 		} else {
 			it->second++;
 		}
 	} else if (run_helper.experiment_histories.size() == 1
 			&& run_helper.experiment_histories.back()->experiment == this->parent->new_action_experiment) {
-		context.back().nodes_seen.push_back({this, false});
+		context.back().nodes_seen.push_back({this, is_branch});
 	}
 
 	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
 		bool is_selected = this->experiments[e_index]->activate(
 			this,
-			false,
+			is_branch,
 			curr_node,
 			problem,
 			context,

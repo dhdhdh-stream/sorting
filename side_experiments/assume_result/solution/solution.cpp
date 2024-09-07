@@ -284,7 +284,7 @@ void Solution::random_trim() {
 
 				clean_scope_node_helper(possible_scopes[random_index],
 										return_node,
-										return_node->next_node);
+										return_node->skipped_next_node);
 
 				possible_scopes[random_index]->nodes.erase(return_node->id);
 				delete return_node;

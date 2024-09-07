@@ -8,13 +8,10 @@
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
-#include "solution_set.h"
 
 using namespace std;
 
 ScopeNode* create_existing(Scope* parent_scope) {
-	Solution* solution = solution_set->solutions[solution_set->curr_solution_index];
-
 	uniform_int_distribution<int> possible_distribution(1, solution->scopes.size() + problem_type->num_possible_actions() - 1);
 	int possible_index = possible_distribution(generator);
 	if (possible_index < (int)solution->scopes.size()) {
@@ -28,8 +25,6 @@ ScopeNode* create_existing(Scope* parent_scope) {
 }
 
 InfoScope* get_existing_info_scope(Scope* parent_scope) {
-	Solution* solution = solution_set->solutions[solution_set->curr_solution_index];
-
 	uniform_int_distribution<int> non_null_distribution(0, 4);
 	if (solution->info_scopes.size() == 0
 			|| non_null_distribution(generator) != 0) {

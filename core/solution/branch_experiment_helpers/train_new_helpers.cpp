@@ -15,8 +15,8 @@
 #include "nn_helpers.h"
 #include "scope.h"
 #include "scope_node.h"
+#include "solution.h"
 #include "solution_helpers.h"
-#include "solution_set.h"
 #include "utilities.h"
 
 using namespace std;
@@ -168,7 +168,7 @@ void BranchExperiment::train_new_backprop(
 			if (run_helper.exceeded_limit) {
 				final_score = -10.0;
 			} else {
-				final_score = (target_val - solution_set->average_score) / (int)history->predicted_scores.size();
+				final_score = (target_val - solution->average_score) / (int)history->predicted_scores.size();
 			}
 			break;
 		case SCORE_TYPE_ALL:
@@ -177,7 +177,7 @@ void BranchExperiment::train_new_backprop(
 				if (run_helper.exceeded_limit) {
 					sum_score = -10.0;
 				} else {
-					sum_score = (target_val - solution_set->average_score) / (int)history->predicted_scores.size();
+					sum_score = (target_val - solution->average_score) / (int)history->predicted_scores.size();
 				}
 				for (int l_index = 0; l_index < (int)history->predicted_scores[i_index].size(); l_index++) {
 					sum_score += history->predicted_scores[i_index][l_index];

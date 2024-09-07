@@ -11,7 +11,6 @@
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
-#include "solution_set.h"
 
 using namespace std;
 
@@ -32,11 +31,6 @@ NewActionExperiment::NewActionExperiment(AbstractScope* scope_context,
 		this->new_action_experiment_type = NEW_ACTION_EXPERIMENT_TYPE_IN_PLACE;
 	}
 
-	Solution* solution = solution_set->solutions[solution_set->curr_solution_index];
-
-	/**
-	 * TODO: select based on scopes_used
-	 */
 	std::vector<Scope*> possible_scopes;
 	for (int s_index = 0; s_index < (int)solution->scopes.size(); s_index++) {
 		if (solution->scopes[s_index]->nodes.size() > PARENT_SCOPE_MIN_NUM_NODES) {

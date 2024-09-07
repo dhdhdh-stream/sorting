@@ -19,7 +19,9 @@ public:
 	Sorting();
 
 	std::vector<double> get_observations();
+	ProblemLocation* get_location();
 	void perform_action(Action action);
+	void return_to_location(ProblemLocation* location);
 	double score_result(int num_decisions,
 						int num_actions);
 
@@ -37,6 +39,11 @@ public:
 	int num_obs();
 	int num_possible_actions();
 	Action random_action();
+};
+
+class SortingLocation : public ProblemLocation {
+public:
+	int loc;
 };
 
 #endif /* SORTING_H */

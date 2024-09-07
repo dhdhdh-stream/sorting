@@ -198,49 +198,8 @@ NewActionExperiment::NewActionExperiment(Scope* scope_context,
 						BranchNode* original_branch_node = (BranchNode*)(*node_it);
 						BranchNode* new_branch_node = (BranchNode*)node_mappings[original_branch_node];
 
-						bool is_stub = false;
-						if (original_branch_node->is_stub) {
-							is_stub = true;
-						}
-
-						map<AbstractNode*, AbstractNode*>::iterator previous_it;
-						if (original_branch_node->previous_location_id != -1) {
-							previous_it = node_mappings.find(original_branch_node->previous_location);
-							if (previous_it == node_mappings.end()) {
-								is_stub = true;
-							}
-						}
-
-						if (is_stub) {
-							new_branch_node->is_stub = true;
-
-							new_branch_node->is_loop = false;
-
-							new_branch_node->previous_location_id = -1;
-							new_branch_node->previous_location = NULL;
-
-							new_branch_node->analyze_size = -1;
-							new_branch_node->network = NULL;
-						} else {
-							new_branch_node->is_stub = false;
-
-							new_branch_node->is_loop = original_branch_node->is_loop;
-
-							if (original_branch_node->previous_location_id == -1) {
-								new_branch_node->previous_location_id = -1;
-								new_branch_node->previous_location = NULL;
-							} else {
-								new_branch_node->previous_location_id = previous_it->second->id;
-								new_branch_node->previous_location = previous_it->second;
-							}
-
-							new_branch_node->analyze_size = original_branch_node->analyze_size;
-							if (new_branch_node->analyze_size == -1) {
-								new_branch_node->network = NULL;
-							} else {
-								new_branch_node->network = new Network(original_branch_node->network);
-							}
-						}
+						new_branch_node->analyze_size = original_branch_node->analyze_size;
+						new_branch_node->network = new Network(original_branch_node->network);
 
 						map<AbstractNode*, AbstractNode*>::iterator original_it = node_mappings
 							.find(original_branch_node->original_next_node);
@@ -281,13 +240,24 @@ NewActionExperiment::NewActionExperiment(Scope* scope_context,
 
 						{
 							map<AbstractNode*, AbstractNode*>::iterator it = node_mappings
-								.find(original_return_node->next_node);
+								.find(original_return_node->passed_next_node);
 							if (it == node_mappings.end()) {
-								new_return_node->next_node_id = new_ending_node->id;
-								new_return_node->next_node = new_ending_node;
+								new_return_node->passed_next_node_id = new_ending_node->id;
+								new_return_node->passed_next_node = new_ending_node;
 							} else {
-								new_return_node->next_node_id = it->second->id;
-								new_return_node->next_node = it->second;
+								new_return_node->passed_next_node_id = it->second->id;
+								new_return_node->passed_next_node = it->second;
+							}
+						}
+						{
+							map<AbstractNode*, AbstractNode*>::iterator it = node_mappings
+								.find(original_return_node->skipped_next_node);
+							if (it == node_mappings.end()) {
+								new_return_node->skipped_next_node_id = new_ending_node->id;
+								new_return_node->skipped_next_node = new_ending_node;
+							} else {
+								new_return_node->skipped_next_node_id = it->second->id;
+								new_return_node->skipped_next_node = it->second;
 							}
 						}
 					}
@@ -338,7 +308,11 @@ NewActionExperiment::NewActionExperiment(Scope* scope_context,
 		case NODE_TYPE_RETURN:
 			{
 				ReturnNode* return_node = (ReturnNode*)node_context;
-				random_start_node = return_node->next_node;
+				if (is_branch) {
+					random_start_node = return_node->passed_next_node;
+				} else {
+					random_start_node = return_node->skipped_next_node;
+				}
 			}
 			break;
 		}

@@ -41,17 +41,19 @@ void ActionNode::activate(AbstractNode*& curr_node,
 
 	if (run_helper.experiments_seen_order.size() == 0) {
 		if (this->parent->type == SCOPE_TYPE_SCOPE) {
-			map<Scope*, set<pair<AbstractNode*,bool>>>::iterator scope_it = run_helper.scope_nodes_seen.find((Scope*)this->parent);
-			if (scope_it == run_helper.scope_nodes_seen.end()) {
-				scope_it = run_helper.scope_nodes_seen.insert({(Scope*)this->parent, set<pair<AbstractNode*,bool>>()}).first;
+			map<pair<AbstractNode*,bool>, int>::iterator it = run_helper.scope_nodes_seen.find({this, false});
+			if (it == run_helper.scope_nodes_seen.end()) {
+				run_helper.scope_nodes_seen[{this, false}] = 1;
+			} else {
+				it->second++;
 			}
-			scope_it->second.insert({this, false});
 		} else {
-			map<InfoScope*, set<AbstractNode*>>::iterator scope_it = run_helper.info_scope_nodes_seen.find((InfoScope*)this->parent);
-			if (scope_it == run_helper.info_scope_nodes_seen.end()) {
-				scope_it = run_helper.info_scope_nodes_seen.insert({(InfoScope*)this->parent, set<AbstractNode*>()}).first;
+			map<AbstractNode*, int>::iterator it = run_helper.info_scope_nodes_seen.find(this);
+			if (it == run_helper.info_scope_nodes_seen.end()) {
+				run_helper.info_scope_nodes_seen[this] = 1;
+			} else {
+				it->second++;
 			}
-			scope_it->second.insert({this});
 		}
 	}
 }

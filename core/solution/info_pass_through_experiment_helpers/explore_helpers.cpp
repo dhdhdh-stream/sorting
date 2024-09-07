@@ -9,8 +9,8 @@
 #include "network.h"
 #include "problem.h"
 #include "scope.h"
+#include "solution.h"
 #include "solution_helpers.h"
-#include "solution_set.h"
 
 using namespace std;
 
@@ -131,11 +131,11 @@ void InfoPassThroughExperiment::explore_backprop(
 			double final_score;
 			switch (this->score_type) {
 			case SCORE_TYPE_TRUTH:
-				final_score = (target_val - solution_set->average_score) / (int)history->predicted_scores.size();
+				final_score = (target_val - solution->average_score) / (int)history->predicted_scores.size();
 				break;
 			case SCORE_TYPE_ALL:
 				{
-					double sum_score = (target_val - solution_set->average_score) / (int)history->predicted_scores.size();
+					double sum_score = (target_val - solution->average_score) / (int)history->predicted_scores.size();
 					for (int l_index = 0; l_index < (int)history->predicted_scores[i_index].size(); l_index++) {
 						sum_score += history->predicted_scores[i_index][l_index];
 					}

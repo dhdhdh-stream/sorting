@@ -16,7 +16,6 @@ public:
 	Scope* scope;
 	AbstractNode* node;
 
-	std::set<AbstractNode*> loop_nodes_seen;
 	std::map<AbstractNode*, std::pair<int,int>> location_history;
 
 	/**

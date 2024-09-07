@@ -16,7 +16,8 @@ ReturnNode::ReturnNode(ReturnNode* original) {
 
 	this->previous_location_id = original->previous_location_id;
 
-	this->next_node_id = original->next_node_id;
+	this->passed_next_node_id = original->passed_next_node_id;
+	this->skipped_next_node_id = original->skipped_next_node_id;
 
 	this->average_instances_per_run = 0.0;
 }
@@ -30,7 +31,8 @@ ReturnNode::~ReturnNode() {
 void ReturnNode::save(ofstream& output_file) {
 	output_file << this->previous_location_id << endl;
 
-	output_file << this->next_node_id << endl;
+	output_file << this->passed_next_node_id << endl;
+	output_file << this->skipped_next_node_id << endl;
 
 	output_file << this->average_instances_per_run << endl;
 }
@@ -40,9 +42,13 @@ void ReturnNode::load(ifstream& input_file) {
 	getline(input_file, previous_location_id_line);
 	this->previous_location_id = stoi(previous_location_id_line);
 
-	string next_node_id_line;
-	getline(input_file, next_node_id_line);
-	this->next_node_id = stoi(next_node_id_line);
+	string passed_next_node_id_line;
+	getline(input_file, passed_next_node_id_line);
+	this->passed_next_node_id = stoi(passed_next_node_id_line);
+
+	string skipped_next_node_id_line;
+	getline(input_file, skipped_next_node_id_line);
+	this->skipped_next_node_id = stoi(skipped_next_node_id_line);
 
 	string average_instances_per_run_line;
 	getline(input_file, average_instances_per_run_line);
@@ -56,15 +62,21 @@ void ReturnNode::link(Solution* parent_solution) {
 		this->previous_location = this->parent->nodes[this->previous_location_id];
 	}
 
-	if (this->next_node_id == -1) {
-		this->next_node = NULL;
+	if (this->passed_next_node_id == -1) {
+		this->passed_next_node = NULL;
 	} else {
-		this->next_node = this->parent->nodes[this->next_node_id];
+		this->passed_next_node = this->parent->nodes[this->passed_next_node_id];
+	}
+	if (this->skipped_next_node_id == -1) {
+		this->skipped_next_node = NULL;
+	} else {
+		this->skipped_next_node = this->parent->nodes[this->skipped_next_node_id];
 	}
 }
 
 void ReturnNode::save_for_display(ofstream& output_file) {
 	output_file << this->previous_location_id << endl;
 
-	output_file << this->next_node_id << endl;
+	output_file << this->passed_next_node_id << endl;
+	output_file << this->skipped_next_node_id << endl;
 }

@@ -25,12 +25,6 @@ BranchNode::BranchNode() {
 BranchNode::BranchNode(BranchNode* original) {
 	this->type = NODE_TYPE_BRANCH;
 
-	this->is_stub = original->is_stub;
-
-	this->is_loop = original->is_loop;
-
-	this->previous_location_id = original->previous_location_id;
-
 	this->analyze_size = original->analyze_size;
 	if (this->analyze_size == -1) {
 		this->network = NULL;
@@ -70,12 +64,6 @@ void BranchNode::clear_verify() {
 #endif /* MDEBUG */
 
 void BranchNode::save(ofstream& output_file) {
-	output_file << this->is_stub << endl;
-
-	output_file << this->is_loop << endl;
-
-	output_file << this->previous_location_id << endl;
-
 	output_file << this->analyze_size << endl;
 	if (this->analyze_size != -1) {
 		this->network->save(output_file);
@@ -88,18 +76,6 @@ void BranchNode::save(ofstream& output_file) {
 }
 
 void BranchNode::load(ifstream& input_file) {
-	string is_stub_line;
-	getline(input_file, is_stub_line);
-	this->is_stub = stoi(is_stub_line);
-
-	string is_loop_line;
-	getline(input_file, is_loop_line);
-	this->is_loop = stoi(is_loop_line);
-
-	string previous_location_id_line;
-	getline(input_file, previous_location_id_line);
-	this->previous_location_id = stoi(previous_location_id_line);
-
 	string analyze_size_line;
 	getline(input_file, analyze_size_line);
 	this->analyze_size = stoi(analyze_size_line);
@@ -121,12 +97,6 @@ void BranchNode::load(ifstream& input_file) {
 }
 
 void BranchNode::link(Solution* parent_solution) {
-	if (this->previous_location_id == -1) {
-		this->previous_location = NULL;
-	} else {
-		this->previous_location = this->parent->nodes[this->previous_location_id];
-	}
-
 	if (this->original_next_node_id == -1) {
 		this->original_next_node = NULL;
 	} else {
@@ -141,8 +111,6 @@ void BranchNode::link(Solution* parent_solution) {
 }
 
 void BranchNode::save_for_display(ofstream& output_file) {
-	output_file << this->previous_location_id << endl;
-
 	output_file << this->analyze_size << endl;
 
 	output_file << this->original_next_node_id << endl;

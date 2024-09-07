@@ -99,8 +99,13 @@ void BranchExperiment::new_branch(Solution* duplicate) {
 		{
 			ReturnNode* return_node = (ReturnNode*)duplicate_explore_node;
 
-			this->branch_node->original_next_node_id = return_node->next_node_id;
-			this->branch_node->original_next_node = return_node->next_node;
+			if (this->is_branch) {
+				this->branch_node->original_next_node_id = return_node->passed_next_node_id;
+				this->branch_node->original_next_node = return_node->passed_next_node;
+			} else {
+				this->branch_node->original_next_node_id = return_node->skipped_next_node_id;
+				this->branch_node->original_next_node = return_node->skipped_next_node;
+			}
 		}
 		break;
 	}
@@ -155,8 +160,13 @@ void BranchExperiment::new_branch(Solution* duplicate) {
 		{
 			ReturnNode* return_node = (ReturnNode*)duplicate_explore_node;
 
-			return_node->next_node_id = this->branch_node->id;
-			return_node->next_node = this->branch_node;
+			if (this->is_branch) {
+				return_node->passed_next_node_id = this->branch_node->id;
+				return_node->passed_next_node = this->branch_node;
+			} else {
+				return_node->skipped_next_node_id = this->branch_node->id;
+				return_node->skipped_next_node = this->branch_node;
+			}
 		}
 		break;
 	}
@@ -190,23 +200,15 @@ void BranchExperiment::new_branch(Solution* duplicate) {
 					->nodes[this->best_scopes.back()->next_node_id];
 			}
 		} else {
-			if (this->best_returns.back()->next_node != NULL) {
-				this->best_returns.back()->next_node = duplicate_local_scope
-					->nodes[this->best_returns.back()->next_node_id];
+			if (this->best_returns.back()->passed_next_node != NULL) {
+				this->best_returns.back()->passed_next_node = duplicate_local_scope
+					->nodes[this->best_returns.back()->passed_next_node_id];
+			}
+			if (this->best_returns.back()->skipped_next_node != NULL) {
+				this->best_returns.back()->skipped_next_node = duplicate_local_scope
+					->nodes[this->best_returns.back()->skipped_next_node_id];
 			}
 		}
-	}
-
-	this->branch_node->is_stub = false;
-
-	this->branch_node->is_loop = this->best_is_loop;
-
-	if (this->best_previous_location == NULL) {
-		this->branch_node->previous_location_id = -1;
-		this->branch_node->previous_location = NULL;
-	} else {
-		this->branch_node->previous_location_id = this->best_previous_location->id;
-		this->branch_node->previous_location = duplicate_local_scope->nodes[this->best_previous_location->id];
 	}
 
 	this->branch_node->analyze_size = this->new_analyze_size;

@@ -44,28 +44,13 @@ void Scope::clean() {
 	map<int, AbstractNode*>::iterator it = this->nodes.begin();
 	while (it != this->nodes.end()) {
 		switch (it->second->type) {
-		case NODE_TYPE_BRANCH:
-			{
-				BranchNode* branch_node = (BranchNode*)it->second;
-				if (branch_node->is_stub) {
-					clean_scope_node_helper(this,
-											branch_node,
-											branch_node->original_next_node);
-
-					delete it->second;
-					it = this->nodes.erase(it);
-
-					continue;
-				}
-			}
-			break;
 		case NODE_TYPE_RETURN:
 			{
 				ReturnNode* return_node = (ReturnNode*)it->second;
 				if (return_node->previous_location_id == -1) {
 					clean_scope_node_helper(this,
 											return_node,
-											return_node->next_node);
+											return_node->skipped_next_node);
 
 					delete it->second;
 					it = this->nodes.erase(it);
@@ -86,28 +71,13 @@ void Scope::clean_node(int node_id) {
 	map<int, AbstractNode*>::iterator it = this->nodes.begin();
 	while (it != this->nodes.end()) {
 		switch (it->second->type) {
-		case NODE_TYPE_BRANCH:
-			{
-				BranchNode* branch_node = (BranchNode*)it->second;
-				if (branch_node->previous_location_id == node_id) {
-					clean_scope_node_helper(this,
-											branch_node,
-											branch_node->original_next_node);
-
-					delete it->second;
-					it = this->nodes.erase(it);
-
-					continue;
-				}
-			}
-			break;
 		case NODE_TYPE_RETURN:
 			{
 				ReturnNode* return_node = (ReturnNode*)it->second;
 				if (return_node->previous_location_id == node_id) {
 					clean_scope_node_helper(this,
 											return_node,
-											return_node->next_node);
+											return_node->skipped_next_node);
 
 					delete it->second;
 					it = this->nodes.erase(it);

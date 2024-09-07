@@ -46,7 +46,7 @@ void create_experiment(RunHelper& run_helper) {
 	/**
 	 * - don't weigh based on number of nodes within scope
 	 *   - can get trapped by small useless scopes
-	 *   - may be good for certain decision heavy scopes to have lots of nodes
+	 *     - may be good for certain decision heavy scopes to have lots of nodes
 	 */
 
 	Scope* explore_scope = (Scope*)explore_node->parent;

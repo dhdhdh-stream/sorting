@@ -149,8 +149,13 @@ void NewActionExperiment::finalize(Solution* duplicate) {
 				{
 					ReturnNode* return_node = (ReturnNode*)duplicate_start_node;
 
-					return_node->next_node_id = new_scope_node->id;
-					return_node->next_node = new_scope_node;
+					if (this->successful_location_is_branch[s_index]) {
+						return_node->passed_next_node_id = new_scope_node->id;
+						return_node->passed_next_node = new_scope_node;
+					} else {
+						return_node->skipped_next_node_id = new_scope_node->id;
+						return_node->skipped_next_node = new_scope_node;
+					}
 				}
 				break;
 			}

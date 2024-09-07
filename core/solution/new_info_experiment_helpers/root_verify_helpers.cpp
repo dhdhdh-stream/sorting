@@ -11,7 +11,6 @@
 #include "scope_node.h"
 #include "solution.h"
 #include "solution_helpers.h"
-#include "solution_set.h"
 #include "utilities.h"
 
 using namespace std;
@@ -46,7 +45,6 @@ bool NewInfoExperiment::root_verify_activate(
 
 		if (this->use_existing) {
 			bool is_positive;
-			Solution* solution = solution_set->solutions[solution_set->curr_solution_index];
 			solution->info_scopes[this->existing_info_scope_index]->activate(
 				problem,
 				context,
