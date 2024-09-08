@@ -6,7 +6,6 @@
 
 #include "abstract_experiment.h"
 #include "globals.h"
-#include "minesweeper.h"
 #include "problem.h"
 #include "scope.h"
 #include "solution.h"
@@ -47,8 +46,7 @@ void ScopeNode::new_action_capture_verify_activate(
 		run_helper.exceeded_limit = true;
 		return;
 	}
-	Minesweeper* minesweeper = (Minesweeper*)problem;
-	context.back().location_history[this] = {minesweeper->current_x, minesweeper->current_y};
+	context.back().location_history[this] = problem->get_relative_location(context.back().starting_location);
 
 	/**
 	 * - still need to check experiments

@@ -30,6 +30,11 @@ public:
 	double score_result(int num_analyze,
 						int num_actions);
 
+	ProblemLocation* get_absolute_location();
+	ProblemLocation* get_relative_location(ProblemLocation* comparison);
+	void return_to_location(ProblemLocation* comparison,
+							ProblemLocation* relative);
+
 	Problem* copy_and_reset();
 	Problem* copy_snapshot();
 
@@ -46,6 +51,17 @@ public:
 	int num_obs();
 	int num_possible_actions();
 	Action random_action();
+
+	void save_location(ProblemLocation* location,
+					   std::ofstream& output_file);
+	ProblemLocation* load_location(std::ifstream& input_file);
+	ProblemLocation* deep_copy_location(ProblemLocation* original);
+};
+
+class MinesweeperLocation : public ProblemLocation {
+public:
+	int loc_x;
+	int loc_y;
 };
 
 #endif /* MINESWEEPER_H */

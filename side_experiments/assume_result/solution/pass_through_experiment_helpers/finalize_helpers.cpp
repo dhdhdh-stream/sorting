@@ -2,6 +2,7 @@
 
 #include <iostream>
 
+#include "absolute_return_node.h"
 #include "action_node.h"
 #include "branch_experiment.h"
 #include "branch_node.h"
@@ -45,9 +46,12 @@ void PassThroughExperiment::new_pass_through(Solution* duplicate) {
 		} else if (this->best_step_types[0] == STEP_TYPE_SCOPE) {
 			start_node_id = this->best_scopes[0]->id;
 			start_node = this->best_scopes[0];
-		} else {
+		} else if (this->best_step_types[0] == STEP_TYPE_RETURN) {
 			start_node_id = this->best_returns[0]->id;
 			start_node = this->best_returns[0];
+		} else {
+			start_node_id = this->best_absolute_returns[0]->id;
+			start_node = this->best_absolute_returns[0];
 		}
 	}
 
@@ -94,6 +98,14 @@ void PassThroughExperiment::new_pass_through(Solution* duplicate) {
 			}
 		}
 		break;
+	case NODE_TYPE_ABSOLUTE_RETURN:
+		{
+			AbsoluteReturnNode* return_node = (AbsoluteReturnNode*)duplicate_explore_node;
+
+			return_node->next_node_id = start_node_id;
+			return_node->next_node = start_node;
+		}
+		break;
 	}
 
 	if (this->ending_node != NULL) {
@@ -110,12 +122,15 @@ void PassThroughExperiment::new_pass_through(Solution* duplicate) {
 			duplicate_local_scope->nodes[this->best_scopes[s_index]->id] = this->best_scopes[s_index];
 
 			this->best_scopes[s_index]->scope = duplicate->scopes[this->best_scopes[s_index]->scope->id];
-		} else {
+		} else if (this->best_step_types[s_index] == STEP_TYPE_RETURN) {
 			this->best_returns[s_index]->parent = duplicate_local_scope;
 			duplicate_local_scope->nodes[this->best_returns[s_index]->id] = this->best_returns[s_index];
 
 			this->best_returns[s_index]->previous_location = duplicate_local_scope->nodes[
 				this->best_returns[s_index]->previous_location_id];
+		} else {
+			this->best_absolute_returns[s_index]->parent = duplicate_local_scope;
+			duplicate_local_scope->nodes[this->best_absolute_returns[s_index]->id] = this->best_absolute_returns[s_index];
 		}
 	}
 	if (this->best_step_types.size() > 0) {
@@ -129,7 +144,7 @@ void PassThroughExperiment::new_pass_through(Solution* duplicate) {
 				this->best_scopes.back()->next_node = duplicate_local_scope
 					->nodes[this->best_scopes.back()->next_node->id];
 			}
-		} else {
+		} else if (this->best_step_types.back() == STEP_TYPE_RETURN) {
 			if (this->best_returns.back()->passed_next_node != NULL) {
 				this->best_returns.back()->passed_next_node = duplicate_local_scope
 					->nodes[this->best_returns.back()->passed_next_node->id];
@@ -138,11 +153,17 @@ void PassThroughExperiment::new_pass_through(Solution* duplicate) {
 				this->best_returns.back()->skipped_next_node = duplicate_local_scope
 					->nodes[this->best_returns.back()->skipped_next_node->id];
 			}
+		} else {
+			if (this->best_absolute_returns.back()->next_node != NULL) {
+				this->best_absolute_returns.back()->next_node = duplicate_local_scope
+					->nodes[this->best_absolute_returns.back()->next_node->id];
+			}
 		}
 	}
 
 	this->best_actions.clear();
 	this->best_scopes.clear();
 	this->best_returns.clear();
+	this->best_absolute_returns.clear();
 	this->ending_node = NULL;
 }

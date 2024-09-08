@@ -2,6 +2,7 @@
 
 #include <iostream>
 
+#include "absolute_return_node.h"
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
@@ -57,6 +58,16 @@ void node_result_activate_helper(AbstractNode*& curr_node,
 		}
 
 		break;
+	case NODE_TYPE_ABSOLUTE_RETURN:
+		{
+			AbsoluteReturnNode* node = (AbsoluteReturnNode*)curr_node;
+			node->result_activate(curr_node,
+								  problem,
+								  context,
+								  run_helper);
+		}
+
+		break;
 	}
 }
 
@@ -75,6 +86,8 @@ void Scope::result_activate(Problem* problem,
 	context.back().scope = this;
 	context.back().node = NULL;
 
+	context.back().starting_location = problem->get_absolute_location();
+
 	AbstractNode* curr_node = this->nodes[0];
 	while (true) {
 		if (curr_node == NULL) {
@@ -89,6 +102,12 @@ void Scope::result_activate(Problem* problem,
 		if (run_helper.exceeded_limit) {
 			break;
 		}
+	}
+
+	delete context.back().starting_location;
+	for (map<AbstractNode*, ProblemLocation*>::iterator it = context.back().location_history.begin();
+			it != context.back().location_history.end(); it++) {
+		delete it->second;
 	}
 
 	context.pop_back();

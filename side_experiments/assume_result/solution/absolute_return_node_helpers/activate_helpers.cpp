@@ -1,6 +1,4 @@
-#include "action_node.h"
-
-#include <iostream>
+#include "absolute_return_node.h"
 
 #include "abstract_experiment.h"
 #include "globals.h"
@@ -11,11 +9,12 @@
 
 using namespace std;
 
-void ActionNode::activate(AbstractNode*& curr_node,
-						  Problem* problem,
-						  vector<ContextLayer>& context,
-						  RunHelper& run_helper) {
-	problem->perform_action(this->action);
+void AbsoluteReturnNode::activate(AbstractNode*& curr_node,
+								  Problem* problem,
+								  vector<ContextLayer>& context,
+								  RunHelper& run_helper) {
+	problem->return_to_location(context.back().starting_location,
+								this->location);
 
 	curr_node = this->next_node;
 

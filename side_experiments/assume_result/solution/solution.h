@@ -51,7 +51,6 @@ public:
 	#endif /* MDEBUG */
 
 	void clean();
-	void random_trim();
 
 	void save(std::string path,
 			  std::string name);

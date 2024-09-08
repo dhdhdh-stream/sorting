@@ -2,6 +2,7 @@
 
 #include <iostream>
 
+#include "absolute_return_node.h"
 #include "action_node.h"
 #include "branch_node.h"
 #include "network.h"
@@ -156,6 +157,14 @@ void NewActionExperiment::finalize(Solution* duplicate) {
 						return_node->skipped_next_node_id = new_scope_node->id;
 						return_node->skipped_next_node = new_scope_node;
 					}
+				}
+				break;
+			case NODE_TYPE_ABSOLUTE_RETURN:
+				{
+					AbsoluteReturnNode* return_node = (AbsoluteReturnNode*)duplicate_start_node;
+
+					return_node->next_node_id = new_scope_node->id;
+					return_node->next_node = new_scope_node;
 				}
 				break;
 			}

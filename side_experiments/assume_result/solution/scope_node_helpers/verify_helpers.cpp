@@ -5,7 +5,6 @@
 #include <iostream>
 
 #include "globals.h"
-#include "minesweeper.h"
 #include "problem.h"
 #include "scope.h"
 #include "solution.h"
@@ -45,8 +44,7 @@ void ScopeNode::verify_activate(AbstractNode*& curr_node,
 		run_helper.exceeded_limit = true;
 		return;
 	}
-	Minesweeper* minesweeper = (Minesweeper*)problem;
-	context.back().location_history[this] = {minesweeper->current_x, minesweeper->current_y};
+	context.back().location_history[this] = problem->get_relative_location(context.back().starting_location);
 }
 
 #endif /* MDEBUG */

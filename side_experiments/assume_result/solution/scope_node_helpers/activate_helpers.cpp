@@ -4,8 +4,8 @@
 
 #include "abstract_experiment.h"
 #include "globals.h"
-#include "minesweeper.h"
 #include "new_action_experiment.h"
+#include "problem.h"
 #include "scope.h"
 #include "solution.h"
 
@@ -55,8 +55,7 @@ void ScopeNode::activate(AbstractNode*& curr_node,
 			&& run_helper.experiment_histories.back()->experiment == this->parent->new_action_experiment) {
 		context.back().nodes_seen.push_back({this, false});
 	}
-	Minesweeper* minesweeper = (Minesweeper*)problem;
-	context.back().location_history[this] = {minesweeper->current_x, minesweeper->current_y};
+	context.back().location_history[this] = problem->get_relative_location(context.back().starting_location);
 
 	if (!run_helper.exceeded_limit) {
 		for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {

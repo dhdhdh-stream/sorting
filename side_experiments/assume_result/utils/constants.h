@@ -7,6 +7,7 @@ const double MIN_STANDARD_DEVIATION = 0.00001;
 const int STEP_TYPE_ACTION = 0;
 const int STEP_TYPE_SCOPE = 1;
 const int STEP_TYPE_RETURN = 2;
+const int STEP_TYPE_ABSOLUTE_RETURN = 3;
 
 /**
  * - select first that is significant improvement

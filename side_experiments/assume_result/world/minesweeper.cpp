@@ -378,6 +378,31 @@ double Minesweeper::score_result(int num_analyze,
 	return score;
 }
 
+ProblemLocation* Minesweeper::get_absolute_location() {
+	MinesweeperLocation* location = new MinesweeperLocation();
+	location->loc_x = this->current_x;
+	location->loc_y = this->current_y;
+	return location;
+}
+
+ProblemLocation* Minesweeper::get_relative_location(ProblemLocation* comparison) {
+	MinesweeperLocation* minesweeper_comparison = (MinesweeperLocation*)comparison;
+
+	MinesweeperLocation* location = new MinesweeperLocation();
+	location->loc_x = this->current_x - minesweeper_comparison->loc_x;
+	location->loc_y = this->current_y - minesweeper_comparison->loc_y;
+	return location;
+}
+
+void Minesweeper::return_to_location(ProblemLocation* comparison,
+									 ProblemLocation* relative) {
+	MinesweeperLocation* minesweeper_comparison = (MinesweeperLocation*)comparison;
+	MinesweeperLocation* minesweeper_relative = (MinesweeperLocation*)relative;
+
+	this->current_x = minesweeper_comparison->loc_x + minesweeper_relative->loc_x;
+	this->current_y = minesweeper_comparison->loc_y + minesweeper_relative->loc_y;
+}
+
 Problem* Minesweeper::copy_and_reset() {
 	Minesweeper* new_problem = new Minesweeper();
 
@@ -456,4 +481,35 @@ Action TypeMinesweeper::random_action() {
 	uniform_int_distribution<int> action_distribution(0, 6);
 	geometric_distribution<int> distance_distribution(0.4);
 	return Action(action_distribution(generator), 1 + distance_distribution(generator));
+}
+
+void TypeMinesweeper::save_location(ProblemLocation* location,
+									ofstream& output_file) {
+	MinesweeperLocation* minesweeper_location = (MinesweeperLocation*)location;
+	output_file << minesweeper_location->loc_x << endl;
+	output_file << minesweeper_location->loc_y << endl;
+}
+
+ProblemLocation* TypeMinesweeper::load_location(ifstream& input_file) {
+	MinesweeperLocation* location = new MinesweeperLocation();
+
+	string loc_x_line;
+	getline(input_file, loc_x_line);
+	location->loc_x = stoi(loc_x_line);
+
+	string loc_y_line;
+	getline(input_file, loc_y_line);
+	location->loc_y = stoi(loc_y_line);
+
+	return location;
+}
+
+ProblemLocation* TypeMinesweeper::deep_copy_location(ProblemLocation* original) {
+	MinesweeperLocation* original_location = (MinesweeperLocation*)original;
+
+	MinesweeperLocation* new_location = new MinesweeperLocation();
+	new_location->loc_x = original_location->loc_x;
+	new_location->loc_y = original_location->loc_y;
+
+	return new_location;
 }

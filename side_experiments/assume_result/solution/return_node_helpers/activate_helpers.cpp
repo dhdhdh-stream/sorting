@@ -4,7 +4,6 @@
 
 #include "abstract_experiment.h"
 #include "globals.h"
-#include "minesweeper.h"
 #include "new_action_experiment.h"
 #include "problem.h"
 #include "scope.h"
@@ -18,12 +17,11 @@ void ReturnNode::activate(AbstractNode*& curr_node,
 						  RunHelper& run_helper) {
 	bool is_branch = false;
 	if (this->previous_location != NULL) {
-		map<AbstractNode*, pair<int,int>>::iterator it
+		map<AbstractNode*, ProblemLocation*>::iterator it
 			= context.back().location_history.find(this->previous_location);
 		if (it != context.back().location_history.end()) {
-			Minesweeper* minesweeper = (Minesweeper*)problem;
-			minesweeper->current_x = it->second.first;
-			minesweeper->current_y = it->second.second;
+			problem->return_to_location(context.back().starting_location,
+										it->second);
 
 			is_branch = true;
 		}

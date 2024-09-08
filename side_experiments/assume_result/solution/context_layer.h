@@ -7,8 +7,7 @@
 #include <vector>
 
 class AbstractNode;
-class AbstractScopeHistory;
-class BranchNode;
+class ProblemLocation;
 class Scope;
 
 class ContextLayer {
@@ -16,7 +15,9 @@ public:
 	Scope* scope;
 	AbstractNode* node;
 
-	std::map<AbstractNode*, std::pair<int,int>> location_history;
+	ProblemLocation* starting_location;
+
+	std::map<AbstractNode*, ProblemLocation*> location_history;
 
 	/**
 	 * - for NewActionExperiment

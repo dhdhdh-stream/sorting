@@ -1,6 +1,6 @@
 #include "return_node.h"
 
-#include "minesweeper.h"
+#include "problem.h"
 
 using namespace std;
 
@@ -8,12 +8,11 @@ void ReturnNode::explore_activate(Problem* problem,
 								  vector<ContextLayer>& context,
 								  RunHelper& run_helper) {
 	if (this->previous_location != NULL) {
-		map<AbstractNode*, pair<int,int>>::iterator it
+		map<AbstractNode*, ProblemLocation*>::iterator it
 			= context.back().location_history.find(this->previous_location);
 		if (it != context.back().location_history.end()) {
-			Minesweeper* minesweeper = (Minesweeper*)problem;
-			minesweeper->current_x = it->second.first;
-			minesweeper->current_y = it->second.second;
+			problem->return_to_location(context.back().starting_location,
+										it->second);
 		}
 	}
 

@@ -2,6 +2,7 @@
 
 #include <iostream>
 
+#include "absolute_return_node.h"
 #include "abstract_experiment.h"
 #include "action_node.h"
 #include "branch_node.h"
@@ -161,6 +162,15 @@ void Scope::load(ifstream& input_file,
 				this->nodes[return_node->id] = return_node;
 			}
 			break;
+		case NODE_TYPE_ABSOLUTE_RETURN:
+			{
+				AbsoluteReturnNode* return_node = new AbsoluteReturnNode();
+				return_node->parent = this;
+				return_node->id = id;
+				return_node->load(input_file);
+				this->nodes[return_node->id] = return_node;
+			}
+			break;
 		}
 	}
 
@@ -215,6 +225,15 @@ void Scope::copy_from(Scope* original,
 			{
 				ReturnNode* original_return_node = (ReturnNode*)it->second;
 				ReturnNode* new_return_node = new ReturnNode(original_return_node);
+				new_return_node->parent = this;
+				new_return_node->id = it->first;
+				this->nodes[it->first] = new_return_node;
+			}
+			break;
+		case NODE_TYPE_ABSOLUTE_RETURN:
+			{
+				AbsoluteReturnNode* original_return_node = (AbsoluteReturnNode*)it->second;
+				AbsoluteReturnNode* new_return_node = new AbsoluteReturnNode(original_return_node);
 				new_return_node->parent = this;
 				new_return_node->id = it->first;
 				this->nodes[it->first] = new_return_node;
