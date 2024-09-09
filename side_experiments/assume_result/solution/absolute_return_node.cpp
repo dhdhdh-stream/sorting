@@ -16,7 +16,7 @@ AbsoluteReturnNode::AbsoluteReturnNode() {
 AbsoluteReturnNode::AbsoluteReturnNode(AbsoluteReturnNode* original) {
 	this->type = NODE_TYPE_ABSOLUTE_RETURN;
 
-	this->location = problem_type->deep_copy_location(original->location);
+	this->location = original->location;
 
 	this->next_node_id = original->next_node_id;
 
@@ -24,16 +24,16 @@ AbsoluteReturnNode::AbsoluteReturnNode(AbsoluteReturnNode* original) {
 }
 
 AbsoluteReturnNode::~AbsoluteReturnNode() {
-	delete this->location;
-
 	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
 		this->experiments[e_index]->decrement(this);
 	}
 }
 
 void AbsoluteReturnNode::save(ofstream& output_file) {
-	problem_type->save_location(this->location,
-								output_file);
+	output_file << this->location.size() << endl;
+	for (int l_index = 0; l_index < (int)this->location.size(); l_index++) {
+		output_file << this->location[l_index] << endl;
+	}
 
 	output_file << this->next_node_id << endl;
 
@@ -41,7 +41,14 @@ void AbsoluteReturnNode::save(ofstream& output_file) {
 }
 
 void AbsoluteReturnNode::load(ifstream& input_file) {
-	this->location = problem_type->load_location(input_file);
+	string location_size_line;
+	getline(input_file, location_size_line);
+	int location_size = stoi(location_size_line);
+	for (int l_index = 0; l_index < location_size; l_index++) {
+		string component_line;
+		getline(input_file, component_line);
+		this->location.push_back(stod(component_line));
+	}
 
 	string next_node_id_line;
 	getline(input_file, next_node_id_line);

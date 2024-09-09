@@ -13,8 +13,9 @@ void AbsoluteReturnNode::activate(AbstractNode*& curr_node,
 								  Problem* problem,
 								  vector<ContextLayer>& context,
 								  RunHelper& run_helper) {
-	problem->return_to_location(context.back().starting_location,
-								this->location);
+	vector<double> world_location = problem_type->relative_to_world(
+		context.back().starting_location, this->location);
+	problem->return_to_location(world_location);
 
 	curr_node = this->next_node;
 
@@ -34,7 +35,7 @@ void AbsoluteReturnNode::activate(AbstractNode*& curr_node,
 			&& run_helper.experiment_histories.back()->experiment == this->parent->new_action_experiment) {
 		context.back().nodes_seen.push_back({this, false});
 	}
-	context.back().location_history[this] = problem->get_relative_location(context.back().starting_location);
+	context.back().location_history[this] = problem->get_location();
 
 	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
 		bool is_selected = this->experiments[e_index]->activate(

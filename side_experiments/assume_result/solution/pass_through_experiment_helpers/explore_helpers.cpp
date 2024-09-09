@@ -147,8 +147,9 @@ void PassThroughExperiment::explore_activate(
 			if (absolute_distribution(generator) == 0) {
 				AbsoluteReturnNode* new_return_node = new AbsoluteReturnNode();
 				uniform_int_distribution<int> location_distribution(0, context.back().location_history.size()-1);
-				ProblemLocation* previous_location = (*next(context.back().location_history.begin(), location_distribution(generator))).second;
-				new_return_node->location = problem_type->deep_copy_location(previous_location);
+				vector<double> previous_world_location = (*next(context.back().location_history.begin(), location_distribution(generator))).second;
+				new_return_node->location = problem_type->world_to_relative(
+					context.back().starting_location, previous_world_location);
 
 				uniform_int_distribution<int> step_distribution(0, new_num_steps);
 				int step_index = step_distribution(generator);

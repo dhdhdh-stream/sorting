@@ -88,7 +88,7 @@ void Scope::verify_activate(Problem* problem,
 	context.back().scope = this;
 	context.back().node = NULL;
 
-	context.back().starting_location = problem->get_absolute_location();
+	context.back().starting_location = problem->get_location();
 
 	AbstractNode* curr_node = this->nodes[0];
 	while (true) {
@@ -104,12 +104,6 @@ void Scope::verify_activate(Problem* problem,
 		if (run_helper.exceeded_limit) {
 			break;
 		}
-	}
-
-	delete context.back().starting_location;
-	for (map<AbstractNode*, ProblemLocation*>::iterator it = context.back().location_history.begin();
-			it != context.back().location_history.end(); it++) {
-		delete it->second;
 	}
 
 	context.pop_back();

@@ -8,11 +8,10 @@ void ReturnNode::explore_activate(Problem* problem,
 								  vector<ContextLayer>& context,
 								  RunHelper& run_helper) {
 	if (this->previous_location != NULL) {
-		map<AbstractNode*, ProblemLocation*>::iterator it
+		map<AbstractNode*, vector<double>>::iterator it
 			= context.back().location_history.find(this->previous_location);
 		if (it != context.back().location_history.end()) {
-			problem->return_to_location(context.back().starting_location,
-										it->second);
+			problem->return_to_location(it->second);
 		}
 	}
 

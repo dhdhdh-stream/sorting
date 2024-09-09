@@ -17,11 +17,10 @@ void ReturnNode::activate(AbstractNode*& curr_node,
 						  RunHelper& run_helper) {
 	bool is_branch = false;
 	if (this->previous_location != NULL) {
-		map<AbstractNode*, ProblemLocation*>::iterator it
+		map<AbstractNode*, vector<double>>::iterator it
 			= context.back().location_history.find(this->previous_location);
 		if (it != context.back().location_history.end()) {
-			problem->return_to_location(context.back().starting_location,
-										it->second);
+			problem->return_to_location(it->second);
 
 			is_branch = true;
 		}
@@ -39,7 +38,7 @@ void ReturnNode::activate(AbstractNode*& curr_node,
 		return;
 	}
 	if (run_helper.experiments_seen_order.size() == 0) {
-		map<pair<AbstractNode*,bool>, int>::iterator it = run_helper.nodes_seen.find({this, false});
+		map<pair<AbstractNode*,bool>, int>::iterator it = run_helper.nodes_seen.find({this, is_branch});
 		if (it == run_helper.nodes_seen.end()) {
 			run_helper.nodes_seen[{this, is_branch}] = 1;
 		} else {

@@ -87,7 +87,7 @@ void Scope::activate(Problem* problem,
 	context.back().scope = this;
 	context.back().node = NULL;
 
-	context.back().starting_location = problem->get_absolute_location();
+	context.back().starting_location = problem->get_location();
 
 	if (this->new_action_experiment != NULL) {
 		this->new_action_experiment->pre_activate(context,
@@ -117,12 +117,6 @@ void Scope::activate(Problem* problem,
 				context,
 				run_helper);
 		}
-	}
-
-	delete context.back().starting_location;
-	for (map<AbstractNode*, ProblemLocation*>::iterator it = context.back().location_history.begin();
-			it != context.back().location_history.end(); it++) {
-		delete it->second;
 	}
 
 	context.pop_back();

@@ -13,6 +13,8 @@ const int NUM_MINES = 10;
 const int STARTING_X = 4;
 const int STARTING_Y = 4;
 
+const int FIELD_OF_VIEW = 2;
+
 Minesweeper::Minesweeper() {
 	while (true) {
 		this->world = vector<vector<int>>(WIDTH, vector<int>(HEIGHT, 0));
@@ -141,12 +143,18 @@ double Minesweeper::get_observation_helper(int x, int y) {
 	}
 }
 
-vector<double> Minesweeper::get_observations() {
-	vector<double> obs;
-
-	obs.push_back(get_observation_helper(this->current_x, this->current_y));
-
-	return obs;
+void Minesweeper::get_observations(vector<double>& obs,
+								   vector<vector<double>>& locations) {
+	for (int x_index = -FIELD_OF_VIEW; x_index <= FIELD_OF_VIEW; x_index++) {
+		for (int y_index = -FIELD_OF_VIEW; y_index <= FIELD_OF_VIEW; y_index++) {
+			obs.push_back(get_observation_helper(
+				this->current_x + x_index,
+				this->current_y + y_index));
+			locations.push_back(vector<double>{
+				this->current_x + x_index,
+				this->current_y + y_index});
+		}
+	}
 }
 
 void Minesweeper::reveal_helper(int x, int y) {
@@ -379,7 +387,7 @@ double Minesweeper::score_result(int num_analyze,
 }
 
 vector<double> Minesweeper::get_location() {
-	return vector<double>{(double)this->current_x, (double)this->current_y};
+	return vector<double>{this->current_x, this->current_y};
 }
 
 void Minesweeper::return_to_location(vector<double>& location) {

@@ -1,25 +1,27 @@
-#ifndef ABSOLUTE_RETURN_NODE_H
-#define ABSOLUTE_RETURN_NODE_H
+#ifndef ACTION_NODE_H
+#define ACTION_NODE_H
 
 #include <fstream>
+#include <map>
 #include <vector>
 
 #include "abstract_node.h"
+#include "action.h"
 #include "context_layer.h"
 #include "run_helper.h"
 
 class Problem;
 
-class AbsoluteReturnNode : public AbstractNode {
+class ActionNode : public AbstractNode {
 public:
-	std::vector<double> location;
+	Action action;
 
 	int next_node_id;
 	AbstractNode* next_node;
 
-	AbsoluteReturnNode();
-	AbsoluteReturnNode(AbsoluteReturnNode* original);
-	~AbsoluteReturnNode();
+	ActionNode();
+	ActionNode(ActionNode* original);
+	~ActionNode();
 
 	void activate(AbstractNode*& curr_node,
 				  Problem* problem,
@@ -27,7 +29,6 @@ public:
 				  RunHelper& run_helper);
 
 	void explore_activate(Problem* problem,
-						  std::vector<ContextLayer>& context,
 						  RunHelper& run_helper);
 
 	void result_activate(AbstractNode*& curr_node,
@@ -41,4 +42,4 @@ public:
 	void save_for_display(std::ofstream& output_file);
 };
 
-#endif /* ABSOLUTE_RETURN_NODE_H */
+#endif /* ACTION_NODE_H */

@@ -1,37 +1,49 @@
 #include "branch_node.h"
 
-#include <iostream>
-
-#include "abstract_experiment.h"
-#include "globals.h"
-#include "minesweeper.h"
-#include "network.h"
-#include "new_action_experiment.h"
-#include "scope.h"
-#include "solution.h"
-#include "utilities.h"
-
 using namespace std;
 
 void BranchNode::activate(AbstractNode*& curr_node,
 						  Problem* problem,
 						  vector<ContextLayer>& context,
 						  RunHelper& run_helper) {
-	Minesweeper* minesweeper = (Minesweeper*)problem;
+	vector<double> local_location = problem->get_absolute_location();
 
-	run_helper.num_analyze += (1 + 2*this->analyze_size) * (1 + 2*this->analyze_size);
+	vector<double> input_vals(this->input_types.size(), 0.0);
+	for (int i_index = 0; i_index < (int)this->input_types.size(); i_index++) {
+		switch (this->input_types[i_index]) {
+		case INPUT_TYPE_GLOBAL:
+			{
+				vector<double> location = problem_type->relative_to_world(
+					context.back().starting_location,
+					this->input_locations[i_index]);
 
-	vector<vector<double>> input_vals(1 + 2*this->analyze_size);
-	for (int x_index = 0; x_index < 1 + 2*this->analyze_size; x_index++) {
-		input_vals[x_index] = vector<double>(1 + 2*this->analyze_size);
-	}
+				map<vector<double>, double>::iterator it = run_helper.world_model.find(location);
+				if (it != run_helper.world_model.end()) {
+					input_vals[i_index] = it->second;
+				}
+			}
+			break;
+		case INPUT_TYPE_RELATIVE:
+			{
+				vector<double> location = problem_type->relative_to_world(
+					local_location,
+					this->input_locations[i_index]);
 
-	for (int x_index = -this->analyze_size; x_index < this->analyze_size+1; x_index++) {
-		for (int y_index = -this->analyze_size; y_index < this->analyze_size+1; y_index++) {
-			input_vals[x_index + this->analyze_size][y_index + this->analyze_size]
-				= minesweeper->get_observation_helper(
-					minesweeper->current_x + x_index,
-					minesweeper->current_y + y_index);
+				map<vector<double>, double>::iterator it = run_helper.world_model.find(location);
+				if (it != run_helper.world_model.end()) {
+					input_vals[i_index] = it->second;
+				}
+			}
+			break;
+		case INPUT_TYPE_HISTORY:
+			{
+				map<AbstractNode*, pair<vector<double>,vector<double>>>::iterator it
+					= context.back().history.find(this->input_node_contexts[i_index]);
+				if (it != context.back().history.end()) {
+					input_vals[i_index] = it->second.second[this->input_obs_indexes[i_index]];
+				}
+			}
+			break;
 		}
 	}
 	this->network->activate(input_vals);

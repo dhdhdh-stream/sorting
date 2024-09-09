@@ -154,7 +154,7 @@ NewActionExperiment::NewActionExperiment(Scope* scope_context,
 						this->new_scope->node_counter++;
 						this->new_scope->nodes[new_return_node->id] = new_return_node;
 
-						new_return_node->location = problem_type->deep_copy_location(original_return_node->location);
+						new_return_node->location = original_return_node->location;
 
 						node_mappings[original_return_node] = new_return_node;
 					}

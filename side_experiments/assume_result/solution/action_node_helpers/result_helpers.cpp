@@ -21,5 +21,5 @@ void ActionNode::result_activate(AbstractNode*& curr_node,
 		run_helper.exceeded_limit = true;
 		return;
 	}
-	context.back().location_history[this] = problem->get_relative_location(context.back().starting_location);
+	context.back().location_history[this] = problem->get_location();
 }

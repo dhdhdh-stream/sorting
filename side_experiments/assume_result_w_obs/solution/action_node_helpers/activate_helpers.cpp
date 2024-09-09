@@ -1,4 +1,4 @@
-#include "scope_node.h"
+#include "action_node.h"
 
 #include <iostream>
 
@@ -11,17 +11,18 @@
 
 using namespace std;
 
-void ScopeNode::activate(AbstractNode*& curr_node,
-						 Problem* problem,
-						 vector<ContextLayer>& context,
-						 RunHelper& run_helper) {
-	context.back().node = this;
+void ActionNode::activate(AbstractNode*& curr_node,
+						  Problem* problem,
+						  vector<ContextLayer>& context,
+						  RunHelper& run_helper) {
+	problem->perform_action(this->action);
 
-	this->scope->activate(problem,
-						  context,
-						  run_helper);
-
-	context.back().node = NULL;
+	vector<double> obs;
+	vector<vector<double>> locations;
+	problem->get_observations(obs, locations);
+	for (int o_index = 0; o_index < (int)obs.size(); o_index++) {
+		run_helper.world_model[locations[o_index]] = obs[o_index];
+	}
 
 	curr_node = this->next_node;
 
@@ -41,20 +42,19 @@ void ScopeNode::activate(AbstractNode*& curr_node,
 			&& run_helper.experiment_histories.back()->experiment == this->parent->new_action_experiment) {
 		context.back().nodes_seen.push_back({this, false});
 	}
-	context.back().location_history[this] = problem->get_location();
 
-	if (!run_helper.exceeded_limit) {
-		for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
-			bool is_selected = this->experiments[e_index]->activate(
-				this,
-				false,
-				curr_node,
-				problem,
-				context,
-				run_helper);
-			if (is_selected) {
-				return;
-			}
+	context.back().history[this] = {problem->get_location(), obs};
+
+	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
+		bool is_selected = this->experiments[e_index]->activate(
+			this,
+			false,
+			curr_node,
+			problem,
+			context,
+			run_helper);
+		if (is_selected) {
+			return;
 		}
 	}
 }

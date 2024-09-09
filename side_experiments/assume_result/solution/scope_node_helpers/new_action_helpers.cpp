@@ -17,27 +17,13 @@ void ScopeNode::new_action_capture_verify_activate(
 		Problem* problem,
 		vector<ContextLayer>& context,
 		RunHelper& run_helper) {
-	bool previously_seen = false;
-	for (int l_index = (int)context.size()-2; l_index >= 0; l_index--) {
-		ScopeNode* previous_scope_node = (ScopeNode*)context[l_index].node;
-		if (previous_scope_node == this) {
-			previously_seen = true;
-			break;
-		} else if (context[l_index].scope == this->scope
-				&& previous_scope_node->index > this->index) {
-			break;
-		}
-	}
+	context.back().node = this;
 
-	if (!previously_seen) {
-		context.back().node = this;
+	this->scope->new_action_capture_verify_activate(problem,
+													context,
+													run_helper);
 
-		this->scope->new_action_capture_verify_activate(problem,
-														context,
-														run_helper);
-
-		context.back().node = NULL;
-	}
+	context.back().node = NULL;
 
 	curr_node = this->next_node;
 
@@ -46,7 +32,7 @@ void ScopeNode::new_action_capture_verify_activate(
 		run_helper.exceeded_limit = true;
 		return;
 	}
-	context.back().location_history[this] = problem->get_relative_location(context.back().starting_location);
+	context.back().location_history[this] = problem->get_location();
 
 	/**
 	 * - still need to check experiments
