@@ -1,9 +1,3 @@
-/**
- * - only return to ActionNodes and ScopeNodes
- * 
- * TODO: only add nodes to location_history when needed
- */
-
 #ifndef RETURN_NODE_H
 #define RETURN_NODE_H
 

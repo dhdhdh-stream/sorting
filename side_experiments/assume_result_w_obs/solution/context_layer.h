@@ -14,9 +14,9 @@ public:
 	Scope* scope;
 	AbstractNode* node;
 
-	vector<double> starting_location;
+	std::vector<double> starting_location;
 
-	std::map<AbstractNode*, std::pair<std::vector<double>,std::vector<double>>> history;
+	std::map<AbstractNode*, std::pair<std::vector<double>,std::vector<double>>> node_history;
 	/**
 	 * - global location, not relative to starting_location
 	 */

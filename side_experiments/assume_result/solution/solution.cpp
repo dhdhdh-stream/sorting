@@ -68,7 +68,7 @@ void Solution::init() {
 	starting_noop_node->parent = new_scope;
 	starting_noop_node->id = new_scope->node_counter;
 	new_scope->node_counter++;
-	starting_noop_node->action = Action(ACTION_NOOP, 0);
+	starting_noop_node->action = Action(ACTION_NOOP);
 	starting_noop_node->next_node_id = -1;
 	starting_noop_node->next_node = NULL;
 	starting_noop_node->average_instances_per_run = 1.0;

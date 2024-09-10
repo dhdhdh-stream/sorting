@@ -1,12 +1,23 @@
 #include "branch_node.h"
 
+#include <iostream>
+
+#include "abstract_experiment.h"
+#include "globals.h"
+#include "network.h"
+#include "new_action_experiment.h"
+#include "problem.h"
+#include "scope.h"
+#include "solution.h"
+#include "utilities.h"
+
 using namespace std;
 
 void BranchNode::activate(AbstractNode*& curr_node,
 						  Problem* problem,
 						  vector<ContextLayer>& context,
 						  RunHelper& run_helper) {
-	vector<double> local_location = problem->get_absolute_location();
+	vector<double> local_location = problem->get_location();
 
 	vector<double> input_vals(this->input_types.size(), 0.0);
 	for (int i_index = 0; i_index < (int)this->input_types.size(); i_index++) {
@@ -23,7 +34,7 @@ void BranchNode::activate(AbstractNode*& curr_node,
 				}
 			}
 			break;
-		case INPUT_TYPE_RELATIVE:
+		case INPUT_TYPE_LOCAL:
 			{
 				vector<double> location = problem_type->relative_to_world(
 					local_location,
@@ -38,8 +49,8 @@ void BranchNode::activate(AbstractNode*& curr_node,
 		case INPUT_TYPE_HISTORY:
 			{
 				map<AbstractNode*, pair<vector<double>,vector<double>>>::iterator it
-					= context.back().history.find(this->input_node_contexts[i_index]);
-				if (it != context.back().history.end()) {
+					= context.back().node_history.find(this->input_node_contexts[i_index]);
+				if (it != context.back().node_history.end()) {
 					input_vals[i_index] = it->second.second[this->input_obs_indexes[i_index]];
 				}
 			}

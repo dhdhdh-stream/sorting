@@ -28,8 +28,6 @@ public:
 	int node_counter;
 	std::map<int, AbstractNode*> nodes;
 
-	int scope_node_index;
-
 	/**
 	 * - tie NewActionExperiment to scope instead of node
 	 *   - so that can be tried throughout entire scope

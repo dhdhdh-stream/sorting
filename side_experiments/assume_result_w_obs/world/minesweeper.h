@@ -26,13 +26,13 @@ public:
 	Minesweeper();
 
 	void get_observations(std::vector<double>& obs,
-						  std::vector<vector<double>>& locations);
+						  std::vector<std::vector<double>>& locations);
 	void perform_action(Action action);
 	double score_result(int num_analyze,
 						int num_actions);
 
-	vector<double> get_location();
-	void return_to_location(vector<double>& location);
+	std::vector<double> get_location();
+	void return_to_location(std::vector<double>& location);
 
 	Problem* copy_and_reset();
 	Problem* copy_snapshot();
@@ -51,13 +51,10 @@ public:
 	int num_possible_actions();
 	Action random_action();
 
-	/**
-	 * - for both INPUT_TYPE_GLOBAL and INPUT_TYPE_RELATIVE
-	 */
-	vector<double> relative_to_world(vector<double>& comparison,
-									 vector<double>& relative_location);
-	vector<double> world_to_relative(vector<double>& comparison,
-									 vector<double>& world_location);
+	std::vector<double> relative_to_world(std::vector<double>& comparison,
+										  std::vector<double>& relative_location);
+	std::vector<double> world_to_relative(std::vector<double>& comparison,
+										  std::vector<double>& world_location);
 };
 
 #endif /* MINESWEEPER_H */

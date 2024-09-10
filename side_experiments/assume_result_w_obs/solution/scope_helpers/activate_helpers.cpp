@@ -119,11 +119,5 @@ void Scope::activate(Problem* problem,
 		}
 	}
 
-	delete context.back().starting_location;
-	for (map<AbstractNode*, ProblemLocation*>::iterator it = context.back().location_history.begin();
-			it != context.back().location_history.end(); it++) {
-		delete it->second;
-	}
-
 	context.pop_back();
 }

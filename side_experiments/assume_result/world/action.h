@@ -13,10 +13,9 @@ const int ACTION_NOOP = -1;
 class Action {
 public:
 	int move;
-	int distance;
 
 	Action();
-	Action(int move, int distance);
+	Action(int move);
 	Action(std::ifstream& save_file);
 	~Action();
 

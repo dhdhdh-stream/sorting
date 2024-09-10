@@ -43,7 +43,7 @@ void ActionNode::activate(AbstractNode*& curr_node,
 		context.back().nodes_seen.push_back({this, false});
 	}
 
-	context.back().history[this] = {problem->get_location(), obs};
+	context.back().node_history[this] = {problem->get_location(), obs};
 
 	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
 		bool is_selected = this->experiments[e_index]->activate(

@@ -151,8 +151,8 @@ void Minesweeper::get_observations(vector<double>& obs,
 				this->current_x + x_index,
 				this->current_y + y_index));
 			locations.push_back(vector<double>{
-				this->current_x + x_index,
-				this->current_y + y_index});
+				(double)this->current_x + x_index,
+				(double)this->current_y + y_index});
 		}
 	}
 }
@@ -193,25 +193,25 @@ void Minesweeper::perform_action(Action action) {
 
 	switch (action.move) {
 	case MINESWEEPER_ACTION_UP:
-		this->current_y += action.distance;
+		this->current_y++;
 		if (this->current_y > HEIGHT-1) {
 			this->current_y = HEIGHT-1;
 		}
 		break;
 	case MINESWEEPER_ACTION_RIGHT:
-		this->current_x += action.distance;
+		this->current_x++;
 		if (this->current_x > WIDTH-1) {
 			this->current_x = WIDTH-1;
 		}
 		break;
 	case MINESWEEPER_ACTION_DOWN:
-		this->current_y -= action.distance;
+		this->current_y--;
 		if (this->current_y < 0) {
 			this->current_y = 0;
 		}
 		break;
 	case MINESWEEPER_ACTION_LEFT:
-		this->current_x -= action.distance;
+		this->current_x--;
 		if (this->current_x < 0) {
 			this->current_x = 0;
 		}
@@ -387,7 +387,7 @@ double Minesweeper::score_result(int num_analyze,
 }
 
 vector<double> Minesweeper::get_location() {
-	return vector<double>{this->current_x, this->current_y};
+	return vector<double>{(double)this->current_x, (double)this->current_y};
 }
 
 void Minesweeper::return_to_location(vector<double>& location) {
@@ -471,8 +471,7 @@ int TypeMinesweeper::num_possible_actions() {
 
 Action TypeMinesweeper::random_action() {
 	uniform_int_distribution<int> action_distribution(0, 6);
-	geometric_distribution<int> distance_distribution(0.4);
-	return Action(action_distribution(generator), 1 + distance_distribution(generator));
+	return Action(action_distribution(generator));
 }
 
 vector<double> TypeMinesweeper::relative_to_world(

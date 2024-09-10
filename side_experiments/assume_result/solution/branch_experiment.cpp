@@ -51,9 +51,6 @@ BranchExperiment::BranchExperiment(Scope* scope_context,
 		this->best_surprise = 0.0;
 	}
 
-	this->obs_histories.reserve(NUM_DATAPOINTS);
-	this->target_val_histories.reserve(NUM_DATAPOINTS);
-
 	uniform_int_distribution<int> until_distribution(0, (int)this->node_context->average_instances_per_run-1.0);
 	this->num_instances_until_target = 1 + until_distribution(generator);
 
