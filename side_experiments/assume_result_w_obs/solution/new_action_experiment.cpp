@@ -234,7 +234,7 @@ NewActionExperiment::NewActionExperiment(Scope* scope_context,
 										new_branch_node->network->remove_input(i_index);
 									} else {
 										new_branch_node->input_types.insert(new_branch_node->input_types.begin(), INPUT_TYPE_HISTORY);
-										new_branch_node->input_locations.insert(new_branch_node->input_locations.begin(), vector<double>());
+										new_branch_node->input_locations.insert(new_branch_node->input_locations.begin(), vector<int>());
 										new_branch_node->input_node_context_ids.insert(new_branch_node->input_node_context_ids.begin(), it->second->id);
 										new_branch_node->input_node_contexts.insert(new_branch_node->input_node_contexts.begin(), it->second);
 										new_branch_node->input_obs_indexes.insert(

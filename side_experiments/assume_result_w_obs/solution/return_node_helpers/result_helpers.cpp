@@ -12,7 +12,7 @@ void ReturnNode::result_activate(AbstractNode*& curr_node,
 								 RunHelper& run_helper) {
 	bool is_branch = false;
 	if (this->previous_location != NULL) {
-		map<AbstractNode*, pair<vector<double>,vector<double>>>::iterator it
+		map<AbstractNode*, pair<vector<int>,vector<double>>>::iterator it
 			= context.back().node_history.find(this->previous_location);
 		if (it != context.back().node_history.end()) {
 			problem->return_to_location(it->second.first);

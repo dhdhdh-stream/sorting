@@ -19,7 +19,7 @@ const int INPUT_TYPE_HISTORY = 2;
 class BranchNode : public AbstractNode {
 public:
 	std::vector<int> input_types;
-	std::vector<std::vector<double>> input_locations;
+	std::vector<std::vector<int>> input_locations;
 	std::vector<int> input_node_context_ids;
 	std::vector<AbstractNode*> input_node_contexts;
 	std::vector<int> input_obs_indexes;

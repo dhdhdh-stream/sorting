@@ -9,6 +9,7 @@ class AbstractExperiment;
 class AbstractExperimentHistory;
 class AbstractNode;
 class ScopeNode;
+class WorldModel;
 
 class RunHelper {
 public:
@@ -17,7 +18,7 @@ public:
 	/**
 	 * - using Problem's starting location
 	 */
-	std::map<std::vector<double>, double> world_model;
+	WorldModel* world_model;
 
 	bool exceeded_limit;
 

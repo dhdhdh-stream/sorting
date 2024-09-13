@@ -97,11 +97,11 @@ void BranchNode::load(ifstream& input_file) {
 		string location_size_line;
 		getline(input_file, location_size_line);
 		int location_size = stoi(location_size_line);
-		vector<double> location;
+		vector<int> location;
 		for (int l_index = 0; l_index < location_size; l_index++) {
 			string component_line;
 			getline(input_file, component_line);
-			location.push_back(stod(component_line));
+			location.push_back(stoi(component_line));
 		}
 		this->input_locations.push_back(location);
 

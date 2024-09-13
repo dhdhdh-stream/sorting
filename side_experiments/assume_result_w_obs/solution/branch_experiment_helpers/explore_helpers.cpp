@@ -140,7 +140,7 @@ bool BranchExperiment::explore_activate(
 			if (absolute_distribution(generator) == 0) {
 				AbsoluteReturnNode* new_return_node = new AbsoluteReturnNode();
 				uniform_int_distribution<int> location_distribution(0, context.back().node_history.size()-1);
-				vector<double> previous_world_location = (*next(context.back().node_history.begin(), location_distribution(generator))).second.first;
+				vector<int> previous_world_location = (*next(context.back().node_history.begin(), location_distribution(generator))).second.first;
 				new_return_node->location = problem_type->world_to_relative(
 					context.back().starting_location, previous_world_location);
 

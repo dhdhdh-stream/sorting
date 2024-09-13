@@ -8,6 +8,7 @@
 #include "problem.h"
 #include "scope.h"
 #include "solution.h"
+#include "world_model.h"
 
 using namespace std;
 
@@ -18,10 +19,16 @@ void ActionNode::activate(AbstractNode*& curr_node,
 	problem->perform_action(this->action);
 
 	vector<double> obs;
-	vector<vector<double>> locations;
+	vector<vector<int>> locations;
 	problem->get_observations(obs, locations);
 	for (int o_index = 0; o_index < (int)obs.size(); o_index++) {
-		run_helper.world_model[locations[o_index]] = obs[o_index];
+		if (run_helper.world_model == NULL) {
+			run_helper.world_model = new WorldModel(locations[o_index],
+													obs[o_index]);
+		} else {
+			run_helper.world_model->update(locations[o_index],
+										   obs[o_index]);
+		}
 	}
 
 	curr_node = this->next_node;

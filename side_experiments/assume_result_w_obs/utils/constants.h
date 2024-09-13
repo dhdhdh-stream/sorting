@@ -17,7 +17,7 @@ const int STEP_TYPE_ABSOLUTE_RETURN = 3;
 const int EXPLORE_TYPE_GOOD = 0;
 const int EXPLORE_TYPE_BEST = 1;
 
-const int NETWORK_INCREMENT_NUM_NEW = 10;
+const int NETWORK_INCREMENT_NUM_NEW = 12;
 
 const double TEST_SAMPLES_PERCENTAGE = 0.2;
 

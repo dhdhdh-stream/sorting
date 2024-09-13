@@ -244,11 +244,12 @@ void BranchExperiment::new_branch(Solution* duplicate) {
 	for (int n_index = 0; n_index < (int)this->input_node_contexts.size(); n_index++) {
 		if (this->input_node_contexts[n_index] == NULL) {
 			this->branch_node->input_node_context_ids.push_back(-1);
+			this->branch_node->input_node_contexts.push_back(NULL);
 		} else {
 			this->branch_node->input_node_context_ids.push_back(this->input_node_contexts[n_index]->id);
+			this->branch_node->input_node_contexts.push_back(duplicate_local_scope->nodes[this->input_node_contexts[n_index]->id]);
 		}
 	}
-	this->branch_node->input_node_contexts = this->input_node_contexts;
 	this->branch_node->input_obs_indexes = this->input_obs_indexes;
 	this->branch_node->network = this->network;
 	this->network = NULL;

@@ -12,6 +12,8 @@ const int EPOCH_SIZE = 20;
 const int INCREMENT_BASE_SIZE = 2;
 const int NEW_LAYER_MULTIPLE = 4;
 
+const int FIRST_LAYER_MIN_SIZE = 4;
+
 Network::Network() {
 	this->input = new Layer(LINEAR_LAYER);
 
@@ -190,6 +192,10 @@ void Network::increment(int new_num_inputs) {
 			this->hiddens[0]->acti_vals.push_back(0.0);
 			this->hiddens[0]->errors.push_back(0.0);
 		}
+	}
+	while (this->hiddens[0]->acti_vals.size() < FIRST_LAYER_MIN_SIZE) {
+		this->hiddens[0]->acti_vals.push_back(0.0);
+		this->hiddens[0]->errors.push_back(0.0);
 	}
 
 	this->hiddens[0]->update_structure();

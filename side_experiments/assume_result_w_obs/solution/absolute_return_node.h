@@ -12,7 +12,7 @@ class Problem;
 
 class AbsoluteReturnNode : public AbstractNode {
 public:
-	std::vector<double> location;
+	std::vector<int> location;
 
 	int next_node_id;
 	AbstractNode* next_node;

@@ -70,17 +70,17 @@ public:
 	double new_average_score;
 
 	std::vector<int> input_types;
-	std::vector<std::vector<double>> input_locations;
+	std::vector<std::vector<int>> input_locations;
 	std::vector<AbstractNode*> input_node_contexts;
 	std::vector<int> input_obs_indexes;
 	Network* network;
 
 	double combined_score;
 
-	std::vector<std::vector<double>> starting_location_histories;
-	std::vector<std::vector<double>> local_location_histories;
-	std::vector<std::map<std::vector<double>, double>> world_model_histories;
-	std::vector<std::map<AbstractNode*, std::pair<std::vector<double>,std::vector<double>>>> node_histories;
+	std::vector<std::vector<int>> starting_location_histories;
+	std::vector<std::vector<int>> local_location_histories;
+	std::vector<WorldModel*> world_model_histories;
+	std::vector<std::map<AbstractNode*, std::pair<std::vector<int>,std::vector<double>>>> node_histories;
 	std::vector<double> target_val_histories;
 
 	#if defined(MDEBUG) && MDEBUG

@@ -144,15 +144,15 @@ double Minesweeper::get_observation_helper(int x, int y) {
 }
 
 void Minesweeper::get_observations(vector<double>& obs,
-								   vector<vector<double>>& locations) {
+								   vector<vector<int>>& locations) {
 	for (int x_index = -FIELD_OF_VIEW; x_index <= FIELD_OF_VIEW; x_index++) {
 		for (int y_index = -FIELD_OF_VIEW; y_index <= FIELD_OF_VIEW; y_index++) {
 			obs.push_back(get_observation_helper(
 				this->current_x + x_index,
 				this->current_y + y_index));
-			locations.push_back(vector<double>{
-				(double)this->current_x + x_index,
-				(double)this->current_y + y_index});
+			locations.push_back(vector<int>{
+				this->current_x + x_index,
+				this->current_y + y_index});
 		}
 	}
 }
@@ -386,11 +386,11 @@ double Minesweeper::score_result(int num_analyze,
 	return score;
 }
 
-vector<double> Minesweeper::get_location() {
-	return vector<double>{(double)this->current_x, (double)this->current_y};
+vector<int> Minesweeper::get_location() {
+	return vector<int>{this->current_x, this->current_y};
 }
 
-void Minesweeper::return_to_location(vector<double>& location) {
+void Minesweeper::return_to_location(vector<int>& location) {
 	this->current_x = location[0];
 	this->current_y = location[1];
 }
@@ -474,18 +474,18 @@ Action TypeMinesweeper::random_action() {
 	return Action(action_distribution(generator));
 }
 
-vector<double> TypeMinesweeper::relative_to_world(
-		vector<double>& comparison,
-		vector<double>& relative_location) {
-	return vector<double>{
+vector<int> TypeMinesweeper::relative_to_world(
+		vector<int>& comparison,
+		vector<int>& relative_location) {
+	return vector<int>{
 		comparison[0] + relative_location[0],
 		comparison[1] + relative_location[1]};
 }
 
-vector<double> TypeMinesweeper::world_to_relative(
-		vector<double>& comparison,
-		vector<double>& world_location) {
-	return vector<double>{
+vector<int> TypeMinesweeper::world_to_relative(
+		vector<int>& comparison,
+		vector<int>& world_location) {
+	return vector<int>{
 		world_location[0] - comparison[0],
 		world_location[1] - comparison[1]};
 }

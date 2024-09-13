@@ -14,6 +14,7 @@
 #include "return_node.h"
 #include "scope.h"
 #include "scope_node.h"
+#include "world_model.h"
 
 using namespace std;
 
@@ -32,7 +33,7 @@ bool BranchExperiment::train_new_activate(
 
 		this->starting_location_histories.push_back(context.back().starting_location);
 		this->local_location_histories.push_back(problem->get_location());
-		this->world_model_histories.push_back(run_helper.world_model);
+		this->world_model_histories.push_back(new WorldModel(run_helper.world_model));
 		this->node_histories.push_back(context.back().node_history);
 
 		if (this->best_step_types.size() == 0) {
@@ -116,7 +117,7 @@ void BranchExperiment::train_new_backprop(
 		uniform_int_distribution<int> global_distribution(0, 2);
 		while (train_index < 3) {
 			vector<int> test_input_types = this->input_types;
-			vector<vector<double>> test_input_locations = this->input_locations;
+			vector<vector<int>> test_input_locations = this->input_locations;
 			vector<AbstractNode*> test_input_node_contexts = this->input_node_contexts;
 			vector<int> test_input_obs_indexes = this->input_obs_indexes;
 
@@ -125,7 +126,7 @@ void BranchExperiment::train_new_backprop(
 
 				if (history_distribution(generator) == 0) {
 					uniform_int_distribution<int> history_distribution(0, this->node_histories[instance_index].size()-1);
-					map<AbstractNode*, pair<vector<double>,vector<double>>>::iterator it = next(
+					map<AbstractNode*, pair<vector<int>,vector<double>>>::iterator it = next(
 						this->node_histories[instance_index].begin(), history_distribution(generator));
 					AbstractNode* node = it->first;
 					uniform_int_distribution<int> obs_distribution(0, it->second.second.size()-1);
@@ -142,16 +143,21 @@ void BranchExperiment::train_new_backprop(
 					}
 					if (!is_existing) {
 						test_input_types.push_back(INPUT_TYPE_HISTORY);
-						test_input_locations.push_back(vector<double>());
+						test_input_locations.push_back(vector<int>());
 						test_input_node_contexts.push_back(node);
 						test_input_obs_indexes.push_back(obs_index);
 					}
 				} else {
-					uniform_int_distribution<int> location_distribution(0, this->world_model_histories[instance_index].size()-1);
-					vector<double> world_location = next(this->world_model_histories[instance_index].begin(), location_distribution(generator))->first;
+					vector<int> location;
+					vector<vector<int>> locations;
+					this->world_model_histories[instance_index]->gather_locations(
+						location,
+						locations);
+					uniform_int_distribution<int> location_distribution(0, locations.size()-1);
+					vector<int> world_location = locations[location_distribution(generator)];
 
 					if (global_distribution(generator) == 0) {
-						vector<double> relative_location = problem_type->world_to_relative(
+						vector<int> relative_location = problem_type->world_to_relative(
 							world_location, this->starting_location_histories[instance_index]);
 
 						bool is_existing = false;
@@ -169,7 +175,7 @@ void BranchExperiment::train_new_backprop(
 							test_input_obs_indexes.push_back(-1);
 						}
 					} else {
-						vector<double> relative_location = problem_type->world_to_relative(
+						vector<int> relative_location = problem_type->world_to_relative(
 							world_location, this->local_location_histories[instance_index]);
 
 						bool is_existing = false;
@@ -200,45 +206,53 @@ void BranchExperiment::train_new_backprop(
 
 			vector<vector<double>> test_input_vals = input_vals;
 			for (int d_index = 0; d_index < num_instances; d_index++) {
-				test_input_vals[d_index].reserve((int)test_input_types.size());
+				int pad_size = (int)test_input_types.size() - (int)this->input_types.size();
+				test_input_vals[d_index].insert(test_input_vals[d_index].end(), pad_size, 0.0);
+
 				for (int t_index = (int)this->input_types.size(); t_index < (int)test_input_types.size(); t_index++) {
 					switch (test_input_types[t_index]) {
 					case INPUT_TYPE_GLOBAL:
-						{
-							vector<double> location = problem_type->relative_to_world(
+						if (run_helper.world_model != NULL) {
+							vector<int> location = problem_type->relative_to_world(
 								this->starting_location_histories[d_index],
 								test_input_locations[t_index]);
 
-							map<vector<double>, double>::iterator it = this->world_model_histories[d_index].find(location);
-							if (it == this->world_model_histories[d_index].end()) {
-								test_input_vals[d_index].push_back(0.0);
-							} else {
-								test_input_vals[d_index].push_back(it->second);
+							bool is_init;
+							double val;
+							this->world_model_histories[d_index]->get_val(
+								location,
+								is_init,
+								val);
+
+							if (is_init) {
+								test_input_vals[d_index][t_index] = val;
 							}
 						}
 						break;
 					case INPUT_TYPE_LOCAL:
-						{
-							vector<double> location = problem_type->relative_to_world(
+						if (run_helper.world_model != NULL) {
+							vector<int> location = problem_type->relative_to_world(
 								this->local_location_histories[d_index],
 								test_input_locations[t_index]);
 
-							map<vector<double>, double>::iterator it = this->world_model_histories[d_index].find(location);
-							if (it == this->world_model_histories[d_index].end()) {
-								test_input_vals[d_index].push_back(0.0);
-							} else {
-								test_input_vals[d_index].push_back(it->second);
+							bool is_init;
+							double val;
+							this->world_model_histories[d_index]->get_val(
+								location,
+								is_init,
+								val);
+
+							if (is_init) {
+								test_input_vals[d_index][t_index] = val;
 							}
 						}
 						break;
 					case INPUT_TYPE_HISTORY:
 						{
-							map<AbstractNode*, pair<vector<double>,vector<double>>>::iterator it
+							map<AbstractNode*, pair<vector<int>,vector<double>>>::iterator it
 								= this->node_histories[d_index].find(test_input_node_contexts[t_index]);
-							if (it == this->node_histories[d_index].end()) {
-								test_input_vals[d_index].push_back(0.0);
-							} else {
-								test_input_vals[d_index].push_back(it->second.second[test_input_obs_indexes[t_index]]);
+							if (it != this->node_histories[d_index].end()) {
+								test_input_vals[d_index][t_index] = it->second.second[test_input_obs_indexes[t_index]];
 							}
 						}
 						break;
@@ -301,7 +315,7 @@ void BranchExperiment::train_new_backprop(
 
 				for (int i_index = test_input_size-1; i_index >= original_input_size; i_index--) {
 					vector<int> remove_input_types = this->input_types;
-					vector<vector<double>> remove_input_locations = this->input_locations;
+					vector<vector<int>> remove_input_locations = this->input_locations;
 					vector<AbstractNode*> remove_input_node_contexts = this->input_node_contexts;
 					vector<int> remove_input_obs_indexes = this->input_obs_indexes;
 
@@ -365,9 +379,13 @@ void BranchExperiment::train_new_backprop(
 
 			cout << "i" << endl;
 		}
+		cout << "train done" << endl;
 
 		this->starting_location_histories.clear();
 		this->local_location_histories.clear();
+		for (int h_index = 0; h_index < (int)this->world_model_histories.size(); h_index++) {
+			delete this->world_model_histories[h_index];
+		}
 		this->world_model_histories.clear();
 		this->node_histories.clear();
 		this->target_val_histories.clear();

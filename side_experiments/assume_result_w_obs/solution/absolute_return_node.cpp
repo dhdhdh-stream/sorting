@@ -49,7 +49,7 @@ void AbsoluteReturnNode::load(ifstream& input_file) {
 	for (int l_index = 0; l_index < location_size; l_index++) {
 		string component_line;
 		getline(input_file, component_line);
-		this->location.push_back(stod(component_line));
+		this->location.push_back(stoi(component_line));
 	}
 
 	string next_node_id_line;

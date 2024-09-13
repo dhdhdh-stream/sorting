@@ -15,7 +15,7 @@ void AbsoluteReturnNode::activate(AbstractNode*& curr_node,
 								  Problem* problem,
 								  vector<ContextLayer>& context,
 								  RunHelper& run_helper) {
-	vector<double> world_location = problem_type->relative_to_world(
+	vector<int> world_location = problem_type->relative_to_world(
 		context.back().starting_location, this->location);
 	problem->return_to_location(world_location);
 
