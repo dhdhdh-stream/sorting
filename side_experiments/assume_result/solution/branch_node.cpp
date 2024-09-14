@@ -111,7 +111,7 @@ void BranchNode::link(Solution* parent_solution) {
 }
 
 void BranchNode::save_for_display(ofstream& output_file) {
-	output_file << this->analyze_size << endl;
+	// output_file << this->analyze_size << endl;
 
 	output_file << this->original_next_node_id << endl;
 	output_file << this->branch_next_node_id << endl;

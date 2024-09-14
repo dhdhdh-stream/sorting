@@ -13,8 +13,6 @@
 
 using namespace std;
 
-const double TRIM_PERCENTAGE = 0.1;
-
 Solution::Solution() {
 	// do nothing
 }

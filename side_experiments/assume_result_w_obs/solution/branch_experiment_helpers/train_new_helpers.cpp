@@ -121,77 +121,99 @@ void BranchExperiment::train_new_backprop(
 			vector<AbstractNode*> test_input_node_contexts = this->input_node_contexts;
 			vector<int> test_input_obs_indexes = this->input_obs_indexes;
 
-			for (int n_index = 0; n_index < NETWORK_INCREMENT_NUM_NEW; n_index++) {
-				int instance_index = instance_distribution(generator);
+			// for (int n_index = 0; n_index < NETWORK_INCREMENT_NUM_NEW; n_index++) {
+			// 	int instance_index = instance_distribution(generator);
 
-				if (history_distribution(generator) == 0) {
-					uniform_int_distribution<int> history_distribution(0, this->node_histories[instance_index].size()-1);
-					map<AbstractNode*, pair<vector<int>,vector<double>>>::iterator it = next(
-						this->node_histories[instance_index].begin(), history_distribution(generator));
-					AbstractNode* node = it->first;
-					uniform_int_distribution<int> obs_distribution(0, it->second.second.size()-1);
-					int obs_index = obs_distribution(generator);
+			// 	if (history_distribution(generator) == 0) {
+			// 		uniform_int_distribution<int> history_distribution(0, this->node_histories[instance_index].size()-1);
+			// 		map<AbstractNode*, pair<vector<int>,vector<double>>>::iterator it = next(
+			// 			this->node_histories[instance_index].begin(), history_distribution(generator));
+			// 		AbstractNode* node = it->first;
+			// 		uniform_int_distribution<int> obs_distribution(0, it->second.second.size()-1);
+			// 		int obs_index = obs_distribution(generator);
+
+			// 		bool is_existing = false;
+			// 		for (int i_index = 0; i_index < (int)test_input_types.size(); i_index++) {
+			// 			if (test_input_types[i_index] == INPUT_TYPE_HISTORY
+			// 					&& test_input_node_contexts[i_index] == node
+			// 					&& test_input_obs_indexes[i_index] == obs_index) {
+			// 				is_existing = true;
+			// 				break;
+			// 			}
+			// 		}
+			// 		if (!is_existing) {
+			// 			test_input_types.push_back(INPUT_TYPE_HISTORY);
+			// 			test_input_locations.push_back(vector<int>());
+			// 			test_input_node_contexts.push_back(node);
+			// 			test_input_obs_indexes.push_back(obs_index);
+			// 		}
+			// 	} else {
+			// 		vector<int> location;
+			// 		vector<vector<int>> locations;
+			// 		this->world_model_histories[instance_index]->gather_locations(
+			// 			location,
+			// 			locations);
+			// 		uniform_int_distribution<int> location_distribution(0, locations.size()-1);
+			// 		vector<int> world_location = locations[location_distribution(generator)];
+
+			// 		if (global_distribution(generator) == 0) {
+			// 			vector<int> relative_location = problem_type->world_to_relative(
+			// 				world_location, this->starting_location_histories[instance_index]);
+
+			// 			bool is_existing = false;
+			// 			for (int i_index = 0; i_index < (int)test_input_types.size(); i_index++) {
+			// 				if (test_input_types[i_index] == INPUT_TYPE_GLOBAL
+			// 						&& test_input_locations[i_index] == relative_location) {
+			// 					is_existing = true;
+			// 					break;
+			// 				}
+			// 			}
+			// 			if (!is_existing) {
+			// 				test_input_types.push_back(INPUT_TYPE_GLOBAL);
+			// 				test_input_locations.push_back(relative_location);
+			// 				test_input_node_contexts.push_back(NULL);
+			// 				test_input_obs_indexes.push_back(-1);
+			// 			}
+			// 		} else {
+			// 			vector<int> relative_location = problem_type->world_to_relative(
+			// 				world_location, this->local_location_histories[instance_index]);
+
+			// 			bool is_existing = false;
+			// 			for (int i_index = 0; i_index < (int)test_input_types.size(); i_index++) {
+			// 				if (test_input_types[i_index] == INPUT_TYPE_LOCAL
+			// 						&& test_input_locations[i_index] == relative_location) {
+			// 					is_existing = true;
+			// 					break;
+			// 				}
+			// 			}
+			// 			if (!is_existing) {
+			// 				test_input_types.push_back(INPUT_TYPE_LOCAL);
+			// 				test_input_locations.push_back(relative_location);
+			// 				test_input_node_contexts.push_back(NULL);
+			// 				test_input_obs_indexes.push_back(-1);
+			// 			}
+			// 		}
+			// 	}
+			// }
+
+			// temp
+			for (int x_index = -2; x_index <= 2; x_index++) {
+				for (int y_index = -2; y_index <= 2; y_index++) {
+					vector<int> location{x_index, y_index};
 
 					bool is_existing = false;
 					for (int i_index = 0; i_index < (int)test_input_types.size(); i_index++) {
-						if (test_input_types[i_index] == INPUT_TYPE_HISTORY
-								&& test_input_node_contexts[i_index] == node
-								&& test_input_obs_indexes[i_index] == obs_index) {
+						if (test_input_types[i_index] == INPUT_TYPE_LOCAL
+								&& test_input_locations[i_index] == location) {
 							is_existing = true;
 							break;
 						}
 					}
 					if (!is_existing) {
-						test_input_types.push_back(INPUT_TYPE_HISTORY);
-						test_input_locations.push_back(vector<int>());
-						test_input_node_contexts.push_back(node);
-						test_input_obs_indexes.push_back(obs_index);
-					}
-				} else {
-					vector<int> location;
-					vector<vector<int>> locations;
-					this->world_model_histories[instance_index]->gather_locations(
-						location,
-						locations);
-					uniform_int_distribution<int> location_distribution(0, locations.size()-1);
-					vector<int> world_location = locations[location_distribution(generator)];
-
-					if (global_distribution(generator) == 0) {
-						vector<int> relative_location = problem_type->world_to_relative(
-							world_location, this->starting_location_histories[instance_index]);
-
-						bool is_existing = false;
-						for (int i_index = 0; i_index < (int)test_input_types.size(); i_index++) {
-							if (test_input_types[i_index] == INPUT_TYPE_GLOBAL
-									&& test_input_locations[i_index] == relative_location) {
-								is_existing = true;
-								break;
-							}
-						}
-						if (!is_existing) {
-							test_input_types.push_back(INPUT_TYPE_GLOBAL);
-							test_input_locations.push_back(relative_location);
-							test_input_node_contexts.push_back(NULL);
-							test_input_obs_indexes.push_back(-1);
-						}
-					} else {
-						vector<int> relative_location = problem_type->world_to_relative(
-							world_location, this->local_location_histories[instance_index]);
-
-						bool is_existing = false;
-						for (int i_index = 0; i_index < (int)test_input_types.size(); i_index++) {
-							if (test_input_types[i_index] == INPUT_TYPE_LOCAL
-									&& test_input_locations[i_index] == relative_location) {
-								is_existing = true;
-								break;
-							}
-						}
-						if (!is_existing) {
-							test_input_types.push_back(INPUT_TYPE_LOCAL);
-							test_input_locations.push_back(relative_location);
-							test_input_node_contexts.push_back(NULL);
-							test_input_obs_indexes.push_back(-1);
-						}
+						test_input_types.push_back(INPUT_TYPE_LOCAL);
+						test_input_locations.push_back(location);
+						test_input_node_contexts.push_back(NULL);
+						test_input_obs_indexes.push_back(-1);
 					}
 				}
 			}

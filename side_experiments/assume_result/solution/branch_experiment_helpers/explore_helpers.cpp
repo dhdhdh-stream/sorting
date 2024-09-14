@@ -20,7 +20,8 @@ using namespace std;
 #if defined(MDEBUG) && MDEBUG
 const int EXPLORE_ITERS = 5;
 #else
-const int EXPLORE_ITERS = 500;
+// const int EXPLORE_ITERS = 500;
+const int EXPLORE_ITERS = 100;
 #endif /* MDEBUG */
 
 bool BranchExperiment::explore_activate(
