@@ -41,6 +41,7 @@ int main(int argc, char* argv[]) {
 			}
 			cout << endl;
 		}
+		cout << "(" << sample.locations[s_index][12][0] << "," << sample.locations[s_index][12][1] << ")" << endl;
 
 		cout << endl;
 	}

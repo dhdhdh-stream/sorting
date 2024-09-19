@@ -12,7 +12,7 @@ HEADERS = ${SOURCES:.cpp=.h}
 OBJECTS = ${HEADERS:.h=.o}
 DEPENDS = ${OBJECTS:.o=.d}
 
-all: capture_sample viewer
+all: capture_sample viewer segmentize
 
 capture_sample: ${OBJECTS} capture_sample.o
 	${CXX} ${CXXFLAGS} ${OBJECTS} capture_sample.o -o capture_sample ${LIBS}
@@ -20,9 +20,13 @@ capture_sample: ${OBJECTS} capture_sample.o
 viewer: ${OBJECTS} viewer.o
 	${CXX} ${CXXFLAGS} ${OBJECTS} viewer.o -o viewer ${LIBS}
 
--include ${DEPENDS} capture_sample.d viewer.d
+segmentize: ${OBJECTS} segmentize.o
+	${CXX} ${CXXFLAGS} ${OBJECTS} segmentize.o -o segmentize ${LIBS}
+
+-include ${DEPENDS} capture_sample.d viewer.d segmentize.d
 
 clean:
 	rm -f ${OBJECTS} ${DEPENDS} \
 	capture_sample.o capture_sample.d capture_sample \
-	viewer.o viewer.d viewer
+	viewer.o viewer.d viewer \
+	segmentize.o segmentize.d segmentize

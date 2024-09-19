@@ -13,6 +13,15 @@
  * - remember the beginning and end of every compound action in sample
  *   - remember e.g., their location
  *   - search existing solution for locations that are similar, and try
+ * 
+ * - segment by location?
+ *   - either moving from point A to point B, or staying near a location
+ *     - so points and lines
+ *       - or just lines
+ *     - then minimize distance from point or where should be on line
+ * 
+ * - if location doesn't move, then executing a sequence at a location
+ *   - might be something copyable
  */
 
 #include <chrono>
