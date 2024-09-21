@@ -12,7 +12,7 @@ HEADERS = ${SOURCES:.cpp=.h}
 OBJECTS = ${HEADERS:.h=.o}
 DEPENDS = ${OBJECTS:.o=.d}
 
-all: capture_sample viewer segmentize
+all: capture_sample viewer build_graph
 
 capture_sample: ${OBJECTS} capture_sample.o
 	${CXX} ${CXXFLAGS} ${OBJECTS} capture_sample.o -o capture_sample ${LIBS}
@@ -20,13 +20,13 @@ capture_sample: ${OBJECTS} capture_sample.o
 viewer: ${OBJECTS} viewer.o
 	${CXX} ${CXXFLAGS} ${OBJECTS} viewer.o -o viewer ${LIBS}
 
-segmentize: ${OBJECTS} segmentize.o
-	${CXX} ${CXXFLAGS} ${OBJECTS} segmentize.o -o segmentize ${LIBS}
+build_graph: ${OBJECTS} build_graph.o
+	${CXX} ${CXXFLAGS} ${OBJECTS} build_graph.o -o build_graph ${LIBS}
 
--include ${DEPENDS} capture_sample.d viewer.d segmentize.d
+-include ${DEPENDS} capture_sample.d viewer.d build_graph.d
 
 clean:
 	rm -f ${OBJECTS} ${DEPENDS} \
 	capture_sample.o capture_sample.d capture_sample \
 	viewer.o viewer.d viewer \
-	segmentize.o segmentize.d segmentize
+	build_graph.o build_graph.d build_graph

@@ -22,6 +22,8 @@
  * 
  * - if location doesn't move, then executing a sequence at a location
  *   - might be something copyable
+ * 
+ * - also use string distance to try to create repeats
  */
 
 #include <chrono>
