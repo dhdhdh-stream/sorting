@@ -2,6 +2,10 @@
 //   - variation short term, medium term, and long term
 
 // - maybe learn slowly, sample by sample?
+// - start performing a sample in its entirety
+//   - learn branches, but can only branch a limited distance
+//     - to prevent large sections of sample from being deleted
+//   - or maybe can quit if certain conditions apply?
 
 // - logic is an efficient way to share information
 //   - can share complex decision making through sharing simple rules that have the right complex consequences
@@ -9,6 +13,15 @@
 //     - look for spots that are a in solution, add branch checking for condition b, then do x
 //   - but not relevant for exploring/building solutions(?)
 //     - decision making can already be broken down
+
+// - maybe swap between sequential mode and Markov mode?
+//   - and don't need state (assume fully captured by context)
+//     - only use obs/world model? (which for Minesweeper captures all state anyways)
+//   - then use Markov mode to evaluate samples
+//     - if sample did something surprising, then that's what should be evaluated deeper?
+
+// - Markov mode might also improve generalization, meaning need to explore less?
+//   - or at least, explore only what's surprising
 
 #include <chrono>
 #include <iostream>
