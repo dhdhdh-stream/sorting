@@ -1,7 +1,3 @@
-// TODO:
-// - use softmax/cross entropy to allow variation
-// - use A3C to transform predicted vs. actual scores into whether performed action was target action
-
 #include <chrono>
 #include <iostream>
 #include <map>

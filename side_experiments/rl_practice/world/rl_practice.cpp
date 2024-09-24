@@ -32,6 +32,9 @@ RLPractice::RLPractice() {
 
 void RLPractice::get_observations(vector<double>& obs,
 								  vector<std::vector<int>>& locations) {
+	obs.clear();
+	locations.clear();
+
 	if (this->at_end) {
 		if (this->left_needed) {
 			obs.push_back(3.0);

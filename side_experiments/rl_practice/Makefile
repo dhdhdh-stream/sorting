@@ -1,10 +1,12 @@
 CXX = g++
 CXXFLAGS = -g -std=c++17 -Wall -Werror -MMD \
 		   -DMDEBUG=0 \
+		   -Inn \
 		   -Iutils \
 		   -Iworld
 LIBS = -pthread
-SOURCES := $(shell find utils -name '*.cpp') \
+SOURCES := $(shell find nn -name '*.cpp') \
+		   $(shell find utils -name '*.cpp') \
 		   $(shell find world -name '*.cpp')
 HEADERS = ${SOURCES:.cpp=.h}
 OBJECTS = ${HEADERS:.h=.o}
