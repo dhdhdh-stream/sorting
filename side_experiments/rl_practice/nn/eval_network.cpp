@@ -159,7 +159,7 @@ void EvalNetwork::activate(vector<double>& obs_vals,
 		}
 	}
 	for (int s_index = 0; s_index < (int)state_vals.size(); s_index++) {
-		this->state_input[s_index] = state_vals[s_index];
+		this->state_input->acti_vals[s_index] = state_vals[s_index];
 	}
 	this->hidden_1->activate();
 	this->hidden_2->activate();
@@ -185,6 +185,30 @@ void EvalNetwork::activate(vector<double>& obs_vals,
 	for (int n_index = 0; n_index < (int)this->hidden_2->acti_vals.size(); n_index++) {
 		history->hidden_2_history[n_index] = this->hidden_2->acti_vals[n_index];
 	}
+
+	output = this->output->acti_vals[0];
+}
+
+void EvalNetwork::activate(vector<double>& obs_vals,
+						   int action,
+						   vector<double>& state_vals,
+						   double& output) {
+	for (int i_index = 0; i_index < (int)obs_vals.size(); i_index++) {
+		this->obs_input->acti_vals[i_index] = obs_vals[i_index];
+	}
+	for (int a_index = 0; a_index < (int)this->action_input->acti_vals.size(); a_index++) {
+		if (a_index == action + 2) {
+			this->action_input->acti_vals[a_index] = 1.0;
+		} else {
+			this->action_input->acti_vals[a_index] = 0.0;
+		}
+	}
+	for (int s_index = 0; s_index < (int)state_vals.size(); s_index++) {
+		this->state_input->acti_vals[s_index] = state_vals[s_index];
+	}
+	this->hidden_1->activate();
+	this->hidden_2->activate();
+	this->output->activate();
 
 	output = this->output->acti_vals[0];
 }

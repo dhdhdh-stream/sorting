@@ -161,7 +161,7 @@ void StateNetwork::activate(vector<double>& obs_vals,
 		}
 	}
 	for (int s_index = 0; s_index < (int)state_vals.size(); s_index++) {
-		this->state_input[s_index] = state_vals[s_index];
+		this->state_input->acti_vals[s_index] = state_vals[s_index];
 	}
 	this->hidden_1->activate();
 	this->hidden_2->activate();
@@ -187,7 +187,7 @@ void StateNetwork::activate(vector<double>& obs_vals,
 		}
 	}
 	for (int s_index = 0; s_index < (int)state_vals.size(); s_index++) {
-		this->state_input[s_index] = state_vals[s_index];
+		this->state_input->acti_vals[s_index] = state_vals[s_index];
 	}
 	this->hidden_1->activate();
 	this->hidden_2->activate();

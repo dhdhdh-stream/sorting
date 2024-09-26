@@ -1,5 +1,7 @@
 #include "decision_network.h"
 
+#include "globals.h"
+
 using namespace std;
 
 const double NETWORK_TARGET_MAX_UPDATE = 0.01;
@@ -39,9 +41,10 @@ DecisionNetwork::DecisionNetwork(int num_obs,
 	this->hidden_2->input_layers.push_back(this->hidden_1);
 	this->hidden_2->update_structure();
 
-	this->output = new SoftmaxLayer(num_actions);
+	this->output = new Layer(LEAKY_LAYER);
 	for (int a_index = 0; a_index < num_actions; a_index++) {
 		this->output->acti_vals.push_back(0.0);
+		this->output->errors.push_back(0.0);
 	}
 	this->output->input_layers.push_back(this->hidden_1);
 	this->output->input_layers.push_back(this->hidden_2);
@@ -100,9 +103,10 @@ DecisionNetwork::DecisionNetwork(ifstream& input_file) {
 	string num_actions_line;
 	getline(input_file, num_actions_line);
 	int num_actions = stoi(num_actions_line);
-	this->output = new SoftmaxLayer(num_actions);
+	this->output = new Layer(LINEAR_LAYER);
 	for (int a_index = 0; a_index < num_actions; a_index++) {
 		this->output->acti_vals.push_back(0.0);
+		this->output->errors.push_back(0.0);
 	}
 	this->output->input_layers.push_back(this->hidden_1);
 	this->output->input_layers.push_back(this->hidden_2);
@@ -133,38 +137,83 @@ void DecisionNetwork::activate(vector<double>& obs_vals,
 		this->obs_input->acti_vals[i_index] = obs_vals[i_index];
 	}
 	for (int s_index = 0; s_index < (int)state_vals.size(); s_index++) {
-		this->state_input[s_index] = state_vals[s_index];
+		this->state_input->acti_vals[s_index] = state_vals[s_index];
 	}
 	this->hidden_1->activate();
 	this->hidden_2->activate();
 	this->output->activate();
 
-	action = this->output->predicted_index - 1;
+	int best_index = -1;
+	double best_val = numeric_limits<double>::lowest();
+	for (int a_index = 0; a_index < (int)this->output->acti_vals.size(); a_index++) {
+		if (this->output->acti_vals[a_index] > best_val) {
+			best_index = a_index;
+			best_val = this->output->acti_vals[a_index];
+		}
+	}
+
+	action = best_index - 1;
+}
+
+void DecisionNetwork::activate(vector<double>& obs_vals,
+							   vector<double>& state_vals,
+							   double temperature,
+							   int& action) {
+	for (int i_index = 0; i_index < (int)obs_vals.size(); i_index++) {
+		this->obs_input->acti_vals[i_index] = obs_vals[i_index];
+	}
+	for (int s_index = 0; s_index < (int)state_vals.size(); s_index++) {
+		this->state_input->acti_vals[s_index] = state_vals[s_index];
+	}
+	this->hidden_1->activate();
+	this->hidden_2->activate();
+	this->output->activate();
+
+	double max_val = numeric_limits<double>::lowest();
+	for (int a_index = 0; a_index < (int)this->output->acti_vals.size(); a_index++) {
+		if (this->output->acti_vals[a_index] > max_val) {
+			max_val = this->output->acti_vals[a_index];
+		}
+	}
+	vector<double> softmax_vals(this->output->acti_vals.size());
+	double sum_vals = 0.0;
+	for (int a_index = 0; a_index < (int)this->output->acti_vals.size(); a_index++) {
+		softmax_vals[a_index] = exp((this->output->acti_vals[a_index] - max_val) / temperature);
+		sum_vals += softmax_vals[a_index];
+	}
+	uniform_real_distribution<double> index_distribution(0.0, sum_vals);
+	double random_val = index_distribution(generator);
+	int curr_index = 0;
+	while (true) {
+		random_val -= softmax_vals[curr_index];
+		if (random_val <= 0.0) {
+			break;
+		} else {
+			curr_index++;
+		}
+	}
+
+	action = curr_index - 1;
 }
 
 void DecisionNetwork::backprop(vector<double>& obs_vals,
 							   int action,
 							   vector<double>& state_vals,
-							   bool is_better,
-							   vector<double>& state_errors) {
+							   double difference) {
 	for (int i_index = 0; i_index < (int)obs_vals.size(); i_index++) {
 		this->obs_input->acti_vals[i_index] = obs_vals[i_index];
 	}
 	for (int s_index = 0; s_index < (int)state_vals.size(); s_index++) {
-		this->state_input[s_index] = state_vals[s_index];
+		this->state_input->acti_vals[s_index] = state_vals[s_index];
 	}
 	this->hidden_1->activate();
 	this->hidden_2->activate();
-	this->output->activate(action);
+	this->output->activate();
 
-	this->output->backprop(is_better);
+	this->output->errors[action + 1] = difference - this->output->acti_vals[action + 1];
+	this->output->backprop();
 	this->hidden_2->backprop();
 	this->hidden_1->backprop();
-
-	for (int i_index = 0; i_index < (int)this->state_input->acti_vals.size(); i_index++) {
-		state_errors[i_index] += this->state_input->errors[i_index];
-		this->state_input->errors[i_index] = 0.0;
-	}
 
 	this->epoch_iter++;
 	if (this->epoch_iter == EPOCH_SIZE) {

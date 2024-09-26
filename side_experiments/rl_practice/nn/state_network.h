@@ -22,8 +22,8 @@ public:
 	double output_average_max_update;
 
 	StateNetwork(int num_obs,
-				int num_actions,
-				int num_state);
+				 int num_actions,
+				 int num_state);
 	StateNetwork(std::ifstream& input_file);
 	~StateNetwork();
 

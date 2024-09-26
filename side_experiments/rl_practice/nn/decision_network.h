@@ -4,7 +4,6 @@
 #include <vector>
 
 #include "layer.h"
-#include "softmax_layer.h"
 
 class DecisionNetwork {
 public:
@@ -13,7 +12,7 @@ public:
 
 	Layer* hidden_1;
 	Layer* hidden_2;
-	SoftmaxLayer* output;
+	Layer* output;
 
 	int epoch_iter;
 	double hidden_1_average_max_update;
@@ -29,11 +28,14 @@ public:
 	void activate(std::vector<double>& obs_vals,
 				  std::vector<double>& state_vals,
 				  int& action);
+	void activate(std::vector<double>& obs_vals,
+				  std::vector<double>& state_vals,
+				  double temperature,
+				  int& action);
 	void backprop(std::vector<double>& obs_vals,
 				  int action,
 				  std::vector<double>& state_vals,
-				  bool is_better,
-				  std::vector<double>& state_errors);
+				  double difference);
 
 	void save(std::ofstream& output_file);
 };

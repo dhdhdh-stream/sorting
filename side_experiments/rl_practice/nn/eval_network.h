@@ -32,6 +32,10 @@ public:
 				  std::vector<double>& state_vals,
 				  EvalNetworkHistory* history,
 				  double& output);
+	void activate(std::vector<double>& obs_vals,
+				  int action,
+				  std::vector<double>& state_vals,
+				  double& output);
 	void backprop(double error,
 				  std::vector<double>& state_errors,
 				  EvalNetworkHistory* history);
