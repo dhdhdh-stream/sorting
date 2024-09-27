@@ -1,4 +1,4 @@
-#include "decision_network.h"
+#include "combined_decision_network.h"
 
 #include <iostream>
 
@@ -10,8 +10,10 @@ using namespace std;
 const double NETWORK_TARGET_MAX_UPDATE = 0.01;
 const int EPOCH_SIZE = 20;
 
-DecisionNetwork::DecisionNetwork(int num_obs,
-								 int num_state) {
+CombinedDecisionNetwork::CombinedDecisionNetwork(
+		int num_obs,
+		int num_actions,
+		int num_state) {
 	this->obs_input = new Layer(num_obs);
 	for (int i_index = 0; i_index < num_obs; i_index++) {
 		this->obs_input->acti_vals.push_back(0.0);
@@ -25,7 +27,7 @@ DecisionNetwork::DecisionNetwork(int num_obs,
 	}
 
 	this->hidden_1 = new Layer(LEAKY_LAYER);
-	for (int h_index = 0; h_index < 10; h_index++) {
+	for (int h_index = 0; h_index < 16; h_index++) {
 		this->hidden_1->acti_vals.push_back(0.0);
 		this->hidden_1->errors.push_back(0.0);
 	}
@@ -34,7 +36,7 @@ DecisionNetwork::DecisionNetwork(int num_obs,
 	this->hidden_1->update_structure();
 
 	this->hidden_2 = new Layer(LEAKY_LAYER);
-	for (int h_index = 0; h_index < 4; h_index++) {
+	for (int h_index = 0; h_index < 8; h_index++) {
 		this->hidden_2->acti_vals.push_back(0.0);
 		this->hidden_2->errors.push_back(0.0);
 	}
@@ -44,8 +46,12 @@ DecisionNetwork::DecisionNetwork(int num_obs,
 	this->hidden_2->update_structure();
 
 	this->output = new Layer(LEAKY_LAYER);
-	this->output->acti_vals.push_back(0.0);
-	this->output->errors.push_back(0.0);
+	for (int a_index = 0; a_index < num_actions; a_index++) {
+		this->output->acti_vals.push_back(0.0);
+		this->output->errors.push_back(0.0);
+	}
+	this->output->input_layers.push_back(this->obs_input);
+	this->output->input_layers.push_back(this->state_input);
 	this->output->input_layers.push_back(this->hidden_1);
 	this->output->input_layers.push_back(this->hidden_2);
 	this->output->update_structure();
@@ -56,7 +62,8 @@ DecisionNetwork::DecisionNetwork(int num_obs,
 	this->output_average_max_update = 0.0;
 }
 
-DecisionNetwork::DecisionNetwork(ifstream& input_file) {
+CombinedDecisionNetwork::CombinedDecisionNetwork(
+		ifstream& input_file) {
 	this->obs_input = new Layer(LINEAR_LAYER);
 	string obs_input_size_line;
 	getline(input_file, obs_input_size_line);
@@ -100,9 +107,14 @@ DecisionNetwork::DecisionNetwork(ifstream& input_file) {
 	this->hidden_2->input_layers.push_back(this->hidden_1);
 	this->hidden_2->update_structure();
 
+	string num_actions_line;
+	getline(input_file, num_actions_line);
+	int num_actions = stoi(num_actions_line);
 	this->output = new Layer(LINEAR_LAYER);
-	this->output->acti_vals.push_back(0.0);
-	this->output->errors.push_back(0.0);
+	for (int a_index = 0; a_index < num_actions; a_index++) {
+		this->output->acti_vals.push_back(0.0);
+		this->output->errors.push_back(0.0);
+	}
 	this->output->input_layers.push_back(this->hidden_1);
 	this->output->input_layers.push_back(this->hidden_2);
 	this->output->update_structure();
@@ -117,7 +129,7 @@ DecisionNetwork::DecisionNetwork(ifstream& input_file) {
 	this->output_average_max_update = 0.0;
 }
 
-DecisionNetwork::~DecisionNetwork() {
+CombinedDecisionNetwork::~CombinedDecisionNetwork() {
 	delete this->obs_input;
 	delete this->state_input;
 	delete this->hidden_1;
@@ -125,8 +137,10 @@ DecisionNetwork::~DecisionNetwork() {
 	delete this->output;
 }
 
-void DecisionNetwork::activate(vector<double>& obs_vals,
-							   vector<double>& state_vals) {
+void CombinedDecisionNetwork::activate(
+		vector<double>& obs_vals,
+		vector<double>& state_vals,
+		int& action) {
 	for (int i_index = 0; i_index < (int)obs_vals.size(); i_index++) {
 		this->obs_input->acti_vals[i_index] = obs_vals[i_index];
 	}
@@ -136,11 +150,23 @@ void DecisionNetwork::activate(vector<double>& obs_vals,
 	this->hidden_1->activate();
 	this->hidden_2->activate();
 	this->output->activate();
+
+	int best_index = -1;
+	double best_val = numeric_limits<double>::lowest();
+	for (int a_index = 0; a_index < (int)this->output->acti_vals.size(); a_index++) {
+		if (this->output->acti_vals[a_index] > best_val) {
+			best_index = a_index;
+			best_val = this->output->acti_vals[a_index];
+		}
+	}
+	action = best_index - 1;
 }
 
-void DecisionNetwork::backprop(vector<double>& obs_vals,
-							   vector<double>& state_vals,
-							   double eval) {
+void CombinedDecisionNetwork::backprop(
+		vector<double>& obs_vals,
+		int action,
+		vector<double>& state_vals,
+		double eval) {
 	for (int i_index = 0; i_index < (int)obs_vals.size(); i_index++) {
 		this->obs_input->acti_vals[i_index] = obs_vals[i_index];
 	}
@@ -151,7 +177,7 @@ void DecisionNetwork::backprop(vector<double>& obs_vals,
 	this->hidden_2->activate();
 	this->output->activate();
 
-	this->output->errors[0] = eval - this->output->acti_vals[0];
+	this->output->errors[action + 1] = eval - this->output->acti_vals[action + 1];
 	this->output->backprop();
 	this->hidden_2->backprop();
 	this->hidden_1->backprop();
@@ -195,11 +221,13 @@ void DecisionNetwork::backprop(vector<double>& obs_vals,
 	}
 }
 
-void DecisionNetwork::save(ofstream& output_file) {
+void CombinedDecisionNetwork::save(
+		ofstream& output_file) {
 	output_file << this->obs_input->acti_vals.size() << endl;
 	output_file << this->state_input->acti_vals.size() << endl;
 	output_file << this->hidden_1->acti_vals.size() << endl;
 	output_file << this->hidden_2->acti_vals.size() << endl;
+	output_file << this->output->acti_vals.size() << endl;
 
 	this->hidden_1->save_weights(output_file);
 	this->hidden_2->save_weights(output_file);

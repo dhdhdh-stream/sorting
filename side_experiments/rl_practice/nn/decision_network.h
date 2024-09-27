@@ -20,22 +20,15 @@ public:
 	double output_average_max_update;
 
 	DecisionNetwork(int num_obs,
-					int num_actions,
 					int num_state);
 	DecisionNetwork(std::ifstream& input_file);
 	~DecisionNetwork();
 
 	void activate(std::vector<double>& obs_vals,
-				  std::vector<double>& state_vals,
-				  int& action);
-	void activate(std::vector<double>& obs_vals,
-				  std::vector<double>& state_vals,
-				  double temperature,
-				  int& action);
+				  std::vector<double>& state_vals);
 	void backprop(std::vector<double>& obs_vals,
-				  int action,
 				  std::vector<double>& state_vals,
-				  double difference);
+				  double eval);
 
 	void save(std::ofstream& output_file);
 };

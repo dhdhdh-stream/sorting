@@ -3,8 +3,8 @@
 #include <iostream>
 #include <vector>
 
+#include "combined_decision_network.h"
 #include "constants.h"
-#include "decision_network.h"
 #include "eval_network.h"
 #include "globals.h"
 #include "problem.h"
@@ -17,17 +17,17 @@ const int TRAIN_ITERS = 200;
 #else
 const int NUM_EPOCHS = 20;
 const int NUM_SAMPLES = 1000;
-const int TRAIN_ITERS = 50000;
+const int TRAIN_ITERS = 100000;
 #endif /* MDEBUG */
 
 using namespace std;
 
-void train_eval_helper(vector<int>& actions,
-					   vector<vector<double>>& obs_vals,
-					   double target_val,
-					   StateNetwork* state_network,
-					   EvalNetwork* eval_network,
-					   double average_val) {
+void train_eval_combined_helper(vector<int>& actions,
+								vector<vector<double>>& obs_vals,
+								double target_val,
+								StateNetwork* state_network,
+								EvalNetwork* eval_network,
+								double average_val) {
 	vector<double> state_vals(RL_STATE_SIZE, 0.0);
 	double current_eval = average_val;
 
@@ -73,12 +73,12 @@ void train_eval_helper(vector<int>& actions,
 	}
 }
 
-void calc_eval_helper(vector<vector<int>>& actions,
-					  vector<vector<vector<double>>>& obs_vals,
-					  vector<vector<vector<double>>>& state_vals,
-					  vector<vector<double>>& eval_vals,
-					  StateNetwork* state_network,
-					  EvalNetwork* eval_network) {
+void calc_eval_combined_helper(vector<vector<int>>& actions,
+							   vector<vector<vector<double>>>& obs_vals,
+							   vector<vector<vector<double>>>& state_vals,
+							   vector<vector<double>>& eval_vals,
+							   StateNetwork* state_network,
+							   EvalNetwork* eval_network) {
 	for (int gather_index = 0; gather_index < NUM_SAMPLES; gather_index++) {
 		state_vals[gather_index] = vector<vector<double>>(actions[gather_index].size());
 		eval_vals[gather_index] = vector<double>(actions[gather_index].size());
@@ -102,23 +102,24 @@ void calc_eval_helper(vector<vector<int>>& actions,
 	}
 }
 
-void train_decision_helper(vector<int>& actions,
-						   vector<vector<double>>& obs_vals,
-						   vector<vector<double>>& state_vals,
-						   vector<double>& eval_vals,
-						   vector<DecisionNetwork*>& decision_networks) {
+void train_decision_combined_helper(vector<int>& actions,
+									vector<vector<double>>& obs_vals,
+									vector<vector<double>>& state_vals,
+									vector<double>& eval_vals,
+									CombinedDecisionNetwork* decision_network) {
 	for (int s_index = 1; s_index < (int)actions.size(); s_index++) {
-		decision_networks[actions[s_index] + 1]->backprop(
+		decision_network->backprop(
 			obs_vals[s_index-1],
+			actions[s_index],
 			state_vals[s_index-1],
 			eval_vals[s_index]);
 	}
 }
 
-void train_rl(vector<DecisionNetwork*>& decision_networks,
-			  StateNetwork* state_network,
-			  EvalNetwork* eval_network,
-			  double& average_val) {
+void train_rl_combined(CombinedDecisionNetwork* decision_network,
+					   StateNetwork* state_network,
+					   EvalNetwork* eval_network,
+					   double& average_val) {
 	/**
 	 * - occasional random is better than temperature
 	 *   - explore should be evaluated given other actions are correct
@@ -161,18 +162,10 @@ void train_rl(vector<DecisionNetwork*>& decision_networks,
 						|| random_distribution(generator) == 0) {
 					action = random_action_distribution(generator);
 				} else {
-					int best_index = -1;
-					double best_val = numeric_limits<double>::lowest();
-					for (int a_index = 0; a_index < (int)decision_networks.size(); a_index++) {
-						decision_networks[a_index]->activate(
-							obs,
-							state_vals);
-						if (decision_networks[a_index]->output->acti_vals[0] > best_val) {
-							best_index = a_index;
-							best_val = decision_networks[a_index]->output->acti_vals[0];
-						}
-					}
-					action = best_index - 1;
+					decision_network->activate(
+						obs,
+						state_vals,
+						action);
 				}
 
 				if (action == ACTION_TERMINATE) {
@@ -219,30 +212,30 @@ void train_rl(vector<DecisionNetwork*>& decision_networks,
 
 		for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
 			int rand_index = sample_distribution(generator);
-			train_eval_helper(actions[rand_index],
-							  obs_vals[rand_index],
-							  target_vals[rand_index],
-							  state_network,
-							  eval_network,
-							  average_val);
+			train_eval_combined_helper(actions[rand_index],
+									   obs_vals[rand_index],
+									   target_vals[rand_index],
+									   state_network,
+									   eval_network,
+									   average_val);
 		}
 
 		vector<vector<vector<double>>> state_vals(NUM_SAMPLES);
 		vector<vector<double>> eval_vals(NUM_SAMPLES);
-		calc_eval_helper(actions,
-						 obs_vals,
-						 state_vals,
-						 eval_vals,
-						 state_network,
-						 eval_network);
+		calc_eval_combined_helper(actions,
+								  obs_vals,
+								  state_vals,
+								  eval_vals,
+								  state_network,
+								  eval_network);
 
 		for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
 			int rand_index = sample_distribution(generator);
-			train_decision_helper(actions[rand_index],
-								  obs_vals[rand_index],
-								  state_vals[rand_index],
-								  eval_vals[rand_index],
-								  decision_networks);
+			train_decision_combined_helper(actions[rand_index],
+										   obs_vals[rand_index],
+										   state_vals[rand_index],
+										   eval_vals[rand_index],
+										   decision_network);
 		}
 	}
 }

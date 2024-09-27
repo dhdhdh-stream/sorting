@@ -4,10 +4,10 @@
 #include <thread>
 #include <random>
 
+#include "combined_decision_network.h"
+#include "combined_nn_helpers.h"
 #include "constants.h"
-#include "decision_network.h"
 #include "eval_network.h"
-#include "nn_helpers.h"
 #include "rl_practice.h"
 #include "simple_rl_practice.h"
 #include "state_network.h"
@@ -31,7 +31,7 @@ int main(int argc, char* argv[]) {
 	// problem_type = new TypeRLPractice();
 	problem_type = new TypeSimpleRLPractice();
 
-	DecisionNetwork* decision_network = new DecisionNetwork(
+	CombinedDecisionNetwork* decision_network = new CombinedDecisionNetwork(
 		problem_type->num_obs(),
 		problem_type->num_possible_actions() + 1,
 		RL_STATE_SIZE);
@@ -45,16 +45,18 @@ int main(int argc, char* argv[]) {
 		RL_STATE_SIZE);
 
 	double average_val;
-	train_rl(decision_network,
-			 state_network,
-			 eval_network,
-			 average_val);
+	train_rl_combined(decision_network,
+					  state_network,
+					  eval_network,
+					  average_val);
 
 	delete decision_network;
 	delete state_network;
 	delete eval_network;
 
 	delete problem_type;
+
+	cout << "Seed: " << seed << endl;
 
 	cout << "Done" << endl;
 }
