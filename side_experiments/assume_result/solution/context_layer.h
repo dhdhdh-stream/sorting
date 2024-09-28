@@ -14,8 +14,6 @@ public:
 	Scope* scope;
 	AbstractNode* node;
 
-	std::vector<double> starting_location;
-
 	std::map<AbstractNode*, std::vector<double>> location_history;
 
 	/**

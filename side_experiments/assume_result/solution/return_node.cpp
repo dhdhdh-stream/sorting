@@ -1,5 +1,7 @@
 #include "return_node.h"
 
+#include <iostream>
+
 #include "abstract_experiment.h"
 #include "scope.h"
 
@@ -16,6 +18,8 @@ ReturnNode::ReturnNode(ReturnNode* original) {
 
 	this->previous_location_id = original->previous_location_id;
 
+	this->location = original->location;
+
 	this->passed_next_node_id = original->passed_next_node_id;
 	this->skipped_next_node_id = original->skipped_next_node_id;
 
@@ -31,6 +35,11 @@ ReturnNode::~ReturnNode() {
 void ReturnNode::save(ofstream& output_file) {
 	output_file << this->previous_location_id << endl;
 
+	output_file << this->location.size() << endl;
+	for (int l_index = 0; l_index < (int)this->location.size(); l_index++) {
+		output_file << this->location[l_index] << endl;
+	}
+
 	output_file << this->passed_next_node_id << endl;
 	output_file << this->skipped_next_node_id << endl;
 
@@ -41,6 +50,15 @@ void ReturnNode::load(ifstream& input_file) {
 	string previous_location_id_line;
 	getline(input_file, previous_location_id_line);
 	this->previous_location_id = stoi(previous_location_id_line);
+
+	string location_size_line;
+	getline(input_file, location_size_line);
+	int location_size = stoi(location_size_line);
+	for (int l_index = 0; l_index < location_size; l_index++) {
+		string component_line;
+		getline(input_file, component_line);
+		this->location.push_back(stod(component_line));
+	}
 
 	string passed_next_node_id_line;
 	getline(input_file, passed_next_node_id_line);

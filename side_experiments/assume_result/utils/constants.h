@@ -21,19 +21,18 @@ const int EXPLORE_TYPE_BEST = 1;
 const int NUM_DATAPOINTS = 10;
 const int MIN_NUM_TRUTH_DATAPOINTS = 10;
 #else
-// const int NUM_DATAPOINTS = 1000;
-// const int MIN_NUM_TRUTH_DATAPOINTS = 400;
-
-const int NUM_DATAPOINTS = 200;
-const int MIN_NUM_TRUTH_DATAPOINTS = 50;
+const int NUM_DATAPOINTS = 1000;
+const int MIN_NUM_TRUTH_DATAPOINTS = 400;
 #endif /* MDEBUG */
 
 #if defined(MDEBUG) && MDEBUG
 const int MEASURE_ITERS = 10;
 #else
-// const int MEASURE_ITERS = 4000;
-
-const int MEASURE_ITERS = 400;
+/**
+ * - need large number of samples
+ *   - otherwise trapped by lottery + local maxima
+ */
+const int MEASURE_ITERS = 4000;
 #endif /* MDEBUG */
 
 const int NUM_VERIFY_SAMPLES = 10;

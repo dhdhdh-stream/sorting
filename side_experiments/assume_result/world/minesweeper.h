@@ -50,6 +50,7 @@ public:
 	int num_possible_actions();
 	Action random_action();
 
+	int num_dimensions();
 	std::vector<double> relative_to_world(std::vector<double>& comparison,
 										  std::vector<double>& relative_location);
 	std::vector<double> world_to_relative(std::vector<double>& comparison,

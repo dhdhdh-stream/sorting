@@ -366,7 +366,9 @@ double Minesweeper::score_result(int num_analyze,
 	score += 0.01*curr_revealed;
 
 	score -= 0.00001*num_analyze;
-	score -= 0.000005*num_actions;
+	// score -= 0.000005*num_actions;
+	score -= 0.00005*num_actions;	// actually works great (?)
+	// score -= 0.0002*num_actions;		// easily stuck in local maxima, but can also lead to efficient solution
 
 	if (this->hit_mine) {
 		score -= 1.0;
@@ -385,6 +387,19 @@ vector<double> Minesweeper::get_location() {
 void Minesweeper::return_to_location(vector<double>& location) {
 	this->current_x = location[0];
 	this->current_y = location[1];
+
+	if (this->current_y > HEIGHT-1) {
+		this->current_y = HEIGHT-1;
+	}
+	if (this->current_x > WIDTH-1) {
+		this->current_x = WIDTH-1;
+	}
+	if (this->current_y < 0) {
+		this->current_y = 0;
+	}
+	if (this->current_x < 0) {
+		this->current_x = 0;
+	}
 }
 
 Problem* Minesweeper::copy_and_reset() {
@@ -464,6 +479,10 @@ int TypeMinesweeper::num_possible_actions() {
 Action TypeMinesweeper::random_action() {
 	uniform_int_distribution<int> action_distribution(0, 6);
 	return Action(action_distribution(generator));
+}
+
+int TypeMinesweeper::num_dimensions() {
+	return 2;
 }
 
 vector<double> TypeMinesweeper::relative_to_world(

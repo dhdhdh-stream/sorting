@@ -2,7 +2,6 @@
 
 #include <iostream>
 
-#include "absolute_return_node.h"
 #include "action_node.h"
 #include "branch_node.h"
 #include "globals.h"
@@ -71,16 +70,6 @@ void Scope::random_exit_activate(AbstractNode* starting_node,
 			}
 
 			break;
-		case NODE_TYPE_ABSOLUTE_RETURN:
-			{
-				AbsoluteReturnNode* node = (AbsoluteReturnNode*)curr_node;
-
-				possible_exits.push_back(curr_node);
-
-				curr_node = node->next_node;
-			}
-
-			break;
 		}
 	}
 }
@@ -142,16 +131,6 @@ void Scope::random_continue(AbstractNode* starting_node,
 				} else {
 					curr_node = node->skipped_next_node;
 				}
-			}
-
-			break;
-		case NODE_TYPE_ABSOLUTE_RETURN:
-			{
-				AbsoluteReturnNode* node = (AbsoluteReturnNode*)curr_node;
-
-				potential_included_nodes.insert(curr_node);
-
-				curr_node = node->next_node;
 			}
 
 			break;

@@ -2,7 +2,6 @@
 
 #include <iostream>
 
-#include "absolute_return_node.h"
 #include "action_node.h"
 #include "branch_node.h"
 #include "return_node.h"
@@ -45,12 +44,6 @@ void clean_scope(Scope* scope) {
 					ReturnNode* return_node = (ReturnNode*)it->second;
 					next_node_ids.insert(return_node->passed_next_node_id);
 					next_node_ids.insert(return_node->skipped_next_node_id);
-				}
-				break;
-			case NODE_TYPE_ABSOLUTE_RETURN:
-				{
-					AbsoluteReturnNode* return_node = (AbsoluteReturnNode*)it->second;
-					next_node_ids.insert(return_node->next_node_id);
 				}
 				break;
 			}
@@ -130,15 +123,6 @@ void clean_branch_node(Scope* scope) {
 								if (node->skipped_next_node == branch_node) {
 									node->skipped_next_node_id = branch_node->original_next_node_id;
 									node->skipped_next_node = branch_node->original_next_node;
-								}
-							}
-							break;
-						case NODE_TYPE_ABSOLUTE_RETURN:
-							{
-								AbsoluteReturnNode* node = (AbsoluteReturnNode*)inner_it->second;
-								if (node->next_node == branch_node) {
-									node->next_node_id = branch_node->original_next_node_id;
-									node->next_node = branch_node->original_next_node;
 								}
 							}
 							break;
@@ -252,21 +236,6 @@ void clean_scope_node_helper(Scope* scope,
 					} else {
 						node->skipped_next_node_id = new_node->id;
 						node->skipped_next_node = new_node;
-					}
-				}
-			}
-			break;
-		case NODE_TYPE_ABSOLUTE_RETURN:
-			{
-				AbsoluteReturnNode* node = (AbsoluteReturnNode*)it->second;
-
-				if (node->next_node == original_node) {
-					if (new_node == NULL) {
-						node->next_node_id = -1;
-						node->next_node = NULL;
-					} else {
-						node->next_node_id = new_node->id;
-						node->next_node = new_node;
 					}
 				}
 			}

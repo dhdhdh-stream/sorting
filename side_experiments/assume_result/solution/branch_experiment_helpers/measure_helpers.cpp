@@ -3,7 +3,6 @@
 #include <cmath>
 #include <iostream>
 
-#include "absolute_return_node.h"
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
@@ -64,10 +63,8 @@ bool BranchExperiment::measure_activate(AbstractNode*& curr_node,
 				curr_node = this->best_actions[0];
 			} else if (this->best_step_types[0] == STEP_TYPE_SCOPE) {
 				curr_node = this->best_scopes[0];
-			} else if (this->best_step_types[0] == STEP_TYPE_RETURN) {
-				curr_node = this->best_returns[0];
 			} else {
-				curr_node = this->best_absolute_returns[0];
+				curr_node = this->best_returns[0];
 			}
 		}
 

@@ -18,7 +18,6 @@
 #include "context_layer.h"
 #include "run_helper.h"
 
-class AbsoluteReturnNode;
 class AbstractNode;
 class ActionNode;
 class BranchNode;
@@ -53,7 +52,6 @@ public:
 	std::vector<ActionNode*> curr_actions;
 	std::vector<ScopeNode*> curr_scopes;
 	std::vector<ReturnNode*> curr_returns;
-	std::vector<AbsoluteReturnNode*> curr_absolute_returns;
 	AbstractNode* curr_exit_next_node;
 
 	double best_surprise;
@@ -61,7 +59,6 @@ public:
 	std::vector<ActionNode*> best_actions;
 	std::vector<ScopeNode*> best_scopes;
 	std::vector<ReturnNode*> best_returns;
-	std::vector<AbsoluteReturnNode*> best_absolute_returns;
 	AbstractNode* best_exit_next_node;
 
 	BranchNode* branch_node;

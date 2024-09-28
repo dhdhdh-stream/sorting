@@ -2,7 +2,6 @@
 
 #include <iostream>
 
-#include "absolute_return_node.h"
 #include "action_node.h"
 #include "branch_node.h"
 #include "globals.h"
@@ -143,21 +142,6 @@ NewActionExperiment::NewActionExperiment(Scope* scope_context,
 						node_mappings[original_return_node] = new_return_node;
 					}
 					break;
-				case NODE_TYPE_ABSOLUTE_RETURN:
-					{
-						AbsoluteReturnNode* original_return_node = (AbsoluteReturnNode*)(*node_it);
-
-						AbsoluteReturnNode* new_return_node = new AbsoluteReturnNode();
-						new_return_node->parent = this->new_scope;
-						new_return_node->id = this->new_scope->node_counter;
-						this->new_scope->node_counter++;
-						this->new_scope->nodes[new_return_node->id] = new_return_node;
-
-						new_return_node->location = original_return_node->location;
-
-						node_mappings[original_return_node] = new_return_node;
-					}
-					break;
 				}
 			}
 
@@ -253,6 +237,8 @@ NewActionExperiment::NewActionExperiment(Scope* scope_context,
 							}
 						}
 
+						new_return_node->location = original_return_node->location;
+
 						{
 							map<AbstractNode*, AbstractNode*>::iterator it = node_mappings
 								.find(original_return_node->passed_next_node);
@@ -274,22 +260,6 @@ NewActionExperiment::NewActionExperiment(Scope* scope_context,
 								new_return_node->skipped_next_node_id = it->second->id;
 								new_return_node->skipped_next_node = it->second;
 							}
-						}
-					}
-					break;
-				case NODE_TYPE_ABSOLUTE_RETURN:
-					{
-						AbsoluteReturnNode* original_return_node = (AbsoluteReturnNode*)(*node_it);
-						AbsoluteReturnNode* new_return_node = (AbsoluteReturnNode*)node_mappings[original_return_node];
-
-						map<AbstractNode*, AbstractNode*>::iterator it = node_mappings
-							.find(original_return_node->next_node);
-						if (it == node_mappings.end()) {
-							new_return_node->next_node_id = new_ending_node->id;
-							new_return_node->next_node = new_ending_node;
-						} else {
-							new_return_node->next_node_id = it->second->id;
-							new_return_node->next_node = it->second;
 						}
 					}
 					break;
@@ -344,12 +314,6 @@ NewActionExperiment::NewActionExperiment(Scope* scope_context,
 				} else {
 					random_start_node = return_node->skipped_next_node;
 				}
-			}
-			break;
-		case NODE_TYPE_ABSOLUTE_RETURN:
-			{
-				AbsoluteReturnNode* return_node = (AbsoluteReturnNode*)node_context;
-				random_start_node = return_node->next_node;
 			}
 			break;
 		}

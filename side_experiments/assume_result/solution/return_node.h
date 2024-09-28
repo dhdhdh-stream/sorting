@@ -18,6 +18,8 @@ public:
 	int previous_location_id;
 	AbstractNode* previous_location;
 
+	std::vector<double> location;
+
 	int passed_next_node_id;
 	AbstractNode* passed_next_node;
 	int skipped_next_node_id;

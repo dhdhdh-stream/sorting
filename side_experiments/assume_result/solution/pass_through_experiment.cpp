@@ -2,7 +2,6 @@
 
 #include <iostream>
 
-#include "absolute_return_node.h"
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
@@ -64,12 +63,6 @@ PassThroughExperiment::~PassThroughExperiment() {
 		}
 	}
 
-	for (int s_index = 0; s_index < (int)this->curr_absolute_returns.size(); s_index++) {
-		if (this->curr_absolute_returns[s_index] != NULL) {
-			delete this->curr_absolute_returns[s_index];
-		}
-	}
-
 	for (int s_index = 0; s_index < (int)this->best_actions.size(); s_index++) {
 		if (this->best_actions[s_index] != NULL) {
 			delete this->best_actions[s_index];
@@ -85,12 +78,6 @@ PassThroughExperiment::~PassThroughExperiment() {
 	for (int s_index = 0; s_index < (int)this->best_returns.size(); s_index++) {
 		if (this->best_returns[s_index] != NULL) {
 			delete this->best_returns[s_index];
-		}
-	}
-
-	for (int s_index = 0; s_index < (int)this->best_absolute_returns.size(); s_index++) {
-		if (this->best_absolute_returns[s_index] != NULL) {
-			delete this->best_absolute_returns[s_index];
 		}
 	}
 

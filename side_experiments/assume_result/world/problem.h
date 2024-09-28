@@ -9,6 +9,9 @@ public:
 
 	virtual std::vector<double> get_observations() = 0;
 	virtual void perform_action(Action action) = 0;
+	/**
+	 * TODO: use actual time spent?
+	 */
 	virtual double score_result(int num_analyze,
 								int num_actions) = 0;
 
@@ -31,6 +34,7 @@ public:
 	virtual int num_possible_actions() = 0;
 	virtual Action random_action() = 0;
 
+	virtual int num_dimensions() = 0;
 	virtual std::vector<double> relative_to_world(std::vector<double>& comparison,
 												  std::vector<double>& relative_location) = 0;
 	virtual std::vector<double> world_to_relative(std::vector<double>& comparison,

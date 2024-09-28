@@ -4,7 +4,6 @@
 
 #include <iostream>
 
-#include "absolute_return_node.h"
 #include "action_node.h"
 #include "branch_node.h"
 #include "globals.h"
@@ -62,16 +61,6 @@ void new_action_capture_verify_node_activate_helper(
 		}
 
 		break;
-	case NODE_TYPE_ABSOLUTE_RETURN:
-		{
-			AbsoluteReturnNode* node = (AbsoluteReturnNode*)curr_node;
-			node->activate(curr_node,
-						   problem,
-						   context,
-						   run_helper);
-		}
-
-		break;
 	}
 }
 
@@ -90,8 +79,6 @@ void Scope::new_action_capture_verify_activate(
 
 	context.back().scope = this;
 	context.back().node = NULL;
-
-	context.back().starting_location = problem->get_location();
 
 	AbstractNode* curr_node = this->nodes[0];
 	while (true) {
