@@ -7,6 +7,7 @@
 #include "branch_node.h"
 #include "constants.h"
 #include "globals.h"
+#include "markov_experiment.h"
 #include "new_action_experiment.h"
 #include "pass_through_experiment.h"
 #include "scope.h"
@@ -72,27 +73,37 @@ void create_experiment(RunHelper& run_helper) {
 			explore_node->experiments.push_back(new_action_experiment);
 		}
 	} else {
-		/**
-		 * - weigh towards PassThroughExperiments as cheaper and potentially just as effective
-		 *   - solutions are often made of relatively few distinct decisions, but applied such that has good coverage
-		 *     - like tessellation, but have to get both the shape and the pattern correct
-		 *       - and PassThroughExperiments help with both
-		 */
-		uniform_int_distribution<int> pass_through_distribution(0, 1);
-		if (pass_through_distribution(generator) == 0) {
-			PassThroughExperiment* new_experiment = new PassThroughExperiment(
+		uniform_int_distribution<int> markov_distribution(0, 2);
+		if (markov_distribution(generator) == 0) {
+			MarkovExperiment* new_experiment = new MarkovExperiment(
 				explore_node->parent,
 				explore_node,
 				explore_is_branch);
 
 			explore_node->experiments.push_back(new_experiment);
 		} else {
-			BranchExperiment* new_experiment = new BranchExperiment(
-				explore_node->parent,
-				explore_node,
-				explore_is_branch);
+			/**
+			 * - weigh towards PassThroughExperiments as cheaper and potentially just as effective
+			 *   - solutions are often made of relatively few distinct decisions, but applied such that has good coverage
+			 *     - like tessellation, but have to get both the shape and the pattern correct
+			 *       - and PassThroughExperiments help with both
+			 */
+			uniform_int_distribution<int> pass_through_distribution(0, 1);
+			if (pass_through_distribution(generator) == 0) {
+				PassThroughExperiment* new_experiment = new PassThroughExperiment(
+					explore_node->parent,
+					explore_node,
+					explore_is_branch);
 
-			explore_node->experiments.push_back(new_experiment);
+				explore_node->experiments.push_back(new_experiment);
+			} else {
+				BranchExperiment* new_experiment = new BranchExperiment(
+					explore_node->parent,
+					explore_node,
+					explore_is_branch);
+
+				explore_node->experiments.push_back(new_experiment);
+			}
 		}
 	}
 }

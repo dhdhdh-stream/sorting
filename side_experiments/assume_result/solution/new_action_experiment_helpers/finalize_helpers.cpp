@@ -4,6 +4,7 @@
 
 #include "action_node.h"
 #include "branch_node.h"
+#include "markov_node.h"
 #include "network.h"
 #include "return_node.h"
 #include "scope.h"
@@ -60,6 +61,18 @@ void NewActionExperiment::finalize(Solution* duplicate) {
 				}
 				break;
 			#endif /* MDEBUG */
+			case NODE_TYPE_MARKOV:
+				{
+					MarkovNode* markov_node = (MarkovNode*)it->second;
+					for (int o_index = 0; o_index < (int)markov_node->scopes.size(); o_index++) {
+						for (int s_index = 0; s_index < (int)markov_node->scopes[o_index].size(); s_index++) {
+							if (markov_node->scopes[o_index][s_index] != NULL) {
+								markov_node->scopes[o_index][s_index] = duplicate->scopes[markov_node->scopes[o_index][s_index]->id];
+							}
+						}
+					}
+				}
+				break;
 			}
 		}
 
@@ -156,6 +169,14 @@ void NewActionExperiment::finalize(Solution* duplicate) {
 						return_node->skipped_next_node_id = new_scope_node->id;
 						return_node->skipped_next_node = new_scope_node;
 					}
+				}
+				break;
+			case NODE_TYPE_MARKOV:
+				{
+					MarkovNode* markov_node = (MarkovNode*)duplicate_start_node;
+
+					markov_node->next_node_id = new_scope_node->id;
+					markov_node->next_node = new_scope_node;
 				}
 				break;
 			}

@@ -23,7 +23,6 @@ void BranchNode::result_activate(AbstractNode*& curr_node,
 	for (int x_index = 0; x_index < 1 + 2*this->analyze_size; x_index++) {
 		input_vals[x_index] = vector<double>(1 + 2*this->analyze_size);
 	}
-
 	for (int x_index = -this->analyze_size; x_index < this->analyze_size+1; x_index++) {
 		for (int y_index = -this->analyze_size; y_index < this->analyze_size+1; y_index++) {
 			input_vals[x_index + this->analyze_size][y_index + this->analyze_size]

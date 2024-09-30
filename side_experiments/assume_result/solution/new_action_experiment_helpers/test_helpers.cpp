@@ -42,15 +42,9 @@ void NewActionExperiment::test_activate(
 	case NEW_ACTION_EXPERIMENT_MEASURE_NEW:
 	case NEW_ACTION_EXPERIMENT_VERIFY_1ST_NEW:
 	case NEW_ACTION_EXPERIMENT_VERIFY_2ND_NEW:
-		ScopeNode* new_scope_node = this->test_scope_nodes[location_index];
-
-		context.back().node = new_scope_node;
-
 		this->new_scope->activate(problem,
 								  context,
 								  run_helper);
-
-		context.back().node = NULL;
 
 		curr_node = this->test_location_exits[location_index];
 	}

@@ -42,8 +42,6 @@ public:
 	int state_iter;
 	int sub_state_iter;
 
-	double average_instances_per_run;
-
 	int num_instances_until_target;
 
 	int explore_type;

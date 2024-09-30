@@ -6,6 +6,7 @@
 #include "action_node.h"
 #include "branch_node.h"
 #include "globals.h"
+#include "markov_node.h"
 #include "network.h"
 #include "return_node.h"
 #include "scope_node.h"
@@ -157,6 +158,16 @@ void Scope::load(ifstream& input_file,
 				this->nodes[return_node->id] = return_node;
 			}
 			break;
+		case NODE_TYPE_MARKOV:
+			{
+				MarkovNode* markov_node = new MarkovNode();
+				markov_node->parent = this;
+				markov_node->id = id;
+				markov_node->load(input_file,
+								  parent_solution);
+				this->nodes[markov_node->id] = markov_node;
+			}
+			break;
 		}
 	}
 }
@@ -210,6 +221,16 @@ void Scope::copy_from(Scope* original,
 				new_return_node->parent = this;
 				new_return_node->id = it->first;
 				this->nodes[it->first] = new_return_node;
+			}
+			break;
+		case NODE_TYPE_MARKOV:
+			{
+				MarkovNode* original_markov_node = (MarkovNode*)it->second;
+				MarkovNode* new_markov_node = new MarkovNode(original_markov_node,
+															 parent_solution);
+				new_markov_node->parent = this;
+				new_markov_node->id = it->first;
+				this->nodes[it->first] = new_markov_node;
 			}
 			break;
 		}

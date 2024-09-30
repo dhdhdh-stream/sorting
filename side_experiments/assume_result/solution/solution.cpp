@@ -6,6 +6,7 @@
 #include "action_node.h"
 #include "branch_node.h"
 #include "globals.h"
+#include "markov_node.h"
 #include "return_node.h"
 #include "scope.h"
 #include "scope_node.h"
@@ -138,12 +139,28 @@ void Solution::clean() {
 			if (s_index != is_index) {
 				for (map<int, AbstractNode*>::iterator it = this->scopes[is_index]->nodes.begin();
 						it != this->scopes[is_index]->nodes.end(); it++) {
-					if (it->second->type == NODE_TYPE_SCOPE) {
-						ScopeNode* scope_node = (ScopeNode*)it->second;
-						if (scope_node->scope == this->scopes[s_index]) {
-							still_used = true;
-							break;
+					switch (it->second->type) {
+					case NODE_TYPE_SCOPE:
+						{
+							ScopeNode* scope_node = (ScopeNode*)it->second;
+							if (scope_node->scope == this->scopes[s_index]) {
+								still_used = true;
+								break;
+							}
 						}
+						break;
+					case NODE_TYPE_MARKOV:
+						{
+							MarkovNode* markov_node = (MarkovNode*)it->second;
+							for (int o_index = 0; o_index < (int)markov_node->scopes.size(); o_index++) {
+								for (int s_index = 0; s_index < (int)markov_node->scopes[o_index].size(); s_index++) {
+									if (markov_node->scopes[o_index][s_index] == this->scopes[s_index]) {
+										still_used = true;
+									}
+								}
+							}
+						}
+						break;
 					}
 				}
 			}
@@ -172,18 +189,24 @@ void Solution::clean() {
 									 this->scopes[s_index],
 									 action_node->action);
 				}
+
+				delete this->scopes[s_index];
+				this->scopes.erase(this->scopes.begin() + s_index);
 			} else if (start_node->next_node->type == NODE_TYPE_SCOPE) {
 				ScopeNode* scope_node = (ScopeNode*)start_node->next_node;
 				clean_scope_node(this,
 								 this->scopes[s_index],
 								 scope_node->scope);
+
+				delete this->scopes[s_index];
+				this->scopes.erase(this->scopes.begin() + s_index);
 			} else {
 				clean_scope_node(this,
 								 this->scopes[s_index]);
-			}
 
-			delete this->scopes[s_index];
-			this->scopes.erase(this->scopes.begin() + s_index);
+				delete this->scopes[s_index];
+				this->scopes.erase(this->scopes.begin() + s_index);
+			}
 		}
 	}
 

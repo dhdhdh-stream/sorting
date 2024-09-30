@@ -23,8 +23,6 @@ public:
 	int sub_state_iter;
 	int explore_iter;
 
-	double existing_average_score;
-
 	double curr_score;
 	std::vector<int> curr_step_types;
 	std::vector<ActionNode*> curr_actions;

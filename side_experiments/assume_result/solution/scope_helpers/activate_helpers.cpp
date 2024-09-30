@@ -6,6 +6,7 @@
 #include "branch_node.h"
 #include "constants.h"
 #include "globals.h"
+#include "markov_node.h"
 #include "minesweeper.h"
 #include "new_action_experiment.h"
 #include "return_node.h"
@@ -58,6 +59,16 @@ void node_activate_helper(AbstractNode*& curr_node,
 		}
 
 		break;
+	case NODE_TYPE_MARKOV:
+		{
+			MarkovNode* node = (MarkovNode*)curr_node;
+			node->activate(curr_node,
+						   problem,
+						   context,
+						   run_helper);
+		}
+
+		break;
 	}
 }
 
@@ -74,7 +85,6 @@ void Scope::activate(Problem* problem,
 	context.push_back(ContextLayer());
 
 	context.back().scope = this;
-	context.back().node = NULL;
 
 	if (this->new_action_experiment != NULL) {
 		this->new_action_experiment->pre_activate(context,

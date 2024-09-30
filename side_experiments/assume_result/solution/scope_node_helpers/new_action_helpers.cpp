@@ -17,13 +17,9 @@ void ScopeNode::new_action_capture_verify_activate(
 		Problem* problem,
 		vector<ContextLayer>& context,
 		RunHelper& run_helper) {
-	context.back().node = this;
-
 	this->scope->new_action_capture_verify_activate(problem,
 													context,
 													run_helper);
-
-	context.back().node = NULL;
 
 	curr_node = this->next_node;
 
@@ -50,6 +46,7 @@ void ScopeNode::new_action_capture_verify_activate(
 			}
 		}
 	}
+	context.back().location_history[this] = problem->get_location();
 }
 
 #endif /* MDEBUG */

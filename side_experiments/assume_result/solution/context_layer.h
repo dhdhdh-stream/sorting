@@ -12,7 +12,6 @@ class Scope;
 class ContextLayer {
 public:
 	Scope* scope;
-	AbstractNode* node;
 
 	std::map<AbstractNode*, std::vector<double>> location_history;
 

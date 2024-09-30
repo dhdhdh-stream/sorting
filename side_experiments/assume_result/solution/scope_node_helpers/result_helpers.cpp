@@ -13,13 +13,9 @@ void ScopeNode::result_activate(AbstractNode*& curr_node,
 								Problem* problem,
 								vector<ContextLayer>& context,
 								RunHelper& run_helper) {
-	context.back().node = this;
-
 	this->scope->result_activate(problem,
 								 context,
 								 run_helper);
-
-	context.back().node = NULL;
 
 	curr_node = this->next_node;
 
@@ -28,4 +24,5 @@ void ScopeNode::result_activate(AbstractNode*& curr_node,
 		run_helper.exceeded_limit = true;
 		return;
 	}
+	context.back().location_history[this] = problem->get_location();
 }

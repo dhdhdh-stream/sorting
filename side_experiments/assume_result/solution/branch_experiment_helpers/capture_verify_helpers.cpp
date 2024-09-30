@@ -34,7 +34,6 @@ bool BranchExperiment::capture_verify_activate(AbstractNode*& curr_node,
 	for (int x_index = 0; x_index < 1 + 2*this->new_analyze_size; x_index++) {
 		input_vals[x_index] = vector<double>(1 + 2*this->new_analyze_size);
 	}
-
 	Minesweeper* minesweeper = (Minesweeper*)problem;
 	for (int x_index = -this->new_analyze_size; x_index < this->new_analyze_size+1; x_index++) {
 		for (int y_index = -this->new_analyze_size; y_index < this->new_analyze_size+1; y_index++) {
@@ -56,10 +55,6 @@ bool BranchExperiment::capture_verify_activate(AbstractNode*& curr_node,
 	cout << "context scope" << endl;
 	for (int c_index = 0; c_index < (int)context.size()-1; c_index++) {
 		cout << c_index << ": " << context[c_index].scope->id << endl;
-	}
-	cout << "context node" << endl;
-	for (int c_index = 0; c_index < (int)context.size()-1; c_index++) {
-		cout << c_index << ": " << context[c_index].node->id << endl;
 	}
 
 	bool decision_is_branch;

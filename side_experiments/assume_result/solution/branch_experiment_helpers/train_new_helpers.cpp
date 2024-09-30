@@ -37,7 +37,6 @@ bool BranchExperiment::train_new_activate(
 		for (int x_index = 0; x_index < 1 + 2*this->new_analyze_size; x_index++) {
 			new_input_vals[x_index] = vector<double>(1 + 2*this->new_analyze_size);
 		}
-
 		for (int x_index = -this->new_analyze_size; x_index < this->new_analyze_size+1; x_index++) {
 			for (int y_index = -this->new_analyze_size; y_index < this->new_analyze_size+1; y_index++) {
 				new_input_vals[x_index + this->new_analyze_size][y_index + this->new_analyze_size]
@@ -46,7 +45,6 @@ bool BranchExperiment::train_new_activate(
 						minesweeper->current_y + y_index);
 			}
 		}
-
 		this->obs_histories.push_back(new_input_vals);
 
 		if (this->best_step_types.size() == 0) {

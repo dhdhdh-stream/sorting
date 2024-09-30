@@ -6,6 +6,7 @@
 #include "branch_node.h"
 #include "constants.h"
 #include "globals.h"
+#include "markov_node.h"
 #include "minesweeper.h"
 #include "network.h"
 #include "problem.h"
@@ -76,6 +77,12 @@ bool BranchExperiment::explore_activate(
 				} else {
 					starting_node = return_node->skipped_next_node;
 				}
+			}
+			break;
+		case NODE_TYPE_MARKOV:
+			{
+				MarkovNode* markov_node = (MarkovNode*)this->node_context;
+				starting_node = markov_node->next_node;
 			}
 			break;
 		}

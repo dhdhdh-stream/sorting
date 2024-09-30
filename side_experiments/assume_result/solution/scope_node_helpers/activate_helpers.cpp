@@ -15,13 +15,9 @@ void ScopeNode::activate(AbstractNode*& curr_node,
 						 Problem* problem,
 						 vector<ContextLayer>& context,
 						 RunHelper& run_helper) {
-	context.back().node = this;
-
 	this->scope->activate(problem,
 						  context,
 						  run_helper);
-
-	context.back().node = NULL;
 
 	curr_node = this->next_node;
 
@@ -41,6 +37,7 @@ void ScopeNode::activate(AbstractNode*& curr_node,
 			&& run_helper.experiment_histories.back()->experiment == this->parent->new_action_experiment) {
 		context.back().nodes_seen.push_back({this, false});
 	}
+	context.back().location_history[this] = problem->get_location();
 
 	if (!run_helper.exceeded_limit) {
 		for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
