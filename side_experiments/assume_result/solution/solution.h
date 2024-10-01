@@ -12,6 +12,16 @@
  *   - improved shape enables deeper repetition, and so on
  *   - eventually, solution will cover the different things that need
  *     to be done everywhere
+ * 
+ * - do not remember everything tried but not taken
+ *   - information becomes irrelevant as solution changes
+ *     - TODO: though can prevent wasted effort in the short run
+ * 
+ * - cannot align different solutions/samples
+ *   - built on different assumptions/choices throughout
+ *   - don't create "average"/high variance solution either
+ *     - makes progress harder
+ *       - even when variance needed, better to start from hard connections
  */
 
 #ifndef SOLUTION_H

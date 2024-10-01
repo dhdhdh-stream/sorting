@@ -8,6 +8,10 @@
  *     - breaks down solution into modular segments
  */
 
+// TODO: try subproblems
+// - may enable progress if shallow, single path stuff doesn't get it done?
+//   - preps adding samples
+
 #include <chrono>
 #include <iostream>
 #include <map>

@@ -53,6 +53,8 @@ MarkovExperiment::MarkovExperiment(Scope* scope_context,
 	this->node_context = node_context;
 	this->is_branch = is_branch;
 
+	this->average_remaining_experiments_from_start = 1.0;
+
 	vector<AbstractNode*> possible_exits;
 
 	if (this->node_context->type == NODE_TYPE_ACTION
@@ -194,23 +196,25 @@ MarkovExperiment::MarkovExperiment(Scope* scope_context,
 					}
 				}
 
-				bool is_existing = false;
-				for (int o_index = 0; o_index < (int)this->step_types.size(); o_index++) {
-					if (options_is_match(this->step_types[o_index],
-										 this->actions[o_index],
-										 this->scopes[o_index],
-										 new_step_types,
-										 new_actions,
-										 new_scopes)) {
-						is_existing = true;
-						break;
+				if (new_step_types.size() > 0) {
+					bool is_existing = false;
+					for (int o_index = 0; o_index < (int)this->step_types.size(); o_index++) {
+						if (options_is_match(this->step_types[o_index],
+											 this->actions[o_index],
+											 this->scopes[o_index],
+											 new_step_types,
+											 new_actions,
+											 new_scopes)) {
+							is_existing = true;
+							break;
+						}
 					}
-				}
-				if (!is_existing) {
-					this->step_types.push_back(new_step_types);
-					this->actions.push_back(new_actions);
-					this->scopes.push_back(new_scopes);
-					this->networks.push_back(new Network(MARKOV_NODE_ANALYZE_SIZE));
+					if (!is_existing) {
+						this->step_types.push_back(new_step_types);
+						this->actions.push_back(new_actions);
+						this->scopes.push_back(new_scopes);
+						this->networks.push_back(new Network(MARKOV_NODE_ANALYZE_SIZE));
+					}
 				}
 			} else {
 				ActionNode* action_node = (ActionNode*)this->scope_context->nodes[0];
@@ -221,74 +225,78 @@ MarkovExperiment::MarkovExperiment(Scope* scope_context,
 					starting_node,
 					path);
 
-				int action_length = action_length_distribution(generator);
-				if (action_length > (int)path.size()) {
-					action_length = (int)path.size();
-				}
+				if (path.size() > 0) {
+					int action_length = action_length_distribution(generator);
+					if (action_length > (int)path.size()) {
+						action_length = (int)path.size();
+					}
 
-				vector<int> new_step_types;
-				vector<Action> new_actions;
-				vector<Scope*> new_scopes;
-				uniform_int_distribution<int> option_start_distribution(0, exit_index+1 - action_length);
-				int option_start_index = option_start_distribution(generator);
-				for (int n_index = 0; n_index < action_length; n_index++) {
-					switch (path[option_start_index + n_index]->type) {
-					case NODE_TYPE_ACTION:
-						{
-							ActionNode* action_node = (ActionNode*)path[option_start_index + n_index];
+					vector<int> new_step_types;
+					vector<Action> new_actions;
+					vector<Scope*> new_scopes;
+					uniform_int_distribution<int> option_start_distribution(0, path.size() - action_length);
+					int option_start_index = option_start_distribution(generator);
+					for (int n_index = 0; n_index < action_length; n_index++) {
+						switch (path[option_start_index + n_index]->type) {
+						case NODE_TYPE_ACTION:
+							{
+								ActionNode* action_node = (ActionNode*)path[option_start_index + n_index];
 
-							if (action_node->action.move != ACTION_NOOP) {
-								new_step_types.push_back(MARKOV_STEP_TYPE_ACTION);
-								new_actions.push_back(action_node->action);
-								new_scopes.push_back(NULL);
+								if (action_node->action.move != ACTION_NOOP) {
+									new_step_types.push_back(MARKOV_STEP_TYPE_ACTION);
+									new_actions.push_back(action_node->action);
+									new_scopes.push_back(NULL);
+								}
+							}
+							break;
+						case NODE_TYPE_SCOPE:
+							{
+								ScopeNode* scope_node = (ScopeNode*)path[option_start_index + n_index];
+
+								new_step_types.push_back(MARKOV_STEP_TYPE_SCOPE);
+								new_actions.push_back(Action());
+								new_scopes.push_back(scope_node->scope);
+							}
+							break;
+						case NODE_TYPE_MARKOV:
+							{
+								MarkovNode* markov_node = (MarkovNode*)path[option_start_index + n_index];
+
+								uniform_int_distribution<int> option_distribution(-1, markov_node->step_types.size()-1);
+								int option_index = option_distribution(generator);
+								if (option_index != -1) {
+									new_step_types.insert(new_step_types.end(),
+										markov_node->step_types[option_index].begin(), markov_node->step_types[option_index].end());
+									new_actions.insert(new_actions.end(),
+										markov_node->actions[option_index].begin(), markov_node->actions[option_index].end());
+									new_scopes.insert(new_scopes.end(),
+										markov_node->scopes[option_index].begin(), markov_node->scopes[option_index].end());
+								}
+							}
+							break;
+						}
+					}
+
+					if (new_step_types.size() > 0) {
+						bool is_existing = false;
+						for (int o_index = 0; o_index < (int)this->step_types.size(); o_index++) {
+							if (options_is_match(this->step_types[o_index],
+												 this->actions[o_index],
+												 this->scopes[o_index],
+												 new_step_types,
+												 new_actions,
+												 new_scopes)) {
+								is_existing = true;
+								break;
 							}
 						}
-						break;
-					case NODE_TYPE_SCOPE:
-						{
-							ScopeNode* scope_node = (ScopeNode*)path[option_start_index + n_index];
-
-							new_step_types.push_back(MARKOV_STEP_TYPE_SCOPE);
-							new_actions.push_back(Action());
-							new_scopes.push_back(scope_node->scope);
+						if (!is_existing) {
+							this->step_types.push_back(new_step_types);
+							this->actions.push_back(new_actions);
+							this->scopes.push_back(new_scopes);
+							this->networks.push_back(new Network(MARKOV_NODE_ANALYZE_SIZE));
 						}
-						break;
-					case NODE_TYPE_MARKOV:
-						{
-							MarkovNode* markov_node = (MarkovNode*)path[option_start_index + n_index];
-
-							uniform_int_distribution<int> option_distribution(-1, markov_node->step_types.size()-1);
-							int option_index = option_distribution(generator);
-							if (option_index != -1) {
-								new_step_types.insert(new_step_types.end(),
-									markov_node->step_types[option_index].begin(), markov_node->step_types[option_index].end());
-								new_actions.insert(new_actions.end(),
-									markov_node->actions[option_index].begin(), markov_node->actions[option_index].end());
-								new_scopes.insert(new_scopes.end(),
-									markov_node->scopes[option_index].begin(), markov_node->scopes[option_index].end());
-							}
-						}
-						break;
 					}
-				}
-
-				bool is_existing = false;
-				for (int o_index = 0; o_index < (int)this->step_types.size(); o_index++) {
-					if (options_is_match(this->step_types[o_index],
-										 this->actions[o_index],
-										 this->scopes[o_index],
-										 new_step_types,
-										 new_actions,
-										 new_scopes)) {
-						is_existing = true;
-						break;
-					}
-				}
-				if (!is_existing) {
-					this->step_types.push_back(new_step_types);
-					this->actions.push_back(new_actions);
-					this->scopes.push_back(new_scopes);
-					this->networks.push_back(new Network(MARKOV_NODE_ANALYZE_SIZE));
 				}
 			}
 		}

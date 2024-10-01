@@ -153,8 +153,8 @@ void Solution::clean() {
 						{
 							MarkovNode* markov_node = (MarkovNode*)it->second;
 							for (int o_index = 0; o_index < (int)markov_node->scopes.size(); o_index++) {
-								for (int s_index = 0; s_index < (int)markov_node->scopes[o_index].size(); s_index++) {
-									if (markov_node->scopes[o_index][s_index] == this->scopes[s_index]) {
+								for (int is_index = 0; is_index < (int)markov_node->scopes[o_index].size(); is_index++) {
+									if (markov_node->scopes[o_index][is_index] == this->scopes[s_index]) {
 										still_used = true;
 									}
 								}

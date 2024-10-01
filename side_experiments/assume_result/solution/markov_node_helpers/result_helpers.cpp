@@ -65,6 +65,7 @@ void MarkovNode::result_activate(AbstractNode*& curr_node,
 			run_helper.num_actions++;
 		}
 
+		iter_index++;
 		if (iter_index >= MARKOV_NODE_MAX_ITERS) {
 			break;
 		}

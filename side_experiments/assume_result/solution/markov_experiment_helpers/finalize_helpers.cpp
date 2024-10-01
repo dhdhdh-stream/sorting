@@ -19,6 +19,7 @@ void MarkovExperiment::finalize(Solution* duplicate) {
 		new_node->parent = duplicate_local_scope;
 		new_node->id = duplicate_local_scope->node_counter;
 		duplicate_local_scope->node_counter++;
+		duplicate_local_scope->nodes[new_node->id] = new_node;
 
 		new_node->step_types = this->step_types;
 		new_node->actions = this->actions;
@@ -40,6 +41,7 @@ void MarkovExperiment::finalize(Solution* duplicate) {
 			new_ending_node->parent = duplicate_local_scope;
 			new_ending_node->id = duplicate_local_scope->node_counter;
 			duplicate_local_scope->node_counter++;
+			duplicate_local_scope->nodes[new_ending_node->id] = new_ending_node;
 
 			new_ending_node->action = Action(ACTION_NOOP);
 

@@ -1,5 +1,7 @@
 #include "markov_node.h"
 
+#include <iostream>
+
 #include "abstract_experiment.h"
 #include "network.h"
 #include "scope.h"
@@ -88,6 +90,8 @@ void MarkovNode::load(ifstream& input_file,
 	this->actions = vector<vector<Action>>(num_options);
 	this->scopes = vector<vector<Scope*>>(num_options);
 	for (int o_index = 0; o_index < num_options; o_index++) {
+		cout << "o_index: " << o_index << endl;
+
 		string num_steps_line;
 		getline(input_file, num_steps_line);
 		int num_steps = stoi(num_steps_line);
@@ -97,18 +101,22 @@ void MarkovNode::load(ifstream& input_file,
 		this->scopes[o_index] = vector<Scope*>(num_steps, NULL);
 
 		for (int s_index = 0; s_index < num_steps; s_index++) {
+			cout << "s_index: " << s_index << endl;
+
 			string step_type_line;
 			getline(input_file, step_type_line);
 			this->step_types[o_index][s_index] = stoi(step_type_line);
 			switch (this->step_types[o_index][s_index]) {
 			case MARKOV_STEP_TYPE_ACTION:
 				this->actions[o_index][s_index] = Action(input_file);
+				cout << "this->actions[o_index][s_index].move: " << this->actions[o_index][s_index].move << endl;
 				break;
 			case MARKOV_STEP_TYPE_SCOPE:
 				{
 					string scope_id_line;
 					getline(input_file, scope_id_line);
 					this->scopes[o_index][s_index] = parent_solution->scopes[stoi(scope_id_line)];
+					cout << "this->scopes[o_index][s_index]->id: " << this->scopes[o_index][s_index]->id << endl;
 				}
 				break;
 			}
