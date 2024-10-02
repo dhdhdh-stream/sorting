@@ -5,7 +5,6 @@
 #include "action_node.h"
 #include "branch_node.h"
 #include "globals.h"
-#include "markov_node.h"
 #include "return_node.h"
 #include "scope_node.h"
 #include "solution.h"
@@ -71,16 +70,6 @@ void Scope::random_exit_activate(AbstractNode* starting_node,
 			}
 
 			break;
-		case NODE_TYPE_MARKOV:
-			{
-				MarkovNode* node = (MarkovNode*)curr_node;
-
-				possible_exits.push_back(curr_node);
-
-				curr_node = node->next_node;
-			}
-
-			break;
 		}
 	}
 }
@@ -142,16 +131,6 @@ void Scope::random_continue(AbstractNode* starting_node,
 				} else {
 					curr_node = node->skipped_next_node;
 				}
-			}
-
-			break;
-		case NODE_TYPE_MARKOV:
-			{
-				MarkovNode* node = (MarkovNode*)curr_node;
-
-				potential_included_nodes.insert(curr_node);
-
-				curr_node = node->next_node;
 			}
 
 			break;

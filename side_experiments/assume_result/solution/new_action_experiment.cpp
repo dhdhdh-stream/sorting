@@ -5,7 +5,6 @@
 #include "action_node.h"
 #include "branch_node.h"
 #include "globals.h"
-#include "markov_node.h"
 #include "network.h"
 #include "problem.h"
 #include "return_node.h"
@@ -67,9 +66,6 @@ NewActionExperiment::NewActionExperiment(Scope* scope_context,
 				}
 				break;
 			case NODE_TYPE_SCOPE:
-				num_meaningful_nodes++;
-				break;
-			case NODE_TYPE_MARKOV:
 				num_meaningful_nodes++;
 				break;
 			}
@@ -144,19 +140,6 @@ NewActionExperiment::NewActionExperiment(Scope* scope_context,
 						this->new_scope->nodes[new_return_node->id] = new_return_node;
 
 						node_mappings[original_return_node] = new_return_node;
-					}
-					break;
-				case NODE_TYPE_MARKOV:
-					{
-						MarkovNode* original_markov_node = (MarkovNode*)(*node_it);
-
-						MarkovNode* new_markov_node = new MarkovNode();
-						new_markov_node->parent = this->new_scope;
-						new_markov_node->id = this->new_scope->node_counter;
-						this->new_scope->node_counter++;
-						this->new_scope->nodes[new_markov_node->id] = new_markov_node;
-
-						node_mappings[original_markov_node] = new_markov_node;
 					}
 					break;
 				}
@@ -280,30 +263,6 @@ NewActionExperiment::NewActionExperiment(Scope* scope_context,
 						}
 					}
 					break;
-				case NODE_TYPE_MARKOV:
-					{
-						MarkovNode* original_markov_node = (MarkovNode*)(*node_it);
-						MarkovNode* new_markov_node = (MarkovNode*)node_mappings[original_markov_node];
-
-						new_markov_node->step_types = original_markov_node->step_types;
-						new_markov_node->actions = original_markov_node->actions;
-						new_markov_node->scopes = original_markov_node->scopes;
-						for (int o_index = 0; o_index < (int)original_markov_node->networks.size(); o_index++) {
-							new_markov_node->networks.push_back(new Network(original_markov_node->networks[o_index]));
-						}
-						new_markov_node->halt_network = new Network(original_markov_node->halt_network);
-
-						map<AbstractNode*, AbstractNode*>::iterator it = node_mappings
-							.find(original_markov_node->next_node);
-						if (it == node_mappings.end()) {
-							new_markov_node->next_node_id = new_ending_node->id;
-							new_markov_node->next_node = new_ending_node;
-						} else {
-							new_markov_node->next_node_id = it->second->id;
-							new_markov_node->next_node = it->second;
-						}
-					}
-					break;
 				}
 			}
 
@@ -355,12 +314,6 @@ NewActionExperiment::NewActionExperiment(Scope* scope_context,
 				} else {
 					random_start_node = return_node->skipped_next_node;
 				}
-			}
-			break;
-		case NODE_TYPE_MARKOV:
-			{
-				MarkovNode* markov_node = (MarkovNode*)node_context;
-				random_start_node = markov_node->next_node;
 			}
 			break;
 		}

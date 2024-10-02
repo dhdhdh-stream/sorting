@@ -81,6 +81,15 @@ void BranchNode::verify_activate(AbstractNode*& curr_node,
 		run_helper.exceeded_limit = true;
 		return;
 	}
+
+	if (solution->subproblem_starting_node == this
+			&& solution->subproblem_is_branch == is_branch) {
+		solution->subproblem->activate(problem,
+										context,
+										run_helper);
+
+		curr_node = solution->subproblem_exit_node;
+	}
 }
 
 #endif /* MDEBUG */

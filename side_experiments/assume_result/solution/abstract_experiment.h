@@ -14,7 +14,6 @@ class Solution;
 const int EXPERIMENT_TYPE_BRANCH = 0;
 const int EXPERIMENT_TYPE_PASS_THROUGH = 1;
 const int EXPERIMENT_TYPE_NEW_ACTION = 2;
-const int EXPERIMENT_TYPE_MARKOV = 3;
 
 const int EXPERIMENT_RESULT_NA = 0;
 const int EXPERIMENT_RESULT_FAIL = 1;

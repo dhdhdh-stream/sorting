@@ -7,7 +7,6 @@
 #include "branch_node.h"
 #include "constants.h"
 #include "globals.h"
-#include "markov_node.h"
 #include "return_node.h"
 #include "scope.h"
 #include "scope_node.h"
@@ -93,14 +92,6 @@ void PassThroughExperiment::new_pass_through(Solution* duplicate) {
 				return_node->skipped_next_node_id = start_node_id;
 				return_node->skipped_next_node = start_node;
 			}
-		}
-		break;
-	case NODE_TYPE_MARKOV:
-		{
-			MarkovNode* markov_node = (MarkovNode*)duplicate_explore_node;
-
-			markov_node->next_node_id = start_node_id;
-			markov_node->next_node = start_node;
 		}
 		break;
 	}

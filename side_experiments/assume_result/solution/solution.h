@@ -30,6 +30,7 @@
 #include <fstream>
 #include <vector>
 
+class AbstractNode;
 class Problem;
 class Scope;
 
@@ -42,6 +43,19 @@ public:
 
 	int max_num_actions;
 	int num_actions_limit;
+
+	double existing_average_score;
+	/**
+	 * - add to scopes, and remove after
+	 */
+	Scope* subproblem;
+	AbstractNode* subproblem_starting_node;
+	bool subproblem_is_branch;
+	AbstractNode* subproblem_exit_node;
+	/**
+	 * - for creating subproblem
+	 */
+	AbstractNode* last_experiment_node;
 
 	#if defined(MDEBUG) && MDEBUG
 	std::vector<Problem*> verify_problems;
@@ -61,6 +75,9 @@ public:
 	#endif /* MDEBUG */
 
 	void clean();
+
+	void create_subproblem();
+	void merge_subproblem();
 
 	void save(std::string path,
 			  std::string name);

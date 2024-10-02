@@ -7,7 +7,6 @@
 #include "action_node.h"
 #include "branch_node.h"
 #include "globals.h"
-#include "markov_node.h"
 #include "minesweeper.h"
 #include "return_node.h"
 #include "scope_node.h"
@@ -55,16 +54,6 @@ void new_action_capture_verify_node_activate_helper(
 	case NODE_TYPE_RETURN:
 		{
 			ReturnNode* node = (ReturnNode*)curr_node;
-			node->activate(curr_node,
-						   problem,
-						   context,
-						   run_helper);
-		}
-
-		break;
-	case NODE_TYPE_MARKOV:
-		{
-			MarkovNode* node = (MarkovNode*)curr_node;
 			node->activate(curr_node,
 						   problem,
 						   context,

@@ -2,6 +2,7 @@
 
 #include "globals.h"
 #include "problem.h"
+#include "scope.h"
 #include "solution.h"
 
 using namespace std;
@@ -33,5 +34,15 @@ void ReturnNode::result_activate(AbstractNode*& curr_node,
 	if (run_helper.num_actions > solution->num_actions_limit) {
 		run_helper.exceeded_limit = true;
 		return;
+	}
+
+	if (solution->subproblem_starting_node == this) {
+		run_helper.hit_subproblem = true;
+
+		solution->subproblem->activate(problem,
+										context,
+										run_helper);
+
+		curr_node = solution->subproblem_exit_node;
 	}
 }

@@ -7,7 +7,6 @@
 #include "branch_node.h"
 #include "constants.h"
 #include "globals.h"
-#include "markov_experiment.h"
 #include "new_action_experiment.h"
 #include "pass_through_experiment.h"
 #include "scope.h"
@@ -52,13 +51,16 @@ void create_experiment(RunHelper& run_helper) {
 
 	Scope* explore_scope = (Scope*)explore_node->parent;
 
+	solution->last_experiment_node = explore_node;
+
 	/**
 	 * - don't focus on generalization/reuse
 	 *   - may block progress if incompatible spots are grouped together
 	 *   - (though may also greatly speed up future progress of course)
 	 */
 	uniform_int_distribution<int> non_new_distribution(0, 4);
-	if (explore_scope->new_action_experiment == NULL
+	if (solution->subproblem == NULL
+			&& explore_scope->new_action_experiment == NULL
 			&& explore_node->parent->nodes.size() > 10
 			&& non_new_distribution(generator) != 0) {
 		NewActionExperiment* new_action_experiment = new NewActionExperiment(
@@ -73,37 +75,27 @@ void create_experiment(RunHelper& run_helper) {
 			explore_node->experiments.push_back(new_action_experiment);
 		}
 	} else {
-		uniform_int_distribution<int> markov_distribution(0, 2);
-		if (markov_distribution(generator) == 0) {
-			MarkovExperiment* new_experiment = new MarkovExperiment(
+		/**
+		 * - weigh towards PassThroughExperiments as cheaper and potentially just as effective
+		 *   - solutions are often made of relatively few distinct decisions, but applied such that has good coverage
+		 *     - like tessellation, but have to get both the shape and the pattern correct
+		 *       - and PassThroughExperiments help with both
+		 */
+		uniform_int_distribution<int> pass_through_distribution(0, 1);
+		if (pass_through_distribution(generator) == 0) {
+			PassThroughExperiment* new_experiment = new PassThroughExperiment(
 				explore_node->parent,
 				explore_node,
 				explore_is_branch);
 
 			explore_node->experiments.push_back(new_experiment);
 		} else {
-			/**
-			 * - weigh towards PassThroughExperiments as cheaper and potentially just as effective
-			 *   - solutions are often made of relatively few distinct decisions, but applied such that has good coverage
-			 *     - like tessellation, but have to get both the shape and the pattern correct
-			 *       - and PassThroughExperiments help with both
-			 */
-			uniform_int_distribution<int> pass_through_distribution(0, 1);
-			if (pass_through_distribution(generator) == 0) {
-				PassThroughExperiment* new_experiment = new PassThroughExperiment(
-					explore_node->parent,
-					explore_node,
-					explore_is_branch);
+			BranchExperiment* new_experiment = new BranchExperiment(
+				explore_node->parent,
+				explore_node,
+				explore_is_branch);
 
-				explore_node->experiments.push_back(new_experiment);
-			} else {
-				BranchExperiment* new_experiment = new BranchExperiment(
-					explore_node->parent,
-					explore_node,
-					explore_is_branch);
-
-				explore_node->experiments.push_back(new_experiment);
-			}
+			explore_node->experiments.push_back(new_experiment);
 		}
 	}
 }

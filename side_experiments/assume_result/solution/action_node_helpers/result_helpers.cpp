@@ -4,6 +4,7 @@
 
 #include "globals.h"
 #include "problem.h"
+#include "scope.h"
 #include "solution.h"
 
 using namespace std;
@@ -22,4 +23,14 @@ void ActionNode::result_activate(AbstractNode*& curr_node,
 		return;
 	}
 	context.back().location_history[this] = problem->get_location();
+
+	if (solution->subproblem_starting_node == this) {
+		run_helper.hit_subproblem = true;
+
+		solution->subproblem->activate(problem,
+										context,
+										run_helper);
+
+		curr_node = solution->subproblem_exit_node;
+	}
 }

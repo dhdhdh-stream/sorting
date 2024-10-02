@@ -27,11 +27,14 @@ void ScopeNode::activate(AbstractNode*& curr_node,
 		return;
 	}
 	if (run_helper.experiments_seen_order.size() == 0) {
-		map<pair<AbstractNode*,bool>, int>::iterator it = run_helper.nodes_seen.find({this, false});
-		if (it == run_helper.nodes_seen.end()) {
-			run_helper.nodes_seen[{this, false}] = 1;
-		} else {
-			it->second++;
+		if (solution->subproblem == NULL
+				|| solution->subproblem == this->parent) {
+			map<pair<AbstractNode*,bool>, int>::iterator it = run_helper.nodes_seen.find({this, false});
+			if (it == run_helper.nodes_seen.end()) {
+				run_helper.nodes_seen[{this, false}] = 1;
+			} else {
+				it->second++;
+			}
 		}
 	} else if (run_helper.experiment_histories.size() == 1
 			&& run_helper.experiment_histories.back()->experiment == this->parent->new_action_experiment) {
@@ -51,6 +54,14 @@ void ScopeNode::activate(AbstractNode*& curr_node,
 			if (is_selected) {
 				return;
 			}
+		}
+
+		if (solution->subproblem_starting_node == this) {
+			solution->subproblem->activate(problem,
+											context,
+											run_helper);
+
+			curr_node = solution->subproblem_exit_node;
 		}
 	}
 }

@@ -5,7 +5,6 @@
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
-#include "markov_node.h"
 #include "return_node.h"
 #include "scope.h"
 #include "scope_node.h"
@@ -109,14 +108,6 @@ void BranchExperiment::new_branch(Solution* duplicate) {
 			}
 		}
 		break;
-	case NODE_TYPE_MARKOV:
-		{
-			MarkovNode* markov_node = (MarkovNode*)duplicate_explore_node;
-
-			this->branch_node->original_next_node_id = markov_node->next_node_id;
-			this->branch_node->original_next_node = markov_node->next_node;
-		}
-		break;
 	}
 
 	if (this->best_step_types.size() == 0) {
@@ -176,14 +167,6 @@ void BranchExperiment::new_branch(Solution* duplicate) {
 				return_node->skipped_next_node_id = this->branch_node->id;
 				return_node->skipped_next_node = this->branch_node;
 			}
-		}
-		break;
-	case NODE_TYPE_MARKOV:
-		{
-			MarkovNode* markov_node = (MarkovNode*)duplicate_explore_node;
-
-			markov_node->next_node_id = this->branch_node->id;
-			markov_node->next_node = this->branch_node;
 		}
 		break;
 	}

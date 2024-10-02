@@ -6,7 +6,6 @@
 #include "branch_node.h"
 #include "constants.h"
 #include "globals.h"
-#include "markov_node.h"
 #include "minesweeper.h"
 #include "problem.h"
 #include "return_node.h"
@@ -84,12 +83,6 @@ void PassThroughExperiment::explore_activate(
 				}
 			}
 			break;
-		case NODE_TYPE_MARKOV:
-			{
-				MarkovNode* markov_node = (MarkovNode*)this->node_context;
-				starting_node = markov_node->next_node;
-			}
-			break;
 		}
 
 		this->scope_context->random_exit_activate(
@@ -112,7 +105,8 @@ void PassThroughExperiment::explore_activate(
 		uniform_int_distribution<int> default_distribution(0, 3);
 		for (int s_index = 0; s_index < new_num_steps; s_index++) {
 			bool default_to_action = true;
-			if (default_distribution(generator) != 0) {
+			if (solution->subproblem == NULL
+					&& default_distribution(generator) != 0) {
 				ScopeNode* new_scope_node = create_existing();
 				if (new_scope_node != NULL) {
 					this->curr_step_types.push_back(STEP_TYPE_SCOPE);
