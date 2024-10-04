@@ -28,6 +28,8 @@ void clean_scope_node(Solution* parent_solution,
 					  Scope* to_remove,
 					  Scope* to_replace);
 
-double get_existing_result(Problem* original_problem);
+void get_existing_result(Problem* original_problem,
+						 double& result,
+						 bool& hit_subproblem);
 
 #endif /* SOLUTION_HELPERS_H */

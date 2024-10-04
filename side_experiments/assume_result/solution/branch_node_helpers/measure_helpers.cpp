@@ -11,10 +11,10 @@
 
 using namespace std;
 
-void BranchNode::result_activate(AbstractNode*& curr_node,
-								 Problem* problem,
-								 vector<ContextLayer>& context,
-								 RunHelper& run_helper) {
+void BranchNode::measure_activate(AbstractNode*& curr_node,
+								  Problem* problem,
+								  vector<ContextLayer>& context,
+								  RunHelper& run_helper) {
 	Minesweeper* minesweeper = (Minesweeper*)problem;
 
 	run_helper.num_analyze += (1 + 2*this->analyze_size) * (1 + 2*this->analyze_size);
@@ -56,19 +56,19 @@ void BranchNode::result_activate(AbstractNode*& curr_node,
 	}
 
 	run_helper.num_actions++;
-	if (run_helper.num_actions > solution->num_actions_limit) {
+	if (run_helper.num_actions > solution_duplicate->num_actions_limit) {
 		run_helper.exceeded_limit = true;
 		return;
 	}
 
-	if (solution->subproblem_starting_node == this
-			&& solution->subproblem_is_branch == is_branch) {
+	if (solution_duplicate->subproblem_starting_node == this
+			&& solution_duplicate->subproblem_is_branch == is_branch) {
 		run_helper.hit_subproblem = true;
 
-		solution->subproblem->result_activate(problem,
-											  context,
-											  run_helper);
+		solution_duplicate->subproblem->measure_activate(problem,
+														 context,
+														 run_helper);
 
-		curr_node = solution->subproblem_exit_node;
+		curr_node = solution_duplicate->subproblem_exit_node;
 	}
 }

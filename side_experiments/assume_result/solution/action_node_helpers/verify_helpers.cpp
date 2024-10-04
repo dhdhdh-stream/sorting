@@ -1,21 +1,23 @@
-#include "scope_node.h"
+#if defined(MDEBUG) && MDEBUG
+
+#include "action_node.h"
 
 #include <iostream>
 
+#include "abstract_experiment.h"
 #include "globals.h"
+#include "new_action_experiment.h"
 #include "problem.h"
 #include "scope.h"
 #include "solution.h"
 
 using namespace std;
 
-void ScopeNode::measure_activate(AbstractNode*& curr_node,
+void ActionNode::verify_activate(AbstractNode*& curr_node,
 								 Problem* problem,
 								 vector<ContextLayer>& context,
 								 RunHelper& run_helper) {
-	this->scope->measure_activate(problem,
-								  context,
-								  run_helper);
+	problem->perform_action(this->action);
 
 	curr_node = this->next_node;
 
@@ -26,13 +28,13 @@ void ScopeNode::measure_activate(AbstractNode*& curr_node,
 	}
 	context.back().location_history[this] = problem->get_location();
 
-	if (!run_helper.exceeded_limit) {
-		if (solution_duplicate->subproblem_starting_node == this) {
-			solution_duplicate->subproblem->measure_activate(problem,
-															 context,
-															 run_helper);
+	if (solution_duplicate->subproblem_starting_node == this) {
+		solution_duplicate->subproblem->verify_activate(problem,
+														context,
+														run_helper);
 
-			curr_node = solution_duplicate->subproblem_exit_node;
-		}
+		curr_node = solution_duplicate->subproblem_exit_node;
 	}
 }
+
+#endif /* MDEBUG */

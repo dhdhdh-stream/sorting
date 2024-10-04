@@ -11,11 +11,12 @@ Sample::Sample() {
 	// do nothing
 }
 
-Sample::Sample(int id) {
+Sample::Sample(string path,
+			   int id) {
 	this->id = id;
 
 	ifstream input_file;
-	input_file.open("saves/samples/" + to_string(this->id) + ".txt");
+	input_file.open(path + "saves/samples/" + to_string(this->id) + ".txt");
 
 	string num_steps_line;
 	getline(input_file, num_steps_line);

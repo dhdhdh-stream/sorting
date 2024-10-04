@@ -51,8 +51,6 @@ void create_experiment(RunHelper& run_helper) {
 
 	Scope* explore_scope = (Scope*)explore_node->parent;
 
-	solution->last_experiment_node = explore_node;
-
 	/**
 	 * - don't focus on generalization/reuse
 	 *   - may block progress if incompatible spots are grouped together

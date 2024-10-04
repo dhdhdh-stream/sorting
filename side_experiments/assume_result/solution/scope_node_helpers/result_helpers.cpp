@@ -30,9 +30,9 @@ void ScopeNode::result_activate(AbstractNode*& curr_node,
 		if (solution->subproblem_starting_node == this) {
 			run_helper.hit_subproblem = true;
 
-			solution->subproblem->activate(problem,
-											context,
-											run_helper);
+			solution->subproblem->result_activate(problem,
+												  context,
+												  run_helper);
 
 			curr_node = solution->subproblem_exit_node;
 		}

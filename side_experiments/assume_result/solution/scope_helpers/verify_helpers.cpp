@@ -22,10 +22,10 @@ void node_verify_activate_helper(AbstractNode*& curr_node,
 	case NODE_TYPE_ACTION:
 		{
 			ActionNode* node = (ActionNode*)curr_node;
-			node->activate(curr_node,
-						   problem,
-						   context,
-						   run_helper);
+			node->verify_activate(curr_node,
+								  problem,
+								  context,
+								  run_helper);
 		}
 
 		break;
@@ -52,10 +52,10 @@ void node_verify_activate_helper(AbstractNode*& curr_node,
 	case NODE_TYPE_RETURN:
 		{
 			ReturnNode* node = (ReturnNode*)curr_node;
-			node->activate(curr_node,
-						   problem,
-						   context,
-						   run_helper);
+			node->verify_activate(curr_node,
+								  problem,
+								  context,
+								  run_helper);
 		}
 
 		break;

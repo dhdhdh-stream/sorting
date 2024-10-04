@@ -211,13 +211,8 @@ void clean_scope_node_helper(Scope* scope,
 				ReturnNode* node = (ReturnNode*)it->second;
 				
 				if (node->previous_location == original_node) {
-					if (new_node == NULL) {
-						node->previous_location_id = -1;
-						node->previous_location = NULL;
-					} else {
-						node->previous_location_id = new_node->id;
-						node->previous_location = new_node;
-					}
+					node->previous_location_id = -1;
+					node->previous_location = NULL;
 				}
 
 				if (node->passed_next_node == original_node) {

@@ -44,7 +44,6 @@ public:
 	int max_num_actions;
 	int num_actions_limit;
 
-	double existing_average_score;
 	/**
 	 * - add to scopes, and remove after
 	 */
@@ -52,10 +51,8 @@ public:
 	AbstractNode* subproblem_starting_node;
 	bool subproblem_is_branch;
 	AbstractNode* subproblem_exit_node;
-	/**
-	 * - for creating subproblem
-	 */
-	AbstractNode* last_experiment_node;
+	int merge_timestamp;
+	double existing_average_score;
 
 	#if defined(MDEBUG) && MDEBUG
 	std::vector<Problem*> verify_problems;
@@ -76,7 +73,7 @@ public:
 
 	void clean();
 
-	void create_subproblem();
+	void create_subproblem(std::string path);
 	void merge_subproblem();
 
 	void save(std::string path,

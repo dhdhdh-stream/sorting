@@ -9,6 +9,7 @@
 #include "minesweeper.h"
 #include "return_node.h"
 #include "scope_node.h"
+#include "solution.h"
 
 using namespace std;
 

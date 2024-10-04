@@ -1,16 +1,20 @@
 #include "return_node.h"
 
+#include <iostream>
+
+#include "abstract_experiment.h"
 #include "globals.h"
+#include "new_action_experiment.h"
 #include "problem.h"
 #include "scope.h"
 #include "solution.h"
 
 using namespace std;
 
-void ReturnNode::result_activate(AbstractNode*& curr_node,
-								 Problem* problem,
-								 vector<ContextLayer>& context,
-								 RunHelper& run_helper) {
+void ReturnNode::measure_activate(AbstractNode*& curr_node,
+								  Problem* problem,
+								  vector<ContextLayer>& context,
+								  RunHelper& run_helper) {
 	bool is_branch = false;
 	if (this->previous_location != NULL) {
 		map<AbstractNode*, vector<double>>::iterator it
@@ -31,18 +35,16 @@ void ReturnNode::result_activate(AbstractNode*& curr_node,
 	}
 
 	run_helper.num_actions++;
-	if (run_helper.num_actions > solution->num_actions_limit) {
+	if (run_helper.num_actions > solution_duplicate->num_actions_limit) {
 		run_helper.exceeded_limit = true;
 		return;
 	}
 
-	if (solution->subproblem_starting_node == this) {
-		run_helper.hit_subproblem = true;
+	if (solution_duplicate->subproblem_starting_node == this) {
+		solution_duplicate->subproblem->measure_activate(problem,
+														 context,
+														 run_helper);
 
-		solution->subproblem->result_activate(problem,
-											  context,
-											  run_helper);
-
-		curr_node = solution->subproblem_exit_node;
+		curr_node = solution_duplicate->subproblem_exit_node;
 	}
 }

@@ -77,18 +77,18 @@ void BranchNode::verify_activate(AbstractNode*& curr_node,
 	}
 
 	run_helper.num_actions++;
-	if (run_helper.num_actions > solution->num_actions_limit) {
+	if (run_helper.num_actions > solution_duplicate->num_actions_limit) {
 		run_helper.exceeded_limit = true;
 		return;
 	}
 
-	if (solution->subproblem_starting_node == this
-			&& solution->subproblem_is_branch == is_branch) {
-		solution->subproblem->activate(problem,
-										context,
-										run_helper);
+	if (solution_duplicate->subproblem_starting_node == this
+			&& solution_duplicate->subproblem_is_branch == is_branch) {
+		solution_duplicate->subproblem->verify_activate(problem,
+														context,
+														run_helper);
 
-		curr_node = solution->subproblem_exit_node;
+		curr_node = solution_duplicate->subproblem_exit_node;
 	}
 }
 

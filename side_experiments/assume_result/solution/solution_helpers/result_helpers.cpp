@@ -4,17 +4,20 @@
 #include "problem.h"
 #include "scope.h"
 #include "solution.h"
+#include "utilities.h"
 
 using namespace std;
 
-double get_existing_result(Problem* original_problem) {
+void get_existing_result(Problem* original_problem,
+						 double& result,
+						 bool& hit_subproblem) {
 	Problem* copy_problem = original_problem->copy_and_reset();
 
 	RunHelper run_helper;
 
 	#if defined(MDEBUG) && MDEBUG
 	run_helper.starting_run_seed = run_index;
-	run_helper.curr_run_seed = run_index;
+	run_helper.curr_run_seed = xorshift(run_helper.starting_run_seed);
 	#endif /* MDEBUG */
 
 	vector<ContextLayer> context;
@@ -33,5 +36,6 @@ double get_existing_result(Problem* original_problem) {
 
 	delete copy_problem;
 
-	return target_val;
+	result = target_val;
+	hit_subproblem = run_helper.hit_subproblem;
 }

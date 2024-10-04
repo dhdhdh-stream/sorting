@@ -10,6 +10,7 @@
 #include "new_action_experiment.h"
 #include "return_node.h"
 #include "scope_node.h"
+#include "solution.h"
 
 using namespace std;
 

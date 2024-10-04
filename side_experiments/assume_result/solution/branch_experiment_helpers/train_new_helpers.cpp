@@ -14,6 +14,7 @@
 #include "return_node.h"
 #include "scope.h"
 #include "scope_node.h"
+#include "solution.h"
 
 using namespace std;
 
@@ -59,8 +60,12 @@ bool BranchExperiment::train_new_activate(
 			}
 		}
 
-		uniform_int_distribution<int> until_distribution(0, 2*((int)this->node_context->average_instances_per_run-1));
-		this->num_instances_until_target = 1 + until_distribution(generator);
+		if (this->node_context->average_instances_per_run < 1.0) {
+			this->num_instances_until_target = 1;
+		} else {
+			uniform_int_distribution<int> until_distribution(0, 2*((int)this->node_context->average_instances_per_run-1));
+			this->num_instances_until_target = 1 + until_distribution(generator);
+		}
 
 		return true;
 	}

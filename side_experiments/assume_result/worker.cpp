@@ -22,6 +22,7 @@ default_random_engine generator;
 
 ProblemType* problem_type;
 Solution* solution;
+Solution* solution_duplicate;
 
 int run_index;
 
@@ -54,7 +55,13 @@ int main(int argc, char* argv[]) {
 
 		RunHelper run_helper;
 
-		run_helper.result = get_existing_result(problem);
+		double result;
+		bool hit_subproblem;
+		get_existing_result(problem,
+							result,
+							hit_subproblem);
+		run_helper.result = result;
+		run_helper.hit_subproblem = hit_subproblem;
 
 		if (solution->subproblem == NULL
 				|| run_helper.hit_subproblem) {
@@ -123,6 +130,7 @@ int main(int argc, char* argv[]) {
 					 * - history->experiment_histories.size() == 1
 					 */
 					Solution* duplicate = new Solution(solution);
+					solution_duplicate = duplicate;
 
 					int last_updated_scope_id = run_helper.experiment_histories.back()->experiment->scope_context->id;
 
@@ -200,9 +208,6 @@ int main(int argc, char* argv[]) {
 						for (map<int, AbstractNode*>::iterator it = duplicate->scopes[s_index]->nodes.begin();
 								it != duplicate->scopes[s_index]->nodes.end(); it++) {
 							it->second->average_instances_per_run /= MEASURE_ITERS;
-							if (it->second->average_instances_per_run < 1.0) {
-								it->second->average_instances_per_run = 1.0;
-							}
 						}
 					}
 
@@ -214,9 +219,16 @@ int main(int argc, char* argv[]) {
 
 					duplicate->max_num_actions = max_num_actions;
 
+					if (duplicate->subproblem != NULL) {
+						cout << "subproblem:" << endl;
+					}
 					cout << "duplicate->average_score: " << duplicate->average_score << endl;
 
-					duplicate->create_subproblem();
+					if (duplicate->subproblem == NULL) {
+						duplicate->create_subproblem("workers/");
+					} else {
+						duplicate->merge_subproblem();
+					}
 
 					duplicate->timestamp++;
 

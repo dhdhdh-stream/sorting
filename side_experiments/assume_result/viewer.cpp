@@ -19,6 +19,7 @@ default_random_engine generator;
 
 ProblemType* problem_type;
 Solution* solution;
+Solution* solution_duplicate;
 
 int run_index;
 

@@ -16,7 +16,8 @@ public:
 	double result;
 
 	Sample();
-	Sample(int id);
+	Sample(std::string path,
+		   int id);
 
 	void save();
 };

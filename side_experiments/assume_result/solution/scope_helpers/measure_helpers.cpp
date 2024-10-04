@@ -20,10 +20,10 @@ void node_measure_activate_helper(AbstractNode*& curr_node,
 	case NODE_TYPE_ACTION:
 		{
 			ActionNode* node = (ActionNode*)curr_node;
-			node->activate(curr_node,
-						   problem,
-						   context,
-						   run_helper);
+			node->measure_activate(curr_node,
+								   problem,
+								   context,
+								   run_helper);
 		}
 
 		break;
@@ -40,20 +40,20 @@ void node_measure_activate_helper(AbstractNode*& curr_node,
 	case NODE_TYPE_BRANCH:
 		{
 			BranchNode* node = (BranchNode*)curr_node;
-			node->activate(curr_node,
-						   problem,
-						   context,
-						   run_helper);
+			node->measure_activate(curr_node,
+								   problem,
+								   context,
+								   run_helper);
 		}
 
 		break;
 	case NODE_TYPE_RETURN:
 		{
 			ReturnNode* node = (ReturnNode*)curr_node;
-			node->activate(curr_node,
-						   problem,
-						   context,
-						   run_helper);
+			node->measure_activate(curr_node,
+								   problem,
+								   context,
+								   run_helper);
 		}
 
 		break;
