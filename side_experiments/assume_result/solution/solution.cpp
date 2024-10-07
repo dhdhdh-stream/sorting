@@ -273,8 +273,9 @@ void Solution::clean() {
 
 void Solution::create_subproblem(string path) {
 	uniform_int_distribution<int> subproblem_distribution(0, 9);
-	if (this->subproblem == NULL
-			&& subproblem_distribution(generator) == 0) {
+	// if (this->subproblem == NULL
+	// 		&& subproblem_distribution(generator) == 0) {
+	if (false) {
 		while (true) {
 			uniform_int_distribution<int> starting_scope_distribution(0, this->scopes.size()-1);
 			Scope* potential_parent_scope = this->scopes[starting_scope_distribution(generator)];

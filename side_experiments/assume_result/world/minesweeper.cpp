@@ -337,6 +337,12 @@ void Minesweeper::perform_action(Action action) {
 
 double Minesweeper::score_result(int num_analyze,
 								 int num_actions) {
+	// temp
+	if (this->current_x != 4
+			|| this->current_y != 4) {
+		return 0.0;
+	}
+
 	int curr_revealed = 0;
 	int num_mines = 0;
 	double score = 1.0;
@@ -384,7 +390,13 @@ vector<double> Minesweeper::get_location() {
 	return vector<double>{(double)this->current_x, (double)this->current_y};
 }
 
-void Minesweeper::return_to_location(vector<double>& location) {
+void Minesweeper::return_to_location(vector<double>& location,
+									 int& num_analyze,
+									 int& num_actions) {
+	num_analyze += 25;
+	num_actions += abs(this->current_x - location[0]);
+	num_actions += abs(this->current_y - location[1]);
+
 	this->current_x = location[0];
 	this->current_y = location[1];
 

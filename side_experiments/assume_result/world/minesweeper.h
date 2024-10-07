@@ -31,7 +31,9 @@ public:
 						int num_actions);
 
 	std::vector<double> get_location();
-	void return_to_location(std::vector<double>& location);
+	void return_to_location(std::vector<double>& location,
+							int& num_analyze,
+							int& num_actions);
 
 	Problem* copy_and_reset();
 	Problem* copy_snapshot();

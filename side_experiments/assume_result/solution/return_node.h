@@ -1,3 +1,9 @@
+/**
+ * TODO:
+ * - can/should be removed
+ *   - but need additional structure (i.e., fixed points) and/or memory of path taken to make up for it
+ */
+
 #ifndef RETURN_NODE_H
 #define RETURN_NODE_H
 

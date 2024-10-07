@@ -16,7 +16,9 @@ public:
 								int num_actions) = 0;
 
 	virtual std::vector<double> get_location() = 0;
-	virtual void return_to_location(std::vector<double>& location) = 0;
+	virtual void return_to_location(std::vector<double>& location,
+									int& num_analyze,
+									int& num_actions) = 0;
 
 	virtual Problem* copy_and_reset() = 0;
 	virtual Problem* copy_snapshot() = 0;
