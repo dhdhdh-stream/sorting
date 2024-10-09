@@ -10,11 +10,11 @@
 
 using namespace std;
 
-void ScopeNode::activate(AbstractNode*& curr_node,
-						 Problem* problem,
-						 vector<ContextLayer>& context,
-						 RunHelper& run_helper,
-						 ScopeHistory* scope_history) {
+void ScopeNode::experiment_activate(AbstractNode*& curr_node,
+									Problem* problem,
+									vector<ContextLayer>& context,
+									RunHelper& run_helper,
+									ScopeHistory* scope_history) {
 	ScopeNodeHistory* history = new ScopeNodeHistory();
 	history->index = (int)scope_history->node_histories.size();
 	scope_history->node_histories[this->id] = history;

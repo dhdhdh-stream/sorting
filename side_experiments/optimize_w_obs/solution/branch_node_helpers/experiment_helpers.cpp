@@ -28,7 +28,7 @@ void BranchNode::experiment_activate(AbstractNode*& curr_node,
 		map<pair<pair<vector<int>,vector<int>>,int>, double>::iterator it =
 			context.back().obs_history.find(this->inputs[i_index]);
 		if (it != context.back().obs_history.end()) {
-			this->inputs[i_index] = it->second;
+			input_vals[i_index] = it->second;
 		}
 	}
 	this->network->activate(input_vals);

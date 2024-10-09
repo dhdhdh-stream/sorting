@@ -10,6 +10,7 @@
 #include "problem.h"
 #include "scope.h"
 #include "scope_node.h"
+#include "solution_helpers.h"
 #include "utilities.h"
 
 using namespace std;
@@ -18,6 +19,7 @@ bool BranchExperiment::measure_activate(AbstractNode*& curr_node,
 										Problem* problem,
 										vector<ContextLayer>& context,
 										RunHelper& run_helper,
+										ScopeHistory* scope_history,
 										BranchExperimentHistory* history) {
 	run_helper.num_actions++;
 
@@ -27,11 +29,10 @@ bool BranchExperiment::measure_activate(AbstractNode*& curr_node,
 
 	vector<double> input_vals(this->inputs.size(), 0.0);
 	for (int i_index = 0; i_index < (int)this->inputs.size(); i_index++) {
-		map<pair<pair<vector<int>,vector<int>>,int>, double>::iterator it =
-			context.back().obs_history.find(this->inputs[i_index]);
-		if (it != context.back().obs_history.end()) {
-			this->inputs[i_index] = it->second;
-		}
+		fetch_input_helper(scope_history,
+						   this->inputs[i_index],
+						   0,
+						   input_vals[i_index]);
 	}
 	this->network->activate(input_vals);
 

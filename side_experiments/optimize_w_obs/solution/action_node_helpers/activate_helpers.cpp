@@ -5,7 +5,6 @@
 #include "globals.h"
 #include "problem.h"
 #include "solution.h"
-#include "world_model.h"
 
 using namespace std;
 

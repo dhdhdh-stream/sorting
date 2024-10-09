@@ -2,8 +2,10 @@
 
 #include <iostream>
 
+#include "branch_node.h"
 #include "constants.h"
 #include "globals.h"
+#include "scope.h"
 #include "scope_node.h"
 
 using namespace std;

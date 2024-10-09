@@ -117,27 +117,17 @@ public:
 						  Problem* problem,
 						  std::vector<ContextLayer>& context,
 						  RunHelper& run_helper,
+						  ScopeHistory* scope_history,
 						  BranchExperimentHistory* history);
 	void measure_backprop(double target_val,
 						  RunHelper& run_helper);
-
-	void verify_existing_activate(BranchExperimentHistory* history);
-	void verify_existing_backprop(double target_val,
-								  RunHelper& run_helper);
-
-	bool verify_activate(AbstractNode*& curr_node,
-						 Problem* problem,
-						 std::vector<ContextLayer>& context,
-						 RunHelper& run_helper,
-						 BranchExperimentHistory* history);
-	void verify_backprop(double target_val,
-						 RunHelper& run_helper);
 
 	#if defined(MDEBUG) && MDEBUG
 	bool capture_verify_activate(AbstractNode*& curr_node,
 								 Problem* problem,
 								 std::vector<ContextLayer>& context,
-								 RunHelper& run_helper);
+								 RunHelper& run_helper,
+								 ScopeHistory* scope_history);
 	void capture_verify_backprop();
 	#endif /* MDEBUG */
 

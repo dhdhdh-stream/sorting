@@ -9,6 +9,7 @@
 class AbstractNode;
 class Problem;
 class Scope;
+class ScopeHistory;
 class Solution;
 
 const int EXPERIMENT_TYPE_BRANCH = 0;

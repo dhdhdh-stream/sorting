@@ -1,3 +1,5 @@
+#if defined(MDEBUG) && MDEBUG
+
 #include "branch_node.h"
 
 #include <iostream>
@@ -11,10 +13,11 @@
 
 using namespace std;
 
-void BranchNode::activate(AbstractNode*& curr_node,
-						  Problem* problem,
-						  vector<ContextLayer>& context,
-						  RunHelper& run_helper) {
+void BranchNode::new_scope_capture_verify_activate(
+		AbstractNode*& curr_node,
+		Problem* problem,
+		vector<ContextLayer>& context,
+		RunHelper& run_helper) {
 	run_helper.num_analyze += (int)this->inputs.size();
 
 	vector<double> input_vals(this->inputs.size(), 0.0);
@@ -27,21 +30,19 @@ void BranchNode::activate(AbstractNode*& curr_node,
 	}
 	this->network->activate(input_vals);
 
+	this->verify_scores.push_back(this->network->output->acti_vals[0]);
+
+	cout << "run_helper.starting_run_seed: " << run_helper.starting_run_seed << endl;
+	cout << "run_helper.curr_run_seed: " << run_helper.curr_run_seed << endl;
+	problem->print();
+
 	bool is_branch;
-	#if defined(MDEBUG) && MDEBUG
 	if (run_helper.curr_run_seed%2 == 0) {
 		is_branch = true;
 	} else {
 		is_branch = false;
 	}
 	run_helper.curr_run_seed = xorshift(run_helper.curr_run_seed);
-	#else
-	if (this->network->output->acti_vals[0] >= 0.0) {
-		is_branch = true;
-	} else {
-		is_branch = false;
-	}
-	#endif /* MDEBUG */
 
 	if (is_branch) {
 		curr_node = this->branch_next_node;
@@ -55,3 +56,5 @@ void BranchNode::activate(AbstractNode*& curr_node,
 		return;
 	}
 }
+
+#endif /* MDEBUG */

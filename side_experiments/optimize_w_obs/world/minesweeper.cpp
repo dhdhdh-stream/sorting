@@ -337,12 +337,6 @@ void Minesweeper::perform_action(Action action) {
 
 double Minesweeper::score_result(int num_analyze,
 								 int num_actions) {
-	// temp
-	if (this->current_x != 4
-			|| this->current_y != 4) {
-		return 0.0;
-	}
-
 	int curr_revealed = 0;
 	int num_mines = 0;
 	double score = 1.0;

@@ -1,13 +1,3 @@
-/**
- * - world model is not about predictions
- *   - but simply about what is located where, and what is moving where
- *   - in humans, built naturally using optical flow/sensor fusion?
- * 
- * - world model enables localization
- *   - helps maintain identity/integrity of long solutions
- *     - breaks down solution into modular segments
- */
-
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -15,12 +5,12 @@
 #include <random>
 
 #include "abstract_experiment.h"
-#include "abstract_node.h"
+#include "action_node.h"
 #include "constants.h"
 #include "globals.h"
 #include "minesweeper.h"
-#include "problem.h"
 #include "scope.h"
+#include "scope_node.h"
 #include "solution.h"
 #include "solution_helpers.h"
 
@@ -36,6 +26,16 @@ Solution* solution;
 int run_index;
 
 int main(int argc, char* argv[]) {
+	if (argc != 2) {
+		cout << "Usage: ./worker [path]" << endl;
+		exit(1);
+	}
+	string path = argv[1];
+
+	/**
+	 * - worker directories need to have already been created
+	 */
+
 	cout << "Starting..." << endl;
 
 	seed = (unsigned)time(NULL);
@@ -46,26 +46,13 @@ int main(int argc, char* argv[]) {
 	problem_type = new TypeMinesweeper();
 
 	solution = new Solution();
-	solution->init();
-	// solution->load("", "main");
+	solution->load("workers/", "main");
 
-	solution->save("", "main");
-
-	run_index = 0;
-
+	auto start_time = chrono::high_resolution_clock::now();
 	while (true) {
 		Problem* problem = problem_type->get_problem();
 
 		RunHelper run_helper;
-
-		#if defined(MDEBUG) && MDEBUG
-		run_helper.starting_run_seed = run_index;
-		run_helper.curr_run_seed = run_index;
-		#endif /* MDEBUG */
-		run_index++;
-		if (run_index%10000 == 0) {
-			cout << "run_index: " << run_index << endl;
-		}
 
 		run_helper.result = get_existing_result(problem);
 
@@ -94,15 +81,30 @@ int main(int argc, char* argv[]) {
 
 		delete problem;
 
-		#if defined(MDEBUG) && MDEBUG
-		if (run_index%2000 == 0) {
-			delete solution;
-			solution = new Solution();
-			solution->load("", "main");
+		auto curr_time = chrono::high_resolution_clock::now();
+		auto time_diff = chrono::duration_cast<chrono::seconds>(curr_time - start_time);
+		if (time_diff.count() >= 20) {
+			start_time = curr_time;
 
-			continue;
+			cout << "alive" << endl;
+
+			ifstream solution_save_file;
+			solution_save_file.open("workers/saves/main.txt");
+			string timestamp_line;
+			getline(solution_save_file, timestamp_line);
+			int curr_timestamp = stoi(timestamp_line);
+			solution_save_file.close();
+
+			if (curr_timestamp > solution->timestamp) {
+				delete solution;
+
+				solution = new Solution();
+				solution->load("workers/", "main");
+				cout << "updated from main" << endl;
+
+				continue;
+			}
 		}
-		#endif /* MDEBUG */
 
 		if (run_helper.experiment_histories.size() > 0) {
 			for (int e_index = 0; e_index < (int)run_helper.experiments_seen_order.size(); e_index++) {
@@ -134,45 +136,13 @@ int main(int argc, char* argv[]) {
 				clean_scope(experiment_scope);
 				duplicate->clean();
 
-				#if defined(MDEBUG) && MDEBUG
-				while (duplicate->verify_problems.size() > 0) {
-					Problem* problem = duplicate->verify_problems[0];
-
-					RunHelper run_helper;
-					run_helper.starting_run_seed = duplicate->verify_seeds[0];
-					cout << "run_helper.starting_run_seed: " << run_helper.starting_run_seed << endl;
-					run_helper.curr_run_seed = duplicate->verify_seeds[0];
-					duplicate->verify_seeds.erase(duplicate->verify_seeds.begin());
-
-					vector<ContextLayer> context;
-					duplicate->scopes[0]->verify_activate(
-						problem,
-						context,
-						run_helper);
-
-					cout << "run_helper.num_actions: " << run_helper.num_actions << endl;
-					cout << "duplicate->num_actions_limit: " << duplicate->num_actions_limit << endl;
-
-					delete duplicate->verify_problems[0];
-					duplicate->verify_problems.erase(duplicate->verify_problems.begin());
-				}
-				duplicate->clear_verify();
-				#endif /* MDEBUG */
-
 				vector<double> target_vals;
 				int max_num_actions = 0;
-				#if defined(MDEBUG) && MDEBUG
 				bool early_exit = false;
-				#endif /* MDEBUG */
 				for (int iter_index = 0; iter_index < MEASURE_ITERS; iter_index++) {
 					Problem* problem = problem_type->get_problem();
 
 					RunHelper run_helper;
-					#if defined(MDEBUG) && MDEBUG
-					run_helper.starting_run_seed = run_index;
-					run_helper.curr_run_seed = run_index;
-					run_index++;
-					#endif /* MDEBUG */
 
 					vector<ContextLayer> context;
 					duplicate->scopes[0]->activate(
@@ -196,12 +166,37 @@ int main(int argc, char* argv[]) {
 
 					delete problem;
 
-					#if defined(MDEBUG) && MDEBUG
-					if (run_index%2000 == 0) {
-						early_exit = true;
-						break;
+					auto curr_time = chrono::high_resolution_clock::now();
+					auto time_diff = chrono::duration_cast<chrono::seconds>(curr_time - start_time);
+					if (time_diff.count() >= 20) {
+						start_time = curr_time;
+
+						cout << "alive" << endl;
+
+						ifstream solution_save_file;
+						solution_save_file.open("workers/saves/main.txt");
+						string timestamp_line;
+						getline(solution_save_file, timestamp_line);
+						int curr_timestamp = stoi(timestamp_line);
+						solution_save_file.close();
+
+						if (curr_timestamp > solution->timestamp) {
+							early_exit = true;
+							break;
+						}
 					}
-					#endif /* MDEBUG */
+				}
+
+				if (early_exit) {
+					delete duplicate;
+
+					delete solution;
+
+					solution = new Solution();
+					solution->load("workers/", "main");
+					cout << "updated from main" << endl;
+
+					continue;
 				}
 
 				for (int s_index = 0; s_index < (int)duplicate->scopes.size(); s_index++) {
@@ -214,18 +209,6 @@ int main(int argc, char* argv[]) {
 					}
 				}
 
-				#if defined(MDEBUG) && MDEBUG
-				if (early_exit) {
-					delete duplicate;
-
-					delete solution;
-					solution = new Solution();
-					solution->load("", "main");
-
-					continue;
-				}
-				#endif /* MDEBUG */
-
 				double sum_score = 0.0;
 				for (int d_index = 0; d_index < MEASURE_ITERS; d_index++) {
 					sum_score += target_vals[d_index];
@@ -233,25 +216,14 @@ int main(int argc, char* argv[]) {
 				duplicate->average_score = sum_score / MEASURE_ITERS;
 
 				duplicate->max_num_actions = max_num_actions;
-				duplicate->num_actions_limit = 2*duplicate->max_num_actions + 10;
 
 				cout << "duplicate->average_score: " << duplicate->average_score << endl;
 
-				ofstream display_file;
-				display_file.open("../display.txt");
-				duplicate->save_for_display(display_file);
-				display_file.close();
-
 				duplicate->timestamp++;
 
-				#if defined(MDEBUG) && MDEBUG
-				delete solution;
-				solution = duplicate;
+				duplicate->save(path, "possible_" + to_string((unsigned)time(NULL)));
 
-				solution->save("", "main");
-				#else
 				delete duplicate;
-				#endif /* MDEBUG */
 			}
 		} else {
 			for (int e_index = 0; e_index < (int)run_helper.experiments_seen_order.size(); e_index++) {

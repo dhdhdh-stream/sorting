@@ -11,6 +11,7 @@
 #include "run_helper.h"
 
 class Problem;
+class ScopeHistory;
 
 class ActionNodeHistory;
 class ActionNode : public AbstractNode {
@@ -40,7 +41,7 @@ public:
 							 Problem* problem,
 							 std::vector<ContextLayer>& context,
 							 RunHelper& run_helper,
-							 std::vector<AbstractNodeHistory*>& node_histories);
+							 ScopeHistory* scope_history);
 
 	void explore_activate(Problem* problem,
 						  RunHelper& run_helper);
@@ -53,7 +54,10 @@ public:
 
 class ActionNodeHistory : public AbstractNodeHistory {
 public:
-	std::vector<int> obs_history;
+	std::vector<double> obs_history;
+
+	ActionNodeHistory();
+	ActionNodeHistory(ActionNodeHistory* original);
 };
 
 #endif /* ACTION_NODE_H */

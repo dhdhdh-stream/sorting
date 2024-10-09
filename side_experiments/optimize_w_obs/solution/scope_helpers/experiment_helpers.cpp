@@ -6,7 +6,7 @@
 #include "branch_node.h"
 #include "constants.h"
 #include "globals.h"
-#include "new_action_experiment.h"
+#include "new_scope_experiment.h"
 #include "scope_node.h"
 
 using namespace std;
@@ -68,9 +68,9 @@ void Scope::experiment_activate(Problem* problem,
 
 	context.back().scope_id = this->id;
 
-	if (this->new_action_experiment != NULL) {
-		this->new_action_experiment->pre_activate(context,
-												  run_helper);
+	if (this->new_scope_experiment != NULL) {
+		this->new_scope_experiment->pre_activate(context,
+												 run_helper);
 	}
 
 	AbstractNode* curr_node = this->nodes[0];
@@ -90,10 +90,10 @@ void Scope::experiment_activate(Problem* problem,
 		}
 	}
 
-	if (this->new_action_experiment != NULL) {
+	if (this->new_scope_experiment != NULL) {
 		if (run_helper.experiment_histories.size() == 1
-				&& run_helper.experiment_histories.back()->experiment == this->new_action_experiment) {
-			this->new_action_experiment->back_activate(
+				&& run_helper.experiment_histories.back()->experiment == this->new_scope_experiment) {
+			this->new_scope_experiment->back_activate(
 				context,
 				run_helper,
 				history);

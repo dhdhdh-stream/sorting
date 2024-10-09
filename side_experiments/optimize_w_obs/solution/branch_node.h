@@ -10,6 +10,7 @@
 
 class Network;
 class Problem;
+class ScopeHistory;
 class Solution;
 
 class BranchNodeHistory;
@@ -37,20 +38,21 @@ public:
 				  std::vector<ContextLayer>& context,
 				  RunHelper& run_helper);
 
-	void result_activate(AbstractNode*& curr_node,
-						 Problem* problem,
-						 std::vector<ContextLayer>& context,
-						 RunHelper& run_helper);
+	void experiment_activate(AbstractNode*& curr_node,
+							 Problem* problem,
+							 std::vector<ContextLayer>& context,
+							 RunHelper& run_helper,
+							 ScopeHistory* scope_history);
 
 	#if defined(MDEBUG) && MDEBUG
 	void verify_activate(AbstractNode*& curr_node,
 						 Problem* problem,
 						 std::vector<ContextLayer>& context,
 						 RunHelper& run_helper);
-	void new_action_capture_verify_activate(AbstractNode*& curr_node,
-											Problem* problem,
-											std::vector<ContextLayer>& context,
-											RunHelper& run_helper);
+	void new_scope_capture_verify_activate(AbstractNode*& curr_node,
+										   Problem* problem,
+										   std::vector<ContextLayer>& context,
+										   RunHelper& run_helper);
 	void clear_verify();
 	#endif /* MDEBUG */
 
@@ -64,6 +66,9 @@ public:
 class BranchNodeHistory : public AbstractNodeHistory {
 public:
 	bool is_branch;
+
+	BranchNodeHistory();
+	BranchNodeHistory(BranchNodeHistory* original);
 };
 
 #endif /* BRANCH_NODE_H */
