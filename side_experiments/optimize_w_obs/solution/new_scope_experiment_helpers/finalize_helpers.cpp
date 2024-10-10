@@ -55,6 +55,29 @@ void NewScopeExperiment::finalize(Solution* duplicate) {
 			case NODE_TYPE_BRANCH:
 				{
 					BranchNode* branch_node = (BranchNode*)it->second;
+
+					for (int i_index = 0; i_index < (int)branch_node->inputs.size(); i_index++) {
+						branch_node->inputs[i_index].first.first[0] = this->new_scope->id;
+
+						Scope* scope = duplicate->scopes[branch_node->inputs[i_index].first.first.back()];
+						ActionNode* node = (ActionNode*)scope->nodes[branch_node->inputs[i_index].first.second.back()];
+
+						bool is_existing = false;
+						for (int ii_index = 0; ii_index < (int)node->input_scope_context_ids.size(); ii_index++) {
+							if (node->input_scope_context_ids[ii_index] == branch_node->inputs[i_index].first.first
+									&& node->input_node_context_ids[ii_index] == branch_node->inputs[i_index].first.second
+									&& node->input_obs_indexes[ii_index] == branch_node->inputs[i_index].second) {
+								is_existing = true;
+								break;
+							}
+						}
+						if (!is_existing) {
+							node->input_scope_context_ids.push_back(branch_node->inputs[i_index].first.first);
+							node->input_node_context_ids.push_back(branch_node->inputs[i_index].first.second);
+							node->input_obs_indexes.push_back(branch_node->inputs[i_index].second);
+						}
+					}
+
 					branch_node->verify_key = this;
 				}
 				break;

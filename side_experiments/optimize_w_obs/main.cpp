@@ -8,6 +8,9 @@
  *     - breaks down solution into modular segments
  */
 
+// TODO: world model makes it easier to make changes?
+// - won't be dependent on specific previous nodes/paths
+
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -46,10 +49,10 @@ int main(int argc, char* argv[]) {
 	problem_type = new TypeMinesweeper();
 
 	solution = new Solution();
-	solution->init();
-	// solution->load("", "main");
+	// solution->init();
+	solution->load("", "main");
 
-	solution->save("", "main");
+	// solution->save("", "main");
 
 	run_index = 0;
 
@@ -131,8 +134,8 @@ int main(int argc, char* argv[]) {
 				delete run_helper.experiment_histories.back()->experiment;
 
 				Scope* experiment_scope = duplicate->scopes[last_updated_scope_id];
-				clean_scope(experiment_scope);
-				duplicate->clean();
+				clean_scope(experiment_scope,
+							duplicate);
 
 				#if defined(MDEBUG) && MDEBUG
 				while (duplicate->verify_problems.size() > 0) {
@@ -248,7 +251,7 @@ int main(int argc, char* argv[]) {
 				delete solution;
 				solution = duplicate;
 
-				solution->save("", "main");
+				// solution->save("", "main");
 				#else
 				delete duplicate;
 				#endif /* MDEBUG */

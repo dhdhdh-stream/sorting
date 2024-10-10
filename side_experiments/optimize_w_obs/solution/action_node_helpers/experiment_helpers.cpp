@@ -15,7 +15,7 @@ void ActionNode::experiment_activate(AbstractNode*& curr_node,
 									 vector<ContextLayer>& context,
 									 RunHelper& run_helper,
 									 ScopeHistory* scope_history) {
-	ActionNodeHistory* history = new ActionNodeHistory();
+	ActionNodeHistory* history = new ActionNodeHistory(this);
 	history->index = (int)scope_history->node_histories.size();
 	scope_history->node_histories[this->id] = history;
 
@@ -40,13 +40,13 @@ void ActionNode::experiment_activate(AbstractNode*& curr_node,
 
 		if (match_context) {
 			if (this->input_obs_indexes[i_index] == -1) {
-				context[context.size() - this->input_scope_context_ids.size()]
+				context[context.size() - this->input_scope_context_ids[i_index].size()]
 					.obs_history[{{this->input_scope_context_ids[i_index],
 						this->input_node_context_ids[i_index]}, -1}] = 1.0;
 			} else {
-				context[context.size() - this->input_scope_context_ids.size()]
+				context[context.size() - this->input_scope_context_ids[i_index].size()]
 					.obs_history[{{this->input_scope_context_ids[i_index],
-						this->input_node_context_ids[i_index]}, -1}] = obs[this->input_obs_indexes[i_index]];
+						this->input_node_context_ids[i_index]}, this->input_obs_indexes[i_index]}] = obs[this->input_obs_indexes[i_index]];
 			}
 		}
 	}

@@ -166,6 +166,26 @@ void BranchExperiment::new_branch(Solution* duplicate) {
 		}
 	}
 
+	for (int i_index = 0; i_index < (int)this->inputs.size(); i_index++) {
+		Scope* scope = duplicate->scopes[this->inputs[i_index].first.first.back()];
+		ActionNode* node = (ActionNode*)scope->nodes[this->inputs[i_index].first.second.back()];
+
+		bool is_existing = false;
+		for (int ii_index = 0; ii_index < (int)node->input_scope_context_ids.size(); ii_index++) {
+			if (node->input_scope_context_ids[ii_index] == this->inputs[i_index].first.first
+					&& node->input_node_context_ids[ii_index] == this->inputs[i_index].first.second
+					&& node->input_obs_indexes[ii_index] == this->inputs[i_index].second) {
+				is_existing = true;
+				break;
+			}
+		}
+		if (!is_existing) {
+			node->input_scope_context_ids.push_back(this->inputs[i_index].first.first);
+			node->input_node_context_ids.push_back(this->inputs[i_index].first.second);
+			node->input_obs_indexes.push_back(this->inputs[i_index].second);
+		}
+	}
+
 	this->branch_node->inputs = this->inputs;
 	this->branch_node->network = this->network;
 	this->network = NULL;

@@ -133,8 +133,8 @@ int main(int argc, char* argv[]) {
 				delete run_helper.experiment_histories.back()->experiment;
 
 				Scope* experiment_scope = duplicate->scopes[last_updated_scope_id];
-				clean_scope(experiment_scope);
-				duplicate->clean();
+				clean_scope(experiment_scope,
+							duplicate);
 
 				vector<double> target_vals;
 				int max_num_actions = 0;

@@ -10,7 +10,8 @@
 
 using namespace std;
 
-void clean_scope(Scope* scope) {
+void clean_scope(Scope* scope,
+				 Solution* parent_solution) {
 	while (true) {
 		bool removed_node = false;
 
@@ -47,6 +48,9 @@ void clean_scope(Scope* scope) {
 			if (needed_it == next_node_ids.end()) {
 				removed_node = true;
 
+				parent_solution->clean_node(scope->id,
+											it->first);
+
 				delete it->second;
 				it = scope->nodes.erase(it);
 			} else {
@@ -56,223 +60,6 @@ void clean_scope(Scope* scope) {
 
 		if (!removed_node) {
 			break;
-		}
-	}
-}
-
-void clean_branch_node(Scope* scope) {
-	while (true) {
-		bool removed_node = false;
-
-		map<int, AbstractNode*>::iterator it = scope->nodes.begin();
-		while (it != scope->nodes.end()) {
-			if (it->second->type == NODE_TYPE_BRANCH) {
-				BranchNode* branch_node = (BranchNode*)it->second;
-				if (branch_node->original_next_node == branch_node->branch_next_node) {
-					for (map<int, AbstractNode*>::iterator inner_it = scope->nodes.begin();
-							inner_it != scope->nodes.end(); inner_it++) {
-						switch (inner_it->second->type) {
-						case NODE_TYPE_ACTION:
-							{
-								ActionNode* node = (ActionNode*)inner_it->second;
-								if (node->next_node == branch_node) {
-									node->next_node_id = branch_node->original_next_node_id;
-									node->next_node = branch_node->original_next_node;
-								}
-							}
-							break;
-						case NODE_TYPE_SCOPE:
-							{
-								ScopeNode* node = (ScopeNode*)inner_it->second;
-								if (node->next_node == branch_node) {
-									node->next_node_id = branch_node->original_next_node_id;
-									node->next_node = branch_node->original_next_node;
-								}
-							}
-							break;
-						case NODE_TYPE_BRANCH:
-							{
-								BranchNode* node = (BranchNode*)inner_it->second;
-								if (node->original_next_node == branch_node) {
-									node->original_next_node_id = branch_node->original_next_node_id;
-									node->original_next_node = branch_node->original_next_node;
-								}
-								if (node->branch_next_node == branch_node) {
-									node->branch_next_node_id = branch_node->original_next_node_id;
-									node->branch_next_node = branch_node->original_next_node;
-								}
-							}
-							break;
-						}
-					}
-
-					removed_node = true;
-
-					delete it->second;
-					it = scope->nodes.erase(it);
-
-					continue;
-				}
-			}
-
-			it++;
-		}
-
-		if (!removed_node) {
-			break;
-		}
-	}
-}
-
-void clean_scope_node_helper(Scope* scope,
-							 AbstractNode* original_node,
-							 AbstractNode* new_node) {
-	for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
-			it != scope->nodes.end(); it++) {
-		switch (it->second->type) {
-		case NODE_TYPE_ACTION:
-			{
-				ActionNode* node = (ActionNode*)it->second;
-				if (node->next_node == original_node) {
-					if (new_node == NULL) {
-						node->next_node_id = -1;
-						node->next_node = NULL;
-					} else {
-						node->next_node_id = new_node->id;
-						node->next_node = new_node;
-					}
-				}
-			}
-			break;
-		case NODE_TYPE_SCOPE:
-			{
-				ScopeNode* node = (ScopeNode*)it->second;
-				if (node->next_node == original_node) {
-					if (new_node == NULL) {
-						node->next_node_id = -1;
-						node->next_node = NULL;
-					} else {
-						node->next_node_id = new_node->id;
-						node->next_node = new_node;
-					}
-				}
-			}
-			break;
-		case NODE_TYPE_BRANCH:
-			{
-				BranchNode* node = (BranchNode*)it->second;
-				if (node->original_next_node == original_node) {
-					if (new_node == NULL) {
-						node->original_next_node_id = -1;
-						node->original_next_node = NULL;
-					} else {
-						node->original_next_node_id = new_node->id;
-						node->original_next_node = new_node;
-					}
-				}
-				if (node->branch_next_node == original_node) {
-					if (new_node == NULL) {
-						node->branch_next_node_id = -1;
-						node->branch_next_node = NULL;
-					} else {
-						node->branch_next_node_id = new_node->id;
-						node->branch_next_node = new_node;
-					}
-				}
-			}
-			break;
-		}
-	}
-}
-
-void clean_scope_node(Solution* parent_solution,
-					  Scope* to_remove) {
-	for (int s_index = 0; s_index < (int)parent_solution->scopes.size(); s_index++) {
-		map<int, AbstractNode*>::iterator it = parent_solution->scopes[s_index]->nodes.begin();
-		while (it != parent_solution->scopes[s_index]->nodes.end()) {
-			if (it->second->type == NODE_TYPE_SCOPE) {
-				ScopeNode* scope_node = (ScopeNode*)it->second;
-				if (scope_node->scope == to_remove) {
-					clean_scope_node_helper(parent_solution->scopes[s_index],
-											scope_node,
-											scope_node->next_node);
-
-					delete it->second;
-					it = parent_solution->scopes[s_index]->nodes.erase(it);
-
-					continue;
-				}
-			}
-
-			it++;
-		}
-	}
-}
-
-void clean_scope_node(Solution* parent_solution,
-					  Scope* to_remove,
-					  Action to_replace) {
-	for (int s_index = 0; s_index < (int)parent_solution->scopes.size(); s_index++) {
-		map<int, AbstractNode*>::iterator it = parent_solution->scopes[s_index]->nodes.begin();
-		while (it != parent_solution->scopes[s_index]->nodes.end()) {
-			if (it->second->type == NODE_TYPE_SCOPE) {
-				ScopeNode* scope_node = (ScopeNode*)it->second;
-				if (scope_node->scope == to_remove) {
-					ActionNode* new_action_node = new ActionNode();
-					new_action_node->parent = parent_solution->scopes[s_index];
-					new_action_node->id = parent_solution->scopes[s_index]->node_counter;
-					parent_solution->scopes[s_index]->node_counter++;
-					new_action_node->action = to_replace;
-					new_action_node->next_node_id = scope_node->next_node_id;
-					new_action_node->next_node = scope_node->next_node;
-					parent_solution->scopes[s_index]->nodes[new_action_node->id] = new_action_node;
-
-					clean_scope_node_helper(parent_solution->scopes[s_index],
-											scope_node,
-											new_action_node);
-
-					delete it->second;
-					it = parent_solution->scopes[s_index]->nodes.erase(it);
-
-					continue;
-				}
-			}
-
-			it++;
-		}
-	}
-}
-
-void clean_scope_node(Solution* parent_solution,
-					  Scope* to_remove,
-					  Scope* to_replace) {
-	for (int s_index = 0; s_index < (int)parent_solution->scopes.size(); s_index++) {
-		map<int, AbstractNode*>::iterator it = parent_solution->scopes[s_index]->nodes.begin();
-		while (it != parent_solution->scopes[s_index]->nodes.end()) {
-			if (it->second->type == NODE_TYPE_SCOPE) {
-				ScopeNode* scope_node = (ScopeNode*)it->second;
-				if (scope_node->scope == to_remove) {
-					ScopeNode* new_scope_node = new ScopeNode();
-					new_scope_node->parent = parent_solution->scopes[s_index];
-					new_scope_node->id = parent_solution->scopes[s_index]->node_counter;
-					parent_solution->scopes[s_index]->node_counter++;
-					new_scope_node->scope = to_replace;
-					new_scope_node->next_node_id = scope_node->next_node_id;
-					new_scope_node->next_node = scope_node->next_node;
-					parent_solution->scopes[s_index]->nodes[new_scope_node->id] = new_scope_node;
-
-					clean_scope_node_helper(parent_solution->scopes[s_index],
-											scope_node,
-											new_scope_node);
-
-					delete it->second;
-					it = parent_solution->scopes[s_index]->nodes.erase(it);
-
-					continue;
-				}
-			}
-
-			it++;
 		}
 	}
 }

@@ -56,7 +56,7 @@ class ActionNodeHistory : public AbstractNodeHistory {
 public:
 	std::vector<double> obs_history;
 
-	ActionNodeHistory();
+	ActionNodeHistory(ActionNode* node);
 	ActionNodeHistory(ActionNodeHistory* original);
 };
 

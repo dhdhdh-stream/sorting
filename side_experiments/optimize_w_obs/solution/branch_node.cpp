@@ -59,6 +59,25 @@ void BranchNode::clear_verify() {
 }
 #endif /* MDEBUG */
 
+void BranchNode::clean_node(int scope_id,
+							int node_id) {
+	for (int i_index = (int)this->inputs.size()-1; i_index >= 0; i_index--) {
+		bool is_match = false;
+		for (int l_index = 0; l_index < (int)this->inputs[i_index].first.first.size(); l_index++) {
+			if (this->inputs[i_index].first.first[l_index] == scope_id
+					&& this->inputs[i_index].first.second[l_index] == node_id) {
+				is_match = true;
+				break;
+			}
+		}
+
+		if (is_match) {
+			this->inputs.erase(this->inputs.begin() + i_index);
+			this->network->remove_input(i_index);
+		}
+	}
+}
+
 void BranchNode::save(ofstream& output_file) {
 	output_file << this->inputs.size() << endl;
 	for (int i_index = 0; i_index < (int)this->inputs.size(); i_index++) {
@@ -141,10 +160,13 @@ void BranchNode::save_for_display(ofstream& output_file) {
 	output_file << this->branch_next_node_id << endl;
 }
 
-BranchNodeHistory::BranchNodeHistory() {
-	// do nothing
+BranchNodeHistory::BranchNodeHistory(BranchNode* node) {
+	this->node = node;
 }
 
 BranchNodeHistory::BranchNodeHistory(BranchNodeHistory* original) {
+	this->node = original->node;
+	this->index = original->index;
+
 	this->is_branch = original->is_branch;
 }

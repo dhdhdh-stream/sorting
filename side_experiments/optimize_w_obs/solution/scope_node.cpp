@@ -69,11 +69,14 @@ void ScopeNode::save_for_display(ofstream& output_file) {
 	output_file << this->next_node_id << endl;
 }
 
-ScopeNodeHistory::ScopeNodeHistory() {
-	// do nothing
+ScopeNodeHistory::ScopeNodeHistory(ScopeNode* node) {
+	this->node = node;
 }
 
 ScopeNodeHistory::ScopeNodeHistory(ScopeNodeHistory* original) {
+	this->node = original->node;
+	this->index = original->index;
+
 	this->scope_history = new ScopeHistory(original->scope_history);
 }
 

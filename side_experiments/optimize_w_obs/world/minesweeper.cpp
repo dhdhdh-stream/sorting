@@ -13,6 +13,8 @@ const int NUM_MINES = 10;
 const int STARTING_X = 4;
 const int STARTING_Y = 4;
 
+const int FIELD_OF_VIEW = 2;
+
 Minesweeper::Minesweeper() {
 	while (true) {
 		this->world = vector<vector<int>>(WIDTH, vector<int>(HEIGHT, 0));
@@ -144,7 +146,13 @@ double Minesweeper::get_observation_helper(int x, int y) {
 vector<double> Minesweeper::get_observations() {
 	vector<double> obs;
 
-	obs.push_back(get_observation_helper(this->current_x, this->current_y));
+	for (int x_index = -FIELD_OF_VIEW; x_index <= FIELD_OF_VIEW; x_index++) {
+		for (int y_index = -FIELD_OF_VIEW; y_index <= FIELD_OF_VIEW; y_index++) {
+			obs.push_back(get_observation_helper(
+				this->current_x + x_index,
+				this->current_y + y_index));
+		}
+	}
 
 	return obs;
 }
@@ -450,7 +458,7 @@ Problem* TypeMinesweeper::get_problem() {
 }
 
 int TypeMinesweeper::num_obs() {
-	return 1;
+	return 25;
 }
 
 int TypeMinesweeper::num_possible_actions() {

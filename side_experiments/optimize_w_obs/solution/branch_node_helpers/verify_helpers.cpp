@@ -38,6 +38,11 @@ void BranchNode::verify_activate(AbstractNode*& curr_node,
 		cout << "run_helper.curr_run_seed: " << run_helper.curr_run_seed << endl;
 		problem->print();
 
+		cout << "input_vals:" << endl;
+		for (int i_index = 0; i_index < (int)input_vals.size(); i_index++) {
+			cout << i_index << ": " << input_vals[i_index] << endl;
+		}
+
 		cout << "context scope" << endl;
 		for (int c_index = 0; c_index < (int)context.size()-1; c_index++) {
 			cout << c_index << ": " << context[c_index].scope_id << endl;

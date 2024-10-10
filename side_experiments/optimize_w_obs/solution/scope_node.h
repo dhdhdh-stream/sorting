@@ -44,6 +44,11 @@ public:
 						  std::vector<ContextLayer>& context,
 						  RunHelper& run_helper);
 
+	void new_scope_activate(AbstractNode*& curr_node,
+							Problem* problem,
+							std::vector<ContextLayer>& context,
+							RunHelper& run_helper);
+
 	#if defined(MDEBUG) && MDEBUG
 	void verify_activate(AbstractNode*& curr_node,
 						 Problem* problem,
@@ -66,7 +71,7 @@ class ScopeNodeHistory : public AbstractNodeHistory {
 public:
 	ScopeHistory* scope_history;
 
-	ScopeNodeHistory();
+	ScopeNodeHistory(ScopeNode* node);
 	ScopeNodeHistory(ScopeNodeHistory* original);
 	~ScopeNodeHistory();
 };

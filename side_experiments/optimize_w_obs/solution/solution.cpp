@@ -130,64 +130,11 @@ void Solution::clear_verify() {
 }
 #endif /* MDEBUG */
 
-void Solution::clean() {
-	for (int s_index = (int)this->scopes.size()-1; s_index >= 1; s_index--) {
-		bool still_used = false;
-		for (int is_index = 0; is_index < (int)this->scopes.size(); is_index++) {
-			if (s_index != is_index) {
-				for (map<int, AbstractNode*>::iterator it = this->scopes[is_index]->nodes.begin();
-						it != this->scopes[is_index]->nodes.end(); it++) {
-					if (it->second->type == NODE_TYPE_SCOPE) {
-						ScopeNode* scope_node = (ScopeNode*)it->second;
-						if (scope_node->scope == this->scopes[s_index]) {
-							still_used = true;
-							break;
-						}
-					}
-				}
-			}
-
-			if (still_used) {
-				break;
-			}
-		}
-
-		if (!still_used) {
-			delete this->scopes[s_index];
-			this->scopes.erase(this->scopes.begin() + s_index);
-		}
-	}
-
-	for (int s_index = (int)this->scopes.size()-1; s_index >= 1; s_index--) {
-		if (this->scopes[s_index]->nodes.size() <= 3) {
-			ActionNode* start_node = (ActionNode*)this->scopes[s_index]->nodes[0];
-			if (start_node->next_node->type == NODE_TYPE_ACTION) {
-				ActionNode* action_node = (ActionNode*)start_node->next_node;
-				if (action_node->action.move == ACTION_NOOP) {
-					clean_scope_node(this,
-									 this->scopes[s_index]);
-				} else {
-					clean_scope_node(this,
-									 this->scopes[s_index],
-									 action_node->action);
-				}
-			} else if (start_node->next_node->type == NODE_TYPE_SCOPE) {
-				ScopeNode* scope_node = (ScopeNode*)start_node->next_node;
-				clean_scope_node(this,
-								 this->scopes[s_index],
-								 scope_node->scope);
-			} else {
-				clean_scope_node(this,
-								 this->scopes[s_index]);
-			}
-
-			delete this->scopes[s_index];
-			this->scopes.erase(this->scopes.begin() + s_index);
-		}
-	}
-
-	for (int s_index = 1; s_index < (int)this->scopes.size(); s_index++) {
-		this->scopes[s_index]->id = s_index;
+void Solution::clean_node(int scope_id,
+						  int node_id) {
+	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
+		this->scopes[s_index]->clean_node(scope_id,
+										  node_id);
 	}
 }
 

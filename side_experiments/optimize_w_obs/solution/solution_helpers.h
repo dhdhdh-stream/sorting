@@ -28,19 +28,8 @@ void fetch_input_helper(ScopeHistory* scope_history,
 						int l_index,
 						double& obs);
 
-void clean_scope(Scope* scope);
-void clean_branch_node(Scope* scope);
-void clean_scope_node_helper(Scope* scope,
-							 AbstractNode* original_node,
-							 AbstractNode* new_node);
-void clean_scope_node(Solution* parent_solution,
-					  Scope* to_remove);
-void clean_scope_node(Solution* parent_solution,
-					  Scope* to_remove,
-					  Action to_replace);
-void clean_scope_node(Solution* parent_solution,
-					  Scope* to_remove,
-					  Scope* to_replace);
+void clean_scope(Scope* scope,
+				 Solution* parent_solution);
 
 double get_existing_result(Problem* original_problem);
 

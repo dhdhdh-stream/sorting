@@ -49,17 +49,25 @@ public:
 						 int num_following,
 						 std::set<AbstractNode*>& potential_included_nodes);
 
+	void new_scope_activate(Problem* problem,
+							std::vector<ContextLayer>& context,
+							RunHelper& run_helper,
+							ScopeHistory* scope_history);
+
 	#if defined(MDEBUG) && MDEBUG
 	void new_scope_capture_verify_activate(Problem* problem,
 										   std::vector<ContextLayer>& context,
-										   RunHelper& run_helper);
+										   RunHelper& run_helper,
+										   ScopeHistory* scope_history);
 	void verify_activate(Problem* problem,
 						 std::vector<ContextLayer>& context,
 						 RunHelper& run_helper);
 	void clear_verify();
 	#endif /* MDEBUG */
 
-	void clean();
+	void clean_unneeded_branch_nodes();
+	void clean_node(int scope_id,
+					int node_id);
 
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file,

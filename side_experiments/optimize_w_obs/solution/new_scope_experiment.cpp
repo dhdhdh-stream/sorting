@@ -222,7 +222,7 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 				}
 			}
 
-			new_scope->clean();
+			new_scope->clean_unneeded_branch_nodes();
 
 			break;
 		}

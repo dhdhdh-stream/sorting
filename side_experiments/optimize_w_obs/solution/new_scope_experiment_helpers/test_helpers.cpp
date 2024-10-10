@@ -44,9 +44,12 @@ void NewScopeExperiment::test_activate(
 	case NEW_SCOPE_EXPERIMENT_VERIFY_2ND_NEW:
 		context.back().node_id = -1;
 
-		this->new_scope->activate(problem,
-								  context,
-								  run_helper);
+		ScopeHistory* inner_scope_history = new ScopeHistory(this->new_scope);
+		this->new_scope->new_scope_activate(problem,
+											context,
+											run_helper,
+											inner_scope_history);
+		delete inner_scope_history;
 
 		curr_node = this->test_location_exits[location_index];
 	}

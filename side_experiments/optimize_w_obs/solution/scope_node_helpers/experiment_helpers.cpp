@@ -15,7 +15,7 @@ void ScopeNode::experiment_activate(AbstractNode*& curr_node,
 									vector<ContextLayer>& context,
 									RunHelper& run_helper,
 									ScopeHistory* scope_history) {
-	ScopeNodeHistory* history = new ScopeNodeHistory();
+	ScopeNodeHistory* history = new ScopeNodeHistory(this);
 	history->index = (int)scope_history->node_histories.size();
 	scope_history->node_histories[this->id] = history;
 

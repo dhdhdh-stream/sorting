@@ -17,7 +17,7 @@ void BranchNode::experiment_activate(AbstractNode*& curr_node,
 									 vector<ContextLayer>& context,
 									 RunHelper& run_helper,
 									 ScopeHistory* scope_history) {
-	BranchNodeHistory* history = new BranchNodeHistory();
+	BranchNodeHistory* history = new BranchNodeHistory(this);
 	history->index = (int)scope_history->node_histories.size();
 	scope_history->node_histories[this->id] = history;
 

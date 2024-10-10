@@ -65,8 +65,12 @@ void fetch_input_helper(ScopeHistory* scope_history,
 		->node_histories.find(input.first.second[l_index]);
 	if (it != scope_history->node_histories.end()) {
 		if (l_index == (int)input.first.first.size()-1) {
-			ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
-			obs = action_node_history->obs_history[input.second];
+			if (input.second == -1) {
+				obs = 1.0;
+			} else {
+				ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
+				obs = action_node_history->obs_history[input.second];
+			}
 		} else {
 			ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)it->second;
 			fetch_input_helper(scope_node_history->scope_history,

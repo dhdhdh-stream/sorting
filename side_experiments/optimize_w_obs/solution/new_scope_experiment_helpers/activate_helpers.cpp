@@ -86,7 +86,12 @@ bool NewScopeExperiment::activate(AbstractNode* experiment_node,
 						return false;
 					}
 				} else {
-					curr_node = this->successful_scope_nodes[location_index];
+					this->successful_scope_nodes[location_index]->new_scope_activate(
+						curr_node,
+						problem,
+						context,
+						run_helper);
+
 					return true;
 				}
 			#if defined(MDEBUG) && MDEBUG
@@ -120,9 +125,8 @@ void NewScopeExperiment::back_activate(vector<ContextLayer>& context,
 				vector<bool> path_is_branch(scope_history->node_histories.size());
 				for (map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
 						it != scope_history->node_histories.end(); it++) {
-					AbstractNode* node = scope_history->scope->nodes[it->first];
-					path_nodes[it->second->index] = node;
-					if (node->type == NODE_TYPE_BRANCH) {
+					path_nodes[it->second->index] = it->second->node;
+					if (it->second->node->type == NODE_TYPE_BRANCH) {
 						BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
 						path_is_branch[it->second->index] = branch_node_history->is_branch;
 					} else {
