@@ -8,6 +8,7 @@
 #include <utility>
 #include <vector>
 
+#include "alignment.h"
 #include "context_layer.h"
 #include "run_helper.h"
 
@@ -64,6 +65,9 @@ public:
 						 RunHelper& run_helper);
 	void clear_verify();
 	#endif /* MDEBUG */
+
+	void align_activate(Alignment& alignment,
+						std::vector<ContextLayer>& context);
 
 	void clean_unneeded_branch_nodes();
 	void clean_node(int scope_id,

@@ -77,6 +77,7 @@ int main(int argc, char* argv[]) {
 	solution->save_for_display(display_file);
 	display_file.close();
 
+	delete problem_type;
 	delete solution;
 
 	cout << "Done" << endl;

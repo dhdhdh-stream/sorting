@@ -63,6 +63,9 @@ public:
 	void clear_verify();
 	#endif /* MDEBUG */
 
+	void align_activate(AbstractNode*& curr_node,
+						std::vector<ContextLayer>& context);
+
 	void clean_node(int scope_id,
 					int node_id);
 

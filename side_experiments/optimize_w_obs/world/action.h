@@ -19,6 +19,8 @@ public:
 	Action(std::ifstream& save_file);
 	~Action();
 
+	bool operator==(const Action& rhs);
+
 	void save(std::ofstream& save_file);
 };
 
