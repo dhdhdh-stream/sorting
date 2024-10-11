@@ -1,5 +1,7 @@
 #include "action_node.h"
 
+#include <iostream>
+
 #include "globals.h"
 #include "sample.h"
 #include "scope.h"
@@ -31,9 +33,14 @@ void ActionNode::align_activate(AbstractNode*& curr_node,
 		int match_distance = closest_match - (alignment.step_nodes.size()-1);
 		uniform_int_distribution<int> select_distribution(0, (match_distance+1)/2);
 		if (select_distribution(generator) == 0) {
+			vector<pair<vector<int>,vector<int>>> existing = alignment.step_nodes.back();
+			alignment.step_nodes.back().clear();
+
 			for (int d_index = 0; d_index < match_distance; d_index++) {
 				alignment.step_nodes.push_back(vector<pair<vector<int>,vector<int>>>());
 			}
+
+			alignment.step_nodes.back() = existing;
 			alignment.step_nodes.back().push_back(local_context);
 
 			if (this->input_scope_context_ids.size() > 0) {

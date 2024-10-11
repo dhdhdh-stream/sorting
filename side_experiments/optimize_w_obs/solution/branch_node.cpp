@@ -28,6 +28,9 @@ BranchNode::BranchNode(BranchNode* original) {
 	this->inputs = original->inputs;
 	this->network = new Network(original->network);
 
+	this->input_scope_context_ids = original->input_scope_context_ids;
+	this->input_node_context_ids = original->input_node_context_ids;
+
 	this->original_next_node_id = original->original_next_node_id;
 	this->branch_next_node_id = original->branch_next_node_id;
 
@@ -76,6 +79,22 @@ void BranchNode::clean_node(int scope_id,
 			this->network->remove_input(i_index);
 		}
 	}
+
+	for (int i_index = (int)this->input_scope_context_ids.size()-1; i_index >= 0; i_index--) {
+		bool is_match = false;
+		for (int l_index = 0; l_index < (int)this->input_scope_context_ids[i_index].size(); l_index++) {
+			if (this->input_scope_context_ids[i_index][l_index] == scope_id
+					&& this->input_node_context_ids[i_index][l_index] == node_id) {
+				is_match = true;
+				break;
+			}
+		}
+
+		if (is_match) {
+			this->input_scope_context_ids.erase(this->input_scope_context_ids.begin() + i_index);
+			this->input_node_context_ids.erase(this->input_node_context_ids.begin() + i_index);
+		}
+	}
 }
 
 void BranchNode::save(ofstream& output_file) {
@@ -92,6 +111,15 @@ void BranchNode::save(ofstream& output_file) {
 
 	this->network->save(output_file);
 
+	output_file << this->input_scope_context_ids.size() << endl;
+	for (int i_index = 0; i_index < (int)this->input_scope_context_ids.size(); i_index++) {
+		output_file << this->input_scope_context_ids[i_index].size() << endl;
+		for (int l_index = 0; l_index < (int)this->input_scope_context_ids[i_index].size(); l_index++) {
+			output_file << this->input_scope_context_ids[i_index][l_index] << endl;
+			output_file << this->input_node_context_ids[i_index][l_index] << endl;
+		}
+	}
+
 	output_file << this->original_next_node_id << endl;
 	output_file << this->branch_next_node_id << endl;
 
@@ -99,34 +127,59 @@ void BranchNode::save(ofstream& output_file) {
 }
 
 void BranchNode::load(ifstream& input_file) {
-	string num_inputs_line;
-	getline(input_file, num_inputs_line);
-	int num_inputs = stoi(num_inputs_line);
-	for (int i_index = 0; i_index < num_inputs; i_index++) {
-		vector<int> scope_ids;
-		vector<int> node_ids;
+	{
+		string num_inputs_line;
+		getline(input_file, num_inputs_line);
+		int num_inputs = stoi(num_inputs_line);
+		for (int i_index = 0; i_index < num_inputs; i_index++) {
+			vector<int> scope_ids;
+			vector<int> node_ids;
 
-		string num_layers_line;
-		getline(input_file, num_layers_line);
-		int num_layers = stoi(num_layers_line);
-		for (int l_index = 0; l_index < num_layers; l_index++) {
-			string scope_id_line;
-			getline(input_file, scope_id_line);
-			scope_ids.push_back(stoi(scope_id_line));
+			string num_layers_line;
+			getline(input_file, num_layers_line);
+			int num_layers = stoi(num_layers_line);
+			for (int l_index = 0; l_index < num_layers; l_index++) {
+				string scope_id_line;
+				getline(input_file, scope_id_line);
+				scope_ids.push_back(stoi(scope_id_line));
 
-			string node_id_line;
-			getline(input_file, node_id_line);
-			node_ids.push_back(stoi(node_id_line));
+				string node_id_line;
+				getline(input_file, node_id_line);
+				node_ids.push_back(stoi(node_id_line));
+			}
+
+			string obs_index_line;
+			getline(input_file, obs_index_line);
+			int obs_index = stoi(obs_index_line);
+
+			this->inputs.push_back({{scope_ids, node_ids}, obs_index});
 		}
-
-		string obs_index_line;
-		getline(input_file, obs_index_line);
-		int obs_index = stoi(obs_index_line);
-
-		this->inputs.push_back({{scope_ids, node_ids}, obs_index});
 	}
 
 	this->network = new Network(input_file);
+
+	{
+		string num_inputs_line;
+		getline(input_file, num_inputs_line);
+		int num_inputs = stoi(num_inputs_line);
+		for (int i_index = 0; i_index < num_inputs; i_index++) {
+			this->input_scope_context_ids.push_back(vector<int>());
+			this->input_node_context_ids.push_back(vector<int>());
+
+			string num_layers_line;
+			getline(input_file, num_layers_line);
+			int num_layers = stoi(num_layers_line);
+			for (int l_index = 0; l_index < num_layers; l_index++) {
+				string scope_id_line;
+				getline(input_file, scope_id_line);
+				this->input_scope_context_ids[i_index].push_back(stoi(scope_id_line));
+
+				string node_id_line;
+				getline(input_file, node_id_line);
+				this->input_node_context_ids[i_index].push_back(stoi(node_id_line));
+			}
+		}
+	}
 
 	string original_next_node_id_line;
 	getline(input_file, original_next_node_id_line);

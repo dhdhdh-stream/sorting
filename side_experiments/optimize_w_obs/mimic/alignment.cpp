@@ -11,6 +11,12 @@
 
 using namespace std;
 
+Alignment::Alignment(Sample* sample) {
+	this->sample = sample;
+
+	this->step_nodes.push_back(vector<pair<vector<int>,vector<int>>>());
+}
+
 double Alignment::score() {
 	double result = 0.0;
 

@@ -16,7 +16,7 @@
 
 using namespace std;
 
-const int NETWORK_NUM_INPUTS = 20;
+const int NETWORK_NUM_INPUTS = 25;
 
 bool BranchExperiment::train_new_activate(
 		AbstractNode*& curr_node,
@@ -101,33 +101,15 @@ void BranchExperiment::train_new_backprop(
 								   node_count,
 								   new_input);
 
-			{
-				bool is_existing = false;
-				for (int ii_index = 0; ii_index < (int)this->inputs.size(); ii_index++) {
-					if (new_input == this->inputs[ii_index]) {
-						is_existing = true;
-						break;
-					}
-				}
-				if (!is_existing) {
-					this->inputs.push_back(new_input);
+			bool is_existing = false;
+			for (int ii_index = 0; ii_index < (int)this->inputs.size(); ii_index++) {
+				if (new_input == this->inputs[ii_index]) {
+					is_existing = true;
+					break;
 				}
 			}
-
-			pair<pair<vector<int>,vector<int>>,int> new_path_input = new_input;
-			new_path_input.second = -1;
-
-			{
-				bool is_existing = false;
-				for (int ii_index = 0; ii_index < (int)this->inputs.size(); ii_index++) {
-					if (new_path_input == this->inputs[ii_index]) {
-						is_existing = true;
-						break;
-					}
-				}
-				if (!is_existing) {
-					this->inputs.push_back(new_path_input);
-				}
+			if (!is_existing) {
+				this->inputs.push_back(new_input);
 			}
 		}
 

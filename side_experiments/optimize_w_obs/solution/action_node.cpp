@@ -33,6 +33,26 @@ ActionNode::~ActionNode() {
 	}
 }
 
+void ActionNode::clean_node(int scope_id,
+							int node_id) {
+	for (int i_index = (int)this->input_scope_context_ids.size()-1; i_index >= 0; i_index--) {
+		bool is_match = false;
+		for (int l_index = 0; l_index < (int)this->input_scope_context_ids[i_index].size(); l_index++) {
+			if (this->input_scope_context_ids[i_index][l_index] == scope_id
+					&& this->input_node_context_ids[i_index][l_index] == node_id) {
+				is_match = true;
+				break;
+			}
+		}
+
+		if (is_match) {
+			this->input_scope_context_ids.erase(this->input_scope_context_ids.begin() + i_index);
+			this->input_node_context_ids.erase(this->input_node_context_ids.begin() + i_index);
+			this->input_obs_indexes.erase(this->input_obs_indexes.begin() + i_index);
+		}
+	}
+}
+
 void ActionNode::save(ofstream& output_file) {
 	this->action.save(output_file);
 

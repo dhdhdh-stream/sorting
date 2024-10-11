@@ -19,6 +19,12 @@ public:
 	std::vector<std::pair<std::pair<std::vector<int>,std::vector<int>>,int>> inputs;
 	Network* network;
 
+	std::vector<std::vector<int>> input_scope_context_ids;
+	std::vector<std::vector<int>> input_node_context_ids;
+	/**
+	 * - 1.0 if branch, -1.0 if original
+	 */
+
 	int original_next_node_id;
 	AbstractNode* original_next_node;
 	int branch_next_node_id;

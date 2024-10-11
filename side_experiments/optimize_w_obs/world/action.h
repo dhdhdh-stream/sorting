@@ -20,6 +20,7 @@ public:
 	~Action();
 
 	bool operator==(const Action& rhs);
+	bool operator!=(const Action& rhs);
 
 	void save(std::ofstream& save_file);
 };

@@ -39,10 +39,9 @@ int main(int argc, char* argv[]) {
 	Sample* sample = new Sample("", 0);
 
 	double best_score = numeric_limits<double>::max();
-	Alignment best_alignment;
+	Alignment best_alignment(sample);
 	for (int t_index = 0; t_index < NUM_ALIGNMENT_TRIES; t_index++) {
-		Alignment curr_alignment;
-		curr_alignment.sample = sample;
+		Alignment curr_alignment(sample);
 		vector<ContextLayer> context;
 		solution->scopes[0]->align_activate(
 			curr_alignment,

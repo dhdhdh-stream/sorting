@@ -21,9 +21,6 @@ public:
 
 	std::vector<std::vector<int>> input_scope_context_ids;
 	std::vector<std::vector<int>> input_node_context_ids;
-	/**
-	 * - -1 if on/off
-	 */
 	std::vector<int> input_obs_indexes;
 
 	int next_node_id;
@@ -50,6 +47,9 @@ public:
 	void align_activate(AbstractNode*& curr_node,
 						Alignment& alignment,
 						std::vector<ContextLayer>& context);
+
+	void clean_node(int scope_id,
+					int node_id);
 
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file);

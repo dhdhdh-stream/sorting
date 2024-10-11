@@ -12,6 +12,8 @@ public:
 
 	std::vector<std::vector<std::pair<std::vector<int>,std::vector<int>>>> step_nodes;
 
+	Alignment(Sample* sample);
+
 	double score();
 
 	void print();

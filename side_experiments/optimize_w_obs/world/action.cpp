@@ -28,6 +28,10 @@ bool Action::operator==(const Action& rhs) {
 	return this->move == rhs.move;
 }
 
+bool Action::operator!=(const Action& rhs) {
+	return this->move != rhs.move;
+}
+
 void Action::save(ofstream& save_file) {
 	save_file << this->move << endl;
 }
