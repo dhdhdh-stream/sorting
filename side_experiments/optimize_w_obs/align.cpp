@@ -1,3 +1,12 @@
+// - can be difficult to take path like sample
+//   - need to know both that the path can be taken and need right follow up
+//     - like, if someone else uses the 8 corners strategy, not meaningful to incorporate into layer strategy
+
+// - need to start by learning someone's strategy to the best of ability
+
+// - find efficient way to summarize samples
+//   - same decision making, paying attention to the same things
+
 #include <chrono>
 #include <iostream>
 #include <map>
