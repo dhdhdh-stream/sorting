@@ -6,6 +6,7 @@ using namespace std;
 
 void BranchNode::align_activate(AbstractNode*& curr_node,
 								vector<ContextLayer>& context) {
+	// TODO: is_local
 	vector<double> input_vals(this->inputs.size(), 0.0);
 	for (int i_index = 0; i_index < (int)this->inputs.size(); i_index++) {
 		map<pair<pair<vector<int>,vector<int>>,int>, double>::iterator it =

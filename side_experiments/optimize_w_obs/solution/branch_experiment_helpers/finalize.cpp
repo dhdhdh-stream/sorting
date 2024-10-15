@@ -212,6 +212,7 @@ void BranchExperiment::new_branch(Solution* duplicate) {
 		
 	}
 
+	this->branch_node->is_local = this->is_local;
 	this->branch_node->inputs = this->inputs;
 	this->branch_node->network = this->network;
 	this->network = NULL;

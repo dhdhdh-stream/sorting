@@ -61,11 +61,13 @@ public:
 	BranchNode* branch_node;
 	ActionNode* ending_node;
 
+	bool is_local;
 	std::vector<std::pair<std::pair<std::vector<int>,std::vector<int>>,int>> inputs;
 	Network* network;
 
 	double combined_score;
 
+	std::vector<std::vector<double>> obs_histories;
 	std::vector<ScopeHistory*> scope_histories;
 	std::vector<double> target_val_histories;
 

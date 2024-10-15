@@ -276,7 +276,14 @@ void BranchExperiment::explore_backprop(
 				}
 			}
 
-			this->scope_histories.reserve(NUM_DATAPOINTS);
+			uniform_int_distribution<int> is_local_distribution(0, 1);
+			if (is_local_distribution(generator) == 0) {
+				this->is_local = true;
+				this->obs_histories.reserve(NUM_DATAPOINTS);
+			} else {
+				this->is_local = false;
+				this->scope_histories.reserve(NUM_DATAPOINTS);
+			}
 			this->target_val_histories.reserve(NUM_DATAPOINTS);
 
 			uniform_int_distribution<int> until_distribution(0, 2*((int)this->node_context->average_instances_per_run-1));

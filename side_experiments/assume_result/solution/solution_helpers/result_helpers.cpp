@@ -9,8 +9,7 @@
 using namespace std;
 
 void get_existing_result(Problem* original_problem,
-						 double& result,
-						 bool& hit_subproblem) {
+						 double& result) {
 	Problem* copy_problem = original_problem->copy_and_reset();
 
 	RunHelper run_helper;
@@ -37,5 +36,4 @@ void get_existing_result(Problem* original_problem,
 	delete copy_problem;
 
 	result = target_val;
-	hit_subproblem = run_helper.hit_subproblem;
 }

@@ -37,14 +37,4 @@ void ReturnNode::result_activate(AbstractNode*& curr_node,
 		run_helper.exceeded_limit = true;
 		return;
 	}
-
-	if (solution->subproblem_starting_node == this) {
-		run_helper.hit_subproblem = true;
-
-		solution->subproblem->result_activate(problem,
-											  context,
-											  run_helper);
-
-		curr_node = solution->subproblem_exit_node;
-	}
 }

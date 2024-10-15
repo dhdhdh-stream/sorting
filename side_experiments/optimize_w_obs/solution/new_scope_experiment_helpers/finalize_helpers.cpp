@@ -45,13 +45,21 @@ void NewScopeExperiment::finalize(Solution* duplicate) {
 		for (map<int, AbstractNode*>::iterator it = this->new_scope->nodes.begin();
 				it != this->new_scope->nodes.end(); it++) {
 			switch (it->second->type) {
+			case NODE_TYPE_ACTION:
+				{
+					ActionNode* action_node = (ActionNode*)it->second;
+
+					for (int i_index = 0; i_index < (int)action_node->input_scope_context_ids.size(); i_index++) {
+						action_node->input_scope_context_ids[i_index][0] = this->new_scope->id;
+					}
+				}
+				break;
 			case NODE_TYPE_SCOPE:
 				{
 					ScopeNode* scope_node = (ScopeNode*)it->second;
 					scope_node->scope = duplicate->scopes[scope_node->scope->id];
 				}
 				break;
-			#if defined(MDEBUG) && MDEBUG
 			case NODE_TYPE_BRANCH:
 				{
 					BranchNode* branch_node = (BranchNode*)it->second;
@@ -103,10 +111,15 @@ void NewScopeExperiment::finalize(Solution* duplicate) {
 						}
 					}
 
+					for (int i_index = 0; i_index < (int)branch_node->input_scope_context_ids.size(); i_index++) {
+						branch_node->input_scope_context_ids[i_index][0] = this->new_scope->id;
+					}
+
+					#if defined(MDEBUG) && MDEBUG
 					branch_node->verify_key = this;
+					#endif /* MDEBUG */
 				}
 				break;
-			#endif /* MDEBUG */
 			}
 		}
 

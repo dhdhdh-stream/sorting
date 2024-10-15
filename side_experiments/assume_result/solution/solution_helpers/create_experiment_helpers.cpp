@@ -57,8 +57,7 @@ void create_experiment(RunHelper& run_helper) {
 	 *   - (though may also greatly speed up future progress of course)
 	 */
 	uniform_int_distribution<int> non_new_distribution(0, 4);
-	if (solution->subproblem == NULL
-			&& explore_scope->new_action_experiment == NULL
+	if (explore_scope->new_action_experiment == NULL
 			&& explore_node->parent->nodes.size() > 10
 			&& non_new_distribution(generator) != 0) {
 		NewActionExperiment* new_action_experiment = new NewActionExperiment(

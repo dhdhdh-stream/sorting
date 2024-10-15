@@ -34,15 +34,13 @@ default_random_engine generator;
 
 ProblemType* problem_type;
 Solution* solution;
-Solution* solution_duplicate;
 
 int run_index;
 
 int main(int argc, char* argv[]) {
 	cout << "Starting..." << endl;
 
-	// seed = (unsigned)time(NULL);
-	seed = 1727997125;
+	seed = (unsigned)time(NULL);
 	srand(seed);
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
@@ -50,37 +48,95 @@ int main(int argc, char* argv[]) {
 	problem_type = new TypeMinesweeper();
 
 	solution = new Solution();
-	// solution->init();
-	solution->load("", "main");
+	solution->init();
+	// solution->load("", "main");
 
-	// solution->save("", "main");
+	solution->save("", "main");
 
 	run_index = 0;
 
 	while (true) {
-		Problem* problem = problem_type->get_problem();
+		if ((solution->timestamp+1) % TRIM_FREQUENCY == 0) {
+			solution->random_trim();
 
-		RunHelper run_helper;
+			vector<double> target_vals;
+			int max_num_actions = 0;
+			for (int iter_index = 0; iter_index < MEASURE_ITERS; iter_index++) {
+				Problem* problem = problem_type->get_problem();
 
-		#if defined(MDEBUG) && MDEBUG
-		run_helper.starting_run_seed = run_index;
-		run_helper.curr_run_seed = xorshift(run_helper.starting_run_seed);
-		#endif /* MDEBUG */
-		run_index++;
-		if (run_index%10000 == 0) {
-			cout << "run_index: " << run_index << endl;
-		}
+				RunHelper run_helper;
+				#if defined(MDEBUG) && MDEBUG
+				run_helper.starting_run_seed = run_index;
+				run_helper.curr_run_seed = xorshift(run_helper.starting_run_seed);
+				run_index++;
+				#endif /* MDEBUG */
 
-		double result;
-		bool hit_subproblem;
-		get_existing_result(problem,
-							result,
-							hit_subproblem);
-		run_helper.result = result;
-		run_helper.hit_subproblem = hit_subproblem;
+				vector<ContextLayer> context;
+				solution->scopes[0]->measure_activate(
+					problem,
+					context,
+					run_helper);
 
-		if (solution->subproblem == NULL
-				|| run_helper.hit_subproblem) {
+				if (run_helper.num_actions > max_num_actions) {
+					max_num_actions = run_helper.num_actions;
+				}
+
+				double target_val;
+				if (!run_helper.exceeded_limit) {
+					target_val = problem->score_result(run_helper.num_analyze,
+													   run_helper.num_actions);
+				} else {
+					target_val = -1.0;
+				}
+
+				target_vals.push_back(target_val);
+
+				delete problem;
+			}
+
+			for (int s_index = 0; s_index < (int)solution->scopes.size(); s_index++) {
+				for (map<int, AbstractNode*>::iterator it = solution->scopes[s_index]->nodes.begin();
+						it != solution->scopes[s_index]->nodes.end(); it++) {
+					it->second->average_instances_per_run /= MEASURE_ITERS;
+				}
+			}
+
+			double sum_score = 0.0;
+			for (int d_index = 0; d_index < MEASURE_ITERS; d_index++) {
+				sum_score += target_vals[d_index];
+			}
+			solution->average_score = sum_score / MEASURE_ITERS;
+
+			solution->max_num_actions = max_num_actions;
+			solution->num_actions_limit = 10*solution->max_num_actions + 10;
+
+			cout << "solution->average_score: " << solution->average_score << endl;
+
+			ofstream display_file;
+			display_file.open("../display.txt");
+			solution->save_for_display(display_file);
+			display_file.close();
+
+			solution->timestamp++;
+		} else {
+			Problem* problem = problem_type->get_problem();
+
+			RunHelper run_helper;
+
+			#if defined(MDEBUG) && MDEBUG
+			run_helper.starting_run_seed = run_index;
+			run_helper.curr_run_seed = xorshift(run_helper.starting_run_seed);
+			#endif /* MDEBUG */
+			run_index++;
+			if (run_index%10000 == 0) {
+				cout << "run_index: " << run_index << endl;
+			}
+
+			double result;
+			get_existing_result(problem,
+								result);
+			run_helper.result = result;
+
 			vector<ContextLayer> context;
 			solution->scopes[0]->activate(
 				problem,
@@ -137,7 +193,6 @@ int main(int argc, char* argv[]) {
 					 * - history->experiment_histories.size() == 1
 					 */
 					Solution* duplicate = new Solution(solution);
-					solution_duplicate = duplicate;
 
 					int last_updated_scope_id = run_helper.experiment_histories.back()->experiment->scope_context->id;
 
@@ -248,16 +303,7 @@ int main(int argc, char* argv[]) {
 					duplicate->max_num_actions = max_num_actions;
 					duplicate->num_actions_limit = 10*duplicate->max_num_actions + 10;
 
-					if (duplicate->subproblem != NULL) {
-						cout << "subproblem:" << endl;
-					}
 					cout << "duplicate->average_score: " << duplicate->average_score << endl;
-
-					if (duplicate->subproblem == NULL) {
-						duplicate->create_subproblem("");
-					} else {
-						duplicate->merge_subproblem();
-					}
 
 					ofstream display_file;
 					display_file.open("../display.txt");
@@ -270,7 +316,7 @@ int main(int argc, char* argv[]) {
 					delete solution;
 					solution = duplicate;
 
-					// solution->save("", "main");
+					solution->save("", "main");
 					#else
 					delete duplicate;
 					#endif /* MDEBUG */
@@ -283,9 +329,9 @@ int main(int argc, char* argv[]) {
 						+ 0.1 * ((int)run_helper.experiments_seen_order.size()-1 - e_index);
 				}
 			}
-		}
 
-		delete problem;
+			delete problem;
+		}
 	}
 
 	delete problem_type;

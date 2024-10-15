@@ -8,8 +8,7 @@
  *     - breaks down solution into modular segments
  */
 
-// TODO: world model makes it easier to make changes?
-// - won't be dependent on specific previous nodes/paths
+// gets stuck in local maxima even with history
 
 #include <chrono>
 #include <iostream>

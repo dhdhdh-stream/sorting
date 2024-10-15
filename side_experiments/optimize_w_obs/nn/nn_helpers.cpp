@@ -16,6 +16,8 @@ const int TRAIN_ITERS = 300000;
 const int OPTIMIZE_ITERS = 100000;
 #endif /* MDEBUG */
 
+// TODO: remove drop?
+
 void train_network(vector<vector<double>>& inputs,
 				   vector<double>& target_vals,
 				   Network* network) {

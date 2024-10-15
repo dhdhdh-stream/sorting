@@ -22,7 +22,6 @@ default_random_engine generator;
 
 ProblemType* problem_type;
 Solution* solution;
-Solution* solution_duplicate;
 
 int run_index;
 
@@ -51,20 +50,105 @@ int main(int argc, char* argv[]) {
 
 	auto start_time = chrono::high_resolution_clock::now();
 	while (true) {
-		Problem* problem = problem_type->get_problem();
+		if ((solution->timestamp+1) % TRIM_FREQUENCY == 0) {
+			Solution* duplicate = new Solution(solution);
+			duplicate->random_trim();
 
-		RunHelper run_helper;
+			vector<double> target_vals;
+			int max_num_actions = 0;
+			bool early_exit = false;
+			for (int iter_index = 0; iter_index < MEASURE_ITERS; iter_index++) {
+				Problem* problem = problem_type->get_problem();
 
-		double result;
-		bool hit_subproblem;
-		get_existing_result(problem,
-							result,
-							hit_subproblem);
-		run_helper.result = result;
-		run_helper.hit_subproblem = hit_subproblem;
+				RunHelper run_helper;
 
-		if (solution->subproblem == NULL
-				|| run_helper.hit_subproblem) {
+				vector<ContextLayer> context;
+				duplicate->scopes[0]->measure_activate(
+					problem,
+					context,
+					run_helper);
+
+				if (run_helper.num_actions > max_num_actions) {
+					max_num_actions = run_helper.num_actions;
+				}
+
+				double target_val;
+				if (!run_helper.exceeded_limit) {
+					target_val = problem->score_result(run_helper.num_analyze,
+													   run_helper.num_actions);
+				} else {
+					target_val = -1.0;
+				}
+
+				target_vals.push_back(target_val);
+
+				delete problem;
+
+				auto curr_time = chrono::high_resolution_clock::now();
+				auto time_diff = chrono::duration_cast<chrono::seconds>(curr_time - start_time);
+				if (time_diff.count() >= 20) {
+					start_time = curr_time;
+
+					cout << "alive" << endl;
+
+					ifstream solution_save_file;
+					solution_save_file.open("workers/saves/main.txt");
+					string timestamp_line;
+					getline(solution_save_file, timestamp_line);
+					int curr_timestamp = stoi(timestamp_line);
+					solution_save_file.close();
+
+					if (curr_timestamp > solution->timestamp) {
+						early_exit = true;
+						break;
+					}
+				}
+			}
+
+			if (early_exit) {
+				delete duplicate;
+
+				delete solution;
+
+				solution = new Solution();
+				solution->load("workers/", "main");
+				cout << "updated from main" << endl;
+
+				continue;
+			}
+
+			for (int s_index = 0; s_index < (int)duplicate->scopes.size(); s_index++) {
+				for (map<int, AbstractNode*>::iterator it = duplicate->scopes[s_index]->nodes.begin();
+						it != duplicate->scopes[s_index]->nodes.end(); it++) {
+					it->second->average_instances_per_run /= MEASURE_ITERS;
+				}
+			}
+
+			double sum_score = 0.0;
+			for (int d_index = 0; d_index < MEASURE_ITERS; d_index++) {
+				sum_score += target_vals[d_index];
+			}
+			duplicate->average_score = sum_score / MEASURE_ITERS;
+
+			duplicate->max_num_actions = max_num_actions;
+
+			cout << "duplicate->average_score: " << duplicate->average_score << endl;
+
+			duplicate->timestamp++;
+
+			duplicate->save(path, "possible_" + to_string((unsigned)time(NULL)));
+
+			delete duplicate;
+		} else {
+			Problem* problem = problem_type->get_problem();
+
+			RunHelper run_helper;
+
+			double result;
+			get_existing_result(problem,
+								result);
+			run_helper.result = result;
+
 			vector<ContextLayer> context;
 			solution->scopes[0]->activate(
 				problem,
@@ -130,7 +214,6 @@ int main(int argc, char* argv[]) {
 					 * - history->experiment_histories.size() == 1
 					 */
 					Solution* duplicate = new Solution(solution);
-					solution_duplicate = duplicate;
 
 					int last_updated_scope_id = run_helper.experiment_histories.back()->experiment->scope_context->id;
 
@@ -219,16 +302,7 @@ int main(int argc, char* argv[]) {
 
 					duplicate->max_num_actions = max_num_actions;
 
-					if (duplicate->subproblem != NULL) {
-						cout << "subproblem:" << endl;
-					}
 					cout << "duplicate->average_score: " << duplicate->average_score << endl;
-
-					if (duplicate->subproblem == NULL) {
-						duplicate->create_subproblem("workers/");
-					} else {
-						duplicate->merge_subproblem();
-					}
 
 					duplicate->timestamp++;
 
@@ -244,9 +318,9 @@ int main(int argc, char* argv[]) {
 						+ 0.1 * ((int)run_helper.experiments_seen_order.size()-1 - e_index);
 				}
 			}
-		}
 
-		delete problem;
+			delete problem;
+		}
 	}
 
 	delete problem_type;

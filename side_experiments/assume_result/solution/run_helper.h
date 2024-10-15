@@ -13,7 +13,6 @@ class ScopeNode;
 class RunHelper {
 public:
 	double result;
-	bool hit_subproblem;
 
 	bool exceeded_limit;
 

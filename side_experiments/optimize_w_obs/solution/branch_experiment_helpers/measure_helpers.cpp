@@ -25,16 +25,21 @@ bool BranchExperiment::measure_activate(AbstractNode*& curr_node,
 
 	history->instance_count++;
 
-	run_helper.num_analyze += (int)this->inputs.size();
+	if (this->is_local) {
+		vector<double> input_vals = problem->get_observations();
+		this->network->activate(input_vals);
+	} else {
+		run_helper.num_analyze += (int)this->inputs.size();
 
-	vector<double> input_vals(this->inputs.size(), 0.0);
-	for (int i_index = 0; i_index < (int)this->inputs.size(); i_index++) {
-		fetch_input_helper(scope_history,
-						   this->inputs[i_index],
-						   0,
-						   input_vals[i_index]);
+		vector<double> input_vals(this->inputs.size(), 0.0);
+		for (int i_index = 0; i_index < (int)this->inputs.size(); i_index++) {
+			fetch_input_helper(scope_history,
+							   this->inputs[i_index],
+							   0,
+							   input_vals[i_index]);
+		}
+		this->network->activate(input_vals);
 	}
-	this->network->activate(input_vals);
 
 	#if defined(MDEBUG) && MDEBUG
 	bool decision_is_branch;

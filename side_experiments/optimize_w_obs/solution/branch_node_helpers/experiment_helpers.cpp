@@ -21,17 +21,22 @@ void BranchNode::experiment_activate(AbstractNode*& curr_node,
 	history->index = (int)scope_history->node_histories.size();
 	scope_history->node_histories[this->id] = history;
 
-	run_helper.num_analyze += (int)this->inputs.size();
+	if (this->is_local) {
+		vector<double> input_vals = problem->get_observations();
+		this->network->activate(input_vals);
+	} else {
+		run_helper.num_analyze += (int)this->inputs.size();
 
-	vector<double> input_vals(this->inputs.size(), 0.0);
-	for (int i_index = 0; i_index < (int)this->inputs.size(); i_index++) {
-		map<pair<pair<vector<int>,vector<int>>,int>, double>::iterator it =
-			context.back().obs_history.find(this->inputs[i_index]);
-		if (it != context.back().obs_history.end()) {
-			input_vals[i_index] = it->second;
+		vector<double> input_vals(this->inputs.size(), 0.0);
+		for (int i_index = 0; i_index < (int)this->inputs.size(); i_index++) {
+			map<pair<pair<vector<int>,vector<int>>,int>, double>::iterator it =
+				context.back().obs_history.find(this->inputs[i_index]);
+			if (it != context.back().obs_history.end()) {
+				input_vals[i_index] = it->second;
+			}
 		}
+		this->network->activate(input_vals);
 	}
-	this->network->activate(input_vals);
 
 	bool is_branch;
 	#if defined(MDEBUG) && MDEBUG

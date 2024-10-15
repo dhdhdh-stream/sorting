@@ -1,8 +1,3 @@
-/**
- * TODO:
- * - when adding back eval, compare ending world against starting world
- */
-
 #ifndef SCOPE_H
 #define SCOPE_H
 
@@ -27,6 +22,8 @@ public:
 
 	int node_counter;
 	std::map<int, AbstractNode*> nodes;
+
+	std::vector<Scope*> child_scopes;
 
 	/**
 	 * - tie NewActionExperiment to scope instead of node

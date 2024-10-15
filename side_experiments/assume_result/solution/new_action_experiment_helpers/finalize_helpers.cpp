@@ -73,6 +73,9 @@ void NewActionExperiment::finalize(Solution* duplicate) {
 
 		Scope* duplicate_local_scope = duplicate->scopes[this->scope_context->id];
 
+		this->new_scope->child_scopes = duplicate_local_scope->child_scopes;
+		duplicate_local_scope->child_scopes.push_back(this->new_scope);
+
 		for (int s_index = 0; s_index < (int)this->successful_location_starts.size(); s_index++) {
 			ScopeNode* new_scope_node = this->successful_scope_nodes[s_index];
 			new_scope_node->parent = duplicate_local_scope;

@@ -17,16 +17,21 @@ void BranchNode::new_scope_activate(AbstractNode*& curr_node,
 									vector<ContextLayer>& context,
 									RunHelper& run_helper,
 									ScopeHistory* scope_history) {
-	run_helper.num_analyze += (int)this->inputs.size();
+	if (this->is_local) {
+		vector<double> input_vals = problem->get_observations();
+		this->network->activate(input_vals);
+	} else {
+		run_helper.num_analyze += (int)this->inputs.size();
 
-	vector<double> input_vals(this->inputs.size(), 0.0);
-	for (int i_index = 0; i_index < (int)this->inputs.size(); i_index++) {
-		fetch_input_helper(scope_history,
-						   this->inputs[i_index],
-						   0,
-						   input_vals[i_index]);
+		vector<double> input_vals(this->inputs.size(), 0.0);
+		for (int i_index = 0; i_index < (int)this->inputs.size(); i_index++) {
+			fetch_input_helper(scope_history,
+							   this->inputs[i_index],
+							   0,
+							   input_vals[i_index]);
+		}
+		this->network->activate(input_vals);
 	}
-	this->network->activate(input_vals);
 
 	bool is_branch;
 	#if defined(MDEBUG) && MDEBUG
@@ -95,14 +100,21 @@ void BranchNode::new_scope_capture_verify_activate(
 		ScopeHistory* scope_history) {
 	run_helper.num_analyze += (int)this->inputs.size();
 
-	vector<double> input_vals(this->inputs.size(), 0.0);
-	for (int i_index = 0; i_index < (int)this->inputs.size(); i_index++) {
-		fetch_input_helper(scope_history,
-						   this->inputs[i_index],
-						   0,
-						   input_vals[i_index]);
+	if (this->is_local) {
+		vector<double> input_vals = problem->get_observations();
+		this->network->activate(input_vals);
+	} else {
+		run_helper.num_analyze += (int)this->inputs.size();
+
+		vector<double> input_vals(this->inputs.size(), 0.0);
+		for (int i_index = 0; i_index < (int)this->inputs.size(); i_index++) {
+			fetch_input_helper(scope_history,
+							   this->inputs[i_index],
+							   0,
+							   input_vals[i_index]);
+		}
+		this->network->activate(input_vals);
 	}
-	this->network->activate(input_vals);
 
 	this->verify_scores.push_back(this->network->output->acti_vals[0]);
 

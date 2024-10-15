@@ -16,6 +16,11 @@ class Solution;
 class BranchNodeHistory;
 class BranchNode : public AbstractNode {
 public:
+	/**
+	 * - world model makes it easier to make future improvements(?)
+	 *   - BranchNode won't be dependent on specific previous nodes/paths
+	 */
+	bool is_local;
 	std::vector<std::pair<std::pair<std::vector<int>,std::vector<int>>,int>> inputs;
 	Network* network;
 

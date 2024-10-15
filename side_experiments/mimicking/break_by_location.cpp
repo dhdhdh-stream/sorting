@@ -9,6 +9,21 @@
 //   - more about teaching/learning
 //     - teach/learn building blocks, and use to build up to larger solutions
 //       - build shared vocabulary (rather than alignment)
+//       - score based on matching actions (and positive reinforcement by the teacher) instead of reality
+
+// TODO: but maybe mimic other way
+// - don't try to match/align/understand entirety, but instead try to look for small sections that match
+//   - learn when safe to perform and add aggressively
+//   - if section needs to combo with something else, adding aggressively gives chance to match
+//   - hmm... but doesn't work if sections individually bad
+//     - but might still be some gains
+//       - need to have some notion of surprise
+//         - but wouldn't the most surprising actions be ones that are individually bad?
+
+// - teaching/learning is about matching the behavior of the teacher
+//   - rather than chasing the actual score function
+
+// TODO: RL learn samples and apply
 
 #include <chrono>
 #include <iostream>

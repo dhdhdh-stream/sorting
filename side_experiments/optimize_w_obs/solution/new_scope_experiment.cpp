@@ -192,6 +192,7 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 						BranchNode* original_branch_node = (BranchNode*)(*node_it);
 						BranchNode* new_branch_node = (BranchNode*)node_mappings[original_branch_node];
 
+						new_branch_node->is_local = original_branch_node->is_local;
 						new_branch_node->network = new Network(original_branch_node->network);
 						for (int i_index = (int)original_branch_node->inputs.size()-1; i_index >= 0; i_index--) {
 							AbstractNode* original_input_node = scope_context->nodes[
