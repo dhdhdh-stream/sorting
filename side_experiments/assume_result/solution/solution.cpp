@@ -210,6 +210,7 @@ void Solution::clean() {
 	}
 }
 
+// TODO: cleans up solution, but doesn't break local optima
 void Solution::random_trim() {
 	int starting_num_nodes = 0;
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
