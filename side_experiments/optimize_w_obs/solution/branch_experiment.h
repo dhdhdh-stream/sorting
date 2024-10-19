@@ -79,7 +79,8 @@ public:
 
 	BranchExperiment(Scope* scope_context,
 					 AbstractNode* node_context,
-					 bool is_branch);
+					 bool is_branch,
+					 std::vector<std::pair<std::pair<std::vector<int>,std::vector<int>>, bool>> conditions);
 	~BranchExperiment();
 	void decrement(AbstractNode* experiment_node);
 

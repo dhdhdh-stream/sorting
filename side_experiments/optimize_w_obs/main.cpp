@@ -8,8 +8,6 @@
  *     - breaks down solution into modular segments
  */
 
-// gets stuck in local maxima even with history
-
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -78,13 +76,14 @@ int main(int argc, char* argv[]) {
 			context,
 			run_helper,
 			scope_history);
-		delete scope_history;
 
 		if (run_helper.experiments_seen_order.size() == 0) {
 			if (!run_helper.exceeded_limit) {
-				create_experiment(run_helper);
+				create_experiment(scope_history);
 			}
 		}
+
+		delete scope_history;
 
 		double target_val;
 		if (!run_helper.exceeded_limit) {

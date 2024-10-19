@@ -14,7 +14,7 @@ class ScopeHistory;
 class ScopeNode;
 class Solution;
 
-void create_experiment(RunHelper& run_helper);
+void create_experiment(ScopeHistory* scope_history);
 
 ScopeNode* create_existing();
 

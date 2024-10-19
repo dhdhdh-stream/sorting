@@ -35,78 +35,25 @@ void Scope::clear_verify() {
 }
 #endif /* MDEBUG */
 
-void Scope::clean_unneeded_branch_nodes() {
-	while (true) {
-		bool removed_node = false;
-
-		map<int, AbstractNode*>::iterator it = this->nodes.begin();
-		while (it != this->nodes.end()) {
-			if (it->second->type == NODE_TYPE_BRANCH) {
-				BranchNode* branch_node = (BranchNode*)it->second;
-				if (branch_node->original_next_node == branch_node->branch_next_node) {
-					for (map<int, AbstractNode*>::iterator inner_it = this->nodes.begin();
-							inner_it != this->nodes.end(); inner_it++) {
-						switch (inner_it->second->type) {
-						case NODE_TYPE_ACTION:
-							{
-								ActionNode* node = (ActionNode*)inner_it->second;
-								if (node->next_node == branch_node) {
-									node->next_node_id = branch_node->original_next_node_id;
-									node->next_node = branch_node->original_next_node;
-								}
-							}
-							break;
-						case NODE_TYPE_SCOPE:
-							{
-								ScopeNode* node = (ScopeNode*)inner_it->second;
-								if (node->next_node == branch_node) {
-									node->next_node_id = branch_node->original_next_node_id;
-									node->next_node = branch_node->original_next_node;
-								}
-							}
-							break;
-						case NODE_TYPE_BRANCH:
-							{
-								BranchNode* node = (BranchNode*)inner_it->second;
-								if (node->original_next_node == branch_node) {
-									node->original_next_node_id = branch_node->original_next_node_id;
-									node->original_next_node = branch_node->original_next_node;
-								}
-								if (node->branch_next_node == branch_node) {
-									node->branch_next_node_id = branch_node->original_next_node_id;
-									node->branch_next_node = branch_node->original_next_node;
-								}
-							}
-							break;
-						}
-					}
-
-					removed_node = true;
-
-					delete it->second;
-					it = this->nodes.erase(it);
-
-					continue;
-				}
-			}
-
-			it++;
-		}
-
-		if (!removed_node) {
-			break;
-		}
-	}
-}
-
-void Scope::clean_node(int scope_id,
-					   int node_id) {
+void Scope::clean_inputs(int scope_id,
+						 int node_id) {
 	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
 			it != this->nodes.end(); it++) {
-		if (it->second->type == NODE_TYPE_BRANCH) {
-			BranchNode* branch_node = (BranchNode*)it->second;
-			branch_node->clean_node(scope_id,
-									node_id);
+		switch (it->second->type) {
+		case NODE_TYPE_ACTION:
+			{
+				ActionNode* action_node = (ActionNode*)it->second;
+				action_node->clean_inputs(scope_id,
+										  node_id);
+			}
+			break;
+		case NODE_TYPE_BRANCH:
+			{
+				BranchNode* branch_node = (BranchNode*)it->second;
+				branch_node->clean_inputs(scope_id,
+										  node_id);
+			}
+			break;
 		}
 	}
 }

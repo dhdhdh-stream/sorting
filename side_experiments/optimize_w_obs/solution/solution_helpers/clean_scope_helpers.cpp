@@ -48,8 +48,8 @@ void clean_scope(Scope* scope,
 			if (needed_it == next_node_ids.end()) {
 				removed_node = true;
 
-				parent_solution->clean_node(scope->id,
-											it->first);
+				parent_solution->clean_inputs(scope->id,
+											  it->first);
 
 				delete it->second;
 				it = scope->nodes.erase(it);

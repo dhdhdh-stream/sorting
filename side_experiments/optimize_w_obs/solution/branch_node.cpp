@@ -63,8 +63,8 @@ void BranchNode::clear_verify() {
 }
 #endif /* MDEBUG */
 
-void BranchNode::clean_node(int scope_id,
-							int node_id) {
+void BranchNode::clean_inputs(int scope_id,
+							  int node_id) {
 	for (int i_index = (int)this->inputs.size()-1; i_index >= 0; i_index--) {
 		bool is_match = false;
 		for (int l_index = 0; l_index < (int)this->inputs[i_index].first.first.size(); l_index++) {

@@ -35,14 +35,6 @@ void ScopeNode::experiment_activate(AbstractNode*& curr_node,
 		run_helper.exceeded_limit = true;
 		return;
 	}
-	if (run_helper.experiments_seen_order.size() == 0) {
-		map<pair<AbstractNode*,bool>, int>::iterator it = run_helper.nodes_seen.find({this, false});
-		if (it == run_helper.nodes_seen.end()) {
-			run_helper.nodes_seen[{this, false}] = 1;
-		} else {
-			it->second++;
-		}
-	}
 
 	if (!run_helper.exceeded_limit) {
 		for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {

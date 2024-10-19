@@ -8,7 +8,6 @@
 #include <vector>
 
 #include "abstract_node.h"
-#include "alignment.h"
 #include "context_layer.h"
 #include "run_helper.h"
 
@@ -60,10 +59,6 @@ public:
 										   std::vector<ContextLayer>& context,
 										   RunHelper& run_helper);
 	#endif /* MDEBUG */
-
-	void align_activate(AbstractNode*& curr_node,
-						Alignment& alignment,
-						std::vector<ContextLayer>& context);
 
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file,

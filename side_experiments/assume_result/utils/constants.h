@@ -37,10 +37,4 @@ const int MEASURE_ITERS = 4000;
 
 const int NUM_VERIFY_SAMPLES = 10;
 
-#if defined(MDEBUG) && MDEBUG
-const int TRIM_FREQUENCY = 10;
-#else
-const int TRIM_FREQUENCY = 50;
-#endif /* MDEBUG */
-
 #endif /* CONSTANTS_H */

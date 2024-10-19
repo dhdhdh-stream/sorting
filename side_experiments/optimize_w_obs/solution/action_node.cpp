@@ -33,8 +33,8 @@ ActionNode::~ActionNode() {
 	}
 }
 
-void ActionNode::clean_node(int scope_id,
-							int node_id) {
+void ActionNode::clean_inputs(int scope_id,
+							  int node_id) {
 	for (int i_index = (int)this->input_scope_context_ids.size()-1; i_index >= 0; i_index--) {
 		bool is_match = false;
 		for (int l_index = 0; l_index < (int)this->input_scope_context_ids[i_index].size(); l_index++) {

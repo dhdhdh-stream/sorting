@@ -50,8 +50,8 @@ public:
 	void clear_verify();
 	#endif /* MDEBUG */
 
-	void clean_node(int scope_id,
-					int node_id);
+	void clean_inputs(int scope_id,
+					  int node_id);
 
 	void save(std::string path,
 			  std::string name);

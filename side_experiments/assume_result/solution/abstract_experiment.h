@@ -24,10 +24,6 @@ class AbstractExperiment {
 public:
 	int type;
 
-	// TODO: add branch condition on context
-	// - too difficult for branch experiment to:
-	//   - capture and learn one branch context needed out of all possible
-	//   - when exactly what's needed for impact to be strong enough
 	Scope* scope_context;
 	AbstractNode* node_context;
 	bool is_branch;

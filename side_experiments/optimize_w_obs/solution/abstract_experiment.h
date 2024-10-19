@@ -1,6 +1,7 @@
 #ifndef ABSTRACT_EXPERIMENT_H
 #define ABSTRACT_EXPERIMENT_H
 
+#include <utility>
 #include <vector>
 
 #include "run_helper.h"
@@ -28,6 +29,13 @@ public:
 	Scope* scope_context;
 	AbstractNode* node_context;
 	bool is_branch;
+	std::vector<std::pair<std::pair<std::vector<int>,std::vector<int>>, bool>> conditions;
+	/**
+	 * - need specialization to break local optima
+	 *   - too difficult to rely on BranchExperiment alone to specialize
+	 *     - hard to both learn to isolate one condition and for that condition's impact to be strong enough
+	 *   - so occasionally preset conditions while experimenting
+	 */
 
 	double average_remaining_experiments_from_start;
 
