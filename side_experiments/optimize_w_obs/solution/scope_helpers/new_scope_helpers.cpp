@@ -4,6 +4,7 @@
 
 #include "action_node.h"
 #include "branch_node.h"
+#include "condition_node.h"
 #include "globals.h"
 #include "scope_node.h"
 #include "solution.h"
@@ -47,6 +48,17 @@ void new_scope_node_activate_helper(
 									 context,
 									 run_helper,
 									 scope_history);
+		}
+
+		break;
+	case NODE_TYPE_CONDITION:
+		{
+			ConditionNode* node = (ConditionNode*)curr_node;
+			node->experiment_activate(curr_node,
+									  problem,
+									  context,
+									  run_helper,
+									  scope_history);
 		}
 
 		break;
@@ -122,6 +134,17 @@ void new_scope_capture_verify_node_activate_helper(
 				context,
 				run_helper,
 				scope_history);
+		}
+
+		break;
+	case NODE_TYPE_CONDITION:
+		{
+			ConditionNode* node = (ConditionNode*)curr_node;
+			node->experiment_activate(curr_node,
+									  problem,
+									  context,
+									  run_helper,
+									  scope_history);
 		}
 
 		break;

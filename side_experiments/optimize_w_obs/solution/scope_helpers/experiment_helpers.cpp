@@ -4,6 +4,7 @@
 
 #include "action_node.h"
 #include "branch_node.h"
+#include "condition_node.h"
 #include "constants.h"
 #include "globals.h"
 #include "new_scope_experiment.h"
@@ -42,6 +43,17 @@ void node_experiment_activate_helper(AbstractNode*& curr_node,
 	case NODE_TYPE_BRANCH:
 		{
 			BranchNode* node = (BranchNode*)curr_node;
+			node->experiment_activate(curr_node,
+									  problem,
+									  context,
+									  run_helper,
+									  history);
+		}
+
+		break;
+	case NODE_TYPE_CONDITION:
+		{
+			ConditionNode* node = (ConditionNode*)curr_node;
 			node->experiment_activate(curr_node,
 									  problem,
 									  context,

@@ -4,6 +4,7 @@
 
 #include "action_node.h"
 #include "branch_node.h"
+#include "condition_node.h"
 #include "constants.h"
 #include "globals.h"
 #include "problem.h"
@@ -71,6 +72,16 @@ void PassThroughExperiment::explore_activate(
 				}
 			}
 			break;
+		case NODE_TYPE_CONDITION:
+			{
+				ConditionNode* condition_node = (ConditionNode*)this->node_context;
+				if (this->is_branch) {
+					starting_node = condition_node->branch_next_node;
+				} else {
+					starting_node = condition_node->original_next_node;
+				}
+			}
+			break;
 		}
 
 		this->scope_context->random_exit_activate(
@@ -90,22 +101,23 @@ void PassThroughExperiment::explore_activate(
 			new_num_steps = uniform_distribution(generator) + geo_distribution(generator);
 		}
 
-		uniform_int_distribution<int> default_distribution(0, 3);
+		/**
+		 * - always give raw actions a large weight
+		 *   - existing scopes often learned to avoid certain patterns
+		 *     - which can prevent innovation
+		 */
+		uniform_int_distribution<int> scope_distribution(0, 2);
 		for (int s_index = 0; s_index < new_num_steps; s_index++) {
-			bool default_to_action = true;
-			if (default_distribution(generator) != 0) {
-				ScopeNode* new_scope_node = create_existing();
-				if (new_scope_node != NULL) {
-					this->curr_step_types.push_back(STEP_TYPE_SCOPE);
-					this->curr_actions.push_back(NULL);
+			if (this->scope_context->child_scopes.size() > 0
+					&& scope_distribution(generator) == 0) {
+				this->curr_step_types.push_back(STEP_TYPE_SCOPE);
+				this->curr_actions.push_back(NULL);
 
-					this->curr_scopes.push_back(new_scope_node);
-
-					default_to_action = false;
-				}
-			}
-
-			if (default_to_action) {
+				ScopeNode* new_scope_node = new ScopeNode();
+				uniform_int_distribution<int> child_scope_distribution(0, this->scope_context->child_scopes.size()-1);
+				new_scope_node->scope = this->scope_context->child_scopes[child_scope_distribution(generator)];
+				this->curr_scopes.push_back(new_scope_node);
+			} else {
 				this->curr_step_types.push_back(STEP_TYPE_ACTION);
 
 				ActionNode* new_action_node = new ActionNode();

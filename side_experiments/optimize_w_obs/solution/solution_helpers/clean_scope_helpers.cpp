@@ -4,6 +4,7 @@
 
 #include "action_node.h"
 #include "branch_node.h"
+#include "condition_node.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
@@ -37,6 +38,13 @@ void clean_scope(Scope* scope,
 					BranchNode* branch_node = (BranchNode*)it->second;
 					next_node_ids.insert(branch_node->original_next_node_id);
 					next_node_ids.insert(branch_node->branch_next_node_id);
+				}
+				break;
+			case NODE_TYPE_CONDITION:
+				{
+					ConditionNode* condition_node = (ConditionNode*)it->second;
+					next_node_ids.insert(condition_node->original_next_node_id);
+					next_node_ids.insert(condition_node->branch_next_node_id);
 				}
 				break;
 			}

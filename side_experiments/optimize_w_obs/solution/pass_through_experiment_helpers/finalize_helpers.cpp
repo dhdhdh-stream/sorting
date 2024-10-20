@@ -4,6 +4,7 @@
 
 #include "action_node.h"
 #include "branch_node.h"
+#include "condition_node.h"
 #include "constants.h"
 #include "globals.h"
 #include "scope.h"
@@ -76,6 +77,19 @@ void PassThroughExperiment::new_pass_through(Solution* duplicate) {
 			}
 		}
 		break;
+	case NODE_TYPE_CONDITION:
+		{
+			ConditionNode* condition_node = (ConditionNode*)duplicate_explore_node;
+
+			if (this->is_branch) {
+				condition_node->branch_next_node_id = start_node_id;
+				condition_node->branch_next_node = start_node;
+			} else {
+				condition_node->original_next_node_id = start_node_id;
+				condition_node->original_next_node = start_node;
+			}
+		}
+		break;
 	}
 
 	if (this->ending_node != NULL) {
@@ -105,6 +119,178 @@ void PassThroughExperiment::new_pass_through(Solution* duplicate) {
 				this->best_scopes.back()->next_node = duplicate_local_scope
 					->nodes[this->best_scopes.back()->next_node->id];
 			}
+		}
+	}
+
+	if (this->conditions.size() > 0) {
+		ConditionNode* new_condition_node = new ConditionNode();
+		new_condition_node->parent = duplicate_local_scope;
+		new_condition_node->id = duplicate_local_scope->node_counter;
+		duplicate_local_scope->node_counter++;
+		duplicate_local_scope->nodes[new_condition_node->id] = new_condition_node;
+
+		new_condition_node->conditions = this->conditions;
+
+		switch (duplicate_explore_node->type) {
+		case NODE_TYPE_ACTION:
+			{
+				ActionNode* action_node = (ActionNode*)duplicate_explore_node;
+
+				if (action_node->next_node == NULL) {
+					/**
+					 * - ending node
+					 */
+					if (this->ending_node != NULL) {
+						new_condition_node->original_next_node_id = this->ending_node->id;
+						new_condition_node->original_next_node = this->ending_node;
+					} else {
+						ActionNode* new_ending_node = new ActionNode();
+						new_ending_node->parent = duplicate_local_scope;
+						new_ending_node->id = duplicate_local_scope->node_counter;
+						duplicate_local_scope->node_counter++;
+						duplicate_local_scope->nodes[new_ending_node->id] = new_ending_node;
+
+						new_ending_node->action = Action(ACTION_NOOP);
+
+						new_ending_node->next_node_id = -1;
+						new_ending_node->next_node = NULL;
+
+						new_condition_node->original_next_node_id = new_ending_node->id;
+						new_condition_node->original_next_node = new_ending_node;
+					}
+				} else {
+					new_condition_node->original_next_node_id = action_node->next_node_id;
+					new_condition_node->original_next_node = action_node->next_node;
+				}
+			}
+			break;
+		case NODE_TYPE_SCOPE:
+			{
+				ScopeNode* scope_node = (ScopeNode*)duplicate_explore_node;
+
+				new_condition_node->original_next_node_id = scope_node->next_node_id;
+				new_condition_node->original_next_node = scope_node->next_node;
+			}
+			break;
+		case NODE_TYPE_BRANCH:
+			{
+				BranchNode* branch_node = (BranchNode*)duplicate_explore_node;
+
+				if (this->is_branch) {
+					new_condition_node->original_next_node_id = branch_node->branch_next_node_id;
+					new_condition_node->original_next_node = branch_node->branch_next_node;
+				} else {
+					new_condition_node->original_next_node_id = branch_node->original_next_node_id;
+					new_condition_node->original_next_node = branch_node->original_next_node;
+				}
+			}
+			break;
+		case NODE_TYPE_CONDITION:
+			{
+				ConditionNode* condition_node = (ConditionNode*)duplicate_explore_node;
+
+				if (this->is_branch) {
+					new_condition_node->original_next_node_id = condition_node->branch_next_node_id;
+					new_condition_node->original_next_node = condition_node->branch_next_node;
+				} else {
+					new_condition_node->original_next_node_id = condition_node->original_next_node_id;
+					new_condition_node->original_next_node = condition_node->original_next_node;
+				}
+			}
+			break;
+		}
+
+		new_condition_node->branch_next_node_id = start_node_id;
+		new_condition_node->branch_next_node = start_node;
+
+		for (int c_index = 0; c_index < (int)this->conditions.size(); c_index++) {
+			Scope* scope = duplicate->scopes[this->conditions[c_index].first.first.back()];
+			AbstractNode* node = scope->nodes[this->conditions[c_index].first.second.back()];
+			switch (node->type) {
+			case NODE_TYPE_ACTION:
+				{
+					ActionNode* input_action_node = (ActionNode*)node;
+
+					bool is_existing = false;
+					for (int ii_index = 0; ii_index < (int)input_action_node->input_scope_context_ids.size(); ii_index++) {
+						if (input_action_node->input_scope_context_ids[ii_index] == this->conditions[c_index].first.first
+								&& input_action_node->input_node_context_ids[ii_index] == this->conditions[c_index].first.second
+								&& input_action_node->input_obs_indexes[ii_index] == this->conditions[c_index].second) {
+							is_existing = true;
+							break;
+						}
+					}
+					if (!is_existing) {
+						input_action_node->input_scope_context_ids.push_back(this->conditions[c_index].first.first);
+						input_action_node->input_node_context_ids.push_back(this->conditions[c_index].first.second);
+						input_action_node->input_obs_indexes.push_back(this->conditions[c_index].second);
+					}
+				}
+				break;
+			case NODE_TYPE_BRANCH:
+				{
+					BranchNode* input_branch_node = (BranchNode*)node;
+
+					bool is_existing = false;
+					for (int ii_index = 0; ii_index < (int)input_branch_node->input_scope_context_ids.size(); ii_index++) {
+						if (input_branch_node->input_scope_context_ids[ii_index] == this->conditions[c_index].first.first
+								&& input_branch_node->input_node_context_ids[ii_index] == this->conditions[c_index].first.second) {
+							is_existing = true;
+							break;
+						}
+					}
+					if (!is_existing) {
+						input_branch_node->input_scope_context_ids.push_back(this->conditions[c_index].first.first);
+						input_branch_node->input_node_context_ids.push_back(this->conditions[c_index].first.second);
+					}
+				}
+				break;
+			}
+		}
+
+		switch (duplicate_explore_node->type) {
+		case NODE_TYPE_ACTION:
+			{
+				ActionNode* action_node = (ActionNode*)duplicate_explore_node;
+
+				action_node->next_node_id = new_condition_node->id;
+				action_node->next_node = new_condition_node;
+			}
+			break;
+		case NODE_TYPE_SCOPE:
+			{
+				ScopeNode* scope_node = (ScopeNode*)duplicate_explore_node;
+
+				scope_node->next_node_id = new_condition_node->id;
+				scope_node->next_node = new_condition_node;
+			}
+			break;
+		case NODE_TYPE_BRANCH:
+			{
+				BranchNode* branch_node = (BranchNode*)duplicate_explore_node;
+
+				if (this->is_branch) {
+					branch_node->branch_next_node_id = new_condition_node->id;
+					branch_node->branch_next_node = new_condition_node;
+				} else {
+					branch_node->original_next_node_id = new_condition_node->id;
+					branch_node->original_next_node = new_condition_node;
+				}
+			}
+			break;
+		case NODE_TYPE_CONDITION:
+			{
+				ConditionNode* condition_node = (ConditionNode*)duplicate_explore_node;
+
+				if (this->is_branch) {
+					condition_node->branch_next_node_id = new_condition_node->id;
+					condition_node->branch_next_node = new_condition_node;
+				} else {
+					condition_node->original_next_node_id = new_condition_node->id;
+					condition_node->original_next_node = new_condition_node;
+				}
+			}
+			break;
 		}
 	}
 

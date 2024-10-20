@@ -25,6 +25,8 @@ public:
 	int node_counter;
 	std::map<int, AbstractNode*> nodes;
 
+	std::vector<Scope*> child_scopes;
+
 	/**
 	 * - tie NewScopeExperiment to scope instead of node
 	 *   - so that can be tried throughout entire scope

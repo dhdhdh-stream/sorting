@@ -4,6 +4,7 @@
 
 #include "action_node.h"
 #include "branch_node.h"
+#include "condition_node.h"
 #include "globals.h"
 #include "network.h"
 #include "problem.h"
@@ -129,6 +130,19 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 						node_mappings[original_branch_node] = new_branch_node;
 					}
 					break;
+				case NODE_TYPE_CONDITION:
+					{
+						ConditionNode* original_condition_node = (ConditionNode*)(*node_it);
+
+						ConditionNode* new_condition_node = new ConditionNode();
+						new_condition_node->parent = this->new_scope;
+						new_condition_node->id = this->new_scope->node_counter;
+						this->new_scope->node_counter++;
+						this->new_scope->nodes[new_condition_node->id] = new_condition_node;
+
+						node_mappings[original_condition_node] = new_condition_node;
+					}
+					break;
 				}
 			}
 
@@ -235,6 +249,43 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 						}
 					}
 					break;
+				case NODE_TYPE_CONDITION:
+					{
+						ConditionNode* original_condition_node = (ConditionNode*)(*node_it);
+						ConditionNode* new_condition_node = (ConditionNode*)node_mappings[original_condition_node];
+
+						for (int c_index = (int)original_condition_node->conditions.size()-1; c_index >= 0; c_index--) {
+							AbstractNode* original_branch_node = scope_context->nodes[
+								original_condition_node->conditions[c_index].first.second[0]];
+							map<AbstractNode*, AbstractNode*>::iterator it = node_mappings.find(original_branch_node);
+							if (it != node_mappings.end()) {
+								pair<pair<vector<int>,vector<int>>,bool> new_condition = original_condition_node->conditions[c_index];
+								new_condition.first.first[0] = -1;
+								new_condition.first.second[0] = it->second->id;
+								new_condition_node->conditions.insert(new_condition_node->conditions.begin(), new_condition);
+							}
+						}
+
+						map<AbstractNode*, AbstractNode*>::iterator original_it = node_mappings
+							.find(original_condition_node->original_next_node);
+						if (original_it == node_mappings.end()) {
+							new_condition_node->original_next_node_id = new_ending_node->id;
+							new_condition_node->original_next_node = new_ending_node;
+						} else {
+							new_condition_node->original_next_node_id = original_it->second->id;
+							new_condition_node->original_next_node = original_it->second;
+						}
+						map<AbstractNode*, AbstractNode*>::iterator branch_it = node_mappings
+							.find(original_condition_node->branch_next_node);
+						if (branch_it == node_mappings.end()) {
+							new_condition_node->branch_next_node_id = new_ending_node->id;
+							new_condition_node->branch_next_node = new_ending_node;
+						} else {
+							new_condition_node->branch_next_node_id = branch_it->second->id;
+							new_condition_node->branch_next_node = branch_it->second;
+						}
+					}
+					break;
 				}
 			}
 
@@ -273,6 +324,16 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 					random_start_node = branch_node->branch_next_node;
 				} else {
 					random_start_node = branch_node->original_next_node;
+				}
+			}
+			break;
+		case NODE_TYPE_CONDITION:
+			{
+				ConditionNode* condition_node = (ConditionNode*)node_context;
+				if (is_branch) {
+					random_start_node = condition_node->branch_next_node;
+				} else {
+					random_start_node = condition_node->original_next_node;
 				}
 			}
 			break;

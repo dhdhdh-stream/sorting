@@ -18,35 +18,58 @@ bool PassThroughExperiment::activate(AbstractNode* experiment_node,
 	bool is_selected = false;
 	PassThroughExperimentHistory* history = NULL;
 	if (is_branch == this->is_branch) {
-		int match_index = -1;
-		for (int e_index = 0; e_index < (int)run_helper.experiment_histories.size(); e_index++) {
-			if (run_helper.experiment_histories[e_index]->experiment == this) {
-				match_index = e_index;
+		bool is_match = true;
+		for (int c_index = 0; c_index < (int)this->conditions.size(); c_index++) {
+			map<pair<pair<vector<int>,vector<int>>,int>, double>::iterator it =
+				context.back().obs_history.find({this->conditions[c_index].first, -1});
+			if (it == context.back().obs_history.end()) {
+				is_match = false;
 				break;
-			}
-		}
-		if (match_index != -1) {
-			history = (PassThroughExperimentHistory*)run_helper.experiment_histories[match_index];
-			is_selected = true;
-		} else {
-			if (run_helper.experiment_histories.size() == 0) {
-				bool has_seen = false;
-				for (int e_index = 0; e_index < (int)run_helper.experiments_seen_order.size(); e_index++) {
-					if (run_helper.experiments_seen_order[e_index] == this) {
-						has_seen = true;
+			} else {
+				if (this->conditions[c_index].second) {
+					if (it->second != 1.0) {
+						is_match = false;
+						break;
+					}
+				} else {
+					if (it->second != -1.0) {
+						is_match = false;
 						break;
 					}
 				}
-				if (!has_seen) {
-					double selected_probability = 1.0 / (1.0 + this->average_remaining_experiments_from_start);
-					uniform_real_distribution<double> distribution(0.0, 1.0);
-					if (distribution(generator) < selected_probability) {
-						history = new PassThroughExperimentHistory(this);
-						run_helper.experiment_histories.push_back(history);
-						is_selected = true;
+			}
+		}
+		if (is_match) {
+			int match_index = -1;
+			for (int e_index = 0; e_index < (int)run_helper.experiment_histories.size(); e_index++) {
+				if (run_helper.experiment_histories[e_index]->experiment == this) {
+					match_index = e_index;
+					break;
+				}
+			}
+			if (match_index != -1) {
+				history = (PassThroughExperimentHistory*)run_helper.experiment_histories[match_index];
+				is_selected = true;
+			} else {
+				if (run_helper.experiment_histories.size() == 0) {
+					bool has_seen = false;
+					for (int e_index = 0; e_index < (int)run_helper.experiments_seen_order.size(); e_index++) {
+						if (run_helper.experiments_seen_order[e_index] == this) {
+							has_seen = true;
+							break;
+						}
 					}
+					if (!has_seen) {
+						double selected_probability = 1.0 / (1.0 + this->average_remaining_experiments_from_start);
+						uniform_real_distribution<double> distribution(0.0, 1.0);
+						if (distribution(generator) < selected_probability) {
+							history = new PassThroughExperimentHistory(this);
+							run_helper.experiment_histories.push_back(history);
+							is_selected = true;
+						}
 
-					run_helper.experiments_seen_order.push_back(this);
+						run_helper.experiments_seen_order.push_back(this);
+					}
 				}
 			}
 		}

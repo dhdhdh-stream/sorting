@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "branch_node.h"
+#include "condition_node.h"
 #include "constants.h"
 #include "globals.h"
 #include "scope.h"
@@ -126,11 +127,23 @@ void NewScopeExperiment::back_activate(vector<ContextLayer>& context,
 				for (map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
 						it != scope_history->node_histories.end(); it++) {
 					path_nodes[it->second->index] = it->second->node;
-					if (it->second->node->type == NODE_TYPE_BRANCH) {
-						BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
-						path_is_branch[it->second->index] = branch_node_history->is_branch;
-					} else {
+					switch (it->second->node->type) {
+					case NODE_TYPE_ACTION:
+					case NODE_TYPE_SCOPE:
 						path_is_branch[it->second->index] = false;
+						break;
+					case NODE_TYPE_BRANCH:
+						{
+							BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
+							path_is_branch[it->second->index] = branch_node_history->is_branch;
+						}
+						break;
+					case NODE_TYPE_CONDITION:
+						{
+							ConditionNodeHistory* condition_node_history = (ConditionNodeHistory*)it->second;
+							path_is_branch[it->second->index] = condition_node_history->is_branch;
+						}
+						break;
 					}
 				}
 

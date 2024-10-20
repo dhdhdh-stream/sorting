@@ -5,6 +5,7 @@
 #include "abstract_experiment.h"
 #include "action_node.h"
 #include "branch_node.h"
+#include "condition_node.h"
 #include "globals.h"
 #include "network.h"
 #include "scope_node.h"
@@ -68,6 +69,11 @@ void Scope::save(ofstream& output_file) {
 		output_file << it->second->type << endl;
 		it->second->save(output_file);
 	}
+
+	output_file << this->child_scopes.size() << endl;
+	for (int c_index = 0; c_index < (int)this->child_scopes.size(); c_index++) {
+		output_file << this->child_scopes[c_index]->id << endl;
+	}
 }
 
 void Scope::load(ifstream& input_file,
@@ -116,7 +122,25 @@ void Scope::load(ifstream& input_file,
 				this->nodes[branch_node->id] = branch_node;
 			}
 			break;
+		case NODE_TYPE_CONDITION:
+			{
+				ConditionNode* condition_node = new ConditionNode();
+				condition_node->parent = this;
+				condition_node->id = id;
+				condition_node->load(input_file);
+				this->nodes[condition_node->id] = condition_node;
+			}
+			break;
 		}
+	}
+
+	string num_child_scopes_line;
+	getline(input_file, num_child_scopes_line);
+	int num_child_scopes = stoi(num_child_scopes_line);
+	for (int c_index = 0; c_index < num_child_scopes; c_index++) {
+		string scope_id_line;
+		getline(input_file, scope_id_line);
+		this->child_scopes.push_back(parent_solution->scopes[stoi(scope_id_line)]);
 	}
 }
 
@@ -162,7 +186,21 @@ void Scope::copy_from(Scope* original,
 				this->nodes[it->first] = new_branch_node;
 			}
 			break;
+		case NODE_TYPE_CONDITION:
+			{
+				ConditionNode* original_condition_node = (ConditionNode*)it->second;
+				ConditionNode* new_condition_node = new ConditionNode(original_condition_node);
+				new_condition_node->parent = this;
+				new_condition_node->id = it->first;
+				this->nodes[it->first] = new_condition_node;
+			}
+			break;
 		}
+	}
+
+	for (int c_index = 0; c_index < (int)original->child_scopes.size(); c_index++) {
+		this->child_scopes.push_back(parent_solution->scopes[
+			original->child_scopes[c_index]->id]);
 	}
 }
 
@@ -203,6 +241,12 @@ ScopeHistory::ScopeHistory(ScopeHistory* original) {
 			{
 				BranchNodeHistory* original_history = (BranchNodeHistory*)it->second;
 				this->node_histories[it->first] = new BranchNodeHistory(original_history);
+			}
+			break;
+		case NODE_TYPE_CONDITION:
+			{
+				ConditionNodeHistory* original_history = (ConditionNodeHistory*)it->second;
+				this->node_histories[it->first] = new ConditionNodeHistory(original_history);
 			}
 			break;
 		}

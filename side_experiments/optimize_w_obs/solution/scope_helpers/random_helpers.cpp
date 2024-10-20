@@ -4,6 +4,7 @@
 
 #include "action_node.h"
 #include "branch_node.h"
+#include "condition_node.h"
 #include "globals.h"
 #include "scope_node.h"
 #include "solution.h"
@@ -54,6 +55,21 @@ void Scope::random_exit_activate(AbstractNode* starting_node,
 			}
 
 			break;
+		case NODE_TYPE_CONDITION:
+			{
+				ConditionNode* node = (ConditionNode*)curr_node;
+
+				possible_exits.push_back(curr_node);
+
+				uniform_int_distribution<int> distribution(0, 1);
+				if (distribution(generator) == 0) {
+					curr_node = node->branch_next_node;
+				} else {
+					curr_node = node->original_next_node;
+				}
+			}
+
+			break;
 		}
 	}
 }
@@ -91,6 +107,21 @@ void Scope::random_continue(AbstractNode* starting_node,
 		case NODE_TYPE_BRANCH:
 			{
 				BranchNode* node = (BranchNode*)curr_node;
+
+				potential_included_nodes.insert(curr_node);
+
+				uniform_int_distribution<int> distribution(0, 1);
+				if (distribution(generator) == 0) {
+					curr_node = node->branch_next_node;
+				} else {
+					curr_node = node->original_next_node;
+				}
+			}
+
+			break;
+		case NODE_TYPE_CONDITION:
+			{
+				ConditionNode* node = (ConditionNode*)curr_node;
 
 				potential_included_nodes.insert(curr_node);
 
