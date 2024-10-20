@@ -24,8 +24,17 @@ void even_distribution_helper(ScopeHistory* scope_history,
 		bool curr_is_branch;
 		switch (history_it->second->node->type) {
 		case NODE_TYPE_ACTION:
-		case NODE_TYPE_SCOPE:
 			curr_is_branch = false;
+			break;
+		case NODE_TYPE_SCOPE:
+			{
+				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)history_it->second;
+
+				even_distribution_helper(scope_node_history->scope_history,
+										 counts);
+
+				curr_is_branch = false;
+			}
 			break;
 		case NODE_TYPE_BRANCH:
 			{
@@ -69,8 +78,22 @@ void frequency_distribution_helper(ScopeHistory* scope_history,
 			explore_node = history_it->second->node;
 			switch (history_it->second->node->type) {
 			case NODE_TYPE_ACTION:
-			case NODE_TYPE_SCOPE:
 				explore_is_branch = false;
+				break;
+			case NODE_TYPE_SCOPE:
+				{
+					ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)history_it->second;
+
+					frequency_distribution_helper(
+						scope_node_history->scope_history,
+						count,
+						explore_node,
+						explore_is_branch,
+						explore_scope_history,
+						explore_index);
+
+					explore_is_branch = false;
+				}
 				break;
 			case NODE_TYPE_BRANCH:
 				{
@@ -215,7 +238,11 @@ void create_experiment(ScopeHistory* scope_history) {
 	 *   - may block progress if incompatible spots are grouped together
 	 *   - (though may also greatly speed up future progress of course)
 	 */
+	#if defined(MDEBUG) && MDEBUG
+	uniform_int_distribution<int> non_new_distribution(0, 1);
+	#else
 	uniform_int_distribution<int> non_new_distribution(0, 4);
+	#endif /* MDEBUG */
 	if (explore_scope->new_scope_experiment == NULL
 			&& explore_node->parent->nodes.size() > 10
 			&& non_new_distribution(generator) != 0) {
@@ -259,7 +286,11 @@ void create_experiment(ScopeHistory* scope_history) {
 		 *     - like tessellation, but have to get both the shape and the pattern correct
 		 *       - and PassThroughExperiments help with both
 		 */
+		#if defined(MDEBUG) && MDEBUG
+		uniform_int_distribution<int> pass_through_distribution(0, 4);
+		#else
 		uniform_int_distribution<int> pass_through_distribution(0, 1);
+		#endif /* MDEBUG */
 		if (pass_through_distribution(generator) == 0) {
 			PassThroughExperiment* new_experiment = new PassThroughExperiment(
 				explore_node->parent,

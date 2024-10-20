@@ -166,14 +166,6 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 						ActionNode* original_action_node = (ActionNode*)(*node_it);
 						ActionNode* new_action_node = (ActionNode*)node_mappings[original_action_node];
 
-						for (int i_index = 0; i_index < (int)original_action_node->input_scope_context_ids.size(); i_index++) {
-							if (original_action_node->input_scope_context_ids[i_index].size() == 1) {
-								new_action_node->input_scope_context_ids.push_back({-1});
-								new_action_node->input_node_context_ids.push_back({new_action_node->id});
-								new_action_node->input_obs_indexes.push_back(original_action_node->input_obs_indexes[i_index]);
-							}
-						}
-
 						map<AbstractNode*, AbstractNode*>::iterator it = node_mappings
 							.find(original_action_node->next_node);
 						if (it == node_mappings.end()) {
@@ -219,13 +211,6 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 								new_input.first.first[0] = -1;
 								new_input.first.second[0] = it->second->id;
 								new_branch_node->inputs.insert(new_branch_node->inputs.begin(), new_input);
-							}
-						}
-
-						for (int i_index = 0; i_index < (int)original_branch_node->input_scope_context_ids.size(); i_index++) {
-							if (original_branch_node->input_scope_context_ids[i_index].size() == 1) {
-								new_branch_node->input_scope_context_ids.push_back({-1});
-								new_branch_node->input_node_context_ids.push_back({new_branch_node->id});
 							}
 						}
 

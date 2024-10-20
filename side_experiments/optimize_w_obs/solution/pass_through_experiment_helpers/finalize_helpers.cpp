@@ -47,79 +47,9 @@ void PassThroughExperiment::new_pass_through(Solution* duplicate) {
 		}
 	}
 
-	switch (duplicate_explore_node->type) {
-	case NODE_TYPE_ACTION:
-		{
-			ActionNode* action_node = (ActionNode*)duplicate_explore_node;
-
-			action_node->next_node_id = start_node_id;
-			action_node->next_node = start_node;
-		}
-		break;
-	case NODE_TYPE_SCOPE:
-		{
-			ScopeNode* scope_node = (ScopeNode*)duplicate_explore_node;
-
-			scope_node->next_node_id = start_node_id;
-			scope_node->next_node = start_node;
-		}
-		break;
-	case NODE_TYPE_BRANCH:
-		{
-			BranchNode* branch_node = (BranchNode*)duplicate_explore_node;
-
-			if (this->is_branch) {
-				branch_node->branch_next_node_id = start_node_id;
-				branch_node->branch_next_node = start_node;
-			} else {
-				branch_node->original_next_node_id = start_node_id;
-				branch_node->original_next_node = start_node;
-			}
-		}
-		break;
-	case NODE_TYPE_CONDITION:
-		{
-			ConditionNode* condition_node = (ConditionNode*)duplicate_explore_node;
-
-			if (this->is_branch) {
-				condition_node->branch_next_node_id = start_node_id;
-				condition_node->branch_next_node = start_node;
-			} else {
-				condition_node->original_next_node_id = start_node_id;
-				condition_node->original_next_node = start_node;
-			}
-		}
-		break;
-	}
-
 	if (this->ending_node != NULL) {
 		this->ending_node->parent = duplicate_local_scope;
 		duplicate_local_scope->nodes[this->ending_node->id] = this->ending_node;
-	}
-
-	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-			this->best_actions[s_index]->parent = duplicate_local_scope;
-			duplicate_local_scope->nodes[this->best_actions[s_index]->id] = this->best_actions[s_index];
-		} else {
-			this->best_scopes[s_index]->parent = duplicate_local_scope;
-			duplicate_local_scope->nodes[this->best_scopes[s_index]->id] = this->best_scopes[s_index];
-
-			this->best_scopes[s_index]->scope = duplicate->scopes[this->best_scopes[s_index]->scope->id];
-		}
-	}
-	if (this->best_step_types.size() > 0) {
-		if (this->best_step_types.back() == STEP_TYPE_ACTION) {
-			if (this->best_actions.back()->next_node != NULL) {
-				this->best_actions.back()->next_node = duplicate_local_scope
-					->nodes[this->best_actions.back()->next_node->id];
-			}
-		} else {
-			if (this->best_scopes.back()->next_node != NULL) {
-				this->best_scopes.back()->next_node = duplicate_local_scope
-					->nodes[this->best_scopes.back()->next_node->id];
-			}
-		}
 	}
 
 	if (this->conditions.size() > 0) {
@@ -291,6 +221,76 @@ void PassThroughExperiment::new_pass_through(Solution* duplicate) {
 				}
 			}
 			break;
+		}
+	} else {
+		switch (duplicate_explore_node->type) {
+		case NODE_TYPE_ACTION:
+			{
+				ActionNode* action_node = (ActionNode*)duplicate_explore_node;
+
+				action_node->next_node_id = start_node_id;
+				action_node->next_node = start_node;
+			}
+			break;
+		case NODE_TYPE_SCOPE:
+			{
+				ScopeNode* scope_node = (ScopeNode*)duplicate_explore_node;
+
+				scope_node->next_node_id = start_node_id;
+				scope_node->next_node = start_node;
+			}
+			break;
+		case NODE_TYPE_BRANCH:
+			{
+				BranchNode* branch_node = (BranchNode*)duplicate_explore_node;
+
+				if (this->is_branch) {
+					branch_node->branch_next_node_id = start_node_id;
+					branch_node->branch_next_node = start_node;
+				} else {
+					branch_node->original_next_node_id = start_node_id;
+					branch_node->original_next_node = start_node;
+				}
+			}
+			break;
+		case NODE_TYPE_CONDITION:
+			{
+				ConditionNode* condition_node = (ConditionNode*)duplicate_explore_node;
+
+				if (this->is_branch) {
+					condition_node->branch_next_node_id = start_node_id;
+					condition_node->branch_next_node = start_node;
+				} else {
+					condition_node->original_next_node_id = start_node_id;
+					condition_node->original_next_node = start_node;
+				}
+			}
+			break;
+		}
+	}
+
+	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+			this->best_actions[s_index]->parent = duplicate_local_scope;
+			duplicate_local_scope->nodes[this->best_actions[s_index]->id] = this->best_actions[s_index];
+		} else {
+			this->best_scopes[s_index]->parent = duplicate_local_scope;
+			duplicate_local_scope->nodes[this->best_scopes[s_index]->id] = this->best_scopes[s_index];
+
+			this->best_scopes[s_index]->scope = duplicate->scopes[this->best_scopes[s_index]->scope->id];
+		}
+	}
+	if (this->best_step_types.size() > 0) {
+		if (this->best_step_types.back() == STEP_TYPE_ACTION) {
+			if (this->best_actions.back()->next_node != NULL) {
+				this->best_actions.back()->next_node = duplicate_local_scope
+					->nodes[this->best_actions.back()->next_node->id];
+			}
+		} else {
+			if (this->best_scopes.back()->next_node != NULL) {
+				this->best_scopes.back()->next_node = duplicate_local_scope
+					->nodes[this->best_scopes.back()->next_node->id];
+			}
 		}
 	}
 

@@ -17,6 +17,10 @@ void BranchNode::new_scope_activate(AbstractNode*& curr_node,
 									vector<ContextLayer>& context,
 									RunHelper& run_helper,
 									ScopeHistory* scope_history) {
+	BranchNodeHistory* history = new BranchNodeHistory(this);
+	history->index = (int)scope_history->node_histories.size();
+	scope_history->node_histories[this->id] = history;
+
 	if (this->is_local) {
 		vector<double> input_vals = problem->get_observations();
 		this->network->activate(input_vals);
@@ -48,6 +52,8 @@ void BranchNode::new_scope_activate(AbstractNode*& curr_node,
 		is_branch = false;
 	}
 	#endif /* MDEBUG */
+
+	history->is_branch = is_branch;
 
 	if (this->input_scope_context_ids.size() > 0) {
 		for (int i_index = 0; i_index < (int)this->input_scope_context_ids.size(); i_index++) {
@@ -98,6 +104,10 @@ void BranchNode::new_scope_capture_verify_activate(
 		vector<ContextLayer>& context,
 		RunHelper& run_helper,
 		ScopeHistory* scope_history) {
+	BranchNodeHistory* history = new BranchNodeHistory(this);
+	history->index = (int)scope_history->node_histories.size();
+	scope_history->node_histories[this->id] = history;
+
 	run_helper.num_analyze += (int)this->inputs.size();
 
 	if (this->is_local) {
@@ -129,6 +139,8 @@ void BranchNode::new_scope_capture_verify_activate(
 		is_branch = false;
 	}
 	run_helper.curr_run_seed = xorshift(run_helper.curr_run_seed);
+
+	history->is_branch = is_branch;
 
 	if (is_branch) {
 		curr_node = this->branch_next_node;

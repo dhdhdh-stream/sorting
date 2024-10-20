@@ -5,6 +5,7 @@
 #include "abstract_node.h"
 #include "globals.h"
 #include "scope.h"
+#include "solution_helpers.h"
 
 using namespace std;
 
@@ -20,22 +21,21 @@ bool PassThroughExperiment::activate(AbstractNode* experiment_node,
 	if (is_branch == this->is_branch) {
 		bool is_match = true;
 		for (int c_index = 0; c_index < (int)this->conditions.size(); c_index++) {
-			map<pair<pair<vector<int>,vector<int>>,int>, double>::iterator it =
-				context.back().obs_history.find({this->conditions[c_index].first, -1});
-			if (it == context.back().obs_history.end()) {
-				is_match = false;
-				break;
+			pair<pair<vector<int>,vector<int>>,int> input = {this->conditions[c_index].first, -1};
+			double obs = 0.0;
+			fetch_input_helper(scope_history,
+							   input,
+							   0,
+							   obs);
+			if (this->conditions[c_index].second) {
+				if (obs != 1.0) {
+					is_match = false;
+					break;
+				}
 			} else {
-				if (this->conditions[c_index].second) {
-					if (it->second != 1.0) {
-						is_match = false;
-						break;
-					}
-				} else {
-					if (it->second != -1.0) {
-						is_match = false;
-						break;
-					}
+				if (obs != -1.0) {
+					is_match = false;
+					break;
 				}
 			}
 		}
