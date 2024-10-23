@@ -1,7 +1,9 @@
 #include "condition_node.h"
 
 #include "abstract_experiment.h"
+#include "branch_node.h"
 #include "scope.h"
+#include "solution.h"
 
 using namespace std;
 
@@ -88,6 +90,24 @@ void ConditionNode::load(ifstream& input_file) {
 }
 
 void ConditionNode::link(Solution* parent_solution) {
+	for (int c_index = 0; c_index < (int)this->conditions.size(); c_index++) {
+		Scope* scope = parent_solution->scopes[this->conditions[c_index].first.first.back()];
+		BranchNode* input_branch_node = (BranchNode*)scope->nodes[this->conditions[c_index].first.second.back()];
+
+		bool is_existing = false;
+		for (int ii_index = 0; ii_index < (int)input_branch_node->input_scope_context_ids.size(); ii_index++) {
+			if (input_branch_node->input_scope_context_ids[ii_index] == this->conditions[c_index].first.first
+					&& input_branch_node->input_node_context_ids[ii_index] == this->conditions[c_index].first.second) {
+				is_existing = true;
+				break;
+			}
+		}
+		if (!is_existing) {
+			input_branch_node->input_scope_context_ids.push_back(this->conditions[c_index].first.first);
+			input_branch_node->input_node_context_ids.push_back(this->conditions[c_index].first.second);
+		}
+	}
+
 	if (this->original_next_node_id == -1) {
 		this->original_next_node = NULL;
 	} else {

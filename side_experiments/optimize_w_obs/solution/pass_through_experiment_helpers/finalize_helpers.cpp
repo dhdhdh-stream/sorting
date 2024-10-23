@@ -135,46 +135,19 @@ void PassThroughExperiment::new_pass_through(Solution* duplicate) {
 
 		for (int c_index = 0; c_index < (int)this->conditions.size(); c_index++) {
 			Scope* scope = duplicate->scopes[this->conditions[c_index].first.first.back()];
-			AbstractNode* node = scope->nodes[this->conditions[c_index].first.second.back()];
-			switch (node->type) {
-			case NODE_TYPE_ACTION:
-				{
-					ActionNode* input_action_node = (ActionNode*)node;
+			BranchNode* input_branch_node = (BranchNode*)scope->nodes[this->conditions[c_index].first.second.back()];
 
-					bool is_existing = false;
-					for (int ii_index = 0; ii_index < (int)input_action_node->input_scope_context_ids.size(); ii_index++) {
-						if (input_action_node->input_scope_context_ids[ii_index] == this->conditions[c_index].first.first
-								&& input_action_node->input_node_context_ids[ii_index] == this->conditions[c_index].first.second
-								&& input_action_node->input_obs_indexes[ii_index] == this->conditions[c_index].second) {
-							is_existing = true;
-							break;
-						}
-					}
-					if (!is_existing) {
-						input_action_node->input_scope_context_ids.push_back(this->conditions[c_index].first.first);
-						input_action_node->input_node_context_ids.push_back(this->conditions[c_index].first.second);
-						input_action_node->input_obs_indexes.push_back(this->conditions[c_index].second);
-					}
+			bool is_existing = false;
+			for (int ii_index = 0; ii_index < (int)input_branch_node->input_scope_context_ids.size(); ii_index++) {
+				if (input_branch_node->input_scope_context_ids[ii_index] == this->conditions[c_index].first.first
+						&& input_branch_node->input_node_context_ids[ii_index] == this->conditions[c_index].first.second) {
+					is_existing = true;
+					break;
 				}
-				break;
-			case NODE_TYPE_BRANCH:
-				{
-					BranchNode* input_branch_node = (BranchNode*)node;
-
-					bool is_existing = false;
-					for (int ii_index = 0; ii_index < (int)input_branch_node->input_scope_context_ids.size(); ii_index++) {
-						if (input_branch_node->input_scope_context_ids[ii_index] == this->conditions[c_index].first.first
-								&& input_branch_node->input_node_context_ids[ii_index] == this->conditions[c_index].first.second) {
-							is_existing = true;
-							break;
-						}
-					}
-					if (!is_existing) {
-						input_branch_node->input_scope_context_ids.push_back(this->conditions[c_index].first.first);
-						input_branch_node->input_node_context_ids.push_back(this->conditions[c_index].first.second);
-					}
-				}
-				break;
+			}
+			if (!is_existing) {
+				input_branch_node->input_scope_context_ids.push_back(this->conditions[c_index].first.first);
+				input_branch_node->input_node_context_ids.push_back(this->conditions[c_index].first.second);
 			}
 		}
 

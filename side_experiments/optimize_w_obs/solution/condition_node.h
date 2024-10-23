@@ -1,6 +1,8 @@
 #ifndef CONDITION_NODE_H
 #define CONDITION_NODE_H
 
+// - not strong enough to break out of bad merges?
+
 #include "abstract_node.h"
 #include "context_layer.h"
 #include "run_helper.h"
@@ -18,7 +20,8 @@ public:
 	/**
 	 * TODO:
 	 * - consider conditioning on obs as well
-	 * - clean node if no decision
+	 *   - e.g., compare if obs greater than a particular val
+	 *     - e.g., initially a standard deviation above average
 	 */
 	std::vector<std::pair<std::pair<std::vector<int>,std::vector<int>>, bool>> conditions;
 
@@ -41,6 +44,12 @@ public:
 							 std::vector<ContextLayer>& context,
 							 RunHelper& run_helper,
 							 ScopeHistory* scope_history);
+
+	void new_scope_activate(AbstractNode*& curr_node,
+							Problem* problem,
+							std::vector<ContextLayer>& context,
+							RunHelper& run_helper,
+							ScopeHistory* scope_history);
 
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file);

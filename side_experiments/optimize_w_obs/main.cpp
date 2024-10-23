@@ -8,6 +8,15 @@
  *     - breaks down solution into modular segments
  */
 
+// TODO: maybe issue is that solution becomes based on early scopes
+// - so more difficult to find alternate needed scopes
+//   - because when try to apply across entire solution, doesn't match
+// - maybe subproblem without any scopes to learn fresh scopes
+//   - also kind of guarantees location/adds structure
+
+// - the way to overcome local optima is good, new, different actions
+//   - need to create such actions in new situation, i.e., fixed spot
+
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -46,10 +55,10 @@ int main(int argc, char* argv[]) {
 	problem_type = new TypeMinesweeper();
 
 	solution = new Solution();
-	// solution->init();
-	solution->load("", "main");
+	solution->init();
+	// solution->load("", "main");
 
-	// solution->save("", "main");
+	solution->save("", "main");
 
 	run_index = 0;
 
@@ -249,7 +258,7 @@ int main(int argc, char* argv[]) {
 				delete solution;
 				solution = duplicate;
 
-				// solution->save("", "main");
+				solution->save("", "main");
 				#else
 				delete duplicate;
 				#endif /* MDEBUG */

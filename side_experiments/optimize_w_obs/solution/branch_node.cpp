@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "abstract_experiment.h"
+#include "action_node.h"
 #include "globals.h"
 #include "network.h"
 #include "scope.h"
@@ -28,9 +29,6 @@ BranchNode::BranchNode(BranchNode* original) {
 	this->is_local = original->is_local;
 	this->inputs = original->inputs;
 	this->network = new Network(original->network);
-
-	this->input_scope_context_ids = original->input_scope_context_ids;
-	this->input_node_context_ids = original->input_node_context_ids;
 
 	this->original_next_node_id = original->original_next_node_id;
 	this->branch_next_node_id = original->branch_next_node_id;
@@ -113,15 +111,6 @@ void BranchNode::save(ofstream& output_file) {
 
 	this->network->save(output_file);
 
-	output_file << this->input_scope_context_ids.size() << endl;
-	for (int i_index = 0; i_index < (int)this->input_scope_context_ids.size(); i_index++) {
-		output_file << this->input_scope_context_ids[i_index].size() << endl;
-		for (int l_index = 0; l_index < (int)this->input_scope_context_ids[i_index].size(); l_index++) {
-			output_file << this->input_scope_context_ids[i_index][l_index] << endl;
-			output_file << this->input_node_context_ids[i_index][l_index] << endl;
-		}
-	}
-
 	output_file << this->original_next_node_id << endl;
 	output_file << this->branch_next_node_id << endl;
 
@@ -164,29 +153,6 @@ void BranchNode::load(ifstream& input_file) {
 
 	this->network = new Network(input_file);
 
-	{
-		string num_inputs_line;
-		getline(input_file, num_inputs_line);
-		int num_inputs = stoi(num_inputs_line);
-		for (int i_index = 0; i_index < num_inputs; i_index++) {
-			this->input_scope_context_ids.push_back(vector<int>());
-			this->input_node_context_ids.push_back(vector<int>());
-
-			string num_layers_line;
-			getline(input_file, num_layers_line);
-			int num_layers = stoi(num_layers_line);
-			for (int l_index = 0; l_index < num_layers; l_index++) {
-				string scope_id_line;
-				getline(input_file, scope_id_line);
-				this->input_scope_context_ids[i_index].push_back(stoi(scope_id_line));
-
-				string node_id_line;
-				getline(input_file, node_id_line);
-				this->input_node_context_ids[i_index].push_back(stoi(node_id_line));
-			}
-		}
-	}
-
 	string original_next_node_id_line;
 	getline(input_file, original_next_node_id_line);
 	this->original_next_node_id = stoi(original_next_node_id_line);
@@ -201,6 +167,51 @@ void BranchNode::load(ifstream& input_file) {
 }
 
 void BranchNode::link(Solution* parent_solution) {
+	for (int i_index = 0; i_index < (int)this->inputs.size(); i_index++) {
+		Scope* scope = parent_solution->scopes[this->inputs[i_index].first.first.back()];
+		AbstractNode* node = scope->nodes[this->inputs[i_index].first.second.back()];
+		switch (node->type) {
+		case NODE_TYPE_ACTION:
+			{
+				ActionNode* input_action_node = (ActionNode*)node;
+
+				bool is_existing = false;
+				for (int ii_index = 0; ii_index < (int)input_action_node->input_scope_context_ids.size(); ii_index++) {
+					if (input_action_node->input_scope_context_ids[ii_index] == this->inputs[i_index].first.first
+							&& input_action_node->input_node_context_ids[ii_index] == this->inputs[i_index].first.second
+							&& input_action_node->input_obs_indexes[ii_index] == this->inputs[i_index].second) {
+						is_existing = true;
+						break;
+					}
+				}
+				if (!is_existing) {
+					input_action_node->input_scope_context_ids.push_back(this->inputs[i_index].first.first);
+					input_action_node->input_node_context_ids.push_back(this->inputs[i_index].first.second);
+					input_action_node->input_obs_indexes.push_back(this->inputs[i_index].second);
+				}
+			}
+			break;
+		case NODE_TYPE_BRANCH:
+			{
+				BranchNode* input_branch_node = (BranchNode*)node;
+
+				bool is_existing = false;
+				for (int ii_index = 0; ii_index < (int)input_branch_node->input_scope_context_ids.size(); ii_index++) {
+					if (input_branch_node->input_scope_context_ids[ii_index] == this->inputs[i_index].first.first
+							&& input_branch_node->input_node_context_ids[ii_index] == this->inputs[i_index].first.second) {
+						is_existing = true;
+						break;
+					}
+				}
+				if (!is_existing) {
+					input_branch_node->input_scope_context_ids.push_back(this->inputs[i_index].first.first);
+					input_branch_node->input_node_context_ids.push_back(this->inputs[i_index].first.second);
+				}
+			}
+			break;
+		}
+	}
+
 	if (this->original_next_node_id == -1) {
 		this->original_next_node = NULL;
 	} else {

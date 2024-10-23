@@ -44,7 +44,10 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 
 		set<AbstractNode*> potential_included_nodes;
 
-		geometric_distribution<int> following_distribution(0.3);
+		/**
+		 * TODO: scale by possible length
+		 */
+		geometric_distribution<int> following_distribution(0.2);
 		for (int r_index = 0; r_index < num_runs; r_index++) {
 			int num_following = 1 + following_distribution(generator);
 			scope_context->random_continue(

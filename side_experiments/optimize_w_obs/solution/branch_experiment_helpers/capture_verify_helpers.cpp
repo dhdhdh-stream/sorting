@@ -30,6 +30,8 @@ bool BranchExperiment::capture_verify_activate(AbstractNode*& curr_node,
 	run_helper.num_actions++;
 
 	if (this->is_local) {
+		run_helper.num_analyze += problem_type->num_obs();
+
 		vector<double> input_vals = problem->get_observations();
 		this->network->activate(input_vals);
 	} else {
@@ -90,9 +92,11 @@ bool BranchExperiment::capture_verify_activate(AbstractNode*& curr_node,
 }
 
 void BranchExperiment::capture_verify_backprop() {
-	this->state_iter++;
-	if (this->state_iter >= NUM_VERIFY_SAMPLES) {
-		this->result = EXPERIMENT_RESULT_SUCCESS;
+	if (this->verify_problems[this->state_iter] != NULL) {
+		this->state_iter++;
+		if (this->state_iter >= NUM_VERIFY_SAMPLES) {
+			this->result = EXPERIMENT_RESULT_SUCCESS;
+		}
 	}
 }
 

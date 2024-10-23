@@ -9,6 +9,7 @@
 #include "globals.h"
 #include "new_scope_experiment.h"
 #include "scope_node.h"
+#include "solution.h"
 
 using namespace std;
 
@@ -69,13 +70,6 @@ void Scope::experiment_activate(Problem* problem,
 								vector<ContextLayer>& context,
 								RunHelper& run_helper,
 								ScopeHistory* history) {
-	for (int c_index = 0; c_index < (int)context.size(); c_index++) {
-		if (context[c_index].scope_id == this->id) {
-			run_helper.exceeded_limit = true;
-			return;
-		}
-	}
-
 	context.push_back(ContextLayer());
 
 	context.back().scope_id = this->id;

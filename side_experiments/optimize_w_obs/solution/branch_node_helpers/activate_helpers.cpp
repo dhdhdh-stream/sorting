@@ -16,6 +16,8 @@ void BranchNode::activate(AbstractNode*& curr_node,
 						  vector<ContextLayer>& context,
 						  RunHelper& run_helper) {
 	if (this->is_local) {
+		run_helper.num_analyze += problem_type->num_obs();
+
 		vector<double> input_vals = problem->get_observations();
 		this->network->activate(input_vals);
 	} else {

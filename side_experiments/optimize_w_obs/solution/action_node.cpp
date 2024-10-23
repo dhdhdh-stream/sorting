@@ -18,10 +18,6 @@ ActionNode::ActionNode(ActionNode* original) {
 
 	this->action = original->action;
 
-	this->input_scope_context_ids = original->input_scope_context_ids;
-	this->input_node_context_ids = original->input_node_context_ids;
-	this->input_obs_indexes = original->input_obs_indexes;
-
 	this->next_node_id = original->next_node_id;
 
 	this->average_instances_per_run = 0.0;
@@ -56,17 +52,6 @@ void ActionNode::clean_inputs(int scope_id,
 void ActionNode::save(ofstream& output_file) {
 	this->action.save(output_file);
 
-	output_file << this->input_scope_context_ids.size() << endl;
-	for (int i_index = 0; i_index < (int)this->input_scope_context_ids.size(); i_index++) {
-		output_file << this->input_scope_context_ids[i_index].size() << endl;
-		for (int l_index = 0; l_index < (int)this->input_scope_context_ids[i_index].size(); l_index++) {
-			output_file << this->input_scope_context_ids[i_index][l_index] << endl;
-			output_file << this->input_node_context_ids[i_index][l_index] << endl;
-		}
-
-		output_file << this->input_obs_indexes[i_index] << endl;
-	}
-
 	output_file << this->next_node_id << endl;
 
 	output_file << this->average_instances_per_run << endl;
@@ -74,31 +59,6 @@ void ActionNode::save(ofstream& output_file) {
 
 void ActionNode::load(ifstream& input_file) {
 	this->action = Action(input_file);
-
-	string num_inputs_line;
-	getline(input_file, num_inputs_line);
-	int num_inputs = stoi(num_inputs_line);
-	for (int i_index = 0; i_index < num_inputs; i_index++) {
-		this->input_scope_context_ids.push_back(vector<int>());
-		this->input_node_context_ids.push_back(vector<int>());
-
-		string num_layers_line;
-		getline(input_file, num_layers_line);
-		int num_layers = stoi(num_layers_line);
-		for (int l_index = 0; l_index < num_layers; l_index++) {
-			string scope_id_line;
-			getline(input_file, scope_id_line);
-			this->input_scope_context_ids[i_index].push_back(stoi(scope_id_line));
-
-			string node_id_line;
-			getline(input_file, node_id_line);
-			this->input_node_context_ids[i_index].push_back(stoi(node_id_line));
-		}
-
-		string obs_index_line;
-		getline(input_file, obs_index_line);
-		this->input_obs_indexes.push_back(stoi(obs_index_line));
-	}
 
 	string next_node_id_line;
 	getline(input_file, next_node_id_line);

@@ -54,11 +54,11 @@ void new_scope_node_activate_helper(
 	case NODE_TYPE_CONDITION:
 		{
 			ConditionNode* node = (ConditionNode*)curr_node;
-			node->experiment_activate(curr_node,
-									  problem,
-									  context,
-									  run_helper,
-									  scope_history);
+			node->new_scope_activate(curr_node,
+									 problem,
+									 context,
+									 run_helper,
+									 scope_history);
 		}
 
 		break;
@@ -140,11 +140,11 @@ void new_scope_capture_verify_node_activate_helper(
 	case NODE_TYPE_CONDITION:
 		{
 			ConditionNode* node = (ConditionNode*)curr_node;
-			node->experiment_activate(curr_node,
-									  problem,
-									  context,
-									  run_helper,
-									  scope_history);
+			node->new_scope_activate(curr_node,
+									 problem,
+									 context,
+									 run_helper,
+									 scope_history);
 		}
 
 		break;

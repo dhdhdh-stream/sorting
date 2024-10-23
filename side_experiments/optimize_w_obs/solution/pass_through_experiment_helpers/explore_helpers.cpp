@@ -153,50 +153,17 @@ void PassThroughExperiment::explore_activate(
 void PassThroughExperiment::explore_backprop(
 		double target_val,
 		RunHelper& run_helper) {
-	bool is_fail = false;
+	if (this->state_iter != -1) {
+		bool is_fail = false;
 
-	if (run_helper.exceeded_limit) {
-		is_fail = true;
-	} else {
-		PassThroughExperimentHistory* history = (PassThroughExperimentHistory*)run_helper.experiment_histories.back();
+		if (run_helper.exceeded_limit) {
+			is_fail = true;
+		} else {
+			PassThroughExperimentHistory* history = (PassThroughExperimentHistory*)run_helper.experiment_histories.back();
 
-		this->state_iter++;
-		if (this->state_iter == INITIAL_NUM_TRUTH_PER_ITER
-				&& this->sub_state_iter >= INITIAL_NUM_SAMPLES_PER_ITER) {
-			#if defined(MDEBUG) && MDEBUG
-			if (false) {
-			#else
-			if (this->curr_score <= 0.0) {
-			#endif /* MDEBUG */
-				is_fail = true;
-			}
-		} else if (this->state_iter == VERIFY_1ST_NUM_TRUTH_PER_ITER
-				&& this->sub_state_iter >= VERIFY_1ST_NUM_SAMPLES_PER_ITER) {
-			#if defined(MDEBUG) && MDEBUG
-			if (false) {
-			#else
-			if (this->curr_score <= 0.0) {
-			#endif /* MDEBUG */
-				is_fail = true;
-			}
-		} else if (this->state_iter == VERIFY_2ND_NUM_TRUTH_PER_ITER
-				&& this->sub_state_iter >= VERIFY_2ND_NUM_SAMPLES_PER_ITER) {
-			#if defined(MDEBUG) && MDEBUG
-			if (rand()%2 == 0) {
-			#else
-			if (this->curr_score <= 0.0) {
-			#endif /* MDEBUG */
-				is_fail = true;
-			}
-		}
-
-		double final_score = (target_val - run_helper.result) / history->instance_count;
-		for (int i_index = 0; i_index < history->instance_count; i_index++) {
-			this->curr_score += final_score;
-			this->sub_state_iter++;
-
-			if (this->sub_state_iter == INITIAL_NUM_SAMPLES_PER_ITER
-					&& this->state_iter >= INITIAL_NUM_TRUTH_PER_ITER) {
+			this->state_iter++;
+			if (this->state_iter == INITIAL_NUM_TRUTH_PER_ITER
+					&& this->sub_state_iter >= INITIAL_NUM_SAMPLES_PER_ITER) {
 				#if defined(MDEBUG) && MDEBUG
 				if (false) {
 				#else
@@ -204,8 +171,8 @@ void PassThroughExperiment::explore_backprop(
 				#endif /* MDEBUG */
 					is_fail = true;
 				}
-			} else if (this->sub_state_iter == VERIFY_1ST_NUM_SAMPLES_PER_ITER
-					&& this->state_iter >= VERIFY_1ST_NUM_TRUTH_PER_ITER) {
+			} else if (this->state_iter == VERIFY_1ST_NUM_TRUTH_PER_ITER
+					&& this->sub_state_iter >= VERIFY_1ST_NUM_SAMPLES_PER_ITER) {
 				#if defined(MDEBUG) && MDEBUG
 				if (false) {
 				#else
@@ -213,8 +180,8 @@ void PassThroughExperiment::explore_backprop(
 				#endif /* MDEBUG */
 					is_fail = true;
 				}
-			} else if (this->sub_state_iter == VERIFY_2ND_NUM_SAMPLES_PER_ITER
-					&& this->state_iter >= VERIFY_2ND_NUM_TRUTH_PER_ITER) {
+			} else if (this->state_iter == VERIFY_2ND_NUM_TRUTH_PER_ITER
+					&& this->sub_state_iter >= VERIFY_2ND_NUM_SAMPLES_PER_ITER) {
 				#if defined(MDEBUG) && MDEBUG
 				if (rand()%2 == 0) {
 				#else
@@ -223,140 +190,175 @@ void PassThroughExperiment::explore_backprop(
 					is_fail = true;
 				}
 			}
-		}
-	}
 
-	bool is_next = false;
-	if (is_fail) {
-		for (int s_index = 0; s_index < (int)this->curr_step_types.size(); s_index++) {
-			if (this->curr_step_types[s_index] == STEP_TYPE_ACTION) {
-				delete this->curr_actions[s_index];
-			} else {
-				delete this->curr_scopes[s_index];
-			}
-		}
+			double final_score = (target_val - run_helper.result) / history->instance_count;
+			for (int i_index = 0; i_index < history->instance_count; i_index++) {
+				this->curr_score += final_score;
+				this->sub_state_iter++;
 
-		this->curr_score = 0.0;
-		this->curr_step_types.clear();
-		this->curr_actions.clear();
-		this->curr_scopes.clear();
-
-		is_next = true;
-	} else if (this->sub_state_iter >= VERIFY_2ND_NUM_SAMPLES_PER_ITER
-			&& this->state_iter >= VERIFY_2ND_NUM_TRUTH_PER_ITER) {
-		for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-			if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-				delete this->best_actions[s_index];
-			} else {
-				delete this->best_scopes[s_index];
-			}
-		}
-
-		this->best_score = curr_score;
-		this->best_step_types = this->curr_step_types;
-		this->best_actions = this->curr_actions;
-		this->best_scopes = this->curr_scopes;
-		this->best_exit_next_node = this->curr_exit_next_node;
-
-		this->curr_score = 0.0;
-		this->curr_step_types.clear();
-		this->curr_actions.clear();
-		this->curr_scopes.clear();
-
-		is_next = true;
-	}
-
-	if (is_next) {
-		this->explore_iter++;
-		if (this->explore_iter >= EXPLORE_ITERS) {
-			#if defined(MDEBUG) && MDEBUG
-			if (this->best_score != numeric_limits<double>::lowest()) {
-			#else
-			if (this->best_score > 0.0) {
-			#endif /* MDEBUG */
-				for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-					if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-						this->best_actions[s_index]->parent = this->scope_context;
-						this->best_actions[s_index]->id = this->scope_context->node_counter;
-						this->scope_context->node_counter++;
-					} else {
-						this->best_scopes[s_index]->parent = this->scope_context;
-						this->best_scopes[s_index]->id = this->scope_context->node_counter;
-						this->scope_context->node_counter++;
+				if (this->sub_state_iter == INITIAL_NUM_SAMPLES_PER_ITER
+						&& this->state_iter >= INITIAL_NUM_TRUTH_PER_ITER) {
+					#if defined(MDEBUG) && MDEBUG
+					if (false) {
+					#else
+					if (this->curr_score <= 0.0) {
+					#endif /* MDEBUG */
+						is_fail = true;
+					}
+				} else if (this->sub_state_iter == VERIFY_1ST_NUM_SAMPLES_PER_ITER
+						&& this->state_iter >= VERIFY_1ST_NUM_TRUTH_PER_ITER) {
+					#if defined(MDEBUG) && MDEBUG
+					if (false) {
+					#else
+					if (this->curr_score <= 0.0) {
+					#endif /* MDEBUG */
+						is_fail = true;
+					}
+				} else if (this->sub_state_iter == VERIFY_2ND_NUM_SAMPLES_PER_ITER
+						&& this->state_iter >= VERIFY_2ND_NUM_TRUTH_PER_ITER) {
+					#if defined(MDEBUG) && MDEBUG
+					if (rand()%2 == 0) {
+					#else
+					if (this->curr_score <= 0.0) {
+					#endif /* MDEBUG */
+						is_fail = true;
 					}
 				}
+			}
+		}
 
-				int exit_node_id;
-				AbstractNode* exit_node;
-				if (this->best_exit_next_node == NULL) {
-					ActionNode* new_ending_node = new ActionNode();
-					new_ending_node->parent = this->scope_context;
-					new_ending_node->id = this->scope_context->node_counter;
-					this->scope_context->node_counter++;
-
-					new_ending_node->action = Action(ACTION_NOOP);
-
-					new_ending_node->next_node_id = -1;
-					new_ending_node->next_node = NULL;
-
-					this->ending_node = new_ending_node;
-
-					exit_node_id = new_ending_node->id;
-					exit_node = new_ending_node;
+		bool is_next = false;
+		if (is_fail) {
+			for (int s_index = 0; s_index < (int)this->curr_step_types.size(); s_index++) {
+				if (this->curr_step_types[s_index] == STEP_TYPE_ACTION) {
+					delete this->curr_actions[s_index];
 				} else {
-					exit_node_id = this->best_exit_next_node->id;
-					exit_node = this->best_exit_next_node;
+					delete this->curr_scopes[s_index];
 				}
+			}
 
-				for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-					int next_node_id;
-					AbstractNode* next_node;
-					if (s_index == (int)this->best_step_types.size()-1) {
-						next_node_id = exit_node_id;
-						next_node = exit_node;
-					} else {
-						if (this->best_step_types[s_index+1] == STEP_TYPE_ACTION) {
-							next_node_id = this->best_actions[s_index+1]->id;
-							next_node = this->best_actions[s_index+1];
+			this->curr_score = 0.0;
+			this->curr_step_types.clear();
+			this->curr_actions.clear();
+			this->curr_scopes.clear();
+
+			is_next = true;
+		} else if (this->sub_state_iter >= VERIFY_2ND_NUM_SAMPLES_PER_ITER
+				&& this->state_iter >= VERIFY_2ND_NUM_TRUTH_PER_ITER) {
+			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+					delete this->best_actions[s_index];
+				} else {
+					delete this->best_scopes[s_index];
+				}
+			}
+
+			this->best_score = curr_score;
+			this->best_step_types = this->curr_step_types;
+			this->best_actions = this->curr_actions;
+			this->best_scopes = this->curr_scopes;
+			this->best_exit_next_node = this->curr_exit_next_node;
+
+			this->curr_score = 0.0;
+			this->curr_step_types.clear();
+			this->curr_actions.clear();
+			this->curr_scopes.clear();
+
+			is_next = true;
+		}
+
+		if (is_next) {
+			this->explore_iter++;
+			if (this->explore_iter >= EXPLORE_ITERS) {
+				#if defined(MDEBUG) && MDEBUG
+				if (this->best_score != numeric_limits<double>::lowest()) {
+				#else
+				if (this->best_score > 0.0) {
+				#endif /* MDEBUG */
+					for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+						if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+							this->best_actions[s_index]->parent = this->scope_context;
+							this->best_actions[s_index]->id = this->scope_context->node_counter;
+							this->scope_context->node_counter++;
 						} else {
-							next_node_id = this->best_scopes[s_index+1]->id;
-							next_node = this->best_scopes[s_index+1];
+							this->best_scopes[s_index]->parent = this->scope_context;
+							this->best_scopes[s_index]->id = this->scope_context->node_counter;
+							this->scope_context->node_counter++;
 						}
 					}
 
-					if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-						this->best_actions[s_index]->next_node_id = next_node_id;
-						this->best_actions[s_index]->next_node = next_node;
+					int exit_node_id;
+					AbstractNode* exit_node;
+					if (this->best_exit_next_node == NULL) {
+						ActionNode* new_ending_node = new ActionNode();
+						new_ending_node->parent = this->scope_context;
+						new_ending_node->id = this->scope_context->node_counter;
+						this->scope_context->node_counter++;
+
+						new_ending_node->action = Action(ACTION_NOOP);
+
+						new_ending_node->next_node_id = -1;
+						new_ending_node->next_node = NULL;
+
+						this->ending_node = new_ending_node;
+
+						exit_node_id = new_ending_node->id;
+						exit_node = new_ending_node;
 					} else {
-						this->best_scopes[s_index]->next_node_id = next_node_id;
-						this->best_scopes[s_index]->next_node = next_node;
+						exit_node_id = this->best_exit_next_node->id;
+						exit_node = this->best_exit_next_node;
 					}
-				}
 
-				cout << "PassThrough" << endl;
-				cout << "this->scope_context->id: " << this->scope_context->id << endl;
-				cout << "this->node_context->id: " << this->node_context->id << endl;
-				cout << "this->is_branch: " << this->is_branch << endl;
-				cout << "this->conditions.size(): " << this->conditions.size() << endl;
-				cout << "new explore path:";
-				for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-					if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-						cout << " " << this->best_actions[s_index]->action.move;
-					} else {
-						cout << " E";
+					for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+						int next_node_id;
+						AbstractNode* next_node;
+						if (s_index == (int)this->best_step_types.size()-1) {
+							next_node_id = exit_node_id;
+							next_node = exit_node;
+						} else {
+							if (this->best_step_types[s_index+1] == STEP_TYPE_ACTION) {
+								next_node_id = this->best_actions[s_index+1]->id;
+								next_node = this->best_actions[s_index+1];
+							} else {
+								next_node_id = this->best_scopes[s_index+1]->id;
+								next_node = this->best_scopes[s_index+1];
+							}
+						}
+
+						if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+							this->best_actions[s_index]->next_node_id = next_node_id;
+							this->best_actions[s_index]->next_node = next_node;
+						} else {
+							this->best_scopes[s_index]->next_node_id = next_node_id;
+							this->best_scopes[s_index]->next_node = next_node;
+						}
 					}
+
+					cout << "PassThrough" << endl;
+					cout << "this->scope_context->id: " << this->scope_context->id << endl;
+					cout << "this->node_context->id: " << this->node_context->id << endl;
+					cout << "this->is_branch: " << this->is_branch << endl;
+					cout << "this->conditions.size(): " << this->conditions.size() << endl;
+					cout << "new explore path:";
+					for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+						if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+							cout << " " << this->best_actions[s_index]->action.move;
+						} else {
+							cout << " E";
+						}
+					}
+					cout << endl;
+
+					cout << "this->best_score: " << this->best_score << endl;
+
+					this->result = EXPERIMENT_RESULT_SUCCESS;
+				} else {
+					this->result = EXPERIMENT_RESULT_FAIL;
 				}
-				cout << endl;
-
-				cout << "this->best_score: " << this->best_score << endl;
-
-				this->result = EXPERIMENT_RESULT_SUCCESS;
 			} else {
-				this->result = EXPERIMENT_RESULT_FAIL;
+				this->state_iter = -1;
+				this->sub_state_iter = -1;
 			}
-		} else {
-			this->state_iter = -1;
-			this->sub_state_iter = -1;
 		}
 	}
 }

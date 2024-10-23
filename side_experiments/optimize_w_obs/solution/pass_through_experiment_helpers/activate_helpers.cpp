@@ -5,6 +5,7 @@
 #include "abstract_node.h"
 #include "globals.h"
 #include "scope.h"
+#include "solution.h"
 #include "solution_helpers.h"
 
 using namespace std;
@@ -75,6 +76,7 @@ bool PassThroughExperiment::activate(AbstractNode* experiment_node,
 		}
 	}
 
+	bool result = false;
 	if (is_selected) {
 		explore_activate(curr_node,
 						 problem,
@@ -82,10 +84,10 @@ bool PassThroughExperiment::activate(AbstractNode* experiment_node,
 						 run_helper,
 						 history);
 
-		return true;
-	} else {
-		return false;
+		result = true;
 	}
+
+	return result;
 }
 
 void PassThroughExperiment::backprop(double target_val,
