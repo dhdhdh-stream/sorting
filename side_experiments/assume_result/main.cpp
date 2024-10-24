@@ -249,6 +249,8 @@ int main(int argc, char* argv[]) {
 
 				duplicate->timestamp++;
 
+				duplicate->update_subproblem();
+
 				#if defined(MDEBUG) && MDEBUG
 				delete solution;
 				solution = duplicate;

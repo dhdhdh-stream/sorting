@@ -63,11 +63,14 @@ void BranchNode::activate(AbstractNode*& curr_node,
 		return;
 	}
 	if (run_helper.experiments_seen_order.size() == 0) {
-		map<pair<AbstractNode*,bool>, int>::iterator it = run_helper.nodes_seen.find({this, is_branch});
-		if (it == run_helper.nodes_seen.end()) {
-			run_helper.nodes_seen[{this, is_branch}] = 1;
-		} else {
-			it->second++;
+		if (solution->subproblem_id == -1
+				|| this->parent->id == solution->subproblem_id) {
+			map<pair<AbstractNode*,bool>, int>::iterator it = run_helper.nodes_seen.find({this, is_branch});
+			if (it == run_helper.nodes_seen.end()) {
+				run_helper.nodes_seen[{this, is_branch}] = 1;
+			} else {
+				it->second++;
+			}
 		}
 	} else if (run_helper.experiment_histories.size() == 1
 			&& run_helper.experiment_histories.back()->experiment == this->parent->new_action_experiment) {

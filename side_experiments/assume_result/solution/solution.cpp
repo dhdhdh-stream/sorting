@@ -5,6 +5,7 @@
 #include "abstract_experiment.h"
 #include "action_node.h"
 #include "branch_node.h"
+#include "constants.h"
 #include "globals.h"
 #include "return_node.h"
 #include "scope.h"
@@ -40,6 +41,8 @@ Solution::Solution(Solution* original) {
 
 	this->max_num_actions = original->max_num_actions;
 	this->num_actions_limit = original->num_actions_limit;
+
+	this->subproblem_id = original->subproblem_id;
 }
 
 Solution::~Solution() {
@@ -76,6 +79,8 @@ void Solution::init() {
 
 	this->max_num_actions = 10;
 	this->num_actions_limit = 100;
+
+	this->subproblem_id = -1;
 }
 
 void Solution::load(string path,
@@ -116,6 +121,10 @@ void Solution::load(string path,
 
 	this->num_actions_limit = 10*this->max_num_actions + 10;
 
+	string subproblem_id_line;
+	getline(input_file, subproblem_id_line);
+	this->subproblem_id = stoi(subproblem_id_line);
+
 	input_file.close();
 }
 
@@ -130,83 +139,259 @@ void Solution::clear_verify() {
 #endif /* MDEBUG */
 
 void Solution::clean() {
-	for (int s_index = (int)this->scopes.size()-1; s_index >= 1; s_index--) {
-		bool still_used = false;
-		for (int is_index = 0; is_index < (int)this->scopes.size(); is_index++) {
-			if (s_index != is_index) {
-				for (map<int, AbstractNode*>::iterator it = this->scopes[is_index]->nodes.begin();
-						it != this->scopes[is_index]->nodes.end(); it++) {
-					switch (it->second->type) {
-					case NODE_TYPE_SCOPE:
-						{
-							ScopeNode* scope_node = (ScopeNode*)it->second;
-							if (scope_node->scope == this->scopes[s_index]) {
-								still_used = true;
-								break;
-							}
-						}
-						break;
-					}
-				}
-			}
-
-			if (still_used) {
-				break;
-			}
-		}
-
-		if (!still_used) {
+	if (this->subproblem_id == -1) {
+		for (int s_index = (int)this->scopes.size()-1; s_index >= 1; s_index--) {
+			bool still_used = false;
 			for (int is_index = 0; is_index < (int)this->scopes.size(); is_index++) {
-				for (int c_index = 0; c_index < (int)this->scopes[is_index]->child_scopes.size(); c_index++) {
-					if (this->scopes[is_index]->child_scopes[c_index] == this->scopes[s_index]) {
-						this->scopes[is_index]->child_scopes.erase(this->scopes[is_index]->child_scopes.begin() + c_index);
-						break;
+				if (s_index != is_index) {
+					for (map<int, AbstractNode*>::iterator it = this->scopes[is_index]->nodes.begin();
+							it != this->scopes[is_index]->nodes.end(); it++) {
+						switch (it->second->type) {
+						case NODE_TYPE_SCOPE:
+							{
+								ScopeNode* scope_node = (ScopeNode*)it->second;
+								if (scope_node->scope == this->scopes[s_index]) {
+									still_used = true;
+									break;
+								}
+							}
+							break;
+						}
 					}
 				}
-			}
-			delete this->scopes[s_index];
-			this->scopes.erase(this->scopes.begin() + s_index);
-		}
-	}
 
-	for (int s_index = (int)this->scopes.size()-1; s_index >= 1; s_index--) {
-		if (this->scopes[s_index]->nodes.size() <= 3) {
-			ActionNode* start_node = (ActionNode*)this->scopes[s_index]->nodes[0];
-			if (start_node->next_node->type == NODE_TYPE_ACTION) {
-				ActionNode* action_node = (ActionNode*)start_node->next_node;
-				if (action_node->action.move == ACTION_NOOP) {
-					clean_scope_node(this,
-									 this->scopes[s_index]);
-				} else {
+				if (still_used) {
+					break;
+				}
+			}
+
+			if (!still_used) {
+				for (int is_index = 0; is_index < (int)this->scopes.size(); is_index++) {
+					for (int c_index = 0; c_index < (int)this->scopes[is_index]->child_scopes.size(); c_index++) {
+						if (this->scopes[is_index]->child_scopes[c_index] == this->scopes[s_index]) {
+							this->scopes[is_index]->child_scopes.erase(this->scopes[is_index]->child_scopes.begin() + c_index);
+							break;
+						}
+					}
+				}
+				delete this->scopes[s_index];
+				this->scopes.erase(this->scopes.begin() + s_index);
+			}
+		}
+
+		for (int s_index = (int)this->scopes.size()-1; s_index >= 1; s_index--) {
+			if (this->scopes[s_index]->nodes.size() <= 3) {
+				ActionNode* start_node = (ActionNode*)this->scopes[s_index]->nodes[0];
+				if (start_node->next_node->type == NODE_TYPE_ACTION) {
+					ActionNode* action_node = (ActionNode*)start_node->next_node;
+					if (action_node->action.move == ACTION_NOOP) {
+						clean_scope_node(this,
+										 this->scopes[s_index]);
+					} else {
+						clean_scope_node(this,
+										 this->scopes[s_index],
+										 action_node->action);
+					}
+				} else if (start_node->next_node->type == NODE_TYPE_SCOPE) {
+					ScopeNode* scope_node = (ScopeNode*)start_node->next_node;
 					clean_scope_node(this,
 									 this->scopes[s_index],
-									 action_node->action);
+									 scope_node->scope);
+				} else {
+					clean_scope_node(this,
+									 this->scopes[s_index]);
 				}
-			} else if (start_node->next_node->type == NODE_TYPE_SCOPE) {
-				ScopeNode* scope_node = (ScopeNode*)start_node->next_node;
-				clean_scope_node(this,
-								 this->scopes[s_index],
-								 scope_node->scope);
-			} else {
-				clean_scope_node(this,
-								 this->scopes[s_index]);
-			}
 
-			for (int is_index = 0; is_index < (int)this->scopes.size(); is_index++) {
-				for (int c_index = 0; c_index < (int)this->scopes[is_index]->child_scopes.size(); c_index++) {
-					if (this->scopes[is_index]->child_scopes[c_index] == this->scopes[s_index]) {
-						this->scopes[is_index]->child_scopes.erase(this->scopes[is_index]->child_scopes.begin() + c_index);
-						break;
+				for (int is_index = 0; is_index < (int)this->scopes.size(); is_index++) {
+					for (int c_index = 0; c_index < (int)this->scopes[is_index]->child_scopes.size(); c_index++) {
+						if (this->scopes[is_index]->child_scopes[c_index] == this->scopes[s_index]) {
+							this->scopes[is_index]->child_scopes.erase(this->scopes[is_index]->child_scopes.begin() + c_index);
+							break;
+						}
 					}
 				}
+				delete this->scopes[s_index];
+				this->scopes.erase(this->scopes.begin() + s_index);
 			}
-			delete this->scopes[s_index];
-			this->scopes.erase(this->scopes.begin() + s_index);
+		}
+
+		for (int s_index = 1; s_index < (int)this->scopes.size(); s_index++) {
+			this->scopes[s_index]->id = s_index;
 		}
 	}
+}
 
-	for (int s_index = 1; s_index < (int)this->scopes.size(); s_index++) {
-		this->scopes[s_index]->id = s_index;
+void Solution::update_subproblem() {
+	if ((this->timestamp + 1) % SUBPROBLEM_ITER == 0) {
+		if (this->subproblem_id == -1) {
+			Scope* new_scope = new Scope();
+			new_scope->id = this->scopes.size();
+			new_scope->node_counter = 0;
+			this->scopes.push_back(new_scope);
+
+			ActionNode* starting_noop_node = new ActionNode();
+			starting_noop_node->parent = new_scope;
+			starting_noop_node->id = new_scope->node_counter;
+			new_scope->node_counter++;
+			starting_noop_node->action = Action(ACTION_NOOP);
+			starting_noop_node->next_node_id = -1;
+			starting_noop_node->next_node = NULL;
+			starting_noop_node->average_instances_per_run = 1.0;
+			new_scope->nodes[starting_noop_node->id] = starting_noop_node;
+
+			this->subproblem_id = new_scope->id;
+
+			ScopeNode* new_scope_node = new ScopeNode();
+			new_scope_node->parent = this->scopes[0];
+			new_scope_node->id = this->scopes[0]->node_counter;
+			this->scopes[0]->node_counter++;
+			this->scopes[0]->nodes[new_scope_node->id] = new_scope_node;
+
+			new_scope_node->scope = new_scope;
+
+			AbstractNode* subproblem_node;
+			bool subproblem_is_branch;
+			int num_valid = 0;
+			for (map<int, AbstractNode*>::iterator it = this->scopes[0]->nodes.begin();
+					it != this->scopes[0]->nodes.end(); it++) {
+				switch (it->second->type) {
+				case NODE_TYPE_ACTION:
+				case NODE_TYPE_SCOPE:
+					if (it->second->average_instances_per_run > 0.5) {
+						uniform_int_distribution<int> select_distribution(0, num_valid);
+						if (select_distribution(generator) == 0) {
+							subproblem_node = it->second;
+							subproblem_is_branch = false;
+						}
+
+						num_valid++;
+					}
+					break;
+				case NODE_TYPE_BRANCH:
+					{
+						BranchNode* branch_node = (BranchNode*)it->second;
+						if (branch_node->original_next_node == NULL
+								|| branch_node->original_next_node->average_instances_per_run > 0.5) {
+							uniform_int_distribution<int> select_distribution(0, num_valid);
+							if (select_distribution(generator) == 0) {
+								subproblem_node = it->second;
+								subproblem_is_branch = false;
+							}
+
+							num_valid++;
+						}
+						if (branch_node->branch_next_node == NULL
+								|| branch_node->branch_next_node->average_instances_per_run > 0.5) {
+							uniform_int_distribution<int> select_distribution(0, num_valid);
+							if (select_distribution(generator) == 0) {
+								subproblem_node = it->second;
+								subproblem_is_branch = true;
+							}
+
+							num_valid++;
+						}
+					}
+					break;
+				case NODE_TYPE_RETURN:
+					{
+						ReturnNode* return_node = (ReturnNode*)it->second;
+						if (return_node->skipped_next_node == NULL
+								|| return_node->skipped_next_node->average_instances_per_run > 0.5) {
+							uniform_int_distribution<int> select_distribution(0, num_valid);
+							if (select_distribution(generator) == 0) {
+								subproblem_node = it->second;
+								subproblem_is_branch = false;
+							}
+
+							num_valid++;
+						}
+						if (return_node->passed_next_node == NULL
+								|| return_node->passed_next_node->average_instances_per_run > 0.5) {
+							uniform_int_distribution<int> select_distribution(0, num_valid);
+							if (select_distribution(generator) == 0) {
+								subproblem_node = it->second;
+								subproblem_is_branch = true;
+							}
+
+							num_valid++;
+						}
+					}
+					break;
+				}
+			}
+
+			switch (subproblem_node->type) {
+			case NODE_TYPE_ACTION:
+				{
+					ActionNode* action_node = (ActionNode*)subproblem_node;
+
+					new_scope_node->next_node_id = action_node->next_node_id;
+					new_scope_node->next_node = action_node->next_node;
+
+					action_node->next_node_id = new_scope_node->id;
+					action_node->next_node = new_scope_node;
+				}
+				break;
+			case NODE_TYPE_SCOPE:
+				{
+					ScopeNode* scope_node = (ScopeNode*)subproblem_node;
+
+					new_scope_node->next_node_id = scope_node->next_node_id;
+					new_scope_node->next_node = scope_node->next_node;
+
+					scope_node->next_node_id = new_scope_node->id;
+					scope_node->next_node = new_scope_node;
+				}
+				break;
+			case NODE_TYPE_BRANCH:
+				{
+					BranchNode* branch_node = (BranchNode*)subproblem_node;
+					if (subproblem_is_branch) {
+						new_scope_node->next_node_id = branch_node->branch_next_node_id;
+						new_scope_node->next_node = branch_node->branch_next_node;
+
+						branch_node->branch_next_node_id = new_scope_node->id;
+						branch_node->branch_next_node = new_scope_node;
+					} else {
+						new_scope_node->next_node_id = branch_node->original_next_node_id;
+						new_scope_node->next_node = branch_node->original_next_node;
+
+						branch_node->original_next_node_id = new_scope_node->id;
+						branch_node->original_next_node = new_scope_node;
+					}
+				}
+				break;
+			case NODE_TYPE_RETURN:
+				{
+					ReturnNode* return_node = (ReturnNode*)subproblem_node;
+					if (subproblem_is_branch) {
+						new_scope_node->next_node_id = return_node->passed_next_node_id;
+						new_scope_node->next_node = return_node->passed_next_node;
+
+						return_node->passed_next_node_id = new_scope_node->id;
+						return_node->passed_next_node = new_scope_node;
+					} else {
+						new_scope_node->next_node_id = return_node->skipped_next_node_id;
+						new_scope_node->next_node = return_node->skipped_next_node;
+
+						return_node->skipped_next_node_id = new_scope_node->id;
+						return_node->skipped_next_node = new_scope_node;
+					}
+				}
+				break;
+			}
+
+			this->subproblem_id = new_scope->id;
+		} else {
+			for (int c_index = 0; c_index < (int)this->scopes[this->subproblem_id]->child_scopes.size(); c_index++) {
+				for (int s_index = 0; s_index < this->subproblem_id; s_index++) {
+					this->scopes[s_index]->child_scopes.push_back(
+						this->scopes[this->subproblem_id]->child_scopes[c_index]);
+				}
+			}
+
+			this->subproblem_id = -1;
+		}
 	}
 }
 
@@ -225,6 +410,8 @@ void Solution::save(string path,
 	}
 
 	output_file << this->max_num_actions << endl;
+
+	output_file << this->subproblem_id << endl;
 
 	output_file.close();
 

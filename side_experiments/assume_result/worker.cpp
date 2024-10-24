@@ -216,6 +216,8 @@ int main(int argc, char* argv[]) {
 
 				duplicate->timestamp++;
 
+				duplicate->update_subproblem();
+
 				duplicate->save(path, "possible_" + to_string((unsigned)time(NULL)));
 
 				delete duplicate;

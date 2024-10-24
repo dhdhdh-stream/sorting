@@ -38,6 +38,8 @@ public:
 	int max_num_actions;
 	int num_actions_limit;
 
+	int subproblem_id;
+
 	#if defined(MDEBUG) && MDEBUG
 	std::vector<Problem*> verify_problems;
 	std::vector<unsigned long> verify_seeds;
@@ -56,6 +58,8 @@ public:
 	#endif /* MDEBUG */
 
 	void clean();
+
+	void update_subproblem();
 
 	void save(std::string path,
 			  std::string name);

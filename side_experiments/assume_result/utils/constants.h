@@ -37,4 +37,6 @@ const int MEASURE_ITERS = 4000;
 
 const int NUM_VERIFY_SAMPLES = 10;
 
+const int SUBPROBLEM_ITER = 50;
+
 #endif /* CONSTANTS_H */
