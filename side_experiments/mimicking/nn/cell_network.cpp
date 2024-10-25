@@ -1,46 +1,47 @@
-#include "action_network.h"
-
-#include <cmath>
-#include <iostream>
-#include <limits>
+#include "cell_network.h"
 
 using namespace std;
 
 const double NETWORK_TARGET_MAX_UPDATE = 0.01;
 
-const double TEMPERATURE = 0.1;
+CellNetwork::CellNetwork(int num_obs,
+						 int num_actions) {
+	this->obs_input = new Layer(LINEAR_LAYER);
+	for (int i_index = 0; i_index < num_obs; i_index++) {
+		this->obs_input->acti_vals.push_back(0.0);
+		this->obs_input->errors.push_back(0.0);
+	}
 
-ActionNetwork::ActionNetwork(int num_states,
-							 int num_actions) {
-	this->input = new Layer(LINEAR_LAYER);
-	for (int i_index = 0; i_index < num_states; i_index++) {
-		this->input->acti_vals.push_back(0.0);
-		this->input->errors.push_back(0.0);
+	this->action_input = new Layer(LINEAR_LAYER);
+	for (int i_index = 0; i_index < num_actions; i_index++) {
+		this->action_input->acti_vals.push_back(0.0);
+		this->action_input->errors.push_back(0.0);
 	}
 
 	this->hidden_1 = new Layer(LEAKY_LAYER);
-	for (int h_index = 0; h_index < 10; h_index++) {
+	for (int h_index = 0; h_index < 4; h_index++) {
 		this->hidden_1->acti_vals.push_back(0.0);
 		this->hidden_1->errors.push_back(0.0);
 	}
-	this->hidden_1->input_layers.push_back(this->input);
+	this->hidden_1->input_layers.push_back(this->obs_input);
+	this->hidden_1->input_layers.push_back(this->action_input);
 	this->hidden_1->update_structure();
 
 	this->hidden_2 = new Layer(LEAKY_LAYER);
-	for (int h_index = 0; h_index < 4; h_index++) {
+	for (int h_index = 0; h_index < 1; h_index++) {
 		this->hidden_2->acti_vals.push_back(0.0);
 		this->hidden_2->errors.push_back(0.0);
 	}
-	this->hidden_2->input_layers.push_back(this->input);
+	this->hidden_2->input_layers.push_back(this->obs_input);
+	this->hidden_2->input_layers.push_back(this->action_input);
 	this->hidden_2->input_layers.push_back(this->hidden_1);
 	this->hidden_2->update_structure();
 
-	this->output = new Layer(LINEAR_LAYER);
-	for (int o_index = 0; o_index < num_actions; o_index++) {
-		this->output->acti_vals.push_back(0.0);
-		this->output->errors.push_back(0.0);
-	}
-	this->output->input_layers.push_back(this->input);
+	this->output = new Layer(HYPERBOLIC_TANGENT_LAYER);
+	this->output->acti_vals.push_back(0.0);
+	this->output->errors.push_back(0.0);
+	this->output->input_layers.push_back(this->obs_input);
+	this->output->input_layers.push_back(this->action_input);
 	this->output->input_layers.push_back(this->hidden_1);
 	this->output->input_layers.push_back(this->hidden_2);
 	this->output->update_structure();
@@ -50,14 +51,23 @@ ActionNetwork::ActionNetwork(int num_states,
 	this->output_average_max_update = 0.0;
 }
 
-ActionNetwork::ActionNetwork(ifstream& input_file) {
-	this->input = new Layer(LINEAR_LAYER);
-	string input_size_line;
-	getline(input_file, input_size_line);
-	int input_size = stoi(input_size_line);
-	for (int i_index = 0; i_index < input_size; i_index++) {
-		this->input->acti_vals.push_back(0.0);
-		this->input->errors.push_back(0.0);
+CellNetwork::CellNetwork(ifstream& input_file) {
+	this->obs_input = new Layer(LINEAR_LAYER);
+	string obs_input_size_line;
+	getline(input_file, obs_input_size_line);
+	int obs_input_size = stoi(obs_input_size_line);
+	for (int i_index = 0; i_index < obs_input_size; i_index++) {
+		this->obs_input->acti_vals.push_back(0.0);
+		this->obs_input->errors.push_back(0.0);
+	}
+
+	this->action_input = new Layer(LINEAR_LAYER);
+	string action_input_size_line;
+	getline(input_file, action_input_size_line);
+	int action_input_size = stoi(action_input_size_line);
+	for (int i_index = 0; i_index < action_input_size; i_index++) {
+		this->action_input->acti_vals.push_back(0.0);
+		this->action_input->errors.push_back(0.0);
 	}
 
 	this->hidden_1 = new Layer(LEAKY_LAYER);
@@ -68,7 +78,8 @@ ActionNetwork::ActionNetwork(ifstream& input_file) {
 		this->hidden_1->acti_vals.push_back(0.0);
 		this->hidden_1->errors.push_back(0.0);
 	}
-	this->hidden_1->input_layers.push_back(this->input);
+	this->hidden_1->input_layers.push_back(this->obs_input);
+	this->hidden_1->input_layers.push_back(this->action_input);
 	this->hidden_1->update_structure();
 
 	this->hidden_2 = new Layer(LEAKY_LAYER);
@@ -79,19 +90,16 @@ ActionNetwork::ActionNetwork(ifstream& input_file) {
 		this->hidden_2->acti_vals.push_back(0.0);
 		this->hidden_2->errors.push_back(0.0);
 	}
-	this->hidden_2->input_layers.push_back(this->input);
+	this->hidden_2->input_layers.push_back(this->obs_input);
+	this->hidden_2->input_layers.push_back(this->action_input);
 	this->hidden_2->input_layers.push_back(this->hidden_1);
 	this->hidden_2->update_structure();
 
-	this->output = new Layer(LINEAR_LAYER);
-	string output_size_line;
-	getline(input_file, output_size_line);
-	int output_size = stoi(output_size_line);
-	for (int o_index = 0; o_index < output_size; o_index++) {
-		this->output->acti_vals.push_back(0.0);
-		this->output->errors.push_back(0.0);
-	}
-	this->output->input_layers.push_back(this->input);
+	this->output = new Layer(HYPERBOLIC_TANGENT_LAYER);
+	this->output->acti_vals.push_back(0.0);
+	this->output->errors.push_back(0.0);
+	this->output->input_layers.push_back(this->obs_input);
+	this->output->input_layers.push_back(this->action_input);
 	this->output->input_layers.push_back(this->hidden_1);
 	this->output->input_layers.push_back(this->hidden_2);
 	this->output->update_structure();
@@ -105,68 +113,55 @@ ActionNetwork::ActionNetwork(ifstream& input_file) {
 	this->output_average_max_update = 0.0;
 }
 
-ActionNetwork::~ActionNetwork() {
-	delete this->input;
+CellNetwork::~CellNetwork() {
+	delete this->obs_input;
+	delete this->action_input;
 	delete this->hidden_1;
 	delete this->hidden_2;
 	delete this->output;
 }
 
-void ActionNetwork::activate(vector<double>& state_vals) {
-	for (int i_index = 0; i_index < (int)state_vals.size(); i_index++) {
-		this->input->acti_vals[i_index] = state_vals[i_index];
+void CellNetwork::activate(vector<double>& obs_vals,
+						   int action) {
+	for (int i_index = 0; i_index < (int)obs_vals.size(); i_index++) {
+		this->obs_input->acti_vals[i_index] = obs_vals[i_index];
+	}
+	for (int i_index = 0; i_index < (int)this->action_input->acti_vals.size(); i_index++) {
+		if (i_index == action) {
+			this->action_input->acti_vals[i_index] = 1.0;
+		} else {
+			this->action_input->acti_vals[i_index] = 0.0;
+		}
 	}
 	this->hidden_1->activate();
 	this->hidden_2->activate();
 	this->output->activate();
-
-	double max_val = numeric_limits<double>::lowest();
-	for (int o_index = 0; o_index < (int)this->output->acti_vals.size(); o_index++) {
-		this->output->acti_vals[o_index] *= TEMPERATURE;
-
-		if (this->output->acti_vals[o_index] > max_val) {
-			max_val = this->output->acti_vals[o_index];
-		}
-	}
-
-	double sum_vals = 0.0;
-	for (int o_index = 0; o_index < (int)this->output->acti_vals.size(); o_index++) {
-		this->output->acti_vals[o_index] = exp(this->output->acti_vals[o_index] - max_val);
-		sum_vals += this->output->acti_vals[o_index];
-	}
-	for (int o_index = 0; o_index < (int)this->output->acti_vals.size(); o_index++) {
-		this->output->acti_vals[o_index] /= sum_vals;
-	}
 }
 
-void ActionNetwork::activate(vector<double>& state_vals,
-							 ActionNetworkHistory* history) {
-	for (int i_index = 0; i_index < (int)state_vals.size(); i_index++) {
-		this->input->acti_vals[i_index] = state_vals[i_index];
+void CellNetwork::activate(vector<double>& obs_vals,
+						   int action,
+						   CellNetworkHistory* history) {
+	for (int i_index = 0; i_index < (int)obs_vals.size(); i_index++) {
+		this->obs_input->acti_vals[i_index] = obs_vals[i_index];
+	}
+	for (int i_index = 0; i_index < (int)this->action_input->acti_vals.size(); i_index++) {
+		if (i_index == action) {
+			this->action_input->acti_vals[i_index] = 1.0;
+		} else {
+			this->action_input->acti_vals[i_index] = 0.0;
+		}
 	}
 	this->hidden_1->activate();
 	this->hidden_2->activate();
 	this->output->activate();
 
-	double max_val = numeric_limits<double>::lowest();
-	for (int o_index = 0; o_index < (int)this->output->acti_vals.size(); o_index++) {
-		if (this->output->acti_vals[o_index] > max_val) {
-			max_val = this->output->acti_vals[o_index];
-		}
+	history->obs_input_histories = vector<double>(this->obs_input->acti_vals.size());
+	for (int i_index = 0; i_index < (int)this->obs_input->acti_vals.size(); i_index++) {
+		history->obs_input_histories[i_index] = this->obs_input->acti_vals[i_index];
 	}
-
-	double sum_vals = 0.0;
-	for (int o_index = 0; o_index < (int)this->output->acti_vals.size(); o_index++) {
-		this->output->acti_vals[o_index] = exp(this->output->acti_vals[o_index] - max_val);
-		sum_vals += this->output->acti_vals[o_index];
-	}
-	for (int o_index = 0; o_index < (int)this->output->acti_vals.size(); o_index++) {
-		this->output->acti_vals[o_index] /= sum_vals;
-	}
-
-	history->input_histories = vector<double>(this->input->acti_vals.size());
-	for (int i_index = 0; i_index < (int)this->input->acti_vals.size(); i_index++) {
-		history->input_histories[i_index] = this->input->acti_vals[i_index];
+	history->action_input_histories = vector<double>(this->action_input->acti_vals.size());
+	for (int i_index = 0; i_index < (int)this->action_input->acti_vals.size(); i_index++) {
+		history->action_input_histories[i_index] = this->action_input->acti_vals[i_index];
 	}
 	history->hidden_1_histories = vector<double>(this->hidden_1->acti_vals.size());
 	for (int n_index = 0; n_index < (int)this->hidden_1->acti_vals.size(); n_index++) {
@@ -182,11 +177,13 @@ void ActionNetwork::activate(vector<double>& state_vals,
 	}
 }
 
-void ActionNetwork::backprop(int target,
-							 vector<double>& state_errors,
-							 ActionNetworkHistory* history) {
-	for (int i_index = 0; i_index < (int)this->input->acti_vals.size(); i_index++) {
-		this->input->acti_vals[i_index] = history->input_histories[i_index];
+void CellNetwork::backprop(double error,
+						   CellNetworkHistory* history) {
+	for (int i_index = 0; i_index < (int)this->obs_input->acti_vals.size(); i_index++) {
+		this->obs_input->acti_vals[i_index] = history->obs_input_histories[i_index];
+	}
+	for (int i_index = 0; i_index < (int)this->action_input->acti_vals.size(); i_index++) {
+		this->action_input->acti_vals[i_index] = history->action_input_histories[i_index];
 	}
 	for (int n_index = 0; n_index < (int)this->hidden_1->acti_vals.size(); n_index++) {
 		this->hidden_1->acti_vals[n_index] = history->hidden_1_histories[n_index];
@@ -198,25 +195,12 @@ void ActionNetwork::backprop(int target,
 		this->output->acti_vals[n_index] = history->output_histories[n_index];
 	}
 
-	for (int o_index = 0; o_index < (int)this->output->acti_vals.size(); o_index++) {
-		if (o_index == target) {
-			this->output->errors[o_index] = this->output->acti_vals[o_index] * (1.0 - this->output->acti_vals[o_index]);
-		} else {
-			this->output->errors[o_index] = -this->output->acti_vals[o_index] * this->output->acti_vals[target];
-		}
-	}
-
-	this->output->backprop();
+	this->output->errors[0] = error;
 	this->hidden_2->backprop();
 	this->hidden_1->backprop();
-
-	for (int i_index = 0; i_index < (int)state_errors.size(); i_index++) {
-		state_errors[i_index] += this->input->errors[i_index];
-		this->input->errors[i_index] = 0;
-	}
 }
 
-void ActionNetwork::update_weights() {
+void CellNetwork::update_weights() {
 	double hidden_1_max_update = 0.0;
 	this->hidden_1->get_max_update(hidden_1_max_update);
 	this->hidden_1_average_max_update = 0.999*this->hidden_1_average_max_update+0.001*hidden_1_max_update;
@@ -251,11 +235,11 @@ void ActionNetwork::update_weights() {
 	}
 }
 
-void ActionNetwork::save(ofstream& output_file) {
-	output_file << this->input->acti_vals.size() << endl;
+void CellNetwork::save(ofstream& output_file) {
+	output_file << this->obs_input->acti_vals.size() << endl;
+	output_file << this->action_input->acti_vals.size() << endl;
 	output_file << this->hidden_1->acti_vals.size() << endl;
 	output_file << this->hidden_2->acti_vals.size() << endl;
-	output_file << this->output->acti_vals.size() << endl;
 
 	this->hidden_1->save_weights(output_file);
 	this->hidden_2->save_weights(output_file);

@@ -4,11 +4,11 @@
 #include <vector>
 
 class ActionNetwork;
+class LSTM;
 class Sample;
-class StateNetwork;
 
 void train_network(std::vector<Sample*>& samples,
-				   StateNetwork* state_network,
+				   std::vector<LSTM*>& memory_cells,
 				   ActionNetwork* action_network);
 
 #endif /* NN_HELPERS_H */

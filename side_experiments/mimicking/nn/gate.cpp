@@ -1,14 +1,12 @@
-#include "state_network.h"
-
-#include "globals.h"
+#include "gate.h"
 
 using namespace std;
 
-const double NETWORK_TARGET_MAX_UPDATE = 0.000005;
+const double NETWORK_TARGET_MAX_UPDATE = 0.01;
 
-StateNetwork::StateNetwork(int num_obs,
-						   int num_actions,
-						   int num_states) {
+Gate::Gate(int num_obs,
+		   int num_actions,
+		   int num_states) {
 	this->obs_input = new Layer(LINEAR_LAYER);
 	for (int i_index = 0; i_index < num_obs; i_index++) {
 		this->obs_input->acti_vals.push_back(0.0);
@@ -28,7 +26,7 @@ StateNetwork::StateNetwork(int num_obs,
 	}
 
 	this->hidden_1 = new Layer(LEAKY_LAYER);
-	for (int h_index = 0; h_index < 40; h_index++) {
+	for (int h_index = 0; h_index < 4; h_index++) {
 		this->hidden_1->acti_vals.push_back(0.0);
 		this->hidden_1->errors.push_back(0.0);
 	}
@@ -38,7 +36,7 @@ StateNetwork::StateNetwork(int num_obs,
 	this->hidden_1->update_structure();
 
 	this->hidden_2 = new Layer(LEAKY_LAYER);
-	for (int h_index = 0; h_index < 20; h_index++) {
+	for (int h_index = 0; h_index < 1; h_index++) {
 		this->hidden_2->acti_vals.push_back(0.0);
 		this->hidden_2->errors.push_back(0.0);
 	}
@@ -48,38 +46,22 @@ StateNetwork::StateNetwork(int num_obs,
 	this->hidden_2->input_layers.push_back(this->hidden_1);
 	this->hidden_2->update_structure();
 
-	this->hidden_3 = new Layer(LEAKY_LAYER);
-	for (int h_index = 0; h_index < 10; h_index++) {
-		this->hidden_3->acti_vals.push_back(0.0);
-		this->hidden_3->errors.push_back(0.0);
-	}
-	this->hidden_3->input_layers.push_back(this->obs_input);
-	this->hidden_3->input_layers.push_back(this->action_input);
-	this->hidden_3->input_layers.push_back(this->state_input);
-	this->hidden_3->input_layers.push_back(this->hidden_1);
-	this->hidden_3->input_layers.push_back(this->hidden_2);
-	this->hidden_3->update_structure();
-
-	this->output = new Layer(LINEAR_LAYER);
-	for (int o_index = 0; o_index < num_states; o_index++) {
-		this->output->acti_vals.push_back(0.0);
-		this->output->errors.push_back(0.0);
-	}
+	this->output = new Layer(SIGMOID_LAYER);
+	this->output->acti_vals.push_back(0.0);
+	this->output->errors.push_back(0.0);
 	this->output->input_layers.push_back(this->obs_input);
 	this->output->input_layers.push_back(this->action_input);
 	this->output->input_layers.push_back(this->state_input);
 	this->output->input_layers.push_back(this->hidden_1);
 	this->output->input_layers.push_back(this->hidden_2);
-	this->output->input_layers.push_back(this->hidden_3);
 	this->output->update_structure();
 
 	this->hidden_1_average_max_update = 0.0;
 	this->hidden_2_average_max_update = 0.0;
-	this->hidden_3_average_max_update = 0.0;
 	this->output_average_max_update = 0.0;
 }
 
-StateNetwork::StateNetwork(ifstream& input_file) {
+Gate::Gate(ifstream& input_file) {
 	this->obs_input = new Layer(LINEAR_LAYER);
 	string obs_input_size_line;
 	getline(input_file, obs_input_size_line);
@@ -134,61 +116,37 @@ StateNetwork::StateNetwork(ifstream& input_file) {
 	this->hidden_2->input_layers.push_back(this->hidden_1);
 	this->hidden_2->update_structure();
 
-	this->hidden_3 = new Layer(LEAKY_LAYER);
-	string hidden_3_size_line;
-	getline(input_file, hidden_3_size_line);
-	int hidden_3_size = stoi(hidden_3_size_line);
-	for (int i_index = 0; i_index < hidden_3_size; i_index++) {
-		this->hidden_3->acti_vals.push_back(0.0);
-		this->hidden_3->errors.push_back(0.0);
-	}
-	this->hidden_3->input_layers.push_back(this->obs_input);
-	this->hidden_3->input_layers.push_back(this->action_input);
-	this->hidden_3->input_layers.push_back(this->state_input);
-	this->hidden_3->input_layers.push_back(this->hidden_1);
-	this->hidden_3->input_layers.push_back(this->hidden_2);
-	this->hidden_3->update_structure();
-
-	this->output = new Layer(LINEAR_LAYER);
-	string output_size_line;
-	getline(input_file, output_size_line);
-	int output_size = stoi(output_size_line);
-	for (int o_index = 0; o_index < output_size; o_index++) {
-		this->output->acti_vals.push_back(0.0);
-		this->output->errors.push_back(0.0);
-	}
+	this->output = new Layer(SIGMOID_LAYER);
+	this->output->acti_vals.push_back(0.0);
+	this->output->errors.push_back(0.0);
 	this->output->input_layers.push_back(this->obs_input);
 	this->output->input_layers.push_back(this->action_input);
 	this->output->input_layers.push_back(this->state_input);
 	this->output->input_layers.push_back(this->hidden_1);
 	this->output->input_layers.push_back(this->hidden_2);
-	this->output->input_layers.push_back(this->hidden_3);
 	this->output->update_structure();
 
 	this->hidden_1->load_weights_from(input_file);
 	this->hidden_2->load_weights_from(input_file);
-	this->hidden_3->load_weights_from(input_file);
 	this->output->load_weights_from(input_file);
 
 	this->hidden_1_average_max_update = 0.0;
 	this->hidden_2_average_max_update = 0.0;
-	this->hidden_3_average_max_update = 0.0;
 	this->output_average_max_update = 0.0;
 }
 
-StateNetwork::~StateNetwork() {
+Gate::~Gate() {
 	delete this->obs_input;
 	delete this->action_input;
 	delete this->state_input;
 	delete this->hidden_1;
 	delete this->hidden_2;
-	delete this->hidden_3;
 	delete this->output;
 }
 
-void StateNetwork::activate(vector<double>& obs_vals,
-							int action,
-							vector<double>& state_vals) {
+void Gate::activate(vector<double>& obs_vals,
+					int action,
+					std::vector<double>& state_vals) {
 	for (int i_index = 0; i_index < (int)obs_vals.size(); i_index++) {
 		this->obs_input->acti_vals[i_index] = obs_vals[i_index];
 	}
@@ -204,18 +162,13 @@ void StateNetwork::activate(vector<double>& obs_vals,
 	}
 	this->hidden_1->activate();
 	this->hidden_2->activate();
-	this->hidden_3->activate();
 	this->output->activate();
-
-	for (int o_index = 0; o_index < (int)state_vals.size(); o_index++) {
-		state_vals[o_index] += this->output->acti_vals[o_index];
-	}
 }
 
-void StateNetwork::activate(vector<double>& obs_vals,
-							int action,
-							vector<double>& state_vals,
-							StateNetworkHistory* history) {
+void Gate::activate(vector<double>& obs_vals,
+					int action,
+					std::vector<double>& state_vals,
+					GateHistory* history) {
 	for (int i_index = 0; i_index < (int)obs_vals.size(); i_index++) {
 		this->obs_input->acti_vals[i_index] = obs_vals[i_index];
 	}
@@ -231,12 +184,7 @@ void StateNetwork::activate(vector<double>& obs_vals,
 	}
 	this->hidden_1->activate();
 	this->hidden_2->activate();
-	this->hidden_3->activate();
 	this->output->activate();
-
-	for (int o_index = 0; o_index < (int)state_vals.size(); o_index++) {
-		state_vals[o_index] += this->output->acti_vals[o_index];
-	}
 
 	history->obs_input_histories = vector<double>(this->obs_input->acti_vals.size());
 	for (int i_index = 0; i_index < (int)this->obs_input->acti_vals.size(); i_index++) {
@@ -258,14 +206,15 @@ void StateNetwork::activate(vector<double>& obs_vals,
 	for (int n_index = 0; n_index < (int)this->hidden_2->acti_vals.size(); n_index++) {
 		history->hidden_2_histories[n_index] = this->hidden_2->acti_vals[n_index];
 	}
-	history->hidden_3_histories = vector<double>(this->hidden_3->acti_vals.size());
-	for (int n_index = 0; n_index < (int)this->hidden_3->acti_vals.size(); n_index++) {
-		history->hidden_3_histories[n_index] = this->hidden_3->acti_vals[n_index];
+	history->output_histories = vector<double>(this->output->acti_vals.size());
+	for (int n_index = 0; n_index < (int)this->output->acti_vals.size(); n_index++) {
+		history->output_histories[n_index] = this->output->acti_vals[n_index];
 	}
 }
 
-void StateNetwork::backprop(vector<double>& state_errors,
-							StateNetworkHistory* history) {
+void Gate::backprop(double error,
+					vector<double>& state_errors,
+					GateHistory* history) {
 	for (int i_index = 0; i_index < (int)this->obs_input->acti_vals.size(); i_index++) {
 		this->obs_input->acti_vals[i_index] = history->obs_input_histories[i_index];
 	}
@@ -281,15 +230,11 @@ void StateNetwork::backprop(vector<double>& state_errors,
 	for (int n_index = 0; n_index < (int)this->hidden_2->acti_vals.size(); n_index++) {
 		this->hidden_2->acti_vals[n_index] = history->hidden_2_histories[n_index];
 	}
-	for (int n_index = 0; n_index < (int)this->hidden_3->acti_vals.size(); n_index++) {
-		this->hidden_3->acti_vals[n_index] = history->hidden_3_histories[n_index];
+	for (int n_index = 0; n_index < (int)this->output->acti_vals.size(); n_index++) {
+		this->output->acti_vals[n_index] = history->output_histories[n_index];
 	}
 
-	for (int o_index = 0; o_index < (int)state_errors.size(); o_index++) {
-		this->output->errors[o_index] = state_errors[o_index];
-	}
-	this->output->backprop();
-	this->hidden_3->backprop();
+	this->output->errors[0] = error;
 	this->hidden_2->backprop();
 	this->hidden_1->backprop();
 
@@ -299,7 +244,7 @@ void StateNetwork::backprop(vector<double>& state_errors,
 	}
 }
 
-void StateNetwork::update_weights() {
+void Gate::update_weights() {
 	double hidden_1_max_update = 0.0;
 	this->hidden_1->get_max_update(hidden_1_max_update);
 	this->hidden_1_average_max_update = 0.999*this->hidden_1_average_max_update+0.001*hidden_1_max_update;
@@ -322,17 +267,6 @@ void StateNetwork::update_weights() {
 		this->hidden_2->update_weights(hidden_2_learning_rate);
 	}
 
-	double hidden_3_max_update = 0.0;
-	this->hidden_3->get_max_update(hidden_3_max_update);
-	this->hidden_3_average_max_update = 0.999*this->hidden_3_average_max_update+0.001*hidden_3_max_update;
-	if (hidden_3_max_update > 0.0) {
-		double hidden_3_learning_rate = (0.3*NETWORK_TARGET_MAX_UPDATE)/this->hidden_3_average_max_update;
-		if (hidden_3_learning_rate*hidden_3_max_update > NETWORK_TARGET_MAX_UPDATE) {
-			hidden_3_learning_rate = NETWORK_TARGET_MAX_UPDATE/hidden_3_max_update;
-		}
-		this->hidden_3->update_weights(hidden_3_learning_rate);
-	}
-
 	double output_max_update = 0.0;
 	this->output->get_max_update(output_max_update);
 	this->output_average_max_update = 0.999*this->output_average_max_update+0.001*output_max_update;
@@ -345,17 +279,14 @@ void StateNetwork::update_weights() {
 	}
 }
 
-void StateNetwork::save(ofstream& output_file) {
+void Gate::save(ofstream& output_file) {
 	output_file << this->obs_input->acti_vals.size() << endl;
 	output_file << this->action_input->acti_vals.size() << endl;
 	output_file << this->state_input->acti_vals.size() << endl;
 	output_file << this->hidden_1->acti_vals.size() << endl;
 	output_file << this->hidden_2->acti_vals.size() << endl;
-	output_file << this->hidden_3->acti_vals.size() << endl;
-	output_file << this->output->acti_vals.size() << endl;
 
 	this->hidden_1->save_weights(output_file);
 	this->hidden_2->save_weights(output_file);
-	this->hidden_3->save_weights(output_file);
 	this->output->save_weights(output_file);
 }

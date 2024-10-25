@@ -1,3 +1,9 @@
+/**
+ * - don't use softmax
+ *   - does not correspond to probability distribution(?)
+ *     - exponential makes predictions way too confident
+ */
+
 #ifndef ACTION_NETWORK_H
 #define ACTION_NETWORK_H
 
