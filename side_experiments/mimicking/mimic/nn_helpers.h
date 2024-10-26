@@ -9,6 +9,6 @@ class Sample;
 
 void train_network(std::vector<Sample*>& samples,
 				   std::vector<LSTM*>& memory_cells,
-				   ActionNetwork* action_network);
+				   std::vector<ActionNetwork*>& action_networks);
 
 #endif /* NN_HELPERS_H */

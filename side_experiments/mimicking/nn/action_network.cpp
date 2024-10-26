@@ -8,10 +8,7 @@ using namespace std;
 
 const double NETWORK_TARGET_MAX_UPDATE = 0.01;
 
-const double TEMPERATURE = 0.1;
-
-ActionNetwork::ActionNetwork(int num_states,
-							 int num_actions) {
+ActionNetwork::ActionNetwork(int num_states) {
 	this->input = new Layer(LINEAR_LAYER);
 	for (int i_index = 0; i_index < num_states; i_index++) {
 		this->input->acti_vals.push_back(0.0);
@@ -36,10 +33,8 @@ ActionNetwork::ActionNetwork(int num_states,
 	this->hidden_2->update_structure();
 
 	this->output = new Layer(LINEAR_LAYER);
-	for (int o_index = 0; o_index < num_actions; o_index++) {
-		this->output->acti_vals.push_back(0.0);
-		this->output->errors.push_back(0.0);
-	}
+	this->output->acti_vals.push_back(0.0);
+	this->output->errors.push_back(0.0);
 	this->output->input_layers.push_back(this->input);
 	this->output->input_layers.push_back(this->hidden_1);
 	this->output->input_layers.push_back(this->hidden_2);
@@ -84,13 +79,8 @@ ActionNetwork::ActionNetwork(ifstream& input_file) {
 	this->hidden_2->update_structure();
 
 	this->output = new Layer(LINEAR_LAYER);
-	string output_size_line;
-	getline(input_file, output_size_line);
-	int output_size = stoi(output_size_line);
-	for (int o_index = 0; o_index < output_size; o_index++) {
-		this->output->acti_vals.push_back(0.0);
-		this->output->errors.push_back(0.0);
-	}
+	this->output->acti_vals.push_back(0.0);
+	this->output->errors.push_back(0.0);
 	this->output->input_layers.push_back(this->input);
 	this->output->input_layers.push_back(this->hidden_1);
 	this->output->input_layers.push_back(this->hidden_2);
@@ -119,24 +109,6 @@ void ActionNetwork::activate(vector<double>& state_vals) {
 	this->hidden_1->activate();
 	this->hidden_2->activate();
 	this->output->activate();
-
-	double max_val = numeric_limits<double>::lowest();
-	for (int o_index = 0; o_index < (int)this->output->acti_vals.size(); o_index++) {
-		this->output->acti_vals[o_index] *= TEMPERATURE;
-
-		if (this->output->acti_vals[o_index] > max_val) {
-			max_val = this->output->acti_vals[o_index];
-		}
-	}
-
-	double sum_vals = 0.0;
-	for (int o_index = 0; o_index < (int)this->output->acti_vals.size(); o_index++) {
-		this->output->acti_vals[o_index] = exp(this->output->acti_vals[o_index] - max_val);
-		sum_vals += this->output->acti_vals[o_index];
-	}
-	for (int o_index = 0; o_index < (int)this->output->acti_vals.size(); o_index++) {
-		this->output->acti_vals[o_index] /= sum_vals;
-	}
 }
 
 void ActionNetwork::activate(vector<double>& state_vals,
@@ -147,22 +119,6 @@ void ActionNetwork::activate(vector<double>& state_vals,
 	this->hidden_1->activate();
 	this->hidden_2->activate();
 	this->output->activate();
-
-	double max_val = numeric_limits<double>::lowest();
-	for (int o_index = 0; o_index < (int)this->output->acti_vals.size(); o_index++) {
-		if (this->output->acti_vals[o_index] > max_val) {
-			max_val = this->output->acti_vals[o_index];
-		}
-	}
-
-	double sum_vals = 0.0;
-	for (int o_index = 0; o_index < (int)this->output->acti_vals.size(); o_index++) {
-		this->output->acti_vals[o_index] = exp(this->output->acti_vals[o_index] - max_val);
-		sum_vals += this->output->acti_vals[o_index];
-	}
-	for (int o_index = 0; o_index < (int)this->output->acti_vals.size(); o_index++) {
-		this->output->acti_vals[o_index] /= sum_vals;
-	}
 
 	history->input_histories = vector<double>(this->input->acti_vals.size());
 	for (int i_index = 0; i_index < (int)this->input->acti_vals.size(); i_index++) {
@@ -182,7 +138,7 @@ void ActionNetwork::activate(vector<double>& state_vals,
 	}
 }
 
-void ActionNetwork::backprop(int target,
+void ActionNetwork::backprop(double target,
 							 vector<double>& state_errors,
 							 ActionNetworkHistory* history) {
 	for (int i_index = 0; i_index < (int)this->input->acti_vals.size(); i_index++) {
@@ -198,13 +154,7 @@ void ActionNetwork::backprop(int target,
 		this->output->acti_vals[n_index] = history->output_histories[n_index];
 	}
 
-	for (int o_index = 0; o_index < (int)this->output->acti_vals.size(); o_index++) {
-		if (o_index == target) {
-			this->output->errors[o_index] = this->output->acti_vals[o_index] * (1.0 - this->output->acti_vals[o_index]);
-		} else {
-			this->output->errors[o_index] = -this->output->acti_vals[o_index] * this->output->acti_vals[target];
-		}
-	}
+	this->output->errors[0] = target - this->output->acti_vals[0];
 
 	this->output->backprop();
 	this->hidden_2->backprop();
@@ -255,7 +205,6 @@ void ActionNetwork::save(ofstream& output_file) {
 	output_file << this->input->acti_vals.size() << endl;
 	output_file << this->hidden_1->acti_vals.size() << endl;
 	output_file << this->hidden_2->acti_vals.size() << endl;
-	output_file << this->output->acti_vals.size() << endl;
 
 	this->hidden_1->save_weights(output_file);
 	this->hidden_2->save_weights(output_file);

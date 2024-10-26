@@ -24,15 +24,14 @@ public:
 	double hidden_2_average_max_update;
 	double output_average_max_update;
 
-	ActionNetwork(int num_states,
-				  int num_actions);
+	ActionNetwork(int num_states);
 	ActionNetwork(std::ifstream& input_file);
 	~ActionNetwork();
 
 	void activate(std::vector<double>& state_vals);
 	void activate(std::vector<double>& state_vals,
 				  ActionNetworkHistory* history);
-	void backprop(int target,
+	void backprop(double target,
 				  std::vector<double>& state_errors,
 				  ActionNetworkHistory* history);
 	void update_weights();
