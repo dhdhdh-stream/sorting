@@ -69,11 +69,6 @@ void Scope::activate(Problem* problem,
 
 	context.back().scope = this;
 
-	if (this->new_action_experiment != NULL) {
-		this->new_action_experiment->pre_activate(context,
-												  run_helper);
-	}
-
 	AbstractNode* curr_node = this->nodes[0];
 	while (true) {
 		if (curr_node == NULL) {

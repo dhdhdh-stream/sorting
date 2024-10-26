@@ -48,6 +48,12 @@ public:
 	~PassThroughExperiment();
 	void decrement(AbstractNode* experiment_node);
 
+	bool result_activate(AbstractNode* experiment_node,
+						 bool is_branch,
+						 AbstractNode*& curr_node,
+						 Problem* problem,
+						 std::vector<ContextLayer>& context,
+						 RunHelper& run_helper);
 	bool activate(AbstractNode* experiment_node,
 				  bool is_branch,
 				  AbstractNode*& curr_node,

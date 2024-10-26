@@ -50,36 +50,6 @@ int main(int argc, char* argv[]) {
 
 	auto start_time = chrono::high_resolution_clock::now();
 	while (true) {
-		Problem* problem = problem_type->get_problem();
-
-		RunHelper run_helper;
-
-		double result;
-		get_existing_result(problem,
-							result);
-		run_helper.result = result;
-
-		vector<ContextLayer> context;
-		solution->scopes[0]->activate(
-			problem,
-			context,
-			run_helper);
-
-		if (run_helper.experiments_seen_order.size() == 0
-				&& run_helper.nodes_seen.size() != 0) {
-			if (!run_helper.exceeded_limit) {
-				create_experiment(run_helper);
-			}
-		}
-
-		double target_val;
-		if (!run_helper.exceeded_limit) {
-			target_val = problem->score_result(run_helper.num_analyze,
-											   run_helper.num_actions);
-		} else {
-			target_val = -1.0;
-		}
-
 		auto curr_time = chrono::high_resolution_clock::now();
 		auto time_diff = chrono::duration_cast<chrono::seconds>(curr_time - start_time);
 		if (time_diff.count() >= 20) {
@@ -105,7 +75,33 @@ int main(int argc, char* argv[]) {
 			}
 		}
 
+		Problem* problem = problem_type->get_problem();
+
+		RunHelper run_helper;
+
+		get_existing_result(problem,
+							run_helper);
+
 		if (run_helper.experiment_histories.size() > 0) {
+			run_helper.exceeded_limit = false;
+
+			run_helper.num_analyze = 0;
+			run_helper.num_actions = 0;
+
+			vector<ContextLayer> context;
+			solution->scopes[0]->activate(
+				problem,
+				context,
+				run_helper);
+
+			double target_val;
+			if (!run_helper.exceeded_limit) {
+				target_val = problem->score_result(run_helper.num_analyze,
+												   run_helper.num_actions);
+			} else {
+				target_val = -1.0;
+			}
+
 			for (int e_index = 0; e_index < (int)run_helper.experiments_seen_order.size(); e_index++) {
 				AbstractExperiment* experiment = run_helper.experiments_seen_order[e_index];
 				experiment->average_remaining_experiments_from_start =
@@ -195,6 +191,8 @@ int main(int argc, char* argv[]) {
 					solution->load("workers/", "main");
 					cout << "updated from main" << endl;
 
+					delete problem;
+
 					continue;
 				}
 
@@ -222,13 +220,6 @@ int main(int argc, char* argv[]) {
 				duplicate->save(path, "possible_" + to_string((unsigned)time(NULL)));
 
 				delete duplicate;
-			}
-		} else {
-			for (int e_index = 0; e_index < (int)run_helper.experiments_seen_order.size(); e_index++) {
-				AbstractExperiment* experiment = run_helper.experiments_seen_order[e_index];
-				experiment->average_remaining_experiments_from_start =
-					0.9 * experiment->average_remaining_experiments_from_start
-					+ 0.1 * ((int)run_helper.experiments_seen_order.size()-1 - e_index);
 			}
 		}
 

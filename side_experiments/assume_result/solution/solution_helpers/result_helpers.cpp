@@ -1,5 +1,6 @@
 #include "solution_helpers.h"
 
+#include "abstract_experiment.h"
 #include "globals.h"
 #include "problem.h"
 #include "scope.h"
@@ -9,10 +10,8 @@
 using namespace std;
 
 void get_existing_result(Problem* original_problem,
-						 double& result) {
+						 RunHelper& run_helper) {
 	Problem* copy_problem = original_problem->copy_and_reset();
-
-	RunHelper run_helper;
 
 	#if defined(MDEBUG) && MDEBUG
 	run_helper.starting_run_seed = run_index;
@@ -24,7 +23,23 @@ void get_existing_result(Problem* original_problem,
 			copy_problem,
 			context,
 			run_helper);
-	
+
+	if (run_helper.experiments_seen_order.size() == 0
+			&& run_helper.nodes_seen.size() != 0) {
+		if (!run_helper.exceeded_limit) {
+			create_experiment(run_helper);
+		}
+	}
+
+	if (run_helper.experiment_histories.size() == 0) {
+		for (int e_index = 0; e_index < (int)run_helper.experiments_seen_order.size(); e_index++) {
+			AbstractExperiment* experiment = run_helper.experiments_seen_order[e_index];
+			experiment->average_remaining_experiments_from_start =
+				0.9 * experiment->average_remaining_experiments_from_start
+				+ 0.1 * ((int)run_helper.experiments_seen_order.size()-1 - e_index);
+		}
+	}
+
 	double target_val;
 	if (!run_helper.exceeded_limit) {
 		target_val = copy_problem->score_result(run_helper.num_analyze,
@@ -33,7 +48,7 @@ void get_existing_result(Problem* original_problem,
 		target_val = -1.0;
 	}
 
-	delete copy_problem;
+	run_helper.result = target_val;
 
-	result = target_val;
+	delete copy_problem;
 }

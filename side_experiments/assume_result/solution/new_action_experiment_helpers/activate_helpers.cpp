@@ -31,6 +31,38 @@ void NewActionExperiment::pre_activate(vector<ContextLayer>& context,
 	}
 }
 
+bool NewActionExperiment::result_activate(
+		AbstractNode* experiment_node,
+		bool is_branch,
+		AbstractNode*& curr_node,
+		Problem* problem,
+		vector<ContextLayer>& context,
+		RunHelper& run_helper) {
+	if (run_helper.experiment_histories.size() == 1
+			&& run_helper.experiment_histories.back()->experiment == this) {
+		bool has_match = false;
+		int location_index;
+		for (int s_index = 0; s_index < (int)this->successful_location_starts.size(); s_index++) {
+			if (this->successful_location_starts[s_index] == experiment_node
+					&& this->successful_location_is_branch[s_index] == is_branch) {
+				has_match = true;
+				location_index = s_index;
+				break;
+			}
+		}
+
+		if (has_match) {
+			switch (this->state) {
+			case NEW_ACTION_EXPERIMENT_STATE_EXPLORE:
+				curr_node = this->successful_scope_nodes[location_index];
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
 bool NewActionExperiment::activate(AbstractNode* experiment_node,
 								   bool is_branch,
 								   AbstractNode*& curr_node,

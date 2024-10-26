@@ -27,6 +27,6 @@ void clean_scope_node(Solution* parent_solution,
 					  Scope* to_replace);
 
 void get_existing_result(Problem* original_problem,
-						 double& result);
+						 RunHelper& run_helper);
 
 #endif /* SOLUTION_HELPERS_H */

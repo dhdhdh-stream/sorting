@@ -7,6 +7,7 @@
 #include "constants.h"
 #include "globals.h"
 #include "minesweeper.h"
+#include "new_action_experiment.h"
 #include "return_node.h"
 #include "scope_node.h"
 #include "solution.h"
@@ -67,6 +68,11 @@ void Scope::result_activate(Problem* problem,
 	context.push_back(ContextLayer());
 
 	context.back().scope = this;
+
+	if (this->new_action_experiment != NULL) {
+		this->new_action_experiment->pre_activate(context,
+												  run_helper);
+	}
 
 	AbstractNode* curr_node = this->nodes[0];
 	while (true) {

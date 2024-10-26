@@ -2,6 +2,7 @@
 
 #include <iostream>
 
+#include "abstract_experiment.h"
 #include "globals.h"
 #include "minesweeper.h"
 #include "network.h"
@@ -59,5 +60,29 @@ void BranchNode::result_activate(AbstractNode*& curr_node,
 	if (run_helper.num_actions > solution->num_actions_limit) {
 		run_helper.exceeded_limit = true;
 		return;
+	}
+	if (run_helper.experiments_seen_order.size() == 0) {
+		if (solution->subproblem_id == -1
+				|| this->parent->id >= solution->subproblem_id) {
+			map<pair<AbstractNode*,bool>, int>::iterator it = run_helper.nodes_seen.find({this, is_branch});
+			if (it == run_helper.nodes_seen.end()) {
+				run_helper.nodes_seen[{this, is_branch}] = 1;
+			} else {
+				it->second++;
+			}
+		}
+	}
+
+	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
+		bool is_selected = this->experiments[e_index]->result_activate(
+			this,
+			is_branch,
+			curr_node,
+			problem,
+			context,
+			run_helper);
+		if (is_selected) {
+			return;
+		}
 	}
 }
