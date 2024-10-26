@@ -56,7 +56,7 @@ void create_experiment(RunHelper& run_helper) {
 	 *   - may block progress if incompatible spots are grouped together
 	 *   - (though may also greatly speed up future progress of course)
 	 */
-	uniform_int_distribution<int> non_new_distribution(0, 4);
+	uniform_int_distribution<int> non_new_distribution(0, 9);
 	if (explore_scope->new_action_experiment == NULL
 			&& explore_node->parent->nodes.size() > 10
 			&& non_new_distribution(generator) != 0) {
@@ -78,7 +78,7 @@ void create_experiment(RunHelper& run_helper) {
 		 *     - like tessellation, but have to get both the shape and the pattern correct
 		 *       - and PassThroughExperiments help with both
 		 */
-		uniform_int_distribution<int> pass_through_distribution(0, 1);
+		uniform_int_distribution<int> pass_through_distribution(0, 3);
 		if (pass_through_distribution(generator) == 0) {
 			PassThroughExperiment* new_experiment = new PassThroughExperiment(
 				explore_node->parent,

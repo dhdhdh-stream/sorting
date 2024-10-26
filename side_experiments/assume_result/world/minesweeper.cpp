@@ -376,21 +376,8 @@ double Minesweeper::score_result(int num_analyze,
 	score -= 0.00005*num_actions;	// actually works great (?)
 	// score -= 0.0002*num_actions;		// easily stuck in local maxima, but can also lead to efficient solution
 
-	// local optima when sequence OK, but not best, but not compatible with steps needed to reach best
-
-	// even if incremental steps exist to find best, may not be found when no single step is as good as local optima
-
-	// subproblems not based on location in solution, but context, i.e., what paths were previously taken
-
-	// - perhaps Markov is good because it enables exploring deeply in a way that makes sense
-	//   - and can explore in multiple places at once
-
-	// - when Markov, can explore until end, or can stop early and try to resume solution
-
-	// - or try deleting large parts of solution to try to break local maxima
-
 	if (this->hit_mine) {
-		// score -= 1.0;
+		score -= 1.0;
 	}
 	if (score < 0.0) {
 		score = 0.0;

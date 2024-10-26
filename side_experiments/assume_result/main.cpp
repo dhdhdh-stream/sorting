@@ -8,6 +8,22 @@
  *     - breaks down solution into modular segments
  */
 
+// TODO: to confirm if return node only useful for minesweeper in staying close to origin:
+// - return node can only go to local location
+
+// - can also try allowing return nodes only on scopes[0]
+//   - or only on new scopes
+
+// can also try trimming branches?
+// - make later parts more consistent?
+
+// try repeating scopes with no actions in between
+// - try to force good coverage and consistency from them?
+
+// move experiment selection and NewActionExperiment existing activation into result_activate
+
+// then weigh NewActionExperiment towards repetition
+
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -48,10 +64,10 @@ int main(int argc, char* argv[]) {
 	problem_type = new TypeMinesweeper();
 
 	solution = new Solution();
-	solution->init();
-	// solution->load("", "main");
+	// solution->init();
+	solution->load("", "main");
 
-	solution->save("", "main");
+	// solution->save("", "main");
 
 	run_index = 0;
 
@@ -80,9 +96,6 @@ int main(int argc, char* argv[]) {
 			context,
 			run_helper);
 
-		/**
-		 * - during debugging run_helper.nodes_seen.size() can be 0 due to branches behaving differently
-		 */
 		if (run_helper.experiments_seen_order.size() == 0
 				&& run_helper.nodes_seen.size() != 0) {
 			if (!run_helper.exceeded_limit) {
@@ -255,7 +268,7 @@ int main(int argc, char* argv[]) {
 				delete solution;
 				solution = duplicate;
 
-				solution->save("", "main");
+				// solution->save("", "main");
 				#else
 				delete duplicate;
 				#endif /* MDEBUG */

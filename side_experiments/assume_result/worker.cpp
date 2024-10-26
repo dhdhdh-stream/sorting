@@ -65,7 +65,8 @@ int main(int argc, char* argv[]) {
 			context,
 			run_helper);
 
-		if (run_helper.experiments_seen_order.size() == 0) {
+		if (run_helper.experiments_seen_order.size() == 0
+				&& run_helper.nodes_seen.size() != 0) {
 			if (!run_helper.exceeded_limit) {
 				create_experiment(run_helper);
 			}

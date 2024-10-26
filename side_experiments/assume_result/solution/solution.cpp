@@ -254,24 +254,11 @@ void Solution::update_subproblem() {
 			int num_valid = 0;
 			for (map<int, AbstractNode*>::iterator it = this->scopes[0]->nodes.begin();
 					it != this->scopes[0]->nodes.end(); it++) {
-				switch (it->second->type) {
-				case NODE_TYPE_ACTION:
-				case NODE_TYPE_SCOPE:
-					if (it->second->average_instances_per_run > 0.5) {
-						uniform_int_distribution<int> select_distribution(0, num_valid);
-						if (select_distribution(generator) == 0) {
-							subproblem_node = it->second;
-							subproblem_is_branch = false;
-						}
-
-						num_valid++;
-					}
-					break;
-				case NODE_TYPE_BRANCH:
-					{
-						BranchNode* branch_node = (BranchNode*)it->second;
-						if (branch_node->original_next_node == NULL
-								|| branch_node->original_next_node->average_instances_per_run > 0.5) {
+				if (it->second->average_instances_per_run > 0.5) {
+					switch (it->second->type) {
+					case NODE_TYPE_ACTION:
+					case NODE_TYPE_SCOPE:
+						{
 							uniform_int_distribution<int> select_distribution(0, num_valid);
 							if (select_distribution(generator) == 0) {
 								subproblem_node = it->second;
@@ -280,43 +267,58 @@ void Solution::update_subproblem() {
 
 							num_valid++;
 						}
-						if (branch_node->branch_next_node == NULL
-								|| branch_node->branch_next_node->average_instances_per_run > 0.5) {
-							uniform_int_distribution<int> select_distribution(0, num_valid);
-							if (select_distribution(generator) == 0) {
-								subproblem_node = it->second;
-								subproblem_is_branch = true;
-							}
+						break;
+					case NODE_TYPE_BRANCH:
+						{
+							BranchNode* branch_node = (BranchNode*)it->second;
+							if (branch_node->original_next_node == NULL
+									|| branch_node->original_next_node->average_instances_per_run > 0.5) {
+								uniform_int_distribution<int> select_distribution(0, num_valid);
+								if (select_distribution(generator) == 0) {
+									subproblem_node = it->second;
+									subproblem_is_branch = false;
+								}
 
-							num_valid++;
+								num_valid++;
+							}
+							if (branch_node->branch_next_node == NULL
+									|| branch_node->branch_next_node->average_instances_per_run > 0.5) {
+								uniform_int_distribution<int> select_distribution(0, num_valid);
+								if (select_distribution(generator) == 0) {
+									subproblem_node = it->second;
+									subproblem_is_branch = true;
+								}
+
+								num_valid++;
+							}
 						}
+						break;
+					case NODE_TYPE_RETURN:
+						{
+							ReturnNode* return_node = (ReturnNode*)it->second;
+							if (return_node->skipped_next_node == NULL
+									|| return_node->skipped_next_node->average_instances_per_run > 0.5) {
+								uniform_int_distribution<int> select_distribution(0, num_valid);
+								if (select_distribution(generator) == 0) {
+									subproblem_node = it->second;
+									subproblem_is_branch = false;
+								}
+
+								num_valid++;
+							}
+							if (return_node->passed_next_node == NULL
+									|| return_node->passed_next_node->average_instances_per_run > 0.5) {
+								uniform_int_distribution<int> select_distribution(0, num_valid);
+								if (select_distribution(generator) == 0) {
+									subproblem_node = it->second;
+									subproblem_is_branch = true;
+								}
+
+								num_valid++;
+							}
+						}
+						break;
 					}
-					break;
-				case NODE_TYPE_RETURN:
-					{
-						ReturnNode* return_node = (ReturnNode*)it->second;
-						if (return_node->skipped_next_node == NULL
-								|| return_node->skipped_next_node->average_instances_per_run > 0.5) {
-							uniform_int_distribution<int> select_distribution(0, num_valid);
-							if (select_distribution(generator) == 0) {
-								subproblem_node = it->second;
-								subproblem_is_branch = false;
-							}
-
-							num_valid++;
-						}
-						if (return_node->passed_next_node == NULL
-								|| return_node->passed_next_node->average_instances_per_run > 0.5) {
-							uniform_int_distribution<int> select_distribution(0, num_valid);
-							if (select_distribution(generator) == 0) {
-								subproblem_node = it->second;
-								subproblem_is_branch = true;
-							}
-
-							num_valid++;
-						}
-					}
-					break;
 				}
 			}
 

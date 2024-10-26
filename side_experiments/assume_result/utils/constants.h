@@ -7,7 +7,6 @@ const double MIN_STANDARD_DEVIATION = 0.00001;
 const int STEP_TYPE_ACTION = 0;
 const int STEP_TYPE_SCOPE = 1;
 const int STEP_TYPE_RETURN = 2;
-const int STEP_TYPE_ABSOLUTE_RETURN = 3;
 
 /**
  * - select first that is significant improvement
@@ -37,6 +36,10 @@ const int MEASURE_ITERS = 4000;
 
 const int NUM_VERIFY_SAMPLES = 10;
 
+#if defined(MDEBUG) && MDEBUG
+const int SUBPROBLEM_ITER = 20;
+#else
 const int SUBPROBLEM_ITER = 50;
+#endif /* MDEBUG */
 
 #endif /* CONSTANTS_H */
