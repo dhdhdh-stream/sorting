@@ -24,6 +24,22 @@
 
 // then weigh NewActionExperiment towards repetition
 
+// - for minesweeper, initially, only immediate local matters
+//   - but after a point, global location in grid really matters
+//     - how to go from not caring to caring?
+// - in general, in the short term, merging speeds up progress
+//   - e.g., finding the blank space in which can check for mines repeatedly
+//   - but in the long term, things that don't matter in the short term begin to matter
+//     - e.g., global position
+//       - every decision from the entire solution matters
+//         - perhaps try to use RL to crunch?
+
+// - state needed for crunching down thousands of branch decisions
+//   - e.g., initially, location doesn't matter
+//     - by the time location matters, already hundreds of branches deep
+
+// TODO: try giving location information
+
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -64,10 +80,10 @@ int main(int argc, char* argv[]) {
 	problem_type = new TypeMinesweeper();
 
 	solution = new Solution();
-	// solution->init();
-	solution->load("", "main");
+	solution->init();
+	// solution->load("", "main");
 
-	// solution->save("", "main");
+	solution->save("", "main");
 
 	run_index = 0;
 
@@ -263,7 +279,7 @@ int main(int argc, char* argv[]) {
 				delete solution;
 				solution = duplicate;
 
-				// solution->save("", "main");
+				solution->save("", "main");
 				#else
 				delete duplicate;
 				#endif /* MDEBUG */

@@ -164,8 +164,7 @@ void NewActionExperiment::backprop(double target_val,
 			add_new_test_location(history);
 		}
 
-		if (this->generalize_iter >= NEW_ACTION_NUM_GENERALIZE_TRIES
-				|| this->successful_location_starts.size() >= NEW_ACTION_MAX_LOCATIONS) {
+		if (this->generalize_iter >= NEW_ACTION_NUM_GENERALIZE_TRIES) {
 			if (this->successful_location_starts.size() >= NEW_ACTION_MIN_LOCATIONS) {
 				#if defined(MDEBUG) && MDEBUG
 				for (int t_index = 0; t_index < (int)this->test_location_starts.size(); t_index++) {
@@ -182,12 +181,9 @@ void NewActionExperiment::backprop(double target_val,
 				this->test_location_is_branch.clear();
 				this->test_location_exits.clear();
 				this->test_location_states.clear();
-				this->test_location_existing_scores.clear();
-				this->test_location_existing_counts.clear();
-				this->test_location_existing_truth_counts.clear();
-				this->test_location_new_scores.clear();
-				this->test_location_new_counts.clear();
-				this->test_location_new_truth_counts.clear();
+				this->test_location_scores.clear();
+				this->test_location_counts.clear();
+				this->test_location_truth_counts.clear();
 				for (int t_index = 0; t_index < (int)this->test_scope_nodes.size(); t_index++) {
 					delete this->test_scope_nodes[t_index];
 				}

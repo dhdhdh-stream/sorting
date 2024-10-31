@@ -97,6 +97,8 @@ bool BranchExperiment::explore_activate(
 			new_num_steps = geo_distribution(generator);
 		}
 
+		// TODO: repeat
+
 		/**
 		 * - always give raw actions a large weight
 		 *   - existing scopes often learned to avoid certain patterns

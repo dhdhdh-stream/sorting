@@ -16,11 +16,11 @@ const int NEW_ACTION_VERIFY_1ST_TRUTH_NUM_DATAPOINTS = 2;
 const int NEW_ACTION_VERIFY_2ND_NUM_DATAPOINTS = 10;
 const int NEW_ACTION_VERIFY_2ND_TRUTH_NUM_DATAPOINTS = 2;
 #else
-const int NEW_ACTION_NUM_DATAPOINTS = 100;
+const int NEW_ACTION_NUM_DATAPOINTS = 50;
 const int NEW_ACTION_TRUTH_NUM_DATAPOINTS = 20;
-const int NEW_ACTION_VERIFY_1ST_NUM_DATAPOINTS = 500;
+const int NEW_ACTION_VERIFY_1ST_NUM_DATAPOINTS = 250;
 const int NEW_ACTION_VERIFY_1ST_TRUTH_NUM_DATAPOINTS = 100;
-const int NEW_ACTION_VERIFY_2ND_NUM_DATAPOINTS = 2000;
+const int NEW_ACTION_VERIFY_2ND_NUM_DATAPOINTS = 1000;
 const int NEW_ACTION_VERIFY_2ND_TRUTH_NUM_DATAPOINTS = 400;
 #endif /* MDEBUG */
 
@@ -38,16 +38,11 @@ void NewActionExperiment::test_activate(
 
 	history->instance_count++;
 
-	switch (this->test_location_states[location_index]) {
-	case NEW_ACTION_EXPERIMENT_MEASURE_NEW:
-	case NEW_ACTION_EXPERIMENT_VERIFY_1ST_NEW:
-	case NEW_ACTION_EXPERIMENT_VERIFY_2ND_NEW:
-		this->new_scope->activate(problem,
-								  context,
-								  run_helper);
+	this->new_scope->activate(problem,
+							  context,
+							  run_helper);
 
-		curr_node = this->test_location_exits[location_index];
-	}
+	curr_node = this->test_location_exits[location_index];
 }
 
 void NewActionExperiment::test_backprop(
@@ -61,50 +56,26 @@ void NewActionExperiment::test_backprop(
 		is_fail = true;
 	} else {
 		switch (this->test_location_states[history->test_location_index]) {
-		case NEW_ACTION_EXPERIMENT_MEASURE_EXISTING:
+		case NEW_ACTION_EXPERIMENT_MEASURE:
 			{
 				for (int i_index = 0; i_index < history->instance_count; i_index++) {
 					double final_score = (target_val - run_helper.result) / history->instance_count;
-					this->test_location_existing_scores[history->test_location_index] += final_score;
-					this->test_location_existing_counts[history->test_location_index]++;
+					this->test_location_scores[history->test_location_index] += final_score;
+					this->test_location_counts[history->test_location_index]++;
 				}
-				this->test_location_existing_truth_counts[history->test_location_index]++;
+				this->test_location_truth_counts[history->test_location_index]++;
 
-				if (this->test_location_existing_counts[history->test_location_index] >= NEW_ACTION_NUM_DATAPOINTS
-						&& this->test_location_existing_truth_counts[history->test_location_index] >= NEW_ACTION_TRUTH_NUM_DATAPOINTS) {
-					this->test_location_states[history->test_location_index] = NEW_ACTION_EXPERIMENT_MEASURE_NEW;
-				}
-			}
-
-			break;
-		case NEW_ACTION_EXPERIMENT_MEASURE_NEW:
-			{
-				for (int i_index = 0; i_index < history->instance_count; i_index++) {
-					double final_score = (target_val - run_helper.result) / history->instance_count;
-					this->test_location_new_scores[history->test_location_index] += final_score;
-					this->test_location_new_counts[history->test_location_index]++;
-				}
-				this->test_location_new_truth_counts[history->test_location_index]++;
-
-				if (this->test_location_new_counts[history->test_location_index] >= NEW_ACTION_NUM_DATAPOINTS
-						&& this->test_location_new_truth_counts[history->test_location_index] >= NEW_ACTION_TRUTH_NUM_DATAPOINTS) {
+				if (this->test_location_counts[history->test_location_index] >= NEW_ACTION_NUM_DATAPOINTS
+						&& this->test_location_truth_counts[history->test_location_index] >= NEW_ACTION_TRUTH_NUM_DATAPOINTS) {
 					#if defined(MDEBUG) && MDEBUG
 					if (rand()%2 == 0) {
 					#else
-					double existing_score = this->test_location_existing_scores[history->test_location_index]
-						/ this->test_location_existing_counts[history->test_location_index];
-					double new_score = this->test_location_new_scores[history->test_location_index]
-						/ this->test_location_new_counts[history->test_location_index];
-
-					if (new_score >= existing_score) {
+					if (this->test_location_scores[history->test_location_index] > 0.0) {
 					#endif /* MDEBUG */
-						this->test_location_existing_scores[history->test_location_index] = 0.0;
-						this->test_location_existing_counts[history->test_location_index] = 0;
-						this->test_location_existing_truth_counts[history->test_location_index] = 0;
-						this->test_location_new_scores[history->test_location_index] = 0.0;
-						this->test_location_new_counts[history->test_location_index] = 0;
-						this->test_location_new_truth_counts[history->test_location_index] = 0;
-						this->test_location_states[history->test_location_index] = NEW_ACTION_EXPERIMENT_VERIFY_1ST_EXISTING;
+						this->test_location_scores[history->test_location_index] = 0.0;
+						this->test_location_counts[history->test_location_index] = 0;
+						this->test_location_truth_counts[history->test_location_index] = 0;
+						this->test_location_states[history->test_location_index] = NEW_ACTION_EXPERIMENT_VERIFY_1ST;
 					} else {
 						is_fail = true;
 					}
@@ -112,50 +83,26 @@ void NewActionExperiment::test_backprop(
 			}
 
 			break;
-		case NEW_ACTION_EXPERIMENT_VERIFY_1ST_EXISTING:
+		case NEW_ACTION_EXPERIMENT_VERIFY_1ST:
 			{
 				for (int i_index = 0; i_index < history->instance_count; i_index++) {
 					double final_score = (target_val - run_helper.result) / history->instance_count;
-					this->test_location_existing_scores[history->test_location_index] += final_score;
-					this->test_location_existing_counts[history->test_location_index]++;
+					this->test_location_scores[history->test_location_index] += final_score;
+					this->test_location_counts[history->test_location_index]++;
 				}
-				this->test_location_existing_truth_counts[history->test_location_index]++;
+				this->test_location_truth_counts[history->test_location_index]++;
 
-				if (this->test_location_existing_counts[history->test_location_index] >= NEW_ACTION_VERIFY_1ST_NUM_DATAPOINTS
-						&& this->test_location_existing_truth_counts[history->test_location_index] >= NEW_ACTION_VERIFY_1ST_TRUTH_NUM_DATAPOINTS) {
-					this->test_location_states[history->test_location_index] = NEW_ACTION_EXPERIMENT_VERIFY_1ST_NEW;
-				}
-			}
-
-			break;
-		case NEW_ACTION_EXPERIMENT_VERIFY_1ST_NEW:
-			{
-				for (int i_index = 0; i_index < history->instance_count; i_index++) {
-					double final_score = (target_val - run_helper.result) / history->instance_count;
-					this->test_location_new_scores[history->test_location_index] += final_score;
-					this->test_location_new_counts[history->test_location_index]++;
-				}
-				this->test_location_new_truth_counts[history->test_location_index]++;
-
-				if (this->test_location_new_counts[history->test_location_index] >= NEW_ACTION_VERIFY_1ST_NUM_DATAPOINTS
-						&& this->test_location_new_truth_counts[history->test_location_index] >= NEW_ACTION_VERIFY_1ST_TRUTH_NUM_DATAPOINTS) {
+				if (this->test_location_counts[history->test_location_index] >= NEW_ACTION_VERIFY_1ST_NUM_DATAPOINTS
+						&& this->test_location_truth_counts[history->test_location_index] >= NEW_ACTION_VERIFY_1ST_TRUTH_NUM_DATAPOINTS) {
 					#if defined(MDEBUG) && MDEBUG
 					if (rand()%2 == 0) {
 					#else
-					double existing_score = this->test_location_existing_scores[history->test_location_index]
-						/ this->test_location_existing_counts[history->test_location_index];
-					double new_score = this->test_location_new_scores[history->test_location_index]
-						/ this->test_location_new_counts[history->test_location_index];
-
-					if (new_score >= existing_score) {
+					if (this->test_location_scores[history->test_location_index] > 0.0) {
 					#endif /* MDEBUG */
-						this->test_location_existing_scores[history->test_location_index] = 0.0;
-						this->test_location_existing_counts[history->test_location_index] = 0;
-						this->test_location_existing_truth_counts[history->test_location_index] = 0;
-						this->test_location_new_scores[history->test_location_index] = 0.0;
-						this->test_location_new_counts[history->test_location_index] = 0;
-						this->test_location_new_truth_counts[history->test_location_index] = 0;
-						this->test_location_states[history->test_location_index] = NEW_ACTION_EXPERIMENT_VERIFY_2ND_EXISTING;
+						this->test_location_scores[history->test_location_index] = 0.0;
+						this->test_location_counts[history->test_location_index] = 0;
+						this->test_location_truth_counts[history->test_location_index] = 0;
+						this->test_location_states[history->test_location_index] = NEW_ACTION_EXPERIMENT_VERIFY_2ND;
 					} else {
 						is_fail = true;
 					}
@@ -163,42 +110,21 @@ void NewActionExperiment::test_backprop(
 			}
 
 			break;
-		case NEW_ACTION_EXPERIMENT_VERIFY_2ND_EXISTING:
+		case NEW_ACTION_EXPERIMENT_VERIFY_2ND:
 			{
 				for (int i_index = 0; i_index < history->instance_count; i_index++) {
 					double final_score = (target_val - run_helper.result) / history->instance_count;
-					this->test_location_existing_scores[history->test_location_index] += final_score;
-					this->test_location_existing_counts[history->test_location_index]++;
+					this->test_location_scores[history->test_location_index] += final_score;
+					this->test_location_counts[history->test_location_index]++;
 				}
-				this->test_location_existing_truth_counts[history->test_location_index]++;
+				this->test_location_truth_counts[history->test_location_index]++;
 
-				if (this->test_location_existing_counts[history->test_location_index] >= NEW_ACTION_VERIFY_2ND_NUM_DATAPOINTS
-						&& this->test_location_existing_truth_counts[history->test_location_index] >= NEW_ACTION_VERIFY_2ND_TRUTH_NUM_DATAPOINTS) {
-					this->test_location_states[history->test_location_index] = NEW_ACTION_EXPERIMENT_VERIFY_2ND_NEW;
-				}
-			}
-
-			break;
-		case NEW_ACTION_EXPERIMENT_VERIFY_2ND_NEW:
-			{
-				for (int i_index = 0; i_index < history->instance_count; i_index++) {
-					double final_score = (target_val - run_helper.result) / history->instance_count;
-					this->test_location_new_scores[history->test_location_index] += final_score;
-					this->test_location_new_counts[history->test_location_index]++;
-				}
-				this->test_location_new_truth_counts[history->test_location_index]++;
-
-				if (this->test_location_new_counts[history->test_location_index] >= NEW_ACTION_VERIFY_2ND_NUM_DATAPOINTS
-						&& this->test_location_new_truth_counts[history->test_location_index] >= NEW_ACTION_VERIFY_2ND_TRUTH_NUM_DATAPOINTS) {
+				if (this->test_location_counts[history->test_location_index] >= NEW_ACTION_VERIFY_2ND_NUM_DATAPOINTS
+						&& this->test_location_truth_counts[history->test_location_index] >= NEW_ACTION_VERIFY_2ND_TRUTH_NUM_DATAPOINTS) {
 					#if defined(MDEBUG) && MDEBUG
 					if (rand()%2 == 0) {
 					#else
-					double existing_score = this->test_location_existing_scores[history->test_location_index]
-						/ this->test_location_existing_counts[history->test_location_index];
-					double new_score = this->test_location_new_scores[history->test_location_index]
-						/ this->test_location_new_counts[history->test_location_index];
-
-					if (new_score >= existing_score) {
+					if (this->test_location_scores[history->test_location_index] > 0.0) {
 					#endif /* MDEBUG */
 						ScopeNode* new_scope_node = this->test_scope_nodes[history->test_location_index];
 						new_scope_node->parent = this->scope_context;
@@ -223,23 +149,12 @@ void NewActionExperiment::test_backprop(
 						this->test_location_is_branch.erase(this->test_location_is_branch.begin() + history->test_location_index);
 						this->test_location_exits.erase(this->test_location_exits.begin() + history->test_location_index);
 						this->test_location_states.erase(this->test_location_states.begin() + history->test_location_index);
-						this->test_location_existing_scores.erase(this->test_location_existing_scores.begin() + history->test_location_index);
-						this->test_location_existing_counts.erase(this->test_location_existing_counts.begin() + history->test_location_index);
-						this->test_location_existing_truth_counts.erase(this->test_location_existing_truth_counts.begin() + history->test_location_index);
-						this->test_location_new_scores.erase(this->test_location_new_scores.begin() + history->test_location_index);
-						this->test_location_new_counts.erase(this->test_location_new_counts.begin() + history->test_location_index);
-						this->test_location_new_truth_counts.erase(this->test_location_new_truth_counts.begin() + history->test_location_index);
+						this->test_location_scores.erase(this->test_location_scores.begin() + history->test_location_index);
+						this->test_location_counts.erase(this->test_location_counts.begin() + history->test_location_index);
+						this->test_location_truth_counts.erase(this->test_location_truth_counts.begin() + history->test_location_index);
 						this->test_scope_nodes.erase(this->test_scope_nodes.begin() + history->test_location_index);
 
-						if (this->generalize_iter == -1
-								&& this->successful_location_starts.size() == 0) {
-							this->result = EXPERIMENT_RESULT_FAIL;
-							/**
-							 * - only continue if first succeeds
-							 */
-						} else {
-							this->generalize_iter++;
-						}
+						this->generalize_iter++;
 					} else {
 						is_fail = true;
 					}
@@ -268,12 +183,9 @@ void NewActionExperiment::test_backprop(
 		this->test_location_is_branch.erase(this->test_location_is_branch.begin() + history->test_location_index);
 		this->test_location_exits.erase(this->test_location_exits.begin() + history->test_location_index);
 		this->test_location_states.erase(this->test_location_states.begin() + history->test_location_index);
-		this->test_location_existing_scores.erase(this->test_location_existing_scores.begin() + history->test_location_index);
-		this->test_location_existing_counts.erase(this->test_location_existing_counts.begin() + history->test_location_index);
-		this->test_location_existing_truth_counts.erase(this->test_location_existing_truth_counts.begin() + history->test_location_index);
-		this->test_location_new_scores.erase(this->test_location_new_scores.begin() + history->test_location_index);
-		this->test_location_new_counts.erase(this->test_location_new_counts.begin() + history->test_location_index);
-		this->test_location_new_truth_counts.erase(this->test_location_new_truth_counts.begin() + history->test_location_index);
+		this->test_location_scores.erase(this->test_location_scores.begin() + history->test_location_index);
+		this->test_location_counts.erase(this->test_location_counts.begin() + history->test_location_index);
+		this->test_location_truth_counts.erase(this->test_location_truth_counts.begin() + history->test_location_index);
 		delete this->test_scope_nodes[history->test_location_index];
 		this->test_scope_nodes.erase(this->test_scope_nodes.begin() + history->test_location_index);
 
