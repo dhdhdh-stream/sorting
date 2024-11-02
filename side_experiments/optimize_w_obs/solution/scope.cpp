@@ -5,7 +5,6 @@
 #include "abstract_experiment.h"
 #include "action_node.h"
 #include "branch_node.h"
-#include "condition_node.h"
 #include "globals.h"
 #include "network.h"
 #include "scope_node.h"
@@ -122,15 +121,6 @@ void Scope::load(ifstream& input_file,
 				this->nodes[branch_node->id] = branch_node;
 			}
 			break;
-		case NODE_TYPE_CONDITION:
-			{
-				ConditionNode* condition_node = new ConditionNode();
-				condition_node->parent = this;
-				condition_node->id = id;
-				condition_node->load(input_file);
-				this->nodes[condition_node->id] = condition_node;
-			}
-			break;
 		}
 	}
 
@@ -186,15 +176,6 @@ void Scope::copy_from(Scope* original,
 				this->nodes[it->first] = new_branch_node;
 			}
 			break;
-		case NODE_TYPE_CONDITION:
-			{
-				ConditionNode* original_condition_node = (ConditionNode*)it->second;
-				ConditionNode* new_condition_node = new ConditionNode(original_condition_node);
-				new_condition_node->parent = this;
-				new_condition_node->id = it->first;
-				this->nodes[it->first] = new_condition_node;
-			}
-			break;
 		}
 	}
 
@@ -241,12 +222,6 @@ ScopeHistory::ScopeHistory(ScopeHistory* original) {
 			{
 				BranchNodeHistory* original_history = (BranchNodeHistory*)it->second;
 				this->node_histories[it->first] = new BranchNodeHistory(original_history);
-			}
-			break;
-		case NODE_TYPE_CONDITION:
-			{
-				ConditionNodeHistory* original_history = (ConditionNodeHistory*)it->second;
-				this->node_histories[it->first] = new ConditionNodeHistory(original_history);
 			}
 			break;
 		}

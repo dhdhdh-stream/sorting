@@ -43,8 +43,7 @@ public:
 
 	PassThroughExperiment(Scope* scope_context,
 						  AbstractNode* node_context,
-						  bool is_branch,
-						  std::vector<std::pair<std::pair<std::vector<int>,std::vector<int>>, bool>> conditions);
+						  bool is_branch);
 	~PassThroughExperiment();
 	void decrement(AbstractNode* experiment_node);
 

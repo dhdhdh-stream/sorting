@@ -5,7 +5,6 @@
 #include "action_node.h"
 #include "branch_experiment.h"
 #include "branch_node.h"
-#include "condition_node.h"
 #include "constants.h"
 #include "globals.h"
 #include "new_scope_experiment.h"
@@ -37,12 +36,6 @@ void even_distribution_helper(ScopeHistory* scope_history,
 			{
 				BranchNodeHistory* branch_node_history = (BranchNodeHistory*)history_it->second;
 				curr_is_branch = branch_node_history->is_branch;
-			}
-			break;
-		case NODE_TYPE_CONDITION:
-			{
-				ConditionNodeHistory* condition_node_history = (ConditionNodeHistory*)history_it->second;
-				curr_is_branch = condition_node_history->is_branch;
 			}
 			break;
 		}
@@ -95,101 +88,12 @@ void frequency_distribution_helper(ScopeHistory* scope_history,
 					explore_is_branch = branch_node_history->is_branch;
 				}
 				break;
-			case NODE_TYPE_CONDITION:
-				{
-					ConditionNodeHistory* condition_node_history = (ConditionNodeHistory*)history_it->second;
-					explore_is_branch = condition_node_history->is_branch;
-				}
-				break;
 			}
 			explore_scope_history = scope_history;
 			explore_index = history_it->second->index;
 		}
 
 		count++;
-	}
-}
-
-void gather_branches_inner_helper(ScopeHistory* scope_history,
-								  vector<int>& scope_context,
-								  vector<int>& node_context,
-								  vector<pair<pair<vector<int>,vector<int>>, bool>>& possible_conditions) {
-	for (map<int, AbstractNodeHistory*>::iterator history_it = scope_history->node_histories.begin();
-			history_it != scope_history->node_histories.end(); history_it++) {
-		switch (history_it->second->node->type) {
-		case NODE_TYPE_SCOPE:
-			{
-				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)history_it->second;
-
-				scope_context.push_back(scope_history->scope->id);
-				node_context.push_back(history_it->first);
-
-				gather_branches_inner_helper(scope_node_history->scope_history,
-											 scope_context,
-											 node_context,
-											 possible_conditions);
-
-				scope_context.pop_back();
-				node_context.pop_back();
-			}
-			break;
-		case NODE_TYPE_BRANCH:
-			{
-				BranchNodeHistory* branch_node_history = (BranchNodeHistory*)history_it->second;
-
-				scope_context.push_back(scope_history->scope->id);
-				node_context.push_back(history_it->first);
-
-				possible_conditions.push_back({{scope_context,node_context}, branch_node_history->is_branch});
-
-				scope_context.pop_back();
-				node_context.pop_back();
-			}
-			break;
-		}
-	}
-}
-
-void gather_branches_helper(ScopeHistory* scope_history,
-							int index,
-							vector<pair<pair<vector<int>,vector<int>>, bool>>& possible_conditions) {
-	vector<int> scope_context;
-	vector<int> node_context;
-	for (map<int, AbstractNodeHistory*>::iterator history_it = scope_history->node_histories.begin();
-			history_it != scope_history->node_histories.end(); history_it++) {
-		if (history_it->second->index < index) {
-			switch (history_it->second->node->type) {
-			case NODE_TYPE_SCOPE:
-				{
-					ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)history_it->second;
-
-					scope_context.push_back(scope_history->scope->id);
-					node_context.push_back(history_it->first);
-
-					gather_branches_inner_helper(scope_node_history->scope_history,
-												 scope_context,
-												 node_context,
-												 possible_conditions);
-
-					scope_context.pop_back();
-					node_context.pop_back();
-				}
-				break;
-			case NODE_TYPE_BRANCH:
-				{
-					BranchNodeHistory* branch_node_history = (BranchNodeHistory*)history_it->second;
-
-					scope_context.push_back(scope_history->scope->id);
-					node_context.push_back(history_it->first);
-
-					possible_conditions.push_back({{scope_context,node_context}, branch_node_history->is_branch});
-
-					scope_context.pop_back();
-					node_context.pop_back();
-				}
-				break;
-			}
-		}
 	}
 }
 
@@ -252,28 +156,6 @@ void create_experiment(ScopeHistory* scope_history) {
 			explore_node->experiments.push_back(new_scope_experiment);
 		}
 	} else {
-		vector<pair<pair<vector<int>,vector<int>>, bool>> conditions;
-		geometric_distribution<int> num_conditions_distribution(0.5);
-		int num_conditions = num_conditions_distribution(generator);
-		if (num_conditions > 0) {
-			vector<pair<pair<vector<int>,vector<int>>, bool>> possible_conditions;
-			gather_branches_helper(explore_scope_history,
-								   explore_index,
-								   possible_conditions);
-
-			if (num_conditions > (int)possible_conditions.size()) {
-				num_conditions = (int)possible_conditions.size();
-			}
-			for (int c_index = 0; c_index < num_conditions; c_index++) {
-				uniform_int_distribution<int> possible_distribution(0, possible_conditions.size()-1);
-				int possible_index = possible_distribution(generator);
-
-				conditions.push_back(possible_conditions[possible_index]);
-
-				possible_conditions.erase(possible_conditions.begin() + possible_index);
-			}
-		}
-
 		/**
 		 * - weigh towards PassThroughExperiments as cheaper and potentially just as effective
 		 *   - solutions are often made of relatively few distinct decisions, but applied such that has good coverage
@@ -285,16 +167,14 @@ void create_experiment(ScopeHistory* scope_history) {
 			PassThroughExperiment* new_experiment = new PassThroughExperiment(
 				explore_node->parent,
 				explore_node,
-				explore_is_branch,
-				conditions);
+				explore_is_branch);
 
 			explore_node->experiments.push_back(new_experiment);
 		} else {
 			BranchExperiment* new_experiment = new BranchExperiment(
 				explore_node->parent,
 				explore_node,
-				explore_is_branch,
-				conditions);
+				explore_is_branch);
 
 			explore_node->experiments.push_back(new_experiment);
 		}

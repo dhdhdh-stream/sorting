@@ -4,7 +4,6 @@
 
 #include "action_node.h"
 #include "branch_node.h"
-#include "condition_node.h"
 #include "network.h"
 #include "scope.h"
 #include "scope_node.h"
@@ -121,58 +120,6 @@ void NewScopeExperiment::finalize(Solution* duplicate) {
 					#endif /* MDEBUG */
 				}
 				break;
-			case NODE_TYPE_CONDITION:
-				{
-					ConditionNode* condition_node = (ConditionNode*)it->second;
-
-					for (int c_index = 0; c_index < (int)condition_node->conditions.size(); c_index++) {
-						condition_node->conditions[c_index].first.first[0] = this->new_scope->id;
-
-						Scope* scope = duplicate->scopes[condition_node->conditions[c_index].first.first.back()];
-						AbstractNode* node = scope->nodes[condition_node->conditions[c_index].first.second.back()];
-						switch (node->type) {
-						case NODE_TYPE_ACTION:
-							{
-								ActionNode* input_action_node = (ActionNode*)node;
-
-								bool is_existing = false;
-								for (int ii_index = 0; ii_index < (int)input_action_node->input_scope_context_ids.size(); ii_index++) {
-									if (input_action_node->input_scope_context_ids[ii_index] == condition_node->conditions[c_index].first.first
-											&& input_action_node->input_node_context_ids[ii_index] == condition_node->conditions[c_index].first.second
-											&& input_action_node->input_obs_indexes[ii_index] == condition_node->conditions[c_index].second) {
-										is_existing = true;
-										break;
-									}
-								}
-								if (!is_existing) {
-									input_action_node->input_scope_context_ids.push_back(condition_node->conditions[c_index].first.first);
-									input_action_node->input_node_context_ids.push_back(condition_node->conditions[c_index].first.second);
-									input_action_node->input_obs_indexes.push_back(condition_node->conditions[c_index].second);
-								}
-							}
-							break;
-						case NODE_TYPE_BRANCH:
-							{
-								BranchNode* input_branch_node = (BranchNode*)node;
-
-								bool is_existing = false;
-								for (int ii_index = 0; ii_index < (int)input_branch_node->input_scope_context_ids.size(); ii_index++) {
-									if (input_branch_node->input_scope_context_ids[ii_index] == condition_node->conditions[c_index].first.first
-											&& input_branch_node->input_node_context_ids[ii_index] == condition_node->conditions[c_index].first.second) {
-										is_existing = true;
-										break;
-									}
-								}
-								if (!is_existing) {
-									input_branch_node->input_scope_context_ids.push_back(condition_node->conditions[c_index].first.first);
-									input_branch_node->input_node_context_ids.push_back(condition_node->conditions[c_index].first.second);
-								}
-							}
-							break;
-						}
-					}
-				}
-				break;
 			}
 		}
 
@@ -258,19 +205,6 @@ void NewScopeExperiment::finalize(Solution* duplicate) {
 					} else {
 						branch_node->original_next_node_id = new_scope_node->id;
 						branch_node->original_next_node = new_scope_node;
-					}
-				}
-				break;
-			case NODE_TYPE_CONDITION:
-				{
-					ConditionNode* condition_node = (ConditionNode*)duplicate_start_node;
-
-					if (this->successful_location_is_branch[s_index]) {
-						condition_node->branch_next_node_id = new_scope_node->id;
-						condition_node->branch_next_node = new_scope_node;
-					} else {
-						condition_node->original_next_node_id = new_scope_node->id;
-						condition_node->original_next_node = new_scope_node;
 					}
 				}
 				break;

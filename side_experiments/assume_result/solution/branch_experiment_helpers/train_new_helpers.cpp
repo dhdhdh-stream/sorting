@@ -34,18 +34,17 @@ bool BranchExperiment::train_new_activate(
 		run_helper.num_analyze += (1 + 2*this->new_analyze_size) * (1 + 2*this->new_analyze_size);
 
 		Minesweeper* minesweeper = (Minesweeper*)problem;
-		vector<vector<double>> new_input_vals(1 + 2*this->new_analyze_size);
-		for (int x_index = 0; x_index < 1 + 2*this->new_analyze_size; x_index++) {
-			new_input_vals[x_index] = vector<double>(1 + 2*this->new_analyze_size);
-		}
+		vector<double> new_input_vals;
+		new_input_vals.reserve((1 + 2*this->new_analyze_size) * (1 + 2*this->new_analyze_size) + 2);
 		for (int x_index = -this->new_analyze_size; x_index < this->new_analyze_size+1; x_index++) {
 			for (int y_index = -this->new_analyze_size; y_index < this->new_analyze_size+1; y_index++) {
-				new_input_vals[x_index + this->new_analyze_size][y_index + this->new_analyze_size]
-					= minesweeper->get_observation_helper(
+				new_input_vals.push_back(minesweeper->get_observation_helper(
 						minesweeper->current_x + x_index,
-						minesweeper->current_y + y_index);
+						minesweeper->current_y + y_index));
 			}
 		}
+		new_input_vals.push_back(minesweeper->current_x);
+		new_input_vals.push_back(minesweeper->current_y);
 		this->obs_histories.push_back(new_input_vals);
 
 		if (this->best_step_types.size() == 0) {
@@ -101,7 +100,7 @@ void BranchExperiment::train_new_backprop(
 		shuffle(this->obs_histories.begin(), this->obs_histories.end(), generator);
 		shuffle(this->target_val_histories.begin(), this->target_val_histories.end(), generator_copy);
 
-		this->new_network = new Network(this->new_analyze_size);
+		this->new_network = new Network((1 + 2*this->new_analyze_size) * (1 + 2*this->new_analyze_size) + 2);
 
 		train_network(this->obs_histories,
 					  this->target_val_histories,

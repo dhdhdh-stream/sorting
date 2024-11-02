@@ -1,8 +1,4 @@
 /**
- * TODO:
- * - convolution as analyze gets larger
- *   - everytime layer reaches 7x7, add another layer
- * 
  * - even if world fully visible, may be too complex to analyze with a glance
  *   - whether for eval, or for guessing the impact of complex actions
  *   - so is always just best effort
@@ -33,12 +29,12 @@ public:
 	double hidden_3_average_max_update;
 	double output_average_max_update;
 
-	Network(int analyze_size);
+	Network(int input_size);
 	Network(Network* original);
 	Network(std::ifstream& input_file);
 	~Network();
 
-	void activate(std::vector<std::vector<double>>& input_vals);
+	void activate(std::vector<double>& input_vals);
 	void backprop(double error);
 
 	void save(std::ofstream& output_file);

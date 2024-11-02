@@ -4,7 +4,6 @@
 
 #include "action_node.h"
 #include "branch_node.h"
-#include "condition_node.h"
 #include "constants.h"
 #include "scope.h"
 #include "scope_node.h"
@@ -95,19 +94,6 @@ void BranchExperiment::new_branch(Solution* duplicate) {
 			}
 		}
 		break;
-	case NODE_TYPE_CONDITION:
-		{
-			ConditionNode* condition_node = (ConditionNode*)duplicate_explore_node;
-
-			if (this->is_branch) {
-				this->branch_node->original_next_node_id = condition_node->branch_next_node_id;
-				this->branch_node->original_next_node = condition_node->branch_next_node;
-			} else {
-				this->branch_node->original_next_node_id = condition_node->original_next_node_id;
-				this->branch_node->original_next_node = condition_node->original_next_node;
-			}
-		}
-		break;
 	}
 
 	if (this->best_step_types.size() == 0) {
@@ -150,19 +136,6 @@ void BranchExperiment::new_branch(Solution* duplicate) {
 			} else {
 				branch_node->original_next_node_id = this->branch_node->id;
 				branch_node->original_next_node = this->branch_node;
-			}
-		}
-		break;
-	case NODE_TYPE_CONDITION:
-		{
-			ConditionNode* condition_node = (ConditionNode*)duplicate_explore_node;
-
-			if (this->is_branch) {
-				condition_node->branch_next_node_id = this->branch_node->id;
-				condition_node->branch_next_node = this->branch_node;
-			} else {
-				condition_node->original_next_node_id = this->branch_node->id;
-				condition_node->original_next_node = this->branch_node;
 			}
 		}
 		break;
@@ -253,84 +226,6 @@ void BranchExperiment::new_branch(Solution* duplicate) {
 		this->branch_node->verify_scores = this->verify_scores;
 	}
 	#endif /* MDEBUG */
-
-	if (this->conditions.size() > 0) {
-		ConditionNode* new_condition_node = new ConditionNode();
-		new_condition_node->parent = duplicate_local_scope;
-		new_condition_node->id = duplicate_local_scope->node_counter;
-		duplicate_local_scope->node_counter++;
-		duplicate_local_scope->nodes[new_condition_node->id] = new_condition_node;
-
-		new_condition_node->conditions = this->conditions;
-
-		new_condition_node->original_next_node_id = this->branch_node->original_next_node_id;
-		new_condition_node->original_next_node = this->branch_node->original_next_node;
-		new_condition_node->branch_next_node_id = this->branch_node->id;
-		new_condition_node->branch_next_node = this->branch_node;
-
-		for (int c_index = 0; c_index < (int)this->conditions.size(); c_index++) {
-			Scope* scope = duplicate->scopes[this->conditions[c_index].first.first.back()];
-			BranchNode* input_branch_node = (BranchNode*)scope->nodes[this->conditions[c_index].first.second.back()];
-
-			bool is_existing = false;
-			for (int ii_index = 0; ii_index < (int)input_branch_node->input_scope_context_ids.size(); ii_index++) {
-				if (input_branch_node->input_scope_context_ids[ii_index] == this->conditions[c_index].first.first
-						&& input_branch_node->input_node_context_ids[ii_index] == this->conditions[c_index].first.second) {
-					is_existing = true;
-					break;
-				}
-			}
-			if (!is_existing) {
-				input_branch_node->input_scope_context_ids.push_back(this->conditions[c_index].first.first);
-				input_branch_node->input_node_context_ids.push_back(this->conditions[c_index].first.second);
-			}
-		}
-
-		switch (duplicate_explore_node->type) {
-		case NODE_TYPE_ACTION:
-			{
-				ActionNode* action_node = (ActionNode*)duplicate_explore_node;
-
-				action_node->next_node_id = new_condition_node->id;
-				action_node->next_node = new_condition_node;
-			}
-			break;
-		case NODE_TYPE_SCOPE:
-			{
-				ScopeNode* scope_node = (ScopeNode*)duplicate_explore_node;
-
-				scope_node->next_node_id = new_condition_node->id;
-				scope_node->next_node = new_condition_node;
-			}
-			break;
-		case NODE_TYPE_BRANCH:
-			{
-				BranchNode* branch_node = (BranchNode*)duplicate_explore_node;
-
-				if (this->is_branch) {
-					branch_node->branch_next_node_id = new_condition_node->id;
-					branch_node->branch_next_node = new_condition_node;
-				} else {
-					branch_node->original_next_node_id = new_condition_node->id;
-					branch_node->original_next_node = new_condition_node;
-				}
-			}
-			break;
-		case NODE_TYPE_CONDITION:
-			{
-				ConditionNode* condition_node = (ConditionNode*)duplicate_explore_node;
-
-				if (this->is_branch) {
-					condition_node->branch_next_node_id = new_condition_node->id;
-					condition_node->branch_next_node = new_condition_node;
-				} else {
-					condition_node->original_next_node_id = new_condition_node->id;
-					condition_node->original_next_node = new_condition_node;
-				}
-			}
-			break;
-		}
-	}
 
 	this->best_actions.clear();
 	this->best_scopes.clear();

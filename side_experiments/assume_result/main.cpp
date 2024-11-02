@@ -38,6 +38,10 @@
 //   - e.g., initially, location doesn't matter
 //     - by the time location matters, already hundreds of branches deep
 
+// - use same network for all scenarios
+//   - so works with new branches/nodes/scopes
+// - or have a network for all scenarios, but also have node specific networks?
+
 // TODO: try giving location information
 
 #include <chrono>

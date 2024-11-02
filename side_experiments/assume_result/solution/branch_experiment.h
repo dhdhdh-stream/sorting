@@ -69,7 +69,7 @@ public:
 
 	double combined_score;
 
-	std::vector<std::vector<std::vector<double>>> obs_histories;
+	std::vector<std::vector<double>> obs_histories;
 	std::vector<double> target_val_histories;
 
 	#if defined(MDEBUG) && MDEBUG

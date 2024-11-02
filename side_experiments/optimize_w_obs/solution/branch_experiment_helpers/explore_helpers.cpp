@@ -4,7 +4,6 @@
 
 #include "action_node.h"
 #include "branch_node.h"
-#include "condition_node.h"
 #include "constants.h"
 #include "globals.h"
 #include "network.h"
@@ -65,16 +64,6 @@ bool BranchExperiment::explore_activate(
 				}
 			}
 			break;
-		case NODE_TYPE_CONDITION:
-			{
-				ConditionNode* condition_node = (ConditionNode*)this->node_context;
-				if (this->is_branch) {
-					starting_node = condition_node->branch_next_node;
-				} else {
-					starting_node = condition_node->original_next_node;
-				}
-			}
-			break;
 		}
 
 		this->scope_context->random_exit_activate(
@@ -86,12 +75,11 @@ bool BranchExperiment::explore_activate(
 		this->curr_exit_next_node = possible_exits[random_index];
 
 		int new_num_steps;
-		uniform_int_distribution<int> uniform_distribution(0, 1);
-		geometric_distribution<int> geo_distribution(0.5);
+		geometric_distribution<int> geo_distribution(0.2);
 		if (random_index == 0) {
-			new_num_steps = 1 + uniform_distribution(generator) + geo_distribution(generator);
+			new_num_steps = 1 + geo_distribution(generator);
 		} else {
-			new_num_steps = uniform_distribution(generator) + geo_distribution(generator);
+			new_num_steps = geo_distribution(generator);
 		}
 
 		/**
@@ -289,7 +277,8 @@ void BranchExperiment::explore_backprop(
 			}
 
 			uniform_int_distribution<int> is_local_distribution(0, 1);
-			if (is_local_distribution(generator) == 0) {
+			// if (is_local_distribution(generator) == 0) {
+			if (true) {
 				this->is_local = true;
 				this->obs_histories.reserve(NUM_DATAPOINTS);
 			} else {

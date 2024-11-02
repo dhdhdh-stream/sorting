@@ -21,18 +21,17 @@ void BranchNode::activate(AbstractNode*& curr_node,
 
 	run_helper.num_analyze += (1 + 2*this->analyze_size) * (1 + 2*this->analyze_size);
 
-	vector<vector<double>> input_vals(1 + 2*this->analyze_size);
-	for (int x_index = 0; x_index < 1 + 2*this->analyze_size; x_index++) {
-		input_vals[x_index] = vector<double>(1 + 2*this->analyze_size);
-	}
+	vector<double> input_vals;
+	input_vals.reserve((1 + 2*this->analyze_size) * (1 + 2*this->analyze_size) + 2);
 	for (int x_index = -this->analyze_size; x_index < this->analyze_size+1; x_index++) {
 		for (int y_index = -this->analyze_size; y_index < this->analyze_size+1; y_index++) {
-			input_vals[x_index + this->analyze_size][y_index + this->analyze_size]
-				= minesweeper->get_observation_helper(
+			input_vals.push_back(minesweeper->get_observation_helper(
 					minesweeper->current_x + x_index,
-					minesweeper->current_y + y_index);
+					minesweeper->current_y + y_index));
 		}
 	}
+	input_vals.push_back(minesweeper->current_x);
+	input_vals.push_back(minesweeper->current_y);
 	this->network->activate(input_vals);
 
 	bool is_branch;

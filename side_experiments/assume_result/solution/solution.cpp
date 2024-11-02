@@ -222,179 +222,179 @@ void Solution::clean() {
 }
 
 void Solution::update_subproblem() {
-	if ((this->timestamp + 1) % SUBPROBLEM_ITER == 0) {
-		if (this->subproblem_id == -1) {
-			Scope* new_scope = new Scope();
-			new_scope->id = this->scopes.size();
-			new_scope->node_counter = 0;
-			this->scopes.push_back(new_scope);
+	// if ((this->timestamp + 1) % SUBPROBLEM_ITER == 0) {
+	// 	if (this->subproblem_id == -1) {
+	// 		Scope* new_scope = new Scope();
+	// 		new_scope->id = this->scopes.size();
+	// 		new_scope->node_counter = 0;
+	// 		this->scopes.push_back(new_scope);
 
-			ActionNode* starting_noop_node = new ActionNode();
-			starting_noop_node->parent = new_scope;
-			starting_noop_node->id = new_scope->node_counter;
-			new_scope->node_counter++;
-			starting_noop_node->action = Action(ACTION_NOOP);
-			starting_noop_node->next_node_id = -1;
-			starting_noop_node->next_node = NULL;
-			starting_noop_node->average_instances_per_run = 1.0;
-			new_scope->nodes[starting_noop_node->id] = starting_noop_node;
+	// 		ActionNode* starting_noop_node = new ActionNode();
+	// 		starting_noop_node->parent = new_scope;
+	// 		starting_noop_node->id = new_scope->node_counter;
+	// 		new_scope->node_counter++;
+	// 		starting_noop_node->action = Action(ACTION_NOOP);
+	// 		starting_noop_node->next_node_id = -1;
+	// 		starting_noop_node->next_node = NULL;
+	// 		starting_noop_node->average_instances_per_run = 1.0;
+	// 		new_scope->nodes[starting_noop_node->id] = starting_noop_node;
 
-			this->subproblem_id = new_scope->id;
+	// 		this->subproblem_id = new_scope->id;
 
-			ScopeNode* new_scope_node = new ScopeNode();
-			new_scope_node->parent = this->scopes[0];
-			new_scope_node->id = this->scopes[0]->node_counter;
-			this->scopes[0]->node_counter++;
-			this->scopes[0]->nodes[new_scope_node->id] = new_scope_node;
+	// 		ScopeNode* new_scope_node = new ScopeNode();
+	// 		new_scope_node->parent = this->scopes[0];
+	// 		new_scope_node->id = this->scopes[0]->node_counter;
+	// 		this->scopes[0]->node_counter++;
+	// 		this->scopes[0]->nodes[new_scope_node->id] = new_scope_node;
 
-			new_scope_node->scope = new_scope;
+	// 		new_scope_node->scope = new_scope;
 
-			AbstractNode* subproblem_node;
-			bool subproblem_is_branch;
-			int num_valid = 0;
-			for (map<int, AbstractNode*>::iterator it = this->scopes[0]->nodes.begin();
-					it != this->scopes[0]->nodes.end(); it++) {
-				if (it->second->average_instances_per_run > 0.5) {
-					switch (it->second->type) {
-					case NODE_TYPE_ACTION:
-					case NODE_TYPE_SCOPE:
-						{
-							uniform_int_distribution<int> select_distribution(0, num_valid);
-							if (select_distribution(generator) == 0) {
-								subproblem_node = it->second;
-								subproblem_is_branch = false;
-							}
+	// 		AbstractNode* subproblem_node;
+	// 		bool subproblem_is_branch;
+	// 		int num_valid = 0;
+	// 		for (map<int, AbstractNode*>::iterator it = this->scopes[0]->nodes.begin();
+	// 				it != this->scopes[0]->nodes.end(); it++) {
+	// 			if (it->second->average_instances_per_run > 0.5) {
+	// 				switch (it->second->type) {
+	// 				case NODE_TYPE_ACTION:
+	// 				case NODE_TYPE_SCOPE:
+	// 					{
+	// 						uniform_int_distribution<int> select_distribution(0, num_valid);
+	// 						if (select_distribution(generator) == 0) {
+	// 							subproblem_node = it->second;
+	// 							subproblem_is_branch = false;
+	// 						}
 
-							num_valid++;
-						}
-						break;
-					case NODE_TYPE_BRANCH:
-						{
-							BranchNode* branch_node = (BranchNode*)it->second;
-							if (branch_node->original_next_node == NULL
-									|| branch_node->original_next_node->average_instances_per_run > 0.5) {
-								uniform_int_distribution<int> select_distribution(0, num_valid);
-								if (select_distribution(generator) == 0) {
-									subproblem_node = it->second;
-									subproblem_is_branch = false;
-								}
+	// 						num_valid++;
+	// 					}
+	// 					break;
+	// 				case NODE_TYPE_BRANCH:
+	// 					{
+	// 						BranchNode* branch_node = (BranchNode*)it->second;
+	// 						if (branch_node->original_next_node == NULL
+	// 								|| branch_node->original_next_node->average_instances_per_run > 0.5) {
+	// 							uniform_int_distribution<int> select_distribution(0, num_valid);
+	// 							if (select_distribution(generator) == 0) {
+	// 								subproblem_node = it->second;
+	// 								subproblem_is_branch = false;
+	// 							}
 
-								num_valid++;
-							}
-							if (branch_node->branch_next_node == NULL
-									|| branch_node->branch_next_node->average_instances_per_run > 0.5) {
-								uniform_int_distribution<int> select_distribution(0, num_valid);
-								if (select_distribution(generator) == 0) {
-									subproblem_node = it->second;
-									subproblem_is_branch = true;
-								}
+	// 							num_valid++;
+	// 						}
+	// 						if (branch_node->branch_next_node == NULL
+	// 								|| branch_node->branch_next_node->average_instances_per_run > 0.5) {
+	// 							uniform_int_distribution<int> select_distribution(0, num_valid);
+	// 							if (select_distribution(generator) == 0) {
+	// 								subproblem_node = it->second;
+	// 								subproblem_is_branch = true;
+	// 							}
 
-								num_valid++;
-							}
-						}
-						break;
-					case NODE_TYPE_RETURN:
-						{
-							ReturnNode* return_node = (ReturnNode*)it->second;
-							if (return_node->skipped_next_node == NULL
-									|| return_node->skipped_next_node->average_instances_per_run > 0.5) {
-								uniform_int_distribution<int> select_distribution(0, num_valid);
-								if (select_distribution(generator) == 0) {
-									subproblem_node = it->second;
-									subproblem_is_branch = false;
-								}
+	// 							num_valid++;
+	// 						}
+	// 					}
+	// 					break;
+	// 				case NODE_TYPE_RETURN:
+	// 					{
+	// 						ReturnNode* return_node = (ReturnNode*)it->second;
+	// 						if (return_node->skipped_next_node == NULL
+	// 								|| return_node->skipped_next_node->average_instances_per_run > 0.5) {
+	// 							uniform_int_distribution<int> select_distribution(0, num_valid);
+	// 							if (select_distribution(generator) == 0) {
+	// 								subproblem_node = it->second;
+	// 								subproblem_is_branch = false;
+	// 							}
 
-								num_valid++;
-							}
-							if (return_node->passed_next_node == NULL
-									|| return_node->passed_next_node->average_instances_per_run > 0.5) {
-								uniform_int_distribution<int> select_distribution(0, num_valid);
-								if (select_distribution(generator) == 0) {
-									subproblem_node = it->second;
-									subproblem_is_branch = true;
-								}
+	// 							num_valid++;
+	// 						}
+	// 						if (return_node->passed_next_node == NULL
+	// 								|| return_node->passed_next_node->average_instances_per_run > 0.5) {
+	// 							uniform_int_distribution<int> select_distribution(0, num_valid);
+	// 							if (select_distribution(generator) == 0) {
+	// 								subproblem_node = it->second;
+	// 								subproblem_is_branch = true;
+	// 							}
 
-								num_valid++;
-							}
-						}
-						break;
-					}
-				}
-			}
+	// 							num_valid++;
+	// 						}
+	// 					}
+	// 					break;
+	// 				}
+	// 			}
+	// 		}
 
-			switch (subproblem_node->type) {
-			case NODE_TYPE_ACTION:
-				{
-					ActionNode* action_node = (ActionNode*)subproblem_node;
+	// 		switch (subproblem_node->type) {
+	// 		case NODE_TYPE_ACTION:
+	// 			{
+	// 				ActionNode* action_node = (ActionNode*)subproblem_node;
 
-					new_scope_node->next_node_id = action_node->next_node_id;
-					new_scope_node->next_node = action_node->next_node;
+	// 				new_scope_node->next_node_id = action_node->next_node_id;
+	// 				new_scope_node->next_node = action_node->next_node;
 
-					action_node->next_node_id = new_scope_node->id;
-					action_node->next_node = new_scope_node;
-				}
-				break;
-			case NODE_TYPE_SCOPE:
-				{
-					ScopeNode* scope_node = (ScopeNode*)subproblem_node;
+	// 				action_node->next_node_id = new_scope_node->id;
+	// 				action_node->next_node = new_scope_node;
+	// 			}
+	// 			break;
+	// 		case NODE_TYPE_SCOPE:
+	// 			{
+	// 				ScopeNode* scope_node = (ScopeNode*)subproblem_node;
 
-					new_scope_node->next_node_id = scope_node->next_node_id;
-					new_scope_node->next_node = scope_node->next_node;
+	// 				new_scope_node->next_node_id = scope_node->next_node_id;
+	// 				new_scope_node->next_node = scope_node->next_node;
 
-					scope_node->next_node_id = new_scope_node->id;
-					scope_node->next_node = new_scope_node;
-				}
-				break;
-			case NODE_TYPE_BRANCH:
-				{
-					BranchNode* branch_node = (BranchNode*)subproblem_node;
-					if (subproblem_is_branch) {
-						new_scope_node->next_node_id = branch_node->branch_next_node_id;
-						new_scope_node->next_node = branch_node->branch_next_node;
+	// 				scope_node->next_node_id = new_scope_node->id;
+	// 				scope_node->next_node = new_scope_node;
+	// 			}
+	// 			break;
+	// 		case NODE_TYPE_BRANCH:
+	// 			{
+	// 				BranchNode* branch_node = (BranchNode*)subproblem_node;
+	// 				if (subproblem_is_branch) {
+	// 					new_scope_node->next_node_id = branch_node->branch_next_node_id;
+	// 					new_scope_node->next_node = branch_node->branch_next_node;
 
-						branch_node->branch_next_node_id = new_scope_node->id;
-						branch_node->branch_next_node = new_scope_node;
-					} else {
-						new_scope_node->next_node_id = branch_node->original_next_node_id;
-						new_scope_node->next_node = branch_node->original_next_node;
+	// 					branch_node->branch_next_node_id = new_scope_node->id;
+	// 					branch_node->branch_next_node = new_scope_node;
+	// 				} else {
+	// 					new_scope_node->next_node_id = branch_node->original_next_node_id;
+	// 					new_scope_node->next_node = branch_node->original_next_node;
 
-						branch_node->original_next_node_id = new_scope_node->id;
-						branch_node->original_next_node = new_scope_node;
-					}
-				}
-				break;
-			case NODE_TYPE_RETURN:
-				{
-					ReturnNode* return_node = (ReturnNode*)subproblem_node;
-					if (subproblem_is_branch) {
-						new_scope_node->next_node_id = return_node->passed_next_node_id;
-						new_scope_node->next_node = return_node->passed_next_node;
+	// 					branch_node->original_next_node_id = new_scope_node->id;
+	// 					branch_node->original_next_node = new_scope_node;
+	// 				}
+	// 			}
+	// 			break;
+	// 		case NODE_TYPE_RETURN:
+	// 			{
+	// 				ReturnNode* return_node = (ReturnNode*)subproblem_node;
+	// 				if (subproblem_is_branch) {
+	// 					new_scope_node->next_node_id = return_node->passed_next_node_id;
+	// 					new_scope_node->next_node = return_node->passed_next_node;
 
-						return_node->passed_next_node_id = new_scope_node->id;
-						return_node->passed_next_node = new_scope_node;
-					} else {
-						new_scope_node->next_node_id = return_node->skipped_next_node_id;
-						new_scope_node->next_node = return_node->skipped_next_node;
+	// 					return_node->passed_next_node_id = new_scope_node->id;
+	// 					return_node->passed_next_node = new_scope_node;
+	// 				} else {
+	// 					new_scope_node->next_node_id = return_node->skipped_next_node_id;
+	// 					new_scope_node->next_node = return_node->skipped_next_node;
 
-						return_node->skipped_next_node_id = new_scope_node->id;
-						return_node->skipped_next_node = new_scope_node;
-					}
-				}
-				break;
-			}
+	// 					return_node->skipped_next_node_id = new_scope_node->id;
+	// 					return_node->skipped_next_node = new_scope_node;
+	// 				}
+	// 			}
+	// 			break;
+	// 		}
 
-			this->subproblem_id = new_scope->id;
-		} else {
-			for (int c_index = 0; c_index < (int)this->scopes[this->subproblem_id]->child_scopes.size(); c_index++) {
-				for (int s_index = 0; s_index < this->subproblem_id; s_index++) {
-					this->scopes[s_index]->child_scopes.push_back(
-						this->scopes[this->subproblem_id]->child_scopes[c_index]);
-				}
-			}
+	// 		this->subproblem_id = new_scope->id;
+	// 	} else {
+	// 		for (int c_index = 0; c_index < (int)this->scopes[this->subproblem_id]->child_scopes.size(); c_index++) {
+	// 			for (int s_index = 0; s_index < this->subproblem_id; s_index++) {
+	// 				this->scopes[s_index]->child_scopes.push_back(
+	// 					this->scopes[this->subproblem_id]->child_scopes[c_index]);
+	// 			}
+	// 		}
 
-			this->subproblem_id = -1;
-		}
-	}
+	// 		this->subproblem_id = -1;
+	// 	}
+	// }
 }
 
 void Solution::save(string path,

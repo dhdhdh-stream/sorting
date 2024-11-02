@@ -20,7 +20,7 @@ const int TRAIN_ITERS = 30;
 const int TRAIN_ITERS = 300000;
 #endif /* MDEBUG */
 
-void train_network(vector<vector<vector<double>>>& inputs,
+void train_network(vector<vector<double>>& inputs,
 				   vector<double>& target_vals,
 				   Network* network) {
 	uniform_int_distribution<int> distribution(0, inputs.size()-1);

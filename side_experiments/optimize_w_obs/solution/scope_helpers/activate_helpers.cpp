@@ -4,7 +4,6 @@
 
 #include "action_node.h"
 #include "branch_node.h"
-#include "condition_node.h"
 #include "constants.h"
 #include "globals.h"
 #include "scope_node.h"
@@ -39,16 +38,6 @@ void node_activate_helper(AbstractNode*& curr_node,
 	case NODE_TYPE_BRANCH:
 		{
 			BranchNode* node = (BranchNode*)curr_node;
-			node->activate(curr_node,
-						   problem,
-						   context,
-						   run_helper);
-		}
-
-		break;
-	case NODE_TYPE_CONDITION:
-		{
-			ConditionNode* node = (ConditionNode*)curr_node;
 			node->activate(curr_node,
 						   problem,
 						   context,

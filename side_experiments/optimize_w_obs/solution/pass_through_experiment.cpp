@@ -16,14 +16,12 @@ using namespace std;
 
 PassThroughExperiment::PassThroughExperiment(Scope* scope_context,
 											 AbstractNode* node_context,
-											 bool is_branch,
-											 vector<pair<pair<vector<int>,vector<int>>, bool>> conditions) {
+											 bool is_branch) {
 	this->type = EXPERIMENT_TYPE_PASS_THROUGH;
 
 	this->scope_context = scope_context;
 	this->node_context = node_context;
 	this->is_branch = is_branch;
-	this->conditions = conditions;
 
 	this->average_remaining_experiments_from_start = 1.0;
 

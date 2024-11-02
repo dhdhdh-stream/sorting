@@ -9,9 +9,8 @@ using namespace std;
 const double NETWORK_TARGET_MAX_UPDATE = 0.01;
 const int EPOCH_SIZE = 20;
 
-Network::Network(int analyze_size) {
+Network::Network(int input_size) {
 	this->input = new Layer(LINEAR_LAYER);
-	int input_size = (2*analyze_size + 1) * (2*analyze_size + 1);
 	for (int i_index = 0; i_index < input_size; i_index++) {
 		this->input->acti_vals.push_back(0.0);
 		this->input->errors.push_back(0.0);
@@ -186,11 +185,9 @@ Network::~Network() {
 	delete this->output;
 }
 
-void Network::activate(vector<vector<double>>& input_vals) {
-	for (int x_index = 0; x_index < (int)input_vals.size(); x_index++) {
-		for (int y_index = 0; y_index < (int)input_vals[x_index].size(); y_index++) {
-			this->input->acti_vals[x_index * (int)input_vals[x_index].size() + y_index] = input_vals[x_index][y_index];
-		}
+void Network::activate(vector<double>& input_vals) {
+	for (int i_index = 0; i_index < (int)input_vals.size(); i_index++) {
+		this->input->acti_vals[i_index] = input_vals[i_index];
 	}
 	this->hidden_1->activate();
 	this->hidden_2->activate();

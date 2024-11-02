@@ -4,7 +4,6 @@
 
 #include "action_node.h"
 #include "branch_node.h"
-#include "condition_node.h"
 #include "constants.h"
 #include "globals.h"
 #include "problem.h"
@@ -25,11 +24,11 @@ const int VERIFY_2ND_NUM_SAMPLES_PER_ITER = 10;
 const int VERIFY_2ND_NUM_TRUTH_PER_ITER = 2;
 const int EXPLORE_ITERS = 2;
 #else
-const int INITIAL_NUM_SAMPLES_PER_ITER = 50;
+const int INITIAL_NUM_SAMPLES_PER_ITER = 100;
 const int INITIAL_NUM_TRUTH_PER_ITER = 20;
-const int VERIFY_1ST_NUM_SAMPLES_PER_ITER = 250;
+const int VERIFY_1ST_NUM_SAMPLES_PER_ITER = 500;
 const int VERIFY_1ST_NUM_TRUTH_PER_ITER = 100;
-const int VERIFY_2ND_NUM_SAMPLES_PER_ITER = 1000;
+const int VERIFY_2ND_NUM_SAMPLES_PER_ITER = 2000;
 const int VERIFY_2ND_NUM_TRUTH_PER_ITER = 400;
 const int EXPLORE_ITERS = 100;
 #endif /* MDEBUG */
@@ -72,16 +71,6 @@ void PassThroughExperiment::explore_activate(
 				}
 			}
 			break;
-		case NODE_TYPE_CONDITION:
-			{
-				ConditionNode* condition_node = (ConditionNode*)this->node_context;
-				if (this->is_branch) {
-					starting_node = condition_node->branch_next_node;
-				} else {
-					starting_node = condition_node->original_next_node;
-				}
-			}
-			break;
 		}
 
 		this->scope_context->random_exit_activate(
@@ -93,12 +82,11 @@ void PassThroughExperiment::explore_activate(
 		this->curr_exit_next_node = possible_exits[random_index];
 
 		int new_num_steps;
-		uniform_int_distribution<int> uniform_distribution(0, 1);
-		geometric_distribution<int> geo_distribution(0.5);
+		geometric_distribution<int> geo_distribution(0.2);
 		if (random_index == 0) {
-			new_num_steps = 1 + uniform_distribution(generator) + geo_distribution(generator);
+			new_num_steps = 1 + geo_distribution(generator);
 		} else {
-			new_num_steps = uniform_distribution(generator) + geo_distribution(generator);
+			new_num_steps = geo_distribution(generator);
 		}
 
 		/**
@@ -338,7 +326,6 @@ void PassThroughExperiment::explore_backprop(
 					cout << "this->scope_context->id: " << this->scope_context->id << endl;
 					cout << "this->node_context->id: " << this->node_context->id << endl;
 					cout << "this->is_branch: " << this->is_branch << endl;
-					cout << "this->conditions.size(): " << this->conditions.size() << endl;
 					cout << "new explore path:";
 					for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 						if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {

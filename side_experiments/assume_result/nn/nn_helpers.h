@@ -5,7 +5,7 @@
 
 class Network;
 
-void train_network(std::vector<std::vector<std::vector<double>>>& inputs,
+void train_network(std::vector<std::vector<double>>& inputs,
 				   std::vector<double>& target_vals,
 				   Network* network);
 

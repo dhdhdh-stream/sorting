@@ -20,57 +20,35 @@ bool PassThroughExperiment::activate(AbstractNode* experiment_node,
 	bool is_selected = false;
 	PassThroughExperimentHistory* history = NULL;
 	if (is_branch == this->is_branch) {
-		bool is_match = true;
-		for (int c_index = 0; c_index < (int)this->conditions.size(); c_index++) {
-			pair<pair<vector<int>,vector<int>>,int> input = {this->conditions[c_index].first, -1};
-			double obs = 0.0;
-			fetch_input_helper(scope_history,
-							   input,
-							   0,
-							   obs);
-			if (this->conditions[c_index].second) {
-				if (obs != 1.0) {
-					is_match = false;
-					break;
-				}
-			} else {
-				if (obs != -1.0) {
-					is_match = false;
-					break;
-				}
+		int match_index = -1;
+		for (int e_index = 0; e_index < (int)run_helper.experiment_histories.size(); e_index++) {
+			if (run_helper.experiment_histories[e_index]->experiment == this) {
+				match_index = e_index;
+				break;
 			}
 		}
-		if (is_match) {
-			int match_index = -1;
-			for (int e_index = 0; e_index < (int)run_helper.experiment_histories.size(); e_index++) {
-				if (run_helper.experiment_histories[e_index]->experiment == this) {
-					match_index = e_index;
-					break;
+		if (match_index != -1) {
+			history = (PassThroughExperimentHistory*)run_helper.experiment_histories[match_index];
+			is_selected = true;
+		} else {
+			if (run_helper.experiment_histories.size() == 0) {
+				bool has_seen = false;
+				for (int e_index = 0; e_index < (int)run_helper.experiments_seen_order.size(); e_index++) {
+					if (run_helper.experiments_seen_order[e_index] == this) {
+						has_seen = true;
+						break;
+					}
 				}
-			}
-			if (match_index != -1) {
-				history = (PassThroughExperimentHistory*)run_helper.experiment_histories[match_index];
-				is_selected = true;
-			} else {
-				if (run_helper.experiment_histories.size() == 0) {
-					bool has_seen = false;
-					for (int e_index = 0; e_index < (int)run_helper.experiments_seen_order.size(); e_index++) {
-						if (run_helper.experiments_seen_order[e_index] == this) {
-							has_seen = true;
-							break;
-						}
+				if (!has_seen) {
+					double selected_probability = 1.0 / (1.0 + this->average_remaining_experiments_from_start);
+					uniform_real_distribution<double> distribution(0.0, 1.0);
+					if (distribution(generator) < selected_probability) {
+						history = new PassThroughExperimentHistory(this);
+						run_helper.experiment_histories.push_back(history);
+						is_selected = true;
 					}
-					if (!has_seen) {
-						double selected_probability = 1.0 / (1.0 + this->average_remaining_experiments_from_start);
-						uniform_real_distribution<double> distribution(0.0, 1.0);
-						if (distribution(generator) < selected_probability) {
-							history = new PassThroughExperimentHistory(this);
-							run_helper.experiment_histories.push_back(history);
-							is_selected = true;
-						}
 
-						run_helper.experiments_seen_order.push_back(this);
-					}
+					run_helper.experiments_seen_order.push_back(this);
 				}
 			}
 		}
