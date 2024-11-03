@@ -3,8 +3,10 @@
 #include <iostream>
 
 #include "abstract_node.h"
+#include "action_network.h"
 #include "constants.h"
 #include "globals.h"
+#include "lstm.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
@@ -64,6 +66,7 @@ bool BranchExperiment::activate(AbstractNode* experiment_node,
 									  problem,
 									  context,
 									  run_helper,
+									  scope_history,
 									  history);
 			break;
 		case BRANCH_EXPERIMENT_STATE_TRAIN_NEW:

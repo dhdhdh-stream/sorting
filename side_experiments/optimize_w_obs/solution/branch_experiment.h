@@ -102,6 +102,7 @@ public:
 						  Problem* problem,
 						  std::vector<ContextLayer>& context,
 						  RunHelper& run_helper,
+						  ScopeHistory* scope_history,
 						  BranchExperimentHistory* history);
 	void explore_backprop(double target_val,
 						  RunHelper& run_helper);

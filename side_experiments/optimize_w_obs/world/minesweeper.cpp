@@ -154,9 +154,6 @@ vector<double> Minesweeper::get_observations() {
 		}
 	}
 
-	obs.push_back(this->current_x);
-	obs.push_back(this->current_y);
-
 	return obs;
 }
 
@@ -461,8 +458,7 @@ Problem* TypeMinesweeper::get_problem() {
 }
 
 int TypeMinesweeper::num_obs() {
-	// return 25;
-	return 27;
+	return 25;
 }
 
 int TypeMinesweeper::num_possible_actions() {

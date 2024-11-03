@@ -20,6 +20,9 @@ default_random_engine generator;
 ProblemType* problem_type;
 Solution* solution;
 
+vector<LSTM*> mimic_memory_cells;
+vector<ActionNetwork*> mimic_action_networks;
+
 int run_index;
 
 int main(int argc, char* argv[]) {

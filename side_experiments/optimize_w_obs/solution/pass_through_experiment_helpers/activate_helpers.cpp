@@ -60,6 +60,7 @@ bool PassThroughExperiment::activate(AbstractNode* experiment_node,
 						 problem,
 						 context,
 						 run_helper,
+						 scope_history,
 						 history);
 
 		result = true;

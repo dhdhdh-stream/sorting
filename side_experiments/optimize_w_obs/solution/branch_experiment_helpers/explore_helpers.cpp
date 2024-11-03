@@ -25,6 +25,7 @@ bool BranchExperiment::explore_activate(
 		Problem* problem,
 		vector<ContextLayer>& context,
 		RunHelper& run_helper,
+		ScopeHistory* scope_history,
 		BranchExperimentHistory* history) {
 	run_helper.num_actions++;
 
@@ -82,43 +83,62 @@ bool BranchExperiment::explore_activate(
 			new_num_steps = geo_distribution(generator);
 		}
 
-		/**
-		 * - always give raw actions a large weight
-		 *   - existing scopes often learned to avoid certain patterns
-		 *     - which can prevent innovation
-		 */
-		uniform_int_distribution<int> scope_distribution(0, 2);
-		for (int s_index = 0; s_index < new_num_steps; s_index++) {
-			if (this->scope_context->child_scopes.size() > 0
-					&& scope_distribution(generator) == 0) {
-				this->curr_step_types.push_back(STEP_TYPE_SCOPE);
-				this->curr_actions.push_back(NULL);
+		uniform_int_distribution<int> mimic_distribution(0, 3);
+		if (mimic_distribution(generator) == 0) {
+			vector<Action> mimic_actions;
+			mimic(problem,
+				  scope_history,
+				  new_num_steps,
+				  mimic_actions);
 
-				ScopeNode* new_scope_node = new ScopeNode();
-				uniform_int_distribution<int> child_scope_distribution(0, this->scope_context->child_scopes.size()-1);
-				new_scope_node->scope = this->scope_context->child_scopes[child_scope_distribution(generator)];
-				this->curr_scopes.push_back(new_scope_node);
-			} else {
+			for (int step_index = 0; step_index < (int)mimic_actions.size(); step_index++) {
 				this->curr_step_types.push_back(STEP_TYPE_ACTION);
 
 				ActionNode* new_action_node = new ActionNode();
-				new_action_node->action = problem_type->random_action();
+				new_action_node->action = mimic_actions[step_index];
 				this->curr_actions.push_back(new_action_node);
 
 				this->curr_scopes.push_back(NULL);
 			}
-		}
+		} else {
+			/**
+			 * - always give raw actions a large weight
+			 *   - existing scopes often learned to avoid certain patterns
+			 *     - which can prevent innovation
+			 */
+			uniform_int_distribution<int> scope_distribution(0, 2);
+			for (int s_index = 0; s_index < new_num_steps; s_index++) {
+				if (this->scope_context->child_scopes.size() > 0
+						&& scope_distribution(generator) == 0) {
+					this->curr_step_types.push_back(STEP_TYPE_SCOPE);
+					this->curr_actions.push_back(NULL);
 
-		for (int s_index = 0; s_index < (int)this->curr_step_types.size(); s_index++) {
-			if (this->curr_step_types[s_index] == STEP_TYPE_ACTION) {
-				this->curr_actions[s_index]->explore_activate(
-					problem,
-					run_helper);
-			} else {
-				this->curr_scopes[s_index]->explore_activate(
-					problem,
-					context,
-					run_helper);
+					ScopeNode* new_scope_node = new ScopeNode();
+					uniform_int_distribution<int> child_scope_distribution(0, this->scope_context->child_scopes.size()-1);
+					new_scope_node->scope = this->scope_context->child_scopes[child_scope_distribution(generator)];
+					this->curr_scopes.push_back(new_scope_node);
+				} else {
+					this->curr_step_types.push_back(STEP_TYPE_ACTION);
+
+					ActionNode* new_action_node = new ActionNode();
+					new_action_node->action = problem_type->random_action();
+					this->curr_actions.push_back(new_action_node);
+
+					this->curr_scopes.push_back(NULL);
+				}
+			}
+
+			for (int s_index = 0; s_index < (int)this->curr_step_types.size(); s_index++) {
+				if (this->curr_step_types[s_index] == STEP_TYPE_ACTION) {
+					this->curr_actions[s_index]->explore_activate(
+						problem,
+						run_helper);
+				} else {
+					this->curr_scopes[s_index]->explore_activate(
+						problem,
+						context,
+						run_helper);
+				}
 			}
 		}
 

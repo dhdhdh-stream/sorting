@@ -37,4 +37,6 @@ const int MEASURE_ITERS = 4000;
 
 const int NUM_VERIFY_SAMPLES = 10;
 
+const int MIMIC_NUM_STATES = 20;
+
 #endif /* CONSTANTS_H */

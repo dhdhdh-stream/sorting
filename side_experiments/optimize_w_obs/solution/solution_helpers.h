@@ -31,4 +31,9 @@ void clean_scope(Scope* scope,
 
 double get_existing_result(Problem* original_problem);
 
+void mimic(Problem* problem,
+		   ScopeHistory* scope_history,
+		   int num_steps,
+		   std::vector<Action>& mimic_actions);
+
 #endif /* SOLUTION_HELPERS_H */

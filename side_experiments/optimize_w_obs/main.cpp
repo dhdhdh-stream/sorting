@@ -16,8 +16,10 @@
 
 #include "abstract_experiment.h"
 #include "abstract_node.h"
+#include "action_network.h"
 #include "constants.h"
 #include "globals.h"
+#include "lstm.h"
 #include "minesweeper.h"
 #include "problem.h"
 #include "scope.h"
@@ -32,6 +34,9 @@ default_random_engine generator;
 
 ProblemType* problem_type;
 Solution* solution;
+
+vector<LSTM*> mimic_memory_cells;
+vector<ActionNetwork*> mimic_action_networks;
 
 int run_index;
 
@@ -50,6 +55,22 @@ int main(int argc, char* argv[]) {
 	// solution->load("", "main");
 
 	solution->save("", "main");
+
+	mimic_memory_cells = vector<LSTM*>(MIMIC_NUM_STATES);
+	for (int s_index = 0; s_index < MIMIC_NUM_STATES; s_index++) {
+		ifstream memory_cell_save_file;
+		memory_cell_save_file.open("saves/mimic/memory_cell_" + to_string(s_index) + ".txt");
+		mimic_memory_cells[s_index] = new LSTM(memory_cell_save_file);
+		memory_cell_save_file.close();
+		mimic_memory_cells[s_index]->index = s_index;
+	}
+	mimic_action_networks = vector<ActionNetwork*>(problem_type->num_possible_actions() + 1);
+	for (int a_index = 0; a_index < problem_type->num_possible_actions() + 1; a_index++) {
+		ifstream action_network_save_file;
+		action_network_save_file.open("saves/mimic/action_network_" + to_string(a_index) + ".txt");
+		mimic_action_networks[a_index] = new ActionNetwork(action_network_save_file);
+		action_network_save_file.close();
+	}
 
 	run_index = 0;
 
