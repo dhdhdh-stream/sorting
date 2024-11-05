@@ -32,6 +32,7 @@ class Solution {
 public:
 	int timestamp;
 	double average_score;
+	double decision_quality;
 
 	std::vector<Scope*> scopes;
 

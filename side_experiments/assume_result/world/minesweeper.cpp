@@ -104,6 +104,8 @@ Minesweeper::Minesweeper() {
 	this->hit_mine = false;
 
 	reveal_helper(STARTING_X, STARTING_Y);
+
+	this->starting_world = this->world;
 }
 
 double Minesweeper::get_observation_helper(int x, int y) {
@@ -371,6 +373,9 @@ double Minesweeper::score_result(int num_analyze,
 
 	score += 0.01*curr_revealed;
 
+	/**
+	 * TODO: potentially change cost of actions periodically
+	 */
 	score -= 0.00001*num_analyze;
 	// score -= 0.000005*num_actions;
 	score -= 0.00005*num_actions;	// actually works great (?)
@@ -417,7 +422,7 @@ void Minesweeper::return_to_location(vector<double>& location,
 Problem* Minesweeper::copy_and_reset() {
 	Minesweeper* new_problem = new Minesweeper();
 
-	new_problem->world = this->world;
+	new_problem->world = this->starting_world;
 
 	new_problem->revealed = vector<vector<bool>>(WIDTH, vector<bool>(HEIGHT, false));
 	new_problem->flagged = vector<vector<bool>>(WIDTH, vector<bool>(HEIGHT, false));
@@ -427,18 +432,7 @@ Problem* Minesweeper::copy_and_reset() {
 
 	new_problem->reveal_helper(STARTING_X, STARTING_Y);
 
-	return new_problem;
-}
-
-Problem* Minesweeper::copy_snapshot() {
-	Minesweeper* new_problem = new Minesweeper();
-
-	new_problem->world = this->world;
-	new_problem->revealed = this->revealed;
-	new_problem->flagged = this->flagged;
-	new_problem->current_x = this->current_x;
-	new_problem->current_y = this->current_y;
-	new_problem->hit_mine = this->hit_mine;
+	new_problem->starting_world = this->starting_world;
 
 	return new_problem;
 }

@@ -23,6 +23,8 @@ public:
 
 	bool hit_mine;
 
+	std::vector<std::vector<int>> starting_world;
+
 	Minesweeper();
 
 	std::vector<double> get_observations();
@@ -36,7 +38,6 @@ public:
 							int& num_actions);
 
 	Problem* copy_and_reset();
-	Problem* copy_snapshot();
 
 	void print();
 

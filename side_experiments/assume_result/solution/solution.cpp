@@ -14,8 +14,6 @@
 
 using namespace std;
 
-const double TRIM_PERCENTAGE = 0.15;
-
 Solution::Solution() {
 	// do nothing
 }
@@ -23,6 +21,7 @@ Solution::Solution() {
 Solution::Solution(Solution* original) {
 	this->timestamp = original->timestamp;
 	this->average_score = original->average_score;
+	this->decision_quality = original->decision_quality;
 
 	for (int s_index = 0; s_index < (int)original->scopes.size(); s_index++) {
 		Scope* scope = new Scope();
@@ -54,6 +53,7 @@ Solution::~Solution() {
 void Solution::init() {
 	this->timestamp = 0;
 	this->average_score = -1.0;
+	this->decision_quality = 0.0;
 
 	/**
 	 * - even though scopes[0] will not be reused, still good to start with:
@@ -95,6 +95,10 @@ void Solution::load(string path,
 	string average_score_line;
 	getline(input_file, average_score_line);
 	this->average_score = stod(average_score_line);
+
+	string decision_quality_line;
+	getline(input_file, decision_quality_line);
+	this->decision_quality = stod(decision_quality_line);
 
 	string num_scopes_line;
 	getline(input_file, num_scopes_line);
@@ -404,6 +408,7 @@ void Solution::save(string path,
 
 	output_file << this->timestamp << endl;
 	output_file << this->average_score << endl;
+	output_file << this->decision_quality << endl;
 
 	output_file << this->scopes.size() << endl;
 

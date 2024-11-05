@@ -133,7 +133,7 @@ int main(int argc, char* argv[]) {
 
 				vector<double> target_vals;
 				int max_num_actions = 0;
-				bool early_exit = false;
+				bool measure_early_exit = false;
 				for (int iter_index = 0; iter_index < MEASURE_ITERS; iter_index++) {
 					Problem* problem = problem_type->get_problem();
 
@@ -176,13 +176,13 @@ int main(int argc, char* argv[]) {
 						solution_save_file.close();
 
 						if (curr_timestamp > solution->timestamp) {
-							early_exit = true;
+							measure_early_exit = true;
 							break;
 						}
 					}
 				}
 
-				if (early_exit) {
+				if (measure_early_exit) {
 					delete duplicate;
 
 					delete solution;
@@ -190,6 +190,115 @@ int main(int argc, char* argv[]) {
 					solution = new Solution();
 					solution->load("workers/", "main");
 					cout << "updated from main" << endl;
+
+					delete problem;
+
+					continue;
+				}
+
+				double sum_score_difference = 0.0;
+				int branch_count = 0;
+				bool flip_early_exit = false;
+				for (int iter_index = 0; iter_index < MEASURE_ITERS; iter_index++) {
+					Problem* problem = problem_type->get_problem();
+
+					vector<int> branch_node_indexes;
+					double original_score;
+					{
+						Problem* copy_problem = problem->copy_and_reset();
+
+						RunHelper run_helper;
+
+						vector<ContextLayer> context;
+						duplicate->scopes[0]->flip_gather_activate(
+							copy_problem,
+							context,
+							run_helper,
+							branch_node_indexes);
+
+						if (!run_helper.exceeded_limit) {
+							original_score = copy_problem->score_result(run_helper.num_analyze,
+																		run_helper.num_actions);
+						} else {
+							original_score = -1.0;
+						}
+
+						auto curr_time = chrono::high_resolution_clock::now();
+						auto time_diff = chrono::duration_cast<chrono::seconds>(curr_time - start_time);
+						if (time_diff.count() >= 20) {
+							start_time = curr_time;
+
+							cout << "alive" << endl;
+
+							ifstream solution_save_file;
+							solution_save_file.open("workers/saves/main.txt");
+							string timestamp_line;
+							getline(solution_save_file, timestamp_line);
+							int curr_timestamp = stoi(timestamp_line);
+							solution_save_file.close();
+
+							if (curr_timestamp > solution->timestamp) {
+								flip_early_exit = true;
+								break;
+							}
+						}
+					}
+
+					for (int b_index = 0; b_index < (int)branch_node_indexes.size(); b_index++) {
+						Problem* copy_problem = problem->copy_and_reset();
+
+						RunHelper run_helper;
+
+						vector<ContextLayer> context;
+						duplicate->scopes[0]->flip_activate(
+							copy_problem,
+							context,
+							run_helper,
+							branch_node_indexes[b_index]);
+
+						double target_val;
+						if (!run_helper.exceeded_limit) {
+							target_val = copy_problem->score_result(run_helper.num_analyze,
+																	run_helper.num_actions);
+						} else {
+							target_val = -1.0;
+						}
+
+						sum_score_difference += (original_score - target_val);
+						branch_count++;
+
+						auto curr_time = chrono::high_resolution_clock::now();
+						auto time_diff = chrono::duration_cast<chrono::seconds>(curr_time - start_time);
+						if (time_diff.count() >= 20) {
+							start_time = curr_time;
+
+							cout << "alive" << endl;
+
+							ifstream solution_save_file;
+							solution_save_file.open("workers/saves/main.txt");
+							string timestamp_line;
+							getline(solution_save_file, timestamp_line);
+							int curr_timestamp = stoi(timestamp_line);
+							solution_save_file.close();
+
+							if (curr_timestamp > solution->timestamp) {
+								flip_early_exit = true;
+								break;
+							}
+						}
+					}
+
+					if (flip_early_exit) {
+						break;
+					}
+				}
+
+				if (flip_early_exit) {
+					delete duplicate;
+
+					delete solution;
+					solution = new Solution();
+					solution->load("", "main");
 
 					delete problem;
 
@@ -208,6 +317,7 @@ int main(int argc, char* argv[]) {
 					sum_score += target_vals[d_index];
 				}
 				duplicate->average_score = sum_score / MEASURE_ITERS;
+				duplicate->decision_quality = sum_score_difference / branch_count;
 
 				duplicate->max_num_actions = max_num_actions;
 

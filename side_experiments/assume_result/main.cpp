@@ -44,6 +44,13 @@
 
 // TODO: try giving location information
 
+// - location information doesn't make enough of a difference?
+//   - maybe about actions being consistent in their effects?
+
+// to determine if actions consistent, perhaps randomly flip a later decision and see if it still aligns?
+// i.e., measure decision making quality
+// - if making worse decisions, then don't take?
+
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -196,7 +203,7 @@ int main(int argc, char* argv[]) {
 				vector<double> target_vals;
 				int max_num_actions = 0;
 				#if defined(MDEBUG) && MDEBUG
-				bool early_exit = false;
+				bool measure_early_exit = false;
 				#endif /* MDEBUG */
 				for (int iter_index = 0; iter_index < MEASURE_ITERS; iter_index++) {
 					Problem* problem = problem_type->get_problem();
@@ -232,21 +239,14 @@ int main(int argc, char* argv[]) {
 
 					#if defined(MDEBUG) && MDEBUG
 					if (run_index%2000 == 0) {
-						early_exit = true;
+						measure_early_exit = true;
 						break;
 					}
 					#endif /* MDEBUG */
 				}
 
-				for (int s_index = 0; s_index < (int)duplicate->scopes.size(); s_index++) {
-					for (map<int, AbstractNode*>::iterator it = duplicate->scopes[s_index]->nodes.begin();
-							it != duplicate->scopes[s_index]->nodes.end(); it++) {
-						it->second->average_instances_per_run /= MEASURE_ITERS;
-					}
-				}
-
 				#if defined(MDEBUG) && MDEBUG
-				if (early_exit) {
+				if (measure_early_exit) {
 					delete duplicate;
 
 					delete solution;
@@ -259,11 +259,118 @@ int main(int argc, char* argv[]) {
 				}
 				#endif /* MDEBUG */
 
+				double sum_score_difference = 0.0;
+				int branch_count = 0;
+				#if defined(MDEBUG) && MDEBUG
+				bool flip_early_exit = false;
+				#endif /* MDEBUG */
+				for (int iter_index = 0; iter_index < MEASURE_ITERS; iter_index++) {
+					Problem* problem = problem_type->get_problem();
+
+					vector<int> branch_node_indexes;
+					double original_score;
+					{
+						Problem* copy_problem = problem->copy_and_reset();
+
+						RunHelper run_helper;
+						#if defined(MDEBUG) && MDEBUG
+						run_helper.starting_run_seed = run_index;
+						run_helper.curr_run_seed = xorshift(run_helper.starting_run_seed);
+						run_index++;
+						#endif /* MDEBUG */
+
+						vector<ContextLayer> context;
+						duplicate->scopes[0]->flip_gather_activate(
+							copy_problem,
+							context,
+							run_helper,
+							branch_node_indexes);
+
+						if (!run_helper.exceeded_limit) {
+							original_score = copy_problem->score_result(run_helper.num_analyze,
+																		run_helper.num_actions);
+						} else {
+							original_score = -1.0;
+						}
+
+						#if defined(MDEBUG) && MDEBUG
+						if (run_index%2000 == 0) {
+							flip_early_exit = true;
+							break;
+						}
+						#endif /* MDEBUG */
+					}
+
+					for (int b_index = 0; b_index < (int)branch_node_indexes.size(); b_index++) {
+						Problem* copy_problem = problem->copy_and_reset();
+
+						RunHelper run_helper;
+						#if defined(MDEBUG) && MDEBUG
+						run_helper.starting_run_seed = run_index;
+						run_helper.curr_run_seed = xorshift(run_helper.starting_run_seed);
+						run_index++;
+						#endif /* MDEBUG */
+
+						vector<ContextLayer> context;
+						duplicate->scopes[0]->flip_activate(
+							copy_problem,
+							context,
+							run_helper,
+							branch_node_indexes[b_index]);
+
+						double target_val;
+						if (!run_helper.exceeded_limit) {
+							target_val = copy_problem->score_result(run_helper.num_analyze,
+																	run_helper.num_actions);
+						} else {
+							target_val = -1.0;
+						}
+
+						sum_score_difference += (original_score - target_val);
+						branch_count++;
+
+						#if defined(MDEBUG) && MDEBUG
+						if (run_index%2000 == 0) {
+							flip_early_exit = true;
+							break;
+						}
+						#endif /* MDEBUG */
+					}
+
+					#if defined(MDEBUG) && MDEBUG
+					if (flip_early_exit) {
+						break;
+					}
+					#endif /* MDEBUG */
+				}
+
+				#if defined(MDEBUG) && MDEBUG
+				if (flip_early_exit) {
+					delete duplicate;
+
+					delete solution;
+					solution = new Solution();
+					solution->load("", "main");
+
+					delete problem;
+
+					continue;
+				}
+				#endif /* MDEBUG */
+
+				for (int s_index = 0; s_index < (int)duplicate->scopes.size(); s_index++) {
+					for (map<int, AbstractNode*>::iterator it = duplicate->scopes[s_index]->nodes.begin();
+							it != duplicate->scopes[s_index]->nodes.end(); it++) {
+						it->second->average_instances_per_run /= MEASURE_ITERS;
+					}
+				}
+
 				double sum_score = 0.0;
 				for (int d_index = 0; d_index < MEASURE_ITERS; d_index++) {
 					sum_score += target_vals[d_index];
 				}
 				duplicate->average_score = sum_score / MEASURE_ITERS;
+				duplicate->decision_quality = sum_score_difference / branch_count;
 
 				duplicate->max_num_actions = max_num_actions;
 				duplicate->num_actions_limit = 10*duplicate->max_num_actions + 10;

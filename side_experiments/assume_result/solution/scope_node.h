@@ -46,6 +46,17 @@ public:
 						  std::vector<ContextLayer>& context,
 						  RunHelper& run_helper);
 
+	void flip_gather_activate(AbstractNode*& curr_node,
+							  Problem* problem,
+							  std::vector<ContextLayer>& context,
+							  RunHelper& run_helper,
+							  std::vector<int>& branch_node_indexes);
+	void flip_activate(AbstractNode*& curr_node,
+					   Problem* problem,
+					   std::vector<ContextLayer>& context,
+					   RunHelper& run_helper,
+					   int target_branch_node_index);
+
 	#if defined(MDEBUG) && MDEBUG
 	void verify_activate(AbstractNode*& curr_node,
 						 Problem* problem,
