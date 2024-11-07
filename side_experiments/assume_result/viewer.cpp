@@ -35,6 +35,11 @@ int main(int argc, char* argv[]) {
 	solution = new Solution();
 	solution->load("", "main");
 
+	cout << "solution->curr_true_score: " << solution->curr_true_score << endl;
+	cout << "solution->best_true_score: " << solution->best_true_score << endl;
+	cout << "solution->best_true_score_timestamp: " << solution->best_true_score_timestamp << endl;
+	cout << "solution->curr_time_penalty: " << solution->curr_time_penalty << endl;
+
 	{
 		Problem* problem = problem_type->get_problem();
 
@@ -50,8 +55,9 @@ int main(int argc, char* argv[]) {
 		if (run_helper.exceeded_limit) {
 			target_val = -1.0;
 		} else {
-			target_val = problem->score_result(run_helper.num_analyze,
-											   run_helper.num_actions);
+			target_val = problem->score_result();
+			target_val -= 0.05 * run_helper.num_actions * solution->curr_time_penalty;
+			target_val -= run_helper.num_analyze * solution->curr_time_penalty;
 		}
 		cout << "target_val: " << target_val << endl;
 

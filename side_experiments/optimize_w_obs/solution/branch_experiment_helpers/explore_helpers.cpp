@@ -100,6 +100,8 @@ bool BranchExperiment::explore_activate(
 
 				this->curr_scopes.push_back(NULL);
 			}
+
+			this->curr_is_mimic = true;
 		} else {
 			/**
 			 * - always give raw actions a large weight
@@ -140,6 +142,8 @@ bool BranchExperiment::explore_activate(
 						run_helper);
 				}
 			}
+
+			this->curr_is_mimic = false;
 		}
 
 		curr_node = this->curr_exit_next_node;
@@ -182,6 +186,8 @@ void BranchExperiment::explore_backprop(
 				this->best_actions = this->curr_actions;
 				this->best_scopes = this->curr_scopes;
 				this->best_exit_next_node = this->curr_exit_next_node;
+				// temp
+				this->best_is_mimic = this->curr_is_mimic;
 
 				this->curr_step_types.clear();
 				this->curr_actions.clear();
@@ -215,6 +221,8 @@ void BranchExperiment::explore_backprop(
 				this->best_actions = this->curr_actions;
 				this->best_scopes = this->curr_scopes;
 				this->best_exit_next_node = this->curr_exit_next_node;
+				// temp
+				this->best_is_mimic = this->curr_is_mimic;
 
 				this->curr_step_types.clear();
 				this->curr_actions.clear();

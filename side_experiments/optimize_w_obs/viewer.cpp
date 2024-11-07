@@ -38,6 +38,8 @@ int main(int argc, char* argv[]) {
 	solution = new Solution();
 	solution->load("", "main");
 
+	cout << "solution->num_mimic: " << solution->num_mimic << endl;
+
 	{
 		Problem* problem = problem_type->get_problem();
 

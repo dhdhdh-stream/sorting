@@ -109,6 +109,8 @@ void PassThroughExperiment::explore_activate(
 
 				this->curr_scopes.push_back(NULL);
 			}
+
+			this->curr_is_mimic = true;
 		} else {
 			/**
 			 * - always give raw actions a large weight
@@ -149,6 +151,8 @@ void PassThroughExperiment::explore_activate(
 						run_helper);
 				}
 			}
+
+			this->curr_is_mimic = false;
 		}
 
 		this->state_iter = 0;
@@ -279,6 +283,7 @@ void PassThroughExperiment::explore_backprop(
 			this->best_actions = this->curr_actions;
 			this->best_scopes = this->curr_scopes;
 			this->best_exit_next_node = this->curr_exit_next_node;
+			this->best_is_mimic = this->curr_is_mimic;
 
 			this->curr_score = 0.0;
 			this->curr_step_types.clear();

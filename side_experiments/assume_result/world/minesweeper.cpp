@@ -337,8 +337,7 @@ void Minesweeper::perform_action(Action action) {
 	}
 }
 
-double Minesweeper::score_result(int num_analyze,
-								 int num_actions) {
+double Minesweeper::score_result() {
 	// // temp
 	// if (this->current_x != 4
 	// 		|| this->current_y != 4) {
@@ -373,14 +372,6 @@ double Minesweeper::score_result(int num_analyze,
 
 	score += 0.01*curr_revealed;
 
-	/**
-	 * TODO: potentially change cost of actions periodically
-	 */
-	score -= 0.00001*num_analyze;
-	// score -= 0.000005*num_actions;
-	score -= 0.00005*num_actions;	// actually works great (?)
-	// score -= 0.0002*num_actions;		// easily stuck in local maxima, but can also lead to efficient solution
-
 	if (this->hit_mine) {
 		score -= 1.0;
 	}
@@ -395,13 +386,7 @@ vector<double> Minesweeper::get_location() {
 	return vector<double>{(double)this->current_x, (double)this->current_y};
 }
 
-void Minesweeper::return_to_location(vector<double>& location,
-									 int& num_analyze,
-									 int& num_actions) {
-	num_analyze += 25;
-	num_actions += abs(this->current_x - location[0]);
-	num_actions += abs(this->current_y - location[1]);
-
+void Minesweeper::return_to_location(vector<double>& location) {
 	this->current_x = location[0];
 	this->current_y = location[1];
 

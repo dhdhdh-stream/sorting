@@ -51,12 +51,16 @@ public:
 	std::vector<ActionNode*> curr_actions;
 	std::vector<ScopeNode*> curr_scopes;
 	AbstractNode* curr_exit_next_node;
+	// temp
+	bool curr_is_mimic;
 
 	double best_surprise;
 	std::vector<int> best_step_types;
 	std::vector<ActionNode*> best_actions;
 	std::vector<ScopeNode*> best_scopes;
 	AbstractNode* best_exit_next_node;
+	// temp
+	bool best_is_mimic;
 
 	BranchNode* branch_node;
 	ActionNode* ending_node;

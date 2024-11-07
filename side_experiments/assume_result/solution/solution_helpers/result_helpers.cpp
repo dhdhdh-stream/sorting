@@ -42,8 +42,9 @@ void get_existing_result(Problem* original_problem,
 
 	double target_val;
 	if (!run_helper.exceeded_limit) {
-		target_val = copy_problem->score_result(run_helper.num_analyze,
-												run_helper.num_actions);
+		target_val = copy_problem->score_result();
+		target_val -= 0.05 * run_helper.num_actions * solution->curr_time_penalty;
+		target_val -= run_helper.num_analyze * solution->curr_time_penalty;
 	} else {
 		target_val = -1.0;
 	}

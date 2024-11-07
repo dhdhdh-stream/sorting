@@ -14,14 +14,20 @@
 
 using namespace std;
 
+const double STARTING_TIME_PENALTY = 0.001;
+
 Solution::Solution() {
 	// do nothing
 }
 
 Solution::Solution(Solution* original) {
 	this->timestamp = original->timestamp;
-	this->average_score = original->average_score;
-	this->decision_quality = original->decision_quality;
+	this->curr_score = original->curr_score;
+
+	this->curr_true_score = original->curr_true_score;
+	this->best_true_score = original->best_true_score;
+	this->best_true_score_timestamp = original->best_true_score_timestamp;
+	this->curr_time_penalty = original->curr_time_penalty;
 
 	for (int s_index = 0; s_index < (int)original->scopes.size(); s_index++) {
 		Scope* scope = new Scope();
@@ -52,8 +58,12 @@ Solution::~Solution() {
 
 void Solution::init() {
 	this->timestamp = 0;
-	this->average_score = -1.0;
-	this->decision_quality = 0.0;
+	this->curr_score = -1.0;
+
+	this->curr_true_score = -1.0;
+	this->best_true_score = -1.0;
+	this->best_true_score_timestamp = 0;
+	this->curr_time_penalty = STARTING_TIME_PENALTY;
 
 	/**
 	 * - even though scopes[0] will not be reused, still good to start with:
@@ -92,13 +102,25 @@ void Solution::load(string path,
 	getline(input_file, timestamp_line);
 	this->timestamp = stoi(timestamp_line);
 
-	string average_score_line;
-	getline(input_file, average_score_line);
-	this->average_score = stod(average_score_line);
+	string curr_score_line;
+	getline(input_file, curr_score_line);
+	this->curr_score = stod(curr_score_line);
 
-	string decision_quality_line;
-	getline(input_file, decision_quality_line);
-	this->decision_quality = stod(decision_quality_line);
+	string curr_true_score_line;
+	getline(input_file, curr_true_score_line);
+	this->curr_true_score = stod(curr_true_score_line);
+
+	string best_true_score_line;
+	getline(input_file, best_true_score_line);
+	this->best_true_score = stod(best_true_score_line);
+
+	string best_true_score_timestamp_line;
+	getline(input_file, best_true_score_timestamp_line);
+	this->best_true_score_timestamp = stoi(best_true_score_timestamp_line);
+
+	string curr_time_penalty_line;
+	getline(input_file, curr_time_penalty_line);
+	this->curr_time_penalty = stod(curr_time_penalty_line);
 
 	string num_scopes_line;
 	getline(input_file, num_scopes_line);
@@ -407,8 +429,12 @@ void Solution::save(string path,
 	output_file.open(path + "saves/" + name + "_temp.txt");
 
 	output_file << this->timestamp << endl;
-	output_file << this->average_score << endl;
-	output_file << this->decision_quality << endl;
+	output_file << this->curr_score << endl;
+
+	output_file << this->curr_true_score << endl;
+	output_file << this->best_true_score << endl;
+	output_file << this->best_true_score_timestamp << endl;
+	output_file << this->curr_time_penalty << endl;
 
 	output_file << this->scopes.size() << endl;
 

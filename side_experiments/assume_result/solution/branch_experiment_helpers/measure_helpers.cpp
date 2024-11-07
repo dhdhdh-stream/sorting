@@ -25,7 +25,7 @@ bool BranchExperiment::measure_activate(AbstractNode*& curr_node,
 
 	history->instance_count++;
 
-	run_helper.num_analyze += (1 + 2*this->new_analyze_size) * (1 + 2*this->new_analyze_size);
+	run_helper.num_analyze++;
 
 	vector<double> input_vals;
 	input_vals.reserve((1 + 2*this->new_analyze_size) * (1 + 2*this->new_analyze_size) + 2);
@@ -37,8 +37,8 @@ bool BranchExperiment::measure_activate(AbstractNode*& curr_node,
 					minesweeper->current_y + y_index));
 		}
 	}
-	input_vals.push_back(minesweeper->current_x);
-	input_vals.push_back(minesweeper->current_y);
+	// input_vals.push_back(minesweeper->current_x);
+	// input_vals.push_back(minesweeper->current_y);
 	this->new_network->activate(input_vals);
 
 	#if defined(MDEBUG) && MDEBUG

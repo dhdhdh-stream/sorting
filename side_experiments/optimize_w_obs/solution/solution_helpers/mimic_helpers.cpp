@@ -86,6 +86,10 @@ void mimic(Problem* problem,
 		 */
 		for (int a_index = 1; a_index < (int)mimic_action_networks.size(); a_index++) {
 			mimic_action_networks[a_index]->activate(output_state_vals);
+
+			if (mimic_action_networks[a_index]->output->acti_vals[0] < 0.0) {
+				mimic_action_networks[a_index]->output->acti_vals[0] = 0.0;
+			}
 		}
 
 		double sum_probability = 0.0;
@@ -101,6 +105,7 @@ void mimic(Problem* problem,
 				rand_val -= mimic_action_networks[a_index]->output->acti_vals[0];
 				if (rand_val <= 0.0) {
 					new_action = Action(a_index-1);
+					break;
 				} else {
 					a_index++;
 				}

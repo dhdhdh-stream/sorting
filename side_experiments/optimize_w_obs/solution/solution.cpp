@@ -37,6 +37,9 @@ Solution::Solution(Solution* original) {
 
 	this->max_num_actions = original->max_num_actions;
 	this->num_actions_limit = original->num_actions_limit;
+
+	// temp
+	this->num_mimic = original->num_mimic;
 }
 
 Solution::~Solution() {
@@ -73,6 +76,9 @@ void Solution::init() {
 
 	this->max_num_actions = 1;
 	this->num_actions_limit = 40;
+
+	// temp
+	this->num_mimic = 0;
 }
 
 void Solution::load(string path,
@@ -117,6 +123,10 @@ void Solution::load(string path,
 	this->num_actions_limit = 10*this->max_num_actions + 10;
 	#endif /* MDEBUG */
 
+	string num_mimic_line;
+	getline(input_file, num_mimic_line);
+	this->num_mimic = stoi(num_mimic_line);
+
 	input_file.close();
 }
 
@@ -153,6 +163,8 @@ void Solution::save(string path,
 	}
 
 	output_file << this->max_num_actions << endl;
+
+	output_file << this->num_mimic << endl;
 
 	output_file.close();
 

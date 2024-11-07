@@ -28,11 +28,18 @@ class AbstractNode;
 class Problem;
 class Scope;
 
+const int INCREASE_TIME_PENALTY_ITER = 6;
+const int DECREASE_TIME_PENALTY_ITER = 2;
+
 class Solution {
 public:
 	int timestamp;
-	double average_score;
-	double decision_quality;
+	double curr_score;
+
+	double curr_true_score;
+	double best_true_score;
+	int best_true_score_timestamp;
+	double curr_time_penalty;
 
 	std::vector<Scope*> scopes;
 

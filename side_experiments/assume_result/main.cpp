@@ -8,21 +8,8 @@
  *     - breaks down solution into modular segments
  */
 
-// TODO: to confirm if return node only useful for minesweeper in staying close to origin:
-// - return node can only go to local location
-
 // - can also try allowing return nodes only on scopes[0]
 //   - or only on new scopes
-
-// can also try trimming branches?
-// - make later parts more consistent?
-
-// try repeating scopes with no actions in between
-// - try to force good coverage and consistency from them?
-
-// move experiment selection and NewActionExperiment existing activation into result_activate
-
-// then weigh NewActionExperiment towards repetition
 
 // - for minesweeper, initially, only immediate local matters
 //   - but after a point, global location in grid really matters
@@ -50,6 +37,10 @@
 // to determine if actions consistent, perhaps randomly flip a later decision and see if it still aligns?
 // i.e., measure decision making quality
 // - if making worse decisions, then don't take?
+
+// TODO: test if score penalty is the bottleneck
+// - then test if return node without scopes[0] works
+// - also test if analyze_size always 2 works
 
 #include <chrono>
 #include <iostream>
@@ -140,8 +131,9 @@ int main(int argc, char* argv[]) {
 
 			double target_val;
 			if (!run_helper.exceeded_limit) {
-				target_val = problem->score_result(run_helper.num_analyze,
-												   run_helper.num_actions);
+				target_val = problem->score_result();
+				target_val -= 0.05 * run_helper.num_actions * solution->curr_time_penalty;
+				target_val -= run_helper.num_analyze * solution->curr_time_penalty;
 			} else {
 				target_val = -1.0;
 			}
@@ -200,7 +192,8 @@ int main(int argc, char* argv[]) {
 				duplicate->clear_verify();
 				#endif /* MDEBUG */
 
-				vector<double> target_vals;
+				double sum_score = 0.0;
+				double sum_true_score = 0.0;
 				int max_num_actions = 0;
 				#if defined(MDEBUG) && MDEBUG
 				bool measure_early_exit = false;
@@ -225,15 +218,15 @@ int main(int argc, char* argv[]) {
 						max_num_actions = run_helper.num_actions;
 					}
 
-					double target_val;
 					if (!run_helper.exceeded_limit) {
-						target_val = problem->score_result(run_helper.num_analyze,
-														   run_helper.num_actions);
+						double target_val = problem->score_result();
+						sum_score += target_val - 0.05 * run_helper.num_actions * solution->curr_time_penalty
+							- run_helper.num_analyze * solution->curr_time_penalty;
+						sum_true_score += target_val;
 					} else {
-						target_val = -1.0;
+						sum_score += -1.0;
+						sum_true_score += -1.0;
 					}
-
-					target_vals.push_back(target_val);
 
 					delete problem;
 
@@ -259,105 +252,6 @@ int main(int argc, char* argv[]) {
 				}
 				#endif /* MDEBUG */
 
-				double sum_score_difference = 0.0;
-				int branch_count = 0;
-				#if defined(MDEBUG) && MDEBUG
-				bool flip_early_exit = false;
-				#endif /* MDEBUG */
-				for (int iter_index = 0; iter_index < MEASURE_ITERS; iter_index++) {
-					Problem* problem = problem_type->get_problem();
-
-					vector<int> branch_node_indexes;
-					double original_score;
-					{
-						Problem* copy_problem = problem->copy_and_reset();
-
-						RunHelper run_helper;
-						#if defined(MDEBUG) && MDEBUG
-						run_helper.starting_run_seed = run_index;
-						run_helper.curr_run_seed = xorshift(run_helper.starting_run_seed);
-						run_index++;
-						#endif /* MDEBUG */
-
-						vector<ContextLayer> context;
-						duplicate->scopes[0]->flip_gather_activate(
-							copy_problem,
-							context,
-							run_helper,
-							branch_node_indexes);
-
-						if (!run_helper.exceeded_limit) {
-							original_score = copy_problem->score_result(run_helper.num_analyze,
-																		run_helper.num_actions);
-						} else {
-							original_score = -1.0;
-						}
-
-						#if defined(MDEBUG) && MDEBUG
-						if (run_index%2000 == 0) {
-							flip_early_exit = true;
-							break;
-						}
-						#endif /* MDEBUG */
-					}
-
-					for (int b_index = 0; b_index < (int)branch_node_indexes.size(); b_index++) {
-						Problem* copy_problem = problem->copy_and_reset();
-
-						RunHelper run_helper;
-						#if defined(MDEBUG) && MDEBUG
-						run_helper.starting_run_seed = run_index;
-						run_helper.curr_run_seed = xorshift(run_helper.starting_run_seed);
-						run_index++;
-						#endif /* MDEBUG */
-
-						vector<ContextLayer> context;
-						duplicate->scopes[0]->flip_activate(
-							copy_problem,
-							context,
-							run_helper,
-							branch_node_indexes[b_index]);
-
-						double target_val;
-						if (!run_helper.exceeded_limit) {
-							target_val = copy_problem->score_result(run_helper.num_analyze,
-																	run_helper.num_actions);
-						} else {
-							target_val = -1.0;
-						}
-
-						sum_score_difference += (original_score - target_val);
-						branch_count++;
-
-						#if defined(MDEBUG) && MDEBUG
-						if (run_index%2000 == 0) {
-							flip_early_exit = true;
-							break;
-						}
-						#endif /* MDEBUG */
-					}
-
-					#if defined(MDEBUG) && MDEBUG
-					if (flip_early_exit) {
-						break;
-					}
-					#endif /* MDEBUG */
-				}
-
-				#if defined(MDEBUG) && MDEBUG
-				if (flip_early_exit) {
-					delete duplicate;
-
-					delete solution;
-					solution = new Solution();
-					solution->load("", "main");
-
-					delete problem;
-
-					continue;
-				}
-				#endif /* MDEBUG */
-
 				for (int s_index = 0; s_index < (int)duplicate->scopes.size(); s_index++) {
 					for (map<int, AbstractNode*>::iterator it = duplicate->scopes[s_index]->nodes.begin();
 							it != duplicate->scopes[s_index]->nodes.end(); it++) {
@@ -365,17 +259,13 @@ int main(int argc, char* argv[]) {
 					}
 				}
 
-				double sum_score = 0.0;
-				for (int d_index = 0; d_index < MEASURE_ITERS; d_index++) {
-					sum_score += target_vals[d_index];
-				}
-				duplicate->average_score = sum_score / MEASURE_ITERS;
-				duplicate->decision_quality = sum_score_difference / branch_count;
+				duplicate->curr_score = sum_score / MEASURE_ITERS;
+				duplicate->curr_true_score = sum_true_score / MEASURE_ITERS;
 
 				duplicate->max_num_actions = max_num_actions;
 				duplicate->num_actions_limit = 10*duplicate->max_num_actions + 10;
 
-				cout << "duplicate->average_score: " << duplicate->average_score << endl;
+				cout << "duplicate->curr_score: " << duplicate->curr_score << endl;
 
 				ofstream display_file;
 				display_file.open("../display.txt");
@@ -383,6 +273,18 @@ int main(int argc, char* argv[]) {
 				display_file.close();
 
 				duplicate->timestamp++;
+
+				if (duplicate->timestamp % INCREASE_TIME_PENALTY_ITER == 0) {
+					duplicate->curr_time_penalty *= 1.25;
+				}
+				if ((duplicate->best_true_score_timestamp - duplicate->timestamp)
+						% DECREASE_TIME_PENALTY_ITER == 0) {
+					duplicate->curr_time_penalty *= 0.8;
+				}
+				if (duplicate->curr_true_score > duplicate->best_true_score) {
+					duplicate->best_true_score = duplicate->curr_true_score;
+					duplicate->best_true_score_timestamp = duplicate->timestamp;
+				}
 
 				duplicate->update_subproblem();
 

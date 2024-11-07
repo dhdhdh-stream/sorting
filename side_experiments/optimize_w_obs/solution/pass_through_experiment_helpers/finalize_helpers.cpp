@@ -108,6 +108,11 @@ void PassThroughExperiment::new_pass_through(Solution* duplicate) {
 		}
 	}
 
+	// temp
+	if (this->best_is_mimic) {
+		duplicate->num_mimic++;
+	}
+
 	this->best_actions.clear();
 	this->best_scopes.clear();
 	this->ending_node = NULL;

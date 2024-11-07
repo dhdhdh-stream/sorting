@@ -38,6 +38,9 @@ public:
 	std::vector<unsigned long> verify_seeds;
 	#endif /* MDEBUG */
 
+	// temp
+	int num_mimic;
+
 	Solution();
 	Solution(Solution* original);
 	~Solution();

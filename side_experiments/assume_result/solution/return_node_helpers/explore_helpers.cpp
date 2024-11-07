@@ -14,9 +14,7 @@ void ReturnNode::explore_activate(Problem* problem,
 		if (it != context.back().location_history.end()) {
 			vector<double> world_location = problem_type->relative_to_world(
 				it->second, this->location);
-			problem->return_to_location(world_location,
-										run_helper.num_analyze,
-										run_helper.num_actions);
+			problem->return_to_location(world_location);
 		}
 	}
 

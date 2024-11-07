@@ -21,7 +21,7 @@ void BranchNode::new_action_capture_verify_activate(
 		RunHelper& run_helper) {
 	Minesweeper* minesweeper = (Minesweeper*)problem;
 
-	run_helper.num_analyze += (1 + 2*this->analyze_size) * (1 + 2*this->analyze_size);
+	run_helper.num_analyze++;
 
 	vector<double> input_vals;
 	input_vals.reserve((1 + 2*this->analyze_size) * (1 + 2*this->analyze_size) + 2);
@@ -32,8 +32,8 @@ void BranchNode::new_action_capture_verify_activate(
 					minesweeper->current_y + y_index));
 		}
 	}
-	input_vals.push_back(minesweeper->current_x);
-	input_vals.push_back(minesweeper->current_y);
+	// input_vals.push_back(minesweeper->current_x);
+	// input_vals.push_back(minesweeper->current_y);
 	this->network->activate(input_vals);
 
 	this->verify_scores.push_back(this->network->output->acti_vals[0]);

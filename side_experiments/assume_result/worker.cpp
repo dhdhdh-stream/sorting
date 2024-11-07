@@ -96,8 +96,9 @@ int main(int argc, char* argv[]) {
 
 			double target_val;
 			if (!run_helper.exceeded_limit) {
-				target_val = problem->score_result(run_helper.num_analyze,
-												   run_helper.num_actions);
+				target_val = problem->score_result();
+				target_val -= 0.05 * run_helper.num_actions * solution->curr_time_penalty;
+				target_val -= run_helper.num_analyze * solution->curr_time_penalty;
 			} else {
 				target_val = -1.0;
 			}
@@ -131,7 +132,8 @@ int main(int argc, char* argv[]) {
 				clean_scope(experiment_scope);
 				duplicate->clean();
 
-				vector<double> target_vals;
+				double sum_score = 0.0;
+				double sum_true_score = 0.0;
 				int max_num_actions = 0;
 				bool measure_early_exit = false;
 				for (int iter_index = 0; iter_index < MEASURE_ITERS; iter_index++) {
@@ -149,15 +151,15 @@ int main(int argc, char* argv[]) {
 						max_num_actions = run_helper.num_actions;
 					}
 
-					double target_val;
 					if (!run_helper.exceeded_limit) {
-						target_val = problem->score_result(run_helper.num_analyze,
-														   run_helper.num_actions);
+						double target_val = problem->score_result();
+						sum_score += target_val - 0.05 * run_helper.num_actions * solution->curr_time_penalty
+							- run_helper.num_analyze * solution->curr_time_penalty;
+						sum_true_score += target_val;
 					} else {
-						target_val = -1.0;
+						sum_score += -1.0;
+						sum_true_score += -1.0;
 					}
-
-					target_vals.push_back(target_val);
 
 					delete problem;
 
@@ -196,115 +198,6 @@ int main(int argc, char* argv[]) {
 					continue;
 				}
 
-				double sum_score_difference = 0.0;
-				int branch_count = 0;
-				bool flip_early_exit = false;
-				for (int iter_index = 0; iter_index < MEASURE_ITERS; iter_index++) {
-					Problem* problem = problem_type->get_problem();
-
-					vector<int> branch_node_indexes;
-					double original_score;
-					{
-						Problem* copy_problem = problem->copy_and_reset();
-
-						RunHelper run_helper;
-
-						vector<ContextLayer> context;
-						duplicate->scopes[0]->flip_gather_activate(
-							copy_problem,
-							context,
-							run_helper,
-							branch_node_indexes);
-
-						if (!run_helper.exceeded_limit) {
-							original_score = copy_problem->score_result(run_helper.num_analyze,
-																		run_helper.num_actions);
-						} else {
-							original_score = -1.0;
-						}
-
-						auto curr_time = chrono::high_resolution_clock::now();
-						auto time_diff = chrono::duration_cast<chrono::seconds>(curr_time - start_time);
-						if (time_diff.count() >= 20) {
-							start_time = curr_time;
-
-							cout << "alive" << endl;
-
-							ifstream solution_save_file;
-							solution_save_file.open("workers/saves/main.txt");
-							string timestamp_line;
-							getline(solution_save_file, timestamp_line);
-							int curr_timestamp = stoi(timestamp_line);
-							solution_save_file.close();
-
-							if (curr_timestamp > solution->timestamp) {
-								flip_early_exit = true;
-								break;
-							}
-						}
-					}
-
-					for (int b_index = 0; b_index < (int)branch_node_indexes.size(); b_index++) {
-						Problem* copy_problem = problem->copy_and_reset();
-
-						RunHelper run_helper;
-
-						vector<ContextLayer> context;
-						duplicate->scopes[0]->flip_activate(
-							copy_problem,
-							context,
-							run_helper,
-							branch_node_indexes[b_index]);
-
-						double target_val;
-						if (!run_helper.exceeded_limit) {
-							target_val = copy_problem->score_result(run_helper.num_analyze,
-																	run_helper.num_actions);
-						} else {
-							target_val = -1.0;
-						}
-
-						sum_score_difference += (original_score - target_val);
-						branch_count++;
-
-						auto curr_time = chrono::high_resolution_clock::now();
-						auto time_diff = chrono::duration_cast<chrono::seconds>(curr_time - start_time);
-						if (time_diff.count() >= 20) {
-							start_time = curr_time;
-
-							cout << "alive" << endl;
-
-							ifstream solution_save_file;
-							solution_save_file.open("workers/saves/main.txt");
-							string timestamp_line;
-							getline(solution_save_file, timestamp_line);
-							int curr_timestamp = stoi(timestamp_line);
-							solution_save_file.close();
-
-							if (curr_timestamp > solution->timestamp) {
-								flip_early_exit = true;
-								break;
-							}
-						}
-					}
-
-					if (flip_early_exit) {
-						break;
-					}
-				}
-
-				if (flip_early_exit) {
-					delete duplicate;
-
-					delete solution;
-					solution = new Solution();
-					solution->load("", "main");
-
-					delete problem;
-
-					continue;
-				}
-
 				for (int s_index = 0; s_index < (int)duplicate->scopes.size(); s_index++) {
 					for (map<int, AbstractNode*>::iterator it = duplicate->scopes[s_index]->nodes.begin();
 							it != duplicate->scopes[s_index]->nodes.end(); it++) {
@@ -312,18 +205,26 @@ int main(int argc, char* argv[]) {
 					}
 				}
 
-				double sum_score = 0.0;
-				for (int d_index = 0; d_index < MEASURE_ITERS; d_index++) {
-					sum_score += target_vals[d_index];
-				}
-				duplicate->average_score = sum_score / MEASURE_ITERS;
-				duplicate->decision_quality = sum_score_difference / branch_count;
+				duplicate->curr_score = sum_score / MEASURE_ITERS;
+				duplicate->curr_true_score = sum_true_score / MEASURE_ITERS;
 
 				duplicate->max_num_actions = max_num_actions;
 
-				cout << "duplicate->average_score: " << duplicate->average_score << endl;
+				cout << "duplicate->curr_score: " << duplicate->curr_score << endl;
 
 				duplicate->timestamp++;
+
+				if (duplicate->timestamp % INCREASE_TIME_PENALTY_ITER == 0) {
+					duplicate->curr_time_penalty *= 1.25;
+				}
+				if ((duplicate->best_true_score_timestamp - duplicate->timestamp)
+						% DECREASE_TIME_PENALTY_ITER == 0) {
+					duplicate->curr_time_penalty *= 0.8;
+				}
+				if (duplicate->curr_true_score > duplicate->best_true_score) {
+					duplicate->best_true_score = duplicate->curr_true_score;
+					duplicate->best_true_score_timestamp = duplicate->timestamp;
+				}
 
 				duplicate->update_subproblem();
 
