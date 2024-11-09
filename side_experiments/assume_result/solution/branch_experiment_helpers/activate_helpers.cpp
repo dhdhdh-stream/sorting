@@ -3,8 +3,10 @@
 #include <iostream>
 
 #include "abstract_node.h"
+#include "branch_node.h"
 #include "constants.h"
 #include "globals.h"
+#include "problem.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
@@ -99,6 +101,47 @@ bool BranchExperiment::activate(AbstractNode* experiment_node,
 	}
 
 	return result;
+}
+
+void BranchExperiment::split_activate(BranchNode* branch_node,
+									  bool existing_is_branch,
+									  Problem* problem,
+									  vector<ContextLayer>& context,
+									  RunHelper& run_helper) {
+	if (this->state == BRANCH_EXPERIMENT_STATE_MEASURE) {
+		BranchExperimentHistory* history = (BranchExperimentHistory*)run_helper.experiment_histories.back();
+
+		Problem* copy_problem = problem->copy_snapshot();
+
+		RunHelper copy_run_helper = run_helper;
+		copy_run_helper.is_split = true;
+
+		vector<ContextLayer> copy_context = context;
+		if (existing_is_branch) {
+			copy_context.back().node = branch_node->original_next_node;
+		} else {
+			copy_context.back().node = branch_node->branch_next_node;
+		}
+		solution->scopes[0]->continue_experiment_activate(
+			copy_problem,
+			copy_context,
+			0,
+			copy_run_helper);
+
+		double target_val;
+		if (!run_helper.exceeded_limit) {
+			target_val = copy_problem->score_result();
+			target_val -= 0.05 * run_helper.num_actions * solution->curr_time_penalty;
+			target_val -= run_helper.num_analyze * solution->curr_time_penalty;
+		} else {
+			target_val = -1.0;
+		}
+
+		history->existing_impacts.push_back(branch_node->impact);
+		history->new_impacts.push_back(run_helper.result - target_val);
+
+		delete copy_problem;
+	}
 }
 
 void BranchExperiment::backprop(double target_val,

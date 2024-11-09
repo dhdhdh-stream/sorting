@@ -42,6 +42,10 @@
 // - then test if return node without scopes[0] works
 // - also test if analyze_size always 2 works
 
+// - actually no, still base on decision making quality
+//   - good decisions made on mismatched reasoning still OK
+//   - based on prediction will tend to fix the location, even bad ones
+
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -101,6 +105,8 @@ int main(int argc, char* argv[]) {
 			solution = new Solution();
 			solution->load("", "main");
 
+			update_impact();
+
 			continue;
 		}
 		#endif /* MDEBUG */
@@ -124,7 +130,7 @@ int main(int argc, char* argv[]) {
 			#endif /* MDEBUG */
 
 			vector<ContextLayer> context;
-			solution->scopes[0]->activate(
+			solution->scopes[0]->experiment_activate(
 				problem,
 				context,
 				run_helper);
@@ -209,7 +215,7 @@ int main(int argc, char* argv[]) {
 					#endif /* MDEBUG */
 
 					vector<ContextLayer> context;
-					duplicate->scopes[0]->measure_activate(
+					duplicate->scopes[0]->activate(
 						problem,
 						context,
 						run_helper);
@@ -245,6 +251,8 @@ int main(int argc, char* argv[]) {
 					delete solution;
 					solution = new Solution();
 					solution->load("", "main");
+
+					update_impact();
 
 					delete problem;
 
@@ -293,6 +301,8 @@ int main(int argc, char* argv[]) {
 				solution = duplicate;
 
 				solution->save("", "main");
+
+				update_impact();
 				#else
 				delete duplicate;
 				#endif /* MDEBUG */

@@ -35,6 +35,8 @@ BranchNode::BranchNode(BranchNode* original) {
 	this->original_next_node_id = original->original_next_node_id;
 	this->branch_next_node_id = original->branch_next_node_id;
 
+	this->impact = original->impact;
+
 	this->average_instances_per_run = 0.0;
 
 	#if defined(MDEBUG) && MDEBUG
@@ -72,6 +74,8 @@ void BranchNode::save(ofstream& output_file) {
 	output_file << this->original_next_node_id << endl;
 	output_file << this->branch_next_node_id << endl;
 
+	output_file << this->impact << endl;
+
 	output_file << this->average_instances_per_run << endl;
 }
 
@@ -90,6 +94,10 @@ void BranchNode::load(ifstream& input_file) {
 	string branch_next_node_id_line;
 	getline(input_file, branch_next_node_id_line);
 	this->branch_next_node_id = stoi(branch_next_node_id_line);
+
+	string impact_line;
+	getline(input_file, impact_line);
+	this->impact = stod(impact_line);
 
 	string average_instances_per_run_line;
 	getline(input_file, average_instances_per_run_line);

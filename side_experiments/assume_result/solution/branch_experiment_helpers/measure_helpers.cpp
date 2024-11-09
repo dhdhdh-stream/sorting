@@ -12,6 +12,7 @@
 #include "return_node.h"
 #include "scope.h"
 #include "scope_node.h"
+#include "solution.h"
 #include "utilities.h"
 
 using namespace std;
@@ -52,6 +53,48 @@ bool BranchExperiment::measure_activate(AbstractNode*& curr_node,
 	#else
 	bool decision_is_branch = this->new_network->output->acti_vals[0] >= 0.0;
 	#endif /* MDEBUG */
+
+	if (!run_helper.is_split) {
+		Problem* copy_problem = problem->copy_snapshot();
+
+		RunHelper copy_run_helper = run_helper;
+		copy_run_helper.is_split = true;
+
+		vector<ContextLayer> copy_context = context;
+		if (decision_is_branch) {
+			copy_context.back().node = curr_node;
+		} else {
+			if (this->best_step_types.size() == 0) {
+				copy_context.back().node = this->best_exit_next_node;
+			} else {
+				if (this->best_step_types[0] == STEP_TYPE_ACTION) {
+					copy_context.back().node = this->best_actions[0];
+				} else if (this->best_step_types[0] == STEP_TYPE_SCOPE) {
+					copy_context.back().node = this->best_scopes[0];
+				} else {
+					copy_context.back().node = this->best_returns[0];
+				}
+			}
+		}
+		solution->scopes[0]->continue_activate(
+			copy_problem,
+			copy_context,
+			0,
+			copy_run_helper);
+
+		double target_val;
+		if (!run_helper.exceeded_limit) {
+			target_val = copy_problem->score_result();
+			target_val -= 0.05 * run_helper.num_actions * solution->curr_time_penalty;
+			target_val -= run_helper.num_analyze * solution->curr_time_penalty;
+		} else {
+			target_val = -1.0;
+		}
+
+		history->flip_target_vals.push_back(target_val);
+
+		delete copy_problem;
+	}
 
 	if (decision_is_branch) {
 		if (this->best_step_types.size() == 0) {

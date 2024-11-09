@@ -48,7 +48,6 @@ void get_existing_result(Problem* original_problem,
 	} else {
 		target_val = -1.0;
 	}
-
 	run_helper.result = target_val;
 
 	delete copy_problem;

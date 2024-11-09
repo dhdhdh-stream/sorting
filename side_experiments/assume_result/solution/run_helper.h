@@ -13,6 +13,7 @@ class ScopeNode;
 class RunHelper {
 public:
 	double result;
+	bool is_split;
 
 	bool exceeded_limit;
 

@@ -6,11 +6,8 @@
 #include "branch_node.h"
 #include "constants.h"
 #include "globals.h"
-#include "minesweeper.h"
-#include "new_action_experiment.h"
 #include "return_node.h"
 #include "scope_node.h"
-#include "solution.h"
 
 using namespace std;
 
@@ -68,12 +65,15 @@ void Scope::activate(Problem* problem,
 	context.push_back(ContextLayer());
 
 	context.back().scope = this;
+	context.back().node = NULL;
 
 	AbstractNode* curr_node = this->nodes[0];
 	while (true) {
 		if (curr_node == NULL) {
 			break;
 		}
+
+		curr_node->average_instances_per_run += 1.0;
 
 		node_activate_helper(curr_node,
 							 problem,
@@ -82,15 +82,6 @@ void Scope::activate(Problem* problem,
 
 		if (run_helper.exceeded_limit) {
 			break;
-		}
-	}
-
-	if (this->new_action_experiment != NULL) {
-		if (run_helper.experiment_histories.size() == 1
-				&& run_helper.experiment_histories.back()->experiment == this->new_action_experiment) {
-			this->new_action_experiment->back_activate(
-				context,
-				run_helper);
 		}
 	}
 

@@ -4,21 +4,22 @@
 
 #include "abstract_experiment.h"
 #include "globals.h"
+#include "new_action_experiment.h"
 #include "problem.h"
 #include "scope.h"
 #include "solution.h"
 
 using namespace std;
 
-void ScopeNode::result_activate(AbstractNode*& curr_node,
-								Problem* problem,
-								vector<ContextLayer>& context,
-								RunHelper& run_helper) {
+void ScopeNode::experiment_activate(AbstractNode*& curr_node,
+									Problem* problem,
+									vector<ContextLayer>& context,
+									RunHelper& run_helper) {
 	context.back().node = this;
 
-	this->scope->result_activate(problem,
-								 context,
-								 run_helper);
+	this->scope->experiment_activate(problem,
+									 context,
+									 run_helper);
 
 	context.back().node = NULL;
 
@@ -29,22 +30,15 @@ void ScopeNode::result_activate(AbstractNode*& curr_node,
 		run_helper.exceeded_limit = true;
 		return;
 	}
-	if (run_helper.experiments_seen_order.size() == 0) {
-		if (solution->subproblem_id == -1
-				|| this->parent->id >= solution->subproblem_id) {
-			map<pair<AbstractNode*,bool>, int>::iterator it = run_helper.nodes_seen.find({this, false});
-			if (it == run_helper.nodes_seen.end()) {
-				run_helper.nodes_seen[{this, false}] = 1;
-			} else {
-				it->second++;
-			}
-		}
+	if (run_helper.experiment_histories.size() == 1
+			&& run_helper.experiment_histories.back()->experiment == this->parent->new_action_experiment) {
+		context.back().nodes_seen.push_back({this, false});
 	}
 	context.back().location_history[this] = problem->get_location();
 
 	if (!run_helper.exceeded_limit) {
 		for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
-			bool is_selected = this->experiments[e_index]->result_activate(
+			bool is_selected = this->experiments[e_index]->activate(
 				this,
 				false,
 				curr_node,

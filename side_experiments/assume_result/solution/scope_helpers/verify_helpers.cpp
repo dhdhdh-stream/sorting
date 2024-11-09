@@ -68,6 +68,7 @@ void Scope::verify_activate(Problem* problem,
 	context.push_back(ContextLayer());
 
 	context.back().scope = this;
+	context.back().node = NULL;
 
 	AbstractNode* curr_node = this->nodes[0];
 	while (true) {

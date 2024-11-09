@@ -7,6 +7,7 @@
 #include "context_layer.h"
 
 class AbstractNode;
+class BranchNode;
 class Problem;
 class Scope;
 class Solution;
@@ -47,6 +48,11 @@ public:
 						  Problem* problem,
 						  std::vector<ContextLayer>& context,
 						  RunHelper& run_helper) = 0;
+	virtual void split_activate(BranchNode* branch_node,
+								bool existing_is_branch,
+								Problem* problem,
+								std::vector<ContextLayer>& context,
+								RunHelper& run_helper) = 0;
 	virtual void backprop(double target_val,
 						  RunHelper& run_helper) = 0;
 

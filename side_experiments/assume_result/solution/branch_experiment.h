@@ -69,6 +69,8 @@ public:
 
 	double combined_score;
 
+	double impact;
+
 	std::vector<std::vector<double>> obs_histories;
 	std::vector<double> target_val_histories;
 
@@ -96,6 +98,11 @@ public:
 				  Problem* problem,
 				  std::vector<ContextLayer>& context,
 				  RunHelper& run_helper);
+	void split_activate(BranchNode* branch_node,
+						bool existing_is_branch,
+						Problem* problem,
+						std::vector<ContextLayer>& context,
+						RunHelper& run_helper);
 	void backprop(double target_val,
 				  RunHelper& run_helper);
 
@@ -158,6 +165,11 @@ public:
 	int instance_count;
 
 	bool has_target;
+
+	std::vector<double> flip_target_vals;
+
+	std::vector<double> existing_impacts;
+	std::vector<double> new_impacts;
 
 	BranchExperimentHistory(BranchExperiment* experiment);
 };

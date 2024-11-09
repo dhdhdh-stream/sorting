@@ -9,15 +9,13 @@ public:
 
 	virtual std::vector<double> get_observations() = 0;
 	virtual void perform_action(Action action) = 0;
-	/**
-	 * TODO: use actual time spent?
-	 */
 	virtual double score_result() = 0;
 
 	virtual std::vector<double> get_location() = 0;
 	virtual void return_to_location(std::vector<double>& location) = 0;
 
 	virtual Problem* copy_and_reset() = 0;
+	virtual Problem* copy_snapshot() = 0;
 
 	virtual void print() = 0;
 };

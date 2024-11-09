@@ -39,6 +39,9 @@ public:
 	double curr_true_score;
 	double best_true_score;
 	int best_true_score_timestamp;
+	/**
+	 * TODO: use actual time spent?
+	 */
 	double curr_time_penalty;
 
 	std::vector<Scope*> scopes;

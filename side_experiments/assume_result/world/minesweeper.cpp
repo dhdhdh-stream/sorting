@@ -422,6 +422,20 @@ Problem* Minesweeper::copy_and_reset() {
 	return new_problem;
 }
 
+Problem* Minesweeper::copy_snapshot() {
+	Minesweeper* new_problem = new Minesweeper();
+
+	new_problem->world = this->world;
+	new_problem->revealed = this->revealed;
+	new_problem->flagged = this->flagged;
+	new_problem->current_x = this->current_x;
+	new_problem->current_y = this->current_y;
+	new_problem->hit_mine = this->hit_mine;
+	new_problem->starting_world = this->starting_world;
+
+	return new_problem;
+}
+
 void Minesweeper::print() {
 	for (int y_index = HEIGHT-1; y_index >= 0; y_index--) {
 		for (int x_index = 0; x_index < WIDTH; x_index++) {

@@ -38,9 +38,9 @@ void NewActionExperiment::test_activate(
 
 	history->instance_count++;
 
-	this->new_scope->activate(problem,
-							  context,
-							  run_helper);
+	this->new_scope->experiment_activate(problem,
+										 context,
+										 run_helper);
 
 	curr_node = this->test_location_exits[location_index];
 }

@@ -68,6 +68,7 @@ void Scope::result_activate(Problem* problem,
 	context.push_back(ContextLayer());
 
 	context.back().scope = this;
+	context.back().node = NULL;
 
 	if (this->new_action_experiment != NULL) {
 		this->new_action_experiment->pre_activate(context,

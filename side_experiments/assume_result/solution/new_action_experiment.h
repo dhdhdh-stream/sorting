@@ -87,6 +87,11 @@ public:
 				  RunHelper& run_helper);
 	void back_activate(std::vector<ContextLayer>& context,
 					   RunHelper& run_helper);
+	void split_activate(BranchNode* branch_node,
+						bool existing_is_branch,
+						Problem* problem,
+						std::vector<ContextLayer>& context,
+						RunHelper& run_helper);
 	void backprop(double target_val,
 				  RunHelper& run_helper);
 
@@ -121,6 +126,9 @@ public:
 	int instance_count;
 
 	std::vector<std::pair<AbstractNode*,bool>> selected_nodes_seen;
+
+	std::vector<double> existing_impacts;
+	std::vector<double> new_impacts;
 
 	NewActionExperimentHistory(NewActionExperiment* experiment);
 };

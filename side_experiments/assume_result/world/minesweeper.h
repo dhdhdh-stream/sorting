@@ -35,6 +35,7 @@ public:
 	void return_to_location(std::vector<double>& location);
 
 	Problem* copy_and_reset();
+	Problem* copy_snapshot();
 
 	void print();
 

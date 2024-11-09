@@ -8,6 +8,7 @@ using namespace std;
 
 RunHelper::RunHelper() {
 	this->exceeded_limit = false;
+	this->is_split = false;
 
 	this->num_analyze = 0;
 	this->num_actions = 0;
