@@ -48,7 +48,7 @@ int main(int argc, char* argv[]) {
 	solution = new Solution();
 	solution->load("workers/", "main");
 
-	update_impact();
+	// update_impact();
 
 	auto start_time = chrono::high_resolution_clock::now();
 	while (true) {
@@ -73,7 +73,7 @@ int main(int argc, char* argv[]) {
 				solution->load("workers/", "main");
 				cout << "updated from main" << endl;
 
-				update_impact();
+				// update_impact();
 
 				continue;
 			}
@@ -139,6 +139,7 @@ int main(int argc, char* argv[]) {
 				double sum_score = 0.0;
 				double sum_true_score = 0.0;
 				int max_num_actions = 0;
+				int sum_num_analyze = 0;
 				bool measure_early_exit = false;
 				for (int iter_index = 0; iter_index < MEASURE_ITERS; iter_index++) {
 					Problem* problem = problem_type->get_problem();
@@ -154,6 +155,8 @@ int main(int argc, char* argv[]) {
 					if (run_helper.num_actions > max_num_actions) {
 						max_num_actions = run_helper.num_actions;
 					}
+
+					sum_num_analyze += run_helper.num_analyze;
 
 					if (!run_helper.exceeded_limit) {
 						double target_val = problem->score_result();
@@ -197,7 +200,7 @@ int main(int argc, char* argv[]) {
 					solution->load("workers/", "main");
 					cout << "updated from main" << endl;
 
-					update_impact();
+					// update_impact();
 
 					delete problem;
 
@@ -215,6 +218,8 @@ int main(int argc, char* argv[]) {
 				duplicate->curr_true_score = sum_true_score / MEASURE_ITERS;
 
 				duplicate->max_num_actions = max_num_actions;
+
+				duplicate->average_num_analyze = sum_num_analyze / MEASURE_ITERS;
 
 				cout << "duplicate->curr_score: " << duplicate->curr_score << endl;
 

@@ -129,6 +129,11 @@ void BranchExperiment::measure_backprop(
 			this->sub_state_iter++;
 		}
 
+		for (int f_index = 0; f_index < (int)history->flip_target_vals.size(); f_index++) {
+			this->new_branch_impact_sum_score += (target_val - history->flip_target_vals[f_index]);
+			this->new_branch_instance_count++;
+		}
+
 		this->state_iter++;
 		if (this->sub_state_iter >= NUM_DATAPOINTS
 				&& this->state_iter >= MIN_NUM_TRUTH_DATAPOINTS) {
@@ -137,7 +142,9 @@ void BranchExperiment::measure_backprop(
 			#if defined(MDEBUG) && MDEBUG
 			if (rand()%2 == 0) {
 			#else
-			if (this->combined_score > 0.0) {
+			if (this->combined_score > 0.0
+					&& this->existing_impact >= 0.0
+					&& this->new_branch_impact_sum_score > 0.0) {
 			#endif /* MDEBUG */
 				cout << "BranchExperiment" << endl;
 				cout << "this->scope_context->id: " << this->scope_context->id << endl;

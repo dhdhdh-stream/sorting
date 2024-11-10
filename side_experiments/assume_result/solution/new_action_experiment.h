@@ -50,6 +50,7 @@ public:
 	std::vector<AbstractNode*> test_location_exits;
 	std::vector<int> test_location_states;
 	std::vector<double> test_location_scores;
+	std::vector<double> test_location_existing_impacts;
 	std::vector<int> test_location_counts;
 	std::vector<int> test_location_truth_counts;
 	std::vector<ScopeNode*> test_scope_nodes;
@@ -126,9 +127,6 @@ public:
 	int instance_count;
 
 	std::vector<std::pair<AbstractNode*,bool>> selected_nodes_seen;
-
-	std::vector<double> existing_impacts;
-	std::vector<double> new_impacts;
 
 	NewActionExperimentHistory(NewActionExperiment* experiment);
 };

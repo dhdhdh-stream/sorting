@@ -105,7 +105,7 @@ int main(int argc, char* argv[]) {
 			solution = new Solution();
 			solution->load("", "main");
 
-			update_impact();
+			// update_impact();
 
 			continue;
 		}
@@ -201,6 +201,7 @@ int main(int argc, char* argv[]) {
 				double sum_score = 0.0;
 				double sum_true_score = 0.0;
 				int max_num_actions = 0;
+				int sum_num_analyze = 0;
 				#if defined(MDEBUG) && MDEBUG
 				bool measure_early_exit = false;
 				#endif /* MDEBUG */
@@ -223,6 +224,8 @@ int main(int argc, char* argv[]) {
 					if (run_helper.num_actions > max_num_actions) {
 						max_num_actions = run_helper.num_actions;
 					}
+
+					sum_num_analyze += run_helper.num_analyze;
 
 					if (!run_helper.exceeded_limit) {
 						double target_val = problem->score_result();
@@ -252,7 +255,7 @@ int main(int argc, char* argv[]) {
 					solution = new Solution();
 					solution->load("", "main");
 
-					update_impact();
+					// update_impact();
 
 					delete problem;
 
@@ -272,6 +275,8 @@ int main(int argc, char* argv[]) {
 
 				duplicate->max_num_actions = max_num_actions;
 				duplicate->num_actions_limit = 10*duplicate->max_num_actions + 10;
+
+				duplicate->average_num_analyze = sum_num_analyze / MEASURE_ITERS;
 
 				cout << "duplicate->curr_score: " << duplicate->curr_score << endl;
 
@@ -302,7 +307,7 @@ int main(int argc, char* argv[]) {
 
 				solution->save("", "main");
 
-				update_impact();
+				// update_impact();
 				#else
 				delete duplicate;
 				#endif /* MDEBUG */

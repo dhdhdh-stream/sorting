@@ -200,6 +200,8 @@ NewActionExperiment::NewActionExperiment(Scope* scope_context,
 						new_branch_node->analyze_size = original_branch_node->analyze_size;
 						new_branch_node->network = new Network(original_branch_node->network);
 
+						new_branch_node->impact = original_branch_node->impact;
+
 						map<AbstractNode*, AbstractNode*>::iterator original_it = node_mappings
 							.find(original_branch_node->original_next_node);
 						if (original_it == node_mappings.end()) {
@@ -335,6 +337,7 @@ NewActionExperiment::NewActionExperiment(Scope* scope_context,
 		this->test_location_exits.push_back(exit_next_node);
 		this->test_location_states.push_back(NEW_ACTION_EXPERIMENT_MEASURE);
 		this->test_location_scores.push_back(0.0);
+		this->test_location_existing_impacts.push_back(0.0);
 		this->test_location_counts.push_back(0);
 		this->test_location_truth_counts.push_back(0);
 		this->test_scope_nodes.push_back(new ScopeNode());

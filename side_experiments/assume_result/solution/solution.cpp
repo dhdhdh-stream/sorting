@@ -47,6 +47,8 @@ Solution::Solution(Solution* original) {
 	this->max_num_actions = original->max_num_actions;
 	this->num_actions_limit = original->num_actions_limit;
 
+	this->average_num_analyze = original->average_num_analyze;
+
 	this->subproblem_id = original->subproblem_id;
 }
 
@@ -89,6 +91,8 @@ void Solution::init() {
 
 	this->max_num_actions = 10;
 	this->num_actions_limit = 100;
+
+	this->average_num_analyze = 0.0;
 
 	this->subproblem_id = -1;
 }
@@ -146,6 +150,10 @@ void Solution::load(string path,
 	this->max_num_actions = stoi(max_num_actions_line);
 
 	this->num_actions_limit = 10*this->max_num_actions + 10;
+
+	string average_num_analyze_line;
+	getline(input_file, average_num_analyze_line);
+	this->average_num_analyze = stod(average_num_analyze_line);
 
 	string subproblem_id_line;
 	getline(input_file, subproblem_id_line);
@@ -443,6 +451,8 @@ void Solution::save(string path,
 	}
 
 	output_file << this->max_num_actions << endl;
+
+	output_file << this->average_num_analyze << endl;
 
 	output_file << this->subproblem_id << endl;
 

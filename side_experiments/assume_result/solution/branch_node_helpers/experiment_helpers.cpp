@@ -52,22 +52,12 @@ void BranchNode::experiment_activate(AbstractNode*& curr_node,
 
 	if (!run_helper.is_split) {
 		if (run_helper.experiment_histories.size() > 0) {
-			bool in_new_scope = false;
-			for (int l_index = 0; l_index < (int)context.size(); l_index++) {
-				if (context[l_index].scope->id == -1) {
-					in_new_scope = true;
-					break;
-				}
-			}
-
-			if (!in_new_scope) {
-				run_helper.experiment_histories.back()->experiment->split_activate(
-					this,
-					is_branch,
-					problem,
-					context,
-					run_helper);
-			}
+			run_helper.experiment_histories.back()->experiment->split_activate(
+				this,
+				is_branch,
+				problem,
+				context,
+				run_helper);
 		}
 	}
 

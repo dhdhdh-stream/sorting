@@ -49,6 +49,8 @@ public:
 	int max_num_actions;
 	int num_actions_limit;
 
+	double average_num_analyze;
+
 	int subproblem_id;
 
 	#if defined(MDEBUG) && MDEBUG

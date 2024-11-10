@@ -69,7 +69,10 @@ public:
 
 	double combined_score;
 
-	double impact;
+	double new_branch_impact_sum_score;
+	int new_branch_instance_count;
+
+	double existing_impact;
 
 	std::vector<std::vector<double>> obs_histories;
 	std::vector<double> target_val_histories;
@@ -167,9 +170,6 @@ public:
 	bool has_target;
 
 	std::vector<double> flip_target_vals;
-
-	std::vector<double> existing_impacts;
-	std::vector<double> new_impacts;
 
 	BranchExperimentHistory(BranchExperiment* experiment);
 };

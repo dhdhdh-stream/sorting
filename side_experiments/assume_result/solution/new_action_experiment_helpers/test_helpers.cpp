@@ -66,13 +66,15 @@ void NewActionExperiment::test_backprop(
 				this->test_location_truth_counts[history->test_location_index]++;
 
 				if (this->test_location_counts[history->test_location_index] >= NEW_ACTION_NUM_DATAPOINTS
-						&& this->test_location_truth_counts[history->test_location_index] >= NEW_ACTION_TRUTH_NUM_DATAPOINTS) {
+						&& this->test_location_truth_counts[history->test_location_index] >= NEW_ACTION_TRUTH_NUM_DATAPOINTS
+						&& this->test_location_existing_impacts[history->test_location_index] >= 0.0) {
 					#if defined(MDEBUG) && MDEBUG
 					if (rand()%2 == 0) {
 					#else
 					if (this->test_location_scores[history->test_location_index] > 0.0) {
 					#endif /* MDEBUG */
 						this->test_location_scores[history->test_location_index] = 0.0;
+						this->test_location_existing_impacts[history->test_location_index] = 0.0;
 						this->test_location_counts[history->test_location_index] = 0;
 						this->test_location_truth_counts[history->test_location_index] = 0;
 						this->test_location_states[history->test_location_index] = NEW_ACTION_EXPERIMENT_VERIFY_1ST;
@@ -93,13 +95,15 @@ void NewActionExperiment::test_backprop(
 				this->test_location_truth_counts[history->test_location_index]++;
 
 				if (this->test_location_counts[history->test_location_index] >= NEW_ACTION_VERIFY_1ST_NUM_DATAPOINTS
-						&& this->test_location_truth_counts[history->test_location_index] >= NEW_ACTION_VERIFY_1ST_TRUTH_NUM_DATAPOINTS) {
+						&& this->test_location_truth_counts[history->test_location_index] >= NEW_ACTION_VERIFY_1ST_TRUTH_NUM_DATAPOINTS
+						&& this->test_location_existing_impacts[history->test_location_index] >= 0.0) {
 					#if defined(MDEBUG) && MDEBUG
 					if (rand()%2 == 0) {
 					#else
 					if (this->test_location_scores[history->test_location_index] > 0.0) {
 					#endif /* MDEBUG */
 						this->test_location_scores[history->test_location_index] = 0.0;
+						this->test_location_existing_impacts[history->test_location_index] = 0.0;
 						this->test_location_counts[history->test_location_index] = 0;
 						this->test_location_truth_counts[history->test_location_index] = 0;
 						this->test_location_states[history->test_location_index] = NEW_ACTION_EXPERIMENT_VERIFY_2ND;
@@ -120,7 +124,8 @@ void NewActionExperiment::test_backprop(
 				this->test_location_truth_counts[history->test_location_index]++;
 
 				if (this->test_location_counts[history->test_location_index] >= NEW_ACTION_VERIFY_2ND_NUM_DATAPOINTS
-						&& this->test_location_truth_counts[history->test_location_index] >= NEW_ACTION_VERIFY_2ND_TRUTH_NUM_DATAPOINTS) {
+						&& this->test_location_truth_counts[history->test_location_index] >= NEW_ACTION_VERIFY_2ND_TRUTH_NUM_DATAPOINTS
+						&& this->test_location_existing_impacts[history->test_location_index] >= 0.0) {
 					#if defined(MDEBUG) && MDEBUG
 					if (rand()%2 == 0) {
 					#else
@@ -150,6 +155,7 @@ void NewActionExperiment::test_backprop(
 						this->test_location_exits.erase(this->test_location_exits.begin() + history->test_location_index);
 						this->test_location_states.erase(this->test_location_states.begin() + history->test_location_index);
 						this->test_location_scores.erase(this->test_location_scores.begin() + history->test_location_index);
+						this->test_location_existing_impacts.erase(this->test_location_existing_impacts.begin() + history->test_location_index);
 						this->test_location_counts.erase(this->test_location_counts.begin() + history->test_location_index);
 						this->test_location_truth_counts.erase(this->test_location_truth_counts.begin() + history->test_location_index);
 						this->test_scope_nodes.erase(this->test_scope_nodes.begin() + history->test_location_index);
@@ -184,6 +190,7 @@ void NewActionExperiment::test_backprop(
 		this->test_location_exits.erase(this->test_location_exits.begin() + history->test_location_index);
 		this->test_location_states.erase(this->test_location_states.begin() + history->test_location_index);
 		this->test_location_scores.erase(this->test_location_scores.begin() + history->test_location_index);
+		this->test_location_existing_impacts.erase(this->test_location_existing_impacts.begin() + history->test_location_index);
 		this->test_location_counts.erase(this->test_location_counts.begin() + history->test_location_index);
 		this->test_location_truth_counts.erase(this->test_location_truth_counts.begin() + history->test_location_index);
 		delete this->test_scope_nodes[history->test_location_index];

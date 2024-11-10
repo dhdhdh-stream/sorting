@@ -24,6 +24,7 @@ public:
 	int explore_iter;
 
 	double curr_score;
+	double curr_existing_impact;
 	std::vector<int> curr_step_types;
 	std::vector<ActionNode*> curr_actions;
 	std::vector<ScopeNode*> curr_scopes;
@@ -83,9 +84,6 @@ public:
 class PassThroughExperimentHistory : public AbstractExperimentHistory {
 public:
 	int instance_count;
-
-	std::vector<double> existing_impacts;
-	std::vector<double> new_impacts;
 
 	PassThroughExperimentHistory(PassThroughExperiment* experiment);
 };
