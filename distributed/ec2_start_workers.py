@@ -71,17 +71,32 @@ for w_index in range(len(workers)):
 	channel = transport.open_session()
 	channels.append(channel)
 
-	command = './workers/worker ' + 'workers/' + workers[w_index][0] + '/ ' + workers[w_index][0] + ' 2>&1'
+	command = './workers/worker ' + 'workers/' + workers[w_index][0] + '/ 2>&1'
 	print(command)
 	channel.exec_command(command)
 
 	time.sleep(1)
 
+worker_empty_counts = [0 for _ in range(len(workers))]
+
 while True:
 	for w_index in range(len(workers)):
 		rl, wl, xl = select.select([channels[w_index]],[],[],0.0)
 		if len(rl) > 0:
-			print(workers[w_index][0])
-			print(channels[w_index].recv(1024))
+			message = channels[w_index].recv(1024)
 
-	time.sleep(15)
+			if len(message) == 0:
+				worker_empty_counts[w_index] += 1
+
+				if worker_empty_counts[w_index] > 3:
+					print('worker ' + workers[w_index][0] + ' failed');
+					exit(1)
+				else:
+					print('worker ' + workers[w_index][0] + ' empty warning ' + str(worker_empty_counts[w_index]))
+			else:
+				worker_empty_counts[w_index] = 0
+
+			print(workers[w_index][0])
+			print(message)
+
+	time.sleep(30)

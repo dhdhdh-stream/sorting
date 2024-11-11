@@ -8,19 +8,22 @@ import stat
 import sys
 import time
 
-# INCLUDE_EC2 = True
-INCLUDE_EC2 = False
+# INCLUDE_LOCAL = True
+INCLUDE_LOCAL = False
+INCLUDE_EC2 = True
+# INCLUDE_EC2 = False
 
 print('Starting...')
 
 workers = []
 ec2_workers = []
 
-workers_file = open(os.path.expanduser('~/workers.txt'), 'r')
-for line in workers_file:
-	arr = line.strip().split()
-	workers.append([arr[0], arr[1], arr[2], arr[3]])
-workers_file.close()
+if INCLUDE_LOCAL:
+	workers_file = open(os.path.expanduser('~/workers.txt'), 'r')
+	for line in workers_file:
+		arr = line.strip().split()
+		workers.append([arr[0], arr[1], arr[2], arr[3]])
+	workers_file.close()
 
 if INCLUDE_EC2:
 	ec2_workers_file = open(os.path.expanduser('~/ec2_workers.txt'), 'r')
@@ -38,43 +41,44 @@ while True:
 	start_time = time.time()
 	count = 0
 	while True:
-		for worker in workers:
-			client = paramiko.SSHClient()
-			client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-			client.connect(worker[1],
-						   username=worker[2],
-						   password=worker[3])
+		if INCLUDE_LOCAL:
+			for worker in workers:
+				client = paramiko.SSHClient()
+				client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+				client.connect(worker[1],
+							   username=worker[2],
+							   password=worker[3])
 
-			client_sftp = client.open_sftp()
+				client_sftp = client.open_sftp()
 
-			for filename in client_sftp.listdir('workers/' + worker[0] + '/saves/'):
-				if filename.startswith('possible') and 'temp' not in filename:
-					print('workers/' + worker[0] + '/saves/' + filename)
+				for filename in client_sftp.listdir('workers/' + worker[0] + '/saves/'):
+					if filename.startswith('possible') and 'temp' not in filename:
+						print('workers/' + worker[0] + '/saves/' + filename)
 
-					client_sftp.get('workers/' + worker[0] + '/saves/' + filename, 'saves/temp.txt')
-					client_sftp.remove('workers/' + worker[0] + '/saves/' + filename)
+						client_sftp.get('workers/' + worker[0] + '/saves/' + filename, 'saves/temp.txt')
+						client_sftp.remove('workers/' + worker[0] + '/saves/' + filename)
 
-					possible_file = open('saves/temp.txt', 'r')
-					possible_timestamp = int(possible_file.readline())
-					possible_average_score = float(possible_file.readline())
-					possible_file.close()
+						possible_file = open('saves/temp.txt', 'r')
+						possible_timestamp = int(possible_file.readline())
+						possible_average_score = float(possible_file.readline())
+						possible_file.close()
 
-					# TODO: potentially remove timestamp check so will keep great runs that finished after increment
-					if possible_timestamp == curr_timestamp+1:
-						count += 1
-						if possible_average_score > curr_average_score:
-							os.rename('saves/temp.txt', 'saves/main.txt')
+						# TODO: potentially remove timestamp check so will keep great runs that finished after increment
+						if possible_timestamp == curr_timestamp+1:
+							count += 1
+							if possible_average_score > curr_average_score:
+								os.rename('saves/temp.txt', 'saves/main.txt')
 
-							print('updated')
+								print('updated')
 
-							curr_average_score = possible_average_score
+								curr_average_score = possible_average_score
+							else:
+								os.remove('saves/temp.txt')
 						else:
 							os.remove('saves/temp.txt')
-					else:
-						os.remove('saves/temp.txt')
 
-			client_sftp.close()
-			client.close()
+				client_sftp.close()
+				client.close()
 
 		if INCLUDE_EC2:
 			for worker in ec2_workers:
@@ -127,26 +131,27 @@ while True:
 	print(datetime.datetime.now())
 	print(curr_average_score)
 
-	# simply use workers[0]
-	client = paramiko.SSHClient()
-	client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-	client.connect(workers[0][1],
-				   username=workers[0][2],
-				   password=workers[0][3])
+	if INCLUDE_LOCAL:
+		# simply use workers[0]
+		client = paramiko.SSHClient()
+		client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+		client.connect(workers[0][1],
+					   username=workers[0][2],
+					   password=workers[0][3])
 
-	client_sftp = client.open_sftp()
+		client_sftp = client.open_sftp()
 
-	try:
-		client_sftp.put('saves/main.txt', 'workers/saves/main_temp.txt')
-		stdin, stdout, stderr = client.exec_command('mv workers/saves/main_temp.txt workers/saves/main.txt')
-		for line in iter(lambda:stdout.readline(2048), ''):
-			print(line, end='')
+		try:
+			client_sftp.put('saves/main.txt', 'workers/saves/main_temp.txt')
+			stdin, stdout, stderr = client.exec_command('mv workers/saves/main_temp.txt workers/saves/main.txt')
+			for line in iter(lambda:stdout.readline(2048), ''):
+				print(line, end='')
 
-	except IOError:
-		pass
+		except IOError:
+			pass
 
-	client_sftp.close()
-	client.close()
+		client_sftp.close()
+		client.close()
 
 	if INCLUDE_EC2:
 		# simply use ec2_workers[0]
