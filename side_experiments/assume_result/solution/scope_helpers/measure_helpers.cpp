@@ -11,10 +11,10 @@
 
 using namespace std;
 
-void node_activate_helper(AbstractNode*& curr_node,
-						  Problem* problem,
-						  vector<ContextLayer>& context,
-						  RunHelper& run_helper) {
+void node_measure_activate_helper(AbstractNode*& curr_node,
+								  Problem* problem,
+								  vector<ContextLayer>& context,
+								  RunHelper& run_helper) {
 	switch (curr_node->type) {
 	case NODE_TYPE_ACTION:
 		{
@@ -29,10 +29,10 @@ void node_activate_helper(AbstractNode*& curr_node,
 	case NODE_TYPE_SCOPE:
 		{
 			ScopeNode* node = (ScopeNode*)curr_node;
-			node->activate(curr_node,
-						   problem,
-						   context,
-						   run_helper);
+			node->measure_activate(curr_node,
+								   problem,
+								   context,
+								   run_helper);
 		}
 
 		break;
@@ -59,9 +59,9 @@ void node_activate_helper(AbstractNode*& curr_node,
 	}
 }
 
-void Scope::activate(Problem* problem,
-					 vector<ContextLayer>& context,
-					 RunHelper& run_helper) {
+void Scope::measure_activate(Problem* problem,
+							 vector<ContextLayer>& context,
+							 RunHelper& run_helper) {
 	context.push_back(ContextLayer());
 
 	context.back().scope = this;
@@ -73,10 +73,12 @@ void Scope::activate(Problem* problem,
 			break;
 		}
 
-		node_activate_helper(curr_node,
-							 problem,
-							 context,
-							 run_helper);
+		curr_node->average_instances_per_run += 1.0;
+
+		node_measure_activate_helper(curr_node,
+									 problem,
+									 context,
+									 run_helper);
 
 		if (run_helper.exceeded_limit) {
 			break;

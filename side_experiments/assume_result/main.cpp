@@ -46,6 +46,9 @@
 //   - good decisions made on mismatched reasoning still OK
 //   - based on prediction will tend to fix the location, even bad ones
 
+// TODO: try creating lots of scopes and try combining
+// - initially while combining, don't modify existing scopes to keep shape
+
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -105,7 +108,7 @@ int main(int argc, char* argv[]) {
 			solution = new Solution();
 			solution->load("", "main");
 
-			// update_impact();
+			update_impact();
 
 			continue;
 		}
@@ -216,7 +219,7 @@ int main(int argc, char* argv[]) {
 					#endif /* MDEBUG */
 
 					vector<ContextLayer> context;
-					duplicate->scopes[0]->activate(
+					duplicate->scopes[0]->measure_activate(
 						problem,
 						context,
 						run_helper);
@@ -255,7 +258,7 @@ int main(int argc, char* argv[]) {
 					solution = new Solution();
 					solution->load("", "main");
 
-					// update_impact();
+					update_impact();
 
 					delete problem;
 
@@ -307,7 +310,7 @@ int main(int argc, char* argv[]) {
 
 				solution->save("", "main");
 
-				// update_impact();
+				update_impact();
 				#else
 				delete duplicate;
 				#endif /* MDEBUG */

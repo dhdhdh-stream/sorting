@@ -64,6 +64,10 @@ public:
 					   std::vector<ContextLayer>& context,
 					   RunHelper& run_helper);
 
+	void measure_activate(Problem* problem,
+						  std::vector<ContextLayer>& context,
+						  RunHelper& run_helper);
+
 	#if defined(MDEBUG) && MDEBUG
 	void new_action_capture_verify_activate(Problem* problem,
 											std::vector<ContextLayer>& context,

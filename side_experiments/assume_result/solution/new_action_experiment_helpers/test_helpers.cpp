@@ -38,9 +38,13 @@ void NewActionExperiment::test_activate(
 
 	history->instance_count++;
 
+	context.back().node = this->test_scope_nodes[location_index];
+
 	this->new_scope->experiment_activate(problem,
 										 context,
 										 run_helper);
+
+	context.back().node = NULL;
 
 	curr_node = this->test_location_exits[location_index];
 }
@@ -66,12 +70,12 @@ void NewActionExperiment::test_backprop(
 				this->test_location_truth_counts[history->test_location_index]++;
 
 				if (this->test_location_counts[history->test_location_index] >= NEW_ACTION_NUM_DATAPOINTS
-						&& this->test_location_truth_counts[history->test_location_index] >= NEW_ACTION_TRUTH_NUM_DATAPOINTS
-						&& this->test_location_existing_impacts[history->test_location_index] >= 0.0) {
+						&& this->test_location_truth_counts[history->test_location_index] >= NEW_ACTION_TRUTH_NUM_DATAPOINTS) {
 					#if defined(MDEBUG) && MDEBUG
 					if (rand()%2 == 0) {
 					#else
-					if (this->test_location_scores[history->test_location_index] > 0.0) {
+					if (this->test_location_scores[history->test_location_index] > 0.0
+							&& this->test_location_existing_impacts[history->test_location_index] >= 0.0) {
 					#endif /* MDEBUG */
 						this->test_location_scores[history->test_location_index] = 0.0;
 						this->test_location_existing_impacts[history->test_location_index] = 0.0;
@@ -95,12 +99,12 @@ void NewActionExperiment::test_backprop(
 				this->test_location_truth_counts[history->test_location_index]++;
 
 				if (this->test_location_counts[history->test_location_index] >= NEW_ACTION_VERIFY_1ST_NUM_DATAPOINTS
-						&& this->test_location_truth_counts[history->test_location_index] >= NEW_ACTION_VERIFY_1ST_TRUTH_NUM_DATAPOINTS
-						&& this->test_location_existing_impacts[history->test_location_index] >= 0.0) {
+						&& this->test_location_truth_counts[history->test_location_index] >= NEW_ACTION_VERIFY_1ST_TRUTH_NUM_DATAPOINTS) {
 					#if defined(MDEBUG) && MDEBUG
 					if (rand()%2 == 0) {
 					#else
-					if (this->test_location_scores[history->test_location_index] > 0.0) {
+					if (this->test_location_scores[history->test_location_index] > 0.0
+							&& this->test_location_existing_impacts[history->test_location_index] >= 0.0) {
 					#endif /* MDEBUG */
 						this->test_location_scores[history->test_location_index] = 0.0;
 						this->test_location_existing_impacts[history->test_location_index] = 0.0;
@@ -124,12 +128,12 @@ void NewActionExperiment::test_backprop(
 				this->test_location_truth_counts[history->test_location_index]++;
 
 				if (this->test_location_counts[history->test_location_index] >= NEW_ACTION_VERIFY_2ND_NUM_DATAPOINTS
-						&& this->test_location_truth_counts[history->test_location_index] >= NEW_ACTION_VERIFY_2ND_TRUTH_NUM_DATAPOINTS
-						&& this->test_location_existing_impacts[history->test_location_index] >= 0.0) {
+						&& this->test_location_truth_counts[history->test_location_index] >= NEW_ACTION_VERIFY_2ND_TRUTH_NUM_DATAPOINTS) {
 					#if defined(MDEBUG) && MDEBUG
 					if (rand()%2 == 0) {
 					#else
-					if (this->test_location_scores[history->test_location_index] > 0.0) {
+					if (this->test_location_scores[history->test_location_index] > 0.0
+							&& this->test_location_existing_impacts[history->test_location_index] >= 0.0) {
 					#endif /* MDEBUG */
 						ScopeNode* new_scope_node = this->test_scope_nodes[history->test_location_index];
 						new_scope_node->parent = this->scope_context;

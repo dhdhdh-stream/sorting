@@ -75,6 +75,7 @@ void NewActionExperiment::add_new_test_location(NewActionExperimentHistory* hist
 		this->test_location_counts.push_back(0);
 		this->test_location_truth_counts.push_back(0);
 		this->test_scope_nodes.push_back(new ScopeNode());
+		this->test_scope_nodes.back()->next_node = exit_node;
 
 		this->average_remaining_experiments_from_start = 1.0;
 

@@ -48,7 +48,7 @@ int main(int argc, char* argv[]) {
 	solution = new Solution();
 	solution->load("workers/", "main");
 
-	// update_impact();
+	update_impact();
 
 	auto start_time = chrono::high_resolution_clock::now();
 	while (true) {
@@ -73,7 +73,7 @@ int main(int argc, char* argv[]) {
 				solution->load("workers/", "main");
 				cout << "updated from main" << endl;
 
-				// update_impact();
+				update_impact();
 
 				continue;
 			}
@@ -147,7 +147,7 @@ int main(int argc, char* argv[]) {
 					RunHelper run_helper;
 
 					vector<ContextLayer> context;
-					duplicate->scopes[0]->activate(
+					duplicate->scopes[0]->measure_activate(
 						problem,
 						context,
 						run_helper);
@@ -200,7 +200,7 @@ int main(int argc, char* argv[]) {
 					solution->load("workers/", "main");
 					cout << "updated from main" << endl;
 
-					// update_impact();
+					update_impact();
 
 					delete problem;
 

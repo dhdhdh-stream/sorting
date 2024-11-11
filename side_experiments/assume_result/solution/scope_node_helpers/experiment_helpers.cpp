@@ -30,7 +30,8 @@ void ScopeNode::experiment_activate(AbstractNode*& curr_node,
 		run_helper.exceeded_limit = true;
 		return;
 	}
-	if (run_helper.experiment_histories.size() == 1
+	if (!run_helper.is_split
+			&& run_helper.experiment_histories.size() == 1
 			&& run_helper.experiment_histories.back()->experiment == this->parent->new_action_experiment) {
 		context.back().nodes_seen.push_back({this, false});
 	}

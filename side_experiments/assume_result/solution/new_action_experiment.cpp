@@ -341,6 +341,7 @@ NewActionExperiment::NewActionExperiment(Scope* scope_context,
 		this->test_location_counts.push_back(0);
 		this->test_location_truth_counts.push_back(0);
 		this->test_scope_nodes.push_back(new ScopeNode());
+		this->test_scope_nodes.back()->next_node = exit_next_node;
 
 		this->average_remaining_experiments_from_start = 1.0;
 

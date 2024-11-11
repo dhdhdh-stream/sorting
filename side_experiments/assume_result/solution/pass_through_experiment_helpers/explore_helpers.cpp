@@ -132,32 +132,56 @@ void PassThroughExperiment::explore_activate(
 			}
 		}
 
-		if (this->scope_context->id != 0) {
-			geometric_distribution<int> return_distribution(0.75);
-			int num_returns = return_distribution(generator);
-			uniform_int_distribution<int> relative_distribution(0, 1);
-			for (int r_index = 0; r_index < num_returns; r_index++) {
-				ReturnNode* new_return_node = new ReturnNode();
-				uniform_int_distribution<int> location_distribution(0, context.back().location_history.size()-1);
-				if (relative_distribution(generator) == 0) {
-					map<AbstractNode*, vector<double>>::iterator it = next(context.back().location_history.begin(), location_distribution(generator));
-					new_return_node->previous_location_id = it->first->id;
-					new_return_node->previous_location = it->first;
-					vector<double> previous_world_location = (*next(context.back().location_history.begin(), location_distribution(generator))).second;
-					new_return_node->location = problem_type->world_to_relative(
-						it->second, previous_world_location);
+		// if (this->scope_context->id != 0) {
+		// 	geometric_distribution<int> return_distribution(0.75);
+		// 	int num_returns = return_distribution(generator);
+		// 	uniform_int_distribution<int> relative_distribution(0, 1);
+		// 	for (int r_index = 0; r_index < num_returns; r_index++) {
+		// 		ReturnNode* new_return_node = new ReturnNode();
+		// 		uniform_int_distribution<int> location_distribution(0, context.back().location_history.size()-1);
+		// 		if (relative_distribution(generator) == 0) {
+		// 			map<AbstractNode*, vector<double>>::iterator it = next(context.back().location_history.begin(), location_distribution(generator));
+		// 			new_return_node->previous_location_id = it->first->id;
+		// 			new_return_node->previous_location = it->first;
+		// 			vector<double> previous_world_location = (*next(context.back().location_history.begin(), location_distribution(generator))).second;
+		// 			new_return_node->location = problem_type->world_to_relative(
+		// 				it->second, previous_world_location);
+		// 		} else {
+		// 			AbstractNode* previous_location = (*next(context.back().location_history.begin(), location_distribution(generator))).first;
+		// 			new_return_node->previous_location_id = previous_location->id;
+		// 			new_return_node->previous_location = previous_location;
+		// 			new_return_node->location = vector<double>(problem_type->num_dimensions(), 0.0);
+		// 		}
+		// 		uniform_int_distribution<int> step_distribution(0, new_num_steps);
+		// 		int step_index = step_distribution(generator);
+		// 		this->curr_step_types.insert(this->curr_step_types.begin() + step_index, STEP_TYPE_RETURN);
+		// 		this->curr_actions.insert(this->curr_actions.begin() + step_index, NULL);
+		// 		this->curr_scopes.insert(this->curr_scopes.begin() + step_index, NULL);
+		// 		this->curr_returns.insert(this->curr_returns.begin() + step_index, new_return_node);
+		// 	}
+		// }
+
+		for (int s_index = 0; s_index < (int)this->curr_step_types.size(); s_index++) {
+			AbstractNode* next_node;
+			if (s_index == (int)this->curr_step_types.size()-1) {
+				next_node = this->curr_exit_next_node;
+			} else {
+				if (this->curr_step_types[s_index+1] == STEP_TYPE_ACTION) {
+					next_node = this->curr_actions[s_index+1];
+				} else if (this->curr_step_types[s_index+1] == STEP_TYPE_SCOPE) {
+					next_node = this->curr_scopes[s_index+1];
 				} else {
-					AbstractNode* previous_location = (*next(context.back().location_history.begin(), location_distribution(generator))).first;
-					new_return_node->previous_location_id = previous_location->id;
-					new_return_node->previous_location = previous_location;
-					new_return_node->location = vector<double>(problem_type->num_dimensions(), 0.0);
+					next_node = this->curr_returns[s_index+1];
 				}
-				uniform_int_distribution<int> step_distribution(0, new_num_steps);
-				int step_index = step_distribution(generator);
-				this->curr_step_types.insert(this->curr_step_types.begin() + step_index, STEP_TYPE_RETURN);
-				this->curr_actions.insert(this->curr_actions.begin() + step_index, NULL);
-				this->curr_scopes.insert(this->curr_scopes.begin() + step_index, NULL);
-				this->curr_returns.insert(this->curr_returns.begin() + step_index, new_return_node);
+			}
+
+			if (this->curr_step_types[s_index] == STEP_TYPE_ACTION) {
+				this->curr_actions[s_index]->next_node = next_node;
+			} else if (this->curr_step_types[s_index] == STEP_TYPE_SCOPE) {
+				this->curr_scopes[s_index]->next_node = next_node;
+			} else {
+				this->curr_returns[s_index]->passed_next_node = next_node;
+				this->curr_returns[s_index]->skipped_next_node = next_node;
 			}
 		}
 

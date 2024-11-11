@@ -112,6 +112,11 @@ void BranchExperiment::train_new_backprop(
 
 		this->combined_score = 0.0;
 
+		this->new_branch_impact_sum_score = 0.0;
+		this->new_branch_instance_count = 0;
+
+		this->existing_impact = 0.0;
+
 		this->state = BRANCH_EXPERIMENT_STATE_MEASURE;
 		this->state_iter = 0;
 		this->sub_state_iter = 0;

@@ -4,6 +4,7 @@
 #include "problem.h"
 #include "scope.h"
 #include "solution.h"
+#include "utilities.h"
 
 using namespace std;
 
