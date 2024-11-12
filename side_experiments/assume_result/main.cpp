@@ -8,9 +8,6 @@
  *     - breaks down solution into modular segments
  */
 
-// - can also try allowing return nodes only on scopes[0]
-//   - or only on new scopes
-
 // - for minesweeper, initially, only immediate local matters
 //   - but after a point, global location in grid really matters
 //     - how to go from not caring to caring?
@@ -34,17 +31,8 @@
 // - location information doesn't make enough of a difference?
 //   - maybe about actions being consistent in their effects?
 
-// to determine if actions consistent, perhaps randomly flip a later decision and see if it still aligns?
-// i.e., measure decision making quality
-// - if making worse decisions, then don't take?
-
-// TODO: test if score penalty is the bottleneck
-// - then test if return node without scopes[0] works
-// - also test if analyze_size always 2 works
-
-// - actually no, still base on decision making quality
-//   - good decisions made on mismatched reasoning still OK
-//   - based on prediction will tend to fix the location, even bad ones
+// TODO: reset every 100 iters
+// - in coordinator, copy every 100 iters
 
 // TODO: try creating lots of scopes and try combining
 // - initially while combining, don't modify existing scopes to keep shape
@@ -91,6 +79,7 @@ int main(int argc, char* argv[]) {
 	solution = new Solution();
 	solution->init();
 	// solution->load("", "main");
+	solution->check_reset();
 
 	solution->save("", "main");
 
@@ -107,8 +96,7 @@ int main(int argc, char* argv[]) {
 			delete solution;
 			solution = new Solution();
 			solution->load("", "main");
-
-			update_impact();
+			solution->check_reset();
 
 			continue;
 		}
@@ -204,7 +192,6 @@ int main(int argc, char* argv[]) {
 				double sum_score = 0.0;
 				double sum_true_score = 0.0;
 				int max_num_actions = 0;
-				int sum_num_analyze = 0;
 				#if defined(MDEBUG) && MDEBUG
 				bool measure_early_exit = false;
 				#endif /* MDEBUG */
@@ -227,8 +214,6 @@ int main(int argc, char* argv[]) {
 					if (run_helper.num_actions > max_num_actions) {
 						max_num_actions = run_helper.num_actions;
 					}
-
-					sum_num_analyze += run_helper.num_analyze;
 
 					if (!run_helper.exceeded_limit) {
 						double target_val = problem->score_result();
@@ -257,8 +242,7 @@ int main(int argc, char* argv[]) {
 					delete solution;
 					solution = new Solution();
 					solution->load("", "main");
-
-					update_impact();
+					solution->check_reset();
 
 					delete problem;
 
@@ -278,8 +262,6 @@ int main(int argc, char* argv[]) {
 
 				duplicate->max_num_actions = max_num_actions;
 				duplicate->num_actions_limit = 10*duplicate->max_num_actions + 10;
-
-				duplicate->average_num_analyze = sum_num_analyze / MEASURE_ITERS;
 
 				cout << "duplicate->curr_score: " << duplicate->curr_score << endl;
 
@@ -302,15 +284,13 @@ int main(int argc, char* argv[]) {
 					duplicate->best_true_score_timestamp = duplicate->timestamp;
 				}
 
-				duplicate->update_subproblem();
-
 				#if defined(MDEBUG) && MDEBUG
 				delete solution;
 				solution = duplicate;
 
 				solution->save("", "main");
 
-				update_impact();
+				solution->check_reset();
 				#else
 				delete duplicate;
 				#endif /* MDEBUG */

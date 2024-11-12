@@ -77,46 +77,6 @@ bool PassThroughExperiment::activate(AbstractNode* experiment_node,
 	}
 }
 
-void PassThroughExperiment::split_activate(BranchNode* branch_node,
-										   bool existing_is_branch,
-										   Problem* problem,
-										   vector<ContextLayer>& context,
-										   RunHelper& run_helper) {
-	uniform_real_distribution<double> split_distribution(0.0, solution->average_num_analyze);
-	if (split_distribution(generator) <= 2.0) {
-		Problem* copy_problem = problem->copy_snapshot();
-
-		RunHelper copy_run_helper = run_helper;
-		copy_run_helper.is_split = true;
-
-		vector<ContextLayer> copy_context = context;
-		if (existing_is_branch) {
-			copy_context.back().node = branch_node->original_next_node;
-		} else {
-			copy_context.back().node = branch_node->branch_next_node;
-		}
-		solution->scopes[0]->continue_experiment_activate(
-			copy_problem,
-			copy_context,
-			0,
-			copy_run_helper);
-
-		double target_val;
-		if (!run_helper.exceeded_limit) {
-			target_val = copy_problem->score_result();
-			target_val -= 0.05 * run_helper.num_actions * solution->curr_time_penalty;
-			target_val -= run_helper.num_analyze * solution->curr_time_penalty;
-		} else {
-			target_val = -1.0;
-		}
-
-		this->curr_existing_impact += (run_helper.result - target_val)
-			- branch_node->impact;
-
-		delete copy_problem;
-	}
-}
-
 void PassThroughExperiment::backprop(double target_val,
 									 RunHelper& run_helper) {
 	explore_backprop(target_val,

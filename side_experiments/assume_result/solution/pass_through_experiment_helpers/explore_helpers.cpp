@@ -228,8 +228,7 @@ void PassThroughExperiment::explore_backprop(
 			#if defined(MDEBUG) && MDEBUG
 			if (false) {
 			#else
-			if (this->curr_score <= 0.0
-					|| this->curr_existing_impact < 0.0) {
+			if (this->curr_score <= 0.0) {
 			#endif /* MDEBUG */
 				is_fail = true;
 			}
@@ -238,8 +237,7 @@ void PassThroughExperiment::explore_backprop(
 			#if defined(MDEBUG) && MDEBUG
 			if (false) {
 			#else
-			if (this->curr_score <= 0.0
-					|| this->curr_existing_impact < 0.0) {
+			if (this->curr_score <= 0.0) {
 			#endif /* MDEBUG */
 				is_fail = true;
 			}
@@ -248,8 +246,7 @@ void PassThroughExperiment::explore_backprop(
 			#if defined(MDEBUG) && MDEBUG
 			if (rand()%2 == 0) {
 			#else
-			if (this->curr_score <= 0.0
-					|| this->curr_existing_impact < 0.0) {
+			if (this->curr_score <= 0.0) {
 			#endif /* MDEBUG */
 				is_fail = true;
 			}
@@ -265,8 +262,7 @@ void PassThroughExperiment::explore_backprop(
 				#if defined(MDEBUG) && MDEBUG
 				if (false) {
 				#else
-				if (this->curr_score <= 0.0
-						|| this->curr_existing_impact < 0.0) {
+				if (this->curr_score <= 0.0) {
 				#endif /* MDEBUG */
 					is_fail = true;
 				}
@@ -275,8 +271,7 @@ void PassThroughExperiment::explore_backprop(
 				#if defined(MDEBUG) && MDEBUG
 				if (false) {
 				#else
-				if (this->curr_score <= 0.0
-						|| this->curr_existing_impact < 0.0) {
+				if (this->curr_score <= 0.0) {
 				#endif /* MDEBUG */
 					is_fail = true;
 				}
@@ -285,8 +280,7 @@ void PassThroughExperiment::explore_backprop(
 				#if defined(MDEBUG) && MDEBUG
 				if (rand()%2 == 0) {
 				#else
-				if (this->curr_score <= 0.0
-						|| this->curr_existing_impact < 0.0) {
+				if (this->curr_score <= 0.0) {
 				#endif /* MDEBUG */
 					is_fail = true;
 				}
@@ -307,7 +301,6 @@ void PassThroughExperiment::explore_backprop(
 		}
 
 		this->curr_score = 0.0;
-		this->curr_existing_impact = 0.0;
 		this->curr_step_types.clear();
 		this->curr_actions.clear();
 		this->curr_scopes.clear();
@@ -334,7 +327,6 @@ void PassThroughExperiment::explore_backprop(
 		this->best_exit_next_node = this->curr_exit_next_node;
 
 		this->curr_score = 0.0;
-		this->curr_existing_impact = 0.0;
 		this->curr_step_types.clear();
 		this->curr_actions.clear();
 		this->curr_scopes.clear();

@@ -50,7 +50,6 @@ public:
 	std::vector<AbstractNode*> test_location_exits;
 	std::vector<int> test_location_states;
 	std::vector<double> test_location_scores;
-	std::vector<double> test_location_existing_impacts;
 	std::vector<int> test_location_counts;
 	std::vector<int> test_location_truth_counts;
 	std::vector<ScopeNode*> test_scope_nodes;
@@ -88,11 +87,6 @@ public:
 				  RunHelper& run_helper);
 	void back_activate(std::vector<ContextLayer>& context,
 					   RunHelper& run_helper);
-	void split_activate(BranchNode* branch_node,
-						bool existing_is_branch,
-						Problem* problem,
-						std::vector<ContextLayer>& context,
-						RunHelper& run_helper);
 	void backprop(double target_val,
 				  RunHelper& run_helper);
 

@@ -33,7 +33,6 @@ PassThroughExperiment::PassThroughExperiment(Scope* scope_context,
 	this->ending_node = NULL;
 
 	this->curr_score = 0.0;
-	this->curr_existing_impact = 0.0;
 	this->best_score = numeric_limits<double>::lowest();
 
 	this->target_val_histories.reserve(NUM_DATAPOINTS);

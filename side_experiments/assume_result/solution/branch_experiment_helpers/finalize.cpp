@@ -215,8 +215,6 @@ void BranchExperiment::new_branch(Solution* duplicate) {
 	this->branch_node->network = this->new_network;
 	this->new_network = NULL;
 
-	this->branch_node->impact = this->new_branch_impact_sum_score / this->new_branch_instance_count;
-
 	#if defined(MDEBUG) && MDEBUG
 	if (this->verify_problems.size() > 0) {
 		duplicate->verify_problems = this->verify_problems;

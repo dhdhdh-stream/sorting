@@ -45,22 +45,6 @@ public:
 						  std::vector<ContextLayer>& context,
 						  RunHelper& run_helper);
 
-	void continue_activate(AbstractNode*& curr_node,
-						   Problem* problem,
-						   std::vector<ContextLayer>& context,
-						   int curr_layer,
-						   RunHelper& run_helper);
-	void continue_experiment_activate(AbstractNode*& curr_node,
-									  Problem* problem,
-									  std::vector<ContextLayer>& context,
-									  int curr_layer,
-									  RunHelper& run_helper);
-
-	void flip_activate(AbstractNode*& curr_node,
-					   Problem* problem,
-					   std::vector<ContextLayer>& context,
-					   RunHelper& run_helper);
-
 	void measure_activate(AbstractNode*& curr_node,
 						  Problem* problem,
 						  std::vector<ContextLayer>& context,

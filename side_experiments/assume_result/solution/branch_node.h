@@ -22,8 +22,6 @@ public:
 	int branch_next_node_id;
 	AbstractNode* branch_next_node;
 
-	double impact;
-
 	#if defined(MDEBUG) && MDEBUG
 	void* verify_key;
 	std::vector<double> verify_scores;
@@ -46,11 +44,6 @@ public:
 							 Problem* problem,
 							 std::vector<ContextLayer>& context,
 							 RunHelper& run_helper);
-
-	void flip_activate(AbstractNode*& curr_node,
-					   Problem* problem,
-					   std::vector<ContextLayer>& context,
-					   RunHelper& run_helper);
 
 	#if defined(MDEBUG) && MDEBUG
 	void verify_activate(AbstractNode*& curr_node,

@@ -4,14 +4,17 @@ import datetime
 import errno
 import os
 import paramiko
+import shutil
 import stat
 import sys
 import time
 
-# INCLUDE_LOCAL = True
-INCLUDE_LOCAL = False
-INCLUDE_EC2 = True
-# INCLUDE_EC2 = False
+INCLUDE_LOCAL = True
+# INCLUDE_LOCAL = False
+# INCLUDE_EC2 = True
+INCLUDE_EC2 = False
+
+SAVE_ITER = 100
 
 print('Starting...')
 
@@ -130,6 +133,9 @@ while True:
 
 	print(datetime.datetime.now())
 	print(curr_average_score)
+
+	if curr_timestamp % SAVE_ITER == 0 and curr_timestamp > 0:
+		shutil.copyfile('saves/main.txt', 'saves/main_' + str(curr_timestamp) + '.txt')
 
 	if INCLUDE_LOCAL:
 		# simply use workers[0]

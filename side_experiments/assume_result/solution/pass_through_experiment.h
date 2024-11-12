@@ -24,7 +24,6 @@ public:
 	int explore_iter;
 
 	double curr_score;
-	double curr_existing_impact;
 	std::vector<int> curr_step_types;
 	std::vector<ActionNode*> curr_actions;
 	std::vector<ScopeNode*> curr_scopes;
@@ -61,11 +60,6 @@ public:
 				  Problem* problem,
 				  std::vector<ContextLayer>& context,
 				  RunHelper& run_helper);
-	void split_activate(BranchNode* branch_node,
-						bool existing_is_branch,
-						Problem* problem,
-						std::vector<ContextLayer>& context,
-						RunHelper& run_helper);
 	void backprop(double target_val,
 				  RunHelper& run_helper);
 

@@ -50,17 +50,6 @@ void BranchNode::experiment_activate(AbstractNode*& curr_node,
 	}
 	#endif /* MDEBUG */
 
-	if (!run_helper.is_split) {
-		if (run_helper.experiment_histories.size() > 0) {
-			run_helper.experiment_histories.back()->experiment->split_activate(
-				this,
-				is_branch,
-				problem,
-				context,
-				run_helper);
-		}
-	}
-
 	if (is_branch) {
 		curr_node = this->branch_next_node;
 	} else {
@@ -72,8 +61,7 @@ void BranchNode::experiment_activate(AbstractNode*& curr_node,
 		run_helper.exceeded_limit = true;
 		return;
 	}
-	if (!run_helper.is_split
-			&& run_helper.experiment_histories.size() == 1
+	if (run_helper.experiment_histories.size() == 1
 			&& run_helper.experiment_histories.back()->experiment == this->parent->new_action_experiment) {
 		context.back().nodes_seen.push_back({this, is_branch});
 	}

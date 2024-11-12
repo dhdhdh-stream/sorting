@@ -71,7 +71,6 @@ void NewActionExperiment::add_new_test_location(NewActionExperimentHistory* hist
 		this->test_location_exits.push_back(exit_node);
 		this->test_location_states.push_back(NEW_ACTION_EXPERIMENT_MEASURE);
 		this->test_location_scores.push_back(0.0);
-		this->test_location_existing_impacts.push_back(0.0);
 		this->test_location_counts.push_back(0);
 		this->test_location_truth_counts.push_back(0);
 		this->test_scope_nodes.push_back(new ScopeNode());

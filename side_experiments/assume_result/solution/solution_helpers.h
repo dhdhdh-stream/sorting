@@ -29,6 +29,4 @@ void clean_scope_node(Solution* parent_solution,
 void get_existing_result(Problem* original_problem,
 						 RunHelper& run_helper);
 
-void update_impact();
-
 #endif /* SOLUTION_HELPERS_H */

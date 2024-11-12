@@ -54,48 +54,6 @@ bool BranchExperiment::measure_activate(AbstractNode*& curr_node,
 	bool decision_is_branch = this->new_network->output->acti_vals[0] >= 0.0;
 	#endif /* MDEBUG */
 
-	if (!run_helper.is_split) {
-		Problem* copy_problem = problem->copy_snapshot();
-
-		RunHelper copy_run_helper = run_helper;
-		copy_run_helper.is_split = true;
-
-		vector<ContextLayer> copy_context = context;
-		if (decision_is_branch) {
-			copy_context.back().node = curr_node;
-		} else {
-			if (this->best_step_types.size() == 0) {
-				copy_context.back().node = this->best_exit_next_node;
-			} else {
-				if (this->best_step_types[0] == STEP_TYPE_ACTION) {
-					copy_context.back().node = this->best_actions[0];
-				} else if (this->best_step_types[0] == STEP_TYPE_SCOPE) {
-					copy_context.back().node = this->best_scopes[0];
-				} else {
-					copy_context.back().node = this->best_returns[0];
-				}
-			}
-		}
-		solution->scopes[0]->continue_activate(
-			copy_problem,
-			copy_context,
-			0,
-			copy_run_helper);
-
-		double target_val;
-		if (!run_helper.exceeded_limit) {
-			target_val = copy_problem->score_result();
-			target_val -= 0.05 * run_helper.num_actions * solution->curr_time_penalty;
-			target_val -= run_helper.num_analyze * solution->curr_time_penalty;
-		} else {
-			target_val = -1.0;
-		}
-
-		history->flip_target_vals.push_back(target_val);
-
-		delete copy_problem;
-	}
-
 	if (decision_is_branch) {
 		if (this->best_step_types.size() == 0) {
 			curr_node = this->best_exit_next_node;
@@ -129,11 +87,6 @@ void BranchExperiment::measure_backprop(
 			this->sub_state_iter++;
 		}
 
-		for (int f_index = 0; f_index < (int)history->flip_target_vals.size(); f_index++) {
-			this->new_branch_impact_sum_score += (target_val - history->flip_target_vals[f_index]);
-			this->new_branch_instance_count++;
-		}
-
 		this->state_iter++;
 		if (this->sub_state_iter >= NUM_DATAPOINTS
 				&& this->state_iter >= MIN_NUM_TRUTH_DATAPOINTS) {
@@ -142,9 +95,7 @@ void BranchExperiment::measure_backprop(
 			#if defined(MDEBUG) && MDEBUG
 			if (rand()%2 == 0) {
 			#else
-			if (this->combined_score > 0.0
-					&& this->existing_impact >= 0.0
-					&& this->new_branch_impact_sum_score > 0.0) {
+			if (this->combined_score > 0.0) {
 			#endif /* MDEBUG */
 				cout << "BranchExperiment" << endl;
 				cout << "this->scope_context->id: " << this->scope_context->id << endl;
