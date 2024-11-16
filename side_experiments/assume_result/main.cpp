@@ -31,12 +31,6 @@
 // - location information doesn't make enough of a difference?
 //   - maybe about actions being consistent in their effects?
 
-// TODO: reset every 100 iters
-// - in coordinator, copy every 100 iters
-
-// TODO: try creating lots of scopes and try combining
-// - initially while combining, don't modify existing scopes to keep shape
-
 #include <chrono>
 #include <iostream>
 #include <map>

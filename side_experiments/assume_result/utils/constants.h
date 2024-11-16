@@ -36,10 +36,10 @@ const int MEASURE_ITERS = 4000;
 
 const int NUM_VERIFY_SAMPLES = 10;
 
-#if defined(MDEBUG) && MDEBUG
-const int SUBPROBLEM_ITER = 20;
-#else
-const int SUBPROBLEM_ITER = 50;
-#endif /* MDEBUG */
+/**
+ * - temp
+ */
+const int NUM_EXISTING = 50;
+const int MAINTAIN_ITERS = 100;
 
 #endif /* CONSTANTS_H */
