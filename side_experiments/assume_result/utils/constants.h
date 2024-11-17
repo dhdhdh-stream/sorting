@@ -39,7 +39,7 @@ const int NUM_VERIFY_SAMPLES = 10;
 /**
  * - temp
  */
-const int NUM_EXISTING = 50;
-const int MAINTAIN_ITERS = 100;
+const int NUM_EXISTING = 126;
+const int MAINTAIN_ITERS = 50;
 
 #endif /* CONSTANTS_H */

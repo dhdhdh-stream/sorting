@@ -134,8 +134,8 @@ while True:
 	print(datetime.datetime.now())
 	print(curr_average_score)
 
-	if curr_timestamp % SAVE_ITER == 0 and curr_timestamp > 0:
-		shutil.copyfile('saves/main.txt', 'saves/main_' + str(curr_timestamp) + '.txt')
+	if (curr_timestamp+1) % SAVE_ITER == 0:
+		shutil.copyfile('saves/main.txt', 'saves/main_' + str(curr_timestamp+1) + '.txt')
 
 	if INCLUDE_LOCAL:
 		# simply use workers[0]

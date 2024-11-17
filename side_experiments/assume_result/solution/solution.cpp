@@ -164,77 +164,81 @@ void Solution::clear_verify() {
 
 void Solution::clean() {
 	for (int s_index = (int)this->scopes.size()-1; s_index >= 1; s_index--) {
-		bool still_used = false;
-		for (int is_index = 0; is_index < (int)this->scopes.size(); is_index++) {
-			if (s_index != is_index) {
-				for (map<int, AbstractNode*>::iterator it = this->scopes[is_index]->nodes.begin();
-						it != this->scopes[is_index]->nodes.end(); it++) {
-					switch (it->second->type) {
-					case NODE_TYPE_SCOPE:
-						{
-							ScopeNode* scope_node = (ScopeNode*)it->second;
-							if (scope_node->scope == this->scopes[s_index]) {
-								still_used = true;
-								break;
-							}
-						}
-						break;
-					}
-				}
-			}
-
-			if (still_used) {
-				break;
-			}
-		}
-
-		if (!still_used) {
+		if (s_index > NUM_EXISTING) {
+			bool still_used = false;
 			for (int is_index = 0; is_index < (int)this->scopes.size(); is_index++) {
-				for (int c_index = 0; c_index < (int)this->scopes[is_index]->child_scopes.size(); c_index++) {
-					if (this->scopes[is_index]->child_scopes[c_index] == this->scopes[s_index]) {
-						this->scopes[is_index]->child_scopes.erase(this->scopes[is_index]->child_scopes.begin() + c_index);
-						break;
+				if (s_index != is_index) {
+					for (map<int, AbstractNode*>::iterator it = this->scopes[is_index]->nodes.begin();
+							it != this->scopes[is_index]->nodes.end(); it++) {
+						switch (it->second->type) {
+						case NODE_TYPE_SCOPE:
+							{
+								ScopeNode* scope_node = (ScopeNode*)it->second;
+								if (scope_node->scope == this->scopes[s_index]) {
+									still_used = true;
+									break;
+								}
+							}
+							break;
+						}
 					}
 				}
+
+				if (still_used) {
+					break;
+				}
 			}
-			delete this->scopes[s_index];
-			this->scopes.erase(this->scopes.begin() + s_index);
+
+			if (!still_used) {
+				for (int is_index = 0; is_index < (int)this->scopes.size(); is_index++) {
+					for (int c_index = 0; c_index < (int)this->scopes[is_index]->child_scopes.size(); c_index++) {
+						if (this->scopes[is_index]->child_scopes[c_index] == this->scopes[s_index]) {
+							this->scopes[is_index]->child_scopes.erase(this->scopes[is_index]->child_scopes.begin() + c_index);
+							break;
+						}
+					}
+				}
+				delete this->scopes[s_index];
+				this->scopes.erase(this->scopes.begin() + s_index);
+			}
 		}
 	}
 
 	for (int s_index = (int)this->scopes.size()-1; s_index >= 1; s_index--) {
-		if (this->scopes[s_index]->nodes.size() <= 3) {
-			ActionNode* start_node = (ActionNode*)this->scopes[s_index]->nodes[0];
-			if (start_node->next_node->type == NODE_TYPE_ACTION) {
-				ActionNode* action_node = (ActionNode*)start_node->next_node;
-				if (action_node->action.move == ACTION_NOOP) {
-					clean_scope_node(this,
-									 this->scopes[s_index]);
-				} else {
+		if (s_index > NUM_EXISTING) {
+			if (this->scopes[s_index]->nodes.size() <= 3) {
+				ActionNode* start_node = (ActionNode*)this->scopes[s_index]->nodes[0];
+				if (start_node->next_node->type == NODE_TYPE_ACTION) {
+					ActionNode* action_node = (ActionNode*)start_node->next_node;
+					if (action_node->action.move == ACTION_NOOP) {
+						clean_scope_node(this,
+										 this->scopes[s_index]);
+					} else {
+						clean_scope_node(this,
+										 this->scopes[s_index],
+										 action_node->action);
+					}
+				} else if (start_node->next_node->type == NODE_TYPE_SCOPE) {
+					ScopeNode* scope_node = (ScopeNode*)start_node->next_node;
 					clean_scope_node(this,
 									 this->scopes[s_index],
-									 action_node->action);
+									 scope_node->scope);
+				} else {
+					clean_scope_node(this,
+									 this->scopes[s_index]);
 				}
-			} else if (start_node->next_node->type == NODE_TYPE_SCOPE) {
-				ScopeNode* scope_node = (ScopeNode*)start_node->next_node;
-				clean_scope_node(this,
-								 this->scopes[s_index],
-								 scope_node->scope);
-			} else {
-				clean_scope_node(this,
-								 this->scopes[s_index]);
-			}
 
-			for (int is_index = 0; is_index < (int)this->scopes.size(); is_index++) {
-				for (int c_index = 0; c_index < (int)this->scopes[is_index]->child_scopes.size(); c_index++) {
-					if (this->scopes[is_index]->child_scopes[c_index] == this->scopes[s_index]) {
-						this->scopes[is_index]->child_scopes.erase(this->scopes[is_index]->child_scopes.begin() + c_index);
-						break;
+				for (int is_index = 0; is_index < (int)this->scopes.size(); is_index++) {
+					for (int c_index = 0; c_index < (int)this->scopes[is_index]->child_scopes.size(); c_index++) {
+						if (this->scopes[is_index]->child_scopes[c_index] == this->scopes[s_index]) {
+							this->scopes[is_index]->child_scopes.erase(this->scopes[is_index]->child_scopes.begin() + c_index);
+							break;
+						}
 					}
 				}
+				delete this->scopes[s_index];
+				this->scopes.erase(this->scopes.begin() + s_index);
 			}
-			delete this->scopes[s_index];
-			this->scopes.erase(this->scopes.begin() + s_index);
 		}
 	}
 
@@ -244,37 +248,37 @@ void Solution::clean() {
 }
 
 void Solution::check_reset() {
-	if (this->timestamp % RESET_ITERS == 0) {
-		for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
-			delete this->scopes[s_index];
-		}
-		this->scopes.clear();
+	// if (this->timestamp % RESET_ITERS == 0) {
+	// 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
+	// 		delete this->scopes[s_index];
+	// 	}
+	// 	this->scopes.clear();
 
-		this->curr_score = -1.0;
+	// 	this->curr_score = -1.0;
 
-		this->curr_true_score = -1.0;
-		this->best_true_score = -1.0;
-		this->best_true_score_timestamp = 0;
-		this->curr_time_penalty = STARTING_TIME_PENALTY;
+	// 	this->curr_true_score = -1.0;
+	// 	this->best_true_score = -1.0;
+	// 	this->best_true_score_timestamp = 0;
+	// 	this->curr_time_penalty = STARTING_TIME_PENALTY;
 
-		Scope* new_scope = new Scope();
-		new_scope->id = this->scopes.size();
-		new_scope->node_counter = 0;
-		this->scopes.push_back(new_scope);
+	// 	Scope* new_scope = new Scope();
+	// 	new_scope->id = this->scopes.size();
+	// 	new_scope->node_counter = 0;
+	// 	this->scopes.push_back(new_scope);
 
-		ActionNode* starting_noop_node = new ActionNode();
-		starting_noop_node->parent = new_scope;
-		starting_noop_node->id = new_scope->node_counter;
-		new_scope->node_counter++;
-		starting_noop_node->action = Action(ACTION_NOOP);
-		starting_noop_node->next_node_id = -1;
-		starting_noop_node->next_node = NULL;
-		starting_noop_node->average_instances_per_run = 1.0;
-		new_scope->nodes[starting_noop_node->id] = starting_noop_node;
+	// 	ActionNode* starting_noop_node = new ActionNode();
+	// 	starting_noop_node->parent = new_scope;
+	// 	starting_noop_node->id = new_scope->node_counter;
+	// 	new_scope->node_counter++;
+	// 	starting_noop_node->action = Action(ACTION_NOOP);
+	// 	starting_noop_node->next_node_id = -1;
+	// 	starting_noop_node->next_node = NULL;
+	// 	starting_noop_node->average_instances_per_run = 1.0;
+	// 	new_scope->nodes[starting_noop_node->id] = starting_noop_node;
 
-		this->max_num_actions = 10;
-		this->num_actions_limit = 100;
-	}
+	// 	this->max_num_actions = 10;
+	// 	this->num_actions_limit = 100;
+	// }
 }
 
 void Solution::save(string path,

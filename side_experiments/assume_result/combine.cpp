@@ -30,9 +30,9 @@ int main(int argc, char* argv[]) {
 	Solution* combined_solution = new Solution();
 	combined_solution->init();
 
-	for (int existing_index = 0; existing_index < 30; existing_index++) {
+	for (int existing_index = 1; existing_index <= 28; existing_index++) {
 		Solution* existing_solution = new Solution();
-		existing_solution->load("", "main_" + to_string(existing_index) + "00");
+		existing_solution->load("", "samples/main_" + to_string(existing_index) + "00");
 
 		for (int scope_index = 1; scope_index < (int)existing_solution->scopes.size(); scope_index++) {
 			combined_solution->scopes.push_back(existing_solution->scopes[scope_index]);
@@ -45,6 +45,10 @@ int main(int argc, char* argv[]) {
 
 	for (int scope_index = 1; scope_index < (int)combined_solution->scopes.size(); scope_index++) {
 		combined_solution->scopes[scope_index]->id = scope_index;
+	}
+
+	for (int scope_index = 1; scope_index < (int)combined_solution->scopes.size(); scope_index++) {
+		combined_solution->scopes[0]->child_scopes.push_back(combined_solution->scopes[scope_index]);
 	}
 
 	combined_solution->save("", "main");

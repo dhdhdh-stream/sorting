@@ -186,7 +186,6 @@ void NewActionExperiment::backprop(double target_val,
 				this->test_location_exits.clear();
 				this->test_location_states.clear();
 				this->test_location_scores.clear();
-				this->test_location_existing_impacts.clear();
 				this->test_location_counts.clear();
 				this->test_location_truth_counts.clear();
 				for (int t_index = 0; t_index < (int)this->test_scope_nodes.size(); t_index++) {
