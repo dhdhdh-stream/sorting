@@ -23,23 +23,28 @@
 class Problem;
 class Scope;
 
+const int INCREASE_TIME_PENALTY_ITER = 6;
+const int DECREASE_TIME_PENALTY_ITER = 2;
+
 class Solution {
 public:
 	int timestamp;
-	double average_score;
+	double curr_score;
+
+	double curr_true_score;
+	double best_true_score;
+	int best_true_score_timestamp;
+	/**
+	 * TODO: use actual time spent?
+	 */
+	double curr_time_penalty;
 
 	std::vector<Scope*> scopes;
-
-	int max_num_actions;
-	int num_actions_limit;
 
 	#if defined(MDEBUG) && MDEBUG
 	std::vector<Problem*> verify_problems;
 	std::vector<unsigned long> verify_seeds;
 	#endif /* MDEBUG */
-
-	// temp
-	int num_mimic;
 
 	Solution();
 	Solution(Solution* original);
@@ -55,6 +60,8 @@ public:
 
 	void clean_inputs(int scope_id,
 					  int node_id);
+
+	void check_reset();
 
 	void save(std::string path,
 			  std::string name);

@@ -1,49 +1,24 @@
-#include "branch_node.h"
+#include "action_node.h"
 
 #include <iostream>
 
+#include "abstract_experiment.h"
 #include "globals.h"
-#include "network.h"
 #include "problem.h"
 #include "scope.h"
 #include "solution.h"
-#include "utilities.h"
 
 using namespace std;
 
-void BranchNode::activate(AbstractNode*& curr_node,
-						  Problem* problem,
-						  vector<ContextLayer>& context,
-						  RunHelper& run_helper) {
-	run_helper.num_analyze += (int)this->inputs.size();
-
-	vector<double> input_vals(this->inputs.size(), 0.0);
-	for (int i_index = 0; i_index < (int)this->inputs.size(); i_index++) {
-		map<pair<pair<vector<int>,vector<int>>,int>, double>::iterator it =
-			context.back().obs_history.find(this->inputs[i_index]);
-		if (it != context.back().obs_history.end()) {
-			input_vals[i_index] = it->second;
-		}
-	}
-	this->network->activate(input_vals);
-
-	bool is_branch;
-	#if defined(MDEBUG) && MDEBUG
-	if (run_helper.curr_run_seed%2 == 0) {
-		is_branch = true;
-	} else {
-		is_branch = false;
-	}
-	run_helper.curr_run_seed = xorshift(run_helper.curr_run_seed);
-	#else
-	if (this->network->output->acti_vals[0] >= 0.0) {
-		is_branch = true;
-	} else {
-		is_branch = false;
-	}
-	#endif /* MDEBUG */
+void ActionNode::result_activate(AbstractNode*& curr_node,
+								 Problem* problem,
+								 vector<ContextLayer>& context,
+								 RunHelper& run_helper) {
+	problem->perform_action(this->action);
 
 	if (this->input_scope_context_ids.size() > 0) {
+		vector<double> obs = problem->get_observations();
+
 		for (int i_index = 0; i_index < (int)this->input_scope_context_ids.size(); i_index++) {
 			bool match_context = false;
 			if (context.size() >= this->input_scope_context_ids[i_index].size()) {
@@ -59,22 +34,40 @@ void BranchNode::activate(AbstractNode*& curr_node,
 			}
 
 			if (match_context) {
-				if (is_branch) {
+				if (this->input_obs_indexes[i_index] == -1) {
 					context[context.size() - this->input_scope_context_ids[i_index].size()]
 						.obs_history[{{this->input_scope_context_ids[i_index],
 							this->input_node_context_ids[i_index]}, -1}] = 1.0;
 				} else {
 					context[context.size() - this->input_scope_context_ids[i_index].size()]
 						.obs_history[{{this->input_scope_context_ids[i_index],
-							this->input_node_context_ids[i_index]}, -1}] = -1.0;
+							this->input_node_context_ids[i_index]}, this->input_obs_indexes[i_index]}] = obs[this->input_obs_indexes[i_index]];
 				}
 			}
 		}
 	}
 
-	if (is_branch) {
-		curr_node = this->branch_next_node;
-	} else {
-		curr_node = this->original_next_node;
+	curr_node = this->next_node;
+
+	if (run_helper.experiments_seen_order.size() == 0) {
+		map<pair<AbstractNode*,bool>, int>::iterator it = run_helper.nodes_seen.find({this, false});
+		if (it == run_helper.nodes_seen.end()) {
+			run_helper.nodes_seen[{this, false}] = 1;
+		} else {
+			it->second++;
+		}
+	}
+
+	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
+		bool is_selected = this->experiments[e_index]->result_activate(
+			this,
+			false,
+			curr_node,
+			problem,
+			context,
+			run_helper);
+		if (is_selected) {
+			return;
+		}
 	}
 }

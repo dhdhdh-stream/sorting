@@ -53,12 +53,6 @@ void ActionNode::experiment_activate(AbstractNode*& curr_node,
 
 	curr_node = this->next_node;
 
-	run_helper.num_actions++;
-	if (run_helper.num_actions > solution->num_actions_limit) {
-		run_helper.exceeded_limit = true;
-		return;
-	}
-
 	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
 		bool is_selected = this->experiments[e_index]->activate(
 			this,

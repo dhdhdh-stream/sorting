@@ -74,10 +74,6 @@ void Scope::new_scope_activate(
 			context,
 			run_helper,
 			scope_history);
-
-		if (run_helper.exceeded_limit) {
-			break;
-		}
 	}
 
 	context.pop_back();
@@ -149,10 +145,6 @@ void Scope::new_scope_capture_verify_activate(
 			context,
 			run_helper,
 			scope_history);
-
-		if (run_helper.exceeded_limit) {
-			break;
-		}
 	}
 
 	context.pop_back();

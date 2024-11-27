@@ -62,11 +62,6 @@ void Scope::experiment_activate(Problem* problem,
 
 	context.back().scope_id = this->id;
 
-	if (this->new_scope_experiment != NULL) {
-		this->new_scope_experiment->pre_activate(context,
-												 run_helper);
-	}
-
 	AbstractNode* curr_node = this->nodes[0];
 	while (true) {
 		if (curr_node == NULL) {
@@ -78,10 +73,6 @@ void Scope::experiment_activate(Problem* problem,
 										context,
 										run_helper,
 										history);
-
-		if (run_helper.exceeded_limit) {
-			break;
-		}
 	}
 
 	if (this->new_scope_experiment != NULL) {

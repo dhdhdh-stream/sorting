@@ -30,25 +30,17 @@ void ScopeNode::experiment_activate(AbstractNode*& curr_node,
 
 	curr_node = this->next_node;
 
-	run_helper.num_actions++;
-	if (run_helper.num_actions > solution->num_actions_limit) {
-		run_helper.exceeded_limit = true;
-		return;
-	}
-
-	if (!run_helper.exceeded_limit) {
-		for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
-			bool is_selected = this->experiments[e_index]->activate(
-				this,
-				false,
-				curr_node,
-				problem,
-				context,
-				run_helper,
-				scope_history);
-			if (is_selected) {
-				return;
-			}
+	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
+		bool is_selected = this->experiments[e_index]->activate(
+			this,
+			false,
+			curr_node,
+			problem,
+			context,
+			run_helper,
+			scope_history);
+		if (is_selected) {
+			return;
 		}
 	}
 }

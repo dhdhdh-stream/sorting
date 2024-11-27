@@ -26,7 +26,6 @@ BranchNode::BranchNode() {
 BranchNode::BranchNode(BranchNode* original) {
 	this->type = NODE_TYPE_BRANCH;
 
-	this->is_local = original->is_local;
 	this->inputs = original->inputs;
 	this->network = new Network(original->network);
 
@@ -97,7 +96,6 @@ void BranchNode::clean_inputs(int scope_id,
 }
 
 void BranchNode::save(ofstream& output_file) {
-	output_file << this->is_local << endl;
 	output_file << this->inputs.size() << endl;
 	for (int i_index = 0; i_index < (int)this->inputs.size(); i_index++) {
 		output_file << this->inputs[i_index].first.first.size() << endl;
@@ -118,10 +116,6 @@ void BranchNode::save(ofstream& output_file) {
 }
 
 void BranchNode::load(ifstream& input_file) {
-	string is_local_line;
-	getline(input_file, is_local_line);
-	this->is_local = stoi(is_local_line);
-
 	{
 		string num_inputs_line;
 		getline(input_file, num_inputs_line);

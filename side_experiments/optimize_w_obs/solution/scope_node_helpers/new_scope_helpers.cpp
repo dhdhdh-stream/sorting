@@ -26,28 +26,20 @@ void ScopeNode::new_scope_activate(
 
 	curr_node = this->next_node;
 
-	run_helper.num_actions++;
-	if (run_helper.num_actions > solution->num_actions_limit) {
-		run_helper.exceeded_limit = true;
-		return;
-	}
-
 	/**
 	 * - still need to check experiments
 	 */
-	if (!run_helper.exceeded_limit) {
-		for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
-			bool is_selected = this->experiments[e_index]->activate(
-				this,
-				false,
-				curr_node,
-				problem,
-				context,
-				run_helper,
-				NULL);
-			if (is_selected) {
-				return;
-			}
+	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
+		bool is_selected = this->experiments[e_index]->activate(
+			this,
+			false,
+			curr_node,
+			problem,
+			context,
+			run_helper,
+			NULL);
+		if (is_selected) {
+			return;
 		}
 	}
 }
@@ -69,28 +61,20 @@ void ScopeNode::new_scope_capture_verify_activate(
 
 	curr_node = this->next_node;
 
-	run_helper.num_actions++;
-	if (run_helper.num_actions > solution->num_actions_limit) {
-		run_helper.exceeded_limit = true;
-		return;
-	}
-
 	/**
 	 * - still need to check experiments
 	 */
-	if (!run_helper.exceeded_limit) {
-		for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
-			bool is_selected = this->experiments[e_index]->activate(
-				this,
-				false,
-				curr_node,
-				problem,
-				context,
-				run_helper,
-				NULL);
-			if (is_selected) {
-				return;
-			}
+	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
+		bool is_selected = this->experiments[e_index]->activate(
+			this,
+			false,
+			curr_node,
+			problem,
+			context,
+			run_helper,
+			NULL);
+		if (is_selected) {
+			return;
 		}
 	}
 }

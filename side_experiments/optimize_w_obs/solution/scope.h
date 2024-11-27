@@ -40,6 +40,9 @@ public:
 				  std::vector<ContextLayer>& context,
 				  RunHelper& run_helper);
 
+	void result_activate(Problem* problem,
+						 std::vector<ContextLayer>& context,
+						 RunHelper& run_helper);
 	void experiment_activate(Problem* problem,
 							 std::vector<ContextLayer>& context,
 							 RunHelper& run_helper,
@@ -55,6 +58,10 @@ public:
 							std::vector<ContextLayer>& context,
 							RunHelper& run_helper,
 							ScopeHistory* scope_history);
+
+	void measure_activate(Problem* problem,
+						  std::vector<ContextLayer>& context,
+						  RunHelper& run_helper);
 
 	#if defined(MDEBUG) && MDEBUG
 	void new_scope_capture_verify_activate(Problem* problem,

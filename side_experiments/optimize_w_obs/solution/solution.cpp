@@ -12,13 +12,26 @@
 
 using namespace std;
 
+const double STARTING_TIME_PENALTY = 0.001;
+
+#if defined(MDEBUG) && MDEBUG
+const int RESET_ITERS = 20;
+#else
+const int RESET_ITERS = 100;
+#endif /* MDEBUG */
+
 Solution::Solution() {
 	// do nothing
 }
 
 Solution::Solution(Solution* original) {
 	this->timestamp = original->timestamp;
-	this->average_score = original->average_score;
+	this->curr_score = original->curr_score;
+
+	this->curr_true_score = original->curr_true_score;
+	this->best_true_score = original->best_true_score;
+	this->best_true_score_timestamp = original->best_true_score_timestamp;
+	this->curr_time_penalty = original->curr_time_penalty;
 
 	for (int s_index = 0; s_index < (int)original->scopes.size(); s_index++) {
 		Scope* scope = new Scope();
@@ -34,12 +47,6 @@ Solution::Solution(Solution* original) {
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
 		this->scopes[s_index]->link(this);
 	}
-
-	this->max_num_actions = original->max_num_actions;
-	this->num_actions_limit = original->num_actions_limit;
-
-	// temp
-	this->num_mimic = original->num_mimic;
 }
 
 Solution::~Solution() {
@@ -50,7 +57,12 @@ Solution::~Solution() {
 
 void Solution::init() {
 	this->timestamp = 0;
-	this->average_score = -1.0;
+	this->curr_score = -1.0;
+
+	this->curr_true_score = -1.0;
+	this->best_true_score = -1.0;
+	this->best_true_score_timestamp = 0;
+	this->curr_time_penalty = STARTING_TIME_PENALTY;
 
 	/**
 	 * - even though scopes[0] will not be reused, still good to start with:
@@ -73,12 +85,6 @@ void Solution::init() {
 	starting_noop_node->next_node = NULL;
 	starting_noop_node->average_instances_per_run = 1.0;
 	new_scope->nodes[starting_noop_node->id] = starting_noop_node;
-
-	this->max_num_actions = 1;
-	this->num_actions_limit = 40;
-
-	// temp
-	this->num_mimic = 0;
 }
 
 void Solution::load(string path,
@@ -90,9 +96,25 @@ void Solution::load(string path,
 	getline(input_file, timestamp_line);
 	this->timestamp = stoi(timestamp_line);
 
-	string average_score_line;
-	getline(input_file, average_score_line);
-	this->average_score = stod(average_score_line);
+	string curr_score_line;
+	getline(input_file, curr_score_line);
+	this->curr_score = stod(curr_score_line);
+
+	string curr_true_score_line;
+	getline(input_file, curr_true_score_line);
+	this->curr_true_score = stod(curr_true_score_line);
+
+	string best_true_score_line;
+	getline(input_file, best_true_score_line);
+	this->best_true_score = stod(best_true_score_line);
+
+	string best_true_score_timestamp_line;
+	getline(input_file, best_true_score_timestamp_line);
+	this->best_true_score_timestamp = stoi(best_true_score_timestamp_line);
+
+	string curr_time_penalty_line;
+	getline(input_file, curr_time_penalty_line);
+	this->curr_time_penalty = stod(curr_time_penalty_line);
 
 	string num_scopes_line;
 	getline(input_file, num_scopes_line);
@@ -112,20 +134,6 @@ void Solution::load(string path,
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
 		this->scopes[s_index]->link(this);
 	}
-
-	string max_num_actions_line;
-	getline(input_file, max_num_actions_line);
-	this->max_num_actions = stoi(max_num_actions_line);
-
-	#if defined(MDEBUG) && MDEBUG
-	this->num_actions_limit = 2*this->max_num_actions + 10;
-	#else
-	this->num_actions_limit = 10*this->max_num_actions + 10;
-	#endif /* MDEBUG */
-
-	string num_mimic_line;
-	getline(input_file, num_mimic_line);
-	this->num_mimic = stoi(num_mimic_line);
 
 	input_file.close();
 }
@@ -148,23 +156,55 @@ void Solution::clean_inputs(int scope_id,
 	}
 }
 
+void Solution::check_reset() {
+	if (this->timestamp % RESET_ITERS == 0) {
+		for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
+			delete this->scopes[s_index];
+		}
+		this->scopes.clear();
+
+		this->curr_score = -1.0;
+
+		this->curr_true_score = -1.0;
+		this->best_true_score = -1.0;
+		this->best_true_score_timestamp = 0;
+		this->curr_time_penalty = STARTING_TIME_PENALTY;
+
+		Scope* new_scope = new Scope();
+		new_scope->id = this->scopes.size();
+		new_scope->node_counter = 0;
+		this->scopes.push_back(new_scope);
+
+		ActionNode* starting_noop_node = new ActionNode();
+		starting_noop_node->parent = new_scope;
+		starting_noop_node->id = new_scope->node_counter;
+		new_scope->node_counter++;
+		starting_noop_node->action = Action(ACTION_NOOP);
+		starting_noop_node->next_node_id = -1;
+		starting_noop_node->next_node = NULL;
+		starting_noop_node->average_instances_per_run = 1.0;
+		new_scope->nodes[starting_noop_node->id] = starting_noop_node;
+	}
+}
+
 void Solution::save(string path,
 					string name) {
 	ofstream output_file;
 	output_file.open(path + "saves/" + name + "_temp.txt");
 
 	output_file << this->timestamp << endl;
-	output_file << this->average_score << endl;
+	output_file << this->curr_score << endl;
+
+	output_file << this->curr_true_score << endl;
+	output_file << this->best_true_score << endl;
+	output_file << this->best_true_score_timestamp << endl;
+	output_file << this->curr_time_penalty << endl;
 
 	output_file << this->scopes.size() << endl;
 
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
 		this->scopes[s_index]->save(output_file);
 	}
-
-	output_file << this->max_num_actions << endl;
-
-	output_file << this->num_mimic << endl;
 
 	output_file.close();
 

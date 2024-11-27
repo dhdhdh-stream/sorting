@@ -34,6 +34,10 @@ public:
 				  std::vector<ContextLayer>& context,
 				  RunHelper& run_helper);
 
+	void result_activate(AbstractNode*& curr_node,
+						 Problem* problem,
+						 std::vector<ContextLayer>& context,
+						 RunHelper& run_helper);
 	void experiment_activate(AbstractNode*& curr_node,
 							 Problem* problem,
 							 std::vector<ContextLayer>& context,
@@ -48,6 +52,11 @@ public:
 							Problem* problem,
 							std::vector<ContextLayer>& context,
 							RunHelper& run_helper);
+
+	void measure_activate(AbstractNode*& curr_node,
+						  Problem* problem,
+						  std::vector<ContextLayer>& context,
+						  RunHelper& run_helper);
 
 	#if defined(MDEBUG) && MDEBUG
 	void verify_activate(AbstractNode*& curr_node,

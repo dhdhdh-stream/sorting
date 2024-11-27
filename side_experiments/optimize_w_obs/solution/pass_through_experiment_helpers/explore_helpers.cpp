@@ -92,67 +92,44 @@ void PassThroughExperiment::explore_activate(
 			new_num_steps = geo_distribution(generator);
 		}
 
-		uniform_int_distribution<int> mimic_distribution(0, 3);
-		if (mimic_distribution(generator) == 0) {
-			vector<Action> mimic_actions;
-			mimic(problem,
-				  scope_history,
-				  new_num_steps,
-				  mimic_actions);
+		/**
+		 * - always give raw actions a large weight
+		 *   - existing scopes often learned to avoid certain patterns
+		 *     - which can prevent innovation
+		 */
+		uniform_int_distribution<int> scope_distribution(0, 2);
+		for (int s_index = 0; s_index < new_num_steps; s_index++) {
+			if (this->scope_context->child_scopes.size() > 0
+					&& scope_distribution(generator) == 0) {
+				this->curr_step_types.push_back(STEP_TYPE_SCOPE);
+				this->curr_actions.push_back(NULL);
 
-			for (int step_index = 0; step_index < (int)mimic_actions.size(); step_index++) {
+				ScopeNode* new_scope_node = new ScopeNode();
+				uniform_int_distribution<int> child_scope_distribution(0, this->scope_context->child_scopes.size()-1);
+				new_scope_node->scope = this->scope_context->child_scopes[child_scope_distribution(generator)];
+				this->curr_scopes.push_back(new_scope_node);
+			} else {
 				this->curr_step_types.push_back(STEP_TYPE_ACTION);
 
 				ActionNode* new_action_node = new ActionNode();
-				new_action_node->action = mimic_actions[step_index];
+				new_action_node->action = problem_type->random_action();
 				this->curr_actions.push_back(new_action_node);
 
 				this->curr_scopes.push_back(NULL);
 			}
+		}
 
-			this->curr_is_mimic = true;
-		} else {
-			/**
-			 * - always give raw actions a large weight
-			 *   - existing scopes often learned to avoid certain patterns
-			 *     - which can prevent innovation
-			 */
-			uniform_int_distribution<int> scope_distribution(0, 2);
-			for (int s_index = 0; s_index < new_num_steps; s_index++) {
-				if (this->scope_context->child_scopes.size() > 0
-						&& scope_distribution(generator) == 0) {
-					this->curr_step_types.push_back(STEP_TYPE_SCOPE);
-					this->curr_actions.push_back(NULL);
-
-					ScopeNode* new_scope_node = new ScopeNode();
-					uniform_int_distribution<int> child_scope_distribution(0, this->scope_context->child_scopes.size()-1);
-					new_scope_node->scope = this->scope_context->child_scopes[child_scope_distribution(generator)];
-					this->curr_scopes.push_back(new_scope_node);
-				} else {
-					this->curr_step_types.push_back(STEP_TYPE_ACTION);
-
-					ActionNode* new_action_node = new ActionNode();
-					new_action_node->action = problem_type->random_action();
-					this->curr_actions.push_back(new_action_node);
-
-					this->curr_scopes.push_back(NULL);
-				}
+		for (int s_index = 0; s_index < (int)this->curr_step_types.size(); s_index++) {
+			if (this->curr_step_types[s_index] == STEP_TYPE_ACTION) {
+				this->curr_actions[s_index]->explore_activate(
+					problem,
+					run_helper);
+			} else {
+				this->curr_scopes[s_index]->explore_activate(
+					problem,
+					context,
+					run_helper);
 			}
-
-			for (int s_index = 0; s_index < (int)this->curr_step_types.size(); s_index++) {
-				if (this->curr_step_types[s_index] == STEP_TYPE_ACTION) {
-					this->curr_actions[s_index]->explore_activate(
-						problem,
-						run_helper);
-				} else {
-					this->curr_scopes[s_index]->explore_activate(
-						problem,
-						context,
-						run_helper);
-				}
-			}
-
-			this->curr_is_mimic = false;
 		}
 
 		this->state_iter = 0;
@@ -181,14 +158,45 @@ void PassThroughExperiment::explore_backprop(
 	if (this->state_iter != -1) {
 		bool is_fail = false;
 
-		if (run_helper.exceeded_limit) {
-			is_fail = true;
-		} else {
-			PassThroughExperimentHistory* history = (PassThroughExperimentHistory*)run_helper.experiment_histories.back();
+		PassThroughExperimentHistory* history = (PassThroughExperimentHistory*)run_helper.experiment_histories.back();
 
-			this->state_iter++;
-			if (this->state_iter == INITIAL_NUM_TRUTH_PER_ITER
-					&& this->sub_state_iter >= INITIAL_NUM_SAMPLES_PER_ITER) {
+		this->state_iter++;
+		if (this->state_iter == INITIAL_NUM_TRUTH_PER_ITER
+				&& this->sub_state_iter >= INITIAL_NUM_SAMPLES_PER_ITER) {
+			#if defined(MDEBUG) && MDEBUG
+			if (false) {
+			#else
+			if (this->curr_score <= 0.0) {
+			#endif /* MDEBUG */
+				is_fail = true;
+			}
+		} else if (this->state_iter == VERIFY_1ST_NUM_TRUTH_PER_ITER
+				&& this->sub_state_iter >= VERIFY_1ST_NUM_SAMPLES_PER_ITER) {
+			#if defined(MDEBUG) && MDEBUG
+			if (false) {
+			#else
+			if (this->curr_score <= 0.0) {
+			#endif /* MDEBUG */
+				is_fail = true;
+			}
+		} else if (this->state_iter == VERIFY_2ND_NUM_TRUTH_PER_ITER
+				&& this->sub_state_iter >= VERIFY_2ND_NUM_SAMPLES_PER_ITER) {
+			#if defined(MDEBUG) && MDEBUG
+			if (rand()%2 == 0) {
+			#else
+			if (this->curr_score <= 0.0) {
+			#endif /* MDEBUG */
+				is_fail = true;
+			}
+		}
+
+		double final_score = (target_val - run_helper.result) / history->instance_count;
+		for (int i_index = 0; i_index < history->instance_count; i_index++) {
+			this->curr_score += final_score;
+			this->sub_state_iter++;
+
+			if (this->sub_state_iter == INITIAL_NUM_SAMPLES_PER_ITER
+					&& this->state_iter >= INITIAL_NUM_TRUTH_PER_ITER) {
 				#if defined(MDEBUG) && MDEBUG
 				if (false) {
 				#else
@@ -196,8 +204,8 @@ void PassThroughExperiment::explore_backprop(
 				#endif /* MDEBUG */
 					is_fail = true;
 				}
-			} else if (this->state_iter == VERIFY_1ST_NUM_TRUTH_PER_ITER
-					&& this->sub_state_iter >= VERIFY_1ST_NUM_SAMPLES_PER_ITER) {
+			} else if (this->sub_state_iter == VERIFY_1ST_NUM_SAMPLES_PER_ITER
+					&& this->state_iter >= VERIFY_1ST_NUM_TRUTH_PER_ITER) {
 				#if defined(MDEBUG) && MDEBUG
 				if (false) {
 				#else
@@ -205,49 +213,14 @@ void PassThroughExperiment::explore_backprop(
 				#endif /* MDEBUG */
 					is_fail = true;
 				}
-			} else if (this->state_iter == VERIFY_2ND_NUM_TRUTH_PER_ITER
-					&& this->sub_state_iter >= VERIFY_2ND_NUM_SAMPLES_PER_ITER) {
+			} else if (this->sub_state_iter == VERIFY_2ND_NUM_SAMPLES_PER_ITER
+					&& this->state_iter >= VERIFY_2ND_NUM_TRUTH_PER_ITER) {
 				#if defined(MDEBUG) && MDEBUG
 				if (rand()%2 == 0) {
 				#else
 				if (this->curr_score <= 0.0) {
 				#endif /* MDEBUG */
 					is_fail = true;
-				}
-			}
-
-			double final_score = (target_val - run_helper.result) / history->instance_count;
-			for (int i_index = 0; i_index < history->instance_count; i_index++) {
-				this->curr_score += final_score;
-				this->sub_state_iter++;
-
-				if (this->sub_state_iter == INITIAL_NUM_SAMPLES_PER_ITER
-						&& this->state_iter >= INITIAL_NUM_TRUTH_PER_ITER) {
-					#if defined(MDEBUG) && MDEBUG
-					if (false) {
-					#else
-					if (this->curr_score <= 0.0) {
-					#endif /* MDEBUG */
-						is_fail = true;
-					}
-				} else if (this->sub_state_iter == VERIFY_1ST_NUM_SAMPLES_PER_ITER
-						&& this->state_iter >= VERIFY_1ST_NUM_TRUTH_PER_ITER) {
-					#if defined(MDEBUG) && MDEBUG
-					if (false) {
-					#else
-					if (this->curr_score <= 0.0) {
-					#endif /* MDEBUG */
-						is_fail = true;
-					}
-				} else if (this->sub_state_iter == VERIFY_2ND_NUM_SAMPLES_PER_ITER
-						&& this->state_iter >= VERIFY_2ND_NUM_TRUTH_PER_ITER) {
-					#if defined(MDEBUG) && MDEBUG
-					if (rand()%2 == 0) {
-					#else
-					if (this->curr_score <= 0.0) {
-					#endif /* MDEBUG */
-						is_fail = true;
-					}
 				}
 			}
 		}
@@ -283,7 +256,6 @@ void PassThroughExperiment::explore_backprop(
 			this->best_actions = this->curr_actions;
 			this->best_scopes = this->curr_scopes;
 			this->best_exit_next_node = this->curr_exit_next_node;
-			this->best_is_mimic = this->curr_is_mimic;
 
 			this->curr_score = 0.0;
 			this->curr_step_types.clear();

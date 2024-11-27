@@ -83,67 +83,44 @@ bool BranchExperiment::explore_activate(
 			new_num_steps = geo_distribution(generator);
 		}
 
-		uniform_int_distribution<int> mimic_distribution(0, 3);
-		if (mimic_distribution(generator) == 0) {
-			vector<Action> mimic_actions;
-			mimic(problem,
-				  scope_history,
-				  new_num_steps,
-				  mimic_actions);
+		/**
+		 * - always give raw actions a large weight
+		 *   - existing scopes often learned to avoid certain patterns
+		 *     - which can prevent innovation
+		 */
+		uniform_int_distribution<int> scope_distribution(0, 2);
+		for (int s_index = 0; s_index < new_num_steps; s_index++) {
+			if (this->scope_context->child_scopes.size() > 0
+					&& scope_distribution(generator) == 0) {
+				this->curr_step_types.push_back(STEP_TYPE_SCOPE);
+				this->curr_actions.push_back(NULL);
 
-			for (int step_index = 0; step_index < (int)mimic_actions.size(); step_index++) {
+				ScopeNode* new_scope_node = new ScopeNode();
+				uniform_int_distribution<int> child_scope_distribution(0, this->scope_context->child_scopes.size()-1);
+				new_scope_node->scope = this->scope_context->child_scopes[child_scope_distribution(generator)];
+				this->curr_scopes.push_back(new_scope_node);
+			} else {
 				this->curr_step_types.push_back(STEP_TYPE_ACTION);
 
 				ActionNode* new_action_node = new ActionNode();
-				new_action_node->action = mimic_actions[step_index];
+				new_action_node->action = problem_type->random_action();
 				this->curr_actions.push_back(new_action_node);
 
 				this->curr_scopes.push_back(NULL);
 			}
+		}
 
-			this->curr_is_mimic = true;
-		} else {
-			/**
-			 * - always give raw actions a large weight
-			 *   - existing scopes often learned to avoid certain patterns
-			 *     - which can prevent innovation
-			 */
-			uniform_int_distribution<int> scope_distribution(0, 2);
-			for (int s_index = 0; s_index < new_num_steps; s_index++) {
-				if (this->scope_context->child_scopes.size() > 0
-						&& scope_distribution(generator) == 0) {
-					this->curr_step_types.push_back(STEP_TYPE_SCOPE);
-					this->curr_actions.push_back(NULL);
-
-					ScopeNode* new_scope_node = new ScopeNode();
-					uniform_int_distribution<int> child_scope_distribution(0, this->scope_context->child_scopes.size()-1);
-					new_scope_node->scope = this->scope_context->child_scopes[child_scope_distribution(generator)];
-					this->curr_scopes.push_back(new_scope_node);
-				} else {
-					this->curr_step_types.push_back(STEP_TYPE_ACTION);
-
-					ActionNode* new_action_node = new ActionNode();
-					new_action_node->action = problem_type->random_action();
-					this->curr_actions.push_back(new_action_node);
-
-					this->curr_scopes.push_back(NULL);
-				}
+		for (int s_index = 0; s_index < (int)this->curr_step_types.size(); s_index++) {
+			if (this->curr_step_types[s_index] == STEP_TYPE_ACTION) {
+				this->curr_actions[s_index]->explore_activate(
+					problem,
+					run_helper);
+			} else {
+				this->curr_scopes[s_index]->explore_activate(
+					problem,
+					context,
+					run_helper);
 			}
-
-			for (int s_index = 0; s_index < (int)this->curr_step_types.size(); s_index++) {
-				if (this->curr_step_types[s_index] == STEP_TYPE_ACTION) {
-					this->curr_actions[s_index]->explore_activate(
-						problem,
-						run_helper);
-				} else {
-					this->curr_scopes[s_index]->explore_activate(
-						problem,
-						context,
-						run_helper);
-				}
-			}
-
-			this->curr_is_mimic = false;
 		}
 
 		curr_node = this->curr_exit_next_node;
@@ -168,10 +145,9 @@ void BranchExperiment::explore_backprop(
 		bool select = false;
 		if (this->explore_type == EXPLORE_TYPE_BEST) {
 			#if defined(MDEBUG) && MDEBUG
-			if (!run_helper.exceeded_limit) {
+			if (true) {
 			#else
-			if (!run_helper.exceeded_limit
-					&& curr_surprise > this->best_surprise) {
+			if (curr_surprise > this->best_surprise) {
 			#endif /* MDEBUG */
 				for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 					if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
@@ -186,8 +162,6 @@ void BranchExperiment::explore_backprop(
 				this->best_actions = this->curr_actions;
 				this->best_scopes = this->curr_scopes;
 				this->best_exit_next_node = this->curr_exit_next_node;
-				// temp
-				this->best_is_mimic = this->curr_is_mimic;
 
 				this->curr_step_types.clear();
 				this->curr_actions.clear();
@@ -212,17 +186,14 @@ void BranchExperiment::explore_backprop(
 			}
 		} else if (this->explore_type == EXPLORE_TYPE_GOOD) {
 			#if defined(MDEBUG) && MDEBUG
-			if (!run_helper.exceeded_limit) {
+			if (true) {
 			#else
-			if (!run_helper.exceeded_limit
-					&& curr_surprise > 0.0) {
+			if (curr_surprise > 0.0) {
 			#endif /* MDEBUG */
 				this->best_step_types = this->curr_step_types;
 				this->best_actions = this->curr_actions;
 				this->best_scopes = this->curr_scopes;
 				this->best_exit_next_node = this->curr_exit_next_node;
-				// temp
-				this->best_is_mimic = this->curr_is_mimic;
 
 				this->curr_step_types.clear();
 				this->curr_actions.clear();
@@ -304,15 +275,7 @@ void BranchExperiment::explore_backprop(
 				}
 			}
 
-			uniform_int_distribution<int> is_local_distribution(0, 1);
-			// if (is_local_distribution(generator) == 0) {
-			if (true) {
-				this->is_local = true;
-				this->obs_histories.reserve(NUM_DATAPOINTS);
-			} else {
-				this->is_local = false;
-				this->scope_histories.reserve(NUM_DATAPOINTS);
-			}
+			this->scope_histories.reserve(NUM_DATAPOINTS);
 			this->target_val_histories.reserve(NUM_DATAPOINTS);
 
 			uniform_int_distribution<int> until_distribution(0, 2*((int)this->node_context->average_instances_per_run-1));

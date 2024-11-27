@@ -69,13 +69,10 @@ void NewScopeExperiment::add_new_test_location(NewScopeExperimentHistory* histor
 		this->test_location_starts.push_back(possible_starts[start_index]);
 		this->test_location_is_branch.push_back(possible_is_branch[start_index]);
 		this->test_location_exits.push_back(exit_node);
-		this->test_location_states.push_back(NEW_SCOPE_EXPERIMENT_MEASURE_EXISTING);
-		this->test_location_existing_scores.push_back(0.0);
-		this->test_location_existing_counts.push_back(0);
-		this->test_location_existing_truth_counts.push_back(0);
-		this->test_location_new_scores.push_back(0.0);
-		this->test_location_new_counts.push_back(0);
-		this->test_location_new_truth_counts.push_back(0);
+		this->test_location_states.push_back(NEW_SCOPE_EXPERIMENT_MEASURE);
+		this->test_location_scores.push_back(0.0);
+		this->test_location_counts.push_back(0);
+		this->test_location_truth_counts.push_back(0);
 		this->test_scope_nodes.push_back(new ScopeNode());
 
 		this->average_remaining_experiments_from_start = 1.0;

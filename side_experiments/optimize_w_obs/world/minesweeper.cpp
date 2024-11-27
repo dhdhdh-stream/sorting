@@ -343,8 +343,7 @@ void Minesweeper::perform_action(Action action) {
 	}
 }
 
-double Minesweeper::score_result(int num_analyze,
-								 int num_actions) {
+double Minesweeper::score_result() {
 	int curr_revealed = 0;
 	int num_mines = 0;
 	double score = 1.0;
@@ -372,10 +371,6 @@ double Minesweeper::score_result(int num_analyze,
 	}
 
 	score += 0.01*curr_revealed;
-
-	score -= 0.00001*num_analyze;
-	score -= 0.00005*num_actions;
-	// score -= 0.0002*num_actions;		// easily stuck in local maxima, but can also lead to efficient solution
 
 	if (this->hit_mine) {
 		score -= 1.0;

@@ -27,8 +27,7 @@ public:
 
 	std::vector<double> get_observations();
 	void perform_action(Action action);
-	double score_result(int num_analyze,
-						int num_actions);
+	double score_result();
 
 	std::vector<double> get_location();
 

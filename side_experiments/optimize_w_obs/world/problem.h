@@ -9,11 +9,7 @@ public:
 
 	virtual std::vector<double> get_observations() = 0;
 	virtual void perform_action(Action action) = 0;
-	/**
-	 * TODO: use actual time spent?
-	 */
-	virtual double score_result(int num_analyze,
-								int num_actions) = 0;
+	virtual double score_result() = 0;
 
 	virtual std::vector<double> get_location() = 0;
 

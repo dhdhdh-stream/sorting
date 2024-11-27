@@ -40,10 +40,4 @@ void ActionNode::activate(AbstractNode*& curr_node,
 	}
 
 	curr_node = this->next_node;
-
-	run_helper.num_actions++;
-	if (run_helper.num_actions > solution->num_actions_limit) {
-		run_helper.exceeded_limit = true;
-		return;
-	}
 }

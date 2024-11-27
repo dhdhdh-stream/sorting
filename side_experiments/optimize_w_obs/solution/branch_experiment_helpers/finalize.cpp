@@ -211,7 +211,6 @@ void BranchExperiment::new_branch(Solution* duplicate) {
 		}
 	}
 
-	this->branch_node->is_local = this->is_local;
 	this->branch_node->inputs = this->inputs;
 	this->branch_node->network = this->network;
 	this->network = NULL;
@@ -226,11 +225,6 @@ void BranchExperiment::new_branch(Solution* duplicate) {
 		this->branch_node->verify_scores = this->verify_scores;
 	}
 	#endif /* MDEBUG */
-
-	// temp
-	if (this->best_is_mimic) {
-		duplicate->num_mimic++;
-	}
 
 	this->best_actions.clear();
 	this->best_scopes.clear();

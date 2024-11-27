@@ -187,7 +187,6 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 						BranchNode* original_branch_node = (BranchNode*)(*node_it);
 						BranchNode* new_branch_node = (BranchNode*)node_mappings[original_branch_node];
 
-						new_branch_node->is_local = original_branch_node->is_local;
 						new_branch_node->network = new Network(original_branch_node->network);
 						for (int i_index = (int)original_branch_node->inputs.size()-1; i_index >= 0; i_index--) {
 							AbstractNode* original_input_node = scope_context->nodes[
@@ -281,13 +280,10 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 		this->test_location_starts.push_back(node_context);
 		this->test_location_is_branch.push_back(is_branch);
 		this->test_location_exits.push_back(exit_next_node);
-		this->test_location_states.push_back(NEW_SCOPE_EXPERIMENT_MEASURE_EXISTING);
-		this->test_location_existing_scores.push_back(0.0);
-		this->test_location_existing_counts.push_back(0);
-		this->test_location_existing_truth_counts.push_back(0);
-		this->test_location_new_scores.push_back(0.0);
-		this->test_location_new_counts.push_back(0);
-		this->test_location_new_truth_counts.push_back(0);
+		this->test_location_states.push_back(NEW_SCOPE_EXPERIMENT_MEASURE);
+		this->test_location_scores.push_back(0.0);
+		this->test_location_counts.push_back(0);
+		this->test_location_truth_counts.push_back(0);
 		this->test_scope_nodes.push_back(new ScopeNode());
 
 		this->average_remaining_experiments_from_start = 1.0;

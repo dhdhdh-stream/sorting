@@ -19,21 +19,16 @@ const int NEW_SCOPE_EXPERIMENT_STATE_EXPLORE = 0;
 const int NEW_SCOPE_EXPERIMENT_STATE_CAPTURE_VERIFY = 1;
 #endif /* MDEBUG */
 
-const int NEW_SCOPE_EXPERIMENT_MEASURE_EXISTING = 0;
-const int NEW_SCOPE_EXPERIMENT_MEASURE_NEW = 1;
-const int NEW_SCOPE_EXPERIMENT_VERIFY_1ST_EXISTING = 2;
-const int NEW_SCOPE_EXPERIMENT_VERIFY_1ST_NEW = 3;
-const int NEW_SCOPE_EXPERIMENT_VERIFY_2ND_EXISTING = 4;
-const int NEW_SCOPE_EXPERIMENT_VERIFY_2ND_NEW = 5;
+const int NEW_SCOPE_EXPERIMENT_MEASURE = 0;
+const int NEW_SCOPE_EXPERIMENT_VERIFY_1ST = 1;
+const int NEW_SCOPE_EXPERIMENT_VERIFY_2ND = 2;
 
 #if defined(MDEBUG) && MDEBUG
 const int NEW_SCOPE_NUM_GENERALIZE_TRIES = 10;
 const int NEW_SCOPE_MIN_LOCATIONS = 2;
-const int NEW_SCOPE_MAX_LOCATIONS = 3;
 #else
-const int NEW_SCOPE_NUM_GENERALIZE_TRIES = 300;
+const int NEW_SCOPE_NUM_GENERALIZE_TRIES = 200;
 const int NEW_SCOPE_MIN_LOCATIONS = 3;
-const int NEW_SCOPE_MAX_LOCATIONS = 5;
 #endif /* MDEBUG */
 
 const int NEW_SCOPE_EXPERIMENT_TYPE_IN_PLACE = 0;
@@ -54,12 +49,9 @@ public:
 	std::vector<bool> test_location_is_branch;
 	std::vector<AbstractNode*> test_location_exits;
 	std::vector<int> test_location_states;
-	std::vector<double> test_location_existing_scores;
-	std::vector<int> test_location_existing_counts;
-	std::vector<int> test_location_existing_truth_counts;
-	std::vector<double> test_location_new_scores;
-	std::vector<int> test_location_new_counts;
-	std::vector<int> test_location_new_truth_counts;
+	std::vector<double> test_location_scores;
+	std::vector<int> test_location_counts;
+	std::vector<int> test_location_truth_counts;
 	std::vector<ScopeNode*> test_scope_nodes;
 
 	std::vector<AbstractNode*> successful_location_starts;
@@ -81,6 +73,12 @@ public:
 	void pre_activate(std::vector<ContextLayer>& context,
 					  RunHelper& run_helper);
 
+	bool result_activate(AbstractNode* experiment_node,
+						 bool is_branch,
+						 AbstractNode*& curr_node,
+						 Problem* problem,
+						 std::vector<ContextLayer>& context,
+						 RunHelper& run_helper);
 	bool activate(AbstractNode* experiment_node,
 				  bool is_branch,
 				  AbstractNode*& curr_node,

@@ -14,7 +14,7 @@ class ScopeHistory;
 class ScopeNode;
 class Solution;
 
-void create_experiment(ScopeHistory* scope_history);
+void create_experiment(RunHelper& run_helper);
 
 void gather_possible_helper(ScopeHistory* scope_history,
 							std::vector<int>& scope_context,
@@ -29,11 +29,7 @@ void fetch_input_helper(ScopeHistory* scope_history,
 void clean_scope(Scope* scope,
 				 Solution* parent_solution);
 
-double get_existing_result(Problem* original_problem);
-
-void mimic(Problem* problem,
-		   ScopeHistory* scope_history,
-		   int num_steps,
-		   std::vector<Action>& mimic_actions);
+void get_existing_result(Problem* original_problem,
+						 RunHelper& run_helper);
 
 #endif /* SOLUTION_HELPERS_H */

@@ -5,11 +5,9 @@
 #include <random>
 
 #include "abstract_experiment.h"
-#include "action_network.h"
 #include "action_node.h"
 #include "constants.h"
 #include "globals.h"
-#include "lstm.h"
 #include "minesweeper.h"
 #include "scope.h"
 #include "scope_node.h"
@@ -24,9 +22,6 @@ default_random_engine generator;
 
 ProblemType* problem_type;
 Solution* solution;
-
-vector<LSTM*> mimic_memory_cells;
-vector<ActionNetwork*> mimic_action_networks;
 
 int run_index;
 
@@ -52,57 +47,10 @@ int main(int argc, char* argv[]) {
 
 	solution = new Solution();
 	solution->load("workers/", "main");
-
-	mimic_memory_cells = vector<LSTM*>(MIMIC_NUM_STATES);
-	for (int s_index = 0; s_index < MIMIC_NUM_STATES; s_index++) {
-		ifstream memory_cell_save_file;
-		memory_cell_save_file.open("workers/saves/mimic/memory_cell_" + to_string(s_index) + ".txt");
-		mimic_memory_cells[s_index] = new LSTM(memory_cell_save_file);
-		memory_cell_save_file.close();
-		mimic_memory_cells[s_index]->index = s_index;
-	}
-	mimic_action_networks = vector<ActionNetwork*>(problem_type->num_possible_actions() + 1);
-	for (int a_index = 0; a_index < problem_type->num_possible_actions() + 1; a_index++) {
-		ifstream action_network_save_file;
-		action_network_save_file.open("workers/saves/mimic/action_network_" + to_string(a_index) + ".txt");
-		mimic_action_networks[a_index] = new ActionNetwork(action_network_save_file);
-		action_network_save_file.close();
-	}
+	solution->check_reset();
 
 	auto start_time = chrono::high_resolution_clock::now();
 	while (true) {
-		Problem* problem = problem_type->get_problem();
-
-		RunHelper run_helper;
-
-		run_helper.result = get_existing_result(problem);
-
-		vector<ContextLayer> context;
-		ScopeHistory* scope_history = new ScopeHistory(solution->scopes[0]);
-		solution->scopes[0]->experiment_activate(
-			problem,
-			context,
-			run_helper,
-			scope_history);
-
-		if (run_helper.experiments_seen_order.size() == 0) {
-			if (!run_helper.exceeded_limit) {
-				create_experiment(scope_history);
-			}
-		}
-
-		delete scope_history;
-
-		double target_val;
-		if (!run_helper.exceeded_limit) {
-			target_val = problem->score_result(run_helper.num_analyze,
-											   run_helper.num_actions);
-		} else {
-			target_val = -1.0;
-		}
-
-		delete problem;
-
 		auto curr_time = chrono::high_resolution_clock::now();
 		auto time_diff = chrono::duration_cast<chrono::seconds>(curr_time - start_time);
 		if (time_diff.count() >= 20) {
@@ -122,13 +70,38 @@ int main(int argc, char* argv[]) {
 
 				solution = new Solution();
 				solution->load("workers/", "main");
+				solution->check_reset();
 				cout << "updated from main" << endl;
 
 				continue;
 			}
 		}
 
+		Problem* problem = problem_type->get_problem();
+
+		RunHelper run_helper;
+
+		get_existing_result(problem,
+							run_helper);
+
 		if (run_helper.experiment_histories.size() > 0) {
+			run_helper.num_analyze = 0;
+			run_helper.num_actions = 0;
+
+			vector<ContextLayer> context;
+			ScopeHistory* scope_history = new ScopeHistory(solution->scopes[0]);
+			solution->scopes[0]->experiment_activate(
+				problem,
+				context,
+				run_helper,
+				scope_history);
+
+			delete scope_history;
+
+			double target_val = problem->score_result();
+			target_val -= 0.05 * run_helper.num_actions * solution->curr_time_penalty;
+			target_val -= run_helper.num_analyze * solution->curr_time_penalty;
+
 			for (int e_index = 0; e_index < (int)run_helper.experiments_seen_order.size(); e_index++) {
 				AbstractExperiment* experiment = run_helper.experiments_seen_order[e_index];
 				experiment->average_remaining_experiments_from_start =
@@ -158,8 +131,8 @@ int main(int argc, char* argv[]) {
 				clean_scope(experiment_scope,
 							duplicate);
 
-				vector<double> target_vals;
-				int max_num_actions = 0;
+				double sum_score = 0.0;
+				double sum_true_score = 0.0;
 				bool early_exit = false;
 				for (int iter_index = 0; iter_index < MEASURE_ITERS; iter_index++) {
 					Problem* problem = problem_type->get_problem();
@@ -172,19 +145,10 @@ int main(int argc, char* argv[]) {
 						context,
 						run_helper);
 
-					if (run_helper.num_actions > max_num_actions) {
-						max_num_actions = run_helper.num_actions;
-					}
-
-					double target_val;
-					if (!run_helper.exceeded_limit) {
-						target_val = problem->score_result(run_helper.num_analyze,
-														   run_helper.num_actions);
-					} else {
-						target_val = -1.0;
-					}
-
-					target_vals.push_back(target_val);
+					double target_val = problem->score_result();
+					sum_score += target_val - 0.05 * run_helper.num_actions * solution->curr_time_penalty
+						- run_helper.num_analyze * solution->curr_time_penalty;
+					sum_true_score += target_val;
 
 					delete problem;
 
@@ -216,7 +180,10 @@ int main(int argc, char* argv[]) {
 
 					solution = new Solution();
 					solution->load("workers/", "main");
+					solution->check_reset();
 					cout << "updated from main" << endl;
+
+					delete problem;
 
 					continue;
 				}
@@ -231,30 +198,32 @@ int main(int argc, char* argv[]) {
 					}
 				}
 
-				double sum_score = 0.0;
-				for (int d_index = 0; d_index < MEASURE_ITERS; d_index++) {
-					sum_score += target_vals[d_index];
-				}
-				duplicate->average_score = sum_score / MEASURE_ITERS;
+				duplicate->curr_score = sum_score / MEASURE_ITERS;
+				duplicate->curr_true_score = sum_true_score / MEASURE_ITERS;
 
-				duplicate->max_num_actions = max_num_actions;
-
-				cout << "duplicate->average_score: " << duplicate->average_score << endl;
+				cout << "duplicate->curr_score: " << duplicate->curr_score << endl;
 
 				duplicate->timestamp++;
+
+				if (duplicate->timestamp % INCREASE_TIME_PENALTY_ITER == 0) {
+					duplicate->curr_time_penalty *= 1.25;
+				}
+				if ((duplicate->best_true_score_timestamp - duplicate->timestamp)
+						% DECREASE_TIME_PENALTY_ITER == 0) {
+					duplicate->curr_time_penalty *= 0.8;
+				}
+				if (duplicate->curr_true_score > duplicate->best_true_score) {
+					duplicate->best_true_score = duplicate->curr_true_score;
+					duplicate->best_true_score_timestamp = duplicate->timestamp;
+				}
 
 				duplicate->save(path, "possible_" + to_string((unsigned)time(NULL)));
 
 				delete duplicate;
 			}
-		} else {
-			for (int e_index = 0; e_index < (int)run_helper.experiments_seen_order.size(); e_index++) {
-				AbstractExperiment* experiment = run_helper.experiments_seen_order[e_index];
-				experiment->average_remaining_experiments_from_start =
-					0.9 * experiment->average_remaining_experiments_from_start
-					+ 0.1 * ((int)run_helper.experiments_seen_order.size()-1 - e_index);
-			}
 		}
+
+		delete problem;
 	}
 
 	delete problem_type;

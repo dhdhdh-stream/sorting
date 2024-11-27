@@ -33,6 +33,42 @@ void NewScopeExperiment::pre_activate(vector<ContextLayer>& context,
 	}
 }
 
+bool NewScopeExperiment::result_activate(AbstractNode* experiment_node,
+										 bool is_branch,
+										 AbstractNode*& curr_node,
+										 Problem* problem,
+										 vector<ContextLayer>& context,
+										 RunHelper& run_helper) {
+	if (run_helper.experiment_histories.size() == 1
+			&& run_helper.experiment_histories.back()->experiment == this) {
+		bool has_match = false;
+		int location_index;
+		for (int s_index = 0; s_index < (int)this->successful_location_starts.size(); s_index++) {
+			if (this->successful_location_starts[s_index] == experiment_node
+					&& this->successful_location_is_branch[s_index] == is_branch) {
+				has_match = true;
+				location_index = s_index;
+				break;
+			}
+		}
+
+		if (has_match) {
+			switch (this->state) {
+			case NEW_SCOPE_EXPERIMENT_STATE_EXPLORE:
+				this->successful_scope_nodes[location_index]->new_scope_activate(
+					curr_node,
+					problem,
+					context,
+					run_helper);
+
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
 bool NewScopeExperiment::activate(AbstractNode* experiment_node,
 								  bool is_branch,
 								  AbstractNode*& curr_node,
@@ -161,8 +197,7 @@ void NewScopeExperiment::backprop(double target_val,
 			add_new_test_location(history);
 		}
 
-		if (this->generalize_iter >= NEW_SCOPE_NUM_GENERALIZE_TRIES
-				|| this->successful_location_starts.size() >= NEW_SCOPE_MAX_LOCATIONS) {
+		if (this->generalize_iter >= NEW_SCOPE_NUM_GENERALIZE_TRIES) {
 			if (this->successful_location_starts.size() >= NEW_SCOPE_MIN_LOCATIONS) {
 				#if defined(MDEBUG) && MDEBUG
 				for (int t_index = 0; t_index < (int)this->test_location_starts.size(); t_index++) {
@@ -179,12 +214,9 @@ void NewScopeExperiment::backprop(double target_val,
 				this->test_location_is_branch.clear();
 				this->test_location_exits.clear();
 				this->test_location_states.clear();
-				this->test_location_existing_scores.clear();
-				this->test_location_existing_counts.clear();
-				this->test_location_existing_truth_counts.clear();
-				this->test_location_new_scores.clear();
-				this->test_location_new_counts.clear();
-				this->test_location_new_truth_counts.clear();
+				this->test_location_scores.clear();
+				this->test_location_counts.clear();
+				this->test_location_truth_counts.clear();
 				for (int t_index = 0; t_index < (int)this->test_scope_nodes.size(); t_index++) {
 					delete this->test_scope_nodes[t_index];
 				}

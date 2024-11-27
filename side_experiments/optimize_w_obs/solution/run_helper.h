@@ -14,10 +14,10 @@ class RunHelper {
 public:
 	double result;
 
-	bool exceeded_limit;
-
 	int num_analyze;
 	int num_actions;
+
+	std::map<std::pair<AbstractNode*,bool>, int> nodes_seen;
 
 	std::vector<AbstractExperiment*> experiments_seen_order;
 	std::vector<AbstractExperimentHistory*> experiment_histories;

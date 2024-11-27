@@ -21,24 +21,17 @@ void BranchNode::experiment_activate(AbstractNode*& curr_node,
 	history->index = (int)scope_history->node_histories.size();
 	scope_history->node_histories[this->id] = history;
 
-	if (this->is_local) {
-		run_helper.num_analyze += problem_type->num_obs();
+	run_helper.num_analyze += (int)this->inputs.size();
 
-		vector<double> input_vals = problem->get_observations();
-		this->network->activate(input_vals);
-	} else {
-		run_helper.num_analyze += (int)this->inputs.size();
-
-		vector<double> input_vals(this->inputs.size(), 0.0);
-		for (int i_index = 0; i_index < (int)this->inputs.size(); i_index++) {
-			map<pair<pair<vector<int>,vector<int>>,int>, double>::iterator it =
-				context.back().obs_history.find(this->inputs[i_index]);
-			if (it != context.back().obs_history.end()) {
-				input_vals[i_index] = it->second;
-			}
+	vector<double> input_vals(this->inputs.size(), 0.0);
+	for (int i_index = 0; i_index < (int)this->inputs.size(); i_index++) {
+		map<pair<pair<vector<int>,vector<int>>,int>, double>::iterator it =
+			context.back().obs_history.find(this->inputs[i_index]);
+		if (it != context.back().obs_history.end()) {
+			input_vals[i_index] = it->second;
 		}
-		this->network->activate(input_vals);
 	}
+	this->network->activate(input_vals);
 
 	bool is_branch;
 	#if defined(MDEBUG) && MDEBUG
@@ -91,12 +84,6 @@ void BranchNode::experiment_activate(AbstractNode*& curr_node,
 		curr_node = this->branch_next_node;
 	} else {
 		curr_node = this->original_next_node;
-	}
-
-	run_helper.num_actions++;
-	if (run_helper.num_actions > solution->num_actions_limit) {
-		run_helper.exceeded_limit = true;
-		return;
 	}
 
 	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {

@@ -34,6 +34,10 @@ public:
 				  std::vector<ContextLayer>& context,
 				  RunHelper& run_helper);
 
+	void result_activate(AbstractNode*& curr_node,
+						 Problem* problem,
+						 std::vector<ContextLayer>& context,
+						 RunHelper& run_helper);
 	void experiment_activate(AbstractNode*& curr_node,
 							 Problem* problem,
 							 std::vector<ContextLayer>& context,

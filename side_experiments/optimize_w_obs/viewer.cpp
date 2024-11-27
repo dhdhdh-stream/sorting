@@ -20,9 +20,6 @@ default_random_engine generator;
 ProblemType* problem_type;
 Solution* solution;
 
-vector<LSTM*> mimic_memory_cells;
-vector<ActionNetwork*> mimic_action_networks;
-
 int run_index;
 
 int main(int argc, char* argv[]) {
@@ -38,8 +35,6 @@ int main(int argc, char* argv[]) {
 	solution = new Solution();
 	solution->load("", "main");
 
-	cout << "solution->num_mimic: " << solution->num_mimic << endl;
-
 	{
 		Problem* problem = problem_type->get_problem();
 
@@ -51,13 +46,9 @@ int main(int argc, char* argv[]) {
 			context,
 			run_helper);
 
-		double target_val;
-		if (run_helper.exceeded_limit) {
-			target_val = -1.0;
-		} else {
-			target_val = problem->score_result(run_helper.num_analyze,
-											   run_helper.num_actions);
-		}
+		double target_val = problem->score_result();
+		target_val -= 0.05 * run_helper.num_actions * solution->curr_time_penalty;
+		target_val -= run_helper.num_analyze * solution->curr_time_penalty;
 		cout << "target_val: " << target_val << endl;
 
 		problem->print();
