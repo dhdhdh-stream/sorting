@@ -18,24 +18,17 @@ void BranchNode::verify_activate(AbstractNode*& curr_node,
 								 Problem* problem,
 								 vector<ContextLayer>& context,
 								 RunHelper& run_helper) {
-	if (this->is_local) {
-		run_helper.num_analyze += problem_type->num_obs();
+	run_helper.num_analyze += (int)this->inputs.size();
 
-		vector<double> input_vals = problem->get_observations();
-		this->network->activate(input_vals);
-	} else {
-		run_helper.num_analyze += (int)this->inputs.size();
-
-		vector<double> input_vals(this->inputs.size(), 0.0);
-		for (int i_index = 0; i_index < (int)this->inputs.size(); i_index++) {
-			map<pair<pair<vector<int>,vector<int>>,int>, double>::iterator it =
-				context.back().obs_history.find(this->inputs[i_index]);
-			if (it != context.back().obs_history.end()) {
-				input_vals[i_index] = it->second;
-			}
+	vector<double> input_vals(this->inputs.size(), 0.0);
+	for (int i_index = 0; i_index < (int)this->inputs.size(); i_index++) {
+		map<pair<pair<vector<int>,vector<int>>,int>, double>::iterator it =
+			context.back().obs_history.find(this->inputs[i_index]);
+		if (it != context.back().obs_history.end()) {
+			input_vals[i_index] = it->second;
 		}
-		this->network->activate(input_vals);
 	}
+	this->network->activate(input_vals);
 
 	double score = this->network->output->acti_vals[0];
 
@@ -108,12 +101,6 @@ void BranchNode::verify_activate(AbstractNode*& curr_node,
 		curr_node = this->branch_next_node;
 	} else {
 		curr_node = this->original_next_node;
-	}
-
-	run_helper.num_actions++;
-	if (run_helper.num_actions > solution->num_actions_limit) {
-		run_helper.exceeded_limit = true;
-		return;
 	}
 }
 

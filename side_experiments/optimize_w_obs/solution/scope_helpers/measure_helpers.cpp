@@ -46,6 +46,8 @@ void node_measure_activate_helper(AbstractNode*& curr_node,
 
 		break;
 	}
+
+	run_helper.num_actions++;
 }
 
 void Scope::measure_activate(Problem* problem,

@@ -52,6 +52,8 @@ void node_experiment_activate_helper(AbstractNode*& curr_node,
 
 		break;
 	}
+
+	run_helper.num_actions++;
 }
 
 void Scope::experiment_activate(Problem* problem,

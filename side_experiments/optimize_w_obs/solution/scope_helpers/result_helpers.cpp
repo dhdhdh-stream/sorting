@@ -48,6 +48,8 @@ void node_result_activate_helper(AbstractNode*& curr_node,
 
 		break;
 	}
+
+	run_helper.num_actions++;
 }
 
 void Scope::result_activate(Problem* problem,

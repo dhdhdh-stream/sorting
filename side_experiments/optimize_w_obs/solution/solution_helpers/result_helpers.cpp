@@ -5,6 +5,7 @@
 #include "problem.h"
 #include "scope.h"
 #include "solution.h"
+#include "utilities.h"
 
 using namespace std;
 
@@ -14,7 +15,7 @@ void get_existing_result(Problem* original_problem,
 
 	#if defined(MDEBUG) && MDEBUG
 	run_helper.starting_run_seed = run_index;
-	run_helper.curr_run_seed = run_index;
+	run_helper.curr_run_seed = xorshift(run_helper.starting_run_seed);
 	#endif /* MDEBUG */
 
 	vector<ContextLayer> context;

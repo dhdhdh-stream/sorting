@@ -48,6 +48,8 @@ void node_verify_activate_helper(AbstractNode*& curr_node,
 
 		break;
 	}
+
+	run_helper.num_actions++;
 }
 
 void Scope::verify_activate(Problem* problem,
@@ -67,10 +69,6 @@ void Scope::verify_activate(Problem* problem,
 									problem,
 									context,
 									run_helper);
-
-		if (run_helper.exceeded_limit) {
-			break;
-		}
 	}
 
 	context.pop_back();

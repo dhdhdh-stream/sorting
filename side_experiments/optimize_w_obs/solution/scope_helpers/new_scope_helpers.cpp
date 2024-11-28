@@ -51,6 +51,8 @@ void new_scope_node_activate_helper(
 
 		break;
 	}
+
+	run_helper.num_actions++;
 }
 
 void Scope::new_scope_activate(
@@ -122,6 +124,8 @@ void new_scope_capture_verify_node_activate_helper(
 
 		break;
 	}
+
+	run_helper.num_actions++;
 }
 
 void Scope::new_scope_capture_verify_activate(

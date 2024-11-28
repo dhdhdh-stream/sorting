@@ -16,6 +16,14 @@ class Solution;
 class BranchNodeHistory;
 class BranchNode : public AbstractNode {
 public:
+	/**
+	 * - having dependencies on nodes makes it difficult to replace those nodes later
+	 *   - but even with world modeling, will still have dependencies against nodes for relative location
+	 * 
+	 * TODO: split action nodes and obs
+	 * - make it at least be able to separate from a committing action
+	 * - also include both pre and post
+	 */
 	std::vector<std::pair<std::pair<std::vector<int>,std::vector<int>>,int>> inputs;
 	Network* network;
 

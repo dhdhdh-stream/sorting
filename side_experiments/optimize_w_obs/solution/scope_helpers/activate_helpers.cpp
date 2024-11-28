@@ -46,6 +46,8 @@ void node_activate_helper(AbstractNode*& curr_node,
 
 		break;
 	}
+
+	run_helper.num_actions++;
 }
 
 void Scope::activate(Problem* problem,

@@ -8,6 +8,12 @@
  *     - breaks down solution into modular segments
  */
 
+/**
+ * TODO:
+ * - instead of sub-experiments, try committing to something that can be good at least occasionally
+ *   - then force solution to adjust
+ */
+
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -23,6 +29,7 @@
 #include "scope.h"
 #include "solution.h"
 #include "solution_helpers.h"
+#include "utilities.h"
 
 using namespace std;
 
@@ -46,11 +53,11 @@ int main(int argc, char* argv[]) {
 	problem_type = new TypeMinesweeper();
 
 	solution = new Solution();
-	solution->init();
-	// solution->load("", "main");
+	// solution->init();
+	solution->load("", "main");
 	solution->check_reset();
 
-	solution->save("", "main");
+	// solution->save("", "main");
 
 	run_index = 0;
 
@@ -137,7 +144,7 @@ int main(int argc, char* argv[]) {
 					RunHelper run_helper;
 					run_helper.starting_run_seed = duplicate->verify_seeds[0];
 					cout << "run_helper.starting_run_seed: " << run_helper.starting_run_seed << endl;
-					run_helper.curr_run_seed = duplicate->verify_seeds[0];
+					run_helper.curr_run_seed = xorshift(run_helper.starting_run_seed);
 					duplicate->verify_seeds.erase(duplicate->verify_seeds.begin());
 
 					vector<ContextLayer> context;
@@ -145,9 +152,6 @@ int main(int argc, char* argv[]) {
 						problem,
 						context,
 						run_helper);
-
-					cout << "run_helper.num_actions: " << run_helper.num_actions << endl;
-					cout << "duplicate->num_actions_limit: " << duplicate->num_actions_limit << endl;
 
 					delete duplicate->verify_problems[0];
 					duplicate->verify_problems.erase(duplicate->verify_problems.begin());
@@ -166,7 +170,7 @@ int main(int argc, char* argv[]) {
 					RunHelper run_helper;
 					#if defined(MDEBUG) && MDEBUG
 					run_helper.starting_run_seed = run_index;
-					run_helper.curr_run_seed = run_index;
+					run_helper.curr_run_seed = xorshift(run_helper.starting_run_seed);
 					run_index++;
 					#endif /* MDEBUG */
 
@@ -244,7 +248,7 @@ int main(int argc, char* argv[]) {
 				delete solution;
 				solution = duplicate;
 
-				solution->save("", "main");
+				// solution->save("", "main");
 
 				solution->check_reset();
 				#else

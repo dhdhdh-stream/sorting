@@ -17,7 +17,7 @@
 
 using namespace std;
 
-const int NETWORK_NUM_INPUTS = 25;
+const int NETWORK_NUM_INPUTS = 10;
 
 bool BranchExperiment::train_new_activate(
 		AbstractNode*& curr_node,
