@@ -217,6 +217,8 @@ int main(int argc, char* argv[]) {
 					duplicate->best_true_score_timestamp = duplicate->timestamp;
 				}
 
+				duplicate->check_commit();
+
 				duplicate->save(path, "possible_" + to_string((unsigned)time(NULL)));
 
 				delete duplicate;

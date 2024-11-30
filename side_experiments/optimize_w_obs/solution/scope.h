@@ -14,6 +14,7 @@
 class AbstractNode;
 class AbstractNodeHistory;
 class NewScopeExperiment;
+class PotentialCommit;
 class Problem;
 class Solution;
 
@@ -62,6 +63,17 @@ public:
 	void measure_activate(Problem* problem,
 						  std::vector<ContextLayer>& context,
 						  RunHelper& run_helper);
+
+	void commit_gather_activate(Problem* problem,
+								std::vector<ContextLayer>& context,
+								RunHelper& run_helper,
+								int& node_count,
+								AbstractNode*& potential_node_context,
+								bool& potential_is_branch);
+	void commit_activate(Problem* problem,
+						 std::vector<ContextLayer>& context,
+						 RunHelper& run_helper,
+						 PotentialCommit* potential_commit);
 
 	#if defined(MDEBUG) && MDEBUG
 	void new_scope_capture_verify_activate(Problem* problem,

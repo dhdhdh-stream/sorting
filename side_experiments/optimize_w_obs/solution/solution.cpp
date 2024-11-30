@@ -15,8 +15,10 @@ using namespace std;
 const double STARTING_TIME_PENALTY = 0.001;
 
 #if defined(MDEBUG) && MDEBUG
+const int COMMIT_ITERS = 4;
 const int RESET_ITERS = 20;
 #else
+const int COMMIT_ITERS = 20;
 const int RESET_ITERS = 100;
 #endif /* MDEBUG */
 
@@ -85,6 +87,8 @@ void Solution::init() {
 	starting_noop_node->next_node = NULL;
 	starting_noop_node->average_instances_per_run = 1.0;
 	new_scope->nodes[starting_noop_node->id] = starting_noop_node;
+
+	commit(this);
 }
 
 void Solution::load(string path,
@@ -153,6 +157,12 @@ void Solution::clean_inputs(int scope_id,
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
 		this->scopes[s_index]->clean_inputs(scope_id,
 											node_id);
+	}
+}
+
+void Solution::check_commit() {
+	if (this->timestamp % COMMIT_ITERS) {
+		commit(this);
 	}
 }
 

@@ -8,12 +8,6 @@
  *     - breaks down solution into modular segments
  */
 
-/**
- * TODO:
- * - instead of sub-experiments, try committing to something that can be good at least occasionally
- *   - then force solution to adjust
- */
-
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -243,6 +237,8 @@ int main(int argc, char* argv[]) {
 					duplicate->best_true_score = duplicate->curr_true_score;
 					duplicate->best_true_score_timestamp = duplicate->timestamp;
 				}
+
+				duplicate->check_commit();
 
 				#if defined(MDEBUG) && MDEBUG
 				delete solution;

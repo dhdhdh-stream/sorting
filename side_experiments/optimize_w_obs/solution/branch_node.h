@@ -9,6 +9,7 @@
 #include <vector>
 
 class Network;
+class PotentialCommit;
 class Problem;
 class ScopeHistory;
 class Solution;
@@ -19,10 +20,6 @@ public:
 	/**
 	 * - having dependencies on nodes makes it difficult to replace those nodes later
 	 *   - but even with world modeling, will still have dependencies against nodes for relative location
-	 * 
-	 * TODO: split action nodes and obs
-	 * - make it at least be able to separate from a committing action
-	 * - also include both pre and post
 	 */
 	std::vector<std::pair<std::pair<std::vector<int>,std::vector<int>>,int>> inputs;
 	Network* network;
@@ -67,6 +64,19 @@ public:
 							std::vector<ContextLayer>& context,
 							RunHelper& run_helper,
 							ScopeHistory* scope_history);
+
+	void commit_gather_activate(AbstractNode*& curr_node,
+								Problem* problem,
+								std::vector<ContextLayer>& context,
+								RunHelper& run_helper,
+								int& node_count,
+								AbstractNode*& potential_node_context,
+								bool& potential_is_branch);
+	void commit_activate(AbstractNode*& curr_node,
+						 Problem* problem,
+						 std::vector<ContextLayer>& context,
+						 RunHelper& run_helper,
+						 PotentialCommit* potential_commit);
 
 	#if defined(MDEBUG) && MDEBUG
 	void verify_activate(AbstractNode*& curr_node,

@@ -11,6 +11,7 @@
 #include "context_layer.h"
 #include "run_helper.h"
 
+class PotentialCommit;
 class Problem;
 class Scope;
 class ScopeHistory;
@@ -57,6 +58,19 @@ public:
 						  Problem* problem,
 						  std::vector<ContextLayer>& context,
 						  RunHelper& run_helper);
+
+	void commit_gather_activate(AbstractNode*& curr_node,
+								Problem* problem,
+								std::vector<ContextLayer>& context,
+								RunHelper& run_helper,
+								int& node_count,
+								AbstractNode*& potential_node_context,
+								bool& potential_is_branch);
+	void commit_activate(AbstractNode*& curr_node,
+						 Problem* problem,
+						 std::vector<ContextLayer>& context,
+						 RunHelper& run_helper,
+						 PotentialCommit* potential_commit);
 
 	#if defined(MDEBUG) && MDEBUG
 	void verify_activate(AbstractNode*& curr_node,

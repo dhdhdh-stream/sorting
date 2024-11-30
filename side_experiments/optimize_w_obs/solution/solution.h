@@ -61,6 +61,7 @@ public:
 	void clean_inputs(int scope_id,
 					  int node_id);
 
+	void check_commit();
 	void check_reset();
 
 	void save(std::string path,

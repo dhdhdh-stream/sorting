@@ -10,6 +10,7 @@
 #include "context_layer.h"
 #include "run_helper.h"
 
+class PotentialCommit;
 class Problem;
 class ScopeHistory;
 
@@ -46,6 +47,19 @@ public:
 
 	void explore_activate(Problem* problem,
 						  RunHelper& run_helper);
+
+	void commit_gather_activate(AbstractNode*& curr_node,
+								Problem* problem,
+								std::vector<ContextLayer>& context,
+								RunHelper& run_helper,
+								int& node_count,
+								AbstractNode*& potential_node_context,
+								bool& potential_is_branch);
+	void commit_activate(AbstractNode*& curr_node,
+						 Problem* problem,
+						 std::vector<ContextLayer>& context,
+						 RunHelper& run_helper,
+						 PotentialCommit* potential_commit);
 
 	void clean_inputs(int scope_id,
 					  int node_id);

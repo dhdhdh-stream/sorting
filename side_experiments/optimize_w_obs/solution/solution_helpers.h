@@ -32,4 +32,6 @@ void clean_scope(Scope* scope,
 void get_existing_result(Problem* original_problem,
 						 RunHelper& run_helper);
 
+void commit(Solution* parent_solution);
+
 #endif /* SOLUTION_HELPERS_H */
