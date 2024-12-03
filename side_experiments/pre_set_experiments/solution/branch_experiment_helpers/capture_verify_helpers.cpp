@@ -50,7 +50,7 @@ bool BranchExperiment::capture_verify_activate(AbstractNode*& curr_node,
 
 	cout << "context scope" << endl;
 	for (int c_index = 0; c_index < (int)context.size()-1; c_index++) {
-		cout << c_index << ": " << context[c_index].scope_id << endl;
+		cout << c_index << ": " << context[c_index].scope->id << endl;
 	}
 	cout << "context node" << endl;
 	for (int c_index = 0; c_index < (int)context.size()-1; c_index++) {

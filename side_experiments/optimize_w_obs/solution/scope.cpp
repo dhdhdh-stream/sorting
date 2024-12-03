@@ -58,6 +58,26 @@ void Scope::clean_inputs(int scope_id,
 	}
 }
 
+void Scope::update_scope_ids(map<int, int>& dictionary) {
+	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
+			it != this->nodes.end(); it++) {
+		switch (it->second->type) {
+		case NODE_TYPE_ACTION:
+			{
+				ActionNode* action_node = (ActionNode*)it->second;
+				action_node->update_scope_ids(dictionary);
+			}
+			break;
+		case NODE_TYPE_BRANCH:
+			{
+				BranchNode* branch_node = (BranchNode*)it->second;
+				branch_node->update_scope_ids(dictionary);
+			}
+			break;
+		}
+	}
+}
+
 void Scope::save(ofstream& output_file) {
 	output_file << this->node_counter << endl;
 

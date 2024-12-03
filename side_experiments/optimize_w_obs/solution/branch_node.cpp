@@ -95,6 +95,22 @@ void BranchNode::clean_inputs(int scope_id,
 	}
 }
 
+void BranchNode::update_scope_ids(map<int, int>& dictionary) {
+	for (int i_index = 0; i_index < (int)this->inputs.size(); i_index++) {
+		for (int l_index = 0; l_index < (int)this->inputs[i_index].first.first.size(); l_index++) {
+			this->inputs[i_index].first.first[l_index] =
+				dictionary[this->inputs[i_index].first.first[l_index]];
+		}
+	}
+
+	for (int i_index = 0; i_index < (int)this->input_scope_context_ids.size(); i_index++) {
+		for (int l_index = 0; l_index < (int)this->input_scope_context_ids[i_index].size(); l_index++) {
+			this->input_scope_context_ids[i_index][l_index] =
+				dictionary[this->input_scope_context_ids[i_index][l_index]];
+		}
+	}
+}
+
 void BranchNode::save(ofstream& output_file) {
 	output_file << this->inputs.size() << endl;
 	for (int i_index = 0; i_index < (int)this->inputs.size(); i_index++) {

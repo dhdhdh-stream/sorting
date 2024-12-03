@@ -15,12 +15,12 @@ class ScopeNode;
 class Solution;
 
 void gather_possible_helper(ScopeHistory* scope_history,
-							std::vector<int>& scope_context,
+							std::vector<Scope*>& scope_context,
 							std::vector<int>& node_context,
 							int& node_count,
-							std::pair<std::pair<std::vector<int>,std::vector<int>>,int>& new_input);
+							std::pair<std::pair<std::vector<Scope*>,std::vector<int>>,int>& new_input);
 void fetch_input_helper(ScopeHistory* scope_history,
-						std::pair<std::pair<std::vector<int>,std::vector<int>>,int>& input,
+						std::pair<std::pair<std::vector<Scope*>,std::vector<int>>,int>& input,
 						int l_index,
 						double& obs);
 

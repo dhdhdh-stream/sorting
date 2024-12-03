@@ -152,7 +152,14 @@ void BranchExperiment::finalize(Solution* duplicate) {
 	}
 
 	for (int i_index = 0; i_index < (int)this->inputs.size(); i_index++) {
-		Scope* scope = duplicate->scopes[this->inputs[i_index].first.first.back()];
+		for (int l_index = 0; l_index < (int)this->inputs[i_index].first.first.size(); l_index++) {
+			this->inputs[i_index].first.first[l_index] = duplicate->scopes[
+				this->inputs[i_index].first.first[l_index]->id];
+		}
+	}
+
+	for (int i_index = 0; i_index < (int)this->inputs.size(); i_index++) {
+		Scope* scope = this->inputs[i_index].first.first.back();
 		AbstractNode* node = scope->nodes[this->inputs[i_index].first.second.back()];
 		switch (node->type) {
 		case NODE_TYPE_ACTION:
@@ -160,8 +167,8 @@ void BranchExperiment::finalize(Solution* duplicate) {
 				ActionNode* input_action_node = (ActionNode*)node;
 
 				bool is_existing = false;
-				for (int ii_index = 0; ii_index < (int)input_action_node->input_scope_context_ids.size(); ii_index++) {
-					if (input_action_node->input_scope_context_ids[ii_index] == this->inputs[i_index].first.first
+				for (int ii_index = 0; ii_index < (int)input_action_node->input_scope_contexts.size(); ii_index++) {
+					if (input_action_node->input_scope_contexts[ii_index] == this->inputs[i_index].first.first
 							&& input_action_node->input_node_context_ids[ii_index] == this->inputs[i_index].first.second
 							&& input_action_node->input_obs_indexes[ii_index] == this->inputs[i_index].second) {
 						is_existing = true;
@@ -169,7 +176,7 @@ void BranchExperiment::finalize(Solution* duplicate) {
 					}
 				}
 				if (!is_existing) {
-					input_action_node->input_scope_context_ids.push_back(this->inputs[i_index].first.first);
+					input_action_node->input_scope_contexts.push_back(this->inputs[i_index].first.first);
 					input_action_node->input_node_context_ids.push_back(this->inputs[i_index].first.second);
 					input_action_node->input_obs_indexes.push_back(this->inputs[i_index].second);
 				}
@@ -180,15 +187,15 @@ void BranchExperiment::finalize(Solution* duplicate) {
 				BranchNode* input_branch_node = (BranchNode*)node;
 
 				bool is_existing = false;
-				for (int ii_index = 0; ii_index < (int)input_branch_node->input_scope_context_ids.size(); ii_index++) {
-					if (input_branch_node->input_scope_context_ids[ii_index] == this->inputs[i_index].first.first
+				for (int ii_index = 0; ii_index < (int)input_branch_node->input_scope_contexts.size(); ii_index++) {
+					if (input_branch_node->input_scope_contexts[ii_index] == this->inputs[i_index].first.first
 							&& input_branch_node->input_node_context_ids[ii_index] == this->inputs[i_index].first.second) {
 						is_existing = true;
 						break;
 					}
 				}
 				if (!is_existing) {
-					input_branch_node->input_scope_context_ids.push_back(this->inputs[i_index].first.first);
+					input_branch_node->input_scope_contexts.push_back(this->inputs[i_index].first.first);
 					input_branch_node->input_node_context_ids.push_back(this->inputs[i_index].first.second);
 				}
 			}

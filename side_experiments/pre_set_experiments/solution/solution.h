@@ -58,7 +58,7 @@ public:
 	void clear_verify();
 	#endif /* MDEBUG */
 
-	void clean_inputs(int scope_id,
+	void clean_inputs(Scope* scope,
 					  int node_id);
 	void clean_scopes();
 

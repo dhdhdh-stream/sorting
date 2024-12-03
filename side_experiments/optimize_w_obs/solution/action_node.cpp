@@ -49,6 +49,15 @@ void ActionNode::clean_inputs(int scope_id,
 	}
 }
 
+void ActionNode::update_scope_ids(map<int, int>& dictionary) {
+	for (int i_index = 0; i_index < (int)this->input_scope_context_ids.size(); i_index++) {
+		for (int l_index = 0; l_index < (int)this->input_scope_context_ids[i_index].size(); l_index++) {
+			this->input_scope_context_ids[i_index][l_index] =
+				dictionary[this->input_scope_context_ids[i_index][l_index]];
+		}
+	}
+}
+
 void ActionNode::save(ofstream& output_file) {
 	this->action.save(output_file);
 

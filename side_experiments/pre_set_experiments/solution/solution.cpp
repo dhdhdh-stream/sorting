@@ -155,10 +155,10 @@ void Solution::clear_verify() {
 }
 #endif /* MDEBUG */
 
-void Solution::clean_inputs(int scope_id,
+void Solution::clean_inputs(Scope* scope,
 							int node_id) {
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
-		this->scopes[s_index]->clean_inputs(scope_id,
+		this->scopes[s_index]->clean_inputs(scope,
 											node_id);
 	}
 }
@@ -191,7 +191,7 @@ void Solution::clean_scopes() {
 
 		if (!still_used) {
 			for (int is_index = 0; is_index < (int)this->scopes.size(); is_index++) {
-				this->scopes[is_index]->clean_inputs(this->scopes[s_index]->id);
+				this->scopes[is_index]->clean_inputs(this->scopes[s_index]);
 
 				for (int c_index = 0; c_index < (int)this->scopes[is_index]->child_scopes.size(); c_index++) {
 					if (this->scopes[is_index]->child_scopes[c_index] == this->scopes[s_index]) {

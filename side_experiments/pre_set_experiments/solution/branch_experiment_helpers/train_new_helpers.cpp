@@ -92,10 +92,10 @@ void BranchExperiment::train_new_backprop(
 
 		uniform_int_distribution<int> instance_distribution(0, num_instances-1);
 		for (int i_index = 0; i_index < NETWORK_NUM_INPUTS; i_index++) {
-			vector<int> scope_context;
+			vector<Scope*> scope_context;
 			vector<int> node_context;
 			int node_count = 0;
-			pair<pair<vector<int>,vector<int>>,int> new_input;
+			pair<pair<vector<Scope*>,vector<int>>,int> new_input;
 			gather_possible_helper(this->scope_histories[instance_distribution(generator)],
 								   scope_context,
 								   node_context,
@@ -140,7 +140,7 @@ void BranchExperiment::train_new_backprop(
 						misguess_standard_deviation);
 
 		for (int i_index = (int)this->inputs.size()-1; i_index >= 0; i_index--) {
-			vector<pair<pair<vector<int>,vector<int>>,int>> remove_inputs = this->inputs;
+			vector<pair<pair<vector<Scope*>,vector<int>>,int>> remove_inputs = this->inputs;
 			remove_inputs.erase(remove_inputs.begin() + i_index);
 
 			Network* remove_network = new Network(this->network);

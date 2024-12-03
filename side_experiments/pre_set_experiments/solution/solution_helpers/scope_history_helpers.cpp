@@ -10,10 +10,10 @@
 using namespace std;
 
 void gather_possible_helper(ScopeHistory* scope_history,
-							vector<int>& scope_context,
+							vector<Scope*>& scope_context,
 							vector<int>& node_context,
 							int& node_count,
-							pair<pair<vector<int>,vector<int>>,int>& new_input) {
+							pair<pair<vector<Scope*>,vector<int>>,int>& new_input) {
 	Scope* scope = scope_history->scope;
 
 	uniform_int_distribution<int> obs_distribution(0, problem_type->num_obs()-1);
@@ -26,7 +26,7 @@ void gather_possible_helper(ScopeHistory* scope_history,
 				uniform_int_distribution<int> select_distribution(0, node_count);
 				node_count++;
 				if (select_distribution(generator) == 0) {
-					scope_context.push_back(scope->id);
+					scope_context.push_back(scope);
 					node_context.push_back(it->first);
 
 					new_input = {{scope_context, node_context}, obs_distribution(generator)};
@@ -40,7 +40,7 @@ void gather_possible_helper(ScopeHistory* scope_history,
 			{
 				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)it->second;
 
-				scope_context.push_back(scope->id);
+				scope_context.push_back(scope);
 				node_context.push_back(it->first);
 
 				gather_possible_helper(scope_node_history->scope_history,
@@ -58,7 +58,7 @@ void gather_possible_helper(ScopeHistory* scope_history,
 				uniform_int_distribution<int> select_distribution(0, node_count);
 				node_count++;
 				if (select_distribution(generator) == 0) {
-					scope_context.push_back(scope->id);
+					scope_context.push_back(scope);
 					node_context.push_back(it->first);
 
 					new_input = {{scope_context, node_context}, -1};
@@ -73,7 +73,7 @@ void gather_possible_helper(ScopeHistory* scope_history,
 }
 
 void fetch_input_helper(ScopeHistory* scope_history,
-						pair<pair<vector<int>,vector<int>>,int>& input,
+						pair<pair<vector<Scope*>,vector<int>>,int>& input,
 						int l_index,
 						double& obs) {
 	map<int, AbstractNodeHistory*>::iterator it = scope_history
