@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "abstract_experiment.h"
+#include "constants.h"
 #include "globals.h"
 #include "problem.h"
 #include "scope.h"
@@ -50,11 +51,14 @@ void ActionNode::result_activate(AbstractNode*& curr_node,
 	curr_node = this->next_node;
 
 	if (run_helper.experiments_seen_order.size() == 0) {
-		map<pair<AbstractNode*,bool>, int>::iterator it = run_helper.nodes_seen.find({this, false});
-		if (it == run_helper.nodes_seen.end()) {
-			run_helper.nodes_seen[{this, false}] = 1;
-		} else {
-			it->second++;
+		if (solution->timestamp >= MAINTAIN_ITERS
+				|| (this->parent->id == 0 || this->parent->id > NUM_EXISTING)) {
+			map<pair<AbstractNode*,bool>, int>::iterator it = run_helper.nodes_seen.find({this, false});
+			if (it == run_helper.nodes_seen.end()) {
+				run_helper.nodes_seen[{this, false}] = 1;
+			} else {
+				it->second++;
+			}
 		}
 	}
 

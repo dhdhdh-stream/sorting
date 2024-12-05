@@ -20,6 +20,13 @@ Solution* solution;
 int run_index;
 
 int main(int argc, char* argv[]) {
+	string filename;
+	if (argc > 1) {
+		filename = argv[1];
+	} else {
+		filename = "main.txt";
+	}
+
 	cout << "Starting..." << endl;
 
 	seed = (unsigned)time(NULL);
@@ -30,7 +37,7 @@ int main(int argc, char* argv[]) {
 	solution = new Solution();
 	solution->init();
 
-	solution->save("", "main");
+	solution->save("saves/", filename);
 
 	ofstream display_file;
 	display_file.open("../display.txt");

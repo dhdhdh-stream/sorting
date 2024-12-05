@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "abstract_experiment.h"
+#include "constants.h"
 #include "globals.h"
 #include "network.h"
 #include "problem.h"
@@ -81,10 +82,13 @@ void BranchNode::result_activate(AbstractNode*& curr_node,
 
 	if (run_helper.experiments_seen_order.size() == 0) {
 			map<pair<AbstractNode*,bool>, int>::iterator it = run_helper.nodes_seen.find({this, is_branch});
-		if (it == run_helper.nodes_seen.end()) {
-			run_helper.nodes_seen[{this, is_branch}] = 1;
-		} else {
-			it->second++;
+		if (solution->timestamp >= MAINTAIN_ITERS
+				|| (this->parent->id == 0 || this->parent->id > NUM_EXISTING)) {
+			if (it == run_helper.nodes_seen.end()) {
+				run_helper.nodes_seen[{this, is_branch}] = 1;
+			} else {
+				it->second++;
+			}
 		}
 	}
 

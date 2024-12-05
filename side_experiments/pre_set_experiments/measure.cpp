@@ -31,7 +31,12 @@ int main(int argc, char* argv[]) {
 	problem_type = new TypeMinesweeper();
 
 	solution = new Solution();
-	solution->load("", "main");
+	if (argc > 1) {
+		string filename = argv[1];
+		solution->load("saves/", filename);
+	} else {
+		solution->load("saves/", "main.txt");
+	}
 
 	double sum_vals = 0.0;
 	int max_num_actions = 0;
@@ -47,15 +52,6 @@ int main(int argc, char* argv[]) {
 			problem,
 			context,
 			run_helper);
-
-		// vector<ContextLayer> context;
-		// ScopeHistory* scope_history = new ScopeHistory(solution->scopes[0]);
-		// solution->scopes[0]->experiment_activate(
-		// 	problem,
-		// 	context,
-		// 	run_helper,
-		// 	scope_history);
-		// delete scope_history;
 
 		double target_val = problem->score_result();
 		target_val -= 0.05 * run_helper.num_actions * solution->curr_time_penalty;

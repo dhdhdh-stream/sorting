@@ -1,7 +1,9 @@
 #include "action_node.h"
 
+#include "constants.h"
 #include "globals.h"
 #include "problem.h"
+#include "scope.h"
 #include "solution.h"
 
 using namespace std;
@@ -46,11 +48,14 @@ void ActionNode::set_activate(AbstractNode*& curr_node,
 	}
 
 	if (!experiment_seen) {
-		map<pair<AbstractNode*,bool>, int>::iterator it = nodes_seen.find({this, false});
-		if (it == nodes_seen.end()) {
-			nodes_seen[{this, false}] = 1;
-		} else {
-			it->second++;
+		if (solution->timestamp >= MAINTAIN_ITERS
+				|| (this->parent->id == 0 || this->parent->id > solution->num_existing_scopes)) {
+			map<pair<AbstractNode*,bool>, int>::iterator it = nodes_seen.find({this, false});
+			if (it == nodes_seen.end()) {
+				nodes_seen[{this, false}] = 1;
+			} else {
+				it->second++;
+			}
 		}
 	}
 }

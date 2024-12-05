@@ -14,7 +14,7 @@ HEADERS = ${SOURCES:.cpp=.h}
 OBJECTS = ${HEADERS:.h=.o}
 DEPENDS = ${OBJECTS:.o=.d}
 
-all: main viewer worker simple_init measure
+all: main viewer worker simple_init measure combine
 
 main: ${OBJECTS} main.o
 	${CXX} ${CXXFLAGS} ${OBJECTS} main.o -o main ${LIBS}
@@ -31,7 +31,10 @@ simple_init: ${OBJECTS} simple_init.o
 measure: ${OBJECTS} measure.o
 	${CXX} ${CXXFLAGS} ${OBJECTS} measure.o -o measure ${LIBS}
 
--include ${DEPENDS} main.d viewer.d worker.d simple_init.d measure.d
+combine: ${OBJECTS} combine.o
+	${CXX} ${CXXFLAGS} ${OBJECTS} combine.o -o combine ${LIBS}
+
+-include ${DEPENDS} main.d viewer.d worker.d simple_init.d measure.d combine.d
 
 clean:
 	rm -f ${OBJECTS} ${DEPENDS} \
@@ -39,4 +42,5 @@ clean:
 	viewer.o viewer.d viewer \
 	worker.o worker.d worker \
 	simple_init.o simple_init.d simple_init \
-	measure.o measure.d measure
+	measure.o measure.d measure \
+	combine.o combine.d combine
