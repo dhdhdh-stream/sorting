@@ -21,36 +21,36 @@ void BranchExperiment::activate(AbstractNode*& curr_node,
 
 	switch (this->state) {
 	case BRANCH_EXPERIMENT_STATE_EXPLORE:
-		result = explore_activate(curr_node,
-								  problem,
-								  context,
-								  run_helper,
-								  scope_history,
-								  history);
+		explore_activate(curr_node,
+						 problem,
+						 context,
+						 run_helper,
+						 scope_history,
+						 history);
 		break;
 	case BRANCH_EXPERIMENT_STATE_TRAIN_NEW:
-		result = train_new_activate(curr_node,
-									problem,
-									context,
-									run_helper,
-									scope_history,
-									history);
+		train_new_activate(curr_node,
+						   problem,
+						   context,
+						   run_helper,
+						   scope_history,
+						   history);
 		break;
 	case BRANCH_EXPERIMENT_STATE_MEASURE:
-		result = measure_activate(curr_node,
-								  problem,
-								  context,
-								  run_helper,
-								  scope_history,
-								  history);
+		measure_activate(curr_node,
+						 problem,
+						 context,
+						 run_helper,
+						 scope_history,
+						 history);
 		break;
 	#if defined(MDEBUG) && MDEBUG
 	case BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY:
-		result = capture_verify_activate(curr_node,
-										 problem,
-										 context,
-										 run_helper,
-										 scope_history);
+		capture_verify_activate(curr_node,
+								problem,
+								context,
+								run_helper,
+								scope_history);
 		break;
 	#endif /* MDEBUG */
 	}

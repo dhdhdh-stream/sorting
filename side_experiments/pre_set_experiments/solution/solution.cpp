@@ -91,12 +91,11 @@ void Solution::init() {
 	starting_noop_node->average_instances_per_run = 1.0;
 	new_scope->nodes[starting_noop_node->id] = starting_noop_node;
 
-	starting_noop_node->is_experiment = true;
-	starting_noop_node->experiment_is_branch = false;
-
 	this->num_existing_scopes = 0;
 
 	commit(this);
+
+	set_experiments(this);
 }
 
 void Solution::load(string path,

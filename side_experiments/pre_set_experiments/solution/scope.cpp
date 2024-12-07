@@ -191,7 +191,8 @@ void Scope::copy_from(Scope* original,
 		case NODE_TYPE_BRANCH:
 			{
 				BranchNode* original_branch_node = (BranchNode*)it->second;
-				BranchNode* new_branch_node = new BranchNode(original_branch_node);
+				BranchNode* new_branch_node = new BranchNode(original_branch_node,
+															 parent_solution);
 				new_branch_node->parent = this;
 				new_branch_node->id = it->first;
 				this->nodes[it->first] = new_branch_node;

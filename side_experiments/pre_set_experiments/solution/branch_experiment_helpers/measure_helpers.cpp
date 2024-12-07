@@ -15,7 +15,7 @@
 
 using namespace std;
 
-bool BranchExperiment::measure_activate(AbstractNode*& curr_node,
+void BranchExperiment::measure_activate(AbstractNode*& curr_node,
 										Problem* problem,
 										vector<ContextLayer>& context,
 										RunHelper& run_helper,
@@ -58,11 +58,7 @@ bool BranchExperiment::measure_activate(AbstractNode*& curr_node,
 				curr_node = this->best_scopes[0];
 			}
 		}
-
-		return true;
 	}
-
-	return false;
 }
 
 void BranchExperiment::measure_backprop(

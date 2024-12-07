@@ -47,11 +47,15 @@ void PotentialCommit::finalize() {
 			this->actions[s_index]->id = parent_scope->node_counter;
 			parent_scope->node_counter++;
 			parent_scope->nodes[this->actions[s_index]->id] = this->actions[s_index];
+
+			this->actions[s_index]->average_instances_per_run = this->node_context->average_instances_per_run;
 		} else {
 			this->scopes[s_index]->parent = parent_scope;
 			this->scopes[s_index]->id = parent_scope->node_counter;
 			parent_scope->node_counter++;
 			parent_scope->nodes[this->scopes[s_index]->id] = this->scopes[s_index];
+
+			this->scopes[s_index]->average_instances_per_run = this->node_context->average_instances_per_run;
 		}
 	}
 

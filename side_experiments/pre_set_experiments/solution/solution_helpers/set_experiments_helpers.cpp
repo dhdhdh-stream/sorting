@@ -1,5 +1,7 @@
 #include "solution_helpers.h"
 
+#include <iostream>
+
 #include "abstract_node.h"
 #include "globals.h"
 #include "problem.h"
@@ -12,7 +14,7 @@ using namespace std;
 const int SET_ITERS = 100;
 
 void set_experiments(Solution* parent_solution) {
-	for (int iter_index = 0; iter_index < 100; iter_index++) {
+	for (int iter_index = 0; iter_index < SET_ITERS; iter_index++) {
 		run_index++;
 
 		Problem* problem = problem_type->get_problem();
@@ -71,5 +73,7 @@ void set_experiments(Solution* parent_solution) {
 			explore_node->is_experiment = true;
 			explore_node->experiment_is_branch = explore_is_branch;
 		}
+
+		delete problem;
 	}
 }

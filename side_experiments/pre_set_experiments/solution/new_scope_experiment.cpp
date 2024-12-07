@@ -273,6 +273,8 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 		}
 
 		this->state = NEW_SCOPE_EXPERIMENT_STATE_MEASURE;
+		this->state_iter = 0;
+		this->sub_state_iter = 0;
 
 		this->result = EXPERIMENT_RESULT_NA;
 	} else {

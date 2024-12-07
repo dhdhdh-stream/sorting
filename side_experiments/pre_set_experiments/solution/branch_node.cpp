@@ -17,6 +17,7 @@ BranchNode::BranchNode() {
 	this->network = NULL;
 
 	this->is_experiment = false;
+	this->experiment_is_branch = false;
 	this->experiment = NULL;
 
 	this->average_instances_per_run = 0.0;
@@ -26,16 +27,24 @@ BranchNode::BranchNode() {
 	#endif /* MDEBUG */
 }
 
-BranchNode::BranchNode(BranchNode* original) {
+BranchNode::BranchNode(BranchNode* original,
+					   Solution* parent_solution) {
 	this->type = NODE_TYPE_BRANCH;
 
 	this->inputs = original->inputs;
+	for (int i_index = 0; i_index < (int)this->inputs.size(); i_index++) {
+		for (int l_index = 0; l_index < (int)this->inputs[i_index].first.first.size(); l_index++) {
+			this->inputs[i_index].first.first[l_index] =
+				parent_solution->scopes[this->inputs[i_index].first.first[l_index]->id];
+		}
+	}
 	this->network = new Network(original->network);
 
 	this->original_next_node_id = original->original_next_node_id;
 	this->branch_next_node_id = original->branch_next_node_id;
 
 	this->is_experiment = false;
+	this->experiment_is_branch = false;
 	this->experiment = NULL;
 
 	this->average_instances_per_run = 0.0;

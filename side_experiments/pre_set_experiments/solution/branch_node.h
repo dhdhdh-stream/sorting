@@ -41,7 +41,8 @@ public:
 	#endif /* MDEBUG */
 
 	BranchNode();
-	BranchNode(BranchNode* original);
+	BranchNode(BranchNode* original,
+			   Solution* parent_solution);
 	~BranchNode();
 
 	void activate(AbstractNode*& curr_node,

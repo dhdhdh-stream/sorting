@@ -20,7 +20,7 @@ const int BRANCH_EXPERIMENT_EXPLORE_ITERS = 5;
 const int BRANCH_EXPERIMENT_EXPLORE_ITERS = 500;
 #endif /* MDEBUG */
 
-bool BranchExperiment::explore_activate(
+void BranchExperiment::explore_activate(
 		AbstractNode*& curr_node,
 		Problem* problem,
 		vector<ContextLayer>& context,
@@ -124,10 +124,6 @@ bool BranchExperiment::explore_activate(
 		}
 
 		curr_node = this->curr_exit_next_node;
-
-		return true;
-	}  else {
-		return false;
 	}
 }
 
@@ -180,8 +176,12 @@ void BranchExperiment::explore_backprop(
 				this->curr_scopes.clear();
 			}
 
+			#if defined(MDEBUG) && MDEBUG
+			if (this->state_iter == BRANCH_EXPERIMENT_EXPLORE_ITERS-1) {
+			#else
 			if (this->state_iter == BRANCH_EXPERIMENT_EXPLORE_ITERS-1
 					&& this->best_surprise > 0.0) {
+			#endif /* MDEBUG */
 				select = true;
 			}
 		} else if (this->explore_type == EXPLORE_TYPE_GOOD) {

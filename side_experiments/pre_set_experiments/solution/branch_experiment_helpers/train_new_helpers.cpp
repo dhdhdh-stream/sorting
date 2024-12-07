@@ -19,7 +19,7 @@ using namespace std;
 
 const int NETWORK_NUM_INPUTS = 10;
 
-bool BranchExperiment::train_new_activate(
+void BranchExperiment::train_new_activate(
 		AbstractNode*& curr_node,
 		Problem* problem,
 		vector<ContextLayer>& context,
@@ -47,11 +47,7 @@ bool BranchExperiment::train_new_activate(
 
 		uniform_int_distribution<int> until_distribution(0, 2*((int)this->node_context->average_instances_per_run-1));
 		this->num_instances_until_target = 1 + until_distribution(generator);
-
-		return true;
 	}
-
-	return false;
 }
 
 void BranchExperiment::train_new_backprop(

@@ -91,7 +91,7 @@ public:
 	void train_existing_backprop(double target_val,
 								 RunHelper& run_helper);
 
-	bool explore_activate(AbstractNode*& curr_node,
+	void explore_activate(AbstractNode*& curr_node,
 						  Problem* problem,
 						  std::vector<ContextLayer>& context,
 						  RunHelper& run_helper,
@@ -100,7 +100,7 @@ public:
 	void explore_backprop(double target_val,
 						  RunHelper& run_helper);
 
-	bool train_new_activate(AbstractNode*& curr_node,
+	void train_new_activate(AbstractNode*& curr_node,
 							Problem* problem,
 							std::vector<ContextLayer>& context,
 							RunHelper& run_helper,
@@ -109,7 +109,7 @@ public:
 	void train_new_backprop(double target_val,
 							RunHelper& run_helper);
 
-	bool measure_activate(AbstractNode*& curr_node,
+	void measure_activate(AbstractNode*& curr_node,
 						  Problem* problem,
 						  std::vector<ContextLayer>& context,
 						  RunHelper& run_helper,
@@ -119,7 +119,7 @@ public:
 						  RunHelper& run_helper);
 
 	#if defined(MDEBUG) && MDEBUG
-	bool capture_verify_activate(AbstractNode*& curr_node,
+	void capture_verify_activate(AbstractNode*& curr_node,
 								 Problem* problem,
 								 std::vector<ContextLayer>& context,
 								 RunHelper& run_helper,

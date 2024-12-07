@@ -172,9 +172,9 @@ int main(int argc, char* argv[]) {
 		delete solution;
 		solution = best_solution;
 
-		set_experiments(solution);
-
 		solution->check_commit();
+
+		set_experiments(solution);
 
 		solution->save(path, filename);
 	}

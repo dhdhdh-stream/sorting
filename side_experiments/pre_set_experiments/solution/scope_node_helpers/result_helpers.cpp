@@ -16,9 +16,9 @@ void ScopeNode::result_activate(AbstractNode*& curr_node,
 								RunHelper& run_helper) {
 	context.back().node_id = this->id;
 
-	this->scope->activate(problem,
-						  context,
-						  run_helper);
+	this->scope->result_activate(problem,
+								 context,
+								 run_helper);
 
 	curr_node = this->next_node;
 

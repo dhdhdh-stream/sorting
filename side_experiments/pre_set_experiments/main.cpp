@@ -46,6 +46,13 @@ int main(int argc, char* argv[]) {
 		solution->save("saves/", "main.txt");
 	}
 
+	{
+		ofstream display_file;
+		display_file.open("../display.txt");
+		solution->save_for_display(display_file);
+		display_file.close();
+	}
+
 	run_index = 0;
 
 	while (solution->timestamp < EXPLORE_ITERS) {
@@ -192,8 +199,12 @@ int main(int argc, char* argv[]) {
 						duplicate->best_true_score_timestamp = duplicate->timestamp;
 					}
 
+					#if defined(MDEBUG) && MDEBUG
+					if (best_solution == NULL) {
+					#else
 					if (best_solution == NULL
 							|| duplicate->curr_score > best_solution->curr_score) {
+					#endif /* MDEBUG */
 						if (best_solution != NULL) {
 							delete best_solution;
 						}
@@ -217,9 +228,9 @@ int main(int argc, char* argv[]) {
 		delete solution;
 		solution = best_solution;
 
-		set_experiments(solution);
-
 		solution->check_commit();
+
+		set_experiments(solution);
 
 		solution->save("saves/", "main.txt");
 	}
