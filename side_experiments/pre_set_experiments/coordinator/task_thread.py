@@ -1,6 +1,7 @@
 import os
 import paramiko
 import select
+import time
 
 EXPLORE_ITERS = 100
 
@@ -27,16 +28,15 @@ class TaskThread:
 		command = 'distributed/worker distributed/ ' + self.tasknode.filenames[self.index] + ' 2>&1'
 		self.channel.exec_command(command)
 
+		time.sleep(1)
+
 		self.curr_iter = 0
 
 	def check_status(self):
-		while True:
-			rl, wl, xl = select.select([self.channel],[],[],0.0)
-			if len(rl) > 0:
-				message = self.channel.recv(1024)
-				print(message)
-			else:
-				break
+		rl, wl, xl = select.select([self.channel],[],[],0.0)
+		if len(rl) > 0:
+			message = self.channel.recv(1024)
+			print(message)
 
 		temp_client = paramiko.SSHClient()
 		temp_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())

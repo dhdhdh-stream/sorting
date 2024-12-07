@@ -5,6 +5,7 @@
 #include <random>
 
 #include "globals.h"
+#include "minesweeper.h"
 #include "scope.h"
 #include "solution.h"
 
@@ -40,6 +41,8 @@ int main(int argc, char* argv[]) {
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
 
+	problem_type = new TypeMinesweeper();
+
 	Solution* combined_solution = new Solution();
 	combined_solution->init();
 
@@ -67,6 +70,8 @@ int main(int argc, char* argv[]) {
 	combined_solution->save("saves/", output_file);
 
 	delete combined_solution;
+
+	delete problem_type;
 
 	cout << "Done" << endl;
 }

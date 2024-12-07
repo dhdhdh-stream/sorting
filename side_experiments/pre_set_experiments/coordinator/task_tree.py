@@ -11,47 +11,47 @@ STATUS_ADDED = 1
 STATUS_DONE = 2
 
 class TaskNode:
-	def __init__(self, layer):
-		self.layer = layer
+	def __init__(self, layer=None, file=None):
+		if file == None:
+			self.layer = layer
 
-		if self.layer == 0:
-			self.filenames = ['']
-			self.statuses = [STATUS_NOT_ADDED]
+			if self.layer == 0:
+				self.filenames = ['']
+				self.statuses = [STATUS_NOT_ADDED]
+			else:
+				self.filenames = ['' for _ in range(MERGE_NUM_TRIES)]
+				self.statuses = [STATUS_NOT_ADDED for _ in range(MERGE_NUM_TRIES)]
+
+				self.children = []
+				for _ in range(BRANCH_FACTOR):
+					self.children.append(TaskNode(self.layer - 1))
+
+			self.result = ''
 		else:
-			self.filenames = ['' for _ in range(MERGE_NUM_TRIES)]
-			self.statuses = [STATUS_NOT_ADDED for _ in range(MERGE_NUM_TRIES)]
+			self.layer = int(file.readline().strip())
 
-			self.children = []
-			for _ in range(BRANCH_FACTOR):
-				self.children.append(TaskNode(self.layer - 1))
+			if self.layer == 0:
+				self.filenames = [file.readline().strip()]
+				self.statuses = [int(file.readline().strip())]
 
-		self.result = ''
+				if self.statuses[0] == STATUS_ADDED:
+					self.statuses[0] = STATUS_NOT_ADDED
+			else:
+				self.filenames = []
+				self.statuses = []
 
-	def __init__(self, file):
-		self.layer = int(file.readline())
+				for m_index in range(MERGE_NUM_TRIES):
+					self.filenames.append(file.readline().strip())
+					self.statuses.append(int(file.readline().strip()))
 
-		if self.layer == 0:
-			self.filenames = [file.readline()]
-			self.statuses = [int(file.readline())]
+					if self.statuses[m_index] == STATUS_ADDED:
+						self.statuses[m_index] = STATUS_NOT_ADDED
 
-			if self.statuses[0] == STATUS_ADDED:
-				self.statuses[0] = STATUS_NOT_ADDED
-		else:
-			self.filenames = []
-			self.statuses = []
+				self.children = []
+				for _ in range(BRANCH_FACTOR):
+					self.children.append(TaskNode(file=file))
 
-			for m_index in range(MERGE_NUM_TRIES):
-				self.filenames.append(file.readline())
-				self.statuses.append(int(file.readline()))
-
-				if self.statuses[m_index] == STATUS_ADDED:
-					self.statuses[m_index] = STATUS_NOT_ADDED
-
-			self.children = []
-			for _ in range(BRANCH_FACTOR):
-				self.children.append(TaskNode(file))
-
-		self.result = file.readline()
+			self.result = file.readline().strip()
 
 	def init_and_add_tasks(self, tasks):
 		# simply add leaf tasks to the back, non-leaf tasks to the front
@@ -66,8 +66,11 @@ class TaskNode:
 
 				self.filenames[0] = filename
 
+				time.sleep(1)
+
 			if self.statuses[0] == STATUS_NOT_ADDED:
 				tasks.append([self, 0])
+				self.statuses[0] = STATUS_ADDED
 		else:
 			if self.filenames[0] == '':
 				all_children_done = True
@@ -77,6 +80,8 @@ class TaskNode:
 						break
 
 				if all_children_done:
+					curr_time_stamp = int(time.time())
+
 					starting_filename = 't_' + str(curr_time_stamp) + '.txt'
 
 					combine_input = []
@@ -100,6 +105,7 @@ class TaskNode:
 				for m_index in range(MERGE_NUM_TRIES):
 					if self.statuses[m_index] == STATUS_NOT_ADDED:
 						tasks.appendleft([self, m_index])
+						self.statuses[m_index] = STATUS_ADDED
 
 			for c_index in range(BRANCH_FACTOR):
 				self.children[c_index].init_and_add_tasks(tasks)
@@ -149,11 +155,11 @@ class TaskNode:
 		file.write(self.result + '\n')
 
 class TaskTree:
-	def __init__(self):
-		self.root = TaskNode(1)
-
-	def __init__(self, file):
-		self.root = TaskNode(file)
+	def __init__(self, file=None):
+		if file == None:
+			self.root = TaskNode(1)
+		else:
+			self.root = TaskNode(file=file)
 
 	def init_and_add_tasks(self, tasks):
 		self.root.init_and_add_tasks(tasks)
@@ -163,5 +169,5 @@ class TaskTree:
 		new_root.children[0] = self.root
 		self.root = new_root
 
-	def save(self):
+	def save(self, file):
 		self.root.save(file)
