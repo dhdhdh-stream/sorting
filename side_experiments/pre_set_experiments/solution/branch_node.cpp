@@ -147,7 +147,7 @@ void BranchNode::save(ofstream& output_file) {
 	for (int i_index = 0; i_index < (int)this->inputs.size(); i_index++) {
 		output_file << this->inputs[i_index].first.first.size() << endl;
 		for (int l_index = 0; l_index < (int)this->inputs[i_index].first.first.size(); l_index++) {
-			output_file << this->inputs[i_index].first.first[l_index] << endl;
+			output_file << this->inputs[i_index].first.first[l_index]->id << endl;
 			output_file << this->inputs[i_index].first.second[l_index] << endl;
 		}
 

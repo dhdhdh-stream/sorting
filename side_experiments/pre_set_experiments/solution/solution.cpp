@@ -222,7 +222,8 @@ void Solution::clean_scopes() {
 }
 
 void Solution::check_commit() {
-	if (this->timestamp % COMMIT_ITERS) {
+	if (this->timestamp % COMMIT_ITERS == 0
+			&& this->timestamp != EXPLORE_ITERS) {
 		commit(this);
 	}
 }

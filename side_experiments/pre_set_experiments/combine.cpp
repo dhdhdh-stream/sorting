@@ -67,6 +67,8 @@ int main(int argc, char* argv[]) {
 		combined_solution->scopes[0]->child_scopes.push_back(combined_solution->scopes[scope_index]);
 	}
 
+	combined_solution->num_existing_scopes = (int)combined_solution->scopes.size() - 1;
+
 	combined_solution->save("saves/", output_file);
 
 	delete combined_solution;

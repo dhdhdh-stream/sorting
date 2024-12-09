@@ -42,8 +42,9 @@ int main(int argc, char* argv[]) {
 		filename = argv[1];
 		solution->load("saves/", filename);
 	} else {
+		filename = "main.txt";
 		solution->init();
-		solution->save("saves/", "main.txt");
+		solution->save("saves/", filename);
 	}
 
 	{
@@ -64,6 +65,7 @@ int main(int argc, char* argv[]) {
 			run_index++;
 			if (run_index%10000 == 0) {
 				cout << "run_index: " << run_index << endl;
+				cout << "solution->timestamp: " << solution->timestamp << endl;
 			}
 
 			Problem* problem = problem_type->get_problem();
@@ -232,7 +234,13 @@ int main(int argc, char* argv[]) {
 
 		set_experiments(solution);
 
-		solution->save("saves/", "main.txt");
+		solution->save("saves/", filename);
+
+		#if defined(MDEBUG) && MDEBUG
+		delete solution;
+		solution = new Solution();
+		solution->load("saves/", filename);
+		#endif /* MDEBUG */
 	}
 
 	delete problem_type;

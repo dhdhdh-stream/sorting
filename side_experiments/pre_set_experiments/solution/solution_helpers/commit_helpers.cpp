@@ -44,46 +44,34 @@ void commit(Solution* parent_solution) {
 		existing_target_val -= 0.05 * run_helper.num_actions * solution->curr_time_penalty;
 		existing_target_val -= run_helper.num_analyze * solution->curr_time_penalty;
 
-		vector<AbstractNode*> possible_exits;
-
-		if (potential_node_context->type == NODE_TYPE_ACTION
-				&& ((ActionNode*)potential_node_context)->next_node == NULL) {
-			possible_exits.push_back(NULL);
-		}
-
-		AbstractNode* starting_node;
+		/**
+		 * - exit in-place to not delete existing nodes
+		 */
+		AbstractNode* exit_next_node;
 		switch (potential_node_context->type) {
 		case NODE_TYPE_ACTION:
 			{
 				ActionNode* action_node = (ActionNode*)potential_node_context;
-				starting_node = action_node->next_node;
+				exit_next_node = action_node->next_node;
 			}
 			break;
 		case NODE_TYPE_SCOPE:
 			{
 				ScopeNode* scope_node = (ScopeNode*)potential_node_context;
-				starting_node = scope_node->next_node;
+				exit_next_node = scope_node->next_node;
 			}
 			break;
 		case NODE_TYPE_BRANCH:
 			{
 				BranchNode* branch_node = (BranchNode*)potential_node_context;
 				if (potential_is_branch) {
-					starting_node = branch_node->branch_next_node;
+					exit_next_node = branch_node->branch_next_node;
 				} else {
-					starting_node = branch_node->original_next_node;
+					exit_next_node = branch_node->original_next_node;
 				}
 			}
 			break;
 		}
-
-		potential_node_context->parent->random_exit_activate(
-			starting_node,
-			possible_exits);
-
-		uniform_int_distribution<int> distribution(0, possible_exits.size()-1);
-		int random_index = distribution(generator);
-		AbstractNode* exit_next_node = possible_exits[random_index];
 
 		geometric_distribution<int> geo_distribution(0.2);
 		int new_num_steps = 3 + geo_distribution(generator);

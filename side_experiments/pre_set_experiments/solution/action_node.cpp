@@ -11,6 +11,7 @@ ActionNode::ActionNode() {
 	this->type = NODE_TYPE_ACTION;
 
 	this->is_experiment = false;
+	this->experiment_is_branch = false;
 	this->experiment = NULL;
 
 	this->average_instances_per_run = 0.0;
@@ -24,6 +25,7 @@ ActionNode::ActionNode(ActionNode* original) {
 	this->next_node_id = original->next_node_id;
 
 	this->is_experiment = false;
+	this->experiment_is_branch = false;
 	this->experiment = NULL;
 
 	this->average_instances_per_run = 0.0;
