@@ -94,8 +94,6 @@ void Solution::init() {
 	this->num_existing_scopes = 0;
 
 	commit(this);
-
-	set_experiments(this);
 }
 
 void Solution::load(string path,

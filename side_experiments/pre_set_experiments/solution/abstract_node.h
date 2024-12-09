@@ -19,12 +19,11 @@ public:
 	Scope* parent;
 	int id;
 
-	bool is_experiment;
-	bool experiment_is_branch;
 	/**
 	 * - simply don't allow experiments on both branches of a branch node
 	 */
 	AbstractExperiment* experiment;
+	bool experiment_is_branch;
 
 	double average_instances_per_run;
 

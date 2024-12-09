@@ -53,7 +53,7 @@ void ActionNode::experiment_activate(AbstractNode*& curr_node,
 
 	curr_node = this->next_node;
 
-	if (run_helper.experiment_node == this) {
+	if (run_helper.experiment_history->experiment == this->experiment) {
 		this->experiment->activate(
 			curr_node,
 			problem,

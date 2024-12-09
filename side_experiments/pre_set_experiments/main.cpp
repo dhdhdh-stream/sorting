@@ -232,8 +232,6 @@ int main(int argc, char* argv[]) {
 
 		solution->check_commit();
 
-		set_experiments(solution);
-
 		solution->save("saves/", filename);
 
 		#if defined(MDEBUG) && MDEBUG

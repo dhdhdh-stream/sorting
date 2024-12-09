@@ -16,9 +16,8 @@ BranchNode::BranchNode() {
 
 	this->network = NULL;
 
-	this->is_experiment = false;
-	this->experiment_is_branch = false;
 	this->experiment = NULL;
+	this->experiment_is_branch = false;
 
 	this->average_instances_per_run = 0.0;
 
@@ -43,9 +42,8 @@ BranchNode::BranchNode(BranchNode* original,
 	this->original_next_node_id = original->original_next_node_id;
 	this->branch_next_node_id = original->branch_next_node_id;
 
-	this->is_experiment = false;
-	this->experiment_is_branch = false;
 	this->experiment = NULL;
+	this->experiment_is_branch = false;
 
 	this->average_instances_per_run = 0.0;
 
@@ -159,9 +157,6 @@ void BranchNode::save(ofstream& output_file) {
 	output_file << this->original_next_node_id << endl;
 	output_file << this->branch_next_node_id << endl;
 
-	output_file << this->is_experiment << endl;
-	output_file << this->experiment_is_branch << endl;
-
 	output_file << this->average_instances_per_run << endl;
 }
 
@@ -205,14 +200,6 @@ void BranchNode::load(ifstream& input_file,
 	string branch_next_node_id_line;
 	getline(input_file, branch_next_node_id_line);
 	this->branch_next_node_id = stoi(branch_next_node_id_line);
-
-	string is_experiment_line;
-	getline(input_file, is_experiment_line);
-	this->is_experiment = stoi(is_experiment_line);
-
-	string experiment_is_branch_line;
-	getline(input_file, experiment_is_branch_line);
-	this->experiment_is_branch = stoi(experiment_is_branch_line);
 
 	string average_instances_per_run_line;
 	getline(input_file, average_instances_per_run_line);

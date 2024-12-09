@@ -174,8 +174,6 @@ int main(int argc, char* argv[]) {
 
 		solution->check_commit();
 
-		set_experiments(solution);
-
 		solution->save(path, filename);
 	}
 

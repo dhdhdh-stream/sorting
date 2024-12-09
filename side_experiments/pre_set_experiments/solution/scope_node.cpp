@@ -12,9 +12,8 @@ using namespace std;
 ScopeNode::ScopeNode() {
 	this->type = NODE_TYPE_SCOPE;
 
-	this->is_experiment = false;
-	this->experiment_is_branch = false;
 	this->experiment = NULL;
+	this->experiment_is_branch = false;
 
 	this->average_instances_per_run = 0.0;
 }
@@ -27,9 +26,8 @@ ScopeNode::ScopeNode(ScopeNode* original,
 
 	this->next_node_id = original->next_node_id;
 
-	this->is_experiment = false;
-	this->experiment_is_branch = false;
 	this->experiment = NULL;
+	this->experiment_is_branch = false;
 
 	this->average_instances_per_run = 0.0;
 }
@@ -45,8 +43,6 @@ void ScopeNode::save(ofstream& output_file) {
 
 	output_file << this->next_node_id << endl;
 
-	output_file << this->is_experiment << endl;
-
 	output_file << this->average_instances_per_run << endl;
 }
 
@@ -59,10 +55,6 @@ void ScopeNode::load(ifstream& input_file,
 	string next_node_id_line;
 	getline(input_file, next_node_id_line);
 	this->next_node_id = stoi(next_node_id_line);
-
-	string is_experiment_line;
-	getline(input_file, is_experiment_line);
-	this->is_experiment = stoi(is_experiment_line);
 
 	string average_instances_per_run_line;
 	getline(input_file, average_instances_per_run_line);

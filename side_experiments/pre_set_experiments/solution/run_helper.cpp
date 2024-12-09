@@ -10,7 +10,6 @@ RunHelper::RunHelper() {
 	this->num_analyze = 0;
 	this->num_actions = 0;
 
-	this->experiment_node = NULL;
 	this->experiment_history = NULL;
 }
 

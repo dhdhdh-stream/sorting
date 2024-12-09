@@ -17,9 +17,9 @@ public:
 	int num_analyze;
 	int num_actions;
 
-	std::vector<AbstractNode*> experiments_seen;
+	std::vector<AbstractExperiment*> experiments_seen;
+	std::map<std::pair<AbstractNode*,bool>, int> nodes_seen;
 
-	AbstractNode* experiment_node;
 	AbstractExperimentHistory* experiment_history;
 
 	#if defined(MDEBUG) && MDEBUG

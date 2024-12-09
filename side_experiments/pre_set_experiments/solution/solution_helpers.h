@@ -14,6 +14,8 @@ class ScopeHistory;
 class ScopeNode;
 class Solution;
 
+void create_experiment(RunHelper& run_helper);
+
 void gather_possible_helper(ScopeHistory* scope_history,
 							std::vector<Scope*>& scope_context,
 							std::vector<int>& node_context,
@@ -29,8 +31,6 @@ void clean_scope(Scope* scope,
 
 void get_existing_result(Problem* original_problem,
 						 RunHelper& run_helper);
-
-void set_experiments(Solution* parent_solution);
 
 void commit(Solution* parent_solution);
 
