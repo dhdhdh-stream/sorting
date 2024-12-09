@@ -73,6 +73,8 @@ void PotentialCommit::finalize() {
 		new_ending_node->next_node_id = -1;
 		new_ending_node->next_node = NULL;
 
+		new_ending_node->average_instances_per_run = 1.0;
+
 		exit_node_id = new_ending_node->id;
 		exit_node = new_ending_node;
 	} else {

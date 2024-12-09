@@ -85,7 +85,8 @@ void BranchNode::result_activate(AbstractNode*& curr_node,
 		run_helper.experiments_seen.push_back(this->experiment);
 	}
 
-	if (run_helper.experiments_seen.size() == 0) {
+	if (this->experiment == NULL
+			&& run_helper.experiments_seen.size() == 0) {
 		if (solution->timestamp >= MAINTAIN_ITERS
 				|| (this->parent->id == 0 || this->parent->id > solution->num_existing_scopes)) {
 			map<pair<AbstractNode*,bool>, int>::iterator it = run_helper.nodes_seen.find({this, is_branch});

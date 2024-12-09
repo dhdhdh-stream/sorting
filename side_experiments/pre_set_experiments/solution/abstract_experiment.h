@@ -1,3 +1,9 @@
+/**
+ * TODO:
+ * - instead of training eval per experiment, train eval overall?
+ *   - maybe learn factors, then retrain per experiment using existing factors?
+ */
+
 #ifndef ABSTRACT_EXPERIMENT_H
 #define ABSTRACT_EXPERIMENT_H
 
