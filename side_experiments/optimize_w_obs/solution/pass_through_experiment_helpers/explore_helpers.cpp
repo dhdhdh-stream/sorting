@@ -22,7 +22,7 @@ const int VERIFY_1ST_NUM_SAMPLES_PER_ITER = 5;
 const int VERIFY_1ST_NUM_TRUTH_PER_ITER = 2;
 const int VERIFY_2ND_NUM_SAMPLES_PER_ITER = 10;
 const int VERIFY_2ND_NUM_TRUTH_PER_ITER = 2;
-const int EXPLORE_ITERS = 2;
+const int PASS_THROUGH_EXPERIMENT_EXPLORE_ITERS = 2;
 #else
 const int INITIAL_NUM_SAMPLES_PER_ITER = 100;
 const int INITIAL_NUM_TRUTH_PER_ITER = 20;
@@ -30,7 +30,7 @@ const int VERIFY_1ST_NUM_SAMPLES_PER_ITER = 500;
 const int VERIFY_1ST_NUM_TRUTH_PER_ITER = 100;
 const int VERIFY_2ND_NUM_SAMPLES_PER_ITER = 2000;
 const int VERIFY_2ND_NUM_TRUTH_PER_ITER = 400;
-const int EXPLORE_ITERS = 100;
+const int PASS_THROUGH_EXPERIMENT_EXPLORE_ITERS = 100;
 #endif /* MDEBUG */
 
 void PassThroughExperiment::explore_activate(
@@ -267,7 +267,7 @@ void PassThroughExperiment::explore_backprop(
 
 		if (is_next) {
 			this->explore_iter++;
-			if (this->explore_iter >= EXPLORE_ITERS) {
+			if (this->explore_iter >= PASS_THROUGH_EXPERIMENT_EXPLORE_ITERS) {
 				#if defined(MDEBUG) && MDEBUG
 				if (this->best_score != numeric_limits<double>::lowest()) {
 				#else

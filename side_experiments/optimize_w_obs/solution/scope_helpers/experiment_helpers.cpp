@@ -62,7 +62,7 @@ void Scope::experiment_activate(Problem* problem,
 								ScopeHistory* history) {
 	context.push_back(ContextLayer());
 
-	context.back().scope_id = this->id;
+	context.back().scope = this;
 
 	AbstractNode* curr_node = this->nodes[0];
 	while (true) {

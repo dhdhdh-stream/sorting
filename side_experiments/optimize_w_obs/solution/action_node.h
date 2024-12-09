@@ -19,7 +19,7 @@ class ActionNode : public AbstractNode {
 public:
 	Action action;
 
-	std::vector<std::vector<int>> input_scope_context_ids;
+	std::vector<std::vector<Scope*>> input_scope_contexts;
 	std::vector<std::vector<int>> input_node_context_ids;
 	std::vector<int> input_obs_indexes;
 
@@ -61,10 +61,9 @@ public:
 						 RunHelper& run_helper,
 						 PotentialCommit* potential_commit);
 
-	void clean_inputs(int scope_id,
+	void clean_inputs(Scope* scope,
 					  int node_id);
-
-	void update_scope_ids(std::map<int, int>& dictionary);
+	void clean_inputs(Scope* scope);
 
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file);

@@ -5,6 +5,7 @@
 #include "abstract_experiment.h"
 #include "action_node.h"
 #include "branch_node.h"
+#include "constants.h"
 #include "globals.h"
 #include "scope.h"
 #include "scope_node.h"
@@ -49,6 +50,8 @@ Solution::Solution(Solution* original) {
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
 		this->scopes[s_index]->link(this);
 	}
+
+	this->num_existing_scopes = original->num_existing_scopes;
 }
 
 Solution::~Solution() {
@@ -88,13 +91,15 @@ void Solution::init() {
 	starting_noop_node->average_instances_per_run = 1.0;
 	new_scope->nodes[starting_noop_node->id] = starting_noop_node;
 
+	this->num_existing_scopes = 0;
+
 	commit(this);
 }
 
 void Solution::load(string path,
 					string name) {
 	ifstream input_file;
-	input_file.open(path + "saves/" + name + ".txt");
+	input_file.open(path + name);
 
 	string timestamp_line;
 	getline(input_file, timestamp_line);
@@ -139,6 +144,10 @@ void Solution::load(string path,
 		this->scopes[s_index]->link(this);
 	}
 
+	string num_existing_scopes_line;
+	getline(input_file, num_existing_scopes_line);
+	this->num_existing_scopes = stoi(num_existing_scopes_line);
+
 	input_file.close();
 }
 
@@ -152,55 +161,75 @@ void Solution::clear_verify() {
 }
 #endif /* MDEBUG */
 
-void Solution::clean_inputs(int scope_id,
+void Solution::clean_inputs(Scope* scope,
 							int node_id) {
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
-		this->scopes[s_index]->clean_inputs(scope_id,
+		this->scopes[s_index]->clean_inputs(scope,
 											node_id);
 	}
 }
 
-void Solution::check_commit() {
-	if (this->timestamp % COMMIT_ITERS) {
-		commit(this);
+void Solution::clean_scopes() {
+	if (this->timestamp > MAINTAIN_ITERS) {
+		for (int s_index = (int)this->scopes.size()-1; s_index >= 1; s_index--) {
+			bool still_used = false;
+			for (int is_index = 0; is_index < (int)this->scopes.size(); is_index++) {
+				if (s_index != is_index) {
+					for (map<int, AbstractNode*>::iterator it = this->scopes[is_index]->nodes.begin();
+							it != this->scopes[is_index]->nodes.end(); it++) {
+						switch (it->second->type) {
+						case NODE_TYPE_SCOPE:
+							{
+								ScopeNode* scope_node = (ScopeNode*)it->second;
+								if (scope_node->scope == this->scopes[s_index]) {
+									still_used = true;
+									break;
+								}
+							}
+							break;
+						}
+					}
+				}
+
+				if (still_used) {
+					break;
+				}
+			}
+
+			if (!still_used) {
+				for (int is_index = 0; is_index < (int)this->scopes.size(); is_index++) {
+					this->scopes[is_index]->clean_inputs(this->scopes[s_index]);
+
+					for (int c_index = 0; c_index < (int)this->scopes[is_index]->child_scopes.size(); c_index++) {
+						if (this->scopes[is_index]->child_scopes[c_index] == this->scopes[s_index]) {
+							this->scopes[is_index]->child_scopes.erase(this->scopes[is_index]->child_scopes.begin() + c_index);
+							break;
+						}
+					}
+				}
+
+				delete this->scopes[s_index];
+				this->scopes.erase(this->scopes.begin() + s_index);
+			}
+		}
+
+		for (int s_index = 1; s_index < (int)this->scopes.size(); s_index++) {
+			this->scopes[s_index]->id = s_index;
+		}
 	}
 }
 
-void Solution::check_reset() {
-	if (this->timestamp % RESET_ITERS == 0) {
-		for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
-			delete this->scopes[s_index];
-		}
-		this->scopes.clear();
-
-		this->curr_score = -1.0;
-
-		this->curr_true_score = -1.0;
-		this->best_true_score = -1.0;
-		this->best_true_score_timestamp = 0;
-		this->curr_time_penalty = STARTING_TIME_PENALTY;
-
-		Scope* new_scope = new Scope();
-		new_scope->id = this->scopes.size();
-		new_scope->node_counter = 0;
-		this->scopes.push_back(new_scope);
-
-		ActionNode* starting_noop_node = new ActionNode();
-		starting_noop_node->parent = new_scope;
-		starting_noop_node->id = new_scope->node_counter;
-		new_scope->node_counter++;
-		starting_noop_node->action = Action(ACTION_NOOP);
-		starting_noop_node->next_node_id = -1;
-		starting_noop_node->next_node = NULL;
-		starting_noop_node->average_instances_per_run = 1.0;
-		new_scope->nodes[starting_noop_node->id] = starting_noop_node;
+void Solution::check_commit() {
+	if (this->timestamp % COMMIT_ITERS == 0
+			&& this->timestamp != EXPLORE_ITERS) {
+		commit(this);
 	}
 }
 
 void Solution::save(string path,
 					string name) {
 	ofstream output_file;
-	output_file.open(path + "saves/" + name + "_temp.txt");
+	output_file.open(path + "temp_" + name);
 
 	output_file << this->timestamp << endl;
 	output_file << this->curr_score << endl;
@@ -216,10 +245,12 @@ void Solution::save(string path,
 		this->scopes[s_index]->save(output_file);
 	}
 
+	output_file << this->num_existing_scopes << endl;
+
 	output_file.close();
 
-	string oldname = path + "saves/" + name + "_temp.txt";
-	string newname = path + "saves/" + name + ".txt";
+	string oldname = path + "temp_" + name;
+	string newname = path + name;
 	rename(oldname.c_str(), newname.c_str());
 }
 

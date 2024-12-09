@@ -86,10 +86,9 @@ public:
 	void clear_verify();
 	#endif /* MDEBUG */
 
-	void clean_inputs(int scope_id,
+	void clean_inputs(Scope* scope,
 					  int node_id);
-
-	void update_scope_ids(std::map<int, int>& dictionary);
+	void clean_inputs(Scope* scope);
 
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file,

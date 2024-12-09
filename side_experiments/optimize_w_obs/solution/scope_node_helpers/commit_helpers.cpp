@@ -17,9 +17,12 @@ void ScopeNode::commit_gather_activate(AbstractNode*& curr_node,
 									   bool& potential_is_branch) {
 	context.back().node_id = this->id;
 
-	this->scope->activate(problem,
-						  context,
-						  run_helper);
+	this->scope->commit_gather_activate(problem,
+										context,
+										run_helper,
+										node_count,
+										potential_node_context,
+										potential_is_branch);
 
 	curr_node = this->next_node;
 
@@ -38,9 +41,10 @@ void ScopeNode::commit_activate(AbstractNode*& curr_node,
 								PotentialCommit* potential_commit) {
 	context.back().node_id = this->id;
 
-	this->scope->activate(problem,
-						  context,
-						  run_helper);
+	this->scope->commit_activate(problem,
+								 context,
+								 run_helper,
+								 potential_commit);
 
 	curr_node = this->next_node;
 

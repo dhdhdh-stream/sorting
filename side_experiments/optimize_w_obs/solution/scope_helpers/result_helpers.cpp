@@ -57,7 +57,7 @@ void Scope::result_activate(Problem* problem,
 							RunHelper& run_helper) {
 	context.push_back(ContextLayer());
 
-	context.back().scope_id = this->id;
+	context.back().scope = this;
 
 	if (this->new_scope_experiment != NULL) {
 		this->new_scope_experiment->pre_activate(context,

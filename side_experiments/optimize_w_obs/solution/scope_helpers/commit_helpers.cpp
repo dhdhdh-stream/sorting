@@ -69,7 +69,7 @@ void Scope::commit_gather_activate(Problem* problem,
 								   bool& potential_is_branch) {
 	context.push_back(ContextLayer());
 
-	context.back().scope_id = this->id;
+	context.back().scope = this;
 
 	AbstractNode* curr_node = this->nodes[0];
 	while (true) {
@@ -139,7 +139,7 @@ void Scope::commit_activate(Problem* problem,
 							PotentialCommit* potential_commit) {
 	context.push_back(ContextLayer());
 
-	context.back().scope_id = this->id;
+	context.back().scope = this;
 
 	AbstractNode* curr_node = this->nodes[0];
 	while (true) {

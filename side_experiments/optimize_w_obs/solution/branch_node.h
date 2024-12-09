@@ -21,10 +21,10 @@ public:
 	 * - having dependencies on nodes makes it difficult to replace those nodes later
 	 *   - but even with world modeling, will still have dependencies against nodes for relative location
 	 */
-	std::vector<std::pair<std::pair<std::vector<int>,std::vector<int>>,int>> inputs;
+	std::vector<std::pair<std::pair<std::vector<Scope*>,std::vector<int>>,int>> inputs;
 	Network* network;
 
-	std::vector<std::vector<int>> input_scope_context_ids;
+	std::vector<std::vector<Scope*>> input_scope_contexts;
 	std::vector<std::vector<int>> input_node_context_ids;
 	/**
 	 * - 1.0 if branch, -1.0 if original
@@ -41,7 +41,8 @@ public:
 	#endif /* MDEBUG */
 
 	BranchNode();
-	BranchNode(BranchNode* original);
+	BranchNode(BranchNode* original,
+			   Solution* parent_solution);
 	~BranchNode();
 
 	void activate(AbstractNode*& curr_node,
@@ -91,13 +92,13 @@ public:
 	void clear_verify();
 	#endif /* MDEBUG */
 
-	void clean_inputs(int scope_id,
+	void clean_inputs(Scope* scope,
 					  int node_id);
-
-	void update_scope_ids(std::map<int, int>& dictionary);
+	void clean_inputs(Scope* scope);
 
 	void save(std::ofstream& output_file);
-	void load(std::ifstream& input_file);
+	void load(std::ifstream& input_file,
+			  Solution* parent_solution);
 	void link(Solution* parent_solution);
 
 	void save_for_display(std::ofstream& output_file);

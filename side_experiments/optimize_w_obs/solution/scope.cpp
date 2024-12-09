@@ -35,7 +35,7 @@ void Scope::clear_verify() {
 }
 #endif /* MDEBUG */
 
-void Scope::clean_inputs(int scope_id,
+void Scope::clean_inputs(Scope* scope,
 						 int node_id) {
 	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
 			it != this->nodes.end(); it++) {
@@ -43,14 +43,14 @@ void Scope::clean_inputs(int scope_id,
 		case NODE_TYPE_ACTION:
 			{
 				ActionNode* action_node = (ActionNode*)it->second;
-				action_node->clean_inputs(scope_id,
+				action_node->clean_inputs(scope,
 										  node_id);
 			}
 			break;
 		case NODE_TYPE_BRANCH:
 			{
 				BranchNode* branch_node = (BranchNode*)it->second;
-				branch_node->clean_inputs(scope_id,
+				branch_node->clean_inputs(scope,
 										  node_id);
 			}
 			break;
@@ -58,20 +58,20 @@ void Scope::clean_inputs(int scope_id,
 	}
 }
 
-void Scope::update_scope_ids(map<int, int>& dictionary) {
+void Scope::clean_inputs(Scope* scope) {
 	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
 			it != this->nodes.end(); it++) {
 		switch (it->second->type) {
 		case NODE_TYPE_ACTION:
 			{
 				ActionNode* action_node = (ActionNode*)it->second;
-				action_node->update_scope_ids(dictionary);
+				action_node->clean_inputs(scope);
 			}
 			break;
 		case NODE_TYPE_BRANCH:
 			{
 				BranchNode* branch_node = (BranchNode*)it->second;
-				branch_node->update_scope_ids(dictionary);
+				branch_node->clean_inputs(scope);
 			}
 			break;
 		}
@@ -137,7 +137,8 @@ void Scope::load(ifstream& input_file,
 				BranchNode* branch_node = new BranchNode();
 				branch_node->parent = this;
 				branch_node->id = id;
-				branch_node->load(input_file);
+				branch_node->load(input_file,
+								  parent_solution);
 				this->nodes[branch_node->id] = branch_node;
 			}
 			break;
@@ -190,7 +191,8 @@ void Scope::copy_from(Scope* original,
 		case NODE_TYPE_BRANCH:
 			{
 				BranchNode* original_branch_node = (BranchNode*)it->second;
-				BranchNode* new_branch_node = new BranchNode(original_branch_node);
+				BranchNode* new_branch_node = new BranchNode(original_branch_node,
+															 parent_solution);
 				new_branch_node->parent = this;
 				new_branch_node->id = it->first;
 				this->nodes[it->first] = new_branch_node;

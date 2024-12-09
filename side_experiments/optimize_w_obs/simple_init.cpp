@@ -6,6 +6,7 @@
 #include <random>
 
 #include "globals.h"
+#include "minesweeper.h"
 #include "solution.h"
 
 using namespace std;
@@ -20,6 +21,13 @@ Solution* solution;
 int run_index;
 
 int main(int argc, char* argv[]) {
+	string filename;
+	if (argc > 1) {
+		filename = argv[1];
+	} else {
+		filename = "main.txt";
+	}
+
 	cout << "Starting..." << endl;
 
 	seed = (unsigned)time(NULL);
@@ -27,16 +35,19 @@ int main(int argc, char* argv[]) {
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
 
+	problem_type = new TypeMinesweeper();
+
 	solution = new Solution();
 	solution->init();
 
-	solution->save("", "main");
+	solution->save("saves/", filename);
 
 	ofstream display_file;
 	display_file.open("../display.txt");
 	solution->save_for_display(display_file);
 	display_file.close();
 
+	delete problem_type;
 	delete solution;
 
 	cout << "Done" << endl;

@@ -33,7 +33,12 @@ int main(int argc, char* argv[]) {
 	problem_type = new TypeMinesweeper();
 
 	solution = new Solution();
-	solution->load("", "main");
+	if (argc > 1) {
+		string filename = argv[1];
+		solution->load("saves/", filename);
+	} else {
+		solution->load("saves/", "main.txt");
+	}
 
 	{
 		Problem* problem = problem_type->get_problem();

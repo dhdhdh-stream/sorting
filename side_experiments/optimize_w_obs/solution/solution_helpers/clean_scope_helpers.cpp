@@ -48,7 +48,7 @@ void clean_scope(Scope* scope,
 			if (needed_it == next_node_ids.end()) {
 				removed_node = true;
 
-				parent_solution->clean_inputs(scope->id,
+				parent_solution->clean_inputs(scope,
 											  it->first);
 
 				delete it->second;

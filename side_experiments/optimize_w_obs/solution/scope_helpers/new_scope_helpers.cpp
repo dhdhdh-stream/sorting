@@ -62,7 +62,7 @@ void Scope::new_scope_activate(
 		ScopeHistory* scope_history) {
 	context.push_back(ContextLayer());
 
-	context.back().scope_id = -1;
+	context.back().scope = this;
 
 	AbstractNode* curr_node = this->nodes[0];
 	while (true) {
@@ -135,7 +135,7 @@ void Scope::new_scope_capture_verify_activate(
 		ScopeHistory* scope_history) {
 	context.push_back(ContextLayer());
 
-	context.back().scope_id = -1;
+	context.back().scope = this;
 
 	AbstractNode* curr_node = this->nodes[0];
 	while (true) {

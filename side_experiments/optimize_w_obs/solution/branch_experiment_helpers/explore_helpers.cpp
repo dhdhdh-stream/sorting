@@ -15,9 +15,9 @@
 using namespace std;
 
 #if defined(MDEBUG) && MDEBUG
-const int EXPLORE_ITERS = 5;
+const int BRANCH_EXPERIMENT_EXPLORE_ITERS = 5;
 #else
-const int EXPLORE_ITERS = 500;
+const int BRANCH_EXPERIMENT_EXPLORE_ITERS = 500;
 #endif /* MDEBUG */
 
 bool BranchExperiment::explore_activate(
@@ -180,7 +180,7 @@ void BranchExperiment::explore_backprop(
 				this->curr_scopes.clear();
 			}
 
-			if (this->state_iter == EXPLORE_ITERS-1
+			if (this->state_iter == BRANCH_EXPERIMENT_EXPLORE_ITERS-1
 					&& this->best_surprise > 0.0) {
 				select = true;
 			}
@@ -285,7 +285,7 @@ void BranchExperiment::explore_backprop(
 			this->state_iter = 0;
 		} else {
 			this->state_iter++;
-			if (this->state_iter >= EXPLORE_ITERS) {
+			if (this->state_iter >= BRANCH_EXPERIMENT_EXPLORE_ITERS) {
 				this->result = EXPERIMENT_RESULT_FAIL;
 			}
 		}

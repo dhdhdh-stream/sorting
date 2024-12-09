@@ -195,8 +195,8 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 							if (it == node_mappings.end()) {
 								new_branch_node->network->remove_input(i_index);
 							} else {
-								pair<pair<vector<int>,vector<int>>,int> new_input = original_branch_node->inputs[i_index];
-								new_input.first.first[0] = -1;
+								pair<pair<vector<Scope*>,vector<int>>,int> new_input = original_branch_node->inputs[i_index];
+								new_input.first.first[0] = this->new_scope;
 								new_input.first.second[0] = it->second->id;
 								new_branch_node->inputs.insert(new_branch_node->inputs.begin(), new_input);
 							}

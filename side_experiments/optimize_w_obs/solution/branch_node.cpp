@@ -23,10 +23,17 @@ BranchNode::BranchNode() {
 	#endif /* MDEBUG */
 }
 
-BranchNode::BranchNode(BranchNode* original) {
+BranchNode::BranchNode(BranchNode* original,
+					   Solution* parent_solution) {
 	this->type = NODE_TYPE_BRANCH;
 
 	this->inputs = original->inputs;
+	for (int i_index = 0; i_index < (int)this->inputs.size(); i_index++) {
+		for (int l_index = 0; l_index < (int)this->inputs[i_index].first.first.size(); l_index++) {
+			this->inputs[i_index].first.first[l_index] =
+				parent_solution->scopes[this->inputs[i_index].first.first[l_index]->id];
+		}
+	}
 	this->network = new Network(original->network);
 
 	this->original_next_node_id = original->original_next_node_id;
@@ -60,12 +67,12 @@ void BranchNode::clear_verify() {
 }
 #endif /* MDEBUG */
 
-void BranchNode::clean_inputs(int scope_id,
+void BranchNode::clean_inputs(Scope* scope,
 							  int node_id) {
 	for (int i_index = (int)this->inputs.size()-1; i_index >= 0; i_index--) {
 		bool is_match = false;
 		for (int l_index = 0; l_index < (int)this->inputs[i_index].first.first.size(); l_index++) {
-			if (this->inputs[i_index].first.first[l_index] == scope_id
+			if (this->inputs[i_index].first.first[l_index] == scope
 					&& this->inputs[i_index].first.second[l_index] == node_id) {
 				is_match = true;
 				break;
@@ -78,10 +85,10 @@ void BranchNode::clean_inputs(int scope_id,
 		}
 	}
 
-	for (int i_index = (int)this->input_scope_context_ids.size()-1; i_index >= 0; i_index--) {
+	for (int i_index = (int)this->input_scope_contexts.size()-1; i_index >= 0; i_index--) {
 		bool is_match = false;
-		for (int l_index = 0; l_index < (int)this->input_scope_context_ids[i_index].size(); l_index++) {
-			if (this->input_scope_context_ids[i_index][l_index] == scope_id
+		for (int l_index = 0; l_index < (int)this->input_scope_contexts[i_index].size(); l_index++) {
+			if (this->input_scope_contexts[i_index][l_index] == scope
 					&& this->input_node_context_ids[i_index][l_index] == node_id) {
 				is_match = true;
 				break;
@@ -89,24 +96,40 @@ void BranchNode::clean_inputs(int scope_id,
 		}
 
 		if (is_match) {
-			this->input_scope_context_ids.erase(this->input_scope_context_ids.begin() + i_index);
+			this->input_scope_contexts.erase(this->input_scope_contexts.begin() + i_index);
 			this->input_node_context_ids.erase(this->input_node_context_ids.begin() + i_index);
 		}
 	}
 }
 
-void BranchNode::update_scope_ids(map<int, int>& dictionary) {
-	for (int i_index = 0; i_index < (int)this->inputs.size(); i_index++) {
+void BranchNode::clean_inputs(Scope* scope) {
+	for (int i_index = (int)this->inputs.size()-1; i_index >= 0; i_index--) {
+		bool is_match = false;
 		for (int l_index = 0; l_index < (int)this->inputs[i_index].first.first.size(); l_index++) {
-			this->inputs[i_index].first.first[l_index] =
-				dictionary[this->inputs[i_index].first.first[l_index]];
+			if (this->inputs[i_index].first.first[l_index] == scope) {
+				is_match = true;
+				break;
+			}
+		}
+
+		if (is_match) {
+			this->inputs.erase(this->inputs.begin() + i_index);
+			this->network->remove_input(i_index);
 		}
 	}
 
-	for (int i_index = 0; i_index < (int)this->input_scope_context_ids.size(); i_index++) {
-		for (int l_index = 0; l_index < (int)this->input_scope_context_ids[i_index].size(); l_index++) {
-			this->input_scope_context_ids[i_index][l_index] =
-				dictionary[this->input_scope_context_ids[i_index][l_index]];
+	for (int i_index = (int)this->input_scope_contexts.size()-1; i_index >= 0; i_index--) {
+		bool is_match = false;
+		for (int l_index = 0; l_index < (int)this->input_scope_contexts[i_index].size(); l_index++) {
+			if (this->input_scope_contexts[i_index][l_index] == scope) {
+				is_match = true;
+				break;
+			}
+		}
+
+		if (is_match) {
+			this->input_scope_contexts.erase(this->input_scope_contexts.begin() + i_index);
+			this->input_node_context_ids.erase(this->input_node_context_ids.begin() + i_index);
 		}
 	}
 }
@@ -116,7 +139,7 @@ void BranchNode::save(ofstream& output_file) {
 	for (int i_index = 0; i_index < (int)this->inputs.size(); i_index++) {
 		output_file << this->inputs[i_index].first.first.size() << endl;
 		for (int l_index = 0; l_index < (int)this->inputs[i_index].first.first.size(); l_index++) {
-			output_file << this->inputs[i_index].first.first[l_index] << endl;
+			output_file << this->inputs[i_index].first.first[l_index]->id << endl;
 			output_file << this->inputs[i_index].first.second[l_index] << endl;
 		}
 
@@ -131,13 +154,14 @@ void BranchNode::save(ofstream& output_file) {
 	output_file << this->average_instances_per_run << endl;
 }
 
-void BranchNode::load(ifstream& input_file) {
+void BranchNode::load(ifstream& input_file,
+					  Solution* parent_solution) {
 	{
 		string num_inputs_line;
 		getline(input_file, num_inputs_line);
 		int num_inputs = stoi(num_inputs_line);
 		for (int i_index = 0; i_index < num_inputs; i_index++) {
-			vector<int> scope_ids;
+			vector<Scope*> scope_ids;
 			vector<int> node_ids;
 
 			string num_layers_line;
@@ -146,7 +170,7 @@ void BranchNode::load(ifstream& input_file) {
 			for (int l_index = 0; l_index < num_layers; l_index++) {
 				string scope_id_line;
 				getline(input_file, scope_id_line);
-				scope_ids.push_back(stoi(scope_id_line));
+				scope_ids.push_back(parent_solution->scopes[stoi(scope_id_line)]);
 
 				string node_id_line;
 				getline(input_file, node_id_line);
@@ -178,7 +202,7 @@ void BranchNode::load(ifstream& input_file) {
 
 void BranchNode::link(Solution* parent_solution) {
 	for (int i_index = 0; i_index < (int)this->inputs.size(); i_index++) {
-		Scope* scope = parent_solution->scopes[this->inputs[i_index].first.first.back()];
+		Scope* scope = this->inputs[i_index].first.first.back();
 		AbstractNode* node = scope->nodes[this->inputs[i_index].first.second.back()];
 		switch (node->type) {
 		case NODE_TYPE_ACTION:
@@ -186,8 +210,8 @@ void BranchNode::link(Solution* parent_solution) {
 				ActionNode* input_action_node = (ActionNode*)node;
 
 				bool is_existing = false;
-				for (int ii_index = 0; ii_index < (int)input_action_node->input_scope_context_ids.size(); ii_index++) {
-					if (input_action_node->input_scope_context_ids[ii_index] == this->inputs[i_index].first.first
+				for (int ii_index = 0; ii_index < (int)input_action_node->input_scope_contexts.size(); ii_index++) {
+					if (input_action_node->input_scope_contexts[ii_index] == this->inputs[i_index].first.first
 							&& input_action_node->input_node_context_ids[ii_index] == this->inputs[i_index].first.second
 							&& input_action_node->input_obs_indexes[ii_index] == this->inputs[i_index].second) {
 						is_existing = true;
@@ -195,7 +219,7 @@ void BranchNode::link(Solution* parent_solution) {
 					}
 				}
 				if (!is_existing) {
-					input_action_node->input_scope_context_ids.push_back(this->inputs[i_index].first.first);
+					input_action_node->input_scope_contexts.push_back(this->inputs[i_index].first.first);
 					input_action_node->input_node_context_ids.push_back(this->inputs[i_index].first.second);
 					input_action_node->input_obs_indexes.push_back(this->inputs[i_index].second);
 				}
@@ -206,15 +230,15 @@ void BranchNode::link(Solution* parent_solution) {
 				BranchNode* input_branch_node = (BranchNode*)node;
 
 				bool is_existing = false;
-				for (int ii_index = 0; ii_index < (int)input_branch_node->input_scope_context_ids.size(); ii_index++) {
-					if (input_branch_node->input_scope_context_ids[ii_index] == this->inputs[i_index].first.first
+				for (int ii_index = 0; ii_index < (int)input_branch_node->input_scope_contexts.size(); ii_index++) {
+					if (input_branch_node->input_scope_contexts[ii_index] == this->inputs[i_index].first.first
 							&& input_branch_node->input_node_context_ids[ii_index] == this->inputs[i_index].first.second) {
 						is_existing = true;
 						break;
 					}
 				}
 				if (!is_existing) {
-					input_branch_node->input_scope_context_ids.push_back(this->inputs[i_index].first.first);
+					input_branch_node->input_scope_contexts.push_back(this->inputs[i_index].first.first);
 					input_branch_node->input_node_context_ids.push_back(this->inputs[i_index].first.second);
 				}
 			}

@@ -41,6 +41,8 @@ public:
 
 	std::vector<Scope*> scopes;
 
+	int num_existing_scopes;
+
 	#if defined(MDEBUG) && MDEBUG
 	std::vector<Problem*> verify_problems;
 	std::vector<unsigned long> verify_seeds;
@@ -58,11 +60,11 @@ public:
 	void clear_verify();
 	#endif /* MDEBUG */
 
-	void clean_inputs(int scope_id,
+	void clean_inputs(Scope* scope,
 					  int node_id);
+	void clean_scopes();
 
 	void check_commit();
-	void check_reset();
 
 	void save(std::string path,
 			  std::string name);

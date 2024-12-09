@@ -55,7 +55,7 @@ void Scope::measure_activate(Problem* problem,
 							 RunHelper& run_helper) {
 	context.push_back(ContextLayer());
 
-	context.back().scope_id = this->id;
+	context.back().scope = this;
 
 	AbstractNode* curr_node = this->nodes[0];
 	while (true) {

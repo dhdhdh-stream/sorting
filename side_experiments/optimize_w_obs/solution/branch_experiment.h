@@ -61,7 +61,7 @@ public:
 	BranchNode* branch_node;
 	ActionNode* ending_node;
 
-	std::vector<std::pair<std::pair<std::vector<int>,std::vector<int>>,int>> inputs;
+	std::vector<std::pair<std::pair<std::vector<Scope*>,std::vector<int>>,int>> inputs;
 	Network* network;
 
 	double combined_score;

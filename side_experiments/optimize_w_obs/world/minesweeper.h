@@ -12,6 +12,10 @@ const int MINESWEEPER_ACTION_LEFT = 3;
 const int MINESWEEPER_ACTION_CLICK = 4;
 const int MINESWEEPER_ACTION_FLAG = 5;
 const int MINESWEEPER_ACTION_DOUBLECLICK = 6;
+/**
+ * - for visual problems, stick to moving focus and looking one square at a time
+ *   - don't, e.g., use convolutional NN as far too expensive
+ */
 
 class Minesweeper : public Problem {
 public:

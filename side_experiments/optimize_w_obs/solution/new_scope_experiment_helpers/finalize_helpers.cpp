@@ -49,8 +49,11 @@ void NewScopeExperiment::finalize(Solution* duplicate) {
 				{
 					ActionNode* action_node = (ActionNode*)it->second;
 
-					for (int i_index = 0; i_index < (int)action_node->input_scope_context_ids.size(); i_index++) {
-						action_node->input_scope_context_ids[i_index][0] = this->new_scope->id;
+					for (int i_index = 0; i_index < (int)action_node->input_scope_contexts.size(); i_index++) {
+						for (int l_index = 1; l_index < (int)action_node->input_scope_contexts[i_index].size(); l_index++) {
+							action_node->input_scope_contexts[i_index][l_index] =
+								duplicate->scopes[action_node->input_scope_contexts[i_index][l_index]->id];
+						}
 					}
 				}
 				break;
@@ -65,9 +68,14 @@ void NewScopeExperiment::finalize(Solution* duplicate) {
 					BranchNode* branch_node = (BranchNode*)it->second;
 
 					for (int i_index = 0; i_index < (int)branch_node->inputs.size(); i_index++) {
-						branch_node->inputs[i_index].first.first[0] = this->new_scope->id;
+						for (int l_index = 1; l_index < (int)branch_node->inputs[i_index].first.first.size(); l_index++) {
+							branch_node->inputs[i_index].first.first[l_index] =
+								duplicate->scopes[branch_node->inputs[i_index].first.first[l_index]->id];
+						}
+					}
 
-						Scope* scope = duplicate->scopes[branch_node->inputs[i_index].first.first.back()];
+					for (int i_index = 0; i_index < (int)branch_node->inputs.size(); i_index++) {
+						Scope* scope = branch_node->inputs[i_index].first.first.back();
 						AbstractNode* node = scope->nodes[branch_node->inputs[i_index].first.second.back()];
 						switch (node->type) {
 						case NODE_TYPE_ACTION:
@@ -75,8 +83,8 @@ void NewScopeExperiment::finalize(Solution* duplicate) {
 								ActionNode* input_action_node = (ActionNode*)node;
 
 								bool is_existing = false;
-								for (int ii_index = 0; ii_index < (int)input_action_node->input_scope_context_ids.size(); ii_index++) {
-									if (input_action_node->input_scope_context_ids[ii_index] == branch_node->inputs[i_index].first.first
+								for (int ii_index = 0; ii_index < (int)input_action_node->input_scope_contexts.size(); ii_index++) {
+									if (input_action_node->input_scope_contexts[ii_index] == branch_node->inputs[i_index].first.first
 											&& input_action_node->input_node_context_ids[ii_index] == branch_node->inputs[i_index].first.second
 											&& input_action_node->input_obs_indexes[ii_index] == branch_node->inputs[i_index].second) {
 										is_existing = true;
@@ -84,7 +92,7 @@ void NewScopeExperiment::finalize(Solution* duplicate) {
 									}
 								}
 								if (!is_existing) {
-									input_action_node->input_scope_context_ids.push_back(branch_node->inputs[i_index].first.first);
+									input_action_node->input_scope_contexts.push_back(branch_node->inputs[i_index].first.first);
 									input_action_node->input_node_context_ids.push_back(branch_node->inputs[i_index].first.second);
 									input_action_node->input_obs_indexes.push_back(branch_node->inputs[i_index].second);
 								}
@@ -95,15 +103,15 @@ void NewScopeExperiment::finalize(Solution* duplicate) {
 								BranchNode* input_branch_node = (BranchNode*)node;
 
 								bool is_existing = false;
-								for (int ii_index = 0; ii_index < (int)input_branch_node->input_scope_context_ids.size(); ii_index++) {
-									if (input_branch_node->input_scope_context_ids[ii_index] == branch_node->inputs[i_index].first.first
+								for (int ii_index = 0; ii_index < (int)input_branch_node->input_scope_contexts.size(); ii_index++) {
+									if (input_branch_node->input_scope_contexts[ii_index] == branch_node->inputs[i_index].first.first
 											&& input_branch_node->input_node_context_ids[ii_index] == branch_node->inputs[i_index].first.second) {
 										is_existing = true;
 										break;
 									}
 								}
 								if (!is_existing) {
-									input_branch_node->input_scope_context_ids.push_back(branch_node->inputs[i_index].first.first);
+									input_branch_node->input_scope_contexts.push_back(branch_node->inputs[i_index].first.first);
 									input_branch_node->input_node_context_ids.push_back(branch_node->inputs[i_index].first.second);
 								}
 							}
@@ -111,8 +119,11 @@ void NewScopeExperiment::finalize(Solution* duplicate) {
 						}
 					}
 
-					for (int i_index = 0; i_index < (int)branch_node->input_scope_context_ids.size(); i_index++) {
-						branch_node->input_scope_context_ids[i_index][0] = this->new_scope->id;
+					for (int i_index = 0; i_index < (int)branch_node->input_scope_contexts.size(); i_index++) {
+						for (int l_index = 1; l_index < (int)branch_node->input_scope_contexts[i_index].size(); l_index++) {
+							branch_node->input_scope_contexts[i_index][l_index] =
+								duplicate->scopes[branch_node->input_scope_contexts[i_index][l_index]->id];
+						}
 					}
 
 					#if defined(MDEBUG) && MDEBUG
