@@ -48,6 +48,10 @@ task_tree_file.close()
 tasks = deque()
 task_tree.init_and_add_tasks(tasks)
 
+task_tree_file = open('saves/task_tree.txt', 'w')
+task_tree.save(task_tree_file)
+task_tree_file.close()
+
 task_threads = []
 while True:
 	for t_index in range(len(task_threads)-1, -1, -1):

@@ -146,13 +146,14 @@ double Minesweeper::get_observation_helper(int x, int y) {
 vector<double> Minesweeper::get_observations() {
 	vector<double> obs;
 
-	for (int x_index = -FIELD_OF_VIEW; x_index <= FIELD_OF_VIEW; x_index++) {
-		for (int y_index = -FIELD_OF_VIEW; y_index <= FIELD_OF_VIEW; y_index++) {
-			obs.push_back(get_observation_helper(
-				this->current_x + x_index,
-				this->current_y + y_index));
-		}
-	}
+	// for (int x_index = -FIELD_OF_VIEW; x_index <= FIELD_OF_VIEW; x_index++) {
+	// 	for (int y_index = -FIELD_OF_VIEW; y_index <= FIELD_OF_VIEW; y_index++) {
+	// 		obs.push_back(get_observation_helper(
+	// 			this->current_x + x_index,
+	// 			this->current_y + y_index));
+	// 	}
+	// }
+	obs.push_back(get_observation_helper(this->current_x, this->current_y));
 
 	return obs;
 }
@@ -194,26 +195,38 @@ void Minesweeper::perform_action(Action action) {
 	switch (action.move) {
 	case MINESWEEPER_ACTION_UP:
 		this->current_y++;
-		if (this->current_y > HEIGHT-1) {
-			this->current_y = HEIGHT-1;
+		// if (this->current_y > HEIGHT-1) {
+		// 	this->current_y = HEIGHT-1;
+		// }
+		if (this->current_y > HEIGHT) {
+			this->current_y = HEIGHT;
 		}
 		break;
 	case MINESWEEPER_ACTION_RIGHT:
 		this->current_x++;
-		if (this->current_x > WIDTH-1) {
-			this->current_x = WIDTH-1;
+		// if (this->current_x > WIDTH-1) {
+		// 	this->current_x = WIDTH-1;
+		// }
+		if (this->current_x > WIDTH) {
+			this->current_x = WIDTH;
 		}
 		break;
 	case MINESWEEPER_ACTION_DOWN:
 		this->current_y--;
-		if (this->current_y < 0) {
-			this->current_y = 0;
+		// if (this->current_y < 0) {
+		// 	this->current_y = 0;
+		// }
+		if (this->current_y < -1) {
+			this->current_y = -1;
 		}
 		break;
 	case MINESWEEPER_ACTION_LEFT:
 		this->current_x--;
-		if (this->current_x < 0) {
-			this->current_x = 0;
+		// if (this->current_x < 0) {
+		// 	this->current_x = 0;
+		// }
+		if (this->current_x < -1) {
+			this->current_x = -1;
 		}
 		break;
 	case MINESWEEPER_ACTION_CLICK:
@@ -453,7 +466,8 @@ Problem* TypeMinesweeper::get_problem() {
 }
 
 int TypeMinesweeper::num_obs() {
-	return 25;
+	// return 25;
+	return 1;
 }
 
 int TypeMinesweeper::num_possible_actions() {
@@ -463,24 +477,4 @@ int TypeMinesweeper::num_possible_actions() {
 Action TypeMinesweeper::random_action() {
 	uniform_int_distribution<int> action_distribution(0, 6);
 	return Action(action_distribution(generator));
-}
-
-int TypeMinesweeper::num_dimensions() {
-	return 2;
-}
-
-vector<double> TypeMinesweeper::relative_to_world(
-		vector<double>& comparison,
-		vector<double>& relative_location) {
-	return vector<double>{
-		comparison[0] + relative_location[0],
-		comparison[1] + relative_location[1]};
-}
-
-vector<double> TypeMinesweeper::world_to_relative(
-		vector<double>& comparison,
-		vector<double>& world_location) {
-	return vector<double>{
-		world_location[0] - comparison[0],
-		world_location[1] - comparison[1]};
 }

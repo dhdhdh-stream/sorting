@@ -49,6 +49,7 @@ int main(int argc, char* argv[]) {
 		Solution* best_solution = NULL;
 
 		int improvement_iter = 0;
+		int consecutive_failures = 0;
 
 		while (true) {
 			Problem* problem = problem_type->get_problem();
@@ -88,12 +89,13 @@ int main(int argc, char* argv[]) {
 					target_val,
 					run_helper);
 				if (run_helper.experiment_histories.back()->experiment->result == EXPERIMENT_RESULT_FAIL) {
+					consecutive_failures++;
+
 					run_helper.experiment_histories.back()->experiment->finalize(NULL);
 					delete run_helper.experiment_histories.back()->experiment;
 				} else if (run_helper.experiment_histories.back()->experiment->result == EXPERIMENT_RESULT_SUCCESS) {
-					/**
-					 * - history->experiment_histories.size() == 1
-					 */
+					consecutive_failures = 0;
+
 					Solution* duplicate = new Solution(solution);
 
 					int last_updated_scope_id = run_helper.experiment_histories.back()->experiment->scope_context->id;
@@ -173,17 +175,25 @@ int main(int argc, char* argv[]) {
 
 			delete problem;
 
-			if (improvement_iter >= IMPROVEMENTS_PER_ITER) {
+			if (improvement_iter >= IMPROVEMENTS_PER_ITER
+					|| consecutive_failures >= CONSECUTIVE_FAILURE_LIMIT) {
 				break;
 			}
 		}
 
-		delete solution;
-		solution = best_solution;
+		if (improvement_iter >= IMPROVEMENTS_PER_ITER) {
+			delete solution;
+			solution = best_solution;
 
-		solution->check_commit();
+			// if (solution->timestamp % COMMIT_ITERS == 0
+			// 		&& solution->timestamp != EXPLORE_ITERS) {
+			// 	solution->commit();
+			// }
 
-		solution->save(path, filename);
+			solution->save(path, filename);
+		} else {
+			solution->commit();
+		}
 	}
 
 	delete problem_type;

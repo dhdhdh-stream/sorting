@@ -64,7 +64,7 @@ public:
 					  int node_id);
 	void clean_scopes();
 
-	void check_commit();
+	void commit();
 
 	void save(std::string path,
 			  std::string name);

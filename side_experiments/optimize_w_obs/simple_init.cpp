@@ -39,6 +39,7 @@ int main(int argc, char* argv[]) {
 
 	solution = new Solution();
 	solution->init();
+	solution->commit();
 
 	solution->save("saves/", filename);
 

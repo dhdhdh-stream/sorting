@@ -80,26 +80,21 @@ class TaskNode:
 						break
 
 				if all_children_done:
-					curr_time_stamp = int(time.time())
+					for m_index in range(0, MERGE_NUM_TRIES):
+						curr_time_stamp = int(time.time())
 
-					starting_filename = 't_' + str(curr_time_stamp) + '.txt'
+						output_filename = 't_' + str(curr_time_stamp) + '.txt'
 
-					combine_input = []
-					combine_input.append('./combine')
-					for c_index in range(BRANCH_FACTOR):
-						combine_input.append(self.children[c_index].result)
-					combine_input.append(starting_filename)
+						combine_input = []
+						combine_input.append('./combine')
+						for c_index in range(BRANCH_FACTOR):
+							combine_input.append(self.children[c_index].result)
+						combine_input.append(output_filename)
 
-					result = subprocess.run(combine_input, capture_output=True, text=True)
-					print(result.stdout)
+						result = subprocess.run(combine_input, capture_output=True, text=True)
+						print(result.stdout)
 
-					self.filenames[0] = starting_filename
-					for c_index in range(1, BRANCH_FACTOR):
-						filename = 't_' + str(curr_time_stamp + c_index) + '.txt'
-
-						shutil.copyfile('saves/' + starting_filename, 'saves/' + filename)
-
-						self.filenames[c_index] = filename
+						self.filenames[m_index] = output_filename
 
 			if self.filenames[0] != '':
 				for m_index in range(MERGE_NUM_TRIES):
