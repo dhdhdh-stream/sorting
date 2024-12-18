@@ -96,6 +96,8 @@ class TaskNode:
 
 						self.filenames[m_index] = output_filename
 
+						time.sleep(1)
+
 			if self.filenames[0] != '':
 				for m_index in range(MERGE_NUM_TRIES):
 					if self.statuses[m_index] == STATUS_NOT_ADDED:

@@ -36,6 +36,7 @@ class TaskThread:
 		rl, wl, xl = select.select([self.channel],[],[],0.0)
 		if len(rl) > 0:
 			message = self.channel.recv(1024)
+			print(self.worker[0])
 			print(message)
 
 		temp_client = paramiko.SSHClient()
