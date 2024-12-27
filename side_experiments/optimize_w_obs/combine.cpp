@@ -43,15 +43,15 @@ int main(int argc, char* argv[]) {
 
 	problem_type = new TypeMinesweeper();
 
-	Solution* combined_solution = new Solution();
-	combined_solution->init();
+	solution = new Solution();
+	solution->init();
 
 	for (int existing_index = 0; existing_index < BRANCH_FACTOR; existing_index++) {
 		Solution* existing_solution = new Solution();
 		existing_solution->load("saves/", child_files[existing_index]);
 
 		for (int scope_index = 1; scope_index < (int)existing_solution->scopes.size(); scope_index++) {
-			combined_solution->scopes.push_back(existing_solution->scopes[scope_index]);
+			solution->scopes.push_back(existing_solution->scopes[scope_index]);
 		}
 
 		existing_solution->scopes.erase(existing_solution->scopes.begin() + 1, existing_solution->scopes.end());
@@ -59,21 +59,21 @@ int main(int argc, char* argv[]) {
 		delete existing_solution;
 	}
 
-	for (int scope_index = 1; scope_index < (int)combined_solution->scopes.size(); scope_index++) {
-		combined_solution->scopes[scope_index]->id = scope_index;
+	for (int scope_index = 1; scope_index < (int)solution->scopes.size(); scope_index++) {
+		solution->scopes[scope_index]->id = scope_index;
 	}
 
-	for (int scope_index = 1; scope_index < (int)combined_solution->scopes.size(); scope_index++) {
-		combined_solution->scopes[0]->child_scopes.push_back(combined_solution->scopes[scope_index]);
+	for (int scope_index = 1; scope_index < (int)solution->scopes.size(); scope_index++) {
+		solution->scopes[0]->child_scopes.push_back(solution->scopes[scope_index]);
 	}
 
-	combined_solution->num_existing_scopes = (int)combined_solution->scopes.size() - 1;
+	solution->num_existing_scopes = (int)solution->scopes.size() - 1;
 
-	combined_solution->commit();
+	solution->commit();
 
-	combined_solution->save("saves/", output_file);
+	solution->save("saves/", output_file);
 
-	delete combined_solution;
+	delete solution;
 
 	delete problem_type;
 

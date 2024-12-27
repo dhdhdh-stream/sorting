@@ -177,24 +177,47 @@ int main(int argc, char* argv[]) {
 
 			delete problem;
 
-			if (improvement_iter >= IMPROVEMENTS_PER_ITER
-					|| consecutive_failures >= CONSECUTIVE_FAILURE_LIMIT) {
-				break;
+			if (solution->was_commit) {
+				if (improvement_iter >= COMMIT_IMPROVEMENTS_PER_ITER
+						|| consecutive_failures >= CONSECUTIVE_FAILURE_LIMIT) {
+					break;
+				}
+			} else {
+				if (improvement_iter >= IMPROVEMENTS_PER_ITER
+						|| consecutive_failures >= CONSECUTIVE_FAILURE_LIMIT) {
+					break;
+				}
 			}
 		}
 
-		if (improvement_iter >= IMPROVEMENTS_PER_ITER) {
-			delete solution;
-			solution = best_solution;
+		if (solution->was_commit) {
+			if (improvement_iter >= COMMIT_IMPROVEMENTS_PER_ITER) {
+				delete solution;
+				solution = best_solution;
 
-			if (solution->timestamp % COMMIT_ITERS == 0
-					&& solution->timestamp != EXPLORE_ITERS) {
+				if (solution->timestamp % COMMIT_ITERS == 0
+						&& solution->timestamp != EXPLORE_ITERS) {
+					solution->commit();
+				}
+
+				solution->save(path, filename);
+			} else {
 				solution->commit();
 			}
-
-			solution->save(path, filename);
 		} else {
-			solution->commit();
+			if (improvement_iter >= IMPROVEMENTS_PER_ITER) {
+				delete solution;
+				solution = best_solution;
+
+				if (solution->timestamp % COMMIT_ITERS == 0
+						&& solution->timestamp != EXPLORE_ITERS) {
+					solution->commit();
+				}
+
+				solution->save(path, filename);
+			} else {
+				solution->commit();
+			}
 		}
 	}
 
