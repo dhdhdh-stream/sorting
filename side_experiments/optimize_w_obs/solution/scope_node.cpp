@@ -13,6 +13,8 @@ ScopeNode::ScopeNode() {
 	this->type = NODE_TYPE_SCOPE;
 
 	this->average_instances_per_run = 0.0;
+
+	this->was_commit = false;
 }
 
 ScopeNode::ScopeNode(ScopeNode* original,
@@ -24,6 +26,8 @@ ScopeNode::ScopeNode(ScopeNode* original,
 	this->next_node_id = original->next_node_id;
 
 	this->average_instances_per_run = 0.0;
+
+	this->was_commit = false;
 }
 
 ScopeNode::~ScopeNode() {
@@ -38,6 +42,8 @@ void ScopeNode::save(ofstream& output_file) {
 	output_file << this->next_node_id << endl;
 
 	output_file << this->average_instances_per_run << endl;
+
+	output_file << this->was_commit << endl;
 }
 
 void ScopeNode::load(ifstream& input_file,
@@ -53,6 +59,10 @@ void ScopeNode::load(ifstream& input_file,
 	string average_instances_per_run_line;
 	getline(input_file, average_instances_per_run_line);
 	this->average_instances_per_run = stod(average_instances_per_run_line);
+
+	string was_commit_line;
+	getline(input_file, was_commit_line);
+	this->was_commit = stoi(was_commit_line);
 }
 
 void ScopeNode::link(Solution* parent_solution) {

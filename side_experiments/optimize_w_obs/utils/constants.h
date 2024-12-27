@@ -45,11 +45,11 @@ const int IMPROVEMENTS_PER_ITER = 10;
 
 const int CONSECUTIVE_FAILURE_LIMIT = 500;
 
-// #if defined(MDEBUG) && MDEBUG
-// const int COMMIT_ITERS = 4;
-// #else
-// const int COMMIT_ITERS = 30;
-// #endif /* MDEBUG */
+#if defined(MDEBUG) && MDEBUG
+const int COMMIT_ITERS = 4;
+#else
+const int COMMIT_ITERS = 20;
+#endif /* MDEBUG */
 
 #if defined(MDEBUG) && MDEBUG
 const int MAINTAIN_ITERS = 10;

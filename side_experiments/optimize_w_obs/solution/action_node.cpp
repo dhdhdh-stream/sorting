@@ -11,6 +11,8 @@ ActionNode::ActionNode() {
 	this->type = NODE_TYPE_ACTION;
 
 	this->average_instances_per_run = 0.0;
+
+	this->was_commit = false;
 }
 
 ActionNode::ActionNode(ActionNode* original) {
@@ -21,6 +23,8 @@ ActionNode::ActionNode(ActionNode* original) {
 	this->next_node_id = original->next_node_id;
 
 	this->average_instances_per_run = 0.0;
+
+	this->was_commit = false;
 }
 
 ActionNode::~ActionNode() {
@@ -73,6 +77,8 @@ void ActionNode::save(ofstream& output_file) {
 	output_file << this->next_node_id << endl;
 
 	output_file << this->average_instances_per_run << endl;
+
+	output_file << this->was_commit << endl;
 }
 
 void ActionNode::load(ifstream& input_file) {
@@ -85,6 +91,10 @@ void ActionNode::load(ifstream& input_file) {
 	string average_instances_per_run_line;
 	getline(input_file, average_instances_per_run_line);
 	this->average_instances_per_run = stod(average_instances_per_run_line);
+
+	string was_commit_line;
+	getline(input_file, was_commit_line);
+	this->was_commit = stoi(was_commit_line);
 }
 
 void ActionNode::link(Solution* parent_solution) {

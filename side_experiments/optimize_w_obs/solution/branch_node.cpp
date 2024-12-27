@@ -18,6 +18,8 @@ BranchNode::BranchNode() {
 
 	this->average_instances_per_run = 0.0;
 
+	this->was_commit = false;
+
 	#if defined(MDEBUG) && MDEBUG
 	this->verify_key = NULL;
 	#endif /* MDEBUG */
@@ -40,6 +42,8 @@ BranchNode::BranchNode(BranchNode* original,
 	this->branch_next_node_id = original->branch_next_node_id;
 
 	this->average_instances_per_run = 0.0;
+
+	this->was_commit = false;
 
 	#if defined(MDEBUG) && MDEBUG
 	this->verify_key = NULL;
@@ -152,6 +156,8 @@ void BranchNode::save(ofstream& output_file) {
 	output_file << this->branch_next_node_id << endl;
 
 	output_file << this->average_instances_per_run << endl;
+
+	output_file << this->was_commit << endl;
 }
 
 void BranchNode::load(ifstream& input_file,
@@ -198,6 +204,10 @@ void BranchNode::load(ifstream& input_file,
 	string average_instances_per_run_line;
 	getline(input_file, average_instances_per_run_line);
 	this->average_instances_per_run = stod(average_instances_per_run_line);
+
+	string was_commit_line;
+	getline(input_file, was_commit_line);
+	this->was_commit = stoi(was_commit_line);
 }
 
 void BranchNode::link(Solution* parent_solution) {

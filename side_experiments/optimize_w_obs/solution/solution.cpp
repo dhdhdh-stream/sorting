@@ -46,6 +46,8 @@ Solution::Solution(Solution* original) {
 	}
 
 	this->num_existing_scopes = original->num_existing_scopes;
+
+	this->was_commit = false;
 }
 
 Solution::~Solution() {
@@ -86,6 +88,8 @@ void Solution::init() {
 	new_scope->nodes[starting_noop_node->id] = starting_noop_node;
 
 	this->num_existing_scopes = 0;
+
+	this->was_commit = false;
 }
 
 void Solution::load(string path,
@@ -139,6 +143,10 @@ void Solution::load(string path,
 	string num_existing_scopes_line;
 	getline(input_file, num_existing_scopes_line);
 	this->num_existing_scopes = stoi(num_existing_scopes_line);
+
+	string was_commit_line;
+	getline(input_file, was_commit_line);
+	this->was_commit = stoi(was_commit_line);
 
 	input_file.close();
 }
@@ -366,6 +374,8 @@ void Solution::save(string path,
 	}
 
 	output_file << this->num_existing_scopes << endl;
+
+	output_file << this->was_commit << endl;
 
 	output_file.close();
 

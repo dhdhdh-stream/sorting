@@ -44,6 +44,7 @@ int main(int argc, char* argv[]) {
 	} else {
 		filename = "main.txt";
 		solution->init();
+		solution->commit();
 		solution->save("saves/", filename);
 	}
 
@@ -99,14 +100,6 @@ int main(int argc, char* argv[]) {
 				double target_val = problem->score_result();
 				target_val -= 0.05 * run_helper.num_actions * solution->curr_time_penalty;
 				target_val -= run_helper.num_analyze * solution->curr_time_penalty;
-
-				for (int e_index = 0; e_index < (int)run_helper.experiments_seen_order.size(); e_index++) {
-					AbstractExperiment* experiment = run_helper.experiments_seen_order[e_index];
-					experiment->average_remaining_experiments_from_start =
-						0.9 * experiment->average_remaining_experiments_from_start
-						+ 0.1 * ((int)run_helper.experiments_seen_order.size()-1 - e_index
-							+ run_helper.experiment_histories[0]->experiment->average_remaining_experiments_from_start);
-				}
 
 				run_helper.experiment_histories.back()->experiment->backprop(
 					target_val,
@@ -244,10 +237,10 @@ int main(int argc, char* argv[]) {
 			delete solution;
 			solution = best_solution;
 
-			// if (solution->timestamp % COMMIT_ITERS == 0
-			// 		&& solution->timestamp != EXPLORE_ITERS) {
-			// 	solution->commit();
-			// }
+			if (solution->timestamp % COMMIT_ITERS == 0
+					&& solution->timestamp != EXPLORE_ITERS) {
+				solution->commit();
+			}
 
 			solution->save("saves/", filename);
 

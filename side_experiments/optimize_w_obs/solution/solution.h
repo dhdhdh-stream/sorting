@@ -43,6 +43,8 @@ public:
 
 	int num_existing_scopes;
 
+	bool was_commit;
+
 	#if defined(MDEBUG) && MDEBUG
 	std::vector<Problem*> verify_problems;
 	std::vector<unsigned long> verify_seeds;

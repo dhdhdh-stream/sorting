@@ -33,12 +33,6 @@ class TaskThread:
 		self.curr_iter = 0
 
 	def check_status(self):
-		rl, wl, xl = select.select([self.channel],[],[],0.0)
-		if len(rl) > 0:
-			message = self.channel.recv(1024)
-			print(self.worker[0])
-			print(message)
-
 		temp_client = paramiko.SSHClient()
 		temp_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 		temp_client.connect(self.worker[1],
@@ -64,6 +58,16 @@ class TaskThread:
 				temp_client_sftp.close()
 
 		temp_client.close()
+
+		rl, wl, xl = select.select([self.channel],[],[],0.0)
+		if len(rl) > 0:
+			message = self.channel.recv(1024)
+			print(self.worker[0])
+			print(message)
+
+			if len(message) == 0 and self.curr_iter != EXPLORE_ITERS:
+				print('worker ' + self.worker[0] + ' ' + self.tasknode.filenames[self.index] + ' failed')
+				exit(1)
 
 	def close(self):
 		self.client.close()

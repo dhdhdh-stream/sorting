@@ -3,8 +3,10 @@
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
+#include "globals.h"
 #include "scope.h"
 #include "scope_node.h"
+#include "solution.h"
 
 using namespace std;
 
@@ -41,6 +43,8 @@ void PotentialCommit::activate(AbstractNode*& curr_node,
 void PotentialCommit::finalize() {
 	Scope* parent_scope = this->node_context->parent;
 
+	this->node_context->was_commit = true;
+
 	for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {
 		if (this->step_types[s_index] == STEP_TYPE_ACTION) {
 			this->actions[s_index]->parent = parent_scope;
@@ -49,6 +53,8 @@ void PotentialCommit::finalize() {
 			parent_scope->nodes[this->actions[s_index]->id] = this->actions[s_index];
 
 			this->actions[s_index]->average_instances_per_run = this->node_context->average_instances_per_run;
+
+			this->actions[s_index]->was_commit = true;
 		} else {
 			this->scopes[s_index]->parent = parent_scope;
 			this->scopes[s_index]->id = parent_scope->node_counter;
@@ -56,8 +62,12 @@ void PotentialCommit::finalize() {
 			parent_scope->nodes[this->scopes[s_index]->id] = this->scopes[s_index];
 
 			this->scopes[s_index]->average_instances_per_run = this->node_context->average_instances_per_run;
+
+			this->scopes[s_index]->was_commit = true;
 		}
 	}
+
+	solution->was_commit = true;
 
 	int exit_node_id;
 	AbstractNode* exit_node;

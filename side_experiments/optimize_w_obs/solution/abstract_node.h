@@ -23,6 +23,8 @@ public:
 
 	double average_instances_per_run;
 
+	bool was_commit;
+
 	virtual ~AbstractNode() {};
 
 	virtual void save(std::ofstream& output_file) = 0;
