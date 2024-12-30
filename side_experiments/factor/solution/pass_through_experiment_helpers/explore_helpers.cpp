@@ -59,6 +59,12 @@ void PassThroughExperiment::explore_activate(
 				}
 			}
 			break;
+		case NODE_TYPE_OBS:
+			{
+				ObsNode* obs_node = (ObsNode*)this->node_context;
+				starting_node = obs_node->next_node;
+			}
+			break;
 		}
 
 		this->scope_context->random_exit_activate(

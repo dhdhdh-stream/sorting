@@ -10,16 +10,16 @@ using namespace std;
 
 const int TRAIN_EXISTING_NUM_DATAPOINTS = 2000;
 
-const double IMPACT_THRESHOLD = 0.5;
-
 void BranchExperiment::train_existing_activate(
+		RunHelper& run_helper,
 		ScopeHistory* scope_history,
 		BranchExperimentHistory* history) {
 	history->instance_count++;
 
 	vector<double> input_vals(this->existing_inputs.size());
 	for (int i_index = 0; i_index < (int)this->existing_inputs.size(); i_index++) {
-		fetch_input_helper(scope_history,
+		fetch_input_helper(run_helper,
+						   scope_history,
 						   this->existing_inputs[i_index],
 						   0,
 						   input_vals[i_index]);
@@ -27,7 +27,8 @@ void BranchExperiment::train_existing_activate(
 	this->input_histories.push_back(input_vals);
 
 	map<pair<int,int>, double> factors;
-	gather_factors(scope_history,
+	gather_factors(run_helper,
+				   scope_history,
 				   factors);
 	this->factor_histories.push_back(factors);
 }
@@ -125,22 +126,23 @@ void BranchExperiment::train_existing_backprop(
 				}
 			}
 
-			double impact_threshold = average_offset / num_factors * IMPACT_THRESHOLD;
+			double impact_threshold = average_offset / num_factors * FACTOR_IMPACT_THRESHOLD;
 
 			for (map<pair<int,int>, double>::iterator it = sum_factor_impacts.begin();
 					it != sum_factor_impacts.end(); it++) {
 				if (abs(weights(factor_mapping[it->first])) * sum_factor_impacts[it->first] > impact_threshold) {
-					this->existing_factor_weights[it->first] = weights(factor_mapping[it->first]);
+					this->existing_factor_ids.push_back(it->first);
+					this->existing_factor_weights.push_back(weights(factor_mapping[it->first]));
 				}
 			}
 
 			for (int i_index = 0; i_index < num_instances; i_index++) {
 				double sum_score = this->existing_average_score;
-				for (map<pair<int,int>, double>::iterator it = this->existing_factor_weights.begin();
-						it != this->existing_factor_weights.end(); it++) {
-					map<pair<int,int>, double>::iterator h_it = this->factor_histories[i_index].find(it->first);
-					if (h_it != this->factor_histories[i_index].end()) {
-						sum_score += it->double * h_it->double;
+				for (int f_index = 0; f_index < (int)this->existing_factor_ids.size(); f_index++) {
+					map<pair<int,int>, double>::iterator it = this->factor_histories[i_index]
+						.find(this->existing_factor_ids[f_index]);
+					if (it != this->factor_histories[i_index].end()) {
+						sum_score += this->existing_factor_weights[f_index] * it->double;
 					}
 				}
 
@@ -235,103 +237,135 @@ void BranchExperiment::train_existing_backprop(
 			new_factor->inputs = this->existing_inputs;
 			new_factor->network = existing_network;
 			if (this->node_context->type == NODE_TYPE_OBS) {
+				ObsNode* obs_node = (ObsNode*)this->node_context;
 
+				new_factor->parent = obs_node;
+				new_factor->index = (int)obs_node->factors.size();
+
+				obs_node->factors.push_back(new_factor);
+
+				this->existing_factor_ids.push_back({obs_node->id, new_factor->index});
+				this->existing_factor_weights.push_back(1.0);
 			} else {
+				ObsNode* new_obs_node = new ObsNode();
+				new_obs_node->parent = this->scope_context;
+				new_obs_node->id = this->scope_context->node_counter;
+				this->scope_context->node_counter++;
+				this->scope_context->nodes[new_obs_node->id] = new_obs_node;
 
-			}
+				new_factor->parent = new_obs_node;
+				new_factor->index = (int)new_obs_node->factors.size();
 
-			FactorNode* new_factor_node = new FactorNode();
-			new_factor_node->parent = this->scope_context;
-			new_factor_node->id = this->scope_context->node_counter;
-			this->scope_context->node_counter++;
-			this->scope_context->nodes[new_factor_node->id] = new_factor_node;
+				new_obs_node->factors.push_back(new_factor);
 
-			new_factor_node->inputs = existing_inputs;
-			new_factor_node->network = existing_network;
+				switch (this->node_context->type) {
+				case NODE_TYPE_ACTION:
+					{
+						ActionNode* action_node = (ActionNode*)this->node_context;
 
-			switch (this->node_context->type) {
-			case NODE_TYPE_ACTION:
-				{
-					ActionNode* action_node = (ActionNode*)this->node_context;
+						new_obs_node->next_node_id = action_node->next_node_id;
+						new_obs_node->next_node = action_node->next_node;
 
-					new_factor_node->next_node_id = action_node->next_node_id;
-					new_factor_node->next_node = action_node->next_node;
+						for (int a_index = 0; a_index < (int)action_node->next_node->ancestors.size(); a_index++) {
+							if (action_node->next_node->ancestors[a_index] == a_index) {
+								action_node->next_node->ancestors.erase(
+									action_node->next_node->ancestors.begin() + a_index);
+								break;
+							}
+						}
+						action_node->next_node->ancestors.push_back(new_obs_node);
 
-					action_node->next_node_id = new_factor_node->id;
-					action_node->next_node = new_factor_node;
-				}
-				break;
-			case NODE_TYPE_SCOPE:
-				{
-					ScopeNode* scope_node = (ScopeNode*)this->node_context;
+						action_node->next_node_id = new_obs_node->id;
+						action_node->next_node = new_obs_node;
 
-					new_factor_node->next_node_id = scope_node->next_node_id;
-					new_factor_node->next_node = scope_node->next_node;
-
-					scope_node->next_node_id = new_factor_node->id;
-					scope_node->next_node = new_factor_node;
-				}
-				break;
-			case NODE_TYPE_BRANCH:
-				{
-					BranchNode* branch_node = (BranchNode*)this->node_context;
-
-					if (this->is_branch) {
-						new_factor_node->next_node_id = branch_node->branch_next_node_id;
-						new_factor_node->next_node = branch_node->branch_next_node;
-
-						branch_node->branch_next_node_id = new_factor_node->id;
-						branch_node->branch_next_node = new_factor_node;
-					} else {
-						new_factor_node->next_node_id = branch_node->original_next_node_id;
-						new_factor_node->next_node = branch_node->original_next_node;
-
-						branch_node->original_next_node_id = new_factor_node->id;
-						branch_node->original_next_node = new_factor_node;
+						new_obs_node->ancestors.push_back(action_node);
 					}
-				}
-				break;
-			case NODE_TYPE_OBS:
-				{
-					ObsNode* obs_node = (ObsNode*)this->node_context;
+					break;
+				case NODE_TYPE_SCOPE:
+					{
+						ScopeNode* scope_node = (ScopeNode*)this->node_context;
 
-					new_factor_node->next_node_id = obs_node->next_node_id;
-					new_factor_node->next_node = obs_node->next_node;
+						new_obs_node->next_node_id = scope_node->next_node_id;
+						new_obs_node->next_node = scope_node->next_node;
 
-					obs_node->next_node_id = new_factor_node->id;
-					obs_node->next_node = new_factor_node;
-				}
-				break;
-			case NODE_TYPE_FACTOR:
-				{
-					FactorNode* factor_node = (FactorNode*)this->node_context;
+						for (int a_index = 0; a_index < (int)scope_node->next_node->ancestors.size(); a_index++) {
+							if (scope_node->next_node->ancestors[a_index] == a_index) {
+								scope_node->next_node->ancestors.erase(
+									scope_node->next_node->ancestors.begin() + a_index);
+								break;
+							}
+						}
+						action_node->next_node->ancestors.push_back(new_obs_node);
 
-					new_factor_node->next_node_id = factor_node->next_node_id;
-					new_factor_node->next_node = factor_node->next_node;
+						scope_node->next_node_id = new_obs_node->id;
+						scope_node->next_node = new_obs_node;
 
-					factor_node->next_node_id = new_factor_node->id;
-					factor_node->next_node = new_factor_node;
-				}
-				break;
-			}
+						new_obs_node->ancestors.push_back(scope_node);
+					}
+					break;
+				case NODE_TYPE_BRANCH:
+					{
+						BranchNode* branch_node = (BranchNode*)this->node_context;
 
-			new_factor_node->average_instances_per_run = this->node_context->average_instances_per_run;
+						if (this->is_branch) {
+							new_obs_node->next_node_id = branch_node->branch_next_node_id;
+							new_obs_node->next_node = branch_node->branch_next_node;
 
-			this->existing_factor_weights[new_factor_node->id] = 1.0;
+							for (int a_index = 0; a_index < (int)branch_node->branch_next_node->ancestors.size(); a_index++) {
+								if (branch_node->branch_next_node->ancestors[a_index] == a_index) {
+									branch_node->branch_next_node->ancestors.erase(
+										branch_node->branch_next_node->ancestors.begin() + a_index);
+									break;
+								}
+							}
+							branch_node->branch_next_node->ancestors.push_back(new_obs_node);
 
-			int experiment_index;
-			for (int e_index = 0; e_index < (int)this->node_context->experiments.size(); e_index++) {
-				if (this->node_context->experiments[e_index] == this) {
-					experiment_index = e_index;
+							branch_node->branch_next_node_id = new_obs_node->id;
+							branch_node->branch_next_node = new_obs_node;
+						} else {
+							new_obs_node->next_node_id = branch_node->original_next_node_id;
+							new_obs_node->next_node = branch_node->original_next_node;
+
+							for (int a_index = 0; a_index < (int)branch_node->original_next_node->ancestors.size(); a_index++) {
+								if (branch_node->original_next_node->ancestors[a_index] == a_index) {
+									branch_node->original_next_node->ancestors.erase(
+										branch_node->original_next_node->ancestors.begin() + a_index);
+									break;
+								}
+							}
+							branch_node->original_next_node->ancestors.push_back(new_obs_node);
+
+							branch_node->original_next_node_id = new_obs_node->id;
+							branch_node->original_next_node = new_obs_node;
+						}
+
+						new_obs_node->ancestors.push_back(branch_node);
+					}
 					break;
 				}
+
+				new_obs_node->average_instances_per_run = this->node_context->average_instances_per_run;
+
+				new_obs_node->was_commit = this->node_context->was_commit;
+
+				new_obs_node->num_measure = this->node_context->num_measure;
+				new_obs_node->sum_score = this->node_context->sum_score;
+
+				int experiment_index;
+				for (int e_index = 0; e_index < (int)this->node_context->experiments.size(); e_index++) {
+					if (this->node_context->experiments[e_index] == this) {
+						experiment_index = e_index;
+						break;
+					}
+				}
+				this->node_context->experiments.erase(this->node_context->experiments.begin() + experiment_index);
+
+				this->node_context = new_obs_node;
+				this->node_context->experiments.push_back(this);
+
+				this->existing_factor_ids.push_back({new_obs_node->id, 0});
+				this->existing_factor_weights.push_back(1.0);
 			}
-			this->node_context->experiments.erase(this->node_context->experiments.begin() + experiment_index);
-
-			this->node_context = new_factor_node;
-			this->node_context->experiments.push_back(this);
-
-			// TODO: add inputs to nodes
 		} else {
 			delete existing_network;
 		}

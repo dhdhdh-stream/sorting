@@ -57,7 +57,6 @@ public:
 						  RunHelper& run_helper);
 
 	void finalize(Solution* duplicate);
-	void new_pass_through(Solution* duplicate);
 };
 
 class PassThroughExperimentHistory : public AbstractExperimentHistory {

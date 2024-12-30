@@ -32,7 +32,7 @@ void Factor::activate(vector<ContextLayer>& context,
 	}
 
 	if (has_match) {
-		run_helper.num_analyze += (int)this->input_scope_contexts.size();
+		run_helper.num_analyze += (int)this->inputs.size();
 
 		vector<double> input_vals(this->inputs.size(), 0.0);
 		for (int i_index = 0; i_index < (int)this->inputs.size(); i_index++) {
