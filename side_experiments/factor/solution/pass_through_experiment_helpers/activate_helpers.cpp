@@ -7,7 +7,7 @@
 
 using namespace std;
 
-bool PassThroughExperiment::activate(AbstractNode* experiment_node,
+void PassThroughExperiment::activate(AbstractNode* experiment_node,
 									 bool is_branch,
 									 AbstractNode*& curr_node,
 									 Problem* problem,
@@ -39,17 +39,12 @@ bool PassThroughExperiment::activate(AbstractNode* experiment_node,
 		}
 	}
 
-	bool result = false;
 	if (is_selected) {
 		explore_activate(curr_node,
 						 problem,
 						 context,
 						 run_helper);
-
-		result = true;
 	}
-
-	return result;
 }
 
 void PassThroughExperiment::backprop(double target_val,

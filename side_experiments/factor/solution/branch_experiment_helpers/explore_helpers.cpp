@@ -8,7 +8,7 @@ const int BRANCH_EXPERIMENT_EXPLORE_ITERS = 5;
 const int BRANCH_EXPERIMENT_EXPLORE_ITERS = 500;
 #endif /* MDEBUG */
 
-bool BranchExperiment::explore_activate(
+void BranchExperiment::explore_activate(
 		AbstractNode*& curr_node,
 		Problem* problem,
 		vector<ContextLayer>& context,
@@ -123,10 +123,6 @@ bool BranchExperiment::explore_activate(
 		}
 
 		curr_node = this->curr_exit_next_node;
-
-		return true;
-	}  else {
-		return false;
 	}
 }
 

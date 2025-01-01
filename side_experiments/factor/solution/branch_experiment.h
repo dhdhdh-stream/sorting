@@ -45,12 +45,11 @@ public:
 	std::vector<Scope*> best_scopes;
 	AbstractNode* best_exit_next_node;
 
-	std::vector<std::pair<int,int>> new_factor_ids;
-	std::vector<double> new_factor_weights;
-
 	std::vector<std::pair<std::pair<std::vector<Scope*>,std::vector<int>>,
 		std::pair<int,int>>> new_inputs;
-	Network* new_network;
+
+	std::vector<std::pair<int,int>> new_factor_ids;
+	std::vector<double> new_factor_weights;
 
 	std::vector<std::vector<double>> input_histories;
 	std::vector<std::map<std::pair<int,int>, double>> factor_histories;

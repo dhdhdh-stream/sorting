@@ -21,6 +21,9 @@ public:
 	int id;
 
 	std::vector<int> ancestor_ids;
+	/**
+	 * - if both paths of BranchNode point to same node, add twice
+	 */
 
 	std::vector<AbstractExperiment*> experiments;
 

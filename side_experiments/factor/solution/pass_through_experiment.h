@@ -39,7 +39,7 @@ public:
 	~PassThroughExperiment();
 	void decrement(AbstractNode* experiment_node);
 
-	bool activate(AbstractNode* experiment_node,
+	void activate(AbstractNode* experiment_node,
 				  bool is_branch,
 				  AbstractNode*& curr_node,
 				  Problem* problem,
