@@ -22,7 +22,8 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 	this->type = EXPERIMENT_TYPE_NEW_SCOPE;
 
 	uniform_int_distribution<int> type_distribution(0, 2);
-	if (type_distribution(generator) == 0) {
+	// if (type_distribution(generator) == 0) {
+	if (true) {
 		this->new_scope_experiment_type = NEW_SCOPE_EXPERIMENT_TYPE_ANY;
 	} else {
 		this->new_scope_experiment_type = NEW_SCOPE_EXPERIMENT_TYPE_IN_PLACE;

@@ -27,6 +27,7 @@ public:
 	std::map<int, AbstractNode*> nodes;
 
 	std::vector<Scope*> child_scopes;
+	std::vector<Scope*> existing_scopes;
 
 	/**
 	 * - tie NewScopeExperiment to scope instead of node

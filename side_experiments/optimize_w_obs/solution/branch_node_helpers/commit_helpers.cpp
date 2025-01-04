@@ -1,5 +1,6 @@
 #include "branch_node.h"
 
+#include "constants.h"
 #include "globals.h"
 #include "network.h"
 #include "potential_commit.h"
@@ -80,11 +81,14 @@ void BranchNode::commit_gather_activate(AbstractNode*& curr_node,
 		curr_node = this->original_next_node;
 	}
 
-	uniform_int_distribution<int> select_distribution(0, node_count);
-	node_count++;
-	if (select_distribution(generator) == 0) {
-		potential_node_context = this;
-		potential_is_branch = false;
+	if (solution->timestamp >= MAINTAIN_ITERS
+			|| (this->parent->id == 0 || this->parent->id > solution->num_existing_scopes)) {
+		uniform_int_distribution<int> select_distribution(0, node_count);
+		node_count++;
+		if (select_distribution(generator) == 0) {
+			potential_node_context = this;
+			potential_is_branch = false;
+		}
 	}
 }
 

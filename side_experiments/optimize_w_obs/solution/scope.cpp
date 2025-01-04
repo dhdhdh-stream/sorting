@@ -93,6 +93,11 @@ void Scope::save(ofstream& output_file) {
 	for (int c_index = 0; c_index < (int)this->child_scopes.size(); c_index++) {
 		output_file << this->child_scopes[c_index]->id << endl;
 	}
+
+	output_file << this->existing_scopes.size() << endl;
+	for (int c_index = 0; c_index < (int)this->existing_scopes.size(); c_index++) {
+		output_file << this->existing_scopes[c_index]->id << endl;
+	}
 }
 
 void Scope::load(ifstream& input_file,
@@ -153,6 +158,15 @@ void Scope::load(ifstream& input_file,
 		getline(input_file, scope_id_line);
 		this->child_scopes.push_back(parent_solution->scopes[stoi(scope_id_line)]);
 	}
+
+	string num_existing_scopes_line;
+	getline(input_file, num_existing_scopes_line);
+	int num_existing_scopes = stoi(num_existing_scopes_line);
+	for (int c_index = 0; c_index < num_existing_scopes; c_index++) {
+		string scope_id_line;
+		getline(input_file, scope_id_line);
+		this->existing_scopes.push_back(parent_solution->scopes[stoi(scope_id_line)]);
+	}
 }
 
 void Scope::link(Solution* parent_solution) {
@@ -204,6 +218,11 @@ void Scope::copy_from(Scope* original,
 	for (int c_index = 0; c_index < (int)original->child_scopes.size(); c_index++) {
 		this->child_scopes.push_back(parent_solution->scopes[
 			original->child_scopes[c_index]->id]);
+	}
+
+	for (int c_index = 0; c_index < (int)original->existing_scopes.size(); c_index++) {
+		this->existing_scopes.push_back(parent_solution->scopes[
+			original->existing_scopes[c_index]->id]);
 	}
 }
 

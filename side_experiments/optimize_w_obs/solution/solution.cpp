@@ -206,6 +206,13 @@ void Solution::clean_scopes() {
 							break;
 						}
 					}
+
+					for (int c_index = 0; c_index < (int)this->scopes[is_index]->existing_scopes.size(); c_index++) {
+						if (this->scopes[is_index]->existing_scopes[c_index] == this->scopes[s_index]) {
+							this->scopes[is_index]->existing_scopes.erase(this->scopes[is_index]->existing_scopes.begin() + c_index);
+							break;
+						}
+					}
 				}
 
 				delete this->scopes[s_index];
@@ -288,16 +295,24 @@ void Solution::commit() {
 		 *   - existing scopes often learned to avoid certain patterns
 		 *     - which can prevent innovation
 		 */
-		uniform_int_distribution<int> scope_distribution(0, 2);
+		uniform_int_distribution<int> type_distribution(0, 2);
 		for (int s_index = 0; s_index < new_num_steps; s_index++) {
-			if (potential_node_context->parent->child_scopes.size() > 0
-					&& scope_distribution(generator) == 0) {
+			int type = type_distribution(generator);
+			if (type >= 2 && potential_node_context->parent->child_scopes.size() > 0) {
 				step_types.push_back(STEP_TYPE_SCOPE);
 				actions.push_back(NULL);
 
 				ScopeNode* new_scope_node = new ScopeNode();
 				uniform_int_distribution<int> child_scope_distribution(0, potential_node_context->parent->child_scopes.size()-1);
 				new_scope_node->scope = potential_node_context->parent->child_scopes[child_scope_distribution(generator)];
+				scopes.push_back(new_scope_node);
+			} else if (type >= 1 && potential_node_context->parent->existing_scopes.size() > 0) {
+				step_types.push_back(STEP_TYPE_SCOPE);
+				actions.push_back(NULL);
+
+				ScopeNode* new_scope_node = new ScopeNode();
+				uniform_int_distribution<int> existing_scope_distribution(0, potential_node_context->parent->existing_scopes.size()-1);
+				new_scope_node->scope = potential_node_context->parent->existing_scopes[existing_scope_distribution(generator)];
 				scopes.push_back(new_scope_node);
 			} else {
 				step_types.push_back(STEP_TYPE_ACTION);

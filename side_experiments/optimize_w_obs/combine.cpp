@@ -64,7 +64,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	for (int scope_index = 1; scope_index < (int)solution->scopes.size(); scope_index++) {
-		solution->scopes[0]->child_scopes.push_back(solution->scopes[scope_index]);
+		solution->scopes[0]->existing_scopes.push_back(solution->scopes[scope_index]);
 	}
 
 	solution->num_existing_scopes = (int)solution->scopes.size() - 1;

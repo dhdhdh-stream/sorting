@@ -43,14 +43,14 @@ const int IMPROVEMENTS_PER_ITER = 2;
 const int IMPROVEMENTS_PER_ITER = 10;
 #endif /* MDEBUG */
 
-const int CONSECUTIVE_FAILURE_LIMIT = 500;
+const int CONSECUTIVE_FAILURE_LIMIT = 1000;
 
 #if defined(MDEBUG) && MDEBUG
 const int COMMIT_ITERS = 4;
-const int COMMIT_IMPROVEMENTS_PER_ITER = 8;
+const int COMMIT_IMPROVEMENTS_PER_ITER = 10;
 #else
 const int COMMIT_ITERS = 20;
-const int COMMIT_IMPROVEMENTS_PER_ITER = 40;
+const int COMMIT_IMPROVEMENTS_PER_ITER = 60;
 #endif /* MDEBUG */
 
 #if defined(MDEBUG) && MDEBUG

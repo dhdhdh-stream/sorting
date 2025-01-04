@@ -197,42 +197,42 @@ void NewScopeExperiment::backprop(double target_val,
 			add_new_test_location(history);
 		}
 
-		if (this->generalize_iter >= NEW_SCOPE_NUM_GENERALIZE_TRIES) {
-			if (this->successful_location_starts.size() >= NEW_SCOPE_MIN_LOCATIONS) {
-				#if defined(MDEBUG) && MDEBUG
-				for (int t_index = 0; t_index < (int)this->test_location_starts.size(); t_index++) {
-					int experiment_index;
-					for (int e_index = 0; e_index < (int)this->test_location_starts[t_index]->experiments.size(); e_index++) {
-						if (this->test_location_starts[t_index]->experiments[e_index] == this) {
-							experiment_index = e_index;
-							break;
-						}
+		if (this->successful_location_starts.size() >= NEW_SCOPE_NUM_LOCATIONS) {
+			#if defined(MDEBUG) && MDEBUG
+			for (int t_index = 0; t_index < (int)this->test_location_starts.size(); t_index++) {
+				int experiment_index;
+				for (int e_index = 0; e_index < (int)this->test_location_starts[t_index]->experiments.size(); e_index++) {
+					if (this->test_location_starts[t_index]->experiments[e_index] == this) {
+						experiment_index = e_index;
+						break;
 					}
-					this->test_location_starts[t_index]->experiments.erase(this->test_location_starts[t_index]->experiments.begin() + experiment_index);
 				}
-				this->test_location_starts.clear();
-				this->test_location_is_branch.clear();
-				this->test_location_exits.clear();
-				this->test_location_states.clear();
-				this->test_location_scores.clear();
-				this->test_location_counts.clear();
-				this->test_location_truth_counts.clear();
-				for (int t_index = 0; t_index < (int)this->test_scope_nodes.size(); t_index++) {
-					delete this->test_scope_nodes[t_index];
-				}
-				this->test_scope_nodes.clear();
-
-				this->verify_problems = vector<Problem*>(NUM_VERIFY_SAMPLES, NULL);
-				this->verify_seeds = vector<unsigned long>(NUM_VERIFY_SAMPLES);
-
-				this->state = NEW_SCOPE_EXPERIMENT_STATE_CAPTURE_VERIFY;
-				this->state_iter = 0;
-				#else
-				this->result = EXPERIMENT_RESULT_SUCCESS;
-				#endif /* MDEBUG */
-			} else {
-				this->result = EXPERIMENT_RESULT_FAIL;
+				this->test_location_starts[t_index]->experiments.erase(this->test_location_starts[t_index]->experiments.begin() + experiment_index);
 			}
+			this->test_location_starts.clear();
+			this->test_location_is_branch.clear();
+			this->test_location_exits.clear();
+			this->test_location_states.clear();
+			this->test_location_scores.clear();
+			this->test_location_counts.clear();
+			this->test_location_truth_counts.clear();
+			for (int t_index = 0; t_index < (int)this->test_scope_nodes.size(); t_index++) {
+				delete this->test_scope_nodes[t_index];
+			}
+			this->test_scope_nodes.clear();
+
+			this->verify_problems = vector<Problem*>(NUM_VERIFY_SAMPLES, NULL);
+			this->verify_seeds = vector<unsigned long>(NUM_VERIFY_SAMPLES);
+
+			this->state = NEW_SCOPE_EXPERIMENT_STATE_CAPTURE_VERIFY;
+			this->state_iter = 0;
+			#else
+			this->result = EXPERIMENT_RESULT_SUCCESS;
+			#endif /* MDEBUG */
+		}
+
+		if (this->generalize_iter >= NEW_SCOPE_NUM_GENERALIZE_TRIES) {
+			this->result = EXPERIMENT_RESULT_FAIL;
 		}
 
 		break;
