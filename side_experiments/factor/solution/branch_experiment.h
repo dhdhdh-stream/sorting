@@ -51,11 +51,83 @@ public:
 	std::vector<std::pair<int,int>> new_factor_ids;
 	std::vector<double> new_factor_weights;
 
+	double combined_score;
+
 	std::vector<std::vector<double>> input_histories;
 	std::vector<std::map<std::pair<int,int>, double>> factor_histories;
 	std::vector<double> i_target_val_histories;
 	std::vector<double> o_target_val_histories;
 
+	#if defined(MDEBUG) && MDEBUG
+	std::vector<Problem*> verify_problems;
+	std::vector<unsigned long> verify_seeds;
+	std::vector<double> verify_scores;
+	#endif /* MDEBUG */
+
+	BranchExperiment(Scope* scope_context,
+					 AbstractNode* node_context,
+					 bool is_branch);
+	~BranchExperiment();
+	void decrement(AbstractNode* experiment_node);
+
+	bool activate(AbstractNode* experiment_node,
+				  bool is_branch,
+				  AbstractNode*& curr_node,
+				  Problem* problem,
+				  std::vector<ContextLayer>& context,
+				  RunHelper& run_helper,
+				  ScopeHistory* scope_history);
+	void backprop(double target_val,
+				  RunHelper& run_helper);
+
+	void existing_gather_activate(ScopeHistory* scope_history);
+	void existing_gather_backprop();
+
+	void train_existing_activate(RunHelper& run_helper,
+								 ScopeHistory* scope_history,
+								 BranchExperimentHistory* history);
+	void train_existing_backprop(double target_val,
+								 RunHelper& run_helper);
+
+	void explore_activate(AbstractNode*& curr_node,
+						  Problem* problem,
+						  std::vector<ContextLayer>& context,
+						  RunHelper& run_helper,
+						  ScopeHistory* scope_history,
+						  BranchExperimentHistory* history);
+	void explore_backprop(double target_val,
+						  RunHelper& run_helper);
+
+	void new_gather_activate(ScopeHistory* scope_history);
+	void new_gather_backprop();
+
+	void train_new_activate(AbstractNode*& curr_node,
+							Problem* problem,
+							std::vector<ContextLayer>& context,
+							RunHelper& run_helper,
+							ScopeHistory* scope_history,
+							BranchExperimentHistory* history);
+	void train_new_backprop(double target_val,
+							RunHelper& run_helper);
+
+	void measure_activate(AbstractNode*& curr_node,
+						  Problem* problem,
+						  std::vector<ContextLayer>& context,
+						  RunHelper& run_helper,
+						  ScopeHistory* scope_history);
+	void measure_backprop(double target_val,
+						  RunHelper& run_helper);
+
+	#if defined(MDEBUG) && MDEBUG
+	void capture_verify_activate(AbstractNode*& curr_node,
+								 Problem* problem,
+								 std::vector<ContextLayer>& context,
+								 RunHelper& run_helper,
+								 ScopeHistory* scope_history);
+	void capture_verify_backprop();
+	#endif /* MDEBUG */
+
+	void finalize(Solution* duplicate);
 };
 
 class BranchExperimentHistory : public AbstractExperimentHistory {

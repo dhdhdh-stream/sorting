@@ -22,16 +22,14 @@ void BranchExperiment::explore_activate(
 			&& this->num_instances_until_target == 0) {
 		run_helper.has_explore = true;
 
-		map<pair<int,int>, double> factors;
-		gather_factors(run_helper,
-					   scope_history,
-					   factors);
 		double sum_vals = this->existing_average_score;
 		for (int f_index = 0; f_index < (int)this->existing_factor_ids.size(); f_index++) {
-			map<pair<int,int>, double>::iterator it = factors.find(this->existing_factor_ids[f_index]);
-			if (it != factors.end()) {
-				sum_vals += this->existing_factor_weights[f_index] * it->second;
-			}
+			double val;
+			fetch_factor_helper(run_helper,
+								scope_history,
+								this->existing_factor_ids[f_index],
+								val);
+			sum_vals += this->existing_factor_weights[f_index] * val;
 		}
 		history->existing_predicted_scores.push_back(sum_vals);
 
@@ -90,15 +88,21 @@ void BranchExperiment::explore_activate(
 		 *   - existing scopes often learned to avoid certain patterns
 		 *     - which can prevent innovation
 		 */
-		uniform_int_distribution<int> scope_distribution(0, 2);
+		uniform_int_distribution<int> type_distribution(0, 2);
 		for (int s_index = 0; s_index < new_num_steps; s_index++) {
-			if (this->scope_context->child_scopes.size() > 0
-					&& scope_distribution(generator) == 0) {
+			int type = type_distribution(generator);
+			if (type >= 2 && this->scope_context->child_scopes.size() > 0) {
 				this->curr_step_types.push_back(STEP_TYPE_SCOPE);
 				this->curr_actions.push_back(NULL);
 
 				uniform_int_distribution<int> child_scope_distribution(0, this->scope_context->child_scopes.size()-1);
 				this->curr_scopes.push_back(this->scope_context->child_scopes[child_scope_distribution(generator)]);
+			} else if (type >= 1 && this->scope_context->existing_scopes.size() > 0) {
+				this->curr_step_types.push_back(STEP_TYPE_SCOPE);
+				this->curr_actions.push_back(NULL);
+
+				uniform_int_distribution<int> existing_scope_distribution(0, this->scope_context->existing_scopes.size()-1);
+				this->curr_scopes.push_back(this->scope_context->existing_scopes[existing_scope_distribution(generator)]);
 			} else {
 				this->curr_step_types.push_back(STEP_TYPE_ACTION);
 

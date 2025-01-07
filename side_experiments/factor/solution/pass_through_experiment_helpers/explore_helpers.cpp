@@ -88,15 +88,21 @@ void PassThroughExperiment::explore_activate(
 		 *   - existing scopes often learned to avoid certain patterns
 		 *     - which can prevent innovation
 		 */
-		uniform_int_distribution<int> scope_distribution(0, 2);
+		uniform_int_distribution<int> type_distribution(0, 2);
 		for (int s_index = 0; s_index < new_num_steps; s_index++) {
-			if (this->scope_context->child_scopes.size() > 0
-					&& scope_distribution(generator) == 0) {
+			int type = type_distribution(generator);
+			if (type >= 2 && this->scope_context->child_scopes.size() > 0) {
 				this->curr_step_types.push_back(STEP_TYPE_SCOPE);
 				this->curr_actions.push_back(NULL);
 
 				uniform_int_distribution<int> child_scope_distribution(0, this->scope_context->child_scopes.size()-1);
 				this->curr_scopes.push_back(this->scope_context->child_scopes[child_scope_distribution(generator)]);
+			} else if (type >= 1 && this->scope_context->existing_scopes.size() > 0) {
+				this->curr_step_types.push_back(STEP_TYPE_SCOPE);
+				this->curr_actions.push_back(NULL);
+
+				uniform_int_distribution<int> existing_scope_distribution(0, this->scope_context->existing_scopes.size()-1);
+				this->curr_scopes.push_back(this->scope_context->existing_scopes[existing_scope_distribution(generator)]);
 			} else {
 				this->curr_step_types.push_back(STEP_TYPE_ACTION);
 
@@ -131,7 +137,7 @@ void PassThroughExperiment::explore_backprop(
 		RunHelper& run_helper) {
 	bool is_fail = false;
 
-	this->curr_score += target_val;
+	this->curr_sum_score += target_val;
 
 	this->state_iter++;
 	if (this->state_iter == INITIAL_NUM_SAMPLES_PER_ITER
@@ -140,8 +146,9 @@ void PassThroughExperiment::explore_backprop(
 		#if defined(MDEBUG) && MDEBUG
 		if (false) {
 		#else
+		double curr_score = this->curr_sum_score / this->state_iter;
 		double existing_score = this->node_context->sum_score / this->node_context->num_measure;
-		if (this->curr_score <= existing_score) {
+		if (curr_score <= existing_score) {
 		#endif /* MDEBUG */
 			is_fail = true;
 		}
@@ -149,20 +156,21 @@ void PassThroughExperiment::explore_backprop(
 
 	bool is_next = false;
 	if (is_fail) {
-		this->curr_score = 0.0;
+		this->curr_sum_score = 0.0;
 		this->curr_step_types.clear();
 		this->curr_actions.clear();
 		this->curr_scopes.clear();
 
 		is_next = true;
 	} else if (this->state_iter >= VERIFY_2ND_NUM_SAMPLES_PER_ITER) {
+		double curr_score = this->curr_sum_score / this->state_iter;
 		this->best_score = curr_score;
 		this->best_step_types = this->curr_step_types;
 		this->best_actions = this->curr_actions;
 		this->best_scopes = this->curr_scopes;
 		this->best_exit_next_node = this->curr_exit_next_node;
 
-		this->curr_score = 0.0;
+		this->curr_sum_score = 0.0;
 		this->curr_step_types.clear();
 		this->curr_actions.clear();
 		this->curr_scopes.clear();

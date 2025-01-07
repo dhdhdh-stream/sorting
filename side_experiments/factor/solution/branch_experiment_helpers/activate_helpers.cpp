@@ -50,8 +50,7 @@ void BranchExperiment::activate(AbstractNode* experiment_node,
 	if (is_selected) {
 		switch (this->state) {
 		case BRANCH_EXPERIMENT_STATE_EXISTING_GATHER:
-			existing_gather_activate(scope_history,
-									 history);
+			existing_gather_activate(scope_history);
 			break;
 		case BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING:
 			train_existing_activate(run_helper,
@@ -67,8 +66,7 @@ void BranchExperiment::activate(AbstractNode* experiment_node,
 							 history);
 			break;
 		case BRANCH_EXPERIMENT_STATE_NEW_GATHER:
-			new_gather_activate(scope_history,
-								history);
+			new_gather_activate(scope_history);
 			break;
 		case BRANCH_EXPERIMENT_STATE_TRAIN_NEW:
 			train_new_activate(curr_node,
@@ -83,8 +81,7 @@ void BranchExperiment::activate(AbstractNode* experiment_node,
 							 problem,
 							 context,
 							 run_helper,
-							 scope_history,
-							 history);
+							 scope_history);
 			break;
 		#if defined(MDEBUG) && MDEBUG
 		case BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY:

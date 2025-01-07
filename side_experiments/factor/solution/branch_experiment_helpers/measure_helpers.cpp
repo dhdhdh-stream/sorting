@@ -12,21 +12,17 @@ void BranchExperiment::measure_activate(AbstractNode*& curr_node,
 										Problem* problem,
 										vector<ContextLayer>& context,
 										RunHelper& run_helper,
-										ScopeHistory* scope_history,
-										BranchExperimentHistory* history) {
+										ScopeHistory* scope_history) {
 	run_helper.has_explore = true;
-
-	map<pair<int,int>, double> factors;
-	gather_factors(run_helper,
-				   scope_history,
-				   factors);
 
 	double sum_vals = 0.0;
 	for (int f_index = 0; f_index < (int)this->new_factor_ids.size(); f_index++) {
-		map<pair<int,int>, double>::iterator it = factors.find(this->new_factor_ids[f_index]);
-		if (it != factors.end()) {
-			sum_vals += this->new_factor_weights[f_index] * it->second;
-		}
+		double val;
+		fetch_factor_helper(run_helper,
+							scope_history,
+							this->new_factor_ids[f_index],
+							val);
+		sum_vals += this->new_factor_weights[f_index] * val;
 	}
 
 	#if defined(MDEBUG) && MDEBUG
@@ -55,6 +51,8 @@ void BranchExperiment::measure_activate(AbstractNode*& curr_node,
 
 			run_helper.num_actions += 2;
 		}
+
+		curr_node = this->best_exit_next_node;
 	}
 }
 

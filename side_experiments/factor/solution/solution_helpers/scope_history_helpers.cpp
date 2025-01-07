@@ -119,6 +119,27 @@ void gather_factors(RunHelper& run_helper,
 	}
 }
 
+void fetch_factor_helper(RunHelper& run_helper,
+						 ScopeHistory* scope_history,
+						 pair<int,int> factor,
+						 double& val) {
+	map<int, AbstractNodeHistory*>::iterator it = scope_history
+		->node_histories.find(factor.first);
+	if (it != scope_history->node_histories.end()) {
+		ObsNodeHistory* obs_node_history = (ObsNodeHistory*)it->second;
+		if (!obs_node_history->factor_initialized[factor.second]) {
+			ObsNode* obs_node = (ObsNode*)obs_node_history->node;
+			double value = obs_node->factors[factor.second]->back_activate(
+				run_helper,
+				scope_history);
+			obs_node_history->factor_values[factor.second] = value;
+		}
+		val = obs_node_history->factor_values[factor.second];
+	} else {
+		val = 0.0;
+	}
+}
+
 void fetch_input_helper(RunHelper& run_helper,
 						ScopeHistory* scope_history,
 						pair<pair<vector<Scope*>,vector<int>>,pair<int,int>>& input,

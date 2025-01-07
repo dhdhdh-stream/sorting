@@ -40,11 +40,14 @@ BranchNode::~BranchNode() {
 	}
 }
 
-void BranchNode::clean_inputs(int node_id) {
-	for (int f_index = (int)this->factor_ids.size()-1; f_index >= 0; f_index--) {
-		if (this->factor_ids[f_index].first == node_id) {
-			this->factor_ids.erase(this->factor_ids.begin() + f_index);
-			this->factor_weights.erase(this->factor_weights.begin() + f_index);
+void BranchNode::clean_inputs(Scope* scope,
+							  int node_id) {
+	if (scope == this->parent) {
+		for (int f_index = (int)this->factor_ids.size()-1; f_index >= 0; f_index--) {
+			if (this->factor_ids[f_index].first == node_id) {
+				this->factor_ids.erase(this->factor_ids.begin() + f_index);
+				this->factor_weights.erase(this->factor_weights.begin() + f_index);
+			}
 		}
 	}
 
@@ -193,11 +196,4 @@ void BranchNode::save_for_display(ofstream& output_file) {
 
 BranchNodeHistory::BranchNodeHistory(BranchNode* node) {
 	this->node = node;
-}
-
-BranchNodeHistory::BranchNodeHistory(BranchNodeHistory* original) {
-	this->node = original->node;
-	this->index = original->index;
-
-	this->is_branch = original->is_branch;
 }

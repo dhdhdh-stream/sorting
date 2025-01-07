@@ -22,15 +22,39 @@ public:
 	int next_node_id;
 	AbstractNode* next_node;
 
+	ActionNode();
+	ActionNode(ActionNode* original);
+	~ActionNode();
 
+	void activate(AbstractNode*& curr_node,
+				  Problem* problem);
+
+	void experiment_activate(AbstractNode*& curr_node,
+							 Problem* problem,
+							 std::vector<ContextLayer>& context,
+							 RunHelper& run_helper,
+							 ScopeHistory* scope_history);
+
+	void commit_gather_activate(AbstractNode*& curr_node,
+								Problem* problem,
+								int& node_count,
+								AbstractNode*& potential_node_context,
+								bool& potential_is_branch);
+	void commit_activate(AbstractNode*& curr_node,
+						 Problem* problem,
+						 std::vector<ContextLayer>& context,
+						 RunHelper& run_helper,
+						 PotentialCommit* potential_commit);
+
+	void save(std::ofstream& output_file);
+	void load(std::ifstream& input_file);
+	void link(Solution* parent_solution);
+	void save_for_display(std::ofstream& output_file);
 };
 
 class ActionNodeHistory : public AbstractNodeHistory {
 public:
-	std::vector<double> obs_history;
-
 	ActionNodeHistory(ActionNode* node);
-	ActionNodeHistory(ActionNodeHistory* original);
 };
 
 #endif /* ACTION_NODE_H */

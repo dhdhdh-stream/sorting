@@ -1,18 +1,15 @@
 #include "branch_node.h"
 
-#include <iostream>
-
-#include "globals.h"
-#include "problem.h"
-#include "scope.h"
-#include "solution.h"
-#include "utilities.h"
-
 using namespace std;
 
-void BranchNode::activate(AbstractNode*& curr_node,
-						  vector<ContextLayer>& context,
-						  RunHelper& run_helper) {
+void BranchNode::experiment_activate(AbstractNode*& curr_node,
+									 Problem* problem,
+									 vector<ContextLayer>& context,
+									 RunHelper& run_helper,
+									 ScopeHistory* scope_history) {
+	BranchNodeHistory* history = new BranchNodeHistory(this);
+	scope_history->node_histories[this->id] = history;
+
 	double sum_vals = 0.0;
 	for (int f_index = 0; f_index < (int)this->factor_ids.size(); f_index++) {
 		map<pair<pair<vector<Scope*>,vector<int>>, pair<int,int>>>::iterator it
@@ -39,6 +36,8 @@ void BranchNode::activate(AbstractNode*& curr_node,
 		is_branch = false;
 	}
 	#endif /* MDEBUG */
+
+	history->is_branch = is_branch;
 
 	if (this->input_scope_contexts.size() > 0) {
 		for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
@@ -73,5 +72,19 @@ void BranchNode::activate(AbstractNode*& curr_node,
 		curr_node = this->branch_next_node;
 	} else {
 		curr_node = this->original_next_node;
+	}
+
+	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
+		bool is_selected = this->experiments[e_index]->activate(
+			this,
+			is_branch,
+			curr_node,
+			problem,
+			context,
+			run_helper,
+			scope_history);
+		if (is_selected) {
+			return;
+		}
 	}
 }

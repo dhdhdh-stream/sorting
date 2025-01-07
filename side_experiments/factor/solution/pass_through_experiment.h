@@ -19,7 +19,7 @@ public:
 	int sub_state_iter;
 	int explore_iter;
 
-	double curr_score;
+	double curr_sum_score;
 	std::vector<int> curr_step_types;
 	std::vector<Action*> curr_actions;
 	std::vector<Scope*> curr_scopes;
@@ -31,12 +31,9 @@ public:
 	std::vector<Scope*> best_scopes;
 	AbstractNode* best_exit_next_node;
 
-	std::vector<double> target_val_histories;
-
 	PassThroughExperiment(Scope* scope_context,
 						  AbstractNode* node_context,
 						  bool is_branch);
-	~PassThroughExperiment();
 	void decrement(AbstractNode* experiment_node);
 
 	void activate(AbstractNode* experiment_node,

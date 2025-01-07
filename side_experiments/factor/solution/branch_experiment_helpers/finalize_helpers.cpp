@@ -24,6 +24,8 @@ void BranchExperiment::finalize(Solution* duplicate) {
 				duplicate_local_scope->nodes[new_action_node->id] = new_action_node;
 
 				new_action_node->action = this->best_actions[s_index];
+
+				new_nodes.push_back(new_action_node);
 			} else {
 				ScopeNode* new_scope_node = new ScopeNode();
 				new_scope_node->parent = duplicate_local_scope;
@@ -32,6 +34,8 @@ void BranchExperiment::finalize(Solution* duplicate) {
 				duplicate_local_scope->nodes[new_scope_node->id] = new_scope_node;
 
 				new_scope_node->scope = duplicate->scopes[this->best_scopes[s_index]->id];
+
+				new_nodes.push_back(new_scope_node);
 			}
 		}
 

@@ -5,8 +5,7 @@ using namespace std;
 const int NEW_GATHER_ITERS = 10;
 
 void BranchExperiment::new_gather_activate(
-		ScopeHistory* scope_history,
-		BranchExperimentHistory* history) {
+		ScopeHistory* scope_history) {
 	this->num_instances_until_target--;
 
 	if (this->num_instances_until_target <= 0) {
