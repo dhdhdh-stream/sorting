@@ -8,8 +8,6 @@
 #include <fstream>
 #include <vector>
 
-class Network;
-class PotentialCommit;
 class Problem;
 class ScopeHistory;
 class Solution;
@@ -55,17 +53,6 @@ public:
 							RunHelper& run_helper,
 							ScopeHistory* scope_history);
 
-	void commit_gather_activate(AbstractNode*& curr_node,
-								std::vector<ContextLayer>& context,
-								RunHelper& run_helper,
-								int& node_count,
-								AbstractNode*& potential_node_context,
-								bool& potential_is_branch);
-	void commit_activate(AbstractNode*& curr_node,
-						 std::vector<ContextLayer>& context,
-						 RunHelper& run_helper,
-						 PotentialCommit* potential_commit);
-
 	#if defined(MDEBUG) && MDEBUG
 	void verify_activate(AbstractNode*& curr_node,
 						 Problem* problem,
@@ -79,7 +66,8 @@ public:
 	void clear_verify();
 	#endif /* MDEBUG */
 
-	void clean_inputs(int node_id);
+	void clean_inputs(Scope* scope,
+					  int node_id);
 	void clean_inputs(Scope* scope);
 
 	void save(std::ofstream& output_file);

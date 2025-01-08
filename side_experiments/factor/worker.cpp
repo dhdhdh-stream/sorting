@@ -5,15 +5,14 @@
 #include <random>
 
 #include "abstract_experiment.h"
-#include "abstract_node.h"
+#include "action_node.h"
 #include "constants.h"
 #include "globals.h"
 #include "minesweeper.h"
-#include "problem.h"
 #include "scope.h"
+#include "scope_node.h"
 #include "solution.h"
 #include "solution_helpers.h"
-#include "utilities.h"
 
 using namespace std;
 
@@ -27,6 +26,13 @@ Solution* solution;
 int run_index;
 
 int main(int argc, char* argv[]) {
+	if (argc != 3) {
+		cout << "Usage: ./worker [path] [filename]" << endl;
+		exit(1);
+	}
+	string path = argv[1];
+	string filename = argv[2];
+
 	cout << "Starting..." << endl;
 
 	seed = (unsigned)time(NULL);
@@ -37,24 +43,9 @@ int main(int argc, char* argv[]) {
 	problem_type = new TypeMinesweeper();
 
 	solution = new Solution();
-	string filename;
-	if (argc > 1) {
-		filename = argv[1];
-		solution->load("saves/", filename);
-	} else {
-		filename = "main.txt";
-		solution->init();
-		solution->save("saves/", filename);
-	}
+	solution->load(path, filename);
 
-	{
-		ofstream display_file;
-		display_file.open("../display.txt");
-		solution->save_for_display(display_file);
-		display_file.close();
-	}
-
-	run_index = 0;
+	auto start_time = chrono::high_resolution_clock::now();
 
 	while (solution->timestamp < EXPLORE_ITERS) {
 		Solution* best_solution = NULL;
@@ -62,21 +53,17 @@ int main(int argc, char* argv[]) {
 		int improvement_iter = 0;
 
 		while (true) {
-			run_index++;
-			if (run_index%10000 == 0) {
-				cout << "run_index: " << run_index << endl;
-				cout << "solution->timestamp: " << solution->timestamp << endl;
-				cout << "improvement_iter: " << improvement_iter << endl;
+			auto curr_time = chrono::high_resolution_clock::now();
+			auto time_diff = chrono::duration_cast<chrono::seconds>(curr_time - start_time);
+			if (time_diff.count() >= 20) {
+				start_time = curr_time;
+
+				cout << "alive" << endl;
 			}
 
 			Problem* problem = problem_type->get_problem();
 
 			RunHelper run_helper;
-
-			#if defined(MDEBUG) && MDEBUG
-			run_helper.starting_run_seed = run_index;
-			run_helper.curr_run_seed = xorshift(run_helper.starting_run_seed);
-			#endif /* MDEBUG */
 
 			vector<ContextLayer> context;
 			ScopeHistory* scope_history = new ScopeHistory(solution->scopes[0]);
@@ -130,39 +117,12 @@ int main(int argc, char* argv[]) {
 								duplicate);
 					duplicate->clean_scopes();
 
-					#if defined(MDEBUG) && MDEBUG
-					while (duplicate->verify_problems.size() > 0) {
-						Problem* problem = duplicate->verify_problems[0];
-
-						RunHelper run_helper;
-						run_helper.starting_run_seed = duplicate->verify_seeds[0];
-						cout << "run_helper.starting_run_seed: " << run_helper.starting_run_seed << endl;
-						run_helper.curr_run_seed = xorshift(run_helper.starting_run_seed);
-						duplicate->verify_seeds.erase(duplicate->verify_seeds.begin());
-
-						vector<ContextLayer> context;
-						duplicate->scopes[0]->verify_activate(
-							problem,
-							context,
-							run_helper);
-
-						delete duplicate->verify_problems[0];
-						duplicate->verify_problems.erase(duplicate->verify_problems.begin());
-					}
-					duplicate->clear_verify();
-					#endif /* MDEBUG */
-
 					double sum_score = 0.0;
 					double sum_true_score = 0.0;
 					for (int iter_index = 0; iter_index < MEASURE_ITERS; iter_index++) {
 						Problem* problem = problem_type->get_problem();
 
 						RunHelper run_helper;
-						#if defined(MDEBUG) && MDEBUG
-						run_helper.starting_run_seed = run_index;
-						run_helper.curr_run_seed = xorshift(run_helper.starting_run_seed);
-						run_index++;
-						#endif /* MDEBUG */
 
 						vector<ContextLayer> context;
 						duplicate->scopes[0]->measure_activate(
@@ -193,11 +153,6 @@ int main(int argc, char* argv[]) {
 
 					cout << "duplicate->curr_score: " << duplicate->curr_score << endl;
 
-					ofstream display_file;
-					display_file.open("../display.txt");
-					duplicate->save_for_display(display_file);
-					display_file.close();
-
 					duplicate->timestamp++;
 
 					if (duplicate->timestamp % INCREASE_TIME_PENALTY_ITER == 0) {
@@ -212,12 +167,8 @@ int main(int argc, char* argv[]) {
 						duplicate->best_true_score_timestamp = duplicate->timestamp;
 					}
 
-					#if defined(MDEBUG) && MDEBUG
-					if (best_solution == NULL) {
-					#else
 					if (best_solution == NULL
 							|| duplicate->curr_score > best_solution->curr_score) {
-					#endif /* MDEBUG */
 						if (best_solution != NULL) {
 							delete best_solution;
 						}
@@ -229,11 +180,13 @@ int main(int argc, char* argv[]) {
 
 					improvement_iter++;
 					if (solution->was_commit) {
-						if (improvement_iter >= COMMIT_IMPROVEMENTS_PER_ITER) {
+						if (improvement_iter >= COMMIT_IMPROVEMENTS_PER_ITER
+								|| consecutive_failures >= CONSECUTIVE_FAILURE_LIMIT) {
 							break;
 						}
 					} else {
-						if (improvement_iter >= IMPROVEMENTS_PER_ITER) {
+						if (improvement_iter >= IMPROVEMENTS_PER_ITER
+								|| consecutive_failures >= CONSECUTIVE_FAILURE_LIMIT) {
 							break;
 						}
 					}
@@ -322,13 +275,7 @@ int main(int argc, char* argv[]) {
 			}
 		}
 
-		solution->save("saves/", filename);
-
-		#if defined(MDEBUG) && MDEBUG
-		delete solution;
-		solution = new Solution();
-		solution->load("saves/", filename);
-		#endif /* MDEBUG */
+		solution->save(path, filename);
 	}
 
 	delete problem_type;

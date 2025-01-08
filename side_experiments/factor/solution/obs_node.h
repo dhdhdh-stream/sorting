@@ -29,19 +29,6 @@ public:
 							 RunHelper& run_helper,
 							 ScopeHistory* scope_history);
 
-	void commit_gather_activate(AbstractNode*& curr_node,
-								Problem* problem,
-								std::vector<ContextLayer>& context,
-								RunHelper& run_helper,
-								int& node_count,
-								AbstractNode*& potential_node_context,
-								bool& potential_is_branch);
-	void commit_activate(AbstractNode*& curr_node,
-						 Problem* problem,
-						 std::vector<ContextLayer>& context,
-						 RunHelper& run_helper,
-						 PotentialCommit* potential_commit);
-
 	void clean_inputs(Scope* scope,
 					  int node_id);
 	void clean_inputs(Scope* scope);
