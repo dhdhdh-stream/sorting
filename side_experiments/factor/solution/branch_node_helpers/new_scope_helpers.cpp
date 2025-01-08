@@ -1,5 +1,12 @@
 #include "branch_node.h"
 
+#include <iostream>
+
+#include "problem.h"
+#include "scope.h"
+#include "solution_helpers.h"
+#include "utilities.h"
+
 using namespace std;
 
 void BranchNode::new_scope_activate(AbstractNode*& curr_node,

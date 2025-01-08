@@ -1,9 +1,12 @@
 #include "pass_through_experiment.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
 #include "globals.h"
+#include "obs_node.h"
 #include "problem.h"
 #include "scope.h"
 #include "scope_node.h"
@@ -93,13 +96,13 @@ void PassThroughExperiment::explore_activate(
 			int type = type_distribution(generator);
 			if (type >= 2 && this->scope_context->child_scopes.size() > 0) {
 				this->curr_step_types.push_back(STEP_TYPE_SCOPE);
-				this->curr_actions.push_back(NULL);
+				this->curr_actions.push_back(Action());
 
 				uniform_int_distribution<int> child_scope_distribution(0, this->scope_context->child_scopes.size()-1);
 				this->curr_scopes.push_back(this->scope_context->child_scopes[child_scope_distribution(generator)]);
 			} else if (type >= 1 && this->scope_context->existing_scopes.size() > 0) {
 				this->curr_step_types.push_back(STEP_TYPE_SCOPE);
-				this->curr_actions.push_back(NULL);
+				this->curr_actions.push_back(Action());
 
 				uniform_int_distribution<int> existing_scope_distribution(0, this->scope_context->existing_scopes.size()-1);
 				this->curr_scopes.push_back(this->scope_context->existing_scopes[existing_scope_distribution(generator)]);

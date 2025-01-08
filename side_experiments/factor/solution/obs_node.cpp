@@ -2,6 +2,10 @@
 
 #include <iostream>
 
+#include "abstract_experiment.h"
+#include "factor.h"
+#include "scope.h"
+
 using namespace std;
 
 ObsNode::ObsNode() {
@@ -13,9 +17,9 @@ ObsNode::ObsNode(ObsNode* original,
 	this->type = NODE_TYPE_OBS;
 
 	for (int f_index = 0; f_index < (int)original->factors.size(); f_index++) {
-		this->factors.push_back(new Factor(
-			original->factors[f_index],
-			parent_solution));
+		Factor* factor = new Factor(original->factors[f_index],
+									parent_solution);
+		this->factors.push_back(factor);
 	}
 
 	this->next_node_id = original->next_node_id;

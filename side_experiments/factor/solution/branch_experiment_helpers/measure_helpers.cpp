@@ -1,5 +1,14 @@
 #include "branch_experiment.h"
 
+#include <iostream>
+
+#include "abstract_node.h"
+#include "constants.h"
+#include "problem.h"
+#include "scope.h"
+#include "solution_helpers.h"
+#include "utilities.h"
+
 using namespace std;
 
 #if defined(MDEBUG) && MDEBUG

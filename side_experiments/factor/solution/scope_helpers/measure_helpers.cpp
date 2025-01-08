@@ -6,6 +6,7 @@
 #include "branch_node.h"
 #include "constants.h"
 #include "globals.h"
+#include "obs_node.h"
 #include "scope_node.h"
 
 using namespace std;

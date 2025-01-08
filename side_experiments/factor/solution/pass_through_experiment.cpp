@@ -1,5 +1,7 @@
 #include "pass_through_experiment.h"
 
+#include <limits>
+
 using namespace std;
 
 PassThroughExperiment::PassThroughExperiment(Scope* scope_context,

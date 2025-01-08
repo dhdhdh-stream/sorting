@@ -1,5 +1,15 @@
 #include "branch_experiment.h"
 
+#include "action_node.h"
+#include "branch_node.h"
+#include "constants.h"
+#include "globals.h"
+#include "obs_node.h"
+#include "problem.h"
+#include "scope.h"
+#include "scope_node.h"
+#include "solution_helpers.h"
+
 using namespace std;
 
 #if defined(MDEBUG) && MDEBUG
@@ -18,7 +28,7 @@ void BranchExperiment::explore_activate(
 	run_helper.num_actions++;
 
 	this->num_instances_until_target--;
-	if (!history->has_target
+	if (history->existing_predicted_scores.size() == 0
 			&& this->num_instances_until_target == 0) {
 		run_helper.has_explore = true;
 
@@ -93,13 +103,13 @@ void BranchExperiment::explore_activate(
 			int type = type_distribution(generator);
 			if (type >= 2 && this->scope_context->child_scopes.size() > 0) {
 				this->curr_step_types.push_back(STEP_TYPE_SCOPE);
-				this->curr_actions.push_back(NULL);
+				this->curr_actions.push_back(Action());
 
 				uniform_int_distribution<int> child_scope_distribution(0, this->scope_context->child_scopes.size()-1);
 				this->curr_scopes.push_back(this->scope_context->child_scopes[child_scope_distribution(generator)]);
 			} else if (type >= 1 && this->scope_context->existing_scopes.size() > 0) {
 				this->curr_step_types.push_back(STEP_TYPE_SCOPE);
-				this->curr_actions.push_back(NULL);
+				this->curr_actions.push_back(Action());
 
 				uniform_int_distribution<int> existing_scope_distribution(0, this->scope_context->existing_scopes.size()-1);
 				this->curr_scopes.push_back(this->scope_context->existing_scopes[existing_scope_distribution(generator)]);
@@ -133,7 +143,7 @@ void BranchExperiment::explore_activate(
 void BranchExperiment::explore_backprop(
 		double target_val,
 		RunHelper& run_helper) {
-	BranchExperimentHistory* history = (BranchExperimentHistory*)run_helper.experiment_histories.back();
+	BranchExperimentHistory* history = (BranchExperimentHistory*)run_helper.experiment_history;
 
 	uniform_int_distribution<int> until_distribution(0, (int)this->node_context->average_instances_per_run-1);
 	this->num_instances_until_target = 1 + until_distribution(generator);

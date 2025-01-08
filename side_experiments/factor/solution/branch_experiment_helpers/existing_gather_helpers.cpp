@@ -1,5 +1,10 @@
 #include "branch_experiment.h"
 
+#include "abstract_node.h"
+#include "constants.h"
+#include "globals.h"
+#include "solution_helpers.h"
+
 using namespace std;
 
 const int EXISTING_GATHER_ITERS = 10;

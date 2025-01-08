@@ -38,7 +38,7 @@ public:
 	virtual ~AbstractExperiment() {};
 	virtual void decrement(AbstractNode* experiment_node) = 0;
 
-	virtual bool activate(AbstractNode* experiment_node,
+	virtual void activate(AbstractNode* experiment_node,
 						  bool is_branch,
 						  AbstractNode*& curr_node,
 						  Problem* problem,

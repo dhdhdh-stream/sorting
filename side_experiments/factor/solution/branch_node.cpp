@@ -1,7 +1,11 @@
 #include "branch_node.h"
 
+#include <iostream>
+
 #include "abstract_experiment.h"
+#include "factor.h"
 #include "globals.h"
+#include "obs_node.h"
 #include "scope.h"
 #include "solution.h"
 
@@ -39,6 +43,17 @@ BranchNode::~BranchNode() {
 		this->experiments[e_index]->decrement(this);
 	}
 }
+
+#if defined(MDEBUG) && MDEBUG
+void BranchNode::clear_verify() {
+	this->verify_key = NULL;
+	if (this->verify_scores.size() > 0) {
+		cout << "seed: " << seed << endl;
+
+		throw invalid_argument("branch node remaining verify");
+	}
+}
+#endif /* MDEBUG */
 
 void BranchNode::clean_inputs(Scope* scope,
 							  int node_id) {

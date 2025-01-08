@@ -16,7 +16,6 @@ void ScopeNode::experiment_activate(AbstractNode*& curr_node,
 									RunHelper& run_helper,
 									ScopeHistory* scope_history) {
 	ScopeNodeHistory* history = new ScopeNodeHistory(this);
-	history->index = (int)scope_history->node_histories.size();
 	scope_history->node_histories[this->id] = history;
 
 	context.back().node_id = this->id;
@@ -31,7 +30,7 @@ void ScopeNode::experiment_activate(AbstractNode*& curr_node,
 	curr_node = this->next_node;
 
 	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
-		bool is_selected = this->experiments[e_index]->activate(
+		this->experiments[e_index]->activate(
 			this,
 			false,
 			curr_node,
@@ -39,8 +38,5 @@ void ScopeNode::experiment_activate(AbstractNode*& curr_node,
 			context,
 			run_helper,
 			scope_history);
-		if (is_selected) {
-			return;
-		}
 	}
 }

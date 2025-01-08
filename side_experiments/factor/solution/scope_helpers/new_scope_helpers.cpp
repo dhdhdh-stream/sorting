@@ -42,7 +42,6 @@ void new_scope_node_activate_helper(
 		{
 			BranchNode* node = (BranchNode*)curr_node;
 			node->new_scope_activate(curr_node,
-									 problem,
 									 context,
 									 run_helper,
 									 scope_history);

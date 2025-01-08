@@ -180,13 +180,11 @@ int main(int argc, char* argv[]) {
 
 					improvement_iter++;
 					if (solution->was_commit) {
-						if (improvement_iter >= COMMIT_IMPROVEMENTS_PER_ITER
-								|| consecutive_failures >= CONSECUTIVE_FAILURE_LIMIT) {
+						if (improvement_iter >= COMMIT_IMPROVEMENTS_PER_ITER) {
 							break;
 						}
 					} else {
-						if (improvement_iter >= IMPROVEMENTS_PER_ITER
-								|| consecutive_failures >= CONSECUTIVE_FAILURE_LIMIT) {
+						if (improvement_iter >= IMPROVEMENTS_PER_ITER) {
 							break;
 						}
 					}

@@ -9,6 +9,7 @@
 #include "run_helper.h"
 
 class AbstractNode;
+class AbstractNodeHistory;
 class NewScopeExperiment;
 class PotentialCommit;
 class Problem;

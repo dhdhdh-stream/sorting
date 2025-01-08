@@ -1,5 +1,10 @@
 #include "obs_node.h"
 
+#include "abstract_experiment.h"
+#include "factor.h"
+#include "problem.h"
+#include "scope.h"
+
 using namespace std;
 
 void ObsNode::experiment_activate(AbstractNode*& curr_node,
@@ -37,16 +42,21 @@ void ObsNode::experiment_activate(AbstractNode*& curr_node,
 	history->factor_initialized = vector<bool>(this->factors.size());
 	history->factor_values = vector<double>(this->factors.size());
 	for (int f_index = 0; f_index < (int)this->factors.size(); f_index++) {
-		this->factors[f_index]->activate(context,
+		bool initialized;
+		double value;
+		this->factors[f_index]->activate(f_index,
+										 context,
 										 run_helper,
-										 history->factor_initialized[f_index],
-										 history->factor_values[f_index]);
+										 initialized,
+										 value);
+		history->factor_initialized[f_index] = initialized;
+		history->factor_values[f_index] = value;
 	}
 
 	curr_node = this->next_node;
 
 	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
-		bool is_selected = this->experiments[e_index]->activate(
+		this->experiments[e_index]->activate(
 			this,
 			false,
 			curr_node,
@@ -54,8 +64,5 @@ void ObsNode::experiment_activate(AbstractNode*& curr_node,
 			context,
 			run_helper,
 			scope_history);
-		if (is_selected) {
-			return;
-		}
 	}
 }

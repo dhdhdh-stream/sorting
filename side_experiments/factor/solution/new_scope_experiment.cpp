@@ -2,8 +2,10 @@
 
 #include "action_node.h"
 #include "branch_node.h"
+#include "factor.h"
 #include "globals.h"
 #include "network.h"
+#include "obs_node.h"
 #include "problem.h"
 #include "scope.h"
 #include "scope_node.h"
@@ -156,12 +158,12 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 							new_action_node->next_node_id = new_ending_node->id;
 							new_action_node->next_node = new_ending_node;
 
-							new_ending_node->ancestors.push_back(new_action_node);
+							new_ending_node->ancestor_ids.push_back(new_action_node->id);
 						} else {
 							new_action_node->next_node_id = it->second->id;
 							new_action_node->next_node = it->second;
 
-							it->second->ancestors.push_back(new_action_node);
+							it->second->ancestor_ids.push_back(new_action_node->id);
 						}
 					}
 					break;
@@ -176,12 +178,12 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 							new_scope_node->next_node_id = new_ending_node->id;
 							new_scope_node->next_node = new_ending_node;
 
-							new_ending_node->ancestors.push_back(new_scope_node);
+							new_ending_node->ancestor_ids.push_back(new_scope_node->id);
 						} else {
 							new_scope_node->next_node_id = it->second->id;
 							new_scope_node->next_node = it->second;
 
-							it->second->ancestors.push_back(new_scope_node);
+							it->second->ancestor_ids.push_back(new_scope_node->id);
 						}
 					}
 					break;
@@ -197,7 +199,7 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 								.find(original_input_node);
 							if (input_it != node_mappings.end()) {
 								new_branch_node->factor_ids.push_back(
-									{input_it->id, original_branch_node->factor_ids[f_index].second});
+									{input_it->second->id, original_branch_node->factor_ids[f_index].second});
 								new_branch_node->factor_weights.push_back(
 									original_branch_node->factor_weights[f_index]);
 							}
@@ -209,12 +211,12 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 							new_branch_node->original_next_node_id = new_ending_node->id;
 							new_branch_node->original_next_node = new_ending_node;
 
-							new_ending_node->ancestors.push_back(new_branch_node);
+							new_ending_node->ancestor_ids.push_back(new_branch_node->id);
 						} else {
 							new_branch_node->original_next_node_id = original_it->second->id;
 							new_branch_node->original_next_node = original_it->second;
 
-							original_it->second->ancestors.push_back(new_branch_node);
+							original_it->second->ancestor_ids.push_back(new_branch_node->id);
 						}
 						map<AbstractNode*, AbstractNode*>::iterator branch_it = node_mappings
 							.find(original_branch_node->branch_next_node);
@@ -222,12 +224,12 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 							new_branch_node->branch_next_node_id = new_ending_node->id;
 							new_branch_node->branch_next_node = new_ending_node;
 
-							new_ending_node->ancestors.push_back(new_branch_node);
+							new_ending_node->ancestor_ids.push_back(new_branch_node->id);
 						} else {
 							new_branch_node->branch_next_node_id = branch_it->second->id;
 							new_branch_node->branch_next_node = branch_it->second;
 
-							branch_it->second->ancestors.push_back(new_branch_node);
+							branch_it->second->ancestor_ids.push_back(new_branch_node->id);
 						}
 					}
 					break;
@@ -238,10 +240,7 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 
 						for (int f_index = 0; f_index < (int)original_obs_node->factors.size(); f_index++) {
 							Factor* original_factor = original_obs_node->factors[f_index];
-
 							Factor* new_factor = new Factor();
-							new_factor->parent = new_obs_node;
-							new_factor->index = f_index;
 
 							new_factor->network = new Network(original_factor->network);
 							for (int i_index = (int)original_factor->inputs.size()-1; i_index >= 0; i_index--) {
@@ -267,12 +266,12 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 							new_obs_node->next_node_id = new_ending_node->id;
 							new_obs_node->next_node = new_ending_node;
 
-							new_ending_node->ancestors.push_back(new_obs_node);
+							new_ending_node->ancestor_ids.push_back(new_obs_node->id);
 						} else {
 							new_obs_node->next_node_id = it->second->id;
 							new_obs_node->next_node = it->second;
 
-							it->second->ancestors.push_back(new_obs_node);
+							it->second->ancestor_ids.push_back(new_obs_node->id);
 						}
 					}
 					break;

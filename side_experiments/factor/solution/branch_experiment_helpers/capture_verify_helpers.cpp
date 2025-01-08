@@ -2,6 +2,14 @@
 
 #include "branch_experiment.h"
 
+#include <iostream>
+
+#include "constants.h"
+#include "problem.h"
+#include "scope.h"
+#include "solution_helpers.h"
+#include "utilities.h"
+
 using namespace std;
 
 void BranchExperiment::capture_verify_activate(AbstractNode*& curr_node,

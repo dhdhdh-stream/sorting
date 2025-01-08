@@ -1,9 +1,20 @@
 #include "factor.h"
 
+#include "branch_node.h"
+#include "network.h"
+#include "obs_node.h"
+#include "scope.h"
+#include "solution.h"
+
 using namespace std;
 
 Factor::Factor() {
 	// do nothing
+}
+
+Factor::Factor(Factor* original,
+			   Solution* parent_solution) {
+	
 }
 
 Factor::~Factor() {
@@ -77,7 +88,7 @@ void Factor::clean_inputs(Scope* scope) {
 	}
 }
 
-void BranchNode::save(ofstream& output_file) {
+void Factor::save(ofstream& output_file) {
 	output_file << this->inputs.size() << endl;
 	for (int i_index = 0; i_index < (int)this->inputs.size(); i_index++) {
 		output_file << this->inputs[i_index].first.first.size() << endl;
@@ -93,8 +104,8 @@ void BranchNode::save(ofstream& output_file) {
 	this->network->save(output_file);
 }
 
-void BranchNode::load(ifstream& input_file,
-					  Solution* parent_solution) {
+void Factor::load(ifstream& input_file,
+				  Solution* parent_solution) {
 	string num_inputs_line;
 	getline(input_file, num_inputs_line);
 	int num_inputs = stoi(num_inputs_line);
@@ -159,7 +170,7 @@ void Factor::link(Solution* parent_solution) {
 
 					if (this->inputs[i_index].second.first == -1) {
 						bool is_existing = false;
-						for (int ii_index = 0; ii_index < (int)input_action_node->input_scope_contexts.size(); ii_index++) {
+						for (int ii_index = 0; ii_index < (int)obs_node->input_scope_contexts.size(); ii_index++) {
 							if (obs_node->input_scope_contexts[ii_index] == this->inputs[i_index].first.first
 									&& obs_node->input_node_context_ids[ii_index] == this->inputs[i_index].first.second
 									&& obs_node->input_obs_indexes[ii_index] == this->inputs[i_index].second.second) {

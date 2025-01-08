@@ -1,5 +1,8 @@
 #include "obs_node.h"
 
+#include "factor.h"
+#include "problem.h"
+
 using namespace std;
 
 void ObsNode::activate(AbstractNode*& curr_node,
@@ -31,10 +34,11 @@ void ObsNode::activate(AbstractNode*& curr_node,
 		}
 	}
 
-	for (int f_index = 0; f_index < this->factors.size(); f_index++) {
+	for (int f_index = 0; f_index < (int)this->factors.size(); f_index++) {
 		bool initialized;
 		double value;
-		this->factors[f_index]->activate(context,
+		this->factors[f_index]->activate(f_index,
+										 context,
 										 run_helper,
 										 initialized,
 										 value);

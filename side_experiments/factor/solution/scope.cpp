@@ -2,6 +2,12 @@
 
 #include <iostream>
 
+#include "action_node.h"
+#include "branch_node.h"
+#include "obs_node.h"
+#include "scope_node.h"
+#include "solution.h"
+
 using namespace std;
 
 Scope::Scope() {
@@ -141,7 +147,7 @@ void Scope::load(ifstream& input_file,
 			{
 				ObsNode* obs_node = new ObsNode();
 				obs_node->parent = this;
-				obs_node->id = od;
+				obs_node->id = id;
 				obs_node->load(input_file,
 							   parent_solution);
 				this->nodes[obs_node->id] = obs_node;

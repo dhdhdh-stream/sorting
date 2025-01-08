@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+#include "problem.h"
+
 using namespace std;
 
 BranchExperiment::BranchExperiment(Scope* scope_context,

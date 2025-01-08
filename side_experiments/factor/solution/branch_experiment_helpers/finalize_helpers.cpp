@@ -3,6 +3,8 @@
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
+#include "factor.h"
+#include "obs_node.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
@@ -57,7 +59,7 @@ void BranchExperiment::finalize(Solution* duplicate) {
 						obs_node->next_node_id = new_ending_node->id;
 						obs_node->next_node = new_ending_node;
 
-						new_ending_node->ancestors.push_back(obs_node);
+						new_ending_node->ancestor_ids.push_back(obs_node->id);
 
 						break;
 					}
@@ -90,14 +92,14 @@ void BranchExperiment::finalize(Solution* duplicate) {
 			{
 				ActionNode* action_node = (ActionNode*)duplicate_explore_node;
 
-				for (int a_index = 0; a_index < (int)action_node->next_node->ancestors.size(); a_index++) {
-					if (action_node->next_node->ancestors[a_index] == action_node) {
-						action_node->next_node->ancestors.erase(
-							action_node->next_node->ancestors.begin() + a_index);
+				for (int a_index = 0; a_index < (int)action_node->next_node->ancestor_ids.size(); a_index++) {
+					if (action_node->next_node->ancestor_ids[a_index] == action_node->id) {
+						action_node->next_node->ancestor_ids.erase(
+							action_node->next_node->ancestor_ids.begin() + a_index);
 						break;
 					}
 				}
-				action_node->next_node->ancestors.push_back(new_branch_node);
+				action_node->next_node->ancestor_ids.push_back(new_branch_node->id);
 
 				new_branch_node->original_next_node_id = action_node->next_node_id;
 				new_branch_node->original_next_node = action_node->next_node;
@@ -107,14 +109,14 @@ void BranchExperiment::finalize(Solution* duplicate) {
 			{
 				ScopeNode* scope_node = (ScopeNode*)duplicate_explore_node;
 
-				for (int a_index = 0; a_index < (int)scope_node->next_node->ancestors.size(); a_index++) {
-					if (scope_node->next_node->ancestors[a_index] == scope_node) {
-						scope_node->next_node->ancestors.erase(
-							scope_node->next_node->ancestors.begin() + a_index);
+				for (int a_index = 0; a_index < (int)scope_node->next_node->ancestor_ids.size(); a_index++) {
+					if (scope_node->next_node->ancestor_ids[a_index] == scope_node->id) {
+						scope_node->next_node->ancestor_ids.erase(
+							scope_node->next_node->ancestor_ids.begin() + a_index);
 						break;
 					}
 				}
-				scope_node->next_node->ancestors.push_back(new_branch_node);
+				scope_node->next_node->ancestor_ids.push_back(new_branch_node->id);
 
 				new_branch_node->original_next_node_id = scope_node->next_node_id;
 				new_branch_node->original_next_node = scope_node->next_node;
@@ -125,26 +127,26 @@ void BranchExperiment::finalize(Solution* duplicate) {
 				BranchNode* branch_node = (BranchNode*)duplicate_explore_node;
 
 				if (this->is_branch) {
-					for (int a_index = 0; a_index < (int)branch_node->branch_next_node->ancestors.size(); a_index++) {
-						if (branch_node->branch_next_node->ancestors[a_index] == branch_node) {
-							branch_node->branch_next_node->ancestors.erase(
-								branch_node->branch_next_node->ancestors.begin() + a_index);
+					for (int a_index = 0; a_index < (int)branch_node->branch_next_node->ancestor_ids.size(); a_index++) {
+						if (branch_node->branch_next_node->ancestor_ids[a_index] == branch_node->id) {
+							branch_node->branch_next_node->ancestor_ids.erase(
+								branch_node->branch_next_node->ancestor_ids.begin() + a_index);
 							break;
 						}
 					}
-					branch_node->branch_next_node->ancestors.push_back(new_branch_node);
+					branch_node->branch_next_node->ancestor_ids.push_back(new_branch_node->id);
 
 					new_branch_node->original_next_node_id = branch_node->branch_next_node_id;
 					new_branch_node->original_next_node = branch_node->branch_next_node;
 				} else {
-					for (int a_index = 0; a_index < (int)branch_node->original_next_node->ancestors.size(); a_index++) {
-						if (branch_node->original_next_node->ancestors[a_index] == branch_node) {
-							branch_node->original_next_node->ancestors.erase(
-								branch_node->original_next_node->ancestors.begin() + a_index);
+					for (int a_index = 0; a_index < (int)branch_node->original_next_node->ancestor_ids.size(); a_index++) {
+						if (branch_node->original_next_node->ancestor_ids[a_index] == branch_node->id) {
+							branch_node->original_next_node->ancestor_ids.erase(
+								branch_node->original_next_node->ancestor_ids.begin() + a_index);
 							break;
 						}
 					}
-					branch_node->original_next_node->ancestors.push_back(new_branch_node);
+					branch_node->original_next_node->ancestor_ids.push_back(new_branch_node->id);
 
 					new_branch_node->original_next_node_id = branch_node->original_next_node_id;
 					new_branch_node->original_next_node = branch_node->original_next_node;
@@ -157,7 +159,7 @@ void BranchExperiment::finalize(Solution* duplicate) {
 
 				if (obs_node->next_node == NULL) {
 					if (new_ending_node != NULL) {
-						new_ending_node->ancestors.push_back(new_branch_node);
+						new_ending_node->ancestor_ids.push_back(new_branch_node->id);
 
 						new_branch_node->original_next_node_id = new_ending_node->id;
 						new_branch_node->original_next_node = new_ending_node;
@@ -175,7 +177,7 @@ void BranchExperiment::finalize(Solution* duplicate) {
 									p_obs_node->next_node_id = new_ending_node->id;
 									p_obs_node->next_node = new_ending_node;
 
-									new_ending_node->ancestors.push_back(p_obs_node);
+									new_ending_node->ancestor_ids.push_back(p_obs_node->id);
 
 									break;
 								}
@@ -187,20 +189,20 @@ void BranchExperiment::finalize(Solution* duplicate) {
 						new_ending_node->next_node_id = -1;
 						new_ending_node->next_node = NULL;
 
-						new_ending_node->ancestors.push_back(new_branch_node);
+						new_ending_node->ancestor_ids.push_back(new_branch_node->id);
 
 						new_branch_node->original_next_node_id = new_ending_node->id;
 						new_branch_node->original_next_node = new_ending_node;
 					}
 				} else {
-					for (int a_index = 0; a_index < (int)obs_node->next_node->ancestors.size(); a_index++) {
-						if (obs_node->next_node->ancestors[a_index] == obs_node) {
-							obs_node->next_node->ancestors.erase(
-								obs_node->next_node->ancestors.begin() + a_index);
+					for (int a_index = 0; a_index < (int)obs_node->next_node->ancestor_ids.size(); a_index++) {
+						if (obs_node->next_node->ancestor_ids[a_index] == obs_node->id) {
+							obs_node->next_node->ancestor_ids.erase(
+								obs_node->next_node->ancestor_ids.begin() + a_index);
 							break;
 						}
 					}
-					obs_node->next_node->ancestors.push_back(new_branch_node);
+					obs_node->next_node->ancestor_ids.push_back(new_branch_node->id);
 
 					new_branch_node->original_next_node_id = obs_node->next_node_id;
 					new_branch_node->original_next_node = obs_node->next_node;
@@ -210,12 +212,12 @@ void BranchExperiment::finalize(Solution* duplicate) {
 		}
 
 		if (this->best_step_types.size() == 0) {
-			exit_node->ancestors.push_back(new_branch_node);
+			exit_node->ancestor_ids.push_back(new_branch_node->id);
 
 			new_branch_node->branch_next_node_id = exit_node_id;
 			new_branch_node->branch_next_node = exit_node;
 		} else {
-			new_nodes[0]->ancestors.push_back(new_branch_node);
+			new_nodes[0]->ancestor_ids.push_back(new_branch_node->id);
 
 			new_branch_node->branch_next_node_id = new_nodes[0]->id;
 			new_branch_node->branch_next_node = new_nodes[0];
@@ -260,13 +262,13 @@ void BranchExperiment::finalize(Solution* duplicate) {
 			}
 			break;
 		}
-		new_branch_node->ancestors.push_back(duplicate_explore_node);
+		new_branch_node->ancestor_ids.push_back(duplicate_explore_node->id);
 
 		for (int f_index = 0; f_index < (int)this->new_factor_ids.size(); f_index++) {
 			ObsNode* obs_node = (ObsNode*)duplicate_local_scope->nodes[this->new_factor_ids[f_index].first];
 			Factor* factor = obs_node->factors[this->new_factor_ids[f_index].second];
 
-			factor->link(parent_solution);
+			factor->link(duplicate);
 
 			vector<Scope*> scope_context{duplicate_local_scope};
 			vector<int> node_context_ids{this->new_factor_ids[f_index].first};
@@ -306,7 +308,7 @@ void BranchExperiment::finalize(Solution* duplicate) {
 				scope_node->next_node = next_node;
 			}
 
-			next_node->ancestors.push_back(new_nodes[s_index]);
+			next_node->ancestor_ids.push_back(new_nodes[s_index]->id);
 		}
 
 		#if defined(MDEBUG) && MDEBUG
@@ -315,8 +317,8 @@ void BranchExperiment::finalize(Solution* duplicate) {
 			this->verify_problems.clear();
 			duplicate->verify_seeds = this->verify_seeds;
 
-			this->branch_node->verify_key = this;
-			this->branch_node->verify_scores = this->verify_scores;
+			new_branch_node->verify_key = this;
+			new_branch_node->verify_scores = this->verify_scores;
 		}
 		#endif /* MDEBUG */
 	}

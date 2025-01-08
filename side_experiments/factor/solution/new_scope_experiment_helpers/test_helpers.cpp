@@ -2,6 +2,10 @@
 
 #include <iostream>
 
+#include "constants.h"
+#include "scope.h"
+#include "scope_node.h"
+
 using namespace std;
 
 #if defined(MDEBUG) && MDEBUG
@@ -48,7 +52,7 @@ void NewScopeExperiment::test_activate(
 void NewScopeExperiment::test_backprop(
 		double target_val,
 		RunHelper& run_helper) {
-	NewScopeExperimentHistory* history = (NewScopeExperimentHistory*)run_helper.experiment_histories.back();
+	NewScopeExperimentHistory* history = (NewScopeExperimentHistory*)run_helper.experiment_history;
 
 	bool is_fail = false;
 

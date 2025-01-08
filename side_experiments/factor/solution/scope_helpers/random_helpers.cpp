@@ -4,7 +4,6 @@
 
 #include "action_node.h"
 #include "branch_node.h"
-#include "factor_node.h"
 #include "globals.h"
 #include "obs_node.h"
 #include "scope_node.h"

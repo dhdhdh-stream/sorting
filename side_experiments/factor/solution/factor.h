@@ -1,11 +1,21 @@
 #ifndef FACTOR_H
 #define FACTOR_H
 
+#include <fstream>
+#include <utility>
+#include <vector>
+
+#include "context_layer.h"
+#include "run_helper.h"
+
+class Network;
+class ObsNode;
+class Scope;
+class ScopeHistory;
+class Solution;
+
 class Factor {
 public:
-	ObsNode* parent;
-	int index;
-
 	std::vector<std::pair<std::pair<std::vector<Scope*>,std::vector<int>>,
 		std::pair<int,int>>> inputs;
 	Network* network;
@@ -18,7 +28,8 @@ public:
 		   Solution* parent_solution);
 	~Factor();
 
-	void activate(vector<ContextLayer>& context,
+	void activate(int index,
+				  std::vector<ContextLayer>& context,
 				  RunHelper& run_helper,
 				  bool& initialized,
 				  double& value);

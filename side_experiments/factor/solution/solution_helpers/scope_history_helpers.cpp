@@ -1,5 +1,14 @@
 #include "solution_helpers.h"
 
+#include "action_node.h"
+#include "branch_node.h"
+#include "factor.h"
+#include "globals.h"
+#include "obs_node.h"
+#include "problem.h"
+#include "scope.h"
+#include "scope_node.h"
+
 using namespace std;
 
 void update_scores(ScopeHistory* scope_history,
@@ -22,7 +31,7 @@ void gather_possible_helper(ScopeHistory* scope_history,
 							vector<Scope*>& scope_context,
 							vector<int>& node_context,
 							int& node_count,
-							pair<pair<vector<Scope*>,vector<int>>,vector<int,int>>& new_input) {
+							pair<pair<vector<Scope*>,vector<int>>,pair<int,int>>& new_input) {
 	Scope* scope = scope_history->scope;
 
 	uniform_int_distribution<int> obs_distribution(0, problem_type->num_obs()-1);

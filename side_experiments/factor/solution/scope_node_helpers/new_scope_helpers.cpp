@@ -30,7 +30,7 @@ void ScopeNode::new_scope_activate(
 	 * - still need to check experiments
 	 */
 	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
-		bool is_selected = this->experiments[e_index]->activate(
+		this->experiments[e_index]->activate(
 			this,
 			false,
 			curr_node,
@@ -38,9 +38,6 @@ void ScopeNode::new_scope_activate(
 			context,
 			run_helper,
 			NULL);
-		if (is_selected) {
-			return;
-		}
 	}
 }
 
@@ -65,7 +62,7 @@ void ScopeNode::new_scope_capture_verify_activate(
 	 * - still need to check experiments
 	 */
 	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
-		bool is_selected = this->experiments[e_index]->activate(
+		this->experiments[e_index]->activate(
 			this,
 			false,
 			curr_node,
@@ -73,9 +70,6 @@ void ScopeNode::new_scope_capture_verify_activate(
 			context,
 			run_helper,
 			NULL);
-		if (is_selected) {
-			return;
-		}
 	}
 }
 #endif /* MDEBUG */

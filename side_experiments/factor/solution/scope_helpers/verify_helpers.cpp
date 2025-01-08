@@ -7,6 +7,7 @@
 #include "action_node.h"
 #include "branch_node.h"
 #include "globals.h"
+#include "obs_node.h"
 #include "scope_node.h"
 #include "solution.h"
 
@@ -37,6 +38,7 @@ void node_verify_activate_helper(AbstractNode*& curr_node,
 		{
 			BranchNode* node = (BranchNode*)curr_node;
 			node->verify_activate(curr_node,
+								  problem,
 								  context,
 								  run_helper);
 		}

@@ -1,6 +1,19 @@
 #ifndef OBS_NODE_H
 #define OBS_NODE_H
 
+#include <fstream>
+#include <vector>
+
+#include "abstract_node.h"
+#include "context_layer.h"
+#include "run_helper.h"
+
+class Factor;
+class Problem;
+class Scope;
+class ScopeHistory;
+class Solution;
+
 class ObsNodeHistory;
 class ObsNode : public AbstractNode {
 public:
@@ -14,7 +27,7 @@ public:
 	AbstractNode* next_node;
 
 	ObsNode();
-	ObsNode(ActionNode* original,
+	ObsNode(ObsNode* original,
 			Solution* parent_solution);
 	~ObsNode();
 
@@ -47,7 +60,7 @@ public:
 	std::vector<bool> factor_initialized;
 	std::vector<double> factor_values;
 
-	ActionNodeHistory(ActionNode* node);
+	ObsNodeHistory(ObsNode* node);
 };
 
 #endif /* OBS_NODE_H */

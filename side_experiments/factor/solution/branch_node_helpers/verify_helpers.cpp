@@ -2,6 +2,13 @@
 
 #include "branch_node.h"
 
+#include <iostream>
+
+#include "globals.h"
+#include "problem.h"
+#include "scope.h"
+#include "utilities.h"
+
 using namespace std;
 
 void BranchNode::verify_activate(AbstractNode*& curr_node,
@@ -10,7 +17,7 @@ void BranchNode::verify_activate(AbstractNode*& curr_node,
 								 RunHelper& run_helper) {
 	double sum_vals = 0.0;
 	for (int f_index = 0; f_index < (int)this->factor_ids.size(); f_index++) {
-		map<pair<pair<vector<Scope*>,vector<int>>, pair<int,int>>>::iterator it
+		map<pair<pair<vector<Scope*>,vector<int>>,pair<int,int>>, double>::iterator it
 			= context.back().obs_history.find(
 				{{vector<Scope*>{this->parent},vector<int>{this->factor_ids[f_index].first}},
 					{this->factor_ids[f_index].second,-1}});
@@ -74,11 +81,11 @@ void BranchNode::verify_activate(AbstractNode*& curr_node,
 				if (is_branch) {
 					context[context.size() - this->input_scope_contexts[i_index].size()]
 						.obs_history[{{this->input_scope_contexts[i_index],
-							this->input_node_context_ids[i_index]}, -1}] = 1.0;
+							this->input_node_context_ids[i_index]}, {-1,-1}}] = 1.0;
 				} else {
 					context[context.size() - this->input_scope_contexts[i_index].size()]
 						.obs_history[{{this->input_scope_contexts[i_index],
-							this->input_node_context_ids[i_index]}, -1}] = -1.0;
+							this->input_node_context_ids[i_index]}, {-1,-1}}] = -1.0;
 				}
 			}
 		}

@@ -5,9 +5,14 @@
 #include <thread>
 #include <random>
 
+#include "abstract_experiment.h"
+#include "context_layer.h"
 #include "globals.h"
 #include "minesweeper.h"
+#include "run_helper.h"
+#include "scope.h"
 #include "solution.h"
+#include "solution_helpers.h"
 
 using namespace std;
 

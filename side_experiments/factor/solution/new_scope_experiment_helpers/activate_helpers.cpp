@@ -1,5 +1,12 @@
 #include "new_scope_experiment.h"
 
+#include "action_node.h"
+#include "branch_node.h"
+#include "globals.h"
+#include "obs_node.h"
+#include "scope.h"
+#include "scope_node.h"
+
 using namespace std;
 
 void NewScopeExperiment::pre_activate(vector<ContextLayer>& context,
@@ -16,8 +23,7 @@ void NewScopeExperiment::pre_activate(vector<ContextLayer>& context,
 			double selected_probability = 1.0 / (1.0 + this->average_remaining_experiments_from_start);
 			uniform_real_distribution<double> distribution(0.0, 1.0);
 			if (distribution(generator) < selected_probability) {
-				NewScopeExperimentHistory* history = new NewScopeExperimentHistory(this);
-				run_helper.experiment_histories.push_back(history);
+				run_helper.experiment_history = new NewScopeExperimentHistory(this);
 			}
 
 			run_helper.experiments_seen_order.push_back(this);
@@ -59,7 +65,7 @@ void NewScopeExperiment::activate(AbstractNode* experiment_node,
 		}
 
 		if (has_match) {
-			NewScopeExperimentHistory* history = (NewScopeExperimentHistory*)run_helper.experiment_histories[0];
+			NewScopeExperimentHistory* history = (NewScopeExperimentHistory*)run_helper.experiment_history;
 
 			switch (this->state) {
 			case NEW_SCOPE_EXPERIMENT_STATE_EXPLORE:
@@ -96,7 +102,7 @@ void NewScopeExperiment::activate(AbstractNode* experiment_node,
 
 void NewScopeExperiment::back_activate(RunHelper& run_helper,
 									   ScopeHistory* scope_history) {
-	NewScopeExperimentHistory* history = (NewScopeExperimentHistory*)run_helper.experiment_histories.back();
+	NewScopeExperimentHistory* history = (NewScopeExperimentHistory*)run_helper.experiment_history;
 
 	switch (this->state) {
 	case NEW_SCOPE_EXPERIMENT_STATE_EXPLORE:
@@ -158,7 +164,7 @@ void NewScopeExperiment::back_activate(RunHelper& run_helper,
 
 void NewScopeExperiment::backprop(double target_val,
 								  RunHelper& run_helper) {
-	NewScopeExperimentHistory* history = (NewScopeExperimentHistory*)run_helper.experiment_histories.back();
+	NewScopeExperimentHistory* history = (NewScopeExperimentHistory*)run_helper.experiment_history;
 
 	switch (this->state) {
 	case NEW_SCOPE_EXPERIMENT_STATE_EXPLORE:

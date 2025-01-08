@@ -4,8 +4,11 @@
 #include <vector>
 
 #include "abstract_experiment.h"
+#include "action.h"
 #include "context_layer.h"
 #include "run_helper.h"
+
+class Scope;
 
 const int BRANCH_EXPERIMENT_STATE_EXISTING_GATHER = 0;
 const int BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING = 1;
@@ -35,13 +38,13 @@ public:
 	int explore_type;
 
 	std::vector<int> curr_step_types;
-	std::vector<Action*> curr_actions;
+	std::vector<Action> curr_actions;
 	std::vector<Scope*> curr_scopes;
 	AbstractNode* curr_exit_next_node;
 
 	double best_surprise;
 	std::vector<int> best_step_types;
-	std::vector<Action*> best_actions;
+	std::vector<Action> best_actions;
 	std::vector<Scope*> best_scopes;
 	AbstractNode* best_exit_next_node;
 
@@ -70,7 +73,7 @@ public:
 	~BranchExperiment();
 	void decrement(AbstractNode* experiment_node);
 
-	bool activate(AbstractNode* experiment_node,
+	void activate(AbstractNode* experiment_node,
 				  bool is_branch,
 				  AbstractNode*& curr_node,
 				  Problem* problem,

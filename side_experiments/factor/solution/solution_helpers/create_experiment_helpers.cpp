@@ -5,6 +5,7 @@
 #include "action_node.h"
 #include "branch_experiment.h"
 #include "branch_node.h"
+#include "commit_experiment.h"
 #include "constants.h"
 #include "globals.h"
 #include "new_scope_experiment.h"
@@ -19,57 +20,57 @@ using namespace std;
 const int PASS_THROUGH_MIN_NUM_MEASURE = 1000;
 
 void gather_nodes_seen_helper(ScopeHistory* scope_history,
-							  map<pair<AbstractNode*,bool>,int>& nodes_seen) {
-	for (map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
-			it != scope_history->node_histories.end(); it++) {
-		switch (it->second->node->type) {
+							  map<pair<AbstractNode*,bool>, int>& nodes_seen) {
+	for (map<int, AbstractNodeHistory*>::iterator h_it = scope_history->node_histories.begin();
+			h_it != scope_history->node_histories.end(); h_it++) {
+		switch (h_it->second->node->type) {
 		case NODE_TYPE_ACTION:
 		case NODE_TYPE_OBS:
-			if (!solution->was_commit || it->second->node->was_commit) {
+			if (!solution->was_commit || h_it->second->node->was_commit) {
 				if (solution->timestamp >= MAINTAIN_ITERS
 						|| scope_history->scope->id == 0 || scope_history->scope->id > solution->num_existing_scopes) {
-					map<pair<AbstractNode*,bool>, int>::iterator it = run_helper.nodes_seen
-						.find({it->second->node, false});
-					if (it == run_helper.nodes_seen.end()) {
-						run_helper.nodes_seen[{it->second->node, false}] = 1;
+					map<pair<AbstractNode*,bool>, int>::iterator seen_it = nodes_seen
+						.find({h_it->second->node, false});
+					if (seen_it == nodes_seen.end()) {
+						nodes_seen[{h_it->second->node, false}] = 1;
 					} else {
-						it->second++;
+						seen_it->second++;
 					}
 				}
 			}
 			break;
 		case NODE_TYPE_SCOPE:
 			{
-				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)it->second;
+				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)h_it->second;
 
 				gather_nodes_seen_helper(scope_node_history->scope_history,
 										 nodes_seen);
 
-				if (!solution->was_commit || it->second->node->was_commit) {
+				if (!solution->was_commit || h_it->second->node->was_commit) {
 					if (solution->timestamp >= MAINTAIN_ITERS
 							|| scope_history->scope->id == 0 || scope_history->scope->id > solution->num_existing_scopes) {
-						map<pair<AbstractNode*,bool>, int>::iterator it = run_helper.nodes_seen
-							.find({it->second->node, false});
-						if (it == run_helper.nodes_seen.end()) {
-							run_helper.nodes_seen[{it->second->node, false}] = 1;
+						map<pair<AbstractNode*,bool>, int>::iterator seen_it = nodes_seen
+							.find({h_it->second->node, false});
+						if (seen_it == nodes_seen.end()) {
+							nodes_seen[{h_it->second->node, false}] = 1;
 						} else {
-							it->second++;
+							seen_it->second++;
 						}
 					}
 				}
 			}
 			break;
 		case NODE_TYPE_BRANCH:
-			if (!solution->was_commit || it->second->node->was_commit) {
+			if (!solution->was_commit || h_it->second->node->was_commit) {
 				if (solution->timestamp >= MAINTAIN_ITERS
 						|| scope_history->scope->id == 0 || scope_history->scope->id > solution->num_existing_scopes) {
-					BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
-					map<pair<AbstractNode*,bool>, int>::iterator it = run_helper.nodes_seen
-						.find({it->second->node, branch_node_history->is_branch});
-					if (it == run_helper.nodes_seen.end()) {
-						run_helper.nodes_seen[{it->second->node, branch_node_history->is_branch}] = 1;
+					BranchNodeHistory* branch_node_history = (BranchNodeHistory*)h_it->second;
+					map<pair<AbstractNode*,bool>, int>::iterator seen_it = nodes_seen
+						.find({h_it->second->node, branch_node_history->is_branch});
+					if (seen_it == nodes_seen.end()) {
+						nodes_seen[{h_it->second->node, branch_node_history->is_branch}] = 1;
 					} else {
-						it->second++;
+						seen_it->second++;
 					}
 				}
 			}

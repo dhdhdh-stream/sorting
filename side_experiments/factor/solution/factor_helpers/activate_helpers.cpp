@@ -1,8 +1,11 @@
 #include "factor.h"
 
+#include "network.h"
+
 using namespace std;
 
-void Factor::activate(vector<ContextLayer>& context,
+void Factor::activate(int index,
+					  vector<ContextLayer>& context,
 					  RunHelper& run_helper,
 					  bool& initialized,
 					  double& value) {
@@ -49,7 +52,7 @@ void Factor::activate(vector<ContextLayer>& context,
 			if (matches[i_index]) {
 				context[context.size() - this->input_scope_contexts[i_index].size()]
 					.obs_history[{{this->input_scope_contexts[i_index],
-						this->input_node_context_ids[i_index]}, {this->index,-1}}] = this->network->output->acti_vals[0];
+						this->input_node_context_ids[i_index]}, {index,-1}}] = this->network->output->acti_vals[0];
 			}
 		}
 

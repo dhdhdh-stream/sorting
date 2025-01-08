@@ -23,7 +23,7 @@ void ActionNode::experiment_activate(AbstractNode*& curr_node,
 	curr_node = this->next_node;
 
 	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
-		bool is_selected = this->experiments[e_index]->activate(
+		this->experiments[e_index]->activate(
 			this,
 			false,
 			curr_node,
@@ -31,8 +31,5 @@ void ActionNode::experiment_activate(AbstractNode*& curr_node,
 			context,
 			run_helper,
 			scope_history);
-		if (is_selected) {
-			return;
-		}
 	}
 }

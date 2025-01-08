@@ -6,6 +6,18 @@
 #define eigen_assert(x) if (!(x)) {throw std::invalid_argument("Eigen error");}
 #include <Eigen/Dense>
 
+#include "action_node.h"
+#include "branch_node.h"
+#include "constants.h"
+#include "factor.h"
+#include "globals.h"
+#include "network.h"
+#include "nn_helpers.h"
+#include "obs_node.h"
+#include "scope.h"
+#include "scope_node.h"
+#include "solution_helpers.h"
+
 using namespace std;
 
 const int TRAIN_EXISTING_NUM_DATAPOINTS = 2000;
@@ -36,7 +48,7 @@ void BranchExperiment::train_existing_activate(
 void BranchExperiment::train_existing_backprop(
 		double target_val,
 		RunHelper& run_helper) {
-	BranchExperimentHistory* history = (BranchExperimentHistory*)run_helper.experiment_histories.back();
+	BranchExperimentHistory* history = (BranchExperimentHistory*)run_helper.experiment_history;
 
 	for (int i_index = 0; i_index < history->instance_count; i_index++) {
 		this->i_target_val_histories.push_back(target_val);
@@ -49,7 +61,7 @@ void BranchExperiment::train_existing_backprop(
 		for (int i_index = 0; i_index < (int)this->o_target_val_histories.size(); i_index++) {
 			sum_score += this->o_target_val_histories[i_index];
 		}
-		this->existing_average_score = sum_score / num_instances;
+		this->existing_average_score = sum_score / (int)this->o_target_val_histories.size();
 
 		{
 			default_random_engine generator_copy = generator;
@@ -112,7 +124,7 @@ void BranchExperiment::train_existing_backprop(
 
 			Eigen::VectorXd outputs(num_train_instances);
 			for (int i_index = 0; i_index < num_train_instances; i_index++) {
-				outputs(d_index) = this->i_target_val_histories[i_index] - this->existing_average_score;
+				outputs(i_index) = this->i_target_val_histories[i_index] - this->existing_average_score;
 			}
 
 			Eigen::VectorXd weights;
@@ -142,7 +154,7 @@ void BranchExperiment::train_existing_backprop(
 					map<pair<int,int>, double>::iterator it = this->factor_histories[i_index]
 						.find(this->existing_factor_ids[f_index]);
 					if (it != this->factor_histories[i_index].end()) {
-						sum_score += this->existing_factor_weights[f_index] * it->double;
+						sum_score += this->existing_factor_weights[f_index] * it->second;
 					}
 				}
 
@@ -239,12 +251,9 @@ void BranchExperiment::train_existing_backprop(
 			if (this->node_context->type == NODE_TYPE_OBS) {
 				ObsNode* obs_node = (ObsNode*)this->node_context;
 
-				new_factor->parent = obs_node;
-				new_factor->index = (int)obs_node->factors.size();
-
 				obs_node->factors.push_back(new_factor);
 
-				this->existing_factor_ids.push_back({obs_node->id, new_factor->index});
+				this->existing_factor_ids.push_back({obs_node->id, (int)obs_node->factors.size()-1});
 				this->existing_factor_weights.push_back(1.0);
 			} else {
 				ObsNode* new_obs_node = new ObsNode();
@@ -252,9 +261,6 @@ void BranchExperiment::train_existing_backprop(
 				new_obs_node->id = this->scope_context->node_counter;
 				this->scope_context->node_counter++;
 				this->scope_context->nodes[new_obs_node->id] = new_obs_node;
-
-				new_factor->parent = new_obs_node;
-				new_factor->index = (int)new_obs_node->factors.size();
 
 				new_obs_node->factors.push_back(new_factor);
 
@@ -266,19 +272,19 @@ void BranchExperiment::train_existing_backprop(
 						new_obs_node->next_node_id = action_node->next_node_id;
 						new_obs_node->next_node = action_node->next_node;
 
-						for (int a_index = 0; a_index < (int)action_node->next_node->ancestors.size(); a_index++) {
-							if (action_node->next_node->ancestors[a_index] == a_index) {
-								action_node->next_node->ancestors.erase(
-									action_node->next_node->ancestors.begin() + a_index);
+						for (int a_index = 0; a_index < (int)action_node->next_node->ancestor_ids.size(); a_index++) {
+							if (action_node->next_node->ancestor_ids[a_index] == action_node->id) {
+								action_node->next_node->ancestor_ids.erase(
+									action_node->next_node->ancestor_ids.begin() + a_index);
 								break;
 							}
 						}
-						action_node->next_node->ancestors.push_back(new_obs_node);
+						action_node->next_node->ancestor_ids.push_back(new_obs_node->id);
 
 						action_node->next_node_id = new_obs_node->id;
 						action_node->next_node = new_obs_node;
 
-						new_obs_node->ancestors.push_back(action_node);
+						new_obs_node->ancestor_ids.push_back(action_node->id);
 					}
 					break;
 				case NODE_TYPE_SCOPE:
@@ -288,19 +294,19 @@ void BranchExperiment::train_existing_backprop(
 						new_obs_node->next_node_id = scope_node->next_node_id;
 						new_obs_node->next_node = scope_node->next_node;
 
-						for (int a_index = 0; a_index < (int)scope_node->next_node->ancestors.size(); a_index++) {
-							if (scope_node->next_node->ancestors[a_index] == a_index) {
-								scope_node->next_node->ancestors.erase(
-									scope_node->next_node->ancestors.begin() + a_index);
+						for (int a_index = 0; a_index < (int)scope_node->next_node->ancestor_ids.size(); a_index++) {
+							if (scope_node->next_node->ancestor_ids[a_index] == scope_node->id) {
+								scope_node->next_node->ancestor_ids.erase(
+									scope_node->next_node->ancestor_ids.begin() + a_index);
 								break;
 							}
 						}
-						action_node->next_node->ancestors.push_back(new_obs_node);
+						scope_node->next_node->ancestor_ids.push_back(new_obs_node->id);
 
 						scope_node->next_node_id = new_obs_node->id;
 						scope_node->next_node = new_obs_node;
 
-						new_obs_node->ancestors.push_back(scope_node);
+						new_obs_node->ancestor_ids.push_back(scope_node->id);
 					}
 					break;
 				case NODE_TYPE_BRANCH:
@@ -311,14 +317,14 @@ void BranchExperiment::train_existing_backprop(
 							new_obs_node->next_node_id = branch_node->branch_next_node_id;
 							new_obs_node->next_node = branch_node->branch_next_node;
 
-							for (int a_index = 0; a_index < (int)branch_node->branch_next_node->ancestors.size(); a_index++) {
-								if (branch_node->branch_next_node->ancestors[a_index] == a_index) {
-									branch_node->branch_next_node->ancestors.erase(
-										branch_node->branch_next_node->ancestors.begin() + a_index);
+							for (int a_index = 0; a_index < (int)branch_node->branch_next_node->ancestor_ids.size(); a_index++) {
+								if (branch_node->branch_next_node->ancestor_ids[a_index] == branch_node->id) {
+									branch_node->branch_next_node->ancestor_ids.erase(
+										branch_node->branch_next_node->ancestor_ids.begin() + a_index);
 									break;
 								}
 							}
-							branch_node->branch_next_node->ancestors.push_back(new_obs_node);
+							branch_node->branch_next_node->ancestor_ids.push_back(new_obs_node->id);
 
 							branch_node->branch_next_node_id = new_obs_node->id;
 							branch_node->branch_next_node = new_obs_node;
@@ -326,20 +332,20 @@ void BranchExperiment::train_existing_backprop(
 							new_obs_node->next_node_id = branch_node->original_next_node_id;
 							new_obs_node->next_node = branch_node->original_next_node;
 
-							for (int a_index = 0; a_index < (int)branch_node->original_next_node->ancestors.size(); a_index++) {
-								if (branch_node->original_next_node->ancestors[a_index] == a_index) {
-									branch_node->original_next_node->ancestors.erase(
-										branch_node->original_next_node->ancestors.begin() + a_index);
+							for (int a_index = 0; a_index < (int)branch_node->original_next_node->ancestor_ids.size(); a_index++) {
+								if (branch_node->original_next_node->ancestor_ids[a_index] == branch_node->id) {
+									branch_node->original_next_node->ancestor_ids.erase(
+										branch_node->original_next_node->ancestor_ids.begin() + a_index);
 									break;
 								}
 							}
-							branch_node->original_next_node->ancestors.push_back(new_obs_node);
+							branch_node->original_next_node->ancestor_ids.push_back(new_obs_node->id);
 
 							branch_node->original_next_node_id = new_obs_node->id;
 							branch_node->original_next_node = new_obs_node;
 						}
 
-						new_obs_node->ancestors.push_back(branch_node);
+						new_obs_node->ancestor_ids.push_back(branch_node->id);
 					}
 					break;
 				}
