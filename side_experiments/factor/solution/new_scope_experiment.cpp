@@ -419,4 +419,6 @@ NewScopeExperimentHistory::NewScopeExperimentHistory(
 	this->experiment = experiment;
 
 	this->test_location_index = -1;
+
+	this->instance_count = 0;
 }

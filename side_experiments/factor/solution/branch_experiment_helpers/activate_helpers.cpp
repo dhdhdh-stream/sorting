@@ -22,8 +22,9 @@ void BranchExperiment::activate(AbstractNode* experiment_node,
 	bool is_selected = false;
 	BranchExperimentHistory* history = NULL;
 	if (is_branch == this->is_branch) {
-		if (run_helper.experiment_history->experiment == this) {
-			history = (BranchExperimentHistory*)run_helper.experiment_history->experiment;
+		if (run_helper.experiment_history != NULL
+				&& run_helper.experiment_history->experiment == this) {
+			history = (BranchExperimentHistory*)run_helper.experiment_history;
 			is_selected = true;
 		} else if (run_helper.experiment_history == NULL) {
 			bool has_seen = false;

@@ -17,7 +17,11 @@
 
 using namespace std;
 
+#if defined(MDEBUG) && MDEBUG
+const int PASS_THROUGH_MIN_NUM_MEASURE = 10;
+#else
 const int PASS_THROUGH_MIN_NUM_MEASURE = 1000;
+#endif /* MDEBUG */
 
 void gather_nodes_seen_helper(ScopeHistory* scope_history,
 							  map<pair<AbstractNode*,bool>, int>& nodes_seen) {
@@ -124,7 +128,11 @@ void create_experiment(ScopeHistory* scope_history) {
 	 *   - may block progress if incompatible spots are grouped together
 	 *   - (though may also greatly speed up future progress of course)
 	 */
+	#if defined(MDEBUG) && MDEBUG
+	uniform_int_distribution<int> non_new_distribution(0, 1);
+	#else
 	uniform_int_distribution<int> non_new_distribution(0, 9);
+	#endif /* MDEBUG */
 	if (explore_scope->new_scope_experiment == NULL
 			&& explore_node->parent->nodes.size() > 10
 			&& non_new_distribution(generator) != 0) {

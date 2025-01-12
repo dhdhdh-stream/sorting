@@ -43,7 +43,8 @@ public:
 	void new_scope_activate(AbstractNode*& curr_node,
 							Problem* problem,
 							std::vector<ContextLayer>& context,
-							RunHelper& run_helper);
+							RunHelper& run_helper,
+							ScopeHistory* scope_history);
 
 	void measure_activate(AbstractNode*& curr_node,
 						  Problem* problem,
@@ -60,6 +61,8 @@ public:
 										   std::vector<ContextLayer>& context,
 										   RunHelper& run_helper);
 	#endif /* MDEBUG */
+
+	void clear_experiments();
 
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file,

@@ -11,6 +11,13 @@ using namespace std;
 
 ScopeNode::ScopeNode() {
 	this->type = NODE_TYPE_SCOPE;
+
+	this->average_instances_per_run = 0.0;
+
+	this->was_commit = false;
+
+	this->num_measure = 0;
+	this->sum_score = 0.0;
 }
 
 ScopeNode::ScopeNode(ScopeNode* original,
@@ -35,6 +42,13 @@ ScopeNode::~ScopeNode() {
 	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
 		this->experiments[e_index]->decrement(this);
 	}
+}
+
+void ScopeNode::clear_experiments() {
+	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
+		this->experiments[e_index]->decrement(this);
+	}
+	this->experiments.clear();
 }
 
 void ScopeNode::save(ofstream& output_file) {

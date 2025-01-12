@@ -27,6 +27,10 @@ void CommitExperiment::finalize(Solution* duplicate) {
 
 				new_action_node->action = this->best_actions[s_index];
 
+				new_action_node->average_instances_per_run = this->node_context->average_instances_per_run;
+
+				new_action_node->was_commit = true;
+
 				new_nodes.push_back(new_action_node);
 			} else {
 				ScopeNode* new_scope_node = new ScopeNode();
@@ -36,6 +40,10 @@ void CommitExperiment::finalize(Solution* duplicate) {
 				duplicate_local_scope->nodes[new_scope_node->id] = new_scope_node;
 
 				new_scope_node->scope = duplicate->scopes[this->best_scopes[s_index]->id];
+
+				new_scope_node->average_instances_per_run = this->node_context->average_instances_per_run;
+
+				new_scope_node->was_commit = true;
 
 				new_nodes.push_back(new_scope_node);
 			}
@@ -68,6 +76,10 @@ void CommitExperiment::finalize(Solution* duplicate) {
 
 			new_ending_node->next_node_id = -1;
 			new_ending_node->next_node = NULL;
+
+			new_ending_node->average_instances_per_run = this->node_context->average_instances_per_run;
+
+			new_ending_node->was_commit = true;
 
 			exit_node_id = new_ending_node->id;
 			exit_node = new_ending_node;

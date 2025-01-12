@@ -13,6 +13,13 @@ using namespace std;
 
 BranchNode::BranchNode() {
 	this->type = NODE_TYPE_BRANCH;
+
+	this->average_instances_per_run = 0.0;
+
+	this->was_commit = false;
+
+	this->num_measure = 0;
+	this->sum_score = 0.0;
 }
 
 BranchNode::BranchNode(BranchNode* original) {
@@ -98,6 +105,13 @@ void BranchNode::clean_inputs(Scope* scope) {
 			this->input_node_context_ids.erase(this->input_node_context_ids.begin() + i_index);
 		}
 	}
+}
+
+void BranchNode::clear_experiments() {
+	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
+		this->experiments[e_index]->decrement(this);
+	}
+	this->experiments.clear();
 }
 
 void BranchNode::save(ofstream& output_file) {

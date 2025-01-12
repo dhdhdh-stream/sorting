@@ -20,7 +20,11 @@
 
 using namespace std;
 
+#if defined(MDEBUG) && MDEBUG
+const int TRAIN_EXISTING_NUM_DATAPOINTS = 20;
+#else
 const int TRAIN_EXISTING_NUM_DATAPOINTS = 2000;
+#endif /* MDEBUG */
 
 void BranchExperiment::train_existing_activate(
 		RunHelper& run_helper,

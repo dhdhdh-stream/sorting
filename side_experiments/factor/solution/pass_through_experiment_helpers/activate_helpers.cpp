@@ -16,7 +16,8 @@ void PassThroughExperiment::activate(AbstractNode* experiment_node,
 									 ScopeHistory* scope_history) {
 	bool is_selected = false;
 	if (is_branch == this->is_branch) {
-		if (run_helper.experiment_history->experiment == this) {
+		if (run_helper.experiment_history != NULL
+				&& run_helper.experiment_history->experiment == this) {
 			is_selected = true;
 		} else if (run_helper.experiment_history == NULL) {
 			bool has_seen = false;

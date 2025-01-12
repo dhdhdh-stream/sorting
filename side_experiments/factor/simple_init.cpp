@@ -66,14 +66,10 @@ int main(int argc, char* argv[]) {
 			create_commit_experiment(scope_history);
 		}
 
-		if (run_helper.experiment_history == NULL) {
-			for (int e_index = 0; e_index < (int)run_helper.experiments_seen_order.size(); e_index++) {
-				AbstractExperiment* experiment = run_helper.experiments_seen_order[e_index];
-				experiment->average_remaining_experiments_from_start =
-					0.9 * experiment->average_remaining_experiments_from_start
-					+ 0.1 * ((int)run_helper.experiments_seen_order.size()-1 - e_index);
-			}
-		} else {
+		delete scope_history;
+		delete problem;
+
+		if (run_helper.experiment_history != NULL) {
 			for (int e_index = 0; e_index < (int)run_helper.experiments_seen_order.size(); e_index++) {
 				AbstractExperiment* experiment = run_helper.experiments_seen_order[e_index];
 				experiment->average_remaining_experiments_from_start =
@@ -81,36 +77,34 @@ int main(int argc, char* argv[]) {
 					+ 0.1 * ((int)run_helper.experiments_seen_order.size()-1 - e_index
 						+ run_helper.experiment_history->experiment->average_remaining_experiments_from_start);
 			}
+
+			run_helper.experiment_history->experiment->backprop(
+				target_val,
+				run_helper);
+			if (run_helper.experiment_history->experiment->result == EXPERIMENT_RESULT_FAIL) {
+				run_helper.experiment_history->experiment->finalize(NULL);
+				delete run_helper.experiment_history->experiment;
+			} else if (run_helper.experiment_history->experiment->result == EXPERIMENT_RESULT_SUCCESS) {
+				int last_updated_scope_id = run_helper.experiment_history->experiment->scope_context->id;
+
+				run_helper.experiment_history->experiment->finalize(solution);
+				delete run_helper.experiment_history->experiment;
+
+				Scope* experiment_scope = solution->scopes[last_updated_scope_id];
+				clean_scope(experiment_scope,
+							solution);
+				solution->clean_scopes();
+
+				break;
+			}
+		} else {
+			for (int e_index = 0; e_index < (int)run_helper.experiments_seen_order.size(); e_index++) {
+				AbstractExperiment* experiment = run_helper.experiments_seen_order[e_index];
+				experiment->average_remaining_experiments_from_start =
+					0.9 * experiment->average_remaining_experiments_from_start
+					+ 0.1 * ((int)run_helper.experiments_seen_order.size()-1 - e_index);
+			}
 		}
-
-		delete scope_history;
-
-		run_helper.experiment_history->experiment->backprop(
-			target_val,
-			run_helper);
-		if (run_helper.experiment_history->experiment->result == EXPERIMENT_RESULT_FAIL) {
-			run_helper.experiment_history->experiment->finalize(NULL);
-			delete run_helper.experiment_history->experiment;
-		} else if (run_helper.experiment_history->experiment->result == EXPERIMENT_RESULT_SUCCESS) {
-			Solution* duplicate = new Solution(solution);
-
-			int last_updated_scope_id = run_helper.experiment_history->experiment->scope_context->id;
-
-			run_helper.experiment_history->experiment->finalize(duplicate);
-			delete run_helper.experiment_history->experiment;
-
-			Scope* experiment_scope = duplicate->scopes[last_updated_scope_id];
-			clean_scope(experiment_scope,
-						duplicate);
-			duplicate->clean_scopes();
-
-			delete solution;
-			solution = duplicate;
-
-			break;
-		}
-
-		delete problem;
 	}
 
 	solution->save("saves/", filename);

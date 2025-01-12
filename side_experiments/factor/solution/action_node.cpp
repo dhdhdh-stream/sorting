@@ -9,6 +9,13 @@ using namespace std;
 
 ActionNode::ActionNode() {
 	this->type = NODE_TYPE_ACTION;
+
+	this->average_instances_per_run = 0.0;
+
+	this->was_commit = false;
+
+	this->num_measure = 0;
+	this->sum_score = 0.0;
 }
 
 ActionNode::ActionNode(ActionNode* original) {
@@ -32,6 +39,13 @@ ActionNode::~ActionNode() {
 	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
 		this->experiments[e_index]->decrement(this);
 	}
+}
+
+void ActionNode::clear_experiments() {
+	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
+		this->experiments[e_index]->decrement(this);
+	}
+	this->experiments.clear();
 }
 
 void ActionNode::save(ofstream& output_file) {

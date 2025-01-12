@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+#include "abstract_node.h"
+#include "globals.h"
 #include "problem.h"
 
 using namespace std;
@@ -19,6 +21,9 @@ BranchExperiment::BranchExperiment(Scope* scope_context,
 	/**
 	 * - start with a 50% chance to bypass
 	 */
+
+	uniform_int_distribution<int> until_distribution(0, (int)this->node_context->average_instances_per_run-1);
+	this->num_instances_until_target = 1 + until_distribution(generator);
 
 	this->state = BRANCH_EXPERIMENT_STATE_EXISTING_GATHER;
 	this->state_iter = 0;

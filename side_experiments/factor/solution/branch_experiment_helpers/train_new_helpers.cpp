@@ -21,7 +21,11 @@
 
 using namespace std;
 
+#if defined(MDEBUG) && MDEBUG
+const int TRAIN_NEW_NUM_DATAPOINTS = 20;
+#else
 const int TRAIN_NEW_NUM_DATAPOINTS = 2000;
+#endif /* MDEBUG */
 
 void BranchExperiment::train_new_activate(
 		AbstractNode*& curr_node,

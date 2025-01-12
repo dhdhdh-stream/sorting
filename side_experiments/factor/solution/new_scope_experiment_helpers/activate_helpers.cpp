@@ -1,5 +1,7 @@
 #include "new_scope_experiment.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_node.h"
 #include "globals.h"
@@ -84,9 +86,10 @@ void NewScopeExperiment::activate(AbstractNode* experiment_node,
 						curr_node,
 						problem,
 						context,
-						run_helper);
-
+						run_helper,
+						scope_history);
 				}
+				break;
 			#if defined(MDEBUG) && MDEBUG
 			case NEW_SCOPE_EXPERIMENT_STATE_CAPTURE_VERIFY:
 				capture_verify_activate(location_index,
@@ -94,6 +97,7 @@ void NewScopeExperiment::activate(AbstractNode* experiment_node,
 										problem,
 										context,
 										run_helper);
+				break;
 			#endif /* MDEBUG */
 			}
 		}
@@ -159,6 +163,8 @@ void NewScopeExperiment::back_activate(RunHelper& run_helper,
 			}
 			history->instance_count++;
 		}
+
+		break;
 	}
 }
 

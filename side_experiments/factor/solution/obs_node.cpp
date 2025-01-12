@@ -10,6 +10,13 @@ using namespace std;
 
 ObsNode::ObsNode() {
 	this->type = NODE_TYPE_OBS;
+
+	this->average_instances_per_run = 0.0;
+
+	this->was_commit = false;
+
+	this->num_measure = 0;
+	this->sum_score = 0.0;
 }
 
 ObsNode::ObsNode(ObsNode* original,
@@ -89,6 +96,13 @@ void ObsNode::clean_inputs(Scope* scope) {
 	for (int f_index = 0; f_index < (int)this->factors.size(); f_index++) {
 		this->factors[f_index]->clean_inputs(scope);
 	}
+}
+
+void ObsNode::clear_experiments() {
+	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
+		this->experiments[e_index]->decrement(this);
+	}
+	this->experiments.clear();
 }
 
 void ObsNode::save(ofstream& output_file) {

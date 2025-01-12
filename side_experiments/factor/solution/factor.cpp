@@ -14,7 +14,14 @@ Factor::Factor() {
 
 Factor::Factor(Factor* original,
 			   Solution* parent_solution) {
-	
+	this->inputs = original->inputs;
+	for (int i_index = 0; i_index < (int)this->inputs.size(); i_index++) {
+		for (int l_index = 0; l_index < (int)this->inputs[i_index].first.first.size(); l_index++) {
+			this->inputs[i_index].first.first[l_index] =
+				parent_solution->scopes[this->inputs[i_index].first.first[l_index]->id];
+		}
+	}
+	this->network = new Network(original->network);
 }
 
 Factor::~Factor() {

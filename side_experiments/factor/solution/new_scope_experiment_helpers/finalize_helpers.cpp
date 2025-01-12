@@ -275,6 +275,24 @@ void NewScopeExperiment::finalize(Solution* duplicate) {
 					}
 				}
 				break;
+			case NODE_TYPE_OBS:
+				{
+					ObsNode* obs_node = (ObsNode*)duplicate_start_node;
+
+					for (int a_index = 0; a_index < (int)obs_node->next_node->ancestor_ids.size(); a_index++) {
+						if (obs_node->next_node->ancestor_ids[a_index] == obs_node->id) {
+							obs_node->next_node->ancestor_ids.erase(
+								obs_node->next_node->ancestor_ids.begin() + a_index);
+							break;
+						}
+					}
+
+					obs_node->next_node_id = new_scope_node->id;
+					obs_node->next_node = new_scope_node;
+
+					new_scope_node->ancestor_ids.push_back(obs_node->id);
+				}
+				break;
 			}
 		}
 		this->successful_scope_nodes.clear();
