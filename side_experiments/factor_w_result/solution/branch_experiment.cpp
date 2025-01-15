@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "abstract_node.h"
+#include "constants.h"
 #include "globals.h"
 #include "problem.h"
 
@@ -22,10 +23,26 @@ BranchExperiment::BranchExperiment(Scope* scope_context,
 	 * - start with a 50% chance to bypass
 	 */
 
-	uniform_int_distribution<int> until_distribution(0, (int)this->node_context->average_instances_per_run-1);
+	// uniform_int_distribution<int> until_distribution(0, (int)this->node_context->average_instances_per_run-1);
+	// this->num_instances_until_target = 1 + until_distribution(generator);
+
+	// this->state = BRANCH_EXPERIMENT_STATE_EXISTING_GATHER;
+	// this->state_iter = 0;
+
+	// temp
+	uniform_int_distribution<int> good_distribution(0, 3);
+	if (good_distribution(generator) == 0) {
+		this->explore_type = EXPLORE_TYPE_GOOD;
+	} else {
+		this->explore_type = EXPLORE_TYPE_BEST;
+
+		this->best_surprise = 0.0;
+	}
+
+	uniform_int_distribution<int> until_distribution(0, (int)this->node_context->average_instances_per_run-1.0);
 	this->num_instances_until_target = 1 + until_distribution(generator);
 
-	this->state = BRANCH_EXPERIMENT_STATE_EXISTING_GATHER;
+	this->state = BRANCH_EXPERIMENT_STATE_EXPLORE;
 	this->state_iter = 0;
 
 	this->result = EXPERIMENT_RESULT_NA;

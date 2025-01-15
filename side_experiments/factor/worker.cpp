@@ -120,6 +120,14 @@ int main(int argc, char* argv[]) {
 					double sum_score = 0.0;
 					double sum_true_score = 0.0;
 					for (int iter_index = 0; iter_index < MEASURE_ITERS; iter_index++) {
+						auto curr_time = chrono::high_resolution_clock::now();
+						auto time_diff = chrono::duration_cast<chrono::seconds>(curr_time - start_time);
+						if (time_diff.count() >= 20) {
+							start_time = curr_time;
+
+							cout << "alive" << endl;
+						}
+
 						Problem* problem = problem_type->get_problem();
 
 						RunHelper run_helper;
@@ -205,6 +213,14 @@ int main(int argc, char* argv[]) {
 		if (solution->timestamp % COMMIT_ITERS == 0
 				&& solution->timestamp != EXPLORE_ITERS) {
 			while (true) {
+				auto curr_time = chrono::high_resolution_clock::now();
+				auto time_diff = chrono::duration_cast<chrono::seconds>(curr_time - start_time);
+				if (time_diff.count() >= 20) {
+					start_time = curr_time;
+
+					cout << "alive" << endl;
+				}
+
 				Problem* problem = problem_type->get_problem();
 
 				RunHelper run_helper;

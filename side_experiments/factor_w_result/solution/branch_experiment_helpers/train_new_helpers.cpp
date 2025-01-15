@@ -47,14 +47,16 @@ void BranchExperiment::train_new_activate(
 		gather_factors(run_helper,
 					   scope_history,
 					   factors);
-		double sum_vals = this->existing_average_score;
-		for (int f_index = 0; f_index < (int)this->existing_factor_ids.size(); f_index++) {
-			map<pair<int,int>, double>::iterator it = factors.find(this->existing_factor_ids[f_index]);
-			if (it != factors.end()) {
-				sum_vals += this->existing_factor_weights[f_index] * it->second;
-			}
-		}
-		history->existing_predicted_scores.push_back(sum_vals);
+		// double sum_vals = this->existing_average_score;
+		// for (int f_index = 0; f_index < (int)this->existing_factor_ids.size(); f_index++) {
+		// 	map<pair<int,int>, double>::iterator it = factors.find(this->existing_factor_ids[f_index]);
+		// 	if (it != factors.end()) {
+		// 		sum_vals += this->existing_factor_weights[f_index] * it->second;
+		// 	}
+		// }
+		// history->existing_predicted_scores.push_back(sum_vals);
+		// temp
+		history->existing_predicted_scores.push_back(0.0);
 
 		vector<double> input_vals(this->new_inputs.size());
 		for (int i_index = 0; i_index < (int)this->new_inputs.size(); i_index++) {
@@ -179,7 +181,9 @@ void BranchExperiment::train_new_backprop(
 
 			for (map<pair<int,int>, double>::iterator it = sum_factor_impacts.begin();
 					it != sum_factor_impacts.end(); it++) {
-				if (abs(weights(factor_mapping[it->first])) * sum_factor_impacts[it->first] > impact_threshold) {
+				double impact = abs(weights(factor_mapping[it->first])) * sum_factor_impacts[it->first]
+					/ num_train_instances;
+				if (impact > impact_threshold) {
 					this->new_factor_ids.push_back(it->first);
 					this->new_factor_weights.push_back(weights(factor_mapping[it->first]));
 				}
@@ -238,6 +242,8 @@ void BranchExperiment::train_new_backprop(
 		double new_t_score = new_improvement / (new_standard_deviation / sqrt(num_test_instances));
 
 		if (new_t_score > 1.645) {
+			average_misguess = new_average_misguess;
+
 			for (int i_index = (int)this->new_inputs.size()-1; i_index >= 0; i_index--) {
 				vector<pair<pair<vector<Scope*>,vector<int>>,pair<int,int>>> remove_inputs = this->new_inputs;
 				remove_inputs.erase(remove_inputs.begin() + i_index);

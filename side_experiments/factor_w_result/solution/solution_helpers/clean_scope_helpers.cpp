@@ -149,7 +149,8 @@ void clean_scope(Scope* scope,
 						&& curr_obs_node->next_node->type == NODE_TYPE_OBS
 						&& curr_obs_node->next_node->ancestor_ids.size() == 1) {
 					ObsNode* next_obs_node = (ObsNode*)curr_obs_node->next_node;
-					if (next_obs_node->input_scope_contexts.size() == 0) {
+					if (next_obs_node->input_scope_contexts.size() == 0
+							&& next_obs_node->factors.size() == 0) {
 						if (next_obs_node->next_node != NULL) {
 							for (int a_index = 0; a_index < (int)next_obs_node->next_node->ancestor_ids.size(); a_index++) {
 								if (next_obs_node->next_node->ancestor_ids[a_index] == next_obs_node->id) {
@@ -163,12 +164,17 @@ void clean_scope(Scope* scope,
 						curr_obs_node->next_node_id = next_obs_node->next_node_id;
 						curr_obs_node->next_node = next_obs_node->next_node;
 
+						parent_solution->clean_inputs(scope,
+													  next_obs_node->id);
+
 						scope->nodes.erase(next_obs_node->id);
 						delete next_obs_node;
 
 						removed_node = true;
 						break;
-					} else if (curr_obs_node->input_scope_contexts.size() == 0) {
+					} else if (curr_obs_node->id != 0
+							&& curr_obs_node->input_scope_contexts.size() == 0
+							&& curr_obs_node->factors.size() == 0) {
 						for (int a_index = 0; a_index < (int)next_obs_node->ancestor_ids.size(); a_index++) {
 							if (next_obs_node->ancestor_ids[a_index] == curr_obs_node->id) {
 								next_obs_node->ancestor_ids.erase(
@@ -201,12 +207,12 @@ void clean_scope(Scope* scope,
 									BranchNode* branch_node = (BranchNode*)node;
 
 									if (branch_node->original_next_node == curr_obs_node) {
-										branch_node->original_next_node_id = curr_obs_node->id;
-										branch_node->original_next_node = curr_obs_node;
+										branch_node->original_next_node_id = next_obs_node->id;
+										branch_node->original_next_node = next_obs_node;
 									}
 									if (branch_node->branch_next_node == curr_obs_node) {
-										branch_node->branch_next_node_id = curr_obs_node->id;
-										branch_node->branch_next_node = curr_obs_node;
+										branch_node->branch_next_node_id = next_obs_node->id;
+										branch_node->branch_next_node = next_obs_node;
 									}
 								}
 								break;
@@ -222,6 +228,9 @@ void clean_scope(Scope* scope,
 
 							next_obs_node->ancestor_ids.push_back(node->id);
 						}
+
+						parent_solution->clean_inputs(scope,
+													  curr_obs_node->id);
 
 						scope->nodes.erase(curr_obs_node->id);
 						delete curr_obs_node;

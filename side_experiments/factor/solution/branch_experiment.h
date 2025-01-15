@@ -48,6 +48,7 @@ public:
 	std::vector<Scope*> best_scopes;
 	AbstractNode* best_exit_next_node;
 
+	double new_average_score;
 	std::vector<std::pair<std::pair<std::vector<Scope*>,std::vector<int>>,
 		std::pair<int,int>>> new_inputs;
 
@@ -59,7 +60,6 @@ public:
 	std::vector<std::vector<double>> input_histories;
 	std::vector<std::map<std::pair<int,int>, double>> factor_histories;
 	std::vector<double> i_target_val_histories;
-	std::vector<double> o_target_val_histories;
 
 	#if defined(MDEBUG) && MDEBUG
 	std::vector<Problem*> verify_problems;

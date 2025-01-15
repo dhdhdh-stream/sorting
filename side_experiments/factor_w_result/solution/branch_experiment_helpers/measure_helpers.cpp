@@ -68,7 +68,7 @@ void BranchExperiment::measure_activate(AbstractNode*& curr_node,
 void BranchExperiment::measure_backprop(
 		double target_val,
 		RunHelper& run_helper) {
-	this->combined_score += target_val;
+	this->combined_score += target_val - run_helper.result;
 
 	this->state_iter++;
 	if (this->state_iter >= MEASURE_NUM_DATAPOINTS) {

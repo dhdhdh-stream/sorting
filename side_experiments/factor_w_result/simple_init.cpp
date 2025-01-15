@@ -50,6 +50,8 @@ int main(int argc, char* argv[]) {
 
 		RunHelper run_helper;
 
+		run_helper.result = get_existing_result(problem);
+
 		vector<ContextLayer> context;
 		ScopeHistory* scope_history = new ScopeHistory(solution->scopes[0]);
 		solution->scopes[0]->experiment_activate(

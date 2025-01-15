@@ -15,6 +15,7 @@ class Solution;
 class BranchNodeHistory;
 class BranchNode : public AbstractNode {
 public:
+	double average_val;
 	std::vector<std::pair<int,int>> factor_ids;
 	std::vector<double> factor_weights;
 

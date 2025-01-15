@@ -17,7 +17,7 @@ const int EXPLORE_TYPE_BEST = 1;
 
 const double TEST_SAMPLES_PERCENTAGE = 0.2;
 
-const double FACTOR_IMPACT_THRESHOLD = 0.5;
+const double FACTOR_IMPACT_THRESHOLD = 1.0;
 
 const int NETWORK_NUM_INPUTS = 10;
 
@@ -38,6 +38,8 @@ const int IMPROVEMENTS_PER_ITER = 2;
 #else
 const int IMPROVEMENTS_PER_ITER = 20;
 #endif /* MDEBUG */
+
+const int CONSECUTIVE_FAILURE_LIMIT = 1000;
 
 #if defined(MDEBUG) && MDEBUG
 const int COMMIT_ITERS = 4;

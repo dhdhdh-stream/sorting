@@ -88,16 +88,18 @@ void gather_possible_helper(ScopeHistory* scope_history,
 				}
 
 				for (int f_index = 0; f_index < (int)obs_node->factors.size(); f_index++) {
-					uniform_int_distribution<int> select_distribution(0, node_count);
-					node_count++;
-					if (select_distribution(generator) == 0) {
-						scope_context.push_back(scope);
-						node_context.push_back(it->first);
+					if (obs_node->factors[f_index]->inputs.size() > 0) {
+						uniform_int_distribution<int> select_distribution(0, node_count);
+						node_count++;
+						if (select_distribution(generator) == 0) {
+							scope_context.push_back(scope);
+							node_context.push_back(it->first);
 
-						new_input = {{scope_context, node_context}, {f_index, -1}};
+							new_input = {{scope_context, node_context}, {f_index, -1}};
 
-						scope_context.pop_back();
-						node_context.pop_back();
+							scope_context.pop_back();
+							node_context.pop_back();
+						}
 					}
 				}
 			}
@@ -116,13 +118,16 @@ void gather_factors(RunHelper& run_helper,
 			ObsNode* obs_node = (ObsNode*)it->second->node;
 
 			for (int f_index = 0; f_index < (int)obs_node->factors.size(); f_index++) {
-				if (!obs_node_history->factor_initialized[f_index]) {
-					double value = obs_node->factors[f_index]->back_activate(
-						run_helper,
-						scope_history);
-					obs_node_history->factor_values[f_index] = value;
+				if (obs_node->factors[f_index]->inputs.size() > 0) {
+					if (!obs_node_history->factor_initialized[f_index]) {
+						double value = obs_node->factors[f_index]->back_activate(
+							run_helper,
+							scope_history);
+						obs_node_history->factor_values[f_index] = value;
+						obs_node_history->factor_initialized[f_index] = true;
+					}
+					factors[{obs_node->id, f_index}] = obs_node_history->factor_values[f_index];
 				}
-				factors[{obs_node->id, f_index}] = obs_node_history->factor_values[f_index];
 			}
 		}
 	}
@@ -142,6 +147,7 @@ void fetch_factor_helper(RunHelper& run_helper,
 				run_helper,
 				scope_history);
 			obs_node_history->factor_values[factor.second] = value;
+			obs_node_history->factor_initialized[factor.second] = true;
 		}
 		val = obs_node_history->factor_values[factor.second];
 	} else {
@@ -181,6 +187,7 @@ void fetch_input_helper(RunHelper& run_helper,
 								run_helper,
 								scope_history);
 							obs_node_history->factor_values[input.second.first] = value;
+							obs_node_history->factor_initialized[input.second.first] = true;
 						}
 						obs = obs_node_history->factor_values[input.second.first];
 					}

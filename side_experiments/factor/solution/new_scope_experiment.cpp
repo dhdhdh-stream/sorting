@@ -31,7 +31,7 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 		uniform_int_distribution<int> start_distribution(0, possible_starting_nodes.size()-1);
 		AbstractNode* potential_starting_node = possible_starting_nodes[start_distribution(generator)];
 
-		geometric_distribution<int> run_distribution(0.33);
+		geometric_distribution<int> run_distribution(0.2);
 		int num_runs = 1 + run_distribution(generator);
 
 		set<AbstractNode*> potential_included_nodes;
@@ -191,6 +191,8 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 					{
 						BranchNode* original_branch_node = (BranchNode*)(*node_it);
 						BranchNode* new_branch_node = (BranchNode*)node_mappings[original_branch_node];
+
+						new_branch_node->average_val = original_branch_node->average_val;
 
 						for (int f_index = 0; f_index < (int)original_branch_node->factor_ids.size(); f_index++) {
 							AbstractNode* original_input_node = scope_context->nodes[

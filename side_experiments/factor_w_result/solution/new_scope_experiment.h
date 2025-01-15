@@ -27,9 +27,12 @@ const int NEW_SCOPE_NUM_GENERALIZE_TRIES = 200;
 const int NEW_SCOPE_NUM_LOCATIONS = 3;
 #endif /* MDEBUG */
 
-const int LOCATION_STATE_MEASURE = 0;
-const int LOCATION_STATE_VERIFY_1ST = 1;
-const int LOCATION_STATE_VERIFY_2ND = 2;
+const int LOCATION_STATE_MEASURE_EXISTING = 0;
+const int LOCATION_STATE_MEASURE_NEW = 1;
+const int LOCATION_STATE_VERIFY_EXISTING_1ST = 2;
+const int LOCATION_STATE_VERIFY_NEW_1ST = 3;
+const int LOCATION_STATE_VERIFY_EXISTING_2ND = 4;
+const int LOCATION_STATE_VERIFY_NEW_2ND = 5;
 
 class NewScopeExperimentHistory;
 class NewScopeExperiment : public AbstractExperiment {
@@ -44,7 +47,8 @@ public:
 	std::vector<bool> test_location_is_branch;
 	std::vector<AbstractNode*> test_location_exits;
 	std::vector<int> test_location_states;
-	std::vector<double> test_location_scores;
+	std::vector<double> test_location_existing_scores;
+	std::vector<double> test_location_new_scores;
 	std::vector<int> test_location_counts;
 
 	std::vector<AbstractNode*> successful_location_starts;

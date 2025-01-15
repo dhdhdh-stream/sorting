@@ -27,18 +27,26 @@ void NewScopeExperiment::test_activate(
 		NewScopeExperimentHistory* history) {
 	history->test_location_index = location_index;
 
-	run_helper.has_explore = true;
+	switch (this->test_location_states[location_index]) {
+	case LOCATION_STATE_MEASURE_NEW:
+	case LOCATION_STATE_VERIFY_NEW_1ST:
+	case LOCATION_STATE_VERIFY_NEW_2ND:
+		{
+			run_helper.has_explore = true;
 
-	context.back().node_id = -1;
+			context.back().node_id = -1;
 
-	ScopeHistory* inner_scope_history = new ScopeHistory(this->new_scope);
-	this->new_scope->new_scope_activate(problem,
-										context,
-										run_helper,
-										inner_scope_history);
-	delete inner_scope_history;
+			ScopeHistory* inner_scope_history = new ScopeHistory(this->new_scope);
+			this->new_scope->new_scope_activate(problem,
+												context,
+												run_helper,
+												inner_scope_history);
+			delete inner_scope_history;
 
-	curr_node = this->test_location_exits[location_index];
+			curr_node = this->test_location_exits[location_index];
+		}
+		break;
+	}
 }
 
 void NewScopeExperiment::test_backprop(
@@ -49,18 +57,30 @@ void NewScopeExperiment::test_backprop(
 	bool is_fail = false;
 
 	switch (this->test_location_states[history->test_location_index]) {
-	case LOCATION_STATE_MEASURE:
-		this->test_location_scores[history->test_location_index] += target_val - run_helper.result;
+	case LOCATION_STATE_MEASURE_EXISTING:
+		this->test_location_existing_scores[history->test_location_index] += target_val;
+		this->test_location_counts[history->test_location_index]++;
+
+		if (this->test_location_counts[history->test_location_index] >= NEW_SCOPE_NUM_DATAPOINTS) {
+			this->test_location_states[history->test_location_index] = LOCATION_STATE_MEASURE_NEW;
+			this->test_location_counts[history->test_location_index] = 0;
+		}
+
+		break;
+	case LOCATION_STATE_MEASURE_NEW:
+		this->test_location_new_scores[history->test_location_index] += target_val;
 		this->test_location_counts[history->test_location_index]++;
 
 		if (this->test_location_counts[history->test_location_index] >= NEW_SCOPE_NUM_DATAPOINTS) {
 			#if defined(MDEBUG) && MDEBUG
 			if (rand()%2 == 0) {
 			#else
-			if (this->test_location_scores[history->test_location_index] > 0.0) {
+			if (this->test_location_new_scores[history->test_location_index]
+					> this->test_location_existing_scores[history->test_location_index]) {
 			#endif /* MDEBUG */
-				this->test_location_states[history->test_location_index] = LOCATION_STATE_VERIFY_1ST;
-				this->test_location_scores[history->test_location_index] = 0.0;
+				this->test_location_states[history->test_location_index] = LOCATION_STATE_VERIFY_EXISTING_1ST;
+				this->test_location_existing_scores[history->test_location_index] = 0.0;
+				this->test_location_new_scores[history->test_location_index] = 0.0;
 				this->test_location_counts[history->test_location_index] = 0;
 			} else {
 				is_fail = true;
@@ -68,18 +88,30 @@ void NewScopeExperiment::test_backprop(
 		}
 
 		break;
-	case LOCATION_STATE_VERIFY_1ST:
-		this->test_location_scores[history->test_location_index] += target_val - run_helper.result;
+	case LOCATION_STATE_VERIFY_EXISTING_1ST:
+		this->test_location_existing_scores[history->test_location_index] += target_val;
+		this->test_location_counts[history->test_location_index]++;
+
+		if (this->test_location_counts[history->test_location_index] >= NEW_SCOPE_VERIFY_1ST_NUM_DATAPOINTS) {
+			this->test_location_states[history->test_location_index] = LOCATION_STATE_VERIFY_NEW_1ST;
+			this->test_location_counts[history->test_location_index] = 0;
+		}
+
+		break;
+	case LOCATION_STATE_VERIFY_NEW_1ST:
+		this->test_location_new_scores[history->test_location_index] += target_val;
 		this->test_location_counts[history->test_location_index]++;
 
 		if (this->test_location_counts[history->test_location_index] >= NEW_SCOPE_VERIFY_1ST_NUM_DATAPOINTS) {
 			#if defined(MDEBUG) && MDEBUG
 			if (rand()%2 == 0) {
 			#else
-			if (this->test_location_scores[history->test_location_index] > 0.0) {
+			if (this->test_location_new_scores[history->test_location_index]
+					> this->test_location_existing_scores[history->test_location_index]) {
 			#endif /* MDEBUG */
-				this->test_location_states[history->test_location_index] = LOCATION_STATE_VERIFY_2ND;
-				this->test_location_scores[history->test_location_index] = 0.0;
+				this->test_location_states[history->test_location_index] = LOCATION_STATE_VERIFY_EXISTING_2ND;
+				this->test_location_existing_scores[history->test_location_index] = 0.0;
+				this->test_location_new_scores[history->test_location_index] = 0.0;
 				this->test_location_counts[history->test_location_index] = 0;
 			} else {
 				is_fail = true;
@@ -87,15 +119,26 @@ void NewScopeExperiment::test_backprop(
 		}
 
 		break;
-	case LOCATION_STATE_VERIFY_2ND:
-		this->test_location_scores[history->test_location_index] += target_val - run_helper.result;
+	case LOCATION_STATE_VERIFY_EXISTING_2ND:
+		this->test_location_existing_scores[history->test_location_index] += target_val;
+		this->test_location_counts[history->test_location_index]++;
+
+		if (this->test_location_counts[history->test_location_index] >= NEW_SCOPE_VERIFY_2ND_NUM_DATAPOINTS) {
+			this->test_location_states[history->test_location_index] = LOCATION_STATE_VERIFY_NEW_2ND;
+			this->test_location_counts[history->test_location_index] = 0;
+		}
+
+		break;
+	case LOCATION_STATE_VERIFY_NEW_2ND:
+		this->test_location_new_scores[history->test_location_index] += target_val;
 		this->test_location_counts[history->test_location_index]++;
 
 		if (this->test_location_counts[history->test_location_index] >= NEW_SCOPE_VERIFY_2ND_NUM_DATAPOINTS) {
 			#if defined(MDEBUG) && MDEBUG
 			if (rand()%2 == 0) {
 			#else
-			if (this->test_location_scores[history->test_location_index] > 0.0) {
+			if (this->test_location_new_scores[history->test_location_index]
+					> this->test_location_existing_scores[history->test_location_index]) {
 			#endif /* MDEBUG */
 				ScopeNode* new_scope_node = new ScopeNode();
 				new_scope_node->parent = this->scope_context;
@@ -120,7 +163,8 @@ void NewScopeExperiment::test_backprop(
 				this->test_location_is_branch.erase(this->test_location_is_branch.begin() + history->test_location_index);
 				this->test_location_exits.erase(this->test_location_exits.begin() + history->test_location_index);
 				this->test_location_states.erase(this->test_location_states.begin() + history->test_location_index);
-				this->test_location_scores.erase(this->test_location_scores.begin() + history->test_location_index);
+				this->test_location_existing_scores.erase(this->test_location_existing_scores.begin() + history->test_location_index);
+				this->test_location_new_scores.erase(this->test_location_new_scores.begin() + history->test_location_index);
 				this->test_location_counts.erase(this->test_location_counts.begin() + history->test_location_index);
 
 				this->generalize_iter++;
@@ -150,7 +194,8 @@ void NewScopeExperiment::test_backprop(
 		this->test_location_is_branch.erase(this->test_location_is_branch.begin() + history->test_location_index);
 		this->test_location_exits.erase(this->test_location_exits.begin() + history->test_location_index);
 		this->test_location_states.erase(this->test_location_states.begin() + history->test_location_index);
-		this->test_location_scores.erase(this->test_location_scores.begin() + history->test_location_index);
+		this->test_location_existing_scores.erase(this->test_location_existing_scores.begin() + history->test_location_index);
+		this->test_location_new_scores.erase(this->test_location_new_scores.begin() + history->test_location_index);
 		this->test_location_counts.erase(this->test_location_counts.begin() + history->test_location_index);
 
 		if (this->generalize_iter == -1
@@ -180,7 +225,8 @@ void NewScopeExperiment::test_backprop(
 		this->test_location_is_branch.clear();
 		this->test_location_exits.clear();
 		this->test_location_states.clear();
-		this->test_location_scores.clear();
+		this->test_location_existing_scores.clear();
+		this->test_location_new_scores.clear();
 		this->test_location_counts.clear();
 
 		this->verify_problems = vector<Problem*>(NUM_VERIFY_SAMPLES, NULL);

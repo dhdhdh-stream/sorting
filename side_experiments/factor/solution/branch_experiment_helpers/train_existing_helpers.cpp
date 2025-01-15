@@ -23,7 +23,7 @@ using namespace std;
 #if defined(MDEBUG) && MDEBUG
 const int TRAIN_EXISTING_NUM_DATAPOINTS = 20;
 #else
-const int TRAIN_EXISTING_NUM_DATAPOINTS = 2000;
+const int TRAIN_EXISTING_NUM_DATAPOINTS = 4000;
 #endif /* MDEBUG */
 
 void BranchExperiment::train_existing_activate(
@@ -57,16 +57,9 @@ void BranchExperiment::train_existing_backprop(
 	for (int i_index = 0; i_index < history->instance_count; i_index++) {
 		this->i_target_val_histories.push_back(target_val);
 	}
-	this->o_target_val_histories.push_back(target_val);
 
 	this->state_iter++;
 	if (this->state_iter >= TRAIN_EXISTING_NUM_DATAPOINTS) {
-		double sum_score = 0.0;
-		for (int i_index = 0; i_index < (int)this->o_target_val_histories.size(); i_index++) {
-			sum_score += this->o_target_val_histories[i_index];
-		}
-		this->existing_average_score = sum_score / (int)this->o_target_val_histories.size();
-
 		{
 			default_random_engine generator_copy = generator;
 			shuffle(this->input_histories.begin(), this->input_histories.end(), generator_copy);
@@ -83,6 +76,12 @@ void BranchExperiment::train_existing_backprop(
 		int num_instances = (int)this->i_target_val_histories.size();
 		int num_train_instances = (double)num_instances * (1.0 - TEST_SAMPLES_PERCENTAGE);
 		int num_test_instances = num_instances - num_train_instances;
+
+		double sum_score = 0.0;
+		for (int i_index = 0; i_index < num_instances; i_index++) {
+			sum_score += this->i_target_val_histories[i_index];
+		}
+		this->existing_average_score = sum_score / num_instances;
 
 		map<pair<int,int>, double> sum_factor_impacts;
 		for (int i_index = 0; i_index < num_train_instances; i_index++) {
@@ -101,11 +100,14 @@ void BranchExperiment::train_existing_backprop(
 
 		int num_factors = (int)sum_factor_impacts.size();
 		if (num_factors > 0) {
+			#if defined(MDEBUG) && MDEBUG
+			#else
 			double sum_offset = 0.0;
 			for (int i_index = 0; i_index < num_train_instances; i_index++) {
 				sum_offset += abs(this->i_target_val_histories[i_index] - this->existing_average_score);
 			}
 			double average_offset = sum_offset / num_train_instances;
+			#endif /* MDEBUG */
 
 			map<pair<int,int>, int> factor_mapping;
 			for (map<pair<int,int>, double>::iterator it = sum_factor_impacts.begin();
@@ -142,11 +144,20 @@ void BranchExperiment::train_existing_backprop(
 				}
 			}
 
+			#if defined(MDEBUG) && MDEBUG
+			#else
 			double impact_threshold = average_offset / num_factors * FACTOR_IMPACT_THRESHOLD;
+			#endif /* MDEBUG */
 
 			for (map<pair<int,int>, double>::iterator it = sum_factor_impacts.begin();
 					it != sum_factor_impacts.end(); it++) {
-				if (abs(weights(factor_mapping[it->first])) * sum_factor_impacts[it->first] > impact_threshold) {
+				#if defined(MDEBUG) && MDEBUG
+				if (rand()%2 == 0) {
+				#else
+				double impact = abs(weights(factor_mapping[it->first])) * sum_factor_impacts[it->first]
+					/ num_train_instances;
+				if (impact > impact_threshold) {
+				#endif /* MDEBUG */
 					this->existing_factor_ids.push_back(it->first);
 					this->existing_factor_weights.push_back(weights(factor_mapping[it->first]));
 				}
@@ -204,7 +215,9 @@ void BranchExperiment::train_existing_backprop(
 		double new_standard_deviation = min(misguess_standard_deviation, new_misguess_standard_deviation);
 		double new_t_score = new_improvement / (new_standard_deviation / sqrt(num_test_instances));
 
-		if (new_t_score > 1.645) {
+		if (new_t_score > 2.326) {
+			average_misguess = new_standard_deviation;
+
 			for (int i_index = (int)this->existing_inputs.size()-1; i_index >= 0; i_index--) {
 				vector<pair<pair<vector<Scope*>,vector<int>>,pair<int,int>>> remove_inputs = this->existing_inputs;
 				remove_inputs.erase(remove_inputs.begin() + i_index);
@@ -249,132 +262,136 @@ void BranchExperiment::train_existing_backprop(
 				}
 			}
 
-			Factor* new_factor = new Factor();
-			new_factor->inputs = this->existing_inputs;
-			new_factor->network = existing_network;
-			if (this->node_context->type == NODE_TYPE_OBS) {
-				ObsNode* obs_node = (ObsNode*)this->node_context;
+			if (this->existing_inputs.size() > 0) {
+				Factor* new_factor = new Factor();
+				new_factor->inputs = this->existing_inputs;
+				new_factor->network = existing_network;
+				if (this->node_context->type == NODE_TYPE_OBS) {
+					ObsNode* obs_node = (ObsNode*)this->node_context;
 
-				obs_node->factors.push_back(new_factor);
+					obs_node->factors.push_back(new_factor);
 
-				this->existing_factor_ids.push_back({obs_node->id, (int)obs_node->factors.size()-1});
-				this->existing_factor_weights.push_back(1.0);
-			} else {
-				ObsNode* new_obs_node = new ObsNode();
-				new_obs_node->parent = this->scope_context;
-				new_obs_node->id = this->scope_context->node_counter;
-				this->scope_context->node_counter++;
-				this->scope_context->nodes[new_obs_node->id] = new_obs_node;
+					this->existing_factor_ids.push_back({obs_node->id, (int)obs_node->factors.size()-1});
+					this->existing_factor_weights.push_back(1.0);
+				} else {
+					ObsNode* new_obs_node = new ObsNode();
+					new_obs_node->parent = this->scope_context;
+					new_obs_node->id = this->scope_context->node_counter;
+					this->scope_context->node_counter++;
+					this->scope_context->nodes[new_obs_node->id] = new_obs_node;
 
-				new_obs_node->factors.push_back(new_factor);
+					new_obs_node->factors.push_back(new_factor);
 
-				switch (this->node_context->type) {
-				case NODE_TYPE_ACTION:
-					{
-						ActionNode* action_node = (ActionNode*)this->node_context;
+					switch (this->node_context->type) {
+					case NODE_TYPE_ACTION:
+						{
+							ActionNode* action_node = (ActionNode*)this->node_context;
 
-						new_obs_node->next_node_id = action_node->next_node_id;
-						new_obs_node->next_node = action_node->next_node;
+							new_obs_node->next_node_id = action_node->next_node_id;
+							new_obs_node->next_node = action_node->next_node;
 
-						for (int a_index = 0; a_index < (int)action_node->next_node->ancestor_ids.size(); a_index++) {
-							if (action_node->next_node->ancestor_ids[a_index] == action_node->id) {
-								action_node->next_node->ancestor_ids.erase(
-									action_node->next_node->ancestor_ids.begin() + a_index);
-								break;
-							}
-						}
-						action_node->next_node->ancestor_ids.push_back(new_obs_node->id);
-
-						action_node->next_node_id = new_obs_node->id;
-						action_node->next_node = new_obs_node;
-
-						new_obs_node->ancestor_ids.push_back(action_node->id);
-					}
-					break;
-				case NODE_TYPE_SCOPE:
-					{
-						ScopeNode* scope_node = (ScopeNode*)this->node_context;
-
-						new_obs_node->next_node_id = scope_node->next_node_id;
-						new_obs_node->next_node = scope_node->next_node;
-
-						for (int a_index = 0; a_index < (int)scope_node->next_node->ancestor_ids.size(); a_index++) {
-							if (scope_node->next_node->ancestor_ids[a_index] == scope_node->id) {
-								scope_node->next_node->ancestor_ids.erase(
-									scope_node->next_node->ancestor_ids.begin() + a_index);
-								break;
-							}
-						}
-						scope_node->next_node->ancestor_ids.push_back(new_obs_node->id);
-
-						scope_node->next_node_id = new_obs_node->id;
-						scope_node->next_node = new_obs_node;
-
-						new_obs_node->ancestor_ids.push_back(scope_node->id);
-					}
-					break;
-				case NODE_TYPE_BRANCH:
-					{
-						BranchNode* branch_node = (BranchNode*)this->node_context;
-
-						if (this->is_branch) {
-							new_obs_node->next_node_id = branch_node->branch_next_node_id;
-							new_obs_node->next_node = branch_node->branch_next_node;
-
-							for (int a_index = 0; a_index < (int)branch_node->branch_next_node->ancestor_ids.size(); a_index++) {
-								if (branch_node->branch_next_node->ancestor_ids[a_index] == branch_node->id) {
-									branch_node->branch_next_node->ancestor_ids.erase(
-										branch_node->branch_next_node->ancestor_ids.begin() + a_index);
+							for (int a_index = 0; a_index < (int)action_node->next_node->ancestor_ids.size(); a_index++) {
+								if (action_node->next_node->ancestor_ids[a_index] == action_node->id) {
+									action_node->next_node->ancestor_ids.erase(
+										action_node->next_node->ancestor_ids.begin() + a_index);
 									break;
 								}
 							}
-							branch_node->branch_next_node->ancestor_ids.push_back(new_obs_node->id);
+							action_node->next_node->ancestor_ids.push_back(new_obs_node->id);
 
-							branch_node->branch_next_node_id = new_obs_node->id;
-							branch_node->branch_next_node = new_obs_node;
-						} else {
-							new_obs_node->next_node_id = branch_node->original_next_node_id;
-							new_obs_node->next_node = branch_node->original_next_node;
+							action_node->next_node_id = new_obs_node->id;
+							action_node->next_node = new_obs_node;
 
-							for (int a_index = 0; a_index < (int)branch_node->original_next_node->ancestor_ids.size(); a_index++) {
-								if (branch_node->original_next_node->ancestor_ids[a_index] == branch_node->id) {
-									branch_node->original_next_node->ancestor_ids.erase(
-										branch_node->original_next_node->ancestor_ids.begin() + a_index);
+							new_obs_node->ancestor_ids.push_back(action_node->id);
+						}
+						break;
+					case NODE_TYPE_SCOPE:
+						{
+							ScopeNode* scope_node = (ScopeNode*)this->node_context;
+
+							new_obs_node->next_node_id = scope_node->next_node_id;
+							new_obs_node->next_node = scope_node->next_node;
+
+							for (int a_index = 0; a_index < (int)scope_node->next_node->ancestor_ids.size(); a_index++) {
+								if (scope_node->next_node->ancestor_ids[a_index] == scope_node->id) {
+									scope_node->next_node->ancestor_ids.erase(
+										scope_node->next_node->ancestor_ids.begin() + a_index);
 									break;
 								}
 							}
-							branch_node->original_next_node->ancestor_ids.push_back(new_obs_node->id);
+							scope_node->next_node->ancestor_ids.push_back(new_obs_node->id);
 
-							branch_node->original_next_node_id = new_obs_node->id;
-							branch_node->original_next_node = new_obs_node;
+							scope_node->next_node_id = new_obs_node->id;
+							scope_node->next_node = new_obs_node;
+
+							new_obs_node->ancestor_ids.push_back(scope_node->id);
 						}
+						break;
+					case NODE_TYPE_BRANCH:
+						{
+							BranchNode* branch_node = (BranchNode*)this->node_context;
 
-						new_obs_node->ancestor_ids.push_back(branch_node->id);
-					}
-					break;
-				}
+							if (this->is_branch) {
+								new_obs_node->next_node_id = branch_node->branch_next_node_id;
+								new_obs_node->next_node = branch_node->branch_next_node;
 
-				new_obs_node->average_instances_per_run = this->node_context->average_instances_per_run;
+								for (int a_index = 0; a_index < (int)branch_node->branch_next_node->ancestor_ids.size(); a_index++) {
+									if (branch_node->branch_next_node->ancestor_ids[a_index] == branch_node->id) {
+										branch_node->branch_next_node->ancestor_ids.erase(
+											branch_node->branch_next_node->ancestor_ids.begin() + a_index);
+										break;
+									}
+								}
+								branch_node->branch_next_node->ancestor_ids.push_back(new_obs_node->id);
 
-				new_obs_node->was_commit = this->node_context->was_commit;
+								branch_node->branch_next_node_id = new_obs_node->id;
+								branch_node->branch_next_node = new_obs_node;
+							} else {
+								new_obs_node->next_node_id = branch_node->original_next_node_id;
+								new_obs_node->next_node = branch_node->original_next_node;
 
-				new_obs_node->num_measure = this->node_context->num_measure;
-				new_obs_node->sum_score = this->node_context->sum_score;
+								for (int a_index = 0; a_index < (int)branch_node->original_next_node->ancestor_ids.size(); a_index++) {
+									if (branch_node->original_next_node->ancestor_ids[a_index] == branch_node->id) {
+										branch_node->original_next_node->ancestor_ids.erase(
+											branch_node->original_next_node->ancestor_ids.begin() + a_index);
+										break;
+									}
+								}
+								branch_node->original_next_node->ancestor_ids.push_back(new_obs_node->id);
 
-				int experiment_index;
-				for (int e_index = 0; e_index < (int)this->node_context->experiments.size(); e_index++) {
-					if (this->node_context->experiments[e_index] == this) {
-						experiment_index = e_index;
+								branch_node->original_next_node_id = new_obs_node->id;
+								branch_node->original_next_node = new_obs_node;
+							}
+
+							new_obs_node->ancestor_ids.push_back(branch_node->id);
+						}
 						break;
 					}
+
+					new_obs_node->average_instances_per_run = this->node_context->average_instances_per_run;
+
+					new_obs_node->was_commit = this->node_context->was_commit;
+
+					new_obs_node->num_measure = this->node_context->num_measure;
+					new_obs_node->sum_score = this->node_context->sum_score;
+
+					int experiment_index;
+					for (int e_index = 0; e_index < (int)this->node_context->experiments.size(); e_index++) {
+						if (this->node_context->experiments[e_index] == this) {
+							experiment_index = e_index;
+							break;
+						}
+					}
+					this->node_context->experiments.erase(this->node_context->experiments.begin() + experiment_index);
+
+					this->node_context = new_obs_node;
+					this->node_context->experiments.push_back(this);
+
+					this->existing_factor_ids.push_back({new_obs_node->id, 0});
+					this->existing_factor_weights.push_back(1.0);
 				}
-				this->node_context->experiments.erase(this->node_context->experiments.begin() + experiment_index);
-
-				this->node_context = new_obs_node;
-				this->node_context->experiments.push_back(this);
-
-				this->existing_factor_ids.push_back({new_obs_node->id, 0});
-				this->existing_factor_weights.push_back(1.0);
+			} else {
+				delete existing_network;
 			}
 		} else {
 			delete existing_network;
@@ -383,7 +400,6 @@ void BranchExperiment::train_existing_backprop(
 		this->input_histories.clear();
 		this->factor_histories.clear();
 		this->i_target_val_histories.clear();
-		this->o_target_val_histories.clear();
 
 		uniform_int_distribution<int> good_distribution(0, 3);
 		if (good_distribution(generator) == 0) {

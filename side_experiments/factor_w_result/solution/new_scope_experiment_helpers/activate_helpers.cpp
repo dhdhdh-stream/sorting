@@ -223,8 +223,9 @@ void NewScopeExperiment::backprop(double target_val,
 			this->test_location_starts.push_back(history->potential_start);
 			this->test_location_is_branch.push_back(history->potential_is_branch);
 			this->test_location_exits.push_back(exit_next_node);
-			this->test_location_states.push_back(LOCATION_STATE_MEASURE);
-			this->test_location_scores.push_back(0.0);
+			this->test_location_states.push_back(LOCATION_STATE_MEASURE_EXISTING);
+			this->test_location_existing_scores.push_back(0.0);
+			this->test_location_new_scores.push_back(0.0);
 			this->test_location_counts.push_back(0);
 
 			history->potential_start->experiments.insert(history->potential_start->experiments.begin(), this);

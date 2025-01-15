@@ -1,5 +1,7 @@
 #include "solution_helpers.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_node.h"
 #include "factor.h"
@@ -121,6 +123,7 @@ void gather_factors(RunHelper& run_helper,
 						run_helper,
 						scope_history);
 					obs_node_history->factor_values[f_index] = value;
+					obs_node_history->factor_initialized[f_index] = true;
 				}
 				factors[{obs_node->id, f_index}] = obs_node_history->factor_values[f_index];
 			}
@@ -142,6 +145,7 @@ void fetch_factor_helper(RunHelper& run_helper,
 				run_helper,
 				scope_history);
 			obs_node_history->factor_values[factor.second] = value;
+			obs_node_history->factor_initialized[factor.second] = true;
 		}
 		val = obs_node_history->factor_values[factor.second];
 	} else {
@@ -181,6 +185,7 @@ void fetch_input_helper(RunHelper& run_helper,
 								run_helper,
 								scope_history);
 							obs_node_history->factor_values[input.second.first] = value;
+							obs_node_history->factor_initialized[input.second.first] = true;
 						}
 						obs = obs_node_history->factor_values[input.second.first];
 					}

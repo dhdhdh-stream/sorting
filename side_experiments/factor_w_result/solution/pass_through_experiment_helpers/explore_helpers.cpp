@@ -149,7 +149,7 @@ void PassThroughExperiment::explore_backprop(
 		#if defined(MDEBUG) && MDEBUG
 		if (false) {
 		#else
-		if (curr_score <= 0.0) {
+		if (this->curr_sum_score <= 0.0) {
 		#endif /* MDEBUG */
 			is_fail = true;
 		}
@@ -200,6 +200,11 @@ void PassThroughExperiment::explore_backprop(
 					}
 				}
 				cout << endl;
+				if (this->best_exit_next_node == NULL) {
+					cout << "this->best_exit_next_node->id: " << -1 << endl;
+				} else {
+					cout << "this->best_exit_next_node->id: " << this->best_exit_next_node->id << endl;
+				}
 
 				cout << "this->best_score: " << this->best_score << endl;
 

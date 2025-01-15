@@ -146,7 +146,9 @@ void BranchExperiment::train_existing_backprop(
 
 			for (map<pair<int,int>, double>::iterator it = sum_factor_impacts.begin();
 					it != sum_factor_impacts.end(); it++) {
-				if (abs(weights(factor_mapping[it->first])) * sum_factor_impacts[it->first] > impact_threshold) {
+				double impact = abs(weights(factor_mapping[it->first])) * sum_factor_impacts[it->first]
+					/ num_train_instances;
+				if (impact > impact_threshold) {
 					this->existing_factor_ids.push_back(it->first);
 					this->existing_factor_weights.push_back(weights(factor_mapping[it->first]));
 				}
@@ -205,6 +207,8 @@ void BranchExperiment::train_existing_backprop(
 		double new_t_score = new_improvement / (new_standard_deviation / sqrt(num_test_instances));
 
 		if (new_t_score > 1.645) {
+			average_misguess = new_average_misguess;
+
 			for (int i_index = (int)this->existing_inputs.size()-1; i_index >= 0; i_index--) {
 				vector<pair<pair<vector<Scope*>,vector<int>>,pair<int,int>>> remove_inputs = this->existing_inputs;
 				remove_inputs.erase(remove_inputs.begin() + i_index);

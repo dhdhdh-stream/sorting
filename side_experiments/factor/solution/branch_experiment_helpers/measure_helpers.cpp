@@ -24,7 +24,7 @@ void BranchExperiment::measure_activate(AbstractNode*& curr_node,
 										ScopeHistory* scope_history) {
 	run_helper.has_explore = true;
 
-	double sum_vals = 0.0;
+	double sum_vals = this->new_average_score;
 	for (int f_index = 0; f_index < (int)this->new_factor_ids.size(); f_index++) {
 		double val;
 		fetch_factor_helper(run_helper,

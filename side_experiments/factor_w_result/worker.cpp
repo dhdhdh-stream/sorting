@@ -13,6 +13,7 @@
 #include "scope_node.h"
 #include "solution.h"
 #include "solution_helpers.h"
+#include "utilities.h"
 
 using namespace std;
 
@@ -51,8 +52,18 @@ int main(int argc, char* argv[]) {
 		Solution* best_solution = NULL;
 
 		int improvement_iter = 0;
+		int consecutive_failures = 0;
 
 		while (true) {
+			#if defined(MDEBUG) && MDEBUG
+			run_index++;
+			if (run_index%100000 == 0) {
+				cout << "run_index: " << run_index << endl;
+				cout << "solution->timestamp: " << solution->timestamp << endl;
+				cout << "improvement_iter: " << improvement_iter << endl;
+			}
+			#endif /* MDEBUG */
+
 			auto curr_time = chrono::high_resolution_clock::now();
 			auto time_diff = chrono::duration_cast<chrono::seconds>(curr_time - start_time);
 			if (time_diff.count() >= 20) {
@@ -64,6 +75,13 @@ int main(int argc, char* argv[]) {
 			Problem* problem = problem_type->get_problem();
 
 			RunHelper run_helper;
+
+			run_helper.result = get_existing_result(problem);
+
+			#if defined(MDEBUG) && MDEBUG
+			run_helper.starting_run_seed = run_index;
+			run_helper.curr_run_seed = xorshift(run_helper.starting_run_seed);
+			#endif /* MDEBUG */
 
 			vector<ContextLayer> context;
 			ScopeHistory* scope_history = new ScopeHistory(solution->scopes[0]);
@@ -102,9 +120,13 @@ int main(int argc, char* argv[]) {
 					target_val,
 					run_helper);
 				if (run_helper.experiment_history->experiment->result == EXPERIMENT_RESULT_FAIL) {
+					consecutive_failures++;
+
 					run_helper.experiment_history->experiment->finalize(NULL);
 					delete run_helper.experiment_history->experiment;
 				} else if (run_helper.experiment_history->experiment->result == EXPERIMENT_RESULT_SUCCESS) {
+					consecutive_failures = 0;
+
 					Solution* duplicate = new Solution(solution);
 
 					int last_updated_scope_id = run_helper.experiment_history->experiment->scope_context->id;
@@ -120,9 +142,22 @@ int main(int argc, char* argv[]) {
 					double sum_score = 0.0;
 					double sum_true_score = 0.0;
 					for (int iter_index = 0; iter_index < MEASURE_ITERS; iter_index++) {
+						auto curr_time = chrono::high_resolution_clock::now();
+						auto time_diff = chrono::duration_cast<chrono::seconds>(curr_time - start_time);
+						if (time_diff.count() >= 20) {
+							start_time = curr_time;
+
+							cout << "alive" << endl;
+						}
+
 						Problem* problem = problem_type->get_problem();
 
 						RunHelper run_helper;
+						#if defined(MDEBUG) && MDEBUG
+						run_helper.starting_run_seed = run_index;
+						run_helper.curr_run_seed = xorshift(run_helper.starting_run_seed);
+						run_index++;
+						#endif /* MDEBUG */
 
 						vector<ContextLayer> context;
 						duplicate->scopes[0]->measure_activate(
@@ -179,15 +214,6 @@ int main(int argc, char* argv[]) {
 					}
 
 					improvement_iter++;
-					if (solution->was_commit) {
-						if (improvement_iter >= COMMIT_IMPROVEMENTS_PER_ITER) {
-							break;
-						}
-					} else {
-						if (improvement_iter >= IMPROVEMENTS_PER_ITER) {
-							break;
-						}
-					}
 				}
 			} else {
 				for (int e_index = 0; e_index < (int)run_helper.experiments_seen_order.size(); e_index++) {
@@ -197,17 +223,55 @@ int main(int argc, char* argv[]) {
 						+ 0.1 * ((int)run_helper.experiments_seen_order.size()-1 - e_index);
 				}
 			}
+
+			if (solution->was_commit) {
+				if (improvement_iter >= COMMIT_IMPROVEMENTS_PER_ITER
+						|| consecutive_failures >= CONSECUTIVE_FAILURE_LIMIT) {
+					break;
+				}
+			} else {
+				if (improvement_iter >= IMPROVEMENTS_PER_ITER
+						|| consecutive_failures >= CONSECUTIVE_FAILURE_LIMIT) {
+					break;
+				}
+			}
 		}
 
-		delete solution;
-		solution = best_solution;
+		if (consecutive_failures < CONSECUTIVE_FAILURE_LIMIT) {
+			delete solution;
+			solution = best_solution;
+		}
 
-		if (solution->timestamp % COMMIT_ITERS == 0
-				&& solution->timestamp != EXPLORE_ITERS) {
+		if ((solution->timestamp % COMMIT_ITERS == 0
+					&& solution->timestamp != EXPLORE_ITERS)
+				|| consecutive_failures >= CONSECUTIVE_FAILURE_LIMIT) {
 			while (true) {
+				#if defined(MDEBUG) && MDEBUG
+				run_index++;
+				if (run_index%100000 == 0) {
+					cout << "run_index: " << run_index << endl;
+					cout << "solution->timestamp: " << solution->timestamp << endl;
+				}
+				#endif /* MDEBUG */
+
+				auto curr_time = chrono::high_resolution_clock::now();
+				auto time_diff = chrono::duration_cast<chrono::seconds>(curr_time - start_time);
+				if (time_diff.count() >= 20) {
+					start_time = curr_time;
+
+					cout << "alive" << endl;
+				}
+
 				Problem* problem = problem_type->get_problem();
 
 				RunHelper run_helper;
+
+				run_helper.result = get_existing_result(problem);
+
+				#if defined(MDEBUG) && MDEBUG
+				run_helper.starting_run_seed = run_index;
+				run_helper.curr_run_seed = xorshift(run_helper.starting_run_seed);
+				#endif /* MDEBUG */
 
 				vector<ContextLayer> context;
 				ScopeHistory* scope_history = new ScopeHistory(solution->scopes[0]);

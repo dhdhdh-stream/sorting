@@ -84,6 +84,7 @@ void BranchExperiment::finalize(Solution* duplicate) {
 		duplicate_local_scope->node_counter++;
 		duplicate_local_scope->nodes[new_branch_node->id] = new_branch_node;
 
+		new_branch_node->average_val = this->new_average_score;
 		new_branch_node->factor_ids = this->new_factor_ids;
 		new_branch_node->factor_weights = this->new_factor_weights;
 

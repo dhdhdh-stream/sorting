@@ -30,7 +30,7 @@ int main(int argc, char* argv[]) {
 	cout << "Starting..." << endl;
 
 	// seed = (unsigned)time(NULL);
-	seed = 1736656047;
+	seed = 1736729851;
 	srand(seed);
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
@@ -142,6 +142,7 @@ int main(int argc, char* argv[]) {
 		Solution* best_solution = NULL;
 
 		int improvement_iter = 0;
+		int consecutive_failures = 0;
 
 		while (true) {
 			run_index++;
@@ -199,9 +200,13 @@ int main(int argc, char* argv[]) {
 					target_val,
 					run_helper);
 				if (run_helper.experiment_history->experiment->result == EXPERIMENT_RESULT_FAIL) {
+					consecutive_failures++;
+
 					run_helper.experiment_history->experiment->finalize(NULL);
 					delete run_helper.experiment_history->experiment;
 				} else if (run_helper.experiment_history->experiment->result == EXPERIMENT_RESULT_SUCCESS) {
+					consecutive_failures = 0;
+
 					Solution* duplicate = new Solution(solution);
 
 					int last_updated_scope_id = run_helper.experiment_history->experiment->scope_context->id;
@@ -312,15 +317,6 @@ int main(int argc, char* argv[]) {
 					}
 
 					improvement_iter++;
-					if (solution->was_commit) {
-						if (improvement_iter >= COMMIT_IMPROVEMENTS_PER_ITER) {
-							break;
-						}
-					} else {
-						if (improvement_iter >= IMPROVEMENTS_PER_ITER) {
-							break;
-						}
-					}
 				}
 			} else {
 				for (int e_index = 0; e_index < (int)run_helper.experiments_seen_order.size(); e_index++) {
@@ -330,13 +326,28 @@ int main(int argc, char* argv[]) {
 						+ 0.1 * ((int)run_helper.experiments_seen_order.size()-1 - e_index);
 				}
 			}
+
+			if (solution->was_commit) {
+				if (improvement_iter >= COMMIT_IMPROVEMENTS_PER_ITER
+						|| consecutive_failures >= CONSECUTIVE_FAILURE_LIMIT) {
+					break;
+				}
+			} else {
+				if (improvement_iter >= IMPROVEMENTS_PER_ITER
+						|| consecutive_failures >= CONSECUTIVE_FAILURE_LIMIT) {
+					break;
+				}
+			}
 		}
 
-		delete solution;
-		solution = best_solution;
+		if (consecutive_failures < CONSECUTIVE_FAILURE_LIMIT) {
+			delete solution;
+			solution = best_solution;
+		}
 
-		if (solution->timestamp % COMMIT_ITERS == 0
-				&& solution->timestamp != EXPLORE_ITERS) {
+		if ((solution->timestamp % COMMIT_ITERS == 0
+					&& solution->timestamp != EXPLORE_ITERS)
+				|| consecutive_failures >= CONSECUTIVE_FAILURE_LIMIT) {
 			while (true) {
 				run_index++;
 				if (run_index%100000 == 0) {

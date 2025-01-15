@@ -13,7 +13,7 @@ using namespace std;
 void BranchNode::activate(AbstractNode*& curr_node,
 						  vector<ContextLayer>& context,
 						  RunHelper& run_helper) {
-	double sum_vals = 0.0;
+	double sum_vals = this->average_val;
 	for (int f_index = 0; f_index < (int)this->factor_ids.size(); f_index++) {
 		map<pair<pair<vector<Scope*>,vector<int>>, pair<int,int>>, double>::iterator it
 			= context.back().obs_history.find(

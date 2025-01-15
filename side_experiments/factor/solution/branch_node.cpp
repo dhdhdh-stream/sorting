@@ -25,6 +25,7 @@ BranchNode::BranchNode() {
 BranchNode::BranchNode(BranchNode* original) {
 	this->type = NODE_TYPE_BRANCH;
 
+	this->average_val = original->average_val;
 	this->factor_ids = original->factor_ids;
 	this->factor_weights = original->factor_weights;
 
@@ -115,6 +116,7 @@ void BranchNode::clear_experiments() {
 }
 
 void BranchNode::save(ofstream& output_file) {
+	output_file << this->average_val << endl;
 	output_file << this->factor_ids.size() << endl;
 	for (int f_index = 0; f_index < (int)this->factor_ids.size(); f_index++) {
 		output_file << this->factor_ids[f_index].first << endl;
@@ -136,6 +138,10 @@ void BranchNode::save(ofstream& output_file) {
 }
 
 void BranchNode::load(ifstream& input_file) {
+	string average_val_line;
+	getline(input_file, average_val_line);
+	this->average_val = stod(average_val_line);
+
 	string num_factors_line;
 	getline(input_file, num_factors_line);
 	int num_factors = stoi(num_factors_line);

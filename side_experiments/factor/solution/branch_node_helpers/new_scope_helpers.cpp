@@ -16,7 +16,7 @@ void BranchNode::new_scope_activate(AbstractNode*& curr_node,
 	BranchNodeHistory* history = new BranchNodeHistory(this);
 	scope_history->node_histories[this->id] = history;
 
-	double sum_vals = 0.0;
+	double sum_vals = this->average_val;
 	for (int f_index = 0; f_index < (int)this->factor_ids.size(); f_index++) {
 		double val;
 		fetch_factor_helper(run_helper,
@@ -61,7 +61,7 @@ void BranchNode::new_scope_capture_verify_activate(
 	BranchNodeHistory* history = new BranchNodeHistory(this);
 	scope_history->node_histories[this->id] = history;
 
-	double sum_vals = 0.0;
+	double sum_vals = this->average_val;
 	for (int f_index = 0; f_index < (int)this->factor_ids.size(); f_index++) {
 		double val;
 		fetch_factor_helper(run_helper,

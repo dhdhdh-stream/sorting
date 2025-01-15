@@ -1,5 +1,7 @@
 #include "factor.h"
 
+#include <iostream>
+
 #include "branch_node.h"
 #include "network.h"
 #include "obs_node.h"
