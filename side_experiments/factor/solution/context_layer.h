@@ -12,9 +12,6 @@ class ContextLayer {
 public:
 	Scope* scope;
 	int node_id;
-
-	std::map<std::pair<std::pair<std::vector<Scope*>,std::vector<int>>,
-		std::pair<int,int>>, double> obs_history;
 };
 
 #endif /* CONTEXT_LAYER_H */

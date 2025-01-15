@@ -37,7 +37,8 @@ public:
 
 	void activate(Problem* problem,
 				  std::vector<ContextLayer>& context,
-				  RunHelper& run_helper);
+				  RunHelper& run_helper,
+				  ScopeHistory* scope_history);
 
 	void experiment_activate(Problem* problem,
 							 std::vector<ContextLayer>& context,
@@ -57,18 +58,8 @@ public:
 
 	void measure_activate(Problem* problem,
 						  std::vector<ContextLayer>& context,
-						  RunHelper& run_helper);
-
-	void commit_gather_activate(Problem* problem,
-								std::vector<ContextLayer>& context,
-								RunHelper& run_helper,
-								int& node_count,
-								AbstractNode*& potential_node_context,
-								bool& potential_is_branch);
-	void commit_activate(Problem* problem,
-						 std::vector<ContextLayer>& context,
-						 RunHelper& run_helper,
-						 PotentialCommit* potential_commit);
+						  RunHelper& run_helper,
+						  ScopeHistory* scope_history);
 
 	#if defined(MDEBUG) && MDEBUG
 	void new_scope_capture_verify_activate(Problem* problem,
@@ -77,7 +68,8 @@ public:
 										   ScopeHistory* scope_history);
 	void verify_activate(Problem* problem,
 						 std::vector<ContextLayer>& context,
-						 RunHelper& run_helper);
+						 RunHelper& run_helper,
+						 ScopeHistory* scope_history);
 	void clear_verify();
 	#endif /* MDEBUG */
 

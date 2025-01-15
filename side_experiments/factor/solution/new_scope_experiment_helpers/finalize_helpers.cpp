@@ -78,61 +78,17 @@ void NewScopeExperiment::finalize(Solution* duplicate) {
 							Scope* scope = factor->inputs[i_index].first.first.back();
 							AbstractNode* node = scope->nodes[factor->inputs[i_index].first.second.back()];
 							switch (node->type) {
-							case NODE_TYPE_BRANCH:
-								{
-									BranchNode* branch_node = (BranchNode*)node;
-
-									bool is_existing = false;
-									for (int ii_index = 0; ii_index < (int)branch_node->input_scope_contexts.size(); ii_index++) {
-										if (branch_node->input_scope_contexts[ii_index] == factor->inputs[i_index].first.first
-												&& branch_node->input_node_context_ids[ii_index] == factor->inputs[i_index].first.second) {
-											is_existing = true;
-											break;
-										}
-									}
-									if (!is_existing) {
-										branch_node->input_scope_contexts.push_back(factor->inputs[i_index].first.first);
-										branch_node->input_node_context_ids.push_back(factor->inputs[i_index].first.second);
-									}
-								}
-								break;
 							case NODE_TYPE_OBS:
 								{
 									ObsNode* obs_node = (ObsNode*)node;
 
-									if (factor->inputs[i_index].second.first == -1) {
-										bool is_existing = false;
-										for (int ii_index = 0; ii_index < (int)obs_node->input_scope_contexts.size(); ii_index++) {
-											if (obs_node->input_scope_contexts[ii_index] == factor->inputs[i_index].first.first
-													&& obs_node->input_node_context_ids[ii_index] == factor->inputs[i_index].first.second
-													&& obs_node->input_obs_indexes[ii_index] == factor->inputs[i_index].second.second) {
-												is_existing = true;
-												break;
-											}
-										}
-										if (!is_existing) {
-											obs_node->input_scope_contexts.push_back(factor->inputs[i_index].first.first);
-											obs_node->input_node_context_ids.push_back(factor->inputs[i_index].first.second);
-											obs_node->input_obs_indexes.push_back(factor->inputs[i_index].second.second);
-										}
-									} else {
+									if (factor->inputs[i_index].second.first != -1) {
 										Factor* i_factor = obs_node->factors[factor->inputs[i_index].second.first];
 
 										i_factor->link(duplicate);
-
-										bool is_existing = false;
-										for (int ii_index = 0; ii_index < (int)i_factor->input_scope_contexts.size(); ii_index++) {
-											if (i_factor->input_scope_contexts[ii_index] == factor->inputs[i_index].first.first
-													&& i_factor->input_node_context_ids[ii_index] == factor->inputs[i_index].first.second) {
-												is_existing = true;
-												break;
-											}
-										}
-										if (!is_existing) {
-											i_factor->input_scope_contexts.push_back(factor->inputs[i_index].first.first);
-											i_factor->input_node_context_ids.push_back(factor->inputs[i_index].first.second);
-										}
 									}
+
+									obs_node->is_used = true;
 								}
 								break;
 							}

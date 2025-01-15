@@ -16,7 +16,8 @@ using namespace std;
 void node_verify_activate_helper(AbstractNode*& curr_node,
 								 Problem* problem,
 								 vector<ContextLayer>& context,
-								 RunHelper& run_helper) {
+								 RunHelper& run_helper,
+								 ScopeHistory* history) {
 	switch (curr_node->type) {
 	case NODE_TYPE_ACTION:
 		{
@@ -31,7 +32,8 @@ void node_verify_activate_helper(AbstractNode*& curr_node,
 			node->verify_activate(curr_node,
 								  problem,
 								  context,
-								  run_helper);
+								  run_helper,
+								  history);
 		}
 		break;
 	case NODE_TYPE_BRANCH:
@@ -40,7 +42,8 @@ void node_verify_activate_helper(AbstractNode*& curr_node,
 			node->verify_activate(curr_node,
 								  problem,
 								  context,
-								  run_helper);
+								  run_helper,
+								  history);
 		}
 		break;
 	case NODE_TYPE_OBS:
@@ -49,7 +52,8 @@ void node_verify_activate_helper(AbstractNode*& curr_node,
 			node->activate(curr_node,
 						   problem,
 						   context,
-						   run_helper);
+						   run_helper,
+						   history);
 		}
 		break;
 	}
@@ -59,7 +63,8 @@ void node_verify_activate_helper(AbstractNode*& curr_node,
 
 void Scope::verify_activate(Problem* problem,
 							vector<ContextLayer>& context,
-							RunHelper& run_helper) {
+							RunHelper& run_helper,
+							ScopeHistory* history) {
 	context.push_back(ContextLayer());
 
 	context.back().scope = this;
@@ -73,7 +78,8 @@ void Scope::verify_activate(Problem* problem,
 		node_verify_activate_helper(curr_node,
 									problem,
 									context,
-									run_helper);
+									run_helper,
+									history);
 	}
 
 	context.pop_back();

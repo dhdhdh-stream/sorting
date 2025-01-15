@@ -19,12 +19,6 @@ public:
 	std::vector<std::pair<int,int>> factor_ids;
 	std::vector<double> factor_weights;
 
-	std::vector<std::vector<Scope*>> input_scope_contexts;
-	std::vector<std::vector<int>> input_node_context_ids;
-	/**
-	 * - 1.0 if branch, -1.0 if original
-	 */
-
 	int original_next_node_id;
 	AbstractNode* original_next_node;
 	int branch_next_node_id;
@@ -41,7 +35,8 @@ public:
 
 	void activate(AbstractNode*& curr_node,
 				  std::vector<ContextLayer>& context,
-				  RunHelper& run_helper);
+				  RunHelper& run_helper,
+				  ScopeHistory* scope_history);
 
 	void experiment_activate(AbstractNode*& curr_node,
 							 Problem* problem,
@@ -58,7 +53,8 @@ public:
 	void verify_activate(AbstractNode*& curr_node,
 						 Problem* problem,
 						 std::vector<ContextLayer>& context,
-						 RunHelper& run_helper);
+						 RunHelper& run_helper,
+						 ScopeHistory* scope_history);
 	void new_scope_capture_verify_activate(AbstractNode*& curr_node,
 										   Problem* problem,
 										   std::vector<ContextLayer>& context,

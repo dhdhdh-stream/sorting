@@ -29,8 +29,7 @@ int run_index;
 int main(int argc, char* argv[]) {
 	cout << "Starting..." << endl;
 
-	// seed = (unsigned)time(NULL);
-	seed = 1736656047;
+	seed = (unsigned)time(NULL);
 	srand(seed);
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
@@ -221,10 +220,13 @@ int main(int argc, char* argv[]) {
 						duplicate->verify_seeds.erase(duplicate->verify_seeds.begin());
 
 						vector<ContextLayer> context;
+						ScopeHistory* scope_history = new ScopeHistory(duplicate->scopes[0]);
 						duplicate->scopes[0]->verify_activate(
 							problem,
 							context,
-							run_helper);
+							run_helper,
+							scope_history);
+						delete scope_history;
 
 						delete duplicate->verify_problems[0];
 						duplicate->verify_problems.erase(duplicate->verify_problems.begin());
@@ -245,10 +247,13 @@ int main(int argc, char* argv[]) {
 						#endif /* MDEBUG */
 
 						vector<ContextLayer> context;
+						ScopeHistory* scope_history = new ScopeHistory(duplicate->scopes[0]);
 						duplicate->scopes[0]->measure_activate(
 							problem,
 							context,
-							run_helper);
+							run_helper,
+							scope_history);
+						delete scope_history;
 
 						double target_val = problem->score_result();
 						sum_score += target_val - 0.05 * run_helper.num_actions * solution->curr_time_penalty

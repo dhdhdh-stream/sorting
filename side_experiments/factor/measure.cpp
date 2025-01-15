@@ -48,10 +48,13 @@ int main(int argc, char* argv[]) {
 		RunHelper run_helper;
 
 		vector<ContextLayer> context;
+		ScopeHistory* scope_history = new ScopeHistory(solution->scopes[0]);
 		solution->scopes[0]->activate(
 			problem,
 			context,
-			run_helper);
+			run_helper,
+			scope_history);
+		delete scope_history;
 
 		double target_val = problem->score_result();
 		target_val -= 0.05 * run_helper.num_actions * solution->curr_time_penalty;

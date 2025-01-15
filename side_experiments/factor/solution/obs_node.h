@@ -17,9 +17,7 @@ class Solution;
 class ObsNodeHistory;
 class ObsNode : public AbstractNode {
 public:
-	std::vector<std::vector<Scope*>> input_scope_contexts;
-	std::vector<std::vector<int>> input_node_context_ids;
-	std::vector<int> input_obs_indexes;
+	bool is_used;
 
 	std::vector<Factor*> factors;
 
@@ -34,7 +32,8 @@ public:
 	void activate(AbstractNode*& curr_node,
 				  Problem* problem,
 				  std::vector<ContextLayer>& context,
-				  RunHelper& run_helper);
+				  RunHelper& run_helper,
+				  ScopeHistory* scope_history);
 
 	void experiment_activate(AbstractNode*& curr_node,
 							 Problem* problem,

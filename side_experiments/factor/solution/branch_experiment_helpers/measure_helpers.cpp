@@ -53,9 +53,12 @@ void BranchExperiment::measure_activate(AbstractNode*& curr_node,
 			} else {
 				context.back().node_id = -1;
 
+				ScopeHistory* inner_scope_history = new ScopeHistory(this->best_scopes[s_index]);
 				this->best_scopes[s_index]->activate(problem,
 					context,
-					run_helper);
+					run_helper,
+					inner_scope_history);
+				delete inner_scope_history;
 			}
 
 			run_helper.num_actions += 2;

@@ -16,7 +16,8 @@ void NewScopeExperiment::capture_verify_activate(
 		AbstractNode*& curr_node,
 		Problem* problem,
 		vector<ContextLayer>& context,
-		RunHelper& run_helper) {
+		RunHelper& run_helper,
+		ScopeHistory* scope_history) {
 	if (this->verify_problems[this->state_iter] == NULL) {
 		this->verify_problems[this->state_iter] = problem->copy_and_reset();
 	}
@@ -30,7 +31,8 @@ void NewScopeExperiment::capture_verify_activate(
 			curr_node,
 			problem,
 			context,
-			run_helper);
+			run_helper,
+			scope_history);
 
 		if (curr_node == NULL
 				|| this->scope_context->nodes.find(curr_node->id) != this->scope_context->nodes.end()) {

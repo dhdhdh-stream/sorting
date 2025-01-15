@@ -23,6 +23,8 @@ ObsNode::ObsNode(ObsNode* original,
 				 Solution* parent_solution) {
 	this->type = NODE_TYPE_OBS;
 
+	this->is_used = original->is_used;
+
 	for (int f_index = 0; f_index < (int)original->factors.size(); f_index++) {
 		Factor* factor = new Factor(original->factors[f_index],
 									parent_solution);
@@ -53,23 +55,6 @@ ObsNode::~ObsNode() {
 
 void ObsNode::clean_inputs(Scope* scope,
 						   int node_id) {
-	for (int i_index = (int)this->input_scope_contexts.size()-1; i_index >= 0; i_index--) {
-		bool is_match = false;
-		for (int l_index = 0; l_index < (int)this->input_scope_contexts[i_index].size(); l_index++) {
-			if (this->input_scope_contexts[i_index][l_index] == scope
-					&& this->input_node_context_ids[i_index][l_index] == node_id) {
-				is_match = true;
-				break;
-			}
-		}
-
-		if (is_match) {
-			this->input_scope_contexts.erase(this->input_scope_contexts.begin() + i_index);
-			this->input_node_context_ids.erase(this->input_node_context_ids.begin() + i_index);
-			this->input_obs_indexes.erase(this->input_obs_indexes.begin() + i_index);
-		}
-	}
-
 	for (int f_index = 0; f_index < (int)this->factors.size(); f_index++) {
 		this->factors[f_index]->clean_inputs(scope,
 											 node_id);
@@ -77,22 +62,6 @@ void ObsNode::clean_inputs(Scope* scope,
 }
 
 void ObsNode::clean_inputs(Scope* scope) {
-	for (int i_index = (int)this->input_scope_contexts.size()-1; i_index >= 0; i_index--) {
-		bool is_match = false;
-		for (int l_index = 0; l_index < (int)this->input_scope_contexts[i_index].size(); l_index++) {
-			if (this->input_scope_contexts[i_index][l_index] == scope) {
-				is_match = true;
-				break;
-			}
-		}
-
-		if (is_match) {
-			this->input_scope_contexts.erase(this->input_scope_contexts.begin() + i_index);
-			this->input_node_context_ids.erase(this->input_node_context_ids.begin() + i_index);
-			this->input_obs_indexes.erase(this->input_obs_indexes.begin() + i_index);
-		}
-	}
-
 	for (int f_index = 0; f_index < (int)this->factors.size(); f_index++) {
 		this->factors[f_index]->clean_inputs(scope);
 	}
@@ -125,6 +94,8 @@ void ObsNode::save(ofstream& output_file) {
 
 void ObsNode::load(ifstream& input_file,
 				   Solution* parent_solution) {
+	this->is_used = false;
+
 	string num_factors_line;
 	getline(input_file, num_factors_line);
 	int num_factors = stoi(num_factors_line);

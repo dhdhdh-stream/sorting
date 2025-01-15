@@ -130,9 +130,12 @@ void BranchExperiment::explore_activate(
 			} else {
 				context.back().node_id = -1;
 
+				ScopeHistory* inner_scope_history = new ScopeHistory(this->curr_scopes[s_index]);
 				this->curr_scopes[s_index]->activate(problem,
 					context,
-					run_helper);
+					run_helper,
+					inner_scope_history);
+				delete inner_scope_history;
 			}
 
 			run_helper.num_actions += 2;

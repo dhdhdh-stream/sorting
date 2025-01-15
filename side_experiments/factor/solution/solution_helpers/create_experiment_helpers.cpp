@@ -20,7 +20,7 @@ using namespace std;
 #if defined(MDEBUG) && MDEBUG
 const int PASS_THROUGH_MIN_NUM_MEASURE = 10;
 #else
-const int PASS_THROUGH_MIN_NUM_MEASURE = 1000;
+const int PASS_THROUGH_MIN_NUM_MEASURE = 2000;
 #endif /* MDEBUG */
 
 void gather_nodes_seen_helper(ScopeHistory* scope_history,

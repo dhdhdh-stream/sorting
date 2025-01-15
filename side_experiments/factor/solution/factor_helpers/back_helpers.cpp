@@ -7,7 +7,7 @@ using namespace std;
 
 double Factor::back_activate(RunHelper& run_helper,
 							 ScopeHistory* scope_history) {
-	// run_helper.num_analyze += (int)this->inputs.size();
+	run_helper.num_analyze += (int)this->inputs.size();
 
 	vector<double> input_vals(this->inputs.size(), 0.0);
 	for (int i_index = 0; i_index < (int)this->inputs.size(); i_index++) {

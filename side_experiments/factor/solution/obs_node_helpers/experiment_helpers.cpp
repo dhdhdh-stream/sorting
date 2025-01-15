@@ -18,40 +18,8 @@ void ObsNode::experiment_activate(AbstractNode*& curr_node,
 	vector<double> obs = problem->get_observations();
 	history->obs_history = obs;
 
-	for (int i_index = 0; i_index < (int)this->input_scope_contexts.size(); i_index++) {
-		bool match_context = false;
-		if (context.size() >= this->input_scope_contexts[i_index].size()) {
-			match_context = true;
-			for (int l_index = 0; l_index < (int)this->input_scope_contexts[i_index].size()-1; l_index++) {
-				int context_index = context.size() - this->input_scope_contexts[i_index].size() + l_index;
-				if (context[context_index].scope != this->input_scope_contexts[i_index][l_index]
-						|| context[context_index].node_id != this->input_node_context_ids[i_index][l_index]) {
-					match_context = false;
-					break;
-				}
-			}
-		}
-
-		if (match_context) {
-			context[context.size() - this->input_scope_contexts[i_index].size()]
-				.obs_history[{{this->input_scope_contexts[i_index],
-					this->input_node_context_ids[i_index]}, {-1,this->input_obs_indexes[i_index]}}] = obs[this->input_obs_indexes[i_index]];
-		}
-	}
-
 	history->factor_initialized = vector<bool>(this->factors.size());
 	history->factor_values = vector<double>(this->factors.size());
-	for (int f_index = 0; f_index < (int)this->factors.size(); f_index++) {
-		bool initialized;
-		double value;
-		this->factors[f_index]->activate(f_index,
-										 context,
-										 run_helper,
-										 initialized,
-										 value);
-		history->factor_initialized[f_index] = initialized;
-		history->factor_values[f_index] = value;
-	}
 
 	curr_node = this->next_node;
 

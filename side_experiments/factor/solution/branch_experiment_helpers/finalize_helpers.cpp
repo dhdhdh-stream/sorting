@@ -271,21 +271,7 @@ void BranchExperiment::finalize(Solution* duplicate) {
 
 			factor->link(duplicate);
 
-			vector<Scope*> scope_context{duplicate_local_scope};
-			vector<int> node_context_ids{this->new_factor_ids[f_index].first};
-
-			bool is_existing = false;
-			for (int i_index = 0; i_index < (int)factor->input_scope_contexts.size(); i_index++) {
-				if (factor->input_scope_contexts[i_index] == scope_context
-						&& factor->input_node_context_ids[i_index] == node_context_ids) {
-					is_existing = true;
-					break;
-				}
-			}
-			if (!is_existing) {
-				factor->input_scope_contexts.push_back(scope_context);
-				factor->input_node_context_ids.push_back(node_context_ids);
-			}
+			obs_node->is_used = true;
 		}
 
 		for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {

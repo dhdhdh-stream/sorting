@@ -96,7 +96,8 @@ void NewScopeExperiment::activate(AbstractNode* experiment_node,
 										curr_node,
 										problem,
 										context,
-										run_helper);
+										run_helper,
+										scope_history);
 				break;
 			#endif /* MDEBUG */
 			}

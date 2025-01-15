@@ -94,7 +94,8 @@ public:
 								 AbstractNode*& curr_node,
 								 Problem* problem,
 								 std::vector<ContextLayer>& context,
-								 RunHelper& run_helper);
+								 RunHelper& run_helper,
+								 ScopeHistory* scope_history);
 	void capture_verify_backprop();
 	#endif /* MDEBUG */
 

@@ -59,12 +59,6 @@ void Scope::clean_inputs(Scope* scope) {
 	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
 			it != this->nodes.end(); it++) {
 		switch (it->second->type) {
-		case NODE_TYPE_BRANCH:
-			{
-				BranchNode* branch_node = (BranchNode*)it->second;
-				branch_node->clean_inputs(scope);
-			}
-			break;
 		case NODE_TYPE_OBS:
 			{
 				ObsNode* obs_node = (ObsNode*)it->second;

@@ -73,39 +73,6 @@ void BranchNode::clean_inputs(Scope* scope,
 			}
 		}
 	}
-
-	for (int i_index = (int)this->input_scope_contexts.size()-1; i_index >= 0; i_index--) {
-		bool is_match = false;
-		for (int l_index = 0; l_index < (int)this->input_scope_contexts[i_index].size(); l_index++) {
-			if (this->input_scope_contexts[i_index][l_index] == scope
-					&& this->input_node_context_ids[i_index][l_index] == node_id) {
-				is_match = true;
-				break;
-			}
-		}
-
-		if (is_match) {
-			this->input_scope_contexts.erase(this->input_scope_contexts.begin() + i_index);
-			this->input_node_context_ids.erase(this->input_node_context_ids.begin() + i_index);
-		}
-	}
-}
-
-void BranchNode::clean_inputs(Scope* scope) {
-	for (int i_index = (int)this->input_scope_contexts.size()-1; i_index >= 0; i_index--) {
-		bool is_match = false;
-		for (int l_index = 0; l_index < (int)this->input_scope_contexts[i_index].size(); l_index++) {
-			if (this->input_scope_contexts[i_index][l_index] == scope) {
-				is_match = true;
-				break;
-			}
-		}
-
-		if (is_match) {
-			this->input_scope_contexts.erase(this->input_scope_contexts.begin() + i_index);
-			this->input_node_context_ids.erase(this->input_node_context_ids.begin() + i_index);
-		}
-	}
 }
 
 void BranchNode::clear_experiments() {
@@ -194,21 +161,7 @@ void BranchNode::link(Solution* parent_solution) {
 
 		factor->link(parent_solution);
 
-		vector<Scope*> scope_context{this->parent};
-		vector<int> node_context_ids{this->factor_ids[f_index].first};
-
-		bool is_existing = false;
-		for (int i_index = 0; i_index < (int)factor->input_scope_contexts.size(); i_index++) {
-			if (factor->input_scope_contexts[i_index] == scope_context
-					&& factor->input_node_context_ids[i_index] == node_context_ids) {
-				is_existing = true;
-				break;
-			}
-		}
-		if (!is_existing) {
-			factor->input_scope_contexts.push_back(scope_context);
-			factor->input_node_context_ids.push_back(node_context_ids);
-		}
+		obs_node->is_used = true;
 	}
 
 	if (this->original_next_node_id == -1) {

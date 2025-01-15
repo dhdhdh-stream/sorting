@@ -16,23 +16,16 @@ class Solution;
 
 class Factor {
 public:
+	bool is_used;
+
 	std::vector<std::pair<std::pair<std::vector<Scope*>,std::vector<int>>,
 		std::pair<int,int>>> inputs;
 	Network* network;
-
-	std::vector<std::vector<Scope*>> input_scope_contexts;
-	std::vector<std::vector<int>> input_node_context_ids;
 
 	Factor();
 	Factor(Factor* original,
 		   Solution* parent_solution);
 	~Factor();
-
-	void activate(int index,
-				  std::vector<ContextLayer>& context,
-				  RunHelper& run_helper,
-				  bool& initialized,
-				  double& value);
 
 	double back_activate(RunHelper& run_helper,
 						 ScopeHistory* scope_history);
