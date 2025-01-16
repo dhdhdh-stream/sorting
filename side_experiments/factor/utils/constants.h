@@ -17,7 +17,7 @@ const int EXPLORE_TYPE_BEST = 1;
 
 const double TEST_SAMPLES_PERCENTAGE = 0.2;
 
-const double FACTOR_IMPACT_THRESHOLD = 0.5;
+const double FACTOR_IMPACT_THRESHOLD = 0.1;
 
 const int NETWORK_NUM_INPUTS = 10;
 

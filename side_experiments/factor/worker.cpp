@@ -273,6 +273,8 @@ int main(int argc, char* argv[]) {
 									solution);
 						solution->clean_scopes();
 
+						solution->clear_experiments();
+
 						break;
 					}
 				} else {

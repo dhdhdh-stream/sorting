@@ -146,7 +146,7 @@ void BranchExperiment::train_existing_backprop(
 
 			#if defined(MDEBUG) && MDEBUG
 			#else
-			double impact_threshold = average_offset / num_factors * FACTOR_IMPACT_THRESHOLD;
+			double impact_threshold = average_offset * FACTOR_IMPACT_THRESHOLD;
 			#endif /* MDEBUG */
 
 			for (map<pair<int,int>, double>::iterator it = sum_factor_impacts.begin();
@@ -262,7 +262,7 @@ void BranchExperiment::train_existing_backprop(
 				}
 			}
 
-			if (this->existing_inputs.size() > 0) {
+			if (this->existing_inputs.size() > 1) {
 				Factor* new_factor = new Factor();
 				new_factor->inputs = this->existing_inputs;
 				new_factor->network = existing_network;

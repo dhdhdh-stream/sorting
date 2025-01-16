@@ -16,6 +16,8 @@ void CommitExperiment::finalize(Solution* duplicate) {
 		Scope* duplicate_local_scope = duplicate->scopes[this->scope_context->id];
 		AbstractNode* duplicate_explore_node = duplicate_local_scope->nodes[this->node_context->id];
 
+		duplicate_explore_node->was_commit = true;
+
 		vector<AbstractNode*> new_nodes;
 		for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 			if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
@@ -49,6 +51,8 @@ void CommitExperiment::finalize(Solution* duplicate) {
 			}
 		}
 
+		duplicate->was_commit = true;
+
 		int exit_node_id;
 		AbstractNode* exit_node;
 		if (this->best_exit_next_node == NULL) {
@@ -78,8 +82,6 @@ void CommitExperiment::finalize(Solution* duplicate) {
 			new_ending_node->next_node = NULL;
 
 			new_ending_node->average_instances_per_run = this->node_context->average_instances_per_run;
-
-			new_ending_node->was_commit = true;
 
 			exit_node_id = new_ending_node->id;
 			exit_node = new_ending_node;

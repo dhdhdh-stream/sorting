@@ -88,7 +88,7 @@ void gather_possible_helper(ScopeHistory* scope_history,
 				}
 
 				for (int f_index = 0; f_index < (int)obs_node->factors.size(); f_index++) {
-					if (obs_node->factors[f_index]->inputs.size() > 0) {
+					if (obs_node->factors[f_index]->inputs.size() > 1) {
 						uniform_int_distribution<int> select_distribution(0, node_count);
 						node_count++;
 						if (select_distribution(generator) == 0) {
@@ -118,7 +118,7 @@ void gather_factors(RunHelper& run_helper,
 			ObsNode* obs_node = (ObsNode*)it->second->node;
 
 			for (int f_index = 0; f_index < (int)obs_node->factors.size(); f_index++) {
-				if (obs_node->factors[f_index]->inputs.size() > 0) {
+				if (obs_node->factors[f_index]->inputs.size() > 1) {
 					if (!obs_node_history->factor_initialized[f_index]) {
 						double value = obs_node->factors[f_index]->back_activate(
 							run_helper,

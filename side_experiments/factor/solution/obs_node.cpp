@@ -11,6 +11,8 @@ using namespace std;
 ObsNode::ObsNode() {
 	this->type = NODE_TYPE_OBS;
 
+	this->is_used = false;
+
 	this->average_instances_per_run = 0.0;
 
 	this->was_commit = false;
@@ -94,8 +96,6 @@ void ObsNode::save(ofstream& output_file) {
 
 void ObsNode::load(ifstream& input_file,
 				   Solution* parent_solution) {
-	this->is_used = false;
-
 	string num_factors_line;
 	getline(input_file, num_factors_line);
 	int num_factors = stoi(num_factors_line);

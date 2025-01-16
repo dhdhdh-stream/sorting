@@ -106,6 +106,8 @@ int main(int argc, char* argv[]) {
 								solution);
 					solution->clean_scopes();
 
+					solution->clear_experiments();
+
 					ofstream display_file;
 					display_file.open("../display.txt");
 					solution->save_for_display(display_file);
@@ -398,6 +400,8 @@ int main(int argc, char* argv[]) {
 						clean_scope(experiment_scope,
 									solution);
 						solution->clean_scopes();
+
+						solution->clear_experiments();
 
 						ofstream display_file;
 						display_file.open("../display.txt");

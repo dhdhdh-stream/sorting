@@ -77,7 +77,7 @@ void ScopeNode::new_scope_capture_verify_activate(
 			problem,
 			context,
 			run_helper,
-			NULL);
+			scope_history);
 	}
 }
 #endif /* MDEBUG */
