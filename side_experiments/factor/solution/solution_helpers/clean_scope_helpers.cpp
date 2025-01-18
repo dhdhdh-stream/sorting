@@ -149,8 +149,7 @@ void clean_scope(Scope* scope,
 						&& curr_obs_node->next_node->type == NODE_TYPE_OBS
 						&& curr_obs_node->next_node->ancestor_ids.size() == 1) {
 					ObsNode* next_obs_node = (ObsNode*)curr_obs_node->next_node;
-					if (!next_obs_node->is_used
-							&& next_obs_node->factors.size() == 0) {
+					if (!next_obs_node->is_used) {
 						if (next_obs_node->next_node != NULL) {
 							for (int a_index = 0; a_index < (int)next_obs_node->next_node->ancestor_ids.size(); a_index++) {
 								if (next_obs_node->next_node->ancestor_ids[a_index] == next_obs_node->id) {
@@ -173,8 +172,7 @@ void clean_scope(Scope* scope,
 						removed_node = true;
 						break;
 					} else if (curr_obs_node->id != 0
-							&& !curr_obs_node->is_used
-							&& curr_obs_node->factors.size() == 0) {
+							&& !curr_obs_node->is_used) {
 						for (int a_index = 0; a_index < (int)next_obs_node->ancestor_ids.size(); a_index++) {
 							if (next_obs_node->ancestor_ids[a_index] == curr_obs_node->id) {
 								next_obs_node->ancestor_ids.erase(

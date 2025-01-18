@@ -9,6 +9,7 @@
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
+#include "solution_helpers.h"
 
 using namespace std;
 
@@ -104,6 +105,9 @@ void NewScopeExperiment::finalize(Solution* duplicate) {
 		this->verify_problems.clear();
 		duplicate->verify_seeds = this->verify_seeds;
 		#endif /* MDEBUG */
+
+		clean_scope(this->new_scope,
+					duplicate);
 
 		ObsNode* new_local_ending_node = NULL;
 

@@ -169,13 +169,13 @@ int main(int argc, char* argv[]) {
 					if (duplicate->timestamp % INCREASE_TIME_PENALTY_ITER == 0) {
 						duplicate->curr_time_penalty *= 1.25;
 					}
-					if ((duplicate->best_true_score_timestamp - duplicate->timestamp)
-							% DECREASE_TIME_PENALTY_ITER == 0) {
-						duplicate->curr_time_penalty *= 0.8;
-					}
 					if (duplicate->curr_true_score > duplicate->best_true_score) {
 						duplicate->best_true_score = duplicate->curr_true_score;
 						duplicate->best_true_score_timestamp = duplicate->timestamp;
+					}
+					if ((duplicate->best_true_score_timestamp - duplicate->timestamp)
+							% DECREASE_TIME_PENALTY_ITER == 0) {
+						duplicate->curr_time_penalty *= 0.8;
 					}
 
 					if (best_solution == NULL

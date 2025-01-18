@@ -136,6 +136,8 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 			starting_node->next_node_id = node_mappings[potential_starting_node]->id;
 			starting_node->next_node = node_mappings[potential_starting_node];
 
+			starting_node->next_node->ancestor_ids.push_back(starting_node->id);
+
 			ObsNode* new_ending_node = new ObsNode();
 			new_ending_node->parent = this->new_scope;
 			new_ending_node->id = this->new_scope->node_counter;
