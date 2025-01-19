@@ -126,6 +126,12 @@ void Factor::link(Solution* parent_solution) {
 			Scope* scope = this->inputs[i_index].first.first.back();
 			AbstractNode* node = scope->nodes[this->inputs[i_index].first.second.back()];
 			switch (node->type) {
+			case NODE_TYPE_BRANCH:
+				{
+					BranchNode* branch_node = (BranchNode*)node;
+					branch_node->is_used = true;
+				}
+				break;
 			case NODE_TYPE_OBS:
 				{
 					ObsNode* obs_node = (ObsNode*)node;

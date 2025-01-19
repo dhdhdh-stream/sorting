@@ -19,6 +19,8 @@ public:
 	std::vector<std::pair<int,int>> factor_ids;
 	std::vector<double> factor_weights;
 
+	bool is_used;
+
 	int original_next_node_id;
 	AbstractNode* original_next_node;
 	int branch_next_node_id;

@@ -15,6 +15,13 @@ const int STEP_TYPE_SCOPE = 1;
 const int EXPLORE_TYPE_GOOD = 0;
 const int EXPLORE_TYPE_BEST = 1;
 
+const int GATHER_ITERS = 10;
+const int GATHER_FACTORS_PER_ITER = 5;
+/**
+ * - will lead to factors with duplicate effects being created
+ *   - but OK as getting limited regardless
+ */
+
 const double TEST_SAMPLES_PERCENTAGE = 0.2;
 
 const double FACTOR_IMPACT_THRESHOLD = 0.1;

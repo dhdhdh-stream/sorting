@@ -14,6 +14,8 @@ using namespace std;
 BranchNode::BranchNode() {
 	this->type = NODE_TYPE_BRANCH;
 
+	this->is_used = false;
+
 	this->average_instances_per_run = 0.0;
 
 	this->was_commit = false;
@@ -28,6 +30,8 @@ BranchNode::BranchNode(BranchNode* original) {
 	this->average_val = original->average_val;
 	this->factor_ids = original->factor_ids;
 	this->factor_weights = original->factor_weights;
+
+	this->is_used = original->is_used;
 
 	this->original_next_node_id = original->original_next_node_id;
 	this->branch_next_node_id = original->branch_next_node_id;

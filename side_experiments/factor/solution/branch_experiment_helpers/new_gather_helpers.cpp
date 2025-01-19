@@ -37,6 +37,25 @@ void BranchExperiment::new_gather_activate(
 			}
 		}
 
+		for (int f_index = 0; f_index < GATHER_FACTORS_PER_ITER; f_index++) {
+			if (this->new_factor_ids.size() < GATHER_ITERS * GATHER_FACTORS_PER_ITER) {
+				pair<int,int> new_factor;
+				gather_possible_factor_helper(scope_history,
+											  new_factor);
+
+				bool is_existing = false;
+				for (int i_index = 0; i_index < (int)this->new_factor_ids.size(); i_index++) {
+					if (new_factor == this->new_factor_ids[i_index]) {
+						is_existing = true;
+						break;
+					}
+				}
+				if (!is_existing) {
+					this->new_factor_ids.push_back(new_factor);
+				}
+			}
+		}
+
 		uniform_int_distribution<int> until_distribution(0, 2*((int)this->node_context->average_instances_per_run-1));
 		this->num_instances_until_target = 1 + until_distribution(generator);
 	}

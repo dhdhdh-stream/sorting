@@ -79,6 +79,12 @@ void NewScopeExperiment::finalize(Solution* duplicate) {
 							Scope* scope = factor->inputs[i_index].first.first.back();
 							AbstractNode* node = scope->nodes[factor->inputs[i_index].first.second.back()];
 							switch (node->type) {
+							case NODE_TYPE_BRANCH:
+								{
+									BranchNode* branch_node = (BranchNode*)node;
+									branch_node->is_used = true;
+								}
+								break;
 							case NODE_TYPE_OBS:
 								{
 									ObsNode* obs_node = (ObsNode*)node;

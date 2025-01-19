@@ -23,9 +23,9 @@ public:
 
 	std::vector<std::pair<std::pair<std::vector<Scope*>,std::vector<int>>,
 		std::pair<int,int>>> existing_inputs;
+	std::vector<std::pair<int,int>> existing_factor_ids;
 
 	double existing_average_score;
-	std::vector<std::pair<int,int>> existing_factor_ids;
 	std::vector<double> existing_factor_weights;
 
 	int num_instances_until_target;
@@ -44,9 +44,8 @@ public:
 	AbstractNode* best_exit_next_node;
 
 	std::vector<std::vector<double>> input_histories;
-	std::vector<std::map<std::pair<int,int>, double>> factor_histories;
+	std::vector<std::vector<double>> factor_histories;
 	std::vector<double> i_target_val_histories;
-	std::vector<double> o_target_val_histories;
 
 	CommitExperiment(Scope* scope_context,
 					 AbstractNode* node_context,
