@@ -305,7 +305,7 @@ void BranchExperiment::train_new_backprop(
 				}
 			}
 
-			if (this->new_inputs.size() > 1) {
+			if (this->new_inputs.size() > 0) {
 				Factor* new_factor = new Factor();
 				new_factor->inputs = this->new_inputs;
 				new_factor->network = new_network;
@@ -440,13 +440,36 @@ void BranchExperiment::train_new_backprop(
 			delete new_network;
 		}
 
-		this->input_histories.clear();
-		this->factor_histories.clear();
-		this->i_target_val_histories.clear();
+		cout << "BranchExperiment" << endl;
+		cout << "this->scope_context->id: " << this->scope_context->id << endl;
+		cout << "this->node_context->id: " << this->node_context->id << endl;
+		cout << "this->is_branch: " << this->is_branch << endl;
+		cout << "new explore path:";
+		for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+			if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+				cout << " " << this->best_actions[s_index].move;
+			} else {
+				cout << " E" << this->best_scopes[s_index]->id;
+			}
+		}
+		cout << endl;
 
-		this->combined_score = 0.0;
+		if (this->best_exit_next_node == NULL) {
+			cout << "this->best_exit_next_node->id: " << -1 << endl;
+		} else {
+			cout << "this->best_exit_next_node->id: " << this->best_exit_next_node->id << endl;
+		}
 
-		this->state = BRANCH_EXPERIMENT_STATE_MEASURE;
+		cout << endl;
+
+		#if defined(MDEBUG) && MDEBUG
+		this->verify_problems = vector<Problem*>(NUM_VERIFY_SAMPLES, NULL);
+		this->verify_seeds = vector<unsigned long>(NUM_VERIFY_SAMPLES);
+
+		this->state = BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY;
 		this->state_iter = 0;
+		#else
+		this->result = EXPERIMENT_RESULT_SUCCESS;
+		#endif /* MDEBUG */
 	}
 }

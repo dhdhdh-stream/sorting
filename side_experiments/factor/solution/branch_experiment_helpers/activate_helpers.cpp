@@ -77,13 +77,6 @@ void BranchExperiment::activate(AbstractNode* experiment_node,
 							   scope_history,
 							   history);
 			break;
-		case BRANCH_EXPERIMENT_STATE_MEASURE:
-			measure_activate(curr_node,
-							 problem,
-							 context,
-							 run_helper,
-							 scope_history);
-			break;
 		#if defined(MDEBUG) && MDEBUG
 		case BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY:
 			capture_verify_activate(curr_node,
@@ -117,10 +110,6 @@ void BranchExperiment::backprop(double target_val,
 	case BRANCH_EXPERIMENT_STATE_TRAIN_NEW:
 		train_new_backprop(target_val,
 						   run_helper);
-		break;
-	case BRANCH_EXPERIMENT_STATE_MEASURE:
-		measure_backprop(target_val,
-						 run_helper);
 		break;
 	#if defined(MDEBUG) && MDEBUG
 	case BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY:

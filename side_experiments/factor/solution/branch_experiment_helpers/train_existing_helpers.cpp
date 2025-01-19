@@ -262,7 +262,7 @@ void BranchExperiment::train_existing_backprop(
 				}
 			}
 
-			if (this->existing_inputs.size() > 1) {
+			if (this->existing_inputs.size() > 0) {
 				Factor* new_factor = new Factor();
 				new_factor->inputs = this->existing_inputs;
 				new_factor->network = existing_network;

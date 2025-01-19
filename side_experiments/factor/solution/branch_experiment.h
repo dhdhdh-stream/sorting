@@ -15,9 +15,8 @@ const int BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING = 1;
 const int BRANCH_EXPERIMENT_STATE_EXPLORE = 2;
 const int BRANCH_EXPERIMENT_STATE_NEW_GATHER = 3;
 const int BRANCH_EXPERIMENT_STATE_TRAIN_NEW = 4;
-const int BRANCH_EXPERIMENT_STATE_MEASURE = 5;
 #if defined(MDEBUG) && MDEBUG
-const int BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY = 6;
+const int BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY = 5;
 #endif /* MDEBUG */
 
 class BranchExperimentHistory;
@@ -54,8 +53,6 @@ public:
 
 	std::vector<std::pair<int,int>> new_factor_ids;
 	std::vector<double> new_factor_weights;
-
-	double combined_score;
 
 	std::vector<std::vector<double>> input_histories;
 	std::vector<std::map<std::pair<int,int>, double>> factor_histories;
@@ -112,14 +109,6 @@ public:
 							BranchExperimentHistory* history);
 	void train_new_backprop(double target_val,
 							RunHelper& run_helper);
-
-	void measure_activate(AbstractNode*& curr_node,
-						  Problem* problem,
-						  std::vector<ContextLayer>& context,
-						  RunHelper& run_helper,
-						  ScopeHistory* scope_history);
-	void measure_backprop(double target_val,
-						  RunHelper& run_helper);
 
 	#if defined(MDEBUG) && MDEBUG
 	void capture_verify_activate(AbstractNode*& curr_node,

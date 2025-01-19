@@ -294,8 +294,9 @@ int main(int argc, char* argv[]) {
 						duplicate->best_true_score = duplicate->curr_true_score;
 						duplicate->best_true_score_timestamp = duplicate->timestamp;
 					}
-					if ((duplicate->best_true_score_timestamp - duplicate->timestamp)
-							% DECREASE_TIME_PENALTY_ITER == 0) {
+					if (duplicate->best_true_score_timestamp < duplicate->timestamp
+							&& (duplicate->timestamp - duplicate->best_true_score_timestamp)
+								% DECREASE_TIME_PENALTY_ITER == 0) {
 						duplicate->curr_time_penalty *= 0.8;
 					}
 

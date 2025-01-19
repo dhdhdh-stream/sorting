@@ -124,11 +124,6 @@ void create_experiment(ScopeHistory* scope_history) {
 
 		Scope* explore_scope = (Scope*)explore_node->parent;
 
-		/**
-		 * - don't focus on generalization/reuse
-		 *   - may block progress if incompatible spots are grouped together
-		 *   - (though may also greatly speed up future progress of course)
-		 */
 		#if defined(MDEBUG) && MDEBUG
 		uniform_int_distribution<int> non_new_distribution(0, 1);
 		#else
@@ -156,8 +151,9 @@ void create_experiment(ScopeHistory* scope_history) {
 			 *     - like tessellation, but have to get both the shape and the pattern correct
 			 *       - and PassThroughExperiments help with both
 			 */
-			uniform_int_distribution<int> pass_through_distribution(0, 3);
-			if (explore_node->num_measure >= PASS_THROUGH_MIN_NUM_MEASURE
+			uniform_int_distribution<int> pass_through_distribution(0, 1);
+			if (!solution->was_commit
+					&& explore_node->num_measure >= PASS_THROUGH_MIN_NUM_MEASURE
 					&& pass_through_distribution(generator) == 0) {
 				PassThroughExperiment* new_experiment = new PassThroughExperiment(
 					explore_node->parent,
