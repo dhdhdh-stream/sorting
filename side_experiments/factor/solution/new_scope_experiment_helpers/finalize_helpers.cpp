@@ -53,14 +53,24 @@ void NewScopeExperiment::finalize(Solution* duplicate) {
 					scope_node->scope = duplicate->scopes[scope_node->scope->id];
 				}
 				break;
-			#if defined(MDEBUG) && MDEBUG
 			case NODE_TYPE_BRANCH:
 				{
 					BranchNode* branch_node = (BranchNode*)it->second;
+
+					for (int f_index = 0; f_index < (int)branch_node->factor_ids.size(); f_index++) {
+						ObsNode* obs_node = (ObsNode*)this->new_scope->nodes[branch_node->factor_ids[f_index].first];
+						Factor* factor = obs_node->factors[branch_node->factor_ids[f_index].second];
+
+						factor->link(duplicate);
+
+						obs_node->is_used = true;
+					}
+
+					#if defined(MDEBUG) && MDEBUG
 					branch_node->verify_key = this;
+					#endif /* MDEBUG */
 				}
 				break;
-			#endif /* MDEBUG */
 			case NODE_TYPE_OBS:
 				{
 					ObsNode* obs_node = (ObsNode*)it->second;

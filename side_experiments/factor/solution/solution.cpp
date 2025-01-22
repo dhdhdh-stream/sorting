@@ -147,6 +147,29 @@ void Solution::load(string path,
 	getline(input_file, was_commit_line);
 	this->was_commit = stoi(was_commit_line);
 
+	if (this->was_commit) {
+		string scope_id_line;
+		getline(input_file, scope_id_line);
+		this->commit_scope = this->scopes[stoi(scope_id_line)];
+
+		string start_node_id_line;
+		getline(input_file, start_node_id_line);
+		this->commit_start_node = this->commit_scope->nodes[stoi(start_node_id_line)];
+
+		string is_branch_line;
+		getline(input_file, is_branch_line);
+		this->commit_is_branch = stoi(is_branch_line);
+
+		string exit_node_id_line;
+		getline(input_file, exit_node_id_line);
+		int exit_node_id = stoi(exit_node_id_line);
+		if (exit_node_id == -1) {
+			this->commit_exit_node = NULL;
+		} else {
+			this->commit_exit_node = this->commit_scope->nodes[exit_node_id];
+		}
+	}
+
 	input_file.close();
 }
 
@@ -253,6 +276,16 @@ void Solution::save(string path,
 	output_file << this->num_existing_scopes << endl;
 
 	output_file << this->was_commit << endl;
+	if (this->was_commit) {
+		output_file << this->commit_scope->id << endl;
+		output_file << this->commit_start_node->id << endl;
+		output_file << this->commit_is_branch << endl;
+		if (this->commit_exit_node == NULL) {
+			output_file << -1 << endl;
+		} else {
+			output_file << this->commit_exit_node->id << endl;
+		}
+	}
 
 	output_file.close();
 

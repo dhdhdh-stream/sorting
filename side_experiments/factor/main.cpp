@@ -5,12 +5,15 @@
 #include <random>
 
 #include "abstract_experiment.h"
-#include "abstract_node.h"
+#include "action_node.h"
+#include "branch_node.h"
 #include "constants.h"
 #include "globals.h"
 #include "minesweeper.h"
+#include "obs_node.h"
 #include "problem.h"
 #include "scope.h"
+#include "scope_node.h"
 #include "solution.h"
 #include "solution_helpers.h"
 #include "utilities.h"
@@ -336,8 +339,52 @@ int main(int argc, char* argv[]) {
 			}
 		}
 
-		delete solution;
-		solution = best_solution;
+		if (solution->was_commit) {
+			if (best_solution->curr_score < solution->curr_score) {
+				switch (solution->commit_start_node->type) {
+				case NODE_TYPE_ACTION:
+					{
+						ActionNode* action_node = (ActionNode*)solution->commit_start_node;
+						action_node->next_node = solution->commit_exit_node;
+					}
+					break;
+				case NODE_TYPE_SCOPE:
+					{
+						ScopeNode* scope_node = (ScopeNode*)solution->commit_start_node;
+						scope_node->next_node = solution->commit_exit_node;
+					}
+					break;
+				case NODE_TYPE_BRANCH:
+					{
+						BranchNode* branch_node = (BranchNode*)solution->commit_start_node;
+						if (solution->commit_is_branch) {
+							branch_node->branch_next_node = solution->commit_exit_node;
+						} else {
+							branch_node->original_next_node = solution->commit_exit_node;
+						}
+					}
+					break;
+				case NODE_TYPE_OBS:
+					{
+						ObsNode* obs_node = (ObsNode*)solution->commit_start_node;
+						obs_node->next_node = solution->commit_exit_node;
+					}
+					break;
+				}
+
+				clean_scope(solution->commit_scope,
+							solution);
+
+				solution->timestamp++;
+				solution->was_commit = false;
+			} else {
+				delete solution;
+				solution = best_solution;
+			}
+		} else {
+			delete solution;
+			solution = best_solution;
+		}
 
 		if (solution->timestamp % COMMIT_ITERS == 0
 				&& solution->timestamp != EXPLORE_ITERS) {

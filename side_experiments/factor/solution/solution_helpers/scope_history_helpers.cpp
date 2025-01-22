@@ -1,5 +1,7 @@
 #include "solution_helpers.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_node.h"
 #include "factor.h"

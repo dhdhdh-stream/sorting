@@ -37,19 +37,21 @@ void BranchExperiment::existing_gather_activate(
 
 		for (int f_index = 0; f_index < GATHER_FACTORS_PER_ITER; f_index++) {
 			if (this->existing_factor_ids.size() < GATHER_ITERS * GATHER_FACTORS_PER_ITER) {
-				pair<int,int> new_factor;
+				pair<int,int> new_factor = {-1, -1};
 				gather_possible_factor_helper(scope_history,
 											  new_factor);
 
-				bool is_existing = false;
-				for (int i_index = 0; i_index < (int)this->existing_factor_ids.size(); i_index++) {
-					if (new_factor == this->existing_factor_ids[i_index]) {
-						is_existing = true;
-						break;
+				if (new_factor.first != -1) {
+					bool is_existing = false;
+					for (int i_index = 0; i_index < (int)this->existing_factor_ids.size(); i_index++) {
+						if (new_factor == this->existing_factor_ids[i_index]) {
+							is_existing = true;
+							break;
+						}
 					}
-				}
-				if (!is_existing) {
-					this->existing_factor_ids.push_back(new_factor);
+					if (!is_existing) {
+						this->existing_factor_ids.push_back(new_factor);
+					}
 				}
 			}
 		}

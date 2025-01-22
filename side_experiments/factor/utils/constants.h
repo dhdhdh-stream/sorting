@@ -50,8 +50,8 @@ const int IMPROVEMENTS_PER_ITER = 20;
 const int COMMIT_ITERS = 4;
 const int COMMIT_IMPROVEMENTS_PER_ITER = 10;
 #else
-const int COMMIT_ITERS = 40;
-const int COMMIT_IMPROVEMENTS_PER_ITER = 100;
+const int COMMIT_ITERS = 10;
+const int COMMIT_IMPROVEMENTS_PER_ITER = 80;
 #endif /* MDEBUG */
 
 #if defined(MDEBUG) && MDEBUG

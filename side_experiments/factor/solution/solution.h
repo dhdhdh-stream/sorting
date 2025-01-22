@@ -20,6 +20,7 @@
 #include <fstream>
 #include <vector>
 
+class AbstractNode;
 class Problem;
 class Scope;
 
@@ -44,6 +45,10 @@ public:
 	int num_existing_scopes;
 
 	bool was_commit;
+	Scope* commit_scope;
+	AbstractNode* commit_start_node;
+	bool commit_is_branch;
+	AbstractNode* commit_exit_node;
 
 	#if defined(MDEBUG) && MDEBUG
 	std::vector<Problem*> verify_problems;

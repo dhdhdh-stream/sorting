@@ -52,6 +52,10 @@ void CommitExperiment::finalize(Solution* duplicate) {
 		}
 
 		duplicate->was_commit = true;
+		duplicate->commit_scope = this->scope_context;
+		duplicate->commit_start_node = this->node_context;
+		duplicate->commit_is_branch = this->is_branch;
+		duplicate->commit_exit_node = this->best_exit_next_node;
 
 		int exit_node_id;
 		AbstractNode* exit_node;

@@ -22,7 +22,7 @@ Solution* solution;
 
 int run_index;
 
-const int BRANCH_FACTOR = 10;
+const int BRANCH_FACTOR = 4;
 
 int main(int argc, char* argv[]) {
 	if (argc != 1 + BRANCH_FACTOR + 1) {

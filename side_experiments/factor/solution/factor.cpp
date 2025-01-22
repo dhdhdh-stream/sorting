@@ -9,7 +9,7 @@
 using namespace std;
 
 Factor::Factor() {
-	// do nothing
+	this->is_used = false;
 }
 
 Factor::Factor(Factor* original,

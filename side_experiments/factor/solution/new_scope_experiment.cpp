@@ -23,13 +23,37 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 
 	this->new_scope = NULL;
 	for (int t_index = 0; t_index < CREATE_NEW_SCOPE_NUM_TRIES; t_index++) {
-		vector<AbstractNode*> possible_starting_nodes;
-		scope_context->random_exit_activate(
-			scope_context->nodes[0],
-			possible_starting_nodes);
-
-		uniform_int_distribution<int> start_distribution(0, possible_starting_nodes.size()-1);
-		AbstractNode* potential_starting_node = possible_starting_nodes[start_distribution(generator)];
+		AbstractNode* potential_starting_node;
+		switch (node_context->type) {
+		case NODE_TYPE_ACTION:
+			{
+				ActionNode* action_node = (ActionNode*)node_context;
+				potential_starting_node = action_node->next_node;
+			}
+			break;
+		case NODE_TYPE_SCOPE:
+			{
+				ScopeNode* scope_node = (ScopeNode*)node_context;
+				potential_starting_node = scope_node->next_node;
+			}
+			break;
+		case NODE_TYPE_BRANCH:
+			{
+				BranchNode* branch_node = (BranchNode*)node_context;
+				if (is_branch) {
+					potential_starting_node = branch_node->branch_next_node;
+				} else {
+					potential_starting_node = branch_node->original_next_node;
+				}
+			}
+			break;
+		case NODE_TYPE_OBS:
+			{
+				ObsNode* obs_node = (ObsNode*)node_context;
+				potential_starting_node = obs_node->next_node;
+			}
+			break;
+		}
 
 		geometric_distribution<int> run_distribution(0.2);
 		int num_runs = 1 + run_distribution(generator);
