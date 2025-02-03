@@ -14,6 +14,7 @@ void ActionNode::activate(AbstractNode*& curr_node,
 	scope_history->node_histories[this->id] = history;
 
 	double score = problem->perform_action(this->action);
+	run_helper.sum_score += score;
 	run_helper.num_actions++;
 	double individual_impact = score / run_helper.num_actions;
 	for (int h_index = 0; h_index < (int)run_helper.experiment_histories.size(); h_index++) {

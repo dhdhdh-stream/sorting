@@ -7,6 +7,8 @@ class AbstractExperimentHistory;
 
 class RunHelper {
 public:
+	double sum_score;
+
 	int num_actions;
 
 	int num_experiments_seen;

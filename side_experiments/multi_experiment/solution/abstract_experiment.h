@@ -41,6 +41,10 @@ public:
 	virtual void update() = 0;
 
 	virtual void finalize() = 0;
+
+	virtual void clean_inputs(Scope* scope,
+							  int node_id) = 0;
+	virtual void clean_inputs(Scope* scope) = 0;
 };
 
 class AbstractExperimentHistory {

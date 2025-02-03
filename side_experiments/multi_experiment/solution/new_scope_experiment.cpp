@@ -435,9 +435,21 @@ void NewScopeExperiment::decrement(AbstractNode* experiment_node) {
 	}
 }
 
+void NewScopeExperiment::clean_inputs(Scope* scope,
+									  int node_id) {
+	this->new_scope->clean_inputs(scope,
+								  node_id);
+}
+
+void NewScopeExperiment::clean_inputs(Scope* scope) {
+	this->new_scope->clean_inputs(scope);
+}
+
 NewScopeExperimentHistory::NewScopeExperimentHistory(
 		NewScopeExperiment* experiment) {
 	this->experiment = experiment;
+
+	this->impact = 0.0;
 
 	this->test_location_index = -1;
 }

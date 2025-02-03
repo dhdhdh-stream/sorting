@@ -28,6 +28,10 @@ public:
 
 	virtual ~AbstractNode() {};
 
+	virtual void clean_inputs(Scope* scope,
+							  int node_id) = 0;
+	virtual void clean_inputs(Scope* scope) = 0;
+
 	virtual void save(std::ofstream& output_file) = 0;
 	virtual void link() = 0;
 	virtual void save_for_display(std::ofstream& output_file) = 0;

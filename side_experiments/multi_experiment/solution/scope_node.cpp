@@ -17,6 +17,20 @@ ScopeNode::~ScopeNode() {
 	}
 }
 
+void ScopeNode::clean_inputs(Scope* scope,
+							 int node_id) {
+	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
+		this->experiments[e_index]->clean_inputs(scope,
+												 node_id);
+	}
+}
+
+void ScopeNode::clean_inputs(Scope* scope) {
+	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
+		this->experiments[e_index]->clean_inputs(scope);
+	}
+}
+
 void ScopeNode::save(ofstream& output_file) {
 	output_file << this->scope->id << endl;
 

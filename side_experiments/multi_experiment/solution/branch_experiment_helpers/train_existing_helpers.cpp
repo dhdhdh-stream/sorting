@@ -29,7 +29,7 @@ void BranchExperiment::train_existing_activate(
 						   0,
 						   input_vals[i_index]);
 	}
-	this->input_histories.push_back(input_vals);
+	this->existing_input_histories.push_back(input_vals);
 
 	vector<double> factor_vals(this->existing_factor_ids.size());
 	for (int f_index = 0; f_index < (int)this->existing_factor_ids.size(); f_index++) {
@@ -37,7 +37,7 @@ void BranchExperiment::train_existing_activate(
 							this->existing_factor_ids[f_index],
 							factor_vals[f_index]);
 	}
-	this->factor_histories.push_back(factor_vals);
+	this->existing_factor_histories.push_back(factor_vals);
 }
 
 void BranchExperiment::train_existing_backprop(
@@ -46,14 +46,14 @@ void BranchExperiment::train_existing_backprop(
 }
 
 void BranchExperiment::train_existing_update() {
-	if (this->input_histories.size() >= TRAIN_NUM_DATAPOINTS) {
+	if (this->existing_input_histories.size() >= TRAIN_NUM_DATAPOINTS) {
 		{
 			default_random_engine generator_copy = generator;
-			shuffle(this->input_histories.begin(), this->input_histories.end(), generator_copy);
+			shuffle(this->existing_input_histories.begin(), this->existing_input_histories.end(), generator_copy);
 		}
 		{
 			default_random_engine generator_copy = generator;
-			shuffle(this->factor_histories.begin(), this->factor_histories.end(), generator_copy);
+			shuffle(this->existing_factor_histories.begin(), this->existing_factor_histories.end(), generator_copy);
 		}
 		{
 			default_random_engine generator_copy = generator;
@@ -85,7 +85,7 @@ void BranchExperiment::train_existing_update() {
 			Eigen::MatrixXd inputs(num_train_instances, this->existing_factor_ids.size());
 			for (int i_index = 0; i_index < num_train_instances; i_index++) {
 				for (int f_index = 0; f_index < (int)this->existing_factor_ids.size(); f_index++) {
-					inputs(i_index, f_index) = this->factor_histories[i_index][f_index];
+					inputs(i_index, f_index) = this->existing_factor_histories[i_index][f_index];
 				}
 			}
 
@@ -120,7 +120,7 @@ void BranchExperiment::train_existing_update() {
 				#else
 				double sum_impact = 0.0;
 				for (int i_index = 0; i_index < num_train_instances; i_index++) {
-					sum_impact += abs(this->factor_histories[i_index][f_index]);
+					sum_impact += abs(this->existing_factor_histories[i_index][f_index]);
 				}
 
 				double impact = this->existing_factor_weights[f_index] * sum_impact
@@ -131,7 +131,7 @@ void BranchExperiment::train_existing_update() {
 					this->existing_factor_weights.erase(this->existing_factor_weights.begin() + f_index);
 
 					for (int i_index = 0; i_index < num_instances; i_index++) {
-						this->factor_histories[i_index].erase(this->factor_histories[i_index].begin() + f_index);
+						this->existing_factor_histories[i_index].erase(this->existing_factor_histories[i_index].begin() + f_index);
 					}
 				}
 			}
@@ -140,7 +140,7 @@ void BranchExperiment::train_existing_update() {
 				double sum_score = this->existing_average_score;
 				for (int f_index = 0; f_index < (int)this->existing_factor_ids.size(); f_index++) {
 					sum_score += this->existing_factor_weights[f_index]
-						* this->factor_histories[i_index][f_index];
+						* this->existing_factor_histories[i_index][f_index];
 				}
 
 				remaining_scores[i_index] = this->i_target_val_histories[i_index] - sum_score;
@@ -169,13 +169,13 @@ void BranchExperiment::train_existing_update() {
 
 		Network* existing_network = new Network((int)this->existing_inputs.size());
 
-		train_network(this->input_histories,
+		train_network(this->existing_input_histories,
 					  remaining_scores,
 					  existing_network);
 
 		double new_average_misguess;
 		double new_misguess_standard_deviation;
-		measure_network(this->input_histories,
+		measure_network(this->existing_input_histories,
 						remaining_scores,
 						existing_network,
 						new_average_misguess,
@@ -195,7 +195,7 @@ void BranchExperiment::train_existing_update() {
 				Network* remove_network = new Network(existing_network);
 				remove_network->remove_input(i_index);
 
-				vector<vector<double>> remove_input_vals = this->input_histories;
+				vector<vector<double>> remove_input_vals = this->existing_input_histories;
 				for (int d_index = 0; d_index < num_instances; d_index++) {
 					remove_input_vals[d_index].erase(remove_input_vals[d_index].begin() + i_index);
 				}
@@ -226,7 +226,7 @@ void BranchExperiment::train_existing_update() {
 					delete existing_network;
 					existing_network = remove_network;
 
-					this->input_histories = remove_input_vals;
+					this->existing_input_histories = remove_input_vals;
 				} else {
 					delete remove_network;
 				}
@@ -360,8 +360,8 @@ void BranchExperiment::train_existing_update() {
 			delete existing_network;
 		}
 
-		this->input_histories.clear();
-		this->factor_histories.clear();
+		this->existing_input_histories.clear();
+		this->existing_factor_histories.clear();
 		this->i_target_val_histories.clear();
 
 		this->best_surprise = 0.0;

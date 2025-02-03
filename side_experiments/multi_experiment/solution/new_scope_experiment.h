@@ -68,6 +68,10 @@ public:
 	void test_update();
 
 	void finalize();
+
+	void clean_inputs(Scope* scope,
+					  int node_id);
+	void clean_inputs(Scope* scope);
 };
 
 class NewScopeExperimentHistory : public AbstractExperimentHistory {

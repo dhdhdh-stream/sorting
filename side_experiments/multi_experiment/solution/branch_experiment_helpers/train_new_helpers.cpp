@@ -44,7 +44,7 @@ void BranchExperiment::train_new_activate(
 						   0,
 						   input_vals[i_index]);
 	}
-	this->input_histories.push_back(input_vals);
+	this->new_input_histories.push_back(input_vals);
 
 	vector<double> factor_vals(this->new_factor_ids.size());
 	for (int f_index = 0; f_index < (int)this->new_factor_ids.size(); f_index++) {
@@ -52,11 +52,12 @@ void BranchExperiment::train_new_activate(
 							this->new_factor_ids[f_index],
 							factor_vals[f_index]);
 	}
-	this->factor_histories.push_back(factor_vals);
+	this->new_factor_histories.push_back(factor_vals);
 
 	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 			double score = problem->perform_action(this->best_actions[s_index]);
+			run_helper.sum_score += score;
 			run_helper.num_actions++;
 			double individual_impact = score / run_helper.num_actions;
 			for (int h_index = 0; h_index < (int)run_helper.experiment_histories.size(); h_index++) {
@@ -83,18 +84,18 @@ void BranchExperiment::train_new_activate(
 
 void BranchExperiment::train_new_backprop(
 		BranchExperimentHistory* history) {
-	this->i_target_val_histories.push_back(history->impact);
+	this->i_target_val_histories.push_back(history->impact - history->existing_predicted_score);
 }
 
 void BranchExperiment::train_new_update() {
-	if ((int)this->input_histories.size() >= TRAIN_NUM_DATAPOINTS) {
+	if ((int)this->new_input_histories.size() >= TRAIN_NUM_DATAPOINTS) {
 		{
 			default_random_engine generator_copy = generator;
-			shuffle(this->input_histories.begin(), this->input_histories.end(), generator_copy);
+			shuffle(this->new_input_histories.begin(), this->new_input_histories.end(), generator_copy);
 		}
 		{
 			default_random_engine generator_copy = generator;
-			shuffle(this->factor_histories.begin(), this->factor_histories.end(), generator_copy);
+			shuffle(this->new_factor_histories.begin(), this->new_factor_histories.end(), generator_copy);
 		}
 		{
 			default_random_engine generator_copy = generator;
@@ -127,7 +128,7 @@ void BranchExperiment::train_new_update() {
 			Eigen::MatrixXd inputs(num_train_instances, this->new_factor_ids.size());
 			for (int i_index = 0; i_index < num_train_instances; i_index++) {
 				for (int f_index = 0; f_index < (int)this->new_factor_ids.size(); f_index++) {
-					inputs(i_index, f_index) = this->factor_histories[i_index][f_index];
+					inputs(i_index, f_index) = this->new_factor_histories[i_index][f_index];
 				}
 			}
 
@@ -162,7 +163,7 @@ void BranchExperiment::train_new_update() {
 				#else
 				double sum_impact = 0.0;
 				for (int i_index = 0; i_index < num_train_instances; i_index++) {
-					sum_impact += abs(this->factor_histories[i_index][f_index]);
+					sum_impact += abs(this->new_factor_histories[i_index][f_index]);
 				}
 
 				double impact = this->new_factor_weights[f_index] * sum_impact
@@ -173,7 +174,7 @@ void BranchExperiment::train_new_update() {
 					this->new_factor_weights.erase(this->new_factor_weights.begin() + f_index);
 
 					for (int i_index = 0; i_index < num_instances; i_index++) {
-						this->factor_histories[i_index].erase(this->factor_histories[i_index].begin() + f_index);
+						this->new_factor_histories[i_index].erase(this->new_factor_histories[i_index].begin() + f_index);
 					}
 				}
 			}
@@ -182,7 +183,7 @@ void BranchExperiment::train_new_update() {
 				double sum_score = this->new_average_score;
 				for (int f_index = 0; f_index < (int)this->new_factor_ids.size(); f_index++) {
 					sum_score += this->new_factor_weights[f_index]
-						* this->factor_histories[i_index][f_index];
+						* this->new_factor_histories[i_index][f_index];
 				}
 
 				remaining_scores[i_index] = this->i_target_val_histories[i_index] - sum_score;
@@ -213,13 +214,13 @@ void BranchExperiment::train_new_update() {
 
 		Network* new_network = new Network((int)this->new_inputs.size());
 
-		train_network(this->input_histories,
+		train_network(this->new_input_histories,
 					  remaining_scores,
 					  new_network);
 
 		double new_average_misguess;
 		double new_misguess_standard_deviation;
-		measure_network(this->input_histories,
+		measure_network(this->new_input_histories,
 						remaining_scores,
 						new_network,
 						new_average_misguess,
@@ -239,7 +240,7 @@ void BranchExperiment::train_new_update() {
 				Network* remove_network = new Network(new_network);
 				remove_network->remove_input(i_index);
 
-				vector<vector<double>> remove_input_vals = this->input_histories;
+				vector<vector<double>> remove_input_vals = this->new_input_histories;
 				for (int d_index = 0; d_index < num_instances; d_index++) {
 					remove_input_vals[d_index].erase(remove_input_vals[d_index].begin() + i_index);
 				}
@@ -270,7 +271,7 @@ void BranchExperiment::train_new_update() {
 					delete new_network;
 					new_network = remove_network;
 
-					this->input_histories = remove_input_vals;
+					this->new_input_histories = remove_input_vals;
 				} else {
 					delete remove_network;
 				}
@@ -399,7 +400,7 @@ void BranchExperiment::train_new_update() {
 				}
 
 				for (int i_index = 0; i_index < num_instances; i_index++) {
-					new_network->activate(this->input_histories[i_index]);
+					new_network->activate(this->new_input_histories[i_index]);
 					sum_vals[i_index] += new_network->output->acti_vals[0];
 				}
 			} else {
@@ -417,7 +418,11 @@ void BranchExperiment::train_new_update() {
 		}
 		this->select_percentage = (double)num_positive / (double)num_instances;
 
+		#if defined(MDEBUG) && MDEBUG
+		if (rand()%2 == 0) {
+		#else
 		if (this->select_percentage > 0.0) {
+		#endif /* MDEBUG */
 			cout << "BranchExperiment" << endl;
 			cout << "this->scope_context->id: " << this->scope_context->id << endl;
 			cout << "this->node_context->id: " << this->node_context->id << endl;

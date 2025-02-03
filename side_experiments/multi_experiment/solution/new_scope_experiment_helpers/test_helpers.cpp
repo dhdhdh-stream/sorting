@@ -47,11 +47,15 @@ void NewScopeExperiment::test_update() {
 			break;
 		case LOCATION_STATE_MEASURE_NEW:
 			if (this->test_location_new_counts[t_index] >= NEW_SCOPE_NUM_DATAPOINTS) {
+				#if defined(MDEBUG) && MDEBUG
+				if (rand()%2 == 0) {
+				#else
 				double existing_score = this->test_location_existing_scores[t_index]
 					/ this->test_location_existing_counts[t_index];
 				double new_score = this->test_location_new_scores[t_index]
 					/ this->test_location_new_counts[t_index];
 				if (new_score > existing_score) {
+				#endif /* MDEBUG */
 					this->test_location_states[t_index] = LOCATION_STATE_VERIFY_EXISTING_1ST;
 					this->test_location_existing_scores[t_index] = 0.0;
 					this->test_location_existing_counts[t_index] = 0;
@@ -69,12 +73,16 @@ void NewScopeExperiment::test_update() {
 			break;
 		case LOCATION_STATE_VERIFY_NEW_1ST:
 			if (this->test_location_new_counts[t_index] >= NEW_SCOPE_VERIFY_1ST_NUM_DATAPOINTS) {
+				#if defined(MDEBUG) && MDEBUG
+				if (rand()%2 == 0) {
+				#else
 				double existing_score = this->test_location_existing_scores[t_index]
 					/ this->test_location_existing_counts[t_index];
 				double new_score = this->test_location_new_scores[t_index]
 					/ this->test_location_new_counts[t_index];
 				if (new_score > existing_score) {
-					this->test_location_states[t_index] = LOCATION_STATE_VERIFY_EXISTING_1ST;
+				#endif /* MDEBUG */
+					this->test_location_states[t_index] = LOCATION_STATE_VERIFY_EXISTING_2ND;
 					this->test_location_existing_scores[t_index] = 0.0;
 					this->test_location_existing_counts[t_index] = 0;
 					this->test_location_new_scores[t_index] = 0.0;
@@ -91,11 +99,15 @@ void NewScopeExperiment::test_update() {
 			break;
 		case LOCATION_STATE_VERIFY_NEW_2ND:
 			if (this->test_location_new_counts[t_index] >= NEW_SCOPE_VERIFY_2ND_NUM_DATAPOINTS) {
+				#if defined(MDEBUG) && MDEBUG
+				if (rand()%2 == 0) {
+				#else
 				double existing_score = this->test_location_existing_scores[t_index]
 					/ this->test_location_existing_counts[t_index];
 				double new_score = this->test_location_new_scores[t_index]
 					/ this->test_location_new_counts[t_index];
 				if (new_score > existing_score) {
+				#endif /* MDEBUG */
 					this->successful_location_starts.push_back(this->test_location_starts[t_index]);
 					this->successful_location_is_branch.push_back(this->test_location_is_branch[t_index]);
 					this->successful_location_exits.push_back(this->test_location_exits[t_index]);

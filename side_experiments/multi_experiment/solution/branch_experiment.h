@@ -43,8 +43,10 @@ public:
 
 	double select_percentage;
 
-	std::vector<std::vector<double>> input_histories;
-	std::vector<std::vector<double>> factor_histories;
+	std::vector<std::vector<double>> existing_input_histories;
+	std::vector<std::vector<double>> existing_factor_histories;
+	std::vector<std::vector<double>> new_input_histories;
+	std::vector<std::vector<double>> new_factor_histories;
 	std::vector<double> i_target_val_histories;
 
 	BranchExperiment(Scope* scope_context,
@@ -90,6 +92,10 @@ public:
 	void train_new_update();
 
 	void finalize();
+
+	void clean_inputs(Scope* scope,
+					  int node_id);
+	void clean_inputs(Scope* scope);
 };
 
 class BranchExperimentHistory : public AbstractExperimentHistory {

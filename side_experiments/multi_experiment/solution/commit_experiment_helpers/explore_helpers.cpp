@@ -1,5 +1,7 @@
 #include "commit_experiment.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
@@ -103,6 +105,7 @@ void CommitExperiment::explore_activate(
 	for (int s_index = 0; s_index < (int)history->curr_step_types.size(); s_index++) {
 		if (history->curr_step_types[s_index] == STEP_TYPE_ACTION) {
 			double score = problem->perform_action(history->curr_actions[s_index]);
+			run_helper.sum_score += score;
 			run_helper.num_actions++;
 			double individual_impact = score / run_helper.num_actions;
 			for (int h_index = 0; h_index < (int)run_helper.experiment_histories.size(); h_index++) {
@@ -147,6 +150,28 @@ void CommitExperiment::explore_backprop(CommitExperimentHistory* history) {
 void CommitExperiment::explore_update() {
 	if (this->state_iter >= COMMIT_EXPERIMENT_EXPLORE_ITERS) {
 		if (this->best_surprise > 0.0) {
+			cout << "CommitExperiment" << endl;
+			cout << "this->scope_context->id: " << this->scope_context->id << endl;
+			cout << "this->node_context->id: " << this->node_context->id << endl;
+			cout << "this->is_branch: " << this->is_branch << endl;
+			cout << "new explore path:";
+			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+					cout << " " << this->best_actions[s_index].move;
+				} else {
+					cout << " E" << this->best_scopes[s_index]->id;
+				}
+			}
+			cout << endl;
+
+			if (this->best_exit_next_node == NULL) {
+				cout << "this->best_exit_next_node->id: " << -1 << endl;
+			} else {
+				cout << "this->best_exit_next_node->id: " << this->best_exit_next_node->id << endl;
+			}
+
+			cout << endl;
+
 			this->result = EXPERIMENT_RESULT_SUCCESS;
 		} else {
 			this->result = EXPERIMENT_RESULT_FAIL;

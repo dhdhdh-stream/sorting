@@ -1,5 +1,7 @@
 #include "new_scope_experiment.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_node.h"
 #include "globals.h"
@@ -145,72 +147,76 @@ void NewScopeExperiment::back_activate(RunHelper& run_helper,
 				}
 			}
 
-			uniform_int_distribution<int> start_distribution(0, possible_starts.size()-1);
-			int start_index = start_distribution(generator);
+			if (possible_starts.size() > 0) {
+				uniform_int_distribution<int> start_distribution(0, possible_starts.size()-1);
+				int start_index = start_distribution(generator);
 
-			AbstractNode* new_start_node = possible_starts[start_index];
-			bool new_is_branch = possible_is_branch[start_index];
+				AbstractNode* new_start_node = possible_starts[start_index];
+				bool new_is_branch = possible_is_branch[start_index];
 
-			vector<AbstractNode*> possible_exits;
+				vector<AbstractNode*> possible_exits;
 
-			AbstractNode* starting_node;
-			switch (new_start_node->type) {
-			case NODE_TYPE_ACTION:
-				{
-					ActionNode* action_node = (ActionNode*)new_start_node;
-					starting_node = action_node->next_node;
-				}
-				break;
-			case NODE_TYPE_SCOPE:
-				{
-					ScopeNode* scope_node = (ScopeNode*)new_start_node;
-					starting_node = scope_node->next_node;
-				}
-				break;
-			case NODE_TYPE_BRANCH:
-				{
-					BranchNode* branch_node = (BranchNode*)new_start_node;
-					if (new_is_branch) {
-						starting_node = branch_node->branch_next_node;
-					} else {
-						starting_node = branch_node->original_next_node;
+				AbstractNode* starting_node;
+				switch (new_start_node->type) {
+				case NODE_TYPE_ACTION:
+					{
+						ActionNode* action_node = (ActionNode*)new_start_node;
+						starting_node = action_node->next_node;
 					}
+					break;
+				case NODE_TYPE_SCOPE:
+					{
+						ScopeNode* scope_node = (ScopeNode*)new_start_node;
+						starting_node = scope_node->next_node;
+					}
+					break;
+				case NODE_TYPE_BRANCH:
+					{
+						BranchNode* branch_node = (BranchNode*)new_start_node;
+						if (new_is_branch) {
+							starting_node = branch_node->branch_next_node;
+						} else {
+							starting_node = branch_node->original_next_node;
+						}
+					}
+					break;
+				case NODE_TYPE_OBS:
+					{
+						ObsNode* obs_node = (ObsNode*)new_start_node;
+						starting_node = obs_node->next_node;
+					}
+					break;
 				}
-				break;
-			case NODE_TYPE_OBS:
-				{
-					ObsNode* obs_node = (ObsNode*)new_start_node;
-					starting_node = obs_node->next_node;
-				}
-				break;
+
+				this->scope_context->random_exit_activate(
+					starting_node,
+					possible_exits);
+
+				uniform_int_distribution<int> distribution(0, possible_exits.size()-1);
+				int random_index = distribution(generator);
+				AbstractNode* new_exit_next_node = possible_exits[random_index];
+
+				this->test_location_starts.push_back(new_start_node);
+				this->test_location_is_branch.push_back(new_is_branch);
+				this->test_location_exits.push_back(new_exit_next_node);
+				this->test_location_states.push_back(LOCATION_STATE_MEASURE_EXISTING);
+				this->test_location_existing_scores.push_back(0.0);
+				this->test_location_existing_counts.push_back(0);
+				this->test_location_new_scores.push_back(0.0);
+				this->test_location_new_counts.push_back(0);
+
+				new_start_node->experiments.insert(new_start_node->experiments.begin(), this);
 			}
-
-			this->scope_context->random_exit_activate(
-				starting_node,
-				possible_exits);
-
-			uniform_int_distribution<int> distribution(0, possible_exits.size()-1);
-			int random_index = distribution(generator);
-			AbstractNode* new_exit_next_node = possible_exits[random_index];
-
-			this->test_location_starts.push_back(new_start_node);
-			this->test_location_is_branch.push_back(new_is_branch);
-			this->test_location_exits.push_back(new_exit_next_node);
-			this->test_location_states.push_back(LOCATION_STATE_MEASURE_EXISTING);
-			this->test_location_existing_scores.push_back(0.0);
-			this->test_location_existing_counts.push_back(0);
-			this->test_location_new_scores.push_back(0.0);
-			this->test_location_new_counts.push_back(0);
-
-			new_start_node->experiments.insert(new_start_node->experiments.begin(), this);
 		}
 	}
 }
 
 void NewScopeExperiment::backprop(AbstractExperimentHistory* history) {
+	NewScopeExperimentHistory* new_scope_experiment_history = (NewScopeExperimentHistory*)history;
 
+	test_backprop(new_scope_experiment_history);
 }
 
 void NewScopeExperiment::update() {
-
+	test_update();
 }

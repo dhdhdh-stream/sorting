@@ -28,6 +28,10 @@ public:
 				  RunHelper& run_helper,
 				  ScopeHistory* scope_history);
 
+	void clean_inputs(Scope* scope,
+					  int node_id);
+	void clean_inputs(Scope* scope);
+
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file);
 	void link();

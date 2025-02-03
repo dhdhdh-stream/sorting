@@ -93,7 +93,7 @@ int main(int argc, char* argv[]) {
 			if (experiment->result == EXPERIMENT_RESULT_FAIL) {
 				experiment->finalize();
 				delete experiment;
-			} else {
+			} else if (experiment->result == EXPERIMENT_RESULT_SUCCESS) {
 				experiment->finalize();
 				updated_scopes.insert(experiment->scope_context);
 				delete experiment;
@@ -105,6 +105,13 @@ int main(int argc, char* argv[]) {
 				clean_scope(*it);
 			}
 			solution->clean_scopes();
+
+			solution->save("saves/", filename);
+
+			ofstream display_file;
+			display_file.open("../display.txt");
+			solution->save_for_display(display_file);
+			display_file.close();
 		}
 	}
 

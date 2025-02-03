@@ -8,6 +8,8 @@ using namespace std;
 
 ObsNode::ObsNode() {
 	this->type = NODE_TYPE_OBS;
+
+	this->is_used = false;
 }
 
 ObsNode::~ObsNode() {
@@ -26,11 +28,20 @@ void ObsNode::clean_inputs(Scope* scope,
 		this->factors[f_index]->clean_inputs(scope,
 											 node_id);
 	}
+
+	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
+		this->experiments[e_index]->clean_inputs(scope,
+												 node_id);
+	}
 }
 
 void ObsNode::clean_inputs(Scope* scope) {
 	for (int f_index = 0; f_index < (int)this->factors.size(); f_index++) {
 		this->factors[f_index]->clean_inputs(scope);
+	}
+
+	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
+		this->experiments[e_index]->clean_inputs(scope);
 	}
 }
 

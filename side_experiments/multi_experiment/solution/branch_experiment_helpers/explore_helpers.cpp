@@ -118,6 +118,7 @@ void BranchExperiment::explore_activate(
 	for (int s_index = 0; s_index < (int)history->curr_step_types.size(); s_index++) {
 		if (history->curr_step_types[s_index] == STEP_TYPE_ACTION) {
 			double score = problem->perform_action(history->curr_actions[s_index]);
+			run_helper.sum_score += score;
 			run_helper.num_actions++;
 			double individual_impact = score / run_helper.num_actions;
 			for (int h_index = 0; h_index < (int)run_helper.experiment_histories.size(); h_index++) {
@@ -161,7 +162,11 @@ void BranchExperiment::explore_backprop(BranchExperimentHistory* history) {
 
 void BranchExperiment::explore_update() {
 	if (this->state_iter >= BRANCH_EXPERIMENT_EXPLORE_ITERS) {
+		#if defined(MDEBUG) && MDEBUG
+		if (rand()%2 == 0) {
+		#else
 		if (this->best_surprise > 0.0) {
+		#endif /* MDEBUG */
 			this->state = BRANCH_EXPERIMENT_STATE_NEW_GATHER;
 			this->state_iter = 0;
 		} else {

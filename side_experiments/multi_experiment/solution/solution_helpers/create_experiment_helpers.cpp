@@ -107,7 +107,8 @@ void create_experiment(ScopeHistory* scope_history) {
 		Scope* explore_scope = (Scope*)explore_node->parent;
 
 		uniform_int_distribution<int> commit_distribution(0, 999);
-		if (commit_distribution(generator) == 0) {
+		if (solution->scopes[0]->nodes.size() == 1	// starting
+				|| commit_distribution(generator) == 0) {
 			CommitExperiment* new_commit_experiment = new CommitExperiment(
 				explore_node->parent,
 				explore_node,

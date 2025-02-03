@@ -1,7 +1,7 @@
 CXX = g++
 CXXFLAGS = -g -std=c++17 -Wall -Werror -MMD \
 		   `pkg-config --cflags eigen3` \
-		   -DMDEBUG=1 \
+		   -DMDEBUG=0 \
 		   -Inn \
 		   -Isolution \
 		   -Iutils \
@@ -15,13 +15,21 @@ HEADERS = ${SOURCES:.cpp=.h}
 OBJECTS = ${HEADERS:.h=.o}
 DEPENDS = ${OBJECTS:.o=.d}
 
-all: main
+all: main measure viewer
 
 main: ${OBJECTS} main.o
 	${CXX} ${CXXFLAGS} ${OBJECTS} main.o -o main ${LIBS}
 
--include ${DEPENDS} main.d
+measure: ${OBJECTS} measure.o
+	${CXX} ${CXXFLAGS} ${OBJECTS} measure.o -o measure ${LIBS}
+
+viewer: ${OBJECTS} viewer.o
+	${CXX} ${CXXFLAGS} ${OBJECTS} viewer.o -o viewer ${LIBS}
+
+-include ${DEPENDS} main.d measure.d viewer.d
 
 clean:
 	rm -f ${OBJECTS} ${DEPENDS} \
-	main.o main.d main
+	main.o main.d main \
+	measure.o measure.d measure \
+	viewer.o viewer.d viewer
