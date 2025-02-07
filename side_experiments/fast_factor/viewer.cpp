@@ -11,6 +11,9 @@
 #include "solution.h"
 #include "solution_helpers.h"
 
+// temp
+#include "obs_node.h"
+
 using namespace std;
 
 int seed;
@@ -20,7 +23,7 @@ default_random_engine generator;
 ProblemType* problem_type;
 Solution* solution;
 
-int run_index;
+int run_index = 0;
 
 int main(int argc, char* argv[]) {
 	cout << "Starting..." << endl;

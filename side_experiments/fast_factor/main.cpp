@@ -27,7 +27,7 @@ default_random_engine generator;
 ProblemType* problem_type;
 Solution* solution;
 
-int run_index;
+int run_index = 0;
 
 int main(int argc, char* argv[]) {
 	cout << "Starting..." << endl;
@@ -78,9 +78,7 @@ int main(int argc, char* argv[]) {
 		solution->curr_score = sum_score / MEASURE_ITERS;
 		solution->curr_true_score = sum_true_score / MEASURE_ITERS;
 
-		commit_helper();
-
-		solution->save("saves/", filename);
+		// solution->save("saves/", filename);
 	}
 
 	{
@@ -90,9 +88,11 @@ int main(int argc, char* argv[]) {
 		display_file.close();
 	}
 
-	run_index = 0;
-
 	while (solution->timestamp < EXPLORE_ITERS) {
+		if (solution->timestamp % COMMIT_ITERS == 0) {
+			commit_helper();
+		}
+
 		int improvement_iter = 0;
 		while (true) {
 			run_index++;
@@ -122,7 +122,8 @@ int main(int argc, char* argv[]) {
 			target_val -= run_helper.num_analyze * solution->curr_time_penalty;
 
 			if (run_helper.experiments_seen_order.size() == 0) {
-				create_experiment(scope_history);
+				create_experiment(solution,
+								  scope_history);
 			}
 
 			delete scope_history;
@@ -175,6 +176,38 @@ int main(int argc, char* argv[]) {
 					}
 					solution->clear_verify();
 					#endif /* MDEBUG */
+
+					// temp
+					double sum_score = 0.0;
+					for (int iter_index = 0; iter_index < MEASURE_ITERS; iter_index++) {
+						Problem* problem = problem_type->get_problem();
+
+						RunHelper run_helper;
+						#if defined(MDEBUG) && MDEBUG
+						run_helper.starting_run_seed = run_index;
+						run_helper.curr_run_seed = xorshift(run_helper.starting_run_seed);
+						run_index++;
+						#endif /* MDEBUG */
+
+						ScopeHistory* scope_history = new ScopeHistory(solution->scopes[0]);
+						solution->scopes[0]->activate(
+							problem,
+							run_helper,
+							scope_history);
+						delete scope_history;
+
+						double target_val = problem->score_result();
+						sum_score += target_val - 0.05 * run_helper.num_actions * solution->curr_time_penalty
+							- run_helper.num_analyze * solution->curr_time_penalty;
+
+						delete problem;
+					}
+					cout << "curr_score: " << sum_score / MEASURE_ITERS << endl;
+
+					ofstream display_file;
+					display_file.open("../display.txt");
+					solution->save_for_display(display_file);
+					display_file.close();
 
 					solution->clear_experiments();
 
@@ -245,12 +278,7 @@ int main(int argc, char* argv[]) {
 			solution->curr_time_penalty *= 0.8;
 		}
 
-		if (solution->timestamp % COMMIT_ITERS == 0
-				&& solution->timestamp != EXPLORE_ITERS) {
-			commit_helper();
-		}
-
-		solution->save("saves/", filename);
+		// solution->save("saves/", filename);
 
 		#if defined(MDEBUG) && MDEBUG
 		delete solution;

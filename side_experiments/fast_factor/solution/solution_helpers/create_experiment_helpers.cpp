@@ -16,16 +16,17 @@
 
 using namespace std;
 
-void gather_nodes_seen_helper(ScopeHistory* scope_history,
+void gather_nodes_seen_helper(Solution* parent_solution,
+							  ScopeHistory* scope_history,
 							  map<pair<AbstractNode*,bool>, int>& nodes_seen) {
 	for (map<int, AbstractNodeHistory*>::iterator h_it = scope_history->node_histories.begin();
 			h_it != scope_history->node_histories.end(); h_it++) {
 		switch (h_it->second->node->type) {
 		case NODE_TYPE_ACTION:
 		case NODE_TYPE_OBS:
-			if (!solution->was_commit || h_it->second->node->was_commit) {
-				if (solution->timestamp >= MAINTAIN_ITERS
-						|| scope_history->scope->id == 0 || scope_history->scope->id > solution->num_existing_scopes) {
+			if (!parent_solution->was_commit || h_it->second->node->was_commit) {
+				if (parent_solution->timestamp >= MAINTAIN_ITERS
+						|| scope_history->scope->id == 0 || scope_history->scope->id > parent_solution->num_existing_scopes) {
 					map<pair<AbstractNode*,bool>, int>::iterator seen_it = nodes_seen
 						.find({h_it->second->node, false});
 					if (seen_it == nodes_seen.end()) {
@@ -40,12 +41,13 @@ void gather_nodes_seen_helper(ScopeHistory* scope_history,
 			{
 				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)h_it->second;
 
-				gather_nodes_seen_helper(scope_node_history->scope_history,
+				gather_nodes_seen_helper(parent_solution,
+										 scope_node_history->scope_history,
 										 nodes_seen);
 
-				if (!solution->was_commit || h_it->second->node->was_commit) {
-					if (solution->timestamp >= MAINTAIN_ITERS
-							|| scope_history->scope->id == 0 || scope_history->scope->id > solution->num_existing_scopes) {
+				if (!parent_solution->was_commit || h_it->second->node->was_commit) {
+					if (parent_solution->timestamp >= MAINTAIN_ITERS
+							|| scope_history->scope->id == 0 || scope_history->scope->id > parent_solution->num_existing_scopes) {
 						map<pair<AbstractNode*,bool>, int>::iterator seen_it = nodes_seen
 							.find({h_it->second->node, false});
 						if (seen_it == nodes_seen.end()) {
@@ -58,9 +60,9 @@ void gather_nodes_seen_helper(ScopeHistory* scope_history,
 			}
 			break;
 		case NODE_TYPE_BRANCH:
-			if (!solution->was_commit || h_it->second->node->was_commit) {
-				if (solution->timestamp >= MAINTAIN_ITERS
-						|| scope_history->scope->id == 0 || scope_history->scope->id > solution->num_existing_scopes) {
+			if (!parent_solution->was_commit || h_it->second->node->was_commit) {
+				if (parent_solution->timestamp >= MAINTAIN_ITERS
+						|| scope_history->scope->id == 0 || scope_history->scope->id > parent_solution->num_existing_scopes) {
 					BranchNodeHistory* branch_node_history = (BranchNodeHistory*)h_it->second;
 					map<pair<AbstractNode*,bool>, int>::iterator seen_it = nodes_seen
 						.find({h_it->second->node, branch_node_history->is_branch});
@@ -76,9 +78,11 @@ void gather_nodes_seen_helper(ScopeHistory* scope_history,
 	}
 }
 
-void create_experiment(ScopeHistory* scope_history) {
+void create_experiment(Solution* parent_solution,
+					   ScopeHistory* scope_history) {
 	map<pair<AbstractNode*,bool>,int> nodes_seen;
-	gather_nodes_seen_helper(scope_history,
+	gather_nodes_seen_helper(parent_solution,
+							 scope_history,
 							 nodes_seen);
 
 	if (nodes_seen.size() > 0) {
@@ -120,9 +124,9 @@ void create_experiment(ScopeHistory* scope_history) {
 		#if defined(MDEBUG) && MDEBUG
 		uniform_int_distribution<int> non_new_distribution(0, 1);
 		#else
-		uniform_int_distribution<int> non_new_distribution(0, 9);
+		uniform_int_distribution<int> non_new_distribution(0, 7);
 		#endif /* MDEBUG */
-		if (!solution->was_commit
+		if (!parent_solution->was_commit
 				&& explore_scope->new_scope_experiment == NULL
 				&& explore_node->parent->nodes.size() > 10
 				&& non_new_distribution(generator) != 0) {
@@ -148,9 +152,11 @@ void create_experiment(ScopeHistory* scope_history) {
 	}
 }
 
-void create_commit_experiment(ScopeHistory* scope_history) {
+void create_commit_experiment(Solution* parent_solution,
+							  ScopeHistory* scope_history) {
 	map<pair<AbstractNode*,bool>,int> nodes_seen;
-	gather_nodes_seen_helper(scope_history,
+	gather_nodes_seen_helper(parent_solution,
+							 scope_history,
 							 nodes_seen);
 
 	if (nodes_seen.size() > 0) {

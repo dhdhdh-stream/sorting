@@ -14,8 +14,13 @@ const int BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING = 1;
 const int BRANCH_EXPERIMENT_STATE_EXPLORE = 2;
 const int BRANCH_EXPERIMENT_STATE_NEW_GATHER = 3;
 const int BRANCH_EXPERIMENT_STATE_TRAIN_NEW = 4;
+/**
+ * - still need measure phase because TRAIN_NEW samples gathered sporadically
+ *   - actual results may change when decision applied everywhere
+ */
+const int BRANCH_EXPERIMENT_STATE_MEASURE = 5;
 #if defined(MDEBUG) && MDEBUG
-const int BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY = 5;
+const int BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY = 6;
 #endif /* MDEBUG */
 
 class BranchExperimentHistory;
@@ -23,6 +28,8 @@ class BranchExperiment : public AbstractExperiment {
 public:
 	int state;
 	int state_iter;
+
+	double o_existing_average_score;
 
 	int sum_num_instances;
 
@@ -58,9 +65,12 @@ public:
 
 	double select_percentage;
 
+	double combined_score;
+
 	std::vector<std::vector<double>> input_histories;
 	std::vector<std::vector<double>> factor_histories;
 	std::vector<double> i_target_val_histories;
+	std::vector<double> o_target_val_histories;
 
 	#if defined(MDEBUG) && MDEBUG
 	std::vector<Problem*> verify_problems;
@@ -110,6 +120,13 @@ public:
 							BranchExperimentHistory* history);
 	void train_new_backprop(double target_val,
 							RunHelper& run_helper);
+
+	void measure_activate(AbstractNode*& curr_node,
+						  Problem* problem,
+						  RunHelper& run_helper,
+						  ScopeHistory* scope_history);
+	void measure_backprop(double target_val,
+						  RunHelper& run_helper);
 
 	#if defined(MDEBUG) && MDEBUG
 	void capture_verify_activate(AbstractNode*& curr_node,

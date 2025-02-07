@@ -29,8 +29,6 @@ void CommitExperiment::explore_activate(
 	this->num_instances_until_target--;
 	if (history->existing_predicted_scores.size() == 0
 			&& this->num_instances_until_target == 0) {
-		run_helper.has_explore = true;
-
 		double sum_vals = this->existing_average_score;
 		for (int f_index = 0; f_index < (int)this->existing_factor_ids.size(); f_index++) {
 			double val;
@@ -136,61 +134,31 @@ void CommitExperiment::explore_backprop(
 
 	if (history->existing_predicted_scores.size() > 0) {
 		double curr_surprise = target_val - history->existing_predicted_scores[0];
+		#if defined(MDEBUG) && MDEBUG
+		if (true) {
+		#else
+		if (curr_surprise > this->best_surprise) {
+		#endif /* MDEBUG */
+			this->best_surprise = curr_surprise;
+			this->best_step_types = this->curr_step_types;
+			this->best_actions = this->curr_actions;
+			this->best_scopes = this->curr_scopes;
+			this->best_exit_next_node = this->curr_exit_next_node;
 
-		bool select = false;
-		if (this->explore_type == EXPLORE_TYPE_BEST) {
-			#if defined(MDEBUG) && MDEBUG
-			if (true) {
-			#else
-			if (curr_surprise > this->best_surprise) {
-			#endif /* MDEBUG */
-				this->best_surprise = curr_surprise;
-				this->best_step_types = this->curr_step_types;
-				this->best_actions = this->curr_actions;
-				this->best_scopes = this->curr_scopes;
-				this->best_exit_next_node = this->curr_exit_next_node;
-
-				this->curr_step_types.clear();
-				this->curr_actions.clear();
-				this->curr_scopes.clear();
-			} else {
-				this->curr_step_types.clear();
-				this->curr_actions.clear();
-				this->curr_scopes.clear();
-			}
-
-			if (this->state_iter == COMMIT_EXPERIMENT_EXPLORE_ITERS-1
-					&& this->best_surprise > 0.0) {
-				select = true;
-			}
-		} else if (this->explore_type == EXPLORE_TYPE_GOOD) {
-			#if defined(MDEBUG) && MDEBUG
-			if (true) {
-			#else
-			if (curr_surprise > 0.0) {
-			#endif /* MDEBUG */
-				this->best_step_types = this->curr_step_types;
-				this->best_actions = this->curr_actions;
-				this->best_scopes = this->curr_scopes;
-				this->best_exit_next_node = this->curr_exit_next_node;
-
-				this->curr_step_types.clear();
-				this->curr_actions.clear();
-				this->curr_scopes.clear();
-
-				select = true;
-			} else {
-				this->curr_step_types.clear();
-				this->curr_actions.clear();
-				this->curr_scopes.clear();
-			}
+			this->curr_step_types.clear();
+			this->curr_actions.clear();
+			this->curr_scopes.clear();
+		} else {
+			this->curr_step_types.clear();
+			this->curr_actions.clear();
+			this->curr_scopes.clear();
 		}
 
-		if (select) {
-			this->result = EXPERIMENT_RESULT_SUCCESS;
-		} else {
-			this->state_iter++;
-			if (this->state_iter >= COMMIT_EXPERIMENT_EXPLORE_ITERS) {
+		this->state_iter++;
+		if (this->state_iter >= COMMIT_EXPERIMENT_EXPLORE_ITERS) {
+			if (this->best_surprise > 0.0) {
+				this->result = EXPERIMENT_RESULT_SUCCESS;
+			} else {
 				this->result = EXPERIMENT_RESULT_FAIL;
 			}
 		}

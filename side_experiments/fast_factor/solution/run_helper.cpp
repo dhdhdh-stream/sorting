@@ -11,8 +11,6 @@ RunHelper::RunHelper() {
 	this->num_actions = 0;
 
 	this->experiment_history = NULL;
-
-	this->has_explore = false;
 }
 
 RunHelper::~RunHelper() {

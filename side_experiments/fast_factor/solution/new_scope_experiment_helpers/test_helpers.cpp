@@ -13,9 +13,9 @@ const int NEW_SCOPE_NUM_DATAPOINTS = 10;
 const int NEW_SCOPE_VERIFY_1ST_NUM_DATAPOINTS = 10;
 const int NEW_SCOPE_VERIFY_2ND_NUM_DATAPOINTS = 10;
 #else
-const int NEW_SCOPE_NUM_DATAPOINTS = 100;
-const int NEW_SCOPE_VERIFY_1ST_NUM_DATAPOINTS = 500;
-const int NEW_SCOPE_VERIFY_2ND_NUM_DATAPOINTS = 2000;
+const int NEW_SCOPE_NUM_DATAPOINTS = 200;
+const int NEW_SCOPE_VERIFY_1ST_NUM_DATAPOINTS = 1000;
+const int NEW_SCOPE_VERIFY_2ND_NUM_DATAPOINTS = 4000;
 #endif /* MDEBUG */
 
 void NewScopeExperiment::test_activate(
@@ -31,8 +31,6 @@ void NewScopeExperiment::test_activate(
 	case LOCATION_STATE_VERIFY_NEW_1ST:
 	case LOCATION_STATE_VERIFY_NEW_2ND:
 		{
-			run_helper.has_explore = true;
-
 			ScopeHistory* inner_scope_history = new ScopeHistory(this->new_scope);
 			this->new_scope->experiment_activate(problem,
 												 run_helper,
@@ -156,12 +154,23 @@ void NewScopeExperiment::test_backprop(
 				this->successful_scope_nodes.push_back(new_scope_node);
 
 				this->test_location_starts.erase(this->test_location_starts.begin() + history->test_location_index);
-				this->test_location_is_branch.erase(this->test_location_is_branch.begin() + history->test_location_index);
-				this->test_location_exits.erase(this->test_location_exits.begin() + history->test_location_index);
-				this->test_location_states.erase(this->test_location_states.begin() + history->test_location_index);
-				this->test_location_existing_scores.erase(this->test_location_existing_scores.begin() + history->test_location_index);
-				this->test_location_new_scores.erase(this->test_location_new_scores.begin() + history->test_location_index);
-				this->test_location_counts.erase(this->test_location_counts.begin() + history->test_location_index);
+				for (int t_index = 0; t_index < (int)this->test_location_starts.size(); t_index++) {
+					int experiment_index;
+					for (int e_index = 0; e_index < (int)this->test_location_starts[t_index]->experiments.size(); e_index++) {
+						if (this->test_location_starts[t_index]->experiments[e_index] == this) {
+							experiment_index = e_index;
+							break;
+						}
+					}
+					this->test_location_starts[t_index]->experiments.erase(this->test_location_starts[t_index]->experiments.begin() + experiment_index);
+				}
+				this->test_location_starts.clear();
+				this->test_location_is_branch.clear();
+				this->test_location_exits.clear();
+				this->test_location_states.clear();
+				this->test_location_existing_scores.clear();
+				this->test_location_new_scores.clear();
+				this->test_location_counts.clear();
 
 				this->generalize_iter++;
 			} else {

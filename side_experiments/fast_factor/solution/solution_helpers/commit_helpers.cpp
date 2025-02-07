@@ -1,5 +1,6 @@
 #include "solution_helpers.h"
 
+#include <chrono>
 #include <iostream>
 
 #include "abstract_experiment.h"
@@ -15,10 +16,17 @@ using namespace std;
 void commit_helper() {
 	Solution* commit_start = new Solution(solution);
 
+	auto start_time = chrono::high_resolution_clock::now();
+
 	while (true) {
 		run_index++;
-		if (run_index%100000 == 0) {
-			cout << "run_index: " << run_index << endl;
+
+		auto curr_time = chrono::high_resolution_clock::now();
+		auto time_diff = chrono::duration_cast<chrono::seconds>(curr_time - start_time);
+		if (time_diff.count() >= 20) {
+			start_time = curr_time;
+
+			cout << "alive" << endl;
 		}
 
 		Problem* problem = problem_type->get_problem();
@@ -41,7 +49,8 @@ void commit_helper() {
 		target_val -= run_helper.num_analyze * commit_start->curr_time_penalty;
 
 		if (run_helper.experiments_seen_order.size() == 0) {
-			create_commit_experiment(scope_history);
+			create_commit_experiment(commit_start,
+									 scope_history);
 		}
 
 		delete scope_history;
@@ -75,11 +84,6 @@ void commit_helper() {
 
 				commit_start->clear_experiments();
 
-				ofstream display_file;
-				display_file.open("../display.txt");
-				commit_start->save_for_display(display_file);
-				display_file.close();
-
 				break;
 			}
 		} else {
@@ -98,9 +102,13 @@ void commit_helper() {
 
 	while (true) {
 		run_index++;
-		if (run_index%100000 == 0) {
-			cout << "run_index: " << run_index << endl;
-			cout << "improvement_iter: " << improvement_iter << endl;
+
+		auto curr_time = chrono::high_resolution_clock::now();
+		auto time_diff = chrono::duration_cast<chrono::seconds>(curr_time - start_time);
+		if (time_diff.count() >= 20) {
+			start_time = curr_time;
+
+			cout << "alive" << endl;
 		}
 
 		Problem* problem = problem_type->get_problem();
@@ -123,7 +131,8 @@ void commit_helper() {
 		target_val -= run_helper.num_analyze * commit_start->curr_time_penalty;
 
 		if (run_helper.experiments_seen_order.size() == 0) {
-			create_experiment(scope_history);
+			create_experiment(commit_start,
+							  scope_history);
 		}
 
 		delete scope_history;
@@ -156,6 +165,29 @@ void commit_helper() {
 				clean_scope(experiment_scope,
 							duplicate);
 				duplicate->clean_scopes();
+
+				#if defined(MDEBUG) && MDEBUG
+				while (duplicate->verify_problems.size() > 0) {
+					Problem* problem = duplicate->verify_problems[0];
+
+					RunHelper run_helper;
+					run_helper.starting_run_seed = duplicate->verify_seeds[0];
+					cout << "run_helper.starting_run_seed: " << run_helper.starting_run_seed << endl;
+					run_helper.curr_run_seed = xorshift(run_helper.starting_run_seed);
+					duplicate->verify_seeds.erase(duplicate->verify_seeds.begin());
+
+					ScopeHistory* scope_history = new ScopeHistory(duplicate->scopes[0]);
+					duplicate->scopes[0]->verify_activate(
+						problem,
+						run_helper,
+						scope_history);
+					delete scope_history;
+
+					delete duplicate->verify_problems[0];
+					duplicate->verify_problems.erase(duplicate->verify_problems.begin());
+				}
+				duplicate->clear_verify();
+				#endif /* MDEBUG */
 
 				double sum_score = 0.0;
 				double sum_true_score = 0.0;

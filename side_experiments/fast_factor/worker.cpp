@@ -25,7 +25,7 @@ default_random_engine generator;
 ProblemType* problem_type;
 Solution* solution;
 
-int run_index;
+int run_index = 0;
 
 int main(int argc, char* argv[]) {
 	if (argc != 3) {
@@ -50,6 +50,10 @@ int main(int argc, char* argv[]) {
 	auto start_time = chrono::high_resolution_clock::now();
 
 	while (solution->timestamp < EXPLORE_ITERS) {
+		if (solution->timestamp % COMMIT_ITERS == 0) {
+			commit_helper();
+		}
+
 		int improvement_iter = 0;
 		while (true) {
 			auto curr_time = chrono::high_resolution_clock::now();
@@ -75,7 +79,8 @@ int main(int argc, char* argv[]) {
 			target_val -= run_helper.num_analyze * solution->curr_time_penalty;
 
 			if (run_helper.experiments_seen_order.size() == 0) {
-				create_experiment(scope_history);
+				create_experiment(solution,
+								  scope_history);
 			}
 
 			delete scope_history;

@@ -21,7 +21,7 @@ default_random_engine generator;
 ProblemType* problem_type;
 Solution* solution;
 
-int run_index;
+int run_index = 0;
 
 const int BRANCH_FACTOR = 4;
 

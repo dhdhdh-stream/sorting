@@ -32,8 +32,6 @@ public:
 	double average_instances_per_run;
 	int num_instances_until_target;
 
-	int explore_type;
-
 	std::vector<int> curr_step_types;
 	std::vector<Action> curr_actions;
 	std::vector<Scope*> curr_scopes;

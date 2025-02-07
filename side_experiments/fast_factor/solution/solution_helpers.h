@@ -14,8 +14,10 @@ class ScopeHistory;
 class ScopeNode;
 class Solution;
 
-void create_experiment(ScopeHistory* scope_history);
-void create_commit_experiment(ScopeHistory* scope_history);
+void create_experiment(Solution* parent_solution,
+					   ScopeHistory* scope_history);
+void create_commit_experiment(Solution* parent_solution,
+							  ScopeHistory* scope_history);
 
 void gather_possible_helper(ScopeHistory* scope_history,
 							std::vector<Scope*>& scope_context,

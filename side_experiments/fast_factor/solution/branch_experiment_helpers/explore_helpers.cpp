@@ -31,8 +31,6 @@ void BranchExperiment::explore_activate(
 	this->num_instances_until_target--;
 	if (history->existing_predicted_scores.size() == 0
 			&& this->num_instances_until_target == 0) {
-		run_helper.has_explore = true;
-
 		double sum_vals = this->existing_average_score;
 		for (int f_index = 0; f_index < (int)this->existing_factor_ids.size(); f_index++) {
 			double val;
@@ -87,7 +85,7 @@ void BranchExperiment::explore_activate(
 		this->curr_exit_next_node = possible_exits[random_index];
 
 		int new_num_steps;
-		geometric_distribution<int> geo_distribution(0.2);
+		geometric_distribution<int> geo_distribution(0.3);
 		if (random_index == 0) {
 			new_num_steps = 1 + geo_distribution(generator);
 		} else {
@@ -151,65 +149,32 @@ void BranchExperiment::explore_backprop(
 
 	if (history->existing_predicted_scores.size() > 0) {
 		double curr_surprise = target_val - history->existing_predicted_scores[0];
+		#if defined(MDEBUG) && MDEBUG
+		if (true) {
+		#else
+		if (curr_surprise > this->best_surprise) {
+		#endif /* MDEBUG */
+			this->best_surprise = curr_surprise;
+			this->best_step_types = this->curr_step_types;
+			this->best_actions = this->curr_actions;
+			this->best_scopes = this->curr_scopes;
+			this->best_exit_next_node = this->curr_exit_next_node;
 
-		bool select = false;
-		if (this->explore_type == EXPLORE_TYPE_BEST) {
-			#if defined(MDEBUG) && MDEBUG
-			if (true) {
-			#else
-			if (curr_surprise > this->best_surprise) {
-			#endif /* MDEBUG */
-				this->best_surprise = curr_surprise;
-				this->best_step_types = this->curr_step_types;
-				this->best_actions = this->curr_actions;
-				this->best_scopes = this->curr_scopes;
-				this->best_exit_next_node = this->curr_exit_next_node;
-
-				this->curr_step_types.clear();
-				this->curr_actions.clear();
-				this->curr_scopes.clear();
-			} else {
-				this->curr_step_types.clear();
-				this->curr_actions.clear();
-				this->curr_scopes.clear();
-			}
-
-			if (this->state_iter == BRANCH_EXPERIMENT_EXPLORE_ITERS-1
-					&& this->best_surprise > 0.0) {
-				select = true;
-			}
-		} else if (this->explore_type == EXPLORE_TYPE_GOOD) {
-			#if defined(MDEBUG) && MDEBUG
-			if (true) {
-			#else
-			if (curr_surprise > 0.0) {
-			#endif /* MDEBUG */
-				this->best_step_types = this->curr_step_types;
-				this->best_actions = this->curr_actions;
-				this->best_scopes = this->curr_scopes;
-				this->best_exit_next_node = this->curr_exit_next_node;
-
-				this->curr_step_types.clear();
-				this->curr_actions.clear();
-				this->curr_scopes.clear();
-
-				select = true;
-			} else {
-				this->curr_step_types.clear();
-				this->curr_actions.clear();
-				this->curr_scopes.clear();
-			}
+			this->curr_step_types.clear();
+			this->curr_actions.clear();
+			this->curr_scopes.clear();
+		} else {
+			this->curr_step_types.clear();
+			this->curr_actions.clear();
+			this->curr_scopes.clear();
 		}
 
-		if (select) {
-			uniform_int_distribution<int> until_distribution(0, 2*((int)this->average_instances_per_run-1));
-			this->num_instances_until_target = 1 + until_distribution(generator);
-
-			this->state = BRANCH_EXPERIMENT_STATE_NEW_GATHER;
-			this->state_iter = 0;
-		} else {
-			this->state_iter++;
-			if (this->state_iter >= BRANCH_EXPERIMENT_EXPLORE_ITERS) {
+		this->state_iter++;
+		if (this->state_iter >= BRANCH_EXPERIMENT_EXPLORE_ITERS) {
+			if (this->best_surprise > 0.0) {
+				this->state = BRANCH_EXPERIMENT_STATE_NEW_GATHER;
+				this->state_iter = 0;
+			} else {
 				this->result = EXPERIMENT_RESULT_FAIL;
 			}
 		}

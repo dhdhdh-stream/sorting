@@ -132,6 +132,7 @@ void BranchExperiment::train_new_backprop(
 		this->new_average_score = sum_score / num_instances;
 
 		vector<double> remaining_scores(num_instances);
+		vector<double> sum_vals(num_instances);
 
 		if (this->new_factor_ids.size() > 0) {
 			#if defined(MDEBUG) && MDEBUG
@@ -205,10 +206,12 @@ void BranchExperiment::train_new_backprop(
 				}
 
 				remaining_scores[i_index] = this->i_target_val_histories[i_index] - sum_score;
+				sum_vals[i_index] = sum_score;
 			}
 		} else {
 			for (int i_index = 0; i_index < num_instances; i_index++) {
 				remaining_scores[i_index] = this->i_target_val_histories[i_index] - this->new_average_score;
+				sum_vals[i_index] = this->new_average_score;
 			}
 		}
 
@@ -421,6 +424,11 @@ void BranchExperiment::train_new_backprop(
 					this->new_factor_ids.push_back({new_obs_node->id, 0});
 					this->new_factor_weights.push_back(1.0);
 				}
+
+				for (int i_index = 0; i_index < num_instances; i_index++) {
+					new_network->activate(this->input_histories[i_index]);
+					sum_vals[i_index] += new_network->output->acti_vals[0];
+				}
 			} else {
 				delete new_network;
 			}
@@ -428,36 +436,48 @@ void BranchExperiment::train_new_backprop(
 			delete new_network;
 		}
 
-		cout << "BranchExperiment" << endl;
-		cout << "this->scope_context->id: " << this->scope_context->id << endl;
-		cout << "this->node_context->id: " << this->node_context->id << endl;
-		cout << "this->is_branch: " << this->is_branch << endl;
-		cout << "new explore path:";
-		for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-			if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-				cout << " " << this->best_actions[s_index].move;
-			} else {
-				cout << " E" << this->best_scopes[s_index]->id;
+		int num_positive = 0;
+		for (int i_index = 0; i_index < num_instances; i_index++) {
+			if (sum_vals[i_index] > 0.0) {
+				num_positive++;
 			}
 		}
-		cout << endl;
+		this->select_percentage = (double)num_positive / (double)num_instances;
 
-		if (this->best_exit_next_node == NULL) {
-			cout << "this->best_exit_next_node->id: " << -1 << endl;
+		if (this->select_percentage > 0.0) {
+			cout << "BranchExperiment" << endl;
+			cout << "this->scope_context->id: " << this->scope_context->id << endl;
+			cout << "this->node_context->id: " << this->node_context->id << endl;
+			cout << "this->is_branch: " << this->is_branch << endl;
+			cout << "new explore path:";
+			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+					cout << " " << this->best_actions[s_index].move;
+				} else {
+					cout << " E" << this->best_scopes[s_index]->id;
+				}
+			}
+			cout << endl;
+
+			if (this->best_exit_next_node == NULL) {
+				cout << "this->best_exit_next_node->id: " << -1 << endl;
+			} else {
+				cout << "this->best_exit_next_node->id: " << this->best_exit_next_node->id << endl;
+			}
+
+			cout << endl;
+
+			#if defined(MDEBUG) && MDEBUG
+			this->verify_problems = vector<Problem*>(NUM_VERIFY_SAMPLES, NULL);
+			this->verify_seeds = vector<unsigned long>(NUM_VERIFY_SAMPLES);
+
+			this->state = BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY;
+			this->state_iter = 0;
+			#else
+			this->result = EXPERIMENT_RESULT_SUCCESS;
+			#endif /* MDEBUG */
 		} else {
-			cout << "this->best_exit_next_node->id: " << this->best_exit_next_node->id << endl;
+			this->result = EXPERIMENT_RESULT_FAIL;
 		}
-
-		cout << endl;
-
-		#if defined(MDEBUG) && MDEBUG
-		this->verify_problems = vector<Problem*>(NUM_VERIFY_SAMPLES, NULL);
-		this->verify_seeds = vector<unsigned long>(NUM_VERIFY_SAMPLES);
-
-		this->state = BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY;
-		this->state_iter = 0;
-		#else
-		this->result = EXPERIMENT_RESULT_SUCCESS;
-		#endif /* MDEBUG */
 	}
 }

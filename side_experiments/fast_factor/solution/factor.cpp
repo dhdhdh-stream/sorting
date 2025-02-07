@@ -14,7 +14,7 @@ Factor::Factor() {
 
 Factor::Factor(Factor* original,
 			   Solution* parent_solution) {
-	this->is_used = original->is_used;
+	this->is_used = false;
 
 	this->inputs = original->inputs;
 	for (int i_index = 0; i_index < (int)this->inputs.size(); i_index++) {
