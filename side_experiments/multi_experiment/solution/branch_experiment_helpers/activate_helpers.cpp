@@ -99,5 +99,8 @@ void BranchExperiment::update() {
 	case BRANCH_EXPERIMENT_STATE_TRAIN_NEW:
 		train_new_update();
 		break;
+	case BRANCH_EXPERIMENT_STATE_MEASURE:
+		measure_update();
+		break;
 	}
 }

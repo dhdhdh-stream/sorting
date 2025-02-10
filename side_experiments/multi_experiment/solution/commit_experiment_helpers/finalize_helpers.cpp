@@ -167,29 +167,44 @@ void CommitExperiment::add() {
 		break;
 	}
 
-	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+	for (int n_index = 0; n_index < (int)this->new_nodes.size(); n_index++) {
 		int next_node_id;
 		AbstractNode* next_node;
-		if (s_index == (int)this->best_step_types.size()-1) {
+		if (n_index == (int)this->new_nodes.size()-1) {
 			next_node_id = exit_node_id;
 			next_node = exit_node;
 		} else {
-			next_node_id = this->new_nodes[s_index+1]->id;
-			next_node = this->new_nodes[s_index+1];
+			next_node_id = this->new_nodes[n_index+1]->id;
+			next_node = this->new_nodes[n_index+1];
 		}
 
-		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-			ActionNode* action_node = (ActionNode*)this->new_nodes[s_index];
-			action_node->next_node_id = next_node_id;
-			action_node->next_node = next_node;
-		} else {
-			ScopeNode* scope_node = (ScopeNode*)this->new_nodes[s_index];
-			scope_node->next_node_id = next_node_id;
-			scope_node->next_node = next_node;
+		switch (this->new_nodes[n_index]->type) {
+		case NODE_TYPE_ACTION:
+			{
+				ActionNode* action_node = (ActionNode*)this->new_nodes[n_index];
+				action_node->next_node_id = next_node_id;
+				action_node->next_node = next_node;
+			}
+			break;
+		case NODE_TYPE_SCOPE:
+			{
+				ScopeNode* scope_node = (ScopeNode*)this->new_nodes[n_index];
+				scope_node->next_node_id = next_node_id;
+				scope_node->next_node = next_node;
+			}
+			break;
+		case NODE_TYPE_OBS:
+			{
+				ObsNode* obs_node = (ObsNode*)this->new_nodes[n_index];
+				obs_node->next_node_id = next_node_id;
+				obs_node->next_node = next_node;
+			}
+			break;
 		}
 
-		next_node->ancestor_ids.push_back(this->new_nodes[s_index]->id);
+		next_node->ancestor_ids.push_back(this->new_nodes[n_index]->id);
 	}
+	this->new_nodes.clear();
 
 	this->best_experiment->add();
 }

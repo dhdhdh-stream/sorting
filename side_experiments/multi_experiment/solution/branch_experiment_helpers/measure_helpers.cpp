@@ -89,7 +89,11 @@ void BranchExperiment::measure_backprop(
 void BranchExperiment::measure_update() {
 	if (this->state_iter >= MEASURE_NUM_DATAPOINTS) {
 		this->improvement = this->combined_score / (double)this->state_iter - this->existing_average_score;
+		#if defined(MDEBUG) && MDEBUG
+		if (rand()%2 == 0) {
+		#else
 		if (this->improvement > 0.0) {
+		#endif /* MDEBUG */
 			cout << "BranchExperiment" << endl;
 			cout << "this->scope_context->id: " << this->scope_context->id << endl;
 			cout << "this->node_context->id: " << this->node_context->id << endl;

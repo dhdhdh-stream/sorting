@@ -1,5 +1,7 @@
 #include "branch_experiment.h"
 
+#include <iostream>
+
 using namespace std;
 
 BranchExperiment::BranchExperiment(Scope* scope_context,

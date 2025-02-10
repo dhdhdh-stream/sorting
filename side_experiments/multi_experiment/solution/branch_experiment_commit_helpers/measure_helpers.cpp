@@ -55,20 +55,11 @@ bool BranchExperiment::measure_commit_activate(
 		}
 
 		bool is_branch;
-		#if defined(MDEBUG) && MDEBUG
-		if (run_helper.curr_run_seed%2 == 0) {
-			is_branch = true;
-		} else {
-			is_branch = false;
-		}
-		run_helper.curr_run_seed = xorshift(run_helper.curr_run_seed);
-		#else
 		if (sum_vals >= 0.0) {
 			is_branch = true;
 		} else {
 			is_branch = false;
 		}
-		#endif /* MDEBUG */
 
 		if (is_branch) {
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {

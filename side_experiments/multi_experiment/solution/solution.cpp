@@ -38,6 +38,9 @@ void Solution::init() {
 	new_scope->nodes[starting_noop_node->id] = starting_noop_node;
 
 	this->num_existing_scopes = 0;
+
+	this->num_branch_experiments = 0;
+	this->num_new_scope_experiments = 0;
 }
 
 void Solution::load(string path,
@@ -66,6 +69,14 @@ void Solution::load(string path,
 	string num_existing_scopes_line;
 	getline(input_file, num_existing_scopes_line);
 	this->num_existing_scopes = stoi(num_existing_scopes_line);
+
+	string num_branch_experiments_line;
+	getline(input_file, num_branch_experiments_line);
+	this->num_branch_experiments = stoi(num_branch_experiments_line);
+
+	string num_new_scope_experiments_line;
+	getline(input_file, num_new_scope_experiments_line);
+	this->num_new_scope_experiments = stoi(num_new_scope_experiments_line);
 
 	input_file.close();
 }
@@ -156,6 +167,9 @@ void Solution::save(string path,
 	}
 
 	output_file << this->num_existing_scopes << endl;
+
+	output_file << this->num_branch_experiments << endl;
+	output_file << this->num_new_scope_experiments << endl;
 
 	output_file.close();
 

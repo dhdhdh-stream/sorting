@@ -23,7 +23,7 @@ void gather_possible_helper(ScopeHistory* scope_history,
 	uniform_int_distribution<int> obs_distribution(0, problem_type->num_obs()-1);
 	for (map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
 			it != scope_history->node_histories.end(); it++) {
-		AbstractNode* node = scope->nodes[it->first];
+		AbstractNode* node = it->second->node;
 		switch (node->type) {
 		case NODE_TYPE_SCOPE:
 			{

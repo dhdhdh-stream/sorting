@@ -1,5 +1,8 @@
 #include "commit_experiment.h"
 
+#include <iostream>
+
+#include "abstract_node.h"
 #include "branch_experiment.h"
 
 using namespace std;
@@ -23,6 +26,10 @@ CommitExperiment::CommitExperiment(Scope* scope_context,
 }
 
 CommitExperiment::~CommitExperiment() {
+	for (int n_index = 0; n_index < (int)this->new_nodes.size(); n_index++) {
+		delete this->new_nodes[n_index];
+	}
+
 	if (this->best_experiment != NULL) {
 		delete this->best_experiment;
 	}

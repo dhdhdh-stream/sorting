@@ -29,6 +29,11 @@ public:
 						 RunHelper& run_helper,
 						 ScopeHistory* scope_history);
 
+	void measure_activate(AbstractNode*& curr_node,
+						  Problem* problem,
+						  RunHelper& run_helper,
+						  ScopeHistory* scope_history);
+
 	void clean_inputs(Scope* scope,
 					  int node_id);
 	void clean_inputs(Scope* scope);

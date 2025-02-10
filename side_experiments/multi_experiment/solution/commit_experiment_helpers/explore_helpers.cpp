@@ -180,13 +180,14 @@ void CommitExperiment::explore_update() {
 				this->new_nodes.push_back(new_obs_node);
 			}
 
-			uniform_int_distribution<int> experiment_node_distribution(0, this->new_nodes.size() / 2);
+			uniform_int_distribution<int> experiment_node_distribution(0, this->new_nodes.size() / 2 - 1);
 			this->experiment_index = 2 * experiment_node_distribution(generator) + 1;
 
 			this->curr_experiment = new BranchExperiment(this->scope_context,
 														 this->new_nodes[this->experiment_index],
 														 false);
 			this->curr_experiment->parent_experiment = this;
+			cout << "inner BranchExperiment" << endl;
 
 			this->state = COMMIT_EXPERIMENT_STATE_EXPERIMENT;
 			this->state_iter = 0;

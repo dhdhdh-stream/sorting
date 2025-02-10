@@ -21,6 +21,8 @@ default_random_engine generator;
 ProblemType* problem_type;
 Solution* solution;
 
+int run_index;
+
 int main(int argc, char* argv[]) {
 	cout << "Starting..." << endl;
 
@@ -49,6 +51,8 @@ int main(int argc, char* argv[]) {
 		display_file.close();
 	}
 
+	run_index = 0;
+
 	while (true) {
 		/**
 		 * - need to be selective
@@ -58,6 +62,16 @@ int main(int argc, char* argv[]) {
 		BranchExperiment* best_experiment = NULL;
 		int improvement_iter = 0;
 		while (true) {
+			run_index++;
+			#if defined(MDEBUG) && MDEBUG
+			if (run_index%10000 == 0) {
+			#else
+			if (run_index%100000 == 0) {
+			#endif /* MDEBUG */
+				cout << "run_index: " << run_index << endl;
+				cout << "improvement_iter: " << improvement_iter << endl;
+			}
+
 			Problem* problem = problem_type->get_problem();
 
 			RunHelper run_helper;
@@ -121,6 +135,7 @@ int main(int argc, char* argv[]) {
 						if (solution->num_branch_experiments / BRANCH_PER_NEW_SCOPE
 								> solution->num_new_scope_experiments) {
 							experiment->add();
+							solution->num_new_scope_experiments++;
 						}
 						delete experiment;
 						break;
@@ -136,7 +151,33 @@ int main(int argc, char* argv[]) {
 			}
 		}
 
+		best_experiment->add();
+		delete best_experiment;
+
 		solution->clean();
+
+		// temp
+		double sum_score = 0.0;
+		for (int iter_index = 0; iter_index < 4000; iter_index++) {
+			Problem* problem = problem_type->get_problem();
+
+			RunHelper run_helper;
+
+			ScopeHistory* scope_history = new ScopeHistory(solution->scopes[0]);
+			solution->scopes[0]->measure_activate(
+				problem,
+				run_helper,
+				scope_history);
+			delete scope_history;
+
+			double target_val = run_helper.sum_score + problem->score_result();
+			sum_score += target_val;
+
+			delete problem;
+		}
+		cout << "curr_score: " << sum_score / 4000 << endl;
+
+		solution->num_branch_experiments++;
 
 		solution->save("saves/", filename);
 

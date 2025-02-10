@@ -1,5 +1,7 @@
 #include "commit_experiment.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_experiment.h"
 #include "globals.h"
@@ -25,9 +27,6 @@ void CommitExperiment::experiment_activate(
 
 	ScopeHistory* temp_history = new ScopeHistory(this->scope_context);
 
-	BranchExperimentHistory* branch_experiment_history = new BranchExperimentHistory(this->curr_experiment);
-	history->branch_experiment_history = branch_experiment_history;
-
 	for (int n_index = 0; n_index < (int)this->new_nodes.size(); n_index++) {
 		switch (this->new_nodes[n_index]->type) {
 		case NODE_TYPE_ACTION:
@@ -40,7 +39,7 @@ void CommitExperiment::experiment_activate(
 			break;
 		case NODE_TYPE_SCOPE:
 			{
-				ScopeNode* node = (ScopeNode*)curr_node;
+				ScopeNode* node = (ScopeNode*)this->new_nodes[n_index];
 				node->commit_activate(problem,
 									  run_helper,
 									  temp_history);
@@ -48,7 +47,7 @@ void CommitExperiment::experiment_activate(
 			break;
 		case NODE_TYPE_OBS:
 			{
-				ObsNode* node = (ObsNode*)curr_node;
+				ObsNode* node = (ObsNode*)this->new_nodes[n_index];
 				node->commit_activate(problem,
 									  run_helper,
 									  temp_history);
@@ -61,6 +60,9 @@ void CommitExperiment::experiment_activate(
 		}
 
 		if (n_index == this->experiment_index) {
+			BranchExperimentHistory* branch_experiment_history = new BranchExperimentHistory(this->curr_experiment);
+			history->branch_experiment_history = branch_experiment_history;
+
 			bool is_selected = this->curr_experiment->commit_activate(
 				curr_node,
 				problem,
@@ -79,9 +81,11 @@ void CommitExperiment::experiment_activate(
 
 void CommitExperiment::experiment_backprop(
 		CommitExperimentHistory* history) {
-	history->branch_experiment_history->impact = history->impact;
+	if (history->branch_experiment_history != NULL) {
+		history->branch_experiment_history->impact = history->impact;
 
-	this->curr_experiment->backprop(history->branch_experiment_history);
+		this->curr_experiment->backprop(history->branch_experiment_history);
+	}
 }
 
 void CommitExperiment::experiment_update() {
@@ -90,13 +94,14 @@ void CommitExperiment::experiment_update() {
 	if (this->curr_experiment->result == EXPERIMENT_RESULT_FAIL) {
 		delete this->curr_experiment;
 
-		uniform_int_distribution<int> experiment_node_distribution(0, this->new_nodes.size() / 2);
+		uniform_int_distribution<int> experiment_node_distribution(0, this->new_nodes.size() / 2 - 1);
 		this->experiment_index = 2 * experiment_node_distribution(generator) + 1;
 
 		this->curr_experiment = new BranchExperiment(this->scope_context,
 													 this->new_nodes[this->experiment_index],
 													 false);
 		this->curr_experiment->parent_experiment = this;
+		cout << "inner BranchExperiment" << endl;
 	} else if (this->curr_experiment->result == EXPERIMENT_RESULT_SUCCESS) {
 		if (this->best_experiment == NULL) {
 			this->best_experiment = this->curr_experiment;
@@ -126,13 +131,14 @@ void CommitExperiment::experiment_update() {
 				this->result = EXPERIMENT_RESULT_FAIL;
 			}
 		} else {
-			uniform_int_distribution<int> experiment_node_distribution(0, this->new_nodes.size() / 2);
+			uniform_int_distribution<int> experiment_node_distribution(0, this->new_nodes.size() / 2 - 1);
 			this->experiment_index = 2 * experiment_node_distribution(generator) + 1;
 
 			this->curr_experiment = new BranchExperiment(this->scope_context,
 														 this->new_nodes[this->experiment_index],
 														 false);
 			this->curr_experiment->parent_experiment = this;
+			cout << "inner BranchExperiment" << endl;
 		}
 	}
 }

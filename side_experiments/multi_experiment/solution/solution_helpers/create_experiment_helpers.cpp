@@ -128,21 +128,29 @@ void create_experiment(ScopeHistory* scope_history) {
 			} else {
 				explore_scope->new_scope_experiment = new_scope_experiment;
 				explore_node->experiments.push_back(new_scope_experiment);
+				cout << "NewScopeExperiment" << endl;
 			}
 		} else {
-			uniform_int_distribution<int> commit_distribution(0, 19);
-			if (commit_distribution(generator) == 0) {
+			#if defined(MDEBUG) && MDEBUG
+			uniform_int_distribution<int> commit_distribution(0, 1);
+			#else
+			uniform_int_distribution<int> commit_distribution(0, 99);
+			#endif /* MDEBUG */
+			if (solution->scopes[0]->nodes.size() == 1	// start special case
+					|| commit_distribution(generator) == 0) {
 				CommitExperiment* new_commit_experiment = new CommitExperiment(
 					explore_node->parent,
 					explore_node,
 					explore_is_branch);
 				explore_node->experiments.push_back(new_commit_experiment);
+				cout << "CommitExperiment" << endl;
 			} else {
 				BranchExperiment* new_experiment = new BranchExperiment(
 					explore_node->parent,
 					explore_node,
 					explore_is_branch);
 				explore_node->experiments.push_back(new_experiment);
+				cout << "BranchExperiment" << endl;
 			}
 		}
 	}
