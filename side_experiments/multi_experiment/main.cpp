@@ -1,16 +1,14 @@
-/**
- * TODO: reset periodically
- */
-
 #include <chrono>
 #include <iostream>
 #include <map>
 #include <thread>
 #include <random>
 
-#include "abstract_experiment.h"
+#include "branch_experiment.h"
+#include "commit_experiment.h"
 #include "constants.h"
 #include "minesweeper.h"
+#include "new_scope_experiment.h"
 #include "problem.h"
 #include "scope.h"
 #include "solution.h"
@@ -52,67 +50,100 @@ int main(int argc, char* argv[]) {
 	}
 
 	while (true) {
-		Problem* problem = problem_type->get_problem();
+		/**
+		 * - need to be selective
+		 *   - otherwise, more likely to be meaningless improvements
+		 *     - which leads to even more meaningless improvements when experimenting from
+		 */
+		BranchExperiment* best_experiment = NULL;
+		int improvement_iter = 0;
+		while (true) {
+			Problem* problem = problem_type->get_problem();
 
-		RunHelper run_helper;
+			RunHelper run_helper;
 
-		ScopeHistory* scope_history = new ScopeHistory(solution->scopes[0]);
-		solution->scopes[0]->activate(
-				problem,
-				run_helper,
-				scope_history);
+			ScopeHistory* scope_history = new ScopeHistory(solution->scopes[0]);
+			solution->scopes[0]->activate(
+					problem,
+					run_helper,
+					scope_history);
 
-		double score = problem->score_result();
-		double individual_impact = score / run_helper.num_actions;
-		for (int h_index = 0; h_index < (int)run_helper.experiment_histories.size(); h_index++) {
-			run_helper.experiment_histories[h_index]->impact += individual_impact;
-		}
+			double score = problem->score_result();
+			double individual_impact = score / run_helper.num_actions;
+			for (int h_index = 0; h_index < (int)run_helper.experiment_histories.size(); h_index++) {
+				run_helper.experiment_histories[h_index]->impact += individual_impact;
+			}
 
-		int expected_number_of_experiments = ceil((double)run_helper.num_actions / ACTIONS_PER_EXPERIMENT);
-		int number_of_experiments_diff = expected_number_of_experiments - run_helper.num_experiments_seen;
-		for (int e_index = 0; e_index < number_of_experiments_diff; e_index++) {
-			create_experiment(scope_history);
-		}
+			int expected_number_of_experiments = ceil((double)run_helper.num_actions / ACTIONS_PER_EXPERIMENT);
+			int number_of_experiments_diff = expected_number_of_experiments - run_helper.num_experiments_seen;
+			for (int e_index = 0; e_index < number_of_experiments_diff; e_index++) {
+				create_experiment(scope_history);
+			}
 
-		delete scope_history;
-		delete problem;
+			delete scope_history;
+			delete problem;
 
-		set<AbstractExperiment*> experiments;
-		for (int h_index = 0; h_index < (int)run_helper.experiment_histories.size(); h_index++) {
-			run_helper.experiment_histories[h_index]->experiment->backprop(
-				run_helper.experiment_histories[h_index]);
+			set<AbstractExperiment*> experiments;
+			for (int h_index = 0; h_index < (int)run_helper.experiment_histories.size(); h_index++) {
+				run_helper.experiment_histories[h_index]->experiment->backprop(
+					run_helper.experiment_histories[h_index]);
 
-			experiments.insert(run_helper.experiment_histories[h_index]->experiment);
-		}
+				experiments.insert(run_helper.experiment_histories[h_index]->experiment);
+			}
 
-		set<Scope*> updated_scopes;
-		for (set<AbstractExperiment*>::iterator it = experiments.begin();
-				it != experiments.end(); it++) {
-			AbstractExperiment* experiment = *it;
-			experiment->update();
-			if (experiment->result == EXPERIMENT_RESULT_FAIL) {
-				experiment->finalize();
-				delete experiment;
-			} else if (experiment->result == EXPERIMENT_RESULT_SUCCESS) {
-				experiment->finalize();
-				updated_scopes.insert(experiment->scope_context);
-				delete experiment;
+			for (set<AbstractExperiment*>::iterator it = experiments.begin();
+					it != experiments.end(); it++) {
+				AbstractExperiment* experiment = *it;
+				experiment->update();
+				if (experiment->result == EXPERIMENT_RESULT_FAIL) {
+					experiment->cleanup();
+					delete experiment;
+				} else if (experiment->result == EXPERIMENT_RESULT_SUCCESS) {
+					experiment->cleanup();
+					switch (experiment->type) {
+					case EXPERIMENT_TYPE_BRANCH:
+						{
+							BranchExperiment* branch_experiment = (BranchExperiment*)experiment;
+							if (best_experiment == NULL) {
+								best_experiment = branch_experiment;
+							} else {
+								if (branch_experiment->improvement > best_experiment->improvement) {
+									delete best_experiment;
+									best_experiment = branch_experiment;
+								} else {
+									delete branch_experiment;
+								}
+							}
+							improvement_iter++;
+						}
+						break;
+					case EXPERIMENT_TYPE_NEW_SCOPE:
+						if (solution->num_branch_experiments / BRANCH_PER_NEW_SCOPE
+								> solution->num_new_scope_experiments) {
+							experiment->add();
+						}
+						delete experiment;
+						break;
+					case EXPERIMENT_TYPE_COMMIT:
+						experiment->add();
+						delete experiment;
+						break;
+					}
+				}
+			}
+			if (improvement_iter >= IMPROVEMENTS_PER_ITER) {
+				break;
 			}
 		}
-		if (updated_scopes.size() > 0) {
-			for (set<Scope*>::iterator it = updated_scopes.begin();
-					it != updated_scopes.end(); it++) {
-				clean_scope(*it);
-			}
-			solution->clean_scopes();
 
-			solution->save("saves/", filename);
+		solution->clean();
 
-			ofstream display_file;
-			display_file.open("../display.txt");
-			solution->save_for_display(display_file);
-			display_file.close();
-		}
+		solution->save("saves/", filename);
+
+		ofstream display_file;
+		display_file.open("../display.txt");
+		solution->save_for_display(display_file);
+		display_file.close();
 	}
 
 	delete problem_type;

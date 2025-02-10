@@ -73,14 +73,11 @@ void CommitExperiment::train_existing_update() {
 		vector<double> remaining_scores(num_instances);
 
 		if (this->existing_factor_ids.size() > 0) {
-			#if defined(MDEBUG) && MDEBUG
-			#else
 			double sum_offset = 0.0;
 			for (int i_index = 0; i_index < num_train_instances; i_index++) {
 				sum_offset += abs(this->i_target_val_histories[i_index] - this->existing_average_score);
 			}
 			double average_offset = sum_offset / num_train_instances;
-			#endif /* MDEBUG */
 
 			Eigen::MatrixXd inputs(num_train_instances, this->existing_factor_ids.size());
 			for (int i_index = 0; i_index < num_train_instances; i_index++) {
@@ -123,9 +120,10 @@ void CommitExperiment::train_existing_update() {
 					sum_impact += abs(this->factor_histories[i_index][f_index]);
 				}
 
-				double impact = this->existing_factor_weights[f_index] * sum_impact
+				double impact = abs(this->existing_factor_weights[f_index]) * sum_impact
 					/ num_train_instances;
-				if (impact < impact_threshold) {
+				if (impact < impact_threshold
+						|| abs(this->existing_factor_weights[f_index]) > REGRESSION_WEIGHT_LIMIT) {
 				#endif /* MDEBUG */
 					this->existing_factor_ids.erase(this->existing_factor_ids.begin() + f_index);
 					this->existing_factor_weights.erase(this->existing_factor_weights.begin() + f_index);
@@ -144,6 +142,11 @@ void CommitExperiment::train_existing_update() {
 				}
 
 				remaining_scores[i_index] = this->i_target_val_histories[i_index] - sum_score;
+
+				if (abs(sum_score) > REGRESSION_FAIL_MULTIPLIER * average_offset) {
+					this->result = EXPERIMENT_RESULT_FAIL;
+					return;
+				}
 			}
 		} else {
 			for (int i_index = 0; i_index < num_instances; i_index++) {

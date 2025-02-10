@@ -1,5 +1,7 @@
 #include "commit_experiment.h"
 
+#include "branch_experiment.h"
+
 using namespace std;
 
 CommitExperiment::CommitExperiment(Scope* scope_context,
@@ -14,7 +16,19 @@ CommitExperiment::CommitExperiment(Scope* scope_context,
 	this->state = COMMIT_EXPERIMENT_STATE_EXISTING_GATHER;
 	this->state_iter = 0;
 
+	this->best_experiment = NULL;
+	this->curr_experiment = NULL;
+
 	this->result = EXPERIMENT_RESULT_NA;
+}
+
+CommitExperiment::~CommitExperiment() {
+	if (this->best_experiment != NULL) {
+		delete this->best_experiment;
+	}
+	if (this->curr_experiment != NULL) {
+		delete this->curr_experiment;
+	}
 }
 
 void CommitExperiment::decrement(AbstractNode* experiment_node) {
@@ -76,4 +90,12 @@ CommitExperimentHistory::CommitExperimentHistory(CommitExperiment* experiment) {
 	this->experiment = experiment;
 
 	this->impact = 0.0;
+
+	this->branch_experiment_history = NULL;
+}
+
+CommitExperimentHistory::~CommitExperimentHistory() {
+	if (this->branch_experiment_history != NULL) {
+		delete this->branch_experiment_history;
+	}
 }

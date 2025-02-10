@@ -106,29 +106,37 @@ void create_experiment(ScopeHistory* scope_history) {
 
 		Scope* explore_scope = (Scope*)explore_node->parent;
 
-		uniform_int_distribution<int> commit_distribution(0, 999);
-		if (solution->scopes[0]->nodes.size() == 1	// starting
-				|| commit_distribution(generator) == 0) {
-			CommitExperiment* new_commit_experiment = new CommitExperiment(
+		bool can_new_scope;
+		if (solution->num_branch_experiments / BRANCH_PER_NEW_SCOPE
+				> solution->num_new_scope_experiments) {
+			can_new_scope = true;
+		} else {
+			can_new_scope = false;
+		}
+
+		uniform_int_distribution<int> new_scope_distribution(0, 1);
+		if (explore_scope->new_scope_experiment == NULL
+				&& explore_node->parent->nodes.size() > 20
+				&& can_new_scope
+				&& new_scope_distribution(generator) != 0) {
+			NewScopeExperiment* new_scope_experiment = new NewScopeExperiment(
 				explore_node->parent,
 				explore_node,
 				explore_is_branch);
-			explore_node->experiments.push_back(new_commit_experiment);
+			if (new_scope_experiment->result == EXPERIMENT_RESULT_FAIL) {
+				delete new_scope_experiment;
+			} else {
+				explore_scope->new_scope_experiment = new_scope_experiment;
+				explore_node->experiments.push_back(new_scope_experiment);
+			}
 		} else {
-			uniform_int_distribution<int> non_new_distribution(0, 9);
-			if (explore_scope->new_scope_experiment == NULL
-					&& explore_node->parent->nodes.size() > 20
-					&& non_new_distribution(generator) != 0) {
-				NewScopeExperiment* new_scope_experiment = new NewScopeExperiment(
+			uniform_int_distribution<int> commit_distribution(0, 19);
+			if (commit_distribution(generator) == 0) {
+				CommitExperiment* new_commit_experiment = new CommitExperiment(
 					explore_node->parent,
 					explore_node,
 					explore_is_branch);
-				if (new_scope_experiment->result == EXPERIMENT_RESULT_FAIL) {
-					delete new_scope_experiment;
-				} else {
-					explore_scope->new_scope_experiment = new_scope_experiment;
-					explore_node->experiments.push_back(new_scope_experiment);
-				}
+				explore_node->experiments.push_back(new_commit_experiment);
 			} else {
 				BranchExperiment* new_experiment = new BranchExperiment(
 					explore_node->parent,

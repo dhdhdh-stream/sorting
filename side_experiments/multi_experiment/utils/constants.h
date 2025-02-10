@@ -22,8 +22,26 @@ const int TRAIN_NUM_DATAPOINTS = 4000;
 
 const double TEST_SAMPLES_PERCENTAGE = 0.2;
 
+/**
+ * - when there's correlation, weights can get strange values(?)
+ */
+const double REGRESSION_WEIGHT_LIMIT = 100000.0;
+const double REGRESSION_FAIL_MULTIPLIER = 1000.0;
+
 const double FACTOR_IMPACT_THRESHOLD = 0.1;
 
 const double ACTIONS_PER_EXPERIMENT = 400.0;
+
+#if defined(MDEBUG) && MDEBUG
+const int BRANCH_PER_NEW_SCOPE = 2;
+#else
+const int BRANCH_PER_NEW_SCOPE = 10;
+#endif /* MDEBUG */
+
+#if defined(MDEBUG) && MDEBUG
+const int IMPROVEMENTS_PER_ITER = 2;
+#else
+const int IMPROVEMENTS_PER_ITER = 10;
+#endif /* MDEBUG */
 
 #endif /* CONSTANTS_H */

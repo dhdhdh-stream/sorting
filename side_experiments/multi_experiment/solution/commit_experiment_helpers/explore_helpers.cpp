@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "action_node.h"
+#include "branch_experiment.h"
 #include "branch_node.h"
 #include "constants.h"
 #include "globals.h"
@@ -150,29 +151,45 @@ void CommitExperiment::explore_backprop(CommitExperimentHistory* history) {
 void CommitExperiment::explore_update() {
 	if (this->state_iter >= COMMIT_EXPERIMENT_EXPLORE_ITERS) {
 		if (this->best_surprise > 0.0) {
-			cout << "CommitExperiment" << endl;
-			cout << "this->scope_context->id: " << this->scope_context->id << endl;
-			cout << "this->node_context->id: " << this->node_context->id << endl;
-			cout << "this->is_branch: " << this->is_branch << endl;
-			cout << "new explore path:";
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-					cout << " " << this->best_actions[s_index].move;
+					ActionNode* new_action_node = new ActionNode();
+					new_action_node->parent = this->scope_context;
+					new_action_node->id = this->scope_context->node_counter;
+					this->scope_context->node_counter++;
+
+					new_action_node->action = this->best_actions[s_index];
+
+					this->new_nodes.push_back(new_action_node);
 				} else {
-					cout << " E" << this->best_scopes[s_index]->id;
+					ScopeNode* new_scope_node = new ScopeNode();
+					new_scope_node->parent = this->scope_context;
+					new_scope_node->id = this->scope_context->node_counter;
+					this->scope_context->node_counter++;
+
+					new_scope_node->scope = this->best_scopes[s_index];
+
+					this->new_nodes.push_back(new_scope_node);
 				}
+
+				ObsNode* new_obs_node = new ObsNode();
+				new_obs_node->parent = this->scope_context;
+				new_obs_node->id = this->scope_context->node_counter;
+				this->scope_context->node_counter++;
+
+				this->new_nodes.push_back(new_obs_node);
 			}
-			cout << endl;
 
-			if (this->best_exit_next_node == NULL) {
-				cout << "this->best_exit_next_node->id: " << -1 << endl;
-			} else {
-				cout << "this->best_exit_next_node->id: " << this->best_exit_next_node->id << endl;
-			}
+			uniform_int_distribution<int> experiment_node_distribution(0, this->new_nodes.size() / 2);
+			this->experiment_index = 2 * experiment_node_distribution(generator) + 1;
 
-			cout << endl;
+			this->curr_experiment = new BranchExperiment(this->scope_context,
+														 this->new_nodes[this->experiment_index],
+														 false);
+			this->curr_experiment->parent_experiment = this;
 
-			this->result = EXPERIMENT_RESULT_SUCCESS;
+			this->state = COMMIT_EXPERIMENT_STATE_EXPERIMENT;
+			this->state_iter = 0;
 		} else {
 			this->result = EXPERIMENT_RESULT_FAIL;
 		}

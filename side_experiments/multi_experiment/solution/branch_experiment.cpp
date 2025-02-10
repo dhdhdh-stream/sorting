@@ -11,6 +11,8 @@ BranchExperiment::BranchExperiment(Scope* scope_context,
 	this->node_context = node_context;
 	this->is_branch = is_branch;
 
+	this->parent_experiment = NULL;
+
 	this->state = BRANCH_EXPERIMENT_STATE_EXISTING_GATHER;
 	this->state_iter = 0;
 

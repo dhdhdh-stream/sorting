@@ -67,7 +67,8 @@ public:
 	void test_backprop(NewScopeExperimentHistory* history);
 	void test_update();
 
-	void finalize();
+	void cleanup();
+	void add();
 
 	void clean_inputs(Scope* scope,
 					  int node_id);

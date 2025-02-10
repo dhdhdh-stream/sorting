@@ -48,6 +48,11 @@ public:
 					  int node_id);
 	void clean_inputs(Scope* scope);
 
+	void clean();
+
+	void unlink();
+	void relink();
+
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file);
 	void link();

@@ -7,6 +7,7 @@
 #include "action.h"
 #include "run_helper.h"
 
+class CommitExperiment;
 class Scope;
 
 const int BRANCH_EXPERIMENT_STATE_EXISTING_GATHER = 0;
@@ -14,6 +15,7 @@ const int BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING = 1;
 const int BRANCH_EXPERIMENT_STATE_EXPLORE = 2;
 const int BRANCH_EXPERIMENT_STATE_NEW_GATHER = 3;
 const int BRANCH_EXPERIMENT_STATE_TRAIN_NEW = 4;
+const int BRANCH_EXPERIMENT_STATE_MEASURE = 5;
 
 class BranchExperimentHistory;
 class BranchExperiment : public AbstractExperiment {
@@ -42,6 +44,11 @@ public:
 	std::vector<double> new_factor_weights;
 
 	double select_percentage;
+
+	double combined_score;
+	double improvement;
+
+	CommitExperiment* parent_experiment;
 
 	std::vector<std::vector<double>> existing_input_histories;
 	std::vector<std::vector<double>> existing_factor_histories;
@@ -91,7 +98,45 @@ public:
 	void train_new_backprop(BranchExperimentHistory* history);
 	void train_new_update();
 
-	void finalize();
+	bool measure_activate(AbstractNode*& curr_node,
+						  Problem* problem,
+						  RunHelper& run_helper,
+						  ScopeHistory* scope_history);
+	void measure_backprop(BranchExperimentHistory* history);
+	void measure_update();
+
+	bool commit_activate(AbstractNode*& curr_node,
+						 Problem* problem,
+						 RunHelper& run_helper,
+						 ScopeHistory* scope_history,
+						 ScopeHistory* temp_history,
+						 BranchExperimentHistory* history);
+	void existing_gather_commit_activate(ScopeHistory* scope_history,
+										 ScopeHistory* temp_history);
+	void train_existing_commit_activate(ScopeHistory* scope_history,
+										ScopeHistory* temp_history);
+	void explore_commit_activate(AbstractNode*& curr_node,
+								 Problem* problem,
+								 RunHelper& run_helper,
+								 ScopeHistory* scope_history,
+								 ScopeHistory* temp_history,
+								 BranchExperimentHistory* history);
+	void new_gather_commit_activate(ScopeHistory* scope_history,
+									ScopeHistory* temp_history);
+	void train_new_commit_activate(AbstractNode*& curr_node,
+								   Problem* problem,
+								   RunHelper& run_helper,
+								   ScopeHistory* scope_history,
+								   ScopeHistory* temp_history,
+								   BranchExperimentHistory* history);
+	bool measure_commit_activate(AbstractNode*& curr_node,
+								   Problem* problem,
+								   RunHelper& run_helper,
+								   ScopeHistory* scope_history,
+								   ScopeHistory* temp_history);
+
+	void cleanup();
+	void add();
 
 	void clean_inputs(Scope* scope,
 					  int node_id);

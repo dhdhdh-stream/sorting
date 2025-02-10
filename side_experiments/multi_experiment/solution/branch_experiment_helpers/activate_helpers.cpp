@@ -47,6 +47,11 @@ bool BranchExperiment::activate(AbstractNode* experiment_node,
 							   scope_history,
 							   history);
 			return true;
+		case BRANCH_EXPERIMENT_STATE_MEASURE:
+			return measure_activate(curr_node,
+									problem,
+									run_helper,
+									scope_history);
 		}
 	}
 
@@ -70,6 +75,9 @@ void BranchExperiment::backprop(AbstractExperimentHistory* history) {
 		break;
 	case BRANCH_EXPERIMENT_STATE_TRAIN_NEW:
 		train_new_backprop(branch_experiment_history);
+		break;
+	case BRANCH_EXPERIMENT_STATE_MEASURE:
+		measure_backprop(branch_experiment_history);
 		break;
 	}
 }

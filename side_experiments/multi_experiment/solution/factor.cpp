@@ -52,6 +52,36 @@ void Factor::clean_inputs(Scope* scope) {
 	}
 }
 
+void Factor::unlink() {
+	this->is_used = false;
+}
+
+void Factor::relink() {
+	if (!this->is_used) {
+		for (int i_index = 0; i_index < (int)this->inputs.size(); i_index++) {
+			Scope* scope = this->inputs[i_index].first.first.back();
+			AbstractNode* node = scope->nodes[this->inputs[i_index].first.second.back()];
+			switch (node->type) {
+			case NODE_TYPE_OBS:
+				{
+					ObsNode* obs_node = (ObsNode*)node;
+
+					if (this->inputs[i_index].second.first != -1) {
+						Factor* factor = obs_node->factors[this->inputs[i_index].second.first];
+
+						factor->link();
+					}
+
+					obs_node->is_used = true;
+				}
+				break;
+			}
+		}
+
+		this->is_used = true;
+	}
+}
+
 void Factor::save(ofstream& output_file) {
 	output_file << this->inputs.size() << endl;
 	for (int i_index = 0; i_index < (int)this->inputs.size(); i_index++) {

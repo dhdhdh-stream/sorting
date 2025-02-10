@@ -95,9 +95,8 @@ void gather_possible_helper(ScopeHistory* scope_history,
 }
 
 void gather_possible_factor_helper(ScopeHistory* scope_history,
+								   int& factor_count,
 								   pair<int,int>& new_factor) {
-	int factor_count = 0;
-
 	for (map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
 			it != scope_history->node_histories.end(); it++) {
 		if (it->second->node->type == NODE_TYPE_OBS) {
@@ -179,5 +178,7 @@ void fetch_input_helper(ScopeHistory* scope_history,
 							   l_index+1,
 							   obs);
 		}
+	} else {
+		obs = 0.0;
 	}
 }

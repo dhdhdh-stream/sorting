@@ -2,8 +2,8 @@
 
 #include "abstract_experiment.h"
 #include "factor.h"
-#include "scope.h"
 #include "problem.h"
+#include "scope.h"
 
 using namespace std;
 

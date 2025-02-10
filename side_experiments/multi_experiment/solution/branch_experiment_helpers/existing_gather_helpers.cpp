@@ -30,8 +30,10 @@ void BranchExperiment::existing_gather_activate(
 	}
 
 	for (int f_index = 0; f_index < GATHER_FACTORS_PER_ITER; f_index++) {
+		int factor_count = 0;
 		pair<int,int> new_factor = {-1, -1};
 		gather_possible_factor_helper(scope_history,
+									  factor_count,
 									  new_factor);
 
 		if (new_factor.first != -1) {

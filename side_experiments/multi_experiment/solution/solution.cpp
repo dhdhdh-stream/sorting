@@ -78,7 +78,11 @@ void Solution::clean_inputs(Scope* scope,
 	}
 }
 
-void Solution::clean_scopes() {
+void Solution::clean() {
+	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
+		this->scopes[s_index]->clean();
+	}
+
 	for (int s_index = (int)this->scopes.size()-1; s_index >= 1; s_index--) {
 		bool still_used = false;
 		for (int is_index = 0; is_index < (int)this->scopes.size(); is_index++) {
@@ -130,6 +134,13 @@ void Solution::clean_scopes() {
 
 	for (int s_index = 1; s_index < (int)this->scopes.size(); s_index++) {
 		this->scopes[s_index]->id = s_index;
+	}
+
+	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
+		this->scopes[s_index]->unlink();
+	}
+	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
+		this->scopes[s_index]->relink();
 	}
 }
 

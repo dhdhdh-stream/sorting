@@ -45,6 +45,20 @@ void ObsNode::clean_inputs(Scope* scope) {
 	}
 }
 
+void ObsNode::unlink() {
+	this->is_used = false;
+
+	for (int f_index = 0; f_index < (int)this->factors.size(); f_index++) {
+		this->factors[f_index]->unlink();
+	}
+}
+
+void ObsNode::relink() {
+	for (int f_index = 0; f_index < (int)this->factors.size(); f_index++) {
+		this->factors[f_index]->link();
+	}
+}
+
 void ObsNode::save(ofstream& output_file) {
 	output_file << this->factors.size() << endl;
 	for (int f_index = 0; f_index < (int)this->factors.size(); f_index++) {

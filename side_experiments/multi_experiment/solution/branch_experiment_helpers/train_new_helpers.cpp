@@ -116,14 +116,11 @@ void BranchExperiment::train_new_update() {
 		vector<double> sum_vals(num_instances);
 
 		if (this->new_factor_ids.size() > 0) {
-			#if defined(MDEBUG) && MDEBUG
-			#else
 			double sum_offset = 0.0;
 			for (int i_index = 0; i_index < num_train_instances; i_index++) {
 				sum_offset += abs(this->i_target_val_histories[i_index] - this->new_average_score);
 			}
 			double average_offset = sum_offset / num_train_instances;
-			#endif /* MDEBUG */
 
 			Eigen::MatrixXd inputs(num_train_instances, this->new_factor_ids.size());
 			for (int i_index = 0; i_index < num_train_instances; i_index++) {
@@ -166,9 +163,10 @@ void BranchExperiment::train_new_update() {
 					sum_impact += abs(this->new_factor_histories[i_index][f_index]);
 				}
 
-				double impact = this->new_factor_weights[f_index] * sum_impact
+				double impact = abs(this->new_factor_weights[f_index]) * sum_impact
 					/ num_train_instances;
-				if (impact < impact_threshold) {
+				if (impact < impact_threshold
+						|| abs(this->new_factor_weights[f_index]) > REGRESSION_WEIGHT_LIMIT) {
 				#endif /* MDEBUG */
 					this->new_factor_ids.erase(this->new_factor_ids.begin() + f_index);
 					this->new_factor_weights.erase(this->new_factor_weights.begin() + f_index);
@@ -188,6 +186,11 @@ void BranchExperiment::train_new_update() {
 
 				remaining_scores[i_index] = this->i_target_val_histories[i_index] - sum_score;
 				sum_vals[i_index] = sum_score;
+
+				if (abs(sum_score) > REGRESSION_FAIL_MULTIPLIER * average_offset) {
+					this->result = EXPERIMENT_RESULT_FAIL;
+					return;
+				}
 			}
 		} else {
 			for (int i_index = 0; i_index < num_instances; i_index++) {
@@ -423,29 +426,10 @@ void BranchExperiment::train_new_update() {
 		#else
 		if (this->select_percentage > 0.0) {
 		#endif /* MDEBUG */
-			cout << "BranchExperiment" << endl;
-			cout << "this->scope_context->id: " << this->scope_context->id << endl;
-			cout << "this->node_context->id: " << this->node_context->id << endl;
-			cout << "this->is_branch: " << this->is_branch << endl;
-			cout << "new explore path:";
-			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-					cout << " " << this->best_actions[s_index].move;
-				} else {
-					cout << " E" << this->best_scopes[s_index]->id;
-				}
-			}
-			cout << endl;
+			this->combined_score = 0.0;
 
-			if (this->best_exit_next_node == NULL) {
-				cout << "this->best_exit_next_node->id: " << -1 << endl;
-			} else {
-				cout << "this->best_exit_next_node->id: " << this->best_exit_next_node->id << endl;
-			}
-
-			cout << endl;
-
-			this->result = EXPERIMENT_RESULT_SUCCESS;
+			this->state = BRANCH_EXPERIMENT_STATE_MEASURE;
+			this->state_iter = 0;
 		} else {
 			this->result = EXPERIMENT_RESULT_FAIL;
 		}

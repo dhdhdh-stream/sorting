@@ -9,6 +9,8 @@
 #include "run_helper.h"
 
 class AbstractNode;
+class BranchExperiment;
+class BranchExperimentHistory;
 class Problem;
 class Scope;
 class ScopeHistory;
@@ -16,6 +18,7 @@ class ScopeHistory;
 const int COMMIT_EXPERIMENT_STATE_EXISTING_GATHER = 0;
 const int COMMIT_EXPERIMENT_STATE_TRAIN_EXISTING = 1;
 const int COMMIT_EXPERIMENT_STATE_EXPLORE = 2;
+const int COMMIT_EXPERIMENT_STATE_EXPERIMENT = 3;
 
 class CommitExperimentHistory;
 class CommitExperiment : public AbstractExperiment {
@@ -36,6 +39,13 @@ public:
 	std::vector<Scope*> best_scopes;
 	AbstractNode* best_exit_next_node;
 
+	std::vector<AbstractNode*> new_nodes;
+
+	BranchExperiment* best_experiment;
+
+	BranchExperiment* curr_experiment;
+	int experiment_index;
+
 	std::vector<std::vector<double>> input_histories;
 	std::vector<std::vector<double>> factor_histories;
 	std::vector<double> i_target_val_histories;
@@ -43,6 +53,7 @@ public:
 	CommitExperiment(Scope* scope_context,
 					 AbstractNode* node_context,
 					 bool is_branch);
+	~CommitExperiment();
 	void decrement(AbstractNode* experiment_node);
 
 	bool activate(AbstractNode* experiment_node,
@@ -70,7 +81,16 @@ public:
 	void explore_backprop(CommitExperimentHistory* history);
 	void explore_update();
 
-	void finalize();
+	void experiment_activate(AbstractNode*& curr_node,
+							 Problem* problem,
+							 RunHelper& run_helper,
+							 ScopeHistory* scope_history,
+							 CommitExperimentHistory* history);
+	void experiment_backprop(CommitExperimentHistory* history);
+	void experiment_update();
+
+	void cleanup();
+	void add();
 
 	void clean_inputs(Scope* scope,
 					  int node_id);
@@ -86,7 +106,10 @@ public:
 	std::vector<Scope*> curr_scopes;
 	AbstractNode* curr_exit_next_node;
 
+	BranchExperimentHistory* branch_experiment_history;
+
 	CommitExperimentHistory(CommitExperiment* experiment);
+	~CommitExperimentHistory();
 };
 
 #endif /* COMMIT_EXPERIMENT_H */

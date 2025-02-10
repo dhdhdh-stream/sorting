@@ -37,6 +37,13 @@ bool CommitExperiment::activate(AbstractNode* experiment_node,
 							 scope_history,
 							 history);
 			return true;
+		case COMMIT_EXPERIMENT_STATE_EXPERIMENT:
+			experiment_activate(curr_node,
+								problem,
+								run_helper,
+								scope_history,
+								history);
+			return true;
 		}
 	}
 
@@ -55,6 +62,9 @@ void CommitExperiment::backprop(AbstractExperimentHistory* history) {
 	case COMMIT_EXPERIMENT_STATE_EXPLORE:
 		explore_backprop(commit_experiment_history);
 		break;
+	case COMMIT_EXPERIMENT_STATE_EXPERIMENT:
+		experiment_backprop(commit_experiment_history);
+		break;
 	}
 }
 
@@ -68,6 +78,9 @@ void CommitExperiment::update() {
 		break;
 	case COMMIT_EXPERIMENT_STATE_EXPLORE:
 		explore_update();
+		break;
+	case COMMIT_EXPERIMENT_STATE_EXPERIMENT:
+		experiment_update();
 		break;
 	}
 }

@@ -40,7 +40,8 @@ public:
 	virtual void backprop(AbstractExperimentHistory* history) = 0;
 	virtual void update() = 0;
 
-	virtual void finalize() = 0;
+	virtual void cleanup() = 0;
+	virtual void add() = 0;
 
 	virtual void clean_inputs(Scope* scope,
 							  int node_id) = 0;

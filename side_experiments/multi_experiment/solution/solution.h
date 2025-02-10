@@ -28,6 +28,9 @@ public:
 
 	int num_existing_scopes;
 
+	int num_branch_experiments;
+	int num_new_scope_experiments;
+
 	Solution();
 	~Solution();
 
@@ -37,7 +40,8 @@ public:
 
 	void clean_inputs(Scope* scope,
 					  int node_id);
-	void clean_scopes();
+
+	void clean();
 
 	void save(std::string path,
 			  std::string name);
