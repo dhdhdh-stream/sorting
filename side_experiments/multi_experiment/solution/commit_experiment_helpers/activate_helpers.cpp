@@ -6,13 +6,13 @@
 
 using namespace std;
 
-bool CommitExperiment::activate(AbstractNode* experiment_node,
+void CommitExperiment::activate(AbstractNode* experiment_node,
 								bool is_branch,
 								AbstractNode*& curr_node,
 								Problem* problem,
 								RunHelper& run_helper,
 								ScopeHistory* scope_history) {
-	run_helper.num_experiments_seen++;
+	run_helper.experiments_seen.insert(this);
 
 	/**
 	 * - each experiment has 1/4 chance of triggering
@@ -26,44 +26,45 @@ bool CommitExperiment::activate(AbstractNode* experiment_node,
 		switch (this->state) {
 		case COMMIT_EXPERIMENT_STATE_EXISTING_GATHER:
 			existing_gather_activate(scope_history);
-			return false;
+			break;
 		case COMMIT_EXPERIMENT_STATE_TRAIN_EXISTING:
 			train_existing_activate(scope_history);
-			return false;
+			break;
 		case COMMIT_EXPERIMENT_STATE_EXPLORE:
 			explore_activate(curr_node,
 							 problem,
 							 run_helper,
 							 scope_history,
 							 history);
-			return true;
+			break;
 		case COMMIT_EXPERIMENT_STATE_EXPERIMENT:
 			experiment_activate(curr_node,
 								problem,
 								run_helper,
 								scope_history,
 								history);
-			return true;
+			break;
 		}
 	}
-
-	return false;
 }
 
-void CommitExperiment::backprop(AbstractExperimentHistory* history) {
+void CommitExperiment::backprop(AbstractExperimentHistory* history,
+								double target_val) {
 	CommitExperimentHistory* commit_experiment_history = (CommitExperimentHistory*)history;
 	switch (this->state) {
 	case COMMIT_EXPERIMENT_STATE_EXISTING_GATHER:
 		existing_gather_backprop();
 		break;
 	case COMMIT_EXPERIMENT_STATE_TRAIN_EXISTING:
-		train_existing_backprop(commit_experiment_history);
+		train_existing_backprop(target_val);
 		break;
 	case COMMIT_EXPERIMENT_STATE_EXPLORE:
-		explore_backprop(commit_experiment_history);
+		explore_backprop(commit_experiment_history,
+						 target_val);
 		break;
 	case COMMIT_EXPERIMENT_STATE_EXPERIMENT:
-		experiment_backprop(commit_experiment_history);
+		experiment_backprop(commit_experiment_history,
+							target_val);
 		break;
 	}
 }

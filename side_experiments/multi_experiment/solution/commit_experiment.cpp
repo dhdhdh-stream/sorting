@@ -72,6 +72,15 @@ void CommitExperiment::clean_inputs(Scope* scope,
 			}
 		}
 	}
+
+	if (this->best_experiment != NULL) {
+		this->best_experiment->clean_inputs(scope,
+											node_id);
+	}
+	if (this->curr_experiment != NULL) {
+		this->curr_experiment->clean_inputs(scope,
+											node_id);
+	}
 }
 
 void CommitExperiment::clean_inputs(Scope* scope) {
@@ -91,12 +100,17 @@ void CommitExperiment::clean_inputs(Scope* scope) {
 			}
 		}
 	}
+
+	if (this->best_experiment != NULL) {
+		this->best_experiment->clean_inputs(scope);
+	}
+	if (this->curr_experiment != NULL) {
+		this->curr_experiment->clean_inputs(scope);
+	}
 }
 
 CommitExperimentHistory::CommitExperimentHistory(CommitExperiment* experiment) {
 	this->experiment = experiment;
-
-	this->impact = 0.0;
 
 	this->branch_experiment_history = NULL;
 }

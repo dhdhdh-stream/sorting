@@ -1,5 +1,7 @@
 #include "branch_node.h"
 
+#include <iostream>
+
 #include "abstract_experiment.h"
 #include "scope.h"
 #include "solution_helpers.h"
@@ -37,16 +39,12 @@ void BranchNode::activate(AbstractNode*& curr_node,
 		curr_node = this->original_next_node;
 	}
 
-	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
-		bool is_selected = this->experiments[e_index]->activate(
-			this,
+	if (this->experiment != NULL) {
+		this->experiment->activate(this,
 			is_branch,
 			curr_node,
 			problem,
 			run_helper,
 			scope_history);
-		if (is_selected) {
-			break;
-		}
 	}
 }

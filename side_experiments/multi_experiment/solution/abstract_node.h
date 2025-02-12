@@ -24,7 +24,7 @@ public:
 	 * - if both paths of BranchNode point to same node, add twice
 	 */
 
-	std::vector<AbstractExperiment*> experiments;
+	AbstractExperiment* experiment;
 
 	virtual ~AbstractNode() {};
 

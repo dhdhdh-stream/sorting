@@ -449,7 +449,5 @@ NewScopeExperimentHistory::NewScopeExperimentHistory(
 		NewScopeExperiment* experiment) {
 	this->experiment = experiment;
 
-	this->impact = 0.0;
-
 	this->test_location_index = -1;
 }

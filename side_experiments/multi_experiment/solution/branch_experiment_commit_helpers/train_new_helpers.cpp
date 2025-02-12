@@ -1,5 +1,7 @@
 #include "branch_experiment.h"
 
+#include <iostream>
+
 #include "constants.h"
 #include "problem.h"
 #include "scope.h"
@@ -87,26 +89,14 @@ void BranchExperiment::train_new_commit_activate(
 
 	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-			double score = problem->perform_action(this->best_actions[s_index]);
-			run_helper.sum_score += score;
+			problem->perform_action(this->best_actions[s_index]);
 			run_helper.num_actions++;
-			double individual_impact = score / run_helper.num_actions;
-			for (int h_index = 0; h_index < (int)run_helper.experiment_histories.size(); h_index++) {
-				run_helper.experiment_histories[h_index]->impact += individual_impact;
-			}
-			if (score < 0.0) {
-				run_helper.early_exit = true;
-			}
 		} else {
 			ScopeHistory* inner_scope_history = new ScopeHistory(this->best_scopes[s_index]);
 			this->best_scopes[s_index]->activate(problem,
 				run_helper,
 				inner_scope_history);
 			delete inner_scope_history;
-		}
-
-		if (run_helper.early_exit) {
-			break;
 		}
 	}
 

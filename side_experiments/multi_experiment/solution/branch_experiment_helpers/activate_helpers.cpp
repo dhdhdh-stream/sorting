@@ -6,78 +6,81 @@
 
 using namespace std;
 
-bool BranchExperiment::activate(AbstractNode* experiment_node,
+void BranchExperiment::activate(AbstractNode* experiment_node,
 								bool is_branch,
 								AbstractNode*& curr_node,
 								Problem* problem,
 								RunHelper& run_helper,
 								ScopeHistory* scope_history) {
-	run_helper.num_experiments_seen++;
+	run_helper.experiments_seen.insert(this);
 
 	/**
 	 * - each experiment has 1/4 chance of triggering
  	 *   - so two experiments can't be more than 1/4 correlated
 	 */
 	uniform_int_distribution<int> select_distribution(0, 3);
-	if (select_distribution(generator) == 0) {
+	// if (select_distribution(generator) == 0) {
+	if (true) {
 		BranchExperimentHistory* history = new BranchExperimentHistory(this);
 		run_helper.experiment_histories.push_back(history);
 
 		switch (this->state) {
 		case BRANCH_EXPERIMENT_STATE_EXISTING_GATHER:
 			existing_gather_activate(scope_history);
-			return false;
+			break;
 		case BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING:
 			train_existing_activate(scope_history);
-			return false;
+			break;
 		case BRANCH_EXPERIMENT_STATE_EXPLORE:
 			explore_activate(curr_node,
 							 problem,
 							 run_helper,
 							 scope_history,
 							 history);
-			return true;
+			break;
 		case BRANCH_EXPERIMENT_STATE_NEW_GATHER:
 			new_gather_activate(scope_history);
-			return false;
+			break;
 		case BRANCH_EXPERIMENT_STATE_TRAIN_NEW:
 			train_new_activate(curr_node,
 							   problem,
 							   run_helper,
 							   scope_history,
 							   history);
-			return true;
+			break;
 		case BRANCH_EXPERIMENT_STATE_MEASURE:
-			return measure_activate(curr_node,
-									problem,
-									run_helper,
-									scope_history);
+			measure_activate(curr_node,
+							 problem,
+							 run_helper,
+							 scope_history);
+			break;
 		}
 	}
-
-	return false;
 }
 
-void BranchExperiment::backprop(AbstractExperimentHistory* history) {
+void BranchExperiment::backprop(AbstractExperimentHistory* history,
+								double target_val) {
 	BranchExperimentHistory* branch_experiment_history = (BranchExperimentHistory*)history;
 	switch (this->state) {
 	case BRANCH_EXPERIMENT_STATE_EXISTING_GATHER:
 		existing_gather_backprop();
 		break;
 	case BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING:
-		train_existing_backprop(branch_experiment_history);
+		train_existing_backprop(target_val);
 		break;
 	case BRANCH_EXPERIMENT_STATE_EXPLORE:
-		explore_backprop(branch_experiment_history);
+		explore_backprop(branch_experiment_history,
+						 target_val);
 		break;
 	case BRANCH_EXPERIMENT_STATE_NEW_GATHER:
 		new_gather_backprop();
 		break;
 	case BRANCH_EXPERIMENT_STATE_TRAIN_NEW:
-		train_new_backprop(branch_experiment_history);
+		train_new_backprop(branch_experiment_history,
+						   target_val);
 		break;
 	case BRANCH_EXPERIMENT_STATE_MEASURE:
-		measure_backprop(branch_experiment_history);
+		measure_backprop(target_val);
 		break;
 	}
 }

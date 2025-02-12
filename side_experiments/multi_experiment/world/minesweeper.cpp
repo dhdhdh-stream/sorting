@@ -103,8 +103,7 @@ Minesweeper::Minesweeper() {
 
 	this->hit_mine = false;
 
-	double score = 0.0;		// unused
-	reveal_helper(STARTING_X, STARTING_Y, score);
+	reveal_helper(STARTING_X, STARTING_Y);
 }
 
 double Minesweeper::get_observation_helper(int x, int y) {
@@ -150,7 +149,7 @@ vector<double> Minesweeper::get_observations() {
 	return obs;
 }
 
-void Minesweeper::reveal_helper(int x, int y, double& score) {
+void Minesweeper::reveal_helper(int x, int y) {
 	if (x < 0
 			|| x > WIDTH-1
 			|| y < 0
@@ -164,28 +163,22 @@ void Minesweeper::reveal_helper(int x, int y, double& score) {
 
 		if (this->world[x][y] == -1) {
 			this->hit_mine = true;
-
-			score -= 1.0;
 		} else {
-			score += 0.01;
-
 			if (this->world[x][y] == 0) {
-				reveal_helper(x-1, y-1, score);
-				reveal_helper(x-1, y, score);
-				reveal_helper(x-1, y+1, score);
-				reveal_helper(x, y+1, score);
-				reveal_helper(x+1, y+1, score);
-				reveal_helper(x+1, y, score);
-				reveal_helper(x+1, y-1, score);
-				reveal_helper(x, y-1, score);
+				reveal_helper(x-1, y-1);
+				reveal_helper(x-1, y);
+				reveal_helper(x-1, y+1);
+				reveal_helper(x, y+1);
+				reveal_helper(x+1, y+1);
+				reveal_helper(x+1, y);
+				reveal_helper(x+1, y-1);
+				reveal_helper(x, y-1);
 			}
 		}
 	}
 }
 
-double Minesweeper::perform_action(Action action) {
-	double score = 0.0;
-
+void Minesweeper::perform_action(Action action) {
 	if (!this->hit_mine) {
 		switch (action.move) {
 		case MINESWEEPER_ACTION_UP:
@@ -213,7 +206,7 @@ double Minesweeper::perform_action(Action action) {
 			}
 			break;
 		case MINESWEEPER_ACTION_CLICK:
-			reveal_helper(this->current_x, this->current_y, score);
+			reveal_helper(this->current_x, this->current_y);
 			break;
 		case MINESWEEPER_ACTION_FLAG:
 			if (this->current_x >= 0
@@ -287,49 +280,49 @@ double Minesweeper::perform_action(Action action) {
 						if (this->current_x > 0 && this->current_y > 0) {
 							if (!this->revealed[this->current_x-1][this->current_y-1]
 									&& !this->flagged[this->current_x-1][this->current_y-1]) {
-								reveal_helper(this->current_x-1, this->current_y-1, score);
+								reveal_helper(this->current_x-1, this->current_y-1);
 							}
 						}
 						if (this->current_x > 0) {
 							if (!this->revealed[this->current_x-1][this->current_y]
 									&& !this->flagged[this->current_x-1][this->current_y]) {
-								reveal_helper(this->current_x-1, this->current_y, score);
+								reveal_helper(this->current_x-1, this->current_y);
 							}
 						}
 						if (this->current_x > 0 && this->current_y < HEIGHT-1) {
 							if (!this->revealed[this->current_x-1][this->current_y+1]
 									&& !this->flagged[this->current_x-1][this->current_y+1]) {
-								reveal_helper(this->current_x-1, this->current_y+1, score);
+								reveal_helper(this->current_x-1, this->current_y+1);
 							}
 						}
 						if (this->current_y < HEIGHT-1) {
 							if (!this->revealed[this->current_x][this->current_y+1]
 									&& !this->flagged[this->current_x][this->current_y+1]) {
-								reveal_helper(this->current_x, this->current_y+1, score);
+								reveal_helper(this->current_x, this->current_y+1);
 							}
 						}
 						if (this->current_x < WIDTH-1 && this->current_y < HEIGHT-1) {
 							if (!this->revealed[this->current_x+1][this->current_y+1]
 									&& !this->flagged[this->current_x+1][this->current_y+1]) {
-								reveal_helper(this->current_x+1, this->current_y+1, score);
+								reveal_helper(this->current_x+1, this->current_y+1);
 							}
 						}
 						if (this->current_x < WIDTH-1) {
 							if (!this->revealed[this->current_x+1][this->current_y]
 									&& !this->flagged[this->current_x+1][this->current_y]) {
-								reveal_helper(this->current_x+1, this->current_y, score);
+								reveal_helper(this->current_x+1, this->current_y);
 							}
 						}
 						if (this->current_x < WIDTH-1 && this->current_y > 0) {
 							if (!this->revealed[this->current_x+1][this->current_y-1]
 									&& !this->flagged[this->current_x+1][this->current_y-1]) {
-								reveal_helper(this->current_x+1, this->current_y-1, score);
+								reveal_helper(this->current_x+1, this->current_y-1);
 							}
 						}
 						if (this->current_y > 0) {
 							if (!this->revealed[this->current_x][this->current_y-1]
 									&& !this->flagged[this->current_x][this->current_y-1]) {
-								reveal_helper(this->current_x, this->current_y-1, score);
+								reveal_helper(this->current_x, this->current_y-1);
 							}
 						}
 					}
@@ -338,12 +331,10 @@ double Minesweeper::perform_action(Action action) {
 			break;
 		}
 	}
-
-	return score;
 }
 
 double Minesweeper::score_result() {
-	double score = 0.0;
+	double score = 1.0;
 
 	int curr_revealed = 0;
 	int num_mines = 0;
@@ -368,6 +359,12 @@ double Minesweeper::score_result() {
 			&& num_mines == 10
 			&& !this->hit_mine) {
 		score += 10.0;
+	}
+
+	score += 0.01*curr_revealed;
+
+	if (this->hit_mine) {
+		score -= 1.0;
 	}
 
 	return score;

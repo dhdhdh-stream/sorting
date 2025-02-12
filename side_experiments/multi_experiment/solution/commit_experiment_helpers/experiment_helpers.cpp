@@ -4,6 +4,7 @@
 
 #include "action_node.h"
 #include "branch_experiment.h"
+#include "constants.h"
 #include "globals.h"
 #include "obs_node.h"
 #include "scope.h"
@@ -55,10 +56,6 @@ void CommitExperiment::experiment_activate(
 			break;
 		}
 
-		if (run_helper.early_exit) {
-			break;
-		}
-
 		if (n_index == this->experiment_index) {
 			BranchExperimentHistory* branch_experiment_history = new BranchExperimentHistory(this->curr_experiment);
 			history->branch_experiment_history = branch_experiment_history;
@@ -80,12 +77,10 @@ void CommitExperiment::experiment_activate(
 }
 
 void CommitExperiment::experiment_backprop(
-		CommitExperimentHistory* history) {
-	if (history->branch_experiment_history != NULL) {
-		history->branch_experiment_history->impact = history->impact;
-
-		this->curr_experiment->backprop(history->branch_experiment_history);
-	}
+		CommitExperimentHistory* history,
+		double target_val) {
+	this->curr_experiment->backprop(history->branch_experiment_history,
+									target_val);
 }
 
 void CommitExperiment::experiment_update() {
@@ -126,6 +121,37 @@ void CommitExperiment::experiment_update() {
 			double new_average_score = this->best_experiment->combined_score
 				/ this->best_experiment->state_iter;
 			if (new_average_score > this->existing_average_score) {
+				cout << "selected BranchExperiment" << endl;
+				cout << "this->best_experiment->scope_context->id: " << this->best_experiment->scope_context->id << endl;
+				cout << "this->best_experiment->node_context->id: " << this->best_experiment->node_context->id << endl;
+				cout << "this->best_experiment->is_branch: " << this->best_experiment->is_branch << endl;
+				cout << "new explore path:";
+				for (int s_index = 0; s_index < (int)this->best_experiment->best_step_types.size(); s_index++) {
+					if (this->best_experiment->best_step_types[s_index] == STEP_TYPE_ACTION) {
+						cout << " " << this->best_experiment->best_actions[s_index].move;
+					} else {
+						cout << " E" << this->best_experiment->best_scopes[s_index]->id;
+					}
+				}
+				cout << endl;
+
+				if (this->best_experiment->best_exit_next_node == NULL) {
+					cout << "this->best_experiment->best_exit_next_node->id: " << -1 << endl;
+				} else {
+					cout << "this->best_experiment->best_exit_next_node->id: " << this->best_experiment->best_exit_next_node->id << endl;
+				}
+
+				cout << "this->best_experiment->new_average_score: " << this->best_experiment->new_average_score << endl;
+				cout << "this->best_experiment->select_percentage: " << this->best_experiment->select_percentage << endl;
+
+				cout << "this->best_experiment->improvement: " << this->best_experiment->improvement << endl;
+				cout << "this->best_experiment->existing_average_score: " << this->best_experiment->existing_average_score << endl;
+
+				cout << "this->existing_average_score: " << this->existing_average_score << endl;
+				cout << "new_average_score: " << new_average_score << endl;
+
+				cout << endl;
+
 				this->result = EXPERIMENT_RESULT_SUCCESS;
 			} else {
 				this->result = EXPERIMENT_RESULT_FAIL;

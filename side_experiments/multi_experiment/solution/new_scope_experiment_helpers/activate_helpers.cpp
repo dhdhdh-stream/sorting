@@ -13,7 +13,7 @@ using namespace std;
 
 const double ACTIONS_PER_TEST = 20.0;
 
-bool NewScopeExperiment::activate(AbstractNode* experiment_node,
+void NewScopeExperiment::activate(AbstractNode* experiment_node,
 								  bool is_branch,
 								  AbstractNode*& curr_node,
 								  Problem* problem,
@@ -62,8 +62,6 @@ bool NewScopeExperiment::activate(AbstractNode* experiment_node,
 					delete inner_scope_history;
 
 					curr_node = this->test_location_exits[location_index];
-
-					return true;
 				}
 			} else {
 				ScopeHistory* inner_scope_history = new ScopeHistory(this->new_scope);
@@ -73,18 +71,14 @@ bool NewScopeExperiment::activate(AbstractNode* experiment_node,
 				delete inner_scope_history;
 
 				curr_node = this->successful_location_exits[location_index];
-
-				return true;
 			}
 		}
 	}
-
-	return false;
 }
 
 void NewScopeExperiment::back_activate(RunHelper& run_helper,
 									   ScopeHistory* scope_history) {
-	run_helper.num_experiments_seen++;
+	run_helper.experiments_seen.insert(this);
 
 	if (this->generalize_iter != -1) {
 		int num_test_locations_seen = 0;
@@ -109,41 +103,43 @@ void NewScopeExperiment::back_activate(RunHelper& run_helper,
 			vector<bool> possible_is_branch;
 			for (map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
 					it != scope_history->node_histories.end(); it++) {
-				bool is_branch;
-				switch (it->second->node->type) {
-				case NODE_TYPE_ACTION:
-				case NODE_TYPE_SCOPE:
-				case NODE_TYPE_OBS:
-					is_branch = false;
-					break;
-				case NODE_TYPE_BRANCH:
-					{
-						BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
-						is_branch = branch_node_history->is_branch;
-					}
-					break;
-				}
-
-				bool has_match = false;
-				for (int t_index = 0; t_index < (int)this->test_location_starts.size(); t_index++) {
-					if (this->test_location_starts[t_index] == it->second->node
-							&& this->test_location_is_branch[t_index] == is_branch) {
-						has_match = true;
+				if (it->second->node->experiment == NULL) {
+					bool is_branch;
+					switch (it->second->node->type) {
+					case NODE_TYPE_ACTION:
+					case NODE_TYPE_SCOPE:
+					case NODE_TYPE_OBS:
+						is_branch = false;
+						break;
+					case NODE_TYPE_BRANCH:
+						{
+							BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
+							is_branch = branch_node_history->is_branch;
+						}
 						break;
 					}
-				}
-				if (!has_match) {
-					for (int s_index = 0; s_index < (int)this->successful_location_starts.size(); s_index++) {
-						if (this->successful_location_starts[s_index] == it->second->node
-								&& this->successful_location_is_branch[s_index] == is_branch) {
+
+					bool has_match = false;
+					for (int t_index = 0; t_index < (int)this->test_location_starts.size(); t_index++) {
+						if (this->test_location_starts[t_index] == it->second->node
+								&& this->test_location_is_branch[t_index] == is_branch) {
 							has_match = true;
 							break;
 						}
 					}
-				}
-				if (!has_match) {
-					possible_starts.push_back(it->second->node);
-					possible_is_branch.push_back(is_branch);
+					if (!has_match) {
+						for (int s_index = 0; s_index < (int)this->successful_location_starts.size(); s_index++) {
+							if (this->successful_location_starts[s_index] == it->second->node
+									&& this->successful_location_is_branch[s_index] == is_branch) {
+								has_match = true;
+								break;
+							}
+						}
+					}
+					if (!has_match) {
+						possible_starts.push_back(it->second->node);
+						possible_is_branch.push_back(is_branch);
+					}
 				}
 			}
 
@@ -205,16 +201,18 @@ void NewScopeExperiment::back_activate(RunHelper& run_helper,
 				this->test_location_new_scores.push_back(0.0);
 				this->test_location_new_counts.push_back(0);
 
-				new_start_node->experiments.insert(new_start_node->experiments.begin(), this);
+				new_start_node->experiment = this;
 			}
 		}
 	}
 }
 
-void NewScopeExperiment::backprop(AbstractExperimentHistory* history) {
+void NewScopeExperiment::backprop(AbstractExperimentHistory* history,
+								  double target_val) {
 	NewScopeExperimentHistory* new_scope_experiment_history = (NewScopeExperimentHistory*)history;
 
-	test_backprop(new_scope_experiment_history);
+	test_backprop(new_scope_experiment_history,
+				  target_val);
 }
 
 void NewScopeExperiment::update() {

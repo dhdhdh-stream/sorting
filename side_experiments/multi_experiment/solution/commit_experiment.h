@@ -56,13 +56,14 @@ public:
 	~CommitExperiment();
 	void decrement(AbstractNode* experiment_node);
 
-	bool activate(AbstractNode* experiment_node,
+	void activate(AbstractNode* experiment_node,
 				  bool is_branch,
 				  AbstractNode*& curr_node,
 				  Problem* problem,
 				  RunHelper& run_helper,
 				  ScopeHistory* scope_history);
-	void backprop(AbstractExperimentHistory* history);
+	void backprop(AbstractExperimentHistory* history,
+				  double target_val);
 	void update();
 
 	void existing_gather_activate(ScopeHistory* scope_history);
@@ -70,7 +71,7 @@ public:
 	void existing_gather_update();
 
 	void train_existing_activate(ScopeHistory* scope_history);
-	void train_existing_backprop(CommitExperimentHistory* history);
+	void train_existing_backprop(double target_val);
 	void train_existing_update();
 
 	void explore_activate(AbstractNode*& curr_node,
@@ -78,7 +79,8 @@ public:
 						  RunHelper& run_helper,
 						  ScopeHistory* scope_history,
 						  CommitExperimentHistory* history);
-	void explore_backprop(CommitExperimentHistory* history);
+	void explore_backprop(CommitExperimentHistory* history,
+						  double target_val);
 	void explore_update();
 
 	void experiment_activate(AbstractNode*& curr_node,
@@ -86,7 +88,8 @@ public:
 							 RunHelper& run_helper,
 							 ScopeHistory* scope_history,
 							 CommitExperimentHistory* history);
-	void experiment_backprop(CommitExperimentHistory* history);
+	void experiment_backprop(CommitExperimentHistory* history,
+							 double target_val);
 	void experiment_update();
 
 	void cleanup();

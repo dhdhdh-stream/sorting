@@ -10,6 +10,8 @@ ObsNode::ObsNode() {
 	this->type = NODE_TYPE_OBS;
 
 	this->is_used = false;
+
+	this->experiment = NULL;
 }
 
 ObsNode::~ObsNode() {
@@ -17,8 +19,8 @@ ObsNode::~ObsNode() {
 		delete this->factors[f_index];
 	}
 
-	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
-		this->experiments[e_index]->decrement(this);
+	if (this->experiment != NULL) {
+		this->experiment->decrement(this);
 	}
 }
 
@@ -29,9 +31,9 @@ void ObsNode::clean_inputs(Scope* scope,
 											 node_id);
 	}
 
-	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
-		this->experiments[e_index]->clean_inputs(scope,
-												 node_id);
+	if (this->experiment != NULL) {
+		this->experiment->clean_inputs(scope,
+									   node_id);
 	}
 }
 
@@ -40,8 +42,8 @@ void ObsNode::clean_inputs(Scope* scope) {
 		this->factors[f_index]->clean_inputs(scope);
 	}
 
-	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
-		this->experiments[e_index]->clean_inputs(scope);
+	if (this->experiment != NULL) {
+		this->experiment->clean_inputs(scope);
 	}
 }
 

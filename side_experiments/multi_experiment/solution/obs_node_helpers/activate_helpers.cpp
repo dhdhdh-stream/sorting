@@ -17,21 +17,17 @@ void ObsNode::activate(AbstractNode*& curr_node,
 	vector<double> obs = problem->get_observations();
 	history->obs_history = obs;
 
-	history->factor_initialized = vector<bool>(this->factors.size());
+	history->factor_initialized = vector<bool>(this->factors.size(), false);
 	history->factor_values = vector<double>(this->factors.size());
 
 	curr_node = this->next_node;
 
-	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
-		bool is_selected = this->experiments[e_index]->activate(
-			this,
+	if (this->experiment != NULL) {
+		this->experiment->activate(this,
 			false,
 			curr_node,
 			problem,
 			run_helper,
 			scope_history);
-		if (is_selected) {
-			break;
-		}
 	}
 }

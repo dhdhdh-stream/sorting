@@ -14,6 +14,9 @@
 #include "solution.h"
 #include "solution_helpers.h"
 
+// temp
+#include "abstract_node.h"
+
 using namespace std;
 
 default_random_engine generator;
@@ -26,7 +29,8 @@ int run_index;
 int main(int argc, char* argv[]) {
 	cout << "Starting..." << endl;
 
-	int seed = (unsigned)time(NULL);
+	// int seed = (unsigned)time(NULL);
+	int seed = 1739311170;
 	srand(seed);
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
@@ -82,14 +86,12 @@ int main(int argc, char* argv[]) {
 					run_helper,
 					scope_history);
 
-			double score = problem->score_result();
-			double individual_impact = score / run_helper.num_actions;
-			for (int h_index = 0; h_index < (int)run_helper.experiment_histories.size(); h_index++) {
-				run_helper.experiment_histories[h_index]->impact += individual_impact;
-			}
+			double target_val = problem->score_result();
 
-			int expected_number_of_experiments = ceil((double)run_helper.num_actions / ACTIONS_PER_EXPERIMENT);
-			int number_of_experiments_diff = expected_number_of_experiments - run_helper.num_experiments_seen;
+			// int expected_number_of_experiments = ceil((double)run_helper.num_actions / ACTIONS_PER_EXPERIMENT);
+			// int expected_number_of_experiments = 2;
+			int expected_number_of_experiments = 1;
+			int number_of_experiments_diff = expected_number_of_experiments - (int)run_helper.experiments_seen.size();
 			for (int e_index = 0; e_index < number_of_experiments_diff; e_index++) {
 				create_experiment(scope_history);
 			}
@@ -100,7 +102,8 @@ int main(int argc, char* argv[]) {
 			set<AbstractExperiment*> experiments;
 			for (int h_index = 0; h_index < (int)run_helper.experiment_histories.size(); h_index++) {
 				run_helper.experiment_histories[h_index]->experiment->backprop(
-					run_helper.experiment_histories[h_index]);
+					run_helper.experiment_histories[h_index],
+					target_val);
 
 				experiments.insert(run_helper.experiment_histories[h_index]->experiment);
 			}
@@ -110,6 +113,7 @@ int main(int argc, char* argv[]) {
 				AbstractExperiment* experiment = *it;
 				experiment->update();
 				if (experiment->result == EXPERIMENT_RESULT_FAIL) {
+					cout << "EXPERIMENT_RESULT_FAIL" << endl;
 					experiment->cleanup();
 					delete experiment;
 				} else if (experiment->result == EXPERIMENT_RESULT_SUCCESS) {
@@ -151,6 +155,35 @@ int main(int argc, char* argv[]) {
 			}
 		}
 
+		// temp
+		cout << "selected BranchExperiment" << endl;
+		cout << "best_experiment->scope_context->id: " << best_experiment->scope_context->id << endl;
+		cout << "best_experiment->node_context->id: " << best_experiment->node_context->id << endl;
+		cout << "best_experiment->is_branch: " << best_experiment->is_branch << endl;
+		cout << "new explore path:";
+		for (int s_index = 0; s_index < (int)best_experiment->best_step_types.size(); s_index++) {
+			if (best_experiment->best_step_types[s_index] == STEP_TYPE_ACTION) {
+				cout << " " << best_experiment->best_actions[s_index].move;
+			} else {
+				cout << " E" << best_experiment->best_scopes[s_index]->id;
+			}
+		}
+		cout << endl;
+
+		if (best_experiment->best_exit_next_node == NULL) {
+			cout << "best_experiment->best_exit_next_node->id: " << -1 << endl;
+		} else {
+			cout << "best_experiment->best_exit_next_node->id: " << best_experiment->best_exit_next_node->id << endl;
+		}
+
+		cout << "best_experiment->new_average_score: " << best_experiment->new_average_score << endl;
+		cout << "best_experiment->select_percentage: " << best_experiment->select_percentage << endl;
+
+		cout << "best_experiment->improvement: " << best_experiment->improvement << endl;
+		cout << "best_experiment->existing_average_score: " << best_experiment->existing_average_score << endl;
+
+		cout << endl;
+
 		best_experiment->add();
 		delete best_experiment;
 
@@ -170,7 +203,7 @@ int main(int argc, char* argv[]) {
 				scope_history);
 			delete scope_history;
 
-			double target_val = run_helper.sum_score + problem->score_result();
+			double target_val = problem->score_result();
 			sum_score += target_val;
 
 			delete problem;

@@ -30,13 +30,13 @@ public:
 	Minesweeper();
 
 	std::vector<double> get_observations();
-	double perform_action(Action action);
+	void perform_action(Action action);
 	double score_result();
 
 	void print();
 
 	double get_observation_helper(int x, int y);
-	void reveal_helper(int x, int y, double& score);
+	void reveal_helper(int x, int y);
 };
 
 class TypeMinesweeper : public ProblemType {

@@ -52,7 +52,7 @@ int main(int argc, char* argv[]) {
 			scope_history);
 		delete scope_history;
 
-		double target_val = run_helper.sum_score + problem->score_result();
+		double target_val = problem->score_result();
 
 		if (run_helper.num_actions > max_num_actions) {
 			max_num_actions = run_helper.num_actions;

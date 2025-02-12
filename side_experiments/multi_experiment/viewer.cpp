@@ -50,7 +50,7 @@ int main(int argc, char* argv[]) {
 			scope_history);
 		delete scope_history;
 
-		double target_val = run_helper.sum_score + problem->score_result();
+		double target_val = problem->score_result();
 		cout << "target_val: " << target_val << endl;
 
 		problem->print();

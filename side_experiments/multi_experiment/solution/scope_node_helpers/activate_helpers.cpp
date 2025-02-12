@@ -23,16 +23,12 @@ void ScopeNode::activate(AbstractNode*& curr_node,
 
 	curr_node = this->next_node;
 
-	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
-		bool is_selected = this->experiments[e_index]->activate(
-			this,
+	if (this->experiment != NULL) {
+		this->experiment->activate(this,
 			false,
 			curr_node,
 			problem,
 			run_helper,
 			scope_history);
-		if (is_selected) {
-			break;
-		}
 	}
 }

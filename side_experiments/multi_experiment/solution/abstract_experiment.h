@@ -31,13 +31,14 @@ public:
 	virtual ~AbstractExperiment() {};
 	virtual void decrement(AbstractNode* experiment_node) = 0;
 
-	virtual bool activate(AbstractNode* experiment_node,
+	virtual void activate(AbstractNode* experiment_node,
 						  bool is_branch,
 						  AbstractNode*& curr_node,
 						  Problem* problem,
 						  RunHelper& run_helper,
 						  ScopeHistory* scope_history) = 0;
-	virtual void backprop(AbstractExperimentHistory* history) = 0;
+	virtual void backprop(AbstractExperimentHistory* history,
+						  double target_val) = 0;
 	virtual void update() = 0;
 
 	virtual void cleanup() = 0;
@@ -51,8 +52,6 @@ public:
 class AbstractExperimentHistory {
 public:
 	AbstractExperiment* experiment;
-
-	double impact;
 
 	virtual ~AbstractExperimentHistory() {};
 };

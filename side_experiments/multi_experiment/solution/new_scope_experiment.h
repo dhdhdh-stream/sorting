@@ -53,7 +53,7 @@ public:
 	~NewScopeExperiment();
 	void decrement(AbstractNode* experiment_node);
 
-	bool activate(AbstractNode* experiment_node,
+	void activate(AbstractNode* experiment_node,
 				  bool is_branch,
 				  AbstractNode*& curr_node,
 				  Problem* problem,
@@ -61,10 +61,12 @@ public:
 				  ScopeHistory* scope_history);
 	void back_activate(RunHelper& run_helper,
 					   ScopeHistory* scope_history);
-	void backprop(AbstractExperimentHistory* history);
+	void backprop(AbstractExperimentHistory* history,
+				  double target_val);
 	void update();
 
-	void test_backprop(NewScopeExperimentHistory* history);
+	void test_backprop(NewScopeExperimentHistory* history,
+					   double target_val);
 	void test_update();
 
 	void cleanup();

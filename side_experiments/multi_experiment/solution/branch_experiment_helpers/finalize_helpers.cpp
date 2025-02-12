@@ -1,5 +1,7 @@
 #include "branch_experiment.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
@@ -11,17 +13,13 @@
 using namespace std;
 
 void BranchExperiment::cleanup() {
-	int experiment_index;
-	for (int e_index = 0; e_index < (int)this->node_context->experiments.size(); e_index++) {
-		if (this->node_context->experiments[e_index] == this) {
-			experiment_index = e_index;
-			break;
-		}
-	}
-	this->node_context->experiments.erase(this->node_context->experiments.begin() + experiment_index);
+	this->node_context->experiment = NULL;
 }
 
 void BranchExperiment::add() {
+	// temp
+	cout << "add BranchExperiment" << endl;
+
 	vector<AbstractNode*> new_nodes;
 	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {

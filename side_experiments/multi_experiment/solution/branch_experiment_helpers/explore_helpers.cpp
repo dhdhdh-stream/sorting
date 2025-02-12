@@ -117,16 +117,8 @@ void BranchExperiment::explore_activate(
 
 	for (int s_index = 0; s_index < (int)history->curr_step_types.size(); s_index++) {
 		if (history->curr_step_types[s_index] == STEP_TYPE_ACTION) {
-			double score = problem->perform_action(history->curr_actions[s_index]);
-			run_helper.sum_score += score;
+			problem->perform_action(history->curr_actions[s_index]);
 			run_helper.num_actions++;
-			double individual_impact = score / run_helper.num_actions;
-			for (int h_index = 0; h_index < (int)run_helper.experiment_histories.size(); h_index++) {
-				run_helper.experiment_histories[h_index]->impact += individual_impact;
-			}
-			if (score < 0.0) {
-				run_helper.early_exit = true;
-			}
 		} else {
 			ScopeHistory* inner_scope_history = new ScopeHistory(history->curr_scopes[s_index]);
 			history->curr_scopes[s_index]->activate(problem,
@@ -134,19 +126,16 @@ void BranchExperiment::explore_activate(
 				inner_scope_history);
 			delete inner_scope_history;
 		}
-
-		if (run_helper.early_exit) {
-			break;
-		}
 	}
 
 	curr_node = history->curr_exit_next_node;
 }
 
-void BranchExperiment::explore_backprop(BranchExperimentHistory* history) {
+void BranchExperiment::explore_backprop(BranchExperimentHistory* history,
+										double target_val) {
 	this->state_iter++;
 
-	double curr_surprise = history->impact - history->existing_predicted_score;
+	double curr_surprise = target_val - history->existing_predicted_score;
 	#if defined(MDEBUG) && MDEBUG
 	if (true) {
 	#else

@@ -7,25 +7,27 @@ using namespace std;
 
 ActionNode::ActionNode() {
 	this->type = NODE_TYPE_ACTION;
+
+	this->experiment = NULL;
 }
 
 ActionNode::~ActionNode() {
-	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
-		this->experiments[e_index]->decrement(this);
+	if (this->experiment != NULL) {
+		this->experiment->decrement(this);
 	}
 }
 
 void ActionNode::clean_inputs(Scope* scope,
 							  int node_id) {
-	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
-		this->experiments[e_index]->clean_inputs(scope,
-												 node_id);
+	if (this->experiment != NULL) {
+		this->experiment->clean_inputs(scope,
+									   node_id);
 	}
 }
 
 void ActionNode::clean_inputs(Scope* scope) {
-	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
-		this->experiments[e_index]->clean_inputs(scope);
+	if (this->experiment != NULL) {
+		this->experiment->clean_inputs(scope);
 	}
 }
 

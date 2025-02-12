@@ -9,11 +9,13 @@ using namespace std;
 
 BranchNode::BranchNode() {
 	this->type = NODE_TYPE_BRANCH;
+
+	this->experiment = NULL;
 }
 
 BranchNode::~BranchNode() {
-	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
-		this->experiments[e_index]->decrement(this);
+	if (this->experiment != NULL) {
+		this->experiment->decrement(this);
 	}
 }
 
@@ -28,15 +30,15 @@ void BranchNode::clean_inputs(Scope* scope,
 		}
 	}
 
-	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
-		this->experiments[e_index]->clean_inputs(scope,
-												 node_id);
+	if (this->experiment != NULL) {
+		this->experiment->clean_inputs(scope,
+									   node_id);
 	}
 }
 
 void BranchNode::clean_inputs(Scope* scope) {
-	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
-		this->experiments[e_index]->clean_inputs(scope);
+	if (this->experiment != NULL) {
+		this->experiment->clean_inputs(scope);
 	}
 }
 

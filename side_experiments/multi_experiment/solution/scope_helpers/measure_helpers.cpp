@@ -12,8 +12,9 @@ void Scope::measure_activate(Problem* problem,
 							 ScopeHistory* history) {
 	AbstractNode* curr_node = this->nodes[0];
 	while (true) {
-		if (curr_node == NULL
-				|| run_helper.early_exit) {
+		// if (curr_node == NULL
+		// 		|| run_helper.early_exit) {
+		if (curr_node == NULL) {
 			break;
 		}
 

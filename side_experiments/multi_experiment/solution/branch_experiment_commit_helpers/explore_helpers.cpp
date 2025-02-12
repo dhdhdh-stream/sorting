@@ -85,13 +85,8 @@ void BranchExperiment::explore_commit_activate(
 	int random_index = distribution(generator);
 	history->curr_exit_next_node = possible_exits[random_index];
 
-	int new_num_steps;
 	geometric_distribution<int> geo_distribution(0.2);
-	if (random_index == 0) {
-		new_num_steps = 1 + geo_distribution(generator);
-	} else {
-		new_num_steps = geo_distribution(generator);
-	}
+	int new_num_steps = geo_distribution(generator);
 
 	/**
 	 * - always give raw actions a large weight
@@ -124,26 +119,14 @@ void BranchExperiment::explore_commit_activate(
 
 	for (int s_index = 0; s_index < (int)history->curr_step_types.size(); s_index++) {
 		if (history->curr_step_types[s_index] == STEP_TYPE_ACTION) {
-			double score = problem->perform_action(history->curr_actions[s_index]);
-			run_helper.sum_score += score;
+			problem->perform_action(history->curr_actions[s_index]);
 			run_helper.num_actions++;
-			double individual_impact = score / run_helper.num_actions;
-			for (int h_index = 0; h_index < (int)run_helper.experiment_histories.size(); h_index++) {
-				run_helper.experiment_histories[h_index]->impact += individual_impact;
-			}
-			if (score < 0.0) {
-				run_helper.early_exit = true;
-			}
 		} else {
 			ScopeHistory* inner_scope_history = new ScopeHistory(history->curr_scopes[s_index]);
 			history->curr_scopes[s_index]->activate(problem,
 				run_helper,
 				inner_scope_history);
 			delete inner_scope_history;
-		}
-
-		if (run_helper.early_exit) {
-			break;
 		}
 	}
 

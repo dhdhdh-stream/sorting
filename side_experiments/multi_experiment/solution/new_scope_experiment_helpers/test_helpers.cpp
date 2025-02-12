@@ -18,18 +18,19 @@ const int NEW_SCOPE_VERIFY_1ST_NUM_DATAPOINTS = 500;
 const int NEW_SCOPE_VERIFY_2ND_NUM_DATAPOINTS = 2000;
 #endif /* MDEBUG */
 
-void NewScopeExperiment::test_backprop(NewScopeExperimentHistory* history) {
+void NewScopeExperiment::test_backprop(NewScopeExperimentHistory* history,
+									   double target_val) {
 	switch (this->test_location_states[history->test_location_index]) {
 	case LOCATION_STATE_MEASURE_EXISTING:
 	case LOCATION_STATE_VERIFY_EXISTING_1ST:
 	case LOCATION_STATE_VERIFY_EXISTING_2ND:
-		this->test_location_existing_scores[history->test_location_index] += history->impact;
+		this->test_location_existing_scores[history->test_location_index] += target_val;
 		this->test_location_existing_counts[history->test_location_index]++;
 		break;
 	case LOCATION_STATE_MEASURE_NEW:
 	case LOCATION_STATE_VERIFY_NEW_1ST:
 	case LOCATION_STATE_VERIFY_NEW_2ND:
-		this->test_location_new_scores[history->test_location_index] += history->impact;
+		this->test_location_new_scores[history->test_location_index] += target_val;
 		this->test_location_new_counts[history->test_location_index]++;
 		break;
 	}
@@ -131,18 +132,7 @@ void NewScopeExperiment::test_update() {
 		}
 
 		if (is_fail) {
-			int experiment_index;
-			for (int e_index = 0; e_index < (int)this->test_location_starts[t_index]->experiments.size(); e_index++) {
-				if (this->test_location_starts[t_index]->experiments[e_index] == this) {
-					experiment_index = e_index;
-					break;
-				}
-			}
-			this->test_location_starts[t_index]->experiments.erase(
-				this->test_location_starts[t_index]->experiments.begin() + experiment_index);
-			/**
-			 * - can simply remove first
-			 */
+			this->test_location_starts[t_index]->experiment = NULL;
 
 			this->test_location_starts.erase(this->test_location_starts.begin() + t_index);
 			this->test_location_is_branch.erase(this->test_location_is_branch.begin() + t_index);

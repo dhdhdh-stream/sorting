@@ -30,7 +30,7 @@ const double REGRESSION_FAIL_MULTIPLIER = 1000.0;
 
 const double FACTOR_IMPACT_THRESHOLD = 0.1;
 
-const double ACTIONS_PER_EXPERIMENT = 400.0;
+// const double ACTIONS_PER_EXPERIMENT = 400.0;
 
 #if defined(MDEBUG) && MDEBUG
 const int BRANCH_PER_NEW_SCOPE = 2;

@@ -56,16 +56,8 @@ void BranchExperiment::train_new_activate(
 
 	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-			double score = problem->perform_action(this->best_actions[s_index]);
-			run_helper.sum_score += score;
+			problem->perform_action(this->best_actions[s_index]);
 			run_helper.num_actions++;
-			double individual_impact = score / run_helper.num_actions;
-			for (int h_index = 0; h_index < (int)run_helper.experiment_histories.size(); h_index++) {
-				run_helper.experiment_histories[h_index]->impact += individual_impact;
-			}
-			if (score < 0.0) {
-				run_helper.early_exit = true;
-			}
 		} else {
 			ScopeHistory* inner_scope_history = new ScopeHistory(this->best_scopes[s_index]);
 			this->best_scopes[s_index]->activate(problem,
@@ -73,18 +65,15 @@ void BranchExperiment::train_new_activate(
 				inner_scope_history);
 			delete inner_scope_history;
 		}
-
-		if (run_helper.early_exit) {
-			break;
-		}
 	}
 
 	curr_node = this->best_exit_next_node;
 }
 
 void BranchExperiment::train_new_backprop(
-		BranchExperimentHistory* history) {
-	this->i_target_val_histories.push_back(history->impact - history->existing_predicted_score);
+		BranchExperimentHistory* history,
+		double target_val) {
+	this->i_target_val_histories.push_back(target_val - history->existing_predicted_score);
 }
 
 void BranchExperiment::train_new_update() {
@@ -386,17 +375,10 @@ void BranchExperiment::train_new_update() {
 						break;
 					}
 
-					int experiment_index;
-					for (int e_index = 0; e_index < (int)this->node_context->experiments.size(); e_index++) {
-						if (this->node_context->experiments[e_index] == this) {
-							experiment_index = e_index;
-							break;
-						}
-					}
-					this->node_context->experiments.erase(this->node_context->experiments.begin() + experiment_index);
+					this->node_context->experiment = NULL;
 
 					this->node_context = new_obs_node;
-					this->node_context->experiments.push_back(this);
+					this->node_context->experiment = this;
 
 					this->new_factor_ids.push_back({new_obs_node->id, 0});
 					this->new_factor_weights.push_back(1.0);
@@ -412,6 +394,10 @@ void BranchExperiment::train_new_update() {
 		} else {
 			delete new_network;
 		}
+
+		this->new_input_histories.clear();
+		this->new_factor_histories.clear();
+		this->i_target_val_histories.clear();
 
 		int num_positive = 0;
 		for (int i_index = 0; i_index < num_instances; i_index++) {

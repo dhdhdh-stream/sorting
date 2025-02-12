@@ -8,8 +8,14 @@ public:
 	virtual ~Problem() {};
 
 	virtual std::vector<double> get_observations() = 0;
-	virtual double perform_action(Action action) = 0;
+	virtual void perform_action(Action action) = 0;
 	virtual double score_result() = 0;
+	/**
+	 * - simply give entire score signal at end
+	 * 
+	 * - don't discount future signals
+	 *   - can lead to pursuing short term gains at the cost of future ones
+	 */
 
 	virtual void print() = 0;
 };

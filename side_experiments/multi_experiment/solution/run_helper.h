@@ -1,21 +1,19 @@
 #ifndef RUN_HELPER_H
 #define RUN_HELPER_H
 
+#include <set>
 #include <vector>
 
+class AbstractExperiment;
 class AbstractExperimentHistory;
 
 class RunHelper {
 public:
-	double sum_score;
-
 	int num_actions;
 
-	int num_experiments_seen;
+	std::set<AbstractExperiment*> experiments_seen;
 
 	std::vector<AbstractExperimentHistory*> experiment_histories;
-
-	bool early_exit;
 
 	RunHelper();
 	~RunHelper();

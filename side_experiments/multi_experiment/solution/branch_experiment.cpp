@@ -127,6 +127,4 @@ void BranchExperiment::clean_inputs(Scope* scope) {
 
 BranchExperimentHistory::BranchExperimentHistory(BranchExperiment* experiment) {
 	this->experiment = experiment;
-
-	this->impact = 0.0;
 }

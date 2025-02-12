@@ -61,13 +61,14 @@ public:
 					 bool is_branch);
 	void decrement(AbstractNode* experiment_node);
 
-	bool activate(AbstractNode* experiment_node,
+	void activate(AbstractNode* experiment_node,
 				  bool is_branch,
 				  AbstractNode*& curr_node,
 				  Problem* problem,
 				  RunHelper& run_helper,
 				  ScopeHistory* scope_history);
-	void backprop(AbstractExperimentHistory* history);
+	void backprop(AbstractExperimentHistory* history,
+				  double target_val);
 	void update();
 
 	void existing_gather_activate(ScopeHistory* scope_history);
@@ -75,7 +76,7 @@ public:
 	void existing_gather_update();
 
 	void train_existing_activate(ScopeHistory* scope_history);
-	void train_existing_backprop(BranchExperimentHistory* history);
+	void train_existing_backprop(double target_val);
 	void train_existing_update();
 
 	void explore_activate(AbstractNode*& curr_node,
@@ -83,7 +84,8 @@ public:
 						  RunHelper& run_helper,
 						  ScopeHistory* scope_history,
 						  BranchExperimentHistory* history);
-	void explore_backprop(BranchExperimentHistory* history);
+	void explore_backprop(BranchExperimentHistory* history,
+						  double target_val);
 	void explore_update();
 
 	void new_gather_activate(ScopeHistory* scope_history);
@@ -95,14 +97,15 @@ public:
 							RunHelper& run_helper,
 							ScopeHistory* scope_history,
 							BranchExperimentHistory* history);
-	void train_new_backprop(BranchExperimentHistory* history);
+	void train_new_backprop(BranchExperimentHistory* history,
+							double target_val);
 	void train_new_update();
 
-	bool measure_activate(AbstractNode*& curr_node,
+	void measure_activate(AbstractNode*& curr_node,
 						  Problem* problem,
 						  RunHelper& run_helper,
 						  ScopeHistory* scope_history);
-	void measure_backprop(BranchExperimentHistory* history);
+	void measure_backprop(double target_val);
 	void measure_update();
 
 	bool commit_activate(AbstractNode*& curr_node,
@@ -130,10 +133,10 @@ public:
 								   ScopeHistory* temp_history,
 								   BranchExperimentHistory* history);
 	bool measure_commit_activate(AbstractNode*& curr_node,
-								   Problem* problem,
-								   RunHelper& run_helper,
-								   ScopeHistory* scope_history,
-								   ScopeHistory* temp_history);
+								 Problem* problem,
+								 RunHelper& run_helper,
+								 ScopeHistory* scope_history,
+								 ScopeHistory* temp_history);
 
 	void cleanup();
 	void add();

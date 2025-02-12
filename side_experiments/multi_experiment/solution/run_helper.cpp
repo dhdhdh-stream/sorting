@@ -5,16 +5,7 @@
 using namespace std;
 
 RunHelper::RunHelper() {
-	this->sum_score = 0.0;
-
-	/**
-	 * - start at 1 to force expected_number_of_experiments > 0
-	 */
-	this->num_actions = 1;
-
-	this->num_experiments_seen = 0;
-
-	this->early_exit = false;
+	this->num_actions = 0;
 }
 
 RunHelper::~RunHelper() {

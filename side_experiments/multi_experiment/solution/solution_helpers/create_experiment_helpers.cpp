@@ -20,47 +20,49 @@ void gather_nodes_seen_helper(ScopeHistory* scope_history,
 							  map<pair<AbstractNode*,bool>, int>& nodes_seen) {
 	for (map<int, AbstractNodeHistory*>::iterator h_it = scope_history->node_histories.begin();
 			h_it != scope_history->node_histories.end(); h_it++) {
-		switch (h_it->second->node->type) {
-		case NODE_TYPE_ACTION:
-		case NODE_TYPE_OBS:
-			{
-				map<pair<AbstractNode*,bool>, int>::iterator seen_it = nodes_seen
-					.find({h_it->second->node, false});
-				if (seen_it == nodes_seen.end()) {
-					nodes_seen[{h_it->second->node, false}] = 1;
-				} else {
-					seen_it->second++;
+		if (h_it->second->node->experiment == NULL) {
+			switch (h_it->second->node->type) {
+			case NODE_TYPE_ACTION:
+			case NODE_TYPE_OBS:
+				{
+					map<pair<AbstractNode*,bool>, int>::iterator seen_it = nodes_seen
+						.find({h_it->second->node, false});
+					if (seen_it == nodes_seen.end()) {
+						nodes_seen[{h_it->second->node, false}] = 1;
+					} else {
+						seen_it->second++;
+					}
 				}
-			}
-			break;
-		case NODE_TYPE_SCOPE:
-			{
-				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)h_it->second;
+				break;
+			case NODE_TYPE_SCOPE:
+				{
+					ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)h_it->second;
 
-				gather_nodes_seen_helper(scope_node_history->scope_history,
-										 nodes_seen);
+					gather_nodes_seen_helper(scope_node_history->scope_history,
+											 nodes_seen);
 
-				map<pair<AbstractNode*,bool>, int>::iterator seen_it = nodes_seen
-					.find({h_it->second->node, false});
-				if (seen_it == nodes_seen.end()) {
-					nodes_seen[{h_it->second->node, false}] = 1;
-				} else {
-					seen_it->second++;
+					map<pair<AbstractNode*,bool>, int>::iterator seen_it = nodes_seen
+						.find({h_it->second->node, false});
+					if (seen_it == nodes_seen.end()) {
+						nodes_seen[{h_it->second->node, false}] = 1;
+					} else {
+						seen_it->second++;
+					}
 				}
-			}
-			break;
-		case NODE_TYPE_BRANCH:
-			{
-				BranchNodeHistory* branch_node_history = (BranchNodeHistory*)h_it->second;
-				map<pair<AbstractNode*,bool>, int>::iterator seen_it = nodes_seen
-					.find({h_it->second->node, branch_node_history->is_branch});
-				if (seen_it == nodes_seen.end()) {
-					nodes_seen[{h_it->second->node, branch_node_history->is_branch}] = 1;
-				} else {
-					seen_it->second++;
+				break;
+			case NODE_TYPE_BRANCH:
+				{
+					BranchNodeHistory* branch_node_history = (BranchNodeHistory*)h_it->second;
+					map<pair<AbstractNode*,bool>, int>::iterator seen_it = nodes_seen
+						.find({h_it->second->node, branch_node_history->is_branch});
+					if (seen_it == nodes_seen.end()) {
+						nodes_seen[{h_it->second->node, branch_node_history->is_branch}] = 1;
+					} else {
+						seen_it->second++;
+					}
 				}
+				break;
 			}
-			break;
 		}
 	}
 }
@@ -106,19 +108,20 @@ void create_experiment(ScopeHistory* scope_history) {
 
 		Scope* explore_scope = (Scope*)explore_node->parent;
 
-		bool can_new_scope;
-		if (solution->num_branch_experiments / BRANCH_PER_NEW_SCOPE
-				> solution->num_new_scope_experiments) {
-			can_new_scope = true;
-		} else {
-			can_new_scope = false;
-		}
+		// bool can_new_scope;
+		// if (solution->num_branch_experiments / BRANCH_PER_NEW_SCOPE
+		// 		> solution->num_new_scope_experiments) {
+		// 	can_new_scope = true;
+		// } else {
+		// 	can_new_scope = false;
+		// }
 
 		uniform_int_distribution<int> new_scope_distribution(0, 1);
-		if (explore_scope->new_scope_experiment == NULL
-				&& explore_node->parent->nodes.size() > 20
-				&& can_new_scope
-				&& new_scope_distribution(generator) != 0) {
+		// if (explore_scope->new_scope_experiment == NULL
+		// 		&& explore_node->parent->nodes.size() > 20
+		// 		&& can_new_scope
+		// 		&& new_scope_distribution(generator) != 0) {
+		if (false) {
 			NewScopeExperiment* new_scope_experiment = new NewScopeExperiment(
 				explore_node->parent,
 				explore_node,
@@ -127,7 +130,7 @@ void create_experiment(ScopeHistory* scope_history) {
 				delete new_scope_experiment;
 			} else {
 				explore_scope->new_scope_experiment = new_scope_experiment;
-				explore_node->experiments.push_back(new_scope_experiment);
+				explore_node->experiment = new_scope_experiment;
 				cout << "NewScopeExperiment" << endl;
 			}
 		} else {
@@ -136,20 +139,21 @@ void create_experiment(ScopeHistory* scope_history) {
 			#else
 			uniform_int_distribution<int> commit_distribution(0, 99);
 			#endif /* MDEBUG */
-			if (solution->scopes[0]->nodes.size() == 1	// start special case
-					|| commit_distribution(generator) == 0) {
+			// if (solution->scopes[0]->nodes.size() == 1	// start special case
+			// 		|| commit_distribution(generator) == 0) {
+			if (false) {
 				CommitExperiment* new_commit_experiment = new CommitExperiment(
 					explore_node->parent,
 					explore_node,
 					explore_is_branch);
-				explore_node->experiments.push_back(new_commit_experiment);
+				explore_node->experiment = new_commit_experiment;
 				cout << "CommitExperiment" << endl;
 			} else {
 				BranchExperiment* new_experiment = new BranchExperiment(
 					explore_node->parent,
 					explore_node,
 					explore_is_branch);
-				explore_node->experiments.push_back(new_experiment);
+				explore_node->experiment = new_experiment;
 				cout << "BranchExperiment" << endl;
 			}
 		}
