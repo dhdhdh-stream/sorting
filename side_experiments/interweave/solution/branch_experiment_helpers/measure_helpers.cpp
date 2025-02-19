@@ -27,8 +27,13 @@ void BranchExperiment::measure_activate(AbstractNode*& curr_node,
 
 	uniform_int_distribution<int> active_distribution(
 		-1, overall_history->active_concurrents.size()-1);
-	int concurrent_index = overall_history->active_concurrents[
-		active_distribution(generator)];
+	int active_index = active_distribution(generator);
+	int concurrent_index;
+	if (active_index == -1) {
+		concurrent_index = -1;
+	} else {
+		concurrent_index = overall_history->active_concurrents[active_index];
+	}
 	instance_history->concurrent_index = concurrent_index;
 
 	if (concurrent_index != -1) {
@@ -47,7 +52,7 @@ void BranchExperiment::measure_activate(AbstractNode*& curr_node,
 				run_helper.num_actions += 2;
 			}
 
-			curr_node = this->exit_next_node[concurrent_index];
+			curr_node = this->exit_next_node;
 		} else {
 			double sum_vals = this->new_average_score[concurrent_index];
 			for (int f_index = 0; f_index < (int)this->new_factor_ids[concurrent_index].size(); f_index++) {
@@ -80,12 +85,15 @@ void BranchExperiment::measure_activate(AbstractNode*& curr_node,
 					run_helper.num_actions += 2;
 				}
 
-				curr_node = this->exit_next_node[concurrent_index];
+				curr_node = this->exit_next_node;
 			}
 		}
-	}
 
-	this->instance_iter++;
+		/**
+		 * - only count non-existing
+		 */
+		this->instance_iter++;
+	}
 }
 
 void BranchExperiment::measure_backprop(
@@ -127,10 +135,10 @@ void BranchExperiment::measure_update() {
 				}
 			}
 			cout << endl;
-			if (this->exit_next_node[this->best_concurrent_index] == NULL) {
-				cout << "this->exit_next_node[this->best_concurrent_index]->id: " << -1 << endl;
+			if (this->exit_next_node == NULL) {
+				cout << "this->exit_next_node->id: " << -1 << endl;
 			} else {
-				cout << "this->exit_next_node[this->best_concurrent_index]->id: " << this->exit_next_node[this->best_concurrent_index]->id << endl;
+				cout << "this->exit_next_node->id: " << this->exit_next_node->id << endl;
 			}
 
 			double existing_score = this->combined_scores[0] / this->combined_counts[0];

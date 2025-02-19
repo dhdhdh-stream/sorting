@@ -51,7 +51,7 @@ void BranchExperiment::finalize() {
 
 		int exit_node_id;
 		AbstractNode* exit_node;
-		if (this->exit_next_node[this->best_concurrent_index] == NULL) {
+		if (this->exit_next_node == NULL) {
 			new_ending_node = new ObsNode();
 			new_ending_node->parent = this->scope_context;
 			new_ending_node->id = this->scope_context->node_counter;
@@ -80,8 +80,8 @@ void BranchExperiment::finalize() {
 			exit_node_id = new_ending_node->id;
 			exit_node = new_ending_node;
 		} else {
-			exit_node_id = this->exit_next_node[this->best_concurrent_index]->id;
-			exit_node = this->exit_next_node[this->best_concurrent_index];
+			exit_node_id = this->exit_next_node->id;
+			exit_node = this->exit_next_node;
 		}
 
 		if (this->select_percentage[this->best_concurrent_index] == 1.0) {

@@ -42,6 +42,29 @@ int main(int argc, char* argv[]) {
 		filename = "main.txt";
 		solution->init();
 		solution->save("saves/", filename);
+
+		// temp
+		{
+			double sum_score = 0.0;
+			for (int iter_index = 0; iter_index < 4000; iter_index++) {
+				Problem* problem = problem_type->get_problem();
+
+				RunHelper run_helper;
+
+				ScopeHistory* scope_history = new ScopeHistory(solution->scopes[0]);
+				solution->scopes[0]->measure_activate(
+					problem,
+					run_helper,
+					scope_history);
+				delete scope_history;
+
+				double target_val = problem->score_result();
+				sum_score += target_val;
+
+				delete problem;
+			}
+			cout << "curr_score: " << sum_score / 4000 << endl;
+		}
 	}
 
 	{
@@ -81,6 +104,9 @@ int main(int argc, char* argv[]) {
 		for (int e_index = 0; e_index < number_of_experiments_diff; e_index++) {
 			create_experiment(scope_history);
 		}
+		/**
+		 * - more than expected will be created because experiments can skip over other experiments
+		 */
 
 		delete scope_history;
 		delete problem;
@@ -97,11 +123,37 @@ int main(int argc, char* argv[]) {
 			it->first->update(it->second,
 							  target_val);
 			if (it->first->result == EXPERIMENT_RESULT_FAIL) {
+				// temp
+				cout << "EXPERIMENT_RESULT_FAIL" << endl;
 				it->first->finalize();
 				delete it->first;
 			} else if (it->first->result == EXPERIMENT_RESULT_SUCCESS) {
 				it->first->finalize();
 				delete it->first;
+
+				// temp
+				cout << "run_index: " << run_index << endl;
+				{
+					double sum_score = 0.0;
+					for (int iter_index = 0; iter_index < 4000; iter_index++) {
+						Problem* problem = problem_type->get_problem();
+
+						RunHelper run_helper;
+
+						ScopeHistory* scope_history = new ScopeHistory(solution->scopes[0]);
+						solution->scopes[0]->measure_activate(
+							problem,
+							run_helper,
+							scope_history);
+						delete scope_history;
+
+						double target_val = problem->score_result();
+						sum_score += target_val;
+
+						delete problem;
+					}
+					cout << "curr_score: " << sum_score / 4000 << endl;
+				}
 
 				solution->timestamp++;
 

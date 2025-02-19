@@ -79,7 +79,7 @@ void BranchExperiment::train_new_activate(
 			run_helper.num_actions += 2;
 		}
 
-		curr_node = this->exit_next_node[concurrent_index];
+		curr_node = this->exit_next_node;
 
 		this->instance_iter++;
 	}

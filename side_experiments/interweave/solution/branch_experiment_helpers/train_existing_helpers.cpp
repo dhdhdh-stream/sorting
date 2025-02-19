@@ -54,6 +54,11 @@ void BranchExperiment::train_existing_update(
 
 	this->run_iter++;
 	if (this->run_iter >= TRAIN_NUM_DATAPOINTS) {
+		this->average_instances_per_run = (double)this->sum_num_instances / (double)this->run_iter;
+		if (this->average_instances_per_run < 1.0) {
+			this->average_instances_per_run = 1.0;
+		}
+
 		{
 			default_random_engine generator_copy = generator;
 			shuffle(this->existing_input_histories.begin(), this->existing_input_histories.end(), generator_copy);
@@ -367,12 +372,53 @@ void BranchExperiment::train_existing_update(
 		this->existing_factor_histories.clear();
 		this->existing_target_val_histories.clear();
 
+		vector<AbstractNode*> possible_exits;
+
+		AbstractNode* starting_node;
+		switch (this->node_context->type) {
+		case NODE_TYPE_ACTION:
+			{
+				ActionNode* action_node = (ActionNode*)this->node_context;
+				starting_node = action_node->next_node;
+			}
+			break;
+		case NODE_TYPE_SCOPE:
+			{
+				ScopeNode* scope_node = (ScopeNode*)this->node_context;
+				starting_node = scope_node->next_node;
+			}
+			break;
+		case NODE_TYPE_BRANCH:
+			{
+				BranchNode* branch_node = (BranchNode*)this->node_context;
+				if (this->is_branch) {
+					starting_node = branch_node->branch_next_node;
+				} else {
+					starting_node = branch_node->original_next_node;
+				}
+			}
+			break;
+		case NODE_TYPE_OBS:
+			{
+				ObsNode* obs_node = (ObsNode*)this->node_context;
+				starting_node = obs_node->next_node;
+			}
+			break;
+		}
+
+		this->scope_context->random_exit_activate(
+			starting_node,
+			possible_exits);
+
+		uniform_int_distribution<int> distribution(0, possible_exits.size()-1);
+		int random_index = distribution(generator);
+		this->exit_next_node = possible_exits[random_index];
+
 		this->surprises = vector<double>(BRANCH_EXPERIMENT_NUM_CONCURRENT,
 			numeric_limits<double>::lowest());
 		this->step_types = vector<vector<int>>(BRANCH_EXPERIMENT_NUM_CONCURRENT);
 		this->actions = vector<vector<Action>>(BRANCH_EXPERIMENT_NUM_CONCURRENT);
 		this->scopes = vector<vector<Scope*>>(BRANCH_EXPERIMENT_NUM_CONCURRENT);
-		this->exit_next_node = vector<AbstractNode*>(BRANCH_EXPERIMENT_NUM_CONCURRENT);
 
 		uniform_int_distribution<int> until_distribution(0, (int)this->average_instances_per_run-1.0);
 		this->num_instances_until_target = 1 + until_distribution(generator);

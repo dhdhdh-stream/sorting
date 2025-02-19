@@ -58,10 +58,45 @@ void BranchExperiment::activate(AbstractNode* experiment_node,
 
 void BranchExperiment::backprop(AbstractExperimentInstanceHistory* instance_history,
 								double target_val) {
-
+	BranchExperimentInstanceHistory* branch_experiment_instance_history = (BranchExperimentInstanceHistory*)instance_history;
+	switch (this->state) {
+	case BRANCH_EXPERIMENT_STATE_EXPLORE:
+		explore_backprop(branch_experiment_instance_history,
+						 target_val);
+		break;
+	case BRANCH_EXPERIMENT_STATE_TRAIN_NEW:
+		train_new_backprop(branch_experiment_instance_history,
+						   target_val);
+		break;
+	case BRANCH_EXPERIMENT_STATE_MEASURE:
+		measure_backprop(branch_experiment_instance_history,
+						 target_val);
+		break;
+	}
 }
 
 void BranchExperiment::update(AbstractExperimentOverallHistory* overall_history,
 							  double target_val) {
-
+	BranchExperimentOverallHistory* branch_experiment_overall_history = (BranchExperimentOverallHistory*)overall_history;
+	switch (this->state) {
+	case BRANCH_EXPERIMENT_STATE_EXISTING_GATHER:
+		existing_gather_update();
+		break;
+	case BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING:
+		train_existing_update(branch_experiment_overall_history,
+							  target_val);
+		break;
+	case BRANCH_EXPERIMENT_STATE_EXPLORE:
+		explore_update();
+		break;
+	case BRANCH_EXPERIMENT_STATE_NEW_GATHER:
+		new_gather_update();
+		break;
+	case BRANCH_EXPERIMENT_STATE_TRAIN_NEW:
+		train_new_update();
+		break;
+	case BRANCH_EXPERIMENT_STATE_MEASURE:
+		measure_update();
+		break;
+	}
 }

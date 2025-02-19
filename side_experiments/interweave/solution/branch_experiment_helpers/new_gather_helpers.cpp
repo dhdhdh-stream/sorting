@@ -77,6 +77,10 @@ void BranchExperiment::new_gather_update() {
 			}
 		}
 
+		this->new_input_histories = vector<vector<vector<double>>>(BRANCH_EXPERIMENT_NUM_CONCURRENT);
+		this->new_factor_histories = vector<vector<vector<double>>>(BRANCH_EXPERIMENT_NUM_CONCURRENT);
+		this->new_target_val_histories = vector<vector<double>>(BRANCH_EXPERIMENT_NUM_CONCURRENT);
+
 		this->state = BRANCH_EXPERIMENT_STATE_TRAIN_NEW;
 		this->instance_iter = 0;
 		this->run_iter = 0;

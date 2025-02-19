@@ -42,11 +42,12 @@ public:
 	double average_instances_per_run;
 	int num_instances_until_target;
 
+	AbstractNode* exit_next_node;
+
 	std::vector<double> surprises;
 	std::vector<std::vector<int>> step_types;
 	std::vector<std::vector<Action>> actions;
 	std::vector<std::vector<Scope*>> scopes;
-	std::vector<AbstractNode*> exit_next_node;
 
 	std::vector<std::vector<std::pair<std::pair<std::vector<Scope*>,std::vector<int>>,
 		std::pair<int,int>>>> new_inputs;
@@ -145,7 +146,6 @@ public:
 	std::vector<int> curr_step_types;
 	std::vector<Action> curr_actions;
 	std::vector<Scope*> curr_scopes;
-	AbstractNode* curr_exit_next_node;
 
 	int concurrent_index;
 

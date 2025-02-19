@@ -1,5 +1,7 @@
 #include "branch_experiment.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
@@ -41,55 +43,8 @@ void BranchExperiment::explore_activate(
 		}
 		instance_history->existing_predicted_score = sum_vals;
 
-		vector<AbstractNode*> possible_exits;
-
-		AbstractNode* starting_node;
-		switch (this->node_context->type) {
-		case NODE_TYPE_ACTION:
-			{
-				ActionNode* action_node = (ActionNode*)this->node_context;
-				starting_node = action_node->next_node;
-			}
-			break;
-		case NODE_TYPE_SCOPE:
-			{
-				ScopeNode* scope_node = (ScopeNode*)this->node_context;
-				starting_node = scope_node->next_node;
-			}
-			break;
-		case NODE_TYPE_BRANCH:
-			{
-				BranchNode* branch_node = (BranchNode*)this->node_context;
-				if (this->is_branch) {
-					starting_node = branch_node->branch_next_node;
-				} else {
-					starting_node = branch_node->original_next_node;
-				}
-			}
-			break;
-		case NODE_TYPE_OBS:
-			{
-				ObsNode* obs_node = (ObsNode*)this->node_context;
-				starting_node = obs_node->next_node;
-			}
-			break;
-		}
-
-		this->scope_context->random_exit_activate(
-			starting_node,
-			possible_exits);
-
-		uniform_int_distribution<int> distribution(0, possible_exits.size()-1);
-		int random_index = distribution(generator);
-		instance_history->curr_exit_next_node = possible_exits[random_index];
-
-		int new_num_steps;
 		geometric_distribution<int> geo_distribution(0.3);
-		if (random_index == 0) {
-			new_num_steps = 1 + geo_distribution(generator);
-		} else {
-			new_num_steps = geo_distribution(generator);
-		}
+		int new_num_steps = geo_distribution(generator);
 
 		/**
 		 * - always give raw actions a large weight
@@ -134,7 +89,7 @@ void BranchExperiment::explore_activate(
 			run_helper.num_actions += 2;
 		}
 
-		curr_node = instance_history->curr_exit_next_node;
+		curr_node = this->exit_next_node;
 	}
 }
 
@@ -147,7 +102,6 @@ void BranchExperiment::explore_backprop(
 		this->step_types.back() = instance_history->curr_step_types;
 		this->actions.back() = instance_history->curr_actions;
 		this->scopes.back() = instance_history->curr_scopes;
-		this->exit_next_node.back() = instance_history->curr_exit_next_node;
 
 		int curr_index = BRANCH_EXPERIMENT_NUM_CONCURRENT-1;
 		while (true) {
@@ -160,19 +114,16 @@ void BranchExperiment::explore_backprop(
 				vector<int> temp_step_types = this->step_types[curr_index];
 				vector<Action> temp_actions = this->actions[curr_index];
 				vector<Scope*> temp_scopes = this->scopes[curr_index];
-				AbstractNode* temp_exit_next_node = this->exit_next_node[curr_index];
 
 				this->surprises[curr_index] = this->surprises[curr_index-1];
 				this->step_types[curr_index] = this->step_types[curr_index-1];
 				this->actions[curr_index] = this->actions[curr_index-1];
 				this->scopes[curr_index] = this->scopes[curr_index-1];
-				this->exit_next_node[curr_index] = this->exit_next_node[curr_index-1];
 
 				this->surprises[curr_index-1] = temp_surprise;
 				this->step_types[curr_index-1] = temp_step_types;
 				this->actions[curr_index-1] = temp_actions;
 				this->scopes[curr_index-1] = temp_scopes;
-				this->exit_next_node[curr_index-1] = temp_exit_next_node;
 
 				curr_index--;
 			} else {

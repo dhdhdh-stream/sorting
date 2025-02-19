@@ -66,6 +66,8 @@ void BranchExperiment::existing_gather_update() {
 			this->existing_factor_ids.erase(this->existing_factor_ids.begin() + remove_index);
 		}
 
+		this->sum_num_instances = 0;
+
 		this->state = BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING;
 		this->run_iter = 0;
 	}

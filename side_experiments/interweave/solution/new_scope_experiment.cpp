@@ -438,5 +438,5 @@ NewScopeExperimentOverallHistory::NewScopeExperimentOverallHistory(
 	this->experiment = experiment;
 
 	uniform_int_distribution<int> experiment_active_distribution(0, 3);
-	this->is_active = experiment_active_distribution(generator);
+	this->is_active = experiment_active_distribution(generator) == 0;
 }
