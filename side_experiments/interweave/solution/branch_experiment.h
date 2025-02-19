@@ -19,8 +19,7 @@ const int BRANCH_EXPERIMENT_STATE_NEW_GATHER = 3;
 const int BRANCH_EXPERIMENT_STATE_TRAIN_NEW = 4;
 const int BRANCH_EXPERIMENT_STATE_MEASURE = 5;
 
-class BranchExperimentOverallHistory;
-class BranchExperimentInstanceHistory;
+class BranchExperimentHistory;
 class BranchExperiment : public AbstractExperiment {
 public:
 	int state;
@@ -73,73 +72,61 @@ public:
 				  Problem* problem,
 				  RunHelper& run_helper,
 				  ScopeHistory* scope_history);
-	void backprop(AbstractExperimentInstanceHistory* instance_history,
-				  double target_val);
-	void update(AbstractExperimentOverallHistory* overall_history,
+	void update(AbstractExperimentHistory* history,
 				double target_val);
 
 	void existing_gather_activate(ScopeHistory* scope_history);
 	void existing_gather_update();
 
 	void train_existing_activate(ScopeHistory* scope_history,
-								 BranchExperimentOverallHistory* overall_history);
-	void train_existing_update(BranchExperimentOverallHistory* overall_history,
+								 BranchExperimentHistory* history);
+	void train_existing_update(BranchExperimentHistory* history,
 							   double target_val);
 
 	void explore_activate(AbstractNode*& curr_node,
 						  Problem* problem,
 						  RunHelper& run_helper,
 						  ScopeHistory* scope_history,
-						  BranchExperimentOverallHistory* overall_history);
-	void explore_backprop(BranchExperimentInstanceHistory* instance_history,
-						  double target_val);
-	void explore_update();
+						  BranchExperimentHistory* history);
+	void explore_update(BranchExperimentHistory* history,
+						double target_val);
 
-	void new_gather_activate(ScopeHistory* scope_history,
-							 BranchExperimentOverallHistory* overall_history);
+	void new_gather_activate(ScopeHistory* scope_history);
 	void new_gather_update();
 
 	void train_new_activate(AbstractNode*& curr_node,
 							Problem* problem,
 							RunHelper& run_helper,
 							ScopeHistory* scope_history,
-							BranchExperimentOverallHistory* overall_history);
-	void train_new_backprop(BranchExperimentInstanceHistory* instance_history,
-							double target_val);
-	void train_new_update(BranchExperimentOverallHistory* overall_history);
+							BranchExperimentHistory* history);
+	void train_new_update(BranchExperimentHistory* history,
+						  double target_val);
 
 	void measure_activate(AbstractNode*& curr_node,
 						  Problem* problem,
 						  RunHelper& run_helper,
 						  ScopeHistory* scope_history,
-						  BranchExperimentOverallHistory* overall_history);
-	void measure_update(BranchExperimentOverallHistory* overall_history,
+						  BranchExperimentHistory* history);
+	void measure_update(BranchExperimentHistory* history,
 						double target_val);
 
 	void finalize();
 };
 
-class BranchExperimentOverallHistory : public AbstractExperimentOverallHistory {
+class BranchExperimentHistory : public AbstractExperimentHistory {
 public:
 	bool is_active;
 
 	int instance_count;
 
-	bool has_target;
-
-	BranchExperimentOverallHistory(BranchExperiment* experiment);
-};
-
-class BranchExperimentInstanceHistory : public AbstractExperimentInstanceHistory {
-public:
-	double existing_predicted_score;
+	std::vector<double> existing_predicted_scores;
 
 	std::vector<int> curr_step_types;
 	std::vector<Action> curr_actions;
 	std::vector<Scope*> curr_scopes;
 	AbstractNode* curr_exit_next_node;
 
-	BranchExperimentInstanceHistory(BranchExperiment* experiment);
+	BranchExperimentHistory(BranchExperiment* experiment);
 };
 
 #endif /* BRANCH_EXPERIMENT_H */

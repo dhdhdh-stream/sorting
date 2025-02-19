@@ -22,8 +22,8 @@ using namespace std;
 
 void BranchExperiment::train_existing_activate(
 		ScopeHistory* scope_history,
-		BranchExperimentOverallHistory* overall_history) {
-	overall_history->instance_count++;
+		BranchExperimentHistory* history) {
+	history->instance_count++;
 
 	vector<double> input_vals(this->existing_inputs.size());
 	for (int i_index = 0; i_index < (int)this->existing_inputs.size(); i_index++) {
@@ -44,13 +44,13 @@ void BranchExperiment::train_existing_activate(
 }
 
 void BranchExperiment::train_existing_update(
-		BranchExperimentOverallHistory* overall_history,
+		BranchExperimentHistory* history,
 		double target_val) {
-	for (int i_index = 0; i_index < overall_history->instance_count; i_index++) {
+	for (int i_index = 0; i_index < history->instance_count; i_index++) {
 		this->target_val_histories.push_back(target_val);
 	}
 
-	this->sum_num_instances += overall_history->instance_count;
+	this->sum_num_instances += history->instance_count;
 
 	this->run_iter++;
 	if (this->run_iter >= TRAIN_NUM_DATAPOINTS) {

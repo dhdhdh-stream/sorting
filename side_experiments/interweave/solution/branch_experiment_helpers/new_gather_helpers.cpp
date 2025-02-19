@@ -7,8 +7,7 @@
 using namespace std;
 
 void BranchExperiment::new_gather_activate(
-		ScopeHistory* scope_history,
-		BranchExperimentOverallHistory* overall_history) {
+		ScopeHistory* scope_history) {
 	vector<Scope*> scope_context;
 	vector<int> node_context;
 	int node_count = 0;
@@ -66,6 +65,9 @@ void BranchExperiment::new_gather_update() {
 			int remove_index = remove_distribution(generator);
 			this->new_factor_ids.erase(this->new_factor_ids.begin() + remove_index);
 		}
+
+		uniform_int_distribution<int> until_distribution(0, (int)this->average_instances_per_run-1.0);
+		this->num_instances_until_target = 1 + until_distribution(generator);
 
 		this->state = BRANCH_EXPERIMENT_STATE_TRAIN_NEW;
 		this->run_iter = 0;

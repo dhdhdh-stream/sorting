@@ -21,13 +21,13 @@ void NewScopeExperiment::test_activate(
 		AbstractNode*& curr_node,
 		Problem* problem,
 		RunHelper& run_helper,
-		NewScopeExperimentOverallHistory* overall_history) {
+		NewScopeExperimentHistory* history) {
 	bool is_new;
-	map<int, bool>::iterator is_new_it = overall_history->test_is_new.find(test_index);
-	if (is_new_it == overall_history->test_is_new.end()) {
+	map<int, bool>::iterator is_new_it = history->test_is_new.find(test_index);
+	if (is_new_it == history->test_is_new.end()) {
 		uniform_int_distribution<int> is_active_distribution(0, 3);
 		is_new = is_active_distribution(generator) == 0;
-		overall_history->test_is_new[test_index] = is_new;
+		history->test_is_new[test_index] = is_new;
 	} else {
 		is_new = is_new_it->second;
 	}
@@ -44,10 +44,10 @@ void NewScopeExperiment::test_activate(
 }
 
 void NewScopeExperiment::test_update(
-		NewScopeExperimentOverallHistory* overall_history,
+		NewScopeExperimentHistory* history,
 		double target_val) {
-	for (map<int, bool>::iterator it = overall_history->test_is_new.begin();
-			it != overall_history->test_is_new.end(); it++) {
+	for (map<int, bool>::iterator it = history->test_is_new.begin();
+			it != history->test_is_new.end(); it++) {
 		if (it->second) {
 			this->test_new_scores[it->first] += target_val;
 			this->test_new_counts[it->first]++;

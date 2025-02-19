@@ -23,7 +23,7 @@ void BranchExperiment::decrement(AbstractNode* experiment_node) {
 	delete this;
 }
 
-BranchExperimentOverallHistory::BranchExperimentOverallHistory(
+BranchExperimentHistory::BranchExperimentHistory(
 		BranchExperiment* experiment) {
 	this->experiment = experiment;
 
@@ -31,11 +31,4 @@ BranchExperimentOverallHistory::BranchExperimentOverallHistory(
 	this->is_active = experiment_active_distribution(generator) == 0;
 
 	this->instance_count = 0;
-
-	this->has_target = false;
-}
-
-BranchExperimentInstanceHistory::BranchExperimentInstanceHistory(
-		BranchExperiment* experiment) {
-	this->experiment = experiment;
 }

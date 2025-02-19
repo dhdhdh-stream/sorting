@@ -100,7 +100,7 @@ int main(int argc, char* argv[]) {
 
 		// int expected_number_of_experiments = ceil((double)run_helper.num_actions / ACTIONS_PER_EXPERIMENT);
 		int expected_number_of_experiments = 2;
-		int number_of_experiments_diff = expected_number_of_experiments - (int)run_helper.overall_histories.size();
+		int number_of_experiments_diff = expected_number_of_experiments - (int)run_helper.experiment_histories.size();
 		for (int e_index = 0; e_index < number_of_experiments_diff; e_index++) {
 			create_experiment(scope_history);
 		}
@@ -111,15 +111,9 @@ int main(int argc, char* argv[]) {
 		delete scope_history;
 		delete problem;
 
-		for (int h_index = 0; h_index < (int)run_helper.instance_histories.size(); h_index++) {
-			run_helper.instance_histories[h_index]->experiment->backprop(
-				run_helper.instance_histories[h_index],
-				target_val);
-		}
-
 		bool reset = false;
-		for (map<AbstractExperiment*, AbstractExperimentOverallHistory*>::iterator it = run_helper.overall_histories.begin();
-				it != run_helper.overall_histories.end(); it++) {
+		for (map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it = run_helper.experiment_histories.begin();
+				it != run_helper.experiment_histories.end(); it++) {
 			it->first->update(it->second,
 							  target_val);
 			if (it->first->result == EXPERIMENT_RESULT_FAIL) {

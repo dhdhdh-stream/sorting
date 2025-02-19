@@ -21,8 +21,8 @@ void BranchExperiment::measure_activate(AbstractNode*& curr_node,
 										Problem* problem,
 										RunHelper& run_helper,
 										ScopeHistory* scope_history,
-										BranchExperimentOverallHistory* overall_history) {
-	if (overall_history->is_active) {
+										BranchExperimentHistory* history) {
+	if (history->is_active) {
 		if (this->select_percentage == 1.0) {
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
@@ -77,9 +77,9 @@ void BranchExperiment::measure_activate(AbstractNode*& curr_node,
 	}
 }
 
-void BranchExperiment::measure_update(BranchExperimentOverallHistory* overall_history,
+void BranchExperiment::measure_update(BranchExperimentHistory* history,
 									  double target_val) {
-	if (overall_history->is_active) {
+	if (history->is_active) {
 		this->new_sum_score += target_val;
 		this->new_count++;
 	} else {

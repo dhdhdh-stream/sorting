@@ -433,7 +433,7 @@ void NewScopeExperiment::decrement(AbstractNode* experiment_node) {
 	}
 }
 
-NewScopeExperimentOverallHistory::NewScopeExperimentOverallHistory(
+NewScopeExperimentHistory::NewScopeExperimentHistory(
 		NewScopeExperiment* experiment) {
 	this->experiment = experiment;
 }

@@ -16,8 +16,7 @@ const int EXPERIMENT_RESULT_NA = 0;
 const int EXPERIMENT_RESULT_FAIL = 1;
 const int EXPERIMENT_RESULT_SUCCESS = 2;
 
-class AbstractExperimentOverallHistory;
-class AbstractExperimentInstanceHistory;
+class AbstractExperimentHistory;
 class AbstractExperiment {
 public:
 	int type;
@@ -37,26 +36,17 @@ public:
 						  Problem* problem,
 						  RunHelper& run_helper,
 						  ScopeHistory* scope_history) = 0;
-	virtual void backprop(AbstractExperimentInstanceHistory* instance_history,
-						  double target_val) = 0;
-	virtual void update(AbstractExperimentOverallHistory* overall_history,
+	virtual void update(AbstractExperimentHistory* history,
 						double target_val) = 0;
 
 	virtual void finalize() = 0;
 };
 
-class AbstractExperimentOverallHistory {
+class AbstractExperimentHistory {
 public:
 	AbstractExperiment* experiment;
 
-	virtual ~AbstractExperimentOverallHistory() {};
-};
-
-class AbstractExperimentInstanceHistory {
-public:
-	AbstractExperiment* experiment;
-
-	virtual ~AbstractExperimentInstanceHistory() {};
+	virtual ~AbstractExperimentHistory() {};
 };
 
 #endif /* ABSTRACT_EXPERIMENT_H */

@@ -5,15 +5,13 @@
 #include <vector>
 
 class AbstractExperiment;
-class AbstractExperimentOverallHistory;
-class AbstractExperimentInstanceHistory;
+class AbstractExperimentHistory;
 
 class RunHelper {
 public:
 	int num_actions;
 
-	std::map<AbstractExperiment*, AbstractExperimentOverallHistory*> overall_histories;
-	std::vector<AbstractExperimentInstanceHistory*> instance_histories;
+	std::map<AbstractExperiment*, AbstractExperimentHistory*> experiment_histories;
 
 	RunHelper();
 	~RunHelper();

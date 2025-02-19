@@ -26,64 +26,66 @@ void BranchExperiment::train_new_activate(
 		Problem* problem,
 		RunHelper& run_helper,
 		ScopeHistory* scope_history,
-		BranchExperimentOverallHistory* overall_history) {
-	if (overall_history->is_active) {
-		BranchExperimentInstanceHistory* instance_history = new BranchExperimentInstanceHistory(this);
-		run_helper.instance_histories.push_back(instance_history);
+		BranchExperimentHistory* history) {
+	if (history->is_active) {
+		this->num_instances_until_target--;
+		if (this->num_instances_until_target <= 0) {
+			double sum_vals = this->existing_average_score;
+			for (int f_index = 0; f_index < (int)this->existing_factor_ids.size(); f_index++) {
+				double val;
+				fetch_factor_helper(scope_history,
+									this->existing_factor_ids[f_index],
+									val);
+				sum_vals += this->existing_factor_weights[f_index] * val;
+			}
+			history->existing_predicted_scores.push_back(sum_vals);
 
-		double sum_vals = this->existing_average_score;
-		for (int f_index = 0; f_index < (int)this->existing_factor_ids.size(); f_index++) {
-			double val;
-			fetch_factor_helper(scope_history,
-								this->existing_factor_ids[f_index],
-								val);
-			sum_vals += this->existing_factor_weights[f_index] * val;
-		}
-		instance_history->existing_predicted_score = sum_vals;
+			vector<double> input_vals(this->new_inputs.size());
+			for (int i_index = 0; i_index < (int)this->new_inputs.size(); i_index++) {
+				fetch_input_helper(scope_history,
+								   this->new_inputs[i_index],
+								   0,
+								   input_vals[i_index]);
+			}
+			this->input_histories.push_back(input_vals);
 
-		vector<double> input_vals(this->new_inputs.size());
-		for (int i_index = 0; i_index < (int)this->new_inputs.size(); i_index++) {
-			fetch_input_helper(scope_history,
-							   this->new_inputs[i_index],
-							   0,
-							   input_vals[i_index]);
-		}
-		this->input_histories.push_back(input_vals);
+			vector<double> factor_vals(this->new_factor_ids.size());
+			for (int f_index = 0; f_index < (int)this->new_factor_ids.size(); f_index++) {
+				fetch_factor_helper(scope_history,
+									this->new_factor_ids[f_index],
+									factor_vals[f_index]);
+			}
+			this->factor_histories.push_back(factor_vals);
 
-		vector<double> factor_vals(this->new_factor_ids.size());
-		for (int f_index = 0; f_index < (int)this->new_factor_ids.size(); f_index++) {
-			fetch_factor_helper(scope_history,
-								this->new_factor_ids[f_index],
-								factor_vals[f_index]);
-		}
-		this->factor_histories.push_back(factor_vals);
+			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+					problem->perform_action(this->best_actions[s_index]);
+				} else {
+					ScopeHistory* inner_scope_history = new ScopeHistory(this->best_scopes[s_index]);
+					this->best_scopes[s_index]->activate(problem,
+						run_helper,
+						inner_scope_history);
+					delete inner_scope_history;
+				}
 
-		for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-			if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-				problem->perform_action(this->best_actions[s_index]);
-			} else {
-				ScopeHistory* inner_scope_history = new ScopeHistory(this->best_scopes[s_index]);
-				this->best_scopes[s_index]->activate(problem,
-					run_helper,
-					inner_scope_history);
-				delete inner_scope_history;
+				run_helper.num_actions += 2;
 			}
 
-			run_helper.num_actions += 2;
-		}
+			curr_node = this->best_exit_next_node;
 
-		curr_node = this->best_exit_next_node;
+			uniform_int_distribution<int> until_distribution(0, 2*((int)this->average_instances_per_run-1));
+			this->num_instances_until_target = 1 + until_distribution(generator);
+		}
 	}
 }
 
-void BranchExperiment::train_new_backprop(
-		BranchExperimentInstanceHistory* instance_history,
-		double target_val) {
-	this->target_val_histories.push_back(target_val - instance_history->existing_predicted_score);
-}
+void BranchExperiment::train_new_update(BranchExperimentHistory* history,
+										double target_val) {
+	if (history->is_active) {
+		for (int i_index = 0; i_index < (int)history->existing_predicted_scores.size(); i_index++) {
+			this->target_val_histories.push_back(target_val - history->existing_predicted_scores[i_index]);
+		}
 
-void BranchExperiment::train_new_update(BranchExperimentOverallHistory* overall_history) {
-	if (overall_history->is_active) {
 		this->run_iter++;
 		if (this->run_iter >= TRAIN_NUM_DATAPOINTS) {
 			{

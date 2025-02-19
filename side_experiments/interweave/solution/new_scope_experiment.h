@@ -20,7 +20,7 @@ const int NEW_SCOPE_NUM_GENERALIZE_TRIES = 200;
 const int NEW_SCOPE_NUM_LOCATIONS = 3;
 #endif /* MDEBUG */
 
-class NewScopeExperimentOverallHistory;
+class NewScopeExperimentHistory;
 class NewScopeExperiment : public AbstractExperiment {
 public:
 	int generalize_iter;
@@ -53,27 +53,25 @@ public:
 				  ScopeHistory* scope_history);
 	void back_activate(RunHelper& run_helper,
 					   ScopeHistory* scope_history);
-	void backprop(AbstractExperimentInstanceHistory* instance_history,
-				  double target_val);
-	void update(AbstractExperimentOverallHistory* overall_history,
+	void update(AbstractExperimentHistory* history,
 				double target_val);
 
 	void test_activate(int test_index,
 					   AbstractNode*& curr_node,
 					   Problem* problem,
 					   RunHelper& run_helper,
-					   NewScopeExperimentOverallHistory* overall_history);
-	void test_update(NewScopeExperimentOverallHistory* overall_history,
+					   NewScopeExperimentHistory* history);
+	void test_update(NewScopeExperimentHistory* history,
 					 double target_val);
 
 	void finalize();
 };
 
-class NewScopeExperimentOverallHistory : public AbstractExperimentOverallHistory {
+class NewScopeExperimentHistory : public AbstractExperimentHistory {
 public:
 	std::map<int, bool> test_is_new;
 
-	NewScopeExperimentOverallHistory(NewScopeExperiment* experiment);
+	NewScopeExperimentHistory(NewScopeExperiment* experiment);
 };
 
 #endif /* NEW_SCOPE_EXPERIMENT_H */

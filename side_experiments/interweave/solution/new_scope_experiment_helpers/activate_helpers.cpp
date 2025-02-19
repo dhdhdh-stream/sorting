@@ -44,14 +44,14 @@ void NewScopeExperiment::activate(AbstractNode* experiment_node,
 	}
 
 	if (has_match) {
-		NewScopeExperimentOverallHistory* overall_history;
-		map<AbstractExperiment*, AbstractExperimentOverallHistory*>::iterator it
-			= run_helper.overall_histories.find(this);
-		if (it == run_helper.overall_histories.end()) {
-			overall_history = new NewScopeExperimentOverallHistory(this);
-			run_helper.overall_histories[this] = overall_history;
+		NewScopeExperimentHistory* history;
+		map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it
+			= run_helper.experiment_histories.find(this);
+		if (it == run_helper.experiment_histories.end()) {
+			history = new NewScopeExperimentHistory(this);
+			run_helper.experiment_histories[this] = history;
 		} else {
-			overall_history = (NewScopeExperimentOverallHistory*)it->second;
+			history = (NewScopeExperimentHistory*)it->second;
 		}
 
 		if (is_test) {
@@ -59,7 +59,7 @@ void NewScopeExperiment::activate(AbstractNode* experiment_node,
 						  curr_node,
 						  problem,
 						  run_helper,
-						  overall_history);
+						  history);
 		} else {
 			ScopeHistory* inner_scope_history = new ScopeHistory(this->new_scope);
 			this->new_scope->activate(problem,
@@ -196,31 +196,26 @@ void NewScopeExperiment::back_activate(RunHelper& run_helper,
 
 				new_start_node->experiment = this;
 
-				NewScopeExperimentOverallHistory* overall_history;
-				map<AbstractExperiment*, AbstractExperimentOverallHistory*>::iterator it
-					= run_helper.overall_histories.find(this);
-				if (it == run_helper.overall_histories.end()) {
-					overall_history = new NewScopeExperimentOverallHistory(this);
-					run_helper.overall_histories[this] = overall_history;
+				NewScopeExperimentHistory* history;
+				map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it
+					= run_helper.experiment_histories.find(this);
+				if (it == run_helper.experiment_histories.end()) {
+					history = new NewScopeExperimentHistory(this);
+					run_helper.experiment_histories[this] = history;
 				} else {
-					overall_history = (NewScopeExperimentOverallHistory*)it->second;
+					history = (NewScopeExperimentHistory*)it->second;
 				}
 
-				overall_history->test_is_new[this->test_starts.size()-1] = false;
+				history->test_is_new[this->test_starts.size()-1] = false;
 			}
 		}
 	}
 }
 
-void NewScopeExperiment::backprop(AbstractExperimentInstanceHistory* instance_history,
-								  double target_val) {
-	// do nothing
-}
-
-void NewScopeExperiment::update(AbstractExperimentOverallHistory* overall_history,
+void NewScopeExperiment::update(AbstractExperimentHistory* history,
 								double target_val) {
-	NewScopeExperimentOverallHistory* new_scope_experiment_overall_history = (NewScopeExperimentOverallHistory*)overall_history;
+	NewScopeExperimentHistory* new_scope_experiment_history = (NewScopeExperimentHistory*)history;
 
-	test_update(new_scope_experiment_overall_history,
+	test_update(new_scope_experiment_history,
 				target_val);
 }
