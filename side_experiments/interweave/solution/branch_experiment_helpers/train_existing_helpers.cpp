@@ -372,6 +372,8 @@ void BranchExperiment::train_existing_update(
 		this->factor_histories.clear();
 		this->target_val_histories.clear();
 
+		this->best_surprise = 0.0;
+
 		uniform_int_distribution<int> until_distribution(0, (int)this->average_instances_per_run-1.0);
 		this->num_instances_until_target = 1 + until_distribution(generator);
 

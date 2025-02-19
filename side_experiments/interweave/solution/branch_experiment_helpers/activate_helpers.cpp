@@ -1,5 +1,9 @@
 #include "branch_experiment.h"
 
+#include <iostream>
+
+#include "globals.h"
+
 using namespace std;
 
 void BranchExperiment::activate(AbstractNode* experiment_node,

@@ -1,5 +1,7 @@
 #include "scope.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
@@ -15,8 +17,6 @@ void Scope::activate(Problem* problem,
 					 ScopeHistory* history) {
 	AbstractNode* curr_node = this->nodes[0];
 	while (true) {
-		// if (curr_node == NULL
-		// 		|| run_helper.early_exit) {
 		if (curr_node == NULL) {
 			break;
 		}

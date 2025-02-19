@@ -61,6 +61,8 @@ void Solution::init() {
 			obs_node->next_node_id = new_scope_node->id;
 			obs_node->next_node = new_scope_node;
 
+			new_scope_node->ancestor_ids.push_back(prev_node->id);
+
 			prev_node = new_scope_node;
 		} else {
 			ActionNode* new_action_node = new ActionNode();
@@ -74,6 +76,8 @@ void Solution::init() {
 			ObsNode* obs_node = (ObsNode*)prev_node;
 			obs_node->next_node_id = new_action_node->id;
 			obs_node->next_node = new_action_node;
+
+			new_action_node->ancestor_ids.push_back(prev_node->id);
 
 			prev_node = new_action_node;
 		}
@@ -100,6 +104,8 @@ void Solution::init() {
 			}
 			break;
 		}
+
+		new_obs_node->ancestor_ids.push_back(prev_node->id);
 
 		prev_node = new_obs_node;
 	}
