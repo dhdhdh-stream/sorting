@@ -54,22 +54,20 @@ void NewScopeExperiment::activate(AbstractNode* experiment_node,
 			overall_history = (NewScopeExperimentOverallHistory*)it->second;
 		}
 
-		if (overall_history->is_active) {
-			if (is_test) {
-				test_activate(location_index,
-							  curr_node,
-							  problem,
-							  run_helper,
-							  overall_history);
-			} else {
-				ScopeHistory* inner_scope_history = new ScopeHistory(this->new_scope);
-				this->new_scope->activate(problem,
-					run_helper,
-					inner_scope_history);
-				delete inner_scope_history;
+		if (is_test) {
+			test_activate(location_index,
+						  curr_node,
+						  problem,
+						  run_helper,
+						  overall_history);
+		} else {
+			ScopeHistory* inner_scope_history = new ScopeHistory(this->new_scope);
+			this->new_scope->activate(problem,
+				run_helper,
+				inner_scope_history);
+			delete inner_scope_history;
 
-				curr_node = this->successful_exits[location_index];
-			}
+			curr_node = this->successful_exits[location_index];
 		}
 	}
 }

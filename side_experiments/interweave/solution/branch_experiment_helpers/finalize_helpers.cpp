@@ -15,15 +15,15 @@ void BranchExperiment::finalize() {
 
 	if (this->result == EXPERIMENT_RESULT_SUCCESS) {
 		vector<AbstractNode*> new_nodes;
-		for (int s_index = 0; s_index < (int)this->step_types[this->best_concurrent_index].size(); s_index++) {
-			if (this->step_types[this->best_concurrent_index][s_index] == STEP_TYPE_ACTION) {
+		for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+			if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 				ActionNode* new_action_node = new ActionNode();
 				new_action_node->parent = this->scope_context;
 				new_action_node->id = this->scope_context->node_counter;
 				this->scope_context->node_counter++;
 				this->scope_context->nodes[new_action_node->id] = new_action_node;
 
-				new_action_node->action = this->actions[this->best_concurrent_index][s_index];
+				new_action_node->action = this->best_actions[s_index];
 
 				new_nodes.push_back(new_action_node);
 			} else {
@@ -33,7 +33,7 @@ void BranchExperiment::finalize() {
 				this->scope_context->node_counter++;
 				this->scope_context->nodes[new_scope_node->id] = new_scope_node;
 
-				new_scope_node->scope = this->scopes[this->best_concurrent_index][s_index];
+				new_scope_node->scope = this->best_scopes[s_index];
 
 				new_nodes.push_back(new_scope_node);
 			}
@@ -51,7 +51,7 @@ void BranchExperiment::finalize() {
 
 		int exit_node_id;
 		AbstractNode* exit_node;
-		if (this->exit_next_node == NULL) {
+		if (this->best_exit_next_node == NULL) {
 			new_ending_node = new ObsNode();
 			new_ending_node->parent = this->scope_context;
 			new_ending_node->id = this->scope_context->node_counter;
@@ -80,14 +80,14 @@ void BranchExperiment::finalize() {
 			exit_node_id = new_ending_node->id;
 			exit_node = new_ending_node;
 		} else {
-			exit_node_id = this->exit_next_node->id;
-			exit_node = this->exit_next_node;
+			exit_node_id = this->best_exit_next_node->id;
+			exit_node = this->best_exit_next_node;
 		}
 
-		if (this->select_percentage[this->best_concurrent_index] == 1.0) {
+		if (this->select_percentage == 1.0) {
 			int start_node_id;
 			AbstractNode* start_node;
-			if (this->step_types[this->best_concurrent_index].size() == 0) {
+			if (this->best_step_types.size() == 0) {
 				start_node_id = exit_node_id;
 				start_node = exit_node;
 			} else {
@@ -191,9 +191,9 @@ void BranchExperiment::finalize() {
 			this->scope_context->node_counter++;
 			this->scope_context->nodes[new_branch_node->id] = new_branch_node;
 
-			new_branch_node->average_val = this->new_average_score[this->best_concurrent_index];
-			new_branch_node->factor_ids = this->new_factor_ids[this->best_concurrent_index];
-			new_branch_node->factor_weights = this->new_factor_weights[this->best_concurrent_index];
+			new_branch_node->average_val = this->new_average_score;
+			new_branch_node->factor_ids = this->new_factor_ids;
+			new_branch_node->factor_weights = this->new_factor_weights;
 
 			switch (this->node_context->type) {
 			case NODE_TYPE_ACTION:
@@ -319,7 +319,7 @@ void BranchExperiment::finalize() {
 				break;
 			}
 
-			if (this->step_types[this->best_concurrent_index].size() == 0) {
+			if (this->best_step_types.size() == 0) {
 				exit_node->ancestor_ids.push_back(new_branch_node->id);
 
 				new_branch_node->branch_next_node_id = exit_node_id;
@@ -373,9 +373,9 @@ void BranchExperiment::finalize() {
 			new_branch_node->ancestor_ids.push_back(this->node_context->id);
 		}
 
-		for (int f_index = 0; f_index < (int)this->new_factor_ids[this->best_concurrent_index].size(); f_index++) {
-			ObsNode* obs_node = (ObsNode*)this->scope_context->nodes[this->new_factor_ids[this->best_concurrent_index][f_index].first];
-			Factor* factor = obs_node->factors[this->new_factor_ids[this->best_concurrent_index][f_index].second];
+		for (int f_index = 0; f_index < (int)this->new_factor_ids.size(); f_index++) {
+			ObsNode* obs_node = (ObsNode*)this->scope_context->nodes[this->new_factor_ids[f_index].first];
+			Factor* factor = obs_node->factors[this->new_factor_ids[f_index].second];
 
 			factor->link();
 

@@ -32,7 +32,7 @@ void BranchExperiment::train_existing_activate(
 						   0,
 						   input_vals[i_index]);
 	}
-	this->existing_input_histories.push_back(input_vals);
+	this->input_histories.push_back(input_vals);
 
 	vector<double> factor_vals(this->existing_factor_ids.size());
 	for (int f_index = 0; f_index < (int)this->existing_factor_ids.size(); f_index++) {
@@ -40,14 +40,14 @@ void BranchExperiment::train_existing_activate(
 							this->existing_factor_ids[f_index],
 							factor_vals[f_index]);
 	}
-	this->existing_factor_histories.push_back(factor_vals);
+	this->factor_histories.push_back(factor_vals);
 }
 
 void BranchExperiment::train_existing_update(
 		BranchExperimentOverallHistory* overall_history,
 		double target_val) {
 	for (int i_index = 0; i_index < overall_history->instance_count; i_index++) {
-		this->existing_target_val_histories.push_back(target_val);
+		this->target_val_histories.push_back(target_val);
 	}
 
 	this->sum_num_instances += overall_history->instance_count;
@@ -61,24 +61,24 @@ void BranchExperiment::train_existing_update(
 
 		{
 			default_random_engine generator_copy = generator;
-			shuffle(this->existing_input_histories.begin(), this->existing_input_histories.end(), generator_copy);
+			shuffle(this->input_histories.begin(), this->input_histories.end(), generator_copy);
 		}
 		{
 			default_random_engine generator_copy = generator;
-			shuffle(this->existing_factor_histories.begin(), this->existing_factor_histories.end(), generator_copy);
+			shuffle(this->factor_histories.begin(), this->factor_histories.end(), generator_copy);
 		}
 		{
 			default_random_engine generator_copy = generator;
-			shuffle(this->existing_target_val_histories.begin(), this->existing_target_val_histories.end(), generator_copy);
+			shuffle(this->target_val_histories.begin(), this->target_val_histories.end(), generator_copy);
 		}
 
-		int num_instances = (int)this->existing_target_val_histories.size();
+		int num_instances = (int)this->target_val_histories.size();
 		int num_train_instances = (double)num_instances * (1.0 - TEST_SAMPLES_PERCENTAGE);
 		int num_test_instances = num_instances - num_train_instances;
 
 		double sum_score = 0.0;
 		for (int i_index = 0; i_index < num_instances; i_index++) {
-			sum_score += this->existing_target_val_histories[i_index];
+			sum_score += this->target_val_histories[i_index];
 		}
 		this->existing_average_score = sum_score / num_instances;
 
@@ -87,20 +87,20 @@ void BranchExperiment::train_existing_update(
 		if (this->existing_factor_ids.size() > 0) {
 			double sum_offset = 0.0;
 			for (int i_index = 0; i_index < num_train_instances; i_index++) {
-				sum_offset += abs(this->existing_target_val_histories[i_index] - this->existing_average_score);
+				sum_offset += abs(this->target_val_histories[i_index] - this->existing_average_score);
 			}
 			double average_offset = sum_offset / num_train_instances;
 
 			Eigen::MatrixXd inputs(num_train_instances, this->existing_factor_ids.size());
 			for (int i_index = 0; i_index < num_train_instances; i_index++) {
 				for (int f_index = 0; f_index < (int)this->existing_factor_ids.size(); f_index++) {
-					inputs(i_index, f_index) = this->existing_factor_histories[i_index][f_index];
+					inputs(i_index, f_index) = this->factor_histories[i_index][f_index];
 				}
 			}
 
 			Eigen::VectorXd outputs(num_train_instances);
 			for (int i_index = 0; i_index < num_train_instances; i_index++) {
-				outputs(i_index) = this->existing_target_val_histories[i_index] - this->existing_average_score;
+				outputs(i_index) = this->target_val_histories[i_index] - this->existing_average_score;
 			}
 
 			Eigen::VectorXd weights;
@@ -129,7 +129,7 @@ void BranchExperiment::train_existing_update(
 				#else
 				double sum_impact = 0.0;
 				for (int i_index = 0; i_index < num_train_instances; i_index++) {
-					sum_impact += abs(this->existing_factor_histories[i_index][f_index]);
+					sum_impact += abs(this->factor_histories[i_index][f_index]);
 				}
 
 				double impact = abs(this->existing_factor_weights[f_index]) * sum_impact
@@ -141,7 +141,7 @@ void BranchExperiment::train_existing_update(
 					this->existing_factor_weights.erase(this->existing_factor_weights.begin() + f_index);
 
 					for (int i_index = 0; i_index < num_instances; i_index++) {
-						this->existing_factor_histories[i_index].erase(this->existing_factor_histories[i_index].begin() + f_index);
+						this->factor_histories[i_index].erase(this->factor_histories[i_index].begin() + f_index);
 					}
 				}
 			}
@@ -150,10 +150,10 @@ void BranchExperiment::train_existing_update(
 				double sum_score = this->existing_average_score;
 				for (int f_index = 0; f_index < (int)this->existing_factor_ids.size(); f_index++) {
 					sum_score += this->existing_factor_weights[f_index]
-						* this->existing_factor_histories[i_index][f_index];
+						* this->factor_histories[i_index][f_index];
 				}
 
-				remaining_scores[i_index] = this->existing_target_val_histories[i_index] - sum_score;
+				remaining_scores[i_index] = this->target_val_histories[i_index] - sum_score;
 
 				if (abs(sum_score) > REGRESSION_FAIL_MULTIPLIER * average_offset) {
 					this->result = EXPERIMENT_RESULT_FAIL;
@@ -162,7 +162,7 @@ void BranchExperiment::train_existing_update(
 			}
 		} else {
 			for (int i_index = 0; i_index < num_instances; i_index++) {
-				remaining_scores[i_index] = this->existing_target_val_histories[i_index] - this->existing_average_score;
+				remaining_scores[i_index] = this->target_val_histories[i_index] - this->existing_average_score;
 			}
 		}
 
@@ -184,13 +184,13 @@ void BranchExperiment::train_existing_update(
 
 		Network* existing_network = new Network((int)this->existing_inputs.size());
 
-		train_network(this->existing_input_histories,
+		train_network(this->input_histories,
 					  remaining_scores,
 					  existing_network);
 
 		double new_average_misguess;
 		double new_misguess_standard_deviation;
-		measure_network(this->existing_input_histories,
+		measure_network(this->input_histories,
 						remaining_scores,
 						existing_network,
 						new_average_misguess,
@@ -210,7 +210,7 @@ void BranchExperiment::train_existing_update(
 				Network* remove_network = new Network(existing_network);
 				remove_network->remove_input(i_index);
 
-				vector<vector<double>> remove_input_vals = this->existing_input_histories;
+				vector<vector<double>> remove_input_vals = this->input_histories;
 				for (int d_index = 0; d_index < num_instances; d_index++) {
 					remove_input_vals[d_index].erase(remove_input_vals[d_index].begin() + i_index);
 				}
@@ -241,7 +241,7 @@ void BranchExperiment::train_existing_update(
 					delete existing_network;
 					existing_network = remove_network;
 
-					this->existing_input_histories = remove_input_vals;
+					this->input_histories = remove_input_vals;
 				} else {
 					delete remove_network;
 				}
@@ -368,62 +368,14 @@ void BranchExperiment::train_existing_update(
 			delete existing_network;
 		}
 
-		this->existing_input_histories.clear();
-		this->existing_factor_histories.clear();
-		this->existing_target_val_histories.clear();
-
-		vector<AbstractNode*> possible_exits;
-
-		AbstractNode* starting_node;
-		switch (this->node_context->type) {
-		case NODE_TYPE_ACTION:
-			{
-				ActionNode* action_node = (ActionNode*)this->node_context;
-				starting_node = action_node->next_node;
-			}
-			break;
-		case NODE_TYPE_SCOPE:
-			{
-				ScopeNode* scope_node = (ScopeNode*)this->node_context;
-				starting_node = scope_node->next_node;
-			}
-			break;
-		case NODE_TYPE_BRANCH:
-			{
-				BranchNode* branch_node = (BranchNode*)this->node_context;
-				if (this->is_branch) {
-					starting_node = branch_node->branch_next_node;
-				} else {
-					starting_node = branch_node->original_next_node;
-				}
-			}
-			break;
-		case NODE_TYPE_OBS:
-			{
-				ObsNode* obs_node = (ObsNode*)this->node_context;
-				starting_node = obs_node->next_node;
-			}
-			break;
-		}
-
-		this->scope_context->random_exit_activate(
-			starting_node,
-			possible_exits);
-
-		uniform_int_distribution<int> distribution(0, possible_exits.size()-1);
-		int random_index = distribution(generator);
-		this->exit_next_node = possible_exits[random_index];
-
-		this->surprises = vector<double>(BRANCH_EXPERIMENT_NUM_CONCURRENT,
-			numeric_limits<double>::lowest());
-		this->step_types = vector<vector<int>>(BRANCH_EXPERIMENT_NUM_CONCURRENT);
-		this->actions = vector<vector<Action>>(BRANCH_EXPERIMENT_NUM_CONCURRENT);
-		this->scopes = vector<vector<Scope*>>(BRANCH_EXPERIMENT_NUM_CONCURRENT);
+		this->input_histories.clear();
+		this->factor_histories.clear();
+		this->target_val_histories.clear();
 
 		uniform_int_distribution<int> until_distribution(0, (int)this->average_instances_per_run-1.0);
 		this->num_instances_until_target = 1 + until_distribution(generator);
 
 		this->state = BRANCH_EXPERIMENT_STATE_EXPLORE;
-		this->instance_iter = 0;
+		this->run_iter = 0;
 	}
 }

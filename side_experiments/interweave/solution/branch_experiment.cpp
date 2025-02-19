@@ -33,11 +33,6 @@ BranchExperimentOverallHistory::BranchExperimentOverallHistory(
 	this->instance_count = 0;
 
 	this->has_target = false;
-
-	uniform_int_distribution<int> concurrent_distribution(0, BRANCH_EXPERIMENT_NUM_CONCURRENT-1);
-	for (int c_index = 0; c_index < BRANCH_EXPERIMENT_NUM_CONCURRENT_PER_RUN; c_index++) {
-		this->active_concurrents.push_back(concurrent_distribution(generator));
-	}
 }
 
 BranchExperimentInstanceHistory::BranchExperimentInstanceHistory(

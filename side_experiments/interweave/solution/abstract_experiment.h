@@ -49,8 +49,6 @@ class AbstractExperimentOverallHistory {
 public:
 	AbstractExperiment* experiment;
 
-	bool is_active;
-
 	virtual ~AbstractExperimentOverallHistory() {};
 };
 
