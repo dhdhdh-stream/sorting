@@ -1,3 +1,10 @@
+// multi-experiment doesn't work due to correlation
+// - when existing vs new:
+//   - on existing, there could be other experiments
+//   - on new, in new ScopeNodes, there could be other experiments
+//   - so can never get a fair comparison
+//     - so if trying to force updates, can make big mistakes
+
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -8,6 +15,7 @@
 #include "constants.h"
 #include "globals.h"
 #include "minesweeper.h"
+#include "new_scope_experiment.h"
 #include "problem.h"
 #include "run_helper.h"
 #include "scope.h"
@@ -191,6 +199,7 @@ int main(int argc, char* argv[]) {
 			display_file.close();
 		}
 
+		int num_failures = 0;
 		while (true) {
 			run_index++;
 			#if defined(MDEBUG) && MDEBUG
@@ -226,6 +235,8 @@ int main(int argc, char* argv[]) {
 				it->first->update(it->second,
 								  target_val);
 				if (it->first->result == EXPERIMENT_RESULT_FAIL) {
+					num_failures++;
+
 					it->first->cleanup();
 					delete it->first;
 				} else if (it->first->result == EXPERIMENT_RESULT_SUCCESS) {
@@ -269,7 +280,8 @@ int main(int argc, char* argv[]) {
 					is_success = true;
 				}
 			}
-			if (is_success) {
+			if (is_success
+					|| num_failures >= NEW_SCOPE_EXPERIMENT_FAIL_LIMIT) {
 				break;
 			}
 		}

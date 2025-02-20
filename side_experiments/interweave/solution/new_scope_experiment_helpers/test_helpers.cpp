@@ -7,8 +7,8 @@
 using namespace std;
 
 #if defined(MDEBUG) && MDEBUG
-const int NEW_SCOPE_NUM_DATAPOINTS = 10;
-const int NEW_SCOPE_VERIFY_1ST_NUM_DATAPOINTS = 10;
+const int NEW_SCOPE_NUM_DATAPOINTS = 2;
+const int NEW_SCOPE_VERIFY_1ST_NUM_DATAPOINTS = 5;
 const int NEW_SCOPE_VERIFY_2ND_NUM_DATAPOINTS = 10;
 #else
 const int NEW_SCOPE_NUM_DATAPOINTS = 100;

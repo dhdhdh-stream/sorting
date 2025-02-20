@@ -417,13 +417,17 @@ void BranchExperiment::train_new_update(BranchExperimentHistory* history,
 			this->factor_histories.clear();
 			this->target_val_histories.clear();
 
-			this->existing_sum_score = 0.0;
-			this->existing_count = 0;
-			this->new_sum_score = 0.0;
-			this->new_count = 0;
+			if (this->select_percentage > 0.0) {
+				this->existing_sum_score = 0.0;
+				this->existing_count = 0;
+				this->new_sum_score = 0.0;
+				this->new_count = 0;
 
-			this->state = BRANCH_EXPERIMENT_STATE_MEASURE;
-			this->run_iter = 0;
+				this->state = BRANCH_EXPERIMENT_STATE_MEASURE;
+				this->run_iter = 0;
+			} else {
+				this->result = EXPERIMENT_RESULT_FAIL;
+			}
 		}
 	}
 }
