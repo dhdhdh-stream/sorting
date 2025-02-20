@@ -64,7 +64,8 @@ public:
 	void test_update(NewScopeExperimentHistory* history,
 					 double target_val);
 
-	void finalize();
+	void cleanup();
+	void add();
 };
 
 class NewScopeExperimentHistory : public AbstractExperimentHistory {

@@ -91,7 +91,9 @@ void BranchExperiment::measure_update(BranchExperimentHistory* history,
 		double existing_score = this->existing_sum_score / (double)this->existing_count;
 		double new_score = this->new_sum_score / (double)this->new_count;
 
-		if (new_score > existing_score) {
+		this->improvement = new_score - existing_score;
+
+		if (this->improvement > 0.0) {
 			cout << "BranchExperiment success" << endl;
 			cout << "this->scope_context->id: " << this->scope_context->id << endl;
 			cout << "this->node_context->id: " << this->node_context->id << endl;

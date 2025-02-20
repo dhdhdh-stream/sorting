@@ -32,7 +32,14 @@ const double FACTOR_IMPACT_THRESHOLD = 0.1;
 
 // const double ACTIONS_PER_EXPERIMENT = 400.0;
 
-const int SOLUTION_RESET_ITERS = 20;
+#if defined(MDEBUG) && MDEBUG
+const int IMPROVEMENTS_PER_ITER = 2;
+#else
+const int IMPROVEMENTS_PER_ITER = 10;
+#endif /* MDEBUG */
+
+const int BRANCH_EXPERIMENTS_PER_NEW_SCOPE_EXPERIMENT = 10;
+const int NEW_SCOPE_EXPERIMENT_FAIL_LIMIT = 1000;
 
 #if defined(MDEBUG) && MDEBUG
 const int MAINTAIN_ITERS = 10;

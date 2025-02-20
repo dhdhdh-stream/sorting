@@ -57,6 +57,8 @@ public:
 	double new_sum_score;
 	int new_count;
 
+	double improvement;
+
 	std::vector<std::vector<double>> input_histories;
 	std::vector<std::vector<double>> factor_histories;
 	std::vector<double> target_val_histories;
@@ -110,7 +112,8 @@ public:
 	void measure_update(BranchExperimentHistory* history,
 						double target_val);
 
-	void finalize();
+	void cleanup();
+	void add();
 };
 
 class BranchExperimentHistory : public AbstractExperimentHistory {

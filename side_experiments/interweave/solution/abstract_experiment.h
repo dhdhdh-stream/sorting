@@ -39,7 +39,8 @@ public:
 	virtual void update(AbstractExperimentHistory* history,
 						double target_val) = 0;
 
-	virtual void finalize() = 0;
+	virtual void cleanup() = 0;
+	virtual void add() = 0;
 };
 
 class AbstractExperimentHistory {
