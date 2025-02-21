@@ -295,10 +295,6 @@ void clean_scope(Scope* scope,
 		scope->node_counter++;
 		scope->nodes[new_obs_node->id] = new_obs_node;
 
-		new_obs_node->average_instances_per_run = obs_node_needed[n_index].first->average_instances_per_run;
-
-		new_obs_node->was_commit = obs_node_needed[n_index].first->was_commit;
-
 		switch (obs_node_needed[n_index].first->type) {
 		case NODE_TYPE_ACTION:
 			{

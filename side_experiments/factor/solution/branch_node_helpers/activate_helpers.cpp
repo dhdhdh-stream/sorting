@@ -12,7 +12,6 @@
 using namespace std;
 
 void BranchNode::activate(AbstractNode*& curr_node,
-						  vector<ContextLayer>& context,
 						  RunHelper& run_helper,
 						  ScopeHistory* scope_history) {
 	BranchNodeHistory* history = new BranchNodeHistory(this);

@@ -13,22 +13,6 @@
 
 using namespace std;
 
-void update_scores(ScopeHistory* scope_history,
-				   double target_val) {
-	for (map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
-			it != scope_history->node_histories.end(); it++) {
-		it->second->node->num_measure++;
-		it->second->node->sum_score += target_val;
-
-		if (it->second->node->type == NODE_TYPE_SCOPE) {
-			ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)it->second;
-
-			update_scores(scope_node_history->scope_history,
-						  target_val);
-		}
-	}
-}
-
 void gather_possible_helper(ScopeHistory* scope_history,
 							vector<Scope*>& scope_context,
 							vector<int>& node_context,

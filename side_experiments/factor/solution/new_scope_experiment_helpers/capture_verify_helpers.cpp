@@ -15,7 +15,6 @@ void NewScopeExperiment::capture_verify_activate(
 		int location_index,
 		AbstractNode*& curr_node,
 		Problem* problem,
-		vector<ContextLayer>& context,
 		RunHelper& run_helper,
 		ScopeHistory* scope_history) {
 	if (this->verify_problems[this->state_iter] == NULL) {
@@ -30,7 +29,6 @@ void NewScopeExperiment::capture_verify_activate(
 		curr_scope_node->new_scope_capture_verify_activate(
 			curr_node,
 			problem,
-			context,
 			run_helper,
 			scope_history);
 

@@ -7,7 +7,6 @@
 
 #include "abstract_node.h"
 #include "action.h"
-#include "context_layer.h"
 #include "run_helper.h"
 
 class Problem;
@@ -26,15 +25,13 @@ public:
 	~ActionNode();
 
 	void activate(AbstractNode*& curr_node,
-				  Problem* problem);
+				  Problem* problem,
+				  RunHelper& run_helper);
 
 	void experiment_activate(AbstractNode*& curr_node,
 							 Problem* problem,
-							 std::vector<ContextLayer>& context,
 							 RunHelper& run_helper,
 							 ScopeHistory* scope_history);
-
-	void clear_experiments();
 
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file);

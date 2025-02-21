@@ -8,7 +8,6 @@ using namespace std;
 
 void ObsNode::activate(AbstractNode*& curr_node,
 					   Problem* problem,
-					   vector<ContextLayer>& context,
 					   RunHelper& run_helper,
 					   ScopeHistory* scope_history) {
 	if (this->is_used) {

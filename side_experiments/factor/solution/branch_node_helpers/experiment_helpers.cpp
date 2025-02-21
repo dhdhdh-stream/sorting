@@ -9,7 +9,6 @@ using namespace std;
 
 void BranchNode::experiment_activate(AbstractNode*& curr_node,
 									 Problem* problem,
-									 vector<ContextLayer>& context,
 									 RunHelper& run_helper,
 									 ScopeHistory* scope_history) {
 	BranchNodeHistory* history = new BranchNodeHistory(this);
@@ -55,7 +54,6 @@ void BranchNode::experiment_activate(AbstractNode*& curr_node,
 			is_branch,
 			curr_node,
 			problem,
-			context,
 			run_helper,
 			scope_history);
 	}

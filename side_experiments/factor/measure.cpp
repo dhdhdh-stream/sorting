@@ -47,11 +47,9 @@ int main(int argc, char* argv[]) {
 
 		RunHelper run_helper;
 
-		vector<ContextLayer> context;
 		ScopeHistory* scope_history = new ScopeHistory(solution->scopes[0]);
 		solution->scopes[0]->activate(
 			problem,
-			context,
 			run_helper,
 			scope_history);
 		delete scope_history;

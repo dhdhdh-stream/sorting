@@ -5,7 +5,6 @@
 #include <vector>
 
 #include "abstract_experiment.h"
-#include "context_layer.h"
 #include "run_helper.h"
 
 class AbstractNode;
@@ -66,13 +65,11 @@ public:
 	~NewScopeExperiment();
 	void decrement(AbstractNode* experiment_node);
 
-	void pre_activate(std::vector<ContextLayer>& context,
-					  RunHelper& run_helper);
+	void pre_activate(RunHelper& run_helper);
 	void activate(AbstractNode* experiment_node,
 				  bool is_branch,
 				  AbstractNode*& curr_node,
 				  Problem* problem,
-				  std::vector<ContextLayer>& context,
 				  RunHelper& run_helper,
 				  ScopeHistory* scope_history);
 	void back_activate(RunHelper& run_helper,
@@ -83,7 +80,6 @@ public:
 	void test_activate(int location_index,
 					   AbstractNode*& curr_node,
 					   Problem* problem,
-					   std::vector<ContextLayer>& context,
 					   RunHelper& run_helper,
 					   NewScopeExperimentHistory* history);
 	void test_backprop(double target_val,
@@ -93,7 +89,6 @@ public:
 	void capture_verify_activate(int location_index,
 								 AbstractNode*& curr_node,
 								 Problem* problem,
-								 std::vector<ContextLayer>& context,
 								 RunHelper& run_helper,
 								 ScopeHistory* scope_history);
 	void capture_verify_backprop();

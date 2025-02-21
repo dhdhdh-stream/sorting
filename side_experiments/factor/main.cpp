@@ -1,3 +1,5 @@
+// TODO: add randomness so will learn to adjust
+
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -47,88 +49,7 @@ int main(int argc, char* argv[]) {
 	} else {
 		filename = "main.txt";
 		solution->init();
-
-		while (true) {
-			run_index++;
-			if (run_index%100000 == 0) {
-				cout << "run_index: " << run_index << endl;
-				cout << "solution->timestamp: " << solution->timestamp << endl;
-			}
-
-			Problem* problem = problem_type->get_problem();
-
-			RunHelper run_helper;
-
-			#if defined(MDEBUG) && MDEBUG
-			run_helper.starting_run_seed = run_index;
-			run_helper.curr_run_seed = xorshift(run_helper.starting_run_seed);
-			#endif /* MDEBUG */
-
-			vector<ContextLayer> context;
-			ScopeHistory* scope_history = new ScopeHistory(solution->scopes[0]);
-			solution->scopes[0]->experiment_activate(
-					problem,
-					context,
-					run_helper,
-					scope_history);
-
-			double target_val = problem->score_result();
-			target_val -= 0.05 * run_helper.num_actions * solution->curr_time_penalty;
-			target_val -= run_helper.num_analyze * solution->curr_time_penalty;
-
-			if (run_helper.experiments_seen_order.size() == 0) {
-				create_commit_experiment(scope_history);
-			}
-
-			delete scope_history;
-			delete problem;
-
-			if (run_helper.experiment_history != NULL) {
-				for (int e_index = 0; e_index < (int)run_helper.experiments_seen_order.size(); e_index++) {
-					AbstractExperiment* experiment = run_helper.experiments_seen_order[e_index];
-					experiment->average_remaining_experiments_from_start =
-						0.9 * experiment->average_remaining_experiments_from_start
-						+ 0.1 * ((int)run_helper.experiments_seen_order.size()-1 - e_index
-							+ run_helper.experiment_history->experiment->average_remaining_experiments_from_start);
-				}
-
-				run_helper.experiment_history->experiment->backprop(
-					target_val,
-					run_helper);
-				if (run_helper.experiment_history->experiment->result == EXPERIMENT_RESULT_FAIL) {
-					run_helper.experiment_history->experiment->finalize(NULL);
-					delete run_helper.experiment_history->experiment;
-				} else if (run_helper.experiment_history->experiment->result == EXPERIMENT_RESULT_SUCCESS) {
-					int last_updated_scope_id = run_helper.experiment_history->experiment->scope_context->id;
-
-					run_helper.experiment_history->experiment->finalize(solution);
-					delete run_helper.experiment_history->experiment;
-
-					Scope* experiment_scope = solution->scopes[last_updated_scope_id];
-					clean_scope(experiment_scope,
-								solution);
-					solution->clean_scopes();
-
-					solution->clear_experiments();
-
-					ofstream display_file;
-					display_file.open("../display.txt");
-					solution->save_for_display(display_file);
-					display_file.close();
-
-					break;
-				}
-			} else {
-				for (int e_index = 0; e_index < (int)run_helper.experiments_seen_order.size(); e_index++) {
-					AbstractExperiment* experiment = run_helper.experiments_seen_order[e_index];
-					experiment->average_remaining_experiments_from_start =
-						0.9 * experiment->average_remaining_experiments_from_start
-						+ 0.1 * ((int)run_helper.experiments_seen_order.size()-1 - e_index);
-				}
-			}
-		}
-
-		// solution->save("saves/", filename);
+		solution->save("saves/", filename);
 	}
 
 	{
@@ -162,22 +83,15 @@ int main(int argc, char* argv[]) {
 			run_helper.curr_run_seed = xorshift(run_helper.starting_run_seed);
 			#endif /* MDEBUG */
 
-			vector<ContextLayer> context;
 			ScopeHistory* scope_history = new ScopeHistory(solution->scopes[0]);
 			solution->scopes[0]->experiment_activate(
 					problem,
-					context,
 					run_helper,
 					scope_history);
 
 			double target_val = problem->score_result();
 			target_val -= 0.05 * run_helper.num_actions * solution->curr_time_penalty;
 			target_val -= run_helper.num_analyze * solution->curr_time_penalty;
-
-			if (!run_helper.has_explore) {
-				update_scores(scope_history,
-							  target_val);
-			}
 
 			if (run_helper.experiments_seen_order.size() == 0) {
 				create_experiment(scope_history);
@@ -224,11 +138,9 @@ int main(int argc, char* argv[]) {
 						run_helper.curr_run_seed = xorshift(run_helper.starting_run_seed);
 						duplicate->verify_seeds.erase(duplicate->verify_seeds.begin());
 
-						vector<ContextLayer> context;
 						ScopeHistory* scope_history = new ScopeHistory(duplicate->scopes[0]);
 						duplicate->scopes[0]->verify_activate(
 							problem,
-							context,
 							run_helper,
 							scope_history);
 						delete scope_history;
@@ -251,11 +163,9 @@ int main(int argc, char* argv[]) {
 						run_index++;
 						#endif /* MDEBUG */
 
-						vector<ContextLayer> context;
 						ScopeHistory* scope_history = new ScopeHistory(duplicate->scopes[0]);
-						duplicate->scopes[0]->measure_activate(
+						duplicate->scopes[0]->activate(
 							problem,
-							context,
 							run_helper,
 							scope_history);
 						delete scope_history;
@@ -266,16 +176,6 @@ int main(int argc, char* argv[]) {
 						sum_true_score += target_val;
 
 						delete problem;
-					}
-
-					for (int s_index = 0; s_index < (int)duplicate->scopes.size(); s_index++) {
-						for (map<int, AbstractNode*>::iterator it = duplicate->scopes[s_index]->nodes.begin();
-								it != duplicate->scopes[s_index]->nodes.end(); it++) {
-							it->second->average_instances_per_run /= MEASURE_ITERS;
-							if (it->second->average_instances_per_run < 1.0) {
-								it->second->average_instances_per_run = 1.0;
-							}
-						}
 					}
 
 					duplicate->curr_score = sum_score / MEASURE_ITERS;
@@ -319,14 +219,8 @@ int main(int argc, char* argv[]) {
 					}
 
 					improvement_iter++;
-					if (solution->was_commit) {
-						if (improvement_iter >= COMMIT_IMPROVEMENTS_PER_ITER) {
-							break;
-						}
-					} else {
-						if (improvement_iter >= IMPROVEMENTS_PER_ITER) {
-							break;
-						}
+					if (improvement_iter >= IMPROVEMENTS_PER_ITER) {
+						break;
 					}
 				}
 			} else {
@@ -339,137 +233,7 @@ int main(int argc, char* argv[]) {
 			}
 		}
 
-		if (solution->was_commit) {
-			if (best_solution->curr_score < solution->curr_score) {
-				switch (solution->commit_start_node->type) {
-				case NODE_TYPE_ACTION:
-					{
-						ActionNode* action_node = (ActionNode*)solution->commit_start_node;
-						action_node->next_node = solution->commit_exit_node;
-					}
-					break;
-				case NODE_TYPE_SCOPE:
-					{
-						ScopeNode* scope_node = (ScopeNode*)solution->commit_start_node;
-						scope_node->next_node = solution->commit_exit_node;
-					}
-					break;
-				case NODE_TYPE_BRANCH:
-					{
-						BranchNode* branch_node = (BranchNode*)solution->commit_start_node;
-						if (solution->commit_is_branch) {
-							branch_node->branch_next_node = solution->commit_exit_node;
-						} else {
-							branch_node->original_next_node = solution->commit_exit_node;
-						}
-					}
-					break;
-				case NODE_TYPE_OBS:
-					{
-						ObsNode* obs_node = (ObsNode*)solution->commit_start_node;
-						obs_node->next_node = solution->commit_exit_node;
-					}
-					break;
-				}
-
-				clean_scope(solution->commit_scope,
-							solution);
-
-				solution->timestamp++;
-				solution->was_commit = false;
-			} else {
-				delete solution;
-				solution = best_solution;
-			}
-		} else {
-			delete solution;
-			solution = best_solution;
-		}
-
-		if (solution->timestamp % COMMIT_ITERS == 0
-				&& solution->timestamp != EXPLORE_ITERS) {
-			while (true) {
-				run_index++;
-				if (run_index%100000 == 0) {
-					cout << "run_index: " << run_index << endl;
-					cout << "solution->timestamp: " << solution->timestamp << endl;
-				}
-
-				Problem* problem = problem_type->get_problem();
-
-				RunHelper run_helper;
-
-				#if defined(MDEBUG) && MDEBUG
-				run_helper.starting_run_seed = run_index;
-				run_helper.curr_run_seed = xorshift(run_helper.starting_run_seed);
-				#endif /* MDEBUG */
-
-				vector<ContextLayer> context;
-				ScopeHistory* scope_history = new ScopeHistory(solution->scopes[0]);
-				solution->scopes[0]->experiment_activate(
-						problem,
-						context,
-						run_helper,
-						scope_history);
-
-				double target_val = problem->score_result();
-				target_val -= 0.05 * run_helper.num_actions * solution->curr_time_penalty;
-				target_val -= run_helper.num_analyze * solution->curr_time_penalty;
-
-				if (run_helper.experiments_seen_order.size() == 0) {
-					create_commit_experiment(scope_history);
-				}
-
-				delete scope_history;
-				delete problem;
-
-				if (run_helper.experiment_history != NULL) {
-					for (int e_index = 0; e_index < (int)run_helper.experiments_seen_order.size(); e_index++) {
-						AbstractExperiment* experiment = run_helper.experiments_seen_order[e_index];
-						experiment->average_remaining_experiments_from_start =
-							0.9 * experiment->average_remaining_experiments_from_start
-							+ 0.1 * ((int)run_helper.experiments_seen_order.size()-1 - e_index
-								+ run_helper.experiment_history->experiment->average_remaining_experiments_from_start);
-					}
-
-					run_helper.experiment_history->experiment->backprop(
-						target_val,
-						run_helper);
-					if (run_helper.experiment_history->experiment->result == EXPERIMENT_RESULT_FAIL) {
-						run_helper.experiment_history->experiment->finalize(NULL);
-						delete run_helper.experiment_history->experiment;
-					} else if (run_helper.experiment_history->experiment->result == EXPERIMENT_RESULT_SUCCESS) {
-						int last_updated_scope_id = run_helper.experiment_history->experiment->scope_context->id;
-
-						run_helper.experiment_history->experiment->finalize(solution);
-						delete run_helper.experiment_history->experiment;
-
-						Scope* experiment_scope = solution->scopes[last_updated_scope_id];
-						clean_scope(experiment_scope,
-									solution);
-						solution->clean_scopes();
-
-						solution->clear_experiments();
-
-						ofstream display_file;
-						display_file.open("../display.txt");
-						solution->save_for_display(display_file);
-						display_file.close();
-
-						break;
-					}
-				} else {
-					for (int e_index = 0; e_index < (int)run_helper.experiments_seen_order.size(); e_index++) {
-						AbstractExperiment* experiment = run_helper.experiments_seen_order[e_index];
-						experiment->average_remaining_experiments_from_start =
-							0.9 * experiment->average_remaining_experiments_from_start
-							+ 0.1 * ((int)run_helper.experiments_seen_order.size()-1 - e_index);
-					}
-				}
-			}
-		}
-
-		// solution->save("saves/", filename);
+		solution->save("saves/", filename);
 
 		#if defined(MDEBUG) && MDEBUG
 		delete solution;

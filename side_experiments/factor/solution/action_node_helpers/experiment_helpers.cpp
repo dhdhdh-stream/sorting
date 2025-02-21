@@ -12,13 +12,14 @@ using namespace std;
 
 void ActionNode::experiment_activate(AbstractNode*& curr_node,
 									 Problem* problem,
-									 vector<ContextLayer>& context,
 									 RunHelper& run_helper,
 									 ScopeHistory* scope_history) {
 	ActionNodeHistory* history = new ActionNodeHistory(this);
 	scope_history->node_histories[this->id] = history;
 
-	problem->perform_action(this->action);
+	if (!run_helper.is_random()) {
+		problem->perform_action(this->action);
+	}
 
 	curr_node = this->next_node;
 
@@ -28,7 +29,6 @@ void ActionNode::experiment_activate(AbstractNode*& curr_node,
 			false,
 			curr_node,
 			problem,
-			context,
 			run_helper,
 			scope_history);
 	}

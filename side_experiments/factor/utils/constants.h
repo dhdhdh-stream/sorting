@@ -7,14 +7,6 @@ const double MIN_STANDARD_DEVIATION = 0.00001;
 const int STEP_TYPE_ACTION = 0;
 const int STEP_TYPE_SCOPE = 1;
 
-/**
- * - select first that is significant improvement
- *   - don't select "best" as might not have been learned for actual best
- *     - so may select lottery instead of actual best
- */
-const int EXPLORE_TYPE_GOOD = 0;
-const int EXPLORE_TYPE_BEST = 1;
-
 const int GATHER_ITERS = 10;
 const int GATHER_FACTORS_PER_ITER = 5;
 /**
@@ -23,6 +15,12 @@ const int GATHER_FACTORS_PER_ITER = 5;
  */
 
 const double TEST_SAMPLES_PERCENTAGE = 0.2;
+
+/**
+ * - when there's correlation, weights can get strange values(?)
+ */
+const double REGRESSION_WEIGHT_LIMIT = 100000.0;
+const double REGRESSION_FAIL_MULTIPLIER = 1000.0;
 
 const double FACTOR_IMPACT_THRESHOLD = 0.1;
 
@@ -44,14 +42,6 @@ const int EXPLORE_ITERS = 80;
 const int IMPROVEMENTS_PER_ITER = 2;
 #else
 const int IMPROVEMENTS_PER_ITER = 20;
-#endif /* MDEBUG */
-
-#if defined(MDEBUG) && MDEBUG
-const int COMMIT_ITERS = 4;
-const int COMMIT_IMPROVEMENTS_PER_ITER = 10;
-#else
-const int COMMIT_ITERS = 10;
-const int COMMIT_IMPROVEMENTS_PER_ITER = 80;
 #endif /* MDEBUG */
 
 #if defined(MDEBUG) && MDEBUG

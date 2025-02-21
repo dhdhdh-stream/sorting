@@ -11,13 +11,6 @@ using namespace std;
 
 ScopeNode::ScopeNode() {
 	this->type = NODE_TYPE_SCOPE;
-
-	this->average_instances_per_run = 0.0;
-
-	this->was_commit = false;
-
-	this->num_measure = 0;
-	this->sum_score = 0.0;
 }
 
 ScopeNode::ScopeNode(ScopeNode* original,
@@ -29,26 +22,12 @@ ScopeNode::ScopeNode(ScopeNode* original,
 	this->next_node_id = original->next_node_id;
 
 	this->ancestor_ids = original->ancestor_ids;
-
-	this->average_instances_per_run = 0.0;
-
-	this->was_commit = false;
-
-	this->num_measure = 0;
-	this->sum_score = 0.0;
 }
 
 ScopeNode::~ScopeNode() {
 	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
 		this->experiments[e_index]->decrement(this);
 	}
-}
-
-void ScopeNode::clear_experiments() {
-	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
-		this->experiments[e_index]->decrement(this);
-	}
-	this->experiments.clear();
 }
 
 void ScopeNode::save(ofstream& output_file) {
@@ -60,10 +39,6 @@ void ScopeNode::save(ofstream& output_file) {
 	for (int a_index = 0; a_index < (int)this->ancestor_ids.size(); a_index++) {
 		output_file << this->ancestor_ids[a_index] << endl;
 	}
-
-	output_file << this->average_instances_per_run << endl;
-
-	output_file << this->was_commit << endl;
 }
 
 void ScopeNode::load(ifstream& input_file,
@@ -84,14 +59,6 @@ void ScopeNode::load(ifstream& input_file,
 		getline(input_file, ancestor_id_line);
 		this->ancestor_ids.push_back(stoi(ancestor_id_line));
 	}
-
-	string average_instances_per_run_line;
-	getline(input_file, average_instances_per_run_line);
-	this->average_instances_per_run = stod(average_instances_per_run_line);
-
-	string was_commit_line;
-	getline(input_file, was_commit_line);
-	this->was_commit = stoi(was_commit_line);
 }
 
 void ScopeNode::link(Solution* parent_solution) {

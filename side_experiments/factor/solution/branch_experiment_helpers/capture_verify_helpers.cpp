@@ -14,15 +14,12 @@ using namespace std;
 
 void BranchExperiment::capture_verify_activate(AbstractNode*& curr_node,
 											   Problem* problem,
-											   vector<ContextLayer>& context,
 											   RunHelper& run_helper,
 											   ScopeHistory* scope_history) {
 	if (this->verify_problems[this->state_iter] == NULL) {
 		this->verify_problems[this->state_iter] = problem->copy_and_reset();
 	}
 	this->verify_seeds[this->state_iter] = run_helper.starting_run_seed;
-
-	run_helper.has_explore = true;
 
 	double sum_vals = this->new_average_score;
 	for (int f_index = 0; f_index < (int)this->new_factor_ids.size(); f_index++) {
@@ -40,15 +37,6 @@ void BranchExperiment::capture_verify_activate(AbstractNode*& curr_node,
 	cout << "run_helper.curr_run_seed: " << run_helper.curr_run_seed << endl;
 	problem->print();
 
-	cout << "context scope" << endl;
-	for (int c_index = 0; c_index < (int)context.size()-1; c_index++) {
-		cout << c_index << ": " << context[c_index].scope->id << endl;
-	}
-	cout << "context node" << endl;
-	for (int c_index = 0; c_index < (int)context.size()-1; c_index++) {
-		cout << c_index << ": " << context[c_index].node_id << endl;
-	}
-
 	bool decision_is_branch;
 	if (run_helper.curr_run_seed%2 == 0) {
 		decision_is_branch = true;
@@ -64,11 +52,8 @@ void BranchExperiment::capture_verify_activate(AbstractNode*& curr_node,
 			if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 				problem->perform_action(this->best_actions[s_index]);
 			} else {
-				context.back().node_id = -1;
-
 				ScopeHistory* inner_scope_history = new ScopeHistory(this->best_scopes[s_index]);
 				this->best_scopes[s_index]->activate(problem,
-					context,
 					run_helper,
 					inner_scope_history);
 				delete inner_scope_history;

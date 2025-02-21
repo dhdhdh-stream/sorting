@@ -42,13 +42,7 @@ public:
 
 	std::vector<Scope*> scopes;
 
-	int num_existing_scopes;
-
-	bool was_commit;
-	Scope* commit_scope;
-	AbstractNode* commit_start_node;
-	bool commit_is_branch;
-	AbstractNode* commit_exit_node;
+	std::vector<Scope*> existing_scopes;
 
 	#if defined(MDEBUG) && MDEBUG
 	std::vector<Problem*> verify_problems;
@@ -70,8 +64,6 @@ public:
 	void clean_inputs(Scope* scope,
 					  int node_id);
 	void clean_scopes();
-
-	void clear_experiments();
 
 	void save(std::string path,
 			  std::string name);

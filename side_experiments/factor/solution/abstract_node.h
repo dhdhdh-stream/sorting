@@ -27,16 +27,7 @@ public:
 
 	std::vector<AbstractExperiment*> experiments;
 
-	double average_instances_per_run;
-
-	bool was_commit;
-
-	int num_measure;
-	double sum_score;
-
 	virtual ~AbstractNode() {};
-
-	virtual void clear_experiments() = 0;
 
 	virtual void save(std::ofstream& output_file) = 0;
 	virtual void link(Solution* parent_solution) = 0;

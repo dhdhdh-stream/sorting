@@ -2,7 +2,6 @@
 #define BRANCH_NODE_H
 
 #include "abstract_node.h"
-#include "context_layer.h"
 #include "run_helper.h"
 
 #include <fstream>
@@ -36,30 +35,21 @@ public:
 	~BranchNode();
 
 	void activate(AbstractNode*& curr_node,
-				  std::vector<ContextLayer>& context,
 				  RunHelper& run_helper,
 				  ScopeHistory* scope_history);
 
 	void experiment_activate(AbstractNode*& curr_node,
 							 Problem* problem,
-							 std::vector<ContextLayer>& context,
 							 RunHelper& run_helper,
 							 ScopeHistory* scope_history);
-
-	void new_scope_activate(AbstractNode*& curr_node,
-							std::vector<ContextLayer>& context,
-							RunHelper& run_helper,
-							ScopeHistory* scope_history);
 
 	#if defined(MDEBUG) && MDEBUG
 	void verify_activate(AbstractNode*& curr_node,
 						 Problem* problem,
-						 std::vector<ContextLayer>& context,
 						 RunHelper& run_helper,
 						 ScopeHistory* scope_history);
 	void new_scope_capture_verify_activate(AbstractNode*& curr_node,
 										   Problem* problem,
-										   std::vector<ContextLayer>& context,
 										   RunHelper& run_helper,
 										   ScopeHistory* scope_history);
 	void clear_verify();
@@ -68,8 +58,6 @@ public:
 	void clean_inputs(Scope* scope,
 					  int node_id);
 	void clean_inputs(Scope* scope);
-
-	void clear_experiments();
 
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file);

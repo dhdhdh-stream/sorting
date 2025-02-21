@@ -5,13 +5,11 @@
 #include <map>
 #include <vector>
 
-#include "context_layer.h"
 #include "run_helper.h"
 
 class AbstractNode;
 class AbstractNodeHistory;
 class NewScopeExperiment;
-class PotentialCommit;
 class Problem;
 class Solution;
 
@@ -24,7 +22,6 @@ public:
 	std::map<int, AbstractNode*> nodes;
 
 	std::vector<Scope*> child_scopes;
-	std::vector<Scope*> existing_scopes;
 
 	/**
 	 * - tie NewScopeExperiment to scope instead of node
@@ -36,12 +33,10 @@ public:
 	~Scope();
 
 	void activate(Problem* problem,
-				  std::vector<ContextLayer>& context,
 				  RunHelper& run_helper,
 				  ScopeHistory* scope_history);
 
 	void experiment_activate(Problem* problem,
-							 std::vector<ContextLayer>& context,
 							 RunHelper& run_helper,
 							 ScopeHistory* scope_history);
 
@@ -51,23 +46,11 @@ public:
 						 int num_following,
 						 std::set<AbstractNode*>& potential_included_nodes);
 
-	void new_scope_activate(Problem* problem,
-							std::vector<ContextLayer>& context,
-							RunHelper& run_helper,
-							ScopeHistory* scope_history);
-
-	void measure_activate(Problem* problem,
-						  std::vector<ContextLayer>& context,
-						  RunHelper& run_helper,
-						  ScopeHistory* scope_history);
-
 	#if defined(MDEBUG) && MDEBUG
 	void new_scope_capture_verify_activate(Problem* problem,
-										   std::vector<ContextLayer>& context,
 										   RunHelper& run_helper,
 										   ScopeHistory* scope_history);
 	void verify_activate(Problem* problem,
-						 std::vector<ContextLayer>& context,
 						 RunHelper& run_helper,
 						 ScopeHistory* scope_history);
 	void clear_verify();
@@ -76,8 +59,6 @@ public:
 	void clean_inputs(Scope* scope,
 					  int node_id);
 	void clean_inputs(Scope* scope);
-
-	void clear_experiments();
 
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file,

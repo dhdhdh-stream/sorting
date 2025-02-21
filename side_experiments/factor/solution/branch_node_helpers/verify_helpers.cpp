@@ -14,7 +14,6 @@ using namespace std;
 
 void BranchNode::verify_activate(AbstractNode*& curr_node,
 								 Problem* problem,
-								 vector<ContextLayer>& context,
 								 RunHelper& run_helper,
 								 ScopeHistory* scope_history) {
 	BranchNodeHistory* history = new BranchNodeHistory(this);
@@ -36,15 +35,6 @@ void BranchNode::verify_activate(AbstractNode*& curr_node,
 		cout << "run_helper.starting_run_seed: " << run_helper.starting_run_seed << endl;
 		cout << "run_helper.curr_run_seed: " << run_helper.curr_run_seed << endl;
 		problem->print();
-
-		cout << "context scope" << endl;
-		for (int c_index = 0; c_index < (int)context.size()-1; c_index++) {
-			cout << c_index << ": " << context[c_index].scope->id << endl;
-		}
-		cout << "context node" << endl;
-		for (int c_index = 0; c_index < (int)context.size()-1; c_index++) {
-			cout << c_index << ": " << context[c_index].node_id << endl;
-		}
 
 		if (this->verify_scores[0] != sum_vals) {
 			cout << "this->verify_scores[0]: " << this->verify_scores[0] << endl;

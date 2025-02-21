@@ -16,7 +16,6 @@ void BranchExperiment::activate(AbstractNode* experiment_node,
 								bool is_branch,
 								AbstractNode*& curr_node,
 								Problem* problem,
-								vector<ContextLayer>& context,
 								RunHelper& run_helper,
 								ScopeHistory* scope_history) {
 	bool is_selected = false;
@@ -61,7 +60,6 @@ void BranchExperiment::activate(AbstractNode* experiment_node,
 		case BRANCH_EXPERIMENT_STATE_EXPLORE:
 			explore_activate(curr_node,
 							 problem,
-							 context,
 							 run_helper,
 							 scope_history,
 							 history);
@@ -72,7 +70,6 @@ void BranchExperiment::activate(AbstractNode* experiment_node,
 		case BRANCH_EXPERIMENT_STATE_TRAIN_NEW:
 			train_new_activate(curr_node,
 							   problem,
-							   context,
 							   run_helper,
 							   scope_history,
 							   history);
@@ -81,7 +78,6 @@ void BranchExperiment::activate(AbstractNode* experiment_node,
 		case BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY:
 			capture_verify_activate(curr_node,
 									problem,
-									context,
 									run_helper,
 									scope_history);
 			break;

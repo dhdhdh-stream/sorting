@@ -9,7 +9,6 @@ using namespace std;
 
 void ObsNode::experiment_activate(AbstractNode*& curr_node,
 								  Problem* problem,
-								  vector<ContextLayer>& context,
 								  RunHelper& run_helper,
 								  ScopeHistory* scope_history) {
 	ObsNodeHistory* history = new ObsNodeHistory(this);
@@ -29,7 +28,6 @@ void ObsNode::experiment_activate(AbstractNode*& curr_node,
 			false,
 			curr_node,
 			problem,
-			context,
 			run_helper,
 			scope_history);
 	}

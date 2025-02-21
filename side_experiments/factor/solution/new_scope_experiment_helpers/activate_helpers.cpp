@@ -11,8 +11,7 @@
 
 using namespace std;
 
-void NewScopeExperiment::pre_activate(vector<ContextLayer>& context,
-									  RunHelper& run_helper) {
+void NewScopeExperiment::pre_activate(RunHelper& run_helper) {
 	if (run_helper.experiment_history == NULL) {
 		bool has_seen = false;
 		for (int e_index = 0; e_index < (int)run_helper.experiments_seen_order.size(); e_index++) {
@@ -37,7 +36,6 @@ void NewScopeExperiment::activate(AbstractNode* experiment_node,
 								  bool is_branch,
 								  AbstractNode*& curr_node,
 								  Problem* problem,
-								  vector<ContextLayer>& context,
 								  RunHelper& run_helper,
 								  ScopeHistory* scope_history) {
 	if (run_helper.experiment_history != NULL
@@ -77,15 +75,13 @@ void NewScopeExperiment::activate(AbstractNode* experiment_node,
 						test_activate(location_index,
 									  curr_node,
 									  problem,
-									  context,
 									  run_helper,
 									  history);
 					}
 				} else {
-					this->successful_scope_nodes[location_index]->new_scope_activate(
+					this->successful_scope_nodes[location_index]->experiment_activate(
 						curr_node,
 						problem,
-						context,
 						run_helper,
 						scope_history);
 				}
@@ -95,7 +91,6 @@ void NewScopeExperiment::activate(AbstractNode* experiment_node,
 				capture_verify_activate(location_index,
 										curr_node,
 										problem,
-										context,
 										run_helper,
 										scope_history);
 				break;

@@ -5,7 +5,6 @@
 
 #include "abstract_experiment.h"
 #include "action.h"
-#include "context_layer.h"
 #include "run_helper.h"
 
 class Scope;
@@ -25,6 +24,8 @@ public:
 	int state;
 	int state_iter;
 
+	int sum_num_instances;
+
 	std::vector<std::pair<std::pair<std::vector<Scope*>,std::vector<int>>,
 		std::pair<int,int>>> existing_inputs;
 	std::vector<std::pair<int,int>> existing_factor_ids;
@@ -32,9 +33,8 @@ public:
 	double existing_average_score;
 	std::vector<double> existing_factor_weights;
 
+	double average_instances_per_run;
 	int num_instances_until_target;
-
-	int explore_type;
 
 	std::vector<int> curr_step_types;
 	std::vector<Action> curr_actions;
@@ -47,11 +47,11 @@ public:
 	std::vector<Scope*> best_scopes;
 	AbstractNode* best_exit_next_node;
 
-	double new_average_score;
 	std::vector<std::pair<std::pair<std::vector<Scope*>,std::vector<int>>,
 		std::pair<int,int>>> new_inputs;
-
 	std::vector<std::pair<int,int>> new_factor_ids;
+
+	double new_average_score;
 	std::vector<double> new_factor_weights;
 
 	double select_percentage;
@@ -76,7 +76,6 @@ public:
 				  bool is_branch,
 				  AbstractNode*& curr_node,
 				  Problem* problem,
-				  std::vector<ContextLayer>& context,
 				  RunHelper& run_helper,
 				  ScopeHistory* scope_history);
 	void backprop(double target_val,
@@ -93,7 +92,6 @@ public:
 
 	void explore_activate(AbstractNode*& curr_node,
 						  Problem* problem,
-						  std::vector<ContextLayer>& context,
 						  RunHelper& run_helper,
 						  ScopeHistory* scope_history,
 						  BranchExperimentHistory* history);
@@ -105,7 +103,6 @@ public:
 
 	void train_new_activate(AbstractNode*& curr_node,
 							Problem* problem,
-							std::vector<ContextLayer>& context,
 							RunHelper& run_helper,
 							ScopeHistory* scope_history,
 							BranchExperimentHistory* history);
@@ -115,7 +112,6 @@ public:
 	#if defined(MDEBUG) && MDEBUG
 	void capture_verify_activate(AbstractNode*& curr_node,
 								 Problem* problem,
-								 std::vector<ContextLayer>& context,
 								 RunHelper& run_helper,
 								 ScopeHistory* scope_history);
 	void capture_verify_backprop();

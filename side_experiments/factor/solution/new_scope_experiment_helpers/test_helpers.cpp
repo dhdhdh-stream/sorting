@@ -22,7 +22,6 @@ void NewScopeExperiment::test_activate(
 		int location_index,
 		AbstractNode*& curr_node,
 		Problem* problem,
-		vector<ContextLayer>& context,
 		RunHelper& run_helper,
 		NewScopeExperimentHistory* history) {
 	history->test_location_index = location_index;
@@ -32,15 +31,10 @@ void NewScopeExperiment::test_activate(
 	case LOCATION_STATE_VERIFY_NEW_1ST:
 	case LOCATION_STATE_VERIFY_NEW_2ND:
 		{
-			run_helper.has_explore = true;
-
-			context.back().node_id = -1;
-
 			ScopeHistory* inner_scope_history = new ScopeHistory(this->new_scope);
-			this->new_scope->new_scope_activate(problem,
-												context,
-												run_helper,
-												inner_scope_history);
+			this->new_scope->experiment_activate(problem,
+												 run_helper,
+												 inner_scope_history);
 			delete inner_scope_history;
 
 			curr_node = this->test_location_exits[location_index];

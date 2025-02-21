@@ -15,13 +15,6 @@ BranchNode::BranchNode() {
 	this->type = NODE_TYPE_BRANCH;
 
 	this->is_used = false;
-
-	this->average_instances_per_run = 0.0;
-
-	this->was_commit = false;
-
-	this->num_measure = 0;
-	this->sum_score = 0.0;
 }
 
 BranchNode::BranchNode(BranchNode* original) {
@@ -37,13 +30,6 @@ BranchNode::BranchNode(BranchNode* original) {
 	this->branch_next_node_id = original->branch_next_node_id;
 
 	this->ancestor_ids = original->ancestor_ids;
-
-	this->average_instances_per_run = 0.0;
-
-	this->was_commit = false;
-
-	this->num_measure = 0;
-	this->sum_score = 0.0;
 
 	#if defined(MDEBUG) && MDEBUG
 	this->verify_key = NULL;
@@ -79,13 +65,6 @@ void BranchNode::clean_inputs(Scope* scope,
 	}
 }
 
-void BranchNode::clear_experiments() {
-	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
-		this->experiments[e_index]->decrement(this);
-	}
-	this->experiments.clear();
-}
-
 void BranchNode::save(ofstream& output_file) {
 	output_file << this->average_val << endl;
 	output_file << this->factor_ids.size() << endl;
@@ -102,10 +81,6 @@ void BranchNode::save(ofstream& output_file) {
 	for (int a_index = 0; a_index < (int)this->ancestor_ids.size(); a_index++) {
 		output_file << this->ancestor_ids[a_index] << endl;
 	}
-
-	output_file << this->average_instances_per_run << endl;
-
-	output_file << this->was_commit << endl;
 }
 
 void BranchNode::load(ifstream& input_file) {
@@ -148,14 +123,6 @@ void BranchNode::load(ifstream& input_file) {
 		getline(input_file, ancestor_id_line);
 		this->ancestor_ids.push_back(stoi(ancestor_id_line));
 	}
-
-	string average_instances_per_run_line;
-	getline(input_file, average_instances_per_run_line);
-	this->average_instances_per_run = stod(average_instances_per_run_line);
-
-	string was_commit_line;
-	getline(input_file, was_commit_line);
-	this->was_commit = stoi(was_commit_line);
 }
 
 void BranchNode::link(Solution* parent_solution) {
