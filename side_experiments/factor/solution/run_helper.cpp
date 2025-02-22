@@ -26,24 +26,25 @@ RunHelper::~RunHelper() {
 }
 
 bool RunHelper::is_random() {
-	#if defined(MDEBUG) && MDEBUG
-	bool result;
-	if (this->can_random) {
-		if (this->curr_run_seed % 5 == 0) {
-			result = true;
-		} else {
-			result = false;
-		}
-		this->curr_run_seed = xorshift(this->curr_run_seed);
-	} else {
-		result = false;
-	}
-	return result;
-	#else
-	if (this->can_random) {
-		return this->random_distribution(generator) == 0;
-	} else {
-		return false;
-	}
-	#endif /* MDEBUG */
+	// #if defined(MDEBUG) && MDEBUG
+	// bool result;
+	// if (this->can_random) {
+	// 	if (this->curr_run_seed % 20 == 0) {
+	// 		result = true;
+	// 	} else {
+	// 		result = false;
+	// 	}
+	// 	this->curr_run_seed = xorshift(this->curr_run_seed);
+	// } else {
+	// 	result = false;
+	// }
+	// return result;
+	// #else
+	// if (this->can_random) {
+	// 	return this->random_distribution(generator) == 0;
+	// } else {
+	// 	return false;
+	// }
+	// #endif /* MDEBUG */
+	return false;
 }

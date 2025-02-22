@@ -78,7 +78,11 @@ int main(int argc, char* argv[]) {
 			target_val -= run_helper.num_analyze * solution->curr_time_penalty;
 
 			if (run_helper.experiments_seen_order.size() == 0) {
-				create_experiment(scope_history);
+				if ((solution->timestamp + 1) % NEW_SCOPE_ITERS == 0) {
+					create_new_scope_experiment(scope_history);
+				} else {
+					create_branch_experiment(scope_history);
+				}
 			}
 
 			delete scope_history;
@@ -187,6 +191,9 @@ int main(int argc, char* argv[]) {
 				}
 			}
 		}
+
+		delete solution;
+		solution = best_solution;
 
 		solution->save(path, filename);
 	}

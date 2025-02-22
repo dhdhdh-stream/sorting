@@ -15,6 +15,8 @@ BranchNode::BranchNode() {
 	this->type = NODE_TYPE_BRANCH;
 
 	this->is_used = false;
+
+	this->experiment = NULL;
 }
 
 BranchNode::BranchNode(BranchNode* original) {
@@ -31,14 +33,16 @@ BranchNode::BranchNode(BranchNode* original) {
 
 	this->ancestor_ids = original->ancestor_ids;
 
+	this->experiment = NULL;
+
 	#if defined(MDEBUG) && MDEBUG
 	this->verify_key = NULL;
 	#endif /* MDEBUG */
 }
 
 BranchNode::~BranchNode() {
-	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
-		this->experiments[e_index]->decrement(this);
+	if (this->experiment != NULL) {
+		this->experiment->decrement(this);
 	}
 }
 

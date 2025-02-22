@@ -31,8 +31,8 @@ void ScopeNode::new_scope_capture_verify_activate(
 	/**
 	 * - still need to check experiments
 	 */
-	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
-		this->experiments[e_index]->activate(
+	if (this->experiment != NULL) {
+		this->experiment->activate(
 			this,
 			false,
 			curr_node,

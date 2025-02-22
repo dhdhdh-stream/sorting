@@ -78,7 +78,7 @@ void Solution::init() {
 	Scope* new_scope = new Scope();
 	new_scope->id = this->scopes.size();
 	new_scope->node_counter = 0;
-	this->scopes.push_back(new_scope);
+	this->scopes.insert(this->scopes.begin(), new_scope);
 
 	ObsNode* starting_node = new ObsNode();
 	starting_node->parent = new_scope;
@@ -114,7 +114,8 @@ void Solution::init() {
 			new_scope->node_counter++;
 			new_scope->nodes[new_action_node->id] = new_action_node;
 
-			new_action_node->action = problem_type->random_action();
+			uniform_int_distribution<int> action_distribution(0, problem_type->num_possible_actions()-1);
+			new_action_node->action = Action(action_distribution(generator));
 
 			ObsNode* obs_node = (ObsNode*)prev_node;
 			obs_node->next_node_id = new_action_node->id;

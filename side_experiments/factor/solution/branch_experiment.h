@@ -63,6 +63,7 @@ public:
 	#if defined(MDEBUG) && MDEBUG
 	std::vector<Problem*> verify_problems;
 	std::vector<unsigned long> verify_seeds;
+	std::vector<bool> verify_can_random;
 	std::vector<double> verify_scores;
 	#endif /* MDEBUG */
 

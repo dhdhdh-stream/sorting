@@ -11,6 +11,8 @@ using namespace std;
 
 ScopeNode::ScopeNode() {
 	this->type = NODE_TYPE_SCOPE;
+
+	this->experiment = NULL;
 }
 
 ScopeNode::ScopeNode(ScopeNode* original,
@@ -22,11 +24,13 @@ ScopeNode::ScopeNode(ScopeNode* original,
 	this->next_node_id = original->next_node_id;
 
 	this->ancestor_ids = original->ancestor_ids;
+
+	this->experiment = NULL;
 }
 
 ScopeNode::~ScopeNode() {
-	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
-		this->experiments[e_index]->decrement(this);
+	if (this->experiment != NULL) {
+		this->experiment->decrement(this);
 	}
 }
 

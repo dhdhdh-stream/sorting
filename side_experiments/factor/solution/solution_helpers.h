@@ -14,7 +14,8 @@ class ScopeHistory;
 class ScopeNode;
 class Solution;
 
-void create_experiment(ScopeHistory* scope_history);
+void create_branch_experiment(ScopeHistory* scope_history);
+void create_new_scope_experiment(ScopeHistory* scope_history);
 
 void gather_possible_helper(ScopeHistory* scope_history,
 							std::vector<Scope*>& scope_context,

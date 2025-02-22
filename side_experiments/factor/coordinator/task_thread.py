@@ -3,7 +3,7 @@ import paramiko
 import select
 import time
 
-EXPLORE_ITERS = 80
+EXPLORE_ITERS = 60
 
 class TaskThread:
 	def __init__(self, worker, tasknode, index):
@@ -52,7 +52,7 @@ class TaskThread:
 				temp_client_sftp.get('distributed/' + self.tasknode.filenames[self.index], 'saves/temp_' + self.tasknode.filenames[self.index])
 				os.rename('saves/temp_' + self.tasknode.filenames[self.index], 'saves/' + self.tasknode.filenames[self.index])
 
-				if self.curr_iter == EXPLORE_ITERS:
+				if self.curr_iter >= EXPLORE_ITERS:
 					temp_client_sftp.remove('distributed/' + self.tasknode.filenames[self.index])
 
 				temp_client_sftp.close()
@@ -65,7 +65,7 @@ class TaskThread:
 			print('l' + str(self.tasknode.layer) + ' ' + self.worker[0] + ' ' + self.tasknode.filenames[self.index])
 			print(message)
 
-			if len(message) == 0 and self.curr_iter != EXPLORE_ITERS:
+			if len(message) == 0 and self.curr_iter < EXPLORE_ITERS:
 				print('worker ' + self.worker[0] + ' ' + self.tasknode.filenames[self.index] + ' failed')
 				exit(1)
 

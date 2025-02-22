@@ -25,8 +25,8 @@ void ScopeNode::experiment_activate(AbstractNode*& curr_node,
 
 	curr_node = this->next_node;
 
-	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
-		this->experiments[e_index]->activate(
+	if (this->experiment != NULL) {
+		this->experiment->activate(
 			this,
 			false,
 			curr_node,

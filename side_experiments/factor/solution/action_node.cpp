@@ -9,6 +9,8 @@ using namespace std;
 
 ActionNode::ActionNode() {
 	this->type = NODE_TYPE_ACTION;
+
+	this->experiment = NULL;
 }
 
 ActionNode::ActionNode(ActionNode* original) {
@@ -19,11 +21,13 @@ ActionNode::ActionNode(ActionNode* original) {
 	this->next_node_id = original->next_node_id;
 
 	this->ancestor_ids = original->ancestor_ids;
+
+	this->experiment = NULL;
 }
 
 ActionNode::~ActionNode() {
-	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
-		this->experiments[e_index]->decrement(this);
+	if (this->experiment != NULL) {
+		this->experiment->decrement(this);
 	}
 }
 

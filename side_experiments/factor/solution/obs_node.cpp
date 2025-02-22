@@ -12,6 +12,8 @@ ObsNode::ObsNode() {
 	this->type = NODE_TYPE_OBS;
 
 	this->is_used = false;
+
+	this->experiment = NULL;
 }
 
 ObsNode::ObsNode(ObsNode* original,
@@ -29,6 +31,8 @@ ObsNode::ObsNode(ObsNode* original,
 	this->next_node_id = original->next_node_id;
 
 	this->ancestor_ids = original->ancestor_ids;
+
+	this->experiment = NULL;
 }
 
 ObsNode::~ObsNode() {
@@ -36,8 +40,8 @@ ObsNode::~ObsNode() {
 		delete this->factors[f_index];
 	}
 
-	for (int e_index = 0; e_index < (int)this->experiments.size(); e_index++) {
-		this->experiments[e_index]->decrement(this);
+	if (this->experiment != NULL) {
+		this->experiment->decrement(this);
 	}
 }
 

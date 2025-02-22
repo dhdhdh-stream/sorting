@@ -171,19 +171,7 @@ void NewScopeExperiment::test_backprop(
 	}
 
 	if (is_fail) {
-		int experiment_index;
-		for (int e_index = 0; e_index < (int)this->test_location_starts[history->test_location_index]->experiments.size(); e_index++) {
-			if (this->test_location_starts[history->test_location_index]->experiments[e_index] == this) {
-				experiment_index = e_index;
-				break;
-			}
-		}
-		this->test_location_starts[history->test_location_index]->experiments.erase(
-			this->test_location_starts[history->test_location_index]->experiments.begin() + experiment_index);
-		/**
-		 * - can simply remove first
-		 */
-
+		this->test_location_starts[history->test_location_index]->experiment = NULL;
 		this->test_location_starts.erase(this->test_location_starts.begin() + history->test_location_index);
 		this->test_location_is_branch.erase(this->test_location_is_branch.begin() + history->test_location_index);
 		this->test_location_exits.erase(this->test_location_exits.begin() + history->test_location_index);
@@ -206,14 +194,7 @@ void NewScopeExperiment::test_backprop(
 	if (this->successful_location_starts.size() >= NEW_SCOPE_NUM_LOCATIONS) {
 		#if defined(MDEBUG) && MDEBUG
 		for (int t_index = 0; t_index < (int)this->test_location_starts.size(); t_index++) {
-			int experiment_index;
-			for (int e_index = 0; e_index < (int)this->test_location_starts[t_index]->experiments.size(); e_index++) {
-				if (this->test_location_starts[t_index]->experiments[e_index] == this) {
-					experiment_index = e_index;
-					break;
-				}
-			}
-			this->test_location_starts[t_index]->experiments.erase(this->test_location_starts[t_index]->experiments.begin() + experiment_index);
+			this->test_location_starts[t_index]->experiment = NULL;
 		}
 		this->test_location_starts.clear();
 		this->test_location_is_branch.clear();
@@ -225,6 +206,7 @@ void NewScopeExperiment::test_backprop(
 
 		this->verify_problems = vector<Problem*>(NUM_VERIFY_SAMPLES, NULL);
 		this->verify_seeds = vector<unsigned long>(NUM_VERIFY_SAMPLES);
+		this->verify_can_random = vector<bool>(NUM_VERIFY_SAMPLES);
 
 		this->state = NEW_SCOPE_EXPERIMENT_STATE_CAPTURE_VERIFY;
 		this->state_iter = 0;

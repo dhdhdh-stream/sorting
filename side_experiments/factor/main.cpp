@@ -1,5 +1,3 @@
-// TODO: add randomness so will learn to adjust
-
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -94,7 +92,11 @@ int main(int argc, char* argv[]) {
 			target_val -= run_helper.num_analyze * solution->curr_time_penalty;
 
 			if (run_helper.experiments_seen_order.size() == 0) {
-				create_experiment(scope_history);
+				if ((solution->timestamp + 1) % NEW_SCOPE_ITERS == 0) {
+					create_new_scope_experiment(scope_history);
+				} else {
+					create_branch_experiment(scope_history);
+				}
 			}
 
 			delete scope_history;
@@ -137,6 +139,8 @@ int main(int argc, char* argv[]) {
 						cout << "run_helper.starting_run_seed: " << run_helper.starting_run_seed << endl;
 						run_helper.curr_run_seed = xorshift(run_helper.starting_run_seed);
 						duplicate->verify_seeds.erase(duplicate->verify_seeds.begin());
+						run_helper.can_random = duplicate->verify_can_random[0];
+						duplicate->verify_can_random.erase(duplicate->verify_can_random.begin());
 
 						ScopeHistory* scope_history = new ScopeHistory(duplicate->scopes[0]);
 						duplicate->scopes[0]->verify_activate(
@@ -233,7 +237,10 @@ int main(int argc, char* argv[]) {
 			}
 		}
 
-		solution->save("saves/", filename);
+		delete solution;
+		solution = best_solution;
+
+		// solution->save("saves/", filename);
 
 		#if defined(MDEBUG) && MDEBUG
 		delete solution;

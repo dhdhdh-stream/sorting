@@ -18,24 +18,10 @@ void NewScopeExperiment::finalize(Solution* duplicate) {
 	parent_scope->new_scope_experiment = NULL;
 
 	for (int t_index = 0; t_index < (int)this->test_location_starts.size(); t_index++) {
-		int experiment_index;
-		for (int e_index = 0; e_index < (int)this->test_location_starts[t_index]->experiments.size(); e_index++) {
-			if (this->test_location_starts[t_index]->experiments[e_index] == this) {
-				experiment_index = e_index;
-				break;
-			}
-		}
-		this->test_location_starts[t_index]->experiments.erase(this->test_location_starts[t_index]->experiments.begin() + experiment_index);
+		this->test_location_starts[t_index]->experiment = NULL;
 	}
 	for (int s_index = 0; s_index < (int)this->successful_location_starts.size(); s_index++) {
-		int experiment_index;
-		for (int e_index = 0; e_index < (int)this->successful_location_starts[s_index]->experiments.size(); e_index++) {
-			if (this->successful_location_starts[s_index]->experiments[e_index] == this) {
-				experiment_index = e_index;
-				break;
-			}
-		}
-		this->successful_location_starts[s_index]->experiments.erase(this->successful_location_starts[s_index]->experiments.begin() + experiment_index);
+		this->successful_location_starts[s_index]->experiment = NULL;
 	}
 
 	if (this->result == EXPERIMENT_RESULT_SUCCESS) {
@@ -120,6 +106,7 @@ void NewScopeExperiment::finalize(Solution* duplicate) {
 		duplicate->verify_problems = this->verify_problems;
 		this->verify_problems.clear();
 		duplicate->verify_seeds = this->verify_seeds;
+		duplicate->verify_can_random = this->verify_can_random;
 		#endif /* MDEBUG */
 
 		clean_scope(this->new_scope,

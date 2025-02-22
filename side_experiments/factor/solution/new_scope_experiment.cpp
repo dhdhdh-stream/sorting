@@ -386,7 +386,7 @@ NewScopeExperiment::~NewScopeExperiment() {
 		/**
 		 * - prevent recursive delete
 		 */
-		this->successful_scope_nodes[s_index]->experiments.clear();
+		this->successful_scope_nodes[s_index]->experiment = NULL;
 
 		delete this->successful_scope_nodes[s_index];
 	}
@@ -449,4 +449,5 @@ NewScopeExperimentHistory::NewScopeExperimentHistory(
 	this->test_location_index = -1;
 
 	this->instance_count = 0;
+	this->potential_start = NULL;
 }

@@ -36,7 +36,7 @@ const int MEASURE_ITERS = 10;
 const int MEASURE_ITERS = 4000;
 #endif /* MDEBUG */
 
-const int EXPLORE_ITERS = 80;
+const int EXPLORE_ITERS = 60;
 
 #if defined(MDEBUG) && MDEBUG
 const int IMPROVEMENTS_PER_ITER = 2;
@@ -44,10 +44,12 @@ const int IMPROVEMENTS_PER_ITER = 2;
 const int IMPROVEMENTS_PER_ITER = 20;
 #endif /* MDEBUG */
 
+const int NEW_SCOPE_ITERS = 10;
+
 #if defined(MDEBUG) && MDEBUG
 const int MAINTAIN_ITERS = 10;
 #else
-const int MAINTAIN_ITERS = 40;
+const int MAINTAIN_ITERS = 20;
 #endif /* MDEBUG */
 
 #if defined(MDEBUG) && MDEBUG

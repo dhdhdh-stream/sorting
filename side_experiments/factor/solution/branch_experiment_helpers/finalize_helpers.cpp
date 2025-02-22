@@ -78,7 +78,11 @@ void BranchExperiment::finalize(Solution* duplicate) {
 			exit_node = duplicate_local_scope->nodes[this->best_exit_next_node->id];
 		}
 
+		#if defined(MDEBUG) && MDEBUG
+		if (rand()%2 == 0) {
+		#else
 		if (this->select_percentage == 1.0) {
+		#endif /* MDEBUG */
 			int start_node_id;
 			AbstractNode* start_node;
 			if (this->best_step_types.size() == 0) {
@@ -380,6 +384,7 @@ void BranchExperiment::finalize(Solution* duplicate) {
 				duplicate->verify_problems = this->verify_problems;
 				this->verify_problems.clear();
 				duplicate->verify_seeds = this->verify_seeds;
+				duplicate->verify_can_random = this->verify_can_random;
 
 				new_branch_node->verify_key = this;
 				new_branch_node->verify_scores = this->verify_scores;
@@ -412,12 +417,5 @@ void BranchExperiment::finalize(Solution* duplicate) {
 		}
 	}
 
-	int experiment_index;
-	for (int e_index = 0; e_index < (int)this->node_context->experiments.size(); e_index++) {
-		if (this->node_context->experiments[e_index] == this) {
-			experiment_index = e_index;
-			break;
-		}
-	}
-	this->node_context->experiments.erase(this->node_context->experiments.begin() + experiment_index);
+	this->node_context->experiment= NULL;
 }

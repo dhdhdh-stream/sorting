@@ -364,17 +364,10 @@ void BranchExperiment::train_existing_backprop(
 						break;
 					}
 
-					int experiment_index;
-					for (int e_index = 0; e_index < (int)this->node_context->experiments.size(); e_index++) {
-						if (this->node_context->experiments[e_index] == this) {
-							experiment_index = e_index;
-							break;
-						}
-					}
-					this->node_context->experiments.erase(this->node_context->experiments.begin() + experiment_index);
+					this->node_context->experiment = NULL;
 
 					this->node_context = new_obs_node;
-					this->node_context->experiments.push_back(this);
+					this->node_context->experiment = this;
 
 					this->existing_factor_ids.push_back({new_obs_node->id, 0});
 					this->existing_factor_weights.push_back(1.0);

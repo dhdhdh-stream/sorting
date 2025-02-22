@@ -5,6 +5,7 @@
 #include <iostream>
 
 #include "constants.h"
+#include "globals.h"
 #include "problem.h"
 #include "scope.h"
 #include "solution_helpers.h"
@@ -20,6 +21,7 @@ void BranchExperiment::capture_verify_activate(AbstractNode*& curr_node,
 		this->verify_problems[this->state_iter] = problem->copy_and_reset();
 	}
 	this->verify_seeds[this->state_iter] = run_helper.starting_run_seed;
+	this->verify_can_random[this->state_iter] = run_helper.can_random;
 
 	double sum_vals = this->new_average_score;
 	for (int f_index = 0; f_index < (int)this->new_factor_ids.size(); f_index++) {
@@ -50,7 +52,14 @@ void BranchExperiment::capture_verify_activate(AbstractNode*& curr_node,
 	if (decision_is_branch) {
 		for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 			if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-				problem->perform_action(this->best_actions[s_index]);
+				while (run_helper.is_random()) {
+					problem->perform_action(Action(run_helper.curr_run_seed%problem_type->num_possible_actions()));
+					run_helper.curr_run_seed = xorshift(run_helper.curr_run_seed);
+				}
+
+				if (!run_helper.is_random()) {
+					problem->perform_action(this->best_actions[s_index]);
+				}
 			} else {
 				ScopeHistory* inner_scope_history = new ScopeHistory(this->best_scopes[s_index]);
 				this->best_scopes[s_index]->activate(problem,

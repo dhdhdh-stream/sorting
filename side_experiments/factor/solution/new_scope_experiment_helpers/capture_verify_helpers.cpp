@@ -5,9 +5,11 @@
 #include "new_scope_experiment.h"
 
 #include "constants.h"
+#include "globals.h"
 #include "problem.h"
 #include "scope.h"
 #include "scope_node.h"
+#include "utilities.h"
 
 using namespace std;
 
@@ -21,6 +23,7 @@ void NewScopeExperiment::capture_verify_activate(
 		this->verify_problems[this->state_iter] = problem->copy_and_reset();
 	}
 	this->verify_seeds[this->state_iter] = run_helper.starting_run_seed;
+	this->verify_can_random[this->state_iter] = run_helper.can_random;
 
 	curr_node = this->successful_scope_nodes[location_index];
 	while (true) {

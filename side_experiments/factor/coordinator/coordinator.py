@@ -39,11 +39,11 @@ for line in iter(lambda:stdout.readline(2048), ''):
 initialize_client.close()
 workers.put(initialize_worker)
 
-# task_tree = TaskTree()
+task_tree = TaskTree()
 
-task_tree_file = open('saves/task_tree.txt', 'r')
-task_tree = TaskTree(task_tree_file)
-task_tree_file.close()
+# task_tree_file = open('saves/task_tree.txt', 'r')
+# task_tree = TaskTree(task_tree_file)
+# task_tree_file.close()
 
 tasks = deque()
 task_tree.init_and_add_tasks(tasks)
@@ -57,7 +57,7 @@ while True:
 	for t_index in range(len(task_threads)-1, -1, -1):
 		task_threads[t_index].check_status()
 
-		if task_threads[t_index].curr_iter == EXPLORE_ITERS:
+		if task_threads[t_index].curr_iter >= EXPLORE_ITERS:
 			task_threads[t_index].close()
 
 			task_threads[t_index].tasknode.finalize(

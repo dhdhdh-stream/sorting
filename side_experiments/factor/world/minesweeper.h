@@ -50,7 +50,6 @@ public:
 
 	int num_obs();
 	int num_possible_actions();
-	Action random_action();
 };
 
 #endif /* MINESWEEPER_H */

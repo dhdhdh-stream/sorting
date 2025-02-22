@@ -399,17 +399,10 @@ void BranchExperiment::train_new_backprop(
 						break;
 					}
 
-					int experiment_index;
-					for (int e_index = 0; e_index < (int)this->node_context->experiments.size(); e_index++) {
-						if (this->node_context->experiments[e_index] == this) {
-							experiment_index = e_index;
-							break;
-						}
-					}
-					this->node_context->experiments.erase(this->node_context->experiments.begin() + experiment_index);
+					this->node_context->experiment = NULL;
 
 					this->node_context = new_obs_node;
-					this->node_context->experiments.push_back(this);
+					this->node_context->experiment = this;
 
 					this->new_factor_ids.push_back({new_obs_node->id, 0});
 					this->new_factor_weights.push_back(1.0);
@@ -460,6 +453,7 @@ void BranchExperiment::train_new_backprop(
 			#if defined(MDEBUG) && MDEBUG
 			this->verify_problems = vector<Problem*>(NUM_VERIFY_SAMPLES, NULL);
 			this->verify_seeds = vector<unsigned long>(NUM_VERIFY_SAMPLES);
+			this->verify_can_random = vector<bool>(NUM_VERIFY_SAMPLES);
 
 			this->state = BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY;
 			this->state_iter = 0;

@@ -11,6 +11,7 @@
 #include "problem.h"
 #include "scope_node.h"
 #include "solution.h"
+#include "utilities.h"
 
 using namespace std;
 
@@ -20,55 +21,51 @@ void Scope::new_scope_capture_verify_activate(
 		ScopeHistory* scope_history) {
 	AbstractNode* curr_node = this->nodes[0];
 	while (true) {
-		if (run_helper.is_random()) {
-			problem->perform_action(problem_type->random_action());
-		} else {
-			if (curr_node == NULL) {
-				break;
-			}
-
-			switch (curr_node->type) {
-			case NODE_TYPE_ACTION:
-				{
-					ActionNode* node = (ActionNode*)curr_node;
-					node->experiment_activate(curr_node,
-											  problem,
-											  run_helper,
-											  scope_history);
-				}
-				break;
-			case NODE_TYPE_SCOPE:
-				{
-					ScopeNode* node = (ScopeNode*)curr_node;
-					node->experiment_activate(curr_node,
-											  problem,
-											  run_helper,
-											  scope_history);
-				}
-				break;
-			case NODE_TYPE_BRANCH:
-				{
-					BranchNode* node = (BranchNode*)curr_node;
-					node->new_scope_capture_verify_activate(
-						curr_node,
-						problem,
-						run_helper,
-						scope_history);
-				}
-				break;
-			case NODE_TYPE_OBS:
-				{
-					ObsNode* node = (ObsNode*)curr_node;
-					node->experiment_activate(curr_node,
-											  problem,
-											  run_helper,
-											  scope_history);
-				}
-				break;
-			}
-
-			run_helper.num_actions++;
+		if (curr_node == NULL) {
+			break;
 		}
+
+		switch (curr_node->type) {
+		case NODE_TYPE_ACTION:
+			{
+				ActionNode* node = (ActionNode*)curr_node;
+				node->experiment_activate(curr_node,
+										  problem,
+										  run_helper,
+										  scope_history);
+			}
+			break;
+		case NODE_TYPE_SCOPE:
+			{
+				ScopeNode* node = (ScopeNode*)curr_node;
+				node->experiment_activate(curr_node,
+										  problem,
+										  run_helper,
+										  scope_history);
+			}
+			break;
+		case NODE_TYPE_BRANCH:
+			{
+				BranchNode* node = (BranchNode*)curr_node;
+				node->new_scope_capture_verify_activate(
+					curr_node,
+					problem,
+					run_helper,
+					scope_history);
+			}
+			break;
+		case NODE_TYPE_OBS:
+			{
+				ObsNode* node = (ObsNode*)curr_node;
+				node->experiment_activate(curr_node,
+										  problem,
+										  run_helper,
+										  scope_history);
+			}
+			break;
+		}
+
+		run_helper.num_actions++;
 	}
 }
 

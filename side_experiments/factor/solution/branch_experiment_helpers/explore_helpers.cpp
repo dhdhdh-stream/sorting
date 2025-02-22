@@ -116,7 +116,8 @@ void BranchExperiment::explore_activate(
 			} else {
 				this->curr_step_types.push_back(STEP_TYPE_ACTION);
 
-				this->curr_actions.push_back(problem_type->random_action());
+				uniform_int_distribution<int> action_distribution(0, problem_type->num_possible_actions()-1);
+				this->curr_actions.push_back(Action(action_distribution(generator)));
 
 				this->curr_scopes.push_back(NULL);
 			}

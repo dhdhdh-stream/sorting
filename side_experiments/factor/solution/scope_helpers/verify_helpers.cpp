@@ -11,6 +11,7 @@
 #include "problem.h"
 #include "scope_node.h"
 #include "solution.h"
+#include "utilities.h"
 
 using namespace std;
 
@@ -19,53 +20,49 @@ void Scope::verify_activate(Problem* problem,
 							ScopeHistory* history) {
 	AbstractNode* curr_node = this->nodes[0];
 	while (true) {
-		if (run_helper.is_random()) {
-			problem->perform_action(problem_type->random_action());
-		} else {
-			if (curr_node == NULL) {
-				break;
-			}
-
-			switch (curr_node->type) {
-			case NODE_TYPE_ACTION:
-				{
-					ActionNode* node = (ActionNode*)curr_node;
-					node->activate(curr_node,
-								   problem,
-								   run_helper);
-				}
-				break;
-			case NODE_TYPE_SCOPE:
-				{
-					ScopeNode* node = (ScopeNode*)curr_node;
-					node->verify_activate(curr_node,
-										  problem,
-										  run_helper,
-										  history);
-				}
-				break;
-			case NODE_TYPE_BRANCH:
-				{
-					BranchNode* node = (BranchNode*)curr_node;
-					node->verify_activate(curr_node,
-										  problem,
-										  run_helper,
-										  history);
-				}
-				break;
-			case NODE_TYPE_OBS:
-				{
-					ObsNode* node = (ObsNode*)curr_node;
-					node->activate(curr_node,
-								   problem,
-								   run_helper,
-								   history);
-				}
-				break;
-			}
-
-			run_helper.num_actions++;
+		if (curr_node == NULL) {
+			break;
 		}
+
+		switch (curr_node->type) {
+		case NODE_TYPE_ACTION:
+			{
+				ActionNode* node = (ActionNode*)curr_node;
+				node->activate(curr_node,
+							   problem,
+							   run_helper);
+			}
+			break;
+		case NODE_TYPE_SCOPE:
+			{
+				ScopeNode* node = (ScopeNode*)curr_node;
+				node->verify_activate(curr_node,
+									  problem,
+									  run_helper,
+									  history);
+			}
+			break;
+		case NODE_TYPE_BRANCH:
+			{
+				BranchNode* node = (BranchNode*)curr_node;
+				node->verify_activate(curr_node,
+									  problem,
+									  run_helper,
+									  history);
+			}
+			break;
+		case NODE_TYPE_OBS:
+			{
+				ObsNode* node = (ObsNode*)curr_node;
+				node->activate(curr_node,
+							   problem,
+							   run_helper,
+							   history);
+			}
+			break;
+		}
+
+		run_helper.num_actions++;
 	}
 }
 
