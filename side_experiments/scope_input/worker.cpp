@@ -50,6 +50,14 @@ int main(int argc, char* argv[]) {
 	auto start_time = chrono::high_resolution_clock::now();
 
 	while (solution->timestamp < EXPLORE_ITERS) {
+		if (solution->timestamp % NEW_SCOPE_ITERS == 0) {
+			if (solution->scopes[0]->child_scopes.size() == 0) {
+				solution->scopes[0]->commit();
+			} else {
+				solution->scopes.back()->commit();
+			}
+		}
+
 		Solution* best_solution = NULL;
 
 		int improvement_iter = 0;
@@ -114,7 +122,6 @@ int main(int argc, char* argv[]) {
 					Scope* experiment_scope = duplicate->scopes[last_updated_scope_id];
 					clean_scope(experiment_scope,
 								duplicate);
-					duplicate->clean_scopes();
 
 					double sum_score = 0.0;
 					double sum_true_score = 0.0;
@@ -197,6 +204,10 @@ int main(int argc, char* argv[]) {
 
 		solution->save(path, filename);
 	}
+
+	solution->clean_scopes();
+
+	solution->save(path, filename);
 
 	delete problem_type;
 	delete solution;

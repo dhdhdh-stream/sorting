@@ -60,6 +60,8 @@ public:
 	void clear_verify();
 	#endif /* MDEBUG */
 
+	void commit();
+
 	void clean_inputs(Scope* scope,
 					  int node_id);
 	void clean_inputs(Scope* scope);

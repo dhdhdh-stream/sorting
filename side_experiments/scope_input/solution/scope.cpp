@@ -5,11 +5,15 @@
 #include "action_node.h"
 #include "branch_node.h"
 #include "factor.h"
+#include "globals.h"
 #include "obs_node.h"
+#include "problem.h"
 #include "scope_node.h"
 #include "solution.h"
 
 using namespace std;
+
+const int COMMIT_NUM_STEPS = 20;
 
 Scope::Scope() {
 	this->new_scope_experiment = NULL;
@@ -19,6 +23,101 @@ Scope::~Scope() {
 	for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {
 		delete this->nodes[n_index];
 	}
+}
+
+void Scope::commit() {
+	ObsNode* starting_node = (ObsNode*)this->nodes[0];
+	int starting_next_node_id = starting_node->next_node_id;
+	AbstractNode* starting_next_node = starting_node->next_node;
+
+	AbstractNode* prev_node = starting_node;
+	uniform_int_distribution<int> type_distribution(0, 2);
+	for (int s_index = 0; s_index < COMMIT_NUM_STEPS; s_index++) {
+		int type = type_distribution(generator);
+		if (type >= 2 && this->child_scopes.size() > 0) {
+			ScopeNode* new_scope_node = new ScopeNode();
+			new_scope_node->parent = this;
+			new_scope_node->id = this->node_counter;
+			this->node_counter++;
+			this->nodes[new_scope_node->id] = new_scope_node;
+
+			uniform_int_distribution<int> child_scope_distribution(0, this->child_scopes.size()-1);
+			new_scope_node->scope = this->child_scopes[child_scope_distribution(generator)];
+
+			ObsNode* obs_node = (ObsNode*)prev_node;
+			obs_node->next_node_id = new_scope_node->id;
+			obs_node->next_node = new_scope_node;
+
+			new_scope_node->ancestor_ids.push_back(prev_node->id);
+
+			prev_node = new_scope_node;
+		} else if (type >= 1 && solution->existing_scopes.size() > 0) {
+			ScopeNode* new_scope_node = new ScopeNode();
+			new_scope_node->parent = this;
+			new_scope_node->id = this->node_counter;
+			this->node_counter++;
+			this->nodes[new_scope_node->id] = new_scope_node;
+
+			uniform_int_distribution<int> existing_scope_distribution(0, solution->existing_scopes.size()-1);
+			new_scope_node->scope = solution->existing_scopes[existing_scope_distribution(generator)];
+
+			ObsNode* obs_node = (ObsNode*)prev_node;
+			obs_node->next_node_id = new_scope_node->id;
+			obs_node->next_node = new_scope_node;
+
+			new_scope_node->ancestor_ids.push_back(prev_node->id);
+
+			prev_node = new_scope_node;
+		} else {
+			ActionNode* new_action_node = new ActionNode();
+			new_action_node->parent = this;
+			new_action_node->id = this->node_counter;
+			this->node_counter++;
+			this->nodes[new_action_node->id] = new_action_node;
+
+			uniform_int_distribution<int> action_distribution(0, problem_type->num_possible_actions()-1);
+			new_action_node->action = Action(action_distribution(generator));
+
+			ObsNode* obs_node = (ObsNode*)prev_node;
+			obs_node->next_node_id = new_action_node->id;
+			obs_node->next_node = new_action_node;
+
+			new_action_node->ancestor_ids.push_back(prev_node->id);
+
+			prev_node = new_action_node;
+		}
+
+		ObsNode* new_obs_node = new ObsNode();
+		new_obs_node->parent = this;
+		new_obs_node->id = this->node_counter;
+		this->node_counter++;
+		this->nodes[new_obs_node->id] = new_obs_node;
+
+		switch (prev_node->type) {
+		case NODE_TYPE_ACTION:
+			{
+				ActionNode* action_node = (ActionNode*)prev_node;
+				action_node->next_node_id = new_obs_node->id;
+				action_node->next_node = new_obs_node;
+			}
+			break;
+		case NODE_TYPE_SCOPE:
+			{
+				ScopeNode* scope_node = (ScopeNode*)prev_node;
+				scope_node->next_node_id = new_obs_node->id;
+				scope_node->next_node = new_obs_node;
+			}
+			break;
+		}
+
+		new_obs_node->ancestor_ids.push_back(prev_node->id);
+
+		prev_node = new_obs_node;
+	}
+
+	ObsNode* obs_node = (ObsNode*)prev_node;
+	obs_node->next_node_id = starting_next_node_id;
+	obs_node->next_node = starting_next_node;
 }
 
 #if defined(MDEBUG) && MDEBUG

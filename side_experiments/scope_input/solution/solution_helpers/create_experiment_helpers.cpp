@@ -18,12 +18,17 @@ using namespace std;
 void gather_nodes_seen_helper(ScopeHistory* scope_history,
 							  map<pair<AbstractNode*,bool>, int>& nodes_seen) {
 	bool can_add = false;
-	if (solution->timestamp >= MAINTAIN_ITERS
-			|| scope_history->scope->id == 0 || scope_history->scope->id > (int)solution->existing_scopes.size()) {
-		if (scope_history->scope->id != 0
-				|| (solution->timestamp + 1) % NEW_SCOPE_ITERS < 2
-				|| solution->scopes[0]->child_scopes.size() == 0) {
-			can_add = true;
+	if (solution->timestamp % NEW_SCOPE_ITERS >= EXPERIMENT_ALL_ITERS) {
+		can_add = true;
+	} else {
+		if (solution->scopes[0]->child_scopes.size() == 0) {
+			if (scope_history->scope->id == 0) {
+				can_add = true;
+			}
+		} else {
+			if (scope_history->scope->id == (int)solution->scopes.size()-1) {
+				can_add = true;
+			}
 		}
 	}
 

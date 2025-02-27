@@ -15,8 +15,6 @@
 
 using namespace std;
 
-const int INIT_NUM_STEPS = 20;
-
 const double STARTING_TIME_PENALTY = 0.001;
 
 Solution::Solution() {
@@ -85,78 +83,8 @@ void Solution::init() {
 	starting_node->id = new_scope->node_counter;
 	new_scope->node_counter++;
 	new_scope->nodes[starting_node->id] = starting_node;
-
-	AbstractNode* prev_node = starting_node;
-	uniform_int_distribution<int> type_distribution(0, 1);
-	for (int s_index = 0; s_index < INIT_NUM_STEPS; s_index++) {
-		int type = type_distribution(generator);
-		if (type >= 1 && this->existing_scopes.size() > 0) {
-			ScopeNode* new_scope_node = new ScopeNode();
-			new_scope_node->parent = new_scope;
-			new_scope_node->id = new_scope->node_counter;
-			new_scope->node_counter++;
-			new_scope->nodes[new_scope_node->id] = new_scope_node;
-
-			uniform_int_distribution<int> existing_scope_distribution(0, this->existing_scopes.size()-1);
-			new_scope_node->scope = this->existing_scopes[existing_scope_distribution(generator)];
-
-			ObsNode* obs_node = (ObsNode*)prev_node;
-			obs_node->next_node_id = new_scope_node->id;
-			obs_node->next_node = new_scope_node;
-
-			new_scope_node->ancestor_ids.push_back(prev_node->id);
-
-			prev_node = new_scope_node;
-		} else {
-			ActionNode* new_action_node = new ActionNode();
-			new_action_node->parent = new_scope;
-			new_action_node->id = new_scope->node_counter;
-			new_scope->node_counter++;
-			new_scope->nodes[new_action_node->id] = new_action_node;
-
-			uniform_int_distribution<int> action_distribution(0, problem_type->num_possible_actions()-1);
-			new_action_node->action = Action(action_distribution(generator));
-
-			ObsNode* obs_node = (ObsNode*)prev_node;
-			obs_node->next_node_id = new_action_node->id;
-			obs_node->next_node = new_action_node;
-
-			new_action_node->ancestor_ids.push_back(prev_node->id);
-
-			prev_node = new_action_node;
-		}
-
-		ObsNode* new_obs_node = new ObsNode();
-		new_obs_node->parent = new_scope;
-		new_obs_node->id = new_scope->node_counter;
-		new_scope->node_counter++;
-		new_scope->nodes[new_obs_node->id] = new_obs_node;
-
-		switch (prev_node->type) {
-		case NODE_TYPE_ACTION:
-			{
-				ActionNode* action_node = (ActionNode*)prev_node;
-				action_node->next_node_id = new_obs_node->id;
-				action_node->next_node = new_obs_node;
-			}
-			break;
-		case NODE_TYPE_SCOPE:
-			{
-				ScopeNode* scope_node = (ScopeNode*)prev_node;
-				scope_node->next_node_id = new_obs_node->id;
-				scope_node->next_node = new_obs_node;
-			}
-			break;
-		}
-
-		new_obs_node->ancestor_ids.push_back(prev_node->id);
-
-		prev_node = new_obs_node;
-	}
-
-	ObsNode* obs_node = (ObsNode*)prev_node;
-	obs_node->next_node_id = -1;
-	obs_node->next_node = NULL;
+	starting_node->next_node_id = -1;
+	starting_node->next_node = NULL;
 
 	new_scope->num_inputs = 0;
 }
@@ -240,52 +168,50 @@ void Solution::clean_inputs(Scope* scope,
 }
 
 void Solution::clean_scopes() {
-	if (this->timestamp > MAINTAIN_ITERS) {
-		for (int s_index = (int)this->scopes.size()-1; s_index >= 1; s_index--) {
-			bool still_used = false;
-			for (int is_index = 0; is_index < (int)this->scopes.size(); is_index++) {
-				if (s_index != is_index) {
-					for (map<int, AbstractNode*>::iterator it = this->scopes[is_index]->nodes.begin();
-							it != this->scopes[is_index]->nodes.end(); it++) {
-						switch (it->second->type) {
-						case NODE_TYPE_SCOPE:
-							{
-								ScopeNode* scope_node = (ScopeNode*)it->second;
-								if (scope_node->scope == this->scopes[s_index]) {
-									still_used = true;
-									break;
-								}
+	for (int s_index = (int)this->scopes.size()-1; s_index >= 1; s_index--) {
+		bool still_used = false;
+		for (int is_index = 0; is_index < (int)this->scopes.size(); is_index++) {
+			if (s_index != is_index) {
+				for (map<int, AbstractNode*>::iterator it = this->scopes[is_index]->nodes.begin();
+						it != this->scopes[is_index]->nodes.end(); it++) {
+					switch (it->second->type) {
+					case NODE_TYPE_SCOPE:
+						{
+							ScopeNode* scope_node = (ScopeNode*)it->second;
+							if (scope_node->scope == this->scopes[s_index]) {
+								still_used = true;
+								break;
 							}
-							break;
 						}
+						break;
 					}
 				}
+			}
 
-				if (still_used) {
+			if (still_used) {
+				break;
+			}
+		}
+
+		if (!still_used) {
+			for (int is_index = 0; is_index < (int)this->scopes.size(); is_index++) {
+				this->scopes[is_index]->clean_inputs(this->scopes[s_index]);
+			}
+
+			for (int e_index = 0; e_index < (int)this->existing_scopes.size(); e_index++) {
+				if (this->existing_scopes[e_index] == this->scopes[s_index]) {
+					this->existing_scopes.erase(this->existing_scopes.begin() + e_index);
 					break;
 				}
 			}
 
-			if (!still_used) {
-				for (int is_index = 0; is_index < (int)this->scopes.size(); is_index++) {
-					this->scopes[is_index]->clean_inputs(this->scopes[s_index]);
-				}
-
-				for (int e_index = 0; e_index < (int)this->existing_scopes.size(); e_index++) {
-					if (this->existing_scopes[e_index] == this->scopes[s_index]) {
-						this->existing_scopes.erase(this->existing_scopes.begin() + e_index);
-						break;
-					}
-				}
-
-				delete this->scopes[s_index];
-				this->scopes.erase(this->scopes.begin() + s_index);
-			}
+			delete this->scopes[s_index];
+			this->scopes.erase(this->scopes.begin() + s_index);
 		}
+	}
 
-		for (int s_index = 1; s_index < (int)this->scopes.size(); s_index++) {
-			this->scopes[s_index]->id = s_index;
-		}
+	for (int s_index = 1; s_index < (int)this->scopes.size(); s_index++) {
+		this->scopes[s_index]->id = s_index;
 	}
 }
 

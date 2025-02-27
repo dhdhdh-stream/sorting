@@ -1,5 +1,3 @@
-// TODO: try new scope -> commit -> clean -> optimize overall
-
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -34,8 +32,7 @@ int run_index;
 int main(int argc, char* argv[]) {
 	cout << "Starting..." << endl;
 
-	// seed = (unsigned)time(NULL);
-	seed = 1740430368;
+	seed = (unsigned)time(NULL);
 	srand(seed);
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
@@ -63,6 +60,14 @@ int main(int argc, char* argv[]) {
 	run_index = 0;
 
 	while (solution->timestamp < EXPLORE_ITERS) {
+		if (solution->timestamp % NEW_SCOPE_ITERS == 0) {
+			if (solution->scopes[0]->child_scopes.size() == 0) {
+				solution->scopes[0]->commit();
+			} else {
+				solution->scopes.back()->commit();
+			}
+		}
+
 		Solution* best_solution = NULL;
 
 		int improvement_iter = 0;
@@ -131,7 +136,6 @@ int main(int argc, char* argv[]) {
 					Scope* experiment_scope = duplicate->scopes[last_updated_scope_id];
 					clean_scope(experiment_scope,
 								duplicate);
-					duplicate->clean_scopes();
 
 					#if defined(MDEBUG) && MDEBUG
 					while (duplicate->verify_problems.size() > 0) {
@@ -251,6 +255,10 @@ int main(int argc, char* argv[]) {
 		solution->load("saves/", filename);
 		#endif /* MDEBUG */
 	}
+
+	solution->clean_scopes();
+
+	solution->load("saves/", filename);
 
 	delete problem_type;
 	delete solution;
