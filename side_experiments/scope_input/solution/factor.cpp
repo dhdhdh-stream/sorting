@@ -90,28 +90,30 @@ void Factor::load(ifstream& input_file,
 void Factor::link(Solution* parent_solution) {
 	if (!this->is_used) {
 		for (int i_index = 0; i_index < (int)this->inputs.size(); i_index++) {
-			Scope* scope = this->inputs[i_index].scope_context.back();
-			AbstractNode* node = scope->nodes[this->inputs[i_index].node_context.back()];
-			switch (node->type) {
-			case NODE_TYPE_BRANCH:
-				{
-					BranchNode* branch_node = (BranchNode*)node;
-					branch_node->is_used = true;
-				}
-				break;
-			case NODE_TYPE_OBS:
-				{
-					ObsNode* obs_node = (ObsNode*)node;
-
-					if (this->inputs[i_index].factor_index != -1) {
-						Factor* factor = obs_node->factors[this->inputs[i_index].factor_index];
-
-						factor->link(parent_solution);
+			if (this->inputs[i_index].type == INPUT_TYPE_OBS) {
+				Scope* scope = this->inputs[i_index].scope_context.back();
+				AbstractNode* node = scope->nodes[this->inputs[i_index].node_context.back()];
+				switch (node->type) {
+				case NODE_TYPE_BRANCH:
+					{
+						BranchNode* branch_node = (BranchNode*)node;
+						branch_node->is_used = true;
 					}
+					break;
+				case NODE_TYPE_OBS:
+					{
+						ObsNode* obs_node = (ObsNode*)node;
 
-					obs_node->is_used = true;
+						if (this->inputs[i_index].factor_index != -1) {
+							Factor* factor = obs_node->factors[this->inputs[i_index].factor_index];
+
+							factor->link(parent_solution);
+						}
+
+						obs_node->is_used = true;
+					}
+					break;
 				}
-				break;
 			}
 		}
 	}

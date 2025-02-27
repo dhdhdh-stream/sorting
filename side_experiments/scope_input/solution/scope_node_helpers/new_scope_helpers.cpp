@@ -22,8 +22,8 @@ void ScopeNode::new_scope_activate(AbstractNode*& curr_node,
 	ScopeHistory* inner_scope_history = new ScopeHistory(this->scope);
 	history->scope_history = inner_scope_history;
 
-	inner_scope_history->input_history = vector<double>(this->scope->num_inputs);
-	for (int i_index = 0; this->scope->num_inputs; i_index++) {
+	inner_scope_history->input_history = vector<double>(this->scope->num_inputs, 0.0);
+	for (int i_index = 0; i_index < this->scope->num_inputs; i_index++) {
 		fetch_input(run_helper,
 					scope_history,
 					new_scope_inputs[i_index],
@@ -60,8 +60,8 @@ void ScopeNode::new_scope_capture_verify_activate(
 	ScopeHistory* inner_scope_history = new ScopeHistory(this->scope);
 	history->scope_history = inner_scope_history;
 
-	inner_scope_history->input_history = vector<double>(this->scope->num_inputs);
-	for (int i_index = 0; this->scope->num_inputs; i_index++) {
+	inner_scope_history->input_history = vector<double>(this->scope->num_inputs, 0.0);
+	for (int i_index = 0; i_index < this->scope->num_inputs; i_index++) {
 		fetch_input(run_helper,
 					scope_history,
 					new_scope_inputs[i_index],

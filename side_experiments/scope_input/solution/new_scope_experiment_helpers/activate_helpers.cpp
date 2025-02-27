@@ -219,9 +219,18 @@ void NewScopeExperiment::backprop(double target_val,
 					starting_node,
 					possible_exits);
 
-				uniform_int_distribution<int> distribution(0, possible_exits.size()-1);
-				int random_index = distribution(generator);
-				AbstractNode* exit_next_node = possible_exits[random_index];
+				AbstractNode* exit_next_node;
+				if (possible_exits.size() < 10) {
+					uniform_int_distribution<int> exit_distribution(0, possible_exits.size()-1);
+					exit_next_node = possible_exits[exit_distribution(generator)];
+				} else {
+					geometric_distribution<int> exit_distribution(0.2);
+					int random_index = exit_distribution(generator);
+					if (random_index >= (int)possible_exits.size()) {
+						random_index = (int)possible_exits.size()-1;
+					}
+					exit_next_node = possible_exits[random_index];
+				}
 
 				this->test_location_starts.push_back(history->potential_start);
 				this->test_location_is_branch.push_back(history->potential_is_branch);

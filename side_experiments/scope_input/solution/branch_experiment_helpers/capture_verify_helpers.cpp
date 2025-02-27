@@ -62,6 +62,18 @@ void BranchExperiment::capture_verify_activate(AbstractNode*& curr_node,
 				}
 			} else {
 				ScopeHistory* inner_scope_history = new ScopeHistory(this->best_scopes[s_index]);
+
+				inner_scope_history->input_history = vector<double>(this->best_scopes[s_index]->num_inputs, 0.0);
+				map<Scope*, vector<Input>>::iterator it = this->scope_context->child_scope_inputs.find(this->best_scopes[s_index]);
+				if (it != this->scope_context->child_scope_inputs.end()) {
+					for (int i_index = 0; i_index < this->best_scopes[s_index]->num_inputs; i_index++) {
+						fetch_input(run_helper,
+									scope_history,
+									it->second[i_index],
+									inner_scope_history->input_history[i_index]);
+					}
+				}
+
 				this->best_scopes[s_index]->activate(problem,
 					run_helper,
 					inner_scope_history);

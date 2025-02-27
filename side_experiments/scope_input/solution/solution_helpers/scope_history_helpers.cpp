@@ -160,7 +160,9 @@ void fetch_input_helper(RunHelper& run_helper,
 						double& val) {
 	map<int, AbstractNodeHistory*>::iterator it = scope_history
 		->node_histories.find(input.node_context[l_index]);
-	if (it != scope_history->node_histories.end()) {
+	if (it == scope_history->node_histories.end()) {
+		val = 0.0;
+	} else {
 		if (l_index == (int)input.scope_context.size()-1) {
 			switch (it->second->node->type) {
 			case NODE_TYPE_BRANCH:

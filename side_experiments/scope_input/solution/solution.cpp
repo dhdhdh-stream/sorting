@@ -87,7 +87,7 @@ void Solution::init() {
 	new_scope->nodes[starting_node->id] = starting_node;
 
 	AbstractNode* prev_node = starting_node;
-	uniform_int_distribution<int> type_distribution(0, 2);
+	uniform_int_distribution<int> type_distribution(0, 1);
 	for (int s_index = 0; s_index < INIT_NUM_STEPS; s_index++) {
 		int type = type_distribution(generator);
 		if (type >= 1 && this->existing_scopes.size() > 0) {
@@ -157,6 +157,8 @@ void Solution::init() {
 	ObsNode* obs_node = (ObsNode*)prev_node;
 	obs_node->next_node_id = -1;
 	obs_node->next_node = NULL;
+
+	new_scope->num_inputs = 0;
 }
 
 void Solution::load(string path,

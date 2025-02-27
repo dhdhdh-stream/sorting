@@ -132,6 +132,7 @@ void Scope::save(ofstream& output_file) {
 			it != this->child_scope_inputs.end(); it++) {
 		output_file << it->first->id << endl;
 
+		output_file << it->second.size() << endl;
 		for (int i_index = 0; i_index < (int)it->second.size(); i_index++) {
 			it->second[i_index].save(output_file);
 		}
@@ -215,8 +216,11 @@ void Scope::load(ifstream& input_file,
 		getline(input_file, scope_id_line);
 		int scope_id = stoi(scope_id_line);
 
+		string child_scope_num_inputs_line;
+		getline(input_file, child_scope_num_inputs_line);
+		int child_scope_num_inputs = stoi(child_scope_num_inputs_line);
 		vector<Input> inputs;
-		for (int i_index = 0; i_index < num_inputs; i_index++) {
+		for (int i_index = 0; i_index < child_scope_num_inputs; i_index++) {
 			inputs.push_back(Input(input_file,
 								   parent_solution));
 		}

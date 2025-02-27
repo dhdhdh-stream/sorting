@@ -222,36 +222,62 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 						new_branch_node->average_val = original_branch_node->average_val;
 
 						for (int f_index = 0; f_index < (int)original_branch_node->factors.size(); f_index++) {
-							AbstractNode* original_input_node = scope_context->nodes[
-								original_branch_node->factors[f_index].node_context.back()];
-							map<AbstractNode*, AbstractNode*>::iterator input_it = node_mappings
-								.find(original_input_node);
-							if (input_it != node_mappings.end()) {
-								new_branch_node->factors.push_back(original_branch_node->factors[f_index]);
-								new_branch_node->factors.back().node_context.back() = input_it->second->id;
-								new_branch_node->factor_weights.push_back(
-									original_branch_node->factor_weights[f_index]);
-							} else if (!drop_distribution(generator) == 0) {
-								int input_index = -1;
-								for (int i_index = 0; i_index < (int)this->new_scope_inputs.size(); i_index++) {
-									if (this->new_scope_inputs[i_index] == original_branch_node->factors[f_index]) {
-										input_index = i_index;
-										break;
+							if (original_branch_node->factors[f_index].type == INPUT_TYPE_INPUT) {
+								if (!drop_distribution(generator) == 0) {
+									int input_index = -1;
+									for (int i_index = 0; i_index < (int)this->new_scope_inputs.size(); i_index++) {
+										if (this->new_scope_inputs[i_index] == original_branch_node->factors[f_index]) {
+											input_index = i_index;
+											break;
+										}
 									}
-								}
-								if (input_index == -1) {
-									input_index = (int)this->new_scope_inputs.size();
-									this->new_scope_inputs.push_back(original_branch_node->factors[f_index]);
-								}
+									if (input_index == -1) {
+										input_index = (int)this->new_scope_inputs.size();
+										this->new_scope_inputs.push_back(original_branch_node->factors[f_index]);
+									}
 
-								Input new_input;
-								new_input.type = INPUT_TYPE_INPUT;
-								new_input.factor_index = -1;
-								new_input.obs_index = -1;
-								new_input.input_index = input_index;
-								new_branch_node->factors.push_back(new_input);
-								new_branch_node->factor_weights.push_back(
-									original_branch_node->factor_weights[f_index]);
+									Input new_input;
+									new_input.type = INPUT_TYPE_INPUT;
+									new_input.factor_index = -1;
+									new_input.obs_index = -1;
+									new_input.input_index = input_index;
+									new_branch_node->factors.push_back(new_input);
+									new_branch_node->factor_weights.push_back(
+										original_branch_node->factor_weights[f_index]);
+								}
+							} else {
+								AbstractNode* original_input_node = scope_context->nodes[
+									original_branch_node->factors[f_index].node_context.back()];
+								map<AbstractNode*, AbstractNode*>::iterator input_it = node_mappings
+									.find(original_input_node);
+								if (input_it != node_mappings.end()) {
+									new_branch_node->factors.push_back(original_branch_node->factors[f_index]);
+									new_branch_node->factors.back().scope_context[0] = this->new_scope;
+									new_branch_node->factors.back().node_context[0] = input_it->second->id;
+									new_branch_node->factor_weights.push_back(
+										original_branch_node->factor_weights[f_index]);
+								} else if (!drop_distribution(generator) == 0) {
+									int input_index = -1;
+									for (int i_index = 0; i_index < (int)this->new_scope_inputs.size(); i_index++) {
+										if (this->new_scope_inputs[i_index] == original_branch_node->factors[f_index]) {
+											input_index = i_index;
+											break;
+										}
+									}
+									if (input_index == -1) {
+										input_index = (int)this->new_scope_inputs.size();
+										this->new_scope_inputs.push_back(original_branch_node->factors[f_index]);
+									}
+
+									Input new_input;
+									new_input.type = INPUT_TYPE_INPUT;
+									new_input.factor_index = -1;
+									new_input.obs_index = -1;
+									new_input.input_index = input_index;
+									new_branch_node->factors.push_back(new_input);
+									new_branch_node->factor_weights.push_back(
+										original_branch_node->factor_weights[f_index]);
+								}
 							}
 						}
 
@@ -289,46 +315,22 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 						ObsNode* new_obs_node = (ObsNode*)node_mappings[original_obs_node];
 
 						for (int f_index = 0; f_index < (int)original_obs_node->factors.size(); f_index++) {
-							Factor* original_factor = original_obs_node->factors[f_index];
 							Factor* new_factor = new Factor();
+							if (!original_obs_node->factors[f_index]->is_used) {
+								new_factor->network = new Network(0);
+							} else {
+								Factor* original_factor = original_obs_node->factors[f_index];
 
-							new_factor->network = new Network(original_factor->network);
-							for (int i_index = (int)original_factor->inputs.size()-1; i_index >= 0; i_index--) {
-								if (original_factor->inputs[i_index].type == INPUT_TYPE_INPUT) {
-									if (drop_distribution(generator) == 0) {
-										new_factor->network->remove_input(i_index);
-									} else {
-										int input_index = -1;
-										for (int i_index = 0; i_index < (int)this->new_scope_inputs.size(); i_index++) {
-											if (this->new_scope_inputs[i_index] == original_factor->inputs[i_index]) {
-												input_index = i_index;
-												break;
-											}
-										}
-										if (input_index == -1) {
-											input_index = (int)this->new_scope_inputs.size();
-											this->new_scope_inputs.push_back(original_factor->inputs[i_index]);
-										}
-
-										Input new_input;
-										new_input.type = INPUT_TYPE_INPUT;
-										new_input.factor_index = -1;
-										new_input.obs_index = -1;
-										new_input.input_index = input_index;
-										new_factor->inputs.insert(new_factor->inputs.begin(), new_input);
-									}
-								} else {
-									AbstractNode* original_input_node = scope_context->nodes[
-										original_factor->inputs[i_index].node_context[0]];
-									map<AbstractNode*, AbstractNode*>::iterator it = node_mappings.find(original_input_node);
-									if (it == node_mappings.end()) {
+								new_factor->network = new Network(original_factor->network);
+								for (int i_index = (int)original_factor->inputs.size()-1; i_index >= 0; i_index--) {
+									if (original_factor->inputs[i_index].type == INPUT_TYPE_INPUT) {
 										if (drop_distribution(generator) == 0) {
 											new_factor->network->remove_input(i_index);
 										} else {
 											int input_index = -1;
-											for (int i_index = 0; i_index < (int)this->new_scope_inputs.size(); i_index++) {
-												if (this->new_scope_inputs[i_index] == original_factor->inputs[i_index]) {
-													input_index = i_index;
+											for (int ii_index = 0; ii_index < (int)this->new_scope_inputs.size(); ii_index++) {
+												if (this->new_scope_inputs[ii_index] == original_factor->inputs[i_index]) {
+													input_index = ii_index;
 													break;
 												}
 											}
@@ -345,9 +347,37 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 											new_factor->inputs.insert(new_factor->inputs.begin(), new_input);
 										}
 									} else {
-										new_factor->inputs.insert(new_factor->inputs.begin(), original_factor->inputs[i_index]);
-										new_factor->inputs[0].scope_context[0] = this->new_scope;
-										new_factor->inputs[0].node_context[0] = it->second->id;
+										AbstractNode* original_input_node = scope_context->nodes[
+											original_factor->inputs[i_index].node_context[0]];
+										map<AbstractNode*, AbstractNode*>::iterator it = node_mappings.find(original_input_node);
+										if (it == node_mappings.end()) {
+											if (drop_distribution(generator) == 0) {
+												new_factor->network->remove_input(i_index);
+											} else {
+												int input_index = -1;
+												for (int ii_index = 0; ii_index < (int)this->new_scope_inputs.size(); ii_index++) {
+													if (this->new_scope_inputs[ii_index] == original_factor->inputs[i_index]) {
+														input_index = ii_index;
+														break;
+													}
+												}
+												if (input_index == -1) {
+													input_index = (int)this->new_scope_inputs.size();
+													this->new_scope_inputs.push_back(original_factor->inputs[i_index]);
+												}
+
+												Input new_input;
+												new_input.type = INPUT_TYPE_INPUT;
+												new_input.factor_index = -1;
+												new_input.obs_index = -1;
+												new_input.input_index = input_index;
+												new_factor->inputs.insert(new_factor->inputs.begin(), new_input);
+											}
+										} else {
+											new_factor->inputs.insert(new_factor->inputs.begin(), original_factor->inputs[i_index]);
+											new_factor->inputs[0].scope_context[0] = this->new_scope;
+											new_factor->inputs[0].node_context[0] = it->second->id;
+										}
 									}
 								}
 							}
@@ -373,15 +403,20 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 				}
 			}
 
-			this->new_scope->num_inputs = (int)this->new_scope_inputs.size();
-
-			this->new_scope->child_scopes = this->scope_context->child_scopes;
-			for (map<Scope*, vector<Input>>::iterator c_it = this->scope_context->child_scope_inputs.begin();
-					c_it != this->scope_context->child_scope_inputs.end(); c_it++) {
+			this->new_scope->child_scopes = scope_context->child_scopes;
+			for (map<Scope*, vector<Input>>::iterator c_it = scope_context->child_scope_inputs.begin();
+					c_it != scope_context->child_scope_inputs.end(); c_it++) {
 				vector<Input> new_inputs;
 				for (int i_index = 0; i_index < (int)c_it->second.size(); i_index++) {
 					Input new_input;
-					if (c_it->second[i_index].type == INPUT_TYPE_INPUT) {
+					switch (c_it->second[i_index].type) {
+					case INPUT_TYPE_REMOVED:
+						new_input.type = INPUT_TYPE_REMOVED;
+						new_input.factor_index = -1;
+						new_input.obs_index = -1;
+						new_input.input_index = -1;
+						break;
+					case INPUT_TYPE_INPUT:
 						if (drop_distribution(generator) == 0) {
 							new_input.type = INPUT_TYPE_REMOVED;
 							new_input.factor_index = -1;
@@ -389,9 +424,9 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 							new_input.input_index = -1;
 						} else {
 							int input_index = -1;
-							for (int i_index = 0; i_index < (int)this->new_scope_inputs.size(); i_index++) {
-								if (this->new_scope_inputs[i_index] == c_it->second[i_index]) {
-									input_index = i_index;
+							for (int ii_index = 0; ii_index < (int)this->new_scope_inputs.size(); ii_index++) {
+								if (this->new_scope_inputs[ii_index] == c_it->second[i_index]) {
+									input_index = ii_index;
 									break;
 								}
 							}
@@ -405,44 +440,50 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 							new_input.obs_index = -1;
 							new_input.input_index = input_index;
 						}
-					} else {
-						AbstractNode* original_input_node = scope_context->nodes[
-							c_it->second[i_index].node_context[0]];
-						map<AbstractNode*, AbstractNode*>::iterator it = node_mappings.find(original_input_node);
-						if (it == node_mappings.end()) {
-							if (drop_distribution(generator) == 0) {
-								new_input.type = INPUT_TYPE_REMOVED;
-								new_input.factor_index = -1;
-								new_input.obs_index = -1;
-								new_input.input_index = -1;
-							} else {
-								int input_index = -1;
-								for (int i_index = 0; i_index < (int)this->new_scope_inputs.size(); i_index++) {
-									if (this->new_scope_inputs[i_index] == c_it->second[i_index]) {
-										input_index = i_index;
-										break;
+						break;
+					case INPUT_TYPE_OBS:
+						{
+							AbstractNode* original_input_node = scope_context->nodes[
+								c_it->second[i_index].node_context[0]];
+							map<AbstractNode*, AbstractNode*>::iterator it = node_mappings.find(original_input_node);
+							if (it == node_mappings.end()) {
+								if (drop_distribution(generator) == 0) {
+									new_input.type = INPUT_TYPE_REMOVED;
+									new_input.factor_index = -1;
+									new_input.obs_index = -1;
+									new_input.input_index = -1;
+								} else {
+									int input_index = -1;
+									for (int ii_index = 0; ii_index < (int)this->new_scope_inputs.size(); ii_index++) {
+										if (this->new_scope_inputs[ii_index] == c_it->second[i_index]) {
+											input_index = ii_index;
+											break;
+										}
 									}
-								}
-								if (input_index == -1) {
-									input_index = (int)this->new_scope_inputs.size();
-									this->new_scope_inputs.push_back(c_it->second[i_index]);
-								}
+									if (input_index == -1) {
+										input_index = (int)this->new_scope_inputs.size();
+										this->new_scope_inputs.push_back(c_it->second[i_index]);
+									}
 
-								new_input.type = INPUT_TYPE_INPUT;
-								new_input.factor_index = -1;
-								new_input.obs_index = -1;
-								new_input.input_index = input_index;
+									new_input.type = INPUT_TYPE_INPUT;
+									new_input.factor_index = -1;
+									new_input.obs_index = -1;
+									new_input.input_index = input_index;
+								}
+							} else {
+								new_input = c_it->second[i_index];
+								new_input.scope_context[0] = this->new_scope;
+								new_input.node_context[0] = it->second->id;
 							}
-						} else {
-							new_input = c_it->second[i_index];
-							new_input.scope_context[0] = this->new_scope;
-							new_input.node_context[0] = it->second->id;
 						}
+						break;
 					}
 					new_inputs.push_back(new_input);
 				}
 				this->new_scope->child_scope_inputs[c_it->first] = new_inputs;
 			}
+
+			this->new_scope->num_inputs = (int)this->new_scope_inputs.size();
 
 			break;
 		}
@@ -489,8 +530,18 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 			random_start_node,
 			possible_exits);
 
-		uniform_int_distribution<int> exit_distribution(0, possible_exits.size()-1);
-		AbstractNode* exit_next_node = possible_exits[exit_distribution(generator)];
+		AbstractNode* exit_next_node;
+		if (possible_exits.size() < 10) {
+			uniform_int_distribution<int> exit_distribution(0, possible_exits.size()-1);
+			exit_next_node = possible_exits[exit_distribution(generator)];
+		} else {
+			geometric_distribution<int> exit_distribution(0.2);
+			int random_index = exit_distribution(generator);
+			if (random_index >= (int)possible_exits.size()) {
+				random_index = (int)possible_exits.size()-1;
+			}
+			exit_next_node = possible_exits[random_index];
+		}
 
 		this->test_location_starts.push_back(node_context);
 		this->test_location_is_branch.push_back(is_branch);

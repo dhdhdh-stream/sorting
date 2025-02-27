@@ -81,17 +81,20 @@ void BranchExperiment::explore_activate(
 			starting_node,
 			possible_exits);
 
-		uniform_int_distribution<int> distribution(0, possible_exits.size()-1);
-		int random_index = distribution(generator);
-		this->curr_exit_next_node = possible_exits[random_index];
-
-		int new_num_steps;
-		geometric_distribution<int> geo_distribution(0.2);
-		if (random_index == 0) {
-			new_num_steps = 1 + geo_distribution(generator);
+		if (possible_exits.size() < 10) {
+			uniform_int_distribution<int> exit_distribution(0, possible_exits.size()-1);
+			this->curr_exit_next_node = possible_exits[exit_distribution(generator)];
 		} else {
-			new_num_steps = geo_distribution(generator);
+			geometric_distribution<int> exit_distribution(0.2);
+			int random_index = exit_distribution(generator);
+			if (random_index >= (int)possible_exits.size()) {
+				random_index = (int)possible_exits.size()-1;
+			}
+			this->curr_exit_next_node = possible_exits[random_index];
 		}
+
+		geometric_distribution<int> geo_distribution(0.3);
+		int new_num_steps = geo_distribution(generator);
 
 		/**
 		 * - always give raw actions a large weight
@@ -107,7 +110,8 @@ void BranchExperiment::explore_activate(
 
 				uniform_int_distribution<int> child_scope_distribution(0, this->scope_context->child_scopes.size()-1);
 				this->curr_scopes.push_back(this->scope_context->child_scopes[child_scope_distribution(generator)]);
-			} else if (type >= 1 && solution->existing_scopes.size() > 0) {
+			} else if (type >= 1 && solution->existing_scopes.size() > 0
+					&& (scope_history->scope->id == 0 || scope_history->scope->id > (int)solution->existing_scopes.size())) {
 				this->curr_step_types.push_back(STEP_TYPE_SCOPE);
 				this->curr_actions.push_back(Action());
 
@@ -128,6 +132,18 @@ void BranchExperiment::explore_activate(
 				problem->perform_action(this->curr_actions[s_index]);
 			} else {
 				ScopeHistory* inner_scope_history = new ScopeHistory(this->curr_scopes[s_index]);
+
+				inner_scope_history->input_history = vector<double>(this->curr_scopes[s_index]->num_inputs, 0.0);
+				map<Scope*, vector<Input>>::iterator it = this->scope_context->child_scope_inputs.find(this->curr_scopes[s_index]);
+				if (it != this->scope_context->child_scope_inputs.end()) {
+					for (int i_index = 0; i_index < this->curr_scopes[s_index]->num_inputs; i_index++) {
+						fetch_input(run_helper,
+									scope_history,
+									it->second[i_index],
+									inner_scope_history->input_history[i_index]);
+					}
+				}
+
 				this->curr_scopes[s_index]->activate(problem,
 					run_helper,
 					inner_scope_history);

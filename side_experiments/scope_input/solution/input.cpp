@@ -1,5 +1,7 @@
 #include "input.h"
 
+#include <iostream>
+
 #include "scope.h"
 #include "solution.h"
 
@@ -69,7 +71,7 @@ void Input::save(ofstream& output_file) {
 
 	output_file << this->scope_context.size() << endl;
 	for (int l_index = 0; l_index < (int)this->scope_context.size(); l_index++) {
-		output_file << this->scope_context[l_index] << endl;
+		output_file << this->scope_context[l_index]->id << endl;
 		output_file << this->node_context[l_index] << endl;
 	}
 	output_file << this->factor_index << endl;

@@ -65,9 +65,11 @@ void BranchNode::clean_inputs(Scope* scope,
 							  int node_id) {
 	if (scope == this->parent) {
 		for (int f_index = (int)this->factors.size()-1; f_index >= 0; f_index--) {
-			if (this->factors[f_index].node_context.back() == node_id) {
-				this->factors.erase(this->factors.begin() + f_index);
-				this->factor_weights.erase(this->factor_weights.begin() + f_index);
+			if (this->factors[f_index].type == INPUT_TYPE_OBS) {
+				if (this->factors[f_index].node_context.back() == node_id) {
+					this->factors.erase(this->factors.begin() + f_index);
+					this->factor_weights.erase(this->factor_weights.begin() + f_index);
+				}
 			}
 		}
 	}
@@ -129,12 +131,14 @@ void BranchNode::load(ifstream& input_file,
 
 void BranchNode::link(Solution* parent_solution) {
 	for (int f_index = 0; f_index < (int)this->factors.size(); f_index++) {
-		ObsNode* obs_node = (ObsNode*)this->parent->nodes[this->factors[f_index].node_context.back()];
-		Factor* factor = obs_node->factors[this->factors[f_index].factor_index];
+		if (this->factors[f_index].type == INPUT_TYPE_OBS) {
+			ObsNode* obs_node = (ObsNode*)this->parent->nodes[this->factors[f_index].node_context.back()];
+			Factor* factor = obs_node->factors[this->factors[f_index].factor_index];
 
-		factor->link(parent_solution);
+			factor->link(parent_solution);
 
-		obs_node->is_used = true;
+			obs_node->is_used = true;
+		}
 	}
 
 	if (this->original_next_node_id == -1) {

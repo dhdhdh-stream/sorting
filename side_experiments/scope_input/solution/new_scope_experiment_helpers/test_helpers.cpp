@@ -36,10 +36,10 @@ void NewScopeExperiment::test_activate(
 			ScopeHistory* inner_scope_history = new ScopeHistory(this->new_scope);
 
 			inner_scope_history->input_history = vector<double>(this->new_scope->num_inputs);
-			for (int i_index = 0; this->new_scope->num_inputs; i_index++) {
+			for (int i_index = 0; i_index < this->new_scope->num_inputs; i_index++) {
 				fetch_input(run_helper,
 							scope_history,
-							new_scope_inputs[i_index],
+							this->new_scope_inputs[i_index],
 							inner_scope_history->input_history[i_index]);
 			}
 

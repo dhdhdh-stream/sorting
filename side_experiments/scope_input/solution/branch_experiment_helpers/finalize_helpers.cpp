@@ -190,6 +190,9 @@ void BranchExperiment::finalize(Solution* duplicate) {
 			duplicate_local_scope->nodes[new_branch_node->id] = new_branch_node;
 
 			new_branch_node->average_val = this->new_average_score;
+			for (int f_index = 0; f_index < (int)this->new_factors.size(); f_index++) {
+				this->new_factors[f_index].scope_context[0] = duplicate_local_scope;
+			}
 			new_branch_node->factors = this->new_factors;
 			new_branch_node->factor_weights = this->new_factor_weights;
 

@@ -1,3 +1,5 @@
+// TODO: try new scope -> commit -> clean -> optimize overall
+
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -32,7 +34,8 @@ int run_index;
 int main(int argc, char* argv[]) {
 	cout << "Starting..." << endl;
 
-	seed = (unsigned)time(NULL);
+	// seed = (unsigned)time(NULL);
+	seed = 1740430368;
 	srand(seed);
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;

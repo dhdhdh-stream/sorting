@@ -17,14 +17,23 @@ using namespace std;
 
 void gather_nodes_seen_helper(ScopeHistory* scope_history,
 							  map<pair<AbstractNode*,bool>, int>& nodes_seen) {
+	bool can_add = false;
+	if (solution->timestamp >= MAINTAIN_ITERS
+			|| scope_history->scope->id == 0 || scope_history->scope->id > (int)solution->existing_scopes.size()) {
+		if (scope_history->scope->id != 0
+				|| (solution->timestamp + 1) % NEW_SCOPE_ITERS < 2
+				|| solution->scopes[0]->child_scopes.size() == 0) {
+			can_add = true;
+		}
+	}
+
 	for (map<int, AbstractNodeHistory*>::iterator h_it = scope_history->node_histories.begin();
 			h_it != scope_history->node_histories.end(); h_it++) {
 		switch (h_it->second->node->type) {
 		case NODE_TYPE_ACTION:
 		case NODE_TYPE_OBS:
 			if (h_it->second->node->experiment == NULL) {
-				if (solution->timestamp >= MAINTAIN_ITERS
-						|| scope_history->scope->id == 0 || scope_history->scope->id > (int)solution->existing_scopes.size()) {
+				if (can_add) {
 					map<pair<AbstractNode*,bool>, int>::iterator seen_it = nodes_seen
 						.find({h_it->second->node, false});
 					if (seen_it == nodes_seen.end()) {
@@ -43,8 +52,7 @@ void gather_nodes_seen_helper(ScopeHistory* scope_history,
 										 nodes_seen);
 
 				if (h_it->second->node->experiment == NULL) {
-					if (solution->timestamp >= MAINTAIN_ITERS
-							|| scope_history->scope->id == 0 || scope_history->scope->id > (int)solution->existing_scopes.size()) {
+					if (can_add) {
 						map<pair<AbstractNode*,bool>, int>::iterator seen_it = nodes_seen
 							.find({h_it->second->node, false});
 						if (seen_it == nodes_seen.end()) {
@@ -58,8 +66,7 @@ void gather_nodes_seen_helper(ScopeHistory* scope_history,
 			break;
 		case NODE_TYPE_BRANCH:
 			if (h_it->second->node->experiment == NULL) {
-				if (solution->timestamp >= MAINTAIN_ITERS
-						|| scope_history->scope->id == 0 || scope_history->scope->id > (int)solution->existing_scopes.size()) {
+				if (can_add) {
 					BranchNodeHistory* branch_node_history = (BranchNodeHistory*)h_it->second;
 					map<pair<AbstractNode*,bool>, int>::iterator seen_it = nodes_seen
 						.find({h_it->second->node, branch_node_history->is_branch});

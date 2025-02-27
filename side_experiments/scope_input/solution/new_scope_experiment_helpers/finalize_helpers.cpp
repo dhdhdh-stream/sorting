@@ -46,12 +46,14 @@ void NewScopeExperiment::finalize(Solution* duplicate) {
 					BranchNode* branch_node = (BranchNode*)it->second;
 
 					for (int f_index = 0; f_index < (int)branch_node->factors.size(); f_index++) {
-						ObsNode* obs_node = (ObsNode*)this->new_scope->nodes[branch_node->factors[f_index].node_context.back()];
-						Factor* factor = obs_node->factors[branch_node->factors[f_index].factor_index];
+						if (branch_node->factors[f_index].type == INPUT_TYPE_OBS) {
+							ObsNode* obs_node = (ObsNode*)this->new_scope->nodes[branch_node->factors[f_index].node_context.back()];
+							Factor* factor = obs_node->factors[branch_node->factors[f_index].factor_index];
 
-						factor->link(duplicate);
+							factor->link(duplicate);
 
-						obs_node->is_used = true;
+							obs_node->is_used = true;
+						}
 					}
 
 					#if defined(MDEBUG) && MDEBUG
@@ -107,6 +109,20 @@ void NewScopeExperiment::finalize(Solution* duplicate) {
 		}
 
 		this->new_scope->child_scopes = duplicate_local_scope->child_scopes;
+		map<Scope*, vector<Input>> new_child_scope_inputs;
+		for (map<Scope*, vector<Input>>::iterator it = this->new_scope->child_scope_inputs.begin();
+				it != this->new_scope->child_scope_inputs.end(); it++) {
+			for (int i_index = 0; i_index < (int)it->second.size(); i_index++) {
+				for (int l_index = 1; l_index < (int)it->second[i_index].scope_context.size(); l_index++) {
+					it->second[i_index].scope_context[l_index] =
+						duplicate->scopes[it->second[i_index].scope_context[l_index]->id];
+				}
+			}
+
+			new_child_scope_inputs[duplicate->scopes[it->first->id]] = it->second;
+		}
+		this->new_scope->child_scope_inputs = new_child_scope_inputs;
+
 		duplicate_local_scope->child_scopes.push_back(this->new_scope);
 		for (int i_index = 0; i_index < (int)this->new_scope_inputs.size(); i_index++) {
 			for (int l_index = 0; l_index < (int)this->new_scope_inputs[i_index].scope_context.size(); l_index++) {
