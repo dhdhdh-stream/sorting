@@ -4,12 +4,9 @@
 
 #include "action_node.h"
 #include "branch_node.h"
-#include "globals.h"
 #include "new_scope_experiment.h"
 #include "obs_node.h"
-#include "problem.h"
 #include "scope_node.h"
-#include "utilities.h"
 
 using namespace std;
 

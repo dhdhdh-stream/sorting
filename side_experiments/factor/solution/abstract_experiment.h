@@ -13,7 +13,9 @@ class ScopeHistory;
 class Solution;
 
 const int EXPERIMENT_TYPE_BRANCH = 0;
-const int EXPERIMENT_TYPE_NEW_SCOPE = 1;
+const int EXPERIMENT_TYPE_PASS_THROUGH = 1;
+const int EXPERIMENT_TYPE_NEW_SCOPE = 2;
+const int EXPERIMENT_TYPE_COMMIT = 3;
 
 const int EXPERIMENT_RESULT_NA = 0;
 const int EXPERIMENT_RESULT_FAIL = 1;

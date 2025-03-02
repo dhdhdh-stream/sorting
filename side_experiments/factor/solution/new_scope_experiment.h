@@ -57,7 +57,6 @@ public:
 	#if defined(MDEBUG) && MDEBUG
 	std::vector<Problem*> verify_problems;
 	std::vector<unsigned long> verify_seeds;
-	std::vector<bool> verify_can_random;
 	#endif /* MDEBUG */
 
 	NewScopeExperiment(Scope* scope_context,
@@ -84,7 +83,8 @@ public:
 					   RunHelper& run_helper,
 					   NewScopeExperimentHistory* history);
 	void test_backprop(double target_val,
-					   RunHelper& run_helper);
+					   RunHelper& run_helper,
+					   NewScopeExperimentHistory* history);
 
 	#if defined(MDEBUG) && MDEBUG
 	void capture_verify_activate(int location_index,

@@ -38,6 +38,8 @@ void BranchExperiment::train_new_activate(
 	this->num_instances_until_target--;
 
 	if (this->num_instances_until_target <= 0) {
+		run_helper.has_explore = true;
+
 		history->instance_count++;
 
 		double sum_vals = this->existing_average_score;
@@ -86,16 +88,15 @@ void BranchExperiment::train_new_activate(
 
 		curr_node = this->best_exit_next_node;
 
-		uniform_int_distribution<int> until_distribution(0, 2*((int)this->average_instances_per_run-1));
+		uniform_int_distribution<int> until_distribution(0, 2*((int)this->node_context->average_instances_per_run-1));
 		this->num_instances_until_target = 1 + until_distribution(generator);
 	}
 }
 
 void BranchExperiment::train_new_backprop(
 		double target_val,
-		RunHelper& run_helper) {
-	BranchExperimentHistory* history = (BranchExperimentHistory*)run_helper.experiment_history;
-
+		RunHelper& run_helper,
+		BranchExperimentHistory* history) {
 	for (int i_index = 0; i_index < history->instance_count; i_index++) {
 		this->i_target_val_histories.push_back(target_val - history->existing_predicted_scores[i_index]);
 	}
@@ -129,11 +130,14 @@ void BranchExperiment::train_new_backprop(
 		vector<double> sum_vals(num_instances);
 
 		if (this->new_factor_ids.size() > 0) {
+			#if defined(MDEBUG) && MDEBUG
+			#else
 			double sum_offset = 0.0;
 			for (int i_index = 0; i_index < num_train_instances; i_index++) {
 				sum_offset += abs(this->i_target_val_histories[i_index] - this->new_average_score);
 			}
 			double average_offset = sum_offset / num_train_instances;
+			#endif /* MDEBUG */
 
 			Eigen::MatrixXd inputs(num_train_instances, this->new_factor_ids.size());
 			for (int i_index = 0; i_index < num_train_instances; i_index++) {
@@ -176,10 +180,9 @@ void BranchExperiment::train_new_backprop(
 					sum_impact += abs(this->factor_histories[i_index][f_index]);
 				}
 
-				double impact = abs(this->new_factor_weights[f_index]) * sum_impact
-						/ num_train_instances;
-				if (impact < impact_threshold
-							|| abs(this->new_factor_weights[f_index]) > REGRESSION_WEIGHT_LIMIT) {
+				double impact = this->new_factor_weights[f_index] * sum_impact
+					/ num_train_instances;
+				if (impact < impact_threshold) {
 				#endif /* MDEBUG */
 					this->new_factor_ids.erase(this->new_factor_ids.begin() + f_index);
 					this->new_factor_weights.erase(this->new_factor_weights.begin() + f_index);
@@ -199,11 +202,6 @@ void BranchExperiment::train_new_backprop(
 
 				remaining_scores[i_index] = this->i_target_val_histories[i_index] - sum_score;
 				sum_vals[i_index] = sum_score;
-
-				if (abs(sum_score) > REGRESSION_FAIL_MULTIPLIER * average_offset) {
-					this->result = EXPERIMENT_RESULT_FAIL;
-					return;
-				}
 			}
 		} else {
 			for (int i_index = 0; i_index < num_instances; i_index++) {
@@ -399,6 +397,11 @@ void BranchExperiment::train_new_backprop(
 						break;
 					}
 
+					new_obs_node->average_instances_per_run = this->node_context->average_instances_per_run;
+
+					new_obs_node->num_measure = this->node_context->num_measure;
+					new_obs_node->sum_score = this->node_context->sum_score;
+
 					this->node_context->experiment = NULL;
 
 					this->node_context = new_obs_node;
@@ -453,7 +456,6 @@ void BranchExperiment::train_new_backprop(
 			#if defined(MDEBUG) && MDEBUG
 			this->verify_problems = vector<Problem*>(NUM_VERIFY_SAMPLES, NULL);
 			this->verify_seeds = vector<unsigned long>(NUM_VERIFY_SAMPLES);
-			this->verify_can_random = vector<bool>(NUM_VERIFY_SAMPLES);
 
 			this->state = BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY;
 			this->state_iter = 0;

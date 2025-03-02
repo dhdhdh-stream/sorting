@@ -38,6 +38,15 @@ public:
 							 RunHelper& run_helper,
 							 ScopeHistory* scope_history);
 
+	void commit_activate(Problem* problem,
+						 RunHelper& run_helper,
+						 ScopeHistory* scope_history);
+
+	void measure_activate(AbstractNode*& curr_node,
+						  Problem* problem,
+						  RunHelper& run_helper,
+						  ScopeHistory* scope_history);
+
 	#if defined(MDEBUG) && MDEBUG
 	void verify_activate(AbstractNode*& curr_node,
 						 Problem* problem,

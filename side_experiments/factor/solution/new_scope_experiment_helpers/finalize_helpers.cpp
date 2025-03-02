@@ -106,7 +106,6 @@ void NewScopeExperiment::finalize(Solution* duplicate) {
 		duplicate->verify_problems = this->verify_problems;
 		this->verify_problems.clear();
 		duplicate->verify_seeds = this->verify_seeds;
-		duplicate->verify_can_random = this->verify_can_random;
 		#endif /* MDEBUG */
 
 		clean_scope(this->new_scope,

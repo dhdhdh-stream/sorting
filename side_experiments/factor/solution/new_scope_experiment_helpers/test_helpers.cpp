@@ -31,6 +31,8 @@ void NewScopeExperiment::test_activate(
 	case LOCATION_STATE_VERIFY_NEW_1ST:
 	case LOCATION_STATE_VERIFY_NEW_2ND:
 		{
+			run_helper.has_explore = true;
+
 			ScopeHistory* inner_scope_history = new ScopeHistory(this->new_scope);
 			this->new_scope->experiment_activate(problem,
 												 run_helper,
@@ -45,9 +47,8 @@ void NewScopeExperiment::test_activate(
 
 void NewScopeExperiment::test_backprop(
 		double target_val,
-		RunHelper& run_helper) {
-	NewScopeExperimentHistory* history = (NewScopeExperimentHistory*)run_helper.experiment_history;
-
+		RunHelper& run_helper,
+		NewScopeExperimentHistory* history) {
 	bool is_fail = false;
 
 	switch (this->test_location_states[history->test_location_index]) {
@@ -172,6 +173,7 @@ void NewScopeExperiment::test_backprop(
 
 	if (is_fail) {
 		this->test_location_starts[history->test_location_index]->experiment = NULL;
+
 		this->test_location_starts.erase(this->test_location_starts.begin() + history->test_location_index);
 		this->test_location_is_branch.erase(this->test_location_is_branch.begin() + history->test_location_index);
 		this->test_location_exits.erase(this->test_location_exits.begin() + history->test_location_index);
@@ -206,7 +208,6 @@ void NewScopeExperiment::test_backprop(
 
 		this->verify_problems = vector<Problem*>(NUM_VERIFY_SAMPLES, NULL);
 		this->verify_seeds = vector<unsigned long>(NUM_VERIFY_SAMPLES);
-		this->verify_can_random = vector<bool>(NUM_VERIFY_SAMPLES);
 
 		this->state = NEW_SCOPE_EXPERIMENT_STATE_CAPTURE_VERIFY;
 		this->state_iter = 0;

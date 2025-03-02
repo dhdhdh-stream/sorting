@@ -7,9 +7,7 @@
 #include "constants.h"
 #include "globals.h"
 #include "obs_node.h"
-#include "problem.h"
 #include "scope_node.h"
-#include "utilities.h"
 
 using namespace std;
 
@@ -27,8 +25,7 @@ void Scope::activate(Problem* problem,
 			{
 				ActionNode* node = (ActionNode*)curr_node;
 				node->activate(curr_node,
-							   problem,
-							   run_helper);
+							   problem);
 			}
 			break;
 		case NODE_TYPE_SCOPE:

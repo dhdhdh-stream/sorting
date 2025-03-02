@@ -27,6 +27,11 @@ public:
 
 	AbstractExperiment* experiment;
 
+	double average_instances_per_run;
+
+	int num_measure;
+	double sum_score;
+
 	virtual ~AbstractNode() {};
 
 	virtual void save(std::ofstream& output_file) = 0;

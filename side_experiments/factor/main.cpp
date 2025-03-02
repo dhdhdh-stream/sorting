@@ -60,6 +60,17 @@ int main(int argc, char* argv[]) {
 	run_index = 0;
 
 	while (solution->timestamp < EXPLORE_ITERS) {
+		int iter_type;
+		if ((solution->timestamp + 1) % NEW_SCOPE_ITERS == 0) {
+			iter_type = ITER_TYPE_NEW_SCOPE;
+		} else {
+			if (solution->timestamp % 2 == 0) {
+				iter_type = ITER_TYPE_COMMIT;
+			} else {
+				iter_type = ITER_TYPE_EXISTING;
+			}
+		}
+
 		Solution* best_solution = NULL;
 
 		int improvement_iter = 0;
@@ -91,11 +102,22 @@ int main(int argc, char* argv[]) {
 			target_val -= 0.05 * run_helper.num_actions * solution->curr_time_penalty;
 			target_val -= run_helper.num_analyze * solution->curr_time_penalty;
 
+			if (!run_helper.has_explore) {
+				update_scores(scope_history,
+							  target_val);
+			}
+
 			if (run_helper.experiments_seen_order.size() == 0) {
-				if ((solution->timestamp + 1) % NEW_SCOPE_ITERS == 0) {
+				switch (iter_type) {
+				case ITER_TYPE_NEW_SCOPE:
 					create_new_scope_experiment(scope_history);
-				} else {
-					create_branch_experiment(scope_history);
+					break;
+				case ITER_TYPE_COMMIT:
+					create_commit_experiment(scope_history);
+					break;
+				case ITER_TYPE_EXISTING:
+					create_experiment(scope_history);
+					break;
 				}
 			}
 
@@ -128,7 +150,6 @@ int main(int argc, char* argv[]) {
 					Scope* experiment_scope = duplicate->scopes[last_updated_scope_id];
 					clean_scope(experiment_scope,
 								duplicate);
-					duplicate->clean_scopes();
 
 					#if defined(MDEBUG) && MDEBUG
 					while (duplicate->verify_problems.size() > 0) {
@@ -139,8 +160,6 @@ int main(int argc, char* argv[]) {
 						cout << "run_helper.starting_run_seed: " << run_helper.starting_run_seed << endl;
 						run_helper.curr_run_seed = xorshift(run_helper.starting_run_seed);
 						duplicate->verify_seeds.erase(duplicate->verify_seeds.begin());
-						run_helper.can_random = duplicate->verify_can_random[0];
-						duplicate->verify_can_random.erase(duplicate->verify_can_random.begin());
 
 						ScopeHistory* scope_history = new ScopeHistory(duplicate->scopes[0]);
 						duplicate->scopes[0]->verify_activate(
@@ -168,7 +187,7 @@ int main(int argc, char* argv[]) {
 						#endif /* MDEBUG */
 
 						ScopeHistory* scope_history = new ScopeHistory(duplicate->scopes[0]);
-						duplicate->scopes[0]->activate(
+						duplicate->scopes[0]->measure_activate(
 							problem,
 							run_helper,
 							scope_history);
@@ -180,6 +199,16 @@ int main(int argc, char* argv[]) {
 						sum_true_score += target_val;
 
 						delete problem;
+					}
+
+					for (int s_index = 0; s_index < (int)duplicate->scopes.size(); s_index++) {
+						for (map<int, AbstractNode*>::iterator it = duplicate->scopes[s_index]->nodes.begin();
+								it != duplicate->scopes[s_index]->nodes.end(); it++) {
+							it->second->average_instances_per_run /= MEASURE_ITERS;
+							if (it->second->average_instances_per_run < 1.0) {
+								it->second->average_instances_per_run = 1.0;
+							}
+						}
 					}
 
 					duplicate->curr_score = sum_score / MEASURE_ITERS;
@@ -223,8 +252,14 @@ int main(int argc, char* argv[]) {
 					}
 
 					improvement_iter++;
-					if (improvement_iter >= IMPROVEMENTS_PER_ITER) {
-						break;
+					if (iter_type == ITER_TYPE_COMMIT) {
+						if (improvement_iter >= COMMIT_IMPROVEMENTS_PER_ITER) {
+							break;
+						}
+					} else {
+						if (improvement_iter >= IMPROVEMENTS_PER_ITER) {
+							break;
+						}
 					}
 				}
 			} else {
@@ -240,7 +275,7 @@ int main(int argc, char* argv[]) {
 		delete solution;
 		solution = best_solution;
 
-		// solution->save("saves/", filename);
+		solution->save("saves/", filename);
 
 		#if defined(MDEBUG) && MDEBUG
 		delete solution;
@@ -248,6 +283,9 @@ int main(int argc, char* argv[]) {
 		solution->load("saves/", filename);
 		#endif /* MDEBUG */
 	}
+
+	solution->clean_scopes();
+	solution->save("saves/", filename);
 
 	delete problem_type;
 	delete solution;

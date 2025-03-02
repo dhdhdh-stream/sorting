@@ -8,10 +8,8 @@
 #include "branch_node.h"
 #include "globals.h"
 #include "obs_node.h"
-#include "problem.h"
 #include "scope_node.h"
 #include "solution.h"
-#include "utilities.h"
 
 using namespace std;
 
@@ -29,8 +27,7 @@ void Scope::verify_activate(Problem* problem,
 			{
 				ActionNode* node = (ActionNode*)curr_node;
 				node->activate(curr_node,
-							   problem,
-							   run_helper);
+							   problem);
 			}
 			break;
 		case NODE_TYPE_SCOPE:

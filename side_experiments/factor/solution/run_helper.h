@@ -2,7 +2,6 @@
 #define RUN_HELPER_H
 
 #include <map>
-#include <random>
 #include <set>
 #include <vector>
 
@@ -12,14 +11,13 @@ class AbstractNode;
 
 class RunHelper {
 public:
-	bool can_random;
-	std::uniform_int_distribution<int> random_distribution;
-
 	int num_analyze;
 	int num_actions;
 
 	std::vector<AbstractExperiment*> experiments_seen_order;
 	AbstractExperimentHistory* experiment_history;
+
+	bool has_explore;
 
 	#if defined(MDEBUG) && MDEBUG
 	unsigned long starting_run_seed;
@@ -28,8 +26,6 @@ public:
 
 	RunHelper();
 	~RunHelper();
-
-	bool is_random();
 };
 
 #endif /* RUN_HELPER_H */

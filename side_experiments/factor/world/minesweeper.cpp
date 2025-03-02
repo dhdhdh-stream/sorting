@@ -449,3 +449,8 @@ int TypeMinesweeper::num_obs() {
 int TypeMinesweeper::num_possible_actions() {
 	return 7;
 }
+
+Action TypeMinesweeper::random_action() {
+	uniform_int_distribution<int> action_distribution(0, 6);
+	return Action(action_distribution(generator));
+}

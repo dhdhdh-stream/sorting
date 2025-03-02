@@ -8,10 +8,8 @@
 #include "branch_node.h"
 #include "globals.h"
 #include "obs_node.h"
-#include "problem.h"
 #include "scope_node.h"
 #include "solution.h"
-#include "utilities.h"
 
 using namespace std;
 

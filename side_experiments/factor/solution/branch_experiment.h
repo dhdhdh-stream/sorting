@@ -7,6 +7,7 @@
 #include "action.h"
 #include "run_helper.h"
 
+class CommitExperiment;
 class Scope;
 
 const int BRANCH_EXPERIMENT_STATE_EXISTING_GATHER = 0;
@@ -14,8 +15,9 @@ const int BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING = 1;
 const int BRANCH_EXPERIMENT_STATE_EXPLORE = 2;
 const int BRANCH_EXPERIMENT_STATE_NEW_GATHER = 3;
 const int BRANCH_EXPERIMENT_STATE_TRAIN_NEW = 4;
+const int BRANCH_EXPERIMENT_STATE_MEASURE = 5;
 #if defined(MDEBUG) && MDEBUG
-const int BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY = 5;
+const int BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY = 6;
 #endif /* MDEBUG */
 
 class BranchExperimentHistory;
@@ -24,8 +26,6 @@ public:
 	int state;
 	int state_iter;
 
-	int sum_num_instances;
-
 	std::vector<std::pair<std::pair<std::vector<Scope*>,std::vector<int>>,
 		std::pair<int,int>>> existing_inputs;
 	std::vector<std::pair<int,int>> existing_factor_ids;
@@ -33,8 +33,9 @@ public:
 	double existing_average_score;
 	std::vector<double> existing_factor_weights;
 
-	double average_instances_per_run;
 	int num_instances_until_target;
+
+	int explore_type;
 
 	std::vector<int> curr_step_types;
 	std::vector<Action> curr_actions;
@@ -47,14 +48,18 @@ public:
 	std::vector<Scope*> best_scopes;
 	AbstractNode* best_exit_next_node;
 
+	double new_average_score;
 	std::vector<std::pair<std::pair<std::vector<Scope*>,std::vector<int>>,
 		std::pair<int,int>>> new_inputs;
-	std::vector<std::pair<int,int>> new_factor_ids;
 
-	double new_average_score;
+	std::vector<std::pair<int,int>> new_factor_ids;
 	std::vector<double> new_factor_weights;
 
 	double select_percentage;
+
+	double combined_score;
+
+	CommitExperiment* parent_experiment;
 
 	std::vector<std::vector<double>> input_histories;
 	std::vector<std::vector<double>> factor_histories;
@@ -63,7 +68,6 @@ public:
 	#if defined(MDEBUG) && MDEBUG
 	std::vector<Problem*> verify_problems;
 	std::vector<unsigned long> verify_seeds;
-	std::vector<bool> verify_can_random;
 	std::vector<double> verify_scores;
 	#endif /* MDEBUG */
 
@@ -89,7 +93,8 @@ public:
 								 ScopeHistory* scope_history,
 								 BranchExperimentHistory* history);
 	void train_existing_backprop(double target_val,
-								 RunHelper& run_helper);
+								 RunHelper& run_helper,
+								 BranchExperimentHistory* history);
 
 	void explore_activate(AbstractNode*& curr_node,
 						  Problem* problem,
@@ -97,7 +102,8 @@ public:
 						  ScopeHistory* scope_history,
 						  BranchExperimentHistory* history);
 	void explore_backprop(double target_val,
-						  RunHelper& run_helper);
+						  RunHelper& run_helper,
+						  BranchExperimentHistory* history);
 
 	void new_gather_activate(ScopeHistory* scope_history);
 	void new_gather_backprop();
@@ -108,7 +114,8 @@ public:
 							ScopeHistory* scope_history,
 							BranchExperimentHistory* history);
 	void train_new_backprop(double target_val,
-							RunHelper& run_helper);
+							RunHelper& run_helper,
+							BranchExperimentHistory* history);
 
 	#if defined(MDEBUG) && MDEBUG
 	void capture_verify_activate(AbstractNode*& curr_node,
@@ -117,6 +124,25 @@ public:
 								 ScopeHistory* scope_history);
 	void capture_verify_backprop();
 	#endif /* MDEBUG */
+
+	bool commit_activate(AbstractNode*& curr_node,
+						 Problem* problem,
+						 RunHelper& run_helper,
+						 ScopeHistory* scope_history,
+						 BranchExperimentHistory* history);
+	void commit_backprop(double target_val,
+						 RunHelper& run_helper,
+						 BranchExperimentHistory* history);
+	void explore_commit_activate(AbstractNode*& curr_node,
+								 Problem* problem,
+								 RunHelper& run_helper,
+								 ScopeHistory* scope_history,
+								 BranchExperimentHistory* history);
+	bool measure_commit_activate(AbstractNode*& curr_node,
+								 Problem* problem,
+								 RunHelper& run_helper,
+								 ScopeHistory* scope_history);
+	void measure_commit_backprop(double target_val);
 
 	void finalize(Solution* duplicate);
 };

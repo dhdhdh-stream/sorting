@@ -17,7 +17,7 @@ void ObsNode::experiment_activate(AbstractNode*& curr_node,
 	vector<double> obs = problem->get_observations();
 	history->obs_history = obs;
 
-	history->factor_initialized = vector<bool>(this->factors.size());
+	history->factor_initialized = vector<bool>(this->factors.size(), false);
 	history->factor_values = vector<double>(this->factors.size());
 
 	curr_node = this->next_node;
