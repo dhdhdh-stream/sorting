@@ -140,105 +140,75 @@ void CommitExperiment::explore_backprop(
 	if (history->existing_predicted_scores.size() > 0) {
 		double curr_surprise = target_val - history->existing_predicted_scores[0];
 
-		bool select = false;
-		if (this->explore_type == EXPLORE_TYPE_BEST) {
-			#if defined(MDEBUG) && MDEBUG
-			if (true) {
-			#else
-			if (curr_surprise > this->best_surprise) {
-			#endif /* MDEBUG */
-				this->best_surprise = curr_surprise;
-				this->best_step_types = this->curr_step_types;
-				this->best_actions = this->curr_actions;
-				this->best_scopes = this->curr_scopes;
-				this->best_exit_next_node = this->curr_exit_next_node;
+		#if defined(MDEBUG) && MDEBUG
+		if (true) {
+		#else
+		if (curr_surprise > this->best_surprise) {
+		#endif /* MDEBUG */
+			this->best_surprise = curr_surprise;
+			this->best_step_types = this->curr_step_types;
+			this->best_actions = this->curr_actions;
+			this->best_scopes = this->curr_scopes;
+			this->best_exit_next_node = this->curr_exit_next_node;
 
-				this->curr_step_types.clear();
-				this->curr_actions.clear();
-				this->curr_scopes.clear();
-			} else {
-				this->curr_step_types.clear();
-				this->curr_actions.clear();
-				this->curr_scopes.clear();
-			}
-
-			if (this->state_iter == COMMIT_EXPERIMENT_EXPLORE_ITERS-1
-					&& this->best_surprise > 0.0) {
-				select = true;
-			}
-		} else if (this->explore_type == EXPLORE_TYPE_GOOD) {
-			#if defined(MDEBUG) && MDEBUG
-			if (true) {
-			#else
-			if (curr_surprise > 0.0) {
-			#endif /* MDEBUG */
-				this->best_step_types = this->curr_step_types;
-				this->best_actions = this->curr_actions;
-				this->best_scopes = this->curr_scopes;
-				this->best_exit_next_node = this->curr_exit_next_node;
-
-				this->curr_step_types.clear();
-				this->curr_actions.clear();
-				this->curr_scopes.clear();
-
-				select = true;
-			} else {
-				this->curr_step_types.clear();
-				this->curr_actions.clear();
-				this->curr_scopes.clear();
-			}
+			this->curr_step_types.clear();
+			this->curr_actions.clear();
+			this->curr_scopes.clear();
+		} else {
+			this->curr_step_types.clear();
+			this->curr_actions.clear();
+			this->curr_scopes.clear();
 		}
 
-		if (select) {
-			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-					ActionNode* new_action_node = new ActionNode();
-					new_action_node->parent = this->scope_context;
-					new_action_node->id = this->scope_context->node_counter;
+		this->state_iter++;
+		if (this->state_iter >= COMMIT_EXPERIMENT_EXPLORE_ITERS) {
+			if (this->best_surprise > 0.0) {
+				for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+					if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+						ActionNode* new_action_node = new ActionNode();
+						new_action_node->parent = this->scope_context;
+						new_action_node->id = this->scope_context->node_counter;
+						this->scope_context->node_counter++;
+
+						new_action_node->action = this->best_actions[s_index];
+
+						new_action_node->average_instances_per_run = this->node_context->average_instances_per_run;
+
+						this->new_nodes.push_back(new_action_node);
+					} else {
+						ScopeNode* new_scope_node = new ScopeNode();
+						new_scope_node->parent = this->scope_context;
+						new_scope_node->id = this->scope_context->node_counter;
+						this->scope_context->node_counter++;
+
+						new_scope_node->scope = this->best_scopes[s_index];
+
+						new_scope_node->average_instances_per_run = this->node_context->average_instances_per_run;
+
+						this->new_nodes.push_back(new_scope_node);
+					}
+
+					ObsNode* new_obs_node = new ObsNode();
+					new_obs_node->parent = this->scope_context;
+					new_obs_node->id = this->scope_context->node_counter;
 					this->scope_context->node_counter++;
 
-					new_action_node->action = this->best_actions[s_index];
+					new_obs_node->average_instances_per_run = node_context->average_instances_per_run;
 
-					new_action_node->average_instances_per_run = this->node_context->average_instances_per_run;
-
-					this->new_nodes.push_back(new_action_node);
-				} else {
-					ScopeNode* new_scope_node = new ScopeNode();
-					new_scope_node->parent = this->scope_context;
-					new_scope_node->id = this->scope_context->node_counter;
-					this->scope_context->node_counter++;
-
-					new_scope_node->scope = this->best_scopes[s_index];
-
-					new_scope_node->average_instances_per_run = this->node_context->average_instances_per_run;
-
-					this->new_nodes.push_back(new_scope_node);
+					this->new_nodes.push_back(new_obs_node);
 				}
 
-				ObsNode* new_obs_node = new ObsNode();
-				new_obs_node->parent = this->scope_context;
-				new_obs_node->id = this->scope_context->node_counter;
-				this->scope_context->node_counter++;
+				uniform_int_distribution<int> experiment_node_distribution(0, this->new_nodes.size() / 2 - 1);
+				this->experiment_index = 2 * experiment_node_distribution(generator) + 1;
 
-				new_obs_node->average_instances_per_run = node_context->average_instances_per_run;
+				this->curr_experiment = new BranchExperiment(this->scope_context,
+															 this->new_nodes[this->experiment_index],
+															 false);
+				this->curr_experiment->parent_experiment = this;
 
-				this->new_nodes.push_back(new_obs_node);
-			}
-
-			uniform_int_distribution<int> experiment_node_distribution(0, this->new_nodes.size() / 2 - 1);
-			this->experiment_index = 2 * experiment_node_distribution(generator) + 1;
-
-			this->curr_experiment = new BranchExperiment(this->scope_context,
-														 this->new_nodes[this->experiment_index],
-														 false);
-			this->curr_experiment->parent_experiment = this;
-			cout << "inner BranchExperiment" << endl;
-
-			this->state = COMMIT_EXPERIMENT_STATE_EXPERIMENT;
-			this->state_iter = 0;
-		} else {
-			this->state_iter++;
-			if (this->state_iter >= COMMIT_EXPERIMENT_EXPLORE_ITERS) {
+				this->state = COMMIT_EXPERIMENT_STATE_EXPERIMENT;
+				this->state_iter = 0;
+			} else {
 				this->result = EXPERIMENT_RESULT_FAIL;
 			}
 		}

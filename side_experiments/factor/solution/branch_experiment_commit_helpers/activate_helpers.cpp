@@ -17,24 +17,22 @@ bool BranchExperiment::commit_activate(AbstractNode*& curr_node,
 								history);
 		return false;
 	case BRANCH_EXPERIMENT_STATE_EXPLORE:
-		explore_commit_activate(curr_node,
-								problem,
-								run_helper,
-								scope_history,
-								history);
-		return true;
+		return commit_explore_activate(curr_node,
+									   problem,
+									   run_helper,
+									   scope_history,
+									   history);
 	case BRANCH_EXPERIMENT_STATE_NEW_GATHER:
 		new_gather_activate(scope_history);
 		return false;
 	case BRANCH_EXPERIMENT_STATE_TRAIN_NEW:
-		train_new_activate(curr_node,
-						   problem,
-						   run_helper,
-						   scope_history,
-						   history);
-		return true;
+		return commit_train_new_activate(curr_node,
+										 problem,
+										 run_helper,
+										 scope_history,
+										 history);
 	case BRANCH_EXPERIMENT_STATE_MEASURE:
-		return measure_commit_activate(curr_node,
+		return commit_measure_activate(curr_node,
 									   problem,
 									   run_helper,
 									   scope_history);
@@ -56,20 +54,20 @@ void BranchExperiment::commit_backprop(double target_val,
 								history);
 		break;
 	case BRANCH_EXPERIMENT_STATE_EXPLORE:
-		explore_backprop(target_val,
-						 run_helper,
-						 history);
+		commit_explore_backprop(target_val,
+								run_helper,
+								history);
 		break;
 	case BRANCH_EXPERIMENT_STATE_NEW_GATHER:
 		new_gather_backprop();
 		break;
 	case BRANCH_EXPERIMENT_STATE_TRAIN_NEW:
-		train_new_backprop(target_val,
-						   run_helper,
-						   history);
+		commit_train_new_backprop(target_val,
+								  run_helper,
+								  history);
 		break;
 	case BRANCH_EXPERIMENT_STATE_MEASURE:
-		measure_commit_backprop(target_val);
+		commit_measure_backprop(target_val);
 		break;
 	}
 }

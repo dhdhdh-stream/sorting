@@ -16,7 +16,6 @@ class PassThroughExperimentHistory;
 class PassThroughExperiment : public AbstractExperiment {
 public:
 	int state_iter;
-	int sub_state_iter;
 	int explore_iter;
 
 	double curr_sum_score;

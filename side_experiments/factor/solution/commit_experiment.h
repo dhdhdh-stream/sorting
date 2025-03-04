@@ -1,3 +1,10 @@
+// TODO: find the save first, then learn branch
+
+/**
+ * - use EXPLORE_TYPE_BEST for both outer commit and inner branch
+ *   - need all the help as difficult to recover from a random commit being applied to all instances
+ */
+
 #ifndef COMMIT_EXPERIMENT_H
 #define COMMIT_EXPERIMENT_H
 
@@ -23,6 +30,8 @@ public:
 	int state;
 	int state_iter;
 
+	double o_existing_average_score;
+
 	std::vector<std::pair<std::pair<std::vector<Scope*>,std::vector<int>>,
 		std::pair<int,int>>> existing_inputs;
 	std::vector<std::pair<int,int>> existing_factor_ids;
@@ -31,8 +40,6 @@ public:
 	std::vector<double> existing_factor_weights;
 
 	int num_instances_until_target;
-
-	int explore_type;
 
 	std::vector<int> curr_step_types;
 	std::vector<Action> curr_actions;
@@ -55,6 +62,7 @@ public:
 	std::vector<std::vector<double>> input_histories;
 	std::vector<std::vector<double>> factor_histories;
 	std::vector<double> i_target_val_histories;
+	std::vector<double> o_target_val_histories;
 
 	CommitExperiment(Scope* scope_context,
 					 AbstractNode* node_context,

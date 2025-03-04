@@ -60,8 +60,16 @@ void CommitExperiment::train_existing_backprop(
 		this->i_target_val_histories.push_back(target_val);
 	}
 
+	this->o_target_val_histories.push_back(target_val);
+
 	this->state_iter++;
 	if (this->state_iter >= TRAIN_EXISTING_NUM_DATAPOINTS) {
+		double o_sum_vals = 0.0;
+		for (int h_index = 0; h_index < (int)this->o_target_val_histories.size(); h_index++) {
+			o_sum_vals += this->o_target_val_histories[h_index];
+		}
+		this->o_existing_average_score = o_sum_vals / (int)this->o_target_val_histories.size();
+
 		{
 			default_random_engine generator_copy = generator;
 			shuffle(this->input_histories.begin(), this->input_histories.end(), generator_copy);
@@ -138,9 +146,10 @@ void CommitExperiment::train_existing_backprop(
 					sum_impact += abs(this->factor_histories[i_index][f_index]);
 				}
 
-				double impact = this->existing_factor_weights[f_index] * sum_impact
+				double impact = abs(this->existing_factor_weights[f_index]) * sum_impact
 					/ num_train_instances;
-				if (impact < impact_threshold) {
+				if (impact < impact_threshold
+						|| abs(this->existing_factor_weights[f_index]) > REGRESSION_WEIGHT_LIMIT) {
 				#endif /* MDEBUG */
 					this->existing_factor_ids.erase(this->existing_factor_ids.begin() + f_index);
 					this->existing_factor_weights.erase(this->existing_factor_weights.begin() + f_index);
@@ -159,6 +168,11 @@ void CommitExperiment::train_existing_backprop(
 				}
 
 				remaining_scores[i_index] = this->i_target_val_histories[i_index] - sum_score;
+
+				if (abs(sum_score) > REGRESSION_FAIL_MULTIPLIER * average_offset) {
+					this->result = EXPERIMENT_RESULT_FAIL;
+					return;
+				}
 			}
 		} else {
 			for (int i_index = 0; i_index < num_instances; i_index++) {
@@ -196,11 +210,15 @@ void CommitExperiment::train_existing_backprop(
 						new_average_misguess,
 						new_misguess_standard_deviation);
 
+		#if defined(MDEBUG) && MDEBUG
+		if (rand()%2 == 0) {
+		#else
 		double new_improvement = average_misguess - new_average_misguess;
 		double new_standard_deviation = min(misguess_standard_deviation, new_misguess_standard_deviation);
 		double new_t_score = new_improvement / (new_standard_deviation / sqrt(num_test_instances));
 
 		if (new_t_score > 2.326) {
+		#endif /* MDEBUG */
 			average_misguess = new_average_misguess;
 
 			for (int i_index = (int)this->existing_inputs.size()-1; i_index >= 0; i_index--) {
@@ -377,14 +395,7 @@ void CommitExperiment::train_existing_backprop(
 		this->factor_histories.clear();
 		this->i_target_val_histories.clear();
 
-		uniform_int_distribution<int> good_distribution(0, 3);
-		if (good_distribution(generator) == 0) {
-			this->explore_type = EXPLORE_TYPE_GOOD;
-		} else {
-			this->explore_type = EXPLORE_TYPE_BEST;
-
-			this->best_surprise = 0.0;
-		}
+		this->best_surprise = 0.0;
 
 		uniform_int_distribution<int> until_distribution(0, (int)this->node_context->average_instances_per_run-1.0);
 		this->num_instances_until_target = 1 + until_distribution(generator);

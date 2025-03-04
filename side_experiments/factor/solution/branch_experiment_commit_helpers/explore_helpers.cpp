@@ -14,7 +14,13 @@
 
 using namespace std;
 
-void BranchExperiment::explore_commit_activate(
+#if defined(MDEBUG) && MDEBUG
+const int BRANCH_EXPERIMENT_EXPLORE_ITERS = 5;
+#else
+const int BRANCH_EXPERIMENT_EXPLORE_ITERS = 500;
+#endif /* MDEBUG */
+
+bool BranchExperiment::commit_explore_activate(
 		AbstractNode*& curr_node,
 		Problem* problem,
 		RunHelper& run_helper,
@@ -76,8 +82,17 @@ void BranchExperiment::explore_commit_activate(
 			starting_node,
 			possible_exits);
 
-		uniform_int_distribution<int> distribution(0, possible_exits.size()-1);
-		int random_index = distribution(generator);
+		int random_index;
+		if (possible_exits.size() < 20) {
+			uniform_int_distribution<int> exit_distribution(0, possible_exits.size()-1);
+			random_index = exit_distribution(generator);
+		} else {
+			geometric_distribution<int> exit_distribution(0.1);
+			random_index = exit_distribution(generator);
+			if (random_index >= (int)possible_exits.size()) {
+				random_index = (int)possible_exits.size()-1;
+			}
+		}
 		this->curr_exit_next_node = possible_exits[random_index];
 
 		geometric_distribution<int> geo_distribution(0.2);
@@ -127,5 +142,54 @@ void BranchExperiment::explore_commit_activate(
 		}
 
 		curr_node = this->curr_exit_next_node;
+
+		return true;
+	}
+
+	return false;
+}
+
+void BranchExperiment::commit_explore_backprop(
+		double target_val,
+		RunHelper& run_helper,
+		BranchExperimentHistory* history) {
+	uniform_int_distribution<int> until_distribution(0, (int)this->node_context->average_instances_per_run-1);
+	this->num_instances_until_target = 1 + until_distribution(generator);
+
+	if (history->existing_predicted_scores.size() > 0) {
+		double curr_surprise = target_val - history->existing_predicted_scores[0];
+
+		#if defined(MDEBUG) && MDEBUG
+		if (true) {
+		#else
+		if (curr_surprise > this->best_surprise) {
+		#endif /* MDEBUG */
+			this->best_surprise = curr_surprise;
+			this->best_step_types = this->curr_step_types;
+			this->best_actions = this->curr_actions;
+			this->best_scopes = this->curr_scopes;
+			this->best_exit_next_node = this->curr_exit_next_node;
+
+			this->curr_step_types.clear();
+			this->curr_actions.clear();
+			this->curr_scopes.clear();
+		} else {
+			this->curr_step_types.clear();
+			this->curr_actions.clear();
+			this->curr_scopes.clear();
+		}
+
+		this->state_iter++;
+		if (this->state_iter >= BRANCH_EXPERIMENT_EXPLORE_ITERS) {
+			if (this->best_surprise > 0.0) {
+				uniform_int_distribution<int> until_distribution(0, 2*((int)this->node_context->average_instances_per_run-1));
+				this->num_instances_until_target = 1 + until_distribution(generator);
+
+				this->state = BRANCH_EXPERIMENT_STATE_NEW_GATHER;
+				this->state_iter = 0;
+			} else {
+				this->result = EXPERIMENT_RESULT_FAIL;
+			}
+		}
 	}
 }

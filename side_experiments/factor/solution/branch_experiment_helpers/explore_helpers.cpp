@@ -83,8 +83,17 @@ void BranchExperiment::explore_activate(
 			starting_node,
 			possible_exits);
 
-		uniform_int_distribution<int> distribution(0, possible_exits.size()-1);
-		int random_index = distribution(generator);
+		int random_index;
+		if (possible_exits.size() < 20) {
+			uniform_int_distribution<int> exit_distribution(0, possible_exits.size()-1);
+			random_index = exit_distribution(generator);
+		} else {
+			geometric_distribution<int> exit_distribution(0.1);
+			random_index = exit_distribution(generator);
+			if (random_index >= (int)possible_exits.size()) {
+				random_index = (int)possible_exits.size()-1;
+			}
+		}
 		this->curr_exit_next_node = possible_exits[random_index];
 
 		int new_num_steps;

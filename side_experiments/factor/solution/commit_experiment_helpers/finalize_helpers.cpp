@@ -1,9 +1,12 @@
 #include "commit_experiment.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_experiment.h"
 #include "branch_node.h"
 #include "constants.h"
+#include "factor.h"
 #include "globals.h"
 #include "obs_node.h"
 #include "scope.h"
@@ -18,7 +21,31 @@ void CommitExperiment::finalize(Solution* duplicate) {
 		AbstractNode* duplicate_explore_node = duplicate_local_scope->nodes[this->node_context->id];
 
 		for (int n_index = 0; n_index < (int)this->new_nodes.size(); n_index++) {
+			this->new_nodes[n_index]->parent = duplicate_local_scope;
 			duplicate_local_scope->nodes[this->new_nodes[n_index]->id] = this->new_nodes[n_index];
+
+			switch (this->new_nodes[n_index]->type) {
+			case NODE_TYPE_SCOPE:
+				{
+					ScopeNode* scope_node = (ScopeNode*)this->new_nodes[n_index];
+					scope_node->scope = duplicate->scopes[scope_node->scope->id];
+				}
+				break;
+			case NODE_TYPE_OBS:
+				{
+					ObsNode* obs_node = (ObsNode*)this->new_nodes[n_index];
+					for (int f_index = 0; f_index < (int)obs_node->factors.size(); f_index++) {
+						Factor* factor = obs_node->factors[f_index];
+						for (int i_index = 0; i_index < (int)factor->inputs.size(); i_index++) {
+							for (int l_index = 0; l_index < (int)factor->inputs[i_index].first.first.size(); l_index++) {
+								factor->inputs[i_index].first.first[l_index] =
+									duplicate->scopes[factor->inputs[i_index].first.first[l_index]->id];
+							}
+						}
+					}
+				}
+				break;
+			}
 		}
 
 		int exit_node_id;

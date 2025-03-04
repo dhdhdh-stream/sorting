@@ -21,7 +21,7 @@ void ActionNode::experiment_activate(AbstractNode*& curr_node,
 
 	curr_node = this->next_node;
 
-	if (this->experiment == NULL) {
+	if (this->experiment != NULL) {
 		this->experiment->activate(
 			this,
 			false,

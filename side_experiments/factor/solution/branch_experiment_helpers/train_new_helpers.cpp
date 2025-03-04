@@ -180,9 +180,10 @@ void BranchExperiment::train_new_backprop(
 					sum_impact += abs(this->factor_histories[i_index][f_index]);
 				}
 
-				double impact = this->new_factor_weights[f_index] * sum_impact
+				double impact = abs(this->new_factor_weights[f_index]) * sum_impact
 					/ num_train_instances;
-				if (impact < impact_threshold) {
+				if (impact < impact_threshold
+						|| abs(this->new_factor_weights[f_index]) > REGRESSION_WEIGHT_LIMIT) {
 				#endif /* MDEBUG */
 					this->new_factor_ids.erase(this->new_factor_ids.begin() + f_index);
 					this->new_factor_weights.erase(this->new_factor_weights.begin() + f_index);
@@ -202,6 +203,11 @@ void BranchExperiment::train_new_backprop(
 
 				remaining_scores[i_index] = this->i_target_val_histories[i_index] - sum_score;
 				sum_vals[i_index] = sum_score;
+
+				if (abs(sum_score) > REGRESSION_FAIL_MULTIPLIER * average_offset) {
+					this->result = EXPERIMENT_RESULT_FAIL;
+					return;
+				}
 			}
 		} else {
 			for (int i_index = 0; i_index < num_instances; i_index++) {
@@ -240,11 +246,15 @@ void BranchExperiment::train_new_backprop(
 						new_average_misguess,
 						new_misguess_standard_deviation);
 
+		#if defined(MDEBUG) && MDEBUG
+		if (rand()%2 == 0) {
+		#else
 		double new_improvement = average_misguess - new_average_misguess;
 		double new_standard_deviation = min(misguess_standard_deviation, new_misguess_standard_deviation);
 		double new_t_score = new_improvement / (new_standard_deviation / sqrt(num_test_instances));
 
 		if (new_t_score > 2.326) {
+		#endif /* MDEBUG */
 			average_misguess = new_average_misguess;
 
 			for (int i_index = (int)this->new_inputs.size()-1; i_index >= 0; i_index--) {
@@ -422,6 +432,13 @@ void BranchExperiment::train_new_backprop(
 			delete new_network;
 		}
 
+		#if defined(MDEBUG) && MDEBUG
+		if (rand()%2 == 0) {
+			this->select_percentage = 0.5;
+		} else {
+			this->select_percentage = 0.0;
+		}
+		#else
 		int num_positive = 0;
 		for (int i_index = 0; i_index < num_instances; i_index++) {
 			if (sum_vals[i_index] > 0.0) {
@@ -429,6 +446,7 @@ void BranchExperiment::train_new_backprop(
 			}
 		}
 		this->select_percentage = (double)num_positive / (double)num_instances;
+		#endif /* MDEBUG */
 
 		if (this->select_percentage > 0.0) {
 			cout << "BranchExperiment" << endl;

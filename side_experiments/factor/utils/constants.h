@@ -24,6 +24,12 @@ const int GATHER_FACTORS_PER_ITER = 5;
 
 const double TEST_SAMPLES_PERCENTAGE = 0.2;
 
+/**
+ * - when there's correlation, weights can get strange values(?)
+ */
+const double REGRESSION_WEIGHT_LIMIT = 100000.0;
+const double REGRESSION_FAIL_MULTIPLIER = 1000.0;
+
 const double FACTOR_IMPACT_THRESHOLD = 0.1;
 
 const int NETWORK_NUM_INPUTS = 10;

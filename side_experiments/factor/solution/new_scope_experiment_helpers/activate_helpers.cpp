@@ -153,11 +153,13 @@ void NewScopeExperiment::back_activate(RunHelper& run_helper,
 					}
 				}
 
-				uniform_int_distribution<int> start_distribution(0, possible_starts.size()-1);
-				int start_index = start_distribution(generator);
+				if (possible_starts.size() > 0) {
+					uniform_int_distribution<int> start_distribution(0, possible_starts.size()-1);
+					int start_index = start_distribution(generator);
 
-				history->potential_start = possible_starts[start_index];
-				history->potential_is_branch = possible_is_branch[start_index];
+					history->potential_start = possible_starts[start_index];
+					history->potential_is_branch = possible_is_branch[start_index];
+				}
 			}
 			history->instance_count++;
 		}
@@ -177,57 +179,59 @@ void NewScopeExperiment::backprop(double target_val,
 						  run_helper,
 						  history);
 		} else {
-			vector<AbstractNode*> possible_exits;
+			if (history->potential_start != NULL) {
+				vector<AbstractNode*> possible_exits;
 
-			AbstractNode* starting_node;
-			switch (history->potential_start->type) {
-			case NODE_TYPE_ACTION:
-				{
-					ActionNode* action_node = (ActionNode*)history->potential_start;
-					starting_node = action_node->next_node;
-				}
-				break;
-			case NODE_TYPE_SCOPE:
-				{
-					ScopeNode* scope_node = (ScopeNode*)history->potential_start;
-					starting_node = scope_node->next_node;
-				}
-				break;
-			case NODE_TYPE_BRANCH:
-				{
-					BranchNode* branch_node = (BranchNode*)history->potential_start;
-					if (history->potential_is_branch) {
-						starting_node = branch_node->branch_next_node;
-					} else {
-						starting_node = branch_node->original_next_node;
+				AbstractNode* starting_node;
+				switch (history->potential_start->type) {
+				case NODE_TYPE_ACTION:
+					{
+						ActionNode* action_node = (ActionNode*)history->potential_start;
+						starting_node = action_node->next_node;
 					}
+					break;
+				case NODE_TYPE_SCOPE:
+					{
+						ScopeNode* scope_node = (ScopeNode*)history->potential_start;
+						starting_node = scope_node->next_node;
+					}
+					break;
+				case NODE_TYPE_BRANCH:
+					{
+						BranchNode* branch_node = (BranchNode*)history->potential_start;
+						if (history->potential_is_branch) {
+							starting_node = branch_node->branch_next_node;
+						} else {
+							starting_node = branch_node->original_next_node;
+						}
+					}
+					break;
+				case NODE_TYPE_OBS:
+					{
+						ObsNode* obs_node = (ObsNode*)history->potential_start;
+						starting_node = obs_node->next_node;
+					}
+					break;
 				}
-				break;
-			case NODE_TYPE_OBS:
-				{
-					ObsNode* obs_node = (ObsNode*)history->potential_start;
-					starting_node = obs_node->next_node;
-				}
-				break;
+
+				this->scope_context->random_exit_activate(
+					starting_node,
+					possible_exits);
+
+				uniform_int_distribution<int> distribution(0, possible_exits.size()-1);
+				int random_index = distribution(generator);
+				AbstractNode* exit_next_node = possible_exits[random_index];
+
+				this->test_location_starts.push_back(history->potential_start);
+				this->test_location_is_branch.push_back(history->potential_is_branch);
+				this->test_location_exits.push_back(exit_next_node);
+				this->test_location_states.push_back(LOCATION_STATE_MEASURE_EXISTING);
+				this->test_location_existing_scores.push_back(0.0);
+				this->test_location_new_scores.push_back(0.0);
+				this->test_location_counts.push_back(0);
+
+				history->potential_start->experiment = this;
 			}
-
-			this->scope_context->random_exit_activate(
-				starting_node,
-				possible_exits);
-
-			uniform_int_distribution<int> distribution(0, possible_exits.size()-1);
-			int random_index = distribution(generator);
-			AbstractNode* exit_next_node = possible_exits[random_index];
-
-			this->test_location_starts.push_back(history->potential_start);
-			this->test_location_is_branch.push_back(history->potential_is_branch);
-			this->test_location_exits.push_back(exit_next_node);
-			this->test_location_states.push_back(LOCATION_STATE_MEASURE_EXISTING);
-			this->test_location_existing_scores.push_back(0.0);
-			this->test_location_new_scores.push_back(0.0);
-			this->test_location_counts.push_back(0);
-
-			history->potential_start->experiment = NULL;
 		}
 
 		break;

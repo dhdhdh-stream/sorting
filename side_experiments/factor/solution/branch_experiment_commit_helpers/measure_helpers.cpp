@@ -16,7 +16,7 @@ const int MEASURE_NUM_DATAPOINTS = 20;
 const int MEASURE_NUM_DATAPOINTS = 4000;
 #endif /* MDEBUG */
 
-bool BranchExperiment::measure_commit_activate(
+bool BranchExperiment::commit_measure_activate(
 		AbstractNode*& curr_node,
 		Problem* problem,
 		RunHelper& run_helper,
@@ -83,12 +83,12 @@ bool BranchExperiment::measure_commit_activate(
 	}
 }
 
-void BranchExperiment::measure_commit_backprop(double target_val) {
+void BranchExperiment::commit_measure_backprop(double target_val) {
 	this->combined_score += target_val;
 
 	this->state_iter++;
 	if (this->state_iter >= MEASURE_NUM_DATAPOINTS) {
-		double improvement = this->combined_score / (double)this->state_iter - this->existing_average_score;
+		double improvement = this->combined_score / (double)this->state_iter - this->o_existing_average_score;
 		#if defined(MDEBUG) && MDEBUG
 		if (rand()%2 == 0) {
 		#else
@@ -118,7 +118,7 @@ void BranchExperiment::measure_commit_backprop(double target_val) {
 			cout << "this->select_percentage: " << this->select_percentage << endl;
 
 			cout << "improvement: " << improvement << endl;
-			cout << "this->existing_average_score: " << this->existing_average_score << endl;
+			cout << "this->o_existing_average_score: " << this->existing_average_score << endl;
 
 			cout << endl;
 
