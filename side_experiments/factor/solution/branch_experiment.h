@@ -7,7 +7,6 @@
 #include "action.h"
 #include "run_helper.h"
 
-class CommitExperiment;
 class Scope;
 
 const int BRANCH_EXPERIMENT_STATE_EXISTING_GATHER = 0;
@@ -15,9 +14,8 @@ const int BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING = 1;
 const int BRANCH_EXPERIMENT_STATE_EXPLORE = 2;
 const int BRANCH_EXPERIMENT_STATE_NEW_GATHER = 3;
 const int BRANCH_EXPERIMENT_STATE_TRAIN_NEW = 4;
-const int BRANCH_EXPERIMENT_STATE_MEASURE = 5;
 #if defined(MDEBUG) && MDEBUG
-const int BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY = 6;
+const int BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY = 5;
 #endif /* MDEBUG */
 
 class BranchExperimentHistory;
@@ -25,8 +23,6 @@ class BranchExperiment : public AbstractExperiment {
 public:
 	int state;
 	int state_iter;
-
-	double o_existing_average_score;
 
 	std::vector<std::pair<std::pair<std::vector<Scope*>,std::vector<int>>,
 		std::pair<int,int>>> existing_inputs;
@@ -59,14 +55,9 @@ public:
 
 	double select_percentage;
 
-	double combined_score;
-
-	CommitExperiment* parent_experiment;
-
 	std::vector<std::vector<double>> input_histories;
 	std::vector<std::vector<double>> factor_histories;
 	std::vector<double> i_target_val_histories;
-	std::vector<double> o_target_val_histories;
 
 	#if defined(MDEBUG) && MDEBUG
 	std::vector<Problem*> verify_problems;
@@ -128,36 +119,6 @@ public:
 	void capture_verify_backprop();
 	#endif /* MDEBUG */
 
-	bool commit_activate(AbstractNode*& curr_node,
-						 Problem* problem,
-						 RunHelper& run_helper,
-						 ScopeHistory* scope_history,
-						 BranchExperimentHistory* history);
-	void commit_backprop(double target_val,
-						 RunHelper& run_helper,
-						 BranchExperimentHistory* history);
-	bool commit_explore_activate(AbstractNode*& curr_node,
-								 Problem* problem,
-								 RunHelper& run_helper,
-								 ScopeHistory* scope_history,
-								 BranchExperimentHistory* history);
-	void commit_explore_backprop(double target_val,
-								 RunHelper& run_helper,
-								 BranchExperimentHistory* history);
-	bool commit_train_new_activate(AbstractNode*& curr_node,
-								   Problem* problem,
-								   RunHelper& run_helper,
-								   ScopeHistory* scope_history,
-								   BranchExperimentHistory* history);
-	void commit_train_new_backprop(double target_val,
-								   RunHelper& run_helper,
-								   BranchExperimentHistory* history);
-	bool commit_measure_activate(AbstractNode*& curr_node,
-								 Problem* problem,
-								 RunHelper& run_helper,
-								 ScopeHistory* scope_history);
-	void commit_measure_backprop(double target_val);
-
 	void finalize(Solution* duplicate);
 };
 
@@ -165,8 +126,6 @@ class BranchExperimentHistory : public AbstractExperimentHistory {
 public:
 	int instance_count;
 	std::vector<double> existing_predicted_scores;
-
-	double original_predicted_score;
 
 	BranchExperimentHistory(BranchExperiment* experiment);
 };

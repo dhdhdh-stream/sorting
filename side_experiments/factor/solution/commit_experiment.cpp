@@ -26,22 +26,12 @@ CommitExperiment::CommitExperiment(Scope* scope_context,
 	this->state = COMMIT_EXPERIMENT_STATE_EXISTING_GATHER;
 	this->state_iter = 0;
 
-	this->best_experiment = NULL;
-	this->curr_experiment = NULL;
-
 	this->result = EXPERIMENT_RESULT_NA;
 }
 
 CommitExperiment::~CommitExperiment() {
 	for (int n_index = 0; n_index < (int)this->new_nodes.size(); n_index++) {
 		delete this->new_nodes[n_index];
-	}
-
-	if (this->best_experiment != NULL) {
-		delete this->best_experiment;
-	}
-	if (this->curr_experiment != NULL) {
-		delete this->curr_experiment;
 	}
 }
 
@@ -53,12 +43,4 @@ CommitExperimentHistory::CommitExperimentHistory(CommitExperiment* experiment) {
 	this->experiment = experiment;
 
 	this->instance_count = 0;
-
-	this->branch_experiment_history = NULL;
-}
-
-CommitExperimentHistory::~CommitExperimentHistory() {
-	if (this->branch_experiment_history != NULL) {
-		delete this->branch_experiment_history;
-	}
 }

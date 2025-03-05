@@ -7,8 +7,6 @@
 
 using namespace std;
 
-const int NEW_GATHER_ITERS = 10;
-
 void BranchExperiment::new_gather_activate(
 		ScopeHistory* scope_history) {
 	this->num_instances_until_target--;
@@ -65,7 +63,7 @@ void BranchExperiment::new_gather_activate(
 
 void BranchExperiment::new_gather_backprop() {
 	this->state_iter++;
-	if (this->state_iter >= NEW_GATHER_ITERS) {
+	if (this->state_iter >= GATHER_ITERS) {
 		uniform_int_distribution<int> until_distribution(0, 2*((int)this->node_context->average_instances_per_run-1));
 		this->num_instances_until_target = 1 + until_distribution(generator);
 

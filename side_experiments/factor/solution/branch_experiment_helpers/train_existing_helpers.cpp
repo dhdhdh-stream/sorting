@@ -60,16 +60,8 @@ void BranchExperiment::train_existing_backprop(
 		this->i_target_val_histories.push_back(target_val);
 	}
 
-	this->o_target_val_histories.push_back(target_val);
-
 	this->state_iter++;
 	if (this->state_iter >= TRAIN_EXISTING_NUM_DATAPOINTS) {
-		double o_sum_vals = 0.0;
-		for (int h_index = 0; h_index < (int)this->o_target_val_histories.size(); h_index++) {
-			o_sum_vals += this->o_target_val_histories[h_index];
-		}
-		this->o_existing_average_score = o_sum_vals / (int)this->o_target_val_histories.size();
-
 		{
 			default_random_engine generator_copy = generator;
 			shuffle(this->input_histories.begin(), this->input_histories.end(), generator_copy);
@@ -96,14 +88,11 @@ void BranchExperiment::train_existing_backprop(
 		vector<double> remaining_scores(num_instances);
 
 		if (this->existing_factor_ids.size() > 0) {
-			#if defined(MDEBUG) && MDEBUG
-			#else
 			double sum_offset = 0.0;
 			for (int i_index = 0; i_index < num_train_instances; i_index++) {
 				sum_offset += abs(this->i_target_val_histories[i_index] - this->existing_average_score);
 			}
 			double average_offset = sum_offset / num_train_instances;
-			#endif /* MDEBUG */
 
 			Eigen::MatrixXd inputs(num_train_instances, this->existing_factor_ids.size());
 			for (int i_index = 0; i_index < num_train_instances; i_index++) {

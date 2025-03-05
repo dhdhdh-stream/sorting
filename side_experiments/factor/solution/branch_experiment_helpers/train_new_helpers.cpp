@@ -130,14 +130,11 @@ void BranchExperiment::train_new_backprop(
 		vector<double> sum_vals(num_instances);
 
 		if (this->new_factor_ids.size() > 0) {
-			#if defined(MDEBUG) && MDEBUG
-			#else
 			double sum_offset = 0.0;
 			for (int i_index = 0; i_index < num_train_instances; i_index++) {
 				sum_offset += abs(this->i_target_val_histories[i_index] - this->new_average_score);
 			}
 			double average_offset = sum_offset / num_train_instances;
-			#endif /* MDEBUG */
 
 			Eigen::MatrixXd inputs(num_train_instances, this->new_factor_ids.size());
 			for (int i_index = 0; i_index < num_train_instances; i_index++) {

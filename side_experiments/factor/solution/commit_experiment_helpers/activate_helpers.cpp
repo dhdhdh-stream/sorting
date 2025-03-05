@@ -64,13 +64,45 @@ void CommitExperiment::activate(AbstractNode* experiment_node,
 							 scope_history,
 							 history);
 			break;
-		case COMMIT_EXPERIMENT_STATE_EXPERIMENT:
-			experiment_activate(curr_node,
-								problem,
-								run_helper,
-								scope_history,
-								history);
+		case COMMIT_EXPERIMENT_STATE_FIND_SAVE:
+			find_save_activate(curr_node,
+							   problem,
+							   run_helper);
 			break;
+		case COMMIT_EXPERIMENT_STATE_COMMIT_EXISTING_GATHER:
+			commit_existing_gather_activate(curr_node,
+											problem,
+											run_helper,
+											scope_history);
+			break;
+		case COMMIT_EXPERIMENT_STATE_COMMIT_TRAIN_EXISTING:
+			commit_train_existing_activate(curr_node,
+										   problem,
+										   run_helper,
+										   scope_history,
+										   history);
+			break;
+		case COMMIT_EXPERIMENT_STATE_COMMIT_NEW_GATHER:
+			commit_new_gather_activate(curr_node,
+									   problem,
+									   run_helper,
+									   scope_history);
+			break;
+		case COMMIT_EXPERIMENT_STATE_COMMIT_TRAIN_NEW:
+			commit_train_new_activate(curr_node,
+									  problem,
+									  run_helper,
+									  scope_history,
+									  history);
+			break;
+		#if defined(MDEBUG) && MDEBUG
+		case COMMIT_EXPERIMENT_STATE_CAPTURE_VERIFY:
+			capture_verify_activate(curr_node,
+									problem,
+									run_helper,
+									scope_history);
+			break;
+		#endif /* MDEBUG */
 		}
 	}
 }
@@ -92,10 +124,30 @@ void CommitExperiment::backprop(double target_val,
 						 run_helper,
 						 history);
 		break;
-	case COMMIT_EXPERIMENT_STATE_EXPERIMENT:
-		experiment_backprop(target_val,
-							run_helper,
-							history);
+	case COMMIT_EXPERIMENT_STATE_FIND_SAVE:
+		find_save_backprop(target_val,
+						   run_helper);
 		break;
+	case COMMIT_EXPERIMENT_STATE_COMMIT_EXISTING_GATHER:
+		commit_existing_gather_backprop();
+		break;
+	case COMMIT_EXPERIMENT_STATE_COMMIT_TRAIN_EXISTING:
+		commit_train_existing_backprop(target_val,
+									   run_helper,
+									   history);
+		break;
+	case COMMIT_EXPERIMENT_STATE_COMMIT_NEW_GATHER:
+		commit_new_gather_backprop();
+		break;
+	case COMMIT_EXPERIMENT_STATE_COMMIT_TRAIN_NEW:
+		commit_train_new_backprop(target_val,
+								  run_helper,
+								  history);
+		break;
+	#if defined(MDEBUG) && MDEBUG
+	case COMMIT_EXPERIMENT_STATE_CAPTURE_VERIFY:
+		capture_verify_backprop();
+		break;
+	#endif /* MDEBUG */
 	}
 }

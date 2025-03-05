@@ -163,50 +163,14 @@ void CommitExperiment::explore_backprop(
 		this->state_iter++;
 		if (this->state_iter >= COMMIT_EXPERIMENT_EXPLORE_ITERS) {
 			if (this->best_surprise > 0.0) {
-				for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-					if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-						ActionNode* new_action_node = new ActionNode();
-						new_action_node->parent = this->scope_context;
-						new_action_node->id = this->scope_context->node_counter;
-						this->scope_context->node_counter++;
+				this->step_iter = (int)this->best_step_types.size();
+				this->save_iter = 0;
 
-						new_action_node->action = this->best_actions[s_index];
+				this->save_sum_score = 0.0;
 
-						new_action_node->average_instances_per_run = this->node_context->average_instances_per_run;
+				this->state_iter = -1;
 
-						this->new_nodes.push_back(new_action_node);
-					} else {
-						ScopeNode* new_scope_node = new ScopeNode();
-						new_scope_node->parent = this->scope_context;
-						new_scope_node->id = this->scope_context->node_counter;
-						this->scope_context->node_counter++;
-
-						new_scope_node->scope = this->best_scopes[s_index];
-
-						new_scope_node->average_instances_per_run = this->node_context->average_instances_per_run;
-
-						this->new_nodes.push_back(new_scope_node);
-					}
-
-					ObsNode* new_obs_node = new ObsNode();
-					new_obs_node->parent = this->scope_context;
-					new_obs_node->id = this->scope_context->node_counter;
-					this->scope_context->node_counter++;
-
-					new_obs_node->average_instances_per_run = node_context->average_instances_per_run;
-
-					this->new_nodes.push_back(new_obs_node);
-				}
-
-				uniform_int_distribution<int> experiment_node_distribution(0, this->new_nodes.size() / 2 - 1);
-				this->experiment_index = 2 * experiment_node_distribution(generator) + 1;
-
-				this->curr_experiment = new BranchExperiment(this->scope_context,
-															 this->new_nodes[this->experiment_index],
-															 false);
-				this->curr_experiment->parent_experiment = this;
-
-				this->state = COMMIT_EXPERIMENT_STATE_EXPERIMENT;
+				this->state = COMMIT_EXPERIMENT_STATE_FIND_SAVE;
 				this->state_iter = 0;
 			} else {
 				this->result = EXPERIMENT_RESULT_FAIL;

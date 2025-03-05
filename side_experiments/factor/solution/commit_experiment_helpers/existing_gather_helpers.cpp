@@ -7,8 +7,6 @@
 
 using namespace std;
 
-const int EXISTING_GATHER_ITERS = 10;
-
 void CommitExperiment::existing_gather_activate(
 		ScopeHistory* scope_history) {
 	this->num_instances_until_target--;
@@ -65,7 +63,7 @@ void CommitExperiment::existing_gather_activate(
 
 void CommitExperiment::existing_gather_backprop() {
 	this->state_iter++;
-	if (this->state_iter >= EXISTING_GATHER_ITERS) {
+	if (this->state_iter >= GATHER_ITERS) {
 		this->state = COMMIT_EXPERIMENT_STATE_TRAIN_EXISTING;
 		this->state_iter = 0;
 	}
