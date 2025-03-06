@@ -78,8 +78,6 @@ public:
 	std::vector<std::pair<int,int>> commit_new_factor_ids;
 	std::vector<double> commit_new_factor_weights;
 
-	double select_percentage;
-
 	std::vector<std::vector<double>> input_histories;
 	std::vector<std::vector<double>> factor_histories;
 	std::vector<double> i_target_val_histories;

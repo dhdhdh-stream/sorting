@@ -64,6 +64,7 @@ int main(int argc, char* argv[]) {
 		Solution* best_solution = NULL;
 
 		int improvement_iter = 0;
+		int num_fail = 0;
 
 		while (true) {
 			auto curr_time = chrono::high_resolution_clock::now();
@@ -125,6 +126,20 @@ int main(int argc, char* argv[]) {
 				if (run_helper.experiment_history->experiment->result == EXPERIMENT_RESULT_FAIL) {
 					run_helper.experiment_history->experiment->finalize(NULL);
 					delete run_helper.experiment_history->experiment;
+
+					if (iter_type == ITER_TYPE_COMMIT) {
+						num_fail++;
+						if (num_fail >= COMMIT_FAIL_LIMIT) {
+							cout << "reset" << endl;
+
+							ofstream output_file;
+							output_file.open(path + filename);
+							output_file << "reset" << endl;
+							output_file.close();
+
+							exit(1);
+						}
+					}
 				} else if (run_helper.experiment_history->experiment->result == EXPERIMENT_RESULT_SUCCESS) {
 					Solution* duplicate = new Solution(solution);
 
@@ -236,7 +251,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	solution->clean_scopes();
-	solution->save("saves/", filename);
+	solution->save(path, filename);
 
 	delete problem_type;
 	delete solution;

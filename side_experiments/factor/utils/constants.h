@@ -55,11 +55,13 @@ const int IMPROVEMENTS_PER_ITER = 2;
 const int COMMIT_IMPROVEMENTS_PER_ITER = 2;
 #else
 const int IMPROVEMENTS_PER_ITER = 20;
-const int COMMIT_IMPROVEMENTS_PER_ITER = 5;
+const int COMMIT_IMPROVEMENTS_PER_ITER = 10;
 #endif /* MDEBUG */
 
 const int NEW_SCOPE_ITERS = 10;
 const int EXPERIMENT_ALL_ITERS = 6;
+
+const int COMMIT_FAIL_LIMIT = 200;
 
 #if defined(MDEBUG) && MDEBUG
 const int NUM_VERIFY_SAMPLES = 10;

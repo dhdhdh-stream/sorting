@@ -17,8 +17,6 @@ using namespace std;
 
 void CommitExperiment::finalize(Solution* duplicate) {
 	if (this->result == EXPERIMENT_RESULT_SUCCESS) {
-		cout << "CommitExperiment success" << endl;
-
 		Scope* duplicate_local_scope = duplicate->scopes[this->scope_context->id];
 		AbstractNode* duplicate_explore_node = duplicate_local_scope->nodes[this->node_context->id];
 
@@ -289,93 +287,66 @@ void CommitExperiment::finalize(Solution* duplicate) {
 			save_exit_node = duplicate_local_scope->nodes[this->save_exit_next_node->id];
 		}
 
-		if (this->select_percentage == 1.0) {
-			int start_node_id;
-			AbstractNode* start_node;
-			if (this->save_step_types.size() == 0) {
-				start_node_id = exit_node_id;
-				start_node = exit_node;
-			} else {
-				start_node_id = save_new_nodes[0]->id;
-				start_node = save_new_nodes[0];
+		BranchNode* new_branch_node = new BranchNode();
+		new_branch_node->parent = duplicate_local_scope;
+		new_branch_node->id = duplicate_local_scope->node_counter;
+		duplicate_local_scope->node_counter++;
+		duplicate_local_scope->nodes[new_branch_node->id] = new_branch_node;
+
+		new_branch_node->average_val = this->commit_new_average_score;
+		new_branch_node->factor_ids = this->commit_new_factor_ids;
+		new_branch_node->factor_weights = this->commit_new_factor_weights;
+
+		ObsNode* obs_node = (ObsNode*)this->new_nodes[this->step_iter-1];
+
+		for (int a_index = 0; a_index < (int)obs_node->next_node->ancestor_ids.size(); a_index++) {
+			if (obs_node->next_node->ancestor_ids[a_index] == obs_node->id) {
+				obs_node->next_node->ancestor_ids.erase(
+					obs_node->next_node->ancestor_ids.begin() + a_index);
+				break;
 			}
-
-			ObsNode* obs_node = (ObsNode*)this->new_nodes[this->step_iter];
-
-			for (int a_index = 0; a_index < (int)obs_node->next_node->ancestor_ids.size(); a_index++) {
-				if (obs_node->next_node->ancestor_ids[a_index] == obs_node->id) {
-					obs_node->next_node->ancestor_ids.erase(
-						obs_node->next_node->ancestor_ids.begin() + a_index);
-					break;
-				}
-			}
-
-			obs_node->next_node_id = start_node_id;
-			obs_node->next_node = start_node;
-
-			start_node->ancestor_ids.push_back(obs_node->id);
-		} else {
-			BranchNode* new_branch_node = new BranchNode();
-			new_branch_node->parent = duplicate_local_scope;
-			new_branch_node->id = duplicate_local_scope->node_counter;
-			duplicate_local_scope->node_counter++;
-			duplicate_local_scope->nodes[new_branch_node->id] = new_branch_node;
-
-			new_branch_node->average_val = this->commit_new_average_score;
-			new_branch_node->factor_ids = this->commit_new_factor_ids;
-			new_branch_node->factor_weights = this->commit_new_factor_weights;
-
-			ObsNode* obs_node = (ObsNode*)this->new_nodes[this->step_iter];
-
-			for (int a_index = 0; a_index < (int)obs_node->next_node->ancestor_ids.size(); a_index++) {
-				if (obs_node->next_node->ancestor_ids[a_index] == obs_node->id) {
-					obs_node->next_node->ancestor_ids.erase(
-						obs_node->next_node->ancestor_ids.begin() + a_index);
-					break;
-				}
-			}
-			obs_node->next_node->ancestor_ids.push_back(new_branch_node->id);
-
-			new_branch_node->original_next_node_id = obs_node->next_node_id;
-			new_branch_node->original_next_node = obs_node->next_node;
-
-			if (this->save_step_types.size() == 0) {
-				save_exit_node->ancestor_ids.push_back(new_branch_node->id);
-
-				new_branch_node->branch_next_node_id = save_exit_node_id;
-				new_branch_node->branch_next_node = save_exit_node;
-			} else {
-				save_new_nodes[0]->ancestor_ids.push_back(new_branch_node->id);
-
-				new_branch_node->branch_next_node_id = save_new_nodes[0]->id;
-				new_branch_node->branch_next_node = save_new_nodes[0];
-			}
-
-			obs_node->next_node_id = new_branch_node->id;
-			obs_node->next_node = new_branch_node;
-
-			new_branch_node->ancestor_ids.push_back(this->new_nodes[this->step_iter]->id);
-
-			for (int f_index = 0; f_index < (int)this->commit_new_factor_ids.size(); f_index++) {
-				ObsNode* obs_node = (ObsNode*)duplicate_local_scope->nodes[this->commit_new_factor_ids[f_index].first];
-				Factor* factor = obs_node->factors[this->commit_new_factor_ids[f_index].second];
-
-				factor->link(duplicate);
-
-				obs_node->is_used = true;
-			}
-
-			#if defined(MDEBUG) && MDEBUG
-			if (this->verify_problems.size() > 0) {
-				duplicate->verify_problems = this->verify_problems;
-				this->verify_problems.clear();
-				duplicate->verify_seeds = this->verify_seeds;
-
-				new_branch_node->verify_key = this;
-				new_branch_node->verify_scores = this->verify_scores;
-			}
-			#endif /* MDEBUG */
 		}
+		obs_node->next_node->ancestor_ids.push_back(new_branch_node->id);
+
+		new_branch_node->original_next_node_id = obs_node->next_node_id;
+		new_branch_node->original_next_node = obs_node->next_node;
+
+		if (this->save_step_types.size() == 0) {
+			save_exit_node->ancestor_ids.push_back(new_branch_node->id);
+
+			new_branch_node->branch_next_node_id = save_exit_node_id;
+			new_branch_node->branch_next_node = save_exit_node;
+		} else {
+			save_new_nodes[0]->ancestor_ids.push_back(new_branch_node->id);
+
+			new_branch_node->branch_next_node_id = save_new_nodes[0]->id;
+			new_branch_node->branch_next_node = save_new_nodes[0];
+		}
+
+		obs_node->next_node_id = new_branch_node->id;
+		obs_node->next_node = new_branch_node;
+
+		new_branch_node->ancestor_ids.push_back(this->new_nodes[this->step_iter-1]->id);
+
+		for (int f_index = 0; f_index < (int)this->commit_new_factor_ids.size(); f_index++) {
+			ObsNode* obs_node = (ObsNode*)duplicate_local_scope->nodes[this->commit_new_factor_ids[f_index].first];
+			Factor* factor = obs_node->factors[this->commit_new_factor_ids[f_index].second];
+
+			factor->link(duplicate);
+
+			obs_node->is_used = true;
+		}
+
+		#if defined(MDEBUG) && MDEBUG
+		if (this->verify_problems.size() > 0) {
+			duplicate->verify_problems = this->verify_problems;
+			this->verify_problems.clear();
+			duplicate->verify_seeds = this->verify_seeds;
+
+			new_branch_node->verify_key = this;
+			new_branch_node->verify_scores = this->verify_scores;
+		}
+		#endif /* MDEBUG */
 
 		for (int s_index = 0; s_index < (int)this->save_step_types.size(); s_index++) {
 			int next_node_id;

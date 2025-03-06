@@ -171,7 +171,6 @@ void CommitExperiment::explore_backprop(
 				this->state_iter = -1;
 
 				this->state = COMMIT_EXPERIMENT_STATE_FIND_SAVE;
-				this->state_iter = 0;
 			} else {
 				this->result = EXPERIMENT_RESULT_FAIL;
 			}

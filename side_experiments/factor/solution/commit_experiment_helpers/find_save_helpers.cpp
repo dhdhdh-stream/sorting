@@ -1,5 +1,7 @@
 #include "commit_experiment.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
@@ -154,7 +156,7 @@ void CommitExperiment::find_save_backprop(
 		if (false) {
 		#else
 		double curr_score = this->save_sum_score / this->state_iter;
-		if (curr_score <= this->o_existing_score) {
+		if (curr_score <= this->o_existing_average_score) {
 		#endif /* MDEBUG */
 			is_fail = true;
 		}

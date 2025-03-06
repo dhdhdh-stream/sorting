@@ -32,7 +32,8 @@ int run_index;
 int main(int argc, char* argv[]) {
 	cout << "Starting..." << endl;
 
-	seed = (unsigned)time(NULL);
+	// seed = (unsigned)time(NULL);
+	seed = 1741195135;
 	srand(seed);
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
@@ -70,10 +71,12 @@ int main(int argc, char* argv[]) {
 				iter_type = ITER_TYPE_EXISTING;
 			}
 		}
+		cout << "iter_type: " << iter_type << endl;
 
 		Solution* best_solution = NULL;
 
 		int improvement_iter = 0;
+		int num_fail = 0;
 
 		while (true) {
 			run_index++;
@@ -139,6 +142,20 @@ int main(int argc, char* argv[]) {
 				if (run_helper.experiment_history->experiment->result == EXPERIMENT_RESULT_FAIL) {
 					run_helper.experiment_history->experiment->finalize(NULL);
 					delete run_helper.experiment_history->experiment;
+
+					if (iter_type == ITER_TYPE_COMMIT) {
+						num_fail++;
+						if (num_fail >= COMMIT_FAIL_LIMIT) {
+							cout << "reset" << endl;
+
+							ofstream output_file;
+							output_file.open("saves/" + filename);
+							output_file << "reset" << endl;
+							output_file.close();
+
+							exit(1);
+						}
+					}
 				} else if (run_helper.experiment_history->experiment->result == EXPERIMENT_RESULT_SUCCESS) {
 					Solution* duplicate = new Solution(solution);
 
@@ -275,7 +292,12 @@ int main(int argc, char* argv[]) {
 		delete solution;
 		solution = best_solution;
 
-		solution->save("saves/", filename);
+		// solution->save("saves/", filename);
+
+		ofstream display_file;
+		display_file.open("../display.txt");
+		solution->save_for_display(display_file);
+		display_file.close();
 
 		#if defined(MDEBUG) && MDEBUG
 		delete solution;
@@ -285,7 +307,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	solution->clean_scopes();
-	solution->save("saves/", filename);
+	// solution->save("saves/", filename);
 
 	delete problem_type;
 	delete solution;

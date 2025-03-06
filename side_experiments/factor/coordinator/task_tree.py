@@ -134,6 +134,22 @@ class TaskNode:
 
 				self.result = self.filenames[best_index]
 
+	def reset(self, index):
+		if self.layer == 0:
+			result = subprocess.run(['./simple_init', self.filenames[index]], capture_output=True, text=True)
+			print(result.stdout)
+		else:
+			combine_input = []
+			combine_input.append('./combine')
+			for c_index in range(BRANCH_FACTOR):
+				combine_input.append(self.children[c_index].result)
+			combine_input.append(self.filenames[index])
+
+			result = subprocess.run(combine_input, capture_output=True, text=True)
+			print(result.stdout)
+
+		time.sleep(1)
+
 	def save(self, file):
 		file.write(str(self.layer) + '\n')
 

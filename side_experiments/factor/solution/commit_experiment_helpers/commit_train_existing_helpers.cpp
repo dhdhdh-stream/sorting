@@ -349,7 +349,7 @@ void CommitExperiment::commit_train_existing_backprop(
 				new_factor->inputs = this->commit_existing_inputs;
 				new_factor->network = existing_network;
 
-				ObsNode* obs_node = (ObsNode*)this->new_nodes[this->step_iter];
+				ObsNode* obs_node = (ObsNode*)this->new_nodes[this->step_iter-1];
 
 				obs_node->factors.push_back(new_factor);
 

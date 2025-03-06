@@ -68,14 +68,14 @@ void CommitExperiment::commit_train_new_activate(
 
 	run_helper.num_actions++;
 
-	double sum_vals = this->existing_average_score;
-	for (int f_index = 0; f_index < (int)this->existing_factor_ids.size(); f_index++) {
+	double sum_vals = this->commit_existing_average_score;
+	for (int f_index = 0; f_index < (int)this->commit_existing_factor_ids.size(); f_index++) {
 		double val;
 		fetch_factor_helper(run_helper,
 							scope_history,
-							this->existing_factor_ids[f_index],
+							this->commit_existing_factor_ids[f_index],
 							val);
-		sum_vals += this->existing_factor_weights[f_index] * val;
+		sum_vals += this->commit_existing_factor_weights[f_index] * val;
 	}
 	history->existing_predicted_scores.push_back(sum_vals);
 
@@ -325,7 +325,7 @@ void CommitExperiment::commit_train_new_backprop(
 				new_factor->inputs = this->commit_new_inputs;
 				new_factor->network = new_network;
 
-				ObsNode* obs_node = (ObsNode*)this->new_nodes[this->step_iter];
+				ObsNode* obs_node = (ObsNode*)this->new_nodes[this->step_iter-1];
 
 				obs_node->factors.push_back(new_factor);
 
@@ -343,23 +343,29 @@ void CommitExperiment::commit_train_new_backprop(
 			delete new_network;
 		}
 
-		#if defined(MDEBUG) && MDEBUG
-		if (rand()%2 == 0) {
-			this->select_percentage = 0.5;
-		} else {
-			this->select_percentage = 0.0;
-		}
-		#else
 		int num_positive = 0;
 		for (int i_index = 0; i_index < num_instances; i_index++) {
 			if (sum_vals[i_index] > 0.0) {
 				num_positive++;
 			}
 		}
-		this->select_percentage = (double)num_positive / (double)num_instances;
-		#endif /* MDEBUG */
+		double select_percentage = (double)num_positive / (double)num_instances;
 
-		if (this->select_percentage > 0.0) {
+		#if defined(MDEBUG) && MDEBUG
+		if (rand()%2 == 0) {
+		#else
+		if (select_percentage < 1.0) {
+		#endif /* MDEBUG */
+			cout << "CommitExperiment success" << endl;
+
+			cout << "this->o_existing_average_score: " << this->o_existing_average_score << endl;
+			cout << "this->commit_existing_average_score: " << this->commit_existing_average_score << endl;
+			cout << "this->commit_new_average_score: " << this->commit_new_average_score << endl;
+			cout << "select_percentage: " << select_percentage << endl;
+
+			cout << "this->new_nodes.size(): " << this->new_nodes.size() << endl;
+			cout << "this->step_iter: " << this->step_iter << endl;
+
 			#if defined(MDEBUG) && MDEBUG
 			this->verify_problems = vector<Problem*>(NUM_VERIFY_SAMPLES, NULL);
 			this->verify_seeds = vector<unsigned long>(NUM_VERIFY_SAMPLES);
