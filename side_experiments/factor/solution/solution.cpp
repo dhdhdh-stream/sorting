@@ -15,7 +15,7 @@
 
 using namespace std;
 
-const double STARTING_TIME_PENALTY = 0.0001;
+const double STARTING_TIME_PENALTY = 0.001;
 
 Solution::Solution() {
 	// do nothing

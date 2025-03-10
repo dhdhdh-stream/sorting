@@ -97,7 +97,8 @@ void CommitExperiment::explore_activate(
 
 				uniform_int_distribution<int> child_scope_distribution(0, this->scope_context->child_scopes.size()-1);
 				this->curr_scopes.push_back(this->scope_context->child_scopes[child_scope_distribution(generator)]);
-			} else if (type >= 1 && solution->existing_scopes.size() > 0) {
+			} else if (type >= 1 && solution->existing_scopes.size() > 0
+					&& (this->scope_context->id == 0 || this->scope_context->id > (int)solution->existing_scopes.size())) {
 				this->curr_step_types.push_back(STEP_TYPE_SCOPE);
 				this->curr_actions.push_back(Action());
 

@@ -54,7 +54,7 @@ int main(int argc, char* argv[]) {
 		if ((solution->timestamp + 1) % NEW_SCOPE_ITERS == 0) {
 			iter_type = ITER_TYPE_NEW_SCOPE;
 		} else {
-			if (solution->timestamp % 2 == 0) {
+			if (solution->timestamp % 4 == 0) {
 				iter_type = ITER_TYPE_COMMIT;
 			} else {
 				iter_type = ITER_TYPE_EXISTING;

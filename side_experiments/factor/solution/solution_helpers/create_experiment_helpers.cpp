@@ -26,16 +26,19 @@ const int PASS_THROUGH_MIN_NUM_MEASURE = 2000;
 void gather_nodes_seen_helper(ScopeHistory* scope_history,
 							  map<pair<AbstractNode*,bool>, int>& nodes_seen) {
 	bool can_add = false;
-	if (solution->timestamp % NEW_SCOPE_ITERS >= EXPERIMENT_ALL_ITERS) {
-		can_add = true;
-	} else {
-		if (solution->scopes[0]->child_scopes.size() == 0) {
-			if (scope_history->scope->id == 0) {
-				can_add = true;
-			}
+	if (solution->timestamp >= MAINTAIN_ITERS
+			|| scope_history->scope->id == 0 || scope_history->scope->id > (int)solution->existing_scopes.size()) {
+		if (solution->timestamp % NEW_SCOPE_ITERS >= EXPERIMENT_ALL_ITERS) {
+			can_add = true;
 		} else {
-			if (scope_history->scope->id == (int)solution->scopes.size()-1) {
-				can_add = true;
+			if (solution->scopes[0]->child_scopes.size() == 0) {
+				if (scope_history->scope->id == 0) {
+					can_add = true;
+				}
+			} else {
+				if (scope_history->scope->id == (int)solution->scopes.size()-1) {
+					can_add = true;
+				}
 			}
 		}
 	}
