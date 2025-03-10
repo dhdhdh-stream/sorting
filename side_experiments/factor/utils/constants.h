@@ -63,8 +63,6 @@ const int EXPERIMENT_ALL_ITERS = 6;
 
 const int COMMIT_FAIL_LIMIT = 200;
 
-const int MAINTAIN_ITERS = 24;
-
 #if defined(MDEBUG) && MDEBUG
 const int NUM_VERIFY_SAMPLES = 10;
 #endif /* MDEBUG */

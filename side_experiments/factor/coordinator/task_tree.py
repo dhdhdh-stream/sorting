@@ -4,7 +4,6 @@ import shutil
 import sys
 
 BRANCH_FACTOR = 4
-MERGE_NUM_TRIES = 4
 
 STATUS_NOT_ADDED = 0
 STATUS_ADDED = 1
@@ -19,8 +18,8 @@ class TaskNode:
 				self.filenames = ['']
 				self.statuses = [STATUS_NOT_ADDED]
 			else:
-				self.filenames = ['' for _ in range(MERGE_NUM_TRIES)]
-				self.statuses = [STATUS_NOT_ADDED for _ in range(MERGE_NUM_TRIES)]
+				self.filenames = ['' for _ in range(BRANCH_FACTOR)]
+				self.statuses = [STATUS_NOT_ADDED for _ in range(BRANCH_FACTOR)]
 
 				self.children = []
 				for _ in range(BRANCH_FACTOR):
@@ -40,7 +39,7 @@ class TaskNode:
 				self.filenames = []
 				self.statuses = []
 
-				for m_index in range(MERGE_NUM_TRIES):
+				for m_index in range(BRANCH_FACTOR):
 					self.filenames.append(file.readline().strip())
 					self.statuses.append(int(file.readline().strip()))
 
@@ -79,15 +78,17 @@ class TaskNode:
 						break
 
 				if all_children_done:
-					for m_index in range(0, MERGE_NUM_TRIES):
+					for m_index in range(0, BRANCH_FACTOR):
 						curr_time_stamp = int(time.time())
 
 						output_filename = 't_' + str(curr_time_stamp) + '.txt'
 
 						combine_input = []
 						combine_input.append('./combine')
+						combine_input.append(self.children[m_index].result)
 						for c_index in range(BRANCH_FACTOR):
-							combine_input.append(self.children[c_index].result)
+							if c_index != m_index:
+								combine_input.append(self.children[c_index].result)
 						combine_input.append(output_filename)
 
 						result = subprocess.run(combine_input, capture_output=True, text=True)
@@ -98,7 +99,7 @@ class TaskNode:
 						time.sleep(1)
 
 			if self.filenames[0] != '':
-				for m_index in range(MERGE_NUM_TRIES):
+				for m_index in range(BRANCH_FACTOR):
 					if self.statuses[m_index] == STATUS_NOT_ADDED:
 						tasks.appendleft([self, m_index])
 						self.statuses[m_index] = STATUS_ADDED
@@ -113,7 +114,7 @@ class TaskNode:
 			self.result = self.filenames[0]
 		else:
 			is_done = True
-			for m_index in range(MERGE_NUM_TRIES):
+			for m_index in range(BRANCH_FACTOR):
 				if self.statuses[m_index] != STATUS_DONE:
 					is_done = False
 					break
@@ -122,7 +123,7 @@ class TaskNode:
 				best_score = sys.float_info.min
 				best_index = -1
 
-				for c_index in range(MERGE_NUM_TRIES):
+				for c_index in range(BRANCH_FACTOR):
 					possible_file = open('saves/' + self.filenames[c_index], 'r')
 					possible_timestamp = int(possible_file.readline())
 					possible_average_score = float(possible_file.readline())
@@ -141,8 +142,10 @@ class TaskNode:
 		else:
 			combine_input = []
 			combine_input.append('./combine')
+			combine_input.append(self.children[index].result)
 			for c_index in range(BRANCH_FACTOR):
-				combine_input.append(self.children[c_index].result)
+				if c_index != index:
+					combine_input.append(self.children[c_index].result)
 			combine_input.append(self.filenames[index])
 
 			result = subprocess.run(combine_input, capture_output=True, text=True)
@@ -157,7 +160,7 @@ class TaskNode:
 			file.write(self.filenames[0] + '\n')
 			file.write(str(self.statuses[0]) + '\n')
 		else:
-			for m_index in range(MERGE_NUM_TRIES):
+			for m_index in range(BRANCH_FACTOR):
 				file.write(self.filenames[m_index] + '\n')
 				file.write(str(self.statuses[m_index]) + '\n')
 

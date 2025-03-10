@@ -42,8 +42,6 @@ public:
 
 	std::vector<Scope*> scopes;
 
-	std::vector<Scope*> existing_scopes;
-
 	#if defined(MDEBUG) && MDEBUG
 	std::vector<Problem*> verify_problems;
 	std::vector<unsigned long> verify_seeds;

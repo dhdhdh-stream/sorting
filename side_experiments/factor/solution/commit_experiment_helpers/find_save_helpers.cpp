@@ -97,22 +97,14 @@ void CommitExperiment::find_save_activate(
 		 *   - existing scopes often learned to avoid certain patterns
 		 *     - which can prevent innovation
 		 */
-		uniform_int_distribution<int> type_distribution(0, 2);
+		uniform_int_distribution<int> scope_distribution(0, 1);
 		for (int s_index = 0; s_index < new_num_steps; s_index++) {
-			int type = type_distribution(generator);
-			if (type >= 2 && this->scope_context->child_scopes.size() > 0) {
+			if (scope_distribution(generator) == 0 && this->scope_context->child_scopes.size() > 0) {
 				this->save_step_types.push_back(STEP_TYPE_SCOPE);
 				this->save_actions.push_back(Action());
 
 				uniform_int_distribution<int> child_scope_distribution(0, this->scope_context->child_scopes.size()-1);
 				this->save_scopes.push_back(this->scope_context->child_scopes[child_scope_distribution(generator)]);
-			} else if (type >= 1 && solution->existing_scopes.size() > 0
-					&& (this->scope_context->id == 0 || this->scope_context->id > (int)solution->existing_scopes.size())) {
-				this->save_step_types.push_back(STEP_TYPE_SCOPE);
-				this->save_actions.push_back(Action());
-
-				uniform_int_distribution<int> existing_scope_distribution(0, solution->existing_scopes.size()-1);
-				this->save_scopes.push_back(solution->existing_scopes[existing_scope_distribution(generator)]);
 			} else {
 				this->save_step_types.push_back(STEP_TYPE_ACTION);
 
