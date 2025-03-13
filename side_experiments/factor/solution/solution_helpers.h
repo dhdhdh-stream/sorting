@@ -17,9 +17,8 @@ class Solution;
 void update_scores(ScopeHistory* scope_history,
 				   double target_val);
 
-void create_commit_experiment(ScopeHistory* scope_history);
-void create_experiment(ScopeHistory* scope_history);
-void create_new_scope_experiment(ScopeHistory* scope_history);
+void create_experiment(ScopeHistory* scope_history,
+					   int improvement_iter);
 
 void gather_possible_helper(ScopeHistory* scope_history,
 							std::vector<Scope*>& scope_context,

@@ -3,7 +3,7 @@ import paramiko
 import select
 import time
 
-EXPLORE_ITERS = 48
+EXPLORE_ITERS = 60
 
 class TaskThread:
 	def __init__(self, worker, tasknode, index):

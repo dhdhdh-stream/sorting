@@ -12,6 +12,8 @@ using namespace std;
 
 Scope::Scope() {
 	this->new_scope_experiment = NULL;
+
+	this->exceeded = false;
 }
 
 Scope::~Scope() {
@@ -84,6 +86,8 @@ void Scope::save(ofstream& output_file) {
 	for (int c_index = 0; c_index < (int)this->child_scopes.size(); c_index++) {
 		output_file << this->child_scopes[c_index]->id << endl;
 	}
+
+	output_file << this->exceeded << endl;
 }
 
 void Scope::load(ifstream& input_file,
@@ -153,6 +157,10 @@ void Scope::load(ifstream& input_file,
 		getline(input_file, scope_id_line);
 		this->child_scopes.push_back(parent_solution->scopes[stoi(scope_id_line)]);
 	}
+
+	string exceeded_line;
+	getline(input_file, exceeded_line);
+	this->exceeded = stoi(exceeded_line);
 }
 
 void Scope::link(Solution* parent_solution) {
@@ -214,6 +222,8 @@ void Scope::copy_from(Scope* original,
 		this->child_scopes.push_back(parent_solution->scopes[
 			original->child_scopes[c_index]->id]);
 	}
+
+	this->exceeded = original->exceeded;
 }
 
 void Scope::save_for_display(ofstream& output_file) {

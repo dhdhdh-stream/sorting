@@ -44,11 +44,10 @@ const int MEASURE_ITERS = 10;
 const int MEASURE_ITERS = 4000;
 #endif /* MDEBUG */
 
-const int EXPLORE_ITERS = 48;
+const int SCOPE_EXCEEDED_NUM_NODES = 80;
+const int SCOPE_RESUME_NUM_NODES = 40;
 
-const int ITER_TYPE_NEW_SCOPE = 0;
-const int ITER_TYPE_COMMIT = 1;
-const int ITER_TYPE_EXISTING = 2;
+const int EXPLORE_ITERS = 60;
 
 #if defined(MDEBUG) && MDEBUG
 const int IMPROVEMENTS_PER_ITER = 2;
@@ -57,11 +56,6 @@ const int COMMIT_IMPROVEMENTS_PER_ITER = 2;
 const int IMPROVEMENTS_PER_ITER = 20;
 const int COMMIT_IMPROVEMENTS_PER_ITER = 10;
 #endif /* MDEBUG */
-
-const int NEW_SCOPE_ITERS = 12;
-const int EXPERIMENT_ALL_ITERS = 6;
-
-const int COMMIT_FAIL_LIMIT = 200;
 
 #if defined(MDEBUG) && MDEBUG
 const int NUM_VERIFY_SAMPLES = 10;

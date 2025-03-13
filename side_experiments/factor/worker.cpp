@@ -50,21 +50,9 @@ int main(int argc, char* argv[]) {
 	auto start_time = chrono::high_resolution_clock::now();
 
 	while (solution->timestamp < EXPLORE_ITERS) {
-		int iter_type;
-		if ((solution->timestamp + 1) % NEW_SCOPE_ITERS == 0) {
-			iter_type = ITER_TYPE_NEW_SCOPE;
-		} else {
-			if (solution->timestamp % 4 == 0) {
-				iter_type = ITER_TYPE_COMMIT;
-			} else {
-				iter_type = ITER_TYPE_EXISTING;
-			}
-		}
-
 		Solution* best_solution = NULL;
 
 		int improvement_iter = 0;
-		int num_fail = 0;
 
 		while (true) {
 			auto curr_time = chrono::high_resolution_clock::now();
@@ -72,7 +60,7 @@ int main(int argc, char* argv[]) {
 			if (time_diff.count() >= 20) {
 				start_time = curr_time;
 
-				cout << "alive" << endl;
+				cout << "improvement_iter: " << improvement_iter << endl;
 			}
 
 			Problem* problem = problem_type->get_problem();
@@ -95,17 +83,8 @@ int main(int argc, char* argv[]) {
 			}
 
 			if (run_helper.experiments_seen_order.size() == 0) {
-				switch (iter_type) {
-				case ITER_TYPE_NEW_SCOPE:
-					create_new_scope_experiment(scope_history);
-					break;
-				case ITER_TYPE_COMMIT:
-					create_commit_experiment(scope_history);
-					break;
-				case ITER_TYPE_EXISTING:
-					create_experiment(scope_history);
-					break;
-				}
+				create_experiment(scope_history,
+								  improvement_iter);
 			}
 
 			delete scope_history;
@@ -126,20 +105,6 @@ int main(int argc, char* argv[]) {
 				if (run_helper.experiment_history->experiment->result == EXPERIMENT_RESULT_FAIL) {
 					run_helper.experiment_history->experiment->finalize(NULL);
 					delete run_helper.experiment_history->experiment;
-
-					if (iter_type == ITER_TYPE_COMMIT) {
-						num_fail++;
-						if (num_fail >= COMMIT_FAIL_LIMIT) {
-							cout << "reset" << endl;
-
-							ofstream output_file;
-							output_file.open(path + filename);
-							output_file << "reset" << endl;
-							output_file.close();
-
-							exit(1);
-						}
-					}
 				} else if (run_helper.experiment_history->experiment->result == EXPERIMENT_RESULT_SUCCESS) {
 					Solution* duplicate = new Solution(solution);
 
@@ -152,6 +117,13 @@ int main(int argc, char* argv[]) {
 					clean_scope(experiment_scope,
 								duplicate);
 
+					if (experiment_scope->nodes.size() >= SCOPE_EXCEEDED_NUM_NODES) {
+						experiment_scope->exceeded = true;
+					}
+					if (experiment_scope->nodes.size() <= SCOPE_RESUME_NUM_NODES) {
+						experiment_scope->exceeded = false;
+					}
+
 					double sum_score = 0.0;
 					double sum_true_score = 0.0;
 					for (int iter_index = 0; iter_index < MEASURE_ITERS; iter_index++) {
@@ -160,7 +132,7 @@ int main(int argc, char* argv[]) {
 						if (time_diff.count() >= 20) {
 							start_time = curr_time;
 
-							cout << "alive" << endl;
+							cout << "improvement_iter: " << improvement_iter << endl;
 						}
 
 						Problem* problem = problem_type->get_problem();
@@ -224,14 +196,8 @@ int main(int argc, char* argv[]) {
 					}
 
 					improvement_iter++;
-					if (iter_type == ITER_TYPE_COMMIT) {
-						if (improvement_iter >= COMMIT_IMPROVEMENTS_PER_ITER) {
-							break;
-						}
-					} else {
-						if (improvement_iter >= IMPROVEMENTS_PER_ITER) {
-							break;
-						}
+					if (improvement_iter >= IMPROVEMENTS_PER_ITER) {
+						break;
 					}
 				}
 			} else {

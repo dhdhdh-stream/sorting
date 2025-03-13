@@ -73,8 +73,19 @@ void PassThroughExperiment::explore_activate(
 			starting_node,
 			possible_exits);
 
-		uniform_int_distribution<int> distribution(0, possible_exits.size()-1);
-		int random_index = distribution(generator);
+		int random_index;
+		if (this->scope_context->exceeded) {
+			if (possible_exits.size() <= 4) {
+				this->result = EXPERIMENT_RESULT_FAIL;
+				return;
+			} else {
+				uniform_int_distribution<int> distribution(4, possible_exits.size()-1);
+				random_index = distribution(generator);
+			}
+		} else {
+			uniform_int_distribution<int> distribution(0, possible_exits.size()-1);
+			random_index = distribution(generator);
+		}
 		this->curr_exit_next_node = possible_exits[random_index];
 
 		int new_num_steps;
@@ -83,6 +94,11 @@ void PassThroughExperiment::explore_activate(
 			new_num_steps = 1 + geo_distribution(generator);
 		} else {
 			new_num_steps = geo_distribution(generator);
+		}
+		if (this->scope_context->exceeded) {
+			if (new_num_steps > random_index/2-1) {
+				new_num_steps = random_index/2-1;
+			}
 		}
 
 		/**

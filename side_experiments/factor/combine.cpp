@@ -72,6 +72,9 @@ int main(int argc, char* argv[]) {
 		solution->scopes[scope_index]->id = scope_index;
 	}
 
+	solution->timestamp = 0;
+	solution->best_true_score_timestamp = 0;
+
 	solution->save("saves/", output_file);
 
 	delete problem_type;

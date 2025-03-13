@@ -23,6 +23,8 @@ public:
 
 	std::vector<Scope*> child_scopes;
 
+	bool exceeded;
+
 	/**
 	 * - tie NewScopeExperiment to scope instead of node
 	 *   - so that can be tried throughout entire scope
