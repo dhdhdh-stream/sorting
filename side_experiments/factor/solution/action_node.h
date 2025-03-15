@@ -36,6 +36,8 @@ public:
 						 RunHelper& run_helper,
 						 ScopeHistory* scope_history);
 
+	void clear_experiments();
+
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file);
 	void link(Solution* parent_solution);

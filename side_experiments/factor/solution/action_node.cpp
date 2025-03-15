@@ -41,6 +41,13 @@ ActionNode::~ActionNode() {
 	}
 }
 
+void ActionNode::clear_experiments() {
+	if (this->experiment != NULL) {
+		this->experiment->decrement(this);
+		this->experiment = NULL;
+	}
+}
+
 void ActionNode::save(ofstream& output_file) {
 	this->action.save(output_file);
 

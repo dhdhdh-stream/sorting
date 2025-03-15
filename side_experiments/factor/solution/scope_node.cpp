@@ -44,6 +44,13 @@ ScopeNode::~ScopeNode() {
 	}
 }
 
+void ScopeNode::clear_experiments() {
+	if (this->experiment != NULL) {
+		this->experiment->decrement(this);
+		this->experiment = NULL;
+	}
+}
+
 void ScopeNode::save(ofstream& output_file) {
 	output_file << this->scope->id << endl;
 

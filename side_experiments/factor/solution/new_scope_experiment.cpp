@@ -382,15 +382,6 @@ NewScopeExperiment::~NewScopeExperiment() {
 		delete this->new_scope;
 	}
 
-	for (int s_index = 0; s_index < (int)this->successful_scope_nodes.size(); s_index++) {
-		/**
-		 * - prevent recursive delete
-		 */
-		this->successful_scope_nodes[s_index]->experiment = NULL;
-
-		delete this->successful_scope_nodes[s_index];
-	}
-
 	#if defined(MDEBUG) && MDEBUG
 	for (int p_index = 0; p_index < (int)this->verify_problems.size(); p_index++) {
 		delete this->verify_problems[p_index];
@@ -399,20 +390,6 @@ NewScopeExperiment::~NewScopeExperiment() {
 }
 
 void NewScopeExperiment::decrement(AbstractNode* experiment_node) {
-	/**
-	 * - simply try to remove experiments on new every decrement
-	 */
-	for (int t_index = (int)this->test_location_starts.size()-1; t_index >= 0; t_index--) {
-		if (this->scope_context->nodes.find(this->test_location_starts[t_index]->id) == this->scope_context->nodes.end()) {
-			this->test_location_starts.erase(this->test_location_starts.begin() + t_index);
-		}
-	}
-	for (int s_index = (int)this->successful_location_starts.size()-1; s_index >= 0; s_index--) {
-		if (this->scope_context->nodes.find(this->successful_location_starts[s_index]->id) == this->scope_context->nodes.end()) {
-			this->successful_location_starts.erase(this->successful_location_starts.begin() + s_index);
-		}
-	}
-
 	bool is_test;
 	int location_index;
 	for (int t_index = 0; t_index < (int)this->test_location_starts.size(); t_index++) {
@@ -432,8 +409,17 @@ void NewScopeExperiment::decrement(AbstractNode* experiment_node) {
 
 	if (is_test) {
 		this->test_location_starts.erase(this->test_location_starts.begin() + location_index);
+		this->test_location_is_branch.erase(this->test_location_is_branch.begin() + location_index);
+		this->test_location_exits.erase(this->test_location_exits.begin() + location_index);
+		this->test_location_existing_scores.erase(this->test_location_existing_scores.begin() + location_index);
+		this->test_location_new_scores.erase(this->test_location_new_scores.begin() + location_index);
+		this->test_location_counts.erase(this->test_location_counts.begin() + location_index);
 	} else {
 		this->successful_location_starts.erase(this->successful_location_starts.begin() + location_index);
+		this->successful_location_is_branch.erase(this->successful_location_is_branch.begin() + location_index);
+		ScopeNode* new_scope_node = this->successful_scope_nodes[location_index];
+		this->successful_scope_nodes.erase(this->successful_scope_nodes.begin() + location_index);
+		delete new_scope_node;
 	}
 
 	if (this->test_location_starts.size() == 0

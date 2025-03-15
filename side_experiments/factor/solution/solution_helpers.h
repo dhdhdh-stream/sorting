@@ -19,6 +19,8 @@ void update_scores(ScopeHistory* scope_history,
 
 void create_experiment(ScopeHistory* scope_history,
 					   int improvement_iter);
+void create_multi_experiment(ScopeHistory* scope_history,
+							 int& multi_id);
 
 void gather_possible_helper(ScopeHistory* scope_history,
 							std::vector<Scope*>& scope_context,
@@ -39,5 +41,7 @@ void fetch_input_helper(RunHelper& run_helper,
 
 void clean_scope(Scope* scope,
 				 Solution* parent_solution);
+
+void multi_iter();
 
 #endif /* SOLUTION_HELPERS_H */

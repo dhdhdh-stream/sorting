@@ -1,6 +1,3 @@
-// TODO: with limiting size of scope, can possibly go fast add again
-// - trash limited by limiting size of scope?
-
 #include <chrono>
 #include <iostream>
 #include <map>

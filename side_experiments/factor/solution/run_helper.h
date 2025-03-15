@@ -8,6 +8,8 @@
 class AbstractExperiment;
 class AbstractExperimentHistory;
 class AbstractNode;
+class MultiPassThroughExperiment;
+class MultiPassThroughExperimentHistory;
 
 class RunHelper {
 public:
@@ -18,6 +20,8 @@ public:
 	AbstractExperimentHistory* experiment_history;
 
 	bool has_explore;
+
+	std::map<MultiPassThroughExperiment*, MultiPassThroughExperimentHistory*> multi_experiment_histories;
 
 	#if defined(MDEBUG) && MDEBUG
 	unsigned long starting_run_seed;

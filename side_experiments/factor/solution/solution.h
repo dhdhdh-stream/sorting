@@ -63,6 +63,8 @@ public:
 					  int node_id);
 	void clean_scopes();
 
+	void clear_experiments();
+
 	void save(std::string path,
 			  std::string name);
 

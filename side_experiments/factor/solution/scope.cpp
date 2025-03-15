@@ -71,6 +71,13 @@ void Scope::clean_inputs(Scope* scope) {
 	}
 }
 
+void Scope::clear_experiments() {
+	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
+			it != this->nodes.end(); it++) {
+		it->second->clear_experiments();
+	}
+}
+
 void Scope::save(ofstream& output_file) {
 	output_file << this->node_counter << endl;
 

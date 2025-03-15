@@ -79,6 +79,13 @@ void BranchNode::clean_inputs(Scope* scope,
 	}
 }
 
+void BranchNode::clear_experiments() {
+	if (this->experiment != NULL) {
+		this->experiment->decrement(this);
+		this->experiment = NULL;
+	}
+}
+
 void BranchNode::save(ofstream& output_file) {
 	output_file << this->average_val << endl;
 	output_file << this->factor_ids.size() << endl;
