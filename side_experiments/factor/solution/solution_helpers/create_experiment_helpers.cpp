@@ -220,9 +220,14 @@ void create_multi_experiment(ScopeHistory* scope_history,
 			explore_node->parent,
 			explore_node,
 			explore_is_branch);
-		new_experiment->id = multi_id;
-		multi_id++;
 
-		explore_node->experiment = new_experiment;
+		if (new_experiment->result == EXPERIMENT_RESULT_FAIL) {
+			delete new_experiment;
+		} else {
+			new_experiment->id = multi_id;
+			multi_id++;
+
+			explore_node->experiment = new_experiment;
+		}
 	}
 }

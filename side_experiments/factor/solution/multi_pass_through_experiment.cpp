@@ -1,5 +1,7 @@
 #include "multi_pass_through_experiment.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
@@ -120,6 +122,6 @@ MultiPassThroughExperimentHistory::MultiPassThroughExperimentHistory(
 		MultiPassThroughExperiment* experiment) {
 	this->experiment = experiment;
 
-	uniform_int_distribution<int> experiment_active_distribution(0, 1);
+	uniform_int_distribution<int> experiment_active_distribution(0, 2);
 	this->is_active = experiment_active_distribution(generator) == 0;
 }

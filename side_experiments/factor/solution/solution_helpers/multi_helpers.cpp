@@ -11,6 +11,7 @@
 #include "scope.h"
 #include "solution.h"
 #include "solution_helpers.h"
+#include "utilities.h"
 
 using namespace std;
 
@@ -21,6 +22,8 @@ void multi_iter() {
 	int improvement_iter = 0;
 
 	while (true) {
+		run_index++;
+
 		auto curr_time = chrono::high_resolution_clock::now();
 		auto time_diff = chrono::duration_cast<chrono::seconds>(curr_time - start_time);
 		if (time_diff.count() >= 20) {
@@ -32,6 +35,11 @@ void multi_iter() {
 		Problem* problem = problem_type->get_problem();
 
 		RunHelper run_helper;
+
+		#if defined(MDEBUG) && MDEBUG
+		run_helper.starting_run_seed = run_index;
+		run_helper.curr_run_seed = xorshift(run_helper.starting_run_seed);
+		#endif /* MDEBUG */
 
 		ScopeHistory* scope_history = new ScopeHistory(solution->scopes[0]);
 		solution->scopes[0]->experiment_activate(
@@ -51,17 +59,19 @@ void multi_iter() {
 		delete scope_history;
 		delete problem;
 
-		set<Scope*> updated_scopes;
 		for (map<MultiPassThroughExperiment*, MultiPassThroughExperimentHistory*>::iterator it = run_helper.multi_experiment_histories.begin();
 				it != run_helper.multi_experiment_histories.end(); it++) {
 			it->first->backprop(target_val,
 								run_helper);
+		}
+		for (map<MultiPassThroughExperiment*, MultiPassThroughExperimentHistory*>::iterator it = run_helper.multi_experiment_histories.begin();
+				it != run_helper.multi_experiment_histories.end(); it++) {
 			if (it->first->result == EXPERIMENT_RESULT_FAIL) {
+				cout << it->first->id << " fail" << endl;
+
 				it->first->finalize(NULL);
 				delete it->first;
 			} else if (it->first->result == EXPERIMENT_RESULT_SUCCESS) {
-				updated_scopes.insert(it->first->scope_context);
-
 				it->first->finalize(solution);
 				delete it->first;
 
@@ -69,25 +79,25 @@ void multi_iter() {
 			}
 		}
 
-		for (set<Scope*>::iterator it = updated_scopes.begin();
-				it != updated_scopes.end(); it++) {
-			clean_scope(*it,
-						solution);
-
-			if ((*it)->nodes.size() >= SCOPE_EXCEEDED_NUM_NODES) {
-				(*it)->exceeded = true;
-			}
-			if ((*it)->nodes.size() <= SCOPE_RESUME_NUM_NODES) {
-				(*it)->exceeded = false;
-			}
-		}
-
-		if (improvement_iter >= 10) {
+		// if (improvement_iter >= 10) {
+		if (improvement_iter >= 1) {
 			break;
 		}
 	}
 
 	solution->clear_experiments();
+
+	for (int s_index = 0; s_index < (int)solution->scopes.size(); s_index++) {
+		clean_scope(solution->scopes[s_index],
+					solution);
+
+		if (solution->scopes[s_index]->nodes.size() >= SCOPE_EXCEEDED_NUM_NODES) {
+			solution->scopes[s_index]->exceeded = true;
+		}
+		if (solution->scopes[s_index]->nodes.size() <= SCOPE_RESUME_NUM_NODES) {
+			solution->scopes[s_index]->exceeded = false;
+		}
+	}
 
 	double sum_score = 0.0;
 	double sum_true_score = 0.0;
