@@ -21,7 +21,7 @@ RunHelper::~RunHelper() {
 		delete this->experiment_history;
 	}
 
-	for (map<MultiPassThroughExperiment*, MultiPassThroughExperimentHistory*>::iterator it = this->multi_experiment_histories.begin();
+	for (map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it = this->multi_experiment_histories.begin();
 			it != this->multi_experiment_histories.end(); it++) {
 		delete it->second;
 	}

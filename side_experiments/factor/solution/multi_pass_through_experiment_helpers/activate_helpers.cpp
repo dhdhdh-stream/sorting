@@ -31,13 +31,13 @@ void MultiPassThroughExperiment::activate(
 		RunHelper& run_helper,
 		ScopeHistory* scope_history) {
 	MultiPassThroughExperimentHistory* history;
-	map<MultiPassThroughExperiment*, MultiPassThroughExperimentHistory*>::iterator it
+	map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it
 		= run_helper.multi_experiment_histories.find(this);
 	if (it == run_helper.multi_experiment_histories.end()) {
 		history = new MultiPassThroughExperimentHistory(this);
 		run_helper.multi_experiment_histories[this] = history;
 	} else {
-		history = it->second;
+		history = (MultiPassThroughExperimentHistory*)it->second;
 	}
 
 	if (history->is_active) {
@@ -62,17 +62,20 @@ void MultiPassThroughExperiment::activate(
 void MultiPassThroughExperiment::backprop(
 		double target_val,
 		RunHelper& run_helper) {
-	MultiPassThroughExperimentHistory* history = run_helper.multi_experiment_histories[this];
+	MultiPassThroughExperimentHistory* history = (MultiPassThroughExperimentHistory*)run_helper.multi_experiment_histories[this];
 
 	vector<int> curr_influence_indexes;
-	for (map<MultiPassThroughExperiment*, MultiPassThroughExperimentHistory*>::iterator it = run_helper.multi_experiment_histories.begin();
+	for (map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it = run_helper.multi_experiment_histories.begin();
 			it != run_helper.multi_experiment_histories.end(); it++) {
-		if (it->first != this && it->second->is_active) {
+		MultiPassThroughExperiment* multi_pass_through_experiment = (MultiPassThroughExperiment*)it->first;
+		MultiPassThroughExperimentHistory* multi_pass_through_experiment_history
+			= (MultiPassThroughExperimentHistory*)it->second;
+		if (multi_pass_through_experiment != this && multi_pass_through_experiment_history->is_active) {
 			int index;
-			map<int, int>::iterator m_it = this->influence_mapping.find(it->first->id);
+			map<int, int>::iterator m_it = this->influence_mapping.find(multi_pass_through_experiment->id);
 			if (m_it == this->influence_mapping.end()) {
 				index = 1 + (int)this->influence_mapping.size();
-				this->influence_mapping[it->first->id] = 1 + (int)this->influence_mapping.size();
+				this->influence_mapping[multi_pass_through_experiment->id] = 1 + (int)this->influence_mapping.size();
 			} else {
 				index = m_it->second;
 			}
@@ -179,6 +182,10 @@ void MultiPassThroughExperiment::backprop(
 			if (new_score <= existing_score) {
 				this->result = EXPERIMENT_RESULT_FAIL;
 				return;
+			}
+
+			if ((int)this->new_target_vals.size() >= VERIFY_2ND_NUM_SAMPLES_PER_ITER) {
+				this->improvement = new_score - existing_score;
 			}
 		}
 

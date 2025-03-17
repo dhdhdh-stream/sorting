@@ -32,6 +32,8 @@ public:
 	std::vector<std::vector<int>> new_influence_indexes;
 	std::map<int, int> influence_mapping;
 
+	double improvement;
+
 	MultiPassThroughExperiment(Scope* scope_context,
 							   AbstractNode* node_context,
 							   bool is_branch);
