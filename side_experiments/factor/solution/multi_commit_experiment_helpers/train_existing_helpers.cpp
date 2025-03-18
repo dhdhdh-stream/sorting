@@ -1,4 +1,4 @@
-#include "multi_branch_experiment.h"
+#include "multi_commit_experiment.h"
 
 #include <cmath>
 #include <iostream>
@@ -26,10 +26,10 @@ const int TRAIN_EXISTING_NUM_DATAPOINTS = 20;
 const int TRAIN_EXISTING_NUM_DATAPOINTS = 4000;
 #endif /* MDEBUG */
 
-void MultiBranchExperiment::train_existing_activate(
+void MultiCommitExperiment::train_existing_activate(
 		RunHelper& run_helper,
 		ScopeHistory* scope_history,
-		MultiBranchExperimentHistory* history) {
+		MultiCommitExperimentHistory* history) {
 	history->instance_count++;
 
 	vector<double> input_vals(this->existing_inputs.size());
@@ -52,10 +52,10 @@ void MultiBranchExperiment::train_existing_activate(
 	this->factor_histories.push_back(factor_vals);
 }
 
-void MultiBranchExperiment::train_existing_backprop(
+void MultiCommitExperiment::train_existing_backprop(
 		double target_val,
 		RunHelper& run_helper,
-		MultiBranchExperimentHistory* history) {
+		MultiCommitExperimentHistory* history) {
 	for (int i_index = 0; i_index < history->instance_count; i_index++) {
 		this->i_target_val_histories.push_back(target_val);
 	}
@@ -391,19 +391,12 @@ void MultiBranchExperiment::train_existing_backprop(
 		this->factor_histories.clear();
 		this->i_target_val_histories.clear();
 
-		uniform_int_distribution<int> good_distribution(0, 3);
-		if (good_distribution(generator) == 0) {
-			this->explore_type = EXPLORE_TYPE_GOOD;
-		} else {
-			this->explore_type = EXPLORE_TYPE_BEST;
-		}
-
 		this->best_surprise = 0.0;
 
 		uniform_int_distribution<int> until_distribution(0, (int)this->average_instances_per_run-1.0);
 		this->num_instances_until_target = 1 + until_distribution(generator);
 
-		this->state = MULTI_BRANCH_EXPERIMENT_STATE_EXPLORE;
+		this->state = MULTI_COMMIT_EXPERIMENT_STATE_EXPLORE;
 		this->state_iter = 0;
 	}
 }

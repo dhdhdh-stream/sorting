@@ -24,6 +24,8 @@ public:
 	int state;
 	int state_iter;
 
+	int sum_num_instances;
+
 	std::vector<std::pair<std::pair<std::vector<Scope*>,std::vector<int>>,
 		std::pair<int,int>>> existing_inputs;
 	std::vector<std::pair<int,int>> existing_factor_ids;
@@ -31,6 +33,7 @@ public:
 	double existing_average_score;
 	std::vector<double> existing_factor_weights;
 
+	double average_instances_per_run;
 	int num_instances_until_target;
 
 	int explore_type;

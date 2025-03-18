@@ -1,4 +1,4 @@
-#include "multi_branch_experiment.h"
+#include "multi_commit_experiment.h"
 
 #include "abstract_node.h"
 #include "constants.h"
@@ -7,7 +7,7 @@
 
 using namespace std;
 
-void MultiBranchExperiment::existing_gather_activate(
+void MultiCommitExperiment::existing_gather_activate(
 		ScopeHistory* scope_history) {
 	vector<Scope*> scope_context;
 	vector<int> node_context;
@@ -50,7 +50,7 @@ void MultiBranchExperiment::existing_gather_activate(
 	}
 }
 
-void MultiBranchExperiment::existing_gather_backprop() {
+void MultiCommitExperiment::existing_gather_backprop() {
 	this->state_iter++;
 	if (this->state_iter >= GATHER_ITERS) {
 		while (this->existing_inputs.size() > GATHER_ITERS) {
@@ -67,7 +67,7 @@ void MultiBranchExperiment::existing_gather_backprop() {
 
 		this->sum_num_instances = 0;
 
-		this->state = MULTI_BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING;
+		this->state = MULTI_COMMIT_EXPERIMENT_STATE_TRAIN_EXISTING;
 		this->state_iter = 0;
 	}
 }

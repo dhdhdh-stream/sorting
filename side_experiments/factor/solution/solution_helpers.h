@@ -23,6 +23,8 @@ void create_multi_experiment(ScopeHistory* scope_history,
 							 int& multi_id);
 void create_multi_branch_experiment(ScopeHistory* scope_history,
 									int& multi_id);
+void create_multi_commit_experiment(ScopeHistory* scope_history,
+									int& multi_id);
 
 void gather_possible_helper(ScopeHistory* scope_history,
 							std::vector<Scope*>& scope_context,

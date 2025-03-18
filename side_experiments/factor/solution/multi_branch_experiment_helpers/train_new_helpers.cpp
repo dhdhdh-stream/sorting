@@ -89,7 +89,7 @@ void MultiBranchExperiment::train_new_activate(
 
 			curr_node = this->best_exit_next_node;
 
-			uniform_int_distribution<int> until_distribution(0, 2*((int)this->node_context->average_instances_per_run-1));
+			uniform_int_distribution<int> until_distribution(0, 2*((int)this->average_instances_per_run-1));
 			this->num_instances_until_target = 1 + until_distribution(generator);
 		}
 	}
