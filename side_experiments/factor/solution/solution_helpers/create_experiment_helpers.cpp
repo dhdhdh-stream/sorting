@@ -178,8 +178,7 @@ void create_experiment(ScopeHistory* scope_history,
 	}
 }
 
-void create_multi_experiment(ScopeHistory* scope_history,
-							 int& multi_id) {
+void create_multi_experiment(ScopeHistory* scope_history) {
 	map<pair<AbstractNode*,bool>,int> nodes_seen;
 	gather_nodes_seen_helper(scope_history,
 							 nodes_seen);
@@ -226,16 +225,15 @@ void create_multi_experiment(ScopeHistory* scope_history,
 		if (new_experiment->result == EXPERIMENT_RESULT_FAIL) {
 			delete new_experiment;
 		} else {
-			new_experiment->id = multi_id;
-			multi_id++;
+			new_experiment->id = multi_index;
+			multi_index++;
 
 			explore_node->experiment = new_experiment;
 		}
 	}
 }
 
-void create_multi_branch_experiment(ScopeHistory* scope_history,
-									int& multi_id) {
+void create_multi_branch_experiment(ScopeHistory* scope_history) {
 	map<pair<AbstractNode*,bool>,int> nodes_seen;
 	gather_nodes_seen_helper(scope_history,
 							 nodes_seen);
@@ -278,15 +276,14 @@ void create_multi_branch_experiment(ScopeHistory* scope_history,
 			explore_node->parent,
 			explore_node,
 			explore_is_branch);
-		new_experiment->id = multi_id;
-		multi_id++;
+		new_experiment->id = multi_index;
+		multi_index++;
 
 		explore_node->experiment = new_experiment;
 	}
 }
 
-void create_multi_commit_experiment(ScopeHistory* scope_history,
-									int& multi_id) {
+void create_multi_commit_experiment(ScopeHistory* scope_history) {
 	map<pair<AbstractNode*,bool>,int> nodes_seen;
 	gather_nodes_seen_helper(scope_history,
 							 nodes_seen);
@@ -329,9 +326,10 @@ void create_multi_commit_experiment(ScopeHistory* scope_history,
 			explore_node->parent,
 			explore_node,
 			explore_is_branch);
-		new_experiment->id = multi_id;
-		multi_id++;
+		new_experiment->id = multi_index;
+		multi_index++;
 
 		explore_node->experiment = new_experiment;
+		cout << "MultiCommitExperiment" << endl;
 	}
 }

@@ -19,72 +19,76 @@ void MultiCommitExperiment::activate(AbstractNode* experiment_node,
 									 RunHelper& run_helper,
 									 ScopeHistory* scope_history) {
 	MultiCommitExperimentHistory* history;
-	map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it
-		= run_helper.multi_experiment_histories.find(this);
-	if (it == run_helper.multi_experiment_histories.end()) {
-		history = new MultiCommitExperimentHistory(this);
-		run_helper.multi_experiment_histories[this] = history;
-	} else {
-		history = (MultiCommitExperimentHistory*)it->second;
-	}
+	if (this->is_branch == is_branch) {
+		map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it
+			= run_helper.multi_experiment_histories.find(this);
+		if (it == run_helper.multi_experiment_histories.end()) {
+			history = new MultiCommitExperimentHistory(this);
+			run_helper.multi_experiment_histories[this] = history;
+		} else {
+			history = (MultiCommitExperimentHistory*)it->second;
+		}
 
-	switch (this->state) {
-	case MULTI_COMMIT_EXPERIMENT_STATE_EXISTING_GATHER:
-		existing_gather_activate(scope_history);
-		break;
-	case MULTI_COMMIT_EXPERIMENT_STATE_TRAIN_EXISTING:
-		train_existing_activate(run_helper,
-								scope_history,
-								history);
-		break;
-	case MULTI_COMMIT_EXPERIMENT_STATE_EXPLORE:
-		explore_activate(curr_node,
-						 problem,
-						 run_helper,
-						 scope_history,
-						 history);
-		break;
-	case MULTI_COMMIT_EXPERIMENT_STATE_FIND_SAVE:
-		find_save_activate(curr_node,
-						   problem,
-						   run_helper,
-						   history);
-		break;
-	case MULTI_COMMIT_EXPERIMENT_STATE_COMMIT_EXISTING_GATHER:
-		commit_existing_gather_activate(curr_node,
-										problem,
-										run_helper,
-										scope_history,
-										history);
-		break;
-	case MULTI_COMMIT_EXPERIMENT_STATE_COMMIT_TRAIN_EXISTING:
-		commit_train_existing_activate(curr_node,
+		run_helper.num_multi_instances++;
+
+		switch (this->state) {
+		case MULTI_COMMIT_EXPERIMENT_STATE_EXISTING_GATHER:
+			existing_gather_activate(scope_history);
+			break;
+		case MULTI_COMMIT_EXPERIMENT_STATE_TRAIN_EXISTING:
+			train_existing_activate(run_helper,
+									scope_history,
+									history);
+			break;
+		case MULTI_COMMIT_EXPERIMENT_STATE_EXPLORE:
+			explore_activate(curr_node,
+							 problem,
+							 run_helper,
+							 scope_history,
+							 history);
+			break;
+		case MULTI_COMMIT_EXPERIMENT_STATE_FIND_SAVE:
+			find_save_activate(curr_node,
+							   problem,
+							   run_helper,
+							   history);
+			break;
+		case MULTI_COMMIT_EXPERIMENT_STATE_COMMIT_EXISTING_GATHER:
+			commit_existing_gather_activate(curr_node,
+											problem,
+											run_helper,
+											scope_history,
+											history);
+			break;
+		case MULTI_COMMIT_EXPERIMENT_STATE_COMMIT_TRAIN_EXISTING:
+			commit_train_existing_activate(curr_node,
+										   problem,
+										   run_helper,
+										   scope_history,
+										   history);
+			break;
+		case MULTI_COMMIT_EXPERIMENT_STATE_COMMIT_NEW_GATHER:
+			commit_new_gather_activate(curr_node,
 									   problem,
 									   run_helper,
 									   scope_history,
 									   history);
-		break;
-	case MULTI_COMMIT_EXPERIMENT_STATE_COMMIT_NEW_GATHER:
-		commit_new_gather_activate(curr_node,
-								   problem,
-								   run_helper,
-								   scope_history,
-								   history);
-		break;
-	case MULTI_COMMIT_EXPERIMENT_STATE_COMMIT_TRAIN_NEW:
-		commit_train_new_activate(curr_node,
-								  problem,
-								  run_helper,
-								  scope_history,
-								  history);
-		break;
-	case MULTI_COMMIT_EXPERIMENT_STATE_MEASURE:
-		measure_activate(curr_node,
-						 problem,
-						 run_helper,
-						 scope_history,
-						 history);
-		break;
+			break;
+		case MULTI_COMMIT_EXPERIMENT_STATE_COMMIT_TRAIN_NEW:
+			commit_train_new_activate(curr_node,
+									  problem,
+									  run_helper,
+									  scope_history,
+									  history);
+			break;
+		case MULTI_COMMIT_EXPERIMENT_STATE_MEASURE:
+			measure_activate(curr_node,
+							 problem,
+							 run_helper,
+							 scope_history,
+							 history);
+			break;
+		}
 	}
 }
 

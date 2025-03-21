@@ -20,6 +20,8 @@ public:
 	bool has_explore;
 
 	std::map<AbstractExperiment*, AbstractExperimentHistory*> multi_experiment_histories;
+	int num_original_actions;
+	int num_multi_instances;
 
 	#if defined(MDEBUG) && MDEBUG
 	unsigned long starting_run_seed;

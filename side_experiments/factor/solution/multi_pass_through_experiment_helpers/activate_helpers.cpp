@@ -31,31 +31,35 @@ void MultiPassThroughExperiment::activate(
 		RunHelper& run_helper,
 		ScopeHistory* scope_history) {
 	MultiPassThroughExperimentHistory* history;
-	map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it
-		= run_helper.multi_experiment_histories.find(this);
-	if (it == run_helper.multi_experiment_histories.end()) {
-		history = new MultiPassThroughExperimentHistory(this);
-		run_helper.multi_experiment_histories[this] = history;
-	} else {
-		history = (MultiPassThroughExperimentHistory*)it->second;
-	}
-
-	if (history->is_active) {
-		for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {
-			if (this->step_types[s_index] == STEP_TYPE_ACTION) {
-				problem->perform_action(this->actions[s_index]);
-			} else {
-				ScopeHistory* inner_scope_history = new ScopeHistory(this->scopes[s_index]);
-				this->scopes[s_index]->activate(problem,
-					run_helper,
-					inner_scope_history);
-				delete inner_scope_history;
-			}
-
-			run_helper.num_actions += 2;
+	if (this->is_branch == is_branch) {
+		map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it
+			= run_helper.multi_experiment_histories.find(this);
+		if (it == run_helper.multi_experiment_histories.end()) {
+			history = new MultiPassThroughExperimentHistory(this);
+			run_helper.multi_experiment_histories[this] = history;
+		} else {
+			history = (MultiPassThroughExperimentHistory*)it->second;
 		}
 
-		curr_node = this->exit_next_node;
+		run_helper.num_multi_instances++;
+
+		if (history->is_active) {
+			for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {
+				if (this->step_types[s_index] == STEP_TYPE_ACTION) {
+					problem->perform_action(this->actions[s_index]);
+				} else {
+					ScopeHistory* inner_scope_history = new ScopeHistory(this->scopes[s_index]);
+					this->scopes[s_index]->activate(problem,
+						run_helper,
+						inner_scope_history);
+					delete inner_scope_history;
+				}
+
+				run_helper.num_actions += 2;
+			}
+
+			curr_node = this->exit_next_node;
+		}
 	}
 }
 
@@ -192,6 +196,7 @@ void MultiPassThroughExperiment::backprop(
 		if ((int)this->new_target_vals.size() >= VERIFY_2ND_NUM_SAMPLES_PER_ITER) {
 			this->result = EXPERIMENT_RESULT_SUCCESS;
 
+			cout << "this->improvement: " << this->improvement << endl;
 			cout << "this->scope_context->id: " << this->scope_context->id << endl;
 			cout << "this->node_context->id: " << this->node_context->id << endl;
 			cout << "this->is_branch: " << this->is_branch << endl;

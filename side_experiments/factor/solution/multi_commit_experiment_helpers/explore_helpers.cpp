@@ -164,6 +164,9 @@ void MultiCommitExperiment::explore_backprop(
 
 					this->state_iter = -1;
 
+					// this->id = multi_index;
+					// multi_index++;
+
 					this->state = MULTI_COMMIT_EXPERIMENT_STATE_FIND_SAVE;
 				} else {
 					this->result = EXPERIMENT_RESULT_FAIL;

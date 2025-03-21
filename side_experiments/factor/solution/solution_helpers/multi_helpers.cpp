@@ -20,7 +20,6 @@ using namespace std;
 void multi_iter() {
 	auto start_time = chrono::high_resolution_clock::now();
 
-	int multi_id = 0;
 	int improvement_iter = 0;
 
 	while (true) {
@@ -54,8 +53,7 @@ void multi_iter() {
 		target_val -= run_helper.num_analyze * solution->curr_time_penalty;
 
 		if (run_helper.multi_experiment_histories.size() < 3) {
-			create_multi_experiment(scope_history,
-									multi_id);
+			create_multi_experiment(scope_history);
 		}
 
 		delete scope_history;
@@ -148,7 +146,6 @@ void multi_iter() {
 void multi_branch_iter() {
 	auto start_time = chrono::high_resolution_clock::now();
 
-	int multi_id = 0;
 	MultiBranchExperiment* best_experiment = NULL;
 	int improvement_iter = 0;
 
@@ -183,8 +180,7 @@ void multi_branch_iter() {
 		target_val -= run_helper.num_analyze * solution->curr_time_penalty;
 
 		if (run_helper.multi_experiment_histories.size() < 3) {
-			create_multi_branch_experiment(scope_history,
-										   multi_id);
+			create_multi_branch_experiment(scope_history);
 		}
 
 		delete scope_history;
@@ -290,8 +286,6 @@ void multi_branch_iter() {
 void multi_commit_iter() {
 	auto start_time = chrono::high_resolution_clock::now();
 
-	int multi_id = 0;
-	MultiCommitExperiment* best_experiment = NULL;
 	int improvement_iter = 0;
 
 	while (true) {
@@ -324,9 +318,13 @@ void multi_commit_iter() {
 		target_val -= 0.05 * run_helper.num_actions * solution->curr_time_penalty;
 		target_val -= run_helper.num_analyze * solution->curr_time_penalty;
 
-		if (run_helper.multi_experiment_histories.size() < 3) {
-			create_multi_commit_experiment(scope_history,
-										   multi_id);
+		if (run_helper.num_multi_instances == 0) {
+			create_multi_commit_experiment(scope_history);
+		} else {
+			int ratio = run_helper.num_original_actions / run_helper.num_multi_instances;
+			if (ratio > 200) {
+				create_multi_commit_experiment(scope_history);
+			}
 		}
 
 		delete scope_history;
@@ -355,9 +353,6 @@ void multi_commit_iter() {
 			break;
 		}
 	}
-
-	best_experiment->finalize(solution);
-	delete best_experiment;
 
 	solution->clear_experiments();
 
@@ -415,6 +410,12 @@ void multi_commit_iter() {
 
 	solution->curr_score = sum_score / MEASURE_ITERS;
 	solution->curr_true_score = sum_true_score / MEASURE_ITERS;
+
+	// temp
+	ofstream display_file;
+	display_file.open("../display.txt");
+	solution->save_for_display(display_file);
+	display_file.close();
 
 	cout << "solution->curr_score: " << solution->curr_score << endl;
 }

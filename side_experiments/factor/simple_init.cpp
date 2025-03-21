@@ -22,6 +22,8 @@ default_random_engine generator;
 ProblemType* problem_type;
 Solution* solution;
 
+int multi_index = 0;
+
 int run_index;
 
 int main(int argc, char* argv[]) {

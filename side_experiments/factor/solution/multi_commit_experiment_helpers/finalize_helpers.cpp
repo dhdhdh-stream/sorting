@@ -293,9 +293,10 @@ void MultiCommitExperiment::finalize(Solution* duplicate) {
 		duplicate_local_scope->node_counter++;
 		duplicate_local_scope->nodes[new_branch_node->id] = new_branch_node;
 
-		new_branch_node->average_val = this->commit_new_average_score;
-		new_branch_node->factor_ids = this->commit_new_factor_ids;
-		new_branch_node->factor_weights = this->commit_new_factor_weights;
+		new_branch_node->average_val = 1.0;
+		// new_branch_node->average_val = this->commit_new_average_score;
+		// new_branch_node->factor_ids = this->commit_new_factor_ids;
+		// new_branch_node->factor_weights = this->commit_new_factor_weights;
 
 		ObsNode* obs_node = (ObsNode*)this->new_nodes[this->step_iter-1];
 

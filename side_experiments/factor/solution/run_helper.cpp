@@ -14,6 +14,9 @@ RunHelper::RunHelper() {
 	this->experiment_history = NULL;
 
 	this->has_explore = false;
+
+	this->num_original_actions = 0;
+	this->num_multi_instances = 0;
 }
 
 RunHelper::~RunHelper() {

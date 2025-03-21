@@ -1,6 +1,8 @@
 // TODO: add back repeat
 // - new scope, but follow immediately with decision making
 
+// TODO: maybe find 10 good, then eval
+
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -30,13 +32,14 @@ default_random_engine generator;
 ProblemType* problem_type;
 Solution* solution;
 
+int multi_index = 0;
+
 int run_index;
 
 int main(int argc, char* argv[]) {
 	cout << "Starting..." << endl;
 
-	// seed = (unsigned)time(NULL);
-	seed = 1741195135;
+	seed = (unsigned)time(NULL);
 	srand(seed);
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
@@ -63,219 +66,221 @@ int main(int argc, char* argv[]) {
 
 	run_index = 0;
 
-	while (solution->timestamp < EXPLORE_ITERS) {
-		Solution* best_solution = NULL;
+	multi_commit_iter();
 
-		int improvement_iter = 0;
+	// while (solution->timestamp < EXPLORE_ITERS) {
+	// 	Solution* best_solution = NULL;
 
-		while (true) {
-			run_index++;
-			if (run_index%100000 == 0) {
-				cout << "run_index: " << run_index << endl;
-				cout << "solution->timestamp: " << solution->timestamp << endl;
-				cout << "improvement_iter: " << improvement_iter << endl;
-			}
+	// 	int improvement_iter = 0;
 
-			Problem* problem = problem_type->get_problem();
+	// 	while (true) {
+	// 		run_index++;
+	// 		if (run_index%100000 == 0) {
+	// 			cout << "run_index: " << run_index << endl;
+	// 			cout << "solution->timestamp: " << solution->timestamp << endl;
+	// 			cout << "improvement_iter: " << improvement_iter << endl;
+	// 		}
 
-			RunHelper run_helper;
+	// 		Problem* problem = problem_type->get_problem();
 
-			#if defined(MDEBUG) && MDEBUG
-			run_helper.starting_run_seed = run_index;
-			run_helper.curr_run_seed = xorshift(run_helper.starting_run_seed);
-			#endif /* MDEBUG */
+	// 		RunHelper run_helper;
 
-			ScopeHistory* scope_history = new ScopeHistory(solution->scopes[0]);
-			solution->scopes[0]->experiment_activate(
-					problem,
-					run_helper,
-					scope_history);
+	// 		#if defined(MDEBUG) && MDEBUG
+	// 		run_helper.starting_run_seed = run_index;
+	// 		run_helper.curr_run_seed = xorshift(run_helper.starting_run_seed);
+	// 		#endif /* MDEBUG */
 
-			double target_val = problem->score_result();
-			target_val -= 0.05 * run_helper.num_actions * solution->curr_time_penalty;
-			target_val -= run_helper.num_analyze * solution->curr_time_penalty;
+	// 		ScopeHistory* scope_history = new ScopeHistory(solution->scopes[0]);
+	// 		solution->scopes[0]->experiment_activate(
+	// 				problem,
+	// 				run_helper,
+	// 				scope_history);
 
-			if (!run_helper.has_explore) {
-				update_scores(scope_history,
-							  target_val);
-			}
+	// 		double target_val = problem->score_result();
+	// 		target_val -= 0.05 * run_helper.num_actions * solution->curr_time_penalty;
+	// 		target_val -= run_helper.num_analyze * solution->curr_time_penalty;
 
-			if (run_helper.experiments_seen_order.size() == 0) {
-				create_experiment(scope_history,
-								  improvement_iter);
-			}
+	// 		if (!run_helper.has_explore) {
+	// 			update_scores(scope_history,
+	// 						  target_val);
+	// 		}
 
-			delete scope_history;
-			delete problem;
+	// 		if (run_helper.experiments_seen_order.size() == 0) {
+	// 			create_experiment(scope_history,
+	// 							  improvement_iter);
+	// 		}
 
-			if (run_helper.experiment_history != NULL) {
-				for (int e_index = 0; e_index < (int)run_helper.experiments_seen_order.size(); e_index++) {
-					AbstractExperiment* experiment = run_helper.experiments_seen_order[e_index];
-					experiment->average_remaining_experiments_from_start =
-						0.9 * experiment->average_remaining_experiments_from_start
-						+ 0.1 * ((int)run_helper.experiments_seen_order.size()-1 - e_index
-							+ run_helper.experiment_history->experiment->average_remaining_experiments_from_start);
-				}
+	// 		delete scope_history;
+	// 		delete problem;
 
-				run_helper.experiment_history->experiment->backprop(
-					target_val,
-					run_helper);
-				if (run_helper.experiment_history->experiment->result == EXPERIMENT_RESULT_FAIL) {
-					run_helper.experiment_history->experiment->finalize(NULL);
-					delete run_helper.experiment_history->experiment;
-				} else if (run_helper.experiment_history->experiment->result == EXPERIMENT_RESULT_SUCCESS) {
-					Solution* duplicate = new Solution(solution);
+	// 		if (run_helper.experiment_history != NULL) {
+	// 			for (int e_index = 0; e_index < (int)run_helper.experiments_seen_order.size(); e_index++) {
+	// 				AbstractExperiment* experiment = run_helper.experiments_seen_order[e_index];
+	// 				experiment->average_remaining_experiments_from_start =
+	// 					0.9 * experiment->average_remaining_experiments_from_start
+	// 					+ 0.1 * ((int)run_helper.experiments_seen_order.size()-1 - e_index
+	// 						+ run_helper.experiment_history->experiment->average_remaining_experiments_from_start);
+	// 			}
 
-					int last_updated_scope_id = run_helper.experiment_history->experiment->scope_context->id;
+	// 			run_helper.experiment_history->experiment->backprop(
+	// 				target_val,
+	// 				run_helper);
+	// 			if (run_helper.experiment_history->experiment->result == EXPERIMENT_RESULT_FAIL) {
+	// 				run_helper.experiment_history->experiment->finalize(NULL);
+	// 				delete run_helper.experiment_history->experiment;
+	// 			} else if (run_helper.experiment_history->experiment->result == EXPERIMENT_RESULT_SUCCESS) {
+	// 				Solution* duplicate = new Solution(solution);
 
-					run_helper.experiment_history->experiment->finalize(duplicate);
-					delete run_helper.experiment_history->experiment;
+	// 				int last_updated_scope_id = run_helper.experiment_history->experiment->scope_context->id;
 
-					Scope* experiment_scope = duplicate->scopes[last_updated_scope_id];
-					clean_scope(experiment_scope,
-								duplicate);
+	// 				run_helper.experiment_history->experiment->finalize(duplicate);
+	// 				delete run_helper.experiment_history->experiment;
 
-					if (experiment_scope->nodes.size() >= SCOPE_EXCEEDED_NUM_NODES) {
-						experiment_scope->exceeded = true;
-					}
-					if (experiment_scope->nodes.size() <= SCOPE_RESUME_NUM_NODES) {
-						experiment_scope->exceeded = false;
-					}
+	// 				Scope* experiment_scope = duplicate->scopes[last_updated_scope_id];
+	// 				clean_scope(experiment_scope,
+	// 							duplicate);
 
-					#if defined(MDEBUG) && MDEBUG
-					while (duplicate->verify_problems.size() > 0) {
-						Problem* problem = duplicate->verify_problems[0];
+	// 				if (experiment_scope->nodes.size() >= SCOPE_EXCEEDED_NUM_NODES) {
+	// 					experiment_scope->exceeded = true;
+	// 				}
+	// 				if (experiment_scope->nodes.size() <= SCOPE_RESUME_NUM_NODES) {
+	// 					experiment_scope->exceeded = false;
+	// 				}
 
-						RunHelper run_helper;
-						run_helper.starting_run_seed = duplicate->verify_seeds[0];
-						cout << "run_helper.starting_run_seed: " << run_helper.starting_run_seed << endl;
-						run_helper.curr_run_seed = xorshift(run_helper.starting_run_seed);
-						duplicate->verify_seeds.erase(duplicate->verify_seeds.begin());
+	// 				#if defined(MDEBUG) && MDEBUG
+	// 				while (duplicate->verify_problems.size() > 0) {
+	// 					Problem* problem = duplicate->verify_problems[0];
 
-						ScopeHistory* scope_history = new ScopeHistory(duplicate->scopes[0]);
-						duplicate->scopes[0]->verify_activate(
-							problem,
-							run_helper,
-							scope_history);
-						delete scope_history;
+	// 					RunHelper run_helper;
+	// 					run_helper.starting_run_seed = duplicate->verify_seeds[0];
+	// 					cout << "run_helper.starting_run_seed: " << run_helper.starting_run_seed << endl;
+	// 					run_helper.curr_run_seed = xorshift(run_helper.starting_run_seed);
+	// 					duplicate->verify_seeds.erase(duplicate->verify_seeds.begin());
 
-						delete duplicate->verify_problems[0];
-						duplicate->verify_problems.erase(duplicate->verify_problems.begin());
-					}
-					duplicate->clear_verify();
-					#endif /* MDEBUG */
+	// 					ScopeHistory* scope_history = new ScopeHistory(duplicate->scopes[0]);
+	// 					duplicate->scopes[0]->verify_activate(
+	// 						problem,
+	// 						run_helper,
+	// 						scope_history);
+	// 					delete scope_history;
 
-					double sum_score = 0.0;
-					double sum_true_score = 0.0;
-					for (int iter_index = 0; iter_index < MEASURE_ITERS; iter_index++) {
-						Problem* problem = problem_type->get_problem();
+	// 					delete duplicate->verify_problems[0];
+	// 					duplicate->verify_problems.erase(duplicate->verify_problems.begin());
+	// 				}
+	// 				duplicate->clear_verify();
+	// 				#endif /* MDEBUG */
 
-						RunHelper run_helper;
-						#if defined(MDEBUG) && MDEBUG
-						run_helper.starting_run_seed = run_index;
-						run_helper.curr_run_seed = xorshift(run_helper.starting_run_seed);
-						run_index++;
-						#endif /* MDEBUG */
+	// 				double sum_score = 0.0;
+	// 				double sum_true_score = 0.0;
+	// 				for (int iter_index = 0; iter_index < MEASURE_ITERS; iter_index++) {
+	// 					Problem* problem = problem_type->get_problem();
 
-						ScopeHistory* scope_history = new ScopeHistory(duplicate->scopes[0]);
-						duplicate->scopes[0]->measure_activate(
-							problem,
-							run_helper,
-							scope_history);
-						delete scope_history;
+	// 					RunHelper run_helper;
+	// 					#if defined(MDEBUG) && MDEBUG
+	// 					run_helper.starting_run_seed = run_index;
+	// 					run_helper.curr_run_seed = xorshift(run_helper.starting_run_seed);
+	// 					run_index++;
+	// 					#endif /* MDEBUG */
 
-						double target_val = problem->score_result();
-						sum_score += target_val - 0.05 * run_helper.num_actions * solution->curr_time_penalty
-							- run_helper.num_analyze * solution->curr_time_penalty;
-						sum_true_score += target_val;
+	// 					ScopeHistory* scope_history = new ScopeHistory(duplicate->scopes[0]);
+	// 					duplicate->scopes[0]->measure_activate(
+	// 						problem,
+	// 						run_helper,
+	// 						scope_history);
+	// 					delete scope_history;
 
-						delete problem;
-					}
+	// 					double target_val = problem->score_result();
+	// 					sum_score += target_val - 0.05 * run_helper.num_actions * solution->curr_time_penalty
+	// 						- run_helper.num_analyze * solution->curr_time_penalty;
+	// 					sum_true_score += target_val;
 
-					for (int s_index = 0; s_index < (int)duplicate->scopes.size(); s_index++) {
-						for (map<int, AbstractNode*>::iterator it = duplicate->scopes[s_index]->nodes.begin();
-								it != duplicate->scopes[s_index]->nodes.end(); it++) {
-							it->second->average_instances_per_run /= MEASURE_ITERS;
-							if (it->second->average_instances_per_run < 1.0) {
-								it->second->average_instances_per_run = 1.0;
-							}
-						}
-					}
+	// 					delete problem;
+	// 				}
 
-					duplicate->curr_score = sum_score / MEASURE_ITERS;
-					duplicate->curr_true_score = sum_true_score / MEASURE_ITERS;
+	// 				for (int s_index = 0; s_index < (int)duplicate->scopes.size(); s_index++) {
+	// 					for (map<int, AbstractNode*>::iterator it = duplicate->scopes[s_index]->nodes.begin();
+	// 							it != duplicate->scopes[s_index]->nodes.end(); it++) {
+	// 						it->second->average_instances_per_run /= MEASURE_ITERS;
+	// 						if (it->second->average_instances_per_run < 1.0) {
+	// 							it->second->average_instances_per_run = 1.0;
+	// 						}
+	// 					}
+	// 				}
 
-					cout << "duplicate->curr_score: " << duplicate->curr_score << endl;
+	// 				duplicate->curr_score = sum_score / MEASURE_ITERS;
+	// 				duplicate->curr_true_score = sum_true_score / MEASURE_ITERS;
 
-					ofstream display_file;
-					display_file.open("../display.txt");
-					duplicate->save_for_display(display_file);
-					display_file.close();
+	// 				cout << "duplicate->curr_score: " << duplicate->curr_score << endl;
 
-					duplicate->timestamp++;
+	// 				ofstream display_file;
+	// 				display_file.open("../display.txt");
+	// 				duplicate->save_for_display(display_file);
+	// 				display_file.close();
 
-					if (duplicate->timestamp % INCREASE_TIME_PENALTY_ITER == 0) {
-						duplicate->curr_time_penalty *= 1.25;
-					}
-					if (duplicate->curr_true_score > duplicate->best_true_score) {
-						duplicate->best_true_score = duplicate->curr_true_score;
-						duplicate->best_true_score_timestamp = duplicate->timestamp;
-					}
-					if (duplicate->best_true_score_timestamp < duplicate->timestamp
-							&& (duplicate->timestamp - duplicate->best_true_score_timestamp)
-								% DECREASE_TIME_PENALTY_ITER == 0) {
-						duplicate->curr_time_penalty *= 0.8;
-					}
+	// 				duplicate->timestamp++;
 
-					#if defined(MDEBUG) && MDEBUG
-					if (best_solution == NULL) {
-					#else
-					if (best_solution == NULL
-							|| duplicate->curr_score > best_solution->curr_score) {
-					#endif /* MDEBUG */
-						if (best_solution != NULL) {
-							delete best_solution;
-						}
+	// 				if (duplicate->timestamp % INCREASE_TIME_PENALTY_ITER == 0) {
+	// 					duplicate->curr_time_penalty *= 1.25;
+	// 				}
+	// 				if (duplicate->curr_true_score > duplicate->best_true_score) {
+	// 					duplicate->best_true_score = duplicate->curr_true_score;
+	// 					duplicate->best_true_score_timestamp = duplicate->timestamp;
+	// 				}
+	// 				if (duplicate->best_true_score_timestamp < duplicate->timestamp
+	// 						&& (duplicate->timestamp - duplicate->best_true_score_timestamp)
+	// 							% DECREASE_TIME_PENALTY_ITER == 0) {
+	// 					duplicate->curr_time_penalty *= 0.8;
+	// 				}
 
-						best_solution = duplicate;
-					} else {
-						delete duplicate;
-					}
+	// 				#if defined(MDEBUG) && MDEBUG
+	// 				if (best_solution == NULL) {
+	// 				#else
+	// 				if (best_solution == NULL
+	// 						|| duplicate->curr_score > best_solution->curr_score) {
+	// 				#endif /* MDEBUG */
+	// 					if (best_solution != NULL) {
+	// 						delete best_solution;
+	// 					}
 
-					improvement_iter++;
-					if (improvement_iter >= IMPROVEMENTS_PER_ITER) {
-						break;
-					}
-				}
-			} else {
-				for (int e_index = 0; e_index < (int)run_helper.experiments_seen_order.size(); e_index++) {
-					AbstractExperiment* experiment = run_helper.experiments_seen_order[e_index];
-					experiment->average_remaining_experiments_from_start =
-						0.9 * experiment->average_remaining_experiments_from_start
-						+ 0.1 * ((int)run_helper.experiments_seen_order.size()-1 - e_index);
-				}
-			}
-		}
+	// 					best_solution = duplicate;
+	// 				} else {
+	// 					delete duplicate;
+	// 				}
 
-		delete solution;
-		solution = best_solution;
+	// 				improvement_iter++;
+	// 				if (improvement_iter >= IMPROVEMENTS_PER_ITER) {
+	// 					break;
+	// 				}
+	// 			}
+	// 		} else {
+	// 			for (int e_index = 0; e_index < (int)run_helper.experiments_seen_order.size(); e_index++) {
+	// 				AbstractExperiment* experiment = run_helper.experiments_seen_order[e_index];
+	// 				experiment->average_remaining_experiments_from_start =
+	// 					0.9 * experiment->average_remaining_experiments_from_start
+	// 					+ 0.1 * ((int)run_helper.experiments_seen_order.size()-1 - e_index);
+	// 			}
+	// 		}
+	// 	}
 
-		// solution->save("saves/", filename);
+	// 	delete solution;
+	// 	solution = best_solution;
 
-		ofstream display_file;
-		display_file.open("../display.txt");
-		solution->save_for_display(display_file);
-		display_file.close();
+	// 	// solution->save("saves/", filename);
 
-		#if defined(MDEBUG) && MDEBUG
-		delete solution;
-		solution = new Solution();
-		solution->load("saves/", filename);
-		#endif /* MDEBUG */
-	}
+	// 	ofstream display_file;
+	// 	display_file.open("../display.txt");
+	// 	solution->save_for_display(display_file);
+	// 	display_file.close();
 
-	solution->clean_scopes();
-	// solution->save("saves/", filename);
+	// 	#if defined(MDEBUG) && MDEBUG
+	// 	delete solution;
+	// 	solution = new Solution();
+	// 	solution->load("saves/", filename);
+	// 	#endif /* MDEBUG */
+	// }
+
+	// solution->clean_scopes();
+	// // solution->save("saves/", filename);
 
 	delete problem_type;
 	delete solution;

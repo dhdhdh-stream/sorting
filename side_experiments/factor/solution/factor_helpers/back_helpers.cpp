@@ -1,6 +1,10 @@
 #include "factor.h"
 
+#include <iostream>
+
+#include "globals.h"
 #include "network.h"
+#include "scope.h"
 #include "solution_helpers.h"
 
 using namespace std;

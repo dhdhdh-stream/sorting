@@ -215,12 +215,16 @@ void MultiCommitExperiment::find_save_backprop(
 					return;
 				}
 
-				if (abs(weights[0]) > 10000.0) {
+				if (abs(weights(0)) > 10000.0) {
 					this->result = EXPERIMENT_RESULT_FAIL;
 					return;
 				}
 
 				existing_adjust = weights(0);
+
+				for (int w_index = 0; w_index < 1 + (int)this->influence_mapping.size(); w_index++) {
+					cout << w_index << ": " << weights(w_index) << endl;
+				}
 			}
 
 			double new_sum_target_vals = 0.0;
@@ -258,18 +262,32 @@ void MultiCommitExperiment::find_save_backprop(
 					return;
 				}
 
-				if (abs(weights[0]) > 10000.0) {
+				if (abs(weights(0)) > 10000.0) {
 					this->result = EXPERIMENT_RESULT_FAIL;
 					return;
 				}
 
 				new_adjust = weights(0);
+
+				for (int w_index = 0; w_index < 1 + (int)this->influence_mapping.size(); w_index++) {
+					cout << w_index << ": " << weights(w_index) << endl;
+				}
 			}
 
 			double existing_score = existing_average_target_val + existing_adjust;
 			double new_score = new_average_target_val + new_adjust;
 
+			// temp
+			cout << "existing_average_target_val: " << existing_average_target_val << endl;
+			cout << "existing_adjust: " << existing_adjust << endl;
+			cout << "new_average_target_val: " << new_average_target_val << endl;
+			cout << "new_adjust: " << new_adjust << endl;
+
+			#if defined(MDEBUG) && MDEBUG
+			if (rand()%2 == 0) {
+			#else
 			if (new_score <= existing_score) {
+			#endif /* MDEBUG */
 				this->existing_target_vals.clear();
 				this->existing_influence_indexes.clear();
 				this->new_target_vals.clear();
@@ -281,6 +299,9 @@ void MultiCommitExperiment::find_save_backprop(
 				this->save_scopes.clear();
 
 				this->state_iter = -1;
+
+				// this->id = multi_index;
+				// multi_index++;
 
 				this->save_iter++;
 				if (this->save_iter >= STEP_TRY_ITERS) {
@@ -297,6 +318,46 @@ void MultiCommitExperiment::find_save_backprop(
 				this->new_target_vals.clear();
 				this->new_influence_indexes.clear();
 				this->influence_mapping.clear();
+
+				// temp
+				cout << "this->scope_context->id: " << this->scope_context->id << endl;
+				cout << "this->node_context->id: " << this->node_context->id << endl;
+				cout << "this->is_branch: " << this->is_branch << endl;
+				cout << "new explore path:";
+				for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+					if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+						cout << " " << this->best_actions[s_index].move;
+					} else {
+						cout << " E" << this->best_scopes[s_index]->id;
+					}
+				}
+				cout << endl;
+
+				if (this->best_exit_next_node == NULL) {
+					cout << "this->best_exit_next_node->id: " << -1 << endl;
+				} else {
+					cout << "this->best_exit_next_node->id: " << this->best_exit_next_node->id << endl;
+				}
+
+				cout << "this->step_iter: " << this->step_iter << endl;
+
+				cout << "new save path:";
+				for (int s_index = 0; s_index < (int)this->save_step_types.size(); s_index++) {
+					if (this->save_step_types[s_index] == STEP_TYPE_ACTION) {
+						cout << " " << this->save_actions[s_index].move;
+					} else {
+						cout << " E" << this->save_scopes[s_index]->id;
+					}
+				}
+				cout << endl;
+
+				if (this->save_exit_next_node == NULL) {
+					cout << "this->save_exit_next_node->id: " << -1 << endl;
+				} else {
+					cout << "this->save_exit_next_node->id: " << this->save_exit_next_node->id << endl;
+				}
+
+				cout << endl;
 
 				for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 					if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
@@ -335,8 +396,10 @@ void MultiCommitExperiment::find_save_backprop(
 
 				this->step_iter *= 2;
 
-				this->state = MULTI_COMMIT_EXPERIMENT_STATE_COMMIT_EXISTING_GATHER;
-				this->state_iter = 0;
+				// this->state = MULTI_COMMIT_EXPERIMENT_STATE_COMMIT_EXISTING_GATHER;
+				// this->state_iter = 0;
+
+				this->result = EXPERIMENT_RESULT_SUCCESS;
 			}
 		}
 	} else {
