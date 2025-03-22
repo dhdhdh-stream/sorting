@@ -22,6 +22,7 @@ const int MULTI_COMMIT_EXPERIMENT_STATE_COMMIT_TRAIN_EXISTING = 5;
 const int MULTI_COMMIT_EXPERIMENT_STATE_COMMIT_NEW_GATHER = 6;
 const int MULTI_COMMIT_EXPERIMENT_STATE_COMMIT_TRAIN_NEW = 7;
 const int MULTI_COMMIT_EXPERIMENT_STATE_MEASURE = 8;
+const int MULTI_COMMIT_EXPERIMENT_STATE_OUTER_MEASURE = 9;
 
 class MultiCommitExperimentHistory;
 class MultiCommitExperiment : public AbstractExperiment {
@@ -173,6 +174,12 @@ public:
 	void measure_backprop(double target_val,
 						  RunHelper& run_helper,
 						  MultiCommitExperimentHistory* history);
+
+	void outer_measure_activate(AbstractNode*& curr_node,
+								Problem* problem,
+								RunHelper& run_helper,
+								ScopeHistory* scope_history,
+								MultiCommitExperimentHistory* history);
 
 	void finalize(Solution* duplicate);
 };

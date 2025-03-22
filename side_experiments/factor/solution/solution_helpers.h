@@ -46,5 +46,6 @@ void clean_scope(Scope* scope,
 void multi_iter();
 void multi_branch_iter();
 void multi_commit_iter();
+void multi_measure(std::vector<AbstractExperiment*>& candidates);
 
 #endif /* SOLUTION_HELPERS_H */

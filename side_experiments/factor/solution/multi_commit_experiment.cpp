@@ -39,20 +39,26 @@ MultiCommitExperimentHistory::MultiCommitExperimentHistory(MultiCommitExperiment
 	this->experiment = experiment;
 
 	uniform_int_distribution<int> experiment_active_distribution(0, 2);
-	switch (experiment->state) {
-	case MULTI_COMMIT_EXPERIMENT_STATE_EXISTING_GATHER:
-	case MULTI_COMMIT_EXPERIMENT_STATE_TRAIN_EXISTING:
-		this->is_active = false;
-		break;
-	case MULTI_COMMIT_EXPERIMENT_STATE_EXPLORE:
-	case MULTI_COMMIT_EXPERIMENT_STATE_FIND_SAVE:
-	case MULTI_COMMIT_EXPERIMENT_STATE_COMMIT_EXISTING_GATHER:
-	case MULTI_COMMIT_EXPERIMENT_STATE_COMMIT_TRAIN_EXISTING:
-	case MULTI_COMMIT_EXPERIMENT_STATE_COMMIT_NEW_GATHER:
-	case MULTI_COMMIT_EXPERIMENT_STATE_COMMIT_TRAIN_NEW:
-	case MULTI_COMMIT_EXPERIMENT_STATE_MEASURE:
+	if (experiment->state == MULTI_COMMIT_EXPERIMENT_STATE_OUTER_MEASURE) {
 		this->is_active = experiment_active_distribution(generator) == 0;
-		break;
+	} else if (experiment->result == EXPERIMENT_RESULT_SUCCESS) {
+		this->is_active = false;
+	} else {
+		switch (experiment->state) {
+		case MULTI_COMMIT_EXPERIMENT_STATE_EXISTING_GATHER:
+		case MULTI_COMMIT_EXPERIMENT_STATE_TRAIN_EXISTING:
+			this->is_active = false;
+			break;
+		case MULTI_COMMIT_EXPERIMENT_STATE_EXPLORE:
+		case MULTI_COMMIT_EXPERIMENT_STATE_FIND_SAVE:
+		case MULTI_COMMIT_EXPERIMENT_STATE_COMMIT_EXISTING_GATHER:
+		case MULTI_COMMIT_EXPERIMENT_STATE_COMMIT_TRAIN_EXISTING:
+		case MULTI_COMMIT_EXPERIMENT_STATE_COMMIT_NEW_GATHER:
+		case MULTI_COMMIT_EXPERIMENT_STATE_COMMIT_TRAIN_NEW:
+		case MULTI_COMMIT_EXPERIMENT_STATE_MEASURE:
+			this->is_active = experiment_active_distribution(generator) == 0;
+			break;
+		}
 	}
 
 	this->instance_count = 0;

@@ -88,6 +88,13 @@ void MultiCommitExperiment::activate(AbstractNode* experiment_node,
 							 scope_history,
 							 history);
 			break;
+		case MULTI_COMMIT_EXPERIMENT_STATE_OUTER_MEASURE:
+			outer_measure_activate(curr_node,
+								   problem,
+								   run_helper,
+								   scope_history,
+								   history);
+			break;
 		}
 	}
 }

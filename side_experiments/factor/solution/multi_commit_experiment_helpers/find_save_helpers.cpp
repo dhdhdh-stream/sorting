@@ -277,17 +277,7 @@ void MultiCommitExperiment::find_save_backprop(
 			double existing_score = existing_average_target_val + existing_adjust;
 			double new_score = new_average_target_val + new_adjust;
 
-			// temp
-			cout << "existing_average_target_val: " << existing_average_target_val << endl;
-			cout << "existing_adjust: " << existing_adjust << endl;
-			cout << "new_average_target_val: " << new_average_target_val << endl;
-			cout << "new_adjust: " << new_adjust << endl;
-
-			#if defined(MDEBUG) && MDEBUG
-			if (rand()%2 == 0) {
-			#else
 			if (new_score <= existing_score) {
-			#endif /* MDEBUG */
 				this->existing_target_vals.clear();
 				this->existing_influence_indexes.clear();
 				this->new_target_vals.clear();
@@ -396,10 +386,8 @@ void MultiCommitExperiment::find_save_backprop(
 
 				this->step_iter *= 2;
 
-				// this->state = MULTI_COMMIT_EXPERIMENT_STATE_COMMIT_EXISTING_GATHER;
-				// this->state_iter = 0;
-
-				this->result = EXPERIMENT_RESULT_SUCCESS;
+				this->state = MULTI_COMMIT_EXPERIMENT_STATE_COMMIT_EXISTING_GATHER;
+				this->state_iter = 0;
 			}
 		}
 	} else {
