@@ -350,6 +350,14 @@ void multi_commit_iter() {
 		}
 	}
 
+	for (int c_index = 0; c_index < (int)candidates.size(); c_index++) {
+		candidates[c_index]->node_context->experiment = NULL;
+	}
+	solution->clear_experiments();
+	for (int c_index = 0; c_index < (int)candidates.size(); c_index++) {
+		candidates[c_index]->node_context->experiment = candidates[c_index];
+	}
+
 	multi_measure(candidates);
 
 	double sum_score = 0.0;

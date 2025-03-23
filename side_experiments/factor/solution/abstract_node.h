@@ -32,6 +32,11 @@ public:
 	int num_measure;
 	double sum_score;
 
+	// TODO:
+	int last_hit_iter;
+	int sum_count;
+	double average_count_per_run;
+
 	virtual ~AbstractNode() {};
 
 	virtual void clear_experiments() = 0;

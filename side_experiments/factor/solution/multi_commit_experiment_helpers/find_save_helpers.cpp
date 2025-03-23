@@ -221,10 +221,6 @@ void MultiCommitExperiment::find_save_backprop(
 				}
 
 				existing_adjust = weights(0);
-
-				for (int w_index = 0; w_index < 1 + (int)this->influence_mapping.size(); w_index++) {
-					cout << w_index << ": " << weights(w_index) << endl;
-				}
 			}
 
 			double new_sum_target_vals = 0.0;
@@ -268,10 +264,6 @@ void MultiCommitExperiment::find_save_backprop(
 				}
 
 				new_adjust = weights(0);
-
-				for (int w_index = 0; w_index < 1 + (int)this->influence_mapping.size(); w_index++) {
-					cout << w_index << ": " << weights(w_index) << endl;
-				}
 			}
 
 			double existing_score = existing_average_target_val + existing_adjust;
