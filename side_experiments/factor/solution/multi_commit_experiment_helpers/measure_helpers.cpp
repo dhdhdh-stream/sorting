@@ -223,7 +223,7 @@ void MultiCommitExperiment::measure_backprop(
 			return;
 		}
 
-		if (weights(0) < 0.0) {
+		if (weights(0) > 0.0) {
 			this->result = EXPERIMENT_RESULT_SUCCESS;
 
 			cout << "this->scope_context->id: " << this->scope_context->id << endl;

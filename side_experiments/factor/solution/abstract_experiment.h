@@ -1,3 +1,10 @@
+/**
+ * - only 1 experiment per run
+ *   - random experiments too likely to be catastrophic
+ *     - such that main focus for other experiments will too likely end up being minimizing damage
+ *       - rather than improvements to actual solution
+ */
+
 #ifndef ABSTRACT_EXPERIMENT_H
 #define ABSTRACT_EXPERIMENT_H
 
