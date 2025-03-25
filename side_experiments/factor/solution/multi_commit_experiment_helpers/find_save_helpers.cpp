@@ -180,96 +180,58 @@ void MultiCommitExperiment::find_save_backprop(
 		if ((int)this->new_target_vals.size() == INITIAL_NUM_SAMPLES_PER_ITER
 				|| (int)this->new_target_vals.size() == VERIFY_1ST_NUM_SAMPLES_PER_ITER
 				|| (int)this->new_target_vals.size() == VERIFY_2ND_NUM_SAMPLES_PER_ITER) {
-			double existing_sum_target_vals = 0.0;
+			int num_instances = (int)this->existing_target_vals.size() + (int)this->new_target_vals.size();
+
+			double sum_target_vals = 0.0;
 			for (int h_index = 0; h_index < (int)this->existing_target_vals.size(); h_index++) {
-				existing_sum_target_vals += this->existing_target_vals[h_index];
+				sum_target_vals += this->existing_target_vals[h_index];
 			}
-			double existing_average_target_val = existing_sum_target_vals / (int)this->existing_target_vals.size();
-
-			double existing_adjust;
-			{
-				Eigen::MatrixXd inputs((int)this->existing_target_vals.size(), 1 + this->influence_mapping.size());
-				for (int i_index = 0; i_index < (int)this->existing_target_vals.size(); i_index++) {
-					for (int m_index = 0; m_index < 1 + (int)this->influence_mapping.size(); m_index++) {
-						inputs(i_index, m_index) = 0.0;
-					}
-				}
-				for (int h_index = 0; h_index < (int)this->existing_target_vals.size(); h_index++) {
-					inputs(h_index, 0) = 1.0;
-					for (int i_index = 0; i_index < (int)this->existing_influence_indexes[h_index].size(); i_index++) {
-						inputs(h_index, this->existing_influence_indexes[h_index][i_index]) = 1.0;
-					}
-				}
-
-				Eigen::VectorXd outputs((int)this->existing_target_vals.size());
-				for (int h_index = 0; h_index < (int)this->existing_target_vals.size(); h_index++) {
-					outputs(h_index) = this->existing_target_vals[h_index] - existing_average_target_val;
-				}
-
-				Eigen::VectorXd weights;
-				try {
-					weights = inputs.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(outputs);
-				} catch (std::invalid_argument &e) {
-					cout << "Eigen error" << endl;
-					this->result = EXPERIMENT_RESULT_FAIL;
-					return;
-				}
-
-				if (abs(weights(0)) > 10000.0) {
-					this->result = EXPERIMENT_RESULT_FAIL;
-					return;
-				}
-
-				existing_adjust = weights(0);
-			}
-
-			double new_sum_target_vals = 0.0;
 			for (int h_index = 0; h_index < (int)this->new_target_vals.size(); h_index++) {
-				new_sum_target_vals += this->new_target_vals[h_index];
+				sum_target_vals += this->new_target_vals[h_index];
 			}
-			double new_average_target_val = new_sum_target_vals / (int)this->new_target_vals.size();
+			double average_target_val = sum_target_vals / num_instances;
 
-			double new_adjust;
-			{
-				Eigen::MatrixXd inputs((int)this->new_target_vals.size(), 1 + this->influence_mapping.size());
-				for (int i_index = 0; i_index < (int)this->new_target_vals.size(); i_index++) {
-					for (int m_index = 0; m_index < 1 + (int)this->influence_mapping.size(); m_index++) {
-						inputs(i_index, m_index) = 0.0;
-					}
+			Eigen::MatrixXd inputs(num_instances, 1 + this->influence_mapping.size());
+			for (int i_index = 0; i_index < num_instances; i_index++) {
+				for (int m_index = 0; m_index < 1 + (int)this->influence_mapping.size(); m_index++) {
+					inputs(i_index, m_index) = 0.0;
 				}
-				for (int h_index = 0; h_index < (int)this->new_target_vals.size(); h_index++) {
-					inputs(h_index, 0) = 1.0;
-					for (int i_index = 0; i_index < (int)this->new_influence_indexes[h_index].size(); i_index++) {
-						inputs(h_index, this->new_influence_indexes[h_index][i_index]) = 1.0;
-					}
+			}
+			for (int h_index = 0; h_index < (int)this->existing_target_vals.size(); h_index++) {
+				for (int i_index = 0; i_index < (int)this->existing_influence_indexes[h_index].size(); i_index++) {
+					inputs(h_index, this->existing_influence_indexes[h_index][i_index]) = 1.0;
 				}
-
-				Eigen::VectorXd outputs((int)this->new_target_vals.size());
-				for (int h_index = 0; h_index < (int)this->new_target_vals.size(); h_index++) {
-					outputs(h_index) = this->new_target_vals[h_index] - new_average_target_val;
+			}
+			for (int h_index = 0; h_index < (int)this->new_target_vals.size(); h_index++) {
+				inputs((int)this->existing_target_vals.size() + h_index, 0) = 1.0;
+				for (int i_index = 0; i_index < (int)this->new_influence_indexes[h_index].size(); i_index++) {
+					inputs((int)this->existing_target_vals.size() + h_index, this->new_influence_indexes[h_index][i_index]) = 1.0;
 				}
-
-				Eigen::VectorXd weights;
-				try {
-					weights = inputs.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(outputs);
-				} catch (std::invalid_argument &e) {
-					cout << "Eigen error" << endl;
-					this->result = EXPERIMENT_RESULT_FAIL;
-					return;
-				}
-
-				if (abs(weights(0)) > 10000.0) {
-					this->result = EXPERIMENT_RESULT_FAIL;
-					return;
-				}
-
-				new_adjust = weights(0);
 			}
 
-			double existing_score = existing_average_target_val + existing_adjust;
-			double new_score = new_average_target_val + new_adjust;
+			Eigen::VectorXd outputs(num_instances);
+			for (int h_index = 0; h_index < (int)this->existing_target_vals.size(); h_index++) {
+				outputs(h_index) = this->existing_target_vals[h_index] - average_target_val;
+			}
+			for (int h_index = 0; h_index < (int)this->new_target_vals.size(); h_index++) {
+				outputs((int)this->existing_target_vals.size() + h_index) = this->new_target_vals[h_index] - average_target_val;
+			}
 
-			if (new_score <= existing_score) {
+			Eigen::VectorXd weights;
+			try {
+				weights = inputs.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(outputs);
+			} catch (std::invalid_argument &e) {
+				cout << "Eigen error" << endl;
+				this->result = EXPERIMENT_RESULT_FAIL;
+				return;
+			}
+
+			if (abs(weights(0)) > 10000.0) {
+				this->result = EXPERIMENT_RESULT_FAIL;
+				return;
+			}
+
+			if (weights(0) < 0.0) {
 				this->existing_target_vals.clear();
 				this->existing_influence_indexes.clear();
 				this->new_target_vals.clear();

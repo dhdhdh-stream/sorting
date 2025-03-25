@@ -22,7 +22,6 @@ const int MULTI_COMMIT_EXPERIMENT_STATE_COMMIT_TRAIN_EXISTING = 5;
 const int MULTI_COMMIT_EXPERIMENT_STATE_COMMIT_NEW_GATHER = 6;
 const int MULTI_COMMIT_EXPERIMENT_STATE_COMMIT_TRAIN_NEW = 7;
 const int MULTI_COMMIT_EXPERIMENT_STATE_MEASURE = 8;
-const int MULTI_COMMIT_EXPERIMENT_STATE_OUTER_MEASURE = 9;
 
 class MultiCommitExperimentHistory;
 class MultiCommitExperiment : public AbstractExperiment {
@@ -84,8 +83,6 @@ public:
 
 	std::vector<std::pair<int,int>> commit_new_factor_ids;
 	std::vector<double> commit_new_factor_weights;
-
-	double improvement;
 
 	std::vector<std::vector<double>> input_histories;
 	std::vector<std::vector<double>> factor_histories;

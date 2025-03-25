@@ -286,7 +286,7 @@ void multi_branch_iter() {
 void multi_commit_iter() {
 	auto start_time = chrono::high_resolution_clock::now();
 
-	vector<AbstractExperiment*> candidates;
+	int improvement_iter = 0;
 
 	while (true) {
 		run_index++;
@@ -296,7 +296,7 @@ void multi_commit_iter() {
 		if (time_diff.count() >= 20) {
 			start_time = curr_time;
 
-			cout << "improvement_iter: " << candidates.size() << endl;
+			cout << "improvement_iter: " << improvement_iter << endl;
 		}
 
 		Problem* problem = problem_type->get_problem();
@@ -341,24 +341,32 @@ void multi_commit_iter() {
 				it->first->finalize(NULL);
 				delete it->first;
 			} else if (it->first->result == EXPERIMENT_RESULT_SUCCESS) {
-				candidates.push_back(it->first);
+				it->first->finalize(solution);
+				delete it->first;
+
+				improvement_iter++;
 			}
 		}
 
-		if (candidates.size() >= 10) {
+		// if (improvement_iter >= 10) {
+		if (improvement_iter >= 1) {
 			break;
 		}
 	}
 
-	for (int c_index = 0; c_index < (int)candidates.size(); c_index++) {
-		candidates[c_index]->node_context->experiment = NULL;
-	}
 	solution->clear_experiments();
-	for (int c_index = 0; c_index < (int)candidates.size(); c_index++) {
-		candidates[c_index]->node_context->experiment = candidates[c_index];
-	}
 
-	multi_measure(candidates);
+	for (int s_index = 0; s_index < (int)solution->scopes.size(); s_index++) {
+		clean_scope(solution->scopes[s_index],
+					solution);
+
+		if (solution->scopes[s_index]->nodes.size() >= SCOPE_EXCEEDED_NUM_NODES) {
+			solution->scopes[s_index]->exceeded = true;
+		}
+		if (solution->scopes[s_index]->nodes.size() <= SCOPE_RESUME_NUM_NODES) {
+			solution->scopes[s_index]->exceeded = false;
+		}
+	}
 
 	double sum_score = 0.0;
 	double sum_true_score = 0.0;

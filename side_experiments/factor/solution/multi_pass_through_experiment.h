@@ -21,10 +21,11 @@ class MultiPassThroughExperiment : public AbstractExperiment {
 public:
 	int id;
 
+	AbstractNode* exit_next_node;
+
 	std::vector<int> step_types;
 	std::vector<Action> actions;
 	std::vector<Scope*> scopes;
-	AbstractNode* exit_next_node;
 
 	std::vector<double> existing_target_vals;
 	std::vector<std::vector<int>> existing_influence_indexes;
@@ -33,6 +34,9 @@ public:
 	std::map<int, int> influence_mapping;
 
 	double improvement;
+
+	std::vector<MultiPassThroughExperiment*> conflicts;
+	std::vector<Scope*> conflicting_scopes;
 
 	MultiPassThroughExperiment(Scope* scope_context,
 							   AbstractNode* node_context,

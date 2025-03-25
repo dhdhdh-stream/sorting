@@ -9,6 +9,7 @@
 
 class AbstractNode;
 class AbstractNodeHistory;
+class MultiPassThroughExperiment;
 class NewScopeExperiment;
 class Problem;
 class Solution;
@@ -30,6 +31,8 @@ public:
 	 *   - so that can be tried throughout entire scope
 	 */
 	NewScopeExperiment* new_scope_experiment;
+
+	std::vector<MultiPassThroughExperiment*> experiments;
 
 	Scope();
 	~Scope();

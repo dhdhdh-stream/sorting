@@ -51,7 +51,6 @@ MultiCommitExperimentHistory::MultiCommitExperimentHistory(MultiCommitExperiment
 	case MULTI_COMMIT_EXPERIMENT_STATE_COMMIT_NEW_GATHER:
 	case MULTI_COMMIT_EXPERIMENT_STATE_COMMIT_TRAIN_NEW:
 	case MULTI_COMMIT_EXPERIMENT_STATE_MEASURE:
-	case MULTI_COMMIT_EXPERIMENT_STATE_OUTER_MEASURE:
 		this->is_active = experiment_active_distribution(generator) == 0;
 		break;
 	}

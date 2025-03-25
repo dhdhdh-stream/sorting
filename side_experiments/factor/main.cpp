@@ -1,8 +1,6 @@
 // TODO: add back repeat
 // - new scope, but follow immediately with decision making
 
-// TODO: maybe find 10 good, then eval
-
 #include <chrono>
 #include <iostream>
 #include <map>
