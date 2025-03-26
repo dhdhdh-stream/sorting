@@ -95,7 +95,8 @@ public:
 	void capture_verify_backprop();
 	#endif /* MDEBUG */
 
-	void finalize(Solution* duplicate);
+	void clean();
+	void add();
 };
 
 class NewScopeExperimentHistory : public AbstractExperimentHistory {

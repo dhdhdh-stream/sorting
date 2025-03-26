@@ -60,8 +60,23 @@ void BranchExperiment::train_existing_backprop(
 		this->i_target_val_histories.push_back(target_val);
 	}
 
+	this->o_target_val_histories.push_back(target_val);
+
+	this->sum_num_instances += history->instance_count;
+
 	this->state_iter++;
 	if (this->state_iter >= TRAIN_EXISTING_NUM_DATAPOINTS) {
+		double o_sum_score = 0.0;
+		for (int i_index = 0; i_index < (int)this->o_target_val_histories.size(); i_index++) {
+			o_sum_score += this->o_target_val_histories[i_index];
+		}
+		this->o_existing_average_score = o_sum_score / (int)this->o_target_val_histories.size();
+
+		this->average_instances_per_run = (double)this->sum_num_instances / (double)this->state_iter;
+		if (this->average_instances_per_run < 1.0) {
+			this->average_instances_per_run = 1.0;
+		}
+
 		{
 			default_random_engine generator_copy = generator;
 			shuffle(this->input_histories.begin(), this->input_histories.end(), generator_copy);
@@ -360,8 +375,6 @@ void BranchExperiment::train_existing_backprop(
 						break;
 					}
 
-					new_obs_node->average_instances_per_run = this->node_context->average_instances_per_run;
-
 					new_obs_node->num_measure = this->node_context->num_measure;
 					new_obs_node->sum_score = this->node_context->sum_score;
 
@@ -383,6 +396,7 @@ void BranchExperiment::train_existing_backprop(
 		this->input_histories.clear();
 		this->factor_histories.clear();
 		this->i_target_val_histories.clear();
+		this->o_target_val_histories.clear();
 
 		uniform_int_distribution<int> good_distribution(0, 3);
 		if (good_distribution(generator) == 0) {
@@ -393,7 +407,7 @@ void BranchExperiment::train_existing_backprop(
 
 		this->best_surprise = 0.0;
 
-		uniform_int_distribution<int> until_distribution(0, (int)this->node_context->average_instances_per_run-1.0);
+		uniform_int_distribution<int> until_distribution(0, (int)this->average_instances_per_run-1.0);
 		this->num_instances_until_target = 1 + until_distribution(generator);
 
 		this->state = BRANCH_EXPERIMENT_STATE_EXPLORE;

@@ -343,6 +343,9 @@ void CommitExperiment::commit_train_new_backprop(
 			delete new_network;
 		}
 
+		#if defined(MDEBUG) && MDEBUG
+		if (rand()%2 == 0) {
+		#else
 		int num_positive = 0;
 		for (int i_index = 0; i_index < num_instances; i_index++) {
 			if (sum_vals[i_index] > 0.0) {
@@ -351,30 +354,12 @@ void CommitExperiment::commit_train_new_backprop(
 		}
 		double select_percentage = (double)num_positive / (double)num_instances;
 
-		#if defined(MDEBUG) && MDEBUG
-		if (rand()%2 == 0) {
-		#else
 		if (select_percentage < 1.0) {
 		#endif /* MDEBUG */
-			cout << "CommitExperiment success" << endl;
+			this->combined_score = 0.0;
 
-			cout << "this->o_existing_average_score: " << this->o_existing_average_score << endl;
-			cout << "this->commit_existing_average_score: " << this->commit_existing_average_score << endl;
-			cout << "this->commit_new_average_score: " << this->commit_new_average_score << endl;
-			cout << "select_percentage: " << select_percentage << endl;
-
-			cout << "this->new_nodes.size(): " << this->new_nodes.size() << endl;
-			cout << "this->step_iter: " << this->step_iter << endl;
-
-			#if defined(MDEBUG) && MDEBUG
-			this->verify_problems = vector<Problem*>(NUM_VERIFY_SAMPLES, NULL);
-			this->verify_seeds = vector<unsigned long>(NUM_VERIFY_SAMPLES);
-
-			this->state = COMMIT_EXPERIMENT_STATE_CAPTURE_VERIFY;
+			this->state = COMMIT_EXPERIMENT_STATE_MEASURE;
 			this->state_iter = 0;
-			#else
-			this->result = EXPERIMENT_RESULT_SUCCESS;
-			#endif /* MDEBUG */
 		} else {
 			this->result = EXPERIMENT_RESULT_FAIL;
 		}

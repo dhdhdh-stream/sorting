@@ -27,19 +27,13 @@ public:
 
 	AbstractExperiment* experiment;
 
-	double average_instances_per_run;
-
+	int last_updated_run_index;
 	int num_measure;
 	double sum_score;
 
-	// TODO:
-	int last_hit_iter;
-	int sum_count;
-	double average_count_per_run;
-
 	virtual ~AbstractNode() {};
 
-	virtual void clear_experiments() = 0;
+	virtual void clean() = 0;
 
 	virtual void save(std::ofstream& output_file) = 0;
 	virtual void link(Solution* parent_solution) = 0;

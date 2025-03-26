@@ -127,7 +127,7 @@ void CommitExperiment::explore_backprop(
 		double target_val,
 		RunHelper& run_helper,
 		CommitExperimentHistory* history) {
-	uniform_int_distribution<int> until_distribution(0, (int)this->node_context->average_instances_per_run-1);
+	uniform_int_distribution<int> until_distribution(0, (int)this->average_instances_per_run-1);
 	this->num_instances_until_target = 1 + until_distribution(generator);
 
 	if (history->existing_predicted_scores.size() > 0) {

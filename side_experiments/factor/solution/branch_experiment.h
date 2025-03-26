@@ -14,8 +14,9 @@ const int BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING = 1;
 const int BRANCH_EXPERIMENT_STATE_EXPLORE = 2;
 const int BRANCH_EXPERIMENT_STATE_NEW_GATHER = 3;
 const int BRANCH_EXPERIMENT_STATE_TRAIN_NEW = 4;
+const int BRANCH_EXPERIMENT_STATE_MEASURE = 5;
 #if defined(MDEBUG) && MDEBUG
-const int BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY = 5;
+const int BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY = 6;
 #endif /* MDEBUG */
 
 class BranchExperimentHistory;
@@ -24,6 +25,10 @@ public:
 	int state;
 	int state_iter;
 
+	int sum_num_instances;
+
+	double o_existing_average_score;
+
 	std::vector<std::pair<std::pair<std::vector<Scope*>,std::vector<int>>,
 		std::pair<int,int>>> existing_inputs;
 	std::vector<std::pair<int,int>> existing_factor_ids;
@@ -31,6 +36,7 @@ public:
 	double existing_average_score;
 	std::vector<double> existing_factor_weights;
 
+	double average_instances_per_run;
 	int num_instances_until_target;
 
 	int explore_type;
@@ -55,9 +61,12 @@ public:
 
 	double select_percentage;
 
+	double combined_score;
+
 	std::vector<std::vector<double>> input_histories;
 	std::vector<std::vector<double>> factor_histories;
 	std::vector<double> i_target_val_histories;
+	std::vector<double> o_target_val_histories;
 
 	#if defined(MDEBUG) && MDEBUG
 	std::vector<Problem*> verify_problems;
@@ -111,6 +120,13 @@ public:
 							RunHelper& run_helper,
 							BranchExperimentHistory* history);
 
+	void measure_activate(AbstractNode*& curr_node,
+						  Problem* problem,
+						  RunHelper& run_helper,
+						  ScopeHistory* scope_history);
+	void measure_backprop(double target_val,
+						  RunHelper& run_helper);
+
 	#if defined(MDEBUG) && MDEBUG
 	void capture_verify_activate(AbstractNode*& curr_node,
 								 Problem* problem,
@@ -119,7 +135,8 @@ public:
 	void capture_verify_backprop();
 	#endif /* MDEBUG */
 
-	void finalize(Solution* duplicate);
+	void clean();
+	void add();
 };
 
 class BranchExperimentHistory : public AbstractExperimentHistory {

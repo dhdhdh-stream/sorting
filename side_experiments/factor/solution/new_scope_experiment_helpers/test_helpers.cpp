@@ -13,9 +13,9 @@ const int NEW_SCOPE_NUM_DATAPOINTS = 2;
 const int NEW_SCOPE_VERIFY_1ST_NUM_DATAPOINTS = 5;
 const int NEW_SCOPE_VERIFY_2ND_NUM_DATAPOINTS = 10;
 #else
-const int NEW_SCOPE_NUM_DATAPOINTS = 100;
-const int NEW_SCOPE_VERIFY_1ST_NUM_DATAPOINTS = 500;
-const int NEW_SCOPE_VERIFY_2ND_NUM_DATAPOINTS = 2000;
+const int NEW_SCOPE_NUM_DATAPOINTS = 40;
+const int NEW_SCOPE_VERIFY_1ST_NUM_DATAPOINTS = 400;
+const int NEW_SCOPE_VERIFY_2ND_NUM_DATAPOINTS = 4000;
 #endif /* MDEBUG */
 
 void NewScopeExperiment::test_activate(
@@ -135,6 +135,10 @@ void NewScopeExperiment::test_backprop(
 			if (this->test_location_new_scores[history->test_location_index]
 					> this->test_location_existing_scores[history->test_location_index]) {
 			#endif /* MDEBUG */
+				double new_score = this->test_location_new_scores[history->test_location_index] / NEW_SCOPE_VERIFY_2ND_NUM_DATAPOINTS;
+				double existing_score = this->test_location_existing_scores[history->test_location_index] / NEW_SCOPE_VERIFY_2ND_NUM_DATAPOINTS;
+				this->improvement += (new_score - existing_score);
+
 				ScopeNode* new_scope_node = new ScopeNode();
 				new_scope_node->parent = this->scope_context;
 				new_scope_node->id = this->scope_context->node_counter;
@@ -154,13 +158,16 @@ void NewScopeExperiment::test_backprop(
 				this->successful_location_is_branch.push_back(this->test_location_is_branch[history->test_location_index]);
 				this->successful_scope_nodes.push_back(new_scope_node);
 
-				this->test_location_starts.erase(this->test_location_starts.begin() + history->test_location_index);
-				this->test_location_is_branch.erase(this->test_location_is_branch.begin() + history->test_location_index);
-				this->test_location_exits.erase(this->test_location_exits.begin() + history->test_location_index);
-				this->test_location_states.erase(this->test_location_states.begin() + history->test_location_index);
-				this->test_location_existing_scores.erase(this->test_location_existing_scores.begin() + history->test_location_index);
-				this->test_location_new_scores.erase(this->test_location_new_scores.begin() + history->test_location_index);
-				this->test_location_counts.erase(this->test_location_counts.begin() + history->test_location_index);
+				for (int t_index = 0; t_index < (int)this->test_location_starts.size(); t_index++) {
+					this->test_location_starts[t_index]->experiment = NULL;
+				}
+				this->test_location_starts.clear();
+				this->test_location_is_branch.clear();
+				this->test_location_exits.clear();
+				this->test_location_states.clear();
+				this->test_location_existing_scores.clear();
+				this->test_location_new_scores.clear();
+				this->test_location_counts.clear();
 
 				this->generalize_iter++;
 			} else {
@@ -195,17 +202,6 @@ void NewScopeExperiment::test_backprop(
 
 	if (this->successful_location_starts.size() >= NEW_SCOPE_NUM_LOCATIONS) {
 		#if defined(MDEBUG) && MDEBUG
-		for (int t_index = 0; t_index < (int)this->test_location_starts.size(); t_index++) {
-			this->test_location_starts[t_index]->experiment = NULL;
-		}
-		this->test_location_starts.clear();
-		this->test_location_is_branch.clear();
-		this->test_location_exits.clear();
-		this->test_location_states.clear();
-		this->test_location_existing_scores.clear();
-		this->test_location_new_scores.clear();
-		this->test_location_counts.clear();
-
 		this->verify_problems = vector<Problem*>(NUM_VERIFY_SAMPLES, NULL);
 		this->verify_seeds = vector<unsigned long>(NUM_VERIFY_SAMPLES);
 

@@ -79,7 +79,6 @@ void Solution::init() {
 	new_scope->node_counter++;
 	starting_noop_node->next_node_id = -1;
 	starting_noop_node->next_node = NULL;
-	starting_noop_node->average_instances_per_run = 1.0;
 	new_scope->nodes[starting_noop_node->id] = starting_noop_node;
 }
 
@@ -200,9 +199,9 @@ void Solution::clean_scopes() {
 	}
 }
 
-void Solution::clear_experiments() {
+void Solution::clean() {
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
-		this->scopes[s_index]->clear_experiments();
+		this->scopes[s_index]->clean();
 	}
 }
 

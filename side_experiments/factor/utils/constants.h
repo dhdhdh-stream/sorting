@@ -53,8 +53,8 @@ const int EXPLORE_ITERS = 60;
 const int IMPROVEMENTS_PER_ITER = 2;
 const int COMMIT_IMPROVEMENTS_PER_ITER = 2;
 #else
-const int IMPROVEMENTS_PER_ITER = 20;
-const int COMMIT_IMPROVEMENTS_PER_ITER = 10;
+const int IMPROVEMENTS_PER_ITER = 10;
+const int COMMIT_IMPROVEMENTS_PER_ITER = 5;
 #endif /* MDEBUG */
 
 #if defined(MDEBUG) && MDEBUG

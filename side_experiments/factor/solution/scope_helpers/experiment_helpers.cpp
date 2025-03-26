@@ -63,7 +63,6 @@ void Scope::experiment_activate(Problem* problem,
 		}
 
 		run_helper.num_actions++;
-		run_helper.num_original_actions++;
 	}
 
 	if (this->new_scope_experiment != NULL) {

@@ -17,8 +17,11 @@ void update_scores(ScopeHistory* scope_history,
 				   double target_val) {
 	for (map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
 			it != scope_history->node_histories.end(); it++) {
-		it->second->node->num_measure++;
-		it->second->node->sum_score += target_val;
+		if (it->second->node->last_updated_run_index != run_index) {
+			it->second->node->last_updated_run_index = run_index;
+			it->second->node->num_measure++;
+			it->second->node->sum_score += target_val;
+		}
 
 		if (it->second->node->type == NODE_TYPE_SCOPE) {
 			ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)it->second;

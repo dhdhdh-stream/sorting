@@ -191,8 +191,6 @@ void CommitExperiment::find_save_backprop(
 
 				new_action_node->action = this->best_actions[s_index];
 
-				new_action_node->average_instances_per_run = this->node_context->average_instances_per_run;
-
 				this->new_nodes.push_back(new_action_node);
 			} else {
 				ScopeNode* new_scope_node = new ScopeNode();
@@ -202,8 +200,6 @@ void CommitExperiment::find_save_backprop(
 
 				new_scope_node->scope = this->best_scopes[s_index];
 
-				new_scope_node->average_instances_per_run = this->node_context->average_instances_per_run;
-
 				this->new_nodes.push_back(new_scope_node);
 			}
 
@@ -212,14 +208,12 @@ void CommitExperiment::find_save_backprop(
 			new_obs_node->id = this->scope_context->node_counter;
 			this->scope_context->node_counter++;
 
-			new_obs_node->average_instances_per_run = node_context->average_instances_per_run;
-
 			this->new_nodes.push_back(new_obs_node);
 		}
 
 		this->step_iter *= 2;
 
-		uniform_int_distribution<int> until_distribution(0, 2*((int)this->node_context->average_instances_per_run-1));
+		uniform_int_distribution<int> until_distribution(0, 2*((int)this->average_instances_per_run-1));
 		this->num_instances_until_target = 1 + until_distribution(generator);
 
 		this->state = COMMIT_EXPERIMENT_STATE_COMMIT_EXISTING_GATHER;

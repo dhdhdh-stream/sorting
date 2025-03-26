@@ -49,14 +49,16 @@ int main(int argc, char* argv[]) {
 	solution = new Solution();
 	solution->load(path, filename);
 
+	run_index = 0;
 	auto start_time = chrono::high_resolution_clock::now();
 
 	while (solution->timestamp < EXPLORE_ITERS) {
-		Solution* best_solution = NULL;
+		AbstractExperiment* best_experiment = NULL;
 
 		int improvement_iter = 0;
 
 		while (true) {
+			run_index++;
 			auto curr_time = chrono::high_resolution_clock::now();
 			auto time_diff = chrono::duration_cast<chrono::seconds>(curr_time - start_time);
 			if (time_diff.count() >= 20) {
@@ -105,96 +107,20 @@ int main(int argc, char* argv[]) {
 					target_val,
 					run_helper);
 				if (run_helper.experiment_history->experiment->result == EXPERIMENT_RESULT_FAIL) {
-					run_helper.experiment_history->experiment->finalize(NULL);
+					run_helper.experiment_history->experiment->clean();
 					delete run_helper.experiment_history->experiment;
 				} else if (run_helper.experiment_history->experiment->result == EXPERIMENT_RESULT_SUCCESS) {
-					Solution* duplicate = new Solution(solution);
+					run_helper.experiment_history->experiment->clean();
 
-					int last_updated_scope_id = run_helper.experiment_history->experiment->scope_context->id;
-
-					run_helper.experiment_history->experiment->finalize(duplicate);
-					delete run_helper.experiment_history->experiment;
-
-					Scope* experiment_scope = duplicate->scopes[last_updated_scope_id];
-					clean_scope(experiment_scope,
-								duplicate);
-
-					if (experiment_scope->nodes.size() >= SCOPE_EXCEEDED_NUM_NODES) {
-						experiment_scope->exceeded = true;
-					}
-					if (experiment_scope->nodes.size() <= SCOPE_RESUME_NUM_NODES) {
-						experiment_scope->exceeded = false;
-					}
-
-					double sum_score = 0.0;
-					double sum_true_score = 0.0;
-					for (int iter_index = 0; iter_index < MEASURE_ITERS; iter_index++) {
-						auto curr_time = chrono::high_resolution_clock::now();
-						auto time_diff = chrono::duration_cast<chrono::seconds>(curr_time - start_time);
-						if (time_diff.count() >= 20) {
-							start_time = curr_time;
-
-							cout << "improvement_iter: " << improvement_iter << endl;
-						}
-
-						Problem* problem = problem_type->get_problem();
-
-						RunHelper run_helper;
-
-						ScopeHistory* scope_history = new ScopeHistory(duplicate->scopes[0]);
-						duplicate->scopes[0]->measure_activate(
-							problem,
-							run_helper,
-							scope_history);
-						delete scope_history;
-
-						double target_val = problem->score_result();
-						sum_score += target_val - 0.05 * run_helper.num_actions * solution->curr_time_penalty
-							- run_helper.num_analyze * solution->curr_time_penalty;
-						sum_true_score += target_val;
-
-						delete problem;
-					}
-
-					for (int s_index = 0; s_index < (int)duplicate->scopes.size(); s_index++) {
-						for (map<int, AbstractNode*>::iterator it = duplicate->scopes[s_index]->nodes.begin();
-								it != duplicate->scopes[s_index]->nodes.end(); it++) {
-							it->second->average_instances_per_run /= MEASURE_ITERS;
-							if (it->second->average_instances_per_run < 1.0) {
-								it->second->average_instances_per_run = 1.0;
-							}
-						}
-					}
-
-					duplicate->curr_score = sum_score / MEASURE_ITERS;
-					duplicate->curr_true_score = sum_true_score / MEASURE_ITERS;
-
-					cout << "duplicate->curr_score: " << duplicate->curr_score << endl;
-
-					duplicate->timestamp++;
-
-					if (duplicate->timestamp % INCREASE_TIME_PENALTY_ITER == 0) {
-						duplicate->curr_time_penalty *= 1.25;
-					}
-					if (duplicate->curr_true_score > duplicate->best_true_score) {
-						duplicate->best_true_score = duplicate->curr_true_score;
-						duplicate->best_true_score_timestamp = duplicate->timestamp;
-					}
-					if (duplicate->best_true_score_timestamp < duplicate->timestamp
-							&& (duplicate->timestamp - duplicate->best_true_score_timestamp)
-								% DECREASE_TIME_PENALTY_ITER == 0) {
-						duplicate->curr_time_penalty *= 0.8;
-					}
-
-					if (best_solution == NULL
-							|| duplicate->curr_score > best_solution->curr_score) {
-						if (best_solution != NULL) {
-							delete best_solution;
-						}
-
-						best_solution = duplicate;
+					if (best_experiment == NULL) {
+						best_experiment = run_helper.experiment_history->experiment;
 					} else {
-						delete duplicate;
+						if (run_helper.experiment_history->experiment->improvement > best_experiment->improvement) {
+							delete best_experiment;
+							best_experiment = run_helper.experiment_history->experiment;
+						} else {
+							delete run_helper.experiment_history->experiment;
+						}
 					}
 
 					improvement_iter++;
@@ -212,8 +138,63 @@ int main(int argc, char* argv[]) {
 			}
 		}
 
-		delete solution;
-		solution = best_solution;
+		Scope* last_updated_scope = best_experiment->scope_context;
+
+		best_experiment->add();
+		delete best_experiment;
+
+		clean_scope(last_updated_scope);
+
+		if (last_updated_scope->nodes.size() >= SCOPE_EXCEEDED_NUM_NODES) {
+			last_updated_scope->exceeded = true;
+		}
+		if (last_updated_scope->nodes.size() <= SCOPE_RESUME_NUM_NODES) {
+			last_updated_scope->exceeded = false;
+		}
+
+		solution->clean();
+
+		double sum_score = 0.0;
+		double sum_true_score = 0.0;
+		for (int iter_index = 0; iter_index < MEASURE_ITERS; iter_index++) {
+			Problem* problem = problem_type->get_problem();
+
+			RunHelper run_helper;
+
+			ScopeHistory* scope_history = new ScopeHistory(solution->scopes[0]);
+			solution->scopes[0]->measure_activate(
+				problem,
+				run_helper,
+				scope_history);
+			delete scope_history;
+
+			double target_val = problem->score_result();
+			sum_score += target_val - 0.05 * run_helper.num_actions * solution->curr_time_penalty
+				- run_helper.num_analyze * solution->curr_time_penalty;
+			sum_true_score += target_val;
+
+			delete problem;
+		}
+
+		solution->curr_score = sum_score / MEASURE_ITERS;
+		solution->curr_true_score = sum_true_score / MEASURE_ITERS;
+
+		cout << "solution->curr_score: " << solution->curr_score << endl;
+
+		solution->timestamp++;
+
+		if (solution->timestamp % INCREASE_TIME_PENALTY_ITER == 0) {
+			solution->curr_time_penalty *= 1.25;
+		}
+		if (solution->curr_true_score > solution->best_true_score) {
+			solution->best_true_score = solution->curr_true_score;
+			solution->best_true_score_timestamp = solution->timestamp;
+		}
+		if (solution->best_true_score_timestamp < solution->timestamp
+				&& (solution->timestamp - solution->best_true_score_timestamp)
+					% DECREASE_TIME_PENALTY_ITER == 0) {
+			solution->curr_time_penalty *= 0.8;
+		}
 
 		solution->save(path, filename);
 	}

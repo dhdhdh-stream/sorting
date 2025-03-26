@@ -46,7 +46,7 @@ public:
 					  int node_id);
 	void clean_inputs(Scope* scope);
 
-	void clear_experiments();
+	void clean();
 
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file,

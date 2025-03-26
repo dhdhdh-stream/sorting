@@ -4,6 +4,7 @@
 
 #include "action_node.h"
 #include "branch_node.h"
+#include "globals.h"
 #include "obs_node.h"
 #include "scope.h"
 #include "scope_node.h"
@@ -11,8 +12,7 @@
 
 using namespace std;
 
-void clean_scope(Scope* scope,
-				 Solution* parent_solution) {
+void clean_scope(Scope* scope) {
 	/**
 	 * - remove no longer accessible nodes
 	 */
@@ -58,8 +58,8 @@ void clean_scope(Scope* scope,
 			if (needed_it == next_node_ids.end()) {
 				removed_node = true;
 
-				parent_solution->clean_inputs(scope,
-											  it->first);
+				solution->clean_inputs(scope,
+									   it->first);
 
 				switch (it->second->type) {
 				case NODE_TYPE_ACTION:
@@ -163,8 +163,8 @@ void clean_scope(Scope* scope,
 						curr_obs_node->next_node_id = next_obs_node->next_node_id;
 						curr_obs_node->next_node = next_obs_node->next_node;
 
-						parent_solution->clean_inputs(scope,
-													  next_obs_node->id);
+						solution->clean_inputs(scope,
+											   next_obs_node->id);
 
 						scope->nodes.erase(next_obs_node->id);
 						delete next_obs_node;
@@ -227,8 +227,8 @@ void clean_scope(Scope* scope,
 							next_obs_node->ancestor_ids.push_back(node->id);
 						}
 
-						parent_solution->clean_inputs(scope,
-													  curr_obs_node->id);
+						solution->clean_inputs(scope,
+											   curr_obs_node->id);
 
 						scope->nodes.erase(curr_obs_node->id);
 						delete curr_obs_node;
@@ -294,8 +294,6 @@ void clean_scope(Scope* scope,
 		new_obs_node->id = scope->node_counter;
 		scope->node_counter++;
 		scope->nodes[new_obs_node->id] = new_obs_node;
-
-		new_obs_node->average_instances_per_run = obs_node_needed[n_index].first->average_instances_per_run;
 
 		switch (obs_node_needed[n_index].first->type) {
 		case NODE_TYPE_ACTION:

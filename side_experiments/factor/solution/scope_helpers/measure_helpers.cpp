@@ -20,8 +20,6 @@ void Scope::measure_activate(Problem* problem,
 			break;
 		}
 
-		curr_node->average_instances_per_run += 1.0;
-
 		switch (curr_node->type) {
 		case NODE_TYPE_ACTION:
 			{

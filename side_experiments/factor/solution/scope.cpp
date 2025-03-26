@@ -71,10 +71,10 @@ void Scope::clean_inputs(Scope* scope) {
 	}
 }
 
-void Scope::clear_experiments() {
+void Scope::clean() {
 	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
 			it != this->nodes.end(); it++) {
-		it->second->clear_experiments();
+		it->second->clean();
 	}
 }
 

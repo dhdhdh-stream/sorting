@@ -88,7 +88,7 @@ void BranchExperiment::train_new_activate(
 
 		curr_node = this->best_exit_next_node;
 
-		uniform_int_distribution<int> until_distribution(0, 2*((int)this->node_context->average_instances_per_run-1));
+		uniform_int_distribution<int> until_distribution(0, 2*((int)this->average_instances_per_run-1));
 		this->num_instances_until_target = 1 + until_distribution(generator);
 	}
 }
@@ -404,8 +404,6 @@ void BranchExperiment::train_new_backprop(
 						break;
 					}
 
-					new_obs_node->average_instances_per_run = this->node_context->average_instances_per_run;
-
 					new_obs_node->num_measure = this->node_context->num_measure;
 					new_obs_node->sum_score = this->node_context->sum_score;
 
@@ -446,37 +444,10 @@ void BranchExperiment::train_new_backprop(
 		#endif /* MDEBUG */
 
 		if (this->select_percentage > 0.0) {
-			cout << "BranchExperiment" << endl;
-			cout << "this->scope_context->id: " << this->scope_context->id << endl;
-			cout << "this->node_context->id: " << this->node_context->id << endl;
-			cout << "this->is_branch: " << this->is_branch << endl;
-			cout << "new explore path:";
-			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-					cout << " " << this->best_actions[s_index].move;
-				} else {
-					cout << " E" << this->best_scopes[s_index]->id;
-				}
-			}
-			cout << endl;
+			this->combined_score = 0.0;
 
-			if (this->best_exit_next_node == NULL) {
-				cout << "this->best_exit_next_node->id: " << -1 << endl;
-			} else {
-				cout << "this->best_exit_next_node->id: " << this->best_exit_next_node->id << endl;
-			}
-
-			cout << endl;
-
-			#if defined(MDEBUG) && MDEBUG
-			this->verify_problems = vector<Problem*>(NUM_VERIFY_SAMPLES, NULL);
-			this->verify_seeds = vector<unsigned long>(NUM_VERIFY_SAMPLES);
-
-			this->state = BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY;
+			this->state = BRANCH_EXPERIMENT_STATE_MEASURE;
 			this->state_iter = 0;
-			#else
-			this->result = EXPERIMENT_RESULT_SUCCESS;
-			#endif /* MDEBUG */
 		} else {
 			this->result = EXPERIMENT_RESULT_FAIL;
 		}

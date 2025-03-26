@@ -21,8 +21,9 @@ const int COMMIT_EXPERIMENT_STATE_COMMIT_EXISTING_GATHER = 4;
 const int COMMIT_EXPERIMENT_STATE_COMMIT_TRAIN_EXISTING = 5;
 const int COMMIT_EXPERIMENT_STATE_COMMIT_NEW_GATHER = 6;
 const int COMMIT_EXPERIMENT_STATE_COMMIT_TRAIN_NEW = 7;
+const int COMMIT_EXPERIMENT_STATE_MEASURE = 8;
 #if defined(MDEBUG) && MDEBUG
-const int COMMIT_EXPERIMENT_STATE_CAPTURE_VERIFY = 8;
+const int COMMIT_EXPERIMENT_STATE_CAPTURE_VERIFY = 9;
 #endif /* MDEBUG */
 
 class CommitExperimentHistory;
@@ -30,6 +31,8 @@ class CommitExperiment : public AbstractExperiment {
 public:
 	int state;
 	int state_iter;
+
+	int sum_num_instances;
 
 	double o_existing_average_score;
 
@@ -40,6 +43,7 @@ public:
 	double existing_average_score;
 	std::vector<double> existing_factor_weights;
 
+	double average_instances_per_run;
 	int num_instances_until_target;
 
 	std::vector<int> curr_step_types;
@@ -77,6 +81,8 @@ public:
 
 	std::vector<std::pair<int,int>> commit_new_factor_ids;
 	std::vector<double> commit_new_factor_weights;
+
+	double combined_score;
 
 	std::vector<std::vector<double>> input_histories;
 	std::vector<std::vector<double>> factor_histories;
@@ -159,6 +165,13 @@ public:
 								   RunHelper& run_helper,
 								   CommitExperimentHistory* history);
 
+	void measure_activate(AbstractNode*& curr_node,
+						  Problem* problem,
+						  RunHelper& run_helper,
+						  ScopeHistory* scope_history);
+	void measure_backprop(double target_val,
+						  RunHelper& run_helper);
+
 	#if defined(MDEBUG) && MDEBUG
 	void capture_verify_activate(AbstractNode*& curr_node,
 								 Problem* problem,
@@ -167,7 +180,8 @@ public:
 	void capture_verify_backprop();
 	#endif /* MDEBUG */
 
-	void finalize(Solution* duplicate);
+	void clean();
+	void add();
 };
 
 class CommitExperimentHistory : public AbstractExperimentHistory {

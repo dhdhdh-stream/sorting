@@ -62,6 +62,8 @@ void CommitExperiment::train_existing_backprop(
 
 	this->o_target_val_histories.push_back(target_val);
 
+	this->sum_num_instances += history->instance_count;
+
 	this->state_iter++;
 	if (this->state_iter >= TRAIN_EXISTING_NUM_DATAPOINTS) {
 		double o_sum_vals = 0.0;
@@ -69,6 +71,11 @@ void CommitExperiment::train_existing_backprop(
 			o_sum_vals += this->o_target_val_histories[h_index];
 		}
 		this->o_existing_average_score = o_sum_vals / (int)this->o_target_val_histories.size();
+
+		this->average_instances_per_run = (double)this->sum_num_instances / (double)this->state_iter;
+		if (this->average_instances_per_run < 1.0) {
+			this->average_instances_per_run = 1.0;
+		}
 
 		{
 			default_random_engine generator_copy = generator;
@@ -368,8 +375,6 @@ void CommitExperiment::train_existing_backprop(
 						break;
 					}
 
-					new_obs_node->average_instances_per_run = this->node_context->average_instances_per_run;
-
 					new_obs_node->num_measure = this->node_context->num_measure;
 					new_obs_node->sum_score = this->node_context->sum_score;
 
@@ -394,7 +399,7 @@ void CommitExperiment::train_existing_backprop(
 
 		this->best_surprise = 0.0;
 
-		uniform_int_distribution<int> until_distribution(0, (int)this->node_context->average_instances_per_run-1.0);
+		uniform_int_distribution<int> until_distribution(0, (int)this->average_instances_per_run-1.0);
 		this->num_instances_until_target = 1 + until_distribution(generator);
 
 		this->state = COMMIT_EXPERIMENT_STATE_EXPLORE;

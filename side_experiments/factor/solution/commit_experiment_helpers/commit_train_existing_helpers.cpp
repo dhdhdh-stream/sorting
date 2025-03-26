@@ -121,7 +121,7 @@ void CommitExperiment::commit_train_existing_activate(
 
 		curr_node = this->best_exit_next_node;
 
-		uniform_int_distribution<int> until_distribution(0, 2*((int)this->node_context->average_instances_per_run-1));
+		uniform_int_distribution<int> until_distribution(0, 2*((int)this->average_instances_per_run-1));
 		this->num_instances_until_target = 1 + until_distribution(generator);
 	} else {
 		for (int s_index = 0; s_index < (int)this->save_step_types.size(); s_index++) {
@@ -366,7 +366,7 @@ void CommitExperiment::commit_train_existing_backprop(
 		this->factor_histories.clear();
 		this->i_target_val_histories.clear();
 
-		uniform_int_distribution<int> until_distribution(0, (int)this->node_context->average_instances_per_run-1.0);
+		uniform_int_distribution<int> until_distribution(0, (int)this->average_instances_per_run-1.0);
 		this->num_instances_until_target = 1 + until_distribution(generator);
 
 		this->state = COMMIT_EXPERIMENT_STATE_COMMIT_NEW_GATHER;

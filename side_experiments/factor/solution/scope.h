@@ -9,7 +9,6 @@
 
 class AbstractNode;
 class AbstractNodeHistory;
-class MultiPassThroughExperiment;
 class NewScopeExperiment;
 class Problem;
 class Solution;
@@ -31,8 +30,6 @@ public:
 	 *   - so that can be tried throughout entire scope
 	 */
 	NewScopeExperiment* new_scope_experiment;
-
-	std::vector<MultiPassThroughExperiment*> experiments;
 
 	Scope();
 	~Scope();
@@ -69,7 +66,7 @@ public:
 					  int node_id);
 	void clean_inputs(Scope* scope);
 
-	void clear_experiments();
+	void clean();
 
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file,

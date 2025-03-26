@@ -12,23 +12,23 @@ class Problem;
 class Scope;
 class Solution;
 
+const int PASS_THROUGH_EXPERIMENT_STATE_INITIAL = 0;
+const int PASS_THROUGH_EXPERIMENT_STATE_VERIFY_1ST = 1;
+const int PASS_THROUGH_EXPERIMENT_STATE_VERIFY_2ND = 2;
+
 class PassThroughExperimentHistory;
 class PassThroughExperiment : public AbstractExperiment {
 public:
+	int state;
 	int state_iter;
 	int explore_iter;
 
-	double curr_sum_score;
-	std::vector<int> curr_step_types;
-	std::vector<Action> curr_actions;
-	std::vector<Scope*> curr_scopes;
-	AbstractNode* curr_exit_next_node;
+	std::vector<int> step_types;
+	std::vector<Action> actions;
+	std::vector<Scope*> scopes;
+	AbstractNode* exit_next_node;
 
-	double best_score;
-	std::vector<int> best_step_types;
-	std::vector<Action> best_actions;
-	std::vector<Scope*> best_scopes;
-	AbstractNode* best_exit_next_node;
+	double sum_score;
 
 	PassThroughExperiment(Scope* scope_context,
 						  AbstractNode* node_context,
@@ -50,7 +50,8 @@ public:
 	void explore_backprop(double target_val,
 						  RunHelper& run_helper);
 
-	void finalize(Solution* duplicate);
+	void clean();
+	void add();
 };
 
 class PassThroughExperimentHistory : public AbstractExperimentHistory {

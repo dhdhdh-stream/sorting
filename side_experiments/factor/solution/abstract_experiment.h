@@ -24,10 +24,6 @@ const int EXPERIMENT_TYPE_PASS_THROUGH = 1;
 const int EXPERIMENT_TYPE_NEW_SCOPE = 2;
 const int EXPERIMENT_TYPE_COMMIT = 3;
 
-const int EXPERIMENT_TYPE_MULTI_PASS_THROUGH = 4;
-const int EXPERIMENT_TYPE_MULTI_BRANCH = 5;
-const int EXPERIMENT_TYPE_MULTI_COMMIT = 6;
-
 const int EXPERIMENT_RESULT_NA = 0;
 const int EXPERIMENT_RESULT_FAIL = 1;
 const int EXPERIMENT_RESULT_SUCCESS = 2;
@@ -45,6 +41,8 @@ public:
 
 	int result;
 
+	double improvement;
+
 	virtual ~AbstractExperiment() {};
 	virtual void decrement(AbstractNode* experiment_node) = 0;
 
@@ -57,7 +55,8 @@ public:
 	virtual void backprop(double target_val,
 						  RunHelper& run_helper) = 0;
 
-	virtual void finalize(Solution* duplicate) = 0;
+	virtual void clean() = 0;
+	virtual void add() = 0;
 };
 
 class AbstractExperimentHistory {

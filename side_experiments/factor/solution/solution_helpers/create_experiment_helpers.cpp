@@ -8,9 +8,6 @@
 #include "commit_experiment.h"
 #include "constants.h"
 #include "globals.h"
-#include "multi_branch_experiment.h"
-#include "multi_commit_experiment.h"
-#include "multi_pass_through_experiment.h"
 #include "new_scope_experiment.h"
 #include "obs_node.h"
 #include "pass_through_experiment.h"
@@ -23,7 +20,7 @@ using namespace std;
 #if defined(MDEBUG) && MDEBUG
 const int PASS_THROUGH_MIN_NUM_MEASURE = 10;
 #else
-const int PASS_THROUGH_MIN_NUM_MEASURE = 2000;
+const int PASS_THROUGH_MIN_NUM_MEASURE = 4000;
 #endif /* MDEBUG */
 
 void gather_nodes_seen_helper(ScopeHistory* scope_history,
@@ -175,161 +172,5 @@ void create_experiment(ScopeHistory* scope_history,
 				}
 			}
 		}
-	}
-}
-
-void create_multi_experiment(ScopeHistory* scope_history) {
-	map<pair<AbstractNode*,bool>,int> nodes_seen;
-	gather_nodes_seen_helper(scope_history,
-							 nodes_seen);
-
-	if (nodes_seen.size() > 0) {
-		AbstractNode* explore_node;
-		bool explore_is_branch;
-		uniform_int_distribution<int> even_distribution(0, 1);
-		if (even_distribution(generator) == 0) {
-			uniform_int_distribution<int> explore_node_distribution(0, nodes_seen.size()-1);
-			int explore_node_index = explore_node_distribution(generator);
-			map<pair<AbstractNode*,bool>, int>::iterator it = next(nodes_seen.begin(), explore_node_index);
-			explore_node = it->first.first;
-			explore_is_branch = it->first.second;
-		} else {
-			int sum_count = 0;
-			for (map<pair<AbstractNode*,bool>, int>::iterator it = nodes_seen.begin();
-					it != nodes_seen.end(); it++) {
-				sum_count += it->second;
-			}
-			uniform_int_distribution<int> random_distribution(1, sum_count);
-			int random_index = random_distribution(generator);
-			for (map<pair<AbstractNode*,bool>, int>::iterator it = nodes_seen.begin();
-					it != nodes_seen.end(); it++) {
-				random_index -= it->second;
-				if (random_index <= 0) {
-					explore_node = it->first.first;
-					explore_is_branch = it->first.second;
-					break;
-				}
-			}
-		}
-		/**
-		 * - don't weigh based on number of nodes within scope
-		 *   - can get trapped by small useless scopes
-		 *     - may be good for certain decision heavy scopes to have lots of nodes
-		 */
-
-		MultiPassThroughExperiment* new_experiment = new MultiPassThroughExperiment(
-			explore_node->parent,
-			explore_node,
-			explore_is_branch);
-
-		if (new_experiment->result == EXPERIMENT_RESULT_FAIL) {
-			delete new_experiment;
-		} else {
-			new_experiment->id = multi_index;
-			multi_index++;
-
-			explore_node->experiment = new_experiment;
-		}
-	}
-}
-
-void create_multi_branch_experiment(ScopeHistory* scope_history) {
-	map<pair<AbstractNode*,bool>,int> nodes_seen;
-	gather_nodes_seen_helper(scope_history,
-							 nodes_seen);
-
-	if (nodes_seen.size() > 0) {
-		AbstractNode* explore_node;
-		bool explore_is_branch;
-		uniform_int_distribution<int> even_distribution(0, 1);
-		if (even_distribution(generator) == 0) {
-			uniform_int_distribution<int> explore_node_distribution(0, nodes_seen.size()-1);
-			int explore_node_index = explore_node_distribution(generator);
-			map<pair<AbstractNode*,bool>, int>::iterator it = next(nodes_seen.begin(), explore_node_index);
-			explore_node = it->first.first;
-			explore_is_branch = it->first.second;
-		} else {
-			int sum_count = 0;
-			for (map<pair<AbstractNode*,bool>, int>::iterator it = nodes_seen.begin();
-					it != nodes_seen.end(); it++) {
-				sum_count += it->second;
-			}
-			uniform_int_distribution<int> random_distribution(1, sum_count);
-			int random_index = random_distribution(generator);
-			for (map<pair<AbstractNode*,bool>, int>::iterator it = nodes_seen.begin();
-					it != nodes_seen.end(); it++) {
-				random_index -= it->second;
-				if (random_index <= 0) {
-					explore_node = it->first.first;
-					explore_is_branch = it->first.second;
-					break;
-				}
-			}
-		}
-		/**
-		 * - don't weigh based on number of nodes within scope
-		 *   - can get trapped by small useless scopes
-		 *     - may be good for certain decision heavy scopes to have lots of nodes
-		 */
-
-		MultiBranchExperiment* new_experiment = new MultiBranchExperiment(
-			explore_node->parent,
-			explore_node,
-			explore_is_branch);
-		new_experiment->id = multi_index;
-		multi_index++;
-
-		explore_node->experiment = new_experiment;
-	}
-}
-
-void create_multi_commit_experiment(ScopeHistory* scope_history) {
-	map<pair<AbstractNode*,bool>,int> nodes_seen;
-	gather_nodes_seen_helper(scope_history,
-							 nodes_seen);
-
-	if (nodes_seen.size() > 0) {
-		AbstractNode* explore_node;
-		bool explore_is_branch;
-		uniform_int_distribution<int> even_distribution(0, 1);
-		if (even_distribution(generator) == 0) {
-			uniform_int_distribution<int> explore_node_distribution(0, nodes_seen.size()-1);
-			int explore_node_index = explore_node_distribution(generator);
-			map<pair<AbstractNode*,bool>, int>::iterator it = next(nodes_seen.begin(), explore_node_index);
-			explore_node = it->first.first;
-			explore_is_branch = it->first.second;
-		} else {
-			int sum_count = 0;
-			for (map<pair<AbstractNode*,bool>, int>::iterator it = nodes_seen.begin();
-					it != nodes_seen.end(); it++) {
-				sum_count += it->second;
-			}
-			uniform_int_distribution<int> random_distribution(1, sum_count);
-			int random_index = random_distribution(generator);
-			for (map<pair<AbstractNode*,bool>, int>::iterator it = nodes_seen.begin();
-					it != nodes_seen.end(); it++) {
-				random_index -= it->second;
-				if (random_index <= 0) {
-					explore_node = it->first.first;
-					explore_is_branch = it->first.second;
-					break;
-				}
-			}
-		}
-		/**
-		 * - don't weigh based on number of nodes within scope
-		 *   - can get trapped by small useless scopes
-		 *     - may be good for certain decision heavy scopes to have lots of nodes
-		 */
-
-		MultiCommitExperiment* new_experiment = new MultiCommitExperiment(
-			explore_node->parent,
-			explore_node,
-			explore_is_branch);
-		new_experiment->id = multi_index;
-		multi_index++;
-
-		explore_node->experiment = new_experiment;
-		cout << "MultiCommitExperiment" << endl;
 	}
 }
