@@ -39,6 +39,7 @@ EvalExperiment::EvalExperiment(Scope* scope_context) {
 		ActionNode* new_action_node = new ActionNode();
 		new_action_node->parent = this->scope_context;
 		new_action_node->id = this->scope_context->node_counter;
+		new_action_node->action = actions[a_index];
 		this->scope_context->node_counter++;
 		this->nodes.push_back(new_action_node);
 
@@ -59,6 +60,8 @@ EvalExperiment::EvalExperiment(Scope* scope_context) {
 
 	this->state = EVAL_EXPERIMENT_TRAIN;
 	this->state_iter = 0;
+
+	this->result = EXPERIMENT_RESULT_NA;
 }
 
 EvalExperiment::~EvalExperiment() {

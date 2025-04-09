@@ -1,6 +1,7 @@
 #include "eval_experiment.h"
 
 #include <algorithm>
+#include <iostream>
 
 #include "action_node.h"
 #include "constants.h"
@@ -82,6 +83,8 @@ void EvalExperiment::train_backprop(double target_val) {
 		}
 		this->obs_average_val = sum_obs_vals / (int)this->input_histories.size() / (int)this->inputs.size();
 
+		cout << "this->obs_average_val: " << this->obs_average_val << endl;
+
 		double sum_obs_variance = 0.0;
 		for (int h_index = 0; h_index < (int)this->input_histories.size(); h_index++) {
 			for (int i_index = 0; i_index < (int)this->input_histories[h_index].size(); i_index++) {
@@ -93,6 +96,8 @@ void EvalExperiment::train_backprop(double target_val) {
 		if (this->obs_standard_deviation < MIN_STANDARD_DEVIATION) {
 			this->obs_standard_deviation = MIN_STANDARD_DEVIATION;
 		}
+
+		cout << "this->obs_standard_deviation: " << this->obs_standard_deviation << endl;
 
 		for (int i_index = 0; i_index < (int)this->inputs.size(); i_index++) {
 			double sum_vals = 0.0;
@@ -110,6 +115,8 @@ void EvalExperiment::train_backprop(double target_val) {
 			if (standard_deviation < MIN_STANDARD_DEVIATION) {
 				standard_deviation = MIN_STANDARD_DEVIATION;
 			}
+
+			cout << "standard_deviation: " << standard_deviation << endl;
 
 			if (standard_deviation < FIXED_POINT_GATE * this->obs_standard_deviation) {
 				this->fixed_points.push_back(this->inputs[i_index]);

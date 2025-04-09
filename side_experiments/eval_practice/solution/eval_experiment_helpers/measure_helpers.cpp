@@ -1,6 +1,7 @@
 #include "eval_experiment.h"
 
 #include <cmath>
+#include <iostream>
 
 #include "globals.h"
 
@@ -60,6 +61,8 @@ void EvalExperiment::measure_activate(Problem* problem) {
 		}
 	}
 
+	cout << "matches: " << matches << endl;
+
 	if (matches) {
 		vector<double> input_vals(this->score_inputs.size(), 0.0);
 		for (int i_index = 0; i_index < (int)this->score_inputs.size(); i_index++) {
@@ -74,21 +77,26 @@ void EvalExperiment::measure_activate(Problem* problem) {
 }
 
 void EvalExperiment::measure_backprop(double target_val) {
-	this->i_target_val_histories.push_back(target_val);
+	if (this->i_target_val_histories.size() < this->predicted_score_histories.size()) {
+		this->i_target_val_histories.push_back(target_val);
 
-	this->state_iter++;
-	if (this->state_iter >= MEASURE_NUM_DATAPOINTS) {
-		double sum_misguess_variance = 0.0;
-		for (int h_index = 0; h_index < (int)this->i_target_val_histories.size(); h_index++) {
-			sum_misguess_variance += (this->i_target_val_histories[h_index] - this->predicted_score_histories[h_index])
-				* (this->i_target_val_histories[h_index] - this->predicted_score_histories[h_index]);
-		}
-		double misguess_standard_deviation = sqrt(sum_misguess_variance / (int)this->i_target_val_histories.size());
+		this->state_iter++;
+		if (this->state_iter >= MEASURE_NUM_DATAPOINTS) {
+			double sum_misguess_variance = 0.0;
+			for (int h_index = 0; h_index < (int)this->i_target_val_histories.size(); h_index++) {
+				sum_misguess_variance += (this->i_target_val_histories[h_index] - this->predicted_score_histories[h_index])
+					* (this->i_target_val_histories[h_index] - this->predicted_score_histories[h_index]);
+			}
+			double misguess_standard_deviation = sqrt(sum_misguess_variance / (int)this->i_target_val_histories.size());
 
-		if (misguess_standard_deviation < MISGUESS_IMPROVEMENT * this->score_standard_deviation) {
-			this->result = EXPERIMENT_RESULT_SUCCESS;
-		} else {
-			this->result = EXPERIMENT_RESULT_FAIL;
+			cout << "this->score_standard_deviation: " << this->score_standard_deviation << endl;
+			cout << "misguess_standard_deviation: " << misguess_standard_deviation << endl;
+
+			if (misguess_standard_deviation < MISGUESS_IMPROVEMENT * this->score_standard_deviation) {
+				this->result = EXPERIMENT_RESULT_SUCCESS;
+			} else {
+				this->result = EXPERIMENT_RESULT_FAIL;
+			}
 		}
 	}
 }

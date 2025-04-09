@@ -1,5 +1,7 @@
 #include "solution_helpers.h"
 
+#include <iostream>
+
 #include "obs_node.h"
 #include "scope.h"
 
@@ -10,7 +12,7 @@ void fetch_input_helper(ScopeHistory* scope_history,
 						double& obs) {
 	map<int, AbstractNodeHistory*>::iterator it = scope_history
 		->node_histories.find(input.node_context[0]);
-	if (it != scope_history->node_histories.end()) {
+	if (it == scope_history->node_histories.end()) {
 		obs = 0.0;
 	} else {
 		ObsNodeHistory* obs_node_history = (ObsNodeHistory*)it->second;
