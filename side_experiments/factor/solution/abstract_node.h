@@ -27,6 +27,7 @@ public:
 
 	AbstractExperiment* experiment;
 
+	// TODO: biased
 	int last_updated_run_index;
 	int num_measure;
 	double sum_score;

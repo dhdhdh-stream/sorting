@@ -130,13 +130,18 @@ void create_experiment(ScopeHistory* scope_history,
 					explore_node->experiment = new_scope_experiment;
 				}
 			} else {
-				if (explore_node->num_measure >= PASS_THROUGH_MIN_NUM_MEASURE) {
+				if (explore_node->num_measure >= PASS_THROUGH_MIN_NUM_MEASURE
+						&& improvement_iter > 3) {
 					PassThroughExperiment* new_experiment = new PassThroughExperiment(
 						explore_node->parent,
 						explore_node,
 						explore_is_branch);
 
-					explore_node->experiment = new_experiment;
+					if (new_experiment->result == EXPERIMENT_RESULT_FAIL) {
+						delete new_experiment;
+					} else {
+						explore_node->experiment = new_experiment;
+					}
 				}
 			}
 		} else {
@@ -146,7 +151,8 @@ void create_experiment(ScopeHistory* scope_history,
 			 *     - like tessellation, but have to get both the shape and the pattern correct
 			 *       - and PassThroughExperiments help with both
 			 */
-			if (improvement_iter == 0) {
+			// if (improvement_iter == 0) {
+			if (false) {
 				CommitExperiment* new_commit_experiment = new CommitExperiment(
 					explore_node->parent,
 					explore_node,
@@ -155,13 +161,18 @@ void create_experiment(ScopeHistory* scope_history,
 			} else {
 				uniform_int_distribution<int> pass_through_distribution(0, 1);
 				if (explore_node->num_measure >= PASS_THROUGH_MIN_NUM_MEASURE
-						&& pass_through_distribution(generator) == 0) {
+						&& pass_through_distribution(generator) == 0
+						&& improvement_iter > 3) {
 					PassThroughExperiment* new_experiment = new PassThroughExperiment(
 						explore_node->parent,
 						explore_node,
 						explore_is_branch);
 
-					explore_node->experiment = new_experiment;
+					if (new_experiment->result == EXPERIMENT_RESULT_FAIL) {
+						delete new_experiment;
+					} else {
+						explore_node->experiment = new_experiment;
+					}
 				} else {
 					BranchExperiment* new_experiment = new BranchExperiment(
 						explore_node->parent,

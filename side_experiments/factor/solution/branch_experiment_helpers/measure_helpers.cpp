@@ -111,6 +111,8 @@ void BranchExperiment::measure_backprop(double target_val,
 				cout << "this->best_exit_next_node->id: " << this->best_exit_next_node->id << endl;
 			}
 
+			cout << "this->improvement: " << this->improvement << endl;
+
 			cout << endl;
 
 			#if defined(MDEBUG) && MDEBUG

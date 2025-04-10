@@ -169,6 +169,8 @@ void NewScopeExperiment::test_backprop(
 				this->test_location_new_scores.clear();
 				this->test_location_counts.clear();
 
+				this->successful_location_starts.back()->experiment = this;
+
 				this->generalize_iter++;
 			} else {
 				is_fail = true;

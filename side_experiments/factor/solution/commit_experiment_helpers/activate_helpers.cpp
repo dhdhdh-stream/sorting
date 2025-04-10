@@ -95,6 +95,12 @@ void CommitExperiment::activate(AbstractNode* experiment_node,
 									  scope_history,
 									  history);
 			break;
+		case COMMIT_EXPERIMENT_STATE_MEASURE:
+			measure_activate(curr_node,
+							 problem,
+							 run_helper,
+							 scope_history);
+			break;
 		#if defined(MDEBUG) && MDEBUG
 		case COMMIT_EXPERIMENT_STATE_CAPTURE_VERIFY:
 			capture_verify_activate(curr_node,
@@ -143,6 +149,10 @@ void CommitExperiment::backprop(double target_val,
 		commit_train_new_backprop(target_val,
 								  run_helper,
 								  history);
+		break;
+	case COMMIT_EXPERIMENT_STATE_MEASURE:
+		measure_backprop(target_val,
+						 run_helper);
 		break;
 	#if defined(MDEBUG) && MDEBUG
 	case COMMIT_EXPERIMENT_STATE_CAPTURE_VERIFY:

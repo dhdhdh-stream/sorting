@@ -1,5 +1,7 @@
 #include "pass_through_experiment.h"
 
+#include <iostream>
+
 #include "globals.h"
 #include "scope.h"
 #include "solution.h"

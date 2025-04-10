@@ -5,6 +5,7 @@
 #include "new_scope_experiment.h"
 
 #include "constants.h"
+#include "globals.h"
 #include "problem.h"
 #include "scope.h"
 #include "scope_node.h"

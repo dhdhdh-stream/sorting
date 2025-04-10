@@ -3,6 +3,7 @@
 #include "abstract_node.h"
 #include "branch_experiment.h"
 #include "globals.h"
+#include "problem.h"
 
 using namespace std;
 
@@ -30,6 +31,12 @@ CommitExperiment::~CommitExperiment() {
 	for (int n_index = 0; n_index < (int)this->new_nodes.size(); n_index++) {
 		delete this->new_nodes[n_index];
 	}
+
+	#if defined(MDEBUG) && MDEBUG
+	for (int p_index = 0; p_index < (int)this->verify_problems.size(); p_index++) {
+		delete this->verify_problems[p_index];
+	}
+	#endif /* MDEBUG */
 }
 
 void CommitExperiment::decrement(AbstractNode* experiment_node) {

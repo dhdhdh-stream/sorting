@@ -21,6 +21,10 @@ BranchNode::BranchNode() {
 	this->last_updated_run_index = -1;
 	this->num_measure = 0;
 	this->sum_score = 0.0;
+
+	#if defined(MDEBUG) && MDEBUG
+	this->verify_key = NULL;
+	#endif /* MDEBUG */
 }
 
 BranchNode::BranchNode(BranchNode* original) {

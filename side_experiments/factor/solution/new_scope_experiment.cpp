@@ -371,6 +371,8 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 		this->state = NEW_SCOPE_EXPERIMENT_STATE_EXPLORE;
 		this->generalize_iter = -1;
 
+		this->improvement = 0.0;
+
 		this->result = EXPERIMENT_RESULT_NA;
 	} else {
 		this->result = EXPERIMENT_RESULT_FAIL;
@@ -380,6 +382,10 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 NewScopeExperiment::~NewScopeExperiment() {
 	if (this->new_scope != NULL) {
 		delete this->new_scope;
+	}
+
+	for (int s_index = 0; s_index < (int)this->successful_scope_nodes.size(); s_index++) {
+		delete this->successful_scope_nodes[s_index];
 	}
 
 	#if defined(MDEBUG) && MDEBUG
@@ -422,9 +428,18 @@ void NewScopeExperiment::decrement(AbstractNode* experiment_node) {
 		delete new_scope_node;
 	}
 
-	if (this->test_location_starts.size() == 0
-			&& this->successful_location_starts.size() == 0) {
-		delete this;
+	if (this->test_location_starts.size() == 0) {
+		bool has_existing = false;
+		for (int s_index = 0; s_index < (int)this->successful_location_starts.size(); s_index++) {
+			if (this->scope_context->nodes.find(this->successful_location_starts[s_index]->id) != this->scope_context->nodes.end()) {
+				has_existing = true;
+				break;
+			}
+		}
+
+		if (!has_existing) {
+			delete this;
+		}
 	}
 }
 

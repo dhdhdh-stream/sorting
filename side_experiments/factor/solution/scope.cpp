@@ -76,6 +76,8 @@ void Scope::clean() {
 			it != this->nodes.end(); it++) {
 		it->second->clean();
 	}
+
+	this->new_scope_experiment = NULL;
 }
 
 void Scope::save(ofstream& output_file) {
