@@ -23,7 +23,7 @@ const int NEW_SCOPE_NUM_GENERALIZE_TRIES = 10;
 const int NEW_SCOPE_NUM_LOCATIONS = 2;
 #else
 const int NEW_SCOPE_NUM_GENERALIZE_TRIES = 200;
-const int NEW_SCOPE_NUM_LOCATIONS = 3;
+const int NEW_SCOPE_NUM_LOCATIONS = 2;
 #endif /* MDEBUG */
 
 const int LOCATION_STATE_MEASURE_EXISTING = 0;
@@ -42,13 +42,13 @@ public:
 
 	Scope* new_scope;
 
-	std::vector<AbstractNode*> test_location_starts;
-	std::vector<bool> test_location_is_branch;
-	std::vector<AbstractNode*> test_location_exits;
-	std::vector<int> test_location_states;
-	std::vector<double> test_location_existing_scores;
-	std::vector<double> test_location_new_scores;
-	std::vector<int> test_location_counts;
+	AbstractNode* test_location_start;
+	bool test_location_is_branch;
+	AbstractNode* test_location_exit;
+	int test_location_state;
+	double test_location_existing_score;
+	double test_location_new_score;
+	int test_location_count;
 
 	std::vector<AbstractNode*> successful_location_starts;
 	std::vector<bool> successful_location_is_branch;
@@ -72,13 +72,10 @@ public:
 				  Problem* problem,
 				  RunHelper& run_helper,
 				  ScopeHistory* scope_history);
-	void back_activate(RunHelper& run_helper,
-					   ScopeHistory* scope_history);
 	void backprop(double target_val,
 				  RunHelper& run_helper);
 
-	void test_activate(int location_index,
-					   AbstractNode*& curr_node,
+	void test_activate(AbstractNode*& curr_node,
 					   Problem* problem,
 					   RunHelper& run_helper,
 					   NewScopeExperimentHistory* history);
@@ -101,11 +98,7 @@ public:
 
 class NewScopeExperimentHistory : public AbstractExperimentHistory {
 public:
-	int test_location_index;
-
-	int instance_count;
-	AbstractNode* potential_start;
-	bool potential_is_branch;
+	bool hit_test;
 
 	NewScopeExperimentHistory(NewScopeExperiment* experiment);
 };

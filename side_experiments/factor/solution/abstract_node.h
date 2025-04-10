@@ -27,6 +27,10 @@ public:
 
 	AbstractExperiment* experiment;
 
+	int last_updated_run_index;
+	int num_measure;
+	double average_instances_per_run;
+
 	virtual ~AbstractNode() {};
 
 	virtual void clean() = 0;

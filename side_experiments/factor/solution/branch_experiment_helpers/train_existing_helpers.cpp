@@ -375,6 +375,8 @@ void BranchExperiment::train_existing_backprop(
 						break;
 					}
 
+					new_obs_node->average_instances_per_run = this->node_context->average_instances_per_run;
+
 					this->node_context->experiment = NULL;
 
 					this->node_context = new_obs_node;

@@ -20,6 +20,11 @@ void Scope::measure_activate(Problem* problem,
 			break;
 		}
 
+		if (curr_node->last_updated_run_index != run_index) {
+ 			curr_node->last_updated_run_index = run_index;
+ 			curr_node->num_measure++;
+ 		}
+
 		switch (curr_node->type) {
 		case NODE_TYPE_ACTION:
 			{

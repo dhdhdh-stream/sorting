@@ -17,9 +17,7 @@ using namespace std;
 void NewScopeExperiment::clean() {
 	this->scope_context->new_scope_experiment = NULL;
 
-	for (int t_index = 0; t_index < (int)this->test_location_starts.size(); t_index++) {
-		this->test_location_starts[t_index]->experiment = NULL;
-	}
+	this->test_location_start->experiment = NULL;
 	for (int s_index = 0; s_index < (int)this->successful_location_starts.size(); s_index++) {
 		this->successful_location_starts[s_index]->experiment = NULL;
 	}

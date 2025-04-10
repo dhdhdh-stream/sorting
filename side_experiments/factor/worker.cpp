@@ -152,6 +152,8 @@ int main(int argc, char* argv[]) {
 		double sum_score = 0.0;
 		double sum_true_score = 0.0;
 		for (int iter_index = 0; iter_index < MEASURE_ITERS; iter_index++) {
+			run_index++;
+
 			Problem* problem = problem_type->get_problem();
 
 			RunHelper run_helper;
@@ -169,6 +171,13 @@ int main(int argc, char* argv[]) {
 			sum_true_score += target_val;
 
 			delete problem;
+		}
+
+		for (int s_index = 0; s_index < (int)solution->scopes.size(); s_index++) {
+			for (map<int, AbstractNode*>::iterator it = solution->scopes[s_index]->nodes.begin();
+					it != solution->scopes[s_index]->nodes.end(); it++) {
+				it->second->average_instances_per_run = it->second->num_measure / MEASURE_ITERS;
+			}
 		}
 
 		solution->curr_score = sum_score / MEASURE_ITERS;
