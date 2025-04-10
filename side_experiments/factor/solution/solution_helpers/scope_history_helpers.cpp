@@ -13,30 +13,11 @@
 
 using namespace std;
 
-void update_scores(ScopeHistory* scope_history,
-				   double target_val) {
-	for (map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
-			it != scope_history->node_histories.end(); it++) {
-		if (it->second->node->last_updated_run_index != run_index) {
-			it->second->node->last_updated_run_index = run_index;
-			it->second->node->num_measure++;
-			it->second->node->sum_score += target_val;
-		}
-
-		if (it->second->node->type == NODE_TYPE_SCOPE) {
-			ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)it->second;
-
-			update_scores(scope_node_history->scope_history,
-						  target_val);
-		}
-	}
-}
-
 void gather_possible_helper(ScopeHistory* scope_history,
 							vector<Scope*>& scope_context,
 							vector<int>& node_context,
 							int& node_count,
-							pair<pair<vector<Scope*>,vector<int>>,pair<int,int>>& new_input) {
+							Input& new_input) {
 	Scope* scope = scope_history->scope;
 
 	uniform_int_distribution<int> obs_distribution(0, problem_type->num_obs()-1);
@@ -69,7 +50,10 @@ void gather_possible_helper(ScopeHistory* scope_history,
 					scope_context.push_back(scope);
 					node_context.push_back(it->first);
 
-					new_input = {{scope_context, node_context}, {-1, -1}};
+					new_input.scope_context = scope_context;
+					new_input.node_context = node_context;
+					new_input.factor_index = -1;
+					new_input.obs_index = -1;
 
 					scope_context.pop_back();
 					node_context.pop_back();
@@ -86,7 +70,10 @@ void gather_possible_helper(ScopeHistory* scope_history,
 					scope_context.push_back(scope);
 					node_context.push_back(it->first);
 
-					new_input = {{scope_context, node_context}, {-1, obs_distribution(generator)}};
+					new_input.scope_context = scope_context;
+					new_input.node_context = node_context;
+					new_input.factor_index = -1;
+					new_input.obs_index = obs_distribution(generator);
 
 					scope_context.pop_back();
 					node_context.pop_back();
@@ -100,7 +87,10 @@ void gather_possible_helper(ScopeHistory* scope_history,
 							scope_context.push_back(scope);
 							node_context.push_back(it->first);
 
-							new_input = {{scope_context, node_context}, {f_index, -1}};
+							new_input.scope_context = scope_context;
+							new_input.node_context = node_context;
+							new_input.factor_index = f_index;
+							new_input.obs_index = -1;
 
 							scope_context.pop_back();
 							node_context.pop_back();
@@ -158,13 +148,13 @@ void fetch_factor_helper(RunHelper& run_helper,
 
 void fetch_input_helper(RunHelper& run_helper,
 						ScopeHistory* scope_history,
-						pair<pair<vector<Scope*>,vector<int>>,pair<int,int>>& input,
+						Input& input,
 						int l_index,
 						double& obs) {
 	map<int, AbstractNodeHistory*>::iterator it = scope_history
-		->node_histories.find(input.first.second[l_index]);
+		->node_histories.find(input.node_context[l_index]);
 	if (it != scope_history->node_histories.end()) {
-		if (l_index == (int)input.first.first.size()-1) {
+		if (l_index == (int)input.scope_context.size()-1) {
 			switch (it->second->node->type) {
 			case NODE_TYPE_BRANCH:
 				{
@@ -179,18 +169,18 @@ void fetch_input_helper(RunHelper& run_helper,
 			case NODE_TYPE_OBS:
 				{
 					ObsNodeHistory* obs_node_history = (ObsNodeHistory*)it->second;
-					if (input.second.first == -1) {
-						obs = obs_node_history->obs_history[input.second.second];
+					if (input.factor_index == -1) {
+						obs = obs_node_history->obs_history[input.obs_index];
 					} else {
-						if (!obs_node_history->factor_initialized[input.second.first]) {
+						if (!obs_node_history->factor_initialized[input.factor_index]) {
 							ObsNode* obs_node = (ObsNode*)it->second->node;
-							double value = obs_node->factors[input.second.first]->back_activate(
+							double value = obs_node->factors[input.factor_index]->back_activate(
 								run_helper,
 								scope_history);
-							obs_node_history->factor_values[input.second.first] = value;
-							obs_node_history->factor_initialized[input.second.first] = true;
+							obs_node_history->factor_values[input.factor_index] = value;
+							obs_node_history->factor_initialized[input.factor_index] = true;
 						}
-						obs = obs_node_history->factor_values[input.second.first];
+						obs = obs_node_history->factor_values[input.factor_index];
 					}
 				}
 				break;

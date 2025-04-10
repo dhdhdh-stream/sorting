@@ -14,10 +14,6 @@ ObsNode::ObsNode() {
 	this->is_used = false;
 
 	this->experiment = NULL;
-
-	this->last_updated_run_index = -1;
-	this->num_measure = 0;
-	this->sum_score = 0.0;
 }
 
 ObsNode::ObsNode(ObsNode* original,
@@ -37,10 +33,6 @@ ObsNode::ObsNode(ObsNode* original,
 	this->ancestor_ids = original->ancestor_ids;
 
 	this->experiment = NULL;
-
-	this->last_updated_run_index = -1;
-	this->num_measure = 0;
-	this->sum_score = 0.0;
 }
 
 ObsNode::~ObsNode() {
@@ -72,9 +64,6 @@ void ObsNode::clean() {
 		this->experiment->decrement(this);
 		this->experiment = NULL;
 	}
-
-	this->num_measure = 0;
-	this->sum_score = 0.0;
 }
 
 void ObsNode::save(ofstream& output_file) {

@@ -33,8 +33,6 @@ void CommitExperiment::commit_train_new_activate(
 		RunHelper& run_helper,
 		ScopeHistory* scope_history,
 		CommitExperimentHistory* history) {
-	run_helper.has_explore = true;
-
 	history->instance_count++;
 
 	for (int n_index = 0; n_index < this->step_iter; n_index++) {
@@ -277,7 +275,7 @@ void CommitExperiment::commit_train_new_backprop(
 			average_misguess = new_average_misguess;
 
 			for (int i_index = (int)this->commit_new_inputs.size()-1; i_index >= 0; i_index--) {
-				vector<pair<pair<vector<Scope*>,vector<int>>,pair<int,int>>> remove_inputs = this->commit_new_inputs;
+				vector<Input> remove_inputs = this->commit_new_inputs;
 				remove_inputs.erase(remove_inputs.begin() + i_index);
 
 				Network* remove_network = new Network(new_network);

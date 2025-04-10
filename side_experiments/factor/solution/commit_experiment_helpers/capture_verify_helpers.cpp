@@ -25,8 +25,6 @@ void CommitExperiment::capture_verify_activate(
 	}
 	this->verify_seeds[this->state_iter] = run_helper.starting_run_seed;
 
-	run_helper.has_explore = true;
-
 	for (int n_index = 0; n_index < this->step_iter; n_index++) {
 		switch (this->new_nodes[n_index]->type) {
 		case NODE_TYPE_ACTION:

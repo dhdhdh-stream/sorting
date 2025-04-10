@@ -4,6 +4,7 @@
 #include "branch_node.h"
 #include "factor.h"
 #include "globals.h"
+#include "input.h"
 #include "network.h"
 #include "obs_node.h"
 #include "problem.h"
@@ -273,14 +274,14 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 							new_factor->network = new Network(original_factor->network);
 							for (int i_index = (int)original_factor->inputs.size()-1; i_index >= 0; i_index--) {
 								AbstractNode* original_input_node = scope_context->nodes[
-									original_factor->inputs[i_index].first.second[0]];
+									original_factor->inputs[i_index].node_context[0]];
 								map<AbstractNode*, AbstractNode*>::iterator it = node_mappings.find(original_input_node);
 								if (it == node_mappings.end()) {
 									new_factor->network->remove_input(i_index);
 								} else {
-									pair<pair<vector<Scope*>,vector<int>>,pair<int,int>> new_input = original_factor->inputs[i_index];
-									new_input.first.first[0] = this->new_scope;
-									new_input.first.second[0] = it->second->id;
+									Input new_input = original_factor->inputs[i_index];
+									new_input.scope_context[0] = this->new_scope;
+									new_input.node_context[0] = it->second->id;
 									new_factor->inputs.insert(new_factor->inputs.begin(), new_input);
 								}
 							}

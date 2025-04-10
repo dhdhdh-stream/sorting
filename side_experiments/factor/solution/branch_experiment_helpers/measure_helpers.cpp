@@ -21,8 +21,6 @@ void BranchExperiment::measure_activate(
 		Problem* problem,
 		RunHelper& run_helper,
 		ScopeHistory* scope_history) {
-	run_helper.has_explore = true;
-
 	if (this->select_percentage == 1.0) {
 		for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 			if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {

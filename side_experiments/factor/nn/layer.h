@@ -8,7 +8,6 @@ const int LINEAR_LAYER = 0;
 const int RELU_LAYER = 1;
 const int LEAKY_LAYER = 2;
 const int SIGMOID_LAYER = 3;
-const int HYPERBOLIC_TANGENT_LAYER = 4;
 
 class Layer {
 public:

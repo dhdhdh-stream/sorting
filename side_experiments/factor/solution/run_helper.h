@@ -17,8 +17,6 @@ public:
 	std::vector<AbstractExperiment*> experiments_seen_order;
 	AbstractExperimentHistory* experiment_history;
 
-	bool has_explore;
-
 	#if defined(MDEBUG) && MDEBUG
 	unsigned long starting_run_seed;
 	unsigned long curr_run_seed;

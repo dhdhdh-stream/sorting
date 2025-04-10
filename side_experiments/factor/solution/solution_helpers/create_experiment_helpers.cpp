@@ -17,12 +17,6 @@
 
 using namespace std;
 
-#if defined(MDEBUG) && MDEBUG
-const int PASS_THROUGH_MIN_NUM_MEASURE = 10;
-#else
-const int PASS_THROUGH_MIN_NUM_MEASURE = 4000;
-#endif /* MDEBUG */
-
 void gather_nodes_seen_helper(ScopeHistory* scope_history,
 							  map<pair<AbstractNode*,bool>, int>& nodes_seen) {
 	for (map<int, AbstractNodeHistory*>::iterator h_it = scope_history->node_histories.begin();
@@ -130,8 +124,7 @@ void create_experiment(ScopeHistory* scope_history,
 					explore_node->experiment = new_scope_experiment;
 				}
 			} else {
-				if (explore_node->num_measure >= PASS_THROUGH_MIN_NUM_MEASURE
-						&& improvement_iter > 3) {
+				if (improvement_iter > 3) {
 					PassThroughExperiment* new_experiment = new PassThroughExperiment(
 						explore_node->parent,
 						explore_node,
@@ -160,8 +153,7 @@ void create_experiment(ScopeHistory* scope_history,
 				explore_node->experiment = new_commit_experiment;
 			} else {
 				uniform_int_distribution<int> pass_through_distribution(0, 1);
-				if (explore_node->num_measure >= PASS_THROUGH_MIN_NUM_MEASURE
-						&& pass_through_distribution(generator) == 0
+				if (pass_through_distribution(generator) == 0
 						&& improvement_iter > 3) {
 					PassThroughExperiment* new_experiment = new PassThroughExperiment(
 						explore_node->parent,

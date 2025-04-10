@@ -42,14 +42,30 @@ void PassThroughExperiment::activate(AbstractNode* experiment_node,
 	}
 
 	if (is_selected) {
-		explore_activate(curr_node,
-						 problem,
-						 run_helper);
+		switch (this->state) {
+		case PASS_THROUGH_EXPERIMENT_STATE_INITIAL:
+		case PASS_THROUGH_EXPERIMENT_STATE_VERIFY_1ST:
+		case PASS_THROUGH_EXPERIMENT_STATE_VERIFY_2ND:
+			explore_activate(curr_node,
+							 problem,
+							 run_helper);
+			break;
+		}
 	}
 }
 
 void PassThroughExperiment::backprop(double target_val,
 									 RunHelper& run_helper) {
-	explore_backprop(target_val,
-					 run_helper);
+	switch (this->state) {
+	case PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING:
+		measure_existing_backprop(target_val,
+								  run_helper);
+		break;
+	case PASS_THROUGH_EXPERIMENT_STATE_INITIAL:
+	case PASS_THROUGH_EXPERIMENT_STATE_VERIFY_1ST:
+	case PASS_THROUGH_EXPERIMENT_STATE_VERIFY_2ND:
+		explore_backprop(target_val,
+						 run_helper);
+		break;
+	}
 }

@@ -11,10 +11,6 @@ ActionNode::ActionNode() {
 	this->type = NODE_TYPE_ACTION;
 
 	this->experiment = NULL;
-
-	this->last_updated_run_index = -1;
-	this->num_measure = 0;
-	this->sum_score = 0.0;
 }
 
 ActionNode::ActionNode(ActionNode* original) {
@@ -27,10 +23,6 @@ ActionNode::ActionNode(ActionNode* original) {
 	this->ancestor_ids = original->ancestor_ids;
 
 	this->experiment = NULL;
-
-	this->last_updated_run_index = -1;
-	this->num_measure = 0;
-	this->sum_score = 0.0;
 }
 
 ActionNode::~ActionNode() {
@@ -44,9 +36,6 @@ void ActionNode::clean() {
 		this->experiment->decrement(this);
 		this->experiment = NULL;
 	}
-
-	this->num_measure = 0;
-	this->sum_score = 0.0;
 }
 
 void ActionNode::save(ofstream& output_file) {

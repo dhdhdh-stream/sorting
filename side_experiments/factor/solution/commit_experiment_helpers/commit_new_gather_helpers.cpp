@@ -16,8 +16,6 @@ void CommitExperiment::commit_new_gather_activate(
 		Problem* problem,
 		RunHelper& run_helper,
 		ScopeHistory* scope_history) {
-	run_helper.has_explore = true;
-
 	for (int n_index = 0; n_index < this->step_iter; n_index++) {
 		switch (this->new_nodes[n_index]->type) {
 		case NODE_TYPE_ACTION:
@@ -52,7 +50,7 @@ void CommitExperiment::commit_new_gather_activate(
 	vector<Scope*> scope_context;
 	vector<int> node_context;
 	int node_count = 0;
-	pair<pair<vector<Scope*>,vector<int>>,pair<int,int>> new_input;
+	Input new_input;
 	gather_possible_helper(scope_history,
 						   scope_context,
 						   node_context,

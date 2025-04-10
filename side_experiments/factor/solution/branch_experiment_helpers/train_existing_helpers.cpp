@@ -226,7 +226,7 @@ void BranchExperiment::train_existing_backprop(
 			average_misguess = new_average_misguess;
 
 			for (int i_index = (int)this->existing_inputs.size()-1; i_index >= 0; i_index--) {
-				vector<pair<pair<vector<Scope*>,vector<int>>,pair<int,int>>> remove_inputs = this->existing_inputs;
+				vector<Input> remove_inputs = this->existing_inputs;
 				remove_inputs.erase(remove_inputs.begin() + i_index);
 
 				Network* remove_network = new Network(existing_network);
@@ -374,9 +374,6 @@ void BranchExperiment::train_existing_backprop(
 						}
 						break;
 					}
-
-					new_obs_node->num_measure = this->node_context->num_measure;
-					new_obs_node->sum_score = this->node_context->sum_score;
 
 					this->node_context->experiment = NULL;
 

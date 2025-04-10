@@ -21,8 +21,6 @@ void BranchExperiment::capture_verify_activate(AbstractNode*& curr_node,
 	}
 	this->verify_seeds[this->state_iter] = run_helper.starting_run_seed;
 
-	run_helper.has_explore = true;
-
 	double sum_vals = this->new_average_score;
 	for (int f_index = 0; f_index < (int)this->new_factor_ids.size(); f_index++) {
 		double val;

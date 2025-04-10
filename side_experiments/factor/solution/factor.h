@@ -5,6 +5,7 @@
 #include <utility>
 #include <vector>
 
+#include "input.h"
 #include "run_helper.h"
 
 class Network;
@@ -17,8 +18,7 @@ class Factor {
 public:
 	bool is_used;
 
-	std::vector<std::pair<std::pair<std::vector<Scope*>,std::vector<int>>,
-		std::pair<int,int>>> inputs;
+	std::vector<Input> inputs;
 	Network* network;
 
 	Factor();

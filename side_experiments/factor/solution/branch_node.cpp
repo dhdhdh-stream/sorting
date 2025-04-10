@@ -18,10 +18,6 @@ BranchNode::BranchNode() {
 
 	this->experiment = NULL;
 
-	this->last_updated_run_index = -1;
-	this->num_measure = 0;
-	this->sum_score = 0.0;
-
 	#if defined(MDEBUG) && MDEBUG
 	this->verify_key = NULL;
 	#endif /* MDEBUG */
@@ -42,10 +38,6 @@ BranchNode::BranchNode(BranchNode* original) {
 	this->ancestor_ids = original->ancestor_ids;
 
 	this->experiment = NULL;
-
-	this->last_updated_run_index = -1;
-	this->num_measure = 0;
-	this->sum_score = 0.0;
 
 	#if defined(MDEBUG) && MDEBUG
 	this->verify_key = NULL;
@@ -86,9 +78,6 @@ void BranchNode::clean() {
 		this->experiment->decrement(this);
 		this->experiment = NULL;
 	}
-
-	this->num_measure = 0;
-	this->sum_score = 0.0;
 }
 
 void BranchNode::save(ofstream& output_file) {

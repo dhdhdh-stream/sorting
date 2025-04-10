@@ -30,8 +30,6 @@ void CommitExperiment::find_save_activate(
 		AbstractNode*& curr_node,
 		Problem* problem,
 		RunHelper& run_helper) {
-	run_helper.has_explore = true;
-
 	for (int s_index = 0; s_index < this->step_iter; s_index++) {
 		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 			problem->perform_action(this->best_actions[s_index]);

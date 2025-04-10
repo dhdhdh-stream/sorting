@@ -6,6 +6,7 @@
 
 #include "abstract_experiment.h"
 #include "action.h"
+#include "input.h"
 #include "run_helper.h"
 
 class AbstractNode;
@@ -36,8 +37,7 @@ public:
 
 	double o_existing_average_score;
 
-	std::vector<std::pair<std::pair<std::vector<Scope*>,std::vector<int>>,
-		std::pair<int,int>>> existing_inputs;
+	std::vector<Input> existing_inputs;
 	std::vector<std::pair<int,int>> existing_factor_ids;
 
 	double existing_average_score;
@@ -68,16 +68,14 @@ public:
 
 	std::vector<AbstractNode*> new_nodes;
 
-	std::vector<std::pair<std::pair<std::vector<Scope*>,std::vector<int>>,
-		std::pair<int,int>>> commit_existing_inputs;
+	std::vector<Input> commit_existing_inputs;
 	std::vector<std::pair<int,int>> commit_existing_factor_ids;
 
 	double commit_existing_average_score;
 	std::vector<double> commit_existing_factor_weights;
 
 	double commit_new_average_score;
-	std::vector<std::pair<std::pair<std::vector<Scope*>,std::vector<int>>,
-		std::pair<int,int>>> commit_new_inputs;
+	std::vector<Input> commit_new_inputs;
 
 	std::vector<std::pair<int,int>> commit_new_factor_ids;
 	std::vector<double> commit_new_factor_weights;

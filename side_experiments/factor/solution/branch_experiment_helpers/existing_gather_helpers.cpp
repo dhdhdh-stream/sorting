@@ -12,7 +12,7 @@ void BranchExperiment::existing_gather_activate(
 	vector<Scope*> scope_context;
 	vector<int> node_context;
 	int node_count = 0;
-	pair<pair<vector<Scope*>,vector<int>>,pair<int,int>> new_input;
+	Input new_input;
 	gather_possible_helper(scope_history,
 						   scope_context,
 						   node_context,

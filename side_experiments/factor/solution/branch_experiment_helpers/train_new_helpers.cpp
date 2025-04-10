@@ -38,8 +38,6 @@ void BranchExperiment::train_new_activate(
 	this->num_instances_until_target--;
 
 	if (this->num_instances_until_target <= 0) {
-		run_helper.has_explore = true;
-
 		history->instance_count++;
 
 		double sum_vals = this->existing_average_score;
@@ -255,7 +253,7 @@ void BranchExperiment::train_new_backprop(
 			average_misguess = new_average_misguess;
 
 			for (int i_index = (int)this->new_inputs.size()-1; i_index >= 0; i_index--) {
-				vector<pair<pair<vector<Scope*>,vector<int>>,pair<int,int>>> remove_inputs = this->new_inputs;
+				vector<Input> remove_inputs = this->new_inputs;
 				remove_inputs.erase(remove_inputs.begin() + i_index);
 
 				Network* remove_network = new Network(new_network);
@@ -403,9 +401,6 @@ void BranchExperiment::train_new_backprop(
 						}
 						break;
 					}
-
-					new_obs_node->num_measure = this->node_context->num_measure;
-					new_obs_node->sum_score = this->node_context->sum_score;
 
 					this->node_context->experiment = NULL;
 

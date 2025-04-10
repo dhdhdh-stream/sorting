@@ -60,8 +60,8 @@ void NewScopeExperiment::add() {
 					Factor* factor = obs_node->factors[f_index];
 
 					for (int i_index = 0; i_index < (int)factor->inputs.size(); i_index++) {
-						Scope* scope = factor->inputs[i_index].first.first.back();
-						AbstractNode* node = scope->nodes[factor->inputs[i_index].first.second.back()];
+						Scope* scope = factor->inputs[i_index].scope_context.back();
+						AbstractNode* node = scope->nodes[factor->inputs[i_index].node_context.back()];
 						switch (node->type) {
 						case NODE_TYPE_BRANCH:
 							{
@@ -73,8 +73,8 @@ void NewScopeExperiment::add() {
 							{
 								ObsNode* obs_node = (ObsNode*)node;
 
-								if (factor->inputs[i_index].second.first != -1) {
-									Factor* i_factor = obs_node->factors[factor->inputs[i_index].second.first];
+								if (factor->inputs[i_index].factor_index != -1) {
+									Factor* i_factor = obs_node->factors[factor->inputs[i_index].factor_index];
 
 									i_factor->link(solution);
 								}

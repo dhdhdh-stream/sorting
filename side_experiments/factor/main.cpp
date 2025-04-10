@@ -99,11 +99,6 @@ int main(int argc, char* argv[]) {
 			target_val -= 0.05 * run_helper.num_actions * solution->curr_time_penalty;
 			target_val -= run_helper.num_analyze * solution->curr_time_penalty;
 
-			if (!run_helper.has_explore) {
-				update_scores(scope_history,
-							  target_val);
-			}
-
 			if (run_helper.experiments_seen_order.size() == 0) {
 				create_experiment(scope_history,
 								  improvement_iter);

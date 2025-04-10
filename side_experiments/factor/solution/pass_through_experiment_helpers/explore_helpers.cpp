@@ -32,8 +32,6 @@ void PassThroughExperiment::explore_activate(
 		AbstractNode*& curr_node,
 		Problem* problem,
 		RunHelper& run_helper) {
-	run_helper.has_explore = true;
-
 	for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {
 		if (this->step_types[s_index] == STEP_TYPE_ACTION) {
 			problem->perform_action(this->actions[s_index]);
@@ -65,8 +63,7 @@ void PassThroughExperiment::explore_backprop(
 			if (rand()%2 == 0) {
 			#else
 			double curr_score = this->sum_score / this->state_iter;
-			double existing_score = this->node_context->sum_score / this->node_context->num_measure;
-			if (curr_score <= existing_score) {
+			if (curr_score <= this->existing_average_score) {
 			#endif /* MDEBUG */
 				is_fail = true;
 			} else {
@@ -83,8 +80,7 @@ void PassThroughExperiment::explore_backprop(
 			if (rand()%2 == 0) {
 			#else
 			double curr_score = this->sum_score / this->state_iter;
-			double existing_score = this->node_context->sum_score / this->node_context->num_measure;
-			if (curr_score <= existing_score) {
+			if (curr_score <= this->existing_average_score) {
 			#endif /* MDEBUG */
 				is_fail = true;
 			} else {
@@ -98,15 +94,14 @@ void PassThroughExperiment::explore_backprop(
 	case PASS_THROUGH_EXPERIMENT_STATE_VERIFY_2ND:
 		if (this->state_iter == VERIFY_2ND_NUM_SAMPLES_PER_ITER) {
 			double curr_score = this->sum_score / this->state_iter;
-			double existing_score = this->node_context->sum_score / this->node_context->num_measure;
 			#if defined(MDEBUG) && MDEBUG
 			if (rand()%2 == 0) {
 			#else
-			if (curr_score <= existing_score) {
+			if (curr_score <= this->existing_average_score) {
 			#endif /* MDEBUG */
 				is_fail = true;
 			} else {
-				this->improvement = curr_score - existing_score;
+				this->improvement = curr_score - this->existing_average_score;
 
 				cout << "PassThrough" << endl;
 				cout << "this->scope_context->id: " << this->scope_context->id << endl;

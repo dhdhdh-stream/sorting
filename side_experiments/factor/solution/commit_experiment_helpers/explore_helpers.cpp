@@ -33,8 +33,6 @@ void CommitExperiment::explore_activate(
 	this->num_instances_until_target--;
 	if (history->existing_predicted_scores.size() == 0
 			&& this->num_instances_until_target == 0) {
-		run_helper.has_explore = true;
-
 		double sum_vals = this->existing_average_score;
 		for (int f_index = 0; f_index < (int)this->existing_factor_ids.size(); f_index++) {
 			double val;

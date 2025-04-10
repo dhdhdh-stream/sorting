@@ -5,6 +5,7 @@
 
 #include "abstract_experiment.h"
 #include "action.h"
+#include "input.h"
 #include "run_helper.h"
 
 class Scope;
@@ -29,8 +30,7 @@ public:
 
 	double o_existing_average_score;
 
-	std::vector<std::pair<std::pair<std::vector<Scope*>,std::vector<int>>,
-		std::pair<int,int>>> existing_inputs;
+	std::vector<Input> existing_inputs;
 	std::vector<std::pair<int,int>> existing_factor_ids;
 
 	double existing_average_score;
@@ -53,8 +53,7 @@ public:
 	AbstractNode* best_exit_next_node;
 
 	double new_average_score;
-	std::vector<std::pair<std::pair<std::vector<Scope*>,std::vector<int>>,
-		std::pair<int,int>>> new_inputs;
+	std::vector<Input> new_inputs;
 
 	std::vector<std::pair<int,int>> new_factor_ids;
 	std::vector<double> new_factor_weights;

@@ -13,10 +13,6 @@ ScopeNode::ScopeNode() {
 	this->type = NODE_TYPE_SCOPE;
 
 	this->experiment = NULL;
-
-	this->last_updated_run_index = -1;
-	this->num_measure = 0;
-	this->sum_score = 0.0;
 }
 
 ScopeNode::ScopeNode(ScopeNode* original,
@@ -30,10 +26,6 @@ ScopeNode::ScopeNode(ScopeNode* original,
 	this->ancestor_ids = original->ancestor_ids;
 
 	this->experiment = NULL;
-
-	this->last_updated_run_index = -1;
-	this->num_measure = 0;
-	this->sum_score = 0.0;
 }
 
 ScopeNode::~ScopeNode() {
@@ -47,9 +39,6 @@ void ScopeNode::clean() {
 		this->experiment->decrement(this);
 		this->experiment = NULL;
 	}
-
-	this->num_measure = 0;
-	this->sum_score = 0.0;
 }
 
 void ScopeNode::save(ofstream& output_file) {

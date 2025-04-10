@@ -31,8 +31,6 @@ void NewScopeExperiment::test_activate(
 	case LOCATION_STATE_VERIFY_NEW_1ST:
 	case LOCATION_STATE_VERIFY_NEW_2ND:
 		{
-			run_helper.has_explore = true;
-
 			ScopeHistory* inner_scope_history = new ScopeHistory(this->new_scope);
 			this->new_scope->experiment_activate(problem,
 												 run_helper,
