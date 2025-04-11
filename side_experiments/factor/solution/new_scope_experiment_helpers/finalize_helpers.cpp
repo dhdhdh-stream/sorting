@@ -17,15 +17,12 @@ using namespace std;
 void NewScopeExperiment::clean() {
 	this->scope_context->new_scope_experiment = NULL;
 
-	this->test_location_start->experiment = NULL;
 	for (int s_index = 0; s_index < (int)this->successful_location_starts.size(); s_index++) {
 		this->successful_location_starts[s_index]->experiment = NULL;
 	}
 }
 
 void NewScopeExperiment::add() {
-	cout << "NewScopeExperiment success" << endl;
-
 	this->new_scope->id = solution->scopes.size();
 	solution->scopes.push_back(this->new_scope);
 

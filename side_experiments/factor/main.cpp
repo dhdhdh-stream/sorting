@@ -4,6 +4,10 @@
 // - with subproblems/subscore, can fast fail
 // - and not directly connected, so early mistakes may not impact later experiments as much
 
+// TODO: add keypoints, but cancel if any node involved is deleted
+
+// TODO: unless experiments selected from start, will always be bias
+
 #include <chrono>
 #include <iostream>
 #include <map>

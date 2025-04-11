@@ -72,6 +72,8 @@ public:
 				  Problem* problem,
 				  RunHelper& run_helper,
 				  ScopeHistory* scope_history);
+	void back_activate(RunHelper& run_helper,
+					   ScopeHistory* scope_history);
 	void backprop(double target_val,
 				  RunHelper& run_helper);
 
@@ -99,6 +101,10 @@ public:
 class NewScopeExperimentHistory : public AbstractExperimentHistory {
 public:
 	bool hit_test;
+
+	int instance_count;
+	AbstractNode* potential_start;
+	bool potential_is_branch;
 
 	NewScopeExperimentHistory(NewScopeExperiment* experiment);
 };

@@ -111,6 +111,7 @@ void create_experiment(ScopeHistory* scope_history,
 		if (explore_node->parent->exceeded) {
 			uniform_int_distribution<int> non_new_distribution(0, 19);
 			if (explore_node->parent->new_scope_experiment == NULL
+					&& explore_node->average_instances_per_run >= NEW_SCOPE_EXPERIMENT_MIN_INSTANCES_PER_RUN
 					&& non_new_distribution(generator) != 0) {
 				NewScopeExperiment* new_scope_experiment = new NewScopeExperiment(
 					explore_node->parent,

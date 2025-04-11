@@ -422,4 +422,7 @@ NewScopeExperimentHistory::NewScopeExperimentHistory(
 	this->experiment = experiment;
 
 	this->hit_test = false;
+
+	this->instance_count = 0;
+	this->potential_start = NULL;
 }
