@@ -150,11 +150,14 @@ void CommitExperiment::commit_train_new_backprop(
 		vector<double> sum_vals(num_instances);
 
 		if (this->commit_new_factor_ids.size() > 0) {
+			#if defined(MDEBUG) && MDEBUG
+			#else
 			double sum_offset = 0.0;
 			for (int i_index = 0; i_index < num_train_instances; i_index++) {
 				sum_offset += abs(this->i_target_val_histories[i_index] - this->commit_new_average_score);
 			}
 			double average_offset = sum_offset / num_train_instances;
+			#endif /* MDEBUG */
 
 			Eigen::MatrixXd inputs(num_train_instances, this->commit_new_factor_ids.size());
 			for (int i_index = 0; i_index < num_train_instances; i_index++) {
@@ -221,10 +224,13 @@ void CommitExperiment::commit_train_new_backprop(
 				remaining_scores[i_index] = this->i_target_val_histories[i_index] - sum_score;
 				sum_vals[i_index] = sum_score;
 
+				#if defined(MDEBUG) && MDEBUG
+				#else
 				if (abs(sum_score) > REGRESSION_FAIL_MULTIPLIER * average_offset) {
 					this->result = EXPERIMENT_RESULT_FAIL;
 					return;
 				}
+				#endif /* MDEBUG */
 			}
 		} else {
 			for (int i_index = 0; i_index < num_instances; i_index++) {

@@ -145,6 +145,8 @@ void CommitExperiment::measure_backprop(double target_val,
 			cout << "this->new_nodes.size(): " << this->new_nodes.size() << endl;
 			cout << "this->step_iter: " << this->step_iter << endl;
 
+			cout << "this->improvement: " << this->improvement << endl;
+
 			#if defined(MDEBUG) && MDEBUG
 			this->verify_problems = vector<Problem*>(NUM_VERIFY_SAMPLES, NULL);
 			this->verify_seeds = vector<unsigned long>(NUM_VERIFY_SAMPLES);

@@ -128,11 +128,14 @@ void BranchExperiment::train_new_backprop(
 		vector<double> sum_vals(num_instances);
 
 		if (this->new_factor_ids.size() > 0) {
+			#if defined(MDEBUG) && MDEBUG
+			#else
 			double sum_offset = 0.0;
 			for (int i_index = 0; i_index < num_train_instances; i_index++) {
 				sum_offset += abs(this->i_target_val_histories[i_index] - this->new_average_score);
 			}
 			double average_offset = sum_offset / num_train_instances;
+			#endif /* MDEBUG */
 
 			Eigen::MatrixXd inputs(num_train_instances, this->new_factor_ids.size());
 			for (int i_index = 0; i_index < num_train_instances; i_index++) {
@@ -199,10 +202,13 @@ void BranchExperiment::train_new_backprop(
 				remaining_scores[i_index] = this->i_target_val_histories[i_index] - sum_score;
 				sum_vals[i_index] = sum_score;
 
+				#if defined(MDEBUG) && MDEBUG
+				#else
 				if (abs(sum_score) > REGRESSION_FAIL_MULTIPLIER * average_offset) {
 					this->result = EXPERIMENT_RESULT_FAIL;
 					return;
 				}
+				#endif /* MDEBUG */
 			}
 		} else {
 			for (int i_index = 0; i_index < num_instances; i_index++) {
@@ -402,11 +408,13 @@ void BranchExperiment::train_new_backprop(
 						break;
 					}
 
+					new_obs_node->average_score = this->node_context->average_score;
 					new_obs_node->average_instances_per_run = this->node_context->average_instances_per_run;
 
 					this->node_context->experiment = NULL;
 
 					this->node_context = new_obs_node;
+					this->is_branch = false;
 					this->node_context->experiment = this;
 
 					this->new_factor_ids.push_back({new_obs_node->id, 0});

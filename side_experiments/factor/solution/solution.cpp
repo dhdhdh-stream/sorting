@@ -79,6 +79,7 @@ void Solution::init() {
 	new_scope->node_counter++;
 	starting_noop_node->next_node_id = -1;
 	starting_noop_node->next_node = NULL;
+	starting_noop_node->average_score = 0.5;
 	starting_noop_node->average_instances_per_run = 1.0;
 	new_scope->nodes[starting_noop_node->id] = starting_noop_node;
 }

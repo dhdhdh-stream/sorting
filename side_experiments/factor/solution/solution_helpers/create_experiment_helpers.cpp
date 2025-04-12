@@ -17,7 +17,7 @@
 
 using namespace std;
 
-const double EXPERIMENT_MIN_AVERAGE_INSTANCES_PER_RUN = 0.4;
+const double EXPERIMENT_MIN_AVERAGE_INSTANCES_PER_RUN = 0.5;
 
 void gather_nodes_seen_helper(ScopeHistory* scope_history,
 							  map<pair<AbstractNode*,bool>, int>& nodes_seen) {
@@ -153,7 +153,8 @@ void create_experiment(ScopeHistory* scope_history,
 			 *     - like tessellation, but have to get both the shape and the pattern correct
 			 *       - and PassThroughExperiments help with both
 			 */
-			if (improvement_iter == 0) {
+			// if (improvement_iter == 0) {
+			if (false) {
 				CommitExperiment* new_commit_experiment = new CommitExperiment(
 					explore_node->parent,
 					explore_node,
