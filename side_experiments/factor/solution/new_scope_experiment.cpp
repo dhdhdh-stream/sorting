@@ -345,8 +345,6 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 		this->test_location_new_score= 0.0;
 		this->test_location_count = 0;
 
-		this->average_remaining_experiments_from_start = 1.0;
-
 		/**
 		 * - added to node_context.experiments outside
 		 */

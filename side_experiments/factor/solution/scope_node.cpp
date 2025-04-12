@@ -16,6 +16,7 @@ ScopeNode::ScopeNode() {
 
 	this->last_updated_run_index = -1;
  	this->num_measure = 0;
+ 	this->sum_score = 0.0;
 }
 
 ScopeNode::ScopeNode(ScopeNode* original,
@@ -32,6 +33,7 @@ ScopeNode::ScopeNode(ScopeNode* original,
 
 	this->last_updated_run_index = -1;
  	this->num_measure = 0;
+ 	this->sum_score = 0.0;
 }
 
 ScopeNode::~ScopeNode() {
@@ -47,6 +49,7 @@ void ScopeNode::clean() {
 	}
 
 	this->num_measure = 0;
+	this->sum_score = 0.0;
 }
 
 void ScopeNode::save(ofstream& output_file) {
@@ -59,6 +62,7 @@ void ScopeNode::save(ofstream& output_file) {
 		output_file << this->ancestor_ids[a_index] << endl;
 	}
 
+	output_file << this->average_score << endl;
 	output_file << this->average_instances_per_run << endl;
 }
 
@@ -80,6 +84,10 @@ void ScopeNode::load(ifstream& input_file,
 		getline(input_file, ancestor_id_line);
 		this->ancestor_ids.push_back(stoi(ancestor_id_line));
 	}
+
+	string average_score_line;
+	getline(input_file, average_score_line);
+	this->average_score = stod(average_score_line);
 
 	string average_instances_per_run_line;
 	getline(input_file, average_instances_per_run_line);

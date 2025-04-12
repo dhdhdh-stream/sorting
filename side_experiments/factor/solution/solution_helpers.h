@@ -16,7 +16,8 @@ class ScopeNode;
 class Solution;
 
 void create_experiment(ScopeHistory* scope_history,
-					   int improvement_iter);
+					   int improvement_iter,
+					   AbstractExperiment*& curr_experiment);
 
 void gather_possible_helper(ScopeHistory* scope_history,
 							std::vector<Scope*>& scope_context,

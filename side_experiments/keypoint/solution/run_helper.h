@@ -11,10 +11,10 @@ class AbstractNode;
 
 class RunHelper {
 public:
-	int num_analyze;
-	int num_actions;
-
 	AbstractExperimentHistory* experiment_history;
+
+	bool verify_keypoints;
+	std::vector<double> keypoint_misguess_factors;
 
 	#if defined(MDEBUG) && MDEBUG
 	unsigned long starting_run_seed;

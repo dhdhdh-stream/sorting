@@ -53,6 +53,7 @@ int main(int argc, char* argv[]) {
 	auto start_time = chrono::high_resolution_clock::now();
 
 	while (solution->timestamp < EXPLORE_ITERS) {
+		AbstractExperiment* curr_experiment = NULL;
 		AbstractExperiment* best_experiment = NULL;
 
 		int improvement_iter = 0;
@@ -81,29 +82,24 @@ int main(int argc, char* argv[]) {
 			target_val -= 0.05 * run_helper.num_actions * solution->curr_time_penalty;
 			target_val -= run_helper.num_analyze * solution->curr_time_penalty;
 
-			if (run_helper.experiments_seen_order.size() == 0) {
+			if (curr_experiment == NULL) {
 				create_experiment(scope_history,
-								  improvement_iter);
+								  improvement_iter,
+								  curr_experiment);
 			}
 
 			delete scope_history;
 			delete problem;
 
 			if (run_helper.experiment_history != NULL) {
-				for (int e_index = 0; e_index < (int)run_helper.experiments_seen_order.size(); e_index++) {
-					AbstractExperiment* experiment = run_helper.experiments_seen_order[e_index];
-					experiment->average_remaining_experiments_from_start =
-						0.9 * experiment->average_remaining_experiments_from_start
-						+ 0.1 * ((int)run_helper.experiments_seen_order.size()-1 - e_index
-							+ run_helper.experiment_history->experiment->average_remaining_experiments_from_start);
-				}
-
 				run_helper.experiment_history->experiment->backprop(
 					target_val,
 					run_helper);
 				if (run_helper.experiment_history->experiment->result == EXPERIMENT_RESULT_FAIL) {
 					run_helper.experiment_history->experiment->clean();
 					delete run_helper.experiment_history->experiment;
+
+					curr_experiment = NULL;
 				} else if (run_helper.experiment_history->experiment->result == EXPERIMENT_RESULT_SUCCESS) {
 					run_helper.experiment_history->experiment->clean();
 
@@ -118,17 +114,12 @@ int main(int argc, char* argv[]) {
 						}
 					}
 
+					curr_experiment = NULL;
+
 					improvement_iter++;
 					if (improvement_iter >= IMPROVEMENTS_PER_ITER) {
 						break;
 					}
-				}
-			} else {
-				for (int e_index = 0; e_index < (int)run_helper.experiments_seen_order.size(); e_index++) {
-					AbstractExperiment* experiment = run_helper.experiments_seen_order[e_index];
-					experiment->average_remaining_experiments_from_start =
-						0.9 * experiment->average_remaining_experiments_from_start
-						+ 0.1 * ((int)run_helper.experiments_seen_order.size()-1 - e_index);
 				}
 			}
 		}
@@ -176,6 +167,7 @@ int main(int argc, char* argv[]) {
 		for (int s_index = 0; s_index < (int)solution->scopes.size(); s_index++) {
 			for (map<int, AbstractNode*>::iterator it = solution->scopes[s_index]->nodes.begin();
 					it != solution->scopes[s_index]->nodes.end(); it++) {
+				it->second->average_score = it->second->sum_score / it->second->num_measure;
 				it->second->average_instances_per_run = it->second->num_measure / MEASURE_ITERS;
 			}
 		}

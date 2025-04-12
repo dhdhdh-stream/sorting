@@ -23,8 +23,6 @@ PassThroughExperiment::PassThroughExperiment(Scope* scope_context,
 	this->node_context = node_context;
 	this->is_branch = is_branch;
 
-	this->average_remaining_experiments_from_start = 1.0;
-
 	this->sum_score = 0.0;
 
 	this->state = PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING;

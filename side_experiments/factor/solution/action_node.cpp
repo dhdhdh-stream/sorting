@@ -14,6 +14,7 @@ ActionNode::ActionNode() {
 
 	this->last_updated_run_index = -1;
  	this->num_measure = 0;
+ 	this->sum_score = 0.0;
 }
 
 ActionNode::ActionNode(ActionNode* original) {
@@ -29,6 +30,7 @@ ActionNode::ActionNode(ActionNode* original) {
 
 	this->last_updated_run_index = -1;
  	this->num_measure = 0;
+ 	this->sum_score = 0.0;
 }
 
 ActionNode::~ActionNode() {
@@ -44,6 +46,7 @@ void ActionNode::clean() {
 	}
 
 	this->num_measure = 0;
+	this->sum_score = 0.0;
 }
 
 void ActionNode::save(ofstream& output_file) {
@@ -56,6 +59,7 @@ void ActionNode::save(ofstream& output_file) {
 		output_file << this->ancestor_ids[a_index] << endl;
 	}
 
+	output_file << this->average_score << endl;
 	output_file << this->average_instances_per_run << endl;
 }
 
@@ -74,6 +78,10 @@ void ActionNode::load(ifstream& input_file) {
 		getline(input_file, ancestor_id_line);
 		this->ancestor_ids.push_back(stoi(ancestor_id_line));
 	}
+
+	string average_score_line;
+	getline(input_file, average_score_line);
+	this->average_score = stod(average_score_line);
 
 	string average_instances_per_run_line;
 	getline(input_file, average_instances_per_run_line);

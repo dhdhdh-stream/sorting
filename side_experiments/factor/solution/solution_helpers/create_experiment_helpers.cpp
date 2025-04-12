@@ -17,11 +17,14 @@
 
 using namespace std;
 
+const double EXPERIMENT_MIN_AVERAGE_INSTANCES_PER_RUN = 0.4;
+
 void gather_nodes_seen_helper(ScopeHistory* scope_history,
 							  map<pair<AbstractNode*,bool>, int>& nodes_seen) {
 	for (map<int, AbstractNodeHistory*>::iterator h_it = scope_history->node_histories.begin();
 			h_it != scope_history->node_histories.end(); h_it++) {
-		if (h_it->second->node->experiment == NULL) {
+		if (h_it->second->node->experiment == NULL
+				&& h_it->second->node->average_instances_per_run > EXPERIMENT_MIN_AVERAGE_INSTANCES_PER_RUN) {
 			switch (h_it->second->node->type) {
 			case NODE_TYPE_ACTION:
 			case NODE_TYPE_OBS:
@@ -69,7 +72,8 @@ void gather_nodes_seen_helper(ScopeHistory* scope_history,
 }
 
 void create_experiment(ScopeHistory* scope_history,
-					   int improvement_iter) {
+					   int improvement_iter,
+					   AbstractExperiment*& curr_experiment) {
 	map<pair<AbstractNode*,bool>,int> nodes_seen;
 	gather_nodes_seen_helper(scope_history,
 							 nodes_seen);
@@ -123,6 +127,8 @@ void create_experiment(ScopeHistory* scope_history,
 				} else {
 					explore_node->parent->new_scope_experiment = new_scope_experiment;
 					explore_node->experiment = new_scope_experiment;
+
+					curr_experiment = new_scope_experiment;
 				}
 			} else {
 				if (improvement_iter > 3) {
@@ -135,6 +141,8 @@ void create_experiment(ScopeHistory* scope_history,
 						delete new_experiment;
 					} else {
 						explore_node->experiment = new_experiment;
+
+						curr_experiment = new_experiment;
 					}
 				}
 			}
@@ -145,13 +153,14 @@ void create_experiment(ScopeHistory* scope_history,
 			 *     - like tessellation, but have to get both the shape and the pattern correct
 			 *       - and PassThroughExperiments help with both
 			 */
-			// if (improvement_iter == 0) {
-			if (false) {
+			if (improvement_iter == 0) {
 				CommitExperiment* new_commit_experiment = new CommitExperiment(
 					explore_node->parent,
 					explore_node,
 					explore_is_branch);
 				explore_node->experiment = new_commit_experiment;
+
+				curr_experiment = new_commit_experiment;
 			} else {
 				uniform_int_distribution<int> pass_through_distribution(0, 1);
 				if (pass_through_distribution(generator) == 0
@@ -165,6 +174,8 @@ void create_experiment(ScopeHistory* scope_history,
 						delete new_experiment;
 					} else {
 						explore_node->experiment = new_experiment;
+
+						curr_experiment = new_experiment;
 					}
 				} else {
 					BranchExperiment* new_experiment = new BranchExperiment(
@@ -173,6 +184,8 @@ void create_experiment(ScopeHistory* scope_history,
 						explore_is_branch);
 
 					explore_node->experiment = new_experiment;
+
+					curr_experiment = new_experiment;
 				}
 			}
 		}
