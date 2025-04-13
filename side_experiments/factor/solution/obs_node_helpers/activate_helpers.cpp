@@ -12,6 +12,7 @@ void ObsNode::activate(AbstractNode*& curr_node,
 					   ScopeHistory* scope_history) {
 	if (this->is_used) {
 		ObsNodeHistory* history = new ObsNodeHistory(this);
+		history->index = (int)scope_history->node_histories.size();
 		scope_history->node_histories[this->id] = history;
 
 		vector<double> obs = problem->get_observations();

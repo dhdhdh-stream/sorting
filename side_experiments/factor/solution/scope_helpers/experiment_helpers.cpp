@@ -19,7 +19,8 @@ void Scope::experiment_activate(Problem* problem,
 
 	AbstractNode* curr_node = this->nodes[0];
 	while (true) {
-		if (curr_node == NULL) {
+		if (curr_node == NULL
+				|| run_helper.early_exit) {
 			break;
 		}
 

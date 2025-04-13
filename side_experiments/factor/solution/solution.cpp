@@ -15,7 +15,7 @@
 
 using namespace std;
 
-const double STARTING_TIME_PENALTY = 0.001;
+const double STARTING_TIME_PENALTY = 0.0005;
 
 Solution::Solution() {
 	// do nothing
@@ -44,6 +44,9 @@ Solution::Solution(Solution* original) {
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
 		this->scopes[s_index]->link(this);
 	}
+
+	this->obs_average_vals = original->obs_average_vals;
+	this->obs_variances = original->obs_variances;
 }
 
 Solution::~Solution() {
@@ -82,6 +85,9 @@ void Solution::init() {
 	starting_noop_node->average_score = 0.5;
 	starting_noop_node->average_instances_per_run = 1.0;
 	new_scope->nodes[starting_noop_node->id] = starting_noop_node;
+
+	this->obs_average_vals = vector<double>(problem_type->num_obs(), 0.0);
+	this->obs_variances = vector<double>(problem_type->num_obs(), 1.0);
 }
 
 void Solution::load(string path,
@@ -130,6 +136,16 @@ void Solution::load(string path,
 
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
 		this->scopes[s_index]->link(this);
+	}
+
+	for (int o_index = 0; o_index < problem_type->num_obs(); o_index++) {
+		string average_val_line;
+		getline(input_file, average_val_line);
+		this->obs_average_vals.push_back(stod(average_val_line));
+
+		string variance_line;
+		getline(input_file, variance_line);
+		this->obs_variances.push_back(stod(variance_line));
 	}
 
 	input_file.close();
@@ -207,6 +223,12 @@ void Solution::clean() {
 	}
 }
 
+void Solution::measure_update() {
+	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
+		this->scopes[s_index]->measure_update();
+	}
+}
+
 void Solution::save(string path,
 					string name) {
 	ofstream output_file;
@@ -224,6 +246,11 @@ void Solution::save(string path,
 
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
 		this->scopes[s_index]->save(output_file);
+	}
+
+	for (int o_index = 0; o_index < problem_type->num_obs(); o_index++) {
+		output_file << this->obs_average_vals[o_index] << endl;
+		output_file << this->obs_variances[o_index] << endl;
 	}
 
 	output_file.close();

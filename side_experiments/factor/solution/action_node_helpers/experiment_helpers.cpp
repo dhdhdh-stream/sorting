@@ -15,6 +15,7 @@ void ActionNode::experiment_activate(AbstractNode*& curr_node,
 									 RunHelper& run_helper,
 									 ScopeHistory* scope_history) {
 	ActionNodeHistory* history = new ActionNodeHistory(this);
+	history->index = (int)scope_history->node_histories.size();
 	scope_history->node_histories[this->id] = history;
 
 	problem->perform_action(this->action);

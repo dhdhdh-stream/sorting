@@ -43,8 +43,7 @@ void BranchExperiment::train_new_activate(
 		double sum_vals = this->existing_average_score;
 		for (int f_index = 0; f_index < (int)this->existing_factor_ids.size(); f_index++) {
 			double val;
-			fetch_factor_helper(run_helper,
-								scope_history,
+			fetch_factor_helper(scope_history,
 								this->existing_factor_ids[f_index],
 								val);
 			sum_vals += this->existing_factor_weights[f_index] * val;
@@ -53,8 +52,7 @@ void BranchExperiment::train_new_activate(
 
 		vector<double> input_vals(this->new_inputs.size());
 		for (int i_index = 0; i_index < (int)this->new_inputs.size(); i_index++) {
-			fetch_input_helper(run_helper,
-							   scope_history,
+			fetch_input_helper(scope_history,
 							   this->new_inputs[i_index],
 							   0,
 							   input_vals[i_index]);
@@ -63,8 +61,7 @@ void BranchExperiment::train_new_activate(
 
 		vector<double> factor_vals(this->new_factor_ids.size());
 		for (int f_index = 0; f_index < (int)this->new_factor_ids.size(); f_index++) {
-			fetch_factor_helper(run_helper,
-								scope_history,
+			fetch_factor_helper(scope_history,
 								this->new_factor_ids[f_index],
 								factor_vals[f_index]);
 		}

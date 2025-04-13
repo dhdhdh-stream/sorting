@@ -37,6 +37,7 @@ public:
 	virtual ~AbstractNode() {};
 
 	virtual void clean() = 0;
+	virtual void measure_update() = 0;
 
 	virtual void save(std::ofstream& output_file) = 0;
 	virtual void link(Solution* parent_solution) = 0;
@@ -46,6 +47,8 @@ public:
 class AbstractNodeHistory {
 public:
 	AbstractNode* node;
+
+	int index;
 
 	virtual ~AbstractNodeHistory() {};
 };

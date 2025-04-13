@@ -69,8 +69,7 @@ void CommitExperiment::commit_train_new_activate(
 	double sum_vals = this->commit_existing_average_score;
 	for (int f_index = 0; f_index < (int)this->commit_existing_factor_ids.size(); f_index++) {
 		double val;
-		fetch_factor_helper(run_helper,
-							scope_history,
+		fetch_factor_helper(scope_history,
 							this->commit_existing_factor_ids[f_index],
 							val);
 		sum_vals += this->commit_existing_factor_weights[f_index] * val;
@@ -79,8 +78,7 @@ void CommitExperiment::commit_train_new_activate(
 
 	vector<double> input_vals(this->commit_new_inputs.size());
 	for (int i_index = 0; i_index < (int)this->commit_new_inputs.size(); i_index++) {
-		fetch_input_helper(run_helper,
-						   scope_history,
+		fetch_input_helper(scope_history,
 						   this->commit_new_inputs[i_index],
 						   0,
 						   input_vals[i_index]);
@@ -89,8 +87,7 @@ void CommitExperiment::commit_train_new_activate(
 
 	vector<double> factor_vals(this->commit_new_factor_ids.size());
 	for (int f_index = 0; f_index < (int)this->commit_new_factor_ids.size(); f_index++) {
-		fetch_factor_helper(run_helper,
-							scope_history,
+		fetch_factor_helper(scope_history,
 							this->commit_new_factor_ids[f_index],
 							factor_vals[f_index]);
 	}

@@ -26,15 +26,23 @@ void gather_possible_helper(ScopeHistory* scope_history,
 							Input& new_input);
 void gather_possible_factor_helper(ScopeHistory* scope_history,
 								   std::pair<int,int>& new_factor);
-void fetch_factor_helper(RunHelper& run_helper,
-						 ScopeHistory* scope_history,
+void fetch_factor_helper(ScopeHistory* scope_history,
 						 std::pair<int,int> factor,
 						 double& val);
-void fetch_input_helper(RunHelper& run_helper,
-						ScopeHistory* scope_history,
+void fetch_input_helper(ScopeHistory* scope_history,
 						Input& input,
 						int l_index,
 						double& obs);
+void fetch_input_helper(ScopeHistory* scope_history,
+						Input& input,
+						int l_index,
+						bool& hit,
+						double& obs);
+
+void update_scores(ScopeHistory* scope_history,
+				   double target_val);
+
+void keypoint_experiment(std::vector<ScopeHistory*>& scope_histories);
 
 void clean_scope(Scope* scope);
 

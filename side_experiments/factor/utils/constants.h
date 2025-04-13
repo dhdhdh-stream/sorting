@@ -36,6 +36,9 @@ const int NETWORK_NUM_INPUTS = 10;
 
 const double NEW_SCOPE_EXPERIMENT_MIN_INSTANCES_PER_RUN = 0.2;
 
+const int KEYPOINT_NUM_CHECK = 3;
+const double KEYPOINT_MAX_FACTOR = 4.0;
+
 #if defined(MDEBUG) && MDEBUG
 const int MEASURE_ITERS = 10;
 #else
@@ -45,6 +48,8 @@ const int MEASURE_ITERS = 10;
  */
 const int MEASURE_ITERS = 4000;
 #endif /* MDEBUG */
+
+const int KEYPOINT_EXPERIMENTS_PER_MEASURE = 10;
 
 const int SCOPE_EXCEEDED_NUM_NODES = 80;
 const int SCOPE_RESUME_NUM_NODES = 40;

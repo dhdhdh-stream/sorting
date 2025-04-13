@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "abstract_experiment.h"
+#include "constants.h"
 #include "scope.h"
 
 using namespace std;
@@ -47,6 +48,11 @@ void ActionNode::clean() {
 
 	this->num_measure = 0;
 	this->sum_score = 0.0;
+}
+
+void ActionNode::measure_update() {
+	this->average_score = this->sum_score / this->num_measure;
+	this->average_instances_per_run = this->num_measure / MEASURE_ITERS;
 }
 
 void ActionNode::save(ofstream& output_file) {

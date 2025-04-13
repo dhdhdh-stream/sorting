@@ -11,6 +11,7 @@ void ObsNode::commit_activate(Problem* problem,
 							  RunHelper& run_helper,
 							  ScopeHistory* scope_history) {
 	ObsNodeHistory* history = new ObsNodeHistory(this);
+	history->index = (int)scope_history->node_histories.size();
 	scope_history->node_histories[this->id] = history;
 
 	vector<double> obs = problem->get_observations();

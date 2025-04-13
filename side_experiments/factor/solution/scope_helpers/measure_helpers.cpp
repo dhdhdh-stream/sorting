@@ -20,11 +20,6 @@ void Scope::measure_activate(Problem* problem,
 			break;
 		}
 
-		if (curr_node->last_updated_run_index != run_index) {
- 			curr_node->last_updated_run_index = run_index;
- 			curr_node->num_measure++;
- 		}
-
 		switch (curr_node->type) {
 		case NODE_TYPE_ACTION:
 			{
@@ -53,10 +48,10 @@ void Scope::measure_activate(Problem* problem,
 		case NODE_TYPE_OBS:
 			{
 				ObsNode* node = (ObsNode*)curr_node;
-				node->activate(curr_node,
-							   problem,
-							   run_helper,
-							   history);
+				node->measure_activate(curr_node,
+									   problem,
+									   run_helper,
+									   history);
 			}
 			break;
 		}

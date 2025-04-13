@@ -67,6 +67,7 @@ public:
 	void clean_inputs(Scope* scope);
 
 	void clean();
+	void measure_update();
 
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file,

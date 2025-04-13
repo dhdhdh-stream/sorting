@@ -57,8 +57,7 @@ int main(int argc, char* argv[]) {
 		delete scope_history;
 
 		double target_val = problem->score_result();
-		target_val -= 0.05 * run_helper.num_actions * solution->curr_time_penalty;
-		target_val -= run_helper.num_analyze * solution->curr_time_penalty;
+		target_val -= run_helper.num_actions * solution->curr_time_penalty;
 
 		if (run_helper.num_actions > max_num_actions) {
 			max_num_actions = run_helper.num_actions;

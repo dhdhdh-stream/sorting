@@ -78,9 +78,23 @@ int main(int argc, char* argv[]) {
 					run_helper,
 					scope_history);
 
-			double target_val = problem->score_result();
-			target_val -= 0.05 * run_helper.num_actions * solution->curr_time_penalty;
-			target_val -= run_helper.num_analyze * solution->curr_time_penalty;
+			if (run_helper.keypoint_misguess_factors.size() > 0) {
+				double sum_misguess_factors = 0.0;
+				for (int m_index = 0; m_index < (int)run_helper.keypoint_misguess_factors.size(); m_index++) {
+					sum_misguess_factors += run_helper.keypoint_misguess_factors[m_index];
+				}
+				if (sum_misguess_factors / run_helper.keypoint_misguess_factors.size() > KEYPOINT_MAX_FACTOR) {
+					run_helper.early_exit = true;
+				}
+			}
+
+			double target_val;
+			if (run_helper.early_exit) {
+				target_val = -10.0;
+			} else {
+				double target_val = problem->score_result();
+				target_val -= run_helper.num_actions * solution->curr_time_penalty;
+			}
 
 			if (curr_experiment == NULL) {
 				create_experiment(scope_history,
@@ -142,6 +156,7 @@ int main(int argc, char* argv[]) {
 
 		double sum_score = 0.0;
 		double sum_true_score = 0.0;
+		vector<ScopeHistory*> scope_histories;
 		for (int iter_index = 0; iter_index < MEASURE_ITERS; iter_index++) {
 			run_index++;
 
@@ -157,19 +172,25 @@ int main(int argc, char* argv[]) {
 			delete scope_history;
 
 			double target_val = problem->score_result();
-			sum_score += target_val - 0.05 * run_helper.num_actions * solution->curr_time_penalty
-				- run_helper.num_analyze * solution->curr_time_penalty;
+			sum_score += target_val - run_helper.num_actions * solution->curr_time_penalty;
 			sum_true_score += target_val;
+
+			update_scores(scope_history,
+						  target_val);
+
+			scope_histories.push_back(scope_history);
 
 			delete problem;
 		}
 
-		for (int s_index = 0; s_index < (int)solution->scopes.size(); s_index++) {
-			for (map<int, AbstractNode*>::iterator it = solution->scopes[s_index]->nodes.begin();
-					it != solution->scopes[s_index]->nodes.end(); it++) {
-				it->second->average_score = it->second->sum_score / it->second->num_measure;
-				it->second->average_instances_per_run = it->second->num_measure / MEASURE_ITERS;
-			}
+		solution->measure_update();
+
+		for (int k_index = 0; k_index < KEYPOINT_EXPERIMENTS_PER_MEASURE; k_index++) {
+			keypoint_experiment(scope_histories);
+		}
+
+		for (int h_index = 0; h_index < (int)scope_histories.size(); h_index++) {
+			delete scope_histories[h_index];
 		}
 
 		solution->curr_score = sum_score / MEASURE_ITERS;

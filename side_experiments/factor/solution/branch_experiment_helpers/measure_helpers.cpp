@@ -41,8 +41,7 @@ void BranchExperiment::measure_activate(
 		double sum_vals = this->new_average_score;
 		for (int f_index = 0; f_index < (int)this->new_factor_ids.size(); f_index++) {
 			double val;
-			fetch_factor_helper(run_helper,
-								scope_history,
+			fetch_factor_helper(scope_history,
 								this->new_factor_ids[f_index],
 								val);
 			sum_vals += this->new_factor_weights[f_index] * val;

@@ -42,6 +42,9 @@ public:
 
 	std::vector<Scope*> scopes;
 
+	std::vector<double> obs_average_vals;
+	std::vector<double> obs_variances;
+
 	#if defined(MDEBUG) && MDEBUG
 	std::vector<Problem*> verify_problems;
 	std::vector<unsigned long> verify_seeds;
@@ -64,6 +67,7 @@ public:
 	void clean_scopes();
 
 	void clean();
+	void measure_update();
 
 	void save(std::string path,
 			  std::string name);

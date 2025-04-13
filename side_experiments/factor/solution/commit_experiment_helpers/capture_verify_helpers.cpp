@@ -59,8 +59,7 @@ void CommitExperiment::capture_verify_activate(
 	double sum_vals = this->commit_new_average_score;
 	for (int f_index = 0; f_index < (int)this->commit_new_factor_ids.size(); f_index++) {
 		double val;
-		fetch_factor_helper(run_helper,
-							scope_history,
+		fetch_factor_helper(scope_history,
 							this->commit_new_factor_ids[f_index],
 							val);
 		sum_vals += this->commit_new_factor_weights[f_index] * val;

@@ -17,13 +17,13 @@ void BranchNode::verify_activate(AbstractNode*& curr_node,
 								 RunHelper& run_helper,
 								 ScopeHistory* scope_history) {
 	BranchNodeHistory* history = new BranchNodeHistory(this);
+	history->index = (int)scope_history->node_histories.size();
 	scope_history->node_histories[this->id] = history;
 
 	double sum_vals = this->average_val;
 	for (int f_index = 0; f_index < (int)this->factor_ids.size(); f_index++) {
 		double val;
-		fetch_factor_helper(run_helper,
-							scope_history,
+		fetch_factor_helper(scope_history,
 							this->factor_ids[f_index],
 							val);
 		sum_vals += this->factor_weights[f_index] * val;

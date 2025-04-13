@@ -55,13 +55,11 @@ int main(int argc, char* argv[]) {
 		delete scope_history;
 
 		double target_val = problem->score_result();
-		target_val -= 0.05 * run_helper.num_actions * solution->curr_time_penalty;
-		target_val -= run_helper.num_analyze * solution->curr_time_penalty;
+		target_val -= run_helper.num_actions * solution->curr_time_penalty;
 		cout << "target_val: " << target_val << endl;
 
 		problem->print();
 
-		cout << "run_helper.num_analyze: " << run_helper.num_analyze << endl;
 		cout << "run_helper.num_actions: " << run_helper.num_actions << endl;
 
 		delete problem;

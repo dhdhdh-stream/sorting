@@ -8,6 +8,7 @@
 #include "run_helper.h"
 
 class Factor;
+class Keypoint;
 class Problem;
 class Scope;
 class ScopeHistory;
@@ -19,6 +20,8 @@ public:
 	bool is_used;
 
 	std::vector<Factor*> factors;
+
+	std::vector<Keypoint*> keypoints;
 
 	int next_node_id;
 	AbstractNode* next_node;
@@ -42,11 +45,17 @@ public:
 						 RunHelper& run_helper,
 						 ScopeHistory* scope_history);
 
+	void measure_activate(AbstractNode*& curr_node,
+						  Problem* problem,
+						  RunHelper& run_helper,
+						  ScopeHistory* scope_history);
+
 	void clean_inputs(Scope* scope,
 					  int node_id);
 	void clean_inputs(Scope* scope);
 
 	void clean();
+	void measure_update();
 
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file,

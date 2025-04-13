@@ -26,8 +26,7 @@ public:
 		   Solution* parent_solution);
 	~Factor();
 
-	double back_activate(RunHelper& run_helper,
-						 ScopeHistory* scope_history);
+	double back_activate(ScopeHistory* scope_history);
 
 	void clean_inputs(Scope* scope,
 					  int node_id);
