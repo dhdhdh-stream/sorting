@@ -4,8 +4,6 @@
 // - with subproblems/subscore, can fast fail
 // - and not directly connected, so early mistakes may not impact later experiments as much
 
-// TODO: add keypoints, but cancel if any node involved is deleted
-
 // TODO: add experiments that are completely separate from each other
 
 #include <chrono>
@@ -114,7 +112,7 @@ int main(int argc, char* argv[]) {
 			if (run_helper.early_exit) {
 				target_val = -10.0;
 			} else {
-				double target_val = problem->score_result();
+				target_val = problem->score_result();
 				target_val -= run_helper.num_actions * solution->curr_time_penalty;
 			}
 
@@ -190,12 +188,12 @@ int main(int argc, char* argv[]) {
 		solution->clear_verify();
 		#endif /* MDEBUG */
 
-		if (last_updated_scope->nodes.size() >= SCOPE_EXCEEDED_NUM_NODES) {
-			last_updated_scope->exceeded = true;
-		}
-		if (last_updated_scope->nodes.size() <= SCOPE_RESUME_NUM_NODES) {
-			last_updated_scope->exceeded = false;
-		}
+		// if (last_updated_scope->nodes.size() >= SCOPE_EXCEEDED_NUM_NODES) {
+		// 	last_updated_scope->exceeded = true;
+		// }
+		// if (last_updated_scope->nodes.size() <= SCOPE_RESUME_NUM_NODES) {
+		// 	last_updated_scope->exceeded = false;
+		// }
 
 		solution->clean();
 
@@ -262,7 +260,7 @@ int main(int argc, char* argv[]) {
 			solution->curr_time_penalty *= 0.8;
 		}
 
-		// solution->save("saves/", filename);
+		solution->save("saves/", filename);
 
 		ofstream display_file;
 		display_file.open("../display.txt");
@@ -277,7 +275,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	solution->clean_scopes();
-	// solution->save("saves/", filename);
+	solution->save("saves/", filename);
 
 	delete problem_type;
 	delete solution;

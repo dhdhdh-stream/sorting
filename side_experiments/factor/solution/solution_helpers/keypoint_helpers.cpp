@@ -1,6 +1,7 @@
 #include "solution_helpers.h"
 
 #include <algorithm>
+#include <iostream>
 
 #include "branch_node.h"
 #include "factor.h"
@@ -207,15 +208,17 @@ void keypoint_experiment(vector<ScopeHistory*>& scope_histories) {
 			}
 		}
 
-		bool is_existing = false;
-		for (int i_index = 0; i_index < (int)inputs.size(); i_index++) {
-			if (new_input == inputs[i_index]) {
-				is_existing = true;
-				break;
+		if (new_input.scope_context.size() > 0) {
+			bool is_existing = false;
+			for (int i_index = 0; i_index < (int)inputs.size(); i_index++) {
+				if (new_input == inputs[i_index]) {
+					is_existing = true;
+					break;
+				}
 			}
-		}
-		if (!is_existing) {
-			inputs.push_back(new_input);
+			if (!is_existing) {
+				inputs.push_back(new_input);
+			}
 		}
 	}
 
@@ -270,6 +273,11 @@ void keypoint_experiment(vector<ScopeHistory*>& scope_histories) {
 						new_misguess_standard_deviation);
 
 		double obs_misguess = sqrt(solution->obs_variances[explore_obs_index]);
+
+		cout << "obs_misguess: " << obs_misguess << endl;
+		cout << "new_average_misguess: " << new_average_misguess << endl;
+		cout << "explore_node->id: " << explore_node->id << endl;
+
 		if (new_average_misguess < KEYPOINT_MAX_MISGUESS_RATIO * obs_misguess) {
 			if (explore_node->keypoints[explore_obs_index] != NULL) {
 				delete explore_node->keypoints[explore_obs_index];
@@ -280,6 +288,8 @@ void keypoint_experiment(vector<ScopeHistory*>& scope_histories) {
 			new_keypoint->network = network;
 			new_keypoint->misguess_standard_deviation = new_misguess_standard_deviation;
 			new_keypoint->availability = new_availability;
+			// temp
+			new_keypoint->created_timestamp = solution->timestamp;
 			explore_node->keypoints[explore_obs_index] = new_keypoint;
 		} else {
 			delete network;

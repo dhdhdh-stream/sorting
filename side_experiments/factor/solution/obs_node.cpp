@@ -113,7 +113,9 @@ void ObsNode::clean_inputs(Scope* scope) {
 
 void ObsNode::clean() {
 	for (int k_index = 0; k_index < (int)this->keypoints.size(); k_index++) {
-		this->keypoints[k_index]->clean();
+		if (this->keypoints[k_index] != NULL) {
+			this->keypoints[k_index]->clean();
+		}
 	}
 
 	if (this->experiment != NULL) {
@@ -127,7 +129,9 @@ void ObsNode::clean() {
 
 void ObsNode::measure_update() {
 	for (int k_index = 0; k_index < (int)this->keypoints.size(); k_index++) {
-		this->keypoints[k_index]->measure_update();
+		if (this->keypoints[k_index] != NULL) {
+			this->keypoints[k_index]->measure_update();
+		}
 	}
 
 	this->average_score = this->sum_score / this->num_measure;
@@ -175,13 +179,15 @@ void ObsNode::load(ifstream& input_file,
 		string is_null_line;
 		getline(input_file, is_null_line);
 		bool is_null = stoi(is_null_line);
-		if (is_null) {
-			this->keypoints.push_back(NULL);
-		} else {
+		if (!is_null) {
 			Keypoint* keypoint = new Keypoint();
 			keypoint->load(input_file,
 						   parent_solution);
-			this->keypoints.push_back(keypoint);
+			this->keypoints[k_index] = keypoint;
+
+			// temp
+			cout << "this->id: " << this->id << endl;
+			cout << "this->keypoints[k_index]->created_timestamp: " << this->keypoints[k_index]->created_timestamp << endl;
 		}
 	}
 

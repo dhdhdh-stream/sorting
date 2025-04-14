@@ -22,6 +22,9 @@ public:
 	int num_miss;
 	double sum_misguess;
 
+	// temp
+	int created_timestamp;
+
 	Keypoint();
 	Keypoint(Keypoint* original,
 			 Solution* parent_solution);

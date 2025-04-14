@@ -67,6 +67,8 @@ void BranchExperiment::train_new_activate(
 		}
 		this->factor_histories.push_back(factor_vals);
 
+		run_helper.verify_keypoints = true;
+
 		for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 			if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 				problem->perform_action(this->best_actions[s_index]);

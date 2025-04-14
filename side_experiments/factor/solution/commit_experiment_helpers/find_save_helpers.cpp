@@ -124,6 +124,8 @@ void CommitExperiment::find_save_activate(
 		this->state_iter = 0;
 	}
 
+	run_helper.verify_keypoints = true;
+
 	for (int s_index = 0; s_index < (int)this->save_step_types.size(); s_index++) {
 		if (this->save_step_types[s_index] == STEP_TYPE_ACTION) {
 			problem->perform_action(this->save_actions[s_index]);

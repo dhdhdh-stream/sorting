@@ -42,13 +42,17 @@ int main(int argc, char* argv[]) {
 		solution->load("saves/", "main.txt");
 	}
 
+	cout << "solution->obs_average_vals[0]: " << solution->obs_average_vals[0] << endl;
+	cout << "solution->obs_variances[0]: " << solution->obs_variances[0] << endl;
+
 	{
 		Problem* problem = problem_type->get_problem();
 
 		RunHelper run_helper;
 
 		ScopeHistory* scope_history = new ScopeHistory(solution->scopes[0]);
-		solution->scopes[0]->activate(
+		// solution->scopes[0]->activate(
+		solution->scopes[0]->measure_activate(
 			problem,
 			run_helper,
 			scope_history);

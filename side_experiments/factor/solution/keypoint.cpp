@@ -26,6 +26,9 @@ Keypoint::Keypoint(Keypoint* original,
 	this->misguess_standard_deviation = original->misguess_standard_deviation;
 
 	this->availability = original->availability;
+
+	// temp
+	this->created_timestamp = original->created_timestamp;
 }
 
 Keypoint::~Keypoint() {
@@ -81,6 +84,8 @@ void Keypoint::save(ofstream& output_file) {
 	output_file << this->misguess_standard_deviation << endl;
 
 	output_file << this->availability << endl;
+
+	output_file << this->created_timestamp << endl;
 }
 
 void Keypoint::load(ifstream& input_file,
@@ -102,4 +107,8 @@ void Keypoint::load(ifstream& input_file,
 	string availability_line;
 	getline(input_file, availability_line);
 	this->availability = stod(availability_line);
+
+	string created_timestamp_line;
+	getline(input_file, created_timestamp_line);
+	this->created_timestamp = stod(created_timestamp_line);
 }

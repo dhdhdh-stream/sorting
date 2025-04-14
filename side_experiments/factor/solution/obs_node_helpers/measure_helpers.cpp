@@ -1,5 +1,7 @@
 #include "obs_node.h"
 
+#include <iostream>
+
 #include "factor.h"
 #include "globals.h"
 #include "keypoint.h"
@@ -32,6 +34,7 @@ void ObsNode::measure_activate(AbstractNode*& curr_node,
 
 	for (int k_index = 0; k_index < (int)this->keypoints.size(); k_index++) {
 		if (this->keypoints[k_index] != NULL) {
+			cout << "this->id: " << this->id << endl;
 			this->keypoints[k_index]->measure_activate(obs[k_index],
 													   run_helper,
 													   scope_history);

@@ -32,6 +32,8 @@ void PassThroughExperiment::explore_activate(
 		AbstractNode*& curr_node,
 		Problem* problem,
 		RunHelper& run_helper) {
+	run_helper.verify_keypoints = true;
+
 	for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {
 		if (this->step_types[s_index] == STEP_TYPE_ACTION) {
 			problem->perform_action(this->actions[s_index]);

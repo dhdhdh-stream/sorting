@@ -114,6 +114,8 @@ void BranchExperiment::explore_activate(
 			}
 		}
 
+		run_helper.verify_keypoints = true;
+
 		for (int s_index = 0; s_index < (int)this->curr_step_types.size(); s_index++) {
 			if (this->curr_step_types[s_index] == STEP_TYPE_ACTION) {
 				problem->perform_action(this->curr_actions[s_index]);

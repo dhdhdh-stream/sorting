@@ -92,7 +92,7 @@ int main(int argc, char* argv[]) {
 			if (run_helper.early_exit) {
 				target_val = -10.0;
 			} else {
-				double target_val = problem->score_result();
+				target_val = problem->score_result();
 				target_val -= run_helper.num_actions * solution->curr_time_penalty;
 			}
 

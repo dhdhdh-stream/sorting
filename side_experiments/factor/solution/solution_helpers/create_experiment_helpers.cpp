@@ -153,8 +153,7 @@ void create_experiment(ScopeHistory* scope_history,
 			 *     - like tessellation, but have to get both the shape and the pattern correct
 			 *       - and PassThroughExperiments help with both
 			 */
-			// if (improvement_iter == 0) {
-			if (false) {
+			if (improvement_iter == 0) {
 				CommitExperiment* new_commit_experiment = new CommitExperiment(
 					explore_node->parent,
 					explore_node,
