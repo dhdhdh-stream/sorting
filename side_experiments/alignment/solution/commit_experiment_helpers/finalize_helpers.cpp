@@ -25,20 +25,8 @@ void CommitExperiment::add() {
 		this->scope_context->nodes[this->new_nodes[n_index]->id] = this->new_nodes[n_index];
 	}
 
-	int start_node_id;
-	AbstractNode* start_node;
-	if (this->best_step_types.size() == 0) {
-		if (this->node_context_next_node == NULL) {
-			start_node_id = -1;
-			start_node = NULL;
-		} else {
-			start_node_id = this->node_context_next_node->id;
-			start_node = this->node_context_next_node;
-		}
-	} else {
-		start_node_id = new_nodes[0]->id;
-		start_node = new_nodes[0];
-	}
+	int start_node_id = new_nodes[0]->id;
+	AbstractNode* start_node = new_nodes[0];
 
 	switch (this->node_context->type) {
 	case NODE_TYPE_ACTION:
@@ -170,7 +158,9 @@ void CommitExperiment::add() {
 			break;
 		}
 
-		next_node->ancestor_ids.push_back(this->new_nodes[n_index]->id);
+		if (next_node != NULL) {
+			next_node->ancestor_ids.push_back(this->new_nodes[n_index]->id);
+		}
 	}
 
 	vector<AbstractNode*> save_new_nodes;
@@ -210,14 +200,16 @@ void CommitExperiment::add() {
 
 	ObsNode* obs_node = (ObsNode*)this->new_nodes[this->step_iter-1];
 
-	for (int a_index = 0; a_index < (int)obs_node->next_node->ancestor_ids.size(); a_index++) {
-		if (obs_node->next_node->ancestor_ids[a_index] == obs_node->id) {
-			obs_node->next_node->ancestor_ids.erase(
-				obs_node->next_node->ancestor_ids.begin() + a_index);
-			break;
+	if (obs_node->next_node != NULL) {
+		for (int a_index = 0; a_index < (int)obs_node->next_node->ancestor_ids.size(); a_index++) {
+			if (obs_node->next_node->ancestor_ids[a_index] == obs_node->id) {
+				obs_node->next_node->ancestor_ids.erase(
+					obs_node->next_node->ancestor_ids.begin() + a_index);
+				break;
+			}
 		}
+		obs_node->next_node->ancestor_ids.push_back(new_branch_node->id);
 	}
-	obs_node->next_node->ancestor_ids.push_back(new_branch_node->id);
 
 	new_branch_node->original_next_node_id = obs_node->next_node_id;
 	new_branch_node->original_next_node = obs_node->next_node;
@@ -290,7 +282,9 @@ void CommitExperiment::add() {
 			scope_node->next_node = next_node;
 		}
 
-		next_node->ancestor_ids.push_back(save_new_nodes[s_index]->id);
+		if (next_node != NULL) {
+			next_node->ancestor_ids.push_back(save_new_nodes[s_index]->id);
+		}
 	}
 
 	this->new_nodes.clear();

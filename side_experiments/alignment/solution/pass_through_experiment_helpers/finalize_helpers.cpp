@@ -74,7 +74,9 @@ void PassThroughExperiment::add() {
 			action_node->next_node_id = start_node_id;
 			action_node->next_node = start_node;
 
-			start_node->ancestor_ids.push_back(action_node->id);
+			if (start_node != NULL) {
+				start_node->ancestor_ids.push_back(action_node->id);
+			}
 		}
 		break;
 	case NODE_TYPE_SCOPE:
@@ -92,7 +94,9 @@ void PassThroughExperiment::add() {
 			scope_node->next_node_id = start_node_id;
 			scope_node->next_node = start_node;
 
-			start_node->ancestor_ids.push_back(scope_node->id);
+			if (start_node != NULL) {
+				start_node->ancestor_ids.push_back(scope_node->id);
+			}
 		}
 		break;
 	case NODE_TYPE_BRANCH:
@@ -123,7 +127,9 @@ void PassThroughExperiment::add() {
 				branch_node->original_next_node = start_node;
 			}
 
-			start_node->ancestor_ids.push_back(branch_node->id);
+			if (start_node != NULL) {
+				start_node->ancestor_ids.push_back(branch_node->id);
+			}
 		}
 		break;
 	case NODE_TYPE_OBS:
@@ -143,7 +149,9 @@ void PassThroughExperiment::add() {
 			obs_node->next_node_id = start_node_id;
 			obs_node->next_node = start_node;
 
-			start_node->ancestor_ids.push_back(obs_node->id);
+			if (start_node != NULL) {
+				start_node->ancestor_ids.push_back(obs_node->id);
+			}
 		}
 		break;
 	}
@@ -174,6 +182,8 @@ void PassThroughExperiment::add() {
 			scope_node->next_node = next_node;
 		}
 
-		next_node->ancestor_ids.push_back(new_nodes[s_index]->id);
+		if (next_node != NULL) {
+			next_node->ancestor_ids.push_back(new_nodes[s_index]->id);
+		}
 	}
 }

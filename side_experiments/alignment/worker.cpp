@@ -153,7 +153,6 @@ int main(int argc, char* argv[]) {
 				problem,
 				run_helper,
 				scope_history);
-			delete scope_history;
 
 			double target_val = problem->score_result();
 			sum_score += target_val - run_helper.num_actions * solution->curr_time_penalty;
@@ -162,6 +161,7 @@ int main(int argc, char* argv[]) {
 			update_scores(scope_history,
 						  target_val);
 
+			delete scope_history;
 			delete problem;
 		}
 

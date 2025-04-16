@@ -113,11 +113,13 @@ void clean_scope(Scope* scope) {
 					{
 						ObsNode* obs_node = (ObsNode*)it->second;
 
-						for (int a_index = 0; a_index < (int)obs_node->next_node->ancestor_ids.size(); a_index++) {
-							if (obs_node->next_node->ancestor_ids[a_index] == it->second->id) {
-								obs_node->next_node->ancestor_ids.erase(
-									obs_node->next_node->ancestor_ids.begin() + a_index);
-								break;
+						if (obs_node->next_node != NULL) {
+							for (int a_index = 0; a_index < (int)obs_node->next_node->ancestor_ids.size(); a_index++) {
+								if (obs_node->next_node->ancestor_ids[a_index] == it->second->id) {
+									obs_node->next_node->ancestor_ids.erase(
+										obs_node->next_node->ancestor_ids.begin() + a_index);
+									break;
+								}
 							}
 						}
 					}

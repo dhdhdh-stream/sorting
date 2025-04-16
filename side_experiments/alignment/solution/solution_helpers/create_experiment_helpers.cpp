@@ -131,11 +131,13 @@ void gather_children_helper(AbstractNode* curr_node,
 	case NODE_TYPE_OBS:
 		{
 			ObsNode* obs_node = (ObsNode*)curr_node;
-			set<AbstractNode*>::iterator it = children.find(obs_node->next_node);
-			if (it == children.end()) {
-				children.insert(obs_node->next_node);
-				gather_children_helper(obs_node->next_node,
-									   children);
+			if (obs_node->next_node != NULL) {
+				set<AbstractNode*>::iterator it = children.find(obs_node->next_node);
+				if (it == children.end()) {
+					children.insert(obs_node->next_node);
+					gather_children_helper(obs_node->next_node,
+										   children);
+				}
 			}
 		}
 		break;
@@ -191,27 +193,33 @@ void create_experiment(ScopeHistory* scope_history,
 				it != explore_node->parent->nodes.end(); it++) {
 			possible_exit_next_nodes.insert(it->second);
 		}
+		possible_exit_next_nodes.erase(explore_node);
 		for (set<AbstractNode*>::iterator it = ancestors.begin();
-				it != ancestors.begin(); it++) {
+				it != ancestors.end(); it++) {
 			possible_exit_next_nodes.erase(*it);
 		}
-		uniform_int_distribution<int> exit_next_node_distribution(0, possible_exit_next_nodes.size()-1);
-		AbstractNode* potential_exit_next_node = *next(possible_exit_next_nodes.begin(), exit_next_node_distribution(generator));
-		set<AbstractNode*> children;
-		gather_children_helper(potential_exit_next_node,
-							   children);
-		int num_meaningful_nodes = 0;
-		for (set<AbstractNode*>::iterator it = children.begin();
-				it != children.end(); it++) {
-			switch ((*it)->type) {
-			case NODE_TYPE_ACTION:
-			case NODE_TYPE_SCOPE:
-				num_meaningful_nodes++;
-				break;
-			}
-		}
-		if (num_meaningful_nodes < MERGE_MIN_FOLLOW_NODES) {
+		AbstractNode* potential_exit_next_node;
+		if (possible_exit_next_nodes.size() == 0) {
 			potential_exit_next_node = NULL;
+		} else {
+			uniform_int_distribution<int> exit_next_node_distribution(0, possible_exit_next_nodes.size()-1);
+			potential_exit_next_node = *next(possible_exit_next_nodes.begin(), exit_next_node_distribution(generator));
+			set<AbstractNode*> children;
+			gather_children_helper(potential_exit_next_node,
+								   children);
+			int num_meaningful_nodes = 0;
+			for (set<AbstractNode*>::iterator it = children.begin();
+					it != children.end(); it++) {
+				switch ((*it)->type) {
+				case NODE_TYPE_ACTION:
+				case NODE_TYPE_SCOPE:
+					num_meaningful_nodes++;
+					break;
+				}
+			}
+			if (num_meaningful_nodes < MERGE_MIN_FOLLOW_NODES) {
+				potential_exit_next_node = NULL;
+			}
 		}
 
 		if (explore_node->parent->exceeded) {
@@ -252,7 +260,8 @@ void create_experiment(ScopeHistory* scope_history,
 			 *     - like tessellation, but have to get both the shape and the pattern correct
 			 *       - and PassThroughExperiments help with both
 			 */
-			if (improvement_iter == 0) {
+			// if (improvement_iter == 0) {
+			if (false) {
 				CommitExperiment* new_commit_experiment = new CommitExperiment(
 					explore_node->parent,
 					explore_node,
