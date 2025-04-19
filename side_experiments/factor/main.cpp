@@ -6,6 +6,40 @@
 
 // TODO: add experiments that are completely separate from each other
 
+// TODO: for CommitExperiment, can separate commit from information gather?
+
+// - has to be world model
+//   - if jump over large section, no way snapshot alone will identify what's needed
+
+// - intention is for each spot to represent 1 state
+//   - but the steps to get to that state may not be identical everytime, so different actions may be needed
+//   - also, initially may think that two states are the same
+//     - only with further information may the states be separated
+//     - so just hidden information
+//       - or information that doesn't affect decision
+// - so no, each spot doesn't represent 1 state
+
+// - things to track that are correlated to final result:
+//   - how many flags/how many opens
+//     - which can be run dependent
+//   - and still difficult to know what would have happened with previous path
+
+// - can realize drastic mistakes and confusion (which likely leads to mistakes)
+//   - but still running multiple experiments together
+
+// - a good predicted score can never replace actual score
+
+// - still need to successfully run multi-experiment
+//   - try changing location of experiment so not too negative (and checking early failure)
+
+// - score functions are not truths, but theories
+//   - treat them as truths, until they are proven wrong
+//     - so don't worry about multi-experiments
+//       - it would instead mean that the theory is broken
+
+// - score function for Minesweeper is complicated
+//   - practice with an easier problem
+
 #include <chrono>
 #include <iostream>
 #include <map>
