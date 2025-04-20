@@ -46,3 +46,6 @@
 // - for single run, look for all kinds of loops, and combine
 //   - can't really pay attention to actions before stable state
 //     - may also never be stable state, but still be able to find temporary loops
+
+// - many spots/world states may be so hard to reach, but also so important to reach that it takes a solution to consistently reach them
+//   - which means single run not as relevant

@@ -1,0 +1,7 @@
+#ifndef CONSTANTS_H
+#define CONSTANTS_H
+
+const double EQUAL_STATE_AVERAGE_MAX_DIFF = 0.1;
+const double EQUAL_STATE_STANDARD_DEVIATION_MAX_DIFF = 0.2;
+
+#endif /* CONSTANTS_H */

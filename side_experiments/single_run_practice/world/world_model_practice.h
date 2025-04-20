@@ -14,8 +14,6 @@ public:
 	std::vector<int> world;
 	int current_index;
 
-	bool performed_action;
-
 	WorldModelPractice();
 
 	std::vector<double> get_observations();

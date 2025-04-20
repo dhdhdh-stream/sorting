@@ -3,7 +3,7 @@
 
 class RunInstance {
 public:
-	std::vector<State*> states;
+	std::set<State*> states;
 
 	State* curr_state;
 

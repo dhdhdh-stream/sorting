@@ -5,14 +5,12 @@ using namespace std;
 const int WORLD_SIZE = 5;
 
 WorldModelPractice::WorldModelPractice() {
-	uniform_int_distribution<int> distribution(0, 10);
+	uniform_int_distribution<int> distribution(0, 1);
 	this->world = vector<int>(WORLD_SIZE);
 	for (int i_index = 0; i_index < WORLD_SIZE; i_index++) {
-		this->world[i_index] = distribution(generator);
+		this->world[i_index] = 2 * distribution(generator) - 1;
 	}
 	this->current_index = 2;
-
-	this->perform_action = false;
 }
 
 vector<double> WorldModelPractice::get_observations() {
@@ -42,12 +40,8 @@ void WorldModelPractice::perform_action(Action action) {
 		}
 		break;
 	case WORLD_MODEL_ACTION_ACTION:
-		if (!this->perform_action) {
-			if (this->current_index >= 0 && this->current_index <= WORLD_SIZE-1) {
-				this->world[this->current_index] = 20.0;
-
-				this->perform_action = true;
-			}
+		if (this->current_index >= 0 && this->current_index <= WORLD_SIZE-1) {
+			this->world[this->current_index] = -this->world[this->current_index];
 		}
 	}
 }
