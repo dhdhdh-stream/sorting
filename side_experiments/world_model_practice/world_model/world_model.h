@@ -49,3 +49,6 @@
 
 // - many spots/world states may be so hard to reach, but also so important to reach that it takes a solution to consistently reach them
 //   - which means single run not as relevant
+
+// - note that after branch merge, state is new, unique from the 2 branches before it
+//   - not just branch merge, but even just branch
