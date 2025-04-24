@@ -179,10 +179,6 @@ void Minesweeper::reveal_helper(int x, int y) {
 }
 
 void Minesweeper::perform_action(Action action) {
-	if (this->hit_mine) {
-		return;
-	}
-
 	switch (action.move) {
 	case MINESWEEPER_ACTION_UP:
 		this->current_y++;
@@ -209,123 +205,129 @@ void Minesweeper::perform_action(Action action) {
 		}
 		break;
 	case MINESWEEPER_ACTION_CLICK:
-		reveal_helper(this->current_x, this->current_y);
+		if (!this->hit_mine) {
+			reveal_helper(this->current_x, this->current_y);
+		}
 		break;
 	case MINESWEEPER_ACTION_FLAG:
-		if (this->current_x >= 0
-				&& this->current_x < WIDTH
-				&& this->current_y >= 0
-				&& this->current_y < HEIGHT) {
-			if (!this->revealed[this->current_x][this->current_y]
-					&& !this->flagged[this->current_x][this->current_y]) {
-				this->flagged[this->current_x][this->current_y] = true;
+		if (!this->hit_mine) {
+			if (this->current_x >= 0
+					&& this->current_x < WIDTH
+					&& this->current_y >= 0
+					&& this->current_y < HEIGHT) {
+				if (!this->revealed[this->current_x][this->current_y]
+						&& !this->flagged[this->current_x][this->current_y]) {
+					this->flagged[this->current_x][this->current_y] = true;
+				}
 			}
 		}
 		break;
 	case MINESWEEPER_ACTION_DOUBLECLICK:
-		if (this->current_x >= 0
-				&& this->current_x < WIDTH
-				&& this->current_y >= 0
-				&& this->current_y < HEIGHT) {
-			if (this->revealed[this->current_x][this->current_y]
-					&& this->world[this->current_x][this->current_y] > 0) {
-				int num_surrounding = 0;
+		if (!this->hit_mine) {
+			if (this->current_x >= 0
+					&& this->current_x < WIDTH
+					&& this->current_y >= 0
+					&& this->current_y < HEIGHT) {
+				if (this->revealed[this->current_x][this->current_y]
+						&& this->world[this->current_x][this->current_y] > 0) {
+					int num_surrounding = 0;
 
-				if (this->current_x > 0 && this->current_y < HEIGHT-1) {
-					if (this->flagged[this->current_x-1][this->current_y+1]) {
-						num_surrounding++;
-					}
-				}
-
-				if (this->current_y < HEIGHT-1) {
-					if (this->flagged[this->current_x][this->current_y+1]) {
-						num_surrounding++;
-					}
-				}
-
-				if (this->current_x < WIDTH-1 && this->current_y < HEIGHT-1) {
-					if (this->flagged[this->current_x+1][this->current_y+1]) {
-						num_surrounding++;
-					}
-				}
-
-				if (this->current_x < WIDTH-1) {
-					if (this->flagged[this->current_x+1][this->current_y]) {
-						num_surrounding++;
-					}
-				}
-
-				if (this->current_x < WIDTH-1 && this->current_y > 0) {
-					if (this->flagged[this->current_x+1][this->current_y-1]) {
-						num_surrounding++;
-					}
-				}
-
-				if (this->current_y > 0) {
-					if (this->flagged[this->current_x][this->current_y-1]) {
-						num_surrounding++;
-					}
-				}
-
-				if (this->current_x > 0 && this->current_y > 0) {
-					if (this->flagged[this->current_x-1][this->current_y-1]) {
-						num_surrounding++;
-					}
-				}
-
-				if (this->current_x > 0) {
-					if (this->flagged[this->current_x-1][this->current_y]) {
-						num_surrounding++;
-					}
-				}
-
-				if (num_surrounding == this->world[this->current_x][this->current_y]) {
-					if (this->current_x > 0 && this->current_y > 0) {
-						if (!this->revealed[this->current_x-1][this->current_y-1]
-								&& !this->flagged[this->current_x-1][this->current_y-1]) {
-							reveal_helper(this->current_x-1, this->current_y-1);
-						}
-					}
-					if (this->current_x > 0) {
-						if (!this->revealed[this->current_x-1][this->current_y]
-								&& !this->flagged[this->current_x-1][this->current_y]) {
-							reveal_helper(this->current_x-1, this->current_y);
-						}
-					}
 					if (this->current_x > 0 && this->current_y < HEIGHT-1) {
-						if (!this->revealed[this->current_x-1][this->current_y+1]
-								&& !this->flagged[this->current_x-1][this->current_y+1]) {
-							reveal_helper(this->current_x-1, this->current_y+1);
+						if (this->flagged[this->current_x-1][this->current_y+1]) {
+							num_surrounding++;
 						}
 					}
+
 					if (this->current_y < HEIGHT-1) {
-						if (!this->revealed[this->current_x][this->current_y+1]
-								&& !this->flagged[this->current_x][this->current_y+1]) {
-							reveal_helper(this->current_x, this->current_y+1);
+						if (this->flagged[this->current_x][this->current_y+1]) {
+							num_surrounding++;
 						}
 					}
+
 					if (this->current_x < WIDTH-1 && this->current_y < HEIGHT-1) {
-						if (!this->revealed[this->current_x+1][this->current_y+1]
-								&& !this->flagged[this->current_x+1][this->current_y+1]) {
-							reveal_helper(this->current_x+1, this->current_y+1);
+						if (this->flagged[this->current_x+1][this->current_y+1]) {
+							num_surrounding++;
 						}
 					}
+
 					if (this->current_x < WIDTH-1) {
-						if (!this->revealed[this->current_x+1][this->current_y]
-								&& !this->flagged[this->current_x+1][this->current_y]) {
-							reveal_helper(this->current_x+1, this->current_y);
+						if (this->flagged[this->current_x+1][this->current_y]) {
+							num_surrounding++;
 						}
 					}
+
 					if (this->current_x < WIDTH-1 && this->current_y > 0) {
-						if (!this->revealed[this->current_x+1][this->current_y-1]
-								&& !this->flagged[this->current_x+1][this->current_y-1]) {
-							reveal_helper(this->current_x+1, this->current_y-1);
+						if (this->flagged[this->current_x+1][this->current_y-1]) {
+							num_surrounding++;
 						}
 					}
+
 					if (this->current_y > 0) {
-						if (!this->revealed[this->current_x][this->current_y-1]
-								&& !this->flagged[this->current_x][this->current_y-1]) {
-							reveal_helper(this->current_x, this->current_y-1);
+						if (this->flagged[this->current_x][this->current_y-1]) {
+							num_surrounding++;
+						}
+					}
+
+					if (this->current_x > 0 && this->current_y > 0) {
+						if (this->flagged[this->current_x-1][this->current_y-1]) {
+							num_surrounding++;
+						}
+					}
+
+					if (this->current_x > 0) {
+						if (this->flagged[this->current_x-1][this->current_y]) {
+							num_surrounding++;
+						}
+					}
+
+					if (num_surrounding == this->world[this->current_x][this->current_y]) {
+						if (this->current_x > 0 && this->current_y > 0) {
+							if (!this->revealed[this->current_x-1][this->current_y-1]
+									&& !this->flagged[this->current_x-1][this->current_y-1]) {
+								reveal_helper(this->current_x-1, this->current_y-1);
+							}
+						}
+						if (this->current_x > 0) {
+							if (!this->revealed[this->current_x-1][this->current_y]
+									&& !this->flagged[this->current_x-1][this->current_y]) {
+								reveal_helper(this->current_x-1, this->current_y);
+							}
+						}
+						if (this->current_x > 0 && this->current_y < HEIGHT-1) {
+							if (!this->revealed[this->current_x-1][this->current_y+1]
+									&& !this->flagged[this->current_x-1][this->current_y+1]) {
+								reveal_helper(this->current_x-1, this->current_y+1);
+							}
+						}
+						if (this->current_y < HEIGHT-1) {
+							if (!this->revealed[this->current_x][this->current_y+1]
+									&& !this->flagged[this->current_x][this->current_y+1]) {
+								reveal_helper(this->current_x, this->current_y+1);
+							}
+						}
+						if (this->current_x < WIDTH-1 && this->current_y < HEIGHT-1) {
+							if (!this->revealed[this->current_x+1][this->current_y+1]
+									&& !this->flagged[this->current_x+1][this->current_y+1]) {
+								reveal_helper(this->current_x+1, this->current_y+1);
+							}
+						}
+						if (this->current_x < WIDTH-1) {
+							if (!this->revealed[this->current_x+1][this->current_y]
+									&& !this->flagged[this->current_x+1][this->current_y]) {
+								reveal_helper(this->current_x+1, this->current_y);
+							}
+						}
+						if (this->current_x < WIDTH-1 && this->current_y > 0) {
+							if (!this->revealed[this->current_x+1][this->current_y-1]
+									&& !this->flagged[this->current_x+1][this->current_y-1]) {
+								reveal_helper(this->current_x+1, this->current_y-1);
+							}
+						}
+						if (this->current_y > 0) {
+							if (!this->revealed[this->current_x][this->current_y-1]
+									&& !this->flagged[this->current_x][this->current_y-1]) {
+								reveal_helper(this->current_x, this->current_y-1);
+							}
 						}
 					}
 				}

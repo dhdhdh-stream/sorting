@@ -27,7 +27,6 @@ public:
 
 	virtual int num_obs() = 0;
 	virtual int num_possible_actions() = 0;
-	virtual Action random_action() = 0;
 };
 
 #endif /* PROBLEM_H */
