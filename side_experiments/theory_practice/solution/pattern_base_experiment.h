@@ -27,6 +27,9 @@ const int PATTERN_BASE_EXPERIMENT_STATE_GATHER = 1;
 // - goals are patterns
 //   - assume pursuing goals keeps you local
 
+// - rules to help capture score cheaply
+// - patterns for discovery
+
 class PatternBaseExperiment {
 public:
 	int state;
