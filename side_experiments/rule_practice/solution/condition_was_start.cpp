@@ -1,5 +1,7 @@
 #include "condition_was_start.h"
 
+#include <iostream>
+
 using namespace std;
 
 ConditionWasStart::ConditionWasStart(int start_index) {
@@ -29,6 +31,11 @@ bool ConditionWasStart::is_hit(vector<vector<double>>& obs_history,
 	} else {
 		return false;
 	}
+}
+
+void ConditionWasStart::print() {
+	cout << "ConditionWasStart" << endl;
+	cout << "this->start_index: " << this->start_index << endl;
 }
 
 void ConditionWasStart::save(ofstream& output_file) {

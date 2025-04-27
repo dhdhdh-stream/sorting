@@ -21,6 +21,8 @@ public:
 				std::vector<int>& move_history);
 	void apply(std::set<int>& possible_moves);
 
+	void print();
+
 	void save(std::ofstream& output_file);
 };
 

@@ -13,6 +13,7 @@ SimpleProblem::SimpleProblem() {
 
 	uniform_int_distribution<int> target_distribution(0, WORLD_SIZE-1);
 	this->target_index = target_distribution(generator);
+	this->target_index = target_distribution(generator);
 
 	this->current_index = 0;
 }

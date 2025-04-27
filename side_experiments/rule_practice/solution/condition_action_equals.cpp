@@ -1,5 +1,7 @@
 #include "condition_action_equals.h"
 
+#include <iostream>
+
 using namespace std;
 
 ConditionActionEquals::ConditionActionEquals(int action_index,
@@ -40,6 +42,12 @@ bool ConditionActionEquals::is_hit(vector<vector<double>>& obs_history,
 			return false;
 		}
 	}
+}
+
+void ConditionActionEquals::print() {
+	cout << "ConditionActionEquals" << endl;
+	cout << "this->action_index: " << this->action_index << endl;
+	cout << "this->move: " << this->move << endl;
 }
 
 void ConditionActionEquals::save(ofstream& output_file) {

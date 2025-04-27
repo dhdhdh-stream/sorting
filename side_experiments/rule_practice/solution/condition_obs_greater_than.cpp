@@ -1,5 +1,7 @@
 #include "condition_obs_greater_than.h"
 
+#include <iostream>
+
 using namespace std;
 
 ConditionObsGreaterThan::ConditionObsGreaterThan(int obs_index,
@@ -40,6 +42,12 @@ bool ConditionObsGreaterThan::is_hit(vector<vector<double>>& obs_history,
 			return false;
 		}
 	}
+}
+
+void ConditionObsGreaterThan::print() {
+	cout << "ConditionObsGreaterThan" << endl;
+	cout << "this->obs_index: " << this->obs_index << endl;
+	cout << "this->max_val: " << this->max_val << endl;
 }
 
 void ConditionObsGreaterThan::save(ofstream& output_file) {

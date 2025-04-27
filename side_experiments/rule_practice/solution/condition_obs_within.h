@@ -18,6 +18,8 @@ public:
 	bool is_hit(std::vector<std::vector<double>>& obs_history,
 				std::vector<int>& move_history);
 
+	void print();
+
 	void save(std::ofstream& output_file);
 };
 

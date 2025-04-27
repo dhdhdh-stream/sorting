@@ -1,5 +1,7 @@
 #include "condition_obs_within.h"
 
+#include <iostream>
+
 using namespace std;
 
 ConditionObsWithin::ConditionObsWithin(int obs_index,
@@ -48,6 +50,13 @@ bool ConditionObsWithin::is_hit(vector<vector<double>>& obs_history,
 			return false;
 		}
 	}
+}
+
+void ConditionObsWithin::print() {
+	cout << "ConditionObsWithin" << endl;
+	cout << "this->obs_index: " << this->obs_index << endl;
+	cout << "this->min_val: " << this->min_val << endl;
+	cout << "this->max_val: " << this->max_val << endl;
 }
 
 void ConditionObsWithin::save(ofstream& output_file) {

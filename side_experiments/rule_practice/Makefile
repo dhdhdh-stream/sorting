@@ -15,7 +15,7 @@ HEADERS = ${SOURCES:.cpp=.h}
 OBJECTS = ${HEADERS:.h=.o}
 DEPENDS = ${OBJECTS:.o=.d}
 
-all: three_unroll one_unroll measure experiment
+all: three_unroll one_unroll measure experiment viewer
 
 three_unroll: ${OBJECTS} three_unroll.o
 	${CXX} ${CXXFLAGS} ${OBJECTS} three_unroll.o -o three_unroll ${LIBS}
@@ -29,11 +29,15 @@ measure: ${OBJECTS} measure.o
 experiment: ${OBJECTS} experiment.o
 	${CXX} ${CXXFLAGS} ${OBJECTS} experiment.o -o experiment ${LIBS}
 
--include ${DEPENDS} three_unroll.d one_unroll.d measure.d experiment.d
+viewer: ${OBJECTS} viewer.o
+	${CXX} ${CXXFLAGS} ${OBJECTS} viewer.o -o viewer ${LIBS}
+
+-include ${DEPENDS} three_unroll.d one_unroll.d measure.d experiment.d viewer.d
 
 clean:
 	rm -f ${OBJECTS} ${DEPENDS} \
 	three_unroll.o three_unroll.d three_unroll \
 	one_unroll.o one_unroll.d one_unroll \
 	measure.o measure.d measure \
-	experiment.o experiment.d experiment
+	experiment.o experiment.d experiment \
+	viewer.o viewer.d viewer

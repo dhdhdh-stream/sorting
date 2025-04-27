@@ -51,13 +51,17 @@ int main(int argc, char* argv[]) {
 			delete potential_rule;
 		}
 
-		if (e_index % 10) {
+		if (e_index % 10 == 0) {
 			cout << e_index << endl;
 			cout << "solution.rules.size(): " << solution.rules.size() << endl;
 			cout << "solution.average_val: " << solution.average_val << endl;
 			cout << "solution.top_5_percentile: " << solution.top_5_percentile << endl;
 			cout << "solution.top_5_percentile_average_val: " << solution.top_5_percentile_average_val << endl;
 			cout << endl;
+		}
+
+		if (e_index % 100 == 0) {
+			solution.save("saves/", "main.txt");
 		}
 	}
 

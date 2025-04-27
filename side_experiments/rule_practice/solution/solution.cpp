@@ -1,5 +1,7 @@
 #include "solution.h"
 
+#include <iostream>
+
 #include "rule.h"
 #include "solution_helpers.h"
 
@@ -47,6 +49,19 @@ void Solution::load(string path,
 	this->top_5_percentile_average_val = stod(top_5_percentile_average_val_line);
 
 	input_file.close();
+}
+
+void Solution::print() {
+	cout << "this->rules.size(): " << this->rules.size() << endl;
+	for (int r_index = 0; r_index < (int)this->rules.size(); r_index++) {
+		cout << "r_index: " << r_index << endl;
+		this->rules[r_index]->print();
+		cout << endl;
+	}
+
+	cout << "this->average_val: " << this->average_val << endl;
+	cout << "this->top_5_percentile: " << this->top_5_percentile << endl;
+	cout << "this->top_5_percentile_average_val: " << this->top_5_percentile_average_val << endl;
 }
 
 void Solution::save(string path,

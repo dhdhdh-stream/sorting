@@ -1,5 +1,7 @@
 #include "condition_obs_less_than.h"
 
+#include <iostream>
+
 using namespace std;
 
 ConditionObsLessThan::ConditionObsLessThan(int obs_index,
@@ -40,6 +42,12 @@ bool ConditionObsLessThan::is_hit(vector<vector<double>>& obs_history,
 			return false;
 		}
 	}
+}
+
+void ConditionObsLessThan::print() {
+	cout << "ConditionObsLessThan" << endl;
+	cout << "this->obs_index: " << this->obs_index << endl;
+	cout << "this->min_val: " << this->min_val << endl;
 }
 
 void ConditionObsLessThan::save(ofstream& output_file) {

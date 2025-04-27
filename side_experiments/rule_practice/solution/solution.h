@@ -21,6 +21,8 @@ public:
 	void load(std::string path,
 			  std::string name);
 
+	void print();
+
 	void save(std::string path,
 			  std::string name);
 };

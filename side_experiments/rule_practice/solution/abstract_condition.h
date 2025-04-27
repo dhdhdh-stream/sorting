@@ -19,6 +19,8 @@ public:
 	virtual bool is_hit(std::vector<std::vector<double>>& obs_history,
 						std::vector<int>& move_history) = 0;
 
+	virtual void print() = 0;
+
 	virtual void save(std::ofstream& output_file) = 0;
 };
 

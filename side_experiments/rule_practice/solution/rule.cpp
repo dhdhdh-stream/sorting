@@ -1,5 +1,7 @@
 #include "rule.h"
 
+#include <iostream>
+
 #include "condition_action_equals.h"
 #include "condition_obs_greater_than.h"
 #include "condition_obs_less_than.h"
@@ -104,6 +106,16 @@ bool Rule::is_hit(vector<vector<double>>& obs_history,
 
 void Rule::apply(set<int>& possible_moves) {
 	possible_moves.erase(this->move);
+}
+
+void Rule::print() {
+	for (int c_index = 0; c_index < (int)this->conditions.size(); c_index++) {
+		cout << c_index << endl;
+		this->conditions[c_index]->print();
+		cout << endl;
+	}
+
+	cout << "this->move: " << this->move << endl;
 }
 
 void Rule::save(ofstream& output_file) {
