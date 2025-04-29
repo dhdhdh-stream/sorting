@@ -20,6 +20,9 @@
  * - also needs to not impact score
  */
 
+// distinguish between patterns that you can return to vs. patterns that you have 1-shot to see
+// - divide problems by if it's easy to return to patterns?
+
 #ifndef PATTERN_H
 #define PATTERN_H
 

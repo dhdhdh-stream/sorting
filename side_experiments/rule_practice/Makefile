@@ -15,7 +15,7 @@ HEADERS = ${SOURCES:.cpp=.h}
 OBJECTS = ${HEADERS:.h=.o}
 DEPENDS = ${OBJECTS:.o=.d}
 
-all: three_unroll one_unroll measure experiment viewer
+all: three_unroll one_unroll measure experiment viewer ideal first_variance
 
 three_unroll: ${OBJECTS} three_unroll.o
 	${CXX} ${CXXFLAGS} ${OBJECTS} three_unroll.o -o three_unroll ${LIBS}
@@ -32,7 +32,13 @@ experiment: ${OBJECTS} experiment.o
 viewer: ${OBJECTS} viewer.o
 	${CXX} ${CXXFLAGS} ${OBJECTS} viewer.o -o viewer ${LIBS}
 
--include ${DEPENDS} three_unroll.d one_unroll.d measure.d experiment.d viewer.d
+ideal: ${OBJECTS} ideal.o
+	${CXX} ${CXXFLAGS} ${OBJECTS} ideal.o -o ideal ${LIBS}
+
+first_variance: ${OBJECTS} first_variance.o
+	${CXX} ${CXXFLAGS} ${OBJECTS} first_variance.o -o first_variance ${LIBS}
+
+-include ${DEPENDS} three_unroll.d one_unroll.d measure.d experiment.d viewer.d ideal.d first_variance.d
 
 clean:
 	rm -f ${OBJECTS} ${DEPENDS} \
@@ -40,4 +46,6 @@ clean:
 	one_unroll.o one_unroll.d one_unroll \
 	measure.o measure.d measure \
 	experiment.o experiment.d experiment \
-	viewer.o viewer.d viewer
+	viewer.o viewer.d viewer \
+	ideal.o ideal.d ideal \
+	first_variance.o first_variance.d first_variance
