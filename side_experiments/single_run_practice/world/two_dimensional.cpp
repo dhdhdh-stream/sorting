@@ -13,7 +13,7 @@ TwoDimensional::TwoDimensional() {
 	this->world = vector<vector<double>>(X_SIZE, vector<double>(Y_SIZE));
 	for (int i_index = 0; i_index < X_SIZE; i_index++) {
 		for (int j_index = 0; j_index < Y_SIZE; j_index++) {
-			this->world[i_index][j_index] = i_index * Y_SIZE + j_index;
+			this->world[i_index][j_index] = j_index * Y_SIZE + i_index;
 		}
 	}
 	this->x_index = 0;
@@ -32,9 +32,9 @@ double TwoDimensional::get_observation() {
 }
 
 void TwoDimensional::perform_action(Action action) {
-	uniform_int_distribution<int> zero_distribution(1, 40);
+	uniform_int_distribution<int> zero_distribution(0, 40);
 	if (zero_distribution(generator) != 0) {
-		uniform_int_distribution<int> double_distribution(1, 39);
+		uniform_int_distribution<int> double_distribution(0, 39);
 		bool is_double = double_distribution(generator) == 0;
 		switch (action.move) {
 		case TWO_DIMENSIONAL_ACTION_UP:
@@ -43,8 +43,11 @@ void TwoDimensional::perform_action(Action action) {
 			} else {
 				y_index++;
 			}
-			if (y_index > Y_SIZE) {
-				y_index = Y_SIZE;
+			// if (y_index > Y_SIZE) {
+			// 	y_index = Y_SIZE;
+			// }
+			if (y_index > Y_SIZE-1) {
+				y_index = Y_SIZE-1;
 			}
 			break;
 		case TWO_DIMENSIONAL_ACTION_RIGHT:
@@ -53,8 +56,11 @@ void TwoDimensional::perform_action(Action action) {
 			} else {
 				x_index++;
 			}
-			if (x_index > X_SIZE) {
-				x_index = X_SIZE;
+			// if (x_index > X_SIZE) {
+			// 	x_index = X_SIZE;
+			// }
+			if (x_index > X_SIZE-1) {
+				x_index = X_SIZE-1;
 			}
 			break;
 		case TWO_DIMENSIONAL_ACTION_DOWN:
@@ -63,8 +69,11 @@ void TwoDimensional::perform_action(Action action) {
 			} else {
 				y_index--;
 			}
-			if (y_index < -1) {
-				y_index = -1;
+			// if (y_index < -1) {
+			// 	y_index = -1;
+			// }
+			if (y_index < 0) {
+				y_index = 0;
 			}
 			break;
 		case TWO_DIMENSIONAL_ACTION_LEFT:
@@ -73,8 +82,11 @@ void TwoDimensional::perform_action(Action action) {
 			} else {
 				x_index--;
 			}
-			if (x_index < -1) {
-				x_index = -1;
+			// if (x_index < -1) {
+			// 	x_index = -1;
+			// }
+			if (x_index < 0) {
+				x_index = 0;
 			}
 			break;
 		}

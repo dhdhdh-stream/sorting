@@ -35,3 +35,15 @@ void FixedPoint::load(ifstream& input_file) {
 		this->transitions[fixed_point] = transition;
 	}
 }
+
+void FixedPoint::save_for_display(ofstream& output_file) {
+	output_file << this->val_average << endl;
+
+	output_file << this->transitions.size() << endl;
+	for (map<FixedPoint*, Transition>::iterator it = this->transitions.begin();
+			it != this->transitions.end(); it++) {
+		output_file << it->first->id << endl;
+
+		it->second.save_for_display(output_file);
+	}
+}

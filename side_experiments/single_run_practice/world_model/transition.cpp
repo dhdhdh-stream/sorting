@@ -34,3 +34,10 @@ void Transition::save(ofstream& output_file) {
 	output_file << this->likelihood_calculated << endl;
 	output_file << this->success_likelihood << endl;
 }
+
+void Transition::save_for_display(ofstream& output_file) {
+	output_file << this->moves.size() << endl;
+	for (int m_index = 0; m_index < (int)this->moves.size(); m_index++) {
+		output_file << this->moves[m_index] << endl;
+	}
+}

@@ -15,6 +15,8 @@ public:
 	Transition(std::ifstream& input_file);
 
 	void save(std::ofstream& output_file);
+
+	void save_for_display(std::ofstream& output_file);
 };
 
 #endif /* TRANSITION_H */

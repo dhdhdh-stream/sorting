@@ -101,3 +101,12 @@ void World::save(string path,
 	string newname = path + name;
 	rename(oldname.c_str(), newname.c_str());
 }
+
+void World::save_for_display(ofstream& output_file) {
+	output_file << this->fixed_points.size() << endl;
+	for (map<int, FixedPoint*>::iterator it = this->fixed_points.begin();
+			it != this->fixed_points.end(); it++) {
+		output_file << it->first << endl;
+		it->second->save_for_display(output_file);
+	}
+}

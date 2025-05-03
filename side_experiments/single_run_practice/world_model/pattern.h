@@ -15,6 +15,8 @@ class Pattern {
 public:
 	std::vector<FixedPoint*> fixed_points;
 
+	double success_likelihood;
+
 	Pattern();
 	Pattern(std::ifstream& input_file);
 

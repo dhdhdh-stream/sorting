@@ -1,8 +1,65 @@
 /**
+ * - look for points with high contrast?
+ *   - otherwise, if, e.g., everything is mostly one color, then will too easily find loops where there isn't
+ *     - makes 
+ * 
+ * - loop may not mean identical location
+ *   - e.g., duplicate, where identical on loop, but different off loop
+ *   - but then again, no different than if there's state modifying behavior
+ * 
  * - TODO: add check to prevent all equals
- */
+ */ 
+
+// - certain paths available only when certain conditions are satisfied
+
+// - when do you want to treat as separate vs. when to just have a state
+
+// - state is almost always cheaper?
+//   - otherwise, if e.g., state only occurs every tenth cycle, need to duplicate by ten
+//     - vs. conditioning a bunch of branches
+
+// - but if state hits, then can enter subloop which may be more detailed
+
+// - should really keep eyes on the target
+//   - goal isn't to world model
+//     - there can just be too much?
+
+// - goal is:
+//   - find pattern that can return to (at least twice?)
+//     - seeing same values both times
+//   - then on explore, be able to return to pattern
+//     - see something different (but on repeat, see the same something different)
+
+// - or on explore, action, and score function can already be found later
+//   - and can return to that score function
+
+// - perhaps find something that has:
+//   - high variance
+//   - score function after
+// - then find something that matches pattern after, but score matches original
+//   - so now have impact of the action
+
+// - score function is only correlation, not 100% explanatory
+//   - as may be things that depend on luck
+//   - so don't worry if goes from strong correlation to weak correlation
+//     - but do worry if goes from positive correlation to negative correlation
+//       - only realizable with large sample size, and if not explainable through world, special case?
+
+// - so need many score functions operating together?
+//   - have to check all of them?
+
+// - also need to watch out for poison
+//   - something that satisfies local score function, but ruins future
+//     - even worse if gets added
+//   - can't even get signal that something is wrong, because "caught" in parallel somewhere else
+
+// TODO: examine if maintain position plus measure together works
+
+// - maybe with score function, still measure together at end for verification
 
 #include "world_model_helpers.h"
+
+#include <iostream>
 
 #include "constants.h"
 #include "fixed_point.h"
@@ -177,14 +234,16 @@ void find_potential_pattern(vector<bool>& need_match,
 	}
 }
 
-bool verify_potential_pattern(vector<bool>& need_match,
+void verify_potential_pattern(vector<bool>& need_match,
 							  vector<double>& match_vals,
 							  vector<int>& moves,
 							  vector<int>& repeat,
 							  Problem* problem,
-							  RunHelper& run_helper) {
-	vector<int> num_tries(10, 0);
-	vector<int> num_success(10, 0);
+							  RunHelper& run_helper,
+							  bool& is_pattern,
+							  double& success_likelihood) {
+	vector<int> num_tries(MAX_REPEAT, 0);
+	vector<int> num_success(MAX_REPEAT, 0);
 	for (int iter_index = 0; iter_index < VERIFY_NUM_SAMPLES; iter_index++) {
 		bool is_success = find_pattern(need_match,
 									   match_vals,
@@ -193,7 +252,8 @@ bool verify_potential_pattern(vector<bool>& need_match,
 									   run_helper);
 
 		if (!is_success) {
-			return false;
+			is_pattern = false;
+			return;
 		}
 
 		int curr_repeat = 0;
@@ -224,10 +284,22 @@ bool verify_potential_pattern(vector<bool>& need_match,
 		}
 	}
 
+	cout << "num_tries:";
+	for (int i_index = 0; i_index < (int)num_tries.size(); i_index++) {
+		cout << " " << num_tries[i_index];
+	}
+	cout << endl;
+	cout << "num_success:";
+	for (int i_index = 0; i_index < (int)num_success.size(); i_index++) {
+		cout << " " << num_success[i_index];
+	}
+	cout << endl;
+
 	double probability = (double)num_success[0] / (double)num_tries[0];
 
 	if (probability < MIN_REPEAT_SUCCESS_PROBABILITY) {
-		return false;
+		is_pattern = false;
+		return;
 	}
 
 	double standard_deviation = sqrt(probability * (1.0 - probability));
@@ -239,11 +311,14 @@ bool verify_potential_pattern(vector<bool>& need_match,
 		double t_score = (curr_probability - probability)
 			/ (standard_deviation / sqrt(num_tries[r_index]));
 		if (t_score < -0.674) {
-			return false;
+			is_pattern = false;
+			return;
 		}
 	}
 
-	return true;
+	is_pattern = true;
+	success_likelihood = probability;
+	return;
 }
 
 void find_initial_pattern(Problem* problem,
@@ -260,13 +335,22 @@ void find_initial_pattern(Problem* problem,
 							   problem,
 							   run_helper);
 
-		bool is_success = verify_potential_pattern(
-			need_match,
-			match_vals,
-			moves,
-			repeat,
-			problem,
-			run_helper);
+		cout << "match_vals:";
+		for (int v_index = 0; v_index < (int)match_vals.size(); v_index++) {
+			cout << " " << match_vals[v_index];
+		}
+		cout << endl;
+
+		bool is_success;
+		double success_likelihood;
+		verify_potential_pattern(need_match,
+								 match_vals,
+								 moves,
+								 repeat,
+								 problem,
+								 run_helper,
+								 is_success,
+								 success_likelihood);
 		if (is_success) {
 			Pattern* new_pattern = new Pattern();
 
@@ -316,6 +400,8 @@ void find_initial_pattern(Problem* problem,
 					new_pattern->fixed_points.push_back(new_fixed_point);
 
 					curr_fixed_point = new_fixed_point;
+
+					transition_actions.clear();
 				}
 			}
 
@@ -330,6 +416,8 @@ void find_initial_pattern(Problem* problem,
 			repeat_transition.success_likelihood = 0.0;
 
 			curr_fixed_point->transitions[starting_fixed_point] = repeat_transition;
+
+			new_pattern->success_likelihood = success_likelihood;
 
 			world->patterns.push_back(new_pattern);
 

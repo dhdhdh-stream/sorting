@@ -30,6 +30,8 @@ public:
 
 	void save(std::string path,
 			  std::string name);
+
+	void save_for_display(std::ofstream& output_file);
 };
 
 #endif /* WORLD_H */

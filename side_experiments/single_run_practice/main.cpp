@@ -25,16 +25,25 @@ int main(int argc, char* argv[]) {
 
 	world = new World();
 
-	world->init();
-
 	Problem* problem = problem_type->get_problem();
 
 	RunHelper run_helper;
+
+	world->init();
 
 	find_initial_pattern(problem,
 						 run_helper);
 
 	world->save("saves/", "main.txt");
+
+	// world->load("saves/", "main.txt");
+
+
+
+	ofstream display_file;
+	display_file.open("saves/display.txt");
+	world->save_for_display(display_file);
+	display_file.close();
 
 	delete problem;
 
