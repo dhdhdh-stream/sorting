@@ -1,5 +1,6 @@
 #include "solution_helpers.h"
 
+#include "branch_experiment.h"
 #include "branch_node.h"
 #include "globals.h"
 #include "pass_through_experiment.h"
@@ -38,12 +39,12 @@ void create_experiment(AbstractNode* experiment_node,
 				experiment_node->experiment_exit_next_node);
 			experiment_node->experiment = new_experiment;
 		} else {
-			// BranchExperiment* new_experiment = new BranchExperiment(
-			// 	experiment_node->parent,
-			// 	experiment_node,
-			// 	experiment_node->experiment_is_branch,
-			// 	experiment_node->experiment_exit_next_node);
-			// experiment_node->experiment = new_experiment;
+			BranchExperiment* new_experiment = new BranchExperiment(
+				experiment_node->parent,
+				experiment_node,
+				experiment_node->experiment_is_branch,
+				experiment_node->experiment_exit_next_node);
+			experiment_node->experiment = new_experiment;
 		}
 	}
 }
