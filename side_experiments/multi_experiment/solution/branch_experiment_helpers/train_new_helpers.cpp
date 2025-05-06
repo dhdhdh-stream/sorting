@@ -414,6 +414,9 @@ void BranchExperiment::train_new_backprop(
 						this->is_branch = false;
 						this->node_context->experiment = this;
 
+						this->node_context->experiment_is_branch = false;
+						this->node_context->experiment_exit_next_node = this->exit_next_node;
+
 						this->new_factor_ids.push_back({new_obs_node->id, 0});
 						this->new_factor_weights.push_back(1.0);
 					}

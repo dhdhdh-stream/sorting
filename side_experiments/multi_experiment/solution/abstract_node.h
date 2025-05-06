@@ -25,7 +25,6 @@ public:
 	 * - if both paths of BranchNode point to same node, add twice
 	 */
 
-	bool is_experiment;
 	bool experiment_is_branch;
 	AbstractNode* experiment_exit_next_node;
 

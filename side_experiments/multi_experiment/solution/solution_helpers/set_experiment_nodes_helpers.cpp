@@ -1,5 +1,7 @@
 #include "solution_helpers.h"
 
+#include <iostream>
+
 #include "branch_experiment.h"
 #include "branch_node.h"
 #include "globals.h"
@@ -21,7 +23,8 @@ void create_experiment(AbstractNode* experiment_node,
 	 *     - like tessellation, but have to get both the shape and the pattern correct
 	 *       - and PassThroughExperiments help with both
 	 */
-	if (improvement_iter == 0) {
+	// if (improvement_iter == 0) {
+	if (false) {
 		// CommitExperiment* new_experiment = new CommitExperiment(
 		// 	experiment_node->parent,
 		// 	experiment_node,
@@ -82,21 +85,22 @@ void set_experiment_nodes() {
 
 	int max_num_experiments = ((int)nodes.size() + NODES_PER_EXPERIMENT-1) / NODES_PER_EXPERIMENT;
 
-	nodes.push_back(NULL);
-
 	uniform_int_distribution<int> num_experiments_distribution(1, max_num_experiments);
 	int num_experiments = num_experiments_distribution(generator);
 
 	double nodes_per = (int)nodes.size() / (double)num_experiments;
+
+	nodes.push_back(NULL);
+
 	vector<int> starts(num_experiments);
 	vector<int> ends(num_experiments);
 	starts[0] = 0;
 	for (int e_index = 0; e_index < num_experiments-1; e_index++) {
-		int divider = nodes_per * e_index;
+		int divider = nodes_per * (e_index + 1);
 		starts[e_index + 1] = divider;
 		ends[e_index] = divider;
 	}
-	ends[num_experiments-1] = (int)nodes.size();
+	ends[num_experiments-1] = (int)nodes.size() - 1;
 
 	for (int e_index = 0; e_index < num_experiments; e_index++) {
 		uniform_int_distribution<int> start_distribution(starts[e_index], ends[e_index]-1);
@@ -106,12 +110,11 @@ void set_experiment_nodes() {
 		while (true) {
 			start_index = start_distribution(generator);
 			end_index = end_distribution(generator);
-			if (start_index <= end_index) {
+			if (start_index < end_index) {
 				break;
 			}
 		}
 
-		nodes[start_index]->is_experiment = true;
 		nodes[start_index]->experiment_is_branch = is_branches[start_index];
 		nodes[start_index]->experiment_exit_next_node = nodes[end_index];
 
@@ -120,4 +123,6 @@ void set_experiment_nodes() {
 	}
 
 	delete scope_history;
+
+	delete problem;
 }
