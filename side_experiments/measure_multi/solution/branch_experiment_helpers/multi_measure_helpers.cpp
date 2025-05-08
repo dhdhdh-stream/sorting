@@ -124,8 +124,6 @@ void BranchExperiment::multi_measure_calc() {
 		map<AbstractExperiment*, int> influence_mapping;
 		for (map<AbstractExperiment*, pair<int,int>>::iterator it = sum_counts.begin();
 				it != sum_counts.end(); it++) {
-			cout << "it->second.first: " << it->second.first << endl;
-			cout << "it->second.second: " << it->second.second << endl;
 			int sum_count = it->second.first + it->second.second;
 			if (sum_count > INFLUENCE_MIN_NUM) {
 				double curr_percentage = (double)it->second.second / (double)sum_count;
@@ -175,9 +173,9 @@ void BranchExperiment::multi_measure_calc() {
 			return;
 		}
 
-		for (int w_index = 0; w_index < (int)weights.size(); w_index++) {
-			cout << w_index << ": " << weights[w_index] << endl;
-		}
+		// for (int w_index = 0; w_index < (int)weights.size(); w_index++) {
+		// 	cout << w_index << ": " << weights[w_index] << endl;
+		// }
 
 		if (abs(weights[0]) > 10000.0) {
 			this->improvement = -1.0;
@@ -214,8 +212,6 @@ void BranchExperiment::multi_measure_calc() {
 		map<AbstractExperiment*, int> influence_mapping;
 		for (map<AbstractExperiment*, pair<int,int>>::iterator it = sum_counts.begin();
 				it != sum_counts.end(); it++) {
-			cout << "it->second.first: " << it->second.first << endl;
-			cout << "it->second.second: " << it->second.second << endl;
 			int sum_count = it->second.first + it->second.second;
 			if (sum_count > INFLUENCE_MIN_NUM) {
 				double curr_percentage = (double)it->second.second / (double)sum_count;
@@ -265,9 +261,9 @@ void BranchExperiment::multi_measure_calc() {
 			return;
 		}
 
-		for (int w_index = 0; w_index < (int)weights.size(); w_index++) {
-			cout << w_index << ": " << weights[w_index] << endl;
-		}
+		// for (int w_index = 0; w_index < (int)weights.size(); w_index++) {
+		// 	cout << w_index << ": " << weights[w_index] << endl;
+		// }
 
 		if (abs(weights[0]) > 10000.0) {
 			this->improvement = -1.0;
@@ -282,8 +278,6 @@ void BranchExperiment::multi_measure_calc() {
 
 	this->improvement = new_score - existing_score;
 
-	cout << "this->true_improvement: " << this->true_improvement << endl;
-	cout << "this->improvement: " << this->improvement << endl;
 	cout << "existing_average_target_val: " << existing_average_target_val << endl;
 	cout << "new_average_target_val: " << new_average_target_val << endl;
 }

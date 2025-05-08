@@ -49,4 +49,8 @@ void update_scores(ScopeHistory* scope_history,
 
 void clean_scope(Scope* scope);
 
+void multi_measure_calc(std::vector<std::vector<double>>& influences,
+						std::vector<double>& target_vals,
+						std::vector<double>& multi_scores);
+
 #endif /* SOLUTION_HELPERS_H */
