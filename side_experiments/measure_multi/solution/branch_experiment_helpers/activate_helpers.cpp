@@ -62,6 +62,13 @@ void BranchExperiment::activate(AbstractNode* experiment_node,
 							 scope_history,
 							 history);
 			break;
+		case BRANCH_EXPERIMENT_STATE_MULTI_MEASURE:
+			multi_measure_activate(curr_node,
+								   problem,
+								   run_helper,
+								   scope_history,
+								   history);
+			break;
 		}
 	}
 }
@@ -94,6 +101,10 @@ void BranchExperiment::backprop(double target_val,
 	case BRANCH_EXPERIMENT_STATE_MEASURE:
 		measure_backprop(target_val,
 						 run_helper);
+		break;
+	case BRANCH_EXPERIMENT_STATE_MULTI_MEASURE:
+		multi_measure_backprop(target_val,
+							   run_helper);
 		break;
 	}
 }

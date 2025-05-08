@@ -57,6 +57,7 @@ void BranchExperiment::train_existing_backprop(
 	for (int i_index = 0; i_index < history->instance_count; i_index++) {
 		this->i_target_val_histories.push_back(target_val);
 	}
+	this->o_target_val_histories.push_back(target_val);
 
 	this->sum_num_instances += history->instance_count;
 

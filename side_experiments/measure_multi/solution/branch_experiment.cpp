@@ -42,6 +42,7 @@ BranchExperimentHistory::BranchExperimentHistory(BranchExperiment* experiment) {
 	case BRANCH_EXPERIMENT_STATE_EXPLORE:
 	case BRANCH_EXPERIMENT_STATE_TRAIN_NEW:
 	case BRANCH_EXPERIMENT_STATE_MEASURE:
+	case BRANCH_EXPERIMENT_STATE_MULTI_MEASURE:
 		this->is_active = experiment_active_distribution(generator) == 0;
 		break;
 	}

@@ -97,44 +97,6 @@ void BranchExperiment::multi_measure_backprop(double target_val,
 }
 
 void BranchExperiment::multi_measure_calc() {
-	map<AbstractExperiment*, pair<int,int>> sum_counts;
-	for (int h_index = 0; h_index < (int)this->existing_influence_indexes.size(); h_index++) {
-		for (int i_index = 0; i_index < (int)this->existing_influence_indexes[h_index].size(); i_index++) {
-			pair<AbstractExperiment*,bool> influence = this->existing_influence_indexes[h_index][i_index];
-			map<AbstractExperiment*, pair<int,int>>::iterator it = sum_counts.find(influence.first);
-			if (it == sum_counts.end()) {
-				it = sum_counts.insert({influence.first, {0,0}}).first;
-			}
-			if (influence.second) {
-				it->second.second++;
-			} else {
-				it->second.first++;
-			}
-		}
-	}
-
-	map<AbstractExperiment*, int> influence_mapping;
-	for (map<AbstractExperiment*, pair<int,int>>::iterator it = sum_counts.begin();
-			it != sum_counts.end(); it++) {
-		int sum_count = it->second.first + it->second.second;
-		if (sum_count > INFLUENCE_MIN_NUM) {
-			double curr_percentage = (double)it->second.second / (double)sum_count;
-			double curr_standard_deviation = sqrt(curr_percentage * (1.0 - curr_percentage));
-			if (curr_standard_deviation < MIN_STANDARD_DEVIATION) {
-				curr_standard_deviation = MIN_STANDARD_DEVIATION;
-			}
-
-			double t_score = ((1.0 / 3.0) - curr_percentage)
-				/ curr_standard_deviation / sqrt(sum_count);
-			if (abs(t_score) > 0.674) {
-				this->result = EXPERIMENT_RESULT_FAIL;
-				return;
-			}
-
-			influence_mapping[it->first] = (int)influence_mapping.size();
-		}
-	}
-
 	double existing_sum_target_vals = 0.0;
 	for (int h_index = 0; h_index < (int)this->existing_target_vals.size(); h_index++) {
 		existing_sum_target_vals += this->existing_target_vals[h_index];
@@ -143,6 +105,46 @@ void BranchExperiment::multi_measure_calc() {
 
 	double existing_adjust;
 	{
+		map<AbstractExperiment*, pair<int,int>> sum_counts;
+		for (int h_index = 0; h_index < (int)this->existing_influence_indexes.size(); h_index++) {
+			for (int i_index = 0; i_index < (int)this->existing_influence_indexes[h_index].size(); i_index++) {
+				pair<AbstractExperiment*,bool> influence = this->existing_influence_indexes[h_index][i_index];
+				map<AbstractExperiment*, pair<int,int>>::iterator it = sum_counts.find(influence.first);
+				if (it == sum_counts.end()) {
+					it = sum_counts.insert({influence.first, {0,0}}).first;
+				}
+				if (influence.second) {
+					it->second.second++;
+				} else {
+					it->second.first++;
+				}
+			}
+		}
+
+		map<AbstractExperiment*, int> influence_mapping;
+		for (map<AbstractExperiment*, pair<int,int>>::iterator it = sum_counts.begin();
+				it != sum_counts.end(); it++) {
+			cout << "it->second.first: " << it->second.first << endl;
+			cout << "it->second.second: " << it->second.second << endl;
+			int sum_count = it->second.first + it->second.second;
+			if (sum_count > INFLUENCE_MIN_NUM) {
+				double curr_percentage = (double)it->second.second / (double)sum_count;
+				double curr_standard_deviation = sqrt(curr_percentage * (1.0 - curr_percentage));
+				if (curr_standard_deviation < MIN_STANDARD_DEVIATION) {
+					curr_standard_deviation = MIN_STANDARD_DEVIATION;
+				}
+
+				double t_score = ((1.0 / 3.0) - curr_percentage)
+					/ curr_standard_deviation / sqrt(sum_count);
+				if (abs(t_score) > 0.674) {
+					this->improvement = -1.0;
+					return;
+				}
+
+				influence_mapping[it->first] = 1 + (int)influence_mapping.size();
+			}
+		}
+
 		Eigen::MatrixXd inputs((int)this->existing_target_vals.size(), 1 + influence_mapping.size());
 		for (int i_index = 0; i_index < (int)this->existing_target_vals.size(); i_index++) {
 			for (int m_index = 0; m_index < 1 + (int)influence_mapping.size(); m_index++) {
@@ -169,12 +171,16 @@ void BranchExperiment::multi_measure_calc() {
 			weights = inputs.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(outputs);
 		} catch (std::invalid_argument &e) {
 			cout << "Eigen error" << endl;
-			this->result = EXPERIMENT_RESULT_FAIL;
+			this->improvement = -1.0;
 			return;
 		}
 
+		for (int w_index = 0; w_index < (int)weights.size(); w_index++) {
+			cout << w_index << ": " << weights[w_index] << endl;
+		}
+
 		if (abs(weights[0]) > 10000.0) {
-			this->result = EXPERIMENT_RESULT_FAIL;
+			this->improvement = -1.0;
 			return;
 		}
 
@@ -189,6 +195,46 @@ void BranchExperiment::multi_measure_calc() {
 
 	double new_adjust;
 	{
+		map<AbstractExperiment*, pair<int,int>> sum_counts;
+		for (int h_index = 0; h_index < (int)this->new_influence_indexes.size(); h_index++) {
+			for (int i_index = 0; i_index < (int)this->new_influence_indexes[h_index].size(); i_index++) {
+				pair<AbstractExperiment*,bool> influence = this->new_influence_indexes[h_index][i_index];
+				map<AbstractExperiment*, pair<int,int>>::iterator it = sum_counts.find(influence.first);
+				if (it == sum_counts.end()) {
+					it = sum_counts.insert({influence.first, {0,0}}).first;
+				}
+				if (influence.second) {
+					it->second.second++;
+				} else {
+					it->second.first++;
+				}
+			}
+		}
+
+		map<AbstractExperiment*, int> influence_mapping;
+		for (map<AbstractExperiment*, pair<int,int>>::iterator it = sum_counts.begin();
+				it != sum_counts.end(); it++) {
+			cout << "it->second.first: " << it->second.first << endl;
+			cout << "it->second.second: " << it->second.second << endl;
+			int sum_count = it->second.first + it->second.second;
+			if (sum_count > INFLUENCE_MIN_NUM) {
+				double curr_percentage = (double)it->second.second / (double)sum_count;
+				double curr_standard_deviation = sqrt(curr_percentage * (1.0 - curr_percentage));
+				if (curr_standard_deviation < MIN_STANDARD_DEVIATION) {
+					curr_standard_deviation = MIN_STANDARD_DEVIATION;
+				}
+
+				double t_score = ((1.0 / 3.0) - curr_percentage)
+					/ curr_standard_deviation / sqrt(sum_count);
+				if (abs(t_score) > 0.674) {
+					this->improvement = -1.0;
+					return;
+				}
+
+				influence_mapping[it->first] = 1 + (int)influence_mapping.size();
+			}
+		}
+
 		Eigen::MatrixXd inputs((int)this->new_target_vals.size(), 1 + influence_mapping.size());
 		for (int i_index = 0; i_index < (int)this->new_target_vals.size(); i_index++) {
 			for (int m_index = 0; m_index < 1 + (int)influence_mapping.size(); m_index++) {
@@ -215,12 +261,16 @@ void BranchExperiment::multi_measure_calc() {
 			weights = inputs.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(outputs);
 		} catch (std::invalid_argument &e) {
 			cout << "Eigen error" << endl;
-			this->result = EXPERIMENT_RESULT_FAIL;
+			this->improvement = -1.0;
 			return;
 		}
 
+		for (int w_index = 0; w_index < (int)weights.size(); w_index++) {
+			cout << w_index << ": " << weights[w_index] << endl;
+		}
+
 		if (abs(weights[0]) > 10000.0) {
-			this->result = EXPERIMENT_RESULT_FAIL;
+			this->improvement = -1.0;
 			return;
 		}
 
@@ -231,4 +281,9 @@ void BranchExperiment::multi_measure_calc() {
 	double new_score = new_average_target_val + new_adjust;
 
 	this->improvement = new_score - existing_score;
+
+	cout << "this->true_improvement: " << this->true_improvement << endl;
+	cout << "this->improvement: " << this->improvement << endl;
+	cout << "existing_average_target_val: " << existing_average_target_val << endl;
+	cout << "new_average_target_val: " << new_average_target_val << endl;
 }

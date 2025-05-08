@@ -27,7 +27,7 @@ void create_experiment(vector<AbstractNode*>& experiment_starts,
 		}
 	}
 	uniform_int_distribution<int> possible_distribution(0, possible_indexes.size()-1);
-	curr_experiment_index = possible_distribution(generator);
+	curr_experiment_index = possible_indexes[possible_distribution(generator)];
 
 	/**
 	 * - weigh towards PassThroughExperiments as cheaper and potentially just as effective

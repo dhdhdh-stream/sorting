@@ -60,10 +60,10 @@ void PassThroughExperiment::explore_backprop(
 	case PASS_THROUGH_EXPERIMENT_STATE_INITIAL:
 		if (this->state_iter == INITIAL_NUM_SAMPLES_PER_ITER) {
 			#if defined(MDEBUG) && MDEBUG
-			if (rand()%2 == 0) {
+			if (this->allow_bad || rand()%2 == 0) {
 			#else
 			double curr_score = this->sum_score / this->state_iter;
-			if (curr_score <= this->existing_average_score) {
+			if (this->allow_bad || curr_score <= this->existing_average_score) {
 			#endif /* MDEBUG */
 				is_fail = true;
 			} else {
@@ -77,10 +77,10 @@ void PassThroughExperiment::explore_backprop(
 	case PASS_THROUGH_EXPERIMENT_STATE_VERIFY_1ST:
 		if (this->state_iter == VERIFY_1ST_NUM_SAMPLES_PER_ITER) {
 			#if defined(MDEBUG) && MDEBUG
-			if (rand()%2 == 0) {
+			if (this->allow_bad || rand()%2 == 0) {
 			#else
 			double curr_score = this->sum_score / this->state_iter;
-			if (curr_score <= this->existing_average_score) {
+			if (this->allow_bad || curr_score <= this->existing_average_score) {
 			#endif /* MDEBUG */
 				is_fail = true;
 			} else {
@@ -95,13 +95,13 @@ void PassThroughExperiment::explore_backprop(
 		if (this->state_iter == VERIFY_2ND_NUM_SAMPLES_PER_ITER) {
 			double curr_score = this->sum_score / this->state_iter;
 			#if defined(MDEBUG) && MDEBUG
-			if (rand()%2 == 0) {
+			if (this->allow_bad || rand()%2 == 0) {
 			#else
-			if (curr_score <= this->existing_average_score) {
+			if (this->allow_bad || curr_score <= this->existing_average_score) {
 			#endif /* MDEBUG */
 				is_fail = true;
 			} else {
-				this->improvement = curr_score - this->existing_average_score;
+				this->true_improvement = curr_score - this->existing_average_score;
 
 				cout << "PassThrough" << endl;
 				cout << "this->scope_context->id: " << this->scope_context->id << endl;
@@ -117,7 +117,7 @@ void PassThroughExperiment::explore_backprop(
 				}
 				cout << endl;
 
-				cout << "this->improvement: " << this->improvement << endl;
+				cout << "this->true_improvement: " << this->true_improvement << endl;
 
 				this->result = EXPERIMENT_RESULT_SUCCESS;
 			}

@@ -39,7 +39,8 @@ int run_index;
 int main(int argc, char* argv[]) {
 	cout << "Starting..." << endl;
 
-	seed = (unsigned)time(NULL);
+	// seed = (unsigned)time(NULL);
+	seed = 1746649591;
 	srand(seed);
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
@@ -125,6 +126,8 @@ int main(int argc, char* argv[]) {
 									  curr_experiment_index,
 									  improvement_iter);
 				} else if (it->first->result == EXPERIMENT_RESULT_SUCCESS) {
+					cout << "EXPERIMENT_RESULT_SUCCESS " << curr_experiment_index << endl;
+
 					it->first->unattach();
 					experiments[curr_experiment_index] = it->first;
 					improvement_iter++;
@@ -185,11 +188,12 @@ int main(int argc, char* argv[]) {
 		}
 
 		for (int e_index = 0; e_index < (int)experiments.size(); e_index++) {
+			cout << e_index << endl;
+
 			experiments[e_index]->multi_measure_calc();
 
-			cout << e_index << endl;
-			cout << "experiments[e_index]->true_improvement: " << experiments[e_index]->true_improvement << endl;
-			cout << "experiments[e_index]->improvement: " << experiments[e_index]->improvement << endl;
+			// cout << "experiments[e_index]->true_improvement: " << experiments[e_index]->true_improvement << endl;
+			// cout << "experiments[e_index]->improvement: " << experiments[e_index]->improvement << endl;
 		}
 
 		int best_index = 0;

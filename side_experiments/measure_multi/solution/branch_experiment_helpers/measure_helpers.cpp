@@ -83,9 +83,9 @@ void BranchExperiment::measure_backprop(double target_val,
 	if (this->state_iter >= MEASURE_NUM_DATAPOINTS) {
 		double new_score = this->combined_score / this->state_iter;
 		#if defined(MDEBUG) && MDEBUG
-		if (rand()%2 == 0) {
+		if (this->allow_bad || rand()%2 == 0) {
 		#else
-		if (new_score > this->o_existing_average_score) {
+		if (this->allow_bad || new_score > this->o_existing_average_score) {
 		#endif /* MDEBUG */
 			this->true_improvement = new_score - this->o_existing_average_score;
 
@@ -109,7 +109,7 @@ void BranchExperiment::measure_backprop(double target_val,
 				cout << "this->exit_next_node->id: " << this->exit_next_node->id << endl;
 			}
 
-			cout << "this->improvement: " << this->improvement << endl;
+			cout << "this->true_improvement: " << this->true_improvement << endl;
 
 			cout << endl;
 
