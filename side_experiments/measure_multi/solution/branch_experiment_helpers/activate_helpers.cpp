@@ -74,6 +74,7 @@ void BranchExperiment::activate(AbstractNode* experiment_node,
 }
 
 void BranchExperiment::backprop(double target_val,
+								bool is_return,
 								RunHelper& run_helper) {
 	BranchExperimentHistory* history = (BranchExperimentHistory*)run_helper.experiment_histories[this];
 	switch (this->state) {
@@ -87,6 +88,7 @@ void BranchExperiment::backprop(double target_val,
 		break;
 	case BRANCH_EXPERIMENT_STATE_EXPLORE:
 		explore_backprop(target_val,
+						 is_return,
 						 run_helper,
 						 history);
 		break;

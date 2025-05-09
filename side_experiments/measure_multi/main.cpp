@@ -109,12 +109,22 @@ int main(int argc, char* argv[]) {
 			double target_val = problem->score_result();
 			target_val -= run_helper.num_actions * solution->curr_time_penalty;
 
+			bool is_return;
+			Minesweeper* minesweeper = (Minesweeper*)problem;
+			if (minesweeper->current_x == 4
+					&& minesweeper->current_y == 4) {
+				is_return = true;
+			} else {
+				is_return = false;
+			}
+
 			delete scope_history;
 			delete problem;
 
 			for (map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it = run_helper.experiment_histories.begin();
 					it != run_helper.experiment_histories.end(); it++) {
 				it->first->backprop(target_val,
+									is_return,
 									run_helper);
 				if (it->first->result == EXPERIMENT_RESULT_FAIL) {
 					it->first->unattach();
@@ -201,6 +211,15 @@ int main(int argc, char* argv[]) {
 			double target_val = problem->score_result();
 			target_val -= run_helper.num_actions * solution->curr_time_penalty;
 
+			bool is_return;
+			Minesweeper* minesweeper = (Minesweeper*)problem;
+			if (minesweeper->current_x == 4
+					&& minesweeper->current_y == 4) {
+				is_return = true;
+			} else {
+				is_return = false;
+			}
+
 			vector<double> curr_influences(experiments.size(), 0.0);
 			for (map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it = run_helper.experiment_histories.begin();
 					it != run_helper.experiment_histories.end(); it++) {
@@ -221,6 +240,7 @@ int main(int argc, char* argv[]) {
 			for (map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it = run_helper.experiment_histories.begin();
 					it != run_helper.experiment_histories.end(); it++) {
 				it->first->backprop(target_val,
+									is_return,
 									run_helper);
 			}
 		}

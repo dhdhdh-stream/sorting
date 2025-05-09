@@ -64,6 +64,7 @@ void PassThroughExperiment::activate(AbstractNode* experiment_node,
 }
 
 void PassThroughExperiment::backprop(double target_val,
+									 bool is_return,
 									 RunHelper& run_helper) {
 	switch (this->state) {
 	case PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING:
@@ -74,6 +75,7 @@ void PassThroughExperiment::backprop(double target_val,
 	case PASS_THROUGH_EXPERIMENT_STATE_VERIFY_1ST:
 	case PASS_THROUGH_EXPERIMENT_STATE_VERIFY_2ND:
 		explore_backprop(target_val,
+						 is_return,
 						 run_helper);
 		break;
 	case PASS_THROUGH_EXPERIMENT_STATE_MULTI_MEASURE:

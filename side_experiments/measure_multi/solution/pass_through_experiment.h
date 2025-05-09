@@ -52,6 +52,7 @@ public:
 				  RunHelper& run_helper,
 				  ScopeHistory* scope_history);
 	void backprop(double target_val,
+				  bool is_return,
 				  RunHelper& run_helper);
 
 	void measure_existing_backprop(double target_val,
@@ -61,6 +62,7 @@ public:
 						  Problem* problem,
 						  RunHelper& run_helper);
 	void explore_backprop(double target_val,
+						  bool is_return,
 						  RunHelper& run_helper);
 
 	void multi_measure_activate(AbstractNode*& curr_node,

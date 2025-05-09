@@ -51,78 +51,83 @@ void PassThroughExperiment::explore_activate(
 
 void PassThroughExperiment::explore_backprop(
 		double target_val,
+		bool is_return,
 		RunHelper& run_helper) {
 	this->sum_score += target_val;
 
 	this->state_iter++;
 	bool is_fail = false;
-	switch (this->state) {
-	case PASS_THROUGH_EXPERIMENT_STATE_INITIAL:
-		if (this->state_iter == INITIAL_NUM_SAMPLES_PER_ITER) {
-			#if defined(MDEBUG) && MDEBUG
-			if (this->allow_bad || rand()%2 == 0) {
-			#else
-			double curr_score = this->sum_score / this->state_iter;
-			if (this->allow_bad || curr_score <= this->existing_average_score) {
-			#endif /* MDEBUG */
-				is_fail = true;
-			} else {
-				this->sum_score = 0.0;
+	if (is_fail) {
+		is_fail = true;
+	} else {
+		switch (this->state) {
+		case PASS_THROUGH_EXPERIMENT_STATE_INITIAL:
+			if (this->state_iter == INITIAL_NUM_SAMPLES_PER_ITER) {
+				#if defined(MDEBUG) && MDEBUG
+				if (this->allow_bad || rand()%2 == 0) {
+				#else
+				double curr_score = this->sum_score / this->state_iter;
+				if (this->allow_bad || curr_score <= this->existing_average_score) {
+				#endif /* MDEBUG */
+					is_fail = true;
+				} else {
+					this->sum_score = 0.0;
 
-				this->state = PASS_THROUGH_EXPERIMENT_STATE_VERIFY_1ST;
-				this->state_iter = 0;
-			}
-		}
-		break;
-	case PASS_THROUGH_EXPERIMENT_STATE_VERIFY_1ST:
-		if (this->state_iter == VERIFY_1ST_NUM_SAMPLES_PER_ITER) {
-			#if defined(MDEBUG) && MDEBUG
-			if (this->allow_bad || rand()%2 == 0) {
-			#else
-			double curr_score = this->sum_score / this->state_iter;
-			if (this->allow_bad || curr_score <= this->existing_average_score) {
-			#endif /* MDEBUG */
-				is_fail = true;
-			} else {
-				this->sum_score = 0.0;
-
-				this->state = PASS_THROUGH_EXPERIMENT_STATE_VERIFY_2ND;
-				this->state_iter = 0;
-			}
-		}
-		break;
-	case PASS_THROUGH_EXPERIMENT_STATE_VERIFY_2ND:
-		if (this->state_iter == VERIFY_2ND_NUM_SAMPLES_PER_ITER) {
-			double curr_score = this->sum_score / this->state_iter;
-			#if defined(MDEBUG) && MDEBUG
-			if (this->allow_bad || rand()%2 == 0) {
-			#else
-			if (this->allow_bad || curr_score <= this->existing_average_score) {
-			#endif /* MDEBUG */
-				is_fail = true;
-			} else {
-				this->true_improvement = curr_score - this->existing_average_score;
-
-				cout << "PassThrough" << endl;
-				cout << "this->scope_context->id: " << this->scope_context->id << endl;
-				cout << "this->node_context->id: " << this->node_context->id << endl;
-				cout << "this->is_branch: " << this->is_branch << endl;
-				cout << "new explore path:";
-				for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {
-					if (this->step_types[s_index] == STEP_TYPE_ACTION) {
-						cout << " " << this->actions[s_index].move;
-					} else {
-						cout << " E" << this->scopes[s_index]->id;
-					}
+					this->state = PASS_THROUGH_EXPERIMENT_STATE_VERIFY_1ST;
+					this->state_iter = 0;
 				}
-				cout << endl;
-
-				cout << "this->true_improvement: " << this->true_improvement << endl;
-
-				this->result = EXPERIMENT_RESULT_SUCCESS;
 			}
+			break;
+		case PASS_THROUGH_EXPERIMENT_STATE_VERIFY_1ST:
+			if (this->state_iter == VERIFY_1ST_NUM_SAMPLES_PER_ITER) {
+				#if defined(MDEBUG) && MDEBUG
+				if (this->allow_bad || rand()%2 == 0) {
+				#else
+				double curr_score = this->sum_score / this->state_iter;
+				if (this->allow_bad || curr_score <= this->existing_average_score) {
+				#endif /* MDEBUG */
+					is_fail = true;
+				} else {
+					this->sum_score = 0.0;
+
+					this->state = PASS_THROUGH_EXPERIMENT_STATE_VERIFY_2ND;
+					this->state_iter = 0;
+				}
+			}
+			break;
+		case PASS_THROUGH_EXPERIMENT_STATE_VERIFY_2ND:
+			if (this->state_iter == VERIFY_2ND_NUM_SAMPLES_PER_ITER) {
+				double curr_score = this->sum_score / this->state_iter;
+				#if defined(MDEBUG) && MDEBUG
+				if (this->allow_bad || rand()%2 == 0) {
+				#else
+				if (this->allow_bad || curr_score <= this->existing_average_score) {
+				#endif /* MDEBUG */
+					is_fail = true;
+				} else {
+					this->true_improvement = curr_score - this->existing_average_score;
+
+					cout << "PassThrough" << endl;
+					cout << "this->scope_context->id: " << this->scope_context->id << endl;
+					cout << "this->node_context->id: " << this->node_context->id << endl;
+					cout << "this->is_branch: " << this->is_branch << endl;
+					cout << "new explore path:";
+					for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {
+						if (this->step_types[s_index] == STEP_TYPE_ACTION) {
+							cout << " " << this->actions[s_index].move;
+						} else {
+							cout << " E" << this->scopes[s_index]->id;
+						}
+					}
+					cout << endl;
+
+					cout << "this->true_improvement: " << this->true_improvement << endl;
+
+					this->result = EXPERIMENT_RESULT_SUCCESS;
+				}
+			}
+			break;
 		}
-		break;
 	}
 
 	if (is_fail) {
