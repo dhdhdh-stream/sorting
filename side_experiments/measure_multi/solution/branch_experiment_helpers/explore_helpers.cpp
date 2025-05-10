@@ -101,7 +101,7 @@ void BranchExperiment::explore_backprop(
 			#if defined(MDEBUG) && MDEBUG
 			if (true) {
 			#else
-			if (!is_return && curr_surprise > this->best_surprise) {
+			if (is_return && curr_surprise > this->best_surprise) {
 			#endif /* MDEBUG */
 				this->best_surprise = curr_surprise;
 				this->best_step_types = this->curr_step_types;
@@ -125,7 +125,7 @@ void BranchExperiment::explore_backprop(
 			#if defined(MDEBUG) && MDEBUG
 			if (true) {
 			#else
-			if (!is_return && curr_surprise > 0.0) {
+			if (is_return && curr_surprise > 0.0) {
 			#endif /* MDEBUG */
 				this->best_step_types = this->curr_step_types;
 				this->best_actions = this->curr_actions;

@@ -50,7 +50,8 @@ const int MULTI_MEASURE_ITERS = 20000;
 const int MEASURE_ITERS = 4000;
 #endif /* MDEBUG */
 
-const int EXPLORE_ITERS = 60;
+// const int EXPLORE_ITERS = 60;
+const int EXPLORE_ITERS = 200;
 
 const int IMPROVEMENTS_PER_ITER = 10;
 

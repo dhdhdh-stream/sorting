@@ -114,6 +114,7 @@ public:
 							ScopeHistory* scope_history,
 							BranchExperimentHistory* history);
 	void train_new_backprop(double target_val,
+							bool is_return,
 							RunHelper& run_helper,
 							BranchExperimentHistory* history);
 

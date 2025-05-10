@@ -90,6 +90,7 @@ void BranchExperiment::train_new_activate(
 
 void BranchExperiment::train_new_backprop(
 		double target_val,
+		bool is_return,
 		RunHelper& run_helper,
 		BranchExperimentHistory* history) {
 	for (int i_index = 0; i_index < history->instance_count; i_index++) {

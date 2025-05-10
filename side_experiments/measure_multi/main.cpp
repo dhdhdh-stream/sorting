@@ -180,22 +180,22 @@ int main(int argc, char* argv[]) {
 
 			RunHelper run_helper;
 
-			for (int e_index = 0; e_index < (int)experiments.size(); e_index++) {
-				switch (experiments[e_index]->type) {
-				case EXPERIMENT_TYPE_BRANCH:
-					{
-						BranchExperiment* branch_experiment = (BranchExperiment*)experiments[e_index];
-						run_helper.experiment_histories[branch_experiment] = new BranchExperimentHistory(branch_experiment);
-					}
-					break;
-				case EXPERIMENT_TYPE_PASS_THROUGH:
-					{
-						PassThroughExperiment* pass_through_experiment = (PassThroughExperiment*)experiments[e_index];
-						run_helper.experiment_histories[pass_through_experiment] = new PassThroughExperimentHistory(pass_through_experiment);
-					}
-					break;
-				}
-			}
+			// for (int e_index = 0; e_index < (int)experiments.size(); e_index++) {
+			// 	switch (experiments[e_index]->type) {
+			// 	case EXPERIMENT_TYPE_BRANCH:
+			// 		{
+			// 			BranchExperiment* branch_experiment = (BranchExperiment*)experiments[e_index];
+			// 			run_helper.experiment_histories[branch_experiment] = new BranchExperimentHistory(branch_experiment);
+			// 		}
+			// 		break;
+			// 	case EXPERIMENT_TYPE_PASS_THROUGH:
+			// 		{
+			// 			PassThroughExperiment* pass_through_experiment = (PassThroughExperiment*)experiments[e_index];
+			// 			run_helper.experiment_histories[pass_through_experiment] = new PassThroughExperimentHistory(pass_through_experiment);
+			// 		}
+			// 		break;
+			// 	}
+			// }
 
 			#if defined(MDEBUG) && MDEBUG
 			run_helper.starting_run_seed = run_index;
@@ -253,10 +253,19 @@ int main(int argc, char* argv[]) {
 		for (int e_index = 0; e_index < (int)experiments.size(); e_index++) {
 			cout << e_index << endl;
 
+			cout << "experiments[e_index]->type: " << experiments[e_index]->type << endl;
+
 			experiments[e_index]->multi_measure_calc();
 
+			cout << "experiments[e_index]->node_context->id: " << experiments[e_index]->node_context->id << endl;
+			if (experiments[e_index]->exit_next_node == NULL) {
+				cout << "experiments[e_index]->exit_next_node->id: -1" << endl;
+			} else {
+				cout << "experiments[e_index]->exit_next_node->id: " << experiments[e_index]->exit_next_node->id << endl;
+			}
+
 			cout << "experiments[e_index]->true_improvement: " << experiments[e_index]->true_improvement << endl;
-			// cout << "experiments[e_index]->improvement: " << experiments[e_index]->improvement << endl;
+			cout << "experiments[e_index]->improvement: " << experiments[e_index]->improvement << endl;
 
 			cout << "multi_scores[e_index]: " << multi_scores[e_index] << endl;
 			cout << "counts[e_index]: " << counts[e_index] << endl;
@@ -264,13 +273,16 @@ int main(int argc, char* argv[]) {
 
 		int best_index = 0;
 		// double best_score = experiments[0]->true_improvement;
-		double best_score = multi_scores[0];
+		// double best_score = multi_scores[0];
+		double best_score = experiments[0]->improvement;
 		for (int e_index = 1; e_index < (int)experiments.size(); e_index++) {
 			// if (experiments[e_index]->true_improvement > best_score) {
-			if (multi_scores[e_index] > best_score) {
+			// if (multi_scores[e_index] > best_score) {
+			if (experiments[e_index]->improvement > best_score) {
 				best_index = e_index;
 				// best_score = experiments[e_index]->true_improvement;
-				best_score = multi_scores[e_index];
+				// best_score = multi_scores[e_index];
+				best_score = experiments[e_index]->improvement;
 			}
 		}
 

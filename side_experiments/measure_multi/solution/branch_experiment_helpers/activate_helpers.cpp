@@ -97,6 +97,7 @@ void BranchExperiment::backprop(double target_val,
 		break;
 	case BRANCH_EXPERIMENT_STATE_TRAIN_NEW:
 		train_new_backprop(target_val,
+						   is_return,
 						   run_helper,
 						   history);
 		break;

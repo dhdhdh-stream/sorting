@@ -57,7 +57,7 @@ void PassThroughExperiment::explore_backprop(
 
 	this->state_iter++;
 	bool is_fail = false;
-	if (is_fail) {
+	if (!is_return) {
 		is_fail = true;
 	} else {
 		switch (this->state) {
