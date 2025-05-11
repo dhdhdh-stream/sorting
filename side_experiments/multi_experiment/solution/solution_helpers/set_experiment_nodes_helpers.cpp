@@ -47,6 +47,7 @@ void create_experiment(AbstractNode* experiment_node,
 				experiment_node->experiment_is_branch,
 				experiment_node->experiment_exit_next_node);
 			experiment_node->experiment = new_experiment;
+			cout << "PassThroughExperiment" << endl;
 		} else {
 			BranchExperiment* new_experiment = new BranchExperiment(
 				experiment_node->parent,
@@ -54,6 +55,7 @@ void create_experiment(AbstractNode* experiment_node,
 				experiment_node->experiment_is_branch,
 				experiment_node->experiment_exit_next_node);
 			experiment_node->experiment = new_experiment;
+			cout << "BranchExperiment" << endl;
 		}
 	}
 }

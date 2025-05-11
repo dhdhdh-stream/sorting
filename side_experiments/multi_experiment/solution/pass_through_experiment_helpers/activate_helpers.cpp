@@ -6,11 +6,14 @@
 #define eigen_assert(x) if (!(x)) {throw std::invalid_argument("Eigen error");}
 #include <Eigen/Dense>
 
-#include "abstract_node.h"
+#include "action_node.h"
+#include "branch_node.h"
 #include "constants.h"
 #include "globals.h"
+#include "obs_node.h"
 #include "problem.h"
 #include "scope.h"
+#include "scope_node.h"
 #include "solution.h"
 #include "solution_helpers.h"
 
@@ -81,44 +84,6 @@ void PassThroughExperiment::activate(AbstractNode* experiment_node,
 
 void PassThroughExperiment::calc_improve_helper(bool& is_success,
 												double& curr_improvement) {
-	map<AbstractExperiment*, pair<int,int>> sum_counts;
-	for (int h_index = 0; h_index < (int)this->existing_influence_indexes.size(); h_index++) {
-		for (int i_index = 0; i_index < (int)this->existing_influence_indexes[h_index].size(); i_index++) {
-			pair<AbstractExperiment*,bool> influence = this->existing_influence_indexes[h_index][i_index];
-			map<AbstractExperiment*, pair<int,int>>::iterator it = sum_counts.find(influence.first);
-			if (it == sum_counts.end()) {
-				it = sum_counts.insert({influence.first, {0,0}}).first;
-			}
-			if (influence.second) {
-				it->second.second++;
-			} else {
-				it->second.first++;
-			}
-		}
-	}
-
-	map<AbstractExperiment*, int> influence_mapping;
-	for (map<AbstractExperiment*, pair<int,int>>::iterator it = sum_counts.begin();
-			it != sum_counts.end(); it++) {
-		int sum_count = it->second.first + it->second.second;
-		if (sum_count > INFLUENCE_MIN_NUM) {
-			double curr_percentage = (double)it->second.second / (double)sum_count;
-			double curr_standard_deviation = sqrt(curr_percentage * (1.0 - curr_percentage));
-			if (curr_standard_deviation < MIN_STANDARD_DEVIATION) {
-				curr_standard_deviation = MIN_STANDARD_DEVIATION;
-			}
-
-			double t_score = ((1.0 / 3.0) - curr_percentage)
-				/ curr_standard_deviation / sqrt(sum_count);
-			if (abs(t_score) > 0.674) {
-				is_success = false;
-				return;
-			}
-
-			influence_mapping[it->first] = (int)influence_mapping.size();
-		}
-	}
-
 	double existing_sum_target_vals = 0.0;
 	for (int h_index = 0; h_index < (int)this->existing_target_vals.size(); h_index++) {
 		existing_sum_target_vals += this->existing_target_vals[h_index];
@@ -127,6 +92,44 @@ void PassThroughExperiment::calc_improve_helper(bool& is_success,
 
 	double existing_adjust;
 	{
+		map<AbstractExperiment*, pair<int,int>> sum_counts;
+		for (int h_index = 0; h_index < (int)this->existing_influence_indexes.size(); h_index++) {
+			for (int i_index = 0; i_index < (int)this->existing_influence_indexes[h_index].size(); i_index++) {
+				pair<AbstractExperiment*,bool> influence = this->existing_influence_indexes[h_index][i_index];
+				map<AbstractExperiment*, pair<int,int>>::iterator it = sum_counts.find(influence.first);
+				if (it == sum_counts.end()) {
+					it = sum_counts.insert({influence.first, {0,0}}).first;
+				}
+				if (influence.second) {
+					it->second.second++;
+				} else {
+					it->second.first++;
+				}
+			}
+		}
+
+		map<AbstractExperiment*, int> influence_mapping;
+		for (map<AbstractExperiment*, pair<int,int>>::iterator it = sum_counts.begin();
+				it != sum_counts.end(); it++) {
+			int sum_count = it->second.first + it->second.second;
+			if (sum_count > INFLUENCE_MIN_NUM) {
+				double curr_percentage = (double)it->second.second / (double)sum_count;
+				double curr_standard_deviation = sqrt(curr_percentage * (1.0 - curr_percentage));
+				if (curr_standard_deviation < MIN_STANDARD_DEVIATION) {
+					curr_standard_deviation = MIN_STANDARD_DEVIATION;
+				}
+
+				double t_score = ((1.0 / 3.0) - curr_percentage)
+					/ curr_standard_deviation / sqrt(sum_count);
+				if (abs(t_score) > 0.674) {
+					is_success = false;
+					return;
+				}
+
+				influence_mapping[it->first] = (int)influence_mapping.size();
+			}
+		}
+
 		Eigen::MatrixXd inputs((int)this->existing_target_vals.size(), 1 + influence_mapping.size());
 		for (int i_index = 0; i_index < (int)this->existing_target_vals.size(); i_index++) {
 			for (int m_index = 0; m_index < 1 + (int)influence_mapping.size(); m_index++) {
@@ -173,6 +176,44 @@ void PassThroughExperiment::calc_improve_helper(bool& is_success,
 
 	double new_adjust;
 	{
+		map<AbstractExperiment*, pair<int,int>> sum_counts;
+		for (int h_index = 0; h_index < (int)this->new_influence_indexes.size(); h_index++) {
+			for (int i_index = 0; i_index < (int)this->new_influence_indexes[h_index].size(); i_index++) {
+				pair<AbstractExperiment*,bool> influence = this->new_influence_indexes[h_index][i_index];
+				map<AbstractExperiment*, pair<int,int>>::iterator it = sum_counts.find(influence.first);
+				if (it == sum_counts.end()) {
+					it = sum_counts.insert({influence.first, {0,0}}).first;
+				}
+				if (influence.second) {
+					it->second.second++;
+				} else {
+					it->second.first++;
+				}
+			}
+		}
+
+		map<AbstractExperiment*, int> influence_mapping;
+		for (map<AbstractExperiment*, pair<int,int>>::iterator it = sum_counts.begin();
+				it != sum_counts.end(); it++) {
+			int sum_count = it->second.first + it->second.second;
+			if (sum_count > INFLUENCE_MIN_NUM) {
+				double curr_percentage = (double)it->second.second / (double)sum_count;
+				double curr_standard_deviation = sqrt(curr_percentage * (1.0 - curr_percentage));
+				if (curr_standard_deviation < MIN_STANDARD_DEVIATION) {
+					curr_standard_deviation = MIN_STANDARD_DEVIATION;
+				}
+
+				double t_score = ((1.0 / 3.0) - curr_percentage)
+					/ curr_standard_deviation / sqrt(sum_count);
+				if (abs(t_score) > 0.674) {
+					is_success = false;
+					return;
+				}
+
+				influence_mapping[it->first] = (int)influence_mapping.size();
+			}
+		}
+
 		Eigen::MatrixXd inputs((int)this->new_target_vals.size(), 1 + influence_mapping.size());
 		for (int i_index = 0; i_index < (int)this->new_target_vals.size(); i_index++) {
 			for (int m_index = 0; m_index < 1 + (int)influence_mapping.size(); m_index++) {
@@ -249,6 +290,56 @@ void PassThroughExperiment::backprop(double target_val,
 
 					geometric_distribution<int> geo_distribution(0.2);
 					int new_num_steps = geo_distribution(generator);
+					switch (this->node_context->type) {
+					case NODE_TYPE_ACTION:
+						{
+							ActionNode* action_node = (ActionNode*)this->node_context;
+							if (action_node->next_node == this->exit_next_node) {
+								if (new_num_steps == 0) {
+									new_num_steps = 1;
+								}
+							}
+						}
+						break;
+					case NODE_TYPE_SCOPE:
+						{
+							ScopeNode* scope_node = (ScopeNode*)this->node_context;
+							if (scope_node->next_node == this->exit_next_node) {
+								if (new_num_steps == 0) {
+									new_num_steps = 1;
+								}
+							}
+						}
+						break;
+					case NODE_TYPE_BRANCH:
+						{
+							BranchNode* branch_node = (BranchNode*)this->node_context;
+							if (this->is_branch) {
+								if (branch_node->branch_next_node == this->exit_next_node) {
+									if (new_num_steps == 0) {
+										new_num_steps = 1;
+									}
+								}
+							} else {
+								if (branch_node->original_next_node == this->exit_next_node) {
+									if (new_num_steps == 0) {
+										new_num_steps = 1;
+									}
+								}
+							}
+						}
+						break;
+					case NODE_TYPE_OBS:
+						{
+							ObsNode* obs_node = (ObsNode*)this->node_context;
+							if (obs_node->next_node == this->exit_next_node) {
+								if (new_num_steps == 0) {
+									new_num_steps = 1;
+								}
+							}
+						}
+						break;
+					}
 
 					/**
 					 * - always give raw actions a large weight
@@ -390,6 +481,56 @@ void PassThroughExperiment::backprop(double target_val,
 
 						geometric_distribution<int> geo_distribution(0.2);
 						int new_num_steps = geo_distribution(generator);
+						switch (this->node_context->type) {
+						case NODE_TYPE_ACTION:
+							{
+								ActionNode* action_node = (ActionNode*)this->node_context;
+								if (action_node->next_node == this->exit_next_node) {
+									if (new_num_steps == 0) {
+										new_num_steps = 1;
+									}
+								}
+							}
+							break;
+						case NODE_TYPE_SCOPE:
+							{
+								ScopeNode* scope_node = (ScopeNode*)this->node_context;
+								if (scope_node->next_node == this->exit_next_node) {
+									if (new_num_steps == 0) {
+										new_num_steps = 1;
+									}
+								}
+							}
+							break;
+						case NODE_TYPE_BRANCH:
+							{
+								BranchNode* branch_node = (BranchNode*)this->node_context;
+								if (this->is_branch) {
+									if (branch_node->branch_next_node == this->exit_next_node) {
+										if (new_num_steps == 0) {
+											new_num_steps = 1;
+										}
+									}
+								} else {
+									if (branch_node->original_next_node == this->exit_next_node) {
+										if (new_num_steps == 0) {
+											new_num_steps = 1;
+										}
+									}
+								}
+							}
+							break;
+						case NODE_TYPE_OBS:
+							{
+								ObsNode* obs_node = (ObsNode*)this->node_context;
+								if (obs_node->next_node == this->exit_next_node) {
+									if (new_num_steps == 0) {
+										new_num_steps = 1;
+									}
+								}
+							}
+							break;
+						}
 
 						/**
 						 * - always give raw actions a large weight

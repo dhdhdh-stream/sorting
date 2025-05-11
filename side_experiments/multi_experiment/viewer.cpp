@@ -42,9 +42,6 @@ int main(int argc, char* argv[]) {
 		solution->load("saves/", "main.txt");
 	}
 
-	cout << "solution->obs_average_vals[0]: " << solution->obs_average_vals[0] << endl;
-	cout << "solution->obs_variances[0]: " << solution->obs_variances[0] << endl;
-
 	{
 		Problem* problem = problem_type->get_problem();
 

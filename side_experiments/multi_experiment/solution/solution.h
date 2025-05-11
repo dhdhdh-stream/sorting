@@ -40,6 +40,9 @@ public:
 	 */
 	double curr_time_penalty;
 
+	// temp
+	double biggest_drop;
+
 	std::vector<Scope*> scopes;
 
 	std::vector<double> obs_average_vals;

@@ -47,6 +47,56 @@ void BranchExperiment::explore_activate(
 
 			geometric_distribution<int> geo_distribution(0.2);
 			int new_num_steps = geo_distribution(generator);
+			switch (this->node_context->type) {
+			case NODE_TYPE_ACTION:
+				{
+					ActionNode* action_node = (ActionNode*)this->node_context;
+					if (action_node->next_node == this->exit_next_node) {
+						if (new_num_steps == 0) {
+							new_num_steps = 1;
+						}
+					}
+				}
+				break;
+			case NODE_TYPE_SCOPE:
+				{
+					ScopeNode* scope_node = (ScopeNode*)this->node_context;
+					if (scope_node->next_node == this->exit_next_node) {
+						if (new_num_steps == 0) {
+							new_num_steps = 1;
+						}
+					}
+				}
+				break;
+			case NODE_TYPE_BRANCH:
+				{
+					BranchNode* branch_node = (BranchNode*)this->node_context;
+					if (this->is_branch) {
+						if (branch_node->branch_next_node == this->exit_next_node) {
+							if (new_num_steps == 0) {
+								new_num_steps = 1;
+							}
+						}
+					} else {
+						if (branch_node->original_next_node == this->exit_next_node) {
+							if (new_num_steps == 0) {
+								new_num_steps = 1;
+							}
+						}
+					}
+				}
+				break;
+			case NODE_TYPE_OBS:
+				{
+					ObsNode* obs_node = (ObsNode*)this->node_context;
+					if (obs_node->next_node == this->exit_next_node) {
+						if (new_num_steps == 0) {
+							new_num_steps = 1;
+						}
+					}
+				}
+				break;
+			}
 
 			/**
 			 * - always give raw actions a large weight
@@ -104,7 +154,7 @@ void BranchExperiment::explore_backprop(
 			bool select = false;
 			if (this->explore_type == EXPLORE_TYPE_BEST) {
 				#if defined(MDEBUG) && MDEBUG
-				if (true) {
+				if (is_return) {
 				#else
 				if (is_return && curr_surprise > this->best_surprise) {
 				#endif /* MDEBUG */
@@ -128,7 +178,7 @@ void BranchExperiment::explore_backprop(
 				}
 			} else if (this->explore_type == EXPLORE_TYPE_GOOD) {
 				#if defined(MDEBUG) && MDEBUG
-				if (true) {
+				if (is_return) {
 				#else
 				if (is_return && curr_surprise > 0.0) {
 				#endif /* MDEBUG */

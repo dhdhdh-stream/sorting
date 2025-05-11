@@ -456,5 +456,13 @@ void BranchExperiment::train_new_backprop(
 				this->result = EXPERIMENT_RESULT_FAIL;
 			}
 		}
+	} else {
+		while (this->input_histories.size() > this->i_target_val_histories.size()) {
+			this->input_histories.pop_back();
+		}
+
+		while (this->factor_histories.size() > this->i_target_val_histories.size()) {
+			this->factor_histories.pop_back();
+		}
 	}
 }

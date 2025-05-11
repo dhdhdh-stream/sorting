@@ -30,6 +30,8 @@ Solution::Solution(Solution* original) {
 	this->best_true_score_timestamp = original->best_true_score_timestamp;
 	this->curr_time_penalty = original->curr_time_penalty;
 
+	this->biggest_drop = original->biggest_drop;
+
 	for (int s_index = 0; s_index < (int)original->scopes.size(); s_index++) {
 		Scope* scope = new Scope();
 		scope->id = s_index;
@@ -63,6 +65,8 @@ void Solution::init() {
 	this->best_true_score = -1.0;
 	this->best_true_score_timestamp = 0;
 	this->curr_time_penalty = STARTING_TIME_PENALTY;
+
+	this->biggest_drop = 0.0;
 
 	/**
 	 * - even though scopes[0] will not be reused, still good to start with:
@@ -116,6 +120,10 @@ void Solution::load(string path,
 	string curr_time_penalty_line;
 	getline(input_file, curr_time_penalty_line);
 	this->curr_time_penalty = stod(curr_time_penalty_line);
+
+	string biggest_drop_line;
+	getline(input_file, biggest_drop_line);
+	this->biggest_drop = stod(biggest_drop_line);
 
 	string num_scopes_line;
 	getline(input_file, num_scopes_line);
@@ -239,6 +247,8 @@ void Solution::save(string path,
 	output_file << this->best_true_score << endl;
 	output_file << this->best_true_score_timestamp << endl;
 	output_file << this->curr_time_penalty << endl;
+
+	output_file << this->biggest_drop << endl;
 
 	output_file << this->scopes.size() << endl;
 
