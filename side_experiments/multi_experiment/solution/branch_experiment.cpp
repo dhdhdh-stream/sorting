@@ -32,19 +32,5 @@ void BranchExperiment::decrement(AbstractNode* experiment_node) {
 BranchExperimentHistory::BranchExperimentHistory(BranchExperiment* experiment) {
 	this->experiment = experiment;
 
-	uniform_int_distribution<int> experiment_active_distribution(0, 2);
-	switch (experiment->state) {
-	case BRANCH_EXPERIMENT_STATE_EXISTING_GATHER:
-	case BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING:
-	case BRANCH_EXPERIMENT_STATE_NEW_GATHER:
-		this->is_active = false;
-		break;
-	case BRANCH_EXPERIMENT_STATE_EXPLORE:
-	case BRANCH_EXPERIMENT_STATE_TRAIN_NEW:
-	case BRANCH_EXPERIMENT_STATE_MEASURE:
-		this->is_active = experiment_active_distribution(generator) == 0;
-		break;
-	}
-
 	this->instance_count = 0;
 }

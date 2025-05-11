@@ -8,6 +8,8 @@ using namespace std;
 
 RunHelper::RunHelper() {
 	this->num_actions = 0;
+
+	this->has_explore = false;
 }
 
 RunHelper::~RunHelper() {

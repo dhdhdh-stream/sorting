@@ -24,6 +24,27 @@ void BranchExperiment::activate(AbstractNode* experiment_node,
 			= run_helper.experiment_histories.find(this);
 		if (it == run_helper.experiment_histories.end()) {
 			history = new BranchExperimentHistory(this);
+
+			uniform_int_distribution<int> experiment_active_distribution(0, 2);
+			switch (this->state) {
+			case BRANCH_EXPERIMENT_STATE_EXISTING_GATHER:
+			case BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING:
+			case BRANCH_EXPERIMENT_STATE_NEW_GATHER:
+				history->is_active = false;
+				break;
+			case BRANCH_EXPERIMENT_STATE_EXPLORE:
+				if (run_helper.has_explore) {
+					history->is_active = false;
+				} else {
+					history->is_active = true;
+				}
+				break;
+			case BRANCH_EXPERIMENT_STATE_TRAIN_NEW:
+			case BRANCH_EXPERIMENT_STATE_MEASURE:
+				history->is_active = experiment_active_distribution(generator) == 0;
+				break;
+			}
+
 			run_helper.experiment_histories[this] = history;
 		} else {
 			history = (BranchExperimentHistory*)it->second;
@@ -67,6 +88,7 @@ void BranchExperiment::activate(AbstractNode* experiment_node,
 }
 
 void BranchExperiment::backprop(double target_val,
+								bool is_return,
 								RunHelper& run_helper) {
 	BranchExperimentHistory* history = (BranchExperimentHistory*)run_helper.experiment_histories[this];
 	switch (this->state) {
@@ -80,6 +102,7 @@ void BranchExperiment::backprop(double target_val,
 		break;
 	case BRANCH_EXPERIMENT_STATE_EXPLORE:
 		explore_backprop(target_val,
+						 is_return,
 						 run_helper,
 						 history);
 		break;
@@ -88,11 +111,13 @@ void BranchExperiment::backprop(double target_val,
 		break;
 	case BRANCH_EXPERIMENT_STATE_TRAIN_NEW:
 		train_new_backprop(target_val,
+						   is_return,
 						   run_helper,
 						   history);
 		break;
 	case BRANCH_EXPERIMENT_STATE_MEASURE:
 		measure_backprop(target_val,
+						 is_return,
 						 run_helper);
 		break;
 	}

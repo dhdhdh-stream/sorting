@@ -82,189 +82,192 @@ void BranchExperiment::measure_activate(
 }
 
 void BranchExperiment::measure_backprop(double target_val,
+										bool is_return,
 										RunHelper& run_helper) {
-	BranchExperimentHistory* history = (BranchExperimentHistory*)run_helper.experiment_histories[this];
+	if (is_return) {
+		BranchExperimentHistory* history = (BranchExperimentHistory*)run_helper.experiment_histories[this];
 
-	vector<pair<AbstractExperiment*,bool>> curr_influence_indexes;
-	for (map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it = run_helper.experiment_histories.begin();
-			it != run_helper.experiment_histories.end(); it++) {
-		if (it->first != this) {
-			curr_influence_indexes.push_back({it->first, it->second->is_active});
+		vector<pair<AbstractExperiment*,bool>> curr_influence_indexes;
+		for (map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it = run_helper.experiment_histories.begin();
+				it != run_helper.experiment_histories.end(); it++) {
+			if (it->first != this) {
+				curr_influence_indexes.push_back({it->first, it->second->is_active});
+			}
 		}
-	}
 
-	if (history->is_active) {
-		this->new_target_vals.push_back(target_val);
-		this->new_influence_indexes.push_back(curr_influence_indexes);
+		if (history->is_active) {
+			this->new_target_vals.push_back(target_val);
+			this->new_influence_indexes.push_back(curr_influence_indexes);
 
-		if ((int)this->new_target_vals.size() >= MEASURE_NUM_DATAPOINTS) {
-			map<AbstractExperiment*, pair<int,int>> sum_counts;
-			for (int h_index = 0; h_index < (int)this->existing_influence_indexes.size(); h_index++) {
-				for (int i_index = 0; i_index < (int)this->existing_influence_indexes[h_index].size(); i_index++) {
-					pair<AbstractExperiment*,bool> influence = this->existing_influence_indexes[h_index][i_index];
-					map<AbstractExperiment*, pair<int,int>>::iterator it = sum_counts.find(influence.first);
-					if (it == sum_counts.end()) {
-						it = sum_counts.insert({influence.first, {0,0}}).first;
-					}
-					if (influence.second) {
-						it->second.second++;
-					} else {
-						it->second.first++;
+			if ((int)this->new_target_vals.size() >= MEASURE_NUM_DATAPOINTS) {
+				map<AbstractExperiment*, pair<int,int>> sum_counts;
+				for (int h_index = 0; h_index < (int)this->existing_influence_indexes.size(); h_index++) {
+					for (int i_index = 0; i_index < (int)this->existing_influence_indexes[h_index].size(); i_index++) {
+						pair<AbstractExperiment*,bool> influence = this->existing_influence_indexes[h_index][i_index];
+						map<AbstractExperiment*, pair<int,int>>::iterator it = sum_counts.find(influence.first);
+						if (it == sum_counts.end()) {
+							it = sum_counts.insert({influence.first, {0,0}}).first;
+						}
+						if (influence.second) {
+							it->second.second++;
+						} else {
+							it->second.first++;
+						}
 					}
 				}
-			}
 
-			map<AbstractExperiment*, int> influence_mapping;
-			for (map<AbstractExperiment*, pair<int,int>>::iterator it = sum_counts.begin();
-					it != sum_counts.end(); it++) {
-				int sum_count = it->second.first + it->second.second;
-				if (sum_count > INFLUENCE_MIN_NUM) {
-					double curr_percentage = (double)it->second.second / (double)sum_count;
-					double curr_standard_deviation = sqrt(curr_percentage * (1.0 - curr_percentage));
-					if (curr_standard_deviation < MIN_STANDARD_DEVIATION) {
-						curr_standard_deviation = MIN_STANDARD_DEVIATION;
+				map<AbstractExperiment*, int> influence_mapping;
+				for (map<AbstractExperiment*, pair<int,int>>::iterator it = sum_counts.begin();
+						it != sum_counts.end(); it++) {
+					int sum_count = it->second.first + it->second.second;
+					if (sum_count > INFLUENCE_MIN_NUM) {
+						double curr_percentage = (double)it->second.second / (double)sum_count;
+						double curr_standard_deviation = sqrt(curr_percentage * (1.0 - curr_percentage));
+						if (curr_standard_deviation < MIN_STANDARD_DEVIATION) {
+							curr_standard_deviation = MIN_STANDARD_DEVIATION;
+						}
+
+						double t_score = ((1.0 / 3.0) - curr_percentage)
+							/ curr_standard_deviation / sqrt(sum_count);
+						if (abs(t_score) > 0.674) {
+							this->result = EXPERIMENT_RESULT_FAIL;
+							return;
+						}
+
+						influence_mapping[it->first] = (int)influence_mapping.size();
+					}
+				}
+
+				double existing_sum_target_vals = 0.0;
+				for (int h_index = 0; h_index < (int)this->existing_target_vals.size(); h_index++) {
+					existing_sum_target_vals += this->existing_target_vals[h_index];
+				}
+				double existing_average_target_val = existing_sum_target_vals / (int)this->existing_target_vals.size();
+
+				double existing_adjust;
+				{
+					Eigen::MatrixXd inputs((int)this->existing_target_vals.size(), 1 + influence_mapping.size());
+					for (int i_index = 0; i_index < (int)this->existing_target_vals.size(); i_index++) {
+						for (int m_index = 0; m_index < 1 + (int)influence_mapping.size(); m_index++) {
+							inputs(i_index, m_index) = 0.0;
+						}
+					}
+					for (int h_index = 0; h_index < (int)this->existing_target_vals.size(); h_index++) {
+						inputs(h_index, 0) = 1.0;
+						for (int i_index = 0; i_index < (int)this->existing_influence_indexes[h_index].size(); i_index++) {
+							pair<AbstractExperiment*,bool> influence = this->existing_influence_indexes[h_index][i_index];
+							if (influence.second) {
+								inputs(h_index, influence_mapping[influence.first]) = 1.0;
+							}
+						}
 					}
 
-					double t_score = ((1.0 / 3.0) - curr_percentage)
-						/ curr_standard_deviation / sqrt(sum_count);
-					if (abs(t_score) > 0.674) {
+					Eigen::VectorXd outputs((int)this->existing_target_vals.size());
+					for (int h_index = 0; h_index < (int)this->existing_target_vals.size(); h_index++) {
+						outputs(h_index) = this->existing_target_vals[h_index] - existing_average_target_val;
+					}
+
+					Eigen::VectorXd weights;
+					try {
+						weights = inputs.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(outputs);
+					} catch (std::invalid_argument &e) {
+						cout << "Eigen error" << endl;
 						this->result = EXPERIMENT_RESULT_FAIL;
 						return;
 					}
 
-					influence_mapping[it->first] = (int)influence_mapping.size();
-				}
-			}
-
-			double existing_sum_target_vals = 0.0;
-			for (int h_index = 0; h_index < (int)this->existing_target_vals.size(); h_index++) {
-				existing_sum_target_vals += this->existing_target_vals[h_index];
-			}
-			double existing_average_target_val = existing_sum_target_vals / (int)this->existing_target_vals.size();
-
-			double existing_adjust;
-			{
-				Eigen::MatrixXd inputs((int)this->existing_target_vals.size(), 1 + influence_mapping.size());
-				for (int i_index = 0; i_index < (int)this->existing_target_vals.size(); i_index++) {
-					for (int m_index = 0; m_index < 1 + (int)influence_mapping.size(); m_index++) {
-						inputs(i_index, m_index) = 0.0;
+					if (abs(weights[0]) > 10000.0) {
+						this->result = EXPERIMENT_RESULT_FAIL;
+						return;
 					}
+
+					existing_adjust = weights(0);
 				}
-				for (int h_index = 0; h_index < (int)this->existing_target_vals.size(); h_index++) {
-					inputs(h_index, 0) = 1.0;
-					for (int i_index = 0; i_index < (int)this->existing_influence_indexes[h_index].size(); i_index++) {
-						pair<AbstractExperiment*,bool> influence = this->existing_influence_indexes[h_index][i_index];
-						if (influence.second) {
-							inputs(h_index, influence_mapping[influence.first]) = 1.0;
+
+				double new_sum_target_vals = 0.0;
+				for (int h_index = 0; h_index < (int)this->new_target_vals.size(); h_index++) {
+					new_sum_target_vals += this->new_target_vals[h_index];
+				}
+				double new_average_target_val = new_sum_target_vals / (int)this->new_target_vals.size();
+
+				double new_adjust;
+				{
+					Eigen::MatrixXd inputs((int)this->new_target_vals.size(), 1 + influence_mapping.size());
+					for (int i_index = 0; i_index < (int)this->new_target_vals.size(); i_index++) {
+						for (int m_index = 0; m_index < 1 + (int)influence_mapping.size(); m_index++) {
+							inputs(i_index, m_index) = 0.0;
 						}
 					}
-				}
-
-				Eigen::VectorXd outputs((int)this->existing_target_vals.size());
-				for (int h_index = 0; h_index < (int)this->existing_target_vals.size(); h_index++) {
-					outputs(h_index) = this->existing_target_vals[h_index] - existing_average_target_val;
-				}
-
-				Eigen::VectorXd weights;
-				try {
-					weights = inputs.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(outputs);
-				} catch (std::invalid_argument &e) {
-					cout << "Eigen error" << endl;
-					this->result = EXPERIMENT_RESULT_FAIL;
-					return;
-				}
-
-				if (abs(weights[0]) > 10000.0) {
-					this->result = EXPERIMENT_RESULT_FAIL;
-					return;
-				}
-
-				existing_adjust = weights(0);
-			}
-
-			double new_sum_target_vals = 0.0;
-			for (int h_index = 0; h_index < (int)this->new_target_vals.size(); h_index++) {
-				new_sum_target_vals += this->new_target_vals[h_index];
-			}
-			double new_average_target_val = new_sum_target_vals / (int)this->new_target_vals.size();
-
-			double new_adjust;
-			{
-				Eigen::MatrixXd inputs((int)this->new_target_vals.size(), 1 + influence_mapping.size());
-				for (int i_index = 0; i_index < (int)this->new_target_vals.size(); i_index++) {
-					for (int m_index = 0; m_index < 1 + (int)influence_mapping.size(); m_index++) {
-						inputs(i_index, m_index) = 0.0;
-					}
-				}
-				for (int h_index = 0; h_index < (int)this->new_target_vals.size(); h_index++) {
-					inputs(h_index, 0) = 1.0;
-					for (int i_index = 0; i_index < (int)this->new_influence_indexes[h_index].size(); i_index++) {
-						pair<AbstractExperiment*,bool> influence = this->new_influence_indexes[h_index][i_index];
-						if (influence.second) {
-							inputs(h_index, influence_mapping[influence.first]) = 1.0;
+					for (int h_index = 0; h_index < (int)this->new_target_vals.size(); h_index++) {
+						inputs(h_index, 0) = 1.0;
+						for (int i_index = 0; i_index < (int)this->new_influence_indexes[h_index].size(); i_index++) {
+							pair<AbstractExperiment*,bool> influence = this->new_influence_indexes[h_index][i_index];
+							if (influence.second) {
+								inputs(h_index, influence_mapping[influence.first]) = 1.0;
+							}
 						}
 					}
+
+					Eigen::VectorXd outputs((int)this->new_target_vals.size());
+					for (int h_index = 0; h_index < (int)this->new_target_vals.size(); h_index++) {
+						outputs(h_index) = this->new_target_vals[h_index] - new_average_target_val;
+					}
+
+					Eigen::VectorXd weights;
+					try {
+						weights = inputs.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(outputs);
+					} catch (std::invalid_argument &e) {
+						cout << "Eigen error" << endl;
+						this->result = EXPERIMENT_RESULT_FAIL;
+						return;
+					}
+
+					if (abs(weights[0]) > 10000.0) {
+						this->result = EXPERIMENT_RESULT_FAIL;
+						return;
+					}
+
+					new_adjust = weights(0);
 				}
 
-				Eigen::VectorXd outputs((int)this->new_target_vals.size());
-				for (int h_index = 0; h_index < (int)this->new_target_vals.size(); h_index++) {
-					outputs(h_index) = this->new_target_vals[h_index] - new_average_target_val;
-				}
+				double existing_score = existing_average_target_val + existing_adjust;
+				double new_score = new_average_target_val + new_adjust;
 
-				Eigen::VectorXd weights;
-				try {
-					weights = inputs.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(outputs);
-				} catch (std::invalid_argument &e) {
-					cout << "Eigen error" << endl;
-					this->result = EXPERIMENT_RESULT_FAIL;
-					return;
-				}
+				if (new_score > existing_score) {
+					this->improvement = new_score - existing_score;
 
-				if (abs(weights[0]) > 10000.0) {
-					this->result = EXPERIMENT_RESULT_FAIL;
-					return;
-				}
+					cout << "BranchExperiment" << endl;
+					cout << "this->scope_context->id: " << this->scope_context->id << endl;
+					cout << "this->node_context->id: " << this->node_context->id << endl;
+					cout << "this->is_branch: " << this->is_branch << endl;
+					cout << "new explore path:";
+					for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+						if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+							cout << " " << this->best_actions[s_index].move;
+						} else {
+							cout << " E" << this->best_scopes[s_index]->id;
+						}
+					}
+					cout << endl;
 
-				new_adjust = weights(0);
-			}
-
-			double existing_score = existing_average_target_val + existing_adjust;
-			double new_score = new_average_target_val + new_adjust;
-
-			if (new_score > existing_score) {
-				this->improvement = new_score - existing_score;
-
-				cout << "BranchExperiment" << endl;
-				cout << "this->scope_context->id: " << this->scope_context->id << endl;
-				cout << "this->node_context->id: " << this->node_context->id << endl;
-				cout << "this->is_branch: " << this->is_branch << endl;
-				cout << "new explore path:";
-				for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-					if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-						cout << " " << this->best_actions[s_index].move;
+					if (this->exit_next_node == NULL) {
+						cout << "this->exit_next_node->id: " << -1 << endl;
 					} else {
-						cout << " E" << this->best_scopes[s_index]->id;
+						cout << "this->exit_next_node->id: " << this->exit_next_node->id << endl;
 					}
-				}
-				cout << endl;
 
-				if (this->exit_next_node == NULL) {
-					cout << "this->exit_next_node->id: " << -1 << endl;
+					cout << "this->improvement: " << this->improvement << endl;
+
+					cout << endl;
+
+					this->result = EXPERIMENT_RESULT_SUCCESS;
 				} else {
-					cout << "this->exit_next_node->id: " << this->exit_next_node->id << endl;
+					this->result = EXPERIMENT_RESULT_FAIL;
 				}
-
-				cout << "this->improvement: " << this->improvement << endl;
-
-				cout << endl;
-
-				this->result = EXPERIMENT_RESULT_SUCCESS;
-			} else {
-				this->result = EXPERIMENT_RESULT_FAIL;
 			}
+		} else {
+			this->existing_target_vals.push_back(target_val);
+			this->existing_influence_indexes.push_back(curr_influence_indexes);
 		}
-	} else {
-		this->existing_target_vals.push_back(target_val);
-		this->existing_influence_indexes.push_back(curr_influence_indexes);
 	}
 }

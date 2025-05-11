@@ -26,6 +26,9 @@ PassThroughExperiment::PassThroughExperiment(Scope* scope_context,
 	this->exit_next_node = exit_next_node;
 
 	this->state = PASS_THROUGH_EXPERIMENT_STATE_INITIAL;
+
+	this->needs_init = true;
+
 	this->explore_iter = 0;
 
 	this->result = EXPERIMENT_RESULT_NA;
@@ -38,7 +41,4 @@ void PassThroughExperiment::decrement(AbstractNode* experiment_node) {
 PassThroughExperimentHistory::PassThroughExperimentHistory(
 		PassThroughExperiment* experiment) {
 	this->experiment = experiment;
-
-	uniform_int_distribution<int> experiment_active_distribution(0, 2);
-	this->is_active = experiment_active_distribution(generator) == 0;
 }

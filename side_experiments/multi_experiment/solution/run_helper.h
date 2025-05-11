@@ -15,6 +15,8 @@ public:
 
 	std::map<AbstractExperiment*, AbstractExperimentHistory*> experiment_histories;
 
+	bool has_explore;
+
 	#if defined(MDEBUG) && MDEBUG
 	unsigned long starting_run_seed;
 	unsigned long curr_run_seed;

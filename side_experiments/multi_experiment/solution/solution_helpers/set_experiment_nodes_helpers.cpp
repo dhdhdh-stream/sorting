@@ -1,3 +1,9 @@
+/**
+ * - makes it such that original paths will not be correlated with experiments
+ *   - because experiments are likely negative, would likely frequently give new extra score
+ *     - which can be especially bad when damaging news are added
+ */
+
 #include "solution_helpers.h"
 
 #include <iostream>

@@ -51,6 +51,7 @@ public:
 						  RunHelper& run_helper,
 						  ScopeHistory* scope_history) = 0;
 	virtual void backprop(double target_val,
+						  bool is_return,
 						  RunHelper& run_helper) = 0;
 
 	virtual void clean() = 0;

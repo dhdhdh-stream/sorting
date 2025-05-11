@@ -92,9 +92,10 @@ void BranchExperiment::train_new_activate(
 
 void BranchExperiment::train_new_backprop(
 		double target_val,
+		bool is_return,
 		RunHelper& run_helper,
 		BranchExperimentHistory* history) {
-	if (history->is_active) {
+	if (history->is_active && is_return) {
 		for (int i_index = 0; i_index < history->instance_count; i_index++) {
 			this->i_target_val_histories.push_back(target_val - history->existing_predicted_scores[i_index]);
 		}

@@ -40,12 +40,26 @@ void PassThroughExperiment::activate(AbstractNode* experiment_node,
 			= run_helper.experiment_histories.find(this);
 		if (it == run_helper.experiment_histories.end()) {
 			history = new PassThroughExperimentHistory(this);
+
+			if (this->needs_init) {
+				if (run_helper.has_explore) {
+					history->is_active = false;
+				} else {
+					history->is_active = true;
+				}
+			} else {
+				uniform_int_distribution<int> experiment_active_distribution(0, 2);
+				history->is_active = experiment_active_distribution(generator) == 0;
+			}
+
 			run_helper.experiment_histories[this] = history;
 		} else {
 			history = (PassThroughExperimentHistory*)it->second;
 		}
 
 		if (history->is_active) {
+			run_helper.has_explore = true;
+
 			for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {
 				if (this->step_types[s_index] == STEP_TYPE_ACTION) {
 					problem->perform_action(this->actions[s_index]);
@@ -205,151 +219,209 @@ void PassThroughExperiment::calc_improve_helper(bool& is_success,
 }
 
 void PassThroughExperiment::backprop(double target_val,
+									 bool is_return,
 									 RunHelper& run_helper) {
 	PassThroughExperimentHistory* history = (PassThroughExperimentHistory*)run_helper.experiment_histories[this];
 
-	vector<pair<AbstractExperiment*,bool>> curr_influence_indexes;
-	for (map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it = run_helper.experiment_histories.begin();
-			it != run_helper.experiment_histories.end(); it++) {
-		if (it->first != this) {
-			curr_influence_indexes.push_back({it->first, it->second->is_active});
-		}
-	}
-
-	if (history->is_active) {
-		this->new_target_vals.push_back(target_val);
-		this->new_influence_indexes.push_back(curr_influence_indexes);
-
-		bool is_fail = false;
-		switch (this->state) {
-		case PASS_THROUGH_EXPERIMENT_STATE_INITIAL:
-			if ((int)this->new_target_vals.size() == INITIAL_NUM_SAMPLES_PER_ITER) {
-				bool is_success;
-				double curr_improvement;
-				calc_improve_helper(is_success,
-									curr_improvement);
-
-				this->existing_target_vals.clear();
-				this->existing_influence_indexes.clear();
-				this->new_target_vals.clear();
-				this->new_influence_indexes.clear();
-
-				#if defined(MDEBUG) && MDEBUG
-				if (rand()%2 == 0) {
-				#else
-				if (!is_success || curr_improvement <= 0.0) {
-				#endif /* MDEBUG */
-					is_fail = true;
-				} else {
-					this->state = PASS_THROUGH_EXPERIMENT_STATE_VERIFY_1ST;
+	if (this->needs_init) {
+		if (history->is_active) {
+			if (is_return) {
+				vector<pair<AbstractExperiment*,bool>> curr_influence_indexes;
+				for (map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it = run_helper.experiment_histories.begin();
+						it != run_helper.experiment_histories.end(); it++) {
+					if (it->first != this) {
+						curr_influence_indexes.push_back({it->first, it->second->is_active});
+					}
 				}
-			}
-			break;
-		case PASS_THROUGH_EXPERIMENT_STATE_VERIFY_1ST:
-			if ((int)this->new_target_vals.size() == VERIFY_1ST_NUM_SAMPLES_PER_ITER) {
-				bool is_success;
-				double curr_improvement;
-				calc_improve_helper(is_success,
-									curr_improvement);
 
-				this->existing_target_vals.clear();
-				this->existing_influence_indexes.clear();
-				this->new_target_vals.clear();
-				this->new_influence_indexes.clear();
+				this->new_target_vals.push_back(target_val);
+				this->new_influence_indexes.push_back(curr_influence_indexes);
 
-				#if defined(MDEBUG) && MDEBUG
-				if (rand()%2 == 0) {
-				#else
-				if (!is_success || curr_improvement <= 0.0) {
-				#endif /* MDEBUG */
-					is_fail = true;
+				this->needs_init = false;
+			} else {
+				this->explore_iter++;
+				if (this->explore_iter >= PASS_THROUGH_EXPERIMENT_EXPLORE_ITERS) {
+					this->result = EXPERIMENT_RESULT_FAIL;
 				} else {
-					this->state = PASS_THROUGH_EXPERIMENT_STATE_VERIFY_2ND;
-				}
-			}
-			break;
-		case PASS_THROUGH_EXPERIMENT_STATE_VERIFY_2ND:
-			if ((int)this->new_target_vals.size() == VERIFY_2ND_NUM_SAMPLES_PER_ITER) {
-				bool is_success;
-				double curr_improvement;
-				calc_improve_helper(is_success,
-									curr_improvement);
+					this->step_types.clear();
+					this->actions.clear();
+					this->scopes.clear();
 
-				this->existing_target_vals.clear();
-				this->existing_influence_indexes.clear();
-				this->new_target_vals.clear();
-				this->new_influence_indexes.clear();
+					geometric_distribution<int> geo_distribution(0.2);
+					int new_num_steps = geo_distribution(generator);
 
-				#if defined(MDEBUG) && MDEBUG
-				if (rand()%2 == 0) {
-				#else
-				if (!is_success || curr_improvement <= 0.0) {
-				#endif /* MDEBUG */
-					is_fail = true;
-				} else {
-					this->improvement = curr_improvement;
+					/**
+					 * - always give raw actions a large weight
+					 *   - existing scopes often learned to avoid certain patterns
+					 *     - which can prevent innovation
+					 */
+					uniform_int_distribution<int> scope_distribution(0, 1);
+					for (int s_index = 0; s_index < new_num_steps; s_index++) {
+						if (scope_distribution(generator) == 0 && this->scope_context->child_scopes.size() > 0) {
+							this->step_types.push_back(STEP_TYPE_SCOPE);
+							this->actions.push_back(Action());
 
-					cout << "PassThrough" << endl;
-					cout << "this->scope_context->id: " << this->scope_context->id << endl;
-					cout << "this->node_context->id: " << this->node_context->id << endl;
-					cout << "this->is_branch: " << this->is_branch << endl;
-					cout << "new explore path:";
-					for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {
-						if (this->step_types[s_index] == STEP_TYPE_ACTION) {
-							cout << " " << this->actions[s_index].move;
+							uniform_int_distribution<int> child_scope_distribution(0, this->scope_context->child_scopes.size()-1);
+							this->scopes.push_back(this->scope_context->child_scopes[child_scope_distribution(generator)]);
 						} else {
-							cout << " E" << this->scopes[s_index]->id;
+							this->step_types.push_back(STEP_TYPE_ACTION);
+
+							this->actions.push_back(problem_type->random_action());
+
+							this->scopes.push_back(NULL);
 						}
 					}
-					cout << endl;
-
-					cout << "this->improvement: " << this->improvement << endl;
-
-					this->result = EXPERIMENT_RESULT_SUCCESS;
 				}
-			}
-			break;
-		}
-
-		if (is_fail) {
-			this->explore_iter++;
-			if (this->explore_iter >= PASS_THROUGH_EXPERIMENT_EXPLORE_ITERS) {
-				this->result = EXPERIMENT_RESULT_FAIL;
-			} else {
-				this->step_types.clear();
-				this->actions.clear();
-				this->scopes.clear();
-
-				geometric_distribution<int> geo_distribution(0.2);
-				int new_num_steps = geo_distribution(generator);
-
-				/**
-				 * - always give raw actions a large weight
-				 *   - existing scopes often learned to avoid certain patterns
-				 *     - which can prevent innovation
-				 */
-				uniform_int_distribution<int> scope_distribution(0, 1);
-				for (int s_index = 0; s_index < new_num_steps; s_index++) {
-					if (scope_distribution(generator) == 0 && this->scope_context->child_scopes.size() > 0) {
-						this->step_types.push_back(STEP_TYPE_SCOPE);
-						this->actions.push_back(Action());
-
-						uniform_int_distribution<int> child_scope_distribution(0, this->scope_context->child_scopes.size()-1);
-						this->scopes.push_back(this->scope_context->child_scopes[child_scope_distribution(generator)]);
-					} else {
-						this->step_types.push_back(STEP_TYPE_ACTION);
-
-						this->actions.push_back(problem_type->random_action());
-
-						this->scopes.push_back(NULL);
-					}
-				}
-
-				this->state = PASS_THROUGH_EXPERIMENT_STATE_INITIAL;
 			}
 		}
 	} else {
-		this->existing_target_vals.push_back(target_val);
-		this->existing_influence_indexes.push_back(curr_influence_indexes);
+		if (is_return) {
+			vector<pair<AbstractExperiment*,bool>> curr_influence_indexes;
+			for (map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it = run_helper.experiment_histories.begin();
+					it != run_helper.experiment_histories.end(); it++) {
+				if (it->first != this) {
+					curr_influence_indexes.push_back({it->first, it->second->is_active});
+				}
+			}
+
+			if (history->is_active) {
+				this->new_target_vals.push_back(target_val);
+				this->new_influence_indexes.push_back(curr_influence_indexes);
+
+				bool is_fail = false;
+				switch (this->state) {
+				case PASS_THROUGH_EXPERIMENT_STATE_INITIAL:
+					if ((int)this->new_target_vals.size() == INITIAL_NUM_SAMPLES_PER_ITER) {
+						bool is_success;
+						double curr_improvement;
+						calc_improve_helper(is_success,
+											curr_improvement);
+
+						this->existing_target_vals.clear();
+						this->existing_influence_indexes.clear();
+						this->new_target_vals.clear();
+						this->new_influence_indexes.clear();
+
+						#if defined(MDEBUG) && MDEBUG
+						if (rand()%2 == 0) {
+						#else
+						if (!is_success || curr_improvement <= 0.0) {
+						#endif /* MDEBUG */
+							is_fail = true;
+						} else {
+							this->state = PASS_THROUGH_EXPERIMENT_STATE_VERIFY_1ST;
+						}
+					}
+					break;
+				case PASS_THROUGH_EXPERIMENT_STATE_VERIFY_1ST:
+					if ((int)this->new_target_vals.size() == VERIFY_1ST_NUM_SAMPLES_PER_ITER) {
+						bool is_success;
+						double curr_improvement;
+						calc_improve_helper(is_success,
+											curr_improvement);
+
+						this->existing_target_vals.clear();
+						this->existing_influence_indexes.clear();
+						this->new_target_vals.clear();
+						this->new_influence_indexes.clear();
+
+						#if defined(MDEBUG) && MDEBUG
+						if (rand()%2 == 0) {
+						#else
+						if (!is_success || curr_improvement <= 0.0) {
+						#endif /* MDEBUG */
+							is_fail = true;
+						} else {
+							this->state = PASS_THROUGH_EXPERIMENT_STATE_VERIFY_2ND;
+						}
+					}
+					break;
+				case PASS_THROUGH_EXPERIMENT_STATE_VERIFY_2ND:
+					if ((int)this->new_target_vals.size() == VERIFY_2ND_NUM_SAMPLES_PER_ITER) {
+						bool is_success;
+						double curr_improvement;
+						calc_improve_helper(is_success,
+											curr_improvement);
+
+						this->existing_target_vals.clear();
+						this->existing_influence_indexes.clear();
+						this->new_target_vals.clear();
+						this->new_influence_indexes.clear();
+
+						#if defined(MDEBUG) && MDEBUG
+						if (rand()%2 == 0) {
+						#else
+						if (!is_success || curr_improvement <= 0.0) {
+						#endif /* MDEBUG */
+							is_fail = true;
+						} else {
+							this->improvement = curr_improvement;
+
+							cout << "PassThrough" << endl;
+							cout << "this->scope_context->id: " << this->scope_context->id << endl;
+							cout << "this->node_context->id: " << this->node_context->id << endl;
+							cout << "this->is_branch: " << this->is_branch << endl;
+							cout << "new explore path:";
+							for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {
+								if (this->step_types[s_index] == STEP_TYPE_ACTION) {
+									cout << " " << this->actions[s_index].move;
+								} else {
+									cout << " E" << this->scopes[s_index]->id;
+								}
+							}
+							cout << endl;
+
+							cout << "this->improvement: " << this->improvement << endl;
+
+							this->result = EXPERIMENT_RESULT_SUCCESS;
+						}
+					}
+					break;
+				}
+
+				if (is_fail) {
+					this->explore_iter++;
+					if (this->explore_iter >= PASS_THROUGH_EXPERIMENT_EXPLORE_ITERS) {
+						this->result = EXPERIMENT_RESULT_FAIL;
+					} else {
+						this->step_types.clear();
+						this->actions.clear();
+						this->scopes.clear();
+
+						geometric_distribution<int> geo_distribution(0.2);
+						int new_num_steps = geo_distribution(generator);
+
+						/**
+						 * - always give raw actions a large weight
+						 *   - existing scopes often learned to avoid certain patterns
+						 *     - which can prevent innovation
+						 */
+						uniform_int_distribution<int> scope_distribution(0, 1);
+						for (int s_index = 0; s_index < new_num_steps; s_index++) {
+							if (scope_distribution(generator) == 0 && this->scope_context->child_scopes.size() > 0) {
+								this->step_types.push_back(STEP_TYPE_SCOPE);
+								this->actions.push_back(Action());
+
+								uniform_int_distribution<int> child_scope_distribution(0, this->scope_context->child_scopes.size()-1);
+								this->scopes.push_back(this->scope_context->child_scopes[child_scope_distribution(generator)]);
+							} else {
+								this->step_types.push_back(STEP_TYPE_ACTION);
+
+								this->actions.push_back(problem_type->random_action());
+
+								this->scopes.push_back(NULL);
+							}
+						}
+
+						this->state = PASS_THROUGH_EXPERIMENT_STATE_INITIAL;
+
+						this->needs_init = true;
+					}
+				}
+			} else {
+				this->existing_target_vals.push_back(target_val);
+				this->existing_influence_indexes.push_back(curr_influence_indexes);
+			}
+		}
 	}
 }

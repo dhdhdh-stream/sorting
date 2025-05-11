@@ -75,6 +75,7 @@ public:
 				  RunHelper& run_helper,
 				  ScopeHistory* scope_history);
 	void backprop(double target_val,
+				  bool is_return,
 				  RunHelper& run_helper);
 
 	void existing_gather_activate(ScopeHistory* scope_history);
@@ -93,6 +94,7 @@ public:
 						  ScopeHistory* scope_history,
 						  BranchExperimentHistory* history);
 	void explore_backprop(double target_val,
+						  bool is_return,
 						  RunHelper& run_helper,
 						  BranchExperimentHistory* history);
 
@@ -105,6 +107,7 @@ public:
 							ScopeHistory* scope_history,
 							BranchExperimentHistory* history);
 	void train_new_backprop(double target_val,
+							bool is_return,
 							RunHelper& run_helper,
 							BranchExperimentHistory* history);
 
@@ -114,6 +117,7 @@ public:
 						  ScopeHistory* scope_history,
 						  BranchExperimentHistory* history);
 	void measure_backprop(double target_val,
+						  bool is_return,
 						  RunHelper& run_helper);
 
 	#if defined(MDEBUG) && MDEBUG
