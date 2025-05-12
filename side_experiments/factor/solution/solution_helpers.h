@@ -42,8 +42,6 @@ void fetch_input_helper(ScopeHistory* scope_history,
 void update_scores(ScopeHistory* scope_history,
 				   double target_val);
 
-void keypoint_experiment(std::vector<ScopeHistory*>& scope_histories);
-
 void clean_scope(Scope* scope);
 
 #endif /* SOLUTION_HELPERS_H */

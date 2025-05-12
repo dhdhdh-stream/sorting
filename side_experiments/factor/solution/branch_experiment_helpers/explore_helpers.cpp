@@ -44,38 +44,7 @@ void BranchExperiment::explore_activate(
 
 		vector<AbstractNode*> possible_exits;
 
-		AbstractNode* starting_node;
-		switch (this->node_context->type) {
-		case NODE_TYPE_ACTION:
-			{
-				ActionNode* action_node = (ActionNode*)this->node_context;
-				starting_node = action_node->next_node;
-			}
-			break;
-		case NODE_TYPE_SCOPE:
-			{
-				ScopeNode* scope_node = (ScopeNode*)this->node_context;
-				starting_node = scope_node->next_node;
-			}
-			break;
-		case NODE_TYPE_BRANCH:
-			{
-				BranchNode* branch_node = (BranchNode*)this->node_context;
-				if (this->is_branch) {
-					starting_node = branch_node->branch_next_node;
-				} else {
-					starting_node = branch_node->original_next_node;
-				}
-			}
-			break;
-		case NODE_TYPE_OBS:
-			{
-				ObsNode* obs_node = (ObsNode*)this->node_context;
-				starting_node = obs_node->next_node;
-			}
-			break;
-		}
-
+		AbstractNode* starting_node = this->node_context->next_node;
 		this->scope_context->random_exit_activate(
 			starting_node,
 			possible_exits);
@@ -113,8 +82,6 @@ void BranchExperiment::explore_activate(
 				this->curr_scopes.push_back(NULL);
 			}
 		}
-
-		run_helper.verify_keypoints = true;
 
 		for (int s_index = 0; s_index < (int)this->curr_step_types.size(); s_index++) {
 			if (this->curr_step_types[s_index] == STEP_TYPE_ACTION) {

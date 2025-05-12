@@ -25,14 +25,4 @@ void ScopeNode::experiment_activate(AbstractNode*& curr_node,
 									 inner_scope_history);
 
 	curr_node = this->next_node;
-
-	if (this->experiment != NULL) {
-		this->experiment->activate(
-			this,
-			false,
-			curr_node,
-			problem,
-			run_helper,
-			scope_history);
-	}
 }

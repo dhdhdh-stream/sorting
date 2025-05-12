@@ -3,6 +3,11 @@
 
 // TODO: for CommitExperiment, can separate commit from information gather?
 
+// TODO: to prevent experiment nodes from being used, add an extra flag
+// TODO: to verify location, look for simple linear relationships between pairs of nodes?
+// - a single node can have relationships with multiple others
+// - ownership is on the outermost layer, tied to the scope
+
 #include <chrono>
 #include <iostream>
 #include <map>

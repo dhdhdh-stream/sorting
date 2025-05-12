@@ -22,22 +22,13 @@ public:
 
 	ActionNode();
 	ActionNode(ActionNode* original);
-	~ActionNode();
 
 	void activate(AbstractNode*& curr_node,
 				  Problem* problem);
 
-	void experiment_activate(AbstractNode*& curr_node,
-							 Problem* problem,
-							 RunHelper& run_helper,
-							 ScopeHistory* scope_history);
-
 	void commit_activate(Problem* problem,
 						 RunHelper& run_helper,
 						 ScopeHistory* scope_history);
-
-	void clean();
-	void measure_update();
 
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file);

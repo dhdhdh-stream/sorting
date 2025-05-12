@@ -12,23 +12,20 @@
 
 using namespace std;
 
-void BranchExperiment::activate(AbstractNode* experiment_node,
-								bool is_branch,
+void BranchExperiment::activate(ObsNode* experiment_node,
 								AbstractNode*& curr_node,
 								Problem* problem,
 								RunHelper& run_helper,
 								ScopeHistory* scope_history) {
 	bool is_selected = false;
 	BranchExperimentHistory* history = NULL;
-	if (is_branch == this->is_branch) {
-		if (run_helper.experiment_history != NULL) {
-			history = (BranchExperimentHistory*)run_helper.experiment_history;
-			is_selected = true;
-		} else if (run_helper.experiment_history == NULL) {
-			history = new BranchExperimentHistory(this);
-			run_helper.experiment_history = history;
-			is_selected = true;
-		}
+	if (run_helper.experiment_history != NULL) {
+		history = (BranchExperimentHistory*)run_helper.experiment_history;
+		is_selected = true;
+	} else if (run_helper.experiment_history == NULL) {
+		history = new BranchExperimentHistory(this);
+		run_helper.experiment_history = history;
+		is_selected = true;
 	}
 
 	if (is_selected) {

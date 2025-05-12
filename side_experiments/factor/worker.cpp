@@ -25,8 +25,6 @@ default_random_engine generator;
 ProblemType* problem_type;
 Solution* solution;
 
-int multi_index = 0;
-
 int run_index;
 
 int main(int argc, char* argv[]) {
@@ -78,23 +76,8 @@ int main(int argc, char* argv[]) {
 					run_helper,
 					scope_history);
 
-			if (run_helper.keypoint_misguess_factors.size() > 0) {
-				double sum_misguess_factors = 0.0;
-				for (int m_index = 0; m_index < (int)run_helper.keypoint_misguess_factors.size(); m_index++) {
-					sum_misguess_factors += run_helper.keypoint_misguess_factors[m_index];
-				}
-				if (sum_misguess_factors / run_helper.keypoint_misguess_factors.size() > KEYPOINT_MAX_FACTOR) {
-					run_helper.early_exit = true;
-				}
-			}
-
-			double target_val;
-			if (run_helper.early_exit) {
-				target_val = -10.0;
-			} else {
-				target_val = problem->score_result();
-				target_val -= run_helper.num_actions * solution->curr_time_penalty;
-			}
+			double target_val = problem->score_result();
+			target_val -= run_helper.num_actions * solution->curr_time_penalty;
 
 			if (curr_experiment == NULL) {
 				create_experiment(scope_history,
@@ -169,7 +152,6 @@ int main(int argc, char* argv[]) {
 				problem,
 				run_helper,
 				scope_history);
-			delete scope_history;
 
 			double target_val = problem->score_result();
 			sum_score += target_val - run_helper.num_actions * solution->curr_time_penalty;
@@ -184,10 +166,6 @@ int main(int argc, char* argv[]) {
 		}
 
 		solution->measure_update();
-
-		for (int k_index = 0; k_index < KEYPOINT_EXPERIMENTS_PER_MEASURE; k_index++) {
-			keypoint_experiment(scope_histories);
-		}
 
 		for (int h_index = 0; h_index < (int)scope_histories.size(); h_index++) {
 			delete scope_histories[h_index];

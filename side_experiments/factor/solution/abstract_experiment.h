@@ -1,10 +1,3 @@
-/**
- * - only 1 experiment per run
- *   - random experiments too likely to be catastrophic
- *     - such that main focus for other experiments will too likely end up being minimizing damage
- *       - rather than improvements to actual solution
- */
-
 #ifndef ABSTRACT_EXPERIMENT_H
 #define ABSTRACT_EXPERIMENT_H
 
@@ -14,6 +7,7 @@
 #include "run_helper.h"
 
 class AbstractNode;
+class ObsNode;
 class Problem;
 class Scope;
 class ScopeHistory;
@@ -34,18 +28,16 @@ public:
 	int type;
 
 	Scope* scope_context;
-	AbstractNode* node_context;
-	bool is_branch;
+	ObsNode* node_context;
 
 	int result;
 
 	double improvement;
 
 	virtual ~AbstractExperiment() {};
-	virtual void decrement(AbstractNode* experiment_node) = 0;
+	virtual void decrement(ObsNode* experiment_node) = 0;
 
-	virtual void activate(AbstractNode* experiment_node,
-						  bool is_branch,
+	virtual void activate(ObsNode* experiment_node,
 						  AbstractNode*& curr_node,
 						  Problem* problem,
 						  RunHelper& run_helper,

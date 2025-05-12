@@ -6,7 +6,6 @@
 #include "constants.h"
 #include "factor.h"
 #include "globals.h"
-#include "keypoint.h"
 #include "problem.h"
 #include "scope.h"
 
@@ -14,8 +13,6 @@ using namespace std;
 
 ObsNode::ObsNode() {
 	this->type = NODE_TYPE_OBS;
-
-	this->keypoints = vector<Keypoint*>(problem_type->num_obs(), NULL);
 
 	this->is_used = false;
 
@@ -38,16 +35,6 @@ ObsNode::ObsNode(ObsNode* original,
 		this->factors.push_back(factor);
 	}
 
-	for (int k_index = 0; k_index < (int)original->keypoints.size(); k_index++) {
-		if (original->keypoints[k_index] == NULL) {
-			this->keypoints.push_back(NULL);
-		} else {
-			Keypoint* keypoint = new Keypoint(original->keypoints[k_index],
-											  parent_solution);
-			this->keypoints.push_back(keypoint);
-		}
-	}
-
 	this->next_node_id = original->next_node_id;
 
 	this->ancestor_ids = original->ancestor_ids;
@@ -64,12 +51,6 @@ ObsNode::~ObsNode() {
 		delete this->factors[f_index];
 	}
 
-	for (int k_index = 0; k_index < (int)this->keypoints.size(); k_index++) {
-		if (this->keypoints[k_index] != NULL) {
-			delete this->keypoints[k_index];
-		}
-	}
-
 	if (this->experiment != NULL) {
 		this->experiment->decrement(this);
 	}
@@ -81,43 +62,15 @@ void ObsNode::clean_inputs(Scope* scope,
 		this->factors[f_index]->clean_inputs(scope,
 											 node_id);
 	}
-
-	for (int k_index = 0; k_index < (int)this->keypoints.size(); k_index++) {
-		if (this->keypoints[k_index] != NULL) {
-			bool should_clean = this->keypoints[k_index]->should_clean_inputs(
-				scope,
-				node_id);
-			if (should_clean) {
-				delete this->keypoints[k_index];
-				this->keypoints[k_index] = NULL;
-			}
-		}
-	}
 }
 
 void ObsNode::clean_inputs(Scope* scope) {
 	for (int f_index = 0; f_index < (int)this->factors.size(); f_index++) {
 		this->factors[f_index]->clean_inputs(scope);
 	}
-
-	for (int k_index = 0; k_index < (int)this->keypoints.size(); k_index++) {
-		if (this->keypoints[k_index] != NULL) {
-			bool should_clean = this->keypoints[k_index]->should_clean_inputs(scope);
-			if (should_clean) {
-				delete this->keypoints[k_index];
-				this->keypoints[k_index] = NULL;
-			}
-		}
-	}
 }
 
 void ObsNode::clean() {
-	for (int k_index = 0; k_index < (int)this->keypoints.size(); k_index++) {
-		if (this->keypoints[k_index] != NULL) {
-			this->keypoints[k_index]->clean();
-		}
-	}
-
 	if (this->experiment != NULL) {
 		this->experiment->decrement(this);
 		this->experiment = NULL;
@@ -128,12 +81,6 @@ void ObsNode::clean() {
 }
 
 void ObsNode::measure_update() {
-	for (int k_index = 0; k_index < (int)this->keypoints.size(); k_index++) {
-		if (this->keypoints[k_index] != NULL) {
-			this->keypoints[k_index]->measure_update();
-		}
-	}
-
 	this->average_score = this->sum_score / this->num_measure;
 	this->average_instances_per_run = this->num_measure / MEASURE_ITERS;
 }
@@ -142,14 +89,6 @@ void ObsNode::save(ofstream& output_file) {
 	output_file << this->factors.size() << endl;
 	for (int f_index = 0; f_index < (int)this->factors.size(); f_index++) {
 		this->factors[f_index]->save(output_file);
-	}
-
-	for (int k_index = 0; k_index < (int)this->keypoints.size(); k_index++) {
-		output_file << (this->keypoints[k_index] == NULL) << endl;
-
-		if (this->keypoints[k_index] != NULL) {
-			this->keypoints[k_index]->save(output_file);
-		}
 	}
 
 	output_file << this->next_node_id << endl;
@@ -173,22 +112,6 @@ void ObsNode::load(ifstream& input_file,
 		factor->load(input_file,
 					 parent_solution);
 		this->factors.push_back(factor);
-	}
-
-	for (int k_index = 0; k_index < problem_type->num_obs(); k_index++) {
-		string is_null_line;
-		getline(input_file, is_null_line);
-		bool is_null = stoi(is_null_line);
-		if (!is_null) {
-			Keypoint* keypoint = new Keypoint();
-			keypoint->load(input_file,
-						   parent_solution);
-			this->keypoints[k_index] = keypoint;
-
-			// temp
-			cout << "this->id: " << this->id << endl;
-			cout << "this->keypoints[k_index]->created_timestamp: " << this->keypoints[k_index]->created_timestamp << endl;
-		}
 	}
 
 	string next_node_id_line;

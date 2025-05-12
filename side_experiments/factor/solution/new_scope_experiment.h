@@ -8,9 +8,9 @@
 #include "run_helper.h"
 
 class AbstractNode;
+class ObsNode;
 class Problem;
 class Scope;
-class ScopeNode;
 class Solution;
 
 const int NEW_SCOPE_EXPERIMENT_STATE_EXPLORE = 0;
@@ -42,17 +42,15 @@ public:
 
 	Scope* new_scope;
 
-	AbstractNode* test_location_start;
-	bool test_location_is_branch;
+	ObsNode* test_location_start;
 	AbstractNode* test_location_exit;
 	int test_location_state;
 	double test_location_existing_score;
 	double test_location_new_score;
 	int test_location_count;
 
-	std::vector<AbstractNode*> successful_location_starts;
-	std::vector<bool> successful_location_is_branch;
-	std::vector<ScopeNode*> successful_scope_nodes;
+	std::vector<ObsNode*> successful_location_starts;
+	std::vector<ObsNode*> successful_obs_nodes;
 
 	#if defined(MDEBUG) && MDEBUG
 	std::vector<Problem*> verify_problems;
@@ -60,14 +58,12 @@ public:
 	#endif /* MDEBUG */
 
 	NewScopeExperiment(Scope* scope_context,
-					   AbstractNode* node_context,
-					   bool is_branch);
+					   ObsNode* node_context);
 	~NewScopeExperiment();
-	void decrement(AbstractNode* experiment_node);
+	void decrement(ObsNode* experiment_node);
 
 	void pre_activate(RunHelper& run_helper);
-	void activate(AbstractNode* experiment_node,
-				  bool is_branch,
+	void activate(ObsNode* experiment_node,
 				  AbstractNode*& curr_node,
 				  Problem* problem,
 				  RunHelper& run_helper,
@@ -103,8 +99,7 @@ public:
 	bool hit_test;
 
 	int instance_count;
-	AbstractNode* potential_start;
-	bool potential_is_branch;
+	ObsNode* potential_start;
 
 	NewScopeExperimentHistory(NewScopeExperiment* experiment);
 };

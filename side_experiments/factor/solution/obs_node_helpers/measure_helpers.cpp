@@ -4,7 +4,6 @@
 
 #include "factor.h"
 #include "globals.h"
-#include "keypoint.h"
 #include "scope.h"
 #include "solution.h"
 #include "problem.h"
@@ -31,15 +30,6 @@ void ObsNode::measure_activate(AbstractNode*& curr_node,
 
 	history->factor_initialized = vector<bool>(this->factors.size(), false);
 	history->factor_values = vector<double>(this->factors.size());
-
-	for (int k_index = 0; k_index < (int)this->keypoints.size(); k_index++) {
-		if (this->keypoints[k_index] != NULL) {
-			cout << "this->id: " << this->id << endl;
-			this->keypoints[k_index]->measure_activate(obs[k_index],
-													   run_helper,
-													   scope_history);
-		}
-	}
 
 	curr_node = this->next_node;
 }

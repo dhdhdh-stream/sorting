@@ -1,44 +1,7 @@
 // TODO: add back repeat
 // - new scope, but follow immediately with decision making
 
-// - with subproblems/subscore, can fast fail
-// - and not directly connected, so early mistakes may not impact later experiments as much
-
-// TODO: add experiments that are completely separate from each other
-
 // TODO: for CommitExperiment, can separate commit from information gather?
-
-// - has to be world model
-//   - if jump over large section, no way snapshot alone will identify what's needed
-
-// - intention is for each spot to represent 1 state
-//   - but the steps to get to that state may not be identical everytime, so different actions may be needed
-//   - also, initially may think that two states are the same
-//     - only with further information may the states be separated
-//     - so just hidden information
-//       - or information that doesn't affect decision
-// - so no, each spot doesn't represent 1 state
-
-// - things to track that are correlated to final result:
-//   - how many flags/how many opens
-//     - which can be run dependent
-//   - and still difficult to know what would have happened with previous path
-
-// - can realize drastic mistakes and confusion (which likely leads to mistakes)
-//   - but still running multiple experiments together
-
-// - a good predicted score can never replace actual score
-
-// - still need to successfully run multi-experiment
-//   - try changing location of experiment so not too negative (and checking early failure)
-
-// - score functions are not truths, but theories
-//   - treat them as truths, until they are proven wrong
-//     - so don't worry about multi-experiments
-//       - it would instead mean that the theory is broken
-
-// - score function for Minesweeper is complicated
-//   - practice with an easier problem
 
 #include <chrono>
 #include <iostream>
@@ -68,8 +31,6 @@ default_random_engine generator;
 
 ProblemType* problem_type;
 Solution* solution;
-
-int multi_index = 0;
 
 int run_index;
 
@@ -132,23 +93,8 @@ int main(int argc, char* argv[]) {
 					run_helper,
 					scope_history);
 
-			if (run_helper.keypoint_misguess_factors.size() > 0) {
-				double sum_misguess_factors = 0.0;
-				for (int m_index = 0; m_index < (int)run_helper.keypoint_misguess_factors.size(); m_index++) {
-					sum_misguess_factors += run_helper.keypoint_misguess_factors[m_index];
-				}
-				if (sum_misguess_factors / run_helper.keypoint_misguess_factors.size() > KEYPOINT_MAX_FACTOR) {
-					run_helper.early_exit = true;
-				}
-			}
-
-			double target_val;
-			if (run_helper.early_exit) {
-				target_val = -10.0;
-			} else {
-				target_val = problem->score_result();
-				target_val -= run_helper.num_actions * solution->curr_time_penalty;
-			}
+			double target_val = problem->score_result();
+			target_val -= run_helper.num_actions * solution->curr_time_penalty;
 
 			if (curr_experiment == NULL) {
 				create_experiment(scope_history,
@@ -265,10 +211,6 @@ int main(int argc, char* argv[]) {
 		}
 
 		solution->measure_update();
-
-		for (int k_index = 0; k_index < KEYPOINT_EXPERIMENTS_PER_MEASURE; k_index++) {
-			keypoint_experiment(scope_histories);
-		}
 
 		for (int h_index = 0; h_index < (int)scope_histories.size(); h_index++) {
 			delete scope_histories[h_index];

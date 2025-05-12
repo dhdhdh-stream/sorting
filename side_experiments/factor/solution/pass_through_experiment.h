@@ -39,12 +39,10 @@ public:
 	double sum_score;
 
 	PassThroughExperiment(Scope* scope_context,
-						  AbstractNode* node_context,
-						  bool is_branch);
-	void decrement(AbstractNode* experiment_node);
+						  ObsNode* node_context);
+	void decrement(ObsNode* experiment_node);
 
-	void activate(AbstractNode* experiment_node,
-				  bool is_branch,
+	void activate(ObsNode* experiment_node,
 				  AbstractNode*& curr_node,
 				  Problem* problem,
 				  RunHelper& run_helper,

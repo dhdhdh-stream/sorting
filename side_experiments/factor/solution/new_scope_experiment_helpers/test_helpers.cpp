@@ -137,26 +137,23 @@ void NewScopeExperiment::test_backprop(
 				double existing_score = this->test_location_existing_score / NEW_SCOPE_VERIFY_2ND_NUM_DATAPOINTS;
 				this->improvement += (new_score - existing_score);
 
-				ScopeNode* new_scope_node = new ScopeNode();
-				new_scope_node->parent = this->scope_context;
-				new_scope_node->id = this->scope_context->node_counter;
+				ObsNode* new_obs_node = new ObsNode();
+				new_obs_node->parent = this->scope_context;
+				new_obs_node->id = this->scope_context->node_counter;
 				this->scope_context->node_counter++;
 
-				new_scope_node->scope = this->new_scope;
-
 				if (this->test_location_exit == NULL) {
-					new_scope_node->next_node_id = -1;
-					new_scope_node->next_node = NULL;
+					new_obs_node->next_node_id = -1;
+					new_obs_node->next_node = NULL;
 				} else {
-					new_scope_node->next_node_id = this->test_location_exit->id;
-					new_scope_node->next_node = this->test_location_exit;
+					new_obs_node->next_node_id = this->test_location_exit->id;
+					new_obs_node->next_node = this->test_location_exit;
 				}
 
-				new_scope_node->average_instances_per_run = this->test_location_start->average_instances_per_run;
+				new_obs_node->average_instances_per_run = this->test_location_start->average_instances_per_run;
 
 				this->successful_location_starts.push_back(this->test_location_start);
-				this->successful_location_is_branch.push_back(this->test_location_is_branch);
-				this->successful_scope_nodes.push_back(new_scope_node);
+				this->successful_obs_nodes.push_back(new_obs_node);
 
 				this->test_location_start = NULL;
 

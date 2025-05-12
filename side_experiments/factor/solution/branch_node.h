@@ -32,16 +32,10 @@ public:
 
 	BranchNode();
 	BranchNode(BranchNode* original);
-	~BranchNode();
 
 	void activate(AbstractNode*& curr_node,
 				  RunHelper& run_helper,
 				  ScopeHistory* scope_history);
-
-	void experiment_activate(AbstractNode*& curr_node,
-							 Problem* problem,
-							 RunHelper& run_helper,
-							 ScopeHistory* scope_history);
 
 	#if defined(MDEBUG) && MDEBUG
 	void verify_activate(AbstractNode*& curr_node,
@@ -58,9 +52,6 @@ public:
 	void clean_inputs(Scope* scope,
 					  int node_id);
 	void clean_inputs(Scope* scope);
-
-	void clean();
-	void measure_update();
 
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file);

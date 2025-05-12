@@ -74,7 +74,10 @@ void Scope::clean_inputs(Scope* scope) {
 void Scope::clean() {
 	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
 			it != this->nodes.end(); it++) {
-		it->second->clean();
+		if (it->second->type == NODE_TYPE_OBS) {
+			ObsNode* obs_node = (ObsNode*)it->second;
+			obs_node->clean();
+		}
 	}
 
 	this->new_scope_experiment = NULL;
@@ -83,7 +86,10 @@ void Scope::clean() {
 void Scope::measure_update() {
 	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
 			it != this->nodes.end(); it++) {
-		it->second->measure_update();
+		if (it->second->type == NODE_TYPE_OBS) {
+			ObsNode* obs_node = (ObsNode*)it->second;
+			obs_node->measure_update();
+		}
 	}
 }
 

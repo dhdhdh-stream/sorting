@@ -17,17 +17,25 @@ void update_scores(ScopeHistory* scope_history,
 				   double target_val) {
 	for (map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
 			it != scope_history->node_histories.end(); it++) {
-		if (it->second->node->last_updated_run_index != run_index) {
-			it->second->node->last_updated_run_index = run_index;
-			it->second->node->num_measure++;
-			it->second->node->sum_score += target_val;
-		}
+		switch (it->second->node->type) {
+		case NODE_TYPE_SCOPE:
+			{
+				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)it->second;
 
-		if (it->second->node->type == NODE_TYPE_SCOPE) {
-			ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)it->second;
-
-			update_scores(scope_node_history->scope_history,
-						  target_val);
+				update_scores(scope_node_history->scope_history,
+							  target_val);
+			}
+			break;
+		case NODE_TYPE_OBS:
+			{
+				ObsNode* obs_node = (ObsNode*)it->second->node;
+				if (obs_node->last_updated_run_index != run_index) {
+					obs_node->last_updated_run_index = run_index;
+					obs_node->num_measure++;
+					obs_node->sum_score += target_val;
+				}
+			}
+			break;
 		}
 	}
 }

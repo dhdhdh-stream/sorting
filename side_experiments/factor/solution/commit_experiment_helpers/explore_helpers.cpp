@@ -46,36 +46,7 @@ void CommitExperiment::explore_activate(
 		/**
 		 * - exit in-place to not delete existing nodes
 		 */
-		switch (this->node_context->type) {
-		case NODE_TYPE_ACTION:
-			{
-				ActionNode* action_node = (ActionNode*)this->node_context;
-				this->curr_exit_next_node = action_node->next_node;
-			}
-			break;
-		case NODE_TYPE_SCOPE:
-			{
-				ScopeNode* scope_node = (ScopeNode*)this->node_context;
-				this->curr_exit_next_node = scope_node->next_node;
-			}
-			break;
-		case NODE_TYPE_BRANCH:
-			{
-				BranchNode* branch_node = (BranchNode*)this->node_context;
-				if (this->is_branch) {
-					this->curr_exit_next_node = branch_node->branch_next_node;
-				} else {
-					this->curr_exit_next_node = branch_node->original_next_node;
-				}
-			}
-			break;
-		case NODE_TYPE_OBS:
-			{
-				ObsNode* obs_node = (ObsNode*)this->node_context;
-				this->curr_exit_next_node = obs_node->next_node;
-			}
-			break;
-		}
+		this->curr_exit_next_node = this->node_context->next_node;
 
 		geometric_distribution<int> geo_distribution(0.2);
 		int new_num_steps = 3 + geo_distribution(generator);
@@ -101,8 +72,6 @@ void CommitExperiment::explore_activate(
 				this->curr_scopes.push_back(NULL);
 			}
 		}
-
-		run_helper.verify_keypoints = true;
 
 		for (int s_index = 0; s_index < (int)this->curr_step_types.size(); s_index++) {
 			if (this->curr_step_types[s_index] == STEP_TYPE_ACTION) {

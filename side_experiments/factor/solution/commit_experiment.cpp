@@ -8,13 +8,11 @@
 using namespace std;
 
 CommitExperiment::CommitExperiment(Scope* scope_context,
-								   AbstractNode* node_context,
-								   bool is_branch) {
+								   ObsNode* node_context) {
 	this->type = EXPERIMENT_TYPE_COMMIT;
 
 	this->scope_context = scope_context;
 	this->node_context = node_context;
-	this->is_branch = is_branch;
 
 	this->state = COMMIT_EXPERIMENT_STATE_EXISTING_GATHER;
 	this->state_iter = 0;
@@ -34,7 +32,7 @@ CommitExperiment::~CommitExperiment() {
 	#endif /* MDEBUG */
 }
 
-void CommitExperiment::decrement(AbstractNode* experiment_node) {
+void CommitExperiment::decrement(ObsNode* experiment_node) {
 	delete this;
 }
 

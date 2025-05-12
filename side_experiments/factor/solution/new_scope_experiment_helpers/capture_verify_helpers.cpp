@@ -6,6 +6,7 @@
 
 #include "constants.h"
 #include "globals.h"
+#include "obs_node.h"
 #include "problem.h"
 #include "scope.h"
 #include "scope_node.h"
@@ -23,21 +24,14 @@ void NewScopeExperiment::capture_verify_activate(
 	}
 	this->verify_seeds[this->state_iter] = run_helper.starting_run_seed;
 
-	curr_node = this->successful_scope_nodes[location_index];
-	while (true) {
-		ScopeNode* curr_scope_node = (ScopeNode*)curr_node;
+	ScopeHistory* inner_scope_history = new ScopeHistory(this->new_scope);
+	this->new_scope->new_scope_capture_verify_activate(
+		problem,
+		run_helper,
+		inner_scope_history);
+	delete inner_scope_history;
 
-		curr_scope_node->new_scope_capture_verify_activate(
-			curr_node,
-			problem,
-			run_helper,
-			scope_history);
-
-		if (curr_node == NULL
-				|| this->scope_context->nodes.find(curr_node->id) != this->scope_context->nodes.end()) {
-			break;
-		}
-	}
+	curr_node = this->successful_obs_nodes[location_index];
 }
 
 void NewScopeExperiment::capture_verify_backprop() {

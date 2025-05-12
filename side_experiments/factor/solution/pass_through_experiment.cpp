@@ -15,13 +15,11 @@
 using namespace std;
 
 PassThroughExperiment::PassThroughExperiment(Scope* scope_context,
-											 AbstractNode* node_context,
-											 bool is_branch) {
+											 ObsNode* node_context) {
 	this->type = EXPERIMENT_TYPE_PASS_THROUGH;
 
 	this->scope_context = scope_context;
 	this->node_context = node_context;
-	this->is_branch = is_branch;
 
 	this->sum_score = 0.0;
 
@@ -31,7 +29,7 @@ PassThroughExperiment::PassThroughExperiment(Scope* scope_context,
 	this->result = EXPERIMENT_RESULT_NA;
 }
 
-void PassThroughExperiment::decrement(AbstractNode* experiment_node) {
+void PassThroughExperiment::decrement(ObsNode* experiment_node) {
 	delete this;
 }
 

@@ -17,12 +17,6 @@ BranchNode::BranchNode() {
 
 	this->is_used = false;
 
-	this->experiment = NULL;
-
-	this->last_updated_run_index = -1;
- 	this->num_measure = 0;
- 	this->sum_score = 0.0;
-
 	#if defined(MDEBUG) && MDEBUG
 	this->verify_key = NULL;
 	#endif /* MDEBUG */
@@ -42,21 +36,9 @@ BranchNode::BranchNode(BranchNode* original) {
 
 	this->ancestor_ids = original->ancestor_ids;
 
-	this->experiment = NULL;
-
-	this->last_updated_run_index = -1;
- 	this->num_measure = 0;
- 	this->sum_score = 0.0;
-
 	#if defined(MDEBUG) && MDEBUG
 	this->verify_key = NULL;
 	#endif /* MDEBUG */
-}
-
-BranchNode::~BranchNode() {
-	if (this->experiment != NULL) {
-		this->experiment->decrement(this);
-	}
 }
 
 #if defined(MDEBUG) && MDEBUG
@@ -82,21 +64,6 @@ void BranchNode::clean_inputs(Scope* scope,
 	}
 }
 
-void BranchNode::clean() {
-	if (this->experiment != NULL) {
-		this->experiment->decrement(this);
-		this->experiment = NULL;
-	}
-
-	this->num_measure = 0;
-	this->sum_score = 0.0;
-}
-
-void BranchNode::measure_update() {
-	this->average_score = this->sum_score / this->num_measure;
-	this->average_instances_per_run = this->num_measure / MEASURE_ITERS;
-}
-
 void BranchNode::save(ofstream& output_file) {
 	output_file << this->average_val << endl;
 	output_file << this->factor_ids.size() << endl;
@@ -113,9 +80,6 @@ void BranchNode::save(ofstream& output_file) {
 	for (int a_index = 0; a_index < (int)this->ancestor_ids.size(); a_index++) {
 		output_file << this->ancestor_ids[a_index] << endl;
 	}
-
-	output_file << this->average_score << endl;
-	output_file << this->average_instances_per_run << endl;
 }
 
 void BranchNode::load(ifstream& input_file) {
@@ -158,14 +122,6 @@ void BranchNode::load(ifstream& input_file) {
 		getline(input_file, ancestor_id_line);
 		this->ancestor_ids.push_back(stoi(ancestor_id_line));
 	}
-
-	string average_score_line;
-	getline(input_file, average_score_line);
-	this->average_score = stod(average_score_line);
-
-	string average_instances_per_run_line;
-	getline(input_file, average_instances_per_run_line);
-	this->average_instances_per_run = stod(average_instances_per_run_line);
 }
 
 void BranchNode::link(Solution* parent_solution) {
