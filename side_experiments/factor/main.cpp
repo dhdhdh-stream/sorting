@@ -168,12 +168,12 @@ int main(int argc, char* argv[]) {
 		solution->clear_verify();
 		#endif /* MDEBUG */
 
-		// if (last_updated_scope->nodes.size() >= SCOPE_EXCEEDED_NUM_NODES) {
-		// 	last_updated_scope->exceeded = true;
-		// }
-		// if (last_updated_scope->nodes.size() <= SCOPE_RESUME_NUM_NODES) {
-		// 	last_updated_scope->exceeded = false;
-		// }
+		if (last_updated_scope->nodes.size() >= SCOPE_EXCEEDED_NUM_NODES) {
+			last_updated_scope->exceeded = true;
+		}
+		if (last_updated_scope->nodes.size() <= SCOPE_RESUME_NUM_NODES) {
+			last_updated_scope->exceeded = false;
+		}
 
 		solution->clean();
 

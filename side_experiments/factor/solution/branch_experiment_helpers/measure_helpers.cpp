@@ -2,8 +2,8 @@
 
 #include <iostream>
 
+#include "abstract_node.h"
 #include "constants.h"
-#include "obs_node.h"
 #include "problem.h"
 #include "scope.h"
 #include "solution_helpers.h"
@@ -91,6 +91,7 @@ void BranchExperiment::measure_backprop(double target_val,
 			cout << "BranchExperiment" << endl;
 			cout << "this->scope_context->id: " << this->scope_context->id << endl;
 			cout << "this->node_context->id: " << this->node_context->id << endl;
+			cout << "this->is_branch: " << this->is_branch << endl;
 			cout << "new explore path:";
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {

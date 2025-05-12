@@ -27,8 +27,10 @@ void Scope::new_scope_capture_verify_activate(
 		case NODE_TYPE_ACTION:
 			{
 				ActionNode* node = (ActionNode*)curr_node;
-				node->activate(curr_node,
-							   problem);
+				node->experiment_activate(curr_node,
+										  problem,
+										  run_helper,
+										  scope_history);
 			}
 			break;
 		case NODE_TYPE_SCOPE:

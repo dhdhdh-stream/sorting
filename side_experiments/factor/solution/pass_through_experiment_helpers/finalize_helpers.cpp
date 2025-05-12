@@ -88,20 +88,95 @@ void PassThroughExperiment::add() {
 		start_node = new_nodes[0];
 	}
 
-	if (this->node_context->next_node != NULL) {
-		for (int a_index = 0; a_index < (int)this->node_context->next_node->ancestor_ids.size(); a_index++) {
-			if (this->node_context->next_node->ancestor_ids[a_index] == this->node_context->id) {
-				this->node_context->next_node->ancestor_ids.erase(
-					this->node_context->next_node->ancestor_ids.begin() + a_index);
-				break;
+	switch (this->node_context->type) {
+	case NODE_TYPE_ACTION:
+		{
+			ActionNode* action_node = (ActionNode*)this->node_context;
+
+			for (int a_index = 0; a_index < (int)action_node->next_node->ancestor_ids.size(); a_index++) {
+				if (action_node->next_node->ancestor_ids[a_index] == action_node->id) {
+					action_node->next_node->ancestor_ids.erase(
+						action_node->next_node->ancestor_ids.begin() + a_index);
+					break;
+				}
 			}
+
+			action_node->next_node_id = start_node_id;
+			action_node->next_node = start_node;
+
+			start_node->ancestor_ids.push_back(action_node->id);
 		}
+		break;
+	case NODE_TYPE_SCOPE:
+		{
+			ScopeNode* scope_node = (ScopeNode*)this->node_context;
+
+			for (int a_index = 0; a_index < (int)scope_node->next_node->ancestor_ids.size(); a_index++) {
+				if (scope_node->next_node->ancestor_ids[a_index] == scope_node->id) {
+					scope_node->next_node->ancestor_ids.erase(
+						scope_node->next_node->ancestor_ids.begin() + a_index);
+					break;
+				}
+			}
+
+			scope_node->next_node_id = start_node_id;
+			scope_node->next_node = start_node;
+
+			start_node->ancestor_ids.push_back(scope_node->id);
+		}
+		break;
+	case NODE_TYPE_BRANCH:
+		{
+			BranchNode* branch_node = (BranchNode*)this->node_context;
+
+			if (this->is_branch) {
+				for (int a_index = 0; a_index < (int)branch_node->branch_next_node->ancestor_ids.size(); a_index++) {
+					if (branch_node->branch_next_node->ancestor_ids[a_index] == branch_node->id) {
+						branch_node->branch_next_node->ancestor_ids.erase(
+							branch_node->branch_next_node->ancestor_ids.begin() + a_index);
+						break;
+					}
+				}
+
+				branch_node->branch_next_node_id = start_node_id;
+				branch_node->branch_next_node = start_node;
+			} else {
+				for (int a_index = 0; a_index < (int)branch_node->original_next_node->ancestor_ids.size(); a_index++) {
+					if (branch_node->original_next_node->ancestor_ids[a_index] == branch_node->id) {
+						branch_node->original_next_node->ancestor_ids.erase(
+							branch_node->original_next_node->ancestor_ids.begin() + a_index);
+						break;
+					}
+				}
+
+				branch_node->original_next_node_id = start_node_id;
+				branch_node->original_next_node = start_node;
+			}
+
+			start_node->ancestor_ids.push_back(branch_node->id);
+		}
+		break;
+	case NODE_TYPE_OBS:
+		{
+			ObsNode* obs_node = (ObsNode*)this->node_context;
+
+			if (obs_node->next_node != NULL) {
+				for (int a_index = 0; a_index < (int)obs_node->next_node->ancestor_ids.size(); a_index++) {
+					if (obs_node->next_node->ancestor_ids[a_index] == obs_node->id) {
+						obs_node->next_node->ancestor_ids.erase(
+							obs_node->next_node->ancestor_ids.begin() + a_index);
+						break;
+					}
+				}
+			}
+
+			obs_node->next_node_id = start_node_id;
+			obs_node->next_node = start_node;
+
+			start_node->ancestor_ids.push_back(obs_node->id);
+		}
+		break;
 	}
-
-	this->node_context->next_node_id = start_node_id;
-	this->node_context->next_node = start_node;
-
-	start_node->ancestor_ids.push_back(this->node_context->id);
 
 	for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {
 		int next_node_id;

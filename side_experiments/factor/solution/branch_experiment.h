@@ -74,11 +74,13 @@ public:
 	#endif /* MDEBUG */
 
 	BranchExperiment(Scope* scope_context,
-					 ObsNode* node_context);
+					 AbstractNode* node_context,
+					 bool is_branch);
 	~BranchExperiment();
-	void decrement(ObsNode* experiment_node);
+	void decrement(AbstractNode* experiment_node);
 
-	void activate(ObsNode* experiment_node,
+	void activate(AbstractNode* experiment_node,
+				  bool is_branch,
 				  AbstractNode*& curr_node,
 				  Problem* problem,
 				  RunHelper& run_helper,

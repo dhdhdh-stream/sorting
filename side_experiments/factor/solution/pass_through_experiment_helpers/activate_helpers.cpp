@@ -9,17 +9,20 @@
 
 using namespace std;
 
-void PassThroughExperiment::activate(ObsNode* experiment_node,
+void PassThroughExperiment::activate(AbstractNode* experiment_node,
+									 bool is_branch,
 									 AbstractNode*& curr_node,
 									 Problem* problem,
 									 RunHelper& run_helper,
 									 ScopeHistory* scope_history) {
 	bool is_selected = false;
-	if (run_helper.experiment_history != NULL) {
-		is_selected = true;
-	} else if (run_helper.experiment_history == NULL) {
-		run_helper.experiment_history = new PassThroughExperimentHistory(this);
-		is_selected = true;
+	if (is_branch == this->is_branch) {
+		if (run_helper.experiment_history != NULL) {
+			is_selected = true;
+		} else if (run_helper.experiment_history == NULL) {
+			run_helper.experiment_history = new PassThroughExperimentHistory(this);
+			is_selected = true;
+		}
 	}
 
 	if (is_selected) {

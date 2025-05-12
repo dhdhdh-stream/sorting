@@ -26,6 +26,7 @@ public:
 	ScopeNode();
 	ScopeNode(ScopeNode* original,
 			  Solution* parent_solution);
+	~ScopeNode();
 
 	void activate(AbstractNode*& curr_node,
 				  Problem* problem,
@@ -51,7 +52,14 @@ public:
 						 Problem* problem,
 						 RunHelper& run_helper,
 						 ScopeHistory* scope_history);
+	void new_scope_capture_verify_activate(AbstractNode*& curr_node,
+										   Problem* problem,
+										   RunHelper& run_helper,
+										   ScopeHistory* scope_history);
 	#endif /* MDEBUG */
+
+	void clean();
+	void measure_update();
 
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file,

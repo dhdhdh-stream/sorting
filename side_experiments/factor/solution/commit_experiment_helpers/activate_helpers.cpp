@@ -12,20 +12,23 @@
 
 using namespace std;
 
-void CommitExperiment::activate(ObsNode* experiment_node,
+void CommitExperiment::activate(AbstractNode* experiment_node,
+								bool is_branch,
 								AbstractNode*& curr_node,
 								Problem* problem,
 								RunHelper& run_helper,
 								ScopeHistory* scope_history) {
 	bool is_selected = false;
 	CommitExperimentHistory* history = NULL;
-	if (run_helper.experiment_history != NULL) {
-		history = (CommitExperimentHistory*)run_helper.experiment_history;
-		is_selected = true;
-	} else if (run_helper.experiment_history == NULL) {
-		history = new CommitExperimentHistory(this);
-		run_helper.experiment_history = history;
-		is_selected = true;
+	if (is_branch == this->is_branch) {
+		if (run_helper.experiment_history != NULL) {
+			history = (CommitExperimentHistory*)run_helper.experiment_history;
+			is_selected = true;
+		} else if (run_helper.experiment_history == NULL) {
+			history = new CommitExperimentHistory(this);
+			run_helper.experiment_history = history;
+			is_selected = true;
+		}
 	}
 
 	if (is_selected) {

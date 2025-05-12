@@ -24,15 +24,6 @@ public:
 	int next_node_id;
 	AbstractNode* next_node;
 
-	AbstractExperiment* experiment;
-
-	double average_score;
-	double average_instances_per_run;
-
-	int last_updated_run_index;
-	int num_measure;
-	double sum_score;
-
 	ObsNode();
 	ObsNode(ObsNode* original,
 			Solution* parent_solution);

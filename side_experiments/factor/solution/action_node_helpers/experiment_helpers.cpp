@@ -1,4 +1,4 @@
-#include "scope_node.h"
+#include "action_node.h"
 
 #include <iostream>
 
@@ -10,19 +10,15 @@
 
 using namespace std;
 
-void ScopeNode::experiment_activate(AbstractNode*& curr_node,
-									Problem* problem,
-									RunHelper& run_helper,
-									ScopeHistory* scope_history) {
-	ScopeNodeHistory* history = new ScopeNodeHistory(this);
+void ActionNode::experiment_activate(AbstractNode*& curr_node,
+									 Problem* problem,
+									 RunHelper& run_helper,
+									 ScopeHistory* scope_history) {
+	ActionNodeHistory* history = new ActionNodeHistory(this);
 	history->index = (int)scope_history->node_histories.size();
 	scope_history->node_histories[this->id] = history;
 
-	ScopeHistory* inner_scope_history = new ScopeHistory(this->scope);
-	history->scope_history = inner_scope_history;
-	this->scope->experiment_activate(problem,
-									 run_helper,
-									 inner_scope_history);
+	problem->perform_action(this->action);
 
 	curr_node = this->next_node;
 

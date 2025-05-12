@@ -27,8 +27,10 @@ void Scope::experiment_activate(Problem* problem,
 		case NODE_TYPE_ACTION:
 			{
 				ActionNode* node = (ActionNode*)curr_node;
-				node->activate(curr_node,
-							   problem);
+				node->experiment_activate(curr_node,
+										  problem,
+										  run_helper,
+										  history);
 			}
 			break;
 		case NODE_TYPE_SCOPE:
@@ -43,9 +45,10 @@ void Scope::experiment_activate(Problem* problem,
 		case NODE_TYPE_BRANCH:
 			{
 				BranchNode* node = (BranchNode*)curr_node;
-				node->activate(curr_node,
-							   run_helper,
-							   history);
+				node->experiment_activate(curr_node,
+										  problem,
+										  run_helper,
+										  history);
 			}
 			break;
 		case NODE_TYPE_OBS:
