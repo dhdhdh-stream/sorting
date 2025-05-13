@@ -23,50 +23,52 @@ void gather_nodes_seen_helper(ScopeHistory* scope_history,
 							  map<pair<AbstractNode*,bool>, int>& nodes_seen) {
 	for (map<int, AbstractNodeHistory*>::iterator h_it = scope_history->node_histories.begin();
 			h_it != scope_history->node_histories.end(); h_it++) {
-		if (h_it->second->node->experiment == NULL
-				&& h_it->second->node->average_instances_per_run > EXPERIMENT_MIN_AVERAGE_INSTANCES_PER_RUN) {
-			switch (h_it->second->node->type) {
-			case NODE_TYPE_ACTION:
-			case NODE_TYPE_OBS:
-				{
-					map<pair<AbstractNode*,bool>, int>::iterator seen_it = nodes_seen
-						.find({h_it->second->node, false});
-					if (seen_it == nodes_seen.end()) {
-						nodes_seen[{h_it->second->node, false}] = 1;
-					} else {
-						seen_it->second++;
-					}
+		switch (h_it->second->node->type) {
+		case NODE_TYPE_ACTION:
+		case NODE_TYPE_OBS:
+			if (h_it->second->node->experiment == NULL
+					&& h_it->second->node->average_instances_per_run > EXPERIMENT_MIN_AVERAGE_INSTANCES_PER_RUN) {
+				map<pair<AbstractNode*,bool>, int>::iterator seen_it = nodes_seen
+					.find({h_it->second->node, false});
+				if (seen_it == nodes_seen.end()) {
+					nodes_seen[{h_it->second->node, false}] = 1;
+				} else {
+					seen_it->second++;
 				}
-				break;
-			case NODE_TYPE_SCOPE:
-				{
-					ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)h_it->second;
-
-					gather_nodes_seen_helper(scope_node_history->scope_history,
-											 nodes_seen);
-
-					map<pair<AbstractNode*,bool>, int>::iterator seen_it = nodes_seen
-						.find({h_it->second->node, false});
-					if (seen_it == nodes_seen.end()) {
-						nodes_seen[{h_it->second->node, false}] = 1;
-					} else {
-						seen_it->second++;
-					}
-				}
-				break;
-			case NODE_TYPE_BRANCH:
-				{
-					BranchNodeHistory* branch_node_history = (BranchNodeHistory*)h_it->second;
-					map<pair<AbstractNode*,bool>, int>::iterator seen_it = nodes_seen
-						.find({h_it->second->node, branch_node_history->is_branch});
-					if (seen_it == nodes_seen.end()) {
-						nodes_seen[{h_it->second->node, branch_node_history->is_branch}] = 1;
-					} else {
-						seen_it->second++;
-					}
-				}
-				break;
 			}
+			break;
+		case NODE_TYPE_SCOPE:
+			{
+				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)h_it->second;
+
+				gather_nodes_seen_helper(scope_node_history->scope_history,
+										 nodes_seen);
+
+				if (h_it->second->node->experiment == NULL
+						&& h_it->second->node->average_instances_per_run > EXPERIMENT_MIN_AVERAGE_INSTANCES_PER_RUN) {
+					map<pair<AbstractNode*,bool>, int>::iterator seen_it = nodes_seen
+						.find({h_it->second->node, false});
+					if (seen_it == nodes_seen.end()) {
+						nodes_seen[{h_it->second->node, false}] = 1;
+					} else {
+						seen_it->second++;
+					}
+				}
+			}
+			break;
+		case NODE_TYPE_BRANCH:
+			if (h_it->second->node->experiment == NULL
+					&& h_it->second->node->average_instances_per_run > EXPERIMENT_MIN_AVERAGE_INSTANCES_PER_RUN) {
+				BranchNodeHistory* branch_node_history = (BranchNodeHistory*)h_it->second;
+				map<pair<AbstractNode*,bool>, int>::iterator seen_it = nodes_seen
+					.find({h_it->second->node, branch_node_history->is_branch});
+				if (seen_it == nodes_seen.end()) {
+					nodes_seen[{h_it->second->node, branch_node_history->is_branch}] = 1;
+				} else {
+					seen_it->second++;
+				}
+			}
+			break;
 		}
 	}
 }

@@ -66,10 +66,6 @@ public:
 				  bool is_return,
 				  RunHelper& run_helper);
 
-	void test_activate(AbstractNode*& curr_node,
-					   Problem* problem,
-					   RunHelper& run_helper,
-					   NewScopeExperimentHistory* history);
 	void test_backprop(double target_val,
 					   bool is_return,
 					   RunHelper& run_helper,

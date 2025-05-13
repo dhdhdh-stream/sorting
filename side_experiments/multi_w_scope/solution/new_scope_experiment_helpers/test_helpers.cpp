@@ -26,24 +26,6 @@ const int NEW_SCOPE_VERIFY_1ST_NUM_DATAPOINTS = 400;
 const int NEW_SCOPE_VERIFY_2ND_NUM_DATAPOINTS = 4000;
 #endif /* MDEBUG */
 
-void NewScopeExperiment::test_activate(
-		AbstractNode*& curr_node,
-		Problem* problem,
-		RunHelper& run_helper,
-		NewScopeExperimentHistory* history) {
-	history->hit_test = true;
-
-	if (history->is_active) {
-		ScopeHistory* inner_scope_history = new ScopeHistory(this->new_scope);
-		this->new_scope->experiment_activate(problem,
-											 run_helper,
-											 inner_scope_history);
-		delete inner_scope_history;
-
-		curr_node = this->test_location_exit;
-	}
-}
-
 void NewScopeExperiment::calc_improve_helper(bool& is_success,
 											 double& curr_improvement) {
 	double existing_sum_target_vals = 0.0;
