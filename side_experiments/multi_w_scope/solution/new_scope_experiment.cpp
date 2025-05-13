@@ -349,10 +349,6 @@ NewScopeExperiment::~NewScopeExperiment() {
 	if (this->new_scope != NULL) {
 		delete this->new_scope;
 	}
-
-	for (int s_index = 0; s_index < (int)this->successful_scope_nodes.size(); s_index++) {
-		delete this->successful_scope_nodes[s_index];
-	}
 }
 
 void NewScopeExperiment::decrement(AbstractNode* experiment_node) {
@@ -374,9 +370,7 @@ void NewScopeExperiment::decrement(AbstractNode* experiment_node) {
 	} else {
 		this->successful_location_starts.erase(this->successful_location_starts.begin() + location_index);
 		this->successful_location_is_branch.erase(this->successful_location_is_branch.begin() + location_index);
-		ScopeNode* new_scope_node = this->successful_scope_nodes[location_index];
-		this->successful_scope_nodes.erase(this->successful_scope_nodes.begin() + location_index);
-		delete new_scope_node;
+		this->successful_location_exits.erase(this->successful_location_exits.begin() + location_index);
 	}
 
 	if (this->test_location_start == NULL) {

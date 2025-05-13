@@ -1,3 +1,5 @@
+// TODO: need way to verify new scope stays in position
+
 #ifndef NEW_SCOPE_EXPERIMENT_H
 #define NEW_SCOPE_EXPERIMENT_H
 
@@ -46,7 +48,7 @@ public:
 
 	std::vector<AbstractNode*> successful_location_starts;
 	std::vector<bool> successful_location_is_branch;
-	std::vector<ScopeNode*> successful_scope_nodes;
+	std::vector<AbstractNode*> successful_location_exits;
 
 	NewScopeExperiment(Scope* scope_context,
 					   AbstractNode* node_context,

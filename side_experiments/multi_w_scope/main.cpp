@@ -71,7 +71,11 @@ int main(int argc, char* argv[]) {
 
 		while (true) {
 			run_index++;
+			#if defined(MDEBUG) && MDEBUG
+			if (run_index%1000 == 0) {
+			#else
 			if (run_index%100000 == 0) {
+			#endif /* MDEBUG */
 				cout << "run_index: " << run_index << endl;
 				cout << "solution->timestamp: " << solution->timestamp << endl;
 				cout << "improvement_iter: " << improvement_iter << endl;

@@ -17,6 +17,10 @@ using namespace std;
 void NewScopeExperiment::clean() {
 	this->scope_context->new_scope_experiment = NULL;
 
+	if (this->test_location_start != NULL) {
+		this->test_location_start->experiment = NULL;
+	}
+
 	for (int s_index = 0; s_index < (int)this->successful_location_starts.size(); s_index++) {
 		this->successful_location_starts[s_index]->experiment = NULL;
 	}
@@ -89,9 +93,21 @@ void NewScopeExperiment::add() {
 	this->scope_context->child_scopes.push_back(this->new_scope);
 
 	for (int s_index = 0; s_index < (int)this->successful_location_starts.size(); s_index++) {
-		ScopeNode* new_scope_node = this->successful_scope_nodes[s_index];
+		ScopeNode* new_scope_node = new ScopeNode();
 		new_scope_node->parent = this->scope_context;
+		new_scope_node->id = this->scope_context->node_counter;
+		this->scope_context->node_counter++;
 		this->scope_context->nodes[new_scope_node->id] = new_scope_node;
+
+		new_scope_node->scope = this->new_scope;
+
+		if (this->successful_location_exits[s_index] == NULL) {
+			new_scope_node->next_node_id = -1;
+			new_scope_node->next_node = NULL;
+		} else {
+			new_scope_node->next_node_id = this->successful_location_exits[s_index]->id;
+			new_scope_node->next_node = this->successful_location_exits[s_index];
+		}
 
 		if (new_scope_node->next_node == NULL) {
 			if (new_local_ending_node == NULL) {
@@ -219,7 +235,6 @@ void NewScopeExperiment::add() {
 			break;
 		}
 	}
-	this->successful_scope_nodes.clear();
 
 	this->new_scope = NULL;
 }

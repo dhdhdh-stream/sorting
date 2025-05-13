@@ -8,7 +8,7 @@
 // #include "commit_experiment.h"
 #include "constants.h"
 #include "globals.h"
-// #include "new_scope_experiment.h"
+#include "new_scope_experiment.h"
 #include "obs_node.h"
 #include "pass_through_experiment.h"
 #include "scope.h"
@@ -109,21 +109,21 @@ void create_experiment(ScopeHistory* scope_history,
 		 */
 
 		if (explore_node->parent->exceeded) {
-			uniform_int_distribution<int> non_new_distribution(0, 19);
-			// if (explore_node->parent->new_scope_experiment == NULL
-			// 		&& non_new_distribution(generator) != 0) {
-			if (false) {
-				// NewScopeExperiment* new_scope_experiment = new NewScopeExperiment(
-				// 	explore_node->parent,
-				// 	explore_node,
-				// 	explore_is_branch);
+			uniform_int_distribution<int> non_new_distribution(0, 49);
+			if (explore_node->parent->new_scope_experiment == NULL
+					&& non_new_distribution(generator) != 0) {
+				NewScopeExperiment* new_scope_experiment = new NewScopeExperiment(
+					explore_node->parent,
+					explore_node,
+					explore_is_branch);
 
-				// if (new_scope_experiment->result == EXPERIMENT_RESULT_FAIL) {
-				// 	delete new_scope_experiment;
-				// } else {
-				// 	explore_node->parent->new_scope_experiment = new_scope_experiment;
-				// 	explore_node->experiment = new_scope_experiment;
-				// }
+				if (new_scope_experiment->result == EXPERIMENT_RESULT_FAIL) {
+					delete new_scope_experiment;
+				} else {
+					explore_node->parent->new_scope_experiment = new_scope_experiment;
+					explore_node->experiment = new_scope_experiment;
+					cout << "NewScopeExperiment" << endl;
+				}
 			} else {
 				if (improvement_iter > 3) {
 					PassThroughExperiment* new_experiment = new PassThroughExperiment(
@@ -145,7 +145,8 @@ void create_experiment(ScopeHistory* scope_history,
 			 *     - like tessellation, but have to get both the shape and the pattern correct
 			 *       - and PassThroughExperiments help with both
 			 */
-			if (improvement_iter == 0) {
+			// if (improvement_iter == 0) {
+			if (false) {
 				// CommitExperiment* new_commit_experiment = new CommitExperiment(
 				// 	explore_node->parent,
 				// 	explore_node,

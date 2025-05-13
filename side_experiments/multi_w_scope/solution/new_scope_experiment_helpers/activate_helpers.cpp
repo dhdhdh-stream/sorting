@@ -39,8 +39,6 @@ void NewScopeExperiment::activate(AbstractNode* experiment_node,
 	}
 
 	if (has_match) {
-		run_helper.num_experiment_instances++;
-
 		map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it
 				= run_helper.experiment_histories.find(this);
 		NewScopeExperimentHistory* history;
@@ -77,11 +75,13 @@ void NewScopeExperiment::activate(AbstractNode* experiment_node,
 			}
 		} else {
 			if (history->is_active) {
-				this->successful_scope_nodes[location_index]->new_scope_activate(
-					curr_node,
-					problem,
-					run_helper,
-					scope_history);
+				ScopeHistory* inner_scope_history = new ScopeHistory(this->new_scope);
+				this->new_scope->experiment_activate(problem,
+													 run_helper,
+													 inner_scope_history);
+				delete inner_scope_history;
+
+				curr_node = this->successful_location_exits[location_index];
 			}
 		}
 	}
@@ -89,6 +89,8 @@ void NewScopeExperiment::activate(AbstractNode* experiment_node,
 
 void NewScopeExperiment::back_activate(RunHelper& run_helper,
 									   ScopeHistory* scope_history) {
+	run_helper.num_experiment_instances++;
+
 	if (this->test_location_start == NULL) {
 		map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it
 				= run_helper.experiment_histories.find(this);
@@ -146,12 +148,6 @@ void NewScopeExperiment::back_activate(RunHelper& run_helper,
 						possible_starts.push_back(it->second->node);
 						possible_is_branch.push_back(is_branch);
 					}
-				}
-			}
-			for (int s_index = 0; s_index < (int)this->successful_scope_nodes.size(); s_index++) {
-				if (this->successful_scope_nodes[s_index]->experiment == NULL) {
-					possible_starts.push_back(this->successful_scope_nodes[s_index]);
-					possible_is_branch.push_back(false);
 				}
 			}
 

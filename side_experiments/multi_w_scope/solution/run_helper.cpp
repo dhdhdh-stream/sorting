@@ -9,6 +9,9 @@ using namespace std;
 RunHelper::RunHelper() {
 	this->num_actions = 0;
 
+	this->num_original_actions = 0;
+	this->num_experiment_instances = 0;
+
 	this->has_explore = false;
 }
 

@@ -11,7 +11,7 @@
 using namespace std;
 
 Scope::Scope() {
-	// this->new_scope_experiment = NULL;
+	this->new_scope_experiment = NULL;
 
 	this->exceeded = false;
 }
@@ -65,7 +65,7 @@ void Scope::clean() {
 		it->second->clean();
 	}
 
-	// this->new_scope_experiment = NULL;
+	this->new_scope_experiment = NULL;
 }
 
 void Scope::save(ofstream& output_file) {

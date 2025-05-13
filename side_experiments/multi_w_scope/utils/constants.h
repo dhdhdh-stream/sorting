@@ -48,8 +48,13 @@ const int MEASURE_ITERS = 10;
 const int MEASURE_ITERS = 4000;
 #endif /* MDEBUG */
 
+#if defined(MDEBUG) && MDEBUG
+const int SCOPE_EXCEEDED_NUM_NODES = 40;
+const int SCOPE_RESUME_NUM_NODES = 20;
+#else
 const int SCOPE_EXCEEDED_NUM_NODES = 80;
 const int SCOPE_RESUME_NUM_NODES = 40;
+#endif /* MDEBUG */
 
 const int EXPLORE_ITERS = 60;
 

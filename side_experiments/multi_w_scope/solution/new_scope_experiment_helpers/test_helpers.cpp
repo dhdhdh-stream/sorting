@@ -310,24 +310,9 @@ void NewScopeExperiment::test_backprop(
 						} else {
 							this->improvement = curr_improvement;
 
-							ScopeNode* new_scope_node = new ScopeNode();
-							new_scope_node->parent = this->scope_context;
-							new_scope_node->id = this->scope_context->node_counter;
-							this->scope_context->node_counter++;
-
-							new_scope_node->scope = this->new_scope;
-
-							if (this->test_location_exit == NULL) {
-								new_scope_node->next_node_id = -1;
-								new_scope_node->next_node = NULL;
-							} else {
-								new_scope_node->next_node_id = this->test_location_exit->id;
-								new_scope_node->next_node = this->test_location_exit;
-							}
-
 							this->successful_location_starts.push_back(this->test_location_start);
 							this->successful_location_is_branch.push_back(this->test_location_is_branch);
-							this->successful_scope_nodes.push_back(new_scope_node);
+							this->successful_location_exits.push_back(this->test_location_exit);
 
 							this->test_location_start = NULL;
 
