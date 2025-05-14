@@ -33,8 +33,6 @@ public:
 	int state_iter;
 	int generalize_iter;
 
-	bool needs_init;
-
 	Scope* new_scope;
 
 	AbstractNode* test_location_start;

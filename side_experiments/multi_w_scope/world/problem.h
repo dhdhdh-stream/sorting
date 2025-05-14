@@ -11,10 +11,8 @@ public:
 	virtual void perform_action(Action action) = 0;
 	virtual double score_result() = 0;
 
-	#if defined(MDEBUG) && MDEBUG
 	virtual Problem* copy_and_reset() = 0;
 	virtual Problem* copy_snapshot() = 0;
-	#endif /* MDEBUG */
 
 	virtual void print() = 0;
 };

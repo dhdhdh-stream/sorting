@@ -45,16 +45,8 @@ void NewScopeExperiment::activate(AbstractNode* experiment_node,
 		if (it == run_helper.experiment_histories.end()) {
 			history = new NewScopeExperimentHistory(this);
 
-			if (this->needs_init) {
-				if (run_helper.has_explore) {
-					history->is_active = false;
-				} else {
-					history->is_active = true;
-				}
-			} else {
-				uniform_int_distribution<int> experiment_active_distribution(0, 2);
-				history->is_active = experiment_active_distribution(generator) == 0;
-			}
+			uniform_int_distribution<int> experiment_active_distribution(0, 2);
+			history->is_active = experiment_active_distribution(generator) == 0;
 
 			run_helper.experiment_histories[this] = history;
 		} else {
@@ -98,16 +90,8 @@ void NewScopeExperiment::back_activate(RunHelper& run_helper,
 		if (it == run_helper.experiment_histories.end()) {
 			history = new NewScopeExperimentHistory(this);
 
-			if (this->needs_init) {
-				if (run_helper.has_explore) {
-					history->is_active = false;
-				} else {
-					history->is_active = true;
-				}
-			} else {
-				uniform_int_distribution<int> experiment_active_distribution(0, 2);
-				history->is_active = experiment_active_distribution(generator) == 0;
-			}
+			uniform_int_distribution<int> experiment_active_distribution(0, 2);
+			history->is_active = experiment_active_distribution(generator) == 0;
 
 			run_helper.experiment_histories[this] = history;
 		} else {

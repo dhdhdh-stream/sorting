@@ -38,6 +38,8 @@ void fetch_input_helper(ScopeHistory* scope_history,
 						bool& hit,
 						double& obs);
 
+bool new_scope_in_place(Scope* scope);
+
 void clean_scope(Scope* scope);
 
 #endif /* SOLUTION_HELPERS_H */

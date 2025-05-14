@@ -208,147 +208,126 @@ void NewScopeExperiment::test_backprop(
 		bool is_return,
 		RunHelper& run_helper,
 		NewScopeExperimentHistory* history) {
-	if (this->needs_init) {
-		if (history->is_active) {
-			if (is_return) {
-				vector<pair<AbstractExperiment*,bool>> curr_influence_indexes;
-				for (map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it = run_helper.experiment_histories.begin();
-						it != run_helper.experiment_histories.end(); it++) {
-					if (it->first != this) {
-						curr_influence_indexes.push_back({it->first, it->second->is_active});
-					}
-				}
-
-				this->new_target_vals.push_back(target_val);
-				this->new_influence_indexes.push_back(curr_influence_indexes);
-
-				this->needs_init = false;
-			} else {
-				this->result = EXPERIMENT_RESULT_FAIL;
+	if (is_return) {
+		vector<pair<AbstractExperiment*,bool>> curr_influence_indexes;
+		for (map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it = run_helper.experiment_histories.begin();
+				it != run_helper.experiment_histories.end(); it++) {
+			if (it->first != this) {
+				curr_influence_indexes.push_back({it->first, it->second->is_active});
 			}
 		}
-	} else {
-		if (is_return) {
-			vector<pair<AbstractExperiment*,bool>> curr_influence_indexes;
-			for (map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it = run_helper.experiment_histories.begin();
-					it != run_helper.experiment_histories.end(); it++) {
-				if (it->first != this) {
-					curr_influence_indexes.push_back({it->first, it->second->is_active});
-				}
-			}
 
-			if (history->is_active) {
-				this->new_target_vals.push_back(target_val);
-				this->new_influence_indexes.push_back(curr_influence_indexes);
+		if (history->is_active) {
+			this->new_target_vals.push_back(target_val);
+			this->new_influence_indexes.push_back(curr_influence_indexes);
 
-				bool is_fail = false;
-				switch (this->test_location_state) {
-				case LOCATION_STATE_MEASURE:
-					if ((int)this->new_target_vals.size() == NEW_SCOPE_NUM_DATAPOINTS) {
-						bool is_success;
-						double curr_improvement;
-						calc_improve_helper(is_success,
-											curr_improvement);
+			bool is_fail = false;
+			switch (this->test_location_state) {
+			case LOCATION_STATE_MEASURE:
+				if ((int)this->new_target_vals.size() == NEW_SCOPE_NUM_DATAPOINTS) {
+					bool is_success;
+					double curr_improvement;
+					calc_improve_helper(is_success,
+										curr_improvement);
 
-						this->existing_target_vals.clear();
-						this->existing_influence_indexes.clear();
-						this->new_target_vals.clear();
-						this->new_influence_indexes.clear();
+					this->existing_target_vals.clear();
+					this->existing_influence_indexes.clear();
+					this->new_target_vals.clear();
+					this->new_influence_indexes.clear();
 
-						#if defined(MDEBUG) && MDEBUG
-						if (rand()%2 == 0) {
-						#else
-						if (!is_success || curr_improvement <= 0.0) {
-						#endif /* MDEBUG */
-							is_fail = true;
-						} else {
-							this->test_location_state = LOCATION_STATE_VERIFY_1ST;
-						}
-					}
-					break;
-				case LOCATION_STATE_VERIFY_1ST:
-					if ((int)this->new_target_vals.size() == NEW_SCOPE_VERIFY_1ST_NUM_DATAPOINTS) {
-						bool is_success;
-						double curr_improvement;
-						calc_improve_helper(is_success,
-											curr_improvement);
-
-						this->existing_target_vals.clear();
-						this->existing_influence_indexes.clear();
-						this->new_target_vals.clear();
-						this->new_influence_indexes.clear();
-
-						#if defined(MDEBUG) && MDEBUG
-						if (rand()%2 == 0) {
-						#else
-						if (!is_success || curr_improvement <= 0.0) {
-						#endif /* MDEBUG */
-							is_fail = true;
-						} else {
-							this->test_location_state = LOCATION_STATE_VERIFY_2ND;
-						}
-					}
-					break;
-				case LOCATION_STATE_VERIFY_2ND:
-					if ((int)this->new_target_vals.size() == NEW_SCOPE_VERIFY_2ND_NUM_DATAPOINTS) {
-						bool is_success;
-						double curr_improvement;
-						calc_improve_helper(is_success,
-											curr_improvement);
-
-						this->existing_target_vals.clear();
-						this->existing_influence_indexes.clear();
-						this->new_target_vals.clear();
-						this->new_influence_indexes.clear();
-
-						#if defined(MDEBUG) && MDEBUG
-						if (rand()%2 == 0) {
-						#else
-						if (!is_success || curr_improvement <= 0.0) {
-						#endif /* MDEBUG */
-							is_fail = true;
-						} else {
-							this->improvement = curr_improvement;
-
-							this->successful_location_starts.push_back(this->test_location_start);
-							this->successful_location_is_branch.push_back(this->test_location_is_branch);
-							this->successful_location_exits.push_back(this->test_location_exit);
-
-							this->test_location_start = NULL;
-
-							this->generalize_iter++;
-						}
-					}
-					break;
-				}
-
-				if (is_fail) {
-					this->test_location_start->experiment = NULL;
-					this->test_location_start = NULL;
-
-					if (this->generalize_iter == -1
-							&& this->successful_location_starts.size() == 0) {
-						this->result = EXPERIMENT_RESULT_FAIL;
-						/**
-						 * - only continue if first succeeds
-						 */
+					#if defined(MDEBUG) && MDEBUG
+					if (rand()%2 == 0) {
+					#else
+					if (!is_success || curr_improvement <= 0.0) {
+					#endif /* MDEBUG */
+						is_fail = true;
 					} else {
+						this->test_location_state = LOCATION_STATE_VERIFY_1ST;
+					}
+				}
+				break;
+			case LOCATION_STATE_VERIFY_1ST:
+				if ((int)this->new_target_vals.size() == NEW_SCOPE_VERIFY_1ST_NUM_DATAPOINTS) {
+					bool is_success;
+					double curr_improvement;
+					calc_improve_helper(is_success,
+										curr_improvement);
+
+					this->existing_target_vals.clear();
+					this->existing_influence_indexes.clear();
+					this->new_target_vals.clear();
+					this->new_influence_indexes.clear();
+
+					#if defined(MDEBUG) && MDEBUG
+					if (rand()%2 == 0) {
+					#else
+					if (!is_success || curr_improvement <= 0.0) {
+					#endif /* MDEBUG */
+						is_fail = true;
+					} else {
+						this->test_location_state = LOCATION_STATE_VERIFY_2ND;
+					}
+				}
+				break;
+			case LOCATION_STATE_VERIFY_2ND:
+				if ((int)this->new_target_vals.size() == NEW_SCOPE_VERIFY_2ND_NUM_DATAPOINTS) {
+					bool is_success;
+					double curr_improvement;
+					calc_improve_helper(is_success,
+										curr_improvement);
+
+					this->existing_target_vals.clear();
+					this->existing_influence_indexes.clear();
+					this->new_target_vals.clear();
+					this->new_influence_indexes.clear();
+
+					#if defined(MDEBUG) && MDEBUG
+					if (rand()%2 == 0) {
+					#else
+					if (!is_success || curr_improvement <= 0.0) {
+					#endif /* MDEBUG */
+						is_fail = true;
+					} else {
+						this->improvement = curr_improvement;
+
+						this->successful_location_starts.push_back(this->test_location_start);
+						this->successful_location_is_branch.push_back(this->test_location_is_branch);
+						this->successful_location_exits.push_back(this->test_location_exit);
+
+						this->test_location_start = NULL;
+
 						this->generalize_iter++;
 					}
 				}
-
-				if (this->successful_location_starts.size() >= NEW_SCOPE_NUM_LOCATIONS) {
-					cout << "NewScopeExperiment success" << endl;
-					cout << "this->improvement: " << this->improvement << endl;
-
-					this->result = EXPERIMENT_RESULT_SUCCESS;
-				} else if (this->generalize_iter >= NEW_SCOPE_NUM_GENERALIZE_TRIES) {
-					this->result = EXPERIMENT_RESULT_FAIL;
-				}
-			} else {
-				this->existing_target_vals.push_back(target_val);
-				this->existing_influence_indexes.push_back(curr_influence_indexes);
+				break;
 			}
+
+			if (is_fail) {
+				this->test_location_start->experiment = NULL;
+				this->test_location_start = NULL;
+
+				if (this->generalize_iter == -1
+						&& this->successful_location_starts.size() == 0) {
+					this->result = EXPERIMENT_RESULT_FAIL;
+					/**
+					 * - only continue if first succeeds
+					 */
+				} else {
+					this->generalize_iter++;
+				}
+			}
+
+			if (this->successful_location_starts.size() >= NEW_SCOPE_NUM_LOCATIONS) {
+				cout << "NewScopeExperiment success" << endl;
+				cout << "this->improvement: " << this->improvement << endl;
+
+				this->result = EXPERIMENT_RESULT_SUCCESS;
+			} else if (this->generalize_iter >= NEW_SCOPE_NUM_GENERALIZE_TRIES) {
+				this->result = EXPERIMENT_RESULT_FAIL;
+			}
+		} else {
+			this->existing_target_vals.push_back(target_val);
+			this->existing_influence_indexes.push_back(curr_influence_indexes);
 		}
 	}
 }

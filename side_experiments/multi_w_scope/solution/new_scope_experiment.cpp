@@ -11,6 +11,7 @@
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
+#include "solution_helpers.h"
 
 using namespace std;
 
@@ -55,16 +56,16 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 			}
 		}
 		if (num_meaningful_nodes >= NEW_SCOPE_MIN_NUM_NODES) {
-			this->new_scope = new Scope();
-			this->new_scope->id = -1;
+			Scope* potential_scope = new Scope();
+			potential_scope->id = -1;
 
-			this->new_scope->node_counter = 0;
+			potential_scope->node_counter = 0;
 
 			ObsNode* starting_node = new ObsNode();
-			starting_node->parent = this->new_scope;
-			starting_node->id = this->new_scope->node_counter;
-			this->new_scope->node_counter++;
-			this->new_scope->nodes[starting_node->id] = starting_node;
+			starting_node->parent = potential_scope;
+			starting_node->id = potential_scope->node_counter;
+			potential_scope->node_counter++;
+			potential_scope->nodes[starting_node->id] = starting_node;
 
 			map<AbstractNode*, AbstractNode*> node_mappings;
 			for (set<AbstractNode*>::iterator node_it = potential_included_nodes.begin();
@@ -75,10 +76,10 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 						ActionNode* original_action_node = (ActionNode*)(*node_it);
 
 						ActionNode* new_action_node = new ActionNode();
-						new_action_node->parent = this->new_scope;
-						new_action_node->id = this->new_scope->node_counter;
-						this->new_scope->node_counter++;
-						this->new_scope->nodes[new_action_node->id] = new_action_node;
+						new_action_node->parent = potential_scope;
+						new_action_node->id = potential_scope->node_counter;
+						potential_scope->node_counter++;
+						potential_scope->nodes[new_action_node->id] = new_action_node;
 
 						new_action_node->action = original_action_node->action;
 
@@ -90,10 +91,10 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 						ScopeNode* original_scope_node = (ScopeNode*)(*node_it);
 
 						ScopeNode* new_scope_node = new ScopeNode();
-						new_scope_node->parent = this->new_scope;
-						new_scope_node->id = this->new_scope->node_counter;
-						this->new_scope->node_counter++;
-						this->new_scope->nodes[new_scope_node->id] = new_scope_node;
+						new_scope_node->parent = potential_scope;
+						new_scope_node->id = potential_scope->node_counter;
+						potential_scope->node_counter++;
+						potential_scope->nodes[new_scope_node->id] = new_scope_node;
 
 						new_scope_node->scope = original_scope_node->scope;
 
@@ -105,10 +106,10 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 						BranchNode* original_branch_node = (BranchNode*)(*node_it);
 
 						BranchNode* new_branch_node = new BranchNode();
-						new_branch_node->parent = this->new_scope;
-						new_branch_node->id = this->new_scope->node_counter;
-						this->new_scope->node_counter++;
-						this->new_scope->nodes[new_branch_node->id] = new_branch_node;
+						new_branch_node->parent = potential_scope;
+						new_branch_node->id = potential_scope->node_counter;
+						potential_scope->node_counter++;
+						potential_scope->nodes[new_branch_node->id] = new_branch_node;
 
 						node_mappings[original_branch_node] = new_branch_node;
 					}
@@ -118,10 +119,10 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 						ObsNode* original_obs_node = (ObsNode*)(*node_it);
 
 						ObsNode* new_obs_node = new ObsNode();
-						new_obs_node->parent = this->new_scope;
-						new_obs_node->id = this->new_scope->node_counter;
-						this->new_scope->node_counter++;
-						this->new_scope->nodes[new_obs_node->id] = new_obs_node;
+						new_obs_node->parent = potential_scope;
+						new_obs_node->id = potential_scope->node_counter;
+						potential_scope->node_counter++;
+						potential_scope->nodes[new_obs_node->id] = new_obs_node;
 
 						node_mappings[original_obs_node] = new_obs_node;
 					}
@@ -135,10 +136,10 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 			starting_node->next_node->ancestor_ids.push_back(starting_node->id);
 
 			ObsNode* new_ending_node = new ObsNode();
-			new_ending_node->parent = this->new_scope;
-			new_ending_node->id = this->new_scope->node_counter;
-			this->new_scope->node_counter++;
-			this->new_scope->nodes[new_ending_node->id] = new_ending_node;
+			new_ending_node->parent = potential_scope;
+			new_ending_node->id = potential_scope->node_counter;
+			potential_scope->node_counter++;
+			potential_scope->nodes[new_ending_node->id] = new_ending_node;
 			new_ending_node->next_node_id = -1;
 			new_ending_node->next_node = NULL;
 
@@ -251,7 +252,7 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 									new_factor->network->remove_input(i_index);
 								} else {
 									Input new_input = original_factor->inputs[i_index];
-									new_input.scope_context[0] = this->new_scope;
+									new_input.scope_context[0] = potential_scope;
 									new_input.node_context[0] = it->second->id;
 									new_factor->inputs.insert(new_factor->inputs.begin(), new_input);
 								}
@@ -278,7 +279,12 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 				}
 			}
 
-			break;
+			if (new_scope_in_place(potential_scope)) {
+				this->new_scope = potential_scope;
+				break;
+			} else {
+				delete potential_scope;
+			}
 		}
 	}
 
@@ -336,8 +342,6 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 		 */
 
 		this->generalize_iter = -1;
-
-		this->needs_init = true;
 
 		this->result = EXPERIMENT_RESULT_NA;
 	} else {
