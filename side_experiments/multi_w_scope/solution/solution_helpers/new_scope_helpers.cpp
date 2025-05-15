@@ -1,5 +1,6 @@
 #include "solution_helpers.h"
 
+#include <iostream>
 #include <map>
 #include <utility>
 
@@ -94,20 +95,6 @@ bool new_scope_in_place(Scope* scope) {
 
 	if (!result) {
 		return false;
-	}
-
-	for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
-			it != scope->nodes.end(); it++) {
-		if (it->second->type == NODE_TYPE_OBS) {
-			ObsNode* obs_node = (ObsNode*)it->second;
-			if (obs_node->next_node == NULL) {
-				pair<int,int> loc = mapping[obs_node];
-				if (loc.first != 4 || loc.second != 4) {
-					return false;
-				}
-				break;
-			}
-		}
 	}
 
 	return true;

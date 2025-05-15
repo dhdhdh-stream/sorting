@@ -38,6 +38,7 @@ void BranchExperiment::activate(AbstractNode* experiment_node,
 				if (run_helper.has_explore) {
 					history->is_active = false;
 				} else {
+					run_helper.has_explore = true;
 					history->is_active = true;
 				}
 				break;

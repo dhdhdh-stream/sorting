@@ -122,7 +122,6 @@ void create_experiment(ScopeHistory* scope_history,
 				} else {
 					explore_node->parent->new_scope_experiment = new_scope_experiment;
 					explore_node->experiment = new_scope_experiment;
-					cout << "NewScopeExperiment" << endl;
 				}
 			} else {
 				if (improvement_iter > 3) {
@@ -131,11 +130,7 @@ void create_experiment(ScopeHistory* scope_history,
 						explore_node,
 						explore_is_branch);
 
-					if (new_experiment->result == EXPERIMENT_RESULT_FAIL) {
-						delete new_experiment;
-					} else {
-						explore_node->experiment = new_experiment;
-					}
+					explore_node->experiment = new_experiment;
 				}
 			}
 		} else {
@@ -161,11 +156,7 @@ void create_experiment(ScopeHistory* scope_history,
 						explore_node,
 						explore_is_branch);
 
-					if (new_experiment->result == EXPERIMENT_RESULT_FAIL) {
-						delete new_experiment;
-					} else {
-						explore_node->experiment = new_experiment;
-					}
+					explore_node->experiment = new_experiment;
 				} else {
 					BranchExperiment* new_experiment = new BranchExperiment(
 						explore_node->parent,

@@ -116,6 +116,11 @@ int main(int argc, char* argv[]) {
 								  improvement_iter);
 			}
 
+			// temp
+			if (run_index%100000 == 0) {
+				cout << "run_helper.num_experiment_instances: " << run_helper.num_experiment_instances << endl;
+			}
+
 			delete scope_history;
 			delete problem;
 
@@ -198,9 +203,15 @@ int main(int argc, char* argv[]) {
 			delete scope_histories[h_index];
 		}
 
+		double curr_drop = sum_score / MEASURE_ITERS - solution->curr_score;
+
 		solution->curr_score = sum_score / MEASURE_ITERS;
 
 		cout << "solution->curr_score: " << solution->curr_score << endl;
+
+		if (curr_drop < solution->biggest_drop) {
+			solution->biggest_drop = curr_drop;
+		}
 
 		solution->timestamp++;
 

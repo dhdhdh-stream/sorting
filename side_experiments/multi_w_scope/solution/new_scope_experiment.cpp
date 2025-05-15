@@ -335,7 +335,7 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 		this->test_location_start = node_context;
 		this->test_location_is_branch = is_branch;
 		this->test_location_exit = exit_next_node;
-		this->test_location_state = LOCATION_STATE_MEASURE;
+		this->test_location_state = LOCATION_STATE_CHECK_LOCATION;
 
 		/**
 		 * - added to node_context.experiments outside

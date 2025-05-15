@@ -23,6 +23,8 @@ Solution::Solution(Solution* original) {
 	this->timestamp = original->timestamp;
 	this->curr_score = original->curr_score;
 
+	this->biggest_drop = original->biggest_drop;
+
 	for (int s_index = 0; s_index < (int)original->scopes.size(); s_index++) {
 		Scope* scope = new Scope();
 		scope->id = s_index;
@@ -51,6 +53,8 @@ Solution::~Solution() {
 void Solution::init() {
 	this->timestamp = 0;
 	this->curr_score = -1.0;
+
+	this->biggest_drop = 0.0;
 
 	/**
 	 * - even though scopes[0] will not be reused, still good to start with:
@@ -88,6 +92,10 @@ void Solution::load(string path,
 	string curr_score_line;
 	getline(input_file, curr_score_line);
 	this->curr_score = stod(curr_score_line);
+
+	string biggest_drop_line;
+	getline(input_file, biggest_drop_line);
+	this->biggest_drop = stod(biggest_drop_line);
 
 	string num_scopes_line;
 	getline(input_file, num_scopes_line);
@@ -190,6 +198,8 @@ void Solution::save(string path,
 
 	output_file << this->timestamp << endl;
 	output_file << this->curr_score << endl;
+
+	output_file << this->biggest_drop << endl;
 
 	output_file << this->scopes.size() << endl;
 

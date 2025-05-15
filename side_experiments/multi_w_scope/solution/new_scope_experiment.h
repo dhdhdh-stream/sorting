@@ -1,5 +1,3 @@
-// TODO: need way to verify new scope stays in position
-
 #ifndef NEW_SCOPE_EXPERIMENT_H
 #define NEW_SCOPE_EXPERIMENT_H
 
@@ -23,9 +21,10 @@ const int NEW_SCOPE_NUM_GENERALIZE_TRIES = 200;
 const int NEW_SCOPE_NUM_LOCATIONS = 2;
 #endif /* MDEBUG */
 
-const int LOCATION_STATE_MEASURE = 0;
-const int LOCATION_STATE_VERIFY_1ST = 1;
-const int LOCATION_STATE_VERIFY_2ND = 2;
+const int LOCATION_STATE_CHECK_LOCATION = 0;
+const int LOCATION_STATE_MEASURE = 1;
+const int LOCATION_STATE_VERIFY_1ST = 2;
+const int LOCATION_STATE_VERIFY_2ND = 3;
 
 class NewScopeExperimentHistory;
 class NewScopeExperiment : public AbstractExperiment {

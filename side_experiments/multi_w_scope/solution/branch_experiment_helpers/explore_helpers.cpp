@@ -28,8 +28,6 @@ void BranchExperiment::explore_activate(
 		ScopeHistory* scope_history,
 		BranchExperimentHistory* history) {
 	if (history->is_active) {
-		run_helper.has_explore = true;
-
 		run_helper.num_actions++;
 
 		this->num_instances_until_target--;
