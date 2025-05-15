@@ -228,6 +228,9 @@ void NewScopeExperiment::backprop(double target_val,
 			this->test_location_state = LOCATION_STATE_CHECK_LOCATION;
 
 			history->potential_start->experiment = this;
+
+			this->multi_index = multi_counter;
+			multi_counter++;
 		}
 	}
 }

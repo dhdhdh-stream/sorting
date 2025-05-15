@@ -140,6 +140,9 @@ PassThroughExperiment::PassThroughExperiment(Scope* scope_context,
 		}
 	}
 
+	this->multi_index = multi_counter;
+	multi_counter++;
+
 	this->state = PASS_THROUGH_EXPERIMENT_STATE_INITIAL;
 
 	this->needs_init = true;

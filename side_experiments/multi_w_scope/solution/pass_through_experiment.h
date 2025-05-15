@@ -30,9 +30,9 @@ public:
 	AbstractNode* exit_next_node;
 
 	std::vector<double> existing_target_vals;
-	std::vector<std::vector<std::pair<AbstractExperiment*,bool>>> existing_influence_indexes;
+	std::vector<std::vector<std::pair<int,bool>>> existing_influence_indexes;
 	std::vector<double> new_target_vals;
-	std::vector<std::vector<std::pair<AbstractExperiment*,bool>>> new_influence_indexes;
+	std::vector<std::vector<std::pair<int,bool>>> new_influence_indexes;
 
 	PassThroughExperiment(Scope* scope_context,
 						  AbstractNode* node_context,

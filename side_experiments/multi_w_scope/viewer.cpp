@@ -22,6 +22,8 @@ Solution* solution;
 
 int run_index;
 
+int multi_counter = 0;
+
 int main(int argc, char* argv[]) {
 	cout << "Starting..." << endl;
 

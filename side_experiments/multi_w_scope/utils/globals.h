@@ -15,4 +15,6 @@ extern Solution* solution;
 
 extern int run_index;
 
+extern int multi_counter;
+
 #endif /* GLOBALS_H */

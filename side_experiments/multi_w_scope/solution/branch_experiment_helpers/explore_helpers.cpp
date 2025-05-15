@@ -43,55 +43,13 @@ void BranchExperiment::explore_activate(
 			}
 			history->existing_predicted_scores.push_back(sum_vals);
 
-			vector<AbstractNode*> possible_exits;
-
-			AbstractNode* starting_node;
-			switch (this->node_context->type) {
-			case NODE_TYPE_ACTION:
-				{
-					ActionNode* action_node = (ActionNode*)this->node_context;
-					starting_node = action_node->next_node;
-				}
-				break;
-			case NODE_TYPE_SCOPE:
-				{
-					ScopeNode* scope_node = (ScopeNode*)this->node_context;
-					starting_node = scope_node->next_node;
-				}
-				break;
-			case NODE_TYPE_BRANCH:
-				{
-					BranchNode* branch_node = (BranchNode*)this->node_context;
-					if (this->is_branch) {
-						starting_node = branch_node->branch_next_node;
-					} else {
-						starting_node = branch_node->original_next_node;
-					}
-				}
-				break;
-			case NODE_TYPE_OBS:
-				{
-					ObsNode* obs_node = (ObsNode*)this->node_context;
-					starting_node = obs_node->next_node;
-				}
-				break;
-			}
-
-			this->scope_context->random_exit_activate(
-				starting_node,
-				possible_exits);
-
-			uniform_int_distribution<int> exit_distribution(0, possible_exits.size()-1);
-			int random_index = exit_distribution(generator);
-			this->curr_exit_next_node = possible_exits[random_index];
-
 			geometric_distribution<int> geo_distribution(0.2);
 			int new_num_steps = geo_distribution(generator);
 			switch (this->node_context->type) {
 			case NODE_TYPE_ACTION:
 				{
 					ActionNode* action_node = (ActionNode*)this->node_context;
-					if (action_node->next_node == this->curr_exit_next_node) {
+					if (action_node->next_node == this->exit_next_node) {
 						if (new_num_steps == 0) {
 							new_num_steps = 1;
 						}
@@ -101,7 +59,7 @@ void BranchExperiment::explore_activate(
 			case NODE_TYPE_SCOPE:
 				{
 					ScopeNode* scope_node = (ScopeNode*)this->node_context;
-					if (scope_node->next_node == this->curr_exit_next_node) {
+					if (scope_node->next_node == this->exit_next_node) {
 						if (new_num_steps == 0) {
 							new_num_steps = 1;
 						}
@@ -112,13 +70,13 @@ void BranchExperiment::explore_activate(
 				{
 					BranchNode* branch_node = (BranchNode*)this->node_context;
 					if (this->is_branch) {
-						if (branch_node->branch_next_node == this->curr_exit_next_node) {
+						if (branch_node->branch_next_node == this->exit_next_node) {
 							if (new_num_steps == 0) {
 								new_num_steps = 1;
 							}
 						}
 					} else {
-						if (branch_node->original_next_node == this->curr_exit_next_node) {
+						if (branch_node->original_next_node == this->exit_next_node) {
 							if (new_num_steps == 0) {
 								new_num_steps = 1;
 							}
@@ -129,7 +87,7 @@ void BranchExperiment::explore_activate(
 			case NODE_TYPE_OBS:
 				{
 					ObsNode* obs_node = (ObsNode*)this->node_context;
-					if (obs_node->next_node == this->curr_exit_next_node) {
+					if (obs_node->next_node == this->exit_next_node) {
 						if (new_num_steps == 0) {
 							new_num_steps = 1;
 						}
@@ -174,7 +132,7 @@ void BranchExperiment::explore_activate(
 				run_helper.num_actions += 2;
 			}
 
-			curr_node = this->curr_exit_next_node;
+			curr_node = this->exit_next_node;
 		}
 	}
 }
@@ -202,7 +160,6 @@ void BranchExperiment::explore_backprop(
 					this->best_step_types = this->curr_step_types;
 					this->best_actions = this->curr_actions;
 					this->best_scopes = this->curr_scopes;
-					this->best_exit_next_node = this->curr_exit_next_node;
 
 					this->curr_step_types.clear();
 					this->curr_actions.clear();
@@ -226,7 +183,6 @@ void BranchExperiment::explore_backprop(
 					this->best_step_types = this->curr_step_types;
 					this->best_actions = this->curr_actions;
 					this->best_scopes = this->curr_scopes;
-					this->best_exit_next_node = this->curr_exit_next_node;
 
 					this->curr_step_types.clear();
 					this->curr_actions.clear();

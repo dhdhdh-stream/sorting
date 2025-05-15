@@ -30,6 +30,8 @@ public:
 	AbstractNode* node_context;
 	bool is_branch;
 
+	int multi_index;
+
 	int result;
 
 	double improvement;

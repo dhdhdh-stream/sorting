@@ -42,7 +42,7 @@ void BranchExperiment::measure_activate(
 				run_helper.num_actions += 2;
 			}
 
-			curr_node = this->best_exit_next_node;
+			curr_node = this->exit_next_node;
 		} else {
 			double sum_vals = this->new_average_score;
 			for (int f_index = 0; f_index < (int)this->new_factor_ids.size(); f_index++) {
@@ -75,7 +75,7 @@ void BranchExperiment::measure_activate(
 					run_helper.num_actions += 2;
 				}
 
-				curr_node = this->best_exit_next_node;
+				curr_node = this->exit_next_node;
 			}
 		}
 	}
@@ -87,11 +87,11 @@ void BranchExperiment::measure_backprop(double target_val,
 	if (is_return) {
 		BranchExperimentHistory* history = (BranchExperimentHistory*)run_helper.experiment_histories[this];
 
-		vector<pair<AbstractExperiment*,bool>> curr_influence_indexes;
+		vector<pair<int,bool>> curr_influence_indexes;
 		for (map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it = run_helper.experiment_histories.begin();
 				it != run_helper.experiment_histories.end(); it++) {
 			if (it->first != this) {
-				curr_influence_indexes.push_back({it->first, it->second->is_active});
+				curr_influence_indexes.push_back({it->first->multi_index, it->second->is_active});
 			}
 		}
 
@@ -101,11 +101,11 @@ void BranchExperiment::measure_backprop(double target_val,
 
 			if ((int)this->new_target_vals.size() >= MEASURE_NUM_DATAPOINTS) {
 				{
-					map<AbstractExperiment*, pair<int,int>> sum_counts;
+					map<int, pair<int,int>> sum_counts;
 					for (int h_index = 0; h_index < (int)this->existing_influence_indexes.size(); h_index++) {
 						for (int i_index = 0; i_index < (int)this->existing_influence_indexes[h_index].size(); i_index++) {
-							pair<AbstractExperiment*,bool> influence = this->existing_influence_indexes[h_index][i_index];
-							map<AbstractExperiment*, pair<int,int>>::iterator it = sum_counts.find(influence.first);
+							pair<int,bool> influence = this->existing_influence_indexes[h_index][i_index];
+							map<int, pair<int,int>>::iterator it = sum_counts.find(influence.first);
 							if (it == sum_counts.end()) {
 								it = sum_counts.insert({influence.first, {0,0}}).first;
 							}
@@ -114,8 +114,8 @@ void BranchExperiment::measure_backprop(double target_val,
 					}
 					for (int h_index = 0; h_index < (int)this->new_influence_indexes.size(); h_index++) {
 						for (int i_index = 0; i_index < (int)this->new_influence_indexes[h_index].size(); i_index++) {
-							pair<AbstractExperiment*,bool> influence = this->new_influence_indexes[h_index][i_index];
-							map<AbstractExperiment*, pair<int,int>>::iterator it = sum_counts.find(influence.first);
+							pair<int,bool> influence = this->new_influence_indexes[h_index][i_index];
+							map<int, pair<int,int>>::iterator it = sum_counts.find(influence.first);
 							if (it == sum_counts.end()) {
 								it = sum_counts.insert({influence.first, {0,0}}).first;
 							}
@@ -123,7 +123,7 @@ void BranchExperiment::measure_backprop(double target_val,
 						}
 					}
 
-					for (map<AbstractExperiment*, pair<int,int>>::iterator it = sum_counts.begin();
+					for (map<int, pair<int,int>>::iterator it = sum_counts.begin();
 							it != sum_counts.end(); it++) {
 						int sum_count = it->second.first + it->second.second;
 						if (sum_count > INFLUENCE_MIN_NUM) {
@@ -151,11 +151,11 @@ void BranchExperiment::measure_backprop(double target_val,
 
 				double existing_adjust;
 				{
-					map<AbstractExperiment*, pair<int,int>> sum_counts;
+					map<int, pair<int,int>> sum_counts;
 					for (int h_index = 0; h_index < (int)this->existing_influence_indexes.size(); h_index++) {
 						for (int i_index = 0; i_index < (int)this->existing_influence_indexes[h_index].size(); i_index++) {
-							pair<AbstractExperiment*,bool> influence = this->existing_influence_indexes[h_index][i_index];
-							map<AbstractExperiment*, pair<int,int>>::iterator it = sum_counts.find(influence.first);
+							pair<int,bool> influence = this->existing_influence_indexes[h_index][i_index];
+							map<int, pair<int,int>>::iterator it = sum_counts.find(influence.first);
 							if (it == sum_counts.end()) {
 								it = sum_counts.insert({influence.first, {0,0}}).first;
 							}
@@ -167,8 +167,8 @@ void BranchExperiment::measure_backprop(double target_val,
 						}
 					}
 
-					map<AbstractExperiment*, int> influence_mapping;
-					for (map<AbstractExperiment*, pair<int,int>>::iterator it = sum_counts.begin();
+					map<int, int> influence_mapping;
+					for (map<int, pair<int,int>>::iterator it = sum_counts.begin();
 							it != sum_counts.end(); it++) {
 						int sum_count = it->second.first + it->second.second;
 						if (sum_count > INFLUENCE_MIN_NUM) {
@@ -198,7 +198,7 @@ void BranchExperiment::measure_backprop(double target_val,
 					for (int h_index = 0; h_index < (int)this->existing_target_vals.size(); h_index++) {
 						inputs(h_index, 0) = 1.0;
 						for (int i_index = 0; i_index < (int)this->existing_influence_indexes[h_index].size(); i_index++) {
-							pair<AbstractExperiment*,bool> influence = this->existing_influence_indexes[h_index][i_index];
+							pair<int,bool> influence = this->existing_influence_indexes[h_index][i_index];
 							if (influence.second) {
 								inputs(h_index, influence_mapping[influence.first]) = 1.0;
 							}
@@ -235,11 +235,11 @@ void BranchExperiment::measure_backprop(double target_val,
 
 				double new_adjust;
 				{
-					map<AbstractExperiment*, pair<int,int>> sum_counts;
+					map<int, pair<int,int>> sum_counts;
 					for (int h_index = 0; h_index < (int)this->new_influence_indexes.size(); h_index++) {
 						for (int i_index = 0; i_index < (int)this->new_influence_indexes[h_index].size(); i_index++) {
-							pair<AbstractExperiment*,bool> influence = this->new_influence_indexes[h_index][i_index];
-							map<AbstractExperiment*, pair<int,int>>::iterator it = sum_counts.find(influence.first);
+							pair<int,bool> influence = this->new_influence_indexes[h_index][i_index];
+							map<int, pair<int,int>>::iterator it = sum_counts.find(influence.first);
 							if (it == sum_counts.end()) {
 								it = sum_counts.insert({influence.first, {0,0}}).first;
 							}
@@ -251,8 +251,8 @@ void BranchExperiment::measure_backprop(double target_val,
 						}
 					}
 
-					map<AbstractExperiment*, int> influence_mapping;
-					for (map<AbstractExperiment*, pair<int,int>>::iterator it = sum_counts.begin();
+					map<int, int> influence_mapping;
+					for (map<int, pair<int,int>>::iterator it = sum_counts.begin();
 							it != sum_counts.end(); it++) {
 						int sum_count = it->second.first + it->second.second;
 						if (sum_count > INFLUENCE_MIN_NUM) {
@@ -282,7 +282,7 @@ void BranchExperiment::measure_backprop(double target_val,
 					for (int h_index = 0; h_index < (int)this->new_target_vals.size(); h_index++) {
 						inputs(h_index, 0) = 1.0;
 						for (int i_index = 0; i_index < (int)this->new_influence_indexes[h_index].size(); i_index++) {
-							pair<AbstractExperiment*,bool> influence = this->new_influence_indexes[h_index][i_index];
+							pair<int,bool> influence = this->new_influence_indexes[h_index][i_index];
 							if (influence.second) {
 								inputs(h_index, influence_mapping[influence.first]) = 1.0;
 							}
@@ -331,10 +331,10 @@ void BranchExperiment::measure_backprop(double target_val,
 					}
 					cout << endl;
 
-					if (this->best_exit_next_node == NULL) {
-						cout << "this->best_exit_next_node->id: " << -1 << endl;
+					if (this->exit_next_node == NULL) {
+						cout << "this->exit_next_node->id: " << -1 << endl;
 					} else {
-						cout << "this->best_exit_next_node->id: " << this->best_exit_next_node->id << endl;
+						cout << "this->exit_next_node->id: " << this->exit_next_node->id << endl;
 					}
 
 					cout << "this->improvement: " << this->improvement << endl;

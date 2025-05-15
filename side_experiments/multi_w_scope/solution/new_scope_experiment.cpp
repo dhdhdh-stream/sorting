@@ -341,6 +341,9 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 		 * - added to node_context.experiments outside
 		 */
 
+		this->multi_index = multi_counter;
+		multi_counter++;
+
 		this->generalize_iter = -1;
 
 		this->result = EXPERIMENT_RESULT_NA;

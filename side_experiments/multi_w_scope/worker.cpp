@@ -27,6 +27,8 @@ Solution* solution;
 
 int run_index;
 
+int multi_counter = 0;
+
 int main(int argc, char* argv[]) {
 	if (argc != 3) {
 		cout << "Usage: ./worker [path] [filename]" << endl;

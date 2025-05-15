@@ -29,11 +29,11 @@ const int NEW_SCOPE_VERIFY_2ND_NUM_DATAPOINTS = 4000;
 void NewScopeExperiment::calc_improve_helper(bool& is_success,
 											 double& curr_improvement) {
 	{
-		map<AbstractExperiment*, pair<int,int>> sum_counts;
+		map<int, pair<int,int>> sum_counts;
 		for (int h_index = 0; h_index < (int)this->existing_influence_indexes.size(); h_index++) {
 			for (int i_index = 0; i_index < (int)this->existing_influence_indexes[h_index].size(); i_index++) {
-				pair<AbstractExperiment*,bool> influence = this->existing_influence_indexes[h_index][i_index];
-				map<AbstractExperiment*, pair<int,int>>::iterator it = sum_counts.find(influence.first);
+				pair<int,bool> influence = this->existing_influence_indexes[h_index][i_index];
+				map<int, pair<int,int>>::iterator it = sum_counts.find(influence.first);
 				if (it == sum_counts.end()) {
 					it = sum_counts.insert({influence.first, {0,0}}).first;
 				}
@@ -42,8 +42,8 @@ void NewScopeExperiment::calc_improve_helper(bool& is_success,
 		}
 		for (int h_index = 0; h_index < (int)this->new_influence_indexes.size(); h_index++) {
 			for (int i_index = 0; i_index < (int)this->new_influence_indexes[h_index].size(); i_index++) {
-				pair<AbstractExperiment*,bool> influence = this->new_influence_indexes[h_index][i_index];
-				map<AbstractExperiment*, pair<int,int>>::iterator it = sum_counts.find(influence.first);
+				pair<int,bool> influence = this->new_influence_indexes[h_index][i_index];
+				map<int, pair<int,int>>::iterator it = sum_counts.find(influence.first);
 				if (it == sum_counts.end()) {
 					it = sum_counts.insert({influence.first, {0,0}}).first;
 				}
@@ -51,7 +51,7 @@ void NewScopeExperiment::calc_improve_helper(bool& is_success,
 			}
 		}
 
-		for (map<AbstractExperiment*, pair<int,int>>::iterator it = sum_counts.begin();
+		for (map<int, pair<int,int>>::iterator it = sum_counts.begin();
 				it != sum_counts.end(); it++) {
 			int sum_count = it->second.first + it->second.second;
 			if (sum_count > INFLUENCE_MIN_NUM) {
@@ -79,11 +79,11 @@ void NewScopeExperiment::calc_improve_helper(bool& is_success,
 
 	double existing_adjust;
 	{
-		map<AbstractExperiment*, pair<int,int>> sum_counts;
+		map<int, pair<int,int>> sum_counts;
 		for (int h_index = 0; h_index < (int)this->existing_influence_indexes.size(); h_index++) {
 			for (int i_index = 0; i_index < (int)this->existing_influence_indexes[h_index].size(); i_index++) {
-				pair<AbstractExperiment*,bool> influence = this->existing_influence_indexes[h_index][i_index];
-				map<AbstractExperiment*, pair<int,int>>::iterator it = sum_counts.find(influence.first);
+				pair<int,bool> influence = this->existing_influence_indexes[h_index][i_index];
+				map<int, pair<int,int>>::iterator it = sum_counts.find(influence.first);
 				if (it == sum_counts.end()) {
 					it = sum_counts.insert({influence.first, {0,0}}).first;
 				}
@@ -95,8 +95,8 @@ void NewScopeExperiment::calc_improve_helper(bool& is_success,
 			}
 		}
 
-		map<AbstractExperiment*, int> influence_mapping;
-		for (map<AbstractExperiment*, pair<int,int>>::iterator it = sum_counts.begin();
+		map<int, int> influence_mapping;
+		for (map<int, pair<int,int>>::iterator it = sum_counts.begin();
 				it != sum_counts.end(); it++) {
 			int sum_count = it->second.first + it->second.second;
 			if (sum_count > INFLUENCE_MIN_NUM) {
@@ -126,7 +126,7 @@ void NewScopeExperiment::calc_improve_helper(bool& is_success,
 		for (int h_index = 0; h_index < (int)this->existing_target_vals.size(); h_index++) {
 			inputs(h_index, 0) = 1.0;
 			for (int i_index = 0; i_index < (int)this->existing_influence_indexes[h_index].size(); i_index++) {
-				pair<AbstractExperiment*,bool> influence = this->existing_influence_indexes[h_index][i_index];
+				pair<int,bool> influence = this->existing_influence_indexes[h_index][i_index];
 				if (influence.second) {
 					inputs(h_index, influence_mapping[influence.first]) = 1.0;
 				}
@@ -163,11 +163,11 @@ void NewScopeExperiment::calc_improve_helper(bool& is_success,
 
 	double new_adjust;
 	{
-		map<AbstractExperiment*, pair<int,int>> sum_counts;
+		map<int, pair<int,int>> sum_counts;
 		for (int h_index = 0; h_index < (int)this->new_influence_indexes.size(); h_index++) {
 			for (int i_index = 0; i_index < (int)this->new_influence_indexes[h_index].size(); i_index++) {
-				pair<AbstractExperiment*,bool> influence = this->new_influence_indexes[h_index][i_index];
-				map<AbstractExperiment*, pair<int,int>>::iterator it = sum_counts.find(influence.first);
+				pair<int,bool> influence = this->new_influence_indexes[h_index][i_index];
+				map<int, pair<int,int>>::iterator it = sum_counts.find(influence.first);
 				if (it == sum_counts.end()) {
 					it = sum_counts.insert({influence.first, {0,0}}).first;
 				}
@@ -179,8 +179,8 @@ void NewScopeExperiment::calc_improve_helper(bool& is_success,
 			}
 		}
 
-		map<AbstractExperiment*, int> influence_mapping;
-		for (map<AbstractExperiment*, pair<int,int>>::iterator it = sum_counts.begin();
+		map<int, int> influence_mapping;
+		for (map<int, pair<int,int>>::iterator it = sum_counts.begin();
 				it != sum_counts.end(); it++) {
 			int sum_count = it->second.first + it->second.second;
 			if (sum_count > INFLUENCE_MIN_NUM) {
@@ -210,7 +210,7 @@ void NewScopeExperiment::calc_improve_helper(bool& is_success,
 		for (int h_index = 0; h_index < (int)this->new_target_vals.size(); h_index++) {
 			inputs(h_index, 0) = 1.0;
 			for (int i_index = 0; i_index < (int)this->new_influence_indexes[h_index].size(); i_index++) {
-				pair<AbstractExperiment*,bool> influence = this->new_influence_indexes[h_index][i_index];
+				pair<int,bool> influence = this->new_influence_indexes[h_index][i_index];
 				if (influence.second) {
 					inputs(h_index, influence_mapping[influence.first]) = 1.0;
 				}
@@ -272,11 +272,11 @@ void NewScopeExperiment::test_backprop(
 		}
 	} else {
 		if (is_return) {
-			vector<pair<AbstractExperiment*,bool>> curr_influence_indexes;
+			vector<pair<int,bool>> curr_influence_indexes;
 			for (map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it = run_helper.experiment_histories.begin();
 					it != run_helper.experiment_histories.end(); it++) {
 				if (it->first != this) {
-					curr_influence_indexes.push_back({it->first, it->second->is_active});
+					curr_influence_indexes.push_back({it->first->multi_index, it->second->is_active});
 				}
 			}
 

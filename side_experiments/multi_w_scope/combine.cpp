@@ -22,6 +22,8 @@ Solution* solution;
 
 int run_index;
 
+int multi_counter = 0;
+
 const int BRANCH_FACTOR = 4;
 
 int main(int argc, char* argv[]) {

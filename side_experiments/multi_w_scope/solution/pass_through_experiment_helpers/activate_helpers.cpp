@@ -86,11 +86,11 @@ void PassThroughExperiment::activate(AbstractNode* experiment_node,
 void PassThroughExperiment::calc_improve_helper(bool& is_success,
 												double& curr_improvement) {
 	{
-		map<AbstractExperiment*, pair<int,int>> sum_counts;
+		map<int, pair<int,int>> sum_counts;
 		for (int h_index = 0; h_index < (int)this->existing_influence_indexes.size(); h_index++) {
 			for (int i_index = 0; i_index < (int)this->existing_influence_indexes[h_index].size(); i_index++) {
-				pair<AbstractExperiment*,bool> influence = this->existing_influence_indexes[h_index][i_index];
-				map<AbstractExperiment*, pair<int,int>>::iterator it = sum_counts.find(influence.first);
+				pair<int,bool> influence = this->existing_influence_indexes[h_index][i_index];
+				map<int, pair<int,int>>::iterator it = sum_counts.find(influence.first);
 				if (it == sum_counts.end()) {
 					it = sum_counts.insert({influence.first, {0,0}}).first;
 				}
@@ -99,8 +99,8 @@ void PassThroughExperiment::calc_improve_helper(bool& is_success,
 		}
 		for (int h_index = 0; h_index < (int)this->new_influence_indexes.size(); h_index++) {
 			for (int i_index = 0; i_index < (int)this->new_influence_indexes[h_index].size(); i_index++) {
-				pair<AbstractExperiment*,bool> influence = this->new_influence_indexes[h_index][i_index];
-				map<AbstractExperiment*, pair<int,int>>::iterator it = sum_counts.find(influence.first);
+				pair<int,bool> influence = this->new_influence_indexes[h_index][i_index];
+				map<int, pair<int,int>>::iterator it = sum_counts.find(influence.first);
 				if (it == sum_counts.end()) {
 					it = sum_counts.insert({influence.first, {0,0}}).first;
 				}
@@ -108,7 +108,7 @@ void PassThroughExperiment::calc_improve_helper(bool& is_success,
 			}
 		}
 
-		for (map<AbstractExperiment*, pair<int,int>>::iterator it = sum_counts.begin();
+		for (map<int, pair<int,int>>::iterator it = sum_counts.begin();
 				it != sum_counts.end(); it++) {
 			int sum_count = it->second.first + it->second.second;
 			if (sum_count > INFLUENCE_MIN_NUM) {
@@ -136,11 +136,11 @@ void PassThroughExperiment::calc_improve_helper(bool& is_success,
 
 	double existing_adjust;
 	{
-		map<AbstractExperiment*, pair<int,int>> sum_counts;
+		map<int, pair<int,int>> sum_counts;
 		for (int h_index = 0; h_index < (int)this->existing_influence_indexes.size(); h_index++) {
 			for (int i_index = 0; i_index < (int)this->existing_influence_indexes[h_index].size(); i_index++) {
-				pair<AbstractExperiment*,bool> influence = this->existing_influence_indexes[h_index][i_index];
-				map<AbstractExperiment*, pair<int,int>>::iterator it = sum_counts.find(influence.first);
+				pair<int,bool> influence = this->existing_influence_indexes[h_index][i_index];
+				map<int, pair<int,int>>::iterator it = sum_counts.find(influence.first);
 				if (it == sum_counts.end()) {
 					it = sum_counts.insert({influence.first, {0,0}}).first;
 				}
@@ -152,8 +152,8 @@ void PassThroughExperiment::calc_improve_helper(bool& is_success,
 			}
 		}
 
-		map<AbstractExperiment*, int> influence_mapping;
-		for (map<AbstractExperiment*, pair<int,int>>::iterator it = sum_counts.begin();
+		map<int, int> influence_mapping;
+		for (map<int, pair<int,int>>::iterator it = sum_counts.begin();
 				it != sum_counts.end(); it++) {
 			int sum_count = it->second.first + it->second.second;
 			if (sum_count > INFLUENCE_MIN_NUM) {
@@ -183,7 +183,7 @@ void PassThroughExperiment::calc_improve_helper(bool& is_success,
 		for (int h_index = 0; h_index < (int)this->existing_target_vals.size(); h_index++) {
 			inputs(h_index, 0) = 1.0;
 			for (int i_index = 0; i_index < (int)this->existing_influence_indexes[h_index].size(); i_index++) {
-				pair<AbstractExperiment*,bool> influence = this->existing_influence_indexes[h_index][i_index];
+				pair<int,bool> influence = this->existing_influence_indexes[h_index][i_index];
 				if (influence.second) {
 					inputs(h_index, influence_mapping[influence.first]) = 1.0;
 				}
@@ -220,11 +220,11 @@ void PassThroughExperiment::calc_improve_helper(bool& is_success,
 
 	double new_adjust;
 	{
-		map<AbstractExperiment*, pair<int,int>> sum_counts;
+		map<int, pair<int,int>> sum_counts;
 		for (int h_index = 0; h_index < (int)this->new_influence_indexes.size(); h_index++) {
 			for (int i_index = 0; i_index < (int)this->new_influence_indexes[h_index].size(); i_index++) {
-				pair<AbstractExperiment*,bool> influence = this->new_influence_indexes[h_index][i_index];
-				map<AbstractExperiment*, pair<int,int>>::iterator it = sum_counts.find(influence.first);
+				pair<int,bool> influence = this->new_influence_indexes[h_index][i_index];
+				map<int, pair<int,int>>::iterator it = sum_counts.find(influence.first);
 				if (it == sum_counts.end()) {
 					it = sum_counts.insert({influence.first, {0,0}}).first;
 				}
@@ -236,8 +236,8 @@ void PassThroughExperiment::calc_improve_helper(bool& is_success,
 			}
 		}
 
-		map<AbstractExperiment*, int> influence_mapping;
-		for (map<AbstractExperiment*, pair<int,int>>::iterator it = sum_counts.begin();
+		map<int, int> influence_mapping;
+		for (map<int, pair<int,int>>::iterator it = sum_counts.begin();
 				it != sum_counts.end(); it++) {
 			int sum_count = it->second.first + it->second.second;
 			if (sum_count > INFLUENCE_MIN_NUM) {
@@ -267,7 +267,7 @@ void PassThroughExperiment::calc_improve_helper(bool& is_success,
 		for (int h_index = 0; h_index < (int)this->new_target_vals.size(); h_index++) {
 			inputs(h_index, 0) = 1.0;
 			for (int i_index = 0; i_index < (int)this->new_influence_indexes[h_index].size(); i_index++) {
-				pair<AbstractExperiment*,bool> influence = this->new_influence_indexes[h_index][i_index];
+				pair<int,bool> influence = this->new_influence_indexes[h_index][i_index];
 				if (influence.second) {
 					inputs(h_index, influence_mapping[influence.first]) = 1.0;
 				}
@@ -311,11 +311,11 @@ void PassThroughExperiment::backprop(double target_val,
 	if (this->needs_init) {
 		if (history->is_active) {
 			if (is_return) {
-				vector<pair<AbstractExperiment*,bool>> curr_influence_indexes;
+				vector<pair<int,bool>> curr_influence_indexes;
 				for (map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it = run_helper.experiment_histories.begin();
 						it != run_helper.experiment_histories.end(); it++) {
 					if (it->first != this) {
-						curr_influence_indexes.push_back({it->first, it->second->is_active});
+						curr_influence_indexes.push_back({it->first->multi_index, it->second->is_active});
 					}
 				}
 
@@ -331,48 +331,6 @@ void PassThroughExperiment::backprop(double target_val,
 					this->step_types.clear();
 					this->actions.clear();
 					this->scopes.clear();
-
-					vector<AbstractNode*> possible_exits;
-
-					AbstractNode* starting_node;
-					switch (this->node_context->type) {
-					case NODE_TYPE_ACTION:
-						{
-							ActionNode* action_node = (ActionNode*)this->node_context;
-							starting_node = action_node->next_node;
-						}
-						break;
-					case NODE_TYPE_SCOPE:
-						{
-							ScopeNode* scope_node = (ScopeNode*)this->node_context;
-							starting_node = scope_node->next_node;
-						}
-						break;
-					case NODE_TYPE_BRANCH:
-						{
-							BranchNode* branch_node = (BranchNode*)this->node_context;
-							if (this->is_branch) {
-								starting_node = branch_node->branch_next_node;
-							} else {
-								starting_node = branch_node->original_next_node;
-							}
-						}
-						break;
-					case NODE_TYPE_OBS:
-						{
-							ObsNode* obs_node = (ObsNode*)this->node_context;
-							starting_node = obs_node->next_node;
-						}
-						break;
-					}
-
-					this->scope_context->random_exit_activate(
-						starting_node,
-						possible_exits);
-
-					uniform_int_distribution<int> exit_distribution(0, possible_exits.size()-1);
-					int random_index = exit_distribution(generator);
-					this->exit_next_node = possible_exits[random_index];
 
 					geometric_distribution<int> geo_distribution(0.2);
 					int new_num_steps = geo_distribution(generator);
@@ -453,11 +411,11 @@ void PassThroughExperiment::backprop(double target_val,
 		}
 	} else {
 		if (is_return) {
-			vector<pair<AbstractExperiment*,bool>> curr_influence_indexes;
+			vector<pair<int,bool>> curr_influence_indexes;
 			for (map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it = run_helper.experiment_histories.begin();
 					it != run_helper.experiment_histories.end(); it++) {
 				if (it->first != this) {
-					curr_influence_indexes.push_back({it->first, it->second->is_active});
+					curr_influence_indexes.push_back({it->first->multi_index, it->second->is_active});
 				}
 			}
 
@@ -564,48 +522,6 @@ void PassThroughExperiment::backprop(double target_val,
 						this->step_types.clear();
 						this->actions.clear();
 						this->scopes.clear();
-
-						vector<AbstractNode*> possible_exits;
-
-						AbstractNode* starting_node;
-						switch (this->node_context->type) {
-						case NODE_TYPE_ACTION:
-							{
-								ActionNode* action_node = (ActionNode*)this->node_context;
-								starting_node = action_node->next_node;
-							}
-							break;
-						case NODE_TYPE_SCOPE:
-							{
-								ScopeNode* scope_node = (ScopeNode*)this->node_context;
-								starting_node = scope_node->next_node;
-							}
-							break;
-						case NODE_TYPE_BRANCH:
-							{
-								BranchNode* branch_node = (BranchNode*)this->node_context;
-								if (this->is_branch) {
-									starting_node = branch_node->branch_next_node;
-								} else {
-									starting_node = branch_node->original_next_node;
-								}
-							}
-							break;
-						case NODE_TYPE_OBS:
-							{
-								ObsNode* obs_node = (ObsNode*)this->node_context;
-								starting_node = obs_node->next_node;
-							}
-							break;
-						}
-
-						this->scope_context->random_exit_activate(
-							starting_node,
-							possible_exits);
-
-						uniform_int_distribution<int> exit_distribution(0, possible_exits.size()-1);
-						int random_index = exit_distribution(generator);
-						this->exit_next_node = possible_exits[random_index];
 
 						geometric_distribution<int> geo_distribution(0.2);
 						int new_num_steps = geo_distribution(generator);

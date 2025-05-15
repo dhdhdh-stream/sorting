@@ -39,9 +39,9 @@ public:
 	AbstractNode* test_location_exit;
 	int test_location_state;
 	std::vector<double> existing_target_vals;
-	std::vector<std::vector<std::pair<AbstractExperiment*,bool>>> existing_influence_indexes;
+	std::vector<std::vector<std::pair<int,bool>>> existing_influence_indexes;
 	std::vector<double> new_target_vals;
-	std::vector<std::vector<std::pair<AbstractExperiment*,bool>>> new_influence_indexes;
+	std::vector<std::vector<std::pair<int,bool>>> new_influence_indexes;
 
 	std::vector<AbstractNode*> successful_location_starts;
 	std::vector<bool> successful_location_is_branch;

@@ -36,16 +36,16 @@ public:
 
 	int explore_type;
 
+	AbstractNode* exit_next_node;
+
 	std::vector<int> curr_step_types;
 	std::vector<Action> curr_actions;
 	std::vector<Scope*> curr_scopes;
-	AbstractNode* curr_exit_next_node;
 
 	double best_surprise;
 	std::vector<int> best_step_types;
 	std::vector<Action> best_actions;
 	std::vector<Scope*> best_scopes;
-	AbstractNode* best_exit_next_node;
 
 	double new_average_score;
 	std::vector<Input> new_inputs;
@@ -60,9 +60,9 @@ public:
 	std::vector<double> i_target_val_histories;
 
 	std::vector<double> existing_target_vals;
-	std::vector<std::vector<std::pair<AbstractExperiment*,bool>>> existing_influence_indexes;
+	std::vector<std::vector<std::pair<int,bool>>> existing_influence_indexes;
 	std::vector<double> new_target_vals;
-	std::vector<std::vector<std::pair<AbstractExperiment*,bool>>> new_influence_indexes;
+	std::vector<std::vector<std::pair<int,bool>>> new_influence_indexes;
 
 	BranchExperiment(Scope* scope_context,
 					 AbstractNode* node_context,
