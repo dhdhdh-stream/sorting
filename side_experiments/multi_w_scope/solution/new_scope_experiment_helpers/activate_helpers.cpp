@@ -231,6 +231,11 @@ void NewScopeExperiment::backprop(double target_val,
 
 			this->multi_index = multi_counter;
 			multi_counter++;
+		} else {
+			this->generalize_iter++;
+			if (this->generalize_iter >= NEW_SCOPE_NUM_GENERALIZE_TRIES) {
+				this->result = EXPERIMENT_RESULT_FAIL;
+			}
 		}
 	}
 }

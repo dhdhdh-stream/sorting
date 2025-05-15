@@ -105,6 +105,9 @@ int main(int argc, char* argv[]) {
 				it->first->backprop(target_val,
 									is_return,
 									run_helper);
+			}
+			for (map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it = run_helper.experiment_histories.begin();
+					it != run_helper.experiment_histories.end(); it++) {
 				if (it->first->result == EXPERIMENT_RESULT_FAIL) {
 					it->first->clean();
 					delete it->first;
