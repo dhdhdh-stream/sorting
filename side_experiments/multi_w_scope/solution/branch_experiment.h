@@ -124,6 +124,10 @@ public:
 
 	void clean();
 	void add();
+
+private:
+	void calc_improve_helper(bool& is_success,
+							 double& curr_improvement);
 };
 
 class BranchExperimentHistory : public AbstractExperimentHistory {

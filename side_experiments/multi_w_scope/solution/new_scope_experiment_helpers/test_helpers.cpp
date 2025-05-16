@@ -28,86 +28,188 @@ const int NEW_SCOPE_VERIFY_2ND_NUM_DATAPOINTS = 4000;
 
 void NewScopeExperiment::calc_improve_helper(bool& is_success,
 											 double& curr_improvement) {
-	map<int, int> sum_counts;
+	map<int, pair<int,int>> sum_counts;
 	for (int h_index = 0; h_index < (int)this->existing_influence_indexes.size(); h_index++) {
 		for (int i_index = 0; i_index < (int)this->existing_influence_indexes[h_index].size(); i_index++) {
 			pair<int,bool> influence = this->existing_influence_indexes[h_index][i_index];
 			if (influence.second) {
-				map<int, int>::iterator it = sum_counts.find(influence.first);
+				map<int, pair<int,int>>::iterator it = sum_counts.find(influence.first);
 				if (it == sum_counts.end()) {
-					it = sum_counts.insert({influence.first, 0}).first;
+					it = sum_counts.insert({influence.first, {0,0}}).first;
 				}
-				it->second++;
+				it->second.first++;
+			}
+		}
+	}
+	for (int h_index = 0; h_index < (int)this->new_influence_indexes.size(); h_index++) {
+		for (int i_index = 0; i_index < (int)this->new_influence_indexes[h_index].size(); i_index++) {
+			pair<int,bool> influence = this->new_influence_indexes[h_index][i_index];
+			if (influence.second) {
+				map<int, pair<int,int>>::iterator it = sum_counts.find(influence.first);
+				if (it == sum_counts.end()) {
+					it = sum_counts.insert({influence.first, {0,0}}).first;
+				}
+				it->second.second++;
 			}
 		}
 	}
 
 	map<int, int> influence_mapping;
-	for (map<int, int>::iterator it = sum_counts.begin(); it != sum_counts.end(); it++) {
-		if (it->second > INFLUENCE_MIN_NUM) {
+	for (map<int, pair<int,int>>::iterator it = sum_counts.begin();
+			it != sum_counts.end(); it++) {
+		if (it->second.first > INFLUENCE_MIN_NUM
+				&& it->second.second > INFLUENCE_MIN_NUM) {
 			influence_mapping[it->first] = (int)influence_mapping.size();
 		}
 	}
 
-	Eigen::MatrixXd inputs((int)this->existing_target_vals.size(), 1 + influence_mapping.size());
+	double existing_sum_target_vals = 0.0;
 	for (int h_index = 0; h_index < (int)this->existing_target_vals.size(); h_index++) {
-		inputs(h_index, 0) = 1.0;
-		for (int m_index = 1; m_index < 1 + (int)influence_mapping.size(); m_index++) {
-			inputs(h_index, m_index) = 0.0;
+		existing_sum_target_vals += this->existing_target_vals[h_index];
+	}
+	double existing_average_target_val = existing_sum_target_vals / (int)this->existing_target_vals.size();
+
+	Eigen::MatrixXd existing_inputs((int)this->existing_target_vals.size(), influence_mapping.size());
+	for (int h_index = 0; h_index < (int)this->existing_target_vals.size(); h_index++) {
+		for (int m_index = 0; m_index < (int)influence_mapping.size(); m_index++) {
+			existing_inputs(h_index, m_index) = 0.0;
 		}
 		for (int i_index = 0; i_index < (int)this->existing_influence_indexes[h_index].size(); i_index++) {
 			pair<int,bool> influence = this->existing_influence_indexes[h_index][i_index];
 			if (influence.second) {
 				map<int, int>::iterator it = influence_mapping.find(influence.first);
 				if (it != influence_mapping.end()) {
-					inputs(h_index, it->second) = 1.0;
+					existing_inputs(h_index, it->second) = 1.0;
 				}
 			}
 		}
 	}
 
-	Eigen::VectorXd outputs((int)this->existing_target_vals.size());
+	Eigen::VectorXd existing_outputs((int)this->existing_target_vals.size());
 	for (int h_index = 0; h_index < (int)this->existing_target_vals.size(); h_index++) {
-		outputs(h_index) = this->existing_target_vals[h_index];
+		existing_outputs(h_index) = this->existing_target_vals[h_index] - existing_average_target_val;
 	}
 
-	Eigen::VectorXd weights;
+	Eigen::VectorXd existing_weights;
 	try {
-		weights = inputs.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(outputs);
+		existing_weights = existing_inputs.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(existing_outputs);
 	} catch (std::invalid_argument &e) {
 		cout << "Eigen error" << endl;
 		is_success = false;
 		return;
 	}
 
-	for (int w_index = 0; w_index < 1 + (int)influence_mapping.size(); w_index++) {
-		if (abs(weights(w_index)) > 10000.0) {
-			is_success = false;
-			return;
-		}
-	}
-
-	double existing_adjust = weights(0);
-
-	double sum_new = 0.0;
+	double new_sum_target_vals = 0.0;
 	for (int h_index = 0; h_index < (int)this->new_target_vals.size(); h_index++) {
-		double sum_new_influence = 0.0;
+		new_sum_target_vals += this->new_target_vals[h_index];
+	}
+	double new_average_target_val = new_sum_target_vals / (int)this->new_target_vals.size();
+
+	Eigen::MatrixXd new_inputs((int)this->new_target_vals.size(), influence_mapping.size());
+	for (int h_index = 0; h_index < (int)this->new_target_vals.size(); h_index++) {
+		for (int m_index = 0; m_index < (int)influence_mapping.size(); m_index++) {
+			new_inputs(h_index, m_index) = 0.0;
+		}
 		for (int i_index = 0; i_index < (int)this->new_influence_indexes[h_index].size(); i_index++) {
 			pair<int,bool> influence = this->new_influence_indexes[h_index][i_index];
 			if (influence.second) {
 				map<int, int>::iterator it = influence_mapping.find(influence.first);
 				if (it != influence_mapping.end()) {
-					sum_new_influence += weights(it->second);
+					new_inputs(h_index, it->second) = 1.0;
+				}
+			}
+		}
+	}
+
+	Eigen::VectorXd new_outputs((int)this->new_target_vals.size());
+	for (int h_index = 0; h_index < (int)this->new_target_vals.size(); h_index++) {
+		new_outputs(h_index) = this->new_target_vals[h_index] - new_average_target_val;
+	}
+
+	Eigen::VectorXd new_weights;
+	try {
+		new_weights = new_inputs.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(new_outputs);
+	} catch (std::invalid_argument &e) {
+		cout << "Eigen error" << endl;
+		is_success = false;
+		return;
+	}
+
+	double sum_variance = 0.0;
+	for (int h_index = 0; h_index < (int)this->existing_target_vals.size(); h_index++) {
+		sum_variance += (this->existing_target_vals[h_index] - existing_average_target_val)
+			* (this->existing_target_vals[h_index] - existing_average_target_val);
+	}
+	double standard_deviation = sqrt(sum_variance / (int)this->existing_target_vals.size());
+
+	double max_impact = INFLUENCE_MAX_PERCENTAGE * standard_deviation;
+
+	vector<bool> is_correlated(influence_mapping.size());
+	for (int w_index = 0; w_index < (int)influence_mapping.size(); w_index++) {
+		if (abs(existing_weights(w_index) - new_weights(w_index)) > max_impact) {
+			is_correlated[w_index] = true;
+		} else {
+			is_correlated[w_index] = false;
+		}
+	}
+
+	double sum_existing_score = 0.0;
+	int existing_count = 0;
+	for (int h_index = 0; h_index < (int)this->existing_target_vals.size(); h_index++) {
+		bool is_valid = true;
+		for (int i_index = 0; i_index < (int)this->existing_influence_indexes[h_index].size(); i_index++) {
+			pair<int,bool> influence = this->existing_influence_indexes[h_index][i_index];
+			if (influence.second) {
+				map<int, int>::iterator it = influence_mapping.find(influence.first);
+				if (it != influence_mapping.end()) {
+					if (is_correlated[it->second]) {
+						is_valid = false;
+						break;
+					}
 				}
 			}
 		}
 
-		sum_new += this->new_target_vals[h_index] - sum_new_influence;
+		if (is_valid) {
+			sum_existing_score += this->existing_target_vals[h_index];
+			existing_count++;
+		}
 	}
-	double new_adjust = sum_new / (int)this->new_target_vals.size();
 
-	is_success = true;
-	curr_improvement = new_adjust - existing_adjust;
+	double sum_new_score = 0.0;
+	int new_count = 0;
+	for (int h_index = 0; h_index < (int)this->new_target_vals.size(); h_index++) {
+		bool is_valid = true;
+		for (int i_index = 0; i_index < (int)this->new_influence_indexes[h_index].size(); i_index++) {
+			pair<int,bool> influence = this->new_influence_indexes[h_index][i_index];
+			if (influence.second) {
+				map<int, int>::iterator it = influence_mapping.find(influence.first);
+				if (it != influence_mapping.end()) {
+					if (is_correlated[it->second]) {
+						is_valid = false;
+						break;
+					}
+				}
+			}
+		}
+
+		if (is_valid) {
+			sum_new_score += this->new_target_vals[h_index];
+			new_count++;
+		}
+	}
+
+	int min_samples_needed = INFLUENCE_VALID_MIN_PERCENTAGE * (int)this->new_target_vals.size();
+	if (existing_count > min_samples_needed
+			&& new_count > min_samples_needed) {
+		double existing_score = sum_existing_score / existing_count;
+		double new_score = sum_new_score / new_count;
+
+		is_success = true;
+		curr_improvement = new_score - existing_score;
+	} else {
+		is_success = false;
+	}
 }
 
 void NewScopeExperiment::test_backprop(
