@@ -7,7 +7,7 @@ const double MIN_STANDARD_DEVIATION = 0.00001;
 const int STEP_TYPE_ACTION = 0;
 const int STEP_TYPE_SCOPE = 1;
 
-const int INFLUENCE_MIN_NUM = 30;
+const int INFLUENCE_MIN_NUM = 20;
 
 /**
  * - select first that is significant improvement
