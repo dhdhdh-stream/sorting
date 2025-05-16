@@ -130,7 +130,11 @@ void create_experiment(ScopeHistory* scope_history,
 						explore_node,
 						explore_is_branch);
 
-					explore_node->experiment = new_experiment;
+					if (new_experiment->result == EXPERIMENT_RESULT_FAIL) {
+						delete new_experiment;
+					} else {
+						explore_node->experiment = new_experiment;
+					}
 				}
 			}
 		} else {
@@ -156,7 +160,11 @@ void create_experiment(ScopeHistory* scope_history,
 						explore_node,
 						explore_is_branch);
 
-					explore_node->experiment = new_experiment;
+					if (new_experiment->result == EXPERIMENT_RESULT_FAIL) {
+						delete new_experiment;
+					} else {
+						explore_node->experiment = new_experiment;
+					}
 				} else {
 					BranchExperiment* new_experiment = new BranchExperiment(
 						explore_node->parent,

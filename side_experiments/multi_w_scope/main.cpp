@@ -3,6 +3,24 @@
 
 // TODO: for CommitExperiment, can separate commit from information gather?
 
+// - actually, doesn't work
+//   - whole issue is that experiment is positively correlated with other experiments
+//     - (by avoiding other experiments)
+//       - but it looks like they're not avoiding because always on when have scopes and a lot of tries
+
+// - but too many degrees of freedom to solve separately than compare?
+//   - can make impact of experiments worse, but average higher
+//   - or impact of experiments less, but average lower
+//   - but impact of experiments can differ due to correlations
+//   - and average can differ due to positive impact of current experiment
+
+// - e.g., true impact of other -1.0
+//   - with current experiment, dodges other, reducing true impact to -0.5
+//     - during regression, gives credit to current experiment 0.25, calculates impact as -0.75
+
+// TODO: perhaps simply check for the presence of correlation
+// - if correlation, then cannot get an accurate read on impact and give up
+
 #include <chrono>
 #include <iostream>
 #include <map>

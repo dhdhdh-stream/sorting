@@ -22,6 +22,8 @@ public:
 	int state;
 	int explore_iter;
 
+	int exceed_max_length;
+
 	bool needs_init;
 
 	std::vector<int> step_types;

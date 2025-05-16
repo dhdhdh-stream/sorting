@@ -248,6 +248,11 @@ void PassThroughExperiment::backprop(double target_val,
 						}
 						break;
 					}
+					if (this->scope_context->exceeded) {
+						if (new_num_steps > this->exceed_max_length) {
+							new_num_steps = this->exceed_max_length;
+						}
+					}
 
 					/**
 					 * - always give raw actions a large weight
@@ -438,6 +443,11 @@ void PassThroughExperiment::backprop(double target_val,
 								}
 							}
 							break;
+						}
+						if (this->scope_context->exceeded) {
+							if (new_num_steps > this->exceed_max_length) {
+								new_num_steps = this->exceed_max_length;
+							}
 						}
 
 						/**

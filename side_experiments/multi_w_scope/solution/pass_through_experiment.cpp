@@ -61,9 +61,22 @@ PassThroughExperiment::PassThroughExperiment(Scope* scope_context,
 		starting_node,
 		possible_exits);
 
-	uniform_int_distribution<int> exit_distribution(0, possible_exits.size()-1);
-	int random_index = exit_distribution(generator);
+	int random_index;
+	if (this->scope_context->exceeded) {
+		if (possible_exits.size() <= 4) {
+			this->result = EXPERIMENT_RESULT_FAIL;
+			return;
+		} else {
+			uniform_int_distribution<int> distribution(4, possible_exits.size()-1);
+			random_index = distribution(generator);
+		}
+	} else {
+		uniform_int_distribution<int> distribution(0, possible_exits.size()-1);
+		random_index = distribution(generator);
+	}
 	this->exit_next_node = possible_exits[random_index];
+
+	this->exceed_max_length = random_index/2-1;
 
 	geometric_distribution<int> geo_distribution(0.2);
 	int new_num_steps = geo_distribution(generator);
@@ -116,6 +129,11 @@ PassThroughExperiment::PassThroughExperiment(Scope* scope_context,
 			}
 		}
 		break;
+	}
+	if (this->scope_context->exceeded) {
+		if (new_num_steps > this->exceed_max_length) {
+			new_num_steps = this->exceed_max_length;
+		}
 	}
 
 	/**
