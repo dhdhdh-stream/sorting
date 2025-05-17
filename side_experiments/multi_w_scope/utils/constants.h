@@ -7,8 +7,12 @@ const double MIN_STANDARD_DEVIATION = 0.00001;
 const int STEP_TYPE_ACTION = 0;
 const int STEP_TYPE_SCOPE = 1;
 
+#if defined(MDEBUG) && MDEBUG
+const int INFLUENCE_MIN_NUM = 2;
+#else
 const int INFLUENCE_MIN_NUM = 20;
-const double INFLUENCE_MAX_PERCENTAGE = 0.3;
+#endif /* MDEBUG */
+const double INFLUENCE_MAX_PERCENTAGE = 0.2;
 const int INFLUENCE_VALID_MIN_PERCENTAGE = 0.5;
 
 /**

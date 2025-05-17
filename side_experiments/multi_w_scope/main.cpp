@@ -21,6 +21,13 @@
 // TODO: perhaps simply check for the presence of correlation
 // - if correlation, then cannot get an accurate read on impact and give up
 
+// TODO: instead of discarding failed experiments due to not enough sample size, can wait for more?
+
+// - can't just be a million experiments
+//   - amount of failure so large that becomes not meaningful
+// - need some way of recovery
+// - or need experiments to unlikely have such drastic impacts
+
 #include <chrono>
 #include <iostream>
 #include <map>
