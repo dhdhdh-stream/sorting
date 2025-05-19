@@ -1,5 +1,7 @@
 #include "obs_node.h"
 
+#include <iostream>
+
 #include "constants.h"
 #include "globals.h"
 #include "scope.h"
@@ -7,11 +9,15 @@
 
 using namespace std;
 
+#if defined(MDEBUG) && MDEBUG
+const int NEW_MATCH_MIN_DATAPOINTS = 4;
+#else
 const int NEW_MATCH_MIN_DATAPOINTS = 40;
+#endif /* MDEBUG */
 
 void ObsNode::gather_match_datapoints(ObsNodeHistory* history,
 									  ScopeHistory* scope_history) {
-	if (this->is_init) {
+	if (!this->is_init) {
 		for (map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
 				it != scope_history->node_histories.end(); it++) {
 			if (it->second->index < history->index
@@ -48,18 +54,13 @@ void ObsNode::gather_match_datapoints(ObsNodeHistory* history,
 					{early_history->obs_history[0], history->obs_history[0]});
 			}
 		}
+
+		
 	}
 }
 
 void ObsNode::update_matches() {
-	double overall_standard_deviation = sqrt(solution->obs_variances[0]);
-	if (this->standard_deviation < FIXED_POINT_MAX_FACTOR * overall_standard_deviation) {
-		this->is_fixed_point = true;
-	} else {
-		this->is_fixed_point = false;
-	}
-
-	if (this->is_init) {
+	if (!this->is_init) {
 		for (int m_index = (int)this->matches.size()-1; m_index >= 0; m_index--) {
 			if (this->matches[m_index].datapoints.size() < NEW_MATCH_MIN_DATAPOINTS) {
 				this->matches.erase(this->matches.begin() + m_index);
@@ -76,6 +77,9 @@ void ObsNode::update_matches() {
 			bool is_still_needed;
 			this->matches[m_index].update(is_still_needed);
 			if (!is_still_needed) {
+				// temp
+				cout << this->parent->id << " lose " << this->matches[m_index].node_context[0] << " " << this->id << endl;
+
 				this->matches.erase(this->matches.begin() + m_index);
 			}
 		}

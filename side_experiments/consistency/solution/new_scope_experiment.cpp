@@ -273,6 +273,25 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 
 							it->second->ancestor_ids.push_back(new_obs_node->id);
 						}
+
+						new_obs_node->average = original_obs_node->average;
+						new_obs_node->standard_deviation = original_obs_node->standard_deviation;
+						new_obs_node->is_fixed_point = original_obs_node->is_fixed_point;
+						for (int m_index = 0; m_index < (int)original_obs_node->matches.size(); m_index++) {
+							AbstractNode* original_early_node = scope_context->nodes[
+								original_obs_node->matches[m_index].node_context[0]];
+							map<AbstractNode*, AbstractNode*>::iterator early_it = node_mappings.find(original_early_node);
+							if (early_it != node_mappings.end()) {
+								Match new_match;
+								new_match.parent = new_obs_node;
+								new_match.scope_context = {new_scope};
+								new_match.node_context = {early_it->second->id};
+								new_match.weight = original_obs_node->matches[m_index].weight;
+								new_match.constant = original_obs_node->matches[m_index].constant;
+								new_match.standard_deviation = original_obs_node->matches[m_index].standard_deviation;
+								new_obs_node->matches.push_back(new_match);
+							}
+						}
 					}
 					break;
 				}

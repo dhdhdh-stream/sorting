@@ -1,6 +1,7 @@
 #include "solution_helpers.h"
 
 #include <cmath>
+#include <iostream>
 
 #include "constants.h"
 #include "globals.h"
@@ -69,6 +70,7 @@ void update_matches(vector<ScopeHistory*>& scope_histories) {
 		sum_obs_variance_helpers(scope_histories[h_index]);
 	}
 
+	double overall_standard_deviation = sqrt(solution->obs_variances[0]);
 	for (int s_index = 0; s_index < (int)solution->scopes.size(); s_index++) {
 		for (map<int, AbstractNode*>::iterator it = solution->scopes[s_index]->nodes.begin();
 				it != solution->scopes[s_index]->nodes.end(); it++) {
@@ -78,6 +80,12 @@ void update_matches(vector<ScopeHistory*>& scope_histories) {
 					obs_node->standard_deviation = sqrt(obs_node->sum_obs_variance / obs_node->obs_count);
 					if (obs_node->standard_deviation < MIN_STANDARD_DEVIATION) {
 						obs_node->standard_deviation = MIN_STANDARD_DEVIATION;
+					}
+
+					if (obs_node->standard_deviation < FIXED_POINT_MAX_FACTOR * overall_standard_deviation) {
+						obs_node->is_fixed_point = true;
+					} else {
+						obs_node->is_fixed_point = false;
 					}
 				}
 			}

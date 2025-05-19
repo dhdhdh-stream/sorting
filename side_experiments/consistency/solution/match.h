@@ -42,6 +42,10 @@ public:
 			  RunHelper& run_helper,
 			  ScopeHistory* scope_history);
 
+	bool should_delete(Scope* scope,
+					   int node_id);
+	bool should_delete(Scope* scope);
+
 	void clean();
 
 	void update(bool& is_still_needed);

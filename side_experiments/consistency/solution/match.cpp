@@ -39,6 +39,10 @@ Match::Match(ifstream& input_file,
 	string constant_line;
 	getline(input_file, constant_line);
 	this->constant = stod(constant_line);
+
+	string standard_deviation_line;
+	getline(input_file, standard_deviation_line);
+	this->standard_deviation = stod(standard_deviation_line);
 }
 
 void Match::eval(vector<double>& obs,
@@ -55,6 +59,28 @@ void Match::eval(vector<double>& obs,
 	}
 }
 
+bool Match::should_delete(Scope* scope,
+						  int node_id) {
+	for (int l_index = 0; l_index < (int)this->scope_context.size(); l_index++) {
+		if (this->scope_context[l_index] == scope
+				&& this->node_context[l_index] == node_id) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
+bool Match::should_delete(Scope* scope) {
+	for (int l_index = 0; l_index < (int)this->scope_context.size(); l_index++) {
+		if (this->scope_context[l_index] == scope) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
 void Match::clean() {
 	this->datapoints.clear();
 }
@@ -63,23 +89,51 @@ void Match::update(bool& is_still_needed) {
 	if (this->datapoints.size() == 0) {
 		is_still_needed = true;
 	} else {
-		ObsNode* early_obs_node = (ObsNode*)this->scope_context[0]->nodes[this->node_context[0]];
-		double early_average = early_obs_node->average;
-
-		double later_average = this->parent->average;
-
-		double sum_covariance = 0.0;
+		double early_sum_vals = 0.0;
+		double later_sum_vals = 0.0;
 		for (int d_index = 0; d_index < (int)this->datapoints.size(); d_index++) {
-			sum_covariance += (this->datapoints[d_index].first - early_average)
-				* (this->datapoints[d_index].second - later_average);
+			early_sum_vals += this->datapoints[d_index].first;
+			later_sum_vals += this->datapoints[d_index].second;
 		}
-		double covariance = sum_covariance / (int)this->datapoints.size();
+		double early_average_val = early_sum_vals / (int)this->datapoints.size();
+		double later_average_val = later_sum_vals / (int)this->datapoints.size();
 
-		double pcc = covariance / early_obs_node->standard_deviation
-			/ this->parent->standard_deviation;
-		if (pcc < MATCH_MIN_PCC) {
+		double early_sum_variances = 0.0;
+		double later_sum_variances = 0.0;
+		for (int d_index = 0; d_index < (int)this->datapoints.size(); d_index++) {
+			early_sum_variances += (this->datapoints[d_index].first - early_average_val)
+				* (this->datapoints[d_index].first - early_average_val);
+			later_sum_variances += (this->datapoints[d_index].second - later_average_val)
+				* (this->datapoints[d_index].second - later_average_val);
+		}
+		double early_standard_deviation = sqrt(early_sum_variances / (int)this->datapoints.size());
+		double later_standard_deviation = sqrt(later_sum_variances / (int)this->datapoints.size());
+
+		if (early_standard_deviation < MIN_STANDARD_DEVIATION
+				&& later_standard_deviation < MIN_STANDARD_DEVIATION) {
+			is_still_needed = true;
+		} else if (early_standard_deviation < MIN_STANDARD_DEVIATION) {
+			is_still_needed = false;
+		} else if (later_standard_deviation < MIN_STANDARD_DEVIATION) {
 			is_still_needed = false;
 		} else {
+			double sum_covariance = 0.0;
+			for (int d_index = 0; d_index < (int)this->datapoints.size(); d_index++) {
+				sum_covariance += (this->datapoints[d_index].first - early_average_val)
+					* (this->datapoints[d_index].second - later_average_val);
+			}
+			double covariance = sum_covariance / (int)this->datapoints.size();
+
+			double pcc = covariance / early_standard_deviation
+				/ later_standard_deviation;
+			if (abs(pcc) < MATCH_MIN_PCC) {
+				is_still_needed = false;
+			} else {
+				is_still_needed = true;
+			}
+		}
+
+		if (is_still_needed) {
 			Eigen::MatrixXd inputs(this->datapoints.size(), 2);
 			Eigen::VectorXd outputs(this->datapoints.size());
 			for (int d_index = 0; d_index < (int)this->datapoints.size(); d_index++) {
@@ -126,4 +180,5 @@ void Match::save(ofstream& output_file) {
 
 	output_file << this->weight << endl;
 	output_file << this->constant << endl;
+	output_file << this->standard_deviation << endl;
 }

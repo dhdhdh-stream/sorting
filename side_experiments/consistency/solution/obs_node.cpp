@@ -19,6 +19,10 @@ ObsNode::ObsNode() {
 
 	this->is_init = false;
 
+	this->average = 0.0;
+	this->standard_deviation = 1.0;
+	this->is_fixed_point = false;
+
 	this->experiment = NULL;
 
 	this->last_updated_run_index = -1;
@@ -86,11 +90,26 @@ void ObsNode::clean_inputs(Scope* scope,
 		this->factors[f_index]->clean_inputs(scope,
 											 node_id);
 	}
+
+	for (int m_index = (int)this->matches.size()-1; m_index >= 0; m_index--) {
+		bool should_delete = this->matches[m_index].should_delete(scope,
+																  node_id);
+		if (should_delete) {
+			this->matches.erase(this->matches.begin() + m_index);
+		}
+	}
 }
 
 void ObsNode::clean_inputs(Scope* scope) {
 	for (int f_index = 0; f_index < (int)this->factors.size(); f_index++) {
 		this->factors[f_index]->clean_inputs(scope);
+	}
+
+	for (int m_index = (int)this->matches.size()-1; m_index >= 0; m_index--) {
+		bool should_delete = this->matches[m_index].should_delete(scope);
+		if (should_delete) {
+			this->matches.erase(this->matches.begin() + m_index);
+		}
 	}
 }
 
@@ -186,6 +205,9 @@ void ObsNode::load(ifstream& input_file,
 		this->matches.push_back(Match(input_file,
 									  parent_solution));
 		this->matches.back().parent = this;
+
+		// temp
+		cout << this->parent->id << ": " << this->matches.back().node_context[0] << " " << this->id << endl;
 	}
 
 	this->is_init = true;
