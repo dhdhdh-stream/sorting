@@ -34,6 +34,8 @@ public:
 
 	std::vector<std::pair<double,double>> datapoints;
 
+	bool is_init;
+
 	Match();
 	Match(std::ifstream& input_file,
 		  Solution* parent_solution);
