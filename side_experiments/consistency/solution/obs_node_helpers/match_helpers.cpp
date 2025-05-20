@@ -84,13 +84,21 @@ void ObsNode::gather_match_datapoints(ObsNodeHistory* history,
 void ObsNode::update_matches() {
 	for (int m_index = (int)this->matches.size()-1; m_index >= 0; m_index--) {
 		if (this->matches[m_index].datapoints.size() < MATCH_UPDATE_MIN_DATAPOINTS) {
-			if (this->matches[m_index].is_init) {
+			if (!this->matches[m_index].is_init) {
 				this->matches.erase(this->matches.begin() + m_index);
 			}
 		} else {
+			// temp
+			bool match_is_init = this->matches[m_index].is_init;
+
 			bool is_still_needed;
 			this->matches[m_index].update(is_still_needed);
 			if (!is_still_needed) {
+				// temp
+				if (match_is_init) {
+					cout << "erase " << this->matches[m_index].node_context[0] << " " << this->id << endl;
+				}
+
 				this->matches.erase(this->matches.begin() + m_index);
 			}
 		}

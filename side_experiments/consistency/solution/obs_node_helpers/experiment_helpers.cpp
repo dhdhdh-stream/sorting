@@ -28,6 +28,9 @@ void ObsNode::experiment_activate(AbstractNode*& curr_node,
 			double factor = abs(obs[0] - this->average) / this->standard_deviation;
 			run_helper.match_factors.push_back(factor);
 		}
+		/**
+		 * - check every match to check on all earlier nodes
+		 */
 		for (int m_index = 0; m_index < (int)this->matches.size(); m_index++) {
 			this->matches[m_index].eval(obs,
 										run_helper,

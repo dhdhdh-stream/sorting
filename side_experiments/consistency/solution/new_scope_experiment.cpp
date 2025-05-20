@@ -289,6 +289,7 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 								new_match.weight = original_obs_node->matches[m_index].weight;
 								new_match.constant = original_obs_node->matches[m_index].constant;
 								new_match.standard_deviation = original_obs_node->matches[m_index].standard_deviation;
+								new_match.is_init = true;
 								new_obs_node->matches.push_back(new_match);
 							}
 						}

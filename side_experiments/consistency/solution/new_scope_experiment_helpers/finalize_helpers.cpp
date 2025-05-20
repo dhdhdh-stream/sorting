@@ -80,6 +80,11 @@ void NewScopeExperiment::add() {
 						}
 					}
 				}
+
+				// temp
+				for (int m_index = 0; m_index < (int)obs_node->matches.size(); m_index++) {
+					cout << "NewScope match " << obs_node->matches[m_index].node_context[0] << " " << obs_node->id << endl;
+				}
 			}
 			break;
 		}

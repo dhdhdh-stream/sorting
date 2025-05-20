@@ -1,3 +1,5 @@
+// TODO: merge ObsNodes
+
 #include "solution_helpers.h"
 
 #include <iostream>

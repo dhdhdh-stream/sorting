@@ -7,6 +7,7 @@
 #include "globals.h"
 #include "obs_node.h"
 #include "scope.h"
+#include "scope_node.h"
 #include "solution.h"
 
 using namespace std;
@@ -14,12 +15,22 @@ using namespace std;
 void sum_obs_average_helpers(ScopeHistory* scope_history) {
 	for (map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
 			it != scope_history->node_histories.end(); it++) {
-		if (it->second->node->type == NODE_TYPE_OBS) {
-			ObsNodeHistory* obs_node_history = (ObsNodeHistory*)it->second;
-			ObsNode* obs_node = (ObsNode*)it->second->node;
+		switch (it->second->node->type) {
+		case NODE_TYPE_SCOPE:
+			{
+				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)it->second;
+				sum_obs_average_helpers(scope_node_history->scope_history);
+			}
+			break;
+		case NODE_TYPE_OBS:
+			{
+				ObsNodeHistory* obs_node_history = (ObsNodeHistory*)it->second;
+				ObsNode* obs_node = (ObsNode*)it->second->node;
 
-			obs_node->sum_obs_average += obs_node_history->obs_history[0];
-			obs_node->obs_count++;
+				obs_node->sum_obs_average += obs_node_history->obs_history[0];
+				obs_node->obs_count++;
+			}
+			break;
 		}
 	}
 }
@@ -27,12 +38,22 @@ void sum_obs_average_helpers(ScopeHistory* scope_history) {
 void sum_obs_variance_helpers(ScopeHistory* scope_history) {
 	for (map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
 			it != scope_history->node_histories.end(); it++) {
-		if (it->second->node->type == NODE_TYPE_OBS) {
-			ObsNodeHistory* obs_node_history = (ObsNodeHistory*)it->second;
-			ObsNode* obs_node = (ObsNode*)it->second->node;
+		switch (it->second->node->type) {
+		case NODE_TYPE_SCOPE:
+			{
+				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)it->second;
+				sum_obs_variance_helpers(scope_node_history->scope_history);
+			}
+			break;
+		case NODE_TYPE_OBS:
+			{
+				ObsNodeHistory* obs_node_history = (ObsNodeHistory*)it->second;
+				ObsNode* obs_node = (ObsNode*)it->second->node;
 
-			obs_node->sum_obs_variance += (obs_node_history->obs_history[0] - obs_node->average)
-				* (obs_node_history->obs_history[0] - obs_node->average);
+				obs_node->sum_obs_variance += (obs_node_history->obs_history[0] - obs_node->average)
+					* (obs_node_history->obs_history[0] - obs_node->average);
+			}
+			break;
 		}
 	}
 }
@@ -40,11 +61,21 @@ void sum_obs_variance_helpers(ScopeHistory* scope_history) {
 void gather_match_datapoints_helpers(ScopeHistory* scope_history) {
 	for (map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
 			it != scope_history->node_histories.end(); it++) {
-		if (it->second->node->type == NODE_TYPE_OBS) {
-			ObsNodeHistory* obs_node_history = (ObsNodeHistory*)it->second;
-			ObsNode* obs_node = (ObsNode*)it->second->node;
-			obs_node->gather_match_datapoints(obs_node_history,
-											  scope_history);
+		switch (it->second->node->type) {
+		case NODE_TYPE_SCOPE:
+			{
+				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)it->second;
+				gather_match_datapoints_helpers(scope_node_history->scope_history);
+			}
+			break;
+		case NODE_TYPE_OBS:
+			{
+				ObsNodeHistory* obs_node_history = (ObsNodeHistory*)it->second;
+				ObsNode* obs_node = (ObsNode*)it->second->node;
+				obs_node->gather_match_datapoints(obs_node_history,
+												  scope_history);
+			}
+			break;
 		}
 	}
 }

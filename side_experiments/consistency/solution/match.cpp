@@ -66,21 +66,21 @@ bool Match::should_delete(Scope* scope,
 	for (int l_index = 0; l_index < (int)this->scope_context.size(); l_index++) {
 		if (this->scope_context[l_index] == scope
 				&& this->node_context[l_index] == node_id) {
-			return false;
+			return true;
 		}
 	}
 
-	return true;
+	return false;
 }
 
 bool Match::should_delete(Scope* scope) {
 	for (int l_index = 0; l_index < (int)this->scope_context.size(); l_index++) {
 		if (this->scope_context[l_index] == scope) {
-			return false;
+			return true;
 		}
 	}
 
-	return true;
+	return false;
 }
 
 void Match::clean() {
