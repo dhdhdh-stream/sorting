@@ -71,6 +71,56 @@ void Scope::clean_inputs(Scope* scope) {
 	}
 }
 
+void Scope::replace_factor(Scope* scope,
+						   int original_node_id,
+						   int original_factor_index,
+						   int new_node_id,
+						   int new_factor_index) {
+	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
+			it != this->nodes.end(); it++) {
+		switch (it->second->type) {
+		case NODE_TYPE_BRANCH:
+			{
+				BranchNode* branch_node = (BranchNode*)it->second;
+				branch_node->replace_factor(scope,
+											original_node_id,
+											original_factor_index,
+											new_node_id,
+											new_factor_index);
+			}
+			break;
+		case NODE_TYPE_OBS:
+			{
+				ObsNode* obs_node = (ObsNode*)it->second;
+				obs_node->replace_factor(scope,
+										 original_node_id,
+										 original_factor_index,
+										 new_node_id,
+										 new_factor_index);
+			}
+			break;
+		}
+	}
+}
+
+void Scope::replace_obs_node(Scope* scope,
+							 int original_node_id,
+							 int new_node_id) {
+	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
+			it != this->nodes.end(); it++) {
+		switch (it->second->type) {
+		case NODE_TYPE_OBS:
+			{
+				ObsNode* obs_node = (ObsNode*)it->second;
+				obs_node->replace_obs_node(scope,
+										   original_node_id,
+										   new_node_id);
+			}
+			break;
+		}
+	}
+}
+
 void Scope::clean() {
 	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
 			it != this->nodes.end(); it++) {

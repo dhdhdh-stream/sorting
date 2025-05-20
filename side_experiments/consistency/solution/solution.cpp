@@ -169,6 +169,30 @@ void Solution::clean_inputs(Scope* scope,
 	}
 }
 
+void Solution::replace_factor(Scope* scope,
+							  int original_node_id,
+							  int original_factor_index,
+							  int new_node_id,
+							  int new_factor_index) {
+	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
+		this->scopes[s_index]->replace_factor(scope,
+											  original_node_id,
+											  original_factor_index,
+											  new_node_id,
+											  new_factor_index);
+	}
+}
+
+void Solution::replace_obs_node(Scope* scope,
+								int original_node_id,
+								int new_node_id) {
+	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
+		this->scopes[s_index]->replace_obs_node(scope,
+												original_node_id,
+												new_node_id);
+	}
+}
+
 void Solution::clean_scopes() {
 	for (int s_index = (int)this->scopes.size()-1; s_index >= 1; s_index--) {
 		bool still_used = false;

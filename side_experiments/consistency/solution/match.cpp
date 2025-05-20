@@ -83,6 +83,15 @@ bool Match::should_delete(Scope* scope) {
 	return false;
 }
 
+void Match::replace_obs_node(Scope* scope,
+							 int original_node_id,
+							 int new_node_id) {
+	if (this->scope_context.back() == scope
+			&& this->node_context.back() == original_node_id) {
+		this->node_context.back() = new_node_id;
+	}
+}
+
 void Match::clean() {
 	this->datapoints.clear();
 }

@@ -113,6 +113,36 @@ void ObsNode::clean_inputs(Scope* scope) {
 	}
 }
 
+void ObsNode::replace_factor(Scope* scope,
+							 int original_node_id,
+							 int original_factor_index,
+							 int new_node_id,
+							 int new_factor_index) {
+	for (int f_index = 0; f_index < (int)this->factors.size(); f_index++) {
+		this->factors[f_index]->replace_factor(scope,
+											   original_node_id,
+											   original_factor_index,
+											   new_node_id,
+											   new_factor_index);
+	}
+}
+
+void ObsNode::replace_obs_node(Scope* scope,
+							   int original_node_id,
+							   int new_node_id) {
+	for (int f_index = 0; f_index < (int)this->factors.size(); f_index++) {
+		this->factors[f_index]->replace_obs_node(scope,
+												 original_node_id,
+												 new_node_id);
+	}
+
+	for (int m_index = 0; m_index < (int)this->matches.size(); m_index++) {
+		this->matches[m_index].replace_obs_node(scope,
+												original_node_id,
+												new_node_id);
+	}
+}
+
 void ObsNode::clean() {
 	if (this->experiment != NULL) {
 		this->experiment->decrement(this);

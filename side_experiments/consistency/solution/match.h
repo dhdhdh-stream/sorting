@@ -48,6 +48,10 @@ public:
 					   int node_id);
 	bool should_delete(Scope* scope);
 
+	void replace_obs_node(Scope* scope,
+						  int original_node_id,
+						  int new_node_id);
+
 	void clean();
 
 	void update(bool& is_still_needed);

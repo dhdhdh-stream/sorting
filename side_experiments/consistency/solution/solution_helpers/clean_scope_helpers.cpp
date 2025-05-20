@@ -1,11 +1,10 @@
-// TODO: merge ObsNodes
-
 #include "solution_helpers.h"
 
 #include <iostream>
 
 #include "action_node.h"
 #include "branch_node.h"
+#include "factor.h"
 #include "globals.h"
 #include "obs_node.h"
 #include "scope.h"
@@ -151,93 +150,44 @@ void clean_scope(Scope* scope) {
 						&& curr_obs_node->next_node->type == NODE_TYPE_OBS
 						&& curr_obs_node->next_node->ancestor_ids.size() == 1) {
 					ObsNode* next_obs_node = (ObsNode*)curr_obs_node->next_node;
-					if (!next_obs_node->is_used) {
-						if (next_obs_node->next_node != NULL) {
-							for (int a_index = 0; a_index < (int)next_obs_node->next_node->ancestor_ids.size(); a_index++) {
-								if (next_obs_node->next_node->ancestor_ids[a_index] == next_obs_node->id) {
-									next_obs_node->next_node->ancestor_ids.erase(
-										next_obs_node->next_node->ancestor_ids.begin() + a_index);
-									break;
-								}
-							}
-							next_obs_node->next_node->ancestor_ids.push_back(curr_obs_node->id);
-						}
-						curr_obs_node->next_node_id = next_obs_node->next_node_id;
-						curr_obs_node->next_node = next_obs_node->next_node;
 
-						solution->clean_inputs(scope,
-											   next_obs_node->id);
+					for (int f_index = 0; f_index < (int)next_obs_node->factors.size(); f_index++) {
+						Factor* new_factor = new Factor(next_obs_node->factors[f_index],
+														solution);
+						curr_obs_node->factors.push_back(new_factor);
 
-						scope->nodes.erase(next_obs_node->id);
-						delete next_obs_node;
+						solution->replace_factor(scope,
+												 next_obs_node->id,
+												 f_index,
+												 curr_obs_node->id,
+												 curr_obs_node->factors.size()-1);
+					}
 
-						removed_node = true;
-						break;
-					} else if (curr_obs_node->id != 0
-							&& !curr_obs_node->is_used) {
-						for (int a_index = 0; a_index < (int)next_obs_node->ancestor_ids.size(); a_index++) {
-							if (next_obs_node->ancestor_ids[a_index] == curr_obs_node->id) {
-								next_obs_node->ancestor_ids.erase(
-									next_obs_node->ancestor_ids.begin() + a_index);
-								break;
-							}
-						}
-
-						for (int a_index = 0; a_index < (int)curr_obs_node->ancestor_ids.size(); a_index++) {
-							AbstractNode* node = scope->nodes[curr_obs_node->ancestor_ids[a_index]];
-							switch (node->type) {
-							case NODE_TYPE_ACTION:
-								{
-									ActionNode* action_node = (ActionNode*)node;
-
-									action_node->next_node_id = next_obs_node->id;
-									action_node->next_node = next_obs_node;
-								}
-								break;
-							case NODE_TYPE_SCOPE:
-								{
-									ScopeNode* scope_node = (ScopeNode*)node;
-
-									scope_node->next_node_id = next_obs_node->id;
-									scope_node->next_node = next_obs_node;
-								}
-								break;
-							case NODE_TYPE_BRANCH:
-								{
-									BranchNode* branch_node = (BranchNode*)node;
-
-									if (branch_node->original_next_node == curr_obs_node) {
-										branch_node->original_next_node_id = next_obs_node->id;
-										branch_node->original_next_node = next_obs_node;
-									}
-									if (branch_node->branch_next_node == curr_obs_node) {
-										branch_node->branch_next_node_id = next_obs_node->id;
-										branch_node->branch_next_node = next_obs_node;
-									}
-								}
-								break;
-							case NODE_TYPE_OBS:
-								{
-									ObsNode* obs_node = (ObsNode*)node;
-
-									obs_node->next_node_id = next_obs_node->id;
-									obs_node->next_node = next_obs_node;
-								}
-								break;
-							}
-
-							next_obs_node->ancestor_ids.push_back(node->id);
-						}
-
-						solution->clean_inputs(scope,
+					solution->replace_obs_node(scope,
+											   next_obs_node->id,
 											   curr_obs_node->id);
 
-						scope->nodes.erase(curr_obs_node->id);
-						delete curr_obs_node;
-
-						removed_node = true;
-						break;
+					if (next_obs_node->next_node != NULL) {
+						for (int a_index = 0; a_index < (int)next_obs_node->next_node->ancestor_ids.size(); a_index++) {
+							if (next_obs_node->next_node->ancestor_ids[a_index] == next_obs_node->id) {
+								next_obs_node->next_node->ancestor_ids.erase(
+									next_obs_node->next_node->ancestor_ids.begin() + a_index);
+								break;
+							}
+						}
+						next_obs_node->next_node->ancestor_ids.push_back(curr_obs_node->id);
 					}
+					curr_obs_node->next_node_id = next_obs_node->next_node_id;
+					curr_obs_node->next_node = next_obs_node->next_node;
+
+					solution->clean_inputs(scope,
+										   next_obs_node->id);
+
+					scope->nodes.erase(next_obs_node->id);
+					delete next_obs_node;
+
+					removed_node = true;
+					break;
 				}
 			}
 		}
