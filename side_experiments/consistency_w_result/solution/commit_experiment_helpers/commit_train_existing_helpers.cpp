@@ -119,7 +119,7 @@ void CommitExperiment::commit_train_existing_activate(
 
 		curr_node = this->best_exit_next_node;
 
-		uniform_int_distribution<int> until_distribution(0, 2*((int)this->node_context->average_instances_per_run-1));
+		uniform_int_distribution<int> until_distribution(0, max((int)this->node_context->average_instances_per_run-1, 0));
 		this->num_instances_until_target = 1 + until_distribution(generator);
 	} else {
 		for (int s_index = 0; s_index < (int)this->save_step_types.size(); s_index++) {
@@ -174,6 +174,7 @@ void CommitExperiment::commit_train_existing_backprop(
 		this->commit_existing_average_score = sum_score / num_instances;
 
 		vector<double> remaining_scores(num_instances);
+		vector<double> sum_vals(num_instances);
 
 		if (this->commit_existing_factor_ids.size() > 0) {
 			#if defined(MDEBUG) && MDEBUG
@@ -248,6 +249,7 @@ void CommitExperiment::commit_train_existing_backprop(
 				}
 
 				remaining_scores[i_index] = this->i_target_val_histories[i_index] - sum_score;
+				sum_vals[i_index] = sum_score;
 
 				#if defined(MDEBUG) && MDEBUG
 				#else
@@ -260,6 +262,7 @@ void CommitExperiment::commit_train_existing_backprop(
 		} else {
 			for (int i_index = 0; i_index < num_instances; i_index++) {
 				remaining_scores[i_index] = this->i_target_val_histories[i_index] - this->commit_existing_average_score;
+				sum_vals[i_index] = this->commit_existing_average_score;
 			}
 		}
 
@@ -359,6 +362,11 @@ void CommitExperiment::commit_train_existing_backprop(
 
 				this->commit_existing_factor_ids.push_back({obs_node->id, (int)obs_node->factors.size()-1});
 				this->commit_existing_factor_weights.push_back(1.0);
+
+				for (int i_index = 0; i_index < num_instances; i_index++) {
+					existing_network->activate(this->input_histories[i_index]);
+					sum_vals[i_index] += existing_network->output->acti_vals[0];
+				}
 			} else {
 				delete existing_network;
 			}

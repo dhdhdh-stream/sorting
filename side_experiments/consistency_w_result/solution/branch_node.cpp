@@ -191,15 +191,6 @@ void BranchNode::load(ifstream& input_file) {
 }
 
 void BranchNode::link(Solution* parent_solution) {
-	for (int f_index = 0; f_index < (int)this->factor_ids.size(); f_index++) {
-		ObsNode* obs_node = (ObsNode*)this->parent->nodes[this->factor_ids[f_index].first];
-		Factor* factor = obs_node->factors[this->factor_ids[f_index].second];
-
-		factor->link(parent_solution);
-
-		obs_node->is_used = true;
-	}
-
 	if (this->original_next_node_id == -1) {
 		this->original_next_node = NULL;
 	} else {

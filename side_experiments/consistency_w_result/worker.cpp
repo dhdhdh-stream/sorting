@@ -81,6 +81,7 @@ int main(int argc, char* argv[]) {
 						problem,
 						run_helper,
 						scope_history);
+				delete scope_history;
 
 				double target_val = problem->score_result();
 				target_val -= run_helper.num_actions * solution->curr_time_penalty;
@@ -97,9 +98,6 @@ int main(int argc, char* argv[]) {
 						target_val = -10.0;
 					}
 				}
-
-				delete scope_history;
-				delete problem;
 
 				run_helper.experiment_history->experiment->backprop(
 					target_val,
@@ -126,10 +124,13 @@ int main(int argc, char* argv[]) {
 					curr_experiment = NULL;
 
 					improvement_iter++;
-					if (improvement_iter >= IMPROVEMENTS_PER_ITER) {
-						break;
-					}
 				}
+			}
+
+			delete problem;
+
+			if (improvement_iter >= IMPROVEMENTS_PER_ITER) {
+				break;
 			}
 		}
 

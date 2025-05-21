@@ -176,11 +176,11 @@ void PassThroughExperiment::explore_backprop(
 
 			int random_index;
 			if (this->scope_context->exceeded) {
-				if (possible_exits.size() <= 4) {
+				if (possible_exits.size() <= 2) {
 					this->result = EXPERIMENT_RESULT_FAIL;
 					return;
 				} else {
-					uniform_int_distribution<int> distribution(4, possible_exits.size()-1);
+					uniform_int_distribution<int> distribution(2, possible_exits.size()-1);
 					random_index = distribution(generator);
 				}
 			} else {

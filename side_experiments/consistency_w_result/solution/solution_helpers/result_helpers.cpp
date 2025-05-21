@@ -21,7 +21,7 @@ void result_helper(Problem* original_problem,
 			scope_history);
 
 	double target_val = copy_problem->score_result();
-	target_val -= run_helper.num_actions * solution->curr_time_penalty;
+	target_val -= run_helper.num_actions * 0.0001;
 
 	if (curr_experiment == NULL) {
 		create_experiment(scope_history,

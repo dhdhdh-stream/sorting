@@ -72,7 +72,7 @@ void CommitExperiment::result_activate(AbstractNode* experiment_node,
 					problem->perform_action(this->save_actions[s_index]);
 				} else {
 					ScopeHistory* inner_scope_history = new ScopeHistory(this->save_scopes[s_index]);
-					this->save_scopes[s_index]->experiment_activate(problem,
+					this->save_scopes[s_index]->result_activate(problem,
 						run_helper,
 						inner_scope_history);
 					delete inner_scope_history;

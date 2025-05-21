@@ -26,6 +26,7 @@ void NewScopeExperiment::add() {
 	this->new_scope->id = solution->scopes.size();
 	solution->scopes.push_back(this->new_scope);
 
+	#if defined(MDEBUG) && MDEBUG
 	for (map<int, AbstractNode*>::iterator it = this->new_scope->nodes.begin();
 			it != this->new_scope->nodes.end(); it++) {
 		switch (it->second->type) {
@@ -33,64 +34,12 @@ void NewScopeExperiment::add() {
 			{
 				BranchNode* branch_node = (BranchNode*)it->second;
 
-				for (int f_index = 0; f_index < (int)branch_node->factor_ids.size(); f_index++) {
-					ObsNode* obs_node = (ObsNode*)this->new_scope->nodes[branch_node->factor_ids[f_index].first];
-					Factor* factor = obs_node->factors[branch_node->factor_ids[f_index].second];
-
-					factor->link(solution);
-
-					obs_node->is_used = true;
-				}
-
-				#if defined(MDEBUG) && MDEBUG
 				branch_node->verify_key = this;
-				#endif /* MDEBUG */
-			}
-			break;
-		case NODE_TYPE_OBS:
-			{
-				ObsNode* obs_node = (ObsNode*)it->second;
-
-				for (int f_index = 0; f_index < (int)obs_node->factors.size(); f_index++) {
-					Factor* factor = obs_node->factors[f_index];
-
-					for (int i_index = 0; i_index < (int)factor->inputs.size(); i_index++) {
-						Scope* scope = factor->inputs[i_index].scope_context.back();
-						AbstractNode* node = scope->nodes[factor->inputs[i_index].node_context.back()];
-						switch (node->type) {
-						case NODE_TYPE_BRANCH:
-							{
-								BranchNode* branch_node = (BranchNode*)node;
-								branch_node->is_used = true;
-							}
-							break;
-						case NODE_TYPE_OBS:
-							{
-								ObsNode* obs_node = (ObsNode*)node;
-
-								if (factor->inputs[i_index].factor_index != -1) {
-									Factor* i_factor = obs_node->factors[factor->inputs[i_index].factor_index];
-
-									i_factor->link(solution);
-								}
-
-								obs_node->is_used = true;
-							}
-							break;
-						}
-					}
-				}
-
-				// temp
-				for (int m_index = 0; m_index < (int)obs_node->matches.size(); m_index++) {
-					cout << "NewScope match " << obs_node->matches[m_index].node_context[0] << " " << obs_node->id << endl;
-				}
 			}
 			break;
 		}
 	}
 
-	#if defined(MDEBUG) && MDEBUG
 	solution->verify_problems = this->verify_problems;
 	this->verify_problems.clear();
 	solution->verify_seeds = this->verify_seeds;

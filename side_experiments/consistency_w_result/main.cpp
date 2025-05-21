@@ -93,14 +93,21 @@ int main(int argc, char* argv[]) {
 						  curr_experiment);
 
 			if (run_helper.experiment_history != NULL) {
+				#if defined(MDEBUG) && MDEBUG
+				run_helper.starting_run_seed = run_index;
+				run_helper.curr_run_seed = xorshift(run_helper.starting_run_seed);
+				#endif /* MDEBUG */
+
 				ScopeHistory* scope_history = new ScopeHistory(solution->scopes[0]);
 				solution->scopes[0]->experiment_activate(
 						problem,
 						run_helper,
 						scope_history);
+				delete scope_history;
 
 				double target_val = problem->score_result();
-				target_val -= run_helper.num_actions * solution->curr_time_penalty;
+				// target_val -= run_helper.num_actions * solution->curr_time_penalty;
+				target_val -= run_helper.num_actions * 0.0001;
 
 				if (run_helper.check_match) {
 					int num_mismatches = 0;
@@ -114,9 +121,6 @@ int main(int argc, char* argv[]) {
 						target_val = -10.0;
 					}
 				}
-
-				delete scope_history;
-				delete problem;
 
 				run_helper.experiment_history->experiment->backprop(
 					target_val,
@@ -143,10 +147,13 @@ int main(int argc, char* argv[]) {
 					curr_experiment = NULL;
 
 					improvement_iter++;
-					if (improvement_iter >= IMPROVEMENTS_PER_ITER) {
-						break;
-					}
 				}
+			}
+
+			delete problem;
+
+			if (improvement_iter >= IMPROVEMENTS_PER_ITER) {
+				break;
 			}
 		}
 
@@ -211,7 +218,8 @@ int main(int argc, char* argv[]) {
 				scope_history);
 
 			double target_val = problem->score_result();
-			sum_score += target_val - run_helper.num_actions * solution->curr_time_penalty;
+			// sum_score += target_val - run_helper.num_actions * solution->curr_time_penalty;
+			sum_score += target_val - run_helper.num_actions * 0.0001;
 			sum_true_score += target_val;
 
 			update_scores(scope_history,

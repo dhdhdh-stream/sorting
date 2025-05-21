@@ -303,15 +303,6 @@ void CommitExperiment::add() {
 
 	new_branch_node->ancestor_ids.push_back(this->new_nodes[this->step_iter-1]->id);
 
-	for (int f_index = 0; f_index < (int)this->commit_existing_factor_ids.size(); f_index++) {
-		ObsNode* obs_node = (ObsNode*)this->scope_context->nodes[this->commit_existing_factor_ids[f_index].first];
-		Factor* factor = obs_node->factors[this->commit_existing_factor_ids[f_index].second];
-
-		factor->link(solution);
-
-		obs_node->is_used = true;
-	}
-
 	#if defined(MDEBUG) && MDEBUG
 	if (this->verify_problems.size() > 0) {
 		solution->verify_problems = this->verify_problems;

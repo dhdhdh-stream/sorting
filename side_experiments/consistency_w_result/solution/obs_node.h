@@ -18,8 +18,6 @@ class Solution;
 class ObsNodeHistory;
 class ObsNode : public AbstractNode {
 public:
-	bool is_used;
-
 	std::vector<Factor*> factors;
 
 	int next_node_id;

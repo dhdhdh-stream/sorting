@@ -22,6 +22,9 @@ const int NEW_SCOPE_VERIFY_1ST_NUM_DATAPOINTS = 400;
 const int NEW_SCOPE_VERIFY_2ND_NUM_DATAPOINTS = 4000;
 #endif /* MDEBUG */
 
+// const double MATCH_SCORE = -0.01;
+const double MATCH_SCORE = -0.003;
+
 void NewScopeExperiment::test_activate(
 		AbstractNode*& curr_node,
 		Problem* problem,
@@ -55,7 +58,7 @@ void NewScopeExperiment::test_backprop(
 			#if defined(MDEBUG) && MDEBUG
 			if (rand()%2 == 0) {
 			#else
-			if (this->test_location_score > 0.0) {
+			if (this->test_location_score > MATCH_SCORE) {
 			#endif /* MDEBUG */
 				this->test_location_state = LOCATION_STATE_VERIFY_1ST;
 				this->test_location_score = 0.0;
@@ -74,7 +77,7 @@ void NewScopeExperiment::test_backprop(
 			#if defined(MDEBUG) && MDEBUG
 			if (rand()%2 == 0) {
 			#else
-			if (this->test_location_score > 0.0) {
+			if (this->test_location_score > MATCH_SCORE) {
 			#endif /* MDEBUG */
 				this->test_location_state = LOCATION_STATE_VERIFY_2ND;
 				this->test_location_score = 0.0;
@@ -93,7 +96,7 @@ void NewScopeExperiment::test_backprop(
 			#if defined(MDEBUG) && MDEBUG
 			if (rand()%2 == 0) {
 			#else
-			if (this->test_location_score > 0.0) {
+			if (this->test_location_score > MATCH_SCORE) {
 			#endif /* MDEBUG */
 				double new_score = this->test_location_score / NEW_SCOPE_VERIFY_2ND_NUM_DATAPOINTS;
 				this->improvement += new_score;

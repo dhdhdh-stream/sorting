@@ -133,7 +133,7 @@ void CommitExperiment::measure_backprop(double target_val,
 		#if defined(MDEBUG) && MDEBUG
 		if (rand()%2 == 0) {
 		#else
-		if (new_score > this->o_existing_average_score) {
+		if (new_score > 0.0) {
 		#endif /* MDEBUG */
 			this->improvement = new_score;
 

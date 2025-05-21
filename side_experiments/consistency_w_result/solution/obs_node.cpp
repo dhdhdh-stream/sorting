@@ -15,8 +15,6 @@ using namespace std;
 ObsNode::ObsNode() {
 	this->type = NODE_TYPE_OBS;
 
-	this->is_used = false;
-
 	this->is_init = false;
 
 	this->average = 0.0;
@@ -37,8 +35,6 @@ ObsNode::ObsNode() {
 ObsNode::ObsNode(ObsNode* original,
 				 Solution* parent_solution) {
 	this->type = NODE_TYPE_OBS;
-
-	this->is_used = original->is_used;
 
 	for (int f_index = 0; f_index < (int)original->factors.size(); f_index++) {
 		Factor* factor = new Factor(original->factors[f_index],
@@ -252,10 +248,6 @@ void ObsNode::load(ifstream& input_file,
 }
 
 void ObsNode::link(Solution* parent_solution) {
-	for (int f_index = 0; f_index < (int)this->factors.size(); f_index++) {
-		this->factors[f_index]->link(parent_solution);
-	}
-
 	if (this->next_node_id == -1) {
 		this->next_node = NULL;
 	} else {

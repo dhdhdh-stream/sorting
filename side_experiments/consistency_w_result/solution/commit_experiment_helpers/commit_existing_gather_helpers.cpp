@@ -120,7 +120,7 @@ void CommitExperiment::commit_existing_gather_backprop() {
 			this->commit_existing_factor_ids.erase(this->commit_existing_factor_ids.begin() + remove_index);
 		}
 
-		uniform_int_distribution<int> until_distribution(0, 2*((int)this->node_context->average_instances_per_run-1));
+		uniform_int_distribution<int> until_distribution(0, max((int)this->node_context->average_instances_per_run-1, 0));
 		this->num_instances_until_target = 1 + until_distribution(generator);
 
 		this->state = COMMIT_EXPERIMENT_STATE_COMMIT_TRAIN_EXISTING;

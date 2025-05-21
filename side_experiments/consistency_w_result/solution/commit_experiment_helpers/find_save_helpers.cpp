@@ -26,6 +26,9 @@ const int VERIFY_2ND_NUM_SAMPLES_PER_ITER = 4000;
 const int STEP_TRY_ITERS = 100;
 #endif /* MDEBUG */
 
+// const double MATCH_SCORE = -0.01;
+const double MATCH_SCORE = -0.003;
+
 void CommitExperiment::find_save_activate(
 		AbstractNode*& curr_node,
 		Problem* problem,
@@ -158,7 +161,7 @@ void CommitExperiment::find_save_backprop(
 		if (false) {
 		#else
 		double curr_score = this->save_sum_score / this->state_iter;
-		if (curr_score <= this->o_existing_average_score) {
+		if (curr_score < MATCH_SCORE) {
 		#endif /* MDEBUG */
 			is_fail = true;
 		}
@@ -213,7 +216,7 @@ void CommitExperiment::find_save_backprop(
 
 		this->step_iter *= 2;
 
-		uniform_int_distribution<int> until_distribution(0, 2*((int)this->node_context->average_instances_per_run-1));
+		uniform_int_distribution<int> until_distribution(0, max((int)this->node_context->average_instances_per_run-1, 0));
 		this->num_instances_until_target = 1 + until_distribution(generator);
 
 		this->state = COMMIT_EXPERIMENT_STATE_COMMIT_EXISTING_GATHER;
