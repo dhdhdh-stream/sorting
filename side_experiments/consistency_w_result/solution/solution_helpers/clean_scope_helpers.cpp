@@ -334,3 +334,52 @@ void clean_scope(Scope* scope) {
 		}
 	}
 }
+
+void check_generalize(Scope* scope_to_generalize) {
+	if (!scope_to_generalize->generalized) {
+		Scope* new_scope = new Scope();
+		new_scope->node_counter = 0;
+
+		ObsNode* start_node = new ObsNode();
+		start_node->parent = new_scope;
+		start_node->id = new_scope->node_counter;
+		new_scope->node_counter++;
+		new_scope->nodes[start_node->id] = start_node;
+
+		ScopeNode* new_scope_node = new ScopeNode();
+		new_scope_node->parent = new_scope;
+		new_scope_node->id = new_scope->node_counter;
+		new_scope->node_counter++;
+		new_scope->nodes[new_scope_node->id] = new_scope_node;
+
+		new_scope_node->scope = scope_to_generalize;
+
+		ObsNode* end_node = new ObsNode();
+		end_node->parent = new_scope;
+		end_node->id = new_scope->node_counter;
+		new_scope->node_counter++;
+		new_scope->nodes[end_node->id] = end_node;
+
+		start_node->next_node_id = new_scope_node->id;
+		start_node->next_node = new_scope_node;
+
+		new_scope_node->next_node_id = end_node->id;
+		new_scope_node->next_node = end_node;
+
+		end_node->next_node_id = -1;
+		end_node->next_node = NULL;
+
+		solution->replace_scope(scope_to_generalize,
+								new_scope,
+								new_scope_node->id);
+
+		new_scope->id = 0;
+		solution->scopes.insert(solution->scopes.begin(), new_scope);
+
+		scope_to_generalize->generalized = true;
+
+		for (int s_index = 1; s_index < (int)solution->scopes.size(); s_index++) {
+			solution->scopes[s_index]->id = s_index;
+		}
+	}
+}

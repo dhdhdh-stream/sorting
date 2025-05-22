@@ -17,11 +17,9 @@ class Solution;
 
 void result_helper(Problem* original_problem,
 				   RunHelper& run_helper,
-				   int& improvement_iter,
 				   AbstractExperiment*& curr_experiment);
 
 void create_experiment(ScopeHistory* scope_history,
-					   int improvement_iter,
 					   AbstractExperiment*& curr_experiment);
 
 void gather_possible_helper(ScopeHistory* scope_history,
@@ -50,5 +48,7 @@ void update_scores(ScopeHistory* scope_history,
 void clean_scope(Scope* scope);
 
 void update_matches(std::vector<ScopeHistory*>& scope_histories);
+
+void check_generalize(Scope* scope_to_generalize);
 
 #endif /* SOLUTION_HELPERS_H */

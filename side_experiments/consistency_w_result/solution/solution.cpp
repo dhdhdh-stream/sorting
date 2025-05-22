@@ -193,6 +193,16 @@ void Solution::replace_obs_node(Scope* scope,
 	}
 }
 
+void Solution::replace_scope(Scope* original_scope,
+							 Scope* new_scope,
+							 int new_scope_node_id) {
+	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
+		this->scopes[s_index]->replace_scope(original_scope,
+											 new_scope,
+											 new_scope_node_id);
+	}
+}
+
 void Solution::clean_scopes() {
 	for (int s_index = (int)this->scopes.size()-1; s_index >= 1; s_index--) {
 		bool still_used = false;

@@ -10,7 +10,6 @@ using namespace std;
 
 void result_helper(Problem* original_problem,
 				   RunHelper& run_helper,
-				   int& improvement_iter,
 				   AbstractExperiment*& curr_experiment) {
 	Problem* copy_problem = original_problem->copy_and_reset();
 
@@ -25,7 +24,6 @@ void result_helper(Problem* original_problem,
 
 	if (curr_experiment == NULL) {
 		create_experiment(scope_history,
-						  improvement_iter,
 						  curr_experiment);
 	}
 

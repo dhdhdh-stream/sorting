@@ -139,6 +139,16 @@ void ObsNode::replace_obs_node(Scope* scope,
 	}
 }
 
+void ObsNode::replace_scope(Scope* original_scope,
+							Scope* new_scope,
+							int new_scope_node_id) {
+	for (int f_index = 0; f_index < (int)this->factors.size(); f_index++) {
+		this->factors[f_index]->replace_scope(original_scope,
+											  new_scope,
+											  new_scope_node_id);
+	}
+}
+
 void ObsNode::clean() {
 	if (this->experiment != NULL) {
 		this->experiment->decrement(this);

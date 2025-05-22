@@ -47,6 +47,13 @@ ScopeNode::~ScopeNode() {
 	}
 }
 
+void ScopeNode::replace_scope(Scope* original_scope,
+							  Scope* new_scope) {
+	if (this->scope == original_scope) {
+		this->scope = new_scope;
+	}
+}
+
 void ScopeNode::clean() {
 	if (this->experiment != NULL) {
 		this->experiment->decrement(this);
