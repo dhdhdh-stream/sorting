@@ -99,7 +99,8 @@ void NewScopeExperiment::test_backprop(
 			if (this->test_location_score > MATCH_SCORE) {
 			#endif /* MDEBUG */
 				double new_score = this->test_location_score / NEW_SCOPE_VERIFY_2ND_NUM_DATAPOINTS;
-				this->improvement += new_score;
+				// this->improvement += new_score;
+				this->improvement = new_score;
 
 				ScopeNode* new_scope_node = new ScopeNode();
 				new_scope_node->parent = this->scope_context;

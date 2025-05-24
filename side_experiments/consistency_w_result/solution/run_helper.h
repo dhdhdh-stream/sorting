@@ -18,7 +18,7 @@ public:
 	AbstractExperimentHistory* experiment_history;
 
 	bool check_match;
-	std::vector<double> match_factors;
+	std::vector<bool> match_factors;
 
 	#if defined(MDEBUG) && MDEBUG
 	unsigned long starting_run_seed;

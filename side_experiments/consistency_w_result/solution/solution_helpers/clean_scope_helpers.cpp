@@ -138,62 +138,66 @@ void clean_scope(Scope* scope) {
 
 	/**
 	 * - remove duplicate ObsNodes
+	 * 
+	 * - clean for all scopes as ObsNodes could have been added during experiments
 	 */
-	while (true) {
-		bool removed_node = false;
+	for (int s_index = 0; s_index < (int)solution->scopes.size(); s_index++) {
+		while (true) {
+			bool removed_node = false;
 
-		for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
-				it != scope->nodes.end(); it++) {
-			if (it->second->type == NODE_TYPE_OBS) {
-				ObsNode* curr_obs_node = (ObsNode*)it->second;
-				if (curr_obs_node->next_node != NULL
-						&& curr_obs_node->next_node->type == NODE_TYPE_OBS
-						&& curr_obs_node->next_node->ancestor_ids.size() == 1) {
-					ObsNode* next_obs_node = (ObsNode*)curr_obs_node->next_node;
+			for (map<int, AbstractNode*>::iterator it = solution->scopes[s_index]->nodes.begin();
+					it != solution->scopes[s_index]->nodes.end(); it++) {
+				if (it->second->type == NODE_TYPE_OBS) {
+					ObsNode* curr_obs_node = (ObsNode*)it->second;
+					if (curr_obs_node->next_node != NULL
+							&& curr_obs_node->next_node->type == NODE_TYPE_OBS
+							&& curr_obs_node->next_node->ancestor_ids.size() == 1) {
+						ObsNode* next_obs_node = (ObsNode*)curr_obs_node->next_node;
 
-					for (int f_index = 0; f_index < (int)next_obs_node->factors.size(); f_index++) {
-						Factor* new_factor = new Factor(next_obs_node->factors[f_index],
-														solution);
-						curr_obs_node->factors.push_back(new_factor);
+						for (int f_index = 0; f_index < (int)next_obs_node->factors.size(); f_index++) {
+							Factor* new_factor = new Factor(next_obs_node->factors[f_index],
+															solution);
+							curr_obs_node->factors.push_back(new_factor);
 
-						solution->replace_factor(scope,
-												 next_obs_node->id,
-												 f_index,
-												 curr_obs_node->id,
-												 curr_obs_node->factors.size()-1);
-					}
-
-					solution->replace_obs_node(scope,
-											   next_obs_node->id,
-											   curr_obs_node->id);
-
-					if (next_obs_node->next_node != NULL) {
-						for (int a_index = 0; a_index < (int)next_obs_node->next_node->ancestor_ids.size(); a_index++) {
-							if (next_obs_node->next_node->ancestor_ids[a_index] == next_obs_node->id) {
-								next_obs_node->next_node->ancestor_ids.erase(
-									next_obs_node->next_node->ancestor_ids.begin() + a_index);
-								break;
-							}
+							solution->replace_factor(solution->scopes[s_index],
+													 next_obs_node->id,
+													 f_index,
+													 curr_obs_node->id,
+													 curr_obs_node->factors.size()-1);
 						}
-						next_obs_node->next_node->ancestor_ids.push_back(curr_obs_node->id);
+
+						solution->replace_obs_node(solution->scopes[s_index],
+												   next_obs_node->id,
+												   curr_obs_node->id);
+
+						if (next_obs_node->next_node != NULL) {
+							for (int a_index = 0; a_index < (int)next_obs_node->next_node->ancestor_ids.size(); a_index++) {
+								if (next_obs_node->next_node->ancestor_ids[a_index] == next_obs_node->id) {
+									next_obs_node->next_node->ancestor_ids.erase(
+										next_obs_node->next_node->ancestor_ids.begin() + a_index);
+									break;
+								}
+							}
+							next_obs_node->next_node->ancestor_ids.push_back(curr_obs_node->id);
+						}
+						curr_obs_node->next_node_id = next_obs_node->next_node_id;
+						curr_obs_node->next_node = next_obs_node->next_node;
+
+						solution->clean_inputs(solution->scopes[s_index],
+											   next_obs_node->id);
+
+						solution->scopes[s_index]->nodes.erase(next_obs_node->id);
+						delete next_obs_node;
+
+						removed_node = true;
+						break;
 					}
-					curr_obs_node->next_node_id = next_obs_node->next_node_id;
-					curr_obs_node->next_node = next_obs_node->next_node;
-
-					solution->clean_inputs(scope,
-										   next_obs_node->id);
-
-					scope->nodes.erase(next_obs_node->id);
-					delete next_obs_node;
-
-					removed_node = true;
-					break;
 				}
 			}
-		}
 
-		if (!removed_node) {
-			break;
+			if (!removed_node) {
+				break;
+			}
 		}
 	}
 
@@ -340,6 +344,9 @@ void check_generalize(Scope* scope_to_generalize) {
 		Scope* new_scope = new Scope();
 		new_scope->node_counter = 0;
 
+		new_scope->child_scopes = scope_to_generalize->child_scopes;
+		new_scope->child_scopes.push_back(scope_to_generalize);
+
 		ObsNode* start_node = new ObsNode();
 		start_node->parent = new_scope;
 		start_node->id = new_scope->node_counter;
@@ -373,12 +380,15 @@ void check_generalize(Scope* scope_to_generalize) {
 								new_scope,
 								new_scope_node->id);
 
-		new_scope->id = 0;
-		solution->scopes.insert(solution->scopes.begin(), new_scope);
+		if (scope_to_generalize->id == 0) {
+			solution->scopes.insert(solution->scopes.begin(), new_scope);
+		} else {
+			solution->scopes.push_back(new_scope);
+		}
 
 		scope_to_generalize->generalized = true;
 
-		for (int s_index = 1; s_index < (int)solution->scopes.size(); s_index++) {
+		for (int s_index = 0; s_index < (int)solution->scopes.size(); s_index++) {
 			solution->scopes[s_index]->id = s_index;
 		}
 	}

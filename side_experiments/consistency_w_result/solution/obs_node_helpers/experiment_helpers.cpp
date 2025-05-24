@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "abstract_experiment.h"
+#include "constants.h"
 #include "factor.h"
 #include "problem.h"
 #include "scope.h"
@@ -25,8 +26,11 @@ void ObsNode::experiment_activate(AbstractNode*& curr_node,
 
 	if (run_helper.check_match) {
 		if (this->is_fixed_point) {
-			double factor = abs(obs[0] - this->average) / this->standard_deviation;
-			run_helper.match_factors.push_back(factor);
+			if (abs(obs[0] - this->average) < MIN_STANDARD_DEVIATION) {
+				run_helper.match_factors.push_back(true);
+			} else {
+				run_helper.match_factors.push_back(false);
+			}
 		}
 		/**
 		 * - check every match to check on all earlier nodes

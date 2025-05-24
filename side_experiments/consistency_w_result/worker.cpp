@@ -83,12 +83,13 @@ int main(int argc, char* argv[]) {
 				delete scope_history;
 
 				double target_val = problem->score_result();
-				target_val -= run_helper.num_actions * solution->curr_time_penalty;
+				// target_val -= run_helper.num_actions * solution->curr_time_penalty;
+				target_val -= run_helper.num_actions * 0.0001;
 
 				if (run_helper.check_match) {
 					int num_mismatches = 0;
 					for (int m_index = 0; m_index < (int)run_helper.match_factors.size(); m_index++) {
-						if (run_helper.match_factors[m_index] > 3.0) {
+						if (!run_helper.match_factors[m_index]) {
 							num_mismatches++;
 						}
 					}
@@ -140,6 +141,8 @@ int main(int argc, char* argv[]) {
 
 		clean_scope(last_updated_scope);
 
+		solution->clean();
+
 		if (last_updated_scope->nodes.size() >= SCOPE_EXCEEDED_NUM_NODES) {
 			last_updated_scope->exceeded = true;
 
@@ -148,8 +151,6 @@ int main(int argc, char* argv[]) {
 		if (last_updated_scope->nodes.size() <= SCOPE_RESUME_NUM_NODES) {
 			last_updated_scope->exceeded = false;
 		}
-
-		solution->clean();
 
 		double sum_score = 0.0;
 		double sum_true_score = 0.0;
@@ -168,7 +169,8 @@ int main(int argc, char* argv[]) {
 				scope_history);
 
 			double target_val = problem->score_result();
-			sum_score += target_val - run_helper.num_actions * solution->curr_time_penalty;
+			// sum_score += target_val - run_helper.num_actions * solution->curr_time_penalty;
+			sum_score += target_val - run_helper.num_actions * 0.0001;
 			sum_true_score += target_val;
 
 			update_scores(scope_history,

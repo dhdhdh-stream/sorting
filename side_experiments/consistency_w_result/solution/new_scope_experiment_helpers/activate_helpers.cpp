@@ -24,42 +24,42 @@ void NewScopeExperiment::result_activate(AbstractNode* experiment_node,
 										 Problem* problem,
 										 RunHelper& run_helper,
 										 ScopeHistory* scope_history) {
-	if (run_helper.experiment_history != NULL
-			&& run_helper.experiment_history->experiment == this) {
-		bool has_match = false;
-		bool is_test;
-		int location_index;
-		if (this->test_location_start == experiment_node
-				&& this->test_location_is_branch == is_branch) {
-			has_match = true;
-			is_test = true;
-		}
-		if (!has_match) {
-			for (int s_index = 0; s_index < (int)this->successful_location_starts.size(); s_index++) {
-				if (this->successful_location_starts[s_index] == experiment_node
-						&& this->successful_location_is_branch[s_index] == is_branch) {
-					has_match = true;
-					is_test = false;
-					location_index = s_index;
-					break;
-				}
-			}
-		}
+	// if (run_helper.experiment_history != NULL
+	// 		&& run_helper.experiment_history->experiment == this) {
+	// 	bool has_match = false;
+	// 	bool is_test;
+	// 	int location_index;
+	// 	if (this->test_location_start == experiment_node
+	// 			&& this->test_location_is_branch == is_branch) {
+	// 		has_match = true;
+	// 		is_test = true;
+	// 	}
+	// 	if (!has_match) {
+	// 		for (int s_index = 0; s_index < (int)this->successful_location_starts.size(); s_index++) {
+	// 			if (this->successful_location_starts[s_index] == experiment_node
+	// 					&& this->successful_location_is_branch[s_index] == is_branch) {
+	// 				has_match = true;
+	// 				is_test = false;
+	// 				location_index = s_index;
+	// 				break;
+	// 			}
+	// 		}
+	// 	}
 
-		if (has_match) {
-			switch (this->state) {
-			case NEW_SCOPE_EXPERIMENT_STATE_EXPLORE:
-				if (!is_test) {
-					this->successful_scope_nodes[location_index]->experiment_activate(
-						curr_node,
-						problem,
-						run_helper,
-						scope_history);
-				}
-				break;
-			}
-		}
-	}
+	// 	if (has_match) {
+	// 		switch (this->state) {
+	// 		case NEW_SCOPE_EXPERIMENT_STATE_EXPLORE:
+	// 			if (!is_test) {
+	// 				this->successful_scope_nodes[location_index]->experiment_activate(
+	// 					curr_node,
+	// 					problem,
+	// 					run_helper,
+	// 					scope_history);
+	// 			}
+	// 			break;
+	// 		}
+	// 	}
+	// }
 }
 
 void NewScopeExperiment::activate(AbstractNode* experiment_node,

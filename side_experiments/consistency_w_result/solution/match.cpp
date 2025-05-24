@@ -56,8 +56,11 @@ void Match::eval(vector<double>& obs,
 		ObsNodeHistory* early_history = (ObsNodeHistory*)it->second;
 
 		double predicted_score = obs[0] * this->weight + this->constant;
-		double factor = abs(early_history->obs_history[0] - predicted_score) / this->standard_deviation;
-		run_helper.match_factors.push_back(factor);
+		if (abs(early_history->obs_history[0] - predicted_score) < MIN_STANDARD_DEVIATION) {
+			run_helper.match_factors.push_back(true);
+		} else {
+			run_helper.match_factors.push_back(false);
+		}
 	}
 }
 

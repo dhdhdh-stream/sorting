@@ -34,8 +34,13 @@ const double FACTOR_IMPACT_THRESHOLD = 0.1;
 
 const int NETWORK_NUM_INPUTS = 10;
 
+#if defined(MDEBUG) && MDEBUG
+const int MATCH_UPDATE_MIN_DATAPOINTS = 4;
+#else
+const int MATCH_UPDATE_MIN_DATAPOINTS = 20;
+#endif /* MDEBUG */
 const double FIXED_POINT_MAX_FACTOR = 0.1;
-const double MATCH_MIN_PCC = 0.9;
+const double MATCH_MIN_PCC = 1.0;
 
 const double MAX_MISMATCH_PERCENTAGE = 0.2;
 

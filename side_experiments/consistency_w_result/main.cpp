@@ -111,7 +111,7 @@ int main(int argc, char* argv[]) {
 				if (run_helper.check_match) {
 					int num_mismatches = 0;
 					for (int m_index = 0; m_index < (int)run_helper.match_factors.size(); m_index++) {
-						if (run_helper.match_factors[m_index] > 3.0) {
+						if (!run_helper.match_factors[m_index]) {
 							num_mismatches++;
 						}
 					}
@@ -186,6 +186,8 @@ int main(int argc, char* argv[]) {
 		solution->clear_verify();
 		#endif /* MDEBUG */
 
+		solution->clean();
+
 		if (last_updated_scope->nodes.size() >= SCOPE_EXCEEDED_NUM_NODES) {
 			last_updated_scope->exceeded = true;
 
@@ -194,8 +196,6 @@ int main(int argc, char* argv[]) {
 		if (last_updated_scope->nodes.size() <= SCOPE_RESUME_NUM_NODES) {
 			last_updated_scope->exceeded = false;
 		}
-
-		solution->clean();
 
 		double sum_score = 0.0;
 		double sum_true_score = 0.0;

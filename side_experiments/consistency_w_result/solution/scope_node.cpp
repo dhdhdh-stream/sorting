@@ -51,6 +51,17 @@ void ScopeNode::replace_scope(Scope* original_scope,
 							  Scope* new_scope) {
 	if (this->scope == original_scope) {
 		this->scope = new_scope;
+
+		bool has_match = false;
+		for (int c_index = 0; c_index < (int)this->parent->child_scopes.size(); c_index++) {
+			if (this->parent->child_scopes[c_index] == new_scope) {
+				has_match = true;
+				break;
+			}
+		}
+		if (!has_match) {
+			this->parent->child_scopes.push_back(new_scope);
+		}
 	}
 }
 
@@ -65,8 +76,8 @@ void ScopeNode::clean() {
 }
 
 void ScopeNode::measure_update() {
-	this->average_score = this->sum_score / this->num_measure;
-	this->average_instances_per_run = this->num_measure / MEASURE_ITERS;
+	this->average_score = this->sum_score / (double)this->num_measure;
+	this->average_instances_per_run = (double)this->num_measure / MEASURE_ITERS;
 }
 
 void ScopeNode::save(ofstream& output_file) {

@@ -17,6 +17,7 @@
 
 using namespace std;
 
+const double EXPERIMENT_MIN_INSTANCES_PER_RUN = 0.2;
 const int NEW_SCOPE_MIN_NODES = 60;
 
 void gather_nodes_seen_helper(ScopeHistory* scope_history,
@@ -26,7 +27,8 @@ void gather_nodes_seen_helper(ScopeHistory* scope_history,
 		switch (h_it->second->node->type) {
 		case NODE_TYPE_ACTION:
 		case NODE_TYPE_OBS:
-			if (h_it->second->node->experiment == NULL) {
+			if (h_it->second->node->experiment == NULL
+					&& h_it->second->node->average_instances_per_run >= EXPERIMENT_MIN_INSTANCES_PER_RUN) {
 				map<pair<AbstractNode*,bool>, int>::iterator seen_it = nodes_seen
 					.find({h_it->second->node, false});
 				if (seen_it == nodes_seen.end()) {
@@ -43,7 +45,8 @@ void gather_nodes_seen_helper(ScopeHistory* scope_history,
 				gather_nodes_seen_helper(scope_node_history->scope_history,
 										 nodes_seen);
 
-				if (h_it->second->node->experiment == NULL) {
+				if (h_it->second->node->experiment == NULL
+						&& h_it->second->node->average_instances_per_run >= EXPERIMENT_MIN_INSTANCES_PER_RUN) {
 					map<pair<AbstractNode*,bool>, int>::iterator seen_it = nodes_seen
 						.find({h_it->second->node, false});
 					if (seen_it == nodes_seen.end()) {
@@ -55,7 +58,8 @@ void gather_nodes_seen_helper(ScopeHistory* scope_history,
 			}
 			break;
 		case NODE_TYPE_BRANCH:
-			if (h_it->second->node->experiment == NULL) {
+			if (h_it->second->node->experiment == NULL
+					&& h_it->second->node->average_instances_per_run >= EXPERIMENT_MIN_INSTANCES_PER_RUN) {
 				BranchNodeHistory* branch_node_history = (BranchNodeHistory*)h_it->second;
 				map<pair<AbstractNode*,bool>, int>::iterator seen_it = nodes_seen
 					.find({h_it->second->node, branch_node_history->is_branch});
@@ -127,8 +131,6 @@ void create_experiment(ScopeHistory* scope_history,
 					explore_node->experiment = new_scope_experiment;
 
 					curr_experiment = new_scope_experiment;
-
-					cout << "NewScopeExperiment" << endl;
 				}
 			} else {
 				PassThroughExperiment* new_experiment = new PassThroughExperiment(
@@ -142,8 +144,6 @@ void create_experiment(ScopeHistory* scope_history,
 					explore_node->experiment = new_experiment;
 
 					curr_experiment = new_experiment;
-
-					cout << "PassThroughExperiment" << endl;
 				}
 			}
 		} else {
@@ -163,8 +163,6 @@ void create_experiment(ScopeHistory* scope_history,
 					explore_node->experiment = new_scope_experiment;
 
 					curr_experiment = new_scope_experiment;
-
-					cout << "NewScopeExperiment" << endl;
 				}
 			} else {
 				uniform_int_distribution<int> commit_distribution(0, 9);
@@ -176,8 +174,6 @@ void create_experiment(ScopeHistory* scope_history,
 					explore_node->experiment = new_commit_experiment;
 
 					curr_experiment = new_commit_experiment;
-
-					cout << "CommitExperiment" << endl;
 				} else {
 					/**
 					 * - weigh towards PassThroughExperiments as cheaper and potentially just as effective
@@ -198,8 +194,6 @@ void create_experiment(ScopeHistory* scope_history,
 							explore_node->experiment = new_experiment;
 
 							curr_experiment = new_experiment;
-
-							cout << "PassThroughExperiment" << endl;
 						}
 					} else {
 						BranchExperiment* new_experiment = new BranchExperiment(
@@ -210,8 +204,6 @@ void create_experiment(ScopeHistory* scope_history,
 						explore_node->experiment = new_experiment;
 
 						curr_experiment = new_experiment;
-
-						cout << "BranchExperiment" << endl;
 					}
 				}
 			}

@@ -9,12 +9,6 @@
 
 using namespace std;
 
-#if defined(MDEBUG) && MDEBUG
-const int MATCH_UPDATE_MIN_DATAPOINTS = 4;
-#else
-const int MATCH_UPDATE_MIN_DATAPOINTS = 20;
-#endif /* MDEBUG */
-
 void ObsNode::gather_match_datapoints(ObsNodeHistory* history,
 									  ScopeHistory* scope_history) {
 	if (!this->is_init) {
