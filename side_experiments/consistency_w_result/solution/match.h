@@ -32,17 +32,15 @@ public:
 
 	double standard_deviation;
 
-	std::vector<std::pair<double,double>> datapoints;
+	double average_distance;
+
+	std::vector<std::pair<std::pair<double,double>,int>> datapoints;
 
 	bool is_init;
 
 	Match();
 	Match(std::ifstream& input_file,
 		  Solution* parent_solution);
-
-	void eval(std::vector<double>& obs,
-			  RunHelper& run_helper,
-			  ScopeHistory* scope_history);
 
 	bool should_delete(Scope* scope,
 					   int node_id);

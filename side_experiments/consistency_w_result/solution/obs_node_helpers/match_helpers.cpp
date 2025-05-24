@@ -1,5 +1,6 @@
 #include "obs_node.h"
 
+#include <algorithm>
 #include <iostream>
 
 #include "constants.h"
@@ -8,6 +9,14 @@
 #include "solution.h"
 
 using namespace std;
+
+bool match_comp(Match first, Match second) {
+	if (first.average_distance > second.average_distance) {
+		return true;
+	} else {
+		return false;
+	}
+}
 
 void ObsNode::gather_match_datapoints(ObsNodeHistory* history,
 									  ScopeHistory* scope_history) {
@@ -35,7 +44,8 @@ void ObsNode::gather_match_datapoints(ObsNodeHistory* history,
 
 				ObsNodeHistory* early_history = (ObsNodeHistory*)it->second;
 				this->matches[match_index].datapoints.push_back(
-					{early_history->obs_history[0], history->obs_history[0]});
+					{{early_history->obs_history[0], history->obs_history[0]},
+						history->index - it->second->index});
 			}
 		}
 	} else {
@@ -69,7 +79,8 @@ void ObsNode::gather_match_datapoints(ObsNodeHistory* history,
 				ObsNodeHistory* early_history = (ObsNodeHistory*)it->second;
 
 				this->matches[m_index].datapoints.push_back(
-					{early_history->obs_history[0], history->obs_history[0]});
+					{{early_history->obs_history[0], history->obs_history[0]},
+						history->index - it->second->index});
 			}
 		}
 	}
@@ -82,19 +93,13 @@ void ObsNode::update_matches() {
 				this->matches.erase(this->matches.begin() + m_index);
 			}
 		} else {
-			// temp
-			bool match_is_init = this->matches[m_index].is_init;
-
 			bool is_still_needed;
 			this->matches[m_index].update(is_still_needed);
 			if (!is_still_needed) {
-				// temp
-				if (match_is_init) {
-					cout << "erase " << this->matches[m_index].node_context[0] << " " << this->id << endl;
-				}
-
 				this->matches.erase(this->matches.begin() + m_index);
 			}
 		}
 	}
+
+	sort(this->matches.begin(), this->matches.end(), match_comp);
 }

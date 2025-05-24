@@ -47,23 +47,6 @@ Match::Match(ifstream& input_file,
 	this->is_init = true;
 }
 
-void Match::eval(vector<double>& obs,
-				 RunHelper& run_helper,
-				 ScopeHistory* scope_history) {
-	map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories
-		.find(this->node_context[0]);
-	if (it != scope_history->node_histories.end()) {
-		ObsNodeHistory* early_history = (ObsNodeHistory*)it->second;
-
-		double predicted_score = obs[0] * this->weight + this->constant;
-		if (abs(early_history->obs_history[0] - predicted_score) < MIN_STANDARD_DEVIATION) {
-			run_helper.match_factors.push_back(true);
-		} else {
-			run_helper.match_factors.push_back(false);
-		}
-	}
-}
-
 bool Match::should_delete(Scope* scope,
 						  int node_id) {
 	for (int l_index = 0; l_index < (int)this->scope_context.size(); l_index++) {
@@ -109,8 +92,8 @@ void Match::update(bool& is_still_needed) {
 	double early_sum_vals = 0.0;
 	double later_sum_vals = 0.0;
 	for (int d_index = 0; d_index < (int)this->datapoints.size(); d_index++) {
-		early_sum_vals += this->datapoints[d_index].first;
-		later_sum_vals += this->datapoints[d_index].second;
+		early_sum_vals += this->datapoints[d_index].first.first;
+		later_sum_vals += this->datapoints[d_index].first.second;
 	}
 	double early_average_val = early_sum_vals / (int)this->datapoints.size();
 	double later_average_val = later_sum_vals / (int)this->datapoints.size();
@@ -118,10 +101,10 @@ void Match::update(bool& is_still_needed) {
 	double early_sum_variances = 0.0;
 	double later_sum_variances = 0.0;
 	for (int d_index = 0; d_index < (int)this->datapoints.size(); d_index++) {
-		early_sum_variances += (this->datapoints[d_index].first - early_average_val)
-			* (this->datapoints[d_index].first - early_average_val);
-		later_sum_variances += (this->datapoints[d_index].second - later_average_val)
-			* (this->datapoints[d_index].second - later_average_val);
+		early_sum_variances += (this->datapoints[d_index].first.first - early_average_val)
+			* (this->datapoints[d_index].first.first - early_average_val);
+		later_sum_variances += (this->datapoints[d_index].first.second - later_average_val)
+			* (this->datapoints[d_index].first.second - later_average_val);
 	}
 	double early_standard_deviation = sqrt(early_sum_variances / (int)this->datapoints.size());
 	double later_standard_deviation = sqrt(later_sum_variances / (int)this->datapoints.size());
@@ -136,8 +119,8 @@ void Match::update(bool& is_still_needed) {
 	} else {
 		double sum_covariance = 0.0;
 		for (int d_index = 0; d_index < (int)this->datapoints.size(); d_index++) {
-			sum_covariance += (this->datapoints[d_index].first - early_average_val)
-				* (this->datapoints[d_index].second - later_average_val);
+			sum_covariance += (this->datapoints[d_index].first.first - early_average_val)
+				* (this->datapoints[d_index].first.second - later_average_val);
 		}
 		double covariance = sum_covariance / (int)this->datapoints.size();
 
@@ -151,12 +134,18 @@ void Match::update(bool& is_still_needed) {
 	}
 
 	if (is_still_needed) {
+		double sum_distance = 0.0;
+		for (int d_index = 0; d_index < (int)this->datapoints.size(); d_index++) {
+			sum_distance += this->datapoints[d_index].second;
+		}
+		this->average_distance = sum_distance / (int)this->datapoints.size();
+
 		Eigen::MatrixXd inputs(this->datapoints.size(), 2);
 		Eigen::VectorXd outputs(this->datapoints.size());
 		for (int d_index = 0; d_index < (int)this->datapoints.size(); d_index++) {
 			inputs(d_index, 0) = 1.0;
-			inputs(d_index, 1) = this->datapoints[d_index].second;
-			outputs(d_index) = this->datapoints[d_index].first;
+			inputs(d_index, 1) = this->datapoints[d_index].first.second;
+			outputs(d_index) = this->datapoints[d_index].first.first;
 		}
 
 		Eigen::VectorXd weights;
