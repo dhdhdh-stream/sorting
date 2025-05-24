@@ -44,6 +44,10 @@ Match::Match(ifstream& input_file,
 	getline(input_file, standard_deviation_line);
 	this->standard_deviation = stod(standard_deviation_line);
 
+	string average_distance_line;
+	getline(input_file, average_distance_line);
+	this->average_distance = stod(average_distance_line);
+
 	this->is_init = true;
 }
 
@@ -139,6 +143,9 @@ void Match::update(bool& is_still_needed) {
 			sum_distance += this->datapoints[d_index].second;
 		}
 		this->average_distance = sum_distance / (int)this->datapoints.size();
+		if (this->average_distance < MIN_STANDARD_DEVIATION) {
+			this->average_distance = 0.0;
+		}
 
 		Eigen::MatrixXd inputs(this->datapoints.size(), 2);
 		Eigen::VectorXd outputs(this->datapoints.size());
@@ -158,7 +165,13 @@ void Match::update(bool& is_still_needed) {
 		}
 
 		this->constant = weights(0);
+		if (this->constant < MIN_STANDARD_DEVIATION) {
+			this->constant = 0.0;
+		}
 		this->weight = weights(1);
+		if (this->weight < MIN_STANDARD_DEVIATION) {
+			this->weight = 0.0;
+		}
 
 		Eigen::VectorXd predicted = inputs * weights;
 		Eigen::VectorXd diff = outputs - predicted;
@@ -188,4 +201,6 @@ void Match::save(ofstream& output_file) {
 	output_file << this->weight << endl;
 	output_file << this->constant << endl;
 	output_file << this->standard_deviation << endl;
+
+	output_file << this->average_distance << endl;
 }
