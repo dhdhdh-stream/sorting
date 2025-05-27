@@ -30,6 +30,8 @@ public:
 
 	double sum_score;
 
+	std::vector<int> match_histories;
+
 	PassThroughExperiment(Scope* scope_context,
 						  AbstractNode* node_context,
 						  bool is_branch);
@@ -47,17 +49,23 @@ public:
 				  Problem* problem,
 				  RunHelper& run_helper,
 				  ScopeHistory* scope_history);
+	void back_activate(RunHelper& run_helper,
+					   ScopeHistory* scope_history);
 	void backprop(double target_val,
 				  RunHelper& run_helper);
 
 	void explore_activate(AbstractNode*& curr_node,
 						  Problem* problem,
-						  RunHelper& run_helper);
+						  RunHelper& run_helper,
+						  ScopeHistory* scope_history);
 	void explore_backprop(double target_val,
 						  RunHelper& run_helper);
 
 	void clean();
 	void add();
+
+private:
+	bool eval_match();
 };
 
 class PassThroughExperimentHistory : public AbstractExperimentHistory {

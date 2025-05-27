@@ -119,7 +119,8 @@ void CommitExperiment::activate(AbstractNode* experiment_node,
 		case COMMIT_EXPERIMENT_STATE_FIND_SAVE:
 			find_save_activate(curr_node,
 							   problem,
-							   run_helper);
+							   run_helper,
+							   scope_history);
 			break;
 		case COMMIT_EXPERIMENT_STATE_COMMIT_EXISTING_GATHER:
 			commit_existing_gather_activate(curr_node,
@@ -149,6 +150,24 @@ void CommitExperiment::activate(AbstractNode* experiment_node,
 			break;
 		#endif /* MDEBUG */
 		}
+	}
+}
+
+void CommitExperiment::back_activate(RunHelper& run_helper,
+									 ScopeHistory* scope_history) {
+	switch (this->state) {
+	case COMMIT_EXPERIMENT_STATE_FIND_SAVE:
+		if (scope_history->has_local_experiment) {
+			this->save_match_histories.push_back(
+				scope_history->num_matches - scope_history->experiment_num_matches);
+		}
+		break;
+	case COMMIT_EXPERIMENT_STATE_COMMIT_TRAIN_EXISTING:
+		if (scope_history->has_local_experiment) {
+			this->commit_existing_match_histories.push_back(
+				scope_history->num_matches - scope_history->experiment_num_matches);
+		}
+		break;
 	}
 }
 

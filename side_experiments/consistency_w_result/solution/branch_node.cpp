@@ -25,6 +25,9 @@ BranchNode::BranchNode() {
  	this->num_measure = 0;
  	this->sum_score = 0.0;
 
+ 	this->num_match_measure = 0;
+	this->sum_remaining_matches = 0.0;
+
 	#if defined(MDEBUG) && MDEBUG
 	this->verify_key = NULL;
 	#endif /* MDEBUG */
@@ -51,6 +54,9 @@ BranchNode::BranchNode(BranchNode* original) {
 	this->last_updated_run_index = -1;
  	this->num_measure = 0;
  	this->sum_score = 0.0;
+
+ 	this->num_match_measure = 0;
+	this->sum_remaining_matches = 0.0;
 
 	#if defined(MDEBUG) && MDEBUG
 	this->verify_key = NULL;
@@ -110,11 +116,18 @@ void BranchNode::clean() {
 
 	this->num_measure = 0;
 	this->sum_score = 0.0;
+
+	this->num_match_measure = 0;
+	this->sum_remaining_matches = 0.0;
 }
 
 void BranchNode::measure_update() {
 	this->average_score = this->sum_score / (double)this->num_measure;
 	this->average_instances_per_run = (double)this->num_measure / MEASURE_ITERS;
+}
+
+void BranchNode::measure_match_update() {
+	this->average_remaining_matches = this->sum_remaining_matches / (double)this->num_match_measure;
 }
 
 void BranchNode::save(ofstream& output_file) {

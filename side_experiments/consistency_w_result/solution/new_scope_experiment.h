@@ -46,6 +46,8 @@ public:
 	double test_location_score;
 	int test_location_count;
 
+	std::vector<int> test_match_histories;
+
 	std::vector<AbstractNode*> successful_location_starts;
 	std::vector<bool> successful_location_is_branch;
 	std::vector<ScopeNode*> successful_scope_nodes;
@@ -82,6 +84,7 @@ public:
 	void test_activate(AbstractNode*& curr_node,
 					   Problem* problem,
 					   RunHelper& run_helper,
+					   ScopeHistory* scope_history,
 					   NewScopeExperimentHistory* history);
 	void test_backprop(double target_val,
 					   RunHelper& run_helper,
@@ -98,6 +101,9 @@ public:
 
 	void clean();
 	void add();
+
+private:
+	bool eval_match();
 };
 
 class NewScopeExperimentHistory : public AbstractExperimentHistory {

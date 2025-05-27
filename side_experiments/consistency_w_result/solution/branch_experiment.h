@@ -53,6 +53,8 @@ public:
 	std::vector<std::vector<double>> factor_histories;
 	std::vector<double> i_target_val_histories;
 
+	std::vector<int> match_histories;
+
 	#if defined(MDEBUG) && MDEBUG
 	std::vector<Problem*> verify_problems;
 	std::vector<unsigned long> verify_seeds;
@@ -77,6 +79,8 @@ public:
 				  Problem* problem,
 				  RunHelper& run_helper,
 				  ScopeHistory* scope_history);
+	void back_activate(RunHelper& run_helper,
+					   ScopeHistory* scope_history);
 	void backprop(double target_val,
 				  RunHelper& run_helper);
 
@@ -118,6 +122,9 @@ public:
 
 	void clean();
 	void add();
+
+private:
+	bool eval_match();
 };
 
 class BranchExperimentHistory : public AbstractExperimentHistory {

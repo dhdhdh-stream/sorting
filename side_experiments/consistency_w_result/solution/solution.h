@@ -80,6 +80,7 @@ public:
 
 	void clean();
 	void measure_update();
+	void measure_match_update();
 
 	void save(std::string path,
 			  std::string name);

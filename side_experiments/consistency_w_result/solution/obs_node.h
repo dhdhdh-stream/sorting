@@ -64,6 +64,11 @@ public:
 						  RunHelper& run_helper,
 						  ScopeHistory* scope_history);
 
+	void measure_match_activate(AbstractNode*& curr_node,
+								Problem* problem,
+								RunHelper& run_helper,
+								ScopeHistory* scope_history);
+
 	void clean_inputs(Scope* scope,
 					  int node_id);
 	void clean_inputs(Scope* scope);
@@ -81,6 +86,7 @@ public:
 
 	void clean();
 	void measure_update();
+	void measure_match_update();
 
 	void gather_match_datapoints(ObsNodeHistory* history,
 								 ScopeHistory* scope_history);
@@ -99,6 +105,8 @@ public:
 
 	std::vector<bool> factor_initialized;
 	std::vector<double> factor_values;
+
+	int num_actions;
 
 	ObsNodeHistory(ObsNode* node);
 };

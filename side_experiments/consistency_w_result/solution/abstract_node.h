@@ -36,10 +36,16 @@ public:
 	int num_measure;
 	double sum_score;
 
+	double average_remaining_matches;
+
+	int num_match_measure;
+	double sum_remaining_matches;
+
 	virtual ~AbstractNode() {};
 
 	virtual void clean() = 0;
 	virtual void measure_update() = 0;
+	virtual void measure_match_update() = 0;
 
 	virtual void save(std::ofstream& output_file) = 0;
 	virtual void link(Solution* parent_solution) = 0;
@@ -51,6 +57,8 @@ public:
 	AbstractNode* node;
 
 	int index;
+
+	int num_matches;
 
 	virtual ~AbstractNodeHistory() {};
 };

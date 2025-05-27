@@ -10,14 +10,6 @@
 
 using namespace std;
 
-bool match_comp(Match first, Match second) {
-	if (first.average_distance > second.average_distance) {
-		return true;
-	} else {
-		return false;
-	}
-}
-
 void ObsNode::gather_match_datapoints(ObsNodeHistory* history,
 									  ScopeHistory* scope_history) {
 	if (!this->is_init) {
@@ -45,7 +37,7 @@ void ObsNode::gather_match_datapoints(ObsNodeHistory* history,
 				ObsNodeHistory* early_history = (ObsNodeHistory*)it->second;
 				this->matches[match_index].datapoints.push_back(
 					{{early_history->obs_history[0], history->obs_history[0]},
-						history->index - it->second->index});
+						history->num_actions - early_history->num_actions});
 			}
 		}
 	} else {
@@ -80,7 +72,7 @@ void ObsNode::gather_match_datapoints(ObsNodeHistory* history,
 
 				this->matches[m_index].datapoints.push_back(
 					{{early_history->obs_history[0], history->obs_history[0]},
-						history->index - it->second->index});
+						history->num_actions - early_history->num_actions});
 			}
 		}
 	}
@@ -100,6 +92,4 @@ void ObsNode::update_matches() {
 			}
 		}
 	}
-
-	sort(this->matches.begin(), this->matches.end(), match_comp);
 }

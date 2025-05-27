@@ -163,6 +163,13 @@ void Scope::measure_update() {
 	}
 }
 
+void Scope::measure_match_update() {
+	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
+			it != this->nodes.end(); it++) {
+		it->second->measure_match_update();
+	}
+}
+
 void Scope::save(ofstream& output_file) {
 	output_file << this->node_counter << endl;
 
@@ -336,6 +343,8 @@ void Scope::save_for_display(ofstream& output_file) {
 
 ScopeHistory::ScopeHistory(Scope* scope) {
 	this->scope = scope;
+
+	this->num_matches = 0;
 }
 
 ScopeHistory::~ScopeHistory() {

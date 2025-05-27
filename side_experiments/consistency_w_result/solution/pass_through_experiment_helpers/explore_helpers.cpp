@@ -31,8 +31,10 @@ const int PASS_THROUGH_EXPERIMENT_EXPLORE_ITERS = 100;
 void PassThroughExperiment::explore_activate(
 		AbstractNode*& curr_node,
 		Problem* problem,
-		RunHelper& run_helper) {
-	run_helper.check_match = true;
+		RunHelper& run_helper,
+		ScopeHistory* scope_history) {
+	scope_history->has_local_experiment = true;
+	scope_history->experiment_num_matches = scope_history->num_matches;
 
 	for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {
 		if (this->step_types[s_index] == STEP_TYPE_ACTION) {
@@ -51,6 +53,27 @@ void PassThroughExperiment::explore_activate(
 	curr_node = this->exit_next_node;
 }
 
+bool PassThroughExperiment::eval_match() {
+	int sum_num_matches = 0;
+	for (int h_index = 0; h_index < (int)this->match_histories.size(); h_index++) {
+		sum_num_matches += this->match_histories[h_index];
+	}
+	double average_num_matches = (double)sum_num_matches / (int)this->match_histories.size();
+
+	double target_num_matches;
+	if (this->exit_next_node == NULL) {
+		target_num_matches = 0.0;
+	} else {
+		target_num_matches = MIN_MATCH_RATIO * this->exit_next_node->average_remaining_matches;
+	}
+
+	if (average_num_matches < target_num_matches) {
+		return false;
+	} else {
+		return true;
+	}
+}
+
 void PassThroughExperiment::explore_backprop(
 		double target_val,
 		RunHelper& run_helper) {
@@ -65,11 +88,13 @@ void PassThroughExperiment::explore_backprop(
 			if (rand()%2 == 0) {
 			#else
 			double curr_score = this->sum_score / this->state_iter;
-			if (curr_score <= 0.0) {
+			if (curr_score <= 0.0 || !eval_match()) {
 			#endif /* MDEBUG */
 				is_fail = true;
 			} else {
 				this->sum_score = 0.0;
+
+				this->match_histories.clear();
 
 				this->state = PASS_THROUGH_EXPERIMENT_STATE_VERIFY_1ST;
 				this->state_iter = 0;
@@ -82,11 +107,13 @@ void PassThroughExperiment::explore_backprop(
 			if (rand()%2 == 0) {
 			#else
 			double curr_score = this->sum_score / this->state_iter;
-			if (curr_score <= 0.0) {
+			if (curr_score <= 0.0 || !eval_match()) {
 			#endif /* MDEBUG */
 				is_fail = true;
 			} else {
 				this->sum_score = 0.0;
+
+				this->match_histories.clear();
 
 				this->state = PASS_THROUGH_EXPERIMENT_STATE_VERIFY_2ND;
 				this->state_iter = 0;
@@ -99,7 +126,7 @@ void PassThroughExperiment::explore_backprop(
 			#if defined(MDEBUG) && MDEBUG
 			if (rand()%2 == 0) {
 			#else
-			if (curr_score <= 0.0) {
+			if (curr_score <= 0.0 || !eval_match()) {
 			#endif /* MDEBUG */
 				is_fail = true;
 			} else {
@@ -225,6 +252,8 @@ void PassThroughExperiment::explore_backprop(
 			}
 
 			this->sum_score = 0.0;
+
+			this->match_histories.clear();
 
 			this->state = PASS_THROUGH_EXPERIMENT_STATE_INITIAL;
 			this->state_iter = 0;

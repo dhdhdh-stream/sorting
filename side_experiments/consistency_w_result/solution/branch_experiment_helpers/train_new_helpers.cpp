@@ -33,7 +33,8 @@ void BranchExperiment::train_new_activate(
 		RunHelper& run_helper,
 		ScopeHistory* scope_history,
 		BranchExperimentHistory* history) {
-	run_helper.check_match = true;
+	scope_history->has_local_experiment = true;
+	scope_history->experiment_num_matches = scope_history->num_matches;
 
 	run_helper.num_actions++;
 
@@ -80,6 +81,27 @@ void BranchExperiment::train_new_activate(
 	}
 }
 
+bool BranchExperiment::eval_match() {
+	int sum_num_matches = 0;
+	for (int h_index = 0; h_index < (int)this->match_histories.size(); h_index++) {
+		sum_num_matches += this->match_histories[h_index];
+	}
+	double average_num_matches = (double)sum_num_matches / (int)this->match_histories.size();
+
+	double target_num_matches;
+	if (this->best_exit_next_node == NULL) {
+		target_num_matches = 0.0;
+	} else {
+		target_num_matches = MIN_MATCH_RATIO * this->best_exit_next_node->average_remaining_matches;
+	}
+
+	if (average_num_matches < target_num_matches) {
+		return false;
+	} else {
+		return true;
+	}
+}
+
 void BranchExperiment::train_new_backprop(
 		double target_val,
 		RunHelper& run_helper,
@@ -90,6 +112,11 @@ void BranchExperiment::train_new_backprop(
 
 	this->state_iter++;
 	if (this->state_iter >= TRAIN_NEW_NUM_DATAPOINTS) {
+		if (!eval_match()) {
+			this->result = EXPERIMENT_RESULT_FAIL;
+			return;
+		}
+
 		{
 			default_random_engine generator_copy = generator;
 			shuffle(this->input_histories.begin(), this->input_histories.end(), generator_copy);

@@ -20,6 +20,9 @@ ScopeNode::ScopeNode() {
 	this->last_updated_run_index = -1;
  	this->num_measure = 0;
  	this->sum_score = 0.0;
+
+ 	this->num_match_measure = 0;
+	this->sum_remaining_matches = 0.0;
 }
 
 ScopeNode::ScopeNode(ScopeNode* original,
@@ -39,6 +42,9 @@ ScopeNode::ScopeNode(ScopeNode* original,
 	this->last_updated_run_index = -1;
  	this->num_measure = 0;
  	this->sum_score = 0.0;
+
+ 	this->num_match_measure = 0;
+	this->sum_remaining_matches = 0.0;
 }
 
 ScopeNode::~ScopeNode() {
@@ -73,11 +79,18 @@ void ScopeNode::clean() {
 
 	this->num_measure = 0;
 	this->sum_score = 0.0;
+
+	this->num_match_measure = 0;
+	this->sum_remaining_matches = 0.0;
 }
 
 void ScopeNode::measure_update() {
 	this->average_score = this->sum_score / (double)this->num_measure;
 	this->average_instances_per_run = (double)this->num_measure / MEASURE_ITERS;
+}
+
+void ScopeNode::measure_match_update() {
+	this->average_remaining_matches = this->sum_remaining_matches / (double)this->num_match_measure;
 }
 
 void ScopeNode::save(ofstream& output_file) {

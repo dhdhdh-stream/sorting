@@ -13,6 +13,8 @@
 
 using namespace std;
 
+const double MIN_AVERAGE_DISTANCE = 5.0;
+
 Match::Match() {
 	// do nothing
 }
@@ -93,6 +95,16 @@ void Match::update(bool& is_still_needed) {
 		return;
 	}
 
+	double sum_distance = 0.0;
+	for (int d_index = 0; d_index < (int)this->datapoints.size(); d_index++) {
+		sum_distance += this->datapoints[d_index].second;
+	}
+	this->average_distance = sum_distance / (int)this->datapoints.size();
+	if (this->average_distance < MIN_AVERAGE_DISTANCE) {
+		is_still_needed = false;
+		return;
+	}
+
 	double early_sum_vals = 0.0;
 	double later_sum_vals = 0.0;
 	for (int d_index = 0; d_index < (int)this->datapoints.size(); d_index++) {
@@ -138,15 +150,6 @@ void Match::update(bool& is_still_needed) {
 	}
 
 	if (is_still_needed) {
-		double sum_distance = 0.0;
-		for (int d_index = 0; d_index < (int)this->datapoints.size(); d_index++) {
-			sum_distance += this->datapoints[d_index].second;
-		}
-		this->average_distance = sum_distance / (int)this->datapoints.size();
-		if (this->average_distance < MIN_STANDARD_DEVIATION) {
-			this->average_distance = 0.0;
-		}
-
 		Eigen::MatrixXd inputs(this->datapoints.size(), 2);
 		Eigen::VectorXd outputs(this->datapoints.size());
 		for (int d_index = 0; d_index < (int)this->datapoints.size(); d_index++) {

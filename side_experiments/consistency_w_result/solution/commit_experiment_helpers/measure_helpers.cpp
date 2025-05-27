@@ -24,7 +24,8 @@ void CommitExperiment::measure_activate(
 		Problem* problem,
 		RunHelper& run_helper,
 		ScopeHistory* scope_history) {
-	run_helper.check_match = true;
+	scope_history->has_local_experiment = true;
+	scope_history->experiment_num_matches = scope_history->num_matches;
 
 	for (int n_index = 0; n_index < this->step_iter; n_index++) {
 		switch (this->new_nodes[n_index]->type) {

@@ -18,6 +18,9 @@ ActionNode::ActionNode() {
 	this->last_updated_run_index = -1;
  	this->num_measure = 0;
  	this->sum_score = 0.0;
+
+ 	this->num_match_measure = 0;
+	this->sum_remaining_matches = 0.0;
 }
 
 ActionNode::ActionNode(ActionNode* original) {
@@ -36,6 +39,9 @@ ActionNode::ActionNode(ActionNode* original) {
 	this->last_updated_run_index = -1;
  	this->num_measure = 0;
  	this->sum_score = 0.0;
+
+ 	this->num_match_measure = 0;
+	this->sum_remaining_matches = 0.0;
 }
 
 ActionNode::~ActionNode() {
@@ -52,11 +58,18 @@ void ActionNode::clean() {
 
 	this->num_measure = 0;
 	this->sum_score = 0.0;
+
+	this->num_match_measure = 0;
+	this->sum_remaining_matches = 0.0;
 }
 
 void ActionNode::measure_update() {
 	this->average_score = this->sum_score / (double)this->num_measure;
 	this->average_instances_per_run = (double)this->num_measure / MEASURE_ITERS;
+}
+
+void ActionNode::measure_match_update() {
+	this->average_remaining_matches = this->sum_remaining_matches / (double)this->num_match_measure;
 }
 
 void ActionNode::save(ofstream& output_file) {

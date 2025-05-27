@@ -99,6 +99,7 @@ void NewScopeExperiment::activate(AbstractNode* experiment_node,
 					test_activate(curr_node,
 								  problem,
 								  run_helper,
+								  scope_history,
 								  history);
 				} else {
 					this->successful_scope_nodes[location_index]->experiment_activate(
@@ -124,6 +125,11 @@ void NewScopeExperiment::activate(AbstractNode* experiment_node,
 
 void NewScopeExperiment::back_activate(RunHelper& run_helper,
 									   ScopeHistory* scope_history) {
+	if (scope_history->has_local_experiment) {
+		this->test_match_histories.push_back(
+			scope_history->num_matches - scope_history->experiment_num_matches);
+	}
+
 	NewScopeExperimentHistory* history = (NewScopeExperimentHistory*)run_helper.experiment_history;
 
 	switch (this->state) {
@@ -242,6 +248,8 @@ void NewScopeExperiment::backprop(double target_val,
 				this->test_location_state = LOCATION_STATE_MEASURE;
 				this->test_location_score = 0.0;
 				this->test_location_count = 0;
+
+				this->test_match_histories.clear();
 
 				history->potential_start->experiment = this;
 			}

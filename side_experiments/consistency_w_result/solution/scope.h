@@ -56,6 +56,10 @@ public:
 						  RunHelper& run_helper,
 						  ScopeHistory* scope_history);
 
+	void measure_match_activate(Problem* problem,
+								RunHelper& run_helper,
+								ScopeHistory* scope_history);
+
 	#if defined(MDEBUG) && MDEBUG
 	void new_scope_capture_verify_activate(Problem* problem,
 										   RunHelper& run_helper,
@@ -83,6 +87,7 @@ public:
 
 	void clean();
 	void measure_update();
+	void measure_match_update();
 
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file,
@@ -100,6 +105,11 @@ public:
 	Scope* scope;
 
 	std::map<int, AbstractNodeHistory*> node_histories;
+
+	int num_matches;
+
+	bool has_local_experiment;
+	int experiment_num_matches;
 
 	ScopeHistory(Scope* scope);
 	~ScopeHistory();

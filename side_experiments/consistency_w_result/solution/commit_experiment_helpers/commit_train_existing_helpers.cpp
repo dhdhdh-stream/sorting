@@ -33,8 +33,6 @@ void CommitExperiment::commit_train_existing_activate(
 		RunHelper& run_helper,
 		ScopeHistory* scope_history,
 		CommitExperimentHistory* history) {
-	run_helper.check_match = true;
-
 	for (int n_index = 0; n_index < this->step_iter; n_index++) {
 		switch (this->new_nodes[n_index]->type) {
 		case NODE_TYPE_ACTION:
@@ -69,6 +67,9 @@ void CommitExperiment::commit_train_existing_activate(
 	this->num_instances_until_target--;
 
 	if (this->num_instances_until_target <= 0) {
+		scope_history->has_local_experiment = true;
+		scope_history->experiment_num_matches = scope_history->num_matches;
+
 		history->instance_count++;
 
 		vector<double> input_vals(this->commit_existing_inputs.size());
@@ -140,6 +141,27 @@ void CommitExperiment::commit_train_existing_activate(
 	}
 }
 
+bool CommitExperiment::commit_existing_eval_match() {
+	int sum_num_matches = 0;
+	for (int h_index = 0; h_index < (int)this->commit_existing_match_histories.size(); h_index++) {
+		sum_num_matches += this->commit_existing_match_histories[h_index];
+	}
+	double average_num_matches = (double)sum_num_matches / (int)this->commit_existing_match_histories.size();
+
+	double target_num_matches;
+	if (this->best_exit_next_node == NULL) {
+		target_num_matches = 0.0;
+	} else {
+		target_num_matches = MIN_MATCH_RATIO * this->best_exit_next_node->average_remaining_matches;
+	}
+
+	if (average_num_matches < target_num_matches) {
+		return false;
+	} else {
+		return true;
+	}
+}
+
 void CommitExperiment::commit_train_existing_backprop(
 		double target_val,
 		RunHelper& run_helper,
@@ -150,6 +172,11 @@ void CommitExperiment::commit_train_existing_backprop(
 
 	this->state_iter++;
 	if (this->state_iter >= TRAIN_EXISTING_NUM_DATAPOINTS) {
+		if (!commit_existing_eval_match()) {
+			this->result = EXPERIMENT_RESULT_FAIL;
+			return;
+		}
+
 		{
 			default_random_engine generator_copy = generator;
 			shuffle(this->input_histories.begin(), this->input_histories.end(), generator_copy);

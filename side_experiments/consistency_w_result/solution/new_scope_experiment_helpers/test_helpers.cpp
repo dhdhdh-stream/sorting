@@ -29,10 +29,12 @@ void NewScopeExperiment::test_activate(
 		AbstractNode*& curr_node,
 		Problem* problem,
 		RunHelper& run_helper,
+		ScopeHistory* scope_history,
 		NewScopeExperimentHistory* history) {
 	history->hit_test = true;
 
-	run_helper.check_match = true;
+	scope_history->has_local_experiment = true;
+	scope_history->experiment_num_matches = scope_history->num_matches;
 
 	ScopeHistory* inner_scope_history = new ScopeHistory(this->new_scope);
 	this->new_scope->experiment_activate(problem,
@@ -41,6 +43,27 @@ void NewScopeExperiment::test_activate(
 	delete inner_scope_history;
 
 	curr_node = this->test_location_exit;
+}
+
+bool NewScopeExperiment::eval_match() {
+	int sum_num_matches = 0;
+	for (int h_index = 0; h_index < (int)this->test_match_histories.size(); h_index++) {
+		sum_num_matches += this->test_match_histories[h_index];
+	}
+	double average_num_matches = (double)sum_num_matches / (int)this->test_match_histories.size();
+
+	double target_num_matches;
+	if (this->test_location_exit == NULL) {
+		target_num_matches = 0.0;
+	} else {
+		target_num_matches = MIN_MATCH_RATIO * this->test_location_exit->average_remaining_matches;
+	}
+
+	if (average_num_matches < target_num_matches) {
+		return false;
+	} else {
+		return true;
+	}
 }
 
 void NewScopeExperiment::test_backprop(
@@ -58,11 +81,13 @@ void NewScopeExperiment::test_backprop(
 			#if defined(MDEBUG) && MDEBUG
 			if (rand()%2 == 0) {
 			#else
-			if (this->test_location_score > MATCH_SCORE) {
+			if (this->test_location_score > MATCH_SCORE && eval_match()) {
 			#endif /* MDEBUG */
 				this->test_location_state = LOCATION_STATE_VERIFY_1ST;
 				this->test_location_score = 0.0;
 				this->test_location_count = 0;
+
+				this->test_match_histories.clear();
 			} else {
 				is_fail = true;
 			}
@@ -77,11 +102,13 @@ void NewScopeExperiment::test_backprop(
 			#if defined(MDEBUG) && MDEBUG
 			if (rand()%2 == 0) {
 			#else
-			if (this->test_location_score > MATCH_SCORE) {
+			if (this->test_location_score > MATCH_SCORE && eval_match()) {
 			#endif /* MDEBUG */
 				this->test_location_state = LOCATION_STATE_VERIFY_2ND;
 				this->test_location_score = 0.0;
 				this->test_location_count = 0;
+
+				this->test_match_histories.clear();
 			} else {
 				is_fail = true;
 			}
@@ -96,7 +123,7 @@ void NewScopeExperiment::test_backprop(
 			#if defined(MDEBUG) && MDEBUG
 			if (rand()%2 == 0) {
 			#else
-			if (this->test_location_score > MATCH_SCORE) {
+			if (this->test_location_score > MATCH_SCORE && eval_match()) {
 			#endif /* MDEBUG */
 				double new_score = this->test_location_score / NEW_SCOPE_VERIFY_2ND_NUM_DATAPOINTS;
 				// this->improvement += new_score;

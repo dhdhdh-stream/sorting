@@ -263,6 +263,12 @@ void Solution::measure_update() {
 	}
 }
 
+void Solution::measure_match_update() {
+	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
+		this->scopes[s_index]->measure_match_update();
+	}
+}
+
 void Solution::save(string path,
 					string name) {
 	ofstream output_file;

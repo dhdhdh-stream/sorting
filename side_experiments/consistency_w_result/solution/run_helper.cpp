@@ -10,8 +10,6 @@ RunHelper::RunHelper() {
 	this->num_actions = 0;
 
 	this->experiment_history = NULL;
-
-	this->check_match = false;
 }
 
 RunHelper::~RunHelper() {

@@ -27,6 +27,9 @@ ObsNode::ObsNode() {
  	this->num_measure = 0;
  	this->sum_score = 0.0;
 
+ 	this->num_match_measure = 0;
+	this->sum_remaining_matches = 0.0;
+
  	this->sum_obs_average = 0.0;
  	this->sum_obs_variance = 0.0;
  	this->obs_count = 0;
@@ -64,6 +67,9 @@ ObsNode::ObsNode(ObsNode* original,
 	this->last_updated_run_index = -1;
  	this->num_measure = 0;
  	this->sum_score = 0.0;
+
+ 	this->num_match_measure = 0;
+	this->sum_remaining_matches = 0.0;
 
  	this->sum_obs_average = 0.0;
  	this->sum_obs_variance = 0.0;
@@ -158,6 +164,9 @@ void ObsNode::clean() {
 	this->num_measure = 0;
 	this->sum_score = 0.0;
 
+	this->num_match_measure = 0;
+	this->sum_remaining_matches = 0.0;
+
 	for (int m_index = 0; m_index < (int)this->matches.size(); m_index++) {
 		this->matches[m_index].clean();
 	}
@@ -170,6 +179,10 @@ void ObsNode::clean() {
 void ObsNode::measure_update() {
 	this->average_score = this->sum_score / (double)this->num_measure;
 	this->average_instances_per_run = (double)this->num_measure / MEASURE_ITERS;
+}
+
+void ObsNode::measure_match_update() {
+	this->average_remaining_matches = this->sum_remaining_matches / (double)this->num_match_measure;
 }
 
 void ObsNode::save(ofstream& output_file) {

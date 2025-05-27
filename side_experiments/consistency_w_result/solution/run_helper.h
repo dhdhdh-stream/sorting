@@ -17,7 +17,6 @@ public:
 
 	AbstractExperimentHistory* experiment_history;
 
-	bool check_match;
 	std::vector<bool> match_factors;
 
 	#if defined(MDEBUG) && MDEBUG

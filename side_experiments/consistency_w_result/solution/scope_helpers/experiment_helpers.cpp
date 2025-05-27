@@ -61,12 +61,9 @@ void Scope::experiment_activate(Problem* problem,
 		run_helper.num_actions++;
 	}
 
-	if (this->new_scope_experiment != NULL) {
-		if (run_helper.experiment_history != NULL
-				&& run_helper.experiment_history->experiment == this->new_scope_experiment) {
-			this->new_scope_experiment->back_activate(
-				run_helper,
-				history);
-		}
+	if (run_helper.experiment_history != NULL) {
+		run_helper.experiment_history->experiment->back_activate(
+			run_helper,
+			history);
 	}
 }

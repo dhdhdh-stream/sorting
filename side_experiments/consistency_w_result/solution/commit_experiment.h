@@ -65,6 +65,9 @@ public:
 	std::vector<std::vector<double>> factor_histories;
 	std::vector<double> i_target_val_histories;
 
+	std::vector<int> save_match_histories;
+	std::vector<int> commit_existing_match_histories;
+
 	#if defined(MDEBUG) && MDEBUG
 	std::vector<Problem*> verify_problems;
 	std::vector<unsigned long> verify_seeds;
@@ -89,6 +92,8 @@ public:
 				  Problem* problem,
 				  RunHelper& run_helper,
 				  ScopeHistory* scope_history);
+	void back_activate(RunHelper& run_helper,
+					   ScopeHistory* scope_history);
 	void backprop(double target_val,
 				  RunHelper& run_helper);
 
@@ -103,7 +108,8 @@ public:
 
 	void find_save_activate(AbstractNode*& curr_node,
 							Problem* problem,
-							RunHelper& run_helper);
+							RunHelper& run_helper,
+							ScopeHistory* scope_history);
 	void find_save_backprop(double target_val,
 							RunHelper& run_helper);
 
@@ -154,6 +160,10 @@ public:
 
 	void clean();
 	void add();
+
+private:
+	bool save_eval_match();
+	bool commit_existing_eval_match();
 };
 
 class CommitExperimentHistory : public AbstractExperimentHistory {

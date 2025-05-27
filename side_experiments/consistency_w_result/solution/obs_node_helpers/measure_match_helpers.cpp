@@ -2,20 +2,25 @@
 
 #include <iostream>
 
-#include "abstract_experiment.h"
 #include "constants.h"
 #include "factor.h"
-#include "problem.h"
+#include "globals.h"
 #include "scope.h"
+#include "solution.h"
+#include "problem.h"
 
 using namespace std;
 
-void ObsNode::experiment_activate(AbstractNode*& curr_node,
-								  Problem* problem,
-								  RunHelper& run_helper,
-								  ScopeHistory* scope_history) {
+void ObsNode::measure_match_activate(AbstractNode*& curr_node,
+									 Problem* problem,
+									 RunHelper& run_helper,
+									 ScopeHistory* scope_history) {
 	ObsNodeHistory* history = new ObsNodeHistory(this);
 	history->index = (int)scope_history->node_histories.size();
+	history->num_matches = scope_history->num_matches;
+	/**
+	 * - set early to include local matches
+	 */
 	scope_history->node_histories[this->id] = history;
 
 	vector<double> obs = problem->get_observations();
@@ -26,13 +31,7 @@ void ObsNode::experiment_activate(AbstractNode*& curr_node,
 
 	if (this->is_fixed_point) {
 		if (abs(obs[0] - this->average) < MIN_STANDARD_DEVIATION) {
-			run_helper.match_factors.push_back(true);
-
-			if (scope_history->has_local_experiment) {
-				scope_history->num_matches++;
-			}
-		} else {
-			run_helper.match_factors.push_back(false);
+			scope_history->num_matches++;
 		}
 	}
 	/**
@@ -46,26 +45,11 @@ void ObsNode::experiment_activate(AbstractNode*& curr_node,
 
 			double predicted_score = obs[0] * this->matches[m_index].weight + this->matches[m_index].constant;
 			if (abs(early_history->obs_history[0] - predicted_score) < MIN_STANDARD_DEVIATION) {
-				run_helper.match_factors.push_back(true);
-
-				if (scope_history->has_local_experiment) {
-					scope_history->num_matches++;
-				}
-			} else {
-				run_helper.match_factors.push_back(false);
+				scope_history->num_matches++;
 			}
 		}
 	}
 
-	curr_node = this->next_node;
 
-	if (this->experiment != NULL) {
-		this->experiment->activate(
-			this,
-			false,
-			curr_node,
-			problem,
-			run_helper,
-			scope_history);
-	}
+	curr_node = this->next_node;
 }
