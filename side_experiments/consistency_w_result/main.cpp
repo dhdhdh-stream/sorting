@@ -3,6 +3,9 @@
 
 // TODO: for CommitExperiment, can separate commit from information gather?
 
+// TODO: once you lose certainty, hard to gain it back
+// - if you get into a mixed situation, branches coming from it will also be in mixed situation
+
 #include <chrono>
 #include <iostream>
 #include <map>

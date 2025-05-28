@@ -68,7 +68,7 @@ void CommitExperiment::commit_train_existing_activate(
 
 	if (this->num_instances_until_target <= 0) {
 		scope_history->has_local_experiment = true;
-		scope_history->experiment_num_matches = scope_history->num_matches;
+		scope_history->experiment_num_matches = run_helper.num_matches;
 
 		history->instance_count++;
 

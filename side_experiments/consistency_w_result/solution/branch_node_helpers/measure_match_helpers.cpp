@@ -16,7 +16,7 @@ void BranchNode::measure_match_activate(AbstractNode*& curr_node,
 										ScopeHistory* scope_history) {
 	BranchNodeHistory* history = new BranchNodeHistory(this);
 	history->index = (int)scope_history->node_histories.size();
-	history->num_matches = scope_history->num_matches;
+	history->num_matches = run_helper.num_matches;
 	scope_history->node_histories[this->id] = history;
 
 	double sum_vals = this->average_val;

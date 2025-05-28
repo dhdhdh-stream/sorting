@@ -344,7 +344,7 @@ void Scope::save_for_display(ofstream& output_file) {
 ScopeHistory::ScopeHistory(Scope* scope) {
 	this->scope = scope;
 
-	this->num_matches = 0;
+	this->has_local_experiment = false;
 }
 
 ScopeHistory::~ScopeHistory() {

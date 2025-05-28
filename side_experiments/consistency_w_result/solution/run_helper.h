@@ -14,9 +14,11 @@ public:
 	double result;
 
 	int num_actions;
+	int num_true_actions;
 
 	AbstractExperimentHistory* experiment_history;
 
+	int num_matches;
 	std::vector<bool> match_factors;
 
 	#if defined(MDEBUG) && MDEBUG

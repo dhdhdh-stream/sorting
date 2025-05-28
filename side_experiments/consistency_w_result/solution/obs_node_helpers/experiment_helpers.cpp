@@ -29,15 +29,12 @@ void ObsNode::experiment_activate(AbstractNode*& curr_node,
 			run_helper.match_factors.push_back(true);
 
 			if (scope_history->has_local_experiment) {
-				scope_history->num_matches++;
+				run_helper.num_matches++;
 			}
 		} else {
 			run_helper.match_factors.push_back(false);
 		}
 	}
-	/**
-	 * - check every match to check on all earlier nodes
-	 */
 	for (int m_index = 0; m_index < (int)this->matches.size(); m_index++) {
 		map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories
 			.find(this->matches[m_index].node_context[0]);
@@ -49,11 +46,13 @@ void ObsNode::experiment_activate(AbstractNode*& curr_node,
 				run_helper.match_factors.push_back(true);
 
 				if (scope_history->has_local_experiment) {
-					scope_history->num_matches++;
+					run_helper.num_matches++;
 				}
 			} else {
 				run_helper.match_factors.push_back(false);
 			}
+
+			break;
 		}
 	}
 

@@ -88,7 +88,7 @@ void BranchExperiment::back_activate(RunHelper& run_helper,
 	if (this->state == BRANCH_EXPERIMENT_STATE_TRAIN_NEW) {
 		if (scope_history->has_local_experiment) {
 			this->match_histories.push_back(
-				scope_history->num_matches - scope_history->experiment_num_matches);
+				run_helper.num_matches - scope_history->experiment_num_matches);
 		}
 	}
 }

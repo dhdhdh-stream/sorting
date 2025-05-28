@@ -36,6 +36,8 @@ public:
 	double sum_obs_variance;
 	int obs_count;
 
+	bool is_match_start;
+
 	ObsNode();
 	ObsNode(ObsNode* original,
 			Solution* parent_solution);

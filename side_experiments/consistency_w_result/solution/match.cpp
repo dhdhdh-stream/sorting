@@ -168,11 +168,11 @@ void Match::update(bool& is_still_needed) {
 		}
 
 		this->constant = weights(0);
-		if (this->constant < MIN_STANDARD_DEVIATION) {
+		if (abs(this->constant) < MIN_STANDARD_DEVIATION) {
 			this->constant = 0.0;
 		}
 		this->weight = weights(1);
-		if (this->weight < MIN_STANDARD_DEVIATION) {
+		if (abs(this->weight) < MIN_STANDARD_DEVIATION) {
 			this->weight = 0.0;
 		}
 
@@ -184,6 +184,10 @@ void Match::update(bool& is_still_needed) {
 			sum_variance += diff(d_index) * diff(d_index);
 		}
 		this->standard_deviation = sqrt(sum_variance / (int)this->datapoints.size());
+		// temp
+		if (this->standard_deviation > MIN_STANDARD_DEVIATION) {
+			throw invalid_argument("this->standard_deviation > MIN_STANDARD_DEVIATION");
+		}
 		if (this->standard_deviation < MIN_STANDARD_DEVIATION) {
 			this->standard_deviation = MIN_STANDARD_DEVIATION;
 		}

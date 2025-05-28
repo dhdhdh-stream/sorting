@@ -50,7 +50,7 @@ void PassThroughExperiment::back_activate(RunHelper& run_helper,
 										  ScopeHistory* scope_history) {
 	if (scope_history->has_local_experiment) {
 		this->match_histories.push_back(
-			scope_history->num_matches - scope_history->experiment_num_matches);
+			run_helper.num_matches - scope_history->experiment_num_matches);
 	}
 }
 

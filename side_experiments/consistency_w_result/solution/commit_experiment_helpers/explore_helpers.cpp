@@ -95,7 +95,7 @@ void CommitExperiment::explore_activate(
 		}
 
 		scope_history->has_local_experiment = true;
-		scope_history->experiment_num_matches = scope_history->num_matches;
+		scope_history->experiment_num_matches = run_helper.num_matches;
 
 		for (int s_index = 0; s_index < (int)this->curr_step_types.size(); s_index++) {
 			if (this->curr_step_types[s_index] == STEP_TYPE_ACTION) {

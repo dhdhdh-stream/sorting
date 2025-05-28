@@ -34,7 +34,7 @@ void BranchExperiment::train_new_activate(
 		ScopeHistory* scope_history,
 		BranchExperimentHistory* history) {
 	scope_history->has_local_experiment = true;
-	scope_history->experiment_num_matches = scope_history->num_matches;
+	scope_history->experiment_num_matches = run_helper.num_matches;
 
 	run_helper.num_actions++;
 
@@ -426,6 +426,8 @@ void BranchExperiment::train_new_backprop(
 
 					new_obs_node->average_score = this->node_context->average_score;
 					new_obs_node->average_instances_per_run = this->node_context->average_instances_per_run;
+
+					new_obs_node->average_remaining_matches = this->node_context->average_remaining_matches;
 
 					this->node_context->experiment = NULL;
 

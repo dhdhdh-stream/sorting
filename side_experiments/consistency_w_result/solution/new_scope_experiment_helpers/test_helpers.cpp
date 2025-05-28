@@ -34,7 +34,7 @@ void NewScopeExperiment::test_activate(
 	history->hit_test = true;
 
 	scope_history->has_local_experiment = true;
-	scope_history->experiment_num_matches = scope_history->num_matches;
+	scope_history->experiment_num_matches = run_helper.num_matches;
 
 	ScopeHistory* inner_scope_history = new ScopeHistory(this->new_scope);
 	this->new_scope->experiment_activate(problem,

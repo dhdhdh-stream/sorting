@@ -17,7 +17,7 @@ void ObsNode::measure_match_activate(AbstractNode*& curr_node,
 									 ScopeHistory* scope_history) {
 	ObsNodeHistory* history = new ObsNodeHistory(this);
 	history->index = (int)scope_history->node_histories.size();
-	history->num_matches = scope_history->num_matches;
+	history->num_matches = run_helper.num_matches;
 	/**
 	 * - set early to include local matches
 	 */
@@ -31,12 +31,13 @@ void ObsNode::measure_match_activate(AbstractNode*& curr_node,
 
 	if (this->is_fixed_point) {
 		if (abs(obs[0] - this->average) < MIN_STANDARD_DEVIATION) {
-			scope_history->num_matches++;
+			run_helper.match_factors.push_back(true);
+
+			run_helper.num_matches++;
+		} else {
+			run_helper.match_factors.push_back(false);
 		}
 	}
-	/**
-	 * - check every match to check on all earlier nodes
-	 */
 	for (int m_index = 0; m_index < (int)this->matches.size(); m_index++) {
 		map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories
 			.find(this->matches[m_index].node_context[0]);
@@ -45,11 +46,16 @@ void ObsNode::measure_match_activate(AbstractNode*& curr_node,
 
 			double predicted_score = obs[0] * this->matches[m_index].weight + this->matches[m_index].constant;
 			if (abs(early_history->obs_history[0] - predicted_score) < MIN_STANDARD_DEVIATION) {
-				scope_history->num_matches++;
+				run_helper.match_factors.push_back(true);
+
+				run_helper.num_matches++;
+			} else {
+				run_helper.match_factors.push_back(false);
 			}
+
+			break;
 		}
 	}
-
 
 	curr_node = this->next_node;
 }

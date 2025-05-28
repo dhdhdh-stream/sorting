@@ -106,8 +106,6 @@ public:
 
 	std::map<int, AbstractNodeHistory*> node_histories;
 
-	int num_matches;
-
 	bool has_local_experiment;
 	int experiment_num_matches;
 

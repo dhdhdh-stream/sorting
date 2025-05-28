@@ -69,7 +69,14 @@ void ActionNode::measure_update() {
 }
 
 void ActionNode::measure_match_update() {
-	this->average_remaining_matches = this->sum_remaining_matches / (double)this->num_match_measure;
+	if (this->num_match_measure == 0) {
+		/**
+		 * - simply set to 0.0
+		 */
+		this->average_remaining_matches = 0.0;
+	} else {
+		this->average_remaining_matches = this->sum_remaining_matches / (double)this->num_match_measure;
+	}
 }
 
 void ActionNode::save(ofstream& output_file) {
@@ -84,6 +91,8 @@ void ActionNode::save(ofstream& output_file) {
 
 	output_file << this->average_score << endl;
 	output_file << this->average_instances_per_run << endl;
+
+	output_file << this->average_remaining_matches << endl;
 }
 
 void ActionNode::load(ifstream& input_file) {
@@ -111,6 +120,10 @@ void ActionNode::load(ifstream& input_file) {
 	string average_instances_per_run_line;
 	getline(input_file, average_instances_per_run_line);
 	this->average_instances_per_run = stod(average_instances_per_run_line);
+
+	string average_remaining_matches_line;
+	getline(input_file, average_remaining_matches_line);
+	this->average_remaining_matches = stod(average_remaining_matches_line);
 }
 
 void ActionNode::link(Solution* parent_solution) {

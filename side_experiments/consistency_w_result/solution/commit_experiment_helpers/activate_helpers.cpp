@@ -159,13 +159,13 @@ void CommitExperiment::back_activate(RunHelper& run_helper,
 	case COMMIT_EXPERIMENT_STATE_FIND_SAVE:
 		if (scope_history->has_local_experiment) {
 			this->save_match_histories.push_back(
-				scope_history->num_matches - scope_history->experiment_num_matches);
+				run_helper.num_matches - scope_history->experiment_num_matches);
 		}
 		break;
 	case COMMIT_EXPERIMENT_STATE_COMMIT_TRAIN_EXISTING:
 		if (scope_history->has_local_experiment) {
 			this->commit_existing_match_histories.push_back(
-				scope_history->num_matches - scope_history->experiment_num_matches);
+				run_helper.num_matches - scope_history->experiment_num_matches);
 		}
 		break;
 	}

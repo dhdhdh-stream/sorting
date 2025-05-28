@@ -44,7 +44,7 @@ const double MATCH_MIN_PCC = 1.0;
 
 const double MIN_MATCH_RATIO = 0.8;
 
-const double MAX_MISMATCH_PERCENTAGE = 0.2;
+const double MAX_MISMATCH_PERCENTAGE = 0.1;
 
 const double NEW_SCOPE_EXPERIMENT_MIN_INSTANCES_PER_RUN = 0.2;
 

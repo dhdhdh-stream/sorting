@@ -35,7 +35,7 @@ void CommitExperiment::find_save_activate(
 		RunHelper& run_helper,
 		ScopeHistory* scope_history) {
 	scope_history->has_local_experiment = true;
-	scope_history->experiment_num_matches = scope_history->num_matches;
+	scope_history->experiment_num_matches = run_helper.num_matches;
 
 	for (int s_index = 0; s_index < this->step_iter; s_index++) {
 		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {

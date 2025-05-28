@@ -65,6 +65,6 @@ void Scope::measure_match_activate(Problem* problem,
 			it != history->node_histories.end(); it++) {
 		it->second->node->num_match_measure++;
 		it->second->node->sum_remaining_matches +=
-			history->num_matches - it->second->num_matches;
+			run_helper.num_matches - it->second->num_matches;
 	}
 }
