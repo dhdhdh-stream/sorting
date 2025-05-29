@@ -14,8 +14,6 @@ using namespace std;
 ObsNode::ObsNode() {
 	this->type = NODE_TYPE_OBS;
 
-	this->is_used = false;
-
 	this->experiment = NULL;
 
 	this->last_updated_run_index = -1;
@@ -26,8 +24,6 @@ ObsNode::ObsNode() {
 ObsNode::ObsNode(ObsNode* original,
 				 Solution* parent_solution) {
 	this->type = NODE_TYPE_OBS;
-
-	this->is_used = original->is_used;
 
 	for (int f_index = 0; f_index < (int)original->factors.size(); f_index++) {
 		Factor* factor = new Factor(original->factors[f_index],
@@ -67,6 +63,40 @@ void ObsNode::clean_inputs(Scope* scope,
 void ObsNode::clean_inputs(Scope* scope) {
 	for (int f_index = 0; f_index < (int)this->factors.size(); f_index++) {
 		this->factors[f_index]->clean_inputs(scope);
+	}
+}
+
+void ObsNode::replace_factor(Scope* scope,
+							 int original_node_id,
+							 int original_factor_index,
+							 int new_node_id,
+							 int new_factor_index) {
+	for (int f_index = 0; f_index < (int)this->factors.size(); f_index++) {
+		this->factors[f_index]->replace_factor(scope,
+											   original_node_id,
+											   original_factor_index,
+											   new_node_id,
+											   new_factor_index);
+	}
+}
+
+void ObsNode::replace_obs_node(Scope* scope,
+							   int original_node_id,
+							   int new_node_id) {
+	for (int f_index = 0; f_index < (int)this->factors.size(); f_index++) {
+		this->factors[f_index]->replace_obs_node(scope,
+												 original_node_id,
+												 new_node_id);
+	}
+}
+
+void ObsNode::replace_scope(Scope* original_scope,
+							Scope* new_scope,
+							int new_scope_node_id) {
+	for (int f_index = 0; f_index < (int)this->factors.size(); f_index++) {
+		this->factors[f_index]->replace_scope(original_scope,
+											  new_scope,
+											  new_scope_node_id);
 	}
 }
 
@@ -137,10 +167,6 @@ void ObsNode::load(ifstream& input_file,
 }
 
 void ObsNode::link(Solution* parent_solution) {
-	for (int f_index = 0; f_index < (int)this->factors.size(); f_index++) {
-		this->factors[f_index]->link(parent_solution);
-	}
-
 	if (this->next_node_id == -1) {
 		this->next_node = NULL;
 	} else {

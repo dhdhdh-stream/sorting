@@ -9,13 +9,11 @@
 using namespace std;
 
 Factor::Factor() {
-	this->is_used = false;
+	// do nothing
 }
 
 Factor::Factor(Factor* original,
 			   Solution* parent_solution) {
-	this->is_used = original->is_used;
-
 	this->inputs = original->inputs;
 	for (int i_index = 0; i_index < (int)this->inputs.size(); i_index++) {
 		for (int l_index = 0; l_index < (int)this->inputs[i_index].scope_context.size(); l_index++) {
@@ -66,6 +64,48 @@ void Factor::clean_inputs(Scope* scope) {
 	}
 }
 
+void Factor::replace_factor(Scope* scope,
+							int original_node_id,
+							int original_factor_index,
+							int new_node_id,
+							int new_factor_index) {
+	for (int i_index = 0; i_index < (int)this->inputs.size(); i_index++) {
+		if (this->inputs[i_index].scope_context.back() == scope
+				&& this->inputs[i_index].node_context.back() == original_node_id
+				&& this->inputs[i_index].factor_index == original_factor_index) {
+			this->inputs[i_index].node_context.back() = new_node_id;
+			this->inputs[i_index].factor_index = new_factor_index;
+		}
+	}
+}
+
+void Factor::replace_obs_node(Scope* scope,
+							  int original_node_id,
+							  int new_node_id) {
+	for (int i_index = 0; i_index < (int)this->inputs.size(); i_index++) {
+		if (this->inputs[i_index].scope_context.back() == scope
+				&& this->inputs[i_index].node_context.back() == original_node_id) {
+			this->inputs[i_index].node_context.back() = new_node_id;
+		}
+	}
+}
+
+void Factor::replace_scope(Scope* original_scope,
+						   Scope* new_scope,
+						   int new_scope_node_id) {
+	for (int i_index = 0; i_index < (int)this->inputs.size(); i_index++) {
+		for (int l_index = 1; l_index < (int)this->inputs[i_index].scope_context.size(); l_index++) {
+			if (this->inputs[i_index].scope_context[l_index] == original_scope) {
+				this->inputs[i_index].scope_context.insert(
+					this->inputs[i_index].scope_context.begin() + l_index, new_scope);
+				this->inputs[i_index].node_context.insert(
+					this->inputs[i_index].node_context.begin() + l_index, new_scope_node_id);
+				break;
+			}
+		}
+	}
+}
+
 void Factor::save(ofstream& output_file) {
 	output_file << this->inputs.size() << endl;
 	for (int i_index = 0; i_index < (int)this->inputs.size(); i_index++) {
@@ -77,8 +117,6 @@ void Factor::save(ofstream& output_file) {
 
 void Factor::load(ifstream& input_file,
 				  Solution* parent_solution) {
-	this->is_used = false;
-
 	string num_inputs_line;
 	getline(input_file, num_inputs_line);
 	int num_inputs = stoi(num_inputs_line);
@@ -88,34 +126,4 @@ void Factor::load(ifstream& input_file,
 	}
 
 	this->network = new Network(input_file);
-}
-
-void Factor::link(Solution* parent_solution) {
-	if (!this->is_used) {
-		for (int i_index = 0; i_index < (int)this->inputs.size(); i_index++) {
-			Scope* scope = this->inputs[i_index].scope_context.back();
-			AbstractNode* node = scope->nodes[this->inputs[i_index].node_context.back()];
-			switch (node->type) {
-			case NODE_TYPE_BRANCH:
-				{
-					BranchNode* branch_node = (BranchNode*)node;
-					branch_node->is_used = true;
-				}
-				break;
-			case NODE_TYPE_OBS:
-				{
-					ObsNode* obs_node = (ObsNode*)node;
-
-					if (this->inputs[i_index].factor_index != -1) {
-						Factor* factor = obs_node->factors[this->inputs[i_index].factor_index];
-
-						factor->link(parent_solution);
-					}
-
-					obs_node->is_used = true;
-				}
-				break;
-			}
-		}
-	}
 }

@@ -14,6 +14,7 @@ Scope::Scope() {
 	this->new_scope_experiment = NULL;
 
 	this->exceeded = false;
+	this->generalized = false;
 }
 
 Scope::~Scope() {
@@ -71,6 +72,81 @@ void Scope::clean_inputs(Scope* scope) {
 	}
 }
 
+void Scope::replace_factor(Scope* scope,
+						   int original_node_id,
+						   int original_factor_index,
+						   int new_node_id,
+						   int new_factor_index) {
+	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
+			it != this->nodes.end(); it++) {
+		switch (it->second->type) {
+		case NODE_TYPE_BRANCH:
+			{
+				BranchNode* branch_node = (BranchNode*)it->second;
+				branch_node->replace_factor(scope,
+											original_node_id,
+											original_factor_index,
+											new_node_id,
+											new_factor_index);
+			}
+			break;
+		case NODE_TYPE_OBS:
+			{
+				ObsNode* obs_node = (ObsNode*)it->second;
+				obs_node->replace_factor(scope,
+										 original_node_id,
+										 original_factor_index,
+										 new_node_id,
+										 new_factor_index);
+			}
+			break;
+		}
+	}
+}
+
+void Scope::replace_obs_node(Scope* scope,
+							 int original_node_id,
+							 int new_node_id) {
+	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
+			it != this->nodes.end(); it++) {
+		switch (it->second->type) {
+		case NODE_TYPE_OBS:
+			{
+				ObsNode* obs_node = (ObsNode*)it->second;
+				obs_node->replace_obs_node(scope,
+										   original_node_id,
+										   new_node_id);
+			}
+			break;
+		}
+	}
+}
+
+void Scope::replace_scope(Scope* original_scope,
+						  Scope* new_scope,
+						  int new_scope_node_id) {
+	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
+			it != this->nodes.end(); it++) {
+		switch (it->second->type) {
+		case NODE_TYPE_SCOPE:
+			{
+				ScopeNode* scope_node = (ScopeNode*)it->second;
+				scope_node->replace_scope(original_scope,
+										  new_scope);
+			}
+			break;
+		case NODE_TYPE_OBS:
+			{
+				ObsNode* obs_node = (ObsNode*)it->second;
+				obs_node->replace_scope(original_scope,
+										new_scope,
+										new_scope_node_id);
+			}
+			break;
+		}
+	}
+}
+
 void Scope::clean() {
 	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
 			it != this->nodes.end(); it++) {
@@ -104,6 +180,7 @@ void Scope::save(ofstream& output_file) {
 	}
 
 	output_file << this->exceeded << endl;
+	output_file << this->generalized << endl;
 }
 
 void Scope::load(ifstream& input_file,
@@ -177,6 +254,10 @@ void Scope::load(ifstream& input_file,
 	string exceeded_line;
 	getline(input_file, exceeded_line);
 	this->exceeded = stoi(exceeded_line);
+
+	string generalized_line;
+	getline(input_file, generalized_line);
+	this->generalized = stoi(generalized_line);
 }
 
 void Scope::link(Solution* parent_solution) {
@@ -240,6 +321,7 @@ void Scope::copy_from(Scope* original,
 	}
 
 	this->exceeded = original->exceeded;
+	this->generalized = original->generalized;
 }
 
 void Scope::save_for_display(ofstream& output_file) {

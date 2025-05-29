@@ -44,4 +44,6 @@ void update_scores(ScopeHistory* scope_history,
 
 void clean_scope(Scope* scope);
 
+void check_generalize(Scope* scope_to_generalize);
+
 #endif /* SOLUTION_HELPERS_H */

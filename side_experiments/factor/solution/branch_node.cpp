@@ -15,8 +15,6 @@ using namespace std;
 BranchNode::BranchNode() {
 	this->type = NODE_TYPE_BRANCH;
 
-	this->is_used = false;
-
 	this->experiment = NULL;
 
 	this->last_updated_run_index = -1;
@@ -34,8 +32,6 @@ BranchNode::BranchNode(BranchNode* original) {
 	this->average_val = original->average_val;
 	this->factor_ids = original->factor_ids;
 	this->factor_weights = original->factor_weights;
-
-	this->is_used = original->is_used;
 
 	this->original_next_node_id = original->original_next_node_id;
 	this->branch_next_node_id = original->branch_next_node_id;
@@ -77,6 +73,22 @@ void BranchNode::clean_inputs(Scope* scope,
 			if (this->factor_ids[f_index].first == node_id) {
 				this->factor_ids.erase(this->factor_ids.begin() + f_index);
 				this->factor_weights.erase(this->factor_weights.begin() + f_index);
+			}
+		}
+	}
+}
+
+void BranchNode::replace_factor(Scope* scope,
+								int original_node_id,
+								int original_factor_index,
+								int new_node_id,
+								int new_factor_index) {
+	if (this->parent == scope) {
+		for (int f_index = 0; f_index < (int)this->factor_ids.size(); f_index++) {
+			if (this->factor_ids[f_index].first == original_node_id
+					&& this->factor_ids[f_index].second == original_factor_index) {
+				this->factor_ids[f_index].first = new_node_id;
+				this->factor_ids[f_index].second = new_factor_index;
 			}
 		}
 	}
@@ -169,15 +181,6 @@ void BranchNode::load(ifstream& input_file) {
 }
 
 void BranchNode::link(Solution* parent_solution) {
-	for (int f_index = 0; f_index < (int)this->factor_ids.size(); f_index++) {
-		ObsNode* obs_node = (ObsNode*)this->parent->nodes[this->factor_ids[f_index].first];
-		Factor* factor = obs_node->factors[this->factor_ids[f_index].second];
-
-		factor->link(parent_solution);
-
-		obs_node->is_used = true;
-	}
-
 	if (this->original_next_node_id == -1) {
 		this->original_next_node = NULL;
 	} else {

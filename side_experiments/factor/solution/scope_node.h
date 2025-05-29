@@ -58,6 +58,9 @@ public:
 										   ScopeHistory* scope_history);
 	#endif /* MDEBUG */
 
+	void replace_scope(Scope* original_scope,
+					   Scope* new_scope);
+
 	void clean();
 	void measure_update();
 
