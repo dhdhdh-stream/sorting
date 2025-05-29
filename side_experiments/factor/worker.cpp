@@ -81,7 +81,6 @@ int main(int argc, char* argv[]) {
 
 			if (curr_experiment == NULL) {
 				create_experiment(scope_history,
-								  improvement_iter,
 								  curr_experiment);
 			}
 
@@ -130,6 +129,8 @@ int main(int argc, char* argv[]) {
 
 		if (last_updated_scope->nodes.size() >= SCOPE_EXCEEDED_NUM_NODES) {
 			last_updated_scope->exceeded = true;
+
+			check_generalize(last_updated_scope);
 		}
 		if (last_updated_scope->nodes.size() <= SCOPE_RESUME_NUM_NODES) {
 			last_updated_scope->exceeded = false;

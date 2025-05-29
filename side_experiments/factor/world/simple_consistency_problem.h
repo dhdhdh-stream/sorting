@@ -1,3 +1,6 @@
+// - not hard enough
+//   - loop gets sanded into place
+
 // TODO: or want problem where there's reason to stay on track, and reason to stay off track
 
 #ifndef SIMPLE_CONSISTENCY_PROBLEM_H

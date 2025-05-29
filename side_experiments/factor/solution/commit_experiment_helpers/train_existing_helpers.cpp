@@ -166,13 +166,11 @@ void CommitExperiment::train_existing_backprop(
 			}
 
 			for (int i_index = 0; i_index < num_instances; i_index++) {
-				double sum_score = this->existing_average_score;
+				double sum_score = 0.0;
 				for (int f_index = 0; f_index < (int)this->existing_factor_ids.size(); f_index++) {
 					sum_score += this->existing_factor_weights[f_index]
 						* this->factor_histories[i_index][f_index];
 				}
-
-				remaining_scores[i_index] = this->i_target_val_histories[i_index] - sum_score;
 
 				#if defined(MDEBUG) && MDEBUG
 				#else
@@ -181,6 +179,9 @@ void CommitExperiment::train_existing_backprop(
 					return;
 				}
 				#endif /* MDEBUG */
+
+				remaining_scores[i_index] = this->i_target_val_histories[i_index]
+					- this->existing_average_score - sum_score;
 			}
 		} else {
 			for (int i_index = 0; i_index < num_instances; i_index++) {

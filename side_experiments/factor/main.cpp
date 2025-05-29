@@ -19,6 +19,7 @@
 #include "problem.h"
 #include "scope.h"
 #include "scope_node.h"
+#include "simple_consistency_problem.h"
 #include "solution.h"
 #include "solution_helpers.h"
 #include "utilities.h"
@@ -42,7 +43,8 @@ int main(int argc, char* argv[]) {
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
 
-	problem_type = new TypeMinesweeper();
+	// problem_type = new TypeMinesweeper();
+	problem_type = new TypeSimpleConsistencyProblem();
 
 	solution = new Solution();
 	string filename;
@@ -98,7 +100,6 @@ int main(int argc, char* argv[]) {
 
 			if (curr_experiment == NULL) {
 				create_experiment(scope_history,
-								  improvement_iter,
 								  curr_experiment);
 			}
 
@@ -170,6 +171,8 @@ int main(int argc, char* argv[]) {
 
 		if (last_updated_scope->nodes.size() >= SCOPE_EXCEEDED_NUM_NODES) {
 			last_updated_scope->exceeded = true;
+
+			check_generalize(last_updated_scope);
 		}
 		if (last_updated_scope->nodes.size() <= SCOPE_RESUME_NUM_NODES) {
 			last_updated_scope->exceeded = false;

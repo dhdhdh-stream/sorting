@@ -1,5 +1,7 @@
 #include "obs_node.h"
 
+#include <iostream>
+
 #include "factor.h"
 #include "scope.h"
 #include "problem.h"

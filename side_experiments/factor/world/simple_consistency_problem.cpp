@@ -163,6 +163,13 @@ void SimpleConsistencyProblem::print() {
 	cout << "current_x: " << this->current_x << endl;
 	cout << "current_y: " << this->current_y << endl;
 
+	cout << "targets:";
+	for (int t_index = 0; t_index < (int)this->targets.size(); t_index++) {
+		cout << " " << this->targets[t_index];
+	}
+	cout << endl;
+	cout << "curr_target_index: " << curr_target_index << endl;
+
 	cout << "this->score: " << this->score << endl;
 }
 
