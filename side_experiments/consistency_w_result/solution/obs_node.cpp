@@ -17,8 +17,8 @@ ObsNode::ObsNode() {
 
 	this->is_init = false;
 
-	this->check_consistency = false;
-	this->average = 0.0;
+	this->average_val = 0.0;
+	this->average_variance = 1.0;
 	this->standard_deviation = 1.0;
 
 	this->experiment = NULL;
@@ -27,8 +27,8 @@ ObsNode::ObsNode() {
  	this->num_measure = 0;
  	this->sum_score = 0.0;
 
- 	this->sum_obs_average = 0.0;
- 	this->sum_obs_variance = 0.0;
+ 	this->sum_obs_vals = 0.0;
+ 	this->sum_obs_variances = 0.0;
  	this->obs_count = 0;
 }
 
@@ -48,8 +48,8 @@ ObsNode::ObsNode(ObsNode* original,
 
 	this->is_init = true;
 
-	this->check_consistency = original->check_consistency;
-	this->average = original->average;
+	this->average_val = original->average_val;
+	this->average_variance = original->average_variance;
 	this->standard_deviation = original->standard_deviation;
 	this->matches = original->matches;
 	for (int m_index = 0; m_index < (int)this->matches.size(); m_index++) {
@@ -65,8 +65,8 @@ ObsNode::ObsNode(ObsNode* original,
  	this->num_measure = 0;
  	this->sum_score = 0.0;
 
- 	this->sum_obs_average = 0.0;
- 	this->sum_obs_variance = 0.0;
+ 	this->sum_obs_vals = 0.0;
+ 	this->sum_obs_variances = 0.0;
  	this->obs_count = 0;
 }
 
@@ -162,8 +162,8 @@ void ObsNode::clean() {
 		this->matches[m_index].clean();
 	}
 
-	this->sum_obs_average = 0.0;
- 	this->sum_obs_variance = 0.0;
+	this->sum_obs_vals = 0.0;
+ 	this->sum_obs_variances = 0.0;
  	this->obs_count = 0;
 }
 
@@ -185,8 +185,8 @@ void ObsNode::save(ofstream& output_file) {
 		output_file << this->ancestor_ids[a_index] << endl;
 	}
 
-	output_file << this->check_consistency << endl;
-	output_file << this->average << endl;
+	output_file << this->average_val << endl;
+	output_file << this->average_variance << endl;
 	output_file << this->standard_deviation << endl;
 	output_file << this->matches.size() << endl;
 	for (int m_index = 0; m_index < (int)this->matches.size(); m_index++) {
@@ -222,13 +222,13 @@ void ObsNode::load(ifstream& input_file,
 		this->ancestor_ids.push_back(stoi(ancestor_id_line));
 	}
 
-	string check_consistency_line;
-	getline(input_file, check_consistency_line);
-	this->check_consistency = stoi(check_consistency_line);
+	string average_val_line;
+	getline(input_file, average_val_line);
+	this->average_val = stod(average_val_line);
 
-	string average_line;
-	getline(input_file, average_line);
-	this->average = stod(average_line);
+	string average_variance_line;
+	getline(input_file, average_variance_line);
+	this->average_variance = stod(average_variance_line);
 
 	string standard_deviation_line;
 	getline(input_file, standard_deviation_line);
@@ -241,9 +241,6 @@ void ObsNode::load(ifstream& input_file,
 		this->matches.push_back(Match(input_file,
 									  parent_solution));
 		this->matches.back().parent = this;
-
-		// temp
-		cout << this->parent->id << ": " << this->matches.back().node_context[0] << " matches " << this->id << endl;
 	}
 
 	this->is_init = true;

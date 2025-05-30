@@ -23,17 +23,13 @@ public:
 	int next_node_id;
 	AbstractNode* next_node;
 
-	bool check_consistency;
-	double average;
+	double average_val;
+	double average_variance;
 	double standard_deviation;
-	/**
-	 * - remeasure, but don't look for new matches
-	 *   - only remove ones that no longer match
-	 */
 	std::vector<Match> matches;
 
-	double sum_obs_average;
-	double sum_obs_variance;
+	double sum_obs_vals;
+	double sum_obs_variances;
 	int obs_count;
 
 	ObsNode();

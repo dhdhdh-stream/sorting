@@ -32,16 +32,16 @@ void ObsNode::experiment_activate(AbstractNode*& curr_node,
 			if (it != scope_history->node_histories.end()) {
 				ObsNodeHistory* early_history = (ObsNodeHistory*)it->second;
 
-				double predicted_score = obs[0] * this->matches[m_index].weight + this->matches[m_index].constant;
-				double factor = abs(predicted_score - early_history->obs_history[0]) / this->matches[m_index].standard_deviation;
+				double predicted_score = early_history->obs_history[0] * this->matches[m_index].weight + this->matches[m_index].constant;
+				double factor = abs(obs[0] - predicted_score) / this->matches[m_index].standard_deviation;
 				run_helper.match_factors.push_back(factor);
 
 				has_match = true;
 				break;
 			}
 		}
-		if (!has_match && this->check_consistency) {
-			double factor = abs(obs[0] - this->average) / this->standard_deviation;
+		if (!has_match) {
+			double factor = abs(obs[0] - this->average_val) / this->standard_deviation;
 			run_helper.match_factors.push_back(factor);
 		}
 	}

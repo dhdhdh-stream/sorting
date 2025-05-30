@@ -111,6 +111,7 @@ void BranchExperiment::measure_backprop(double target_val,
 			}
 
 			cout << "this->improvement: " << this->improvement << endl;
+			cout << "this->average_match: " << this->average_match << endl;
 
 			cout << endl;
 

@@ -50,12 +50,16 @@ void NewScopeExperiment::test_backprop(
 		NewScopeExperimentHistory* history) {
 	bool is_fail = false;
 
-	double sum_factors = 0.0;
-	for (int f_index = 0; f_index < (int)run_helper.match_factors.size(); f_index++) {
-		sum_factors += run_helper.match_factors[f_index];
+	if (run_helper.match_factors.size() == 0) {
+		this->match_histories.push_back(0.0);
+	} else {
+		double sum_factors = 0.0;
+		for (int f_index = 0; f_index < (int)run_helper.match_factors.size(); f_index++) {
+			sum_factors += min(run_helper.match_factors[f_index], FACTOR_MAX_CAP);
+		}
+		double average_factor = sum_factors / (int)run_helper.match_factors.size();
+		this->match_histories.push_back(average_factor);
 	}
-	double average_factor = sum_factors / (int)run_helper.match_factors.size();
-	this->match_histories.push_back(average_factor);
 
 	switch (this->test_location_state) {
 	case LOCATION_STATE_MEASURE:
@@ -68,19 +72,18 @@ void NewScopeExperiment::test_backprop(
 				sum_matches += this->match_histories[h_index];
 			}
 			double average_match = sum_matches / (int)this->match_histories.size();
+			// temp
+			this->average_match = average_match;
 			this->match_histories.clear();
-			cout << "average_match: " << average_match << endl;
 
 			#if defined(MDEBUG) && MDEBUG
 			if (rand()%2 == 0) {
 			#else
-			if (this->test_location_score > MATCH_SCORE) {
+			if (this->test_location_score > MATCH_SCORE && average_match <= MATCH_MAX_DISTANCE) {
 			#endif /* MDEBUG */
 				this->test_location_state = LOCATION_STATE_VERIFY_1ST;
 				this->test_location_score = 0.0;
 				this->test_location_count = 0;
-
-				this->test_match_histories.clear();
 			} else {
 				is_fail = true;
 			}
@@ -97,19 +100,18 @@ void NewScopeExperiment::test_backprop(
 				sum_matches += this->match_histories[h_index];
 			}
 			double average_match = sum_matches / (int)this->match_histories.size();
+			// temp
+			this->average_match = average_match;
 			this->match_histories.clear();
-			cout << "average_match: " << average_match << endl;
 
 			#if defined(MDEBUG) && MDEBUG
 			if (rand()%2 == 0) {
 			#else
-			if (this->test_location_score > MATCH_SCORE) {
+			if (this->test_location_score > MATCH_SCORE && average_match <= MATCH_MAX_DISTANCE) {
 			#endif /* MDEBUG */
 				this->test_location_state = LOCATION_STATE_VERIFY_2ND;
 				this->test_location_score = 0.0;
 				this->test_location_count = 0;
-
-				this->test_match_histories.clear();
 			} else {
 				is_fail = true;
 			}
@@ -126,13 +128,14 @@ void NewScopeExperiment::test_backprop(
 				sum_matches += this->match_histories[h_index];
 			}
 			double average_match = sum_matches / (int)this->match_histories.size();
+			// temp
+			this->average_match = average_match;
 			this->match_histories.clear();
-			cout << "average_match: " << average_match << endl;
 
 			#if defined(MDEBUG) && MDEBUG
 			if (rand()%2 == 0) {
 			#else
-			if (this->test_location_score > MATCH_SCORE) {
+			if (this->test_location_score > MATCH_SCORE && average_match <= MATCH_MAX_DISTANCE) {
 			#endif /* MDEBUG */
 				double new_score = this->test_location_score / NEW_SCOPE_VERIFY_2ND_NUM_DATAPOINTS;
 				// this->improvement += new_score;
@@ -188,6 +191,7 @@ void NewScopeExperiment::test_backprop(
 	if (this->successful_location_starts.size() >= NEW_SCOPE_NUM_LOCATIONS) {
 		cout << "NewScopeExperiment success" << endl;
 		cout << "this->improvement: " << this->improvement << endl;
+		cout << "this->average_match: " << this->average_match << endl;
 
 		#if defined(MDEBUG) && MDEBUG
 		this->verify_problems = vector<Problem*>(NUM_VERIFY_SAMPLES, NULL);

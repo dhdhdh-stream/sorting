@@ -32,6 +32,7 @@ public:
 
 	double standard_deviation;
 
+	bool is_init;
 	std::vector<std::pair<double,double>> datapoints;
 
 	Match();

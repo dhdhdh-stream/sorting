@@ -46,8 +46,6 @@ public:
 	double test_location_score;
 	int test_location_count;
 
-	std::vector<int> test_match_histories;
-
 	std::vector<AbstractNode*> successful_location_starts;
 	std::vector<bool> successful_location_is_branch;
 	std::vector<ScopeNode*> successful_scope_nodes;

@@ -41,6 +41,9 @@ public:
 
 	double improvement;
 
+	// temp
+	double average_match;
+
 	virtual ~AbstractExperiment() {};
 	virtual void decrement(AbstractNode* experiment_node) = 0;
 

@@ -88,12 +88,16 @@ void BranchExperiment::train_new_backprop(
 		this->i_target_val_histories.push_back(target_val - run_helper.result);
 	}
 
-	double sum_factors = 0.0;
-	for (int f_index = 0; f_index < (int)run_helper.match_factors.size(); f_index++) {
-		sum_factors += run_helper.match_factors[f_index];
+	if (run_helper.match_factors.size() == 0) {
+		this->match_histories.push_back(0.0);
+	} else {
+		double sum_factors = 0.0;
+		for (int f_index = 0; f_index < (int)run_helper.match_factors.size(); f_index++) {
+			sum_factors += min(run_helper.match_factors[f_index], FACTOR_MAX_CAP);
+		}
+		double average_factor = sum_factors / (int)run_helper.match_factors.size();
+		this->match_histories.push_back(average_factor);
 	}
-	double average_factor = sum_factors / (int)run_helper.match_factors.size();
-	this->match_histories.push_back(average_factor);
 
 	this->state_iter++;
 	if (this->state_iter >= TRAIN_NEW_NUM_DATAPOINTS) {
@@ -102,8 +106,14 @@ void BranchExperiment::train_new_backprop(
 			sum_matches += this->match_histories[h_index];
 		}
 		double average_match = sum_matches / (int)this->match_histories.size();
+		// temp
+		this->average_match = average_match;
 		this->match_histories.clear();
-		cout << "average_match: " << average_match << endl;
+
+		if (average_match > MATCH_MAX_DISTANCE) {
+			this->result = EXPERIMENT_RESULT_FAIL;
+			return;
+		}
 
 		{
 			default_random_engine generator_copy = generator;

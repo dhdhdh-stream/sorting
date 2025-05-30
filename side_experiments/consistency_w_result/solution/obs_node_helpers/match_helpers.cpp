@@ -37,6 +37,7 @@ void ObsNode::gather_match_datapoints(ObsNodeHistory* history,
 					new_match.parent = this;
 					new_match.scope_context = {this->parent};
 					new_match.node_context = {it->first};
+					new_match.is_init = false;
 					this->matches.push_back(new_match);
 					match_index = (int)this->matches.size()-1;
 				}
@@ -64,6 +65,7 @@ void ObsNode::gather_match_datapoints(ObsNodeHistory* history,
 					new_match.parent = this;
 					new_match.scope_context = {this->parent};
 					new_match.node_context = {it->first};
+					new_match.is_init = false;
 					this->matches.push_back(new_match);
 				}
 			}
@@ -84,14 +86,10 @@ void ObsNode::gather_match_datapoints(ObsNodeHistory* history,
 
 void ObsNode::update_matches() {
 	for (int m_index = (int)this->matches.size()-1; m_index >= 0; m_index--) {
-		if (this->matches[m_index].datapoints.size() < MATCH_UPDATE_MIN_DATAPOINTS) {
+		bool is_still_needed;
+		this->matches[m_index].update(is_still_needed);
+		if (!is_still_needed) {
 			this->matches.erase(this->matches.begin() + m_index);
-		} else {
-			bool is_still_needed;
-			this->matches[m_index].update(is_still_needed);
-			if (!is_still_needed) {
-				this->matches.erase(this->matches.begin() + m_index);
-			}
 		}
 	}
 

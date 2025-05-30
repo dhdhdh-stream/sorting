@@ -13,7 +13,7 @@
 
 using namespace std;
 
-const double MIN_AVERAGE_DISTANCE = 5.0;
+const double MAX_PARENT_FACTOR = 0.5;
 
 Match::Match() {
 	// do nothing
@@ -45,6 +45,8 @@ Match::Match(ifstream& input_file,
 	string standard_deviation_line;
 	getline(input_file, standard_deviation_line);
 	this->standard_deviation = stod(standard_deviation_line);
+
+	this->is_init = true;
 }
 
 bool Match::should_delete(Scope* scope,
@@ -83,77 +85,105 @@ void Match::clean() {
 }
 
 void Match::update(bool& is_still_needed) {
-	double early_sum_vals = 0.0;
-	double later_sum_vals = 0.0;
-	for (int d_index = 0; d_index < (int)this->datapoints.size(); d_index++) {
-		early_sum_vals += this->datapoints[d_index].first;
-		later_sum_vals += this->datapoints[d_index].second;
-	}
-	double early_average_val = early_sum_vals / (int)this->datapoints.size();
-	double later_average_val = later_sum_vals / (int)this->datapoints.size();
-
-	double early_sum_variances = 0.0;
-	double later_sum_variances = 0.0;
-	for (int d_index = 0; d_index < (int)this->datapoints.size(); d_index++) {
-		early_sum_variances += (this->datapoints[d_index].first - early_average_val)
-			* (this->datapoints[d_index].first - early_average_val);
-		later_sum_variances += (this->datapoints[d_index].second - later_average_val)
-			* (this->datapoints[d_index].second - later_average_val);
-	}
-	double early_standard_deviation = sqrt(early_sum_variances / (int)this->datapoints.size());
-	double later_standard_deviation = sqrt(later_sum_variances / (int)this->datapoints.size());
-
-	double sum_covariance = 0.0;
-	for (int d_index = 0; d_index < (int)this->datapoints.size(); d_index++) {
-		sum_covariance += (this->datapoints[d_index].first - early_average_val)
-			* (this->datapoints[d_index].second - later_average_val);
-	}
-	double covariance = sum_covariance / (int)this->datapoints.size();
-
-	double pcc = covariance / early_standard_deviation
-		/ later_standard_deviation;
-	if (abs(pcc) < MATCH_MIN_PCC) {
-		is_still_needed = false;
-	} else {
-		Eigen::MatrixXd inputs(this->datapoints.size(), 2);
-		Eigen::VectorXd outputs(this->datapoints.size());
-		for (int d_index = 0; d_index < (int)this->datapoints.size(); d_index++) {
-			inputs(d_index, 0) = 1.0;
-			inputs(d_index, 1) = this->datapoints[d_index].second;
-			outputs(d_index) = this->datapoints[d_index].first;
-		}
-
-		Eigen::VectorXd weights;
-		try {
-			weights = inputs.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(outputs);
-		} catch (std::invalid_argument &e) {
-			cout << "Eigen error" << endl;
+	if (this->datapoints.size() < MATCH_UPDATE_MIN_DATAPOINTS) {
+		if (!this->is_init) {
 			is_still_needed = false;
-			return;
+		} else {
+			if (this->datapoints.size() == 0) {
+				is_still_needed = true;
+			} else {
+				double sum_variance = 0.0;
+				for (int d_index = 0; d_index < (int)this->datapoints.size(); d_index++) {
+					double predicted_score = this->datapoints[d_index].first * this->weight + this->constant;
+					double curr_variance = (predicted_score - this->datapoints[d_index].second)
+						* (predicted_score - this->datapoints[d_index].second);
+					sum_variance += curr_variance;
+				}
+				double test_standard_deviation = sqrt(sum_variance / (int)this->datapoints.size());
+				if (test_standard_deviation > MAX_PARENT_FACTOR * this->parent->standard_deviation) {
+					is_still_needed = false;
+				} else {
+					is_still_needed = true;
+				}
+			}
 		}
-
-		this->constant = weights(0);
-		if (abs(this->constant) < MIN_STANDARD_DEVIATION) {
-			this->constant = 0.0;
-		}
-		this->weight = weights(1);
-		if (abs(this->weight) < MIN_STANDARD_DEVIATION) {
-			this->weight = 0.0;
-		}
-
-		Eigen::VectorXd predicted = inputs * weights;
-		Eigen::VectorXd diff = outputs - predicted;
-
-		double sum_variance = 0.0;
+	} else {
+		double early_sum_vals = 0.0;
+		double later_sum_vals = 0.0;
 		for (int d_index = 0; d_index < (int)this->datapoints.size(); d_index++) {
-			sum_variance += diff(d_index) * diff(d_index);
+			early_sum_vals += this->datapoints[d_index].first;
+			later_sum_vals += this->datapoints[d_index].second;
 		}
-		this->standard_deviation = sqrt(sum_variance / (int)this->datapoints.size());
-		if (this->standard_deviation < MIN_STANDARD_DEVIATION) {
-			this->standard_deviation = MIN_STANDARD_DEVIATION;
-		}
+		double early_average_val = early_sum_vals / (int)this->datapoints.size();
+		double later_average_val = later_sum_vals / (int)this->datapoints.size();
 
-		is_still_needed = true;
+		double early_sum_variances = 0.0;
+		double later_sum_variances = 0.0;
+		for (int d_index = 0; d_index < (int)this->datapoints.size(); d_index++) {
+			early_sum_variances += (this->datapoints[d_index].first - early_average_val)
+				* (this->datapoints[d_index].first - early_average_val);
+			later_sum_variances += (this->datapoints[d_index].second - later_average_val)
+				* (this->datapoints[d_index].second - later_average_val);
+		}
+		double early_standard_deviation = sqrt(early_sum_variances / (int)this->datapoints.size());
+		double later_standard_deviation = sqrt(later_sum_variances / (int)this->datapoints.size());
+
+		double sum_covariance = 0.0;
+		for (int d_index = 0; d_index < (int)this->datapoints.size(); d_index++) {
+			sum_covariance += (this->datapoints[d_index].first - early_average_val)
+				* (this->datapoints[d_index].second - later_average_val);
+		}
+		double covariance = sum_covariance / (int)this->datapoints.size();
+
+		double pcc = covariance / early_standard_deviation
+			/ later_standard_deviation;
+		if (abs(pcc) < MATCH_MIN_PCC) {
+			is_still_needed = false;
+		} else {
+			Eigen::MatrixXd inputs(this->datapoints.size(), 2);
+			Eigen::VectorXd outputs(this->datapoints.size());
+			for (int d_index = 0; d_index < (int)this->datapoints.size(); d_index++) {
+				inputs(d_index, 0) = 1.0;
+				inputs(d_index, 1) = this->datapoints[d_index].first;
+				outputs(d_index) = this->datapoints[d_index].second;
+			}
+
+			Eigen::VectorXd weights;
+			try {
+				weights = inputs.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(outputs);
+			} catch (std::invalid_argument &e) {
+				cout << "Eigen error" << endl;
+				is_still_needed = false;
+				return;
+			}
+
+			this->constant = weights(0);
+			if (abs(this->constant) < MIN_STANDARD_DEVIATION) {
+				this->constant = 0.0;
+			}
+			this->weight = weights(1);
+			if (abs(this->weight) < MIN_STANDARD_DEVIATION) {
+				this->weight = 0.0;
+			}
+
+			Eigen::VectorXd predicted = inputs * weights;
+			Eigen::VectorXd diff = outputs - predicted;
+
+			double sum_variance = 0.0;
+			for (int d_index = 0; d_index < (int)this->datapoints.size(); d_index++) {
+				sum_variance += diff(d_index) * diff(d_index);
+			}
+			this->standard_deviation = sqrt(sum_variance / (int)this->datapoints.size());
+			if (this->standard_deviation < MIN_STANDARD_DEVIATION) {
+				this->standard_deviation = MIN_STANDARD_DEVIATION;
+			}
+
+			if (this->standard_deviation > MAX_PARENT_FACTOR * this->parent->standard_deviation) {
+				is_still_needed = false;
+			} else {
+				is_still_needed = true;
+			}
+		}
 	}
 }
 

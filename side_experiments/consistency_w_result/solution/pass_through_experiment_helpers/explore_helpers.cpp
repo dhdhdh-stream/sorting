@@ -57,12 +57,16 @@ void PassThroughExperiment::explore_backprop(
 		RunHelper& run_helper) {
 	this->sum_score += target_val - run_helper.result;
 
-	double sum_factors = 0.0;
-	for (int f_index = 0; f_index < (int)run_helper.match_factors.size(); f_index++) {
-		sum_factors += run_helper.match_factors[f_index];
+	if (run_helper.match_factors.size() == 0) {
+		this->match_histories.push_back(0.0);
+	} else {
+		double sum_factors = 0.0;
+		for (int f_index = 0; f_index < (int)run_helper.match_factors.size(); f_index++) {
+			sum_factors += min(run_helper.match_factors[f_index], FACTOR_MAX_CAP);
+		}
+		double average_factor = sum_factors / (int)run_helper.match_factors.size();
+		this->match_histories.push_back(average_factor);
 	}
-	double average_factor = sum_factors / (int)run_helper.match_factors.size();
-	this->match_histories.push_back(average_factor);
 
 	this->state_iter++;
 	bool is_fail = false;
@@ -74,20 +78,19 @@ void PassThroughExperiment::explore_backprop(
 				sum_matches += this->match_histories[h_index];
 			}
 			double average_match = sum_matches / (int)this->match_histories.size();
+			// temp
+			this->average_match = average_match;
 			this->match_histories.clear();
-			cout << "average_match: " << average_match << endl;
 
 			#if defined(MDEBUG) && MDEBUG
 			if (rand()%2 == 0) {
 			#else
 			double curr_score = this->sum_score / this->state_iter;
-			if (curr_score <= 0.0) {
+			if (curr_score <= 0.0 || average_match > MATCH_MAX_DISTANCE) {
 			#endif /* MDEBUG */
 				is_fail = true;
 			} else {
 				this->sum_score = 0.0;
-
-				this->match_histories.clear();
 
 				this->state = PASS_THROUGH_EXPERIMENT_STATE_VERIFY_1ST;
 				this->state_iter = 0;
@@ -101,20 +104,19 @@ void PassThroughExperiment::explore_backprop(
 				sum_matches += this->match_histories[h_index];
 			}
 			double average_match = sum_matches / (int)this->match_histories.size();
+			// temp
+			this->average_match = average_match;
 			this->match_histories.clear();
-			cout << "average_match: " << average_match << endl;
 
 			#if defined(MDEBUG) && MDEBUG
 			if (rand()%2 == 0) {
 			#else
 			double curr_score = this->sum_score / this->state_iter;
-			if (curr_score <= 0.0) {
+			if (curr_score <= 0.0 || average_match > MATCH_MAX_DISTANCE) {
 			#endif /* MDEBUG */
 				is_fail = true;
 			} else {
 				this->sum_score = 0.0;
-
-				this->match_histories.clear();
 
 				this->state = PASS_THROUGH_EXPERIMENT_STATE_VERIFY_2ND;
 				this->state_iter = 0;
@@ -128,14 +130,15 @@ void PassThroughExperiment::explore_backprop(
 				sum_matches += this->match_histories[h_index];
 			}
 			double average_match = sum_matches / (int)this->match_histories.size();
+			// temp
+			this->average_match = average_match;
 			this->match_histories.clear();
-			cout << "average_match: " << average_match << endl;
 
 			double curr_score = this->sum_score / this->state_iter;
 			#if defined(MDEBUG) && MDEBUG
 			if (rand()%2 == 0) {
 			#else
-			if (curr_score <= 0.0) {
+			if (curr_score <= 0.0 || average_match > MATCH_MAX_DISTANCE) {
 			#endif /* MDEBUG */
 				is_fail = true;
 			} else {
@@ -156,6 +159,7 @@ void PassThroughExperiment::explore_backprop(
 				cout << endl;
 
 				cout << "this->improvement: " << this->improvement << endl;
+				cout << "this->average_match: " << this->average_match << endl;
 
 				this->result = EXPERIMENT_RESULT_SUCCESS;
 			}
@@ -261,8 +265,6 @@ void PassThroughExperiment::explore_backprop(
 			}
 
 			this->sum_score = 0.0;
-
-			this->match_histories.clear();
 
 			this->state = PASS_THROUGH_EXPERIMENT_STATE_INITIAL;
 			this->state_iter = 0;

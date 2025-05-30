@@ -63,6 +63,7 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 			ObsNode* starting_node = new ObsNode();
 			starting_node->parent = this->new_scope;
 			starting_node->id = this->new_scope->node_counter;
+			starting_node->is_init = true;
 			this->new_scope->node_counter++;
 			this->new_scope->nodes[starting_node->id] = starting_node;
 
@@ -77,6 +78,7 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 						ActionNode* new_action_node = new ActionNode();
 						new_action_node->parent = this->new_scope;
 						new_action_node->id = this->new_scope->node_counter;
+						new_action_node->is_init = true;
 						this->new_scope->node_counter++;
 						this->new_scope->nodes[new_action_node->id] = new_action_node;
 
@@ -92,6 +94,7 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 						ScopeNode* new_scope_node = new ScopeNode();
 						new_scope_node->parent = this->new_scope;
 						new_scope_node->id = this->new_scope->node_counter;
+						new_scope_node->is_init = true;
 						this->new_scope->node_counter++;
 						this->new_scope->nodes[new_scope_node->id] = new_scope_node;
 
@@ -107,6 +110,7 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 						BranchNode* new_branch_node = new BranchNode();
 						new_branch_node->parent = this->new_scope;
 						new_branch_node->id = this->new_scope->node_counter;
+						new_branch_node->is_init = true;
 						this->new_scope->node_counter++;
 						this->new_scope->nodes[new_branch_node->id] = new_branch_node;
 
@@ -120,6 +124,7 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 						ObsNode* new_obs_node = new ObsNode();
 						new_obs_node->parent = this->new_scope;
 						new_obs_node->id = this->new_scope->node_counter;
+						new_obs_node->is_init = true;
 						this->new_scope->node_counter++;
 						this->new_scope->nodes[new_obs_node->id] = new_obs_node;
 
@@ -137,6 +142,7 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 			ObsNode* new_ending_node = new ObsNode();
 			new_ending_node->parent = this->new_scope;
 			new_ending_node->id = this->new_scope->node_counter;
+			new_ending_node->is_init = true;
 			this->new_scope->node_counter++;
 			this->new_scope->nodes[new_ending_node->id] = new_ending_node;
 			new_ending_node->next_node_id = -1;
@@ -274,8 +280,8 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 							it->second->ancestor_ids.push_back(new_obs_node->id);
 						}
 
-						new_obs_node->check_consistency = original_obs_node->check_consistency;
-						new_obs_node->average = original_obs_node->average;
+						new_obs_node->average_val = original_obs_node->average_val;
+						new_obs_node->average_variance = original_obs_node->average_variance;
 						new_obs_node->standard_deviation = original_obs_node->standard_deviation;
 						for (int m_index = 0; m_index < (int)original_obs_node->matches.size(); m_index++) {
 							AbstractNode* original_early_node = scope_context->nodes[
@@ -289,6 +295,7 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 								new_match.weight = original_obs_node->matches[m_index].weight;
 								new_match.constant = original_obs_node->matches[m_index].constant;
 								new_match.standard_deviation = original_obs_node->matches[m_index].standard_deviation;
+								new_match.is_init = true;
 								new_obs_node->matches.push_back(new_match);
 							}
 						}

@@ -27,7 +27,7 @@ void sum_obs_average_helpers(ScopeHistory* scope_history) {
 				ObsNodeHistory* obs_node_history = (ObsNodeHistory*)it->second;
 				ObsNode* obs_node = (ObsNode*)it->second->node;
 
-				obs_node->sum_obs_average += obs_node_history->obs_history[0];
+				obs_node->sum_obs_vals += obs_node_history->obs_history[0];
 				obs_node->obs_count++;
 			}
 			break;
@@ -50,8 +50,8 @@ void sum_obs_variance_helpers(ScopeHistory* scope_history) {
 				ObsNodeHistory* obs_node_history = (ObsNodeHistory*)it->second;
 				ObsNode* obs_node = (ObsNode*)it->second->node;
 
-				obs_node->sum_obs_variance += (obs_node_history->obs_history[0] - obs_node->average)
-					* (obs_node_history->obs_history[0] - obs_node->average);
+				obs_node->sum_obs_variances += (obs_node_history->obs_history[0] - obs_node->average_val)
+					* (obs_node_history->obs_history[0] - obs_node->average_val);
 			}
 			break;
 		}
@@ -90,8 +90,18 @@ void update_matches(vector<ScopeHistory*>& scope_histories) {
 				it != solution->scopes[s_index]->nodes.end(); it++) {
 			if (it->second->type == NODE_TYPE_OBS) {
 				ObsNode* obs_node = (ObsNode*)it->second;
-				if (obs_node->obs_count > 0) {
-					obs_node->average = obs_node->sum_obs_average / obs_node->obs_count;
+				if (!obs_node->is_init) {
+					obs_node->average_val = obs_node->sum_obs_vals / obs_node->obs_count;
+				} else {
+					if (obs_node->obs_count > MEASURE_ITERS) {
+						obs_node->average_val = obs_node->sum_obs_vals / obs_node->obs_count;
+					} else {
+						if (obs_node->obs_count > 0) {
+							double new_average_val = obs_node->sum_obs_vals / obs_node->obs_count;
+							double ratio = (double)obs_node->obs_count / (double)MEASURE_ITERS;
+							obs_node->average_val = (1.0 - ratio) * obs_node->average_val + ratio * new_average_val;
+						}
+					}
 				}
 			}
 		}
@@ -106,15 +116,30 @@ void update_matches(vector<ScopeHistory*>& scope_histories) {
 				it != solution->scopes[s_index]->nodes.end(); it++) {
 			if (it->second->type == NODE_TYPE_OBS) {
 				ObsNode* obs_node = (ObsNode*)it->second;
-				if (obs_node->obs_count > MATCH_UPDATE_MIN_DATAPOINTS) {
-					obs_node->check_consistency = true;
-
-					obs_node->standard_deviation = sqrt(obs_node->sum_obs_variance / obs_node->obs_count);
+				if (!obs_node->is_init) {
+					obs_node->average_variance = obs_node->sum_obs_variances / obs_node->obs_count;
+					obs_node->standard_deviation = sqrt(obs_node->average_variance);
 					if (obs_node->standard_deviation < MIN_STANDARD_DEVIATION) {
 						obs_node->standard_deviation = MIN_STANDARD_DEVIATION;
 					}
 				} else {
-					obs_node->check_consistency = false;
+					if (obs_node->obs_count > MEASURE_ITERS) {
+						obs_node->average_variance = obs_node->sum_obs_variances / obs_node->obs_count;
+						obs_node->standard_deviation = sqrt(obs_node->average_variance);
+						if (obs_node->standard_deviation < MIN_STANDARD_DEVIATION) {
+							obs_node->standard_deviation = MIN_STANDARD_DEVIATION;
+						}
+					} else {
+						if (obs_node->obs_count > 0) {
+							double new_average_variance = obs_node->sum_obs_variances / obs_node->obs_count;
+							double ratio = (double)obs_node->obs_count / (double)MEASURE_ITERS;
+							obs_node->average_variance = (1.0 - ratio) * obs_node->average_variance + ratio * new_average_variance;
+							obs_node->standard_deviation = sqrt(obs_node->average_variance);
+							if (obs_node->standard_deviation < MIN_STANDARD_DEVIATION) {
+								obs_node->standard_deviation = MIN_STANDARD_DEVIATION;
+							}
+						}
+					}
 				}
 			}
 		}

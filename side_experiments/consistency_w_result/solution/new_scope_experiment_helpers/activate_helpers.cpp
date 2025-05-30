@@ -244,8 +244,6 @@ void NewScopeExperiment::backprop(double target_val,
 				this->test_location_score = 0.0;
 				this->test_location_count = 0;
 
-				this->test_match_histories.clear();
-
 				history->potential_start->experiment = this;
 			}
 		}

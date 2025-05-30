@@ -145,6 +145,7 @@ void CommitExperiment::measure_backprop(double target_val,
 			cout << "this->step_iter: " << this->step_iter << endl;
 
 			cout << "this->improvement: " << this->improvement << endl;
+			cout << "this->average_match: " << this->average_match << endl;
 
 			#if defined(MDEBUG) && MDEBUG
 			this->verify_problems = vector<Problem*>(NUM_VERIFY_SAMPLES, NULL);
