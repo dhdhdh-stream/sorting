@@ -84,8 +84,6 @@ void Solution::init() {
 	starting_noop_node->next_node = NULL;
 	starting_noop_node->average_score = 0.5;
 	starting_noop_node->average_instances_per_run = 1.0;
-	starting_noop_node->average_remaining_matches = 0.0;
-	starting_noop_node->is_match_start = false;
 	new_scope->nodes[starting_noop_node->id] = starting_noop_node;
 
 	this->obs_average_vals = vector<double>(problem_type->num_obs(), 0.0);
@@ -262,12 +260,6 @@ void Solution::clean() {
 void Solution::measure_update() {
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
 		this->scopes[s_index]->measure_update();
-	}
-}
-
-void Solution::measure_match_update() {
-	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
-		this->scopes[s_index]->measure_match_update();
 	}
 }
 

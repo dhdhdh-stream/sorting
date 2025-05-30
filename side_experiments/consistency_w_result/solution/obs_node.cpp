@@ -12,19 +12,14 @@
 
 using namespace std;
 
-const int OBS_NODE_DISPLAY_TYPE_NONE = 0;
-const int OBS_NODE_DISPLAY_TYPE_IS_FIXED = 1;
-const int OBS_NODE_DISPLAY_TYPE_MATCH_START = 2;
-const int OBS_NODE_DISPLAY_TYPE_MATCH_END = 3;
-
 ObsNode::ObsNode() {
 	this->type = NODE_TYPE_OBS;
 
 	this->is_init = false;
 
+	this->check_consistency = false;
 	this->average = 0.0;
 	this->standard_deviation = 1.0;
-	this->is_fixed_point = false;
 
 	this->experiment = NULL;
 
@@ -32,14 +27,9 @@ ObsNode::ObsNode() {
  	this->num_measure = 0;
  	this->sum_score = 0.0;
 
- 	this->num_match_measure = 0;
-	this->sum_remaining_matches = 0.0;
-
  	this->sum_obs_average = 0.0;
  	this->sum_obs_variance = 0.0;
  	this->obs_count = 0;
-
- 	this->is_match_start = false;
 }
 
 ObsNode::ObsNode(ObsNode* original,
@@ -58,9 +48,9 @@ ObsNode::ObsNode(ObsNode* original,
 
 	this->is_init = true;
 
+	this->check_consistency = original->check_consistency;
 	this->average = original->average;
 	this->standard_deviation = original->standard_deviation;
-	this->is_fixed_point = original->is_fixed_point;
 	this->matches = original->matches;
 	for (int m_index = 0; m_index < (int)this->matches.size(); m_index++) {
 		for (int l_index = 0; l_index < (int)this->matches[m_index].scope_context.size(); l_index++) {
@@ -75,14 +65,9 @@ ObsNode::ObsNode(ObsNode* original,
  	this->num_measure = 0;
  	this->sum_score = 0.0;
 
- 	this->num_match_measure = 0;
-	this->sum_remaining_matches = 0.0;
-
  	this->sum_obs_average = 0.0;
  	this->sum_obs_variance = 0.0;
  	this->obs_count = 0;
-
- 	this->is_match_start = false;
 }
 
 ObsNode::~ObsNode() {
@@ -173,9 +158,6 @@ void ObsNode::clean() {
 	this->num_measure = 0;
 	this->sum_score = 0.0;
 
-	this->num_match_measure = 0;
-	this->sum_remaining_matches = 0.0;
-
 	for (int m_index = 0; m_index < (int)this->matches.size(); m_index++) {
 		this->matches[m_index].clean();
 	}
@@ -183,24 +165,11 @@ void ObsNode::clean() {
 	this->sum_obs_average = 0.0;
  	this->sum_obs_variance = 0.0;
  	this->obs_count = 0;
-
- 	this->is_match_start = false;
 }
 
 void ObsNode::measure_update() {
 	this->average_score = this->sum_score / (double)this->num_measure;
 	this->average_instances_per_run = (double)this->num_measure / MEASURE_ITERS;
-}
-
-void ObsNode::measure_match_update() {
-	if (this->num_match_measure == 0) {
-		/**
-		 * - simply set to 0.0
-		 */
-		this->average_remaining_matches = 0.0;
-	} else {
-		this->average_remaining_matches = this->sum_remaining_matches / (double)this->num_match_measure;
-	}
 }
 
 void ObsNode::save(ofstream& output_file) {
@@ -216,9 +185,9 @@ void ObsNode::save(ofstream& output_file) {
 		output_file << this->ancestor_ids[a_index] << endl;
 	}
 
+	output_file << this->check_consistency << endl;
 	output_file << this->average << endl;
 	output_file << this->standard_deviation << endl;
-	output_file << this->is_fixed_point << endl;
 	output_file << this->matches.size() << endl;
 	for (int m_index = 0; m_index < (int)this->matches.size(); m_index++) {
 		this->matches[m_index].save(output_file);
@@ -226,10 +195,6 @@ void ObsNode::save(ofstream& output_file) {
 
 	output_file << this->average_score << endl;
 	output_file << this->average_instances_per_run << endl;
-
-	output_file << this->average_remaining_matches << endl;
-
-	output_file << this->is_match_start << endl;
 }
 
 void ObsNode::load(ifstream& input_file,
@@ -257,6 +222,10 @@ void ObsNode::load(ifstream& input_file,
 		this->ancestor_ids.push_back(stoi(ancestor_id_line));
 	}
 
+	string check_consistency_line;
+	getline(input_file, check_consistency_line);
+	this->check_consistency = stoi(check_consistency_line);
+
 	string average_line;
 	getline(input_file, average_line);
 	this->average = stod(average_line);
@@ -264,15 +233,6 @@ void ObsNode::load(ifstream& input_file,
 	string standard_deviation_line;
 	getline(input_file, standard_deviation_line);
 	this->standard_deviation = stod(standard_deviation_line);
-
-	string is_fixed_point_line;
-	getline(input_file, is_fixed_point_line);
-	this->is_fixed_point = stoi(is_fixed_point_line);
-
-	// temp
-	if (this->is_fixed_point) {
-		cout << this->parent->id << ": " << this->id << " is fixed point" << endl;
-	}
 
 	string num_matches_line;
 	getline(input_file, num_matches_line);
@@ -295,14 +255,6 @@ void ObsNode::load(ifstream& input_file,
 	string average_instances_per_run_line;
 	getline(input_file, average_instances_per_run_line);
 	this->average_instances_per_run = stod(average_instances_per_run_line);
-
-	string average_remaining_matches_line;
-	getline(input_file, average_remaining_matches_line);
-	this->average_remaining_matches = stod(average_remaining_matches_line);
-
-	string is_match_start_line;
-	getline(input_file, is_match_start_line);
-	this->is_match_start = stoi(is_match_start_line);
 }
 
 void ObsNode::link(Solution* parent_solution) {
@@ -315,20 +267,6 @@ void ObsNode::link(Solution* parent_solution) {
 
 void ObsNode::save_for_display(ofstream& output_file) {
 	output_file << this->next_node_id << endl;
-
-	if (this->is_fixed_point) {
-		output_file << OBS_NODE_DISPLAY_TYPE_IS_FIXED << endl;
-	} else {
-		if (this->is_match_start) {
-			output_file << OBS_NODE_DISPLAY_TYPE_MATCH_START << endl;
-		} else {
-			if (this->matches.size() > 0) {
-				output_file << OBS_NODE_DISPLAY_TYPE_MATCH_END << endl;
-			} else {
-				output_file << OBS_NODE_DISPLAY_TYPE_NONE << endl;
-			}
-		}
-	}
 }
 
 ObsNodeHistory::ObsNodeHistory(ObsNode* node) {

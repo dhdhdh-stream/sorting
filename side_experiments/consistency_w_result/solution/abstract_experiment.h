@@ -56,8 +56,6 @@ public:
 						  Problem* problem,
 						  RunHelper& run_helper,
 						  ScopeHistory* scope_history) = 0;
-	virtual void back_activate(RunHelper& run_helper,
-							   ScopeHistory* scope_history) = 0;
 	virtual void backprop(double target_val,
 						  RunHelper& run_helper) = 0;
 

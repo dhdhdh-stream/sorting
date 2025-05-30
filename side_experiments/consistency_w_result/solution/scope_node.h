@@ -72,7 +72,6 @@ public:
 
 	void clean();
 	void measure_update();
-	void measure_match_update();
 
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file,

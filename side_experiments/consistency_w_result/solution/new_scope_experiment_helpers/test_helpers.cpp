@@ -33,8 +33,7 @@ void NewScopeExperiment::test_activate(
 		NewScopeExperimentHistory* history) {
 	history->hit_test = true;
 
-	scope_history->has_local_experiment = true;
-	scope_history->experiment_num_matches = run_helper.num_matches;
+	run_helper.check_match = true;
 
 	ScopeHistory* inner_scope_history = new ScopeHistory(this->new_scope);
 	this->new_scope->experiment_activate(problem,
@@ -45,32 +44,18 @@ void NewScopeExperiment::test_activate(
 	curr_node = this->test_location_exit;
 }
 
-bool NewScopeExperiment::eval_match() {
-	int sum_num_matches = 0;
-	for (int h_index = 0; h_index < (int)this->test_match_histories.size(); h_index++) {
-		sum_num_matches += this->test_match_histories[h_index];
-	}
-	double average_num_matches = (double)sum_num_matches / (int)this->test_match_histories.size();
-
-	double target_num_matches;
-	if (this->test_location_exit == NULL) {
-		target_num_matches = 0.0;
-	} else {
-		target_num_matches = MIN_MATCH_RATIO * this->test_location_exit->average_remaining_matches;
-	}
-
-	if (average_num_matches < target_num_matches) {
-		return false;
-	} else {
-		return true;
-	}
-}
-
 void NewScopeExperiment::test_backprop(
 		double target_val,
 		RunHelper& run_helper,
 		NewScopeExperimentHistory* history) {
 	bool is_fail = false;
+
+	double sum_factors = 0.0;
+	for (int f_index = 0; f_index < (int)run_helper.match_factors.size(); f_index++) {
+		sum_factors += run_helper.match_factors[f_index];
+	}
+	double average_factor = sum_factors / (int)run_helper.match_factors.size();
+	this->match_histories.push_back(average_factor);
 
 	switch (this->test_location_state) {
 	case LOCATION_STATE_MEASURE:
@@ -78,10 +63,18 @@ void NewScopeExperiment::test_backprop(
 		this->test_location_count++;
 
 		if (this->test_location_count >= NEW_SCOPE_NUM_DATAPOINTS) {
+			double sum_matches = 0.0;
+			for (int h_index = 0; h_index < (int)this->match_histories.size(); h_index++) {
+				sum_matches += this->match_histories[h_index];
+			}
+			double average_match = sum_matches / (int)this->match_histories.size();
+			this->match_histories.clear();
+			cout << "average_match: " << average_match << endl;
+
 			#if defined(MDEBUG) && MDEBUG
 			if (rand()%2 == 0) {
 			#else
-			if (this->test_location_score > MATCH_SCORE && eval_match()) {
+			if (this->test_location_score > MATCH_SCORE) {
 			#endif /* MDEBUG */
 				this->test_location_state = LOCATION_STATE_VERIFY_1ST;
 				this->test_location_score = 0.0;
@@ -99,10 +92,18 @@ void NewScopeExperiment::test_backprop(
 		this->test_location_count++;
 
 		if (this->test_location_count >= NEW_SCOPE_VERIFY_1ST_NUM_DATAPOINTS) {
+			double sum_matches = 0.0;
+			for (int h_index = 0; h_index < (int)this->match_histories.size(); h_index++) {
+				sum_matches += this->match_histories[h_index];
+			}
+			double average_match = sum_matches / (int)this->match_histories.size();
+			this->match_histories.clear();
+			cout << "average_match: " << average_match << endl;
+
 			#if defined(MDEBUG) && MDEBUG
 			if (rand()%2 == 0) {
 			#else
-			if (this->test_location_score > MATCH_SCORE && eval_match()) {
+			if (this->test_location_score > MATCH_SCORE) {
 			#endif /* MDEBUG */
 				this->test_location_state = LOCATION_STATE_VERIFY_2ND;
 				this->test_location_score = 0.0;
@@ -120,10 +121,18 @@ void NewScopeExperiment::test_backprop(
 		this->test_location_count++;
 
 		if (this->test_location_count >= NEW_SCOPE_VERIFY_2ND_NUM_DATAPOINTS) {
+			double sum_matches = 0.0;
+			for (int h_index = 0; h_index < (int)this->match_histories.size(); h_index++) {
+				sum_matches += this->match_histories[h_index];
+			}
+			double average_match = sum_matches / (int)this->match_histories.size();
+			this->match_histories.clear();
+			cout << "average_match: " << average_match << endl;
+
 			#if defined(MDEBUG) && MDEBUG
 			if (rand()%2 == 0) {
 			#else
-			if (this->test_location_score > MATCH_SCORE && eval_match()) {
+			if (this->test_location_score > MATCH_SCORE) {
 			#endif /* MDEBUG */
 				double new_score = this->test_location_score / NEW_SCOPE_VERIFY_2ND_NUM_DATAPOINTS;
 				// this->improvement += new_score;

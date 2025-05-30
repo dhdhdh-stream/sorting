@@ -107,16 +107,14 @@ void update_matches(vector<ScopeHistory*>& scope_histories) {
 			if (it->second->type == NODE_TYPE_OBS) {
 				ObsNode* obs_node = (ObsNode*)it->second;
 				if (obs_node->obs_count > MATCH_UPDATE_MIN_DATAPOINTS) {
+					obs_node->check_consistency = true;
+
 					obs_node->standard_deviation = sqrt(obs_node->sum_obs_variance / obs_node->obs_count);
 					if (obs_node->standard_deviation < MIN_STANDARD_DEVIATION) {
 						obs_node->standard_deviation = MIN_STANDARD_DEVIATION;
 					}
-
-					if (obs_node->sum_obs_variance < MIN_STANDARD_DEVIATION) {
-						obs_node->is_fixed_point = true;
-					} else {
-						obs_node->is_fixed_point = false;
-					}
+				} else {
+					obs_node->check_consistency = false;
 				}
 			}
 		}

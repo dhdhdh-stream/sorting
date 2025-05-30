@@ -27,7 +27,8 @@ void Scope::verify_activate(Problem* problem,
 			{
 				ActionNode* node = (ActionNode*)curr_node;
 				node->activate(curr_node,
-							   problem);
+							   problem,
+							   run_helper);
 			}
 			break;
 		case NODE_TYPE_SCOPE:

@@ -49,8 +49,6 @@ public:
 				  Problem* problem,
 				  RunHelper& run_helper,
 				  ScopeHistory* scope_history);
-	void back_activate(RunHelper& run_helper,
-					   ScopeHistory* scope_history);
 	void backprop(double target_val,
 				  RunHelper& run_helper);
 
@@ -63,9 +61,6 @@ public:
 
 	void clean();
 	void add();
-
-private:
-	bool eval_match();
 };
 
 class PassThroughExperimentHistory : public AbstractExperimentHistory {

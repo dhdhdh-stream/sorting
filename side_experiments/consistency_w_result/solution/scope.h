@@ -87,7 +87,6 @@ public:
 
 	void clean();
 	void measure_update();
-	void measure_match_update();
 
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file,
@@ -105,9 +104,6 @@ public:
 	Scope* scope;
 
 	std::map<int, AbstractNodeHistory*> node_histories;
-
-	bool has_local_experiment;
-	int experiment_num_matches;
 
 	ScopeHistory(Scope* scope);
 	~ScopeHistory();

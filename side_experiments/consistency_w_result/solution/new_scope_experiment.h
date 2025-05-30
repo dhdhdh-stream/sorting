@@ -52,6 +52,8 @@ public:
 	std::vector<bool> successful_location_is_branch;
 	std::vector<ScopeNode*> successful_scope_nodes;
 
+	std::vector<double> match_histories;
+
 	#if defined(MDEBUG) && MDEBUG
 	std::vector<Problem*> verify_problems;
 	std::vector<unsigned long> verify_seeds;
@@ -101,9 +103,6 @@ public:
 
 	void clean();
 	void add();
-
-private:
-	bool eval_match();
 };
 
 class NewScopeExperimentHistory : public AbstractExperimentHistory {

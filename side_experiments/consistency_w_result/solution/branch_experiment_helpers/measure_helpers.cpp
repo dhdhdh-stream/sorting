@@ -21,8 +21,7 @@ void BranchExperiment::measure_activate(
 		Problem* problem,
 		RunHelper& run_helper,
 		ScopeHistory* scope_history) {
-	scope_history->has_local_experiment = true;
-	scope_history->experiment_num_matches = run_helper.num_matches;
+	run_helper.check_match = true;
 
 	if (this->select_percentage == 1.0) {
 		for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {

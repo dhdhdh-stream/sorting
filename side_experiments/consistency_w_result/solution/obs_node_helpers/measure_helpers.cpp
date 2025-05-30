@@ -16,7 +16,6 @@ void ObsNode::measure_activate(AbstractNode*& curr_node,
 							   ScopeHistory* scope_history) {
 	ObsNodeHistory* history = new ObsNodeHistory(this);
 	history->index = (int)scope_history->node_histories.size();
-	history->num_actions = run_helper.num_true_actions;
 	scope_history->node_histories[this->id] = history;
 
 	vector<double> obs = problem->get_observations();

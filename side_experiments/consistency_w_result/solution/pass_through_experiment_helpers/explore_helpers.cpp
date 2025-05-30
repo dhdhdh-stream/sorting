@@ -33,8 +33,7 @@ void PassThroughExperiment::explore_activate(
 		Problem* problem,
 		RunHelper& run_helper,
 		ScopeHistory* scope_history) {
-	scope_history->has_local_experiment = true;
-	scope_history->experiment_num_matches = run_helper.num_matches;
+	run_helper.check_match = true;
 
 	for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {
 		if (this->step_types[s_index] == STEP_TYPE_ACTION) {
@@ -53,42 +52,36 @@ void PassThroughExperiment::explore_activate(
 	curr_node = this->exit_next_node;
 }
 
-bool PassThroughExperiment::eval_match() {
-	int sum_num_matches = 0;
-	for (int h_index = 0; h_index < (int)this->match_histories.size(); h_index++) {
-		sum_num_matches += this->match_histories[h_index];
-	}
-	double average_num_matches = (double)sum_num_matches / (int)this->match_histories.size();
-
-	double target_num_matches;
-	if (this->exit_next_node == NULL) {
-		target_num_matches = 0.0;
-	} else {
-		target_num_matches = MIN_MATCH_RATIO * this->exit_next_node->average_remaining_matches;
-	}
-
-	if (average_num_matches < target_num_matches) {
-		return false;
-	} else {
-		return true;
-	}
-}
-
 void PassThroughExperiment::explore_backprop(
 		double target_val,
 		RunHelper& run_helper) {
 	this->sum_score += target_val - run_helper.result;
+
+	double sum_factors = 0.0;
+	for (int f_index = 0; f_index < (int)run_helper.match_factors.size(); f_index++) {
+		sum_factors += run_helper.match_factors[f_index];
+	}
+	double average_factor = sum_factors / (int)run_helper.match_factors.size();
+	this->match_histories.push_back(average_factor);
 
 	this->state_iter++;
 	bool is_fail = false;
 	switch (this->state) {
 	case PASS_THROUGH_EXPERIMENT_STATE_INITIAL:
 		if (this->state_iter == INITIAL_NUM_SAMPLES_PER_ITER) {
+			double sum_matches = 0.0;
+			for (int h_index = 0; h_index < (int)this->match_histories.size(); h_index++) {
+				sum_matches += this->match_histories[h_index];
+			}
+			double average_match = sum_matches / (int)this->match_histories.size();
+			this->match_histories.clear();
+			cout << "average_match: " << average_match << endl;
+
 			#if defined(MDEBUG) && MDEBUG
 			if (rand()%2 == 0) {
 			#else
 			double curr_score = this->sum_score / this->state_iter;
-			if (curr_score <= 0.0 || !eval_match()) {
+			if (curr_score <= 0.0) {
 			#endif /* MDEBUG */
 				is_fail = true;
 			} else {
@@ -103,11 +96,19 @@ void PassThroughExperiment::explore_backprop(
 		break;
 	case PASS_THROUGH_EXPERIMENT_STATE_VERIFY_1ST:
 		if (this->state_iter == VERIFY_1ST_NUM_SAMPLES_PER_ITER) {
+			double sum_matches = 0.0;
+			for (int h_index = 0; h_index < (int)this->match_histories.size(); h_index++) {
+				sum_matches += this->match_histories[h_index];
+			}
+			double average_match = sum_matches / (int)this->match_histories.size();
+			this->match_histories.clear();
+			cout << "average_match: " << average_match << endl;
+
 			#if defined(MDEBUG) && MDEBUG
 			if (rand()%2 == 0) {
 			#else
 			double curr_score = this->sum_score / this->state_iter;
-			if (curr_score <= 0.0 || !eval_match()) {
+			if (curr_score <= 0.0) {
 			#endif /* MDEBUG */
 				is_fail = true;
 			} else {
@@ -122,11 +123,19 @@ void PassThroughExperiment::explore_backprop(
 		break;
 	case PASS_THROUGH_EXPERIMENT_STATE_VERIFY_2ND:
 		if (this->state_iter == VERIFY_2ND_NUM_SAMPLES_PER_ITER) {
+			double sum_matches = 0.0;
+			for (int h_index = 0; h_index < (int)this->match_histories.size(); h_index++) {
+				sum_matches += this->match_histories[h_index];
+			}
+			double average_match = sum_matches / (int)this->match_histories.size();
+			this->match_histories.clear();
+			cout << "average_match: " << average_match << endl;
+
 			double curr_score = this->sum_score / this->state_iter;
 			#if defined(MDEBUG) && MDEBUG
 			if (rand()%2 == 0) {
 			#else
-			if (curr_score <= 0.0 || !eval_match()) {
+			if (curr_score <= 0.0) {
 			#endif /* MDEBUG */
 				is_fail = true;
 			} else {

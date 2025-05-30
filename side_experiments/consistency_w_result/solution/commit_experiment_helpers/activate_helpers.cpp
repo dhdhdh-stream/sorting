@@ -153,24 +153,6 @@ void CommitExperiment::activate(AbstractNode* experiment_node,
 	}
 }
 
-void CommitExperiment::back_activate(RunHelper& run_helper,
-									 ScopeHistory* scope_history) {
-	switch (this->state) {
-	case COMMIT_EXPERIMENT_STATE_FIND_SAVE:
-		if (scope_history->has_local_experiment) {
-			this->save_match_histories.push_back(
-				run_helper.num_matches - scope_history->experiment_num_matches);
-		}
-		break;
-	case COMMIT_EXPERIMENT_STATE_COMMIT_TRAIN_EXISTING:
-		if (scope_history->has_local_experiment) {
-			this->commit_existing_match_histories.push_back(
-				run_helper.num_matches - scope_history->experiment_num_matches);
-		}
-		break;
-	}
-}
-
 void CommitExperiment::backprop(double target_val,
 								RunHelper& run_helper) {
 	CommitExperimentHistory* history = (CommitExperimentHistory*)run_helper.experiment_history;

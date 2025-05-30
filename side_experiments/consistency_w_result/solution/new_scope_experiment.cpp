@@ -274,9 +274,9 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 							it->second->ancestor_ids.push_back(new_obs_node->id);
 						}
 
+						new_obs_node->check_consistency = original_obs_node->check_consistency;
 						new_obs_node->average = original_obs_node->average;
 						new_obs_node->standard_deviation = original_obs_node->standard_deviation;
-						new_obs_node->is_fixed_point = original_obs_node->is_fixed_point;
 						for (int m_index = 0; m_index < (int)original_obs_node->matches.size(); m_index++) {
 							AbstractNode* original_early_node = scope_context->nodes[
 								original_obs_node->matches[m_index].node_context[0]];
@@ -289,8 +289,6 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 								new_match.weight = original_obs_node->matches[m_index].weight;
 								new_match.constant = original_obs_node->matches[m_index].constant;
 								new_match.standard_deviation = original_obs_node->matches[m_index].standard_deviation;
-								new_match.average_distance = original_obs_node->matches[m_index].average_distance;
-								new_match.is_init = true;
 								new_obs_node->matches.push_back(new_match);
 							}
 						}

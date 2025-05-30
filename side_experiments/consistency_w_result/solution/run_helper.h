@@ -14,12 +14,11 @@ public:
 	double result;
 
 	int num_actions;
-	int num_true_actions;
 
 	AbstractExperimentHistory* experiment_history;
 
-	int num_matches;
-	std::vector<bool> match_factors;
+	bool check_match;
+	std::vector<double> match_factors;
 
 	#if defined(MDEBUG) && MDEBUG
 	unsigned long starting_run_seed;

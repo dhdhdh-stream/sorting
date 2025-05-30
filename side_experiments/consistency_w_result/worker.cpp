@@ -86,16 +86,6 @@ int main(int argc, char* argv[]) {
 				// target_val -= run_helper.num_actions * solution->curr_time_penalty;
 				target_val -= run_helper.num_actions * 0.0001;
 
-				int num_mismatches = 0;
-				for (int m_index = 0; m_index < (int)run_helper.match_factors.size(); m_index++) {
-					if (!run_helper.match_factors[m_index]) {
-						num_mismatches++;
-					}
-				}
-				if (num_mismatches > MAX_MISMATCH_PERCENTAGE * run_helper.match_factors.size()) {
-					target_val = -10.0;
-				}
-
 				run_helper.experiment_history->experiment->backprop(
 					target_val,
 					run_helper);
@@ -185,25 +175,6 @@ int main(int argc, char* argv[]) {
 		for (int h_index = 0; h_index < (int)scope_histories.size(); h_index++) {
 			delete scope_histories[h_index];
 		}
-
-		for (int iter_index = 0; iter_index < MEASURE_ITERS; iter_index++) {
-			run_index++;
-
-			Problem* problem = problem_type->get_problem();
-
-			RunHelper run_helper;
-
-			ScopeHistory* scope_history = new ScopeHistory(solution->scopes[0]);
-			solution->scopes[0]->measure_match_activate(
-				problem,
-				run_helper,
-				scope_history);
-			delete scope_history;
-
-			delete problem;
-		}
-
-		solution->measure_match_update();
 
 		solution->curr_score = sum_score / MEASURE_ITERS;
 		solution->curr_true_score = sum_true_score / MEASURE_ITERS;

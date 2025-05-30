@@ -23,20 +23,18 @@ public:
 	int next_node_id;
 	AbstractNode* next_node;
 
+	bool check_consistency;
+	double average;
+	double standard_deviation;
 	/**
 	 * - remeasure, but don't look for new matches
 	 *   - only remove ones that no longer match
 	 */
-	double average;
-	double standard_deviation;
-	bool is_fixed_point;
 	std::vector<Match> matches;
 
 	double sum_obs_average;
 	double sum_obs_variance;
 	int obs_count;
-
-	bool is_match_start;
 
 	ObsNode();
 	ObsNode(ObsNode* original,
@@ -88,7 +86,6 @@ public:
 
 	void clean();
 	void measure_update();
-	void measure_match_update();
 
 	void gather_match_datapoints(ObsNodeHistory* history,
 								 ScopeHistory* scope_history);
@@ -107,8 +104,6 @@ public:
 
 	std::vector<bool> factor_initialized;
 	std::vector<double> factor_values;
-
-	int num_actions;
 
 	ObsNodeHistory(ObsNode* node);
 };

@@ -11,7 +11,7 @@
 using namespace std;
 
 bool match_comp(Match first, Match second) {
-	if (first.average_distance > second.average_distance) {
+	if (first.standard_deviation < second.standard_deviation) {
 		return true;
 	} else {
 		return false;
@@ -37,15 +37,13 @@ void ObsNode::gather_match_datapoints(ObsNodeHistory* history,
 					new_match.parent = this;
 					new_match.scope_context = {this->parent};
 					new_match.node_context = {it->first};
-					new_match.is_init = false;
 					this->matches.push_back(new_match);
 					match_index = (int)this->matches.size()-1;
 				}
 
 				ObsNodeHistory* early_history = (ObsNodeHistory*)it->second;
 				this->matches[match_index].datapoints.push_back(
-					{{early_history->obs_history[0], history->obs_history[0]},
-						history->num_actions - early_history->num_actions});
+					{early_history->obs_history[0], history->obs_history[0]});
 			}
 		}
 	} else {
@@ -66,7 +64,6 @@ void ObsNode::gather_match_datapoints(ObsNodeHistory* history,
 					new_match.parent = this;
 					new_match.scope_context = {this->parent};
 					new_match.node_context = {it->first};
-					new_match.is_init = false;
 					this->matches.push_back(new_match);
 				}
 			}
@@ -79,8 +76,7 @@ void ObsNode::gather_match_datapoints(ObsNodeHistory* history,
 				ObsNodeHistory* early_history = (ObsNodeHistory*)it->second;
 
 				this->matches[m_index].datapoints.push_back(
-					{{early_history->obs_history[0], history->obs_history[0]},
-						history->num_actions - early_history->num_actions});
+					{early_history->obs_history[0], history->obs_history[0]});
 			}
 		}
 	}
@@ -89,9 +85,7 @@ void ObsNode::gather_match_datapoints(ObsNodeHistory* history,
 void ObsNode::update_matches() {
 	for (int m_index = (int)this->matches.size()-1; m_index >= 0; m_index--) {
 		if (this->matches[m_index].datapoints.size() < MATCH_UPDATE_MIN_DATAPOINTS) {
-			if (!this->matches[m_index].is_init) {
-				this->matches.erase(this->matches.begin() + m_index);
-			}
+			this->matches.erase(this->matches.begin() + m_index);
 		} else {
 			bool is_still_needed;
 			this->matches[m_index].update(is_still_needed);
@@ -99,11 +93,6 @@ void ObsNode::update_matches() {
 				this->matches.erase(this->matches.begin() + m_index);
 			}
 		}
-	}
-
-	for (int m_index = 0; m_index < (int)this->matches.size(); m_index++) {
-		ObsNode* obs_node = (ObsNode*)this->parent->nodes[this->matches[m_index].node_context[0]];
-		obs_node->is_match_start = true;
 	}
 
 	sort(this->matches.begin(), this->matches.end(), match_comp);

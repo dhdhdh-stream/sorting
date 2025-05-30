@@ -46,14 +46,6 @@ void PassThroughExperiment::activate(AbstractNode* experiment_node,
 	}
 }
 
-void PassThroughExperiment::back_activate(RunHelper& run_helper,
-										  ScopeHistory* scope_history) {
-	if (scope_history->has_local_experiment) {
-		this->match_histories.push_back(
-			run_helper.num_matches - scope_history->experiment_num_matches);
-	}
-}
-
 void PassThroughExperiment::backprop(double target_val,
 									 RunHelper& run_helper) {
 	explore_backprop(target_val,

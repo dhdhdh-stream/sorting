@@ -34,8 +34,7 @@ void CommitExperiment::find_save_activate(
 		Problem* problem,
 		RunHelper& run_helper,
 		ScopeHistory* scope_history) {
-	scope_history->has_local_experiment = true;
-	scope_history->experiment_num_matches = run_helper.num_matches;
+	run_helper.check_match = true;
 
 	for (int s_index = 0; s_index < this->step_iter; s_index++) {
 		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
@@ -148,27 +147,6 @@ void CommitExperiment::find_save_activate(
 	curr_node = this->save_exit_next_node;
 }
 
-bool CommitExperiment::save_eval_match() {
-	int sum_num_matches = 0;
-	for (int h_index = 0; h_index < (int)this->save_match_histories.size(); h_index++) {
-		sum_num_matches += this->save_match_histories[h_index];
-	}
-	double average_num_matches = (double)sum_num_matches / (int)this->save_match_histories.size();
-
-	double target_num_matches;
-	if (this->save_exit_next_node == NULL) {
-		target_num_matches = 0.0;
-	} else {
-		target_num_matches = MIN_MATCH_RATIO * this->save_exit_next_node->average_remaining_matches;
-	}
-
-	if (average_num_matches < target_num_matches) {
-		return false;
-	} else {
-		return true;
-	}
-}
-
 void CommitExperiment::find_save_backprop(
 		double target_val,
 		RunHelper& run_helper) {
@@ -176,15 +154,30 @@ void CommitExperiment::find_save_backprop(
 
 	this->save_sum_score += target_val - run_helper.result;
 
+	double sum_factors = 0.0;
+	for (int f_index = 0; f_index < (int)run_helper.match_factors.size(); f_index++) {
+		sum_factors += run_helper.match_factors[f_index];
+	}
+	double average_factor = sum_factors / (int)run_helper.match_factors.size();
+	this->match_histories.push_back(average_factor);
+
 	this->state_iter++;
 	if (this->state_iter == INITIAL_NUM_SAMPLES_PER_ITER
 			|| this->state_iter == VERIFY_1ST_NUM_SAMPLES_PER_ITER
 			|| this->state_iter == VERIFY_2ND_NUM_SAMPLES_PER_ITER) {
+		double sum_matches = 0.0;
+		for (int h_index = 0; h_index < (int)this->match_histories.size(); h_index++) {
+			sum_matches += this->match_histories[h_index];
+		}
+		double average_match = sum_matches / (int)this->match_histories.size();
+		this->match_histories.clear();
+		cout << "average_match: " << average_match << endl;
+
 		#if defined(MDEBUG) && MDEBUG
 		if (false) {
 		#else
 		double curr_score = this->save_sum_score / this->state_iter;
-		if (curr_score < MATCH_SCORE || !save_eval_match()) {
+		if (curr_score < MATCH_SCORE) {
 		#endif /* MDEBUG */
 			is_fail = true;
 		}
@@ -195,8 +188,6 @@ void CommitExperiment::find_save_backprop(
 		this->save_step_types.clear();
 		this->save_actions.clear();
 		this->save_scopes.clear();
-
-		this->save_match_histories.clear();
 
 		this->state_iter = -1;
 

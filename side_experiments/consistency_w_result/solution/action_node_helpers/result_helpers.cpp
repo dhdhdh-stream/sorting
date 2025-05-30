@@ -20,8 +20,6 @@ void ActionNode::result_activate(AbstractNode*& curr_node,
 
 	problem->perform_action(this->action);
 
-	run_helper.num_true_actions++;
-
 	curr_node = this->next_node;
 
 	if (this->experiment != NULL) {

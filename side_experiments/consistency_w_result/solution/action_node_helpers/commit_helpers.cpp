@@ -10,6 +10,4 @@ void ActionNode::commit_activate(Problem* problem,
 								 RunHelper& run_helper,
 								 ScopeHistory* scope_history) {
 	problem->perform_action(this->action);
-
-	run_helper.num_true_actions++;
 }

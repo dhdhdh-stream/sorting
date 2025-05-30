@@ -67,8 +67,7 @@ void CommitExperiment::commit_train_existing_activate(
 	this->num_instances_until_target--;
 
 	if (this->num_instances_until_target <= 0) {
-		scope_history->has_local_experiment = true;
-		scope_history->experiment_num_matches = run_helper.num_matches;
+		run_helper.check_match = true;
 
 		history->instance_count++;
 
@@ -141,27 +140,6 @@ void CommitExperiment::commit_train_existing_activate(
 	}
 }
 
-bool CommitExperiment::commit_existing_eval_match() {
-	int sum_num_matches = 0;
-	for (int h_index = 0; h_index < (int)this->commit_existing_match_histories.size(); h_index++) {
-		sum_num_matches += this->commit_existing_match_histories[h_index];
-	}
-	double average_num_matches = (double)sum_num_matches / (int)this->commit_existing_match_histories.size();
-
-	double target_num_matches;
-	if (this->best_exit_next_node == NULL) {
-		target_num_matches = 0.0;
-	} else {
-		target_num_matches = MIN_MATCH_RATIO * this->best_exit_next_node->average_remaining_matches;
-	}
-
-	if (average_num_matches < target_num_matches) {
-		return false;
-	} else {
-		return true;
-	}
-}
-
 void CommitExperiment::commit_train_existing_backprop(
 		double target_val,
 		RunHelper& run_helper,
@@ -170,12 +148,22 @@ void CommitExperiment::commit_train_existing_backprop(
 		this->i_target_val_histories.push_back(run_helper.result - target_val);
 	}
 
+	double sum_factors = 0.0;
+	for (int f_index = 0; f_index < (int)run_helper.match_factors.size(); f_index++) {
+		sum_factors += run_helper.match_factors[f_index];
+	}
+	double average_factor = sum_factors / (int)run_helper.match_factors.size();
+	this->match_histories.push_back(average_factor);
+
 	this->state_iter++;
 	if (this->state_iter >= TRAIN_EXISTING_NUM_DATAPOINTS) {
-		if (!commit_existing_eval_match()) {
-			this->result = EXPERIMENT_RESULT_FAIL;
-			return;
+		double sum_matches = 0.0;
+		for (int h_index = 0; h_index < (int)this->match_histories.size(); h_index++) {
+			sum_matches += this->match_histories[h_index];
 		}
+		double average_match = sum_matches / (int)this->match_histories.size();
+		this->match_histories.clear();
+		cout << "average_match: " << average_match << endl;
 
 		{
 			default_random_engine generator_copy = generator;

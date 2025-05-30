@@ -83,16 +83,6 @@ void BranchExperiment::activate(AbstractNode* experiment_node,
 	}
 }
 
-void BranchExperiment::back_activate(RunHelper& run_helper,
-									 ScopeHistory* scope_history) {
-	if (this->state == BRANCH_EXPERIMENT_STATE_TRAIN_NEW) {
-		if (scope_history->has_local_experiment) {
-			this->match_histories.push_back(
-				run_helper.num_matches - scope_history->experiment_num_matches);
-		}
-	}
-}
-
 void BranchExperiment::backprop(double target_val,
 								RunHelper& run_helper) {
 	BranchExperimentHistory* history = (BranchExperimentHistory*)run_helper.experiment_history;
