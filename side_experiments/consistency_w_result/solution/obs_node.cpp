@@ -20,6 +20,12 @@ ObsNode::ObsNode() {
 	this->average_val = 0.0;
 	this->average_variance = 1.0;
 	this->standard_deviation = 1.0;
+	this->check_consistency = false;
+
+	this->min_standard_deviation = 1.0;
+	this->min_average_val = 0.0;
+	this->max_standard_deviation = 1.0;
+	this->max_average_val = 0.0;
 
 	this->experiment = NULL;
 
@@ -51,6 +57,7 @@ ObsNode::ObsNode(ObsNode* original,
 	this->average_val = original->average_val;
 	this->average_variance = original->average_variance;
 	this->standard_deviation = original->standard_deviation;
+	this->check_consistency = original->check_consistency;
 	this->matches = original->matches;
 	for (int m_index = 0; m_index < (int)this->matches.size(); m_index++) {
 		for (int l_index = 0; l_index < (int)this->matches[m_index].scope_context.size(); l_index++) {
@@ -58,6 +65,12 @@ ObsNode::ObsNode(ObsNode* original,
 				parent_solution->scopes[this->matches[m_index].scope_context[l_index]->id];
 		}
 	}
+
+	// temp
+	this->min_standard_deviation = original->min_standard_deviation;
+	this->min_average_val = original->min_average_val;
+	this->max_standard_deviation = original->max_standard_deviation;
+	this->max_average_val = original->max_average_val;
 
 	this->experiment = NULL;
 
@@ -168,8 +181,13 @@ void ObsNode::clean() {
 }
 
 void ObsNode::measure_update() {
-	this->average_score = this->sum_score / (double)this->num_measure;
-	this->average_instances_per_run = (double)this->num_measure / MEASURE_ITERS;
+	if (this->num_measure == 0) {
+		this->average_score = 0.0;
+		this->average_instances_per_run = 0.0;
+	} else {
+		this->average_score = this->sum_score / (double)this->num_measure;
+		this->average_instances_per_run = (double)this->num_measure / MEASURE_ITERS;
+	}
 }
 
 void ObsNode::save(ofstream& output_file) {
@@ -188,10 +206,16 @@ void ObsNode::save(ofstream& output_file) {
 	output_file << this->average_val << endl;
 	output_file << this->average_variance << endl;
 	output_file << this->standard_deviation << endl;
+	output_file << this->check_consistency << endl;
 	output_file << this->matches.size() << endl;
 	for (int m_index = 0; m_index < (int)this->matches.size(); m_index++) {
 		this->matches[m_index].save(output_file);
 	}
+
+	output_file << this->min_standard_deviation << endl;
+	output_file << this->min_average_val << endl;
+	output_file << this->max_standard_deviation << endl;
+	output_file << this->max_average_val << endl;
 
 	output_file << this->average_score << endl;
 	output_file << this->average_instances_per_run << endl;
@@ -234,6 +258,10 @@ void ObsNode::load(ifstream& input_file,
 	getline(input_file, standard_deviation_line);
 	this->standard_deviation = stod(standard_deviation_line);
 
+	string check_consistency_line;
+	getline(input_file, check_consistency_line);
+	this->check_consistency = stoi(check_consistency_line);
+
 	string num_matches_line;
 	getline(input_file, num_matches_line);
 	int num_matches = stoi(num_matches_line);
@@ -242,6 +270,22 @@ void ObsNode::load(ifstream& input_file,
 									  parent_solution));
 		this->matches.back().parent = this;
 	}
+
+	string min_standard_deviation_line;
+	getline(input_file, min_standard_deviation_line);
+	this->min_standard_deviation = stod(min_standard_deviation_line);
+
+	string min_average_val_line;
+	getline(input_file, min_average_val_line);
+	this->min_average_val = stod(min_average_val_line);
+
+	string max_standard_deviation_line;
+	getline(input_file, max_standard_deviation_line);
+	this->max_standard_deviation = stod(max_standard_deviation_line);
+
+	string max_average_val_line;
+	getline(input_file, max_average_val_line);
+	this->max_average_val = stod(max_average_val_line);
 
 	this->is_init = true;
 

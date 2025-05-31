@@ -11,7 +11,7 @@
 using namespace std;
 
 bool match_comp(Match first, Match second) {
-	if (first.standard_deviation < second.standard_deviation) {
+	if (first.average_distance > second.average_distance) {
 		return true;
 	} else {
 		return false;
@@ -45,6 +45,8 @@ void ObsNode::gather_match_datapoints(ObsNodeHistory* history,
 				ObsNodeHistory* early_history = (ObsNodeHistory*)it->second;
 				this->matches[match_index].datapoints.push_back(
 					{early_history->obs_history[0], history->obs_history[0]});
+				this->matches[match_index].distances.push_back(
+					history->num_true_actions - early_history->num_true_actions);
 			}
 		}
 	} else {
@@ -79,6 +81,8 @@ void ObsNode::gather_match_datapoints(ObsNodeHistory* history,
 
 				this->matches[m_index].datapoints.push_back(
 					{early_history->obs_history[0], history->obs_history[0]});
+				this->matches[m_index].distances.push_back(
+					{history->num_true_actions - early_history->num_true_actions});
 			}
 		}
 	}

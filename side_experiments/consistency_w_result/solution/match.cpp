@@ -7,12 +7,14 @@
 #include <Eigen/Dense>
 
 #include "constants.h"
+#include "globals.h"
 #include "obs_node.h"
 #include "scope.h"
 #include "solution.h"
 
 using namespace std;
 
+const double MIN_AVERAGE_DISTANCE = 3.0;
 const double MAX_PARENT_FACTOR = 0.5;
 
 Match::Match() {
@@ -45,6 +47,10 @@ Match::Match(ifstream& input_file,
 	string standard_deviation_line;
 	getline(input_file, standard_deviation_line);
 	this->standard_deviation = stod(standard_deviation_line);
+
+	string average_distance_line;
+	getline(input_file, average_distance_line);
+	this->average_distance = stod(average_distance_line);
 
 	this->is_init = true;
 }
@@ -82,6 +88,7 @@ void Match::replace_obs_node(Scope* scope,
 
 void Match::clean() {
 	this->datapoints.clear();
+	this->distances.clear();
 }
 
 void Match::update(bool& is_still_needed) {
@@ -92,6 +99,16 @@ void Match::update(bool& is_still_needed) {
 			if (this->datapoints.size() == 0) {
 				is_still_needed = true;
 			} else {
+				double sum_distances = 0.0;
+				for (int d_index = 0; d_index < (int)this->distances.size(); d_index++) {
+					sum_distances += this->distances[d_index];
+				}
+				double test_average_distance = sum_distances / (int)this->distances.size();
+				if (test_average_distance < MIN_AVERAGE_DISTANCE) {
+					is_still_needed = false;
+					return;
+				}
+
 				double sum_variance = 0.0;
 				for (int d_index = 0; d_index < (int)this->datapoints.size(); d_index++) {
 					double predicted_score = this->datapoints[d_index].first * this->weight + this->constant;
@@ -100,7 +117,10 @@ void Match::update(bool& is_still_needed) {
 					sum_variance += curr_variance;
 				}
 				double test_standard_deviation = sqrt(sum_variance / (int)this->datapoints.size());
-				if (test_standard_deviation > MAX_PARENT_FACTOR * this->parent->standard_deviation) {
+
+				double overall_standard_deviation = sqrt(solution->obs_variances[0]);
+				if (test_standard_deviation > MAX_PARENT_FACTOR * this->parent->standard_deviation
+						|| this->standard_deviation > MAX_OVERALL_OBS_FACTOR * overall_standard_deviation) {
 					is_still_needed = false;
 				} else {
 					is_still_needed = true;
@@ -108,6 +128,16 @@ void Match::update(bool& is_still_needed) {
 			}
 		}
 	} else {
+		double sum_distances = 0.0;
+		for (int d_index = 0; d_index < (int)this->distances.size(); d_index++) {
+			sum_distances += this->distances[d_index];
+		}
+		this->average_distance = sum_distances / (int)this->distances.size();
+		if (this->average_distance < MIN_AVERAGE_DISTANCE) {
+			is_still_needed = false;
+			return;
+		}
+
 		double early_sum_vals = 0.0;
 		double later_sum_vals = 0.0;
 		for (int d_index = 0; d_index < (int)this->datapoints.size(); d_index++) {
@@ -178,7 +208,9 @@ void Match::update(bool& is_still_needed) {
 				this->standard_deviation = MIN_STANDARD_DEVIATION;
 			}
 
-			if (this->standard_deviation > MAX_PARENT_FACTOR * this->parent->standard_deviation) {
+			double overall_standard_deviation = sqrt(solution->obs_variances[0]);
+			if (this->standard_deviation > MAX_PARENT_FACTOR * this->parent->standard_deviation
+					|| this->standard_deviation > MAX_OVERALL_OBS_FACTOR * overall_standard_deviation) {
 				is_still_needed = false;
 			} else {
 				is_still_needed = true;
@@ -197,4 +229,6 @@ void Match::save(ofstream& output_file) {
 	output_file << this->weight << endl;
 	output_file << this->constant << endl;
 	output_file << this->standard_deviation << endl;
+
+	output_file << this->average_distance << endl;
 }

@@ -113,8 +113,13 @@ void BranchNode::clean() {
 }
 
 void BranchNode::measure_update() {
-	this->average_score = this->sum_score / (double)this->num_measure;
-	this->average_instances_per_run = (double)this->num_measure / MEASURE_ITERS;
+	if (this->num_measure == 0) {
+		this->average_score = 0.0;
+		this->average_instances_per_run = 0.0;
+	} else {
+		this->average_score = this->sum_score / (double)this->num_measure;
+		this->average_instances_per_run = (double)this->num_measure / MEASURE_ITERS;
+	}
 }
 
 void BranchNode::save(ofstream& output_file) {

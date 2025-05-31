@@ -32,8 +32,11 @@ public:
 
 	double standard_deviation;
 
+	double average_distance;
+
 	bool is_init;
 	std::vector<std::pair<double,double>> datapoints;
+	std::vector<int> distances;
 
 	Match();
 	Match(std::ifstream& input_file,

@@ -42,6 +42,7 @@ const int MATCH_UPDATE_MIN_DATAPOINTS = 20;
 const double MATCH_MIN_PCC = 0.8;
 const double FACTOR_MAX_CAP = 6.0;
 const double MATCH_MAX_DISTANCE = 1.0;
+const double MAX_OVERALL_OBS_FACTOR = 0.4;
 
 const double NEW_SCOPE_EXPERIMENT_MIN_INSTANCES_PER_RUN = 0.2;
 

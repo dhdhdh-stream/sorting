@@ -26,7 +26,14 @@ public:
 	double average_val;
 	double average_variance;
 	double standard_deviation;
+	bool check_consistency;
 	std::vector<Match> matches;
+
+	// temp
+	double min_standard_deviation;
+	double min_average_val;
+	double max_standard_deviation;
+	double max_average_val;
 
 	double sum_obs_vals;
 	double sum_obs_variances;
@@ -100,6 +107,8 @@ public:
 
 	std::vector<bool> factor_initialized;
 	std::vector<double> factor_values;
+
+	int num_true_actions;
 
 	ObsNodeHistory(ObsNode* node);
 };

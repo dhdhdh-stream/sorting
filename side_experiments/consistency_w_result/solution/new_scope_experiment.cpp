@@ -63,7 +63,6 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 			ObsNode* starting_node = new ObsNode();
 			starting_node->parent = this->new_scope;
 			starting_node->id = this->new_scope->node_counter;
-			starting_node->is_init = true;
 			this->new_scope->node_counter++;
 			this->new_scope->nodes[starting_node->id] = starting_node;
 
@@ -142,7 +141,6 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 			ObsNode* new_ending_node = new ObsNode();
 			new_ending_node->parent = this->new_scope;
 			new_ending_node->id = this->new_scope->node_counter;
-			new_ending_node->is_init = true;
 			this->new_scope->node_counter++;
 			this->new_scope->nodes[new_ending_node->id] = new_ending_node;
 			new_ending_node->next_node_id = -1;
@@ -283,6 +281,7 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 						new_obs_node->average_val = original_obs_node->average_val;
 						new_obs_node->average_variance = original_obs_node->average_variance;
 						new_obs_node->standard_deviation = original_obs_node->standard_deviation;
+						new_obs_node->check_consistency = original_obs_node->check_consistency;
 						for (int m_index = 0; m_index < (int)original_obs_node->matches.size(); m_index++) {
 							AbstractNode* original_early_node = scope_context->nodes[
 								original_obs_node->matches[m_index].node_context[0]];
@@ -295,10 +294,16 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 								new_match.weight = original_obs_node->matches[m_index].weight;
 								new_match.constant = original_obs_node->matches[m_index].constant;
 								new_match.standard_deviation = original_obs_node->matches[m_index].standard_deviation;
+								new_match.average_distance = original_obs_node->matches[m_index].average_distance;
 								new_match.is_init = true;
 								new_obs_node->matches.push_back(new_match);
 							}
 						}
+						// temp
+						new_obs_node->min_standard_deviation = original_obs_node->min_standard_deviation;
+						new_obs_node->min_average_val = original_obs_node->min_average_val;
+						new_obs_node->max_standard_deviation = original_obs_node->max_standard_deviation;
+						new_obs_node->max_average_val = original_obs_node->max_average_val;
 					}
 					break;
 				}

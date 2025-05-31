@@ -14,6 +14,7 @@ public:
 	double result;
 
 	int num_actions;
+	int num_true_actions;
 
 	AbstractExperimentHistory* experiment_history;
 
