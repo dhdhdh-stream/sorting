@@ -1,3 +1,7 @@
+/**
+ * TODO: normalize output?
+ */
+
 #ifndef NETWORK_H
 #define NETWORK_H
 
@@ -7,7 +11,10 @@
 
 class Network {
 public:
+	std::vector<double> input_averages;
+	std::vector<double> input_standard_deviations;
 	Layer* input;
+
 	Layer* hidden_1;
 	Layer* hidden_2;
 	Layer* hidden_3;
@@ -19,7 +26,8 @@ public:
 	double hidden_3_average_max_update;
 	double output_average_max_update;
 
-	Network(int input_size);
+	Network(int input_size,
+			std::vector<std::vector<double>>& sample_inputs);
 	Network(Network* original);
 	Network(std::ifstream& input_file);
 	~Network();
