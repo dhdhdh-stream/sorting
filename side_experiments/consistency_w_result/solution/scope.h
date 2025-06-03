@@ -48,9 +48,6 @@ public:
 
 	void random_exit_activate(AbstractNode* starting_node,
 							  std::vector<AbstractNode*>& possible_exits);
-	void random_continue(AbstractNode* starting_node,
-						 int num_following,
-						 std::set<AbstractNode*>& potential_included_nodes);
 
 	void measure_activate(Problem* problem,
 						  RunHelper& run_helper,

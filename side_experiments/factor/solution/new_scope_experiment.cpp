@@ -17,6 +17,83 @@ using namespace std;
 const int NEW_SCOPE_MIN_NUM_NODES = 3;
 const int CREATE_NEW_SCOPE_NUM_TRIES = 50;
 
+void ancestor_helper(AbstractNode* curr_node,
+					 set<AbstractNode*>& ancestors) {
+	for (int a_index = 0; a_index < (int)curr_node->ancestor_ids.size(); a_index++) {
+		AbstractNode* next_node = curr_node->parent->nodes[curr_node->ancestor_ids[a_index]];
+		set<AbstractNode*>::iterator it = ancestors.find(next_node);
+		if (it == ancestors.end()) {
+			ancestors.insert(next_node);
+
+			ancestor_helper(next_node,
+							ancestors);
+		}
+	}
+}
+
+void children_helper(AbstractNode* curr_node,
+					 set<AbstractNode*>& children) {
+	switch (curr_node->type) {
+	case NODE_TYPE_ACTION:
+		{
+			ActionNode* action_node = (ActionNode*)curr_node;
+			set<AbstractNode*>::iterator it = children.find(action_node->next_node);
+			if (it == children.end()) {
+				children.insert(action_node->next_node);
+
+				children_helper(action_node->next_node,
+								children);
+			}
+		}
+		break;
+	case NODE_TYPE_SCOPE:
+		{
+			ScopeNode* scope_node = (ScopeNode*)curr_node;
+			set<AbstractNode*>::iterator it = children.find(scope_node->next_node);
+			if (it == children.end()) {
+				children.insert(scope_node->next_node);
+
+				children_helper(scope_node->next_node,
+								children);
+			}
+		}
+		break;
+	case NODE_TYPE_BRANCH:
+		{
+			BranchNode* branch_node = (BranchNode*)curr_node;
+			set<AbstractNode*>::iterator original_it = children.find(branch_node->original_next_node);
+			if (original_it == children.end()) {
+				children.insert(branch_node->original_next_node);
+
+				children_helper(branch_node->original_next_node,
+								children);
+			}
+			set<AbstractNode*>::iterator branch_it = children.find(branch_node->branch_next_node);
+			if (branch_it == children.end()) {
+				children.insert(branch_node->branch_next_node);
+
+				children_helper(branch_node->branch_next_node,
+								children);
+			}
+		}
+		break;
+	case NODE_TYPE_OBS:
+		{
+			ObsNode* obs_node = (ObsNode*)curr_node;
+			if (obs_node->next_node != NULL) {
+				set<AbstractNode*>::iterator it = children.find(obs_node->next_node);
+				if (it == children.end()) {
+					children.insert(obs_node->next_node);
+
+					children_helper(obs_node->next_node,
+									children);
+				}
+			}
+		}
+		break;
+	}
+}
+
 NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 									   AbstractNode* node_context,
 									   bool is_branch) {
@@ -24,25 +101,26 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 
 	this->new_scope = NULL;
 	for (int t_index = 0; t_index < CREATE_NEW_SCOPE_NUM_TRIES; t_index++) {
-		uniform_int_distribution<int> start_distribution(0, scope_context->nodes.size()-1);
-		AbstractNode* potential_starting_node = next(scope_context->nodes.begin(), start_distribution(generator))->second;
+		uniform_int_distribution<int> node_distribution(0, scope_context->nodes.size()-1);
+		AbstractNode* potential_start_node = next(scope_context->nodes.begin(), node_distribution(generator))->second;
+		AbstractNode* potential_end_node = next(scope_context->nodes.begin(), node_distribution(generator))->second;
 
-		geometric_distribution<int> run_distribution(0.2);
-		int num_runs = 1 + run_distribution(generator);
+		set<AbstractNode*> children;
+		children_helper(potential_start_node,
+						children);
+
+		set<AbstractNode*> ancestors;
+		ancestor_helper(potential_end_node,
+						ancestors);
 
 		set<AbstractNode*> potential_included_nodes;
-
-		/**
-		 * TODO: scale by possible length
-		 */
-		geometric_distribution<int> following_distribution(0.1);
-		for (int r_index = 0; r_index < num_runs; r_index++) {
-			int num_following = 1 + following_distribution(generator);
-			scope_context->random_continue(
-				potential_starting_node,
-				num_following,
-				potential_included_nodes);
+		for (set<AbstractNode*>::iterator it = children.begin(); it != children.end(); it++) {
+			if (ancestors.find(*it) != ancestors.end()) {
+				potential_included_nodes.insert(*it);
+			}
 		}
+		potential_included_nodes.insert(potential_start_node);
+		potential_included_nodes.insert(potential_end_node);
 
 		int num_meaningful_nodes = 0;
 		for (set<AbstractNode*>::iterator it = potential_included_nodes.begin();
@@ -129,8 +207,8 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 				}
 			}
 
-			starting_node->next_node_id = node_mappings[potential_starting_node]->id;
-			starting_node->next_node = node_mappings[potential_starting_node];
+			starting_node->next_node_id = node_mappings[potential_start_node]->id;
+			starting_node->next_node = node_mappings[potential_start_node];
 
 			starting_node->next_node->ancestor_ids.push_back(starting_node->id);
 
