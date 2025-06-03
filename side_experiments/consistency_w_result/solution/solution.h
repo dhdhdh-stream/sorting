@@ -45,6 +45,11 @@ public:
 	std::vector<double> obs_average_vals;
 	std::vector<double> obs_variances;
 
+	// temp
+	std::vector<int> num_check_history;
+	std::vector<int> num_no_check_history;
+	std::vector<int> num_match_history;
+
 	#if defined(MDEBUG) && MDEBUG
 	std::vector<Problem*> verify_problems;
 	std::vector<unsigned long> verify_seeds;

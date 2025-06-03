@@ -222,6 +222,28 @@ int main(int argc, char* argv[]) {
 
 		update_matches(scope_histories);
 
+		// temp
+		int new_check = 0;
+		int new_no_check = 0;
+		int new_matches = 0;
+		for (int s_index = 0; s_index < (int)solution->scopes.size(); s_index++) {
+			for (map<int, AbstractNode*>::iterator it = solution->scopes[s_index]->nodes.begin();
+					it != solution->scopes[s_index]->nodes.end(); it++) {
+				if (it->second->type == NODE_TYPE_OBS) {
+					ObsNode* obs_node = (ObsNode*)it->second;
+					if (obs_node->check_consistency) {
+						new_check++;
+					} else {
+						new_no_check++;
+					}
+					new_matches += (int)obs_node->matches.size();
+				}
+			}
+		}
+		solution->num_check_history.push_back(new_check);
+		solution->num_no_check_history.push_back(new_no_check);
+		solution->num_match_history.push_back(new_matches);
+
 		for (int h_index = 0; h_index < (int)scope_histories.size(); h_index++) {
 			delete scope_histories[h_index];
 		}
@@ -246,7 +268,7 @@ int main(int argc, char* argv[]) {
 			solution->curr_time_penalty *= 0.8;
 		}
 
-		solution->save("saves/", filename);
+		// solution->save("saves/", filename);
 
 		ofstream display_file;
 		display_file.open("../display.txt");
@@ -261,7 +283,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	solution->clean_scopes();
-	solution->save("saves/", filename);
+	// solution->save("saves/", filename);
 
 	delete problem_type;
 	delete solution;

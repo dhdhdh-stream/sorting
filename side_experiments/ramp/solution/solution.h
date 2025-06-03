@@ -29,6 +29,9 @@ public:
 	int timestamp;
 	double curr_score;
 
+	// temp
+	double biggest_drop;
+
 	std::vector<Scope*> scopes;
 
 	Solution();

@@ -15,7 +15,6 @@
 using namespace std;
 
 const double MIN_AVERAGE_DISTANCE = 3.0;
-const double MAX_PARENT_FACTOR = 0.5;
 
 Match::Match() {
 	// do nothing
@@ -119,8 +118,7 @@ void Match::update(bool& is_still_needed) {
 				double test_standard_deviation = sqrt(sum_variance / (int)this->datapoints.size());
 
 				double overall_standard_deviation = sqrt(solution->obs_variances[0]);
-				if (test_standard_deviation > MAX_PARENT_FACTOR * this->parent->standard_deviation
-						|| this->standard_deviation > MAX_OVERALL_OBS_FACTOR * overall_standard_deviation) {
+				if (test_standard_deviation > MAX_OVERALL_OBS_FACTOR * overall_standard_deviation) {
 					is_still_needed = false;
 				} else {
 					is_still_needed = true;
@@ -209,8 +207,7 @@ void Match::update(bool& is_still_needed) {
 			}
 
 			double overall_standard_deviation = sqrt(solution->obs_variances[0]);
-			if (this->standard_deviation > MAX_PARENT_FACTOR * this->parent->standard_deviation
-					|| this->standard_deviation > MAX_OVERALL_OBS_FACTOR * overall_standard_deviation) {
+			if (this->standard_deviation > MAX_OVERALL_OBS_FACTOR * overall_standard_deviation) {
 				is_still_needed = false;
 			} else {
 				is_still_needed = true;

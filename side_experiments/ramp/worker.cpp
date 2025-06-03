@@ -143,6 +143,12 @@ int main(int argc, char* argv[]) {
 					delete problem;
 				}
 
+				// temp
+				double curr_drop = sum_score / MEASURE_ITERS - solution->curr_score;
+				if (curr_drop < solution->biggest_drop) {
+					solution->biggest_drop = curr_drop;
+				}
+
 				solution->curr_score = sum_score / MEASURE_ITERS;
 
 				cout << "solution->curr_score: " << solution->curr_score << endl;

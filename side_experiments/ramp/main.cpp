@@ -90,6 +90,14 @@ int main(int argc, char* argv[]) {
 
 		double target_val = problem->score_result();
 
+		// temp
+		if (run_index%100000 == 0) {
+			double num_actions = (double)sum_num_actions / (double)CHECK_EXPERIMENT_ITER;
+			double num_experiments = (double)sum_num_experiment_instances / (double)CHECK_EXPERIMENT_ITER;
+			cout << "num_actions: " << num_actions << endl;
+			cout << "num_experiments: " << num_experiments << endl;
+		}
+
 		sum_num_actions += run_helper.num_actions;
 		sum_num_experiment_instances += run_helper.num_experiment_instances;
 		if (run_index % CHECK_EXPERIMENT_ITER == 0) {
@@ -162,6 +170,12 @@ int main(int argc, char* argv[]) {
 					sum_score += target_val;
 
 					delete problem;
+				}
+
+				// temp
+				double curr_drop = sum_score / MEASURE_ITERS - solution->curr_score;
+				if (curr_drop < solution->biggest_drop) {
+					solution->biggest_drop = curr_drop;
 				}
 
 				solution->curr_score = sum_score / MEASURE_ITERS;

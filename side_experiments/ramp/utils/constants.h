@@ -35,7 +35,8 @@ const double FACTOR_IMPACT_THRESHOLD = 0.1;
 const int NETWORK_NUM_INPUTS = 10;
 
 const int CHECK_EXPERIMENT_ITER = 100;
-const int ACTIONS_PER_EXPERIMENT = 20;
+// const int ACTIONS_PER_EXPERIMENT = 20;
+const int ACTIONS_PER_EXPERIMENT = 10;
 
 #if defined(MDEBUG) && MDEBUG
 const int MEASURE_ITERS = 10;

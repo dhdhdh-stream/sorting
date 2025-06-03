@@ -25,24 +25,23 @@ void ObsNode::experiment_activate(AbstractNode*& curr_node,
 	history->factor_values = vector<double>(this->factors.size());
 
 	if (run_helper.check_match && this->is_init) {
-		bool has_match = false;
-		for (int m_index = 0; m_index < (int)this->matches.size(); m_index++) {
-			map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories
-				.find(this->matches[m_index].node_context[0]);
-			if (it != scope_history->node_histories.end()) {
-				ObsNodeHistory* early_history = (ObsNodeHistory*)it->second;
-
-				double predicted_score = early_history->obs_history[0] * this->matches[m_index].weight + this->matches[m_index].constant;
-				double factor = abs(obs[0] - predicted_score) / this->matches[m_index].standard_deviation;
-				run_helper.match_factors.push_back(factor);
-
-				has_match = true;
-				break;
-			}
-		}
-		if (!has_match && this->check_consistency) {
+		if (this->check_consistency) {
 			double factor = abs(obs[0] - this->average_val) / this->standard_deviation;
 			run_helper.match_factors.push_back(factor);
+		} else {
+			for (int m_index = 0; m_index < (int)this->matches.size(); m_index++) {
+				map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories
+					.find(this->matches[m_index].node_context[0]);
+				if (it != scope_history->node_histories.end()) {
+					ObsNodeHistory* early_history = (ObsNodeHistory*)it->second;
+
+					double predicted_score = early_history->obs_history[0] * this->matches[m_index].weight + this->matches[m_index].constant;
+					double factor = abs(obs[0] - predicted_score) / this->matches[m_index].standard_deviation;
+					run_helper.match_factors.push_back(factor);
+
+					break;
+				}
+			}
 		}
 	}
 
@@ -56,32 +55,31 @@ void ObsNode::experiment_activate(AbstractNode*& curr_node,
 	// cout << "this->min_average_val: " << this->min_average_val << endl;
 	// cout << "this->max_standard_deviation: " << this->max_standard_deviation << endl;
 	// cout << "this->max_average_val: " << this->max_average_val << endl;
-	// bool has_match = false;
-	// for (int m_index = 0; m_index < (int)this->matches.size(); m_index++) {
-	// 	map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories
-	// 		.find(this->matches[m_index].node_context[0]);
-	// 	if (it != scope_history->node_histories.end()) {
-	// 		ObsNodeHistory* early_history = (ObsNodeHistory*)it->second;
-
-	// 		double predicted_score = early_history->obs_history[0] * this->matches[m_index].weight + this->matches[m_index].constant;
-	// 		double factor = abs(obs[0] - predicted_score) / this->matches[m_index].standard_deviation;
-
-	// 		cout << "this->matches[m_index].node_context[0]: " << this->matches[m_index].node_context[0] << endl;
-	// 		cout << "predicted_score: " << predicted_score << endl;
-	// 		cout << "early_history->obs_history[0]: " << early_history->obs_history[0] << endl;
-	// 		cout << "this->matches[m_index].standard_deviation: " << this->matches[m_index].standard_deviation << endl;
-	// 		cout << "this->matches[m_index].average_distance: " << this->matches[m_index].average_distance << endl;
-	// 		cout << "factor: " << factor << endl;
-
-	// 		has_match = true;
-	// 		break;
-	// 	}
-	// }
-	// if (!has_match) {
+	// if (this->check_consistency) {
 	// 	double factor = abs(obs[0] - this->average_val) / this->standard_deviation;
 	// 	run_helper.match_factors.push_back(factor);
 
 	// 	cout << "factor: " << factor << endl;
+	// } else {
+	// 	for (int m_index = 0; m_index < (int)this->matches.size(); m_index++) {
+	// 		map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories
+	// 			.find(this->matches[m_index].node_context[0]);
+	// 		if (it != scope_history->node_histories.end()) {
+	// 			ObsNodeHistory* early_history = (ObsNodeHistory*)it->second;
+
+	// 			double predicted_score = early_history->obs_history[0] * this->matches[m_index].weight + this->matches[m_index].constant;
+	// 			double factor = abs(obs[0] - predicted_score) / this->matches[m_index].standard_deviation;
+
+	// 			cout << "this->matches[m_index].node_context[0]: " << this->matches[m_index].node_context[0] << endl;
+	// 			cout << "predicted_score: " << predicted_score << endl;
+	// 			cout << "early_history->obs_history[0]: " << early_history->obs_history[0] << endl;
+	// 			cout << "this->matches[m_index].standard_deviation: " << this->matches[m_index].standard_deviation << endl;
+	// 			cout << "this->matches[m_index].average_distance: " << this->matches[m_index].average_distance << endl;
+	// 			cout << "factor: " << factor << endl;
+
+	// 			break;
+	// 		}
+	// 	}
 	// }
 
 	curr_node = this->next_node;

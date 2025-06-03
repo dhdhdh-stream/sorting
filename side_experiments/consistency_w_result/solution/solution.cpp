@@ -47,6 +47,11 @@ Solution::Solution(Solution* original) {
 
 	this->obs_average_vals = original->obs_average_vals;
 	this->obs_variances = original->obs_variances;
+
+	// temp
+	this->num_check_history = original->num_check_history;
+	this->num_no_check_history = original->num_no_check_history;
+	this->num_match_history = original->num_match_history;
 }
 
 Solution::~Solution() {
@@ -146,6 +151,24 @@ void Solution::load(string path,
 		string variance_line;
 		getline(input_file, variance_line);
 		this->obs_variances.push_back(stod(variance_line));
+	}
+
+	// temp
+	string num_history_line;
+	getline(input_file, num_history_line);
+	int num_history = stoi(num_history_line);
+	for (int h_index = 0; h_index < num_history; h_index++) {
+		string check_line;
+		getline(input_file, check_line);
+		this->num_check_history.push_back(stoi(check_line));
+
+		string no_check_line;
+		getline(input_file, no_check_line);
+		this->num_no_check_history.push_back(stoi(no_check_line));
+
+		string match_line;
+		getline(input_file, match_line);
+		this->num_match_history.push_back(stoi(match_line));
 	}
 
 	input_file.close();
@@ -285,6 +308,14 @@ void Solution::save(string path,
 	for (int o_index = 0; o_index < problem_type->num_obs(); o_index++) {
 		output_file << this->obs_average_vals[o_index] << endl;
 		output_file << this->obs_variances[o_index] << endl;
+	}
+
+	// temp
+	output_file << this->num_check_history.size() << endl;
+	for (int h_index = 0; h_index < (int)this->num_check_history.size(); h_index++) {
+		output_file << this->num_check_history[h_index] << endl;
+		output_file << this->num_no_check_history[h_index] << endl;
+		output_file << this->num_match_history[h_index] << endl;
 	}
 
 	output_file.close();

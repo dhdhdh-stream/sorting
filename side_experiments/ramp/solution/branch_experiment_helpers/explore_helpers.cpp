@@ -257,6 +257,8 @@ void BranchExperiment::explore_backprop(
 
 					for (int i_index = 0; i_index < num_instances; i_index++) {
 						this->existing_factor_histories[i_index].erase(this->existing_factor_histories[i_index].begin() + f_index);
+					}
+					for (int i_index = 0; i_index < (int)this->explore_factor_histories.size(); i_index++) {
 						this->explore_factor_histories[i_index].erase(this->explore_factor_histories[i_index].begin() + f_index);
 					}
 				}
@@ -339,6 +341,8 @@ void BranchExperiment::explore_backprop(
 				vector<vector<double>> explore_remove_input_vals = this->explore_input_histories;
 				for (int d_index = 0; d_index < num_instances; d_index++) {
 					existing_remove_input_vals[d_index].erase(existing_remove_input_vals[d_index].begin() + i_index);
+				}
+				for (int d_index = 0; d_index < (int)explore_remove_input_vals.size(); d_index++) {
 					explore_remove_input_vals[d_index].erase(explore_remove_input_vals[d_index].begin() + i_index);
 				}
 
@@ -489,11 +493,11 @@ void BranchExperiment::explore_backprop(
 
 					this->existing_factor_ids.push_back({new_obs_node->id, 0});
 					this->existing_factor_weights.push_back(1.0);
+				}
 
-					for (int h_index = 0; h_index < (int)this->explore_input_histories.size(); h_index++) {
-						existing_network->activate(this->explore_input_histories[h_index]);
-						this->explore_factor_histories[h_index].push_back(existing_network->output->acti_vals[0]);
-					}
+				for (int h_index = 0; h_index < (int)this->explore_input_histories.size(); h_index++) {
+					existing_network->activate(this->explore_input_histories[h_index]);
+					this->explore_factor_histories[h_index].push_back(existing_network->output->acti_vals[0]);
 				}
 			} else {
 				delete existing_network;
