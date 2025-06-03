@@ -140,7 +140,6 @@ int main(int argc, char* argv[]) {
 
 		double sum_score = 0.0;
 		double sum_true_score = 0.0;
-		vector<ScopeHistory*> scope_histories;
 		for (int iter_index = 0; iter_index < MEASURE_ITERS; iter_index++) {
 			run_index++;
 
@@ -149,27 +148,17 @@ int main(int argc, char* argv[]) {
 			RunHelper run_helper;
 
 			ScopeHistory* scope_history = new ScopeHistory(solution->scopes[0]);
-			solution->scopes[0]->measure_activate(
+			solution->scopes[0]->activate(
 				problem,
 				run_helper,
 				scope_history);
+			delete scope_history;
 
 			double target_val = problem->score_result();
 			sum_score += target_val - run_helper.num_actions * solution->curr_time_penalty;
 			sum_true_score += target_val;
 
-			update_scores(scope_history,
-						  target_val);
-
-			scope_histories.push_back(scope_history);
-
 			delete problem;
-		}
-
-		solution->measure_update();
-
-		for (int h_index = 0; h_index < (int)scope_histories.size(); h_index++) {
-			delete scope_histories[h_index];
 		}
 
 		solution->curr_score = sum_score / MEASURE_ITERS;

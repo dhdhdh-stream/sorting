@@ -62,7 +62,6 @@ public:
 						int new_factor_index);
 
 	void clean();
-	void measure_update();
 
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file);

@@ -42,11 +42,6 @@ public:
 						 RunHelper& run_helper,
 						 ScopeHistory* scope_history);
 
-	void measure_activate(AbstractNode*& curr_node,
-						  Problem* problem,
-						  RunHelper& run_helper,
-						  ScopeHistory* scope_history);
-
 	#if defined(MDEBUG) && MDEBUG
 	void verify_activate(AbstractNode*& curr_node,
 						 Problem* problem,
@@ -62,7 +57,6 @@ public:
 					   Scope* new_scope);
 
 	void clean();
-	void measure_update();
 
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file,

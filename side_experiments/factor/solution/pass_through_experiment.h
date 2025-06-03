@@ -17,6 +17,8 @@ const int PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING = 0;
  * - have to remeasure
  *   - cannot rely on score gathered from other experiments' measure existing
  *     - score will be biased as based on path
+ * 
+ * - also fails on BranchNodes
  */
 const int PASS_THROUGH_EXPERIMENT_STATE_INITIAL = 1;
 const int PASS_THROUGH_EXPERIMENT_STATE_VERIFY_1ST = 2;

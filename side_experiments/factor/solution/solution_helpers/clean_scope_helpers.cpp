@@ -341,6 +341,8 @@ void clean_scope(Scope* scope) {
 
 void check_generalize(Scope* scope_to_generalize) {
 	if (!scope_to_generalize->generalized) {
+		cout << "generalize " << scope_to_generalize->id << endl;
+
 		Scope* new_scope = new Scope();
 		new_scope->node_counter = 0;
 

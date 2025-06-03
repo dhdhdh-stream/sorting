@@ -38,9 +38,6 @@ void fetch_input_helper(ScopeHistory* scope_history,
 						bool& hit,
 						double& obs);
 
-void update_scores(ScopeHistory* scope_history,
-				   double target_val);
-
 void clean_scope(Scope* scope);
 
 void check_generalize(Scope* scope_to_generalize);

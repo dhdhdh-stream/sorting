@@ -91,8 +91,7 @@ void NewScopeExperiment::back_activate(RunHelper& run_helper,
 				vector<bool> possible_is_branch;
 				for (map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
 						it != scope_history->node_histories.end(); it++) {
-					if (it->second->node->experiment == NULL
-							&& it->second->node->average_instances_per_run >= NEW_SCOPE_EXPERIMENT_MIN_INSTANCES_PER_RUN) {
+					if (it->second->node->experiment == NULL) {
 						bool is_branch;
 						switch (it->second->node->type) {
 						case NODE_TYPE_ACTION:

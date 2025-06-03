@@ -34,8 +34,6 @@ const double FACTOR_IMPACT_THRESHOLD = 0.1;
 
 const int NETWORK_NUM_INPUTS = 10;
 
-const double NEW_SCOPE_EXPERIMENT_MIN_INSTANCES_PER_RUN = 0.2;
-
 #if defined(MDEBUG) && MDEBUG
 const int MEASURE_ITERS = 10;
 #else
@@ -53,10 +51,8 @@ const int EXPLORE_ITERS = 60;
 
 #if defined(MDEBUG) && MDEBUG
 const int IMPROVEMENTS_PER_ITER = 2;
-const int COMMIT_IMPROVEMENTS_PER_ITER = 2;
 #else
 const int IMPROVEMENTS_PER_ITER = 10;
-const int COMMIT_IMPROVEMENTS_PER_ITER = 5;
 #endif /* MDEBUG */
 
 #if defined(MDEBUG) && MDEBUG

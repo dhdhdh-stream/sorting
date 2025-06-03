@@ -19,7 +19,6 @@
 #include "problem.h"
 #include "scope.h"
 #include "scope_node.h"
-#include "simple_consistency_problem.h"
 #include "solution.h"
 #include "solution_helpers.h"
 #include "utilities.h"
@@ -43,8 +42,7 @@ int main(int argc, char* argv[]) {
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
 
-	// problem_type = new TypeMinesweeper();
-	problem_type = new TypeSimpleConsistencyProblem();
+	problem_type = new TypeMinesweeper();
 
 	solution = new Solution();
 	string filename;
@@ -146,6 +144,17 @@ int main(int argc, char* argv[]) {
 
 		clean_scope(last_updated_scope);
 
+		if (last_updated_scope->nodes.size() >= SCOPE_EXCEEDED_NUM_NODES) {
+			last_updated_scope->exceeded = true;
+
+			check_generalize(last_updated_scope);
+		}
+		if (last_updated_scope->nodes.size() <= SCOPE_RESUME_NUM_NODES) {
+			last_updated_scope->exceeded = false;
+		}
+
+		solution->clean();
+
 		#if defined(MDEBUG) && MDEBUG
 		while (solution->verify_problems.size() > 0) {
 			Problem* problem = solution->verify_problems[0];
@@ -169,20 +178,8 @@ int main(int argc, char* argv[]) {
 		solution->clear_verify();
 		#endif /* MDEBUG */
 
-		if (last_updated_scope->nodes.size() >= SCOPE_EXCEEDED_NUM_NODES) {
-			last_updated_scope->exceeded = true;
-
-			check_generalize(last_updated_scope);
-		}
-		if (last_updated_scope->nodes.size() <= SCOPE_RESUME_NUM_NODES) {
-			last_updated_scope->exceeded = false;
-		}
-
-		solution->clean();
-
 		double sum_score = 0.0;
 		double sum_true_score = 0.0;
-		vector<ScopeHistory*> scope_histories;
 		for (int iter_index = 0; iter_index < MEASURE_ITERS; iter_index++) {
 			run_index++;
 
@@ -196,27 +193,17 @@ int main(int argc, char* argv[]) {
 			#endif /* MDEBUG */
 
 			ScopeHistory* scope_history = new ScopeHistory(solution->scopes[0]);
-			solution->scopes[0]->measure_activate(
+			solution->scopes[0]->activate(
 				problem,
 				run_helper,
 				scope_history);
+			delete scope_history;
 
 			double target_val = problem->score_result();
 			sum_score += target_val - run_helper.num_actions * solution->curr_time_penalty;
 			sum_true_score += target_val;
 
-			update_scores(scope_history,
-						  target_val);
-
-			scope_histories.push_back(scope_history);
-
 			delete problem;
-		}
-
-		solution->measure_update();
-
-		for (int h_index = 0; h_index < (int)scope_histories.size(); h_index++) {
-			delete scope_histories[h_index];
 		}
 
 		solution->curr_score = sum_score / MEASURE_ITERS;
@@ -239,22 +226,22 @@ int main(int argc, char* argv[]) {
 			solution->curr_time_penalty *= 0.8;
 		}
 
-		solution->save("saves/", filename);
+		// solution->save("saves/", filename);
 
 		ofstream display_file;
 		display_file.open("../display.txt");
 		solution->save_for_display(display_file);
 		display_file.close();
 
-		#if defined(MDEBUG) && MDEBUG
-		delete solution;
-		solution = new Solution();
-		solution->load("saves/", filename);
-		#endif /* MDEBUG */
+		// #if defined(MDEBUG) && MDEBUG
+		// delete solution;
+		// solution = new Solution();
+		// solution->load("saves/", filename);
+		// #endif /* MDEBUG */
 	}
 
 	solution->clean_scopes();
-	solution->save("saves/", filename);
+	// solution->save("saves/", filename);
 
 	delete problem_type;
 	delete solution;

@@ -49,10 +49,6 @@ public:
 						 int num_following,
 						 std::set<AbstractNode*>& potential_included_nodes);
 
-	void measure_activate(Problem* problem,
-						  RunHelper& run_helper,
-						  ScopeHistory* scope_history);
-
 	#if defined(MDEBUG) && MDEBUG
 	void new_scope_capture_verify_activate(Problem* problem,
 										   RunHelper& run_helper,
@@ -79,7 +75,6 @@ public:
 					   int new_scope_node_id);
 
 	void clean();
-	void measure_update();
 
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file,

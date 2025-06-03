@@ -152,8 +152,6 @@ void NewScopeExperiment::test_backprop(
 					new_scope_node->next_node = this->test_location_exit;
 				}
 
-				new_scope_node->average_instances_per_run = this->test_location_start->average_instances_per_run;
-
 				this->successful_location_starts.push_back(this->test_location_start);
 				this->successful_location_is_branch.push_back(this->test_location_is_branch);
 				this->successful_scope_nodes.push_back(new_scope_node);

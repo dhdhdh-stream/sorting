@@ -23,7 +23,10 @@ using namespace std;
 #if defined(MDEBUG) && MDEBUG
 const int TRAIN_EXISTING_NUM_DATAPOINTS = 20;
 #else
-const int TRAIN_EXISTING_NUM_DATAPOINTS = 100;
+/**
+ * - need large amount to measure o_existing_average_score
+ */
+const int TRAIN_EXISTING_NUM_DATAPOINTS = 4000;
 #endif /* MDEBUG */
 
 void CommitExperiment::train_existing_activate(
@@ -380,9 +383,6 @@ void CommitExperiment::train_existing_backprop(
 						}
 						break;
 					}
-
-					new_obs_node->average_score = this->node_context->average_score;
-					new_obs_node->average_instances_per_run = this->node_context->average_instances_per_run;
 
 					this->node_context->experiment = NULL;
 

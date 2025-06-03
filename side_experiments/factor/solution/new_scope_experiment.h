@@ -1,3 +1,5 @@
+// TODO: when constructing new scope, pick start node and end node and add all in-between
+
 #ifndef NEW_SCOPE_EXPERIMENT_H
 #define NEW_SCOPE_EXPERIMENT_H
 

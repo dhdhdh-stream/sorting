@@ -156,13 +156,6 @@ void Scope::clean() {
 	this->new_scope_experiment = NULL;
 }
 
-void Scope::measure_update() {
-	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
-			it != this->nodes.end(); it++) {
-		it->second->measure_update();
-	}
-}
-
 void Scope::save(ofstream& output_file) {
 	output_file << this->node_counter << endl;
 

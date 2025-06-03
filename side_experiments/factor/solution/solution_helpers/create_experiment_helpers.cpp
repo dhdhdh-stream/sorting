@@ -17,7 +17,6 @@
 
 using namespace std;
 
-const double EXPERIMENT_MIN_INSTANCES_PER_RUN = 0.2;
 const int NEW_SCOPE_MIN_NODES = 60;
 
 void gather_nodes_seen_helper(ScopeHistory* scope_history,
@@ -27,8 +26,7 @@ void gather_nodes_seen_helper(ScopeHistory* scope_history,
 		switch (h_it->second->node->type) {
 		case NODE_TYPE_ACTION:
 		case NODE_TYPE_OBS:
-			if (h_it->second->node->experiment == NULL
-					&& h_it->second->node->average_instances_per_run >= EXPERIMENT_MIN_INSTANCES_PER_RUN) {
+			if (h_it->second->node->experiment == NULL) {
 				map<pair<AbstractNode*,bool>, int>::iterator seen_it = nodes_seen
 					.find({h_it->second->node, false});
 				if (seen_it == nodes_seen.end()) {
@@ -45,8 +43,7 @@ void gather_nodes_seen_helper(ScopeHistory* scope_history,
 				gather_nodes_seen_helper(scope_node_history->scope_history,
 										 nodes_seen);
 
-				if (h_it->second->node->experiment == NULL
-						&& h_it->second->node->average_instances_per_run >= EXPERIMENT_MIN_INSTANCES_PER_RUN) {
+				if (h_it->second->node->experiment == NULL) {
 					map<pair<AbstractNode*,bool>, int>::iterator seen_it = nodes_seen
 						.find({h_it->second->node, false});
 					if (seen_it == nodes_seen.end()) {
@@ -58,8 +55,7 @@ void gather_nodes_seen_helper(ScopeHistory* scope_history,
 			}
 			break;
 		case NODE_TYPE_BRANCH:
-			if (h_it->second->node->experiment == NULL
-					&& h_it->second->node->average_instances_per_run >= EXPERIMENT_MIN_INSTANCES_PER_RUN) {
+			if (h_it->second->node->experiment == NULL) {
 				BranchNodeHistory* branch_node_history = (BranchNodeHistory*)h_it->second;
 				map<pair<AbstractNode*,bool>, int>::iterator seen_it = nodes_seen
 					.find({h_it->second->node, branch_node_history->is_branch});
@@ -117,7 +113,6 @@ void create_experiment(ScopeHistory* scope_history,
 		uniform_int_distribution<int> non_new_distribution(0, 19);
 		if (explore_node->parent->exceeded) {
 			if (explore_node->parent->new_scope_experiment == NULL
-					&& explore_node->average_instances_per_run >= NEW_SCOPE_EXPERIMENT_MIN_INSTANCES_PER_RUN
 					&& non_new_distribution(generator) != 0) {
 				NewScopeExperiment* new_scope_experiment = new NewScopeExperiment(
 					explore_node->parent,
@@ -149,7 +144,6 @@ void create_experiment(ScopeHistory* scope_history,
 		} else {
 			if (explore_node->parent->new_scope_experiment == NULL
 					&& explore_node->parent->nodes.size() >= NEW_SCOPE_MIN_NODES
-					&& explore_node->average_instances_per_run >= NEW_SCOPE_EXPERIMENT_MIN_INSTANCES_PER_RUN
 					&& non_new_distribution(generator) != 0) {
 				NewScopeExperiment* new_scope_experiment = new NewScopeExperiment(
 					explore_node->parent,
@@ -166,8 +160,7 @@ void create_experiment(ScopeHistory* scope_history,
 				}
 			} else {
 				uniform_int_distribution<int> commit_distribution(0, 9);
-				// if (commit_distribution(generator) == 0) {
-				if (false) {
+				if (commit_distribution(generator) == 0) {
 					CommitExperiment* new_commit_experiment = new CommitExperiment(
 						explore_node->parent,
 						explore_node,
@@ -183,8 +176,7 @@ void create_experiment(ScopeHistory* scope_history,
 					 *       - and PassThroughExperiments help with both
 					 */
 					uniform_int_distribution<int> pass_through_distribution(0, 1);
-					// if (pass_through_distribution(generator) == 0) {
-					if (false) {
+					if (pass_through_distribution(generator) == 0) {
 						PassThroughExperiment* new_experiment = new PassThroughExperiment(
 							explore_node->parent,
 							explore_node,
