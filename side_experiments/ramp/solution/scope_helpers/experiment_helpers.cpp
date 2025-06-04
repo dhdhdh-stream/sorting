@@ -4,7 +4,7 @@
 
 #include "action_node.h"
 #include "branch_node.h"
-// #include "new_scope_experiment.h"
+#include "new_scope_experiment.h"
 #include "obs_node.h"
 #include "scope_node.h"
 
@@ -13,9 +13,9 @@ using namespace std;
 void Scope::experiment_activate(Problem* problem,
 								RunHelper& run_helper,
 								ScopeHistory* history) {
-	// if (this->new_scope_experiment != NULL) {
-	// 	this->new_scope_experiment->pre_activate(run_helper);
-	// }
+	if (this->new_scope_experiment != NULL) {
+		this->new_scope_experiment->pre_activate(run_helper);
+	}
 
 	AbstractNode* curr_node = this->nodes[0];
 	while (true) {
@@ -63,12 +63,9 @@ void Scope::experiment_activate(Problem* problem,
 		}
 	}
 
-	// if (this->new_scope_experiment != NULL) {
-	// 	if (run_helper.experiment_history != NULL
-	// 			&& run_helper.experiment_history->experiment == this->new_scope_experiment) {
-	// 		this->new_scope_experiment->back_activate(
-	// 			run_helper,
-	// 			history);
-	// 	}
-	// }
+	if (this->new_scope_experiment != NULL) {
+		this->new_scope_experiment->back_activate(
+			run_helper,
+			history);
+	}
 }

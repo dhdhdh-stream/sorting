@@ -30,7 +30,7 @@ public:
 	 * - tie NewScopeExperiment to scope instead of node
 	 *   - so that can be tried throughout entire scope
 	 */
-	// NewScopeExperiment* new_scope_experiment;
+	NewScopeExperiment* new_scope_experiment;
 
 	Scope();
 	~Scope();
@@ -45,9 +45,6 @@ public:
 
 	void random_exit_activate(AbstractNode* starting_node,
 							  std::vector<AbstractNode*>& possible_exits);
-	void random_continue(AbstractNode* starting_node,
-						 int num_following,
-						 std::set<AbstractNode*>& potential_included_nodes);
 
 	void clean_inputs(Scope* scope,
 					  int node_id);
