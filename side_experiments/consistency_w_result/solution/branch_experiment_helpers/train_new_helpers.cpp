@@ -247,7 +247,8 @@ void BranchExperiment::train_new_backprop(
 			misguess_standard_deviation = MIN_STANDARD_DEVIATION;
 		}
 
-		Network* new_network = new Network((int)this->new_inputs.size());
+		Network* new_network = new Network((int)this->new_inputs.size(),
+										   this->input_histories);
 
 		train_network(this->input_histories,
 					  remaining_scores,

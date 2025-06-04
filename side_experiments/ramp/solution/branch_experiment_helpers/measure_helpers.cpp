@@ -152,6 +152,9 @@ void BranchExperiment::measure_backprop(double target_val,
 				break;
 			}
 		} else {
+			// temp
+			cout << "BranchExperiment fail " << this->state << endl;
+
 			this->result = EXPERIMENT_RESULT_FAIL;
 		}
 	}

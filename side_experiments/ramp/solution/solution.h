@@ -58,8 +58,6 @@ public:
 
 	void clean_scopes();
 
-	void clean();
-
 	void save(std::string path,
 			  std::string name);
 

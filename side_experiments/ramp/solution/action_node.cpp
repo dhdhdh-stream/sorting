@@ -80,13 +80,6 @@ void ActionNode::replace_scope(Scope* original_scope,
 	}
 }
 
-void ActionNode::clean() {
-	if (this->experiment != NULL) {
-		this->experiment->decrement(this);
-		this->experiment = NULL;
-	}
-}
-
 void ActionNode::save(ofstream& output_file) {
 	this->action.save(output_file);
 

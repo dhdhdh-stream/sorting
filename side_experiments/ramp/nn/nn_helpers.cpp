@@ -12,8 +12,8 @@ using namespace std;
 const int TRAIN_ITERS = 30;
 const int OPTIMIZE_ITERS = 10;
 #else
-const int TRAIN_ITERS = 30000;
-const int OPTIMIZE_ITERS = 10000;
+const int TRAIN_ITERS = 300000;
+const int OPTIMIZE_ITERS = 100000;
 #endif /* MDEBUG */
 
 void train_network(vector<vector<double>>& inputs,

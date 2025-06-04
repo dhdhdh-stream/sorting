@@ -109,7 +109,7 @@ void create_experiment(ScopeHistory* scope_history) {
 		 *     - may be good for certain decision heavy scopes to have lots of nodes
 		 */
 
-		uniform_int_distribution<int> non_new_distribution(0, 19);
+		uniform_int_distribution<int> non_new_distribution(0, 1);
 		if (explore_node->parent->exceeded) {
 			if (explore_node->parent->new_scope_experiment == NULL
 					&& non_new_distribution(generator) != 0) {

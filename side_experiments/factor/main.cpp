@@ -3,6 +3,8 @@
 
 // TODO: for CommitExperiment, can separate commit from information gather?
 
+// TODO: train with 1% chance of screw up
+
 #include <chrono>
 #include <iostream>
 #include <map>

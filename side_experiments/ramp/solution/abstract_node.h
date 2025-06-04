@@ -44,8 +44,6 @@ public:
 							   Scope* new_scope,
 							   int new_scope_node_id) = 0;
 
-	virtual void clean() = 0;
-
 	virtual void save(std::ofstream& output_file) = 0;
 	virtual void link(Solution* parent_solution) = 0;
 	virtual void save_for_display(std::ofstream& output_file) = 0;

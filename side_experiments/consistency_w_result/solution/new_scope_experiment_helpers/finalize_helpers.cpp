@@ -4,6 +4,7 @@
 
 #include "action_node.h"
 #include "branch_node.h"
+#include "constants.h"
 #include "factor.h"
 #include "globals.h"
 #include "obs_node.h"
@@ -184,6 +185,12 @@ void NewScopeExperiment::add() {
 		}
 	}
 	this->successful_scope_nodes.clear();
+
+	if (this->new_scope->nodes.size() >= SCOPE_EXCEEDED_NUM_NODES) {
+		this->new_scope->exceeded = true;
+
+		check_generalize(this->new_scope);
+	}
 
 	this->new_scope = NULL;
 }

@@ -307,7 +307,8 @@ void CommitExperiment::commit_train_existing_backprop(
 			misguess_standard_deviation = MIN_STANDARD_DEVIATION;
 		}
 
-		Network* existing_network = new Network((int)this->commit_existing_inputs.size());
+		Network* existing_network = new Network((int)this->commit_existing_inputs.size(),
+												this->input_histories);
 
 		train_network(this->input_histories,
 					  remaining_scores,

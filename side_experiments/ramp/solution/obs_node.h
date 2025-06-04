@@ -56,8 +56,6 @@ public:
 					   Scope* new_scope,
 					   int new_scope_node_id);
 
-	void clean();
-
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file,
 			  Solution* parent_solution);

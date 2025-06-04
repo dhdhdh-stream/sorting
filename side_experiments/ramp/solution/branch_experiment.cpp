@@ -17,12 +17,18 @@ BranchExperiment::BranchExperiment(Scope* scope_context,
 	this->node_context = node_context;
 	this->is_branch = is_branch;
 
+	this->best_exit_next_node = NULL;
+
 	this->sum_num_instances = 0;
 
 	this->state = BRANCH_EXPERIMENT_STATE_EXISTING_GATHER;
 	this->state_iter = 0;
 
 	this->result = EXPERIMENT_RESULT_NA;
+}
+
+BranchExperiment::~BranchExperiment() {
+	this->node_context->experiment = NULL;
 }
 
 void BranchExperiment::decrement(AbstractNode* experiment_node) {
@@ -61,6 +67,31 @@ void BranchExperiment::clean_inputs(Scope* scope,
 				if (this->existing_factor_weights.size() > 0) {
 					this->existing_factor_weights.erase(this->existing_factor_weights.begin() + f_index);
 				}
+			}
+		}
+	}
+
+	if (scope == this->scope_context) {
+		for (int e_index = 0; e_index < (int)this->explore_exit_next_nodes.size(); e_index++) {
+			if (this->explore_exit_next_nodes[e_index] != NULL) {
+				if (this->explore_exit_next_nodes[e_index]->id == node_id) {
+					this->explore_input_histories.erase(this->explore_input_histories.begin() + e_index);
+					this->explore_factor_histories.erase(this->explore_factor_histories.begin() + e_index);
+					this->explore_step_types.erase(this->explore_step_types.begin() + e_index);
+					this->explore_actions.erase(this->explore_actions.begin() + e_index);
+					this->explore_scopes.erase(this->explore_scopes.begin() + e_index);
+					this->explore_exit_next_nodes.erase(this->explore_exit_next_nodes.begin() + e_index);
+					this->explore_target_val_histories.erase(this->explore_target_val_histories.begin() + e_index);
+				}
+			}
+		}
+	}
+
+	if (scope == this->scope_context) {
+		if (this->best_exit_next_node != NULL) {
+			if (this->best_exit_next_node->id == node_id) {
+				delete this;
+				return;
 			}
 		}
 	}

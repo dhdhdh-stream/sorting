@@ -59,9 +59,11 @@ void NewScopeExperiment::activate(AbstractNode* experiment_node,
 		NewScopeExperimentHistory* history = (NewScopeExperimentHistory*)run_helper.experiment_histories[this];
 
 		if (is_test) {
-			if (history->is_active) {
-				history->hit_test = true;
+			run_helper.num_experiment_instances++;
 
+			history->hit_test = true;
+
+			if (history->is_active) {
 				ScopeHistory* inner_scope_history = new ScopeHistory(this->new_scope);
 				this->new_scope->experiment_activate(problem,
 													 run_helper,
@@ -88,60 +90,61 @@ void NewScopeExperiment::back_activate(RunHelper& run_helper,
 									   ScopeHistory* scope_history) {
 	if (this->test_location_start == NULL) {
 		NewScopeExperimentHistory* history = (NewScopeExperimentHistory*)run_helper.experiment_histories[this];
-
-		uniform_int_distribution<int> select_distribution(0, history->instance_count);
-		if (select_distribution(generator) == 0) {
-			vector<AbstractNode*> possible_starts;
-			vector<bool> possible_is_branch;
-			for (map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
-					it != scope_history->node_histories.end(); it++) {
-				if (it->second->node->experiment == NULL) {
-					bool is_branch;
-					switch (it->second->node->type) {
-					case NODE_TYPE_ACTION:
-					case NODE_TYPE_SCOPE:
-					case NODE_TYPE_OBS:
-						is_branch = false;
-						break;
-					case NODE_TYPE_BRANCH:
-						{
-							BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
-							is_branch = branch_node_history->is_branch;
-						}
-						break;
-					}
-
-					bool has_match = false;
-					for (int s_index = 0; s_index < (int)this->successful_location_starts.size(); s_index++) {
-						if (this->successful_location_starts[s_index] == it->second->node
-								&& this->successful_location_is_branch[s_index] == is_branch) {
-							has_match = true;
+		if (history->is_active) {
+			uniform_int_distribution<int> select_distribution(0, history->instance_count);
+			if (select_distribution(generator) == 0) {
+				vector<AbstractNode*> possible_starts;
+				vector<bool> possible_is_branch;
+				for (map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
+						it != scope_history->node_histories.end(); it++) {
+					if (it->second->node->experiment == NULL) {
+						bool is_branch;
+						switch (it->second->node->type) {
+						case NODE_TYPE_ACTION:
+						case NODE_TYPE_SCOPE:
+						case NODE_TYPE_OBS:
+							is_branch = false;
+							break;
+						case NODE_TYPE_BRANCH:
+							{
+								BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
+								is_branch = branch_node_history->is_branch;
+							}
 							break;
 						}
-					}
-					if (!has_match) {
-						possible_starts.push_back(it->second->node);
-						possible_is_branch.push_back(is_branch);
+
+						bool has_match = false;
+						for (int s_index = 0; s_index < (int)this->successful_location_starts.size(); s_index++) {
+							if (this->successful_location_starts[s_index] == it->second->node
+									&& this->successful_location_is_branch[s_index] == is_branch) {
+								has_match = true;
+								break;
+							}
+						}
+						if (!has_match) {
+							possible_starts.push_back(it->second->node);
+							possible_is_branch.push_back(is_branch);
+						}
 					}
 				}
-			}
-			for (int s_index = 0; s_index < (int)history->local_successful_hits.size(); s_index++) {
-				AbstractNode* possible_node = this->successful_scope_nodes[history->local_successful_hits[s_index]];
-				if (possible_node->experiment == NULL) {
-					possible_starts.push_back(possible_node);
-					possible_is_branch.push_back(false);
+				for (int s_index = 0; s_index < (int)history->local_successful_hits.size(); s_index++) {
+					AbstractNode* possible_node = this->successful_scope_nodes[history->local_successful_hits[s_index]];
+					if (possible_node->experiment == NULL) {
+						possible_starts.push_back(possible_node);
+						possible_is_branch.push_back(false);
+					}
+				}
+
+				if (possible_starts.size() > 0) {
+					uniform_int_distribution<int> start_distribution(0, possible_starts.size()-1);
+					int start_index = start_distribution(generator);
+
+					history->potential_start = possible_starts[start_index];
+					history->potential_is_branch = possible_is_branch[start_index];
 				}
 			}
-
-			if (possible_starts.size() > 0) {
-				uniform_int_distribution<int> start_distribution(0, possible_starts.size()-1);
-				int start_index = start_distribution(generator);
-
-				history->potential_start = possible_starts[start_index];
-				history->potential_is_branch = possible_is_branch[start_index];
-			}
+			history->instance_count++;
 		}
-		history->instance_count++;
 	}
 }
 
@@ -220,6 +223,8 @@ void NewScopeExperiment::backprop(double target_val,
 				this->test_location_start->experiment = NULL;
 				this->test_location_start = NULL;
 
+				cout << "NewScopeExperiment fail " << this->test_location_state << endl;
+
 				if (this->generalize_iter == -1
 						&& this->successful_location_starts.size() == 0) {
 					this->result = EXPERIMENT_RESULT_FAIL;
@@ -235,59 +240,63 @@ void NewScopeExperiment::backprop(double target_val,
 			}
 		}
 	} else if (this->test_location_start == NULL) {
-		if (history->potential_start != NULL) {
-			vector<AbstractNode*> possible_exits;
+		if (history->is_active) {
+			if (history->potential_start != NULL) {
+				vector<AbstractNode*> possible_exits;
 
-			AbstractNode* starting_node;
-			switch (history->potential_start->type) {
-			case NODE_TYPE_ACTION:
-				{
-					ActionNode* action_node = (ActionNode*)history->potential_start;
-					starting_node = action_node->next_node;
-				}
-				break;
-			case NODE_TYPE_SCOPE:
-				{
-					ScopeNode* scope_node = (ScopeNode*)history->potential_start;
-					starting_node = scope_node->next_node;
-				}
-				break;
-			case NODE_TYPE_BRANCH:
-				{
-					BranchNode* branch_node = (BranchNode*)history->potential_start;
-					if (history->potential_is_branch) {
-						starting_node = branch_node->branch_next_node;
-					} else {
-						starting_node = branch_node->original_next_node;
+				AbstractNode* starting_node;
+				switch (history->potential_start->type) {
+				case NODE_TYPE_ACTION:
+					{
+						ActionNode* action_node = (ActionNode*)history->potential_start;
+						starting_node = action_node->next_node;
 					}
+					break;
+				case NODE_TYPE_SCOPE:
+					{
+						ScopeNode* scope_node = (ScopeNode*)history->potential_start;
+						starting_node = scope_node->next_node;
+					}
+					break;
+				case NODE_TYPE_BRANCH:
+					{
+						BranchNode* branch_node = (BranchNode*)history->potential_start;
+						if (history->potential_is_branch) {
+							starting_node = branch_node->branch_next_node;
+						} else {
+							starting_node = branch_node->original_next_node;
+						}
+					}
+					break;
+				case NODE_TYPE_OBS:
+					{
+						ObsNode* obs_node = (ObsNode*)history->potential_start;
+						starting_node = obs_node->next_node;
+					}
+					break;
 				}
-				break;
-			case NODE_TYPE_OBS:
-				{
-					ObsNode* obs_node = (ObsNode*)history->potential_start;
-					starting_node = obs_node->next_node;
-				}
-				break;
+
+				this->scope_context->random_exit_activate(
+					starting_node,
+					possible_exits);
+
+				uniform_int_distribution<int> distribution(0, possible_exits.size()-1);
+				int random_index = distribution(generator);
+				AbstractNode* exit_next_node = possible_exits[random_index];
+
+				this->test_location_start = history->potential_start;
+				this->test_location_is_branch = history->potential_is_branch;
+				this->test_location_exit = exit_next_node;
+				this->test_location_state = LOCATION_STATE_MEASURE_1_PERCENT;
+				this->test_location_existing_sum_score = 0.0;
+				this->test_location_existing_count = 0;
+				this->test_location_new_sum_score = 0.0;
+				this->test_location_new_count = 0;
+
+				cout << "NewScopeExperiment new test" << endl;
+
+				history->potential_start->experiment = this;
 			}
-
-			this->scope_context->random_exit_activate(
-				starting_node,
-				possible_exits);
-
-			uniform_int_distribution<int> distribution(0, possible_exits.size()-1);
-			int random_index = distribution(generator);
-			AbstractNode* exit_next_node = possible_exits[random_index];
-
-			this->test_location_start = history->potential_start;
-			this->test_location_is_branch = history->potential_is_branch;
-			this->test_location_exit = exit_next_node;
-			this->test_location_state = LOCATION_STATE_MEASURE_1_PERCENT;
-			this->test_location_existing_sum_score = 0.0;
-			this->test_location_existing_count = 0;
-			this->test_location_new_sum_score = 0.0;
-			this->test_location_new_count = 0;
-
-			history->potential_start->experiment = this;
 		}
 	}
 }

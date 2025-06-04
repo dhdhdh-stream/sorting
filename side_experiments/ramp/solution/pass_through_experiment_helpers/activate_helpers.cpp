@@ -125,6 +125,9 @@ void PassThroughExperiment::backprop(double target_val,
 				break;
 			}
 		} else {
+			// temp
+			cout << "PassThroughExperiment fail " << this->state << endl;
+
 			this->result = EXPERIMENT_RESULT_FAIL;
 		}
 	}

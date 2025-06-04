@@ -76,15 +76,6 @@ void Scope::replace_scope(Scope* original_scope,
 	}
 }
 
-void Scope::clean() {
-	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
-			it != this->nodes.end(); it++) {
-		it->second->clean();
-	}
-
-	this->new_scope_experiment = NULL;
-}
-
 void Scope::save(ofstream& output_file) {
 	output_file << this->node_counter << endl;
 

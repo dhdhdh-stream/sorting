@@ -1,3 +1,10 @@
+/**
+ * - needs ~20x(?) more iterations than single experiment
+ *   - not worth unless want to run >20 experiments at a time(?)
+ *     - so no speedup until >1000 actions(?)
+ *       - and no meaningful speedup until >10000 actions(?)
+ */
+
 #ifndef BRANCH_EXPERIMENT_H
 #define BRANCH_EXPERIMENT_H
 
@@ -74,6 +81,7 @@ public:
 	BranchExperiment(Scope* scope_context,
 					 AbstractNode* node_context,
 					 bool is_branch);
+	~BranchExperiment();
 	void decrement(AbstractNode* experiment_node);
 
 	void activate(AbstractNode* experiment_node,

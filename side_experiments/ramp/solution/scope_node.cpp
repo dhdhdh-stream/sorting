@@ -87,13 +87,6 @@ void ScopeNode::replace_scope(Scope* original_scope,
 	}
 }
 
-void ScopeNode::clean() {
-	if (this->experiment != NULL) {
-		this->experiment->decrement(this);
-		this->experiment = NULL;
-	}
-}
-
 void ScopeNode::save(ofstream& output_file) {
 	output_file << this->scope->id << endl;
 

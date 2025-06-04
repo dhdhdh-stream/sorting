@@ -122,13 +122,22 @@ PassThroughExperiment::PassThroughExperiment(Scope* scope_context,
 	this->result = EXPERIMENT_RESULT_NA;
 }
 
+PassThroughExperiment::~PassThroughExperiment() {
+	this->node_context->experiment = NULL;
+}
+
 void PassThroughExperiment::decrement(AbstractNode* experiment_node) {
 	delete this;
 }
 
 void PassThroughExperiment::clean_inputs(Scope* scope,
 										 int node_id) {
-	// do nothing
+	if (this->exit_next_node != NULL) {
+		if (this->scope_context == scope
+				&& this->exit_next_node->id == node_id) {
+			delete this;
+		}
+	}
 }
 
 void PassThroughExperiment::clean_inputs(Scope* scope) {

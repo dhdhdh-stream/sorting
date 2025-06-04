@@ -99,11 +99,16 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 									   bool is_branch) {
 	this->type = EXPERIMENT_TYPE_NEW_SCOPE;
 
+	this->scope_context = scope_context;
+
 	this->new_scope = NULL;
+
+	this->test_location_start = NULL;
+
 	for (int t_index = 0; t_index < CREATE_NEW_SCOPE_NUM_TRIES; t_index++) {
-		uniform_int_distribution<int> node_distribution(0, scope_context->nodes.size()-1);
-		AbstractNode* potential_start_node = next(scope_context->nodes.begin(), node_distribution(generator))->second;
-		AbstractNode* potential_end_node = next(scope_context->nodes.begin(), node_distribution(generator))->second;
+		uniform_int_distribution<int> node_distribution(0, this->scope_context->nodes.size()-1);
+		AbstractNode* potential_start_node = next(this->scope_context->nodes.begin(), node_distribution(generator))->second;
+		AbstractNode* potential_end_node = next(this->scope_context->nodes.begin(), node_distribution(generator))->second;
 
 		set<AbstractNode*> children;
 		children_helper(potential_start_node,
@@ -271,7 +276,7 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 						new_branch_node->average_val = original_branch_node->average_val;
 
 						for (int f_index = 0; f_index < (int)original_branch_node->factor_ids.size(); f_index++) {
-							AbstractNode* original_input_node = scope_context->nodes[
+							AbstractNode* original_input_node = this->scope_context->nodes[
 								original_branch_node->factor_ids[f_index].first];
 							map<AbstractNode*, AbstractNode*>::iterator input_it = node_mappings
 								.find(original_input_node);
@@ -322,7 +327,7 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 
 							new_factor->network = new Network(original_factor->network);
 							for (int i_index = (int)original_factor->inputs.size()-1; i_index >= 0; i_index--) {
-								AbstractNode* original_input_node = scope_context->nodes[
+								AbstractNode* original_input_node = this->scope_context->nodes[
 									original_factor->inputs[i_index].node_context[0]];
 								map<AbstractNode*, AbstractNode*>::iterator it = node_mappings.find(original_input_node);
 								if (it == node_mappings.end()) {
@@ -356,15 +361,13 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 				}
 			}
 
-			this->new_scope->child_scopes = scope_context->child_scopes;
+			this->new_scope->child_scopes = this->scope_context->child_scopes;
 
 			break;
 		}
 	}
 
 	if (this->new_scope != NULL) {
-		this->scope_context = scope_context;
-
 		vector<AbstractNode*> possible_exits;
 
 		AbstractNode* random_start_node;
@@ -428,6 +431,15 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 }
 
 NewScopeExperiment::~NewScopeExperiment() {
+	this->scope_context->new_scope_experiment = NULL;
+
+	if (this->test_location_start != NULL) {
+		this->test_location_start->experiment = NULL;
+	}
+	for (int s_index = 0; s_index < (int)this->successful_location_starts.size(); s_index++) {
+		this->successful_location_starts[s_index]->experiment = NULL;
+	}
+
 	if (this->new_scope != NULL) {
 		delete this->new_scope;
 	}
@@ -480,6 +492,24 @@ void NewScopeExperiment::clean_inputs(Scope* scope,
 									  int node_id) {
 	this->new_scope->clean_inputs(scope,
 								  node_id);
+
+	if (this->scope_context == scope) {
+		if (this->test_location_start != NULL) {
+			if (this->test_location_exit != NULL) {
+				if (this->test_location_exit->id == node_id) {
+					delete this;
+					return;
+				}
+			}
+		}
+
+		for (int s_index = 0; s_index < (int)this->successful_scope_nodes.size(); s_index++) {
+			if (this->successful_scope_nodes[s_index]->next_node_id == node_id) {
+				delete this;
+				return;
+			}
+		}
+	}
 }
 
 void NewScopeExperiment::clean_inputs(Scope* scope) {

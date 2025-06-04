@@ -121,13 +121,6 @@ void ObsNode::replace_scope(Scope* original_scope,
 	}
 }
 
-void ObsNode::clean() {
-	if (this->experiment != NULL) {
-		this->experiment->decrement(this);
-		this->experiment = NULL;
-	}
-}
-
 void ObsNode::save(ofstream& output_file) {
 	output_file << this->factors.size() << endl;
 	for (int f_index = 0; f_index < (int)this->factors.size(); f_index++) {
