@@ -3,8 +3,6 @@
 
 // TODO: for CommitExperiment, can separate commit from information gather?
 
-// TODO: train with 1% chance of screw up
-
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -72,6 +70,8 @@ int main(int argc, char* argv[]) {
 
 		int improvement_iter = 0;
 
+		int sum_num_actions = 0;
+		int sum_num_confusion_instances = 0;
 		while (true) {
 			run_index++;
 			if (run_index%100000 == 0) {
@@ -101,6 +101,19 @@ int main(int argc, char* argv[]) {
 			if (curr_experiment == NULL) {
 				create_experiment(scope_history,
 								  curr_experiment);
+			}
+			sum_num_actions += run_helper.num_actions;
+			sum_num_confusion_instances += run_helper.num_confusion_instances;
+			if (run_index % CHECK_CONFUSION_ITER == 0) {
+				double num_actions = (double)sum_num_actions / (double)CHECK_CONFUSION_ITER;
+				double num_confusions = (double)sum_num_confusion_instances / (double)CHECK_CONFUSION_ITER;
+
+				if (num_actions / (double)ACTIONS_PER_CONFUSION > num_confusions) {
+					create_confusion(scope_history);
+				}
+
+				sum_num_actions = 0;
+				sum_num_confusion_instances = 0;
 			}
 
 			delete scope_history;

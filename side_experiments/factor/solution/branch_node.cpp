@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "abstract_experiment.h"
+#include "confusion.h"
 #include "constants.h"
 #include "factor.h"
 #include "globals.h"
@@ -16,6 +17,7 @@ BranchNode::BranchNode() {
 	this->type = NODE_TYPE_BRANCH;
 
 	this->experiment = NULL;
+	this->confusion = NULL;
 
 	#if defined(MDEBUG) && MDEBUG
 	this->verify_key = NULL;
@@ -35,6 +37,7 @@ BranchNode::BranchNode(BranchNode* original) {
 	this->ancestor_ids = original->ancestor_ids;
 
 	this->experiment = NULL;
+	this->confusion = NULL;
 
 	#if defined(MDEBUG) && MDEBUG
 	this->verify_key = NULL;
@@ -44,6 +47,10 @@ BranchNode::BranchNode(BranchNode* original) {
 BranchNode::~BranchNode() {
 	if (this->experiment != NULL) {
 		this->experiment->decrement(this);
+	}
+
+	if (this->confusion != NULL) {
+		delete this->confusion;
 	}
 }
 
@@ -90,6 +97,11 @@ void BranchNode::clean() {
 	if (this->experiment != NULL) {
 		this->experiment->decrement(this);
 		this->experiment = NULL;
+	}
+
+	if (this->confusion != NULL) {
+		delete this->confusion;
+		this->confusion = NULL;
 	}
 }
 

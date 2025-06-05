@@ -12,6 +12,7 @@ class AbstractNode;
 class RunHelper {
 public:
 	int num_actions;
+	int num_confusion_instances;
 
 	AbstractExperimentHistory* experiment_history;
 

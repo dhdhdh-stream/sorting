@@ -64,8 +64,6 @@ void CommitExperiment::commit_train_new_activate(
 		}
 	}
 
-	run_helper.num_actions++;
-
 	double sum_vals = this->commit_existing_average_score;
 	for (int f_index = 0; f_index < (int)this->commit_existing_factor_ids.size(); f_index++) {
 		double val;
@@ -96,6 +94,8 @@ void CommitExperiment::commit_train_new_activate(
 	for (int s_index = 0; s_index < (int)this->save_step_types.size(); s_index++) {
 		if (this->save_step_types[s_index] == STEP_TYPE_ACTION) {
 			problem->perform_action(this->save_actions[s_index]);
+
+			run_helper.num_actions++;
 		} else {
 			ScopeHistory* inner_scope_history = new ScopeHistory(this->save_scopes[s_index]);
 			this->save_scopes[s_index]->activate(problem,
@@ -103,8 +103,6 @@ void CommitExperiment::commit_train_new_activate(
 				inner_scope_history);
 			delete inner_scope_history;
 		}
-
-		run_helper.num_actions += 2;
 	}
 
 	curr_node = this->save_exit_next_node;

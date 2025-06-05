@@ -27,8 +27,6 @@ void BranchExperiment::explore_activate(
 		RunHelper& run_helper,
 		ScopeHistory* scope_history,
 		BranchExperimentHistory* history) {
-	run_helper.num_actions++;
-
 	this->num_instances_until_target--;
 	if (history->existing_predicted_scores.size() == 0
 			&& this->num_instances_until_target == 0) {
@@ -117,6 +115,8 @@ void BranchExperiment::explore_activate(
 		for (int s_index = 0; s_index < (int)this->curr_step_types.size(); s_index++) {
 			if (this->curr_step_types[s_index] == STEP_TYPE_ACTION) {
 				problem->perform_action(this->curr_actions[s_index]);
+
+				run_helper.num_actions++;
 			} else {
 				ScopeHistory* inner_scope_history = new ScopeHistory(this->curr_scopes[s_index]);
 				this->curr_scopes[s_index]->activate(problem,
@@ -124,8 +124,6 @@ void BranchExperiment::explore_activate(
 					inner_scope_history);
 				delete inner_scope_history;
 			}
-
-			run_helper.num_actions += 2;
 		}
 
 		curr_node = this->curr_exit_next_node;

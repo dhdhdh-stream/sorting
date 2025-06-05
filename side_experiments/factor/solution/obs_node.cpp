@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "abstract_experiment.h"
+#include "confusion.h"
 #include "constants.h"
 #include "factor.h"
 #include "globals.h"
@@ -15,6 +16,7 @@ ObsNode::ObsNode() {
 	this->type = NODE_TYPE_OBS;
 
 	this->experiment = NULL;
+	this->confusion = NULL;
 }
 
 ObsNode::ObsNode(ObsNode* original,
@@ -32,6 +34,7 @@ ObsNode::ObsNode(ObsNode* original,
 	this->ancestor_ids = original->ancestor_ids;
 
 	this->experiment = NULL;
+	this->confusion = NULL;
 }
 
 ObsNode::~ObsNode() {
@@ -41,6 +44,10 @@ ObsNode::~ObsNode() {
 
 	if (this->experiment != NULL) {
 		this->experiment->decrement(this);
+	}
+
+	if (this->confusion != NULL) {
+		delete this->confusion;
 	}
 }
 
@@ -96,6 +103,11 @@ void ObsNode::clean() {
 	if (this->experiment != NULL) {
 		this->experiment->decrement(this);
 		this->experiment = NULL;
+	}
+
+	if (this->confusion != NULL) {
+		delete this->confusion;
+		this->confusion = NULL;
 	}
 }
 

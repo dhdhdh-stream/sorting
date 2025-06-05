@@ -1,6 +1,7 @@
 #include "obs_node.h"
 
 #include "abstract_experiment.h"
+#include "confusion.h"
 #include "factor.h"
 #include "problem.h"
 #include "scope.h"
@@ -31,5 +32,9 @@ void ObsNode::experiment_activate(AbstractNode*& curr_node,
 			problem,
 			run_helper,
 			scope_history);
+	} else if (this->confusion != NULL) {
+		this->confusion->activate(curr_node,
+								  problem,
+								  run_helper);
 	}
 }

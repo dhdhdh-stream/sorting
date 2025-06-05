@@ -17,6 +17,7 @@ class Solution;
 
 void create_experiment(ScopeHistory* scope_history,
 					   AbstractExperiment*& curr_experiment);
+void create_confusion(ScopeHistory* scope_history);
 
 void gather_possible_helper(ScopeHistory* scope_history,
 							std::vector<Scope*>& scope_context,

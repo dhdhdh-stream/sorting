@@ -34,6 +34,9 @@ const double FACTOR_IMPACT_THRESHOLD = 0.1;
 
 const int NETWORK_NUM_INPUTS = 10;
 
+const int CHECK_CONFUSION_ITER = 100;
+const int ACTIONS_PER_CONFUSION = 20;
+
 #if defined(MDEBUG) && MDEBUG
 const int MEASURE_ITERS = 10;
 #else

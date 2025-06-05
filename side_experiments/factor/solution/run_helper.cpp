@@ -7,7 +7,8 @@
 using namespace std;
 
 RunHelper::RunHelper() {
-	this->num_actions = 0;
+	this->num_actions = 1;
+	this->num_confusion_instances = 0;
 
 	this->experiment_history = NULL;
 }

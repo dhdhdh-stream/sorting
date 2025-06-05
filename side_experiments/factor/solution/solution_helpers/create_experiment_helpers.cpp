@@ -160,7 +160,8 @@ void create_experiment(ScopeHistory* scope_history,
 				}
 			} else {
 				uniform_int_distribution<int> commit_distribution(0, 9);
-				if (commit_distribution(generator) == 0) {
+				if (explore_node->parent->nodes.size() < 20
+						&& commit_distribution(generator) == 0) {
 					CommitExperiment* new_commit_experiment = new CommitExperiment(
 						explore_node->parent,
 						explore_node,

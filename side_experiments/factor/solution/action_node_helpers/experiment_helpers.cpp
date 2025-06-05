@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "abstract_experiment.h"
+#include "confusion.h"
 #include "globals.h"
 #include "problem.h"
 #include "scope.h"
@@ -20,6 +21,8 @@ void ActionNode::experiment_activate(AbstractNode*& curr_node,
 
 	problem->perform_action(this->action);
 
+	run_helper.num_actions++;
+
 	curr_node = this->next_node;
 
 	if (this->experiment != NULL) {
@@ -30,5 +33,9 @@ void ActionNode::experiment_activate(AbstractNode*& curr_node,
 			problem,
 			run_helper,
 			scope_history);
+	} else if (this->confusion != NULL) {
+		this->confusion->activate(curr_node,
+								  problem,
+								  run_helper);
 	}
 }

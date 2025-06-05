@@ -1,6 +1,7 @@
 #include "branch_node.h"
 
 #include "abstract_experiment.h"
+#include "confusion.h"
 #include "scope.h"
 #include "solution_helpers.h"
 #include "utilities.h"
@@ -56,5 +57,11 @@ void BranchNode::experiment_activate(AbstractNode*& curr_node,
 			problem,
 			run_helper,
 			scope_history);
+	} else if (this->confusion != NULL) {
+		if (this->confusion->is_branch == is_branch) {
+			this->confusion->activate(curr_node,
+									  problem,
+									  run_helper);
+		}
 	}
 }

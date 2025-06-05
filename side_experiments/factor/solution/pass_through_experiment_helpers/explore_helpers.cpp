@@ -35,6 +35,8 @@ void PassThroughExperiment::explore_activate(
 	for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {
 		if (this->step_types[s_index] == STEP_TYPE_ACTION) {
 			problem->perform_action(this->actions[s_index]);
+
+			run_helper.num_actions++;
 		} else {
 			ScopeHistory* inner_scope_history = new ScopeHistory(this->scopes[s_index]);
 			this->scopes[s_index]->activate(problem,
@@ -42,8 +44,6 @@ void PassThroughExperiment::explore_activate(
 				inner_scope_history);
 			delete inner_scope_history;
 		}
-
-		run_helper.num_actions += 2;
 	}
 
 	curr_node = this->exit_next_node;

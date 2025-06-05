@@ -25,7 +25,8 @@ public:
 	~ActionNode();
 
 	void activate(AbstractNode*& curr_node,
-				  Problem* problem);
+				  Problem* problem,
+				  RunHelper& run_helper);
 
 	void experiment_activate(AbstractNode*& curr_node,
 							 Problem* problem,

@@ -62,8 +62,6 @@ void Scope::new_scope_capture_verify_activate(
 			}
 			break;
 		}
-
-		run_helper.num_actions++;
 	}
 }
 

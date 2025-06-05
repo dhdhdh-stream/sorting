@@ -5,6 +5,7 @@
 #include <vector>
 
 class AbstractExperiment;
+class Confusion;
 class Scope;
 class Solution;
 
@@ -26,6 +27,8 @@ public:
 	 */
 
 	AbstractExperiment* experiment;
+
+	Confusion* confusion;
 
 	virtual ~AbstractNode() {};
 

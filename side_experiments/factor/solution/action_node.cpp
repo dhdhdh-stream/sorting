@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "abstract_experiment.h"
+#include "confusion.h"
 #include "constants.h"
 #include "scope.h"
 
@@ -12,6 +13,7 @@ ActionNode::ActionNode() {
 	this->type = NODE_TYPE_ACTION;
 
 	this->experiment = NULL;
+	this->confusion = NULL;
 }
 
 ActionNode::ActionNode(ActionNode* original) {
@@ -24,11 +26,16 @@ ActionNode::ActionNode(ActionNode* original) {
 	this->ancestor_ids = original->ancestor_ids;
 
 	this->experiment = NULL;
+	this->confusion = NULL;
 }
 
 ActionNode::~ActionNode() {
 	if (this->experiment != NULL) {
 		this->experiment->decrement(this);
+	}
+
+	if (this->confusion != NULL) {
+		delete this->confusion;
 	}
 }
 
@@ -36,6 +43,11 @@ void ActionNode::clean() {
 	if (this->experiment != NULL) {
 		this->experiment->decrement(this);
 		this->experiment = NULL;
+	}
+
+	if (this->confusion != NULL) {
+		delete this->confusion;
+		this->confusion = NULL;
 	}
 }
 

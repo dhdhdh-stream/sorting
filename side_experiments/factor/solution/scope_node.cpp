@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "abstract_experiment.h"
+#include "confusion.h"
 #include "constants.h"
 #include "globals.h"
 #include "scope.h"
@@ -14,6 +15,7 @@ ScopeNode::ScopeNode() {
 	this->type = NODE_TYPE_SCOPE;
 
 	this->experiment = NULL;
+	this->confusion = NULL;
 }
 
 ScopeNode::ScopeNode(ScopeNode* original,
@@ -27,11 +29,16 @@ ScopeNode::ScopeNode(ScopeNode* original,
 	this->ancestor_ids = original->ancestor_ids;
 
 	this->experiment = NULL;
+	this->confusion = NULL;
 }
 
 ScopeNode::~ScopeNode() {
 	if (this->experiment != NULL) {
 		this->experiment->decrement(this);
+	}
+
+	if (this->confusion != NULL) {
+		delete this->confusion;
 	}
 }
 
@@ -57,6 +64,11 @@ void ScopeNode::clean() {
 	if (this->experiment != NULL) {
 		this->experiment->decrement(this);
 		this->experiment = NULL;
+	}
+
+	if (this->confusion != NULL) {
+		delete this->confusion;
+		this->confusion = NULL;
 	}
 }
 

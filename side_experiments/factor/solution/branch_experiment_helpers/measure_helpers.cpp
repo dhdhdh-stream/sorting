@@ -25,6 +25,8 @@ void BranchExperiment::measure_activate(
 		for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 			if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 				problem->perform_action(this->best_actions[s_index]);
+
+				run_helper.num_actions++;
 			} else {
 				ScopeHistory* inner_scope_history = new ScopeHistory(this->best_scopes[s_index]);
 				this->best_scopes[s_index]->activate(problem,
@@ -33,7 +35,6 @@ void BranchExperiment::measure_activate(
 				delete inner_scope_history;
 			}
 
-			run_helper.num_actions += 2;
 		}
 
 		curr_node = this->best_exit_next_node;
@@ -58,6 +59,8 @@ void BranchExperiment::measure_activate(
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 					problem->perform_action(this->best_actions[s_index]);
+
+					run_helper.num_actions++;
 				} else {
 					ScopeHistory* inner_scope_history = new ScopeHistory(this->best_scopes[s_index]);
 					this->best_scopes[s_index]->activate(problem,
@@ -65,8 +68,6 @@ void BranchExperiment::measure_activate(
 						inner_scope_history);
 					delete inner_scope_history;
 				}
-
-				run_helper.num_actions += 2;
 			}
 
 			curr_node = this->best_exit_next_node;
