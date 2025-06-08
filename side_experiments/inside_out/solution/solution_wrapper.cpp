@@ -20,6 +20,8 @@ SolutionWrapper::SolutionWrapper(int num_obs,
 
 	this->sum_num_actions = 0;
 	this->sum_num_confusion_instances = 0;
+
+	this->experiment_history = NULL;
 }
 
 SolutionWrapper::SolutionWrapper(int num_obs,
@@ -40,6 +42,12 @@ SolutionWrapper::SolutionWrapper(int num_obs,
 
 	this->sum_num_actions = 0;
 	this->sum_num_confusion_instances = 0;
+
+	this->experiment_history = NULL;
+}
+
+SolutionWrapper::~SolutionWrapper() {
+	delete this->solution;
 }
 
 void SolutionWrapper::save(string path,

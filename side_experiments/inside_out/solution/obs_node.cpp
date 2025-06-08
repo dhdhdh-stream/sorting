@@ -15,6 +15,8 @@ using namespace std;
 ObsNode::ObsNode() {
 	this->type = NODE_TYPE_OBS;
 
+	this->is_init = false;
+
 	this->experiment = NULL;
 	this->confusion = NULL;
 }
@@ -131,6 +133,8 @@ void ObsNode::load(ifstream& input_file,
 		getline(input_file, ancestor_id_line);
 		this->ancestor_ids.push_back(stoi(ancestor_id_line));
 	}
+
+	this->is_init = true;
 }
 
 void ObsNode::link(Solution* parent_solution) {

@@ -27,6 +27,8 @@ public:
 	 * - if both paths of BranchNode point to same node, add twice
 	 */
 
+	bool is_init;
+
 	AbstractExperiment* experiment;
 
 	Confusion* confusion;

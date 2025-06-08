@@ -3,6 +3,7 @@
 #include "abstract_experiment.h"
 #include "confusion.h"
 #include "constants.h"
+#include "new_scope_experiment.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
@@ -26,6 +27,10 @@ void SolutionWrapper::experiment_init() {
 	this->node_context.push_back(this->solution->scopes[0]->nodes[0]);
 	this->experiment_context.push_back(NULL);
 	this->confusion_context.push_back(NULL);
+
+	if (this->solution->scopes[0]->new_scope_experiment != NULL) {
+		this->solution->scopes[0]->new_scope_experiment->pre_activate(this);
+	}
 }
 
 pair<bool,int> SolutionWrapper::experiment_step(vector<double> obs) {
@@ -75,6 +80,10 @@ pair<bool,int> SolutionWrapper::experiment_step(vector<double> obs) {
 }
 
 void SolutionWrapper::experiment_end(double result) {
+	if (this->solution->scopes[0]->new_scope_experiment != NULL) {
+		this->solution->scopes[0]->new_scope_experiment->back_activate(this);
+	}
+
 	if (this->curr_experiment == NULL) {
 		create_experiment(this->scope_histories[0],
 						  this->curr_experiment,
@@ -151,6 +160,8 @@ void SolutionWrapper::experiment_end(double result) {
 				this->solution->clean();
 
 				this->solution->timestamp++;
+
+				this->improvement_iter = 0;
 			}
 		}
 

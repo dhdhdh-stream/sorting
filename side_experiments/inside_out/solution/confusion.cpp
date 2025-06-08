@@ -115,38 +115,40 @@ void Confusion::experiment_step(vector<double>& obs,
 								bool& is_next,
 								SolutionWrapper* wrapper) {
 	ConfusionState* confusion_state = (ConfusionState*)wrapper->confusion_context.back();
-	if (this->step_types[confusion_state->step_index] == STEP_TYPE_ACTION) {
-		action = this->actions[confusion_state->step_index];
-		is_next = true;
 
-		confusion_state->step_index++;
-		if (confusion_state->step_index >= (int)this->step_types.size()) {
-			wrapper->node_context.back() = this->exit_next_node;
+	if (confusion_state->step_index >= (int)this->step_types.size()) {
+		wrapper->node_context.back() = this->exit_next_node;
 
-			delete confusion_state;
-			wrapper->confusion_context.back() = NULL;
+		delete confusion_state;
+		wrapper->confusion_context.back() = NULL;
 
-			this->iter++;
-			if (this->iter >= ITERS_BEFORE_DELETE) {
-				this->node_context->confusion = NULL;
-				delete this;
-			}
+		this->iter++;
+		if (this->iter >= ITERS_BEFORE_DELETE) {
+			this->node_context->confusion = NULL;
+			delete this;
 		}
 	} else {
-		ScopeHistory* inner_scope_history = new ScopeHistory(this->scopes[confusion_state->step_index]);
-		wrapper->scope_histories.push_back(inner_scope_history);
-		wrapper->node_context.push_back(this->scopes[confusion_state->step_index]->nodes[0]);
-		wrapper->experiment_context.push_back(NULL);
-		wrapper->confusion_context.push_back(NULL);
+		if (this->step_types[confusion_state->step_index] == STEP_TYPE_ACTION) {
+			action = this->actions[confusion_state->step_index];
+			is_next = true;
 
-		if (this->scopes[confusion_state->step_index]->new_scope_experiment != NULL) {
-			this->scopes[confusion_state->step_index]->new_scope_experiment->pre_activate(wrapper);
+			confusion_state->step_index++;
+		} else {
+			ScopeHistory* inner_scope_history = new ScopeHistory(this->scopes[confusion_state->step_index]);
+			wrapper->scope_histories.push_back(inner_scope_history);
+			wrapper->node_context.push_back(this->scopes[confusion_state->step_index]->nodes[0]);
+			wrapper->experiment_context.push_back(NULL);
+			wrapper->confusion_context.push_back(NULL);
+
+			if (this->scopes[confusion_state->step_index]->new_scope_experiment != NULL) {
+				this->scopes[confusion_state->step_index]->new_scope_experiment->pre_activate(wrapper);
+			}
 		}
 	}
 }
 
 void Confusion::experiment_exit_step(SolutionWrapper* wrapper) {
-	ConfusionState* confusion_state = (ConfusionState*)wrapper->confusion_context.back();
+	ConfusionState* confusion_state = (ConfusionState*)wrapper->confusion_context[wrapper->confusion_context.size() - 2];
 	if (this->scopes[confusion_state->step_index]->new_scope_experiment != NULL) {
 		this->scopes[confusion_state->step_index]->new_scope_experiment->back_activate(wrapper);
 	}
@@ -159,18 +161,6 @@ void Confusion::experiment_exit_step(SolutionWrapper* wrapper) {
 	wrapper->confusion_context.pop_back();
 
 	confusion_state->step_index++;
-	if (confusion_state->step_index >= (int)this->step_types.size()) {
-		wrapper->node_context.back() = this->exit_next_node;
-
-		delete confusion_state;
-		wrapper->confusion_context.back() = NULL;
-
-		this->iter++;
-		if (this->iter >= ITERS_BEFORE_DELETE) {
-			this->node_context->confusion = NULL;
-			delete this;
-		}
-	}
 }
 
 ConfusionState::ConfusionState(Confusion* confusion) {

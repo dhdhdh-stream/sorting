@@ -12,6 +12,8 @@ using namespace std;
 ActionNode::ActionNode() {
 	this->type = NODE_TYPE_ACTION;
 
+	this->is_init = false;
+
 	this->experiment = NULL;
 	this->confusion = NULL;
 }
@@ -24,6 +26,8 @@ ActionNode::ActionNode(ActionNode* original) {
 	this->next_node_id = original->next_node_id;
 
 	this->ancestor_ids = original->ancestor_ids;
+
+	this->is_init = original->is_init;
 
 	this->experiment = NULL;
 	this->confusion = NULL;
@@ -77,6 +81,8 @@ void ActionNode::load(ifstream& input_file) {
 		getline(input_file, ancestor_id_line);
 		this->ancestor_ids.push_back(stoi(ancestor_id_line));
 	}
+
+	this->is_init = true;
 }
 
 void ActionNode::link(Solution* parent_solution) {

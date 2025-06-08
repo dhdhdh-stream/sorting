@@ -96,7 +96,7 @@ void BranchExperiment::experiment_step(vector<double>& obs,
 }
 
 void BranchExperiment::experiment_exit_step(SolutionWrapper* wrapper) {
-	BranchExperimentState* experiment_state = (BranchExperimentState*)wrapper->experiment_context.back();
+	BranchExperimentState* experiment_state = (BranchExperimentState*)wrapper->experiment_context[wrapper->experiment_context.size() - 2];
 	switch (this->state) {
 	case BRANCH_EXPERIMENT_STATE_EXPLORE:
 		explore_exit_step(wrapper,

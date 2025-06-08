@@ -55,6 +55,10 @@ const int EXPLORE_ITERS = 60;
 #if defined(MDEBUG) && MDEBUG
 const int IMPROVEMENTS_PER_ITER = 2;
 #else
+/**
+ * - still choose best among multiple to help against variance
+ *   - still possible for false positives under extreme circumstances
+ */
 const int IMPROVEMENTS_PER_ITER = 10;
 #endif /* MDEBUG */
 

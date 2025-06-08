@@ -19,7 +19,8 @@ void confusion_gather_nodes_seen_helper(ScopeHistory* scope_history,
 		switch (h_it->second->node->type) {
 		case NODE_TYPE_ACTION:
 		case NODE_TYPE_OBS:
-			if (h_it->second->node->confusion == NULL) {
+			if (h_it->second->node->is_init
+					&& h_it->second->node->confusion == NULL) {
 				map<pair<AbstractNode*,bool>, int>::iterator seen_it = nodes_seen
 					.find({h_it->second->node, false});
 				if (seen_it == nodes_seen.end()) {
@@ -36,7 +37,8 @@ void confusion_gather_nodes_seen_helper(ScopeHistory* scope_history,
 				confusion_gather_nodes_seen_helper(scope_node_history->scope_history,
 												   nodes_seen);
 
-				if (h_it->second->node->confusion == NULL) {
+				if (h_it->second->node->is_init
+						&& h_it->second->node->confusion == NULL) {
 					map<pair<AbstractNode*,bool>, int>::iterator seen_it = nodes_seen
 						.find({h_it->second->node, false});
 					if (seen_it == nodes_seen.end()) {
@@ -48,7 +50,8 @@ void confusion_gather_nodes_seen_helper(ScopeHistory* scope_history,
 			}
 			break;
 		case NODE_TYPE_BRANCH:
-			if (h_it->second->node->confusion == NULL) {
+			if (h_it->second->node->is_init
+					&& h_it->second->node->confusion == NULL) {
 				BranchNodeHistory* branch_node_history = (BranchNodeHistory*)h_it->second;
 				map<pair<AbstractNode*,bool>, int>::iterator seen_it = nodes_seen
 					.find({h_it->second->node, branch_node_history->is_branch});

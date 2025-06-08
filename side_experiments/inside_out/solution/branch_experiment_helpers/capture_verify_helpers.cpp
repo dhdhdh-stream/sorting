@@ -56,26 +56,27 @@ void BranchExperiment::capture_verify_step(vector<double>& obs,
 										   bool& is_next,
 										   SolutionWrapper* wrapper,
 										   BranchExperimentState* experiment_state) {
-	if (this->best_step_types[experiment_state->step_index] == STEP_TYPE_ACTION) {
-		action = this->best_actions[experiment_state->step_index];
-		is_next = true;
+	if (experiment_state->step_index >= (int)this->best_step_types.size()) {
+		wrapper->node_context.back() = this->best_exit_next_node;
 
-		experiment_state->step_index++;
-		if (experiment_state->step_index >= (int)this->best_step_types.size()) {
-			wrapper->node_context.back() = this->best_exit_next_node;
-
-			delete experiment_state;
-			wrapper->experiment_context.back() = NULL;
-		}
+		delete experiment_state;
+		wrapper->experiment_context.back() = NULL;
 	} else {
-		ScopeHistory* inner_scope_history = new ScopeHistory(this->best_scopes[experiment_state->step_index]);
-		wrapper->scope_histories.push_back(inner_scope_history);
-		wrapper->node_context.push_back(this->best_scopes[experiment_state->step_index]->nodes[0]);
-		wrapper->experiment_context.push_back(NULL);
-		wrapper->confusion_context.push_back(NULL);
+		if (this->best_step_types[experiment_state->step_index] == STEP_TYPE_ACTION) {
+			action = this->best_actions[experiment_state->step_index];
+			is_next = true;
 
-		if (this->best_scopes[experiment_state->step_index]->new_scope_experiment != NULL) {
-			this->best_scopes[experiment_state->step_index]->new_scope_experiment->pre_activate(wrapper);
+			experiment_state->step_index++;
+		} else {
+			ScopeHistory* inner_scope_history = new ScopeHistory(this->best_scopes[experiment_state->step_index]);
+			wrapper->scope_histories.push_back(inner_scope_history);
+			wrapper->node_context.push_back(this->best_scopes[experiment_state->step_index]->nodes[0]);
+			wrapper->experiment_context.push_back(NULL);
+			wrapper->confusion_context.push_back(NULL);
+
+			if (this->best_scopes[experiment_state->step_index]->new_scope_experiment != NULL) {
+				this->best_scopes[experiment_state->step_index]->new_scope_experiment->pre_activate(wrapper);
+			}
 		}
 	}
 }
@@ -94,12 +95,6 @@ void BranchExperiment::capture_verify_exit_step(SolutionWrapper* wrapper,
 	wrapper->confusion_context.pop_back();
 
 	experiment_state->step_index++;
-	if (experiment_state->step_index >= (int)this->best_step_types.size()) {
-		wrapper->node_context.back() = this->best_exit_next_node;
-
-		delete experiment_state;
-		wrapper->experiment_context.back() = NULL;
-	}
 }
 
 void BranchExperiment::capture_verify_backprop() {

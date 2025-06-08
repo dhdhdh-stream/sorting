@@ -16,6 +16,8 @@ using namespace std;
 BranchNode::BranchNode() {
 	this->type = NODE_TYPE_BRANCH;
 
+	this->is_init = false;
+
 	this->experiment = NULL;
 	this->confusion = NULL;
 
@@ -35,6 +37,8 @@ BranchNode::BranchNode(BranchNode* original) {
 	this->branch_next_node_id = original->branch_next_node_id;
 
 	this->ancestor_ids = original->ancestor_ids;
+
+	this->is_init = original->is_init;
 
 	this->experiment = NULL;
 	this->confusion = NULL;
@@ -163,6 +167,8 @@ void BranchNode::load(ifstream& input_file) {
 		getline(input_file, ancestor_id_line);
 		this->ancestor_ids.push_back(stoi(ancestor_id_line));
 	}
+
+	this->is_init = true;
 }
 
 void BranchNode::link(Solution* parent_solution) {

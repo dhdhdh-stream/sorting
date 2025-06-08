@@ -57,6 +57,7 @@ public:
 					int num_possible_actions,
 					std::string path,
 					std::string name);
+	~SolutionWrapper();
 
 	void init();
 	std::pair<bool,int> step(std::vector<double> obs);

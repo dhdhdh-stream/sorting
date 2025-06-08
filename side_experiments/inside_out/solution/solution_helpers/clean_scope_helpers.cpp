@@ -339,6 +339,11 @@ void clean_scope(Scope* scope,
 			break;
 		}
 	}
+
+	for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
+			it != scope->nodes.end(); it++) {
+		it->second->is_init = true;
+	}
 }
 
 void check_generalize(Scope* scope_to_generalize,

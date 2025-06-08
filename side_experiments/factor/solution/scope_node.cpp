@@ -14,6 +14,8 @@ using namespace std;
 ScopeNode::ScopeNode() {
 	this->type = NODE_TYPE_SCOPE;
 
+	this->is_init = false;
+
 	this->experiment = NULL;
 	this->confusion = NULL;
 }
@@ -27,6 +29,8 @@ ScopeNode::ScopeNode(ScopeNode* original,
 	this->next_node_id = original->next_node_id;
 
 	this->ancestor_ids = original->ancestor_ids;
+
+	this->is_init = original->is_init;
 
 	this->experiment = NULL;
 	this->confusion = NULL;
@@ -101,6 +105,8 @@ void ScopeNode::load(ifstream& input_file,
 		getline(input_file, ancestor_id_line);
 		this->ancestor_ids.push_back(stoi(ancestor_id_line));
 	}
+
+	this->is_init = true;
 }
 
 void ScopeNode::link(Solution* parent_solution) {
