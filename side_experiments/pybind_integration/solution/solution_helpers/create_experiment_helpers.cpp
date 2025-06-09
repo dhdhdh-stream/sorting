@@ -17,7 +17,7 @@
 
 using namespace std;
 
-const int NEW_SCOPE_MIN_NODES = 60;
+const int NEW_SCOPE_MIN_NODES = 20;
 
 void gather_nodes_seen_helper(ScopeHistory* scope_history,
 							  map<pair<AbstractNode*,bool>, int>& nodes_seen) {
@@ -111,7 +111,7 @@ void create_experiment(ScopeHistory* scope_history,
 		 *     - may be good for certain decision heavy scopes to have lots of nodes
 		 */
 
-		uniform_int_distribution<int> non_new_distribution(0, 19);
+		uniform_int_distribution<int> non_new_distribution(0, 9);
 		if (explore_node->parent->exceeded) {
 			if (explore_node->parent->new_scope_experiment == NULL
 					&& non_new_distribution(generator) != 0) {

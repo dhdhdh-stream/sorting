@@ -82,6 +82,35 @@ pair<bool,int> SolutionWrapper::experiment_step(vector<double> obs) {
 }
 
 void SolutionWrapper::experiment_end(double result) {
+	while (true) {
+		if (this->node_context.back() == NULL
+				&& this->experiment_context.back() == NULL
+				&& this->confusion_context.back() == NULL) {
+			if (this->scope_histories.size() == 1) {
+				break;
+			} else {
+				if (this->experiment_context[this->experiment_context.size() - 2] != NULL) {
+					AbstractExperiment* experiment = this->experiment_context[this->experiment_context.size() - 2]->experiment;
+					experiment->experiment_exit_step(this);
+				} else if (this->confusion_context[this->confusion_context.size() - 2] != NULL) {
+					Confusion* confusion = this->confusion_context[this->confusion_context.size() - 2]->confusion;
+					confusion->experiment_exit_step(this);
+				} else {
+					ScopeNode* scope_node = (ScopeNode*)this->node_context[this->node_context.size() - 2];
+					scope_node->experiment_exit_step(this);
+				}
+			}
+		} else if (this->experiment_context.back() != NULL) {
+			delete this->experiment_context.back();
+			this->experiment_context.back() = NULL;
+		} else if (this->confusion_context.back() != NULL) {
+			delete this->confusion_context.back();
+			this->confusion_context.back() = NULL;
+		} else {
+			this->node_context.back() = NULL;
+		}
+	}
+
 	if (this->solution->scopes[0]->new_scope_experiment != NULL) {
 		this->solution->scopes[0]->new_scope_experiment->back_activate(this);
 	}

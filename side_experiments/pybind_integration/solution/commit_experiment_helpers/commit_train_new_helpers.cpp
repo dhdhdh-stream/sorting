@@ -27,8 +27,6 @@ const int TRAIN_NEW_NUM_DATAPOINTS = 100;
 void CommitExperiment::commit_train_new_check_activate(
 		SolutionWrapper* wrapper,
 		CommitExperimentHistory* history) {
-	history->instance_count++;
-
 	CommitExperimentState* new_experiment_state = new CommitExperimentState(this);
 	new_experiment_state->is_save = false;
 	new_experiment_state->step_index = 0;
@@ -193,7 +191,7 @@ void CommitExperiment::commit_train_new_exit_step(
 void CommitExperiment::commit_train_new_backprop(
 		double target_val,
 		CommitExperimentHistory* history) {
-	for (int i_index = 0; i_index < history->instance_count; i_index++) {
+	for (int i_index = 0; i_index < (int)history->existing_predicted_scores.size(); i_index++) {
 		this->i_target_val_histories.push_back(target_val - history->existing_predicted_scores[i_index]);
 	}
 

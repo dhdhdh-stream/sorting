@@ -40,6 +40,7 @@ const int ACTIONS_PER_CONFUSION = 20;
 const int SCOPE_EXCEEDED_NUM_NODES = 120;
 const int SCOPE_RESUME_NUM_NODES = 80;
 
-const int IMPROVEMENTS_PER_ITER = 10;
+// const int IMPROVEMENTS_PER_ITER = 10;
+const int IMPROVEMENTS_PER_ITER = 2;
 
 #endif /* CONSTANTS_H */
