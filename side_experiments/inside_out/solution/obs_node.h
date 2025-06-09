@@ -35,10 +35,6 @@ public:
 						 bool& is_next,
 						 SolutionWrapper* wrapper);
 
-	// void commit_activate(Problem* problem,
-	// 					 RunHelper& run_helper,
-	// 					 ScopeHistory* scope_history);
-
 	void clean_inputs(Scope* scope,
 					  int node_id);
 	void clean_inputs(Scope* scope);

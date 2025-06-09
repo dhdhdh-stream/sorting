@@ -5,12 +5,12 @@
 #include "action_node.h"
 #include "branch_experiment.h"
 #include "branch_node.h"
-// #include "commit_experiment.h"
+#include "commit_experiment.h"
 #include "constants.h"
 #include "globals.h"
 #include "new_scope_experiment.h"
 #include "obs_node.h"
-// #include "pass_through_experiment.h"
+#include "pass_through_experiment.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
@@ -129,18 +129,18 @@ void create_experiment(ScopeHistory* scope_history,
 					curr_experiment = new_scope_experiment;
 				}
 			} else {
-				// PassThroughExperiment* new_experiment = new PassThroughExperiment(
-				// 	explore_node->parent,
-				// 	explore_node,
-				// 	explore_is_branch);
+				PassThroughExperiment* new_experiment = new PassThroughExperiment(
+					explore_node->parent,
+					explore_node,
+					explore_is_branch);
 
-				// if (new_experiment->result == EXPERIMENT_RESULT_FAIL) {
-				// 	delete new_experiment;
-				// } else {
-				// 	explore_node->experiment = new_experiment;
+				if (new_experiment->result == EXPERIMENT_RESULT_FAIL) {
+					delete new_experiment;
+				} else {
+					explore_node->experiment = new_experiment;
 
-				// 	curr_experiment = new_experiment;
-				// }
+					curr_experiment = new_experiment;
+				}
 			}
 		} else {
 			if (explore_node->parent->new_scope_experiment == NULL
@@ -163,13 +163,13 @@ void create_experiment(ScopeHistory* scope_history,
 				uniform_int_distribution<int> commit_distribution(0, 9);
 				if (explore_node->parent->nodes.size() < 20
 						&& commit_distribution(generator) == 0) {
-					// CommitExperiment* new_commit_experiment = new CommitExperiment(
-					// 	explore_node->parent,
-					// 	explore_node,
-					// 	explore_is_branch);
-					// explore_node->experiment = new_commit_experiment;
+					CommitExperiment* new_commit_experiment = new CommitExperiment(
+						explore_node->parent,
+						explore_node,
+						explore_is_branch);
+					explore_node->experiment = new_commit_experiment;
 
-					// curr_experiment = new_commit_experiment;
+					curr_experiment = new_commit_experiment;
 				} else {
 					/**
 					 * - weigh towards PassThroughExperiments as cheaper and potentially just as effective
@@ -179,18 +179,18 @@ void create_experiment(ScopeHistory* scope_history,
 					 */
 					uniform_int_distribution<int> pass_through_distribution(0, 1);
 					if (pass_through_distribution(generator) == 0) {
-						// PassThroughExperiment* new_experiment = new PassThroughExperiment(
-						// 	explore_node->parent,
-						// 	explore_node,
-						// 	explore_is_branch);
+						PassThroughExperiment* new_experiment = new PassThroughExperiment(
+							explore_node->parent,
+							explore_node,
+							explore_is_branch);
 
-						// if (new_experiment->result == EXPERIMENT_RESULT_FAIL) {
-						// 	delete new_experiment;
-						// } else {
-						// 	explore_node->experiment = new_experiment;
+						if (new_experiment->result == EXPERIMENT_RESULT_FAIL) {
+							delete new_experiment;
+						} else {
+							explore_node->experiment = new_experiment;
 
-						// 	curr_experiment = new_experiment;
-						// }
+							curr_experiment = new_experiment;
+						}
 					} else {
 						BranchExperiment* new_experiment = new BranchExperiment(
 							explore_node->parent,

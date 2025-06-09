@@ -133,6 +133,8 @@ void BranchExperiment::explore_step(vector<double>& obs,
 			action = this->curr_actions[experiment_state->step_index];
 			is_next = true;
 
+			wrapper->num_actions++;
+
 			experiment_state->step_index++;
 		} else {
 			ScopeHistory* inner_scope_history = new ScopeHistory(this->curr_scopes[experiment_state->step_index]);

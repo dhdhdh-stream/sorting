@@ -33,6 +33,7 @@ void BranchExperiment::capture_verify_check_activate(SolutionWrapper* wrapper) {
 
 	cout << "wrapper->starting_run_seed: " << wrapper->starting_run_seed << endl;
 	cout << "wrapper->curr_run_seed: " << wrapper->curr_run_seed << endl;
+	wrapper->problem->print();
 
 	bool decision_is_branch;
 	if (wrapper->curr_run_seed%2 == 0) {
@@ -65,6 +66,8 @@ void BranchExperiment::capture_verify_step(vector<double>& obs,
 		if (this->best_step_types[experiment_state->step_index] == STEP_TYPE_ACTION) {
 			action = this->best_actions[experiment_state->step_index];
 			is_next = true;
+
+			wrapper->num_actions++;
 
 			experiment_state->step_index++;
 		} else {

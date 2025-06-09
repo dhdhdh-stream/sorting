@@ -73,6 +73,8 @@ void BranchExperiment::measure_step(vector<double>& obs,
 			action = this->best_actions[experiment_state->step_index];
 			is_next = true;
 
+			wrapper->num_actions++;
+
 			experiment_state->step_index++;
 		} else {
 			ScopeHistory* inner_scope_history = new ScopeHistory(this->best_scopes[experiment_state->step_index]);

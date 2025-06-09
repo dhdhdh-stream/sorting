@@ -132,6 +132,8 @@ void Confusion::experiment_step(vector<double>& obs,
 			action = this->actions[confusion_state->step_index];
 			is_next = true;
 
+			wrapper->num_actions++;
+
 			confusion_state->step_index++;
 		} else {
 			ScopeHistory* inner_scope_history = new ScopeHistory(this->scopes[confusion_state->step_index]);

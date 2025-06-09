@@ -37,6 +37,7 @@ void BranchNode::verify_step(vector<double>& obs,
 
 		cout << "wrapper->starting_run_seed: " << wrapper->starting_run_seed << endl;
 		cout << "wrapper->curr_run_seed: " << wrapper->curr_run_seed << endl;
+		wrapper->problem->print();
 
 		if (this->verify_scores[0] != sum_vals) {
 			cout << "this->verify_scores[0]: " << this->verify_scores[0] << endl;

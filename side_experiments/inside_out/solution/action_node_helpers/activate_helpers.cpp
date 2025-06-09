@@ -14,5 +14,7 @@ void ActionNode::step(vector<double>& obs,
 	action = this->action;
 	is_next = true;
 
+	wrapper->num_actions++;
+
 	wrapper->node_context.back() = this->next_node;
 }

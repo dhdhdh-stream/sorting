@@ -1,141 +1,202 @@
-// #if defined(MDEBUG) && MDEBUG
+#if defined(MDEBUG) && MDEBUG
 
-// #include "commit_experiment.h"
+#include "commit_experiment.h"
 
-// #include <iostream>
+#include <iostream>
 
-// #include "action_node.h"
-// #include "constants.h"
-// #include "obs_node.h"
-// #include "problem.h"
-// #include "scope.h"
-// #include "scope_node.h"
-// #include "solution_helpers.h"
-// #include "utilities.h"
+#include "action_node.h"
+#include "constants.h"
+#include "new_scope_experiment.h"
+#include "obs_node.h"
+#include "problem.h"
+#include "scope.h"
+#include "scope_node.h"
+#include "solution_helpers.h"
+#include "solution_wrapper.h"
+#include "utilities.h"
 
-// using namespace std;
+using namespace std;
 
-// void CommitExperiment::capture_verify_activate(
-// 		AbstractNode*& curr_node,
-// 		Problem* problem,
-// 		RunHelper& run_helper,
-// 		ScopeHistory* scope_history) {
-// 	if (this->verify_problems[this->state_iter] == NULL) {
-// 		this->verify_problems[this->state_iter] = problem->copy_and_reset();
-// 	}
-// 	this->verify_seeds[this->state_iter] = run_helper.starting_run_seed;
+void CommitExperiment::capture_verify_check_activate(
+		SolutionWrapper* wrapper) {
+	if (this->verify_problems[this->state_iter] == NULL) {
+		this->verify_problems[this->state_iter] = wrapper->problem->copy_and_reset();
+	}
+	this->verify_seeds[this->state_iter] = wrapper->starting_run_seed;
 
-// 	for (int n_index = 0; n_index < this->step_iter; n_index++) {
-// 		switch (this->new_nodes[n_index]->type) {
-// 		case NODE_TYPE_ACTION:
-// 			{
-// 				ActionNode* node = (ActionNode*)this->new_nodes[n_index];
-// 				node->commit_activate(problem,
-// 									  run_helper,
-// 									  scope_history);
-// 			}
-// 			break;
-// 		case NODE_TYPE_SCOPE:
-// 			{
-// 				ScopeNode* node = (ScopeNode*)this->new_nodes[n_index];
-// 				node->commit_activate(problem,
-// 									  run_helper,
-// 									  scope_history);
-// 			}
-// 			break;
-// 		case NODE_TYPE_OBS:
-// 			{
-// 				ObsNode* node = (ObsNode*)this->new_nodes[n_index];
-// 				node->commit_activate(problem,
-// 									  run_helper,
-// 									  scope_history);
-// 			}
-// 			break;
-// 		}
-// 	}
+	CommitExperimentState* new_experiment_state = new CommitExperimentState(this);
+	new_experiment_state->is_save = false;
+	new_experiment_state->step_index = 0;
+	wrapper->experiment_context.back() = new_experiment_state;
+}
 
-// 	double sum_vals = this->commit_new_average_score;
-// 	for (int f_index = 0; f_index < (int)this->commit_new_factor_ids.size(); f_index++) {
-// 		double val;
-// 		fetch_factor_helper(scope_history,
-// 							this->commit_new_factor_ids[f_index],
-// 							val);
-// 		sum_vals += this->commit_new_factor_weights[f_index] * val;
-// 	}
+void CommitExperiment::capture_verify_step(vector<double>& obs,
+										   int& action,
+										   bool& is_next,
+										   SolutionWrapper* wrapper,
+										   CommitExperimentState* experiment_state) {
+	if (experiment_state->is_save) {
+		if (experiment_state->step_index >= (int)this->save_step_types.size()) {
+			wrapper->node_context.back() = this->save_exit_next_node;
 
-// 	this->verify_scores.push_back(sum_vals);
+			delete experiment_state;
+			wrapper->experiment_context.back() = NULL;
+		} else {
+			if (this->save_step_types[experiment_state->step_index] == STEP_TYPE_ACTION) {
+				action = this->save_actions[experiment_state->step_index];
+				is_next = true;
 
-// 	cout << "run_helper.starting_run_seed: " << run_helper.starting_run_seed << endl;
-// 	cout << "run_helper.curr_run_seed: " << run_helper.curr_run_seed << endl;
-// 	problem->print();
+				wrapper->num_actions++;
 
-// 	bool decision_is_branch;
-// 	if (run_helper.curr_run_seed%2 == 0) {
-// 		decision_is_branch = true;
-// 	} else {
-// 		decision_is_branch = false;
-// 	}
-// 	run_helper.curr_run_seed = xorshift(run_helper.curr_run_seed);
+				experiment_state->step_index++;
+			} else {
+				ScopeHistory* inner_scope_history = new ScopeHistory(this->save_scopes[experiment_state->step_index]);
+				wrapper->scope_histories.push_back(inner_scope_history);
+				wrapper->node_context.push_back(this->save_scopes[experiment_state->step_index]->nodes[0]);
+				wrapper->experiment_context.push_back(NULL);
+				wrapper->confusion_context.push_back(NULL);
 
-// 	cout << "decision_is_branch: " << decision_is_branch << endl;
+				if (this->save_scopes[experiment_state->step_index]->new_scope_experiment != NULL) {
+					this->save_scopes[experiment_state->step_index]->new_scope_experiment->pre_activate(wrapper);
+				}
+			}
+		}
+	} else {
+		if (experiment_state->step_index == this->step_iter) {
+			double sum_vals = this->commit_new_average_score;
+			for (int f_index = 0; f_index < (int)this->commit_new_factor_ids.size(); f_index++) {
+				double val;
+				fetch_factor_helper(wrapper->scope_histories.back(),
+									this->commit_new_factor_ids[f_index],
+									val);
+				sum_vals += this->commit_new_factor_weights[f_index] * val;
+			}
 
-// 	if (decision_is_branch) {
-// 		for (int s_index = 0; s_index < (int)this->save_step_types.size(); s_index++) {
-// 			if (this->save_step_types[s_index] == STEP_TYPE_ACTION) {
-// 				problem->perform_action(this->save_actions[s_index]);
+			this->verify_scores.push_back(sum_vals);
 
-// 				run_helper.num_actions++;
-// 			} else {
-// 				ScopeHistory* inner_scope_history = new ScopeHistory(this->save_scopes[s_index]);
-// 				this->save_scopes[s_index]->activate(problem,
-// 					run_helper,
-// 					inner_scope_history);
-// 				delete inner_scope_history;
-// 			}
-// 		}
+			cout << "wrapper->starting_run_seed: " << wrapper->starting_run_seed << endl;
+			cout << "wrapper->curr_run_seed: " << wrapper->curr_run_seed << endl;
+			wrapper->problem->print();
 
-// 		curr_node = this->save_exit_next_node;
-// 	} else {
-// 		for (int n_index = this->step_iter; n_index < (int)this->new_nodes.size(); n_index++) {
-// 			switch (this->new_nodes[n_index]->type) {
-// 			case NODE_TYPE_ACTION:
-// 				{
-// 					ActionNode* node = (ActionNode*)this->new_nodes[n_index];
-// 					node->commit_activate(problem,
-// 										  run_helper,
-// 										  scope_history);
-// 				}
-// 				break;
-// 			case NODE_TYPE_SCOPE:
-// 				{
-// 					ScopeNode* node = (ScopeNode*)this->new_nodes[n_index];
-// 					node->commit_activate(problem,
-// 										  run_helper,
-// 										  scope_history);
-// 				}
-// 				break;
-// 			case NODE_TYPE_OBS:
-// 				{
-// 					ObsNode* node = (ObsNode*)this->new_nodes[n_index];
-// 					node->commit_activate(problem,
-// 										  run_helper,
-// 										  scope_history);
-// 				}
-// 				break;
-// 			}
-// 		}
+			bool decision_is_branch;
+			if (wrapper->curr_run_seed%2 == 0) {
+				decision_is_branch = true;
+			} else {
+				decision_is_branch = false;
+			}
+			wrapper->curr_run_seed = xorshift(wrapper->curr_run_seed);
 
-// 		curr_node = this->best_exit_next_node;
-// 	}
-// }
+			cout << "decision_is_branch: " << decision_is_branch << endl;
 
-// void CommitExperiment::capture_verify_backprop() {
-// 	if (this->verify_problems[this->state_iter] != NULL) {
-// 		this->state_iter++;
-// 		if (this->state_iter >= NUM_VERIFY_SAMPLES) {
-// 			this->result = EXPERIMENT_RESULT_SUCCESS;
-// 		}
-// 	}
-// }
+			if (decision_is_branch) {
+				experiment_state->is_save = true;
+				experiment_state->step_index = 0;
+				return;
+			}
+		}
 
-// #endif /* MDEBUG */
+		if (experiment_state->step_index >= (int)this->new_nodes.size()) {
+			wrapper->node_context.back() = this->best_exit_next_node;
+
+			delete experiment_state;
+			wrapper->experiment_context.back() = NULL;
+		} else {
+			switch (this->new_nodes[experiment_state->step_index]->type) {
+			case NODE_TYPE_ACTION:
+				{
+					ActionNode* node = (ActionNode*)this->new_nodes[experiment_state->step_index];
+
+					action = node->action;
+					is_next = true;
+
+					wrapper->num_actions++;
+
+					experiment_state->step_index++;
+				}
+				break;
+			case NODE_TYPE_SCOPE:
+				{
+					ScopeNode* node = (ScopeNode*)this->new_nodes[experiment_state->step_index];
+
+					ScopeHistory* scope_history = wrapper->scope_histories.back();
+
+					ScopeNodeHistory* history = new ScopeNodeHistory(node);
+					history->index = (int)scope_history->node_histories.size();
+					scope_history->node_histories[node->id] = history;
+
+					ScopeHistory* inner_scope_history = new ScopeHistory(node->scope);
+					history->scope_history = inner_scope_history;
+					wrapper->scope_histories.push_back(inner_scope_history);
+					wrapper->node_context.push_back(node->scope->nodes[0]);
+					wrapper->experiment_context.push_back(NULL);
+					wrapper->confusion_context.push_back(NULL);
+
+					if (node->scope->new_scope_experiment != NULL) {
+						node->scope->new_scope_experiment->pre_activate(wrapper);
+					}
+				}
+				break;
+			case NODE_TYPE_OBS:
+				{
+					ObsNode* node = (ObsNode*)this->new_nodes[experiment_state->step_index];
+
+					ScopeHistory* scope_history = wrapper->scope_histories.back();
+
+					ObsNodeHistory* history = new ObsNodeHistory(node);
+					history->index = (int)scope_history->node_histories.size();
+					scope_history->node_histories[node->id] = history;
+
+					history->obs_history = obs;
+
+					history->factor_initialized = vector<bool>(node->factors.size(), false);
+					history->factor_values = vector<double>(node->factors.size());
+
+					experiment_state->step_index++;
+				}
+				break;
+			}
+		}
+	}
+}
+
+void CommitExperiment::capture_verify_exit_step(SolutionWrapper* wrapper,
+												CommitExperimentState* experiment_state) {
+	if (experiment_state->is_save) {
+		if (this->save_scopes[experiment_state->step_index]->new_scope_experiment != NULL) {
+			this->save_scopes[experiment_state->step_index]->new_scope_experiment->back_activate(wrapper);
+		}
+
+		delete wrapper->scope_histories.back();
+
+		wrapper->scope_histories.pop_back();
+		wrapper->node_context.pop_back();
+		wrapper->experiment_context.pop_back();
+		wrapper->confusion_context.pop_back();
+
+		experiment_state->step_index++;
+	} else {
+		ScopeNode* node = (ScopeNode*)this->new_nodes[experiment_state->step_index];
+
+		if (node->scope->new_scope_experiment != NULL) {
+			node->scope->new_scope_experiment->back_activate(wrapper);
+		}
+
+		wrapper->scope_histories.pop_back();
+		wrapper->node_context.pop_back();
+		wrapper->experiment_context.pop_back();
+		wrapper->confusion_context.pop_back();
+
+		experiment_state->step_index++;
+	}
+}
+
+void CommitExperiment::capture_verify_backprop() {
+	if (this->verify_problems[this->state_iter] != NULL) {
+		this->state_iter++;
+		if (this->state_iter >= NUM_VERIFY_SAMPLES) {
+			this->result = EXPERIMENT_RESULT_SUCCESS;
+		}
+	}
+}
+
+#endif /* MDEBUG */
