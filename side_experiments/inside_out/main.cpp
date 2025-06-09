@@ -89,6 +89,7 @@ int main(int argc, char* argv[]) {
 			#if defined(MDEBUG) && MDEBUG
 			while (solution_wrapper->solution->verify_problems.size() > 0) {
 				Problem* problem = solution_wrapper->solution->verify_problems[0];
+				solution_wrapper->problem = problem;
 
 				solution_wrapper->verify_init();
 

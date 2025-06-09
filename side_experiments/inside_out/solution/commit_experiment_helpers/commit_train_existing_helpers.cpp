@@ -73,7 +73,7 @@ void CommitExperiment::commit_train_existing_step(
 		if (experiment_state->step_index == this->step_iter) {
 			this->num_instances_until_target--;
 			if (this->num_instances_until_target <= 0) {
-				NewScopeExperimentHistory* history = (NewScopeExperimentHistory*)wrapper->experiment_history;
+				CommitExperimentHistory* history = (CommitExperimentHistory*)wrapper->experiment_history;
 				history->instance_count++;
 
 				vector<double> input_vals(this->commit_existing_inputs.size());

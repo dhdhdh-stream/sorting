@@ -1,5 +1,7 @@
 #include "solution_wrapper.h"
 
+#include <iostream>
+
 #include "abstract_experiment.h"
 #include "confusion.h"
 #include "constants.h"
