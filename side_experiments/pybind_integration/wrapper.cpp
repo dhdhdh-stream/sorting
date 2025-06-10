@@ -28,6 +28,7 @@ PYBIND11_MODULE(wrapper, m) {
 		.def("experiment_init", &SolutionWrapper::experiment_init)
 		.def("experiment_step", &SolutionWrapper::experiment_step)
 		.def("experiment_end", &SolutionWrapper::experiment_end)
+		.def("combine", &SolutionWrapper::combine)
 		.def("save", &SolutionWrapper::save)
 		.def("save_for_display", &SolutionWrapper::save_for_display);
 }

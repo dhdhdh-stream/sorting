@@ -61,6 +61,9 @@ public:
 	std::pair<bool,int> experiment_step(std::vector<double> obs);
 	bool experiment_end(double result);
 
+	void combine(std::string other_path,
+				 std::string other_name);
+
 	void save(std::string path,
 			  std::string name);
 
