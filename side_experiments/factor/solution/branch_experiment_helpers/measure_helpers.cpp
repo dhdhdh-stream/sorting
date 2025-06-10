@@ -7,6 +7,7 @@
 #include "problem.h"
 #include "scope.h"
 #include "solution_helpers.h"
+#include "utilities.h"
 
 using namespace std;
 

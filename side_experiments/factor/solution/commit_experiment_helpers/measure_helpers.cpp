@@ -10,6 +10,7 @@
 #include "scope.h"
 #include "scope_node.h"
 #include "solution_helpers.h"
+#include "utilities.h"
 
 using namespace std;
 
