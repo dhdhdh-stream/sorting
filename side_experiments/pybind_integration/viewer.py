@@ -1,10 +1,15 @@
 import gymnasium as gym
+import sys
 import wrapper
 
-# env = gym.make('CartPole-v1')
+if len(sys.argv) == 2:
+	filename = sys.argv[1]
+else:
+	filename = 'main.txt'
+
 env = gym.make('CartPole-v1', render_mode='human')
 
-w = wrapper.Wrapper(4, 2, 'saves/', 'main.txt')
+w = wrapper.Wrapper(4, 2, 'saves/', filename)
 
 obs, info = env.reset()
 w.init()
@@ -20,3 +25,5 @@ while True:
 w.end()
 
 print('sum_reward: ' + str(sum_reward))
+
+w.save_for_display('../', 'display.txt')

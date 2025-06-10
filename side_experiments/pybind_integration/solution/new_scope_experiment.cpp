@@ -177,19 +177,6 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 						node_mappings[original_scope_node] = new_scope_node;
 					}
 					break;
-				case NODE_TYPE_BRANCH:
-					{
-						BranchNode* original_branch_node = (BranchNode*)(*node_it);
-
-						BranchNode* new_branch_node = new BranchNode();
-						new_branch_node->parent = this->new_scope;
-						new_branch_node->id = this->new_scope->node_counter;
-						this->new_scope->node_counter++;
-						this->new_scope->nodes[new_branch_node->id] = new_branch_node;
-
-						node_mappings[original_branch_node] = new_branch_node;
-					}
-					break;
 				case NODE_TYPE_OBS:
 					{
 						ObsNode* original_obs_node = (ObsNode*)(*node_it);
@@ -203,6 +190,29 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 						node_mappings[original_obs_node] = new_obs_node;
 					}
 					break;
+				}
+			}
+			for (set<AbstractNode*>::iterator node_it = potential_included_nodes.begin();
+					node_it != potential_included_nodes.end(); node_it++) {
+				if ((*node_it)->type == NODE_TYPE_BRANCH) {
+					BranchNode* original_branch_node = (BranchNode*)(*node_it);
+
+					map<AbstractNode*, AbstractNode*>::iterator original_it = node_mappings.find(original_branch_node->original_next_node);
+					map<AbstractNode*, AbstractNode*>::iterator branch_it = node_mappings.find(original_branch_node->branch_next_node);
+					if (original_it != node_mappings.end()
+							&& branch_it != node_mappings.end()) {
+						BranchNode* new_branch_node = new BranchNode();
+						new_branch_node->parent = this->new_scope;
+						new_branch_node->id = this->new_scope->node_counter;
+						this->new_scope->node_counter++;
+						this->new_scope->nodes[new_branch_node->id] = new_branch_node;
+
+						node_mappings[original_branch_node] = new_branch_node;
+					} else if (original_it != node_mappings.end()) {
+						node_mappings[original_branch_node] = original_it->second;
+					} else if (branch_it != node_mappings.end()) {
+						node_mappings[original_branch_node] = branch_it->second;
+					}
 				}
 			}
 
@@ -219,12 +229,12 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 			new_ending_node->next_node_id = -1;
 			new_ending_node->next_node = NULL;
 
-			for (set<AbstractNode*>::iterator node_it = potential_included_nodes.begin();
-					node_it != potential_included_nodes.end(); node_it++) {
-				switch ((*node_it)->type) {
+			for (map<AbstractNode*, AbstractNode*>::iterator node_it = node_mappings.begin();
+					node_it != node_mappings.end(); node_it++) {
+				switch (node_it->first->type) {
 				case NODE_TYPE_ACTION:
 					{
-						ActionNode* original_action_node = (ActionNode*)(*node_it);
+						ActionNode* original_action_node = (ActionNode*)node_it->first;
 						ActionNode* new_action_node = (ActionNode*)node_mappings[original_action_node];
 
 						map<AbstractNode*, AbstractNode*>::iterator it = node_mappings
@@ -244,7 +254,7 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 					break;
 				case NODE_TYPE_SCOPE:
 					{
-						ScopeNode* original_scope_node = (ScopeNode*)(*node_it);
+						ScopeNode* original_scope_node = (ScopeNode*)node_it->first;
 						ScopeNode* new_scope_node = (ScopeNode*)node_mappings[original_scope_node];
 
 						map<AbstractNode*, AbstractNode*>::iterator it = node_mappings
@@ -263,8 +273,8 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 					}
 					break;
 				case NODE_TYPE_BRANCH:
-					{
-						BranchNode* original_branch_node = (BranchNode*)(*node_it);
+					if (node_it->first->type == node_it->second->type) {
+						BranchNode* original_branch_node = (BranchNode*)node_it->first;
 						BranchNode* new_branch_node = (BranchNode*)node_mappings[original_branch_node];
 
 						new_branch_node->average_val = original_branch_node->average_val;
@@ -312,7 +322,7 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 					break;
 				case NODE_TYPE_OBS:
 					{
-						ObsNode* original_obs_node = (ObsNode*)(*node_it);
+						ObsNode* original_obs_node = (ObsNode*)node_it->first;
 						ObsNode* new_obs_node = (ObsNode*)node_mappings[original_obs_node];
 
 						for (int f_index = 0; f_index < (int)original_obs_node->factors.size(); f_index++) {

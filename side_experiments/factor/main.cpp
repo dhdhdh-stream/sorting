@@ -105,12 +105,14 @@ int main(int argc, char* argv[]) {
 			sum_num_actions += run_helper.num_actions;
 			sum_num_confusion_instances += run_helper.num_confusion_instances;
 			if (run_index % CHECK_CONFUSION_ITER == 0) {
+				#if defined(MDEBUG) && MDEBUG
+				#else
 				double num_actions = (double)sum_num_actions / (double)CHECK_CONFUSION_ITER;
 				double num_confusions = (double)sum_num_confusion_instances / (double)CHECK_CONFUSION_ITER;
-
 				if (num_actions / (double)ACTIONS_PER_CONFUSION > num_confusions) {
 					create_confusion(scope_history);
 				}
+				#endif /* MDEBUG */
 
 				sum_num_actions = 0;
 				sum_num_confusion_instances = 0;
@@ -241,22 +243,22 @@ int main(int argc, char* argv[]) {
 			solution->curr_time_penalty *= 0.8;
 		}
 
-		// solution->save("saves/", filename);
+		solution->save("saves/", filename);
 
 		ofstream display_file;
 		display_file.open("../display.txt");
 		solution->save_for_display(display_file);
 		display_file.close();
 
-		// #if defined(MDEBUG) && MDEBUG
-		// delete solution;
-		// solution = new Solution();
-		// solution->load("saves/", filename);
-		// #endif /* MDEBUG */
+		#if defined(MDEBUG) && MDEBUG
+		delete solution;
+		solution = new Solution();
+		solution->load("saves/", filename);
+		#endif /* MDEBUG */
 	}
 
 	solution->clean_scopes();
-	// solution->save("saves/", filename);
+	solution->save("saves/", filename);
 
 	delete problem_type;
 	delete solution;

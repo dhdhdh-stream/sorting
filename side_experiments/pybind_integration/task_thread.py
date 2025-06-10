@@ -3,7 +3,7 @@ import paramiko
 import select
 import time
 
-EXPLORE_ITERS = 60
+EXPLORE_ITERS = 10
 
 class TaskThread:
 	def __init__(self, worker, tasknode, index):
@@ -25,7 +25,7 @@ class TaskThread:
 		client_sftp.put('saves/' + self.tasknode.filenames[self.index], 'distributed/' + self.tasknode.filenames[self.index])
 		client_sftp.close()
 
-		command = 'python3 worker.py distributed/ ' + self.tasknode.filenames[self.index] + ' 2>&1'
+		command = 'python3 distributed/worker.py distributed/ ' + self.tasknode.filenames[self.index] + ' 2>&1'
 		self.channel.exec_command(command)
 
 		time.sleep(1)
@@ -53,7 +53,7 @@ class TaskThread:
 				client_sftp.put('saves/' + self.tasknode.filenames[self.index], 'distributed/' + self.tasknode.filenames[self.index])
 				client_sftp.close()
 
-				command = 'python3 worker.py distributed/ ' + self.tasknode.filenames[self.index] + ' 2>&1'
+				command = 'python3 distributed/worker.py distributed/ ' + self.tasknode.filenames[self.index] + ' 2>&1'
 				self.channel.exec_command(command)
 			else:
 				new_iter = int(line)

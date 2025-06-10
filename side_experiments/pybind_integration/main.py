@@ -34,6 +34,7 @@ while True:
 				if terminated or truncated:
 					break
 			w.end()
+		w.update_score(sum_reward / MEASURE_ITERS)
 		print('sum_reward: ' + str(sum_reward))
 
 		w.save('saves/', 'main.txt')

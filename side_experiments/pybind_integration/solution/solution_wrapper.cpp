@@ -56,6 +56,10 @@ SolutionWrapper::~SolutionWrapper() {
 	delete this->solution;
 }
 
+void SolutionWrapper::update_score(double score) {
+	this->solution->curr_score = score;
+}
+
 void SolutionWrapper::combine(string other_path,
 							  string other_name) {
 	Solution* other = new Solution();
@@ -78,6 +82,8 @@ void SolutionWrapper::combine(string other_path,
 	for (int scope_index = 1; scope_index < (int)this->solution->scopes.size(); scope_index++) {
 		this->solution->scopes[scope_index]->id = scope_index;
 	}
+
+	this->solution->timestamp = 0;
 }
 
 void SolutionWrapper::save(string path,

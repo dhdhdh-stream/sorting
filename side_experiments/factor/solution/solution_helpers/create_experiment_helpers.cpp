@@ -17,7 +17,7 @@
 
 using namespace std;
 
-const int NEW_SCOPE_MIN_NODES = 60;
+const int NEW_SCOPE_MIN_NODES = 20;
 
 void gather_nodes_seen_helper(ScopeHistory* scope_history,
 							  map<pair<AbstractNode*,bool>, int>& nodes_seen) {

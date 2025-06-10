@@ -60,8 +60,8 @@ class TaskNode:
 
 				filename = 't_' + str(curr_time_stamp) + '.txt'
 
-				result = subprocess.run(['./simple_init', filename], capture_output=True, text=True)
-				print(result.stdout)
+				w = wrapper.Wrapper(4, 2)
+				w.save('saves/', filename)
 
 				self.filenames[0] = filename
 
@@ -133,12 +133,12 @@ class TaskNode:
 
 	def reset(self, index):
 		if self.layer == 0:
-			result = subprocess.run(['./simple_init', self.filenames[index]], capture_output=True, text=True)
-			print(result.stdout)
+			w = wrapper.Wrapper(4, 2)
+			w.save('saves/', filename)
 		else:
 			w = wrapper.Wrapper(4, 2, 'saves/', self.children[index].result)
 			for c_index in range(BRANCH_FACTOR):
-				if c_index != m_index:
+				if c_index != index:
 					w.combine('saves/', self.children[c_index].result)
 			w.save('saves/', self.filenames[index])
 

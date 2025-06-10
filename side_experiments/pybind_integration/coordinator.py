@@ -1,5 +1,6 @@
 import os
 import paramiko
+import subprocess
 import time
 
 from collections import deque
@@ -32,7 +33,7 @@ for line in iter(lambda:stdout.readline(2048), ''):
 try:
 	initialize_client_sftp.put('worker.py', 'distributed/worker.py')
 
-	pybind_extension = subprocess.Popen('python3-config --extension-suffix', shell=True, stdout=subprocess.PIPE).stdout.read().strip()
+	pybind_extension = subprocess.Popen('python3-config --extension-suffix', shell=True, stdout=subprocess.PIPE).stdout.read().strip().decode('utf-8')
 	initialize_client_sftp.put('wrapper'+pybind_extension, 'distributed/wrapper'+pybind_extension)
 except IOError as e:
 	print(e)

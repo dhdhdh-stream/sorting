@@ -1,18 +1,21 @@
 import gymnasium as gym
+import subprocess
 import sys
 import time
 import wrapper
 
 MEASURE_ITERS = 1000
 
-EXPLORE_ITERS = 60
+EXPLORE_ITERS = 10
 
 if len(sys.argv) != 3:
 	print("Usage: python3 worker.py [path] [filename]")
 	exit()
 
-path = argv[1]
-filename = argv[2]
+print('Starting...', flush=True)
+
+path = sys.argv[1]
+filename = sys.argv[2]
 
 env = gym.make('CartPole-v1')
 
@@ -22,7 +25,7 @@ start_time = time.time()
 while True:
 	curr_time = time.time()
 	if curr_time - start_time > 20:
-		print('a')
+		print('a', flush=True)
 		start_time = curr_time
 
 	obs, info = env.reset()
@@ -51,10 +54,13 @@ while True:
 				if terminated or truncated:
 					break
 			w.end()
-		print('sum_reward: ' + str(sum_reward))
+		w.update_score(sum_reward / MEASURE_ITERS)
+		print('sum_reward: ' + str(sum_reward), flush=True)
 
 		w.save(path, filename)
 
 		timestamp = subprocess.Popen('head -n 1 ' + path + filename, shell=True, stdout=subprocess.PIPE).stdout.read().strip()
 		if int(timestamp) >= EXPLORE_ITERS:
 			break
+
+print('Done', flush=True)
