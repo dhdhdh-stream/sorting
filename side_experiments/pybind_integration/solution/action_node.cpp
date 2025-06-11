@@ -52,9 +52,7 @@ void ActionNode::save(ofstream& output_file) {
 }
 
 void ActionNode::load(ifstream& input_file) {
-	string action_line;
-	getline(input_file, action_line);
-	this->action = stoi(action_line);
+	getline(input_file, this->action);
 
 	string next_node_id_line;
 	getline(input_file, next_node_id_line);

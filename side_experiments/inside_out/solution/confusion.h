@@ -20,6 +20,7 @@ public:
 	std::vector<int> actions;
 	std::vector<Scope*> scopes;
 	AbstractNode* exit_next_node;
+	bool is_init;
 
 	Confusion(Scope* scope_context,
 			  AbstractNode* node_context,
@@ -30,7 +31,10 @@ public:
 	void experiment_step(std::vector<double>& obs,
 						 int& action,
 						 bool& is_next,
+						 bool& fetch_action,
 						 SolutionWrapper* wrapper);
+	void set_action(int action,
+					SolutionWrapper* wrapper);
 	void experiment_exit_step(SolutionWrapper* wrapper);
 };
 

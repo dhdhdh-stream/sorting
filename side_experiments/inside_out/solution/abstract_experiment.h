@@ -47,9 +47,12 @@ public:
 								bool is_branch,
 								SolutionWrapper* wrapper) = 0;
 	virtual void experiment_step(std::vector<double>& obs,
-					  int& action,
-					  bool& is_next,
-					  SolutionWrapper* wrapper) = 0;
+								 int& action,
+								 bool& is_next,
+								 bool& fetch_action,
+								 SolutionWrapper* wrapper) = 0;
+	virtual void set_action(int action,
+							SolutionWrapper* wrapper) = 0;
 	virtual void experiment_exit_step(SolutionWrapper* wrapper) = 0;
 	virtual void backprop(double target_val,
 						  SolutionWrapper* wrapper) = 0;

@@ -2,6 +2,7 @@
 #define SOLUTION_WRAPPER_H
 
 #include <string>
+#include <tuple>
 #include <vector>
 
 class AbstractExperiment;
@@ -16,7 +17,6 @@ class Solution;
 class SolutionWrapper {
 public:
 	int num_obs;
-	int num_possible_actions;
 
 	Solution* solution;
 
@@ -45,23 +45,20 @@ public:
 
 	AbstractExperimentHistory* experiment_history;
 
+	SolutionWrapper(int num_obs);
 	SolutionWrapper(int num_obs,
-					int num_possible_actions);
-	SolutionWrapper(int num_obs,
-					int num_possible_actions,
 					std::string path,
 					std::string name);
 	~SolutionWrapper();
 
 	void init();
-	std::pair<bool,int> step(std::vector<double> obs);
+	std::pair<bool,std::string> step(std::vector<double> obs);
 	void end();
 
 	void experiment_init();
-	std::pair<bool,int> experiment_step(std::vector<double> obs);
+	std::tuple<bool,bool,std::string> experiment_step(std::vector<double> obs);
+	void set_action(std::string action);
 	bool experiment_end(double result);
-
-	void update_score(double score);
 
 	void combine(std::string other_path,
 				 std::string other_name);

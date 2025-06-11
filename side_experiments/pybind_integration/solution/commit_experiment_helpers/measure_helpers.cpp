@@ -25,7 +25,7 @@ void CommitExperiment::measure_check_activate(
 }
 
 void CommitExperiment::measure_step(vector<double>& obs,
-									int& action,
+									string& action,
 									bool& is_next,
 									SolutionWrapper* wrapper,
 									CommitExperimentState* experiment_state) {

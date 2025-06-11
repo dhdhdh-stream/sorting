@@ -39,13 +39,13 @@ public:
 	int explore_type;
 
 	std::vector<int> curr_step_types;
-	std::vector<int> curr_actions;
+	std::vector<std::string> curr_actions;
 	std::vector<Scope*> curr_scopes;
 	AbstractNode* curr_exit_next_node;
 
 	double best_surprise;
 	std::vector<int> best_step_types;
-	std::vector<int> best_actions;
+	std::vector<std::string> best_actions;
 	std::vector<Scope*> best_scopes;
 	AbstractNode* best_exit_next_node;
 
@@ -73,9 +73,12 @@ public:
 						bool is_branch,
 						SolutionWrapper* wrapper);
 	void experiment_step(std::vector<double>& obs,
-						 int& action,
+						 std::string& action,
 						 bool& is_next,
+						 bool& fetch_action,
 						 SolutionWrapper* wrapper);
+	void set_action(std::string action,
+					SolutionWrapper* wrapper);
 	void experiment_exit_step(SolutionWrapper* wrapper);
 	void backprop(double target_val,
 				  SolutionWrapper* wrapper);
@@ -91,10 +94,13 @@ public:
 	void explore_check_activate(SolutionWrapper* wrapper,
 								BranchExperimentHistory* history);
 	void explore_step(std::vector<double>& obs,
-					  int& action,
+					  std::string& action,
 					  bool& is_next,
+					  bool& fetch_action,
 					  SolutionWrapper* wrapper,
 					  BranchExperimentState* experiment_state);
+	void explore_set_action(std::string action,
+							BranchExperimentState* experiment_state);
 	void explore_exit_step(SolutionWrapper* wrapper,
 						   BranchExperimentState* experiment_state);
 	void explore_backprop(double target_val,
@@ -106,7 +112,7 @@ public:
 	void train_new_check_activate(SolutionWrapper* wrapper,
 								  BranchExperimentHistory* history);
 	void train_new_step(std::vector<double>& obs,
-						int& action,
+						std::string& action,
 						bool& is_next,
 						SolutionWrapper* wrapper,
 						BranchExperimentState* experiment_state);
@@ -117,7 +123,7 @@ public:
 
 	void measure_check_activate(SolutionWrapper* wrapper);
 	void measure_step(std::vector<double>& obs,
-					  int& action,
+					  std::string& action,
 					  bool& is_next,
 					  SolutionWrapper* wrapper,
 					  BranchExperimentState* experiment_state);

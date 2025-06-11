@@ -6,12 +6,10 @@
 
 using namespace std;
 
-SolutionWrapper::SolutionWrapper(int num_obs,
-								 int num_possible_actions) {
+SolutionWrapper::SolutionWrapper(int num_obs) {
 	generator.seed((unsigned)time(NULL));
 
 	this->num_obs = num_obs;
-	this->num_possible_actions = num_possible_actions;
 
 	this->solution = new Solution();
 	this->solution->init();
@@ -29,13 +27,11 @@ SolutionWrapper::SolutionWrapper(int num_obs,
 }
 
 SolutionWrapper::SolutionWrapper(int num_obs,
-								 int num_possible_actions,
 								 std::string path,
 								 std::string name) {
 	generator.seed((unsigned)time(NULL));
 
 	this->num_obs = num_obs;
-	this->num_possible_actions = num_possible_actions;
 
 	this->solution = new Solution();
 	this->solution->load(path, name);
@@ -54,10 +50,6 @@ SolutionWrapper::SolutionWrapper(int num_obs,
 
 SolutionWrapper::~SolutionWrapper() {
 	delete this->solution;
-}
-
-void SolutionWrapper::update_score(double score) {
-	this->solution->curr_score = score;
 }
 
 void SolutionWrapper::combine(string other_path,

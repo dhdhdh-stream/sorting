@@ -39,21 +39,31 @@ void PassThroughExperiment::explore_check_activate(SolutionWrapper* wrapper) {
 void PassThroughExperiment::explore_step(vector<double>& obs,
 										 int& action,
 										 bool& is_next,
+										 bool& fetch_action,
 										 SolutionWrapper* wrapper,
 										 PassThroughExperimentState* experiment_state) {
 	if (experiment_state->step_index >= (int)this->step_types.size()) {
 		wrapper->node_context.back() = this->exit_next_node;
 
+		this->is_init = true;
+
 		delete experiment_state;
 		wrapper->experiment_context.back() = NULL;
 	} else {
 		if (this->step_types[experiment_state->step_index] == STEP_TYPE_ACTION) {
-			action = this->actions[experiment_state->step_index];
-			is_next = true;
+			if (this->is_init) {
+				action = this->actions[experiment_state->step_index];
+				is_next = true;
 
-			wrapper->num_actions++;
+				wrapper->num_actions++;
 
-			experiment_state->step_index++;
+				experiment_state->step_index++;
+			} else {
+				is_next = true;
+				fetch_action = true;
+
+				wrapper->num_actions++;
+			}
 		} else {
 			ScopeHistory* inner_scope_history = new ScopeHistory(this->scopes[experiment_state->step_index]);
 			wrapper->scope_histories.push_back(inner_scope_history);
@@ -66,6 +76,13 @@ void PassThroughExperiment::explore_step(vector<double>& obs,
 			}
 		}
 	}
+}
+
+void PassThroughExperiment::explore_set_action(int action,
+											   PassThroughExperimentState* experiment_state) {
+	this->actions[experiment_state->step_index] = action;
+
+	experiment_state->step_index++;
 }
 
 void PassThroughExperiment::explore_exit_step(SolutionWrapper* wrapper,
@@ -250,12 +267,12 @@ void PassThroughExperiment::explore_backprop(double target_val,
 				} else {
 					this->step_types.push_back(STEP_TYPE_ACTION);
 
-					uniform_int_distribution<int> action_distribution(0, wrapper->num_possible_actions-1);
-					this->actions.push_back(action_distribution(generator));
+					this->actions.push_back(-1);
 
 					this->scopes.push_back(NULL);
 				}
 			}
+			this->is_init = false;
 
 			this->sum_score = 0.0;
 

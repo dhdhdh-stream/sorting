@@ -33,9 +33,10 @@ public:
 	double existing_average_score;
 
 	std::vector<int> step_types;
-	std::vector<int> actions;
+	std::vector<std::string> actions;
 	std::vector<Scope*> scopes;
 	AbstractNode* exit_next_node;
+	bool is_init;
 
 	double sum_score;
 
@@ -48,9 +49,12 @@ public:
 						bool is_branch,
 						SolutionWrapper* wrapper);
 	void experiment_step(std::vector<double>& obs,
-						 int& action,
+						 std::string& action,
 						 bool& is_next,
+						 bool& fetch_action,
 						 SolutionWrapper* wrapper);
+	void set_action(std::string action,
+					SolutionWrapper* wrapper);
 	void experiment_exit_step(SolutionWrapper* wrapper);
 	void backprop(double target_val,
 				  SolutionWrapper* wrapper);
@@ -60,10 +64,13 @@ public:
 
 	void explore_check_activate(SolutionWrapper* wrapper);
 	void explore_step(std::vector<double>& obs,
-					  int& action,
+					  std::string& action,
 					  bool& is_next,
+					  bool& fetch_action,
 					  SolutionWrapper* wrapper,
 					  PassThroughExperimentState* experiment_state);
+	void explore_set_action(std::string action,
+							PassThroughExperimentState* experiment_state);
 	void explore_exit_step(SolutionWrapper* wrapper,
 						   PassThroughExperimentState* experiment_state);
 	void explore_backprop(double target_val,

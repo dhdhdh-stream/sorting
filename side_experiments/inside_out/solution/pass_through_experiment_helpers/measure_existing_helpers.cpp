@@ -109,12 +109,12 @@ void PassThroughExperiment::measure_existing_backprop(
 			} else {
 				this->step_types.push_back(STEP_TYPE_ACTION);
 
-				uniform_int_distribution<int> action_distribution(0, wrapper->num_possible_actions-1);
-				this->actions.push_back(action_distribution(generator));
+				this->actions.push_back(-1);
 
 				this->scopes.push_back(NULL);
 			}
 		}
+		this->is_init = false;
 
 		this->sum_score = 0.0;
 

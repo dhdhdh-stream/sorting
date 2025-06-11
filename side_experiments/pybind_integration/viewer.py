@@ -9,7 +9,7 @@ else:
 
 env = gym.make('CartPole-v1', render_mode='human')
 
-w = wrapper.Wrapper(4, 2, 'saves/', filename)
+w = wrapper.Wrapper(4, 'saves/', filename)
 
 obs, info = env.reset()
 w.init()

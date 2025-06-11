@@ -5,7 +5,7 @@ MEASURE_ITERS = 1000
 
 env = gym.make('CartPole-v1')
 
-w = wrapper.Wrapper(4, 2, 'saves/', 'main.txt')
+w = wrapper.Wrapper(4, 'saves/', 'main.txt')
 
 sum_reward = 0.0
 for _ in range(MEASURE_ITERS):

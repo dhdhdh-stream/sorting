@@ -52,8 +52,9 @@ void BranchExperiment::check_activate(AbstractNode* experiment_node,
 }
 
 void BranchExperiment::experiment_step(vector<double>& obs,
-									   int& action,
+									   string& action,
 									   bool& is_next,
+									   bool& fetch_action,
 									   SolutionWrapper* wrapper) {
 	BranchExperimentState* experiment_state = (BranchExperimentState*)wrapper->experiment_context.back();
 	switch (this->state) {
@@ -61,6 +62,7 @@ void BranchExperiment::experiment_step(vector<double>& obs,
 		explore_step(obs,
 					 action,
 					 is_next,
+					 fetch_action,
 					 wrapper,
 					 experiment_state);
 		break;
@@ -79,6 +81,13 @@ void BranchExperiment::experiment_step(vector<double>& obs,
 					 experiment_state);
 		break;
 	}
+}
+
+void BranchExperiment::set_action(string action,
+								  SolutionWrapper* wrapper) {
+	BranchExperimentState* experiment_state = (BranchExperimentState*)wrapper->experiment_context.back();
+	explore_set_action(action,
+					   experiment_state);
 }
 
 void BranchExperiment::experiment_exit_step(SolutionWrapper* wrapper) {

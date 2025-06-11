@@ -64,6 +64,7 @@ public:
 	std::vector<int> save_actions;
 	std::vector<Scope*> save_scopes;
 	AbstractNode* save_exit_next_node;
+	bool save_is_init;
 
 	std::vector<AbstractNode*> new_nodes;
 
@@ -104,7 +105,10 @@ public:
 	void experiment_step(std::vector<double>& obs,
 						 int& action,
 						 bool& is_next,
+						 bool& fetch_action,
 						 SolutionWrapper* wrapper);
+	void set_action(int action,
+					SolutionWrapper* wrapper);
 	void experiment_exit_step(SolutionWrapper* wrapper);
 	void backprop(double target_val,
 				  SolutionWrapper* wrapper);
@@ -122,8 +126,11 @@ public:
 	void explore_step(std::vector<double>& obs,
 					  int& action,
 					  bool& is_next,
+					  bool& fetch_action,
 					  SolutionWrapper* wrapper,
 					  CommitExperimentState* experiment_state);
+	void explore_set_action(int action,
+							CommitExperimentState* experiment_state);
 	void explore_exit_step(SolutionWrapper* wrapper,
 						   CommitExperimentState* experiment_state);
 	void explore_backprop(double target_val,
@@ -133,8 +140,11 @@ public:
 	void find_save_step(std::vector<double>& obs,
 						int& action,
 						bool& is_next,
+						bool& fetch_action,
 						SolutionWrapper* wrapper,
 						CommitExperimentState* experiment_state);
+	void find_save_set_action(int action,
+							  CommitExperimentState* experiment_state);
 	void find_save_exit_step(SolutionWrapper* wrapper,
 							 CommitExperimentState* experiment_state);
 	void find_save_backprop(double target_val);

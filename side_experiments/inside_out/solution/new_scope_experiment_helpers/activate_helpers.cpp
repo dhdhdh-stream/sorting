@@ -73,7 +73,13 @@ void NewScopeExperiment::check_activate(AbstractNode* experiment_node,
 void NewScopeExperiment::experiment_step(vector<double>& obs,
 										 int& action,
 										 bool& is_next,
+										 bool& fetch_action,
 										 SolutionWrapper* wrapper) {
+	// can't be hit
+}
+
+void NewScopeExperiment::set_action(int action,
+									SolutionWrapper* wrapper) {
 	// can't be hit
 }
 

@@ -22,7 +22,7 @@ void CommitExperiment::commit_new_gather_check_activate(
 
 void CommitExperiment::commit_new_gather_step(
 		vector<double>& obs,
-		int& action,
+		string& action,
 		bool& is_next,
 		SolutionWrapper* wrapper,
 		CommitExperimentState* experiment_state) {

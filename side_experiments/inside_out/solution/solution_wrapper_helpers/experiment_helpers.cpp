@@ -35,10 +35,11 @@ void SolutionWrapper::experiment_init() {
 	}
 }
 
-pair<bool,int> SolutionWrapper::experiment_step(vector<double> obs) {
+tuple<bool,bool,int> SolutionWrapper::experiment_step(vector<double> obs) {
 	int action;
 	bool is_next = false;
 	bool is_done = false;
+	bool fetch_action = false;
 	while (!is_next) {
 		if (this->node_context.back() == NULL
 				&& this->experiment_context.back() == NULL
@@ -63,12 +64,14 @@ pair<bool,int> SolutionWrapper::experiment_step(vector<double> obs) {
 			experiment->experiment_step(obs,
 										action,
 										is_next,
+										fetch_action,
 										this);
 		} else if (this->confusion_context.back() != NULL) {
 			Confusion* confusion = this->confusion_context.back()->confusion;
 			confusion->experiment_step(obs,
 									   action,
 									   is_next,
+									   fetch_action,
 									   this);
 		} else {
 			this->node_context.back()->experiment_step(obs,
@@ -78,7 +81,19 @@ pair<bool,int> SolutionWrapper::experiment_step(vector<double> obs) {
 		}
 	}
 
-	return {is_done, action};
+	return tuple<bool,bool,int>{is_done, fetch_action, action};
+}
+
+void SolutionWrapper::set_action(int action) {
+	if (this->experiment_context.back() != NULL) {
+		AbstractExperiment* experiment = this->experiment_context.back()->experiment;
+		experiment->set_action(action,
+							   this);
+	} else {
+		Confusion* confusion = this->confusion_context.back()->confusion;
+		confusion->set_action(action,
+							  this);
+	}
 }
 
 void SolutionWrapper::experiment_end(double result) {

@@ -85,7 +85,10 @@ public:
 	void experiment_step(std::vector<double>& obs,
 						 int& action,
 						 bool& is_next,
+						 bool& fetch_action,
 						 SolutionWrapper* wrapper);
+	void set_action(int action,
+					SolutionWrapper* wrapper);
 	void experiment_exit_step(SolutionWrapper* wrapper);
 	void backprop(double target_val,
 				  SolutionWrapper* wrapper);
@@ -103,8 +106,11 @@ public:
 	void explore_step(std::vector<double>& obs,
 					  int& action,
 					  bool& is_next,
+					  bool& fetch_action,
 					  SolutionWrapper* wrapper,
 					  BranchExperimentState* experiment_state);
+	void explore_set_action(int action,
+							BranchExperimentState* experiment_state);
 	void explore_exit_step(SolutionWrapper* wrapper,
 						   BranchExperimentState* experiment_state);
 	void explore_backprop(double target_val,

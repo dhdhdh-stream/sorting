@@ -60,7 +60,7 @@ class TaskNode:
 
 				filename = 't_' + str(curr_time_stamp) + '.txt'
 
-				w = wrapper.Wrapper(4, 2)
+				w = wrapper.Wrapper(4)
 				w.save('saves/', filename)
 
 				self.filenames[0] = filename
@@ -84,7 +84,7 @@ class TaskNode:
 
 						output_filename = 't_' + str(curr_time_stamp) + '.txt'
 
-						w = wrapper.Wrapper(4, 2, 'saves/', self.children[m_index].result)
+						w = wrapper.Wrapper(4, 'saves/', self.children[m_index].result)
 						for c_index in range(BRANCH_FACTOR):
 							if c_index != m_index:
 								w.combine('saves/', self.children[c_index].result)
@@ -133,10 +133,10 @@ class TaskNode:
 
 	def reset(self, index):
 		if self.layer == 0:
-			w = wrapper.Wrapper(4, 2)
+			w = wrapper.Wrapper(4)
 			w.save('saves/', filename)
 		else:
-			w = wrapper.Wrapper(4, 2, 'saves/', self.children[index].result)
+			w = wrapper.Wrapper(4, 'saves/', self.children[index].result)
 			for c_index in range(BRANCH_FACTOR):
 				if c_index != index:
 					w.combine('saves/', self.children[c_index].result)

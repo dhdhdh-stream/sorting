@@ -81,15 +81,14 @@ void CommitExperiment::explore_check_activate(
 		for (int s_index = 0; s_index < new_num_steps; s_index++) {
 			if (scope_distribution(generator) == 0 && this->scope_context->child_scopes.size() > 0) {
 				this->curr_step_types.push_back(STEP_TYPE_SCOPE);
-				this->curr_actions.push_back(-1);
+				this->curr_actions.push_back("");
 
 				uniform_int_distribution<int> child_scope_distribution(0, this->scope_context->child_scopes.size()-1);
 				this->curr_scopes.push_back(this->scope_context->child_scopes[child_scope_distribution(generator)]);
 			} else {
 				this->curr_step_types.push_back(STEP_TYPE_ACTION);
 
-				uniform_int_distribution<int> action_distribution(0, wrapper->num_possible_actions-1);
-				this->curr_actions.push_back(action_distribution(generator));
+				this->curr_actions.push_back("");
 
 				this->curr_scopes.push_back(NULL);
 			}
@@ -103,8 +102,9 @@ void CommitExperiment::explore_check_activate(
 }
 
 void CommitExperiment::explore_step(vector<double>& obs,
-									int& action,
+									string& action,
 									bool& is_next,
+									bool& fetch_action,
 									SolutionWrapper* wrapper,
 									CommitExperimentState* experiment_state) {
 	if (experiment_state->step_index >= (int)this->curr_step_types.size()) {
@@ -114,12 +114,10 @@ void CommitExperiment::explore_step(vector<double>& obs,
 		wrapper->experiment_context.back() = NULL;
 	} else {
 		if (this->curr_step_types[experiment_state->step_index] == STEP_TYPE_ACTION) {
-			action = this->curr_actions[experiment_state->step_index];
 			is_next = true;
+			fetch_action = true;
 
 			wrapper->num_actions++;
-
-			experiment_state->step_index++;
 		} else {
 			ScopeHistory* inner_scope_history = new ScopeHistory(this->curr_scopes[experiment_state->step_index]);
 			wrapper->scope_histories.push_back(inner_scope_history);
@@ -132,6 +130,13 @@ void CommitExperiment::explore_step(vector<double>& obs,
 			}
 		}
 	}
+}
+
+void CommitExperiment::explore_set_action(string action,
+										  CommitExperimentState* experiment_state) {
+	this->curr_actions[experiment_state->step_index] = action;
+
+	experiment_state->step_index++;
 }
 
 void CommitExperiment::explore_exit_step(SolutionWrapper* wrapper,

@@ -34,7 +34,7 @@ void CommitExperiment::commit_train_existing_check_activate(
 
 void CommitExperiment::commit_train_existing_step(
 		vector<double>& obs,
-		int& action,
+		string& action,
 		bool& is_next,
 		SolutionWrapper* wrapper,
 		CommitExperimentState* experiment_state) {

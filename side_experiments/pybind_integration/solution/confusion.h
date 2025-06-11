@@ -1,6 +1,7 @@
 #ifndef CONFUSION_H
 #define CONFUSION_H
 
+#include <string>
 #include <vector>
 
 class AbstractNode;
@@ -17,9 +18,10 @@ public:
 	int iter;
 
 	std::vector<int> step_types;
-	std::vector<int> actions;
+	std::vector<std::string> actions;
 	std::vector<Scope*> scopes;
 	AbstractNode* exit_next_node;
+	bool is_init;
 
 	Confusion(Scope* scope_context,
 			  AbstractNode* node_context,
@@ -28,9 +30,12 @@ public:
 
 	void check_activate(SolutionWrapper* wrapper);
 	void experiment_step(std::vector<double>& obs,
-						 int& action,
+						 std::string& action,
 						 bool& is_next,
+						 bool& fetch_action,
 						 SolutionWrapper* wrapper);
+	void set_action(std::string action,
+					SolutionWrapper* wrapper);
 	void experiment_exit_step(SolutionWrapper* wrapper);
 };
 

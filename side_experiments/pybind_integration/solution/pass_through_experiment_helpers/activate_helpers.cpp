@@ -29,15 +29,24 @@ void PassThroughExperiment::check_activate(AbstractNode* experiment_node,
 }
 
 void PassThroughExperiment::experiment_step(vector<double>& obs,
-											int& action,
+											string& action,
 											bool& is_next,
+											bool& fetch_action,
 											SolutionWrapper* wrapper) {
 	PassThroughExperimentState* experiment_state = (PassThroughExperimentState*)wrapper->experiment_context.back();
 	explore_step(obs,
 				 action,
 				 is_next,
+				 fetch_action,
 				 wrapper,
 				 experiment_state);
+}
+
+void PassThroughExperiment::set_action(string action,
+									   SolutionWrapper* wrapper) {
+	PassThroughExperimentState* experiment_state = (PassThroughExperimentState*)wrapper->experiment_context.back();
+	explore_set_action(action,
+					   experiment_state);
 }
 
 void PassThroughExperiment::experiment_exit_step(SolutionWrapper* wrapper) {

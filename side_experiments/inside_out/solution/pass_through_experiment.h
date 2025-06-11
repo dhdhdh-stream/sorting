@@ -36,6 +36,7 @@ public:
 	std::vector<int> actions;
 	std::vector<Scope*> scopes;
 	AbstractNode* exit_next_node;
+	bool is_init;
 
 	double sum_score;
 
@@ -50,7 +51,10 @@ public:
 	void experiment_step(std::vector<double>& obs,
 						 int& action,
 						 bool& is_next,
+						 bool& fetch_action,
 						 SolutionWrapper* wrapper);
+	void set_action(int action,
+					SolutionWrapper* wrapper);
 	void experiment_exit_step(SolutionWrapper* wrapper);
 	void backprop(double target_val,
 				  SolutionWrapper* wrapper);
@@ -62,8 +66,11 @@ public:
 	void explore_step(std::vector<double>& obs,
 					  int& action,
 					  bool& is_next,
+					  bool& fetch_action,
 					  SolutionWrapper* wrapper,
 					  PassThroughExperimentState* experiment_state);
+	void explore_set_action(int action,
+							PassThroughExperimentState* experiment_state);
 	void explore_exit_step(SolutionWrapper* wrapper,
 						   PassThroughExperimentState* experiment_state);
 	void explore_backprop(double target_val,

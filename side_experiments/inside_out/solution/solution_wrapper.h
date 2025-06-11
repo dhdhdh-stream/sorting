@@ -2,6 +2,7 @@
 #define SOLUTION_WRAPPER_H
 
 #include <string>
+#include <tuple>
 #include <vector>
 
 class AbstractExperiment;
@@ -16,7 +17,6 @@ class Solution;
 class SolutionWrapper {
 public:
 	int num_obs;
-	int num_possible_actions;
 
 	Solution* solution;
 
@@ -51,10 +51,8 @@ public:
 	unsigned long curr_run_seed;
 	#endif /* MDEBUG */
 
+	SolutionWrapper(int num_obs);
 	SolutionWrapper(int num_obs,
-					int num_possible_actions);
-	SolutionWrapper(int num_obs,
-					int num_possible_actions,
 					std::string path,
 					std::string name);
 	~SolutionWrapper();
@@ -64,7 +62,8 @@ public:
 	void end();
 
 	void experiment_init();
-	std::pair<bool,int> experiment_step(std::vector<double> obs);
+	std::tuple<bool,bool,int> experiment_step(std::vector<double> obs);
+	void set_action(int action);
 	void experiment_end(double result);
 
 	#if defined(MDEBUG) && MDEBUG

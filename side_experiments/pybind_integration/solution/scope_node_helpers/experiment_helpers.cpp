@@ -13,7 +13,7 @@
 using namespace std;
 
 void ScopeNode::experiment_step(vector<double>& obs,
-								int& action,
+								string& action,
 								bool& is_next,
 								SolutionWrapper* wrapper) {
 	ScopeHistory* scope_history = wrapper->scope_histories.back();

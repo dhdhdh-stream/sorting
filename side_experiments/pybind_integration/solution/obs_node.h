@@ -26,12 +26,12 @@ public:
 	~ObsNode();
 
 	void step(std::vector<double>& obs,
-			  int& action,
+			  std::string& action,
 			  bool& is_next,
 			  SolutionWrapper* wrapper);
 
 	void experiment_step(std::vector<double>& obs,
-						 int& action,
+						 std::string& action,
 						 bool& is_next,
 						 SolutionWrapper* wrapper);
 

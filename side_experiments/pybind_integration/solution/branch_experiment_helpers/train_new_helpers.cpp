@@ -69,7 +69,7 @@ void BranchExperiment::train_new_check_activate(
 }
 
 void BranchExperiment::train_new_step(vector<double>& obs,
-									  int& action,
+									  string& action,
 									  bool& is_next,
 									  SolutionWrapper* wrapper,
 									  BranchExperimentState* experiment_state) {

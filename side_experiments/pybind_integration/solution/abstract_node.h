@@ -36,12 +36,12 @@ public:
 	virtual ~AbstractNode() {};
 
 	virtual void step(std::vector<double>& obs,
-					  int& action,
+					  std::string& action,
 					  bool& is_next,
 					  SolutionWrapper* wrapper) = 0;
 
 	virtual void experiment_step(std::vector<double>& obs,
-								 int& action,
+								 std::string& action,
 								 bool& is_next,
 								 SolutionWrapper* wrapper) = 0;
 

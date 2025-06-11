@@ -26,7 +26,6 @@ Solution::~Solution() {
 
 void Solution::init() {
 	this->timestamp = 0;
-	this->curr_score = 0.0;
 
 	/**
 	 * - even though scopes[0] will not be reused, still good to start with:
@@ -57,10 +56,6 @@ void Solution::load(string path,
 	string timestamp_line;
 	getline(input_file, timestamp_line);
 	this->timestamp = stoi(timestamp_line);
-
-	string curr_score_line;
-	getline(input_file, curr_score_line);
-	this->curr_score = stod(curr_score_line);
 
 	string num_scopes_line;
 	getline(input_file, num_scopes_line);
@@ -186,7 +181,6 @@ void Solution::save(string path,
 	output_file.open(path + "temp_" + name);
 
 	output_file << this->timestamp << endl;
-	output_file << this->curr_score << endl;
 
 	output_file << this->scopes.size() << endl;
 

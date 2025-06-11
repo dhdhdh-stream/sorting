@@ -19,7 +19,7 @@ filename = sys.argv[2]
 
 env = gym.make('CartPole-v1')
 
-w = wrapper.Wrapper(4, 2, path, filename)
+w = wrapper.Wrapper(4, path, filename)
 
 start_time = time.time()
 while True:
@@ -32,9 +32,17 @@ while True:
 	w.experiment_init()
 	sum_reward = 0.0
 	while True:
-		is_done, action = w.experiment_step(obs)
+		is_done, is_fetch, s_action = w.experiment_step(obs)
 		if is_done:
 			break
+
+		if is_fetch:
+			action = env.action_space.sample()
+			s_action = pickle.dumps(action)
+			w.set_action(s_action)
+		else:
+			action = pickle.loads(s_action)
+
 		obs, reward, terminated, truncated, info = env.step(action)
 		sum_reward += reward
 		if terminated or truncated:
@@ -46,15 +54,15 @@ while True:
 			obs, info = env.reset()
 			w.init()
 			while True:
-				is_done, action = w.step(obs)
+				is_done, s_action = w.step(obs)
 				if is_done:
 					break
+				action = pickle.loads(s_action)
 				obs, reward, terminated, truncated, info = env.step(action)
 				sum_reward += reward
 				if terminated or truncated:
 					break
 			w.end()
-		w.update_score(sum_reward / MEASURE_ITERS)
 		print('sum_reward: ' + str(sum_reward), flush=True)
 
 		w.save(path, filename)

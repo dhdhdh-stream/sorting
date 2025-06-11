@@ -7,7 +7,7 @@
 using namespace std;
 
 void ActionNode::step(vector<double>& obs,
-					  int& action,
+					  string& action,
 					  bool& is_next,
 					  SolutionWrapper* wrapper) {
 	action = this->action;

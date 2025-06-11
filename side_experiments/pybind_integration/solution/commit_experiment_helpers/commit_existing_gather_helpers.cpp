@@ -23,7 +23,7 @@ void CommitExperiment::commit_existing_gather_check_activate(
 
 void CommitExperiment::commit_existing_gather_step(
 		vector<double>& obs,
-		int& action,
+		string& action,
 		bool& is_next,
 		SolutionWrapper* wrapper,
 		CommitExperimentState* experiment_state) {

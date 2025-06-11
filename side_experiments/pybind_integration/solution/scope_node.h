@@ -27,13 +27,13 @@ public:
 	~ScopeNode();
 
 	void step(std::vector<double>& obs,
-			  int& action,
+			  std::string& action,
 			  bool& is_next,
 			  SolutionWrapper* wrapper);
 	void exit_step(SolutionWrapper* wrapper);
 
 	void experiment_step(std::vector<double>& obs,
-						 int& action,
+						 std::string& action,
 						 bool& is_next,
 						 SolutionWrapper* wrapper);
 	void experiment_exit_step(SolutionWrapper* wrapper);

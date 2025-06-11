@@ -61,8 +61,9 @@ void CommitExperiment::check_activate(AbstractNode* experiment_node,
 }
 
 void CommitExperiment::experiment_step(vector<double>& obs,
-									   int& action,
+									   string& action,
 									   bool& is_next,
+									   bool& fetch_action,
 									   SolutionWrapper* wrapper) {
 	CommitExperimentState* experiment_state = (CommitExperimentState*)wrapper->experiment_context.back();
 	switch (this->state) {
@@ -70,6 +71,7 @@ void CommitExperiment::experiment_step(vector<double>& obs,
 		explore_step(obs,
 					 action,
 					 is_next,
+					 fetch_action,
 					 wrapper,
 					 experiment_state);
 		break;
@@ -77,6 +79,7 @@ void CommitExperiment::experiment_step(vector<double>& obs,
 		find_save_step(obs,
 					   action,
 					   is_next,
+					   fetch_action,
 					   wrapper,
 					   experiment_state);
 		break;
@@ -114,6 +117,21 @@ void CommitExperiment::experiment_step(vector<double>& obs,
 					 is_next,
 					 wrapper,
 					 experiment_state);
+		break;
+	}
+}
+
+void CommitExperiment::set_action(string action,
+								  SolutionWrapper* wrapper) {
+	CommitExperimentState* experiment_state = (CommitExperimentState*)wrapper->experiment_context.back();
+	switch (this->state) {
+	case COMMIT_EXPERIMENT_STATE_EXPLORE:
+		explore_set_action(action,
+						   experiment_state);
+		break;
+	case COMMIT_EXPERIMENT_STATE_FIND_SAVE:
+		find_save_set_action(action,
+							 experiment_state);
 		break;
 	}
 }

@@ -15,8 +15,8 @@ void SolutionWrapper::init() {
 	this->node_context.push_back(this->solution->scopes[0]->nodes[0]);
 }
 
-pair<bool,int> SolutionWrapper::step(vector<double> obs) {
-	int action;
+pair<bool,string> SolutionWrapper::step(vector<double> obs) {
+	string action;
 	bool is_next = false;
 	bool is_done = false;
 	while (!is_next) {

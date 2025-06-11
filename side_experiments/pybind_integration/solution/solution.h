@@ -27,7 +27,6 @@ class Scope;
 class Solution {
 public:
 	int timestamp;
-	double curr_score;
 
 	std::vector<Scope*> scopes;
 

@@ -46,14 +46,12 @@ int main(int argc, char* argv[]) {
 		filename = argv[1];
 		solution_wrapper = new SolutionWrapper(
 			problem_type->num_obs(),
-			problem_type->num_possible_actions(),
 			"saves/",
 			filename);
 	} else {
 		filename = "main.txt";
 		solution_wrapper = new SolutionWrapper(
-			problem_type->num_obs(),
-			problem_type->num_possible_actions());
+			problem_type->num_obs());
 		solution_wrapper->save("saves/", filename);
 	}
 
@@ -71,11 +69,18 @@ int main(int argc, char* argv[]) {
 
 		vector<double> obs = problem->get_observations();
 		while (true) {
-			pair<bool,int> next = solution_wrapper->experiment_step(obs);
-			if (next.first) {
+			tuple<bool,bool,int> next = solution_wrapper->experiment_step(obs);
+			if (get<0>(next)) {
 				break;
+			} else if (get<1>(next)) {
+				uniform_int_distribution<int> action_distribution(0, problem_type->num_possible_actions()-1);
+				int new_action = action_distribution(generator);
+
+				solution_wrapper->set_action(new_action);
+
+				problem->perform_action(new_action);
 			} else {
-				problem->perform_action(next.second);
+				problem->perform_action(get<2>(next));
 			}
 		}
 
@@ -145,7 +150,6 @@ int main(int argc, char* argv[]) {
 			delete solution_wrapper;
 			solution_wrapper = new SolutionWrapper(
 				problem_type->num_obs(),
-				problem_type->num_possible_actions(),
 				"saves/",
 				filename);
 			#endif /* MDEBUG */

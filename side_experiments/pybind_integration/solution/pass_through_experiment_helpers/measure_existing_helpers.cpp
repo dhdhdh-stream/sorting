@@ -97,19 +97,19 @@ void PassThroughExperiment::measure_existing_backprop(
 		for (int s_index = 0; s_index < new_num_steps; s_index++) {
 			if (scope_distribution(generator) == 0 && this->scope_context->child_scopes.size() > 0) {
 				this->step_types.push_back(STEP_TYPE_SCOPE);
-				this->actions.push_back(-1);
+				this->actions.push_back("");
 
 				uniform_int_distribution<int> child_scope_distribution(0, this->scope_context->child_scopes.size()-1);
 				this->scopes.push_back(this->scope_context->child_scopes[child_scope_distribution(generator)]);
 			} else {
 				this->step_types.push_back(STEP_TYPE_ACTION);
 
-				uniform_int_distribution<int> action_distribution(0, wrapper->num_possible_actions-1);
-				this->actions.push_back(action_distribution(generator));
+				this->actions.push_back("");
 
 				this->scopes.push_back(NULL);
 			}
 		}
+		this->is_init = false;
 
 		this->sum_score = 0.0;
 

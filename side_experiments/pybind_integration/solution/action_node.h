@@ -14,7 +14,7 @@ class SolutionWrapper;
 class ActionNodeHistory;
 class ActionNode : public AbstractNode {
 public:
-	int action;
+	std::string action;
 
 	int next_node_id;
 	AbstractNode* next_node;
@@ -23,12 +23,12 @@ public:
 	~ActionNode();
 
 	void step(std::vector<double>& obs,
-			  int& action,
+			  std::string& action,
 			  bool& is_next,
 			  SolutionWrapper* wrapper);
 
 	void experiment_step(std::vector<double>& obs,
-						 int& action,
+						 std::string& action,
 						 bool& is_next,
 						 SolutionWrapper* wrapper);
 
