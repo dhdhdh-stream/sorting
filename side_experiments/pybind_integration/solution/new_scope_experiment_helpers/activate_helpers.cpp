@@ -46,6 +46,8 @@ void NewScopeExperiment::check_activate(AbstractNode* experiment_node,
 		NewScopeExperimentHistory* history = (NewScopeExperimentHistory*)wrapper->experiment_history;
 
 		if (is_test) {
+			wrapper->test_hit = true;
+
 			history->hit_test = true;
 
 			switch (this->test_location_state) {

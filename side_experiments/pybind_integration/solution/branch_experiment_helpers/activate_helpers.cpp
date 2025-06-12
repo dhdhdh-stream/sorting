@@ -17,6 +17,8 @@ void BranchExperiment::check_activate(AbstractNode* experiment_node,
 									  bool is_branch,
 									  SolutionWrapper* wrapper) {
 	if (is_branch == this->is_branch) {
+		wrapper->test_hit = true;
+
 		BranchExperimentHistory* history;
 		if (wrapper->experiment_history != NULL) {
 			history = (BranchExperimentHistory*)wrapper->experiment_history;

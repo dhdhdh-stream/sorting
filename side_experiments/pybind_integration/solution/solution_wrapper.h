@@ -29,8 +29,7 @@ public:
 	AbstractExperiment* best_experiment;
 	int improvement_iter;
 
-	// temp
-	int num_experiments_hit;
+	int num_tests_hit;
 
 	int sum_num_actions;
 	int sum_num_confusion_instances;
@@ -42,6 +41,8 @@ public:
 	std::vector<AbstractNode*> node_context;
 	std::vector<AbstractExperimentState*> experiment_context;
 	std::vector<ConfusionState*> confusion_context;
+
+	bool test_hit;
 
 	int num_actions;
 	int num_confusion_instances;

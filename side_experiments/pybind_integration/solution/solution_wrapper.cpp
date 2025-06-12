@@ -20,7 +20,7 @@ SolutionWrapper::SolutionWrapper(int num_obs) {
 	this->best_experiment = NULL;
 	this->improvement_iter = 0;
 
-	this->num_experiments_hit = 0;
+	this->num_tests_hit = 0;
 
 	this->sum_num_actions = 0;
 	this->sum_num_confusion_instances = 0;

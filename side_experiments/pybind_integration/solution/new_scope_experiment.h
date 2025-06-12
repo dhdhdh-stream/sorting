@@ -67,6 +67,8 @@ public:
 	void test_backprop(double target_val,
 					   NewScopeExperimentHistory* history);
 
+	void abort();
+
 	void clean();
 	void add(SolutionWrapper* wrapper);
 };

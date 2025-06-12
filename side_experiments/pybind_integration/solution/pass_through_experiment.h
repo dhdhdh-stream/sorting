@@ -76,6 +76,8 @@ public:
 	void explore_backprop(double target_val,
 						  SolutionWrapper* wrapper);
 
+	void abort();
+
 	void clean();
 	void add(SolutionWrapper* wrapper);
 };

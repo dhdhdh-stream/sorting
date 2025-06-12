@@ -131,6 +131,8 @@ public:
 						   BranchExperimentState* experiment_state);
 	void measure_backprop(double target_val);
 
+	void abort();
+
 	void clean();
 	void add(SolutionWrapper* wrapper);
 };

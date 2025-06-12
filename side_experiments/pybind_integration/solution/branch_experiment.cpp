@@ -26,6 +26,10 @@ void BranchExperiment::decrement(AbstractNode* experiment_node) {
 	delete this;
 }
 
+void BranchExperiment::abort() {
+	this->result = EXPERIMENT_RESULT_FAIL;
+}
+
 BranchExperimentHistory::BranchExperimentHistory(BranchExperiment* experiment) {
 	this->experiment = experiment;
 

@@ -17,6 +17,8 @@ void CommitExperiment::check_activate(AbstractNode* experiment_node,
 									  bool is_branch,
 									  SolutionWrapper* wrapper) {
 	if (is_branch == this->is_branch) {
+		wrapper->test_hit = true;
+
 		CommitExperimentHistory* history;
 		if (wrapper->experiment_history != NULL) {
 			history = (CommitExperimentHistory*)wrapper->experiment_history;
