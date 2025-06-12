@@ -95,18 +95,11 @@ int main(int argc, char* argv[]) {
 		for (map<AbstractExperiment*, AbstractExperimentHistory*>::iterator it = run_helper.experiment_histories.begin();
 				it != run_helper.experiment_histories.end(); it++) {
 			it->first->backprop(target_val,
-								run_helper);
-			if (it->first->result == EXPERIMENT_RESULT_FAIL) {
-				it->first->clean();
-				delete it->first;
-			} else if (it->first->result == EXPERIMENT_RESULT_SUCCESS) {
-				it->first->clean();
-
-				updated_scopes.insert(it->first->scope_context);
-
-				it->first->add();
-				delete it->first;
-			}
+								it->second,
+								updated_scopes);
+		}
+		for (int s_index = 0; s_index < (int)solution->scopes.size(); s_index++) {
+			solution->scopes[s_index]->check_new_scope(updated_scopes);
 		}
 		if (updated_scopes.size() > 0) {
 			for (set<Scope*>::iterator it = updated_scopes.begin();

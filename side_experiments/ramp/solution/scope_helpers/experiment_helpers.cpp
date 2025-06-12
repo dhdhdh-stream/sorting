@@ -13,10 +13,6 @@ using namespace std;
 void Scope::experiment_activate(Problem* problem,
 								RunHelper& run_helper,
 								ScopeHistory* history) {
-	if (this->new_scope_experiment != NULL) {
-		this->new_scope_experiment->pre_activate(run_helper);
-	}
-
 	AbstractNode* curr_node = this->nodes[0];
 	while (true) {
 		if (curr_node == NULL) {
@@ -61,11 +57,5 @@ void Scope::experiment_activate(Problem* problem,
 			}
 			break;
 		}
-	}
-
-	if (this->new_scope_experiment != NULL) {
-		this->new_scope_experiment->back_activate(
-			run_helper,
-			history);
 	}
 }

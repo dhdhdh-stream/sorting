@@ -23,8 +23,6 @@ public:
 	AbstractNode* next_node;
 
 	ObsNode();
-	ObsNode(ObsNode* original,
-			Solution* parent_solution);
 	~ObsNode();
 
 	void activate(AbstractNode*& curr_node,

@@ -24,7 +24,6 @@ public:
 	AbstractNode* branch_next_node;
 
 	BranchNode();
-	BranchNode(BranchNode* original);
 	~BranchNode();
 
 	void activate(AbstractNode*& curr_node,

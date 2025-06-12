@@ -19,29 +19,6 @@ Solution::Solution() {
 	// do nothing
 }
 
-Solution::Solution(Solution* original) {
-	this->timestamp = original->timestamp;
-	this->curr_score = original->curr_score;
-
-	// temp
-	this->biggest_drop = original->biggest_drop;
-
-	for (int s_index = 0; s_index < (int)original->scopes.size(); s_index++) {
-		Scope* scope = new Scope();
-		scope->id = s_index;
-		this->scopes.push_back(scope);
-	}
-
-	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
-		this->scopes[s_index]->copy_from(original->scopes[s_index],
-										 this);
-	}
-
-	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
-		this->scopes[s_index]->link(this);
-	}
-}
-
 Solution::~Solution() {
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
 		delete this->scopes[s_index];

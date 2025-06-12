@@ -38,16 +38,14 @@ public:
 						  AbstractNode* node_context,
 						  bool is_branch);
 	~PassThroughExperiment();
-	void decrement(AbstractNode* experiment_node);
 
-	void activate(AbstractNode* experiment_node,
-				  bool is_branch,
-				  AbstractNode*& curr_node,
+	void activate(AbstractNode*& curr_node,
 				  Problem* problem,
 				  RunHelper& run_helper,
 				  ScopeHistory* scope_history);
 	void backprop(double target_val,
-				  RunHelper& run_helper);
+				  AbstractExperimentHistory* history,
+				  std::set<Scope*>& updated_scopes);
 
 	void clean_inputs(Scope* scope,
 					  int node_id);
@@ -64,7 +62,6 @@ public:
 					   Scope* new_scope,
 					   int new_scope_node_id);
 
-	void clean();
 	void add();
 };
 

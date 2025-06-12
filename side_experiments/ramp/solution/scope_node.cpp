@@ -16,22 +16,9 @@ ScopeNode::ScopeNode() {
 	this->experiment = NULL;
 }
 
-ScopeNode::ScopeNode(ScopeNode* original,
-					 Solution* parent_solution) {
-	this->type = NODE_TYPE_SCOPE;
-
-	this->scope = parent_solution->scopes[original->scope->id];
-
-	this->next_node_id = original->next_node_id;
-
-	this->ancestor_ids = original->ancestor_ids;
-
-	this->experiment = NULL;
-}
-
 ScopeNode::~ScopeNode() {
 	if (this->experiment != NULL) {
-		this->experiment->decrement(this);
+		delete this->experiment;
 	}
 }
 

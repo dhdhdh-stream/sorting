@@ -17,30 +17,13 @@ ObsNode::ObsNode() {
 	this->experiment = NULL;
 }
 
-ObsNode::ObsNode(ObsNode* original,
-				 Solution* parent_solution) {
-	this->type = NODE_TYPE_OBS;
-
-	for (int f_index = 0; f_index < (int)original->factors.size(); f_index++) {
-		Factor* factor = new Factor(original->factors[f_index],
-									parent_solution);
-		this->factors.push_back(factor);
-	}
-
-	this->next_node_id = original->next_node_id;
-
-	this->ancestor_ids = original->ancestor_ids;
-
-	this->experiment = NULL;
-}
-
 ObsNode::~ObsNode() {
 	for (int f_index = 0; f_index < (int)this->factors.size(); f_index++) {
 		delete this->factors[f_index];
 	}
 
 	if (this->experiment != NULL) {
-		this->experiment->decrement(this);
+		delete this->experiment;
 	}
 }
 

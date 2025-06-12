@@ -14,21 +14,9 @@ ActionNode::ActionNode() {
 	this->experiment = NULL;
 }
 
-ActionNode::ActionNode(ActionNode* original) {
-	this->type = NODE_TYPE_ACTION;
-
-	this->action = original->action;
-
-	this->next_node_id = original->next_node_id;
-
-	this->ancestor_ids = original->ancestor_ids;
-
-	this->experiment = NULL;
-}
-
 ActionNode::~ActionNode() {
 	if (this->experiment != NULL) {
-		this->experiment->decrement(this);
+		delete this->experiment;
 	}
 }
 

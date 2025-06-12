@@ -13,10 +13,6 @@
 
 using namespace std;
 
-void PassThroughExperiment::clean() {
-	this->node_context->experiment = NULL;
-}
-
 void PassThroughExperiment::add() {
 	vector<AbstractNode*> new_nodes;
 	for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {

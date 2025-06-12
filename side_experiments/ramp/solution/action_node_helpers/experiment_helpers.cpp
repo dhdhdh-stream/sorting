@@ -26,8 +26,6 @@ void ActionNode::experiment_activate(AbstractNode*& curr_node,
 
 	if (this->experiment != NULL) {
 		this->experiment->activate(
-			this,
-			false,
 			curr_node,
 			problem,
 			run_helper,

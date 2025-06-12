@@ -11,7 +11,7 @@
 using namespace std;
 
 Scope::Scope() {
-	this->new_scope_experiment = NULL;
+	this->new_scope = NULL;
 
 	this->exceeded = false;
 	this->generalized = false;
@@ -30,12 +30,21 @@ void Scope::clean_inputs(Scope* scope,
 		it->second->clean_inputs(scope,
 								 node_id);
 	}
+
+	if (this->new_scope != NULL) {
+		this->new_scope->clean_inputs(scope,
+									  node_id);
+	}
 }
 
 void Scope::clean_inputs(Scope* scope) {
 	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
 			it != this->nodes.end(); it++) {
 		it->second->clean_inputs(scope);
+	}
+
+	if (this->new_scope != NULL) {
+		this->new_scope->clean_inputs(scope);
 	}
 }
 
@@ -52,6 +61,14 @@ void Scope::replace_factor(Scope* scope,
 								   new_node_id,
 								   new_factor_index);
 	}
+
+	if (this->new_scope != NULL) {
+		this->new_scope->replace_factor(scope,
+										original_node_id,
+										original_factor_index,
+										new_node_id,
+										new_factor_index);
+	}
 }
 
 void Scope::replace_obs_node(Scope* scope,
@@ -63,6 +80,12 @@ void Scope::replace_obs_node(Scope* scope,
 									 original_node_id,
 									 new_node_id);
 	}
+
+	if (this->new_scope != NULL) {
+		this->new_scope->replace_obs_node(scope,
+										  original_node_id,
+										  new_node_id);
+	}
 }
 
 void Scope::replace_scope(Scope* original_scope,
@@ -73,6 +96,18 @@ void Scope::replace_scope(Scope* original_scope,
 		it->second->replace_scope(original_scope,
 								  new_scope,
 								  new_scope_node_id);
+	}
+
+	if (this->new_scope != NULL) {
+		this->new_scope->replace_scope(original_scope,
+									   new_scope,
+									   new_scope_node_id);
+
+		for (int c_index = 0; c_index < (int)this->new_scope->child_scopes.size(); c_index++) {
+			if (this->new_scope->child_scopes[c_index] == original_scope) {
+				this->new_scope->child_scopes.push_back(new_scope);
+			}
+		}
 	}
 }
 
@@ -178,63 +213,6 @@ void Scope::link(Solution* parent_solution) {
 			it != this->nodes.end(); it++) {
 		it->second->link(parent_solution);
 	}
-}
-
-void Scope::copy_from(Scope* original,
-					  Solution* parent_solution) {
-	this->node_counter = original->node_counter;
-
-	for (map<int, AbstractNode*>::iterator it = original->nodes.begin();
-			it != original->nodes.end(); it++) {
-		switch (it->second->type) {
-		case NODE_TYPE_ACTION:
-			{
-				ActionNode* original_action_node = (ActionNode*)it->second;
-				ActionNode* new_action_node = new ActionNode(original_action_node);
-				new_action_node->parent = this;
-				new_action_node->id = it->first;
-				this->nodes[it->first] = new_action_node;
-			}
-			break;
-		case NODE_TYPE_SCOPE:
-			{
-				ScopeNode* original_scope_node = (ScopeNode*)it->second;
-				ScopeNode* new_scope_node = new ScopeNode(original_scope_node,
-														  parent_solution);
-				new_scope_node->parent = this;
-				new_scope_node->id = it->first;
-				this->nodes[it->first] = new_scope_node;
-			}
-			break;
-		case NODE_TYPE_BRANCH:
-			{
-				BranchNode* original_branch_node = (BranchNode*)it->second;
-				BranchNode* new_branch_node = new BranchNode(original_branch_node);
-				new_branch_node->parent = this;
-				new_branch_node->id = it->first;
-				this->nodes[it->first] = new_branch_node;
-			}
-			break;
-		case NODE_TYPE_OBS:
-			{
-				ObsNode* original_obs_node = (ObsNode*)it->second;
-				ObsNode* new_obs_node = new ObsNode(original_obs_node,
-													parent_solution);
-				new_obs_node->parent = this;
-				new_obs_node->id = it->first;
-				this->nodes[it->first] = new_obs_node;
-			}
-			break;
-		}
-	}
-
-	for (int c_index = 0; c_index < (int)original->child_scopes.size(); c_index++) {
-		this->child_scopes.push_back(parent_solution->scopes[
-			original->child_scopes[c_index]->id]);
-	}
-
-	this->exceeded = original->exceeded;
-	this->generalized = original->generalized;
 }
 
 void Scope::save_for_display(ofstream& output_file) {

@@ -10,10 +10,24 @@
 
 using namespace std;
 
+// #if defined(MDEBUG) && MDEBUG
+// const int MEASURE_NUM_DATAPOINTS = 20;
+// #else
+// const int MEASURE_NUM_DATAPOINTS = 4000;
+// #endif /* MDEBUG */
+
 #if defined(MDEBUG) && MDEBUG
-const int MEASURE_NUM_DATAPOINTS = 20;
+const int MEASURE_1_PERCENT_NUM_DATAPOINTS = 2;
+const int MEASURE_5_PERCENT_NUM_DATAPOINTS = 2;
+const int MEASURE_10_PERCENT_NUM_DATAPOINTS = 2;
+const int MEASURE_25_PERCENT_NUM_DATAPOINTS = 2;
+const int MEASURE_50_PERCENT_NUM_DATAPOINTS = 2;
 #else
-const int MEASURE_NUM_DATAPOINTS = 4000;
+const int MEASURE_1_PERCENT_NUM_DATAPOINTS = 10;
+const int MEASURE_5_PERCENT_NUM_DATAPOINTS = 50;
+const int MEASURE_10_PERCENT_NUM_DATAPOINTS = 100;
+const int MEASURE_25_PERCENT_NUM_DATAPOINTS = 250;
+const int MEASURE_50_PERCENT_NUM_DATAPOINTS = 500;
 #endif /* MDEBUG */
 
 void BranchExperiment::measure_activate(
@@ -78,8 +92,8 @@ void BranchExperiment::measure_activate(
 }
 
 void BranchExperiment::measure_backprop(double target_val,
-										RunHelper& run_helper,
-										BranchExperimentHistory* history) {
+										BranchExperimentHistory* history,
+										set<Scope*>& updated_scopes) {
 	if (history->is_active) {
 		this->combined_sum_score += target_val;
 		this->combined_count++;
@@ -89,38 +103,104 @@ void BranchExperiment::measure_backprop(double target_val,
 	}
 
 	this->state_iter++;
-	if (this->state_iter >= MEASURE_NUM_DATAPOINTS) {
-		double existing_score = this->existing_sum_score / this->existing_count;
-		double combined_score = this->combined_sum_score / this->combined_count;
+	switch (this->state) {
+	case BRANCH_EXPERIMENT_STATE_MEASURE_1_PERCENT:
+		if (this->combined_count >= MEASURE_1_PERCENT_NUM_DATAPOINTS) {
+			#if defined(MDEBUG) && MDEBUG
+			if (rand()%4 != 0) {
+			#else
+			double existing_score = this->existing_sum_score / this->existing_count;
+			double combined_score = this->combined_sum_score / this->combined_count;
+			if (combined_score > existing_score) {
+			#endif /* MDEBUG */
+				this->existing_sum_score = 0.0;
+				this->existing_count = 0;
+				this->combined_sum_score = 0.0;
+				this->combined_count = 0;
 
-		#if defined(MDEBUG) && MDEBUG
-		if (rand()%4 != 0) {
-		#else
-		if (combined_score > existing_score) {
-		#endif /* MDEBUG */
-			this->existing_sum_score = 0.0;
-			this->existing_count = 0;
-			this->combined_sum_score = 0.0;
-			this->combined_count = 0;
-
-			this->state_iter = 0;
-
-			switch (this->state) {
-			case BRANCH_EXPERIMENT_STATE_MEASURE_1_PERCENT:
 				this->state = BRANCH_EXPERIMENT_STATE_MEASURE_5_PERCENT;
-				break;
-			case BRANCH_EXPERIMENT_STATE_MEASURE_5_PERCENT:
-				this->state = BRANCH_EXPERIMENT_STATE_MEASURE_10_PERCENT;
-				break;
-			case BRANCH_EXPERIMENT_STATE_MEASURE_10_PERCENT:
-				this->state = BRANCH_EXPERIMENT_STATE_MEASURE_25_PERCENT;
-				break;
-			case BRANCH_EXPERIMENT_STATE_MEASURE_25_PERCENT:
-				this->state = BRANCH_EXPERIMENT_STATE_MEASURE_50_PERCENT;
-				break;
-			case BRANCH_EXPERIMENT_STATE_MEASURE_50_PERCENT:
-				this->improvement = combined_score - existing_score;
+				this->state_iter = 0;
+			} else {
+				delete this;
+				return;
+			}
+		}
+		break;
+	case BRANCH_EXPERIMENT_STATE_MEASURE_5_PERCENT:
+		if (this->combined_count >= MEASURE_5_PERCENT_NUM_DATAPOINTS) {
+			#if defined(MDEBUG) && MDEBUG
+			if (rand()%4 != 0) {
+			#else
+			double existing_score = this->existing_sum_score / this->existing_count;
+			double combined_score = this->combined_sum_score / this->combined_count;
+			if (combined_score > existing_score) {
+			#endif /* MDEBUG */
+				this->existing_sum_score = 0.0;
+				this->existing_count = 0;
+				this->combined_sum_score = 0.0;
+				this->combined_count = 0;
 
+				this->state = BRANCH_EXPERIMENT_STATE_MEASURE_10_PERCENT;
+				this->state_iter = 0;
+			} else {
+				delete this;
+				return;
+			}
+		}
+		break;
+	case BRANCH_EXPERIMENT_STATE_MEASURE_10_PERCENT:
+		if (this->combined_count >= MEASURE_10_PERCENT_NUM_DATAPOINTS) {
+			#if defined(MDEBUG) && MDEBUG
+			if (rand()%4 != 0) {
+			#else
+			double existing_score = this->existing_sum_score / this->existing_count;
+			double combined_score = this->combined_sum_score / this->combined_count;
+			if (combined_score > existing_score) {
+			#endif /* MDEBUG */
+				this->existing_sum_score = 0.0;
+				this->existing_count = 0;
+				this->combined_sum_score = 0.0;
+				this->combined_count = 0;
+
+				this->state = BRANCH_EXPERIMENT_STATE_MEASURE_25_PERCENT;
+				this->state_iter = 0;
+			} else {
+				delete this;
+				return;
+			}
+		}
+		break;
+	case BRANCH_EXPERIMENT_STATE_MEASURE_25_PERCENT:
+		if (this->combined_count >= MEASURE_25_PERCENT_NUM_DATAPOINTS) {
+			#if defined(MDEBUG) && MDEBUG
+			if (rand()%4 != 0) {
+			#else
+			double existing_score = this->existing_sum_score / this->existing_count;
+			double combined_score = this->combined_sum_score / this->combined_count;
+			if (combined_score > existing_score) {
+			#endif /* MDEBUG */
+				this->existing_sum_score = 0.0;
+				this->existing_count = 0;
+				this->combined_sum_score = 0.0;
+				this->combined_count = 0;
+
+				this->state = BRANCH_EXPERIMENT_STATE_MEASURE_50_PERCENT;
+				this->state_iter = 0;
+			} else {
+				delete this;
+				return;
+			}
+		}
+		break;
+	case BRANCH_EXPERIMENT_STATE_MEASURE_50_PERCENT:
+		if (this->combined_count >= MEASURE_50_PERCENT_NUM_DATAPOINTS) {
+			double existing_score = this->existing_sum_score / this->existing_count;
+			double combined_score = this->combined_sum_score / this->combined_count;
+			#if defined(MDEBUG) && MDEBUG
+			if (rand()%4 != 0) {
+			#else
+			if (combined_score > existing_score) {
+			#endif /* MDEBUG */
 				cout << "BranchExperiment" << endl;
 				cout << "this->scope_context->id: " << this->scope_context->id << endl;
 				cout << "this->node_context->id: " << this->node_context->id << endl;
@@ -143,19 +223,19 @@ void BranchExperiment::measure_backprop(double target_val,
 
 				cout << "this->select_percentage: " << this->select_percentage << endl;
 
-				cout << "this->improvement: " << this->improvement << endl;
+				double improvement = combined_score - existing_score;
+				cout << "improvement: " << improvement << endl;
 
 				cout << endl;
 
-				this->result = EXPERIMENT_RESULT_SUCCESS;
-
-				break;
+				add();
+				updated_scopes.insert(this->scope_context);
+				delete this;
+			} else {
+				delete this;
+				return;
 			}
-		} else {
-			// temp
-			cout << "BranchExperiment fail " << this->state << endl;
-
-			this->result = EXPERIMENT_RESULT_FAIL;
 		}
+		break;
 	}
 }

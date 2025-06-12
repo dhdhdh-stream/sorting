@@ -17,106 +17,113 @@ void gather_possible_helper(ScopeHistory* scope_history,
 							vector<Scope*>& scope_context,
 							vector<int>& node_context,
 							int& node_count,
-							Input& new_input) {
+							Input& new_input,
+							AbstractExperiment* experiment) {
 	Scope* scope = scope_history->scope;
 
 	uniform_int_distribution<int> obs_distribution(0, problem_type->num_obs()-1);
 	for (map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
 			it != scope_history->node_histories.end(); it++) {
 		AbstractNode* node = it->second->node;
-		switch (node->type) {
-		case NODE_TYPE_SCOPE:
-			{
-				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)it->second;
+		if (node->is_init || node->init_experiment == experiment) {
+			switch (node->type) {
+			case NODE_TYPE_SCOPE:
+				{
+					ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)it->second;
 
-				scope_context.push_back(scope);
-				node_context.push_back(it->first);
-
-				gather_possible_helper(scope_node_history->scope_history,
-									   scope_context,
-									   node_context,
-									   node_count,
-									   new_input);
-
-				scope_context.pop_back();
-				node_context.pop_back();
-			}
-			break;
-		case NODE_TYPE_BRANCH:
-			{
-				uniform_int_distribution<int> select_distribution(0, node_count);
-				node_count++;
-				if (select_distribution(generator) == 0) {
 					scope_context.push_back(scope);
 					node_context.push_back(it->first);
 
-					new_input.scope_context = scope_context;
-					new_input.node_context = node_context;
-					new_input.factor_index = -1;
-					new_input.obs_index = -1;
+					gather_possible_helper(scope_node_history->scope_history,
+										   scope_context,
+										   node_context,
+										   node_count,
+										   new_input,
+										   experiment);
 
 					scope_context.pop_back();
 					node_context.pop_back();
 				}
-			}
-			break;
-		case NODE_TYPE_OBS:
-			{
-				ObsNode* obs_node = (ObsNode*)node;
+				break;
+			case NODE_TYPE_BRANCH:
+				{
+					uniform_int_distribution<int> select_distribution(0, node_count);
+					node_count++;
+					if (select_distribution(generator) == 0) {
+						scope_context.push_back(scope);
+						node_context.push_back(it->first);
 
-				uniform_int_distribution<int> select_distribution(0, node_count);
-				node_count++;
-				if (select_distribution(generator) == 0) {
-					scope_context.push_back(scope);
-					node_context.push_back(it->first);
+						new_input.scope_context = scope_context;
+						new_input.node_context = node_context;
+						new_input.factor_index = -1;
+						new_input.obs_index = -1;
 
-					new_input.scope_context = scope_context;
-					new_input.node_context = node_context;
-					new_input.factor_index = -1;
-					new_input.obs_index = obs_distribution(generator);
-
-					scope_context.pop_back();
-					node_context.pop_back();
+						scope_context.pop_back();
+						node_context.pop_back();
+					}
 				}
+				break;
+			case NODE_TYPE_OBS:
+				{
+					ObsNode* obs_node = (ObsNode*)node;
 
-				for (int f_index = 0; f_index < (int)obs_node->factors.size(); f_index++) {
-					if (obs_node->factors[f_index]->inputs.size() > 0) {
-						uniform_int_distribution<int> select_distribution(0, node_count);
-						node_count++;
-						if (select_distribution(generator) == 0) {
-							scope_context.push_back(scope);
-							node_context.push_back(it->first);
+					uniform_int_distribution<int> select_distribution(0, node_count);
+					node_count++;
+					if (select_distribution(generator) == 0) {
+						scope_context.push_back(scope);
+						node_context.push_back(it->first);
 
-							new_input.scope_context = scope_context;
-							new_input.node_context = node_context;
-							new_input.factor_index = f_index;
-							new_input.obs_index = -1;
+						new_input.scope_context = scope_context;
+						new_input.node_context = node_context;
+						new_input.factor_index = -1;
+						new_input.obs_index = obs_distribution(generator);
 
-							scope_context.pop_back();
-							node_context.pop_back();
+						scope_context.pop_back();
+						node_context.pop_back();
+					}
+
+					for (int f_index = 0; f_index < (int)obs_node->factors.size(); f_index++) {
+						if (obs_node->factors[f_index]->inputs.size() > 0) {
+							uniform_int_distribution<int> select_distribution(0, node_count);
+							node_count++;
+							if (select_distribution(generator) == 0) {
+								scope_context.push_back(scope);
+								node_context.push_back(it->first);
+
+								new_input.scope_context = scope_context;
+								new_input.node_context = node_context;
+								new_input.factor_index = f_index;
+								new_input.obs_index = -1;
+
+								scope_context.pop_back();
+								node_context.pop_back();
+							}
 						}
 					}
 				}
+				break;
 			}
-			break;
 		}
 	}
 }
 
 void gather_possible_factor_helper(ScopeHistory* scope_history,
-								   pair<int,int>& new_factor) {
+								   pair<int,int>& new_factor,
+								   AbstractExperiment* experiment) {
 	int factor_count = 0;
 
 	for (map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
 			it != scope_history->node_histories.end(); it++) {
 		if (it->second->node->type == NODE_TYPE_OBS) {
-			ObsNode* obs_node = (ObsNode*)it->second->node;
-			for (int f_index = 0; f_index < (int)obs_node->factors.size(); f_index++) {
-				if (obs_node->factors[f_index]->inputs.size() > 0) {
-					uniform_int_distribution<int> select_distribution(0, factor_count);
-					factor_count++;
-					if (select_distribution(generator) == 0) {
-						new_factor = {obs_node->id, f_index};
+			if (it->second->node->is_init || it->second->node->init_experiment == experiment) {
+				ObsNode* obs_node = (ObsNode*)it->second->node;
+				for (int f_index = 0; f_index < (int)obs_node->factors.size(); f_index++) {
+					if (obs_node->factors[f_index]->inputs.size() > 0) {
+						uniform_int_distribution<int> select_distribution(0, factor_count);
+						factor_count++;
+						if (select_distribution(generator) == 0) {
+							new_factor = {obs_node->id, f_index};
+						}
 					}
 				}
 			}

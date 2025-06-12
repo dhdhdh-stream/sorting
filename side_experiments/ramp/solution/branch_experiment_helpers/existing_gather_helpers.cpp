@@ -21,7 +21,8 @@ void BranchExperiment::existing_gather_activate(
 						   scope_context,
 						   node_context,
 						   node_count,
-						   new_input);
+						   new_input,
+						   this);
 
 	bool is_existing = false;
 	for (int i_index = 0; i_index < (int)this->existing_inputs.size(); i_index++) {
@@ -37,7 +38,8 @@ void BranchExperiment::existing_gather_activate(
 	for (int f_index = 0; f_index < GATHER_FACTORS_PER_ITER; f_index++) {
 		pair<int,int> new_factor = {-1, -1};
 		gather_possible_factor_helper(scope_history,
-									  new_factor);
+									  new_factor,
+									  this);
 
 		if (new_factor.first != -1) {
 			bool is_existing = false;

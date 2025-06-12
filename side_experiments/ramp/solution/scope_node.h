@@ -24,8 +24,6 @@ public:
 	AbstractNode* next_node;
 
 	ScopeNode();
-	ScopeNode(ScopeNode* original,
-			  Solution* parent_solution);
 	~ScopeNode();
 
 	void activate(AbstractNode*& curr_node,
@@ -37,11 +35,6 @@ public:
 							 Problem* problem,
 							 RunHelper& run_helper,
 							 ScopeHistory* scope_history);
-
-	void new_scope_activate(AbstractNode*& curr_node,
-							Problem* problem,
-							RunHelper& run_helper,
-							ScopeHistory* scope_history);
 
 	void commit_activate(Problem* problem,
 						 RunHelper& run_helper,

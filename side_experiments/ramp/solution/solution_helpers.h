@@ -21,9 +21,11 @@ void gather_possible_helper(ScopeHistory* scope_history,
 							std::vector<Scope*>& scope_context,
 							std::vector<int>& node_context,
 							int& node_count,
-							Input& new_input);
+							Input& new_input,
+							AbstractExperiment* experiment);
 void gather_possible_factor_helper(ScopeHistory* scope_history,
-								   std::pair<int,int>& new_factor);
+								   std::pair<int,int>& new_factor,
+								   AbstractExperiment* experiment);
 void fetch_factor_helper(ScopeHistory* scope_history,
 						 std::pair<int,int> factor,
 						 double& val);

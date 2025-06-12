@@ -12,10 +12,6 @@
 
 using namespace std;
 
-void BranchExperiment::clean() {
-	this->node_context->experiment = NULL;
-}
-
 void BranchExperiment::add() {
 	vector<AbstractNode*> new_nodes;
 	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {

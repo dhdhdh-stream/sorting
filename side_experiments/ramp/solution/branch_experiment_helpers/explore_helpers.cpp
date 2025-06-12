@@ -155,7 +155,6 @@ void BranchExperiment::explore_activate(
 
 void BranchExperiment::explore_backprop(
 		double target_val,
-		RunHelper& run_helper,
 		BranchExperimentHistory* history) {
 	uniform_int_distribution<int> until_distribution(0, 2*((int)this->average_instances_per_run-1));
 	this->num_instances_until_target = 1 + until_distribution(generator);
@@ -545,7 +544,7 @@ void BranchExperiment::explore_backprop(
 			this->state = BRANCH_EXPERIMENT_STATE_NEW_GATHER;
 			this->state_iter = 0;
 		} else {
-			this->result = EXPERIMENT_RESULT_FAIL;
+			delete this;
 		}
 	}
 }

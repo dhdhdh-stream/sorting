@@ -27,6 +27,9 @@ public:
 
 	AbstractExperiment* experiment;
 
+	int is_init;
+	AbstractExperiment* init_experiment;
+
 	virtual ~AbstractNode() {};
 
 	virtual void clean_inputs(Scope* scope,

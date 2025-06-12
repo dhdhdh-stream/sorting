@@ -18,24 +18,9 @@ BranchNode::BranchNode() {
 	this->experiment = NULL;
 }
 
-BranchNode::BranchNode(BranchNode* original) {
-	this->type = NODE_TYPE_BRANCH;
-
-	this->average_val = original->average_val;
-	this->factor_ids = original->factor_ids;
-	this->factor_weights = original->factor_weights;
-
-	this->original_next_node_id = original->original_next_node_id;
-	this->branch_next_node_id = original->branch_next_node_id;
-
-	this->ancestor_ids = original->ancestor_ids;
-
-	this->experiment = NULL;
-}
-
 BranchNode::~BranchNode() {
 	if (this->experiment != NULL) {
-		this->experiment->decrement(this);
+		delete this->experiment;
 	}
 }
 

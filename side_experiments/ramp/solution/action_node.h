@@ -21,7 +21,6 @@ public:
 	AbstractNode* next_node;
 
 	ActionNode();
-	ActionNode(ActionNode* original);
 	~ActionNode();
 
 	void activate(AbstractNode*& curr_node,

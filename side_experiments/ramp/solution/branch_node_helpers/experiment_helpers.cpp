@@ -48,10 +48,9 @@ void BranchNode::experiment_activate(AbstractNode*& curr_node,
 		curr_node = this->original_next_node;
 	}
 
-	if (this->experiment != NULL) {
+	if (this->experiment != NULL
+			&& this->experiment->is_branch == is_branch) {
 		this->experiment->activate(
-			this,
-			is_branch,
 			curr_node,
 			problem,
 			run_helper,

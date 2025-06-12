@@ -61,32 +61,22 @@ PassThroughExperiment::PassThroughExperiment(Scope* scope_context,
 		starting_node,
 		possible_exits);
 
-	int random_index;
-	if (this->scope_context->exceeded) {
-		if (possible_exits.size() <= 4) {
-			this->result = EXPERIMENT_RESULT_FAIL;
-			return;
-		} else {
-			uniform_int_distribution<int> distribution(4, possible_exits.size()-1);
-			random_index = distribution(generator);
-		}
-	} else {
-		uniform_int_distribution<int> distribution(0, possible_exits.size()-1);
-		random_index = distribution(generator);
-	}
+	uniform_int_distribution<int> distribution(0, possible_exits.size()-1);
+	int random_index = distribution(generator);
 	this->exit_next_node = possible_exits[random_index];
 
-	int new_num_steps;
 	geometric_distribution<int> geo_distribution(0.2);
-	if (random_index == 0) {
-		new_num_steps = 1 + geo_distribution(generator);
-	} else {
-		new_num_steps = geo_distribution(generator);
-	}
+	int new_num_steps = geo_distribution(generator);
 	if (this->scope_context->exceeded) {
 		if (new_num_steps > random_index/2-1) {
 			new_num_steps = random_index/2-1;
 		}
+		if (new_num_steps < 0) {
+			new_num_steps = 0;
+		}
+	}
+	if (random_index == 0) {
+		new_num_steps++;
 	}
 
 	/**
@@ -118,16 +108,10 @@ PassThroughExperiment::PassThroughExperiment(Scope* scope_context,
 
 	this->state = PASS_THROUGH_EXPERIMENT_STATE_MEASURE_1_PERCENT;
 	this->state_iter = 0;
-
-	this->result = EXPERIMENT_RESULT_NA;
 }
 
 PassThroughExperiment::~PassThroughExperiment() {
 	this->node_context->experiment = NULL;
-}
-
-void PassThroughExperiment::decrement(AbstractNode* experiment_node) {
-	delete this;
 }
 
 void PassThroughExperiment::clean_inputs(Scope* scope,

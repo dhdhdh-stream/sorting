@@ -23,16 +23,10 @@ BranchExperiment::BranchExperiment(Scope* scope_context,
 
 	this->state = BRANCH_EXPERIMENT_STATE_EXISTING_GATHER;
 	this->state_iter = 0;
-
-	this->result = EXPERIMENT_RESULT_NA;
 }
 
 BranchExperiment::~BranchExperiment() {
 	this->node_context->experiment = NULL;
-}
-
-void BranchExperiment::decrement(AbstractNode* experiment_node) {
-	delete this;
 }
 
 void BranchExperiment::clean_inputs(Scope* scope,

@@ -3,6 +3,7 @@
 
 #include <fstream>
 #include <map>
+#include <set>
 #include <vector>
 
 #include "run_helper.h"
@@ -26,11 +27,10 @@ public:
 	bool exceeded;
 	bool generalized;
 
-	/**
-	 * - tie NewScopeExperiment to scope instead of node
-	 *   - so that can be tried throughout entire scope
-	 */
-	NewScopeExperiment* new_scope_experiment;
+	Scope* new_scope;
+	std::vector<NewScopeExperiment*> test_experiments;
+	int generalize_iter;
+	std::vector<NewScopeExperiment*> successful_experiments;
 
 	Scope();
 	~Scope();
@@ -45,6 +45,8 @@ public:
 
 	void random_exit_activate(AbstractNode* starting_node,
 							  std::vector<AbstractNode*>& possible_exits);
+
+	void check_new_scope(std::set<Scope*>& updated_scopes);
 
 	void clean_inputs(Scope* scope,
 					  int node_id);
@@ -65,9 +67,6 @@ public:
 	void load(std::ifstream& input_file,
 			  Solution* parent_solution);
 	void link(Solution* parent_solution);
-
-	void copy_from(Scope* original,
-				   Solution* parent_solution);
 
 	void save_for_display(std::ofstream& output_file);
 };

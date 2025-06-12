@@ -35,7 +35,6 @@ public:
 	std::vector<Scope*> scopes;
 
 	Solution();
-	Solution(Solution* original);
 	~Solution();
 
 	void init();

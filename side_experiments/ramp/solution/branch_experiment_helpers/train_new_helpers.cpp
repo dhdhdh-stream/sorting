@@ -88,7 +88,6 @@ void BranchExperiment::train_new_activate(
 
 void BranchExperiment::train_new_backprop(
 		double target_val,
-		RunHelper& run_helper,
 		BranchExperimentHistory* history) {
 	if (history->is_active) {
 		for (int i_index = 0; i_index < (int)history->existing_predicted_scores.size(); i_index++) {
@@ -458,7 +457,7 @@ void BranchExperiment::train_new_backprop(
 				this->state = BRANCH_EXPERIMENT_STATE_MEASURE_1_PERCENT;
 				this->state_iter = 0;
 			} else {
-				this->result = EXPERIMENT_RESULT_FAIL;
+				delete this;
 			}
 		}
 	}
