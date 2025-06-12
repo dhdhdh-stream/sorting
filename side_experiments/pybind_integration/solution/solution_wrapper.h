@@ -29,6 +29,9 @@ public:
 	AbstractExperiment* best_experiment;
 	int improvement_iter;
 
+	// temp
+	int num_experiments_hit;
+
 	int sum_num_actions;
 	int sum_num_confusion_instances;
 

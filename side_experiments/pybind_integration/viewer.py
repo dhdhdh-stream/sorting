@@ -1,4 +1,5 @@
 import gymnasium as gym
+import pickle
 import sys
 import wrapper
 
@@ -15,9 +16,10 @@ obs, info = env.reset()
 w.init()
 sum_reward = 0.0
 while True:
-	is_done, action = w.step(obs)
+	is_done, s_action = w.step(obs)
 	if is_done:
 		break
+	action = pickle.loads(s_action)
 	obs, reward, terminated, truncated, info = env.step(action)
 	sum_reward += reward
 	if terminated or truncated:

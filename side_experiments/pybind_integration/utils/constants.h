@@ -34,6 +34,9 @@ const double FACTOR_IMPACT_THRESHOLD = 0.1;
 
 const int NETWORK_NUM_INPUTS = 10;
 
+// temp
+const int CHECK_NUM_EXPERIMENTS_HIT_ITER = 4000;
+
 const int CHECK_CONFUSION_ITER = 100;
 const int ACTIONS_PER_CONFUSION = 20;
 

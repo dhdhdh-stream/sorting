@@ -211,6 +211,7 @@ public:
 	int step_index;
 
 	CommitExperimentState(CommitExperiment* experiment);
+	~CommitExperimentState();
 };
 
 #endif /* COMMIT_EXPERIMENT_H */

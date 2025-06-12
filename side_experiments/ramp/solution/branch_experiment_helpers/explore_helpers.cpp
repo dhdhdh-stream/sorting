@@ -273,7 +273,7 @@ void BranchExperiment::explore_backprop(
 				#if defined(MDEBUG) && MDEBUG
 				#else
 				if (abs(sum_score) > REGRESSION_FAIL_MULTIPLIER * average_offset) {
-					this->result = EXPERIMENT_RESULT_FAIL;
+					delete this;
 					return;
 				}
 				#endif /* MDEBUG */
@@ -483,6 +483,8 @@ void BranchExperiment::explore_backprop(
 						}
 						break;
 					}
+
+					new_obs_node->is_init = true;
 
 					this->node_context->experiment = NULL;
 

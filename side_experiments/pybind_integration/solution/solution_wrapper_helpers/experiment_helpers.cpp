@@ -133,6 +133,19 @@ bool SolutionWrapper::experiment_end(double result) {
 						  this->curr_experiment,
 						  this);
 	}
+	// temp
+	if (this->experiment_history != NULL) {
+		this->num_experiments_hit++;
+	}
+	if (this->run_index % CHECK_NUM_EXPERIMENTS_HIT_ITER == 0) {
+		double hit_ratio = (double)this->num_experiments_hit / (double)CHECK_NUM_EXPERIMENTS_HIT_ITER;
+
+		if (this->curr_experiment != NULL) {
+			cout << this->curr_experiment->type << " hit_ratio: " << hit_ratio << endl;
+		}
+
+		this->num_experiments_hit = 0;
+	}
 	sum_num_actions += this->num_actions;
 	sum_num_confusion_instances += this->num_confusion_instances;
 	if (this->run_index % CHECK_CONFUSION_ITER == 0) {

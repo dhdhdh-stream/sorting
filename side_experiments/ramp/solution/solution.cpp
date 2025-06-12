@@ -50,6 +50,7 @@ void Solution::init() {
 	new_scope->node_counter++;
 	starting_noop_node->next_node_id = -1;
 	starting_noop_node->next_node = NULL;
+	starting_noop_node->is_init = true;
 	new_scope->nodes[starting_noop_node->id] = starting_noop_node;
 }
 

@@ -8,8 +8,6 @@
 using namespace std;
 
 void SolutionWrapper::init() {
-	this->run_index++;
-
 	ScopeHistory* scope_history = new ScopeHistory(this->solution->scopes[0]);
 	this->scope_histories.push_back(scope_history);
 	this->node_context.push_back(this->solution->scopes[0]->nodes[0]);

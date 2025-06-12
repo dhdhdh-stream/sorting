@@ -141,7 +141,7 @@ void PassThroughExperiment::explore_backprop(double target_val,
 				cout << "new explore path:";
 				for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {
 					if (this->step_types[s_index] == STEP_TYPE_ACTION) {
-						cout << " " << this->actions[s_index];
+						cout << " A";
 					} else {
 						cout << " E" << this->scopes[s_index]->id;
 					}

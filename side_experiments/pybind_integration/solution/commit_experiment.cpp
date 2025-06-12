@@ -40,3 +40,28 @@ CommitExperimentHistory::CommitExperimentHistory(CommitExperiment* experiment) {
 CommitExperimentState::CommitExperimentState(CommitExperiment* experiment) {
 	this->experiment = experiment;
 }
+
+CommitExperimentState::~CommitExperimentState() {
+	/**
+	 * - catch early exit
+	 */
+	CommitExperiment* commit_experiment = (CommitExperiment*)this->experiment;
+	switch (commit_experiment->state) {
+	case COMMIT_EXPERIMENT_STATE_EXPLORE:
+		while (this->step_index < (int)commit_experiment->curr_step_types.size()) {
+			commit_experiment->curr_step_types.pop_back();
+			commit_experiment->curr_actions.pop_back();
+			commit_experiment->curr_scopes.pop_back();
+		}
+		break;
+	case COMMIT_EXPERIMENT_STATE_FIND_SAVE:
+		if (!commit_experiment->save_is_init) {
+			while (this->step_index < (int)commit_experiment->save_step_types.size()) {
+				commit_experiment->save_step_types.pop_back();
+				commit_experiment->save_actions.pop_back();
+				commit_experiment->save_scopes.pop_back();
+			}
+		}
+		break;
+	}
+}

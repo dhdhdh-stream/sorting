@@ -90,6 +90,7 @@ public:
 	int step_index;
 
 	PassThroughExperimentState(PassThroughExperiment* experiment);
+	~PassThroughExperimentState();
 };
 
 #endif /* PASS_THROUGH_EXPERIMENT_H */

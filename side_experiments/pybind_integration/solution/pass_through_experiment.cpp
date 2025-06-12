@@ -43,3 +43,22 @@ PassThroughExperimentState::PassThroughExperimentState(
 		PassThroughExperiment* experiment) {
 	this->experiment = experiment;
 }
+
+PassThroughExperimentState::~PassThroughExperimentState() {
+	/**
+	 * - catch early exit
+	 */
+	PassThroughExperiment* pass_through_experiment = (PassThroughExperiment*)this->experiment;
+	switch (pass_through_experiment->state) {
+	case PASS_THROUGH_EXPERIMENT_STATE_INITIAL:
+	case PASS_THROUGH_EXPERIMENT_STATE_VERIFY_1ST:
+	case PASS_THROUGH_EXPERIMENT_STATE_VERIFY_2ND:
+		if (!pass_through_experiment->is_init) {
+			while (this->step_index < (int)pass_through_experiment->step_types.size()) {
+				pass_through_experiment->step_types.pop_back();
+				pass_through_experiment->actions.pop_back();
+				pass_through_experiment->scopes.pop_back();
+			}
+		}
+	}
+}

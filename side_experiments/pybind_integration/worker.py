@@ -1,4 +1,5 @@
 import gymnasium as gym
+import pickle
 import subprocess
 import sys
 import time
@@ -6,7 +7,7 @@ import wrapper
 
 MEASURE_ITERS = 1000
 
-EXPLORE_ITERS = 10
+EXPLORE_ITERS = 30
 
 if len(sys.argv) != 3:
 	print("Usage: python3 worker.py [path] [filename]")

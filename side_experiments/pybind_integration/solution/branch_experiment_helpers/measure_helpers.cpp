@@ -108,7 +108,7 @@ void BranchExperiment::measure_backprop(double target_val) {
 			cout << "new explore path:";
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-					cout << " " << this->best_actions[s_index];
+					cout << " A";
 				} else {
 					cout << " E" << this->best_scopes[s_index]->id;
 				}

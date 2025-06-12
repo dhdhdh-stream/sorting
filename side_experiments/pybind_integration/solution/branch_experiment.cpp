@@ -35,3 +35,17 @@ BranchExperimentHistory::BranchExperimentHistory(BranchExperiment* experiment) {
 BranchExperimentState::BranchExperimentState(BranchExperiment* experiment) {
 	this->experiment = experiment;
 }
+
+BranchExperimentState::~BranchExperimentState() {
+	/**
+	 * - catch early exit
+	 */
+	BranchExperiment* branch_experiment = (BranchExperiment*)this->experiment;
+	if (branch_experiment->state == BRANCH_EXPERIMENT_STATE_EXPLORE) {
+		while (this->step_index < (int)branch_experiment->curr_step_types.size()) {
+			branch_experiment->curr_step_types.pop_back();
+			branch_experiment->curr_actions.pop_back();
+			branch_experiment->curr_scopes.pop_back();
+		}
+	}
+}

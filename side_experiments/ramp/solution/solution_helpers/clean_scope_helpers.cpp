@@ -355,12 +355,14 @@ void check_generalize(Scope* scope_to_generalize) {
 		ObsNode* start_node = new ObsNode();
 		start_node->parent = new_scope;
 		start_node->id = new_scope->node_counter;
+		start_node->is_init = true;
 		new_scope->node_counter++;
 		new_scope->nodes[start_node->id] = start_node;
 
 		ScopeNode* new_scope_node = new ScopeNode();
 		new_scope_node->parent = new_scope;
 		new_scope_node->id = new_scope->node_counter;
+		new_scope_node->is_init = true;
 		new_scope->node_counter++;
 		new_scope->nodes[new_scope_node->id] = new_scope_node;
 
@@ -369,6 +371,7 @@ void check_generalize(Scope* scope_to_generalize) {
 		ObsNode* end_node = new ObsNode();
 		end_node->parent = new_scope;
 		end_node->id = new_scope->node_counter;
+		end_node->is_init = true;
 		new_scope->node_counter++;
 		new_scope->nodes[end_node->id] = end_node;
 

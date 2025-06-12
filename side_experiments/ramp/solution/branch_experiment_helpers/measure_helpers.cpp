@@ -10,12 +10,6 @@
 
 using namespace std;
 
-// #if defined(MDEBUG) && MDEBUG
-// const int MEASURE_NUM_DATAPOINTS = 20;
-// #else
-// const int MEASURE_NUM_DATAPOINTS = 4000;
-// #endif /* MDEBUG */
-
 #if defined(MDEBUG) && MDEBUG
 const int MEASURE_1_PERCENT_NUM_DATAPOINTS = 2;
 const int MEASURE_5_PERCENT_NUM_DATAPOINTS = 2;

@@ -148,6 +148,7 @@ public:
 	int step_index;
 
 	BranchExperimentState(BranchExperiment* experiment);
+	~BranchExperimentState();
 };
 
 #endif /* BRANCH_EXPERIMENT_H */
