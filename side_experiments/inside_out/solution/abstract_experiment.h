@@ -57,6 +57,8 @@ public:
 	virtual void backprop(double target_val,
 						  SolutionWrapper* wrapper) = 0;
 
+	virtual void abort() = 0;
+
 	virtual void clean() = 0;
 	virtual void add(SolutionWrapper* wrapper) = 0;
 };

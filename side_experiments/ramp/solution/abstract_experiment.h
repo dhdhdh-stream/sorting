@@ -16,7 +16,10 @@ class Solution;
 const int EXPERIMENT_TYPE_BRANCH = 0;
 const int EXPERIMENT_TYPE_PASS_THROUGH = 1;
 const int EXPERIMENT_TYPE_NEW_SCOPE = 2;
-const int EXPERIMENT_TYPE_COMMIT = 3;
+/**
+ * - no CommitExperiment as solution should already be large
+ *   - and practically, likely too slow
+ */
 
 class AbstractExperimentHistory;
 class AbstractExperiment {

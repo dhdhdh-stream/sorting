@@ -21,7 +21,6 @@ public:
 
 	std::vector<Scope*> child_scopes;
 
-	bool exceeded;
 	bool generalized;
 
 	/**

@@ -153,6 +153,8 @@ public:
 	void capture_verify_backprop();
 	#endif /* MDEBUG */
 
+	void abort();
+
 	void clean();
 	void add(SolutionWrapper* wrapper);
 };

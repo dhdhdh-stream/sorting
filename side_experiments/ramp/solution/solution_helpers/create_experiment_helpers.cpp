@@ -5,7 +5,6 @@
 #include "action_node.h"
 #include "branch_experiment.h"
 #include "branch_node.h"
-// #include "commit_experiment.h"
 #include "constants.h"
 #include "globals.h"
 #include "new_scope_experiment.h"
@@ -152,35 +151,25 @@ void create_experiment(ScopeHistory* scope_history) {
 						explore_is_branch);
 					explore_node->experiment = new_scope_experiment;
 				} else {
-					// uniform_int_distribution<int> commit_distribution(0, 9);
-					// if (commit_distribution(generator) == 0) {
-					if (false) {
-						// CommitExperiment* new_commit_experiment = new CommitExperiment(
-						// 	explore_node->parent,
-						// 	explore_node,
-						// 	explore_is_branch);
-						// explore_node->experiment = new_commit_experiment;
+					/**
+					 * - weigh towards PassThroughExperiments as cheaper and potentially just as effective
+					 *   - solutions are often made of relatively few distinct decisions, but applied such that has good coverage
+					 *     - like tessellation, but have to get both the shape and the pattern correct
+					 *       - and PassThroughExperiments help with both
+					 */
+					uniform_int_distribution<int> pass_through_distribution(0, 1);
+					if (pass_through_distribution(generator) == 0) {
+						PassThroughExperiment* new_experiment = new PassThroughExperiment(
+							explore_node->parent,
+							explore_node,
+							explore_is_branch);
+						explore_node->experiment = new_experiment;
 					} else {
-						/**
-						 * - weigh towards PassThroughExperiments as cheaper and potentially just as effective
-						 *   - solutions are often made of relatively few distinct decisions, but applied such that has good coverage
-						 *     - like tessellation, but have to get both the shape and the pattern correct
-						 *       - and PassThroughExperiments help with both
-						 */
-						uniform_int_distribution<int> pass_through_distribution(0, 1);
-						if (pass_through_distribution(generator) == 0) {
-							PassThroughExperiment* new_experiment = new PassThroughExperiment(
-								explore_node->parent,
-								explore_node,
-								explore_is_branch);
-							explore_node->experiment = new_experiment;
-						} else {
-							BranchExperiment* new_experiment = new BranchExperiment(
-								explore_node->parent,
-								explore_node,
-								explore_is_branch);
-							explore_node->experiment = new_experiment;
-						}
+						BranchExperiment* new_experiment = new BranchExperiment(
+							explore_node->parent,
+							explore_node,
+							explore_is_branch);
+						explore_node->experiment = new_experiment;
 					}
 				}
 			}

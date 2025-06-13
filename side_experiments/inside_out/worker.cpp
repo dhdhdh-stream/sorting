@@ -15,17 +15,13 @@
 #include "scope_node.h"
 #include "solution.h"
 #include "solution_helpers.h"
+#include "solution_wrapper.h"
 
 using namespace std;
 
 int seed;
 
 default_random_engine generator;
-
-ProblemType* problem_type;
-Solution* solution;
-
-int run_index;
 
 int main(int argc, char* argv[]) {
 	if (argc != 3) {
@@ -42,149 +38,86 @@ int main(int argc, char* argv[]) {
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
 
-	problem_type = new TypeMinesweeper();
+	ProblemType* problem_type = new TypeMinesweeper();
 
-	solution = new Solution();
-	solution->load(path, filename);
+	SolutionWrapper* solution_wrapper = new SolutionWrapper(
+		problem_type->num_obs(), path, filename);
 
-	run_index = 0;
 	auto start_time = chrono::high_resolution_clock::now();
+	while (solution_wrapper->solution->timestamp < EXPLORE_ITERS) {
+		auto curr_time = chrono::high_resolution_clock::now();
+		auto time_diff = chrono::duration_cast<chrono::seconds>(curr_time - start_time);
+		if (time_diff.count() >= 20) {
+			start_time = curr_time;
 
-	while (solution->timestamp < EXPLORE_ITERS) {
-		AbstractExperiment* curr_experiment = NULL;
-		AbstractExperiment* best_experiment = NULL;
+			cout << "a" << endl;
+		}
 
-		int improvement_iter = 0;
+		int starting_timestamp = solution_wrapper->solution->timestamp;
 
-		int sum_num_actions = 0;
-		int sum_num_confusion_instances = 0;
+		Problem* problem = problem_type->get_problem();
+
+		solution_wrapper->experiment_init();
+
+		vector<double> obs = problem->get_observations();
 		while (true) {
-			run_index++;
-			auto curr_time = chrono::high_resolution_clock::now();
-			auto time_diff = chrono::duration_cast<chrono::seconds>(curr_time - start_time);
-			if (time_diff.count() >= 20) {
-				start_time = curr_time;
+			tuple<bool,bool,int> next = solution_wrapper->experiment_step(obs);
+			if (get<0>(next)) {
+				break;
+			} else if (get<1>(next)) {
+				uniform_int_distribution<int> action_distribution(0, problem_type->num_possible_actions()-1);
+				int new_action = action_distribution(generator);
 
-				cout << "improvement_iter: " << improvement_iter << endl;
+				solution_wrapper->set_action(new_action);
+
+				problem->perform_action(new_action);
+			} else {
+				problem->perform_action(get<2>(next));
 			}
+		}
 
-			Problem* problem = problem_type->get_problem();
+		double target_val = problem->score_result();
 
-			RunHelper run_helper;
+		solution_wrapper->experiment_end(target_val);
 
-			ScopeHistory* scope_history = new ScopeHistory(solution->scopes[0]);
-			solution->scopes[0]->experiment_activate(
-					problem,
-					run_helper,
-					scope_history);
+		delete problem;
 
-			double target_val = problem->score_result();
+		if (solution_wrapper->solution->timestamp > starting_timestamp) {
+			double sum_score = 0.0;
+			for (int iter_index = 0; iter_index < MEASURE_ITERS; iter_index++) {
+				Problem* problem = problem_type->get_problem();
 
-			if (curr_experiment == NULL) {
-				create_experiment(scope_history,
-								  curr_experiment);
-			}
-			sum_num_actions += run_helper.num_actions;
-			sum_num_confusion_instances += run_helper.num_confusion_instances;
-			if (run_index % CHECK_CONFUSION_ITER == 0) {
-				double num_actions = (double)sum_num_actions / (double)CHECK_CONFUSION_ITER;
-				double num_confusions = (double)sum_num_confusion_instances / (double)CHECK_CONFUSION_ITER;
+				solution_wrapper->init();
 
-				if (num_actions / (double)ACTIONS_PER_CONFUSION > num_confusions) {
-					create_confusion(scope_history);
-				}
-
-				sum_num_actions = 0;
-				sum_num_confusion_instances = 0;
-			}
-
-			delete scope_history;
-			delete problem;
-
-			if (run_helper.experiment_history != NULL) {
-				run_helper.experiment_history->experiment->backprop(
-					target_val,
-					run_helper);
-				if (run_helper.experiment_history->experiment->result == EXPERIMENT_RESULT_FAIL) {
-					run_helper.experiment_history->experiment->clean();
-					delete run_helper.experiment_history->experiment;
-
-					curr_experiment = NULL;
-				} else if (run_helper.experiment_history->experiment->result == EXPERIMENT_RESULT_SUCCESS) {
-					run_helper.experiment_history->experiment->clean();
-
-					if (best_experiment == NULL) {
-						best_experiment = run_helper.experiment_history->experiment;
-					} else {
-						if (run_helper.experiment_history->experiment->improvement > best_experiment->improvement) {
-							delete best_experiment;
-							best_experiment = run_helper.experiment_history->experiment;
-						} else {
-							delete run_helper.experiment_history->experiment;
-						}
-					}
-
-					curr_experiment = NULL;
-
-					improvement_iter++;
-					if (improvement_iter >= IMPROVEMENTS_PER_ITER) {
+				vector<double> obs = problem->get_observations();
+				while (true) {
+					pair<bool,int> next = solution_wrapper->step(obs);
+					if (next.first) {
 						break;
+					} else {
+						problem->perform_action(next.second);
 					}
 				}
+
+				double target_val = problem->score_result();
+				sum_score += target_val;
+
+				solution_wrapper->end();
+
+				delete problem;
 			}
+
+			cout << "curr_score: " << sum_score / MEASURE_ITERS << endl;
+
+			solution_wrapper->save(path, filename);
 		}
-
-		Scope* last_updated_scope = best_experiment->scope_context;
-
-		best_experiment->add();
-		delete best_experiment;
-
-		clean_scope(last_updated_scope);
-
-		if (last_updated_scope->nodes.size() >= SCOPE_EXCEEDED_NUM_NODES) {
-			last_updated_scope->exceeded = true;
-
-			check_generalize(last_updated_scope);
-		}
-		if (last_updated_scope->nodes.size() <= SCOPE_RESUME_NUM_NODES) {
-			last_updated_scope->exceeded = false;
-		}
-
-		solution->clean();
-
-		double sum_score = 0.0;
-		for (int iter_index = 0; iter_index < MEASURE_ITERS; iter_index++) {
-			run_index++;
-
-			Problem* problem = problem_type->get_problem();
-
-			RunHelper run_helper;
-
-			ScopeHistory* scope_history = new ScopeHistory(solution->scopes[0]);
-			solution->scopes[0]->activate(
-				problem,
-				run_helper,
-				scope_history);
-			delete scope_history;
-
-			double target_val = problem->score_result();
-			sum_score += target_val;
-
-			delete problem;
-		}
-
-		cout << "curr_score: " << sum_score / MEASURE_ITERS << endl;
-
-		solution->timestamp++;
-
-		solution->save(path, filename);
 	}
 
-	solution->clean_scopes();
-	solution->save(path, filename);
+	solution_wrapper->solution->clean_scopes();
+	solution_wrapper->save(path, filename);
 
 	delete problem_type;
-	delete solution;
+	delete solution_wrapper;
 
 	cout << "Done" << endl;
 }

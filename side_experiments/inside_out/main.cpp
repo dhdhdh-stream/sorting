@@ -3,6 +3,14 @@
 
 // TODO: for CommitExperiment, can separate commit from information gather?
 
+// TODO: for BranchExperiment, pick strongest signals
+// - pick 5 from best, 5 from worst
+
+// TODO: remove PassThrough, always Branch
+
+// TODO: have existing score
+// - for NewScopeExperiment, remeasure on measure new
+
 #include <chrono>
 #include <iostream>
 #include <map>

@@ -8,21 +8,16 @@
 #include "abstract_experiment.h"
 #include "globals.h"
 #include "minesweeper.h"
-#include "run_helper.h"
 #include "scope.h"
 #include "solution.h"
 #include "solution_helpers.h"
+#include "solution_wrapper.h"
 
 using namespace std;
 
 int seed;
 
 default_random_engine generator;
-
-ProblemType* problem_type;
-Solution* solution;
-
-int run_index;
 
 int main(int argc, char* argv[]) {
 	string filename;
@@ -39,19 +34,14 @@ int main(int argc, char* argv[]) {
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
 
-	problem_type = new TypeMinesweeper();
+	ProblemType* problem_type = new TypeMinesweeper();
 
-	solution = new Solution();
-	solution->init();
-	solution->save("saves/", filename);
-
-	ofstream display_file;
-	display_file.open("../display.txt");
-	solution->save_for_display(display_file);
-	display_file.close();
+	SolutionWrapper* solution_wrapper = new SolutionWrapper(
+		problem_type->num_obs());
+	solution_wrapper->save("saves/", filename);
 
 	delete problem_type;
-	delete solution;
+	delete solution_wrapper;
 
 	cout << "Done" << endl;
 }

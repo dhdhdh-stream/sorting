@@ -35,6 +35,10 @@ void PassThroughExperiment::decrement(AbstractNode* experiment_node) {
 	delete this;
 }
 
+void PassThroughExperiment::abort() {
+	this->result = EXPERIMENT_RESULT_FAIL;
+}
+
 PassThroughExperimentHistory::PassThroughExperimentHistory(
 		PassThroughExperiment* experiment) {
 	this->experiment = experiment;

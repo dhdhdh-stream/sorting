@@ -65,19 +65,8 @@ void PassThroughExperiment::measure_existing_backprop(
 			starting_node,
 			possible_exits);
 
-		int random_index;
-		if (this->scope_context->exceeded) {
-			if (possible_exits.size() <= 4) {
-				this->result = EXPERIMENT_RESULT_FAIL;
-				return;
-			} else {
-				uniform_int_distribution<int> distribution(4, possible_exits.size()-1);
-				random_index = distribution(generator);
-			}
-		} else {
-			uniform_int_distribution<int> distribution(0, possible_exits.size()-1);
-			random_index = distribution(generator);
-		}
+		uniform_int_distribution<int> distribution(0, possible_exits.size()-1);
+		int random_index = distribution(generator);
 		this->exit_next_node = possible_exits[random_index];
 
 		int new_num_steps;
@@ -87,11 +76,6 @@ void PassThroughExperiment::measure_existing_backprop(
 		} else {
 			new_num_steps = geo_distribution(generator);
 		}
-		if (this->scope_context->exceeded) {
-			if (new_num_steps > random_index/2-1) {
-				new_num_steps = random_index/2-1;
-			}
-		}
 
 		/**
 		 * - always give raw actions a large weight
@@ -99,13 +83,19 @@ void PassThroughExperiment::measure_existing_backprop(
 		 *     - which can prevent innovation
 		 */
 		uniform_int_distribution<int> scope_distribution(0, 1);
+		vector<Scope*> possible_scopes;
+		for (int c_index = 0; c_index < (int)this->scope_context->child_scopes.size(); c_index++) {
+			if (this->scope_context->child_scopes[c_index]->nodes.size() > 1) {
+				possible_scopes.push_back(this->scope_context->child_scopes[c_index]);
+			}
+		}
 		for (int s_index = 0; s_index < new_num_steps; s_index++) {
-			if (scope_distribution(generator) == 0 && this->scope_context->child_scopes.size() > 0) {
+			if (scope_distribution(generator) == 0 && possible_scopes.size() > 0) {
 				this->step_types.push_back(STEP_TYPE_SCOPE);
 				this->actions.push_back(-1);
 
-				uniform_int_distribution<int> child_scope_distribution(0, this->scope_context->child_scopes.size()-1);
-				this->scopes.push_back(this->scope_context->child_scopes[child_scope_distribution(generator)]);
+				uniform_int_distribution<int> child_scope_distribution(0, possible_scopes.size()-1);
+				this->scopes.push_back(possible_scopes[child_scope_distribution(generator)]);
 			} else {
 				this->step_types.push_back(STEP_TYPE_ACTION);
 

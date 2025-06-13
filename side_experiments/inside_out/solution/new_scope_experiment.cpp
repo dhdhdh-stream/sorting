@@ -485,6 +485,21 @@ void NewScopeExperiment::decrement(AbstractNode* experiment_node) {
 	}
 }
 
+void NewScopeExperiment::abort() {
+	this->test_location_start->experiment = NULL;
+	this->test_location_start = NULL;
+
+	if (this->generalize_iter == -1
+			&& this->successful_location_starts.size() == 0) {
+		this->result = EXPERIMENT_RESULT_FAIL;
+	} else {
+		this->generalize_iter++;
+		if (this->generalize_iter >= NEW_SCOPE_NUM_GENERALIZE_TRIES) {
+			this->result = EXPERIMENT_RESULT_FAIL;
+		}
+	}
+}
+
 NewScopeExperimentHistory::NewScopeExperimentHistory(
 		NewScopeExperiment* experiment) {
 	this->experiment = experiment;

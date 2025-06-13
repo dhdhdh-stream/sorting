@@ -38,6 +38,10 @@ void CommitExperiment::decrement(AbstractNode* experiment_node) {
 	delete this;
 }
 
+void CommitExperiment::abort() {
+	this->result = EXPERIMENT_RESULT_FAIL;
+}
+
 CommitExperimentHistory::CommitExperimentHistory(CommitExperiment* experiment) {
 	this->experiment = experiment;
 

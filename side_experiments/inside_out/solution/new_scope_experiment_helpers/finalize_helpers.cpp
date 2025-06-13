@@ -169,12 +169,5 @@ void NewScopeExperiment::add(SolutionWrapper* wrapper) {
 	}
 	this->successful_scope_nodes.clear();
 
-	if (this->new_scope->nodes.size() >= SCOPE_EXCEEDED_NUM_NODES) {
-		this->new_scope->exceeded = true;
-
-		check_generalize(this->new_scope,
-						 wrapper);
-	}
-
 	this->new_scope = NULL;
 }

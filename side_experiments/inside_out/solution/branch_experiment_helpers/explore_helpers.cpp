@@ -95,13 +95,19 @@ void BranchExperiment::explore_check_activate(
 		 *     - which can prevent innovation
 		 */
 		uniform_int_distribution<int> scope_distribution(0, 1);
+		vector<Scope*> possible_scopes;
+		for (int c_index = 0; c_index < (int)this->scope_context->child_scopes.size(); c_index++) {
+			if (this->scope_context->child_scopes[c_index]->nodes.size() > 1) {
+				possible_scopes.push_back(this->scope_context->child_scopes[c_index]);
+			}
+		}
 		for (int s_index = 0; s_index < new_num_steps; s_index++) {
-			if (scope_distribution(generator) == 0 && this->scope_context->child_scopes.size() > 0) {
+			if (scope_distribution(generator) == 0 && possible_scopes.size() > 0) {
 				this->curr_step_types.push_back(STEP_TYPE_SCOPE);
 				this->curr_actions.push_back(-1);
 
-				uniform_int_distribution<int> child_scope_distribution(0, this->scope_context->child_scopes.size()-1);
-				this->curr_scopes.push_back(this->scope_context->child_scopes[child_scope_distribution(generator)]);
+				uniform_int_distribution<int> child_scope_distribution(0, possible_scopes.size()-1);
+				this->curr_scopes.push_back(possible_scopes[child_scope_distribution(generator)]);
 			} else {
 				this->curr_step_types.push_back(STEP_TYPE_ACTION);
 

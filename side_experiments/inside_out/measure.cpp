@@ -8,17 +8,13 @@
 #include "minesweeper.h"
 #include "scope.h"
 #include "solution.h"
+#include "solution_wrapper.h"
 
 using namespace std;
 
 int seed;
 
 default_random_engine generator;
-
-ProblemType* problem_type;
-Solution* solution;
-
-int run_index;
 
 int main(int argc, char* argv[]) {
 	cout << "Starting..." << endl;
@@ -28,14 +24,21 @@ int main(int argc, char* argv[]) {
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
 
-	problem_type = new TypeMinesweeper();
+	ProblemType* problem_type = new TypeMinesweeper();
 
-	solution = new Solution();
+	string filename;
+	SolutionWrapper* solution_wrapper;
 	if (argc > 1) {
-		string filename = argv[1];
-		solution->load("saves/", filename);
+		filename = argv[1];
+		solution_wrapper = new SolutionWrapper(
+			problem_type->num_obs(),
+			"saves/",
+			filename);
 	} else {
-		solution->load("saves/", "main.txt");
+		filename = "main.txt";
+		solution_wrapper = new SolutionWrapper(
+			problem_type->num_obs());
+		solution_wrapper->save("saves/", filename);
 	}
 
 	double sum_vals = 0.0;
@@ -45,19 +48,22 @@ int main(int argc, char* argv[]) {
 	for (int i_index = 0; i_index < 2000; i_index++) {
 		Problem* problem = problem_type->get_problem();
 
-		RunHelper run_helper;
+		solution_wrapper->init();
 
-		ScopeHistory* scope_history = new ScopeHistory(solution->scopes[0]);
-		solution->scopes[0]->activate(
-			problem,
-			run_helper,
-			scope_history);
-		delete scope_history;
+		vector<double> obs = problem->get_observations();
+		while (true) {
+			pair<bool,int> next = solution_wrapper->step(obs);
+			if (next.first) {
+				break;
+			} else {
+				problem->perform_action(next.second);
+			}
+		}
 
 		double target_val = problem->score_result();
 
-		if (run_helper.num_actions > max_num_actions) {
-			max_num_actions = run_helper.num_actions;
+		if (solution_wrapper->num_actions > max_num_actions) {
+			max_num_actions = solution_wrapper->num_actions;
 		}
 
 		sum_vals += target_val;
@@ -72,13 +78,10 @@ int main(int argc, char* argv[]) {
 	auto time_diff = chrono::duration_cast<chrono::milliseconds>(curr_time - start_time);
 	cout << "time_diff.count(): " << time_diff.count() << endl;
 
-	ofstream display_file;
-	display_file.open("../display.txt");
-	solution->save_for_display(display_file);
-	display_file.close();
+	solution_wrapper->save_for_display("../", "display.txt");
 
 	delete problem_type;
-	delete solution;
+	delete solution_wrapper;
 
 	cout << "Done" << endl;
 }

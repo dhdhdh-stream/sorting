@@ -14,7 +14,6 @@ using namespace std;
 Scope::Scope() {
 	this->new_scope_experiment = NULL;
 
-	this->exceeded = false;
 	this->generalized = false;
 }
 
@@ -229,7 +228,6 @@ void Scope::save(ofstream& output_file) {
 		output_file << this->child_scopes[c_index]->id << endl;
 	}
 
-	output_file << this->exceeded << endl;
 	output_file << this->generalized << endl;
 }
 
@@ -300,10 +298,6 @@ void Scope::load(ifstream& input_file,
 		getline(input_file, scope_id_line);
 		this->child_scopes.push_back(parent_solution->scopes[stoi(scope_id_line)]);
 	}
-
-	string exceeded_line;
-	getline(input_file, exceeded_line);
-	this->exceeded = stoi(exceeded_line);
 
 	string generalized_line;
 	getline(input_file, generalized_line);
