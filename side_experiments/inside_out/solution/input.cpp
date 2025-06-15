@@ -33,18 +33,98 @@ Input::Input(ifstream& input_file,
 	this->obs_index = stoi(obs_index_line);
 }
 
-bool Input::operator==(const Input& rhs) {
+bool Input::operator==(const Input& rhs) const {
 	return this->scope_context == rhs.scope_context
 		&& this->node_context == rhs.node_context
 		&& this->factor_index == rhs.factor_index
 		&& this->obs_index == rhs.obs_index;
 }
 
-bool Input::operator!=(const Input& rhs) {
+bool Input::operator!=(const Input& rhs) const {
 	return this->scope_context != rhs.scope_context
 		|| this->node_context != rhs.node_context
 		|| this->factor_index != rhs.factor_index
 		|| this->obs_index != rhs.obs_index;
+}
+
+bool Input::operator<(const Input& rhs) const {
+	if (this->scope_context != rhs.scope_context) {
+		return this->scope_context < rhs.scope_context;
+	} else {
+		if (this->node_context != rhs.node_context) {
+			return this->node_context < rhs.node_context;
+		} else {
+			if (this->factor_index != rhs.factor_index) {
+				return this->factor_index < rhs.factor_index;
+			} else {
+				if (this->obs_index != rhs.obs_index) {
+					return this->obs_index < rhs.obs_index;
+				} else {
+					return false;
+				}
+			}
+		}
+	}
+}
+
+bool Input::operator>(const Input& rhs) const {
+	if (this->scope_context != rhs.scope_context) {
+		return this->scope_context > rhs.scope_context;
+	} else {
+		if (this->node_context != rhs.node_context) {
+			return this->node_context > rhs.node_context;
+		} else {
+			if (this->factor_index != rhs.factor_index) {
+				return this->factor_index > rhs.factor_index;
+			} else {
+				if (this->obs_index != rhs.obs_index) {
+					return this->obs_index > rhs.obs_index;
+				} else {
+					return false;
+				}
+			}
+		}
+	}
+}
+
+bool Input::operator<=(const Input& rhs) const {
+	if (this->scope_context != rhs.scope_context) {
+		return this->scope_context < rhs.scope_context;
+	} else {
+		if (this->node_context != rhs.node_context) {
+			return this->node_context < rhs.node_context;
+		} else {
+			if (this->factor_index != rhs.factor_index) {
+				return this->factor_index < rhs.factor_index;
+			} else {
+				if (this->obs_index != rhs.obs_index) {
+					return this->obs_index < rhs.obs_index;
+				} else {
+					return true;
+				}
+			}
+		}
+	}
+}
+
+bool Input::operator>=(const Input& rhs) const {
+	if (this->scope_context != rhs.scope_context) {
+		return this->scope_context > rhs.scope_context;
+	} else {
+		if (this->node_context != rhs.node_context) {
+			return this->node_context > rhs.node_context;
+		} else {
+			if (this->factor_index != rhs.factor_index) {
+				return this->factor_index > rhs.factor_index;
+			} else {
+				if (this->obs_index != rhs.obs_index) {
+					return this->obs_index > rhs.obs_index;
+				} else {
+					return true;
+				}
+			}
+		}
+	}
 }
 
 void Input::save(ofstream& output_file) {

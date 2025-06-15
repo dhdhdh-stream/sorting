@@ -29,10 +29,9 @@ public:
 	AbstractExperiment* best_experiment;
 	int improvement_iter;
 
-	int num_tests_hit;
-
 	int sum_num_actions;
 	int sum_num_confusion_instances;
+	int experiment_iter;
 
 	/**
 	 * - run variables
@@ -42,17 +41,15 @@ public:
 	std::vector<AbstractExperimentState*> experiment_context;
 	std::vector<ConfusionState*> confusion_context;
 
-	bool test_hit;
-
 	int num_actions;
 	int num_confusion_instances;
 
 	AbstractExperimentHistory* experiment_history;
 
 	#if defined(MDEBUG) && MDEBUG
-	Problem* problem;
 	unsigned long starting_run_seed;
 	unsigned long curr_run_seed;
+	Problem* problem;
 	#endif /* MDEBUG */
 
 	SolutionWrapper(int num_obs);
@@ -75,6 +72,11 @@ public:
 	std::pair<bool,int> verify_step(std::vector<double> obs);
 	void verify_end();
 	#endif /* MDEBUG */
+
+	void measure_init();
+	std::pair<bool,int> measure_step(std::vector<double> obs);
+	void measure_end(double result);
+	void measure_update();
 
 	void save(std::string path,
 			  std::string name);

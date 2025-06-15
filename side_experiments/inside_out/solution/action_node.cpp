@@ -16,6 +16,8 @@ ActionNode::ActionNode() {
 
 	this->experiment = NULL;
 	this->confusion = NULL;
+
+	this->last_updated_run_index = 0;
 }
 
 ActionNode::~ActionNode() {
@@ -38,6 +40,24 @@ void ActionNode::clean() {
 		delete this->confusion;
 		this->confusion = NULL;
 	}
+
+	this->sum_score = 0.0;
+	this->sum_count = 0;
+}
+
+void ActionNode::measure_update() {
+	this->average_hits_per_run = (double)this->sum_count / (double)MEASURE_ITERS;
+	this->average_score = this->sum_score / (double)this->sum_count;
+}
+
+void ActionNode::new_scope_clean() {
+	this->new_scope_sum_score = 0.0;
+	this->new_scope_sum_count = 0;
+}
+
+void ActionNode::new_scope_measure_update() {
+	this->new_scope_average_hits_per_run = (double)this->new_scope_sum_count / (double)MEASURE_S4_ITERS;
+	this->new_scope_average_score = this->new_scope_sum_score / (double)this->new_scope_sum_count;
 }
 
 void ActionNode::save(ofstream& output_file) {
@@ -49,6 +69,9 @@ void ActionNode::save(ofstream& output_file) {
 	for (int a_index = 0; a_index < (int)this->ancestor_ids.size(); a_index++) {
 		output_file << this->ancestor_ids[a_index] << endl;
 	}
+
+	output_file << this->average_hits_per_run << endl;
+	output_file << this->average_score << endl;
 }
 
 void ActionNode::load(ifstream& input_file) {
@@ -69,6 +92,14 @@ void ActionNode::load(ifstream& input_file) {
 		this->ancestor_ids.push_back(stoi(ancestor_id_line));
 	}
 
+	string average_hits_per_run_line;
+	getline(input_file, average_hits_per_run_line);
+	this->average_hits_per_run = stod(average_hits_per_run_line);
+
+	string average_score_line;
+	getline(input_file, average_score_line);
+	this->average_score = stod(average_score_line);
+
 	this->is_init = true;
 }
 
@@ -88,4 +119,8 @@ void ActionNode::save_for_display(ofstream& output_file) {
 
 ActionNodeHistory::ActionNodeHistory(ActionNode* node) {
 	this->node = node;
+}
+
+ActionNodeHistory::ActionNodeHistory(ActionNodeHistory* original) {
+	this->node = original->node;
 }

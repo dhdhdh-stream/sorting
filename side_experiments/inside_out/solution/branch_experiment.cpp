@@ -17,7 +17,9 @@ BranchExperiment::BranchExperiment(Scope* scope_context,
 	this->node_context = node_context;
 	this->is_branch = is_branch;
 
-	this->state = BRANCH_EXPERIMENT_STATE_EXISTING_GATHER;
+	this->sum_num_instances = 0;
+
+	this->state = BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING;
 	this->state_iter = 0;
 
 	this->result = EXPERIMENT_RESULT_NA;
@@ -33,10 +35,6 @@ BranchExperiment::~BranchExperiment() {
 
 void BranchExperiment::decrement(AbstractNode* experiment_node) {
 	delete this;
-}
-
-void BranchExperiment::abort() {
-	this->result = EXPERIMENT_RESULT_FAIL;
 }
 
 BranchExperimentHistory::BranchExperimentHistory(BranchExperiment* experiment) {

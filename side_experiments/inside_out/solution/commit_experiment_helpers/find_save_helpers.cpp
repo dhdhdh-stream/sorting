@@ -16,17 +16,7 @@
 
 using namespace std;
 
-#if defined(MDEBUG) && MDEBUG
-const int INITIAL_NUM_SAMPLES_PER_ITER = 2;
-const int VERIFY_1ST_NUM_SAMPLES_PER_ITER = 5;
-const int VERIFY_2ND_NUM_SAMPLES_PER_ITER = 10;
-const int STEP_TRY_ITERS = 2;
-#else
-const int INITIAL_NUM_SAMPLES_PER_ITER = 40;
-const int VERIFY_1ST_NUM_SAMPLES_PER_ITER = 400;
-const int VERIFY_2ND_NUM_SAMPLES_PER_ITER = 4000;
 const int STEP_TRY_ITERS = 100;
-#endif /* MDEBUG */
 
 void CommitExperiment::find_save_check_activate(
 		SolutionWrapper* wrapper) {
@@ -231,77 +221,199 @@ void CommitExperiment::find_save_exit_step(SolutionWrapper* wrapper,
 
 void CommitExperiment::find_save_backprop(
 		double target_val) {
-	bool is_fail = false;
-
-	this->save_sum_score += target_val;
+	this->i_target_val_histories.push_back(target_val);
 
 	this->state_iter++;
-	if (this->state_iter == INITIAL_NUM_SAMPLES_PER_ITER
-			|| this->state_iter == VERIFY_1ST_NUM_SAMPLES_PER_ITER
-			|| this->state_iter == VERIFY_2ND_NUM_SAMPLES_PER_ITER) {
+	if (this->state_iter == EARLY_SUCCESS_S1_ITERS
+			|| this->state_iter == EARLY_SUCCESS_S2_ITERS) {
+		double sum_score = 0.0;
+		for (int h_index = 0; h_index < (int)this->i_target_val_histories.size(); h_index++) {
+			sum_score += this->i_target_val_histories[h_index];
+		}
+		double new_score = sum_score / (double)this->state_iter;
+
+		double sum_variance = 0.0;
+		for (int h_index = 0; h_index < (int)this->i_target_val_histories.size(); h_index++) {
+			sum_variance += (this->i_target_val_histories[h_index] - new_score)
+				* (this->i_target_val_histories[h_index] - new_score);
+		}
+		double new_standard_deviation = sqrt(sum_variance / (double)this->i_target_val_histories.size());
+		if (new_standard_deviation < MIN_STANDARD_DEVIATION) {
+			new_standard_deviation = MIN_STANDARD_DEVIATION;
+		}
+
+		double existing_score;
+		switch (this->node_context->type) {
+		case NODE_TYPE_ACTION:
+			{
+				ActionNode* action_node = (ActionNode*)this->node_context;
+				existing_score = action_node->average_score;
+			}
+			break;
+		case NODE_TYPE_SCOPE:
+			{
+				ScopeNode* scope_node = (ScopeNode*)this->node_context;
+				existing_score = scope_node->average_score;
+			}
+			break;
+		case NODE_TYPE_BRANCH:
+			{
+				BranchNode* branch_node = (BranchNode*)this->node_context;
+				if (this->is_branch) {
+					existing_score = branch_node->branch_average_score;
+				} else {
+					existing_score = branch_node->original_average_score;
+				}
+			}
+			break;
+		case NODE_TYPE_OBS:
+			{
+				ObsNode* obs_node = (ObsNode*)this->node_context;
+				existing_score = obs_node->average_score;
+			}
+			break;
+		}
+
+		double t_score = (new_score - existing_score) / new_standard_deviation;
+		if (t_score >= EARLY_SUCCESS_MIN_T_SCORE) {
+			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+					ActionNode* new_action_node = new ActionNode();
+					new_action_node->parent = this->scope_context;
+					new_action_node->id = this->scope_context->node_counter;
+					this->scope_context->node_counter++;
+
+					new_action_node->action = this->best_actions[s_index];
+
+					this->new_nodes.push_back(new_action_node);
+				} else {
+					ScopeNode* new_scope_node = new ScopeNode();
+					new_scope_node->parent = this->scope_context;
+					new_scope_node->id = this->scope_context->node_counter;
+					this->scope_context->node_counter++;
+
+					new_scope_node->scope = this->best_scopes[s_index];
+
+					this->new_nodes.push_back(new_scope_node);
+				}
+
+				ObsNode* new_obs_node = new ObsNode();
+				new_obs_node->parent = this->scope_context;
+				new_obs_node->id = this->scope_context->node_counter;
+				this->scope_context->node_counter++;
+
+				this->new_nodes.push_back(new_obs_node);
+			}
+
+			this->step_iter *= 2;
+
+			uniform_int_distribution<int> until_distribution(0, 2*((int)this->average_instances_per_run-1));
+			this->num_instances_until_target = 1 + until_distribution(generator);
+
+			this->state = COMMIT_EXPERIMENT_STATE_COMMIT_TRAIN_EXISTING;
+			this->state_iter = 0;
+		}
+	} else if (this->state_iter == MEASURE_S1_ITERS
+			|| this->state_iter == MEASURE_S2_ITERS
+			|| this->state_iter == MEASURE_S3_ITERS
+			|| this->state_iter == MEASURE_S4_ITERS) {
 		#if defined(MDEBUG) && MDEBUG
 		if (false) {
 		#else
-		double curr_score = this->save_sum_score / this->state_iter;
-		if (curr_score <= this->o_existing_average_score) {
+		double sum_score = 0.0;
+		for (int h_index = 0; h_index < (int)this->i_target_val_histories.size(); h_index++) {
+			sum_score += this->i_target_val_histories[h_index];
+		}
+		double new_score = sum_score / (double)this->state_iter;
+
+		double existing_score;
+		switch (this->node_context->type) {
+		case NODE_TYPE_ACTION:
+			{
+				ActionNode* action_node = (ActionNode*)this->node_context;
+				existing_score = action_node->average_score;
+			}
+			break;
+		case NODE_TYPE_SCOPE:
+			{
+				ScopeNode* scope_node = (ScopeNode*)this->node_context;
+				existing_score = scope_node->average_score;
+			}
+			break;
+		case NODE_TYPE_BRANCH:
+			{
+				BranchNode* branch_node = (BranchNode*)this->node_context;
+				if (this->is_branch) {
+					existing_score = branch_node->branch_average_score;
+				} else {
+					existing_score = branch_node->original_average_score;
+				}
+			}
+			break;
+		case NODE_TYPE_OBS:
+			{
+				ObsNode* obs_node = (ObsNode*)this->node_context;
+				existing_score = obs_node->average_score;
+			}
+			break;
+		}
+
+		if (new_score < existing_score) {
 		#endif /* MDEBUG */
-			is_fail = true;
-		}
-	}
+			this->save_step_types.clear();
+			this->save_actions.clear();
+			this->save_scopes.clear();
 
-	if (is_fail) {
-		this->save_sum_score = 0.0;
-		this->save_step_types.clear();
-		this->save_actions.clear();
-		this->save_scopes.clear();
+			this->i_target_val_histories.clear();
 
-		this->state_iter = -1;
+			this->state_iter = -1;
 
-		this->save_iter++;
-		if (this->save_iter >= STEP_TRY_ITERS) {
-			this->save_iter = 0;
+			this->save_iter++;
+			if (this->save_iter >= STEP_TRY_ITERS) {
+				this->save_iter = 0;
 
-			this->step_iter--;
-			if (this->step_iter == 0) {
-				this->result = EXPERIMENT_RESULT_FAIL;
+				this->step_iter--;
+				if (this->step_iter == 0) {
+					this->result = EXPERIMENT_RESULT_FAIL;
+				}
 			}
-		}
-	} else if (this->state_iter >= VERIFY_2ND_NUM_SAMPLES_PER_ITER) {
-		for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-			if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-				ActionNode* new_action_node = new ActionNode();
-				new_action_node->parent = this->scope_context;
-				new_action_node->id = this->scope_context->node_counter;
+		} else if (this->state_iter >= MEASURE_S4_ITERS) {
+			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+					ActionNode* new_action_node = new ActionNode();
+					new_action_node->parent = this->scope_context;
+					new_action_node->id = this->scope_context->node_counter;
+					this->scope_context->node_counter++;
+
+					new_action_node->action = this->best_actions[s_index];
+
+					this->new_nodes.push_back(new_action_node);
+				} else {
+					ScopeNode* new_scope_node = new ScopeNode();
+					new_scope_node->parent = this->scope_context;
+					new_scope_node->id = this->scope_context->node_counter;
+					this->scope_context->node_counter++;
+
+					new_scope_node->scope = this->best_scopes[s_index];
+
+					this->new_nodes.push_back(new_scope_node);
+				}
+
+				ObsNode* new_obs_node = new ObsNode();
+				new_obs_node->parent = this->scope_context;
+				new_obs_node->id = this->scope_context->node_counter;
 				this->scope_context->node_counter++;
 
-				new_action_node->action = this->best_actions[s_index];
-
-				this->new_nodes.push_back(new_action_node);
-			} else {
-				ScopeNode* new_scope_node = new ScopeNode();
-				new_scope_node->parent = this->scope_context;
-				new_scope_node->id = this->scope_context->node_counter;
-				this->scope_context->node_counter++;
-
-				new_scope_node->scope = this->best_scopes[s_index];
-
-				this->new_nodes.push_back(new_scope_node);
+				this->new_nodes.push_back(new_obs_node);
 			}
 
-			ObsNode* new_obs_node = new ObsNode();
-			new_obs_node->parent = this->scope_context;
-			new_obs_node->id = this->scope_context->node_counter;
-			this->scope_context->node_counter++;
+			this->step_iter *= 2;
 
-			this->new_nodes.push_back(new_obs_node);
+			uniform_int_distribution<int> until_distribution(0, 2*((int)this->average_instances_per_run-1));
+			this->num_instances_until_target = 1 + until_distribution(generator);
+
+			this->state = COMMIT_EXPERIMENT_STATE_COMMIT_TRAIN_EXISTING;
+			this->state_iter = 0;
 		}
-
-		this->step_iter *= 2;
-
-		uniform_int_distribution<int> until_distribution(0, 2*((int)this->average_instances_per_run-1));
-		this->num_instances_until_target = 1 + until_distribution(generator);
-
-		this->state = COMMIT_EXPERIMENT_STATE_COMMIT_EXISTING_GATHER;
-		this->state_iter = 0;
 	}
 }

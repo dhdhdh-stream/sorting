@@ -19,6 +19,19 @@ public:
 	int next_node_id;
 	AbstractNode* next_node;
 
+	double average_hits_per_run;
+	double average_score;
+
+	int last_updated_run_index;
+	double sum_score;
+	int sum_count;
+
+	double new_scope_average_hits_per_run;
+	double new_scope_average_score;
+
+	double new_scope_sum_score;
+	int new_scope_sum_count;
+
 	ActionNode();
 	~ActionNode();
 
@@ -33,6 +46,10 @@ public:
 						 SolutionWrapper* wrapper);
 
 	void clean();
+	void measure_update();
+
+	void new_scope_clean();
+	void new_scope_measure_update();
 
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file);
@@ -43,6 +60,7 @@ public:
 class ActionNodeHistory : public AbstractNodeHistory {
 public:
 	ActionNodeHistory(ActionNode* node);
+	ActionNodeHistory(ActionNodeHistory* original);
 };
 
 #endif /* ACTION_NODE_H */

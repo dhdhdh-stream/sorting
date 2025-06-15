@@ -10,7 +10,6 @@
 #include "globals.h"
 #include "new_scope_experiment.h"
 #include "obs_node.h"
-#include "pass_through_experiment.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
@@ -28,22 +27,27 @@ void gather_helper(ScopeHistory* scope_history,
 	uniform_real_distribution<double> scope_distribution(0.0, 1.0);
 	for (map<int, AbstractNodeHistory*>::iterator h_it = scope_history->node_histories.begin();
 			h_it != scope_history->node_histories.end(); h_it++) {
-		switch (h_it->second->node->type) {
+		AbstractNode* node = h_it->second->node;
+		switch (node->type) {
 		case NODE_TYPE_ACTION:
-		case NODE_TYPE_OBS:
-			if (h_it->second->node->experiment == NULL) {
-				if (scope_distribution(generator) <= scope_probability) {
-					uniform_int_distribution<int> select_distribution(0, node_count);
-					node_count++;
-					if (select_distribution(generator) == 0) {
-						explore_node = h_it->second->node;
-						explore_is_branch = false;
+			{
+				ActionNode* action_node = (ActionNode*)node;
+				if (action_node->average_hits_per_run > EXPERIMENT_MIN_AVERAGE_HITS_PER_RUN
+						&& action_node->experiment == NULL) {
+					if (scope_distribution(generator) <= scope_probability) {
+						uniform_int_distribution<int> select_distribution(0, node_count);
+						node_count++;
+						if (select_distribution(generator) == 0) {
+							explore_node = action_node;
+							explore_is_branch = false;
+						}
 					}
 				}
 			}
 			break;
 		case NODE_TYPE_SCOPE:
 			{
+				ScopeNode* scope_node = (ScopeNode*)node;
 				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)h_it->second;
 
 				gather_helper(scope_node_history->scope_history,
@@ -51,12 +55,13 @@ void gather_helper(ScopeHistory* scope_history,
 							  explore_node,
 							  explore_is_branch);
 
-				if (h_it->second->node->experiment == NULL) {
+				if (scope_node->average_hits_per_run > EXPERIMENT_MIN_AVERAGE_HITS_PER_RUN
+						&& scope_node->experiment == NULL) {
 					if (scope_distribution(generator) <= scope_probability) {
 						uniform_int_distribution<int> select_distribution(0, node_count);
 						node_count++;
 						if (select_distribution(generator) == 0) {
-							explore_node = h_it->second->node;
+							explore_node = scope_node;
 							explore_is_branch = false;
 						}
 					}
@@ -64,14 +69,48 @@ void gather_helper(ScopeHistory* scope_history,
 			}
 			break;
 		case NODE_TYPE_BRANCH:
-			if (h_it->second->node->experiment == NULL) {
-				if (scope_distribution(generator) <= scope_probability) {
-					uniform_int_distribution<int> select_distribution(0, node_count);
-					node_count++;
-					if (select_distribution(generator) == 0) {
-						BranchNodeHistory* branch_node_history = (BranchNodeHistory*)h_it->second;
-						explore_node = h_it->second->node;
-						explore_is_branch = branch_node_history->is_branch;
+			{
+				BranchNode* branch_node = (BranchNode*)node;
+				BranchNodeHistory* branch_node_history = (BranchNodeHistory*)h_it->second;
+				if (branch_node_history->is_branch) {
+					if (branch_node->branch_average_hits_per_run > EXPERIMENT_MIN_AVERAGE_HITS_PER_RUN
+							&& branch_node->experiment == NULL) {
+						if (scope_distribution(generator) <= scope_probability) {
+							uniform_int_distribution<int> select_distribution(0, node_count);
+							node_count++;
+							if (select_distribution(generator) == 0) {
+								explore_node = branch_node;
+								explore_is_branch = true;
+							}
+						}
+					}
+				} else {
+					if (branch_node->original_average_hits_per_run > EXPERIMENT_MIN_AVERAGE_HITS_PER_RUN
+							&& branch_node->experiment == NULL) {
+						if (scope_distribution(generator) <= scope_probability) {
+							uniform_int_distribution<int> select_distribution(0, node_count);
+							node_count++;
+							if (select_distribution(generator) == 0) {
+								explore_node = branch_node;
+								explore_is_branch = false;
+							}
+						}
+					}
+				}
+			}
+			break;
+		case NODE_TYPE_OBS:
+			{
+				ObsNode* obs_node = (ObsNode*)node;
+				if (obs_node->average_hits_per_run > EXPERIMENT_MIN_AVERAGE_HITS_PER_RUN
+						&& obs_node->experiment == NULL) {
+					if (scope_distribution(generator) <= scope_probability) {
+						uniform_int_distribution<int> select_distribution(0, node_count);
+						node_count++;
+						if (select_distribution(generator) == 0) {
+							explore_node = obs_node;
+							explore_is_branch = false;
+						}
 					}
 				}
 			}
@@ -88,40 +127,74 @@ void even_gather_helper(ScopeHistory* scope_history,
 	}
 	for (map<int, AbstractNodeHistory*>::iterator h_it = scope_history->node_histories.begin();
 			h_it != scope_history->node_histories.end(); h_it++) {
-		switch (h_it->second->node->type) {
+		AbstractNode* node = h_it->second->node;
+		switch (node->type) {
 		case NODE_TYPE_ACTION:
-		case NODE_TYPE_OBS:
-			if (h_it->second->node->experiment == NULL) {
-				uniform_int_distribution<int> select_distribution(0, scope_it->second.first);
-				scope_it->second.first++;
-				if (select_distribution(generator) == 0) {
-					scope_it->second.second = {h_it->second->node, false};
+			{
+				ActionNode* action_node = (ActionNode*)node;
+				if (action_node->average_hits_per_run > EXPERIMENT_MIN_AVERAGE_HITS_PER_RUN
+						&& action_node->experiment == NULL) {
+					uniform_int_distribution<int> select_distribution(0, scope_it->second.first);
+					scope_it->second.first++;
+					if (select_distribution(generator) == 0) {
+						scope_it->second.second = {action_node, false};
+					}
 				}
 			}
 			break;
 		case NODE_TYPE_SCOPE:
 			{
+				ScopeNode* scope_node = (ScopeNode*)node;
 				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)h_it->second;
 
 				even_gather_helper(scope_node_history->scope_history,
 								   nodes_seen);
 
-				if (h_it->second->node->experiment == NULL) {
+				if (scope_node->average_hits_per_run > EXPERIMENT_MIN_AVERAGE_HITS_PER_RUN
+						&& scope_node->experiment == NULL) {
 					uniform_int_distribution<int> select_distribution(0, scope_it->second.first);
 					scope_it->second.first++;
 					if (select_distribution(generator) == 0) {
-						scope_it->second.second = {h_it->second->node, false};
+						scope_it->second.second = {scope_node, false};
 					}
 				}
 			}
 			break;
 		case NODE_TYPE_BRANCH:
-			if (h_it->second->node->experiment == NULL) {
-				uniform_int_distribution<int> select_distribution(0, scope_it->second.first);
-				scope_it->second.first++;
-				if (select_distribution(generator) == 0) {
-					BranchNodeHistory* branch_node_history = (BranchNodeHistory*)h_it->second;
-					scope_it->second.second = {h_it->second->node, branch_node_history->is_branch};
+			{
+				BranchNode* branch_node = (BranchNode*)node;
+				BranchNodeHistory* branch_node_history = (BranchNodeHistory*)h_it->second;
+				if (branch_node_history->is_branch) {
+					if (branch_node->branch_average_hits_per_run > EXPERIMENT_MIN_AVERAGE_HITS_PER_RUN
+							&& branch_node->experiment == NULL) {
+						uniform_int_distribution<int> select_distribution(0, scope_it->second.first);
+						scope_it->second.first++;
+						if (select_distribution(generator) == 0) {
+							scope_it->second.second = {branch_node, true};
+						}
+					}
+				} else {
+					if (branch_node->original_average_hits_per_run > EXPERIMENT_MIN_AVERAGE_HITS_PER_RUN
+							&& branch_node->experiment == NULL) {
+						uniform_int_distribution<int> select_distribution(0, scope_it->second.first);
+						scope_it->second.first++;
+						if (select_distribution(generator) == 0) {
+							scope_it->second.second = {branch_node, false};
+						}
+					}
+				}
+			}
+			break;
+		case NODE_TYPE_OBS:
+			{
+				ObsNode* obs_node = (ObsNode*)node;
+				if (obs_node->average_hits_per_run > EXPERIMENT_MIN_AVERAGE_HITS_PER_RUN
+						&& obs_node->experiment == NULL) {
+					uniform_int_distribution<int> select_distribution(0, scope_it->second.first);
+					scope_it->second.first++;
+					if (select_distribution(generator) == 0) {
+						scope_it->second.second = {obs_node, false};
+					}
 				}
 			}
 			break;
@@ -201,36 +274,14 @@ void create_experiment(ScopeHistory* scope_history,
 
 				curr_experiment = new_commit_experiment;
 			} else {
-				/**
-				 * - weigh towards PassThroughExperiments as cheaper and potentially just as effective
-				 *   - solutions are often made of relatively few distinct decisions, but applied such that has good coverage
-				 *     - like tessellation, but have to get both the shape and the pattern correct
-				 *       - and PassThroughExperiments help with both
-				 */
-				uniform_int_distribution<int> pass_through_distribution(0, 1);
-				if (pass_through_distribution(generator) == 0) {
-					PassThroughExperiment* new_experiment = new PassThroughExperiment(
-						explore_node->parent,
-						explore_node,
-						explore_is_branch);
+				BranchExperiment* new_experiment = new BranchExperiment(
+					explore_node->parent,
+					explore_node,
+					explore_is_branch);
 
-					if (new_experiment->result == EXPERIMENT_RESULT_FAIL) {
-						delete new_experiment;
-					} else {
-						explore_node->experiment = new_experiment;
+				explore_node->experiment = new_experiment;
 
-						curr_experiment = new_experiment;
-					}
-				} else {
-					BranchExperiment* new_experiment = new BranchExperiment(
-						explore_node->parent,
-						explore_node,
-						explore_is_branch);
-
-					explore_node->experiment = new_experiment;
-
-					curr_experiment = new_experiment;
-				}
+				curr_experiment = new_experiment;
 			}
 		}
 	}

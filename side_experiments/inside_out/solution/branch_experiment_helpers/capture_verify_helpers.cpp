@@ -21,12 +21,18 @@ void BranchExperiment::capture_verify_check_activate(SolutionWrapper* wrapper) {
 	this->verify_seeds[this->state_iter] = wrapper->starting_run_seed;
 
 	double sum_vals = this->new_average_score;
-	for (int f_index = 0; f_index < (int)this->new_factor_ids.size(); f_index++) {
+	for (int i_index = 0; i_index < (int)this->new_inputs.size(); i_index++) {
 		double val;
-		fetch_factor_helper(wrapper->scope_histories.back(),
-							this->new_factor_ids[f_index],
-							val);
-		sum_vals += this->new_factor_weights[f_index] * val;
+		bool is_on;
+		fetch_input_helper(wrapper->scope_histories.back(),
+						   this->new_inputs[i_index],
+						   0,
+						   val,
+						   is_on);
+		if (is_on) {
+			double normalized_val = (val - this->new_input_averages[i_index]) / this->new_input_standard_deviations[i_index];
+			sum_vals += this->new_weights[i_index] * normalized_val;
+		}
 	}
 
 	this->verify_scores.push_back(sum_vals);

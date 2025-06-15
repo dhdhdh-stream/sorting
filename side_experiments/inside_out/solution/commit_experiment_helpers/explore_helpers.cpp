@@ -21,7 +21,7 @@ using namespace std;
 #if defined(MDEBUG) && MDEBUG
 const int COMMIT_EXPERIMENT_EXPLORE_ITERS = 5;
 #else
-const int COMMIT_EXPERIMENT_EXPLORE_ITERS = 500;
+const int COMMIT_EXPERIMENT_EXPLORE_ITERS = 100;
 #endif /* MDEBUG */
 
 void CommitExperiment::explore_check_activate(
@@ -31,12 +31,18 @@ void CommitExperiment::explore_check_activate(
 	if (history->existing_predicted_scores.size() == 0
 			&& this->num_instances_until_target == 0) {
 		double sum_vals = this->existing_average_score;
-		for (int f_index = 0; f_index < (int)this->existing_factor_ids.size(); f_index++) {
+		for (int i_index = 0; i_index < (int)this->existing_inputs.size(); i_index++) {
 			double val;
-			fetch_factor_helper(wrapper->scope_histories.back(),
-								this->existing_factor_ids[f_index],
-								val);
-			sum_vals += this->existing_factor_weights[f_index] * val;
+			bool is_on;
+			fetch_input_helper(wrapper->scope_histories.back(),
+							   this->existing_inputs[i_index],
+							   0,
+							   val,
+							   is_on);
+			if (is_on) {
+				double normalized_val = (val - this->existing_input_averages[i_index]) / this->existing_input_standard_deviations[i_index];
+				sum_vals += this->existing_weights[i_index] * normalized_val;
+			}
 		}
 		history->existing_predicted_scores.push_back(sum_vals);
 
@@ -200,8 +206,6 @@ void CommitExperiment::explore_backprop(
 			if (this->best_surprise > 0.0) {
 				this->step_iter = (int)this->best_step_types.size();
 				this->save_iter = 0;
-
-				this->save_sum_score = 0.0;
 
 				this->state_iter = -1;
 

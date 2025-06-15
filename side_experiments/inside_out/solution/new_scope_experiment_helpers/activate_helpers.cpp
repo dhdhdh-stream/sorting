@@ -46,26 +46,16 @@ void NewScopeExperiment::check_activate(AbstractNode* experiment_node,
 		NewScopeExperimentHistory* history = (NewScopeExperimentHistory*)wrapper->experiment_history;
 
 		if (is_test) {
-			wrapper->test_hit = true;
-
 			history->hit_test = true;
 
-			switch (this->test_location_state) {
-			case LOCATION_STATE_MEASURE_NEW:
-			case LOCATION_STATE_VERIFY_NEW_1ST:
-			case LOCATION_STATE_VERIFY_NEW_2ND:
-				{
-					NewScopeExperimentState* new_experiment_state = new NewScopeExperimentState(this);
-					wrapper->experiment_context.back() = new_experiment_state;
+			NewScopeExperimentState* new_experiment_state = new NewScopeExperimentState(this);
+			wrapper->experiment_context.back() = new_experiment_state;
 
-					ScopeHistory* inner_scope_history = new ScopeHistory(this->new_scope);
-					wrapper->scope_histories.push_back(inner_scope_history);
-					wrapper->node_context.push_back(this->new_scope->nodes[0]);
-					wrapper->experiment_context.push_back(NULL);
-					wrapper->confusion_context.push_back(NULL);
-				}
-				break;
-			}
+			ScopeHistory* inner_scope_history = new ScopeHistory(this->new_scope);
+			wrapper->scope_histories.push_back(inner_scope_history);
+			wrapper->node_context.push_back(this->new_scope->nodes[0]);
+			wrapper->experiment_context.push_back(NULL);
+			wrapper->confusion_context.push_back(NULL);
 		} else {
 			wrapper->node_context.back() = this->successful_scope_nodes[location_index];
 		}
@@ -100,44 +90,67 @@ void NewScopeExperiment::experiment_exit_step(SolutionWrapper* wrapper) {
 }
 
 void NewScopeExperiment::back_activate(SolutionWrapper* wrapper) {
-	if (this->test_location_start == NULL) {
-		NewScopeExperimentHistory* history = (NewScopeExperimentHistory*)wrapper->experiment_history;
-		ScopeHistory* scope_history = wrapper->scope_histories.back();
+	NewScopeExperimentHistory* history = (NewScopeExperimentHistory*)wrapper->experiment_history;
+	ScopeHistory* scope_history = wrapper->scope_histories.back();
 
+	if (this->test_location_start == NULL) {
 		uniform_int_distribution<int> select_distribution(0, history->instance_count);
 		if (select_distribution(generator) == 0) {
 			vector<AbstractNode*> possible_starts;
 			vector<bool> possible_is_branch;
 			for (map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
 					it != scope_history->node_histories.end(); it++) {
-				if (it->second->node->experiment == NULL) {
-					bool is_branch;
-					switch (it->second->node->type) {
-					case NODE_TYPE_ACTION:
-					case NODE_TYPE_SCOPE:
-					case NODE_TYPE_OBS:
-						is_branch = false;
-						break;
-					case NODE_TYPE_BRANCH:
-						{
-							BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
-							is_branch = branch_node_history->is_branch;
-						}
-						break;
-					}
-
-					bool has_match = false;
-					for (int s_index = 0; s_index < (int)this->successful_location_starts.size(); s_index++) {
-						if (this->successful_location_starts[s_index] == it->second->node
-								&& this->successful_location_is_branch[s_index] == is_branch) {
-							has_match = true;
-							break;
+				AbstractNode* node = it->second->node;
+				switch (node->type) {
+				case NODE_TYPE_ACTION:
+					{
+						ActionNode* action_node = (ActionNode*)node;
+						if (action_node->new_scope_average_hits_per_run > EXPERIMENT_MIN_AVERAGE_HITS_PER_RUN
+								&& action_node->experiment == NULL) {
+							possible_starts.push_back(action_node);
+							possible_is_branch.push_back(false);
 						}
 					}
-					if (!has_match) {
-						possible_starts.push_back(it->second->node);
-						possible_is_branch.push_back(is_branch);
+					break;
+				case NODE_TYPE_SCOPE:
+					{
+						ScopeNode* scope_node = (ScopeNode*)node;
+						if (scope_node->new_scope_average_hits_per_run > EXPERIMENT_MIN_AVERAGE_HITS_PER_RUN
+								&& scope_node->experiment == NULL) {
+							possible_starts.push_back(scope_node);
+							possible_is_branch.push_back(false);
+						}
 					}
+					break;
+				case NODE_TYPE_BRANCH:
+					{
+						BranchNode* branch_node = (BranchNode*)node;
+						BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
+						if (branch_node_history->is_branch) {
+							if (branch_node->branch_new_scope_average_hits_per_run > EXPERIMENT_MIN_AVERAGE_HITS_PER_RUN
+									&& branch_node->experiment == NULL) {
+								possible_starts.push_back(branch_node);
+								possible_is_branch.push_back(true);
+							}
+						} else {
+							if (branch_node->original_new_scope_average_hits_per_run > EXPERIMENT_MIN_AVERAGE_HITS_PER_RUN
+									&& branch_node->experiment == NULL) {
+								possible_starts.push_back(branch_node);
+								possible_is_branch.push_back(false);
+							}
+						}
+					}
+					break;
+				case NODE_TYPE_OBS:
+					{
+						ObsNode* obs_node = (ObsNode*)node;
+						if (obs_node->new_scope_average_hits_per_run > EXPERIMENT_MIN_AVERAGE_HITS_PER_RUN
+								&& obs_node->experiment == NULL) {
+							possible_starts.push_back(obs_node);
+							possible_is_branch.push_back(false);
+						}
+					}
+					break;
 				}
 			}
 
@@ -150,12 +163,71 @@ void NewScopeExperiment::back_activate(SolutionWrapper* wrapper) {
 			}
 		}
 		history->instance_count++;
+	} else {
+		for (map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
+				it != scope_history->node_histories.end(); it++) {
+			AbstractNode* node = it->second->node;
+			switch (node->type) {
+			case NODE_TYPE_ACTION:
+			case NODE_TYPE_SCOPE:
+			case NODE_TYPE_OBS:
+				history->nodes_seen.insert({node, false});
+				break;
+			case NODE_TYPE_BRANCH:
+				{
+					BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
+					history->nodes_seen.insert({node, branch_node_history->is_branch});
+				}
+				break;
+			}
+		}
 	}
 }
 
 void NewScopeExperiment::backprop(double target_val,
 								  SolutionWrapper* wrapper) {
 	NewScopeExperimentHistory* history = (NewScopeExperimentHistory*)wrapper->experiment_history;
+
+	if (this->test_location_start != NULL) {
+		for (set<pair<AbstractNode*,bool>>::iterator it = history->nodes_seen.begin();
+				it != history->nodes_seen.end(); it++) {
+			switch (it->first->type) {
+			case NODE_TYPE_ACTION:
+				{
+					ActionNode* action_node = (ActionNode*)it->first;
+					action_node->new_scope_sum_score += target_val;
+					action_node->new_scope_sum_count++;
+				}
+				break;
+			case NODE_TYPE_SCOPE:
+				{
+					ScopeNode* scope_node = (ScopeNode*)it->first;
+					scope_node->new_scope_sum_score += target_val;
+					scope_node->new_scope_sum_count++;
+				}
+				break;
+			case NODE_TYPE_BRANCH:
+				{
+					BranchNode* branch_node = (BranchNode*)it->first;
+					if (it->second) {
+						branch_node->branch_new_scope_sum_score += target_val;
+						branch_node->branch_new_scope_sum_count++;
+					} else {
+						branch_node->original_new_scope_sum_score += target_val;
+						branch_node->original_new_scope_sum_count++;
+					}
+				}
+				break;
+			case NODE_TYPE_OBS:
+				{
+					ObsNode* obs_node = (ObsNode*)it->first;
+					obs_node->new_scope_sum_score += target_val;
+					obs_node->new_scope_sum_count++;
+				}
+				break;
+			}
+		}
+	}
 
 	if (history->hit_test) {
 		test_backprop(target_val,
@@ -207,10 +279,9 @@ void NewScopeExperiment::backprop(double target_val,
 			this->test_location_start = history->potential_start;
 			this->test_location_is_branch = history->potential_is_branch;
 			this->test_location_exit = exit_next_node;
-			this->test_location_state = LOCATION_STATE_MEASURE_EXISTING;
-			this->test_location_existing_score = 0.0;
-			this->test_location_new_score = 0.0;
-			this->test_location_count = 0;
+			this->test_target_val_histories.clear();
+
+			this->scope_context->new_scope_clean();
 
 			history->potential_start->experiment = this;
 		}

@@ -18,8 +18,12 @@ public:
 	Input(std::ifstream& input_file,
 		  Solution* parent_solution);
 
-	bool operator==(const Input& rhs);
-	bool operator!=(const Input& rhs);
+	bool operator==(const Input& rhs) const;
+	bool operator!=(const Input& rhs) const;
+	bool operator<(const Input& rhs) const;
+	bool operator>(const Input& rhs) const;
+	bool operator<=(const Input& rhs) const;
+	bool operator>=(const Input& rhs) const;
 
 	void save(std::ofstream& output_file);
 };

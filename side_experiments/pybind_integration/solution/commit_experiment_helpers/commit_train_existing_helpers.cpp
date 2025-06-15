@@ -87,6 +87,9 @@ void CommitExperiment::commit_train_existing_step(
 										factor_vals[f_index]);
 				}
 				this->factor_histories.push_back(factor_vals);
+
+				uniform_int_distribution<int> until_distribution(0, 2*((int)this->average_instances_per_run-1));
+				this->num_instances_until_target = 1 + until_distribution(generator);
 			} else {
 				experiment_state->is_save = true;
 				experiment_state->step_index = 0;

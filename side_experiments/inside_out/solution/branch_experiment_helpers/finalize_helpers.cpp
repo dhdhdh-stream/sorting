@@ -188,8 +188,10 @@ void BranchExperiment::add(SolutionWrapper* wrapper) {
 		this->scope_context->nodes[new_branch_node->id] = new_branch_node;
 
 		new_branch_node->average_val = this->new_average_score;
-		new_branch_node->factor_ids = this->new_factor_ids;
-		new_branch_node->factor_weights = this->new_factor_weights;
+		new_branch_node->inputs = this->new_inputs;
+		new_branch_node->input_averages = this->new_input_averages;
+		new_branch_node->input_standard_deviations = this->new_input_standard_deviations;
+		new_branch_node->weights = this->new_weights;
 
 		switch (this->node_context->type) {
 		case NODE_TYPE_ACTION:

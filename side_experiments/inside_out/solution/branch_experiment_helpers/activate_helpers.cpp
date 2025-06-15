@@ -17,8 +17,6 @@ void BranchExperiment::check_activate(AbstractNode* experiment_node,
 									  bool is_branch,
 									  SolutionWrapper* wrapper) {
 	if (is_branch == this->is_branch) {
-		wrapper->test_hit = true;
-
 		BranchExperimentHistory* history;
 		if (wrapper->experiment_history != NULL) {
 			history = (BranchExperimentHistory*)wrapper->experiment_history;
@@ -28,9 +26,6 @@ void BranchExperiment::check_activate(AbstractNode* experiment_node,
 		}
 
 		switch (this->state) {
-		case BRANCH_EXPERIMENT_STATE_EXISTING_GATHER:
-			existing_gather_check_activate(wrapper);
-			break;
 		case BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING:
 			train_existing_check_activate(wrapper,
 										  history);
@@ -38,9 +33,6 @@ void BranchExperiment::check_activate(AbstractNode* experiment_node,
 		case BRANCH_EXPERIMENT_STATE_EXPLORE:
 			explore_check_activate(wrapper,
 								   history);
-			break;
-		case BRANCH_EXPERIMENT_STATE_NEW_GATHER:
-			new_gather_check_activate(wrapper);
 			break;
 		case BRANCH_EXPERIMENT_STATE_TRAIN_NEW:
 			train_new_check_activate(wrapper,
@@ -134,9 +126,6 @@ void BranchExperiment::backprop(double target_val,
 								SolutionWrapper* wrapper) {
 	BranchExperimentHistory* history = (BranchExperimentHistory*)wrapper->experiment_history;
 	switch (this->state) {
-	case BRANCH_EXPERIMENT_STATE_EXISTING_GATHER:
-		existing_gather_backprop();
-		break;
 	case BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING:
 		train_existing_backprop(target_val,
 								history);
@@ -144,9 +133,6 @@ void BranchExperiment::backprop(double target_val,
 	case BRANCH_EXPERIMENT_STATE_EXPLORE:
 		explore_backprop(target_val,
 						 history);
-		break;
-	case BRANCH_EXPERIMENT_STATE_NEW_GATHER:
-		new_gather_backprop();
 		break;
 	case BRANCH_EXPERIMENT_STATE_TRAIN_NEW:
 		train_new_backprop(target_val,

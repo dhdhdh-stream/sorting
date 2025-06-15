@@ -64,12 +64,18 @@ void CommitExperiment::capture_verify_step(vector<double>& obs,
 	} else {
 		if (experiment_state->step_index == this->step_iter) {
 			double sum_vals = this->commit_new_average_score;
-			for (int f_index = 0; f_index < (int)this->commit_new_factor_ids.size(); f_index++) {
+			for (int i_index = 0; i_index < (int)this->commit_new_inputs.size(); i_index++) {
 				double val;
-				fetch_factor_helper(wrapper->scope_histories.back(),
-									this->commit_new_factor_ids[f_index],
-									val);
-				sum_vals += this->commit_new_factor_weights[f_index] * val;
+				bool is_on;
+				fetch_input_helper(wrapper->scope_histories.back(),
+								   this->commit_new_inputs[i_index],
+								   0,
+								   val,
+								   is_on);
+				if (is_on) {
+					double normalized_val = (val - this->commit_new_input_averages[i_index]) / this->commit_new_input_standard_deviations[i_index];
+					sum_vals += this->commit_new_weights[i_index] * normalized_val;
+				}
 			}
 
 			this->verify_scores.push_back(sum_vals);

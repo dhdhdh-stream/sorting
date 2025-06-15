@@ -17,6 +17,7 @@ const int OPTIMIZE_ITERS = 100000;
 #endif /* MDEBUG */
 
 void train_network(vector<vector<double>>& inputs,
+				   vector<vector<bool>>& input_is_on,
 				   vector<double>& target_vals,
 				   Network* network) {
 	int train_instances = (1.0 - TEST_SAMPLES_PERCENTAGE) * inputs.size();
@@ -26,16 +27,17 @@ void train_network(vector<vector<double>>& inputs,
 		for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
 			int rand_index = distribution(generator);
 
-			vector<double> inputs_w_drop(inputs[rand_index].size());
+			vector<bool> w_drop(inputs[rand_index].size());
 			for (int i_index = 0; i_index < (int)inputs[rand_index].size(); i_index++) {
 				if (drop_distribution(generator) == 0) {
-					inputs_w_drop[i_index] = 0.0;
+					w_drop[i_index] = false;
 				} else {
-					inputs_w_drop[i_index] = inputs[rand_index][i_index];
+					w_drop[i_index] = input_is_on[rand_index][i_index];
 				}
 			}
 
-			network->activate(inputs_w_drop);
+			network->activate(inputs[rand_index],
+							  w_drop);
 
 			double error = target_vals[rand_index] - network->output->acti_vals[0];
 
@@ -45,6 +47,7 @@ void train_network(vector<vector<double>>& inputs,
 }
 
 void measure_network(vector<vector<double>>& inputs,
+					 vector<vector<bool>>& input_is_on,
 					 vector<double>& target_vals,
 					 Network* network,
 					 double& average_misguess,
@@ -54,7 +57,8 @@ void measure_network(vector<vector<double>>& inputs,
 
 	vector<double> predicted_outputs(test_instances);
 	for (int d_index = 0; d_index < test_instances; d_index++) {
-		network->activate(inputs[train_instances + d_index]);
+		network->activate(inputs[train_instances + d_index],
+						  input_is_on[train_instances + d_index]);
 		predicted_outputs[d_index] = network->output->acti_vals[0];
 	}
 
@@ -76,6 +80,7 @@ void measure_network(vector<vector<double>>& inputs,
 }
 
 void optimize_network(vector<vector<double>>& inputs,
+					  vector<vector<bool>>& input_is_on,
 					  vector<double>& target_vals,
 					  Network* network) {
 	int train_instances = (1.0 - TEST_SAMPLES_PERCENTAGE) * inputs.size();
@@ -85,16 +90,17 @@ void optimize_network(vector<vector<double>>& inputs,
 		for (int iter_index = 0; iter_index < OPTIMIZE_ITERS; iter_index++) {
 			int rand_index = distribution(generator);
 
-			vector<double> inputs_w_drop(inputs[rand_index].size());
+			vector<bool> w_drop(inputs[rand_index].size());
 			for (int i_index = 0; i_index < (int)inputs[rand_index].size(); i_index++) {
 				if (drop_distribution(generator) == 0) {
-					inputs_w_drop[i_index] = 0.0;
+					w_drop[i_index] = false;
 				} else {
-					inputs_w_drop[i_index] = inputs[rand_index][i_index];
+					w_drop[i_index] = input_is_on[rand_index][i_index];
 				}
 			}
 
-			network->activate(inputs_w_drop);
+			network->activate(inputs[rand_index],
+							  w_drop);
 
 			double error = target_vals[rand_index] - network->output->acti_vals[0];
 

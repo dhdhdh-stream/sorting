@@ -61,6 +61,7 @@ public:
 					   int new_scope_node_id);
 
 	void clean_scopes();
+	void measure_update();
 
 	void clean();
 

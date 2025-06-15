@@ -24,12 +24,18 @@ void BranchNode::verify_step(vector<double>& obs,
 	scope_history->node_histories[this->id] = history;
 
 	double sum_vals = this->average_val;
-	for (int f_index = 0; f_index < (int)this->factor_ids.size(); f_index++) {
+	for (int i_index = 0; i_index < (int)this->inputs.size(); i_index++) {
 		double val;
-		fetch_factor_helper(scope_history,
-							this->factor_ids[f_index],
-							val);
-		sum_vals += this->factor_weights[f_index] * val;
+		bool is_on;
+		fetch_input_helper(scope_history,
+						   this->inputs[i_index],
+						   0,
+						   val,
+						   is_on);
+		if (is_on) {
+			double normalized_val = (val - this->input_averages[i_index]) / this->input_standard_deviations[i_index];
+			sum_vals += this->weights[i_index] * normalized_val;
+		}
 	}
 
 	if (this->verify_key != NULL) {

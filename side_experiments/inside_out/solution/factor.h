@@ -2,6 +2,7 @@
 #define FACTOR_H
 
 #include <fstream>
+#include <list>
 #include <utility>
 #include <vector>
 

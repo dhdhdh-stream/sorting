@@ -16,7 +16,9 @@ CommitExperiment::CommitExperiment(Scope* scope_context,
 	this->node_context = node_context;
 	this->is_branch = is_branch;
 
-	this->state = COMMIT_EXPERIMENT_STATE_EXISTING_GATHER;
+	this->sum_num_instances = 0;
+
+	this->state = COMMIT_EXPERIMENT_STATE_TRAIN_EXISTING;
 	this->state_iter = 0;
 
 	this->result = EXPERIMENT_RESULT_NA;
@@ -36,10 +38,6 @@ CommitExperiment::~CommitExperiment() {
 
 void CommitExperiment::decrement(AbstractNode* experiment_node) {
 	delete this;
-}
-
-void CommitExperiment::abort() {
-	this->result = EXPERIMENT_RESULT_FAIL;
 }
 
 CommitExperimentHistory::CommitExperimentHistory(CommitExperiment* experiment) {

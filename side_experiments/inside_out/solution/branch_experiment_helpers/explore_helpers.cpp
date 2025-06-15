@@ -20,7 +20,7 @@ using namespace std;
 #if defined(MDEBUG) && MDEBUG
 const int BRANCH_EXPERIMENT_EXPLORE_ITERS = 5;
 #else
-const int BRANCH_EXPERIMENT_EXPLORE_ITERS = 500;
+const int BRANCH_EXPERIMENT_EXPLORE_ITERS = 100;
 #endif /* MDEBUG */
 
 void BranchExperiment::explore_check_activate(
@@ -30,12 +30,18 @@ void BranchExperiment::explore_check_activate(
 	if (history->existing_predicted_scores.size() == 0
 			&& this->num_instances_until_target == 0) {
 		double sum_vals = this->existing_average_score;
-		for (int f_index = 0; f_index < (int)this->existing_factor_ids.size(); f_index++) {
+		for (int i_index = 0; i_index < (int)this->existing_inputs.size(); i_index++) {
 			double val;
-			fetch_factor_helper(wrapper->scope_histories.back(),
-								this->existing_factor_ids[f_index],
-								val);
-			sum_vals += this->existing_factor_weights[f_index] * val;
+			bool is_on;
+			fetch_input_helper(wrapper->scope_histories.back(),
+							   this->existing_inputs[i_index],
+							   0,
+							   val,
+							   is_on);
+			if (is_on) {
+				double normalized_val = (val - this->existing_input_averages[i_index]) / this->existing_input_standard_deviations[i_index];
+				sum_vals += this->existing_weights[i_index] * normalized_val;
+			}
 		}
 		history->existing_predicted_scores.push_back(sum_vals);
 
@@ -186,64 +192,35 @@ void BranchExperiment::explore_backprop(
 	if (history->existing_predicted_scores.size() > 0) {
 		double curr_surprise = target_val - history->existing_predicted_scores[0];
 
-		bool select = false;
-		if (this->explore_type == EXPLORE_TYPE_BEST) {
-			#if defined(MDEBUG) && MDEBUG
-			if (true) {
-			#else
-			if (curr_surprise > this->best_surprise) {
-			#endif /* MDEBUG */
-				this->best_surprise = curr_surprise;
-				this->best_step_types = this->curr_step_types;
-				this->best_actions = this->curr_actions;
-				this->best_scopes = this->curr_scopes;
-				this->best_exit_next_node = this->curr_exit_next_node;
+		#if defined(MDEBUG) && MDEBUG
+		if (true) {
+		#else
+		if (curr_surprise > this->best_surprise) {
+		#endif /* MDEBUG */
+			this->best_surprise = curr_surprise;
+			this->best_step_types = this->curr_step_types;
+			this->best_actions = this->curr_actions;
+			this->best_scopes = this->curr_scopes;
+			this->best_exit_next_node = this->curr_exit_next_node;
 
-				this->curr_step_types.clear();
-				this->curr_actions.clear();
-				this->curr_scopes.clear();
-			} else {
-				this->curr_step_types.clear();
-				this->curr_actions.clear();
-				this->curr_scopes.clear();
-			}
-
-			if (this->state_iter == BRANCH_EXPERIMENT_EXPLORE_ITERS-1
-					&& this->best_surprise > 0.0) {
-				select = true;
-			}
-		} else if (this->explore_type == EXPLORE_TYPE_GOOD) {
-			#if defined(MDEBUG) && MDEBUG
-			if (true) {
-			#else
-			if (curr_surprise > 0.0) {
-			#endif /* MDEBUG */
-				this->best_step_types = this->curr_step_types;
-				this->best_actions = this->curr_actions;
-				this->best_scopes = this->curr_scopes;
-				this->best_exit_next_node = this->curr_exit_next_node;
-
-				this->curr_step_types.clear();
-				this->curr_actions.clear();
-				this->curr_scopes.clear();
-
-				select = true;
-			} else {
-				this->curr_step_types.clear();
-				this->curr_actions.clear();
-				this->curr_scopes.clear();
-			}
+			this->curr_step_types.clear();
+			this->curr_actions.clear();
+			this->curr_scopes.clear();
+		} else {
+			this->curr_step_types.clear();
+			this->curr_actions.clear();
+			this->curr_scopes.clear();
 		}
 
-		if (select) {
-			uniform_int_distribution<int> until_distribution(0, 2*((int)this->average_instances_per_run-1));
-			this->num_instances_until_target = 1 + until_distribution(generator);
+		this->state_iter++;
+		if (this->state_iter >= BRANCH_EXPERIMENT_EXPLORE_ITERS) {
+			if (this->best_surprise > 0.0) {
+				uniform_int_distribution<int> until_distribution(0, 2*((int)this->average_instances_per_run-1));
+				this->num_instances_until_target = 1 + until_distribution(generator);
 
-			this->state = BRANCH_EXPERIMENT_STATE_NEW_GATHER;
-			this->state_iter = 0;
-		} else {
-			this->state_iter++;
-			if (this->state_iter >= BRANCH_EXPERIMENT_EXPLORE_ITERS) {
+				this->state = BRANCH_EXPERIMENT_STATE_TRAIN_NEW;
+				this->state_iter = 0;
+			} else {
 				this->result = EXPERIMENT_RESULT_FAIL;
 			}
 		}

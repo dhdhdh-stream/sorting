@@ -10,14 +10,21 @@
 using namespace std;
 
 double Factor::back_activate(ScopeHistory* scope_history) {
-	vector<double> input_vals(this->inputs.size(), 0.0);
+	vector<double> input_vals(this->inputs.size());
+	vector<bool> input_is_on(this->inputs.size());
 	for (int i_index = 0; i_index < (int)this->inputs.size(); i_index++) {
+		double val;
+		bool is_on;
 		fetch_input_helper(scope_history,
 						   this->inputs[i_index],
 						   0,
-						   input_vals[i_index]);
+						   val,
+						   is_on);
+		input_vals[i_index] = val;
+		input_is_on[i_index] = is_on;
 	}
-	this->network->activate(input_vals);
+	this->network->activate(input_vals,
+							input_is_on);
 
 	return this->network->output->acti_vals[0];
 }
