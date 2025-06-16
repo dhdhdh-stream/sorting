@@ -64,13 +64,13 @@ while True:
 				start_time = curr_time
 
 			obs, info = env.reset()
-			w.init()
+			w.measure_init()
 			solution_done = False
 			while True:
 				if solution_done:
 					action = env.action_space.sample()
 				else:
-					solution_done, s_action = w.step(obs)
+					solution_done, s_action = w.measure_step(obs)
 					if solution_done:
 						continue
 					action = pickle.loads(s_action)
@@ -79,8 +79,11 @@ while True:
 				sum_reward += reward
 				if terminated or truncated:
 					break
-			w.end()
-		print('sum_reward: ' + str(sum_reward), flush=True)
+			w.measure_end()
+
+		new_score = sum_reward / MEASURE_ITERS
+		print('new_score: ' + str(new_score), flush=True)
+		w.measure_update(new_score)
 
 		w.save(path, filename)
 

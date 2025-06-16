@@ -7,41 +7,39 @@ const double MIN_STANDARD_DEVIATION = 0.00001;
 const int STEP_TYPE_ACTION = 0;
 const int STEP_TYPE_SCOPE = 1;
 
-/**
- * - select first that is significant improvement
- *   - don't select "best" as might not have been learned for actual best
- *     - so may select lottery instead of actual best
- */
-const int EXPLORE_TYPE_GOOD = 0;
-const int EXPLORE_TYPE_BEST = 1;
-
-const int GATHER_ITERS = 10;
-const int GATHER_FACTORS_PER_ITER = 5;
-/**
- * - will lead to factors with duplicate effects being created
- *   - but OK as getting limited regardless
- */
-
 const double TEST_SAMPLES_PERCENTAGE = 0.2;
 
-/**
- * - when there's correlation, weights can get strange values(?)
- */
-const double REGRESSION_WEIGHT_LIMIT = 100000.0;
-const double REGRESSION_FAIL_MULTIPLIER = 1000.0;
+const double EXPERIMENT_MIN_AVERAGE_HITS_PER_RUN = 0.2;
 
-const double FACTOR_IMPACT_THRESHOLD = 0.1;
+#if defined(MDEBUG) && MDEBUG
+const int MEASURE_S1_ITERS = 1;
+const int MEASURE_S2_ITERS = 2;
+const int MEASURE_S3_ITERS = 5;
+const int MEASURE_S4_ITERS = 10;
+#else
+const int MEASURE_S1_ITERS = 1;
+const int MEASURE_S2_ITERS = 40;
+const int MEASURE_S3_ITERS = 400;
+const int MEASURE_S4_ITERS = 4000;
+#endif /* MDEBUG */
 
-const int NETWORK_NUM_INPUTS = 10;
-
-const int CHECK_NUM_TESTS_HIT_ITER = 200;
-const double MIN_HIT_RATIO = 0.1;
+#if defined(MDEBUG) && MDEBUG
+const int EARLY_SUCCESS_S1_ITERS = 2;
+const int EARLY_SUCCESS_S2_ITERS = 5;
+#else
+const int EARLY_SUCCESS_S1_ITERS = 100;
+const int EARLY_SUCCESS_S2_ITERS = 800;
+#endif /* MDEBUG */
+const double EARLY_SUCCESS_MIN_T_SCORE = 3.0;
 
 const int CHECK_CONFUSION_ITER = 100;
 const int ACTIONS_PER_CONFUSION = 20;
 
-const int SCOPE_EXCEEDED_NUM_NODES = 120;
-const int SCOPE_RESUME_NUM_NODES = 80;
+/**
+ * - need large number of samples
+ *   - otherwise trapped by lottery + local maxima
+ */
+const int MEASURE_ITERS = 4000;
 
 // const int IMPROVEMENTS_PER_ITER = 10;
 const int IMPROVEMENTS_PER_ITER = 2;

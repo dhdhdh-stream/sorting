@@ -21,31 +21,31 @@ void create_experiment(ScopeHistory* scope_history,
 void create_confusion(ScopeHistory* scope_history,
 					  SolutionWrapper* wrapper);
 
-void gather_possible_helper(ScopeHistory* scope_history,
-							std::vector<Scope*>& scope_context,
-							std::vector<int>& node_context,
-							int& node_count,
-							Input& new_input,
-							SolutionWrapper* wrapper);
-void gather_possible_factor_helper(ScopeHistory* scope_history,
-								   std::pair<int,int>& new_factor);
-void fetch_factor_helper(ScopeHistory* scope_history,
-						 std::pair<int,int> factor,
-						 double& val);
 void fetch_input_helper(ScopeHistory* scope_history,
 						Input& input,
 						int l_index,
-						double& obs);
-void fetch_input_helper(ScopeHistory* scope_history,
-						Input& input,
-						int l_index,
-						bool& hit,
-						double& obs);
+						double& obs,
+						bool& is_on);
+
+bool train_helper(std::vector<ScopeHistory*>& scope_histories,
+				  std::vector<double>& target_val_histories,
+				  double& average_score,
+				  std::vector<Input>& factor_inputs,
+				  std::vector<double>& factor_input_averages,
+				  std::vector<double>& factor_input_standard_deviations,
+				  std::vector<double>& factor_weights,
+				  AbstractNode* node_context,
+				  AbstractExperiment* experiment,
+				  double& select_percentage);
 
 void clean_scope(Scope* scope,
 				 SolutionWrapper* wrapper);
 
 void check_generalize(Scope* scope_to_generalize,
 					  SolutionWrapper* wrapper);
+
+void update_scores(ScopeHistory* scope_history,
+				   double target_val,
+				   SolutionWrapper* wrapper);
 
 #endif /* SOLUTION_HELPERS_H */

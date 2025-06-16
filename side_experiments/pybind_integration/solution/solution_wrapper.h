@@ -22,17 +22,16 @@ public:
 
 	int run_index;
 
-	int num_tests_hit;
-
-	int sum_num_actions;
-	int sum_num_confusion_instances;
-
 	/**
 	 * - iter variables
 	 */
 	AbstractExperiment* curr_experiment;
 	AbstractExperiment* best_experiment;
 	int improvement_iter;
+
+	int sum_num_actions;
+	int sum_num_confusion_instances;
+	int experiment_iter;
 
 	/**
 	 * - run variables
@@ -41,8 +40,6 @@ public:
 	std::vector<AbstractNode*> node_context;
 	std::vector<AbstractExperimentState*> experiment_context;
 	std::vector<ConfusionState*> confusion_context;
-
-	bool test_hit;
 
 	int num_actions;
 	int num_confusion_instances;
@@ -63,6 +60,11 @@ public:
 	std::tuple<bool,bool,std::string> experiment_step(std::vector<double> obs);
 	void set_action(std::string action);
 	bool experiment_end(double result);
+
+	void measure_init();
+	std::pair<bool,std::string> measure_step(std::vector<double> obs);
+	void measure_end(double result);
+	void measure_update(double new_score);
 
 	void combine(std::string other_path,
 				 std::string other_name);

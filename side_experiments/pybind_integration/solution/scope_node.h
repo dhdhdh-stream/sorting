@@ -23,6 +23,19 @@ public:
 	int next_node_id;
 	AbstractNode* next_node;
 
+	double average_hits_per_run;
+	double average_score;
+
+	int last_updated_run_index;
+	double sum_score;
+	int sum_count;
+
+	double new_scope_average_hits_per_run;
+	double new_scope_average_score;
+
+	double new_scope_sum_score;
+	int new_scope_sum_count;
+
 	ScopeNode();
 	~ScopeNode();
 
@@ -42,6 +55,10 @@ public:
 					   Scope* new_scope);
 
 	void clean();
+	void measure_update();
+
+	void new_scope_clean();
+	void new_scope_measure_update(int total_count);
 
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file,
@@ -55,6 +72,7 @@ public:
 	ScopeHistory* scope_history;
 
 	ScopeNodeHistory(ScopeNode* node);
+	ScopeNodeHistory(ScopeNodeHistory* original);
 	~ScopeNodeHistory();
 };
 

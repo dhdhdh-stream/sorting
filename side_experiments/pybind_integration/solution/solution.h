@@ -27,6 +27,7 @@ class Scope;
 class Solution {
 public:
 	int timestamp;
+	double curr_score;
 
 	std::vector<Scope*> scopes;
 
@@ -52,6 +53,7 @@ public:
 					   int new_scope_node_id);
 
 	void clean_scopes();
+	void measure_update();
 
 	void clean();
 

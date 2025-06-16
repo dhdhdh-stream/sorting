@@ -3,6 +3,7 @@
 #include "abstract_node.h"
 #include "branch_experiment.h"
 #include "globals.h"
+#include "scope.h"
 
 using namespace std;
 
@@ -15,7 +16,9 @@ CommitExperiment::CommitExperiment(Scope* scope_context,
 	this->node_context = node_context;
 	this->is_branch = is_branch;
 
-	this->state = COMMIT_EXPERIMENT_STATE_EXISTING_GATHER;
+	this->sum_num_instances = 0;
+
+	this->state = COMMIT_EXPERIMENT_STATE_TRAIN_EXISTING;
 	this->state_iter = 0;
 
 	this->result = EXPERIMENT_RESULT_NA;
@@ -25,14 +28,14 @@ CommitExperiment::~CommitExperiment() {
 	for (int n_index = 0; n_index < (int)this->new_nodes.size(); n_index++) {
 		delete this->new_nodes[n_index];
 	}
+
+	for (int h_index = 0; h_index < (int)this->scope_histories.size(); h_index++) {
+		delete this->scope_histories[h_index];
+	}
 }
 
 void CommitExperiment::decrement(AbstractNode* experiment_node) {
 	delete this;
-}
-
-void CommitExperiment::abort() {
-	this->result = EXPERIMENT_RESULT_FAIL;
 }
 
 CommitExperimentHistory::CommitExperimentHistory(CommitExperiment* experiment) {

@@ -46,6 +46,10 @@ public:
 								 SolutionWrapper* wrapper) = 0;
 
 	virtual void clean() = 0;
+	virtual void measure_update() = 0;
+
+	virtual void new_scope_clean() = 0;
+	virtual void new_scope_measure_update(int total_count) = 0;
 
 	virtual void save(std::ofstream& output_file) = 0;
 	virtual void link(Solution* parent_solution) = 0;

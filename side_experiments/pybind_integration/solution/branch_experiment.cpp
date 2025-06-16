@@ -4,6 +4,7 @@
 
 #include "abstract_node.h"
 #include "globals.h"
+#include "scope.h"
 
 using namespace std;
 
@@ -16,18 +17,33 @@ BranchExperiment::BranchExperiment(Scope* scope_context,
 	this->node_context = node_context;
 	this->is_branch = is_branch;
 
-	this->state = BRANCH_EXPERIMENT_STATE_EXISTING_GATHER;
+	this->curr_scope_history = NULL;
+	this->best_scope_history = NULL;
+
+	this->sum_num_instances = 0;
+
+	this->state = BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING;
 	this->state_iter = 0;
 
 	this->result = EXPERIMENT_RESULT_NA;
 }
 
-void BranchExperiment::decrement(AbstractNode* experiment_node) {
-	delete this;
+BranchExperiment::~BranchExperiment() {
+	if (this->curr_scope_history != NULL) {
+		delete this->curr_scope_history;
+	}
+
+	if (this->best_scope_history != NULL) {
+		delete this->best_scope_history;
+	}
+
+	for (int h_index = 0; h_index < (int)this->scope_histories.size(); h_index++) {
+		delete this->scope_histories[h_index];
+	}
 }
 
-void BranchExperiment::abort() {
-	this->result = EXPERIMENT_RESULT_FAIL;
+void BranchExperiment::decrement(AbstractNode* experiment_node) {
+	delete this;
 }
 
 BranchExperimentHistory::BranchExperimentHistory(BranchExperiment* experiment) {

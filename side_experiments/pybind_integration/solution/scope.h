@@ -21,7 +21,6 @@ public:
 
 	std::vector<Scope*> child_scopes;
 
-	bool exceeded;
 	bool generalized;
 
 	/**
@@ -52,6 +51,10 @@ public:
 					   int new_scope_node_id);
 
 	void clean();
+	void measure_update();
+
+	void new_scope_clean();
+	void new_scope_measure_update(int total_count);
 
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file,
@@ -68,6 +71,7 @@ public:
 	std::map<int, AbstractNodeHistory*> node_histories;
 
 	ScopeHistory(Scope* scope);
+	ScopeHistory(ScopeHistory* original);
 	~ScopeHistory();
 };
 

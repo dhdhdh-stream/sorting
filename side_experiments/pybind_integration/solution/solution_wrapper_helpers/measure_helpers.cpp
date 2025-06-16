@@ -3,11 +3,12 @@
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
+#include "solution_helpers.h"
 #include "utilities.h"
 
 using namespace std;
 
-void SolutionWrapper::init() {
+void SolutionWrapper::measure_init() {
 	this->run_index++;
 
 	this->num_actions = 1;
@@ -18,7 +19,7 @@ void SolutionWrapper::init() {
 	this->node_context.push_back(this->solution->scopes[0]->nodes[0]);
 }
 
-pair<bool,string> SolutionWrapper::step(vector<double> obs) {
+pair<bool,string> SolutionWrapper::measure_step(vector<double> obs) {
 	string action;
 	bool is_next = false;
 	bool is_done = false;
@@ -42,9 +43,19 @@ pair<bool,string> SolutionWrapper::step(vector<double> obs) {
 	return {is_done, action};
 }
 
-void SolutionWrapper::end() {
+void SolutionWrapper::measure_end(double result) {
+	update_scores(this->scope_histories[0],
+				  result,
+				  this);
+
 	delete this->scope_histories[0];
 
 	this->scope_histories.clear();
 	this->node_context.clear();
+}
+
+void SolutionWrapper::measure_update(double new_score) {
+	this->solution->curr_score = new_score;
+
+	this->solution->measure_update();
 }

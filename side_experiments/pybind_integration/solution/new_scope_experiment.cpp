@@ -281,16 +281,22 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 
 						new_branch_node->average_val = original_branch_node->average_val;
 
-						for (int f_index = 0; f_index < (int)original_branch_node->factor_ids.size(); f_index++) {
+						for (int i_index = 0; i_index < (int)original_branch_node->inputs.size(); i_index++) {
 							AbstractNode* original_input_node = scope_context->nodes[
-								original_branch_node->factor_ids[f_index].first];
+								original_branch_node->inputs[i_index].node_context[0]];
 							map<AbstractNode*, AbstractNode*>::iterator input_it = node_mappings
 								.find(original_input_node);
 							if (input_it != node_mappings.end()) {
-								new_branch_node->factor_ids.push_back(
-									{input_it->second->id, original_branch_node->factor_ids[f_index].second});
-								new_branch_node->factor_weights.push_back(
-									original_branch_node->factor_weights[f_index]);
+								Input new_input = original_branch_node->inputs[i_index];
+								new_input.scope_context[0] = this->new_scope;
+								new_input.node_context[0] = input_it->second->id;
+								new_branch_node->inputs.push_back(new_input);
+								new_branch_node->input_averages.push_back(
+									original_branch_node->input_averages[i_index]);
+								new_branch_node->input_standard_deviations.push_back(
+									original_branch_node->input_standard_deviations[i_index]);
+								new_branch_node->weights.push_back(
+									original_branch_node->weights[i_index]);
 							}
 						}
 
@@ -418,10 +424,9 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 		this->test_location_start = node_context;
 		this->test_location_is_branch = is_branch;
 		this->test_location_exit = exit_next_node;
-		this->test_location_state = LOCATION_STATE_MEASURE_EXISTING;
-		this->test_location_existing_score = 0.0;
-		this->test_location_new_score= 0.0;
-		this->test_location_count = 0;
+
+		this->state_iter = 0;
+		this->scope_context->new_scope_clean();
 
 		/**
 		 * - added to node_context.experiments outside
@@ -482,21 +487,6 @@ void NewScopeExperiment::decrement(AbstractNode* experiment_node) {
 
 		if (!has_existing) {
 			delete this;
-		}
-	}
-}
-
-void NewScopeExperiment::abort() {
-	this->test_location_start->experiment = NULL;
-	this->test_location_start = NULL;
-
-	if (this->generalize_iter == -1
-			&& this->successful_location_starts.size() == 0) {
-		this->result = EXPERIMENT_RESULT_FAIL;
-	} else {
-		this->generalize_iter++;
-		if (this->generalize_iter >= NEW_SCOPE_NUM_GENERALIZE_TRIES) {
-			this->result = EXPERIMENT_RESULT_FAIL;
 		}
 	}
 }

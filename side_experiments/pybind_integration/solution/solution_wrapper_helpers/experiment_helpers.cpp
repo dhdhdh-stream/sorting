@@ -15,12 +15,10 @@
 using namespace std;
 
 void SolutionWrapper::experiment_init() {
-	this->test_hit = false;
+	this->run_index++;
 
 	this->num_actions = 1;
 	this->num_confusion_instances = 0;
-
-	this->run_index++;
 
 	ScopeHistory* scope_history = new ScopeHistory(this->solution->scopes[0]);
 	this->scope_histories.push_back(scope_history);
@@ -135,19 +133,21 @@ bool SolutionWrapper::experiment_end(double result) {
 						  this->curr_experiment,
 						  this);
 	}
-	sum_num_actions += this->num_actions;
-	sum_num_confusion_instances += this->num_confusion_instances;
-	if (this->run_index % CHECK_CONFUSION_ITER == 0) {
-		double num_actions = (double)sum_num_actions / (double)CHECK_CONFUSION_ITER;
-		double num_confusions = (double)sum_num_confusion_instances / (double)CHECK_CONFUSION_ITER;
+	this->sum_num_actions += this->num_actions;
+	this->sum_num_confusion_instances += this->num_confusion_instances;
+	this->experiment_iter++;
+	if (this->experiment_iter >= CHECK_CONFUSION_ITER) {
+		double num_actions = (double)this->sum_num_actions / (double)CHECK_CONFUSION_ITER;
+		double num_confusions = (double)this->sum_num_confusion_instances / (double)CHECK_CONFUSION_ITER;
 
 		if (num_actions / (double)ACTIONS_PER_CONFUSION > num_confusions) {
 			create_confusion(this->scope_histories[0],
 							 this);
 		}
 
-		sum_num_actions = 0;
-		sum_num_confusion_instances = 0;
+		this->sum_num_actions = 0;
+		this->sum_num_confusion_instances = 0;
+		this->experiment_iter = 0;
 	}
 
 	delete this->scope_histories[0];
@@ -164,19 +164,6 @@ bool SolutionWrapper::experiment_end(double result) {
 
 		delete this->experiment_history;
 		this->experiment_history = NULL;
-	}
-	if (this->test_hit) {
-		this->num_tests_hit++;
-	}
-	if (this->run_index % CHECK_NUM_TESTS_HIT_ITER == 0) {
-		if (this->curr_experiment != NULL) {
-			double hit_ratio = (double)this->num_tests_hit / (double)CHECK_NUM_TESTS_HIT_ITER;
-			if (hit_ratio < MIN_HIT_RATIO) {
-				this->curr_experiment->abort();
-			}
-		}
-
-		this->num_tests_hit = 0;
 	}
 	if (this->curr_experiment != NULL) {
 		if (this->curr_experiment->result == EXPERIMENT_RESULT_FAIL) {
@@ -211,15 +198,8 @@ bool SolutionWrapper::experiment_end(double result) {
 				clean_scope(last_updated_scope,
 							this);
 
-				if (last_updated_scope->nodes.size() >= SCOPE_EXCEEDED_NUM_NODES) {
-					last_updated_scope->exceeded = true;
-
-					check_generalize(last_updated_scope,
-									 this);
-				}
-				if (last_updated_scope->nodes.size() <= SCOPE_RESUME_NUM_NODES) {
-					last_updated_scope->exceeded = false;
-				}
+				check_generalize(last_updated_scope,
+								 this);
 
 				this->solution->clean();
 

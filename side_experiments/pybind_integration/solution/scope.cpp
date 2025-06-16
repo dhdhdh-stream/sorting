@@ -14,7 +14,6 @@ using namespace std;
 Scope::Scope() {
 	this->new_scope_experiment = NULL;
 
-	this->exceeded = false;
 	this->generalized = false;
 }
 
@@ -107,6 +106,12 @@ void Scope::clean_inputs(Scope* scope) {
 	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
 			it != this->nodes.end(); it++) {
 		switch (it->second->type) {
+		case NODE_TYPE_BRANCH:
+			{
+				BranchNode* branch_node = (BranchNode*)it->second;
+				branch_node->clean_inputs(scope);
+			}
+			break;
 		case NODE_TYPE_OBS:
 			{
 				ObsNode* obs_node = (ObsNode*)it->second;
@@ -155,6 +160,14 @@ void Scope::replace_obs_node(Scope* scope,
 	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
 			it != this->nodes.end(); it++) {
 		switch (it->second->type) {
+		case NODE_TYPE_BRANCH:
+			{
+				BranchNode* branch_node = (BranchNode*)it->second;
+				branch_node->replace_obs_node(scope,
+											  original_node_id,
+											  new_node_id);
+			}
+			break;
 		case NODE_TYPE_OBS:
 			{
 				ObsNode* obs_node = (ObsNode*)it->second;
@@ -180,6 +193,14 @@ void Scope::replace_scope(Scope* original_scope,
 										  new_scope);
 			}
 			break;
+		case NODE_TYPE_BRANCH:
+			{
+				BranchNode* branch_node = (BranchNode*)it->second;
+				branch_node->replace_scope(original_scope,
+										   new_scope,
+										   new_scope_node_id);
+			}
+			break;
 		case NODE_TYPE_OBS:
 			{
 				ObsNode* obs_node = (ObsNode*)it->second;
@@ -201,6 +222,27 @@ void Scope::clean() {
 	this->new_scope_experiment = NULL;
 }
 
+void Scope::measure_update() {
+	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
+			it != this->nodes.end(); it++) {
+		it->second->measure_update();
+	}
+}
+
+void Scope::new_scope_clean() {
+	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
+			it != this->nodes.end(); it++) {
+		it->second->new_scope_clean();
+	}
+}
+
+void Scope::new_scope_measure_update(int total_count) {
+	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
+			it != this->nodes.end(); it++) {
+		it->second->new_scope_measure_update(total_count);
+	}
+}
+
 void Scope::save(ofstream& output_file) {
 	output_file << this->node_counter << endl;
 
@@ -217,7 +259,6 @@ void Scope::save(ofstream& output_file) {
 		output_file << this->child_scopes[c_index]->id << endl;
 	}
 
-	output_file << this->exceeded << endl;
 	output_file << this->generalized << endl;
 }
 
@@ -263,7 +304,8 @@ void Scope::load(ifstream& input_file,
 				BranchNode* branch_node = new BranchNode();
 				branch_node->parent = this;
 				branch_node->id = id;
-				branch_node->load(input_file);
+				branch_node->load(input_file,
+								  parent_solution);
 				this->nodes[branch_node->id] = branch_node;
 			}
 			break;
@@ -289,10 +331,6 @@ void Scope::load(ifstream& input_file,
 		this->child_scopes.push_back(parent_solution->scopes[stoi(scope_id_line)]);
 	}
 
-	string exceeded_line;
-	getline(input_file, exceeded_line);
-	this->exceeded = stoi(exceeded_line);
-
 	string generalized_line;
 	getline(input_file, generalized_line);
 	this->generalized = stoi(generalized_line);
@@ -317,6 +355,40 @@ void Scope::save_for_display(ofstream& output_file) {
 
 ScopeHistory::ScopeHistory(Scope* scope) {
 	this->scope = scope;
+}
+
+ScopeHistory::ScopeHistory(ScopeHistory* original) {
+	this->scope = original->scope;
+
+	for (map<int, AbstractNodeHistory*>::iterator it = original->node_histories.begin();
+			it != original->node_histories.end(); it++) {
+		switch (it->second->node->type) {
+		case NODE_TYPE_ACTION:
+			{
+				ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
+				this->node_histories[it->first] = new ActionNodeHistory(action_node_history);
+			}
+			break;
+		case NODE_TYPE_SCOPE:
+			{
+				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)it->second;
+				this->node_histories[it->first] = new ScopeNodeHistory(scope_node_history);
+			}
+			break;
+		case NODE_TYPE_BRANCH:
+			{
+				BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
+				this->node_histories[it->first] = new BranchNodeHistory(branch_node_history);
+			}
+			break;
+		case NODE_TYPE_OBS:
+			{
+				ObsNodeHistory* obs_node_history = (ObsNodeHistory*)it->second;
+				this->node_histories[it->first] = new ObsNodeHistory(obs_node_history);
+			}
+			break;
+		}
+	}
 }
 
 ScopeHistory::~ScopeHistory() {

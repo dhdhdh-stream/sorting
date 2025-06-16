@@ -1,6 +1,5 @@
 #include "branch_experiment.h"
 
-#include <cmath>
 #include <iostream>
 
 #include "constants.h"

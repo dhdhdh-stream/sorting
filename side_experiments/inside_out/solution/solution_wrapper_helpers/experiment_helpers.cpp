@@ -140,16 +140,16 @@ void SolutionWrapper::experiment_end(double result) {
 	this->sum_num_confusion_instances += this->num_confusion_instances;
 	this->experiment_iter++;
 	if (this->experiment_iter >= CHECK_CONFUSION_ITER) {
-		double num_actions = (double)sum_num_actions / (double)CHECK_CONFUSION_ITER;
-		double num_confusions = (double)sum_num_confusion_instances / (double)CHECK_CONFUSION_ITER;
+		double num_actions = (double)this->sum_num_actions / (double)CHECK_CONFUSION_ITER;
+		double num_confusions = (double)this->sum_num_confusion_instances / (double)CHECK_CONFUSION_ITER;
 
 		if (num_actions / (double)ACTIONS_PER_CONFUSION > num_confusions) {
 			create_confusion(this->scope_histories[0],
 							 this);
 		}
 
-		sum_num_actions = 0;
-		sum_num_confusion_instances = 0;
+		this->sum_num_actions = 0;
+		this->sum_num_confusion_instances = 0;
 		this->experiment_iter = 0;
 	}
 

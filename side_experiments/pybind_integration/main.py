@@ -8,7 +8,7 @@ import wrapper
 
 print('Starting...')
 
-MEASURE_ITERS = 1000
+MEASURE_ITERS = 4000
 
 env = gym.make('LunarLander-v3')
 
@@ -47,13 +47,13 @@ while True:
 		sum_reward = 0.0
 		for _ in range(MEASURE_ITERS):
 			obs, info = env.reset()
-			w.init()
+			w.measure_init()
 			solution_done = False
 			while True:
 				if solution_done:
 					action = env.action_space.sample()
 				else:
-					solution_done, s_action = w.step(obs)
+					solution_done, s_action = w.measure_step(obs)
 					if solution_done:
 						continue
 					action = pickle.loads(s_action)
@@ -62,8 +62,11 @@ while True:
 				sum_reward += reward
 				if terminated or truncated:
 					break
-			w.end()
-		print('sum_reward: ' + str(sum_reward))
+			w.measure_end()
+
+		new_score = sum_reward / MEASURE_ITERS
+		print('new_score: ' + str(new_score))
+		w.measure_update(new_score)
 
 		w.save('saves/', 'main.txt')
 		w.save_for_display('../', 'display.txt')

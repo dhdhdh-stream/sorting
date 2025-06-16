@@ -1,10 +1,3 @@
-/**
- * - only 1 experiment per run
- *   - random experiments too likely to be catastrophic
- *     - such that main focus for other experiments will too likely end up being minimizing damage
- *       - rather than improvements to actual solution
- */
-
 #ifndef ABSTRACT_EXPERIMENT_H
 #define ABSTRACT_EXPERIMENT_H
 
@@ -13,16 +6,12 @@
 #include <vector>
 
 class AbstractNode;
-class Problem;
 class Scope;
-class ScopeHistory;
-class Solution;
 class SolutionWrapper;
 
 const int EXPERIMENT_TYPE_BRANCH = 0;
-const int EXPERIMENT_TYPE_PASS_THROUGH = 1;
-const int EXPERIMENT_TYPE_NEW_SCOPE = 2;
-const int EXPERIMENT_TYPE_COMMIT = 3;
+const int EXPERIMENT_TYPE_NEW_SCOPE = 1;
+const int EXPERIMENT_TYPE_COMMIT = 2;
 
 const int EXPERIMENT_RESULT_NA = 0;
 const int EXPERIMENT_RESULT_FAIL = 1;
@@ -57,8 +46,6 @@ public:
 	virtual void experiment_exit_step(SolutionWrapper* wrapper) = 0;
 	virtual void backprop(double target_val,
 						  SolutionWrapper* wrapper) = 0;
-
-	virtual void abort() = 0;
 
 	virtual void clean() = 0;
 	virtual void add(SolutionWrapper* wrapper) = 0;

@@ -13,22 +13,29 @@ const double NETWORK_TARGET_MAX_UPDATE = 0.01;
 const int EPOCH_SIZE = 20;
 
 Network::Network(int input_size,
-				 vector<vector<double>>& sample_inputs) {
+				 vector<vector<double>>& sample_inputs,
+				 vector<vector<bool>>& sample_is_on) {
 	this->input_averages = vector<double>(input_size);
 	this->input_standard_deviations = vector<double>(input_size);
 	for (int i_index = 0; i_index < input_size; i_index++) {
 		double sum_vals = 0.0;
+		int on_count = 0;
 		for (int d_index = 0; d_index < (int)sample_inputs.size(); d_index++) {
-			sum_vals += sample_inputs[d_index][i_index];
+			if (sample_is_on[d_index][i_index]) {
+				sum_vals += sample_inputs[d_index][i_index];
+				on_count++;
+			}
 		}
-		this->input_averages[i_index] = sum_vals / (int)sample_inputs.size();
+		this->input_averages[i_index] = sum_vals / (double)on_count;
 
 		double sum_variances = 0.0;
 		for (int d_index = 0; d_index < (int)sample_inputs.size(); d_index++) {
-			sum_variances += (this->input_averages[i_index] - sample_inputs[d_index][i_index])
-				* (this->input_averages[i_index] - sample_inputs[d_index][i_index]);
+			if (sample_is_on[d_index][i_index]) {
+				sum_variances += (this->input_averages[i_index] - sample_inputs[d_index][i_index])
+					* (this->input_averages[i_index] - sample_inputs[d_index][i_index]);
+			}
 		}
-		this->input_standard_deviations[i_index] = sqrt(sum_variances / (int)sample_inputs.size());
+		this->input_standard_deviations[i_index] = sqrt(sum_variances / (double)on_count);
 		if (this->input_standard_deviations[i_index] < MIN_STANDARD_DEVIATION) {
 			this->input_standard_deviations[i_index] = MIN_STANDARD_DEVIATION;
 		}
@@ -222,16 +229,21 @@ Network::~Network() {
 	delete this->output;
 }
 
-void Network::activate(vector<double>& input_vals) {
+void Network::activate(vector<double>& input_vals,
+					   vector<bool>& input_is_on) {
 	for (int i_index = 0; i_index < (int)input_vals.size(); i_index++) {
-		double normalized = (input_vals[i_index] - this->input_averages[i_index])
-			/ this->input_standard_deviations[i_index];
-		if (normalized > INPUT_CLIP) {
-			normalized = INPUT_CLIP;
-		} else if (normalized < -INPUT_CLIP) {
-			normalized = -INPUT_CLIP;
+		if (input_is_on[i_index]) {
+			double normalized = (input_vals[i_index] - this->input_averages[i_index])
+				/ this->input_standard_deviations[i_index];
+			if (normalized > INPUT_CLIP) {
+				normalized = INPUT_CLIP;
+			} else if (normalized < -INPUT_CLIP) {
+				normalized = -INPUT_CLIP;
+			}
+			this->input->acti_vals[i_index] = normalized;
+		} else {
+			this->input->acti_vals[i_index] = 0.0;
 		}
-		this->input->acti_vals[i_index] = normalized;
 	}
 	this->hidden_1->activate();
 	this->hidden_2->activate();

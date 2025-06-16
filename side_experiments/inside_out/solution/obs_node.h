@@ -2,7 +2,6 @@
 #define OBS_NODE_H
 
 #include <fstream>
-#include <list>
 #include <vector>
 
 #include "abstract_node.h"

@@ -1,6 +1,7 @@
 #ifndef NEW_SCOPE_EXPERIMENT_H
 #define NEW_SCOPE_EXPERIMENT_H
 
+#include <set>
 #include <utility>
 #include <vector>
 
@@ -16,16 +17,10 @@ class SolutionWrapper;
 const int NEW_SCOPE_NUM_GENERALIZE_TRIES = 200;
 const int NEW_SCOPE_NUM_LOCATIONS = 2;
 
-const int LOCATION_STATE_MEASURE_EXISTING = 0;
-const int LOCATION_STATE_MEASURE_NEW = 1;
-const int LOCATION_STATE_VERIFY_EXISTING_1ST = 2;
-const int LOCATION_STATE_VERIFY_NEW_1ST = 3;
-const int LOCATION_STATE_VERIFY_EXISTING_2ND = 4;
-const int LOCATION_STATE_VERIFY_NEW_2ND = 5;
-
 class NewScopeExperimentHistory;
 class NewScopeExperiment : public AbstractExperiment {
 public:
+	int state_iter;
 	int generalize_iter;
 
 	Scope* new_scope;
@@ -33,10 +28,7 @@ public:
 	AbstractNode* test_location_start;
 	bool test_location_is_branch;
 	AbstractNode* test_location_exit;
-	int test_location_state;
-	double test_location_existing_score;
-	double test_location_new_score;
-	int test_location_count;
+	std::vector<double> test_target_val_histories;
 
 	std::vector<AbstractNode*> successful_location_starts;
 	std::vector<bool> successful_location_is_branch;
@@ -67,8 +59,6 @@ public:
 	void test_backprop(double target_val,
 					   NewScopeExperimentHistory* history);
 
-	void abort();
-
 	void clean();
 	void add(SolutionWrapper* wrapper);
 };
@@ -80,6 +70,8 @@ public:
 	int instance_count;
 	AbstractNode* potential_start;
 	bool potential_is_branch;
+
+	std::set<std::pair<AbstractNode*,bool>> nodes_seen;
 
 	NewScopeExperimentHistory(NewScopeExperiment* experiment);
 };

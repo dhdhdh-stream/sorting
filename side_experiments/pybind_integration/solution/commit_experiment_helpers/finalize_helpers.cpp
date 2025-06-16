@@ -270,8 +270,10 @@ void CommitExperiment::add(SolutionWrapper* wrapper) {
 	this->scope_context->nodes[new_branch_node->id] = new_branch_node;
 
 	new_branch_node->average_val = this->commit_new_average_score;
-	new_branch_node->factor_ids = this->commit_new_factor_ids;
-	new_branch_node->factor_weights = this->commit_new_factor_weights;
+	new_branch_node->inputs = this->commit_new_inputs;
+	new_branch_node->input_averages = this->commit_new_input_averages;
+	new_branch_node->input_standard_deviations = this->commit_new_input_standard_deviations;
+	new_branch_node->weights = this->commit_new_weights;
 
 	ObsNode* obs_node = (ObsNode*)this->new_nodes[this->step_iter-1];
 

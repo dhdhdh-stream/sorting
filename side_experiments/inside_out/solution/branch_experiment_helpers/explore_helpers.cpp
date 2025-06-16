@@ -224,7 +224,7 @@ void BranchExperiment::explore_backprop(
 		this->state_iter++;
 		if (this->state_iter >= BRANCH_EXPERIMENT_EXPLORE_ITERS) {
 			if (this->best_surprise > 0.0) {
-				uniform_int_distribution<int> until_distribution(0, 2*((int)this->average_instances_per_run-1));
+				uniform_int_distribution<int> until_distribution(0, (int)this->average_instances_per_run-1.0);
 				this->num_instances_until_target = 1 + until_distribution(generator);
 
 				this->state = BRANCH_EXPERIMENT_STATE_TRAIN_NEW;

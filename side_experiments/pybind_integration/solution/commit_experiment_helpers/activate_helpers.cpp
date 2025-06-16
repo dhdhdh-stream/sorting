@@ -17,8 +17,6 @@ void CommitExperiment::check_activate(AbstractNode* experiment_node,
 									  bool is_branch,
 									  SolutionWrapper* wrapper) {
 	if (is_branch == this->is_branch) {
-		wrapper->test_hit = true;
-
 		CommitExperimentHistory* history;
 		if (wrapper->experiment_history != NULL) {
 			history = (CommitExperimentHistory*)wrapper->experiment_history;
@@ -28,9 +26,6 @@ void CommitExperiment::check_activate(AbstractNode* experiment_node,
 		}
 
 		switch (this->state) {
-		case COMMIT_EXPERIMENT_STATE_EXISTING_GATHER:
-			existing_gather_check_activate(wrapper);
-			break;
 		case COMMIT_EXPERIMENT_STATE_TRAIN_EXISTING:
 			train_existing_check_activate(wrapper,
 										  history);
@@ -42,14 +37,8 @@ void CommitExperiment::check_activate(AbstractNode* experiment_node,
 		case COMMIT_EXPERIMENT_STATE_FIND_SAVE:
 			find_save_check_activate(wrapper);
 			break;
-		case COMMIT_EXPERIMENT_STATE_COMMIT_EXISTING_GATHER:
-			commit_existing_gather_check_activate(wrapper);
-			break;
 		case COMMIT_EXPERIMENT_STATE_COMMIT_TRAIN_EXISTING:
 			commit_train_existing_check_activate(wrapper);
-			break;
-		case COMMIT_EXPERIMENT_STATE_COMMIT_NEW_GATHER:
-			commit_new_gather_check_activate(wrapper);
 			break;
 		case COMMIT_EXPERIMENT_STATE_COMMIT_TRAIN_NEW:
 			commit_train_new_check_activate(wrapper,
@@ -85,26 +74,12 @@ void CommitExperiment::experiment_step(vector<double>& obs,
 					   wrapper,
 					   experiment_state);
 		break;
-	case COMMIT_EXPERIMENT_STATE_COMMIT_EXISTING_GATHER:
-		commit_existing_gather_step(obs,
-									action,
-									is_next,
-									wrapper,
-									experiment_state);
-		break;
 	case COMMIT_EXPERIMENT_STATE_COMMIT_TRAIN_EXISTING:
 		commit_train_existing_step(obs,
 								   action,
 								   is_next,
 								   wrapper,
 								   experiment_state);
-		break;
-	case COMMIT_EXPERIMENT_STATE_COMMIT_NEW_GATHER:
-		commit_new_gather_step(obs,
-							   action,
-							   is_next,
-							   wrapper,
-							   experiment_state);
 		break;
 	case COMMIT_EXPERIMENT_STATE_COMMIT_TRAIN_NEW:
 		commit_train_new_step(obs,
@@ -149,17 +124,9 @@ void CommitExperiment::experiment_exit_step(SolutionWrapper* wrapper) {
 		find_save_exit_step(wrapper,
 							experiment_state);
 		break;
-	case COMMIT_EXPERIMENT_STATE_COMMIT_EXISTING_GATHER:
-		commit_existing_gather_exit_step(wrapper,
-										 experiment_state);
-		break;
 	case COMMIT_EXPERIMENT_STATE_COMMIT_TRAIN_EXISTING:
 		commit_train_existing_exit_step(wrapper,
 										experiment_state);
-		break;
-	case COMMIT_EXPERIMENT_STATE_COMMIT_NEW_GATHER:
-		commit_new_gather_exit_step(wrapper,
-									experiment_state);
 		break;
 	case COMMIT_EXPERIMENT_STATE_COMMIT_TRAIN_NEW:
 		commit_train_new_exit_step(wrapper,
@@ -176,9 +143,6 @@ void CommitExperiment::backprop(double target_val,
 								SolutionWrapper* wrapper) {
 	CommitExperimentHistory* history = (CommitExperimentHistory*)wrapper->experiment_history;
 	switch (this->state) {
-	case COMMIT_EXPERIMENT_STATE_EXISTING_GATHER:
-		existing_gather_backprop();
-		break;
 	case COMMIT_EXPERIMENT_STATE_TRAIN_EXISTING:
 		train_existing_backprop(target_val,
 								history);
@@ -190,15 +154,9 @@ void CommitExperiment::backprop(double target_val,
 	case COMMIT_EXPERIMENT_STATE_FIND_SAVE:
 		find_save_backprop(target_val);
 		break;
-	case COMMIT_EXPERIMENT_STATE_COMMIT_EXISTING_GATHER:
-		commit_existing_gather_backprop();
-		break;
 	case COMMIT_EXPERIMENT_STATE_COMMIT_TRAIN_EXISTING:
 		commit_train_existing_backprop(target_val,
 									   history);
-		break;
-	case COMMIT_EXPERIMENT_STATE_COMMIT_NEW_GATHER:
-		commit_new_gather_backprop();
 		break;
 	case COMMIT_EXPERIMENT_STATE_COMMIT_TRAIN_NEW:
 		commit_train_new_backprop(target_val,

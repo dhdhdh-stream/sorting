@@ -1,7 +1,3 @@
-/**
- * TODO: normalize output?
- */
-
 #ifndef NETWORK_H
 #define NETWORK_H
 
@@ -27,12 +23,14 @@ public:
 	double output_average_max_update;
 
 	Network(int input_size,
-			std::vector<std::vector<double>>& sample_inputs);
+			std::vector<std::vector<double>>& sample_inputs,
+			std::vector<std::vector<bool>>& sample_is_on);
 	Network(Network* original);
 	Network(std::ifstream& input_file);
 	~Network();
 
-	void activate(std::vector<double>& input_vals);
+	void activate(std::vector<double>& input_vals,
+				  std::vector<bool>& input_is_on);
 	void backprop(double error);
 
 	void remove_input(int index);

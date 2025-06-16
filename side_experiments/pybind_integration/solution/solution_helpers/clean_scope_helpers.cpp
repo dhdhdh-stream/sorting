@@ -14,6 +14,8 @@
 
 using namespace std;
 
+const int SCOPE_EXCEEDED_NUM_NODES = 100;
+
 void clean_scope(Scope* scope,
 				 SolutionWrapper* wrapper) {
 	/**
@@ -340,6 +342,99 @@ void clean_scope(Scope* scope,
 		}
 	}
 
+	/**
+	 * - remove useless BranchNodes
+	 */
+	while (true) {
+		bool removed_node = false;
+
+		for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
+				it != scope->nodes.end(); it++) {
+			if (it->second->type == NODE_TYPE_BRANCH) {
+				BranchNode* branch_node = (BranchNode*)it->second;
+				ObsNode* original_obs_node = (ObsNode*)branch_node->original_next_node;
+				ObsNode* branch_obs_node = (ObsNode*)branch_node->branch_next_node;
+				if (original_obs_node->next_node == branch_obs_node->next_node) {
+					ObsNode* merge_obs_node = (ObsNode*)original_obs_node->next_node;
+
+					for (int f_index = 0; f_index < (int)original_obs_node->factors.size(); f_index++) {
+						Factor* new_factor = new Factor(original_obs_node->factors[f_index],
+														wrapper->solution);
+						merge_obs_node->factors.push_back(new_factor);
+
+						wrapper->solution->replace_factor(scope,
+														  original_obs_node->id,
+														  f_index,
+														  merge_obs_node->id,
+														  merge_obs_node->factors.size()-1);
+					}
+
+					wrapper->solution->replace_obs_node(scope,
+														original_obs_node->id,
+														merge_obs_node->id);
+
+					for (int a_index = 0; a_index < (int)merge_obs_node->ancestor_ids.size(); a_index++) {
+						if (merge_obs_node->ancestor_ids[a_index] == original_obs_node->id) {
+							merge_obs_node->ancestor_ids.erase(merge_obs_node->ancestor_ids.begin() + a_index);
+							break;
+						}
+					}
+
+					wrapper->solution->clean_inputs(scope,
+													original_obs_node->id);
+
+					for (int f_index = 0; f_index < (int)branch_obs_node->factors.size(); f_index++) {
+						Factor* new_factor = new Factor(branch_obs_node->factors[f_index],
+														wrapper->solution);
+						merge_obs_node->factors.push_back(new_factor);
+
+						wrapper->solution->replace_factor(scope,
+														  branch_obs_node->id,
+														  f_index,
+														  merge_obs_node->id,
+														  merge_obs_node->factors.size()-1);
+					}
+
+					wrapper->solution->replace_obs_node(scope,
+														branch_obs_node->id,
+														merge_obs_node->id);
+
+					for (int a_index = 0; a_index < (int)merge_obs_node->ancestor_ids.size(); a_index++) {
+						if (merge_obs_node->ancestor_ids[a_index] == branch_obs_node->id) {
+							merge_obs_node->ancestor_ids.erase(merge_obs_node->ancestor_ids.begin() + a_index);
+							break;
+						}
+					}
+
+					wrapper->solution->clean_inputs(scope,
+													branch_obs_node->id);
+
+					wrapper->solution->clean_inputs(scope,
+													branch_node->id);
+
+					ObsNode* previous_obs_node = (ObsNode*)scope->nodes[branch_node->ancestor_ids[0]];
+					previous_obs_node->next_node_id = merge_obs_node->id;
+					previous_obs_node->next_node = merge_obs_node;
+					merge_obs_node->ancestor_ids.push_back(previous_obs_node->id);
+
+					scope->nodes.erase(original_obs_node->id);
+					delete original_obs_node;
+					scope->nodes.erase(branch_obs_node->id);
+					delete branch_obs_node;
+					scope->nodes.erase(branch_node->id);
+					delete branch_node;
+
+					removed_node = true;
+					break;
+				}
+			}
+		}
+
+		if (!removed_node) {
+			break;
+		}
+	}
+
 	for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
 			it != scope->nodes.end(); it++) {
 		it->second->is_init = true;
@@ -348,7 +443,8 @@ void clean_scope(Scope* scope,
 
 void check_generalize(Scope* scope_to_generalize,
 					  SolutionWrapper* wrapper) {
-	if (!scope_to_generalize->generalized) {
+	if (scope_to_generalize->nodes.size() > SCOPE_EXCEEDED_NUM_NODES
+			&& !scope_to_generalize->generalized) {
 		cout << "generalize " << scope_to_generalize->id << endl;
 
 		Scope* new_scope = new Scope();

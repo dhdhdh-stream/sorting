@@ -1,5 +1,7 @@
 #include "input.h"
 
+#include <iostream>
+
 #include "scope.h"
 #include "solution.h"
 
@@ -33,18 +35,106 @@ Input::Input(ifstream& input_file,
 	this->obs_index = stoi(obs_index_line);
 }
 
-bool Input::operator==(const Input& rhs) {
+bool Input::operator==(const Input& rhs) const {
 	return this->scope_context == rhs.scope_context
 		&& this->node_context == rhs.node_context
 		&& this->factor_index == rhs.factor_index
 		&& this->obs_index == rhs.obs_index;
 }
 
-bool Input::operator!=(const Input& rhs) {
+bool Input::operator!=(const Input& rhs) const {
 	return this->scope_context != rhs.scope_context
 		|| this->node_context != rhs.node_context
 		|| this->factor_index != rhs.factor_index
 		|| this->obs_index != rhs.obs_index;
+}
+
+bool Input::operator<(const Input& rhs) const {
+	if (this->scope_context != rhs.scope_context) {
+		return this->scope_context < rhs.scope_context;
+	} else {
+		if (this->node_context != rhs.node_context) {
+			return this->node_context < rhs.node_context;
+		} else {
+			if (this->factor_index != rhs.factor_index) {
+				return this->factor_index < rhs.factor_index;
+			} else {
+				if (this->obs_index != rhs.obs_index) {
+					return this->obs_index < rhs.obs_index;
+				} else {
+					return false;
+				}
+			}
+		}
+	}
+}
+
+bool Input::operator>(const Input& rhs) const {
+	if (this->scope_context != rhs.scope_context) {
+		return this->scope_context > rhs.scope_context;
+	} else {
+		if (this->node_context != rhs.node_context) {
+			return this->node_context > rhs.node_context;
+		} else {
+			if (this->factor_index != rhs.factor_index) {
+				return this->factor_index > rhs.factor_index;
+			} else {
+				if (this->obs_index != rhs.obs_index) {
+					return this->obs_index > rhs.obs_index;
+				} else {
+					return false;
+				}
+			}
+		}
+	}
+}
+
+bool Input::operator<=(const Input& rhs) const {
+	if (this->scope_context != rhs.scope_context) {
+		return this->scope_context < rhs.scope_context;
+	} else {
+		if (this->node_context != rhs.node_context) {
+			return this->node_context < rhs.node_context;
+		} else {
+			if (this->factor_index != rhs.factor_index) {
+				return this->factor_index < rhs.factor_index;
+			} else {
+				if (this->obs_index != rhs.obs_index) {
+					return this->obs_index < rhs.obs_index;
+				} else {
+					return true;
+				}
+			}
+		}
+	}
+}
+
+bool Input::operator>=(const Input& rhs) const {
+	if (this->scope_context != rhs.scope_context) {
+		return this->scope_context > rhs.scope_context;
+	} else {
+		if (this->node_context != rhs.node_context) {
+			return this->node_context > rhs.node_context;
+		} else {
+			if (this->factor_index != rhs.factor_index) {
+				return this->factor_index > rhs.factor_index;
+			} else {
+				if (this->obs_index != rhs.obs_index) {
+					return this->obs_index > rhs.obs_index;
+				} else {
+					return true;
+				}
+			}
+		}
+	}
+}
+
+void Input::print() {
+	for (int l_index = 0; l_index < (int)this->scope_context.size(); l_index++) {
+		cout << this->scope_context[l_index]->id << " " << this->node_context[l_index] << endl;
+	}
+	cout << this->factor_index << endl;
+	cout << this->obs_index << endl;
 }
 
 void Input::save(ofstream& output_file) {
