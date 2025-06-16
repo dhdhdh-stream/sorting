@@ -128,6 +128,7 @@ void clean_scope(Scope* scope,
 					}
 					break;
 				}
+
 				delete it->second;
 				it = scope->nodes.erase(it);
 			} else {
@@ -339,6 +340,27 @@ void clean_scope(Scope* scope,
 				new_obs_node->ancestor_ids.push_back(branch_node->id);
 			}
 			break;
+		}
+	}
+	for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
+			it != scope->nodes.end(); it++) {
+		if (it->second->ancestor_ids.size() > 1 && it->second->type != NODE_TYPE_OBS) {
+			ObsNode* new_obs_node = new ObsNode();
+			new_obs_node->parent = scope;
+			new_obs_node->id = scope->node_counter;
+			scope->node_counter++;
+			scope->nodes[new_obs_node->id] = new_obs_node;
+
+			new_obs_node->next_node_id = it->first;
+			new_obs_node->next_node = it->second;
+
+			for (int a_index = 0; a_index < (int)it->second->ancestor_ids.size(); a_index++) {
+				ObsNode* obs_node = (ObsNode*)scope->nodes[it->second->ancestor_ids[a_index]];
+				obs_node->next_node = new_obs_node;
+			}
+
+			new_obs_node->ancestor_ids = it->second->ancestor_ids;
+			it->second->ancestor_ids = {new_obs_node->id};
 		}
 	}
 

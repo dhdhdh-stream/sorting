@@ -286,6 +286,10 @@ void NewScopeExperiment::backprop(double target_val,
 			this->state_iter = 0;
 			this->scope_context->new_scope_clean();
 
+			if (this->generalize_iter % 20 == 0) {
+				cout << "this->generalize_iter: " << this->generalize_iter << endl;
+			}
+
 			history->potential_start->experiment = this;
 		}
 	}

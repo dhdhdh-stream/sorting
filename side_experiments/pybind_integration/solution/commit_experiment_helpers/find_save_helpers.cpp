@@ -370,6 +370,7 @@ void CommitExperiment::find_save_backprop(
 				this->save_iter = 0;
 
 				this->step_iter--;
+				cout << "this->step_iter: " << this->step_iter << endl;
 				if (this->step_iter == 0) {
 					this->result = EXPERIMENT_RESULT_FAIL;
 				}
@@ -408,7 +409,7 @@ void CommitExperiment::find_save_backprop(
 
 			this->step_iter *= 2;
 
-			uniform_int_distribution<int> until_distribution(0, 2*((int)this->average_instances_per_run-1));
+			uniform_int_distribution<int> until_distribution(0, (int)this->average_instances_per_run-1.0);
 			this->num_instances_until_target = 1 + until_distribution(generator);
 
 			this->state = COMMIT_EXPERIMENT_STATE_COMMIT_TRAIN_EXISTING;

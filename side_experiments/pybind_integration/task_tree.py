@@ -60,7 +60,7 @@ class TaskNode:
 
 				filename = 't_' + str(curr_time_stamp) + '.txt'
 
-				w = wrapper.Wrapper(4)
+				w = wrapper.Wrapper(8)
 				w.save('saves/', filename)
 
 				self.filenames[0] = filename
@@ -84,7 +84,7 @@ class TaskNode:
 
 						output_filename = 't_' + str(curr_time_stamp) + '.txt'
 
-						w = wrapper.Wrapper(4, 'saves/', self.children[m_index].result)
+						w = wrapper.Wrapper(8, 'saves/', self.children[m_index].result)
 						for c_index in range(BRANCH_FACTOR):
 							if c_index != m_index:
 								w.combine('saves/', self.children[c_index].result)
@@ -120,9 +120,21 @@ class TaskNode:
 				best_index = -1
 
 				for c_index in range(BRANCH_FACTOR):
-					possible_file = open('saves/' + self.filenames[c_index], 'r')
-					possible_timestamp = int(possible_file.readline())
-					possible_average_score = float(possible_file.readline())
+					possible_file = open('saves/' + self.filenames[c_index], 'rb')
+					b_possible_timestamp = b''
+					while True:
+						byte = possible_file.read(1)
+						b_possible_timestamp += byte
+						if byte == b'\n':
+							break
+					possible_timestamp = int(b_possible_timestamp.decode('utf-8'))
+					b_possible_average_score = b''
+					while True:
+						byte = possible_file.read(1)
+						b_possible_timestamp += byte
+						if byte == b'\n':
+							break
+					possible_average_score = float(b_possible_average_score.decode('utf-8'))
 					possible_file.close()
 
 					if possible_average_score > best_score:
@@ -133,10 +145,10 @@ class TaskNode:
 
 	def reset(self, index):
 		if self.layer == 0:
-			w = wrapper.Wrapper(4)
+			w = wrapper.Wrapper(8)
 			w.save('saves/', filename)
 		else:
-			w = wrapper.Wrapper(4, 'saves/', self.children[index].result)
+			w = wrapper.Wrapper(8, 'saves/', self.children[index].result)
 			for c_index in range(BRANCH_FACTOR):
 				if c_index != index:
 					w.combine('saves/', self.children[c_index].result)

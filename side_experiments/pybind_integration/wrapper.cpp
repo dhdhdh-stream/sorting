@@ -35,6 +35,13 @@ PYBIND11_MODULE(wrapper, m) {
 		})
 		.def("set_action", &SolutionWrapper::set_action)
 		.def("experiment_end", &SolutionWrapper::experiment_end)
+		.def("measure_init", &SolutionWrapper::measure_init)
+		.def("measure_step", [](SolutionWrapper &wrapper, std::vector<double> obs) {
+			std::pair<bool,std::string> result = wrapper.measure_step(obs);
+			return py::make_tuple(result.first, py::bytes(result.second));
+		})
+		.def("measure_end", &SolutionWrapper::measure_end)
+		.def("measure_update", &SolutionWrapper::measure_update)
 		.def("combine", &SolutionWrapper::combine)
 		.def("save", &SolutionWrapper::save)
 		.def("save_for_display", &SolutionWrapper::save_for_display);

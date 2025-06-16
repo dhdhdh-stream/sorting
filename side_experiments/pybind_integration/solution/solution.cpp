@@ -46,6 +46,8 @@ void Solution::init() {
 	new_scope->node_counter++;
 	starting_noop_node->next_node_id = -1;
 	starting_noop_node->next_node = NULL;
+	starting_noop_node->sum_score = 0.0;
+	starting_noop_node->sum_count = 0;
 	new_scope->nodes[starting_noop_node->id] = starting_noop_node;
 }
 

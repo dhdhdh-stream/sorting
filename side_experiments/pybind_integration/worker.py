@@ -22,6 +22,30 @@ env = gym.make('LunarLander-v3')
 
 w = wrapper.Wrapper(8, path, filename)
 
+sum_reward = 0.0
+for _ in range(MEASURE_ITERS):
+	obs, info = env.reset()
+	w.measure_init()
+	solution_done = False
+	while True:
+		if solution_done:
+			action = env.action_space.sample()
+		else:
+			solution_done, s_action = w.measure_step(obs)
+			if solution_done:
+				continue
+			action = pickle.loads(s_action)
+
+		obs, reward, terminated, truncated, info = env.step(action)
+		sum_reward += reward
+		if terminated or truncated:
+			break
+	w.measure_end()
+
+new_score = sum_reward / MEASURE_ITERS
+print('new_score: ' + str(new_score))
+w.measure_update(new_score)
+
 start_time = time.time()
 while True:
 	curr_time = time.time()

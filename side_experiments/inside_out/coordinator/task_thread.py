@@ -79,9 +79,9 @@ class TaskThread:
 			print('l' + str(self.tasknode.layer) + ' ' + self.worker[0] + ' ' + self.tasknode.filenames[self.index])
 			print(message)
 
-			if len(message) == 0 and self.curr_iter < EXPLORE_ITERS:
-				print('worker ' + self.worker[0] + ' ' + self.tasknode.filenames[self.index] + ' failed')
-				exit(1)
+		if self.channel.closed and self.curr_iter < EXPLORE_ITERS:
+			print('worker ' + self.worker[0] + ' ' + self.tasknode.filenames[self.index] + ' failed')
+			exit(1)
 
 	def close(self):
 		self.client.close()

@@ -17,7 +17,7 @@
 
 using namespace std;
 
-const int COMMIT_EXPERIMENT_EXPLORE_ITERS = 500;
+const int COMMIT_EXPERIMENT_EXPLORE_ITERS = 100;
 
 void CommitExperiment::explore_check_activate(
 		SolutionWrapper* wrapper,

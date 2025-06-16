@@ -50,7 +50,7 @@ int main(int argc, char* argv[]) {
 		if (time_diff.count() >= 20) {
 			start_time = curr_time;
 
-			cout << "a" << endl;
+			cout << "solution_wrapper->improvement_iter: " << solution_wrapper->improvement_iter << endl;
 		}
 
 		int starting_timestamp = solution_wrapper->solution->timestamp;
@@ -92,7 +92,7 @@ int main(int argc, char* argv[]) {
 				if (time_diff.count() >= 20) {
 					start_time = curr_time;
 
-					cout << "a" << endl;
+					cout << "measure" << endl;
 				}
 
 				Problem* problem = problem_type->get_problem();

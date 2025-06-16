@@ -1,6 +1,12 @@
 // TODO: hooks
 // TODO: new score functions
 
+// TODO: while improving, keep going
+// - only merge when failing
+//   - or also fail if stuck
+
+// TODO: save train_existing
+
 #include <chrono>
 #include <iostream>
 #include <map>
