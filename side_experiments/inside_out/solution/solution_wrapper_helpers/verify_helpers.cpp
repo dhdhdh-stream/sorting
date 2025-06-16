@@ -13,6 +13,9 @@
 using namespace std;
 
 void SolutionWrapper::verify_init() {
+	this->num_actions = 1;
+	this->num_confusion_instances = 0;
+
 	this->starting_run_seed = solution->verify_seeds[0];
 	cout << "this->starting_run_seed: " << this->starting_run_seed << endl;
 	this->curr_run_seed = xorshift(this->starting_run_seed);

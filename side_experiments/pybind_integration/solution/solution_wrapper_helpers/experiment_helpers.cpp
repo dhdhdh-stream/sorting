@@ -178,55 +178,57 @@ bool SolutionWrapper::experiment_end(double result) {
 
 		this->num_tests_hit = 0;
 	}
-	if (this->curr_experiment->result == EXPERIMENT_RESULT_FAIL) {
-		this->curr_experiment->clean();
-		delete this->curr_experiment;
+	if (this->curr_experiment != NULL) {
+		if (this->curr_experiment->result == EXPERIMENT_RESULT_FAIL) {
+			this->curr_experiment->clean();
+			delete this->curr_experiment;
 
-		this->curr_experiment = NULL;
-	} else if (this->curr_experiment->result == EXPERIMENT_RESULT_SUCCESS) {
-		this->curr_experiment->clean();
+			this->curr_experiment = NULL;
+		} else if (this->curr_experiment->result == EXPERIMENT_RESULT_SUCCESS) {
+			this->curr_experiment->clean();
 
-		if (this->best_experiment == NULL) {
-			this->best_experiment = this->curr_experiment;
-		} else {
-			if (this->curr_experiment->improvement > best_experiment->improvement) {
-				delete this->best_experiment;
+			if (this->best_experiment == NULL) {
 				this->best_experiment = this->curr_experiment;
 			} else {
-				delete this->curr_experiment;
-			}
-		}
-
-		this->curr_experiment = NULL;
-
-		improvement_iter++;
-		if (improvement_iter >= IMPROVEMENTS_PER_ITER) {
-			Scope* last_updated_scope = this->best_experiment->scope_context;
-
-			this->best_experiment->add(this);
-			delete this->best_experiment;
-			this->best_experiment = NULL;
-
-			clean_scope(last_updated_scope,
-						this);
-
-			if (last_updated_scope->nodes.size() >= SCOPE_EXCEEDED_NUM_NODES) {
-				last_updated_scope->exceeded = true;
-
-				check_generalize(last_updated_scope,
-								 this);
-			}
-			if (last_updated_scope->nodes.size() <= SCOPE_RESUME_NUM_NODES) {
-				last_updated_scope->exceeded = false;
+				if (this->curr_experiment->improvement > best_experiment->improvement) {
+					delete this->best_experiment;
+					this->best_experiment = this->curr_experiment;
+				} else {
+					delete this->curr_experiment;
+				}
 			}
 
-			this->solution->clean();
+			this->curr_experiment = NULL;
 
-			this->solution->timestamp++;
+			improvement_iter++;
+			if (improvement_iter >= IMPROVEMENTS_PER_ITER) {
+				Scope* last_updated_scope = this->best_experiment->scope_context;
 
-			updated = true;
+				this->best_experiment->add(this);
+				delete this->best_experiment;
+				this->best_experiment = NULL;
 
-			this->improvement_iter = 0;
+				clean_scope(last_updated_scope,
+							this);
+
+				if (last_updated_scope->nodes.size() >= SCOPE_EXCEEDED_NUM_NODES) {
+					last_updated_scope->exceeded = true;
+
+					check_generalize(last_updated_scope,
+									 this);
+				}
+				if (last_updated_scope->nodes.size() <= SCOPE_RESUME_NUM_NODES) {
+					last_updated_scope->exceeded = false;
+				}
+
+				this->solution->clean();
+
+				this->solution->timestamp++;
+
+				updated = true;
+
+				this->improvement_iter = 0;
+			}
 		}
 	}
 

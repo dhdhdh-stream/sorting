@@ -32,24 +32,22 @@ int main(int argc, char* argv[]) {
 	SolutionWrapper* solution_wrapper;
 	if (argc > 1) {
 		filename = argv[1];
-		solution_wrapper = new SolutionWrapper(
-			problem_type->num_obs(),
-			"saves/",
-			filename);
 	} else {
 		filename = "main.txt";
-		solution_wrapper = new SolutionWrapper(
-			problem_type->num_obs());
-		solution_wrapper->save("saves/", filename);
 	}
+	solution_wrapper = new SolutionWrapper(
+		problem_type->num_obs(),
+		"saves/",
+		filename);
 
 	{
 		Problem* problem = problem_type->get_problem();
 
 		solution_wrapper->init();
 
-		vector<double> obs = problem->get_observations();
 		while (true) {
+			vector<double> obs = problem->get_observations();
+
 			pair<bool,int> next = solution_wrapper->step(obs);
 			if (next.first) {
 				break;
@@ -59,7 +57,10 @@ int main(int argc, char* argv[]) {
 		}
 
 		double target_val = problem->score_result();
+		target_val -= 0.0001 * solution_wrapper->num_actions;
 		cout << "target_val: " << target_val << endl;
+
+		solution_wrapper->end();
 
 		problem->print();
 

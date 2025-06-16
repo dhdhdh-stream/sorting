@@ -118,6 +118,12 @@ void Scope::clean_inputs(Scope* scope) {
 	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
 			it != this->nodes.end(); it++) {
 		switch (it->second->type) {
+		case NODE_TYPE_BRANCH:
+			{
+				BranchNode* branch_node = (BranchNode*)it->second;
+				branch_node->clean_inputs(scope);
+			}
+			break;
 		case NODE_TYPE_OBS:
 			{
 				ObsNode* obs_node = (ObsNode*)it->second;
@@ -166,6 +172,14 @@ void Scope::replace_obs_node(Scope* scope,
 	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
 			it != this->nodes.end(); it++) {
 		switch (it->second->type) {
+		case NODE_TYPE_BRANCH:
+			{
+				BranchNode* branch_node = (BranchNode*)it->second;
+				branch_node->replace_obs_node(scope,
+											  original_node_id,
+											  new_node_id);
+			}
+			break;
 		case NODE_TYPE_OBS:
 			{
 				ObsNode* obs_node = (ObsNode*)it->second;
@@ -189,6 +203,14 @@ void Scope::replace_scope(Scope* original_scope,
 				ScopeNode* scope_node = (ScopeNode*)it->second;
 				scope_node->replace_scope(original_scope,
 										  new_scope);
+			}
+			break;
+		case NODE_TYPE_BRANCH:
+			{
+				BranchNode* branch_node = (BranchNode*)it->second;
+				branch_node->replace_scope(original_scope,
+										   new_scope,
+										   new_scope_node_id);
 			}
 			break;
 		case NODE_TYPE_OBS:
@@ -226,10 +248,10 @@ void Scope::new_scope_clean() {
 	}
 }
 
-void Scope::new_scope_measure_update() {
+void Scope::new_scope_measure_update(int total_count) {
 	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
 			it != this->nodes.end(); it++) {
-		it->second->new_scope_measure_update();
+		it->second->new_scope_measure_update(total_count);
 	}
 }
 

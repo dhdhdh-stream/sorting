@@ -59,10 +59,13 @@ void factor_best_helper(vector<double>& target_val_histories,
 					break;
 				}
 
-				if (best_indexes[curr_index + 1] > best_indexes[curr_index]) {
+				if (best_indexes[curr_index] == -1
+						|| target_val_histories[best_indexes[curr_index + 1]] > target_val_histories[best_indexes[curr_index]]) {
 					double temp = best_indexes[curr_index + 1];
 					best_indexes[curr_index + 1] = best_indexes[curr_index];
 					best_indexes[curr_index] = temp;
+
+					curr_index--;
 				} else {
 					break;
 				}
@@ -85,10 +88,13 @@ void factor_worst_helper(vector<double>& target_val_histories,
 					break;
 				}
 
-				if (worst_indexes[curr_index + 1] < worst_indexes[curr_index]) {
+				if (worst_indexes[curr_index] == -1
+						|| target_val_histories[worst_indexes[curr_index + 1]] < target_val_histories[worst_indexes[curr_index]]) {
 					double temp = worst_indexes[curr_index + 1];
 					worst_indexes[curr_index + 1] = worst_indexes[curr_index];
 					worst_indexes[curr_index] = temp;
+
+					curr_index--;
 				} else {
 					break;
 				}
@@ -129,9 +135,6 @@ void analyze_input(Input& input,
 			sum_variance += (input_data.average - vals[v_index]) * (input_data.average - vals[v_index]);
 		}
 		input_data.standard_deviation = sqrt(sum_variance / (double)vals.size());
-		if (input_data.standard_deviation < MIN_STANDARD_DEVIATION) {
-			input_data.standard_deviation = MIN_STANDARD_DEVIATION;
-		}
 	}
 }
 
@@ -191,7 +194,8 @@ void highest_t_factor_helper(ScopeHistory* scope_history,
 						it = input_tracker.insert({input, input_data}).first;
 					}
 
-					if (it->second.hit_percent >= MIN_CONSIDER_HIT_PERCENT) {
+					if (it->second.hit_percent >= MIN_CONSIDER_HIT_PERCENT
+							&& it->second.standard_deviation > 0.0) {
 						double curr_val = obs_node_history->factor_values[f_index];
 						double curr_t_score = abs(curr_val - it->second.average) / it->second.standard_deviation;
 						if (curr_t_score > highest_t_scores.back()) {
@@ -211,6 +215,8 @@ void highest_t_factor_helper(ScopeHistory* scope_history,
 									highest_t_scores[curr_index + 1] = highest_t_scores[curr_index];
 									highest_t[curr_index] = temp;
 									highest_t_scores[curr_index] = temp_score;
+
+									curr_index--;
 								} else {
 									break;
 								}
@@ -282,7 +288,8 @@ void highest_t_input_helper(ScopeHistory* scope_history,
 					it = input_tracker.insert({input, input_data}).first;
 				}
 
-				if (it->second.hit_percent >= MIN_CONSIDER_HIT_PERCENT) {
+				if (it->second.hit_percent >= MIN_CONSIDER_HIT_PERCENT
+						&& it->second.standard_deviation > 0.0) {
 					double curr_val;
 					if (branch_node_history->is_branch) {
 						curr_val = 1.0;
@@ -307,6 +314,8 @@ void highest_t_input_helper(ScopeHistory* scope_history,
 								highest_t_scores[curr_index + 1] = highest_t_scores[curr_index];
 								highest_t[curr_index] = temp;
 								highest_t_scores[curr_index] = temp_score;
+
+								curr_index--;
 							} else {
 								break;
 							}
@@ -343,7 +352,8 @@ void highest_t_input_helper(ScopeHistory* scope_history,
 						it = input_tracker.insert({input, input_data}).first;
 					}
 
-					if (it->second.hit_percent >= MIN_CONSIDER_HIT_PERCENT) {
+					if (it->second.hit_percent >= MIN_CONSIDER_HIT_PERCENT
+							&& it->second.standard_deviation > 0.0) {
 						double curr_val = obs_node_history->obs_history[o_index];
 						double curr_t_score = abs(curr_val - it->second.average) / it->second.standard_deviation;
 						if (curr_t_score > highest_t_scores.back()) {
@@ -363,6 +373,8 @@ void highest_t_input_helper(ScopeHistory* scope_history,
 									highest_t_scores[curr_index + 1] = highest_t_scores[curr_index];
 									highest_t[curr_index] = temp;
 									highest_t_scores[curr_index] = temp_score;
+
+									curr_index--;
 								} else {
 									break;
 								}
@@ -394,7 +406,8 @@ void highest_t_input_helper(ScopeHistory* scope_history,
 						it = input_tracker.insert({input, input_data}).first;
 					}
 
-					if (it->second.hit_percent >= MIN_CONSIDER_HIT_PERCENT) {
+					if (it->second.hit_percent >= MIN_CONSIDER_HIT_PERCENT
+							&& it->second.standard_deviation > 0.0) {
 						double curr_val = obs_node_history->factor_values[f_index];
 						double curr_t_score = abs(curr_val - it->second.average) / it->second.standard_deviation;
 						if (curr_t_score > highest_t_scores.back()) {
@@ -414,6 +427,8 @@ void highest_t_input_helper(ScopeHistory* scope_history,
 									highest_t_scores[curr_index + 1] = highest_t_scores[curr_index];
 									highest_t[curr_index] = temp;
 									highest_t_scores[curr_index] = temp_score;
+
+									curr_index--;
 								} else {
 									break;
 								}
@@ -483,7 +498,8 @@ void random_input_helper(ScopeHistory* scope_history,
 					it = input_tracker.insert({input, input_data}).first;
 				}
 
-				if (it->second.hit_percent >= MIN_CONSIDER_HIT_PERCENT) {
+				if (it->second.hit_percent >= MIN_CONSIDER_HIT_PERCENT
+						&& it->second.standard_deviation > 0.0) {
 					uniform_int_distribution<int> select_distribution(0, input_count);
 					input_count++;
 					if (select_distribution(generator) == 0) {
@@ -520,7 +536,8 @@ void random_input_helper(ScopeHistory* scope_history,
 						it = input_tracker.insert({input, input_data}).first;
 					}
 
-					if (it->second.hit_percent >= MIN_CONSIDER_HIT_PERCENT) {
+					if (it->second.hit_percent >= MIN_CONSIDER_HIT_PERCENT
+							&& it->second.standard_deviation > 0.0) {
 						uniform_int_distribution<int> select_distribution(0, input_count);
 						input_count++;
 						if (select_distribution(generator) == 0) {
@@ -552,7 +569,8 @@ void random_input_helper(ScopeHistory* scope_history,
 						it = input_tracker.insert({input, input_data}).first;
 					}
 
-					if (it->second.hit_percent >= MIN_CONSIDER_HIT_PERCENT) {
+					if (it->second.hit_percent >= MIN_CONSIDER_HIT_PERCENT
+							&& it->second.standard_deviation > 0.0) {
 						uniform_int_distribution<int> select_distribution(0, input_count);
 						input_count++;
 						if (select_distribution(generator) == 0) {
@@ -579,15 +597,6 @@ bool train_helper(vector<ScopeHistory*>& scope_histories,
 				  AbstractNode* node_context,
 				  AbstractExperiment* experiment,
 				  double& select_percentage) {
-	{
-		default_random_engine generator_copy = generator;
-		shuffle(scope_histories.begin(), scope_histories.end(), generator_copy);
-	}
-	{
-		default_random_engine generator_copy = generator;
-		shuffle(target_val_histories.begin(), target_val_histories.end(), generator_copy);
-	}
-
 	int num_instances = (int)target_val_histories.size();
 	int num_train_instances = (double)num_instances * (1.0 - TEST_SAMPLES_PERCENTAGE);
 	int num_test_instances = num_instances - num_train_instances;
@@ -678,8 +687,8 @@ bool train_helper(vector<ScopeHistory*>& scope_histories,
 				curr_factor_vals[f_index] = val;
 				curr_factor_is_on[f_index] = is_on;
 			}
-			factor_vals.push_back(curr_factor_vals);
-			factor_is_on.push_back(curr_factor_is_on);
+			factor_vals[h_index] = curr_factor_vals;
+			factor_is_on[h_index] = curr_factor_is_on;
 		}
 
 		#if defined(MDEBUG) && MDEBUG
@@ -833,7 +842,9 @@ bool train_helper(vector<ScopeHistory*>& scope_histories,
 							selected_input,
 							scope_histories,
 							input_tracker);
-		s_network_inputs.insert(selected_input);
+		if (selected_input.scope_context.size() != 0) {
+			s_network_inputs.insert(selected_input);
+		}
 	}
 	{
 		vector<Input> highest_t(INPUT_NUM_HIGHEST);
@@ -867,281 +878,285 @@ bool train_helper(vector<ScopeHistory*>& scope_histories,
 							selected_input,
 							scope_histories,
 							input_tracker);
-		s_network_inputs.insert(selected_input);
-	}
-
-	vector<Input> network_inputs;
-	for (set<Input>::iterator it = s_network_inputs.begin();
-			it != s_network_inputs.end(); it++) {
-		network_inputs.push_back(*it);
-	}
-
-	vector<vector<double>> input_vals(num_instances);
-	vector<vector<bool>> input_is_on(num_instances);
-	for (int h_index = 0; h_index < num_instances; h_index++) {
-		vector<double> curr_input_vals(network_inputs.size());
-		vector<bool> curr_input_is_on(network_inputs.size());
-		for (int i_index = 0; i_index < (int)network_inputs.size(); i_index++) {
-			double val;
-			bool is_on;
-			fetch_input_helper(scope_histories[h_index],
-							   network_inputs[i_index],
-							   0,
-							   val,
-							   is_on);
-			curr_input_vals[i_index] = val;
-			curr_input_is_on[i_index] = is_on;
+		if (selected_input.scope_context.size() != 0) {
+			s_network_inputs.insert(selected_input);
 		}
-		input_vals.push_back(curr_input_vals);
-		input_is_on.push_back(curr_input_is_on);
 	}
 
-	double sum_misguess = 0.0;
-	for (int i_index = num_train_instances; i_index < num_instances; i_index++) {
-		sum_misguess += remaining_scores[i_index] * remaining_scores[i_index];
-	}
-	double average_misguess = sum_misguess / num_test_instances;
-
-	double sum_misguess_variance = 0.0;
-	for (int i_index = num_train_instances; i_index < num_instances; i_index++) {
-		double curr_misguess = remaining_scores[i_index] * remaining_scores[i_index];
-		sum_misguess_variance += (curr_misguess - average_misguess) * (curr_misguess - average_misguess);
-	}
-	double misguess_standard_deviation = sqrt(sum_misguess_variance / num_test_instances);
-	if (misguess_standard_deviation < MIN_STANDARD_DEVIATION) {
-		misguess_standard_deviation = MIN_STANDARD_DEVIATION;
-	}
-
-	Network* new_network = new Network((int)network_inputs.size(),
-									   input_vals,
-									   input_is_on);
-
-	train_network(input_vals,
-				  input_is_on,
-				  remaining_scores,
-				  new_network);
-
-	double new_average_misguess;
-	double new_misguess_standard_deviation;
-	measure_network(input_vals,
-					input_is_on,
-					remaining_scores,
-					new_network,
-					new_average_misguess,
-					new_misguess_standard_deviation);
-
-	#if defined(MDEBUG) && MDEBUG
-	if (rand()%2 == 0) {
-	#else
-	double new_improvement = average_misguess - new_average_misguess;
-	double new_standard_deviation = min(misguess_standard_deviation, new_misguess_standard_deviation);
-	double new_t_score = new_improvement / (new_standard_deviation / sqrt(num_test_instances));
-
-	if (new_t_score > 2.326) {
-	#endif /* MDEBUG */
-		average_misguess = new_average_misguess;
-
-		for (int i_index = (int)network_inputs.size()-1; i_index >= 0; i_index--) {
-			vector<Input> remove_inputs = network_inputs;
-			remove_inputs.erase(remove_inputs.begin() + i_index);
-
-			Network* remove_network = new Network(new_network);
-			remove_network->remove_input(i_index);
-
-			vector<vector<double>> remove_input_vals = input_vals;
-			vector<vector<bool>> remove_input_is_on = input_is_on;
-			for (int d_index = 0; d_index < num_instances; d_index++) {
-				remove_input_vals[d_index].erase(remove_input_vals[d_index].begin() + i_index);
-				remove_input_is_on[d_index].erase(remove_input_is_on[d_index].begin() + i_index);
-			}
-
-			optimize_network(remove_input_vals,
-							 remove_input_is_on,
-							 remaining_scores,
-							 remove_network);
-
-			double remove_average_misguess;
-			double remove_misguess_standard_deviation;
-			measure_network(remove_input_vals,
-							remove_input_is_on,
-							remaining_scores,
-							remove_network,
-							remove_average_misguess,
-							remove_misguess_standard_deviation);
-
-			#if defined(MDEBUG) && MDEBUG
-			if (rand()%2 == 0) {
-			#else
-			double remove_improvement = average_misguess - remove_average_misguess;
-			double remove_standard_deviation = min(misguess_standard_deviation, remove_misguess_standard_deviation);
-			double remove_t_score = remove_improvement / (remove_standard_deviation / sqrt(num_instances * TEST_SAMPLES_PERCENTAGE));
-
-			if (remove_t_score > -0.674) {
-			#endif /* MDEBUG */
-				network_inputs = remove_inputs;
-
-				delete new_network;
-				new_network = remove_network;
-
-				input_vals = remove_input_vals;
-				input_is_on = remove_input_is_on;
-			} else {
-				delete remove_network;
-			}
+	if (s_network_inputs.size() > 0) {
+		vector<Input> network_inputs;
+		for (set<Input>::iterator it = s_network_inputs.begin();
+				it != s_network_inputs.end(); it++) {
+			network_inputs.push_back(*it);
 		}
 
-		if (network_inputs.size() > 0) {
-			Factor* new_factor = new Factor();
-			new_factor->inputs = network_inputs;
-			new_factor->network = new_network;
-			if (node_context->type == NODE_TYPE_OBS) {
-				ObsNode* obs_node = (ObsNode*)node_context;
+		vector<vector<double>> input_vals(num_instances);
+		vector<vector<bool>> input_is_on(num_instances);
+		for (int h_index = 0; h_index < num_instances; h_index++) {
+			vector<double> curr_input_vals(network_inputs.size());
+			vector<bool> curr_input_is_on(network_inputs.size());
+			for (int i_index = 0; i_index < (int)network_inputs.size(); i_index++) {
+				double val;
+				bool is_on;
+				fetch_input_helper(scope_histories[h_index],
+								   network_inputs[i_index],
+								   0,
+								   val,
+								   is_on);
+				curr_input_vals[i_index] = val;
+				curr_input_is_on[i_index] = is_on;
+			}
+			input_vals[h_index] = curr_input_vals;
+			input_is_on[h_index] = curr_input_is_on;
+		}
 
-				obs_node->factors.push_back(new_factor);
+		double sum_misguess = 0.0;
+		for (int i_index = num_train_instances; i_index < num_instances; i_index++) {
+			sum_misguess += remaining_scores[i_index] * remaining_scores[i_index];
+		}
+		double average_misguess = sum_misguess / num_test_instances;
 
-				Input new_input;
-				new_input.scope_context = {obs_node->parent};
-				new_input.node_context = {obs_node->id};
-				new_input.factor_index = (int)obs_node->factors.size()-1;
-				new_input.obs_index = -1;
-				factor_inputs.push_back(new_input);
-				factor_input_averages.push_back(0.0);
-				factor_input_standard_deviations.push_back(1.0);
-				factor_weights.push_back(1.0);
-			} else {
-				ObsNode* new_obs_node = new ObsNode();
-				new_obs_node->parent = experiment->scope_context;
-				new_obs_node->id = experiment->scope_context->node_counter;
-				experiment->scope_context->node_counter++;
-				experiment->scope_context->nodes[new_obs_node->id] = new_obs_node;
+		double sum_misguess_variance = 0.0;
+		for (int i_index = num_train_instances; i_index < num_instances; i_index++) {
+			double curr_misguess = remaining_scores[i_index] * remaining_scores[i_index];
+			sum_misguess_variance += (curr_misguess - average_misguess) * (curr_misguess - average_misguess);
+		}
+		double misguess_standard_deviation = sqrt(sum_misguess_variance / num_test_instances);
+		if (misguess_standard_deviation < MIN_STANDARD_DEVIATION) {
+			misguess_standard_deviation = MIN_STANDARD_DEVIATION;
+		}
 
-				new_obs_node->factors.push_back(new_factor);
+		Network* new_network = new Network((int)network_inputs.size(),
+										   input_vals,
+										   input_is_on);
 
-				switch (experiment->node_context->type) {
-				case NODE_TYPE_ACTION:
-					{
-						ActionNode* action_node = (ActionNode*)experiment->node_context;
+		train_network(input_vals,
+					  input_is_on,
+					  remaining_scores,
+					  new_network);
 
-						new_obs_node->next_node_id = action_node->next_node_id;
-						new_obs_node->next_node = action_node->next_node;
+		double new_average_misguess;
+		double new_misguess_standard_deviation;
+		measure_network(input_vals,
+						input_is_on,
+						remaining_scores,
+						new_network,
+						new_average_misguess,
+						new_misguess_standard_deviation);
 
-						for (int a_index = 0; a_index < (int)action_node->next_node->ancestor_ids.size(); a_index++) {
-							if (action_node->next_node->ancestor_ids[a_index] == action_node->id) {
-								action_node->next_node->ancestor_ids.erase(
-									action_node->next_node->ancestor_ids.begin() + a_index);
-								break;
-							}
-						}
-						action_node->next_node->ancestor_ids.push_back(new_obs_node->id);
+		#if defined(MDEBUG) && MDEBUG
+		if (rand()%2 == 0) {
+		#else
+		double new_improvement = average_misguess - new_average_misguess;
+		double new_standard_deviation = min(misguess_standard_deviation, new_misguess_standard_deviation);
+		double new_t_score = new_improvement / (new_standard_deviation / sqrt(num_test_instances));
 
-						action_node->next_node_id = new_obs_node->id;
-						action_node->next_node = new_obs_node;
+		if (new_t_score > 2.326) {
+		#endif /* MDEBUG */
+			average_misguess = new_average_misguess;
 
-						new_obs_node->ancestor_ids.push_back(action_node->id);
+			for (int i_index = (int)network_inputs.size()-1; i_index >= 0; i_index--) {
+				vector<Input> remove_inputs = network_inputs;
+				remove_inputs.erase(remove_inputs.begin() + i_index);
 
-						new_obs_node->average_hits_per_run = action_node->average_hits_per_run;
-						new_obs_node->average_score = action_node->average_score;
-					}
-					break;
-				case NODE_TYPE_SCOPE:
-					{
-						ScopeNode* scope_node = (ScopeNode*)experiment->node_context;
+				Network* remove_network = new Network(new_network);
+				remove_network->remove_input(i_index);
 
-						new_obs_node->next_node_id = scope_node->next_node_id;
-						new_obs_node->next_node = scope_node->next_node;
-
-						for (int a_index = 0; a_index < (int)scope_node->next_node->ancestor_ids.size(); a_index++) {
-							if (scope_node->next_node->ancestor_ids[a_index] == scope_node->id) {
-								scope_node->next_node->ancestor_ids.erase(
-									scope_node->next_node->ancestor_ids.begin() + a_index);
-								break;
-							}
-						}
-						scope_node->next_node->ancestor_ids.push_back(new_obs_node->id);
-
-						scope_node->next_node_id = new_obs_node->id;
-						scope_node->next_node = new_obs_node;
-
-						new_obs_node->ancestor_ids.push_back(scope_node->id);
-
-						new_obs_node->average_hits_per_run = scope_node->average_hits_per_run;
-						new_obs_node->average_score = scope_node->average_score;
-					}
-					break;
-				case NODE_TYPE_BRANCH:
-					{
-						BranchNode* branch_node = (BranchNode*)experiment->node_context;
-
-						if (experiment->is_branch) {
-							new_obs_node->next_node_id = branch_node->branch_next_node_id;
-							new_obs_node->next_node = branch_node->branch_next_node;
-
-							for (int a_index = 0; a_index < (int)branch_node->branch_next_node->ancestor_ids.size(); a_index++) {
-								if (branch_node->branch_next_node->ancestor_ids[a_index] == branch_node->id) {
-									branch_node->branch_next_node->ancestor_ids.erase(
-										branch_node->branch_next_node->ancestor_ids.begin() + a_index);
-									break;
-								}
-							}
-							branch_node->branch_next_node->ancestor_ids.push_back(new_obs_node->id);
-
-							branch_node->branch_next_node_id = new_obs_node->id;
-							branch_node->branch_next_node = new_obs_node;
-
-							new_obs_node->average_hits_per_run = branch_node->branch_average_hits_per_run;
-							new_obs_node->average_score = branch_node->branch_average_score;
-						} else {
-							new_obs_node->next_node_id = branch_node->original_next_node_id;
-							new_obs_node->next_node = branch_node->original_next_node;
-
-							for (int a_index = 0; a_index < (int)branch_node->original_next_node->ancestor_ids.size(); a_index++) {
-								if (branch_node->original_next_node->ancestor_ids[a_index] == branch_node->id) {
-									branch_node->original_next_node->ancestor_ids.erase(
-										branch_node->original_next_node->ancestor_ids.begin() + a_index);
-									break;
-								}
-							}
-							branch_node->original_next_node->ancestor_ids.push_back(new_obs_node->id);
-
-							branch_node->original_next_node_id = new_obs_node->id;
-							branch_node->original_next_node = new_obs_node;
-
-							new_obs_node->average_hits_per_run = branch_node->original_average_hits_per_run;
-							new_obs_node->average_score = branch_node->original_average_score;
-						}
-
-						new_obs_node->ancestor_ids.push_back(branch_node->id);
-					}
-					break;
+				vector<vector<double>> remove_input_vals = input_vals;
+				vector<vector<bool>> remove_input_is_on = input_is_on;
+				for (int d_index = 0; d_index < num_instances; d_index++) {
+					remove_input_vals[d_index].erase(remove_input_vals[d_index].begin() + i_index);
+					remove_input_is_on[d_index].erase(remove_input_is_on[d_index].begin() + i_index);
 				}
 
-				experiment->node_context->experiment = NULL;
+				optimize_network(remove_input_vals,
+								 remove_input_is_on,
+								 remaining_scores,
+								 remove_network);
 
-				experiment->node_context = new_obs_node;
-				experiment->is_branch = false;
-				experiment->node_context->experiment = experiment;
+				double remove_average_misguess;
+				double remove_misguess_standard_deviation;
+				measure_network(remove_input_vals,
+								remove_input_is_on,
+								remaining_scores,
+								remove_network,
+								remove_average_misguess,
+								remove_misguess_standard_deviation);
 
-				Input new_input;
-				new_input.scope_context = {experiment->scope_context};
-				new_input.node_context = {new_obs_node->id};
-				new_input.factor_index = 0;
-				new_input.obs_index = -1;
-				factor_inputs.push_back(new_input);
-				factor_input_averages.push_back(0.0);
-				factor_input_standard_deviations.push_back(1.0);
-				factor_weights.push_back(1.0);
+				#if defined(MDEBUG) && MDEBUG
+				if (rand()%2 == 0) {
+				#else
+				double remove_improvement = average_misguess - remove_average_misguess;
+				double remove_standard_deviation = min(misguess_standard_deviation, remove_misguess_standard_deviation);
+				double remove_t_score = remove_improvement / (remove_standard_deviation / sqrt(num_instances * TEST_SAMPLES_PERCENTAGE));
+
+				if (remove_t_score > -0.674) {
+				#endif /* MDEBUG */
+					network_inputs = remove_inputs;
+
+					delete new_network;
+					new_network = remove_network;
+
+					input_vals = remove_input_vals;
+					input_is_on = remove_input_is_on;
+				} else {
+					delete remove_network;
+				}
 			}
 
-			for (int i_index = 0; i_index < num_instances; i_index++) {
-				new_network->activate(input_vals[i_index],
-									  input_is_on[i_index]);
-				sum_vals[i_index] += new_network->output->acti_vals[0];
+			if (network_inputs.size() > 0) {
+				Factor* new_factor = new Factor();
+				new_factor->inputs = network_inputs;
+				new_factor->network = new_network;
+				if (node_context->type == NODE_TYPE_OBS) {
+					ObsNode* obs_node = (ObsNode*)node_context;
+
+					obs_node->factors.push_back(new_factor);
+
+					Input new_input;
+					new_input.scope_context = {obs_node->parent};
+					new_input.node_context = {obs_node->id};
+					new_input.factor_index = (int)obs_node->factors.size()-1;
+					new_input.obs_index = -1;
+					factor_inputs.push_back(new_input);
+					factor_input_averages.push_back(0.0);
+					factor_input_standard_deviations.push_back(1.0);
+					factor_weights.push_back(1.0);
+				} else {
+					ObsNode* new_obs_node = new ObsNode();
+					new_obs_node->parent = experiment->scope_context;
+					new_obs_node->id = experiment->scope_context->node_counter;
+					experiment->scope_context->node_counter++;
+					experiment->scope_context->nodes[new_obs_node->id] = new_obs_node;
+
+					new_obs_node->factors.push_back(new_factor);
+
+					switch (experiment->node_context->type) {
+					case NODE_TYPE_ACTION:
+						{
+							ActionNode* action_node = (ActionNode*)experiment->node_context;
+
+							new_obs_node->next_node_id = action_node->next_node_id;
+							new_obs_node->next_node = action_node->next_node;
+
+							for (int a_index = 0; a_index < (int)action_node->next_node->ancestor_ids.size(); a_index++) {
+								if (action_node->next_node->ancestor_ids[a_index] == action_node->id) {
+									action_node->next_node->ancestor_ids.erase(
+										action_node->next_node->ancestor_ids.begin() + a_index);
+									break;
+								}
+							}
+							action_node->next_node->ancestor_ids.push_back(new_obs_node->id);
+
+							action_node->next_node_id = new_obs_node->id;
+							action_node->next_node = new_obs_node;
+
+							new_obs_node->ancestor_ids.push_back(action_node->id);
+
+							new_obs_node->average_hits_per_run = action_node->average_hits_per_run;
+							new_obs_node->average_score = action_node->average_score;
+						}
+						break;
+					case NODE_TYPE_SCOPE:
+						{
+							ScopeNode* scope_node = (ScopeNode*)experiment->node_context;
+
+							new_obs_node->next_node_id = scope_node->next_node_id;
+							new_obs_node->next_node = scope_node->next_node;
+
+							for (int a_index = 0; a_index < (int)scope_node->next_node->ancestor_ids.size(); a_index++) {
+								if (scope_node->next_node->ancestor_ids[a_index] == scope_node->id) {
+									scope_node->next_node->ancestor_ids.erase(
+										scope_node->next_node->ancestor_ids.begin() + a_index);
+									break;
+								}
+							}
+							scope_node->next_node->ancestor_ids.push_back(new_obs_node->id);
+
+							scope_node->next_node_id = new_obs_node->id;
+							scope_node->next_node = new_obs_node;
+
+							new_obs_node->ancestor_ids.push_back(scope_node->id);
+
+							new_obs_node->average_hits_per_run = scope_node->average_hits_per_run;
+							new_obs_node->average_score = scope_node->average_score;
+						}
+						break;
+					case NODE_TYPE_BRANCH:
+						{
+							BranchNode* branch_node = (BranchNode*)experiment->node_context;
+
+							if (experiment->is_branch) {
+								new_obs_node->next_node_id = branch_node->branch_next_node_id;
+								new_obs_node->next_node = branch_node->branch_next_node;
+
+								for (int a_index = 0; a_index < (int)branch_node->branch_next_node->ancestor_ids.size(); a_index++) {
+									if (branch_node->branch_next_node->ancestor_ids[a_index] == branch_node->id) {
+										branch_node->branch_next_node->ancestor_ids.erase(
+											branch_node->branch_next_node->ancestor_ids.begin() + a_index);
+										break;
+									}
+								}
+								branch_node->branch_next_node->ancestor_ids.push_back(new_obs_node->id);
+
+								branch_node->branch_next_node_id = new_obs_node->id;
+								branch_node->branch_next_node = new_obs_node;
+
+								new_obs_node->average_hits_per_run = branch_node->branch_average_hits_per_run;
+								new_obs_node->average_score = branch_node->branch_average_score;
+							} else {
+								new_obs_node->next_node_id = branch_node->original_next_node_id;
+								new_obs_node->next_node = branch_node->original_next_node;
+
+								for (int a_index = 0; a_index < (int)branch_node->original_next_node->ancestor_ids.size(); a_index++) {
+									if (branch_node->original_next_node->ancestor_ids[a_index] == branch_node->id) {
+										branch_node->original_next_node->ancestor_ids.erase(
+											branch_node->original_next_node->ancestor_ids.begin() + a_index);
+										break;
+									}
+								}
+								branch_node->original_next_node->ancestor_ids.push_back(new_obs_node->id);
+
+								branch_node->original_next_node_id = new_obs_node->id;
+								branch_node->original_next_node = new_obs_node;
+
+								new_obs_node->average_hits_per_run = branch_node->original_average_hits_per_run;
+								new_obs_node->average_score = branch_node->original_average_score;
+							}
+
+							new_obs_node->ancestor_ids.push_back(branch_node->id);
+						}
+						break;
+					}
+
+					experiment->node_context->experiment = NULL;
+
+					experiment->node_context = new_obs_node;
+					experiment->is_branch = false;
+					experiment->node_context->experiment = experiment;
+
+					Input new_input;
+					new_input.scope_context = {experiment->scope_context};
+					new_input.node_context = {new_obs_node->id};
+					new_input.factor_index = 0;
+					new_input.obs_index = -1;
+					factor_inputs.push_back(new_input);
+					factor_input_averages.push_back(0.0);
+					factor_input_standard_deviations.push_back(1.0);
+					factor_weights.push_back(1.0);
+				}
+
+				for (int i_index = 0; i_index < num_instances; i_index++) {
+					new_network->activate(input_vals[i_index],
+										  input_is_on[i_index]);
+					sum_vals[i_index] += new_network->output->acti_vals[0];
+				}
+			} else {
+				delete new_network;
 			}
 		} else {
 			delete new_network;
 		}
-	} else {
-		delete new_network;
 	}
 
 	#if defined(MDEBUG) && MDEBUG

@@ -276,6 +276,8 @@ void CommitExperiment::find_save_backprop(
 
 		double t_score = (new_score - existing_score) / new_standard_deviation;
 		if (t_score >= EARLY_SUCCESS_MIN_T_SCORE) {
+			this->i_target_val_histories.clear();
+
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 					ActionNode* new_action_node = new ActionNode();
@@ -307,7 +309,7 @@ void CommitExperiment::find_save_backprop(
 
 			this->step_iter *= 2;
 
-			uniform_int_distribution<int> until_distribution(0, 2*((int)this->average_instances_per_run-1));
+			uniform_int_distribution<int> until_distribution(0, (int)this->average_instances_per_run-1.0);
 			this->num_instances_until_target = 1 + until_distribution(generator);
 
 			this->state = COMMIT_EXPERIMENT_STATE_COMMIT_TRAIN_EXISTING;
@@ -378,6 +380,8 @@ void CommitExperiment::find_save_backprop(
 				}
 			}
 		} else if (this->state_iter >= MEASURE_S4_ITERS) {
+			this->i_target_val_histories.clear();
+
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 					ActionNode* new_action_node = new ActionNode();

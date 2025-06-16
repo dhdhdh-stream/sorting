@@ -40,16 +40,19 @@ except IOError as e:
 initialize_client.close()
 workers.put(initialize_worker)
 
-task_tree = TaskTree()
+# curr_time_stamp = int(time.time())
+# filename = 'saves/task_tree_' + str(curr_time_stamp) + '.txt'
+# task_tree = TaskTree()
 
-# task_tree_file = open('saves/task_tree.txt', 'r')
-# task_tree = TaskTree(task_tree_file)
-# task_tree_file.close()
+filename = 'saves/task_tree_1749834670.txt'
+task_tree_file = open(filename, 'r')
+task_tree = TaskTree(task_tree_file)
+task_tree_file.close()
 
 tasks = deque()
 task_tree.init_and_add_tasks(tasks)
 
-task_tree_file = open('saves/task_tree.txt', 'w')
+task_tree_file = open(filename, 'w')
 task_tree.save(task_tree_file)
 task_tree_file.close()
 
@@ -66,7 +69,7 @@ while True:
 
 			task_tree.init_and_add_tasks(tasks)
 
-			task_tree_file = open('saves/task_tree.txt', 'w')
+			task_tree_file = open(filename, 'w')
 			task_tree.save(task_tree_file)
 			task_tree_file.close()
 
@@ -79,7 +82,7 @@ while True:
 			task_tree.expand()
 			task_tree.init_and_add_tasks(tasks)
 
-			task_tree_file = open('saves/task_tree.txt', 'w')
+			task_tree_file = open(filename, 'w')
 			task_tree.save(task_tree_file)
 			task_tree_file.close()
 

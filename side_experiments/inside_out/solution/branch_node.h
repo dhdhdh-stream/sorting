@@ -93,7 +93,7 @@ public:
 	void measure_update();
 
 	void new_scope_clean();
-	void new_scope_measure_update();
+	void new_scope_measure_update(int total_count);
 
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file,

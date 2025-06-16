@@ -48,8 +48,40 @@ int main(int argc, char* argv[]) {
 			filename);
 	} else {
 		filename = "main.txt";
+
 		solution_wrapper = new SolutionWrapper(
 			problem_type->num_obs());
+
+		double sum_score = 0.0;
+		for (int iter_index = 0; iter_index < MEASURE_ITERS; iter_index++) {
+			Problem* problem = problem_type->get_problem();
+
+			solution_wrapper->measure_init();
+
+			while (true) {
+				vector<double> obs = problem->get_observations();
+
+				pair<bool,int> next = solution_wrapper->measure_step(obs);
+				if (next.first) {
+					break;
+				} else {
+					problem->perform_action(next.second);
+				}
+			}
+
+			double target_val = problem->score_result();
+			target_val -= 0.0001 * solution_wrapper->num_actions;
+			sum_score += target_val;
+
+			solution_wrapper->measure_end(target_val);
+
+			delete problem;
+		}
+
+		double new_score = sum_score / (double)MEASURE_ITERS;
+		cout << "new_score: " << new_score << endl;
+		solution_wrapper->measure_update(new_score);
+
 		solution_wrapper->save("saves/", filename);
 	}
 
@@ -65,8 +97,9 @@ int main(int argc, char* argv[]) {
 
 		solution_wrapper->experiment_init();
 
-		vector<double> obs = problem->get_observations();
 		while (true) {
+			vector<double> obs = problem->get_observations();
+
 			tuple<bool,bool,int> next = solution_wrapper->experiment_step(obs);
 			if (get<0>(next)) {
 				break;
@@ -83,6 +116,7 @@ int main(int argc, char* argv[]) {
 		}
 
 		double target_val = problem->score_result();
+		target_val -= 0.0001 * solution_wrapper->num_actions;
 
 		solution_wrapper->experiment_end(target_val);
 
@@ -96,8 +130,9 @@ int main(int argc, char* argv[]) {
 
 				solution_wrapper->verify_init();
 
-				vector<double> obs = problem->get_observations();
 				while (true) {
+					vector<double> obs = problem->get_observations();
+
 					pair<bool,int> next = solution_wrapper->verify_step(obs);
 					if (next.first) {
 						break;
@@ -118,11 +153,12 @@ int main(int argc, char* argv[]) {
 			for (int iter_index = 0; iter_index < MEASURE_ITERS; iter_index++) {
 				Problem* problem = problem_type->get_problem();
 
-				solution_wrapper->init();
+				solution_wrapper->measure_init();
 
-				vector<double> obs = problem->get_observations();
 				while (true) {
-					pair<bool,int> next = solution_wrapper->step(obs);
+					vector<double> obs = problem->get_observations();
+
+					pair<bool,int> next = solution_wrapper->measure_step(obs);
 					if (next.first) {
 						break;
 					} else {
@@ -131,14 +167,17 @@ int main(int argc, char* argv[]) {
 				}
 
 				double target_val = problem->score_result();
+				target_val -= 0.0001 * solution_wrapper->num_actions;
 				sum_score += target_val;
 
-				solution_wrapper->end();
+				solution_wrapper->measure_end(target_val);
 
 				delete problem;
 			}
 
-			cout << "curr_score: " << sum_score / MEASURE_ITERS << endl;
+			double new_score = sum_score / (double)MEASURE_ITERS;
+			cout << "new_score: " << new_score << endl;
+			solution_wrapper->measure_update(new_score);
 
 			solution_wrapper->save("saves/", filename);
 

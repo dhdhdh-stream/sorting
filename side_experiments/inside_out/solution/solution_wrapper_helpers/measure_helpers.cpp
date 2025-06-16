@@ -11,6 +11,9 @@ using namespace std;
 void SolutionWrapper::measure_init() {
 	this->run_index++;
 
+	this->num_actions = 1;
+	this->num_confusion_instances = 0;
+
 	#if defined(MDEBUG) && MDEBUG
 	this->starting_run_seed = this->run_index;
 	this->curr_run_seed = xorshift(this->starting_run_seed);
@@ -56,6 +59,8 @@ void SolutionWrapper::measure_end(double result) {
 	this->node_context.clear();
 }
 
-void SolutionWrapper::measure_update() {
+void SolutionWrapper::measure_update(double new_score) {
+	this->solution->curr_score = new_score;
+
 	this->solution->measure_update();
 }

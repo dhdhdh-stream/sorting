@@ -76,7 +76,7 @@ public:
 	void measure_init();
 	std::pair<bool,int> measure_step(std::vector<double> obs);
 	void measure_end(double result);
-	void measure_update();
+	void measure_update(double new_score);
 
 	void save(std::string path,
 			  std::string name);

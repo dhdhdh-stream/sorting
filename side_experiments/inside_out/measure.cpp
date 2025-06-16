@@ -50,8 +50,9 @@ int main(int argc, char* argv[]) {
 
 		solution_wrapper->init();
 
-		vector<double> obs = problem->get_observations();
 		while (true) {
+			vector<double> obs = problem->get_observations();
+
 			pair<bool,int> next = solution_wrapper->step(obs);
 			if (next.first) {
 				break;
@@ -61,6 +62,9 @@ int main(int argc, char* argv[]) {
 		}
 
 		double target_val = problem->score_result();
+		target_val -= 0.0001 * solution_wrapper->num_actions;
+
+		solution_wrapper->end();
 
 		if (solution_wrapper->num_actions > max_num_actions) {
 			max_num_actions = solution_wrapper->num_actions;

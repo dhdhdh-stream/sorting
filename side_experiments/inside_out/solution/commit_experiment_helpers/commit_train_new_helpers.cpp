@@ -184,7 +184,8 @@ void CommitExperiment::commit_train_new_backprop(
 	}
 
 	this->state_iter++;
-	if (this->state_iter >= TRAIN_NEW_NUM_DATAPOINTS) {
+	if (this->state_iter >= TRAIN_NEW_NUM_DATAPOINTS
+			&& (int)this->i_target_val_histories.size() >= TRAIN_NEW_NUM_DATAPOINTS) {
 		double average_score;
 		vector<Input> factor_inputs;
 		vector<double> factor_input_averages;
@@ -198,7 +199,7 @@ void CommitExperiment::commit_train_new_backprop(
 									   factor_input_averages,
 									   factor_input_standard_deviations,
 									   factor_weights,
-									   this->node_context,
+									   this->new_nodes[this->step_iter-1],
 									   this,
 									   select_percentage);
 

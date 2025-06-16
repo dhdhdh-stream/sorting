@@ -27,6 +27,9 @@ public:
 
 	bool hit_mine;
 
+	// temp
+	double starting_score;
+
 	Minesweeper();
 
 	std::vector<double> get_observations();
@@ -42,6 +45,8 @@ public:
 
 	double get_observation_helper(int x, int y);
 	void reveal_helper(int x, int y);
+	// temp
+	double score_result_helper();
 };
 
 class TypeMinesweeper : public ProblemType {

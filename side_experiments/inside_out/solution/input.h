@@ -25,6 +25,8 @@ public:
 	bool operator<=(const Input& rhs) const;
 	bool operator>=(const Input& rhs) const;
 
+	void print();
+
 	void save(std::ofstream& output_file);
 };
 

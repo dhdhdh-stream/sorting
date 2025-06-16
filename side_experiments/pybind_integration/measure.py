@@ -10,19 +10,24 @@ else:
 
 MEASURE_ITERS = 1000
 
-env = gym.make('CartPole-v1')
+env = gym.make('LunarLander-v3')
 
-w = wrapper.Wrapper(4, 'saves/', filename)
+w = wrapper.Wrapper(8, 'saves/', filename)
 
 sum_reward = 0.0
 for _ in range(MEASURE_ITERS):
 	obs, info = env.reset()
 	w.init()
+	solution_done = False
 	while True:
-		is_done, s_action = w.step(obs)
-		if is_done:
-			break
-		action = pickle.loads(s_action)
+		if solution_done:
+			action = env.action_space.sample()
+		else:
+			solution_done, s_action = w.step(obs)
+			if solution_done:
+				continue
+			action = pickle.loads(s_action)
+
 		obs, reward, terminated, truncated, info = env.step(action)
 		sum_reward += reward
 		if terminated or truncated:

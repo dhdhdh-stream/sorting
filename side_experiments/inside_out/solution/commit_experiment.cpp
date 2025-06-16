@@ -4,6 +4,7 @@
 #include "branch_experiment.h"
 #include "globals.h"
 #include "problem.h"
+#include "scope.h"
 
 using namespace std;
 
@@ -27,6 +28,10 @@ CommitExperiment::CommitExperiment(Scope* scope_context,
 CommitExperiment::~CommitExperiment() {
 	for (int n_index = 0; n_index < (int)this->new_nodes.size(); n_index++) {
 		delete this->new_nodes[n_index];
+	}
+
+	for (int h_index = 0; h_index < (int)this->scope_histories.size(); h_index++) {
+		delete this->scope_histories[h_index];
 	}
 
 	#if defined(MDEBUG) && MDEBUG

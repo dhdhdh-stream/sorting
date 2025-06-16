@@ -110,8 +110,8 @@ void ObsNode::new_scope_clean() {
 	this->new_scope_sum_count = 0;
 }
 
-void ObsNode::new_scope_measure_update() {
-	this->new_scope_average_hits_per_run = (double)this->new_scope_sum_count / (double)MEASURE_S4_ITERS;
+void ObsNode::new_scope_measure_update(int total_count) {
+	this->new_scope_average_hits_per_run = (double)this->new_scope_sum_count / (double)total_count;
 	this->new_scope_average_score = this->new_scope_sum_score / (double)this->new_scope_sum_count;
 }
 

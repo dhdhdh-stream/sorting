@@ -45,6 +45,8 @@ void BranchExperiment::explore_check_activate(
 		}
 		history->existing_predicted_scores.push_back(sum_vals);
 
+		this->curr_scope_history = new ScopeHistory(wrapper->scope_histories.back());
+
 		vector<AbstractNode*> possible_exits;
 
 		AbstractNode* starting_node;
@@ -202,14 +204,21 @@ void BranchExperiment::explore_backprop(
 			this->best_actions = this->curr_actions;
 			this->best_scopes = this->curr_scopes;
 			this->best_exit_next_node = this->curr_exit_next_node;
+			if (this->best_scope_history != NULL) {
+				delete this->best_scope_history;
+			}
+			this->best_scope_history = this->curr_scope_history;
 
 			this->curr_step_types.clear();
 			this->curr_actions.clear();
 			this->curr_scopes.clear();
+			this->curr_scope_history = NULL;
 		} else {
 			this->curr_step_types.clear();
 			this->curr_actions.clear();
 			this->curr_scopes.clear();
+			delete this->curr_scope_history;
+			this->curr_scope_history = NULL;
 		}
 
 		this->state_iter++;

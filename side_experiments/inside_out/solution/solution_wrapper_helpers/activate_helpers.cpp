@@ -10,6 +10,9 @@ using namespace std;
 void SolutionWrapper::init() {
 	this->run_index++;
 
+	this->num_actions = 1;
+	this->num_confusion_instances = 0;
+
 	#if defined(MDEBUG) && MDEBUG
 	this->starting_run_seed = this->run_index;
 	this->curr_run_seed = xorshift(this->starting_run_seed);

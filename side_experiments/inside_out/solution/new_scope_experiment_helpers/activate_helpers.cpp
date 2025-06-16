@@ -189,6 +189,8 @@ void NewScopeExperiment::backprop(double target_val,
 	NewScopeExperimentHistory* history = (NewScopeExperimentHistory*)wrapper->experiment_history;
 
 	if (this->test_location_start != NULL) {
+		this->state_iter++;
+
 		for (set<pair<AbstractNode*,bool>>::iterator it = history->nodes_seen.begin();
 				it != history->nodes_seen.end(); it++) {
 			switch (it->first->type) {
@@ -281,6 +283,7 @@ void NewScopeExperiment::backprop(double target_val,
 			this->test_location_exit = exit_next_node;
 			this->test_target_val_histories.clear();
 
+			this->state_iter = 0;
 			this->scope_context->new_scope_clean();
 
 			history->potential_start->experiment = this;

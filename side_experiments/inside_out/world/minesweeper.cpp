@@ -104,6 +104,8 @@ Minesweeper::Minesweeper() {
 	this->hit_mine = false;
 
 	reveal_helper(STARTING_X, STARTING_Y);
+
+	this->starting_score = score_result_helper();
 }
 
 double Minesweeper::get_observation_helper(int x, int y) {
@@ -146,6 +148,15 @@ vector<double> Minesweeper::get_observations() {
 
 	obs.push_back(get_observation_helper(this->current_x, this->current_y));
 
+	// for (int x_index = -2; x_index <= 2; x_index++) {
+	// 	for (int y_index = -2; y_index <= 2; y_index++) {
+	// 		obs.push_back(get_observation_helper(
+	// 			this->current_x + x_index,
+	// 			this->current_y + y_index
+	// 		));
+	// 	}
+	// }
+
 	return obs;
 }
 
@@ -185,24 +196,36 @@ void Minesweeper::perform_action(int action) {
 		if (this->current_y > HEIGHT) {
 			this->current_y = HEIGHT;
 		}
+		// if (this->current_y > HEIGHT-1) {
+		// 	this->current_y = HEIGHT-1;
+		// }
 		break;
 	case MINESWEEPER_ACTION_RIGHT:
 		this->current_x++;
 		if (this->current_x > WIDTH) {
 			this->current_x = WIDTH;
 		}
+		// if (this->current_x > WIDTH-1) {
+		// 	this->current_x = WIDTH-1;
+		// }
 		break;
 	case MINESWEEPER_ACTION_DOWN:
 		this->current_y--;
 		if (this->current_y < -1) {
 			this->current_y = -1;
 		}
+		// if (this->current_y < 0) {
+		// 	this->current_y = 0;
+		// }
 		break;
 	case MINESWEEPER_ACTION_LEFT:
 		this->current_x--;
 		if (this->current_x < -1) {
 			this->current_x = -1;
 		}
+		// if (this->current_x < 0) {
+		// 	this->current_x = 0;
+		// }
 		break;
 	case MINESWEEPER_ACTION_CLICK:
 		if (!this->hit_mine) {
@@ -337,7 +360,7 @@ void Minesweeper::perform_action(int action) {
 	}
 }
 
-double Minesweeper::score_result() {
+double Minesweeper::score_result_helper() {
 	int curr_revealed = 0;
 	int num_mines = 0;
 	double score = 1.0;
@@ -369,11 +392,15 @@ double Minesweeper::score_result() {
 	if (this->hit_mine) {
 		score -= 1.0;
 	}
-	if (score < 0.0) {
-		score = 0.0;
-	}
 
 	return score;
+}
+
+double Minesweeper::score_result() {
+	// double final_score = score_result_helper();
+	// return final_score - this->starting_score;
+
+	return score_result_helper();
 }
 
 #if defined(MDEBUG) && MDEBUG
@@ -446,6 +473,7 @@ Problem* TypeMinesweeper::get_problem() {
 
 int TypeMinesweeper::num_obs() {
 	return 1;
+	// return 25;
 }
 
 int TypeMinesweeper::num_possible_actions() {

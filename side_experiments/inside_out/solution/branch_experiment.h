@@ -39,12 +39,14 @@ public:
 	std::vector<int> curr_actions;
 	std::vector<Scope*> curr_scopes;
 	AbstractNode* curr_exit_next_node;
+	ScopeHistory* curr_scope_history;
 
 	double best_surprise;
 	std::vector<int> best_step_types;
 	std::vector<int> best_actions;
 	std::vector<Scope*> best_scopes;
 	AbstractNode* best_exit_next_node;
+	ScopeHistory* best_scope_history;
 
 	double new_average_score;
 	std::vector<Input> new_inputs;

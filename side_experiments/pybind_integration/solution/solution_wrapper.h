@@ -22,17 +22,17 @@ public:
 
 	int run_index;
 
+	int num_tests_hit;
+
+	int sum_num_actions;
+	int sum_num_confusion_instances;
+
 	/**
 	 * - iter variables
 	 */
 	AbstractExperiment* curr_experiment;
 	AbstractExperiment* best_experiment;
 	int improvement_iter;
-
-	int num_tests_hit;
-
-	int sum_num_actions;
-	int sum_num_confusion_instances;
 
 	/**
 	 * - run variables

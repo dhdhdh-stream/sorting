@@ -25,6 +25,7 @@ const int NEW_SCOPE_NUM_LOCATIONS = 2;
 class NewScopeExperimentHistory;
 class NewScopeExperiment : public AbstractExperiment {
 public:
+	int state_iter;
 	int generalize_iter;
 
 	Scope* new_scope;

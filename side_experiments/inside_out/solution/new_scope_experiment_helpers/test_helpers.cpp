@@ -39,7 +39,7 @@ void NewScopeExperiment::test_backprop(
 		switch (test_location_start->type) {
 		case NODE_TYPE_ACTION:
 			{
-				ActionNode* action_node = (ActionNode*)this->node_context;
+				ActionNode* action_node = (ActionNode*)this->test_location_start;
 				if (this->successful_location_starts.size() == 0) {
 					existing_score = action_node->average_score;
 				} else {
@@ -49,7 +49,7 @@ void NewScopeExperiment::test_backprop(
 			break;
 		case NODE_TYPE_SCOPE:
 			{
-				ScopeNode* scope_node = (ScopeNode*)this->node_context;
+				ScopeNode* scope_node = (ScopeNode*)this->test_location_start;
 				if (this->successful_location_starts.size() == 0) {
 					existing_score = scope_node->average_score;
 				} else {
@@ -59,15 +59,15 @@ void NewScopeExperiment::test_backprop(
 			break;
 		case NODE_TYPE_BRANCH:
 			{
-				BranchNode* branch_node = (BranchNode*)this->node_context;
+				BranchNode* branch_node = (BranchNode*)this->test_location_start;
 				if (this->successful_location_starts.size() == 0) {
-					if (this->is_branch) {
+					if (this->test_location_is_branch) {
 						existing_score = branch_node->branch_average_score;
 					} else {
 						existing_score = branch_node->original_average_score;
 					}
 				} else {
-					if (this->is_branch) {
+					if (this->test_location_is_branch) {
 						existing_score = branch_node->branch_new_scope_average_score;
 					} else {
 						existing_score = branch_node->original_new_scope_average_score;
@@ -77,7 +77,7 @@ void NewScopeExperiment::test_backprop(
 			break;
 		case NODE_TYPE_OBS:
 			{
-				ObsNode* obs_node = (ObsNode*)this->node_context;
+				ObsNode* obs_node = (ObsNode*)this->test_location_start;
 				if (this->successful_location_starts.size() == 0) {
 					existing_score = obs_node->average_score;
 				} else {
@@ -89,7 +89,10 @@ void NewScopeExperiment::test_backprop(
 
 		double t_score = (new_score - existing_score) / new_standard_deviation;
 		if (t_score >= EARLY_SUCCESS_MIN_T_SCORE) {
-			this->improvement += (new_score - existing_score);
+			double curr_improvement = new_score - existing_score;
+			if (curr_improvement > this->improvement) {
+				this->improvement = curr_improvement;
+			}
 
 			ScopeNode* new_scope_node = new ScopeNode();
 			new_scope_node->parent = this->scope_context;
@@ -106,11 +109,17 @@ void NewScopeExperiment::test_backprop(
 				new_scope_node->next_node = this->test_location_exit;
 			}
 
+			/**
+			 * - simply set to 1.0 to allow follow up
+			 */
+			new_scope_node->new_scope_average_hits_per_run = 1.0;
+			new_scope_node->new_scope_average_score = new_score;
+
 			this->successful_location_starts.push_back(this->test_location_start);
 			this->successful_location_is_branch.push_back(this->test_location_is_branch);
 			this->successful_scope_nodes.push_back(new_scope_node);
 
-			this->scope_context->new_scope_measure_update();
+			this->scope_context->new_scope_measure_update(this->state_iter);
 
 			this->test_location_start = NULL;
 
@@ -135,7 +144,7 @@ void NewScopeExperiment::test_backprop(
 		switch (test_location_start->type) {
 		case NODE_TYPE_ACTION:
 			{
-				ActionNode* action_node = (ActionNode*)this->node_context;
+				ActionNode* action_node = (ActionNode*)this->test_location_start;
 				if (this->successful_location_starts.size() == 0) {
 					existing_score = action_node->average_score;
 				} else {
@@ -145,7 +154,7 @@ void NewScopeExperiment::test_backprop(
 			break;
 		case NODE_TYPE_SCOPE:
 			{
-				ScopeNode* scope_node = (ScopeNode*)this->node_context;
+				ScopeNode* scope_node = (ScopeNode*)this->test_location_start;
 				if (this->successful_location_starts.size() == 0) {
 					existing_score = scope_node->average_score;
 				} else {
@@ -155,15 +164,15 @@ void NewScopeExperiment::test_backprop(
 			break;
 		case NODE_TYPE_BRANCH:
 			{
-				BranchNode* branch_node = (BranchNode*)this->node_context;
+				BranchNode* branch_node = (BranchNode*)this->test_location_start;
 				if (this->successful_location_starts.size() == 0) {
-					if (this->is_branch) {
+					if (this->test_location_is_branch) {
 						existing_score = branch_node->branch_average_score;
 					} else {
 						existing_score = branch_node->original_average_score;
 					}
 				} else {
-					if (this->is_branch) {
+					if (this->test_location_is_branch) {
 						existing_score = branch_node->branch_new_scope_average_score;
 					} else {
 						existing_score = branch_node->original_new_scope_average_score;
@@ -173,7 +182,7 @@ void NewScopeExperiment::test_backprop(
 			break;
 		case NODE_TYPE_OBS:
 			{
-				ObsNode* obs_node = (ObsNode*)this->node_context;
+				ObsNode* obs_node = (ObsNode*)this->test_location_start;
 				if (this->successful_location_starts.size() == 0) {
 					existing_score = obs_node->average_score;
 				} else {
@@ -203,7 +212,10 @@ void NewScopeExperiment::test_backprop(
 				}
 			}
 		} else if ((int)this->test_target_val_histories.size() == MEASURE_S4_ITERS) {
-			this->improvement += (new_score - existing_score);
+			double curr_improvement = new_score - existing_score;
+			if (curr_improvement > this->improvement) {
+				this->improvement = curr_improvement;
+			}
 
 			ScopeNode* new_scope_node = new ScopeNode();
 			new_scope_node->parent = this->scope_context;
@@ -220,11 +232,17 @@ void NewScopeExperiment::test_backprop(
 				new_scope_node->next_node = this->test_location_exit;
 			}
 
+			/**
+			 * - simply set to 1.0 to allow follow up
+			 */
+			new_scope_node->new_scope_average_hits_per_run = 1.0;
+			new_scope_node->new_scope_average_score = new_score;
+
 			this->successful_location_starts.push_back(this->test_location_start);
 			this->successful_location_is_branch.push_back(this->test_location_is_branch);
 			this->successful_scope_nodes.push_back(new_scope_node);
 
-			this->scope_context->new_scope_measure_update();
+			this->scope_context->new_scope_measure_update(this->state_iter);
 
 			this->test_location_start = NULL;
 

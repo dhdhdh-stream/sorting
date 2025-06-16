@@ -1,5 +1,7 @@
 #include "input.h"
 
+#include <iostream>
+
 #include "scope.h"
 #include "solution.h"
 
@@ -125,6 +127,14 @@ bool Input::operator>=(const Input& rhs) const {
 			}
 		}
 	}
+}
+
+void Input::print() {
+	for (int l_index = 0; l_index < (int)this->scope_context.size(); l_index++) {
+		cout << this->scope_context[l_index]->id << " " << this->node_context[l_index] << endl;
+	}
+	cout << this->factor_index << endl;
+	cout << this->obs_index << endl;
 }
 
 void Input::save(ofstream& output_file) {

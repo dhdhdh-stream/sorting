@@ -18,31 +18,36 @@ print('Starting...', flush=True)
 path = sys.argv[1]
 filename = sys.argv[2]
 
-env = gym.make('CartPole-v1')
+env = gym.make('LunarLander-v3')
 
-w = wrapper.Wrapper(4, path, filename)
+w = wrapper.Wrapper(8, path, filename)
 
 start_time = time.time()
 while True:
 	curr_time = time.time()
-	if curr_time - start_time > 20:
-		print('a', flush=True)
+	elapsed_time = curr_time - start_time
+	if elapsed_time > 20:
+		print(elapsed_time, flush=True)
 		start_time = curr_time
 
 	obs, info = env.reset()
 	w.experiment_init()
+	solution_done = False
 	sum_reward = 0.0
 	while True:
-		is_done, is_fetch, s_action = w.experiment_step(obs)
-		if is_done:
-			break
-
-		if is_fetch:
+		if solution_done:
 			action = env.action_space.sample()
-			s_action = pickle.dumps(action)
-			w.set_action(s_action)
 		else:
-			action = pickle.loads(s_action)
+			solution_done, is_fetch, s_action = w.experiment_step(obs)
+			if solution_done:
+				continue
+
+			if is_fetch:
+				action = env.action_space.sample()
+				s_action = pickle.dumps(action)
+				w.set_action(s_action)
+			else:
+				action = pickle.loads(s_action)
 
 		obs, reward, terminated, truncated, info = env.step(action)
 		sum_reward += reward
@@ -52,13 +57,24 @@ while True:
 	if has_updated:
 		sum_reward = 0.0
 		for _ in range(MEASURE_ITERS):
+			curr_time = time.time()
+			elapsed_time = curr_time - start_time
+			if elapsed_time > 20:
+				print(elapsed_time, flush=True)
+				start_time = curr_time
+
 			obs, info = env.reset()
 			w.init()
+			solution_done = False
 			while True:
-				is_done, s_action = w.step(obs)
-				if is_done:
-					break
-				action = pickle.loads(s_action)
+				if solution_done:
+					action = env.action_space.sample()
+				else:
+					solution_done, s_action = w.step(obs)
+					if solution_done:
+						continue
+					action = pickle.loads(s_action)
+
 				obs, reward, terminated, truncated, info = env.step(action)
 				sum_reward += reward
 				if terminated or truncated:

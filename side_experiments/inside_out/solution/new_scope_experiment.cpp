@@ -290,6 +290,10 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 								new_input.scope_context[0] = this->new_scope;
 								new_input.node_context[0] = input_it->second->id;
 								new_branch_node->inputs.push_back(new_input);
+								new_branch_node->input_averages.push_back(
+									original_branch_node->input_averages[i_index]);
+								new_branch_node->input_standard_deviations.push_back(
+									original_branch_node->input_standard_deviations[i_index]);
 								new_branch_node->weights.push_back(
 									original_branch_node->weights[i_index]);
 							}
@@ -420,6 +424,7 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 		this->test_location_is_branch = is_branch;
 		this->test_location_exit = exit_next_node;
 
+		this->state_iter = 0;
 		this->scope_context->new_scope_clean();
 
 		/**

@@ -64,6 +64,8 @@ void BranchNode::clean_inputs(Scope* scope,
 
 		if (is_match) {
 			this->inputs.erase(this->inputs.begin() + i_index);
+			this->input_averages.erase(this->input_averages.begin() + i_index);
+			this->input_standard_deviations.erase(this->input_standard_deviations.begin() + i_index);
 			this->weights.erase(this->weights.begin() + i_index);
 		}
 	}
@@ -81,6 +83,8 @@ void BranchNode::clean_inputs(Scope* scope) {
 
 		if (is_match) {
 			this->inputs.erase(this->inputs.begin() + i_index);
+			this->input_averages.erase(this->input_averages.begin() + i_index);
+			this->input_standard_deviations.erase(this->input_standard_deviations.begin() + i_index);
 			this->weights.erase(this->weights.begin() + i_index);
 		}
 	}
@@ -159,10 +163,10 @@ void BranchNode::new_scope_clean() {
 	this->branch_new_scope_sum_count = 0;
 }
 
-void BranchNode::new_scope_measure_update() {
-	this->original_new_scope_average_hits_per_run = (double)this->original_new_scope_sum_count / (double)MEASURE_S4_ITERS;
+void BranchNode::new_scope_measure_update(int total_count) {
+	this->original_new_scope_average_hits_per_run = (double)this->original_new_scope_sum_count / (double)total_count;
 	this->original_new_scope_average_score = this->original_new_scope_sum_score / (double)this->original_new_scope_sum_count;
-	this->branch_new_scope_average_hits_per_run = (double)this->branch_new_scope_sum_count / (double)MEASURE_S4_ITERS;
+	this->branch_new_scope_average_hits_per_run = (double)this->branch_new_scope_sum_count / (double)total_count;
 	this->branch_new_scope_average_score = this->branch_new_scope_sum_score / (double)this->branch_new_scope_sum_count;
 }
 
@@ -171,7 +175,8 @@ void BranchNode::save(ofstream& output_file) {
 	output_file << this->inputs.size() << endl;
 	for (int i_index = 0; i_index < (int)this->inputs.size(); i_index++) {
 		this->inputs[i_index].save(output_file);
-
+		output_file << this->input_averages[i_index] << endl;
+		output_file << this->input_standard_deviations[i_index] << endl;
 		output_file << this->weights[i_index] << endl;
 	}
 
@@ -201,6 +206,14 @@ void BranchNode::load(ifstream& input_file,
 	for (int i_index = 0; i_index < num_inputs; i_index++) {
 		this->inputs.push_back(Input(input_file,
 									 parent_solution));
+
+		string input_average_line;
+		getline(input_file, input_average_line);
+		this->input_averages.push_back(stod(input_average_line));
+
+		string input_standard_deviation_line;
+		getline(input_file, input_standard_deviation_line);
+		this->input_standard_deviations.push_back(stod(input_standard_deviation_line));
 
 		string weight_line;
 		getline(input_file, weight_line);

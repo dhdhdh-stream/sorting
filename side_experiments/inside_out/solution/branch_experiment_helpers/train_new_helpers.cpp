@@ -44,7 +44,7 @@ void BranchExperiment::train_new_check_activate(
 
 		this->scope_histories.push_back(new ScopeHistory(wrapper->scope_histories.back()));
 
-		uniform_int_distribution<int> until_distribution(0, 2*((int)this->average_instances_per_run-1));
+		uniform_int_distribution<int> until_distribution(0, (int)this->average_instances_per_run-1.0);
 		this->num_instances_until_target = 1 + until_distribution(generator);
 
 		BranchExperimentState* new_experiment_state = new BranchExperimentState(this);
@@ -109,7 +109,12 @@ void BranchExperiment::train_new_backprop(
 	}
 
 	this->state_iter++;
-	if (this->state_iter >= TRAIN_NEW_NUM_DATAPOINTS) {
+	if (this->state_iter >= TRAIN_NEW_NUM_DATAPOINTS
+			&& (int)this->i_target_val_histories.size() >= TRAIN_NEW_NUM_DATAPOINTS) {
+		this->scope_histories.insert(this->scope_histories.begin(), this->best_scope_history);
+		this->best_scope_history = NULL;
+		this->i_target_val_histories.insert(this->i_target_val_histories.begin(), this->best_surprise);
+
 		double average_score;
 		vector<Input> factor_inputs;
 		vector<double> factor_input_averages;
@@ -139,6 +144,8 @@ void BranchExperiment::train_new_backprop(
 			this->new_input_averages = factor_input_averages;
 			this->new_input_standard_deviations = factor_input_standard_deviations;
 			this->new_weights = factor_weights;
+
+			this->select_percentage = select_percentage;
 
 			this->state = BRANCH_EXPERIMENT_STATE_MEASURE;
 			this->state_iter = 0;

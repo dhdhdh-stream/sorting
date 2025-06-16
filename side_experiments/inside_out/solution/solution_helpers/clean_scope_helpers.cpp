@@ -14,6 +14,8 @@
 
 using namespace std;
 
+const int SCOPE_EXCEEDED_NUM_NODES = 100;
+
 void clean_scope(Scope* scope,
 				 SolutionWrapper* wrapper) {
 	/**
@@ -441,7 +443,8 @@ void clean_scope(Scope* scope,
 
 void check_generalize(Scope* scope_to_generalize,
 					  SolutionWrapper* wrapper) {
-	if (!scope_to_generalize->generalized) {
+	if (scope_to_generalize->nodes.size() > SCOPE_EXCEEDED_NUM_NODES
+			&& !scope_to_generalize->generalized) {
 		cout << "generalize " << scope_to_generalize->id << endl;
 
 		Scope* new_scope = new Scope();

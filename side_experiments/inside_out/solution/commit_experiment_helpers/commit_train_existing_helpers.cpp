@@ -70,7 +70,7 @@ void CommitExperiment::commit_train_existing_step(
 
 				this->scope_histories.push_back(new ScopeHistory(wrapper->scope_histories.back()));
 
-				uniform_int_distribution<int> until_distribution(0, 2*((int)this->average_instances_per_run-1));
+				uniform_int_distribution<int> until_distribution(0, (int)this->average_instances_per_run-1.0);
 				this->num_instances_until_target = 1 + until_distribution(generator);
 			} else {
 				experiment_state->is_save = true;
@@ -183,7 +183,8 @@ void CommitExperiment::commit_train_existing_backprop(
 	}
 
 	this->state_iter++;
-	if (this->state_iter >= TRAIN_EXISTING_NUM_DATAPOINTS) {
+	if (this->state_iter >= TRAIN_EXISTING_NUM_DATAPOINTS
+			&& (int)this->i_target_val_histories.size() >= TRAIN_EXISTING_NUM_DATAPOINTS) {
 		double average_score;
 		vector<Input> factor_inputs;
 		vector<double> factor_input_averages;
@@ -197,7 +198,7 @@ void CommitExperiment::commit_train_existing_backprop(
 									   factor_input_averages,
 									   factor_input_standard_deviations,
 									   factor_weights,
-									   this->node_context,
+									   this->new_nodes[this->step_iter-1],
 									   this,
 									   select_percentage);
 
