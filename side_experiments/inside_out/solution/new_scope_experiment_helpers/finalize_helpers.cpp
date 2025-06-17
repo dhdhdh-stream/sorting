@@ -24,6 +24,34 @@ void NewScopeExperiment::clean() {
 	}
 }
 
+void recursive_add_child(Scope* curr_parent,
+						 SolutionWrapper* wrapper,
+						 Scope* new_scope) {
+	curr_parent->child_scopes.push_back(new_scope);
+
+	for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
+		Scope* scope = wrapper->solution->scopes[s_index];
+
+		bool is_needed = false;
+		bool is_added = false;
+		for (int c_index = 0; c_index < (int)scope->child_scopes.size(); c_index++) {
+			if (scope->child_scopes[c_index] == curr_parent) {
+				is_needed = true;
+			}
+
+			if (scope->child_scopes[c_index] == new_scope) {
+				is_added = true;
+			}
+		}
+
+		if (is_needed && !is_added) {
+			recursive_add_child(scope,
+								wrapper,
+								new_scope);
+		}
+	}
+}
+
 void NewScopeExperiment::add(SolutionWrapper* wrapper) {
 	this->new_scope->id = wrapper->solution->scopes.size();
 	wrapper->solution->scopes.push_back(this->new_scope);
@@ -34,7 +62,9 @@ void NewScopeExperiment::add(SolutionWrapper* wrapper) {
 	ObsNode* new_local_ending_node = NULL;
 
 	this->new_scope->child_scopes = this->scope_context->child_scopes;
-	this->scope_context->child_scopes.push_back(this->new_scope);
+	recursive_add_child(this->scope_context,
+						wrapper,
+						this->new_scope);
 
 	for (int s_index = 0; s_index < (int)this->successful_location_starts.size(); s_index++) {
 		ScopeNode* new_scope_node = this->successful_scope_nodes[s_index];

@@ -44,7 +44,7 @@ int main(int argc, char* argv[]) {
 		problem_type->num_obs(), path, filename);
 
 	auto start_time = chrono::high_resolution_clock::now();
-	while (solution_wrapper->solution->timestamp < EXPLORE_ITERS) {
+	while (!solution_wrapper->is_done()) {
 		auto curr_time = chrono::high_resolution_clock::now();
 		auto time_diff = chrono::duration_cast<chrono::seconds>(curr_time - start_time);
 		if (time_diff.count() >= 20) {
@@ -127,7 +127,7 @@ int main(int argc, char* argv[]) {
 		}
 	}
 
-	solution_wrapper->solution->clean_scopes();
+	solution_wrapper->clean_scopes();
 	solution_wrapper->save(path, filename);
 
 	delete problem_type;

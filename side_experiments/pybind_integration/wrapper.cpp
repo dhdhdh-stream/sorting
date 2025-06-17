@@ -1,7 +1,3 @@
-// make child scopes available recursively upwards
-
-// add callback/exit/hooks
-
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 

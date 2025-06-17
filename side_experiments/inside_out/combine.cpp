@@ -10,17 +10,13 @@
 #include "scope.h"
 #include "solution.h"
 #include "solution_helpers.h"
+#include "solution_wrapper.h"
 
 using namespace std;
 
 int seed;
 
 default_random_engine generator;
-
-ProblemType* problem_type;
-Solution* solution;
-
-int run_index;
 
 const int BRANCH_FACTOR = 4;
 
@@ -44,40 +40,19 @@ int main(int argc, char* argv[]) {
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
 
-	problem_type = new TypeMinesweeper();
+	ProblemType* problem_type = new TypeMinesweeper();
 
-	solution = new Solution();
-	solution->load("saves/", target_file);
-
-	int existing_num_scopes = (int)solution->scopes.size();
+	SolutionWrapper* solution_wrapper = new SolutionWrapper(
+		problem_type->num_obs(), "saves/", target_file);
 
 	for (int other_index = 0; other_index < BRANCH_FACTOR-1; other_index++) {
-		Solution* other_solution = new Solution();
-		other_solution->load("saves/", other_files[other_index]);
-
-		for (int scope_index = 1; scope_index < (int)other_solution->scopes.size(); scope_index++) {
-			solution->scopes.push_back(other_solution->scopes[scope_index]);
-
-			for (int i_index = 0; i_index < existing_num_scopes; i_index++) {
-				solution->scopes[i_index]->child_scopes.push_back(other_solution->scopes[scope_index]);
-			}
-		}
-
-		other_solution->scopes.erase(other_solution->scopes.begin() + 1, other_solution->scopes.end());
-
-		delete other_solution;
+		solution_wrapper->combine("saves/", other_files[other_index]);
 	}
 
-	for (int scope_index = 1; scope_index < (int)solution->scopes.size(); scope_index++) {
-		solution->scopes[scope_index]->id = scope_index;
-	}
-
-	solution->timestamp = 0;
-
-	solution->save("saves/", output_file);
+	solution_wrapper->save("saves/", output_file);
 
 	delete problem_type;
-	delete solution;
+	delete solution_wrapper;
 
 	cout << "Done" << endl;
 }

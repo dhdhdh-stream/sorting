@@ -14,6 +14,11 @@
 
 using namespace std;
 
+/**
+ * - allow for ~10 CommitExperiments(?)
+ */
+const int EXPERIMENTS_MAX_FAIL = 100;
+
 void SolutionWrapper::experiment_init() {
 	this->run_index++;
 
@@ -132,9 +137,18 @@ void SolutionWrapper::experiment_end(double result) {
 	}
 
 	if (this->curr_experiment == NULL) {
+		if (this->experiments_since_success >= EXPERIMENTS_MAX_FAIL) {
+			this->solution->timestamp = -1;
+		}
+
 		create_experiment(this->scope_histories[0],
 						  this->curr_experiment,
 						  this);
+
+		if (this->curr_experiment != NULL
+				&& this->curr_experiment->type == EXPERIMENT_TYPE_BRANCH) {
+			this->experiments_since_success++;
+		}
 	}
 	this->sum_num_actions += this->num_actions;
 	this->sum_num_confusion_instances += this->num_confusion_instances;
@@ -189,6 +203,8 @@ void SolutionWrapper::experiment_end(double result) {
 			}
 
 			this->curr_experiment = NULL;
+
+			this->experiments_since_success = 0;
 
 			improvement_iter++;
 			if (improvement_iter >= IMPROVEMENTS_PER_ITER) {

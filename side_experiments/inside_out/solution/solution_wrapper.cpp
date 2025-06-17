@@ -1,5 +1,6 @@
 #include "solution_wrapper.h"
 
+#include "scope.h"
 #include "solution.h"
 
 using namespace std;
@@ -19,6 +20,8 @@ SolutionWrapper::SolutionWrapper(int num_obs) {
 	this->sum_num_actions = 0;
 	this->sum_num_confusion_instances = 0;
 	this->experiment_iter = 0;
+
+	this->experiments_since_success = 0;
 
 	this->experiment_history = NULL;
 }
@@ -41,11 +44,48 @@ SolutionWrapper::SolutionWrapper(int num_obs,
 	this->sum_num_confusion_instances = 0;
 	this->experiment_iter = 0;
 
+	this->experiments_since_success = 0;
+
 	this->experiment_history = NULL;
 }
 
 SolutionWrapper::~SolutionWrapper() {
 	delete this->solution;
+}
+
+bool SolutionWrapper::is_done() {
+	return this->solution->timestamp == -1;
+}
+
+void SolutionWrapper::clean_scopes() {
+	this->solution->clean_scopes();
+}
+
+void SolutionWrapper::combine(string other_path,
+							  string other_name) {
+	Solution* other = new Solution();
+	other->load(other_path, other_name);
+
+	int existing_num_scopes = (int)this->solution->scopes.size();
+
+	for (int scope_index = 1; scope_index < (int)other->scopes.size(); scope_index++) {
+		this->solution->scopes.push_back(other->scopes[scope_index]);
+
+		for (int i_index = 0; i_index < existing_num_scopes; i_index++) {
+			this->solution->scopes[i_index]->child_scopes.push_back(other->scopes[scope_index]);
+		}
+	}
+
+	other->scopes.erase(other->scopes.begin() + 1, other->scopes.end());
+
+	delete other;
+
+	for (int scope_index = 1; scope_index < (int)this->solution->scopes.size(); scope_index++) {
+		this->solution->scopes[scope_index]->id = scope_index;
+	}
+
+	this->solution->timestamp = 0;
+	this->solution->best_timestamp = 0;
 }
 
 void SolutionWrapper::save(string path,

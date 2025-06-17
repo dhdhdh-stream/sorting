@@ -25,8 +25,7 @@ using namespace std;
 
 const double MIN_CONSIDER_HIT_PERCENT = 0.2;
 
-const int FACTOR_NUM_GATHER = 5;
-const int FACTOR_NUM_PER_GATHER = 5;
+const int NUM_FACTORS = 10;
 
 /**
  * - when there's correlation, weights can get strange values(?)
@@ -36,8 +35,8 @@ const double REGRESSION_FAIL_MULTIPLIER = 1000.0;
 
 const double FACTOR_IMPACT_THRESHOLD = 0.1;
 
-const int INPUT_NUM_HIGHEST = 2;
-const int INPUT_NUM_RANDOM = 3;
+const int INPUT_NUM_HIGHEST = 4;
+const int INPUT_NUM_RANDOM_PER = 3;
 
 class InputData {
 public:
@@ -46,67 +45,9 @@ public:
 	double standard_deviation;
 };
 
-void factor_best_helper(vector<double>& target_val_histories,
-						vector<int>& best_indexes) {
-	best_indexes = vector<int>(FACTOR_NUM_GATHER, -1);
-	for (int h_index = 0; h_index < (int)target_val_histories.size(); h_index++) {
-		if (best_indexes.back() == -1
-				|| target_val_histories[h_index] > target_val_histories[best_indexes.back()]) {
-			best_indexes.back() = h_index;
-
-			int curr_index = FACTOR_NUM_GATHER-2;
-			while (true) {
-				if (curr_index < 0) {
-					break;
-				}
-
-				if (best_indexes[curr_index] == -1
-						|| target_val_histories[best_indexes[curr_index + 1]] > target_val_histories[best_indexes[curr_index]]) {
-					double temp = best_indexes[curr_index + 1];
-					best_indexes[curr_index + 1] = best_indexes[curr_index];
-					best_indexes[curr_index] = temp;
-
-					curr_index--;
-				} else {
-					break;
-				}
-			}
-		}
-	}
-}
-
-void factor_worst_helper(vector<double>& target_val_histories,
-						 vector<int>& worst_indexes) {
-	worst_indexes = vector<int>(FACTOR_NUM_GATHER, -1);
-	for (int h_index = 0; h_index < (int)target_val_histories.size(); h_index++) {
-		if (worst_indexes.back() == -1
-				|| target_val_histories[h_index] < target_val_histories[worst_indexes.back()]) {
-			worst_indexes.back() = h_index;
-
-			int curr_index = FACTOR_NUM_GATHER-2;
-			while (true) {
-				if (curr_index < 0) {
-					break;
-				}
-
-				if (worst_indexes[curr_index] == -1
-						|| target_val_histories[worst_indexes[curr_index + 1]] < target_val_histories[worst_indexes[curr_index]]) {
-					double temp = worst_indexes[curr_index + 1];
-					worst_indexes[curr_index + 1] = worst_indexes[curr_index];
-					worst_indexes[curr_index] = temp;
-
-					curr_index--;
-				} else {
-					break;
-				}
-			}
-		}
-	}
-}
-
 void analyze_input(Input& input,
-					vector<ScopeHistory*>& scope_histories,
-					InputData& input_data) {
+				   vector<ScopeHistory*>& scope_histories,
+				   InputData& input_data) {
 	vector<double> vals;
 	int num_is_on = 0;
 	for (int h_index = 0; h_index < (int)scope_histories.size(); h_index++) {
@@ -139,13 +80,12 @@ void analyze_input(Input& input,
 	}
 }
 
-void highest_t_factor_helper(ScopeHistory* scope_history,
-							 vector<Scope*>& scope_context,
-							 vector<int>& node_context,
-							 vector<Input>& highest_t,
-							 vector<double>& highest_t_scores,
-							 vector<ScopeHistory*>& scope_histories,
-							 map<Input, InputData>& input_tracker) {
+void gather_factor_t_scores_helper(ScopeHistory* scope_history,
+								   vector<Scope*>& scope_context,
+								   vector<int>& node_context,
+								   map<Input, double>& t_scores,
+								   vector<ScopeHistory*>& scope_histories,
+								   map<Input, InputData>& input_tracker) {
 	Scope* scope = scope_history->scope;
 
 	for (map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
@@ -159,13 +99,12 @@ void highest_t_factor_helper(ScopeHistory* scope_history,
 				scope_context.push_back(scope);
 				node_context.push_back(it->first);
 
-				highest_t_factor_helper(scope_node_history->scope_history,
-										scope_context,
-										node_context,
-										highest_t,
-										highest_t_scores,
-										scope_histories,
-										input_tracker);
+				gather_factor_t_scores_helper(scope_node_history->scope_history,
+											  scope_context,
+											  node_context,
+											  t_scores,
+											  scope_histories,
+											  input_tracker);
 
 				scope_context.pop_back();
 				node_context.pop_back();
@@ -198,31 +137,8 @@ void highest_t_factor_helper(ScopeHistory* scope_history,
 					if (it->second.hit_percent >= MIN_CONSIDER_HIT_PERCENT
 							&& it->second.standard_deviation > 0.0) {
 						double curr_val = obs_node_history->factor_values[f_index];
-						double curr_t_score = abs(curr_val - it->second.average) / it->second.standard_deviation;
-						if (curr_t_score > highest_t_scores.back()) {
-							highest_t.back() = input;
-							highest_t_scores.back() = curr_t_score;
-
-							int curr_index = FACTOR_NUM_PER_GATHER-2;
-							while (true) {
-								if (curr_index < 0) {
-									break;
-								}
-
-								if (highest_t_scores[curr_index + 1] > highest_t_scores[curr_index]) {
-									Input temp = highest_t[curr_index + 1];
-									double temp_score = highest_t_scores[curr_index + 1];
-									highest_t[curr_index + 1] = highest_t[curr_index];
-									highest_t_scores[curr_index + 1] = highest_t_scores[curr_index];
-									highest_t[curr_index] = temp;
-									highest_t_scores[curr_index] = temp_score;
-
-									curr_index--;
-								} else {
-									break;
-								}
-							}
-						}
+						double curr_t_score = (curr_val - it->second.average) / it->second.standard_deviation;
+						t_scores[input] = curr_t_score;
 					}
 
 					scope_context.pop_back();
@@ -234,13 +150,12 @@ void highest_t_factor_helper(ScopeHistory* scope_history,
 	}
 }
 
-void highest_t_input_helper(ScopeHistory* scope_history,
-							vector<Scope*>& scope_context,
-							vector<int>& node_context,
-							vector<Input>& highest_t,
-							vector<double>& highest_t_scores,
-							vector<ScopeHistory*>& scope_histories,
-							map<Input, InputData>& input_tracker) {
+void gather_input_t_scores_helper(ScopeHistory* scope_history,
+								  vector<Scope*>& scope_context,
+								  vector<int>& node_context,
+								  map<Input, double>& t_scores,
+								  vector<ScopeHistory*>& scope_histories,
+								  map<Input, InputData>& input_tracker) {
 	Scope* scope = scope_history->scope;
 
 	for (map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
@@ -254,13 +169,12 @@ void highest_t_input_helper(ScopeHistory* scope_history,
 				scope_context.push_back(scope);
 				node_context.push_back(it->first);
 
-				highest_t_input_helper(scope_node_history->scope_history,
-									   scope_context,
-									   node_context,
-									   highest_t,
-									   highest_t_scores,
-									   scope_histories,
-									   input_tracker);
+				gather_input_t_scores_helper(scope_node_history->scope_history,
+											 scope_context,
+											 node_context,
+											 t_scores,
+											 scope_histories,
+											 input_tracker);
 
 				scope_context.pop_back();
 				node_context.pop_back();
@@ -297,31 +211,8 @@ void highest_t_input_helper(ScopeHistory* scope_history,
 					} else {
 						curr_val = -1.0;
 					}
-					double curr_t_score = abs(curr_val - it->second.average) / it->second.standard_deviation;
-					if (curr_t_score > highest_t_scores.back()) {
-						highest_t.back() = input;
-						highest_t_scores.back() = curr_t_score;
-
-						int curr_index = INPUT_NUM_HIGHEST-2;
-						while (true) {
-							if (curr_index < 0) {
-								break;
-							}
-
-							if (highest_t_scores[curr_index + 1] > highest_t_scores[curr_index]) {
-								Input temp = highest_t[curr_index + 1];
-								double temp_score = highest_t_scores[curr_index + 1];
-								highest_t[curr_index + 1] = highest_t[curr_index];
-								highest_t_scores[curr_index + 1] = highest_t_scores[curr_index];
-								highest_t[curr_index] = temp;
-								highest_t_scores[curr_index] = temp_score;
-
-								curr_index--;
-							} else {
-								break;
-							}
-						}
-					}
+					double curr_t_score = (curr_val - it->second.average) / it->second.standard_deviation;
+					t_scores[input] = curr_t_score;
 				}
 
 				scope_context.pop_back();
@@ -356,31 +247,8 @@ void highest_t_input_helper(ScopeHistory* scope_history,
 					if (it->second.hit_percent >= MIN_CONSIDER_HIT_PERCENT
 							&& it->second.standard_deviation > 0.0) {
 						double curr_val = obs_node_history->obs_history[o_index];
-						double curr_t_score = abs(curr_val - it->second.average) / it->second.standard_deviation;
-						if (curr_t_score > highest_t_scores.back()) {
-							highest_t.back() = input;
-							highest_t_scores.back() = curr_t_score;
-
-							int curr_index = INPUT_NUM_HIGHEST-2;
-							while (true) {
-								if (curr_index < 0) {
-									break;
-								}
-
-								if (highest_t_scores[curr_index + 1] > highest_t_scores[curr_index]) {
-									Input temp = highest_t[curr_index + 1];
-									double temp_score = highest_t_scores[curr_index + 1];
-									highest_t[curr_index + 1] = highest_t[curr_index];
-									highest_t_scores[curr_index + 1] = highest_t_scores[curr_index];
-									highest_t[curr_index] = temp;
-									highest_t_scores[curr_index] = temp_score;
-
-									curr_index--;
-								} else {
-									break;
-								}
-							}
-						}
+						double curr_t_score = (curr_val - it->second.average) / it->second.standard_deviation;
+						t_scores[input] = curr_t_score;
 					}
 
 					scope_context.pop_back();
@@ -410,31 +278,8 @@ void highest_t_input_helper(ScopeHistory* scope_history,
 					if (it->second.hit_percent >= MIN_CONSIDER_HIT_PERCENT
 							&& it->second.standard_deviation > 0.0) {
 						double curr_val = obs_node_history->factor_values[f_index];
-						double curr_t_score = abs(curr_val - it->second.average) / it->second.standard_deviation;
-						if (curr_t_score > highest_t_scores.back()) {
-							highest_t.back() = input;
-							highest_t_scores.back() = curr_t_score;
-
-							int curr_index = INPUT_NUM_HIGHEST-2;
-							while (true) {
-								if (curr_index < 0) {
-									break;
-								}
-
-								if (highest_t_scores[curr_index + 1] > highest_t_scores[curr_index]) {
-									Input temp = highest_t[curr_index + 1];
-									double temp_score = highest_t_scores[curr_index + 1];
-									highest_t[curr_index + 1] = highest_t[curr_index];
-									highest_t_scores[curr_index + 1] = highest_t_scores[curr_index];
-									highest_t[curr_index] = temp;
-									highest_t_scores[curr_index] = temp_score;
-
-									curr_index--;
-								} else {
-									break;
-								}
-							}
-						}
+						double curr_t_score = (curr_val - it->second.average) / it->second.standard_deviation;
+						t_scores[input] = curr_t_score;
 					}
 
 					scope_context.pop_back();
@@ -612,64 +457,106 @@ bool train_helper(vector<ScopeHistory*>& scope_histories,
 
 	map<Input, InputData> input_tracker;
 
-	vector<int> factor_best_indexes;
-	factor_best_helper(target_val_histories,
-					   factor_best_indexes);
-	vector<int> factor_worst_indexes;
-	factor_worst_helper(target_val_histories,
-						factor_worst_indexes);
+	int best_factor_index = 0;
+	double best_factor_score = target_val_histories[0];
+	for (int h_index = 1; h_index < num_instances; h_index++) {
+		if (target_val_histories[h_index] > best_factor_score) {
+			best_factor_index = h_index;
+			best_factor_score = target_val_histories[h_index];
+		}
+	}
+	int worst_factor_index = 0;
+	double worst_factor_score = target_val_histories[0];
+	for (int h_index = 1; h_index < num_instances; h_index++) {
+		if (target_val_histories[h_index] < worst_factor_score) {
+			worst_factor_index = h_index;
+			worst_factor_score = target_val_histories[h_index];
+		}
+	}
 
-	set<Input> s_factor_inputs;
-	for (int i_index = 0; i_index < (int)factor_best_indexes.size(); i_index++) {
-		vector<Input> highest_t(FACTOR_NUM_PER_GATHER);
-		vector<double> highest_t_scores(FACTOR_NUM_PER_GATHER, 0.0);
-
+	map<Input, double> best_factor_t_scores;
+	{
 		vector<Scope*> scope_context;
 		vector<int> node_context;
-		highest_t_factor_helper(scope_histories[factor_best_indexes[i_index]],
-								scope_context,
-								node_context,
-								highest_t,
-								highest_t_scores,
-								scope_histories,
-								input_tracker);
+		gather_factor_t_scores_helper(scope_histories[best_factor_index],
+									  scope_context,
+									  node_context,
+									  best_factor_t_scores,
+									  scope_histories,
+									  input_tracker);
+	}
 
-		for (int f_index = 0; f_index < (int)highest_t.size(); f_index++) {
-			if (highest_t_scores[f_index] != 0.0) {
-				s_factor_inputs.insert(highest_t[f_index]);
+	map<Input, double> worst_factor_t_scores;
+	{
+		vector<Scope*> scope_context;
+		vector<int> node_context;
+		gather_factor_t_scores_helper(scope_histories[worst_factor_index],
+									  scope_context,
+									  node_context,
+									  worst_factor_t_scores,
+									  scope_histories,
+									  input_tracker);
+	}
+
+	map<Input, double> contrast_factor_t_scores;
+	for (map<Input, double>::iterator best_it = best_factor_t_scores.begin();
+			best_it != best_factor_t_scores.end(); best_it++) {
+		map<Input, double>::iterator worst_it = worst_factor_t_scores.find(best_it->first);
+		if (worst_it == worst_factor_t_scores.end()) {
+			contrast_factor_t_scores[best_it->first] = abs(best_it->second);
+		} else {
+			contrast_factor_t_scores[best_it->first] = abs(best_it->second - worst_it->second);
+		}
+	}
+	for (map<Input, double>::iterator worst_it = worst_factor_t_scores.begin();
+			worst_it != worst_factor_t_scores.end(); worst_it++) {
+		map<Input, double>::iterator best_it = best_factor_t_scores.find(worst_it->first);
+		if (best_it == best_factor_t_scores.end()) {
+			contrast_factor_t_scores[worst_it->first] = abs(worst_it->second);
+		}
+	}
+
+	factor_inputs = vector<Input>(NUM_FACTORS);
+	vector<double> factor_input_contrasts(NUM_FACTORS, 0.0);
+	for (map<Input, double>::iterator it = contrast_factor_t_scores.begin();
+			it != contrast_factor_t_scores.end(); it++) {
+		if (it->second > factor_input_contrasts.back()) {
+			factor_inputs.back() = it->first;
+			factor_input_contrasts.back() = it->second;
+
+			int curr_index = NUM_FACTORS-2;
+			while (true) {
+				if (curr_index < 0) {
+					break;
+				}
+
+				if (factor_input_contrasts[curr_index + 1] > factor_input_contrasts[curr_index]) {
+					Input temp = factor_inputs[curr_index + 1];
+					double temp_score = factor_input_contrasts[curr_index + 1];
+					factor_inputs[curr_index + 1] = factor_inputs[curr_index];
+					factor_input_contrasts[curr_index + 1] = factor_input_contrasts[curr_index];
+					factor_inputs[curr_index] = temp;
+					factor_input_contrasts[curr_index] = temp_score;
+
+					curr_index--;
+				} else {
+					break;
+				}
 			}
 		}
 	}
-	for (int i_index = 0; i_index < (int)factor_worst_indexes.size(); i_index++) {
-		vector<Input> highest_t(FACTOR_NUM_PER_GATHER);
-		vector<double> highest_t_scores(FACTOR_NUM_PER_GATHER, 0.0);
-
-		vector<Scope*> scope_context;
-		vector<int> node_context;
-		highest_t_factor_helper(scope_histories[factor_worst_indexes[i_index]],
-								scope_context,
-								node_context,
-								highest_t,
-								highest_t_scores,
-								scope_histories,
-								input_tracker);
-
-		for (int f_index = 0; f_index < (int)highest_t.size(); f_index++) {
-			if (highest_t_scores[f_index] != 0.0) {
-				s_factor_inputs.insert(highest_t[f_index]);
-			}
+	for (int f_index = (int)factor_inputs.size()-1; f_index >= 0; f_index--) {
+		if (factor_inputs[f_index].scope_context.size() == 0) {
+			factor_inputs.erase(factor_inputs.begin() + f_index);
 		}
 	}
 
 	vector<double> remaining_scores(num_instances);
 	vector<double> sum_vals(num_instances);
 
-	if (s_factor_inputs.size() > 0) {
-		for (set<Input>::iterator it = s_factor_inputs.begin();
-				it != s_factor_inputs.end(); it++) {
-			factor_inputs.push_back(*it);
-
-			InputData input_data = input_tracker[*it];
+	if (factor_inputs.size() > 0) {
+		for (int f_index = 0; f_index < (int)factor_inputs.size(); f_index++) {
+			InputData input_data = input_tracker[factor_inputs[f_index]];
 			factor_input_averages.push_back(input_data.average);
 			factor_input_standard_deviations.push_back(input_data.standard_deviation);
 		}
@@ -812,28 +699,85 @@ bool train_helper(vector<ScopeHistory*>& scope_histories,
 		}
 	}
 
-	set<Input> s_network_inputs;
+	map<Input, double> best_t_scores;
 	{
-		vector<Input> highest_t(INPUT_NUM_HIGHEST);
-		vector<double> highest_t_scores(INPUT_NUM_HIGHEST, 0.0);
-
 		vector<Scope*> scope_context;
 		vector<int> node_context;
-		highest_t_input_helper(scope_histories[best_index],
-							   scope_context,
-							   node_context,
-							   highest_t,
-							   highest_t_scores,
-							   scope_histories,
-							   input_tracker);
+		gather_input_t_scores_helper(scope_histories[best_index],
+									 scope_context,
+									 node_context,
+									 best_t_scores,
+									 scope_histories,
+									 input_tracker);
+	}
 
-		for (int f_index = 0; f_index < (int)highest_t.size(); f_index++) {
-			if (highest_t_scores[f_index] != 0.0) {
-				s_network_inputs.insert(highest_t[f_index]);
+	map<Input, double> worst_t_scores;
+	{
+		vector<Scope*> scope_context;
+		vector<int> node_context;
+		gather_input_t_scores_helper(scope_histories[worst_index],
+									 scope_context,
+									 node_context,
+									 worst_t_scores,
+									 scope_histories,
+									 input_tracker);
+	}
+
+	map<Input, double> contrast_t_scores;
+	for (map<Input, double>::iterator best_it = best_t_scores.begin();
+			best_it != best_t_scores.end(); best_it++) {
+		map<Input, double>::iterator worst_it = worst_t_scores.find(best_it->first);
+		if (worst_it == worst_t_scores.end()) {
+			contrast_t_scores[best_it->first] = abs(best_it->second);
+		} else {
+			contrast_t_scores[best_it->first] = abs(best_it->second - worst_it->second);
+		}
+	}
+	for (map<Input, double>::iterator worst_it = worst_t_scores.begin();
+			worst_it != worst_t_scores.end(); worst_it++) {
+		map<Input, double>::iterator best_it = best_t_scores.find(worst_it->first);
+		if (best_it == best_t_scores.end()) {
+			contrast_t_scores[worst_it->first] = abs(worst_it->second);
+		}
+	}
+
+	vector<Input> highest_inputs = vector<Input>(INPUT_NUM_HIGHEST);
+	vector<double> input_contrasts(INPUT_NUM_HIGHEST, 0.0);
+	for (map<Input, double>::iterator it = contrast_t_scores.begin();
+			it != contrast_t_scores.end(); it++) {
+		if (it->second > input_contrasts.back()) {
+			highest_inputs.back() = it->first;
+			input_contrasts.back() = it->second;
+
+			int curr_index = INPUT_NUM_HIGHEST-2;
+			while (true) {
+				if (curr_index < 0) {
+					break;
+				}
+
+				if (input_contrasts[curr_index + 1] > input_contrasts[curr_index]) {
+					Input temp = highest_inputs[curr_index + 1];
+					double temp_score = input_contrasts[curr_index + 1];
+					highest_inputs[curr_index + 1] = highest_inputs[curr_index];
+					input_contrasts[curr_index + 1] = input_contrasts[curr_index];
+					highest_inputs[curr_index] = temp;
+					input_contrasts[curr_index] = temp_score;
+
+					curr_index--;
+				} else {
+					break;
+				}
 			}
 		}
 	}
-	for (int i_index = 0; i_index < INPUT_NUM_RANDOM; i_index++) {
+
+	set<Input> s_network_inputs;
+	for (int i_index = 0; i_index < (int)highest_inputs.size(); i_index++) {
+		if (highest_inputs[i_index].scope_context.size() == 0) {
+			s_network_inputs.insert(highest_inputs[i_index]);
+		}
+	}
+	for (int i_index = 0; i_index < INPUT_NUM_RANDOM_PER; i_index++) {
 		vector<Scope*> scope_context;
 		vector<int> node_context;
 		int input_count = 0;
@@ -849,27 +793,7 @@ bool train_helper(vector<ScopeHistory*>& scope_histories,
 			s_network_inputs.insert(selected_input);
 		}
 	}
-	{
-		vector<Input> highest_t(INPUT_NUM_HIGHEST);
-		vector<double> highest_t_scores(INPUT_NUM_HIGHEST, 0.0);
-
-		vector<Scope*> scope_context;
-		vector<int> node_context;
-		highest_t_input_helper(scope_histories[worst_index],
-							   scope_context,
-							   node_context,
-							   highest_t,
-							   highest_t_scores,
-							   scope_histories,
-							   input_tracker);
-
-		for (int f_index = 0; f_index < (int)highest_t.size(); f_index++) {
-			if (highest_t_scores[f_index] != 0.0) {
-				s_network_inputs.insert(highest_t[f_index]);
-			}
-		}
-	}
-	for (int i_index = 0; i_index < INPUT_NUM_RANDOM; i_index++) {
+	for (int i_index = 0; i_index < INPUT_NUM_RANDOM_PER; i_index++) {
 		vector<Scope*> scope_context;
 		vector<int> node_context;
 		int input_count = 0;

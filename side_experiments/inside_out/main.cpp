@@ -1,10 +1,6 @@
 // TODO: hooks
 // TODO: new score functions
 
-// TODO: while improving, keep going
-// - only merge when failing
-//   - or also fail if stuck
-
 // TODO: save train_existing
 
 #include <chrono>
@@ -93,7 +89,7 @@ int main(int argc, char* argv[]) {
 
 	solution_wrapper->save_for_display("../", "display.txt");
 
-	while (solution_wrapper->solution->timestamp < EXPLORE_ITERS) {
+	while (!solution_wrapper->is_done()) {
 		int starting_timestamp = solution_wrapper->solution->timestamp;
 
 		Problem* problem = problem_type->get_problem();
@@ -199,7 +195,7 @@ int main(int argc, char* argv[]) {
 		}
 	}
 
-	solution_wrapper->solution->clean_scopes();
+	solution_wrapper->clean_scopes();
 	solution_wrapper->save("saves/", filename);
 
 	delete problem_type;

@@ -142,71 +142,6 @@ void clean_scope(Scope* scope,
 	}
 
 	/**
-	 * - remove duplicate ObsNodes
-	 * 
-	 * - clean for all scopes as ObsNodes could have been added during experiments
-	 */
-	for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
-		while (true) {
-			bool removed_node = false;
-
-			for (map<int, AbstractNode*>::iterator it = wrapper->solution->scopes[s_index]->nodes.begin();
-					it != wrapper->solution->scopes[s_index]->nodes.end(); it++) {
-				if (it->second->type == NODE_TYPE_OBS) {
-					ObsNode* curr_obs_node = (ObsNode*)it->second;
-					if (curr_obs_node->next_node != NULL
-							&& curr_obs_node->next_node->type == NODE_TYPE_OBS
-							&& curr_obs_node->next_node->ancestor_ids.size() == 1) {
-						ObsNode* next_obs_node = (ObsNode*)curr_obs_node->next_node;
-
-						for (int f_index = 0; f_index < (int)next_obs_node->factors.size(); f_index++) {
-							Factor* new_factor = new Factor(next_obs_node->factors[f_index],
-															wrapper->solution);
-							curr_obs_node->factors.push_back(new_factor);
-
-							wrapper->solution->replace_factor(wrapper->solution->scopes[s_index],
-															  next_obs_node->id,
-															  f_index,
-															  curr_obs_node->id,
-															  curr_obs_node->factors.size()-1);
-						}
-
-						wrapper->solution->replace_obs_node(wrapper->solution->scopes[s_index],
-															next_obs_node->id,
-															curr_obs_node->id);
-
-						if (next_obs_node->next_node != NULL) {
-							for (int a_index = 0; a_index < (int)next_obs_node->next_node->ancestor_ids.size(); a_index++) {
-								if (next_obs_node->next_node->ancestor_ids[a_index] == next_obs_node->id) {
-									next_obs_node->next_node->ancestor_ids.erase(
-										next_obs_node->next_node->ancestor_ids.begin() + a_index);
-									break;
-								}
-							}
-							next_obs_node->next_node->ancestor_ids.push_back(curr_obs_node->id);
-						}
-						curr_obs_node->next_node_id = next_obs_node->next_node_id;
-						curr_obs_node->next_node = next_obs_node->next_node;
-
-						wrapper->solution->clean_inputs(wrapper->solution->scopes[s_index],
-														next_obs_node->id);
-
-						wrapper->solution->scopes[s_index]->nodes.erase(next_obs_node->id);
-						delete next_obs_node;
-
-						removed_node = true;
-						break;
-					}
-				}
-			}
-
-			if (!removed_node) {
-				break;
-			}
-		}
-	}
-
-	/**
 	 * - add needed ObsNodes
 	 */
 	vector<pair<AbstractNode*,bool>> obs_node_needed;
@@ -356,6 +291,7 @@ void clean_scope(Scope* scope,
 
 			for (int a_index = 0; a_index < (int)it->second->ancestor_ids.size(); a_index++) {
 				ObsNode* obs_node = (ObsNode*)scope->nodes[it->second->ancestor_ids[a_index]];
+				obs_node->next_node_id = new_obs_node->id;
 				obs_node->next_node = new_obs_node;
 			}
 

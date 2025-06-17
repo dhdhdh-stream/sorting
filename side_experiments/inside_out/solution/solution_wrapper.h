@@ -33,6 +33,8 @@ public:
 	int sum_num_confusion_instances;
 	int experiment_iter;
 
+	int experiments_since_success;
+
 	/**
 	 * - run variables
 	 */
@@ -77,6 +79,13 @@ public:
 	std::pair<bool,int> measure_step(std::vector<double> obs);
 	void measure_end(double result);
 	void measure_update(double new_score);
+
+	bool is_done();
+
+	void clean_scopes();
+
+	void combine(std::string other_path,
+				 std::string other_name);
 
 	void save(std::string path,
 			  std::string name);

@@ -26,8 +26,14 @@ class Scope;
 
 class Solution {
 public:
+	/**
+	 * - -1 if fail
+	 */
 	int timestamp;
 	double curr_score;
+
+	int best_timestamp;
+	double best_score;
 
 	std::vector<Scope*> scopes;
 
@@ -61,10 +67,10 @@ public:
 					   Scope* new_scope,
 					   int new_scope_node_id);
 
-	void clean_scopes();
+	void clean();
 	void measure_update();
 
-	void clean();
+	void clean_scopes();
 
 	void save(std::string path,
 			  std::string name);

@@ -8,6 +8,8 @@
 
 using namespace std;
 
+const int MAX_STAGNANT_TIMESTEPS = 5;
+
 void SolutionWrapper::measure_init() {
 	this->run_index++;
 
@@ -60,6 +62,13 @@ void SolutionWrapper::measure_end(double result) {
 }
 
 void SolutionWrapper::measure_update(double new_score) {
+	if (new_score > this->solution->best_score) {
+		this->solution->best_score = new_score;
+		this->solution->best_timestamp = this->solution->timestamp;
+	} else if (this->solution->timestamp >= this->solution->best_timestamp + MAX_STAGNANT_TIMESTEPS) {
+		this->solution->timestamp = -1;
+	}
+
 	this->solution->curr_score = new_score;
 
 	this->solution->measure_update();

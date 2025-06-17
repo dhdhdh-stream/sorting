@@ -60,7 +60,7 @@ while True:
 	for t_index in range(len(task_threads)-1, -1, -1):
 		task_threads[t_index].check_status()
 
-		if task_threads[t_index].curr_iter >= EXPLORE_ITERS:
+		if task_threads[t_index].curr_iter == -1:
 			task_threads[t_index].close()
 
 			task_threads[t_index].tasknode.finalize(
