@@ -773,7 +773,7 @@ bool train_helper(vector<ScopeHistory*>& scope_histories,
 
 	set<Input> s_network_inputs;
 	for (int i_index = 0; i_index < (int)highest_inputs.size(); i_index++) {
-		if (highest_inputs[i_index].scope_context.size() == 0) {
+		if (highest_inputs[i_index].scope_context.size() != 0) {
 			s_network_inputs.insert(highest_inputs[i_index]);
 		}
 	}

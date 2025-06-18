@@ -1,6 +1,7 @@
 #include <iostream>
 
 #include "globals.h"
+#include "network.h"
 #include "pattern.h"
 #include "simple.h"
 #include "solution_helpers.h"
@@ -13,7 +14,7 @@ default_random_engine generator;
 
 ProblemType* problem_type;
 
-const int NUM_TRIES = 1000;
+const int NUM_TRIES = 100;
 
 const int PATTERN_LENGTH = 10;
 
@@ -82,6 +83,9 @@ int main(int argc, char* argv[]) {
 							  average_misguess,
 							  misguess_standard_deviation);
 
+		cout << "average_misguess: " << average_misguess << endl;
+		cout << "misguess_standard_deviation: " << misguess_standard_deviation << endl;
+
 		if (best_pattern == NULL) {
 			best_pattern = new Pattern(actions,
 									   keypoints,
@@ -98,8 +102,15 @@ int main(int argc, char* argv[]) {
 									   keypoint_standard_deviations,
 									   inputs,
 									   network);
+		} else {
+			delete network;
 		}
 	}
+
+	ofstream output_file;
+	output_file.open("saves/main.txt");
+	best_pattern->save(output_file);
+	output_file.close();
 
 	cout << "Done" << endl;
 }

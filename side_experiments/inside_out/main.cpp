@@ -89,7 +89,11 @@ int main(int argc, char* argv[]) {
 
 	solution_wrapper->save_for_display("../", "display.txt");
 
+	#if defined(MDEBUG) && MDEBUG
+	while (true) {
+	#else
 	while (!solution_wrapper->is_done()) {
+	#endif /* MDEBUG */
 		int starting_timestamp = solution_wrapper->solution->timestamp;
 
 		Problem* problem = problem_type->get_problem();

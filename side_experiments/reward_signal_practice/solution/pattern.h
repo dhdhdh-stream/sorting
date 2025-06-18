@@ -1,6 +1,7 @@
 #ifndef PATTERN_H
 #define PATTERN_H
 
+#include <fstream>
 #include <vector>
 
 class Network;
@@ -22,7 +23,10 @@ public:
 			std::vector<double> keypoint_standard_deviations,
 			std::vector<int> inputs,
 			Network* network);
+	Pattern(std::ifstream& input_file);
 	~Pattern();
+
+	void save(std::ofstream& output_file);
 };
 
 #endif /* PATTERN_H */

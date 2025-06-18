@@ -33,8 +33,6 @@ public:
 	int sum_num_confusion_instances;
 	int experiment_iter;
 
-	int experiments_since_success;
-
 	/**
 	 * - run variables
 	 */

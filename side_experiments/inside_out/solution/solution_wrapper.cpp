@@ -21,8 +21,6 @@ SolutionWrapper::SolutionWrapper(int num_obs) {
 	this->sum_num_confusion_instances = 0;
 	this->experiment_iter = 0;
 
-	this->experiments_since_success = 0;
-
 	this->experiment_history = NULL;
 }
 
@@ -43,8 +41,6 @@ SolutionWrapper::SolutionWrapper(int num_obs,
 	this->sum_num_actions = 0;
 	this->sum_num_confusion_instances = 0;
 	this->experiment_iter = 0;
-
-	this->experiments_since_success = 0;
 
 	this->experiment_history = NULL;
 }

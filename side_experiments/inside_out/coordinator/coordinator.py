@@ -5,7 +5,6 @@ import time
 from collections import deque
 from queue import Queue
 
-from task_thread import EXPLORE_ITERS
 from task_thread import TaskThread
 from task_tree import TaskTree
 
@@ -43,7 +42,7 @@ curr_time_stamp = int(time.time())
 filename = 'saves/task_tree_' + str(curr_time_stamp) + '.txt'
 task_tree = TaskTree()
 
-# filename = 'saves/task_tree_1749834670.txt'
+# filename = 'saves/task_tree_1750146199.txt'
 # task_tree_file = open(filename, 'r')
 # task_tree = TaskTree(task_tree_file)
 # task_tree_file.close()

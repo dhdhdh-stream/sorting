@@ -1,7 +1,9 @@
 #include "solution_helpers.h"
 
 #include <cmath>
+#include <iostream>
 
+#include "constants.h"
 #include "globals.h"
 #include "network.h"
 #include "nn_helpers.h"
@@ -32,6 +34,8 @@ void measure_keypoints(vector<int>& full_sequence,
 				}
 			}
 		}
+
+		delete problem;
 	}
 
 	for (int k_index = 0; k_index < (int)keypoints.size(); k_index++) {
@@ -47,6 +51,9 @@ void measure_keypoints(vector<int>& full_sequence,
 				* (keypoint_obs[k_index][h_index] - average);
 		}
 		double standard_deviation = sqrt(sum_variances / (double)MEASURE_ITERS);
+		if (standard_deviation < MIN_STANDARD_DEVIATION) {
+			standard_deviation = MIN_STANDARD_DEVIATION;
+		}
 
 		keypoint_averages.push_back(average);
 		keypoint_standard_deviations.push_back(standard_deviation);
@@ -64,9 +71,12 @@ void train_pattern_network(vector<int>& actions,
 	vector<vector<double>> input_vals;
 	vector<vector<bool>> input_is_on;
 	vector<double> target_vals;
+	int count = 0;
 	uniform_int_distribution<int> action_distribution(0, 1);
 	uniform_int_distribution<int> num_random_distribution(0, 99);
-	for (int iter_index = 0; iter_index < MEASURE_ITERS; iter_index++) {
+	while (true) {
+		count++;
+
 		Problem* problem = problem_type->get_problem();
 
 		int num_random = num_random_distribution(generator);
@@ -97,6 +107,10 @@ void train_pattern_network(vector<int>& actions,
 			}
 		}
 
+		double target_val = problem->score_result();
+
+		delete problem;
+
 		double sum_t_scores = 0.0;
 		for (int k_index = 0; k_index < (int)keypoints.size(); k_index++) {
 			sum_t_scores += abs(t_scores[k_index]);
@@ -106,14 +120,16 @@ void train_pattern_network(vector<int>& actions,
 			input_vals.push_back(curr_input_vals);
 			input_is_on.push_back(curr_input_is_on);
 
-			double target_val = problem->score_result();
 			target_vals.push_back(target_val);
 
-			if (inputs.size() >= MEASURE_ITERS) {
+			if (input_vals.size() >= MEASURE_ITERS) {
 				break;
 			}
 		}
 	}
+
+	double hit_percentage = (double)MEASURE_ITERS / (double)count;
+	cout << "hit_percentage: " << hit_percentage << endl;
 
 	network = new Network((int)inputs.size(),
 						  input_vals,
