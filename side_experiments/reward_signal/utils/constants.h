@@ -1,0 +1,58 @@
+#ifndef CONSTANTS_H
+#define CONSTANTS_H
+
+const double MIN_WEIGHT = 0.00001;
+const double MIN_STANDARD_DEVIATION = 0.00001;
+
+const int STEP_TYPE_ACTION = 0;
+const int STEP_TYPE_SCOPE = 1;
+
+const double TEST_SAMPLES_PERCENTAGE = 0.2;
+
+const double EXPERIMENT_MIN_AVERAGE_HITS_PER_RUN = 0.2;
+
+#if defined(MDEBUG) && MDEBUG
+const int MEASURE_S1_ITERS = 1;
+const int MEASURE_S2_ITERS = 2;
+const int MEASURE_S3_ITERS = 5;
+const int MEASURE_S4_ITERS = 10;
+#else
+const int MEASURE_S1_ITERS = 1;
+const int MEASURE_S2_ITERS = 40;
+const int MEASURE_S3_ITERS = 400;
+const int MEASURE_S4_ITERS = 4000;
+#endif /* MDEBUG */
+
+#if defined(MDEBUG) && MDEBUG
+const int EARLY_SUCCESS_S1_ITERS = 2;
+const int EARLY_SUCCESS_S2_ITERS = 5;
+#else
+const int EARLY_SUCCESS_S1_ITERS = 100;
+const int EARLY_SUCCESS_S2_ITERS = 800;
+#endif /* MDEBUG */
+const double EARLY_SUCCESS_MIN_T_SCORE = 3.0;
+
+const int CHECK_CONFUSION_ITER = 100;
+const int ACTIONS_PER_CONFUSION = 20;
+
+#if defined(MDEBUG) && MDEBUG
+const int MEASURE_ITERS = 10;
+#else
+/**
+ * - need large number of samples
+ *   - otherwise trapped by lottery + local maxima
+ */
+const int MEASURE_ITERS = 4000;
+#endif /* MDEBUG */
+
+#if defined(MDEBUG) && MDEBUG
+const int IMPROVEMENTS_PER_ITER = 2;
+#else
+const int IMPROVEMENTS_PER_ITER = 4;
+#endif /* MDEBUG */
+
+#if defined(MDEBUG) && MDEBUG
+const int NUM_VERIFY_SAMPLES = 10;
+#endif /* MDEBUG */
+
+#endif /* CONSTANTS_H */
