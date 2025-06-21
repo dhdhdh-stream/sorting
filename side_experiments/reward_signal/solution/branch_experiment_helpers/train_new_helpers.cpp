@@ -4,7 +4,7 @@
 
 #include "constants.h"
 #include "globals.h"
-#include "new_scope_experiment.h"
+#include "pattern.h"
 #include "scope.h"
 #include "solution_helpers.h"
 #include "solution_wrapper.h"
@@ -23,8 +23,6 @@ void BranchExperiment::train_new_check_activate(
 	this->num_instances_until_target--;
 
 	if (this->num_instances_until_target <= 0) {
-		history->instance_count++;
-
 		double sum_vals = this->existing_average_score;
 		for (int i_index = 0; i_index < (int)this->existing_inputs.size(); i_index++) {
 			double val;
@@ -42,6 +40,8 @@ void BranchExperiment::train_new_check_activate(
 		history->existing_predicted_scores.push_back(sum_vals);
 
 		this->scope_histories.push_back(new ScopeHistory(wrapper->scope_histories.back()));
+
+		wrapper->scope_histories.back()->experiments_hit.push_back(this);
 
 		uniform_int_distribution<int> until_distribution(0, (int)this->average_instances_per_run-1.0);
 		this->num_instances_until_target = 1 + until_distribution(generator);
@@ -76,19 +76,13 @@ void BranchExperiment::train_new_step(vector<double>& obs,
 			wrapper->node_context.push_back(this->best_scopes[experiment_state->step_index]->nodes[0]);
 			wrapper->experiment_context.push_back(NULL);
 			wrapper->confusion_context.push_back(NULL);
-
-			if (this->best_scopes[experiment_state->step_index]->new_scope_experiment != NULL) {
-				this->best_scopes[experiment_state->step_index]->new_scope_experiment->pre_activate(wrapper);
-			}
 		}
 	}
 }
 
 void BranchExperiment::train_new_exit_step(SolutionWrapper* wrapper,
 										   BranchExperimentState* experiment_state) {
-	if (this->best_scopes[experiment_state->step_index]->new_scope_experiment != NULL) {
-		this->best_scopes[experiment_state->step_index]->new_scope_experiment->back_activate(wrapper);
-	}
+	this->best_scopes[experiment_state->step_index]->back_activate(wrapper);
 
 	delete wrapper->scope_histories.back();
 
@@ -100,10 +94,30 @@ void BranchExperiment::train_new_exit_step(SolutionWrapper* wrapper,
 	experiment_state->step_index++;
 }
 
+void BranchExperiment::train_new_back_activate(SolutionWrapper* wrapper,
+											   BranchExperimentHistory* history) {
+	if (this->scope_context->pattern != NULL) {
+		bool has_match;
+		double predicted;
+		this->scope_context->pattern->activate(
+			has_match,
+			predicted,
+			wrapper->scope_histories.back());
+		double target_val;
+		if (has_match) {
+			target_val = predicted / this->scope_context->pattern->predict_standard_deviation;
+		} else {
+			target_val = -1.0;
+		}
+		this->i_target_val_histories.push_back(target_val - history->existing_predicted_scores[0]);
+		history->existing_predicted_scores.clear();
+	}
+}
+
 void BranchExperiment::train_new_backprop(
 		double target_val,
 		BranchExperimentHistory* history) {
-	for (int i_index = 0; i_index < history->instance_count; i_index++) {
+	for (int i_index = 0; i_index < (int)history->existing_predicted_scores.size(); i_index++) {
 		this->i_target_val_histories.push_back(target_val - history->existing_predicted_scores[i_index]);
 	}
 

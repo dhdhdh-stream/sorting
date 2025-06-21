@@ -2,8 +2,7 @@
 
 #include <iostream>
 
-#include "abstract_experiment.h"
-#include "confusion.h"
+#include "explore.h"
 #include "globals.h"
 #include "problem.h"
 #include "scope.h"
@@ -12,10 +11,10 @@
 
 using namespace std;
 
-void ScopeNode::experiment_step(vector<double>& obs,
-								int& action,
-								bool& is_next,
-								SolutionWrapper* wrapper) {
+void ScopeNode::explore_step(vector<double>& obs,
+							 int& action,
+							 bool& is_next,
+							 SolutionWrapper* wrapper) {
 	ScopeHistory* scope_history = wrapper->scope_histories.back();
 
 	ScopeNodeHistory* history = new ScopeNodeHistory(this);
@@ -26,26 +25,19 @@ void ScopeNode::experiment_step(vector<double>& obs,
 	history->scope_history = inner_scope_history;
 	wrapper->scope_histories.push_back(inner_scope_history);
 	wrapper->node_context.push_back(this->scope->nodes[0]);
-	wrapper->experiment_context.push_back(NULL);
-	wrapper->confusion_context.push_back(NULL);
+	wrapper->explore_context.push_back(NULL);
 }
 
-void ScopeNode::experiment_exit_step(SolutionWrapper* wrapper) {
+void ScopeNode::explore_exit_step(SolutionWrapper* wrapper) {
 	this->scope->back_activate(wrapper);
 
 	wrapper->scope_histories.pop_back();
 	wrapper->node_context.pop_back();
-	wrapper->experiment_context.pop_back();
-	wrapper->confusion_context.pop_back();
+	wrapper->explore_context.pop_back();
 
 	wrapper->node_context.back() = this->next_node;
 
-	if (this->experiment != NULL) {
-		this->experiment->check_activate(
-			this,
-			false,
-			wrapper);
-	} else if (this->confusion != NULL) {
-		this->confusion->check_activate(wrapper);
+	if (this->explore != NULL) {
+		this->explore->check_activate(wrapper);
 	}
 }

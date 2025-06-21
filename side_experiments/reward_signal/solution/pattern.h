@@ -21,6 +21,7 @@ public:
 
 	std::vector<Input> inputs;
 	Network* predict_network;
+	double predict_standard_deviation;
 
 	Pattern();
 	~Pattern();

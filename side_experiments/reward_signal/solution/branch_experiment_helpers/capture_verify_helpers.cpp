@@ -5,7 +5,6 @@
 #include <iostream>
 
 #include "constants.h"
-#include "new_scope_experiment.h"
 #include "problem.h"
 #include "scope.h"
 #include "solution_helpers.h"
@@ -82,19 +81,13 @@ void BranchExperiment::capture_verify_step(vector<double>& obs,
 			wrapper->node_context.push_back(this->best_scopes[experiment_state->step_index]->nodes[0]);
 			wrapper->experiment_context.push_back(NULL);
 			wrapper->confusion_context.push_back(NULL);
-
-			if (this->best_scopes[experiment_state->step_index]->new_scope_experiment != NULL) {
-				this->best_scopes[experiment_state->step_index]->new_scope_experiment->pre_activate(wrapper);
-			}
 		}
 	}
 }
 
 void BranchExperiment::capture_verify_exit_step(SolutionWrapper* wrapper,
 												BranchExperimentState* experiment_state) {
-	if (this->best_scopes[experiment_state->step_index]->new_scope_experiment != NULL) {
-		this->best_scopes[experiment_state->step_index]->new_scope_experiment->back_activate(wrapper);
-	}
+	this->best_scopes[experiment_state->step_index]->back_activate(wrapper);
 
 	delete wrapper->scope_histories.back();
 

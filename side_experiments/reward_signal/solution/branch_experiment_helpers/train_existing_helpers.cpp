@@ -4,6 +4,7 @@
 
 #include "constants.h"
 #include "globals.h"
+#include "pattern.h"
 #include "scope.h"
 #include "solution_helpers.h"
 #include "solution_wrapper.h"
@@ -19,23 +20,39 @@ const int TRAIN_EXISTING_NUM_DATAPOINTS = 100;
 void BranchExperiment::train_existing_check_activate(
 		SolutionWrapper* wrapper,
 		BranchExperimentHistory* history) {
-	history->instance_count++;
-
 	this->scope_histories.push_back(new ScopeHistory(wrapper->scope_histories.back()));
+
+	wrapper->scope_histories.back()->experiments_hit.push_back(this);
+}
+
+void BranchExperiment::train_existing_back_activate(
+		SolutionWrapper* wrapper) {
+	if (this->scope_context->pattern != NULL) {
+		bool has_match;
+		double predicted;
+		this->scope_context->pattern->activate(
+			has_match,
+			predicted,
+			wrapper->scope_histories.back());
+		if (has_match) {
+			this->i_target_val_histories.push_back(
+				predicted / this->scope_context->pattern->predict_standard_deviation);
+		} else {
+			this->i_target_val_histories.push_back(-1.0);
+		}
+	}
 }
 
 void BranchExperiment::train_existing_backprop(
 		double target_val,
 		BranchExperimentHistory* history) {
-	for (int i_index = 0; i_index < history->instance_count; i_index++) {
+	while (this->i_target_val_histories.size() < this->scope_histories.size()) {
 		this->i_target_val_histories.push_back(target_val);
 	}
 
-	this->sum_num_instances += history->instance_count;
-
 	this->state_iter++;
 	if (this->state_iter >= TRAIN_EXISTING_NUM_DATAPOINTS) {
-		this->average_instances_per_run = (double)this->sum_num_instances / (double)this->state_iter;
+		this->average_instances_per_run = (double)this->scope_histories.size() / (double)this->state_iter;
 		if (this->average_instances_per_run < 1.0) {
 			this->average_instances_per_run = 1.0;
 		}

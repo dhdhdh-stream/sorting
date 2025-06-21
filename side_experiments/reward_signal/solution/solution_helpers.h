@@ -20,6 +20,9 @@ void create_experiment(ScopeHistory* scope_history,
 					   SolutionWrapper* wrapper);
 void create_confusion(ScopeHistory* scope_history,
 					  SolutionWrapper* wrapper);
+// temp
+void create_explore(ScopeHistory* scope_history,
+					SolutionWrapper* wrapper);
 
 void fetch_input_helper(ScopeHistory* scope_history,
 						Input& input,
@@ -47,5 +50,8 @@ void check_generalize(Scope* scope_to_generalize,
 void update_scores(ScopeHistory* scope_history,
 				   double target_val,
 				   SolutionWrapper* wrapper);
+
+// temp
+void explore_helper(SolutionWrapper* wrapper);
 
 #endif /* SOLUTION_HELPERS_H */

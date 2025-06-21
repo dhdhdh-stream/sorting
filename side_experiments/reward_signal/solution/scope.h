@@ -5,13 +5,14 @@
 #include <map>
 #include <vector>
 
+class AbstractExperiment;
 class AbstractNode;
 class AbstractNodeHistory;
 class NewScopeExperiment;
 class Pattern;
-class PatternExperiment;
 class Problem;
 class Solution;
+class SolutionWrapper;
 
 const int PATTERN_EXPERIMENT_MIN_NODE_SIZE = 20;
 
@@ -28,16 +29,14 @@ public:
 	bool generalized;
 
 	Pattern* pattern;
-	PatternExperiment* pattern_experiment;
-
-	/**
-	 * - tie NewScopeExperiment to scope instead of node
-	 *   - so that can be tried throughout entire scope
-	 */
-	NewScopeExperiment* new_scope_experiment;
+	std::vector<ScopeHistory*> existing_scope_histories;
+	std::vector<ScopeHistory*> explore_scope_histories;
+	std::vector<double> explore_target_vals;
 
 	Scope();
 	~Scope();
+
+	void back_activate(SolutionWrapper* wrapper);
 
 	void random_exit_activate(AbstractNode* starting_node,
 							  std::vector<AbstractNode*>& possible_exits);
@@ -61,6 +60,8 @@ public:
 					   Scope* new_scope,
 					   int new_scope_node_id);
 
+	void update_pattern();
+
 	void clean();
 	void measure_update();
 
@@ -80,6 +81,8 @@ public:
 	Scope* scope;
 
 	std::map<int, AbstractNodeHistory*> node_histories;
+
+	std::vector<AbstractExperiment*> experiments_hit;
 
 	ScopeHistory(Scope* scope);
 	ScopeHistory(ScopeHistory* original);

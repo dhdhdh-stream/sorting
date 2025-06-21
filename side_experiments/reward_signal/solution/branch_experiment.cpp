@@ -21,8 +21,6 @@ BranchExperiment::BranchExperiment(Scope* scope_context,
 	this->curr_scope_history = NULL;
 	this->best_scope_history = NULL;
 
-	this->sum_num_instances = 0;
-
 	this->state = BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING;
 	this->state_iter = 0;
 
@@ -56,7 +54,7 @@ void BranchExperiment::decrement(AbstractNode* experiment_node) {
 BranchExperimentHistory::BranchExperimentHistory(BranchExperiment* experiment) {
 	this->experiment = experiment;
 
-	this->instance_count = 0;
+	this->has_explore = false;
 }
 
 BranchExperimentState::BranchExperimentState(BranchExperiment* experiment) {

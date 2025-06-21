@@ -2,24 +2,22 @@
 
 #include <iostream>
 
+#include "abstract_experiment.h"
 #include "action_node.h"
 #include "branch_node.h"
 #include "globals.h"
 #include "obs_node.h"
 #include "pattern.h"
-#include "pattern_experiment.h"
 #include "scope_node.h"
 #include "solution.h"
+#include "solution_wrapper.h"
 
 using namespace std;
 
 Scope::Scope() {
-	this->new_scope_experiment = NULL;
-
 	this->generalized = false;
 
 	this->pattern = NULL;
-	this->pattern_experiment = NULL;
 }
 
 Scope::~Scope() {
@@ -30,9 +28,18 @@ Scope::~Scope() {
 	if (this->pattern != NULL) {
 		delete this->pattern;
 	}
+	for (int h_index = 0; h_index < (int)this->existing_scope_histories.size(); h_index++) {
+		delete this->existing_scope_histories[h_index];
+	}
+	for (int h_index = 0; h_index < (int)this->explore_scope_histories.size(); h_index++) {
+		delete this->explore_scope_histories[h_index];
+	}
+}
 
-	if (this->pattern_experiment != NULL) {
-		delete this->pattern_experiment;
+void Scope::back_activate(SolutionWrapper* wrapper) {
+	ScopeHistory* scope_history = wrapper->scope_histories.back();
+	for (int e_index = 0; e_index < (int)scope_history->experiments_hit.size(); e_index++) {
+		scope_history->experiments_hit[e_index]->back_activate(wrapper);
 	}
 }
 
@@ -244,19 +251,15 @@ void Scope::clean() {
 		it->second->clean();
 	}
 
-	if (this->pattern != NULL) {
-		delete this->pattern;
-		this->pattern = NULL;
+	for (int h_index = 0; h_index < (int)this->existing_scope_histories.size(); h_index++) {
+		delete this->existing_scope_histories[h_index];
 	}
-	if (this->pattern_experiment != NULL) {
-		delete this->pattern_experiment;
-		this->pattern_experiment = NULL;
+	this->existing_scope_histories.clear();
+	for (int h_index = 0; h_index < (int)this->explore_scope_histories.size(); h_index++) {
+		delete this->explore_scope_histories[h_index];
 	}
-	if (this->nodes.size() >= PATTERN_EXPERIMENT_MIN_NODE_SIZE) {
-		this->pattern_experiment = new PatternExperiment(this);
-	}
-
-	this->new_scope_experiment = NULL;
+	this->explore_scope_histories.clear();
+	this->explore_target_vals.clear();
 }
 
 void Scope::measure_update() {
@@ -371,10 +374,6 @@ void Scope::load(ifstream& input_file,
 	string generalized_line;
 	getline(input_file, generalized_line);
 	this->generalized = stoi(generalized_line);
-
-	if (this->nodes.size() >= PATTERN_EXPERIMENT_MIN_NODE_SIZE) {
-		this->pattern_experiment = new PatternExperiment(this);
-	}
 }
 
 void Scope::link(Solution* parent_solution) {

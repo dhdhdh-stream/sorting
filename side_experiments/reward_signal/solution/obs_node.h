@@ -48,6 +48,11 @@ public:
 						 bool& is_next,
 						 SolutionWrapper* wrapper);
 
+	void explore_step(std::vector<double>& obs,
+					  int& action,
+					  bool& is_next,
+					  SolutionWrapper* wrapper);
+
 	void clean_inputs(Scope* scope,
 					  int node_id);
 	void clean_inputs(Scope* scope);

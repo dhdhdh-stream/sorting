@@ -1,4 +1,4 @@
-#include "confusion.h"
+#include "explore.h"
 
 #include "action_node.h"
 #include "branch_node.h"
@@ -12,17 +12,13 @@
 
 using namespace std;
 
-const int ITERS_BEFORE_DELETE = 100;
-
-Confusion::Confusion(Scope* scope_context,
-					 AbstractNode* node_context,
-					 bool is_branch,
-					 SolutionWrapper* wrapper) {
+Explore::Explore(Scope* scope_context,
+				 AbstractNode* node_context,
+				 bool is_branch,
+				 SolutionWrapper* wrapper) {
 	this->scope_context = scope_context;
 	this->node_context = node_context;
 	this->is_branch = is_branch;
-
-	this->iter = 0;
 
 	vector<AbstractNode*> possible_exits;
 
@@ -95,88 +91,70 @@ Confusion::Confusion(Scope* scope_context,
 			this->scopes.push_back(NULL);
 		}
 	}
-	this->is_init = false;
 }
 
-void Confusion::check_activate(SolutionWrapper* wrapper) {
-	wrapper->num_confusion_instances++;
+void Explore::check_activate(SolutionWrapper* wrapper) {
+	if (!wrapper->has_explore) {
+		wrapper->has_explore = true;
 
-	uniform_int_distribution<int> is_active_distribution(0, 99);
-	if (is_active_distribution(generator) == 0) {
-		ConfusionState* new_confusion_state = new ConfusionState(this);
-		new_confusion_state->step_index = 0;
-		wrapper->confusion_context.back() = new_confusion_state;
+		ExploreState* new_explore_state = new ExploreState(this);
+		new_explore_state->step_index = 0;
+		wrapper->explore_context.back() = new_explore_state;
 	}
 }
 
-void Confusion::experiment_step(vector<double>& obs,
-								int& action,
-								bool& is_next,
-								bool& fetch_action,
-								SolutionWrapper* wrapper) {
-	ConfusionState* confusion_state = (ConfusionState*)wrapper->confusion_context.back();
+void Explore::explore_step(vector<double>& obs,
+						   int& action,
+						   bool& is_next,
+						   bool& fetch_action,
+						   SolutionWrapper* wrapper) {
+	ExploreState* explore_state = (ExploreState*)wrapper->confusion_context.back();
 
-	if (confusion_state->step_index >= (int)this->step_types.size()) {
+	if (explore_state->step_index >= (int)this->step_types.size()) {
 		wrapper->node_context.back() = this->exit_next_node;
 
-		delete confusion_state;
-		wrapper->confusion_context.back() = NULL;
+		delete explore_state;
+		wrapper->explore_context.back() = NULL;
 
-		this->is_init = true;
-
-		this->iter++;
-		if (this->iter >= ITERS_BEFORE_DELETE) {
-			this->node_context->confusion = NULL;
-			delete this;
-		}
+		this->node_context->explore = NULL;
+		delete this;
 	} else {
-		if (this->step_types[confusion_state->step_index] == STEP_TYPE_ACTION) {
-			if (this->is_init) {
-				action = this->actions[confusion_state->step_index];
-				is_next = true;
+		if (this->step_types[explore_state->step_index] == STEP_TYPE_ACTION) {
+			is_next = true;
+			fetch_action = true;
 
-				wrapper->num_actions++;
-
-				confusion_state->step_index++;
-			} else {
-				is_next = true;
-				fetch_action = true;
-
-				wrapper->num_actions++;
-			}
+			wrapper->num_actions++;
 		} else {
-			ScopeHistory* inner_scope_history = new ScopeHistory(this->scopes[confusion_state->step_index]);
+			ScopeHistory* inner_scope_history = new ScopeHistory(this->scopes[explore_state->step_index]);
 			wrapper->scope_histories.push_back(inner_scope_history);
-			wrapper->node_context.push_back(this->scopes[confusion_state->step_index]->nodes[0]);
-			wrapper->experiment_context.push_back(NULL);
-			wrapper->confusion_context.push_back(NULL);
+			wrapper->node_context.push_back(this->scopes[explore_state->step_index]->nodes[0]);
+			wrapper->explore_context.push_back(NULL);
 		}
 	}
 }
 
-void Confusion::set_action(int action,
-						   SolutionWrapper* wrapper) {
-	ConfusionState* confusion_state = (ConfusionState*)wrapper->confusion_context.back();
+void Explore::set_action(int action,
+						 SolutionWrapper* wrapper) {
+	ExploreState* explore_state = (ExploreState*)wrapper->confusion_context.back();
 
-	this->actions[confusion_state->step_index] = action;
+	this->actions[explore_state->step_index] = action;
 
-	confusion_state->step_index++;
+	explore_state->step_index++;
 }
 
-void Confusion::experiment_exit_step(SolutionWrapper* wrapper) {
-	ConfusionState* confusion_state = (ConfusionState*)wrapper->confusion_context[wrapper->confusion_context.size() - 2];
-	this->scopes[confusion_state->step_index]->back_activate(wrapper);
+void Explore::explore_exit_step(SolutionWrapper* wrapper) {
+	ExploreState* explore_state = (ExploreState*)wrapper->confusion_context[wrapper->explore_context.size() - 2];
+	this->scopes[explore_state->step_index]->back_activate(wrapper);
 
 	delete wrapper->scope_histories.back();
 
 	wrapper->scope_histories.pop_back();
 	wrapper->node_context.pop_back();
-	wrapper->experiment_context.pop_back();
-	wrapper->confusion_context.pop_back();
+	wrapper->explore_context.pop_back();
 
-	confusion_state->step_index++;
+	explore_state->step_index++;
 }
 
-ConfusionState::ConfusionState(Confusion* confusion) {
-	this->confusion = confusion;
+ExploreState::ExploreState(Explore* explore) {
+	this->explore = explore;
 }

@@ -6,6 +6,8 @@
 
 class AbstractExperiment;
 class Confusion;
+// temp
+class Explore;
 class Scope;
 class Solution;
 class SolutionWrapper;
@@ -33,6 +35,9 @@ public:
 
 	Confusion* confusion;
 
+	// temp
+	Explore* explore;
+
 	virtual ~AbstractNode() {};
 
 	virtual void step(std::vector<double>& obs,
@@ -44,6 +49,11 @@ public:
 								 int& action,
 								 bool& is_next,
 								 SolutionWrapper* wrapper) = 0;
+
+	virtual void explore_step(std::vector<double>& obs,
+							  int& action,
+							  bool& is_next,
+							  SolutionWrapper* wrapper) = 0;
 
 	virtual void clean() = 0;
 	virtual void measure_update() = 0;

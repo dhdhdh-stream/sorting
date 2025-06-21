@@ -10,6 +10,8 @@ class AbstractExperimentHistory;
 class AbstractExperimentState;
 class AbstractNode;
 class ConfusionState;
+// temp
+class ExploreState;
 class Problem;
 class ScopeHistory;
 class Solution;
@@ -33,6 +35,9 @@ public:
 	int sum_num_confusion_instances;
 	int experiment_iter;
 
+	// temp
+	int num_experiments;
+
 	/**
 	 * - run variables
 	 */
@@ -40,11 +45,16 @@ public:
 	std::vector<AbstractNode*> node_context;
 	std::vector<AbstractExperimentState*> experiment_context;
 	std::vector<ConfusionState*> confusion_context;
+	// temp
+	std::vector<ExploreState*> explore_context;
 
 	int num_actions;
 	int num_confusion_instances;
 
 	AbstractExperimentHistory* experiment_history;
+
+	// temp
+	bool has_explore;
 
 	#if defined(MDEBUG) && MDEBUG
 	unsigned long starting_run_seed;
@@ -66,6 +76,12 @@ public:
 	std::tuple<bool,bool,int> experiment_step(std::vector<double> obs);
 	void set_action(int action);
 	void experiment_end(double result);
+
+	// temp
+	void explore_init();
+	std::tuple<bool,bool,int> explore_step(std::vector<double> obs);
+	void explore_set_action(int action);
+	void explore_end(double result);
 
 	#if defined(MDEBUG) && MDEBUG
 	void verify_init();
