@@ -1,5 +1,7 @@
 #include "explore.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
@@ -108,7 +110,7 @@ void Explore::explore_step(vector<double>& obs,
 						   bool& is_next,
 						   bool& fetch_action,
 						   SolutionWrapper* wrapper) {
-	ExploreState* explore_state = (ExploreState*)wrapper->confusion_context.back();
+	ExploreState* explore_state = (ExploreState*)wrapper->explore_context.back();
 
 	if (explore_state->step_index >= (int)this->step_types.size()) {
 		wrapper->node_context.back() = this->exit_next_node;
@@ -135,7 +137,7 @@ void Explore::explore_step(vector<double>& obs,
 
 void Explore::set_action(int action,
 						 SolutionWrapper* wrapper) {
-	ExploreState* explore_state = (ExploreState*)wrapper->confusion_context.back();
+	ExploreState* explore_state = (ExploreState*)wrapper->explore_context.back();
 
 	this->actions[explore_state->step_index] = action;
 
@@ -143,7 +145,7 @@ void Explore::set_action(int action,
 }
 
 void Explore::explore_exit_step(SolutionWrapper* wrapper) {
-	ExploreState* explore_state = (ExploreState*)wrapper->confusion_context[wrapper->explore_context.size() - 2];
+	ExploreState* explore_state = (ExploreState*)wrapper->explore_context[wrapper->explore_context.size() - 2];
 	this->scopes[explore_state->step_index]->back_activate(wrapper);
 
 	delete wrapper->scope_histories.back();

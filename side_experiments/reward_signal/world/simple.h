@@ -17,10 +17,8 @@ public:
 	int current_x;
 	int current_y;
 
-	int target;
-
-	bool hit_target;
-	int num_mistakes;
+	std::vector<int> targets;
+	int curr_index;
 
 	double random_factor;
 

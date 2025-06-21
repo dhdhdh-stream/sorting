@@ -48,7 +48,8 @@ void explore_gather_nodes_seen_helper(ScopeHistory* scope_history,
 			}
 			break;
 		case NODE_TYPE_BRANCH:
-			if (h_it->second->node->is_init) {
+			if (h_it->second->node->is_init
+					&& h_it->second->node->explore == NULL) {
 				BranchNodeHistory* branch_node_history = (BranchNodeHistory*)h_it->second;
 				map<pair<AbstractNode*,bool>, int>::iterator seen_it = nodes_seen
 					.find({h_it->second->node, branch_node_history->is_branch});

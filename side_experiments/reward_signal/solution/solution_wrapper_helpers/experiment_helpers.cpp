@@ -125,18 +125,9 @@ void SolutionWrapper::experiment_end(double result) {
 	this->solution->scopes[0]->back_activate(this);
 
 	if (this->curr_experiment == NULL) {
-		// temp
-		if (this->solution->scopes[0]->nodes.size() >= PATTERN_EXPERIMENT_MIN_NODE_SIZE) {
-			explore_helper(this);
-			this->solution->scopes[0]->update_pattern();
-		}
-
 		create_experiment(this->scope_histories[0],
 						  this->curr_experiment,
 						  this);
-
-		// temp
-		this->num_experiments++;
 	}
 	this->sum_num_actions += this->num_actions;
 	this->sum_num_confusion_instances += this->num_confusion_instances;
@@ -146,8 +137,8 @@ void SolutionWrapper::experiment_end(double result) {
 		double num_confusions = (double)this->sum_num_confusion_instances / (double)CHECK_CONFUSION_ITER;
 
 		if (num_actions / (double)ACTIONS_PER_CONFUSION > num_confusions) {
-			create_confusion(this->scope_histories[0],
-							 this);
+			// create_confusion(this->scope_histories[0],
+			// 				 this);
 		}
 
 		this->sum_num_actions = 0;
@@ -169,6 +160,15 @@ void SolutionWrapper::experiment_end(double result) {
 
 		delete this->experiment_history;
 		this->experiment_history = NULL;
+
+		// temp
+		this->num_experiments++;
+		if (this->num_experiments % 10 == 0) {
+			if (this->solution->scopes[0]->nodes.size() >= PATTERN_EXPERIMENT_MIN_NODE_SIZE) {
+				explore_helper(this);
+				this->solution->scopes[0]->update_pattern();
+			}
+		}
 	}
 	if (this->curr_experiment != NULL) {
 		if (this->curr_experiment->result == EXPERIMENT_RESULT_FAIL) {
@@ -214,6 +214,10 @@ void SolutionWrapper::experiment_end(double result) {
 
 				// temp
 				this->num_experiments = 0;
+				if (this->solution->scopes[0]->nodes.size() >= PATTERN_EXPERIMENT_MIN_NODE_SIZE) {
+					explore_helper(this);
+					this->solution->scopes[0]->update_pattern();
+				}
 			}
 		}
 	}

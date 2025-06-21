@@ -1,5 +1,7 @@
 #include "scope.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
@@ -15,13 +17,23 @@ using namespace std;
 
 const double MIN_CONSIDER_HIT_PERCENT = 0.2;
 
+#if defined(MDEBUG) && MDEBUG
+const int NUM_TRIES = 10;
+#else
 const int NUM_TRIES = 100;
+#endif /* MDEBUG */
 
 const int NUM_KEYPOINTS = 10;
 const int NUM_INPUTS = 10;
 
+#if defined(MDEBUG) && MDEBUG
+const int KEYPOINT_TRAIN_ITERS = 10;
+const int MAX_TRAIN_ITERS = 4;
+#else
 const int KEYPOINT_TRAIN_ITERS = 1000;
-const int MAX_TRAIN_ITERS = 50000;
+const int MAX_TRAIN_ITERS = 500;
+#endif /* MDEBUG */
+
 const double EXISTING_MIN_MATCH_PERCENT = 0.95;
 const double EXPLORE_MIN_MATCH_PERCENT = 0.15;
 const double EXPLORE_MAX_MATCH_PERCENT = 0.20;
@@ -241,18 +253,25 @@ bool train_keypoints_helper(Pattern* potential_pattern,
 			}
 		}
 
+		#if defined(MDEBUG) && MDEBUG
+		if (rand()%2 == 0) {
+		#else
 		double existing_match_percent = (double)existing_num_match / (double)existing_count;
 		double explore_match_percent = (double)explore_num_match / (double)explore_count;
 		if (existing_match_percent >= EXISTING_MIN_MATCH_PERCENT
 				&& explore_match_percent >= EXPLORE_MIN_MATCH_PERCENT
 				&& explore_match_percent <= EXPLORE_MAX_MATCH_PERCENT) {
+		#endif /* MDEBUG */
 			break;
 		} else {
+			#if defined(MDEBUG) && MDEBUG
+			#else
 			if (explore_match_percent > EXPLORE_MAX_MATCH_PERCENT) {
 				curr_explore_target *= 1.25;
 			} else if (explore_match_percent < EXPLORE_MIN_MATCH_PERCENT) {
 				curr_explore_target *= 0.8;
 			}
+			#endif /* MDEBUG */
 		}
 	}
 
@@ -281,7 +300,11 @@ double train_and_eval_predict_helper(Pattern* potential_pattern,
 		}
 		potential_pattern->keypoint_network->activate(keypoint_vals,
 													  keypoint_is_on);
+		#if defined(MDEBUG) && MDEBUG
+		if (rand()%2 == 0) {
+		#else
 		if (potential_pattern->keypoint_network->output->acti_vals[0] > 0.0) {
+		#endif /* MDEBUG */
 			vector<double> curr_vals(potential_pattern->inputs.size());
 			vector<bool> curr_is_on(potential_pattern->inputs.size());
 			for (int i_index = 0; i_index < (int)potential_pattern->inputs.size(); i_index++) {
@@ -379,9 +402,13 @@ void Scope::update_pattern() {
 			}
 		}
 
+		#if defined(MDEBUG) && MDEBUG
+		if (rand()%2 == 0) {
+		#else
 		double existing_match_percent = (double)predicted_outputs.size() / (double)num_test_instances;
 		if (existing_match_percent < EXPLORE_MIN_MATCH_PERCENT
 				|| existing_match_percent > EXPLORE_MAX_MATCH_PERCENT) {
+		#endif /* MDEBUG */
 			delete this->pattern;
 			this->pattern = NULL;
 
@@ -401,7 +428,11 @@ void Scope::update_pattern() {
 			}
 			double existing_average_misguess = existing_sum_misguess / (double)predicted_outputs.size();
 
+			#if defined(MDEBUG) && MDEBUG
+			if (rand()%2 == 0) {
+			#else
 			if (existing_average_misguess < default_average_misguess) {
+			#endif /* MDEBUG */
 				delete this->pattern;
 				this->pattern = NULL;
 
@@ -469,13 +500,19 @@ void Scope::update_pattern() {
 			potential_pattern,
 			this->explore_scope_histories,
 			this->explore_target_vals);
+		#if defined(MDEBUG) && MDEBUG
+		if (rand()%2 == 0) {
+		#else
 		if (potential_average_misguess < curr_average_misguess) {
+		#endif /* MDEBUG */
 			if (this->pattern != NULL) {
 				delete this->pattern;
 			}
 			this->pattern = potential_pattern;
 
 			curr_average_misguess = potential_average_misguess;
+
+			cout << "curr_average_misguess: " << curr_average_misguess << endl;
 		} else {
 			delete potential_pattern;
 		}

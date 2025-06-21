@@ -6,8 +6,8 @@
 
 #include "abstract_node.h"
 #include "globals.h"
-#include "minesweeper.h"
 #include "scope.h"
+#include "simple.h"
 #include "solution.h"
 #include "solution_helpers.h"
 #include "solution_wrapper.h"
@@ -26,7 +26,7 @@ int main(int argc, char* argv[]) {
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
 
-	ProblemType* problem_type = new TypeMinesweeper();
+	ProblemType* problem_type = new TypeSimple();
 
 	string filename;
 	SolutionWrapper* solution_wrapper;

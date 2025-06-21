@@ -12,6 +12,8 @@ const int ACTION_DOWN = 2;
 const int ACTION_LEFT = 3;
 const int ACTION_CLICK = 4;
 
+const int NUM_TARGETS = 10;
+
 Simple::Simple() {
 	this->world = vector<vector<int>>(3, vector<int>(3));
 
@@ -30,10 +32,10 @@ Simple::Simple() {
 	this->current_y = 1;
 
 	uniform_int_distribution<int> target_distribution(0, 3);
-	this->target = target_distribution(generator);
-
-	this->hit_target = false;
-	this->num_mistakes = 0;
+	for (int t_index = 0; t_index < NUM_TARGETS; t_index++) {
+		this->targets.push_back(target_distribution(generator));
+	}
+	this->curr_index = 0;
 
 	uniform_int_distribution<int> random_factor_distribution(-5, 5);
 	this->random_factor = random_factor_distribution(generator);
@@ -49,7 +51,11 @@ vector<double> Simple::get_observations() {
 		obs.push_back(this->world[this->current_x][this->current_y]);
 	}
 
-	obs.push_back(this->target);
+	if (this->curr_index >= NUM_TARGETS) {
+		obs.push_back(-1);
+	} else {
+		obs.push_back(this->targets[this->curr_index]);
+	}
 
 	return obs;
 }
@@ -81,55 +87,51 @@ void Simple::perform_action(int action) {
 		}
 		break;
 	case ACTION_CLICK:
-		switch (this->target) {
-		case 0:
-			if (this->current_x == 0
-					&& this->current_y == 0) {
-				if (!this->hit_target) {
-					this->hit_target = true;
+		if (this->curr_index >= NUM_TARGETS) {
+			this->world[1][1] -= 3;
+		} else {
+			switch (this->targets[this->curr_index]) {
+			case 0:
+				if (this->current_x == 0
+						&& this->current_y == 0) {
 					this->world[1][1] += 10;
+
+					this->curr_index++;
+				} else {
+					this->world[1][1] -= 3;
 				}
-			} else {
-				this->num_mistakes++;
-				this->world[1][1] -= 1;
-			}
-			break;
-		case 1:
-			if (this->current_x == 2
-					&& this->current_y == 0) {
-				if (!this->hit_target) {
-					this->hit_target = true;
+				break;
+			case 1:
+				if (this->current_x == 2
+						&& this->current_y == 0) {
 					this->world[1][1] += 10;
+
+					this->curr_index++;
+				} else {
+					this->world[1][1] -= 3;
 				}
-			} else {
-				this->num_mistakes++;
-				this->world[1][1] -= 1;
-			}
-			break;
-		case 2:
-			if (this->current_x == 0
-					&& this->current_y == 2) {
-				if (!this->hit_target) {
-					this->hit_target = true;
+				break;
+			case 2:
+				if (this->current_x == 0
+						&& this->current_y == 2) {
 					this->world[1][1] += 10;
+
+					this->curr_index++;
+				} else {
+					this->world[1][1] -= 3;
 				}
-			} else {
-				this->num_mistakes++;
-				this->world[1][1] -= 1;
-			}
-			break;
-		case 3:
-			if (this->current_x == 2
-					&& this->current_y == 2) {
-				if (!this->hit_target) {
-					this->hit_target = true;
+				break;
+			case 3:
+				if (this->current_x == 2
+						&& this->current_y == 2) {
 					this->world[1][1] += 10;
+
+					this->curr_index++;
+				} else {
+					this->world[1][1] -= 3;
 				}
-			} else {
-				this->num_mistakes++;
-				this->world[1][1] -= 1;
+				break;
 			}
-			break;
 		}
 		break;
 	}
@@ -148,6 +150,8 @@ Problem* Simple::copy_and_reset() {
 	new_problem->world = this->world;
 	new_problem->world[1][1] = 0.0;
 
+	new_problem->targets = this->targets;
+
 	new_problem->random_factor = this->random_factor;
 
 	return new_problem;
@@ -159,9 +163,8 @@ Problem* Simple::copy_snapshot() {
 	new_problem->world = this->world;
 	new_problem->current_x = this->current_x;
 	new_problem->current_y = this->current_y;
-	new_problem->target = this->target;
-	new_problem->hit_target = this->hit_target;
-	new_problem->num_mistakes = this->num_mistakes;
+	new_problem->targets = this->targets;
+	new_problem->curr_index = this->curr_index;
 	new_problem->random_factor = this->random_factor;
 
 	return new_problem;
@@ -171,14 +174,15 @@ Problem* Simple::copy_snapshot() {
 void Simple::print() {
 	for (int y_index = 2; y_index >= 0; y_index--) {
 		for (int x_index = 0; x_index < 3; x_index++) {
-			cout << this->world[x_index][y_index] << endl;
+			cout << this->world[x_index][y_index] << " ";
 		}
+		cout << endl;
 	}
 
 	cout << "current_x: " << this->current_x << endl;
 	cout << "current_y: " << this->current_y << endl;
 
-	cout << "target: " << target << endl;
+	cout << "curr_index: " << curr_index << endl;
 }
 
 Problem* TypeSimple::get_problem() {

@@ -16,11 +16,11 @@
 #include "branch_node.h"
 #include "constants.h"
 #include "globals.h"
-#include "minesweeper.h"
 #include "obs_node.h"
 #include "problem.h"
 #include "scope.h"
 #include "scope_node.h"
+#include "simple.h"
 #include "solution.h"
 #include "solution_helpers.h"
 #include "solution_wrapper.h"
@@ -40,7 +40,7 @@ int main(int argc, char* argv[]) {
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
 
-	ProblemType* problem_type = new TypeMinesweeper();
+	ProblemType* problem_type = new TypeSimple();
 
 	string filename;
 	SolutionWrapper* solution_wrapper;
@@ -94,7 +94,8 @@ int main(int argc, char* argv[]) {
 	#if defined(MDEBUG) && MDEBUG
 	while (true) {
 	#else
-	while (!solution_wrapper->is_done()) {
+	// while (!solution_wrapper->is_done()) {
+	while (true) {
 	#endif /* MDEBUG */
 		int starting_timestamp = solution_wrapper->solution->timestamp;
 
@@ -191,13 +192,13 @@ int main(int argc, char* argv[]) {
 
 			solution_wrapper->save_for_display("../", "display.txt");
 
-			#if defined(MDEBUG) && MDEBUG
-			delete solution_wrapper;
-			solution_wrapper = new SolutionWrapper(
-				problem_type->num_obs(),
-				"saves/",
-				filename);
-			#endif /* MDEBUG */
+			// #if defined(MDEBUG) && MDEBUG
+			// delete solution_wrapper;
+			// solution_wrapper = new SolutionWrapper(
+			// 	problem_type->num_obs(),
+			// 	"saves/",
+			// 	filename);
+			// #endif /* MDEBUG */
 		}
 	}
 

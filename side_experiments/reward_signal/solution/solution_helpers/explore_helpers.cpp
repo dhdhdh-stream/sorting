@@ -8,7 +8,11 @@
 
 using namespace std;
 
+#if defined(MDEBUG) && MDEBUG
+const int NUM_EXPLORE_GATHER = 40;
+#else
 const int NUM_EXPLORE_GATHER = 4000;
+#endif /* MDEBUG */
 
 void explore_helper(SolutionWrapper* solution_wrapper) {
 	ProblemType* problem_type = new TypeSimple();
@@ -47,4 +51,6 @@ void explore_helper(SolutionWrapper* solution_wrapper) {
 			break;
 		}
 	}
+
+	delete problem_type;
 }

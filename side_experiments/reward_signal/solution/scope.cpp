@@ -132,6 +132,11 @@ void Scope::clean_inputs(Scope* scope,
 			break;
 		}
 	}
+
+	if (this->pattern != NULL) {
+		this->pattern->clean_inputs(scope,
+									node_id);
+	}
 }
 
 void Scope::clean_inputs(Scope* scope) {
@@ -151,6 +156,10 @@ void Scope::clean_inputs(Scope* scope) {
 			}
 			break;
 		}
+	}
+
+	if (this->pattern != NULL) {
+		this->pattern->clean_inputs(scope);
 	}
 }
 
@@ -184,6 +193,14 @@ void Scope::replace_factor(Scope* scope,
 			break;
 		}
 	}
+
+	if (this->pattern != NULL) {
+		this->pattern->replace_factor(scope,
+									  original_node_id,
+									  original_factor_index,
+									  new_node_id,
+									  new_factor_index);
+	}
 }
 
 void Scope::replace_obs_node(Scope* scope,
@@ -209,6 +226,12 @@ void Scope::replace_obs_node(Scope* scope,
 			}
 			break;
 		}
+	}
+
+	if (this->pattern != NULL) {
+		this->pattern->replace_obs_node(scope,
+										original_node_id,
+										new_node_id);
 	}
 }
 
@@ -242,6 +265,12 @@ void Scope::replace_scope(Scope* original_scope,
 			}
 			break;
 		}
+	}
+
+	if (this->pattern != NULL) {
+		this->pattern->replace_scope(original_scope,
+									 new_scope,
+									 new_scope_node_id);
 	}
 }
 
