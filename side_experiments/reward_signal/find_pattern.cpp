@@ -1,4 +1,8 @@
-#include "solution_helpers.h"
+#include <chrono>
+#include <iostream>
+#include <map>
+#include <thread>
+#include <random>
 
 #include "globals.h"
 #include "scope.h"
@@ -8,14 +12,37 @@
 
 using namespace std;
 
+int seed;
+
+default_random_engine generator;
+
 #if defined(MDEBUG) && MDEBUG
 const int NUM_EXPLORE_GATHER = 40;
 #else
 const int NUM_EXPLORE_GATHER = 4000;
 #endif /* MDEBUG */
 
-void explore_helper(SolutionWrapper* solution_wrapper) {
+int main(int argc, char* argv[]) {
+	cout << "Starting..." << endl;
+
+	seed = (unsigned)time(NULL);
+	srand(seed);
+	generator.seed(seed);
+	cout << "Seed: " << seed << endl;
+
 	ProblemType* problem_type = new TypeSimple();
+
+	string filename;
+	SolutionWrapper* solution_wrapper;
+	if (argc > 1) {
+		filename = argv[1];
+	} else {
+		filename = "main.txt";
+	}
+	solution_wrapper = new SolutionWrapper(
+		problem_type->num_obs(),
+		"saves/",
+		filename);
 
 	while (true) {
 		Problem* problem = problem_type->get_problem();
@@ -52,5 +79,12 @@ void explore_helper(SolutionWrapper* solution_wrapper) {
 		}
 	}
 
+	solution_wrapper->solution->scopes[0]->update_pattern();
+
+	// solution_wrapper->save("saves/", filename);
+
 	delete problem_type;
+	delete solution_wrapper;
+
+	cout << "Done" << endl;
 }

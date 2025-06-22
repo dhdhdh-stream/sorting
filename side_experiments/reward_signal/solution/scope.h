@@ -29,6 +29,7 @@ public:
 	bool generalized;
 
 	Pattern* pattern;
+
 	std::vector<ScopeHistory*> existing_scope_histories;
 	std::vector<ScopeHistory*> explore_scope_histories;
 	std::vector<double> explore_target_vals;

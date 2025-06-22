@@ -160,15 +160,6 @@ void SolutionWrapper::experiment_end(double result) {
 
 		delete this->experiment_history;
 		this->experiment_history = NULL;
-
-		// temp
-		this->num_experiments++;
-		if (this->num_experiments % 10 == 0) {
-			if (this->solution->scopes[0]->nodes.size() >= PATTERN_EXPERIMENT_MIN_NODE_SIZE) {
-				explore_helper(this);
-				this->solution->scopes[0]->update_pattern();
-			}
-		}
 	}
 	if (this->curr_experiment != NULL) {
 		if (this->curr_experiment->result == EXPERIMENT_RESULT_FAIL) {
@@ -211,13 +202,6 @@ void SolutionWrapper::experiment_end(double result) {
 				this->solution->timestamp++;
 
 				this->improvement_iter = 0;
-
-				// temp
-				this->num_experiments = 0;
-				if (this->solution->scopes[0]->nodes.size() >= PATTERN_EXPERIMENT_MIN_NODE_SIZE) {
-					explore_helper(this);
-					this->solution->scopes[0]->update_pattern();
-				}
 			}
 		}
 	}

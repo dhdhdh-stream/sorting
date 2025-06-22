@@ -51,7 +51,4 @@ void update_scores(ScopeHistory* scope_history,
 				   double target_val,
 				   SolutionWrapper* wrapper);
 
-// temp
-void explore_helper(SolutionWrapper* wrapper);
-
 #endif /* SOLUTION_HELPERS_H */

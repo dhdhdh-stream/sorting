@@ -44,6 +44,10 @@ public:
 	void replace_scope(Scope* original_scope,
 					   Scope* new_scope,
 					   int new_scope_node_id);
+
+	void save(std::ofstream& output_file);
+	void load(std::ifstream& input_file,
+			  Solution* parent_solution);
 };
 
 #endif /* PATTERN_H */

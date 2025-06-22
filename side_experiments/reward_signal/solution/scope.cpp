@@ -28,6 +28,7 @@ Scope::~Scope() {
 	if (this->pattern != NULL) {
 		delete this->pattern;
 	}
+
 	for (int h_index = 0; h_index < (int)this->existing_scope_histories.size(); h_index++) {
 		delete this->existing_scope_histories[h_index];
 	}
@@ -329,6 +330,12 @@ void Scope::save(ofstream& output_file) {
 	}
 
 	output_file << this->generalized << endl;
+
+	bool has_pattern = this->pattern != NULL;
+	output_file << has_pattern << endl;
+	if (has_pattern) {
+		this->pattern->save(output_file);
+	}
 }
 
 void Scope::load(ifstream& input_file,
@@ -403,6 +410,15 @@ void Scope::load(ifstream& input_file,
 	string generalized_line;
 	getline(input_file, generalized_line);
 	this->generalized = stoi(generalized_line);
+
+	string has_pattern_line;
+	getline(input_file, has_pattern_line);
+	bool has_pattern = stoi(has_pattern_line);
+	if (has_pattern) {
+		this->pattern = new Pattern();
+		this->pattern->load(input_file,
+							parent_solution);
+	}
 }
 
 void Scope::link(Solution* parent_solution) {

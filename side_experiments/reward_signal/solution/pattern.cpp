@@ -202,3 +202,42 @@ void Pattern::replace_scope(Scope* original_scope,
 		}
 	}
 }
+
+void Pattern::save(ofstream& output_file) {
+	output_file << this->keypoints.size() << endl;
+	for (int k_index = 0; k_index < (int)this->keypoints.size(); k_index++) {
+		this->keypoints[k_index].save(output_file);
+	}
+
+	this->keypoint_network->save(output_file);
+
+	output_file << this->inputs.size() << endl;
+	for (int i_index = 0; i_index < (int)this->inputs.size(); i_index++) {
+		this->inputs[i_index].save(output_file);
+	}
+
+	this->predict_network->save(output_file);
+}
+
+void Pattern::load(ifstream& input_file,
+				   Solution* parent_solution) {
+	string num_keypoints_line;
+	getline(input_file, num_keypoints_line);
+	int num_keypoints = stoi(num_keypoints_line);
+	for (int k_index = 0; k_index < num_keypoints; k_index++) {
+		this->keypoints.push_back(Input(input_file,
+										parent_solution));
+	}
+
+	this->keypoint_network = new Network(input_file);
+
+	string num_inputs_line;
+	getline(input_file, num_inputs_line);
+	int num_inputs = stoi(num_inputs_line);
+	for (int i_index = 0; i_index < num_inputs; i_index++) {
+		this->inputs.push_back(Input(input_file,
+									 parent_solution));
+	}
+
+	this->predict_network = new Network(input_file);
+}
