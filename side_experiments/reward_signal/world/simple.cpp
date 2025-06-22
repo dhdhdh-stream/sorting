@@ -38,7 +38,8 @@ Simple::Simple() {
 	this->curr_index = 0;
 
 	uniform_int_distribution<int> random_factor_distribution(-5, 5);
-	this->random_factor = random_factor_distribution(generator);
+	// this->random_factor = random_factor_distribution(generator);
+	this->random_factor = 0.0;
 }
 
 vector<double> Simple::get_observations() {

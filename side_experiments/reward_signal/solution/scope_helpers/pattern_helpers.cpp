@@ -384,6 +384,8 @@ void Scope::update_pattern() {
 	}
 	double default_average_misguess = default_sum_misguess / (double)num_test_instances;
 
+	cout << "default_average_misguess: " << default_average_misguess << endl;
+
 	double curr_average_misguess;
 	if (this->pattern == NULL) {
 		curr_average_misguess = default_average_misguess;
@@ -462,26 +464,105 @@ void Scope::update_pattern() {
 		}
 	}
 
-	for (int t_index = 0; t_index < NUM_TRIES; t_index++) {
-		vector<int> remaining_indexes;
-		for (int i_index = 0; i_index < (int)possible_inputs.size(); i_index++) {
-			remaining_indexes.push_back(i_index);
-		}
+	// for (int t_index = 0; t_index < NUM_TRIES; t_index++) {
+	// 	vector<int> remaining_indexes;
+	// 	for (int i_index = 0; i_index < (int)possible_inputs.size(); i_index++) {
+	// 		remaining_indexes.push_back(i_index);
+	// 	}
 
+	// 	vector<Input> keypoints;
+	// 	for (int k_index = 0; k_index < NUM_KEYPOINTS; k_index++) {
+	// 		uniform_int_distribution<int> remaining_distribution(0, remaining_indexes.size()-1);
+	// 		int random_index = remaining_distribution(generator);
+	// 		keypoints.push_back(possible_inputs[remaining_indexes[random_index]]);
+	// 		remaining_indexes.erase(remaining_indexes.begin() + random_index);
+	// 	}
+
+	// 	vector<Input> inputs;
+	// 	for (int i_index = 0; i_index < NUM_INPUTS; i_index++) {
+	// 		uniform_int_distribution<int> remaining_distribution(0, remaining_indexes.size()-1);
+	// 		int random_index = remaining_distribution(generator);
+	// 		inputs.push_back(possible_inputs[remaining_indexes[random_index]]);
+	// 		remaining_indexes.erase(remaining_indexes.begin() + random_index);
+	// 	}
+
+	// 	Pattern* potential_pattern = new Pattern();
+	// 	potential_pattern->keypoints = keypoints;
+	// 	potential_pattern->inputs = inputs;
+
+	// 	bool is_success = train_keypoints_helper(potential_pattern,
+	// 											 this->existing_scope_histories,
+	// 											 this->explore_scope_histories);
+	// 	if (!is_success) {
+	// 		delete potential_pattern;
+	// 		continue;
+	// 	}
+
+	// 	double potential_average_misguess = train_and_eval_predict_helper(
+	// 		potential_pattern,
+	// 		this->explore_scope_histories,
+	// 		this->explore_target_vals);
+	// 	#if defined(MDEBUG) && MDEBUG
+	// 	if (rand()%2 == 0) {
+	// 	#else
+	// 	if (potential_average_misguess < curr_average_misguess) {
+	// 	#endif /* MDEBUG */
+	// 		if (this->pattern != NULL) {
+	// 			delete this->pattern;
+	// 		}
+	// 		this->pattern = potential_pattern;
+
+	// 		curr_average_misguess = potential_average_misguess;
+
+	// 		cout << "curr_average_misguess: " << curr_average_misguess << endl;
+	// 	} else {
+	// 		delete potential_pattern;
+	// 	}
+	// }
+
+	{
 		vector<Input> keypoints;
-		for (int k_index = 0; k_index < NUM_KEYPOINTS; k_index++) {
-			uniform_int_distribution<int> remaining_distribution(0, remaining_indexes.size()-1);
-			int random_index = remaining_distribution(generator);
-			keypoints.push_back(possible_inputs[remaining_indexes[random_index]]);
-			remaining_indexes.erase(remaining_indexes.begin() + random_index);
+		{
+			Input new_keypoint;
+			new_keypoint.scope_context = {this};
+			new_keypoint.node_context = {52};
+			new_keypoint.factor_index = -1;
+			new_keypoint.obs_index = 0;
+			keypoints.push_back(new_keypoint);
+		}
+		{
+			Input new_keypoint;
+			new_keypoint.scope_context = {this};
+			new_keypoint.node_context = {50};
+			new_keypoint.factor_index = -1;
+			new_keypoint.obs_index = 0;
+			keypoints.push_back(new_keypoint);
+		}
+		{
+			Input new_keypoint;
+			new_keypoint.scope_context = {this};
+			new_keypoint.node_context = {48};
+			new_keypoint.factor_index = -1;
+			new_keypoint.obs_index = 0;
+			keypoints.push_back(new_keypoint);
+		}
+		{
+			Input new_keypoint;
+			new_keypoint.scope_context = {this};
+			new_keypoint.node_context = {46};
+			new_keypoint.factor_index = -1;
+			new_keypoint.obs_index = 0;
+			keypoints.push_back(new_keypoint);
 		}
 
 		vector<Input> inputs;
-		for (int i_index = 0; i_index < NUM_INPUTS; i_index++) {
-			uniform_int_distribution<int> remaining_distribution(0, remaining_indexes.size()-1);
-			int random_index = remaining_distribution(generator);
-			inputs.push_back(possible_inputs[remaining_indexes[random_index]]);
-			remaining_indexes.erase(remaining_indexes.begin() + random_index);
+		{
+			Input new_input;
+			new_input.scope_context = {this};
+			new_input.node_context = {27};
+			new_input.factor_index = -1;
+			new_input.obs_index = 0;
+			inputs.push_back(new_input);
 		}
 
 		Pattern* potential_pattern = new Pattern();
@@ -493,28 +574,27 @@ void Scope::update_pattern() {
 												 this->explore_scope_histories);
 		if (!is_success) {
 			delete potential_pattern;
-			continue;
-		}
-
-		double potential_average_misguess = train_and_eval_predict_helper(
-			potential_pattern,
-			this->explore_scope_histories,
-			this->explore_target_vals);
-		#if defined(MDEBUG) && MDEBUG
-		if (rand()%2 == 0) {
-		#else
-		if (potential_average_misguess < curr_average_misguess) {
-		#endif /* MDEBUG */
-			if (this->pattern != NULL) {
-				delete this->pattern;
-			}
-			this->pattern = potential_pattern;
-
-			curr_average_misguess = potential_average_misguess;
-
-			cout << "curr_average_misguess: " << curr_average_misguess << endl;
 		} else {
-			delete potential_pattern;
+			double potential_average_misguess = train_and_eval_predict_helper(
+				potential_pattern,
+				this->explore_scope_histories,
+				this->explore_target_vals);
+			#if defined(MDEBUG) && MDEBUG
+			if (rand()%2 == 0) {
+			#else
+			if (potential_average_misguess < curr_average_misguess) {
+			#endif /* MDEBUG */
+				if (this->pattern != NULL) {
+					delete this->pattern;
+				}
+				this->pattern = potential_pattern;
+
+				curr_average_misguess = potential_average_misguess;
+
+				cout << "curr_average_misguess: " << curr_average_misguess << endl;
+			} else {
+				delete potential_pattern;
+			}
 		}
 	}
 
