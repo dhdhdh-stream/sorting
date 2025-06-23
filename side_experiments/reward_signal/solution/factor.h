@@ -1,3 +1,11 @@
+/**
+ * - simply try using correlated existing factors as new scores
+ *   - and simply check that explore roughly matches existing solution
+ *     - will have large number of samples to measure both match and correlation
+ *   - otherwise, if search from scratch, need to create often random match...
+ *     - ...and hope for correlation on low samples
+ */
+
 #ifndef FACTOR_H
 #define FACTOR_H
 
@@ -16,6 +24,14 @@ class Factor {
 public:
 	std::vector<Input> inputs;
 	Network* network;
+
+	double pcc;
+
+	double average;
+	double standard_deviation;
+
+	std::vector<double> factor_history;
+	std::vector<double> target_val_history;
 
 	Factor();
 	Factor(Factor* original,
@@ -38,6 +54,8 @@ public:
 	void replace_scope(Scope* original_scope,
 					   Scope* new_scope,
 					   int new_scope_node_id);
+
+	void measure_update();
 
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file,

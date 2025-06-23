@@ -48,7 +48,7 @@ void BranchExperiment::add(SolutionWrapper* wrapper) {
 	int exit_node_id;
 	AbstractNode* exit_node;
 	if (this->best_exit_next_node == NULL) {
-		new_ending_node = new ObsNode();
+		new_ending_node = new ObsNode(wrapper->num_obs);
 		new_ending_node->parent = this->scope_context;
 		new_ending_node->id = this->scope_context->node_counter;
 		this->scope_context->node_counter++;
@@ -270,7 +270,7 @@ void BranchExperiment::add(SolutionWrapper* wrapper) {
 						new_branch_node->original_next_node_id = new_ending_node->id;
 						new_branch_node->original_next_node = new_ending_node;
 					} else {
-						new_ending_node = new ObsNode();
+						new_ending_node = new ObsNode(wrapper->num_obs);
 						new_ending_node->parent = this->scope_context;
 						new_ending_node->id = this->scope_context->node_counter;
 						this->scope_context->node_counter++;

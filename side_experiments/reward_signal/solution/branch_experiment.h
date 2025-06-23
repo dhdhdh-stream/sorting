@@ -89,7 +89,7 @@ public:
 									   BranchExperimentHistory* history);
 	void train_existing_back_activate(SolutionWrapper* wrapper);
 	void train_existing_backprop(double target_val,
-								 BranchExperimentHistory* history);
+								 SolutionWrapper* wrapper);
 
 	void explore_check_activate(SolutionWrapper* wrapper,
 								BranchExperimentHistory* history);
@@ -106,7 +106,7 @@ public:
 	void explore_back_activate(SolutionWrapper* wrapper,
 							   BranchExperimentHistory* history);
 	void explore_backprop(double target_val,
-						  BranchExperimentHistory* history);
+						  SolutionWrapper* wrapper);
 
 	void train_new_check_activate(SolutionWrapper* wrapper,
 								  BranchExperimentHistory* history);
@@ -120,7 +120,7 @@ public:
 	void train_new_back_activate(SolutionWrapper* wrapper,
 								 BranchExperimentHistory* history);
 	void train_new_backprop(double target_val,
-							BranchExperimentHistory* history);
+							SolutionWrapper* wrapper);
 
 	void measure_check_activate(SolutionWrapper* wrapper);
 	void measure_step(std::vector<double>& obs,

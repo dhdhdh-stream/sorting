@@ -141,19 +141,18 @@ void BranchExperiment::back_activate(SolutionWrapper* wrapper) {
 
 void BranchExperiment::backprop(double target_val,
 								SolutionWrapper* wrapper) {
-	BranchExperimentHistory* history = (BranchExperimentHistory*)wrapper->experiment_history;
 	switch (this->state) {
 	case BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING:
 		train_existing_backprop(target_val,
-								history);
+								wrapper);
 		break;
 	case BRANCH_EXPERIMENT_STATE_EXPLORE:
 		explore_backprop(target_val,
-						 history);
+						 wrapper);
 		break;
 	case BRANCH_EXPERIMENT_STATE_TRAIN_NEW:
 		train_new_backprop(target_val,
-						   history);
+						   wrapper);
 		break;
 	case BRANCH_EXPERIMENT_STATE_MEASURE:
 		measure_backprop(target_val);

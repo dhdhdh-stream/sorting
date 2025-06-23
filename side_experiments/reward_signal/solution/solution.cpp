@@ -26,7 +26,7 @@ Solution::~Solution() {
 	}
 }
 
-void Solution::init() {
+void Solution::init(int num_obs) {
 	this->timestamp = 0;
 	this->curr_score = 0.0;
 
@@ -45,7 +45,7 @@ void Solution::init() {
 	new_scope->node_counter = 0;
 	this->scopes.push_back(new_scope);
 
-	ObsNode* starting_noop_node = new ObsNode();
+	ObsNode* starting_noop_node = new ObsNode(num_obs);
 	starting_noop_node->parent = new_scope;
 	starting_noop_node->id = new_scope->node_counter;
 	new_scope->node_counter++;
@@ -57,7 +57,8 @@ void Solution::init() {
 }
 
 void Solution::load(string path,
-					string name) {
+					string name,
+					int num_obs) {
 	ifstream input_file;
 	input_file.open(path + name);
 
@@ -89,6 +90,7 @@ void Solution::load(string path,
 
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
 		this->scopes[s_index]->load(input_file,
+									num_obs,
 									this);
 	}
 

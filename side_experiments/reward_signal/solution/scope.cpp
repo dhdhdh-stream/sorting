@@ -7,7 +7,6 @@
 #include "branch_node.h"
 #include "globals.h"
 #include "obs_node.h"
-#include "pattern.h"
 #include "scope_node.h"
 #include "solution.h"
 #include "solution_wrapper.h"
@@ -16,24 +15,11 @@ using namespace std;
 
 Scope::Scope() {
 	this->generalized = false;
-
-	this->pattern = NULL;
 }
 
 Scope::~Scope() {
 	for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {
 		delete this->nodes[n_index];
-	}
-
-	if (this->pattern != NULL) {
-		delete this->pattern;
-	}
-
-	for (int h_index = 0; h_index < (int)this->existing_scope_histories.size(); h_index++) {
-		delete this->existing_scope_histories[h_index];
-	}
-	for (int h_index = 0; h_index < (int)this->explore_scope_histories.size(); h_index++) {
-		delete this->explore_scope_histories[h_index];
 	}
 }
 
@@ -133,11 +119,6 @@ void Scope::clean_inputs(Scope* scope,
 			break;
 		}
 	}
-
-	if (this->pattern != NULL) {
-		this->pattern->clean_inputs(scope,
-									node_id);
-	}
 }
 
 void Scope::clean_inputs(Scope* scope) {
@@ -157,10 +138,6 @@ void Scope::clean_inputs(Scope* scope) {
 			}
 			break;
 		}
-	}
-
-	if (this->pattern != NULL) {
-		this->pattern->clean_inputs(scope);
 	}
 }
 
@@ -194,14 +171,6 @@ void Scope::replace_factor(Scope* scope,
 			break;
 		}
 	}
-
-	if (this->pattern != NULL) {
-		this->pattern->replace_factor(scope,
-									  original_node_id,
-									  original_factor_index,
-									  new_node_id,
-									  new_factor_index);
-	}
 }
 
 void Scope::replace_obs_node(Scope* scope,
@@ -227,12 +196,6 @@ void Scope::replace_obs_node(Scope* scope,
 			}
 			break;
 		}
-	}
-
-	if (this->pattern != NULL) {
-		this->pattern->replace_obs_node(scope,
-										original_node_id,
-										new_node_id);
 	}
 }
 
@@ -267,12 +230,6 @@ void Scope::replace_scope(Scope* original_scope,
 			break;
 		}
 	}
-
-	if (this->pattern != NULL) {
-		this->pattern->replace_scope(original_scope,
-									 new_scope,
-									 new_scope_node_id);
-	}
 }
 
 void Scope::clean() {
@@ -280,16 +237,6 @@ void Scope::clean() {
 			it != this->nodes.end(); it++) {
 		it->second->clean();
 	}
-
-	for (int h_index = 0; h_index < (int)this->existing_scope_histories.size(); h_index++) {
-		delete this->existing_scope_histories[h_index];
-	}
-	this->existing_scope_histories.clear();
-	for (int h_index = 0; h_index < (int)this->explore_scope_histories.size(); h_index++) {
-		delete this->explore_scope_histories[h_index];
-	}
-	this->explore_scope_histories.clear();
-	this->explore_target_vals.clear();
 }
 
 void Scope::measure_update() {
@@ -330,15 +277,10 @@ void Scope::save(ofstream& output_file) {
 	}
 
 	output_file << this->generalized << endl;
-
-	bool has_pattern = this->pattern != NULL;
-	output_file << has_pattern << endl;
-	if (has_pattern) {
-		this->pattern->save(output_file);
-	}
 }
 
 void Scope::load(ifstream& input_file,
+				 int num_obs,
 				 Solution* parent_solution) {
 	string node_counter_line;
 	getline(input_file, node_counter_line);
@@ -387,7 +329,7 @@ void Scope::load(ifstream& input_file,
 			break;
 		case NODE_TYPE_OBS:
 			{
-				ObsNode* obs_node = new ObsNode();
+				ObsNode* obs_node = new ObsNode(num_obs);
 				obs_node->parent = this;
 				obs_node->id = id;
 				obs_node->load(input_file,
@@ -410,15 +352,6 @@ void Scope::load(ifstream& input_file,
 	string generalized_line;
 	getline(input_file, generalized_line);
 	this->generalized = stoi(generalized_line);
-
-	string has_pattern_line;
-	getline(input_file, has_pattern_line);
-	bool has_pattern = stoi(has_pattern_line);
-	if (has_pattern) {
-		this->pattern = new Pattern();
-		this->pattern->load(input_file,
-							parent_solution);
-	}
 }
 
 void Scope::link(Solution* parent_solution) {

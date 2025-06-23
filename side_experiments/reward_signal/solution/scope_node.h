@@ -51,12 +51,6 @@ public:
 						 SolutionWrapper* wrapper);
 	void experiment_exit_step(SolutionWrapper* wrapper);
 
-	void explore_step(std::vector<double>& obs,
-					  int& action,
-					  bool& is_next,
-					  SolutionWrapper* wrapper);
-	void explore_exit_step(SolutionWrapper* wrapper);
-
 	void replace_scope(Scope* original_scope,
 					   Scope* new_scope);
 

@@ -45,9 +45,10 @@ public:
 	Solution();
 	~Solution();
 
-	void init();
+	void init(int num_obs);
 	void load(std::string path,
-			  std::string name);
+			  std::string name,
+			  int num_obs);
 
 	#if defined(MDEBUG) && MDEBUG
 	void clear_verify();

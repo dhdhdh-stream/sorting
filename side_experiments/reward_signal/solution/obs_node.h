@@ -22,6 +22,14 @@ public:
 	int next_node_id;
 	AbstractNode* next_node;
 
+	/**
+	 * TODO: replace with NNs
+	 */
+	std::vector<double> obs_val_averages;
+	std::vector<double> obs_val_standard_deviations;
+
+	std::vector<std::vector<double>> measure_val_histories;
+
 	double average_hits_per_run;
 	double average_score;
 
@@ -35,7 +43,7 @@ public:
 	double new_scope_sum_score;
 	int new_scope_sum_count;
 
-	ObsNode();
+	ObsNode(int obs_size);
 	~ObsNode();
 
 	void step(std::vector<double>& obs,
@@ -47,11 +55,6 @@ public:
 						 int& action,
 						 bool& is_next,
 						 SolutionWrapper* wrapper);
-
-	void explore_step(std::vector<double>& obs,
-					  int& action,
-					  bool& is_next,
-					  SolutionWrapper* wrapper);
 
 	void clean_inputs(Scope* scope,
 					  int node_id);

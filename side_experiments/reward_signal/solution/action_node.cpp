@@ -5,7 +5,6 @@
 #include "abstract_experiment.h"
 #include "confusion.h"
 #include "constants.h"
-#include "explore.h"
 #include "scope.h"
 
 using namespace std;
@@ -17,8 +16,6 @@ ActionNode::ActionNode() {
 
 	this->experiment = NULL;
 	this->confusion = NULL;
-	// temp
-	this->explore = NULL;
 
 	this->last_updated_run_index = 0;
 }
@@ -31,11 +28,6 @@ ActionNode::~ActionNode() {
 	if (this->confusion != NULL) {
 		delete this->confusion;
 	}
-
-	// temp
-	if (this->explore != NULL) {
-		delete this->explore;
-	}
 }
 
 void ActionNode::clean() {
@@ -47,12 +39,6 @@ void ActionNode::clean() {
 	if (this->confusion != NULL) {
 		delete this->confusion;
 		this->confusion = NULL;
-	}
-
-	// temp
-	if (this->explore != NULL) {
-		delete this->explore;
-		this->explore = NULL;
 	}
 
 	this->sum_score = 0.0;

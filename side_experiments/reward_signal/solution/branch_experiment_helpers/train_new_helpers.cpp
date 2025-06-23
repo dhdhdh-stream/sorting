@@ -4,7 +4,6 @@
 
 #include "constants.h"
 #include "globals.h"
-#include "pattern.h"
 #include "scope.h"
 #include "solution_helpers.h"
 #include "solution_wrapper.h"
@@ -96,16 +95,18 @@ void BranchExperiment::train_new_exit_step(SolutionWrapper* wrapper,
 
 void BranchExperiment::train_new_back_activate(SolutionWrapper* wrapper,
 											   BranchExperimentHistory* history) {
-	if (this->scope_context->pattern != NULL) {
-		bool has_match;
-		double predicted;
-		this->scope_context->pattern->activate(
-			has_match,
-			predicted,
-			wrapper->scope_histories.back());
+	if (this->scope_context->curr_reward_signal.scope_context.size() != 0) {
+		double val;
+		bool is_on;
+		fetch_input_helper(wrapper->scope_histories.back(),
+						   this->scope_context->curr_reward_signal,
+						   0,
+						   val,
+						   is_on);
 		double target_val;
-		if (has_match) {
-			target_val = predicted / this->scope_context->pattern->predict_standard_deviation;
+		if (is_on) {
+			target_val = (val - this->scope_context->reward_signal_average)
+				/ this->scope_context->reward_signal_standard_deviation;
 		} else {
 			target_val = -1.0;
 		}
@@ -116,7 +117,9 @@ void BranchExperiment::train_new_back_activate(SolutionWrapper* wrapper,
 
 void BranchExperiment::train_new_backprop(
 		double target_val,
-		BranchExperimentHistory* history) {
+		SolutionWrapper* wrapper) {
+	BranchExperimentHistory* history = (BranchExperimentHistory*)wrapper->experiment_history;
+
 	for (int i_index = 0; i_index < (int)history->existing_predicted_scores.size(); i_index++) {
 		this->i_target_val_histories.push_back(target_val - history->existing_predicted_scores[i_index]);
 	}
@@ -143,7 +146,8 @@ void BranchExperiment::train_new_backprop(
 									   factor_weights,
 									   this->node_context,
 									   this,
-									   select_percentage);
+									   select_percentage,
+									   wrapper);
 
 		for (int h_index = 0; h_index < (int)this->scope_histories.size(); h_index++) {
 			delete this->scope_histories[h_index];

@@ -7,7 +7,6 @@
 #include "constants.h"
 #include "globals.h"
 #include "obs_node.h"
-#include "pattern.h"
 #include "problem.h"
 #include "scope.h"
 #include "scope_node.h"
@@ -185,15 +184,17 @@ void BranchExperiment::explore_exit_step(SolutionWrapper* wrapper,
 
 void BranchExperiment::explore_back_activate(SolutionWrapper* wrapper,
 											 BranchExperimentHistory* history) {
-	if (this->scope_context->pattern != NULL) {
-		bool has_match;
-		double predicted;
-		this->scope_context->pattern->activate(
-			has_match,
-			predicted,
-			wrapper->scope_histories.back());
-		if (has_match) {
-			double target_val = predicted / this->scope_context->pattern->predict_standard_deviation;
+	if (this->scope_context->curr_reward_signal.scope_context.size() != 0) {
+		double val;
+		bool is_on;
+		fetch_input_helper(wrapper->scope_histories.back(),
+						   this->scope_context->curr_reward_signal,
+						   0,
+						   val,
+						   is_on);
+		if (is_on) {
+			double target_val = (val - this->scope_context->reward_signal_average)
+				/ this->scope_context->reward_signal_standard_deviation;
 			this->curr_surprise = target_val - history->existing_predicted_scores[0];
 		} else {
 			this->curr_surprise = 0.0;
@@ -205,7 +206,9 @@ void BranchExperiment::explore_back_activate(SolutionWrapper* wrapper,
 
 void BranchExperiment::explore_backprop(
 		double target_val,
-		BranchExperimentHistory* history) {
+		SolutionWrapper* wrapper) {
+	BranchExperimentHistory* history = (BranchExperimentHistory*)wrapper->experiment_history;
+
 	uniform_int_distribution<int> until_distribution(0, (int)this->average_instances_per_run-1);
 	this->num_instances_until_target = 1 + until_distribution(generator);
 

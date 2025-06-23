@@ -20,9 +20,6 @@ void create_experiment(ScopeHistory* scope_history,
 					   SolutionWrapper* wrapper);
 void create_confusion(ScopeHistory* scope_history,
 					  SolutionWrapper* wrapper);
-// temp
-void create_explore(ScopeHistory* scope_history,
-					SolutionWrapper* wrapper);
 
 void fetch_input_helper(ScopeHistory* scope_history,
 						Input& input,
@@ -39,7 +36,8 @@ bool train_helper(std::vector<ScopeHistory*>& scope_histories,
 				  std::vector<double>& factor_weights,
 				  AbstractNode* node_context,
 				  AbstractExperiment* experiment,
-				  double& select_percentage);
+				  double& select_percentage,
+				  SolutionWrapper* wrapper);
 
 void clean_scope(Scope* scope,
 				 SolutionWrapper* wrapper);

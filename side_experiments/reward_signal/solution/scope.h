@@ -5,16 +5,15 @@
 #include <map>
 #include <vector>
 
+#include "input.h"
+
 class AbstractExperiment;
 class AbstractNode;
 class AbstractNodeHistory;
 class NewScopeExperiment;
-class Pattern;
 class Problem;
 class Solution;
 class SolutionWrapper;
-
-const int PATTERN_EXPERIMENT_MIN_NODE_SIZE = 20;
 
 class ScopeHistory;
 class Scope {
@@ -28,11 +27,9 @@ public:
 
 	bool generalized;
 
-	Pattern* pattern;
-
-	std::vector<ScopeHistory*> existing_scope_histories;
-	std::vector<ScopeHistory*> explore_scope_histories;
-	std::vector<double> explore_target_vals;
+	Input curr_reward_signal;
+	double reward_signal_average;
+	double reward_signal_standard_deviation;
 
 	Scope();
 	~Scope();
@@ -61,8 +58,6 @@ public:
 					   Scope* new_scope,
 					   int new_scope_node_id);
 
-	void update_pattern();
-
 	void clean();
 	void measure_update();
 
@@ -71,6 +66,7 @@ public:
 
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file,
+			  int num_obs,
 			  Solution* parent_solution);
 	void link(Solution* parent_solution);
 

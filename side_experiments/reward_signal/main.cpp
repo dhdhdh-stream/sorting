@@ -5,6 +5,8 @@
 // TODO: save past measures
 // - deprecate as needed
 
+// split match check into average check and extreme check
+
 #include <chrono>
 #include <iostream>
 #include <map>

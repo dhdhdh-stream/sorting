@@ -20,6 +20,7 @@
 #include "scope.h"
 #include "scope_node.h"
 #include "solution_helpers.h"
+#include "solution_wrapper.h"
 
 using namespace std;
 
@@ -442,7 +443,8 @@ bool train_helper(vector<ScopeHistory*>& scope_histories,
 				  vector<double>& factor_weights,
 				  AbstractNode* node_context,
 				  AbstractExperiment* experiment,
-				  double& select_percentage) {
+				  double& select_percentage,
+				  SolutionWrapper* wrapper) {
 	auto start_time = chrono::high_resolution_clock::now();
 
 	int num_instances = (int)target_val_histories.size();
@@ -950,7 +952,7 @@ bool train_helper(vector<ScopeHistory*>& scope_histories,
 					factor_input_standard_deviations.push_back(1.0);
 					factor_weights.push_back(1.0);
 				} else {
-					ObsNode* new_obs_node = new ObsNode();
+					ObsNode* new_obs_node = new ObsNode(wrapper->num_obs);
 					new_obs_node->parent = experiment->scope_context;
 					new_obs_node->id = experiment->scope_context->node_counter;
 					experiment->scope_context->node_counter++;
