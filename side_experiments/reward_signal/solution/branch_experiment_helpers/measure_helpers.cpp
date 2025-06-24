@@ -6,6 +6,7 @@
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
+#include "factor.h"
 #include "obs_node.h"
 #include "problem.h"
 #include "scope.h"
@@ -268,6 +269,13 @@ void BranchExperiment::measure_backprop(double target_val) {
 
 			cout << endl;
 
+			if (this->reward_signal.scope_context.size() != 0) {
+				ObsNode* obs_node = (ObsNode*)this->reward_signal.scope_context.back()
+					->nodes[this->reward_signal.node_context.back()];
+				Factor* factor = obs_node->factors[this->reward_signal.factor_index];
+				factor->num_success++;
+			}
+
 			#if defined(MDEBUG) && MDEBUG
 			this->verify_problems = vector<Problem*>(NUM_VERIFY_SAMPLES, NULL);
 			this->verify_seeds = vector<unsigned long>(NUM_VERIFY_SAMPLES);
@@ -278,6 +286,13 @@ void BranchExperiment::measure_backprop(double target_val) {
 			this->result = EXPERIMENT_RESULT_SUCCESS;
 			#endif /* MDEBUG */
 		} else {
+			if (this->reward_signal.scope_context.size() != 0) {
+				ObsNode* obs_node = (ObsNode*)this->reward_signal.scope_context.back()
+					->nodes[this->reward_signal.node_context.back()];
+				Factor* factor = obs_node->factors[this->reward_signal.factor_index];
+				factor->num_failure++;
+			}
+
 			this->result = EXPERIMENT_RESULT_FAIL;
 		}
 	}

@@ -126,7 +126,8 @@ void BranchExperiment::back_activate(SolutionWrapper* wrapper) {
 	BranchExperimentHistory* history = (BranchExperimentHistory*)wrapper->experiment_history;
 	switch (this->state) {
 	case BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING:
-		train_existing_back_activate(wrapper);
+		train_existing_back_activate(wrapper,
+									 history);
 		break;
 	case BRANCH_EXPERIMENT_STATE_EXPLORE:
 		explore_back_activate(wrapper,

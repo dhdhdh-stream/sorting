@@ -26,6 +26,8 @@ public:
 	Network* network;
 
 	double pcc;
+	int num_success;
+	int num_failure;
 
 	double average;
 	double standard_deviation;

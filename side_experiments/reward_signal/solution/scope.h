@@ -5,8 +5,6 @@
 #include <map>
 #include <vector>
 
-#include "input.h"
-
 class AbstractExperiment;
 class AbstractNode;
 class AbstractNodeHistory;
@@ -26,10 +24,6 @@ public:
 	std::vector<Scope*> child_scopes;
 
 	bool generalized;
-
-	Input curr_reward_signal;
-	double reward_signal_average;
-	double reward_signal_standard_deviation;
 
 	Scope();
 	~Scope();

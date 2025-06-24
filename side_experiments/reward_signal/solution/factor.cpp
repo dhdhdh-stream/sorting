@@ -13,7 +13,12 @@
 using namespace std;
 
 Factor::Factor() {
-	// do nothing
+	this->pcc = 0.0;
+	this->num_success = 0;
+	this->num_failure = 0;
+
+	this->average = 0.0;
+	this->standard_deviation = 0.0;
 }
 
 Factor::Factor(Factor* original,
@@ -28,6 +33,9 @@ Factor::Factor(Factor* original,
 	this->network = new Network(original->network);
 
 	this->pcc = original->pcc;
+	this->num_success = original->num_success;
+	this->num_failure = original->num_failure;
+
 	this->average = original->average;
 	this->standard_deviation = original->standard_deviation;
 }
@@ -165,6 +173,9 @@ void Factor::save(ofstream& output_file) {
 	this->network->save(output_file);
 
 	output_file << this->pcc << endl;
+	output_file << this->num_success << endl;
+	output_file << this->num_failure << endl;
+
 	output_file << this->average << endl;
 	output_file << this->standard_deviation << endl;
 }
@@ -184,6 +195,14 @@ void Factor::load(ifstream& input_file,
 	string pcc_line;
 	getline(input_file, pcc_line);
 	this->pcc = stod(pcc_line);
+
+	string num_success_line;
+	getline(input_file, num_success_line);
+	this->num_success = stoi(num_success_line);
+
+	string num_failure_line;
+	getline(input_file, num_failure_line);
+	this->num_failure = stoi(num_failure_line);
 
 	string average_line;
 	getline(input_file, average_line);

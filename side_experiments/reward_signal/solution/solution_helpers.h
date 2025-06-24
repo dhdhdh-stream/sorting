@@ -15,6 +15,8 @@ class ScopeNode;
 class Solution;
 class SolutionWrapper;
 
+void select_reward_signal(Scope* scope,
+						  Input& reward_signal);
 void create_experiment(ScopeHistory* scope_history,
 					   AbstractExperiment*& curr_experiment,
 					   SolutionWrapper* wrapper);
@@ -48,5 +50,7 @@ void check_generalize(Scope* scope_to_generalize,
 void update_scores(ScopeHistory* scope_history,
 				   double target_val,
 				   SolutionWrapper* wrapper);
+
+bool is_match(std::vector<double>& t_scores);
 
 #endif /* SOLUTION_HELPERS_H */

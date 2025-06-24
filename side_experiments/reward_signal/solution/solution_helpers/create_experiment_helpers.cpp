@@ -245,10 +245,15 @@ void create_experiment(ScopeHistory* scope_history,
 	}
 
 	if (explore_node != NULL) {
+		Input reward_signal;
+		select_reward_signal(explore_node->parent,
+							 reward_signal);
+
 		BranchExperiment* new_experiment = new BranchExperiment(
 			explore_node->parent,
 			explore_node,
-			explore_is_branch);
+			explore_is_branch,
+			reward_signal);
 		explore_node->experiment = new_experiment;
 
 		curr_experiment = new_experiment;

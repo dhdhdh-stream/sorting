@@ -5,6 +5,7 @@
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
+#include "factor.h"
 #include "globals.h"
 #include "obs_node.h"
 #include "problem.h"
@@ -128,6 +129,10 @@ void BranchExperiment::explore_check_activate(
 
 		wrapper->scope_histories.back()->experiments_hit.push_back(this);
 
+		if (this->reward_signal.scope_context.size() != 0) {
+			wrapper->measure_match = true;
+		}
+
 		BranchExperimentState* new_experiment_state = new BranchExperimentState(this);
 		new_experiment_state->step_index = 0;
 		wrapper->experiment_context.back() = new_experiment_state;
@@ -184,23 +189,21 @@ void BranchExperiment::explore_exit_step(SolutionWrapper* wrapper,
 
 void BranchExperiment::explore_back_activate(SolutionWrapper* wrapper,
 											 BranchExperimentHistory* history) {
-	if (this->scope_context->curr_reward_signal.scope_context.size() != 0) {
+	if (this->reward_signal.scope_context.size() != 0) {
 		double val;
 		bool is_on;
 		fetch_input_helper(wrapper->scope_histories.back(),
-						   this->scope_context->curr_reward_signal,
+						   this->reward_signal,
 						   0,
 						   val,
 						   is_on);
 		if (is_on) {
-			double target_val = (val - this->scope_context->reward_signal_average)
-				/ this->scope_context->reward_signal_standard_deviation;
+			double target_val = (val - this->reward_signal_average)
+				/ this->reward_signal_standard_deviation;
 			this->curr_surprise = target_val - history->existing_predicted_scores[0];
 		} else {
 			this->curr_surprise = 0.0;
 		}
-
-		history->existing_predicted_scores.clear();
 	}
 }
 
@@ -213,8 +216,12 @@ void BranchExperiment::explore_backprop(
 	this->num_instances_until_target = 1 + until_distribution(generator);
 
 	if (history->has_explore) {
-		if (history->existing_predicted_scores.size() > 0) {
+		if (this->reward_signal.scope_context.size() == 0) {
 			this->curr_surprise = target_val - history->existing_predicted_scores[0];
+		}
+
+		if (!is_match(wrapper->t_scores)) {
+			this->curr_surprise = 0.0;
 		}
 
 		#if defined(MDEBUG) && MDEBUG
@@ -253,6 +260,13 @@ void BranchExperiment::explore_backprop(
 				this->state = BRANCH_EXPERIMENT_STATE_TRAIN_NEW;
 				this->state_iter = 0;
 			} else {
+				if (this->reward_signal.scope_context.size() != 0) {
+					ObsNode* obs_node = (ObsNode*)this->reward_signal.scope_context.back()
+						->nodes[this->reward_signal.node_context.back()];
+					Factor* factor = obs_node->factors[this->reward_signal.factor_index];
+					factor->num_failure++;
+				}
+
 				this->result = EXPERIMENT_RESULT_FAIL;
 			}
 		}

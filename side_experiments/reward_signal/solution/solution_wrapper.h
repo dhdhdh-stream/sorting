@@ -44,6 +44,9 @@ public:
 	int num_actions;
 	int num_confusion_instances;
 
+	bool measure_match;
+	std::vector<double> t_scores;
+
 	AbstractExperimentHistory* experiment_history;
 
 	#if defined(MDEBUG) && MDEBUG

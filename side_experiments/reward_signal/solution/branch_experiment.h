@@ -66,7 +66,8 @@ public:
 
 	BranchExperiment(Scope* scope_context,
 					 AbstractNode* node_context,
-					 bool is_branch);
+					 bool is_branch,
+					 Input reward_signal);
 	~BranchExperiment();
 	void decrement(AbstractNode* experiment_node);
 
@@ -87,7 +88,8 @@ public:
 
 	void train_existing_check_activate(SolutionWrapper* wrapper,
 									   BranchExperimentHistory* history);
-	void train_existing_back_activate(SolutionWrapper* wrapper);
+	void train_existing_back_activate(SolutionWrapper* wrapper,
+									  BranchExperimentHistory* history);
 	void train_existing_backprop(double target_val,
 								 SolutionWrapper* wrapper);
 
@@ -153,6 +155,7 @@ public:
 	bool has_explore;
 
 	std::vector<double> existing_predicted_scores;
+	std::vector<double> reward_signals;
 
 	BranchExperimentHistory(BranchExperiment* experiment);
 };

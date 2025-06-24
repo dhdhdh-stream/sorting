@@ -42,6 +42,10 @@ void BranchExperiment::train_new_check_activate(
 
 		wrapper->scope_histories.back()->experiments_hit.push_back(this);
 
+		if (this->reward_signal.scope_context.size() != 0) {
+			wrapper->measure_match = true;
+		}
+
 		uniform_int_distribution<int> until_distribution(0, (int)this->average_instances_per_run-1.0);
 		this->num_instances_until_target = 1 + until_distribution(generator);
 
@@ -95,23 +99,22 @@ void BranchExperiment::train_new_exit_step(SolutionWrapper* wrapper,
 
 void BranchExperiment::train_new_back_activate(SolutionWrapper* wrapper,
 											   BranchExperimentHistory* history) {
-	if (this->scope_context->curr_reward_signal.scope_context.size() != 0) {
+	if (this->reward_signal.scope_context.size() != 0) {
 		double val;
 		bool is_on;
 		fetch_input_helper(wrapper->scope_histories.back(),
-						   this->scope_context->curr_reward_signal,
+						   this->reward_signal,
 						   0,
 						   val,
 						   is_on);
 		double target_val;
 		if (is_on) {
-			target_val = (val - this->scope_context->reward_signal_average)
-				/ this->scope_context->reward_signal_standard_deviation;
+			target_val = (val - this->reward_signal_average)
+				/ this->reward_signal_standard_deviation;
+			history->reward_signals.push_back(target_val);
 		} else {
-			target_val = -1.0;
+			history->reward_signals.push_back(-1.0);
 		}
-		this->i_target_val_histories.push_back(target_val - history->existing_predicted_scores[0]);
-		history->existing_predicted_scores.clear();
 	}
 }
 
@@ -120,8 +123,20 @@ void BranchExperiment::train_new_backprop(
 		SolutionWrapper* wrapper) {
 	BranchExperimentHistory* history = (BranchExperimentHistory*)wrapper->experiment_history;
 
-	for (int i_index = 0; i_index < (int)history->existing_predicted_scores.size(); i_index++) {
-		this->i_target_val_histories.push_back(target_val - history->existing_predicted_scores[i_index]);
+	if (this->reward_signal.scope_context.size() != 0) {
+		if (is_match(wrapper->t_scores)) {
+			for (int i_index = 0; i_index < (int)history->existing_predicted_scores.size(); i_index++) {
+				this->i_target_val_histories.push_back(history->reward_signals[i_index] - history->existing_predicted_scores[i_index]);
+			}
+		} else {
+			for (int i_index = 0; i_index < (int)history->existing_predicted_scores.size(); i_index++) {
+				this->i_target_val_histories.push_back(-1.0);
+			}
+		}
+	} else {
+		for (int i_index = 0; i_index < (int)history->existing_predicted_scores.size(); i_index++) {
+			this->i_target_val_histories.push_back(target_val - history->existing_predicted_scores[i_index]);
+		}
 	}
 
 	this->state_iter++;

@@ -4,6 +4,8 @@
 #include <utility>
 #include <vector>
 
+#include "input.h"
+
 class AbstractNode;
 class Problem;
 class Scope;
@@ -27,6 +29,10 @@ public:
 	Scope* scope_context;
 	AbstractNode* node_context;
 	bool is_branch;
+
+	Input reward_signal;
+	double reward_signal_average;
+	double reward_signal_standard_deviation;
 
 	int result;
 

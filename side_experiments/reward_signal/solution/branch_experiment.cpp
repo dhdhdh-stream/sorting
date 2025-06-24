@@ -3,7 +3,9 @@
 #include <iostream>
 
 #include "abstract_node.h"
+#include "factor.h"
 #include "globals.h"
+#include "obs_node.h"
 #include "problem.h"
 #include "scope.h"
 
@@ -11,12 +13,22 @@ using namespace std;
 
 BranchExperiment::BranchExperiment(Scope* scope_context,
 								   AbstractNode* node_context,
-								   bool is_branch) {
+								   bool is_branch,
+								   Input reward_signal) {
 	this->type = EXPERIMENT_TYPE_BRANCH;
 
 	this->scope_context = scope_context;
 	this->node_context = node_context;
 	this->is_branch = is_branch;
+	if (reward_signal.scope_context.size() != 0) {
+		this->reward_signal = reward_signal;
+
+		ObsNode* obs_node = (ObsNode*)this->reward_signal.scope_context.back()
+			->nodes[this->reward_signal.node_context.back()];
+		Factor* factor = obs_node->factors[this->reward_signal.factor_index];
+		this->reward_signal_average = factor->average;
+		this->reward_signal_standard_deviation = factor->standard_deviation;
+	}
 
 	this->curr_scope_history = NULL;
 	this->best_scope_history = NULL;

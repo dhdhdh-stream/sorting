@@ -25,21 +25,22 @@ void BranchExperiment::train_existing_check_activate(
 }
 
 void BranchExperiment::train_existing_back_activate(
-		SolutionWrapper* wrapper) {
-	if (this->scope_context->curr_reward_signal.scope_context.size() != 0) {
+		SolutionWrapper* wrapper,
+		BranchExperimentHistory* history) {
+	if (this->reward_signal.scope_context.size() != 0) {
 		double val;
 		bool is_on;
 		fetch_input_helper(wrapper->scope_histories.back(),
-						   this->scope_context->curr_reward_signal,
+						   this->reward_signal,
 						   0,
 						   val,
 						   is_on);
 		if (is_on) {
-			double target_val = (val - this->scope_context->reward_signal_average)
-				/ this->scope_context->reward_signal_standard_deviation;
-			this->i_target_val_histories.push_back(target_val);
+			double target_val = (val - this->reward_signal_average)
+				/ this->reward_signal_standard_deviation;
+			history->reward_signals.push_back(target_val);
 		} else {
-			this->i_target_val_histories.push_back(-1.0);
+			history->reward_signals.push_back(-1.0);
 		}
 	}
 }
@@ -47,8 +48,16 @@ void BranchExperiment::train_existing_back_activate(
 void BranchExperiment::train_existing_backprop(
 		double target_val,
 		SolutionWrapper* wrapper) {
-	while (this->i_target_val_histories.size() < this->scope_histories.size()) {
-		this->i_target_val_histories.push_back(target_val);
+	BranchExperimentHistory* history = (BranchExperimentHistory*)wrapper->experiment_history;
+
+	if (this->reward_signal.scope_context.size() != 0) {
+		for (int r_index = 0; r_index < (int)history->reward_signals.size(); r_index++) {
+			this->i_target_val_histories.push_back(history->reward_signals[r_index]);
+		}
+	} else {
+		while (this->i_target_val_histories.size() < this->scope_histories.size()) {
+			this->i_target_val_histories.push_back(target_val);
+		}
 	}
 
 	this->state_iter++;
