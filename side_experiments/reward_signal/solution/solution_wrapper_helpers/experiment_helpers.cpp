@@ -19,6 +19,11 @@ void SolutionWrapper::experiment_init() {
 	this->num_actions = 1;
 	this->num_confusion_instances = 0;
 
+	this->measure_match = false;
+	this->t_scores.clear();
+
+	this->experiment_history = NULL;
+
 	#if defined(MDEBUG) && MDEBUG
 	this->starting_run_seed = this->run_index;
 	this->curr_run_seed = xorshift(this->starting_run_seed);

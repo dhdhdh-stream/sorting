@@ -5,6 +5,7 @@
 #include <iostream>
 
 #include "constants.h"
+#include "network.h"
 #include "problem.h"
 #include "scope.h"
 #include "solution_helpers.h"
@@ -19,12 +20,14 @@ void BranchExperiment::capture_verify_check_activate(SolutionWrapper* wrapper) {
 	}
 	this->verify_seeds[this->state_iter] = wrapper->starting_run_seed;
 
+	ScopeHistory* scope_history = wrapper->scope_histories.back();
+
 	double sum_vals = this->new_average_score;
 
 	for (int i_index = 0; i_index < (int)this->new_inputs.size(); i_index++) {
 		double val;
 		bool is_on;
-		fetch_input_helper(wrapper->scope_histories.back(),
+		fetch_input_helper(scope_history,
 						   this->new_inputs[i_index],
 						   0,
 						   val,

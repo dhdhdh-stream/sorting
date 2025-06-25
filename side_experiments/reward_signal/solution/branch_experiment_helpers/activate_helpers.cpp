@@ -144,7 +144,8 @@ void BranchExperiment::backprop(double target_val,
 						   wrapper);
 		break;
 	case BRANCH_EXPERIMENT_STATE_MEASURE:
-		measure_backprop(target_val);
+		measure_backprop(target_val,
+						 wrapper);
 		break;
 	#if defined(MDEBUG) && MDEBUG
 	case BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY:

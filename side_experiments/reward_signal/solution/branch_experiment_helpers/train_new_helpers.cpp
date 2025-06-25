@@ -4,6 +4,7 @@
 
 #include "constants.h"
 #include "globals.h"
+#include "network.h"
 #include "scope.h"
 #include "solution_helpers.h"
 #include "solution_wrapper.h"
@@ -42,9 +43,7 @@ void BranchExperiment::train_new_check_activate(
 
 		wrapper->scope_histories.back()->experiments_hit.push_back(this);
 
-		if (this->reward_signal.scope_context.size() != 0) {
-			wrapper->measure_match = true;
-		}
+		wrapper->measure_match = true;
 
 		uniform_int_distribution<int> until_distribution(0, (int)this->average_instances_per_run-1.0);
 		this->num_instances_until_target = 1 + until_distribution(generator);
@@ -124,19 +123,18 @@ void BranchExperiment::train_new_backprop(
 	BranchExperimentHistory* history = (BranchExperimentHistory*)wrapper->experiment_history;
 
 	if (this->reward_signal.scope_context.size() != 0) {
-		if (is_match(wrapper->t_scores)) {
-			for (int i_index = 0; i_index < (int)history->existing_predicted_scores.size(); i_index++) {
-				this->i_target_val_histories.push_back(history->reward_signals[i_index] - history->existing_predicted_scores[i_index]);
-			}
-		} else {
-			for (int i_index = 0; i_index < (int)history->existing_predicted_scores.size(); i_index++) {
-				this->i_target_val_histories.push_back(-1.0);
-			}
+		for (int i_index = 0; i_index < (int)history->existing_predicted_scores.size(); i_index++) {
+			this->i_target_val_histories.push_back(history->reward_signals[i_index] - history->existing_predicted_scores[i_index]);
 		}
 	} else {
 		for (int i_index = 0; i_index < (int)history->existing_predicted_scores.size(); i_index++) {
 			this->i_target_val_histories.push_back(target_val - history->existing_predicted_scores[i_index]);
 		}
+	}
+
+	if (!is_match(wrapper->t_scores)) {
+		this->result = EXPERIMENT_RESULT_FAIL;
+		return;
 	}
 
 	this->state_iter++;
@@ -152,7 +150,7 @@ void BranchExperiment::train_new_backprop(
 		vector<double> factor_input_standard_deviations;
 		vector<double> factor_weights;
 		vector<Input> network_inputs;
-		Network* network;
+		Network* network = NULL;
 		double select_percentage;
 		bool is_success = train_new(this->scope_histories,
 									this->i_target_val_histories,
@@ -185,6 +183,10 @@ void BranchExperiment::train_new_backprop(
 			this->state = BRANCH_EXPERIMENT_STATE_MEASURE;
 			this->state_iter = 0;
 		} else {
+			if (network != NULL) {
+				delete network;
+			}
+
 			this->result = EXPERIMENT_RESULT_FAIL;
 		}
 	}

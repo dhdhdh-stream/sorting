@@ -16,6 +16,7 @@ Factor::Factor() {
 	this->pcc = 0.0;
 	this->num_success = 0;
 	this->num_failure = 0;
+	this->num_selected = 0;
 
 	this->average = 0.0;
 	this->standard_deviation = 0.0;
@@ -35,6 +36,7 @@ Factor::Factor(Factor* original,
 	this->pcc = original->pcc;
 	this->num_success = original->num_success;
 	this->num_failure = original->num_failure;
+	this->num_selected = original->num_selected;
 
 	this->average = original->average;
 	this->standard_deviation = original->standard_deviation;
@@ -175,6 +177,7 @@ void Factor::save(ofstream& output_file) {
 	output_file << this->pcc << endl;
 	output_file << this->num_success << endl;
 	output_file << this->num_failure << endl;
+	output_file << this->num_selected << endl;
 
 	output_file << this->average << endl;
 	output_file << this->standard_deviation << endl;
@@ -203,6 +206,17 @@ void Factor::load(ifstream& input_file,
 	string num_failure_line;
 	getline(input_file, num_failure_line);
 	this->num_failure = stoi(num_failure_line);
+
+	string num_selected_line;
+	getline(input_file, num_selected_line);
+	this->num_selected = stoi(num_selected_line);
+
+	// temp
+	cout << "this->pcc: " << this->pcc << endl;
+	cout << "this->num_success: " << this->num_success << endl;
+	cout << "this->num_failure: " << this->num_failure << endl;
+	cout << "this->num_selected: " << this->num_selected << endl;
+	cout << "this->inputs.size(): " << this->inputs.size() << endl;
 
 	string average_line;
 	getline(input_file, average_line);

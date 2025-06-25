@@ -6,7 +6,7 @@
 
 #include "globals.h"
 #include "scope.h"
-#include "simple.h"
+#include "simpler.h"
 #include "solution.h"
 #include "solution_wrapper.h"
 
@@ -24,22 +24,19 @@ int main(int argc, char* argv[]) {
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
 
-	ProblemType* problem_type = new TypeSimple();
+	ProblemType* problem_type = new TypeSimpler();
 
 	string filename;
 	SolutionWrapper* solution_wrapper;
 	if (argc > 1) {
 		filename = argv[1];
-		solution_wrapper = new SolutionWrapper(
-			problem_type->num_obs(),
-			"saves/",
-			filename);
 	} else {
 		filename = "main.txt";
-		solution_wrapper = new SolutionWrapper(
-			problem_type->num_obs());
-		solution_wrapper->save("saves/", filename);
 	}
+	solution_wrapper = new SolutionWrapper(
+		problem_type->num_obs(),
+		"saves/",
+		filename);
 
 	double sum_vals = 0.0;
 	int max_num_actions = 0;

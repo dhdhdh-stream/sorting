@@ -1,4 +1,5 @@
 // TODO: hooks
+// TODO: early success
 
 #include <chrono>
 #include <iostream>
@@ -11,11 +12,10 @@
 #include "branch_node.h"
 #include "constants.h"
 #include "globals.h"
-#include "obs_node.h"
 #include "problem.h"
 #include "scope.h"
 #include "scope_node.h"
-#include "simple.h"
+#include "simpler.h"
 #include "solution.h"
 #include "solution_helpers.h"
 #include "solution_wrapper.h"
@@ -35,7 +35,7 @@ int main(int argc, char* argv[]) {
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
 
-	ProblemType* problem_type = new TypeSimple();
+	ProblemType* problem_type = new TypeSimpler();
 
 	string filename;
 	SolutionWrapper* solution_wrapper;

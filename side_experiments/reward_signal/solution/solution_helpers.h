@@ -17,7 +17,23 @@ class ScopeNode;
 class Solution;
 class SolutionWrapper;
 
-void select_reward_signal(Scope* scope,
+const double MIN_CONSIDER_HIT_PERCENT = 0.2;
+
+const int NUM_FACTORS = 10;
+
+/**
+ * - when there's correlation, weights can get strange values(?)
+ */
+const double REGRESSION_WEIGHT_LIMIT = 100000.0;
+const double REGRESSION_FAIL_MULTIPLIER = 1000.0;
+
+const double FACTOR_IMPACT_THRESHOLD = 0.1;
+
+const int INPUT_NUM_HIGHEST = 4;
+const int INPUT_NUM_RANDOM_PER = 3;
+
+void select_reward_signal(ScopeHistory* scope_history,
+						  AbstractNode* explore_node,
 						  Input& reward_signal);
 void create_experiment(ScopeHistory* scope_history,
 					   AbstractExperiment*& curr_experiment,
@@ -31,9 +47,17 @@ void fetch_input_helper(ScopeHistory* scope_history,
 						double& obs,
 						bool& is_on);
 
+void analyze_input(Input& input,
+				   std::vector<ScopeHistory*>& scope_histories,
+				   InputData& input_data);
+void existing_add_factor(std::vector<ScopeHistory*>& scope_histories,
+						 std::vector<Input>& network_inputs,
+						 Network* network,
+						 Input& new_input,
+						 AbstractExperiment* experiment,
+						 SolutionWrapper* wrapper);
 bool train_existing(std::vector<ScopeHistory*>& scope_histories,
 					std::vector<double>& target_val_histories,
-					std::map<Input, InputData>& input_tracker,
 					double& average_score,
 					std::vector<Input>& factor_inputs,
 					std::vector<double>& factor_input_averages,

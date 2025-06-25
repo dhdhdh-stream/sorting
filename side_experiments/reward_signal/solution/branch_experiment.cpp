@@ -41,26 +41,47 @@ BranchExperiment::BranchExperiment(Scope* scope_context,
 
 	this->new_network = NULL;
 
+	vector<ScopeHistory*> scope_histories;
 	vector<double> target_val_histories;
-	if (reward_signal.scope_context.size() != 0) {
-		for (int h_index = 0; h_index < (int)this->scope_context->existing_scope_histories.size(); h_index++) {
-			double val;
-			bool is_on;
-			fetch_input_helper(this->scope_context->existing_scope_histories[h_index],
-							   this->reward_signal,
-							   0,
-							   val,
-							   is_on);
-			if (is_on) {
-				double target_val = (val - this->reward_signal_average)
-					/ this->reward_signal_standard_deviation;
-				target_val_histories.push_back(target_val);
+	for (int h_index = 0; h_index < (int)this->scope_context->existing_scope_histories.size(); h_index++) {
+		ScopeHistory* scope_history = this->scope_context->existing_scope_histories[h_index];
+
+		bool has_match = false;
+
+		map<int, AbstractNodeHistory*>::iterator match_it = scope_history->node_histories.find(this->node_context->id);
+		if (match_it != scope_history->node_histories.end()) {
+			if (this->node_context->type == NODE_TYPE_BRANCH) {
+				BranchNodeHistory* branch_node_history = (BranchNodeHistory*)match_it->second;
+				if (branch_node_history->is_branch == this->is_branch) {
+					has_match = true;
+				}
 			} else {
-				target_val_histories.push_back(-1);
+				has_match = true;
 			}
 		}
-	} else {
-		target_val_histories = this->scope_context->existing_target_val_histories;
+
+		if (has_match) {
+			scope_histories.push_back(scope_history);
+
+			if (reward_signal.scope_context.size() != 0) {
+				double val;
+				bool is_on;
+				fetch_input_helper(scope_history,
+								   this->reward_signal,
+								   0,
+								   val,
+								   is_on);
+				if (is_on) {
+					double target_val = (val - this->reward_signal_average)
+						/ this->reward_signal_standard_deviation;
+					target_val_histories.push_back(target_val);
+				} else {
+					target_val_histories.push_back(-1.0);
+				}
+			} else {
+				target_val_histories.push_back(this->scope_context->existing_target_val_histories[h_index]);
+			}
+		}
 	}
 
 	double average_score;
@@ -68,9 +89,8 @@ BranchExperiment::BranchExperiment(Scope* scope_context,
 	vector<double> factor_input_averages;
 	vector<double> factor_input_standard_deviations;
 	vector<double> factor_weights;
-	bool is_success = train_existing(this->scope_context->existing_scope_histories,
+	bool is_success = train_existing(scope_histories,
 									 target_val_histories,
-									 this->scope_context->existing_input_tracker,
 									 average_score,
 									 factor_inputs,
 									 factor_input_averages,
@@ -80,6 +100,8 @@ BranchExperiment::BranchExperiment(Scope* scope_context,
 									 wrapper);
 
 	if (is_success) {
+		this->node_context->experiment = this;
+
 		this->existing_average_score = average_score;
 		this->existing_inputs = factor_inputs;
 		this->existing_input_averages = factor_input_averages;

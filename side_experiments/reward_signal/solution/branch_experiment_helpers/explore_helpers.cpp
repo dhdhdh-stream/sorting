@@ -129,9 +129,7 @@ void BranchExperiment::explore_check_activate(
 
 		wrapper->scope_histories.back()->experiments_hit.push_back(this);
 
-		if (this->reward_signal.scope_context.size() != 0) {
-			wrapper->measure_match = true;
-		}
+		wrapper->measure_match = true;
 
 		BranchExperimentState* new_experiment_state = new BranchExperimentState(this);
 		new_experiment_state->step_index = 0;

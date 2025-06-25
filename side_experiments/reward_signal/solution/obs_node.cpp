@@ -188,6 +188,8 @@ void ObsNode::load(ifstream& input_file,
 	getline(input_file, next_node_id_line);
 	this->next_node_id = stoi(next_node_id_line);
 
+	// temp
+	cout << "this->id: " << this->id << endl;
 	for (int o_index = 0; o_index < (int)this->obs_val_averages.size(); o_index++) {
 		string average_line;
 		getline(input_file, average_line);
@@ -196,6 +198,11 @@ void ObsNode::load(ifstream& input_file,
 		string standard_deviation_line;
 		getline(input_file, standard_deviation_line);
 		this->obs_val_standard_deviations[o_index] = stod(standard_deviation_line);
+
+		// temp
+		cout << o_index << endl;
+		cout << "this->obs_val_averages[o_index]: " << this->obs_val_averages[o_index] << endl;
+		cout << "this->obs_val_standard_deviations[o_index]: " << this->obs_val_standard_deviations[o_index] << endl;
 	}
 
 	string num_ancestors_line;

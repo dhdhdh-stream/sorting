@@ -28,6 +28,7 @@ public:
 	double pcc;
 	int num_success;
 	int num_failure;
+	int num_selected;
 
 	double average;
 	double standard_deviation;

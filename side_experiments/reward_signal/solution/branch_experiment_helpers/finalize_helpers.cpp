@@ -338,6 +338,16 @@ void BranchExperiment::add(SolutionWrapper* wrapper) {
 
 			new_obs_node->factors.push_back(new_factor);
 
+			Input new_input;
+			new_input.scope_context = {this->scope_context};
+			new_input.node_context = {new_obs_node->id};
+			new_input.factor_index = 0;
+			new_input.obs_index = -1;
+			this->new_inputs.push_back(new_input);
+			this->new_input_averages.push_back(0.0);
+			this->new_input_standard_deviations.push_back(1.0);
+			this->new_weights.push_back(1.0);
+
 			switch (this->node_context->type) {
 			case NODE_TYPE_ACTION:
 				{
@@ -476,5 +486,12 @@ void BranchExperiment::add(SolutionWrapper* wrapper) {
 		}
 
 		next_node->ancestor_ids.push_back(new_nodes[s_index]->id);
+	}
+
+	if (this->reward_signal.scope_context.size() != 0) {
+		ObsNode* obs_node = (ObsNode*)this->reward_signal.scope_context.back()
+			->nodes[this->reward_signal.node_context.back()];
+		Factor* factor = obs_node->factors[this->reward_signal.factor_index];
+		factor->num_selected++;
 	}
 }

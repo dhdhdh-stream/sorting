@@ -244,7 +244,6 @@ void Scope::clean() {
 	 * - Solution responsible for deleting
 	 */
 	this->existing_target_val_histories.clear();
-	this->existing_input_tracker.clear();
 }
 
 void Scope::measure_update() {

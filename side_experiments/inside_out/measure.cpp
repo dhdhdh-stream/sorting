@@ -30,16 +30,13 @@ int main(int argc, char* argv[]) {
 	SolutionWrapper* solution_wrapper;
 	if (argc > 1) {
 		filename = argv[1];
-		solution_wrapper = new SolutionWrapper(
-			problem_type->num_obs(),
-			"saves/",
-			filename);
 	} else {
 		filename = "main.txt";
-		solution_wrapper = new SolutionWrapper(
-			problem_type->num_obs());
-		solution_wrapper->save("saves/", filename);
 	}
+	solution_wrapper = new SolutionWrapper(
+		problem_type->num_obs(),
+		"saves/",
+		filename);
 
 	double sum_vals = 0.0;
 	int max_num_actions = 0;

@@ -19,6 +19,8 @@
 using namespace std;
 
 void BranchExperiment::measure_check_activate(SolutionWrapper* wrapper) {
+	wrapper->measure_match = true;
+
 	if (this->select_percentage == 1.0) {
 		BranchExperimentState* new_experiment_state = new BranchExperimentState(this);
 		new_experiment_state->step_index = 0;
@@ -127,7 +129,8 @@ void BranchExperiment::measure_exit_step(SolutionWrapper* wrapper,
 	experiment_state->step_index++;
 }
 
-void BranchExperiment::measure_backprop(double target_val) {
+void BranchExperiment::measure_backprop(double target_val,
+										SolutionWrapper* wrapper) {
 	this->i_target_val_histories.push_back(target_val);
 
 	this->state_iter++;
@@ -205,11 +208,20 @@ void BranchExperiment::measure_backprop(double target_val) {
 				cout << "this->best_exit_next_node->id: " << this->best_exit_next_node->id << endl;
 			}
 
+			cout << "this->reward_signal.scope_context.size(): " << this->reward_signal.scope_context.size() << endl;
+
 			cout << "this->select_percentage: " << this->select_percentage << endl;
 
 			cout << "this->improvement: " << this->improvement << endl;
 
 			cout << endl;
+
+			if (this->reward_signal.scope_context.size() != 0) {
+				ObsNode* obs_node = (ObsNode*)this->reward_signal.scope_context.back()
+					->nodes[this->reward_signal.node_context.back()];
+				Factor* factor = obs_node->factors[this->reward_signal.factor_index];
+				factor->num_success++;
+			}
 
 			#if defined(MDEBUG) && MDEBUG
 			this->verify_problems = vector<Problem*>(NUM_VERIFY_SAMPLES, NULL);
@@ -285,6 +297,8 @@ void BranchExperiment::measure_backprop(double target_val) {
 			} else {
 				cout << "this->best_exit_next_node->id: " << this->best_exit_next_node->id << endl;
 			}
+
+			cout << "this->reward_signal.scope_context.size(): " << this->reward_signal.scope_context.size() << endl;
 
 			cout << "this->select_percentage: " << this->select_percentage << endl;
 
