@@ -6,15 +6,15 @@
 #include "abstract_experiment.h"
 #include "input.h"
 
+class Network;
 class Scope;
 class SolutionWrapper;
 
-const int BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING = 0;
-const int BRANCH_EXPERIMENT_STATE_EXPLORE = 1;
-const int BRANCH_EXPERIMENT_STATE_TRAIN_NEW = 2;
-const int BRANCH_EXPERIMENT_STATE_MEASURE = 3;
+const int BRANCH_EXPERIMENT_STATE_EXPLORE = 0;
+const int BRANCH_EXPERIMENT_STATE_TRAIN_NEW = 1;
+const int BRANCH_EXPERIMENT_STATE_MEASURE = 2;
 #if defined(MDEBUG) && MDEBUG
-const int BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY = 4;
+const int BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY = 3;
 #endif /* MDEBUG */
 
 class BranchExperimentHistory;
@@ -52,6 +52,8 @@ public:
 	std::vector<double> new_input_averages;
 	std::vector<double> new_input_standard_deviations;
 	std::vector<double> new_weights;
+	std::vector<Input> new_network_inputs;
+	Network* new_network;
 
 	double select_percentage;
 
@@ -67,7 +69,8 @@ public:
 	BranchExperiment(Scope* scope_context,
 					 AbstractNode* node_context,
 					 bool is_branch,
-					 Input reward_signal);
+					 Input reward_signal,
+					 SolutionWrapper* wrapper);
 	~BranchExperiment();
 	void decrement(AbstractNode* experiment_node);
 

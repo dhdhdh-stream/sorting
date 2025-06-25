@@ -42,12 +42,14 @@ void ActionNode::clean() {
 	}
 
 	this->sum_score = 0.0;
-	this->sum_count = 0;
+	this->sum_hits = 0;
+	this->sum_instances = 0;
 }
 
 void ActionNode::measure_update() {
-	this->average_hits_per_run = (double)this->sum_count / (double)MEASURE_ITERS;
-	this->average_score = this->sum_score / (double)this->sum_count;
+	this->average_hits_per_run = (double)this->sum_hits / (double)MEASURE_ITERS;
+	this->average_instances_per_run = (double)this->sum_instances / (double)this->sum_hits;
+	this->average_score = this->sum_score / (double)this->sum_hits;
 }
 
 void ActionNode::new_scope_clean() {

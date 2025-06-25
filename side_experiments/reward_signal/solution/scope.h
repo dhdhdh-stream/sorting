@@ -5,6 +5,8 @@
 #include <map>
 #include <vector>
 
+#include "input.h"
+
 class AbstractExperiment;
 class AbstractNode;
 class AbstractNodeHistory;
@@ -24,6 +26,10 @@ public:
 	std::vector<Scope*> child_scopes;
 
 	bool generalized;
+
+	std::vector<ScopeHistory*> existing_scope_histories;
+	std::vector<double> existing_target_val_histories;
+	std::map<Input, InputData> existing_input_tracker;
 
 	Scope();
 	~Scope();

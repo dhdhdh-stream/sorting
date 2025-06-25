@@ -253,10 +253,16 @@ void create_experiment(ScopeHistory* scope_history,
 			explore_node->parent,
 			explore_node,
 			explore_is_branch,
-			reward_signal);
-		explore_node->experiment = new_experiment;
+			reward_signal,
+			wrapper);
 
-		curr_experiment = new_experiment;
+		if (new_experiment->result == EXPERIMENT_RESULT_FAIL) {
+			delete new_experiment;
+		} else {
+			explore_node->experiment = new_experiment;
+
+			curr_experiment = new_experiment;
+		}
 
 		// uniform_int_distribution<int> non_new_distribution(0, 9);
 		// if (explore_node->parent->nodes.size() >= NEW_SCOPE_MIN_NODES

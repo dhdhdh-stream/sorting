@@ -24,6 +24,10 @@ Solution::~Solution() {
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
 		delete this->scopes[s_index];
 	}
+
+	for (int h_index = 0; h_index < (int)this->existing_scope_histories.size(); h_index++) {
+		delete this->existing_scope_histories[h_index];
+	}
 }
 
 void Solution::init(int num_obs) {
@@ -51,9 +55,9 @@ void Solution::init(int num_obs) {
 	new_scope->node_counter++;
 	starting_noop_node->next_node_id = -1;
 	starting_noop_node->next_node = NULL;
-	starting_noop_node->sum_score = 0.0;
-	starting_noop_node->sum_count = 0;
 	new_scope->nodes[starting_noop_node->id] = starting_noop_node;
+
+	clean();
 }
 
 void Solution::load(string path,
@@ -99,6 +103,8 @@ void Solution::load(string path,
 	}
 
 	input_file.close();
+
+	clean();
 }
 
 #if defined(MDEBUG) && MDEBUG
@@ -222,11 +228,22 @@ void Solution::clean() {
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
 		this->scopes[s_index]->clean();
 	}
+
+	for (int h_index = 0; h_index < (int)this->existing_scope_histories.size(); h_index++) {
+		delete this->existing_scope_histories[h_index];
+	}
+	this->existing_scope_histories.clear();
+	this->existing_target_val_histories.clear();
 }
 
 void Solution::measure_update() {
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
 		this->scopes[s_index]->measure_update();
+	}
+
+	for (int h_index = 0; h_index < (int)this->existing_scope_histories.size(); h_index++) {
+		attach_existing_histories(this->existing_scope_histories[h_index],
+								  this->existing_target_val_histories[h_index]);
 	}
 }
 

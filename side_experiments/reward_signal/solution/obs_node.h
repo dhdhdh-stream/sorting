@@ -31,11 +31,13 @@ public:
 	std::vector<std::vector<double>> measure_val_histories;
 
 	double average_hits_per_run;
+	double average_instances_per_run;
 	double average_score;
 
 	int last_updated_run_index;
 	double sum_score;
-	int sum_count;
+	int sum_hits;
+	int sum_instances;
 
 	double new_scope_average_hits_per_run;
 	double new_scope_average_score;

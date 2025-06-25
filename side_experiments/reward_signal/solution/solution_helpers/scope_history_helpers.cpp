@@ -81,10 +81,11 @@ void update_scores(ScopeHistory* scope_history,
 				ActionNode* action_node = (ActionNode*)node;
 				if (wrapper->run_index != action_node->last_updated_run_index) {
 					action_node->sum_score += target_val;
-					action_node->sum_count++;
+					action_node->sum_hits++;
 
 					action_node->last_updated_run_index = wrapper->run_index;
 				}
+				action_node->sum_instances++;
 			}
 			break;
 		case NODE_TYPE_SCOPE:
@@ -98,10 +99,11 @@ void update_scores(ScopeHistory* scope_history,
 
 				if (wrapper->run_index != scope_node->last_updated_run_index) {
 					scope_node->sum_score += target_val;
-					scope_node->sum_count++;
+					scope_node->sum_hits++;
 
 					scope_node->last_updated_run_index = wrapper->run_index;
 				}
+				scope_node->sum_instances++;
 			}
 			break;
 		case NODE_TYPE_BRANCH:
@@ -111,17 +113,19 @@ void update_scores(ScopeHistory* scope_history,
 				if (branch_node_history->is_branch) {
 					if (wrapper->run_index != branch_node->branch_last_updated_run_index) {
 						branch_node->branch_sum_score += target_val;
-						branch_node->branch_sum_count++;
+						branch_node->branch_sum_hits++;
 
 						branch_node->branch_last_updated_run_index = wrapper->run_index;
 					}
+					branch_node->branch_sum_instances++;
 				} else {
 					if (wrapper->run_index != branch_node->original_last_updated_run_index) {
 						branch_node->original_sum_score += target_val;
-						branch_node->original_sum_count++;
+						branch_node->original_sum_hits++;
 
 						branch_node->original_last_updated_run_index = wrapper->run_index;
 					}
+					branch_node->original_sum_instances++;
 				}
 			}
 			break;
@@ -144,12 +148,28 @@ void update_scores(ScopeHistory* scope_history,
 
 				if (wrapper->run_index != obs_node->last_updated_run_index) {
 					obs_node->sum_score += target_val;
-					obs_node->sum_count++;
+					obs_node->sum_hits++;
 
 					obs_node->last_updated_run_index = wrapper->run_index;
 				}
+				obs_node->sum_instances++;
 			}
 			break;
+		}
+	}
+}
+
+void attach_existing_histories(ScopeHistory* scope_history,
+							   double target_val) {
+	scope_history->scope->existing_scope_histories.push_back(scope_history);
+	scope_history->scope->existing_target_val_histories.push_back(target_val);
+
+	for (map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
+			it != scope_history->node_histories.end(); it++) {
+		if (it->second->node->type == NODE_TYPE_SCOPE) {
+			ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)it->second;
+			attach_existing_histories(scope_node_history->scope_history,
+									  target_val);
 		}
 	}
 }

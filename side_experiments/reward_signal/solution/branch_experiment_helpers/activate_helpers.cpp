@@ -26,10 +26,6 @@ void BranchExperiment::check_activate(AbstractNode* experiment_node,
 		}
 
 		switch (this->state) {
-		case BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING:
-			train_existing_check_activate(wrapper,
-										  history);
-			break;
 		case BRANCH_EXPERIMENT_STATE_EXPLORE:
 			explore_check_activate(wrapper,
 								   history);
@@ -125,10 +121,6 @@ void BranchExperiment::experiment_exit_step(SolutionWrapper* wrapper) {
 void BranchExperiment::back_activate(SolutionWrapper* wrapper) {
 	BranchExperimentHistory* history = (BranchExperimentHistory*)wrapper->experiment_history;
 	switch (this->state) {
-	case BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING:
-		train_existing_back_activate(wrapper,
-									 history);
-		break;
 	case BRANCH_EXPERIMENT_STATE_EXPLORE:
 		explore_back_activate(wrapper,
 							  history);
@@ -143,10 +135,6 @@ void BranchExperiment::back_activate(SolutionWrapper* wrapper) {
 void BranchExperiment::backprop(double target_val,
 								SolutionWrapper* wrapper) {
 	switch (this->state) {
-	case BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING:
-		train_existing_backprop(target_val,
-								wrapper);
-		break;
 	case BRANCH_EXPERIMENT_STATE_EXPLORE:
 		explore_backprop(target_val,
 						 wrapper);

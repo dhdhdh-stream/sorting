@@ -1,5 +1,6 @@
 #include "scope.h"
 
+#include <algorithm>
 #include <iostream>
 
 #include "abstract_experiment.h"
@@ -237,12 +238,28 @@ void Scope::clean() {
 			it != this->nodes.end(); it++) {
 		it->second->clean();
 	}
+
+	this->existing_scope_histories.clear();
+	/**
+	 * - Solution responsible for deleting
+	 */
+	this->existing_target_val_histories.clear();
+	this->existing_input_tracker.clear();
 }
 
 void Scope::measure_update() {
 	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
 			it != this->nodes.end(); it++) {
 		it->second->measure_update();
+	}
+
+	{
+		default_random_engine generator_copy = generator;
+		shuffle(this->existing_scope_histories.begin(), this->existing_scope_histories.end(), generator_copy);
+	}
+	{
+		default_random_engine generator_copy = generator;
+		shuffle(this->existing_target_val_histories.begin(), this->existing_target_val_histories.end(), generator_copy);
 	}
 }
 

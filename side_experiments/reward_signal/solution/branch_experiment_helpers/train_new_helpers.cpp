@@ -151,18 +151,19 @@ void BranchExperiment::train_new_backprop(
 		vector<double> factor_input_averages;
 		vector<double> factor_input_standard_deviations;
 		vector<double> factor_weights;
+		vector<Input> network_inputs;
+		Network* network;
 		double select_percentage;
-		bool is_success = train_helper(this->scope_histories,
-									   this->i_target_val_histories,
-									   average_score,
-									   factor_inputs,
-									   factor_input_averages,
-									   factor_input_standard_deviations,
-									   factor_weights,
-									   this->node_context,
-									   this,
-									   select_percentage,
-									   wrapper);
+		bool is_success = train_new(this->scope_histories,
+									this->i_target_val_histories,
+									average_score,
+									factor_inputs,
+									factor_input_averages,
+									factor_input_standard_deviations,
+									factor_weights,
+									network_inputs,
+									network,
+									select_percentage);
 
 		for (int h_index = 0; h_index < (int)this->scope_histories.size(); h_index++) {
 			delete this->scope_histories[h_index];
@@ -176,6 +177,8 @@ void BranchExperiment::train_new_backprop(
 			this->new_input_averages = factor_input_averages;
 			this->new_input_standard_deviations = factor_input_standard_deviations;
 			this->new_weights = factor_weights;
+			this->new_network_inputs = network_inputs;
+			this->new_network = network;
 
 			this->select_percentage = select_percentage;
 

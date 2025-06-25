@@ -144,16 +144,20 @@ void BranchNode::clean() {
 	}
 
 	this->original_sum_score = 0.0;
-	this->original_sum_count = 0;
+	this->original_sum_hits = 0;
+	this->original_sum_instances = 0;
 	this->branch_sum_score = 0.0;
-	this->branch_sum_count = 0;
+	this->branch_sum_hits = 0;
+	this->branch_sum_instances = 0;
 }
 
 void BranchNode::measure_update() {
-	this->original_average_hits_per_run = (double)this->original_sum_count / (double)MEASURE_ITERS;
-	this->original_average_score = this->original_sum_score / (double)this->original_sum_count;
-	this->branch_average_hits_per_run = (double)this->branch_sum_count / (double)MEASURE_ITERS;
-	this->branch_average_score = this->branch_sum_score / (double)this->branch_sum_count;
+	this->original_average_hits_per_run = (double)this->original_sum_hits / (double)MEASURE_ITERS;
+	this->original_average_instances_per_run = (double)this->original_sum_instances / (double)this->original_sum_hits;
+	this->original_average_score = this->original_sum_score / (double)this->original_sum_hits;
+	this->branch_average_hits_per_run = (double)this->branch_sum_hits / (double)MEASURE_ITERS;
+	this->branch_average_instances_per_run = (double)this->branch_sum_instances / (double)this->branch_sum_hits;
+	this->branch_average_score = this->branch_sum_score / (double)this->branch_sum_hits;
 }
 
 void BranchNode::new_scope_clean() {
