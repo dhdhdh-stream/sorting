@@ -23,6 +23,9 @@ public:
 
 	bool generalized;
 
+	std::vector<ScopeHistory*> existing_scope_histories;
+	std::vector<double> existing_target_val_histories;
+
 	/**
 	 * - tie NewScopeExperiment to scope instead of node
 	 *   - so that can be tried throughout entire scope

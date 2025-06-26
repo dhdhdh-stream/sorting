@@ -6,6 +6,7 @@
 #include "action_node.h"
 #include "constants.h"
 #include "globals.h"
+#include "network.h"
 #include "new_scope_experiment.h"
 #include "obs_node.h"
 #include "scope.h"
@@ -190,17 +191,19 @@ void CommitExperiment::commit_train_existing_backprop(
 		vector<double> factor_input_averages;
 		vector<double> factor_input_standard_deviations;
 		vector<double> factor_weights;
+		vector<Input> network_inputs;
+		Network* network = NULL;
 		double select_percentage;
-		bool is_success = train_helper(this->scope_histories,
-									   this->i_target_val_histories,
-									   average_score,
-									   factor_inputs,
-									   factor_input_averages,
-									   factor_input_standard_deviations,
-									   factor_weights,
-									   this->new_nodes[this->step_iter-1],
-									   this,
-									   select_percentage);
+		bool is_success = train_new(this->scope_histories,
+									this->i_target_val_histories,
+									average_score,
+									factor_inputs,
+									factor_input_averages,
+									factor_input_standard_deviations,
+									factor_weights,
+									network_inputs,
+									network,
+									select_percentage);
 
 		for (int h_index = 0; h_index < (int)this->scope_histories.size(); h_index++) {
 			delete this->scope_histories[h_index];
@@ -214,10 +217,16 @@ void CommitExperiment::commit_train_existing_backprop(
 			this->commit_existing_input_averages = factor_input_averages;
 			this->commit_existing_input_standard_deviations = factor_input_standard_deviations;
 			this->commit_existing_weights = factor_weights;
+			this->commit_existing_network_inputs = network_inputs;
+			this->commit_existing_network = network;
 
 			this->state = COMMIT_EXPERIMENT_STATE_COMMIT_TRAIN_NEW;
 			this->state_iter = 0;
 		} else {
+			if (network != NULL) {
+				delete network;
+			}
+
 			this->result = EXPERIMENT_RESULT_FAIL;
 		}
 	}

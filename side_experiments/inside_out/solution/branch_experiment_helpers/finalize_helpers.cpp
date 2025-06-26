@@ -187,12 +187,6 @@ void BranchExperiment::add(SolutionWrapper* wrapper) {
 		this->scope_context->node_counter++;
 		this->scope_context->nodes[new_branch_node->id] = new_branch_node;
 
-		new_branch_node->average_val = this->new_average_score;
-		new_branch_node->inputs = this->new_inputs;
-		new_branch_node->input_averages = this->new_input_averages;
-		new_branch_node->input_standard_deviations = this->new_input_standard_deviations;
-		new_branch_node->weights = this->new_weights;
-
 		switch (this->node_context->type) {
 		case NODE_TYPE_ACTION:
 			{
@@ -329,46 +323,134 @@ void BranchExperiment::add(SolutionWrapper* wrapper) {
 			new_branch_node->branch_next_node = new_nodes[0];
 		}
 
-		switch (this->node_context->type) {
-		case NODE_TYPE_ACTION:
-			{
-				ActionNode* action_node = (ActionNode*)this->node_context;
+		if (this->new_network != NULL
+				&& this->node_context->type != NODE_TYPE_OBS) {
+			ObsNode* new_obs_node = new ObsNode();
+			new_obs_node->parent = this->scope_context;
+			new_obs_node->id = this->scope_context->node_counter;
+			this->scope_context->node_counter++;
+			this->scope_context->nodes[new_obs_node->id] = new_obs_node;
 
-				action_node->next_node_id = new_branch_node->id;
-				action_node->next_node = new_branch_node;
-			}
-			break;
-		case NODE_TYPE_SCOPE:
-			{
-				ScopeNode* scope_node = (ScopeNode*)this->node_context;
+			Factor* new_factor = new Factor();
+			new_factor->inputs = this->new_network_inputs;
+			new_factor->network = this->new_network;
+			this->new_network = NULL;
 
-				scope_node->next_node_id = new_branch_node->id;
-				scope_node->next_node = new_branch_node;
-			}
-			break;
-		case NODE_TYPE_BRANCH:
-			{
-				BranchNode* branch_node = (BranchNode*)this->node_context;
+			new_obs_node->factors.push_back(new_factor);
 
-				if (this->is_branch) {
-					branch_node->branch_next_node_id = new_branch_node->id;
-					branch_node->branch_next_node = new_branch_node;
-				} else {
-					branch_node->original_next_node_id = new_branch_node->id;
-					branch_node->original_next_node = new_branch_node;
+			Input new_input;
+			new_input.scope_context = {this->scope_context};
+			new_input.node_context = {new_obs_node->id};
+			new_input.factor_index = 0;
+			new_input.obs_index = -1;
+			this->new_inputs.push_back(new_input);
+			this->new_input_averages.push_back(0.0);
+			this->new_input_standard_deviations.push_back(1.0);
+			this->new_weights.push_back(1.0);
+
+			switch (this->node_context->type) {
+			case NODE_TYPE_ACTION:
+				{
+					ActionNode* action_node = (ActionNode*)this->node_context;
+
+					action_node->next_node_id = new_obs_node->id;
+					action_node->next_node = new_obs_node;
 				}
-			}
-			break;
-		case NODE_TYPE_OBS:
-			{
-				ObsNode* obs_node = (ObsNode*)this->node_context;
+				break;
+			case NODE_TYPE_SCOPE:
+				{
+					ScopeNode* scope_node = (ScopeNode*)this->node_context;
 
-				obs_node->next_node_id = new_branch_node->id;
-				obs_node->next_node = new_branch_node;
+					scope_node->next_node_id = new_obs_node->id;
+					scope_node->next_node = new_obs_node;
+				}
+				break;
+			case NODE_TYPE_BRANCH:
+				{
+					BranchNode* branch_node = (BranchNode*)this->node_context;
+
+					if (this->is_branch) {
+						branch_node->branch_next_node_id = new_obs_node->id;
+						branch_node->branch_next_node = new_obs_node;
+					} else {
+						branch_node->original_next_node_id = new_obs_node->id;
+						branch_node->original_next_node = new_obs_node;
+					}
+				}
+				break;
 			}
-			break;
+			new_obs_node->ancestor_ids.push_back(this->node_context->id);
+
+			new_obs_node->next_node_id = new_branch_node->id;
+			new_obs_node->next_node = new_branch_node;
+			new_branch_node->ancestor_ids.push_back(new_obs_node->id);
+		} else {
+			switch (this->node_context->type) {
+			case NODE_TYPE_ACTION:
+				{
+					ActionNode* action_node = (ActionNode*)this->node_context;
+
+					action_node->next_node_id = new_branch_node->id;
+					action_node->next_node = new_branch_node;
+				}
+				break;
+			case NODE_TYPE_SCOPE:
+				{
+					ScopeNode* scope_node = (ScopeNode*)this->node_context;
+
+					scope_node->next_node_id = new_branch_node->id;
+					scope_node->next_node = new_branch_node;
+				}
+				break;
+			case NODE_TYPE_BRANCH:
+				{
+					BranchNode* branch_node = (BranchNode*)this->node_context;
+
+					if (this->is_branch) {
+						branch_node->branch_next_node_id = new_branch_node->id;
+						branch_node->branch_next_node = new_branch_node;
+					} else {
+						branch_node->original_next_node_id = new_branch_node->id;
+						branch_node->original_next_node = new_branch_node;
+					}
+				}
+				break;
+			case NODE_TYPE_OBS:
+				{
+					ObsNode* obs_node = (ObsNode*)this->node_context;
+
+					if (this->new_network != NULL) {
+						Factor* new_factor = new Factor();
+						new_factor->inputs = this->new_network_inputs;
+						new_factor->network = this->new_network;
+						this->new_network = NULL;
+
+						obs_node->factors.push_back(new_factor);
+
+						Input new_input;
+						new_input.scope_context = {this->scope_context};
+						new_input.node_context = {this->node_context->id};
+						new_input.factor_index = (int)obs_node->factors.size()-1;
+						new_input.obs_index = -1;
+						this->new_inputs.push_back(new_input);
+						this->new_input_averages.push_back(0.0);
+						this->new_input_standard_deviations.push_back(1.0);
+						this->new_weights.push_back(1.0);
+					}
+
+					obs_node->next_node_id = new_branch_node->id;
+					obs_node->next_node = new_branch_node;
+				}
+				break;
+			}
+			new_branch_node->ancestor_ids.push_back(this->node_context->id);
 		}
-		new_branch_node->ancestor_ids.push_back(this->node_context->id);
+
+		new_branch_node->average_val = this->new_average_score;
+		new_branch_node->inputs = this->new_inputs;
+		new_branch_node->input_averages = this->new_input_averages;
+		new_branch_node->input_standard_deviations = this->new_input_standard_deviations;
+		new_branch_node->weights = this->new_weights;
 
 		#if defined(MDEBUG) && MDEBUG
 		if (this->verify_problems.size() > 0) {

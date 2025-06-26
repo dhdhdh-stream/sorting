@@ -108,3 +108,32 @@ void optimize_network(vector<vector<double>>& inputs,
 		}
 	}
 }
+
+void train_new_network(vector<vector<double>>& inputs,
+					   vector<vector<bool>>& input_is_on,
+					   vector<double>& target_vals,
+					   Network* network) {
+	if (inputs.size() > 0) {
+		uniform_int_distribution<int> distribution(0, (int)inputs.size()-1);
+		uniform_int_distribution<int> drop_distribution(0, 9);
+		for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
+			int rand_index = distribution(generator);
+
+			vector<bool> w_drop(inputs[rand_index].size());
+			for (int i_index = 0; i_index < (int)inputs[rand_index].size(); i_index++) {
+				if (drop_distribution(generator) == 0) {
+					w_drop[i_index] = false;
+				} else {
+					w_drop[i_index] = input_is_on[rand_index][i_index];
+				}
+			}
+
+			network->activate(inputs[rand_index],
+							  w_drop);
+
+			double error = target_vals[rand_index] - network->output->acti_vals[0];
+
+			network->backprop(error);
+		}
+	}
+}

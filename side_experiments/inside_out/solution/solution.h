@@ -23,6 +23,7 @@
 class AbstractNode;
 class Problem;
 class Scope;
+class ScopeHistory;
 
 class Solution {
 public:
@@ -36,6 +37,9 @@ public:
 	double best_score;
 
 	std::vector<Scope*> scopes;
+
+	std::vector<ScopeHistory*> existing_scope_histories;
+	std::vector<double> existing_target_val_histories;
 
 	#if defined(MDEBUG) && MDEBUG
 	std::vector<Problem*> verify_problems;

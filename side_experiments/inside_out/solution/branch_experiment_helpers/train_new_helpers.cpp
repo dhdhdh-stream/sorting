@@ -4,6 +4,7 @@
 
 #include "constants.h"
 #include "globals.h"
+#include "network.h"
 #include "new_scope_experiment.h"
 #include "scope.h"
 #include "solution_helpers.h"
@@ -23,8 +24,6 @@ void BranchExperiment::train_new_check_activate(
 	this->num_instances_until_target--;
 
 	if (this->num_instances_until_target <= 0) {
-		history->instance_count++;
-
 		double sum_vals = this->existing_average_score;
 		for (int i_index = 0; i_index < (int)this->existing_inputs.size(); i_index++) {
 			double val;
@@ -103,7 +102,7 @@ void BranchExperiment::train_new_exit_step(SolutionWrapper* wrapper,
 void BranchExperiment::train_new_backprop(
 		double target_val,
 		BranchExperimentHistory* history) {
-	for (int i_index = 0; i_index < history->instance_count; i_index++) {
+	for (int i_index = 0; i_index < (int)history->existing_predicted_scores.size(); i_index++) {
 		this->i_target_val_histories.push_back(target_val - history->existing_predicted_scores[i_index]);
 	}
 
@@ -119,17 +118,19 @@ void BranchExperiment::train_new_backprop(
 		vector<double> factor_input_averages;
 		vector<double> factor_input_standard_deviations;
 		vector<double> factor_weights;
+		vector<Input> network_inputs;
+		Network* network = NULL;
 		double select_percentage;
-		bool is_success = train_helper(this->scope_histories,
-									   this->i_target_val_histories,
-									   average_score,
-									   factor_inputs,
-									   factor_input_averages,
-									   factor_input_standard_deviations,
-									   factor_weights,
-									   this->node_context,
-									   this,
-									   select_percentage);
+		bool is_success = train_new(this->scope_histories,
+									this->i_target_val_histories,
+									average_score,
+									factor_inputs,
+									factor_input_averages,
+									factor_input_standard_deviations,
+									factor_weights,
+									network_inputs,
+									network,
+									select_percentage);
 
 		for (int h_index = 0; h_index < (int)this->scope_histories.size(); h_index++) {
 			delete this->scope_histories[h_index];
@@ -143,12 +144,18 @@ void BranchExperiment::train_new_backprop(
 			this->new_input_averages = factor_input_averages;
 			this->new_input_standard_deviations = factor_input_standard_deviations;
 			this->new_weights = factor_weights;
+			this->new_network_inputs = network_inputs;
+			this->new_network = network;
 
 			this->select_percentage = select_percentage;
 
 			this->state = BRANCH_EXPERIMENT_STATE_MEASURE;
 			this->state_iter = 0;
 		} else {
+			if (network != NULL) {
+				delete network;
+			}
+
 			this->result = EXPERIMENT_RESULT_FAIL;
 		}
 	}

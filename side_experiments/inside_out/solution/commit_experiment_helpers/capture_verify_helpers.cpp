@@ -6,6 +6,7 @@
 
 #include "action_node.h"
 #include "constants.h"
+#include "network.h"
 #include "new_scope_experiment.h"
 #include "obs_node.h"
 #include "problem.h"
@@ -63,11 +64,14 @@ void CommitExperiment::capture_verify_step(vector<double>& obs,
 		}
 	} else {
 		if (experiment_state->step_index == this->step_iter) {
+			ScopeHistory* scope_history = wrapper->scope_histories.back();
+
 			double sum_vals = this->commit_new_average_score;
+
 			for (int i_index = 0; i_index < (int)this->commit_new_inputs.size(); i_index++) {
 				double val;
 				bool is_on;
-				fetch_input_helper(wrapper->scope_histories.back(),
+				fetch_input_helper(scope_history,
 								   this->commit_new_inputs[i_index],
 								   0,
 								   val,
@@ -76,6 +80,25 @@ void CommitExperiment::capture_verify_step(vector<double>& obs,
 					double normalized_val = (val - this->commit_new_input_averages[i_index]) / this->commit_new_input_standard_deviations[i_index];
 					sum_vals += this->commit_new_weights[i_index] * normalized_val;
 				}
+			}
+
+			if (this->commit_new_network != NULL) {
+				vector<double> input_vals(this->commit_new_network_inputs.size());
+				vector<bool> input_is_on(this->commit_new_network_inputs.size());
+				for (int i_index = 0; i_index < (int)this->commit_new_network_inputs.size(); i_index++) {
+					double val;
+					bool is_on;
+					fetch_input_helper(scope_history,
+									   this->commit_new_network_inputs[i_index],
+									   0,
+									   val,
+									   is_on);
+					input_vals[i_index] = val;
+					input_is_on[i_index] = is_on;
+				}
+				this->commit_new_network->activate(input_vals,
+												   input_is_on);
+				sum_vals += this->commit_new_network->output->acti_vals[0];
 			}
 
 			this->verify_scores.push_back(sum_vals);

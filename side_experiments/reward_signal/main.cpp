@@ -1,6 +1,28 @@
 // TODO: hooks
 // TODO: early success
 
+// - signals may not be good because solution not consistent
+//   - things get increasingly more mixed
+// - probably don't pursue further until consistency addressed
+
+// - standard deviation/leeway increases and increases
+
+// - also probably not worth it over using score when single layer
+//   - but may be useful with scopes involved
+//   - e.g., (after - before) within scope correlated with final score, so instead maximize that for each instance
+
+// - clean signals might also be hard to find because of factors tied to actions
+//   - so correlated with what's been done, and not what's possible
+
+// - try only merging paths if exactly identical
+//   - if not exactly identical, then add extra state and capture exact differences
+
+// - don't have to correlate against final score
+//   - can correlate against layer above
+//     - OK if not ancestor all the time, as once correlated, can use reward signal without outer moving forward
+
+// - probably just train score function to each scope and optimize against it
+
 #include <chrono>
 #include <iostream>
 #include <map>

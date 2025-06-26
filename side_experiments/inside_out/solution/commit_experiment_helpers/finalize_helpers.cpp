@@ -269,13 +269,26 @@ void CommitExperiment::add(SolutionWrapper* wrapper) {
 	this->scope_context->node_counter++;
 	this->scope_context->nodes[new_branch_node->id] = new_branch_node;
 
-	new_branch_node->average_val = this->commit_new_average_score;
-	new_branch_node->inputs = this->commit_new_inputs;
-	new_branch_node->input_averages = this->commit_new_input_averages;
-	new_branch_node->input_standard_deviations = this->commit_new_input_standard_deviations;
-	new_branch_node->weights = this->commit_new_weights;
-
 	ObsNode* obs_node = (ObsNode*)this->new_nodes[this->step_iter-1];
+
+	if (this->commit_new_network != NULL) {
+		Factor* new_factor = new Factor();
+		new_factor->inputs = this->commit_new_network_inputs;
+		new_factor->network = this->commit_new_network;
+		this->commit_new_network = NULL;
+
+		obs_node->factors.push_back(new_factor);
+
+		Input new_input;
+		new_input.scope_context = {this->scope_context};
+		new_input.node_context = {this->node_context->id};
+		new_input.factor_index = (int)obs_node->factors.size()-1;
+		new_input.obs_index = -1;
+		this->commit_new_inputs.push_back(new_input);
+		this->commit_new_input_averages.push_back(0.0);
+		this->commit_new_input_standard_deviations.push_back(1.0);
+		this->commit_new_weights.push_back(1.0);
+	}
 
 	for (int a_index = 0; a_index < (int)obs_node->next_node->ancestor_ids.size(); a_index++) {
 		if (obs_node->next_node->ancestor_ids[a_index] == obs_node->id) {
@@ -305,6 +318,12 @@ void CommitExperiment::add(SolutionWrapper* wrapper) {
 	obs_node->next_node = new_branch_node;
 
 	new_branch_node->ancestor_ids.push_back(this->new_nodes[this->step_iter-1]->id);
+
+	new_branch_node->average_val = this->commit_new_average_score;
+	new_branch_node->inputs = this->commit_new_inputs;
+	new_branch_node->input_averages = this->commit_new_input_averages;
+	new_branch_node->input_standard_deviations = this->commit_new_input_standard_deviations;
+	new_branch_node->weights = this->commit_new_weights;
 
 	#if defined(MDEBUG) && MDEBUG
 	if (this->verify_problems.size() > 0) {

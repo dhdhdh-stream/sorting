@@ -22,4 +22,9 @@ void optimize_network(std::vector<std::vector<double>>& inputs,
 					  std::vector<double>& target_vals,
 					  Network* network);
 
+void train_new_network(std::vector<std::vector<double>>& inputs,
+					   std::vector<std::vector<bool>>& input_is_on,
+					   std::vector<double>& target_vals,
+					   Network* network);
+
 #endif /* NN_HELPERS_H */

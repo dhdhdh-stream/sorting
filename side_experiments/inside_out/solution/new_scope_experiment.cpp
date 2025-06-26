@@ -427,9 +427,8 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 		this->state_iter = 0;
 		this->scope_context->new_scope_clean();
 
-		/**
-		 * - added to node_context.experiments outside
-		 */
+		this->scope_context->new_scope_experiment = this;
+		node_context->experiment = this;
 
 		this->generalize_iter = -1;
 

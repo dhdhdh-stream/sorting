@@ -20,72 +20,16 @@
 #include "scope.h"
 #include "scope_node.h"
 #include "solution_helpers.h"
+#include "solution_wrapper.h"
 
 using namespace std;
 
-const double MIN_CONSIDER_HIT_PERCENT = 0.2;
-
-const int NUM_FACTORS = 10;
-
-/**
- * - when there's correlation, weights can get strange values(?)
- */
-const double REGRESSION_WEIGHT_LIMIT = 100000.0;
-const double REGRESSION_FAIL_MULTIPLIER = 1000.0;
-
-const double FACTOR_IMPACT_THRESHOLD = 0.1;
-
-const int INPUT_NUM_HIGHEST = 4;
-const int INPUT_NUM_RANDOM_PER = 3;
-
-class InputData {
-public:
-	double hit_percent;
-	double average;
-	double standard_deviation;
-};
-
-void analyze_input(Input& input,
-				   vector<ScopeHistory*>& scope_histories,
-				   InputData& input_data) {
-	vector<double> vals;
-	int num_is_on = 0;
-	for (int h_index = 0; h_index < (int)scope_histories.size(); h_index++) {
-		double val;
-		bool is_on;
-		fetch_input_helper(scope_histories[h_index],
-						   input,
-						   0,
-						   val,
-						   is_on);
-		if (is_on) {
-			vals.push_back(val);
-			num_is_on++;
-		}
-	}
-
-	input_data.hit_percent = (double)num_is_on / (double)scope_histories.size();
-	if (input_data.hit_percent >= MIN_CONSIDER_HIT_PERCENT) {
-		double sum_vals = 0.0;
-		for (int v_index = 0; v_index < (int)vals.size(); v_index++) {
-			sum_vals += vals[v_index];
-		}
-		input_data.average = sum_vals / (double)vals.size();
-
-		double sum_variance = 0.0;
-		for (int v_index = 0; v_index < (int)vals.size(); v_index++) {
-			sum_variance += (input_data.average - vals[v_index]) * (input_data.average - vals[v_index]);
-		}
-		input_data.standard_deviation = sqrt(sum_variance / (double)vals.size());
-	}
-}
-
-void gather_factor_t_scores_helper(ScopeHistory* scope_history,
-								   vector<Scope*>& scope_context,
-								   vector<int>& node_context,
-								   map<Input, double>& t_scores,
-								   vector<ScopeHistory*>& scope_histories,
-								   map<Input, InputData>& input_tracker) {
+void new_gather_factor_t_scores_helper(ScopeHistory* scope_history,
+									   vector<Scope*>& scope_context,
+									   vector<int>& node_context,
+									   map<Input, double>& t_scores,
+									   vector<ScopeHistory*>& scope_histories,
+									   map<Input, InputData>& input_tracker) {
 	Scope* scope = scope_history->scope;
 
 	for (map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
@@ -99,12 +43,12 @@ void gather_factor_t_scores_helper(ScopeHistory* scope_history,
 				scope_context.push_back(scope);
 				node_context.push_back(it->first);
 
-				gather_factor_t_scores_helper(scope_node_history->scope_history,
-											  scope_context,
-											  node_context,
-											  t_scores,
-											  scope_histories,
-											  input_tracker);
+				new_gather_factor_t_scores_helper(scope_node_history->scope_history,
+												  scope_context,
+												  node_context,
+												  t_scores,
+												  scope_histories,
+												  input_tracker);
 
 				scope_context.pop_back();
 				node_context.pop_back();
@@ -150,12 +94,12 @@ void gather_factor_t_scores_helper(ScopeHistory* scope_history,
 	}
 }
 
-void gather_input_t_scores_helper(ScopeHistory* scope_history,
-								  vector<Scope*>& scope_context,
-								  vector<int>& node_context,
-								  map<Input, double>& t_scores,
-								  vector<ScopeHistory*>& scope_histories,
-								  map<Input, InputData>& input_tracker) {
+void new_gather_input_t_scores_helper(ScopeHistory* scope_history,
+									  vector<Scope*>& scope_context,
+									  vector<int>& node_context,
+									  map<Input, double>& t_scores,
+									  vector<ScopeHistory*>& scope_histories,
+									  map<Input, InputData>& input_tracker) {
 	Scope* scope = scope_history->scope;
 
 	for (map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
@@ -169,12 +113,12 @@ void gather_input_t_scores_helper(ScopeHistory* scope_history,
 				scope_context.push_back(scope);
 				node_context.push_back(it->first);
 
-				gather_input_t_scores_helper(scope_node_history->scope_history,
-											 scope_context,
-											 node_context,
-											 t_scores,
-											 scope_histories,
-											 input_tracker);
+				new_gather_input_t_scores_helper(scope_node_history->scope_history,
+												 scope_context,
+												 node_context,
+												 t_scores,
+												 scope_histories,
+												 input_tracker);
 
 				scope_context.pop_back();
 				node_context.pop_back();
@@ -291,13 +235,13 @@ void gather_input_t_scores_helper(ScopeHistory* scope_history,
 	}
 }
 
-void random_input_helper(ScopeHistory* scope_history,
-						 vector<Scope*>& scope_context,
-						 vector<int>& node_context,
-						 int& input_count,
-						 Input& selected_input,
-						 vector<ScopeHistory*>& scope_histories,
-						 map<Input, InputData>& input_tracker) {
+void new_random_input_helper(ScopeHistory* scope_history,
+							 vector<Scope*>& scope_context,
+							 vector<int>& node_context,
+							 int& input_count,
+							 Input& selected_input,
+							 vector<ScopeHistory*>& scope_histories,
+							 map<Input, InputData>& input_tracker) {
 	Scope* scope = scope_history->scope;
 
 	for (map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
@@ -311,13 +255,13 @@ void random_input_helper(ScopeHistory* scope_history,
 				scope_context.push_back(scope);
 				node_context.push_back(it->first);
 
-				random_input_helper(scope_node_history->scope_history,
-									scope_context,
-									node_context,
-									input_count,
-									selected_input,
-									scope_histories,
-									input_tracker);
+				new_random_input_helper(scope_node_history->scope_history,
+										scope_context,
+										node_context,
+										input_count,
+										selected_input,
+										scope_histories,
+										input_tracker);
 
 				scope_context.pop_back();
 				node_context.pop_back();
@@ -433,21 +377,19 @@ void random_input_helper(ScopeHistory* scope_history,
 	}
 }
 
-bool train_helper(vector<ScopeHistory*>& scope_histories,
-				  vector<double>& target_val_histories,
-				  double& average_score,
-				  vector<Input>& factor_inputs,
-				  vector<double>& factor_input_averages,
-				  vector<double>& factor_input_standard_deviations,
-				  vector<double>& factor_weights,
-				  AbstractNode* node_context,
-				  AbstractExperiment* experiment,
-				  double& select_percentage) {
+bool train_new(vector<ScopeHistory*>& scope_histories,
+			   vector<double>& target_val_histories,
+			   double& average_score,
+			   vector<Input>& factor_inputs,
+			   vector<double>& factor_input_averages,
+			   vector<double>& factor_input_standard_deviations,
+			   vector<double>& factor_weights,
+			   vector<Input>& network_inputs,
+			   Network*& network,
+			   double& select_percentage) {
 	auto start_time = chrono::high_resolution_clock::now();
 
 	int num_instances = (int)target_val_histories.size();
-	int num_train_instances = (double)num_instances * (1.0 - TEST_SAMPLES_PERCENTAGE);
-	int num_test_instances = num_instances - num_train_instances;
 
 	double sum_score = 0.0;
 	for (int i_index = 0; i_index < num_instances; i_index++) {
@@ -478,24 +420,24 @@ bool train_helper(vector<ScopeHistory*>& scope_histories,
 	{
 		vector<Scope*> scope_context;
 		vector<int> node_context;
-		gather_factor_t_scores_helper(scope_histories[best_factor_index],
-									  scope_context,
-									  node_context,
-									  best_factor_t_scores,
-									  scope_histories,
-									  input_tracker);
+		new_gather_factor_t_scores_helper(scope_histories[best_factor_index],
+										  scope_context,
+										  node_context,
+										  best_factor_t_scores,
+										  scope_histories,
+										  input_tracker);
 	}
 
 	map<Input, double> worst_factor_t_scores;
 	{
 		vector<Scope*> scope_context;
 		vector<int> node_context;
-		gather_factor_t_scores_helper(scope_histories[worst_factor_index],
-									  scope_context,
-									  node_context,
-									  worst_factor_t_scores,
-									  scope_histories,
-									  input_tracker);
+		new_gather_factor_t_scores_helper(scope_histories[worst_factor_index],
+										  scope_context,
+										  node_context,
+										  worst_factor_t_scores,
+										  scope_histories,
+										  input_tracker);
 	}
 
 	map<Input, double> contrast_factor_t_scores;
@@ -584,14 +526,14 @@ bool train_helper(vector<ScopeHistory*>& scope_histories,
 		#if defined(MDEBUG) && MDEBUG
 		#else
 		double sum_offset = 0.0;
-		for (int i_index = 0; i_index < num_train_instances; i_index++) {
+		for (int i_index = 0; i_index < num_instances; i_index++) {
 			sum_offset += abs(target_val_histories[i_index] - average_score);
 		}
-		double average_offset = sum_offset / num_train_instances;
+		double average_offset = sum_offset / (double)num_instances;
 		#endif /* MDEBUG */
 
-		Eigen::MatrixXd inputs(num_train_instances, factor_inputs.size());
-		for (int i_index = 0; i_index < num_train_instances; i_index++) {
+		Eigen::MatrixXd inputs(num_instances, factor_inputs.size());
+		for (int i_index = 0; i_index < num_instances; i_index++) {
 			for (int f_index = 0; f_index < (int)factor_inputs.size(); f_index++) {
 				if (factor_is_on[i_index][f_index]) {
 					double normalized_val = (factor_vals[i_index][f_index] - factor_input_averages[f_index]) / factor_input_standard_deviations[f_index];
@@ -602,8 +544,8 @@ bool train_helper(vector<ScopeHistory*>& scope_histories,
 			}
 		}
 
-		Eigen::VectorXd outputs(num_train_instances);
-		for (int i_index = 0; i_index < num_train_instances; i_index++) {
+		Eigen::VectorXd outputs(num_instances);
+		for (int i_index = 0; i_index < num_instances; i_index++) {
 			outputs(i_index) = target_val_histories[i_index] - average_score;
 		}
 
@@ -632,14 +574,14 @@ bool train_helper(vector<ScopeHistory*>& scope_histories,
 			if (rand()%2 == 0) {
 			#else
 			double sum_impact = 0.0;
-			for (int i_index = 0; i_index < num_train_instances; i_index++) {
+			for (int i_index = 0; i_index < num_instances; i_index++) {
 				if (factor_is_on[i_index][f_index]) {
 					double normalized_val = (factor_vals[i_index][f_index] - factor_input_averages[f_index]) / factor_input_standard_deviations[f_index];
 					sum_impact += abs(normalized_val);
 				}
 			}
 
-			double impact = abs(factor_weights[f_index]) * sum_impact / num_train_instances;
+			double impact = abs(factor_weights[f_index]) * sum_impact / (double)num_instances;
 			if (impact < impact_threshold
 					|| abs(factor_weights[f_index]) > REGRESSION_WEIGHT_LIMIT) {
 			#endif /* MDEBUG */
@@ -703,24 +645,24 @@ bool train_helper(vector<ScopeHistory*>& scope_histories,
 	{
 		vector<Scope*> scope_context;
 		vector<int> node_context;
-		gather_input_t_scores_helper(scope_histories[best_index],
-									 scope_context,
-									 node_context,
-									 best_t_scores,
-									 scope_histories,
-									 input_tracker);
+		new_gather_input_t_scores_helper(scope_histories[best_index],
+										 scope_context,
+										 node_context,
+										 best_t_scores,
+										 scope_histories,
+										 input_tracker);
 	}
 
 	map<Input, double> worst_t_scores;
 	{
 		vector<Scope*> scope_context;
 		vector<int> node_context;
-		gather_input_t_scores_helper(scope_histories[worst_index],
-									 scope_context,
-									 node_context,
-									 worst_t_scores,
-									 scope_histories,
-									 input_tracker);
+		new_gather_input_t_scores_helper(scope_histories[worst_index],
+										 scope_context,
+										 node_context,
+										 worst_t_scores,
+										 scope_histories,
+										 input_tracker);
 	}
 
 	map<Input, double> contrast_t_scores;
@@ -782,13 +724,13 @@ bool train_helper(vector<ScopeHistory*>& scope_histories,
 		vector<int> node_context;
 		int input_count = 0;
 		Input selected_input;
-		random_input_helper(scope_histories[best_index],
-							scope_context,
-							node_context,
-							input_count,
-							selected_input,
-							scope_histories,
-							input_tracker);
+		new_random_input_helper(scope_histories[best_index],
+								scope_context,
+								node_context,
+								input_count,
+								selected_input,
+								scope_histories,
+								input_tracker);
 		if (selected_input.scope_context.size() != 0) {
 			s_network_inputs.insert(selected_input);
 		}
@@ -798,20 +740,19 @@ bool train_helper(vector<ScopeHistory*>& scope_histories,
 		vector<int> node_context;
 		int input_count = 0;
 		Input selected_input;
-		random_input_helper(scope_histories[worst_index],
-							scope_context,
-							node_context,
-							input_count,
-							selected_input,
-							scope_histories,
-							input_tracker);
+		new_random_input_helper(scope_histories[worst_index],
+								scope_context,
+								node_context,
+								input_count,
+								selected_input,
+								scope_histories,
+								input_tracker);
 		if (selected_input.scope_context.size() != 0) {
 			s_network_inputs.insert(selected_input);
 		}
 	}
 
 	if (s_network_inputs.size() > 0) {
-		vector<Input> network_inputs;
 		for (set<Input>::iterator it = s_network_inputs.begin();
 				it != s_network_inputs.end(); it++) {
 			network_inputs.push_back(*it);
@@ -837,252 +778,19 @@ bool train_helper(vector<ScopeHistory*>& scope_histories,
 			input_is_on[h_index] = curr_input_is_on;
 		}
 
-		double sum_misguess = 0.0;
-		for (int i_index = num_train_instances; i_index < num_instances; i_index++) {
-			sum_misguess += remaining_scores[i_index] * remaining_scores[i_index];
-		}
-		double average_misguess = sum_misguess / num_test_instances;
+		network = new Network((int)network_inputs.size(),
+							  input_vals,
+							  input_is_on);
 
-		double sum_misguess_variance = 0.0;
-		for (int i_index = num_train_instances; i_index < num_instances; i_index++) {
-			double curr_misguess = remaining_scores[i_index] * remaining_scores[i_index];
-			sum_misguess_variance += (curr_misguess - average_misguess) * (curr_misguess - average_misguess);
-		}
-		double misguess_standard_deviation = sqrt(sum_misguess_variance / num_test_instances);
-		if (misguess_standard_deviation < MIN_STANDARD_DEVIATION) {
-			misguess_standard_deviation = MIN_STANDARD_DEVIATION;
-		}
+		train_new_network(input_vals,
+						  input_is_on,
+						  remaining_scores,
+						  network);
 
-		Network* new_network = new Network((int)network_inputs.size(),
-										   input_vals,
-										   input_is_on);
-
-		train_network(input_vals,
-					  input_is_on,
-					  remaining_scores,
-					  new_network);
-
-		double new_average_misguess;
-		double new_misguess_standard_deviation;
-		measure_network(input_vals,
-						input_is_on,
-						remaining_scores,
-						new_network,
-						new_average_misguess,
-						new_misguess_standard_deviation);
-
-		#if defined(MDEBUG) && MDEBUG
-		if (rand()%2 == 0) {
-		#else
-		double new_improvement = average_misguess - new_average_misguess;
-		double new_standard_deviation = min(misguess_standard_deviation, new_misguess_standard_deviation);
-		double new_t_score = new_improvement / (new_standard_deviation / sqrt(num_test_instances));
-
-		if (new_t_score > 2.326) {
-		#endif /* MDEBUG */
-			average_misguess = new_average_misguess;
-
-			for (int i_index = (int)network_inputs.size()-1; i_index >= 0; i_index--) {
-				vector<Input> remove_inputs = network_inputs;
-				remove_inputs.erase(remove_inputs.begin() + i_index);
-
-				Network* remove_network = new Network(new_network);
-				remove_network->remove_input(i_index);
-
-				vector<vector<double>> remove_input_vals = input_vals;
-				vector<vector<bool>> remove_input_is_on = input_is_on;
-				for (int d_index = 0; d_index < num_instances; d_index++) {
-					remove_input_vals[d_index].erase(remove_input_vals[d_index].begin() + i_index);
-					remove_input_is_on[d_index].erase(remove_input_is_on[d_index].begin() + i_index);
-				}
-
-				optimize_network(remove_input_vals,
-								 remove_input_is_on,
-								 remaining_scores,
-								 remove_network);
-
-				double remove_average_misguess;
-				double remove_misguess_standard_deviation;
-				measure_network(remove_input_vals,
-								remove_input_is_on,
-								remaining_scores,
-								remove_network,
-								remove_average_misguess,
-								remove_misguess_standard_deviation);
-
-				#if defined(MDEBUG) && MDEBUG
-				if (rand()%2 == 0) {
-				#else
-				double remove_improvement = average_misguess - remove_average_misguess;
-				double remove_standard_deviation = min(misguess_standard_deviation, remove_misguess_standard_deviation);
-				double remove_t_score = remove_improvement / (remove_standard_deviation / sqrt(num_instances * TEST_SAMPLES_PERCENTAGE));
-
-				if (remove_t_score > -0.674) {
-				#endif /* MDEBUG */
-					network_inputs = remove_inputs;
-
-					delete new_network;
-					new_network = remove_network;
-
-					input_vals = remove_input_vals;
-					input_is_on = remove_input_is_on;
-				} else {
-					delete remove_network;
-				}
-			}
-
-			if (network_inputs.size() > 0) {
-				Factor* new_factor = new Factor();
-				new_factor->inputs = network_inputs;
-				new_factor->network = new_network;
-				if (node_context->type == NODE_TYPE_OBS) {
-					ObsNode* obs_node = (ObsNode*)node_context;
-
-					obs_node->factors.push_back(new_factor);
-
-					Input new_input;
-					new_input.scope_context = {obs_node->parent};
-					new_input.node_context = {obs_node->id};
-					new_input.factor_index = (int)obs_node->factors.size()-1;
-					new_input.obs_index = -1;
-					factor_inputs.push_back(new_input);
-					factor_input_averages.push_back(0.0);
-					factor_input_standard_deviations.push_back(1.0);
-					factor_weights.push_back(1.0);
-				} else {
-					ObsNode* new_obs_node = new ObsNode();
-					new_obs_node->parent = experiment->scope_context;
-					new_obs_node->id = experiment->scope_context->node_counter;
-					experiment->scope_context->node_counter++;
-					experiment->scope_context->nodes[new_obs_node->id] = new_obs_node;
-
-					new_obs_node->factors.push_back(new_factor);
-
-					switch (experiment->node_context->type) {
-					case NODE_TYPE_ACTION:
-						{
-							ActionNode* action_node = (ActionNode*)experiment->node_context;
-
-							new_obs_node->next_node_id = action_node->next_node_id;
-							new_obs_node->next_node = action_node->next_node;
-
-							for (int a_index = 0; a_index < (int)action_node->next_node->ancestor_ids.size(); a_index++) {
-								if (action_node->next_node->ancestor_ids[a_index] == action_node->id) {
-									action_node->next_node->ancestor_ids.erase(
-										action_node->next_node->ancestor_ids.begin() + a_index);
-									break;
-								}
-							}
-							action_node->next_node->ancestor_ids.push_back(new_obs_node->id);
-
-							action_node->next_node_id = new_obs_node->id;
-							action_node->next_node = new_obs_node;
-
-							new_obs_node->ancestor_ids.push_back(action_node->id);
-
-							new_obs_node->average_hits_per_run = action_node->average_hits_per_run;
-							new_obs_node->average_score = action_node->average_score;
-						}
-						break;
-					case NODE_TYPE_SCOPE:
-						{
-							ScopeNode* scope_node = (ScopeNode*)experiment->node_context;
-
-							new_obs_node->next_node_id = scope_node->next_node_id;
-							new_obs_node->next_node = scope_node->next_node;
-
-							for (int a_index = 0; a_index < (int)scope_node->next_node->ancestor_ids.size(); a_index++) {
-								if (scope_node->next_node->ancestor_ids[a_index] == scope_node->id) {
-									scope_node->next_node->ancestor_ids.erase(
-										scope_node->next_node->ancestor_ids.begin() + a_index);
-									break;
-								}
-							}
-							scope_node->next_node->ancestor_ids.push_back(new_obs_node->id);
-
-							scope_node->next_node_id = new_obs_node->id;
-							scope_node->next_node = new_obs_node;
-
-							new_obs_node->ancestor_ids.push_back(scope_node->id);
-
-							new_obs_node->average_hits_per_run = scope_node->average_hits_per_run;
-							new_obs_node->average_score = scope_node->average_score;
-						}
-						break;
-					case NODE_TYPE_BRANCH:
-						{
-							BranchNode* branch_node = (BranchNode*)experiment->node_context;
-
-							if (experiment->is_branch) {
-								new_obs_node->next_node_id = branch_node->branch_next_node_id;
-								new_obs_node->next_node = branch_node->branch_next_node;
-
-								for (int a_index = 0; a_index < (int)branch_node->branch_next_node->ancestor_ids.size(); a_index++) {
-									if (branch_node->branch_next_node->ancestor_ids[a_index] == branch_node->id) {
-										branch_node->branch_next_node->ancestor_ids.erase(
-											branch_node->branch_next_node->ancestor_ids.begin() + a_index);
-										break;
-									}
-								}
-								branch_node->branch_next_node->ancestor_ids.push_back(new_obs_node->id);
-
-								branch_node->branch_next_node_id = new_obs_node->id;
-								branch_node->branch_next_node = new_obs_node;
-
-								new_obs_node->average_hits_per_run = branch_node->branch_average_hits_per_run;
-								new_obs_node->average_score = branch_node->branch_average_score;
-							} else {
-								new_obs_node->next_node_id = branch_node->original_next_node_id;
-								new_obs_node->next_node = branch_node->original_next_node;
-
-								for (int a_index = 0; a_index < (int)branch_node->original_next_node->ancestor_ids.size(); a_index++) {
-									if (branch_node->original_next_node->ancestor_ids[a_index] == branch_node->id) {
-										branch_node->original_next_node->ancestor_ids.erase(
-											branch_node->original_next_node->ancestor_ids.begin() + a_index);
-										break;
-									}
-								}
-								branch_node->original_next_node->ancestor_ids.push_back(new_obs_node->id);
-
-								branch_node->original_next_node_id = new_obs_node->id;
-								branch_node->original_next_node = new_obs_node;
-
-								new_obs_node->average_hits_per_run = branch_node->original_average_hits_per_run;
-								new_obs_node->average_score = branch_node->original_average_score;
-							}
-
-							new_obs_node->ancestor_ids.push_back(branch_node->id);
-						}
-						break;
-					}
-
-					experiment->node_context->experiment = NULL;
-
-					experiment->node_context = new_obs_node;
-					experiment->is_branch = false;
-					experiment->node_context->experiment = experiment;
-
-					Input new_input;
-					new_input.scope_context = {experiment->scope_context};
-					new_input.node_context = {new_obs_node->id};
-					new_input.factor_index = 0;
-					new_input.obs_index = -1;
-					factor_inputs.push_back(new_input);
-					factor_input_averages.push_back(0.0);
-					factor_input_standard_deviations.push_back(1.0);
-					factor_weights.push_back(1.0);
-				}
-
-				for (int i_index = 0; i_index < num_instances; i_index++) {
-					new_network->activate(input_vals[i_index],
-										  input_is_on[i_index]);
-					sum_vals[i_index] += new_network->output->acti_vals[0];
-				}
-			} else {
-				delete new_network;
-			}
-		} else {
-			delete new_network;
+		for (int i_index = 0; i_index < num_instances; i_index++) {
+			network->activate(input_vals[i_index],
+							  input_is_on[i_index]);
+			sum_vals[i_index] += network->output->acti_vals[0];
 		}
 	}
 

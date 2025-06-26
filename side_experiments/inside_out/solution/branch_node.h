@@ -32,16 +32,20 @@ public:
 	#endif /* MDEBUG */
 
 	double original_average_hits_per_run;
+	double original_average_instances_per_run;
 	double original_average_score;
 	double branch_average_hits_per_run;
+	double branch_average_instances_per_run;
 	double branch_average_score;
 
 	int original_last_updated_run_index;
 	double original_sum_score;
-	int original_sum_count;
+	int original_sum_hits;
+	int original_sum_instances;
 	int branch_last_updated_run_index;
 	double branch_sum_score;
-	int branch_sum_count;
+	int branch_sum_hits;
+	int branch_sum_instances;
 
 	double original_new_scope_average_hits_per_run;
 	double original_new_scope_average_score;

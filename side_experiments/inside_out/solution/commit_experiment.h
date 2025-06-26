@@ -8,18 +8,19 @@
 #include "input.h"
 
 class AbstractNode;
+class Network;
 class Problem;
 class Scope;
 class ScopeHistory;
+class SolutionWrapper;
 
-const int COMMIT_EXPERIMENT_STATE_TRAIN_EXISTING = 0;
-const int COMMIT_EXPERIMENT_STATE_EXPLORE = 1;
-const int COMMIT_EXPERIMENT_STATE_FIND_SAVE = 2;
-const int COMMIT_EXPERIMENT_STATE_COMMIT_TRAIN_EXISTING = 3;
-const int COMMIT_EXPERIMENT_STATE_COMMIT_TRAIN_NEW = 4;
-const int COMMIT_EXPERIMENT_STATE_MEASURE = 5;
+const int COMMIT_EXPERIMENT_STATE_EXPLORE = 0;
+const int COMMIT_EXPERIMENT_STATE_FIND_SAVE = 1;
+const int COMMIT_EXPERIMENT_STATE_COMMIT_TRAIN_EXISTING = 2;
+const int COMMIT_EXPERIMENT_STATE_COMMIT_TRAIN_NEW = 3;
+const int COMMIT_EXPERIMENT_STATE_MEASURE = 4;
 #if defined(MDEBUG) && MDEBUG
-const int COMMIT_EXPERIMENT_STATE_CAPTURE_VERIFY = 6;
+const int COMMIT_EXPERIMENT_STATE_CAPTURE_VERIFY = 5;
 #endif /* MDEBUG */
 
 class CommitExperimentHistory;
@@ -67,12 +68,16 @@ public:
 	std::vector<double> commit_existing_input_averages;
 	std::vector<double> commit_existing_input_standard_deviations;
 	std::vector<double> commit_existing_weights;
+	std::vector<Input> commit_existing_network_inputs;
+	Network* commit_existing_network;
 
 	double commit_new_average_score;
 	std::vector<Input> commit_new_inputs;
 	std::vector<double> commit_new_input_averages;
 	std::vector<double> commit_new_input_standard_deviations;
 	std::vector<double> commit_new_weights;
+	std::vector<Input> commit_new_network_inputs;
+	Network* commit_new_network;
 
 	std::vector<ScopeHistory*> scope_histories;
 	std::vector<double> i_target_val_histories;

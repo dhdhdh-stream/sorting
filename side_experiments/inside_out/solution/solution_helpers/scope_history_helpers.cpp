@@ -72,6 +72,9 @@ void fetch_input_helper(ScopeHistory* scope_history,
 void update_scores(ScopeHistory* scope_history,
 				   double target_val,
 				   SolutionWrapper* wrapper) {
+	scope_history->scope->existing_scope_histories.push_back(scope_history);
+	scope_history->scope->existing_target_val_histories.push_back(target_val);
+
 	for (map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
 			it != scope_history->node_histories.end(); it++) {
 		AbstractNode* node = it->second->node;
@@ -81,10 +84,11 @@ void update_scores(ScopeHistory* scope_history,
 				ActionNode* action_node = (ActionNode*)node;
 				if (wrapper->run_index != action_node->last_updated_run_index) {
 					action_node->sum_score += target_val;
-					action_node->sum_count++;
+					action_node->sum_hits++;
 
 					action_node->last_updated_run_index = wrapper->run_index;
 				}
+				action_node->sum_instances++;
 			}
 			break;
 		case NODE_TYPE_SCOPE:
@@ -98,10 +102,11 @@ void update_scores(ScopeHistory* scope_history,
 
 				if (wrapper->run_index != scope_node->last_updated_run_index) {
 					scope_node->sum_score += target_val;
-					scope_node->sum_count++;
+					scope_node->sum_hits++;
 
 					scope_node->last_updated_run_index = wrapper->run_index;
 				}
+				scope_node->sum_instances++;
 			}
 			break;
 		case NODE_TYPE_BRANCH:
@@ -111,17 +116,19 @@ void update_scores(ScopeHistory* scope_history,
 				if (branch_node_history->is_branch) {
 					if (wrapper->run_index != branch_node->branch_last_updated_run_index) {
 						branch_node->branch_sum_score += target_val;
-						branch_node->branch_sum_count++;
+						branch_node->branch_sum_hits++;
 
 						branch_node->branch_last_updated_run_index = wrapper->run_index;
 					}
+					branch_node->branch_sum_instances++;
 				} else {
 					if (wrapper->run_index != branch_node->original_last_updated_run_index) {
 						branch_node->original_sum_score += target_val;
-						branch_node->original_sum_count++;
+						branch_node->original_sum_hits++;
 
 						branch_node->original_last_updated_run_index = wrapper->run_index;
 					}
+					branch_node->original_sum_instances++;
 				}
 			}
 			break;
@@ -130,12 +137,48 @@ void update_scores(ScopeHistory* scope_history,
 				ObsNode* obs_node = (ObsNode*)node;
 				if (wrapper->run_index != obs_node->last_updated_run_index) {
 					obs_node->sum_score += target_val;
-					obs_node->sum_count++;
+					obs_node->sum_hits++;
 
 					obs_node->last_updated_run_index = wrapper->run_index;
 				}
+				obs_node->sum_instances++;
 			}
 			break;
 		}
+	}
+}
+
+void analyze_input(Input& input,
+				   vector<ScopeHistory*>& scope_histories,
+				   InputData& input_data) {
+	vector<double> vals;
+	int num_is_on = 0;
+	for (int h_index = 0; h_index < (int)scope_histories.size(); h_index++) {
+		double val;
+		bool is_on;
+		fetch_input_helper(scope_histories[h_index],
+						   input,
+						   0,
+						   val,
+						   is_on);
+		if (is_on) {
+			vals.push_back(val);
+			num_is_on++;
+		}
+	}
+
+	input_data.hit_percent = (double)num_is_on / (double)scope_histories.size();
+	if (input_data.hit_percent >= MIN_CONSIDER_HIT_PERCENT) {
+		double sum_vals = 0.0;
+		for (int v_index = 0; v_index < (int)vals.size(); v_index++) {
+			sum_vals += vals[v_index];
+		}
+		input_data.average = sum_vals / (double)vals.size();
+
+		double sum_variance = 0.0;
+		for (int v_index = 0; v_index < (int)vals.size(); v_index++) {
+			sum_variance += (input_data.average - vals[v_index]) * (input_data.average - vals[v_index]);
+		}
+		input_data.standard_deviation = sqrt(sum_variance / (double)vals.size());
 	}
 }

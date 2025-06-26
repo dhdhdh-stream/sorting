@@ -26,10 +26,6 @@ void CommitExperiment::check_activate(AbstractNode* experiment_node,
 		}
 
 		switch (this->state) {
-		case COMMIT_EXPERIMENT_STATE_TRAIN_EXISTING:
-			train_existing_check_activate(wrapper,
-										  history);
-			break;
 		case COMMIT_EXPERIMENT_STATE_EXPLORE:
 			explore_check_activate(wrapper,
 								   history);
@@ -163,10 +159,6 @@ void CommitExperiment::backprop(double target_val,
 								SolutionWrapper* wrapper) {
 	CommitExperimentHistory* history = (CommitExperimentHistory*)wrapper->experiment_history;
 	switch (this->state) {
-	case COMMIT_EXPERIMENT_STATE_TRAIN_EXISTING:
-		train_existing_backprop(target_val,
-								history);
-		break;
 	case COMMIT_EXPERIMENT_STATE_EXPLORE:
 		explore_backprop(target_val,
 						 history);

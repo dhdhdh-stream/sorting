@@ -257,9 +257,6 @@ void create_experiment(ScopeHistory* scope_history,
 			if (new_scope_experiment->result == EXPERIMENT_RESULT_FAIL) {
 				delete new_scope_experiment;
 			} else {
-				explore_node->parent->new_scope_experiment = new_scope_experiment;
-				explore_node->experiment = new_scope_experiment;
-
 				curr_experiment = new_scope_experiment;
 			}
 		} else {
@@ -270,18 +267,23 @@ void create_experiment(ScopeHistory* scope_history,
 					explore_node->parent,
 					explore_node,
 					explore_is_branch);
-				explore_node->experiment = new_commit_experiment;
 
-				curr_experiment = new_commit_experiment;
+				if (new_commit_experiment->result == EXPERIMENT_RESULT_FAIL) {
+					delete new_commit_experiment;
+				} else {
+					curr_experiment = new_commit_experiment;
+				}
 			} else {
 				BranchExperiment* new_experiment = new BranchExperiment(
 					explore_node->parent,
 					explore_node,
 					explore_is_branch);
 
-				explore_node->experiment = new_experiment;
-
-				curr_experiment = new_experiment;
+				if (new_experiment->result == EXPERIMENT_RESULT_FAIL) {
+					delete new_experiment;
+				} else {
+					curr_experiment = new_experiment;
+				}
 			}
 		}
 	}
