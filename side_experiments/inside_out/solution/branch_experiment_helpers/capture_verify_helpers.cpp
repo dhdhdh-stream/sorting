@@ -36,6 +36,8 @@ void BranchExperiment::capture_verify_check_activate(SolutionWrapper* wrapper) {
 		if (is_on) {
 			double normalized_val = (val - this->new_input_averages[i_index]) / this->new_input_standard_deviations[i_index];
 			sum_vals += this->new_weights[i_index] * normalized_val;
+
+			cout << i_index << ": " << val << endl;
 		}
 	}
 
@@ -56,6 +58,8 @@ void BranchExperiment::capture_verify_check_activate(SolutionWrapper* wrapper) {
 		this->new_network->activate(input_vals,
 									input_is_on);
 		sum_vals += this->new_network->output->acti_vals[0];
+
+		cout << "this->new_network->output->acti_vals[0]: " << this->new_network->output->acti_vals[0] << endl;
 	}
 
 	this->verify_scores.push_back(sum_vals);

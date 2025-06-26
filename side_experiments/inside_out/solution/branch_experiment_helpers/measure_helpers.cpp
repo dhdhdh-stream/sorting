@@ -308,6 +308,11 @@ void BranchExperiment::measure_backprop(double target_val) {
 			this->result = EXPERIMENT_RESULT_SUCCESS;
 			#endif /* MDEBUG */
 		} else {
+			cout << "BranchExperiment fail" << endl;
+			cout << "new_score: " << new_score << endl;
+			cout << "existing_score: " << existing_score << endl;
+			cout << endl;
+
 			this->result = EXPERIMENT_RESULT_FAIL;
 		}
 	}

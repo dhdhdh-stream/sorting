@@ -21,6 +21,8 @@ void CommitExperiment::clean() {
 }
 
 void CommitExperiment::add(SolutionWrapper* wrapper) {
+	cout << "CommitExperiment add" << endl;
+
 	for (int n_index = 0; n_index < (int)this->new_nodes.size(); n_index++) {
 		this->new_nodes[n_index]->parent = this->scope_context;
 		this->scope_context->nodes[this->new_nodes[n_index]->id] = this->new_nodes[n_index];
@@ -281,7 +283,7 @@ void CommitExperiment::add(SolutionWrapper* wrapper) {
 
 		Input new_input;
 		new_input.scope_context = {this->scope_context};
-		new_input.node_context = {this->node_context->id};
+		new_input.node_context = {obs_node->id};
 		new_input.factor_index = (int)obs_node->factors.size()-1;
 		new_input.obs_index = -1;
 		this->commit_new_inputs.push_back(new_input);

@@ -12,6 +12,10 @@
 #include "solution_helpers.h"
 #include "utilities.h"
 
+// temp
+#include "factor.h"
+#include "obs_node.h"
+
 using namespace std;
 
 void SolutionWrapper::experiment_init() {
@@ -144,8 +148,8 @@ void SolutionWrapper::experiment_end(double result) {
 		double num_confusions = (double)this->sum_num_confusion_instances / (double)CHECK_CONFUSION_ITER;
 
 		if (num_actions / (double)ACTIONS_PER_CONFUSION > num_confusions) {
-			create_confusion(this->scope_histories[0],
-							 this);
+			// create_confusion(this->scope_histories[0],
+			// 				 this);
 		}
 
 		this->sum_num_actions = 0;

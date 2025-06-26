@@ -1,5 +1,7 @@
 #include "branch_experiment.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
@@ -18,6 +20,8 @@ void BranchExperiment::clean() {
 }
 
 void BranchExperiment::add(SolutionWrapper* wrapper) {
+	cout << "BranchExperiment add" << endl;
+
 	vector<AbstractNode*> new_nodes;
 	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {

@@ -55,7 +55,8 @@ void SolutionWrapper::measure_end(double result) {
 				  result,
 				  this);
 
-	delete this->scope_histories[0];
+	this->solution->existing_scope_histories.push_back(this->scope_histories[0]);
+	this->solution->existing_target_val_histories.push_back(result);
 
 	this->scope_histories.clear();
 	this->node_context.clear();

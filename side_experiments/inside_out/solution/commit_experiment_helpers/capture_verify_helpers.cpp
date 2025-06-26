@@ -79,6 +79,8 @@ void CommitExperiment::capture_verify_step(vector<double>& obs,
 				if (is_on) {
 					double normalized_val = (val - this->commit_new_input_averages[i_index]) / this->commit_new_input_standard_deviations[i_index];
 					sum_vals += this->commit_new_weights[i_index] * normalized_val;
+
+					cout << i_index << ": " << val << endl;
 				}
 			}
 
@@ -99,6 +101,8 @@ void CommitExperiment::capture_verify_step(vector<double>& obs,
 				this->commit_new_network->activate(input_vals,
 												   input_is_on);
 				sum_vals += this->commit_new_network->output->acti_vals[0];
+
+				cout << "this->commit_new_network->output->acti_vals[0]: " << this->commit_new_network->output->acti_vals[0] << endl;
 			}
 
 			this->verify_scores.push_back(sum_vals);

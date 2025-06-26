@@ -53,6 +53,8 @@ void recursive_add_child(Scope* curr_parent,
 }
 
 void NewScopeExperiment::add(SolutionWrapper* wrapper) {
+	cout << "NewScopeExperiment add" << endl;
+
 	this->new_scope->id = wrapper->solution->scopes.size();
 	wrapper->solution->scopes.push_back(this->new_scope);
 

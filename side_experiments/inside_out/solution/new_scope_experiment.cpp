@@ -285,7 +285,11 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 								original_branch_node->inputs[i_index].node_context[0]];
 							map<AbstractNode*, AbstractNode*>::iterator input_it = node_mappings
 								.find(original_input_node);
-							if (input_it != node_mappings.end()) {
+							/**
+							 * - TODO: handle inputs for removed BranchNodes better
+							 */
+							if (input_it != node_mappings.end()
+									&& original_input_node->type == input_it->second->type) {
 								Input new_input = original_branch_node->inputs[i_index];
 								new_input.scope_context[0] = this->new_scope;
 								new_input.node_context[0] = input_it->second->id;
@@ -341,7 +345,11 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 								AbstractNode* original_input_node = scope_context->nodes[
 									original_factor->inputs[i_index].node_context[0]];
 								map<AbstractNode*, AbstractNode*>::iterator it = node_mappings.find(original_input_node);
-								if (it == node_mappings.end()) {
+								/**
+								 * - TODO: handle inputs for removed BranchNodes better
+								 */
+								if (it == node_mappings.end()
+										|| original_input_node->type != it->second->type) {
 									new_factor->network->remove_input(i_index);
 								} else {
 									Input new_input = original_factor->inputs[i_index];
