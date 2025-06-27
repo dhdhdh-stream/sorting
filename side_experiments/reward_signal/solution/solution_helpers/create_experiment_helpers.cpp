@@ -245,20 +245,10 @@ void create_experiment(ScopeHistory* scope_history,
 	}
 
 	if (explore_node != NULL) {
-		Input reward_signal;
-		uniform_int_distribution<int> reward_signal_distribution(0, 1);
-		if (reward_signal_distribution(generator) == 0) {
-			select_reward_signal(scope_history,
-								 explore_node,
-								 reward_signal);
-		}
-
 		BranchExperiment* new_experiment = new BranchExperiment(
 			explore_node->parent,
 			explore_node,
-			explore_is_branch,
-			reward_signal,
-			wrapper);
+			explore_is_branch);
 
 		if (new_experiment->result == EXPERIMENT_RESULT_FAIL) {
 			delete new_experiment;

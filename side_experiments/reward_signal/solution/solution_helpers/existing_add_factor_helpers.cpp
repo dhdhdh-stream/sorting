@@ -16,8 +16,7 @@ using namespace std;
 void node_history_insert(ScopeHistory* scope_history,
 						 AbstractNode* explore_node,
 						 bool is_branch,
-						 ObsNode* new_node,
-						 SolutionWrapper* wrapper) {
+						 ObsNode* new_node) {
 	bool has_match = false;
 
 	map<int, AbstractNodeHistory*>::iterator match_it = scope_history->node_histories.find(explore_node->id);
@@ -61,8 +60,7 @@ void existing_add_factor(vector<ScopeHistory*>& scope_histories,
 						 vector<Input>& network_inputs,
 						 Network* network,
 						 Input& new_input,
-						 AbstractExperiment* experiment,
-						 SolutionWrapper* wrapper) {
+						 AbstractExperiment* experiment) {
 	Factor* new_factor = new Factor();
 	new_factor->inputs = network_inputs;
 	new_factor->network = network;
@@ -86,7 +84,7 @@ void existing_add_factor(vector<ScopeHistory*>& scope_histories,
 			}
 		}
 	} else {
-		ObsNode* new_obs_node = new ObsNode(wrapper->num_obs);
+		ObsNode* new_obs_node = new ObsNode();
 		new_obs_node->parent = experiment->scope_context;
 		new_obs_node->id = experiment->scope_context->node_counter;
 		experiment->scope_context->node_counter++;
@@ -94,13 +92,10 @@ void existing_add_factor(vector<ScopeHistory*>& scope_histories,
 
 		new_obs_node->factors.push_back(new_factor);
 
-		ObsNode* matching_obs_node;
 		switch (experiment->node_context->type) {
 		case NODE_TYPE_ACTION:
 			{
 				ActionNode* action_node = (ActionNode*)experiment->node_context;
-
-				matching_obs_node = (ObsNode*)action_node->next_node;
 
 				new_obs_node->next_node_id = action_node->next_node_id;
 				new_obs_node->next_node = action_node->next_node;
@@ -127,8 +122,6 @@ void existing_add_factor(vector<ScopeHistory*>& scope_histories,
 		case NODE_TYPE_SCOPE:
 			{
 				ScopeNode* scope_node = (ScopeNode*)experiment->node_context;
-
-				matching_obs_node = (ObsNode*)scope_node->next_node;
 
 				new_obs_node->next_node_id = scope_node->next_node_id;
 				new_obs_node->next_node = scope_node->next_node;
@@ -157,8 +150,6 @@ void existing_add_factor(vector<ScopeHistory*>& scope_histories,
 				BranchNode* branch_node = (BranchNode*)experiment->node_context;
 
 				if (experiment->is_branch) {
-					matching_obs_node = (ObsNode*)branch_node->branch_next_node;
-
 					new_obs_node->next_node_id = branch_node->branch_next_node_id;
 					new_obs_node->next_node = branch_node->branch_next_node;
 
@@ -178,8 +169,6 @@ void existing_add_factor(vector<ScopeHistory*>& scope_histories,
 					new_obs_node->average_instances_per_run = branch_node->branch_average_instances_per_run;
 					new_obs_node->average_score = branch_node->branch_average_score;
 				} else {
-					matching_obs_node = (ObsNode*)branch_node->original_next_node;
-
 					new_obs_node->next_node_id = branch_node->original_next_node_id;
 					new_obs_node->next_node = branch_node->original_next_node;
 
@@ -205,9 +194,6 @@ void existing_add_factor(vector<ScopeHistory*>& scope_histories,
 			break;
 		}
 
-		new_obs_node->obs_val_averages = matching_obs_node->obs_val_averages;
-		new_obs_node->obs_val_standard_deviations = matching_obs_node->obs_val_standard_deviations;
-
 		new_input.scope_context = {experiment->scope_context};
 		new_input.node_context = {new_obs_node->id};
 		new_input.factor_index = 0;
@@ -217,8 +203,7 @@ void existing_add_factor(vector<ScopeHistory*>& scope_histories,
 			node_history_insert(scope_histories[h_index],
 								experiment->node_context,
 								experiment->is_branch,
-								new_obs_node,
-								wrapper);
+								new_obs_node);
 		}
 
 		experiment->node_context->experiment = NULL;

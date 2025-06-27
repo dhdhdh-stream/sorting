@@ -23,6 +23,9 @@
 
 // - probably just train score function to each scope and optimize against it
 
+// - OK to merge initially
+//   - will create new mixed state, but still have non-mixed states
+
 #include <chrono>
 #include <iostream>
 #include <map>

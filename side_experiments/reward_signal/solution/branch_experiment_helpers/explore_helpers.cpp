@@ -187,22 +187,7 @@ void BranchExperiment::explore_exit_step(SolutionWrapper* wrapper,
 
 void BranchExperiment::explore_back_activate(SolutionWrapper* wrapper,
 											 BranchExperimentHistory* history) {
-	if (this->reward_signal.scope_context.size() != 0) {
-		double val;
-		bool is_on;
-		fetch_input_helper(wrapper->scope_histories.back(),
-						   this->reward_signal,
-						   0,
-						   val,
-						   is_on);
-		if (is_on) {
-			double target_val = (val - this->reward_signal_average)
-				/ this->reward_signal_standard_deviation;
-			this->curr_surprise = target_val - history->existing_predicted_scores[0];
-		} else {
-			this->curr_surprise = 0.0;
-		}
-	}
+	// do nothing
 }
 
 void BranchExperiment::explore_backprop(
@@ -214,9 +199,7 @@ void BranchExperiment::explore_backprop(
 	this->num_instances_until_target = 1 + until_distribution(generator);
 
 	if (history->has_explore) {
-		if (this->reward_signal.scope_context.size() == 0) {
-			this->curr_surprise = target_val - history->existing_predicted_scores[0];
-		}
+		this->curr_surprise = target_val - history->existing_predicted_scores[0];
 
 		if (!is_match(wrapper->t_scores)) {
 			this->curr_surprise = 0.0;
@@ -258,13 +241,6 @@ void BranchExperiment::explore_backprop(
 				this->state = BRANCH_EXPERIMENT_STATE_TRAIN_NEW;
 				this->state_iter = 0;
 			} else {
-				if (this->reward_signal.scope_context.size() != 0) {
-					ObsNode* obs_node = (ObsNode*)this->reward_signal.scope_context.back()
-						->nodes[this->reward_signal.node_context.back()];
-					Factor* factor = obs_node->factors[this->reward_signal.factor_index];
-					factor->num_failure++;
-				}
-
 				this->result = EXPERIMENT_RESULT_FAIL;
 			}
 		}

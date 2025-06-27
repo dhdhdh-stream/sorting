@@ -296,7 +296,6 @@ void Scope::save(ofstream& output_file) {
 }
 
 void Scope::load(ifstream& input_file,
-				 int num_obs,
 				 Solution* parent_solution) {
 	string node_counter_line;
 	getline(input_file, node_counter_line);
@@ -345,7 +344,7 @@ void Scope::load(ifstream& input_file,
 			break;
 		case NODE_TYPE_OBS:
 			{
-				ObsNode* obs_node = new ObsNode(num_obs);
+				ObsNode* obs_node = new ObsNode();
 				obs_node->parent = this;
 				obs_node->id = id;
 				obs_node->load(input_file,

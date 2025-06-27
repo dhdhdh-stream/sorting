@@ -98,23 +98,7 @@ void BranchExperiment::train_new_exit_step(SolutionWrapper* wrapper,
 
 void BranchExperiment::train_new_back_activate(SolutionWrapper* wrapper,
 											   BranchExperimentHistory* history) {
-	if (this->reward_signal.scope_context.size() != 0) {
-		double val;
-		bool is_on;
-		fetch_input_helper(wrapper->scope_histories.back(),
-						   this->reward_signal,
-						   0,
-						   val,
-						   is_on);
-		double target_val;
-		if (is_on) {
-			target_val = (val - this->reward_signal_average)
-				/ this->reward_signal_standard_deviation;
-			history->reward_signals.push_back(target_val);
-		} else {
-			history->reward_signals.push_back(-1.0);
-		}
-	}
+	// do nothing
 }
 
 void BranchExperiment::train_new_backprop(
@@ -122,14 +106,8 @@ void BranchExperiment::train_new_backprop(
 		SolutionWrapper* wrapper) {
 	BranchExperimentHistory* history = (BranchExperimentHistory*)wrapper->experiment_history;
 
-	if (this->reward_signal.scope_context.size() != 0) {
-		for (int i_index = 0; i_index < (int)history->existing_predicted_scores.size(); i_index++) {
-			this->i_target_val_histories.push_back(history->reward_signals[i_index] - history->existing_predicted_scores[i_index]);
-		}
-	} else {
-		for (int i_index = 0; i_index < (int)history->existing_predicted_scores.size(); i_index++) {
-			this->i_target_val_histories.push_back(target_val - history->existing_predicted_scores[i_index]);
-		}
+	for (int i_index = 0; i_index < (int)history->existing_predicted_scores.size(); i_index++) {
+		this->i_target_val_histories.push_back(target_val - history->existing_predicted_scores[i_index]);
 	}
 
 	if (!is_match(wrapper->t_scores)) {

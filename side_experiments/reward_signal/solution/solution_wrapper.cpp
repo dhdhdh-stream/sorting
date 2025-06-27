@@ -9,7 +9,7 @@ SolutionWrapper::SolutionWrapper(int num_obs) {
 	this->num_obs = num_obs;
 
 	this->solution = new Solution();
-	this->solution->init(this->num_obs);
+	this->solution->init();
 
 	this->run_index = 0;
 
@@ -30,7 +30,7 @@ SolutionWrapper::SolutionWrapper(int num_obs,
 	this->num_obs = num_obs;
 
 	this->solution = new Solution();
-	this->solution->load(path, name, this->num_obs);
+	this->solution->load(path, name);
 
 	this->run_index = 0;
 
@@ -60,7 +60,7 @@ void SolutionWrapper::clean_scopes() {
 void SolutionWrapper::combine(string other_path,
 							  string other_name) {
 	Solution* other = new Solution();
-	other->load(other_path, other_name, this->num_obs);
+	other->load(other_path, other_name);
 
 	int existing_num_scopes = (int)this->solution->scopes.size();
 

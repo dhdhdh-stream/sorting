@@ -30,7 +30,7 @@ Solution::~Solution() {
 	}
 }
 
-void Solution::init(int num_obs) {
+void Solution::init() {
 	this->timestamp = 0;
 	this->curr_score = 0.0;
 
@@ -49,7 +49,7 @@ void Solution::init(int num_obs) {
 	new_scope->node_counter = 0;
 	this->scopes.push_back(new_scope);
 
-	ObsNode* starting_noop_node = new ObsNode(num_obs);
+	ObsNode* starting_noop_node = new ObsNode();
 	starting_noop_node->parent = new_scope;
 	starting_noop_node->id = new_scope->node_counter;
 	new_scope->node_counter++;
@@ -61,8 +61,7 @@ void Solution::init(int num_obs) {
 }
 
 void Solution::load(string path,
-					string name,
-					int num_obs) {
+					string name) {
 	ifstream input_file;
 	input_file.open(path + name);
 
@@ -94,7 +93,6 @@ void Solution::load(string path,
 
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
 		this->scopes[s_index]->load(input_file,
-									num_obs,
 									this);
 	}
 
@@ -239,11 +237,6 @@ void Solution::clean() {
 void Solution::measure_update() {
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
 		this->scopes[s_index]->measure_update();
-	}
-
-	for (int h_index = 0; h_index < (int)this->existing_scope_histories.size(); h_index++) {
-		attach_existing_histories(this->existing_scope_histories[h_index],
-								  this->existing_target_val_histories[h_index]);
 	}
 }
 

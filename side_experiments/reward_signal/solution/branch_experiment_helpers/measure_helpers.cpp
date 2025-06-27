@@ -133,6 +133,9 @@ void BranchExperiment::measure_backprop(double target_val,
 										SolutionWrapper* wrapper) {
 	this->i_target_val_histories.push_back(target_val);
 
+	add_obs_data_helper(wrapper->scope_histories[0],
+						this->new_obs_data);
+
 	this->state_iter++;
 	if (this->state_iter == EARLY_SUCCESS_S1_ITERS
 			|| this->state_iter == EARLY_SUCCESS_S2_ITERS) {
@@ -185,7 +188,8 @@ void BranchExperiment::measure_backprop(double target_val,
 		}
 
 		double t_score = (new_score - existing_score) / new_standard_deviation;
-		if (t_score >= EARLY_SUCCESS_MIN_T_SCORE) {
+		if (t_score >= EARLY_SUCCESS_MIN_T_SCORE
+				&& compare_obs_data(this->existing_obs_data, this->new_obs_data)) {
 			this->improvement = new_score - existing_score;
 
 			cout << "BranchExperiment" << endl;
@@ -208,20 +212,11 @@ void BranchExperiment::measure_backprop(double target_val,
 				cout << "this->best_exit_next_node->id: " << this->best_exit_next_node->id << endl;
 			}
 
-			cout << "this->reward_signal.scope_context.size(): " << this->reward_signal.scope_context.size() << endl;
-
 			cout << "this->select_percentage: " << this->select_percentage << endl;
 
 			cout << "this->improvement: " << this->improvement << endl;
 
 			cout << endl;
-
-			if (this->reward_signal.scope_context.size() != 0) {
-				ObsNode* obs_node = (ObsNode*)this->reward_signal.scope_context.back()
-					->nodes[this->reward_signal.node_context.back()];
-				Factor* factor = obs_node->factors[this->reward_signal.factor_index];
-				factor->num_success++;
-			}
 
 			#if defined(MDEBUG) && MDEBUG
 			this->verify_problems = vector<Problem*>(NUM_VERIFY_SAMPLES, NULL);
@@ -272,9 +267,11 @@ void BranchExperiment::measure_backprop(double target_val,
 			break;
 		}
 		#if defined(MDEBUG) && MDEBUG
-		if (rand()%2 == 0) {
+		if (rand()%2 == 0
+				&& compare_obs_data(this->existing_obs_data, this->new_obs_data)) {
 		#else
-		if (new_score > existing_score) {
+		if (new_score > existing_score
+				&& compare_obs_data(this->existing_obs_data, this->new_obs_data)) {
 		#endif /* MDEBUG */
 			this->improvement = new_score - existing_score;
 
@@ -298,20 +295,11 @@ void BranchExperiment::measure_backprop(double target_val,
 				cout << "this->best_exit_next_node->id: " << this->best_exit_next_node->id << endl;
 			}
 
-			cout << "this->reward_signal.scope_context.size(): " << this->reward_signal.scope_context.size() << endl;
-
 			cout << "this->select_percentage: " << this->select_percentage << endl;
 
 			cout << "this->improvement: " << this->improvement << endl;
 
 			cout << endl;
-
-			if (this->reward_signal.scope_context.size() != 0) {
-				ObsNode* obs_node = (ObsNode*)this->reward_signal.scope_context.back()
-					->nodes[this->reward_signal.node_context.back()];
-				Factor* factor = obs_node->factors[this->reward_signal.factor_index];
-				factor->num_success++;
-			}
 
 			#if defined(MDEBUG) && MDEBUG
 			this->verify_problems = vector<Problem*>(NUM_VERIFY_SAMPLES, NULL);
@@ -323,13 +311,6 @@ void BranchExperiment::measure_backprop(double target_val,
 			this->result = EXPERIMENT_RESULT_SUCCESS;
 			#endif /* MDEBUG */
 		} else {
-			if (this->reward_signal.scope_context.size() != 0) {
-				ObsNode* obs_node = (ObsNode*)this->reward_signal.scope_context.back()
-					->nodes[this->reward_signal.node_context.back()];
-				Factor* factor = obs_node->factors[this->reward_signal.factor_index];
-				factor->num_failure++;
-			}
-
 			this->result = EXPERIMENT_RESULT_FAIL;
 		}
 	}

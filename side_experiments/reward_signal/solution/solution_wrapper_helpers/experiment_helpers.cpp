@@ -151,13 +151,6 @@ void SolutionWrapper::experiment_end(double result) {
 		this->experiment_iter = 0;
 	}
 
-	delete this->scope_histories[0];
-
-	this->scope_histories.clear();
-	this->node_context.clear();
-	this->experiment_context.clear();
-	this->confusion_context.clear();
-
 	if (this->experiment_history != NULL) {
 		this->experiment_history->experiment->backprop(
 			result,
@@ -210,4 +203,11 @@ void SolutionWrapper::experiment_end(double result) {
 			}
 		}
 	}
+
+	delete this->scope_histories[0];
+
+	this->scope_histories.clear();
+	this->node_context.clear();
+	this->experiment_context.clear();
+	this->confusion_context.clear();
 }

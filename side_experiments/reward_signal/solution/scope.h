@@ -65,7 +65,6 @@ public:
 
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file,
-			  int num_obs,
 			  Solution* parent_solution);
 	void link(Solution* parent_solution);
 

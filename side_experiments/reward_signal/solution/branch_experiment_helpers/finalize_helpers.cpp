@@ -48,7 +48,7 @@ void BranchExperiment::add(SolutionWrapper* wrapper) {
 	int exit_node_id;
 	AbstractNode* exit_node;
 	if (this->best_exit_next_node == NULL) {
-		new_ending_node = new ObsNode(wrapper->num_obs);
+		new_ending_node = new ObsNode();
 		new_ending_node->parent = this->scope_context;
 		new_ending_node->id = this->scope_context->node_counter;
 		this->scope_context->node_counter++;
@@ -264,7 +264,7 @@ void BranchExperiment::add(SolutionWrapper* wrapper) {
 						new_branch_node->original_next_node_id = new_ending_node->id;
 						new_branch_node->original_next_node = new_ending_node;
 					} else {
-						new_ending_node = new ObsNode(wrapper->num_obs);
+						new_ending_node = new ObsNode();
 						new_ending_node->parent = this->scope_context;
 						new_ending_node->id = this->scope_context->node_counter;
 						this->scope_context->node_counter++;
@@ -325,7 +325,7 @@ void BranchExperiment::add(SolutionWrapper* wrapper) {
 
 		if (this->new_network != NULL
 				&& this->node_context->type != NODE_TYPE_OBS) {
-			ObsNode* new_obs_node = new ObsNode(wrapper->num_obs);
+			ObsNode* new_obs_node = new ObsNode();
 			new_obs_node->parent = this->scope_context;
 			new_obs_node->id = this->scope_context->node_counter;
 			this->scope_context->node_counter++;
@@ -486,12 +486,5 @@ void BranchExperiment::add(SolutionWrapper* wrapper) {
 		}
 
 		next_node->ancestor_ids.push_back(new_nodes[s_index]->id);
-	}
-
-	if (this->reward_signal.scope_context.size() != 0) {
-		ObsNode* obs_node = (ObsNode*)this->reward_signal.scope_context.back()
-			->nodes[this->reward_signal.node_context.back()];
-		Factor* factor = obs_node->factors[this->reward_signal.factor_index];
-		factor->num_selected++;
 	}
 }

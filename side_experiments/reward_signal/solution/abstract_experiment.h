@@ -1,12 +1,14 @@
 #ifndef ABSTRACT_EXPERIMENT_H
 #define ABSTRACT_EXPERIMENT_H
 
+#include <map>
 #include <utility>
 #include <vector>
 
 #include "input.h"
 
 class AbstractNode;
+class ObsNode;
 class Problem;
 class Scope;
 class ScopeHistory;
@@ -21,6 +23,14 @@ const int EXPERIMENT_RESULT_NA = 0;
 const int EXPERIMENT_RESULT_FAIL = 1;
 const int EXPERIMENT_RESULT_SUCCESS = 2;
 
+class ObsData {
+public:
+	std::vector<double> averages;
+	std::vector<double> standard_deviations;
+
+	std::vector<std::vector<double>> val_histories;
+};
+
 class AbstractExperimentHistory;
 class AbstractExperiment {
 public:
@@ -30,13 +40,12 @@ public:
 	AbstractNode* node_context;
 	bool is_branch;
 
-	Input reward_signal;
-	double reward_signal_average;
-	double reward_signal_standard_deviation;
-
 	int result;
 
 	double improvement;
+
+	std::map<ObsNode*, ObsData> existing_obs_data;
+	std::map<ObsNode*, ObsData> new_obs_data;
 
 	virtual ~AbstractExperiment() {};
 	virtual void decrement(AbstractNode* experiment_node) = 0;

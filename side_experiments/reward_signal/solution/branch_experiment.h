@@ -68,9 +68,7 @@ public:
 
 	BranchExperiment(Scope* scope_context,
 					 AbstractNode* node_context,
-					 bool is_branch,
-					 Input reward_signal,
-					 SolutionWrapper* wrapper);
+					 bool is_branch);
 	~BranchExperiment();
 	void decrement(AbstractNode* experiment_node);
 

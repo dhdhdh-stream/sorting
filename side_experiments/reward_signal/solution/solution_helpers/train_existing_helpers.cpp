@@ -764,8 +764,7 @@ bool train_existing(vector<ScopeHistory*>& scope_histories,
 					vector<double>& factor_input_averages,
 					vector<double>& factor_input_standard_deviations,
 					vector<double>& factor_weights,
-					AbstractExperiment* experiment,
-					SolutionWrapper* wrapper) {
+					AbstractExperiment* experiment) {
 	auto start_time = chrono::high_resolution_clock::now();
 
 	int num_instances = (int)target_val_histories.size();
@@ -1249,8 +1248,7 @@ bool train_existing(vector<ScopeHistory*>& scope_histories,
 									network_inputs,
 									new_network,
 									new_input,
-									experiment,
-									wrapper);
+									experiment);
 
 				factor_inputs.push_back(new_input);
 				factor_input_averages.push_back(0.0);

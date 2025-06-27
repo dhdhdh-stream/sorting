@@ -12,11 +12,8 @@
 
 using namespace std;
 
-ObsNode::ObsNode(int obs_size) {
+ObsNode::ObsNode() {
 	this->type = NODE_TYPE_OBS;
-
-	this->obs_val_averages = vector<double>(obs_size);
-	this->obs_val_standard_deviations = vector<double>(obs_size);
 
 	this->is_init = false;
 
@@ -108,36 +105,6 @@ void ObsNode::measure_update() {
 	this->average_hits_per_run = (double)this->sum_hits / (double)MEASURE_ITERS;
 	this->average_instances_per_run = (double)this->sum_instances / (double)this->sum_hits;
 	this->average_score = this->sum_score / (double)this->sum_hits;
-
-	for (int o_index = 0; o_index < (int)this->obs_val_averages.size(); o_index++) {
-		if (this->measure_val_histories.size() == 0) {
-			this->obs_val_averages[o_index] = 0.0;
-			this->obs_val_standard_deviations[o_index] = 0.0;
-		} else {
-			double sum_vals = 0.0;
-			for (int h_index = 0; h_index < (int)this->measure_val_histories.size(); h_index++) {
-				sum_vals += this->measure_val_histories[h_index][o_index];
-			}
-			this->obs_val_averages[o_index] = sum_vals / (double)this->measure_val_histories.size();
-
-			double sum_variances = 0.0;
-			for (int h_index = 0; h_index < (int)this->measure_val_histories.size(); h_index++) {
-				sum_variances += (this->measure_val_histories[h_index][o_index] - this->obs_val_averages[o_index])
-					* (this->measure_val_histories[h_index][o_index] - this->obs_val_averages[o_index]);
-			}
-			this->obs_val_standard_deviations[o_index] = sqrt(sum_variances / (double)this->measure_val_histories.size());
-			if (this->obs_val_standard_deviations[o_index] < MIN_STANDARD_DEVIATION) {
-				this->obs_val_standard_deviations[o_index] = MIN_STANDARD_DEVIATION;
-			}
-		}
-	}
-	this->measure_val_histories.clear();
-
-	if (this->average_hits_per_run > EXPERIMENT_MIN_AVERAGE_HITS_PER_RUN) {
-		for (int f_index = 0; f_index < (int)this->factors.size(); f_index++) {
-			this->factors[f_index]->measure_update();
-		}
-	}
 }
 
 void ObsNode::new_scope_clean() {
@@ -157,11 +124,6 @@ void ObsNode::save(ofstream& output_file) {
 	}
 
 	output_file << this->next_node_id << endl;
-
-	for (int o_index = 0; o_index < (int)this->obs_val_averages.size(); o_index++) {
-		output_file << this->obs_val_averages[o_index] << endl;
-		output_file << this->obs_val_standard_deviations[o_index] << endl;
-	}
 
 	output_file << this->ancestor_ids.size() << endl;
 	for (int a_index = 0; a_index < (int)this->ancestor_ids.size(); a_index++) {
@@ -187,23 +149,6 @@ void ObsNode::load(ifstream& input_file,
 	string next_node_id_line;
 	getline(input_file, next_node_id_line);
 	this->next_node_id = stoi(next_node_id_line);
-
-	// temp
-	cout << "this->id: " << this->id << endl;
-	for (int o_index = 0; o_index < (int)this->obs_val_averages.size(); o_index++) {
-		string average_line;
-		getline(input_file, average_line);
-		this->obs_val_averages[o_index] = stod(average_line);
-
-		string standard_deviation_line;
-		getline(input_file, standard_deviation_line);
-		this->obs_val_standard_deviations[o_index] = stod(standard_deviation_line);
-
-		// temp
-		cout << o_index << endl;
-		cout << "this->obs_val_averages[o_index]: " << this->obs_val_averages[o_index] << endl;
-		cout << "this->obs_val_standard_deviations[o_index]: " << this->obs_val_standard_deviations[o_index] << endl;
-	}
 
 	string num_ancestors_line;
 	getline(input_file, num_ancestors_line);

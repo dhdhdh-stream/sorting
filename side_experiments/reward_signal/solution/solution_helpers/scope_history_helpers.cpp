@@ -72,6 +72,9 @@ void fetch_input_helper(ScopeHistory* scope_history,
 void update_scores(ScopeHistory* scope_history,
 				   double target_val,
 				   SolutionWrapper* wrapper) {
+	scope_history->scope->existing_scope_histories.push_back(scope_history);
+	scope_history->scope->existing_target_val_histories.push_back(target_val);
+
 	for (map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
 			it != scope_history->node_histories.end(); it++) {
 		AbstractNode* node = it->second->node;
@@ -132,20 +135,6 @@ void update_scores(ScopeHistory* scope_history,
 		case NODE_TYPE_OBS:
 			{
 				ObsNode* obs_node = (ObsNode*)node;
-				ObsNodeHistory* obs_node_history = (ObsNodeHistory*)it->second;
-
-				obs_node->measure_val_histories.push_back(obs_node_history->obs_history);
-
-				for (int f_index = 0; f_index < (int)obs_node->factors.size(); f_index++) {
-					if (!obs_node_history->factor_initialized[f_index]) {
-						double value = obs_node->factors[f_index]->back_activate(scope_history);
-						obs_node_history->factor_values[f_index] = value;
-						obs_node_history->factor_initialized[f_index] = true;
-					}
-					obs_node->factors[f_index]->factor_history.push_back(obs_node_history->factor_values[f_index]);
-					obs_node->factors[f_index]->target_val_history.push_back(target_val);
-				}
-
 				if (wrapper->run_index != obs_node->last_updated_run_index) {
 					obs_node->sum_score += target_val;
 					obs_node->sum_hits++;
@@ -155,21 +144,6 @@ void update_scores(ScopeHistory* scope_history,
 				obs_node->sum_instances++;
 			}
 			break;
-		}
-	}
-}
-
-void attach_existing_histories(ScopeHistory* scope_history,
-							   double target_val) {
-	scope_history->scope->existing_scope_histories.push_back(scope_history);
-	scope_history->scope->existing_target_val_histories.push_back(target_val);
-
-	for (map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
-			it != scope_history->node_histories.end(); it++) {
-		if (it->second->node->type == NODE_TYPE_SCOPE) {
-			ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)it->second;
-			attach_existing_histories(scope_node_history->scope_history,
-									  target_val);
 		}
 	}
 }

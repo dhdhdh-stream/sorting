@@ -13,13 +13,7 @@
 using namespace std;
 
 Factor::Factor() {
-	this->pcc = 0.0;
-	this->num_success = 0;
-	this->num_failure = 0;
-	this->num_selected = 0;
-
-	this->average = 0.0;
-	this->standard_deviation = 0.0;
+	// do nothing
 }
 
 Factor::Factor(Factor* original,
@@ -32,14 +26,6 @@ Factor::Factor(Factor* original,
 		}
 	}
 	this->network = new Network(original->network);
-
-	this->pcc = original->pcc;
-	this->num_success = original->num_success;
-	this->num_failure = original->num_failure;
-	this->num_selected = original->num_selected;
-
-	this->average = original->average;
-	this->standard_deviation = original->standard_deviation;
 }
 
 Factor::~Factor() {
@@ -124,48 +110,6 @@ void Factor::replace_scope(Scope* original_scope,
 	}
 }
 
-void Factor::measure_update() {
-	double input_sum_vals = 0.0;
-	double target_sum_vals = 0.0;
-	for (int h_index = 0; h_index < (int)this->factor_history.size(); h_index++) {
-		input_sum_vals += this->factor_history[h_index];
-		target_sum_vals += this->target_val_history[h_index];
-	}
-	double input_average = input_sum_vals / (double)this->factor_history.size();
-	double target_average = target_sum_vals / (double)this->factor_history.size();
-
-	double input_sum_variances = 0.0;
-	double target_sum_variances = 0.0;
-	for (int h_index = 0; h_index < (int)this->factor_history.size(); h_index++) {
-		input_sum_variances += (this->factor_history[h_index] - input_average)
-			* (this->factor_history[h_index] - input_average);
-		target_sum_variances += (this->target_val_history[h_index] - target_average)
-			* (this->target_val_history[h_index] - target_average);
-	}
-	double input_standard_deviation = sqrt(input_sum_variances / (double)this->factor_history.size());
-	double target_standard_deviation = sqrt(target_sum_variances / (double)this->factor_history.size());
-
-	this->average = input_average;
-	this->standard_deviation = input_standard_deviation;
-
-	if (input_standard_deviation < MIN_STANDARD_DEVIATION
-			|| target_standard_deviation < MIN_STANDARD_DEVIATION) {
-		this->pcc = 0.0;
-	} else {
-		double sum_covariance = 0.0;
-		for (int h_index = 0; h_index < (int)this->factor_history.size(); h_index++) {
-			sum_covariance += (this->factor_history[h_index] - input_average)
-				* (this->target_val_history[h_index] - target_average);
-		}
-		double covariance = sum_covariance / (double)this->factor_history.size();
-
-		this->pcc = covariance / input_standard_deviation / target_standard_deviation;
-	}
-
-	this->factor_history.clear();
-	this->target_val_history.clear();
-}
-
 void Factor::save(ofstream& output_file) {
 	output_file << this->inputs.size() << endl;
 	for (int i_index = 0; i_index < (int)this->inputs.size(); i_index++) {
@@ -173,14 +117,6 @@ void Factor::save(ofstream& output_file) {
 	}
 
 	this->network->save(output_file);
-
-	output_file << this->pcc << endl;
-	output_file << this->num_success << endl;
-	output_file << this->num_failure << endl;
-	output_file << this->num_selected << endl;
-
-	output_file << this->average << endl;
-	output_file << this->standard_deviation << endl;
 }
 
 void Factor::load(ifstream& input_file,
@@ -194,35 +130,4 @@ void Factor::load(ifstream& input_file,
 	}
 
 	this->network = new Network(input_file);
-
-	string pcc_line;
-	getline(input_file, pcc_line);
-	this->pcc = stod(pcc_line);
-
-	string num_success_line;
-	getline(input_file, num_success_line);
-	this->num_success = stoi(num_success_line);
-
-	string num_failure_line;
-	getline(input_file, num_failure_line);
-	this->num_failure = stoi(num_failure_line);
-
-	string num_selected_line;
-	getline(input_file, num_selected_line);
-	this->num_selected = stoi(num_selected_line);
-
-	// temp
-	cout << "this->pcc: " << this->pcc << endl;
-	cout << "this->num_success: " << this->num_success << endl;
-	cout << "this->num_failure: " << this->num_failure << endl;
-	cout << "this->num_selected: " << this->num_selected << endl;
-	cout << "this->inputs.size(): " << this->inputs.size() << endl;
-
-	string average_line;
-	getline(input_file, average_line);
-	this->average = stod(average_line);
-
-	string standard_deviation_line;
-	getline(input_file, standard_deviation_line);
-	this->standard_deviation = stod(standard_deviation_line);
 }

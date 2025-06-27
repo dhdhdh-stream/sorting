@@ -1,3 +1,5 @@
+// TODO: freshly measure obs_val_average/obs_val_standard_deviation each run
+
 #ifndef OBS_NODE_H
 #define OBS_NODE_H
 
@@ -22,14 +24,6 @@ public:
 	int next_node_id;
 	AbstractNode* next_node;
 
-	/**
-	 * TODO: replace with NNs
-	 */
-	std::vector<double> obs_val_averages;
-	std::vector<double> obs_val_standard_deviations;
-
-	std::vector<std::vector<double>> measure_val_histories;
-
 	double average_hits_per_run;
 	double average_instances_per_run;
 	double average_score;
@@ -45,7 +39,7 @@ public:
 	double new_scope_sum_score;
 	int new_scope_sum_count;
 
-	ObsNode(int obs_size);
+	ObsNode();
 	~ObsNode();
 
 	void step(std::vector<double>& obs,

@@ -185,7 +185,7 @@ void clean_scope(Scope* scope,
 		}
 	}
 	for (int n_index = 0; n_index < (int)obs_node_needed.size(); n_index++) {
-		ObsNode* new_obs_node = new ObsNode(wrapper->num_obs);
+		ObsNode* new_obs_node = new ObsNode();
 		new_obs_node->parent = scope;
 		new_obs_node->id = scope->node_counter;
 		scope->node_counter++;
@@ -280,7 +280,7 @@ void clean_scope(Scope* scope,
 	for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
 			it != scope->nodes.end(); it++) {
 		if (it->second->ancestor_ids.size() > 1 && it->second->type != NODE_TYPE_OBS) {
-			ObsNode* new_obs_node = new ObsNode(wrapper->num_obs);
+			ObsNode* new_obs_node = new ObsNode();
 			new_obs_node->parent = scope;
 			new_obs_node->id = scope->node_counter;
 			scope->node_counter++;
@@ -412,7 +412,7 @@ void check_generalize(Scope* scope_to_generalize,
 		new_scope->child_scopes = scope_to_generalize->child_scopes;
 		new_scope->child_scopes.push_back(scope_to_generalize);
 
-		ObsNode* start_node = new ObsNode(wrapper->num_obs);
+		ObsNode* start_node = new ObsNode();
 		start_node->parent = new_scope;
 		start_node->id = new_scope->node_counter;
 		new_scope->node_counter++;
@@ -426,7 +426,7 @@ void check_generalize(Scope* scope_to_generalize,
 
 		new_scope_node->scope = scope_to_generalize;
 
-		ObsNode* end_node = new ObsNode(wrapper->num_obs);
+		ObsNode* end_node = new ObsNode();
 		end_node->parent = new_scope;
 		end_node->id = new_scope->node_counter;
 		new_scope->node_counter++;

@@ -18,23 +18,12 @@ using namespace std;
 
 BranchExperiment::BranchExperiment(Scope* scope_context,
 								   AbstractNode* node_context,
-								   bool is_branch,
-								   Input reward_signal,
-								   SolutionWrapper* wrapper) {
+								   bool is_branch) {
 	this->type = EXPERIMENT_TYPE_BRANCH;
 
 	this->scope_context = scope_context;
 	this->node_context = node_context;
 	this->is_branch = is_branch;
-	if (reward_signal.scope_context.size() != 0) {
-		this->reward_signal = reward_signal;
-
-		ObsNode* obs_node = (ObsNode*)this->reward_signal.scope_context.back()
-			->nodes[this->reward_signal.node_context.back()];
-		Factor* factor = obs_node->factors[this->reward_signal.factor_index];
-		this->reward_signal_average = factor->average;
-		this->reward_signal_standard_deviation = factor->standard_deviation;
-	}
 
 	this->curr_scope_history = NULL;
 	this->best_scope_history = NULL;
@@ -62,25 +51,7 @@ BranchExperiment::BranchExperiment(Scope* scope_context,
 
 		if (has_match) {
 			scope_histories.push_back(scope_history);
-
-			if (reward_signal.scope_context.size() != 0) {
-				double val;
-				bool is_on;
-				fetch_input_helper(scope_history,
-								   this->reward_signal,
-								   0,
-								   val,
-								   is_on);
-				if (is_on) {
-					double target_val = (val - this->reward_signal_average)
-						/ this->reward_signal_standard_deviation;
-					target_val_histories.push_back(target_val);
-				} else {
-					target_val_histories.push_back(-1.0);
-				}
-			} else {
-				target_val_histories.push_back(this->scope_context->existing_target_val_histories[h_index]);
-			}
+			target_val_histories.push_back(this->scope_context->existing_target_val_histories[h_index]);
 		}
 	}
 
@@ -96,8 +67,7 @@ BranchExperiment::BranchExperiment(Scope* scope_context,
 									 factor_input_averages,
 									 factor_input_standard_deviations,
 									 factor_weights,
-									 this,
-									 wrapper);
+									 this);
 
 	if (is_success) {
 		this->node_context->experiment = this;
@@ -107,6 +77,16 @@ BranchExperiment::BranchExperiment(Scope* scope_context,
 		this->existing_input_averages = factor_input_averages;
 		this->existing_input_standard_deviations = factor_input_standard_deviations;
 		this->existing_weights = factor_weights;
+
+		for (int h_index = 0; h_index < (int)scope_histories.size(); h_index++) {
+			if (has_match_helper(scope_histories[h_index],
+								 this->node_context,
+								 this->is_branch)) {
+				add_obs_data_helper(scope_histories[h_index],
+									this->existing_obs_data);
+			}
+		}
+		process_obs_data(this->existing_obs_data);
 
 		this->best_surprise = 0.0;
 

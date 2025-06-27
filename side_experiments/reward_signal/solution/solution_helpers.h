@@ -5,11 +5,12 @@
 #include <utility>
 #include <vector>
 
+#include "abstract_experiment.h"
 #include "input.h"
 
-class AbstractExperiment;
 class AbstractNode;
 class Network;
+class ObsNode;
 class Problem;
 class Scope;
 class ScopeHistory;
@@ -32,9 +33,6 @@ const double FACTOR_IMPACT_THRESHOLD = 0.1;
 const int INPUT_NUM_HIGHEST = 4;
 const int INPUT_NUM_RANDOM_PER = 3;
 
-void select_reward_signal(ScopeHistory* scope_history,
-						  AbstractNode* explore_node,
-						  Input& reward_signal);
 void create_experiment(ScopeHistory* scope_history,
 					   AbstractExperiment*& curr_experiment,
 					   SolutionWrapper* wrapper);
@@ -54,8 +52,7 @@ void existing_add_factor(std::vector<ScopeHistory*>& scope_histories,
 						 std::vector<Input>& network_inputs,
 						 Network* network,
 						 Input& new_input,
-						 AbstractExperiment* experiment,
-						 SolutionWrapper* wrapper);
+						 AbstractExperiment* experiment);
 bool train_existing(std::vector<ScopeHistory*>& scope_histories,
 					std::vector<double>& target_val_histories,
 					double& average_score,
@@ -63,8 +60,7 @@ bool train_existing(std::vector<ScopeHistory*>& scope_histories,
 					std::vector<double>& factor_input_averages,
 					std::vector<double>& factor_input_standard_deviations,
 					std::vector<double>& factor_weights,
-					AbstractExperiment* experiment,
-					SolutionWrapper* wrapper);
+					AbstractExperiment* experiment);
 bool train_new(std::vector<ScopeHistory*>& scope_histories,
 			   std::vector<double>& target_val_histories,
 			   double& average_score,
@@ -85,9 +81,16 @@ void check_generalize(Scope* scope_to_generalize,
 void update_scores(ScopeHistory* scope_history,
 				   double target_val,
 				   SolutionWrapper* wrapper);
-void attach_existing_histories(ScopeHistory* scope_history,
-							   double target_val);
 
 bool is_match(std::vector<double>& t_scores);
+
+bool has_match_helper(ScopeHistory* scope_history,
+					  AbstractNode* explore_node,
+					  bool is_branch);
+void add_obs_data_helper(ScopeHistory* scope_history,
+						 std::map<ObsNode*, ObsData>& obs_data);
+void process_obs_data(std::map<ObsNode*, ObsData>& obs_data);
+bool compare_obs_data(std::map<ObsNode*, ObsData>& existing_obs_data,
+					  std::map<ObsNode*, ObsData>& new_obs_data);
 
 #endif /* SOLUTION_HELPERS_H */
