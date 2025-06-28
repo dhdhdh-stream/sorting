@@ -82,15 +82,18 @@ void update_scores(ScopeHistory* scope_history,
 				   double target_val,
 				   SolutionWrapper* wrapper);
 
-bool is_match(std::vector<double>& t_scores);
-
 bool has_match_helper(ScopeHistory* scope_history,
 					  AbstractNode* explore_node,
 					  bool is_branch);
-void add_obs_data_helper(ScopeHistory* scope_history,
-						 std::map<ObsNode*, ObsData>& obs_data);
-void process_obs_data(std::map<ObsNode*, ObsData>& obs_data);
-bool compare_obs_data(std::map<ObsNode*, ObsData>& existing_obs_data,
-					  std::map<ObsNode*, ObsData>& new_obs_data);
+void add_existing_hit_obs_data_helper(ScopeHistory* scope_history,
+									  std::map<ObsNode*, ObsData>& obs_data);
+void add_existing_miss_obs_data_helper(ScopeHistory* scope_history,
+									   std::map<ObsNode*, ObsData>& obs_data);
+void add_new_obs_data_helper(ScopeHistory* scope_history,
+							 std::map<ObsNode*, ObsData>& obs_data);
+bool compare_obs_data(std::map<ObsNode*, ObsData>& new_obs_data,
+					  double hit_ratio,
+					  int new_count,
+					  SolutionWrapper* wrapper);
 
 #endif /* SOLUTION_HELPERS_H */

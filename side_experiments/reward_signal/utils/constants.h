@@ -24,13 +24,14 @@ const int MEASURE_S4_ITERS = 4000;
 #endif /* MDEBUG */
 
 #if defined(MDEBUG) && MDEBUG
-const int EARLY_SUCCESS_S1_ITERS = 2;
-const int EARLY_SUCCESS_S2_ITERS = 5;
+const int EARLY_EVAL_S1_ITERS = 2;
+const int EARLY_EVAL_S2_ITERS = 5;
 #else
-const int EARLY_SUCCESS_S1_ITERS = 100;
-const int EARLY_SUCCESS_S2_ITERS = 800;
+const int EARLY_EVAL_S1_ITERS = 100;
+const int EARLY_EVAL_S2_ITERS = 800;
 #endif /* MDEBUG */
 const double EARLY_SUCCESS_MIN_T_SCORE = 3.0;
+const double EARLY_FAIL_MAX_T_SCORE = -3.0;
 
 const int CHECK_CONFUSION_ITER = 100;
 const int ACTIONS_PER_CONFUSION = 20;

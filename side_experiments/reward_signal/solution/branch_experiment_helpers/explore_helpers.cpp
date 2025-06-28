@@ -129,8 +129,6 @@ void BranchExperiment::explore_check_activate(
 
 		wrapper->scope_histories.back()->experiments_hit.push_back(this);
 
-		wrapper->measure_match = true;
-
 		BranchExperimentState* new_experiment_state = new BranchExperimentState(this);
 		new_experiment_state->step_index = 0;
 		wrapper->experiment_context.back() = new_experiment_state;
@@ -200,10 +198,6 @@ void BranchExperiment::explore_backprop(
 
 	if (history->has_explore) {
 		this->curr_surprise = target_val - history->existing_predicted_scores[0];
-
-		if (!is_match(wrapper->t_scores)) {
-			this->curr_surprise = 0.0;
-		}
 
 		#if defined(MDEBUG) && MDEBUG
 		if (true) {

@@ -78,16 +78,6 @@ BranchExperiment::BranchExperiment(Scope* scope_context,
 		this->existing_input_standard_deviations = factor_input_standard_deviations;
 		this->existing_weights = factor_weights;
 
-		for (int h_index = 0; h_index < (int)scope_histories.size(); h_index++) {
-			if (has_match_helper(scope_histories[h_index],
-								 this->node_context,
-								 this->is_branch)) {
-				add_obs_data_helper(scope_histories[h_index],
-									this->existing_obs_data);
-			}
-		}
-		process_obs_data(this->existing_obs_data);
-
 		this->best_surprise = 0.0;
 
 		switch (this->node_context->type) {

@@ -6,6 +6,7 @@
 #include "globals.h"
 #include "network.h"
 #include "scope.h"
+#include "solution.h"
 #include "solution_helpers.h"
 #include "solution_wrapper.h"
 
@@ -42,8 +43,6 @@ void BranchExperiment::train_new_check_activate(
 		this->scope_histories.push_back(new ScopeHistory(wrapper->scope_histories.back()));
 
 		wrapper->scope_histories.back()->experiments_hit.push_back(this);
-
-		wrapper->measure_match = true;
 
 		uniform_int_distribution<int> until_distribution(0, (int)this->average_instances_per_run-1.0);
 		this->num_instances_until_target = 1 + until_distribution(generator);
@@ -110,11 +109,6 @@ void BranchExperiment::train_new_backprop(
 		this->i_target_val_histories.push_back(target_val - history->existing_predicted_scores[i_index]);
 	}
 
-	if (!is_match(wrapper->t_scores)) {
-		this->result = EXPERIMENT_RESULT_FAIL;
-		return;
-	}
-
 	this->state_iter++;
 	if (this->state_iter >= TRAIN_NEW_NUM_DATAPOINTS
 			&& (int)this->i_target_val_histories.size() >= TRAIN_NEW_NUM_DATAPOINTS) {
@@ -157,6 +151,23 @@ void BranchExperiment::train_new_backprop(
 			this->new_network = network;
 
 			this->select_percentage = select_percentage;
+
+			int sum_hits = 0;
+			int sum_misses = 0;
+			for (int h_index = 0; h_index < (int)wrapper->solution->existing_scope_histories.size(); h_index++) {
+				if (has_match_helper(wrapper->solution->existing_scope_histories[h_index],
+									 this->node_context,
+									 this->is_branch)) {
+					add_existing_hit_obs_data_helper(wrapper->solution->existing_scope_histories[h_index],
+													 this->obs_data);
+					sum_hits++;
+				} else {
+					add_existing_miss_obs_data_helper(wrapper->solution->existing_scope_histories[h_index],
+													  this->obs_data);
+					sum_misses++;
+				}
+			}
+			this->hit_ratio = (double)sum_hits / (double)(sum_hits + sum_misses);
 
 			this->state = BRANCH_EXPERIMENT_STATE_MEASURE;
 			this->state_iter = 0;

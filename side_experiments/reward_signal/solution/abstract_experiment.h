@@ -25,10 +25,9 @@ const int EXPERIMENT_RESULT_SUCCESS = 2;
 
 class ObsData {
 public:
-	std::vector<double> averages;
-	std::vector<double> standard_deviations;
-
-	std::vector<std::vector<double>> val_histories;
+	std::vector<std::vector<double>> existing_hit_histories;
+	std::vector<std::vector<double>> existing_miss_histories;
+	std::vector<std::vector<double>> new_histories;
 };
 
 class AbstractExperimentHistory;
@@ -43,9 +42,6 @@ public:
 	int result;
 
 	double improvement;
-
-	std::map<ObsNode*, ObsData> existing_obs_data;
-	std::map<ObsNode*, ObsData> new_obs_data;
 
 	virtual ~AbstractExperiment() {};
 	virtual void decrement(AbstractNode* experiment_node) = 0;

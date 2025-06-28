@@ -57,6 +57,9 @@ public:
 
 	double select_percentage;
 
+	double hit_ratio;
+	std::map<ObsNode*, ObsData> obs_data;
+
 	std::vector<ScopeHistory*> scope_histories;
 	std::vector<double> i_target_val_histories;
 
