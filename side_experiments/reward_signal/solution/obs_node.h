@@ -1,5 +1,3 @@
-// TODO: freshly measure obs_val_average/obs_val_standard_deviation each run
-
 #ifndef OBS_NODE_H
 #define OBS_NODE_H
 
@@ -38,6 +36,13 @@ public:
 
 	double new_scope_sum_score;
 	int new_scope_sum_count;
+
+	/**
+	 * - only for examination
+	 */
+	std::vector<double> obs_averages;
+	std::vector<double> obs_standard_deviations;
+	std::vector<std::vector<double>> obs_val_histories;
 
 	ObsNode();
 	~ObsNode();

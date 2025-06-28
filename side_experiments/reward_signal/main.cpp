@@ -26,6 +26,10 @@
 // - OK to merge initially
 //   - will create new mixed state, but still have non-mixed states
 
+// - actually, shouldn't try to preserve existing state due to mixed state
+
+// TODO: try to always reduce variance
+
 #include <chrono>
 #include <iostream>
 #include <map>

@@ -105,6 +105,25 @@ void ObsNode::measure_update() {
 	this->average_hits_per_run = (double)this->sum_hits / (double)MEASURE_ITERS;
 	this->average_instances_per_run = (double)this->sum_instances / (double)this->sum_hits;
 	this->average_score = this->sum_score / (double)this->sum_hits;
+
+	int obs_size = (int)this->obs_val_histories[0].size();
+	this->obs_averages = vector<double>(obs_size);
+	this->obs_standard_deviations = vector<double>(obs_size);
+	for (int o_index = 0; o_index < obs_size; o_index++) {
+		double sum_vals = 0.0;
+		for (int h_index = 0; h_index < (int)this->obs_val_histories.size(); h_index++) {
+			sum_vals += this->obs_val_histories[h_index][o_index];
+		}
+		this->obs_averages[o_index] = sum_vals / (double)this->obs_val_histories.size();
+
+		double sum_variances = 0.0;
+		for (int h_index = 0; h_index < (int)this->obs_val_histories.size(); h_index++) {
+			sum_variances += (this->obs_val_histories[h_index][o_index] - this->obs_averages[o_index])
+				* (this->obs_val_histories[h_index][o_index] - this->obs_averages[o_index]);
+		}
+		this->obs_standard_deviations[o_index] = sqrt(sum_variances / (double)this->obs_val_histories.size());
+	}
+	this->obs_val_histories.clear();
 }
 
 void ObsNode::new_scope_clean() {
@@ -132,6 +151,12 @@ void ObsNode::save(ofstream& output_file) {
 
 	output_file << this->average_hits_per_run << endl;
 	output_file << this->average_score << endl;
+
+	output_file << this->obs_averages.size() << endl;
+	for (int o_index = 0; o_index < (int)this->obs_averages.size(); o_index++) {
+		output_file << this->obs_averages[o_index] << endl;
+		output_file << this->obs_standard_deviations[o_index] << endl;
+	}
 }
 
 void ObsNode::load(ifstream& input_file,
@@ -168,6 +193,25 @@ void ObsNode::load(ifstream& input_file,
 	this->average_score = stod(average_score_line);
 
 	this->is_init = true;
+
+	cout << "this->id: " << this->id << endl;
+	string num_obs_line;
+	getline(input_file, num_obs_line);
+	int num_obs = stoi(num_obs_line);
+	for (int o_index = 0; o_index < num_obs; o_index++) {
+		cout << o_index << endl;
+
+		string average_line;
+		getline(input_file, average_line);
+		this->obs_averages.push_back(stod(average_line));
+		cout << "average: " << this->obs_averages[o_index] << endl;
+
+		string standard_deviation_line;
+		getline(input_file, standard_deviation_line);
+		this->obs_standard_deviations.push_back(stod(standard_deviation_line));
+		cout << "standard_deviation: " << this->obs_standard_deviations[o_index] << endl;
+	}
+	cout << endl;
 }
 
 void ObsNode::link(Solution* parent_solution) {

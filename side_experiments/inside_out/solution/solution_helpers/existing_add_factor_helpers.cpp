@@ -34,13 +34,13 @@ void node_history_insert(ScopeHistory* scope_history,
 		vector<double> new_obs_history;
 		for (map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
 				it != scope_history->node_histories.end(); it++) {
-			if (it->second->index > match_it->second->index) {
-				it->second->index++;
-			}
-
 			if (it->second->index == match_it->second->index + 1) {
 				ObsNodeHistory* obs_node_history = (ObsNodeHistory*)it->second;
 				new_obs_history = obs_node_history->obs_history;
+			}
+
+			if (it->second->index > match_it->second->index) {
+				it->second->index++;
 			}
 		}
 

@@ -1,6 +1,7 @@
 #include "solution_helpers.h"
 
 #include <cmath>
+#include <iostream>
 
 #include "abstract_experiment.h"
 #include "branch_node.h"
@@ -105,6 +106,9 @@ void process_obs_data(map<ObsNode*, ObsData>& obs_data) {
 	}
 }
 
+/**
+ * TODO: also succeed if standard deviation reduced in general
+ */
 bool compare_obs_data(map<ObsNode*, ObsData>& existing_obs_data,
 					  map<ObsNode*, ObsData>& new_obs_data) {
 	int num_compare = 0;

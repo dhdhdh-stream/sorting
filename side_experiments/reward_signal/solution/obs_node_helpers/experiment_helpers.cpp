@@ -1,5 +1,7 @@
 #include "obs_node.h"
 
+#include <iostream>
+
 #include "abstract_experiment.h"
 #include "confusion.h"
 #include "factor.h"
@@ -24,10 +26,12 @@ void ObsNode::experiment_step(vector<double>& obs,
 	if (wrapper->measure_match) {
 		map<ObsNode*, ObsData>::iterator it = wrapper->experiment_history
 			->experiment->existing_obs_data.find(this);
-		for (int o_index = 0; o_index < (int)obs.size(); o_index++) {
-			double t_score = (obs[o_index] - it->second.averages[o_index])
-				/ it->second.standard_deviations[o_index];
-			wrapper->t_scores.push_back(t_score);
+		if (it != wrapper->experiment_history->experiment->existing_obs_data.end()) {
+			for (int o_index = 0; o_index < (int)obs.size(); o_index++) {
+				double t_score = (obs[o_index] - it->second.averages[o_index])
+					/ it->second.standard_deviations[o_index];
+				wrapper->t_scores.push_back(t_score);
+			}
 		}
 	}
 

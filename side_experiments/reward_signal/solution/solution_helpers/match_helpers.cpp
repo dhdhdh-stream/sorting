@@ -31,8 +31,6 @@ bool is_match(vector<double>& t_scores) {
 
 	double average_distance = sum_distance / (double)num_normal;
 	double extreme_ratio = num_extreme / (double)t_scores.size();
-	cout << "average_distance: " << average_distance << endl;
-	cout << "extreme_ratio: " << extreme_ratio << endl;
 	if (average_distance > MAX_DISTANCE
 			|| extreme_ratio > MAX_EXTREME_RATIO) {
 		return false;

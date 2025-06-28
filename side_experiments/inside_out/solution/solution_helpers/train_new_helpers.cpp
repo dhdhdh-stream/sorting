@@ -609,6 +609,8 @@ bool train_new(vector<ScopeHistory*>& scope_histories,
 			#if defined(MDEBUG) && MDEBUG
 			#else
 			if (abs(sum_score) > REGRESSION_FAIL_MULTIPLIER * average_offset) {
+				cout << "abs(sum_score): " << abs(sum_score) << endl;
+				cout << "average_offset: " << average_offset << endl;
 				return false;
 			}
 			#endif /* MDEBUG */

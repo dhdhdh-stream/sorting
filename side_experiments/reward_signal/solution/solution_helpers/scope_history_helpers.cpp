@@ -135,6 +135,10 @@ void update_scores(ScopeHistory* scope_history,
 		case NODE_TYPE_OBS:
 			{
 				ObsNode* obs_node = (ObsNode*)node;
+				ObsNodeHistory* obs_node_history = (ObsNodeHistory*)it->second;
+
+				obs_node->obs_val_histories.push_back(obs_node_history->obs_history);
+
 				if (wrapper->run_index != obs_node->last_updated_run_index) {
 					obs_node->sum_score += target_val;
 					obs_node->sum_hits++;
