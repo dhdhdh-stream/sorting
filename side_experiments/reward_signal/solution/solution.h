@@ -24,6 +24,7 @@ class AbstractNode;
 class Problem;
 class Scope;
 class ScopeHistory;
+class SolutionWrapper;
 
 class Solution {
 public:
@@ -72,7 +73,7 @@ public:
 					   int new_scope_node_id);
 
 	void clean();
-	void measure_update();
+	void measure_update(SolutionWrapper* wrapper);
 
 	void clean_scopes();
 

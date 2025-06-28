@@ -151,7 +151,7 @@ void BranchNode::clean() {
 	this->branch_sum_instances = 0;
 }
 
-void BranchNode::measure_update() {
+void BranchNode::measure_update(SolutionWrapper* wrapper) {
 	this->original_average_hits_per_run = (double)this->original_sum_hits / (double)MEASURE_ITERS;
 	this->original_average_instances_per_run = (double)this->original_sum_instances / (double)this->original_sum_hits;
 	this->original_average_score = this->original_sum_score / (double)this->original_sum_hits;

@@ -72,5 +72,5 @@ void SolutionWrapper::measure_update(double new_score) {
 
 	this->solution->curr_score = new_score;
 
-	this->solution->measure_update();
+	this->solution->measure_update(this);
 }

@@ -184,7 +184,14 @@ bool compare_obs_data(map<ObsNode*, ObsData>& obs_data,
 	}
 
 	double ratio = sum_ratios / (double)count;
-	if (ratio > 1.0) {
+
+	cout << "ratio: " << ratio << endl;
+
+	#if defined(MDEBUG) && MDEBUG
+	if (rand()%2 == 0) {
+	#else
+	if (ratio > 1.05) {
+	#endif /* MDEBUG */
 		return false;
 	} else {
 		return true;

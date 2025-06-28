@@ -9,6 +9,7 @@
 #include "globals.h"
 #include "problem.h"
 #include "scope.h"
+#include "solution_wrapper.h"
 
 using namespace std;
 
@@ -101,15 +102,14 @@ void ObsNode::clean() {
 	this->sum_instances = 0;
 }
 
-void ObsNode::measure_update() {
+void ObsNode::measure_update(SolutionWrapper* wrapper) {
 	this->average_hits_per_run = (double)this->sum_hits / (double)MEASURE_ITERS;
 	this->average_instances_per_run = (double)this->sum_instances / (double)this->sum_hits;
 	this->average_score = this->sum_score / (double)this->sum_hits;
 
-	int obs_size = (int)this->obs_val_histories[0].size();
-	this->obs_averages = vector<double>(obs_size);
-	this->obs_standard_deviations = vector<double>(obs_size);
-	for (int o_index = 0; o_index < obs_size; o_index++) {
+	this->obs_averages = vector<double>(wrapper->num_obs);
+	this->obs_standard_deviations = vector<double>(wrapper->num_obs);
+	for (int o_index = 0; o_index < wrapper->num_obs; o_index++) {
 		double sum_vals = 0.0;
 		for (int h_index = 0; h_index < (int)this->obs_val_histories.size(); h_index++) {
 			sum_vals += this->obs_val_histories[h_index][o_index];

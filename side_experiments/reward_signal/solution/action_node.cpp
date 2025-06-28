@@ -46,7 +46,7 @@ void ActionNode::clean() {
 	this->sum_instances = 0;
 }
 
-void ActionNode::measure_update() {
+void ActionNode::measure_update(SolutionWrapper* wrapper) {
 	this->average_hits_per_run = (double)this->sum_hits / (double)MEASURE_ITERS;
 	this->average_instances_per_run = (double)this->sum_instances / (double)this->sum_hits;
 	this->average_score = this->sum_score / (double)this->sum_hits;

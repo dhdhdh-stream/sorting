@@ -46,7 +46,7 @@ public:
 								 SolutionWrapper* wrapper) = 0;
 
 	virtual void clean() = 0;
-	virtual void measure_update() = 0;
+	virtual void measure_update(SolutionWrapper* wrapper) = 0;
 
 	virtual void new_scope_clean() = 0;
 	virtual void new_scope_measure_update(int total_count) = 0;

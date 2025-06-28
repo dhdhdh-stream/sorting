@@ -30,6 +30,8 @@
 
 // TODO: try to always reduce variance
 
+// - don't worry about consistency, and just let scopes sand things into place
+
 #include <chrono>
 #include <iostream>
 #include <map>

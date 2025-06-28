@@ -57,7 +57,7 @@ public:
 					   Scope* new_scope);
 
 	void clean();
-	void measure_update();
+	void measure_update(SolutionWrapper* wrapper);
 
 	void new_scope_clean();
 	void new_scope_measure_update(int total_count);

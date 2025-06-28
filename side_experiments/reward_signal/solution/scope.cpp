@@ -246,10 +246,10 @@ void Scope::clean() {
 	this->existing_target_val_histories.clear();
 }
 
-void Scope::measure_update() {
+void Scope::measure_update(SolutionWrapper* wrapper) {
 	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
 			it != this->nodes.end(); it++) {
-		it->second->measure_update();
+		it->second->measure_update(wrapper);
 	}
 
 	{
