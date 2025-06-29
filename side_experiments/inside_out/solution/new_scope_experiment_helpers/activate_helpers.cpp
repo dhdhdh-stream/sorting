@@ -13,12 +13,6 @@
 
 using namespace std;
 
-void NewScopeExperiment::pre_activate(SolutionWrapper* wrapper) {
-	if (wrapper->experiment_history == NULL) {
-		wrapper->experiment_history = new NewScopeExperimentHistory(this);
-	}
-}
-
 void NewScopeExperiment::check_activate(AbstractNode* experiment_node,
 										bool is_branch,
 										SolutionWrapper* wrapper) {
@@ -44,6 +38,7 @@ void NewScopeExperiment::check_activate(AbstractNode* experiment_node,
 
 	if (has_match) {
 		NewScopeExperimentHistory* history = (NewScopeExperimentHistory*)wrapper->experiment_history;
+		history->is_hit = true;
 
 		if (is_test) {
 			history->hit_test = true;
@@ -55,7 +50,6 @@ void NewScopeExperiment::check_activate(AbstractNode* experiment_node,
 			wrapper->scope_histories.push_back(inner_scope_history);
 			wrapper->node_context.push_back(this->new_scope->nodes[0]);
 			wrapper->experiment_context.push_back(NULL);
-			wrapper->confusion_context.push_back(NULL);
 		} else {
 			wrapper->node_context.back() = this->successful_scope_nodes[location_index];
 		}
@@ -81,7 +75,6 @@ void NewScopeExperiment::experiment_exit_step(SolutionWrapper* wrapper) {
 	wrapper->scope_histories.pop_back();
 	wrapper->node_context.pop_back();
 	wrapper->experiment_context.pop_back();
-	wrapper->confusion_context.pop_back();
 
 	wrapper->node_context.back() = this->test_location_exit;
 
@@ -188,53 +181,64 @@ void NewScopeExperiment::backprop(double target_val,
 								  SolutionWrapper* wrapper) {
 	NewScopeExperimentHistory* history = (NewScopeExperimentHistory*)wrapper->experiment_history;
 
-	if (this->test_location_start != NULL) {
-		this->state_iter++;
+	if (history->is_hit) {
+		if (this->test_location_start != NULL) {
+			this->state_iter++;
 
-		for (set<pair<AbstractNode*,bool>>::iterator it = history->nodes_seen.begin();
-				it != history->nodes_seen.end(); it++) {
-			switch (it->first->type) {
-			case NODE_TYPE_ACTION:
-				{
-					ActionNode* action_node = (ActionNode*)it->first;
-					action_node->new_scope_sum_score += target_val;
-					action_node->new_scope_sum_count++;
-				}
-				break;
-			case NODE_TYPE_SCOPE:
-				{
-					ScopeNode* scope_node = (ScopeNode*)it->first;
-					scope_node->new_scope_sum_score += target_val;
-					scope_node->new_scope_sum_count++;
-				}
-				break;
-			case NODE_TYPE_BRANCH:
-				{
-					BranchNode* branch_node = (BranchNode*)it->first;
-					if (it->second) {
-						branch_node->branch_new_scope_sum_score += target_val;
-						branch_node->branch_new_scope_sum_count++;
-					} else {
-						branch_node->original_new_scope_sum_score += target_val;
-						branch_node->original_new_scope_sum_count++;
+			for (set<pair<AbstractNode*,bool>>::iterator it = history->nodes_seen.begin();
+					it != history->nodes_seen.end(); it++) {
+				switch (it->first->type) {
+				case NODE_TYPE_ACTION:
+					{
+						ActionNode* action_node = (ActionNode*)it->first;
+						action_node->new_scope_sum_score += target_val;
+						action_node->new_scope_sum_count++;
 					}
+					break;
+				case NODE_TYPE_SCOPE:
+					{
+						ScopeNode* scope_node = (ScopeNode*)it->first;
+						scope_node->new_scope_sum_score += target_val;
+						scope_node->new_scope_sum_count++;
+					}
+					break;
+				case NODE_TYPE_BRANCH:
+					{
+						BranchNode* branch_node = (BranchNode*)it->first;
+						if (it->second) {
+							branch_node->branch_new_scope_sum_score += target_val;
+							branch_node->branch_new_scope_sum_count++;
+						} else {
+							branch_node->original_new_scope_sum_score += target_val;
+							branch_node->original_new_scope_sum_count++;
+						}
+					}
+					break;
+				case NODE_TYPE_OBS:
+					{
+						ObsNode* obs_node = (ObsNode*)it->first;
+						obs_node->new_scope_sum_score += target_val;
+						obs_node->new_scope_sum_count++;
+					}
+					break;
 				}
-				break;
-			case NODE_TYPE_OBS:
-				{
-					ObsNode* obs_node = (ObsNode*)it->first;
-					obs_node->new_scope_sum_score += target_val;
-					obs_node->new_scope_sum_count++;
-				}
-				break;
 			}
+		}
+
+		if (history->hit_test) {
+			test_backprop(target_val,
+						  history);
 		}
 	}
 
-	if (history->hit_test) {
-		test_backprop(target_val,
-					  history);
-	} else if (this->test_location_start == NULL) {
+	if (this->test_location_start != NULL) {
+		this->new_scope_histories.push_back(wrapper->scope_histories[0]);
+		this->new_target_val_histories.push_back(target_val);
+	} else {
+		delete wrapper->scope_histories[0];
+	}
+
+	if (this->test_location_start == NULL) {
 		if (history->potential_start != NULL) {
 			vector<AbstractNode*> possible_exits;
 
@@ -274,8 +278,14 @@ void NewScopeExperiment::backprop(double target_val,
 				starting_node,
 				possible_exits);
 
-			uniform_int_distribution<int> distribution(0, possible_exits.size()-1);
-			int random_index = distribution(generator);
+			geometric_distribution<int> exit_distribution(0.2);
+			int random_index;
+			while (true) {
+				random_index = exit_distribution(generator);
+				if (random_index < (int)possible_exits.size()) {
+					break;
+				}
+			}
 			AbstractNode* exit_next_node = possible_exits[random_index];
 
 			this->test_location_start = history->potential_start;
@@ -286,6 +296,12 @@ void NewScopeExperiment::backprop(double target_val,
 			this->state_iter = 0;
 			this->scope_context->new_scope_clean();
 
+			for (int h_index = 0; h_index < (int)this->new_scope_histories.size(); h_index++) {
+				delete this->new_scope_histories[h_index];
+			}
+			this->new_scope_histories.clear();
+			this->new_target_val_histories.clear();
+
 			if (this->generalize_iter % 20 == 0) {
 				cout << "this->generalize_iter: " << this->generalize_iter << endl;
 			}
@@ -293,4 +309,5 @@ void NewScopeExperiment::backprop(double target_val,
 			history->potential_start->experiment = this;
 		}
 	}
+
 }

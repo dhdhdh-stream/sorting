@@ -125,7 +125,8 @@ public:
 					  BranchExperimentState* experiment_state);
 	void measure_exit_step(SolutionWrapper* wrapper,
 						   BranchExperimentState* experiment_state);
-	void measure_backprop(double target_val);
+	void measure_backprop(double target_val,
+						  BranchExperimentHistory* history);
 
 	#if defined(MDEBUG) && MDEBUG
 	void capture_verify_check_activate(SolutionWrapper* wrapper);
@@ -136,7 +137,7 @@ public:
 							 BranchExperimentState* experiment_state);
 	void capture_verify_exit_step(SolutionWrapper* wrapper,
 								  BranchExperimentState* experiment_state);
-	void capture_verify_backprop();
+	void capture_verify_backprop(BranchExperimentHistory* history);
 	#endif /* MDEBUG */
 
 	void clean();

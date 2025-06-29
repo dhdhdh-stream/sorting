@@ -42,6 +42,9 @@ public:
 	std::vector<ScopeHistory*> existing_scope_histories;
 	std::vector<double> existing_target_val_histories;
 
+	std::vector<ScopeHistory*> explore_scope_histories;
+	std::vector<double> explore_target_val_histories;
+
 	#if defined(MDEBUG) && MDEBUG
 	std::vector<Problem*> verify_problems;
 	std::vector<unsigned long> verify_seeds;

@@ -5,7 +5,6 @@
 #include <vector>
 
 class AbstractExperiment;
-class Confusion;
 class Scope;
 class Solution;
 class SolutionWrapper;
@@ -31,8 +30,6 @@ public:
 
 	AbstractExperiment* experiment;
 
-	Confusion* confusion;
-
 	virtual ~AbstractNode() {};
 
 	virtual void step(std::vector<double>& obs,
@@ -46,7 +43,7 @@ public:
 								 SolutionWrapper* wrapper) = 0;
 
 	virtual void clean() = 0;
-	virtual void measure_update() = 0;
+	virtual void measure_update(int total_count) = 0;
 
 	virtual void new_scope_clean() = 0;
 	virtual void new_scope_measure_update(int total_count) = 0;

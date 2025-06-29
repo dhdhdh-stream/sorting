@@ -425,8 +425,15 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 			random_start_node,
 			possible_exits);
 
-		uniform_int_distribution<int> exit_distribution(0, possible_exits.size()-1);
-		AbstractNode* exit_next_node = possible_exits[exit_distribution(generator)];
+		geometric_distribution<int> exit_distribution(0.2);
+		int random_index;
+		while (true) {
+			random_index = exit_distribution(generator);
+			if (random_index < (int)possible_exits.size()) {
+				break;
+			}
+		}
+		AbstractNode* exit_next_node = possible_exits[random_index];
 
 		this->test_location_start = node_context;
 		this->test_location_is_branch = is_branch;
@@ -455,6 +462,10 @@ NewScopeExperiment::~NewScopeExperiment() {
 
 	for (int s_index = 0; s_index < (int)this->successful_scope_nodes.size(); s_index++) {
 		delete this->successful_scope_nodes[s_index];
+	}
+
+	for (int h_index = 0; h_index < (int)this->new_scope_histories.size(); h_index++) {
+		delete this->new_scope_histories[h_index];
 	}
 }
 
@@ -500,6 +511,8 @@ void NewScopeExperiment::decrement(AbstractNode* experiment_node) {
 NewScopeExperimentHistory::NewScopeExperimentHistory(
 		NewScopeExperiment* experiment) {
 	this->experiment = experiment;
+
+	this->is_hit = false;
 
 	this->hit_test = false;
 

@@ -32,9 +32,6 @@ const int EARLY_SUCCESS_S2_ITERS = 800;
 #endif /* MDEBUG */
 const double EARLY_SUCCESS_MIN_T_SCORE = 3.0;
 
-const int CHECK_CONFUSION_ITER = 100;
-const int ACTIONS_PER_CONFUSION = 20;
-
 #if defined(MDEBUG) && MDEBUG
 const int MEASURE_ITERS = 10;
 #else

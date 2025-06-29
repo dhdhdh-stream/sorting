@@ -3,7 +3,6 @@
 #include <iostream>
 
 #include "abstract_experiment.h"
-#include "confusion.h"
 #include "globals.h"
 #include "new_scope_experiment.h"
 #include "problem.h"
@@ -28,11 +27,6 @@ void ScopeNode::experiment_step(vector<double>& obs,
 	wrapper->scope_histories.push_back(inner_scope_history);
 	wrapper->node_context.push_back(this->scope->nodes[0]);
 	wrapper->experiment_context.push_back(NULL);
-	wrapper->confusion_context.push_back(NULL);
-
-	if (this->scope->new_scope_experiment != NULL) {
-		this->scope->new_scope_experiment->pre_activate(wrapper);
-	}
 }
 
 void ScopeNode::experiment_exit_step(SolutionWrapper* wrapper) {
@@ -43,7 +37,6 @@ void ScopeNode::experiment_exit_step(SolutionWrapper* wrapper) {
 	wrapper->scope_histories.pop_back();
 	wrapper->node_context.pop_back();
 	wrapper->experiment_context.pop_back();
-	wrapper->confusion_context.pop_back();
 
 	wrapper->node_context.back() = this->next_node;
 
@@ -52,7 +45,5 @@ void ScopeNode::experiment_exit_step(SolutionWrapper* wrapper) {
 			this,
 			false,
 			wrapper);
-	} else if (this->confusion != NULL) {
-		this->confusion->check_activate(wrapper);
 	}
 }

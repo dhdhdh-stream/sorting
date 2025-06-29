@@ -3,7 +3,6 @@
 #include <iostream>
 
 #include "abstract_experiment.h"
-#include "confusion.h"
 #include "constants.h"
 #include "scope.h"
 
@@ -15,7 +14,6 @@ ActionNode::ActionNode() {
 	this->is_init = false;
 
 	this->experiment = NULL;
-	this->confusion = NULL;
 
 	this->last_updated_run_index = 0;
 }
@@ -23,10 +21,6 @@ ActionNode::ActionNode() {
 ActionNode::~ActionNode() {
 	if (this->experiment != NULL) {
 		this->experiment->decrement(this);
-	}
-
-	if (this->confusion != NULL) {
-		delete this->confusion;
 	}
 }
 
@@ -36,18 +30,13 @@ void ActionNode::clean() {
 		this->experiment = NULL;
 	}
 
-	if (this->confusion != NULL) {
-		delete this->confusion;
-		this->confusion = NULL;
-	}
-
 	this->sum_score = 0.0;
 	this->sum_hits = 0;
 	this->sum_instances = 0;
 }
 
-void ActionNode::measure_update() {
-	this->average_hits_per_run = (double)this->sum_hits / (double)MEASURE_ITERS;
+void ActionNode::measure_update(int total_count) {
+	this->average_hits_per_run = (double)this->sum_hits / (double)total_count;
 	this->average_instances_per_run = (double)this->sum_instances / (double)this->sum_hits;
 	this->average_score = this->sum_score / (double)this->sum_hits;
 }

@@ -74,11 +74,6 @@ void BranchExperiment::train_new_step(vector<double>& obs,
 			wrapper->scope_histories.push_back(inner_scope_history);
 			wrapper->node_context.push_back(this->best_scopes[experiment_state->step_index]->nodes[0]);
 			wrapper->experiment_context.push_back(NULL);
-			wrapper->confusion_context.push_back(NULL);
-
-			if (this->best_scopes[experiment_state->step_index]->new_scope_experiment != NULL) {
-				this->best_scopes[experiment_state->step_index]->new_scope_experiment->pre_activate(wrapper);
-			}
 		}
 	}
 }
@@ -94,7 +89,6 @@ void BranchExperiment::train_new_exit_step(SolutionWrapper* wrapper,
 	wrapper->scope_histories.pop_back();
 	wrapper->node_context.pop_back();
 	wrapper->experiment_context.pop_back();
-	wrapper->confusion_context.pop_back();
 
 	experiment_state->step_index++;
 }
@@ -102,61 +96,63 @@ void BranchExperiment::train_new_exit_step(SolutionWrapper* wrapper,
 void BranchExperiment::train_new_backprop(
 		double target_val,
 		BranchExperimentHistory* history) {
-	for (int i_index = 0; i_index < (int)history->existing_predicted_scores.size(); i_index++) {
-		this->i_target_val_histories.push_back(target_val - history->existing_predicted_scores[i_index]);
-	}
-
-	this->state_iter++;
-	if (this->state_iter >= TRAIN_NEW_NUM_DATAPOINTS
-			&& (int)this->i_target_val_histories.size() >= TRAIN_NEW_NUM_DATAPOINTS) {
-		this->scope_histories.insert(this->scope_histories.begin(), this->best_scope_history);
-		this->best_scope_history = NULL;
-		this->i_target_val_histories.insert(this->i_target_val_histories.begin(), this->best_surprise);
-
-		double average_score;
-		vector<Input> factor_inputs;
-		vector<double> factor_input_averages;
-		vector<double> factor_input_standard_deviations;
-		vector<double> factor_weights;
-		vector<Input> network_inputs;
-		Network* network = NULL;
-		double select_percentage;
-		bool is_success = train_new(this->scope_histories,
-									this->i_target_val_histories,
-									average_score,
-									factor_inputs,
-									factor_input_averages,
-									factor_input_standard_deviations,
-									factor_weights,
-									network_inputs,
-									network,
-									select_percentage);
-
-		for (int h_index = 0; h_index < (int)this->scope_histories.size(); h_index++) {
-			delete this->scope_histories[h_index];
+	if (history->is_hit) {
+		for (int i_index = 0; i_index < (int)history->existing_predicted_scores.size(); i_index++) {
+			this->i_target_val_histories.push_back(target_val - history->existing_predicted_scores[i_index]);
 		}
-		this->scope_histories.clear();
-		this->i_target_val_histories.clear();
 
-		if (is_success && select_percentage > 0.0) {
-			this->new_average_score = average_score;
-			this->new_inputs = factor_inputs;
-			this->new_input_averages = factor_input_averages;
-			this->new_input_standard_deviations = factor_input_standard_deviations;
-			this->new_weights = factor_weights;
-			this->new_network_inputs = network_inputs;
-			this->new_network = network;
+		this->state_iter++;
+		if (this->state_iter >= TRAIN_NEW_NUM_DATAPOINTS
+				&& (int)this->i_target_val_histories.size() >= TRAIN_NEW_NUM_DATAPOINTS) {
+			this->scope_histories.insert(this->scope_histories.begin(), this->best_scope_history);
+			this->best_scope_history = NULL;
+			this->i_target_val_histories.insert(this->i_target_val_histories.begin(), this->best_surprise);
 
-			this->select_percentage = select_percentage;
+			double average_score;
+			vector<Input> factor_inputs;
+			vector<double> factor_input_averages;
+			vector<double> factor_input_standard_deviations;
+			vector<double> factor_weights;
+			vector<Input> network_inputs;
+			Network* network = NULL;
+			double select_percentage;
+			bool is_success = train_new(this->scope_histories,
+										this->i_target_val_histories,
+										average_score,
+										factor_inputs,
+										factor_input_averages,
+										factor_input_standard_deviations,
+										factor_weights,
+										network_inputs,
+										network,
+										select_percentage);
 
-			this->state = BRANCH_EXPERIMENT_STATE_MEASURE;
-			this->state_iter = 0;
-		} else {
-			if (network != NULL) {
-				delete network;
+			for (int h_index = 0; h_index < (int)this->scope_histories.size(); h_index++) {
+				delete this->scope_histories[h_index];
 			}
+			this->scope_histories.clear();
+			this->i_target_val_histories.clear();
 
-			this->result = EXPERIMENT_RESULT_FAIL;
+			if (is_success && select_percentage > 0.0) {
+				this->new_average_score = average_score;
+				this->new_inputs = factor_inputs;
+				this->new_input_averages = factor_input_averages;
+				this->new_input_standard_deviations = factor_input_standard_deviations;
+				this->new_weights = factor_weights;
+				this->new_network_inputs = network_inputs;
+				this->new_network = network;
+
+				this->select_percentage = select_percentage;
+
+				this->state = BRANCH_EXPERIMENT_STATE_MEASURE;
+				this->state_iter = 0;
+			} else {
+				if (network != NULL) {
+					delete network;
+				}
+
+				this->result = EXPERIMENT_RESULT_FAIL;
+			}
 		}
 	}
 }

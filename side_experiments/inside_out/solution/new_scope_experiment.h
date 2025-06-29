@@ -45,7 +45,6 @@ public:
 	~NewScopeExperiment();
 	void decrement(AbstractNode* experiment_node);
 
-	void pre_activate(SolutionWrapper* wrapper);
 	void check_activate(AbstractNode* experiment_node,
 						bool is_branch,
 						SolutionWrapper* wrapper);

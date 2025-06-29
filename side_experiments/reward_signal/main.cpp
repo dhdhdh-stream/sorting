@@ -1,5 +1,6 @@
 // TODO: hooks
-// TODO: early success
+// TODO: no seperate measure phase
+// - just reuse experiment measure
 
 // - signals may not be good because solution not consistent
 //   - things get increasingly more mixed
@@ -31,6 +32,19 @@
 // TODO: try to always reduce variance
 
 // - don't worry about consistency, and just let scopes sand things into place
+
+// - maybe reward signals useful for optimizing existing
+//   - still need true signal for innovation
+
+// - maybe save explore samples
+//   - learned results will still be about maintaining existing
+
+// TODO: experiment with ratios:
+// - existing with good outcome
+// - existing with neutral outcome
+// - chaos
+
+// train reward signal using previous samples
 
 #include <chrono>
 #include <iostream>

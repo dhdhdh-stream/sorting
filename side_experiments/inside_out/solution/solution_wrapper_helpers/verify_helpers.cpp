@@ -14,7 +14,6 @@ using namespace std;
 
 void SolutionWrapper::verify_init() {
 	this->num_actions = 1;
-	this->num_confusion_instances = 0;
 
 	this->starting_run_seed = solution->verify_seeds[0];
 	cout << "this->starting_run_seed: " << this->starting_run_seed << endl;
@@ -59,6 +58,19 @@ pair<bool,int> SolutionWrapper::verify_step(vector<double> obs) {
 }
 
 void SolutionWrapper::verify_end() {
+	while (true) {
+		if (this->node_context.back() == NULL) {
+			if (this->scope_histories.size() == 1) {
+				break;
+			} else {
+				ScopeNode* scope_node = (ScopeNode*)this->node_context[this->node_context.size() - 2];
+				scope_node->exit_step(this);
+			}
+		} else {
+			this->node_context.back() = NULL;
+		}
+	}
+
 	delete this->scope_histories[0];
 
 	this->scope_histories.clear();

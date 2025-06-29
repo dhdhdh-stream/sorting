@@ -13,6 +13,7 @@
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
+#include "solution_wrapper.h"
 
 using namespace std;
 
@@ -202,9 +203,12 @@ void even_gather_helper(ScopeHistory* scope_history,
 	}
 }
 
-void create_experiment(ScopeHistory* scope_history,
-					   AbstractExperiment*& curr_experiment,
-					   SolutionWrapper* wrapper) {
+void create_experiment(SolutionWrapper* wrapper,
+					   AbstractExperiment*& curr_experiment) {
+	uniform_int_distribution<int> scope_history_distribution(0,
+		wrapper->solution->existing_scope_histories.size()-1);
+	ScopeHistory* scope_history = wrapper->solution->existing_scope_histories[scope_history_distribution(generator)];
+
 	AbstractNode* explore_node = NULL;
 	bool explore_is_branch = false;
 	uniform_int_distribution<int> even_distribution(0, 1);

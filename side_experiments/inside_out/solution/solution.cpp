@@ -16,6 +16,8 @@
 
 using namespace std;
 
+const int MAX_STAGNANT_TIMESTEPS = 5;
+
 Solution::Solution() {
 	// do nothing
 }
@@ -235,8 +237,31 @@ void Solution::clean() {
 }
 
 void Solution::measure_update() {
+	for (int h_index = 0; h_index < (int)this->existing_scope_histories.size(); h_index++) {
+		update_scores(this->existing_scope_histories[h_index],
+					  this->existing_target_val_histories[h_index],
+					  h_index);
+	}
+
+	double sum_score = 0.0;
+	for (int h_index = 0; h_index < (int)this->existing_target_val_histories.size(); h_index++) {
+		sum_score += this->existing_target_val_histories[h_index];
+	}
+	double new_score = sum_score / (double)this->existing_target_val_histories.size();
+
+	cout << "new_score: " << new_score << endl;
+
+	if (new_score > this->best_score) {
+		this->best_score = new_score;
+		this->best_timestamp = this->timestamp;
+	} else if (this->timestamp >= this->best_timestamp + MAX_STAGNANT_TIMESTEPS) {
+		this->timestamp = -1;
+	}
+
+	this->curr_score = new_score;
+
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
-		this->scopes[s_index]->measure_update();
+		this->scopes[s_index]->measure_update((int)this->existing_scope_histories.size());
 	}
 }
 

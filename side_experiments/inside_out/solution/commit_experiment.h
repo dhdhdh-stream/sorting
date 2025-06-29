@@ -30,8 +30,6 @@ public:
 	int state;
 	int state_iter;
 
-	int sum_num_instances;
-
 	double existing_average_score;
 	std::vector<Input> existing_inputs;
 	std::vector<double> existing_input_averages;
@@ -139,7 +137,8 @@ public:
 							  CommitExperimentState* experiment_state);
 	void find_save_exit_step(SolutionWrapper* wrapper,
 							 CommitExperimentState* experiment_state);
-	void find_save_backprop(double target_val);
+	void find_save_backprop(double target_val,
+							CommitExperimentHistory* history);
 
 	void commit_train_existing_check_activate(SolutionWrapper* wrapper);
 	void commit_train_existing_step(std::vector<double>& obs,
@@ -172,7 +171,8 @@ public:
 					  CommitExperimentState* experiment_state);
 	void measure_exit_step(SolutionWrapper* wrapper,
 						   CommitExperimentState* experiment_state);
-	void measure_backprop(double target_val);
+	void measure_backprop(double target_val,
+						  CommitExperimentHistory* history);
 
 	#if defined(MDEBUG) && MDEBUG
 	void capture_verify_check_activate(SolutionWrapper* wrapper);
@@ -183,7 +183,7 @@ public:
 							 CommitExperimentState* experiment_state);
 	void capture_verify_exit_step(SolutionWrapper* wrapper,
 								  CommitExperimentState* experiment_state);
-	void capture_verify_backprop();
+	void capture_verify_backprop(CommitExperimentHistory* history);
 	#endif /* MDEBUG */
 
 	void clean();
@@ -192,7 +192,6 @@ public:
 
 class CommitExperimentHistory : public AbstractExperimentHistory {
 public:
-	int instance_count;
 	std::vector<double> existing_predicted_scores;
 
 	CommitExperimentHistory(CommitExperiment* experiment);

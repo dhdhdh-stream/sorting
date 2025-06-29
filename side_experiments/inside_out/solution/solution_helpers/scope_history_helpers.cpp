@@ -71,7 +71,7 @@ void fetch_input_helper(ScopeHistory* scope_history,
 
 void update_scores(ScopeHistory* scope_history,
 				   double target_val,
-				   SolutionWrapper* wrapper) {
+				   int h_index) {
 	scope_history->scope->existing_scope_histories.push_back(scope_history);
 	scope_history->scope->existing_target_val_histories.push_back(target_val);
 
@@ -82,11 +82,11 @@ void update_scores(ScopeHistory* scope_history,
 		case NODE_TYPE_ACTION:
 			{
 				ActionNode* action_node = (ActionNode*)node;
-				if (wrapper->run_index != action_node->last_updated_run_index) {
+				if (h_index != action_node->last_updated_run_index) {
 					action_node->sum_score += target_val;
 					action_node->sum_hits++;
 
-					action_node->last_updated_run_index = wrapper->run_index;
+					action_node->last_updated_run_index = h_index;
 				}
 				action_node->sum_instances++;
 			}
@@ -98,13 +98,13 @@ void update_scores(ScopeHistory* scope_history,
 
 				update_scores(scope_node_history->scope_history,
 							  target_val,
-							  wrapper);
+							  h_index);
 
-				if (wrapper->run_index != scope_node->last_updated_run_index) {
+				if (h_index != scope_node->last_updated_run_index) {
 					scope_node->sum_score += target_val;
 					scope_node->sum_hits++;
 
-					scope_node->last_updated_run_index = wrapper->run_index;
+					scope_node->last_updated_run_index = h_index;
 				}
 				scope_node->sum_instances++;
 			}
@@ -114,19 +114,19 @@ void update_scores(ScopeHistory* scope_history,
 				BranchNode* branch_node = (BranchNode*)node;
 				BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
 				if (branch_node_history->is_branch) {
-					if (wrapper->run_index != branch_node->branch_last_updated_run_index) {
+					if (h_index != branch_node->branch_last_updated_run_index) {
 						branch_node->branch_sum_score += target_val;
 						branch_node->branch_sum_hits++;
 
-						branch_node->branch_last_updated_run_index = wrapper->run_index;
+						branch_node->branch_last_updated_run_index = h_index;
 					}
 					branch_node->branch_sum_instances++;
 				} else {
-					if (wrapper->run_index != branch_node->original_last_updated_run_index) {
+					if (h_index != branch_node->original_last_updated_run_index) {
 						branch_node->original_sum_score += target_val;
 						branch_node->original_sum_hits++;
 
-						branch_node->original_last_updated_run_index = wrapper->run_index;
+						branch_node->original_last_updated_run_index = h_index;
 					}
 					branch_node->original_sum_instances++;
 				}
@@ -135,11 +135,11 @@ void update_scores(ScopeHistory* scope_history,
 		case NODE_TYPE_OBS:
 			{
 				ObsNode* obs_node = (ObsNode*)node;
-				if (wrapper->run_index != obs_node->last_updated_run_index) {
+				if (h_index != obs_node->last_updated_run_index) {
 					obs_node->sum_score += target_val;
 					obs_node->sum_hits++;
 
-					obs_node->last_updated_run_index = wrapper->run_index;
+					obs_node->last_updated_run_index = h_index;
 				}
 				obs_node->sum_instances++;
 			}

@@ -49,11 +49,6 @@ void CommitExperiment::measure_step(vector<double>& obs,
 				wrapper->scope_histories.push_back(inner_scope_history);
 				wrapper->node_context.push_back(this->save_scopes[experiment_state->step_index]->nodes[0]);
 				wrapper->experiment_context.push_back(NULL);
-				wrapper->confusion_context.push_back(NULL);
-
-				if (this->save_scopes[experiment_state->step_index]->new_scope_experiment != NULL) {
-					this->save_scopes[experiment_state->step_index]->new_scope_experiment->pre_activate(wrapper);
-				}
 			}
 		}
 	} else {
@@ -143,11 +138,6 @@ void CommitExperiment::measure_step(vector<double>& obs,
 					wrapper->scope_histories.push_back(inner_scope_history);
 					wrapper->node_context.push_back(node->scope->nodes[0]);
 					wrapper->experiment_context.push_back(NULL);
-					wrapper->confusion_context.push_back(NULL);
-
-					if (node->scope->new_scope_experiment != NULL) {
-						node->scope->new_scope_experiment->pre_activate(wrapper);
-					}
 				}
 				break;
 			case NODE_TYPE_OBS:
@@ -185,7 +175,6 @@ void CommitExperiment::measure_exit_step(SolutionWrapper* wrapper,
 		wrapper->scope_histories.pop_back();
 		wrapper->node_context.pop_back();
 		wrapper->experiment_context.pop_back();
-		wrapper->confusion_context.pop_back();
 
 		experiment_state->step_index++;
 	} else {
@@ -198,158 +187,160 @@ void CommitExperiment::measure_exit_step(SolutionWrapper* wrapper,
 		wrapper->scope_histories.pop_back();
 		wrapper->node_context.pop_back();
 		wrapper->experiment_context.pop_back();
-		wrapper->confusion_context.pop_back();
 
 		experiment_state->step_index++;
 	}
 }
 
-void CommitExperiment::measure_backprop(double target_val) {
-	this->i_target_val_histories.push_back(target_val);
+void CommitExperiment::measure_backprop(double target_val,
+										CommitExperimentHistory* history) {
+	if (history->is_hit) {
+		this->i_target_val_histories.push_back(target_val);
 
-	this->state_iter++;
-	if (this->state_iter == EARLY_SUCCESS_S1_ITERS
-			|| this->state_iter == EARLY_SUCCESS_S2_ITERS) {
-		double sum_score = 0.0;
-		for (int h_index = 0; h_index < (int)this->i_target_val_histories.size(); h_index++) {
-			sum_score += this->i_target_val_histories[h_index];
-		}
-		double new_score = sum_score / (double)this->state_iter;
-
-		double sum_variance = 0.0;
-		for (int h_index = 0; h_index < (int)this->i_target_val_histories.size(); h_index++) {
-			sum_variance += (this->i_target_val_histories[h_index] - new_score)
-				* (this->i_target_val_histories[h_index] - new_score);
-		}
-		double new_standard_deviation = sqrt(sum_variance / (double)this->i_target_val_histories.size());
-		if (new_standard_deviation < MIN_STANDARD_DEVIATION) {
-			new_standard_deviation = MIN_STANDARD_DEVIATION;
-		}
-
-		double existing_score;
-		switch (this->node_context->type) {
-		case NODE_TYPE_ACTION:
-			{
-				ActionNode* action_node = (ActionNode*)this->node_context;
-				existing_score = action_node->average_score;
+		this->state_iter++;
+		if (this->state_iter == EARLY_SUCCESS_S1_ITERS
+				|| this->state_iter == EARLY_SUCCESS_S2_ITERS) {
+			double sum_score = 0.0;
+			for (int h_index = 0; h_index < (int)this->i_target_val_histories.size(); h_index++) {
+				sum_score += this->i_target_val_histories[h_index];
 			}
-			break;
-		case NODE_TYPE_SCOPE:
-			{
-				ScopeNode* scope_node = (ScopeNode*)this->node_context;
-				existing_score = scope_node->average_score;
+			double new_score = sum_score / (double)this->state_iter;
+
+			double sum_variance = 0.0;
+			for (int h_index = 0; h_index < (int)this->i_target_val_histories.size(); h_index++) {
+				sum_variance += (this->i_target_val_histories[h_index] - new_score)
+					* (this->i_target_val_histories[h_index] - new_score);
 			}
-			break;
-		case NODE_TYPE_BRANCH:
-			{
-				BranchNode* branch_node = (BranchNode*)this->node_context;
-				if (this->is_branch) {
-					existing_score = branch_node->branch_average_score;
-				} else {
-					existing_score = branch_node->original_average_score;
+			double new_standard_deviation = sqrt(sum_variance / (double)this->i_target_val_histories.size());
+			if (new_standard_deviation < MIN_STANDARD_DEVIATION) {
+				new_standard_deviation = MIN_STANDARD_DEVIATION;
+			}
+
+			double existing_score;
+			switch (this->node_context->type) {
+			case NODE_TYPE_ACTION:
+				{
+					ActionNode* action_node = (ActionNode*)this->node_context;
+					existing_score = action_node->average_score;
 				}
-			}
-			break;
-		case NODE_TYPE_OBS:
-			{
-				ObsNode* obs_node = (ObsNode*)this->node_context;
-				existing_score = obs_node->average_score;
-			}
-			break;
-		}
-
-		double t_score = (new_score - existing_score) / new_standard_deviation;
-		if (t_score >= EARLY_SUCCESS_MIN_T_SCORE) {
-			this->improvement = new_score - existing_score;
-
-			cout << "CommitExperiment success" << endl;
-
-			cout << "existing_score: " << existing_score << endl;
-			cout << "this->commit_existing_average_score: " << this->commit_existing_average_score << endl;
-			cout << "this->commit_new_average_score: " << this->commit_new_average_score << endl;
-
-			cout << "this->new_nodes.size(): " << this->new_nodes.size() << endl;
-			cout << "this->step_iter: " << this->step_iter << endl;
-
-			cout << "this->improvement: " << this->improvement << endl;
-
-			#if defined(MDEBUG) && MDEBUG
-			this->verify_problems = vector<Problem*>(NUM_VERIFY_SAMPLES, NULL);
-			this->verify_seeds = vector<unsigned long>(NUM_VERIFY_SAMPLES);
-
-			this->state = COMMIT_EXPERIMENT_STATE_CAPTURE_VERIFY;
-			this->state_iter = 0;
-			#else
-			this->result = EXPERIMENT_RESULT_SUCCESS;
-			#endif /* MDEBUG */
-		}
-	} else if (this->state_iter >= MEASURE_ITERS) {
-		double sum_score = 0.0;
-		for (int h_index = 0; h_index < (int)this->i_target_val_histories.size(); h_index++) {
-			sum_score += this->i_target_val_histories[h_index];
-		}
-		double new_score = sum_score / (double)this->state_iter;
-
-		double existing_score;
-		switch (this->node_context->type) {
-		case NODE_TYPE_ACTION:
-			{
-				ActionNode* action_node = (ActionNode*)this->node_context;
-				existing_score = action_node->average_score;
-			}
-			break;
-		case NODE_TYPE_SCOPE:
-			{
-				ScopeNode* scope_node = (ScopeNode*)this->node_context;
-				existing_score = scope_node->average_score;
-			}
-			break;
-		case NODE_TYPE_BRANCH:
-			{
-				BranchNode* branch_node = (BranchNode*)this->node_context;
-				if (this->is_branch) {
-					existing_score = branch_node->branch_average_score;
-				} else {
-					existing_score = branch_node->original_average_score;
+				break;
+			case NODE_TYPE_SCOPE:
+				{
+					ScopeNode* scope_node = (ScopeNode*)this->node_context;
+					existing_score = scope_node->average_score;
 				}
+				break;
+			case NODE_TYPE_BRANCH:
+				{
+					BranchNode* branch_node = (BranchNode*)this->node_context;
+					if (this->is_branch) {
+						existing_score = branch_node->branch_average_score;
+					} else {
+						existing_score = branch_node->original_average_score;
+					}
+				}
+				break;
+			case NODE_TYPE_OBS:
+				{
+					ObsNode* obs_node = (ObsNode*)this->node_context;
+					existing_score = obs_node->average_score;
+				}
+				break;
 			}
-			break;
-		case NODE_TYPE_OBS:
-			{
-				ObsNode* obs_node = (ObsNode*)this->node_context;
-				existing_score = obs_node->average_score;
+
+			double t_score = (new_score - existing_score) / new_standard_deviation;
+			if (t_score >= EARLY_SUCCESS_MIN_T_SCORE) {
+				this->improvement = new_score - existing_score;
+
+				cout << "CommitExperiment success" << endl;
+
+				cout << "existing_score: " << existing_score << endl;
+				cout << "this->commit_existing_average_score: " << this->commit_existing_average_score << endl;
+				cout << "this->commit_new_average_score: " << this->commit_new_average_score << endl;
+
+				cout << "this->new_nodes.size(): " << this->new_nodes.size() << endl;
+				cout << "this->step_iter: " << this->step_iter << endl;
+
+				cout << "this->improvement: " << this->improvement << endl;
+
+				#if defined(MDEBUG) && MDEBUG
+				this->verify_problems = vector<Problem*>(NUM_VERIFY_SAMPLES, NULL);
+				this->verify_seeds = vector<unsigned long>(NUM_VERIFY_SAMPLES);
+
+				this->state = COMMIT_EXPERIMENT_STATE_CAPTURE_VERIFY;
+				this->state_iter = 0;
+				#else
+				this->result = EXPERIMENT_RESULT_SUCCESS;
+				#endif /* MDEBUG */
 			}
-			break;
-		}
-		#if defined(MDEBUG) && MDEBUG
-		if (rand()%2 == 0) {
-		#else
-		if (new_score > existing_score) {
-		#endif /* MDEBUG */
-			this->improvement = new_score - existing_score;
+		} else if (this->state_iter >= MEASURE_ITERS) {
+			double sum_score = 0.0;
+			for (int h_index = 0; h_index < (int)this->i_target_val_histories.size(); h_index++) {
+				sum_score += this->i_target_val_histories[h_index];
+			}
+			double new_score = sum_score / (double)this->state_iter;
 
-			cout << "CommitExperiment success" << endl;
-
-			cout << "existing_score: " << existing_score << endl;
-			cout << "this->commit_existing_average_score: " << this->commit_existing_average_score << endl;
-			cout << "this->commit_new_average_score: " << this->commit_new_average_score << endl;
-
-			cout << "this->new_nodes.size(): " << this->new_nodes.size() << endl;
-			cout << "this->step_iter: " << this->step_iter << endl;
-
-			cout << "this->improvement: " << this->improvement << endl;
-
+			double existing_score;
+			switch (this->node_context->type) {
+			case NODE_TYPE_ACTION:
+				{
+					ActionNode* action_node = (ActionNode*)this->node_context;
+					existing_score = action_node->average_score;
+				}
+				break;
+			case NODE_TYPE_SCOPE:
+				{
+					ScopeNode* scope_node = (ScopeNode*)this->node_context;
+					existing_score = scope_node->average_score;
+				}
+				break;
+			case NODE_TYPE_BRANCH:
+				{
+					BranchNode* branch_node = (BranchNode*)this->node_context;
+					if (this->is_branch) {
+						existing_score = branch_node->branch_average_score;
+					} else {
+						existing_score = branch_node->original_average_score;
+					}
+				}
+				break;
+			case NODE_TYPE_OBS:
+				{
+					ObsNode* obs_node = (ObsNode*)this->node_context;
+					existing_score = obs_node->average_score;
+				}
+				break;
+			}
 			#if defined(MDEBUG) && MDEBUG
-			this->verify_problems = vector<Problem*>(NUM_VERIFY_SAMPLES, NULL);
-			this->verify_seeds = vector<unsigned long>(NUM_VERIFY_SAMPLES);
-
-			this->state = COMMIT_EXPERIMENT_STATE_CAPTURE_VERIFY;
-			this->state_iter = 0;
+			if (rand()%2 == 0) {
 			#else
-			this->result = EXPERIMENT_RESULT_SUCCESS;
+			if (new_score > existing_score) {
 			#endif /* MDEBUG */
-		} else {
-			this->result = EXPERIMENT_RESULT_FAIL;
+				this->improvement = new_score - existing_score;
+
+				cout << "CommitExperiment success" << endl;
+
+				cout << "existing_score: " << existing_score << endl;
+				cout << "this->commit_existing_average_score: " << this->commit_existing_average_score << endl;
+				cout << "this->commit_new_average_score: " << this->commit_new_average_score << endl;
+
+				cout << "this->new_nodes.size(): " << this->new_nodes.size() << endl;
+				cout << "this->step_iter: " << this->step_iter << endl;
+
+				cout << "this->improvement: " << this->improvement << endl;
+
+				#if defined(MDEBUG) && MDEBUG
+				this->verify_problems = vector<Problem*>(NUM_VERIFY_SAMPLES, NULL);
+				this->verify_seeds = vector<unsigned long>(NUM_VERIFY_SAMPLES);
+
+				this->state = COMMIT_EXPERIMENT_STATE_CAPTURE_VERIFY;
+				this->state_iter = 0;
+				#else
+				this->result = EXPERIMENT_RESULT_SUCCESS;
+				#endif /* MDEBUG */
+			} else {
+				this->result = EXPERIMENT_RESULT_FAIL;
+			}
 		}
 	}
 }

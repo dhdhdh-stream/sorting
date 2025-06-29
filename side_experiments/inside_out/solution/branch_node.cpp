@@ -3,7 +3,6 @@
 #include <iostream>
 
 #include "abstract_experiment.h"
-#include "confusion.h"
 #include "constants.h"
 #include "factor.h"
 #include "globals.h"
@@ -19,7 +18,6 @@ BranchNode::BranchNode() {
 	this->is_init = false;
 
 	this->experiment = NULL;
-	this->confusion = NULL;
 
 	#if defined(MDEBUG) && MDEBUG
 	this->verify_key = NULL;
@@ -32,10 +30,6 @@ BranchNode::BranchNode() {
 BranchNode::~BranchNode() {
 	if (this->experiment != NULL) {
 		this->experiment->decrement(this);
-	}
-
-	if (this->confusion != NULL) {
-		delete this->confusion;
 	}
 }
 
@@ -138,11 +132,6 @@ void BranchNode::clean() {
 		this->experiment = NULL;
 	}
 
-	if (this->confusion != NULL) {
-		delete this->confusion;
-		this->confusion = NULL;
-	}
-
 	this->original_sum_score = 0.0;
 	this->original_sum_hits = 0;
 	this->original_sum_instances = 0;
@@ -151,11 +140,11 @@ void BranchNode::clean() {
 	this->branch_sum_instances = 0;
 }
 
-void BranchNode::measure_update() {
-	this->original_average_hits_per_run = (double)this->original_sum_hits / (double)MEASURE_ITERS;
+void BranchNode::measure_update(int total_count) {
+	this->original_average_hits_per_run = (double)this->original_sum_hits / (double)total_count;
 	this->original_average_instances_per_run = (double)this->original_sum_instances / (double)this->original_sum_hits;
 	this->original_average_score = this->original_sum_score / (double)this->original_sum_hits;
-	this->branch_average_hits_per_run = (double)this->branch_sum_hits / (double)MEASURE_ITERS;
+	this->branch_average_hits_per_run = (double)this->branch_sum_hits / (double)total_count;
 	this->branch_average_instances_per_run = (double)this->branch_sum_instances / (double)this->branch_sum_hits;
 	this->branch_average_score = this->branch_sum_score / (double)this->branch_sum_hits;
 }

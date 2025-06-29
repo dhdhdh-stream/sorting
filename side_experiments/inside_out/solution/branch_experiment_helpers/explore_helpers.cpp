@@ -85,8 +85,14 @@ void BranchExperiment::explore_check_activate(
 			starting_node,
 			possible_exits);
 
-		uniform_int_distribution<int> exit_distribution(0, possible_exits.size()-1);
-		int random_index = exit_distribution(generator);
+		geometric_distribution<int> exit_distribution(0.2);
+		int random_index;
+		while (true) {
+			random_index = exit_distribution(generator);
+			if (random_index < (int)possible_exits.size()) {
+				break;
+			}
+		}
 		this->curr_exit_next_node = possible_exits[random_index];
 
 		int new_num_steps;
@@ -153,11 +159,6 @@ void BranchExperiment::explore_step(vector<double>& obs,
 			wrapper->scope_histories.push_back(inner_scope_history);
 			wrapper->node_context.push_back(this->curr_scopes[experiment_state->step_index]->nodes[0]);
 			wrapper->experiment_context.push_back(NULL);
-			wrapper->confusion_context.push_back(NULL);
-
-			if (this->curr_scopes[experiment_state->step_index]->new_scope_experiment != NULL) {
-				this->curr_scopes[experiment_state->step_index]->new_scope_experiment->pre_activate(wrapper);
-			}
 		}
 	}
 }
@@ -180,7 +181,6 @@ void BranchExperiment::explore_exit_step(SolutionWrapper* wrapper,
 	wrapper->scope_histories.pop_back();
 	wrapper->node_context.pop_back();
 	wrapper->experiment_context.pop_back();
-	wrapper->confusion_context.pop_back();
 
 	experiment_state->step_index++;
 }

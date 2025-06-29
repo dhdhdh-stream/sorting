@@ -140,11 +140,6 @@ void CommitExperiment::explore_step(vector<double>& obs,
 			wrapper->scope_histories.push_back(inner_scope_history);
 			wrapper->node_context.push_back(this->curr_scopes[experiment_state->step_index]->nodes[0]);
 			wrapper->experiment_context.push_back(NULL);
-			wrapper->confusion_context.push_back(NULL);
-
-			if (this->curr_scopes[experiment_state->step_index]->new_scope_experiment != NULL) {
-				this->curr_scopes[experiment_state->step_index]->new_scope_experiment->pre_activate(wrapper);
-			}
 		}
 	}
 }
@@ -167,7 +162,6 @@ void CommitExperiment::explore_exit_step(SolutionWrapper* wrapper,
 	wrapper->scope_histories.pop_back();
 	wrapper->node_context.pop_back();
 	wrapper->experiment_context.pop_back();
-	wrapper->confusion_context.pop_back();
 
 	experiment_state->step_index++;
 }
@@ -175,43 +169,45 @@ void CommitExperiment::explore_exit_step(SolutionWrapper* wrapper,
 void CommitExperiment::explore_backprop(
 		double target_val,
 		CommitExperimentHistory* history) {
-	uniform_int_distribution<int> until_distribution(0, (int)this->average_instances_per_run-1);
-	this->num_instances_until_target = 1 + until_distribution(generator);
+	if (history->is_hit) {
+		uniform_int_distribution<int> until_distribution(0, (int)this->average_instances_per_run-1);
+		this->num_instances_until_target = 1 + until_distribution(generator);
 
-	if (history->existing_predicted_scores.size() > 0) {
-		double curr_surprise = target_val - history->existing_predicted_scores[0];
+		if (history->existing_predicted_scores.size() > 0) {
+			double curr_surprise = target_val - history->existing_predicted_scores[0];
 
-		#if defined(MDEBUG) && MDEBUG
-		if (true) {
-		#else
-		if (curr_surprise > this->best_surprise) {
-		#endif /* MDEBUG */
-			this->best_surprise = curr_surprise;
-			this->best_step_types = this->curr_step_types;
-			this->best_actions = this->curr_actions;
-			this->best_scopes = this->curr_scopes;
-			this->best_exit_next_node = this->curr_exit_next_node;
+			#if defined(MDEBUG) && MDEBUG
+			if (true) {
+			#else
+			if (curr_surprise > this->best_surprise) {
+			#endif /* MDEBUG */
+				this->best_surprise = curr_surprise;
+				this->best_step_types = this->curr_step_types;
+				this->best_actions = this->curr_actions;
+				this->best_scopes = this->curr_scopes;
+				this->best_exit_next_node = this->curr_exit_next_node;
 
-			this->curr_step_types.clear();
-			this->curr_actions.clear();
-			this->curr_scopes.clear();
-		} else {
-			this->curr_step_types.clear();
-			this->curr_actions.clear();
-			this->curr_scopes.clear();
-		}
-
-		this->state_iter++;
-		if (this->state_iter >= COMMIT_EXPERIMENT_EXPLORE_ITERS) {
-			if (this->best_surprise > 0.0) {
-				this->step_iter = (int)this->best_step_types.size();
-				this->save_iter = 0;
-
-				this->state_iter = -1;
-
-				this->state = COMMIT_EXPERIMENT_STATE_FIND_SAVE;
+				this->curr_step_types.clear();
+				this->curr_actions.clear();
+				this->curr_scopes.clear();
 			} else {
-				this->result = EXPERIMENT_RESULT_FAIL;
+				this->curr_step_types.clear();
+				this->curr_actions.clear();
+				this->curr_scopes.clear();
+			}
+
+			this->state_iter++;
+			if (this->state_iter >= COMMIT_EXPERIMENT_EXPLORE_ITERS) {
+				if (this->best_surprise > 0.0) {
+					this->step_iter = (int)this->best_step_types.size();
+					this->save_iter = 0;
+
+					this->state_iter = -1;
+
+					this->state = COMMIT_EXPERIMENT_STATE_FIND_SAVE;
+				} else {
+					this->result = EXPERIMENT_RESULT_FAIL;
+				}
 			}
 		}
 	}

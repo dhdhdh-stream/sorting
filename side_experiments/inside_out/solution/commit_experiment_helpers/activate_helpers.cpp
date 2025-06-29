@@ -17,13 +17,8 @@ void CommitExperiment::check_activate(AbstractNode* experiment_node,
 									  bool is_branch,
 									  SolutionWrapper* wrapper) {
 	if (is_branch == this->is_branch) {
-		CommitExperimentHistory* history;
-		if (wrapper->experiment_history != NULL) {
-			history = (CommitExperimentHistory*)wrapper->experiment_history;
-		} else {
-			history = new CommitExperimentHistory(this);
-			wrapper->experiment_history = history;
-		}
+		CommitExperimentHistory* history = (CommitExperimentHistory*)wrapper->experiment_history;
+		history->is_hit = true;
 
 		switch (this->state) {
 		case COMMIT_EXPERIMENT_STATE_EXPLORE:
@@ -162,24 +157,45 @@ void CommitExperiment::backprop(double target_val,
 	case COMMIT_EXPERIMENT_STATE_EXPLORE:
 		explore_backprop(target_val,
 						 history);
+
+		delete wrapper->scope_histories[0];
+
 		break;
 	case COMMIT_EXPERIMENT_STATE_FIND_SAVE:
-		find_save_backprop(target_val);
+		find_save_backprop(target_val,
+						   history);
+
+		delete wrapper->scope_histories[0];
+
 		break;
 	case COMMIT_EXPERIMENT_STATE_COMMIT_TRAIN_EXISTING:
 		commit_train_existing_backprop(target_val,
 									   history);
+
+		delete wrapper->scope_histories[0];
+
 		break;
 	case COMMIT_EXPERIMENT_STATE_COMMIT_TRAIN_NEW:
 		commit_train_new_backprop(target_val,
 								  history);
+
+		delete wrapper->scope_histories[0];
+
 		break;
 	case COMMIT_EXPERIMENT_STATE_MEASURE:
-		measure_backprop(target_val);
+		measure_backprop(target_val,
+						 history);
+
+		this->new_scope_histories.push_back(wrapper->scope_histories[0]);
+		this->new_target_val_histories.push_back(target_val);
+
 		break;
 	#if defined(MDEBUG) && MDEBUG
 	case COMMIT_EXPERIMENT_STATE_CAPTURE_VERIFY:
-		capture_verify_backprop();
+		capture_verify_backprop(history);
+
+		delete wrapper->scope_histories[0];
+
 		break;
 	#endif /* MDEBUG */
 	}

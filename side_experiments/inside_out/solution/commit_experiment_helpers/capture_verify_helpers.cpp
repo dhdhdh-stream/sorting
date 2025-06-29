@@ -55,11 +55,6 @@ void CommitExperiment::capture_verify_step(vector<double>& obs,
 				wrapper->scope_histories.push_back(inner_scope_history);
 				wrapper->node_context.push_back(this->save_scopes[experiment_state->step_index]->nodes[0]);
 				wrapper->experiment_context.push_back(NULL);
-				wrapper->confusion_context.push_back(NULL);
-
-				if (this->save_scopes[experiment_state->step_index]->new_scope_experiment != NULL) {
-					this->save_scopes[experiment_state->step_index]->new_scope_experiment->pre_activate(wrapper);
-				}
 			}
 		}
 	} else {
@@ -162,11 +157,6 @@ void CommitExperiment::capture_verify_step(vector<double>& obs,
 					wrapper->scope_histories.push_back(inner_scope_history);
 					wrapper->node_context.push_back(node->scope->nodes[0]);
 					wrapper->experiment_context.push_back(NULL);
-					wrapper->confusion_context.push_back(NULL);
-
-					if (node->scope->new_scope_experiment != NULL) {
-						node->scope->new_scope_experiment->pre_activate(wrapper);
-					}
 				}
 				break;
 			case NODE_TYPE_OBS:
@@ -204,7 +194,6 @@ void CommitExperiment::capture_verify_exit_step(SolutionWrapper* wrapper,
 		wrapper->scope_histories.pop_back();
 		wrapper->node_context.pop_back();
 		wrapper->experiment_context.pop_back();
-		wrapper->confusion_context.pop_back();
 
 		experiment_state->step_index++;
 	} else {
@@ -217,14 +206,13 @@ void CommitExperiment::capture_verify_exit_step(SolutionWrapper* wrapper,
 		wrapper->scope_histories.pop_back();
 		wrapper->node_context.pop_back();
 		wrapper->experiment_context.pop_back();
-		wrapper->confusion_context.pop_back();
 
 		experiment_state->step_index++;
 	}
 }
 
-void CommitExperiment::capture_verify_backprop() {
-	if (this->verify_problems[this->state_iter] != NULL) {
+void CommitExperiment::capture_verify_backprop(CommitExperimentHistory* history) {
+	if (history->is_hit) {
 		this->state_iter++;
 		if (this->state_iter >= NUM_VERIFY_SAMPLES) {
 			this->result = EXPERIMENT_RESULT_SUCCESS;

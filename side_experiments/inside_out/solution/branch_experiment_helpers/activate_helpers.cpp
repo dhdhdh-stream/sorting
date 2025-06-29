@@ -17,13 +17,8 @@ void BranchExperiment::check_activate(AbstractNode* experiment_node,
 									  bool is_branch,
 									  SolutionWrapper* wrapper) {
 	if (is_branch == this->is_branch) {
-		BranchExperimentHistory* history;
-		if (wrapper->experiment_history != NULL) {
-			history = (BranchExperimentHistory*)wrapper->experiment_history;
-		} else {
-			history = new BranchExperimentHistory(this);
-			wrapper->experiment_history = history;
-		}
+		BranchExperimentHistory* history = (BranchExperimentHistory*)wrapper->experiment_history;
+		history->is_hit = true;
 
 		switch (this->state) {
 		case BRANCH_EXPERIMENT_STATE_EXPLORE:
@@ -125,17 +120,31 @@ void BranchExperiment::backprop(double target_val,
 	case BRANCH_EXPERIMENT_STATE_EXPLORE:
 		explore_backprop(target_val,
 						 history);
+
+		delete wrapper->scope_histories[0];
+
 		break;
 	case BRANCH_EXPERIMENT_STATE_TRAIN_NEW:
 		train_new_backprop(target_val,
 						   history);
+
+		delete wrapper->scope_histories[0];
+
 		break;
 	case BRANCH_EXPERIMENT_STATE_MEASURE:
-		measure_backprop(target_val);
+		measure_backprop(target_val,
+						 history);
+
+		this->new_scope_histories.push_back(wrapper->scope_histories[0]);
+		this->new_target_val_histories.push_back(target_val);
+
 		break;
 	#if defined(MDEBUG) && MDEBUG
 	case BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY:
-		capture_verify_backprop();
+		capture_verify_backprop(history);
+
+		delete wrapper->scope_histories[0];
+
 		break;
 	#endif /* MDEBUG */
 	}

@@ -56,11 +56,6 @@ void CommitExperiment::commit_train_new_step(
 				wrapper->scope_histories.push_back(inner_scope_history);
 				wrapper->node_context.push_back(this->save_scopes[experiment_state->step_index]->nodes[0]);
 				wrapper->experiment_context.push_back(NULL);
-				wrapper->confusion_context.push_back(NULL);
-
-				if (this->save_scopes[experiment_state->step_index]->new_scope_experiment != NULL) {
-					this->save_scopes[experiment_state->step_index]->new_scope_experiment->pre_activate(wrapper);
-				}
 			}
 		}
 	} else {
@@ -138,11 +133,6 @@ void CommitExperiment::commit_train_new_step(
 					wrapper->scope_histories.push_back(inner_scope_history);
 					wrapper->node_context.push_back(node->scope->nodes[0]);
 					wrapper->experiment_context.push_back(NULL);
-					wrapper->confusion_context.push_back(NULL);
-
-					if (node->scope->new_scope_experiment != NULL) {
-						node->scope->new_scope_experiment->pre_activate(wrapper);
-					}
 				}
 				break;
 			case NODE_TYPE_OBS:
@@ -181,7 +171,6 @@ void CommitExperiment::commit_train_new_exit_step(
 		wrapper->scope_histories.pop_back();
 		wrapper->node_context.pop_back();
 		wrapper->experiment_context.pop_back();
-		wrapper->confusion_context.pop_back();
 
 		experiment_state->step_index++;
 	} else {
@@ -194,7 +183,6 @@ void CommitExperiment::commit_train_new_exit_step(
 		wrapper->scope_histories.pop_back();
 		wrapper->node_context.pop_back();
 		wrapper->experiment_context.pop_back();
-		wrapper->confusion_context.pop_back();
 
 		experiment_state->step_index++;
 	}
@@ -203,55 +191,57 @@ void CommitExperiment::commit_train_new_exit_step(
 void CommitExperiment::commit_train_new_backprop(
 		double target_val,
 		CommitExperimentHistory* history) {
-	for (int i_index = 0; i_index < (int)history->existing_predicted_scores.size(); i_index++) {
-		this->i_target_val_histories.push_back(target_val - history->existing_predicted_scores[i_index]);
-	}
-
-	this->state_iter++;
-	if (this->state_iter >= TRAIN_NEW_NUM_DATAPOINTS
-			&& (int)this->i_target_val_histories.size() >= TRAIN_NEW_NUM_DATAPOINTS) {
-		double average_score;
-		vector<Input> factor_inputs;
-		vector<double> factor_input_averages;
-		vector<double> factor_input_standard_deviations;
-		vector<double> factor_weights;
-		vector<Input> network_inputs;
-		Network* network = NULL;
-		double select_percentage;
-		bool is_success = train_new(this->scope_histories,
-									this->i_target_val_histories,
-									average_score,
-									factor_inputs,
-									factor_input_averages,
-									factor_input_standard_deviations,
-									factor_weights,
-									network_inputs,
-									network,
-									select_percentage);
-
-		for (int h_index = 0; h_index < (int)this->scope_histories.size(); h_index++) {
-			delete this->scope_histories[h_index];
+	if (history->is_hit) {
+		for (int i_index = 0; i_index < (int)history->existing_predicted_scores.size(); i_index++) {
+			this->i_target_val_histories.push_back(target_val - history->existing_predicted_scores[i_index]);
 		}
-		this->scope_histories.clear();
-		this->i_target_val_histories.clear();
 
-		if (is_success) {
-			this->commit_new_average_score = average_score;
-			this->commit_new_inputs = factor_inputs;
-			this->commit_new_input_averages = factor_input_averages;
-			this->commit_new_input_standard_deviations = factor_input_standard_deviations;
-			this->commit_new_weights = factor_weights;
-			this->commit_new_network_inputs = network_inputs;
-			this->commit_new_network = network;
+		this->state_iter++;
+		if (this->state_iter >= TRAIN_NEW_NUM_DATAPOINTS
+				&& (int)this->i_target_val_histories.size() >= TRAIN_NEW_NUM_DATAPOINTS) {
+			double average_score;
+			vector<Input> factor_inputs;
+			vector<double> factor_input_averages;
+			vector<double> factor_input_standard_deviations;
+			vector<double> factor_weights;
+			vector<Input> network_inputs;
+			Network* network = NULL;
+			double select_percentage;
+			bool is_success = train_new(this->scope_histories,
+										this->i_target_val_histories,
+										average_score,
+										factor_inputs,
+										factor_input_averages,
+										factor_input_standard_deviations,
+										factor_weights,
+										network_inputs,
+										network,
+										select_percentage);
 
-			this->state = COMMIT_EXPERIMENT_STATE_MEASURE;
-			this->state_iter = 0;
-		} else {
-			if (network != NULL) {
-				delete network;
+			for (int h_index = 0; h_index < (int)this->scope_histories.size(); h_index++) {
+				delete this->scope_histories[h_index];
 			}
+			this->scope_histories.clear();
+			this->i_target_val_histories.clear();
 
-			this->result = EXPERIMENT_RESULT_FAIL;
+			if (is_success) {
+				this->commit_new_average_score = average_score;
+				this->commit_new_inputs = factor_inputs;
+				this->commit_new_input_averages = factor_input_averages;
+				this->commit_new_input_standard_deviations = factor_input_standard_deviations;
+				this->commit_new_weights = factor_weights;
+				this->commit_new_network_inputs = network_inputs;
+				this->commit_new_network = network;
+
+				this->state = COMMIT_EXPERIMENT_STATE_MEASURE;
+				this->state_iter = 0;
+			} else {
+				if (network != NULL) {
+					delete network;
+				}
+
+				this->result = EXPERIMENT_RESULT_FAIL;
+			}
 		}
 	}
 }

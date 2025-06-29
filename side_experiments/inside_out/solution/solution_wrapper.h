@@ -9,7 +9,6 @@ class AbstractExperiment;
 class AbstractExperimentHistory;
 class AbstractExperimentState;
 class AbstractNode;
-class ConfusionState;
 class Problem;
 class ScopeHistory;
 class Solution;
@@ -20,8 +19,6 @@ public:
 
 	Solution* solution;
 
-	int run_index;
-
 	/**
 	 * - iter variables
 	 */
@@ -29,24 +26,19 @@ public:
 	AbstractExperiment* best_experiment;
 	int improvement_iter;
 
-	int sum_num_actions;
-	int sum_num_confusion_instances;
-	int experiment_iter;
-
 	/**
 	 * - run variables
 	 */
 	std::vector<ScopeHistory*> scope_histories;
 	std::vector<AbstractNode*> node_context;
 	std::vector<AbstractExperimentState*> experiment_context;
-	std::vector<ConfusionState*> confusion_context;
 
 	int num_actions;
-	int num_confusion_instances;
 
 	AbstractExperimentHistory* experiment_history;
 
 	#if defined(MDEBUG) && MDEBUG
+	int run_index;
 	unsigned long starting_run_seed;
 	unsigned long curr_run_seed;
 	Problem* problem;
@@ -76,7 +68,7 @@ public:
 	void measure_init();
 	std::pair<bool,int> measure_step(std::vector<double> obs);
 	void measure_end(double result);
-	void measure_update(double new_score);
+	void measure_update();
 
 	bool is_done();
 

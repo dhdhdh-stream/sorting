@@ -8,15 +8,11 @@
 
 using namespace std;
 
-const int MAX_STAGNANT_TIMESTEPS = 5;
-
 void SolutionWrapper::measure_init() {
-	this->run_index++;
-
 	this->num_actions = 1;
-	this->num_confusion_instances = 0;
 
 	#if defined(MDEBUG) && MDEBUG
+	this->run_index++;
 	this->starting_run_seed = this->run_index;
 	this->curr_run_seed = xorshift(this->starting_run_seed);
 	#endif /* MDEBUG */
@@ -51,9 +47,18 @@ pair<bool,int> SolutionWrapper::measure_step(vector<double> obs) {
 }
 
 void SolutionWrapper::measure_end(double result) {
-	update_scores(this->scope_histories[0],
-				  result,
-				  this);
+	while (true) {
+		if (this->node_context.back() == NULL) {
+			if (this->scope_histories.size() == 1) {
+				break;
+			} else {
+				ScopeNode* scope_node = (ScopeNode*)this->node_context[this->node_context.size() - 2];
+				scope_node->exit_step(this);
+			}
+		} else {
+			this->node_context.back() = NULL;
+		}
+	}
 
 	this->solution->existing_scope_histories.push_back(this->scope_histories[0]);
 	this->solution->existing_target_val_histories.push_back(result);
@@ -62,15 +67,6 @@ void SolutionWrapper::measure_end(double result) {
 	this->node_context.clear();
 }
 
-void SolutionWrapper::measure_update(double new_score) {
-	if (new_score > this->solution->best_score) {
-		this->solution->best_score = new_score;
-		this->solution->best_timestamp = this->solution->timestamp;
-	} else if (this->solution->timestamp >= this->solution->best_timestamp + MAX_STAGNANT_TIMESTEPS) {
-		this->solution->timestamp = -1;
-	}
-
-	this->solution->curr_score = new_score;
-
+void SolutionWrapper::measure_update() {
 	this->solution->measure_update();
 }

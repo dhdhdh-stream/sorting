@@ -1,7 +1,6 @@
 #include "branch_node.h"
 
 #include "abstract_experiment.h"
-#include "confusion.h"
 #include "scope.h"
 #include "solution_helpers.h"
 #include "solution_wrapper.h"
@@ -63,9 +62,5 @@ void BranchNode::experiment_step(vector<double>& obs,
 			this,
 			is_branch,
 			wrapper);
-	} else if (this->confusion != NULL) {
-		if (this->confusion->is_branch == is_branch) {
-			this->confusion->check_activate(wrapper);
-		}
 	}
 }

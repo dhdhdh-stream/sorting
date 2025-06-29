@@ -3,7 +3,6 @@
 #include <iostream>
 
 #include "abstract_experiment.h"
-#include "confusion.h"
 #include "globals.h"
 #include "problem.h"
 #include "scope.h"
@@ -34,7 +33,5 @@ void ActionNode::experiment_step(vector<double>& obs,
 			this,
 			false,
 			wrapper);
-	} else if (this->confusion != NULL) {
-		this->confusion->check_activate(wrapper);
 	}
 }

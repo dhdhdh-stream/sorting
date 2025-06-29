@@ -32,6 +32,9 @@ public:
 
 	double improvement;
 
+	std::vector<ScopeHistory*> new_scope_histories;
+	std::vector<double> new_target_val_histories;
+
 	virtual ~AbstractExperiment() {};
 	virtual void decrement(AbstractNode* experiment_node) = 0;
 
@@ -56,6 +59,8 @@ public:
 class AbstractExperimentHistory {
 public:
 	AbstractExperiment* experiment;
+
+	bool is_hit;
 
 	virtual ~AbstractExperimentHistory() {};
 };

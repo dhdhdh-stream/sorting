@@ -1,3 +1,12 @@
+// TODO: for reward signal, only select explore nodes that are in the front half
+// TODO: compare reward signal result and actual result
+
+// TODO: for test problem, maybe have positive score or 0
+// - 10 different things that need to be learned to be done
+//   - but have to be pretty precise/can't easily guess?
+// - also have success sometimes when nothing is done
+//   - so success signal isn't 100% correlated with action being performed
+
 #include "solution_helpers.h"
 
 #include <iostream>

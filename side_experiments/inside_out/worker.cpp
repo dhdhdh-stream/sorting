@@ -44,6 +44,40 @@ int main(int argc, char* argv[]) {
 		problem_type->num_obs(), path, filename);
 
 	auto start_time = chrono::high_resolution_clock::now();
+
+	for (int iter_index = 0; iter_index < MEASURE_ITERS; iter_index++) {
+		auto curr_time = chrono::high_resolution_clock::now();
+		auto time_diff = chrono::duration_cast<chrono::seconds>(curr_time - start_time);
+		if (time_diff.count() >= 20) {
+			start_time = curr_time;
+
+			cout << "solution_wrapper->improvement_iter: " << solution_wrapper->improvement_iter << endl;
+		}
+
+		Problem* problem = problem_type->get_problem();
+
+		solution_wrapper->measure_init();
+
+		while (true) {
+			vector<double> obs = problem->get_observations();
+
+			pair<bool,int> next = solution_wrapper->measure_step(obs);
+			if (next.first) {
+				break;
+			} else {
+				problem->perform_action(next.second);
+			}
+		}
+
+		double target_val = problem->score_result();
+		target_val -= 0.0001 * solution_wrapper->num_actions;
+
+		solution_wrapper->measure_end(target_val);
+
+		delete problem;
+	}
+	solution_wrapper->measure_update();
+
 	while (!solution_wrapper->is_done()) {
 		auto curr_time = chrono::high_resolution_clock::now();
 		auto time_diff = chrono::duration_cast<chrono::seconds>(curr_time - start_time);
@@ -85,44 +119,6 @@ int main(int argc, char* argv[]) {
 		delete problem;
 
 		if (solution_wrapper->solution->timestamp > starting_timestamp) {
-			double sum_score = 0.0;
-			for (int iter_index = 0; iter_index < MEASURE_ITERS; iter_index++) {
-				auto curr_time = chrono::high_resolution_clock::now();
-				auto time_diff = chrono::duration_cast<chrono::seconds>(curr_time - start_time);
-				if (time_diff.count() >= 20) {
-					start_time = curr_time;
-
-					cout << "measure" << endl;
-				}
-
-				Problem* problem = problem_type->get_problem();
-
-				solution_wrapper->measure_init();
-
-				while (true) {
-					vector<double> obs = problem->get_observations();
-
-					pair<bool,int> next = solution_wrapper->measure_step(obs);
-					if (next.first) {
-						break;
-					} else {
-						problem->perform_action(next.second);
-					}
-				}
-
-				double target_val = problem->score_result();
-				target_val -= 0.0001 * solution_wrapper->num_actions;
-				sum_score += target_val;
-
-				solution_wrapper->measure_end(target_val);
-
-				delete problem;
-			}
-
-			double new_score = sum_score / (double)MEASURE_ITERS;
-			cout << "new_score: " << new_score << endl;
-			solution_wrapper->measure_update(new_score);
-
 			solution_wrapper->save(path, filename);
 		}
 	}
