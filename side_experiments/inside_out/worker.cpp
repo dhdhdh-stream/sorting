@@ -118,7 +118,7 @@ int main(int argc, char* argv[]) {
 
 		delete problem;
 
-		if (solution_wrapper->solution->timestamp > starting_timestamp) {
+		if (solution_wrapper->solution->timestamp != starting_timestamp) {
 			solution_wrapper->save(path, filename);
 		}
 	}

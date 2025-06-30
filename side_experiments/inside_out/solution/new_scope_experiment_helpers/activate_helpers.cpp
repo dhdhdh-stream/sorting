@@ -43,13 +43,7 @@ void NewScopeExperiment::check_activate(AbstractNode* experiment_node,
 		if (is_test) {
 			history->hit_test = true;
 
-			NewScopeExperimentState* new_experiment_state = new NewScopeExperimentState(this);
-			wrapper->experiment_context.back() = new_experiment_state;
-
-			ScopeHistory* inner_scope_history = new ScopeHistory(this->new_scope);
-			wrapper->scope_histories.push_back(inner_scope_history);
-			wrapper->node_context.push_back(this->new_scope->nodes[0]);
-			wrapper->experiment_context.push_back(NULL);
+			wrapper->node_context.back() = this->test_scope_node;
 		} else {
 			wrapper->node_context.back() = this->successful_scope_nodes[location_index];
 		}
@@ -70,16 +64,7 @@ void NewScopeExperiment::set_action(int action,
 }
 
 void NewScopeExperiment::experiment_exit_step(SolutionWrapper* wrapper) {
-	delete wrapper->scope_histories.back();
-
-	wrapper->scope_histories.pop_back();
-	wrapper->node_context.pop_back();
-	wrapper->experiment_context.pop_back();
-
-	wrapper->node_context.back() = this->test_location_exit;
-
-	delete wrapper->experiment_context.back();
-	wrapper->experiment_context.back() = NULL;
+	// can't be hit
 }
 
 void NewScopeExperiment::back_activate(SolutionWrapper* wrapper) {
@@ -181,6 +166,13 @@ void NewScopeExperiment::backprop(double target_val,
 								  SolutionWrapper* wrapper) {
 	NewScopeExperimentHistory* history = (NewScopeExperimentHistory*)wrapper->experiment_history;
 
+	if (this->test_location_start != NULL) {
+		this->new_scope_histories.push_back(wrapper->scope_histories[0]);
+		this->new_target_val_histories.push_back(target_val);
+	} else {
+		delete wrapper->scope_histories[0];
+	}
+
 	if (history->is_hit) {
 		if (this->test_location_start != NULL) {
 			this->state_iter++;
@@ -229,13 +221,6 @@ void NewScopeExperiment::backprop(double target_val,
 			test_backprop(target_val,
 						  history);
 		}
-	}
-
-	if (this->test_location_start != NULL) {
-		this->new_scope_histories.push_back(wrapper->scope_histories[0]);
-		this->new_target_val_histories.push_back(target_val);
-	} else {
-		delete wrapper->scope_histories[0];
 	}
 
 	if (this->test_location_start == NULL) {
@@ -290,7 +275,22 @@ void NewScopeExperiment::backprop(double target_val,
 
 			this->test_location_start = history->potential_start;
 			this->test_location_is_branch = history->potential_is_branch;
-			this->test_location_exit = exit_next_node;
+			
+			this->test_scope_node = new ScopeNode();
+			this->test_scope_node->parent = this->scope_context;
+			this->test_scope_node->id = this->scope_context->node_counter;
+			this->scope_context->node_counter++;
+
+			this->test_scope_node->scope = this->new_scope;
+
+			if (exit_next_node == NULL) {
+				this->test_scope_node->next_node_id = -1;
+				this->test_scope_node->next_node = NULL;
+			} else {
+				this->test_scope_node->next_node_id = exit_next_node->id;
+				this->test_scope_node->next_node = exit_next_node;
+			}
+
 			this->test_target_val_histories.clear();
 
 			this->state_iter = 0;
@@ -309,5 +309,4 @@ void NewScopeExperiment::backprop(double target_val,
 			history->potential_start->experiment = this;
 		}
 	}
-
 }

@@ -149,16 +149,6 @@ void Solution::replace_obs_node(Scope* scope,
 	}
 }
 
-void Solution::replace_scope(Scope* original_scope,
-							 Scope* new_scope,
-							 int new_scope_node_id) {
-	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
-		this->scopes[s_index]->replace_scope(original_scope,
-											 new_scope,
-											 new_scope_node_id);
-	}
-}
-
 void Solution::clean() {
 	/**
 	 * - remove duplicate ObsNodes
@@ -228,12 +218,6 @@ void Solution::clean() {
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
 		this->scopes[s_index]->clean();
 	}
-
-	for (int h_index = 0; h_index < (int)this->existing_scope_histories.size(); h_index++) {
-		delete this->existing_scope_histories[h_index];
-	}
-	this->existing_scope_histories.clear();
-	this->existing_target_val_histories.clear();
 }
 
 void Solution::measure_update() {

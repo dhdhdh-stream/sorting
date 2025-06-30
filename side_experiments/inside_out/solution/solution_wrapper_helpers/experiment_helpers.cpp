@@ -15,7 +15,7 @@
 using namespace std;
 
 void SolutionWrapper::experiment_init() {
-	if (this->curr_experiment == NULL) {
+	while (this->curr_experiment == NULL) {
 		create_experiment(this,
 						  this->curr_experiment);
 	}
@@ -126,14 +126,12 @@ void SolutionWrapper::experiment_end(double result) {
 		this->solution->scopes[0]->new_scope_experiment->back_activate(this);
 	}
 
-	if (this->experiment_history != NULL) {
-		this->experiment_history->experiment->backprop(
-			result,
-			this);
+	this->experiment_history->experiment->backprop(
+		result,
+		this);
 
-		delete this->experiment_history;
-		this->experiment_history = NULL;
-	}
+	delete this->experiment_history;
+	this->experiment_history = NULL;
 
 	this->scope_histories.clear();
 	this->node_context.clear();
@@ -167,21 +165,25 @@ void SolutionWrapper::experiment_end(double result) {
 
 				this->best_experiment->add(this);
 
-				clean_scope(last_updated_scope,
-							this);
-
-				check_generalize(last_updated_scope,
-								 this);
-
-				this->solution->clean();
+				for (int h_index = 0; h_index < (int)this->solution->existing_scope_histories.size(); h_index++) {
+					delete this->solution->existing_scope_histories[h_index];
+				}
+				this->solution->existing_scope_histories.clear();
+				this->solution->existing_target_val_histories.clear();
 
 				this->solution->existing_scope_histories = this->best_experiment->new_scope_histories;
 				this->best_experiment->new_scope_histories.clear();
 				this->solution->existing_target_val_histories = this->best_experiment->new_target_val_histories;
-				this->solution->measure_update();
 
 				delete this->best_experiment;
 				this->best_experiment = NULL;
+
+				clean_scope(last_updated_scope,
+							this);
+
+				this->solution->clean();
+
+				this->solution->measure_update();
 
 				this->solution->timestamp++;
 

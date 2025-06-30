@@ -31,14 +31,8 @@ void node_history_insert(ScopeHistory* scope_history,
 	}
 
 	if (has_match) {
-		vector<double> new_obs_history;
 		for (map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
 				it != scope_history->node_histories.end(); it++) {
-			if (it->second->index == match_it->second->index + 1) {
-				ObsNodeHistory* obs_node_history = (ObsNodeHistory*)it->second;
-				new_obs_history = obs_node_history->obs_history;
-			}
-
 			if (it->second->index > match_it->second->index) {
 				it->second->index++;
 			}
@@ -48,7 +42,9 @@ void node_history_insert(ScopeHistory* scope_history,
 		new_history->index = match_it->second->index + 1;
 		scope_history->node_histories[new_node->id] = new_history;
 
-		new_history->obs_history = new_obs_history;
+		/**
+		 * - let new_history->obs_history stay empty
+		 */
 
 		new_history->factor_initialized = vector<bool>(new_node->factors.size(), false);
 		new_history->factor_values = vector<double>(new_node->factors.size());

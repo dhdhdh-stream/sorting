@@ -14,8 +14,6 @@ using namespace std;
 
 Scope::Scope() {
 	this->new_scope_experiment = NULL;
-
-	this->generalized = false;
 }
 
 Scope::~Scope() {
@@ -193,39 +191,6 @@ void Scope::replace_obs_node(Scope* scope,
 	}
 }
 
-void Scope::replace_scope(Scope* original_scope,
-						  Scope* new_scope,
-						  int new_scope_node_id) {
-	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
-			it != this->nodes.end(); it++) {
-		switch (it->second->type) {
-		case NODE_TYPE_SCOPE:
-			{
-				ScopeNode* scope_node = (ScopeNode*)it->second;
-				scope_node->replace_scope(original_scope,
-										  new_scope);
-			}
-			break;
-		case NODE_TYPE_BRANCH:
-			{
-				BranchNode* branch_node = (BranchNode*)it->second;
-				branch_node->replace_scope(original_scope,
-										   new_scope,
-										   new_scope_node_id);
-			}
-			break;
-		case NODE_TYPE_OBS:
-			{
-				ObsNode* obs_node = (ObsNode*)it->second;
-				obs_node->replace_scope(original_scope,
-										new_scope,
-										new_scope_node_id);
-			}
-			break;
-		}
-	}
-}
-
 void Scope::clean() {
 	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
 			it != this->nodes.end(); it++) {
@@ -286,8 +251,6 @@ void Scope::save(ofstream& output_file) {
 	for (int c_index = 0; c_index < (int)this->child_scopes.size(); c_index++) {
 		output_file << this->child_scopes[c_index]->id << endl;
 	}
-
-	output_file << this->generalized << endl;
 }
 
 void Scope::load(ifstream& input_file,
@@ -358,10 +321,6 @@ void Scope::load(ifstream& input_file,
 		getline(input_file, scope_id_line);
 		this->child_scopes.push_back(parent_solution->scopes[stoi(scope_id_line)]);
 	}
-
-	string generalized_line;
-	getline(input_file, generalized_line);
-	this->generalized = stoi(generalized_line);
 }
 
 void Scope::link(Solution* parent_solution) {

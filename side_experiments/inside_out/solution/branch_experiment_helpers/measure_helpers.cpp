@@ -77,6 +77,12 @@ void BranchExperiment::measure_check_activate(SolutionWrapper* wrapper) {
 		}
 		#endif /* MDEBUG */
 
+		BranchNodeHistory* branch_node_history = new BranchNodeHistory(this->new_branch_node);
+		branch_node_history->index = (int)scope_history->node_histories.size();
+		scope_history->node_histories[this->new_branch_node->id] = branch_node_history;
+
+		branch_node_history->is_branch = decision_is_branch;
+
 		if (decision_is_branch) {
 			BranchExperimentState* new_experiment_state = new BranchExperimentState(this);
 			new_experiment_state->step_index = 0;
@@ -90,35 +96,73 @@ void BranchExperiment::measure_step(vector<double>& obs,
 									bool& is_next,
 									SolutionWrapper* wrapper,
 									BranchExperimentState* experiment_state) {
-	if (experiment_state->step_index >= (int)this->best_step_types.size()) {
+	if (experiment_state->step_index >= (int)this->new_nodes.size()) {
 		wrapper->node_context.back() = this->best_exit_next_node;
 
 		delete experiment_state;
 		wrapper->experiment_context.back() = NULL;
 	} else {
-		if (this->best_step_types[experiment_state->step_index] == STEP_TYPE_ACTION) {
-			action = this->best_actions[experiment_state->step_index];
-			is_next = true;
+		ScopeHistory* scope_history = wrapper->scope_histories.back();
 
-			wrapper->num_actions++;
+		switch (this->new_nodes[experiment_state->step_index]->type) {
+		case NODE_TYPE_ACTION:
+			{
+				ActionNode* node = (ActionNode*)this->new_nodes[experiment_state->step_index];
 
-			experiment_state->step_index++;
-		} else {
-			ScopeHistory* inner_scope_history = new ScopeHistory(this->best_scopes[experiment_state->step_index]);
-			wrapper->scope_histories.push_back(inner_scope_history);
-			wrapper->node_context.push_back(this->best_scopes[experiment_state->step_index]->nodes[0]);
-			wrapper->experiment_context.push_back(NULL);
+				ActionNodeHistory* history = new ActionNodeHistory(node);
+				history->index = (int)scope_history->node_histories.size();
+				scope_history->node_histories[node->id] = history;
+
+				action = node->action;
+				is_next = true;
+
+				wrapper->num_actions++;
+
+				experiment_state->step_index++;
+			}
+			break;
+		case NODE_TYPE_SCOPE:
+			{
+				ScopeNode* node = (ScopeNode*)this->new_nodes[experiment_state->step_index];
+
+				ScopeNodeHistory* history = new ScopeNodeHistory(node);
+				history->index = (int)scope_history->node_histories.size();
+				scope_history->node_histories[node->id] = history;
+
+				ScopeHistory* inner_scope_history = new ScopeHistory(node->scope);
+				history->scope_history = inner_scope_history;
+				wrapper->scope_histories.push_back(inner_scope_history);
+				wrapper->node_context.push_back(node->scope->nodes[0]);
+				wrapper->experiment_context.push_back(NULL);
+			}
+			break;
+		case NODE_TYPE_OBS:
+			{
+				ObsNode* node = (ObsNode*)this->new_nodes[experiment_state->step_index];
+
+				ObsNodeHistory* history = new ObsNodeHistory(node);
+				history->index = (int)scope_history->node_histories.size();
+				scope_history->node_histories[node->id] = history;
+
+				history->obs_history = obs;
+
+				history->factor_initialized = vector<bool>(node->factors.size(), false);
+				history->factor_values = vector<double>(node->factors.size());
+
+				experiment_state->step_index++;
+			}
+			break;
 		}
 	}
 }
 
 void BranchExperiment::measure_exit_step(SolutionWrapper* wrapper,
 										 BranchExperimentState* experiment_state) {
-	if (this->best_scopes[experiment_state->step_index]->new_scope_experiment != NULL) {
-		this->best_scopes[experiment_state->step_index]->new_scope_experiment->back_activate(wrapper);
-	}
+	ScopeNode* node = (ScopeNode*)this->new_nodes[experiment_state->step_index];
 
-	delete wrapper->scope_histories.back();
+	if (node->scope->new_scope_experiment != NULL) {
+		node->scope->new_scope_experiment->back_activate(wrapper);
+	}
 
 	wrapper->scope_histories.pop_back();
 	wrapper->node_context.pop_back();

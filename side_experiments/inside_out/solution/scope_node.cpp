@@ -17,30 +17,12 @@ ScopeNode::ScopeNode() {
 
 	this->experiment = NULL;
 
-	this->last_updated_run_index = 0;
+	this->last_updated_run_index = -1;
 }
 
 ScopeNode::~ScopeNode() {
 	if (this->experiment != NULL) {
 		this->experiment->decrement(this);
-	}
-}
-
-void ScopeNode::replace_scope(Scope* original_scope,
-							  Scope* new_scope) {
-	if (this->scope == original_scope) {
-		this->scope = new_scope;
-
-		bool has_match = false;
-		for (int c_index = 0; c_index < (int)this->parent->child_scopes.size(); c_index++) {
-			if (this->parent->child_scopes[c_index] == new_scope) {
-				has_match = true;
-				break;
-			}
-		}
-		if (!has_match) {
-			this->parent->child_scopes.push_back(new_scope);
-		}
 	}
 }
 
@@ -50,6 +32,7 @@ void ScopeNode::clean() {
 		this->experiment = NULL;
 	}
 
+	this->last_updated_run_index = -1;
 	this->sum_score = 0.0;
 	this->sum_hits = 0;
 	this->sum_instances = 0;

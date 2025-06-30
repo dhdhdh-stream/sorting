@@ -15,7 +15,7 @@ ActionNode::ActionNode() {
 
 	this->experiment = NULL;
 
-	this->last_updated_run_index = 0;
+	this->last_updated_run_index = -1;
 }
 
 ActionNode::~ActionNode() {
@@ -30,6 +30,7 @@ void ActionNode::clean() {
 		this->experiment = NULL;
 	}
 
+	this->last_updated_run_index = -1;
 	this->sum_score = 0.0;
 	this->sum_hits = 0;
 	this->sum_instances = 0;
@@ -92,6 +93,7 @@ void ActionNode::link(Solution* parent_solution) {
 }
 
 void ActionNode::save_for_display(ofstream& output_file) {
+	output_file << this->action << endl;
 	output_file << this->next_node_id << endl;
 }
 

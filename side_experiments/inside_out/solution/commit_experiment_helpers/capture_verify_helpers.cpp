@@ -5,6 +5,7 @@
 #include <iostream>
 
 #include "action_node.h"
+#include "branch_node.h"
 #include "constants.h"
 #include "network.h"
 #include "new_scope_experiment.h"
@@ -37,24 +38,62 @@ void CommitExperiment::capture_verify_step(vector<double>& obs,
 										   SolutionWrapper* wrapper,
 										   CommitExperimentState* experiment_state) {
 	if (experiment_state->is_save) {
-		if (experiment_state->step_index >= (int)this->save_step_types.size()) {
+		if (experiment_state->step_index >= (int)this->save_new_nodes.size()) {
 			wrapper->node_context.back() = this->save_exit_next_node;
 
 			delete experiment_state;
 			wrapper->experiment_context.back() = NULL;
 		} else {
-			if (this->save_step_types[experiment_state->step_index] == STEP_TYPE_ACTION) {
-				action = this->save_actions[experiment_state->step_index];
-				is_next = true;
+			ScopeHistory* scope_history = wrapper->scope_histories.back();
 
-				wrapper->num_actions++;
+			switch (this->save_new_nodes[experiment_state->step_index]->type) {
+			case NODE_TYPE_ACTION:
+				{
+					ActionNode* node = (ActionNode*)this->save_new_nodes[experiment_state->step_index];
 
-				experiment_state->step_index++;
-			} else {
-				ScopeHistory* inner_scope_history = new ScopeHistory(this->save_scopes[experiment_state->step_index]);
-				wrapper->scope_histories.push_back(inner_scope_history);
-				wrapper->node_context.push_back(this->save_scopes[experiment_state->step_index]->nodes[0]);
-				wrapper->experiment_context.push_back(NULL);
+					ActionNodeHistory* history = new ActionNodeHistory(node);
+					history->index = (int)scope_history->node_histories.size();
+					scope_history->node_histories[node->id] = history;
+
+					action = node->action;
+					is_next = true;
+
+					wrapper->num_actions++;
+
+					experiment_state->step_index++;
+				}
+				break;
+			case NODE_TYPE_SCOPE:
+				{
+					ScopeNode* node = (ScopeNode*)this->save_new_nodes[experiment_state->step_index];
+
+					ScopeNodeHistory* history = new ScopeNodeHistory(node);
+					history->index = (int)scope_history->node_histories.size();
+					scope_history->node_histories[node->id] = history;
+
+					ScopeHistory* inner_scope_history = new ScopeHistory(node->scope);
+					history->scope_history = inner_scope_history;
+					wrapper->scope_histories.push_back(inner_scope_history);
+					wrapper->node_context.push_back(node->scope->nodes[0]);
+					wrapper->experiment_context.push_back(NULL);
+				}
+				break;
+			case NODE_TYPE_OBS:
+				{
+					ObsNode* node = (ObsNode*)this->save_new_nodes[experiment_state->step_index];
+
+					ObsNodeHistory* history = new ObsNodeHistory(node);
+					history->index = (int)scope_history->node_histories.size();
+					scope_history->node_histories[node->id] = history;
+
+					history->obs_history = obs;
+
+					history->factor_initialized = vector<bool>(node->factors.size(), false);
+					history->factor_values = vector<double>(node->factors.size());
+
+					experiment_state->step_index++;
+				}
+				break;
 			}
 		}
 	} else {
@@ -115,6 +154,12 @@ void CommitExperiment::capture_verify_step(vector<double>& obs,
 			wrapper->curr_run_seed = xorshift(wrapper->curr_run_seed);
 
 			cout << "decision_is_branch: " << decision_is_branch << endl;
+
+			BranchNodeHistory* branch_node_history = new BranchNodeHistory(this->new_branch_node);
+			branch_node_history->index = (int)scope_history->node_histories.size();
+			scope_history->node_histories[this->new_branch_node->id] = branch_node_history;
+
+			branch_node_history->is_branch = decision_is_branch;
 
 			if (decision_is_branch) {
 				experiment_state->is_save = true;
@@ -185,11 +230,11 @@ void CommitExperiment::capture_verify_step(vector<double>& obs,
 void CommitExperiment::capture_verify_exit_step(SolutionWrapper* wrapper,
 												CommitExperimentState* experiment_state) {
 	if (experiment_state->is_save) {
-		if (this->save_scopes[experiment_state->step_index]->new_scope_experiment != NULL) {
-			this->save_scopes[experiment_state->step_index]->new_scope_experiment->back_activate(wrapper);
-		}
+		ScopeNode* node = (ScopeNode*)this->save_new_nodes[experiment_state->step_index];
 
-		delete wrapper->scope_histories.back();
+		if (node->scope->new_scope_experiment != NULL) {
+			node->scope->new_scope_experiment->back_activate(wrapper);
+		}
 
 		wrapper->scope_histories.pop_back();
 		wrapper->node_context.pop_back();

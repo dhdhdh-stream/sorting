@@ -6,6 +6,7 @@
 #include "abstract_experiment.h"
 #include "input.h"
 
+class BranchNode;
 class Network;
 class Scope;
 class SolutionWrapper;
@@ -55,6 +56,9 @@ public:
 	Network* new_network;
 
 	double select_percentage;
+
+	BranchNode* new_branch_node;
+	std::vector<AbstractNode*> new_nodes;
 
 	std::vector<ScopeHistory*> scope_histories;
 	std::vector<double> i_target_val_histories;

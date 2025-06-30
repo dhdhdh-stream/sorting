@@ -32,7 +32,7 @@ public:
 
 	AbstractNode* test_location_start;
 	bool test_location_is_branch;
-	AbstractNode* test_location_exit;
+	ScopeNode* test_scope_node;
 	std::vector<double> test_target_val_histories;
 
 	std::vector<AbstractNode*> successful_location_starts;
@@ -78,11 +78,6 @@ public:
 	std::set<std::pair<AbstractNode*,bool>> nodes_seen;
 
 	NewScopeExperimentHistory(NewScopeExperiment* experiment);
-};
-
-class NewScopeExperimentState : public AbstractExperimentState {
-public:
-	NewScopeExperimentState(NewScopeExperiment* experiment);
 };
 
 #endif /* NEW_ACTION_EXPERIMENT_H */

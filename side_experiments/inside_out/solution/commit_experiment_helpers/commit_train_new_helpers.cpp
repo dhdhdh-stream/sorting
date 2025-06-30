@@ -4,6 +4,7 @@
 #include <iostream>
 
 #include "action_node.h"
+#include "branch_node.h"
 #include "constants.h"
 #include "globals.h"
 #include "network.h"
@@ -232,6 +233,47 @@ void CommitExperiment::commit_train_new_backprop(
 				this->commit_new_weights = factor_weights;
 				this->commit_new_network_inputs = network_inputs;
 				this->commit_new_network = network;
+
+				this->new_branch_node = new BranchNode();
+				this->new_branch_node->parent = this->scope_context;
+				this->new_branch_node->id = this->scope_context->node_counter;
+				this->scope_context->node_counter++;
+
+				ObsNode* start_obs_node = new ObsNode();
+				start_obs_node->parent = this->scope_context;
+				start_obs_node->id = this->scope_context->node_counter;
+				this->scope_context->node_counter++;
+
+				this->save_new_nodes.push_back(start_obs_node);
+
+				for (int s_index = 0; s_index < (int)this->save_step_types.size(); s_index++) {
+					if (this->save_step_types[s_index] == STEP_TYPE_ACTION) {
+						ActionNode* new_action_node = new ActionNode();
+						new_action_node->parent = this->scope_context;
+						new_action_node->id = this->scope_context->node_counter;
+						this->scope_context->node_counter++;
+
+						new_action_node->action = this->save_actions[s_index];
+
+						this->save_new_nodes.push_back(new_action_node);
+					} else {
+						ScopeNode* new_scope_node = new ScopeNode();
+						new_scope_node->parent = this->scope_context;
+						new_scope_node->id = this->scope_context->node_counter;
+						this->scope_context->node_counter++;
+
+						new_scope_node->scope = this->save_scopes[s_index];
+
+						this->save_new_nodes.push_back(new_scope_node);
+					}
+
+					ObsNode* new_obs_node = new ObsNode();
+					new_obs_node->parent = this->scope_context;
+					new_obs_node->id = this->scope_context->node_counter;
+					this->scope_context->node_counter++;
+
+					this->save_new_nodes.push_back(new_obs_node);
+				}
 
 				this->state = COMMIT_EXPERIMENT_STATE_MEASURE;
 				this->state_iter = 0;

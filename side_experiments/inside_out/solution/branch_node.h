@@ -89,9 +89,6 @@ public:
 	void replace_obs_node(Scope* scope,
 						  int original_node_id,
 						  int new_node_id);
-	void replace_scope(Scope* original_scope,
-					   Scope* new_scope,
-					   int new_scope_node_id);
 
 	void clean();
 	void measure_update(int total_count);

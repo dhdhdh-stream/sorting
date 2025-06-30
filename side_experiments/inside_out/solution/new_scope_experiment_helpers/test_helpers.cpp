@@ -94,30 +94,16 @@ void NewScopeExperiment::test_backprop(
 				this->improvement = curr_improvement;
 			}
 
-			ScopeNode* new_scope_node = new ScopeNode();
-			new_scope_node->parent = this->scope_context;
-			new_scope_node->id = this->scope_context->node_counter;
-			this->scope_context->node_counter++;
-
-			new_scope_node->scope = this->new_scope;
-
-			if (this->test_location_exit == NULL) {
-				new_scope_node->next_node_id = -1;
-				new_scope_node->next_node = NULL;
-			} else {
-				new_scope_node->next_node_id = this->test_location_exit->id;
-				new_scope_node->next_node = this->test_location_exit;
-			}
-
 			/**
 			 * - simply set to 1.0 to allow follow up
 			 */
-			new_scope_node->new_scope_average_hits_per_run = 1.0;
-			new_scope_node->new_scope_average_score = new_score;
+			this->test_scope_node->new_scope_average_hits_per_run = 1.0;
+			this->test_scope_node->new_scope_average_score = new_score;
 
 			this->successful_location_starts.push_back(this->test_location_start);
 			this->successful_location_is_branch.push_back(this->test_location_is_branch);
-			this->successful_scope_nodes.push_back(new_scope_node);
+			this->successful_scope_nodes.push_back(this->test_scope_node);
+			this->test_scope_node = NULL;
 
 			this->scope_context->new_scope_measure_update(this->state_iter);
 
@@ -198,6 +184,8 @@ void NewScopeExperiment::test_backprop(
 		#endif /* MDEBUG */
 			this->test_location_start->experiment = NULL;
 			this->test_location_start = NULL;
+			delete this->test_scope_node;
+			this->test_scope_node = NULL;
 
 			if (this->generalize_iter == -1
 					&& this->successful_location_starts.size() == 0) {
@@ -217,30 +205,16 @@ void NewScopeExperiment::test_backprop(
 				this->improvement = curr_improvement;
 			}
 
-			ScopeNode* new_scope_node = new ScopeNode();
-			new_scope_node->parent = this->scope_context;
-			new_scope_node->id = this->scope_context->node_counter;
-			this->scope_context->node_counter++;
-
-			new_scope_node->scope = this->new_scope;
-
-			if (this->test_location_exit == NULL) {
-				new_scope_node->next_node_id = -1;
-				new_scope_node->next_node = NULL;
-			} else {
-				new_scope_node->next_node_id = this->test_location_exit->id;
-				new_scope_node->next_node = this->test_location_exit;
-			}
-
 			/**
 			 * - simply set to 1.0 to allow follow up
 			 */
-			new_scope_node->new_scope_average_hits_per_run = 1.0;
-			new_scope_node->new_scope_average_score = new_score;
+			this->test_scope_node->new_scope_average_hits_per_run = 1.0;
+			this->test_scope_node->new_scope_average_score = new_score;
 
 			this->successful_location_starts.push_back(this->test_location_start);
 			this->successful_location_is_branch.push_back(this->test_location_is_branch);
-			this->successful_scope_nodes.push_back(new_scope_node);
+			this->successful_scope_nodes.push_back(this->test_scope_node);
+			this->test_scope_node = NULL;
 
 			this->scope_context->new_scope_measure_update(this->state_iter);
 

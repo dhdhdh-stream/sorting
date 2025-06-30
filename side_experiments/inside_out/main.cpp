@@ -116,7 +116,7 @@ int main(int argc, char* argv[]) {
 
 			delete problem;
 
-			if (solution_wrapper->solution->timestamp > starting_timestamp) {
+			if (solution_wrapper->solution->timestamp != starting_timestamp) {
 				#if defined(MDEBUG) && MDEBUG
 				while (solution_wrapper->solution->verify_problems.size() > 0) {
 					Problem* problem = solution_wrapper->solution->verify_problems[0];

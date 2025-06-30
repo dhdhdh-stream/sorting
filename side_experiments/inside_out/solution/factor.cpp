@@ -92,22 +92,6 @@ void Factor::replace_obs_node(Scope* scope,
 	}
 }
 
-void Factor::replace_scope(Scope* original_scope,
-						   Scope* new_scope,
-						   int new_scope_node_id) {
-	for (int i_index = 0; i_index < (int)this->inputs.size(); i_index++) {
-		for (int l_index = 1; l_index < (int)this->inputs[i_index].scope_context.size(); l_index++) {
-			if (this->inputs[i_index].scope_context[l_index] == original_scope) {
-				this->inputs[i_index].scope_context.insert(
-					this->inputs[i_index].scope_context.begin() + l_index, new_scope);
-				this->inputs[i_index].node_context.insert(
-					this->inputs[i_index].node_context.begin() + l_index, new_scope_node_id);
-				break;
-			}
-		}
-	}
-}
-
 void Factor::save(ofstream& output_file) {
 	output_file << this->inputs.size() << endl;
 	for (int i_index = 0; i_index < (int)this->inputs.size(); i_index++) {

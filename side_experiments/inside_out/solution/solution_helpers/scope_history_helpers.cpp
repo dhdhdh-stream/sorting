@@ -72,78 +72,94 @@ void fetch_input_helper(ScopeHistory* scope_history,
 void update_scores(ScopeHistory* scope_history,
 				   double target_val,
 				   int h_index) {
-	scope_history->scope->existing_scope_histories.push_back(scope_history);
-	scope_history->scope->existing_target_val_histories.push_back(target_val);
+	Scope* scope = scope_history->scope;
 
-	for (map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
-			it != scope_history->node_histories.end(); it++) {
-		AbstractNode* node = it->second->node;
-		switch (node->type) {
-		case NODE_TYPE_ACTION:
-			{
-				ActionNode* action_node = (ActionNode*)node;
-				if (h_index != action_node->last_updated_run_index) {
-					action_node->sum_score += target_val;
-					action_node->sum_hits++;
+	scope->existing_scope_histories.push_back(scope_history);
+	scope->existing_target_val_histories.push_back(target_val);
 
-					action_node->last_updated_run_index = h_index;
-				}
-				action_node->sum_instances++;
-			}
-			break;
-		case NODE_TYPE_SCOPE:
-			{
-				ScopeNode* scope_node = (ScopeNode*)node;
-				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)it->second;
+	map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
+	while (it != scope_history->node_histories.end()) {
+		if (scope->nodes.find(it->first) == scope->nodes.end()) {
+			delete it->second;
+			it = scope_history->node_histories.erase(it);
+		} else {
+			AbstractNode* node = it->second->node;
+			switch (node->type) {
+			case NODE_TYPE_ACTION:
+				{
+					ActionNode* action_node = (ActionNode*)node;
+					if (h_index != action_node->last_updated_run_index) {
+						action_node->sum_score += target_val;
+						action_node->sum_hits++;
 
-				update_scores(scope_node_history->scope_history,
-							  target_val,
-							  h_index);
-
-				if (h_index != scope_node->last_updated_run_index) {
-					scope_node->sum_score += target_val;
-					scope_node->sum_hits++;
-
-					scope_node->last_updated_run_index = h_index;
-				}
-				scope_node->sum_instances++;
-			}
-			break;
-		case NODE_TYPE_BRANCH:
-			{
-				BranchNode* branch_node = (BranchNode*)node;
-				BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
-				if (branch_node_history->is_branch) {
-					if (h_index != branch_node->branch_last_updated_run_index) {
-						branch_node->branch_sum_score += target_val;
-						branch_node->branch_sum_hits++;
-
-						branch_node->branch_last_updated_run_index = h_index;
+						action_node->last_updated_run_index = h_index;
 					}
-					branch_node->branch_sum_instances++;
-				} else {
-					if (h_index != branch_node->original_last_updated_run_index) {
-						branch_node->original_sum_score += target_val;
-						branch_node->original_sum_hits++;
+					action_node->sum_instances++;
+				}
+				break;
+			case NODE_TYPE_SCOPE:
+				{
+					ScopeNode* scope_node = (ScopeNode*)node;
+					ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)it->second;
 
-						branch_node->original_last_updated_run_index = h_index;
+					update_scores(scope_node_history->scope_history,
+								  target_val,
+								  h_index);
+
+					if (h_index != scope_node->last_updated_run_index) {
+						scope_node->sum_score += target_val;
+						scope_node->sum_hits++;
+
+						scope_node->last_updated_run_index = h_index;
 					}
-					branch_node->original_sum_instances++;
+					scope_node->sum_instances++;
 				}
-			}
-			break;
-		case NODE_TYPE_OBS:
-			{
-				ObsNode* obs_node = (ObsNode*)node;
-				if (h_index != obs_node->last_updated_run_index) {
-					obs_node->sum_score += target_val;
-					obs_node->sum_hits++;
+				break;
+			case NODE_TYPE_BRANCH:
+				{
+					BranchNode* branch_node = (BranchNode*)node;
+					BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
+					if (branch_node_history->is_branch) {
+						if (h_index != branch_node->branch_last_updated_run_index) {
+							branch_node->branch_sum_score += target_val;
+							branch_node->branch_sum_hits++;
 
-					obs_node->last_updated_run_index = h_index;
+							branch_node->branch_last_updated_run_index = h_index;
+						}
+						branch_node->branch_sum_instances++;
+					} else {
+						if (h_index != branch_node->original_last_updated_run_index) {
+							branch_node->original_sum_score += target_val;
+							branch_node->original_sum_hits++;
+
+							branch_node->original_last_updated_run_index = h_index;
+						}
+						branch_node->original_sum_instances++;
+					}
 				}
-				obs_node->sum_instances++;
+				break;
+			case NODE_TYPE_OBS:
+				{
+					ObsNode* obs_node = (ObsNode*)node;
+					ObsNodeHistory* obs_node_history = (ObsNodeHistory*)it->second;
+
+					if (h_index != obs_node->last_updated_run_index) {
+						obs_node->sum_score += target_val;
+						obs_node->sum_hits++;
+
+						obs_node->last_updated_run_index = h_index;
+					}
+					obs_node->sum_instances++;
+
+					while (obs_node_history->factor_initialized.size() < obs_node->factors.size()) {
+						obs_node_history->factor_initialized.push_back(false);
+						obs_node_history->factor_values.push_back(0.0);
+					}
+				}
+				break;
 			}
-			break;
+
+			it++;
 		}
 	}
 }

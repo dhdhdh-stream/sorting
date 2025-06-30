@@ -14,8 +14,6 @@
 
 using namespace std;
 
-const int SCOPE_EXCEEDED_NUM_NODES = 100;
-
 void clean_scope(Scope* scope,
 				 SolutionWrapper* wrapper) {
 	/**
@@ -396,64 +394,5 @@ void clean_scope(Scope* scope,
 	for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
 			it != scope->nodes.end(); it++) {
 		it->second->is_init = true;
-	}
-}
-
-void check_generalize(Scope* scope_to_generalize,
-					  SolutionWrapper* wrapper) {
-	if (scope_to_generalize->nodes.size() > SCOPE_EXCEEDED_NUM_NODES
-			&& !scope_to_generalize->generalized) {
-		cout << "generalize " << scope_to_generalize->id << endl;
-
-		Scope* new_scope = new Scope();
-		new_scope->node_counter = 0;
-
-		new_scope->child_scopes = scope_to_generalize->child_scopes;
-		new_scope->child_scopes.push_back(scope_to_generalize);
-
-		ObsNode* start_node = new ObsNode();
-		start_node->parent = new_scope;
-		start_node->id = new_scope->node_counter;
-		new_scope->node_counter++;
-		new_scope->nodes[start_node->id] = start_node;
-
-		ScopeNode* new_scope_node = new ScopeNode();
-		new_scope_node->parent = new_scope;
-		new_scope_node->id = new_scope->node_counter;
-		new_scope->node_counter++;
-		new_scope->nodes[new_scope_node->id] = new_scope_node;
-
-		new_scope_node->scope = scope_to_generalize;
-
-		ObsNode* end_node = new ObsNode();
-		end_node->parent = new_scope;
-		end_node->id = new_scope->node_counter;
-		new_scope->node_counter++;
-		new_scope->nodes[end_node->id] = end_node;
-
-		start_node->next_node_id = new_scope_node->id;
-		start_node->next_node = new_scope_node;
-
-		new_scope_node->next_node_id = end_node->id;
-		new_scope_node->next_node = end_node;
-
-		end_node->next_node_id = -1;
-		end_node->next_node = NULL;
-
-		wrapper->solution->replace_scope(scope_to_generalize,
-										 new_scope,
-										 new_scope_node->id);
-
-		if (scope_to_generalize->id == 0) {
-			wrapper->solution->scopes.insert(wrapper->solution->scopes.begin(), new_scope);
-		} else {
-			wrapper->solution->scopes.push_back(new_scope);
-		}
-
-		scope_to_generalize->generalized = true;
-
-		for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
-			wrapper->solution->scopes[s_index]->id = s_index;
-		}
 	}
 }

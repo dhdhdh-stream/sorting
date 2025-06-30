@@ -100,6 +100,9 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 	this->type = EXPERIMENT_TYPE_NEW_SCOPE;
 
 	this->new_scope = NULL;
+
+	this->test_scope_node = NULL;
+
 	for (int t_index = 0; t_index < CREATE_NEW_SCOPE_NUM_TRIES; t_index++) {
 		uniform_int_distribution<int> node_distribution(0, scope_context->nodes.size()-1);
 		AbstractNode* potential_start_node = next(scope_context->nodes.begin(), node_distribution(generator))->second;
@@ -437,7 +440,21 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 
 		this->test_location_start = node_context;
 		this->test_location_is_branch = is_branch;
-		this->test_location_exit = exit_next_node;
+
+		this->test_scope_node = new ScopeNode();
+		this->test_scope_node->parent = this->scope_context;
+		this->test_scope_node->id = this->scope_context->node_counter;
+		this->scope_context->node_counter++;
+
+		this->test_scope_node->scope = this->new_scope;
+
+		if (exit_next_node == NULL) {
+			this->test_scope_node->next_node_id = -1;
+			this->test_scope_node->next_node = NULL;
+		} else {
+			this->test_scope_node->next_node_id = exit_next_node->id;
+			this->test_scope_node->next_node = exit_next_node;
+		}
 
 		this->state_iter = 0;
 		this->scope_context->new_scope_clean();
@@ -458,6 +475,10 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 NewScopeExperiment::~NewScopeExperiment() {
 	if (this->new_scope != NULL) {
 		delete this->new_scope;
+	}
+
+	if (this->test_scope_node != NULL) {
+		delete this->test_scope_node;
 	}
 
 	for (int s_index = 0; s_index < (int)this->successful_scope_nodes.size(); s_index++) {
@@ -518,9 +539,4 @@ NewScopeExperimentHistory::NewScopeExperimentHistory(
 
 	this->instance_count = 0;
 	this->potential_start = NULL;
-}
-
-NewScopeExperimentState::NewScopeExperimentState(
-		NewScopeExperiment* experiment) {
-	this->experiment = experiment;
 }

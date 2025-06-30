@@ -8,6 +8,7 @@
 #include "input.h"
 
 class AbstractNode;
+class BranchNode;
 class Network;
 class Problem;
 class Scope;
@@ -76,6 +77,9 @@ public:
 	std::vector<double> commit_new_weights;
 	std::vector<Input> commit_new_network_inputs;
 	Network* commit_new_network;
+
+	BranchNode* new_branch_node;
+	std::vector<AbstractNode*> save_new_nodes;
 
 	std::vector<ScopeHistory*> scope_histories;
 	std::vector<double> i_target_val_histories;

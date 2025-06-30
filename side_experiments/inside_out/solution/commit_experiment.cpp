@@ -25,6 +25,8 @@ CommitExperiment::CommitExperiment(Scope* scope_context,
 	this->commit_existing_network = NULL;
 	this->commit_new_network = NULL;
 
+	this->new_branch_node = NULL;
+
 	vector<ScopeHistory*> scope_histories;
 	vector<double> target_val_histories;
 	for (int h_index = 0; h_index < (int)this->scope_context->existing_scope_histories.size(); h_index++) {
@@ -129,6 +131,14 @@ CommitExperiment::~CommitExperiment() {
 
 	if (this->commit_new_network != NULL) {
 		delete this->commit_new_network;
+	}
+
+	if (this->new_branch_node != NULL) {
+		delete this->new_branch_node;
+	}
+
+	for (int n_index = 0; n_index < (int)this->save_new_nodes.size(); n_index++) {
+		delete this->save_new_nodes[n_index];
 	}
 
 	for (int h_index = 0; h_index < (int)this->scope_histories.size(); h_index++) {

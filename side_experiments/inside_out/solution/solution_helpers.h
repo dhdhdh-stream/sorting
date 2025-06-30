@@ -70,9 +70,6 @@ bool train_new(std::vector<ScopeHistory*>& scope_histories,
 void clean_scope(Scope* scope,
 				 SolutionWrapper* wrapper);
 
-void check_generalize(Scope* scope_to_generalize,
-					  SolutionWrapper* wrapper);
-
 void update_scores(ScopeHistory* scope_history,
 				   double target_val,
 				   int h_index);

@@ -203,29 +203,9 @@ void CommitExperiment::add(SolutionWrapper* wrapper) {
 		next_node->ancestor_ids.push_back(this->new_nodes[n_index]->id);
 	}
 
-	vector<AbstractNode*> save_new_nodes;
-	for (int s_index = 0; s_index < (int)this->save_step_types.size(); s_index++) {
-		if (this->save_step_types[s_index] == STEP_TYPE_ACTION) {
-			ActionNode* new_action_node = new ActionNode();
-			new_action_node->parent = this->scope_context;
-			new_action_node->id = this->scope_context->node_counter;
-			this->scope_context->node_counter++;
-			this->scope_context->nodes[new_action_node->id] = new_action_node;
-
-			new_action_node->action = this->save_actions[s_index];
-
-			save_new_nodes.push_back(new_action_node);
-		} else {
-			ScopeNode* new_scope_node = new ScopeNode();
-			new_scope_node->parent = this->scope_context;
-			new_scope_node->id = this->scope_context->node_counter;
-			this->scope_context->node_counter++;
-			this->scope_context->nodes[new_scope_node->id] = new_scope_node;
-
-			new_scope_node->scope = this->save_scopes[s_index];
-
-			save_new_nodes.push_back(new_scope_node);
-		}
+	for (int n_index = 0; n_index < (int)this->save_new_nodes.size(); n_index++) {
+		this->save_new_nodes[n_index]->parent = this->scope_context;
+		this->scope_context->nodes[this->save_new_nodes[n_index]->id] = this->save_new_nodes[n_index];
 	}
 
 	int save_exit_node_id;
@@ -265,11 +245,7 @@ void CommitExperiment::add(SolutionWrapper* wrapper) {
 		save_exit_node = this->save_exit_next_node;
 	}
 
-	BranchNode* new_branch_node = new BranchNode();
-	new_branch_node->parent = this->scope_context;
-	new_branch_node->id = this->scope_context->node_counter;
-	this->scope_context->node_counter++;
-	this->scope_context->nodes[new_branch_node->id] = new_branch_node;
+	this->scope_context->nodes[this->new_branch_node->id] = this->new_branch_node;
 
 	ObsNode* obs_node = (ObsNode*)this->new_nodes[this->step_iter-1];
 
@@ -299,33 +275,33 @@ void CommitExperiment::add(SolutionWrapper* wrapper) {
 			break;
 		}
 	}
-	obs_node->next_node->ancestor_ids.push_back(new_branch_node->id);
+	obs_node->next_node->ancestor_ids.push_back(this->new_branch_node->id);
 
-	new_branch_node->original_next_node_id = obs_node->next_node_id;
-	new_branch_node->original_next_node = obs_node->next_node;
+	this->new_branch_node->original_next_node_id = obs_node->next_node_id;
+	this->new_branch_node->original_next_node = obs_node->next_node;
 
 	if (this->save_step_types.size() == 0) {
-		save_exit_node->ancestor_ids.push_back(new_branch_node->id);
+		save_exit_node->ancestor_ids.push_back(this->new_branch_node->id);
 
-		new_branch_node->branch_next_node_id = save_exit_node_id;
-		new_branch_node->branch_next_node = save_exit_node;
+		this->new_branch_node->branch_next_node_id = save_exit_node_id;
+		this->new_branch_node->branch_next_node = save_exit_node;
 	} else {
-		save_new_nodes[0]->ancestor_ids.push_back(new_branch_node->id);
+		this->save_new_nodes[0]->ancestor_ids.push_back(this->new_branch_node->id);
 
-		new_branch_node->branch_next_node_id = save_new_nodes[0]->id;
-		new_branch_node->branch_next_node = save_new_nodes[0];
+		this->new_branch_node->branch_next_node_id = this->save_new_nodes[0]->id;
+		this->new_branch_node->branch_next_node = this->save_new_nodes[0];
 	}
 
-	obs_node->next_node_id = new_branch_node->id;
-	obs_node->next_node = new_branch_node;
+	obs_node->next_node_id = this->new_branch_node->id;
+	obs_node->next_node = this->new_branch_node;
 
-	new_branch_node->ancestor_ids.push_back(this->new_nodes[this->step_iter-1]->id);
+	this->new_branch_node->ancestor_ids.push_back(this->new_nodes[this->step_iter-1]->id);
 
-	new_branch_node->average_val = this->commit_new_average_score;
-	new_branch_node->inputs = this->commit_new_inputs;
-	new_branch_node->input_averages = this->commit_new_input_averages;
-	new_branch_node->input_standard_deviations = this->commit_new_input_standard_deviations;
-	new_branch_node->weights = this->commit_new_weights;
+	this->new_branch_node->average_val = this->commit_new_average_score;
+	this->new_branch_node->inputs = this->commit_new_inputs;
+	this->new_branch_node->input_averages = this->commit_new_input_averages;
+	this->new_branch_node->input_standard_deviations = this->commit_new_input_standard_deviations;
+	this->new_branch_node->weights = this->commit_new_weights;
 
 	#if defined(MDEBUG) && MDEBUG
 	if (this->verify_problems.size() > 0) {
@@ -333,34 +309,51 @@ void CommitExperiment::add(SolutionWrapper* wrapper) {
 		this->verify_problems.clear();
 		wrapper->solution->verify_seeds = this->verify_seeds;
 
-		new_branch_node->verify_key = this;
-		new_branch_node->verify_scores = this->verify_scores;
+		this->new_branch_node->verify_key = this;
+		this->new_branch_node->verify_scores = this->verify_scores;
 	}
 	#endif /* MDEBUG */
 
-	for (int s_index = 0; s_index < (int)this->save_step_types.size(); s_index++) {
+	this->new_branch_node = NULL;
+
+	for (int n_index = 0; n_index < (int)this->save_new_nodes.size(); n_index++) {
 		int next_node_id;
 		AbstractNode* next_node;
-		if (s_index == (int)this->save_step_types.size()-1) {
+		if (n_index == (int)this->save_new_nodes.size()-1) {
 			next_node_id = save_exit_node_id;
 			next_node = save_exit_node;
 		} else {
-			next_node_id = save_new_nodes[s_index+1]->id;
-			next_node = save_new_nodes[s_index+1];
+			next_node_id = this->save_new_nodes[n_index+1]->id;
+			next_node = this->save_new_nodes[n_index+1];
 		}
 
-		if (this->save_step_types[s_index] == STEP_TYPE_ACTION) {
-			ActionNode* action_node = (ActionNode*)save_new_nodes[s_index];
-			action_node->next_node_id = next_node_id;
-			action_node->next_node = next_node;
-		} else {
-			ScopeNode* scope_node = (ScopeNode*)save_new_nodes[s_index];
-			scope_node->next_node_id = next_node_id;
-			scope_node->next_node = next_node;
+		switch (this->save_new_nodes[n_index]->type) {
+		case NODE_TYPE_ACTION:
+			{
+				ActionNode* action_node = (ActionNode*)this->save_new_nodes[n_index];
+				action_node->next_node_id = next_node_id;
+				action_node->next_node = next_node;
+			}
+			break;
+		case NODE_TYPE_SCOPE:
+			{
+				ScopeNode* scope_node = (ScopeNode*)this->save_new_nodes[n_index];
+				scope_node->next_node_id = next_node_id;
+				scope_node->next_node = next_node;
+			}
+			break;
+		case NODE_TYPE_OBS:
+			{
+				ObsNode* obs_node = (ObsNode*)this->save_new_nodes[n_index];
+				obs_node->next_node_id = next_node_id;
+				obs_node->next_node = next_node;
+			}
+			break;
 		}
 
-		next_node->ancestor_ids.push_back(save_new_nodes[s_index]->id);
+		next_node->ancestor_ids.push_back(this->save_new_nodes[n_index]->id);
 	}
 
 	this->new_nodes.clear();
+	this->save_new_nodes.clear();
 }
