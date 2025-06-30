@@ -523,15 +523,6 @@ bool train_new(vector<ScopeHistory*>& scope_histories,
 			factor_is_on[h_index] = curr_factor_is_on;
 		}
 
-		#if defined(MDEBUG) && MDEBUG
-		#else
-		double sum_offset = 0.0;
-		for (int i_index = 0; i_index < num_instances; i_index++) {
-			sum_offset += abs(target_val_histories[i_index] - average_score);
-		}
-		double average_offset = sum_offset / (double)num_instances;
-		#endif /* MDEBUG */
-
 		Eigen::MatrixXd inputs(num_instances, factor_inputs.size());
 		for (int i_index = 0; i_index < num_instances; i_index++) {
 			for (int f_index = 0; f_index < (int)factor_inputs.size(); f_index++) {
@@ -554,10 +545,7 @@ bool train_new(vector<ScopeHistory*>& scope_histories,
 			weights = inputs.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(outputs);
 		} catch (std::invalid_argument &e) {
 			cout << "Eigen error" << endl;
-			weights = Eigen::VectorXd(factor_inputs.size());
-			for (int f_index = 0; f_index < (int)factor_inputs.size(); f_index++) {
-				weights(f_index) = 0.0;
-			}
+			return false;
 		}
 
 		for (int f_index = 0; f_index < (int)factor_inputs.size(); f_index++) {
@@ -566,6 +554,12 @@ bool train_new(vector<ScopeHistory*>& scope_histories,
 
 		#if defined(MDEBUG) && MDEBUG
 		#else
+		Eigen::VectorXd predicted = weights * inputs;
+		double sum_offset = 0.0;
+		for (int i_index = 0; i_index < num_instances; i_index++) {
+			sum_offset += abs(predicted(i_index));
+		}
+		double average_offset = sum_offset / (double)num_instances;
 		double impact_threshold = average_offset * FACTOR_IMPACT_THRESHOLD;
 		#endif /* MDEBUG */
 
@@ -575,10 +569,7 @@ bool train_new(vector<ScopeHistory*>& scope_histories,
 			#else
 			double sum_impact = 0.0;
 			for (int i_index = 0; i_index < num_instances; i_index++) {
-				if (factor_is_on[i_index][f_index]) {
-					double normalized_val = (factor_vals[i_index][f_index] - factor_input_averages[f_index]) / factor_input_standard_deviations[f_index];
-					sum_impact += abs(normalized_val);
-				}
+				sum_impact += inputs(i_index, f_index);
 			}
 
 			double impact = abs(factor_weights[f_index]) * sum_impact / (double)num_instances;
