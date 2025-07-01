@@ -30,11 +30,4 @@ public:
 	void save(std::ofstream& output_file);
 };
 
-class InputData {
-public:
-	double hit_percent;
-	double average;
-	double standard_deviation;
-};
-
 #endif /* INPUT_H */

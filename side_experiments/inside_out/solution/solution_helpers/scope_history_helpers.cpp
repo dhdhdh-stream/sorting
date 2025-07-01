@@ -163,38 +163,3 @@ void update_scores(ScopeHistory* scope_history,
 		}
 	}
 }
-
-void analyze_input(Input& input,
-				   vector<ScopeHistory*>& scope_histories,
-				   InputData& input_data) {
-	vector<double> vals;
-	int num_is_on = 0;
-	for (int h_index = 0; h_index < (int)scope_histories.size(); h_index++) {
-		double val;
-		bool is_on;
-		fetch_input_helper(scope_histories[h_index],
-						   input,
-						   0,
-						   val,
-						   is_on);
-		if (is_on) {
-			vals.push_back(val);
-			num_is_on++;
-		}
-	}
-
-	input_data.hit_percent = (double)num_is_on / (double)scope_histories.size();
-	if (input_data.hit_percent >= MIN_CONSIDER_HIT_PERCENT) {
-		double sum_vals = 0.0;
-		for (int v_index = 0; v_index < (int)vals.size(); v_index++) {
-			sum_vals += vals[v_index];
-		}
-		input_data.average = sum_vals / (double)vals.size();
-
-		double sum_variance = 0.0;
-		for (int v_index = 0; v_index < (int)vals.size(); v_index++) {
-			sum_variance += (input_data.average - vals[v_index]) * (input_data.average - vals[v_index]);
-		}
-		input_data.standard_deviation = sqrt(sum_variance / (double)vals.size());
-	}
-}

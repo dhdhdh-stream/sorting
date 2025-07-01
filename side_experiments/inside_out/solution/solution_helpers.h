@@ -16,9 +16,19 @@ class ScopeNode;
 class Solution;
 class SolutionWrapper;
 
+void create_experiment(SolutionWrapper* wrapper,
+					   AbstractExperiment*& curr_experiment);
+
+void fetch_input_helper(ScopeHistory* scope_history,
+						Input& input,
+						int l_index,
+						double& obs,
+						bool& is_on);
+
 const double MIN_CONSIDER_HIT_PERCENT = 0.2;
 
-const int NUM_FACTORS = 10;
+const int EXISTING_NUM_FACTORS = 40;
+const int NEW_NUM_FACTORS = 10;
 
 /**
  * - when there's correlation, weights can get strange values(?)
@@ -29,20 +39,24 @@ const double REGRESSION_FAIL_MULTIPLIER = 1000.0;
 const double FACTOR_IMPACT_THRESHOLD = 0.1;
 
 const int INPUT_NUM_HIGHEST = 4;
-const int INPUT_NUM_RANDOM_PER = 3;
+const int INPUT_NUM_RANDOM = 6;
 
-void create_experiment(SolutionWrapper* wrapper,
-					   AbstractExperiment*& curr_experiment);
-
-void fetch_input_helper(ScopeHistory* scope_history,
-						Input& input,
-						int l_index,
-						double& obs,
-						bool& is_on);
+class InputData {
+public:
+	double hit_percent;
+	double average;
+	double standard_deviation;
+};
 
 void analyze_input(Input& input,
 				   std::vector<ScopeHistory*>& scope_histories,
 				   InputData& input_data);
+bool is_unique(std::vector<std::vector<double>>& input_vals,
+			   std::vector<double>& existing_averages,
+			   std::vector<double>& existing_standard_deviations,
+			   std::vector<double>& potential_input_vals,
+			   double& potential_average,
+			   double& potential_standard_deviation);
 void existing_add_factor(std::vector<ScopeHistory*>& scope_histories,
 						 std::vector<Input>& network_inputs,
 						 Network* network,
