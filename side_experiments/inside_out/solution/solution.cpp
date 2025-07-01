@@ -16,7 +16,7 @@
 
 using namespace std;
 
-const int MAX_STAGNANT_TIMESTEPS = 5;
+const int MAX_STAGNANT_TIMESTEPS = 20;
 
 Solution::Solution() {
 	// do nothing
@@ -241,7 +241,7 @@ void Solution::measure_update() {
 		this->best_score = new_score;
 		this->best_timestamp = this->timestamp;
 	} else if (this->timestamp >= this->best_timestamp + MAX_STAGNANT_TIMESTEPS) {
-		// this->timestamp = -1;
+		this->timestamp = -1;
 	}
 
 	this->curr_score = new_score;

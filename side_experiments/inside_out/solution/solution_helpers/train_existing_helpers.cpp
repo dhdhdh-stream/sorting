@@ -80,7 +80,7 @@ void existing_gather_factor_t_scores_helper(
 					}
 
 					if (it->second.hit_percent >= MIN_CONSIDER_HIT_PERCENT
-							&& it->second.standard_deviation > 0.0) {
+							&& it->second.standard_deviation >= MIN_STANDARD_DEVIATION) {
 						double curr_val = obs_node_history->factor_values[f_index];
 						double curr_t_score = (curr_val - it->second.average) / it->second.standard_deviation;
 						t_scores[input] = curr_t_score;
@@ -157,7 +157,7 @@ void existing_gather_factor_t_scores_top_helper(
 						}
 
 						if (it->second.hit_percent >= MIN_CONSIDER_HIT_PERCENT
-								&& it->second.standard_deviation > 0.0) {
+								&& it->second.standard_deviation >= MIN_STANDARD_DEVIATION) {
 							double curr_val = obs_node_history->factor_values[f_index];
 							double curr_t_score = (curr_val - it->second.average) / it->second.standard_deviation;
 							t_scores[input] = curr_t_score;
@@ -229,7 +229,7 @@ void existing_gather_input_t_scores_helper(
 				}
 
 				if (it->second.hit_percent >= MIN_CONSIDER_HIT_PERCENT
-						&& it->second.standard_deviation > 0.0) {
+						&& it->second.standard_deviation >= MIN_STANDARD_DEVIATION) {
 					double curr_val;
 					if (branch_node_history->is_branch) {
 						curr_val = 1.0;
@@ -270,7 +270,7 @@ void existing_gather_input_t_scores_helper(
 					}
 
 					if (it->second.hit_percent >= MIN_CONSIDER_HIT_PERCENT
-							&& it->second.standard_deviation > 0.0) {
+							&& it->second.standard_deviation >= MIN_STANDARD_DEVIATION) {
 						double curr_val = obs_node_history->obs_history[o_index];
 						double curr_t_score = (curr_val - it->second.average) / it->second.standard_deviation;
 						t_scores[input] = curr_t_score;
@@ -301,7 +301,7 @@ void existing_gather_input_t_scores_helper(
 					}
 
 					if (it->second.hit_percent >= MIN_CONSIDER_HIT_PERCENT
-							&& it->second.standard_deviation > 0.0) {
+							&& it->second.standard_deviation >= MIN_STANDARD_DEVIATION) {
 						double curr_val = obs_node_history->factor_values[f_index];
 						double curr_t_score = (curr_val - it->second.average) / it->second.standard_deviation;
 						t_scores[input] = curr_t_score;
@@ -377,7 +377,7 @@ void existing_gather_input_t_scores_top_helper(
 					}
 
 					if (it->second.hit_percent >= MIN_CONSIDER_HIT_PERCENT
-							&& it->second.standard_deviation > 0.0) {
+							&& it->second.standard_deviation >= MIN_STANDARD_DEVIATION) {
 						double curr_val;
 						if (branch_node_history->is_branch) {
 							curr_val = 1.0;
@@ -418,7 +418,7 @@ void existing_gather_input_t_scores_top_helper(
 						}
 
 						if (it->second.hit_percent >= MIN_CONSIDER_HIT_PERCENT
-								&& it->second.standard_deviation > 0.0) {
+								&& it->second.standard_deviation >= MIN_STANDARD_DEVIATION) {
 							double curr_val = obs_node_history->obs_history[o_index];
 							double curr_t_score = (curr_val - it->second.average) / it->second.standard_deviation;
 							t_scores[input] = curr_t_score;
@@ -449,7 +449,7 @@ void existing_gather_input_t_scores_top_helper(
 						}
 
 						if (it->second.hit_percent >= MIN_CONSIDER_HIT_PERCENT
-								&& it->second.standard_deviation > 0.0) {
+								&& it->second.standard_deviation >= MIN_STANDARD_DEVIATION) {
 							double curr_val = obs_node_history->factor_values[f_index];
 							double curr_t_score = (curr_val - it->second.average) / it->second.standard_deviation;
 							t_scores[input] = curr_t_score;
