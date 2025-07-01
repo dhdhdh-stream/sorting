@@ -1,10 +1,9 @@
 #include "solution_helpers.h"
 
 #include <cmath>
+#include <iostream>
 
 using namespace std;
-
-const double UNIQUE_MAX_PCC = 0.7;
 
 void analyze_input(Input& input,
 				   vector<ScopeHistory*>& scope_histories,
@@ -46,7 +45,8 @@ bool is_unique(vector<vector<double>>& input_vals,
 			   vector<double>& existing_standard_deviations,
 			   vector<double>& potential_input_vals,
 			   double& potential_average,
-			   double& potential_standard_deviation) {
+			   double& potential_standard_deviation,
+			   double max_pcc) {
 	double sum_vals = 0.0;
 	for (int h_index = 0; h_index < (int)potential_input_vals.size(); h_index++) {
 		sum_vals += potential_input_vals[h_index];
@@ -69,7 +69,7 @@ bool is_unique(vector<vector<double>>& input_vals,
 		double covariance = sum_covariance / (double)potential_input_vals.size();
 
 		double pcc = covariance / potential_standard_deviation / existing_standard_deviations[f_index];
-		if (pcc > UNIQUE_MAX_PCC) {
+		if (pcc > max_pcc) {
 			return false;
 		}
 	}

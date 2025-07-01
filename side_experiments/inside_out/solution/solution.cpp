@@ -149,7 +149,7 @@ void Solution::replace_obs_node(Scope* scope,
 	}
 }
 
-void Solution::clean() {
+void Solution::clean_obs_nodes() {
 	/**
 	 * - remove duplicate ObsNodes
 	 * 
@@ -214,7 +214,9 @@ void Solution::clean() {
 			}
 		}
 	}
+}
 
+void Solution::clean() {
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
 		this->scopes[s_index]->clean();
 	}
@@ -239,7 +241,7 @@ void Solution::measure_update() {
 		this->best_score = new_score;
 		this->best_timestamp = this->timestamp;
 	} else if (this->timestamp >= this->best_timestamp + MAX_STAGNANT_TIMESTEPS) {
-		this->timestamp = -1;
+		// this->timestamp = -1;
 	}
 
 	this->curr_score = new_score;

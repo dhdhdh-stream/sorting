@@ -26,6 +26,8 @@ public:
 	AbstractExperiment* best_experiment;
 	int improvement_iter;
 
+	int regather_counter;
+
 	/**
 	 * - run variables
 	 */
@@ -64,11 +66,6 @@ public:
 	std::pair<bool,int> verify_step(std::vector<double> obs);
 	void verify_end();
 	#endif /* MDEBUG */
-
-	void measure_init();
-	std::pair<bool,int> measure_step(std::vector<double> obs);
-	void measure_end(double result);
-	void measure_update();
 
 	bool is_done();
 

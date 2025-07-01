@@ -353,7 +353,8 @@ bool train_new(vector<ScopeHistory*>& scope_histories,
 										h_standard_deviations,
 										curr_factor_vals,
 										potential_average,
-										potential_standard_deviation);
+										potential_standard_deviation,
+										FACTOR_MAX_PCC);
 
 			if (should_add) {
 				factor_inputs.push_back(s_contrast_factor_t_scores[f_index].second);
@@ -391,8 +392,16 @@ bool train_new(vector<ScopeHistory*>& scope_histories,
 			return false;
 		}
 
+		if (abs(weights(0)) > REGRESSION_WEIGHT_LIMIT) {
+			cout << "abs(weights(0)): " << abs(weights(0)) << endl;
+			return false;
+		}
 		average_score = weights(0);
 		for (int f_index = 0; f_index < (int)factor_inputs.size(); f_index++) {
+			if (abs(weights(1 + f_index)) > REGRESSION_WEIGHT_LIMIT) {
+				cout << "abs(weights(1 + f_index)): " << abs(weights(1 + f_index)) << endl;
+				return false;
+			}
 			factor_weights.push_back(weights(1 + f_index));
 		}
 
@@ -417,8 +426,7 @@ bool train_new(vector<ScopeHistory*>& scope_histories,
 			}
 
 			double impact = abs(factor_weights[f_index]) * sum_impact / (double)num_instances;
-			if (impact < impact_threshold
-					|| abs(factor_weights[f_index]) > REGRESSION_WEIGHT_LIMIT) {
+			if (impact < impact_threshold) {
 			#endif /* MDEBUG */
 				factor_inputs.erase(factor_inputs.begin() + f_index);
 				factor_input_averages.erase(factor_input_averages.begin() + f_index);
@@ -528,9 +536,8 @@ bool train_new(vector<ScopeHistory*>& scope_histories,
 		}
 		sort(s_contrast_t_scores.begin(), s_contrast_t_scores.end());
 
-		vector<Input> network_inputs;
-		vector<vector<double>> input_vals;
-		vector<vector<bool>> input_is_on;
+		vector<vector<double>> v_input_vals;
+		vector<vector<bool>> v_input_is_on;
 		vector<vector<double>> n_input_vals;
 		vector<double> h_averages;
 		vector<double> h_standard_deviations;
@@ -568,14 +575,15 @@ bool train_new(vector<ScopeHistory*>& scope_histories,
 										h_standard_deviations,
 										curr_n_input_vals,
 										potential_average,
-										potential_standard_deviation);
+										potential_standard_deviation,
+										NETWORK_MAX_PCC);
 
 			s_contrast_t_scores.pop_back();
 
 			if (should_add) {
 				network_inputs.push_back(input);
-				input_vals.push_back(curr_input_vals);
-				input_is_on.push_back(curr_input_is_on);
+				v_input_vals.push_back(curr_input_vals);
+				v_input_is_on.push_back(curr_input_is_on);
 
 				n_input_vals.push_back(curr_n_input_vals);
 				h_averages.push_back(potential_average);
@@ -623,14 +631,15 @@ bool train_new(vector<ScopeHistory*>& scope_histories,
 										h_standard_deviations,
 										curr_n_input_vals,
 										potential_average,
-										potential_standard_deviation);
+										potential_standard_deviation,
+										NETWORK_MAX_PCC);
 
 			s_contrast_t_scores.erase(s_contrast_t_scores.begin() + input_index);
 
 			if (should_add) {
 				network_inputs.push_back(input);
-				input_vals.push_back(curr_input_vals);
-				input_is_on.push_back(curr_input_is_on);
+				v_input_vals.push_back(curr_input_vals);
+				v_input_is_on.push_back(curr_input_is_on);
 
 				n_input_vals.push_back(curr_n_input_vals);
 				h_averages.push_back(potential_average);
@@ -640,6 +649,19 @@ bool train_new(vector<ScopeHistory*>& scope_histories,
 					break;
 				}
 			}
+		}
+
+		vector<vector<double>> input_vals(num_instances);
+		vector<vector<bool>> input_is_on(num_instances);
+		for (int h_index = 0; h_index < num_instances; h_index++) {
+			vector<double> curr_input_vals(network_inputs.size());
+			vector<bool> curr_input_is_on(network_inputs.size());
+			for (int i_index = 0; i_index < (int)network_inputs.size(); i_index++) {
+				curr_input_vals[i_index] = v_input_vals[i_index][h_index];
+				curr_input_is_on[i_index] = v_input_is_on[i_index][h_index];
+			}
+			input_vals[h_index] = curr_input_vals;
+			input_is_on[h_index] = curr_input_is_on;
 		}
 
 		network = new Network((int)network_inputs.size(),

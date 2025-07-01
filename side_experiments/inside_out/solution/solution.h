@@ -69,6 +69,8 @@ public:
 						  int original_node_id,
 						  int new_node_id);
 
+	void clean_obs_nodes();
+
 	void clean();
 	void measure_update();
 

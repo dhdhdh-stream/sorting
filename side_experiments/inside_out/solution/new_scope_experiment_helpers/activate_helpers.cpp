@@ -38,7 +38,6 @@ void NewScopeExperiment::check_activate(AbstractNode* experiment_node,
 
 	if (has_match) {
 		NewScopeExperimentHistory* history = (NewScopeExperimentHistory*)wrapper->experiment_history;
-		history->is_hit = true;
 
 		if (is_test) {
 			history->hit_test = true;
@@ -70,6 +69,8 @@ void NewScopeExperiment::experiment_exit_step(SolutionWrapper* wrapper) {
 void NewScopeExperiment::back_activate(SolutionWrapper* wrapper) {
 	NewScopeExperimentHistory* history = (NewScopeExperimentHistory*)wrapper->experiment_history;
 	ScopeHistory* scope_history = wrapper->scope_histories.back();
+
+	history->is_hit = true;
 
 	if (this->test_location_start == NULL) {
 		uniform_int_distribution<int> select_distribution(0, history->instance_count);

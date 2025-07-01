@@ -51,31 +51,6 @@ int main(int argc, char* argv[]) {
 			problem_type->num_obs());
 	}
 
-	for (int iter_index = 0; iter_index < MEASURE_ITERS; iter_index++) {
-		Problem* problem = problem_type->get_problem();
-
-		solution_wrapper->measure_init();
-
-		while (true) {
-			vector<double> obs = problem->get_observations();
-
-			pair<bool,int> next = solution_wrapper->measure_step(obs);
-			if (next.first) {
-				break;
-			} else {
-				problem->perform_action(next.second);
-			}
-		}
-
-		double target_val = problem->score_result();
-		target_val -= 0.0001 * solution_wrapper->num_actions;
-
-		solution_wrapper->measure_end(target_val);
-
-		delete problem;
-	}
-	solution_wrapper->measure_update();
-
 	#if defined(MDEBUG) && MDEBUG
 	while (true) {
 	#else
@@ -158,31 +133,6 @@ int main(int argc, char* argv[]) {
 				problem_type->num_obs(),
 				"saves/",
 				filename);
-
-			for (int iter_index = 0; iter_index < MEASURE_ITERS; iter_index++) {
-				Problem* problem = problem_type->get_problem();
-
-				solution_wrapper->measure_init();
-
-				while (true) {
-					vector<double> obs = problem->get_observations();
-
-					pair<bool,int> next = solution_wrapper->measure_step(obs);
-					if (next.first) {
-						break;
-					} else {
-						problem->perform_action(next.second);
-					}
-				}
-
-				double target_val = problem->score_result();
-				target_val -= 0.0001 * solution_wrapper->num_actions;
-
-				solution_wrapper->measure_end(target_val);
-
-				delete problem;
-			}
-			solution_wrapper->measure_update();
 		}
 		#endif /* MDEBUG */
 	}

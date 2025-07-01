@@ -30,6 +30,9 @@ const double MIN_CONSIDER_HIT_PERCENT = 0.2;
 const int EXISTING_NUM_FACTORS = 40;
 const int NEW_NUM_FACTORS = 10;
 
+const int FACTOR_MAX_PCC = 0.6;
+const int NETWORK_MAX_PCC = 0.9;
+
 /**
  * - when there's correlation, weights can get strange values(?)
  */
@@ -56,7 +59,8 @@ bool is_unique(std::vector<std::vector<double>>& input_vals,
 			   std::vector<double>& existing_standard_deviations,
 			   std::vector<double>& potential_input_vals,
 			   double& potential_average,
-			   double& potential_standard_deviation);
+			   double& potential_standard_deviation,
+			   double max_pcc);
 void existing_add_factor(std::vector<ScopeHistory*>& scope_histories,
 						 std::vector<Input>& network_inputs,
 						 Network* network,
