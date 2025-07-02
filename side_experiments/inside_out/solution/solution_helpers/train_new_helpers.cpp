@@ -267,8 +267,6 @@ bool train_new(vector<ScopeHistory*>& scope_histories,
 			   vector<Input>& network_inputs,
 			   Network*& network,
 			   double& select_percentage) {
-	auto start_time = chrono::high_resolution_clock::now();
-
 	int num_instances = (int)target_val_histories.size();
 
 	map<Input, InputData> input_tracker;
@@ -807,10 +805,6 @@ bool train_new(vector<ScopeHistory*>& scope_histories,
 	}
 	select_percentage = (double)num_positive / (double)num_instances;
 	#endif /* MDEBUG */
-
-	auto end_time = chrono::high_resolution_clock::now();
-	auto time_diff = chrono::duration_cast<chrono::milliseconds>(end_time - start_time);
-	cout << "train time: " << time_diff.count() << endl;
 
 	return true;
 }

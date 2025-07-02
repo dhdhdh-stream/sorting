@@ -186,8 +186,16 @@ void CommitExperiment::backprop(double target_val,
 		measure_backprop(target_val,
 						 history);
 
-		this->new_scope_histories.push_back(wrapper->scope_histories[0]);
-		this->new_target_val_histories.push_back(target_val);
+		if (this->new_scope_histories.size() < MEASURE_ITERS) {
+			this->new_scope_histories.push_back(wrapper->scope_histories[0]);
+			this->new_target_val_histories.push_back(target_val);
+		} else {
+			uniform_int_distribution<int> distribution(0, this->new_scope_histories.size()-1);
+			int random_index = distribution(generator);
+			delete this->new_scope_histories[random_index];
+			this->new_scope_histories[random_index] = wrapper->scope_histories[0];
+			this->new_target_val_histories[random_index] = target_val;
+		}
 
 		break;
 	#if defined(MDEBUG) && MDEBUG

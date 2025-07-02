@@ -511,8 +511,6 @@ bool train_existing(vector<ScopeHistory*>& scope_histories,
 					vector<double>& factor_input_standard_deviations,
 					vector<double>& factor_weights,
 					AbstractExperiment* experiment) {
-	auto start_time = chrono::high_resolution_clock::now();
-
 	int num_instances = (int)target_val_histories.size();
 	int num_train_instances = (double)num_instances * (1.0 - TEST_SAMPLES_PERCENTAGE);
 	int num_test_instances = num_instances - num_train_instances;
@@ -1125,10 +1123,6 @@ bool train_existing(vector<ScopeHistory*>& scope_histories,
 			delete new_network;
 		}
 	}
-
-	auto end_time = chrono::high_resolution_clock::now();
-	auto time_diff = chrono::duration_cast<chrono::milliseconds>(end_time - start_time);
-	cout << "train time: " << time_diff.count() << endl;
 
 	return true;
 }
