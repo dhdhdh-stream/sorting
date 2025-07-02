@@ -24,6 +24,12 @@
 
 using namespace std;
 
+#if defined(MDEBUG) && MDEBUG
+const int NEW_GATHER_NUM_SAMPLES = 2;
+#else
+const int NEW_GATHER_NUM_SAMPLES = 10;
+#endif /* MDEBUG */
+
 void new_gather_factor_t_scores_helper(ScopeHistory* scope_history,
 									   vector<Scope*>& scope_context,
 									   vector<int>& node_context,
@@ -82,7 +88,11 @@ void new_gather_factor_t_scores_helper(ScopeHistory* scope_history,
 							&& it->second.standard_deviation > MIN_STANDARD_DEVIATION) {
 						double curr_val = obs_node_history->factor_values[f_index];
 						double curr_t_score = (curr_val - it->second.average) / it->second.standard_deviation;
-						t_scores[input] = curr_t_score;
+						map<Input, double>::iterator t_it = t_scores.find(input);
+						if (t_it == t_scores.end()) {
+							t_it = t_scores.insert({input, 0.0}).first;
+						}
+						t_it->second += curr_t_score;
 					}
 
 					scope_context.pop_back();
@@ -156,7 +166,11 @@ void new_gather_input_t_scores_helper(ScopeHistory* scope_history,
 						curr_val = -1.0;
 					}
 					double curr_t_score = (curr_val - it->second.average) / it->second.standard_deviation;
-					t_scores[input] = curr_t_score;
+					map<Input, double>::iterator t_it = t_scores.find(input);
+					if (t_it == t_scores.end()) {
+						t_it = t_scores.insert({input, 0.0}).first;
+					}
+					t_it->second += curr_t_score;
 				}
 
 				scope_context.pop_back();
@@ -192,7 +206,11 @@ void new_gather_input_t_scores_helper(ScopeHistory* scope_history,
 							&& it->second.standard_deviation > MIN_STANDARD_DEVIATION) {
 						double curr_val = obs_node_history->obs_history[o_index];
 						double curr_t_score = (curr_val - it->second.average) / it->second.standard_deviation;
-						t_scores[input] = curr_t_score;
+						map<Input, double>::iterator t_it = t_scores.find(input);
+						if (t_it == t_scores.end()) {
+							t_it = t_scores.insert({input, 0.0}).first;
+						}
+						t_it->second += curr_t_score;
 					}
 
 					scope_context.pop_back();
@@ -223,7 +241,11 @@ void new_gather_input_t_scores_helper(ScopeHistory* scope_history,
 							&& it->second.standard_deviation > MIN_STANDARD_DEVIATION) {
 						double curr_val = obs_node_history->factor_values[f_index];
 						double curr_t_score = (curr_val - it->second.average) / it->second.standard_deviation;
-						t_scores[input] = curr_t_score;
+						map<Input, double>::iterator t_it = t_scores.find(input);
+						if (t_it == t_scores.end()) {
+							t_it = t_scores.insert({input, 0.0}).first;
+						}
+						t_it->second += curr_t_score;
 					}
 
 					scope_context.pop_back();
@@ -251,28 +273,42 @@ bool train_new(vector<ScopeHistory*>& scope_histories,
 
 	map<Input, InputData> input_tracker;
 
-	int best_factor_index = 0;
-	double best_factor_score = target_val_histories[0];
-	for (int h_index = 1; h_index < num_instances; h_index++) {
-		if (target_val_histories[h_index] > best_factor_score) {
-			best_factor_index = h_index;
-			best_factor_score = target_val_histories[h_index];
-		}
-	}
-	int worst_factor_index = 0;
-	double worst_factor_score = target_val_histories[0];
-	for (int h_index = 1; h_index < num_instances; h_index++) {
-		if (target_val_histories[h_index] < worst_factor_score) {
-			worst_factor_index = h_index;
-			worst_factor_score = target_val_histories[h_index];
+	vector<int> best_factor_indexes(NEW_GATHER_NUM_SAMPLES, -1);
+	vector<double> best_factor_scores(NEW_GATHER_NUM_SAMPLES);
+	for (int h_index = 0; h_index < num_instances; h_index++) {
+		if (best_factor_indexes.back() == -1
+				|| target_val_histories[h_index] > best_factor_scores.back()) {
+			best_factor_indexes.back() = h_index;
+			best_factor_scores.back() = target_val_histories[h_index];
+
+			int curr_index = NEW_GATHER_NUM_SAMPLES - 2;
+			while (true) {
+				if (curr_index < 0) {
+					break;
+				}
+
+				if (best_factor_indexes[curr_index] == -1
+						|| best_factor_scores[curr_index + 1] > best_factor_scores[curr_index]) {
+					double temp_index = best_factor_indexes[curr_index];
+					double temp_score = best_factor_scores[curr_index];
+					best_factor_indexes[curr_index] = best_factor_indexes[curr_index + 1];
+					best_factor_scores[curr_index] = best_factor_scores[curr_index + 1];
+					best_factor_indexes[curr_index + 1] = temp_index;
+					best_factor_scores[curr_index + 1] = temp_score;
+
+					curr_index--;
+				} else {
+					break;
+				}
+			}
 		}
 	}
 
 	map<Input, double> best_factor_t_scores;
-	{
+	for (int f_index = 0; f_index < (int)best_factor_indexes.size(); f_index++) {
 		vector<Scope*> scope_context;
 		vector<int> node_context;
-		new_gather_factor_t_scores_helper(scope_histories[best_factor_index],
+		new_gather_factor_t_scores_helper(scope_histories[best_factor_indexes[f_index]],
 										  scope_context,
 										  node_context,
 										  best_factor_t_scores,
@@ -280,11 +316,42 @@ bool train_new(vector<ScopeHistory*>& scope_histories,
 										  input_tracker);
 	}
 
+	vector<int> worst_factor_indexes(NEW_GATHER_NUM_SAMPLES, -1);
+	vector<double> worst_factor_scores(NEW_GATHER_NUM_SAMPLES);
+	for (int h_index = 0; h_index < num_instances; h_index++) {
+		if (worst_factor_indexes.back() == -1
+				|| target_val_histories[h_index] < worst_factor_scores.back()) {
+			worst_factor_indexes.back() = h_index;
+			worst_factor_scores.back() = target_val_histories[h_index];
+
+			int curr_index = NEW_GATHER_NUM_SAMPLES - 2;
+			while (true) {
+				if (curr_index < 0) {
+					break;
+				}
+
+				if (worst_factor_indexes[curr_index] == -1
+						|| worst_factor_scores[curr_index + 1] < worst_factor_scores[curr_index]) {
+					double temp_index = worst_factor_indexes[curr_index];
+					double temp_score = worst_factor_scores[curr_index];
+					worst_factor_indexes[curr_index] = worst_factor_indexes[curr_index + 1];
+					worst_factor_scores[curr_index] = worst_factor_scores[curr_index + 1];
+					worst_factor_indexes[curr_index + 1] = temp_index;
+					worst_factor_scores[curr_index + 1] = temp_score;
+
+					curr_index--;
+				} else {
+					break;
+				}
+			}
+		}
+	}
+
 	map<Input, double> worst_factor_t_scores;
-	{
+	for (int f_index = 0; f_index < (int)worst_factor_indexes.size(); f_index++) {
 		vector<Scope*> scope_context;
 		vector<int> node_context;
-		new_gather_factor_t_scores_helper(scope_histories[worst_factor_index],
+		new_gather_factor_t_scores_helper(scope_histories[worst_factor_indexes[f_index]],
 										  scope_context,
 										  node_context,
 										  worst_factor_t_scores,
@@ -469,28 +536,42 @@ bool train_new(vector<ScopeHistory*>& scope_histories,
 		}
 	}
 
-	int best_index = 0;
-	double best_score = remaining_scores[0];
-	for (int h_index = 1; h_index < num_instances; h_index++) {
-		if (remaining_scores[h_index] > best_score) {
-			best_index = h_index;
-			best_score = remaining_scores[h_index];
-		}
-	}
-	int worst_index = 0;
-	double worst_score = remaining_scores[0];
-	for (int h_index = 1; h_index < num_instances; h_index++) {
-		if (remaining_scores[h_index] < worst_score) {
-			worst_index = h_index;
-			worst_score = remaining_scores[h_index];
+	vector<int> best_indexes(NEW_GATHER_NUM_SAMPLES, -1);
+	vector<double> best_scores(NEW_GATHER_NUM_SAMPLES);
+	for (int h_index = 0; h_index < num_instances; h_index++) {
+		if (best_indexes.back() == -1
+				|| remaining_scores[h_index] > best_scores.back()) {
+			best_indexes.back() = h_index;
+			best_scores.back() = remaining_scores[h_index];
+
+			int curr_index = NEW_GATHER_NUM_SAMPLES - 2;
+			while (true) {
+				if (curr_index < 0) {
+					break;
+				}
+
+				if (best_indexes[curr_index] == -1
+						|| best_scores[curr_index + 1] > best_scores[curr_index]) {
+					double temp_index = best_indexes[curr_index];
+					double temp_score = best_scores[curr_index];
+					best_indexes[curr_index] = best_indexes[curr_index + 1];
+					best_scores[curr_index] = best_scores[curr_index + 1];
+					best_indexes[curr_index + 1] = temp_index;
+					best_scores[curr_index + 1] = temp_score;
+
+					curr_index--;
+				} else {
+					break;
+				}
+			}
 		}
 	}
 
 	map<Input, double> best_t_scores;
-	{
+	for (int i_index = 0; i_index < (int)best_indexes.size(); i_index++) {
 		vector<Scope*> scope_context;
 		vector<int> node_context;
-		new_gather_input_t_scores_helper(scope_histories[best_index],
+		new_gather_input_t_scores_helper(scope_histories[best_indexes[i_index]],
 										 scope_context,
 										 node_context,
 										 best_t_scores,
@@ -498,11 +579,42 @@ bool train_new(vector<ScopeHistory*>& scope_histories,
 										 input_tracker);
 	}
 
+	vector<int> worst_indexes(NEW_GATHER_NUM_SAMPLES, -1);
+	vector<double> worst_scores(NEW_GATHER_NUM_SAMPLES);
+	for (int h_index = 0; h_index < num_instances; h_index++) {
+		if (worst_indexes.back() == -1
+				|| target_val_histories[h_index] < worst_scores.back()) {
+			worst_indexes.back() = h_index;
+			worst_scores.back() = target_val_histories[h_index];
+
+			int curr_index = NEW_GATHER_NUM_SAMPLES - 2;
+			while (true) {
+				if (curr_index < 0) {
+					break;
+				}
+
+				if (worst_indexes[curr_index] == -1
+						|| worst_scores[curr_index + 1] < worst_scores[curr_index]) {
+					double temp_index = worst_indexes[curr_index];
+					double temp_score = worst_scores[curr_index];
+					worst_indexes[curr_index] = worst_indexes[curr_index + 1];
+					worst_scores[curr_index] = worst_scores[curr_index + 1];
+					worst_indexes[curr_index + 1] = temp_index;
+					worst_scores[curr_index + 1] = temp_score;
+
+					curr_index--;
+				} else {
+					break;
+				}
+			}
+		}
+	}
+
 	map<Input, double> worst_t_scores;
-	{
+	for (int i_index = 0; i_index < (int)worst_indexes.size(); i_index++) {
 		vector<Scope*> scope_context;
 		vector<int> node_context;
-		new_gather_input_t_scores_helper(scope_histories[worst_index],
+		new_gather_input_t_scores_helper(scope_histories[worst_indexes[i_index]],
 										 scope_context,
 										 node_context,
 										 worst_t_scores,

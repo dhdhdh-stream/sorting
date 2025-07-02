@@ -250,8 +250,7 @@ void create_experiment(SolutionWrapper* wrapper,
 
 	if (explore_node != NULL) {
 		uniform_int_distribution<int> non_new_distribution(0, 9);
-		if (explore_node->parent->new_scope_experiment == NULL
-				&& explore_node->parent->nodes.size() >= NEW_SCOPE_MIN_NODES
+		if (explore_node->parent->nodes.size() >= NEW_SCOPE_MIN_NODES
 				&& non_new_distribution(generator) != 0) {
 			NewScopeExperiment* new_scope_experiment = new NewScopeExperiment(
 				explore_node->parent,

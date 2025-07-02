@@ -69,7 +69,7 @@ bool is_unique(vector<vector<double>>& input_vals,
 		double covariance = sum_covariance / (double)potential_input_vals.size();
 
 		double pcc = covariance / potential_standard_deviation / existing_standard_deviations[f_index];
-		if (pcc > max_pcc) {
+		if (abs(pcc) > max_pcc) {
 			return false;
 		}
 	}
