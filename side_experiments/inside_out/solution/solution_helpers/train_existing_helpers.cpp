@@ -1,3 +1,8 @@
+/**
+ * - if change has a 1% impact, need ~50000 samples to confirm
+ *   - ultimately, key is still reward signals
+ */
+
 #include "solution_helpers.h"
 
 #include <algorithm>
@@ -29,7 +34,7 @@ const int EXISTING_GATHER_NUM_SAMPLES = 2;
 const int EXISTING_GATHER_NUM_SAMPLES = 40;
 #endif /* MDEBUG */
 
-void existing_gather_factor_t_scores_helper(
+void existing_gather_t_scores_helper(
 		ScopeHistory* scope_history,
 		vector<Scope*>& scope_context,
 		vector<int>& node_context,
@@ -49,165 +54,7 @@ void existing_gather_factor_t_scores_helper(
 				scope_context.push_back(scope);
 				node_context.push_back(it->first);
 
-				existing_gather_factor_t_scores_helper(
-					scope_node_history->scope_history,
-					scope_context,
-					node_context,
-					t_scores,
-					scope_histories,
-					input_tracker);
-
-				scope_context.pop_back();
-				node_context.pop_back();
-			}
-			break;
-		case NODE_TYPE_OBS:
-			{
-				ObsNode* obs_node = (ObsNode*)node;
-				ObsNodeHistory* obs_node_history = (ObsNodeHistory*)it->second;
-				for (int f_index = 0; f_index < (int)obs_node->factors.size(); f_index++) {
-					scope_context.push_back(scope);
-					node_context.push_back(it->first);
-
-					Input input;
-					input.scope_context = scope_context;
-					input.node_context = node_context;
-					input.factor_index = f_index;
-					input.obs_index = -1;
-
-					map<Input, InputData>::iterator it = input_tracker.find(input);
-					if (it == input_tracker.end()) {
-						InputData input_data;
-						analyze_input(input,
-									  scope_histories,
-									  input_data);
-
-						it = input_tracker.insert({input, input_data}).first;
-					}
-
-					if (it->second.hit_percent >= MIN_CONSIDER_HIT_PERCENT
-							&& it->second.standard_deviation >= MIN_STANDARD_DEVIATION) {
-						double curr_val = obs_node_history->factor_values[f_index];
-						double curr_t_score = (curr_val - it->second.average) / it->second.standard_deviation;
-						map<Input, double>::iterator t_it = t_scores.find(input);
-						if (t_it == t_scores.end()) {
-							t_it = t_scores.insert({input, 0.0}).first;
-						}
-						t_it->second += curr_t_score;
-					}
-
-					scope_context.pop_back();
-					node_context.pop_back();
-				}
-			}
-			break;
-		}
-	}
-}
-
-void existing_gather_factor_t_scores_top_helper(
-		ScopeHistory* scope_history,
-		map<Input, double>& t_scores,
-		vector<ScopeHistory*>& scope_histories,
-		map<Input, InputData>& input_tracker,
-		AbstractNode* explore_node) {
-	AbstractNodeHistory* explore_node_history = scope_history->node_histories[explore_node->id];
-
-	vector<Scope*> scope_context;
-	vector<int> node_context;
-
-	Scope* scope = scope_history->scope;
-
-	for (map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
-			it != scope_history->node_histories.end(); it++) {
-		if (it->second->index <= explore_node_history->index) {
-			AbstractNode* node = it->second->node;
-			switch (node->type) {
-			case NODE_TYPE_SCOPE:
-				{
-					ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)it->second;
-
-					scope_context.push_back(scope);
-					node_context.push_back(it->first);
-
-					existing_gather_factor_t_scores_helper(
-						scope_node_history->scope_history,
-						scope_context,
-						node_context,
-						t_scores,
-						scope_histories,
-						input_tracker);
-
-					scope_context.pop_back();
-					node_context.pop_back();
-				}
-				break;
-			case NODE_TYPE_OBS:
-				{
-					ObsNode* obs_node = (ObsNode*)node;
-					ObsNodeHistory* obs_node_history = (ObsNodeHistory*)it->second;
-					for (int f_index = 0; f_index < (int)obs_node->factors.size(); f_index++) {
-						scope_context.push_back(scope);
-						node_context.push_back(it->first);
-
-						Input input;
-						input.scope_context = scope_context;
-						input.node_context = node_context;
-						input.factor_index = f_index;
-						input.obs_index = -1;
-
-						map<Input, InputData>::iterator it = input_tracker.find(input);
-						if (it == input_tracker.end()) {
-							InputData input_data;
-							analyze_input(input,
-										  scope_histories,
-										  input_data);
-
-							it = input_tracker.insert({input, input_data}).first;
-						}
-
-						if (it->second.hit_percent >= MIN_CONSIDER_HIT_PERCENT
-								&& it->second.standard_deviation >= MIN_STANDARD_DEVIATION) {
-							double curr_val = obs_node_history->factor_values[f_index];
-							double curr_t_score = (curr_val - it->second.average) / it->second.standard_deviation;
-							map<Input, double>::iterator t_it = t_scores.find(input);
-							if (t_it == t_scores.end()) {
-								t_it = t_scores.insert({input, 0.0}).first;
-							}
-							t_it->second += curr_t_score;
-						}
-
-						scope_context.pop_back();
-						node_context.pop_back();
-					}
-				}
-				break;
-			}
-		}
-	}
-}
-
-void existing_gather_input_t_scores_helper(
-		ScopeHistory* scope_history,
-		vector<Scope*>& scope_context,
-		vector<int>& node_context,
-		map<Input, double>& t_scores,
-		vector<ScopeHistory*>& scope_histories,
-		map<Input, InputData>& input_tracker) {
-	Scope* scope = scope_history->scope;
-
-	for (map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
-			it != scope_history->node_histories.end(); it++) {
-		AbstractNode* node = it->second->node;
-		switch (node->type) {
-		case NODE_TYPE_SCOPE:
-			{
-				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)it->second;
-
-				scope_context.push_back(scope);
-				node_context.push_back(it->first);
-
-				existing_gather_input_t_scores_helper(
+				existing_gather_t_scores_helper(
 					scope_node_history->scope_history,
 					scope_context,
 					node_context,
@@ -342,7 +189,7 @@ void existing_gather_input_t_scores_helper(
 	}
 }
 
-void existing_gather_input_t_scores_top_helper(
+void existing_gather_t_scores_top_helper(
 		ScopeHistory* scope_history,
 		map<Input, double>& t_scores,
 		vector<ScopeHistory*>& scope_histories,
@@ -367,7 +214,7 @@ void existing_gather_input_t_scores_top_helper(
 					scope_context.push_back(scope);
 					node_context.push_back(it->first);
 
-					existing_gather_input_t_scores_helper(
+					existing_gather_t_scores_helper(
 						scope_node_history->scope_history,
 						scope_context,
 						node_context,
@@ -512,8 +359,6 @@ bool train_existing(vector<ScopeHistory*>& scope_histories,
 					vector<double>& factor_weights,
 					AbstractExperiment* experiment) {
 	int num_instances = (int)target_val_histories.size();
-	int num_train_instances = (double)num_instances * (1.0 - TEST_SAMPLES_PERCENTAGE);
-	int num_test_instances = num_instances - num_train_instances;
 
 	map<Input, InputData> input_tracker;
 
@@ -550,7 +395,7 @@ bool train_existing(vector<ScopeHistory*>& scope_histories,
 
 	map<Input, double> best_factor_t_scores;
 	for (int f_index = 0; f_index < (int)best_factor_indexes.size(); f_index++) {
-		existing_gather_factor_t_scores_top_helper(
+		existing_gather_t_scores_top_helper(
 			scope_histories[best_factor_indexes[f_index]],
 			best_factor_t_scores,
 			scope_histories,
@@ -591,7 +436,7 @@ bool train_existing(vector<ScopeHistory*>& scope_histories,
 
 	map<Input, double> worst_factor_t_scores;
 	for (int f_index = 0; f_index < (int)worst_factor_indexes.size(); f_index++) {
-		existing_gather_factor_t_scores_top_helper(
+		existing_gather_t_scores_top_helper(
 			scope_histories[worst_factor_indexes[f_index]],
 			worst_factor_t_scores,
 			scope_histories,
@@ -677,16 +522,16 @@ bool train_existing(vector<ScopeHistory*>& scope_histories,
 			}
 		}
 
-		Eigen::MatrixXd inputs(num_train_instances, 1 + factor_inputs.size());
-		for (int i_index = 0; i_index < num_train_instances; i_index++) {
+		Eigen::MatrixXd inputs(num_instances, 1 + factor_inputs.size());
+		for (int i_index = 0; i_index < num_instances; i_index++) {
 			inputs(i_index, 0) = 1.0;
 			for (int f_index = 0; f_index < (int)factor_inputs.size(); f_index++) {
 				inputs(i_index, 1 + f_index) = factor_vals[f_index][i_index];
 			}
 		}
 
-		Eigen::VectorXd outputs(num_train_instances);
-		for (int i_index = 0; i_index < num_train_instances; i_index++) {
+		Eigen::VectorXd outputs(num_instances);
+		for (int i_index = 0; i_index < num_instances; i_index++) {
 			outputs(i_index) = target_val_histories[i_index];
 		}
 
@@ -806,7 +651,7 @@ bool train_existing(vector<ScopeHistory*>& scope_histories,
 
 	map<Input, double> best_t_scores;
 	for (int i_index = 0; i_index < (int)best_indexes.size(); i_index++) {
-		existing_gather_input_t_scores_top_helper(
+		existing_gather_t_scores_top_helper(
 			scope_histories[best_indexes[i_index]],
 			best_t_scores,
 			scope_histories,
@@ -847,7 +692,7 @@ bool train_existing(vector<ScopeHistory*>& scope_histories,
 
 	map<Input, double> worst_t_scores;
 	for (int i_index = 0; i_index < (int)worst_indexes.size(); i_index++) {
-		existing_gather_input_t_scores_top_helper(
+		existing_gather_t_scores_top_helper(
 			scope_histories[worst_indexes[i_index]],
 			worst_t_scores,
 			scope_histories,
@@ -1011,17 +856,17 @@ bool train_existing(vector<ScopeHistory*>& scope_histories,
 		}
 
 		double sum_misguess = 0.0;
-		for (int i_index = num_train_instances; i_index < num_instances; i_index++) {
+		for (int i_index = 0; i_index < num_instances; i_index++) {
 			sum_misguess += remaining_scores[i_index] * remaining_scores[i_index];
 		}
-		double average_misguess = sum_misguess / num_test_instances;
+		double average_misguess = sum_misguess / num_instances;
 
 		double sum_misguess_variance = 0.0;
-		for (int i_index = num_train_instances; i_index < num_instances; i_index++) {
+		for (int i_index = 0; i_index < num_instances; i_index++) {
 			double curr_misguess = remaining_scores[i_index] * remaining_scores[i_index];
 			sum_misguess_variance += (curr_misguess - average_misguess) * (curr_misguess - average_misguess);
 		}
-		double misguess_standard_deviation = sqrt(sum_misguess_variance / num_test_instances);
+		double misguess_standard_deviation = sqrt(sum_misguess_variance / num_instances);
 		if (misguess_standard_deviation < MIN_STANDARD_DEVIATION) {
 			misguess_standard_deviation = MIN_STANDARD_DEVIATION;
 		}

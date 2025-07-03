@@ -30,7 +30,7 @@ const double MIN_CONSIDER_HIT_PERCENT = 0.2;
 const int EXISTING_NUM_FACTORS = 40;
 const int NEW_NUM_FACTORS = 10;
 
-const int FACTOR_MAX_PCC = 0.6;
+const int FACTOR_MAX_PCC = 0.7;
 const int NETWORK_MAX_PCC = 0.9;
 
 /**

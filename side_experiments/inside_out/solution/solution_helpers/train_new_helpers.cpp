@@ -30,12 +30,12 @@ const int NEW_GATHER_NUM_SAMPLES = 2;
 const int NEW_GATHER_NUM_SAMPLES = 10;
 #endif /* MDEBUG */
 
-void new_gather_factor_t_scores_helper(ScopeHistory* scope_history,
-									   vector<Scope*>& scope_context,
-									   vector<int>& node_context,
-									   map<Input, double>& t_scores,
-									   vector<ScopeHistory*>& scope_histories,
-									   map<Input, InputData>& input_tracker) {
+void new_gather_t_scores_helper(ScopeHistory* scope_history,
+								vector<Scope*>& scope_context,
+								vector<int>& node_context,
+								map<Input, double>& t_scores,
+								vector<ScopeHistory*>& scope_histories,
+								map<Input, InputData>& input_tracker) {
 	Scope* scope = scope_history->scope;
 
 	for (map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
@@ -49,86 +49,12 @@ void new_gather_factor_t_scores_helper(ScopeHistory* scope_history,
 				scope_context.push_back(scope);
 				node_context.push_back(it->first);
 
-				new_gather_factor_t_scores_helper(scope_node_history->scope_history,
-												  scope_context,
-												  node_context,
-												  t_scores,
-												  scope_histories,
-												  input_tracker);
-
-				scope_context.pop_back();
-				node_context.pop_back();
-			}
-			break;
-		case NODE_TYPE_OBS:
-			{
-				ObsNode* obs_node = (ObsNode*)node;
-				ObsNodeHistory* obs_node_history = (ObsNodeHistory*)it->second;
-				for (int f_index = 0; f_index < (int)obs_node->factors.size(); f_index++) {
-					scope_context.push_back(scope);
-					node_context.push_back(it->first);
-
-					Input input;
-					input.scope_context = scope_context;
-					input.node_context = node_context;
-					input.factor_index = f_index;
-					input.obs_index = -1;
-
-					map<Input, InputData>::iterator it = input_tracker.find(input);
-					if (it == input_tracker.end()) {
-						InputData input_data;
-						analyze_input(input,
-									  scope_histories,
-									  input_data);
-
-						it = input_tracker.insert({input, input_data}).first;
-					}
-
-					if (it->second.hit_percent >= MIN_CONSIDER_HIT_PERCENT
-							&& it->second.standard_deviation > MIN_STANDARD_DEVIATION) {
-						double curr_val = obs_node_history->factor_values[f_index];
-						double curr_t_score = (curr_val - it->second.average) / it->second.standard_deviation;
-						map<Input, double>::iterator t_it = t_scores.find(input);
-						if (t_it == t_scores.end()) {
-							t_it = t_scores.insert({input, 0.0}).first;
-						}
-						t_it->second += curr_t_score;
-					}
-
-					scope_context.pop_back();
-					node_context.pop_back();
-				}
-			}
-			break;
-		}
-	}
-}
-
-void new_gather_input_t_scores_helper(ScopeHistory* scope_history,
-									  vector<Scope*>& scope_context,
-									  vector<int>& node_context,
-									  map<Input, double>& t_scores,
-									  vector<ScopeHistory*>& scope_histories,
-									  map<Input, InputData>& input_tracker) {
-	Scope* scope = scope_history->scope;
-
-	for (map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
-			it != scope_history->node_histories.end(); it++) {
-		AbstractNode* node = it->second->node;
-		switch (node->type) {
-		case NODE_TYPE_SCOPE:
-			{
-				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)it->second;
-
-				scope_context.push_back(scope);
-				node_context.push_back(it->first);
-
-				new_gather_input_t_scores_helper(scope_node_history->scope_history,
-												 scope_context,
-												 node_context,
-												 t_scores,
-												 scope_histories,
-												 input_tracker);
+				new_gather_t_scores_helper(scope_node_history->scope_history,
+										   scope_context,
+										   node_context,
+										   t_scores,
+										   scope_histories,
+										   input_tracker);
 
 				scope_context.pop_back();
 				node_context.pop_back();
@@ -306,12 +232,12 @@ bool train_new(vector<ScopeHistory*>& scope_histories,
 	for (int f_index = 0; f_index < (int)best_factor_indexes.size(); f_index++) {
 		vector<Scope*> scope_context;
 		vector<int> node_context;
-		new_gather_factor_t_scores_helper(scope_histories[best_factor_indexes[f_index]],
-										  scope_context,
-										  node_context,
-										  best_factor_t_scores,
-										  scope_histories,
-										  input_tracker);
+		new_gather_t_scores_helper(scope_histories[best_factor_indexes[f_index]],
+								   scope_context,
+								   node_context,
+								   best_factor_t_scores,
+								   scope_histories,
+								   input_tracker);
 	}
 
 	vector<int> worst_factor_indexes(NEW_GATHER_NUM_SAMPLES, -1);
@@ -349,12 +275,12 @@ bool train_new(vector<ScopeHistory*>& scope_histories,
 	for (int f_index = 0; f_index < (int)worst_factor_indexes.size(); f_index++) {
 		vector<Scope*> scope_context;
 		vector<int> node_context;
-		new_gather_factor_t_scores_helper(scope_histories[worst_factor_indexes[f_index]],
-										  scope_context,
-										  node_context,
-										  worst_factor_t_scores,
-										  scope_histories,
-										  input_tracker);
+		new_gather_t_scores_helper(scope_histories[worst_factor_indexes[f_index]],
+								   scope_context,
+								   node_context,
+								   worst_factor_t_scores,
+								   scope_histories,
+								   input_tracker);
 	}
 
 	map<Input, double> contrast_factor_t_scores;
@@ -569,12 +495,12 @@ bool train_new(vector<ScopeHistory*>& scope_histories,
 	for (int i_index = 0; i_index < (int)best_indexes.size(); i_index++) {
 		vector<Scope*> scope_context;
 		vector<int> node_context;
-		new_gather_input_t_scores_helper(scope_histories[best_indexes[i_index]],
-										 scope_context,
-										 node_context,
-										 best_t_scores,
-										 scope_histories,
-										 input_tracker);
+		new_gather_t_scores_helper(scope_histories[best_indexes[i_index]],
+								   scope_context,
+								   node_context,
+								   best_t_scores,
+								   scope_histories,
+								   input_tracker);
 	}
 
 	vector<int> worst_indexes(NEW_GATHER_NUM_SAMPLES, -1);
@@ -612,12 +538,12 @@ bool train_new(vector<ScopeHistory*>& scope_histories,
 	for (int i_index = 0; i_index < (int)worst_indexes.size(); i_index++) {
 		vector<Scope*> scope_context;
 		vector<int> node_context;
-		new_gather_input_t_scores_helper(scope_histories[worst_indexes[i_index]],
-										 scope_context,
-										 node_context,
-										 worst_t_scores,
-										 scope_histories,
-										 input_tracker);
+		new_gather_t_scores_helper(scope_histories[worst_indexes[i_index]],
+								   scope_context,
+								   node_context,
+								   worst_t_scores,
+								   scope_histories,
+								   input_tracker);
 	}
 
 	map<Input, double> contrast_t_scores;
@@ -778,10 +704,10 @@ bool train_new(vector<ScopeHistory*>& scope_histories,
 							  input_vals,
 							  input_is_on);
 
-		train_new_network(input_vals,
-						  input_is_on,
-						  remaining_scores,
-						  network);
+		train_network(input_vals,
+					  input_is_on,
+					  remaining_scores,
+					  network);
 
 		for (int i_index = 0; i_index < num_instances; i_index++) {
 			network->activate(input_vals[i_index],
