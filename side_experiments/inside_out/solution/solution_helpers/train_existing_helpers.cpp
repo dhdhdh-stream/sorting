@@ -34,6 +34,8 @@ const int EXISTING_GATHER_NUM_SAMPLES = 2;
 const int EXISTING_GATHER_NUM_SAMPLES = 40;
 #endif /* MDEBUG */
 
+const int EXISTING_NUM_FACTORS = 40;
+
 void existing_gather_t_scores_helper(
 		ScopeHistory* scope_history,
 		vector<Scope*>& scope_context,
@@ -150,38 +152,40 @@ void existing_gather_t_scores_helper(
 				}
 
 				for (int f_index = 0; f_index < (int)obs_node->factors.size(); f_index++) {
-					scope_context.push_back(scope);
-					node_context.push_back(it->first);
+					if (obs_node->factors[f_index]->inputs.size() > 0) {
+						scope_context.push_back(scope);
+						node_context.push_back(it->first);
 
-					Input input;
-					input.scope_context = scope_context;
-					input.node_context = node_context;
-					input.factor_index = f_index;
-					input.obs_index = -1;
+						Input input;
+						input.scope_context = scope_context;
+						input.node_context = node_context;
+						input.factor_index = f_index;
+						input.obs_index = -1;
 
-					map<Input, InputData>::iterator it = input_tracker.find(input);
-					if (it == input_tracker.end()) {
-						InputData input_data;
-						analyze_input(input,
-									  scope_histories,
-									  input_data);
+						map<Input, InputData>::iterator it = input_tracker.find(input);
+						if (it == input_tracker.end()) {
+							InputData input_data;
+							analyze_input(input,
+										  scope_histories,
+										  input_data);
 
-						it = input_tracker.insert({input, input_data}).first;
-					}
-
-					if (it->second.hit_percent >= MIN_CONSIDER_HIT_PERCENT
-							&& it->second.standard_deviation >= MIN_STANDARD_DEVIATION) {
-						double curr_val = obs_node_history->factor_values[f_index];
-						double curr_t_score = (curr_val - it->second.average) / it->second.standard_deviation;
-						map<Input, double>::iterator t_it = t_scores.find(input);
-						if (t_it == t_scores.end()) {
-							t_it = t_scores.insert({input, 0.0}).first;
+							it = input_tracker.insert({input, input_data}).first;
 						}
-						t_it->second += curr_t_score;
-					}
 
-					scope_context.pop_back();
-					node_context.pop_back();
+						if (it->second.hit_percent >= MIN_CONSIDER_HIT_PERCENT
+								&& it->second.standard_deviation >= MIN_STANDARD_DEVIATION) {
+							double curr_val = obs_node_history->factor_values[f_index];
+							double curr_t_score = (curr_val - it->second.average) / it->second.standard_deviation;
+							map<Input, double>::iterator t_it = t_scores.find(input);
+							if (t_it == t_scores.end()) {
+								t_it = t_scores.insert({input, 0.0}).first;
+							}
+							t_it->second += curr_t_score;
+						}
+
+						scope_context.pop_back();
+						node_context.pop_back();
+					}
 				}
 			}
 			break;
@@ -310,38 +314,40 @@ void existing_gather_t_scores_top_helper(
 					}
 
 					for (int f_index = 0; f_index < (int)obs_node->factors.size(); f_index++) {
-						scope_context.push_back(scope);
-						node_context.push_back(it->first);
+						if (obs_node->factors[f_index]->inputs.size() > 0) {
+							scope_context.push_back(scope);
+							node_context.push_back(it->first);
 
-						Input input;
-						input.scope_context = scope_context;
-						input.node_context = node_context;
-						input.factor_index = f_index;
-						input.obs_index = -1;
+							Input input;
+							input.scope_context = scope_context;
+							input.node_context = node_context;
+							input.factor_index = f_index;
+							input.obs_index = -1;
 
-						map<Input, InputData>::iterator it = input_tracker.find(input);
-						if (it == input_tracker.end()) {
-							InputData input_data;
-							analyze_input(input,
-										  scope_histories,
-										  input_data);
+							map<Input, InputData>::iterator it = input_tracker.find(input);
+							if (it == input_tracker.end()) {
+								InputData input_data;
+								analyze_input(input,
+											  scope_histories,
+											  input_data);
 
-							it = input_tracker.insert({input, input_data}).first;
-						}
-
-						if (it->second.hit_percent >= MIN_CONSIDER_HIT_PERCENT
-								&& it->second.standard_deviation >= MIN_STANDARD_DEVIATION) {
-							double curr_val = obs_node_history->factor_values[f_index];
-							double curr_t_score = (curr_val - it->second.average) / it->second.standard_deviation;
-							map<Input, double>::iterator t_it = t_scores.find(input);
-							if (t_it == t_scores.end()) {
-								t_it = t_scores.insert({input, 0.0}).first;
+								it = input_tracker.insert({input, input_data}).first;
 							}
-							t_it->second += curr_t_score;
-						}
 
-						scope_context.pop_back();
-						node_context.pop_back();
+							if (it->second.hit_percent >= MIN_CONSIDER_HIT_PERCENT
+									&& it->second.standard_deviation >= MIN_STANDARD_DEVIATION) {
+								double curr_val = obs_node_history->factor_values[f_index];
+								double curr_t_score = (curr_val - it->second.average) / it->second.standard_deviation;
+								map<Input, double>::iterator t_it = t_scores.find(input);
+								if (t_it == t_scores.end()) {
+									t_it = t_scores.insert({input, 0.0}).first;
+								}
+								t_it->second += curr_t_score;
+							}
+
+							scope_context.pop_back();
+							node_context.pop_back();
+						}
 					}
 				}
 				break;
@@ -504,8 +510,7 @@ bool train_existing(vector<ScopeHistory*>& scope_histories,
 										h_standard_deviations,
 										curr_factor_vals,
 										potential_average,
-										potential_standard_deviation,
-										FACTOR_MAX_PCC);
+										potential_standard_deviation);
 
 			if (should_add) {
 				factor_inputs.push_back(s_contrast_factor_t_scores[f_index].second);
@@ -560,10 +565,10 @@ bool train_existing(vector<ScopeHistory*>& scope_histories,
 		#else
 		Eigen::VectorXd predicted = inputs * weights;
 		double sum_offset = 0.0;
-		for (int i_index = 0; i_index < num_train_instances; i_index++) {
+		for (int i_index = 0; i_index < num_instances; i_index++) {
 			sum_offset += abs(predicted(i_index) - average_score);
 		}
-		double average_offset = sum_offset / (double)num_train_instances;
+		double average_offset = sum_offset / (double)num_instances;
 		double impact_threshold = average_offset * FACTOR_IMPACT_THRESHOLD;
 		#endif /* MDEBUG */
 
@@ -572,11 +577,11 @@ bool train_existing(vector<ScopeHistory*>& scope_histories,
 			if (rand()%2 == 0) {
 			#else
 			double sum_impact = 0.0;
-			for (int i_index = 0; i_index < num_train_instances; i_index++) {
+			for (int i_index = 0; i_index < num_instances; i_index++) {
 				sum_impact += abs(inputs(i_index, 1 + f_index));
 			}
 
-			double impact = abs(factor_weights[f_index]) * sum_impact / num_train_instances;
+			double impact = abs(factor_weights[f_index]) * sum_impact / num_instances;
 			if (impact < impact_threshold) {
 			#endif /* MDEBUG */
 				factor_inputs.erase(factor_inputs.begin() + f_index);
@@ -593,15 +598,6 @@ bool train_existing(vector<ScopeHistory*>& scope_histories,
 			for (int f_index = 0; f_index < (int)factor_inputs.size(); f_index++) {
 				sum_score += factor_weights[f_index] * factor_vals[f_index][i_index];
 			}
-
-			#if defined(MDEBUG) && MDEBUG
-			#else
-			if (abs(sum_score) > REGRESSION_FAIL_MULTIPLIER * average_offset) {
-				cout << "abs(sum_score): " << abs(sum_score) << endl;
-				cout << "average_offset: " << average_offset << endl;
-				return false;
-			}
-			#endif /* MDEBUG */
 
 			remaining_scores[i_index] = target_val_histories[i_index]
 				- average_score - sum_score;
@@ -766,8 +762,7 @@ bool train_existing(vector<ScopeHistory*>& scope_histories,
 										h_standard_deviations,
 										curr_n_input_vals,
 										potential_average,
-										potential_standard_deviation,
-										NETWORK_MAX_PCC);
+										potential_standard_deviation);
 
 			s_contrast_t_scores.pop_back();
 
@@ -822,8 +817,7 @@ bool train_existing(vector<ScopeHistory*>& scope_histories,
 										h_standard_deviations,
 										curr_n_input_vals,
 										potential_average,
-										potential_standard_deviation,
-										NETWORK_MAX_PCC);
+										potential_standard_deviation);
 
 			s_contrast_t_scores.erase(s_contrast_t_scores.begin() + input_index);
 
@@ -894,7 +888,7 @@ bool train_existing(vector<ScopeHistory*>& scope_histories,
 		#else
 		double new_improvement = average_misguess - new_average_misguess;
 		double new_standard_deviation = min(misguess_standard_deviation, new_misguess_standard_deviation);
-		double new_t_score = new_improvement / (new_standard_deviation / sqrt(num_test_instances));
+		double new_t_score = new_improvement / (new_standard_deviation / sqrt(num_instances));
 
 		if (new_t_score > 2.326) {
 		#endif /* MDEBUG */
@@ -933,7 +927,7 @@ bool train_existing(vector<ScopeHistory*>& scope_histories,
 				#else
 				double remove_improvement = average_misguess - remove_average_misguess;
 				double remove_standard_deviation = min(misguess_standard_deviation, remove_misguess_standard_deviation);
-				double remove_t_score = remove_improvement / (remove_standard_deviation / sqrt(num_instances * TEST_SAMPLES_PERCENTAGE));
+				double remove_t_score = remove_improvement / (remove_standard_deviation / sqrt(num_instances));
 
 				if (remove_t_score > -0.674) {
 				#endif /* MDEBUG */

@@ -294,7 +294,7 @@ void CommitExperiment::measure_backprop(double target_val,
 
 			double t_score = (new_score - existing_score) / new_standard_deviation;
 			if (t_score >= EARLY_SUCCESS_MIN_T_SCORE) {
-				this->improvement = new_score - existing_score;
+				this->new_score = new_score;
 
 				cout << "CommitExperiment success" << endl;
 
@@ -305,7 +305,8 @@ void CommitExperiment::measure_backprop(double target_val,
 				cout << "this->new_nodes.size(): " << this->new_nodes.size() << endl;
 				cout << "this->step_iter: " << this->step_iter << endl;
 
-				cout << "this->improvement: " << this->improvement << endl;
+				double improvement = new_score - existing_score;
+				cout << "improvement: " << improvement << endl;
 
 				#if defined(MDEBUG) && MDEBUG
 				this->verify_problems = vector<Problem*>(NUM_VERIFY_SAMPLES, NULL);
@@ -360,7 +361,7 @@ void CommitExperiment::measure_backprop(double target_val,
 			#else
 			if (new_score > existing_score) {
 			#endif /* MDEBUG */
-				this->improvement = new_score - existing_score;
+				this->new_score = new_score;
 
 				cout << "CommitExperiment success" << endl;
 
@@ -371,7 +372,8 @@ void CommitExperiment::measure_backprop(double target_val,
 				cout << "this->new_nodes.size(): " << this->new_nodes.size() << endl;
 				cout << "this->step_iter: " << this->step_iter << endl;
 
-				cout << "this->improvement: " << this->improvement << endl;
+				double improvement = new_score - existing_score;
+				cout << "improvement: " << improvement << endl;
 
 				#if defined(MDEBUG) && MDEBUG
 				this->verify_problems = vector<Problem*>(NUM_VERIFY_SAMPLES, NULL);

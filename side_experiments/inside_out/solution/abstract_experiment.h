@@ -30,7 +30,7 @@ public:
 
 	int result;
 
-	double improvement;
+	double new_score;
 
 	std::vector<ScopeHistory*> new_scope_histories;
 	std::vector<double> new_target_val_histories;

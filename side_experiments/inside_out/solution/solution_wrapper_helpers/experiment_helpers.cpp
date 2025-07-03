@@ -225,7 +225,9 @@ void SolutionWrapper::experiment_end(double result) {
 				if (this->best_experiment == NULL) {
 					this->best_experiment = this->curr_experiment;
 				} else {
-					if (this->curr_experiment->improvement > best_experiment->improvement) {
+					double curr_impact = get_experiment_impact(this->curr_experiment);
+					double best_impact = get_experiment_impact(this->best_experiment);
+					if (curr_impact > best_impact) {
 						delete this->best_experiment;
 						this->best_experiment = this->curr_experiment;
 					} else {

@@ -229,7 +229,7 @@ void BranchExperiment::measure_backprop(double target_val,
 
 			double t_score = (new_score - existing_score) / new_standard_deviation;
 			if (t_score >= EARLY_SUCCESS_MIN_T_SCORE) {
-				this->improvement = new_score - existing_score;
+				this->new_score = new_score;
 
 				cout << "BranchExperiment" << endl;
 				cout << "this->scope_context->id: " << this->scope_context->id << endl;
@@ -253,7 +253,8 @@ void BranchExperiment::measure_backprop(double target_val,
 
 				cout << "this->select_percentage: " << this->select_percentage << endl;
 
-				cout << "this->improvement: " << this->improvement << endl;
+				double improvement = new_score - existing_score;
+				cout << "improvement: " << improvement << endl;
 
 				cout << endl;
 
@@ -310,7 +311,7 @@ void BranchExperiment::measure_backprop(double target_val,
 			#else
 			if (new_score > existing_score) {
 			#endif /* MDEBUG */
-				this->improvement = new_score - existing_score;
+				this->new_score = new_score;
 
 				cout << "BranchExperiment" << endl;
 				cout << "this->scope_context->id: " << this->scope_context->id << endl;
@@ -334,7 +335,8 @@ void BranchExperiment::measure_backprop(double target_val,
 
 				cout << "this->select_percentage: " << this->select_percentage << endl;
 
-				cout << "this->improvement: " << this->improvement << endl;
+				double improvement = new_score - existing_score;
+				cout << "improvement: " << improvement << endl;
 
 				cout << endl;
 

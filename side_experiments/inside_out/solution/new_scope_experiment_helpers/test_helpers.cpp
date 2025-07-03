@@ -89,9 +89,8 @@ void NewScopeExperiment::test_backprop(
 
 		double t_score = (new_score - existing_score) / new_standard_deviation;
 		if (t_score >= EARLY_SUCCESS_MIN_T_SCORE) {
-			double curr_improvement = new_score - existing_score;
-			if (curr_improvement > this->improvement) {
-				this->improvement = curr_improvement;
+			if (this->successful_location_starts.size() == 0) {
+				this->new_score = new_score;
 			}
 
 			/**
@@ -109,9 +108,11 @@ void NewScopeExperiment::test_backprop(
 
 			this->test_location_start = NULL;
 
+			double improvement = new_score - existing_score;
+			cout << "improvement: " << improvement << endl;
+
 			if (this->successful_location_starts.size() >= NEW_SCOPE_NUM_LOCATIONS) {
 				cout << "NewScopeExperiment success" << endl;
-				cout << "this->improvement: " << this->improvement << endl;
 
 				this->result = EXPERIMENT_RESULT_SUCCESS;
 			}
@@ -200,9 +201,8 @@ void NewScopeExperiment::test_backprop(
 				}
 			}
 		} else if ((int)this->test_target_val_histories.size() == MEASURE_S4_ITERS) {
-			double curr_improvement = new_score - existing_score;
-			if (curr_improvement > this->improvement) {
-				this->improvement = curr_improvement;
+			if (this->successful_location_starts.size() == 0) {
+				this->new_score = new_score;
 			}
 
 			/**
@@ -220,9 +220,11 @@ void NewScopeExperiment::test_backprop(
 
 			this->test_location_start = NULL;
 
+			double improvement = new_score - existing_score;
+			cout << "improvement: " << improvement << endl;
+
 			if (this->successful_location_starts.size() >= NEW_SCOPE_NUM_LOCATIONS) {
 				cout << "NewScopeExperiment success" << endl;
-				cout << "this->improvement: " << this->improvement << endl;
 
 				this->result = EXPERIMENT_RESULT_SUCCESS;
 			}

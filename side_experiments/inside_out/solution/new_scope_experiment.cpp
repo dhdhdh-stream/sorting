@@ -389,6 +389,11 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 
 	if (this->new_scope != NULL) {
 		this->scope_context = scope_context;
+		/**
+		 * - when measuring vs. other experiments, simply use impact on initial node_context
+		 */
+		this->node_context = node_context;
+		this->is_branch = is_branch;
 
 		vector<AbstractNode*> possible_exits;
 
@@ -463,8 +468,6 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 		node_context->experiment = this;
 
 		this->generalize_iter = -1;
-
-		this->improvement = 0.0;
 
 		this->result = EXPERIMENT_RESULT_NA;
 	} else {

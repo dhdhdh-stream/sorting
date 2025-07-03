@@ -27,17 +27,10 @@ void fetch_input_helper(ScopeHistory* scope_history,
 
 const double MIN_CONSIDER_HIT_PERCENT = 0.2;
 
-const int EXISTING_NUM_FACTORS = 40;
-const int NEW_NUM_FACTORS = 10;
-
-const int FACTOR_MAX_PCC = 0.7;
-const int NETWORK_MAX_PCC = 0.9;
-
 /**
  * - when there's correlation, weights can get strange values(?)
  */
 const double REGRESSION_WEIGHT_LIMIT = 100000.0;
-const double REGRESSION_FAIL_MULTIPLIER = 1000.0;
 
 const double FACTOR_IMPACT_THRESHOLD = 0.1;
 
@@ -59,8 +52,7 @@ bool is_unique(std::vector<std::vector<double>>& input_vals,
 			   std::vector<double>& existing_standard_deviations,
 			   std::vector<double>& potential_input_vals,
 			   double& potential_average,
-			   double& potential_standard_deviation,
-			   double max_pcc);
+			   double& potential_standard_deviation);
 void existing_add_factor(std::vector<ScopeHistory*>& scope_histories,
 						 std::vector<Input>& network_inputs,
 						 Network* network,
@@ -84,6 +76,8 @@ bool train_new(std::vector<ScopeHistory*>& scope_histories,
 			   std::vector<Input>& network_inputs,
 			   Network*& network,
 			   double& select_percentage);
+
+double get_experiment_impact(AbstractExperiment* experiment);
 
 void clean_scope(Scope* scope,
 				 SolutionWrapper* wrapper);

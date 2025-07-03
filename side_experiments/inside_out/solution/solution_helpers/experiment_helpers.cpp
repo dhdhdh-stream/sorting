@@ -291,3 +291,39 @@ void create_experiment(SolutionWrapper* wrapper,
 		}
 	}
 }
+
+double get_experiment_impact(AbstractExperiment* experiment) {
+	double existing_score;
+	switch (experiment->node_context->type) {
+	case NODE_TYPE_ACTION:
+		{
+			ActionNode* action_node = (ActionNode*)experiment->node_context;
+			existing_score = action_node->average_score;
+		}
+		break;
+	case NODE_TYPE_SCOPE:
+		{
+			ScopeNode* scope_node = (ScopeNode*)experiment->node_context;
+			existing_score = scope_node->average_score;
+		}
+		break;
+	case NODE_TYPE_BRANCH:
+		{
+			BranchNode* branch_node = (BranchNode*)experiment->node_context;
+			if (experiment->is_branch) {
+				existing_score = branch_node->branch_average_score;
+			} else {
+				existing_score = branch_node->original_average_score;
+			}
+		}
+		break;
+	case NODE_TYPE_OBS:
+		{
+			ObsNode* obs_node = (ObsNode*)experiment->node_context;
+			existing_score = obs_node->average_score;
+		}
+		break;
+	}
+
+	return experiment->new_score - existing_score;
+}
