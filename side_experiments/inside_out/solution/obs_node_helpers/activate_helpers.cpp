@@ -21,8 +21,10 @@ void ObsNode::step(vector<double>& obs,
 
 	history->obs_history = obs;
 
-	history->factor_initialized = vector<bool>(this->factors.size(), false);
-	history->factor_values = vector<double>(this->factors.size());
+	for (int f_index = 0; f_index < (int)this->impacted_factors.size(); f_index++) {
+		wrapper->scope_histories.back()->factor_initialized[
+			this->impacted_factors[f_index]] = false;
+	}
 
 	wrapper->node_context.back() = this->next_node;
 }

@@ -63,8 +63,7 @@ CommitExperiment::CommitExperiment(Scope* scope_context,
 									 factor_inputs,
 									 factor_input_averages,
 									 factor_input_standard_deviations,
-									 factor_weights,
-									 this);
+									 factor_weights);
 
 	if (is_success) {
 		this->node_context->experiment = this;

@@ -259,8 +259,6 @@ void SolutionWrapper::experiment_end(double result) {
 					clean_scope(last_updated_scope,
 								this);
 
-					this->solution->clean_obs_nodes();
-
 					this->solution->clean();
 
 					if (this->solution->existing_scope_histories.size() >= MEASURE_ITERS) {

@@ -66,21 +66,6 @@ void Factor::clean_inputs(Scope* scope) {
 	}
 }
 
-void Factor::replace_factor(Scope* scope,
-							int original_node_id,
-							int original_factor_index,
-							int new_node_id,
-							int new_factor_index) {
-	for (int i_index = 0; i_index < (int)this->inputs.size(); i_index++) {
-		if (this->inputs[i_index].scope_context.back() == scope
-				&& this->inputs[i_index].node_context.back() == original_node_id
-				&& this->inputs[i_index].factor_index == original_factor_index) {
-			this->inputs[i_index].node_context.back() = new_node_id;
-			this->inputs[i_index].factor_index = new_factor_index;
-		}
-	}
-}
-
 void Factor::replace_obs_node(Scope* scope,
 							  int original_node_id,
 							  int new_node_id) {
@@ -112,4 +97,15 @@ void Factor::load(ifstream& input_file,
 	}
 
 	this->network = new Network(input_file);
+}
+
+void Factor::link(int index) {
+	for (int i_index = 0; i_index < (int)this->inputs.size(); i_index++) {
+		if (this->inputs[i_index].scope_context.size() > 1
+				|| this->inputs[i_index].factor_index != -1) {
+			Scope* scope = this->inputs[i_index].scope_context[0];
+			AbstractNode* node = scope->nodes[this->inputs[i_index].node_context[0]];
+			node->impacted_factors.push_back(index);
+		}
+	}
 }

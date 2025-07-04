@@ -51,7 +51,8 @@ BranchExperiment::BranchExperiment(Scope* scope_context,
 		}
 
 		if (has_match) {
-			scope_histories.push_back(scope_history);
+			ScopeHistory* cleaned_scope_history = new ScopeHistory(scope_history, match_it->second->index);
+			scope_histories.push_back(cleaned_scope_history);
 			target_val_histories.push_back(this->scope_context->existing_target_val_histories[h_index]);
 		}
 	}
@@ -67,8 +68,11 @@ BranchExperiment::BranchExperiment(Scope* scope_context,
 									 factor_inputs,
 									 factor_input_averages,
 									 factor_input_standard_deviations,
-									 factor_weights,
-									 this);
+									 factor_weights);
+
+	for (int h_index = 0; h_index < (int)scope_histories.size(); h_index++) {
+		delete scope_histories[h_index];
+	}
 
 	if (is_success) {
 		this->node_context->experiment = this;

@@ -4,7 +4,6 @@
 
 #include "abstract_experiment.h"
 #include "constants.h"
-#include "factor.h"
 #include "globals.h"
 #include "problem.h"
 #include "scope.h"
@@ -22,50 +21,8 @@ ObsNode::ObsNode() {
 }
 
 ObsNode::~ObsNode() {
-	for (int f_index = 0; f_index < (int)this->factors.size(); f_index++) {
-		delete this->factors[f_index];
-	}
-
 	if (this->experiment != NULL) {
 		this->experiment->decrement(this);
-	}
-}
-
-void ObsNode::clean_inputs(Scope* scope,
-						   int node_id) {
-	for (int f_index = 0; f_index < (int)this->factors.size(); f_index++) {
-		this->factors[f_index]->clean_inputs(scope,
-											 node_id);
-	}
-}
-
-void ObsNode::clean_inputs(Scope* scope) {
-	for (int f_index = 0; f_index < (int)this->factors.size(); f_index++) {
-		this->factors[f_index]->clean_inputs(scope);
-	}
-}
-
-void ObsNode::replace_factor(Scope* scope,
-							 int original_node_id,
-							 int original_factor_index,
-							 int new_node_id,
-							 int new_factor_index) {
-	for (int f_index = 0; f_index < (int)this->factors.size(); f_index++) {
-		this->factors[f_index]->replace_factor(scope,
-											   original_node_id,
-											   original_factor_index,
-											   new_node_id,
-											   new_factor_index);
-	}
-}
-
-void ObsNode::replace_obs_node(Scope* scope,
-							   int original_node_id,
-							   int new_node_id) {
-	for (int f_index = 0; f_index < (int)this->factors.size(); f_index++) {
-		this->factors[f_index]->replace_obs_node(scope,
-												 original_node_id,
-												 new_node_id);
 	}
 }
 
@@ -98,11 +55,6 @@ void ObsNode::new_scope_measure_update(int total_count) {
 }
 
 void ObsNode::save(ofstream& output_file) {
-	output_file << this->factors.size() << endl;
-	for (int f_index = 0; f_index < (int)this->factors.size(); f_index++) {
-		this->factors[f_index]->save(output_file);
-	}
-
 	output_file << this->next_node_id << endl;
 
 	output_file << this->ancestor_ids.size() << endl;
@@ -113,16 +65,6 @@ void ObsNode::save(ofstream& output_file) {
 
 void ObsNode::load(ifstream& input_file,
 				   Solution* parent_solution) {
-	string num_factors_line;
-	getline(input_file, num_factors_line);
-	int num_factors = stoi(num_factors_line);
-	for (int f_index = 0; f_index < num_factors; f_index++) {
-		Factor* factor = new Factor();
-		factor->load(input_file,
-					 parent_solution);
-		this->factors.push_back(factor);
-	}
-
 	string next_node_id_line;
 	getline(input_file, next_node_id_line);
 	this->next_node_id = stoi(next_node_id_line);
@@ -159,7 +101,4 @@ ObsNodeHistory::ObsNodeHistory(ObsNodeHistory* original) {
 	this->node = original->node;
 
 	this->obs_history = original->obs_history;
-
-	this->factor_initialized = original->factor_initialized;
-	this->factor_values = original->factor_values;
 }

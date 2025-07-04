@@ -233,6 +233,43 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 			new_ending_node->next_node_id = -1;
 			new_ending_node->next_node = NULL;
 
+			for (int f_index = 0; f_index < (int)scope_context->factors.size(); f_index++) {
+				Factor* original_factor = scope_context->factors[f_index];
+				Factor* new_factor = new Factor();
+
+				new_factor->network = new Network(original_factor->network);
+				for (int i_index = (int)original_factor->inputs.size()-1; i_index >= 0; i_index--) {
+					if (original_factor->inputs[i_index].factor_index != -1
+							&& original_factor->inputs[i_index].scope_context.size() == 1) {
+						Input new_input = original_factor->inputs[i_index];
+						new_input.scope_context[0] = this->new_scope;
+						new_factor->inputs.insert(new_factor->inputs.begin(), new_input);
+					} else {
+						AbstractNode* original_input_node = scope_context->nodes[
+							original_factor->inputs[i_index].node_context[0]];
+						map<AbstractNode*, AbstractNode*>::iterator it = node_mappings.find(original_input_node);
+						/**
+						 * - TODO: handle inputs for removed BranchNodes better
+						 */
+						if (it == node_mappings.end()
+								|| original_input_node->type != it->second->type) {
+							new_factor->network->remove_input(i_index);
+						} else {
+							Input new_input = original_factor->inputs[i_index];
+							new_input.scope_context[0] = this->new_scope;
+							new_input.node_context[0] = it->second->id;
+							new_factor->inputs.insert(new_factor->inputs.begin(), new_input);
+						}
+					}
+				}
+
+				new_factor->is_meaningful = original_factor->is_meaningful;
+
+				this->new_scope->factors.push_back(new_factor);
+
+				new_factor->link(f_index);
+			}
+
 			for (map<AbstractNode*, AbstractNode*>::iterator node_it = node_mappings.begin();
 					node_it != node_mappings.end(); node_it++) {
 				switch (node_it->first->type) {
@@ -284,18 +321,10 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 						new_branch_node->average_val = original_branch_node->average_val;
 
 						for (int i_index = 0; i_index < (int)original_branch_node->inputs.size(); i_index++) {
-							AbstractNode* original_input_node = scope_context->nodes[
-								original_branch_node->inputs[i_index].node_context[0]];
-							map<AbstractNode*, AbstractNode*>::iterator input_it = node_mappings
-								.find(original_input_node);
-							/**
-							 * - TODO: handle inputs for removed BranchNodes better
-							 */
-							if (input_it != node_mappings.end()
-									&& original_input_node->type == input_it->second->type) {
+							if (original_branch_node->inputs[i_index].factor_index != -1
+									&& original_branch_node->inputs[i_index].scope_context.size() == 1) {
 								Input new_input = original_branch_node->inputs[i_index];
 								new_input.scope_context[0] = this->new_scope;
-								new_input.node_context[0] = input_it->second->id;
 								new_branch_node->inputs.push_back(new_input);
 								new_branch_node->input_averages.push_back(
 									original_branch_node->input_averages[i_index]);
@@ -303,6 +332,27 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 									original_branch_node->input_standard_deviations[i_index]);
 								new_branch_node->weights.push_back(
 									original_branch_node->weights[i_index]);
+							} else {
+								AbstractNode* original_input_node = scope_context->nodes[
+									original_branch_node->inputs[i_index].node_context[0]];
+								map<AbstractNode*, AbstractNode*>::iterator input_it = node_mappings
+									.find(original_input_node);
+								/**
+								 * - TODO: handle inputs for removed BranchNodes better
+								 */
+								if (input_it != node_mappings.end()
+										&& original_input_node->type == input_it->second->type) {
+									Input new_input = original_branch_node->inputs[i_index];
+									new_input.scope_context[0] = this->new_scope;
+									new_input.node_context[0] = input_it->second->id;
+									new_branch_node->inputs.push_back(new_input);
+									new_branch_node->input_averages.push_back(
+										original_branch_node->input_averages[i_index]);
+									new_branch_node->input_standard_deviations.push_back(
+										original_branch_node->input_standard_deviations[i_index]);
+									new_branch_node->weights.push_back(
+										original_branch_node->weights[i_index]);
+								}
 							}
 						}
 
@@ -338,32 +388,6 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 					{
 						ObsNode* original_obs_node = (ObsNode*)node_it->first;
 						ObsNode* new_obs_node = (ObsNode*)node_mappings[original_obs_node];
-
-						for (int f_index = 0; f_index < (int)original_obs_node->factors.size(); f_index++) {
-							Factor* original_factor = original_obs_node->factors[f_index];
-							Factor* new_factor = new Factor();
-
-							new_factor->network = new Network(original_factor->network);
-							for (int i_index = (int)original_factor->inputs.size()-1; i_index >= 0; i_index--) {
-								AbstractNode* original_input_node = scope_context->nodes[
-									original_factor->inputs[i_index].node_context[0]];
-								map<AbstractNode*, AbstractNode*>::iterator it = node_mappings.find(original_input_node);
-								/**
-								 * - TODO: handle inputs for removed BranchNodes better
-								 */
-								if (it == node_mappings.end()
-										|| original_input_node->type != it->second->type) {
-									new_factor->network->remove_input(i_index);
-								} else {
-									Input new_input = original_factor->inputs[i_index];
-									new_input.scope_context[0] = this->new_scope;
-									new_input.node_context[0] = it->second->id;
-									new_factor->inputs.insert(new_factor->inputs.begin(), new_input);
-								}
-							}
-
-							new_obs_node->factors.push_back(new_factor);
-						}
 
 						map<AbstractNode*, AbstractNode*>::iterator it = node_mappings
 							.find(original_obs_node->next_node);

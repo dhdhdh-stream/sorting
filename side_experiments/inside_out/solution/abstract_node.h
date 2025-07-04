@@ -21,6 +21,8 @@ public:
 	Scope* parent;
 	int id;
 
+	std::vector<int> impacted_factors;
+
 	std::vector<int> ancestor_ids;
 	/**
 	 * - if both paths of BranchNode point to same node, add twice

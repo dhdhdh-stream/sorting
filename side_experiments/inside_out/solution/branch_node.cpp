@@ -84,21 +84,6 @@ void BranchNode::clean_inputs(Scope* scope) {
 	}
 }
 
-void BranchNode::replace_factor(Scope* scope,
-								int original_node_id,
-								int original_factor_index,
-								int new_node_id,
-								int new_factor_index) {
-	for (int i_index = 0; i_index < (int)this->inputs.size(); i_index++) {
-		if (this->inputs[i_index].scope_context.back() == scope
-				&& this->inputs[i_index].node_context.back() == original_node_id
-				&& this->inputs[i_index].factor_index == original_factor_index) {
-			this->inputs[i_index].node_context.back() = new_node_id;
-			this->inputs[i_index].factor_index = new_factor_index;
-		}
-	}
-}
-
 void BranchNode::replace_obs_node(Scope* scope,
 								  int original_node_id,
 								  int new_node_id) {

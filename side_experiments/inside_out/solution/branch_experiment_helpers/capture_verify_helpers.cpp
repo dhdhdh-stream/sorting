@@ -150,9 +150,6 @@ void BranchExperiment::capture_verify_step(vector<double>& obs,
 
 				history->obs_history = obs;
 
-				history->factor_initialized = vector<bool>(node->factors.size(), false);
-				history->factor_values = vector<double>(node->factors.size());
-
 				experiment_state->step_index++;
 			}
 			break;

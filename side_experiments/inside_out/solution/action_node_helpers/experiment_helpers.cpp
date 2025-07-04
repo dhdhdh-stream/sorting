@@ -26,6 +26,11 @@ void ActionNode::experiment_step(vector<double>& obs,
 
 	wrapper->num_actions++;
 
+	for (int f_index = 0; f_index < (int)this->impacted_factors.size(); f_index++) {
+		wrapper->scope_histories.back()->factor_initialized[
+			this->impacted_factors[f_index]] = false;
+	}
+
 	wrapper->node_context.back() = this->next_node;
 
 	if (this->experiment != NULL) {

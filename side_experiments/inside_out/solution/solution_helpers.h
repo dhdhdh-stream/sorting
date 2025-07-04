@@ -1,6 +1,7 @@
 #ifndef SOLUTION_HELPERS_H
 #define SOLUTION_HELPERS_H
 
+#include <map>
 #include <utility>
 #include <vector>
 
@@ -27,6 +28,8 @@ void fetch_input_helper(ScopeHistory* scope_history,
 
 const double MIN_CONSIDER_HIT_PERCENT = 0.2;
 
+const int UNIQUE_MAX_PCC = 0.7;
+
 /**
  * - when there's correlation, weights can get strange values(?)
  */
@@ -47,25 +50,25 @@ public:
 void analyze_input(Input& input,
 				   std::vector<ScopeHistory*>& scope_histories,
 				   InputData& input_data);
+void gather_t_scores_helper(ScopeHistory* scope_history,
+							std::vector<Scope*>& scope_context,
+							std::vector<int>& node_context,
+							std::map<Input, double>& t_scores,
+							std::vector<ScopeHistory*>& scope_histories,
+							std::map<Input, InputData>& input_tracker);
 bool is_unique(std::vector<std::vector<double>>& input_vals,
 			   std::vector<double>& existing_averages,
 			   std::vector<double>& existing_standard_deviations,
 			   std::vector<double>& potential_input_vals,
 			   double& potential_average,
 			   double& potential_standard_deviation);
-void existing_add_factor(std::vector<ScopeHistory*>& scope_histories,
-						 std::vector<Input>& network_inputs,
-						 Network* network,
-						 Input& new_input,
-						 AbstractExperiment* experiment);
 bool train_existing(std::vector<ScopeHistory*>& scope_histories,
 					std::vector<double>& target_val_histories,
 					double& average_score,
 					std::vector<Input>& factor_inputs,
 					std::vector<double>& factor_input_averages,
 					std::vector<double>& factor_input_standard_deviations,
-					std::vector<double>& factor_weights,
-					AbstractExperiment* experiment);
+					std::vector<double>& factor_weights);
 bool train_new(std::vector<ScopeHistory*>& scope_histories,
 			   std::vector<double>& target_val_histories,
 			   double& average_score,

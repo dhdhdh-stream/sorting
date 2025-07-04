@@ -60,16 +60,9 @@ public:
 
 	void clean_inputs(Scope* scope,
 					  int node_id);
-	void replace_factor(Scope* scope,
-						int original_node_id,
-						int original_factor_index,
-						int new_node_id,
-						int new_factor_index);
 	void replace_obs_node(Scope* scope,
 						  int original_node_id,
 						  int new_node_id);
-
-	void clean_obs_nodes();
 
 	void clean();
 	void measure_update();

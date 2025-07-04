@@ -7,6 +7,7 @@
 
 class AbstractNode;
 class AbstractNodeHistory;
+class Factor;
 class NewScopeExperiment;
 class Problem;
 class Solution;
@@ -18,6 +19,8 @@ public:
 
 	int node_counter;
 	std::map<int, AbstractNode*> nodes;
+
+	std::vector<Factor*> factors;
 
 	std::vector<Scope*> child_scopes;
 
@@ -47,11 +50,6 @@ public:
 	void clean_inputs(Scope* scope,
 					  int node_id);
 	void clean_inputs(Scope* scope);
-	void replace_factor(Scope* scope,
-						int original_node_id,
-						int original_factor_index,
-						int new_node_id,
-						int new_factor_index);
 	void replace_obs_node(Scope* scope,
 						  int original_node_id,
 						  int new_node_id);
@@ -76,8 +74,13 @@ public:
 
 	std::map<int, AbstractNodeHistory*> node_histories;
 
+	std::vector<bool> factor_initialized;
+	std::vector<double> factor_values;
+
 	ScopeHistory(Scope* scope);
 	ScopeHistory(ScopeHistory* original);
+	ScopeHistory(ScopeHistory* original,
+				 int max_index);
 	~ScopeHistory();
 };
 

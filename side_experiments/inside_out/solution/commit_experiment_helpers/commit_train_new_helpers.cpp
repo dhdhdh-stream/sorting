@@ -148,9 +148,6 @@ void CommitExperiment::commit_train_new_step(
 
 					history->obs_history = obs;
 
-					history->factor_initialized = vector<bool>(node->factors.size(), false);
-					history->factor_values = vector<double>(node->factors.size());
-
 					experiment_state->step_index++;
 				}
 				break;

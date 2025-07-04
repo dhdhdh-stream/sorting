@@ -254,13 +254,16 @@ void CommitExperiment::add(SolutionWrapper* wrapper) {
 		new_factor->inputs = this->commit_new_network_inputs;
 		new_factor->network = this->commit_new_network;
 		this->commit_new_network = NULL;
+		new_factor->is_meaningful = true;
 
-		obs_node->factors.push_back(new_factor);
+		this->scope_context->factors.push_back(new_factor);
+
+		new_factor->link((int)this->scope_context->factors.size()-1);
 
 		Input new_input;
 		new_input.scope_context = {this->scope_context};
-		new_input.node_context = {obs_node->id};
-		new_input.factor_index = (int)obs_node->factors.size()-1;
+		new_input.factor_index = (int)this->scope_context->factors.size()-1;
+		new_input.node_context = {-1};
 		new_input.obs_index = -1;
 		this->commit_new_inputs.push_back(new_input);
 		this->commit_new_input_averages.push_back(0.0);
