@@ -29,13 +29,10 @@ class ScopeHistory;
 class Solution {
 public:
 	/**
-	 * - -1 if fail
+	 * - -1 if done
 	 */
 	int timestamp;
 	double curr_score;
-
-	int best_timestamp;
-	double best_score;
 
 	std::vector<Scope*> scopes;
 

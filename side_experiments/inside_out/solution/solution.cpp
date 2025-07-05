@@ -16,7 +16,11 @@
 
 using namespace std;
 
-const int MAX_STAGNANT_TIMESTEPS = 20;
+/**
+ * - simply merge every fixed number of timesteps
+ *   - hopefully prevents solution from getting too stale and thrashing
+ */
+const int RUN_TIMESTEPS = 30;
 
 Solution::Solution() {
 	// do nothing
@@ -35,9 +39,6 @@ Solution::~Solution() {
 void Solution::init() {
 	this->timestamp = 0;
 	this->curr_score = 0.0;
-
-	this->best_timestamp = 0;
-	this->best_score = 0.0;
 
 	/**
 	 * - even though scopes[0] will not be reused, still good to start with:
@@ -74,14 +75,6 @@ void Solution::load(string path,
 	string curr_score_line;
 	getline(input_file, curr_score_line);
 	this->curr_score = stod(curr_score_line);
-
-	string best_timestamp_line;
-	getline(input_file, best_timestamp_line);
-	this->best_timestamp = stoi(best_timestamp_line);
-
-	string best_score_line;
-	getline(input_file, best_score_line);
-	this->best_score = stod(best_score_line);
 
 	string num_scopes_line;
 	getline(input_file, num_scopes_line);
@@ -156,10 +149,7 @@ void Solution::measure_update() {
 
 	cout << "new_score: " << new_score << endl;
 
-	if (new_score > this->best_score) {
-		this->best_score = new_score;
-		this->best_timestamp = this->timestamp;
-	} else if (this->timestamp >= this->best_timestamp + MAX_STAGNANT_TIMESTEPS) {
+	if (this->timestamp >= RUN_TIMESTEPS) {
 		this->timestamp = -1;
 	}
 
@@ -225,9 +215,6 @@ void Solution::save(string path,
 
 	output_file << this->timestamp << endl;
 	output_file << this->curr_score << endl;
-
-	output_file << this->best_timestamp << endl;
-	output_file << this->best_score << endl;
 
 	output_file << this->scopes.size() << endl;
 

@@ -28,7 +28,7 @@ void fetch_input_helper(ScopeHistory* scope_history,
 
 const double MIN_CONSIDER_HIT_PERCENT = 0.2;
 
-const int UNIQUE_MAX_PCC = 0.7;
+const double UNIQUE_MAX_PCC = 0.7;
 
 /**
  * - when there's correlation, weights can get strange values(?)

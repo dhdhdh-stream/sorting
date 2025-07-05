@@ -81,7 +81,6 @@ void SolutionWrapper::combine(string other_path,
 	}
 
 	this->solution->timestamp = 0;
-	this->solution->best_timestamp = 0;
 }
 
 void SolutionWrapper::save(string path,

@@ -99,6 +99,7 @@ ObsNodeHistory::ObsNodeHistory(ObsNode* node) {
 
 ObsNodeHistory::ObsNodeHistory(ObsNodeHistory* original) {
 	this->node = original->node;
+	this->index = original->index;
 
 	this->obs_history = original->obs_history;
 }

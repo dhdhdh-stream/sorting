@@ -154,7 +154,8 @@ void Scope::replace_obs_node(Scope* scope,
 	for (int f_index = 0; f_index < (int)this->factors.size(); f_index++) {
 		this->factors[f_index]->replace_obs_node(scope,
 												 original_node_id,
-												 new_node_id);
+												 new_node_id,
+												 f_index);
 	}
 }
 

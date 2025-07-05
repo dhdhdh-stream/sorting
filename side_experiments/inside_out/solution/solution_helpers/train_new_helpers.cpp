@@ -129,7 +129,7 @@ bool train_new(vector<ScopeHistory*>& scope_histories,
 		if (should_add) {
 			Input input;
 			input.scope_context = {scope};
-			input.factor_index = remaining_factors[random_index];
+			input.factor_index = factor_index;
 			input.node_context = {-1};
 			input.obs_index = -1;
 
@@ -139,9 +139,9 @@ bool train_new(vector<ScopeHistory*>& scope_histories,
 			factor_input_averages.push_back(input_data.average);
 			factor_input_standard_deviations.push_back(input_data.standard_deviation);
 
-			factor_vals.push_back(a_factor_vals[remaining_factors[random_index]]);
-			h_factor_averages.push_back(a_factor_averages[remaining_factors[random_index]]);
-			h_factor_standard_deviations.push_back(a_factor_standard_deviations[remaining_factors[random_index]]);
+			factor_vals.push_back(a_factor_vals[factor_index]);
+			h_factor_averages.push_back(a_factor_averages[factor_index]);
+			h_factor_standard_deviations.push_back(a_factor_standard_deviations[factor_index]);
 
 			if (factor_inputs.size() >= NEW_NUM_FACTORS) {
 				break;
@@ -152,10 +152,14 @@ bool train_new(vector<ScopeHistory*>& scope_histories,
 	}
 
 	Eigen::MatrixXd inputs(num_instances, 1 + factor_inputs.size());
+	uniform_real_distribution<double> noise_distribution(-0.001, 0.001);
+	/**
+	 * - add some noise to prevent extremes
+	 */
 	for (int i_index = 0; i_index < num_instances; i_index++) {
 		inputs(i_index, 0) = 1.0;
 		for (int f_index = 0; f_index < (int)factor_inputs.size(); f_index++) {
-			inputs(i_index, 1 + f_index) = factor_vals[f_index][i_index];
+			inputs(i_index, 1 + f_index) = factor_vals[f_index][i_index] + noise_distribution(generator);
 		}
 	}
 
@@ -475,7 +479,7 @@ bool train_new(vector<ScopeHistory*>& scope_histories,
 	train_network(input_vals,
 				  input_is_on,
 				  remaining_scores,
-				  network);
+				  new_network);
 
 	vector<double> network_vals(num_instances);
 	for (int i_index = 0; i_index < num_instances; i_index++) {
@@ -522,6 +526,8 @@ bool train_new(vector<ScopeHistory*>& scope_histories,
 		for (int i_index = 0; i_index < num_instances; i_index++) {
 			sum_vals[i_index] += network_vals[i_index];
 		}
+	} else {
+		delete new_network;
 	}
 
 	#if defined(MDEBUG) && MDEBUG

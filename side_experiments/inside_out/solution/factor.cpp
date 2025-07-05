@@ -14,18 +14,6 @@ Factor::Factor() {
 	// do nothing
 }
 
-Factor::Factor(Factor* original,
-			   Solution* parent_solution) {
-	this->inputs = original->inputs;
-	for (int i_index = 0; i_index < (int)this->inputs.size(); i_index++) {
-		for (int l_index = 0; l_index < (int)this->inputs[i_index].scope_context.size(); l_index++) {
-			this->inputs[i_index].scope_context[l_index] =
-				parent_solution->scopes[this->inputs[i_index].scope_context[l_index]->id];
-		}
-	}
-	this->network = new Network(original->network);
-}
-
 Factor::~Factor() {
 	delete this->network;
 }
@@ -68,11 +56,16 @@ void Factor::clean_inputs(Scope* scope) {
 
 void Factor::replace_obs_node(Scope* scope,
 							  int original_node_id,
-							  int new_node_id) {
+							  int new_node_id,
+							  int index) {
 	for (int i_index = 0; i_index < (int)this->inputs.size(); i_index++) {
 		if (this->inputs[i_index].scope_context.back() == scope
 				&& this->inputs[i_index].node_context.back() == original_node_id) {
 			this->inputs[i_index].node_context.back() = new_node_id;
+
+			if (this->inputs[i_index].scope_context.size() == 1) {
+				scope->nodes[new_node_id]->impacted_factors.push_back(index);
+			}
 		}
 	}
 }
@@ -84,6 +77,8 @@ void Factor::save(ofstream& output_file) {
 	}
 
 	this->network->save(output_file);
+
+	output_file << this->is_meaningful << endl;
 }
 
 void Factor::load(ifstream& input_file,
@@ -97,12 +92,16 @@ void Factor::load(ifstream& input_file,
 	}
 
 	this->network = new Network(input_file);
+
+	string is_meaningful_line;
+	getline(input_file, is_meaningful_line);
+	this->is_meaningful = stoi(is_meaningful_line);
 }
 
 void Factor::link(int index) {
 	for (int i_index = 0; i_index < (int)this->inputs.size(); i_index++) {
 		if (this->inputs[i_index].scope_context.size() > 1
-				|| this->inputs[i_index].factor_index != -1) {
+				|| this->inputs[i_index].factor_index == -1) {
 			Scope* scope = this->inputs[i_index].scope_context[0];
 			AbstractNode* node = scope->nodes[this->inputs[i_index].node_context[0]];
 			node->impacted_factors.push_back(index);

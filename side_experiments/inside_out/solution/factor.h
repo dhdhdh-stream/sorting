@@ -20,8 +20,6 @@ public:
 	bool is_meaningful;
 
 	Factor();
-	Factor(Factor* original,
-		   Solution* parent_solution);
 	~Factor();
 
 	double back_activate(ScopeHistory* scope_history);
@@ -31,7 +29,8 @@ public:
 	void clean_inputs(Scope* scope);
 	void replace_obs_node(Scope* scope,
 						  int original_node_id,
-						  int new_node_id);
+						  int new_node_id,
+						  int index);
 
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file,
