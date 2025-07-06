@@ -10,8 +10,8 @@ class Solution;
 class Input {
 public:
 	std::vector<Scope*> scope_context;
-	std::vector<int> node_context;
 	int factor_index;
+	std::vector<int> node_context;
 	int obs_index;
 
 	Input();
@@ -28,13 +28,6 @@ public:
 	void print();
 
 	void save(std::ofstream& output_file);
-};
-
-class InputData {
-public:
-	double hit_percent;
-	double average;
-	double standard_deviation;
 };
 
 #endif /* INPUT_H */

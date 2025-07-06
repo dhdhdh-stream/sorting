@@ -1,14 +1,10 @@
 #ifndef ABSTRACT_EXPERIMENT_H
 #define ABSTRACT_EXPERIMENT_H
 
-#include <map>
 #include <utility>
 #include <vector>
 
-#include "input.h"
-
 class AbstractNode;
-class ObsNode;
 class Problem;
 class Scope;
 class ScopeHistory;
@@ -23,13 +19,6 @@ const int EXPERIMENT_RESULT_NA = 0;
 const int EXPERIMENT_RESULT_FAIL = 1;
 const int EXPERIMENT_RESULT_SUCCESS = 2;
 
-class ObsData {
-public:
-	std::vector<std::vector<double>> existing_hit_histories;
-	std::vector<std::vector<double>> existing_miss_histories;
-	std::vector<std::vector<double>> new_histories;
-};
-
 class AbstractExperimentHistory;
 class AbstractExperiment {
 public:
@@ -41,7 +30,10 @@ public:
 
 	int result;
 
-	double improvement;
+	double new_score;
+
+	std::vector<ScopeHistory*> new_scope_histories;
+	std::vector<double> new_target_val_histories;
 
 	virtual ~AbstractExperiment() {};
 	virtual void decrement(AbstractNode* experiment_node) = 0;
@@ -57,7 +49,6 @@ public:
 	virtual void set_action(int action,
 							SolutionWrapper* wrapper) = 0;
 	virtual void experiment_exit_step(SolutionWrapper* wrapper) = 0;
-	virtual void back_activate(SolutionWrapper* wrapper) = 0;
 	virtual void backprop(double target_val,
 						  SolutionWrapper* wrapper) = 0;
 
@@ -68,6 +59,8 @@ public:
 class AbstractExperimentHistory {
 public:
 	AbstractExperiment* experiment;
+
+	bool is_hit;
 
 	virtual ~AbstractExperimentHistory() {};
 };

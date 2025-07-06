@@ -53,11 +53,8 @@ public:
 						 SolutionWrapper* wrapper);
 	void experiment_exit_step(SolutionWrapper* wrapper);
 
-	void replace_scope(Scope* original_scope,
-					   Scope* new_scope);
-
 	void clean();
-	void measure_update(SolutionWrapper* wrapper);
+	void measure_update(int total_count);
 
 	void new_scope_clean();
 	void new_scope_measure_update(int total_count);

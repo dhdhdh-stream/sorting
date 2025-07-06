@@ -8,12 +8,10 @@
 using namespace std;
 
 void SolutionWrapper::init() {
-	this->run_index++;
-
 	this->num_actions = 1;
-	this->num_confusion_instances = 0;
 
 	#if defined(MDEBUG) && MDEBUG
+	this->run_index++;
 	this->starting_run_seed = this->run_index;
 	this->curr_run_seed = xorshift(this->starting_run_seed);
 	#endif /* MDEBUG */
@@ -48,6 +46,19 @@ pair<bool,int> SolutionWrapper::step(vector<double> obs) {
 }
 
 void SolutionWrapper::end() {
+	while (true) {
+		if (this->node_context.back() == NULL) {
+			if (this->scope_histories.size() == 1) {
+				break;
+			} else {
+				ScopeNode* scope_node = (ScopeNode*)this->node_context[this->node_context.size() - 2];
+				scope_node->exit_step(this);
+			}
+		} else {
+			this->node_context.back() = NULL;
+		}
+	}
+
 	delete this->scope_histories[0];
 
 	this->scope_histories.clear();

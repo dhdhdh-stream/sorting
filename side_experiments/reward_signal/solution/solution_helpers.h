@@ -5,12 +5,11 @@
 #include <utility>
 #include <vector>
 
-#include "abstract_experiment.h"
 #include "input.h"
 
+class AbstractExperiment;
 class AbstractNode;
 class Network;
-class ObsNode;
 class Problem;
 class Scope;
 class ScopeHistory;
@@ -18,26 +17,8 @@ class ScopeNode;
 class Solution;
 class SolutionWrapper;
 
-const double MIN_CONSIDER_HIT_PERCENT = 0.2;
-
-const int NUM_FACTORS = 10;
-
-/**
- * - when there's correlation, weights can get strange values(?)
- */
-const double REGRESSION_WEIGHT_LIMIT = 100000.0;
-const double REGRESSION_FAIL_MULTIPLIER = 1000.0;
-
-const double FACTOR_IMPACT_THRESHOLD = 0.1;
-
-const int INPUT_NUM_HIGHEST = 4;
-const int INPUT_NUM_RANDOM_PER = 3;
-
-void create_experiment(ScopeHistory* scope_history,
-					   AbstractExperiment*& curr_experiment,
-					   SolutionWrapper* wrapper);
-void create_confusion(ScopeHistory* scope_history,
-					  SolutionWrapper* wrapper);
+void create_experiment(SolutionWrapper* wrapper,
+					   AbstractExperiment*& curr_experiment);
 
 void fetch_input_helper(ScopeHistory* scope_history,
 						Input& input,
@@ -45,22 +26,49 @@ void fetch_input_helper(ScopeHistory* scope_history,
 						double& obs,
 						bool& is_on);
 
+const double MIN_CONSIDER_HIT_PERCENT = 0.2;
+
+const double UNIQUE_MAX_PCC = 0.7;
+
+/**
+ * - when there's correlation, weights can get strange values(?)
+ */
+const double REGRESSION_WEIGHT_LIMIT = 100000.0;
+
+const double FACTOR_IMPACT_THRESHOLD = 0.1;
+
+const int INPUT_NUM_HIGHEST = 4;
+const int INPUT_NUM_RANDOM = 6;
+
+class InputData {
+public:
+	double hit_percent;
+	double average;
+	double standard_deviation;
+};
+
 void analyze_input(Input& input,
 				   std::vector<ScopeHistory*>& scope_histories,
 				   InputData& input_data);
-void existing_add_factor(std::vector<ScopeHistory*>& scope_histories,
-						 std::vector<Input>& network_inputs,
-						 Network* network,
-						 Input& new_input,
-						 AbstractExperiment* experiment);
+void gather_t_scores_helper(ScopeHistory* scope_history,
+							std::vector<Scope*>& scope_context,
+							std::vector<int>& node_context,
+							std::map<Input, double>& t_scores,
+							std::vector<ScopeHistory*>& scope_histories,
+							std::map<Input, InputData>& input_tracker);
+bool is_unique(std::vector<std::vector<double>>& input_vals,
+			   std::vector<double>& existing_averages,
+			   std::vector<double>& existing_standard_deviations,
+			   std::vector<double>& potential_input_vals,
+			   double& potential_average,
+			   double& potential_standard_deviation);
 bool train_existing(std::vector<ScopeHistory*>& scope_histories,
 					std::vector<double>& target_val_histories,
 					double& average_score,
 					std::vector<Input>& factor_inputs,
 					std::vector<double>& factor_input_averages,
 					std::vector<double>& factor_input_standard_deviations,
-					std::vector<double>& factor_weights,
-					AbstractExperiment* experiment);
+					std::vector<double>& factor_weights);
 bool train_new(std::vector<ScopeHistory*>& scope_histories,
 			   std::vector<double>& target_val_histories,
 			   double& average_score,
@@ -72,28 +80,13 @@ bool train_new(std::vector<ScopeHistory*>& scope_histories,
 			   Network*& network,
 			   double& select_percentage);
 
+double get_experiment_impact(AbstractExperiment* experiment);
+
 void clean_scope(Scope* scope,
 				 SolutionWrapper* wrapper);
 
-void check_generalize(Scope* scope_to_generalize,
-					  SolutionWrapper* wrapper);
-
 void update_scores(ScopeHistory* scope_history,
 				   double target_val,
-				   SolutionWrapper* wrapper);
-
-bool has_match_helper(ScopeHistory* scope_history,
-					  AbstractNode* explore_node,
-					  bool is_branch);
-void add_existing_hit_obs_data_helper(ScopeHistory* scope_history,
-									  std::map<ObsNode*, ObsData>& obs_data);
-void add_existing_miss_obs_data_helper(ScopeHistory* scope_history,
-									   std::map<ObsNode*, ObsData>& obs_data);
-void add_new_obs_data_helper(ScopeHistory* scope_history,
-							 std::map<ObsNode*, ObsData>& obs_data);
-bool compare_obs_data(std::map<ObsNode*, ObsData>& new_obs_data,
-					  double hit_ratio,
-					  int new_count,
-					  SolutionWrapper* wrapper);
+				   int h_index);
 
 #endif /* SOLUTION_HELPERS_H */

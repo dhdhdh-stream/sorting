@@ -81,20 +81,12 @@ public:
 	void clean_inputs(Scope* scope,
 					  int node_id);
 	void clean_inputs(Scope* scope);
-	void replace_factor(Scope* scope,
-						int original_node_id,
-						int original_factor_index,
-						int new_node_id,
-						int new_factor_index);
 	void replace_obs_node(Scope* scope,
 						  int original_node_id,
 						  int new_node_id);
-	void replace_scope(Scope* original_scope,
-					   Scope* new_scope,
-					   int new_scope_node_id);
 
 	void clean();
-	void measure_update(SolutionWrapper* wrapper);
+	void measure_update(int total_count);
 
 	void new_scope_clean();
 	void new_scope_measure_update(int total_count);

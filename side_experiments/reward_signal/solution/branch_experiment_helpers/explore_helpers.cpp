@@ -5,8 +5,8 @@
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
-#include "factor.h"
 #include "globals.h"
+#include "new_scope_experiment.h"
 #include "obs_node.h"
 #include "problem.h"
 #include "scope.h"
@@ -27,10 +27,8 @@ void BranchExperiment::explore_check_activate(
 		SolutionWrapper* wrapper,
 		BranchExperimentHistory* history) {
 	this->num_instances_until_target--;
-	if (!history->has_explore
+	if (history->existing_predicted_scores.size() == 0
 			&& this->num_instances_until_target == 0) {
-		history->has_explore = true;
-
 		double sum_vals = this->existing_average_score;
 		for (int i_index = 0; i_index < (int)this->existing_inputs.size(); i_index++) {
 			double val;
@@ -133,8 +131,6 @@ void BranchExperiment::explore_check_activate(
 			}
 		}
 
-		wrapper->scope_histories.back()->experiments_hit.push_back(this);
-
 		BranchExperimentState* new_experiment_state = new BranchExperimentState(this);
 		new_experiment_state->step_index = 0;
 		wrapper->experiment_context.back() = new_experiment_state;
@@ -163,7 +159,6 @@ void BranchExperiment::explore_step(vector<double>& obs,
 			wrapper->scope_histories.push_back(inner_scope_history);
 			wrapper->node_context.push_back(this->curr_scopes[experiment_state->step_index]->nodes[0]);
 			wrapper->experiment_context.push_back(NULL);
-			wrapper->confusion_context.push_back(NULL);
 		}
 	}
 }
@@ -177,40 +172,34 @@ void BranchExperiment::explore_set_action(int action,
 
 void BranchExperiment::explore_exit_step(SolutionWrapper* wrapper,
 										 BranchExperimentState* experiment_state) {
-	this->curr_scopes[experiment_state->step_index]->back_activate(wrapper);
+	if (this->curr_scopes[experiment_state->step_index]->new_scope_experiment != NULL) {
+		this->curr_scopes[experiment_state->step_index]->new_scope_experiment->back_activate(wrapper);
+	}
 
 	delete wrapper->scope_histories.back();
 
 	wrapper->scope_histories.pop_back();
 	wrapper->node_context.pop_back();
 	wrapper->experiment_context.pop_back();
-	wrapper->confusion_context.pop_back();
 
 	experiment_state->step_index++;
 }
 
-void BranchExperiment::explore_back_activate(SolutionWrapper* wrapper,
-											 BranchExperimentHistory* history) {
-	// do nothing
-}
-
 void BranchExperiment::explore_backprop(
 		double target_val,
-		SolutionWrapper* wrapper) {
-	BranchExperimentHistory* history = (BranchExperimentHistory*)wrapper->experiment_history;
-
+		BranchExperimentHistory* history) {
 	uniform_int_distribution<int> until_distribution(0, (int)this->average_instances_per_run-1);
 	this->num_instances_until_target = 1 + until_distribution(generator);
 
-	if (history->has_explore) {
-		this->curr_surprise = target_val - history->existing_predicted_scores[0];
+	if (history->existing_predicted_scores.size() > 0) {
+		double curr_surprise = target_val - history->existing_predicted_scores[0];
 
 		#if defined(MDEBUG) && MDEBUG
 		if (true) {
 		#else
-		if (this->curr_surprise > this->best_surprise) {
+		if (curr_surprise > this->best_surprise) {
 		#endif /* MDEBUG */
-			this->best_surprise = this->curr_surprise;
+			this->best_surprise = curr_surprise;
 			this->best_step_types = this->curr_step_types;
 			this->best_actions = this->curr_actions;
 			this->best_scopes = this->curr_scopes;

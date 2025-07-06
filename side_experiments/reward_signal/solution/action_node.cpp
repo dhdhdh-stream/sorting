@@ -3,7 +3,6 @@
 #include <iostream>
 
 #include "abstract_experiment.h"
-#include "confusion.h"
 #include "constants.h"
 #include "scope.h"
 
@@ -15,18 +14,13 @@ ActionNode::ActionNode() {
 	this->is_init = false;
 
 	this->experiment = NULL;
-	this->confusion = NULL;
 
-	this->last_updated_run_index = 0;
+	this->last_updated_run_index = -1;
 }
 
 ActionNode::~ActionNode() {
 	if (this->experiment != NULL) {
 		this->experiment->decrement(this);
-	}
-
-	if (this->confusion != NULL) {
-		delete this->confusion;
 	}
 }
 
@@ -36,18 +30,14 @@ void ActionNode::clean() {
 		this->experiment = NULL;
 	}
 
-	if (this->confusion != NULL) {
-		delete this->confusion;
-		this->confusion = NULL;
-	}
-
+	this->last_updated_run_index = -1;
 	this->sum_score = 0.0;
 	this->sum_hits = 0;
 	this->sum_instances = 0;
 }
 
-void ActionNode::measure_update(SolutionWrapper* wrapper) {
-	this->average_hits_per_run = (double)this->sum_hits / (double)MEASURE_ITERS;
+void ActionNode::measure_update(int total_count) {
+	this->average_hits_per_run = (double)this->sum_hits / (double)total_count;
 	this->average_instances_per_run = (double)this->sum_instances / (double)this->sum_hits;
 	this->average_score = this->sum_score / (double)this->sum_hits;
 }
@@ -71,9 +61,6 @@ void ActionNode::save(ofstream& output_file) {
 	for (int a_index = 0; a_index < (int)this->ancestor_ids.size(); a_index++) {
 		output_file << this->ancestor_ids[a_index] << endl;
 	}
-
-	output_file << this->average_hits_per_run << endl;
-	output_file << this->average_score << endl;
 }
 
 void ActionNode::load(ifstream& input_file) {
@@ -93,14 +80,6 @@ void ActionNode::load(ifstream& input_file) {
 		getline(input_file, ancestor_id_line);
 		this->ancestor_ids.push_back(stoi(ancestor_id_line));
 	}
-
-	string average_hits_per_run_line;
-	getline(input_file, average_hits_per_run_line);
-	this->average_hits_per_run = stod(average_hits_per_run_line);
-
-	string average_score_line;
-	getline(input_file, average_score_line);
-	this->average_score = stod(average_score_line);
 
 	this->is_init = true;
 }
@@ -124,4 +103,5 @@ ActionNodeHistory::ActionNodeHistory(ActionNode* node) {
 
 ActionNodeHistory::ActionNodeHistory(ActionNodeHistory* original) {
 	this->node = original->node;
+	this->index = original->index;
 }

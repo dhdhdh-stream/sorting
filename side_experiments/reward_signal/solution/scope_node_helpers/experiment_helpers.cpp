@@ -3,8 +3,8 @@
 #include <iostream>
 
 #include "abstract_experiment.h"
-#include "confusion.h"
 #include "globals.h"
+#include "new_scope_experiment.h"
 #include "problem.h"
 #include "scope.h"
 #include "solution.h"
@@ -27,16 +27,21 @@ void ScopeNode::experiment_step(vector<double>& obs,
 	wrapper->scope_histories.push_back(inner_scope_history);
 	wrapper->node_context.push_back(this->scope->nodes[0]);
 	wrapper->experiment_context.push_back(NULL);
-	wrapper->confusion_context.push_back(NULL);
 }
 
 void ScopeNode::experiment_exit_step(SolutionWrapper* wrapper) {
-	this->scope->back_activate(wrapper);
+	if (this->scope->new_scope_experiment != NULL) {
+		this->scope->new_scope_experiment->back_activate(wrapper);
+	}
 
 	wrapper->scope_histories.pop_back();
 	wrapper->node_context.pop_back();
 	wrapper->experiment_context.pop_back();
-	wrapper->confusion_context.pop_back();
+
+	for (int f_index = 0; f_index < (int)this->impacted_factors.size(); f_index++) {
+		wrapper->scope_histories.back()->factor_initialized[
+			this->impacted_factors[f_index]] = false;
+	}
 
 	wrapper->node_context.back() = this->next_node;
 
@@ -45,7 +50,5 @@ void ScopeNode::experiment_exit_step(SolutionWrapper* wrapper) {
 			this,
 			false,
 			wrapper);
-	} else if (this->confusion != NULL) {
-		this->confusion->check_activate(wrapper);
 	}
 }

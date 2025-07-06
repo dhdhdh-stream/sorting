@@ -11,17 +11,17 @@ SolutionWrapper::SolutionWrapper(int num_obs) {
 	this->solution = new Solution();
 	this->solution->init();
 
-	this->run_index = 0;
-
 	this->curr_experiment = NULL;
 	this->best_experiment = NULL;
 	this->improvement_iter = 0;
 
-	this->sum_num_actions = 0;
-	this->sum_num_confusion_instances = 0;
-	this->experiment_iter = 0;
+	this->regather_counter = 0;
 
 	this->experiment_history = NULL;
+
+	#if defined(MDEBUG) && MDEBUG
+	this->run_index = 0;
+	#endif /* MDEBUG */
 }
 
 SolutionWrapper::SolutionWrapper(int num_obs,
@@ -32,17 +32,17 @@ SolutionWrapper::SolutionWrapper(int num_obs,
 	this->solution = new Solution();
 	this->solution->load(path, name);
 
-	this->run_index = 0;
-
 	this->curr_experiment = NULL;
 	this->best_experiment = NULL;
 	this->improvement_iter = 0;
 
-	this->sum_num_actions = 0;
-	this->sum_num_confusion_instances = 0;
-	this->experiment_iter = 0;
+	this->regather_counter = 0;
 
 	this->experiment_history = NULL;
+
+	#if defined(MDEBUG) && MDEBUG
+	this->run_index = 0;
+	#endif /* MDEBUG */
 }
 
 SolutionWrapper::~SolutionWrapper() {
@@ -81,7 +81,6 @@ void SolutionWrapper::combine(string other_path,
 	}
 
 	this->solution->timestamp = 0;
-	this->solution->best_timestamp = 0;
 }
 
 void SolutionWrapper::save(string path,

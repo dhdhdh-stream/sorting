@@ -55,6 +55,11 @@ void BranchNode::step(vector<double>& obs,
 
 	history->is_branch = is_branch;
 
+	for (int f_index = 0; f_index < (int)this->impacted_factors.size(); f_index++) {
+		wrapper->scope_histories.back()->factor_initialized[
+			this->impacted_factors[f_index]] = false;
+	}
+
 	if (is_branch) {
 		wrapper->node_context.back() = this->branch_next_node;
 	} else {

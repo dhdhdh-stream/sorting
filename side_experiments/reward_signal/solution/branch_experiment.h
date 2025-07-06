@@ -6,6 +6,7 @@
 #include "abstract_experiment.h"
 #include "input.h"
 
+class BranchNode;
 class Network;
 class Scope;
 class SolutionWrapper;
@@ -33,7 +34,6 @@ public:
 	double average_instances_per_run;
 	int num_instances_until_target;
 
-	double curr_surprise;
 	std::vector<int> curr_step_types;
 	std::vector<int> curr_actions;
 	std::vector<Scope*> curr_scopes;
@@ -57,8 +57,8 @@ public:
 
 	double select_percentage;
 
-	double hit_ratio;
-	std::map<ObsNode*, ObsData> obs_data;
+	BranchNode* new_branch_node;
+	std::vector<AbstractNode*> new_nodes;
 
 	std::vector<ScopeHistory*> scope_histories;
 	std::vector<double> i_target_val_histories;
@@ -86,16 +86,13 @@ public:
 	void set_action(int action,
 					SolutionWrapper* wrapper);
 	void experiment_exit_step(SolutionWrapper* wrapper);
-	void back_activate(SolutionWrapper* wrapper);
 	void backprop(double target_val,
 				  SolutionWrapper* wrapper);
 
 	void train_existing_check_activate(SolutionWrapper* wrapper,
 									   BranchExperimentHistory* history);
-	void train_existing_back_activate(SolutionWrapper* wrapper,
-									  BranchExperimentHistory* history);
 	void train_existing_backprop(double target_val,
-								 SolutionWrapper* wrapper);
+								 BranchExperimentHistory* history);
 
 	void explore_check_activate(SolutionWrapper* wrapper,
 								BranchExperimentHistory* history);
@@ -109,10 +106,8 @@ public:
 							BranchExperimentState* experiment_state);
 	void explore_exit_step(SolutionWrapper* wrapper,
 						   BranchExperimentState* experiment_state);
-	void explore_back_activate(SolutionWrapper* wrapper,
-							   BranchExperimentHistory* history);
 	void explore_backprop(double target_val,
-						  SolutionWrapper* wrapper);
+						  BranchExperimentHistory* history);
 
 	void train_new_check_activate(SolutionWrapper* wrapper,
 								  BranchExperimentHistory* history);
@@ -123,10 +118,8 @@ public:
 						BranchExperimentState* experiment_state);
 	void train_new_exit_step(SolutionWrapper* wrapper,
 							 BranchExperimentState* experiment_state);
-	void train_new_back_activate(SolutionWrapper* wrapper,
-								 BranchExperimentHistory* history);
 	void train_new_backprop(double target_val,
-							SolutionWrapper* wrapper);
+							BranchExperimentHistory* history);
 
 	void measure_check_activate(SolutionWrapper* wrapper);
 	void measure_step(std::vector<double>& obs,
@@ -137,7 +130,7 @@ public:
 	void measure_exit_step(SolutionWrapper* wrapper,
 						   BranchExperimentState* experiment_state);
 	void measure_backprop(double target_val,
-						  SolutionWrapper* wrapper);
+						  BranchExperimentHistory* history);
 
 	#if defined(MDEBUG) && MDEBUG
 	void capture_verify_check_activate(SolutionWrapper* wrapper);
@@ -148,7 +141,7 @@ public:
 							 BranchExperimentState* experiment_state);
 	void capture_verify_exit_step(SolutionWrapper* wrapper,
 								  BranchExperimentState* experiment_state);
-	void capture_verify_backprop();
+	void capture_verify_backprop(BranchExperimentHistory* history);
 	#endif /* MDEBUG */
 
 	void clean();
@@ -157,10 +150,7 @@ public:
 
 class BranchExperimentHistory : public AbstractExperimentHistory {
 public:
-	bool has_explore;
-
 	std::vector<double> existing_predicted_scores;
-	std::vector<double> reward_signals;
 
 	BranchExperimentHistory(BranchExperiment* experiment);
 };

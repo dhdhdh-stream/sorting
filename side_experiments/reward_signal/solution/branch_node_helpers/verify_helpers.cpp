@@ -35,6 +35,13 @@ void BranchNode::verify_step(vector<double>& obs,
 		if (is_on) {
 			double normalized_val = (val - this->input_averages[i_index]) / this->input_standard_deviations[i_index];
 			sum_vals += this->weights[i_index] * normalized_val;
+
+			if (this->verify_key != NULL) {
+				cout << i_index << ": " << val << endl;
+				this->inputs[i_index].print();
+				cout << "this->input_averages[i_index]: " << this->input_averages[i_index] << endl;
+				cout << "this->input_standard_deviations[i_index]: " << this->input_standard_deviations[i_index] << endl;
+			}
 		}
 	}
 
@@ -66,6 +73,11 @@ void BranchNode::verify_step(vector<double>& obs,
 	wrapper->curr_run_seed = xorshift(wrapper->curr_run_seed);
 
 	history->is_branch = is_branch;
+
+	for (int f_index = 0; f_index < (int)this->impacted_factors.size(); f_index++) {
+		wrapper->scope_histories.back()->factor_initialized[
+			this->impacted_factors[f_index]] = false;
+	}
 
 	if (is_branch) {
 		wrapper->node_context.back() = this->branch_next_node;

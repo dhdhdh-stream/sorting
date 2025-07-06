@@ -16,6 +16,12 @@
 
 using namespace std;
 
+/**
+ * - simply merge every fixed number of timesteps
+ *   - hopefully prevents solution from getting too stale and thrashing
+ */
+const int RUN_TIMESTEPS = 30;
+
 Solution::Solution() {
 	// do nothing
 }
@@ -28,14 +34,14 @@ Solution::~Solution() {
 	for (int h_index = 0; h_index < (int)this->existing_scope_histories.size(); h_index++) {
 		delete this->existing_scope_histories[h_index];
 	}
+	for (int h_index = 0; h_index < (int)this->explore_scope_histories.size(); h_index++) {
+		delete this->explore_scope_histories[h_index];
+	}
 }
 
 void Solution::init() {
 	this->timestamp = 0;
 	this->curr_score = 0.0;
-
-	this->best_timestamp = 0;
-	this->best_score = 0.0;
 
 	/**
 	 * - even though scopes[0] will not be reused, still good to start with:
@@ -72,14 +78,6 @@ void Solution::load(string path,
 	string curr_score_line;
 	getline(input_file, curr_score_line);
 	this->curr_score = stod(curr_score_line);
-
-	string best_timestamp_line;
-	getline(input_file, best_timestamp_line);
-	this->best_timestamp = stoi(best_timestamp_line);
-
-	string best_score_line;
-	getline(input_file, best_score_line);
-	this->best_score = stod(best_score_line);
 
 	string num_scopes_line;
 	getline(input_file, num_scopes_line);
@@ -123,20 +121,6 @@ void Solution::clean_inputs(Scope* scope,
 	}
 }
 
-void Solution::replace_factor(Scope* scope,
-							  int original_node_id,
-							  int original_factor_index,
-							  int new_node_id,
-							  int new_factor_index) {
-	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
-		this->scopes[s_index]->replace_factor(scope,
-											  original_node_id,
-											  original_factor_index,
-											  new_node_id,
-											  new_factor_index);
-	}
-}
-
 void Solution::replace_obs_node(Scope* scope,
 								int original_node_id,
 								int new_node_id) {
@@ -147,96 +131,35 @@ void Solution::replace_obs_node(Scope* scope,
 	}
 }
 
-void Solution::replace_scope(Scope* original_scope,
-							 Scope* new_scope,
-							 int new_scope_node_id) {
-	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
-		this->scopes[s_index]->replace_scope(original_scope,
-											 new_scope,
-											 new_scope_node_id);
-	}
-}
-
 void Solution::clean() {
-	/**
-	 * - remove duplicate ObsNodes
-	 * 
-	 * - clean for all scopes as ObsNodes could have been added during experiments
-	 */
-	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
-		while (true) {
-			bool removed_node = false;
-
-			for (map<int, AbstractNode*>::iterator it = this->scopes[s_index]->nodes.begin();
-					it != this->scopes[s_index]->nodes.end(); it++) {
-				if (it->second->type == NODE_TYPE_OBS) {
-					ObsNode* curr_obs_node = (ObsNode*)it->second;
-					if (curr_obs_node->next_node != NULL
-							&& curr_obs_node->next_node->type == NODE_TYPE_OBS
-							&& curr_obs_node->next_node->ancestor_ids.size() == 1) {
-						ObsNode* next_obs_node = (ObsNode*)curr_obs_node->next_node;
-
-						for (int f_index = 0; f_index < (int)next_obs_node->factors.size(); f_index++) {
-							Factor* new_factor = new Factor(next_obs_node->factors[f_index],
-															this);
-							curr_obs_node->factors.push_back(new_factor);
-
-							replace_factor(this->scopes[s_index],
-										   next_obs_node->id,
-										   f_index,
-										   curr_obs_node->id,
-										   curr_obs_node->factors.size()-1);
-						}
-
-						replace_obs_node(this->scopes[s_index],
-										 next_obs_node->id,
-										 curr_obs_node->id);
-
-						if (next_obs_node->next_node != NULL) {
-							for (int a_index = 0; a_index < (int)next_obs_node->next_node->ancestor_ids.size(); a_index++) {
-								if (next_obs_node->next_node->ancestor_ids[a_index] == next_obs_node->id) {
-									next_obs_node->next_node->ancestor_ids.erase(
-										next_obs_node->next_node->ancestor_ids.begin() + a_index);
-									break;
-								}
-							}
-							next_obs_node->next_node->ancestor_ids.push_back(curr_obs_node->id);
-						}
-						curr_obs_node->next_node_id = next_obs_node->next_node_id;
-						curr_obs_node->next_node = next_obs_node->next_node;
-
-						clean_inputs(this->scopes[s_index],
-									 next_obs_node->id);
-
-						this->scopes[s_index]->nodes.erase(next_obs_node->id);
-						delete next_obs_node;
-
-						removed_node = true;
-						break;
-					}
-				}
-			}
-
-			if (!removed_node) {
-				break;
-			}
-		}
-	}
-
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
 		this->scopes[s_index]->clean();
 	}
-
-	for (int h_index = 0; h_index < (int)this->existing_scope_histories.size(); h_index++) {
-		delete this->existing_scope_histories[h_index];
-	}
-	this->existing_scope_histories.clear();
-	this->existing_target_val_histories.clear();
 }
 
-void Solution::measure_update(SolutionWrapper* wrapper) {
+void Solution::measure_update() {
+	for (int h_index = 0; h_index < (int)this->existing_scope_histories.size(); h_index++) {
+		update_scores(this->existing_scope_histories[h_index],
+					  this->existing_target_val_histories[h_index],
+					  h_index);
+	}
+
+	double sum_score = 0.0;
+	for (int h_index = 0; h_index < (int)this->existing_target_val_histories.size(); h_index++) {
+		sum_score += this->existing_target_val_histories[h_index];
+	}
+	double new_score = sum_score / (double)this->existing_target_val_histories.size();
+
+	cout << "new_score: " << new_score << endl;
+
+	if (this->timestamp >= RUN_TIMESTEPS) {
+		this->timestamp = -1;
+	}
+
+	this->curr_score = new_score;
+
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
-		this->scopes[s_index]->measure_update(wrapper);
+		this->scopes[s_index]->measure_update((int)this->existing_scope_histories.size());
 	}
 }
 
@@ -295,9 +218,6 @@ void Solution::save(string path,
 
 	output_file << this->timestamp << endl;
 	output_file << this->curr_score << endl;
-
-	output_file << this->best_timestamp << endl;
-	output_file << this->best_score << endl;
 
 	output_file << this->scopes.size() << endl;
 

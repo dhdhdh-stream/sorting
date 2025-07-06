@@ -1,12 +1,3 @@
-// TODO: for reward signal, only select explore nodes that are in the front half
-// TODO: compare reward signal result and actual result
-
-// TODO: for test problem, maybe have positive score or 0
-// - 10 different things that need to be learned to be done
-//   - but have to be pretty precise/can't easily guess?
-// - also have success sometimes when nothing is done
-//   - so success signal isn't 100% correlated with action being performed
-
 #include "solution_helpers.h"
 
 #include <iostream>
@@ -14,14 +5,15 @@
 #include "action_node.h"
 #include "branch_experiment.h"
 #include "branch_node.h"
-// #include "commit_experiment.h"
+#include "commit_experiment.h"
 #include "constants.h"
 #include "globals.h"
-// #include "new_scope_experiment.h"
+#include "new_scope_experiment.h"
 #include "obs_node.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
+#include "solution_wrapper.h"
 
 using namespace std;
 
@@ -211,9 +203,12 @@ void even_gather_helper(ScopeHistory* scope_history,
 	}
 }
 
-void create_experiment(ScopeHistory* scope_history,
-					   AbstractExperiment*& curr_experiment,
-					   SolutionWrapper* wrapper) {
+void create_experiment(SolutionWrapper* wrapper,
+					   AbstractExperiment*& curr_experiment) {
+	uniform_int_distribution<int> scope_history_distribution(0,
+		wrapper->solution->existing_scope_histories.size()-1);
+	ScopeHistory* scope_history = wrapper->solution->existing_scope_histories[scope_history_distribution(generator)];
+
 	AbstractNode* explore_node = NULL;
 	bool explore_is_branch = false;
 	uniform_int_distribution<int> even_distribution(0, 1);
@@ -254,53 +249,81 @@ void create_experiment(ScopeHistory* scope_history,
 	}
 
 	if (explore_node != NULL) {
-		BranchExperiment* new_experiment = new BranchExperiment(
-			explore_node->parent,
-			explore_node,
-			explore_is_branch);
+		uniform_int_distribution<int> non_new_distribution(0, 9);
+		if (explore_node->parent->nodes.size() >= NEW_SCOPE_MIN_NODES
+				&& non_new_distribution(generator) != 0) {
+			NewScopeExperiment* new_scope_experiment = new NewScopeExperiment(
+				explore_node->parent,
+				explore_node,
+				explore_is_branch);
 
-		if (new_experiment->result == EXPERIMENT_RESULT_FAIL) {
-			delete new_experiment;
+			if (new_scope_experiment->result == EXPERIMENT_RESULT_FAIL) {
+				delete new_scope_experiment;
+			} else {
+				curr_experiment = new_scope_experiment;
+			}
 		} else {
-			curr_experiment = new_experiment;
+			uniform_int_distribution<int> commit_distribution(0, 9);
+			if (explore_node->parent->nodes.size() < 20
+					&& commit_distribution(generator) == 0) {
+				CommitExperiment* new_commit_experiment = new CommitExperiment(
+					explore_node->parent,
+					explore_node,
+					explore_is_branch);
+
+				if (new_commit_experiment->result == EXPERIMENT_RESULT_FAIL) {
+					delete new_commit_experiment;
+				} else {
+					curr_experiment = new_commit_experiment;
+				}
+			} else {
+				BranchExperiment* new_experiment = new BranchExperiment(
+					explore_node->parent,
+					explore_node,
+					explore_is_branch);
+
+				if (new_experiment->result == EXPERIMENT_RESULT_FAIL) {
+					delete new_experiment;
+				} else {
+					curr_experiment = new_experiment;
+				}
+			}
 		}
-
-		// uniform_int_distribution<int> non_new_distribution(0, 9);
-		// if (explore_node->parent->nodes.size() >= NEW_SCOPE_MIN_NODES
-		// 		&& non_new_distribution(generator) != 0) {
-		// 	NewScopeExperiment* new_scope_experiment = new NewScopeExperiment(
-		// 		explore_node->parent,
-		// 		explore_node,
-		// 		explore_is_branch);
-
-		// 	if (new_scope_experiment->result == EXPERIMENT_RESULT_FAIL) {
-		// 		delete new_scope_experiment;
-		// 	} else {
-		// 		explore_node->parent->new_scope_experiment = new_scope_experiment;
-		// 		explore_node->experiment = new_scope_experiment;
-
-		// 		curr_experiment = new_scope_experiment;
-		// 	}
-		// } else {
-		// 	uniform_int_distribution<int> commit_distribution(0, 9);
-		// 	if (explore_node->parent->nodes.size() < 20
-		// 			&& commit_distribution(generator) == 0) {
-		// 		CommitExperiment* new_commit_experiment = new CommitExperiment(
-		// 			explore_node->parent,
-		// 			explore_node,
-		// 			explore_is_branch);
-		// 		explore_node->experiment = new_commit_experiment;
-
-		// 		curr_experiment = new_commit_experiment;
-		// 	} else {
-		// 		BranchExperiment* new_experiment = new BranchExperiment(
-		// 			explore_node->parent,
-		// 			explore_node,
-		// 			explore_is_branch);
-		// 		explore_node->experiment = new_experiment;
-
-		// 		curr_experiment = new_experiment;
-		// 	}
-		// }
 	}
+}
+
+double get_experiment_impact(AbstractExperiment* experiment) {
+	double existing_score;
+	switch (experiment->node_context->type) {
+	case NODE_TYPE_ACTION:
+		{
+			ActionNode* action_node = (ActionNode*)experiment->node_context;
+			existing_score = action_node->average_score;
+		}
+		break;
+	case NODE_TYPE_SCOPE:
+		{
+			ScopeNode* scope_node = (ScopeNode*)experiment->node_context;
+			existing_score = scope_node->average_score;
+		}
+		break;
+	case NODE_TYPE_BRANCH:
+		{
+			BranchNode* branch_node = (BranchNode*)experiment->node_context;
+			if (experiment->is_branch) {
+				existing_score = branch_node->branch_average_score;
+			} else {
+				existing_score = branch_node->original_average_score;
+			}
+		}
+		break;
+	case NODE_TYPE_OBS:
+		{
+			ObsNode* obs_node = (ObsNode*)experiment->node_context;
+			existing_score = obs_node->average_score;
+		}
+		break;
+	}
+
+	return experiment->new_score - existing_score;
 }

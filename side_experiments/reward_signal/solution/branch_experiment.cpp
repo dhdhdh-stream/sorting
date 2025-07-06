@@ -2,7 +2,6 @@
 
 #include <iostream>
 
-#include "abstract_node.h"
 #include "action_node.h"
 #include "branch_node.h"
 #include "factor.h"
@@ -30,6 +29,8 @@ BranchExperiment::BranchExperiment(Scope* scope_context,
 
 	this->new_network = NULL;
 
+	this->new_branch_node = NULL;
+
 	vector<ScopeHistory*> scope_histories;
 	vector<double> target_val_histories;
 	for (int h_index = 0; h_index < (int)this->scope_context->existing_scope_histories.size(); h_index++) {
@@ -50,7 +51,8 @@ BranchExperiment::BranchExperiment(Scope* scope_context,
 		}
 
 		if (has_match) {
-			scope_histories.push_back(scope_history);
+			ScopeHistory* cleaned_scope_history = new ScopeHistory(scope_history, match_it->second->index);
+			scope_histories.push_back(cleaned_scope_history);
 			target_val_histories.push_back(this->scope_context->existing_target_val_histories[h_index]);
 		}
 	}
@@ -66,8 +68,11 @@ BranchExperiment::BranchExperiment(Scope* scope_context,
 									 factor_inputs,
 									 factor_input_averages,
 									 factor_input_standard_deviations,
-									 factor_weights,
-									 this);
+									 factor_weights);
+
+	for (int h_index = 0; h_index < (int)scope_histories.size(); h_index++) {
+		delete scope_histories[h_index];
+	}
 
 	if (is_success) {
 		this->node_context->experiment = this;
@@ -136,8 +141,19 @@ BranchExperiment::~BranchExperiment() {
 		delete this->new_network;
 	}
 
+	if (this->new_branch_node != NULL) {
+		delete this->new_branch_node;
+	}
+	for (int n_index = 0; n_index < (int)this->new_nodes.size(); n_index++) {
+		delete this->new_nodes[n_index];
+	}
+
 	for (int h_index = 0; h_index < (int)this->scope_histories.size(); h_index++) {
 		delete this->scope_histories[h_index];
+	}
+
+	for (int h_index = 0; h_index < (int)this->new_scope_histories.size(); h_index++) {
+		delete this->new_scope_histories[h_index];
 	}
 
 	#if defined(MDEBUG) && MDEBUG
@@ -154,7 +170,7 @@ void BranchExperiment::decrement(AbstractNode* experiment_node) {
 BranchExperimentHistory::BranchExperimentHistory(BranchExperiment* experiment) {
 	this->experiment = experiment;
 
-	this->has_explore = false;
+	this->is_hit = false;
 }
 
 BranchExperimentState::BranchExperimentState(BranchExperiment* experiment) {

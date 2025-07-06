@@ -1,7 +1,6 @@
 #include "branch_node.h"
 
 #include "abstract_experiment.h"
-#include "confusion.h"
 #include "scope.h"
 #include "solution_helpers.h"
 #include "solution_wrapper.h"
@@ -52,6 +51,11 @@ void BranchNode::experiment_step(vector<double>& obs,
 
 	history->is_branch = is_branch;
 
+	for (int f_index = 0; f_index < (int)this->impacted_factors.size(); f_index++) {
+		wrapper->scope_histories.back()->factor_initialized[
+			this->impacted_factors[f_index]] = false;
+	}
+
 	if (is_branch) {
 		wrapper->node_context.back() = this->branch_next_node;
 	} else {
@@ -63,9 +67,5 @@ void BranchNode::experiment_step(vector<double>& obs,
 			this,
 			is_branch,
 			wrapper);
-	} else if (this->confusion != NULL) {
-		if (this->confusion->is_branch == is_branch) {
-			this->confusion->check_activate(wrapper);
-		}
 	}
 }

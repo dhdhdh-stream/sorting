@@ -10,8 +10,6 @@ const int ACTION_LEFT = 0;
 const int ACTION_RIGHT = 1;
 const int ACTION_CLICK = 2;
 
-const int NUM_TARGETS = 10;
-
 Simpler::Simpler() {
 	this->world = vector<double>(5);
 
@@ -24,13 +22,18 @@ Simpler::Simpler() {
 
 	this->curr_index = 2;
 
+	geometric_distribution<int> num_targets_distribution(0.25);
 	uniform_int_distribution<int> target_distribution(0, 1);
-	for (int t_index = 0; t_index < NUM_TARGETS; t_index++) {
+	int num_targets = num_targets_distribution(generator);
+	for (int t_index = 0; t_index < num_targets; t_index++) {
 		this->targets.push_back(target_distribution(generator));
 	}
 	this->curr_target_index = 0;
+	if (this->curr_target_index >= (int)this->targets.size()) {
+		this->world[2] += 1.0;
+	}
 
-	uniform_int_distribution<int> random_factor_distribution(-5, 5);
+	uniform_int_distribution<int> random_factor_distribution(-10, 10);
 	this->random_factor = random_factor_distribution(generator);
 }
 
@@ -43,7 +46,7 @@ vector<double> Simpler::get_observations() {
 		obs.push_back(this->world[this->curr_index]);
 	}
 
-	if (this->curr_target_index >= NUM_TARGETS) {
+	if (this->curr_target_index >= (int)this->targets.size()) {
 		obs.push_back(-1);
 	} else {
 		obs.push_back(this->targets[this->curr_target_index]);
@@ -67,26 +70,32 @@ void Simpler::perform_action(int action) {
 		}
 		break;
 	case ACTION_CLICK:
-		if (this->curr_target_index >= NUM_TARGETS) {
-			this->world[2] -= 3;
+		if (this->curr_target_index >= (int)this->targets.size()) {
+			this->world[2] -= 2.0;
 		} else {
 			switch (this->targets[this->curr_target_index]) {
 			case 0:
 				if (this->curr_index == 0) {
-					this->world[2] += 10;
+					this->world[2] += 1.0;
 
 					this->curr_target_index++;
+					if (this->curr_target_index >= (int)this->targets.size()) {
+						this->world[2] += 1.0;
+					}
 				} else {
-					this->world[2] -= 3;
+					this->world[2] -= 2.0;
 				}
 				break;
 			case 1:
 				if (this->curr_index == 4) {
-					this->world[2] += 10;
+					this->world[2] += 1.0;
 
 					this->curr_target_index++;
+					if (this->curr_target_index >= (int)this->targets.size()) {
+						this->world[2] += 1.0;
+					}
 				} else {
-					this->world[2] -= 3;
+					this->world[2] -= 2.0;
 				}
 				break;
 			}
@@ -97,7 +106,7 @@ void Simpler::perform_action(int action) {
 
 double Simpler::score_result() {
 	double score = this->random_factor;
-	score += this->world[2] / 10.0;
+	score += this->world[2];
 	return score;
 }
 

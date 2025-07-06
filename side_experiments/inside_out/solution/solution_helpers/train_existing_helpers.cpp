@@ -547,7 +547,7 @@ bool train_existing(vector<ScopeHistory*>& scope_histories,
 		sum_new_misguess_variance += (curr_misguess - new_average_misguess)
 			* (curr_misguess - new_average_misguess);
 	}
-	double new_misguess_standard_deviation = sqrt(sum_new_misguess_variance / (double)inputs.size());
+	double new_misguess_standard_deviation = sqrt(sum_new_misguess_variance / (double)num_instances);
 	if (new_misguess_standard_deviation < MIN_STANDARD_DEVIATION) {
 		new_misguess_standard_deviation = MIN_STANDARD_DEVIATION;
 	}

@@ -14,8 +14,6 @@
 
 using namespace std;
 
-const int SCOPE_EXCEEDED_NUM_NODES = 100;
-
 void clean_scope(Scope* scope,
 				 SolutionWrapper* wrapper) {
 	/**
@@ -315,18 +313,6 @@ void clean_scope(Scope* scope,
 				if (original_obs_node->next_node == branch_obs_node->next_node) {
 					ObsNode* merge_obs_node = (ObsNode*)original_obs_node->next_node;
 
-					for (int f_index = 0; f_index < (int)original_obs_node->factors.size(); f_index++) {
-						Factor* new_factor = new Factor(original_obs_node->factors[f_index],
-														wrapper->solution);
-						merge_obs_node->factors.push_back(new_factor);
-
-						wrapper->solution->replace_factor(scope,
-														  original_obs_node->id,
-														  f_index,
-														  merge_obs_node->id,
-														  merge_obs_node->factors.size()-1);
-					}
-
 					wrapper->solution->replace_obs_node(scope,
 														original_obs_node->id,
 														merge_obs_node->id);
@@ -340,18 +326,6 @@ void clean_scope(Scope* scope,
 
 					wrapper->solution->clean_inputs(scope,
 													original_obs_node->id);
-
-					for (int f_index = 0; f_index < (int)branch_obs_node->factors.size(); f_index++) {
-						Factor* new_factor = new Factor(branch_obs_node->factors[f_index],
-														wrapper->solution);
-						merge_obs_node->factors.push_back(new_factor);
-
-						wrapper->solution->replace_factor(scope,
-														  branch_obs_node->id,
-														  f_index,
-														  merge_obs_node->id,
-														  merge_obs_node->factors.size()-1);
-					}
 
 					wrapper->solution->replace_obs_node(scope,
 														branch_obs_node->id,
@@ -393,68 +367,82 @@ void clean_scope(Scope* scope,
 		}
 	}
 
+	/**
+	 * - remove duplicate ObsNodes
+	 */
+	while (true) {
+		bool removed_node = false;
+
+		for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
+				it != scope->nodes.end(); it++) {
+			if (it->second->type == NODE_TYPE_OBS) {
+				ObsNode* curr_obs_node = (ObsNode*)it->second;
+				if (curr_obs_node->next_node != NULL
+						&& curr_obs_node->next_node->type == NODE_TYPE_OBS
+						&& curr_obs_node->next_node->ancestor_ids.size() == 1) {
+					ObsNode* next_obs_node = (ObsNode*)curr_obs_node->next_node;
+
+					wrapper->solution->replace_obs_node(scope,
+														next_obs_node->id,
+														curr_obs_node->id);
+
+					if (next_obs_node->next_node != NULL) {
+						for (int a_index = 0; a_index < (int)next_obs_node->next_node->ancestor_ids.size(); a_index++) {
+							if (next_obs_node->next_node->ancestor_ids[a_index] == next_obs_node->id) {
+								next_obs_node->next_node->ancestor_ids.erase(
+									next_obs_node->next_node->ancestor_ids.begin() + a_index);
+								break;
+							}
+						}
+						next_obs_node->next_node->ancestor_ids.push_back(curr_obs_node->id);
+					}
+					curr_obs_node->next_node_id = next_obs_node->next_node_id;
+					curr_obs_node->next_node = next_obs_node->next_node;
+
+					wrapper->solution->clean_inputs(scope,
+													next_obs_node->id);
+
+					scope->nodes.erase(next_obs_node->id);
+					delete next_obs_node;
+
+					removed_node = true;
+					break;
+				}
+			}
+		}
+
+		if (!removed_node) {
+			break;
+		}
+	}
+
+	/**
+	 * - eval Factor is_meaningful
+	 */
+	for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
+		for (int f_index = 0; f_index < (int)wrapper->solution->scopes[s_index]->factors.size(); f_index++) {
+			Factor* factor = wrapper->solution->scopes[s_index]->factors[f_index];
+
+			bool has_meaningful = false;
+			for (int i_index = 0; i_index < (int)factor->inputs.size(); i_index++) {
+				if (factor->inputs[i_index].factor_index == -1) {
+					has_meaningful = true;
+					break;
+				} else {
+					Scope* input_scope = factor->inputs[i_index].scope_context.back();
+					if (input_scope->factors[factor->inputs[i_index].factor_index]->is_meaningful) {
+						has_meaningful = true;
+						break;
+					}
+				}
+			}
+
+			factor->is_meaningful = has_meaningful;
+		}
+	}
+
 	for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
 			it != scope->nodes.end(); it++) {
 		it->second->is_init = true;
-	}
-}
-
-void check_generalize(Scope* scope_to_generalize,
-					  SolutionWrapper* wrapper) {
-	// if (scope_to_generalize->nodes.size() > SCOPE_EXCEEDED_NUM_NODES
-	// 		&& !scope_to_generalize->generalized) {
-	if (false) {
-		cout << "generalize " << scope_to_generalize->id << endl;
-
-		Scope* new_scope = new Scope();
-		new_scope->node_counter = 0;
-
-		new_scope->child_scopes = scope_to_generalize->child_scopes;
-		new_scope->child_scopes.push_back(scope_to_generalize);
-
-		ObsNode* start_node = new ObsNode();
-		start_node->parent = new_scope;
-		start_node->id = new_scope->node_counter;
-		new_scope->node_counter++;
-		new_scope->nodes[start_node->id] = start_node;
-
-		ScopeNode* new_scope_node = new ScopeNode();
-		new_scope_node->parent = new_scope;
-		new_scope_node->id = new_scope->node_counter;
-		new_scope->node_counter++;
-		new_scope->nodes[new_scope_node->id] = new_scope_node;
-
-		new_scope_node->scope = scope_to_generalize;
-
-		ObsNode* end_node = new ObsNode();
-		end_node->parent = new_scope;
-		end_node->id = new_scope->node_counter;
-		new_scope->node_counter++;
-		new_scope->nodes[end_node->id] = end_node;
-
-		start_node->next_node_id = new_scope_node->id;
-		start_node->next_node = new_scope_node;
-
-		new_scope_node->next_node_id = end_node->id;
-		new_scope_node->next_node = end_node;
-
-		end_node->next_node_id = -1;
-		end_node->next_node = NULL;
-
-		wrapper->solution->replace_scope(scope_to_generalize,
-										 new_scope,
-										 new_scope_node->id);
-
-		if (scope_to_generalize->id == 0) {
-			wrapper->solution->scopes.insert(wrapper->solution->scopes.begin(), new_scope);
-		} else {
-			wrapper->solution->scopes.push_back(new_scope);
-		}
-
-		scope_to_generalize->generalized = true;
-
-		for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
-			wrapper->solution->scopes[s_index]->id = s_index;
-		}
 	}
 }

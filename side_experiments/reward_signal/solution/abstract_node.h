@@ -5,7 +5,6 @@
 #include <vector>
 
 class AbstractExperiment;
-class Confusion;
 class Scope;
 class Solution;
 class SolutionWrapper;
@@ -22,6 +21,8 @@ public:
 	Scope* parent;
 	int id;
 
+	std::vector<int> impacted_factors;
+
 	std::vector<int> ancestor_ids;
 	/**
 	 * - if both paths of BranchNode point to same node, add twice
@@ -30,8 +31,6 @@ public:
 	bool is_init;
 
 	AbstractExperiment* experiment;
-
-	Confusion* confusion;
 
 	virtual ~AbstractNode() {};
 
@@ -46,7 +45,7 @@ public:
 								 SolutionWrapper* wrapper) = 0;
 
 	virtual void clean() = 0;
-	virtual void measure_update(SolutionWrapper* wrapper) = 0;
+	virtual void measure_update(int total_count) = 0;
 
 	virtual void new_scope_clean() = 0;
 	virtual void new_scope_measure_update(int total_count) = 0;

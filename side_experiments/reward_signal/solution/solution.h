@@ -20,28 +20,24 @@
 #include <fstream>
 #include <vector>
 
+class AbstractExperiment;
 class AbstractNode;
 class Problem;
 class Scope;
 class ScopeHistory;
-class SolutionWrapper;
 
 class Solution {
 public:
 	/**
-	 * - -1 if fail
+	 * - -1 if done
 	 */
 	int timestamp;
 	double curr_score;
-
-	int best_timestamp;
-	double best_score;
 
 	std::vector<Scope*> scopes;
 
 	std::vector<ScopeHistory*> existing_scope_histories;
 	std::vector<double> existing_target_val_histories;
-
 	std::vector<ScopeHistory*> explore_scope_histories;
 	std::vector<double> explore_target_val_histories;
 
@@ -63,20 +59,12 @@ public:
 
 	void clean_inputs(Scope* scope,
 					  int node_id);
-	void replace_factor(Scope* scope,
-						int original_node_id,
-						int original_factor_index,
-						int new_node_id,
-						int new_factor_index);
 	void replace_obs_node(Scope* scope,
 						  int original_node_id,
 						  int new_node_id);
-	void replace_scope(Scope* original_scope,
-					   Scope* new_scope,
-					   int new_scope_node_id);
 
 	void clean();
-	void measure_update(SolutionWrapper* wrapper);
+	void measure_update();
 
 	void clean_scopes();
 
