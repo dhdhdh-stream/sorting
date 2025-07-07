@@ -33,6 +33,9 @@ void SolutionWrapper::experiment_init() {
 		while (this->curr_experiment == NULL) {
 			if (this->solution->explore_scope_histories.size() >= NUM_EXPLORE_SAVE) {
 				update_reward_signals(this);
+
+				// temp
+				save("saves/", "main.txt");
 			}
 
 			create_experiment(this,
@@ -186,9 +189,7 @@ void SolutionWrapper::experiment_end(double result) {
 			}
 		}
 
-		if (this->solution->scopes[0]->new_scope_experiment != NULL) {
-			this->solution->scopes[0]->new_scope_experiment->back_activate(this);
-		}
+		this->solution->scopes[0]->back_activate(this);
 
 		this->experiment_history->experiment->backprop(
 			result,

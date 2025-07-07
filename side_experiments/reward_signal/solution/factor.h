@@ -11,11 +11,14 @@ class Network;
 class Scope;
 class ScopeHistory;
 class Solution;
+class SolutionWrapper;
 
 class Factor {
 public:
 	std::vector<Input> inputs;
 	Network* network;
+
+	std::vector<int> impacted_factors;
 
 	bool is_meaningful;
 

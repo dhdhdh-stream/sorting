@@ -100,8 +100,12 @@ void Factor::load(ifstream& input_file,
 
 void Factor::link(int index) {
 	for (int i_index = 0; i_index < (int)this->inputs.size(); i_index++) {
-		if (this->inputs[i_index].scope_context.size() > 1
-				|| this->inputs[i_index].factor_index == -1) {
+		if (this->inputs[i_index].scope_context.size() == 1
+				&& this->inputs[i_index].factor_index != -1) {
+			Scope* scope = this->inputs[i_index].scope_context[0];
+			Factor* factor = scope->factors[this->inputs[i_index].factor_index];
+			factor->impacted_factors.push_back(index);
+		} else {
 			Scope* scope = this->inputs[i_index].scope_context[0];
 			AbstractNode* node = scope->nodes[this->inputs[i_index].node_context[0]];
 			node->impacted_factors.push_back(index);

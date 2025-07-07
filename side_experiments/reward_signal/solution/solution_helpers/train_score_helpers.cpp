@@ -237,7 +237,7 @@ void train_score(Scope* scope) {
 	Eigen::VectorXd predicted = inputs * weights;
 	double sum_offset = 0.0;
 	for (int i_index = 0; i_index < (int)combined_train_scope_histories.size(); i_index++) {
-		sum_offset += abs(predicted(i_index) - average_score);
+		sum_offset += abs(predicted(i_index) - new_score_average_val);
 	}
 	double average_offset = sum_offset / (double)combined_train_scope_histories.size();
 	double impact_threshold = average_offset * FACTOR_IMPACT_THRESHOLD;
@@ -252,7 +252,7 @@ void train_score(Scope* scope) {
 			sum_impact += abs(inputs(i_index, 1 + f_index));
 		}
 
-		double impact = abs(factor_weights[f_index]) * sum_impact / (double)combined_train_scope_histories.size();
+		double impact = abs(new_score_weights[f_index]) * sum_impact / (double)combined_train_scope_histories.size();
 		if (impact < impact_threshold) {
 		#endif /* MDEBUG */
 			new_score_inputs.erase(new_score_inputs.begin() + f_index);
@@ -763,7 +763,7 @@ void train_score(Scope* scope) {
 			#else
 			double remove_improvement = average_misguess - remove_average_misguess;
 			double remove_standard_deviation = min(misguess_standard_deviation, remove_misguess_standard_deviation);
-			double remove_t_score = remove_improvement / (remove_standard_deviation / sqrt(num_instances));
+			double remove_t_score = remove_improvement / (remove_standard_deviation / sqrt((int)combined_train_scope_histories.size()));
 
 			if (remove_t_score > -0.674) {
 			#endif /* MDEBUG */
@@ -883,9 +883,14 @@ void train_score(Scope* scope) {
 		new_test_misguess_standard_deviation = MIN_STANDARD_DEVIATION;
 	}
 
-	double new_improvement = existing_test_misguess_average - new_test_misguess_average;
+	double new_test_improvement = existing_test_misguess_average - new_test_misguess_average;
 	double min_standard_deviation = min(existing_test_misguess_standard_deviation, new_test_misguess_standard_deviation);
-	double t_score = new_improvement / (min_standard_deviation / sqrt((double)combined_test_scope_histories.size()));
+	double t_score = new_test_improvement / (min_standard_deviation / sqrt((double)combined_test_scope_histories.size()));
+
+	cout << "existing_test_misguess_average: " << existing_test_misguess_average << endl;
+	cout << "new_test_misguess_average: " << new_test_misguess_average << endl;
+	cout << "min_standard_deviation: " << min_standard_deviation << endl;
+	cout << "t_score: " << t_score << endl;
 
 	if (t_score > 2.326) {
 		scope->score_average_val = new_score_average_val;

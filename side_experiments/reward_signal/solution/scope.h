@@ -51,6 +51,9 @@ public:
 	Scope();
 	~Scope();
 
+	void invalidate_factor(ScopeHistory* scope_history,
+						   int f_index);
+
 	void back_activate(SolutionWrapper* wrapper);
 
 	void random_exit_activate(AbstractNode* starting_node,

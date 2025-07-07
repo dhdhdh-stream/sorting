@@ -36,8 +36,8 @@ void ScopeNode::experiment_exit_step(SolutionWrapper* wrapper) {
 	wrapper->experiment_context.pop_back();
 
 	for (int f_index = 0; f_index < (int)this->impacted_factors.size(); f_index++) {
-		wrapper->scope_histories.back()->factor_initialized[
-			this->impacted_factors[f_index]] = false;
+		this->parent->invalidate_factor(wrapper->scope_histories.back(),
+										this->impacted_factors[f_index]);
 	}
 
 	wrapper->node_context.back() = this->next_node;

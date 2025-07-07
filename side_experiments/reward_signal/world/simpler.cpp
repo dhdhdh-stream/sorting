@@ -119,6 +119,10 @@ Problem* Simpler::copy_and_reset() {
 
 	new_problem->targets = this->targets;
 
+	if (new_problem->curr_target_index >= (int)new_problem->targets.size()) {
+		new_problem->world[2] += 1.0;
+	}
+
 	new_problem->random_factor = this->random_factor;
 
 	return new_problem;

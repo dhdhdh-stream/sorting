@@ -21,6 +21,7 @@ void BranchExperiment::clean() {
 
 void BranchExperiment::add(SolutionWrapper* wrapper) {
 	cout << "BranchExperiment add" << endl;
+	cout << "this->use_reward_signal: " << this->use_reward_signal << endl;
 
 	for (int n_index = 0; n_index < (int)this->new_nodes.size(); n_index++) {
 		this->new_nodes[n_index]->parent = this->scope_context;
