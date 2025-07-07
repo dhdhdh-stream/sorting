@@ -557,7 +557,7 @@ bool train_existing(vector<ScopeHistory*>& scope_histories,
 	#else
 	double new_improvement = average_misguess - new_average_misguess;
 	double new_standard_deviation = min(misguess_standard_deviation, new_misguess_standard_deviation);
-	double new_t_score = new_improvement / (new_standard_deviation / sqrt(num_instances));
+	double new_t_score = new_improvement / (new_standard_deviation / sqrt((double)num_instances));
 
 	if (should_add && new_t_score > 2.326) {
 	#endif /* MDEBUG */

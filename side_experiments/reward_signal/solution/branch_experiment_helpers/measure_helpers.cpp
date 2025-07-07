@@ -7,7 +7,6 @@
 #include "branch_node.h"
 #include "constants.h"
 #include "network.h"
-#include "new_scope_experiment.h"
 #include "obs_node.h"
 #include "problem.h"
 #include "scope.h"
@@ -157,9 +156,7 @@ void BranchExperiment::measure_exit_step(SolutionWrapper* wrapper,
 										 BranchExperimentState* experiment_state) {
 	ScopeNode* node = (ScopeNode*)this->new_nodes[experiment_state->step_index];
 
-	if (node->scope->new_scope_experiment != NULL) {
-		node->scope->new_scope_experiment->back_activate(wrapper);
-	}
+	node->scope->back_activate(wrapper);
 
 	wrapper->scope_histories.pop_back();
 	wrapper->node_context.pop_back();

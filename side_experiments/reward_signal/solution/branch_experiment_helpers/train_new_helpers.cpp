@@ -7,7 +7,6 @@
 #include "constants.h"
 #include "globals.h"
 #include "network.h"
-#include "new_scope_experiment.h"
 #include "obs_node.h"
 #include "scope.h"
 #include "scope_node.h"
@@ -49,6 +48,10 @@ void BranchExperiment::train_new_check_activate(
 		uniform_int_distribution<int> until_distribution(0, (int)this->average_instances_per_run-1.0);
 		this->num_instances_until_target = 1 + until_distribution(generator);
 
+		if (this->use_reward_signal) {
+			wrapper->scope_histories.back()->experiments_hit.push_back(this);
+		}
+
 		BranchExperimentState* new_experiment_state = new BranchExperimentState(this);
 		new_experiment_state->step_index = 0;
 		wrapper->experiment_context.back() = new_experiment_state;
@@ -84,9 +87,7 @@ void BranchExperiment::train_new_step(vector<double>& obs,
 
 void BranchExperiment::train_new_exit_step(SolutionWrapper* wrapper,
 										   BranchExperimentState* experiment_state) {
-	if (this->best_scopes[experiment_state->step_index]->new_scope_experiment != NULL) {
-		this->best_scopes[experiment_state->step_index]->new_scope_experiment->back_activate(wrapper);
-	}
+	this->best_scopes[experiment_state->step_index]->back_activate(wrapper);
 
 	delete wrapper->scope_histories.back();
 
@@ -97,12 +98,21 @@ void BranchExperiment::train_new_exit_step(SolutionWrapper* wrapper,
 	experiment_state->step_index++;
 }
 
+void BranchExperiment::train_new_back_activate(SolutionWrapper* wrapper) {
+	BranchExperimentHistory* history = (BranchExperimentHistory*)wrapper->experiment_history;
+
+	double reward_signal = calc_reward_signal(wrapper->scope_histories.back());
+	this->i_target_val_histories.push_back(reward_signal - history->existing_predicted_scores.back());
+}
+
 void BranchExperiment::train_new_backprop(
 		double target_val,
 		BranchExperimentHistory* history) {
 	if (history->is_hit) {
-		for (int i_index = 0; i_index < (int)history->existing_predicted_scores.size(); i_index++) {
-			this->i_target_val_histories.push_back(target_val - history->existing_predicted_scores[i_index]);
+		if (!this->use_reward_signal) {
+			for (int i_index = 0; i_index < (int)history->existing_predicted_scores.size(); i_index++) {
+				this->i_target_val_histories.push_back(target_val - history->existing_predicted_scores[i_index]);
+			}
 		}
 
 		this->state_iter++;

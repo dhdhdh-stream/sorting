@@ -3,13 +3,16 @@
 #include <algorithm>
 #include <iostream>
 
+#include "abstract_experiment.h"
 #include "action_node.h"
 #include "branch_node.h"
 #include "factor.h"
 #include "globals.h"
+#include "new_scope_experiment.h"
 #include "obs_node.h"
 #include "scope_node.h"
 #include "solution.h"
+#include "solution_wrapper.h"
 
 using namespace std;
 
@@ -24,6 +27,16 @@ Scope::~Scope() {
 
 	for (int f_index = 0; f_index < (int)this->factors.size(); f_index++) {
 		delete this->factors[f_index];
+	}
+}
+
+void Scope::back_activate(SolutionWrapper* wrapper) {
+	for (int e_index = 0; e_index < (int)wrapper->scope_histories.back()->experiments_hit.size(); e_index++) {
+		wrapper->scope_histories.back()->experiments_hit[e_index]->back_activate(wrapper);
+	}
+
+	if (this->new_scope_experiment != NULL) {
+		this->new_scope_experiment->back_activate(wrapper);
 	}
 }
 

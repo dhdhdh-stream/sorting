@@ -6,7 +6,6 @@
 #include "branch_node.h"
 #include "constants.h"
 #include "globals.h"
-#include "new_scope_experiment.h"
 #include "obs_node.h"
 #include "problem.h"
 #include "scope.h"
@@ -131,6 +130,10 @@ void BranchExperiment::explore_check_activate(
 			}
 		}
 
+		if (this->use_reward_signal) {
+			wrapper->scope_histories.back()->experiments_hit.push_back(this);
+		}
+
 		BranchExperimentState* new_experiment_state = new BranchExperimentState(this);
 		new_experiment_state->step_index = 0;
 		wrapper->experiment_context.back() = new_experiment_state;
@@ -172,9 +175,7 @@ void BranchExperiment::explore_set_action(int action,
 
 void BranchExperiment::explore_exit_step(SolutionWrapper* wrapper,
 										 BranchExperimentState* experiment_state) {
-	if (this->curr_scopes[experiment_state->step_index]->new_scope_experiment != NULL) {
-		this->curr_scopes[experiment_state->step_index]->new_scope_experiment->back_activate(wrapper);
-	}
+	this->curr_scopes[experiment_state->step_index]->back_activate(wrapper);
 
 	delete wrapper->scope_histories.back();
 
@@ -185,6 +186,13 @@ void BranchExperiment::explore_exit_step(SolutionWrapper* wrapper,
 	experiment_state->step_index++;
 }
 
+void BranchExperiment::explore_back_activate(SolutionWrapper* wrapper) {
+	BranchExperimentHistory* history = (BranchExperimentHistory*)wrapper->experiment_history;
+
+	double reward_signal = calc_reward_signal(wrapper->scope_histories.back());
+	this->curr_surprise = reward_signal - history->existing_predicted_scores[0];
+}
+
 void BranchExperiment::explore_backprop(
 		double target_val,
 		BranchExperimentHistory* history) {
@@ -192,14 +200,16 @@ void BranchExperiment::explore_backprop(
 	this->num_instances_until_target = 1 + until_distribution(generator);
 
 	if (history->existing_predicted_scores.size() > 0) {
-		double curr_surprise = target_val - history->existing_predicted_scores[0];
+		if (!this->use_reward_signal) {
+			this->curr_surprise = target_val - history->existing_predicted_scores[0];
+		}
 
 		#if defined(MDEBUG) && MDEBUG
 		if (true) {
 		#else
-		if (curr_surprise > this->best_surprise) {
+		if (this->curr_surprise > this->best_surprise) {
 		#endif /* MDEBUG */
-			this->best_surprise = curr_surprise;
+			this->best_surprise = this->curr_surprise;
 			this->best_step_types = this->curr_step_types;
 			this->best_actions = this->curr_actions;
 			this->best_scopes = this->curr_scopes;

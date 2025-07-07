@@ -4,7 +4,6 @@
 
 #include "abstract_experiment.h"
 #include "globals.h"
-#include "new_scope_experiment.h"
 #include "problem.h"
 #include "scope.h"
 #include "solution.h"
@@ -30,9 +29,7 @@ void ScopeNode::experiment_step(vector<double>& obs,
 }
 
 void ScopeNode::experiment_exit_step(SolutionWrapper* wrapper) {
-	if (this->scope->new_scope_experiment != NULL) {
-		this->scope->new_scope_experiment->back_activate(wrapper);
-	}
+	this->scope->back_activate(wrapper);
 
 	wrapper->scope_histories.pop_back();
 	wrapper->node_context.pop_back();

@@ -806,29 +806,30 @@ void train_score(Scope* scope) {
 		delete new_network;
 	}
 
-	double existing_sum_misguess = 0.0;
-	for (int h_index = 0; h_index < (int)combined_test_scope_histories.size(); h_index++) {
-		double sum_vals = scope->score_average_val;
-		for (int i_index = 0; i_index < (int)scope->score_inputs.size(); i_index++) {
-			double val;
-			bool is_on;
-			fetch_input_helper(combined_test_scope_histories[h_index],
-							   scope->score_inputs[i_index],
-							   0,
-							   val,
-							   is_on);
-			if (is_on) {
-				double normalized_val = (val - scope->score_input_averages[i_index]) / scope->score_input_standard_deviations[i_index];
-				sum_vals += scope->score_weights[i_index] * normalized_val;
-			}
+	vector<double> existing_test_misguesses(combined_test_scope_histories.size());
+	if (scope->score_inputs.size() == 0) {
+		double sum_vals = 0.0;
+		for (int h_index = 0; h_index < (int)combined_test_scope_histories.size(); h_index++) {
+			sum_vals += combined_test_target_val_histories[h_index];
 		}
+		double val_average = sum_vals / (double)combined_test_scope_histories.size();
 
-		double curr_misguess = (sum_vals - combined_test_target_val_histories[h_index])
-			* (sum_vals - combined_test_target_val_histories[h_index]);
-		existing_sum_misguess += curr_misguess;
+		for (int h_index = 0; h_index < (int)combined_test_scope_histories.size(); h_index++) {
+			double curr_misguess = (combined_test_target_val_histories[h_index] - val_average)
+				* (combined_test_target_val_histories[h_index] - val_average);
+			existing_test_misguesses[h_index] = curr_misguess;
+		}
+	} else {
+		for (int h_index = 0; h_index < (int)combined_test_scope_histories.size(); h_index++) {
+			double reward_signal = calc_reward_signal(combined_test_scope_histories[h_index]);
+
+			double curr_misguess = (reward_signal - combined_test_target_val_histories[h_index])
+				* (reward_signal - combined_test_target_val_histories[h_index]);
+			existing_test_misguesses[h_index] = curr_misguess;
+		}
 	}
 
-	double new_sum_misguess = 0.0;
+	vector<double> new_test_misguesses(combined_test_scope_histories.size());
 	for (int h_index = 0; h_index < (int)combined_test_scope_histories.size(); h_index++) {
 		double sum_vals = new_score_average_val;
 		for (int i_index = 0; i_index < (int)new_score_inputs.size(); i_index++) {
@@ -847,10 +848,46 @@ void train_score(Scope* scope) {
 
 		double curr_misguess = (sum_vals - combined_test_target_val_histories[h_index])
 			* (sum_vals - combined_test_target_val_histories[h_index]);
-		new_sum_misguess += curr_misguess;
+		new_test_misguesses[h_index] = curr_misguess;
 	}
 
-	if (new_sum_misguess < existing_sum_misguess) {
+	double existing_test_sum_misguess = 0.0;
+	for (int h_index = 0; h_index < (int)combined_test_scope_histories.size(); h_index++) {
+		existing_test_sum_misguess += existing_test_misguesses[h_index];
+	}
+	double existing_test_misguess_average = existing_test_sum_misguess / (double)combined_test_scope_histories.size();
+
+	double existing_test_sum_misguess_variance = 0.0;
+	for (int h_index = 0; h_index < (int)combined_test_scope_histories.size(); h_index++) {
+		existing_test_sum_misguess_variance += (existing_test_misguesses[h_index] - existing_test_misguess_average)
+			* (existing_test_misguesses[h_index] - existing_test_misguess_average);
+	}
+	double existing_test_misguess_standard_deviation = sqrt(existing_test_sum_misguess_variance / (double)combined_test_scope_histories.size());
+	if (existing_test_misguess_standard_deviation < MIN_STANDARD_DEVIATION) {
+		existing_test_misguess_standard_deviation = MIN_STANDARD_DEVIATION;
+	}
+
+	double new_test_sum_misguess = 0.0;
+	for (int h_index = 0; h_index < (int)combined_test_scope_histories.size(); h_index++) {
+		new_test_sum_misguess += new_test_misguesses[h_index];
+	}
+	double new_test_misguess_average = new_test_sum_misguess / (double)combined_test_scope_histories.size();
+
+	double new_test_sum_misguess_variance = 0.0;
+	for (int h_index = 0; h_index < (int)combined_test_scope_histories.size(); h_index++) {
+		new_test_sum_misguess_variance += (new_test_misguesses[h_index] - new_test_misguess_average)
+			* (new_test_misguesses[h_index] - new_test_misguess_average);
+	}
+	double new_test_misguess_standard_deviation = sqrt(new_test_sum_misguess_variance / (double)combined_test_scope_histories.size());
+	if (new_test_misguess_standard_deviation < MIN_STANDARD_DEVIATION) {
+		new_test_misguess_standard_deviation = MIN_STANDARD_DEVIATION;
+	}
+
+	double new_improvement = existing_test_misguess_average - new_test_misguess_average;
+	double min_standard_deviation = min(existing_test_misguess_standard_deviation, new_test_misguess_standard_deviation);
+	double t_score = new_improvement / (min_standard_deviation / sqrt((double)combined_test_scope_histories.size()));
+
+	if (t_score > 2.326) {
 		scope->score_average_val = new_score_average_val;
 		scope->score_inputs = new_score_inputs;
 		scope->score_input_averages = new_score_input_averages;

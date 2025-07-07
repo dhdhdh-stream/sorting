@@ -28,6 +28,8 @@ public:
 	AbstractNode* node_context;
 	bool is_branch;
 
+	bool use_reward_signal;
+
 	int result;
 
 	double new_score;
@@ -49,6 +51,7 @@ public:
 	virtual void set_action(int action,
 							SolutionWrapper* wrapper) = 0;
 	virtual void experiment_exit_step(SolutionWrapper* wrapper) = 0;
+	virtual void back_activate(SolutionWrapper* wrapper) = 0;
 	virtual void backprop(double target_val,
 						  SolutionWrapper* wrapper) = 0;
 

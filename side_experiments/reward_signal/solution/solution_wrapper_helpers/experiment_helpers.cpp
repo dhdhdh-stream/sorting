@@ -3,7 +3,7 @@
 #include <iostream>
 
 #include "branch_experiment.h"
-#include "commit_experiment.h"
+// #include "commit_experiment.h"
 #include "constants.h"
 #include "new_scope_experiment.h"
 #include "scope.h"
@@ -31,6 +31,10 @@ void SolutionWrapper::experiment_init() {
 		this->node_context.push_back(this->solution->scopes[0]->nodes[0]);
 	} else {
 		while (this->curr_experiment == NULL) {
+			if (this->solution->explore_scope_histories.size() >= NUM_EXPLORE_SAVE) {
+				update_reward_signals(this);
+			}
+
 			create_experiment(this,
 							  this->curr_experiment);
 		}
@@ -56,12 +60,12 @@ void SolutionWrapper::experiment_init() {
 				this->experiment_history = new NewScopeExperimentHistory(new_scope_experiment);
 			}
 			break;
-		case EXPERIMENT_TYPE_COMMIT:
-			{
-				CommitExperiment* commit_experiment = (CommitExperiment*)this->curr_experiment;
-				this->experiment_history = new CommitExperimentHistory(commit_experiment);
-			}
-			break;
+		// case EXPERIMENT_TYPE_COMMIT:
+		// 	{
+		// 		CommitExperiment* commit_experiment = (CommitExperiment*)this->curr_experiment;
+		// 		this->experiment_history = new CommitExperimentHistory(commit_experiment);
+		// 	}
+		// 	break;
 		}
 
 		ScopeHistory* scope_history = new ScopeHistory(this->solution->scopes[0]);

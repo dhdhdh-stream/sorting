@@ -113,6 +113,17 @@ void BranchExperiment::experiment_exit_step(SolutionWrapper* wrapper) {
 	}
 }
 
+void BranchExperiment::back_activate(SolutionWrapper* wrapper) {
+	switch (this->state) {
+	case BRANCH_EXPERIMENT_STATE_EXPLORE:
+		explore_back_activate(wrapper);
+		break;
+	case BRANCH_EXPERIMENT_STATE_TRAIN_NEW:
+		train_new_back_activate(wrapper);
+		break;
+	}
+}
+
 void BranchExperiment::backprop(double target_val,
 								SolutionWrapper* wrapper) {
 	BranchExperimentHistory* history = (BranchExperimentHistory*)wrapper->experiment_history;

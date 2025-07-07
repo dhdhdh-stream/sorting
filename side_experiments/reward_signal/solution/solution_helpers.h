@@ -80,6 +80,10 @@ bool train_new(std::vector<ScopeHistory*>& scope_histories,
 			   Network*& network,
 			   double& select_percentage);
 
+double calc_reward_signal(ScopeHistory* scope_history);
+void update_reward_signals(SolutionWrapper* wrapper);
+void train_score(Scope* scope);
+
 double get_experiment_impact(AbstractExperiment* experiment);
 
 void clean_scope(Scope* scope,

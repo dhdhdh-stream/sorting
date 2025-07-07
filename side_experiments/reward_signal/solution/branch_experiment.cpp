@@ -24,6 +24,14 @@ BranchExperiment::BranchExperiment(Scope* scope_context,
 	this->node_context = node_context;
 	this->is_branch = is_branch;
 
+	uniform_int_distribution<int> use_reward_signal_distribution(0, 1);
+	if (this->scope_context->score_inputs.size() > 0
+			&& use_reward_signal_distribution(generator) == 0) {
+		this->use_reward_signal = true;
+	} else {
+		this->use_reward_signal = false;
+	}
+
 	this->curr_scope_history = NULL;
 	this->best_scope_history = NULL;
 
@@ -53,7 +61,12 @@ BranchExperiment::BranchExperiment(Scope* scope_context,
 		if (has_match) {
 			ScopeHistory* cleaned_scope_history = new ScopeHistory(scope_history, match_it->second->index);
 			scope_histories.push_back(cleaned_scope_history);
-			target_val_histories.push_back(this->scope_context->existing_target_val_histories[h_index]);
+			if (this->use_reward_signal) {
+				double reward_signal = calc_reward_signal(scope_history);
+				target_val_histories.push_back(reward_signal);
+			} else {
+				target_val_histories.push_back(this->scope_context->existing_target_val_histories[h_index]);
+			}
 		}
 	}
 

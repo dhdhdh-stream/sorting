@@ -7,12 +7,14 @@
 
 #include "input.h"
 
+class AbstractExperiment;
 class AbstractNode;
 class AbstractNodeHistory;
 class Factor;
 class NewScopeExperiment;
 class Problem;
 class Solution;
+class SolutionWrapper;
 
 class ScopeHistory;
 class Scope {
@@ -35,6 +37,9 @@ public:
 	std::vector<ScopeHistory*> existing_scope_histories;
 	std::vector<double> existing_target_val_histories;
 	std::vector<ScopeHistory*> explore_scope_histories;
+	/**
+	 * TODO: don't just compare against true score, but also outer reward signals
+	 */
 	std::vector<double> explore_target_val_histories;
 
 	/**
@@ -45,6 +50,8 @@ public:
 
 	Scope();
 	~Scope();
+
+	void back_activate(SolutionWrapper* wrapper);
 
 	void random_exit_activate(AbstractNode* starting_node,
 							  std::vector<AbstractNode*>& possible_exits);
@@ -82,6 +89,8 @@ public:
 
 	std::vector<bool> factor_initialized;
 	std::vector<double> factor_values;
+
+	std::vector<AbstractExperiment*> experiments_hit;
 
 	ScopeHistory(Scope* scope);
 	ScopeHistory(ScopeHistory* original);

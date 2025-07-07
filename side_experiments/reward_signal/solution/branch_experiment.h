@@ -34,6 +34,7 @@ public:
 	double average_instances_per_run;
 	int num_instances_until_target;
 
+	double curr_surprise;
 	std::vector<int> curr_step_types;
 	std::vector<int> curr_actions;
 	std::vector<Scope*> curr_scopes;
@@ -86,13 +87,9 @@ public:
 	void set_action(int action,
 					SolutionWrapper* wrapper);
 	void experiment_exit_step(SolutionWrapper* wrapper);
+	void back_activate(SolutionWrapper* wrapper);
 	void backprop(double target_val,
 				  SolutionWrapper* wrapper);
-
-	void train_existing_check_activate(SolutionWrapper* wrapper,
-									   BranchExperimentHistory* history);
-	void train_existing_backprop(double target_val,
-								 BranchExperimentHistory* history);
 
 	void explore_check_activate(SolutionWrapper* wrapper,
 								BranchExperimentHistory* history);
@@ -106,6 +103,7 @@ public:
 							BranchExperimentState* experiment_state);
 	void explore_exit_step(SolutionWrapper* wrapper,
 						   BranchExperimentState* experiment_state);
+	void explore_back_activate(SolutionWrapper* wrapper);
 	void explore_backprop(double target_val,
 						  BranchExperimentHistory* history);
 
@@ -118,6 +116,7 @@ public:
 						BranchExperimentState* experiment_state);
 	void train_new_exit_step(SolutionWrapper* wrapper,
 							 BranchExperimentState* experiment_state);
+	void train_new_back_activate(SolutionWrapper* wrapper);
 	void train_new_backprop(double target_val,
 							BranchExperimentHistory* history);
 
