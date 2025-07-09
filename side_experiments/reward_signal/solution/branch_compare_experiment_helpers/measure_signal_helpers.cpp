@@ -214,9 +214,11 @@ void BranchCompareExperiment::measure_signal_backprop(
 				break;
 			}
 
+			cout << "BranchCompareExperiment" << endl;
 			cout << "true_score: " << true_score << endl;
 			cout << "signal_score: " << signal_score << endl;
 			cout << "existing_score: " << existing_score << endl;
+			cout << endl;
 
 			this->result = EXPERIMENT_RESULT_FAIL;
 		}

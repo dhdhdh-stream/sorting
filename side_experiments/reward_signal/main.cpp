@@ -7,6 +7,11 @@
 // - once reward signal has been found, focus on reward signal rather than true score?
 //   - otherwise, leads to mixed situation, destroying signal
 
+// - signals difficult to find, easy to lose
+// - maybe goal isn't to build solution, but to find signals
+//   - signals can easily(?) be optimized for once found
+//     - but finding not easy?
+
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -18,11 +23,11 @@
 #include "branch_node.h"
 #include "constants.h"
 #include "globals.h"
-#include "minesweeper.h"
 #include "obs_node.h"
 #include "problem.h"
 #include "scope.h"
 #include "scope_node.h"
+#include "simpler.h"
 #include "solution.h"
 #include "solution_helpers.h"
 #include "solution_wrapper.h"
@@ -42,7 +47,7 @@ int main(int argc, char* argv[]) {
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
 
-	ProblemType* problem_type = new TypeMinesweeper();
+	ProblemType* problem_type = new TypeSimpler();
 
 	string filename;
 	SolutionWrapper* solution_wrapper;

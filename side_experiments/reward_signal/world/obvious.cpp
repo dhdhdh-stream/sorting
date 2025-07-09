@@ -1,4 +1,4 @@
-#include "simpler.h"
+#include "obvious.h"
 
 #include <iostream>
 
@@ -10,7 +10,7 @@ const int ACTION_LEFT = 0;
 const int ACTION_RIGHT = 1;
 const int ACTION_CLICK = 2;
 
-Simpler::Simpler() {
+Obvious::Obvious() {
 	this->world = vector<double>(5);
 
 	uniform_int_distribution<int> target_val_distribution(-10, 10);
@@ -37,7 +37,7 @@ Simpler::Simpler() {
 	this->random_factor = random_factor_distribution(generator);
 }
 
-vector<double> Simpler::get_observations() {
+vector<double> Obvious::get_observations() {
 	vector<double> obs;
 
 	if (this->curr_index < 0 || this->curr_index > 4) {
@@ -52,10 +52,12 @@ vector<double> Simpler::get_observations() {
 		obs.push_back(this->targets[this->curr_target_index]);
 	}
 
+	obs.push_back(this->world[2]);
+
 	return obs;
 }
 
-void Simpler::perform_action(int action) {
+void Obvious::perform_action(int action) {
 	switch (action) {
 	case ACTION_LEFT:
 		this->curr_index--;
@@ -104,15 +106,15 @@ void Simpler::perform_action(int action) {
 	}
 }
 
-double Simpler::score_result() {
+double Obvious::score_result() {
 	double score = this->random_factor;
 	score += this->world[2];
 	return score;
 }
 
 #if defined(MDEBUG) && MDEBUG
-Problem* Simpler::copy_and_reset() {
-	Simpler* new_problem = new Simpler();
+Problem* Obvious::copy_and_reset() {
+	Obvious* new_problem = new Obvious();
 
 	new_problem->world = this->world;
 	new_problem->world[2] = 0;
@@ -128,8 +130,8 @@ Problem* Simpler::copy_and_reset() {
 	return new_problem;
 }
 
-Problem* Simpler::copy_snapshot() {
-	Simpler* new_problem = new Simpler();
+Problem* Obvious::copy_snapshot() {
+	Obvious* new_problem = new Obvious();
 
 	new_problem->world = this->world;
 	new_problem->curr_index = this->curr_index;
@@ -141,7 +143,7 @@ Problem* Simpler::copy_snapshot() {
 }
 #endif /* MDEBUG */
 
-void Simpler::print() {
+void Obvious::print() {
 	for (int w_index = 0; w_index < 5; w_index++) {
 		cout << this->world[w_index] << " ";
 	}
@@ -152,14 +154,14 @@ void Simpler::print() {
 	cout << "curr_target_index: " << curr_target_index << endl;
 }
 
-Problem* TypeSimpler::get_problem() {
-	return new Simpler();
+Problem* TypeObvious::get_problem() {
+	return new Obvious();
 }
 
-int TypeSimpler::num_obs() {
-	return 2;
+int TypeObvious::num_obs() {
+	return 3;
 }
 
-int TypeSimpler::num_possible_actions() {
+int TypeObvious::num_possible_actions() {
 	return 3;
 }

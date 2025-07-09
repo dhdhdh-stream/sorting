@@ -892,7 +892,11 @@ void train_score(Scope* scope) {
 	cout << "min_standard_deviation: " << min_standard_deviation << endl;
 	cout << "t_score: " << t_score << endl;
 
+	#if defined(MDEBUG) && MDEBUG
+	if (true || t_score > 2.326) {
+	#else
 	if (t_score > 2.326) {
+	#endif /* MDEBUG */
 		scope->score_average_val = new_score_average_val;
 		scope->score_inputs = new_score_inputs;
 		scope->score_input_averages = new_score_input_averages;
