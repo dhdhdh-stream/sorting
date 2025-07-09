@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "action_node.h"
+#include "branch_compare_experiment.h"
 #include "branch_experiment.h"
 #include "branch_node.h"
 #include "commit_experiment.h"
@@ -249,15 +250,30 @@ void create_experiment(SolutionWrapper* wrapper,
 	}
 
 	if (explore_node != NULL) {
-		BranchExperiment* new_experiment = new BranchExperiment(
-			explore_node->parent,
-			explore_node,
-			explore_is_branch);
+		uniform_int_distribution<int> compare_distribution(0, 1);
+		if (explore_node->parent->score_inputs.size() > 0
+				&& compare_distribution(generator) == 0) {
+			BranchCompareExperiment* new_experiment = new BranchCompareExperiment(
+				explore_node->parent,
+				explore_node,
+				explore_is_branch);
 
-		if (new_experiment->result == EXPERIMENT_RESULT_FAIL) {
-			delete new_experiment;
+			if (new_experiment->result == EXPERIMENT_RESULT_FAIL) {
+				delete new_experiment;
+			} else {
+				curr_experiment = new_experiment;
+			}
 		} else {
-			curr_experiment = new_experiment;
+			BranchExperiment* new_experiment = new BranchExperiment(
+				explore_node->parent,
+				explore_node,
+				explore_is_branch);
+
+			if (new_experiment->result == EXPERIMENT_RESULT_FAIL) {
+				delete new_experiment;
+			} else {
+				curr_experiment = new_experiment;
+			}
 		}
 
 		// uniform_int_distribution<int> non_new_distribution(0, 9);

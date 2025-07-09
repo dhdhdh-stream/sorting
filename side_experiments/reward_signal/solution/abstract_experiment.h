@@ -14,6 +14,7 @@ class SolutionWrapper;
 const int EXPERIMENT_TYPE_BRANCH = 0;
 const int EXPERIMENT_TYPE_NEW_SCOPE = 1;
 const int EXPERIMENT_TYPE_COMMIT = 2;
+const int EXPERIMENT_TYPE_BRANCH_COMPARE = 3;
 
 const int EXPERIMENT_RESULT_NA = 0;
 const int EXPERIMENT_RESULT_FAIL = 1;
@@ -27,8 +28,6 @@ public:
 	Scope* scope_context;
 	AbstractNode* node_context;
 	bool is_branch;
-
-	bool use_reward_signal;
 
 	int result;
 

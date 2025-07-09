@@ -25,6 +25,8 @@ public:
 	int state;
 	int state_iter;
 
+	bool use_reward_signal;
+
 	double existing_average_score;
 	std::vector<Input> existing_inputs;
 	std::vector<double> existing_input_averages;
