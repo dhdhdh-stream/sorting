@@ -17,10 +17,8 @@
 using namespace std;
 
 #if defined(MDEBUG) && MDEBUG
-const int BRANCH_EXPERIMENT_NEW_SCOPE_ITERS = 1;
 const int BRANCH_EXPERIMENT_EXPLORE_ITERS = 5;
 #else
-const int BRANCH_EXPERIMENT_NEW_SCOPE_ITERS = 10;
 const int BRANCH_EXPERIMENT_EXPLORE_ITERS = 100;
 #endif /* MDEBUG */
 
@@ -48,7 +46,7 @@ void BranchExperiment::explore_check_activate(
 		}
 		instance_history->existing_predicted_score = sum_vals;
 
-		for (int l_index = (int)wrapper->scope_histories.size()-1; l_index--; l_index--) {
+		for (int l_index = (int)wrapper->scope_histories.size()-1; l_index >= 0; l_index--) {
 			Scope* scope = wrapper->scope_histories[l_index]->scope;
 			if (scope->score_inputs.size() > 0) {
 				instance_history->signal_needed_from = wrapper->scope_histories[l_index];
@@ -106,7 +104,12 @@ void BranchExperiment::explore_check_activate(
 		}
 		this->curr_exit_next_node = possible_exits[random_index];
 
-		if (this->state_iter < BRANCH_EXPERIMENT_NEW_SCOPE_ITERS) {
+		#if defined(MDEBUG) && MDEBUG
+		uniform_int_distribution<int> new_scope_distribution(0, 1);
+		#else
+		uniform_int_distribution<int> new_scope_distribution(0, 9);
+		#endif /* MDEBUG */
+		if (new_scope_distribution(generator) == 0) {
 			this->curr_new_scope = create_new_scope(this->scope_context);
 		}
 		if (this->curr_new_scope != NULL) {
@@ -192,6 +195,8 @@ void BranchExperiment::explore_set_action(int action,
 
 void BranchExperiment::explore_exit_step(SolutionWrapper* wrapper,
 										 BranchExperimentState* experiment_state) {
+	delete wrapper->scope_histories.back();
+
 	wrapper->scope_histories.pop_back();
 	wrapper->node_context.pop_back();
 	wrapper->experiment_context.pop_back();
@@ -217,6 +222,10 @@ void BranchExperiment::explore_backprop(
 				instance_history->signal_needed_from->signal_val = calc_reward_signal(instance_history->signal_needed_from);
 			}
 			inner_targel_val = instance_history->signal_needed_from->signal_val;
+
+			// temp
+			cout << "instance_history->signal_needed_from->signal_val: " << instance_history->signal_needed_from->signal_val << endl;
+			wrapper->problem->print();
 		}
 
 		double curr_surprise = inner_targel_val - instance_history->existing_predicted_score;
@@ -259,7 +268,11 @@ void BranchExperiment::explore_backprop(
 
 		this->state_iter++;
 		if (this->state_iter >= BRANCH_EXPERIMENT_EXPLORE_ITERS) {
+			#if defined(MDEBUG) && MDEBUG
+			if (this->best_surprise > 0.0 || true) {
+			#else
 			if (this->best_surprise > 0.0) {
+			#endif /* MDEBUG */
 				uniform_int_distribution<int> until_distribution(0, (int)this->average_instances_per_run-1.0);
 				this->num_instances_until_target = 1 + until_distribution(generator);
 

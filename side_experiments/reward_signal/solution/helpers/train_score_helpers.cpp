@@ -21,6 +21,12 @@
 
 using namespace std;
 
+#if defined(MDEBUG) && MDEBUG
+const int MIN_NUM_SAMPLES = 5;
+#else
+const int MIN_NUM_SAMPLES = 100;
+#endif /* MDEBUG */
+
 const double TEST_SAMPLES_PERCENTAGE = 0.2;
 
 #if defined(MDEBUG) && MDEBUG
@@ -41,20 +47,20 @@ void train_score_fetch_histories_helper(ScopeHistory* scope_history,
 										vector<double>& target_val_histories) {
 	Scope* scope = scope_history->scope;
 
-	double inner_target_val;
-	if (scope->score_inputs.size() > 0) {
-		if (!scope_history->signal_initialized) {
-			scope_history->signal_val = calc_reward_signal(scope_history);
-		}
-		inner_target_val = scope_history->signal_val;
-	} else {
-		inner_target_val = target_val;
-	}
-
 	if (scope == scope_context) {
 		scope_histories.push_back(scope_history);
-		target_val_histories.push_back(inner_target_val);
+		target_val_histories.push_back(target_val);
 	} else {
+		double inner_target_val;
+		if (scope->score_inputs.size() > 0) {
+			if (!scope_history->signal_initialized) {
+				scope_history->signal_val = calc_reward_signal(scope_history);
+			}
+			inner_target_val = scope_history->signal_val;
+		} else {
+			inner_target_val = target_val;
+		}
+
 		bool is_child = false;
 		for (int c_index = 0; c_index < (int)scope->child_scopes.size(); c_index++) {
 			if (scope->child_scopes[c_index] == scope_context) {
@@ -76,6 +82,19 @@ void train_score_fetch_histories_helper(ScopeHistory* scope_history,
 													   target_val_histories);
 				}
 			}
+		}
+	}
+}
+
+void clear_signals(ScopeHistory* scope_history) {
+	scope_history->signal_initialized = false;
+
+	for (map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
+			it != scope_history->node_histories.end(); it++) {
+		AbstractNode* node = it->second->node;
+		if (node->type == NODE_TYPE_SCOPE) {
+			ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)it->second;
+			clear_signals(scope_node_history->scope_history);
 		}
 	}
 }
@@ -122,6 +141,11 @@ void train_score(Scope* scope,
 	{
 		default_random_engine generator_copy = generator;
 		shuffle(explore_target_val_histories.begin(), explore_target_val_histories.end(), generator_copy);
+	}
+
+	if (existing_scope_histories.size() < MIN_NUM_SAMPLES
+			|| explore_scope_histories.size() < MIN_NUM_SAMPLES) {
+		return;
 	}
 
 	vector<ScopeHistory*> combined_train_scope_histories;
@@ -288,21 +312,24 @@ void train_score(Scope* scope,
 		return;
 	}
 
-	if (abs(weights(0)) > REGRESSION_WEIGHT_LIMIT) {
-		cout << "abs(weights(0)): " << abs(weights(0)) << endl;
-		return;
-	}
 	new_score_average_val = weights(0);
 	for (int f_index = 0; f_index < (int)new_score_inputs.size(); f_index++) {
-		if (abs(weights(1 + f_index)) > REGRESSION_WEIGHT_LIMIT) {
-			cout << "abs(weights(1 + f_index)): " << abs(weights(1 + f_index)) << endl;
-			return;
-		}
 		new_score_weights.push_back(weights(1 + f_index));
 	}
 
 	#if defined(MDEBUG) && MDEBUG
 	#else
+	if (abs(weights(0)) > REGRESSION_WEIGHT_LIMIT) {
+		cout << "abs(weights(0)): " << abs(weights(0)) << endl;
+		return;
+	}
+	for (int f_index = 0; f_index < (int)new_score_inputs.size(); f_index++) {
+		if (abs(weights(1 + f_index)) > REGRESSION_WEIGHT_LIMIT) {
+			cout << "abs(weights(1 + f_index)): " << abs(weights(1 + f_index)) << endl;
+			return;
+		}
+	}
+
 	Eigen::VectorXd predicted = inputs * weights;
 	double sum_offset = 0.0;
 	for (int i_index = 0; i_index < (int)combined_train_scope_histories.size(); i_index++) {
@@ -956,6 +983,9 @@ void train_score(Scope* scope,
 	double min_standard_deviation = min(existing_test_misguess_standard_deviation, new_test_misguess_standard_deviation);
 	double t_score = new_test_improvement / (min_standard_deviation / sqrt((double)combined_test_scope_histories.size()));
 
+	// temp
+	cout << "scope->score_inputs.size(): " << scope->score_inputs.size() << endl;
+
 	cout << "existing_test_misguess_average: " << existing_test_misguess_average << endl;
 	cout << "new_test_misguess_average: " << new_test_misguess_average << endl;
 	cout << "min_standard_deviation: " << min_standard_deviation << endl;
@@ -971,5 +1001,12 @@ void train_score(Scope* scope,
 		scope->score_input_averages = new_score_input_averages;
 		scope->score_input_standard_deviations = new_score_input_standard_deviations;
 		scope->score_weights = new_score_weights;
+
+		for (int h_index = 0; h_index < (int)solution_wrapper->solution->existing_scope_histories.size(); h_index++) {
+			clear_signals(solution_wrapper->solution->existing_scope_histories[h_index]);
+		}
+
+		// temp
+		solution_wrapper->save("saves/", "main.txt");
 	}
 }

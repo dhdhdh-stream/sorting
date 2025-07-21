@@ -175,21 +175,24 @@ bool train_new(vector<ScopeHistory*>& scope_histories,
 		return false;
 	}
 
-	if (abs(weights(0)) > REGRESSION_WEIGHT_LIMIT) {
-		cout << "abs(weights(0)): " << abs(weights(0)) << endl;
-		return false;
-	}
 	average_score = weights(0);
 	for (int f_index = 0; f_index < (int)factor_inputs.size(); f_index++) {
-		if (abs(weights(1 + f_index)) > REGRESSION_WEIGHT_LIMIT) {
-			cout << "abs(weights(1 + f_index)): " << abs(weights(1 + f_index)) << endl;
-			return false;
-		}
 		factor_weights.push_back(weights(1 + f_index));
 	}
 
 	#if defined(MDEBUG) && MDEBUG
 	#else
+	if (abs(weights(0)) > REGRESSION_WEIGHT_LIMIT) {
+		cout << "abs(weights(0)): " << abs(weights(0)) << endl;
+		return false;
+	}
+	for (int f_index = 0; f_index < (int)factor_inputs.size(); f_index++) {
+		if (abs(weights(1 + f_index)) > REGRESSION_WEIGHT_LIMIT) {
+			cout << "abs(weights(1 + f_index)): " << abs(weights(1 + f_index)) << endl;
+			return false;
+		}
+	}
+
 	Eigen::VectorXd predicted = inputs * weights;
 	double sum_offset = 0.0;
 	for (int i_index = 0; i_index < num_instances; i_index++) {

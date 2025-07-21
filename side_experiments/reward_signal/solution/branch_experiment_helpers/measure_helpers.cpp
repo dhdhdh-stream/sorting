@@ -189,14 +189,22 @@ void BranchExperiment::measure_backprop(double target_val,
 			}
 			double new_score = new_sum_score / (double)this->new_scores.size();
 
+			#if defined(MDEBUG) && MDEBUG
+			if (new_score <= existing_score && rand()%2 == 0) {
+			#else
 			if (new_score <= existing_score) {
+			#endif /* MDEBUG */
 				this->result = EXPERIMENT_RESULT_FAIL;
 				return;
 			}
 
 			bool maintain_signals = compare_signals(this->existing_signals,
 													this->new_signals);
+			#if defined(MDEBUG) && MDEBUG
+			if (!maintain_signals && rand()%2 == 0) {
+			#else
 			if (!maintain_signals) {
+			#endif /* MDEBUG */
 				this->result = EXPERIMENT_RESULT_FAIL;
 				return;
 			}

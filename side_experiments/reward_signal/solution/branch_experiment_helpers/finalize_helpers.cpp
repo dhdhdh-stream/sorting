@@ -62,6 +62,8 @@ void BranchExperiment::add(SolutionWrapper* wrapper) {
 		recursive_add_child(this->scope_context,
 							wrapper,
 							this->best_new_scope);
+
+		this->best_new_scope = NULL;
 	}
 
 	for (int n_index = 0; n_index < (int)this->new_nodes.size(); n_index++) {

@@ -3,6 +3,11 @@
 // TODO: get rid of CommitExperiment, and simply accept changes that are not provably bad
 // - select from number of candidates to still try to drive progress
 
+// - want a more stable signal
+// - but difficult when changes can be made anywhere
+// - maybe use skip layer
+// - so changes won't be too impactful against signal
+
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -63,9 +68,7 @@ int main(int argc, char* argv[]) {
 
 		while (true) {
 			Problem* problem = problem_type->get_problem();
-			#if defined(MDEBUG) && MDEBUG
 			solution_wrapper->problem = problem;
-			#endif /* MDEBUG */
 
 			solution_wrapper->experiment_init();
 

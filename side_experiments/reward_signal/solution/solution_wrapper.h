@@ -39,11 +39,15 @@ public:
 	AbstractExperimentOverallHistory* experiment_overall_history;
 	std::vector<AbstractExperimentInstanceHistory*> experiment_instance_histories;
 
+	Problem* problem;
+	/**
+	 * - for debugging
+	 */
+
 	#if defined(MDEBUG) && MDEBUG
 	int run_index;
 	unsigned long starting_run_seed;
 	unsigned long curr_run_seed;
-	Problem* problem;
 	#endif /* MDEBUG */
 
 	SolutionWrapper(int num_obs);

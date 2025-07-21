@@ -22,7 +22,7 @@ Simpler::Simpler() {
 
 	this->curr_index = 2;
 
-	geometric_distribution<int> num_targets_distribution(0.25);
+	geometric_distribution<int> num_targets_distribution(0.1);
 	uniform_int_distribution<int> target_distribution(0, 1);
 	int num_targets = num_targets_distribution(generator);
 	for (int t_index = 0; t_index < num_targets; t_index++) {

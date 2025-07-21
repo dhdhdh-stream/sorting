@@ -83,6 +83,11 @@ bool compare_signals(map<Scope*, vector<double>>& existing_signals,
 
 			double t_score = (new_signal - existing_signal) / denom;
 
+			// temp
+			cout << "new_signal: " << new_signal << endl;
+			cout << "existing_signal: " << existing_signal << endl;
+			cout << "t_score: " << t_score << endl;
+
 			if (t_score < -0.674) {
 				return false;
 			}

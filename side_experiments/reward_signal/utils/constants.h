@@ -10,18 +10,6 @@ const int STEP_TYPE_SCOPE = 1;
 const double EXPERIMENT_MIN_AVERAGE_HITS_PER_RUN = 0.2;
 
 #if defined(MDEBUG) && MDEBUG
-const int MEASURE_S1_ITERS = 1;
-const int MEASURE_S2_ITERS = 2;
-const int MEASURE_S3_ITERS = 5;
-const int MEASURE_S4_ITERS = 10;
-#else
-const int MEASURE_S1_ITERS = 1;
-const int MEASURE_S2_ITERS = 10;
-const int MEASURE_S3_ITERS = 100;
-const int MEASURE_S4_ITERS = 1000;
-#endif /* MDEBUG */
-
-#if defined(MDEBUG) && MDEBUG
 const int EARLY_SUCCESS_S1_ITERS = 2;
 const int EARLY_SUCCESS_S2_ITERS = 5;
 #else

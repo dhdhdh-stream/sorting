@@ -45,7 +45,7 @@ void BranchExperiment::train_new_check_activate(
 		}
 		instance_history->existing_predicted_score = sum_vals;
 
-		for (int l_index = (int)wrapper->scope_histories.size()-1; l_index--; l_index--) {
+		for (int l_index = (int)wrapper->scope_histories.size()-1; l_index >= 0; l_index--) {
 			Scope* scope = wrapper->scope_histories[l_index]->scope;
 			if (scope->score_inputs.size() > 0) {
 				instance_history->signal_needed_from = wrapper->scope_histories[l_index];
@@ -93,6 +93,8 @@ void BranchExperiment::train_new_step(vector<double>& obs,
 
 void BranchExperiment::train_new_exit_step(SolutionWrapper* wrapper,
 										   BranchExperimentState* experiment_state) {
+	delete wrapper->scope_histories.back();
+
 	wrapper->scope_histories.pop_back();
 	wrapper->node_context.pop_back();
 	wrapper->experiment_context.pop_back();
