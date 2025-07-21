@@ -5,22 +5,17 @@
 #include <vector>
 
 class AbstractNode;
-class Problem;
 class Scope;
 class ScopeHistory;
-class Solution;
 class SolutionWrapper;
 
 const int EXPERIMENT_TYPE_BRANCH = 0;
-const int EXPERIMENT_TYPE_NEW_SCOPE = 1;
-const int EXPERIMENT_TYPE_COMMIT = 2;
-const int EXPERIMENT_TYPE_BRANCH_COMPARE = 3;
+const int EXPERIMENT_TYPE_COMMIT = 1;
 
 const int EXPERIMENT_RESULT_NA = 0;
 const int EXPERIMENT_RESULT_FAIL = 1;
 const int EXPERIMENT_RESULT_SUCCESS = 2;
 
-class AbstractExperimentHistory;
 class AbstractExperiment {
 public:
 	int type;
@@ -31,7 +26,7 @@ public:
 
 	int result;
 
-	double new_score;
+	double improvement;
 
 	std::vector<ScopeHistory*> new_scope_histories;
 	std::vector<double> new_target_val_histories;
@@ -50,7 +45,6 @@ public:
 	virtual void set_action(int action,
 							SolutionWrapper* wrapper) = 0;
 	virtual void experiment_exit_step(SolutionWrapper* wrapper) = 0;
-	virtual void back_activate(SolutionWrapper* wrapper) = 0;
 	virtual void backprop(double target_val,
 						  SolutionWrapper* wrapper) = 0;
 
@@ -58,13 +52,20 @@ public:
 	virtual void add(SolutionWrapper* wrapper) = 0;
 };
 
-class AbstractExperimentHistory {
+class AbstractExperimentOverallHistory {
 public:
 	AbstractExperiment* experiment;
 
 	bool is_hit;
 
-	virtual ~AbstractExperimentHistory() {};
+	virtual ~AbstractExperimentOverallHistory() {};
+};
+
+class AbstractExperimentInstanceHistory {
+public:
+	AbstractExperiment* experiment;
+
+	virtual ~AbstractExperimentInstanceHistory() {};
 };
 
 class AbstractExperimentState {

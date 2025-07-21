@@ -11,7 +11,6 @@ class AbstractExperiment;
 class AbstractNode;
 class AbstractNodeHistory;
 class Factor;
-class NewScopeExperiment;
 class Problem;
 class Solution;
 class SolutionWrapper;
@@ -31,30 +30,19 @@ public:
 	std::vector<double> score_input_averages;
 	std::vector<double> score_input_standard_deviations;
 	std::vector<double> score_weights;
+	/**
+	 * - protect signal once created
+	 *   - score must be maintained for any experiment prior or within
+	 *     - on measure, calc all reward signals
+	 */
 
 	std::vector<Scope*> child_scopes;
-
-	std::vector<ScopeHistory*> existing_scope_histories;
-	std::vector<double> existing_target_val_histories;
-	std::vector<ScopeHistory*> explore_scope_histories;
-	/**
-	 * TODO: don't just compare against true score, but also outer reward signals
-	 */
-	std::vector<double> explore_target_val_histories;
-
-	/**
-	 * - tie NewScopeExperiment to scope instead of node
-	 *   - so that can be tried throughout entire scope
-	 */
-	NewScopeExperiment* new_scope_experiment;
 
 	Scope();
 	~Scope();
 
 	void invalidate_factor(ScopeHistory* scope_history,
 						   int f_index);
-
-	void back_activate(SolutionWrapper* wrapper);
 
 	void random_exit_activate(AbstractNode* starting_node,
 							  std::vector<AbstractNode*>& possible_exits);
@@ -73,9 +61,6 @@ public:
 	void clean();
 	void measure_update(int total_count);
 
-	void new_scope_clean();
-	void new_scope_measure_update(int total_count);
-
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file,
 			  Solution* parent_solution);
@@ -93,7 +78,8 @@ public:
 	std::vector<bool> factor_initialized;
 	std::vector<double> factor_values;
 
-	std::vector<AbstractExperiment*> experiments_hit;
+	bool signal_initialized;
+	double signal_val;
 
 	ScopeHistory(Scope* scope);
 	ScopeHistory(ScopeHistory* original);

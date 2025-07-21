@@ -15,9 +15,7 @@ SolutionWrapper::SolutionWrapper(int num_obs) {
 	this->best_experiment = NULL;
 	this->improvement_iter = 0;
 
-	this->regather_counter = 0;
-
-	this->experiment_history = NULL;
+	this->experiment_overall_history = NULL;
 
 	#if defined(MDEBUG) && MDEBUG
 	this->run_index = 0;
@@ -36,9 +34,7 @@ SolutionWrapper::SolutionWrapper(int num_obs,
 	this->best_experiment = NULL;
 	this->improvement_iter = 0;
 
-	this->regather_counter = 0;
-
-	this->experiment_history = NULL;
+	this->experiment_overall_history = NULL;
 
 	#if defined(MDEBUG) && MDEBUG
 	this->run_index = 0;

@@ -8,7 +8,6 @@
 #include "branch_node.h"
 #include "factor.h"
 #include "globals.h"
-#include "new_scope_experiment.h"
 #include "obs_node.h"
 #include "scope_node.h"
 #include "solution.h"
@@ -17,8 +16,6 @@
 using namespace std;
 
 Scope::Scope() {
-	this->new_scope_experiment = NULL;
-
 	this->score_average_val = 0.0;
 }
 
@@ -39,16 +36,6 @@ void Scope::invalidate_factor(ScopeHistory* scope_history,
 	for (int if_index = 0; if_index < (int)this->factors[f_index]->impacted_factors.size(); if_index++) {
 		invalidate_factor(scope_history,
 						  this->factors[f_index]->impacted_factors[if_index]);
-	}
-}
-
-void Scope::back_activate(SolutionWrapper* wrapper) {
-	for (int e_index = 0; e_index < (int)wrapper->scope_histories.back()->experiments_hit.size(); e_index++) {
-		wrapper->scope_histories.back()->experiments_hit[e_index]->back_activate(wrapper);
-	}
-
-	if (this->new_scope_experiment != NULL) {
-		this->new_scope_experiment->back_activate(wrapper);
 	}
 }
 
@@ -231,34 +218,12 @@ void Scope::clean() {
 			it != this->nodes.end(); it++) {
 		it->second->clean();
 	}
-
-	this->new_scope_experiment = NULL;
-
-	this->existing_scope_histories.clear();
-	/**
-	 * - Solution responsible for deleting
-	 */
-	this->existing_target_val_histories.clear();
 }
 
 void Scope::measure_update(int total_count) {
 	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
 			it != this->nodes.end(); it++) {
 		it->second->measure_update(total_count);
-	}
-}
-
-void Scope::new_scope_clean() {
-	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
-			it != this->nodes.end(); it++) {
-		it->second->new_scope_clean();
-	}
-}
-
-void Scope::new_scope_measure_update(int total_count) {
-	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
-			it != this->nodes.end(); it++) {
-		it->second->new_scope_measure_update(total_count);
 	}
 }
 
@@ -423,6 +388,8 @@ ScopeHistory::ScopeHistory(Scope* scope) {
 
 	this->factor_initialized = vector<bool>(scope->factors.size(), false);
 	this->factor_values = vector<double>(scope->factors.size());
+
+	this->signal_initialized = false;
 }
 
 ScopeHistory::ScopeHistory(ScopeHistory* original) {
@@ -460,6 +427,8 @@ ScopeHistory::ScopeHistory(ScopeHistory* original) {
 
 	this->factor_initialized = original->factor_initialized;
 	this->factor_values = original->factor_values;
+
+	this->signal_initialized = false;
 }
 
 ScopeHistory::ScopeHistory(ScopeHistory* original,
@@ -500,6 +469,8 @@ ScopeHistory::ScopeHistory(ScopeHistory* original,
 
 	this->factor_initialized = vector<bool>(scope->factors.size(), false);
 	this->factor_values = vector<double>(scope->factors.size());
+
+	this->signal_initialized = false;
 }
 
 ScopeHistory::~ScopeHistory() {

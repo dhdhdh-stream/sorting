@@ -3,19 +3,15 @@
 #include <iostream>
 
 #include "branch_experiment.h"
-#include "branch_compare_experiment.h"
 // #include "commit_experiment.h"
 #include "constants.h"
-#include "new_scope_experiment.h"
+#include "helpers.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
-#include "solution_helpers.h"
 #include "utilities.h"
 
 using namespace std;
-
-const int REGATHER_COUNTER_LIMIT = 20;
 
 void SolutionWrapper::experiment_init() {
 	if (this->solution->existing_scope_histories.size() < MEASURE_ITERS) {
@@ -52,13 +48,7 @@ void SolutionWrapper::experiment_init() {
 		case EXPERIMENT_TYPE_BRANCH:
 			{
 				BranchExperiment* branch_experiment = (BranchExperiment*)this->curr_experiment;
-				this->experiment_history = new BranchExperimentHistory(branch_experiment);
-			}
-			break;
-		case EXPERIMENT_TYPE_NEW_SCOPE:
-			{
-				NewScopeExperiment* new_scope_experiment = (NewScopeExperiment*)this->curr_experiment;
-				this->experiment_history = new NewScopeExperimentHistory(new_scope_experiment);
+				this->experiment_overall_history = new BranchExperimentOverallHistory(branch_experiment);
 			}
 			break;
 		// case EXPERIMENT_TYPE_COMMIT:
@@ -67,12 +57,6 @@ void SolutionWrapper::experiment_init() {
 		// 		this->experiment_history = new CommitExperimentHistory(commit_experiment);
 		// 	}
 		// 	break;
-		case EXPERIMENT_TYPE_BRANCH_COMPARE:
-			{
-				BranchCompareExperiment* branch_compare_experiment = (BranchCompareExperiment*)this->curr_experiment;
-				this->experiment_history = new BranchCompareExperimentHistory(branch_compare_experiment);
-			}
-			break;
 		}
 
 		ScopeHistory* scope_history = new ScopeHistory(this->solution->scopes[0]);
@@ -193,14 +177,16 @@ void SolutionWrapper::experiment_end(double result) {
 			}
 		}
 
-		this->solution->scopes[0]->back_activate(this);
-
-		this->experiment_history->experiment->backprop(
+		this->experiment_overall_history->experiment->backprop(
 			result,
 			this);
 
-		delete this->experiment_history;
-		this->experiment_history = NULL;
+		delete this->experiment_overall_history;
+		this->experiment_overall_history = NULL;
+		for (int i_index = 0; i_index < (int)this->experiment_instance_histories.size(); i_index++) {
+			delete this->experiment_instance_histories[i_index];
+		}
+		this->experiment_instance_histories.clear();
 
 		this->scope_histories.clear();
 		this->node_context.clear();
@@ -208,35 +194,17 @@ void SolutionWrapper::experiment_end(double result) {
 
 		if (this->curr_experiment != NULL) {
 			if (this->curr_experiment->result == EXPERIMENT_RESULT_FAIL) {
-				if (this->curr_experiment->type != EXPERIMENT_TYPE_NEW_SCOPE) {
-					this->regather_counter++;
-				}
-
 				this->curr_experiment->clean();
 				delete this->curr_experiment;
 
 				this->curr_experiment = NULL;
-
-				if (this->regather_counter >= REGATHER_COUNTER_LIMIT) {
-					for (int h_index = 0; h_index < (int)this->solution->existing_scope_histories.size(); h_index++) {
-						delete this->solution->existing_scope_histories[h_index];
-					}
-					this->solution->existing_scope_histories.clear();
-					this->solution->existing_target_val_histories.clear();
-
-					this->solution->clean();
-
-					this->regather_counter = 0;
-				}
 			} else if (this->curr_experiment->result == EXPERIMENT_RESULT_SUCCESS) {
 				this->curr_experiment->clean();
 
 				if (this->best_experiment == NULL) {
 					this->best_experiment = this->curr_experiment;
 				} else {
-					double curr_impact = get_experiment_impact(this->curr_experiment);
-					double best_impact = get_experiment_impact(this->best_experiment);
-					if (curr_impact > best_impact) {
+					if (this->curr_experiment->improvement > this->best_experiment->improvement) {
 						delete this->best_experiment;
 						this->best_experiment = this->curr_experiment;
 					} else {
@@ -277,8 +245,6 @@ void SolutionWrapper::experiment_end(double result) {
 					this->solution->timestamp++;
 
 					this->improvement_iter = 0;
-
-					this->regather_counter = 0;
 				}
 			}
 		}

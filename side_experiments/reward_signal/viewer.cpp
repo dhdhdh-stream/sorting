@@ -6,10 +6,10 @@
 
 #include "abstract_node.h"
 #include "globals.h"
+#include "helpers.h"
 #include "scope.h"
 #include "simpler.h"
 #include "solution.h"
-#include "solution_helpers.h"
 #include "solution_wrapper.h"
 
 using namespace std;

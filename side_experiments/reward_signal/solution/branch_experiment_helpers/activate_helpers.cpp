@@ -5,10 +5,10 @@
 #include "abstract_node.h"
 #include "constants.h"
 #include "globals.h"
+#include "helpers.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
-#include "solution_helpers.h"
 #include "solution_wrapper.h"
 
 using namespace std;
@@ -17,17 +17,15 @@ void BranchExperiment::check_activate(AbstractNode* experiment_node,
 									  bool is_branch,
 									  SolutionWrapper* wrapper) {
 	if (is_branch == this->is_branch) {
-		BranchExperimentHistory* history = (BranchExperimentHistory*)wrapper->experiment_history;
-		history->is_hit = true;
+		BranchExperimentOverallHistory* overall_history = (BranchExperimentOverallHistory*)wrapper->experiment_overall_history;
+		overall_history->is_hit = true;
 
 		switch (this->state) {
 		case BRANCH_EXPERIMENT_STATE_EXPLORE:
-			explore_check_activate(wrapper,
-								   history);
+			explore_check_activate(wrapper);
 			break;
 		case BRANCH_EXPERIMENT_STATE_TRAIN_NEW:
-			train_new_check_activate(wrapper,
-									 history);
+			train_new_check_activate(wrapper);
 			break;
 		case BRANCH_EXPERIMENT_STATE_MEASURE:
 			measure_check_activate(wrapper);
@@ -113,24 +111,12 @@ void BranchExperiment::experiment_exit_step(SolutionWrapper* wrapper) {
 	}
 }
 
-void BranchExperiment::back_activate(SolutionWrapper* wrapper) {
-	switch (this->state) {
-	case BRANCH_EXPERIMENT_STATE_EXPLORE:
-		explore_back_activate(wrapper);
-		break;
-	case BRANCH_EXPERIMENT_STATE_TRAIN_NEW:
-		train_new_back_activate(wrapper);
-		break;
-	}
-}
-
 void BranchExperiment::backprop(double target_val,
 								SolutionWrapper* wrapper) {
-	BranchExperimentHistory* history = (BranchExperimentHistory*)wrapper->experiment_history;
 	switch (this->state) {
 	case BRANCH_EXPERIMENT_STATE_EXPLORE:
 		explore_backprop(target_val,
-						 history);
+						 wrapper);
 
 		if (wrapper->solution->explore_scope_histories.size() < NUM_EXPLORE_SAVE) {
 			wrapper->solution->explore_scope_histories.push_back(wrapper->scope_histories[0]);
@@ -146,14 +132,14 @@ void BranchExperiment::backprop(double target_val,
 		break;
 	case BRANCH_EXPERIMENT_STATE_TRAIN_NEW:
 		train_new_backprop(target_val,
-						   history);
+						   wrapper);
 
 		delete wrapper->scope_histories[0];
 
 		break;
 	case BRANCH_EXPERIMENT_STATE_MEASURE:
 		measure_backprop(target_val,
-						 history);
+						 wrapper);
 
 		if (this->new_scope_histories.size() < MEASURE_ITERS) {
 			this->new_scope_histories.push_back(wrapper->scope_histories[0]);
@@ -169,7 +155,7 @@ void BranchExperiment::backprop(double target_val,
 		break;
 	#if defined(MDEBUG) && MDEBUG
 	case BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY:
-		capture_verify_backprop(history);
+		capture_verify_backprop(wrapper);
 
 		delete wrapper->scope_histories[0];
 

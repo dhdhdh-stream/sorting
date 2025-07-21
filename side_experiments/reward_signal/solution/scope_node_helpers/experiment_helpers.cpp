@@ -29,8 +29,6 @@ void ScopeNode::experiment_step(vector<double>& obs,
 }
 
 void ScopeNode::experiment_exit_step(SolutionWrapper* wrapper) {
-	this->scope->back_activate(wrapper);
-
 	wrapper->scope_histories.pop_back();
 	wrapper->node_context.pop_back();
 	wrapper->experiment_context.pop_back();

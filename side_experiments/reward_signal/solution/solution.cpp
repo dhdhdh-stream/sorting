@@ -8,11 +8,11 @@
 #include "constants.h"
 #include "factor.h"
 #include "globals.h"
+#include "helpers.h"
 #include "obs_node.h"
 #include "problem.h"
 #include "scope.h"
 #include "scope_node.h"
-#include "solution_helpers.h"
 
 using namespace std;
 
@@ -139,8 +139,7 @@ void Solution::clean() {
 
 void Solution::measure_update() {
 	for (int h_index = 0; h_index < (int)this->existing_scope_histories.size(); h_index++) {
-		update_scores(this->existing_scope_histories[h_index],
-					  this->existing_target_val_histories[h_index],
+		update_counts(this->existing_scope_histories[h_index],
 					  h_index);
 	}
 

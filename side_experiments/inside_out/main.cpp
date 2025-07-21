@@ -1,5 +1,3 @@
-// TODO: hooks
-
 #include <chrono>
 #include <iostream>
 #include <map>

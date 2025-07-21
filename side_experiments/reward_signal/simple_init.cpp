@@ -8,10 +8,10 @@
 #include "abstract_experiment.h"
 #include "constants.h"
 #include "globals.h"
+#include "helpers.h"
 #include "minesweeper.h"
 #include "scope.h"
 #include "solution.h"
-#include "solution_helpers.h"
 #include "solution_wrapper.h"
 
 using namespace std;

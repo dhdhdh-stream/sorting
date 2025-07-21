@@ -33,29 +33,15 @@ public:
 
 	double original_average_hits_per_run;
 	double original_average_instances_per_run;
-	double original_average_score;
 	double branch_average_hits_per_run;
 	double branch_average_instances_per_run;
-	double branch_average_score;
 
 	int original_last_updated_run_index;
-	double original_sum_score;
 	int original_sum_hits;
 	int original_sum_instances;
 	int branch_last_updated_run_index;
-	double branch_sum_score;
 	int branch_sum_hits;
 	int branch_sum_instances;
-
-	double original_new_scope_average_hits_per_run;
-	double original_new_scope_average_score;
-	double branch_new_scope_average_hits_per_run;
-	double branch_new_scope_average_score;
-
-	double original_new_scope_sum_score;
-	int original_new_scope_sum_count;
-	double branch_new_scope_sum_score;
-	int branch_new_scope_sum_count;
 
 	BranchNode();
 	~BranchNode();
@@ -87,9 +73,6 @@ public:
 
 	void clean();
 	void measure_update(int total_count);
-
-	void new_scope_clean();
-	void new_scope_measure_update(int total_count);
 
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file,

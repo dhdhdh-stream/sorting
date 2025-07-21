@@ -1,4 +1,4 @@
-#include "solution_helpers.h"
+#include "helpers.h"
 
 #include <algorithm>
 #include <chrono>
@@ -15,6 +15,9 @@
 #include "network.h"
 #include "nn_helpers.h"
 #include "scope.h"
+#include "scope_node.h"
+#include "solution.h"
+#include "solution_wrapper.h"
 
 using namespace std;
 
@@ -31,28 +34,94 @@ const int SCORE_NUM_FACTORS = 40;
 const int INPUT_NUM_BEST_VS_WORST = 2;
 const int INPUT_NUM_EXPLORE_VS_EXISTING = 2;
 
-void train_score(Scope* scope) {
+void train_score_fetch_histories_helper(ScopeHistory* scope_history,
+										double target_val,
+										Scope* scope_context,
+										vector<ScopeHistory*>& scope_histories,
+										vector<double>& target_val_histories) {
+	Scope* scope = scope_history->scope;
+
+	double inner_target_val;
+	if (scope->score_inputs.size() > 0) {
+		if (!scope_history->signal_initialized) {
+			scope_history->signal_val = calc_reward_signal(scope_history);
+		}
+		inner_target_val = scope_history->signal_val;
+	} else {
+		inner_target_val = target_val;
+	}
+
+	if (scope == scope_context) {
+		scope_histories.push_back(scope_history);
+		target_val_histories.push_back(inner_target_val);
+	} else {
+		bool is_child = false;
+		for (int c_index = 0; c_index < (int)scope->child_scopes.size(); c_index++) {
+			if (scope->child_scopes[c_index] == scope_context) {
+				is_child = true;
+				break;
+			}
+		}
+
+		if (is_child) {
+			for (map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
+					it != scope_history->node_histories.end(); it++) {
+				AbstractNode* node = it->second->node;
+				if (node->type == NODE_TYPE_SCOPE) {
+					ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)it->second;
+					train_score_fetch_histories_helper(scope_node_history->scope_history,
+													   inner_target_val,
+													   scope_context,
+													   scope_histories,
+													   target_val_histories);
+				}
+			}
+		}
+	}
+}
+
+void train_score(Scope* scope,
+				 SolutionWrapper* solution_wrapper) {
 	double new_score_average_val;
 	vector<Input> new_score_inputs;
 	vector<double> new_score_input_averages;
 	vector<double> new_score_input_standard_deviations;
 	vector<double> new_score_weights;
 
-	{
-		default_random_engine generator_copy = generator;
-		shuffle(scope->existing_scope_histories.begin(), scope->existing_scope_histories.end(), generator_copy);
+	vector<ScopeHistory*> existing_scope_histories;
+	vector<double> existing_target_val_histories;
+	for (int h_index = 0; h_index < (int)solution_wrapper->solution->existing_scope_histories.size(); h_index++) {
+		train_score_fetch_histories_helper(solution_wrapper->solution->existing_scope_histories[h_index],
+										   solution_wrapper->solution->existing_target_val_histories[h_index],
+										   scope,
+										   existing_scope_histories,
+										   existing_target_val_histories);
 	}
 	{
 		default_random_engine generator_copy = generator;
-		shuffle(scope->existing_target_val_histories.begin(), scope->existing_target_val_histories.end(), generator_copy);
+		shuffle(existing_scope_histories.begin(), existing_scope_histories.end(), generator_copy);
 	}
 	{
 		default_random_engine generator_copy = generator;
-		shuffle(scope->explore_scope_histories.begin(), scope->explore_scope_histories.end(), generator_copy);
+		shuffle(existing_target_val_histories.begin(), existing_target_val_histories.end(), generator_copy);
+	}
+
+	vector<ScopeHistory*> explore_scope_histories;
+	vector<double> explore_target_val_histories;
+	for (int h_index = 0; h_index < (int)solution_wrapper->solution->explore_scope_histories.size(); h_index++) {
+		train_score_fetch_histories_helper(solution_wrapper->solution->explore_scope_histories[h_index],
+										   solution_wrapper->solution->explore_target_val_histories[h_index],
+										   scope,
+										   explore_scope_histories,
+										   explore_target_val_histories);
 	}
 	{
 		default_random_engine generator_copy = generator;
-		shuffle(scope->explore_target_val_histories.begin(), scope->explore_target_val_histories.end(), generator_copy);
+		shuffle(explore_scope_histories.begin(), explore_scope_histories.end(), generator_copy);
+	}
+	{
+		default_random_engine generator_copy = generator;
+		shuffle(explore_target_val_histories.begin(), explore_target_val_histories.end(), generator_copy);
 	}
 
 	vector<ScopeHistory*> combined_train_scope_histories;
@@ -60,33 +129,33 @@ void train_score(Scope* scope) {
 	vector<ScopeHistory*> combined_test_scope_histories;
 	vector<double> combined_test_target_val_histories;
 
-	int existing_num_train_instances = (1.0 - TEST_SAMPLES_PERCENTAGE) * (double)scope->existing_scope_histories.size();
+	int existing_num_train_instances = (1.0 - TEST_SAMPLES_PERCENTAGE) * (double)existing_scope_histories.size();
 	vector<ScopeHistory*> existing_train_scope_histories;
 	vector<double> existing_train_target_val_histories;
 	for (int i_index = 0; i_index < existing_num_train_instances; i_index++) {
-		existing_train_scope_histories.push_back(scope->existing_scope_histories[i_index]);
-		existing_train_target_val_histories.push_back(scope->existing_target_val_histories[i_index]);
+		existing_train_scope_histories.push_back(existing_scope_histories[i_index]);
+		existing_train_target_val_histories.push_back(existing_target_val_histories[i_index]);
 
-		combined_train_scope_histories.push_back(scope->existing_scope_histories[i_index]);
-		combined_train_target_val_histories.push_back(scope->existing_target_val_histories[i_index]);
+		combined_train_scope_histories.push_back(existing_scope_histories[i_index]);
+		combined_train_target_val_histories.push_back(existing_target_val_histories[i_index]);
 	}
-	for (int i_index = existing_num_train_instances; i_index < (int)scope->existing_scope_histories.size(); i_index++) {
-		combined_test_scope_histories.push_back(scope->existing_scope_histories[i_index]);
-		combined_test_target_val_histories.push_back(scope->existing_target_val_histories[i_index]);
+	for (int i_index = existing_num_train_instances; i_index < (int)existing_scope_histories.size(); i_index++) {
+		combined_test_scope_histories.push_back(existing_scope_histories[i_index]);
+		combined_test_target_val_histories.push_back(existing_target_val_histories[i_index]);
 	}
-	int explore_num_train_instances = (1.0 - TEST_SAMPLES_PERCENTAGE) * (double)scope->explore_scope_histories.size();
+	int explore_num_train_instances = (1.0 - TEST_SAMPLES_PERCENTAGE) * (double)explore_scope_histories.size();
 	vector<ScopeHistory*> explore_train_scope_histories;
 	vector<double> explore_train_target_val_histories;
 	for (int i_index = 0; i_index < explore_num_train_instances; i_index++) {
-		explore_train_scope_histories.push_back(scope->explore_scope_histories[i_index]);
-		explore_train_target_val_histories.push_back(scope->explore_target_val_histories[i_index]);
+		explore_train_scope_histories.push_back(explore_scope_histories[i_index]);
+		explore_train_target_val_histories.push_back(explore_target_val_histories[i_index]);
 
-		combined_train_scope_histories.push_back(scope->explore_scope_histories[i_index]);
-		combined_train_target_val_histories.push_back(scope->explore_target_val_histories[i_index]);
+		combined_train_scope_histories.push_back(explore_scope_histories[i_index]);
+		combined_train_target_val_histories.push_back(explore_target_val_histories[i_index]);
 	}
-	for (int i_index = explore_num_train_instances; i_index < (int)scope->explore_scope_histories.size(); i_index++) {
-		combined_test_scope_histories.push_back(scope->explore_scope_histories[i_index]);
-		combined_test_target_val_histories.push_back(scope->explore_target_val_histories[i_index]);
+	for (int i_index = explore_num_train_instances; i_index < (int)explore_scope_histories.size(); i_index++) {
+		combined_test_scope_histories.push_back(explore_scope_histories[i_index]);
+		combined_test_target_val_histories.push_back(explore_target_val_histories[i_index]);
 	}
 
 	map<Input, InputData> input_tracker;

@@ -1,8 +1,8 @@
 #include "branch_node.h"
 
 #include "abstract_experiment.h"
+#include "helpers.h"
 #include "scope.h"
-#include "solution_helpers.h"
 #include "solution_wrapper.h"
 #include "utilities.h"
 

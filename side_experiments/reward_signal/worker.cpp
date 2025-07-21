@@ -9,12 +9,12 @@
 #include "branch_node.h"
 #include "constants.h"
 #include "globals.h"
+#include "helpers.h"
 #include "minesweeper.h"
 #include "obs_node.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
-#include "solution_helpers.h"
 #include "solution_wrapper.h"
 
 using namespace std;

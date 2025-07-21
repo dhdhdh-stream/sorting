@@ -1,18 +1,17 @@
-#include "new_scope_experiment.h"
+#include "helpers.h"
 
 #include "action_node.h"
 #include "branch_node.h"
 #include "factor.h"
 #include "globals.h"
-#include "input.h"
 #include "network.h"
 #include "obs_node.h"
-#include "problem.h"
 #include "scope.h"
 #include "scope_node.h"
-#include "solution.h"
 
 using namespace std;
+
+const int NEW_SCOPE_MIN_NODES = 20;
 
 const int NEW_SCOPE_MIN_NUM_NODES = 3;
 const int CREATE_NEW_SCOPE_NUM_TRIES = 50;
@@ -94,14 +93,10 @@ void children_helper(AbstractNode* curr_node,
 	}
 }
 
-NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
-									   AbstractNode* node_context,
-									   bool is_branch) {
-	this->type = EXPERIMENT_TYPE_NEW_SCOPE;
-
-	this->new_scope = NULL;
-
-	this->test_scope_node = NULL;
+Scope* create_new_scope(Scope* scope_context) {
+	if (scope_context->nodes.size() < NEW_SCOPE_MIN_NODES) {
+		return NULL;
+	}
 
 	for (int t_index = 0; t_index < CREATE_NEW_SCOPE_NUM_TRIES; t_index++) {
 		uniform_int_distribution<int> node_distribution(0, scope_context->nodes.size()-1);
@@ -136,16 +131,16 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 			}
 		}
 		if (num_meaningful_nodes >= NEW_SCOPE_MIN_NUM_NODES) {
-			this->new_scope = new Scope();
-			this->new_scope->id = -1;
+			Scope* new_scope = new Scope();
+			new_scope->id = -1;
 
-			this->new_scope->node_counter = 0;
+			new_scope->node_counter = 0;
 
 			ObsNode* starting_node = new ObsNode();
-			starting_node->parent = this->new_scope;
-			starting_node->id = this->new_scope->node_counter;
-			this->new_scope->node_counter++;
-			this->new_scope->nodes[starting_node->id] = starting_node;
+			starting_node->parent = new_scope;
+			starting_node->id = new_scope->node_counter;
+			new_scope->node_counter++;
+			new_scope->nodes[starting_node->id] = starting_node;
 
 			map<AbstractNode*, AbstractNode*> node_mappings;
 			for (set<AbstractNode*>::iterator node_it = potential_included_nodes.begin();
@@ -156,10 +151,10 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 						ActionNode* original_action_node = (ActionNode*)(*node_it);
 
 						ActionNode* new_action_node = new ActionNode();
-						new_action_node->parent = this->new_scope;
-						new_action_node->id = this->new_scope->node_counter;
-						this->new_scope->node_counter++;
-						this->new_scope->nodes[new_action_node->id] = new_action_node;
+						new_action_node->parent = new_scope;
+						new_action_node->id = new_scope->node_counter;
+						new_scope->node_counter++;
+						new_scope->nodes[new_action_node->id] = new_action_node;
 
 						new_action_node->action = original_action_node->action;
 
@@ -171,10 +166,10 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 						ScopeNode* original_scope_node = (ScopeNode*)(*node_it);
 
 						ScopeNode* new_scope_node = new ScopeNode();
-						new_scope_node->parent = this->new_scope;
-						new_scope_node->id = this->new_scope->node_counter;
-						this->new_scope->node_counter++;
-						this->new_scope->nodes[new_scope_node->id] = new_scope_node;
+						new_scope_node->parent = new_scope;
+						new_scope_node->id = new_scope->node_counter;
+						new_scope->node_counter++;
+						new_scope->nodes[new_scope_node->id] = new_scope_node;
 
 						new_scope_node->scope = original_scope_node->scope;
 
@@ -186,10 +181,10 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 						ObsNode* original_obs_node = (ObsNode*)(*node_it);
 
 						ObsNode* new_obs_node = new ObsNode();
-						new_obs_node->parent = this->new_scope;
-						new_obs_node->id = this->new_scope->node_counter;
-						this->new_scope->node_counter++;
-						this->new_scope->nodes[new_obs_node->id] = new_obs_node;
+						new_obs_node->parent = new_scope;
+						new_obs_node->id = new_scope->node_counter;
+						new_scope->node_counter++;
+						new_scope->nodes[new_obs_node->id] = new_obs_node;
 
 						node_mappings[original_obs_node] = new_obs_node;
 					}
@@ -206,10 +201,10 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 					if (original_it != node_mappings.end()
 							&& branch_it != node_mappings.end()) {
 						BranchNode* new_branch_node = new BranchNode();
-						new_branch_node->parent = this->new_scope;
-						new_branch_node->id = this->new_scope->node_counter;
-						this->new_scope->node_counter++;
-						this->new_scope->nodes[new_branch_node->id] = new_branch_node;
+						new_branch_node->parent = new_scope;
+						new_branch_node->id = new_scope->node_counter;
+						new_scope->node_counter++;
+						new_scope->nodes[new_branch_node->id] = new_branch_node;
 
 						node_mappings[original_branch_node] = new_branch_node;
 					} else if (original_it != node_mappings.end()) {
@@ -226,10 +221,10 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 			starting_node->next_node->ancestor_ids.push_back(starting_node->id);
 
 			ObsNode* new_ending_node = new ObsNode();
-			new_ending_node->parent = this->new_scope;
-			new_ending_node->id = this->new_scope->node_counter;
-			this->new_scope->node_counter++;
-			this->new_scope->nodes[new_ending_node->id] = new_ending_node;
+			new_ending_node->parent = new_scope;
+			new_ending_node->id = new_scope->node_counter;
+			new_scope->node_counter++;
+			new_scope->nodes[new_ending_node->id] = new_ending_node;
 			new_ending_node->next_node_id = -1;
 			new_ending_node->next_node = NULL;
 
@@ -242,7 +237,7 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 					if (original_factor->inputs[i_index].factor_index != -1
 							&& original_factor->inputs[i_index].scope_context.size() == 1) {
 						Input new_input = original_factor->inputs[i_index];
-						new_input.scope_context[0] = this->new_scope;
+						new_input.scope_context[0] = new_scope;
 						new_factor->inputs.insert(new_factor->inputs.begin(), new_input);
 					} else {
 						AbstractNode* original_input_node = scope_context->nodes[
@@ -256,7 +251,7 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 							new_factor->network->remove_input(i_index);
 						} else {
 							Input new_input = original_factor->inputs[i_index];
-							new_input.scope_context[0] = this->new_scope;
+							new_input.scope_context[0] = new_scope;
 							new_input.node_context[0] = it->second->id;
 							new_factor->inputs.insert(new_factor->inputs.begin(), new_input);
 						}
@@ -265,7 +260,7 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 
 				new_factor->is_meaningful = original_factor->is_meaningful;
 
-				this->new_scope->factors.push_back(new_factor);
+				new_scope->factors.push_back(new_factor);
 
 				new_factor->link(f_index);
 			}
@@ -324,7 +319,7 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 							if (original_branch_node->inputs[i_index].factor_index != -1
 									&& original_branch_node->inputs[i_index].scope_context.size() == 1) {
 								Input new_input = original_branch_node->inputs[i_index];
-								new_input.scope_context[0] = this->new_scope;
+								new_input.scope_context[0] = new_scope;
 								new_branch_node->inputs.push_back(new_input);
 								new_branch_node->input_averages.push_back(
 									original_branch_node->input_averages[i_index]);
@@ -343,7 +338,7 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 								if (input_it != node_mappings.end()
 										&& original_input_node->type == input_it->second->type) {
 									Input new_input = original_branch_node->inputs[i_index];
-									new_input.scope_context[0] = this->new_scope;
+									new_input.scope_context[0] = new_scope;
 									new_input.node_context[0] = input_it->second->id;
 									new_branch_node->inputs.push_back(new_input);
 									new_branch_node->input_averages.push_back(
@@ -407,163 +402,9 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 				}
 			}
 
-			break;
+			return new_scope;
 		}
 	}
 
-	if (this->new_scope != NULL) {
-		this->scope_context = scope_context;
-		/**
-		 * - when measuring vs. other experiments, simply use impact on initial node_context
-		 */
-		this->node_context = node_context;
-		this->is_branch = is_branch;
-
-		vector<AbstractNode*> possible_exits;
-
-		AbstractNode* random_start_node;
-		switch (node_context->type) {
-		case NODE_TYPE_ACTION:
-			{
-				ActionNode* action_node = (ActionNode*)node_context;
-				random_start_node = action_node->next_node;
-			}
-			break;
-		case NODE_TYPE_SCOPE:
-			{
-				ScopeNode* scope_node = (ScopeNode*)node_context;
-				random_start_node = scope_node->next_node;
-			}
-			break;
-		case NODE_TYPE_BRANCH:
-			{
-				BranchNode* branch_node = (BranchNode*)node_context;
-				if (is_branch) {
-					random_start_node = branch_node->branch_next_node;
-				} else {
-					random_start_node = branch_node->original_next_node;
-				}
-			}
-			break;
-		case NODE_TYPE_OBS:
-			{
-				ObsNode* obs_node = (ObsNode*)node_context;
-				random_start_node = obs_node->next_node;
-			}
-			break;
-		}
-
-		this->scope_context->random_exit_activate(
-			random_start_node,
-			possible_exits);
-
-		geometric_distribution<int> exit_distribution(0.2);
-		int random_index;
-		while (true) {
-			random_index = exit_distribution(generator);
-			if (random_index < (int)possible_exits.size()) {
-				break;
-			}
-		}
-		AbstractNode* exit_next_node = possible_exits[random_index];
-
-		this->test_location_start = node_context;
-		this->test_location_is_branch = is_branch;
-
-		this->test_scope_node = new ScopeNode();
-		this->test_scope_node->parent = this->scope_context;
-		this->test_scope_node->id = this->scope_context->node_counter;
-		this->scope_context->node_counter++;
-
-		this->test_scope_node->scope = this->new_scope;
-
-		if (exit_next_node == NULL) {
-			this->test_scope_node->next_node_id = -1;
-			this->test_scope_node->next_node = NULL;
-		} else {
-			this->test_scope_node->next_node_id = exit_next_node->id;
-			this->test_scope_node->next_node = exit_next_node;
-		}
-
-		this->state_iter = 0;
-		this->scope_context->new_scope_clean();
-
-		this->scope_context->new_scope_experiment = this;
-		node_context->experiment = this;
-
-		this->generalize_iter = -1;
-
-		this->result = EXPERIMENT_RESULT_NA;
-	} else {
-		this->result = EXPERIMENT_RESULT_FAIL;
-	}
-}
-
-NewScopeExperiment::~NewScopeExperiment() {
-	if (this->new_scope != NULL) {
-		delete this->new_scope;
-	}
-
-	if (this->test_scope_node != NULL) {
-		delete this->test_scope_node;
-	}
-
-	for (int s_index = 0; s_index < (int)this->successful_scope_nodes.size(); s_index++) {
-		delete this->successful_scope_nodes[s_index];
-	}
-
-	for (int h_index = 0; h_index < (int)this->new_scope_histories.size(); h_index++) {
-		delete this->new_scope_histories[h_index];
-	}
-}
-
-void NewScopeExperiment::decrement(AbstractNode* experiment_node) {
-	bool is_test;
-	int location_index;
-	if (this->test_location_start == experiment_node) {
-		is_test = true;
-	}
-	for (int s_index = 0; s_index < (int)this->successful_location_starts.size(); s_index++) {
-		if (this->successful_location_starts[s_index] == experiment_node) {
-			is_test = false;
-			location_index = s_index;
-			break;
-		}
-	}
-
-	if (is_test) {
-		this->test_location_start = NULL;
-	} else {
-		this->successful_location_starts.erase(this->successful_location_starts.begin() + location_index);
-		this->successful_location_is_branch.erase(this->successful_location_is_branch.begin() + location_index);
-		ScopeNode* new_scope_node = this->successful_scope_nodes[location_index];
-		this->successful_scope_nodes.erase(this->successful_scope_nodes.begin() + location_index);
-		delete new_scope_node;
-	}
-
-	if (this->test_location_start == NULL) {
-		bool has_existing = false;
-		for (int s_index = 0; s_index < (int)this->successful_location_starts.size(); s_index++) {
-			if (this->scope_context->nodes.find(this->successful_location_starts[s_index]->id) != this->scope_context->nodes.end()) {
-				has_existing = true;
-				break;
-			}
-		}
-
-		if (!has_existing) {
-			delete this;
-		}
-	}
-}
-
-NewScopeExperimentHistory::NewScopeExperimentHistory(
-		NewScopeExperiment* experiment) {
-	this->experiment = experiment;
-
-	this->is_hit = false;
-
-	this->hit_test = false;
-
-	this->instance_count = 0;
-	this->potential_start = NULL;
+	return NULL;
 }

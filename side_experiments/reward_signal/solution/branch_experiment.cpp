@@ -6,33 +6,30 @@
 #include "branch_node.h"
 #include "factor.h"
 #include "globals.h"
+#include "helpers.h"
 #include "network.h"
 #include "obs_node.h"
 #include "problem.h"
 #include "scope.h"
 #include "scope_node.h"
-#include "solution_helpers.h"
+#include "solution.h"
+#include "solution_wrapper.h"
 
 using namespace std;
 
 BranchExperiment::BranchExperiment(Scope* scope_context,
 								   AbstractNode* node_context,
-								   bool is_branch) {
+								   bool is_branch,
+								   SolutionWrapper* wrapper) {
 	this->type = EXPERIMENT_TYPE_BRANCH;
 
 	this->scope_context = scope_context;
 	this->node_context = node_context;
 	this->is_branch = is_branch;
 
-	uniform_int_distribution<int> use_reward_signal_distribution(0, 1);
-	if (this->scope_context->score_inputs.size() > 0
-			&& use_reward_signal_distribution(generator) == 0) {
-		this->use_reward_signal = true;
-	} else {
-		this->use_reward_signal = false;
-	}
-
+	this->curr_new_scope = NULL;
 	this->curr_scope_history = NULL;
+	this->best_new_scope = NULL;
 	this->best_scope_history = NULL;
 
 	this->new_network = NULL;
@@ -41,32 +38,22 @@ BranchExperiment::BranchExperiment(Scope* scope_context,
 
 	vector<ScopeHistory*> scope_histories;
 	vector<double> target_val_histories;
-	for (int h_index = 0; h_index < (int)this->scope_context->existing_scope_histories.size(); h_index++) {
-		ScopeHistory* scope_history = this->scope_context->existing_scope_histories[h_index];
+	for (int h_index = 0; h_index < (int)wrapper->solution->existing_scope_histories.size(); h_index++) {
+		if (hit_helper(wrapper->solution->existing_scope_histories[h_index],
+					   this->scope_context,
+					   this->node_context,
+					   this->is_branch)) {
+			fetch_histories_helper(wrapper->solution->existing_scope_histories[h_index],
+								   wrapper->solution->existing_target_val_histories[h_index],
+								   this->scope_context,
+								   this->node_context,
+								   this->is_branch,
+								   scope_histories,
+								   target_val_histories);
 
-		bool has_match = false;
-
-		map<int, AbstractNodeHistory*>::iterator match_it = scope_history->node_histories.find(this->node_context->id);
-		if (match_it != scope_history->node_histories.end()) {
-			if (this->node_context->type == NODE_TYPE_BRANCH) {
-				BranchNodeHistory* branch_node_history = (BranchNodeHistory*)match_it->second;
-				if (branch_node_history->is_branch == this->is_branch) {
-					has_match = true;
-				}
-			} else {
-				has_match = true;
-			}
-		}
-
-		if (has_match) {
-			ScopeHistory* cleaned_scope_history = new ScopeHistory(scope_history, match_it->second->index);
-			scope_histories.push_back(cleaned_scope_history);
-			if (this->use_reward_signal) {
-				double reward_signal = calc_reward_signal(scope_history);
-				target_val_histories.push_back(reward_signal);
-			} else {
-				target_val_histories.push_back(this->scope_context->existing_target_val_histories[h_index]);
-			}
+			this->existing_scores.push_back(wrapper->solution->existing_target_val_histories[h_index]);
+			fetch_signals_helper(wrapper->solution->existing_scope_histories[h_index],
+								 this->existing_signals);
 		}
 	}
 
@@ -142,8 +129,16 @@ BranchExperiment::BranchExperiment(Scope* scope_context,
 }
 
 BranchExperiment::~BranchExperiment() {
+	if (this->curr_new_scope != NULL) {
+		delete this->curr_new_scope;
+	}
+
 	if (this->curr_scope_history != NULL) {
 		delete this->curr_scope_history;
+	}
+
+	if (this->best_new_scope != NULL) {
+		delete this->best_new_scope;
 	}
 
 	if (this->best_scope_history != NULL) {
@@ -180,10 +175,16 @@ void BranchExperiment::decrement(AbstractNode* experiment_node) {
 	delete this;
 }
 
-BranchExperimentHistory::BranchExperimentHistory(BranchExperiment* experiment) {
+BranchExperimentOverallHistory::BranchExperimentOverallHistory(BranchExperiment* experiment) {
 	this->experiment = experiment;
 
 	this->is_hit = false;
+}
+
+BranchExperimentInstanceHistory::BranchExperimentInstanceHistory(BranchExperiment* experiment) {
+	this->experiment = experiment;
+
+	this->signal_needed_from = NULL;
 }
 
 BranchExperimentState::BranchExperimentState(BranchExperiment* experiment) {

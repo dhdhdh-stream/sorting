@@ -7,6 +7,7 @@
 #include "constants.h"
 #include "factor.h"
 #include "globals.h"
+#include "helpers.h"
 #include "obs_node.h"
 #include "scope.h"
 #include "scope_node.h"
@@ -19,9 +20,49 @@ void BranchExperiment::clean() {
 	this->node_context->experiment = NULL;
 }
 
+void recursive_add_child(Scope* curr_parent,
+						 SolutionWrapper* wrapper,
+						 Scope* new_scope) {
+	curr_parent->child_scopes.push_back(new_scope);
+
+	for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
+		Scope* scope = wrapper->solution->scopes[s_index];
+
+		bool is_needed = false;
+		bool is_added = false;
+		for (int c_index = 0; c_index < (int)scope->child_scopes.size(); c_index++) {
+			if (scope->child_scopes[c_index] == curr_parent) {
+				is_needed = true;
+			}
+
+			if (scope->child_scopes[c_index] == new_scope) {
+				is_added = true;
+			}
+		}
+
+		if (is_needed && !is_added) {
+			recursive_add_child(scope,
+								wrapper,
+								new_scope);
+		}
+	}
+}
+
 void BranchExperiment::add(SolutionWrapper* wrapper) {
 	cout << "BranchExperiment add" << endl;
-	cout << "this->use_reward_signal: " << this->use_reward_signal << endl;
+
+	if (this->best_new_scope != NULL) {
+		this->best_new_scope->id = wrapper->solution->scopes.size();
+		wrapper->solution->scopes.push_back(this->best_new_scope);
+
+		clean_scope(this->best_new_scope,
+					wrapper);
+
+		this->best_new_scope->child_scopes = this->scope_context->child_scopes;
+		recursive_add_child(this->scope_context,
+							wrapper,
+							this->best_new_scope);
+	}
 
 	for (int n_index = 0; n_index < (int)this->new_nodes.size(); n_index++) {
 		this->new_nodes[n_index]->parent = this->scope_context;

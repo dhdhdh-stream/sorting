@@ -6,11 +6,11 @@
 #include "branch_node.h"
 #include "constants.h"
 #include "globals.h"
+#include "helpers.h"
 #include "network.h"
 #include "obs_node.h"
 #include "scope.h"
 #include "scope_node.h"
-#include "solution_helpers.h"
 #include "solution_wrapper.h"
 
 using namespace std;
@@ -22,11 +22,13 @@ const int TRAIN_NEW_NUM_DATAPOINTS = 100;
 #endif /* MDEBUG */
 
 void BranchExperiment::train_new_check_activate(
-		SolutionWrapper* wrapper,
-		BranchExperimentHistory* history) {
+		SolutionWrapper* wrapper) {
 	this->num_instances_until_target--;
 
 	if (this->num_instances_until_target <= 0) {
+		BranchExperimentInstanceHistory* instance_history = new BranchExperimentInstanceHistory(this);
+		wrapper->experiment_instance_histories.push_back(instance_history);
+
 		double sum_vals = this->existing_average_score;
 		for (int i_index = 0; i_index < (int)this->existing_inputs.size(); i_index++) {
 			double val;
@@ -41,16 +43,20 @@ void BranchExperiment::train_new_check_activate(
 				sum_vals += this->existing_weights[i_index] * normalized_val;
 			}
 		}
-		history->existing_predicted_scores.push_back(sum_vals);
+		instance_history->existing_predicted_score = sum_vals;
+
+		for (int l_index = (int)wrapper->scope_histories.size()-1; l_index--; l_index--) {
+			Scope* scope = wrapper->scope_histories[l_index]->scope;
+			if (scope->score_inputs.size() > 0) {
+				instance_history->signal_needed_from = wrapper->scope_histories[l_index];
+				break;
+			}
+		}
 
 		this->scope_histories.push_back(new ScopeHistory(wrapper->scope_histories.back()));
 
 		uniform_int_distribution<int> until_distribution(0, (int)this->average_instances_per_run-1.0);
 		this->num_instances_until_target = 1 + until_distribution(generator);
-
-		if (this->use_reward_signal) {
-			wrapper->scope_histories.back()->experiments_hit.push_back(this);
-		}
 
 		BranchExperimentState* new_experiment_state = new BranchExperimentState(this);
 		new_experiment_state->step_index = 0;
@@ -87,10 +93,6 @@ void BranchExperiment::train_new_step(vector<double>& obs,
 
 void BranchExperiment::train_new_exit_step(SolutionWrapper* wrapper,
 										   BranchExperimentState* experiment_state) {
-	this->best_scopes[experiment_state->step_index]->back_activate(wrapper);
-
-	delete wrapper->scope_histories.back();
-
 	wrapper->scope_histories.pop_back();
 	wrapper->node_context.pop_back();
 	wrapper->experiment_context.pop_back();
@@ -98,21 +100,27 @@ void BranchExperiment::train_new_exit_step(SolutionWrapper* wrapper,
 	experiment_state->step_index++;
 }
 
-void BranchExperiment::train_new_back_activate(SolutionWrapper* wrapper) {
-	BranchExperimentHistory* history = (BranchExperimentHistory*)wrapper->experiment_history;
-
-	double reward_signal = calc_reward_signal(wrapper->scope_histories.back());
-	this->i_target_val_histories.push_back(reward_signal - history->existing_predicted_scores.back());
-}
-
 void BranchExperiment::train_new_backprop(
 		double target_val,
-		BranchExperimentHistory* history) {
-	if (history->is_hit) {
-		if (!this->use_reward_signal) {
-			for (int i_index = 0; i_index < (int)history->existing_predicted_scores.size(); i_index++) {
-				this->i_target_val_histories.push_back(target_val - history->existing_predicted_scores[i_index]);
+		SolutionWrapper* wrapper) {
+	BranchExperimentOverallHistory* overall_history = (BranchExperimentOverallHistory*)wrapper->experiment_overall_history;
+
+	if (overall_history->is_hit) {
+		for (int i_index = 0; i_index < (int)wrapper->experiment_instance_histories.size(); i_index++) {
+			BranchExperimentInstanceHistory* instance_history =
+				(BranchExperimentInstanceHistory*)wrapper->experiment_instance_histories[i_index];
+
+			double inner_targel_val;
+			if (instance_history->signal_needed_from == NULL) {
+				inner_targel_val = target_val;
+			} else {
+				if (!instance_history->signal_needed_from->signal_initialized) {
+					instance_history->signal_needed_from->signal_val = calc_reward_signal(instance_history->signal_needed_from);
+				}
+				inner_targel_val = instance_history->signal_needed_from->signal_val;
 			}
+
+			this->i_target_val_histories.push_back(inner_targel_val - instance_history->existing_predicted_score);
 		}
 
 		this->state_iter++;

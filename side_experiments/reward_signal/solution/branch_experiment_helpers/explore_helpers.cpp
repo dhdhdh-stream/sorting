@@ -6,28 +6,32 @@
 #include "branch_node.h"
 #include "constants.h"
 #include "globals.h"
+#include "helpers.h"
 #include "obs_node.h"
 #include "problem.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
-#include "solution_helpers.h"
 #include "solution_wrapper.h"
 
 using namespace std;
 
 #if defined(MDEBUG) && MDEBUG
+const int BRANCH_EXPERIMENT_NEW_SCOPE_ITERS = 1;
 const int BRANCH_EXPERIMENT_EXPLORE_ITERS = 5;
 #else
+const int BRANCH_EXPERIMENT_NEW_SCOPE_ITERS = 10;
 const int BRANCH_EXPERIMENT_EXPLORE_ITERS = 100;
 #endif /* MDEBUG */
 
 void BranchExperiment::explore_check_activate(
-		SolutionWrapper* wrapper,
-		BranchExperimentHistory* history) {
+		SolutionWrapper* wrapper) {
 	this->num_instances_until_target--;
-	if (history->existing_predicted_scores.size() == 0
+	if (wrapper->experiment_instance_histories.size() == 0
 			&& this->num_instances_until_target == 0) {
+		BranchExperimentInstanceHistory* instance_history = new BranchExperimentInstanceHistory(this);
+		wrapper->experiment_instance_histories.push_back(instance_history);
+
 		double sum_vals = this->existing_average_score;
 		for (int i_index = 0; i_index < (int)this->existing_inputs.size(); i_index++) {
 			double val;
@@ -42,7 +46,15 @@ void BranchExperiment::explore_check_activate(
 				sum_vals += this->existing_weights[i_index] * normalized_val;
 			}
 		}
-		history->existing_predicted_scores.push_back(sum_vals);
+		instance_history->existing_predicted_score = sum_vals;
+
+		for (int l_index = (int)wrapper->scope_histories.size()-1; l_index--; l_index--) {
+			Scope* scope = wrapper->scope_histories[l_index]->scope;
+			if (scope->score_inputs.size() > 0) {
+				instance_history->signal_needed_from = wrapper->scope_histories[l_index];
+				break;
+			}
+		}
 
 		this->curr_scope_history = new ScopeHistory(wrapper->scope_histories.back());
 
@@ -94,44 +106,49 @@ void BranchExperiment::explore_check_activate(
 		}
 		this->curr_exit_next_node = possible_exits[random_index];
 
-		int new_num_steps;
-		geometric_distribution<int> geo_distribution(0.2);
-		if (random_index == 0) {
-			new_num_steps = 1 + geo_distribution(generator);
+		if (this->state_iter < BRANCH_EXPERIMENT_NEW_SCOPE_ITERS) {
+			this->curr_new_scope = create_new_scope(this->scope_context);
+		}
+		if (this->curr_new_scope != NULL) {
+			this->curr_step_types.push_back(STEP_TYPE_SCOPE);
+			this->curr_actions.push_back(-1);
+			this->curr_scopes.push_back(this->curr_new_scope);
 		} else {
-			new_num_steps = geo_distribution(generator);
-		}
-
-		/**
-		 * - always give raw actions a large weight
-		 *   - existing scopes often learned to avoid certain patterns
-		 *     - which can prevent innovation
-		 */
-		uniform_int_distribution<int> scope_distribution(0, 1);
-		vector<Scope*> possible_scopes;
-		for (int c_index = 0; c_index < (int)this->scope_context->child_scopes.size(); c_index++) {
-			if (this->scope_context->child_scopes[c_index]->nodes.size() > 1) {
-				possible_scopes.push_back(this->scope_context->child_scopes[c_index]);
-			}
-		}
-		for (int s_index = 0; s_index < new_num_steps; s_index++) {
-			if (scope_distribution(generator) == 0 && possible_scopes.size() > 0) {
-				this->curr_step_types.push_back(STEP_TYPE_SCOPE);
-				this->curr_actions.push_back(-1);
-
-				uniform_int_distribution<int> child_scope_distribution(0, possible_scopes.size()-1);
-				this->curr_scopes.push_back(possible_scopes[child_scope_distribution(generator)]);
+			int new_num_steps;
+			geometric_distribution<int> geo_distribution(0.2);
+			if (random_index == 0) {
+				new_num_steps = 1 + geo_distribution(generator);
 			} else {
-				this->curr_step_types.push_back(STEP_TYPE_ACTION);
-
-				this->curr_actions.push_back(-1);
-
-				this->curr_scopes.push_back(NULL);
+				new_num_steps = geo_distribution(generator);
 			}
-		}
 
-		if (this->use_reward_signal) {
-			wrapper->scope_histories.back()->experiments_hit.push_back(this);
+			/**
+			 * - always give raw actions a large weight
+			 *   - existing scopes often learned to avoid certain patterns
+			 *     - which can prevent innovation
+			 */
+			uniform_int_distribution<int> scope_distribution(0, 1);
+			vector<Scope*> possible_scopes;
+			for (int c_index = 0; c_index < (int)this->scope_context->child_scopes.size(); c_index++) {
+				if (this->scope_context->child_scopes[c_index]->nodes.size() > 1) {
+					possible_scopes.push_back(this->scope_context->child_scopes[c_index]);
+				}
+			}
+			for (int s_index = 0; s_index < new_num_steps; s_index++) {
+				if (scope_distribution(generator) == 0 && possible_scopes.size() > 0) {
+					this->curr_step_types.push_back(STEP_TYPE_SCOPE);
+					this->curr_actions.push_back(-1);
+
+					uniform_int_distribution<int> child_scope_distribution(0, possible_scopes.size()-1);
+					this->curr_scopes.push_back(possible_scopes[child_scope_distribution(generator)]);
+				} else {
+					this->curr_step_types.push_back(STEP_TYPE_ACTION);
+
+					this->curr_actions.push_back(-1);
+
+					this->curr_scopes.push_back(NULL);
+				}
+			}
 		}
 
 		BranchExperimentState* new_experiment_state = new BranchExperimentState(this);
@@ -175,10 +192,6 @@ void BranchExperiment::explore_set_action(int action,
 
 void BranchExperiment::explore_exit_step(SolutionWrapper* wrapper,
 										 BranchExperimentState* experiment_state) {
-	this->curr_scopes[experiment_state->step_index]->back_activate(wrapper);
-
-	delete wrapper->scope_histories.back();
-
 	wrapper->scope_histories.pop_back();
 	wrapper->node_context.pop_back();
 	wrapper->experiment_context.pop_back();
@@ -186,30 +199,38 @@ void BranchExperiment::explore_exit_step(SolutionWrapper* wrapper,
 	experiment_state->step_index++;
 }
 
-void BranchExperiment::explore_back_activate(SolutionWrapper* wrapper) {
-	BranchExperimentHistory* history = (BranchExperimentHistory*)wrapper->experiment_history;
-
-	double reward_signal = calc_reward_signal(wrapper->scope_histories.back());
-	this->curr_surprise = reward_signal - history->existing_predicted_scores[0];
-}
-
 void BranchExperiment::explore_backprop(
 		double target_val,
-		BranchExperimentHistory* history) {
+		SolutionWrapper* wrapper) {
 	uniform_int_distribution<int> until_distribution(0, (int)this->average_instances_per_run-1);
 	this->num_instances_until_target = 1 + until_distribution(generator);
 
-	if (history->existing_predicted_scores.size() > 0) {
-		if (!this->use_reward_signal) {
-			this->curr_surprise = target_val - history->existing_predicted_scores[0];
+	if (wrapper->experiment_instance_histories.size() > 0) {
+		BranchExperimentInstanceHistory* instance_history =
+			(BranchExperimentInstanceHistory*)wrapper->experiment_instance_histories[0];
+
+		double inner_targel_val;
+		if (instance_history->signal_needed_from == NULL) {
+			inner_targel_val = target_val;
+		} else {
+			if (!instance_history->signal_needed_from->signal_initialized) {
+				instance_history->signal_needed_from->signal_val = calc_reward_signal(instance_history->signal_needed_from);
+			}
+			inner_targel_val = instance_history->signal_needed_from->signal_val;
 		}
+
+		double curr_surprise = inner_targel_val - instance_history->existing_predicted_score;
 
 		#if defined(MDEBUG) && MDEBUG
 		if (true) {
 		#else
-		if (this->curr_surprise > this->best_surprise) {
+		if (curr_surprise > this->best_surprise) {
 		#endif /* MDEBUG */
-			this->best_surprise = this->curr_surprise;
+			this->best_surprise = curr_surprise;
+			if (this->best_new_scope != NULL) {
+				delete this->best_new_scope;
+			}
+			this->best_new_scope = this->curr_new_scope;
 			this->best_step_types = this->curr_step_types;
 			this->best_actions = this->curr_actions;
 			this->best_scopes = this->curr_scopes;
@@ -219,11 +240,16 @@ void BranchExperiment::explore_backprop(
 			}
 			this->best_scope_history = this->curr_scope_history;
 
+			this->curr_new_scope = NULL;
 			this->curr_step_types.clear();
 			this->curr_actions.clear();
 			this->curr_scopes.clear();
 			this->curr_scope_history = NULL;
 		} else {
+			if (this->curr_new_scope != NULL) {
+				delete this->curr_new_scope;
+			}
+			this->curr_new_scope = NULL;
 			this->curr_step_types.clear();
 			this->curr_actions.clear();
 			this->curr_scopes.clear();

@@ -1,16 +1,7 @@
-// TODO: hooks
+// TODO: for ramp, schedule hits on start to minimize wasted cycles
 
-// - don't have to correlate against final score
-//   - can correlate against layer above
-//     - OK if not ancestor all the time, as once correlated, can use reward signal without outer moving forward
-
-// - once reward signal has been found, focus on reward signal rather than true score?
-//   - otherwise, leads to mixed situation, destroying signal
-
-// - signals difficult to find, easy to lose
-// - maybe goal isn't to build solution, but to find signals
-//   - signals can easily(?) be optimized for once found
-//     - but finding not easy?
+// TODO: get rid of CommitExperiment, and simply accept changes that are not provably bad
+// - select from number of candidates to still try to drive progress
 
 #include <chrono>
 #include <iostream>
@@ -23,13 +14,13 @@
 #include "branch_node.h"
 #include "constants.h"
 #include "globals.h"
+#include "helpers.h"
 #include "obs_node.h"
 #include "problem.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "simpler.h"
 #include "solution.h"
-#include "solution_helpers.h"
 #include "solution_wrapper.h"
 #include "utilities.h"
 

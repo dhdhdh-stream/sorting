@@ -1,5 +1,5 @@
-#ifndef SOLUTION_HELPERS_H
-#define SOLUTION_HELPERS_H
+#ifndef HELPERS_H
+#define HELPERS_H
 
 #include <map>
 #include <utility>
@@ -80,17 +80,34 @@ bool train_new(std::vector<ScopeHistory*>& scope_histories,
 			   Network*& network,
 			   double& select_percentage);
 
+bool hit_helper(ScopeHistory* scope_history,
+				Scope* scope_context,
+				AbstractNode* node_context,
+				bool is_branch);
+void fetch_histories_helper(ScopeHistory* scope_history,
+							double target_val,
+							Scope* scope_context,
+							AbstractNode* node_context,
+							bool is_branch,
+							std::vector<ScopeHistory*>& scope_histories,
+							std::vector<double>& target_val_histories);
+void fetch_signals_helper(ScopeHistory* scope_history,
+						  std::map<Scope*, std::vector<double>>& signals);
+
+Scope* create_new_scope(Scope* scope_context);
+
 double calc_reward_signal(ScopeHistory* scope_history);
 void update_reward_signals(SolutionWrapper* wrapper);
-void train_score(Scope* scope);
+void train_score(Scope* scope,
+				 SolutionWrapper* wrapper);
 
-double get_experiment_impact(AbstractExperiment* experiment);
+bool compare_signals(std::map<Scope*, std::vector<double>>& existing_signals,
+					 std::map<Scope*, std::vector<double>>& new_signals);
 
 void clean_scope(Scope* scope,
 				 SolutionWrapper* wrapper);
 
-void update_scores(ScopeHistory* scope_history,
-				   double target_val,
+void update_counts(ScopeHistory* scope_history,
 				   int h_index);
 
-#endif /* SOLUTION_HELPERS_H */
+#endif /* HELPERS_H */

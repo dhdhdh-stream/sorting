@@ -7,13 +7,12 @@
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
+#include "helpers.h"
 #include "network.h"
-#include "new_scope_experiment.h"
 #include "obs_node.h"
 #include "problem.h"
 #include "scope.h"
 #include "scope_node.h"
-#include "solution_helpers.h"
 #include "solution_wrapper.h"
 #include "utilities.h"
 
@@ -159,10 +158,6 @@ void BranchExperiment::capture_verify_step(vector<double>& obs,
 
 void BranchExperiment::capture_verify_exit_step(SolutionWrapper* wrapper,
 												BranchExperimentState* experiment_state) {
-	ScopeNode* node = (ScopeNode*)this->new_nodes[experiment_state->step_index];
-
-	node->scope->back_activate(wrapper);
-
 	wrapper->scope_histories.pop_back();
 	wrapper->node_context.pop_back();
 	wrapper->experiment_context.pop_back();
@@ -170,8 +165,9 @@ void BranchExperiment::capture_verify_exit_step(SolutionWrapper* wrapper,
 	experiment_state->step_index++;
 }
 
-void BranchExperiment::capture_verify_backprop(BranchExperimentHistory* history) {
-	if (history->is_hit) {
+void BranchExperiment::capture_verify_backprop(SolutionWrapper* wrapper) {
+	BranchExperimentOverallHistory* overall_history = (BranchExperimentOverallHistory*)wrapper->experiment_overall_history;
+	if (overall_history->is_hit) {
 		this->state_iter++;
 		if (this->state_iter >= NUM_VERIFY_SAMPLES) {
 			this->result = EXPERIMENT_RESULT_SUCCESS;

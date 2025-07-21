@@ -1,3 +1,11 @@
+/**
+ * - don't bother with hooks into inner
+ *   - quite messy when multiple hooks on same node
+ *     - if try one by one, cannot override early mistake
+ *     - if only use one outer, restrictive
+ *   - simply rely on inner's child scopes instead
+ */
+
 #ifndef SCOPE_NODE_H
 #define SCOPE_NODE_H
 

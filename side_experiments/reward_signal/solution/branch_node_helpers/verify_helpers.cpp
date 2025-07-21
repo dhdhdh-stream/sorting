@@ -5,9 +5,9 @@
 #include <iostream>
 
 #include "globals.h"
+#include "helpers.h"
 #include "problem.h"
 #include "scope.h"
-#include "solution_helpers.h"
 #include "solution_wrapper.h"
 #include "utilities.h"
 

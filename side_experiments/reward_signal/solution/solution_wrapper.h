@@ -6,7 +6,8 @@
 #include <vector>
 
 class AbstractExperiment;
-class AbstractExperimentHistory;
+class AbstractExperimentInstanceHistory;
+class AbstractExperimentOverallHistory;
 class AbstractExperimentState;
 class AbstractNode;
 class Problem;
@@ -26,8 +27,6 @@ public:
 	AbstractExperiment* best_experiment;
 	int improvement_iter;
 
-	int regather_counter;
-
 	/**
 	 * - run variables
 	 */
@@ -37,7 +36,8 @@ public:
 
 	int num_actions;
 
-	AbstractExperimentHistory* experiment_history;
+	AbstractExperimentOverallHistory* experiment_overall_history;
+	std::vector<AbstractExperimentInstanceHistory*> experiment_instance_histories;
 
 	#if defined(MDEBUG) && MDEBUG
 	int run_index;

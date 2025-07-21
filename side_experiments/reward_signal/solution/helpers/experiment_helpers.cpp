@@ -1,15 +1,13 @@
-#include "solution_helpers.h"
+#include "helpers.h"
 
 #include <iostream>
 
 #include "action_node.h"
-#include "branch_compare_experiment.h"
 #include "branch_experiment.h"
 #include "branch_node.h"
 #include "commit_experiment.h"
 #include "constants.h"
 #include "globals.h"
-#include "new_scope_experiment.h"
 #include "obs_node.h"
 #include "scope.h"
 #include "scope_node.h"
@@ -17,8 +15,6 @@
 #include "solution_wrapper.h"
 
 using namespace std;
-
-const int NEW_SCOPE_MIN_NODES = 20;
 
 void gather_helper(ScopeHistory* scope_history,
 				   int& node_count,
@@ -250,107 +246,42 @@ void create_experiment(SolutionWrapper* wrapper,
 	}
 
 	if (explore_node != NULL) {
-		uniform_int_distribution<int> compare_distribution(0, 1);
-		if (explore_node->parent->score_inputs.size() > 0
-				&& compare_distribution(generator) == 0) {
-			BranchCompareExperiment* new_experiment = new BranchCompareExperiment(
-				explore_node->parent,
-				explore_node,
-				explore_is_branch);
+		BranchExperiment* new_experiment = new BranchExperiment(
+			explore_node->parent,
+			explore_node,
+			explore_is_branch,
+			wrapper);
 
-			if (new_experiment->result == EXPERIMENT_RESULT_FAIL) {
-				delete new_experiment;
-			} else {
-				curr_experiment = new_experiment;
-			}
+		if (new_experiment->result == EXPERIMENT_RESULT_FAIL) {
+			delete new_experiment;
 		} else {
-			BranchExperiment* new_experiment = new BranchExperiment(
-				explore_node->parent,
-				explore_node,
-				explore_is_branch);
-
-			if (new_experiment->result == EXPERIMENT_RESULT_FAIL) {
-				delete new_experiment;
-			} else {
-				curr_experiment = new_experiment;
-			}
+			curr_experiment = new_experiment;
 		}
 
-		// uniform_int_distribution<int> non_new_distribution(0, 9);
-		// if (explore_node->parent->nodes.size() >= NEW_SCOPE_MIN_NODES
-		// 		&& non_new_distribution(generator) != 0) {
-		// 	NewScopeExperiment* new_scope_experiment = new NewScopeExperiment(
+		// uniform_int_distribution<int> commit_distribution(0, 9);
+		// if (explore_node->parent->nodes.size() < 20
+		// 		&& commit_distribution(generator) == 0) {
+		// 	CommitExperiment* new_commit_experiment = new CommitExperiment(
 		// 		explore_node->parent,
 		// 		explore_node,
 		// 		explore_is_branch);
 
-		// 	if (new_scope_experiment->result == EXPERIMENT_RESULT_FAIL) {
-		// 		delete new_scope_experiment;
+		// 	if (new_commit_experiment->result == EXPERIMENT_RESULT_FAIL) {
+		// 		delete new_commit_experiment;
 		// 	} else {
-		// 		curr_experiment = new_scope_experiment;
+		// 		curr_experiment = new_commit_experiment;
 		// 	}
 		// } else {
-		// 	uniform_int_distribution<int> commit_distribution(0, 9);
-		// 	if (explore_node->parent->nodes.size() < 20
-		// 			&& commit_distribution(generator) == 0) {
-		// 		CommitExperiment* new_commit_experiment = new CommitExperiment(
-		// 			explore_node->parent,
-		// 			explore_node,
-		// 			explore_is_branch);
+		// 	BranchExperiment* new_experiment = new BranchExperiment(
+		// 		explore_node->parent,
+		// 		explore_node,
+		// 		explore_is_branch);
 
-		// 		if (new_commit_experiment->result == EXPERIMENT_RESULT_FAIL) {
-		// 			delete new_commit_experiment;
-		// 		} else {
-		// 			curr_experiment = new_commit_experiment;
-		// 		}
+		// 	if (new_experiment->result == EXPERIMENT_RESULT_FAIL) {
+		// 		delete new_experiment;
 		// 	} else {
-		// 		BranchExperiment* new_experiment = new BranchExperiment(
-		// 			explore_node->parent,
-		// 			explore_node,
-		// 			explore_is_branch);
-
-		// 		if (new_experiment->result == EXPERIMENT_RESULT_FAIL) {
-		// 			delete new_experiment;
-		// 		} else {
-		// 			curr_experiment = new_experiment;
-		// 		}
+		// 		curr_experiment = new_experiment;
 		// 	}
 		// }
 	}
-}
-
-double get_experiment_impact(AbstractExperiment* experiment) {
-	double existing_score;
-	switch (experiment->node_context->type) {
-	case NODE_TYPE_ACTION:
-		{
-			ActionNode* action_node = (ActionNode*)experiment->node_context;
-			existing_score = action_node->average_score;
-		}
-		break;
-	case NODE_TYPE_SCOPE:
-		{
-			ScopeNode* scope_node = (ScopeNode*)experiment->node_context;
-			existing_score = scope_node->average_score;
-		}
-		break;
-	case NODE_TYPE_BRANCH:
-		{
-			BranchNode* branch_node = (BranchNode*)experiment->node_context;
-			if (experiment->is_branch) {
-				existing_score = branch_node->branch_average_score;
-			} else {
-				existing_score = branch_node->original_average_score;
-			}
-		}
-		break;
-	case NODE_TYPE_OBS:
-		{
-			ObsNode* obs_node = (ObsNode*)experiment->node_context;
-			existing_score = obs_node->average_score;
-		}
-		break;
-	}
-
-	return experiment->new_score - existing_score;
 }
