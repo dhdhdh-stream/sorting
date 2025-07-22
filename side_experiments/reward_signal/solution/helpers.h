@@ -89,6 +89,7 @@ void fetch_histories_helper(ScopeHistory* scope_history,
 							Scope* scope_context,
 							AbstractNode* node_context,
 							bool is_branch,
+							bool use_reward_signal,
 							std::vector<ScopeHistory*>& scope_histories,
 							std::vector<double>& target_val_histories);
 void fetch_signals_helper(ScopeHistory* scope_history,
@@ -97,6 +98,9 @@ void fetch_signals_helper(ScopeHistory* scope_history,
 Scope* create_new_scope(Scope* scope_context);
 
 double calc_reward_signal(ScopeHistory* scope_history);
+void add_explore_helper(ScopeHistory* scope_history,
+						double target_val,
+						Scope* explore_scope);
 void update_reward_signals(SolutionWrapper* wrapper);
 void train_score(Scope* scope,
 				 SolutionWrapper* wrapper);

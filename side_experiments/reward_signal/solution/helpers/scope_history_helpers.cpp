@@ -78,12 +78,6 @@ void update_counts(ScopeHistory* scope_history,
 				   int h_index) {
 	Scope* scope = scope_history->scope;
 
-	scope_history->has_explore = false;
-	/**
-	 * - reset now that becomes existing
-	 *   - though also shouldn't matter
-	 */
-
 	map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
 	while (it != scope_history->node_histories.end()) {
 		if (scope->nodes.find(it->first) == scope->nodes.end()) {
@@ -213,19 +207,10 @@ void fetch_histories_helper(ScopeHistory* scope_history,
 							Scope* scope_context,
 							AbstractNode* node_context,
 							bool is_branch,
+							bool use_reward_signal,
 							vector<ScopeHistory*>& scope_histories,
 							vector<double>& target_val_histories) {
 	Scope* scope = scope_history->scope;
-
-	double inner_target_val;
-	if (scope->score_inputs.size() > 0) {
-		if (!scope_history->signal_initialized) {
-			scope_history->signal_val = calc_reward_signal(scope_history);
-		}
-		inner_target_val = scope_history->signal_val;
-	} else {
-		inner_target_val = target_val;
-	}
 
 	if (scope == scope_context) {
 		bool has_match = false;
@@ -245,10 +230,9 @@ void fetch_histories_helper(ScopeHistory* scope_history,
 		if (has_match) {
 			ScopeHistory* cleaned_scope_history = new ScopeHistory(scope_history, match_it->second->index);
 			scope_histories.push_back(cleaned_scope_history);
-			target_val_histories.push_back(inner_target_val);
+			target_val_histories.push_back(target_val);
 			/**
-			 * - simply use closest layer
-			 *   - going up may improve magic, but also increases noise
+			 * - simply use right above closest layer
 			 */
 		}
 	} else {
@@ -261,6 +245,17 @@ void fetch_histories_helper(ScopeHistory* scope_history,
 		}
 
 		if (is_child) {
+			double inner_target_val;
+			if (use_reward_signal
+					&& scope->score_inputs.size() > 0) {
+				if (!scope_history->signal_initialized) {
+					scope_history->signal_val = calc_reward_signal(scope_history);
+				}
+				inner_target_val = scope_history->signal_val;
+			} else {
+				inner_target_val = target_val;
+			}
+
 			for (map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
 					it != scope_history->node_histories.end(); it++) {
 				AbstractNode* node = it->second->node;
@@ -271,6 +266,7 @@ void fetch_histories_helper(ScopeHistory* scope_history,
 										   scope_context,
 										   node_context,
 										   is_branch,
+										   use_reward_signal,
 										   scope_histories,
 										   target_val_histories);
 				}

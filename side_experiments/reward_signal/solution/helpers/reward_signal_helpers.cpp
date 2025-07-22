@@ -1,26 +1,19 @@
-// - if protect signal, can get stuck?
-//   - bad signal
-// - if don't protect signal, they get lost/hard to form?
-
-// TODO: don't bother with existing
-// - since nodes are protected
-//   - then there's no longer a familiarity aspect?
-//     - still kind of is
-
-// TODO: use different versions of score
-
-// TODO: set average at start to try to reduce impacts of obs
-// - to make them easier to remove
-
 #include "helpers.h"
 
 #include <cmath>
 #include <iostream>
 
+#include "globals.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
 #include "solution_wrapper.h"
+
+#if defined(MDEBUG) && MDEBUG
+const int NUM_EXPLORE_SAVE = 10;
+#else
+const int NUM_EXPLORE_SAVE = 2000;
+#endif /* MDEBUG */
 
 using namespace std;
 
@@ -45,17 +38,61 @@ double calc_reward_signal(ScopeHistory* scope_history) {
 	return sum_vals;
 }
 
-void update_reward_signals(SolutionWrapper* wrapper) {
-	for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
-		train_score(wrapper->solution->scopes[s_index],
-					wrapper);
+void add_explore_helper(ScopeHistory* scope_history,
+						double target_val,
+						Scope* explore_scope) {
+	Scope* scope = scope_history->scope;
+
+	if (scope != explore_scope) {
+		if (scope->explore_scope_histories.size() < NUM_EXPLORE_SAVE) {
+			scope->explore_scope_histories.push_back(new ScopeHistory(scope_history));
+			scope->explore_target_val_histories.push_back(target_val);
+		} else {
+			uniform_int_distribution<int> distribution(0, scope->explore_scope_histories.size()-1);
+			int random_index = distribution(generator);
+			delete scope->explore_scope_histories[random_index];
+			scope->explore_scope_histories[random_index] = new ScopeHistory(scope_history);
+			scope->explore_target_val_histories[random_index] = target_val;
+		}
 	}
 
-	for (int h_index = 0; h_index < (int)wrapper->solution->explore_scope_histories.size(); h_index++) {
-		delete wrapper->solution->explore_scope_histories[h_index];
+	double inner_target_val;
+	if (scope->score_inputs.size() > 0
+			&& scope != explore_scope) {
+		if (!scope_history->signal_initialized) {
+			scope_history->signal_val = calc_reward_signal(scope_history);
+		}
+		inner_target_val = scope_history->signal_val;
+	} else {
+		inner_target_val = target_val;
 	}
-	wrapper->solution->explore_scope_histories.clear();
-	wrapper->solution->explore_target_val_histories.clear();
+
+	for (map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
+			it != scope_history->node_histories.end(); it++) {
+		AbstractNode* node = it->second->node;
+		if (node->type == NODE_TYPE_SCOPE) {
+			ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)it->second;
+			add_explore_helper(scope_node_history->scope_history,
+							   inner_target_val,
+							   explore_scope);
+		}
+	}
+}
+
+void update_reward_signals(SolutionWrapper* wrapper) {
+	for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
+		Scope* scope = wrapper->solution->scopes[s_index];
+		if (scope->explore_scope_histories.size() >= NUM_EXPLORE_SAVE) {
+			train_score(scope,
+						wrapper);
+
+			for (int h_index = 0; h_index < (int)scope->explore_scope_histories.size(); h_index++) {
+				delete scope->explore_scope_histories[h_index];
+			}
+			scope->explore_scope_histories.clear();
+			scope->explore_target_val_histories.clear();
+		}
+	}
 }
 
 void fetch_signals_helper(ScopeHistory* scope_history,

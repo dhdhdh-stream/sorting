@@ -38,6 +38,9 @@ public:
 
 	std::vector<Scope*> child_scopes;
 
+	std::vector<ScopeHistory*> explore_scope_histories;
+	std::vector<double> explore_target_val_histories;
+
 	Scope();
 	~Scope();
 
@@ -77,11 +80,6 @@ public:
 
 	std::vector<bool> factor_initialized;
 	std::vector<double> factor_values;
-
-	bool has_explore;
-	/**
-	 * - don't train signal on explore to help signals be more stable
-	 */
 
 	bool signal_initialized;
 	double signal_val;

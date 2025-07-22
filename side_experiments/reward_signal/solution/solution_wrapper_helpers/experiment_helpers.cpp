@@ -27,9 +27,7 @@ void SolutionWrapper::experiment_init() {
 		this->node_context.push_back(this->solution->scopes[0]->nodes[0]);
 	} else {
 		while (this->curr_experiment == NULL) {
-			if (this->solution->explore_scope_histories.size() >= NUM_EXPLORE_SAVE) {
-				update_reward_signals(this);
-			}
+			update_reward_signals(this);
 
 			create_experiment(this,
 							  this->curr_experiment);

@@ -20,14 +20,12 @@ const double EARLY_SUCCESS_MIN_T_SCORE = 3.0;
 
 #if defined(MDEBUG) && MDEBUG
 const int MEASURE_ITERS = 10;
-const int NUM_EXPLORE_SAVE = 10;
 #else
 /**
  * - need large number of samples
  *   - otherwise trapped by lottery + local maxima
  */
 const int MEASURE_ITERS = 1000;
-const int NUM_EXPLORE_SAVE = 1000;
 #endif /* MDEBUG */
 
 #if defined(MDEBUG) && MDEBUG

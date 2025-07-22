@@ -36,6 +36,9 @@ BranchExperiment::BranchExperiment(Scope* scope_context,
 
 	this->new_branch_node = NULL;
 
+	uniform_int_distribution<int> signal_distribution(0, 1);
+	this->use_reward_signal = signal_distribution(generator);
+
 	vector<ScopeHistory*> scope_histories;
 	vector<double> target_val_histories;
 	for (int h_index = 0; h_index < (int)wrapper->solution->existing_scope_histories.size(); h_index++) {
@@ -48,6 +51,7 @@ BranchExperiment::BranchExperiment(Scope* scope_context,
 								   this->scope_context,
 								   this->node_context,
 								   this->is_branch,
+								   this->use_reward_signal,
 								   scope_histories,
 								   target_val_histories);
 

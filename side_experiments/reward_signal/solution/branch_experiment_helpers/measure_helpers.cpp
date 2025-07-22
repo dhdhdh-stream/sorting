@@ -25,8 +25,6 @@ using namespace std;
 void BranchExperiment::measure_check_activate(SolutionWrapper* wrapper) {
 	ScopeHistory* scope_history = wrapper->scope_histories.back();
 
-	scope_history->has_explore = true;
-
 	if (this->select_percentage == 1.0) {
 		BranchExperimentState* new_experiment_state = new BranchExperimentState(this);
 		new_experiment_state->step_index = 0;

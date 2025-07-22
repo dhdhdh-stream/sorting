@@ -389,8 +389,6 @@ ScopeHistory::ScopeHistory(Scope* scope) {
 	this->factor_initialized = vector<bool>(scope->factors.size(), false);
 	this->factor_values = vector<double>(scope->factors.size());
 
-	this->has_explore = false;
-
 	this->signal_initialized = false;
 }
 
@@ -429,8 +427,6 @@ ScopeHistory::ScopeHistory(ScopeHistory* original) {
 
 	this->factor_initialized = original->factor_initialized;
 	this->factor_values = original->factor_values;
-
-	this->has_explore = original->has_explore;
 
 	this->signal_initialized = false;
 }
@@ -473,8 +469,6 @@ ScopeHistory::ScopeHistory(ScopeHistory* original,
 
 	this->factor_initialized = vector<bool>(scope->factors.size(), false);
 	this->factor_values = vector<double>(scope->factors.size());
-
-	this->has_explore = original->has_explore;
 
 	this->signal_initialized = false;
 }

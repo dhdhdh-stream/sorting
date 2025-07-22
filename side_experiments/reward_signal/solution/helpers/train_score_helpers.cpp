@@ -21,12 +21,6 @@
 
 using namespace std;
 
-#if defined(MDEBUG) && MDEBUG
-const int MIN_NUM_SAMPLES = 5;
-#else
-const int MIN_NUM_SAMPLES = 400;
-#endif /* MDEBUG */
-
 const double TEST_SAMPLES_PERCENTAGE = 0.2;
 
 #if defined(MDEBUG) && MDEBUG
@@ -37,70 +31,6 @@ const int SCORE_GATHER_NUM_SAMPLES = 40;
 
 const int SCORE_NUM_FACTORS = 40;
 
-const int INPUT_NUM_BEST_VS_WORST = 2;
-const int INPUT_NUM_EXPLORE_VS_EXISTING = 2;
-
-void train_score_fetch_histories_helper(ScopeHistory* scope_history,
-										double target_val,
-										Scope* scope_context,
-										vector<ScopeHistory*>& scope_histories,
-										vector<double>& target_val_histories) {
-	Scope* scope = scope_history->scope;
-
-	if (scope == scope_context
-			&& !scope_history->has_explore) {
-		scope_histories.push_back(scope_history);
-		target_val_histories.push_back(target_val);
-	} else {
-		double inner_target_val;
-		if (scope->score_inputs.size() > 0
-				&& !scope_history->has_explore) {
-			if (!scope_history->signal_initialized) {
-				scope_history->signal_val = calc_reward_signal(scope_history);
-			}
-			inner_target_val = scope_history->signal_val;
-		} else {
-			inner_target_val = target_val;
-		}
-
-		bool is_child = false;
-		for (int c_index = 0; c_index < (int)scope->child_scopes.size(); c_index++) {
-			if (scope->child_scopes[c_index] == scope_context) {
-				is_child = true;
-				break;
-			}
-		}
-
-		if (is_child) {
-			for (map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
-					it != scope_history->node_histories.end(); it++) {
-				AbstractNode* node = it->second->node;
-				if (node->type == NODE_TYPE_SCOPE) {
-					ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)it->second;
-					train_score_fetch_histories_helper(scope_node_history->scope_history,
-													   inner_target_val,
-													   scope_context,
-													   scope_histories,
-													   target_val_histories);
-				}
-			}
-		}
-	}
-}
-
-void clear_signals(ScopeHistory* scope_history) {
-	scope_history->signal_initialized = false;
-
-	for (map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
-			it != scope_history->node_histories.end(); it++) {
-		AbstractNode* node = it->second->node;
-		if (node->type == NODE_TYPE_SCOPE) {
-			ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)it->second;
-			clear_signals(scope_node_history->scope_history);
-		}
-	}
-}
-
 void train_score(Scope* scope,
 				 SolutionWrapper* solution_wrapper) {
 	double new_score_average_val;
@@ -109,79 +39,34 @@ void train_score(Scope* scope,
 	vector<double> new_score_input_standard_deviations;
 	vector<double> new_score_weights;
 
-	vector<ScopeHistory*> existing_scope_histories;
-	vector<double> existing_target_val_histories;
-	for (int h_index = 0; h_index < (int)solution_wrapper->solution->existing_scope_histories.size(); h_index++) {
-		train_score_fetch_histories_helper(solution_wrapper->solution->existing_scope_histories[h_index],
-										   solution_wrapper->solution->existing_target_val_histories[h_index],
-										   scope,
-										   existing_scope_histories,
-										   existing_target_val_histories);
+	{
+		default_random_engine generator_copy = generator;
+		shuffle(scope->explore_scope_histories.begin(), scope->explore_scope_histories.end(), generator_copy);
 	}
 	{
 		default_random_engine generator_copy = generator;
-		shuffle(existing_scope_histories.begin(), existing_scope_histories.end(), generator_copy);
-	}
-	{
-		default_random_engine generator_copy = generator;
-		shuffle(existing_target_val_histories.begin(), existing_target_val_histories.end(), generator_copy);
+		shuffle(scope->explore_target_val_histories.begin(), scope->explore_target_val_histories.end(), generator_copy);
 	}
 
-	vector<ScopeHistory*> explore_scope_histories;
-	vector<double> explore_target_val_histories;
-	for (int h_index = 0; h_index < (int)solution_wrapper->solution->explore_scope_histories.size(); h_index++) {
-		train_score_fetch_histories_helper(solution_wrapper->solution->explore_scope_histories[h_index],
-										   solution_wrapper->solution->explore_target_val_histories[h_index],
-										   scope,
-										   explore_scope_histories,
-										   explore_target_val_histories);
-	}
-	{
-		default_random_engine generator_copy = generator;
-		shuffle(explore_scope_histories.begin(), explore_scope_histories.end(), generator_copy);
-	}
-	{
-		default_random_engine generator_copy = generator;
-		shuffle(explore_target_val_histories.begin(), explore_target_val_histories.end(), generator_copy);
-	}
+	/**
+	 * - simply set constant as average
+	 *   - helps prevent obs from being arbitrarily inflated(?)
+	 */
+	
 
-	if (existing_scope_histories.size() < MIN_NUM_SAMPLES
-			|| explore_scope_histories.size() < MIN_NUM_SAMPLES) {
-		return;
-	}
+	vector<ScopeHistory*> train_scope_histories;
+	vector<double> train_target_val_histories;
+	vector<ScopeHistory*> test_scope_histories;
+	vector<double> test_target_val_histories;
 
-	vector<ScopeHistory*> combined_train_scope_histories;
-	vector<double> combined_train_target_val_histories;
-	vector<ScopeHistory*> combined_test_scope_histories;
-	vector<double> combined_test_target_val_histories;
-
-	int existing_num_train_instances = (1.0 - TEST_SAMPLES_PERCENTAGE) * (double)existing_scope_histories.size();
-	vector<ScopeHistory*> existing_train_scope_histories;
-	vector<double> existing_train_target_val_histories;
-	for (int i_index = 0; i_index < existing_num_train_instances; i_index++) {
-		existing_train_scope_histories.push_back(existing_scope_histories[i_index]);
-		existing_train_target_val_histories.push_back(existing_target_val_histories[i_index]);
-
-		combined_train_scope_histories.push_back(existing_scope_histories[i_index]);
-		combined_train_target_val_histories.push_back(existing_target_val_histories[i_index]);
+	int num_train_instances = (1.0 - TEST_SAMPLES_PERCENTAGE) * (double)scope->explore_scope_histories.size();
+	for (int i_index = 0; i_index < num_train_instances; i_index++) {
+		train_scope_histories.push_back(scope->explore_scope_histories[i_index]);
+		train_target_val_histories.push_back(scope->explore_target_val_histories[i_index]);
 	}
-	for (int i_index = existing_num_train_instances; i_index < (int)existing_scope_histories.size(); i_index++) {
-		combined_test_scope_histories.push_back(existing_scope_histories[i_index]);
-		combined_test_target_val_histories.push_back(existing_target_val_histories[i_index]);
-	}
-	int explore_num_train_instances = (1.0 - TEST_SAMPLES_PERCENTAGE) * (double)explore_scope_histories.size();
-	vector<ScopeHistory*> explore_train_scope_histories;
-	vector<double> explore_train_target_val_histories;
-	for (int i_index = 0; i_index < explore_num_train_instances; i_index++) {
-		explore_train_scope_histories.push_back(explore_scope_histories[i_index]);
-		explore_train_target_val_histories.push_back(explore_target_val_histories[i_index]);
-
-		combined_train_scope_histories.push_back(explore_scope_histories[i_index]);
-		combined_train_target_val_histories.push_back(explore_target_val_histories[i_index]);
-	}
-	for (int i_index = explore_num_train_instances; i_index < (int)explore_scope_histories.size(); i_index++) {
-		combined_test_scope_histories.push_back(explore_scope_histories[i_index]);
-		combined_test_target_val_histories.push_back(explore_target_val_histories[i_index]);
+	for (int i_index = num_train_instances; i_index < (int)scope->explore_scope_histories.size(); i_index++) {
+		test_scope_histories.push_back(scope->explore_scope_histories[i_index]);
+		test_target_val_histories.push_back(scope->explore_target_val_histories[i_index]);
 	}
 
 	map<Input, InputData> input_tracker;
@@ -199,16 +84,16 @@ void train_score(Scope* scope,
 
 		InputData input_data;
 		analyze_input(input,
-					  combined_train_scope_histories,
+					  train_scope_histories,
 					  input_data);
 		input_tracker[input] = input_data;
 
 		if (input_data.standard_deviation >= MIN_STANDARD_DEVIATION) {
-			vector<double> curr_factor_vals(combined_train_scope_histories.size());
-			for (int h_index = 0; h_index < (int)combined_train_scope_histories.size(); h_index++) {
+			vector<double> curr_factor_vals(train_scope_histories.size());
+			for (int h_index = 0; h_index < (int)train_scope_histories.size(); h_index++) {
 				double val;
 				bool is_on;
-				fetch_input_helper(combined_train_scope_histories[h_index],
+				fetch_input_helper(train_scope_histories[h_index],
 								   input,
 								   0,
 								   val,
@@ -224,17 +109,17 @@ void train_score(Scope* scope,
 			a_factor_vals[f_index] = curr_factor_vals;
 
 			double sum_vals = 0.0;
-			for (int h_index = 0; h_index < (int)combined_train_scope_histories.size(); h_index++) {
+			for (int h_index = 0; h_index < (int)train_scope_histories.size(); h_index++) {
 				sum_vals += curr_factor_vals[h_index];
 			}
-			a_factor_averages[f_index] = sum_vals / (double)combined_train_scope_histories.size();
+			a_factor_averages[f_index] = sum_vals / (double)train_scope_histories.size();
 
 			double sum_variances = 0.0;
-			for (int h_index = 0; h_index < (int)combined_train_scope_histories.size(); h_index++) {
+			for (int h_index = 0; h_index < (int)train_scope_histories.size(); h_index++) {
 				sum_variances += (curr_factor_vals[h_index] - a_factor_averages[f_index])
 					* (curr_factor_vals[h_index] - a_factor_averages[f_index]);
 			}
-			a_factor_standard_deviations[f_index] = sqrt(sum_variances / (double)combined_train_scope_histories.size());
+			a_factor_standard_deviations[f_index] = sqrt(sum_variances / (double)train_scope_histories.size());
 
 			remaining_factors.push_back(f_index);
 		}
@@ -251,11 +136,11 @@ void train_score(Scope* scope,
 		bool should_add = true;
 		for (int e_index = 0; e_index < (int)factor_vals.size(); e_index++) {
 			double sum_covariance = 0.0;
-			for (int h_index = 0; h_index < (int)combined_train_scope_histories.size(); h_index++) {
+			for (int h_index = 0; h_index < (int)train_scope_histories.size(); h_index++) {
 				sum_covariance += (factor_vals[e_index][h_index] - h_factor_averages[e_index])
 					* (a_factor_vals[factor_index][h_index] - a_factor_averages[factor_index]);
 			}
-			double covariance = sum_covariance / (double)combined_train_scope_histories.size();
+			double covariance = sum_covariance / (double)train_scope_histories.size();
 
 			double pcc = covariance / h_factor_standard_deviations[e_index] / a_factor_standard_deviations[factor_index];
 			if (abs(pcc) > UNIQUE_MAX_PCC) {
@@ -289,21 +174,21 @@ void train_score(Scope* scope,
 		remaining_factors.erase(remaining_factors.begin() + random_index);
 	}
 
-	Eigen::MatrixXd inputs(combined_train_scope_histories.size(), 1 + new_score_inputs.size());
+	Eigen::MatrixXd inputs(train_scope_histories.size(), 1 + new_score_inputs.size());
 	uniform_real_distribution<double> noise_distribution(-0.001, 0.001);
 	/**
 	 * - add some noise to prevent extremes
 	 */
-	for (int i_index = 0; i_index < (int)combined_train_scope_histories.size(); i_index++) {
+	for (int i_index = 0; i_index < (int)train_scope_histories.size(); i_index++) {
 		inputs(i_index, 0) = 1.0;
 		for (int f_index = 0; f_index < (int)new_score_inputs.size(); f_index++) {
 			inputs(i_index, 1 + f_index) = factor_vals[f_index][i_index] + noise_distribution(generator);
 		}
 	}
 
-	Eigen::VectorXd outputs(combined_train_scope_histories.size());
-	for (int i_index = 0; i_index < (int)combined_train_scope_histories.size(); i_index++) {
-		outputs(i_index) = combined_train_target_val_histories[i_index];
+	Eigen::VectorXd outputs(train_scope_histories.size());
+	for (int i_index = 0; i_index < (int)train_scope_histories.size(); i_index++) {
+		outputs(i_index) = train_target_val_histories[i_index];
 	}
 
 	Eigen::VectorXd weights;
@@ -334,10 +219,10 @@ void train_score(Scope* scope,
 
 	Eigen::VectorXd predicted = inputs * weights;
 	double sum_offset = 0.0;
-	for (int i_index = 0; i_index < (int)combined_train_scope_histories.size(); i_index++) {
+	for (int i_index = 0; i_index < (int)train_scope_histories.size(); i_index++) {
 		sum_offset += abs(predicted(i_index) - new_score_average_val);
 	}
-	double average_offset = sum_offset / (double)combined_train_scope_histories.size();
+	double average_offset = sum_offset / (double)train_scope_histories.size();
 	double impact_threshold = average_offset * FACTOR_IMPACT_THRESHOLD;
 	#endif /* MDEBUG */
 
@@ -346,11 +231,11 @@ void train_score(Scope* scope,
 		if (rand()%2 == 0) {
 		#else
 		double sum_impact = 0.0;
-		for (int i_index = 0; i_index < (int)combined_train_scope_histories.size(); i_index++) {
+		for (int i_index = 0; i_index < (int)train_scope_histories.size(); i_index++) {
 			sum_impact += abs(inputs(i_index, 1 + f_index));
 		}
 
-		double impact = abs(new_score_weights[f_index]) * sum_impact / (double)combined_train_scope_histories.size();
+		double impact = abs(new_score_weights[f_index]) * sum_impact / (double)train_scope_histories.size();
 		if (impact < impact_threshold) {
 		#endif /* MDEBUG */
 			new_score_inputs.erase(new_score_inputs.begin() + f_index);
@@ -362,20 +247,20 @@ void train_score(Scope* scope,
 		}
 	}
 
-	vector<double> remaining_scores(combined_train_scope_histories.size());
-	for (int i_index = 0; i_index < (int)combined_train_scope_histories.size(); i_index++) {
+	vector<double> remaining_scores(train_scope_histories.size());
+	for (int i_index = 0; i_index < (int)train_scope_histories.size(); i_index++) {
 		double sum_score = 0.0;
 		for (int f_index = 0; f_index < (int)new_score_inputs.size(); f_index++) {
 			sum_score += new_score_weights[f_index] * factor_vals[f_index][i_index];
 		}
 
-		remaining_scores[i_index] = combined_train_target_val_histories[i_index]
+		remaining_scores[i_index] = train_target_val_histories[i_index]
 			- new_score_average_val - sum_score;
 	}
 
 	vector<int> best_indexes(SCORE_GATHER_NUM_SAMPLES, -1);
 	vector<double> best_scores(SCORE_GATHER_NUM_SAMPLES);
-	for (int h_index = 0; h_index < (int)existing_train_scope_histories.size(); h_index++) {
+	for (int h_index = 0; h_index < (int)train_scope_histories.size(); h_index++) {
 		if (best_indexes.back() == -1
 				|| remaining_scores[h_index] > best_scores.back()) {
 			best_indexes.back() = h_index;
@@ -408,17 +293,17 @@ void train_score(Scope* scope,
 	for (int f_index = 0; f_index < (int)best_indexes.size(); f_index++) {
 		vector<Scope*> scope_context;
 		vector<int> node_context;
-		gather_t_scores_helper(existing_train_scope_histories[best_indexes[f_index]],
+		gather_t_scores_helper(train_scope_histories[best_indexes[f_index]],
 							   scope_context,
 							   node_context,
 							   best_t_scores,
-							   combined_train_scope_histories,
+							   train_scope_histories,
 							   input_tracker);
 	}
 
 	vector<int> worst_indexes(SCORE_GATHER_NUM_SAMPLES, -1);
 	vector<double> worst_scores(SCORE_GATHER_NUM_SAMPLES);
-	for (int h_index = 0; h_index < (int)existing_train_scope_histories.size(); h_index++) {
+	for (int h_index = 0; h_index < (int)train_scope_histories.size(); h_index++) {
 		if (worst_indexes.back() == -1
 				|| remaining_scores[h_index] < worst_scores.back()) {
 			worst_indexes.back() = h_index;
@@ -451,11 +336,11 @@ void train_score(Scope* scope,
 	for (int f_index = 0; f_index < (int)worst_indexes.size(); f_index++) {
 		vector<Scope*> scope_context;
 		vector<int> node_context;
-		gather_t_scores_helper(existing_train_scope_histories[worst_indexes[f_index]],
+		gather_t_scores_helper(train_scope_histories[worst_indexes[f_index]],
 							   scope_context,
 							   node_context,
 							   worst_t_scores,
-							   combined_train_scope_histories,
+							   train_scope_histories,
 							   input_tracker);
 	}
 
@@ -477,81 +362,12 @@ void train_score(Scope* scope,
 		}
 	}
 
-	vector<int> r_existing_indexes(existing_train_scope_histories.size());
-	for (int i_index = 0; i_index < (int)existing_train_scope_histories.size(); i_index++) {
-		r_existing_indexes[i_index] = i_index;
-	}
-
-	map<Input, double> existing_t_scores;
-	for (int iter_index = 0; iter_index < SCORE_GATHER_NUM_SAMPLES; iter_index++) {
-		uniform_int_distribution<int> r_existing_distribution(0, r_existing_indexes.size()-1);
-		int random_index = r_existing_distribution(generator);
-
-		vector<Scope*> scope_context;
-		vector<int> node_context;
-		gather_t_scores_helper(existing_train_scope_histories[r_existing_indexes[random_index]],
-							   scope_context,
-							   node_context,
-							   existing_t_scores,
-							   combined_train_scope_histories,
-							   input_tracker);
-
-		r_existing_indexes.erase(r_existing_indexes.begin() + random_index);
-	}
-
-	vector<int> r_explore_indexes(explore_train_scope_histories.size());
-	for (int i_index = 0; i_index < (int)explore_train_scope_histories.size(); i_index++) {
-		r_explore_indexes[i_index] = i_index;
-	}
-
-	map<Input, double> explore_t_scores;
-	for (int iter_index = 0; iter_index < SCORE_GATHER_NUM_SAMPLES; iter_index++) {
-		uniform_int_distribution<int> r_explore_distribution(0, r_explore_indexes.size()-1);
-		int random_index = r_explore_distribution(generator);
-
-		vector<Scope*> scope_context;
-		vector<int> node_context;
-		gather_t_scores_helper(explore_train_scope_histories[r_explore_indexes[random_index]],
-							   scope_context,
-							   node_context,
-							   explore_t_scores,
-							   combined_train_scope_histories,
-							   input_tracker);
-
-		r_explore_indexes.erase(r_explore_indexes.begin() + random_index);
-	}
-
-	map<Input, double> explore_vs_existing_t_scores;
-	for (map<Input, double>::iterator existing_it = existing_t_scores.begin();
-			existing_it != existing_t_scores.end(); existing_it++) {
-		map<Input, double>::iterator explore_it = explore_t_scores.find(existing_it->first);
-		if (explore_it == explore_t_scores.end()) {
-			explore_vs_existing_t_scores[existing_it->first] = abs(existing_it->second);
-		} else {
-			explore_vs_existing_t_scores[existing_it->first] = abs(existing_it->second - explore_it->second);
-		}
-	}
-	for (map<Input, double>::iterator explore_it = explore_t_scores.begin();
-			explore_it != explore_t_scores.end(); explore_it++) {
-		map<Input, double>::iterator existing_it = existing_t_scores.find(explore_it->first);
-		if (existing_it == existing_t_scores.end()) {
-			explore_vs_existing_t_scores[explore_it->first] = abs(explore_it->second);
-		}
-	}
-
 	vector<pair<double,Input>> s_best_vs_worst_t_scores;
 	for (map<Input, double>::iterator it = best_vs_worst_t_scores.begin();
 			it != best_vs_worst_t_scores.end(); it++) {
 		s_best_vs_worst_t_scores.push_back({it->second, it->first});
 	}
 	sort(s_best_vs_worst_t_scores.begin(), s_best_vs_worst_t_scores.end());
-
-	vector<pair<double,Input>> s_explore_vs_existing_t_scores;
-	for (map<Input, double>::iterator it = explore_vs_existing_t_scores.begin();
-			it != explore_vs_existing_t_scores.end(); it++) {
-		s_explore_vs_existing_t_scores.push_back({it->second, it->first});
-	}
-	sort(s_explore_vs_existing_t_scores.begin(), s_explore_vs_existing_t_scores.end());
 
 	vector<Input> network_inputs;
 	vector<vector<double>> v_input_vals;
@@ -563,15 +379,15 @@ void train_score(Scope* scope,
 		Input input = s_best_vs_worst_t_scores[f_index].second;
 		InputData input_data = input_tracker[input];
 
-		vector<double> curr_input_vals(combined_train_scope_histories.size());
-		vector<bool> curr_input_is_on(combined_train_scope_histories.size());
-		vector<double> curr_n_input_vals(combined_train_scope_histories.size());
+		vector<double> curr_input_vals(train_scope_histories.size());
+		vector<bool> curr_input_is_on(train_scope_histories.size());
+		vector<double> curr_n_input_vals(train_scope_histories.size());
 		double curr_average = input_data.average;
 		double curr_standard_deviation = input_data.standard_deviation;
-		for (int h_index = 0; h_index < (int)combined_train_scope_histories.size(); h_index++) {
+		for (int h_index = 0; h_index < (int)train_scope_histories.size(); h_index++) {
 			double val;
 			bool is_on;
-			fetch_input_helper(combined_train_scope_histories[h_index],
+			fetch_input_helper(train_scope_histories[h_index],
 							   input,
 							   0,
 							   val,
@@ -606,66 +422,12 @@ void train_score(Scope* scope,
 			h_averages.push_back(potential_average);
 			h_standard_deviations.push_back(potential_standard_deviation);
 
-			if (network_inputs.size() >= INPUT_NUM_BEST_VS_WORST) {
+			if (network_inputs.size() >= INPUT_NUM_HIGHEST) {
 				break;
 			}
 		}
 	}
-	for (int f_index = (int)s_explore_vs_existing_t_scores.size()-1; f_index >= 0; f_index--) {
-		Input input = s_explore_vs_existing_t_scores[f_index].second;
-		InputData input_data = input_tracker[input];
 
-		vector<double> curr_input_vals(combined_train_scope_histories.size());
-		vector<bool> curr_input_is_on(combined_train_scope_histories.size());
-		vector<double> curr_n_input_vals(combined_train_scope_histories.size());
-		double curr_average = input_data.average;
-		double curr_standard_deviation = input_data.standard_deviation;
-		for (int h_index = 0; h_index < (int)combined_train_scope_histories.size(); h_index++) {
-			double val;
-			bool is_on;
-			fetch_input_helper(combined_train_scope_histories[h_index],
-							   input,
-							   0,
-							   val,
-							   is_on);
-			curr_input_vals[h_index] = val;
-			curr_input_is_on[h_index] = is_on;
-			if (is_on) {
-				double normalized_val = (val - curr_average) / curr_standard_deviation;
-				curr_n_input_vals[h_index] = normalized_val;
-			} else {
-				curr_n_input_vals[h_index] = 0.0;
-			}
-		}
-
-		double potential_average;
-		double potential_standard_deviation;
-		bool should_add = is_unique(n_input_vals,
-									h_averages,
-									h_standard_deviations,
-									curr_n_input_vals,
-									potential_average,
-									potential_standard_deviation);
-
-		s_explore_vs_existing_t_scores.pop_back();
-
-		if (should_add) {
-			network_inputs.push_back(input);
-			v_input_vals.push_back(curr_input_vals);
-			v_input_is_on.push_back(curr_input_is_on);
-
-			n_input_vals.push_back(curr_n_input_vals);
-			h_averages.push_back(potential_average);
-			h_standard_deviations.push_back(potential_standard_deviation);
-
-			if (network_inputs.size() >= INPUT_NUM_BEST_VS_WORST + INPUT_NUM_EXPLORE_VS_EXISTING) {
-				break;
-			}
-		}
-	}
-	/**
-	 * - simply select random from s_best_vs_worst_t_scores
-	 */
 	while (s_best_vs_worst_t_scores.size() > 0) {
 		uniform_int_distribution<int> input_distribution(0, s_best_vs_worst_t_scores.size()-1);
 		int input_index = input_distribution(generator);
@@ -673,15 +435,15 @@ void train_score(Scope* scope,
 		Input input = s_best_vs_worst_t_scores[input_index].second;
 		InputData input_data = input_tracker[input];
 
-		vector<double> curr_input_vals(combined_train_scope_histories.size());
-		vector<bool> curr_input_is_on(combined_train_scope_histories.size());
-		vector<double> curr_n_input_vals(combined_train_scope_histories.size());
+		vector<double> curr_input_vals(train_scope_histories.size());
+		vector<bool> curr_input_is_on(train_scope_histories.size());
+		vector<double> curr_n_input_vals(train_scope_histories.size());
 		double curr_average = input_data.average;
 		double curr_standard_deviation = input_data.standard_deviation;
-		for (int h_index = 0; h_index < (int)combined_train_scope_histories.size(); h_index++) {
+		for (int h_index = 0; h_index < (int)train_scope_histories.size(); h_index++) {
 			double val;
 			bool is_on;
-			fetch_input_helper(combined_train_scope_histories[h_index],
+			fetch_input_helper(train_scope_histories[h_index],
 							   input,
 							   0,
 							   val,
@@ -722,9 +484,9 @@ void train_score(Scope* scope,
 		}
 	}
 
-	vector<vector<double>> input_vals(combined_train_scope_histories.size());
-	vector<vector<bool>> input_is_on(combined_train_scope_histories.size());
-	for (int h_index = 0; h_index < (int)combined_train_scope_histories.size(); h_index++) {
+	vector<vector<double>> input_vals(train_scope_histories.size());
+	vector<vector<bool>> input_is_on(train_scope_histories.size());
+	for (int h_index = 0; h_index < (int)train_scope_histories.size(); h_index++) {
 		vector<double> curr_input_vals(network_inputs.size());
 		vector<bool> curr_input_is_on(network_inputs.size());
 		for (int i_index = 0; i_index < (int)network_inputs.size(); i_index++) {
@@ -736,17 +498,17 @@ void train_score(Scope* scope,
 	}
 
 	double sum_misguess = 0.0;
-	for (int i_index = 0; i_index < (int)combined_train_scope_histories.size(); i_index++) {
+	for (int i_index = 0; i_index < (int)train_scope_histories.size(); i_index++) {
 		sum_misguess += remaining_scores[i_index] * remaining_scores[i_index];
 	}
-	double average_misguess = sum_misguess / (double)combined_train_scope_histories.size();
+	double average_misguess = sum_misguess / (double)train_scope_histories.size();
 
 	double sum_misguess_variance = 0.0;
-	for (int i_index = 0; i_index < (int)combined_train_scope_histories.size(); i_index++) {
+	for (int i_index = 0; i_index < (int)train_scope_histories.size(); i_index++) {
 		double curr_misguess = remaining_scores[i_index] * remaining_scores[i_index];
 		sum_misguess_variance += (curr_misguess - average_misguess) * (curr_misguess - average_misguess);
 	}
-	double misguess_standard_deviation = sqrt(sum_misguess_variance / (double)combined_train_scope_histories.size());
+	double misguess_standard_deviation = sqrt(sum_misguess_variance / (double)train_scope_histories.size());
 	if (misguess_standard_deviation < MIN_STANDARD_DEVIATION) {
 		misguess_standard_deviation = MIN_STANDARD_DEVIATION;
 	}
@@ -760,35 +522,35 @@ void train_score(Scope* scope,
 				  remaining_scores,
 				  new_network);
 
-	vector<double> network_vals(combined_train_scope_histories.size());
-	for (int i_index = 0; i_index < (int)combined_train_scope_histories.size(); i_index++) {
+	vector<double> network_vals(train_scope_histories.size());
+	for (int i_index = 0; i_index < (int)train_scope_histories.size(); i_index++) {
 		new_network->activate(input_vals[i_index],
 							  input_is_on[i_index]);
 		network_vals[i_index] = new_network->output->acti_vals[0];
 	}
 
 	double sum_network_vals = 0.0;
-	for (int i_index = 0; i_index < (int)combined_train_scope_histories.size(); i_index++) {
+	for (int i_index = 0; i_index < (int)train_scope_histories.size(); i_index++) {
 		sum_network_vals += network_vals[i_index];
 	}
-	double network_average = sum_network_vals / (double)combined_train_scope_histories.size();
+	double network_average = sum_network_vals / (double)train_scope_histories.size();
 
 	double sum_variances = 0.0;
-	for (int i_index = 0; i_index < (int)combined_train_scope_histories.size(); i_index++) {
+	for (int i_index = 0; i_index < (int)train_scope_histories.size(); i_index++) {
 		sum_variances += (network_vals[i_index] - network_average)
 			* (network_vals[i_index] - network_average);
 	}
-	double network_standard_deviation = sqrt(sum_variances / (double)combined_train_scope_histories.size());
+	double network_standard_deviation = sqrt(sum_variances / (double)train_scope_histories.size());
 
 	bool should_add = true;
 	for (int f_index = 0; f_index < (int)scope->factors.size(); f_index++) {
 		if (a_factor_vals[f_index].size() > 0) {
 			double sum_covariance = 0.0;
-			for (int h_index = 0; h_index < (int)combined_train_scope_histories.size(); h_index++) {
+			for (int h_index = 0; h_index < (int)train_scope_histories.size(); h_index++) {
 				sum_covariance += (a_factor_vals[f_index][h_index] - a_factor_averages[f_index])
 					* (network_vals[h_index] - network_average);
 			}
-			double covariance = sum_covariance / (double)combined_train_scope_histories.size();
+			double covariance = sum_covariance / (double)train_scope_histories.size();
 
 			double pcc = covariance / a_factor_standard_deviations[f_index] / network_standard_deviation;
 			if (abs(pcc) > UNIQUE_MAX_PCC) {
@@ -799,20 +561,20 @@ void train_score(Scope* scope,
 	}
 
 	double sum_new_misguess = 0.0;
-	for (int h_index = 0; h_index < (int)combined_train_scope_histories.size(); h_index++) {
+	for (int h_index = 0; h_index < (int)train_scope_histories.size(); h_index++) {
 		sum_new_misguess += (remaining_scores[h_index] - network_vals[h_index])
 			* (remaining_scores[h_index] - network_vals[h_index]);
 	}
-	double new_average_misguess = sum_new_misguess / (double)combined_train_scope_histories.size();
+	double new_average_misguess = sum_new_misguess / (double)train_scope_histories.size();
 
 	double sum_new_misguess_variance = 0.0;
-	for (int h_index = 0; h_index < (int)combined_train_scope_histories.size(); h_index++) {
+	for (int h_index = 0; h_index < (int)train_scope_histories.size(); h_index++) {
 		double curr_misguess = (remaining_scores[h_index] - network_vals[h_index])
 			* (remaining_scores[h_index] - network_vals[h_index]);
 		sum_new_misguess_variance += (curr_misguess - new_average_misguess)
 			* (curr_misguess - new_average_misguess);
 	}
-	double new_misguess_standard_deviation = sqrt(sum_new_misguess_variance / (double)combined_train_scope_histories.size());
+	double new_misguess_standard_deviation = sqrt(sum_new_misguess_variance / (double)train_scope_histories.size());
 	if (new_misguess_standard_deviation < MIN_STANDARD_DEVIATION) {
 		new_misguess_standard_deviation = MIN_STANDARD_DEVIATION;
 	}
@@ -822,7 +584,7 @@ void train_score(Scope* scope,
 	#else
 	double new_improvement = average_misguess - new_average_misguess;
 	double new_standard_deviation = min(misguess_standard_deviation, new_misguess_standard_deviation);
-	double new_t_score = new_improvement / (new_standard_deviation / sqrt((double)combined_train_scope_histories.size()));
+	double new_t_score = new_improvement / (new_standard_deviation / sqrt((double)train_scope_histories.size()));
 
 	if (should_add && new_t_score > 2.326) {
 	#endif /* MDEBUG */
@@ -837,7 +599,7 @@ void train_score(Scope* scope,
 
 			vector<vector<double>> remove_input_vals = input_vals;
 			vector<vector<bool>> remove_input_is_on = input_is_on;
-			for (int d_index = 0; d_index < (int)combined_train_scope_histories.size(); d_index++) {
+			for (int d_index = 0; d_index < (int)train_scope_histories.size(); d_index++) {
 				remove_input_vals[d_index].erase(remove_input_vals[d_index].begin() + i_index);
 				remove_input_is_on[d_index].erase(remove_input_is_on[d_index].begin() + i_index);
 			}
@@ -904,36 +666,36 @@ void train_score(Scope* scope,
 		delete new_network;
 	}
 
-	vector<double> existing_test_misguesses(combined_test_scope_histories.size());
+	vector<double> existing_test_misguesses(test_scope_histories.size());
 	if (scope->score_inputs.size() == 0) {
 		double sum_vals = 0.0;
-		for (int h_index = 0; h_index < (int)combined_test_scope_histories.size(); h_index++) {
-			sum_vals += combined_test_target_val_histories[h_index];
+		for (int h_index = 0; h_index < (int)test_scope_histories.size(); h_index++) {
+			sum_vals += test_target_val_histories[h_index];
 		}
-		double val_average = sum_vals / (double)combined_test_scope_histories.size();
+		double val_average = sum_vals / (double)test_scope_histories.size();
 
-		for (int h_index = 0; h_index < (int)combined_test_scope_histories.size(); h_index++) {
-			double curr_misguess = (combined_test_target_val_histories[h_index] - val_average)
-				* (combined_test_target_val_histories[h_index] - val_average);
+		for (int h_index = 0; h_index < (int)test_scope_histories.size(); h_index++) {
+			double curr_misguess = (test_target_val_histories[h_index] - val_average)
+				* (test_target_val_histories[h_index] - val_average);
 			existing_test_misguesses[h_index] = curr_misguess;
 		}
 	} else {
-		for (int h_index = 0; h_index < (int)combined_test_scope_histories.size(); h_index++) {
-			double reward_signal = calc_reward_signal(combined_test_scope_histories[h_index]);
+		for (int h_index = 0; h_index < (int)test_scope_histories.size(); h_index++) {
+			double reward_signal = calc_reward_signal(test_scope_histories[h_index]);
 
-			double curr_misguess = (reward_signal - combined_test_target_val_histories[h_index])
-				* (reward_signal - combined_test_target_val_histories[h_index]);
+			double curr_misguess = (reward_signal - test_target_val_histories[h_index])
+				* (reward_signal - test_target_val_histories[h_index]);
 			existing_test_misguesses[h_index] = curr_misguess;
 		}
 	}
 
-	vector<double> new_test_misguesses(combined_test_scope_histories.size());
-	for (int h_index = 0; h_index < (int)combined_test_scope_histories.size(); h_index++) {
+	vector<double> new_test_misguesses(test_scope_histories.size());
+	for (int h_index = 0; h_index < (int)test_scope_histories.size(); h_index++) {
 		double sum_vals = new_score_average_val;
 		for (int i_index = 0; i_index < (int)new_score_inputs.size(); i_index++) {
 			double val;
 			bool is_on;
-			fetch_input_helper(combined_test_scope_histories[h_index],
+			fetch_input_helper(test_scope_histories[h_index],
 							   new_score_inputs[i_index],
 							   0,
 							   val,
@@ -944,52 +706,50 @@ void train_score(Scope* scope,
 			}
 		}
 
-		double curr_misguess = (sum_vals - combined_test_target_val_histories[h_index])
-			* (sum_vals - combined_test_target_val_histories[h_index]);
+		double curr_misguess = (sum_vals - test_target_val_histories[h_index])
+			* (sum_vals - test_target_val_histories[h_index]);
 		new_test_misguesses[h_index] = curr_misguess;
 	}
 
 	double existing_test_sum_misguess = 0.0;
-	for (int h_index = 0; h_index < (int)combined_test_scope_histories.size(); h_index++) {
+	for (int h_index = 0; h_index < (int)test_scope_histories.size(); h_index++) {
 		existing_test_sum_misguess += existing_test_misguesses[h_index];
 	}
-	double existing_test_misguess_average = existing_test_sum_misguess / (double)combined_test_scope_histories.size();
+	double existing_test_misguess_average = existing_test_sum_misguess / (double)test_scope_histories.size();
 
 	double existing_test_sum_misguess_variance = 0.0;
-	for (int h_index = 0; h_index < (int)combined_test_scope_histories.size(); h_index++) {
+	for (int h_index = 0; h_index < (int)test_scope_histories.size(); h_index++) {
 		existing_test_sum_misguess_variance += (existing_test_misguesses[h_index] - existing_test_misguess_average)
 			* (existing_test_misguesses[h_index] - existing_test_misguess_average);
 	}
-	double existing_test_misguess_standard_deviation = sqrt(existing_test_sum_misguess_variance / (double)combined_test_scope_histories.size());
+	double existing_test_misguess_standard_deviation = sqrt(existing_test_sum_misguess_variance / (double)test_scope_histories.size());
 	if (existing_test_misguess_standard_deviation < MIN_STANDARD_DEVIATION) {
 		existing_test_misguess_standard_deviation = MIN_STANDARD_DEVIATION;
 	}
 
 	double new_test_sum_misguess = 0.0;
-	for (int h_index = 0; h_index < (int)combined_test_scope_histories.size(); h_index++) {
+	for (int h_index = 0; h_index < (int)test_scope_histories.size(); h_index++) {
 		new_test_sum_misguess += new_test_misguesses[h_index];
 	}
-	double new_test_misguess_average = new_test_sum_misguess / (double)combined_test_scope_histories.size();
+	double new_test_misguess_average = new_test_sum_misguess / (double)test_scope_histories.size();
 
 	double new_test_sum_misguess_variance = 0.0;
-	for (int h_index = 0; h_index < (int)combined_test_scope_histories.size(); h_index++) {
+	for (int h_index = 0; h_index < (int)test_scope_histories.size(); h_index++) {
 		new_test_sum_misguess_variance += (new_test_misguesses[h_index] - new_test_misguess_average)
 			* (new_test_misguesses[h_index] - new_test_misguess_average);
 	}
-	double new_test_misguess_standard_deviation = sqrt(new_test_sum_misguess_variance / (double)combined_test_scope_histories.size());
+	double new_test_misguess_standard_deviation = sqrt(new_test_sum_misguess_variance / (double)test_scope_histories.size());
 	if (new_test_misguess_standard_deviation < MIN_STANDARD_DEVIATION) {
 		new_test_misguess_standard_deviation = MIN_STANDARD_DEVIATION;
 	}
 
 	double new_test_improvement = existing_test_misguess_average - new_test_misguess_average;
 	double min_standard_deviation = min(existing_test_misguess_standard_deviation, new_test_misguess_standard_deviation);
-	double t_score = new_test_improvement / (min_standard_deviation / sqrt((double)combined_test_scope_histories.size()));
+	double t_score = new_test_improvement / (min_standard_deviation / sqrt((double)test_scope_histories.size()));
 
 	// temp
 	cout << "scope->id: " << scope->id << endl;
 	cout << "scope->score_inputs.size(): " << scope->score_inputs.size() << endl;
-	cout << "existing_scope_histories.size(): " << existing_scope_histories.size() << endl;
-	cout << "explore_scope_histories.size(): " << explore_scope_histories.size() << endl;
 
 	cout << "existing_test_misguess_average: " << existing_test_misguess_average << endl;
 	cout << "new_test_misguess_average: " << new_test_misguess_average << endl;
@@ -1006,10 +766,6 @@ void train_score(Scope* scope,
 		scope->score_input_averages = new_score_input_averages;
 		scope->score_input_standard_deviations = new_score_input_standard_deviations;
 		scope->score_weights = new_score_weights;
-
-		for (int h_index = 0; h_index < (int)solution_wrapper->solution->existing_scope_histories.size(); h_index++) {
-			clear_signals(solution_wrapper->solution->existing_scope_histories[h_index]);
-		}
 
 		// temp
 		solution_wrapper->save("saves/", "main.txt");
