@@ -101,8 +101,11 @@ void update_reward_signals(SolutionWrapper* wrapper);
 void train_score(Scope* scope,
 				 SolutionWrapper* wrapper);
 
-bool compare_signals(std::map<Scope*, std::vector<double>>& existing_signals,
-					 std::map<Scope*, std::vector<double>>& new_signals);
+bool compare_result(std::vector<double>& existing_scores,
+					std::map<Scope*, std::vector<double>>& existing_signals,
+					std::vector<double>& new_scores,
+					std::map<Scope*, std::vector<double>>& new_signals,
+					double& improvement);
 
 void clean_scope(Scope* scope,
 				 SolutionWrapper* wrapper);

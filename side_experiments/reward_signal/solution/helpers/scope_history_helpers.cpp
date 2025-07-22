@@ -78,6 +78,11 @@ void update_counts(ScopeHistory* scope_history,
 				   int h_index) {
 	Scope* scope = scope_history->scope;
 
+	scope_history->has_explore = false;
+	/**
+	 * - reset now that becomes existing
+	 */
+
 	map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
 	while (it != scope_history->node_histories.end()) {
 		if (scope->nodes.find(it->first) == scope->nodes.end()) {
@@ -212,7 +217,8 @@ void fetch_histories_helper(ScopeHistory* scope_history,
 	Scope* scope = scope_history->scope;
 
 	double inner_target_val;
-	if (scope->score_inputs.size() > 0) {
+	if (scope->score_inputs.size() > 0
+			&& !scope_history->has_explore) {
 		if (!scope_history->signal_initialized) {
 			scope_history->signal_val = calc_reward_signal(scope_history);
 		}
@@ -240,6 +246,10 @@ void fetch_histories_helper(ScopeHistory* scope_history,
 			ScopeHistory* cleaned_scope_history = new ScopeHistory(scope_history, match_it->second->index);
 			scope_histories.push_back(cleaned_scope_history);
 			target_val_histories.push_back(inner_target_val);
+			/**
+			 * - simply use closest layer
+			 *   - going up may improve magic, but also increases noise
+			 */
 		}
 	} else {
 		bool is_child = false;
@@ -273,7 +283,8 @@ void fetch_signals_helper(ScopeHistory* scope_history,
 						  map<Scope*, vector<double>>& signals) {
 	Scope* scope = scope_history->scope;
 
-	if (scope->score_inputs.size() > 0) {
+	if (scope->score_inputs.size() > 0
+			&& !scope_history->has_explore) {
 		if (!scope_history->signal_initialized) {
 			scope_history->signal_val = calc_reward_signal(scope_history);
 		}

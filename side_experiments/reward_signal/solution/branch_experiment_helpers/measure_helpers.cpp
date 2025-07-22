@@ -23,13 +23,15 @@
 using namespace std;
 
 void BranchExperiment::measure_check_activate(SolutionWrapper* wrapper) {
+	ScopeHistory* scope_history = wrapper->scope_histories.back();
+
+	scope_history->has_explore = true;
+
 	if (this->select_percentage == 1.0) {
 		BranchExperimentState* new_experiment_state = new BranchExperimentState(this);
 		new_experiment_state->step_index = 0;
 		wrapper->experiment_context.back() = new_experiment_state;
 	} else {
-		ScopeHistory* scope_history = wrapper->scope_histories.back();
-
 		double sum_vals = this->new_average_score;
 
 		for (int i_index = 0; i_index < (int)this->new_inputs.size(); i_index++) {
@@ -177,39 +179,19 @@ void BranchExperiment::measure_backprop(double target_val,
 
 		this->state_iter++;
 		if (this->state_iter >= MEASURE_ITERS) {
-			double existing_sum_score = 0.0;
-			for (int h_index = 0; h_index < (int)this->existing_scores.size(); h_index++) {
-				existing_sum_score += this->existing_scores[h_index];
-			}
-			double existing_score = existing_sum_score / (double)this->existing_scores.size();
-
-			double new_sum_score = 0.0;
-			for (int h_index = 0; h_index < (int)this->new_scores.size(); h_index++) {
-				new_sum_score += this->new_scores[h_index];
-			}
-			double new_score = new_sum_score / (double)this->new_scores.size();
-
+			bool is_success = compare_result(this->existing_scores,
+											 this->existing_signals,
+											 this->new_scores,
+											 this->new_signals,
+											 this->improvement);
 			#if defined(MDEBUG) && MDEBUG
-			if (new_score <= existing_score && rand()%2 == 0) {
+			if (!is_success && rand()%2 == 0) {
 			#else
-			if (new_score <= existing_score) {
+			if (!is_success) {
 			#endif /* MDEBUG */
 				this->result = EXPERIMENT_RESULT_FAIL;
 				return;
 			}
-
-			bool maintain_signals = compare_signals(this->existing_signals,
-													this->new_signals);
-			#if defined(MDEBUG) && MDEBUG
-			if (!maintain_signals && rand()%2 == 0) {
-			#else
-			if (!maintain_signals) {
-			#endif /* MDEBUG */
-				this->result = EXPERIMENT_RESULT_FAIL;
-				return;
-			}
-
-			this->improvement = new_score - existing_score;
 
 			cout << "BranchExperiment" << endl;
 			cout << "this->scope_context->id: " << this->scope_context->id << endl;

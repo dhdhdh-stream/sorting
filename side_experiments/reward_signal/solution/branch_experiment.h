@@ -1,3 +1,10 @@
+/**
+ * TODO:
+ * - occasionally use true as well
+ *   - true has noise but also magic as well
+ *     - something consistently good but not predictable through signals
+ */
+
 #ifndef BRANCH_EXPERIMENT_H
 #define BRANCH_EXPERIMENT_H
 

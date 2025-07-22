@@ -1,13 +1,5 @@
 // TODO: for ramp, schedule hits on start to minimize wasted cycles
 
-// TODO: get rid of CommitExperiment, and simply accept changes that are not provably bad
-// - select from number of candidates to still try to drive progress
-
-// - want a more stable signal
-// - but difficult when changes can be made anywhere
-// - maybe use skip layer
-// - so changes won't be too impactful against signal
-
 #include <chrono>
 #include <iostream>
 #include <map>

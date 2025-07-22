@@ -10,7 +10,6 @@ class ScopeHistory;
 class SolutionWrapper;
 
 const int EXPERIMENT_TYPE_BRANCH = 0;
-const int EXPERIMENT_TYPE_COMMIT = 1;
 
 const int EXPERIMENT_RESULT_NA = 0;
 const int EXPERIMENT_RESULT_FAIL = 1;

@@ -5,7 +5,6 @@
 #include "action_node.h"
 #include "branch_experiment.h"
 #include "branch_node.h"
-#include "commit_experiment.h"
 #include "constants.h"
 #include "globals.h"
 #include "obs_node.h"
@@ -257,31 +256,5 @@ void create_experiment(SolutionWrapper* wrapper,
 		} else {
 			curr_experiment = new_experiment;
 		}
-
-		// uniform_int_distribution<int> commit_distribution(0, 9);
-		// if (explore_node->parent->nodes.size() < 20
-		// 		&& commit_distribution(generator) == 0) {
-		// 	CommitExperiment* new_commit_experiment = new CommitExperiment(
-		// 		explore_node->parent,
-		// 		explore_node,
-		// 		explore_is_branch);
-
-		// 	if (new_commit_experiment->result == EXPERIMENT_RESULT_FAIL) {
-		// 		delete new_commit_experiment;
-		// 	} else {
-		// 		curr_experiment = new_commit_experiment;
-		// 	}
-		// } else {
-		// 	BranchExperiment* new_experiment = new BranchExperiment(
-		// 		explore_node->parent,
-		// 		explore_node,
-		// 		explore_is_branch);
-
-		// 	if (new_experiment->result == EXPERIMENT_RESULT_FAIL) {
-		// 		delete new_experiment;
-		// 	} else {
-		// 		curr_experiment = new_experiment;
-		// 	}
-		// }
 	}
 }

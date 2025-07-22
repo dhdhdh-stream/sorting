@@ -3,7 +3,6 @@
 #include <iostream>
 
 #include "branch_experiment.h"
-// #include "commit_experiment.h"
 #include "constants.h"
 #include "helpers.h"
 #include "scope.h"

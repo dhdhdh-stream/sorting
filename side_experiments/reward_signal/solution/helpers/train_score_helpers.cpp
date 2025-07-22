@@ -52,7 +52,8 @@ void train_score_fetch_histories_helper(ScopeHistory* scope_history,
 		target_val_histories.push_back(target_val);
 	} else {
 		double inner_target_val;
-		if (scope->score_inputs.size() > 0) {
+		if (scope->score_inputs.size() > 0
+				&& !scope_history->has_explore) {
 			if (!scope_history->signal_initialized) {
 				scope_history->signal_val = calc_reward_signal(scope_history);
 			}

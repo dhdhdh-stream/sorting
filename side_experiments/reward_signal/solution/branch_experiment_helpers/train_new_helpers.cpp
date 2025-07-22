@@ -26,6 +26,10 @@ void BranchExperiment::train_new_check_activate(
 	this->num_instances_until_target--;
 
 	if (this->num_instances_until_target <= 0) {
+		ScopeHistory* scope_history = wrapper->scope_histories.back();
+
+		scope_history->has_explore = true;
+
 		BranchExperimentInstanceHistory* instance_history = new BranchExperimentInstanceHistory(this);
 		wrapper->experiment_instance_histories.push_back(instance_history);
 
@@ -33,7 +37,7 @@ void BranchExperiment::train_new_check_activate(
 		for (int i_index = 0; i_index < (int)this->existing_inputs.size(); i_index++) {
 			double val;
 			bool is_on;
-			fetch_input_helper(wrapper->scope_histories.back(),
+			fetch_input_helper(scope_history,
 							   this->existing_inputs[i_index],
 							   0,
 							   val,
@@ -45,7 +49,10 @@ void BranchExperiment::train_new_check_activate(
 		}
 		instance_history->existing_predicted_score = sum_vals;
 
-		for (int l_index = (int)wrapper->scope_histories.size()-1; l_index >= 0; l_index--) {
+		/**
+		 * - start from layer above
+		 */
+		for (int l_index = (int)wrapper->scope_histories.size()-2; l_index >= 0; l_index--) {
 			Scope* scope = wrapper->scope_histories[l_index]->scope;
 			if (scope->score_inputs.size() > 0) {
 				instance_history->signal_needed_from = wrapper->scope_histories[l_index];
@@ -53,7 +60,7 @@ void BranchExperiment::train_new_check_activate(
 			}
 		}
 
-		this->scope_histories.push_back(new ScopeHistory(wrapper->scope_histories.back()));
+		this->scope_histories.push_back(new ScopeHistory(scope_history));
 
 		uniform_int_distribution<int> until_distribution(0, (int)this->average_instances_per_run-1.0);
 		this->num_instances_until_target = 1 + until_distribution(generator);
