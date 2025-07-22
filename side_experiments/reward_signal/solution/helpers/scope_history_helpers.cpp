@@ -81,6 +81,7 @@ void update_counts(ScopeHistory* scope_history,
 	scope_history->has_explore = false;
 	/**
 	 * - reset now that becomes existing
+	 *   - though also shouldn't matter
 	 */
 
 	map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
@@ -217,8 +218,7 @@ void fetch_histories_helper(ScopeHistory* scope_history,
 	Scope* scope = scope_history->scope;
 
 	double inner_target_val;
-	if (scope->score_inputs.size() > 0
-			&& !scope_history->has_explore) {
+	if (scope->score_inputs.size() > 0) {
 		if (!scope_history->signal_initialized) {
 			scope_history->signal_val = calc_reward_signal(scope_history);
 		}
@@ -275,35 +275,6 @@ void fetch_histories_helper(ScopeHistory* scope_history,
 										   target_val_histories);
 				}
 			}
-		}
-	}
-}
-
-void fetch_signals_helper(ScopeHistory* scope_history,
-						  map<Scope*, vector<double>>& signals) {
-	Scope* scope = scope_history->scope;
-
-	if (scope->score_inputs.size() > 0
-			&& !scope_history->has_explore) {
-		if (!scope_history->signal_initialized) {
-			scope_history->signal_val = calc_reward_signal(scope_history);
-		}
-
-		map<Scope*, vector<double>>::iterator it = signals.find(scope);
-		if (it == signals.end()) {
-			it = signals.insert({scope, vector<double>()}).first;
-		}
-
-		it->second.push_back(scope_history->signal_val);
-	}
-
-	for (map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
-			it != scope_history->node_histories.end(); it++) {
-		AbstractNode* node = it->second->node;
-		if (node->type == NODE_TYPE_SCOPE) {
-			ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)it->second;
-			fetch_signals_helper(scope_node_history->scope_history,
-								 signals);
 		}
 	}
 }

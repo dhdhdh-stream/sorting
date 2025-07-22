@@ -24,7 +24,7 @@ using namespace std;
 #if defined(MDEBUG) && MDEBUG
 const int MIN_NUM_SAMPLES = 5;
 #else
-const int MIN_NUM_SAMPLES = 100;
+const int MIN_NUM_SAMPLES = 400;
 #endif /* MDEBUG */
 
 const double TEST_SAMPLES_PERCENTAGE = 0.2;
@@ -47,7 +47,8 @@ void train_score_fetch_histories_helper(ScopeHistory* scope_history,
 										vector<double>& target_val_histories) {
 	Scope* scope = scope_history->scope;
 
-	if (scope == scope_context) {
+	if (scope == scope_context
+			&& !scope_history->has_explore) {
 		scope_histories.push_back(scope_history);
 		target_val_histories.push_back(target_val);
 	} else {
@@ -985,7 +986,10 @@ void train_score(Scope* scope,
 	double t_score = new_test_improvement / (min_standard_deviation / sqrt((double)combined_test_scope_histories.size()));
 
 	// temp
+	cout << "scope->id: " << scope->id << endl;
 	cout << "scope->score_inputs.size(): " << scope->score_inputs.size() << endl;
+	cout << "existing_scope_histories.size(): " << existing_scope_histories.size() << endl;
+	cout << "explore_scope_histories.size(): " << explore_scope_histories.size() << endl;
 
 	cout << "existing_test_misguess_average: " << existing_test_misguess_average << endl;
 	cout << "new_test_misguess_average: " << new_test_misguess_average << endl;

@@ -118,17 +118,6 @@ void BranchExperiment::backprop(double target_val,
 		explore_backprop(target_val,
 						 wrapper);
 
-		if (wrapper->solution->explore_scope_histories.size() < NUM_EXPLORE_SAVE) {
-			wrapper->solution->explore_scope_histories.push_back(wrapper->scope_histories[0]);
-			wrapper->solution->explore_target_val_histories.push_back(target_val);
-		} else {
-			uniform_int_distribution<int> distribution(0, wrapper->solution->explore_scope_histories.size()-1);
-			int random_index = distribution(generator);
-			delete wrapper->solution->explore_scope_histories[random_index];
-			wrapper->solution->explore_scope_histories[random_index] = wrapper->scope_histories[0];
-			wrapper->solution->explore_target_val_histories[random_index] = target_val;
-		}
-
 		break;
 	case BRANCH_EXPERIMENT_STATE_TRAIN_NEW:
 		train_new_backprop(target_val,

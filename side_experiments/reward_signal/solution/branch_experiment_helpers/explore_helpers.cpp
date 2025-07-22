@@ -218,6 +218,17 @@ void BranchExperiment::explore_backprop(
 	this->num_instances_until_target = 1 + until_distribution(generator);
 
 	if (wrapper->experiment_instance_histories.size() > 0) {
+		if (wrapper->solution->explore_scope_histories.size() < NUM_EXPLORE_SAVE) {
+			wrapper->solution->explore_scope_histories.push_back(wrapper->scope_histories[0]);
+			wrapper->solution->explore_target_val_histories.push_back(target_val);
+		} else {
+			uniform_int_distribution<int> distribution(0, wrapper->solution->explore_scope_histories.size()-1);
+			int random_index = distribution(generator);
+			delete wrapper->solution->explore_scope_histories[random_index];
+			wrapper->solution->explore_scope_histories[random_index] = wrapper->scope_histories[0];
+			wrapper->solution->explore_target_val_histories[random_index] = target_val;
+		}
+
 		BranchExperimentInstanceHistory* instance_history =
 			(BranchExperimentInstanceHistory*)wrapper->experiment_instance_histories[0];
 
@@ -231,8 +242,8 @@ void BranchExperiment::explore_backprop(
 			inner_targel_val = instance_history->signal_needed_from->signal_val;
 
 			// temp
-			cout << "instance_history->signal_needed_from->signal_val: " << instance_history->signal_needed_from->signal_val << endl;
-			wrapper->problem->print();
+			// cout << "instance_history->signal_needed_from->signal_val: " << instance_history->signal_needed_from->signal_val << endl;
+			// wrapper->problem->print();
 		}
 
 		double curr_surprise = inner_targel_val - instance_history->existing_predicted_score;

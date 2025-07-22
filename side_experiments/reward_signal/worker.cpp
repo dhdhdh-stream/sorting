@@ -10,10 +10,10 @@
 #include "constants.h"
 #include "globals.h"
 #include "helpers.h"
-#include "minesweeper.h"
 #include "obs_node.h"
 #include "scope.h"
 #include "scope_node.h"
+#include "simpler.h"
 #include "solution.h"
 #include "solution_wrapper.h"
 
@@ -38,7 +38,7 @@ int main(int argc, char* argv[]) {
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
 
-	ProblemType* problem_type = new TypeMinesweeper();
+	ProblemType* problem_type = new TypeSimpler();
 
 	SolutionWrapper* solution_wrapper = new SolutionWrapper(
 		problem_type->num_obs(), path, filename);

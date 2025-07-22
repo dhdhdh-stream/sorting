@@ -1,3 +1,17 @@
+// - if protect signal, can get stuck?
+//   - bad signal
+// - if don't protect signal, they get lost/hard to form?
+
+// TODO: don't bother with existing
+// - since nodes are protected
+//   - then there's no longer a familiarity aspect?
+//     - still kind of is
+
+// TODO: use different versions of score
+
+// TODO: set average at start to try to reduce impacts of obs
+// - to make them easier to remove
+
 #include "helpers.h"
 
 #include <cmath>
@@ -44,21 +58,56 @@ void update_reward_signals(SolutionWrapper* wrapper) {
 	wrapper->solution->explore_target_val_histories.clear();
 }
 
+void fetch_signals_helper(ScopeHistory* scope_history,
+						  map<Scope*, vector<double>>& signals) {
+	Scope* scope = scope_history->scope;
+
+	if (scope->score_inputs.size() > 0) {
+		/**
+		 * - compare signal even if explore to try to protect
+		 */
+		if (!scope_history->signal_initialized) {
+			scope_history->signal_val = calc_reward_signal(scope_history);
+		}
+
+		map<Scope*, vector<double>>::iterator it = signals.find(scope);
+		if (it == signals.end()) {
+			it = signals.insert({scope, vector<double>()}).first;
+		}
+
+		it->second.push_back(scope_history->signal_val);
+	}
+
+	for (map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
+			it != scope_history->node_histories.end(); it++) {
+		AbstractNode* node = it->second->node;
+		if (node->type == NODE_TYPE_SCOPE) {
+			ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)it->second;
+			fetch_signals_helper(scope_node_history->scope_history,
+								 signals);
+		}
+	}
+}
+
 bool compare_result(vector<double>& existing_scores,
 					map<Scope*, vector<double>>& existing_signals,
 					vector<double>& new_scores,
 					map<Scope*, vector<double>>& new_signals,
 					double& improvement) {
 	{
-		/**
-		 * - accept changes that are not provably bad to drive progress
-		 *   - but select best from number of candidates to drive improvement
-		 */
 		double existing_sum_score = 0.0;
 		for (int h_index = 0; h_index < (int)existing_scores.size(); h_index++) {
 			existing_sum_score += existing_scores[h_index];
 		}
 		double existing_score = existing_sum_score / (double)existing_scores.size();
+
+		double new_sum_score = 0.0;
+		for (int h_index = 0; h_index < (int)new_scores.size(); h_index++) {
+			new_sum_score += new_scores[h_index];
+		}
+		double new_score = new_sum_score / (double)new_scores.size();
+
+		improvement = new_score - existing_score;
 
 		double existing_sum_variance = 0.0;
 		for (int h_index = 0; h_index < (int)existing_scores.size(); h_index++) {
@@ -67,12 +116,6 @@ bool compare_result(vector<double>& existing_scores,
 		}
 		double existing_standard_deviation = sqrt(existing_sum_variance / (double)existing_scores.size());
 		double existing_standard_error = existing_standard_deviation / sqrt((double)existing_scores.size());
-
-		double new_sum_score = 0.0;
-		for (int h_index = 0; h_index < (int)new_scores.size(); h_index++) {
-			new_sum_score += new_scores[h_index];
-		}
-		double new_score = new_sum_score / (double)new_scores.size();
 
 		double new_sum_variance = 0.0;
 		for (int h_index = 0; h_index < (int)new_scores.size(); h_index++) {
@@ -87,11 +130,13 @@ bool compare_result(vector<double>& existing_scores,
 
 		double t_score = (new_score - existing_score) / denom;
 
+		/**
+		 * - accept changes that are not provably bad to drive progress
+		 *   - but select best from number of candidates to drive improvement
+		 */
 		if (t_score < -0.674) {
 			return false;
 		}
-
-		improvement = new_score - existing_score;
 	}
 
 	for (map<Scope*, vector<double>>::iterator existing_it = existing_signals.begin();
