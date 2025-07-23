@@ -211,6 +211,8 @@ void BranchExperiment::measure_backprop(double target_val,
 				cout << "this->best_exit_next_node->id: " << this->best_exit_next_node->id << endl;
 			}
 
+			cout << "this->use_reward_signal: " << this->use_reward_signal << endl;
+
 			cout << "this->select_percentage: " << this->select_percentage << endl;
 
 			cout << "this->improvement: " << this->improvement << endl;

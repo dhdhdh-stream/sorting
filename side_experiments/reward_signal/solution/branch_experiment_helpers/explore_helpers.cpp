@@ -114,7 +114,7 @@ void BranchExperiment::explore_check_activate(
 		#if defined(MDEBUG) && MDEBUG
 		uniform_int_distribution<int> new_scope_distribution(0, 1);
 		#else
-		uniform_int_distribution<int> new_scope_distribution(0, 9);
+		uniform_int_distribution<int> new_scope_distribution(0, 4);
 		#endif /* MDEBUG */
 		if (new_scope_distribution(generator) == 0) {
 			this->curr_new_scope = create_new_scope(this->scope_context);
@@ -218,11 +218,6 @@ void BranchExperiment::explore_backprop(
 	this->num_instances_until_target = 1 + until_distribution(generator);
 
 	if (wrapper->experiment_instance_histories.size() > 0) {
-		add_explore_helper(wrapper->scope_histories[0],
-						   target_val,
-						   this->scope_context);
-		delete wrapper->scope_histories[0];
-
 		BranchExperimentInstanceHistory* instance_history =
 			(BranchExperimentInstanceHistory*)wrapper->experiment_instance_histories[0];
 
@@ -291,5 +286,11 @@ void BranchExperiment::explore_backprop(
 				this->result = EXPERIMENT_RESULT_FAIL;
 			}
 		}
+
+		add_explore_helper(wrapper->scope_histories[0],
+						   target_val,
+						   this->scope_context);
 	}
+
+	delete wrapper->scope_histories[0];
 }

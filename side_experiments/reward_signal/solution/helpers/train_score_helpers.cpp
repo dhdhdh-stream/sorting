@@ -1,3 +1,10 @@
+// TODO: need to revert to include existing
+// - need some sort of basis
+//   - otherwise, if 10% A, then these matter, if 10% B, then those matter, etc.
+//     - and difficult for signal to be found
+// - reward signal is just as much about preserving existing, as making improvements(?)
+//   - after all, signal only makes sense under conditions
+
 #include "helpers.h"
 
 #include <algorithm>
@@ -623,7 +630,7 @@ void train_score(Scope* scope,
 			#else
 			double remove_improvement = average_misguess - remove_average_misguess;
 			double remove_standard_deviation = min(misguess_standard_deviation, remove_misguess_standard_deviation);
-			double remove_t_score = remove_improvement / (remove_standard_deviation / sqrt((int)combined_train_scope_histories.size()));
+			double remove_t_score = remove_improvement / (remove_standard_deviation / sqrt((int)train_scope_histories.size()));
 
 			if (remove_t_score > -0.674) {
 			#endif /* MDEBUG */

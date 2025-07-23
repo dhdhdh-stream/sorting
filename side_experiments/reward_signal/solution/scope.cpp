@@ -27,6 +27,10 @@ Scope::~Scope() {
 	for (int f_index = 0; f_index < (int)this->factors.size(); f_index++) {
 		delete this->factors[f_index];
 	}
+
+	for (int h_index = 0; h_index < (int)this->explore_scope_histories.size(); h_index++) {
+		delete this->explore_scope_histories[h_index];
+	}
 }
 
 void Scope::invalidate_factor(ScopeHistory* scope_history,

@@ -34,9 +34,6 @@ Solution::~Solution() {
 	for (int h_index = 0; h_index < (int)this->existing_scope_histories.size(); h_index++) {
 		delete this->existing_scope_histories[h_index];
 	}
-	for (int h_index = 0; h_index < (int)this->explore_scope_histories.size(); h_index++) {
-		delete this->explore_scope_histories[h_index];
-	}
 }
 
 void Solution::init() {

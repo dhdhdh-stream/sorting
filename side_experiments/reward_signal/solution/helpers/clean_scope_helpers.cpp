@@ -449,9 +449,12 @@ void clean_scope(Scope* scope,
 	/**
 	 * - clear explore as nodes removed
 	 */
-	for (int h_index = 0; h_index < (int)wrapper->solution->explore_scope_histories.size(); h_index++) {
-		delete wrapper->solution->explore_scope_histories[h_index];
+	for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
+		Scope* scope = wrapper->solution->scopes[s_index];
+		for (int h_index = 0; h_index < (int)scope->explore_scope_histories.size(); h_index++) {
+			delete scope->explore_scope_histories[h_index];
+		}
+		scope->explore_scope_histories.clear();
+		scope->explore_target_val_histories.clear();
 	}
-	wrapper->solution->explore_scope_histories.clear();
-	wrapper->solution->explore_target_val_histories.clear();
 }

@@ -50,6 +50,7 @@ void recursive_add_child(Scope* curr_parent,
 
 void BranchExperiment::add(SolutionWrapper* wrapper) {
 	cout << "BranchExperiment add" << endl;
+	cout << "this->use_reward_signal: " << this->use_reward_signal << endl;
 
 	if (this->best_new_scope != NULL) {
 		this->best_new_scope->id = wrapper->solution->scopes.size();
