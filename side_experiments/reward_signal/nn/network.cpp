@@ -13,33 +13,10 @@ const double NETWORK_TARGET_MAX_UPDATE = 0.01;
 const int EPOCH_SIZE = 20;
 
 Network::Network(int input_size,
-				 vector<vector<double>>& sample_inputs,
-				 vector<vector<bool>>& sample_is_on) {
-	this->input_averages = vector<double>(input_size);
-	this->input_standard_deviations = vector<double>(input_size);
-	for (int i_index = 0; i_index < input_size; i_index++) {
-		double sum_vals = 0.0;
-		int on_count = 0;
-		for (int d_index = 0; d_index < (int)sample_inputs.size(); d_index++) {
-			if (sample_is_on[d_index][i_index]) {
-				sum_vals += sample_inputs[d_index][i_index];
-				on_count++;
-			}
-		}
-		this->input_averages[i_index] = sum_vals / (double)on_count;
-
-		double sum_variances = 0.0;
-		for (int d_index = 0; d_index < (int)sample_inputs.size(); d_index++) {
-			if (sample_is_on[d_index][i_index]) {
-				sum_variances += (this->input_averages[i_index] - sample_inputs[d_index][i_index])
-					* (this->input_averages[i_index] - sample_inputs[d_index][i_index]);
-			}
-		}
-		this->input_standard_deviations[i_index] = sqrt(sum_variances / (double)on_count);
-		if (this->input_standard_deviations[i_index] < MIN_STANDARD_DEVIATION) {
-			this->input_standard_deviations[i_index] = MIN_STANDARD_DEVIATION;
-		}
-	}
+				 vector<double>& input_averages,
+				 vector<double>& input_standard_deviations) {
+	this->input_averages = input_averages;
+	this->input_standard_deviations = input_standard_deviations;
 
 	this->input = new Layer(LINEAR_LAYER);
 	for (int i_index = 0; i_index < input_size; i_index++) {

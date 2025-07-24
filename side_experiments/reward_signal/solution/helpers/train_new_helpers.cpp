@@ -348,6 +348,8 @@ bool train_new(vector<ScopeHistory*>& scope_histories,
 	sort(s_contrast_t_scores.begin(), s_contrast_t_scores.end());
 
 	vector<Input> new_network_inputs;
+	vector<double> input_averages;
+	vector<double> input_standard_deviations;
 	vector<vector<double>> v_input_vals;
 	vector<vector<bool>> v_input_is_on;
 	vector<vector<double>> n_input_vals;
@@ -393,6 +395,8 @@ bool train_new(vector<ScopeHistory*>& scope_histories,
 
 		if (should_add) {
 			new_network_inputs.push_back(input);
+			input_averages.push_back(curr_average);
+			input_standard_deviations.push_back(curr_standard_deviation);
 			v_input_vals.push_back(curr_input_vals);
 			v_input_is_on.push_back(curr_input_is_on);
 
@@ -448,6 +452,8 @@ bool train_new(vector<ScopeHistory*>& scope_histories,
 
 		if (should_add) {
 			new_network_inputs.push_back(input);
+			input_averages.push_back(curr_average);
+			input_standard_deviations.push_back(curr_standard_deviation);
 			v_input_vals.push_back(curr_input_vals);
 			v_input_is_on.push_back(curr_input_is_on);
 
@@ -475,8 +481,8 @@ bool train_new(vector<ScopeHistory*>& scope_histories,
 	}
 
 	Network* new_network = new Network((int)new_network_inputs.size(),
-									   input_vals,
-									   input_is_on);
+									   input_averages,
+									   input_standard_deviations);
 
 	train_network(input_vals,
 				  input_is_on,

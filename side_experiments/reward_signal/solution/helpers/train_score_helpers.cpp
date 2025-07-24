@@ -1,10 +1,3 @@
-// TODO: need to revert to include existing
-// - need some sort of basis
-//   - otherwise, if 10% A, then these matter, if 10% B, then those matter, etc.
-//     - and difficult for signal to be found
-// - reward signal is just as much about preserving existing, as making improvements(?)
-//   - after all, signal only makes sense under conditions
-
 #include "helpers.h"
 
 #include <algorithm>
@@ -46,6 +39,16 @@ void train_score(Scope* scope,
 	vector<double> new_score_input_standard_deviations;
 	vector<double> new_score_weights;
 
+	/**
+	 * - simply set constant as average
+	 *   - helps prevent obs impact from being arbitrarily inflated(?)
+	 */
+	double sum_vals = 0.0;
+	for (int h_index = 0; h_index < (int)scope->explore_target_val_histories.size(); h_index++) {
+		sum_vals += scope->explore_target_val_histories[h_index];
+	}
+	new_score_average_val = sum_vals / (double)scope->explore_target_val_histories.size();
+
 	{
 		default_random_engine generator_copy = generator;
 		shuffle(scope->explore_scope_histories.begin(), scope->explore_scope_histories.end(), generator_copy);
@@ -54,12 +57,6 @@ void train_score(Scope* scope,
 		default_random_engine generator_copy = generator;
 		shuffle(scope->explore_target_val_histories.begin(), scope->explore_target_val_histories.end(), generator_copy);
 	}
-
-	/**
-	 * - simply set constant as average
-	 *   - helps prevent obs from being arbitrarily inflated(?)
-	 */
-	
 
 	vector<ScopeHistory*> train_scope_histories;
 	vector<double> train_target_val_histories;
@@ -181,21 +178,20 @@ void train_score(Scope* scope,
 		remaining_factors.erase(remaining_factors.begin() + random_index);
 	}
 
-	Eigen::MatrixXd inputs(train_scope_histories.size(), 1 + new_score_inputs.size());
+	Eigen::MatrixXd inputs(train_scope_histories.size(), new_score_inputs.size());
 	uniform_real_distribution<double> noise_distribution(-0.001, 0.001);
 	/**
 	 * - add some noise to prevent extremes
 	 */
 	for (int i_index = 0; i_index < (int)train_scope_histories.size(); i_index++) {
-		inputs(i_index, 0) = 1.0;
 		for (int f_index = 0; f_index < (int)new_score_inputs.size(); f_index++) {
-			inputs(i_index, 1 + f_index) = factor_vals[f_index][i_index] + noise_distribution(generator);
+			inputs(i_index, f_index) = factor_vals[f_index][i_index] + noise_distribution(generator);
 		}
 	}
 
 	Eigen::VectorXd outputs(train_scope_histories.size());
 	for (int i_index = 0; i_index < (int)train_scope_histories.size(); i_index++) {
-		outputs(i_index) = train_target_val_histories[i_index];
+		outputs(i_index) = train_target_val_histories[i_index] - new_score_average_val;
 	}
 
 	Eigen::VectorXd weights;
@@ -206,20 +202,15 @@ void train_score(Scope* scope,
 		return;
 	}
 
-	new_score_average_val = weights(0);
 	for (int f_index = 0; f_index < (int)new_score_inputs.size(); f_index++) {
-		new_score_weights.push_back(weights(1 + f_index));
+		new_score_weights.push_back(weights(f_index));
 	}
 
 	#if defined(MDEBUG) && MDEBUG
 	#else
-	if (abs(weights(0)) > REGRESSION_WEIGHT_LIMIT) {
-		cout << "abs(weights(0)): " << abs(weights(0)) << endl;
-		return;
-	}
 	for (int f_index = 0; f_index < (int)new_score_inputs.size(); f_index++) {
-		if (abs(weights(1 + f_index)) > REGRESSION_WEIGHT_LIMIT) {
-			cout << "abs(weights(1 + f_index)): " << abs(weights(1 + f_index)) << endl;
+		if (abs(weights(f_index)) > REGRESSION_WEIGHT_LIMIT) {
+			cout << "abs(weights(f_index)): " << abs(weights(f_index)) << endl;
 			return;
 		}
 	}
@@ -239,7 +230,7 @@ void train_score(Scope* scope,
 		#else
 		double sum_impact = 0.0;
 		for (int i_index = 0; i_index < (int)train_scope_histories.size(); i_index++) {
-			sum_impact += abs(inputs(i_index, 1 + f_index));
+			sum_impact += abs(inputs(i_index, f_index));
 		}
 
 		double impact = abs(new_score_weights[f_index]) * sum_impact / (double)train_scope_histories.size();
@@ -377,6 +368,8 @@ void train_score(Scope* scope,
 	sort(s_best_vs_worst_t_scores.begin(), s_best_vs_worst_t_scores.end());
 
 	vector<Input> network_inputs;
+	vector<double> input_averages;
+	vector<double> input_standard_deviations;
 	vector<vector<double>> v_input_vals;
 	vector<vector<bool>> v_input_is_on;
 	vector<vector<double>> n_input_vals;
@@ -422,6 +415,8 @@ void train_score(Scope* scope,
 
 		if (should_add) {
 			network_inputs.push_back(input);
+			input_averages.push_back(curr_average);
+			input_standard_deviations.push_back(curr_standard_deviation);
 			v_input_vals.push_back(curr_input_vals);
 			v_input_is_on.push_back(curr_input_is_on);
 
@@ -434,7 +429,6 @@ void train_score(Scope* scope,
 			}
 		}
 	}
-
 	while (s_best_vs_worst_t_scores.size() > 0) {
 		uniform_int_distribution<int> input_distribution(0, s_best_vs_worst_t_scores.size()-1);
 		int input_index = input_distribution(generator);
@@ -478,6 +472,8 @@ void train_score(Scope* scope,
 
 		if (should_add) {
 			network_inputs.push_back(input);
+			input_averages.push_back(curr_average);
+			input_standard_deviations.push_back(curr_standard_deviation);
 			v_input_vals.push_back(curr_input_vals);
 			v_input_is_on.push_back(curr_input_is_on);
 
@@ -521,8 +517,8 @@ void train_score(Scope* scope,
 	}
 
 	Network* new_network = new Network((int)network_inputs.size(),
-									   input_vals,
-									   input_is_on);
+									   input_averages,
+									   input_standard_deviations);
 
 	train_network(input_vals,
 				  input_is_on,

@@ -1,3 +1,18 @@
+/**
+ * TODO: also have no split, go directly to score
+ * 
+ * - reward signal is as much about preserving existing, as making improvements
+ *   - as signal only valid under conditions
+ * 
+ * - there can be multiple options for "consistency" that make sense
+ *   - e.g., train at a train station
+ *     - could be correct to follow train or follow train station
+ * - the option that should be chosen is the one that produces the best signal
+ * 
+ * - best signal is one with biggest impact
+ *   - not best misguess
+ */
+
 #include "helpers.h"
 
 #include <cmath>

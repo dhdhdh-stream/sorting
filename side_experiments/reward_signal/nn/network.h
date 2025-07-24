@@ -23,8 +23,8 @@ public:
 	double output_average_max_update;
 
 	Network(int input_size,
-			std::vector<std::vector<double>>& sample_inputs,
-			std::vector<std::vector<bool>>& sample_is_on);
+			std::vector<double>& input_averages,
+			std::vector<double>& input_standard_deviations);
 	Network(Network* original);
 	Network(std::ifstream& input_file);
 	~Network();
