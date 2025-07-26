@@ -245,10 +245,18 @@ void create_experiment(SolutionWrapper* wrapper,
 	}
 
 	if (explore_node != NULL) {
+		bool in_place;
+		if (wrapper->explore_samples >= EXPLORE_TARGET_NUM_SAMPLES) {
+			in_place = false;
+		} else {
+			in_place = true;
+		}
+
 		BranchExperiment* new_experiment = new BranchExperiment(
 			explore_node->parent,
 			explore_node,
 			explore_is_branch,
+			in_place,
 			wrapper);
 
 		if (new_experiment->result == EXPERIMENT_RESULT_FAIL) {

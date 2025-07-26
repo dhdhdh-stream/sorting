@@ -70,6 +70,7 @@ bool train_existing(std::vector<ScopeHistory*>& scope_histories,
 					std::vector<double>& factor_input_standard_deviations,
 					std::vector<double>& factor_weights);
 bool train_new(std::vector<ScopeHistory*>& scope_histories,
+			   std::vector<bool>& match_histories,
 			   std::vector<double>& target_val_histories,
 			   double& average_score,
 			   std::vector<Input>& factor_inputs,
@@ -93,22 +94,37 @@ void fetch_histories_helper(ScopeHistory* scope_history,
 							std::vector<ScopeHistory*>& scope_histories,
 							std::vector<double>& target_val_histories);
 void fetch_signals_helper(ScopeHistory* scope_history,
-						  std::map<Scope*, std::vector<double>>& signals);
+						  std::map<Scope*, std::vector<std::pair<double,double>>>& signals);
 
 Scope* create_new_scope(Scope* scope_context);
 
+bool check_match(ScopeHistory* scope_history);
 double calc_reward_signal(ScopeHistory* scope_history);
 void add_explore_helper(ScopeHistory* scope_history,
 						double target_val,
 						Scope* explore_scope);
 void update_reward_signals(SolutionWrapper* wrapper);
-void train_score(Scope* scope,
-				 SolutionWrapper* wrapper);
+bool split_helper(std::vector<ScopeHistory*>& existing_scope_histories,
+				  std::vector<ScopeHistory*>& explore_scope_histories,
+				  std::vector<Input>& match_inputs,
+				  Network*& match_network);
+bool train_score(std::vector<ScopeHistory*>& scope_histories,
+				 std::vector<double>& target_val_histories,
+				 double& average_score,
+				 std::vector<Input>& factor_inputs,
+				 std::vector<double>& factor_input_averages,
+				 std::vector<double>& factor_input_standard_deviations,
+				 std::vector<double>& factor_weights,
+				 std::vector<Input>& network_inputs,
+				 Network*& network,
+				 double& highest_signal);
+void create_reward_signal_helper(Scope* scope,
+								 SolutionWrapper* wrapper);
 
 bool compare_result(std::vector<double>& existing_scores,
-					std::map<Scope*, std::vector<double>>& existing_signals,
+					std::map<Scope*, std::vector<std::pair<double,double>>>& existing_signals,
 					std::vector<double>& new_scores,
-					std::map<Scope*, std::vector<double>>& new_signals,
+					std::map<Scope*, std::vector<std::pair<double,double>>>& new_signals,
 					double& improvement);
 
 void clean_scope(Scope* scope,

@@ -32,6 +32,7 @@ const int NEW_GATHER_NUM_SAMPLES = 10;
 const int NEW_NUM_FACTORS = 10;
 
 bool train_new(vector<ScopeHistory*>& scope_histories,
+			   vector<bool>& match_histories,
 			   vector<double>& target_val_histories,
 			   double& average_score,
 			   vector<Input>& factor_inputs,
@@ -44,6 +45,34 @@ bool train_new(vector<ScopeHistory*>& scope_histories,
 	Scope* scope = scope_histories[0]->scope;
 
 	int num_instances = (int)target_val_histories.size();
+
+	double sum_match_vals = 0.0;
+	int match_count = 0;
+	for (int h_index = 0; h_index < (int)scope_histories.size(); h_index++) {
+		if (match_histories[h_index]) {
+			sum_match_vals += target_val_histories[h_index];
+			match_count++;
+		}
+	}
+	double match_val_average = sum_match_vals / (double)match_count;
+
+	double sum_match_variance = 0.0;
+	for (int h_index = 0; h_index < (int)scope_histories.size(); h_index++) {
+		if (match_histories[h_index]) {
+			sum_match_variance += (target_val_histories[h_index] - match_val_average)
+				* (target_val_histories[h_index] - match_val_average);
+		}
+	}
+	double match_val_standard_deviation = sqrt(sum_match_variance / (double)match_count);
+	if (match_val_standard_deviation < MIN_STANDARD_DEVIATION) {
+		match_val_standard_deviation = MIN_STANDARD_DEVIATION;
+	}
+
+	for (int h_index = 0; h_index < (int)scope_histories.size(); h_index++) {
+		if (!match_histories[h_index]) {
+			target_val_histories[h_index] = -match_val_standard_deviation;
+		}
+	}
 
 	map<Input, InputData> input_tracker;
 

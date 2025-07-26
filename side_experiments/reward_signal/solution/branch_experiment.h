@@ -1,10 +1,3 @@
-/**
- * TODO:
- * - occasionally use true as well
- *   - true has noise but also magic as well
- *     - something consistently good but not predictable through signals
- */
-
 #ifndef BRANCH_EXPERIMENT_H
 #define BRANCH_EXPERIMENT_H
 
@@ -34,6 +27,11 @@ public:
 	int state_iter;
 
 	bool use_reward_signal;
+	/**
+	 * - occasionally use true as well
+	 *   - true has noise but also magic as well
+	 *     - something consistently good but not predictable through signals
+	 */
 
 	double existing_average_score;
 	std::vector<Input> existing_inputs;
@@ -73,12 +71,13 @@ public:
 	std::vector<AbstractNode*> new_nodes;
 
 	std::vector<ScopeHistory*> scope_histories;
+	std::vector<bool> match_histories;
 	std::vector<double> i_target_val_histories;
 
 	std::vector<double> existing_scores;
-	std::map<Scope*, std::vector<double>> existing_signals;
+	std::map<Scope*, std::vector<std::pair<double,double>>> existing_signals;
 	std::vector<double> new_scores;
-	std::map<Scope*, std::vector<double>> new_signals;
+	std::map<Scope*, std::vector<std::pair<double,double>>> new_signals;
 
 	#if defined(MDEBUG) && MDEBUG
 	std::vector<Problem*> verify_problems;
@@ -89,6 +88,7 @@ public:
 	BranchExperiment(Scope* scope_context,
 					 AbstractNode* node_context,
 					 bool is_branch,
+					 bool in_place,
 					 SolutionWrapper* wrapper);
 	~BranchExperiment();
 	void decrement(AbstractNode* experiment_node);

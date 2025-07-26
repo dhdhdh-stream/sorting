@@ -20,12 +20,15 @@ using namespace std;
 BranchExperiment::BranchExperiment(Scope* scope_context,
 								   AbstractNode* node_context,
 								   bool is_branch,
+								   bool in_place,
 								   SolutionWrapper* wrapper) {
 	this->type = EXPERIMENT_TYPE_BRANCH;
 
 	this->scope_context = scope_context;
 	this->node_context = node_context;
 	this->is_branch = is_branch;
+
+	this->in_place = in_place;
 
 	this->curr_new_scope = NULL;
 	this->curr_scope_history = NULL;

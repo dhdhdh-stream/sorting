@@ -27,6 +27,8 @@ public:
 	AbstractExperiment* best_experiment;
 	int improvement_iter;
 
+	int explore_samples;
+
 	/**
 	 * - run variables
 	 */

@@ -49,14 +49,24 @@ void BranchExperiment::explore_check_activate(
 		instance_history->existing_predicted_score = sum_vals;
 
 		if (this->use_reward_signal) {
-			/**
-			 * - start from layer above
-			 */
-			for (int l_index = (int)wrapper->scope_histories.size()-2; l_index >= 0; l_index--) {
-				Scope* scope = wrapper->scope_histories[l_index]->scope;
-				if (scope->score_inputs.size() > 0) {
-					instance_history->signal_needed_from = wrapper->scope_histories[l_index];
-					break;
+			if (this->in_place) {
+				for (int l_index = (int)wrapper->scope_histories.size()-1; l_index >= 0; l_index--) {
+					Scope* scope = wrapper->scope_histories[l_index]->scope;
+					if (scope->score_inputs.size() > 0) {
+						instance_history->signal_needed_from = wrapper->scope_histories[l_index];
+						break;
+					}
+				}
+			} else {
+				/**
+				 * - start from layer above
+				 */
+				for (int l_index = (int)wrapper->scope_histories.size()-2; l_index >= 0; l_index--) {
+					Scope* scope = wrapper->scope_histories[l_index]->scope;
+					if (scope->score_inputs.size() > 0) {
+						instance_history->signal_needed_from = wrapper->scope_histories[l_index];
+						break;
+					}
 				}
 			}
 		}
@@ -101,12 +111,16 @@ void BranchExperiment::explore_check_activate(
 			starting_node,
 			possible_exits);
 
-		geometric_distribution<int> exit_distribution(0.2);
 		int random_index;
-		while (true) {
-			random_index = exit_distribution(generator);
-			if (random_index < (int)possible_exits.size()) {
-				break;
+		if (this->in_place) {
+			random_index = 0;
+		} else {
+			geometric_distribution<int> exit_distribution(0.2);
+			while (true) {
+				random_index = exit_distribution(generator);
+				if (random_index < (int)possible_exits.size()) {
+					break;
+				}
 			}
 		}
 		this->curr_exit_next_node = possible_exits[random_index];
@@ -218,54 +232,51 @@ void BranchExperiment::explore_backprop(
 	this->num_instances_until_target = 1 + until_distribution(generator);
 
 	if (wrapper->experiment_instance_histories.size() > 0) {
-		BranchExperimentInstanceHistory* instance_history =
-			(BranchExperimentInstanceHistory*)wrapper->experiment_instance_histories[0];
+		bool is_match = check_match(wrapper->scope_histories[0]);
+		if (is_match) {
+			BranchExperimentInstanceHistory* instance_history =
+				(BranchExperimentInstanceHistory*)wrapper->experiment_instance_histories[0];
 
-		double inner_targel_val;
-		if (!this->use_reward_signal
-				|| instance_history->signal_needed_from == NULL) {
-			inner_targel_val = target_val;
-		} else {
-			if (!instance_history->signal_needed_from->signal_initialized) {
-				instance_history->signal_needed_from->signal_val = calc_reward_signal(instance_history->signal_needed_from);
+			double inner_targel_val;
+			if (!this->use_reward_signal
+					|| instance_history->signal_needed_from == NULL) {
+				inner_targel_val = target_val;
+			} else {
+				if (!instance_history->signal_needed_from->signal_initialized) {
+					instance_history->signal_needed_from->signal_val = calc_reward_signal(instance_history->signal_needed_from);
+				}
+				inner_targel_val = instance_history->signal_needed_from->signal_val;
 			}
-			inner_targel_val = instance_history->signal_needed_from->signal_val;
+
+			double curr_surprise = inner_targel_val - instance_history->existing_predicted_score;
+
+			if (curr_surprise > this->best_surprise) {
+				this->best_surprise = curr_surprise;
+				if (this->best_new_scope != NULL) {
+					delete this->best_new_scope;
+				}
+				this->best_new_scope = this->curr_new_scope;
+				this->curr_new_scope = NULL;
+				this->best_step_types = this->curr_step_types;
+				this->best_actions = this->curr_actions;
+				this->best_scopes = this->curr_scopes;
+				this->best_exit_next_node = this->curr_exit_next_node;
+				if (this->best_scope_history != NULL) {
+					delete this->best_scope_history;
+				}
+				this->best_scope_history = this->curr_scope_history;
+				this->curr_scope_history = NULL;
+			}
 		}
 
-		double curr_surprise = inner_targel_val - instance_history->existing_predicted_score;
-
-		#if defined(MDEBUG) && MDEBUG
-		if (true) {
-		#else
-		if (curr_surprise > this->best_surprise) {
-		#endif /* MDEBUG */
-			this->best_surprise = curr_surprise;
-			if (this->best_new_scope != NULL) {
-				delete this->best_new_scope;
-			}
-			this->best_new_scope = this->curr_new_scope;
-			this->best_step_types = this->curr_step_types;
-			this->best_actions = this->curr_actions;
-			this->best_scopes = this->curr_scopes;
-			this->best_exit_next_node = this->curr_exit_next_node;
-			if (this->best_scope_history != NULL) {
-				delete this->best_scope_history;
-			}
-			this->best_scope_history = this->curr_scope_history;
-
+		if (this->curr_new_scope != NULL) {
+			delete this->curr_new_scope;
 			this->curr_new_scope = NULL;
-			this->curr_step_types.clear();
-			this->curr_actions.clear();
-			this->curr_scopes.clear();
-			this->curr_scope_history = NULL;
-		} else {
-			if (this->curr_new_scope != NULL) {
-				delete this->curr_new_scope;
-			}
-			this->curr_new_scope = NULL;
-			this->curr_step_types.clear();
-			this->curr_actions.clear();
-			this->curr_scopes.clear();
+		}
+		this->curr_step_types.clear();
+		this->curr_actions.clear();
+		this->curr_scopes.clear();
+		if (this->curr_scope_history != NULL) {
 			delete this->curr_scope_history;
 			this->curr_scope_history = NULL;
 		}
@@ -287,9 +298,12 @@ void BranchExperiment::explore_backprop(
 			}
 		}
 
-		add_explore_helper(wrapper->scope_histories[0],
-						   target_val,
-						   this->scope_context);
+		if (this->in_place) {
+			add_explore_helper(wrapper->scope_histories[0],
+							   target_val,
+							   this->scope_context);
+			wrapper->explore_samples++;
+		}
 	}
 
 	delete wrapper->scope_histories[0];

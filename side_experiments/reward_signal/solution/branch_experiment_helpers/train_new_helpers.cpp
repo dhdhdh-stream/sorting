@@ -48,14 +48,24 @@ void BranchExperiment::train_new_check_activate(
 		instance_history->existing_predicted_score = sum_vals;
 
 		if (this->use_reward_signal) {
-			/**
-			 * - start from layer above
-			 */
-			for (int l_index = (int)wrapper->scope_histories.size()-2; l_index >= 0; l_index--) {
-				Scope* scope = wrapper->scope_histories[l_index]->scope;
-				if (scope->score_inputs.size() > 0) {
-					instance_history->signal_needed_from = wrapper->scope_histories[l_index];
-					break;
+			if (this->in_place) {
+				for (int l_index = (int)wrapper->scope_histories.size()-1; l_index >= 0; l_index--) {
+					Scope* scope = wrapper->scope_histories[l_index]->scope;
+					if (scope->score_inputs.size() > 0) {
+						instance_history->signal_needed_from = wrapper->scope_histories[l_index];
+						break;
+					}
+				}
+			} else {
+				/**
+				 * - start from layer above
+				 */
+				for (int l_index = (int)wrapper->scope_histories.size()-2; l_index >= 0; l_index--) {
+					Scope* scope = wrapper->scope_histories[l_index]->scope;
+					if (scope->score_inputs.size() > 0) {
+						instance_history->signal_needed_from = wrapper->scope_histories[l_index];
+						break;
+					}
 				}
 			}
 		}
@@ -115,22 +125,30 @@ void BranchExperiment::train_new_backprop(
 	BranchExperimentOverallHistory* overall_history = (BranchExperimentOverallHistory*)wrapper->experiment_overall_history;
 
 	if (overall_history->is_hit) {
+		bool is_match = check_match(wrapper->scope_histories[0]);
+
 		for (int i_index = 0; i_index < (int)wrapper->experiment_instance_histories.size(); i_index++) {
-			BranchExperimentInstanceHistory* instance_history =
-				(BranchExperimentInstanceHistory*)wrapper->experiment_instance_histories[i_index];
-
-			double inner_targel_val;
-			if (!this->use_reward_signal
-					|| instance_history->signal_needed_from == NULL) {
-				inner_targel_val = target_val;
+			if (is_match) {
+				this->match_histories.push_back(false);
+				this->i_target_val_histories.push_back(0.0);
 			} else {
-				if (!instance_history->signal_needed_from->signal_initialized) {
-					instance_history->signal_needed_from->signal_val = calc_reward_signal(instance_history->signal_needed_from);
-				}
-				inner_targel_val = instance_history->signal_needed_from->signal_val;
-			}
+				BranchExperimentInstanceHistory* instance_history =
+					(BranchExperimentInstanceHistory*)wrapper->experiment_instance_histories[i_index];
 
-			this->i_target_val_histories.push_back(inner_targel_val - instance_history->existing_predicted_score);
+				double inner_targel_val;
+				if (!this->use_reward_signal
+						|| instance_history->signal_needed_from == NULL) {
+					inner_targel_val = target_val;
+				} else {
+					if (!instance_history->signal_needed_from->signal_initialized) {
+						instance_history->signal_needed_from->signal_val = calc_reward_signal(instance_history->signal_needed_from);
+					}
+					inner_targel_val = instance_history->signal_needed_from->signal_val;
+				}
+
+				this->match_histories.push_back(true);
+				this->i_target_val_histories.push_back(inner_targel_val - instance_history->existing_predicted_score);
+			}
 		}
 
 		this->state_iter++;
@@ -138,6 +156,7 @@ void BranchExperiment::train_new_backprop(
 				&& (int)this->i_target_val_histories.size() >= TRAIN_NEW_NUM_DATAPOINTS) {
 			this->scope_histories.insert(this->scope_histories.begin(), this->best_scope_history);
 			this->best_scope_history = NULL;
+			this->match_histories.insert(this->match_histories.begin(), true);
 			this->i_target_val_histories.insert(this->i_target_val_histories.begin(), this->best_surprise);
 
 			double average_score;
@@ -149,6 +168,7 @@ void BranchExperiment::train_new_backprop(
 			Network* network = NULL;
 			double select_percentage;
 			bool is_success = train_new(this->scope_histories,
+										this->match_histories,
 										this->i_target_val_histories,
 										average_score,
 										factor_inputs,

@@ -1,36 +1,49 @@
-/**
- * TODO: also have no split, go directly to score
- * 
- * - reward signal is as much about preserving existing, as making improvements
- *   - as signal only valid under conditions
- * 
- * - there can be multiple options for "consistency" that make sense
- *   - e.g., train at a train station
- *     - could be correct to follow train or follow train station
- * - the option that should be chosen is the one that produces the best signal
- * 
- * - best signal is one with biggest impact
- *   - not best misguess
- */
-
 #include "helpers.h"
 
 #include <cmath>
 #include <iostream>
 
+#include "constants.h"
+#include "factor.h"
 #include "globals.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
 #include "solution_wrapper.h"
 
-#if defined(MDEBUG) && MDEBUG
-const int NUM_EXPLORE_SAVE = 10;
-#else
-const int NUM_EXPLORE_SAVE = 2000;
-#endif /* MDEBUG */
-
 using namespace std;
+
+bool check_match(ScopeHistory* scope_history) {
+	Scope* scope = scope_history->scope;
+
+	if (scope->check_match) {
+		if (!scope_history->factor_initialized[scope->match_factor_index]) {
+			double value = scope->factors[scope->match_factor_index]->back_activate(scope_history);
+			scope_history->factor_initialized[scope->match_factor_index] = true;
+			scope_history->factor_values[scope->match_factor_index] = value;
+		}
+
+		double val = scope_history->factor_values[scope->match_factor_index];
+
+		if (val <= 0.0) {
+			return false;
+		}
+	}
+
+	for (map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
+			it != scope_history->node_histories.end(); it++) {
+		AbstractNode* node = it->second->node;
+		if (node->type == NODE_TYPE_SCOPE) {
+			ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)it->second;
+			bool inner_result = check_match(scope_node_history->scope_history);
+			if (!inner_result) {
+				return false;
+			}
+		}
+	}
+
+	return true;
+}
 
 double calc_reward_signal(ScopeHistory* scope_history) {
 	Scope* scope = scope_history->scope;
@@ -59,7 +72,7 @@ void add_explore_helper(ScopeHistory* scope_history,
 	Scope* scope = scope_history->scope;
 
 	if (scope != explore_scope) {
-		if (scope->explore_scope_histories.size() < NUM_EXPLORE_SAVE) {
+		if (scope->explore_scope_histories.size() < EXPLORE_TARGET_NUM_SAMPLES) {
 			scope->explore_scope_histories.push_back(new ScopeHistory(scope_history));
 			scope->explore_target_val_histories.push_back(target_val);
 		} else {
@@ -97,9 +110,9 @@ void add_explore_helper(ScopeHistory* scope_history,
 void update_reward_signals(SolutionWrapper* wrapper) {
 	for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
 		Scope* scope = wrapper->solution->scopes[s_index];
-		if (scope->explore_scope_histories.size() >= NUM_EXPLORE_SAVE) {
-			train_score(scope,
-						wrapper);
+		if (scope->explore_scope_histories.size() >= EXPLORE_TARGET_NUM_SAMPLES) {
+			create_reward_signal_helper(scope,
+										wrapper);
 
 			for (int h_index = 0; h_index < (int)scope->explore_scope_histories.size(); h_index++) {
 				delete scope->explore_scope_histories[h_index];
@@ -111,10 +124,18 @@ void update_reward_signals(SolutionWrapper* wrapper) {
 }
 
 void fetch_signals_helper(ScopeHistory* scope_history,
-						  map<Scope*, vector<double>>& signals) {
+						  map<Scope*, vector<pair<double,double>>>& signals) {
 	Scope* scope = scope_history->scope;
 
 	if (scope->score_inputs.size() > 0) {
+		if (!scope_history->factor_initialized[scope->match_factor_index]) {
+			double value = scope->factors[scope->match_factor_index]->back_activate(scope_history);
+			scope_history->factor_initialized[scope->match_factor_index] = true;
+			scope_history->factor_values[scope->match_factor_index] = value;
+		}
+		double match_val = scope_history->factor_values[scope->match_factor_index];
+		match_val = min(max(match_val, -1.0), 1.0);
+
 		/**
 		 * - compare signal even if explore to try to protect
 		 */
@@ -122,12 +143,12 @@ void fetch_signals_helper(ScopeHistory* scope_history,
 			scope_history->signal_val = calc_reward_signal(scope_history);
 		}
 
-		map<Scope*, vector<double>>::iterator it = signals.find(scope);
+		map<Scope*, vector<pair<double,double>>>::iterator it = signals.find(scope);
 		if (it == signals.end()) {
-			it = signals.insert({scope, vector<double>()}).first;
+			it = signals.insert({scope, vector<pair<double,double>>()}).first;
 		}
 
-		it->second.push_back(scope_history->signal_val);
+		it->second.push_back({match_val, scope_history->signal_val});
 	}
 
 	for (map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
@@ -142,9 +163,9 @@ void fetch_signals_helper(ScopeHistory* scope_history,
 }
 
 bool compare_result(vector<double>& existing_scores,
-					map<Scope*, vector<double>>& existing_signals,
+					map<Scope*, vector<pair<double,double>>>& existing_signals,
 					vector<double>& new_scores,
-					map<Scope*, vector<double>>& new_signals,
+					map<Scope*, vector<pair<double,double>>>& new_signals,
 					double& improvement) {
 	{
 		double existing_sum_score = 0.0;
@@ -191,50 +212,96 @@ bool compare_result(vector<double>& existing_scores,
 		}
 	}
 
-	for (map<Scope*, vector<double>>::iterator existing_it = existing_signals.begin();
+	for (map<Scope*, vector<pair<double,double>>>::iterator existing_it = existing_signals.begin();
 			existing_it != existing_signals.end(); existing_it++) {
-		map<Scope*, vector<double>>::iterator new_it = new_signals.find(existing_it->first);
+		map<Scope*, vector<pair<double,double>>>::iterator new_it = new_signals.find(existing_it->first);
 		if (new_it != new_signals.end()) {
-			double existing_sum_signal = 0.0;
-			for (int h_index = 0; h_index < (int)existing_it->second.size(); h_index++) {
-				existing_sum_signal += existing_it->second[h_index];
+			{
+				double existing_sum_match = 0.0;
+				for (int h_index = 0; h_index < (int)existing_it->second.size(); h_index++) {
+					existing_sum_match += existing_it->second[h_index].first;
+				}
+				double existing_match = existing_sum_match / (double)existing_it->second.size();
+
+				double existing_sum_variance = 0.0;
+				for (int h_index = 0; h_index < (int)existing_it->second.size(); h_index++) {
+					existing_sum_variance += (existing_it->second[h_index].first - existing_match)
+						* (existing_it->second[h_index].first - existing_match);
+				}
+				double existing_standard_deviation = sqrt(existing_sum_variance / (double)existing_it->second.size());
+				double existing_standard_error = existing_standard_deviation / sqrt((double)existing_it->second.size());
+
+				double new_sum_match = 0.0;
+				for (int h_index = 0; h_index < (int)new_it->second.size(); h_index++) {
+					new_sum_match += new_it->second[h_index].first;
+				}
+				double new_match = new_sum_match / (double)new_it->second.size();
+
+				double new_sum_variance = 0.0;
+				for (int h_index = 0; h_index < (int)new_it->second.size(); h_index++) {
+					new_sum_variance += (new_it->second[h_index].first - new_match)
+						* (new_it->second[h_index].first - new_match);
+				}
+				double new_standard_deviation = sqrt(new_sum_variance / (double)new_it->second.size());
+				double new_standard_error = new_standard_deviation / sqrt((double)new_it->second.size());
+
+				double denom = sqrt(existing_standard_error * existing_standard_error
+					+ new_standard_error * new_standard_error);
+
+				double t_score = (new_match - existing_match) / denom;
+
+				// temp
+				cout << "new_match: " << new_match << endl;
+				cout << "existing_match: " << existing_match << endl;
+				cout << "t_score: " << t_score << endl;
+
+				if (t_score < -0.674) {
+					return false;
+				}
 			}
-			double existing_signal = existing_sum_signal / (double)existing_it->second.size();
 
-			double existing_sum_variance = 0.0;
-			for (int h_index = 0; h_index < (int)existing_it->second.size(); h_index++) {
-				existing_sum_variance += (existing_it->second[h_index] - existing_signal)
-					* (existing_it->second[h_index] - existing_signal);
-			}
-			double existing_standard_deviation = sqrt(existing_sum_variance / (double)existing_it->second.size());
-			double existing_standard_error = existing_standard_deviation / sqrt((double)existing_it->second.size());
+			{
+				double existing_sum_signal = 0.0;
+				for (int h_index = 0; h_index < (int)existing_it->second.size(); h_index++) {
+					existing_sum_signal += existing_it->second[h_index].second;
+				}
+				double existing_signal = existing_sum_signal / (double)existing_it->second.size();
 
-			double new_sum_signal = 0.0;
-			for (int h_index = 0; h_index < (int)new_it->second.size(); h_index++) {
-				new_sum_signal += new_it->second[h_index];
-			}
-			double new_signal = new_sum_signal / (double)new_it->second.size();
+				double existing_sum_variance = 0.0;
+				for (int h_index = 0; h_index < (int)existing_it->second.size(); h_index++) {
+					existing_sum_variance += (existing_it->second[h_index].second - existing_signal)
+						* (existing_it->second[h_index].second - existing_signal);
+				}
+				double existing_standard_deviation = sqrt(existing_sum_variance / (double)existing_it->second.size());
+				double existing_standard_error = existing_standard_deviation / sqrt((double)existing_it->second.size());
 
-			double new_sum_variance = 0.0;
-			for (int h_index = 0; h_index < (int)new_it->second.size(); h_index++) {
-				new_sum_variance += (new_it->second[h_index] - new_signal)
-					* (new_it->second[h_index] - new_signal);
-			}
-			double new_standard_deviation = sqrt(new_sum_variance / (double)new_it->second.size());
-			double new_standard_error = new_standard_deviation / sqrt((double)new_it->second.size());
+				double new_sum_signal = 0.0;
+				for (int h_index = 0; h_index < (int)new_it->second.size(); h_index++) {
+					new_sum_signal += new_it->second[h_index].second;
+				}
+				double new_signal = new_sum_signal / (double)new_it->second.size();
 
-			double denom = sqrt(existing_standard_error * existing_standard_error
-				+ new_standard_error * new_standard_error);
+				double new_sum_variance = 0.0;
+				for (int h_index = 0; h_index < (int)new_it->second.size(); h_index++) {
+					new_sum_variance += (new_it->second[h_index].second - new_signal)
+						* (new_it->second[h_index].second - new_signal);
+				}
+				double new_standard_deviation = sqrt(new_sum_variance / (double)new_it->second.size());
+				double new_standard_error = new_standard_deviation / sqrt((double)new_it->second.size());
 
-			double t_score = (new_signal - existing_signal) / denom;
+				double denom = sqrt(existing_standard_error * existing_standard_error
+					+ new_standard_error * new_standard_error);
 
-			// temp
-			cout << "new_signal: " << new_signal << endl;
-			cout << "existing_signal: " << existing_signal << endl;
-			cout << "t_score: " << t_score << endl;
+				double t_score = (new_signal - existing_signal) / denom;
 
-			if (t_score < -0.674) {
-				return false;
+				// temp
+				cout << "new_signal: " << new_signal << endl;
+				cout << "existing_signal: " << existing_signal << endl;
+				cout << "t_score: " << t_score << endl;
+
+				if (t_score < -0.674) {
+					return false;
+				}
 			}
 		}
 	}

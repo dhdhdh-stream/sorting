@@ -48,12 +48,6 @@ void SolutionWrapper::experiment_init() {
 				this->experiment_overall_history = new BranchExperimentOverallHistory(branch_experiment);
 			}
 			break;
-		// case EXPERIMENT_TYPE_COMMIT:
-		// 	{
-		// 		CommitExperiment* commit_experiment = (CommitExperiment*)this->curr_experiment;
-		// 		this->experiment_history = new CommitExperimentHistory(commit_experiment);
-		// 	}
-		// 	break;
 		}
 
 		ScopeHistory* scope_history = new ScopeHistory(this->solution->scopes[0]);
