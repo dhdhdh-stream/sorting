@@ -168,6 +168,31 @@ void create_reward_signal_helper(Scope* scope,
 											 new_match_network);
 
 		if (split_is_success) {
+			vector<ScopeHistory*> match_histories;
+			vector<double> match_target_vals;
+			for (int h_index = 0; h_index < (int)scope->explore_scope_histories.size(); h_index++) {
+				vector<double> input_vals(new_match_inputs.size());
+				vector<bool> input_is_on(new_match_inputs.size());
+				for (int i_index = 0; i_index < (int)new_match_inputs.size(); i_index++) {
+					double val;
+					bool is_on;
+					fetch_input_helper(scope->explore_scope_histories[h_index],
+									   new_match_inputs[i_index],
+									   0,
+									   val,
+									   is_on);
+					input_vals[i_index] = val;
+					input_is_on[i_index] = is_on;
+				}
+				new_match_network->activate(input_vals,
+											input_is_on);
+
+				if (new_match_network->output->acti_vals[0] > 0.0) {
+					match_histories.push_back(scope->explore_scope_histories[h_index]);
+					match_target_vals.push_back(scope->explore_target_val_histories[h_index]);
+				}
+			}
+
 			double new_average_score;
 			vector<Input> new_factor_inputs;
 			vector<double> new_factor_input_averages;
@@ -176,8 +201,8 @@ void create_reward_signal_helper(Scope* scope,
 			vector<Input> new_network_inputs;
 			Network* new_network = NULL;
 			double new_highest_signal;
-			bool is_success = train_score(scope->explore_scope_histories,
-										  scope->explore_target_val_histories,
+			bool is_success = train_score(match_histories,
+										  match_target_vals,
 										  new_average_score,
 										  new_factor_inputs,
 										  new_factor_input_averages,
