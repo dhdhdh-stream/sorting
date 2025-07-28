@@ -27,6 +27,8 @@ const int MAX_EPOCHS = 30;
 const int ITERS_PER_EPOCH = 10000;
 const double MAX_AVERAGE_ERROR = 0.1;
 
+const double MIN_MATCH_RATIO = 0.1;
+
 const int TRAIN_ITERS = 300000;
 
 const int SPLIT_NUM_TRIES = 20;
@@ -175,6 +177,8 @@ bool train_score(vector<vector<double>>& vals,
 	double min_standard_deviation = min(base_misguess_standard_deviation, signal_misguess_standard_deviation);
 	double t_score = signal_improvement / (min_standard_deviation / sqrt((double)vals.size()));
 
+	cout << "t_score: " << t_score << endl;
+
 	if (t_score < 2.326) {
 		return false;
 	}
@@ -185,6 +189,8 @@ bool train_score(vector<vector<double>>& vals,
 			highest_signal = network_vals[i_index];
 		}
 	}
+
+	cout << "highest_signal: " << highest_signal << endl;
 
 	return true;
 }
@@ -245,6 +251,7 @@ int main(int argc, char* argv[]) {
 
 	vector<vector<double>> explore_vals;
 	vector<double> explore_target_vals;
+	uniform_int_distribution<int> random_action_distribution(0, problem_type->num_possible_actions()-1);
 	for (int t_index = 0; t_index < NUM_EXPLORE; t_index++) {
 		Problem* problem = problem_type->get_problem();
 
@@ -258,7 +265,7 @@ int main(int argc, char* argv[]) {
 		}
 
 		for (int a_index = 0; a_index < EXPLORE_NUM_RANDOM; a_index++) {
-			problem->perform_action(start_actions[a_index]);
+			problem->perform_action(random_action_distribution(generator));
 		}
 
 		curr_vals.push_back(problem->get_observations()[0]);
@@ -279,6 +286,7 @@ int main(int argc, char* argv[]) {
 	double best_highest_signal = numeric_limits<double>::lowest();
 	Network* best_match_network = NULL;
 	Network* best_signal_network = NULL;
+	int num_min_match = MIN_MATCH_RATIO * (int)explore_vals.size();
 	for (int t_index = 0; t_index < SPLIT_NUM_TRIES; t_index++) {
 		Network* new_match_network = new Network(10);
 		bool split_is_success = split_helper(existing_vals,
@@ -295,35 +303,72 @@ int main(int argc, char* argv[]) {
 				}
 			}
 
-			Network* new_signal_network = new Network(10);
-			double new_highest_signal;
-			bool is_success = train_score(match_vals,
-										  match_target_vals,
-										  new_signal_network,
-										  new_highest_signal);
-			if (is_success && new_highest_signal > best_highest_signal) {
-				best_highest_signal = new_highest_signal;
+			if ((int)match_vals.size() >= num_min_match) {
+				Network* new_signal_network = new Network(10);
+				double new_highest_signal;
+				bool is_success = train_score(match_vals,
+											  match_target_vals,
+											  new_signal_network,
+											  new_highest_signal);
+				if (is_success && new_highest_signal > best_highest_signal) {
+					best_highest_signal = new_highest_signal;
 
-				if (best_match_network != NULL) {
-					delete best_match_network;
-				}
-				best_match_network = new_match_network;
+					if (best_match_network != NULL) {
+						delete best_match_network;
+					}
+					best_match_network = new_match_network;
 
-				if (best_signal_network != NULL) {
-					delete best_signal_network;
+					if (best_signal_network != NULL) {
+						delete best_signal_network;
+					}
+					best_signal_network = new_signal_network;
+				} else {
+					delete new_signal_network;
+					delete new_match_network;
 				}
-				best_signal_network = new_signal_network;
 			} else {
-				delete new_signal_network;
+				cout << "min match fail" << endl;
 				delete new_match_network;
 			}
 		} else {
+			cout << "split fail" << endl;
 			delete new_match_network;
 		}
 	}
 
+	for (int t_index = 0; t_index < 100; t_index++) {
+		Problem* problem = problem_type->get_problem();
 
+		vector<double> curr_vals;
 
+		curr_vals.push_back(problem->get_observations()[0]);
+		for (int a_index = 0; a_index < (int)start_actions.size(); a_index++) {
+			problem->perform_action(start_actions[a_index]);
+
+			curr_vals.push_back(problem->get_observations()[0]);
+		}
+
+		for (int a_index = 0; a_index < EXPLORE_NUM_RANDOM; a_index++) {
+			problem->perform_action(random_action_distribution(generator));
+		}
+
+		curr_vals.push_back(problem->get_observations()[0]);
+		for (int a_index = 0; a_index < (int)end_actions.size(); a_index++) {
+			problem->perform_action(end_actions[a_index]);
+
+			curr_vals.push_back(problem->get_observations()[0]);
+		}
+
+		cout << t_index << endl;
+		best_match_network->activate(curr_vals);
+		cout << "best_match_network->output->acti_vals[0]: " << best_match_network->output->acti_vals[0] << endl;
+		best_signal_network->activate(curr_vals);
+		cout << "best_signal_network->output->acti_vals[0]: " << best_signal_network->output->acti_vals[0] << endl;
+		problem->print();
+		cout << endl;
+
+		delete problem;
+	}
 
 	delete problem_type;
 
