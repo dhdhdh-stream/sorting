@@ -188,8 +188,6 @@ bool train_score(vector<vector<double>>& vals,
 	double min_standard_deviation = min(base_misguess_standard_deviation, signal_misguess_standard_deviation);
 	double t_score = signal_improvement / (min_standard_deviation / sqrt((double)vals.size()));
 
-	cout << "t_score: " << t_score << endl;
-
 	if (t_score < 2.326) {
 		return false;
 	}

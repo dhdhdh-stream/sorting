@@ -181,10 +181,18 @@ int main(int argc, char* argv[]) {
 					double min_standard_deviation = min(curr_misguess_standard_deviation, new_misguess_standard_deviation);
 					double t_score = misguess_improvement / (min_standard_deviation / sqrt((double)explore_vals.size()));
 
-					if (t_score >= 2.326) {
+					cout << "t_score: " << t_score << endl;
+
+					if (t_score >= 1.282) {
 						curr_match_networks = potential_match_networks;
 						curr_signal_networks = potential_signal_networks;
 						curr_miss_average_guess = potential_miss_average_guess;
+
+						curr_misguess = new_misguess;
+						curr_misguess_standard_deviation = new_misguess_standard_deviation;
+
+						cout << "new_misguess: " << new_misguess << endl;
+						cout << "new_misguess_standard_deviation: " << new_misguess_standard_deviation << endl;
 					} else {
 						delete new_signal_network;
 						delete new_match_network;
