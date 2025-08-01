@@ -16,7 +16,7 @@
 using namespace std;
 
 Scope::Scope() {
-	this->score_average_val = 0.0;
+	// do nothing
 }
 
 Scope::~Scope() {
@@ -26,10 +26,6 @@ Scope::~Scope() {
 
 	for (int f_index = 0; f_index < (int)this->factors.size(); f_index++) {
 		delete this->factors[f_index];
-	}
-
-	for (int h_index = 0; h_index < (int)this->explore_scope_histories.size(); h_index++) {
-		delete this->explore_scope_histories[h_index];
 	}
 }
 
@@ -130,24 +126,6 @@ void Scope::clean_inputs(Scope* scope,
 		this->factors[f_index]->clean_inputs(scope,
 											 node_id);
 	}
-
-	for (int i_index = (int)this->score_inputs.size()-1; i_index >= 0; i_index--) {
-		bool is_match = false;
-		for (int l_index = 0; l_index < (int)this->score_inputs[i_index].scope_context.size(); l_index++) {
-			if (this->score_inputs[i_index].scope_context[l_index] == scope
-					&& this->score_inputs[i_index].node_context[l_index] == node_id) {
-				is_match = true;
-				break;
-			}
-		}
-
-		if (is_match) {
-			this->score_inputs.erase(this->score_inputs.begin() + i_index);
-			this->score_input_averages.erase(this->score_input_averages.begin() + i_index);
-			this->score_input_standard_deviations.erase(this->score_input_standard_deviations.begin() + i_index);
-			this->score_weights.erase(this->score_weights.begin() + i_index);
-		}
-	}
 }
 
 void Scope::clean_inputs(Scope* scope) {
@@ -165,23 +143,6 @@ void Scope::clean_inputs(Scope* scope) {
 
 	for (int f_index = 0; f_index < (int)this->factors.size(); f_index++) {
 		this->factors[f_index]->clean_inputs(scope);
-	}
-
-	for (int i_index = (int)this->score_inputs.size()-1; i_index >= 0; i_index--) {
-		bool is_match = false;
-		for (int l_index = 0; l_index < (int)this->score_inputs[i_index].scope_context.size(); l_index++) {
-			if (this->score_inputs[i_index].scope_context[l_index] == scope) {
-				is_match = true;
-				break;
-			}
-		}
-
-		if (is_match) {
-			this->score_inputs.erase(this->score_inputs.begin() + i_index);
-			this->score_input_averages.erase(this->score_input_averages.begin() + i_index);
-			this->score_input_standard_deviations.erase(this->score_input_standard_deviations.begin() + i_index);
-			this->score_weights.erase(this->score_weights.begin() + i_index);
-		}
 	}
 }
 
@@ -207,13 +168,6 @@ void Scope::replace_obs_node(Scope* scope,
 												 original_node_id,
 												 new_node_id,
 												 f_index);
-	}
-
-	for (int i_index = 0; i_index < (int)this->score_inputs.size(); i_index++) {
-		if (this->score_inputs[i_index].scope_context.back() == scope
-				&& this->score_inputs[i_index].node_context.back() == original_node_id) {
-			this->score_inputs[i_index].node_context.back() = new_node_id;
-		}
 	}
 }
 
@@ -245,15 +199,6 @@ void Scope::save(ofstream& output_file) {
 	output_file << this->factors.size() << endl;
 	for (int f_index = 0; f_index < (int)this->factors.size(); f_index++) {
 		this->factors[f_index]->save(output_file);
-	}
-
-	output_file << this->score_average_val << endl;
-	output_file << this->score_inputs.size() << endl;
-	for (int i_index = 0; i_index < (int)this->score_inputs.size(); i_index++) {
-		this->score_inputs[i_index].save(output_file);
-		output_file << this->score_input_averages[i_index] << endl;
-		output_file << this->score_input_standard_deviations[i_index] << endl;
-		output_file << this->score_weights[i_index] << endl;
 	}
 
 	output_file << this->child_scopes.size() << endl;
@@ -332,30 +277,6 @@ void Scope::load(ifstream& input_file,
 		this->factors.push_back(factor);
 	}
 
-	string score_average_val_line;
-	getline(input_file, score_average_val_line);
-	this->score_average_val = stod(score_average_val_line);
-
-	string score_num_inputs_line;
-	getline(input_file, score_num_inputs_line);
-	int score_num_inputs = stoi(score_num_inputs_line);
-	for (int i_index = 0; i_index < score_num_inputs; i_index++) {
-		this->score_inputs.push_back(Input(input_file,
-										   parent_solution));
-
-		string input_average_line;
-		getline(input_file, input_average_line);
-		this->score_input_averages.push_back(stod(input_average_line));
-
-		string input_standard_deviation_line;
-		getline(input_file, input_standard_deviation_line);
-		this->score_input_standard_deviations.push_back(stod(input_standard_deviation_line));
-
-		string weight_line;
-		getline(input_file, weight_line);
-		this->score_weights.push_back(stod(weight_line));
-	}
-
 	string num_child_scopes_line;
 	getline(input_file, num_child_scopes_line);
 	int num_child_scopes = stoi(num_child_scopes_line);
@@ -392,8 +313,6 @@ ScopeHistory::ScopeHistory(Scope* scope) {
 
 	this->factor_initialized = vector<bool>(scope->factors.size(), false);
 	this->factor_values = vector<double>(scope->factors.size());
-
-	this->signal_initialized = false;
 }
 
 ScopeHistory::ScopeHistory(ScopeHistory* original) {
@@ -431,8 +350,6 @@ ScopeHistory::ScopeHistory(ScopeHistory* original) {
 
 	this->factor_initialized = original->factor_initialized;
 	this->factor_values = original->factor_values;
-
-	this->signal_initialized = false;
 }
 
 ScopeHistory::ScopeHistory(ScopeHistory* original,
@@ -473,8 +390,6 @@ ScopeHistory::ScopeHistory(ScopeHistory* original,
 
 	this->factor_initialized = vector<bool>(scope->factors.size(), false);
 	this->factor_values = vector<double>(scope->factors.size());
-
-	this->signal_initialized = false;
 }
 
 ScopeHistory::~ScopeHistory() {

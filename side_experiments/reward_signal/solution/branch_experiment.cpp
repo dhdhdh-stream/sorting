@@ -20,15 +20,12 @@ using namespace std;
 BranchExperiment::BranchExperiment(Scope* scope_context,
 								   AbstractNode* node_context,
 								   bool is_branch,
-								   bool in_place,
 								   SolutionWrapper* wrapper) {
 	this->type = EXPERIMENT_TYPE_BRANCH;
 
 	this->scope_context = scope_context;
 	this->node_context = node_context;
 	this->is_branch = is_branch;
-
-	this->in_place = in_place;
 
 	this->curr_new_scope = NULL;
 	this->curr_scope_history = NULL;
@@ -38,9 +35,6 @@ BranchExperiment::BranchExperiment(Scope* scope_context,
 	this->new_network = NULL;
 
 	this->new_branch_node = NULL;
-
-	uniform_int_distribution<int> signal_distribution(0, 1);
-	this->use_reward_signal = signal_distribution(generator);
 
 	vector<ScopeHistory*> scope_histories;
 	vector<double> target_val_histories;
@@ -54,13 +48,10 @@ BranchExperiment::BranchExperiment(Scope* scope_context,
 								   this->scope_context,
 								   this->node_context,
 								   this->is_branch,
-								   this->use_reward_signal,
 								   scope_histories,
 								   target_val_histories);
 
 			this->existing_scores.push_back(wrapper->solution->existing_target_val_histories[h_index]);
-			fetch_signals_helper(wrapper->solution->existing_scope_histories[h_index],
-								 this->existing_signals);
 		}
 	}
 
@@ -191,6 +182,7 @@ BranchExperimentOverallHistory::BranchExperimentOverallHistory(BranchExperiment*
 BranchExperimentInstanceHistory::BranchExperimentInstanceHistory(BranchExperiment* experiment) {
 	this->experiment = experiment;
 
+	this->signal_scope_node = NULL;
 	this->signal_needed_from = NULL;
 }
 

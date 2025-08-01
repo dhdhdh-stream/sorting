@@ -70,7 +70,6 @@ bool train_existing(std::vector<ScopeHistory*>& scope_histories,
 					std::vector<double>& factor_input_standard_deviations,
 					std::vector<double>& factor_weights);
 bool train_new(std::vector<ScopeHistory*>& scope_histories,
-			   std::vector<bool>& match_histories,
 			   std::vector<double>& target_val_histories,
 			   double& average_score,
 			   std::vector<Input>& factor_inputs,
@@ -90,20 +89,14 @@ void fetch_histories_helper(ScopeHistory* scope_history,
 							Scope* scope_context,
 							AbstractNode* node_context,
 							bool is_branch,
-							bool use_reward_signal,
 							std::vector<ScopeHistory*>& scope_histories,
 							std::vector<double>& target_val_histories);
-void fetch_signals_helper(ScopeHistory* scope_history,
-						  std::map<Scope*, std::vector<std::pair<double,double>>>& signals);
 
 Scope* create_new_scope(Scope* scope_context);
 
-bool check_match(ScopeHistory* scope_history);
-double calc_reward_signal(ScopeHistory* scope_history);
-void add_explore_helper(ScopeHistory* scope_history,
-						double target_val,
-						Scope* explore_scope);
-void update_reward_signals(SolutionWrapper* wrapper);
+double calc_signal(ScopeNode* signal_scope_node,
+				   ScopeHistory* signal_needed_from);
+
 bool split_helper(std::vector<ScopeHistory*>& existing_scope_histories,
 				  std::vector<ScopeHistory*>& explore_scope_histories,
 				  std::vector<Input>& match_inputs,
@@ -116,16 +109,8 @@ bool train_score(std::vector<ScopeHistory*>& scope_histories,
 				 std::vector<double>& factor_input_standard_deviations,
 				 std::vector<double>& factor_weights,
 				 std::vector<Input>& network_inputs,
-				 Network*& network,
-				 double& highest_signal);
-void create_reward_signal_helper(Scope* scope,
-								 SolutionWrapper* wrapper);
-
-bool compare_result(std::vector<double>& existing_scores,
-					std::map<Scope*, std::vector<std::pair<double,double>>>& existing_signals,
-					std::vector<double>& new_scores,
-					std::map<Scope*, std::vector<std::pair<double,double>>>& new_signals,
-					double& improvement);
+				 Network*& network);
+void update_reward_signals(SolutionWrapper* wrapper);
 
 void clean_scope(Scope* scope,
 				 SolutionWrapper* wrapper);

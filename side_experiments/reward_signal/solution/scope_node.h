@@ -16,6 +16,7 @@
 #include <vector>
 
 #include "abstract_node.h"
+#include "signal.h"
 
 class Problem;
 class Scope;
@@ -31,12 +32,25 @@ public:
 	int next_node_id;
 	AbstractNode* next_node;
 
+	std::vector<Signal> signals;
+	double miss_average_guess;
+	/**
+	 * - don't explicitly check match
+	 *   - instead, misses will hopefully simply have low average(?)
+	 */
+
 	double average_hits_per_run;
 	double average_instances_per_run;
 
 	int last_updated_run_index;
 	int sum_hits;
 	int sum_instances;
+
+	std::vector<ScopeHistory*> explore_scope_histories;
+	std::vector<double> explore_target_val_histories;
+	/**
+	 * - simply deep copy and clean after train
+	 */
 
 	ScopeNode();
 	~ScopeNode();
@@ -66,6 +80,9 @@ public:
 class ScopeNodeHistory : public AbstractNodeHistory {
 public:
 	ScopeHistory* scope_history;
+
+	bool signal_initialized;
+	double signal_val;
 
 	ScopeNodeHistory(ScopeNode* node);
 	ScopeNodeHistory(ScopeNodeHistory* original);

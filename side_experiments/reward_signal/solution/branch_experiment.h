@@ -11,6 +11,7 @@ class BranchNode;
 class Network;
 class Problem;
 class Scope;
+class ScopeNode;
 class SolutionWrapper;
 
 const int BRANCH_EXPERIMENT_STATE_EXPLORE = 0;
@@ -25,13 +26,6 @@ class BranchExperiment : public AbstractExperiment {
 public:
 	int state;
 	int state_iter;
-
-	bool use_reward_signal;
-	/**
-	 * - occasionally use true as well
-	 *   - true has noise but also magic as well
-	 *     - something consistently good but not predictable through signals
-	 */
 
 	double existing_average_score;
 	std::vector<Input> existing_inputs;
@@ -75,9 +69,10 @@ public:
 	std::vector<double> i_target_val_histories;
 
 	std::vector<double> existing_scores;
-	std::map<Scope*, std::vector<std::pair<double,double>>> existing_signals;
 	std::vector<double> new_scores;
-	std::map<Scope*, std::vector<std::pair<double,double>>> new_signals;
+
+	std::vector<ScopeHistory*> explore_scope_histories;
+	std::vector<AbstractNode*> explore_node_context;
 
 	#if defined(MDEBUG) && MDEBUG
 	std::vector<Problem*> verify_problems;
@@ -88,7 +83,6 @@ public:
 	BranchExperiment(Scope* scope_context,
 					 AbstractNode* node_context,
 					 bool is_branch,
-					 bool in_place,
 					 SolutionWrapper* wrapper);
 	~BranchExperiment();
 	void decrement(AbstractNode* experiment_node);
@@ -168,6 +162,7 @@ class BranchExperimentInstanceHistory : public AbstractExperimentInstanceHistory
 public:
 	double existing_predicted_score;
 
+	ScopeNode* signal_scope_node;
 	ScopeHistory* signal_needed_from;
 
 	BranchExperimentInstanceHistory(BranchExperiment* experiment);

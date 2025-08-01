@@ -23,8 +23,6 @@ public:
 	AbstractNode* node_context;
 	bool is_branch;
 
-	bool in_place;
-
 	int result;
 
 	double improvement;

@@ -25,24 +25,7 @@ public:
 
 	std::vector<Factor*> factors;
 
-	bool check_match;
-	int match_factor_index;
-	/**
-	 * - protect signal once created
-	 *   - match must be maintained for any experiment prior or within
-	 *     - on measure, calc all matches
-	 */
-
-	double score_average_val;
-	std::vector<Input> score_inputs;
-	std::vector<double> score_input_averages;
-	std::vector<double> score_input_standard_deviations;
-	std::vector<double> score_weights;
-
 	std::vector<Scope*> child_scopes;
-
-	std::vector<ScopeHistory*> explore_scope_histories;
-	std::vector<double> explore_target_val_histories;
 
 	Scope();
 	~Scope();
@@ -83,9 +66,6 @@ public:
 
 	std::vector<bool> factor_initialized;
 	std::vector<double> factor_values;
-
-	bool signal_initialized;
-	double signal_val;
 
 	ScopeHistory(Scope* scope);
 	ScopeHistory(ScopeHistory* original);

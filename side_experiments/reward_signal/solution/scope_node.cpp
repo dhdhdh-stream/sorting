@@ -24,9 +24,19 @@ ScopeNode::~ScopeNode() {
 	if (this->experiment != NULL) {
 		this->experiment->decrement(this);
 	}
+
+	for (int h_index = 0; h_index < (int)this->explore_scope_histories.size(); h_index++) {
+		delete this->explore_scope_histories[h_index];
+	}
 }
 
 void ScopeNode::clean() {
+	for (int h_index = 0; h_index < (int)this->explore_scope_histories.size(); h_index++) {
+		delete this->explore_scope_histories[h_index];
+	}
+	this->explore_scope_histories.clear();
+	this->explore_target_val_histories.clear();
+
 	if (this->experiment != NULL) {
 		this->experiment->decrement(this);
 		this->experiment = NULL;
@@ -91,6 +101,8 @@ void ScopeNode::save_for_display(ofstream& output_file) {
 
 ScopeNodeHistory::ScopeNodeHistory(ScopeNode* node) {
 	this->node = node;
+
+	this->signal_initialized = false;
 }
 
 ScopeNodeHistory::ScopeNodeHistory(ScopeNodeHistory* original) {
@@ -98,6 +110,8 @@ ScopeNodeHistory::ScopeNodeHistory(ScopeNodeHistory* original) {
 	this->index = original->index;
 
 	this->scope_history = new ScopeHistory(original->scope_history);
+
+	this->signal_initialized = false;
 }
 
 ScopeNodeHistory::~ScopeNodeHistory() {

@@ -39,8 +39,7 @@ bool train_score(vector<ScopeHistory*>& scope_histories,
 				 vector<double>& factor_input_standard_deviations,
 				 vector<double>& factor_weights,
 				 vector<Input>& network_inputs,
-				 Network*& network,
-				 double& highest_signal) {
+				 Network*& network) {
 	Scope* scope = scope_histories[0]->scope;
 
 	int num_instances = (int)target_val_histories.size();
@@ -586,13 +585,6 @@ bool train_score(vector<ScopeHistory*>& scope_histories,
 
 	if (t_score < 2.326) {
 		return false;
-	}
-
-	highest_signal = sum_vals[0];
-	for (int i_index = 1; i_index < num_instances; i_index++) {
-		if (sum_vals[i_index] > highest_signal) {
-			highest_signal = sum_vals[i_index];
-		}
 	}
 
 	return true;

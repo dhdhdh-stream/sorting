@@ -15,7 +15,7 @@ using namespace std;
 
 const int SPLIT_NUM_INPUTS = 10;
 
-const double SEED_RATIO = 0.2;
+const double SEED_RATIO = 0.1;
 
 const int MAX_EPOCHS = 30;
 const int ITERS_PER_EPOCH = 10000;

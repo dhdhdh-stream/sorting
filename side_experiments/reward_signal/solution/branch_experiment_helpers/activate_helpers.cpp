@@ -118,6 +118,8 @@ void BranchExperiment::backprop(double target_val,
 		explore_backprop(target_val,
 						 wrapper);
 
+		delete wrapper->scope_histories[0];
+
 		break;
 	case BRANCH_EXPERIMENT_STATE_TRAIN_NEW:
 		train_new_backprop(target_val,
