@@ -250,22 +250,39 @@ bool split_helper(vector<ScopeHistory*>& existing_scope_histories,
 								input_averages,
 								input_standard_deviations);
 
-	vector<int> negative_seeds;
-	int num_seeds = SEED_RATIO * (double)explore_scope_histories.size();
-	vector<int> initial_possible_indexes(explore_scope_histories.size());
-	for (int i_index = 0; i_index < (int)explore_scope_histories.size(); i_index++) {
-		initial_possible_indexes[i_index] = i_index;
-	}
-	for (int s_index = 0; s_index < num_seeds; s_index++) {
-		uniform_int_distribution<int> possible_distribution(0, initial_possible_indexes.size()-1);
-		int random_index = possible_distribution(generator);
-		negative_seeds.push_back(initial_possible_indexes[random_index]);
-		initial_possible_indexes.erase(initial_possible_indexes.begin() + random_index);
+	vector<int> positive_seeds;
+	int num_positive_seeds = SEED_RATIO * (double)existing_scope_histories.size();
+	{
+		vector<int> initial_possible_indexes(existing_scope_histories.size());
+		for (int i_index = 0; i_index < (int)existing_scope_histories.size(); i_index++) {
+			initial_possible_indexes[i_index] = i_index;
+		}
+		for (int s_index = 0; s_index < num_positive_seeds; s_index++) {
+			uniform_int_distribution<int> possible_distribution(0, initial_possible_indexes.size()-1);
+			int random_index = possible_distribution(generator);
+			positive_seeds.push_back(initial_possible_indexes[random_index]);
+			initial_possible_indexes.erase(initial_possible_indexes.begin() + random_index);
+		}
 	}
 
-	uniform_int_distribution<int> is_existing_distribution(0, 1);
-	uniform_int_distribution<int> existing_distribution(0, existing_scope_histories.size()-1);
-	uniform_int_distribution<int> seed_distribution(0, num_seeds-1);
+	vector<int> negative_seeds;
+	int num_negative_seeds = SEED_RATIO * (double)explore_scope_histories.size();
+	{
+		vector<int> initial_possible_indexes(explore_scope_histories.size());
+		for (int i_index = 0; i_index < (int)explore_scope_histories.size(); i_index++) {
+			initial_possible_indexes[i_index] = i_index;
+		}
+		for (int s_index = 0; s_index < num_negative_seeds; s_index++) {
+			uniform_int_distribution<int> possible_distribution(0, initial_possible_indexes.size()-1);
+			int random_index = possible_distribution(generator);
+			negative_seeds.push_back(initial_possible_indexes[random_index]);
+			initial_possible_indexes.erase(initial_possible_indexes.begin() + random_index);
+		}
+	}
+
+	uniform_int_distribution<int> is_positive_distribution(0, 1);
+	uniform_int_distribution<int> positive_distribution(0, num_positive_seeds-1);
+	uniform_int_distribution<int> negative_distribution(0, num_negative_seeds-1);
 	uniform_int_distribution<int> drop_distribution(0, 9);
 	int e_index = 0;
 	while (true) {
@@ -274,20 +291,21 @@ bool split_helper(vector<ScopeHistory*>& existing_scope_histories,
 			vector<double> inputs(match_inputs.size());
 			vector<bool> input_is_on(match_inputs.size());
 
-			bool is_existing = is_existing_distribution(generator) == 0;
+			bool is_positive = is_positive_distribution(generator) == 0;
 
-			if (is_existing) {
-				int random_index = existing_distribution(generator);
+			if (is_positive) {
+				int random_index = positive_distribution(generator);
+				int existing_index = positive_seeds[random_index];
 				for (int i_index = 0; i_index < (int)match_inputs.size(); i_index++) {
-					inputs[i_index] = v_existing_input_vals[i_index][random_index];
+					inputs[i_index] = v_existing_input_vals[i_index][existing_index];
 					if (drop_distribution(generator) == 0) {
 						input_is_on[i_index] = false;
 					} else {
-						input_is_on[i_index] = v_existing_input_is_on[i_index][random_index];
+						input_is_on[i_index] = v_existing_input_is_on[i_index][existing_index];
 					}
 				}
 			} else {
-				int random_index = seed_distribution(generator);
+				int random_index = negative_distribution(generator);
 				int explore_index = negative_seeds[random_index];
 				for (int i_index = 0; i_index < (int)match_inputs.size(); i_index++) {
 					inputs[i_index] = v_explore_input_vals[i_index][explore_index];
@@ -303,7 +321,7 @@ bool split_helper(vector<ScopeHistory*>& existing_scope_histories,
 									input_is_on);
 
 			double error;
-			if (is_existing) {
+			if (is_positive) {
 				if (match_network->output->acti_vals[0] < 1.0) {
 					error = 1.0 - match_network->output->acti_vals[0];
 				}
@@ -328,6 +346,25 @@ bool split_helper(vector<ScopeHistory*>& existing_scope_histories,
 			return false;
 		}
 
+		vector<pair<double,int>> existing_acti_vals(existing_scope_histories.size());
+		for (int h_index = 0; h_index < (int)existing_scope_histories.size(); h_index++) {
+			vector<double> inputs(match_inputs.size());
+			vector<bool> input_is_on(match_inputs.size());
+			for (int i_index = 0; i_index < (int)match_inputs.size(); i_index++) {
+				inputs[i_index] = v_existing_input_vals[i_index][h_index];
+				input_is_on[i_index] = v_existing_input_is_on[i_index][h_index];
+			}
+
+			match_network->activate(inputs,
+									input_is_on);
+
+			existing_acti_vals[h_index] = {match_network->output->acti_vals[0], h_index};
+		}
+		sort(existing_acti_vals.begin(), existing_acti_vals.end());
+		for (int s_index = 0; s_index < num_positive_seeds; s_index++) {
+			positive_seeds[s_index] = existing_acti_vals[existing_acti_vals.size() - 1 - s_index].second;
+		}
+
 		vector<pair<double,int>> explore_acti_vals(explore_scope_histories.size());
 		for (int h_index = 0; h_index < (int)explore_scope_histories.size(); h_index++) {
 			vector<double> inputs(match_inputs.size());
@@ -343,7 +380,7 @@ bool split_helper(vector<ScopeHistory*>& existing_scope_histories,
 			explore_acti_vals[h_index] = {match_network->output->acti_vals[0], h_index};
 		}
 		sort(explore_acti_vals.begin(), explore_acti_vals.end());
-		for (int s_index = 0; s_index < num_seeds; s_index++) {
+		for (int s_index = 0; s_index < num_negative_seeds; s_index++) {
 			negative_seeds[s_index] = explore_acti_vals[s_index].second;
 		}
 	}

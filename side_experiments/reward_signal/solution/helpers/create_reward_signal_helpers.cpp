@@ -98,7 +98,7 @@ bool check_incorrect_signals_helper(vector<ScopeHistory*>& scope_histories,
 void check_incorrect_signals(vector<ScopeHistory*>& scope_histories,
 							 vector<double>& target_val_histories,
 							 ScopeNode* signal_scope_node) {
-	for (int s_index = (int)signal_scope_node->signals.size() - 1; s_index >= 0; s_index--) {
+	for (int s_index = (int)signal_scope_node->signals.size()-1; s_index >= 0; s_index--) {
 		bool is_valid = check_incorrect_signals_helper(scope_histories,
 													   target_val_histories,
 													   signal_scope_node->signals[s_index]);
@@ -110,48 +110,101 @@ void check_incorrect_signals(vector<ScopeHistory*>& scope_histories,
 
 void check_unhittable_signals(vector<ScopeHistory*>& scope_histories,
 							  ScopeNode* signal_scope_node) {
-	
+	Scope* scope = scope_histories[0]->scope;
+
+	vector<double> counts(signal_scope_node->signals.size(), 0);
+	for (int h_index = 0; h_index < (int)scope_histories.size(); h_index++) {
+		for (int s_index = 0; s_index < (int)signal_scope_node->signals.size(); s_index++) {
+			int match_factor_index = signal_scope_node->signals[s_index].match_factor_index;
+			if (!scope_histories[h_index]->factor_initialized[match_factor_index]) {
+				double value = scope->factors[match_factor_index]->back_activate(scope_histories[h_index]);
+				scope_histories[h_index]->factor_initialized[match_factor_index] = true;
+				scope_histories[h_index]->factor_values[match_factor_index] = value;
+			}
+			double match_val = scope_histories[h_index]->factor_values[match_factor_index];
+			if (match_val > 0.0) {
+				counts[s_index]++;
+				break;
+			}
+		}
+	}
+
+	for (int s_index = (int)signal_scope_node->signals.size()-1; s_index >= 0; s_index--) {
+		if (counts[s_index] == 0) {
+			signal_scope_node->signals.erase(signal_scope_node->signals.begin() + s_index);
+		}
+	}
 }
 
-// void gather_existing_histories_helper(ScopeHistory* scope_history,
-// 									  Scope* signal_scope,
-// 									  vector<ScopeHistory*>& existing_scope_histories) {
-// 	Scope* scope = scope_history->scope;
+void gather_existing_histories_helper(ScopeHistory* scope_history,
+									  ScopeNode* signal_scope_node,
+									  vector<ScopeHistory*>& existing_scope_histories) {
+	Scope* scope = scope_history->scope;
 
-// 	if (scope == signal_scope) {
-// 		existing_scope_histories.push_back(scope_history);
-// 	} else {
-// 		bool is_child = false;
-// 		for (int c_index = 0; c_index < (int)scope->child_scopes.size(); c_index++) {
-// 			if (scope->child_scopes[c_index] == signal_scope) {
-// 				is_child = true;
-// 				break;
-// 			}
-// 		}
+	Scope* parent_scope = signal_scope_node->parent;
 
-// 		if (is_child) {
-// 			for (map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
-// 					it != scope_history->node_histories.end(); it++) {
-// 				AbstractNode* node = it->second->node;
-// 				if (node->type == NODE_TYPE_SCOPE) {
-// 					ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)it->second;
-// 					gather_existing_histories_helper(scope_node_history->scope_history,
-// 													 signal_scope,
-// 													 existing_scope_histories);
-// 				}
-// 			}
-// 		}
-// 	}
-// }
+	if (scope == parent_scope) {
+		map<int, AbstractNodeHistory*>::iterator it = scope_history
+			->node_histories.find(signal_scope_node->id);
+		if (it != scope_history->node_histories.end()) {
+			ScopeHistory* d_scope_history = new ScopeHistory(scope_history);
+			delete d_scope_history->node_histories[signal_scope_node->id];
+			d_scope_history->node_histories.erase(signal_scope_node->id);
+			existing_scope_histories.push_back(d_scope_history);
+		}
+	} else {
+		bool is_child = false;
+		for (int c_index = 0; c_index < (int)scope->child_scopes.size(); c_index++) {
+			if (scope->child_scopes[c_index] == parent_scope) {
+				is_child = true;
+				break;
+			}
+		}
+
+		if (is_child) {
+			for (map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
+					it != scope_history->node_histories.end(); it++) {
+				AbstractNode* node = it->second->node;
+				if (node->type == NODE_TYPE_SCOPE) {
+					ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)it->second;
+					gather_existing_histories_helper(scope_node_history->scope_history,
+													 signal_scope_node,
+													 existing_scope_histories);
+				}
+			}
+		}
+	}
+}
 
 double calc_miss_average_guess(vector<ScopeHistory*>& scope_histories,
 							   vector<double>& target_val_histories,
+							   vector<Input> new_match_inputs,
+							   Network* new_match_network,
 							   vector<Signal>& signals) {
 	Scope* scope = scope_histories[0]->scope;
 
 	double sum_target_vals = 0.0;
 	int sum_count = 0;
 	for (int h_index = 0; h_index < (int)scope_histories.size(); h_index++) {
+		vector<double> input_vals(new_match_inputs.size());
+		vector<bool> input_is_on(new_match_inputs.size());
+		for (int i_index = 0; i_index < (int)new_match_inputs.size(); i_index++) {
+			double val;
+			bool is_on;
+			fetch_input_helper(scope_histories[h_index],
+							   new_match_inputs[i_index],
+							   0,
+							   val,
+							   is_on);
+			input_vals[i_index] = val;
+			input_is_on[i_index] = is_on;
+		}
+		new_match_network->activate(input_vals,
+									input_is_on);
+		if (new_match_network->output->acti_vals[0] <= 0.0) {
+			continue;
+		}
+
 		bool has_match = false;
 		for (int s_index = 0; s_index < (int)signals.size(); s_index++) {
 			int match_factor_index = signals[s_index].match_factor_index;
@@ -180,10 +233,73 @@ double calc_miss_average_guess(vector<ScopeHistory*>& scope_histories,
 	}
 }
 
-double calc_signal(vector<Signal>& signals,
+double calc_signal(vector<Input> new_match_inputs,
+				   Network* new_match_network,
+				   double new_average_score,
+				   vector<Input> new_factor_inputs,
+				   vector<double> new_factor_input_averages,
+				   vector<double> new_factor_input_standard_deviations,
+				   vector<double> new_factor_weights,
+				   vector<Input> new_network_inputs,
+				   Network* new_network,
+				   vector<Signal>& signals,
 				   double miss_average_guess,
 				   ScopeHistory* signal_needed_from) {
 	Scope* scope = signal_needed_from->scope;
+
+	{
+		vector<double> input_vals(new_match_inputs.size());
+		vector<bool> input_is_on(new_match_inputs.size());
+		for (int i_index = 0; i_index < (int)new_match_inputs.size(); i_index++) {
+			double val;
+			bool is_on;
+			fetch_input_helper(signal_needed_from,
+							   new_match_inputs[i_index],
+							   0,
+							   val,
+							   is_on);
+			input_vals[i_index] = val;
+			input_is_on[i_index] = is_on;
+		}
+		new_match_network->activate(input_vals,
+									input_is_on);
+		if (new_match_network->output->acti_vals[0] > 0.0) {
+			double sum_vals = new_average_score;
+			for (int i_index = 0; i_index < (int)new_factor_inputs.size(); i_index++) {
+				double val;
+				bool is_on;
+				fetch_input_helper(signal_needed_from,
+								   new_factor_inputs[i_index],
+								   0,
+								   val,
+								   is_on);
+				if (is_on) {
+					double normalized_val = (val - new_factor_input_averages[i_index])
+						/ new_factor_input_standard_deviations[i_index];
+					sum_vals += new_factor_weights[i_index] * normalized_val;
+				}
+			}
+
+			vector<double> input_vals(new_network_inputs.size());
+			vector<bool> input_is_on(new_network_inputs.size());
+			for (int i_index = 0; i_index < (int)new_network_inputs.size(); i_index++) {
+				double val;
+				bool is_on;
+				fetch_input_helper(signal_needed_from,
+								   new_network_inputs[i_index],
+								   0,
+								   val,
+								   is_on);
+				input_vals[i_index] = val;
+				input_is_on[i_index] = is_on;
+			}
+			new_network->activate(input_vals,
+								  input_is_on);
+			sum_vals += new_network->output->acti_vals[0];
+
+			return sum_vals;
+		}
+	}
 
 	for (int s_index = 0; s_index < (int)signals.size(); s_index++) {
 		int match_factor_index = signals[s_index].match_factor_index;
@@ -217,248 +333,203 @@ double calc_signal(vector<Signal>& signals,
 	return miss_average_guess;
 }
 
-void measure_signal(vector<ScopeHistory*>& scope_histories,
-					vector<double>& target_val_histories,
-					vector<Signal>& signals,
-					double miss_average_guess,
-					double& new_misguess,
-					double& new_misguess_standard_deviation) {
-	vector<double> vals(scope_histories.size());
-	for (int h_index = 0; h_index < (int)scope_histories.size(); h_index++) {
-		vals[h_index] = calc_signal(signals,
-									miss_average_guess,
-									scope_histories[h_index]);
+void create_reward_signal_helper(ScopeNode* scope_node,
+								 SolutionWrapper* wrapper) {
+	vector<double> existing_vals(scope_node->explore_scope_histories.size());
+	for (int h_index = 0; h_index < (int)scope_node->explore_scope_histories.size(); h_index++) {
+		existing_vals[h_index] = calc_signal(scope_node,
+											 scope_node->explore_scope_histories[h_index]);
 	}
 
 	double sum_misguess = 0.0;
-	for (int h_index = 0; h_index < (int)scope_histories.size(); h_index++) {
-		sum_misguess += (target_val_histories[h_index] - vals[h_index])
-			* (target_val_histories[h_index] - vals[h_index]);
+	for (int h_index = 0; h_index < (int)scope_node->explore_scope_histories.size(); h_index++) {
+		sum_misguess += (scope_node->explore_target_val_histories[h_index] - existing_vals[h_index])
+			* (scope_node->explore_target_val_histories[h_index] - existing_vals[h_index]);
 	}
-	new_misguess = sum_misguess / (double)scope_histories.size();
+	double curr_misguess = sum_misguess / (double)scope_node->explore_scope_histories.size();
 
 	double sum_misguess_variance = 0.0;
-	for (int h_index = 0; h_index < (int)scope_histories.size(); h_index++) {
-		double curr_misguess = (target_val_histories[h_index] - vals[h_index])
-			* (target_val_histories[h_index] - vals[h_index]);
-		sum_misguess_variance += (curr_misguess - new_misguess)
-			* (curr_misguess - new_misguess);
+	for (int h_index = 0; h_index < (int)scope_node->explore_scope_histories.size(); h_index++) {
+		double curr_misguess = (scope_node->explore_target_val_histories[h_index] - existing_vals[h_index])
+			* (scope_node->explore_target_val_histories[h_index] - existing_vals[h_index]);
+		sum_misguess_variance += (curr_misguess - curr_misguess)
+			* (curr_misguess - curr_misguess);
 	}
-	new_misguess_standard_deviation = sqrt(sum_misguess_variance / (double)scope_histories.size());
-}
+	double curr_misguess_standard_deviation = sqrt(sum_misguess_variance / (double)scope_node->explore_scope_histories.size());
 
-void create_reward_signal_helper(ScopeNode* scope_node,
-								 SolutionWrapper* wrapper) {
-	// double best_highest_signal = numeric_limits<double>::lowest();
-	// if (scope->score_inputs.size() > 0) {
-	// 	for (int h_index = 0; h_index < (int)scope->explore_scope_histories.size(); h_index++) {
-	// 		ScopeHistory* scope_history = scope->explore_scope_histories[h_index];
+	vector<ScopeHistory*> existing_scope_histories;
+	for (int h_index = 0; h_index < (int)wrapper->solution->existing_scope_histories.size(); h_index++) {
+		gather_existing_histories_helper(wrapper->solution->existing_scope_histories[h_index],
+										 scope_node,
+										 existing_scope_histories);
+	}
 
-	// 		bool is_match;
-	// 		if (scope->check_match) {
-	// 			if (!scope_history->factor_initialized[scope->match_factor_index]) {
-	// 				double value = scope->factors[scope->match_factor_index]->back_activate(scope_history);
-	// 				scope_history->factor_initialized[scope->match_factor_index] = true;
-	// 				scope_history->factor_values[scope->match_factor_index] = value;
-	// 			}
+	int num_min_match = MIN_MATCH_RATIO * (int)scope_node->explore_scope_histories.size();
+	for (int t_index = 0; t_index < SPLIT_NUM_TRIES; t_index++) {
+		vector<Input> new_match_inputs;
+		Network* new_match_network = NULL;
+		bool split_is_success = split_helper(existing_scope_histories,
+											 scope_node->explore_scope_histories,
+											 new_match_inputs,
+											 new_match_network);
 
-	// 			double val = scope_history->factor_values[scope->match_factor_index];
+		if (split_is_success) {
+			vector<ScopeHistory*> match_histories;
+			vector<double> match_target_vals;
+			for (int h_index = 0; h_index < (int)scope_node->explore_scope_histories.size(); h_index++) {
+				vector<double> input_vals(new_match_inputs.size());
+				vector<bool> input_is_on(new_match_inputs.size());
+				for (int i_index = 0; i_index < (int)new_match_inputs.size(); i_index++) {
+					double val;
+					bool is_on;
+					fetch_input_helper(scope_node->explore_scope_histories[h_index],
+									   new_match_inputs[i_index],
+									   0,
+									   val,
+									   is_on);
+					input_vals[i_index] = val;
+					input_is_on[i_index] = is_on;
+				}
+				new_match_network->activate(input_vals,
+											input_is_on);
 
-	// 			if (val > 0.0) {
-	// 				is_match = true;
-	// 			}
-	// 		} else {
-	// 			is_match = true;
-	// 		}
+				if (new_match_network->output->acti_vals[0] > 0.0) {
+					match_histories.push_back(scope_node->explore_scope_histories[h_index]);
+					match_target_vals.push_back(scope_node->explore_target_val_histories[h_index]);
+				}
+			}
 
-	// 		if (is_match) {
-	// 			double signal = calc_reward_signal(scope_history);
-	// 			if (signal > best_highest_signal) {
-	// 				best_highest_signal = signal;
-	// 			}
-	// 		}
-	// 	}
-	// }
+			if ((int)match_histories.size() >= num_min_match) {
+				double new_average_score;
+				vector<Input> new_factor_inputs;
+				vector<double> new_factor_input_averages;
+				vector<double> new_factor_input_standard_deviations;
+				vector<double> new_factor_weights;
+				vector<Input> new_network_inputs;
+				Network* new_network = NULL;
+				bool is_success = train_score(match_histories,
+											  match_target_vals,
+											  new_average_score,
+											  new_factor_inputs,
+											  new_factor_input_averages,
+											  new_factor_input_standard_deviations,
+											  new_factor_weights,
+											  new_network_inputs,
+											  new_network);
+				if (is_success) {
+					double potential_miss_average_guess = calc_miss_average_guess(
+						scope_node->explore_scope_histories,
+						scope_node->explore_target_val_histories,
+						new_match_inputs,
+						new_match_network,
+						scope_node->signals);
 
-	// {
-	// 	double new_average_score;
-	// 	vector<Input> new_factor_inputs;
-	// 	vector<double> new_factor_input_averages;
-	// 	vector<double> new_factor_input_standard_deviations;
-	// 	vector<double> new_factor_weights;
-	// 	vector<Input> new_network_inputs;
-	// 	Network* new_network = NULL;
-	// 	double new_highest_signal;
-	// 	bool is_success = train_score(scope->explore_scope_histories,
-	// 								  scope->explore_target_val_histories,
-	// 								  new_average_score,
-	// 								  new_factor_inputs,
-	// 								  new_factor_input_averages,
-	// 								  new_factor_input_standard_deviations,
-	// 								  new_factor_weights,
-	// 								  new_network_inputs,
-	// 								  new_network,
-	// 								  new_highest_signal);
-	// 	if (is_success && new_highest_signal > best_highest_signal) {
-	// 		best_highest_signal = new_highest_signal;
+					vector<double> potential_vals(scope_node->explore_scope_histories.size());
+					for (int h_index = 0; h_index < (int)scope_node->explore_scope_histories.size(); h_index++) {
+						potential_vals[h_index] = calc_signal(new_match_inputs,
+															  new_match_network,
+															  new_average_score,
+															  new_factor_inputs,
+															  new_factor_input_averages,
+															  new_factor_input_standard_deviations,
+															  new_factor_weights,
+															  new_network_inputs,
+															  new_network,
+															  scope_node->signals,
+															  potential_miss_average_guess,
+															  scope_node->explore_scope_histories[h_index]);
+					}
 
-	// 		scope->check_match = false;
-	// 		scope->match_factor_index = -1;
+					double sum_potential_misguess = 0.0;
+					for (int h_index = 0; h_index < (int)scope_node->explore_scope_histories.size(); h_index++) {
+						sum_potential_misguess += (scope_node->explore_target_val_histories[h_index] - potential_vals[h_index])
+							* (scope_node->explore_target_val_histories[h_index] - potential_vals[h_index]);
+					}
+					double potential_misguess = sum_potential_misguess / (double)scope_node->explore_scope_histories.size();
 
-	// 		if (new_network != NULL) {
-	// 			Factor* new_factor = new Factor();
-	// 			new_factor->inputs = new_network_inputs;
-	// 			new_factor->network = new_network;
-	// 			new_factor->is_meaningful = true;
+					double sum_potential_misguess_variance = 0.0;
+					for (int h_index = 0; h_index < (int)scope_node->explore_scope_histories.size(); h_index++) {
+						double curr_misguess = (scope_node->explore_target_val_histories[h_index] - potential_vals[h_index])
+							* (scope_node->explore_target_val_histories[h_index] - potential_vals[h_index]);
+						sum_potential_misguess_variance += (curr_misguess - curr_misguess)
+							* (curr_misguess - curr_misguess);
+					}
+					double potential_misguess_standard_deviation = sqrt(sum_potential_misguess_variance / (double)scope_node->explore_scope_histories.size());
 
-	// 			scope->factors.push_back(new_factor);
+					double misguess_improvement = curr_misguess - potential_misguess;
+					double min_standard_deviation = min(curr_misguess_standard_deviation, potential_misguess_standard_deviation);
+					double t_score = misguess_improvement / (min_standard_deviation / sqrt((double)scope_node->explore_scope_histories.size()));
 
-	// 			new_factor->link((int)scope->factors.size()-1);
+					if (t_score >= 1.282) {
+						Signal new_signal;
 
-	// 			Input new_input;
-	// 			new_input.scope_context = {scope};
-	// 			new_input.factor_index = (int)scope->factors.size()-1;
-	// 			new_input.node_context = {-1};
-	// 			new_input.obs_index = -1;
+						{
+							Factor* new_factor = new Factor();
+							new_factor->inputs = new_match_inputs;
+							new_factor->network = new_match_network;
+							new_factor->is_meaningful = true;
 
-	// 			new_factor_inputs.push_back(new_input);
-	// 			new_factor_input_averages.push_back(0.0);
-	// 			new_factor_input_standard_deviations.push_back(1.0);
-	// 			new_factor_weights.push_back(1.0);
+							scope_node->parent->factors.push_back(new_factor);
 
-	// 			new_network = NULL;
-	// 		}
+							new_factor->link((int)scope_node->parent->factors.size()-1);
 
-	// 		scope->score_average_val = new_average_score;
-	// 		scope->score_inputs = new_factor_inputs;
-	// 		scope->score_input_averages = new_factor_input_averages;
-	// 		scope->score_input_standard_deviations = new_factor_input_standard_deviations;
-	// 		scope->score_weights = new_factor_weights;
-	// 	}
+							new_signal.match_factor_index = (int)scope_node->parent->factors.size()-1;
 
-	// 	if (new_network != NULL) {
-	// 		delete new_network;
-	// 	}
-	// }
+							new_match_network = NULL;
+						}
 
-	// vector<ScopeHistory*> existing_scope_histories;
-	// for (int h_index = 0; h_index < (int)wrapper->solution->existing_scope_histories.size(); h_index++) {
-	// 	gather_existing_histories_helper(wrapper->solution->existing_scope_histories[h_index],
-	// 									 scope,
-	// 									 existing_scope_histories);
-	// }
+						if (new_network != NULL) {
+							Factor* new_factor = new Factor();
+							new_factor->inputs = new_network_inputs;
+							new_factor->network = new_network;
+							new_factor->is_meaningful = true;
 
-	// for (int t_index = 0; t_index < SPLIT_NUM_TRIES; t_index++) {
-	// 	vector<Input> new_match_inputs;
-	// 	Network* new_match_network = NULL;
-	// 	bool split_is_success = split_helper(existing_scope_histories,
-	// 										 scope->explore_scope_histories,
-	// 										 new_match_inputs,
-	// 										 new_match_network);
+							scope_node->parent->factors.push_back(new_factor);
 
-	// 	if (split_is_success) {
-	// 		vector<ScopeHistory*> match_histories;
-	// 		vector<double> match_target_vals;
-	// 		for (int h_index = 0; h_index < (int)scope->explore_scope_histories.size(); h_index++) {
-	// 			vector<double> input_vals(new_match_inputs.size());
-	// 			vector<bool> input_is_on(new_match_inputs.size());
-	// 			for (int i_index = 0; i_index < (int)new_match_inputs.size(); i_index++) {
-	// 				double val;
-	// 				bool is_on;
-	// 				fetch_input_helper(scope->explore_scope_histories[h_index],
-	// 								   new_match_inputs[i_index],
-	// 								   0,
-	// 								   val,
-	// 								   is_on);
-	// 				input_vals[i_index] = val;
-	// 				input_is_on[i_index] = is_on;
-	// 			}
-	// 			new_match_network->activate(input_vals,
-	// 										input_is_on);
+							new_factor->link((int)scope_node->parent->factors.size()-1);
 
-	// 			if (new_match_network->output->acti_vals[0] > 0.0) {
-	// 				match_histories.push_back(scope->explore_scope_histories[h_index]);
-	// 				match_target_vals.push_back(scope->explore_target_val_histories[h_index]);
-	// 			}
-	// 		}
+							Input new_input;
+							new_input.scope_context = {scope_node->parent};
+							new_input.factor_index = (int)scope_node->parent->factors.size()-1;
+							new_input.node_context = {-1};
+							new_input.obs_index = -1;
 
-	// 		double new_average_score;
-	// 		vector<Input> new_factor_inputs;
-	// 		vector<double> new_factor_input_averages;
-	// 		vector<double> new_factor_input_standard_deviations;
-	// 		vector<double> new_factor_weights;
-	// 		vector<Input> new_network_inputs;
-	// 		Network* new_network = NULL;
-	// 		double new_highest_signal;
-	// 		bool is_success = train_score(match_histories,
-	// 									  match_target_vals,
-	// 									  new_average_score,
-	// 									  new_factor_inputs,
-	// 									  new_factor_input_averages,
-	// 									  new_factor_input_standard_deviations,
-	// 									  new_factor_weights,
-	// 									  new_network_inputs,
-	// 									  new_network,
-	// 									  new_highest_signal);
-	// 		if (is_success && new_highest_signal > best_highest_signal) {
-	// 			best_highest_signal = new_highest_signal;
+							new_factor_inputs.push_back(new_input);
+							new_factor_input_averages.push_back(0.0);
+							new_factor_input_standard_deviations.push_back(1.0);
+							new_factor_weights.push_back(1.0);
 
-	// 			{
-	// 				Factor* new_factor = new Factor();
-	// 				new_factor->inputs = new_match_inputs;
-	// 				new_factor->network = new_match_network;
-	// 				new_factor->is_meaningful = true;
+							new_network = NULL;
+						}
 
-	// 				scope->factors.push_back(new_factor);
+						new_signal.score_average_val = new_average_score;
+						new_signal.score_inputs = new_factor_inputs;
+						new_signal.score_input_averages = new_factor_input_averages;
+						new_signal.score_input_standard_deviations = new_factor_input_standard_deviations;
+						new_signal.score_weights = new_factor_weights;
 
-	// 				new_factor->link((int)scope->factors.size()-1);
+						scope_node->signals.insert(scope_node->signals.begin(), new_signal);
+						scope_node->miss_average_guess = potential_miss_average_guess;
 
-	// 				scope->check_match = true;
-	// 				scope->match_factor_index = (int)scope->factors.size()-1;
+						curr_misguess = potential_misguess;
+						curr_misguess_standard_deviation = potential_misguess_standard_deviation;
+					}
+				}
 
-	// 				new_match_network = NULL;
-	// 			}
+				if (new_network != NULL) {
+					delete new_network;
+				}
+			}
+		}
 
-	// 			if (new_network != NULL) {
-	// 				Factor* new_factor = new Factor();
-	// 				new_factor->inputs = new_network_inputs;
-	// 				new_factor->network = new_network;
-	// 				new_factor->is_meaningful = true;
+		if (new_match_network != NULL) {
+			delete new_match_network;
+		}
+	}
 
-	// 				scope->factors.push_back(new_factor);
-
-	// 				new_factor->link((int)scope->factors.size()-1);
-
-	// 				Input new_input;
-	// 				new_input.scope_context = {scope};
-	// 				new_input.factor_index = (int)scope->factors.size()-1;
-	// 				new_input.node_context = {-1};
-	// 				new_input.obs_index = -1;
-
-	// 				new_factor_inputs.push_back(new_input);
-	// 				new_factor_input_averages.push_back(0.0);
-	// 				new_factor_input_standard_deviations.push_back(1.0);
-	// 				new_factor_weights.push_back(1.0);
-
-	// 				new_network = NULL;
-	// 			}
-
-	// 			scope->score_average_val = new_average_score;
-	// 			scope->score_inputs = new_factor_inputs;
-	// 			scope->score_input_averages = new_factor_input_averages;
-	// 			scope->score_input_standard_deviations = new_factor_input_standard_deviations;
-	// 			scope->score_weights = new_factor_weights;
-	// 		}
-
-	// 		if (new_network != NULL) {
-	// 			delete new_network;
-	// 		}
-	// 	}
-
-	// 	if (new_match_network != NULL) {
-	// 		delete new_match_network;
-	// 	}
-	// }
+	for (int h_index = 0; h_index < (int)existing_scope_histories.size(); h_index++) {
+		delete existing_scope_histories[h_index];
+	}
 }
 
 void update_reward_signals(SolutionWrapper* wrapper) {
@@ -469,6 +540,13 @@ void update_reward_signals(SolutionWrapper* wrapper) {
 			if (it->second->type == NODE_TYPE_SCOPE) {
 				ScopeNode* scope_node = (ScopeNode*)it->second;
 				if (scope_node->explore_scope_histories.size() >= EXPLORE_TARGET_NUM_SAMPLES) {
+					check_incorrect_signals(scope_node->explore_scope_histories,
+											scope_node->explore_target_val_histories,
+											scope_node);
+
+					check_unhittable_signals(scope_node->explore_scope_histories,
+											 scope_node);
+
 					create_reward_signal_helper(scope_node,
 												wrapper);
 
