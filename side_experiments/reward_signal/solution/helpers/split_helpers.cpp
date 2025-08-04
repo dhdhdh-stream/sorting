@@ -1,6 +1,7 @@
 #include "helpers.h"
 
 #include <algorithm>
+#include <iostream>
 
 #include "branch_node.h"
 #include "constants.h"
@@ -15,10 +16,18 @@ using namespace std;
 
 const int SPLIT_NUM_INPUTS = 10;
 
-const double SEED_RATIO = 0.1;
+#if defined(MDEBUG) && MDEBUG
+const double SEED_RATIO = 0.2;
 
 const int MAX_EPOCHS = 30;
 const int ITERS_PER_EPOCH = 10000;
+#else
+const double SEED_RATIO = 0.2;
+
+const int MAX_EPOCHS = 4;
+const int ITERS_PER_EPOCH = 20;
+#endif /* MDEBUG */
+
 const double MAX_AVERAGE_ERROR = 0.1;
 
 void gather_inputs_helper(ScopeHistory* scope_history,
@@ -211,9 +220,9 @@ bool split_helper(vector<ScopeHistory*>& existing_scope_histories,
 			curr_explore_input_is_on[h_index] = is_on;
 			if (is_on) {
 				double normalized_val = (val - curr_average) / curr_standard_deviation;
-				curr_n_input_vals[(int)explore_scope_histories.size() + h_index] = normalized_val;
+				curr_n_input_vals[(int)existing_scope_histories.size() + h_index] = normalized_val;
 			} else {
-				curr_n_input_vals[(int)explore_scope_histories.size() + h_index] = 0.0;
+				curr_n_input_vals[(int)existing_scope_histories.size() + h_index] = 0.0;
 			}
 		}
 
@@ -251,7 +260,14 @@ bool split_helper(vector<ScopeHistory*>& existing_scope_histories,
 								input_standard_deviations);
 
 	vector<int> positive_seeds;
+	#if defined(MDEBUG) && MDEBUG
+	if (existing_scope_histories.size() == 0) {
+		throw invalid_argument("existing_scope_histories.size() == 0");
+	}
+	int num_positive_seeds = max(1, (int)(SEED_RATIO * (double)existing_scope_histories.size()));
+	#else
 	int num_positive_seeds = SEED_RATIO * (double)existing_scope_histories.size();
+	#endif /* MDEBUG */
 	{
 		vector<int> initial_possible_indexes(existing_scope_histories.size());
 		for (int i_index = 0; i_index < (int)existing_scope_histories.size(); i_index++) {
@@ -266,7 +282,14 @@ bool split_helper(vector<ScopeHistory*>& existing_scope_histories,
 	}
 
 	vector<int> negative_seeds;
+	#if defined(MDEBUG) && MDEBUG
+	if (explore_scope_histories.size() == 0) {
+		throw invalid_argument("explore_scope_histories.size() == 0");
+	}
+	int num_negative_seeds = max(1, (int)(SEED_RATIO * (double)explore_scope_histories.size()));
+	#else
 	int num_negative_seeds = SEED_RATIO * (double)explore_scope_histories.size();
+	#endif /* MDEBUG */
 	{
 		vector<int> initial_possible_indexes(explore_scope_histories.size());
 		for (int i_index = 0; i_index < (int)explore_scope_histories.size(); i_index++) {
@@ -337,7 +360,11 @@ bool split_helper(vector<ScopeHistory*>& existing_scope_histories,
 		}
 
 		double average_error = sum_errors / ITERS_PER_EPOCH;
+		#if defined(MDEBUG) && MDEBUG
+		if (average_error <= MAX_AVERAGE_ERROR || rand()%4 == 0) {
+		#else
 		if (average_error <= MAX_AVERAGE_ERROR) {
+		#endif /* MDEBUG */
 			return true;
 		}
 
@@ -385,5 +412,8 @@ bool split_helper(vector<ScopeHistory*>& existing_scope_histories,
 		}
 	}
 
+	/**
+	 * - unreachable
+	 */
 	return true;
 }

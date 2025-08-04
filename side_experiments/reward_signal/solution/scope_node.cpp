@@ -13,6 +13,8 @@ using namespace std;
 ScopeNode::ScopeNode() {
 	this->type = NODE_TYPE_SCOPE;
 
+	this->miss_average_guess = 0.0;
+
 	this->is_init = false;
 
 	this->experiment = NULL;
@@ -27,6 +29,30 @@ ScopeNode::~ScopeNode() {
 
 	for (int h_index = 0; h_index < (int)this->explore_scope_histories.size(); h_index++) {
 		delete this->explore_scope_histories[h_index];
+	}
+}
+
+void ScopeNode::clean_inputs(Scope* scope,
+							 int node_id) {
+	for (int s_index = 0; s_index < (int)this->signals.size(); s_index++) {
+		this->signals[s_index].clean_inputs(scope,
+											node_id);
+	}
+}
+
+void ScopeNode::clean_inputs(Scope* scope) {
+	for (int s_index = 0; s_index < (int)this->signals.size(); s_index++) {
+		this->signals[s_index].clean_inputs(scope);
+	}
+}
+
+void ScopeNode::replace_obs_node(Scope* scope,
+								 int original_node_id,
+								 int new_node_id) {
+	for (int s_index = 0; s_index < (int)this->signals.size(); s_index++) {
+		this->signals[s_index].replace_obs_node(scope,
+												original_node_id,
+												new_node_id);
 	}
 }
 
@@ -57,6 +83,12 @@ void ScopeNode::save(ofstream& output_file) {
 
 	output_file << this->next_node_id << endl;
 
+	output_file << this->signals.size() << endl;
+	for (int s_index = 0; s_index < (int)this->signals.size(); s_index++) {
+		this->signals[s_index].save(output_file);
+	}
+	output_file << this->miss_average_guess << endl;
+
 	output_file << this->ancestor_ids.size() << endl;
 	for (int a_index = 0; a_index < (int)this->ancestor_ids.size(); a_index++) {
 		output_file << this->ancestor_ids[a_index] << endl;
@@ -72,6 +104,18 @@ void ScopeNode::load(ifstream& input_file,
 	string next_node_id_line;
 	getline(input_file, next_node_id_line);
 	this->next_node_id = stoi(next_node_id_line);
+
+	string num_signals_line;
+	getline(input_file, num_signals_line);
+	int num_signals = stoi(num_signals_line);
+	for (int s_index = 0; s_index < num_signals; s_index++) {
+		this->signals.push_back(Signal(input_file,
+									   parent_solution));
+	}
+
+	string miss_average_guess_line;
+	getline(input_file, miss_average_guess_line);
+	this->miss_average_guess = stod(miss_average_guess_line);
 
 	string num_ancestors_line;
 	getline(input_file, num_ancestors_line);

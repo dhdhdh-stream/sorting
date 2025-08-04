@@ -149,7 +149,7 @@ bool train_score(vector<ScopeHistory*>& scope_histories,
 		remaining_factors.erase(remaining_factors.begin() + random_index);
 	}
 
-	Eigen::MatrixXd inputs(num_instances, factor_inputs.size());
+	Eigen::MatrixXd inputs(num_instances, 1 + factor_inputs.size());
 	uniform_real_distribution<double> noise_distribution(-0.001, 0.001);
 	/**
 	 * - add some noise to prevent extremes
@@ -583,7 +583,11 @@ bool train_score(vector<ScopeHistory*>& scope_histories,
 	double min_standard_deviation = min(base_misguess_standard_deviation, signal_misguess_standard_deviation);
 	double t_score = signal_improvement / (min_standard_deviation / sqrt((double)scope_histories.size()));
 
+	#if defined(MDEBUG) && MDEBUG
+	if (t_score < 2.326 || rand()%2 == 0) {
+	#else
 	if (t_score < 2.326) {
+	#endif /* MDEBUG */
 		return false;
 	}
 

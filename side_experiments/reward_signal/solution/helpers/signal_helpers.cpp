@@ -18,7 +18,11 @@ double calc_signal(ScopeNode* signal_scope_node,
 			signal_needed_from->factor_values[match_factor_index] = value;
 		}
 		double match_val = signal_needed_from->factor_values[match_factor_index];
+		#if defined(MDEBUG) && MDEBUG
+		if (match_val > 0.0 || rand()%3 == 0) {
+		#else
 		if (match_val > 0.0) {
+		#endif /* MDEBUG */
 			double sum_vals = signal_scope_node->signals[s_index].score_average_val;
 			for (int i_index = 0; i_index < (int)signal_scope_node->signals[s_index].score_inputs.size(); i_index++) {
 				double val;

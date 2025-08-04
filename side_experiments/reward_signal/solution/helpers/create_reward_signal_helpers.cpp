@@ -70,7 +70,11 @@ bool check_incorrect_signals_helper(vector<ScopeHistory*>& scope_histories,
 		}
 	}
 
+	#if defined(MDEBUG) && MDEBUG
+	if (rand()%4 == 0) {
+	#else
 	if (match_target_vals.size() < CHECK_MIN_MATCH_RATIO * scope_histories.size()) {
+	#endif /* MDEBUG */
 		return false;
 	}
 
@@ -92,7 +96,11 @@ bool check_incorrect_signals_helper(vector<ScopeHistory*>& scope_histories,
 			* (match_target_vals[m_index] - match_signals[m_index]);
 	}
 
+	#if defined(MDEBUG) && MDEBUG
+	return sum_signal_misguesses < sum_misguesses && rand()%4 == 0;
+	#else
 	return sum_signal_misguesses < sum_misguesses;
+	#endif /* MDEBUG */
 }
 
 void check_incorrect_signals(vector<ScopeHistory*>& scope_histories,
@@ -201,7 +209,11 @@ double calc_miss_average_guess(vector<ScopeHistory*>& scope_histories,
 		}
 		new_match_network->activate(input_vals,
 									input_is_on);
-		if (new_match_network->output->acti_vals[0] <= 0.0) {
+		#if defined(MDEBUG) && MDEBUG
+		if (rand()%3 == 0) {
+		#else
+		if (new_match_network->output->acti_vals[0] > 0.0) {
+		#endif /* MDEBUG */
 			continue;
 		}
 
@@ -214,7 +226,11 @@ double calc_miss_average_guess(vector<ScopeHistory*>& scope_histories,
 				scope_histories[h_index]->factor_values[match_factor_index] = value;
 			}
 			double match_val = scope_histories[h_index]->factor_values[match_factor_index];
+			#if defined(MDEBUG) && MDEBUG
+			if (match_val > 0.0 || rand()%4 == 0) {
+			#else
 			if (match_val > 0.0) {
+			#endif /* MDEBUG */
 				has_match = true;
 				break;
 			}
@@ -263,7 +279,11 @@ double calc_signal(vector<Input> new_match_inputs,
 		}
 		new_match_network->activate(input_vals,
 									input_is_on);
+		#if defined(MDEBUG) && MDEBUG
+		if (rand()%3 == 0) {
+		#else
 		if (new_match_network->output->acti_vals[0] > 0.0) {
+		#endif /* MDEBUG */
 			double sum_vals = new_average_score;
 			for (int i_index = 0; i_index < (int)new_factor_inputs.size(); i_index++) {
 				double val;
@@ -280,22 +300,24 @@ double calc_signal(vector<Input> new_match_inputs,
 				}
 			}
 
-			vector<double> input_vals(new_network_inputs.size());
-			vector<bool> input_is_on(new_network_inputs.size());
-			for (int i_index = 0; i_index < (int)new_network_inputs.size(); i_index++) {
-				double val;
-				bool is_on;
-				fetch_input_helper(signal_needed_from,
-								   new_network_inputs[i_index],
-								   0,
-								   val,
-								   is_on);
-				input_vals[i_index] = val;
-				input_is_on[i_index] = is_on;
+			if (new_network != NULL) {
+				vector<double> input_vals(new_network_inputs.size());
+				vector<bool> input_is_on(new_network_inputs.size());
+				for (int i_index = 0; i_index < (int)new_network_inputs.size(); i_index++) {
+					double val;
+					bool is_on;
+					fetch_input_helper(signal_needed_from,
+									   new_network_inputs[i_index],
+									   0,
+									   val,
+									   is_on);
+					input_vals[i_index] = val;
+					input_is_on[i_index] = is_on;
+				}
+				new_network->activate(input_vals,
+									  input_is_on);
+				sum_vals += new_network->output->acti_vals[0];
 			}
-			new_network->activate(input_vals,
-								  input_is_on);
-			sum_vals += new_network->output->acti_vals[0];
 
 			return sum_vals;
 		}
@@ -309,7 +331,11 @@ double calc_signal(vector<Input> new_match_inputs,
 			signal_needed_from->factor_values[match_factor_index] = value;
 		}
 		double match_val = signal_needed_from->factor_values[match_factor_index];
+		#if defined(MDEBUG) && MDEBUG
+		if (match_val > 0.0 || rand()%4 == 0) {
+		#else
 		if (match_val > 0.0) {
+		#endif /* MDEBUG */
 			double sum_vals = signals[s_index].score_average_val;
 			for (int i_index = 0; i_index < (int)signals[s_index].score_inputs.size(); i_index++) {
 				double val;
@@ -335,10 +361,33 @@ double calc_signal(vector<Input> new_match_inputs,
 
 void create_reward_signal_helper(ScopeNode* scope_node,
 								 SolutionWrapper* wrapper) {
-	vector<double> existing_vals(scope_node->explore_scope_histories.size());
-	for (int h_index = 0; h_index < (int)scope_node->explore_scope_histories.size(); h_index++) {
-		existing_vals[h_index] = calc_signal(scope_node,
-											 scope_node->explore_scope_histories[h_index]);
+	vector<ScopeHistory*> existing_scope_histories;
+	for (int h_index = 0; h_index < (int)wrapper->solution->existing_scope_histories.size(); h_index++) {
+		gather_existing_histories_helper(wrapper->solution->existing_scope_histories[h_index],
+										 scope_node,
+										 existing_scope_histories);
+	}
+	#if defined(MDEBUG) && MDEBUG
+	if (existing_scope_histories.size() == 0) {
+		return;
+	}
+	#endif /* MDEBUG */
+
+	vector<double> existing_vals;
+	if (scope_node->signals.size() > 0) {
+		existing_vals = vector<double>(scope_node->explore_scope_histories.size());
+		for (int h_index = 0; h_index < (int)scope_node->explore_scope_histories.size(); h_index++) {
+			existing_vals[h_index] = calc_signal(scope_node,
+												 scope_node->explore_scope_histories[h_index]);
+		}
+	} else {
+		double sum_vals = 0.0;
+		for (int h_index = 0; h_index < (int)scope_node->explore_target_val_histories.size(); h_index++) {
+			sum_vals += scope_node->explore_target_val_histories[h_index];
+		}
+		double average_val = sum_vals / (double)scope_node->explore_target_val_histories.size();
+
+		existing_vals = vector<double>(scope_node->explore_scope_histories.size(), average_val);
 	}
 
 	double sum_misguess = 0.0;
@@ -357,14 +406,11 @@ void create_reward_signal_helper(ScopeNode* scope_node,
 	}
 	double curr_misguess_standard_deviation = sqrt(sum_misguess_variance / (double)scope_node->explore_scope_histories.size());
 
-	vector<ScopeHistory*> existing_scope_histories;
-	for (int h_index = 0; h_index < (int)wrapper->solution->existing_scope_histories.size(); h_index++) {
-		gather_existing_histories_helper(wrapper->solution->existing_scope_histories[h_index],
-										 scope_node,
-										 existing_scope_histories);
-	}
-
+	#if defined(MDEBUG) && MDEBUG
+	int num_min_match = max(2, (int)(MIN_MATCH_RATIO * (int)scope_node->explore_scope_histories.size()));
+	#else
 	int num_min_match = MIN_MATCH_RATIO * (int)scope_node->explore_scope_histories.size();
+	#endif /* MDEBUG */
 	for (int t_index = 0; t_index < SPLIT_NUM_TRIES; t_index++) {
 		vector<Input> new_match_inputs;
 		Network* new_match_network = NULL;
@@ -392,8 +438,11 @@ void create_reward_signal_helper(ScopeNode* scope_node,
 				}
 				new_match_network->activate(input_vals,
 											input_is_on);
-
+				#if defined(MDEBUG) && MDEBUG
+				if (rand()%3 == 0) {
+				#else
 				if (new_match_network->output->acti_vals[0] > 0.0) {
+				#endif /* MDEBUG */
 					match_histories.push_back(scope_node->explore_scope_histories[h_index]);
 					match_target_vals.push_back(scope_node->explore_target_val_histories[h_index]);
 				}
@@ -460,7 +509,11 @@ void create_reward_signal_helper(ScopeNode* scope_node,
 					double min_standard_deviation = min(curr_misguess_standard_deviation, potential_misguess_standard_deviation);
 					double t_score = misguess_improvement / (min_standard_deviation / sqrt((double)scope_node->explore_scope_histories.size()));
 
+					#if defined(MDEBUG) && MDEBUG
+					if (t_score >= 1.282 || rand()%2 == 0) {
+					#else
 					if (t_score >= 1.282) {
+					#endif /* MDEBUG */
 						Signal new_signal;
 
 						{
@@ -544,8 +597,11 @@ void update_reward_signals(SolutionWrapper* wrapper) {
 											scope_node->explore_target_val_histories,
 											scope_node);
 
+					#if defined(MDEBUG) && MDEBUG
+					#else
 					check_unhittable_signals(scope_node->explore_scope_histories,
 											 scope_node);
+					#endif /* MDEBUG */
 
 					create_reward_signal_helper(scope_node,
 												wrapper);

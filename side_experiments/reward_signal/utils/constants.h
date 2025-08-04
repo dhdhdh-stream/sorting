@@ -38,7 +38,7 @@ const int IMPROVEMENTS_PER_ITER = 10;
 #endif /* MDEBUG */
 
 #if defined(MDEBUG) && MDEBUG
-const int EXPLORE_TARGET_NUM_SAMPLES = 40;
+const int EXPLORE_TARGET_NUM_SAMPLES = 10;
 #else
 const int EXPLORE_TARGET_NUM_SAMPLES = 4000;
 #endif /* MDEBUG */

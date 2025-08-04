@@ -19,7 +19,7 @@ using namespace std;
 #if defined(MDEBUG) && MDEBUG
 const int BRANCH_EXPERIMENT_EXPLORE_ITERS = 5;
 #else
-const int BRANCH_EXPERIMENT_EXPLORE_ITERS = 100;
+const int BRANCH_EXPERIMENT_EXPLORE_ITERS = 400;
 #endif /* MDEBUG */
 
 void BranchExperiment::explore_check_activate(
@@ -233,7 +233,11 @@ void BranchExperiment::explore_backprop(
 
 		double curr_surprise = inner_targel_val - instance_history->existing_predicted_score;
 
+		#if defined(MDEBUG) && MDEBUG
+		if (true) {
+		#else
 		if (curr_surprise > this->best_surprise) {
+		#endif /* MDEBUG */
 			this->best_surprise = curr_surprise;
 			if (this->best_new_scope != NULL) {
 				delete this->best_new_scope;
