@@ -11,6 +11,7 @@ class AbstractExperimentOverallHistory;
 class AbstractExperimentState;
 class AbstractNode;
 class Problem;
+class Scope;
 class ScopeHistory;
 class Solution;
 
@@ -26,6 +27,9 @@ public:
 	AbstractExperiment* curr_experiment;
 	AbstractExperiment* best_experiment;
 	int improvement_iter;
+
+	Scope* curr_explore_scope;
+	int curr_explore_tries;
 
 	/**
 	 * - run variables

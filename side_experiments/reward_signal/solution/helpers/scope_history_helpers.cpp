@@ -78,6 +78,11 @@ void update_counts(ScopeHistory* scope_history,
 				   int h_index) {
 	Scope* scope = scope_history->scope;
 
+	if (h_index != scope->last_updated_run_index) {
+		scope->sum_hits++;
+		scope->last_updated_run_index = h_index;
+	}
+
 	map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
 	while (it != scope_history->node_histories.end()) {
 		if (scope->nodes.find(it->first) == scope->nodes.end()) {

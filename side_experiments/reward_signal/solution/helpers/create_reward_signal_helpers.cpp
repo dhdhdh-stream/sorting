@@ -11,6 +11,7 @@
 #include "helpers.h"
 
 #include <cmath>
+#include <iostream>
 #include <limits>
 
 #include "constants.h"
@@ -361,6 +362,8 @@ double calc_signal(vector<Input> new_match_inputs,
 
 void create_reward_signal_helper(ScopeNode* scope_node,
 								 SolutionWrapper* wrapper) {
+	cout << "create_reward_signal_helper" << endl;
+
 	vector<ScopeHistory*> existing_scope_histories;
 	for (int h_index = 0; h_index < (int)wrapper->solution->existing_scope_histories.size(); h_index++) {
 		gather_existing_histories_helper(wrapper->solution->existing_scope_histories[h_index],
@@ -395,14 +398,14 @@ void create_reward_signal_helper(ScopeNode* scope_node,
 		sum_misguess += (scope_node->explore_target_val_histories[h_index] - existing_vals[h_index])
 			* (scope_node->explore_target_val_histories[h_index] - existing_vals[h_index]);
 	}
-	double curr_misguess = sum_misguess / (double)scope_node->explore_scope_histories.size();
+	double curr_misguess_average = sum_misguess / (double)scope_node->explore_scope_histories.size();
 
 	double sum_misguess_variance = 0.0;
 	for (int h_index = 0; h_index < (int)scope_node->explore_scope_histories.size(); h_index++) {
 		double curr_misguess = (scope_node->explore_target_val_histories[h_index] - existing_vals[h_index])
 			* (scope_node->explore_target_val_histories[h_index] - existing_vals[h_index]);
-		sum_misguess_variance += (curr_misguess - curr_misguess)
-			* (curr_misguess - curr_misguess);
+		sum_misguess_variance += (curr_misguess - curr_misguess_average)
+			* (curr_misguess - curr_misguess_average);
 	}
 	double curr_misguess_standard_deviation = sqrt(sum_misguess_variance / (double)scope_node->explore_scope_histories.size());
 
@@ -447,6 +450,8 @@ void create_reward_signal_helper(ScopeNode* scope_node,
 					match_target_vals.push_back(scope_node->explore_target_val_histories[h_index]);
 				}
 			}
+
+			cout << "match_histories.size(): " << match_histories.size() << endl;
 
 			if ((int)match_histories.size() >= num_min_match) {
 				double new_average_score;
@@ -494,20 +499,22 @@ void create_reward_signal_helper(ScopeNode* scope_node,
 						sum_potential_misguess += (scope_node->explore_target_val_histories[h_index] - potential_vals[h_index])
 							* (scope_node->explore_target_val_histories[h_index] - potential_vals[h_index]);
 					}
-					double potential_misguess = sum_potential_misguess / (double)scope_node->explore_scope_histories.size();
+					double potential_misguess_average = sum_potential_misguess / (double)scope_node->explore_scope_histories.size();
 
 					double sum_potential_misguess_variance = 0.0;
 					for (int h_index = 0; h_index < (int)scope_node->explore_scope_histories.size(); h_index++) {
 						double curr_misguess = (scope_node->explore_target_val_histories[h_index] - potential_vals[h_index])
 							* (scope_node->explore_target_val_histories[h_index] - potential_vals[h_index]);
-						sum_potential_misguess_variance += (curr_misguess - curr_misguess)
-							* (curr_misguess - curr_misguess);
+						sum_potential_misguess_variance += (curr_misguess - potential_misguess_average)
+							* (curr_misguess - potential_misguess_average);
 					}
 					double potential_misguess_standard_deviation = sqrt(sum_potential_misguess_variance / (double)scope_node->explore_scope_histories.size());
 
-					double misguess_improvement = curr_misguess - potential_misguess;
+					double misguess_improvement = curr_misguess_average - potential_misguess_average;
 					double min_standard_deviation = min(curr_misguess_standard_deviation, potential_misguess_standard_deviation);
 					double t_score = misguess_improvement / (min_standard_deviation / sqrt((double)scope_node->explore_scope_histories.size()));
+
+					cout << "measure t_score: " << t_score << endl;
 
 					#if defined(MDEBUG) && MDEBUG
 					if (t_score >= 1.282 || rand()%2 == 0) {
@@ -564,9 +571,15 @@ void create_reward_signal_helper(ScopeNode* scope_node,
 						scope_node->signals.insert(scope_node->signals.begin(), new_signal);
 						scope_node->miss_average_guess = potential_miss_average_guess;
 
-						curr_misguess = potential_misguess;
+						curr_misguess_average = potential_misguess_average;
 						curr_misguess_standard_deviation = potential_misguess_standard_deviation;
+
+						// temp
+						wrapper->save("saves/", "main.txt");
 					}
+
+					// temp
+					throw invalid_argument("success?");
 				}
 
 				if (new_network != NULL) {

@@ -1,5 +1,7 @@
 #include "signal.h"
 
+#include <iostream>
+
 using namespace std;
 
 Signal::Signal() {

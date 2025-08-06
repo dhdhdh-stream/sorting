@@ -27,6 +27,11 @@ public:
 
 	std::vector<Scope*> child_scopes;
 
+	double average_hits_per_run;
+
+	int last_updated_run_index;
+	int sum_hits;
+
 	Scope();
 	~Scope();
 

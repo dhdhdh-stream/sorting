@@ -12,6 +12,8 @@
 
 using namespace std;
 
+const int MAX_EXPLORE_TRIES = 40;
+
 void SolutionWrapper::experiment_init() {
 	if (this->solution->existing_scope_histories.size() < MEASURE_ITERS) {
 		this->num_actions = 1;
@@ -28,6 +30,14 @@ void SolutionWrapper::experiment_init() {
 	} else {
 		while (this->curr_experiment == NULL) {
 			update_reward_signals(this);
+
+			if (this->curr_explore_tries > MAX_EXPLORE_TRIES) {
+				this->curr_explore_scope = NULL;
+			}
+
+			if (this->curr_explore_scope == NULL) {
+				set_explore_scope(this);
+			}
 
 			create_experiment(this,
 							  this->curr_experiment);
@@ -189,6 +199,8 @@ void SolutionWrapper::experiment_end(double result) {
 				delete this->curr_experiment;
 
 				this->curr_experiment = NULL;
+
+				this->curr_explore_tries++;
 			} else if (this->curr_experiment->result == EXPERIMENT_RESULT_SUCCESS) {
 				this->curr_experiment->clean();
 
@@ -205,8 +217,10 @@ void SolutionWrapper::experiment_end(double result) {
 
 				this->curr_experiment = NULL;
 
-				improvement_iter++;
-				if (improvement_iter >= IMPROVEMENTS_PER_ITER) {
+				this->curr_explore_tries++;
+
+				this->improvement_iter++;
+				if (this->improvement_iter >= IMPROVEMENTS_PER_ITER) {
 					Scope* last_updated_scope = this->best_experiment->scope_context;
 
 					this->best_experiment->add(this);
@@ -236,6 +250,8 @@ void SolutionWrapper::experiment_end(double result) {
 					this->solution->timestamp++;
 
 					this->improvement_iter = 0;
+
+					this->curr_explore_scope = NULL;
 				}
 			}
 		}

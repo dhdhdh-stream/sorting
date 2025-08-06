@@ -19,13 +19,13 @@ const int SPLIT_NUM_INPUTS = 10;
 #if defined(MDEBUG) && MDEBUG
 const double SEED_RATIO = 0.2;
 
-const int MAX_EPOCHS = 30;
-const int ITERS_PER_EPOCH = 10000;
+const int MAX_EPOCHS = 4;
+const int ITERS_PER_EPOCH = 20;
 #else
 const double SEED_RATIO = 0.2;
 
-const int MAX_EPOCHS = 4;
-const int ITERS_PER_EPOCH = 20;
+const int MAX_EPOCHS = 30;
+const int ITERS_PER_EPOCH = 10000;
 #endif /* MDEBUG */
 
 const double MAX_AVERAGE_ERROR = 0.1;
@@ -309,7 +309,6 @@ bool split_helper(vector<ScopeHistory*>& existing_scope_histories,
 	uniform_int_distribution<int> drop_distribution(0, 9);
 	int e_index = 0;
 	while (true) {
-		double sum_errors = 0.0;
 		for (int iter_index = 0; iter_index < ITERS_PER_EPOCH; iter_index++) {
 			vector<double> inputs(match_inputs.size());
 			vector<bool> input_is_on(match_inputs.size());
@@ -355,22 +354,6 @@ bool split_helper(vector<ScopeHistory*>& existing_scope_histories,
 			}
 
 			match_network->backprop(error);
-
-			sum_errors += abs(error);
-		}
-
-		double average_error = sum_errors / ITERS_PER_EPOCH;
-		#if defined(MDEBUG) && MDEBUG
-		if (average_error <= MAX_AVERAGE_ERROR || rand()%4 == 0) {
-		#else
-		if (average_error <= MAX_AVERAGE_ERROR) {
-		#endif /* MDEBUG */
-			return true;
-		}
-
-		e_index++;
-		if (e_index >= MAX_EPOCHS) {
-			return false;
 		}
 
 		vector<pair<double,int>> existing_acti_vals(existing_scope_histories.size());
@@ -388,9 +371,15 @@ bool split_helper(vector<ScopeHistory*>& existing_scope_histories,
 			existing_acti_vals[h_index] = {match_network->output->acti_vals[0], h_index};
 		}
 		sort(existing_acti_vals.begin(), existing_acti_vals.end());
+		double sum_positive_errors = 0.0;
 		for (int s_index = 0; s_index < num_positive_seeds; s_index++) {
 			positive_seeds[s_index] = existing_acti_vals[existing_acti_vals.size() - 1 - s_index].second;
+
+			if (existing_acti_vals[existing_acti_vals.size() - 1 - s_index].first < 1.0) {
+				sum_positive_errors += abs(1.0 - existing_acti_vals[existing_acti_vals.size() - 1 - s_index].first);
+			}
 		}
+		double average_positive_error = sum_positive_errors / (double)num_positive_seeds;
 
 		vector<pair<double,int>> explore_acti_vals(explore_scope_histories.size());
 		for (int h_index = 0; h_index < (int)explore_scope_histories.size(); h_index++) {
@@ -407,8 +396,28 @@ bool split_helper(vector<ScopeHistory*>& existing_scope_histories,
 			explore_acti_vals[h_index] = {match_network->output->acti_vals[0], h_index};
 		}
 		sort(explore_acti_vals.begin(), explore_acti_vals.end());
+		double sum_negative_errors = 0.0;
 		for (int s_index = 0; s_index < num_negative_seeds; s_index++) {
 			negative_seeds[s_index] = explore_acti_vals[s_index].second;
+
+			if (explore_acti_vals[s_index].first > -1.0) {
+				sum_negative_errors += abs(-1.0 - explore_acti_vals[s_index].first);
+			}
+		}
+		double average_negative_error = sum_negative_errors / (double)num_negative_seeds;
+
+		#if defined(MDEBUG) && MDEBUG
+		if ((average_positive_error <= MAX_AVERAGE_ERROR && average_negative_error <= MAX_AVERAGE_ERROR)
+				|| rand()%4 == 0) {
+		#else
+		if (average_positive_error <= MAX_AVERAGE_ERROR && average_negative_error <= MAX_AVERAGE_ERROR) {
+		#endif /* MDEBUG */
+			return true;
+		}
+
+		e_index++;
+		if (e_index >= MAX_EPOCHS) {
+			return false;
 		}
 	}
 

@@ -60,6 +60,23 @@ int main(int argc, char* argv[]) {
 		target_val -= 0.0001 * solution_wrapper->num_actions;
 		cout << "target_val: " << target_val << endl;
 
+		// temp
+		ScopeHistory* scope_history = solution_wrapper->scope_histories[0];
+		if (scope_history->node_histories.find(1748) != scope_history->node_histories.end()) {
+			ScopeNode* scope_node = (ScopeNode*)solution_wrapper->solution->scopes[0]->nodes[1748];
+			double signal = calc_signal(scope_node,
+										scope_history);
+			cout << "signal: " << signal << endl;
+
+			Simpler* simpler = (Simpler*)problem;
+			cout << "simpler->random_factor: " << simpler->random_factor << endl;
+		}
+		// TODO: when selecting factors for signal, don't depend on nodes in scope node
+
+		// TODO: for Simpler, try only being able to insert at front
+		// - swap to starting with 2 nodes, start node and end node
+		//   - start node can never be a factor
+
 		solution_wrapper->end();
 
 		problem->print();

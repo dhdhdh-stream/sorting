@@ -17,6 +17,7 @@ class ScopeNode;
 class Solution;
 class SolutionWrapper;
 
+void set_explore_scope(SolutionWrapper* wrapper);
 void create_experiment(SolutionWrapper* wrapper,
 					   AbstractExperiment*& curr_experiment);
 

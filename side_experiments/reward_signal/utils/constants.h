@@ -25,7 +25,8 @@ const int MEASURE_ITERS = 10;
  * - need large number of samples
  *   - otherwise trapped by lottery + local maxima
  */
-const int MEASURE_ITERS = 1000;
+// const int MEASURE_ITERS = 1000;
+const int MEASURE_ITERS = 4000;
 #endif /* MDEBUG */
 
 #if defined(MDEBUG) && MDEBUG

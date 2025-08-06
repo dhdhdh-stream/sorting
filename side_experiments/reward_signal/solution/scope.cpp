@@ -16,7 +16,7 @@
 using namespace std;
 
 Scope::Scope() {
-	// do nothing
+	this->last_updated_run_index = -1;
 }
 
 Scope::~Scope() {
@@ -197,9 +197,14 @@ void Scope::clean() {
 			it != this->nodes.end(); it++) {
 		it->second->clean();
 	}
+
+	this->last_updated_run_index = -1;
+	this->sum_hits = 0;
 }
 
 void Scope::measure_update(int total_count) {
+	this->average_hits_per_run = (double)this->sum_hits / (double)total_count;
+
 	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
 			it != this->nodes.end(); it++) {
 		it->second->measure_update(total_count);
