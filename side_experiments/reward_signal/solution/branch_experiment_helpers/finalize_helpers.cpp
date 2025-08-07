@@ -13,6 +13,7 @@
 #include "scope_node.h"
 #include "solution.h"
 #include "solution_wrapper.h"
+#include "start_node.h"
 
 using namespace std;
 
@@ -109,17 +110,35 @@ void BranchExperiment::add(SolutionWrapper* wrapper) {
 	}
 
 	if (this->select_percentage == 1.0) {
-		int start_node_id;
-		AbstractNode* start_node;
+		int starting_node_id;
+		AbstractNode* starting_node;
 		if (this->best_step_types.size() == 0) {
-			start_node_id = exit_node_id;
-			start_node = exit_node;
+			starting_node_id = exit_node_id;
+			starting_node = exit_node;
 		} else {
-			start_node_id = this->new_nodes[0]->id;
-			start_node = this->new_nodes[0];
+			starting_node_id = this->new_nodes[0]->id;
+			starting_node = this->new_nodes[0];
 		}
 
 		switch (this->node_context->type) {
+		case NODE_TYPE_START:
+			{
+				StartNode* start_node = (StartNode*)this->node_context;
+
+				for (int a_index = 0; a_index < (int)start_node->next_node->ancestor_ids.size(); a_index++) {
+					if (start_node->next_node->ancestor_ids[a_index] == start_node->id) {
+						start_node->next_node->ancestor_ids.erase(
+							start_node->next_node->ancestor_ids.begin() + a_index);
+						break;
+					}
+				}
+
+				start_node->next_node_id = starting_node_id;
+				start_node->next_node = starting_node;
+
+				starting_node->ancestor_ids.push_back(start_node->id);
+			}
+			break;
 		case NODE_TYPE_ACTION:
 			{
 				ActionNode* action_node = (ActionNode*)this->node_context;
@@ -132,10 +151,10 @@ void BranchExperiment::add(SolutionWrapper* wrapper) {
 					}
 				}
 
-				action_node->next_node_id = start_node_id;
-				action_node->next_node = start_node;
+				action_node->next_node_id = starting_node_id;
+				action_node->next_node = starting_node;
 
-				start_node->ancestor_ids.push_back(action_node->id);
+				starting_node->ancestor_ids.push_back(action_node->id);
 			}
 			break;
 		case NODE_TYPE_SCOPE:
@@ -150,10 +169,10 @@ void BranchExperiment::add(SolutionWrapper* wrapper) {
 					}
 				}
 
-				scope_node->next_node_id = start_node_id;
-				scope_node->next_node = start_node;
+				scope_node->next_node_id = starting_node_id;
+				scope_node->next_node = starting_node;
 
-				start_node->ancestor_ids.push_back(scope_node->id);
+				starting_node->ancestor_ids.push_back(scope_node->id);
 			}
 			break;
 		case NODE_TYPE_BRANCH:
@@ -169,8 +188,8 @@ void BranchExperiment::add(SolutionWrapper* wrapper) {
 						}
 					}
 
-					branch_node->branch_next_node_id = start_node_id;
-					branch_node->branch_next_node = start_node;
+					branch_node->branch_next_node_id = starting_node_id;
+					branch_node->branch_next_node = starting_node;
 				} else {
 					for (int a_index = 0; a_index < (int)branch_node->original_next_node->ancestor_ids.size(); a_index++) {
 						if (branch_node->original_next_node->ancestor_ids[a_index] == branch_node->id) {
@@ -180,11 +199,11 @@ void BranchExperiment::add(SolutionWrapper* wrapper) {
 						}
 					}
 
-					branch_node->original_next_node_id = start_node_id;
-					branch_node->original_next_node = start_node;
+					branch_node->original_next_node_id = starting_node_id;
+					branch_node->original_next_node = starting_node;
 				}
 
-				start_node->ancestor_ids.push_back(branch_node->id);
+				starting_node->ancestor_ids.push_back(branch_node->id);
 			}
 			break;
 		case NODE_TYPE_OBS:
@@ -201,10 +220,10 @@ void BranchExperiment::add(SolutionWrapper* wrapper) {
 					}
 				}
 
-				obs_node->next_node_id = start_node_id;
-				obs_node->next_node = start_node;
+				obs_node->next_node_id = starting_node_id;
+				obs_node->next_node = starting_node;
 
-				start_node->ancestor_ids.push_back(obs_node->id);
+				starting_node->ancestor_ids.push_back(obs_node->id);
 			}
 			break;
 		}
@@ -212,6 +231,23 @@ void BranchExperiment::add(SolutionWrapper* wrapper) {
 		this->scope_context->nodes[this->new_branch_node->id] = this->new_branch_node;
 
 		switch (this->node_context->type) {
+		case NODE_TYPE_START:
+			{
+				StartNode* start_node = (StartNode*)this->node_context;
+
+				for (int a_index = 0; a_index < (int)start_node->next_node->ancestor_ids.size(); a_index++) {
+					if (start_node->next_node->ancestor_ids[a_index] == start_node->id) {
+						start_node->next_node->ancestor_ids.erase(
+							start_node->next_node->ancestor_ids.begin() + a_index);
+						break;
+					}
+				}
+				start_node->next_node->ancestor_ids.push_back(this->new_branch_node->id);
+
+				this->new_branch_node->original_next_node_id = start_node->next_node_id;
+				this->new_branch_node->original_next_node = start_node->next_node;
+			}
+			break;
 		case NODE_TYPE_ACTION:
 			{
 				ActionNode* action_node = (ActionNode*)this->node_context;
@@ -348,6 +384,14 @@ void BranchExperiment::add(SolutionWrapper* wrapper) {
 		}
 
 		switch (this->node_context->type) {
+		case NODE_TYPE_START:
+			{
+				StartNode* start_node = (StartNode*)this->node_context;
+
+				start_node->next_node_id = this->new_branch_node->id;
+				start_node->next_node = this->new_branch_node;
+			}
+			break;
 		case NODE_TYPE_ACTION:
 			{
 				ActionNode* action_node = (ActionNode*)this->node_context;

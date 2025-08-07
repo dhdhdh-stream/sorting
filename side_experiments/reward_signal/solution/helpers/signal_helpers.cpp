@@ -25,8 +25,6 @@ double calc_signal(ScopeNode* signal_scope_node,
 			signal_needed_from->factor_values[match_factor_index] = value;
 		}
 		double match_val = signal_needed_from->factor_values[match_factor_index];
-		// temp
-		cout << "match_val: " << match_val << endl;
 		#if defined(MDEBUG) && MDEBUG
 		if (match_val > 0.0 || rand()%3 == 0) {
 		#else

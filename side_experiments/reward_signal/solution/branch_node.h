@@ -26,6 +26,8 @@ public:
 	int branch_next_node_id;
 	AbstractNode* branch_next_node;
 
+	std::vector<int> impacted_factors;
+
 	#if defined(MDEBUG) && MDEBUG
 	void* verify_key;
 	std::vector<double> verify_scores;

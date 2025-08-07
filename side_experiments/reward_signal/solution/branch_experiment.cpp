@@ -84,6 +84,9 @@ BranchExperiment::BranchExperiment(Scope* scope_context,
 		this->best_surprise = 0.0;
 
 		switch (this->node_context->type) {
+		case NODE_TYPE_START:
+			this->average_instances_per_run = this->scope_context->average_instances_per_run;
+			break;
 		case NODE_TYPE_ACTION:
 			{
 				ActionNode* action_node = (ActionNode*)this->node_context;

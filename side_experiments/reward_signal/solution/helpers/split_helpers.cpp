@@ -142,8 +142,129 @@ void gather_inputs_helper(ScopeHistory* scope_history,
 	}
 }
 
+void gather_inputs_top_helper(ScopeHistory* scope_history,
+							  vector<Scope*>& scope_context,
+							  vector<int>& node_context,
+							  ScopeNode* signal_scope_node,
+							  vector<pair<Input,InputData>>& inputs,
+							  vector<ScopeHistory*>& scope_histories) {
+	Scope* scope = scope_history->scope;
+
+	for (map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
+			it != scope_history->node_histories.end(); it++) {
+		AbstractNode* node = it->second->node;
+		switch (node->type) {
+		case NODE_TYPE_SCOPE:
+			if (node != signal_scope_node) {
+				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)it->second;
+
+				scope_context.push_back(scope);
+				node_context.push_back(it->first);
+
+				gather_inputs_helper(scope_node_history->scope_history,
+									 scope_context,
+									 node_context,
+									 inputs,
+									 scope_histories);
+
+				scope_context.pop_back();
+				node_context.pop_back();
+			}
+			break;
+		case NODE_TYPE_BRANCH:
+			{
+				scope_context.push_back(scope);
+				node_context.push_back(it->first);
+
+				Input input;
+				input.scope_context = scope_context;
+				input.factor_index = -1;
+				input.node_context = node_context;
+				input.obs_index = -1;
+
+				InputData input_data;
+				analyze_input(input,
+							  scope_histories,
+							  input_data);
+
+				if (input_data.hit_percent >= MIN_CONSIDER_HIT_PERCENT
+						&& input_data.standard_deviation >= MIN_STANDARD_DEVIATION) {
+					inputs.push_back({input, input_data});
+				}
+
+				scope_context.pop_back();
+				node_context.pop_back();
+			}
+			break;
+		case NODE_TYPE_OBS:
+			{
+				ObsNodeHistory* obs_node_history = (ObsNodeHistory*)it->second;
+
+				for (int o_index = 0; o_index < (int)obs_node_history->obs_history.size(); o_index++) {
+					scope_context.push_back(scope);
+					node_context.push_back(it->first);
+
+					Input input;
+					input.scope_context = scope_context;
+					input.factor_index = -1;
+					input.node_context = node_context;
+					input.obs_index = o_index;
+
+					InputData input_data;
+					analyze_input(input,
+								  scope_histories,
+								  input_data);
+
+					if (input_data.hit_percent >= MIN_CONSIDER_HIT_PERCENT
+							&& input_data.standard_deviation >= MIN_STANDARD_DEVIATION) {
+						inputs.push_back({input, input_data});
+					}
+
+					scope_context.pop_back();
+					node_context.pop_back();
+				}
+			}
+			break;
+		}
+	}
+
+	for (int f_index = 0; f_index < (int)scope->factors.size(); f_index++) {
+		if (scope->factors[f_index]->is_meaningful) {
+			bool has_dependency = factor_has_dependency_on_scope_node(
+				scope,
+				f_index,
+				signal_scope_node->id);
+
+			if (!has_dependency) {
+				scope_context.push_back(scope);
+				node_context.push_back(-1);
+
+				Input input;
+				input.scope_context = scope_context;
+				input.factor_index = f_index;
+				input.node_context = node_context;
+				input.obs_index = -1;
+
+				InputData input_data;
+				analyze_input(input,
+							  scope_histories,
+							  input_data);
+
+				if (input_data.hit_percent >= MIN_CONSIDER_HIT_PERCENT
+						&& input_data.standard_deviation >= MIN_STANDARD_DEVIATION) {
+					inputs.push_back({input, input_data});
+				}
+
+				scope_context.pop_back();
+				node_context.pop_back();
+			}
+		}
+	}
+}
+
 bool split_helper(vector<ScopeHistory*>& existing_scope_histories,
 				  vector<ScopeHistory*>& explore_scope_histories,
+				  ScopeNode* signal_scope_node,
 				  vector<Input>& match_inputs,
 				  Network*& match_network) {
 	vector<ScopeHistory*> combined_scope_histories;
@@ -159,11 +280,12 @@ bool split_helper(vector<ScopeHistory*>& existing_scope_histories,
 	vector<Scope*> scope_context;
 	vector<int> node_context;
 	vector<pair<Input,InputData>> possible_inputs;
-	gather_inputs_helper(gather_history,
-						 scope_context,
-						 node_context,
-						 possible_inputs,
-						 combined_scope_histories);
+	gather_inputs_top_helper(gather_history,
+							 scope_context,
+							 node_context,
+							 signal_scope_node,
+							 possible_inputs,
+							 combined_scope_histories);
 
 	/**
 	 * - simply randomly select inputs

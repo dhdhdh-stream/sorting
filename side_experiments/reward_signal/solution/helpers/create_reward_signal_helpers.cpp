@@ -156,10 +156,7 @@ void gather_existing_histories_helper(ScopeHistory* scope_history,
 		map<int, AbstractNodeHistory*>::iterator it = scope_history
 			->node_histories.find(signal_scope_node->id);
 		if (it != scope_history->node_histories.end()) {
-			ScopeHistory* d_scope_history = new ScopeHistory(scope_history);
-			delete d_scope_history->node_histories[signal_scope_node->id];
-			d_scope_history->node_histories.erase(signal_scope_node->id);
-			existing_scope_histories.push_back(d_scope_history);
+			existing_scope_histories.push_back(scope_history);
 		}
 	} else {
 		bool is_child = false;
@@ -419,6 +416,7 @@ void create_reward_signal_helper(ScopeNode* scope_node,
 		Network* new_match_network = NULL;
 		bool split_is_success = split_helper(existing_scope_histories,
 											 scope_node->explore_scope_histories,
+											 scope_node,
 											 new_match_inputs,
 											 new_match_network);
 
@@ -463,6 +461,7 @@ void create_reward_signal_helper(ScopeNode* scope_node,
 				Network* new_network = NULL;
 				bool is_success = train_score(match_histories,
 											  match_target_vals,
+											  scope_node,
 											  new_average_score,
 											  new_factor_inputs,
 											  new_factor_input_averages,
@@ -592,10 +591,6 @@ void create_reward_signal_helper(ScopeNode* scope_node,
 			delete new_match_network;
 		}
 	}
-
-	for (int h_index = 0; h_index < (int)existing_scope_histories.size(); h_index++) {
-		delete existing_scope_histories[h_index];
-	}
 }
 
 void update_reward_signals(SolutionWrapper* wrapper) {
@@ -628,4 +623,29 @@ void update_reward_signals(SolutionWrapper* wrapper) {
 			}
 		}
 	}
+}
+
+bool factor_has_dependency_on_scope_node(
+		Scope* scope,
+		int factor_index,
+		int scope_node_id) {
+	Factor* factor = scope->factors[factor_index];
+	for (int i_index = 0; i_index < (int)factor->inputs.size(); i_index++) {
+		if (factor->inputs[i_index].scope_context.size() == 1
+				&& factor->inputs[i_index].factor_index != -1) {
+			bool has_dependency = factor_has_dependency_on_scope_node(
+				scope,
+				factor->inputs[i_index].factor_index,
+				scope_node_id);
+			if (has_dependency) {
+				return true;
+			}
+		} else {
+			if (factor->inputs[i_index].node_context[0] == scope_node_id) {
+				return true;
+			}
+		}
+	}
+
+	return false;
 }

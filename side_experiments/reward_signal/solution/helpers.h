@@ -98,12 +98,18 @@ Scope* create_new_scope(Scope* scope_context);
 double calc_signal(ScopeNode* signal_scope_node,
 				   ScopeHistory* signal_needed_from);
 
+bool factor_has_dependency_on_scope_node(
+	Scope* scope,
+	int factor_index,
+	int scope_node_id);
 bool split_helper(std::vector<ScopeHistory*>& existing_scope_histories,
 				  std::vector<ScopeHistory*>& explore_scope_histories,
+				  ScopeNode* signal_scope_node,
 				  std::vector<Input>& match_inputs,
 				  Network*& match_network);
 bool train_score(std::vector<ScopeHistory*>& scope_histories,
 				 std::vector<double>& target_val_histories,
+				 ScopeNode* signal_scope_node,
 				 double& average_score,
 				 std::vector<Input>& factor_inputs,
 				 std::vector<double>& factor_input_averages,

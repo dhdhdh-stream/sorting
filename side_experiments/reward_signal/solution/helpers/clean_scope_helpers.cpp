@@ -11,6 +11,7 @@
 #include "scope_node.h"
 #include "solution.h"
 #include "solution_wrapper.h"
+#include "start_node.h"
 
 using namespace std;
 
@@ -27,6 +28,12 @@ void clean_scope(Scope* scope,
 		for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
 				it != scope->nodes.end(); it++) {
 			switch (it->second->type) {
+			case NODE_TYPE_START:
+				{
+					StartNode* start_node = (StartNode*)it->second;
+					next_node_ids.insert(start_node->next_node_id);
+				}
+				break;
 			case NODE_TYPE_ACTION:
 				{
 					ActionNode* action_node = (ActionNode*)it->second;
@@ -146,6 +153,16 @@ void clean_scope(Scope* scope,
 	for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
 			it != scope->nodes.end(); it++) {
 		switch (it->second->type) {
+		case NODE_TYPE_START:
+			{
+				StartNode* start_node = (StartNode*)it->second;
+
+				if (start_node->next_node->type != NODE_TYPE_OBS
+						|| start_node->next_node->ancestor_ids.size() > 1) {
+					obs_node_needed.push_back({start_node, false});
+				}
+			}
+			break;
 		case NODE_TYPE_ACTION:
 			{
 				ActionNode* action_node = (ActionNode*)it->second;
@@ -190,6 +207,28 @@ void clean_scope(Scope* scope,
 		scope->nodes[new_obs_node->id] = new_obs_node;
 
 		switch (obs_node_needed[n_index].first->type) {
+		case NODE_TYPE_START:
+			{
+				StartNode* start_node = (StartNode*)obs_node_needed[n_index].first;
+
+				for (int a_index = 0; a_index < (int)start_node->next_node->ancestor_ids.size(); a_index++) {
+					if (start_node->next_node->ancestor_ids[a_index] == start_node->id) {
+						start_node->next_node->ancestor_ids.erase(
+							start_node->next_node->ancestor_ids.begin() + a_index);
+						break;
+					}
+				}
+				start_node->next_node->ancestor_ids.push_back(new_obs_node->id);
+
+				new_obs_node->next_node_id = start_node->next_node_id;
+				new_obs_node->next_node = start_node->next_node;
+
+				start_node->next_node_id = new_obs_node->id;
+				start_node->next_node = new_obs_node;
+
+				new_obs_node->ancestor_ids.push_back(start_node->id);
+			}
+			break;
 		case NODE_TYPE_ACTION:
 			{
 				ActionNode* action_node = (ActionNode*)obs_node_needed[n_index].first;

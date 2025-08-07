@@ -6,6 +6,7 @@
 #include "network.h"
 #include "obs_node.h"
 #include "scope.h"
+#include "scope_node.h"
 #include "solution.h"
 
 using namespace std;
@@ -64,7 +65,8 @@ void Factor::replace_obs_node(Scope* scope,
 			this->inputs[i_index].node_context.back() = new_node_id;
 
 			if (this->inputs[i_index].scope_context.size() == 1) {
-				scope->nodes[new_node_id]->impacted_factors.push_back(index);
+				ObsNode* obs_node = (ObsNode*)scope->nodes[new_node_id];
+				obs_node->impacted_factors.push_back(index);
 			}
 		}
 	}
@@ -108,7 +110,26 @@ void Factor::link(int index) {
 		} else {
 			Scope* scope = this->inputs[i_index].scope_context[0];
 			AbstractNode* node = scope->nodes[this->inputs[i_index].node_context[0]];
-			node->impacted_factors.push_back(index);
+			switch (node->type) {
+			case NODE_TYPE_SCOPE:
+				{
+					ScopeNode* scope_node = (ScopeNode*)node;
+					scope_node->impacted_factors.push_back(index);
+				}
+				break;
+			case NODE_TYPE_BRANCH:
+				{
+					BranchNode* branch_node = (BranchNode*)node;
+					branch_node->impacted_factors.push_back(index);
+				}
+				break;
+			case NODE_TYPE_OBS:
+				{
+					ObsNode* obs_node = (ObsNode*)node;
+					obs_node->impacted_factors.push_back(index);
+				}
+				break;
+			}
 		}
 	}
 }

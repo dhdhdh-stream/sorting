@@ -11,6 +11,7 @@
 #include "scope.h"
 #include "scope_node.h"
 #include "solution_wrapper.h"
+#include "start_node.h"
 
 using namespace std;
 
@@ -82,6 +83,7 @@ void update_counts(ScopeHistory* scope_history,
 		scope->sum_hits++;
 		scope->last_updated_run_index = h_index;
 	}
+	scope->sum_instances++;
 
 	map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
 	while (it != scope_history->node_histories.end()) {

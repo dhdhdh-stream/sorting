@@ -31,8 +31,171 @@ const int SCORE_GATHER_NUM_SAMPLES = 10;
 
 const int SCORE_NUM_FACTORS = 10;
 
+void signal_gather_t_scores_top_helper(ScopeHistory* scope_history,
+									   vector<Scope*>& scope_context,
+									   vector<int>& node_context,
+									   ScopeNode* signal_scope_node,
+									   map<Input, double>& t_scores,
+									   vector<ScopeHistory*>& scope_histories,
+									   map<Input, InputData>& input_tracker) {
+	Scope* scope = scope_history->scope;
+
+	for (map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
+			it != scope_history->node_histories.end(); it++) {
+		AbstractNode* node = it->second->node;
+		switch (node->type) {
+		case NODE_TYPE_SCOPE:
+			if (node != signal_scope_node) {
+				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)it->second;
+
+				scope_context.push_back(scope);
+				node_context.push_back(it->first);
+
+				gather_t_scores_helper(scope_node_history->scope_history,
+									   scope_context,
+									   node_context,
+									   t_scores,
+									   scope_histories,
+									   input_tracker);
+
+				scope_context.pop_back();
+				node_context.pop_back();
+			}
+			break;
+		case NODE_TYPE_BRANCH:
+			{
+				BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
+
+				scope_context.push_back(scope);
+				node_context.push_back(it->first);
+
+				Input input;
+				input.scope_context = scope_context;
+				input.factor_index = -1;
+				input.node_context = node_context;
+				input.obs_index = -1;
+
+				map<Input, InputData>::iterator it = input_tracker.find(input);
+				if (it == input_tracker.end()) {
+					InputData input_data;
+					analyze_input(input,
+								  scope_histories,
+								  input_data);
+
+					it = input_tracker.insert({input, input_data}).first;
+				}
+
+				if (it->second.hit_percent >= MIN_CONSIDER_HIT_PERCENT
+						&& it->second.standard_deviation >= MIN_STANDARD_DEVIATION) {
+					double curr_val;
+					if (branch_node_history->is_branch) {
+						curr_val = 1.0;
+					} else {
+						curr_val = -1.0;
+					}
+					double curr_t_score = (curr_val - it->second.average) / it->second.standard_deviation;
+					map<Input, double>::iterator t_it = t_scores.find(input);
+					if (t_it == t_scores.end()) {
+						t_it = t_scores.insert({input, 0.0}).first;
+					}
+					t_it->second += curr_t_score;
+				}
+
+				scope_context.pop_back();
+				node_context.pop_back();
+			}
+			break;
+		case NODE_TYPE_OBS:
+			{
+				ObsNodeHistory* obs_node_history = (ObsNodeHistory*)it->second;
+
+				for (int o_index = 0; o_index < (int)obs_node_history->obs_history.size(); o_index++) {
+					scope_context.push_back(scope);
+					node_context.push_back(it->first);
+
+					Input input;
+					input.scope_context = scope_context;
+					input.factor_index = -1;
+					input.node_context = node_context;
+					input.obs_index = o_index;
+
+					map<Input, InputData>::iterator it = input_tracker.find(input);
+					if (it == input_tracker.end()) {
+						InputData input_data;
+						analyze_input(input,
+									  scope_histories,
+									  input_data);
+
+						it = input_tracker.insert({input, input_data}).first;
+					}
+
+					if (it->second.hit_percent >= MIN_CONSIDER_HIT_PERCENT
+							&& it->second.standard_deviation >= MIN_STANDARD_DEVIATION) {
+						double curr_val = obs_node_history->obs_history[o_index];
+						double curr_t_score = (curr_val - it->second.average) / it->second.standard_deviation;
+						map<Input, double>::iterator t_it = t_scores.find(input);
+						if (t_it == t_scores.end()) {
+							t_it = t_scores.insert({input, 0.0}).first;
+						}
+						t_it->second += curr_t_score;
+					}
+
+					scope_context.pop_back();
+					node_context.pop_back();
+				}
+			}
+			break;
+		}
+	}
+
+	for (int f_index = 0; f_index < (int)scope->factors.size(); f_index++) {
+		if (scope->factors[f_index]->is_meaningful) {
+			bool has_dependency = factor_has_dependency_on_scope_node(
+				scope,
+				f_index,
+				signal_scope_node->id);
+
+			if (!has_dependency) {
+				scope_context.push_back(scope);
+				node_context.push_back(-1);
+
+				Input input;
+				input.scope_context = scope_context;
+				input.factor_index = f_index;
+				input.node_context = node_context;
+				input.obs_index = -1;
+
+				map<Input, InputData>::iterator it = input_tracker.find(input);
+				if (it == input_tracker.end()) {
+					InputData input_data;
+					analyze_input(input,
+								  scope_histories,
+								  input_data);
+
+					it = input_tracker.insert({input, input_data}).first;
+				}
+
+				if (it->second.hit_percent >= MIN_CONSIDER_HIT_PERCENT
+						&& it->second.standard_deviation >= MIN_STANDARD_DEVIATION) {
+					double curr_val = scope_history->factor_values[f_index];
+					double curr_t_score = (curr_val - it->second.average) / it->second.standard_deviation;
+					map<Input, double>::iterator t_it = t_scores.find(input);
+					if (t_it == t_scores.end()) {
+						t_it = t_scores.insert({input, 0.0}).first;
+					}
+					t_it->second += curr_t_score;
+				}
+
+				scope_context.pop_back();
+				node_context.pop_back();
+			}
+		}
+	}
+}
+
 bool train_score(vector<ScopeHistory*>& scope_histories,
 				 vector<double>& target_val_histories,
+				 ScopeNode* signal_scope_node,
 				 double& average_score,
 				 vector<Input>& factor_inputs,
 				 vector<double>& factor_input_averages,
@@ -51,52 +214,59 @@ bool train_score(vector<ScopeHistory*>& scope_histories,
 	vector<double> a_factor_standard_deviations(scope->factors.size());
 	vector<int> remaining_factors;
 	for (int f_index = 0; f_index < (int)scope->factors.size(); f_index++) {
-		Input input;
-		input.scope_context = {scope};
-		input.factor_index = f_index;
-		input.node_context = {-1};
-		input.obs_index = -1;
+		bool has_dependency = factor_has_dependency_on_scope_node(
+			scope,
+			f_index,
+			signal_scope_node->id);
 
-		InputData input_data;
-		analyze_input(input,
-					  scope_histories,
-					  input_data);
-		input_tracker[input] = input_data;
+		if (!has_dependency) {
+			Input input;
+			input.scope_context = {scope};
+			input.factor_index = f_index;
+			input.node_context = {-1};
+			input.obs_index = -1;
 
-		if (input_data.standard_deviation >= MIN_STANDARD_DEVIATION) {
-			vector<double> curr_factor_vals(num_instances);
-			for (int h_index = 0; h_index < num_instances; h_index++) {
-				double val;
-				bool is_on;
-				fetch_input_helper(scope_histories[h_index],
-								   input,
-								   0,
-								   val,
-								   is_on);
-				if (is_on) {
-					double normalized_val = (val - input_data.average) / input_data.standard_deviation;
-					curr_factor_vals[h_index] = normalized_val;
-				} else {
-					curr_factor_vals[h_index] = 0.0;
+			InputData input_data;
+			analyze_input(input,
+						  scope_histories,
+						  input_data);
+			input_tracker[input] = input_data;
+
+			if (input_data.standard_deviation >= MIN_STANDARD_DEVIATION) {
+				vector<double> curr_factor_vals(num_instances);
+				for (int h_index = 0; h_index < num_instances; h_index++) {
+					double val;
+					bool is_on;
+					fetch_input_helper(scope_histories[h_index],
+									   input,
+									   0,
+									   val,
+									   is_on);
+					if (is_on) {
+						double normalized_val = (val - input_data.average) / input_data.standard_deviation;
+						curr_factor_vals[h_index] = normalized_val;
+					} else {
+						curr_factor_vals[h_index] = 0.0;
+					}
 				}
+
+				a_factor_vals[f_index] = curr_factor_vals;
+
+				double sum_vals = 0.0;
+				for (int h_index = 0; h_index < num_instances; h_index++) {
+					sum_vals += curr_factor_vals[h_index];
+				}
+				a_factor_averages[f_index] = sum_vals / (double)num_instances;
+
+				double sum_variances = 0.0;
+				for (int h_index = 0; h_index < num_instances; h_index++) {
+					sum_variances += (curr_factor_vals[h_index] - a_factor_averages[f_index])
+						* (curr_factor_vals[h_index] - a_factor_averages[f_index]);
+				}
+				a_factor_standard_deviations[f_index] = sqrt(sum_variances / (double)num_instances);
+
+				remaining_factors.push_back(f_index);
 			}
-
-			a_factor_vals[f_index] = curr_factor_vals;
-
-			double sum_vals = 0.0;
-			for (int h_index = 0; h_index < num_instances; h_index++) {
-				sum_vals += curr_factor_vals[h_index];
-			}
-			a_factor_averages[f_index] = sum_vals / (double)num_instances;
-
-			double sum_variances = 0.0;
-			for (int h_index = 0; h_index < num_instances; h_index++) {
-				sum_variances += (curr_factor_vals[h_index] - a_factor_averages[f_index])
-					* (curr_factor_vals[h_index] - a_factor_averages[f_index]);
-			}
-			a_factor_standard_deviations[f_index] = sqrt(sum_variances / (double)num_instances);
-
-			remaining_factors.push_back(f_index);
 		}
 	}
 
@@ -270,12 +440,13 @@ bool train_score(vector<ScopeHistory*>& scope_histories,
 	for (int i_index = 0; i_index < (int)best_indexes.size(); i_index++) {
 		vector<Scope*> scope_context;
 		vector<int> node_context;
-		gather_t_scores_helper(scope_histories[best_indexes[i_index]],
-							   scope_context,
-							   node_context,
-							   best_t_scores,
-							   scope_histories,
-							   input_tracker);
+		signal_gather_t_scores_top_helper(scope_histories[best_indexes[i_index]],
+										  scope_context,
+										  node_context,
+										  signal_scope_node,
+										  best_t_scores,
+										  scope_histories,
+										  input_tracker);
 	}
 
 	vector<int> worst_indexes(SCORE_GATHER_NUM_SAMPLES, -1);
@@ -313,12 +484,13 @@ bool train_score(vector<ScopeHistory*>& scope_histories,
 	for (int i_index = 0; i_index < (int)worst_indexes.size(); i_index++) {
 		vector<Scope*> scope_context;
 		vector<int> node_context;
-		gather_t_scores_helper(scope_histories[worst_indexes[i_index]],
-							   scope_context,
-							   node_context,
-							   worst_t_scores,
-							   scope_histories,
-							   input_tracker);
+		signal_gather_t_scores_top_helper(scope_histories[worst_indexes[i_index]],
+										  scope_context,
+										  node_context,
+										  signal_scope_node,
+										  worst_t_scores,
+										  scope_histories,
+										  input_tracker);
 	}
 
 	map<Input, double> contrast_t_scores;

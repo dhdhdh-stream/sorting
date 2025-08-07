@@ -8,6 +8,7 @@
 #include "obs_node.h"
 #include "scope.h"
 #include "scope_node.h"
+#include "start_node.h"
 
 using namespace std;
 
@@ -99,7 +100,7 @@ Scope* create_new_scope(Scope* scope_context) {
 	}
 
 	for (int t_index = 0; t_index < CREATE_NEW_SCOPE_NUM_TRIES; t_index++) {
-		uniform_int_distribution<int> node_distribution(0, scope_context->nodes.size()-1);
+		uniform_int_distribution<int> node_distribution(1, scope_context->nodes.size()-1);
 		AbstractNode* potential_start_node = next(scope_context->nodes.begin(), node_distribution(generator))->second;
 		AbstractNode* potential_end_node = next(scope_context->nodes.begin(), node_distribution(generator))->second;
 
@@ -136,7 +137,7 @@ Scope* create_new_scope(Scope* scope_context) {
 
 			new_scope->node_counter = 0;
 
-			ObsNode* starting_node = new ObsNode();
+			StartNode* starting_node = new StartNode();
 			starting_node->parent = new_scope;
 			starting_node->id = new_scope->node_counter;
 			new_scope->node_counter++;

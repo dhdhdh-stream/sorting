@@ -12,6 +12,7 @@
 #include "scope_node.h"
 #include "solution.h"
 #include "solution_wrapper.h"
+#include "start_node.h"
 
 using namespace std;
 
@@ -24,10 +25,6 @@ void set_explore_scope(SolutionWrapper* wrapper) {
 	}
 
 	uniform_int_distribution<int> explore_scope_distribution(0, possible_scopes.size()-1);
-	// temp
-	if (possible_scopes.size() > 1) {
-		explore_scope_distribution = uniform_int_distribution<int>(1, possible_scopes.size()-1);
-	}
 	wrapper->curr_explore_scope = possible_scopes[explore_scope_distribution(generator)];
 	wrapper->curr_explore_tries = 0;
 }
@@ -38,6 +35,9 @@ void create_experiment(SolutionWrapper* wrapper,
 	for (map<int, AbstractNode*>::iterator it = wrapper->curr_explore_scope->nodes.begin();
 			it != wrapper->curr_explore_scope->nodes.end(); it++) {
 		switch (it->second->type) {
+		case NODE_TYPE_START:
+			possible_explore_nodes.push_back({it->second, false});
+			break;
 		case NODE_TYPE_ACTION:
 			{
 				ActionNode* action_node = (ActionNode*)it->second;

@@ -13,6 +13,7 @@
 #include "scope_node.h"
 #include "solution.h"
 #include "solution_wrapper.h"
+#include "start_node.h"
 
 using namespace std;
 
@@ -69,6 +70,12 @@ void BranchExperiment::explore_check_activate(
 
 		AbstractNode* starting_node;
 		switch (this->node_context->type) {
+		case NODE_TYPE_START:
+			{
+				StartNode* start_node = (StartNode*)this->node_context;
+				starting_node = start_node->next_node;
+			}
+			break;
 		case NODE_TYPE_ACTION:
 			{
 				ActionNode* action_node = (ActionNode*)this->node_context;
@@ -290,10 +297,7 @@ void BranchExperiment::explore_backprop(
 		}
 		for (int l_index = 0; l_index < (int)this->explore_scope_histories.size()-1; l_index++) {
 			ScopeNode* scope_node = (ScopeNode*)this->explore_node_context[l_index];
-			ScopeHistory* d_scope_history = new ScopeHistory(this->explore_scope_histories[l_index]);
-			delete d_scope_history->node_histories[scope_node->id];
-			d_scope_history->node_histories.erase(scope_node->id);
-			scope_node->explore_scope_histories.push_back(d_scope_history);
+			scope_node->explore_scope_histories.push_back(new ScopeHistory(this->explore_scope_histories[l_index]));
 			scope_node->explore_target_val_histories.push_back(outer_scores[l_index]);
 		}
 

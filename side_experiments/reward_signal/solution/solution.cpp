@@ -13,6 +13,7 @@
 #include "problem.h"
 #include "scope.h"
 #include "scope_node.h"
+#include "start_node.h"
 
 using namespace std;
 
@@ -52,13 +53,25 @@ void Solution::init() {
 	new_scope->node_counter = 0;
 	this->scopes.push_back(new_scope);
 
-	ObsNode* starting_noop_node = new ObsNode();
-	starting_noop_node->parent = new_scope;
-	starting_noop_node->id = new_scope->node_counter;
+	StartNode* start_node = new StartNode();
+	start_node->parent = new_scope;
+	start_node->id = new_scope->node_counter;
 	new_scope->node_counter++;
-	starting_noop_node->next_node_id = -1;
-	starting_noop_node->next_node = NULL;
-	new_scope->nodes[starting_noop_node->id] = starting_noop_node;
+	new_scope->nodes[start_node->id] = start_node;
+
+	ObsNode* end_node = new ObsNode();
+	end_node->parent = new_scope;
+	end_node->id = new_scope->node_counter;
+	new_scope->node_counter++;
+	new_scope->nodes[end_node->id] = end_node;
+
+	start_node->next_node_id = end_node->id;
+	start_node->next_node = end_node;
+
+	end_node->ancestor_ids.push_back(start_node->id);
+
+	end_node->next_node_id = -1;
+	end_node->next_node = NULL;
 
 	clean();
 }

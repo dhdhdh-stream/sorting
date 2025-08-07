@@ -9,10 +9,11 @@ class Scope;
 class Solution;
 class SolutionWrapper;
 
-const int NODE_TYPE_ACTION = 0;
-const int NODE_TYPE_SCOPE = 1;
-const int NODE_TYPE_BRANCH = 2;
-const int NODE_TYPE_OBS = 3;
+const int NODE_TYPE_START = 0;
+const int NODE_TYPE_ACTION = 1;
+const int NODE_TYPE_SCOPE = 2;
+const int NODE_TYPE_BRANCH = 3;
+const int NODE_TYPE_OBS = 4;
 
 class AbstractNode {
 public:
@@ -20,8 +21,6 @@ public:
 
 	Scope* parent;
 	int id;
-
-	std::vector<int> impacted_factors;
 
 	std::vector<int> ancestor_ids;
 	/**

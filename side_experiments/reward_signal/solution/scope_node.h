@@ -32,6 +32,8 @@ public:
 	int next_node_id;
 	AbstractNode* next_node;
 
+	std::vector<int> impacted_factors;
+
 	std::vector<Signal> signals;
 	double miss_average_guess;
 	/**

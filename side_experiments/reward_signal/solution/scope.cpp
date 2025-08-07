@@ -12,6 +12,7 @@
 #include "scope_node.h"
 #include "solution.h"
 #include "solution_wrapper.h"
+#include "start_node.h"
 
 using namespace std;
 
@@ -200,10 +201,12 @@ void Scope::clean() {
 
 	this->last_updated_run_index = -1;
 	this->sum_hits = 0;
+	this->sum_instances = 0;
 }
 
 void Scope::measure_update(int total_count) {
 	this->average_hits_per_run = (double)this->sum_hits / (double)total_count;
+	this->average_instances_per_run = (double)this->sum_instances / (double)this->sum_hits;
 
 	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
 			it != this->nodes.end(); it++) {
@@ -251,6 +254,15 @@ void Scope::load(ifstream& input_file,
 		getline(input_file, type_line);
 		int type = stoi(type_line);
 		switch (type) {
+		case NODE_TYPE_START:
+			{
+				StartNode* start_node = new StartNode();
+				start_node->parent = this;
+				start_node->id = id;
+				start_node->load(input_file);
+				this->nodes[start_node->id] = start_node;
+			}
+			break;
 		case NODE_TYPE_ACTION:
 			{
 				ActionNode* action_node = new ActionNode();

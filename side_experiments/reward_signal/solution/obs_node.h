@@ -12,11 +12,12 @@ class ScopeHistory;
 class Solution;
 class SolutionWrapper;
 
-class ObsNodeHistory;
 class ObsNode : public AbstractNode {
 public:
 	int next_node_id;
 	AbstractNode* next_node;
+
+	std::vector<int> impacted_factors;
 
 	double average_hits_per_run;
 	double average_instances_per_run;
