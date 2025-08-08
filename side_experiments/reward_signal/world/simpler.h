@@ -25,10 +25,8 @@ public:
 	void perform_action(int action);
 	double score_result();
 
-	#if defined(MDEBUG) && MDEBUG
 	Problem* copy_and_reset();
 	Problem* copy_snapshot();
-	#endif /* MDEBUG */
 
 	void print();
 };

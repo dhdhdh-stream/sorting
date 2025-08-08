@@ -64,6 +64,12 @@ void BranchExperiment::explore_check_activate(
 		this->explore_scope_histories = wrapper->scope_histories;
 		this->explore_node_context = wrapper->node_context;
 
+		// temp
+		for (int l_index = 0; l_index < (int)this->explore_scope_histories.size()-1; l_index++) {
+			ScopeNode* scope_node = (ScopeNode*)this->explore_node_context[l_index];
+			scope_node->explore_problems_starts.push_back(wrapper->problem->copy_snapshot());
+		}
+
 		this->curr_scope_history = new ScopeHistory(scope_history);
 
 		vector<AbstractNode*> possible_exits;
@@ -187,6 +193,12 @@ void BranchExperiment::explore_step(vector<double>& obs,
 
 		delete experiment_state;
 		wrapper->experiment_context.back() = NULL;
+
+		// temp
+		for (int l_index = 0; l_index < (int)this->explore_scope_histories.size()-1; l_index++) {
+			ScopeNode* scope_node = (ScopeNode*)this->explore_node_context[l_index];
+			scope_node->explore_problems_ends.push_back(wrapper->problem->copy_snapshot());
+		}
 	} else {
 		if (this->curr_step_types[experiment_state->step_index] == STEP_TYPE_ACTION) {
 			is_next = true;

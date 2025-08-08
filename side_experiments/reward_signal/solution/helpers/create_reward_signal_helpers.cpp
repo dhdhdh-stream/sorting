@@ -16,11 +16,15 @@
 
 #include "constants.h"
 #include "factor.h"
+#include "globals.h"
 #include "network.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
 #include "solution_wrapper.h"
+
+// temp
+#include "problem.h"
 
 using namespace std;
 
@@ -520,6 +524,64 @@ void create_reward_signal_helper(ScopeNode* scope_node,
 					#else
 					if (t_score >= 1.282) {
 					#endif /* MDEBUG */
+						// temp
+						for (int i_index = 0; i_index < 100; i_index++) {
+							cout << "i_index: " << i_index << endl;
+
+							scope_node->explore_problems_starts[i_index]->print();
+							scope_node->explore_problems_ends[i_index]->print();
+
+							vector<double> match_input_vals(new_match_inputs.size());
+							vector<bool> match_input_is_on(new_match_inputs.size());
+							for (int mi_index = 0; mi_index < (int)new_match_inputs.size(); mi_index++) {
+								double val;
+								bool is_on;
+								fetch_input_helper(scope_node->explore_scope_histories[i_index],
+												   new_match_inputs[mi_index],
+												   0,
+												   val,
+												   is_on);
+								match_input_vals[mi_index] = val;
+								match_input_is_on[mi_index] = is_on;
+							}
+							new_match_network->activate(match_input_vals,
+														match_input_is_on);
+
+							cout << "match input:" << endl;
+							for (int mi_index = 0; mi_index < (int)match_input_vals.size(); mi_index++) {
+								cout << mi_index << ": " << match_input_is_on[mi_index] << " " << match_input_vals[mi_index] << endl;
+							}
+							cout << "new_match_network->output->acti_vals[0]: " << new_match_network->output->acti_vals[0] << endl;
+
+							if (new_match_network->output->acti_vals[0] > 0.0) {
+								cout << "new_average_score: " << new_average_score << endl;
+
+								double sum_vals = new_average_score;
+								for (int mi_index = 0; mi_index < (int)new_factor_inputs.size(); mi_index++) {
+									double val;
+									bool is_on;
+									fetch_input_helper(scope_node->explore_scope_histories[i_index],
+													   new_factor_inputs[mi_index],
+													   0,
+													   val,
+													   is_on);
+									if (is_on) {
+										double normalized_val = (val - new_factor_input_averages[mi_index])
+											/ new_factor_input_standard_deviations[mi_index];
+										sum_vals += new_factor_weights[mi_index] * normalized_val;
+
+										cout << mi_index << ": " << normalized_val << endl;
+									}
+								}
+
+								cout << "sum_vals: " << sum_vals << endl;
+
+								cout << "scope_node->explore_target_val_histories[i_index]: " << scope_node->explore_target_val_histories[i_index] << endl;
+							}
+
+							cout << endl;
+						}
+
 						Signal new_signal;
 
 						{
@@ -575,10 +637,9 @@ void create_reward_signal_helper(ScopeNode* scope_node,
 
 						// temp
 						wrapper->save("saves/", "main.txt");
+						cout << "seed: " << seed << endl;
+						throw invalid_argument("success?");
 					}
-
-					// temp
-					throw invalid_argument("success?");
 				}
 
 				if (new_network != NULL) {

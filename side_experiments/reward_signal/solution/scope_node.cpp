@@ -8,6 +8,9 @@
 #include "scope.h"
 #include "solution.h"
 
+// temp
+#include "problem.h"
+
 using namespace std;
 
 ScopeNode::ScopeNode() {
@@ -62,6 +65,15 @@ void ScopeNode::clean() {
 	}
 	this->explore_scope_histories.clear();
 	this->explore_target_val_histories.clear();
+	// temp
+	for (int p_index = 0; p_index < (int)this->explore_problems_starts.size(); p_index++) {
+		delete this->explore_problems_starts[p_index];
+	}
+	this->explore_problems_starts.clear();
+	for (int p_index = 0; p_index < (int)this->explore_problems_ends.size(); p_index++) {
+		delete this->explore_problems_ends[p_index];
+	}
+	this->explore_problems_ends.clear();
 
 	if (this->experiment != NULL) {
 		this->experiment->decrement(this);

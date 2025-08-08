@@ -161,20 +161,24 @@ bool hit_helper(ScopeHistory* scope_history,
 	Scope* scope = scope_history->scope;
 
 	if (scope == scope_context) {
-		map<int, AbstractNodeHistory*>::iterator it = scope_history
-			->node_histories.find(node_context->id);
-		if (it == scope_history->node_histories.end()) {
-			return false;
+		if (node_context->type == NODE_TYPE_START) {
+			return true;
 		} else {
-			if (node_context->type == NODE_TYPE_BRANCH) {
-				BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
-				if (branch_node_history->is_branch == is_branch) {
-					return true;
-				} else {
-					return false;
-				}
+			map<int, AbstractNodeHistory*>::iterator it = scope_history
+				->node_histories.find(node_context->id);
+			if (it == scope_history->node_histories.end()) {
+				return false;
 			} else {
-				return true;
+				if (node_context->type == NODE_TYPE_BRANCH) {
+					BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
+					if (branch_node_history->is_branch == is_branch) {
+						return true;
+					} else {
+						return false;
+					}
+				} else {
+					return true;
+				}
 			}
 		}
 	} else {
@@ -219,24 +223,32 @@ void fetch_histories_helper(ScopeHistory* scope_history,
 	Scope* scope = scope_history->scope;
 
 	if (scope == scope_context) {
-		bool has_match = false;
+		if (node_context->type == NODE_TYPE_START) {
+			/**
+			 * - if start, then clean_scope_history simply empty
+			 */
+			scope_histories.push_back(new ScopeHistory(scope));
+			target_val_histories.push_back(target_val);
+		} else {
+			bool has_match = false;
 
-		map<int, AbstractNodeHistory*>::iterator match_it = scope_history->node_histories.find(node_context->id);
-		if (match_it != scope_history->node_histories.end()) {
-			if (node_context->type == NODE_TYPE_BRANCH) {
-				BranchNodeHistory* branch_node_history = (BranchNodeHistory*)match_it->second;
-				if (branch_node_history->is_branch == is_branch) {
+			map<int, AbstractNodeHistory*>::iterator match_it = scope_history->node_histories.find(node_context->id);
+			if (match_it != scope_history->node_histories.end()) {
+				if (node_context->type == NODE_TYPE_BRANCH) {
+					BranchNodeHistory* branch_node_history = (BranchNodeHistory*)match_it->second;
+					if (branch_node_history->is_branch == is_branch) {
+						has_match = true;
+					}
+				} else {
 					has_match = true;
 				}
-			} else {
-				has_match = true;
 			}
-		}
 
-		if (has_match) {
-			ScopeHistory* cleaned_scope_history = new ScopeHistory(scope_history, match_it->second->index);
-			scope_histories.push_back(cleaned_scope_history);
-			target_val_histories.push_back(target_val);
+			if (has_match) {
+				ScopeHistory* cleaned_scope_history = new ScopeHistory(scope_history, match_it->second->index);
+				scope_histories.push_back(cleaned_scope_history);
+				target_val_histories.push_back(target_val);
+			}
 		}
 	} else {
 		bool is_child = false;

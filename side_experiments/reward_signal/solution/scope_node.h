@@ -53,6 +53,9 @@ public:
 	/**
 	 * - simply deep copy and clean after train
 	 */
+	// temp
+	std::vector<Problem*> explore_problems_starts;
+	std::vector<Problem*> explore_problems_ends;
 
 	ScopeNode();
 	~ScopeNode();

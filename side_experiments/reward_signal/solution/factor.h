@@ -2,6 +2,7 @@
 #define FACTOR_H
 
 #include <fstream>
+#include <set>
 #include <utility>
 #include <vector>
 
@@ -34,6 +35,12 @@ public:
 						  int original_node_id,
 						  int new_node_id,
 						  int index);
+
+	/**
+	 * - to help debug signals
+	 */
+	void get_node_dependencies(Scope* parent_scope,
+							   std::set<int>& node_dependencies);
 
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file,

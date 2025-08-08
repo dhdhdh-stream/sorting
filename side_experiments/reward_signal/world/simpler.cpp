@@ -110,7 +110,6 @@ double Simpler::score_result() {
 	return score;
 }
 
-#if defined(MDEBUG) && MDEBUG
 Problem* Simpler::copy_and_reset() {
 	Simpler* new_problem = new Simpler();
 
@@ -139,7 +138,6 @@ Problem* Simpler::copy_snapshot() {
 
 	return new_problem;
 }
-#endif /* MDEBUG */
 
 void Simpler::print() {
 	for (int w_index = 0; w_index < 5; w_index++) {

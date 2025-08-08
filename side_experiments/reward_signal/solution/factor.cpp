@@ -72,6 +72,20 @@ void Factor::replace_obs_node(Scope* scope,
 	}
 }
 
+void Factor::get_node_dependencies(Scope* parent_scope,
+								   set<int>& node_dependencies) {
+	for (int i_index = 0; i_index < (int)this->inputs.size(); i_index++) {
+		if (this->inputs[i_index].scope_context.size() == 1
+				&& this->inputs[i_index].factor_index != -1) {
+			Factor* c_factor = parent_scope->factors[this->inputs[i_index].factor_index];
+			c_factor->get_node_dependencies(parent_scope,
+											node_dependencies);
+		} else {
+			node_dependencies.insert(this->inputs[i_index].node_context[0]);
+		}
+	}
+}
+
 void Factor::save(ofstream& output_file) {
 	output_file << this->inputs.size() << endl;
 	for (int i_index = 0; i_index < (int)this->inputs.size(); i_index++) {

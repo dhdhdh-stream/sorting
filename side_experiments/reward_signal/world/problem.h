@@ -9,10 +9,11 @@ public:
 	virtual void perform_action(int action) = 0;
 	virtual double score_result() = 0;
 
-	#if defined(MDEBUG) && MDEBUG
+	/**
+	 * - for debugging
+	 */
 	virtual Problem* copy_and_reset() = 0;
 	virtual Problem* copy_snapshot() = 0;
-	#endif /* MDEBUG */
 
 	virtual void print() = 0;
 };

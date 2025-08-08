@@ -112,7 +112,6 @@ double Obvious::score_result() {
 	return score;
 }
 
-#if defined(MDEBUG) && MDEBUG
 Problem* Obvious::copy_and_reset() {
 	Obvious* new_problem = new Obvious();
 
@@ -141,7 +140,6 @@ Problem* Obvious::copy_snapshot() {
 
 	return new_problem;
 }
-#endif /* MDEBUG */
 
 void Obvious::print() {
 	for (int w_index = 0; w_index < 5; w_index++) {
