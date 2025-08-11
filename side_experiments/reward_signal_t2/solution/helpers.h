@@ -109,5 +109,10 @@ double calc_signal(std::vector<std::vector<double>>& pre_obs_histories,
 				   std::vector<std::vector<double>>& post_obs_histories,
 				   std::vector<Signal*>& potential_signals,
 				   double potential_miss_average_guess);
+double calc_signal(ScopeHistory* signal_needed_from);
+bool check_signal(std::vector<double>& obs,
+				  int& action,
+				  bool& is_next,
+				  SolutionWrapper* wrapper);
 
 #endif /* HELPERS_H */

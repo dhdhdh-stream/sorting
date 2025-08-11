@@ -29,8 +29,6 @@ void SolutionWrapper::experiment_init() {
 		this->node_context.push_back(this->solution->scopes[0]->nodes[0]);
 	} else {
 		while (this->curr_experiment == NULL) {
-			// update_reward_signals(this);
-
 			if (this->curr_explore_tries > MAX_EXPLORE_TRIES) {
 				this->curr_explore_scope = NULL;
 			}
@@ -92,32 +90,38 @@ tuple<bool,bool,int> SolutionWrapper::experiment_step(vector<double> obs) {
 		}
 	} else {
 		while (!is_next) {
-			if (this->node_context.back() == NULL
-					&& this->experiment_context.back() == NULL) {
-				if (this->scope_histories.size() == 1) {
-					is_next = true;
-					is_done = true;
-				} else {
-					if (this->experiment_context[this->experiment_context.size() - 2] != NULL) {
-						AbstractExperiment* experiment = this->experiment_context[this->experiment_context.size() - 2]->experiment;
-						experiment->experiment_exit_step(this);
+			bool is_signal = check_signal(obs,
+										  action,
+										  is_next,
+										  this);
+			if (!is_signal) {
+				if (this->node_context.back() == NULL
+						&& this->experiment_context.back() == NULL) {
+					if (this->scope_histories.size() == 1) {
+						is_next = true;
+						is_done = true;
 					} else {
-						ScopeNode* scope_node = (ScopeNode*)this->node_context[this->node_context.size() - 2];
-						scope_node->experiment_exit_step(this);
+						if (this->experiment_context[this->experiment_context.size() - 2] != NULL) {
+							AbstractExperiment* experiment = this->experiment_context[this->experiment_context.size() - 2]->experiment;
+							experiment->experiment_exit_step(this);
+						} else {
+							ScopeNode* scope_node = (ScopeNode*)this->node_context[this->node_context.size() - 2];
+							scope_node->experiment_exit_step(this);
+						}
 					}
+				} else if (this->experiment_context.back() != NULL) {
+					AbstractExperiment* experiment = this->experiment_context.back()->experiment;
+					experiment->experiment_step(obs,
+												action,
+												is_next,
+												fetch_action,
+												this);
+				} else {
+					this->node_context.back()->experiment_step(obs,
+															   action,
+															   is_next,
+															   this);
 				}
-			} else if (this->experiment_context.back() != NULL) {
-				AbstractExperiment* experiment = this->experiment_context.back()->experiment;
-				experiment->experiment_step(obs,
-											action,
-											is_next,
-											fetch_action,
-											this);
-			} else {
-				this->node_context.back()->experiment_step(obs,
-														   action,
-														   is_next,
-														   this);
 			}
 		}
 	}

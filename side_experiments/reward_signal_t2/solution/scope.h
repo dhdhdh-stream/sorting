@@ -51,6 +51,11 @@ public:
 	Scope();
 	~Scope();
 
+	void signal_step(std::vector<double>& obs,
+					 int& action,
+					 bool& is_next,
+					 SolutionWrapper* wrapper);
+
 	void invalidate_factor(ScopeHistory* scope_history,
 						   int f_index);
 

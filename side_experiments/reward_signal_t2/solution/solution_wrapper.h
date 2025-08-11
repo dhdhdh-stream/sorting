@@ -38,6 +38,9 @@ public:
 	std::vector<AbstractNode*> node_context;
 	std::vector<AbstractExperimentState*> experiment_context;
 
+	int signal_state;
+	int signal_index;
+
 	int num_actions;
 
 	AbstractExperimentOverallHistory* experiment_overall_history;

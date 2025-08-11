@@ -226,8 +226,7 @@ void BranchExperiment::explore_backprop(
 		if (instance_history->signal_needed_from == NULL) {
 			inner_targel_val = target_val;
 		} else {
-			// inner_targel_val = calc_signal(instance_history->signal_scope_node,
-			// 							   instance_history->signal_needed_from);
+			inner_targel_val = calc_signal(instance_history->signal_needed_from);
 		}
 
 		double curr_surprise = inner_targel_val - instance_history->existing_predicted_score;

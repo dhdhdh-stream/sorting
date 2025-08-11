@@ -4,7 +4,9 @@
 
 #include "constants.h"
 #include "network.h"
+#include "scope.h"
 #include "signal.h"
+#include "solution_wrapper.h"
 
 using namespace std;
 
@@ -45,4 +47,57 @@ double calc_signal(vector<vector<double>>& pre_obs_histories,
 	}
 
 	return potential_miss_average_guess;
+}
+
+double calc_signal(ScopeHistory* signal_needed_from) {
+	Scope* scope = signal_needed_from->scope;
+	return calc_signal(signal_needed_from->signal_pre_obs,
+					   signal_needed_from->signal_post_obs,
+					   scope->signals,
+					   scope->miss_average_guess);
+}
+
+bool check_signal(vector<double>& obs,
+				  int& action,
+				  bool& is_next,
+				  SolutionWrapper* wrapper) {
+	ScopeHistory* scope_history = wrapper->scope_histories.back();
+	Scope* scope = scope_history->scope;
+
+	if (scope->signals.size() > 0) {
+		/**
+		 * - check pre
+		 */
+		if (scope_history->node_histories.size() == 0) {
+			scope_history->signal_pre_obs.push_back(obs);
+
+			if (scope_history->signal_pre_obs.size() <= scope->signal_pre_actions.size()) {
+				action = scope->signal_pre_actions[scope_history->signal_pre_obs.size()-1];
+				is_next = true;
+
+				wrapper->num_actions++;
+
+				return true;
+			}
+		}
+
+		/**
+		 * - check post
+		 */
+		if (wrapper->node_context.back() == NULL
+				&& wrapper->experiment_context.back() == NULL) {
+			scope_history->signal_post_obs.push_back(obs);
+
+			if (scope_history->signal_post_obs.size() <= scope->signal_post_actions.size()) {
+				action = scope->signal_post_actions[scope_history->signal_post_obs.size()-1];
+				is_next = true;
+
+				wrapper->num_actions++;
+
+				return true;
+			}
+		}
+	}
+
+	return false;
 }
