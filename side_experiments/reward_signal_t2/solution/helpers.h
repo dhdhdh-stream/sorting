@@ -14,6 +14,7 @@ class Problem;
 class Scope;
 class ScopeHistory;
 class ScopeNode;
+class Signal;
 class Solution;
 class SolutionWrapper;
 
@@ -103,5 +104,10 @@ void clean_scope(Scope* scope,
 
 void update_counts(ScopeHistory* scope_history,
 				   int h_index);
+
+double calc_signal(std::vector<std::vector<double>>& pre_obs_histories,
+				   std::vector<std::vector<double>>& post_obs_histories,
+				   std::vector<Signal*>& potential_signals,
+				   double potential_miss_average_guess);
 
 #endif /* HELPERS_H */

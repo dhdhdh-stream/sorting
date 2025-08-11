@@ -1,7 +1,7 @@
 CXX = g++
 CXXFLAGS = -g -std=c++17 -Wall -Werror -MMD \
 		   `pkg-config --cflags eigen3` \
-		   -DMDEBUG=1 \
+		   -DMDEBUG=0 \
 		   -Inn \
 		   -Isolution \
 		   -Iutils \
@@ -15,7 +15,7 @@ HEADERS = ${SOURCES:.cpp=.h}
 OBJECTS = ${HEADERS:.h=.o}
 DEPENDS = ${OBJECTS:.o=.d}
 
-all: main viewer worker simple_init measure combine create_signal
+all: main viewer worker simple_init measure combine create_signal view_signal
 
 main: ${OBJECTS} main.o
 	${CXX} ${CXXFLAGS} ${OBJECTS} main.o -o main ${LIBS}
@@ -38,7 +38,10 @@ combine: ${OBJECTS} combine.o
 create_signal: ${OBJECTS} create_signal.o
 	${CXX} ${CXXFLAGS} ${OBJECTS} create_signal.o -o create_signal ${LIBS}
 
--include ${DEPENDS} main.d viewer.d worker.d simple_init.d measure.d combine.d create_signal.d
+view_signal: ${OBJECTS} view_signal.o
+	${CXX} ${CXXFLAGS} ${OBJECTS} view_signal.o -o view_signal ${LIBS}
+
+-include ${DEPENDS} main.d viewer.d worker.d simple_init.d measure.d combine.d create_signal.d view_signal.d
 
 clean:
 	rm -f ${OBJECTS} ${DEPENDS} \
@@ -48,4 +51,5 @@ clean:
 	simple_init.o simple_init.d simple_init \
 	measure.o measure.d measure \
 	combine.o combine.d combine \
-	create_signal.o create_signal.d create_signal
+	create_signal.o create_signal.d create_signal \
+	view_signal.o view_signal.d view_signal

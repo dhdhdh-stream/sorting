@@ -40,7 +40,7 @@ bool SignalExperiment::split_helper(vector<vector<vector<double>>>& pre_obs_hist
 	}
 	for (int i_index = 0; i_index < (int)post_obs_histories[0].size(); i_index++) {
 		for (int o_index = 0; o_index < (int)post_obs_histories[0][i_index].size(); o_index++) {
-			possible_inputs.push_back({true, {i_index, o_index}});
+			possible_inputs.push_back({false, {i_index, o_index}});
 		}
 	}
 

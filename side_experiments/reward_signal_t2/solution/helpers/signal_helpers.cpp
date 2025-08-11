@@ -1,54 +1,48 @@
-// #include "helpers.h"
+#include "helpers.h"
 
-// #include <iostream>
+#include <iostream>
 
-// #include "factor.h"
-// #include "scope.h"
-// #include "scope_node.h"
+#include "constants.h"
+#include "network.h"
+#include "signal.h"
 
-// using namespace std;
+using namespace std;
 
-// double calc_signal(ScopeNode* signal_scope_node,
-// 				   ScopeHistory* signal_needed_from) {
-// 	Scope* scope = signal_needed_from->scope;
+double calc_signal(vector<vector<double>>& pre_obs_histories,
+				   vector<vector<double>>& post_obs_histories,
+				   vector<Signal*>& potential_signals,
+				   double potential_miss_average_guess) {
+	for (int s_index = 0; s_index < (int)potential_signals.size(); s_index++) {
+		vector<double> input_vals(potential_signals[s_index]->match_input_is_pre.size());
+		for (int i_index = 0; i_index < (int)potential_signals[s_index]->match_input_is_pre.size(); i_index++) {
+			if (potential_signals[s_index]->match_input_is_pre[i_index]) {
+				input_vals[i_index] = pre_obs_histories[
+					potential_signals[s_index]->match_input_indexes[i_index]][potential_signals[s_index]->match_input_obs_indexes[i_index]];
+			} else {
+				input_vals[i_index] = post_obs_histories[
+					potential_signals[s_index]->match_input_indexes[i_index]][potential_signals[s_index]->match_input_obs_indexes[i_index]];
+			}
+		}
+		potential_signals[s_index]->match_network->activate(input_vals);
+		#if defined(MDEBUG) && MDEBUG
+		if (rand()%3 == 0) {
+		#else
+		if (potential_signals[s_index]->match_network->output->acti_vals[0] >= MATCH_WEIGHT) {
+		#endif /* MDEBUG */
+			vector<double> input_vals(potential_signals[s_index]->score_input_is_pre.size());
+			for (int i_index = 0; i_index < (int)potential_signals[s_index]->score_input_is_pre.size(); i_index++) {
+				if (potential_signals[s_index]->score_input_is_pre[i_index]) {
+					input_vals[i_index] = pre_obs_histories[
+						potential_signals[s_index]->score_input_indexes[i_index]][potential_signals[s_index]->score_input_obs_indexes[i_index]];
+				} else {
+					input_vals[i_index] = post_obs_histories[
+						potential_signals[s_index]->score_input_indexes[i_index]][potential_signals[s_index]->score_input_obs_indexes[i_index]];
+				}
+			}
+			potential_signals[s_index]->score_network->activate(input_vals);
+			return potential_signals[s_index]->score_network->output->acti_vals[0];
+		}
+	}
 
-// 	while (signal_needed_from->factor_initialized.size() < scope->factors.size()) {
-// 		signal_needed_from->factor_initialized.push_back(false);
-// 		signal_needed_from->factor_values.push_back(0.0);
-// 	}
-
-// 	for (int s_index = 0; s_index < (int)signal_scope_node->signals.size(); s_index++) {
-// 		int match_factor_index = signal_scope_node->signals[s_index].match_factor_index;
-// 		if (!signal_needed_from->factor_initialized[match_factor_index]) {
-// 			double value = scope->factors[match_factor_index]->back_activate(signal_needed_from);
-// 			signal_needed_from->factor_initialized[match_factor_index] = true;
-// 			signal_needed_from->factor_values[match_factor_index] = value;
-// 		}
-// 		double match_val = signal_needed_from->factor_values[match_factor_index];
-// 		#if defined(MDEBUG) && MDEBUG
-// 		if (match_val > 0.0 || rand()%3 == 0) {
-// 		#else
-// 		if (match_val > 0.0) {
-// 		#endif /* MDEBUG */
-// 			double sum_vals = signal_scope_node->signals[s_index].score_average_val;
-// 			for (int i_index = 0; i_index < (int)signal_scope_node->signals[s_index].score_inputs.size(); i_index++) {
-// 				double val;
-// 				bool is_on;
-// 				fetch_input_helper(signal_needed_from,
-// 								   signal_scope_node->signals[s_index].score_inputs[i_index],
-// 								   0,
-// 								   val,
-// 								   is_on);
-// 				if (is_on) {
-// 					double normalized_val = (val - signal_scope_node->signals[s_index].score_input_averages[i_index])
-// 						/ signal_scope_node->signals[s_index].score_input_standard_deviations[i_index];
-// 					sum_vals += signal_scope_node->signals[s_index].score_weights[i_index] * normalized_val;
-// 				}
-// 			}
-
-// 			return sum_vals;
-// 		}
-// 	}
-
-// 	return signal_scope_node->miss_average_guess;
-// }
+	return potential_miss_average_guess;
+}
