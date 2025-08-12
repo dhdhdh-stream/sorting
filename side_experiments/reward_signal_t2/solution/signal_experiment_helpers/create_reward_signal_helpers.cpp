@@ -22,10 +22,12 @@
 using namespace std;
 
 #if defined(MDEBUG) && MDEBUG
-const int SPLIT_NUM_TRIES = 2;
+const int SPLIT_NUM_TRIES = 3;
 #else
-const int SPLIT_NUM_TRIES = 20;
+const int SPLIT_NUM_TRIES = 30;
 #endif /* MDEBUG */
+
+const double MIN_MATCH_RATIO = 0.02;
 
 double calc_miss_average_guess(vector<vector<vector<double>>>& pre_obs_histories,
 							   vector<vector<vector<double>>>& post_obs_histories,
@@ -71,6 +73,9 @@ double calc_miss_average_guess(vector<vector<vector<double>>>& pre_obs_histories
 }
 
 void SignalExperiment::create_reward_signal_helper(
+		vector<vector<vector<double>>>& positive_pre_obs_histories,
+		vector<vector<vector<double>>>& positive_post_obs_histories,
+		vector<double>& positive_target_val_histories,
 		vector<vector<vector<double>>>& pre_obs_histories,
 		vector<vector<vector<double>>>& post_obs_histories,
 		vector<double>& target_val_histories,
@@ -100,12 +105,15 @@ void SignalExperiment::create_reward_signal_helper(
 	}
 	double curr_misguess_standard_deviation = sqrt(sum_misguess_variance / (double)target_val_histories.size());
 
+	int num_min_match = MIN_MATCH_RATIO * (double)pre_obs_histories.size();
 	for (int t_index = 0; t_index < SPLIT_NUM_TRIES; t_index++) {
 		vector<bool> new_match_input_is_pre;
 		vector<int> new_match_input_indexes;
 		vector<int> new_match_input_obs_indexes;
 		Network* new_match_network = NULL;
-		bool split_is_success = split_helper(pre_obs_histories,
+		bool split_is_success = split_helper(positive_pre_obs_histories,
+											 positive_post_obs_histories,
+											 pre_obs_histories,
 											 post_obs_histories,
 											 new_match_input_is_pre,
 											 new_match_input_indexes,
@@ -113,6 +121,32 @@ void SignalExperiment::create_reward_signal_helper(
 											 new_match_network);
 
 		if (split_is_success) {
+			vector<vector<vector<double>>> positive_match_pre_obs;
+			vector<vector<vector<double>>> positive_match_post_obs;
+			vector<double> positive_match_target_vals;
+			for (int h_index = 0; h_index < (int)positive_pre_obs_histories.size(); h_index++) {
+				vector<double> input_vals(new_match_input_is_pre.size());
+				for (int i_index = 0; i_index < (int)new_match_input_is_pre.size(); i_index++) {
+					if (new_match_input_is_pre[i_index]) {
+						input_vals[i_index] = positive_pre_obs_histories[h_index][
+							new_match_input_indexes[i_index]][new_match_input_obs_indexes[i_index]];
+					} else {
+						input_vals[i_index] = positive_post_obs_histories[h_index][
+							new_match_input_indexes[i_index]][new_match_input_obs_indexes[i_index]];
+					}
+				}
+				new_match_network->activate(input_vals);
+				#if defined(MDEBUG) && MDEBUG
+				if (rand()%3 == 0) {
+				#else
+				if (new_match_network->output->acti_vals[0] > MATCH_WEIGHT) {
+				#endif /* MDEBUG */
+					positive_match_pre_obs.push_back(positive_pre_obs_histories[h_index]);
+					positive_match_post_obs.push_back(positive_post_obs_histories[h_index]);
+					positive_match_target_vals.push_back(positive_target_val_histories[h_index]);
+				}
+			}
+
 			vector<vector<vector<double>>> match_pre_obs;
 			vector<vector<vector<double>>> match_post_obs;
 			vector<double> match_target_vals;
@@ -139,18 +173,22 @@ void SignalExperiment::create_reward_signal_helper(
 				}
 			}
 
-			vector<bool> new_score_input_is_pre;
-			vector<int> new_score_input_indexes;
-			vector<int> new_score_input_obs_indexes;
-			Network* new_score_network = NULL;
-			bool is_success = train_score(match_pre_obs,
-										  match_post_obs,
-										  match_target_vals,
-										  new_score_input_is_pre,
-										  new_score_input_indexes,
-										  new_score_input_obs_indexes,
-										  new_score_network);
-			if (is_success) {
+			if ((int)match_pre_obs.size() >= num_min_match) {
+				vector<bool> new_score_input_is_pre;
+				vector<int> new_score_input_indexes;
+				vector<int> new_score_input_obs_indexes;
+				Network* new_score_network = NULL;
+				train_score(positive_match_pre_obs,
+							positive_match_post_obs,
+							positive_match_target_vals,
+							match_pre_obs,
+							match_post_obs,
+							match_target_vals,
+							new_score_input_is_pre,
+							new_score_input_indexes,
+							new_score_input_obs_indexes,
+							new_score_network);
+
 				Signal* new_signal = new Signal();
 				new_signal->match_input_is_pre = new_match_input_is_pre;
 				new_signal->match_input_indexes = new_match_input_indexes;
@@ -215,10 +253,10 @@ void SignalExperiment::create_reward_signal_helper(
 				} else {
 					delete new_signal;
 				}
-			}
 
-			if (new_score_network != NULL) {
-				delete new_score_network;
+				if (new_score_network != NULL) {
+					delete new_score_network;
+				}
 			}
 		}
 

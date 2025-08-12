@@ -5,7 +5,15 @@
 
 using namespace std;
 
-const int NUM_EXPLORE_ITERS = 4000;
+#if defined(MDEBUG) && MDEBUG
+const int NUM_POSITIVE = 10;
+const int MIN_NUM_EXPLORE = 40;
+const int MAX_NUM_EXPLORE = 80;
+#else
+const int NUM_POSITIVE = 1000;
+const int MIN_NUM_EXPLORE = 4000;
+const int MAX_NUM_EXPLORE = 8000;
+#endif /* MDEBUG */
 
 void SignalExperiment::explore_pre_activate(
 		Problem* problem,
@@ -39,12 +47,24 @@ void SignalExperiment::explore_post_activate(
 void SignalExperiment::explore_backprop(
 		double target_val,
 		SignalExperimentHistory* history) {
-	this->pre_obs_histories.push_back(history->pre_obs);
-	this->post_obs_histories.push_back(history->post_obs);
-	this->target_val_histories.push_back(target_val);
+	if (target_val > this->existing_average_score) {
+		this->positive_pre_obs_histories.push_back(history->pre_obs);
+		this->positive_post_obs_histories.push_back(history->post_obs);
+		this->positive_target_val_histories.push_back(target_val);
+	}
 
-	if (this->pre_obs_histories.size() >= NUM_EXPLORE_ITERS) {
-		create_reward_signal_helper(this->pre_obs_histories,
+	if (this->pre_obs_histories.size() < MAX_NUM_EXPLORE) {
+		this->pre_obs_histories.push_back(history->pre_obs);
+		this->post_obs_histories.push_back(history->post_obs);
+		this->target_val_histories.push_back(target_val);
+	}
+
+	if (this->positive_pre_obs_histories.size() >= NUM_POSITIVE
+			&& this->pre_obs_histories.size() >= MIN_NUM_EXPLORE) {
+		create_reward_signal_helper(this->positive_pre_obs_histories,
+									this->positive_post_obs_histories,
+									this->positive_target_val_histories,
+									this->pre_obs_histories,
 									this->post_obs_histories,
 									this->target_val_histories,
 									this->signals,

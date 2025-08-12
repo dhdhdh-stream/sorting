@@ -26,7 +26,9 @@ const int ITERS_PER_EPOCH = 10000;
 
 const double MAX_AVERAGE_ERROR = 0.1;
 
-bool SignalExperiment::split_helper(vector<vector<vector<double>>>& pre_obs_histories,
+bool SignalExperiment::split_helper(vector<vector<vector<double>>>& positive_pre_obs_histories,
+									vector<vector<vector<double>>>& positive_post_obs_histories,
+									vector<vector<vector<double>>>& pre_obs_histories,
 									vector<vector<vector<double>>>& post_obs_histories,
 									vector<bool>& new_match_input_is_pre,
 									vector<int>& new_match_input_indexes,
@@ -66,30 +68,39 @@ bool SignalExperiment::split_helper(vector<vector<vector<double>>>& pre_obs_hist
 									input_averages,
 									input_standard_deviations);
 
-	int num_seeds = SEED_RATIO * (double)pre_obs_histories.size();
-
-	vector<int> initial_possible_indexes(pre_obs_histories.size());
-	for (int i_index = 0; i_index < (int)pre_obs_histories.size(); i_index++) {
-		initial_possible_indexes[i_index] = i_index;
-	}
+	int num_positive_seeds = SEED_RATIO * (double)positive_pre_obs_histories.size();
 	vector<int> positive_seeds;
-	for (int s_index = 0; s_index < num_seeds; s_index++) {
-		uniform_int_distribution<int> possible_distribution(0, initial_possible_indexes.size()-1);
-		int random_index = possible_distribution(generator);
-		positive_seeds.push_back(initial_possible_indexes[random_index]);
-		initial_possible_indexes.erase(initial_possible_indexes.begin() + random_index);
+	{
+		vector<int> initial_possible_indexes(positive_pre_obs_histories.size());
+		for (int i_index = 0; i_index < (int)positive_pre_obs_histories.size(); i_index++) {
+			initial_possible_indexes[i_index] = i_index;
+		}
+		for (int s_index = 0; s_index < num_positive_seeds; s_index++) {
+			uniform_int_distribution<int> possible_distribution(0, initial_possible_indexes.size()-1);
+			int random_index = possible_distribution(generator);
+			positive_seeds.push_back(initial_possible_indexes[random_index]);
+			initial_possible_indexes.erase(initial_possible_indexes.begin() + random_index);
+		}
 	}
+
+	int num_negative_seeds = SEED_RATIO * (double)pre_obs_histories.size();
 	vector<int> negative_seeds;
-	for (int s_index = 0; s_index < num_seeds; s_index++) {
-		uniform_int_distribution<int> possible_distribution(0, initial_possible_indexes.size()-1);
-		int random_index = possible_distribution(generator);
-		negative_seeds.push_back(initial_possible_indexes[random_index]);
-		initial_possible_indexes.erase(initial_possible_indexes.begin() + random_index);
+	{
+		vector<int> initial_possible_indexes(pre_obs_histories.size());
+		for (int i_index = 0; i_index < (int)pre_obs_histories.size(); i_index++) {
+			initial_possible_indexes[i_index] = i_index;
+		}
+		for (int s_index = 0; s_index < num_negative_seeds; s_index++) {
+			uniform_int_distribution<int> possible_distribution(0, initial_possible_indexes.size()-1);
+			int random_index = possible_distribution(generator);
+			negative_seeds.push_back(initial_possible_indexes[random_index]);
+			initial_possible_indexes.erase(initial_possible_indexes.begin() + random_index);
+		}
 	}
 
 	uniform_int_distribution<int> is_positive_distribution(0, 1);
-	uniform_int_distribution<int> positive_distribution(0, num_seeds-1);
-	uniform_int_distribution<int> negative_distribution(0, num_seeds-1);
+	uniform_int_distribution<int> positive_distribution(0, num_positive_seeds-1);
+	uniform_int_distribution<int> negative_distribution(0, num_negative_seeds-1);
 	int e_index = 0;
 	while (true) {
 		for (int iter_index = 0; iter_index < ITERS_PER_EPOCH; iter_index++) {
@@ -97,21 +108,29 @@ bool SignalExperiment::split_helper(vector<vector<vector<double>>>& pre_obs_hist
 
 			bool is_positive = is_positive_distribution(generator) == 0;
 
-			int h_index;
 			if (is_positive) {
 				int random_index = positive_distribution(generator);
-				h_index = positive_seeds[random_index];
+				int h_index = positive_seeds[random_index];
+				for (int i_index = 0; i_index < (int)new_match_input_is_pre.size(); i_index++) {
+					if (new_match_input_is_pre[i_index]) {
+						inputs[i_index] = positive_pre_obs_histories[h_index][
+							new_match_input_indexes[i_index]][new_match_input_obs_indexes[i_index]];
+					} else {
+						inputs[i_index] = positive_post_obs_histories[h_index][
+							new_match_input_indexes[i_index]][new_match_input_obs_indexes[i_index]];
+					}
+				}
 			} else {
 				int random_index = negative_distribution(generator);
-				h_index = negative_seeds[random_index];
-			}
-			for (int i_index = 0; i_index < (int)new_match_input_is_pre.size(); i_index++) {
-				if (new_match_input_is_pre[i_index]) {
-					inputs[i_index] = pre_obs_histories[h_index][
-						new_match_input_indexes[i_index]][new_match_input_obs_indexes[i_index]];
-				} else {
-					inputs[i_index] = post_obs_histories[h_index][
-						new_match_input_indexes[i_index]][new_match_input_obs_indexes[i_index]];
+				int h_index = negative_seeds[random_index];
+				for (int i_index = 0; i_index < (int)new_match_input_is_pre.size(); i_index++) {
+					if (new_match_input_is_pre[i_index]) {
+						inputs[i_index] = pre_obs_histories[h_index][
+							new_match_input_indexes[i_index]][new_match_input_obs_indexes[i_index]];
+					} else {
+						inputs[i_index] = post_obs_histories[h_index][
+							new_match_input_indexes[i_index]][new_match_input_obs_indexes[i_index]];
+					}
 				}
 			}
 
@@ -130,6 +149,35 @@ bool SignalExperiment::split_helper(vector<vector<vector<double>>>& pre_obs_hist
 
 			new_match_network->backprop(error);
 		}
+
+		vector<pair<double,int>> positive_acti_vals(positive_pre_obs_histories.size());
+		for (int h_index = 0; h_index < (int)positive_pre_obs_histories.size(); h_index++) {
+			vector<double> inputs(new_match_input_is_pre.size());
+			for (int i_index = 0; i_index < (int)new_match_input_is_pre.size(); i_index++) {
+				if (new_match_input_is_pre[i_index]) {
+					inputs[i_index] = positive_pre_obs_histories[h_index][
+						new_match_input_indexes[i_index]][new_match_input_obs_indexes[i_index]];
+				} else {
+					inputs[i_index] = positive_post_obs_histories[h_index][
+						new_match_input_indexes[i_index]][new_match_input_obs_indexes[i_index]];
+				}
+			}
+
+			new_match_network->activate(inputs);
+
+			positive_acti_vals[h_index] = {new_match_network->output->acti_vals[0], h_index};
+		}
+		sort(positive_acti_vals.begin(), positive_acti_vals.end());
+
+		double sum_positive_errors = 0.0;
+		for (int s_index = 0; s_index < num_positive_seeds; s_index++) {
+			positive_seeds[s_index] = positive_acti_vals[positive_acti_vals.size() - 1 - s_index].second;
+
+			if (positive_acti_vals[positive_acti_vals.size() - 1 - s_index].first < 1.0) {
+				sum_positive_errors += abs(1.0 - positive_acti_vals[positive_acti_vals.size() - 1 - s_index].first);
+			}
+		}
+		double average_positive_error = sum_positive_errors / (double)num_positive_seeds;
 
 		vector<pair<double,int>> acti_vals(pre_obs_histories.size());
 		for (int h_index = 0; h_index < (int)pre_obs_histories.size(); h_index++) {
@@ -150,25 +198,15 @@ bool SignalExperiment::split_helper(vector<vector<vector<double>>>& pre_obs_hist
 		}
 		sort(acti_vals.begin(), acti_vals.end());
 
-		double sum_positive_errors = 0.0;
-		for (int s_index = 0; s_index < num_seeds; s_index++) {
-			positive_seeds[s_index] = acti_vals[acti_vals.size() - 1 - s_index].second;
-
-			if (acti_vals[acti_vals.size() - 1 - s_index].first < 1.0) {
-				sum_positive_errors += abs(1.0 - acti_vals[acti_vals.size() - 1 - s_index].first);
-			}
-		}
-		double average_positive_error = sum_positive_errors / (double)num_seeds;
-
 		double sum_negative_errors = 0.0;
-		for (int s_index = 0; s_index < num_seeds; s_index++) {
+		for (int s_index = 0; s_index < num_negative_seeds; s_index++) {
 			negative_seeds[s_index] = acti_vals[s_index].second;
 
 			if (acti_vals[s_index].first > -1.0) {
 				sum_negative_errors += abs(-1.0 - acti_vals[s_index].first);
 			}
 		}
-		double average_negative_error = sum_negative_errors / (double)num_seeds;
+		double average_negative_error = sum_negative_errors / (double)num_negative_seeds;
 
 		#if defined(MDEBUG) && MDEBUG
 		if ((average_positive_error <= MAX_AVERAGE_ERROR && average_negative_error <= MAX_AVERAGE_ERROR)

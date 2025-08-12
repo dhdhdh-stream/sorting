@@ -20,11 +20,19 @@ public:
 	int state;
 
 	std::vector<double> existing_scores;
+	double existing_average_score;
 
 	std::vector<int> pre_actions;
 	std::vector<int> post_actions;
 
 	std::vector<double> new_scores;
+
+	/**
+	 * - to help specifically recognize positive situations
+	 */
+	std::vector<std::vector<std::vector<double>>> positive_pre_obs_histories;
+	std::vector<std::vector<std::vector<double>>> positive_post_obs_histories;
+	std::vector<double> positive_target_val_histories;
 
 	std::vector<std::vector<std::vector<double>>> pre_obs_histories;
 	std::vector<std::vector<std::vector<double>>> post_obs_histories;
@@ -56,20 +64,28 @@ public:
 	void add(SolutionWrapper* wrapper);
 
 private:
-	bool split_helper(std::vector<std::vector<std::vector<double>>>& pre_obs_histories,
+	bool split_helper(std::vector<std::vector<std::vector<double>>>& positive_pre_obs_histories,
+					  std::vector<std::vector<std::vector<double>>>& positive_post_obs_histories,
+					  std::vector<std::vector<std::vector<double>>>& pre_obs_histories,
 					  std::vector<std::vector<std::vector<double>>>& post_obs_histories,
 					  std::vector<bool>& new_match_input_is_pre,
 					  std::vector<int>& new_match_input_indexes,
 					  std::vector<int>& new_match_input_obs_indexes,
 					  Network*& new_match_network);
-	bool train_score(std::vector<std::vector<std::vector<double>>>& pre_obs_histories,
+	void train_score(std::vector<std::vector<std::vector<double>>>& positive_pre_obs_histories,
+					 std::vector<std::vector<std::vector<double>>>& positive_post_obs_histories,
+					 std::vector<double>& positive_target_val_histories,
+					 std::vector<std::vector<std::vector<double>>>& pre_obs_histories,
 					 std::vector<std::vector<std::vector<double>>>& post_obs_histories,
 					 std::vector<double>& target_val_histories,
 					 std::vector<bool>& new_score_input_is_pre,
 					 std::vector<int>& new_score_input_indexes,
 					 std::vector<int>& new_score_input_obs_indexes,
 					 Network*& new_score_network);
-	void create_reward_signal_helper(std::vector<std::vector<std::vector<double>>>& pre_obs_histories,
+	void create_reward_signal_helper(std::vector<std::vector<std::vector<double>>>& positive_pre_obs_histories,
+									 std::vector<std::vector<std::vector<double>>>& positive_post_obs_histories,
+									 std::vector<double>& positive_target_val_histories,
+									 std::vector<std::vector<std::vector<double>>>& pre_obs_histories,
 									 std::vector<std::vector<std::vector<double>>>& post_obs_histories,
 									 std::vector<double>& target_val_histories,
 									 std::vector<Signal*>& signals,

@@ -38,6 +38,12 @@ void SignalExperiment::backprop(double target_val,
 		this->existing_scores.push_back(target_val);
 
 		if ((int)this->existing_scores.size() >= MEASURE_ITERS) {
+			double sum_vals = 0.0;
+			for (int h_index = 0; h_index < (int)this->existing_scores.size(); h_index++) {
+				sum_vals += this->existing_scores[h_index];
+			}
+			this->existing_average_score = sum_vals / (double)this->existing_scores.size();
+
 			geometric_distribution<int> num_actions_distribution(0.2);
 			uniform_int_distribution<int> action_distribution(0, 2);
 			int num_pre = num_actions_distribution(generator);
