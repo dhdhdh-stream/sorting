@@ -12,6 +12,7 @@ class AbstractExperiment;
 class AbstractNode;
 class AbstractNodeHistory;
 class Factor;
+class SignalExperiment;
 class Solution;
 class SolutionWrapper;
 
@@ -30,9 +31,8 @@ public:
 	 *   - don't have to worry about changes destroying signal
 	 *   - don't have to worry about branching
 	 * 
-	 * - so also don't worry about matching existing
-	 *   - target would probably be 0 at best, and extremely negative at worst
-	 *   - so signal becomes more about preventing damage, and less about innovation anyways(?)
+	 * - simply only worry about signal at end
+	 *   - impact of an explore will be calculated through train_existing step
 	 */
 	std::vector<int> signal_pre_actions;
 	std::vector<int> signal_post_actions;
@@ -40,6 +40,14 @@ public:
 	double miss_average_guess;
 
 	std::vector<Scope*> child_scopes;
+
+	double signal_misguess_average;
+	double signal_misguess_standard_deviation;
+	/**
+	 * - simply save between updates
+	 */
+
+	SignalExperiment* signal_experiment;
 
 	double average_hits_per_run;
 	double average_instances_per_run;

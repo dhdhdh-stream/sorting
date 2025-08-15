@@ -7,8 +7,9 @@
 
 #include "input.h"
 
-class AbstractExperiment;
 class AbstractNode;
+class BranchExperiment;
+class Explore;
 class Network;
 class Problem;
 class Scope;
@@ -18,9 +19,11 @@ class Signal;
 class Solution;
 class SolutionWrapper;
 
+Explore* create_explore(Scope* scope);
+
 void set_explore_scope(SolutionWrapper* wrapper);
 void create_experiment(SolutionWrapper* wrapper,
-					   AbstractExperiment*& curr_experiment);
+					   BranchExperiment*& curr_experiment);
 
 void fetch_input_helper(ScopeHistory* scope_history,
 						Input& input,
@@ -92,6 +95,12 @@ void fetch_histories_helper(ScopeHistory* scope_history,
 							AbstractNode* node_context,
 							bool is_branch,
 							std::vector<ScopeHistory*>& scope_histories,
+							std::vector<double>& target_val_histories);
+bool hit_helper(ScopeHistory* scope_history,
+				Scope* scope_context);
+void fetch_histories_helper(ScopeHistory* scope_history,
+							double target_val,
+							Scope* scope_context,
 							std::vector<double>& target_val_histories);
 
 Scope* create_new_scope(Scope* scope_context);

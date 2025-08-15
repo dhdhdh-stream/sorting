@@ -25,7 +25,6 @@ public:
 	int sum_instances;
 
 	ActionNode();
-	~ActionNode();
 
 	void step(std::vector<double>& obs,
 			  int& action,

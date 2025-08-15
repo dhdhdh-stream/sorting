@@ -6,6 +6,7 @@
 #include "network.h"
 #include "scope.h"
 #include "signal.h"
+#include "signal_experiment.h"
 #include "solution_wrapper.h"
 
 using namespace std;
@@ -64,37 +65,45 @@ bool check_signal(vector<double>& obs,
 	ScopeHistory* scope_history = wrapper->scope_histories.back();
 	Scope* scope = scope_history->scope;
 
-	if (scope->signals.size() > 0) {
-		/**
-		 * - check pre
-		 */
-		if (scope_history->node_histories.size() == 0) {
-			scope_history->signal_pre_obs.push_back(obs);
+	if (scope->signal_experiment != NULL) {
+		return scope->signal_experiment->check_signal(
+			obs,
+			action,
+			is_next,
+			wrapper);
+	} else {
+		if (scope->signals.size() > 0) {
+			/**
+			 * - check pre
+			 */
+			if (scope_history->node_histories.size() == 0) {
+				scope_history->signal_pre_obs.push_back(obs);
 
-			if (scope_history->signal_pre_obs.size() <= scope->signal_pre_actions.size()) {
-				action = scope->signal_pre_actions[scope_history->signal_pre_obs.size()-1];
-				is_next = true;
+				if (scope_history->signal_pre_obs.size() <= scope->signal_pre_actions.size()) {
+					action = scope->signal_pre_actions[scope_history->signal_pre_obs.size()-1];
+					is_next = true;
 
-				wrapper->num_actions++;
+					wrapper->num_actions++;
 
-				return true;
+					return true;
+				}
 			}
-		}
 
-		/**
-		 * - check post
-		 */
-		if (wrapper->node_context.back() == NULL
-				&& wrapper->experiment_context.back() == NULL) {
-			scope_history->signal_post_obs.push_back(obs);
+			/**
+			 * - check post
+			 */
+			if (wrapper->node_context.back() == NULL
+					&& wrapper->experiment_context.back() == NULL) {
+				scope_history->signal_post_obs.push_back(obs);
 
-			if (scope_history->signal_post_obs.size() <= scope->signal_post_actions.size()) {
-				action = scope->signal_post_actions[scope_history->signal_post_obs.size()-1];
-				is_next = true;
+				if (scope_history->signal_post_obs.size() <= scope->signal_post_actions.size()) {
+					action = scope->signal_post_actions[scope_history->signal_post_obs.size()-1];
+					is_next = true;
 
-				wrapper->num_actions++;
+					wrapper->num_actions++;
 
-				return true;
+					return true;
+				}
 			}
 		}
 	}

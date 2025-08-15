@@ -20,18 +20,7 @@ ObsNode::ObsNode() {
 	this->last_updated_run_index = -1;
 }
 
-ObsNode::~ObsNode() {
-	if (this->experiment != NULL) {
-		this->experiment->decrement(this);
-	}
-}
-
 void ObsNode::clean() {
-	if (this->experiment != NULL) {
-		this->experiment->decrement(this);
-		this->experiment = NULL;
-	}
-
 	this->last_updated_run_index = -1;
 	this->sum_hits = 0;
 	this->sum_instances = 0;

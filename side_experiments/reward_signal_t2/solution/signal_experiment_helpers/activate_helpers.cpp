@@ -2,63 +2,60 @@
 
 #include "constants.h"
 #include "globals.h"
+#include "scope.h"
+#include "solution_wrapper.h"
 
 using namespace std;
 
-void SignalExperiment::pre_activate(Problem* problem,
-									SignalExperimentHistory* history) {
-	switch (this->state) {
-	case SIGNAL_EXPERIMENT_STATE_FIND_SAFE:
-		find_safe_pre_activate(problem);
-		break;
-	case SIGNAL_EXPERIMENT_STATE_EXPLORE:
-		explore_pre_activate(problem,
-							 history);
-		break;
-	}
-}
+bool SignalExperiment::check_signal(vector<double>& obs,
+									int& action,
+									bool& is_next,
+									SolutionWrapper* wrapper) {
+	ScopeHistory* scope_history = wrapper->scope_histories.back();
 
-void SignalExperiment::post_activate(Problem* problem,
-									 SignalExperimentHistory* history) {
-	switch (this->state) {
-	case SIGNAL_EXPERIMENT_STATE_FIND_SAFE:
-		find_safe_post_activate(problem);
-		break;
-	case SIGNAL_EXPERIMENT_STATE_EXPLORE:
-		explore_post_activate(problem,
-							  history);
-		break;
+	/**
+	 * - check pre
+	 */
+	if (scope_history->node_histories.size() == 0) {
+		SignalExperimentHistory* history = wrapper->signal_experiment_history;
+
+		history->pre_obs.push_back(obs);
+
+		if (history->pre_obs.size() <= this->pre_actions.size()) {
+			action = this->pre_actions[history->pre_obs.size()-1];
+			is_next = true;
+
+			wrapper->num_actions++;
+
+			return true;
+		}
 	}
+
+	/**
+	 * - check post
+	 */
+	if (wrapper->node_context.back() == NULL
+			&& wrapper->experiment_context.back() == NULL) {
+		SignalExperimentHistory* history = wrapper->signal_experiment_history;
+
+		history->post_obs.push_back(obs);
+
+		if (history->post_obs.size() <= this->post_actions.size()) {
+			action = this->post_actions[history->post_obs.size()-1];
+			is_next = true;
+
+			wrapper->num_actions++;
+
+			return true;
+		}
+	}
+
+	return false;
 }
 
 void SignalExperiment::backprop(double target_val,
 								SignalExperimentHistory* history) {
 	switch (this->state) {
-	case SIGNAL_EXPERIMENT_STATE_MEASURE_EXISTING:
-		this->existing_scores.push_back(target_val);
-
-		if ((int)this->existing_scores.size() >= MEASURE_ITERS) {
-			double sum_vals = 0.0;
-			for (int h_index = 0; h_index < (int)this->existing_scores.size(); h_index++) {
-				sum_vals += this->existing_scores[h_index];
-			}
-			this->existing_average_score = sum_vals / (double)this->existing_scores.size();
-
-			geometric_distribution<int> num_actions_distribution(0.2);
-			uniform_int_distribution<int> action_distribution(0, 2);
-			int num_pre = num_actions_distribution(generator);
-			for (int a_index = 0; a_index < num_pre; a_index++) {
-				this->pre_actions.push_back(action_distribution(generator));
-			}
-			int num_post = 5 + num_actions_distribution(generator);
-			for (int a_index = 0; a_index < num_post; a_index++) {
-				this->post_actions.push_back(action_distribution(generator));
-			}
-
-			this->state = SIGNAL_EXPERIMENT_STATE_FIND_SAFE;
-		}
-
-		break;
 	case SIGNAL_EXPERIMENT_STATE_FIND_SAFE:
 		find_safe_backprop(target_val);
 		break;

@@ -21,8 +21,6 @@ BranchExperiment::BranchExperiment(Scope* scope_context,
 								   AbstractNode* node_context,
 								   bool is_branch,
 								   SolutionWrapper* wrapper) {
-	this->type = EXPERIMENT_TYPE_BRANCH;
-
 	this->scope_context = scope_context;
 	this->node_context = node_context;
 	this->is_branch = is_branch;
@@ -170,10 +168,6 @@ BranchExperiment::~BranchExperiment() {
 		delete this->verify_problems[p_index];
 	}
 	#endif /* MDEBUG */
-}
-
-void BranchExperiment::decrement(AbstractNode* experiment_node) {
-	delete this;
 }
 
 BranchExperimentOverallHistory::BranchExperimentOverallHistory(BranchExperiment* experiment) {

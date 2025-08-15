@@ -269,8 +269,7 @@ void fetch_histories_helper(ScopeHistory* scope_history,
 					double inner_target_val;
 					if (scope->signals.size() > 0) {
 						if (!scope_history->signal_initialized) {
-							// scope_history->signal_val = calc_signal(scope_node,
-							// 										scope_history);
+							scope_history->signal_val = calc_signal(scope_history);
 						}
 						inner_target_val = scope_history->signal_val;
 					} else {
@@ -283,6 +282,86 @@ void fetch_histories_helper(ScopeHistory* scope_history,
 										   node_context,
 										   is_branch,
 										   scope_histories,
+										   target_val_histories);
+				}
+			}
+		}
+	}
+}
+
+bool hit_helper(ScopeHistory* scope_history,
+				Scope* scope_context) {
+	Scope* scope = scope_history->scope;
+
+	if (scope == scope_context) {
+		return true;
+	} else {
+		bool is_child = false;
+		for (int c_index = 0; c_index < (int)scope->child_scopes.size(); c_index++) {
+			if (scope->child_scopes[c_index] == scope_context) {
+				is_child = true;
+				break;
+			}
+		}
+
+		if (!is_child) {
+			return false;
+		} else {
+			for (map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
+					it != scope_history->node_histories.end(); it++) {
+				AbstractNode* node = it->second->node;
+				if (node->type == NODE_TYPE_SCOPE) {
+					ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)it->second;
+					bool inner_result = hit_helper(scope_node_history->scope_history,
+												   scope_context);
+					if (inner_result) {
+						return true;
+					}
+				}
+			}
+
+			return false;
+		}
+	}
+}
+
+void fetch_histories_helper(ScopeHistory* scope_history,
+							double target_val,
+							Scope* scope_context,
+							vector<double>& target_val_histories) {
+	Scope* scope = scope_history->scope;
+
+	if (scope == scope_context) {
+		target_val_histories.push_back(target_val);
+	} else {
+		bool is_child = false;
+		for (int c_index = 0; c_index < (int)scope->child_scopes.size(); c_index++) {
+			if (scope->child_scopes[c_index] == scope_context) {
+				is_child = true;
+				break;
+			}
+		}
+
+		if (is_child) {
+			for (map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
+					it != scope_history->node_histories.end(); it++) {
+				AbstractNode* node = it->second->node;
+				if (node->type == NODE_TYPE_SCOPE) {
+					ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)it->second;
+
+					double inner_target_val;
+					if (scope->signals.size() > 0) {
+						if (!scope_history->signal_initialized) {
+							scope_history->signal_val = calc_signal(scope_history);
+						}
+						inner_target_val = scope_history->signal_val;
+					} else {
+						inner_target_val = target_val;
+					}
+
+					fetch_histories_helper(scope_node_history->scope_history,
+										   inner_target_val,
+										   scope_context,
 										   target_val_histories);
 				}
 			}

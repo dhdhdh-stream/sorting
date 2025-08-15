@@ -18,18 +18,7 @@ ActionNode::ActionNode() {
 	this->last_updated_run_index = -1;
 }
 
-ActionNode::~ActionNode() {
-	if (this->experiment != NULL) {
-		this->experiment->decrement(this);
-	}
-}
-
 void ActionNode::clean() {
-	if (this->experiment != NULL) {
-		this->experiment->decrement(this);
-		this->experiment = NULL;
-	}
-
 	this->last_updated_run_index = -1;
 	this->sum_hits = 0;
 	this->sum_instances = 0;

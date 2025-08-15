@@ -1,31 +1,49 @@
+// - don't worry about signals within
+//   - if explores are big enough, will miss signals no matter what
+//     - which means have to live with imperfect signals no matter what
+
+/**
+ * - for now, only worry about single explore between pre and post
+ * TODO: support multi-experiment
+ */
+
 #ifndef SIGNAL_EXPERIMENT_H
 #define SIGNAL_EXPERIMENT_H
 
 #include <vector>
 
+#include "abstract_experiment.h"
 #include "signal.h"
 
+class Explore;
 class Network;
 class Problem;
+class Scope;
+class ScopeHistory;
 class SolutionWrapper;
 
-const int SIGNAL_EXPERIMENT_STATE_MEASURE_EXISTING = 0;
-const int SIGNAL_EXPERIMENT_STATE_FIND_SAFE = 1;
-const int SIGNAL_EXPERIMENT_STATE_EXPLORE = 2;
-const int SIGNAL_EXPERIMENT_STATE_DONE = 3;
+const int SIGNAL_EXPERIMENT_STATE_FIND_SAFE = 0;
+const int SIGNAL_EXPERIMENT_STATE_EXPLORE = 1;
+const int SIGNAL_EXPERIMENT_STATE_DONE = 2;
 
 class SignalExperimentHistory;
-class SignalExperiment {
+class SignalExperiment : public AbstractExperiment {
 public:
+	Scope* scope_context;
+
 	int state;
 
-	std::vector<double> existing_scores;
-	double existing_average_score;
+	double existing_average;
+	double existing_standard_deviation;
 
 	std::vector<int> pre_actions;
 	std::vector<int> post_actions;
 
 	std::vector<double> new_scores;
+
+	double existing_average_outer_signal;
+
+	Explore* curr_explore;
 
 	/**
 	 * - to help specifically recognize positive situations
@@ -33,6 +51,12 @@ public:
 	std::vector<std::vector<std::vector<double>>> positive_pre_obs_histories;
 	std::vector<std::vector<std::vector<double>>> positive_post_obs_histories;
 	std::vector<double> positive_target_val_histories;
+	std::vector<Explore*> positive_explores;
+	/**
+	 * TODO:
+	 * - re-utilize good explores
+	 *   - though have to solve measure not being accurate due to not accounting for context
+	 */
 
 	std::vector<std::vector<std::vector<double>>> pre_obs_histories;
 	std::vector<std::vector<std::vector<double>>> post_obs_histories;
@@ -41,23 +65,40 @@ public:
 	std::vector<Signal*> signals;
 	double miss_average_guess;
 
-	SignalExperiment();
+	// TODO: save counterexamples from BranchExperiment
+	// - then try to retrain to see if can be incorporated
+	//   - if not, then signal faulty
+	// - perhaps even save across signals
+	// TODO:
+	// - if cannot be incorporated, figure out how to handle
+	//   - i.e., something special about specific action sequences?
+	//     - but perhaps no good way to handle? don't know if something can be figured out, or magical
 
-	void pre_activate(Problem* problem,
-					  SignalExperimentHistory* history);
-	void post_activate(Problem* problem,
-					   SignalExperimentHistory* history);
+	// TODO: set actions/signals at start to extend on previous
+	SignalExperiment(Scope* scope_context,
+					 SolutionWrapper* wrapper);
+	~SignalExperiment();
+
+	bool check_signal(std::vector<double>& obs,
+					  int& action,
+					  bool& is_next,
+					  SolutionWrapper* wrapper);
 	void backprop(double target_val,
 				  SignalExperimentHistory* history);
 
-	void find_safe_pre_activate(Problem* problem);
-	void find_safe_post_activate(Problem* problem);
 	void find_safe_backprop(double target_val);
 
-	void explore_pre_activate(Problem* problem,
-							  SignalExperimentHistory* history);
-	void explore_post_activate(Problem* problem,
-							   SignalExperimentHistory* history);
+	void check_activate(AbstractNode* experiment_node,
+						bool is_branch,
+						SolutionWrapper* wrapper);
+	void experiment_step(std::vector<double>& obs,
+						 int& action,
+						 bool& is_next,
+						 bool& fetch_action,
+						 SolutionWrapper* wrapper);
+	void set_action(int action,
+					SolutionWrapper* wrapper);
+	void experiment_exit_step(SolutionWrapper* wrapper);
 	void explore_backprop(double target_val,
 						  SignalExperimentHistory* history);
 
@@ -96,6 +137,19 @@ class SignalExperimentHistory {
 public:
 	std::vector<std::vector<double>> pre_obs;
 	std::vector<std::vector<double>> post_obs;
+
+	bool is_hit;
+
+	ScopeHistory* signal_needed_from;
+
+	SignalExperimentHistory();
+};
+
+class SignalExperimentState : public AbstractExperimentState {
+public:
+	int step_index;
+
+	SignalExperimentState(SignalExperiment* experiment);
 };
 
 #endif /* SIGNAL_EXPERIMENT_H */

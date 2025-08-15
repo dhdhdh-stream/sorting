@@ -11,6 +11,7 @@ class BranchNode;
 class Network;
 class Problem;
 class Scope;
+class ScopeHistory;
 class ScopeNode;
 class SolutionWrapper;
 
@@ -21,11 +22,22 @@ const int BRANCH_EXPERIMENT_STATE_MEASURE = 2;
 const int BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY = 3;
 #endif /* MDEBUG */
 
+const int EXPERIMENT_RESULT_NA = 0;
+const int EXPERIMENT_RESULT_FAIL = 1;
+const int EXPERIMENT_RESULT_SUCCESS = 2;
+
 class BranchExperimentState;
 class BranchExperiment : public AbstractExperiment {
 public:
+	Scope* scope_context;
+	AbstractNode* node_context;
+	bool is_branch;
+
 	int state;
 	int state_iter;
+
+	int result;
+	double improvement;
 
 	double existing_average_score;
 	std::vector<Input> existing_inputs;
@@ -73,6 +85,9 @@ public:
 
 	std::vector<ScopeHistory*> explore_scope_histories;
 	std::vector<AbstractNode*> explore_node_context;
+
+	std::vector<ScopeHistory*> new_scope_histories;
+	std::vector<double> new_target_val_histories;
 
 	#if defined(MDEBUG) && MDEBUG
 	std::vector<Problem*> verify_problems;
@@ -153,13 +168,19 @@ public:
 	void add(SolutionWrapper* wrapper);
 };
 
-class BranchExperimentOverallHistory : public AbstractExperimentOverallHistory {
+class BranchExperimentOverallHistory {
 public:
+	BranchExperiment* experiment;
+
+	bool is_hit;
+
 	BranchExperimentOverallHistory(BranchExperiment* experiment);
 };
 
-class BranchExperimentInstanceHistory : public AbstractExperimentInstanceHistory {
+class BranchExperimentInstanceHistory {
 public:
+	BranchExperiment* experiment;
+
 	double existing_predicted_score;
 
 	ScopeHistory* signal_needed_from;

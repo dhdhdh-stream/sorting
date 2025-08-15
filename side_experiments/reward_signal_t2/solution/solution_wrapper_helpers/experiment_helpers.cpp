@@ -49,14 +49,8 @@ void SolutionWrapper::experiment_init() {
 		this->curr_run_seed = xorshift(this->starting_run_seed);
 		#endif /* MDEBUG */
 
-		switch (this->curr_experiment->type) {
-		case EXPERIMENT_TYPE_BRANCH:
-			{
-				BranchExperiment* branch_experiment = (BranchExperiment*)this->curr_experiment;
-				this->experiment_overall_history = new BranchExperimentOverallHistory(branch_experiment);
-			}
-			break;
-		}
+		BranchExperiment* branch_experiment = (BranchExperiment*)this->curr_experiment;
+		this->experiment_overall_history = new BranchExperimentOverallHistory(branch_experiment);
 
 		ScopeHistory* scope_history = new ScopeHistory(this->solution->scopes[0]);
 		this->scope_histories.push_back(scope_history);

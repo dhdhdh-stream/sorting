@@ -15,13 +15,13 @@ StartNode::StartNode() {
 
 StartNode::~StartNode() {
 	if (this->experiment != NULL) {
-		this->experiment->decrement(this);
+		delete this->experiment;
 	}
 }
 
 void StartNode::clean() {
 	if (this->experiment != NULL) {
-		this->experiment->decrement(this);
+		delete this->experiment;
 		this->experiment = NULL;
 	}
 }

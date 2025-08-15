@@ -46,7 +46,6 @@ public:
 	int branch_sum_instances;
 
 	BranchNode();
-	~BranchNode();
 
 	void step(std::vector<double>& obs,
 			  int& action,

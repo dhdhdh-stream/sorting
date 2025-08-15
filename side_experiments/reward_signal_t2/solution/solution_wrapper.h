@@ -5,14 +5,16 @@
 #include <tuple>
 #include <vector>
 
-class AbstractExperiment;
-class AbstractExperimentInstanceHistory;
-class AbstractExperimentOverallHistory;
+class BranchExperiment;
+class BranchExperimentInstanceHistory;
+class BranchExperimentOverallHistory;
 class AbstractExperimentState;
 class AbstractNode;
 class Problem;
 class Scope;
 class ScopeHistory;
+class SignalExperiment;
+class SignalExperimentHistory;
 class Solution;
 
 class SolutionWrapper {
@@ -24,12 +26,14 @@ public:
 	/**
 	 * - iter variables
 	 */
-	AbstractExperiment* curr_experiment;
-	AbstractExperiment* best_experiment;
-	int improvement_iter;
-
 	Scope* curr_explore_scope;
 	int curr_explore_tries;
+
+	SignalExperiment* signal_experiment;
+
+	BranchExperiment* curr_experiment;
+	BranchExperiment* best_experiment;
+	int improvement_iter;
 
 	/**
 	 * - run variables
@@ -43,8 +47,10 @@ public:
 
 	int num_actions;
 
-	AbstractExperimentOverallHistory* experiment_overall_history;
-	std::vector<AbstractExperimentInstanceHistory*> experiment_instance_histories;
+	SignalExperimentHistory* signal_experiment_history;
+
+	BranchExperimentOverallHistory* experiment_overall_history;
+	std::vector<BranchExperimentInstanceHistory*> experiment_instance_histories;
 
 	Problem* problem;
 	/**

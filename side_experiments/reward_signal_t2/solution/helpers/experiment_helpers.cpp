@@ -30,7 +30,7 @@ void set_explore_scope(SolutionWrapper* wrapper) {
 }
 
 void create_experiment(SolutionWrapper* wrapper,
-					   AbstractExperiment*& curr_experiment) {
+					   BranchExperiment*& curr_experiment) {
 	vector<pair<AbstractNode*,bool>> possible_explore_nodes;
 	for (map<int, AbstractNode*>::iterator it = wrapper->curr_explore_scope->nodes.begin();
 			it != wrapper->curr_explore_scope->nodes.end(); it++) {

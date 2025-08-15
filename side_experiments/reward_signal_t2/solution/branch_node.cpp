@@ -27,12 +27,6 @@ BranchNode::BranchNode() {
 	this->branch_last_updated_run_index = -1;
 }
 
-BranchNode::~BranchNode() {
-	if (this->experiment != NULL) {
-		this->experiment->decrement(this);
-	}
-}
-
 #if defined(MDEBUG) && MDEBUG
 void BranchNode::clear_verify() {
 	this->verify_key = NULL;
@@ -96,11 +90,6 @@ void BranchNode::replace_obs_node(Scope* scope,
 }
 
 void BranchNode::clean() {
-	if (this->experiment != NULL) {
-		this->experiment->decrement(this);
-		this->experiment = NULL;
-	}
-
 	this->original_last_updated_run_index = -1;
 	this->original_sum_hits = 0;
 	this->original_sum_instances = 0;
