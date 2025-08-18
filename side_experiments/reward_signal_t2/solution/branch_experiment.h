@@ -81,7 +81,9 @@ public:
 	std::vector<double> i_target_val_histories;
 
 	std::vector<double> existing_scores;
+	std::map<Scope*, std::vector<double>> existing_signals;
 	std::vector<double> new_scores;
+	std::map<Scope*, std::vector<double>> new_signals;
 
 	std::vector<ScopeHistory*> explore_scope_histories;
 	std::vector<AbstractNode*> explore_node_context;

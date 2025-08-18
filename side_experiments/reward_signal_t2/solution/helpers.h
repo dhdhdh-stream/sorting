@@ -22,8 +22,7 @@ class SolutionWrapper;
 Explore* create_explore(Scope* scope);
 
 void set_explore_scope(SolutionWrapper* wrapper);
-void create_experiment(SolutionWrapper* wrapper,
-					   BranchExperiment*& curr_experiment);
+void create_experiment(SolutionWrapper* wrapper);
 
 void fetch_input_helper(ScopeHistory* scope_history,
 						Input& input,
@@ -67,6 +66,20 @@ bool is_unique(std::vector<std::vector<double>>& input_vals,
 			   std::vector<double>& potential_input_vals,
 			   double& potential_average,
 			   double& potential_standard_deviation);
+void train_network(std::vector<std::vector<double>>& inputs,
+				   std::vector<std::vector<bool>>& input_is_on,
+				   std::vector<double>& target_vals,
+				   Network* network);
+void measure_network(std::vector<std::vector<double>>& inputs,
+					 std::vector<std::vector<bool>>& input_is_on,
+					 std::vector<double>& target_vals,
+					 Network* network,
+					 double& average_misguess,
+					 double& misguess_standard_deviation);
+void optimize_network(std::vector<std::vector<double>>& inputs,
+					  std::vector<std::vector<bool>>& input_is_on,
+					  std::vector<double>& target_vals,
+					  Network* network);
 bool train_existing(std::vector<ScopeHistory*>& scope_histories,
 					std::vector<double>& target_val_histories,
 					double& average_score,
@@ -96,6 +109,12 @@ void fetch_histories_helper(ScopeHistory* scope_history,
 							bool is_branch,
 							std::vector<ScopeHistory*>& scope_histories,
 							std::vector<double>& target_val_histories);
+void fetch_signals_helper(ScopeHistory* scope_history,
+						  std::vector<ScopeHistory*>& scope_histories,
+						  Scope* scope_context,
+						  AbstractNode* node_context,
+						  bool is_branch,
+						  std::map<Scope*, std::vector<double>>& signals);
 bool hit_helper(ScopeHistory* scope_history,
 				Scope* scope_context);
 void fetch_histories_helper(ScopeHistory* scope_history,

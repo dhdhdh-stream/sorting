@@ -3,10 +3,10 @@
 #include <iostream>
 
 #include "constants.h"
-#include "network.h"
 #include "scope.h"
 #include "signal.h"
 #include "signal_experiment.h"
+#include "signal_network.h"
 #include "solution_wrapper.h"
 
 using namespace std;

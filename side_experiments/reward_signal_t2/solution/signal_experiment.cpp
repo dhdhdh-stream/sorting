@@ -48,16 +48,7 @@ SignalExperiment::SignalExperiment(Scope* scope_context,
 	}
 	this->existing_average_outer_signal = sum_vals / (double)target_val_histories.size();
 
-	geometric_distribution<int> num_actions_distribution(0.2);
-	uniform_int_distribution<int> action_distribution(0, 2);
-	int num_pre = num_actions_distribution(generator);
-	for (int a_index = 0; a_index < num_pre; a_index++) {
-		this->pre_actions.push_back(action_distribution(generator));
-	}
-	int num_post = 5 + num_actions_distribution(generator);
-	for (int a_index = 0; a_index < num_post; a_index++) {
-		this->post_actions.push_back(action_distribution(generator));
-	}
+	set_actions();
 
 	this->state = SIGNAL_EXPERIMENT_STATE_FIND_SAFE;
 }
@@ -70,14 +61,10 @@ SignalExperiment::~SignalExperiment() {
 	for (int e_index = 0; e_index < (int)this->positive_explores.size(); e_index++) {
 		delete this->positive_explores[e_index];
 	}
-}
 
-void SignalExperiment::add(SolutionWrapper* wrapper) {
-	Scope* scope = wrapper->solution->scopes[0];
-	scope->signal_pre_actions = this->pre_actions;
-	scope->signal_post_actions = this->post_actions;
-	scope->signals = this->signals;
-	scope->miss_average_guess = this->miss_average_guess;
+	for (int s_index = 0; s_index < (int)this->signals.size(); s_index++) {
+		delete this->signals[s_index];
+	}
 }
 
 SignalExperimentHistory::SignalExperimentHistory() {

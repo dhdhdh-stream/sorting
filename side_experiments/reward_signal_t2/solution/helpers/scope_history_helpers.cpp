@@ -222,13 +222,26 @@ void fetch_histories_helper(ScopeHistory* scope_history,
 							vector<double>& target_val_histories) {
 	Scope* scope = scope_history->scope;
 
+	/**
+	 * - use inner
+	 */
+	double inner_target_val;
+	if (scope->signals.size() > 0) {
+		if (!scope_history->signal_initialized) {
+			scope_history->signal_val = calc_signal(scope_history);
+		}
+		inner_target_val = scope_history->signal_val;
+	} else {
+		inner_target_val = target_val;
+	}
+
 	if (scope == scope_context) {
 		if (node_context->type == NODE_TYPE_START) {
 			/**
 			 * - if start, then clean_scope_history simply empty
 			 */
 			scope_histories.push_back(new ScopeHistory(scope));
-			target_val_histories.push_back(target_val);
+			target_val_histories.push_back(inner_target_val);
 		} else {
 			bool has_match = false;
 
@@ -247,7 +260,7 @@ void fetch_histories_helper(ScopeHistory* scope_history,
 			if (has_match) {
 				ScopeHistory* cleaned_scope_history = new ScopeHistory(scope_history, match_it->second->index);
 				scope_histories.push_back(cleaned_scope_history);
-				target_val_histories.push_back(target_val);
+				target_val_histories.push_back(inner_target_val);
 			}
 		}
 	} else {
@@ -265,17 +278,6 @@ void fetch_histories_helper(ScopeHistory* scope_history,
 				AbstractNode* node = it->second->node;
 				if (node->type == NODE_TYPE_SCOPE) {
 					ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)it->second;
-
-					double inner_target_val;
-					if (scope->signals.size() > 0) {
-						if (!scope_history->signal_initialized) {
-							scope_history->signal_val = calc_signal(scope_history);
-						}
-						inner_target_val = scope_history->signal_val;
-					} else {
-						inner_target_val = target_val;
-					}
-
 					fetch_histories_helper(scope_node_history->scope_history,
 										   inner_target_val,
 										   scope_context,
@@ -287,6 +289,80 @@ void fetch_histories_helper(ScopeHistory* scope_history,
 			}
 		}
 	}
+}
+
+void fetch_signals_helper(ScopeHistory* scope_history,
+						  vector<ScopeHistory*>& scope_histories,
+						  Scope* scope_context,
+						  AbstractNode* node_context,
+						  bool is_branch,
+						  map<Scope*, vector<double>>& signals) {
+	Scope* scope = scope_history->scope;
+
+	scope_histories.push_back(scope_history);
+
+	if (scope == scope_context) {
+		bool is_hit = false;
+		if (node_context->type == NODE_TYPE_START) {
+			is_hit = true;
+		} else {
+			map<int, AbstractNodeHistory*>::iterator it = scope_history
+				->node_histories.find(node_context->id);
+			if (it != scope_history->node_histories.end()) {
+				if (node_context->type == NODE_TYPE_BRANCH) {
+					BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
+					if (branch_node_history->is_branch == is_branch) {
+						is_hit = true;
+					}
+				} else {
+					is_hit = true;
+				}
+			}
+		}
+
+		if (is_hit) {
+			for (int l_index = 0; l_index < (int)scope_histories.size(); l_index++) {
+				Scope* outer_scope = scope_histories[l_index]->scope;
+				if (outer_scope->signals.size() > 0) {
+					if (!scope_histories[l_index]->signal_initialized) {
+						scope_histories[l_index]->signal_val = calc_signal(scope_histories[l_index]);
+					}
+
+					map<Scope*, vector<double>>::iterator it = signals.find(outer_scope);
+					if (it == signals.end()) {
+						it = signals.insert({outer_scope, vector<double>()}).first;
+					}
+					it->second.push_back(scope_histories[l_index]->signal_val);
+				}
+			}
+		}
+	} else {
+		bool is_child = false;
+		for (int c_index = 0; c_index < (int)scope->child_scopes.size(); c_index++) {
+			if (scope->child_scopes[c_index] == scope_context) {
+				is_child = true;
+				break;
+			}
+		}
+
+		if (is_child) {
+			for (map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
+					it != scope_history->node_histories.end(); it++) {
+				AbstractNode* node = it->second->node;
+				if (node->type == NODE_TYPE_SCOPE) {
+					ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)it->second;
+					fetch_signals_helper(scope_node_history->scope_history,
+										 scope_histories,
+										 scope_context,
+										 node_context,
+										 is_branch,
+										 signals);
+				}
+			}
+		}
+	}
+
+	scope_histories.pop_back();
 }
 
 bool hit_helper(ScopeHistory* scope_history,
@@ -332,6 +408,9 @@ void fetch_histories_helper(ScopeHistory* scope_history,
 	Scope* scope = scope_history->scope;
 
 	if (scope == scope_context) {
+		/**
+		 * - use outer
+		 */
 		target_val_histories.push_back(target_val);
 	} else {
 		bool is_child = false;

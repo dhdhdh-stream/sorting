@@ -11,12 +11,16 @@ SolutionWrapper::SolutionWrapper(int num_obs) {
 	this->solution = new Solution();
 	this->solution->init();
 
+	this->signal_experiment = NULL;
+
 	this->curr_experiment = NULL;
 	this->best_experiment = NULL;
 	this->improvement_iter = 0;
 
 	this->curr_explore_tries = -1;
 	this->curr_explore_scope = NULL;
+
+	this->signal_experiment_history = NULL;
 
 	this->experiment_overall_history = NULL;
 
@@ -33,12 +37,16 @@ SolutionWrapper::SolutionWrapper(int num_obs,
 	this->solution = new Solution();
 	this->solution->load(path, name);
 
+	this->signal_experiment = NULL;
+
 	this->curr_experiment = NULL;
 	this->best_experiment = NULL;
 	this->improvement_iter = 0;
 
 	this->curr_explore_tries = -1;
 	this->curr_explore_scope = NULL;
+
+	this->signal_experiment_history = NULL;
 
 	this->experiment_overall_history = NULL;
 

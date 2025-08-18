@@ -6,7 +6,7 @@
 #include "constants.h"
 #include "factor.h"
 #include "globals.h"
-#include "network.h"
+#include "signal_network.h"
 
 using namespace std;
 
@@ -26,22 +26,18 @@ const int ITERS_PER_EPOCH = 10000;
 
 const double MAX_AVERAGE_ERROR = 0.1;
 
-bool SignalExperiment::split_helper(vector<vector<vector<double>>>& positive_pre_obs_histories,
-									vector<vector<vector<double>>>& positive_post_obs_histories,
-									vector<vector<vector<double>>>& pre_obs_histories,
-									vector<vector<vector<double>>>& post_obs_histories,
-									vector<bool>& new_match_input_is_pre,
+bool SignalExperiment::split_helper(vector<bool>& new_match_input_is_pre,
 									vector<int>& new_match_input_indexes,
 									vector<int>& new_match_input_obs_indexes,
-									Network*& new_match_network) {
+									SignalNetwork*& new_match_network) {
 	vector<pair<bool,pair<int,int>>> possible_inputs;
-	for (int i_index = 0; i_index < (int)pre_obs_histories[0].size(); i_index++) {
-		for (int o_index = 0; o_index < (int)pre_obs_histories[0][i_index].size(); o_index++) {
+	for (int i_index = 0; i_index < (int)this->pre_obs_histories[0].size(); i_index++) {
+		for (int o_index = 0; o_index < (int)this->pre_obs_histories[0][i_index].size(); o_index++) {
 			possible_inputs.push_back({true, {i_index, o_index}});
 		}
 	}
-	for (int i_index = 0; i_index < (int)post_obs_histories[0].size(); i_index++) {
-		for (int o_index = 0; o_index < (int)post_obs_histories[0][i_index].size(); o_index++) {
+	for (int i_index = 0; i_index < (int)this->post_obs_histories[0].size(); i_index++) {
+		for (int o_index = 0; o_index < (int)this->post_obs_histories[0][i_index].size(); o_index++) {
 			possible_inputs.push_back({false, {i_index, o_index}});
 		}
 	}
@@ -59,20 +55,13 @@ bool SignalExperiment::split_helper(vector<vector<vector<double>>>& positive_pre
 		}
 	}
 
-	vector<double> input_averages(new_match_input_is_pre.size(), 0.0);
-	vector<double> input_standard_deviations(new_match_input_is_pre.size(), 0.0);
-	/**
-	 * -unused
-	 */
-	new_match_network = new Network(new_match_input_is_pre.size(),
-									input_averages,
-									input_standard_deviations);
+	new_match_network = new SignalNetwork(new_match_input_is_pre.size());
 
-	int num_positive_seeds = SEED_RATIO * (double)positive_pre_obs_histories.size();
+	int num_positive_seeds = SEED_RATIO * (double)this->positive_pre_obs_histories.size();
 	vector<int> positive_seeds;
 	{
-		vector<int> initial_possible_indexes(positive_pre_obs_histories.size());
-		for (int i_index = 0; i_index < (int)positive_pre_obs_histories.size(); i_index++) {
+		vector<int> initial_possible_indexes(this->positive_pre_obs_histories.size());
+		for (int i_index = 0; i_index < (int)this->positive_pre_obs_histories.size(); i_index++) {
 			initial_possible_indexes[i_index] = i_index;
 		}
 		for (int s_index = 0; s_index < num_positive_seeds; s_index++) {
@@ -83,11 +72,11 @@ bool SignalExperiment::split_helper(vector<vector<vector<double>>>& positive_pre
 		}
 	}
 
-	int num_negative_seeds = SEED_RATIO * (double)pre_obs_histories.size();
+	int num_negative_seeds = SEED_RATIO * (double)this->pre_obs_histories.size();
 	vector<int> negative_seeds;
 	{
-		vector<int> initial_possible_indexes(pre_obs_histories.size());
-		for (int i_index = 0; i_index < (int)pre_obs_histories.size(); i_index++) {
+		vector<int> initial_possible_indexes(this->pre_obs_histories.size());
+		for (int i_index = 0; i_index < (int)this->pre_obs_histories.size(); i_index++) {
 			initial_possible_indexes[i_index] = i_index;
 		}
 		for (int s_index = 0; s_index < num_negative_seeds; s_index++) {
@@ -113,10 +102,10 @@ bool SignalExperiment::split_helper(vector<vector<vector<double>>>& positive_pre
 				int h_index = positive_seeds[random_index];
 				for (int i_index = 0; i_index < (int)new_match_input_is_pre.size(); i_index++) {
 					if (new_match_input_is_pre[i_index]) {
-						inputs[i_index] = positive_pre_obs_histories[h_index][
+						inputs[i_index] = this->positive_pre_obs_histories[h_index][
 							new_match_input_indexes[i_index]][new_match_input_obs_indexes[i_index]];
 					} else {
-						inputs[i_index] = positive_post_obs_histories[h_index][
+						inputs[i_index] = this->positive_post_obs_histories[h_index][
 							new_match_input_indexes[i_index]][new_match_input_obs_indexes[i_index]];
 					}
 				}
@@ -125,10 +114,10 @@ bool SignalExperiment::split_helper(vector<vector<vector<double>>>& positive_pre
 				int h_index = negative_seeds[random_index];
 				for (int i_index = 0; i_index < (int)new_match_input_is_pre.size(); i_index++) {
 					if (new_match_input_is_pre[i_index]) {
-						inputs[i_index] = pre_obs_histories[h_index][
+						inputs[i_index] = this->pre_obs_histories[h_index][
 							new_match_input_indexes[i_index]][new_match_input_obs_indexes[i_index]];
 					} else {
-						inputs[i_index] = post_obs_histories[h_index][
+						inputs[i_index] = this->post_obs_histories[h_index][
 							new_match_input_indexes[i_index]][new_match_input_obs_indexes[i_index]];
 					}
 				}
@@ -150,15 +139,15 @@ bool SignalExperiment::split_helper(vector<vector<vector<double>>>& positive_pre
 			new_match_network->backprop(error);
 		}
 
-		vector<pair<double,int>> positive_acti_vals(positive_pre_obs_histories.size());
-		for (int h_index = 0; h_index < (int)positive_pre_obs_histories.size(); h_index++) {
+		vector<pair<double,int>> positive_acti_vals(this->positive_pre_obs_histories.size());
+		for (int h_index = 0; h_index < (int)this->positive_pre_obs_histories.size(); h_index++) {
 			vector<double> inputs(new_match_input_is_pre.size());
 			for (int i_index = 0; i_index < (int)new_match_input_is_pre.size(); i_index++) {
 				if (new_match_input_is_pre[i_index]) {
-					inputs[i_index] = positive_pre_obs_histories[h_index][
+					inputs[i_index] = this->positive_pre_obs_histories[h_index][
 						new_match_input_indexes[i_index]][new_match_input_obs_indexes[i_index]];
 				} else {
-					inputs[i_index] = positive_post_obs_histories[h_index][
+					inputs[i_index] = this->positive_post_obs_histories[h_index][
 						new_match_input_indexes[i_index]][new_match_input_obs_indexes[i_index]];
 				}
 			}
@@ -179,15 +168,15 @@ bool SignalExperiment::split_helper(vector<vector<vector<double>>>& positive_pre
 		}
 		double average_positive_error = sum_positive_errors / (double)num_positive_seeds;
 
-		vector<pair<double,int>> acti_vals(pre_obs_histories.size());
-		for (int h_index = 0; h_index < (int)pre_obs_histories.size(); h_index++) {
+		vector<pair<double,int>> acti_vals(this->pre_obs_histories.size());
+		for (int h_index = 0; h_index < (int)this->pre_obs_histories.size(); h_index++) {
 			vector<double> inputs(new_match_input_is_pre.size());
 			for (int i_index = 0; i_index < (int)new_match_input_is_pre.size(); i_index++) {
 				if (new_match_input_is_pre[i_index]) {
-					inputs[i_index] = pre_obs_histories[h_index][
+					inputs[i_index] = this->pre_obs_histories[h_index][
 						new_match_input_indexes[i_index]][new_match_input_obs_indexes[i_index]];
 				} else {
-					inputs[i_index] = post_obs_histories[h_index][
+					inputs[i_index] = this->post_obs_histories[h_index][
 						new_match_input_indexes[i_index]][new_match_input_obs_indexes[i_index]];
 				}
 			}

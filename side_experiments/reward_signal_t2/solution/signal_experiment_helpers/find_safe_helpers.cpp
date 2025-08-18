@@ -45,16 +45,12 @@ void SignalExperiment::find_safe_backprop(
 
 		this->new_scores.clear();
 
-		geometric_distribution<int> num_actions_distribution(0.2);
-		uniform_int_distribution<int> action_distribution(0, 2);
-		int num_pre = num_actions_distribution(generator);
-		for (int a_index = 0; a_index < num_pre; a_index++) {
-			this->pre_actions.push_back(action_distribution(generator));
+		for (int s_index = 0; s_index < (int)this->signals.size(); s_index++) {
+			delete this->signals[s_index];
 		}
-		int num_post = 5 + num_actions_distribution(generator);
-		for (int a_index = 0; a_index < num_post; a_index++) {
-			this->post_actions.push_back(action_distribution(generator));
-		}
+		this->signals.clear();
+
+		set_actions();
 	} else if (this->new_scores.size() >= CHECK_4_NUM_ITERS) {
 		this->curr_explore = create_explore(this->scope_context);
 		this->curr_explore->explore_node->experiment = this;

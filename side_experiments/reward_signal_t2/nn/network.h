@@ -31,7 +31,6 @@ public:
 
 	void activate(std::vector<double>& input_vals,
 				  std::vector<bool>& input_is_on);
-	void activate(std::vector<double>& input_vals);
 	void backprop(double error);
 
 	void remove_input(int index);

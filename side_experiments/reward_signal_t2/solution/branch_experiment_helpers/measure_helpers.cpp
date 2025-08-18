@@ -1,7 +1,3 @@
-/**
- * TODO: re-add early success/failure
- */
-
 #include "branch_experiment.h"
 
 #include <cmath>
@@ -21,6 +17,16 @@
 #include "utilities.h"
 
 using namespace std;
+
+#if defined(MDEBUG) && MDEBUG
+const int EARLY_FAIL_1_NUM_ITERS = 2;
+const int EARLY_FAIL_2_NUM_ITERS = 2;
+const int EARLY_FAIL_3_NUM_ITERS = 2;
+#else
+const int EARLY_FAIL_1_NUM_ITERS = 20;
+const int EARLY_FAIL_2_NUM_ITERS = 60;
+const int EARLY_FAIL_3_NUM_ITERS = 200;
+#endif /* MDEBUG */
 
 void BranchExperiment::measure_check_activate(SolutionWrapper* wrapper) {
 	ScopeHistory* scope_history = wrapper->scope_histories.back();
@@ -93,6 +99,53 @@ void BranchExperiment::measure_check_activate(SolutionWrapper* wrapper) {
 			wrapper->experiment_context.back() = new_experiment_state;
 		}
 	}
+}
+
+bool check_early_fail(map<Scope*, vector<double>>& existing_signals,
+					  map<Scope*, vector<double>>& new_signals) {
+	for (map<Scope*, vector<double>>::iterator existing_it = existing_signals.begin();
+			existing_it != existing_signals.end(); existing_it++) {
+		map<Scope*, vector<double>>::iterator new_it = new_signals.find(existing_it->first);
+		if (new_it != new_signals.end()) {
+			double existing_sum_vals = 0.0;
+			for (int h_index = 0; h_index < (int)existing_it->second.size(); h_index++) {
+				existing_sum_vals += existing_it->second[h_index];
+			}
+			double existing_average = existing_sum_vals / (double)existing_it->second.size();
+
+			double existing_sum_variance = 0.0;
+			for (int h_index = 0; h_index < (int)existing_it->second.size(); h_index++) {
+				existing_sum_variance += (existing_it->second[h_index] - existing_average)
+					* (existing_it->second[h_index] - existing_average);
+			}
+			double existing_standard_deviation = sqrt(existing_sum_variance / (double)existing_it->second.size());
+			double existing_denom = existing_standard_deviation / sqrt((double)existing_it->second.size());
+
+			double new_sum_vals = 0.0;
+			for (int h_index = 0; h_index < (int)new_it->second.size(); h_index++) {
+				new_sum_vals += new_it->second[h_index];
+			}
+			double new_average = new_sum_vals / (double)new_it->second.size();
+
+			double new_sum_variance = 0.0;
+			for (int h_index = 0; h_index < (int)new_it->second.size(); h_index++) {
+				new_sum_variance += (new_it->second[h_index] - new_average)
+					* (new_it->second[h_index] - new_average);
+			}
+			double new_standard_deviation = sqrt(new_sum_variance / (double)new_it->second.size());
+			double new_denom = new_standard_deviation / sqrt((double)new_it->second.size());
+
+			double diff = new_average - existing_average;
+			double t_score = diff / sqrt(existing_denom * existing_denom
+				+ new_denom * new_denom);
+
+			if (t_score < -1.282) {
+				return false;
+			}
+		}
+	}
+
+	return true;
 }
 
 void BranchExperiment::measure_step(vector<double>& obs,
@@ -173,7 +226,25 @@ void BranchExperiment::measure_backprop(double target_val,
 	if (overall_history->is_hit) {
 		this->new_scores.push_back(target_val);
 
+		vector<ScopeHistory*> scope_histories;
+		fetch_signals_helper(wrapper->scope_histories[0],
+							 scope_histories,
+							 this->scope_context,
+							 this->node_context,
+							 this->is_branch,
+							 this->new_signals);
+
 		this->state_iter++;
+		if (this->state_iter == EARLY_FAIL_1_NUM_ITERS
+				|| this->state_iter == EARLY_FAIL_2_NUM_ITERS
+				|| this->state_iter == EARLY_FAIL_3_NUM_ITERS) {
+			bool should_continue = check_early_fail(this->existing_signals,
+													this->new_signals);
+			if (!should_continue) {
+				this->result = EXPERIMENT_RESULT_FAIL;
+				return;
+			}
+		}
 		if (this->state_iter >= MEASURE_ITERS) {
 			double existing_sum_score = 0.0;
 			for (int h_index = 0; h_index < (int)this->existing_scores.size(); h_index++) {

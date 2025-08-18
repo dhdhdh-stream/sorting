@@ -8,8 +8,7 @@
 #include "constants.h"
 #include "factor.h"
 #include "globals.h"
-#include "network.h"
-#include "nn_helpers.h"
+#include "signal_network.h"
 
 using namespace std;
 
@@ -32,7 +31,7 @@ void SignalExperiment::train_score(vector<vector<vector<double>>>& positive_pre_
 								   vector<bool>& new_score_input_is_pre,
 								   vector<int>& new_score_input_indexes,
 								   vector<int>& new_score_input_obs_indexes,
-								   Network*& new_score_network) {
+								   SignalNetwork*& new_score_network) {
 	vector<pair<bool,pair<int,int>>> possible_inputs;
 	for (int i_index = 0; i_index < (int)pre_obs_histories[0].size(); i_index++) {
 		for (int o_index = 0; o_index < (int)pre_obs_histories[0][i_index].size(); o_index++) {
@@ -58,14 +57,7 @@ void SignalExperiment::train_score(vector<vector<vector<double>>>& positive_pre_
 		}
 	}
 
-	vector<double> input_averages(new_score_input_is_pre.size(), 0.0);
-	vector<double> input_standard_deviations(new_score_input_is_pre.size(), 0.0);
-	/**
-	 * -unused
-	 */
-	new_score_network = new Network((int)new_score_input_is_pre.size(),
-									input_averages,
-									input_standard_deviations);
+	new_score_network = new SignalNetwork((int)new_score_input_is_pre.size());
 
 	uniform_real_distribution<double> is_positive_distribution(0.0, 1.0);
 	uniform_int_distribution<int> positive_distribution(0, positive_pre_obs_histories.size()-1);

@@ -1,4 +1,4 @@
-#include "network.h"
+#include "signal_network.h"
 
 #include <iostream>
 
@@ -7,17 +7,10 @@
 
 using namespace std;
 
-const double INPUT_CLIP = 10.0;
-
 const double NETWORK_TARGET_MAX_UPDATE = 0.01;
 const int EPOCH_SIZE = 20;
 
-Network::Network(int input_size,
-				 vector<double>& input_averages,
-				 vector<double>& input_standard_deviations) {
-	this->input_averages = input_averages;
-	this->input_standard_deviations = input_standard_deviations;
-
+SignalNetwork::SignalNetwork(int input_size) {
 	this->input = new Layer(LINEAR_LAYER);
 	for (int i_index = 0; i_index < input_size; i_index++) {
 		this->input->acti_vals.push_back(0.0);
@@ -66,9 +59,7 @@ Network::Network(int input_size,
 	this->output_average_max_update = 0.0;
 }
 
-Network::Network(Network* original) {
-	this->input_averages = original->input_averages;
-	this->input_standard_deviations = original->input_standard_deviations;
+SignalNetwork::SignalNetwork(SignalNetwork* original) {
 	this->input = new Layer(LINEAR_LAYER);
 	for (int i_index = 0; i_index < (int)original->input->acti_vals.size(); i_index++) {
 		this->input->acti_vals.push_back(0.0);
@@ -121,22 +112,11 @@ Network::Network(Network* original) {
 	this->output_average_max_update = 0.0;
 }
 
-Network::Network(ifstream& input_file) {
+SignalNetwork::SignalNetwork(ifstream& input_file) {
+	this->input = new Layer(LINEAR_LAYER);
 	string input_size_line;
 	getline(input_file, input_size_line);
 	int input_size = stoi(input_size_line);
-
-	for (int i_index = 0; i_index < input_size; i_index++) {
-		string average_line;
-		getline(input_file, average_line);
-		this->input_averages.push_back(stod(average_line));
-
-		string standard_deviation_line;
-		getline(input_file, standard_deviation_line);
-		this->input_standard_deviations.push_back(stod(standard_deviation_line));
-	}
-
-	this->input = new Layer(LINEAR_LAYER);
 	for (int i_index = 0; i_index < input_size; i_index++) {
 		this->input->acti_vals.push_back(0.0);
 		this->input->errors.push_back(0.0);
@@ -198,7 +178,7 @@ Network::Network(ifstream& input_file) {
 	this->output_average_max_update = 0.0;
 }
 
-Network::~Network() {
+SignalNetwork::~SignalNetwork() {
 	delete this->input;
 	delete this->hidden_1;
 	delete this->hidden_2;
@@ -206,21 +186,9 @@ Network::~Network() {
 	delete this->output;
 }
 
-void Network::activate(vector<double>& input_vals,
-					   vector<bool>& input_is_on) {
+void SignalNetwork::activate(vector<double>& input_vals) {
 	for (int i_index = 0; i_index < (int)input_vals.size(); i_index++) {
-		if (input_is_on[i_index]) {
-			double normalized = (input_vals[i_index] - this->input_averages[i_index])
-				/ this->input_standard_deviations[i_index];
-			if (normalized > INPUT_CLIP) {
-				normalized = INPUT_CLIP;
-			} else if (normalized < -INPUT_CLIP) {
-				normalized = -INPUT_CLIP;
-			}
-			this->input->acti_vals[i_index] = normalized;
-		} else {
-			this->input->acti_vals[i_index] = 0.0;
-		}
+		this->input->acti_vals[i_index] = input_vals[i_index];
 	}
 	this->hidden_1->activate();
 	this->hidden_2->activate();
@@ -228,7 +196,7 @@ void Network::activate(vector<double>& input_vals,
 	this->output->activate();
 }
 
-void Network::backprop(double error) {
+void SignalNetwork::backprop(double error) {
 	this->output->errors[0] = error;
 	this->output->backprop();
 	this->hidden_3->backprop();
@@ -285,9 +253,7 @@ void Network::backprop(double error) {
 	}
 }
 
-void Network::remove_input(int index) {
-	this->input_averages.erase(this->input_averages.begin() + index);
-	this->input_standard_deviations.erase(this->input_standard_deviations.begin() + index);
+void SignalNetwork::remove_input(int index) {
 	this->input->acti_vals.erase(this->input->acti_vals.begin() + index);
 	this->input->errors.erase(this->input->errors.begin() + index);
 
@@ -296,13 +262,8 @@ void Network::remove_input(int index) {
 	this->hidden_3->remove_input(index);
 }
 
-void Network::save(ofstream& output_file) {
+void SignalNetwork::save(ofstream& output_file) {
 	output_file << this->input->acti_vals.size() << endl;
-	for (int i_index = 0; i_index < (int)this->input->acti_vals.size(); i_index++) {
-		output_file << this->input_averages[i_index] << endl;
-		output_file << this->input_standard_deviations[i_index] << endl;
-	}
-
 	output_file << this->hidden_1->acti_vals.size() << endl;
 	output_file << this->hidden_2->acti_vals.size() << endl;
 	output_file << this->hidden_3->acti_vals.size() << endl;

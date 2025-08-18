@@ -1,7 +1,3 @@
-// - don't worry about signals within
-//   - if explores are big enough, will miss signals no matter what
-//     - which means have to live with imperfect signals no matter what
-
 /**
  * - for now, only worry about single explore between pre and post
  * TODO: support multi-experiment
@@ -16,10 +12,10 @@
 #include "signal.h"
 
 class Explore;
-class Network;
 class Problem;
 class Scope;
 class ScopeHistory;
+class SignalNetwork;
 class SolutionWrapper;
 
 const int SIGNAL_EXPERIMENT_STATE_FIND_SAFE = 0;
@@ -65,16 +61,6 @@ public:
 	std::vector<Signal*> signals;
 	double miss_average_guess;
 
-	// TODO: save counterexamples from BranchExperiment
-	// - then try to retrain to see if can be incorporated
-	//   - if not, then signal faulty
-	// - perhaps even save across signals
-	// TODO:
-	// - if cannot be incorporated, figure out how to handle
-	//   - i.e., something special about specific action sequences?
-	//     - but perhaps no good way to handle? don't know if something can be figured out, or magical
-
-	// TODO: set actions/signals at start to extend on previous
 	SignalExperiment(Scope* scope_context,
 					 SolutionWrapper* wrapper);
 	~SignalExperiment();
@@ -102,17 +88,12 @@ public:
 	void explore_backprop(double target_val,
 						  SignalExperimentHistory* history);
 
-	void add(SolutionWrapper* wrapper);
-
 private:
-	bool split_helper(std::vector<std::vector<std::vector<double>>>& positive_pre_obs_histories,
-					  std::vector<std::vector<std::vector<double>>>& positive_post_obs_histories,
-					  std::vector<std::vector<std::vector<double>>>& pre_obs_histories,
-					  std::vector<std::vector<std::vector<double>>>& post_obs_histories,
-					  std::vector<bool>& new_match_input_is_pre,
+	void set_actions();
+	bool split_helper(std::vector<bool>& new_match_input_is_pre,
 					  std::vector<int>& new_match_input_indexes,
 					  std::vector<int>& new_match_input_obs_indexes,
-					  Network*& new_match_network);
+					  SignalNetwork*& new_match_network);
 	void train_score(std::vector<std::vector<std::vector<double>>>& positive_pre_obs_histories,
 					 std::vector<std::vector<std::vector<double>>>& positive_post_obs_histories,
 					 std::vector<double>& positive_target_val_histories,
@@ -122,15 +103,8 @@ private:
 					 std::vector<bool>& new_score_input_is_pre,
 					 std::vector<int>& new_score_input_indexes,
 					 std::vector<int>& new_score_input_obs_indexes,
-					 Network*& new_score_network);
-	void create_reward_signal_helper(std::vector<std::vector<std::vector<double>>>& positive_pre_obs_histories,
-									 std::vector<std::vector<std::vector<double>>>& positive_post_obs_histories,
-									 std::vector<double>& positive_target_val_histories,
-									 std::vector<std::vector<std::vector<double>>>& pre_obs_histories,
-									 std::vector<std::vector<std::vector<double>>>& post_obs_histories,
-									 std::vector<double>& target_val_histories,
-									 std::vector<Signal*>& signals,
-									 double& miss_average_guess);
+					 SignalNetwork*& new_score_network);
+	void create_reward_signal_helper();
 };
 
 class SignalExperimentHistory {

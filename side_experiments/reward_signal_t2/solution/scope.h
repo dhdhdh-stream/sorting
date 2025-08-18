@@ -33,6 +33,16 @@ public:
 	 * 
 	 * - simply only worry about signal at end
 	 *   - impact of an explore will be calculated through train_existing step
+	 * 
+	 * - don't worry about signals within
+	 *   - simply live with imperfect signals
+	 *   - will always be signals missed within explores anyways
+	 *     - and will always be outer conflicts as well
+	 *   - and will always need sequence after explore to be meaningful anyways
+	 * 
+	 * - signals always predict immediate outer layer
+	 *   - instead of true score
+	 *   - to boost signal strength
 	 */
 	std::vector<int> signal_pre_actions;
 	std::vector<int> signal_post_actions;

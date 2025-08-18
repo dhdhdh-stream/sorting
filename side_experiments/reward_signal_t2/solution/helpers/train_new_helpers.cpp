@@ -15,7 +15,6 @@
 #include "factor.h"
 #include "globals.h"
 #include "network.h"
-#include "nn_helpers.h"
 #include "obs_node.h"
 #include "scope.h"
 #include "scope_node.h"
