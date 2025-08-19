@@ -32,6 +32,77 @@ const int SPLIT_NUM_TRIES = 10;
 
 const double MIN_MATCH_RATIO = 0.02;
 
+const double CHECK_MIN_MATCH_RATIO = 0.01;
+
+bool check_signal_still_good(vector<vector<vector<double>>>& pre_obs_histories,
+							 vector<vector<vector<double>>>& post_obs_histories,
+							 vector<double>& target_val_histories,
+							 Signal* signal) {
+	vector<double> match_target_vals;
+	vector<double> match_predicted_vals;
+	for (int h_index = 0; h_index < (int)pre_obs_histories.size(); h_index++) {
+		vector<double> input_vals(signal->match_input_is_pre.size());
+		for (int i_index = 0; i_index < (int)signal->match_input_is_pre.size(); i_index++) {
+			if (signal->match_input_is_pre[i_index]) {
+				input_vals[i_index] = pre_obs_histories[h_index][
+					signal->match_input_indexes[i_index]][signal->match_input_obs_indexes[i_index]];
+			} else {
+				input_vals[i_index] = post_obs_histories[h_index][
+					signal->match_input_indexes[i_index]][signal->match_input_obs_indexes[i_index]];
+			}
+		}
+		signal->match_network->activate(input_vals);
+		#if defined(MDEBUG) && MDEBUG
+		if (rand()%3 == 0) {
+		#else
+		if (signal->match_network->output->acti_vals[0] >= MATCH_WEIGHT) {
+		#endif /* MDEBUG */
+			match_target_vals.push_back(target_val_histories[h_index]);
+
+			vector<double> input_vals(signal->score_input_is_pre.size());
+			for (int i_index = 0; i_index < (int)signal->score_input_is_pre.size(); i_index++) {
+				if (signal->score_input_is_pre[i_index]) {
+					input_vals[i_index] = pre_obs_histories[h_index][
+						signal->score_input_indexes[i_index]][signal->score_input_obs_indexes[i_index]];
+				} else {
+					input_vals[i_index] = post_obs_histories[h_index][
+						signal->score_input_indexes[i_index]][signal->score_input_obs_indexes[i_index]];
+				}
+			}
+			signal->score_network->activate(input_vals);
+			match_predicted_vals.push_back(signal->score_network->output->acti_vals[0]);
+		}
+	}
+
+	if (match_target_vals.size() >= CHECK_MIN_MATCH_RATIO * (double)pre_obs_histories.size()) {
+		double sum_vals = 0.0;
+		for (int m_index = 0; m_index < (int)match_target_vals.size(); m_index++) {
+			sum_vals += match_target_vals[m_index];
+		}
+		double val_average = sum_vals / (double)match_target_vals.size();
+
+		double default_sum_misguess = 0.0;
+		for (int m_index = 0; m_index < (int)match_target_vals.size(); m_index++) {
+			default_sum_misguess += (match_target_vals[m_index] - val_average)
+				* (match_target_vals[m_index] - val_average);
+		}
+
+		double signal_sum_misguess = 0.0;
+		for (int m_index = 0; m_index < (int)match_target_vals.size(); m_index++) {
+			signal_sum_misguess += (match_target_vals[m_index] - match_predicted_vals[m_index])
+				* (match_target_vals[m_index] - match_predicted_vals[m_index]);
+		}
+
+		if (signal_sum_misguess < default_sum_misguess) {
+			return true;
+		} else {
+			return false;
+		}
+	} else {
+		return false;
+	}
+}
+
 double calc_miss_average_guess(vector<vector<vector<double>>>& pre_obs_histories,
 							   vector<vector<vector<double>>>& post_obs_histories,
 							   vector<double>& target_val_histories,
@@ -76,9 +147,50 @@ double calc_miss_average_guess(vector<vector<vector<double>>>& pre_obs_histories
 }
 
 void SignalExperiment::create_reward_signal_helper(SolutionWrapper* wrapper) {
+	for (int s_index = (int)this->signals.size()-1; s_index >= 0; s_index--) {
+		bool still_good = check_signal_still_good(this->pre_obs_histories,
+												  this->post_obs_histories,
+												  this->target_val_histories,
+												  this->signals[s_index]);
+		if (!still_good) {
+			delete this->signals[s_index];
+			this->signals.erase(this->signals.begin() + s_index);
+		}
+	}
+
 	double curr_misguess_average;
 	double curr_misguess_standard_deviation;
-	if (this->scope_context->signals.size() == 0) {
+	if (this->signals.size() > 0) {
+		this->miss_average_guess = calc_miss_average_guess(
+			this->pre_obs_histories,
+			this->post_obs_histories,
+			this->target_val_histories,
+			this->signals);
+
+		vector<double> signal_vals(this->pre_obs_histories.size());
+		for (int h_index = 0; h_index < (int)this->pre_obs_histories.size(); h_index++) {
+			signal_vals[h_index] = calc_signal(this->pre_obs_histories[h_index],
+											   this->post_obs_histories[h_index],
+											   this->signals,
+											   this->miss_average_guess);
+		}
+
+		double sum_misguess = 0.0;
+		for (int h_index = 0; h_index < (int)this->pre_obs_histories.size(); h_index++) {
+			sum_misguess += (this->target_val_histories[h_index] - signal_vals[h_index])
+				* (this->target_val_histories[h_index] - signal_vals[h_index]);
+		}
+		curr_misguess_average = sum_misguess / (double)this->pre_obs_histories.size();
+
+		double sum_misguess_variance = 0.0;
+		for (int h_index = 0; h_index < (int)this->pre_obs_histories.size(); h_index++) {
+			double curr_misguess = (this->target_val_histories[h_index] - signal_vals[h_index])
+				* (this->target_val_histories[h_index] - signal_vals[h_index]);
+			sum_misguess_variance += (curr_misguess - curr_misguess_average)
+				* (curr_misguess - curr_misguess_average);
+		}
+		curr_misguess_standard_deviation = sqrt(sum_misguess_variance / (double)this->pre_obs_histories.size());
+	} else {
 		double sum_vals = 0.0;
 		for (int h_index = 0; h_index < (int)this->target_val_histories.size(); h_index++) {
 			sum_vals += this->target_val_histories[h_index];
@@ -100,12 +212,8 @@ void SignalExperiment::create_reward_signal_helper(SolutionWrapper* wrapper) {
 				* (curr_misguess - curr_misguess_average);
 		}
 		curr_misguess_standard_deviation = sqrt(sum_misguess_variance / (double)this->target_val_histories.size());
-	} else {
-		curr_misguess_average = this->scope_context->signal_misguess_average;
-		curr_misguess_standard_deviation = this->scope_context->signal_misguess_standard_deviation;
 	}
 
-	bool is_success = false;
 	int num_min_match = MIN_MATCH_RATIO * (double)this->pre_obs_histories.size();
 	for (int t_index = 0; t_index < SPLIT_NUM_TRIES; t_index++) {
 		vector<bool> new_match_input_is_pre;
@@ -250,8 +358,6 @@ void SignalExperiment::create_reward_signal_helper(SolutionWrapper* wrapper) {
 
 					curr_misguess_average = potential_misguess_average;
 					curr_misguess_standard_deviation = potential_misguess_standard_deviation;
-
-					is_success = true;
 				} else {
 					delete new_signal;
 				}
@@ -267,7 +373,7 @@ void SignalExperiment::create_reward_signal_helper(SolutionWrapper* wrapper) {
 		}
 	}
 
-	if (is_success) {
+	if (curr_misguess_average < this->scope_context->signal_misguess_average) {
 		cout << "SignalExperiment success" << endl;
 
 		this->scope_context->signal_pre_actions = this->pre_actions;
