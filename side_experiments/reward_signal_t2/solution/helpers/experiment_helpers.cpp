@@ -17,7 +17,13 @@
 
 using namespace std;
 
-void set_explore_scope(SolutionWrapper* wrapper) {
+void create_experiment(SolutionWrapper* wrapper) {
+	if (wrapper->curr_explore_type == EXPLORE_TYPE_SIGNAL
+			&& wrapper->curr_explore_tries >= SIGNAL_EXPERIMENTS_PER_ITER) {
+		wrapper->curr_explore_type = EXPLORE_TYPE_BRANCH;
+		wrapper->curr_explore_tries = 0;
+	}
+
 	vector<Scope*> possible_scopes;
 	for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
 		if (wrapper->solution->scopes[s_index]->average_hits_per_run >= EXPERIMENT_MIN_AVERAGE_HITS_PER_RUN) {
@@ -26,22 +32,21 @@ void set_explore_scope(SolutionWrapper* wrapper) {
 	}
 
 	uniform_int_distribution<int> explore_scope_distribution(0, possible_scopes.size()-1);
-	wrapper->curr_explore_scope = possible_scopes[explore_scope_distribution(generator)];
-	wrapper->curr_explore_tries = 0;
-}
+	Scope* explore_scope = possible_scopes[explore_scope_distribution(generator)];
 
-void create_experiment(SolutionWrapper* wrapper) {
-	uniform_int_distribution<int> signal_distribution(0, 1);
-	if (signal_distribution(generator) == 0) {
+	if (wrapper->curr_explore_type == EXPLORE_TYPE_SIGNAL) {
 		SignalExperiment* signal_experiment = new SignalExperiment(
-			wrapper->curr_explore_scope,
+			explore_scope,
 			wrapper);
-		wrapper->curr_explore_scope->signal_experiment = signal_experiment;
+		explore_scope->signal_experiment = signal_experiment;
 		wrapper->signal_experiment = signal_experiment;
+
+		// temp
+		cout << "SignalExperiment" << endl;
 	} else {
 		vector<pair<AbstractNode*,bool>> possible_explore_nodes;
-		for (map<int, AbstractNode*>::iterator it = wrapper->curr_explore_scope->nodes.begin();
-				it != wrapper->curr_explore_scope->nodes.end(); it++) {
+		for (map<int, AbstractNode*>::iterator it = explore_scope->nodes.begin();
+				it != explore_scope->nodes.end(); it++) {
 			switch (it->second->type) {
 			case NODE_TYPE_START:
 				possible_explore_nodes.push_back({it->second, false});
@@ -99,6 +104,9 @@ void create_experiment(SolutionWrapper* wrapper) {
 			delete new_experiment;
 		} else {
 			wrapper->curr_experiment = new_experiment;
+
+			// temp
+			cout << "BranchExperiment" << endl;
 		}
 	}
 }

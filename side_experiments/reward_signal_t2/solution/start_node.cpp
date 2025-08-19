@@ -53,3 +53,7 @@ void StartNode::link(Solution* parent_solution) {
 void StartNode::save_for_display(ofstream& output_file) {
 	output_file << this->next_node_id << endl;
 }
+
+StartNodeHistory::StartNodeHistory(StartNode* node) {
+	this->node = node;
+}

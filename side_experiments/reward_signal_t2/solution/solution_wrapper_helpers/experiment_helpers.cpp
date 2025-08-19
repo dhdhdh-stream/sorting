@@ -13,8 +13,6 @@
 
 using namespace std;
 
-const int MAX_EXPLORE_TRIES = 40;
-
 void SolutionWrapper::experiment_init() {
 	if (this->solution->existing_scope_histories.size() < MEASURE_ITERS) {
 		this->num_actions = 1;
@@ -31,14 +29,6 @@ void SolutionWrapper::experiment_init() {
 	} else {
 		while (this->signal_experiment == NULL
 				&& this->curr_experiment == NULL) {
-			if (this->curr_explore_tries > MAX_EXPLORE_TRIES) {
-				this->curr_explore_scope = NULL;
-			}
-
-			if (this->curr_explore_scope == NULL) {
-				set_explore_scope(this);
-			}
-
 			create_experiment(this);
 		}
 
@@ -71,19 +61,25 @@ tuple<bool,bool,int> SolutionWrapper::experiment_step(vector<double> obs) {
 	
 	if (this->solution->existing_scope_histories.size() < MEASURE_ITERS) {
 		while (!is_next) {
-			if (this->node_context.back() == NULL) {
-				if (this->scope_histories.size() == 1) {
-					is_next = true;
-					is_done = true;
+			bool is_signal = check_signal(obs,
+										  action,
+										  is_next,
+										  this);
+			if (!is_signal) {
+				if (this->node_context.back() == NULL) {
+					if (this->scope_histories.size() == 1) {
+						is_next = true;
+						is_done = true;
+					} else {
+						ScopeNode* scope_node = (ScopeNode*)this->node_context[this->node_context.size() - 2];
+						scope_node->exit_step(this);
+					}
 				} else {
-					ScopeNode* scope_node = (ScopeNode*)this->node_context[this->node_context.size() - 2];
-					scope_node->exit_step(this);
+					this->node_context.back()->step(obs,
+													action,
+													is_next,
+													this);
 				}
-			} else {
-				this->node_context.back()->step(obs,
-												action,
-												is_next,
-												this);
 			}
 		}
 	} else {
@@ -182,14 +178,22 @@ void SolutionWrapper::experiment_end(double result) {
 
 		if (this->signal_experiment != NULL) {
 			this->signal_experiment->backprop(result,
-											  this->signal_experiment_history);
+											  this);
 
 			delete this->signal_experiment_history;
 			this->signal_experiment_history = NULL;
 
+			this->scope_histories.clear();
+			this->node_context.clear();
+			this->experiment_context.clear();
+
 			if (this->signal_experiment->state == SIGNAL_EXPERIMENT_STATE_DONE) {
+				this->signal_experiment->scope_context->signal_experiment = NULL;
+
 				delete this->signal_experiment;
 				this->signal_experiment = NULL;
+
+				this->curr_explore_tries++;
 			}
 		} else {
 			this->experiment_overall_history->experiment->backprop(
@@ -265,7 +269,8 @@ void SolutionWrapper::experiment_end(double result) {
 
 						this->improvement_iter = 0;
 
-						this->curr_explore_scope = NULL;
+						this->curr_explore_type = EXPLORE_TYPE_SIGNAL;
+						this->curr_explore_tries = 0;
 					}
 				}
 			}

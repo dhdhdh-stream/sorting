@@ -19,6 +19,7 @@ bool SignalExperiment::check_signal(vector<double>& obs,
 	if (scope_history->node_histories.size() == 0) {
 		SignalExperimentHistory* history = wrapper->signal_experiment_history;
 
+		scope_history->signal_pre_obs.push_back(obs);
 		history->pre_obs.push_back(obs);
 
 		if (history->pre_obs.size() <= this->pre_actions.size()) {
@@ -38,6 +39,7 @@ bool SignalExperiment::check_signal(vector<double>& obs,
 			&& wrapper->experiment_context.back() == NULL) {
 		SignalExperimentHistory* history = wrapper->signal_experiment_history;
 
+		scope_history->signal_post_obs.push_back(obs);
 		history->post_obs.push_back(obs);
 
 		if (history->post_obs.size() <= this->post_actions.size()) {
@@ -54,14 +56,29 @@ bool SignalExperiment::check_signal(vector<double>& obs,
 }
 
 void SignalExperiment::backprop(double target_val,
-								SignalExperimentHistory* history) {
+								SolutionWrapper* wrapper) {
 	switch (this->state) {
 	case SIGNAL_EXPERIMENT_STATE_FIND_SAFE:
 		find_safe_backprop(target_val);
+
+		if (this->new_scope_histories.size() < MEASURE_ITERS) {
+			this->new_scope_histories.push_back(wrapper->scope_histories[0]);
+			this->new_target_val_histories.push_back(target_val);
+		} else {
+			uniform_int_distribution<int> distribution(0, this->new_scope_histories.size()-1);
+			int random_index = distribution(generator);
+			delete this->new_scope_histories[random_index];
+			this->new_scope_histories[random_index] = wrapper->scope_histories[0];
+			this->new_target_val_histories[random_index] = target_val;
+		}
+
 		break;
 	case SIGNAL_EXPERIMENT_STATE_EXPLORE:
 		explore_backprop(target_val,
-						 history);
+						 wrapper);
+
+		delete wrapper->scope_histories[0];
+
 		break;
 	}
 }

@@ -1,5 +1,6 @@
 #include "solution_wrapper.h"
 
+#include "constants.h"
 #include "scope.h"
 #include "solution.h"
 
@@ -17,8 +18,8 @@ SolutionWrapper::SolutionWrapper(int num_obs) {
 	this->best_experiment = NULL;
 	this->improvement_iter = 0;
 
-	this->curr_explore_tries = -1;
-	this->curr_explore_scope = NULL;
+	this->curr_explore_type = EXPLORE_TYPE_SIGNAL;
+	this->curr_explore_tries = 0;
 
 	this->signal_experiment_history = NULL;
 
@@ -43,8 +44,8 @@ SolutionWrapper::SolutionWrapper(int num_obs,
 	this->best_experiment = NULL;
 	this->improvement_iter = 0;
 
-	this->curr_explore_tries = -1;
-	this->curr_explore_scope = NULL;
+	this->curr_explore_type = EXPLORE_TYPE_SIGNAL;
+	this->curr_explore_tries = 0;
 
 	this->signal_experiment_history = NULL;
 

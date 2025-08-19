@@ -24,9 +24,14 @@ const int MEASURE_ITERS = 10;
 const int MEASURE_ITERS = 1000;
 #endif /* MDEBUG */
 
+const int EXPLORE_TYPE_SIGNAL = 0;
+const int EXPLORE_TYPE_BRANCH = 1;
+
 #if defined(MDEBUG) && MDEBUG
+const int SIGNAL_EXPERIMENTS_PER_ITER = 2;
 const int IMPROVEMENTS_PER_ITER = 2;
 #else
+const int SIGNAL_EXPERIMENTS_PER_ITER = 10;
 /**
  * - large number to select good paths to prevent noise
  */

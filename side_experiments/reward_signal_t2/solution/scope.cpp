@@ -18,6 +18,12 @@ using namespace std;
 
 Scope::Scope() {
 	this->last_updated_run_index = -1;
+
+	this->miss_average_guess = 0.0;
+	this->signal_misguess_average = 0.0;
+	this->signal_misguess_standard_deviation = 0.0;
+
+	this->signal_experiment = NULL;
 }
 
 Scope::~Scope() {
@@ -234,6 +240,9 @@ void Scope::save(ofstream& output_file) {
 	for (int c_index = 0; c_index < (int)this->child_scopes.size(); c_index++) {
 		output_file << this->child_scopes[c_index]->id << endl;
 	}
+
+	output_file << this->signal_misguess_average << endl;
+	output_file << this->signal_misguess_standard_deviation << endl;
 }
 
 void Scope::load(ifstream& input_file,
@@ -352,6 +361,14 @@ void Scope::load(ifstream& input_file,
 		getline(input_file, scope_id_line);
 		this->child_scopes.push_back(parent_solution->scopes[stoi(scope_id_line)]);
 	}
+
+	string signal_misguess_average_line;
+	getline(input_file, signal_misguess_average_line);
+	this->signal_misguess_average = stod(signal_misguess_average_line);
+
+	string signal_misguess_standard_deviation_line;
+	getline(input_file, signal_misguess_standard_deviation_line);
+	this->signal_misguess_standard_deviation = stod(signal_misguess_standard_deviation_line);
 }
 
 void Scope::link(Solution* parent_solution) {
@@ -380,6 +397,8 @@ ScopeHistory::ScopeHistory(Scope* scope) {
 
 	this->factor_initialized = vector<bool>(scope->factors.size(), false);
 	this->factor_values = vector<double>(scope->factors.size());
+
+	this->signal_initialized = false;
 }
 
 ScopeHistory::ScopeHistory(ScopeHistory* original) {
@@ -417,6 +436,11 @@ ScopeHistory::ScopeHistory(ScopeHistory* original) {
 
 	this->factor_initialized = original->factor_initialized;
 	this->factor_values = original->factor_values;
+
+	this->signal_pre_obs = original->signal_pre_obs;
+	this->signal_post_obs = original->signal_post_obs;
+
+	this->signal_initialized = original->signal_initialized;
 }
 
 ScopeHistory::ScopeHistory(ScopeHistory* original,
@@ -457,6 +481,8 @@ ScopeHistory::ScopeHistory(ScopeHistory* original,
 
 	this->factor_initialized = vector<bool>(scope->factors.size(), false);
 	this->factor_values = vector<double>(scope->factors.size());
+
+	this->signal_initialized = false;
 }
 
 ScopeHistory::~ScopeHistory() {

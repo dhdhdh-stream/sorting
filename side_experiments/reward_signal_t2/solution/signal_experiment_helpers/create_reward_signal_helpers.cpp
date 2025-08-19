@@ -19,13 +19,15 @@
 #include "helpers.h"
 #include "scope.h"
 #include "signal_network.h"
+#include "solution.h"
+#include "solution_wrapper.h"
 
 using namespace std;
 
 #if defined(MDEBUG) && MDEBUG
 const int SPLIT_NUM_TRIES = 3;
 #else
-const int SPLIT_NUM_TRIES = 30;
+const int SPLIT_NUM_TRIES = 10;
 #endif /* MDEBUG */
 
 const double MIN_MATCH_RATIO = 0.02;
@@ -73,7 +75,7 @@ double calc_miss_average_guess(vector<vector<vector<double>>>& pre_obs_histories
 	}
 }
 
-void SignalExperiment::create_reward_signal_helper() {
+void SignalExperiment::create_reward_signal_helper(SolutionWrapper* wrapper) {
 	double curr_misguess_average;
 	double curr_misguess_standard_deviation;
 	if (this->scope_context->signals.size() == 0) {
@@ -94,8 +96,8 @@ void SignalExperiment::create_reward_signal_helper() {
 		for (int h_index = 0; h_index < (int)this->target_val_histories.size(); h_index++) {
 			double curr_misguess = (this->target_val_histories[h_index] - average_val)
 				* (this->target_val_histories[h_index] - average_val);
-			sum_misguess_variance += (curr_misguess - this->scope_context->signal_misguess_average)
-				* (curr_misguess - this->scope_context->signal_misguess_average);
+			sum_misguess_variance += (curr_misguess - curr_misguess_average)
+				* (curr_misguess - curr_misguess_average);
 		}
 		curr_misguess_standard_deviation = sqrt(sum_misguess_variance / (double)this->target_val_histories.size());
 	} else {
@@ -233,6 +235,9 @@ void SignalExperiment::create_reward_signal_helper() {
 				double min_standard_deviation = min(curr_misguess_standard_deviation, potential_misguess_standard_deviation);
 				double t_score = misguess_improvement / (min_standard_deviation / sqrt((double)this->pre_obs_histories.size()));
 
+				// temp
+				cout << "curr_misguess_average: " << curr_misguess_average << endl;
+				cout << "potential_misguess_average: " << potential_misguess_average << endl;
 				cout << "measure t_score: " << t_score << endl;
 
 				#if defined(MDEBUG) && MDEBUG
@@ -263,15 +268,34 @@ void SignalExperiment::create_reward_signal_helper() {
 	}
 
 	if (is_success) {
+		cout << "SignalExperiment success" << endl;
+
 		this->scope_context->signal_pre_actions = this->pre_actions;
 		this->scope_context->signal_post_actions = this->post_actions;
 		for (int s_index = 0; s_index < (int)this->scope_context->signals.size(); s_index++) {
 			delete this->scope_context->signals[s_index];
 		}
 		this->scope_context->signals = this->signals;
+		this->signals.clear();
 		this->scope_context->miss_average_guess = this->miss_average_guess;
 
 		this->scope_context->signal_misguess_average = curr_misguess_average;
 		this->scope_context->signal_misguess_standard_deviation = curr_misguess_standard_deviation;
+
+		for (int h_index = 0; h_index < (int)wrapper->solution->existing_scope_histories.size(); h_index++) {
+			delete wrapper->solution->existing_scope_histories[h_index];
+		}
+		wrapper->solution->existing_scope_histories.clear();
+		wrapper->solution->existing_target_val_histories.clear();
+
+		wrapper->solution->existing_scope_histories = this->new_scope_histories;
+		this->new_scope_histories.clear();
+		wrapper->solution->existing_target_val_histories = this->new_target_val_histories;
+
+		wrapper->solution->clean();
+
+		if (wrapper->solution->existing_scope_histories.size() >= MEASURE_ITERS) {
+			wrapper->solution->measure_update();
+		}
 	}
 }

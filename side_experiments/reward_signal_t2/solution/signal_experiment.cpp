@@ -65,6 +65,10 @@ SignalExperiment::~SignalExperiment() {
 	for (int s_index = 0; s_index < (int)this->signals.size(); s_index++) {
 		delete this->signals[s_index];
 	}
+
+	for (int h_index = 0; h_index < (int)this->new_scope_histories.size(); h_index++) {
+		delete this->new_scope_histories[h_index];
+	}
 }
 
 SignalExperimentHistory::SignalExperimentHistory() {

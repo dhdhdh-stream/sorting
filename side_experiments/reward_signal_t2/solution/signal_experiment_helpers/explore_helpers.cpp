@@ -1,5 +1,7 @@
 #include "signal_experiment.h"
 
+#include <iostream>
+
 #include "abstract_node.h"
 #include "constants.h"
 #include "explore.h"
@@ -25,21 +27,25 @@ void SignalExperiment::check_activate(AbstractNode* experiment_node,
 									  bool is_branch,
 									  SolutionWrapper* wrapper) {
 	if (is_branch == this->curr_explore->explore_is_branch) {
-		wrapper->signal_experiment_history->is_hit = true;
+		this->num_instances_until_target--;
+		if (!wrapper->signal_experiment_history->is_hit
+				&& this->num_instances_until_target == 0) {
+			wrapper->signal_experiment_history->is_hit = true;
 
-		/**
-		 * - start from layer above
-		 */
-		for (int l_index = (int)wrapper->scope_histories.size()-2; l_index >= 0; l_index--) {
-			if (wrapper->scope_histories[l_index]->scope->signals.size() > 0) {
-				wrapper->signal_experiment_history->signal_needed_from = wrapper->scope_histories[l_index];
-				break;
+			/**
+			 * - start from layer above
+			 */
+			for (int l_index = (int)wrapper->scope_histories.size()-2; l_index >= 0; l_index--) {
+				if (wrapper->scope_histories[l_index]->scope->signals.size() > 0) {
+					wrapper->signal_experiment_history->signal_needed_from = wrapper->scope_histories[l_index];
+					break;
+				}
 			}
-		}
 
-		SignalExperimentState* new_experiment_state = new SignalExperimentState(this);
-		new_experiment_state->step_index = 0;
-		wrapper->experiment_context.back() = new_experiment_state;
+			SignalExperimentState* new_experiment_state = new SignalExperimentState(this);
+			new_experiment_state->step_index = 0;
+			wrapper->experiment_context.back() = new_experiment_state;
+		}
 	}
 }
 
@@ -79,20 +85,24 @@ void SignalExperiment::set_action(int action,
 }
 
 void SignalExperiment::experiment_exit_step(SolutionWrapper* wrapper) {
-	SignalExperimentState* experiment_state = (SignalExperimentState*)wrapper->experiment_context.back();
-
 	delete wrapper->scope_histories.back();
 
 	wrapper->scope_histories.pop_back();
 	wrapper->node_context.pop_back();
 	wrapper->experiment_context.pop_back();
 
+	SignalExperimentState* experiment_state = (SignalExperimentState*)wrapper->experiment_context.back();
 	experiment_state->step_index++;
 }
 
 void SignalExperiment::explore_backprop(
 		double target_val,
-		SignalExperimentHistory* history) {
+		SolutionWrapper* wrapper) {
+	SignalExperimentHistory* history = wrapper->signal_experiment_history;
+
+	uniform_int_distribution<int> until_distribution(0, (int)this->scope_context->average_instances_per_run-1);
+	this->num_instances_until_target = 1 + until_distribution(generator);
+
 	if (history->is_hit) {
 		double inner_target_val;
 		if (history->signal_needed_from == NULL) {
@@ -102,7 +112,11 @@ void SignalExperiment::explore_backprop(
 		}
 
 		this->curr_explore->explore_node->experiment = NULL;
+		#if defined(MDEBUG) && MDEBUG
+		if (inner_target_val > this->existing_average_outer_signal || rand()%2 == 0) {
+		#else
 		if (inner_target_val > this->existing_average_outer_signal) {
+		#endif /* MDEBUG */
 			this->positive_pre_obs_histories.push_back(history->pre_obs);
 			this->positive_post_obs_histories.push_back(history->post_obs);
 			this->positive_target_val_histories.push_back(target_val);
@@ -120,7 +134,7 @@ void SignalExperiment::explore_backprop(
 
 		if (this->positive_pre_obs_histories.size() >= NUM_POSITIVE
 				&& this->pre_obs_histories.size() >= MIN_NUM_EXPLORE) {
-			create_reward_signal_helper();
+			create_reward_signal_helper(wrapper);
 
 			this->state = SIGNAL_EXPERIMENT_STATE_DONE;
 		} else {

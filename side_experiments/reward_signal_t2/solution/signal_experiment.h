@@ -39,6 +39,8 @@ public:
 
 	double existing_average_outer_signal;
 
+	int num_instances_until_target;
+
 	Explore* curr_explore;
 
 	/**
@@ -61,6 +63,9 @@ public:
 	std::vector<Signal*> signals;
 	double miss_average_guess;
 
+	std::vector<ScopeHistory*> new_scope_histories;
+	std::vector<double> new_target_val_histories;
+
 	SignalExperiment(Scope* scope_context,
 					 SolutionWrapper* wrapper);
 	~SignalExperiment();
@@ -70,7 +75,7 @@ public:
 					  bool& is_next,
 					  SolutionWrapper* wrapper);
 	void backprop(double target_val,
-				  SignalExperimentHistory* history);
+				  SolutionWrapper* wrapper);
 
 	void find_safe_backprop(double target_val);
 
@@ -86,7 +91,7 @@ public:
 					SolutionWrapper* wrapper);
 	void experiment_exit_step(SolutionWrapper* wrapper);
 	void explore_backprop(double target_val,
-						  SignalExperimentHistory* history);
+						  SolutionWrapper* wrapper);
 
 private:
 	void set_actions();
@@ -104,7 +109,7 @@ private:
 					 std::vector<int>& new_score_input_indexes,
 					 std::vector<int>& new_score_input_obs_indexes,
 					 SignalNetwork*& new_score_network);
-	void create_reward_signal_helper();
+	void create_reward_signal_helper(SolutionWrapper* wrapper);
 };
 
 class SignalExperimentHistory {

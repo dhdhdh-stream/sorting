@@ -93,7 +93,8 @@ bool check_signal(vector<double>& obs,
 			 * - check post
 			 */
 			if (wrapper->node_context.back() == NULL
-					&& wrapper->experiment_context.back() == NULL) {
+					&& (wrapper->experiment_context.size() == 0
+						|| wrapper->experiment_context.back() == NULL)) {
 				scope_history->signal_post_obs.push_back(obs);
 
 				if (scope_history->signal_post_obs.size() <= scope->signal_post_actions.size()) {

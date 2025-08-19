@@ -26,7 +26,7 @@ public:
 	/**
 	 * - iter variables
 	 */
-	Scope* curr_explore_scope;
+	int curr_explore_type;
 	int curr_explore_tries;
 
 	SignalExperiment* signal_experiment;
