@@ -29,9 +29,6 @@ Simpler::Simpler() {
 		this->targets.push_back(target_distribution(generator));
 	}
 	this->curr_target_index = 0;
-	if (this->curr_target_index >= (int)this->targets.size()) {
-		this->world[2] += 1.0;
-	}
 
 	uniform_int_distribution<int> random_factor_distribution(-5, 5);
 	this->random_factor = random_factor_distribution(generator);
@@ -79,9 +76,6 @@ void Simpler::perform_action(int action) {
 					this->world[2] += 1.0;
 
 					this->curr_target_index++;
-					if (this->curr_target_index >= (int)this->targets.size()) {
-						this->world[2] += 1.0;
-					}
 				} else {
 					this->world[2] -= 2.0;
 				}
@@ -91,9 +85,6 @@ void Simpler::perform_action(int action) {
 					this->world[2] += 1.0;
 
 					this->curr_target_index++;
-					if (this->curr_target_index >= (int)this->targets.size()) {
-						this->world[2] += 1.0;
-					}
 				} else {
 					this->world[2] -= 2.0;
 				}
@@ -117,10 +108,6 @@ Problem* Simpler::copy_and_reset() {
 	new_problem->world[2] = 0;
 
 	new_problem->targets = this->targets;
-
-	if (new_problem->curr_target_index >= (int)new_problem->targets.size()) {
-		new_problem->world[2] += 1.0;
-	}
 
 	new_problem->random_factor = this->random_factor;
 

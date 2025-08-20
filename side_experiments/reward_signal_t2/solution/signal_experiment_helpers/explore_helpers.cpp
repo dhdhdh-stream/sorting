@@ -32,6 +32,8 @@ void SignalExperiment::check_activate(AbstractNode* experiment_node,
 				&& this->num_instances_until_target == 0) {
 			wrapper->signal_experiment_history->is_hit = true;
 
+			wrapper->signal_experiment_history->scope_history = wrapper->scope_histories.back();
+
 			/**
 			 * - start from layer above
 			 */
@@ -117,8 +119,8 @@ void SignalExperiment::explore_backprop(
 		#else
 		if (inner_target_val > this->existing_average_outer_signal) {
 		#endif /* MDEBUG */
-			this->positive_pre_obs_histories.push_back(history->pre_obs);
-			this->positive_post_obs_histories.push_back(history->post_obs);
+			this->positive_pre_obs_histories.push_back(history->scope_history->signal_pre_obs);
+			this->positive_post_obs_histories.push_back(history->scope_history->signal_post_obs);
 			this->positive_target_val_histories.push_back(target_val);
 			this->positive_explores.push_back(this->curr_explore);
 		} else {
@@ -127,8 +129,8 @@ void SignalExperiment::explore_backprop(
 		this->curr_explore = NULL;
 
 		if (this->pre_obs_histories.size() < MAX_NUM_EXPLORE) {
-			this->pre_obs_histories.push_back(history->pre_obs);
-			this->post_obs_histories.push_back(history->post_obs);
+			this->pre_obs_histories.push_back(history->scope_history->signal_pre_obs);
+			this->post_obs_histories.push_back(history->scope_history->signal_post_obs);
 			this->target_val_histories.push_back(target_val);
 		}
 

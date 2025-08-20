@@ -93,7 +93,11 @@ bool check_signal_still_good(vector<vector<vector<double>>>& pre_obs_histories,
 				* (match_target_vals[m_index] - match_predicted_vals[m_index]);
 		}
 
+		#if defined(MDEBUG) && MDEBUG
+		if (signal_sum_misguess < default_sum_misguess || rand()%2 == 0) {
+		#else
 		if (signal_sum_misguess < default_sum_misguess) {
+		#endif /* MDEBUG */
 			return true;
 		} else {
 			return false;
@@ -373,7 +377,23 @@ void SignalExperiment::create_reward_signal_helper(SolutionWrapper* wrapper) {
 		}
 	}
 
-	if (curr_misguess_average < this->scope_context->signal_misguess_average) {
+	bool is_success = false;
+	if (this->scope_context->signals.size() == 0) {
+		if (this->signals.size() > 0) {
+			is_success = true;
+		}
+	} else {
+		#if defined(MDEBUG) && MDEBUG
+		if (curr_misguess_average < this->scope_context->signal_misguess_average
+				|| (this->signals.size() > 0 && rand()%2 == 0)) {
+		#else
+		if (curr_misguess_average < this->scope_context->signal_misguess_average) {
+		#endif /* MDEBUG */
+			is_success = true;
+		}
+	}
+
+	if (is_success) {
 		cout << "SignalExperiment success" << endl;
 
 		this->scope_context->signal_pre_actions = this->pre_actions;

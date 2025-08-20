@@ -28,6 +28,7 @@ public:
 	Scope* scope_context;
 
 	int state;
+	int state_iter;
 
 	double existing_average;
 	double existing_standard_deviation;
@@ -114,10 +115,9 @@ private:
 
 class SignalExperimentHistory {
 public:
-	std::vector<std::vector<double>> pre_obs;
-	std::vector<std::vector<double>> post_obs;
-
 	bool is_hit;
+
+	ScopeHistory* scope_history;
 
 	ScopeHistory* signal_needed_from;
 

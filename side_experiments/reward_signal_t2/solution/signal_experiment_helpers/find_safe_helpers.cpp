@@ -18,6 +18,8 @@ const int CHECK_2_NUM_ITERS = 10;
 const int CHECK_3_NUM_ITERS = 100;
 const int CHECK_4_NUM_ITERS = 1000;
 
+const int MAX_FIND_SAFE_ITERS = 200;
+
 void SignalExperiment::find_safe_backprop(
 		double target_val) {
 	this->new_scores.push_back(target_val);
@@ -48,23 +50,28 @@ void SignalExperiment::find_safe_backprop(
 	}
 
 	if (is_fail) {
-		this->pre_actions.clear();
-		this->post_actions.clear();
+		this->state_iter++;
+		if (this->state_iter >= MAX_FIND_SAFE_ITERS) {
+			this->state = SIGNAL_EXPERIMENT_STATE_DONE;
+		} else {
+			this->pre_actions.clear();
+			this->post_actions.clear();
 
-		this->new_scores.clear();
+			this->new_scores.clear();
 
-		for (int s_index = 0; s_index < (int)this->signals.size(); s_index++) {
-			delete this->signals[s_index];
+			for (int s_index = 0; s_index < (int)this->signals.size(); s_index++) {
+				delete this->signals[s_index];
+			}
+			this->signals.clear();
+
+			for (int h_index = 0; h_index < (int)this->new_scope_histories.size(); h_index++) {
+				delete this->new_scope_histories[h_index];
+			}
+			this->new_scope_histories.clear();
+			this->new_target_val_histories.clear();
+
+			set_actions();
 		}
-		this->signals.clear();
-
-		for (int h_index = 0; h_index < (int)this->new_scope_histories.size(); h_index++) {
-			delete this->new_scope_histories[h_index];
-		}
-		this->new_scope_histories.clear();
-		this->new_target_val_histories.clear();
-
-		set_actions();
 	} else if (this->new_scores.size() >= CHECK_4_NUM_ITERS) {
 		this->curr_explore = create_explore(this->scope_context);
 		this->curr_explore->explore_node->experiment = this;

@@ -14,6 +14,7 @@ SignalExperiment::SignalExperiment(Scope* scope_context,
 	this->scope_context = scope_context;
 
 	this->curr_explore = NULL;
+	this->miss_average_guess = 0.0;
 
 	vector<double> existing_scores;
 	vector<double> target_val_histories;
@@ -51,6 +52,7 @@ SignalExperiment::SignalExperiment(Scope* scope_context,
 	set_actions();
 
 	this->state = SIGNAL_EXPERIMENT_STATE_FIND_SAFE;
+	this->state_iter = 0;
 }
 
 SignalExperiment::~SignalExperiment() {
