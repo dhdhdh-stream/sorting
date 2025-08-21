@@ -30,4 +30,10 @@ void eval_signal(std::vector<std::vector<double>>& vals,
 				 double& new_misguess,
 				 double& new_misguess_standard_deviation);
 
+bool alternate_train_helper(std::vector<std::vector<double>>& vals,
+							std::vector<double>& target_vals,
+							std::vector<double>& existing_predicted_vals,
+							Network* match_network,
+							Network* score_network);
+
 #endif /* HELPERS_H */

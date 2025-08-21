@@ -9,7 +9,7 @@
 #include "globals.h"
 #include "helpers.h"
 #include "network.h"
-#include "simpler.h"
+#include "simplest.h"
 
 using namespace std;
 
@@ -33,7 +33,7 @@ int main(int argc, char* argv[]) {
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
 
-	ProblemType* problem_type = new TypeSimpler();
+	ProblemType* problem_type = new TypeSimplest();
 
 	vector<int> start_actions;
 	start_actions.push_back(1);

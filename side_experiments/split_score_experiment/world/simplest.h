@@ -2,36 +2,30 @@
  * target fixed signal fixed target
  */
 
-#ifndef SIMPLER_H
-#define SIMPLER_H
+#ifndef SIMPLEST_H
+#define SIMPLEST_H
 
 #include <vector>
 
 #include "problem.h"
 
-class Simpler : public Problem {
+class Simplest : public Problem {
 public:
 	std::vector<double> world;
 	int curr_index;
 
-	std::vector<int> targets;
-	int curr_target_index;
-
 	double random_factor;
 
-	Simpler();
+	Simplest();
 
 	std::vector<double> get_observations();
 	void perform_action(int action);
 	double score_result();
 
-	Problem* copy_and_reset();
-	Problem* copy_snapshot();
-
 	void print();
 };
 
-class TypeSimpler : public ProblemType {
+class TypeSimplest : public ProblemType {
 public:
 	Problem* get_problem();
 
@@ -39,4 +33,4 @@ public:
 	int num_possible_actions();
 };
 
-#endif /* SIMPLER_H */
+#endif /* SIMPLEST_H */

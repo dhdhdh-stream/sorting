@@ -1,5 +1,3 @@
-// TODO: attach match to ScopeNodes on the outside
-
 #include <algorithm>
 #include <chrono>
 #include <iostream>
