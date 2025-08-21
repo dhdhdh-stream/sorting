@@ -9,7 +9,7 @@
 #include "globals.h"
 #include "helpers.h"
 #include "network.h"
-#include "simpler.h"
+#include "simplest.h"
 
 using namespace std;
 
@@ -23,7 +23,7 @@ const int EXPLORE_NUM_RANDOM = 20;
 
 const double MIN_MATCH_RATIO = 0.1;
 
-const int SPLIT_NUM_TRIES = 40;
+const int SPLIT_NUM_TRIES = 10;
 
 int main(int argc, char* argv[]) {
 	cout << "Starting..." << endl;
@@ -33,15 +33,31 @@ int main(int argc, char* argv[]) {
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
 
-	ProblemType* problem_type = new TypeSimpler();
+	ProblemType* problem_type = new TypeSimplest();
+
+	// vector<int> start_actions;
+	// start_actions.push_back(1);
+	// start_actions.push_back(1);
+	// start_actions.push_back(1);
+	// start_actions.push_back(1);
+
+	// vector<int> end_actions;
+	// end_actions.push_back(0);
+	// end_actions.push_back(0);
+	// end_actions.push_back(0);
+	// end_actions.push_back(0);
 
 	vector<int> start_actions;
-	start_actions.push_back(1);
-	start_actions.push_back(1);
-	start_actions.push_back(1);
-	start_actions.push_back(1);
 
 	vector<int> end_actions;
+	end_actions.push_back(1);
+	end_actions.push_back(1);
+	end_actions.push_back(1);
+	end_actions.push_back(1);
+	end_actions.push_back(1);
+	end_actions.push_back(1);
+	end_actions.push_back(0);
+	end_actions.push_back(0);
 	end_actions.push_back(0);
 	end_actions.push_back(0);
 	end_actions.push_back(0);
@@ -142,7 +158,7 @@ int main(int argc, char* argv[]) {
 
 	int num_min_match = MIN_MATCH_RATIO * (int)explore_vals.size();
 	for (int t_index = 0; t_index < SPLIT_NUM_TRIES; t_index++) {
-		Network* new_match_network = new Network(10);
+		Network* new_match_network = new Network(existing_vals[0].size());
 		bool split_is_success = split_helper(existing_vals,
 											 explore_vals,
 											 new_match_network);
@@ -158,7 +174,7 @@ int main(int argc, char* argv[]) {
 			}
 
 			if ((int)match_vals.size() >= num_min_match) {
-				Network* new_signal_network = new Network(10);
+				Network* new_signal_network = new Network(existing_vals[0].size());
 				bool is_success = train_score(match_vals,
 											  match_target_vals,
 											  new_signal_network);
@@ -216,7 +232,7 @@ int main(int argc, char* argv[]) {
 		}
 	}
 
-	for (int t_index = 0; t_index < 100; t_index++) {
+	for (int t_index = 0; t_index < 10; t_index++) {
 		Problem* problem = problem_type->get_problem();
 
 		vector<double> curr_vals;

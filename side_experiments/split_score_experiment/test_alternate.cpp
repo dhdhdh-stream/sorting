@@ -7,7 +7,7 @@
 
 #include "helpers.h"
 #include "network.h"
-#include "simpler.h"
+#include "simplest.h"
 
 using namespace std;
 
@@ -19,7 +19,7 @@ const int NUM_SAMPLES = 4000;
 
 const int EXPLORE_NUM_RANDOM = 20;
 
-const int NUM_TRIES = 20;
+const int NUM_TRIES = 10;
 
 int main(int argc, char* argv[]) {
 	cout << "Starting..." << endl;
@@ -29,7 +29,7 @@ int main(int argc, char* argv[]) {
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
 
-	ProblemType* problem_type = new TypeSimpler();
+	ProblemType* problem_type = new TypeSimplest();
 
 	vector<int> start_actions;
 	start_actions.push_back(1);
@@ -103,6 +103,8 @@ int main(int argc, char* argv[]) {
 	vector<double> predicted_vals(explore_vals.size(), curr_miss_average_guess);
 
 	for (int t_index = 0; t_index < NUM_TRIES; t_index++) {
+		cout << "t_index: " << t_index << endl;
+
 		Network* new_match_network = new Network(10);
 		Network* new_score_network = new Network(10);
 		bool is_success = alternate_train_helper(explore_vals,
@@ -161,6 +163,41 @@ int main(int argc, char* argv[]) {
 			delete new_match_network;
 			delete new_score_network;
 		}
+	}
+
+	for (int t_index = 0; t_index < 20; t_index++) {
+		Problem* problem = problem_type->get_problem();
+
+		vector<double> curr_vals;
+
+		curr_vals.push_back(problem->get_observations()[0]);
+		for (int a_index = 0; a_index < (int)start_actions.size(); a_index++) {
+			problem->perform_action(start_actions[a_index]);
+
+			curr_vals.push_back(problem->get_observations()[0]);
+		}
+
+		for (int a_index = 0; a_index < EXPLORE_NUM_RANDOM; a_index++) {
+			problem->perform_action(random_action_distribution(generator));
+		}
+
+		curr_vals.push_back(problem->get_observations()[0]);
+		for (int a_index = 0; a_index < (int)end_actions.size(); a_index++) {
+			problem->perform_action(end_actions[a_index]);
+
+			curr_vals.push_back(problem->get_observations()[0]);
+		}
+
+		cout << t_index << endl;
+		double signal = calc_signal(curr_vals,
+									curr_match_networks,
+									curr_signal_networks,
+									curr_miss_average_guess);
+		cout << "signal: " << signal << endl;
+		problem->print();
+		cout << endl;
+
+		delete problem;
 	}
 
 	cout << "Done" << endl;
