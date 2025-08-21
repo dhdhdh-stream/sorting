@@ -152,16 +152,24 @@ double calc_miss_average_guess(vector<vector<vector<double>>>& pre_obs_histories
 
 void SignalExperiment::create_reward_signal_helper(SolutionWrapper* wrapper) {
 	for (int s_index = (int)this->signals.size()-1; s_index >= 0; s_index--) {
-		bool still_good = check_signal_still_good(this->pre_obs_histories,
-												  this->post_obs_histories,
-												  this->target_val_histories,
-												  this->signals[s_index]);
-		if (!still_good) {
+		bool positive_still_good = check_signal_still_good(
+			this->positive_pre_obs_histories,
+			this->positive_post_obs_histories,
+			this->positive_target_val_histories,
+			this->signals[s_index]);
+		bool still_good = check_signal_still_good(
+			this->pre_obs_histories,
+			this->post_obs_histories,
+			this->target_val_histories,
+			this->signals[s_index]);
+		if (!positive_still_good || !still_good) {
 			delete this->signals[s_index];
 			this->signals.erase(this->signals.begin() + s_index);
 		}
 	}
 
+	double curr_positive_misguess_average;
+	double curr_positive_misguess_standard_deviation;
 	double curr_misguess_average;
 	double curr_misguess_standard_deviation;
 	if (this->signals.size() > 0) {
@@ -170,6 +178,30 @@ void SignalExperiment::create_reward_signal_helper(SolutionWrapper* wrapper) {
 			this->post_obs_histories,
 			this->target_val_histories,
 			this->signals);
+
+		vector<double> positive_signal_vals(this->positive_pre_obs_histories.size());
+		for (int h_index = 0; h_index < (int)this->positive_pre_obs_histories.size(); h_index++) {
+			positive_signal_vals[h_index] = calc_signal(this->positive_pre_obs_histories[h_index],
+														this->positive_post_obs_histories[h_index],
+														this->signals,
+														this->miss_average_guess);
+		}
+
+		double positive_sum_misguess = 0.0;
+		for (int h_index = 0; h_index < (int)this->positive_pre_obs_histories.size(); h_index++) {
+			positive_sum_misguess += (this->positive_target_val_histories[h_index] - positive_signal_vals[h_index])
+				* (this->positive_target_val_histories[h_index] - positive_signal_vals[h_index]);
+		}
+		curr_positive_misguess_average = positive_sum_misguess / (double)this->positive_pre_obs_histories.size();
+
+		double positive_sum_misguess_variance = 0.0;
+		for (int h_index = 0; h_index < (int)this->positive_pre_obs_histories.size(); h_index++) {
+			double curr_misguess = (this->positive_target_val_histories[h_index] - positive_signal_vals[h_index])
+				* (this->positive_target_val_histories[h_index] - positive_signal_vals[h_index]);
+			positive_sum_misguess_variance += (curr_misguess - curr_positive_misguess_average)
+				* (curr_misguess - curr_positive_misguess_average);
+		}
+		curr_positive_misguess_standard_deviation = sqrt(positive_sum_misguess_variance / (double)this->positive_pre_obs_histories.size());
 
 		vector<double> signal_vals(this->pre_obs_histories.size());
 		for (int h_index = 0; h_index < (int)this->pre_obs_histories.size(); h_index++) {
@@ -195,6 +227,28 @@ void SignalExperiment::create_reward_signal_helper(SolutionWrapper* wrapper) {
 		}
 		curr_misguess_standard_deviation = sqrt(sum_misguess_variance / (double)this->pre_obs_histories.size());
 	} else {
+		double positive_sum_vals = 0.0;
+		for (int h_index = 0; h_index < (int)this->positive_target_val_histories.size(); h_index++) {
+			positive_sum_vals += this->positive_target_val_histories[h_index];
+		}
+		double positive_average_val = positive_sum_vals / (double)this->positive_target_val_histories.size();
+
+		double positive_sum_misguess = 0.0;
+		for (int h_index = 0; h_index < (int)this->positive_target_val_histories.size(); h_index++) {
+			positive_sum_misguess += (this->positive_target_val_histories[h_index] - positive_average_val)
+				* (this->positive_target_val_histories[h_index] - positive_average_val);
+		}
+		curr_positive_misguess_average = positive_sum_misguess / (double)this->positive_target_val_histories.size();
+
+		double positive_sum_misguess_variance = 0.0;
+		for (int h_index = 0; h_index < (int)this->positive_target_val_histories.size(); h_index++) {
+			double curr_misguess = (this->positive_target_val_histories[h_index] - positive_average_val)
+				* (this->positive_target_val_histories[h_index] - positive_average_val);
+			positive_sum_misguess_variance += (curr_misguess - curr_positive_misguess_average)
+				* (curr_misguess - curr_positive_misguess_average);
+		}
+		curr_positive_misguess_standard_deviation = sqrt(positive_sum_misguess_variance / (double)this->positive_target_val_histories.size());
+
 		double sum_vals = 0.0;
 		for (int h_index = 0; h_index < (int)this->target_val_histories.size(); h_index++) {
 			sum_vals += this->target_val_histories[h_index];
@@ -319,6 +373,35 @@ void SignalExperiment::create_reward_signal_helper(SolutionWrapper* wrapper) {
 					this->target_val_histories,
 					potential_signals);
 
+				vector<double> positive_potential_vals(this->positive_pre_obs_histories.size());
+				for (int h_index = 0; h_index < (int)this->positive_pre_obs_histories.size(); h_index++) {
+					positive_potential_vals[h_index] = calc_signal(
+						this->positive_pre_obs_histories[h_index],
+						this->positive_post_obs_histories[h_index],
+						potential_signals,
+						potential_miss_average_guess);
+				}
+
+				double positive_sum_potential_misguess = 0.0;
+				for (int h_index = 0; h_index < (int)this->positive_pre_obs_histories.size(); h_index++) {
+					positive_sum_potential_misguess += (this->positive_target_val_histories[h_index] - positive_potential_vals[h_index])
+						* (this->positive_target_val_histories[h_index] - positive_potential_vals[h_index]);
+				}
+				double positive_potential_misguess_average = positive_sum_potential_misguess / (double)this->positive_pre_obs_histories.size();
+
+				double positive_sum_potential_misguess_variance = 0.0;
+				for (int h_index = 0; h_index < (int)this->positive_pre_obs_histories.size(); h_index++) {
+					double curr_misguess = (this->positive_target_val_histories[h_index] - positive_potential_vals[h_index])
+						* (this->positive_target_val_histories[h_index] - positive_potential_vals[h_index]);
+					positive_sum_potential_misguess_variance += (curr_misguess - positive_potential_misguess_average)
+						* (curr_misguess - positive_potential_misguess_average);
+				}
+				double positive_potential_misguess_standard_deviation = sqrt(positive_sum_potential_misguess_variance / (double)this->positive_pre_obs_histories.size());
+
+				double positive_misguess_improvement = curr_positive_misguess_average - positive_potential_misguess_average;
+				double positive_min_standard_deviation = min(curr_positive_misguess_standard_deviation, positive_potential_misguess_standard_deviation);
+				double positive_t_score = positive_misguess_improvement / (positive_min_standard_deviation / sqrt((double)this->positive_pre_obs_histories.size()));
+
 				vector<double> potential_vals(this->pre_obs_histories.size());
 				for (int h_index = 0; h_index < (int)this->pre_obs_histories.size(); h_index++) {
 					potential_vals[h_index] = calc_signal(this->pre_obs_histories[h_index],
@@ -348,18 +431,23 @@ void SignalExperiment::create_reward_signal_helper(SolutionWrapper* wrapper) {
 				double t_score = misguess_improvement / (min_standard_deviation / sqrt((double)this->pre_obs_histories.size()));
 
 				// temp
+				cout << "curr_positive_misguess_average: " << curr_positive_misguess_average << endl;
+				cout << "positive_potential_misguess_average: " << positive_potential_misguess_average << endl;
+				cout << "measure positive_t_score: " << positive_t_score << endl;
 				cout << "curr_misguess_average: " << curr_misguess_average << endl;
 				cout << "potential_misguess_average: " << potential_misguess_average << endl;
 				cout << "measure t_score: " << t_score << endl;
 
 				#if defined(MDEBUG) && MDEBUG
-				if (t_score >= 1.282 || rand()%2 == 0) {
+				if ((positive_t_score >= 1.282 && t_score >= -0.674) || rand()%2 == 0) {
 				#else
-				if (t_score >= 1.282) {
+				if (positive_t_score >= 1.282 && t_score >= -0.674) {
 				#endif /* MDEBUG */
 					this->signals = potential_signals;
 					this->miss_average_guess = potential_miss_average_guess;
 
+					curr_positive_misguess_average = positive_potential_misguess_average;
+					curr_positive_misguess_standard_deviation = positive_potential_misguess_standard_deviation;
 					curr_misguess_average = potential_misguess_average;
 					curr_misguess_standard_deviation = potential_misguess_standard_deviation;
 				} else {
@@ -383,11 +471,17 @@ void SignalExperiment::create_reward_signal_helper(SolutionWrapper* wrapper) {
 			is_success = true;
 		}
 	} else {
+		double misguess_improvement = this->scope_context->signal_misguess_average - curr_misguess_average;
+		double min_standard_deviation = min(this->scope_context->signal_misguess_standard_deviation, curr_misguess_standard_deviation);
+		double t_score = misguess_improvement / (min_standard_deviation / sqrt((double)this->pre_obs_histories.size()));
+
 		#if defined(MDEBUG) && MDEBUG
-		if (curr_misguess_average < this->scope_context->signal_misguess_average
+		if ((curr_positive_misguess_average < this->scope_context->signal_positive_misguess_average
+					&& t_score > -0.674)
 				|| (this->signals.size() > 0 && rand()%2 == 0)) {
 		#else
-		if (curr_misguess_average < this->scope_context->signal_misguess_average) {
+		if (curr_positive_misguess_average < this->scope_context->signal_positive_misguess_average
+				&& t_score > -0.674) {
 		#endif /* MDEBUG */
 			is_success = true;
 		}
@@ -405,6 +499,8 @@ void SignalExperiment::create_reward_signal_helper(SolutionWrapper* wrapper) {
 		this->signals.clear();
 		this->scope_context->miss_average_guess = this->miss_average_guess;
 
+		this->scope_context->signal_positive_misguess_average = curr_positive_misguess_average;
+		this->scope_context->signal_positive_misguess_standard_deviation = curr_positive_misguess_standard_deviation;
 		this->scope_context->signal_misguess_average = curr_misguess_average;
 		this->scope_context->signal_misguess_standard_deviation = curr_misguess_standard_deviation;
 

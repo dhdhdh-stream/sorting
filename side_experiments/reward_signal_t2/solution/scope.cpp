@@ -20,6 +20,8 @@ Scope::Scope() {
 	this->last_updated_run_index = -1;
 
 	this->miss_average_guess = 0.0;
+	this->signal_positive_misguess_average = 0.0;
+	this->signal_positive_misguess_standard_deviation = 0.0;
 	this->signal_misguess_average = 0.0;
 	this->signal_misguess_standard_deviation = 0.0;
 
@@ -241,6 +243,8 @@ void Scope::save(ofstream& output_file) {
 		output_file << this->child_scopes[c_index]->id << endl;
 	}
 
+	output_file << this->signal_positive_misguess_average << endl;
+	output_file << this->signal_positive_misguess_standard_deviation << endl;
 	output_file << this->signal_misguess_average << endl;
 	output_file << this->signal_misguess_standard_deviation << endl;
 }
@@ -361,6 +365,14 @@ void Scope::load(ifstream& input_file,
 		getline(input_file, scope_id_line);
 		this->child_scopes.push_back(parent_solution->scopes[stoi(scope_id_line)]);
 	}
+
+	string signal_positive_misguess_average_line;
+	getline(input_file, signal_positive_misguess_average_line);
+	this->signal_positive_misguess_average = stod(signal_positive_misguess_average_line);
+
+	string signal_positive_misguess_standard_deviation_line;
+	getline(input_file, signal_positive_misguess_standard_deviation_line);
+	this->signal_positive_misguess_standard_deviation = stod(signal_positive_misguess_standard_deviation_line);
 
 	string signal_misguess_average_line;
 	getline(input_file, signal_misguess_average_line);

@@ -45,7 +45,10 @@ public:
 	Explore* curr_explore;
 
 	/**
-	 * - to help specifically recognize positive situations
+	 * - for an improvement to be made, on average, over half of the samples need to be positive
+	 *   - so need to be particularly good at recognizing positive samples
+	 * 
+	 * - as solution becomes increasingly sharp, positive ratio drops
 	 */
 	std::vector<std::vector<std::vector<double>>> positive_pre_obs_histories;
 	std::vector<std::vector<std::vector<double>>> positive_post_obs_histories;

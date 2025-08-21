@@ -1,22 +1,5 @@
 // TODO: for ramp, schedule hits on start to minimize wasted cycles
 
-// TODO: perhaps focus on recognizing good signals?
-// - if not better at recognizing good signals, then not worth?
-//   - not that useful to recognize degrees of badness?
-
-// TODO: try training match and score together?
-// - if new score is better than existing prediction, positive match
-
-// TODO: also measure what misguess perfect is
-
-// TODO: also measure ratio of above average
-
-// - should have half samples be positive
-//   - as for an experiment to be an improvement, on average, more than half samples need to be above average
-
-// - once solution becomes sharp, many possible fail cases
-//   - positive ratio drops even more
-
 #include <chrono>
 #include <iostream>
 #include <map>

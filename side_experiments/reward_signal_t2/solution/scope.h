@@ -51,6 +51,8 @@ public:
 
 	std::vector<Scope*> child_scopes;
 
+	double signal_positive_misguess_average;
+	double signal_positive_misguess_standard_deviation;
 	double signal_misguess_average;
 	double signal_misguess_standard_deviation;
 	/**
