@@ -114,18 +114,6 @@ bool SignalExperiment::split_helper(vector<bool>& new_match_input_is_pre,
 				int h_index = negative_seeds[random_index];
 				for (int i_index = 0; i_index < (int)new_match_input_is_pre.size(); i_index++) {
 					if (new_match_input_is_pre[i_index]) {
-						// temp
-						if (h_index >= (int)this->pre_obs_histories.size()) {
-							throw invalid_argument("h_index >= (int)this->pre_obs_histories.size()");
-						}
-						if (new_match_input_indexes[i_index] >= (int)this->pre_obs_histories[h_index].size()) {
-							cout << "h_index: " << h_index << endl;
-							cout << "new_match_input_indexes[i_index]: " << new_match_input_indexes[i_index] << endl;
-							cout << "this->pre_obs_histories[0].size(): " << this->pre_obs_histories[0].size() << endl;
-							cout << "this->pre_obs_histories[h_index].size(): " << this->pre_obs_histories[h_index].size() << endl;
-							throw invalid_argument("new_match_input_indexes[i_index] >= (int)this->pre_obs_histories[h_index].size()");
-						}
-
 						inputs[i_index] = this->pre_obs_histories[h_index][
 							new_match_input_indexes[i_index]][new_match_input_obs_indexes[i_index]];
 					} else {

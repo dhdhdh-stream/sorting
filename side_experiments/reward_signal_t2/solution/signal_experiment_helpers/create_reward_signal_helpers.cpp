@@ -17,6 +17,7 @@
 #include "constants.h"
 #include "globals.h"
 #include "helpers.h"
+#include "problem.h"
 #include "scope.h"
 #include "signal_network.h"
 #include "solution.h"
@@ -227,28 +228,6 @@ void SignalExperiment::create_reward_signal_helper(SolutionWrapper* wrapper) {
 		}
 		curr_misguess_standard_deviation = sqrt(sum_misguess_variance / (double)this->pre_obs_histories.size());
 	} else {
-		double positive_sum_vals = 0.0;
-		for (int h_index = 0; h_index < (int)this->positive_target_val_histories.size(); h_index++) {
-			positive_sum_vals += this->positive_target_val_histories[h_index];
-		}
-		double positive_average_val = positive_sum_vals / (double)this->positive_target_val_histories.size();
-
-		double positive_sum_misguess = 0.0;
-		for (int h_index = 0; h_index < (int)this->positive_target_val_histories.size(); h_index++) {
-			positive_sum_misguess += (this->positive_target_val_histories[h_index] - positive_average_val)
-				* (this->positive_target_val_histories[h_index] - positive_average_val);
-		}
-		curr_positive_misguess_average = positive_sum_misguess / (double)this->positive_target_val_histories.size();
-
-		double positive_sum_misguess_variance = 0.0;
-		for (int h_index = 0; h_index < (int)this->positive_target_val_histories.size(); h_index++) {
-			double curr_misguess = (this->positive_target_val_histories[h_index] - positive_average_val)
-				* (this->positive_target_val_histories[h_index] - positive_average_val);
-			positive_sum_misguess_variance += (curr_misguess - curr_positive_misguess_average)
-				* (curr_misguess - curr_positive_misguess_average);
-		}
-		curr_positive_misguess_standard_deviation = sqrt(positive_sum_misguess_variance / (double)this->positive_target_val_histories.size());
-
 		double sum_vals = 0.0;
 		for (int h_index = 0; h_index < (int)this->target_val_histories.size(); h_index++) {
 			sum_vals += this->target_val_histories[h_index];
@@ -270,6 +249,22 @@ void SignalExperiment::create_reward_signal_helper(SolutionWrapper* wrapper) {
 				* (curr_misguess - curr_misguess_average);
 		}
 		curr_misguess_standard_deviation = sqrt(sum_misguess_variance / (double)this->target_val_histories.size());
+
+		double positive_sum_misguess = 0.0;
+		for (int h_index = 0; h_index < (int)this->positive_target_val_histories.size(); h_index++) {
+			positive_sum_misguess += (this->positive_target_val_histories[h_index] - average_val)
+				* (this->positive_target_val_histories[h_index] - average_val);
+		}
+		curr_positive_misguess_average = positive_sum_misguess / (double)this->positive_target_val_histories.size();
+
+		double positive_sum_misguess_variance = 0.0;
+		for (int h_index = 0; h_index < (int)this->positive_target_val_histories.size(); h_index++) {
+			double curr_misguess = (this->positive_target_val_histories[h_index] - average_val)
+				* (this->positive_target_val_histories[h_index] - average_val);
+			positive_sum_misguess_variance += (curr_misguess - curr_positive_misguess_average)
+				* (curr_misguess - curr_positive_misguess_average);
+		}
+		curr_positive_misguess_standard_deviation = sqrt(positive_sum_misguess_variance / (double)this->positive_target_val_histories.size());
 	}
 
 	int num_min_match = MIN_MATCH_RATIO * (double)this->pre_obs_histories.size();
@@ -489,6 +484,26 @@ void SignalExperiment::create_reward_signal_helper(SolutionWrapper* wrapper) {
 
 	if (is_success) {
 		cout << "SignalExperiment success" << endl;
+
+		// temp
+		for (int p_index = 0; p_index < (int)this->verify_positive_pre_obs_histories.size(); p_index++) {
+			this->verify_positive_problems[p_index]->print();
+			double signal = calc_signal(this->verify_positive_pre_obs_histories[p_index],
+										this->verify_positive_post_obs_histories[p_index],
+										this->signals,
+										this->miss_average_guess);
+			cout << "signal: " << signal << endl;
+			cout << "this->verify_positive_target_val_histories[p_index]: " << this->verify_positive_target_val_histories[p_index] << endl;
+		}
+		for (int p_index = 0; p_index < (int)this->verify_pre_obs_histories.size(); p_index++) {
+			this->verify_problems[p_index]->print();
+			double signal = calc_signal(this->verify_pre_obs_histories[p_index],
+										this->verify_post_obs_histories[p_index],
+										this->signals,
+										this->miss_average_guess);
+			cout << "signal: " << signal << endl;
+			cout << "this->verify_target_val_histories[p_index]: " << this->verify_target_val_histories[p_index] << endl;
+		}
 
 		this->scope_context->signal_pre_actions = this->pre_actions;
 		this->scope_context->signal_post_actions = this->post_actions;

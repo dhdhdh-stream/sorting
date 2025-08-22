@@ -17,11 +17,6 @@ bool SignalExperiment::check_signal(vector<double>& obs,
 	 * - check pre
 	 */
 	if (scope_history->node_histories.size() == 0) {
-		// temp
-		if (scope_history->signal_pre_obs.size() > this->pre_actions.size()) {
-			throw invalid_argument("scope_history->signal_pre_obs.size() >= this->pre_actions.size()");
-		}
-
 		scope_history->signal_pre_obs.push_back(obs);
 
 		if (scope_history->signal_pre_obs.size() <= this->pre_actions.size()) {
@@ -39,11 +34,6 @@ bool SignalExperiment::check_signal(vector<double>& obs,
 	 */
 	if (wrapper->node_context.back() == NULL
 			&& wrapper->experiment_context.back() == NULL) {
-		// temp
-		if (scope_history->signal_post_obs.size() > this->post_actions.size()) {
-			throw invalid_argument("scope_history->signal_post_obs.size() >= this->post_actions.size()");
-		}
-
 		scope_history->signal_post_obs.push_back(obs);
 
 		if (scope_history->signal_post_obs.size() <= this->post_actions.size()) {
@@ -66,6 +56,8 @@ void SignalExperiment::backprop(double target_val,
 		if (this->new_scope_histories.size() < MEASURE_ITERS) {
 			this->new_scope_histories.push_back(wrapper->scope_histories[0]);
 			this->new_target_val_histories.push_back(target_val);
+		} else {
+			delete wrapper->scope_histories[0];
 		}
 
 		find_safe_backprop(target_val);

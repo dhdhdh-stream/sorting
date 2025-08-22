@@ -76,6 +76,10 @@ void SignalExperiment::find_safe_backprop(
 		this->curr_explore = create_explore(this->scope_context);
 		this->curr_explore->explore_node->experiment = this;
 
+		this->positive_count = 0;
+		this->true_positive_count = 0;
+		this->total_count = 0;
+
 		uniform_int_distribution<int> until_distribution(0, (int)this->scope_context->average_instances_per_run-1);
 		this->num_instances_until_target = 1 + until_distribution(generator);
 

@@ -14,8 +14,6 @@ using namespace std;
 
 const int SCORE_NUM_INPUTS = 10;
 
-const double POSITIVE_RATIO = 0.3;
-
 #if defined(MDEBUG) && MDEBUG
 const int TRAIN_ITERS = 30;
 #else
@@ -59,14 +57,14 @@ void SignalExperiment::train_score(vector<vector<vector<double>>>& positive_pre_
 
 	new_score_network = new SignalNetwork((int)new_score_input_is_pre.size());
 
-	uniform_real_distribution<double> is_positive_distribution(0.0, 1.0);
+	uniform_int_distribution<int> is_positive_distribution(0, 1);
 	uniform_int_distribution<int> positive_distribution(0, positive_pre_obs_histories.size()-1);
 	uniform_int_distribution<int> negative_distribution(0, pre_obs_histories.size()-1);
 	for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
 		vector<double> inputs(new_score_input_is_pre.size());
 		double target_val;
 
-		bool is_positive = is_positive_distribution(generator) < POSITIVE_RATIO;
+		bool is_positive = is_positive_distribution(generator) == 0;
 
 		if (is_positive) {
 			int h_index = positive_distribution(generator);

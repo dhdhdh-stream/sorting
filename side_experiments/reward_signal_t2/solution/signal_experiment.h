@@ -60,9 +60,28 @@ public:
 	 *   - though have to solve measure not being accurate due to not accounting for context
 	 */
 
+	/**
+	 * - temp
+	 */
+	int positive_count;
+	int true_positive_count;
+	std::vector<std::vector<std::vector<double>>> verify_positive_pre_obs_histories;
+	std::vector<std::vector<std::vector<double>>> verify_positive_post_obs_histories;
+	std::vector<double> verify_positive_target_val_histories;
+	std::vector<Problem*> verify_positive_problems;
+
 	std::vector<std::vector<std::vector<double>>> pre_obs_histories;
 	std::vector<std::vector<std::vector<double>>> post_obs_histories;
 	std::vector<double> target_val_histories;
+
+	/**
+	 * - temp
+	 */
+	int total_count;
+	std::vector<std::vector<std::vector<double>>> verify_pre_obs_histories;
+	std::vector<std::vector<std::vector<double>>> verify_post_obs_histories;
+	std::vector<double> verify_target_val_histories;
+	std::vector<Problem*> verify_problems;
 
 	std::vector<Signal*> signals;
 	double miss_average_guess;

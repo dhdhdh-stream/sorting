@@ -1,5 +1,7 @@
 // TODO: for ramp, schedule hits on start to minimize wasted cycles
 
+// - many "positive" samples are actually negative but with positive fluctuations
+
 #include <chrono>
 #include <iostream>
 #include <map>

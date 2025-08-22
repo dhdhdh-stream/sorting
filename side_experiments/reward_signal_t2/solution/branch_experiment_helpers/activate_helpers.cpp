@@ -135,6 +135,8 @@ void BranchExperiment::backprop(double target_val,
 		if (this->new_scope_histories.size() < MEASURE_ITERS) {
 			this->new_scope_histories.push_back(wrapper->scope_histories[0]);
 			this->new_target_val_histories.push_back(target_val);
+		} else {
+			delete wrapper->scope_histories[0];
 		}
 
 		break;

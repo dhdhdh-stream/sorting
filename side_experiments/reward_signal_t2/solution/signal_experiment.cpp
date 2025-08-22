@@ -3,6 +3,7 @@
 #include "explore.h"
 #include "globals.h"
 #include "helpers.h"
+#include "problem.h"
 #include "scope.h"
 #include "solution.h"
 #include "solution_wrapper.h"
@@ -62,6 +63,14 @@ SignalExperiment::~SignalExperiment() {
 
 	for (int e_index = 0; e_index < (int)this->positive_explores.size(); e_index++) {
 		delete this->positive_explores[e_index];
+	}
+
+	for (int p_index = 0; p_index < (int)this->verify_positive_problems.size(); p_index++) {
+		delete this->verify_positive_problems[p_index];
+	}
+
+	for (int p_index = 0; p_index < (int)this->verify_problems.size(); p_index++) {
+		delete this->verify_problems[p_index];
 	}
 
 	for (int s_index = 0; s_index < (int)this->signals.size(); s_index++) {

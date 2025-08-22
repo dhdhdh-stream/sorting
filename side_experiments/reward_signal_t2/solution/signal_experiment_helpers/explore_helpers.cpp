@@ -11,16 +11,25 @@
 #include "scope.h"
 #include "solution_wrapper.h"
 
+// temp
+#include "simpler.h"
+
 using namespace std;
 
 #if defined(MDEBUG) && MDEBUG
 const int NUM_POSITIVE = 10;
 const int MIN_NUM_EXPLORE = 40;
 const int MAX_NUM_EXPLORE = 80;
+
+const int NUM_POSITIVE_VERIFY = 2;
+const int NUM_VERIFY = 2;
 #else
 const int NUM_POSITIVE = 1000;
 const int MIN_NUM_EXPLORE = 4000;
 const int MAX_NUM_EXPLORE = 8000;
+
+const int NUM_POSITIVE_VERIFY = 10;
+const int NUM_VERIFY = 10;
 #endif /* MDEBUG */
 
 void SignalExperiment::check_activate(AbstractNode* experiment_node,
@@ -119,23 +128,73 @@ void SignalExperiment::explore_backprop(
 		#else
 		if (inner_target_val > this->existing_average_outer_signal) {
 		#endif /* MDEBUG */
-			this->positive_pre_obs_histories.push_back(history->scope_history->signal_pre_obs);
-			this->positive_post_obs_histories.push_back(history->scope_history->signal_post_obs);
-			this->positive_target_val_histories.push_back(target_val);
-			this->positive_explores.push_back(this->curr_explore);
-		} else {
-			delete this->curr_explore;
-		}
-		this->curr_explore = NULL;
+			this->positive_count++;
+			if (this->positive_pre_obs_histories.size() < NUM_POSITIVE) {
+				this->positive_pre_obs_histories.push_back(history->scope_history->signal_pre_obs);
+				this->positive_post_obs_histories.push_back(history->scope_history->signal_post_obs);
+				this->positive_target_val_histories.push_back(target_val);
+				this->positive_explores.push_back(this->curr_explore);
+				this->curr_explore = NULL;
+			} else {
+				if (this->verify_positive_pre_obs_histories.size() < NUM_POSITIVE_VERIFY) {
+					this->verify_positive_pre_obs_histories.push_back(history->scope_history->signal_pre_obs);
+					this->verify_positive_post_obs_histories.push_back(history->scope_history->signal_post_obs);
+					this->verify_positive_target_val_histories.push_back(target_val);
+					this->verify_positive_problems.push_back(wrapper->problem->copy_snapshot());
+				}
+			}
 
+			Simpler* simpler = (Simpler*)wrapper->problem;
+			if (simpler->world[2] > 0) {
+				this->true_positive_count++;
+			}
+		}
+		if (this->curr_explore != NULL) {
+			delete this->curr_explore;
+			this->curr_explore = NULL;
+		}
+
+		this->total_count++;
 		if (this->pre_obs_histories.size() < MAX_NUM_EXPLORE) {
 			this->pre_obs_histories.push_back(history->scope_history->signal_pre_obs);
 			this->post_obs_histories.push_back(history->scope_history->signal_post_obs);
 			this->target_val_histories.push_back(target_val);
+		} else {
+			if (this->positive_pre_obs_histories.size() == 0) {
+				this->state = SIGNAL_EXPERIMENT_STATE_DONE;
+				return;
+			}
+
+			if (this->verify_pre_obs_histories.size() < NUM_VERIFY) {
+				this->verify_pre_obs_histories.push_back(history->scope_history->signal_pre_obs);
+				this->verify_post_obs_histories.push_back(history->scope_history->signal_post_obs);
+				this->verify_target_val_histories.push_back(target_val);
+				this->verify_problems.push_back(wrapper->problem->copy_snapshot());
+			}
 		}
 
+		// if (this->positive_pre_obs_histories.size() >= NUM_POSITIVE
+		// 		&& this->pre_obs_histories.size() >= MIN_NUM_EXPLORE) {
 		if (this->positive_pre_obs_histories.size() >= NUM_POSITIVE
-				&& this->pre_obs_histories.size() >= MIN_NUM_EXPLORE) {
+				&& this->verify_positive_pre_obs_histories.size() >= NUM_POSITIVE_VERIFY
+				&& this->pre_obs_histories.size() >= MIN_NUM_EXPLORE
+				&& this->verify_pre_obs_histories.size() >= NUM_VERIFY) {
+			// temp
+			cout << "pre_actions:";
+			for (int a_index = 0; a_index < (int)this->pre_actions.size(); a_index++) {
+				cout << " " << this->pre_actions[a_index];
+			}
+			cout << endl;
+			cout << "post_actions:";
+			for (int a_index = 0; a_index < (int)this->post_actions.size(); a_index++) {
+				cout << " " << this->post_actions[a_index];
+			}
+			cout << endl;
+
+			cout << "this->positive_count: " << this->positive_count << endl;
+			cout << "this->true_positive_count: " << this->true_positive_count << endl;
+			cout << "this->total_count: " << this->total_count << endl;
+
 			create_reward_signal_helper(wrapper);
 
 			this->state = SIGNAL_EXPERIMENT_STATE_DONE;
