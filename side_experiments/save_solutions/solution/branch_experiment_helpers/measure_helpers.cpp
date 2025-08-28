@@ -259,6 +259,20 @@ void BranchExperiment::measure_backprop(double target_val,
 			}
 			double new_score = new_sum_score / (double)this->new_scores.size();
 
+			double new_sum_variance = 0.0;
+			for (int h_index = 0; h_index < (int)this->new_scores.size(); h_index++) {
+				new_sum_variance += (this->new_scores[h_index] - new_score)
+					* (this->new_scores[h_index] - new_score);
+			}
+			double new_standard_deviation = sqrt(new_sum_variance / (double)this->new_scores.size());
+
+			Solution* current_solution_copy = new Solution(wrapper->solution);
+			add(wrapper);
+			wrapper->solution->curr_val_average = new_score;
+			wrapper->solution->curr_val_standard_deviation = new_standard_deviation;
+			wrapper->solutions.push_back(wrapper->solution);
+			wrapper->solution = current_solution_copy;
+
 			#if defined(MDEBUG) && MDEBUG
 			if (new_score <= existing_score && rand()%2 == 0) {
 			#else

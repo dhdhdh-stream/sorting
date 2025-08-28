@@ -9,7 +9,6 @@
 
 class AbstractNode;
 class BranchExperiment;
-class Explore;
 class Network;
 class Problem;
 class Scope;
@@ -18,8 +17,6 @@ class ScopeNode;
 class SignalInstance;
 class Solution;
 class SolutionWrapper;
-
-Explore* create_explore(Scope* scope);
 
 void set_explore_scope(SolutionWrapper* wrapper);
 void create_experiment(SolutionWrapper* wrapper);

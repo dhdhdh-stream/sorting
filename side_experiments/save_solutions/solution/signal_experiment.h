@@ -39,6 +39,7 @@ public:
 	 *   - use to calculate structure score
 	 */
 
+	double average_instances_per_run;
 	int num_instances_until_target;
 
 	AbstractNode* explore_node;
@@ -57,7 +58,7 @@ public:
 	std::vector<SignalInstance*> signals;
 	double miss_average_guess;
 
-	SignalExperiment(Scope* scope_context,
+	SignalExperiment(int scope_context_id,
 					 SolutionWrapper* wrapper);
 	~SignalExperiment();
 
@@ -68,9 +69,17 @@ public:
 	void backprop(double target_val,
 				  SolutionWrapper* wrapper);
 
+	bool find_safe_check_signal(std::vector<double>& obs,
+								int& action,
+								bool& is_next,
+								SolutionWrapper* wrapper);
 	void find_safe_backprop(double target_val,
 							SolutionWrapper* wrapper);
 
+	bool explore_check_signal(std::vector<double>& obs,
+							  int& action,
+							  bool& is_next,
+							  SolutionWrapper* wrapper);
 	void check_activate(AbstractNode* experiment_node,
 						bool is_branch,
 						SolutionWrapper* wrapper);
@@ -88,7 +97,10 @@ public:
 private:
 	void set_actions(SolutionWrapper* wrapper);
 	void set_explore(SolutionWrapper* wrapper);
-	bool split_helper(std::vector<bool>& new_match_input_is_pre,
+	bool split_helper(std::vector<std::vector<std::vector<double>>>& positive_pre_obs,
+					  std::vector<std::vector<std::vector<double>>>& positive_post_obs,
+					  std::vector<double>& positive_scores,
+					  std::vector<bool>& new_match_input_is_pre,
 					  std::vector<int>& new_match_input_indexes,
 					  std::vector<int>& new_match_input_obs_indexes,
 					  SignalNetwork*& new_match_network);
@@ -109,6 +121,8 @@ class SignalExperimentInstanceHistory {
 public:
 	ScopeHistory* scope_history;
 	ScopeHistory* signal_needed_from;
+
+	SignalExperimentInstanceHistory();
 };
 
 class SignalExperimentState : public AbstractExperimentState {

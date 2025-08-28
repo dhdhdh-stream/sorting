@@ -1,14 +1,5 @@
 // TODO: for ramp, schedule hits on start to minimize wasted cycles
 
-// - many "positive" samples are actually negative but with positive fluctuations
-
-// - try training only using structural network
-//   - not enough samples to train instance network?
-
-// - for explore, use true score
-// - for solutions, 50/50 between structural score and true score
-//   - structure and true averages out the same
-
 #include <chrono>
 #include <iostream>
 #include <map>

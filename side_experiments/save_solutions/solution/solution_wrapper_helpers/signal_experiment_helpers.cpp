@@ -106,71 +106,14 @@ void SolutionWrapper::signal_experiment_end(double result) {
 		result,
 		this);
 
-	// delete this->experiment_overall_history;
-	// this->experiment_overall_history = NULL;
-	// for (int i_index = 0; i_index < (int)this->experiment_instance_histories.size(); i_index++) {
-	// 	delete this->experiment_instance_histories[i_index];
-	// }
-	// this->experiment_instance_histories.clear();
+	for (int i_index = 0; i_index < (int)this->signal_experiment_instance_histories.size(); i_index++) {
+		delete this->signal_experiment_instance_histories[i_index];
+	}
+	this->signal_experiment_instance_histories.clear();
 
-	// this->scope_histories.clear();
-	// this->node_context.clear();
-	// this->experiment_context.clear();
+	delete this->scope_histories[0];
 
-	// if (this->curr_experiment != NULL) {
-	// 	if (this->curr_experiment->result == EXPERIMENT_RESULT_FAIL) {
-	// 		this->curr_experiment->clean();
-	// 		delete this->curr_experiment;
-
-	// 		this->curr_experiment = NULL;
-	// 	} else if (this->curr_experiment->result == EXPERIMENT_RESULT_SUCCESS) {
-	// 		this->curr_experiment->clean();
-
-	// 		if (this->best_experiment == NULL) {
-	// 			this->best_experiment = this->curr_experiment;
-	// 		} else {
-	// 			if (this->curr_experiment->improvement > this->best_experiment->improvement) {
-	// 				delete this->best_experiment;
-	// 				this->best_experiment = this->curr_experiment;
-	// 			} else {
-	// 				delete this->curr_experiment;
-	// 			}
-	// 		}
-
-	// 		this->curr_experiment = NULL;
-
-	// 		this->improvement_iter++;
-	// 		if (this->improvement_iter >= IMPROVEMENTS_PER_ITER) {
-	// 			Scope* last_updated_scope = this->best_experiment->scope_context;
-
-	// 			this->best_experiment->add(this);
-
-	// 			for (int h_index = 0; h_index < (int)this->solution->existing_scope_histories.size(); h_index++) {
-	// 				delete this->solution->existing_scope_histories[h_index];
-	// 			}
-	// 			this->solution->existing_scope_histories.clear();
-	// 			this->solution->existing_target_val_histories.clear();
-
-	// 			this->solution->existing_scope_histories = this->best_experiment->new_scope_histories;
-	// 			this->best_experiment->new_scope_histories.clear();
-	// 			this->solution->existing_target_val_histories = this->best_experiment->new_target_val_histories;
-
-	// 			delete this->best_experiment;
-	// 			this->best_experiment = NULL;
-
-	// 			clean_scope(last_updated_scope,
-	// 						this);
-
-	// 			this->solution->clean();
-
-	// 			if (this->solution->existing_scope_histories.size() >= MEASURE_ITERS) {
-	// 				this->solution->measure_update();
-	// 			}
-
-	// 			this->solution->timestamp++;
-
-	// 			this->improvement_iter = 0;
-	// 		}
-	// 	}
-	// }
+	this->scope_histories.clear();
+	this->node_context.clear();
+	this->experiment_context.clear();
 }

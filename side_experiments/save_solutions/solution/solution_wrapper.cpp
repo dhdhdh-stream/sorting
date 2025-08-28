@@ -3,6 +3,7 @@
 #include "constants.h"
 #include "obs_node.h"
 #include "scope.h"
+#include "signal.h"
 #include "solution.h"
 #include "start_node.h"
 
@@ -79,6 +80,9 @@ SolutionWrapper::SolutionWrapper(int num_obs,
 	getline(input_file, scope_counter_line);
 	this->scope_counter = stoi(scope_counter_line);
 
+	this->solution = new Solution();
+	this->solution->load(input_file);
+
 	string num_solutions_line;
 	getline(input_file, num_solutions_line);
 	int num_solutions = stoi(num_solutions_line);
@@ -88,8 +92,18 @@ SolutionWrapper::SolutionWrapper(int num_obs,
 		this->solutions.push_back(l_solution);
 	}
 
-	this->solution = new Solution();
-	this->solution->load(input_file);
+	string num_signals_line;
+	getline(input_file, num_signals_line);
+	int num_signals = stoi(num_signals_line);
+	for (int s_index = 0; s_index < num_signals; s_index++) {
+		string scope_id_line;
+		getline(input_file, scope_id_line);
+		int scope_id = stoi(scope_id_line);
+
+		Signal* signal = new Signal(input_file);
+
+		this->signals[scope_id] = signal;
+	}
 
 	input_file.close();
 
@@ -154,12 +168,19 @@ void SolutionWrapper::save(string path,
 
 	output_file << this->scope_counter << endl;
 
+	this->solution->save(output_file);
+
 	output_file << this->solutions.size() << endl;
 	for (int s_index = 0; s_index < (int)this->solutions.size(); s_index++) {
 		this->solutions[s_index]->save(output_file);
 	}
 
-	this->solution->save(output_file);
+	output_file << this->signals.size() << endl;
+	for (map<int, Signal*>::iterator it = this->signals.begin();
+			it != this->signals.end(); it++) {
+		output_file << it->first << endl;
+		it->second->save(output_file);
+	}
 
 	output_file.close();
 

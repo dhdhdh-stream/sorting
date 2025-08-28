@@ -251,4 +251,38 @@ void SignalExperiment::set_explore(SolutionWrapper* wrapper) {
 	}
 
 	this->explore_node->experiment = this;
+
+	switch (this->explore_node->type) {
+	case NODE_TYPE_START:
+		this->average_instances_per_run = scope->average_instances_per_run;
+		break;
+	case NODE_TYPE_ACTION:
+		{
+			ActionNode* action_node = (ActionNode*)this->explore_node;
+			this->average_instances_per_run = action_node->average_instances_per_run;
+		}
+		break;
+	case NODE_TYPE_SCOPE:
+		{
+			ScopeNode* scope_node = (ScopeNode*)this->explore_node;
+			this->average_instances_per_run = scope_node->average_instances_per_run;
+		}
+		break;
+	case NODE_TYPE_BRANCH:
+		{
+			BranchNode* branch_node = (BranchNode*)this->explore_node;
+			if (this->explore_is_branch) {
+				this->average_instances_per_run = branch_node->branch_average_instances_per_run;
+			} else {
+				this->average_instances_per_run = branch_node->original_average_instances_per_run;
+			}
+		}
+		break;
+	case NODE_TYPE_OBS:
+		{
+			ObsNode* obs_node = (ObsNode*)this->explore_node;
+			this->average_instances_per_run = obs_node->average_instances_per_run;
+		}
+		break;
+	}
 }
