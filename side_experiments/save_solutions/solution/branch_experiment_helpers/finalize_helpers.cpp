@@ -53,8 +53,6 @@ void BranchExperiment::add(SolutionWrapper* wrapper) {
 	cout << "BranchExperiment add" << endl;
 
 	if (this->best_new_scope != NULL) {
-		this->best_new_scope->id = wrapper->scope_counter;
-		wrapper->scope_counter++;
 		wrapper->solution->scopes[this->best_new_scope->id] = this->best_new_scope;
 
 		clean_scope(this->best_new_scope,

@@ -170,6 +170,12 @@ void BranchExperiment::capture_verify_backprop(SolutionWrapper* wrapper) {
 	if (overall_history->is_hit) {
 		this->state_iter++;
 		if (this->state_iter >= NUM_VERIFY_SAMPLES) {
+			Solution* solution_copy = new Solution(wrapper->solution);
+			add(wrapper);
+			this->resulting_solution = wrapper->solution;
+			wrapper->solutions.push_back(this->resulting_solution);
+			wrapper->solution = solution_copy;
+
 			this->result = EXPERIMENT_RESULT_SUCCESS;
 		}
 	}

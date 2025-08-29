@@ -209,23 +209,20 @@ void SolutionWrapper::experiment_end(double result) {
 
 				this->improvement_iter++;
 				if (this->improvement_iter >= IMPROVEMENTS_PER_ITER) {
-					Scope* last_updated_scope = this->best_experiment->scope_context;
+					int last_updated_scope_id = this->best_experiment->scope_context->id;
 
-					this->best_experiment->add(this);
+					delete this->solution;
+					this->solutions.push_back(new Solution(this->best_experiment->resulting_solution));
+					this->solution = this->best_experiment->resulting_solution;
 
-					for (int h_index = 0; h_index < (int)this->solution->existing_scope_histories.size(); h_index++) {
-						delete this->solution->existing_scope_histories[h_index];
-					}
-					this->solution->existing_scope_histories.clear();
-					this->solution->existing_target_val_histories.clear();
-
-					this->solution->existing_scope_histories = this->best_experiment->new_scope_histories;
-					this->best_experiment->new_scope_histories.clear();
-					this->solution->existing_target_val_histories = this->best_experiment->new_target_val_histories;
+					/**
+					 * TODO: add back reuse of existing_scope_histories/new_scope_histories
+					 */
 
 					delete this->best_experiment;
 					this->best_experiment = NULL;
 
+					Scope* last_updated_scope = this->solution->scopes[last_updated_scope_id];
 					clean_scope(last_updated_scope,
 								this);
 

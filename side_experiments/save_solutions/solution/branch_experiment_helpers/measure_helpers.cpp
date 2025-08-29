@@ -266,18 +266,20 @@ void BranchExperiment::measure_backprop(double target_val,
 			}
 			double new_standard_deviation = sqrt(new_sum_variance / (double)this->new_scores.size());
 
-			Solution* current_solution_copy = new Solution(wrapper->solution);
-			add(wrapper);
 			wrapper->solution->curr_val_average = new_score;
 			wrapper->solution->curr_val_standard_deviation = new_standard_deviation;
-			wrapper->solutions.push_back(wrapper->solution);
-			wrapper->solution = current_solution_copy;
 
 			#if defined(MDEBUG) && MDEBUG
 			if (new_score <= existing_score && rand()%2 == 0) {
 			#else
 			if (new_score <= existing_score) {
 			#endif /* MDEBUG */
+				Solution* solution_copy = new Solution(wrapper->solution);
+				add(wrapper);
+				this->resulting_solution = wrapper->solution;
+				wrapper->solutions.push_back(this->resulting_solution);
+				wrapper->solution = solution_copy;
+
 				this->result = EXPERIMENT_RESULT_FAIL;
 				return;
 			}
@@ -317,6 +319,12 @@ void BranchExperiment::measure_backprop(double target_val,
 			this->state = BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY;
 			this->state_iter = 0;
 			#else
+			Solution* solution_copy = new Solution(wrapper->solution);
+			add(wrapper);
+			this->resulting_solution = wrapper->solution;
+			wrapper->solutions.push_back(this->resulting_solution);
+			wrapper->solution = solution_copy;
+
 			this->result = EXPERIMENT_RESULT_SUCCESS;
 			#endif /* MDEBUG */
 		}

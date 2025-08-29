@@ -168,6 +168,11 @@ void BranchExperiment::train_new_backprop(
 
 				this->select_percentage = select_percentage;
 
+				if (this->best_new_scope != NULL) {
+					this->best_new_scope->id = wrapper->scope_counter;
+					wrapper->scope_counter++;
+				}
+
 				if (this->select_percentage < 1.0) {
 					this->new_branch_node = new BranchNode();
 					this->new_branch_node->parent = this->scope_context;

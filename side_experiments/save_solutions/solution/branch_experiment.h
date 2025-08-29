@@ -91,6 +91,8 @@ public:
 	std::vector<ScopeHistory*> new_scope_histories;
 	std::vector<double> new_target_val_histories;
 
+	Solution* resulting_solution;
+
 	#if defined(MDEBUG) && MDEBUG
 	std::vector<Problem*> verify_problems;
 	std::vector<unsigned long> verify_seeds;
@@ -167,6 +169,8 @@ public:
 	#endif /* MDEBUG */
 
 	void clean();
+
+private:
 	void add(SolutionWrapper* wrapper);
 };
 
