@@ -18,9 +18,10 @@ using namespace std;
 
 void create_experiment(SolutionWrapper* wrapper) {
 	vector<Scope*> possible_scopes;
-	for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
-		if (wrapper->solution->scopes[s_index]->average_hits_per_run >= EXPERIMENT_MIN_AVERAGE_HITS_PER_RUN) {
-			possible_scopes.push_back(wrapper->solution->scopes[s_index]);
+	for (map<int, Scope*>::iterator it = wrapper->solution->scopes.begin();
+			it != wrapper->solution->scopes.end(); it++) {
+		if (it->second->average_hits_per_run >= EXPERIMENT_MIN_AVERAGE_HITS_PER_RUN) {
+			possible_scopes.push_back(it->second);
 		}
 	}
 

@@ -24,10 +24,7 @@ StartNode::StartNode(StartNode* original) {
 }
 
 void StartNode::clean() {
-	if (this->experiment != NULL) {
-		delete this->experiment;
-		this->experiment = NULL;
-	}
+	// do nothing
 }
 
 void StartNode::measure_update(int total_count) {

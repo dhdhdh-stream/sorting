@@ -21,8 +21,9 @@ Scope::Scope() {
 }
 
 Scope::~Scope() {
-	for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {
-		delete this->nodes[n_index];
+	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
+			it != this->nodes.end(); it++) {
+		delete it->second;
 	}
 
 	for (int f_index = 0; f_index < (int)this->factors.size(); f_index++) {
@@ -258,6 +259,9 @@ void Scope::copy_from(Scope* original,
 	for (int c_index = 0; c_index < (int)original->child_scopes.size(); c_index++) {
 		this->child_scopes.push_back(parent_solution->scopes[original->child_scopes[c_index]->id]);
 	}
+
+	this->average_hits_per_run = original->average_hits_per_run;
+	this->average_instances_per_run = original->average_instances_per_run;
 }
 
 void Scope::save(ofstream& output_file) {
@@ -280,6 +284,9 @@ void Scope::save(ofstream& output_file) {
 	for (int c_index = 0; c_index < (int)this->child_scopes.size(); c_index++) {
 		output_file << this->child_scopes[c_index]->id << endl;
 	}
+
+	output_file << this->average_hits_per_run << endl;
+	output_file << this->average_instances_per_run << endl;
 }
 
 void Scope::load(ifstream& input_file,
@@ -369,6 +376,14 @@ void Scope::load(ifstream& input_file,
 		getline(input_file, scope_id_line);
 		this->child_scopes.push_back(parent_solution->scopes[stoi(scope_id_line)]);
 	}
+
+	string average_hits_per_run_line;
+	getline(input_file, average_hits_per_run_line);
+	this->average_hits_per_run = stod(average_hits_per_run_line);
+
+	string average_instances_per_run_line;
+	getline(input_file, average_instances_per_run_line);
+	this->average_instances_per_run = stod(average_instances_per_run_line);
 }
 
 void Scope::link(Solution* parent_solution) {

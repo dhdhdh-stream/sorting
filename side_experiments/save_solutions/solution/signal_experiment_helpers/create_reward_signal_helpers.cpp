@@ -164,13 +164,13 @@ void SignalExperiment::create_reward_signal_helper(SolutionWrapper* wrapper) {
 		}
 		double average_val = sum_vals / (double)this->existing_scores[s_index].size();
 
-		for (int h_index = 0; h_index < (int)this->existing_pre_obs.size(); h_index++) {
+		for (int h_index = 0; h_index < (int)this->existing_pre_obs[s_index].size(); h_index++) {
 			positive_pre_obs.push_back(this->existing_pre_obs[s_index][h_index]);
-			positive_post_obs.push_back(this->existing_pre_obs[s_index][h_index]);
+			positive_post_obs.push_back(this->existing_post_obs[s_index][h_index]);
 			positive_scores.push_back(this->existing_scores[s_index][h_index]);
 
 			positive_pre_obs.push_back(this->existing_pre_obs[s_index][h_index]);
-			positive_post_obs.push_back(this->existing_pre_obs[s_index][h_index]);
+			positive_post_obs.push_back(this->existing_post_obs[s_index][h_index]);
 			positive_scores.push_back(average_val);
 		}
 		/**
@@ -461,6 +461,12 @@ void SignalExperiment::create_reward_signal_helper(SolutionWrapper* wrapper) {
 				#endif /* MDEBUG */
 					this->signals = potential_signals;
 					this->miss_average_guess = potential_miss_average_guess;
+
+					// temp
+					cout << "curr_positive_misguess_average: " << curr_positive_misguess_average << endl;
+					cout << "curr_positive_misguess_standard_deviation: " << curr_positive_misguess_standard_deviation << endl;
+					cout << "curr_misguess_average: " << curr_misguess_average << endl;
+					cout << "curr_misguess_standard_deviation: " << curr_misguess_standard_deviation << endl;
 
 					curr_positive_misguess_average = positive_potential_misguess_average;
 					curr_positive_misguess_standard_deviation = positive_potential_misguess_standard_deviation;

@@ -7,6 +7,7 @@
 #include "scope_node.h"
 #include "signal_experiment.h"
 #include "solution.h"
+#include "utilities.h"
 
 using namespace std;
 

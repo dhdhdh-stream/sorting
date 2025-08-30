@@ -71,6 +71,7 @@ public:
 	~SolutionWrapper();
 
 	void init();
+	void init(int solution_index);
 	std::pair<bool,int> step(std::vector<double> obs);
 	void end();
 

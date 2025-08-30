@@ -461,9 +461,10 @@ void clean_scope(Scope* scope,
 	/**
 	 * - eval Factor is_meaningful
 	 */
-	for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
-		for (int f_index = 0; f_index < (int)wrapper->solution->scopes[s_index]->factors.size(); f_index++) {
-			Factor* factor = wrapper->solution->scopes[s_index]->factors[f_index];
+	for (map<int, Scope*>::iterator it = wrapper->solution->scopes.begin();
+			it != wrapper->solution->scopes.end(); it++) {
+		for (int f_index = 0; f_index < (int)it->second->factors.size(); f_index++) {
+			Factor* factor = it->second->factors[f_index];
 
 			bool has_meaningful = false;
 			for (int i_index = 0; i_index < (int)factor->inputs.size(); i_index++) {

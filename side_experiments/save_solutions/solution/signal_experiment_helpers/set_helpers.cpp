@@ -91,6 +91,11 @@ void SignalExperiment::set_actions(SolutionWrapper* wrapper) {
 										   post_insert_length);
 		}
 	}
+
+	this->new_scores = vector<vector<double>>(wrapper->solutions.size());
+	this->existing_pre_obs = vector<vector<vector<vector<double>>>>(wrapper->solutions.size());
+	this->existing_post_obs = vector<vector<vector<vector<double>>>>(wrapper->solutions.size());
+	this->existing_scores = vector<vector<double>>(wrapper->solutions.size());
 }
 
 void SignalExperiment::set_explore(SolutionWrapper* wrapper) {

@@ -1,5 +1,7 @@
 #include "signal_experiment.h"
 
+#include <iostream>
+
 #include "abstract_node.h"
 #include "constants.h"
 #include "globals.h"
@@ -10,9 +12,9 @@
 using namespace std;
 
 #if defined(MDEBUG) && MDEBUG
-const int EXPLORE_ITERS = 40;
+const int EXPLORE_ITERS = 1;
 #else
-const int EXPLORE_ITERS = 4000;
+const int EXPLORE_ITERS = 40;
 #endif /* MDEBUG */
 
 bool SignalExperiment::explore_check_signal(vector<double>& obs,

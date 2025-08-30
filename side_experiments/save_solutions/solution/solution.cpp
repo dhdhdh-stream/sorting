@@ -62,6 +62,12 @@ Solution::~Solution() {
 	for (int h_index = 0; h_index < (int)this->existing_scope_histories.size(); h_index++) {
 		delete this->existing_scope_histories[h_index];
 	}
+
+	#if defined(MDEBUG) && MDEBUG
+	for (int p_index = 0; p_index < (int)this->verify_problems.size(); p_index++) {
+		delete this->verify_problems[p_index];
+	}
+	#endif /* MDEBUG */
 }
 
 void Solution::load(ifstream& input_file) {
@@ -110,8 +116,9 @@ void Solution::load(ifstream& input_file) {
 
 #if defined(MDEBUG) && MDEBUG
 void Solution::clear_verify() {
-	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
-		this->scopes[s_index]->clear_verify();
+	for (map<int, Scope*>::iterator it = this->scopes.begin();
+			it != this->scopes.end(); it++) {
+		it->second->clear_verify();
 	}
 
 	this->verify_problems.clear();
@@ -120,25 +127,28 @@ void Solution::clear_verify() {
 
 void Solution::clean_inputs(Scope* scope,
 							int node_id) {
-	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
-		this->scopes[s_index]->clean_inputs(scope,
-											node_id);
+	for (map<int, Scope*>::iterator it = this->scopes.begin();
+			it != this->scopes.end(); it++) {
+		it->second->clean_inputs(scope,
+								 node_id);
 	}
 }
 
 void Solution::replace_obs_node(Scope* scope,
 								int original_node_id,
 								int new_node_id) {
-	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
-		this->scopes[s_index]->replace_obs_node(scope,
-												original_node_id,
-												new_node_id);
+	for (map<int, Scope*>::iterator it = this->scopes.begin();
+			it != this->scopes.end(); it++) {
+		it->second->replace_obs_node(scope,
+									 original_node_id,
+									 new_node_id);
 	}
 }
 
 void Solution::clean() {
-	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
-		this->scopes[s_index]->clean();
+	for (map<int, Scope*>::iterator it = this->scopes.begin();
+			it != this->scopes.end(); it++) {
+		it->second->clean();
 	}
 }
 
@@ -169,8 +179,9 @@ void Solution::measure_update() {
 	}
 	this->curr_val_standard_deviation = sqrt(sum_variance / (double)this->existing_target_val_histories.size());
 
-	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
-		this->scopes[s_index]->measure_update((int)this->existing_scope_histories.size());
+	for (map<int, Scope*>::iterator it = this->scopes.begin();
+			it != this->scopes.end(); it++) {
+		it->second->measure_update((int)this->existing_scope_histories.size());
 	}
 }
 
@@ -243,7 +254,9 @@ void Solution::save(ofstream& output_file) {
 
 void Solution::save_for_display(ofstream& output_file) {
 	output_file << this->scopes.size() << endl;
-	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
-		this->scopes[s_index]->save_for_display(output_file);
+	for (map<int, Scope*>::iterator it = this->scopes.begin();
+			it != this->scopes.end(); it++) {
+		output_file << it->first << endl;
+		it->second->save_for_display(output_file);
 	}
 }

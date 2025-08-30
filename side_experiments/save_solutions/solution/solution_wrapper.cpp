@@ -1,5 +1,7 @@
 #include "solution_wrapper.h"
 
+#include <iostream>
+
 #include "constants.h"
 #include "obs_node.h"
 #include "scope.h"
@@ -120,6 +122,15 @@ SolutionWrapper::SolutionWrapper(int num_obs,
 
 SolutionWrapper::~SolutionWrapper() {
 	delete this->solution;
+
+	for (int s_index = 0; s_index < (int)this->solutions.size(); s_index++) {
+		delete this->solutions[s_index];
+	}
+
+	for (map<int, Signal*>::iterator it = this->signals.begin();
+			it != this->signals.end(); it++) {
+		delete it->second;
+	}
 }
 
 bool SolutionWrapper::is_done() {
@@ -169,6 +180,8 @@ void SolutionWrapper::save(string path,
 	output_file << this->scope_counter << endl;
 
 	this->solution->save(output_file);
+
+	cout << "this->solutions.size(): " << this->solutions.size() << endl;
 
 	output_file << this->solutions.size() << endl;
 	for (int s_index = 0; s_index < (int)this->solutions.size(); s_index++) {

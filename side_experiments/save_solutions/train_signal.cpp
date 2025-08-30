@@ -77,7 +77,9 @@ int main(int argc, char* argv[]) {
 		}
 	}
 
-	solution_wrapper->save("saves/", filename);
+	delete solution_wrapper->signal_experiment;
+
+	// solution_wrapper->save("saves/", filename);
 
 	delete problem_type;
 	delete solution_wrapper;

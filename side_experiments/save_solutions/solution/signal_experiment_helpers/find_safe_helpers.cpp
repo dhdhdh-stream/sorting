@@ -1,6 +1,7 @@
 #include "signal_experiment.h"
 
 #include <cmath>
+#include <iostream>
 
 #include "globals.h"
 #include "helpers.h"
@@ -108,6 +109,7 @@ void SignalExperiment::find_safe_backprop(
 		this->solution_index = 0;
 		this->state_iter++;
 
+		// TODO: don't check individual until end
 		bool is_fail = false;
 		if (this->state_iter == CHECK_1_NUM_ITERS
 				|| this->state_iter == CHECK_2_NUM_ITERS
@@ -138,7 +140,11 @@ void SignalExperiment::find_safe_backprop(
 			}
 		}
 
+		#if defined(MDEBUG) && MDEBUG
+		if (is_fail && rand()%2 == 0) {
+		#else
 		if (is_fail) {
+		#endif /* MDEBUG */
 			this->pre_actions.clear();
 			this->post_actions.clear();
 
@@ -154,7 +160,23 @@ void SignalExperiment::find_safe_backprop(
 			this->signals.clear();
 
 			set_actions(wrapper);
+
+			this->state_iter = 0;
+			this->solution_index = 0;
 		} else if (this->state_iter >= CHECK_3_NUM_ITERS) {
+			// temp
+			cout << "pre_actions:";
+			for (int a_index = 0; a_index < (int)this->pre_actions.size(); a_index++) {
+				cout << " " << this->pre_actions[a_index];
+			}
+			cout << endl;
+			cout << "post_actions:";
+			for (int a_index = 0; a_index < (int)this->post_actions.size(); a_index++) {
+				cout << " " << this->post_actions[a_index];
+			}
+			cout << endl;
+			cout << "SIGNAL_EXPERIMENT_STATE_EXPLORE" << endl;
+
 			this->state = SIGNAL_EXPERIMENT_STATE_EXPLORE;
 			this->state_iter = 0;
 			this->solution_index = 0;

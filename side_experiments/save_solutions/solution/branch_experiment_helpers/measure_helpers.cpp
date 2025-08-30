@@ -259,27 +259,11 @@ void BranchExperiment::measure_backprop(double target_val,
 			}
 			double new_score = new_sum_score / (double)this->new_scores.size();
 
-			double new_sum_variance = 0.0;
-			for (int h_index = 0; h_index < (int)this->new_scores.size(); h_index++) {
-				new_sum_variance += (this->new_scores[h_index] - new_score)
-					* (this->new_scores[h_index] - new_score);
-			}
-			double new_standard_deviation = sqrt(new_sum_variance / (double)this->new_scores.size());
-
-			wrapper->solution->curr_val_average = new_score;
-			wrapper->solution->curr_val_standard_deviation = new_standard_deviation;
-
 			#if defined(MDEBUG) && MDEBUG
 			if (new_score <= existing_score && rand()%2 == 0) {
 			#else
 			if (new_score <= existing_score) {
 			#endif /* MDEBUG */
-				Solution* solution_copy = new Solution(wrapper->solution);
-				add(wrapper);
-				this->resulting_solution = wrapper->solution;
-				wrapper->solutions.push_back(this->resulting_solution);
-				wrapper->solution = solution_copy;
-
 				this->result = EXPERIMENT_RESULT_FAIL;
 				return;
 			}
@@ -320,7 +304,25 @@ void BranchExperiment::measure_backprop(double target_val,
 			this->state_iter = 0;
 			#else
 			Solution* solution_copy = new Solution(wrapper->solution);
+
 			add(wrapper);
+
+			for (int h_index = 0; h_index < (int)wrapper->solution->existing_scope_histories.size(); h_index++) {
+				delete wrapper->solution->existing_scope_histories[h_index];
+			}
+			wrapper->solution->existing_scope_histories.clear();
+			wrapper->solution->existing_target_val_histories.clear();
+
+			wrapper->solution->existing_scope_histories = this->new_scope_histories;
+			this->new_scope_histories.clear();
+			wrapper->solution->existing_target_val_histories = this->new_target_val_histories;
+			clean_scope(this->scope_context,
+						wrapper);
+
+			wrapper->solution->clean();
+
+			wrapper->solution->measure_update();
+
 			this->resulting_solution = wrapper->solution;
 			wrapper->solutions.push_back(this->resulting_solution);
 			wrapper->solution = solution_copy;

@@ -25,6 +25,9 @@ ActionNode::ActionNode(ActionNode* original) {
 
 	this->next_node_id = original->next_node_id;
 
+	this->average_hits_per_run = original->average_hits_per_run;
+	this->average_instances_per_run = original->average_instances_per_run;
+
 	this->ancestor_ids = original->ancestor_ids;
 
 	this->is_init = true;
@@ -50,6 +53,9 @@ void ActionNode::save(ofstream& output_file) {
 
 	output_file << this->next_node_id << endl;
 
+	output_file << this->average_hits_per_run << endl;
+	output_file << this->average_instances_per_run << endl;
+
 	output_file << this->ancestor_ids.size() << endl;
 	for (int a_index = 0; a_index < (int)this->ancestor_ids.size(); a_index++) {
 		output_file << this->ancestor_ids[a_index] << endl;
@@ -64,6 +70,14 @@ void ActionNode::load(ifstream& input_file) {
 	string next_node_id_line;
 	getline(input_file, next_node_id_line);
 	this->next_node_id = stoi(next_node_id_line);
+
+	string average_hits_per_run_line;
+	getline(input_file, average_hits_per_run_line);
+	this->average_hits_per_run = stod(average_hits_per_run_line);
+
+	string average_instances_per_run_line;
+	getline(input_file, average_instances_per_run_line);
+	this->average_instances_per_run = stod(average_instances_per_run_line);
 
 	string num_ancestors_line;
 	getline(input_file, num_ancestors_line);
