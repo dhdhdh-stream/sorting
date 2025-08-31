@@ -1,3 +1,7 @@
+// TODO: iterative match
+// - first split, then fully train score
+//   - then train match according to whether helps
+
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -101,13 +105,13 @@ int main(int argc, char* argv[]) {
 				}
 			}
 
-			solution_wrapper->end();
-
 			cout << "i_index: " << i_index << endl;
 			problem->print();
 			double signal = calc_signal(solution_wrapper->scope_histories[0],
 										solution_wrapper);
 			cout << "signal: " << signal << endl;
+
+			solution_wrapper->end();
 
 			delete problem;
 		}

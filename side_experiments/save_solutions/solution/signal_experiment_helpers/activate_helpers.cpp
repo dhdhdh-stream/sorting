@@ -20,6 +20,11 @@ bool SignalExperiment::check_signal(vector<double>& obs,
 									action,
 									is_next,
 									wrapper);
+	case SIGNAL_EXPERIMENT_STATE_VERIFY:
+		return verify_check_signal(obs,
+								   action,
+								   is_next,
+								   wrapper);
 	}
 
 	return false;
@@ -100,6 +105,10 @@ void SignalExperiment::backprop(double target_val,
 	case SIGNAL_EXPERIMENT_STATE_EXPLORE:
 		explore_backprop(target_val,
 						 wrapper);
+		break;
+	case SIGNAL_EXPERIMENT_STATE_VERIFY:
+		verify_backprop(target_val,
+						wrapper);
 		break;
 	}
 }
