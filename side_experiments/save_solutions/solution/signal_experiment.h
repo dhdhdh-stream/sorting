@@ -17,6 +17,8 @@ const int SIGNAL_EXPERIMENT_STATE_FIND_SAFE = 0;
 const int SIGNAL_EXPERIMENT_STATE_EXPLORE = 1;
 const int SIGNAL_EXPERIMENT_STATE_DONE = 2;
 
+const int SIGNAL_EXPERIMENT_STATE_VERIFY = 3;
+
 class SignalExperimentHistory;
 class SignalExperiment : public AbstractExperiment {
 public:
@@ -66,6 +68,17 @@ public:
 					  int& action,
 					  bool& is_next,
 					  SolutionWrapper* wrapper);
+	void check_activate(AbstractNode* experiment_node,
+						bool is_branch,
+						SolutionWrapper* wrapper);
+	void experiment_step(std::vector<double>& obs,
+						 int& action,
+						 bool& is_next,
+						 bool& fetch_action,
+						 SolutionWrapper* wrapper);
+	void set_action(int action,
+					SolutionWrapper* wrapper);
+	void experiment_exit_step(SolutionWrapper* wrapper);
 	void backprop(double target_val,
 				  SolutionWrapper* wrapper);
 
@@ -80,19 +93,37 @@ public:
 							  int& action,
 							  bool& is_next,
 							  SolutionWrapper* wrapper);
-	void check_activate(AbstractNode* experiment_node,
-						bool is_branch,
-						SolutionWrapper* wrapper);
-	void experiment_step(std::vector<double>& obs,
-						 int& action,
-						 bool& is_next,
-						 bool& fetch_action,
-						 SolutionWrapper* wrapper);
-	void set_action(int action,
-					SolutionWrapper* wrapper);
-	void experiment_exit_step(SolutionWrapper* wrapper);
+	void explore_check_activate(AbstractNode* experiment_node,
+								bool is_branch,
+								SolutionWrapper* wrapper);
+	void explore_experiment_step(std::vector<double>& obs,
+								 int& action,
+								 bool& is_next,
+								 bool& fetch_action,
+								 SolutionWrapper* wrapper);
+	void explore_set_action(int action,
+							SolutionWrapper* wrapper);
+	void explore_experiment_exit_step(SolutionWrapper* wrapper);
 	void explore_backprop(double target_val,
 						  SolutionWrapper* wrapper);
+
+	bool verify_check_signal(std::vector<double>& obs,
+							 int& action,
+							 bool& is_next,
+							 SolutionWrapper* wrapper);
+	void verify_check_activate(AbstractNode* experiment_node,
+							   bool is_branch,
+							   SolutionWrapper* wrapper);
+	void verify_experiment_step(std::vector<double>& obs,
+								int& action,
+								bool& is_next,
+								bool& fetch_action,
+								SolutionWrapper* wrapper);
+	void verify_set_action(int action,
+						   SolutionWrapper* wrapper);
+	void verify_experiment_exit_step(SolutionWrapper* wrapper);
+	void verify_backprop(double target_val,
+						 SolutionWrapper* wrapper);
 
 private:
 	void set_actions(SolutionWrapper* wrapper);
@@ -114,7 +145,7 @@ private:
 					 std::vector<int>& new_score_input_indexes,
 					 std::vector<int>& new_score_input_obs_indexes,
 					 SignalNetwork*& new_score_network);
-	void create_reward_signal_helper(SolutionWrapper* wrapper);
+	bool create_reward_signal_helper(SolutionWrapper* wrapper);
 };
 
 class SignalExperimentInstanceHistory {

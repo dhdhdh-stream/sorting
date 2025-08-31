@@ -5,6 +5,7 @@
 #include <random>
 
 #include "globals.h"
+#include "helpers.h"
 #include "signal_experiment.h"
 #include "simpler.h"
 #include "solution_wrapper.h"
@@ -79,6 +80,37 @@ int main(int argc, char* argv[]) {
 		}
 
 		delete solution_wrapper->signal_experiment;
+	}
+
+	for (int s_index = 0; s_index < (int)solution_wrapper->solutions.size(); s_index++) {
+		cout << "s_index: " << s_index << endl;
+
+		for (int i_index = 0; i_index < 4; i_index++) {
+			Problem* problem = problem_type->get_problem();
+
+			solution_wrapper->init(s_index);
+
+			while (true) {
+				vector<double> obs = problem->get_observations();
+
+				pair<bool,int> next = solution_wrapper->step(obs);
+				if (next.first) {
+					break;
+				} else {
+					problem->perform_action(next.second);
+				}
+			}
+
+			solution_wrapper->end();
+
+			cout << "i_index: " << i_index << endl;
+			problem->print();
+			double signal = calc_signal(solution_wrapper->scope_histories[0],
+										solution_wrapper);
+			cout << "signal: " << signal << endl;
+
+			delete problem;
+		}
 	}
 
 	// solution_wrapper->save("saves/", filename);

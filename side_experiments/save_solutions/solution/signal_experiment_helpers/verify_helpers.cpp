@@ -6,21 +6,16 @@
 #include "constants.h"
 #include "globals.h"
 #include "helpers.h"
+#include "problem.h"
 #include "scope.h"
 #include "solution_wrapper.h"
 
 using namespace std;
 
-#if defined(MDEBUG) && MDEBUG
-const int EXPLORE_ITERS = 1;
-#else
-const int EXPLORE_ITERS = 40;
-#endif /* MDEBUG */
-
-bool SignalExperiment::explore_check_signal(vector<double>& obs,
-											int& action,
-											bool& is_next,
-											SolutionWrapper* wrapper) {
+bool SignalExperiment::verify_check_signal(vector<double>& obs,
+										   int& action,
+										   bool& is_next,
+										   SolutionWrapper* wrapper) {
 	ScopeHistory* scope_history = wrapper->scope_histories.back();
 
 	/**
@@ -59,9 +54,9 @@ bool SignalExperiment::explore_check_signal(vector<double>& obs,
 	return false;
 }
 
-void SignalExperiment::explore_check_activate(AbstractNode* experiment_node,
-											  bool is_branch,
-											  SolutionWrapper* wrapper) {
+void SignalExperiment::verify_check_activate(AbstractNode* experiment_node,
+											 bool is_branch,
+											 SolutionWrapper* wrapper) {
 	if (is_branch == this->explore_is_branch) {
 		this->num_instances_until_target--;
 		if (wrapper->signal_experiment_instance_histories.size() == 0
@@ -87,11 +82,11 @@ void SignalExperiment::explore_check_activate(AbstractNode* experiment_node,
 	}
 }
 
-void SignalExperiment::explore_experiment_step(std::vector<double>& obs,
-											   int& action,
-											   bool& is_next,
-											   bool& fetch_action,
-											   SolutionWrapper* wrapper) {
+void SignalExperiment::verify_experiment_step(std::vector<double>& obs,
+											  int& action,
+											  bool& is_next,
+											  bool& fetch_action,
+											  SolutionWrapper* wrapper) {
 	SignalExperimentState* experiment_state = (SignalExperimentState*)wrapper->experiment_context.back();
 	if (experiment_state->step_index >= (int)this->step_types.size()) {
 		wrapper->node_context.back() = this->exit_next_node;
@@ -113,8 +108,8 @@ void SignalExperiment::explore_experiment_step(std::vector<double>& obs,
 	}
 }
 
-void SignalExperiment::explore_set_action(int action,
-										  SolutionWrapper* wrapper) {
+void SignalExperiment::verify_set_action(int action,
+										 SolutionWrapper* wrapper) {
 	SignalExperimentState* experiment_state = (SignalExperimentState*)wrapper->experiment_context.back();
 
 	this->actions[experiment_state->step_index] = action;
@@ -122,7 +117,7 @@ void SignalExperiment::explore_set_action(int action,
 	experiment_state->step_index++;
 }
 
-void SignalExperiment::explore_experiment_exit_step(SolutionWrapper* wrapper) {
+void SignalExperiment::verify_experiment_exit_step(SolutionWrapper* wrapper) {
 	delete wrapper->scope_histories.back();
 
 	wrapper->scope_histories.pop_back();
@@ -133,7 +128,7 @@ void SignalExperiment::explore_experiment_exit_step(SolutionWrapper* wrapper) {
 	experiment_state->step_index++;
 }
 
-void SignalExperiment::explore_backprop(
+void SignalExperiment::verify_backprop(
 		double target_val,
 		SolutionWrapper* wrapper) {
 	if (wrapper->signal_experiment_instance_histories.size() > 0) {
@@ -147,6 +142,13 @@ void SignalExperiment::explore_backprop(
 										   wrapper);
 		}
 
+		cout << "this->solution_index: " << this->solution_index << endl;
+		wrapper->problem->print();
+		cout << "inner_target_val: " << inner_target_val << endl;
+		double signal = calc_signal(instance_history->scope_history,
+									wrapper);
+		cout << "signal: " << signal << endl;
+
 		this->explore_node->experiment = NULL;
 		if (this->new_scope != NULL) {
 			delete this->new_scope;
@@ -156,30 +158,10 @@ void SignalExperiment::explore_backprop(
 		this->actions.clear();
 		this->scopes.clear();
 
-		this->explore_pre_obs.push_back(instance_history->scope_history->signal_pre_obs);
-		this->explore_post_obs.push_back(instance_history->scope_history->signal_post_obs);
-		this->explore_scores.push_back(inner_target_val);
-
 		this->solution_index++;
 		if (this->solution_index >= (int)wrapper->solutions.size()) {
-			this->solution_index = 0;
-			this->state_iter++;
-
-			if (this->state_iter >= EXPLORE_ITERS) {
-				bool is_success = create_reward_signal_helper(wrapper);
-				if (is_success) {
-					this->state = SIGNAL_EXPERIMENT_STATE_VERIFY;
-					this->solution_index = 0;
-
-					set_explore(wrapper);
-
-					uniform_int_distribution<int> until_distribution(0, (int)this->average_instances_per_run-1);
-					this->num_instances_until_target = 1 + until_distribution(generator);
-				} else {
-					this->state = SIGNAL_EXPERIMENT_STATE_DONE;
-				}
-				return;
-			}
+			this->state = SIGNAL_EXPERIMENT_STATE_DONE;
+			return;
 		}
 
 		set_explore(wrapper);

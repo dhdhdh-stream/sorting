@@ -153,7 +153,7 @@ double calc_miss_average_guess(vector<vector<vector<double>>>& pre_obs_histories
 	}
 }
 
-void SignalExperiment::create_reward_signal_helper(SolutionWrapper* wrapper) {
+bool SignalExperiment::create_reward_signal_helper(SolutionWrapper* wrapper) {
 	vector<vector<vector<double>>> positive_pre_obs;
 	vector<vector<vector<double>>> positive_post_obs;
 	vector<double> positive_scores;
@@ -540,4 +540,6 @@ void SignalExperiment::create_reward_signal_helper(SolutionWrapper* wrapper) {
 
 		wrapper->solution->clean();
 	}
+
+	return is_success;
 }
