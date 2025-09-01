@@ -1,3 +1,6 @@
+// TODO: have to improve signal quality, have to learn from mistakes
+// - or else will get trapped
+
 #ifndef SIGNAL_H
 #define SIGNAL_H
 

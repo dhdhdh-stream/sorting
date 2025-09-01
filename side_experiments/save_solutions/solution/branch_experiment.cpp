@@ -50,7 +50,7 @@ BranchExperiment::BranchExperiment(Scope* scope_context,
 								   target_val_histories,
 								   wrapper);
 
-			this->existing_scores.push_back(wrapper->solution->existing_target_val_histories[h_index]);
+			// this->existing_scores.push_back(wrapper->solution->existing_target_val_histories[h_index]);
 
 			vector<ScopeHistory*> scope_histories;
 			fetch_signals_helper(wrapper->solution->existing_scope_histories[h_index],
@@ -62,6 +62,9 @@ BranchExperiment::BranchExperiment(Scope* scope_context,
 								 wrapper);
 		}
 	}
+
+	// temp
+	this->existing_scores = target_val_histories;
 
 	double average_score;
 	vector<Input> factor_inputs;
@@ -128,6 +131,8 @@ BranchExperiment::BranchExperiment(Scope* scope_context,
 		uniform_int_distribution<int> until_distribution(0, (int)this->average_instances_per_run-1.0);
 		this->num_instances_until_target = 1 + until_distribution(generator);
 
+		// temp
+		cout << "BRANCH_EXPERIMENT_STATE_EXPLORE" << endl;
 		this->state = BRANCH_EXPERIMENT_STATE_EXPLORE;
 		this->state_iter = 0;
 

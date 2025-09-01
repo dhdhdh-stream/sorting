@@ -19,6 +19,7 @@
 #include "simpler.h"
 #include "solution.h"
 #include "solution_wrapper.h"
+#include "start_node.h"
 #include "utilities.h"
 
 using namespace std;
@@ -30,8 +31,7 @@ default_random_engine generator;
 int main(int argc, char* argv[]) {
 	cout << "Starting..." << endl;
 
-	// seed = (unsigned)time(NULL);
-	seed = 1756690325;
+	seed = (unsigned)time(NULL);
 	srand(seed);
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
@@ -50,6 +50,51 @@ int main(int argc, char* argv[]) {
 		filename = "main.txt";
 		solution_wrapper = new SolutionWrapper(
 			problem_type->num_obs());
+	}
+
+	// temp
+	delete solution_wrapper->solution;
+	{
+		solution_wrapper->solution = new Solution();
+
+		solution_wrapper->solution->timestamp = 0;
+		solution_wrapper->solution->curr_val_average = 0.0;
+		solution_wrapper->solution->curr_val_standard_deviation = 0.0;
+
+		/**
+		 * - even though scopes[0] will not be reused, still good to start with:
+		 *   - if artificially add empty scopes, may be difficult to extend from
+		 *     - and will then junk up explore
+		 *   - new scopes will be created from the reusable portions anyways
+		 */
+
+		Scope* new_scope = new Scope();
+		new_scope->id = 0;
+		solution_wrapper->solution->scopes[new_scope->id] = new_scope;
+
+		new_scope->node_counter = 0;
+
+		StartNode* start_node = new StartNode();
+		start_node->parent = new_scope;
+		start_node->id = new_scope->node_counter;
+		new_scope->node_counter++;
+		new_scope->nodes[start_node->id] = start_node;
+
+		ObsNode* end_node = new ObsNode();
+		end_node->parent = new_scope;
+		end_node->id = new_scope->node_counter;
+		new_scope->node_counter++;
+		new_scope->nodes[end_node->id] = end_node;
+
+		start_node->next_node_id = end_node->id;
+		start_node->next_node = end_node;
+
+		end_node->ancestor_ids.push_back(start_node->id);
+
+		end_node->next_node_id = -1;
+		end_node->next_node = NULL;
+
+		solution_wrapper->solution->clean();
 	}
 
 	#if defined(MDEBUG) && MDEBUG

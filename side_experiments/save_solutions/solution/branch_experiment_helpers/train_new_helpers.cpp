@@ -161,6 +161,9 @@ void BranchExperiment::train_new_backprop(
 										network,
 										select_percentage);
 
+			// temp
+			cout << "select_percentage: " << select_percentage << endl;
+
 			for (int h_index = 0; h_index < (int)this->scope_histories.size(); h_index++) {
 				delete this->scope_histories[h_index];
 			}
