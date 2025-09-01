@@ -1,26 +1,3 @@
-// TODO: iterative match
-// - first split, then fully train score
-//   - then train match according to whether helps
-
-// - save failed experiments as confusion to train against?
-//   - to help signal learn edge cases
-
-// - maybe also put extra emphasis on current solution
-//   - to best make improvements
-
-// - issue is that signal failures dominate experiments
-//   - good spot + bad prediction -> think nothing is improvement -> stuck
-// - need to be good about predicting every spot, or predict misguess
-
-// - signal could be biased
-//   - biased towards bad on mismatch
-//   - but also biased in general because signal is overall, and solution is specific
-//     - but explore is general?
-// - true could have high variance
-// TODO: maybe check for bias beforehand
-// - if bias, then keep going with outer
-//   - otherwise, use inner
-
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -60,50 +37,6 @@ int main(int argc, char* argv[]) {
 		problem_type->num_obs(),
 		"saves/",
 		filename);
-
-	for (int iter_index = 0; iter_index < 10; iter_index++) {
-		solution_wrapper->signal_experiment = new SignalExperiment(
-			0,
-			solution_wrapper);
-
-		while (true) {
-			Problem* problem = problem_type->get_problem();
-			solution_wrapper->problem = problem;
-
-			solution_wrapper->signal_experiment_init();
-
-			while (true) {
-				vector<double> obs = problem->get_observations();
-
-				tuple<bool,bool,int> next = solution_wrapper->signal_experiment_step(obs);
-				if (get<0>(next)) {
-					break;
-				} else if (get<1>(next)) {
-					uniform_int_distribution<int> action_distribution(0, problem_type->num_possible_actions()-1);
-					int new_action = action_distribution(generator);
-
-					solution_wrapper->signal_experiment_set_action(new_action);
-
-					problem->perform_action(new_action);
-				} else {
-					problem->perform_action(get<2>(next));
-				}
-			}
-
-			double target_val = problem->score_result();
-			target_val -= 0.0001 * solution_wrapper->num_actions;
-
-			solution_wrapper->signal_experiment_end(target_val);
-
-			delete problem;
-
-			if (solution_wrapper->signal_experiment->state == SIGNAL_EXPERIMENT_STATE_DONE) {
-				break;
-			}
-		}
-
-		delete solution_wrapper->signal_experiment;
-	}
 
 	for (int s_index = 0; s_index < (int)solution_wrapper->solutions.size(); s_index++) {
 		cout << "s_index: " << s_index << endl;
@@ -165,8 +98,6 @@ int main(int argc, char* argv[]) {
 
 		delete problem;
 	}
-
-	solution_wrapper->save("saves/", filename);
 
 	delete problem_type;
 	delete solution_wrapper;

@@ -27,6 +27,14 @@ public:
 
 	Solution* solution;
 
+	/**
+	 * - for positive samples for training signals
+	 *   - for an improvement to be made, on average, over half of the samples need to be positive
+	 *     - so need to be particularly good at recognizing positive samples
+	 * 
+	 * - use successful solutions rather than "successful" instances
+	 *   - "successful" instances can be more likely to be positive fluctuations
+	 */
 	std::vector<Solution*> solutions;
 	std::map<int, Signal*> signals;
 

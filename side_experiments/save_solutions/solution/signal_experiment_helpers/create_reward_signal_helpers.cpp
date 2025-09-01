@@ -154,35 +154,11 @@ double calc_miss_average_guess(vector<vector<vector<double>>>& pre_obs_histories
 }
 
 bool SignalExperiment::create_reward_signal_helper(SolutionWrapper* wrapper) {
-	vector<vector<vector<double>>> positive_pre_obs;
-	vector<vector<vector<double>>> positive_post_obs;
-	vector<double> positive_scores;
-	for (int s_index = 0; s_index < (int)this->existing_pre_obs.size(); s_index++) {
-		double sum_vals = 0.0;
-		for (int h_index = 0; h_index < (int)this->existing_scores[s_index].size(); h_index++) {
-			sum_vals += this->existing_scores[s_index][h_index];
-		}
-		double average_val = sum_vals / (double)this->existing_scores[s_index].size();
-
-		for (int h_index = 0; h_index < (int)this->existing_pre_obs[s_index].size(); h_index++) {
-			positive_pre_obs.push_back(this->existing_pre_obs[s_index][h_index]);
-			positive_post_obs.push_back(this->existing_post_obs[s_index][h_index]);
-			positive_scores.push_back(this->existing_scores[s_index][h_index]);
-
-			positive_pre_obs.push_back(this->existing_pre_obs[s_index][h_index]);
-			positive_post_obs.push_back(this->existing_post_obs[s_index][h_index]);
-			positive_scores.push_back(average_val);
-		}
-		/**
-		 * - half structure score, half instance score
-		 */
-	}
-
 	for (int s_index = (int)this->signals.size()-1; s_index >= 0; s_index--) {
 		bool positive_still_good = check_signal_still_good(
-			positive_pre_obs,
-			positive_post_obs,
-			positive_scores,
+			this->existing_pre_obs,
+			this->existing_post_obs,
+			this->existing_scores,
 			this->signals[s_index]);
 		bool still_good = check_signal_still_good(
 			this->explore_pre_obs,
@@ -206,29 +182,29 @@ bool SignalExperiment::create_reward_signal_helper(SolutionWrapper* wrapper) {
 			this->explore_scores,
 			this->signals);
 
-		vector<double> positive_signal_vals(positive_pre_obs.size());
-		for (int h_index = 0; h_index < (int)positive_pre_obs.size(); h_index++) {
-			positive_signal_vals[h_index] = calc_signal(positive_pre_obs[h_index],
-														positive_post_obs[h_index],
+		vector<double> positive_signal_vals(this->existing_pre_obs.size());
+		for (int h_index = 0; h_index < (int)this->existing_pre_obs.size(); h_index++) {
+			positive_signal_vals[h_index] = calc_signal(this->existing_pre_obs[h_index],
+														this->existing_post_obs[h_index],
 														this->signals,
 														this->miss_average_guess);
 		}
 
 		double positive_sum_misguess = 0.0;
-		for (int h_index = 0; h_index < (int)positive_pre_obs.size(); h_index++) {
-			positive_sum_misguess += (positive_scores[h_index] - positive_signal_vals[h_index])
-				* (positive_scores[h_index] - positive_signal_vals[h_index]);
+		for (int h_index = 0; h_index < (int)this->existing_pre_obs.size(); h_index++) {
+			positive_sum_misguess += (this->existing_scores[h_index] - positive_signal_vals[h_index])
+				* (this->existing_scores[h_index] - positive_signal_vals[h_index]);
 		}
-		curr_positive_misguess_average = positive_sum_misguess / (double)positive_pre_obs.size();
+		curr_positive_misguess_average = positive_sum_misguess / (double)this->existing_pre_obs.size();
 
 		double positive_sum_misguess_variance = 0.0;
-		for (int h_index = 0; h_index < (int)positive_pre_obs.size(); h_index++) {
-			double curr_misguess = (positive_scores[h_index] - positive_signal_vals[h_index])
-				* (positive_scores[h_index] - positive_signal_vals[h_index]);
+		for (int h_index = 0; h_index < (int)this->existing_pre_obs.size(); h_index++) {
+			double curr_misguess = (this->existing_scores[h_index] - positive_signal_vals[h_index])
+				* (this->existing_scores[h_index] - positive_signal_vals[h_index]);
 			positive_sum_misguess_variance += (curr_misguess - curr_positive_misguess_average)
 				* (curr_misguess - curr_positive_misguess_average);
 		}
-		curr_positive_misguess_standard_deviation = sqrt(positive_sum_misguess_variance / (double)positive_pre_obs.size());
+		curr_positive_misguess_standard_deviation = sqrt(positive_sum_misguess_variance / (double)this->existing_pre_obs.size());
 
 		vector<double> signal_vals(this->explore_pre_obs.size());
 		for (int h_index = 0; h_index < (int)this->explore_pre_obs.size(); h_index++) {
@@ -277,20 +253,20 @@ bool SignalExperiment::create_reward_signal_helper(SolutionWrapper* wrapper) {
 		curr_misguess_standard_deviation = sqrt(sum_misguess_variance / (double)this->explore_scores.size());
 
 		double positive_sum_misguess = 0.0;
-		for (int h_index = 0; h_index < (int)positive_scores.size(); h_index++) {
-			positive_sum_misguess += (positive_scores[h_index] - average_val)
-				* (positive_scores[h_index] - average_val);
+		for (int h_index = 0; h_index < (int)this->existing_scores.size(); h_index++) {
+			positive_sum_misguess += (this->existing_scores[h_index] - average_val)
+				* (this->existing_scores[h_index] - average_val);
 		}
-		curr_positive_misguess_average = positive_sum_misguess / (double)positive_scores.size();
+		curr_positive_misguess_average = positive_sum_misguess / (double)this->existing_scores.size();
 
 		double positive_sum_misguess_variance = 0.0;
-		for (int h_index = 0; h_index < (int)positive_scores.size(); h_index++) {
-			double curr_misguess = (positive_scores[h_index] - average_val)
-				* (positive_scores[h_index] - average_val);
+		for (int h_index = 0; h_index < (int)this->existing_scores.size(); h_index++) {
+			double curr_misguess = (this->existing_scores[h_index] - average_val)
+				* (this->existing_scores[h_index] - average_val);
 			positive_sum_misguess_variance += (curr_misguess - curr_positive_misguess_average)
 				* (curr_misguess - curr_positive_misguess_average);
 		}
-		curr_positive_misguess_standard_deviation = sqrt(positive_sum_misguess_variance / (double)positive_scores.size());
+		curr_positive_misguess_standard_deviation = sqrt(positive_sum_misguess_variance / (double)this->existing_scores.size());
 	}
 
 	int num_min_match = MIN_MATCH_RATIO * (double)this->explore_pre_obs.size();
@@ -299,10 +275,7 @@ bool SignalExperiment::create_reward_signal_helper(SolutionWrapper* wrapper) {
 		vector<int> new_match_input_indexes;
 		vector<int> new_match_input_obs_indexes;
 		SignalNetwork* new_match_network = NULL;
-		bool split_is_success = split_helper(positive_pre_obs,
-											 positive_post_obs,
-											 positive_scores,
-											 new_match_input_is_pre,
+		bool split_is_success = split_helper(new_match_input_is_pre,
 											 new_match_input_indexes,
 											 new_match_input_obs_indexes,
 											 new_match_network);
@@ -311,14 +284,14 @@ bool SignalExperiment::create_reward_signal_helper(SolutionWrapper* wrapper) {
 			vector<vector<vector<double>>> positive_match_pre_obs;
 			vector<vector<vector<double>>> positive_match_post_obs;
 			vector<double> positive_match_target_vals;
-			for (int h_index = 0; h_index < (int)positive_pre_obs.size(); h_index++) {
+			for (int h_index = 0; h_index < (int)this->existing_pre_obs.size(); h_index++) {
 				vector<double> input_vals(new_match_input_is_pre.size());
 				for (int i_index = 0; i_index < (int)new_match_input_is_pre.size(); i_index++) {
 					if (new_match_input_is_pre[i_index]) {
-						input_vals[i_index] = positive_pre_obs[h_index][
+						input_vals[i_index] = this->existing_pre_obs[h_index][
 							new_match_input_indexes[i_index]][new_match_input_obs_indexes[i_index]];
 					} else {
-						input_vals[i_index] = positive_post_obs[h_index][
+						input_vals[i_index] = this->existing_post_obs[h_index][
 							new_match_input_indexes[i_index]][new_match_input_obs_indexes[i_index]];
 					}
 				}
@@ -328,9 +301,9 @@ bool SignalExperiment::create_reward_signal_helper(SolutionWrapper* wrapper) {
 				#else
 				if (new_match_network->output->acti_vals[0] > MATCH_WEIGHT) {
 				#endif /* MDEBUG */
-					positive_match_pre_obs.push_back(positive_pre_obs[h_index]);
-					positive_match_post_obs.push_back(positive_post_obs[h_index]);
-					positive_match_target_vals.push_back(positive_scores[h_index]);
+					positive_match_pre_obs.push_back(this->existing_pre_obs[h_index]);
+					positive_match_post_obs.push_back(this->existing_post_obs[h_index]);
+					positive_match_target_vals.push_back(this->existing_scores[h_index]);
 				}
 			}
 
@@ -397,34 +370,34 @@ bool SignalExperiment::create_reward_signal_helper(SolutionWrapper* wrapper) {
 					this->explore_scores,
 					potential_signals);
 
-				vector<double> positive_potential_vals(positive_pre_obs.size());
-				for (int h_index = 0; h_index < (int)positive_pre_obs.size(); h_index++) {
+				vector<double> positive_potential_vals(this->existing_pre_obs.size());
+				for (int h_index = 0; h_index < (int)this->existing_pre_obs.size(); h_index++) {
 					positive_potential_vals[h_index] = calc_signal(
-						positive_pre_obs[h_index],
-						positive_post_obs[h_index],
+						this->existing_pre_obs[h_index],
+						this->existing_post_obs[h_index],
 						potential_signals,
 						potential_miss_average_guess);
 				}
 
 				double positive_sum_potential_misguess = 0.0;
-				for (int h_index = 0; h_index < (int)positive_pre_obs.size(); h_index++) {
-					positive_sum_potential_misguess += (positive_scores[h_index] - positive_potential_vals[h_index])
-						* (positive_scores[h_index] - positive_potential_vals[h_index]);
+				for (int h_index = 0; h_index < (int)this->existing_pre_obs.size(); h_index++) {
+					positive_sum_potential_misguess += (this->existing_scores[h_index] - positive_potential_vals[h_index])
+						* (this->existing_scores[h_index] - positive_potential_vals[h_index]);
 				}
-				double positive_potential_misguess_average = positive_sum_potential_misguess / (double)positive_pre_obs.size();
+				double positive_potential_misguess_average = positive_sum_potential_misguess / (double)this->existing_pre_obs.size();
 
 				double positive_sum_potential_misguess_variance = 0.0;
-				for (int h_index = 0; h_index < (int)positive_pre_obs.size(); h_index++) {
-					double curr_misguess = (positive_scores[h_index] - positive_potential_vals[h_index])
-						* (positive_scores[h_index] - positive_potential_vals[h_index]);
+				for (int h_index = 0; h_index < (int)this->existing_pre_obs.size(); h_index++) {
+					double curr_misguess = (this->existing_scores[h_index] - positive_potential_vals[h_index])
+						* (this->existing_scores[h_index] - positive_potential_vals[h_index]);
 					positive_sum_potential_misguess_variance += (curr_misguess - positive_potential_misguess_average)
 						* (curr_misguess - positive_potential_misguess_average);
 				}
-				double positive_potential_misguess_standard_deviation = sqrt(positive_sum_potential_misguess_variance / (double)positive_pre_obs.size());
+				double positive_potential_misguess_standard_deviation = sqrt(positive_sum_potential_misguess_variance / (double)this->existing_pre_obs.size());
 
 				double positive_misguess_improvement = curr_positive_misguess_average - positive_potential_misguess_average;
 				double positive_min_standard_deviation = min(curr_positive_misguess_standard_deviation, positive_potential_misguess_standard_deviation);
-				double positive_t_score = positive_misguess_improvement / (positive_min_standard_deviation / sqrt((double)positive_pre_obs.size()));
+				double positive_t_score = positive_misguess_improvement / (positive_min_standard_deviation / sqrt((double)this->existing_pre_obs.size()));
 
 				vector<double> potential_vals(this->explore_pre_obs.size());
 				for (int h_index = 0; h_index < (int)this->explore_pre_obs.size(); h_index++) {

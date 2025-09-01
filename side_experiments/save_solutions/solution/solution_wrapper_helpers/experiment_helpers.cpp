@@ -209,6 +209,8 @@ void SolutionWrapper::experiment_end(double result) {
 
 				this->improvement_iter++;
 				if (this->improvement_iter >= IMPROVEMENTS_PER_ITER) {
+					cout << "update" << endl;
+
 					delete this->solution;
 					for (int s_index = 0; s_index < (int)this->solutions.size(); s_index++) {
 						if (this->solutions[s_index] == this->best_experiment->resulting_solution) {
@@ -218,6 +220,8 @@ void SolutionWrapper::experiment_end(double result) {
 					}
 					this->solutions.push_back(new Solution(this->best_experiment->resulting_solution));
 					this->solution = this->best_experiment->resulting_solution;
+
+					cout << "this->best_experiment->resulting_solution->curr_val_average: " << this->best_experiment->resulting_solution->curr_val_average << endl;
 
 					delete this->best_experiment;
 					this->best_experiment = NULL;

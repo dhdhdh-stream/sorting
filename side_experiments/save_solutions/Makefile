@@ -15,7 +15,7 @@ HEADERS = ${SOURCES:.cpp=.h}
 OBJECTS = ${HEADERS:.h=.o}
 DEPENDS = ${OBJECTS:.o=.d}
 
-all: main viewer worker simple_init measure combine train_signal verify_solutions
+all: main viewer worker simple_init measure combine train_signal verify_solutions verify_signal
 
 main: ${OBJECTS} main.o
 	${CXX} ${CXXFLAGS} ${OBJECTS} main.o -o main ${LIBS}
@@ -41,7 +41,10 @@ train_signal: ${OBJECTS} train_signal.o
 verify_solutions: ${OBJECTS} verify_solutions.o
 	${CXX} ${CXXFLAGS} ${OBJECTS} verify_solutions.o -o verify_solutions ${LIBS}
 
--include ${DEPENDS} main.d viewer.d worker.d simple_init.d measure.d combine.d train_signal.d verify_solutions.d
+verify_signal: ${OBJECTS} verify_signal.o
+	${CXX} ${CXXFLAGS} ${OBJECTS} verify_signal.o -o verify_signal ${LIBS}
+
+-include ${DEPENDS} main.d viewer.d worker.d simple_init.d measure.d combine.d train_signal.d verify_solutions.d verify_signal.d
 
 clean:
 	rm -f ${OBJECTS} ${DEPENDS} \
@@ -52,4 +55,5 @@ clean:
 	measure.o measure.d measure \
 	combine.o combine.d combine \
 	train_signal.o train_signal.d train_signal \
-	verify_solutions.o verify_solutions.d verify_solutions
+	verify_solutions.o verify_solutions.d verify_solutions \
+	verify_signal.o verify_signal.d verify_signal

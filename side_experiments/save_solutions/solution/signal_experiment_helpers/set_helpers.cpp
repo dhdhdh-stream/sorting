@@ -16,12 +16,13 @@
 using namespace std;
 
 void SignalExperiment::set_actions(SolutionWrapper* wrapper) {
+	uniform_int_distribution<int> reset_distribution(0, 2);
 	uniform_int_distribution<int> action_distribution(0, 2);
 	/**
 	 * TODO: add easy way to fetch action
 	 */
 	map<int, Signal*>::iterator it = wrapper->signals.find(this->scope_context_id);
-	if (it == wrapper->signals.end()) {
+	if (it == wrapper->signals.end() || reset_distribution(generator) == 0) {
 		geometric_distribution<int> num_actions_distribution(0.2);
 		int num_pre = num_actions_distribution(generator);
 		for (int a_index = 0; a_index < num_pre; a_index++) {
@@ -39,10 +40,12 @@ void SignalExperiment::set_actions(SolutionWrapper* wrapper) {
 		/**
 		 * - simply try one change pre, one change post
 		 */
-		geometric_distribution<int> exit_distribution(0.2);
-		geometric_distribution<int> length_distribution(0.3);
+		geometric_distribution<int> exit_distribution(0.5);
+		geometric_distribution<int> length_distribution(0.2);
 		/**
-		 * - length smaller than exit to try to reduce actions
+		 * - focus on extending rather than minimizing
+		 *   - found signals likely to be safe
+		 *     - not likely much to be gained from minimizing
 		 */
 
 		uniform_int_distribution<int> pre_index_distribution(0, it->second->signal_pre_actions.size());
@@ -93,9 +96,6 @@ void SignalExperiment::set_actions(SolutionWrapper* wrapper) {
 	}
 
 	this->new_scores = vector<vector<double>>(wrapper->solutions.size());
-	this->existing_pre_obs = vector<vector<vector<vector<double>>>>(wrapper->solutions.size());
-	this->existing_post_obs = vector<vector<vector<vector<double>>>>(wrapper->solutions.size());
-	this->existing_scores = vector<vector<double>>(wrapper->solutions.size());
 }
 
 void SignalExperiment::set_explore(SolutionWrapper* wrapper) {

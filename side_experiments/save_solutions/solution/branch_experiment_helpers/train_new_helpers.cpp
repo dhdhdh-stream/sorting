@@ -9,6 +9,7 @@
 #include "helpers.h"
 #include "network.h"
 #include "obs_node.h"
+#include "problem.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution_wrapper.h"
@@ -120,6 +121,15 @@ void BranchExperiment::train_new_backprop(
 			} else {
 				inner_targel_val = calc_signal(instance_history->signal_needed_from,
 											   wrapper);
+
+				// temp
+				if (this->state_iter%10 == 0) {
+					cout << "train_new" << endl;
+					wrapper->problem->print();
+					cout << "inner_targel_val: " << inner_targel_val << endl;
+					cout << "instance_history->existing_predicted_score: " << instance_history->existing_predicted_score << endl;
+					cout << endl;
+				}
 			}
 
 			this->i_target_val_histories.push_back(inner_targel_val - instance_history->existing_predicted_score);

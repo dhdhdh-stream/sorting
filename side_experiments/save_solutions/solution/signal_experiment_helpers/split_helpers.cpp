@@ -26,10 +26,7 @@ const int ITERS_PER_EPOCH = 10000;
 
 const double MAX_AVERAGE_ERROR = 0.1;
 
-bool SignalExperiment::split_helper(vector<vector<vector<double>>>& positive_pre_obs,
-									vector<vector<vector<double>>>& positive_post_obs,
-									vector<double>& positive_scores,
-									vector<bool>& new_match_input_is_pre,
+bool SignalExperiment::split_helper(vector<bool>& new_match_input_is_pre,
 									vector<int>& new_match_input_indexes,
 									vector<int>& new_match_input_obs_indexes,
 									SignalNetwork*& new_match_network) {
@@ -60,11 +57,11 @@ bool SignalExperiment::split_helper(vector<vector<vector<double>>>& positive_pre
 
 	new_match_network = new SignalNetwork(new_match_input_is_pre.size());
 
-	int num_positive_seeds = SEED_RATIO * (double)positive_pre_obs.size();
+	int num_positive_seeds = SEED_RATIO * (double)this->existing_pre_obs.size();
 	vector<int> positive_seeds;
 	{
-		vector<int> initial_possible_indexes(positive_pre_obs.size());
-		for (int i_index = 0; i_index < (int)positive_pre_obs.size(); i_index++) {
+		vector<int> initial_possible_indexes(this->existing_pre_obs.size());
+		for (int i_index = 0; i_index < (int)this->existing_pre_obs.size(); i_index++) {
 			initial_possible_indexes[i_index] = i_index;
 		}
 		for (int s_index = 0; s_index < num_positive_seeds; s_index++) {
@@ -105,10 +102,10 @@ bool SignalExperiment::split_helper(vector<vector<vector<double>>>& positive_pre
 				int h_index = positive_seeds[random_index];
 				for (int i_index = 0; i_index < (int)new_match_input_is_pre.size(); i_index++) {
 					if (new_match_input_is_pre[i_index]) {
-						inputs[i_index] = positive_pre_obs[h_index][
+						inputs[i_index] = this->existing_pre_obs[h_index][
 							new_match_input_indexes[i_index]][new_match_input_obs_indexes[i_index]];
 					} else {
-						inputs[i_index] = positive_post_obs[h_index][
+						inputs[i_index] = this->existing_post_obs[h_index][
 							new_match_input_indexes[i_index]][new_match_input_obs_indexes[i_index]];
 					}
 				}
@@ -142,15 +139,15 @@ bool SignalExperiment::split_helper(vector<vector<vector<double>>>& positive_pre
 			new_match_network->backprop(error);
 		}
 
-		vector<pair<double,int>> positive_acti_vals(positive_pre_obs.size());
-		for (int h_index = 0; h_index < (int)positive_pre_obs.size(); h_index++) {
+		vector<pair<double,int>> positive_acti_vals(this->existing_pre_obs.size());
+		for (int h_index = 0; h_index < (int)this->existing_pre_obs.size(); h_index++) {
 			vector<double> inputs(new_match_input_is_pre.size());
 			for (int i_index = 0; i_index < (int)new_match_input_is_pre.size(); i_index++) {
 				if (new_match_input_is_pre[i_index]) {
-					inputs[i_index] = positive_pre_obs[h_index][
+					inputs[i_index] = this->existing_pre_obs[h_index][
 						new_match_input_indexes[i_index]][new_match_input_obs_indexes[i_index]];
 				} else {
-					inputs[i_index] = positive_post_obs[h_index][
+					inputs[i_index] = this->existing_post_obs[h_index][
 						new_match_input_indexes[i_index]][new_match_input_obs_indexes[i_index]];
 				}
 			}

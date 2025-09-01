@@ -49,8 +49,6 @@ void recursive_add_child(Scope* curr_parent,
 }
 
 void BranchExperiment::add(SolutionWrapper* wrapper) {
-	cout << "BranchExperiment add" << endl;
-
 	if (this->best_new_scope != NULL) {
 		wrapper->solution->scopes[this->best_new_scope->id] = this->best_new_scope;
 

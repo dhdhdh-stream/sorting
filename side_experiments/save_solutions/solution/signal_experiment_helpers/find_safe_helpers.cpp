@@ -91,8 +91,8 @@ void SignalExperiment::find_safe_backprop(
 	for (int i_index = 0; i_index < (int)wrapper->signal_experiment_instance_histories.size(); i_index++) {
 		SignalExperimentInstanceHistory* instance_history = wrapper->signal_experiment_instance_histories[i_index];
 
-		this->existing_pre_obs[this->solution_index].push_back(instance_history->scope_history->signal_pre_obs);
-		this->existing_post_obs[this->solution_index].push_back(instance_history->scope_history->signal_post_obs);
+		this->existing_pre_obs.push_back(instance_history->scope_history->signal_pre_obs);
+		this->existing_post_obs.push_back(instance_history->scope_history->signal_post_obs);
 
 		double inner_target_val;
 		if (instance_history->signal_needed_from == NULL) {
@@ -101,7 +101,7 @@ void SignalExperiment::find_safe_backprop(
 			inner_target_val = calc_signal(instance_history->signal_needed_from,
 										   wrapper);
 		}
-		this->existing_scores[this->solution_index].push_back(inner_target_val);
+		this->existing_scores.push_back(inner_target_val);
 	}
 
 	this->solution_index++;

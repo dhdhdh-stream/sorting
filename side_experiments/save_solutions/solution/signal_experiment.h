@@ -33,13 +33,9 @@ public:
 
 	std::vector<std::vector<double>> new_scores;
 
-	std::vector<std::vector<std::vector<std::vector<double>>>> existing_pre_obs;
-	std::vector<std::vector<std::vector<std::vector<double>>>> existing_post_obs;
-	std::vector<std::vector<double>> existing_scores;
-	/**
-	 * - track seperately for each solution
-	 *   - use to calculate structure score
-	 */
+	std::vector<std::vector<std::vector<double>>> existing_pre_obs;
+	std::vector<std::vector<std::vector<double>>> existing_post_obs;
+	std::vector<double> existing_scores;
 
 	double average_instances_per_run;
 	int num_instances_until_target;
@@ -128,10 +124,7 @@ public:
 private:
 	void set_actions(SolutionWrapper* wrapper);
 	void set_explore(SolutionWrapper* wrapper);
-	bool split_helper(std::vector<std::vector<std::vector<double>>>& positive_pre_obs,
-					  std::vector<std::vector<std::vector<double>>>& positive_post_obs,
-					  std::vector<double>& positive_scores,
-					  std::vector<bool>& new_match_input_is_pre,
+	bool split_helper(std::vector<bool>& new_match_input_is_pre,
 					  std::vector<int>& new_match_input_indexes,
 					  std::vector<int>& new_match_input_obs_indexes,
 					  SignalNetwork*& new_match_network);

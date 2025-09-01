@@ -259,6 +259,14 @@ void BranchExperiment::measure_backprop(double target_val,
 			}
 			double new_score = new_sum_score / (double)this->new_scores.size();
 
+			// temp
+			map<int, Signal*>::iterator it = wrapper->signals.find(this->scope_context->id);
+			if (it != wrapper->signals.end()) {
+				cout << "existing_score: " << existing_score << endl;
+				cout << "new_score: " << new_score << endl;
+				cout << endl;
+			}
+
 			#if defined(MDEBUG) && MDEBUG
 			if (new_score <= existing_score && rand()%2 == 0) {
 			#else
@@ -304,6 +312,9 @@ void BranchExperiment::measure_backprop(double target_val,
 			this->state_iter = 0;
 			#else
 			Solution* solution_copy = new Solution(wrapper->solution);
+			/**
+			 * - TODO: move scope_histories over
+			 */
 
 			add(wrapper);
 

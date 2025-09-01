@@ -30,7 +30,8 @@ default_random_engine generator;
 int main(int argc, char* argv[]) {
 	cout << "Starting..." << endl;
 
-	seed = (unsigned)time(NULL);
+	// seed = (unsigned)time(NULL);
+	seed = 1756690325;
 	srand(seed);
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
@@ -120,7 +121,7 @@ int main(int argc, char* argv[]) {
 			}
 		}
 
-		solution_wrapper->save("saves/", filename);
+		// solution_wrapper->save("saves/", filename);
 
 		solution_wrapper->save_for_display("../", "display.txt");
 
@@ -136,7 +137,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	solution_wrapper->clean_scopes();
-	solution_wrapper->save("saves/", filename);
+	// solution_wrapper->save("saves/", filename);
 
 	delete problem_type;
 	delete solution_wrapper;
