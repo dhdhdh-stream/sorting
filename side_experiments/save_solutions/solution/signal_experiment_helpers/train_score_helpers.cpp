@@ -20,10 +20,7 @@ const int TRAIN_ITERS = 30;
 const int TRAIN_ITERS = 300000;
 #endif /* MDEBUG */
 
-void SignalExperiment::train_score(vector<vector<vector<double>>>& positive_pre_obs_histories,
-								   vector<vector<vector<double>>>& positive_post_obs_histories,
-								   vector<double>& positive_target_val_histories,
-								   vector<vector<vector<double>>>& pre_obs_histories,
+void SignalExperiment::train_score(vector<vector<vector<double>>>& pre_obs_histories,
 								   vector<vector<vector<double>>>& post_obs_histories,
 								   vector<double>& target_val_histories,
 								   vector<bool>& new_score_input_is_pre,
@@ -57,44 +54,24 @@ void SignalExperiment::train_score(vector<vector<vector<double>>>& positive_pre_
 
 	new_score_network = new SignalNetwork((int)new_score_input_is_pre.size());
 
-	uniform_int_distribution<int> is_positive_distribution(0, 1);
-	uniform_int_distribution<int> positive_distribution(0, positive_pre_obs_histories.size()-1);
-	uniform_int_distribution<int> negative_distribution(0, pre_obs_histories.size()-1);
+	uniform_int_distribution<int> random_distribution(0, pre_obs_histories.size()-1);
 	for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
+		int h_index = random_distribution(generator);
+
 		vector<double> inputs(new_score_input_is_pre.size());
-		double target_val;
-
-		bool is_positive = is_positive_distribution(generator) == 0;
-
-		if (is_positive) {
-			int h_index = positive_distribution(generator);
-			for (int i_index = 0; i_index < (int)new_score_input_is_pre.size(); i_index++) {
-				if (new_score_input_is_pre[i_index]) {
-					inputs[i_index] = positive_pre_obs_histories[h_index][
-						new_score_input_indexes[i_index]][new_score_input_obs_indexes[i_index]];
-				} else {
-					inputs[i_index] = positive_post_obs_histories[h_index][
-						new_score_input_indexes[i_index]][new_score_input_obs_indexes[i_index]];
-				}
+		for (int i_index = 0; i_index < (int)new_score_input_is_pre.size(); i_index++) {
+			if (new_score_input_is_pre[i_index]) {
+				inputs[i_index] = pre_obs_histories[h_index][
+					new_score_input_indexes[i_index]][new_score_input_obs_indexes[i_index]];
+			} else {
+				inputs[i_index] = post_obs_histories[h_index][
+					new_score_input_indexes[i_index]][new_score_input_obs_indexes[i_index]];
 			}
-			target_val = positive_target_val_histories[h_index];
-		} else {
-			int h_index = negative_distribution(generator);
-			for (int i_index = 0; i_index < (int)new_score_input_is_pre.size(); i_index++) {
-				if (new_score_input_is_pre[i_index]) {
-					inputs[i_index] = pre_obs_histories[h_index][
-						new_score_input_indexes[i_index]][new_score_input_obs_indexes[i_index]];
-				} else {
-					inputs[i_index] = post_obs_histories[h_index][
-						new_score_input_indexes[i_index]][new_score_input_obs_indexes[i_index]];
-				}
-			}
-			target_val = target_val_histories[h_index];
 		}
 
 		new_score_network->activate(inputs);
 
-		double error = target_val - new_score_network->output->acti_vals[0];
+		double error = target_val_histories[h_index] - new_score_network->output->acti_vals[0];
 
 		new_score_network->backprop(error);
 	}

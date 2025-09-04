@@ -119,15 +119,17 @@ bool hit_helper(ScopeHistory* scope_history,
 
 Scope* create_new_scope(Scope* scope_context);
 
-double calc_signal(ScopeNode* signal_scope_node,
-				   ScopeHistory* signal_needed_from);
-
 void clean_scope(Scope* scope,
 				 SolutionWrapper* wrapper);
 
 void update_counts(ScopeHistory* scope_history,
 				   int h_index);
 
+void calc_signal(std::vector<std::vector<double>>& pre_obs_histories,
+				 std::vector<std::vector<double>>& post_obs_histories,
+				 std::vector<SignalInstance*>& instances,
+				 bool& is_match,
+				 double& val);
 double calc_signal(std::vector<std::vector<double>>& pre_obs_histories,
 				   std::vector<std::vector<double>>& post_obs_histories,
 				   std::vector<SignalInstance*>& potential_signals,

@@ -91,8 +91,8 @@ void SignalExperiment::find_safe_backprop(
 	for (int i_index = 0; i_index < (int)wrapper->signal_experiment_instance_histories.size(); i_index++) {
 		SignalExperimentInstanceHistory* instance_history = wrapper->signal_experiment_instance_histories[i_index];
 
-		this->existing_pre_obs.push_back(instance_history->scope_history->signal_pre_obs);
-		this->existing_post_obs.push_back(instance_history->scope_history->signal_post_obs);
+		this->positive_pre_obs.push_back(instance_history->scope_history->signal_pre_obs);
+		this->positive_post_obs.push_back(instance_history->scope_history->signal_post_obs);
 
 		double inner_target_val;
 		if (instance_history->signal_needed_from == NULL) {
@@ -101,11 +101,11 @@ void SignalExperiment::find_safe_backprop(
 			inner_target_val = calc_signal(instance_history->signal_needed_from,
 										   wrapper);
 		}
-		this->existing_scores.push_back(inner_target_val);
+		this->positive_scores.push_back(inner_target_val);
 	}
 
 	this->solution_index++;
-	if (this->solution_index >= (int)wrapper->solutions.size()) {
+	if (this->solution_index >= (int)wrapper->positive_solutions.size()) {
 		this->solution_index = 0;
 		this->state_iter++;
 
@@ -114,19 +114,19 @@ void SignalExperiment::find_safe_backprop(
 				|| this->state_iter == CHECK_2_NUM_ITERS
 				|| this->state_iter == CHECK_3_NUM_ITERS) {
 			double sum_normalized = 0.0;
-			for (int s_index = 0; s_index < (int)wrapper->solutions.size(); s_index++) {
+			for (int s_index = 0; s_index < (int)wrapper->positive_solutions.size(); s_index++) {
 				double sum_vals = 0.0;
 				for (int h_index = 0; h_index < (int)this->new_scores[s_index].size(); h_index++) {
 					sum_vals += this->new_scores[s_index][h_index];
 				}
 				double new_val_average = sum_vals / (double)this->new_scores[s_index].size();
 
-				double val_diff = new_val_average - wrapper->solutions[s_index]->curr_val_average;
+				double val_diff = new_val_average - wrapper->positive_solutions[s_index]->curr_val_average;
 
-				sum_normalized += val_diff / wrapper->solutions[s_index]->curr_val_standard_deviation;
+				sum_normalized += val_diff / wrapper->positive_solutions[s_index]->curr_val_standard_deviation;
 			}
 
-			int num_samples = this->state_iter * (int)wrapper->solutions.size();
+			int num_samples = this->state_iter * (int)wrapper->positive_solutions.size();
 			double normalized_average = sum_normalized / (double)num_samples;
 			double t_score = normalized_average * sqrt(num_samples);
 			if (t_score < AVERAGE_MIN_T_SCORE) {
@@ -134,15 +134,15 @@ void SignalExperiment::find_safe_backprop(
 			}
 		}
 		if (this->state_iter == CHECK_3_NUM_ITERS) {
-			for (int s_index = 0; s_index < (int)wrapper->solutions.size(); s_index++) {
+			for (int s_index = 0; s_index < (int)wrapper->positive_solutions.size(); s_index++) {
 				double sum_vals = 0.0;
 				for (int h_index = 0; h_index < (int)this->new_scores[s_index].size(); h_index++) {
 					sum_vals += this->new_scores[s_index][h_index];
 				}
 				double new_val_average = sum_vals / (double)this->new_scores[s_index].size();
 
-				double val_diff = new_val_average - wrapper->solutions[s_index]->curr_val_average;
-				double t_score = val_diff / (wrapper->solutions[s_index]->curr_val_standard_deviation
+				double val_diff = new_val_average - wrapper->positive_solutions[s_index]->curr_val_average;
+				double t_score = val_diff / (wrapper->positive_solutions[s_index]->curr_val_standard_deviation
 					/ sqrt((double)this->new_scores[s_index].size()));
 
 				if (t_score < INDIVIDUAL_MIN_T_SCORE) {
@@ -162,14 +162,14 @@ void SignalExperiment::find_safe_backprop(
 
 			this->new_scores.clear();
 
-			this->existing_pre_obs.clear();
-			this->existing_post_obs.clear();
-			this->existing_scores.clear();
+			this->positive_pre_obs.clear();
+			this->positive_post_obs.clear();
+			this->positive_scores.clear();
 
-			for (int s_index = 0; s_index < (int)this->signals.size(); s_index++) {
-				delete this->signals[s_index];
+			for (int s_index = 0; s_index < (int)this->instances.size(); s_index++) {
+				delete this->instances[s_index];
 			}
-			this->signals.clear();
+			this->instances.clear();
 
 			set_actions(wrapper);
 

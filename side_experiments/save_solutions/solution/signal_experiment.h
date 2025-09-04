@@ -1,3 +1,27 @@
+/**
+ * - use explore for average misguess
+ * 
+ * - current needs to be as accurate as possible
+ *   - i.e., need to try to match all
+ * 
+ * - trap and explore for counterexamples
+ *   - trap doesn't need to all be matched
+ *     - non-matches will have low score so won't be a threat
+ *   - negative predictions don't need to be accurate
+ *     - just need to be slightly negative for explore to shy away
+ * 
+ * - positive for generalization
+ *   - wants to be matched as much as possible
+ * 
+ * - gather distribution:
+ *   - 25% current
+ *   - 25% existing
+ *   - 25% trap
+ *   - 25% explore
+ * - determine matches from gathered
+ *   - resulting distribution will likely not match this initial distribution
+ */
+
 #ifndef SIGNAL_EXPERIMENT_H
 #define SIGNAL_EXPERIMENT_H
 
@@ -13,11 +37,19 @@ class SignalInstance;
 class SignalNetwork;
 class SolutionWrapper;
 
-const int SIGNAL_EXPERIMENT_STATE_FIND_SAFE = 0;
-const int SIGNAL_EXPERIMENT_STATE_EXPLORE = 1;
-const int SIGNAL_EXPERIMENT_STATE_DONE = 2;
+const int SIGNAL_EXPERIMENT_STATE_MEASURE_POSITIVE = 0;
+const int SIGNAL_EXPERIMENT_STATE_FIND_SAFE = 1;
+/**
+ * - don't bother with find safe for traps
+ */
+const int SIGNAL_EXPERIMENT_STATE_GATHER_TRAPS = 2;
+const int SIGNAL_EXPERIMENT_STATE_GATHER_CURRENT = 3;
+const int SIGNAL_EXPERIMENT_STATE_EXPLORE = 4;
+const int SIGNAL_EXPERIMENT_STATE_DONE = 5;
 
-const int SIGNAL_EXPERIMENT_STATE_VERIFY = 3;
+const int SIGNAL_EXPERIMENT_SOLUTION_TYPE_POSITIVE = 0;
+const int SIGNAL_EXPERIMENT_SOLUTION_TYPE_TRAP = 1;
+const int SIGNAL_EXPERIMENT_SOLUTION_TYPE_CURRENT = 2;
 
 class SignalExperimentHistory;
 class SignalExperiment : public AbstractExperiment {
@@ -26,16 +58,30 @@ public:
 
 	int state;
 	int state_iter;
+	int solution_type;
 	int solution_index;
+
+	/**
+	 * - using current signal actions
+	 */
+	std::vector<std::vector<double>> existing_scores;
 
 	std::vector<int> pre_actions;
 	std::vector<int> post_actions;
 
 	std::vector<std::vector<double>> new_scores;
 
-	std::vector<std::vector<std::vector<double>>> existing_pre_obs;
-	std::vector<std::vector<std::vector<double>>> existing_post_obs;
-	std::vector<double> existing_scores;
+	std::vector<std::vector<std::vector<double>>> positive_pre_obs;
+	std::vector<std::vector<std::vector<double>>> positive_post_obs;
+	std::vector<double> positive_scores;
+
+	std::vector<std::vector<std::vector<double>>> trap_pre_obs;
+	std::vector<std::vector<std::vector<double>>> trap_post_obs;
+	std::vector<double> trap_scores;
+
+	std::vector<std::vector<std::vector<double>>> current_pre_obs;
+	std::vector<std::vector<std::vector<double>>> current_post_obs;
+	std::vector<double> current_scores;
 
 	double average_instances_per_run;
 	int num_instances_until_target;
@@ -53,8 +99,7 @@ public:
 	std::vector<std::vector<std::vector<double>>> explore_post_obs;
 	std::vector<double> explore_scores;
 
-	std::vector<SignalInstance*> signals;
-	double miss_average_guess;
+	std::vector<SignalInstance*> instances;
 
 	SignalExperiment(int scope_context_id,
 					 SolutionWrapper* wrapper);
@@ -103,42 +148,25 @@ public:
 	void explore_backprop(double target_val,
 						  SolutionWrapper* wrapper);
 
-	bool verify_check_signal(std::vector<double>& obs,
-							 int& action,
-							 bool& is_next,
-							 SolutionWrapper* wrapper);
-	void verify_check_activate(AbstractNode* experiment_node,
-							   bool is_branch,
-							   SolutionWrapper* wrapper);
-	void verify_experiment_step(std::vector<double>& obs,
-								int& action,
-								bool& is_next,
-								bool& fetch_action,
-								SolutionWrapper* wrapper);
-	void verify_set_action(int action,
-						   SolutionWrapper* wrapper);
-	void verify_experiment_exit_step(SolutionWrapper* wrapper);
-	void verify_backprop(double target_val,
-						 SolutionWrapper* wrapper);
-
 private:
 	void set_actions(SolutionWrapper* wrapper);
 	void set_explore(SolutionWrapper* wrapper);
-	bool split_helper(std::vector<bool>& new_match_input_is_pre,
+	bool check_instance_still_good(SignalInstance* instance,
+								   SolutionWrapper* wrapper);
+	bool split_helper(std::vector<bool>& positive_has_match,
+					  std::vector<bool>& current_has_match,
+					  std::vector<bool>& new_match_input_is_pre,
 					  std::vector<int>& new_match_input_indexes,
 					  std::vector<int>& new_match_input_obs_indexes,
 					  SignalNetwork*& new_match_network);
-	void train_score(std::vector<std::vector<std::vector<double>>>& positive_pre_obs_histories,
-					 std::vector<std::vector<std::vector<double>>>& positive_post_obs_histories,
-					 std::vector<double>& positive_target_val_histories,
-					 std::vector<std::vector<std::vector<double>>>& pre_obs_histories,
+	void train_score(std::vector<std::vector<std::vector<double>>>& pre_obs_histories,
 					 std::vector<std::vector<std::vector<double>>>& post_obs_histories,
 					 std::vector<double>& target_val_histories,
 					 std::vector<bool>& new_score_input_is_pre,
 					 std::vector<int>& new_score_input_indexes,
 					 std::vector<int>& new_score_input_obs_indexes,
 					 SignalNetwork*& new_score_network);
-	bool create_reward_signal_helper(SolutionWrapper* wrapper);
+	void create_reward_signal_helper(SolutionWrapper* wrapper);
 };
 
 class SignalExperimentInstanceHistory {

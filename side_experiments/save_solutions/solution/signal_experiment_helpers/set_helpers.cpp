@@ -34,7 +34,7 @@ void SignalExperiment::set_actions(SolutionWrapper* wrapper) {
 		}
 	} else {
 		for (int s_index = 0; s_index < (int)it->second->instances.size(); s_index++) {
-			this->signals.push_back(new SignalInstance(it->second->instances[s_index]));
+			this->instances.push_back(new SignalInstance(it->second->instances[s_index]));
 		}
 
 		/**
@@ -64,8 +64,8 @@ void SignalExperiment::set_actions(SolutionWrapper* wrapper) {
 		for (int a_index = 0; a_index < pre_insert_length; a_index++) {
 			this->pre_actions.insert(this->pre_actions.begin() + pre_index, action_distribution(generator));
 		}
-		for (int s_index = 0; s_index < (int)this->signals.size(); s_index++) {
-			this->signals[s_index]->insert(true,
+		for (int s_index = 0; s_index < (int)this->instances.size(); s_index++) {
+			this->instances[s_index]->insert(true,
 										   pre_index,
 										   pre_exit_index,
 										   pre_insert_length);
@@ -87,19 +87,19 @@ void SignalExperiment::set_actions(SolutionWrapper* wrapper) {
 		for (int a_index = 0; a_index < post_insert_length; a_index++) {
 			this->post_actions.insert(this->post_actions.begin() + post_index, action_distribution(generator));
 		}
-		for (int s_index = 0; s_index < (int)this->signals.size(); s_index++) {
-			this->signals[s_index]->insert(false,
+		for (int s_index = 0; s_index < (int)this->instances.size(); s_index++) {
+			this->instances[s_index]->insert(false,
 										   post_index,
 										   post_exit_index,
 										   post_insert_length);
 		}
 	}
 
-	this->new_scores = vector<vector<double>>(wrapper->solutions.size());
+	this->new_scores = vector<vector<double>>(wrapper->positive_solutions.size());
 }
 
 void SignalExperiment::set_explore(SolutionWrapper* wrapper) {
-	Scope* scope = wrapper->solutions[this->solution_index]->scopes[this->scope_context_id];
+	Scope* scope = wrapper->positive_solutions[this->solution_index]->scopes[this->scope_context_id];
 
 	vector<pair<AbstractNode*,bool>> possible_explore_nodes;
 	for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();

@@ -161,23 +161,13 @@ void SignalExperiment::explore_backprop(
 		this->explore_scores.push_back(inner_target_val);
 
 		this->solution_index++;
-		if (this->solution_index >= (int)wrapper->solutions.size()) {
+		if (this->solution_index >= (int)wrapper->positive_solutions.size()) {
 			this->solution_index = 0;
 			this->state_iter++;
 
 			if (this->state_iter >= EXPLORE_ITERS) {
-				bool is_success = create_reward_signal_helper(wrapper);
-				if (is_success) {
-					this->state = SIGNAL_EXPERIMENT_STATE_VERIFY;
-					this->solution_index = 0;
-
-					set_explore(wrapper);
-
-					uniform_int_distribution<int> until_distribution(0, (int)this->average_instances_per_run-1);
-					this->num_instances_until_target = 1 + until_distribution(generator);
-				} else {
-					this->state = SIGNAL_EXPERIMENT_STATE_DONE;
-				}
+				create_reward_signal_helper(wrapper);
+				this->state = SIGNAL_EXPERIMENT_STATE_DONE;
 				return;
 			}
 		}

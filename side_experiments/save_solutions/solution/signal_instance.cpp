@@ -1,5 +1,6 @@
 #include "signal_instance.h"
 
+#include "constants.h"
 #include "signal_network.h"
 
 using namespace std;
@@ -67,6 +68,42 @@ SignalInstance::~SignalInstance() {
 	if (this->score_network != NULL) {
 		delete this->score_network;
 	}
+}
+
+bool SignalInstance::is_match(vector<vector<double>>& pre_obs_histories,
+							  vector<vector<double>>& post_obs_histories) {
+	vector<double> input_vals(this->match_input_is_pre.size());
+	for (int i_index = 0; i_index < (int)this->match_input_is_pre.size(); i_index++) {
+		if (this->match_input_is_pre[i_index]) {
+			input_vals[i_index] = pre_obs_histories[this->match_input_indexes[i_index]][this->match_input_obs_indexes[i_index]];
+		} else {
+			input_vals[i_index] = post_obs_histories[this->match_input_indexes[i_index]][this->match_input_obs_indexes[i_index]];
+		}
+	}
+	this->match_network->activate(input_vals);
+	#if defined(MDEBUG) && MDEBUG
+	if (rand()%3 == 0) {
+	#else
+	if (this->match_network->output->acti_vals[0] >= MATCH_WEIGHT) {
+	#endif /* MDEBUG */
+		return true;
+	} else {
+		return false;
+	}
+}
+
+double SignalInstance::calc_score(vector<vector<double>>& pre_obs_histories,
+								  vector<vector<double>>& post_obs_histories) {
+	vector<double> input_vals(this->score_input_is_pre.size());
+	for (int i_index = 0; i_index < (int)this->score_input_is_pre.size(); i_index++) {
+		if (this->score_input_is_pre[i_index]) {
+			input_vals[i_index] = pre_obs_histories[this->score_input_indexes[i_index]][this->score_input_obs_indexes[i_index]];
+		} else {
+			input_vals[i_index] = post_obs_histories[this->score_input_indexes[i_index]][this->score_input_obs_indexes[i_index]];
+		}
+	}
+	this->score_network->activate(input_vals);
+	return this->score_network->output->acti_vals[0];
 }
 
 void SignalInstance::insert(bool is_pre,

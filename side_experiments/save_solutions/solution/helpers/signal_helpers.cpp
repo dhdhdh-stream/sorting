@@ -12,6 +12,50 @@
 
 using namespace std;
 
+void calc_signal(vector<vector<double>>& pre_obs_histories,
+				 vector<vector<double>>& post_obs_histories,
+				 vector<SignalInstance*>& instances,
+				 bool& is_match,
+				 double& val) {
+	for (int s_index = 0; s_index < (int)instances.size(); s_index++) {
+		vector<double> input_vals(instances[s_index]->match_input_is_pre.size());
+		for (int i_index = 0; i_index < (int)instances[s_index]->match_input_is_pre.size(); i_index++) {
+			if (instances[s_index]->match_input_is_pre[i_index]) {
+				input_vals[i_index] = pre_obs_histories[
+					instances[s_index]->match_input_indexes[i_index]][instances[s_index]->match_input_obs_indexes[i_index]];
+			} else {
+				input_vals[i_index] = post_obs_histories[
+					instances[s_index]->match_input_indexes[i_index]][instances[s_index]->match_input_obs_indexes[i_index]];
+			}
+		}
+		instances[s_index]->match_network->activate(input_vals);
+		#if defined(MDEBUG) && MDEBUG
+		if (rand()%3 == 0) {
+		#else
+		if (instances[s_index]->match_network->output->acti_vals[0] >= MATCH_WEIGHT) {
+		#endif /* MDEBUG */
+			vector<double> input_vals(instances[s_index]->score_input_is_pre.size());
+			for (int i_index = 0; i_index < (int)instances[s_index]->score_input_is_pre.size(); i_index++) {
+				if (instances[s_index]->score_input_is_pre[i_index]) {
+					input_vals[i_index] = pre_obs_histories[
+						instances[s_index]->score_input_indexes[i_index]][instances[s_index]->score_input_obs_indexes[i_index]];
+				} else {
+					input_vals[i_index] = post_obs_histories[
+						instances[s_index]->score_input_indexes[i_index]][instances[s_index]->score_input_obs_indexes[i_index]];
+				}
+			}
+			instances[s_index]->score_network->activate(input_vals);
+
+			is_match = true;
+			val = instances[s_index]->score_network->output->acti_vals[0];
+			return;
+		}
+	}
+
+	is_match = false;
+	return;
+}
+
 double calc_signal(vector<vector<double>>& pre_obs_histories,
 				   vector<vector<double>>& post_obs_histories,
 				   vector<SignalInstance*>& potential_signals,
@@ -58,7 +102,7 @@ double calc_signal(ScopeHistory* signal_needed_from,
 	return calc_signal(signal_needed_from->signal_pre_obs,
 					   signal_needed_from->signal_post_obs,
 					   signal->instances,
-					   signal->miss_average_guess);
+					   signal->default_guess);
 }
 
 bool check_signal(vector<double>& obs,

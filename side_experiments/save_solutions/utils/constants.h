@@ -28,7 +28,11 @@ const int MEASURE_ITERS = 1000;
 const int IMPROVEMENTS_PER_ITER = 2;
 #else
 /**
- * - large number to select good paths to prevent noise
+ * - large number to try to mitigate bad variance
+ * 
+ * - most important is to prevent backsliding
+ *   - there are safe, powerful ways to break local optima
+ *   - but if can backslide, then likely will backslide to nothing
  */
 const int IMPROVEMENTS_PER_ITER = 10;
 #endif /* MDEBUG */

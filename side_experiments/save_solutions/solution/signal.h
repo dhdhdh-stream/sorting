@@ -1,5 +1,8 @@
-// TODO: have to improve signal quality, have to learn from mistakes
-// - or else will get trapped
+/**
+ * - predict score relative to current average
+ *   - more likely for signal to predict relative than global true
+ *     - so predicting relative leads to less adjustments
+ */
 
 #ifndef SIGNAL_H
 #define SIGNAL_H
@@ -20,22 +23,24 @@ public:
 	 * - simply only worry about signal at end
 	 *   - impact of an explore will be calculated through train_existing step
 	 * 
-	 * - don't worry about signals within
-	 *   - simply live with imperfect signals
-	 *   - will always be signals missed within explores anyways
-	 *     - and will always be outer conflicts as well
-	 *   - and will always need sequence after explore to be meaningful anyways
+	 * - signals need to be perfect
+	 *   - at least for everything so far
+	 *   - at least when predicting good
+	 *   - anytime a trap is hit, either learn to recognize or give up on signal
 	 * 
-	 * - signals always predict immediate outer layer
-	 *   - instead of true score
-	 *     - but units still in true score
-	 *       - so can be directly compared against each other
-	 *   - to boost signal strength
+	 * - always perform signal actions
+	 *   - as experiments done in their presence
+	 *   - but for SignalExperiments, use current actions rather than original actions
 	 */
 	std::vector<int> signal_pre_actions;
 	std::vector<int> signal_post_actions;
 	std::vector<SignalInstance*> instances;
-	double miss_average_guess;
+	double default_guess;
+	/**
+	 * - simply average of random explore
+	 *   - doesn't need to be accurate
+	 *     - just a bad value that can be learned to avoid
+	 */
 
 	double signal_positive_misguess_average;
 	double signal_positive_misguess_standard_deviation;
@@ -44,6 +49,8 @@ public:
 	/**
 	 * - simply save between updates
 	 */
+	// TODO: remove, and recalculate
+	// - compare against existing
 
 	Signal();
 	Signal(std::ifstream& input_file);

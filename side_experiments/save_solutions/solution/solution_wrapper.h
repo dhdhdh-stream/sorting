@@ -35,7 +35,8 @@ public:
 	 * - use successful solutions rather than "successful" instances
 	 *   - "successful" instances can be more likely to be positive fluctuations
 	 */
-	std::vector<Solution*> solutions;
+	std::vector<Solution*> positive_solutions;
+	std::vector<Solution*> trap_solutions;
 	std::map<int, Signal*> signals;
 
 	/**
@@ -79,7 +80,6 @@ public:
 	~SolutionWrapper();
 
 	void init();
-	void init(int solution_index);
 	std::pair<bool,int> step(std::vector<double> obs);
 	void end();
 
@@ -88,9 +88,16 @@ public:
 	void set_action(int action);
 	void experiment_end(double result);
 
+	void measure_init();
+	std::tuple<bool,bool,int> measure_step(std::vector<double> obs);
+	void measure_end(double result);
+
+	void explore_init();
+	std::tuple<bool,bool,int> explore_step(std::vector<double> obs);
+	void explore_end(double result);
+
 	void signal_experiment_init();
 	std::tuple<bool,bool,int> signal_experiment_step(std::vector<double> obs);
-	void signal_experiment_set_action(int action);
 	void signal_experiment_end(double result);
 
 	#if defined(MDEBUG) && MDEBUG

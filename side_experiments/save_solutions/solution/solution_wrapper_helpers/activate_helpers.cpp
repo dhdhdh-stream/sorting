@@ -24,20 +24,6 @@ void SolutionWrapper::init() {
 	this->node_context.push_back(this->solution->scopes[0]->nodes[0]);
 }
 
-void SolutionWrapper::init(int solution_index) {
-	this->num_actions = 1;
-
-	#if defined(MDEBUG) && MDEBUG
-	this->run_index++;
-	this->starting_run_seed = this->run_index;
-	this->curr_run_seed = xorshift(this->starting_run_seed);
-	#endif /* MDEBUG */
-
-	ScopeHistory* scope_history = new ScopeHistory(this->solutions[solution_index]->scopes[0]);
-	this->scope_histories.push_back(scope_history);
-	this->node_context.push_back(this->solutions[solution_index]->scopes[0]->nodes[0]);
-}
-
 pair<bool,int> SolutionWrapper::step(vector<double> obs) {
 	int action;
 	bool is_next = false;

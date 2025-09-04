@@ -85,13 +85,13 @@ SolutionWrapper::SolutionWrapper(int num_obs,
 	this->solution = new Solution();
 	this->solution->load(input_file);
 
-	string num_solutions_line;
-	getline(input_file, num_solutions_line);
-	int num_solutions = stoi(num_solutions_line);
-	for (int s_index = 0; s_index < num_solutions; s_index++) {
+	string num_positive_solutions_line;
+	getline(input_file, num_positive_solutions_line);
+	int num_positive_solutions = stoi(num_positive_solutions_line);
+	for (int s_index = 0; s_index < num_positive_solutions; s_index++) {
 		Solution* l_solution = new Solution();
 		l_solution->load(input_file);
-		this->solutions.push_back(l_solution);
+		this->positive_solutions.push_back(l_solution);
 	}
 
 	string num_signals_line;
@@ -123,8 +123,8 @@ SolutionWrapper::SolutionWrapper(int num_obs,
 SolutionWrapper::~SolutionWrapper() {
 	delete this->solution;
 
-	for (int s_index = 0; s_index < (int)this->solutions.size(); s_index++) {
-		delete this->solutions[s_index];
+	for (int s_index = 0; s_index < (int)this->positive_solutions.size(); s_index++) {
+		delete this->positive_solutions[s_index];
 	}
 
 	for (map<int, Signal*>::iterator it = this->signals.begin();
@@ -181,11 +181,11 @@ void SolutionWrapper::save(string path,
 
 	this->solution->save(output_file);
 
-	cout << "this->solutions.size(): " << this->solutions.size() << endl;
+	cout << "this->positive_solutions.size(): " << this->positive_solutions.size() << endl;
 
-	output_file << this->solutions.size() << endl;
-	for (int s_index = 0; s_index < (int)this->solutions.size(); s_index++) {
-		this->solutions[s_index]->save(output_file);
+	output_file << this->positive_solutions.size() << endl;
+	for (int s_index = 0; s_index < (int)this->positive_solutions.size(); s_index++) {
+		this->positive_solutions[s_index]->save(output_file);
 	}
 
 	output_file << this->signals.size() << endl;

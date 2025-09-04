@@ -23,6 +23,11 @@ public:
 	SignalInstance(std::ifstream& input_file);
 	~SignalInstance();
 
+	bool is_match(std::vector<std::vector<double>>& pre_obs_histories,
+				  std::vector<std::vector<double>>& post_obs_histories);
+	double calc_score(std::vector<std::vector<double>>& pre_obs_histories,
+					  std::vector<std::vector<double>>& post_obs_histories);
+
 	void insert(bool is_pre,
 				int index,
 				int exit_index,

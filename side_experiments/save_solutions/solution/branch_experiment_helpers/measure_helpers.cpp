@@ -292,7 +292,7 @@ void BranchExperiment::measure_backprop(double target_val,
 			wrapper->solution->measure_update();
 
 			this->resulting_solution = wrapper->solution;
-			wrapper->solutions.push_back(this->resulting_solution);
+			wrapper->positive_solutions.push_back(this->resulting_solution);
 			wrapper->solution = solution_copy;
 
 			this->result = EXPERIMENT_RESULT_SUCCESS;

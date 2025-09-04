@@ -1,5 +1,47 @@
 // TODO: for ramp, schedule hits on start to minimize wasted cycles
 
+// TODO: iterative match
+// - first split, then fully train score
+//   - then train match according to whether helps
+
+// - save failed experiments as confusion to train against?
+//   - to help signal learn edge cases
+
+// - maybe also put extra emphasis on current solution
+//   - to best make improvements
+
+// - learn good
+// - learn true explore
+// - learn traps
+// - learn current?
+
+// - don't save solutions
+//   - instead save scopes
+//     - so apply all the different scope variations everywhere where scope is used
+//     - discard scope variations that no longer work with current solution
+//       - not independent anyways
+
+// - practice snapshot alarm/reward
+//   - but can worry later
+//     - still need to solve issue of bad signal
+//       - i.e., learning traps
+
+// - only activate signal when needed?
+
+// - don't have average misguess
+//   - return that missed, and have different situations handle differently
+
+// - add to trap when signal significantly better, but result worse
+// - or if result significantly worse
+
+// - TODO: evaluate current solution to see if is trap?
+
+// TODO: add solution index
+// - on trap, save both positive miss and negative miss
+
+// - or try to always guarantee that current solution fully guessed
+//   - if there's anything not guessed, likely to be mistake
+
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -50,51 +92,6 @@ int main(int argc, char* argv[]) {
 		filename = "main.txt";
 		solution_wrapper = new SolutionWrapper(
 			problem_type->num_obs());
-	}
-
-	// temp
-	delete solution_wrapper->solution;
-	{
-		solution_wrapper->solution = new Solution();
-
-		solution_wrapper->solution->timestamp = 0;
-		solution_wrapper->solution->curr_val_average = 0.0;
-		solution_wrapper->solution->curr_val_standard_deviation = 0.0;
-
-		/**
-		 * - even though scopes[0] will not be reused, still good to start with:
-		 *   - if artificially add empty scopes, may be difficult to extend from
-		 *     - and will then junk up explore
-		 *   - new scopes will be created from the reusable portions anyways
-		 */
-
-		Scope* new_scope = new Scope();
-		new_scope->id = 0;
-		solution_wrapper->solution->scopes[new_scope->id] = new_scope;
-
-		new_scope->node_counter = 0;
-
-		StartNode* start_node = new StartNode();
-		start_node->parent = new_scope;
-		start_node->id = new_scope->node_counter;
-		new_scope->node_counter++;
-		new_scope->nodes[start_node->id] = start_node;
-
-		ObsNode* end_node = new ObsNode();
-		end_node->parent = new_scope;
-		end_node->id = new_scope->node_counter;
-		new_scope->node_counter++;
-		new_scope->nodes[end_node->id] = end_node;
-
-		start_node->next_node_id = end_node->id;
-		start_node->next_node = end_node;
-
-		end_node->ancestor_ids.push_back(start_node->id);
-
-		end_node->next_node_id = -1;
-		end_node->next_node = NULL;
-
-		solution_wrapper->solution->clean();
 	}
 
 	#if defined(MDEBUG) && MDEBUG

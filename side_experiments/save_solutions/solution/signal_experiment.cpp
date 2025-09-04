@@ -15,7 +15,6 @@ SignalExperiment::SignalExperiment(int scope_context_id,
 	this->scope_context_id = scope_context_id;
 
 	this->new_scope = NULL;
-	this->miss_average_guess = 0.0;
 
 	set_actions(wrapper);
 
@@ -29,8 +28,8 @@ SignalExperiment::~SignalExperiment() {
 		delete this->new_scope;
 	}
 
-	for (int s_index = 0; s_index < (int)this->signals.size(); s_index++) {
-		delete this->signals[s_index];
+	for (int s_index = 0; s_index < (int)this->instances.size(); s_index++) {
+		delete this->instances[s_index];
 	}
 }
 

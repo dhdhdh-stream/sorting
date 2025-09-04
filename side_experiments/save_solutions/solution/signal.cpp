@@ -34,9 +34,9 @@ Signal::Signal(ifstream& input_file) {
 		this->instances.push_back(new SignalInstance(input_file));
 	}
 
-	string miss_average_guess_line;
-	getline(input_file, miss_average_guess_line);
-	this->miss_average_guess = stod(miss_average_guess_line);
+	string default_guess_line;
+	getline(input_file, default_guess_line);
+	this->default_guess = stod(default_guess_line);
 
 	string signal_positive_misguess_average_line;
 	getline(input_file, signal_positive_misguess_average_line);
@@ -77,7 +77,7 @@ void Signal::save(ofstream& output_file) {
 		this->instances[s_index]->save(output_file);
 	}
 
-	output_file << this->miss_average_guess << endl;
+	output_file << this->default_guess << endl;
 
 	output_file << this->signal_positive_misguess_average << endl;
 	output_file << this->signal_positive_misguess_standard_deviation << endl;

@@ -20,11 +20,6 @@ bool SignalExperiment::check_signal(vector<double>& obs,
 									action,
 									is_next,
 									wrapper);
-	case SIGNAL_EXPERIMENT_STATE_VERIFY:
-		return verify_check_signal(obs,
-								   action,
-								   is_next,
-								   wrapper);
 	}
 
 	return false;
@@ -38,11 +33,6 @@ void SignalExperiment::check_activate(AbstractNode* experiment_node,
 		explore_check_activate(experiment_node,
 							   is_branch,
 							   wrapper);
-		break;
-	case SIGNAL_EXPERIMENT_STATE_VERIFY:
-		verify_check_activate(experiment_node,
-							  is_branch,
-							  wrapper);
 		break;
 	}
 }
@@ -60,13 +50,6 @@ void SignalExperiment::experiment_step(std::vector<double>& obs,
 								fetch_action,
 								wrapper);
 		break;
-	case SIGNAL_EXPERIMENT_STATE_VERIFY:
-		verify_experiment_step(obs,
-							   action,
-							   is_next,
-							   fetch_action,
-							   wrapper);
-		break;
 	}
 }
 
@@ -77,10 +60,6 @@ void SignalExperiment::set_action(int action,
 		explore_set_action(action,
 						   wrapper);
 		break;
-	case SIGNAL_EXPERIMENT_STATE_VERIFY:
-		verify_set_action(action,
-						  wrapper);
-		break;
 	}
 }
 
@@ -88,9 +67,6 @@ void SignalExperiment::experiment_exit_step(SolutionWrapper* wrapper) {
 	switch (this->state) {
 	case SIGNAL_EXPERIMENT_STATE_EXPLORE:
 		explore_experiment_exit_step(wrapper);
-		break;
-	case SIGNAL_EXPERIMENT_STATE_VERIFY:
-		verify_experiment_exit_step(wrapper);
 		break;
 	}
 }
@@ -105,10 +81,6 @@ void SignalExperiment::backprop(double target_val,
 	case SIGNAL_EXPERIMENT_STATE_EXPLORE:
 		explore_backprop(target_val,
 						 wrapper);
-		break;
-	case SIGNAL_EXPERIMENT_STATE_VERIFY:
-		verify_backprop(target_val,
-						wrapper);
 		break;
 	}
 }

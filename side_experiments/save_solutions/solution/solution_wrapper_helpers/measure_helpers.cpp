@@ -1,35 +1,33 @@
-#if defined(MDEBUG) && MDEBUG
-
 #include "solution_wrapper.h"
 
-#include <iostream>
-
-#include "branch_node.h"
+#include "constants.h"
 #include "helpers.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
-#include "utilities.h"
 
 using namespace std;
 
-void SolutionWrapper::verify_init() {
+void SolutionWrapper::measure_init() {
 	this->num_actions = 1;
 
-	this->starting_run_seed = solution->verify_seeds[0];
-	cout << "this->starting_run_seed: " << this->starting_run_seed << endl;
+	#if defined(MDEBUG) && MDEBUG
+	this->run_index++;
+	this->starting_run_seed = this->run_index;
 	this->curr_run_seed = xorshift(this->starting_run_seed);
-	solution->verify_seeds.erase(solution->verify_seeds.begin());
+	#endif /* MDEBUG */
 
 	ScopeHistory* scope_history = new ScopeHistory(this->solution->scopes[0]);
 	this->scope_histories.push_back(scope_history);
 	this->node_context.push_back(this->solution->scopes[0]->nodes[0]);
 }
 
-pair<bool,int> SolutionWrapper::verify_step(vector<double> obs) {
+tuple<bool,bool,int> SolutionWrapper::measure_step(vector<double> obs) {
 	int action;
 	bool is_next = false;
 	bool is_done = false;
+	bool fetch_action = false;
+
 	while (!is_next) {
 		bool is_signal = check_signal(obs,
 									  action,
@@ -45,26 +43,18 @@ pair<bool,int> SolutionWrapper::verify_step(vector<double> obs) {
 					scope_node->exit_step(this);
 				}
 			} else {
-				if (this->node_context.back()->type == NODE_TYPE_BRANCH) {
-					BranchNode* branch_node = (BranchNode*)this->node_context.back();
-					branch_node->verify_step(obs,
-											 action,
-											 is_next,
-											 this);
-				} else {
-					this->node_context.back()->step(obs,
-													action,
-													is_next,
-													this);
-				}
+				this->node_context.back()->step(obs,
+												action,
+												is_next,
+												this);
 			}
 		}
 	}
 
-	return {is_done, action};
+	return tuple<bool,bool,int>{is_done, fetch_action, action};
 }
 
-void SolutionWrapper::verify_end() {
+void SolutionWrapper::measure_end(double result) {
 	while (true) {
 		if (this->node_context.back() == NULL) {
 			if (this->scope_histories.size() == 1) {
@@ -78,10 +68,13 @@ void SolutionWrapper::verify_end() {
 		}
 	}
 
-	delete this->scope_histories[0];
+	this->solution->existing_scope_histories.push_back(this->scope_histories[0]);
+	this->solution->existing_target_val_histories.push_back(result);
 
 	this->scope_histories.clear();
 	this->node_context.clear();
-}
 
-#endif /* MDEBUG */
+	if (this->solution->existing_scope_histories.size() == MEASURE_ITERS) {
+		this->solution->measure_update();
+	}
+}
