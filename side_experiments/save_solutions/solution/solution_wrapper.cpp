@@ -59,8 +59,14 @@ SolutionWrapper::SolutionWrapper(int num_obs) {
 		this->solution->clean();
 	}
 
+	this->last_signal_experiment_timestamp = 0;
+
 	this->curr_experiment = NULL;
 	this->best_experiment = NULL;
+
+	this->curr_signal_experiment = NULL;
+	this->best_signal_experiment = NULL;
+
 	this->improvement_iter = 0;
 
 	this->experiment_overall_history = NULL;
@@ -107,10 +113,16 @@ SolutionWrapper::SolutionWrapper(int num_obs,
 		this->signals[scope_id] = signal;
 	}
 
+	string last_signal_experiment_timestamp_line;
+	getline(input_file, last_signal_experiment_timestamp_line);
+	this->last_signal_experiment_timestamp = stoi(last_signal_experiment_timestamp_line);
+
 	input_file.close();
 
 	this->curr_experiment = NULL;
 	this->best_experiment = NULL;
+	this->curr_signal_experiment = NULL;
+	this->best_signal_experiment = NULL;
 	this->improvement_iter = 0;
 
 	this->experiment_overall_history = NULL;
@@ -194,6 +206,8 @@ void SolutionWrapper::save(string path,
 		output_file << it->first << endl;
 		it->second->save(output_file);
 	}
+
+	output_file << this->last_signal_experiment_timestamp << endl;
 
 	output_file.close();
 

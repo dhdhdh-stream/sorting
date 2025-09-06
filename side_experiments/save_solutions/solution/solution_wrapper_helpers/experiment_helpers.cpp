@@ -13,7 +13,7 @@
 using namespace std;
 
 void SolutionWrapper::experiment_init() {
-	if (this->signal_experiment != NULL) {
+	if (this->curr_signal_experiment != NULL) {
 		signal_experiment_init();
 	} else if (this->solution->existing_scope_histories.size() < MEASURE_ITERS) {
 		measure_init();
@@ -23,7 +23,7 @@ void SolutionWrapper::experiment_init() {
 }
 
 tuple<bool,bool,int> SolutionWrapper::experiment_step(vector<double> obs) {
-	if (this->signal_experiment != NULL) {
+	if (this->curr_signal_experiment != NULL) {
 		return signal_experiment_step(obs);
 	} else if (this->solution->existing_scope_histories.size() < MEASURE_ITERS) {
 		return measure_step(obs);
@@ -39,7 +39,7 @@ void SolutionWrapper::set_action(int action) {
 }
 
 void SolutionWrapper::experiment_end(double result) {
-	if (this->signal_experiment != NULL) {
+	if (this->curr_signal_experiment != NULL) {
 		signal_experiment_end(result);
 	} else if (this->solution->existing_scope_histories.size() < MEASURE_ITERS) {
 		experiment_end(result);

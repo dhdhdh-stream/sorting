@@ -158,8 +158,8 @@ bool signal_experiment_check_signal(vector<double>& obs,
 	ScopeHistory* scope_history = wrapper->scope_histories.back();
 	Scope* scope = scope_history->scope;
 
-	if (scope->id == wrapper->signal_experiment->scope_context_id) {
-		return wrapper->signal_experiment->check_signal(
+	if (scope->id == wrapper->curr_signal_experiment->scope_context_id) {
+		return wrapper->curr_signal_experiment->check_signal(
 			obs,
 			action,
 			is_next,

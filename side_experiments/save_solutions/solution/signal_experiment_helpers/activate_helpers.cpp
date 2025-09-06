@@ -10,6 +10,11 @@ bool SignalExperiment::check_signal(vector<double>& obs,
 									bool& is_next,
 									SolutionWrapper* wrapper) {
 	switch (this->state) {
+	case SIGNAL_EXPERIMENT_STATE_MEASURE_POSITIVE:
+		return measure_positive_check_signal(obs,
+											 action,
+											 is_next,
+											 wrapper);
 	case SIGNAL_EXPERIMENT_STATE_FIND_SAFE:
 		return find_safe_check_signal(obs,
 									  action,
@@ -74,6 +79,10 @@ void SignalExperiment::experiment_exit_step(SolutionWrapper* wrapper) {
 void SignalExperiment::backprop(double target_val,
 								SolutionWrapper* wrapper) {
 	switch (this->state) {
+	case SIGNAL_EXPERIMENT_STATE_MEASURE_POSITIVE:
+		measure_positive_backprop(target_val,
+								  wrapper);
+		break;
 	case SIGNAL_EXPERIMENT_STATE_FIND_SAFE:
 		find_safe_backprop(target_val,
 						   wrapper);

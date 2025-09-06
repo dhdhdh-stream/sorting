@@ -95,7 +95,7 @@ void SignalExperiment::set_actions(SolutionWrapper* wrapper) {
 		}
 	}
 
-	this->new_scores = vector<vector<double>>(wrapper->positive_solutions.size());
+	this->new_positive_scores = vector<vector<double>>(wrapper->positive_solutions.size());
 }
 
 void SignalExperiment::set_explore(SolutionWrapper* wrapper) {

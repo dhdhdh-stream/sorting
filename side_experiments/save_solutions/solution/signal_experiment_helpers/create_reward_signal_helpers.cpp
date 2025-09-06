@@ -10,6 +10,8 @@
 
 #include "signal_experiment.h"
 
+#include <cmath>
+
 #include "constants.h"
 #include "helpers.h"
 #include "signal_instance.h"
@@ -27,7 +29,7 @@ const int MATCH_TYPE_EXPLORE = 3;
 #if defined(MDEBUG) && MDEBUG
 const int SPLIT_NUM_TRIES = 3;
 #else
-const int SPLIT_NUM_TRIES = 10;
+const int SPLIT_NUM_TRIES = 20;
 #endif /* MDEBUG */
 
 const double MIN_MATCH_RATIO = 0.04;
@@ -334,7 +336,81 @@ void SignalExperiment::create_reward_signal_helper(SolutionWrapper* wrapper) {
 					match_new_predicted[m_index] = new_score_network->output->acti_vals[0];
 				}
 
-				
+				double curr_sum_misguess = 0.0;
+				for (int m_index = 0; m_index < (int)match_pre_obs.size(); m_index++) {
+					curr_sum_misguess += (match_target_vals[m_index] - match_curr_predicted[m_index])
+						* (match_target_vals[m_index] - match_curr_predicted[m_index]);
+				}
+				double curr_misguess_average = curr_sum_misguess / (double)match_pre_obs.size();
+
+				double curr_sum_misguess_variance = 0.0;
+				for (int m_index = 0; m_index < (int)match_pre_obs.size(); m_index++) {
+					double curr_misguess = (match_target_vals[m_index] - match_curr_predicted[m_index])
+						* (match_target_vals[m_index] - match_curr_predicted[m_index]);
+					curr_sum_misguess_variance += (curr_misguess - curr_misguess_average)
+						* (curr_misguess - curr_misguess_average);
+				}
+				double curr_misguess_standard_deviation = sqrt(curr_sum_misguess_variance / (double)match_pre_obs.size());
+
+				double new_sum_misguess = 0.0;
+				for (int m_index = 0; m_index < (int)match_pre_obs.size(); m_index++) {
+					new_sum_misguess += (match_target_vals[m_index] - match_new_predicted[m_index])
+						* (match_target_vals[m_index] - match_new_predicted[m_index]);
+				}
+				double new_misguess_average = new_sum_misguess / (double)match_pre_obs.size();
+
+				double new_sum_misguess_variance = 0.0;
+				for (int m_index = 0; m_index < (int)match_pre_obs.size(); m_index++) {
+					double new_misguess = (match_target_vals[m_index] - match_new_predicted[m_index])
+						* (match_target_vals[m_index] - match_new_predicted[m_index]);
+					new_sum_misguess_variance += (new_misguess - new_misguess_average)
+						* (new_misguess - new_misguess_average);
+				}
+				double new_misguess_standard_deviation = sqrt(new_sum_misguess_variance / (double)match_pre_obs.size());
+
+				double misguess_improvement = curr_misguess_average - new_misguess_average;
+				double min_standard_deviation = min(curr_misguess_standard_deviation, new_misguess_standard_deviation);
+				double t_score = misguess_improvement / (min_standard_deviation / sqrt((double)match_pre_obs.size()));
+
+				#if defined(MDEBUG) && MDEBUG
+				if (t_score >= 1.282 || rand()%2 == 0) {
+				#else
+				if (t_score >= 1.282) {
+				#endif /* MDEBUG */
+					SignalInstance* new_instance = new SignalInstance();
+					new_instance->match_input_is_pre = new_match_input_is_pre;
+					new_instance->match_input_indexes = new_match_input_indexes;
+					new_instance->match_input_obs_indexes = new_match_input_obs_indexes;
+					new_instance->match_network = new_match_network;
+					new_match_network = NULL;
+					new_instance->score_input_is_pre = new_score_input_is_pre;
+					new_instance->score_input_indexes = new_score_input_indexes;
+					new_instance->score_input_obs_indexes = new_score_input_obs_indexes;
+					new_instance->score_network = new_score_network;
+					new_score_network = NULL;
+					this->instances.push_back(new_instance);
+
+					for (int m_index = 0; m_index < (int)match_pre_obs.size(); m_index++) {
+						switch (match_type[m_index]) {
+						case MATCH_TYPE_POSITIVE:
+							positive_predicted[match_index[m_index]] = match_new_predicted[m_index];
+							break;
+						case MATCH_TYPE_TRAP:
+							trap_predicted[match_index[m_index]] = match_new_predicted[m_index];
+							break;
+						case MATCH_TYPE_CURRENT:
+							current_predicted[match_index[m_index]] = match_new_predicted[m_index];
+							break;
+						case MATCH_TYPE_EXPLORE:
+							explore_predicted[match_index[m_index]] = match_new_predicted[m_index];
+							break;
+						}
+					}
+				}
+
+				if (new_score_network != NULL) {
+					delete new_score_network;
+				}
 			}
 		}
 
@@ -343,5 +419,23 @@ void SignalExperiment::create_reward_signal_helper(SolutionWrapper* wrapper) {
 		}
 	}
 
-
+	double sum_misguess = 0.0;
+	for (int h_index = 0; h_index < (int)this->positive_pre_obs.size(); h_index++) {
+		sum_misguess += (this->positive_scores[h_index] - positive_predicted[h_index])
+			* (this->positive_scores[h_index] - positive_predicted[h_index]);
+	}
+	for (int h_index = 0; h_index < (int)this->trap_pre_obs.size(); h_index++) {
+		sum_misguess += (this->trap_scores[h_index] - trap_predicted[h_index])
+			* (this->trap_scores[h_index] - trap_predicted[h_index]);
+	}
+	for (int h_index = 0; h_index < (int)this->current_pre_obs.size(); h_index++) {
+		sum_misguess += (this->current_scores[h_index] - current_predicted[h_index])
+			* (this->current_scores[h_index] - current_predicted[h_index]);
+	}
+	for (int h_index = 0; h_index < (int)this->explore_pre_obs.size(); h_index++) {
+		sum_misguess += (this->explore_scores[h_index] - explore_predicted[h_index])
+			* (this->explore_scores[h_index] - explore_predicted[h_index]);
+	}
+	this->misguess_average = sum_misguess / (double)(this->positive_pre_obs.size()
+		+ this->trap_pre_obs.size() + this->current_pre_obs.size() + this->explore_pre_obs.size());
 }

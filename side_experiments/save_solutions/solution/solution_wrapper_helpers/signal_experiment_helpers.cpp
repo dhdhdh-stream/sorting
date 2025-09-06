@@ -11,6 +11,12 @@
 
 using namespace std;
 
+#if defined(MDEBUG) && MDEBUG
+const int SIGNAL_IMPROVEMENTS_PER_ITER = 2;
+#else
+const int SIGNAL_IMPROVEMENTS_PER_ITER = 10;
+#endif /* MDEBUG */
+
 void SolutionWrapper::signal_experiment_init() {
 	this->num_actions = 1;
 
@@ -21,14 +27,14 @@ void SolutionWrapper::signal_experiment_init() {
 	#endif /* MDEBUG */
 
 	Solution* current_solution;
-	switch (this->signal_experiment->solution_type) {
+	switch (this->curr_signal_experiment->solution_type) {
 	case SIGNAL_EXPERIMENT_SOLUTION_TYPE_POSITIVE:
 		current_solution = this->positive_solutions[
-			this->signal_experiment->solution_index];
+			this->curr_signal_experiment->solution_index];
 		break;
 	case SIGNAL_EXPERIMENT_SOLUTION_TYPE_TRAP:
 		current_solution = this->trap_solutions[
-			this->signal_experiment->solution_index];
+			this->curr_signal_experiment->solution_index];
 		break;
 	case SIGNAL_EXPERIMENT_SOLUTION_TYPE_CURRENT:
 		current_solution = this->solution;
@@ -110,7 +116,7 @@ void SolutionWrapper::signal_experiment_end(double result) {
 		}
 	}
 
-	this->signal_experiment->backprop(
+	this->curr_signal_experiment->backprop(
 		result,
 		this);
 
@@ -125,8 +131,35 @@ void SolutionWrapper::signal_experiment_end(double result) {
 	this->node_context.clear();
 	this->experiment_context.clear();
 
-	if (this->signal_experiment->state == SIGNAL_EXPERIMENT_STATE_DONE) {
-		delete this->signal_experiment;
-		this->signal_experiment = NULL;
+	if (this->curr_signal_experiment->state == SIGNAL_EXPERIMENT_STATE_DONE) {
+		if (this->best_signal_experiment == NULL) {
+			this->best_signal_experiment = this->curr_signal_experiment;
+		} else {
+			if (this->curr_signal_experiment->misguess_average < this->best_signal_experiment->misguess_average) {
+				delete this->best_signal_experiment;
+				this->best_signal_experiment = this->curr_signal_experiment;
+			} else {
+				delete this->curr_signal_experiment;
+			}
+		}
+		this->curr_signal_experiment = NULL;
+
+		this->improvement_iter++;
+		if (this->improvement_iter >= SIGNAL_IMPROVEMENTS_PER_ITER) {
+			this->best_signal_experiment->add(this);
+
+			delete this->best_signal_experiment;
+			this->best_signal_experiment = NULL;
+
+			for (int s_index = 0; s_index < (int)this->trap_solutions.size(); s_index++) {
+				delete this->trap_solutions[s_index];
+			}
+			this->trap_solutions.clear();
+
+			this->improvement_iter = 0;
+		} else {
+			this->curr_signal_experiment = new SignalExperiment(0,
+																this);
+		}
 	}
 }

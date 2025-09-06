@@ -4,9 +4,11 @@
 
 #include "branch_experiment.h"
 #include "constants.h"
+#include "globals.h"
 #include "helpers.h"
 #include "scope.h"
 #include "scope_node.h"
+#include "signal_experiment.h"
 #include "solution.h"
 
 using namespace std;
@@ -121,6 +123,13 @@ void SolutionWrapper::explore_end(double result) {
 			delete this->curr_experiment;
 
 			this->curr_experiment = NULL;
+
+			if (this->trap_solutions.size() >= MAX_NUM_SOLUTIONS) {
+				this->curr_signal_experiment = new SignalExperiment(0,
+																	this);
+
+				this->improvement_iter = 0;
+			}
 		} else if (this->curr_experiment->result == EXPERIMENT_RESULT_SUCCESS) {
 			this->curr_experiment->clean();
 
@@ -128,9 +137,25 @@ void SolutionWrapper::explore_end(double result) {
 				this->best_experiment = this->curr_experiment;
 			} else {
 				if (this->curr_experiment->improvement > this->best_experiment->improvement) {
+					if (this->positive_solutions.size() >= MAX_NUM_SOLUTIONS) {
+						uniform_int_distribution<int> distribution(0, this->positive_solutions.size()-1);
+						int random_index = distribution(generator);
+						delete this->positive_solutions[random_index];
+						this->positive_solutions[random_index] = this->best_experiment->resulting_solution;
+					} else {
+						this->positive_solutions.push_back(this->best_experiment->resulting_solution);
+					}
 					delete this->best_experiment;
 					this->best_experiment = this->curr_experiment;
 				} else {
+					if (this->positive_solutions.size() >= MAX_NUM_SOLUTIONS) {
+						uniform_int_distribution<int> distribution(0, this->positive_solutions.size()-1);
+						int random_index = distribution(generator);
+						delete this->positive_solutions[random_index];
+						this->positive_solutions[random_index] = this->curr_experiment->resulting_solution;
+					} else {
+						this->positive_solutions.push_back(this->curr_experiment->resulting_solution);
+					}
 					delete this->curr_experiment;
 				}
 			}
@@ -142,12 +167,6 @@ void SolutionWrapper::explore_end(double result) {
 				cout << "update" << endl;
 
 				delete this->solution;
-				for (int s_index = 0; s_index < (int)this->positive_solutions.size(); s_index++) {
-					if (this->positive_solutions[s_index] == this->best_experiment->resulting_solution) {
-						this->positive_solutions.erase(this->positive_solutions.begin() + s_index);
-						break;
-					}
-				}
 				this->positive_solutions.push_back(new Solution(this->best_experiment->resulting_solution));
 				this->solution = this->best_experiment->resulting_solution;
 
@@ -157,6 +176,12 @@ void SolutionWrapper::explore_end(double result) {
 				this->best_experiment = NULL;
 
 				this->solution->timestamp++;
+
+				if (this->solution->timestamp >= this->last_signal_experiment_timestamp + 4
+						&& (int)this->positive_solutions.size() >= MAX_NUM_SOLUTIONS) {
+					this->curr_signal_experiment = new SignalExperiment(0,
+																		this);
+				}
 
 				this->improvement_iter = 0;
 			}

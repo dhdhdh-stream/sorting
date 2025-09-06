@@ -43,6 +43,8 @@ const int EXPLORE_TARGET_NUM_SAMPLES = 10;
 const int EXPLORE_TARGET_NUM_SAMPLES = 4000;
 #endif /* MDEBUG */
 
+const int MAX_NUM_SOLUTIONS = 40;
+
 #if defined(MDEBUG) && MDEBUG
 const int NUM_VERIFY_SAMPLES = 10;
 #endif /* MDEBUG */

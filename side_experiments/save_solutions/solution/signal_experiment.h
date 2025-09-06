@@ -22,6 +22,10 @@
  *   - resulting distribution will likely not match this initial distribution
  */
 
+/**
+ * TODO: balance explore num samples with others
+ */
+
 #ifndef SIGNAL_EXPERIMENT_H
 #define SIGNAL_EXPERIMENT_H
 
@@ -38,9 +42,12 @@ class SignalNetwork;
 class SolutionWrapper;
 
 const int SIGNAL_EXPERIMENT_STATE_MEASURE_POSITIVE = 0;
+/**
+ * TODO: measure positive together at start of cycle
+ */
 const int SIGNAL_EXPERIMENT_STATE_FIND_SAFE = 1;
 /**
- * - don't bother with find safe for traps
+ * - include current but not traps
  */
 const int SIGNAL_EXPERIMENT_STATE_GATHER_TRAPS = 2;
 const int SIGNAL_EXPERIMENT_STATE_GATHER_CURRENT = 3;
@@ -64,12 +71,16 @@ public:
 	/**
 	 * - using current signal actions
 	 */
-	std::vector<std::vector<double>> existing_scores;
+	std::vector<std::vector<double>> existing_positive_scores;
+
+	std::vector<double> existing_positive_score_averages;
+	std::vector<double> existing_positive_score_standard_deviations;
 
 	std::vector<int> pre_actions;
 	std::vector<int> post_actions;
 
-	std::vector<std::vector<double>> new_scores;
+	std::vector<double> new_current_scores;
+	std::vector<std::vector<double>> new_positive_scores;
 
 	std::vector<std::vector<std::vector<double>>> positive_pre_obs;
 	std::vector<std::vector<std::vector<double>>> positive_post_obs;
@@ -100,6 +111,9 @@ public:
 	std::vector<double> explore_scores;
 
 	std::vector<SignalInstance*> instances;
+	double default_guess;
+
+	double misguess_average;
 
 	SignalExperiment(int scope_context_id,
 					 SolutionWrapper* wrapper);
@@ -123,12 +137,33 @@ public:
 	void backprop(double target_val,
 				  SolutionWrapper* wrapper);
 
+	bool measure_positive_check_signal(std::vector<double>& obs,
+									   int& action,
+									   bool& is_next,
+									   SolutionWrapper* wrapper);
+	void measure_positive_backprop(double target_val,
+								   SolutionWrapper* wrapper);
+
 	bool find_safe_check_signal(std::vector<double>& obs,
 								int& action,
 								bool& is_next,
 								SolutionWrapper* wrapper);
 	void find_safe_backprop(double target_val,
 							SolutionWrapper* wrapper);
+
+	bool gather_trap_check_signal(std::vector<double>& obs,
+								  int& action,
+								  bool& is_next,
+								  SolutionWrapper* wrapper);
+	void gather_trap_backprop(double target_val,
+							  SolutionWrapper* wrapper);
+
+	bool gather_current_check_signal(std::vector<double>& obs,
+									 int& action,
+									 bool& is_next,
+									 SolutionWrapper* wrapper);
+	void gather_current_backprop(double target_val,
+								 SolutionWrapper* wrapper);
 
 	bool explore_check_signal(std::vector<double>& obs,
 							  int& action,
@@ -147,6 +182,8 @@ public:
 	void explore_experiment_exit_step(SolutionWrapper* wrapper);
 	void explore_backprop(double target_val,
 						  SolutionWrapper* wrapper);
+
+	void add(SolutionWrapper* wrapper);
 
 private:
 	void set_actions(SolutionWrapper* wrapper);

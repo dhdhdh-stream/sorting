@@ -42,16 +42,6 @@ public:
 	 *     - just a bad value that can be learned to avoid
 	 */
 
-	double signal_positive_misguess_average;
-	double signal_positive_misguess_standard_deviation;
-	double signal_misguess_average;
-	double signal_misguess_standard_deviation;
-	/**
-	 * - simply save between updates
-	 */
-	// TODO: remove, and recalculate
-	// - compare against existing
-
 	Signal();
 	Signal(std::ifstream& input_file);
 	~Signal();

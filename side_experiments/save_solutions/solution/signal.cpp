@@ -37,22 +37,6 @@ Signal::Signal(ifstream& input_file) {
 	string default_guess_line;
 	getline(input_file, default_guess_line);
 	this->default_guess = stod(default_guess_line);
-
-	string signal_positive_misguess_average_line;
-	getline(input_file, signal_positive_misguess_average_line);
-	this->signal_positive_misguess_average = stod(signal_positive_misguess_average_line);
-
-	string signal_positive_misguess_standard_deviation_line;
-	getline(input_file, signal_positive_misguess_standard_deviation_line);
-	this->signal_positive_misguess_standard_deviation = stod(signal_positive_misguess_standard_deviation_line);
-
-	string signal_misguess_average_line;
-	getline(input_file, signal_misguess_average_line);
-	this->signal_misguess_average = stod(signal_misguess_average_line);
-
-	string signal_misguess_standard_deviation_line;
-	getline(input_file, signal_misguess_standard_deviation_line);
-	this->signal_misguess_standard_deviation = stod(signal_misguess_standard_deviation_line);
 }
 
 Signal::~Signal() {
@@ -78,9 +62,4 @@ void Signal::save(ofstream& output_file) {
 	}
 
 	output_file << this->default_guess << endl;
-
-	output_file << this->signal_positive_misguess_average << endl;
-	output_file << this->signal_positive_misguess_standard_deviation << endl;
-	output_file << this->signal_misguess_average << endl;
-	output_file << this->signal_misguess_standard_deviation << endl;
 }

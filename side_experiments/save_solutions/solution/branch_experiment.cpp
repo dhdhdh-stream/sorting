@@ -50,7 +50,7 @@ BranchExperiment::BranchExperiment(Scope* scope_context,
 								   target_val_histories,
 								   wrapper);
 
-			// this->existing_scores.push_back(wrapper->solution->existing_target_val_histories[h_index]);
+			this->existing_scores.push_back(wrapper->solution->existing_target_val_histories[h_index]);
 
 			vector<ScopeHistory*> scope_histories;
 			fetch_signals_helper(wrapper->solution->existing_scope_histories[h_index],
@@ -62,9 +62,6 @@ BranchExperiment::BranchExperiment(Scope* scope_context,
 								 wrapper);
 		}
 	}
-
-	// temp
-	this->existing_scores = target_val_histories;
 
 	double average_score;
 	vector<Input> factor_inputs;

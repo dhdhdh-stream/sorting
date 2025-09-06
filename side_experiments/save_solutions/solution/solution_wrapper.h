@@ -28,25 +28,45 @@ public:
 	Solution* solution;
 
 	/**
+	 * TODO: move into scopes
+	 */
+	/**
 	 * - for positive samples for training signals
 	 *   - for an improvement to be made, on average, over half of the samples need to be positive
 	 *     - so need to be particularly good at recognizing positive samples
 	 * 
 	 * - use successful solutions rather than "successful" instances
 	 *   - "successful" instances can be more likely to be positive fluctuations
+	 * 
+	 * - replace randomly so older solutions have a chance to stay
+	 *   - to try to have more diversity for generalization
 	 */
 	std::vector<Solution*> positive_solutions;
 	std::vector<Solution*> trap_solutions;
+	/**
+	 * - simply reset after SignalExperiment cycle
+	 * 
+	 * TODO:
+	 * - instead save and evaluate after SignalExperiment if causes confusion
+	 *   - if so, rerun SignalExperiments and include from now on
+	 */
 	std::map<int, Signal*> signals;
+
+	int last_signal_experiment_timestamp;
 
 	/**
 	 * - iter variables
 	 */
 	BranchExperiment* curr_experiment;
 	BranchExperiment* best_experiment;
-	int improvement_iter;
 
-	SignalExperiment* signal_experiment;
+	SignalExperiment* curr_signal_experiment;
+	SignalExperiment* best_signal_experiment;
+
+	int improvement_iter;
+	/**
+	 * - SignalExperiment can change actions, so will need to reset BranchExperiments
+	 */
 
 	/**
 	 * - run variables

@@ -19,27 +19,13 @@
 using namespace std;
 
 #if defined(MDEBUG) && MDEBUG
-const int EARLY_FAIL_1_NUM_ITERS = 2;
-const int EARLY_FAIL_2_NUM_ITERS = 2;
-const int EARLY_FAIL_3_NUM_ITERS = 2;
+const int SIGNAL_CHECK_MIN_NUM = 5;
 #else
-const int EARLY_FAIL_1_NUM_ITERS = 20;
-const int EARLY_FAIL_2_NUM_ITERS = 60;
-const int EARLY_FAIL_3_NUM_ITERS = 200;
+const int SIGNAL_CHECK_MIN_NUM = 200;
 #endif /* MDEBUG */
 
 void BranchExperiment::measure_check_activate(SolutionWrapper* wrapper) {
 	ScopeHistory* scope_history = wrapper->scope_histories.back();
-
-	BranchExperimentInstanceHistory* instance_history = new BranchExperimentInstanceHistory(this);
-	wrapper->experiment_instance_histories.push_back(instance_history);
-	for (int l_index = (int)wrapper->scope_histories.size()-1; l_index >= 0; l_index--) {
-		map<int, Signal*>::iterator it = wrapper->signals.find(wrapper->scope_histories[l_index]->scope->id);
-		if (it != wrapper->signals.end()) {
-			instance_history->signal_needed_from = wrapper->scope_histories[l_index];
-			break;
-		}
-	}
 
 	if (this->select_percentage == 1.0) {
 		BranchExperimentState* new_experiment_state = new BranchExperimentState(this);
@@ -187,116 +173,225 @@ void BranchExperiment::measure_backprop(double target_val,
 	BranchExperimentOverallHistory* overall_history = (BranchExperimentOverallHistory*)wrapper->experiment_overall_history;
 
 	if (overall_history->is_hit) {
-		for (int i_index = 0; i_index < (int)wrapper->experiment_instance_histories.size(); i_index++) {
-			BranchExperimentInstanceHistory* instance_history =
-				(BranchExperimentInstanceHistory*)wrapper->experiment_instance_histories[i_index];
+		this->new_scores.push_back(target_val);
 
-			double inner_targel_val;
-			if (instance_history->signal_needed_from == NULL) {
-				inner_targel_val = target_val;
-			} else {
-				inner_targel_val = calc_signal(instance_history->signal_needed_from,
-											   wrapper);
-			}
+		vector<ScopeHistory*> scope_histories;
+		fetch_signals_helper(wrapper->scope_histories[0],
+							 scope_histories,
+							 this->scope_context,
+							 this->node_context,
+							 this->is_branch,
+							 this->new_signals,
+							 wrapper);
 
-			this->new_scores.push_back(inner_targel_val);
-		}
-
-		this->state_iter++;
 		if (this->state_iter >= MEASURE_ITERS) {
 			double existing_sum_score = 0.0;
 			for (int h_index = 0; h_index < (int)this->existing_scores.size(); h_index++) {
 				existing_sum_score += this->existing_scores[h_index];
 			}
-			double existing_score = existing_sum_score / (double)this->existing_scores.size();
+			double existing_score_average = existing_sum_score / (double)this->existing_scores.size();
+
+			double existing_sum_variance = 0.0;
+			for (int h_index = 0; h_index < (int)this->existing_scores.size(); h_index++) {
+				existing_sum_variance += (this->existing_scores[h_index] - existing_score_average)
+					* (this->existing_scores[h_index] - existing_score_average);
+			}
+			double existing_score_standard_deviation = sqrt(existing_sum_variance / (double)this->existing_scores.size());
 
 			double new_sum_score = 0.0;
 			for (int h_index = 0; h_index < (int)this->new_scores.size(); h_index++) {
 				new_sum_score += this->new_scores[h_index];
 			}
-			double new_score = new_sum_score / (double)this->new_scores.size();
+			double new_score_average = new_sum_score / (double)this->new_scores.size();
 
-			// temp
-			map<int, Signal*>::iterator it = wrapper->signals.find(this->scope_context->id);
-			if (it != wrapper->signals.end()) {
-				cout << "existing_score: " << existing_score << endl;
-				cout << "new_score: " << new_score << endl;
-				cout << endl;
+			double new_sum_variance = 0.0;
+			for (int h_index = 0; h_index < (int)this->new_scores.size(); h_index++) {
+				new_sum_variance += (this->new_scores[h_index] - new_score_average)
+					* (this->new_scores[h_index] - new_score_average);
 			}
+			double new_score_standard_deviation = sqrt(new_sum_variance / (double)this->new_scores.size());
+
+			double score_improvement = new_score_average - existing_score_average;
+			double existing_score_standard_error = existing_score_standard_deviation / sqrt((double)this->existing_scores.size());
+			double new_score_standard_error = new_score_standard_deviation / sqrt((double)this->new_scores.size());
+			double score_t_score = score_improvement / sqrt(
+				existing_score_standard_error * existing_score_standard_error
+					+ new_score_standard_error * new_score_standard_error);
 
 			#if defined(MDEBUG) && MDEBUG
-			if (new_score <= existing_score && rand()%2 == 0) {
+			if (new_score_average <= existing_score_average && rand()%2 == 0) {
 			#else
-			if (new_score <= existing_score) {
+			if (new_score_average <= existing_score_average) {
 			#endif /* MDEBUG */
-				this->result = EXPERIMENT_RESULT_FAIL;
-				return;
-			}
+				/**
+				 * TODO: add per scope
+				 */
+				bool add_to_trap = false;
+				if (score_t_score < -2.326) {
+					for (map<Scope*, vector<double>>::iterator existing_it = existing_signals.begin();
+							existing_it != existing_signals.end(); existing_it++) {
+						if (existing_it->second.size() >= SIGNAL_CHECK_MIN_NUM) {
+							map<Scope*, vector<double>>::iterator new_it = new_signals.find(existing_it->first);
+							if (new_it != new_signals.end() && new_it->second.size() >= SIGNAL_CHECK_MIN_NUM) {
+								double existing_sum_vals = 0.0;
+								for (int h_index = 0; h_index < (int)existing_it->second.size(); h_index++) {
+									existing_sum_vals += existing_it->second[h_index];
+								}
+								double existing_average = existing_sum_vals / (double)existing_it->second.size();
 
-			this->improvement = new_score - existing_score;
+								double new_sum_vals = 0.0;
+								for (int h_index = 0; h_index < (int)new_it->second.size(); h_index++) {
+									new_sum_vals += new_it->second[h_index];
+								}
+								double new_average = new_sum_vals / (double)new_it->second.size();
 
-			cout << "BranchExperiment" << endl;
-			cout << "this->scope_context->id: " << this->scope_context->id << endl;
-			cout << "this->node_context->id: " << this->node_context->id << endl;
-			cout << "this->is_branch: " << this->is_branch << endl;
-			cout << "new explore path:";
-			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-					cout << " " << this->best_actions[s_index];
-				} else {
-					cout << " E" << this->best_scopes[s_index]->id;
+								if (new_average > existing_average) {
+									add_to_trap = true;
+									break;
+								}
+							}
+						}
+					}
+				} else if (score_t_score < 0.0) {
+					for (map<Scope*, vector<double>>::iterator existing_it = existing_signals.begin();
+							existing_it != existing_signals.end(); existing_it++) {
+						if (existing_it->second.size() >= SIGNAL_CHECK_MIN_NUM) {
+							map<Scope*, vector<double>>::iterator new_it = new_signals.find(existing_it->first);
+							if (new_it != new_signals.end() && new_it->second.size() >= SIGNAL_CHECK_MIN_NUM) {
+								double existing_sum_vals = 0.0;
+								for (int h_index = 0; h_index < (int)existing_it->second.size(); h_index++) {
+									existing_sum_vals += existing_it->second[h_index];
+								}
+								double existing_average = existing_sum_vals / (double)existing_it->second.size();
+
+								double existing_sum_variance = 0.0;
+								for (int h_index = 0; h_index < (int)existing_it->second.size(); h_index++) {
+									existing_sum_variance += (existing_it->second[h_index] - existing_average)
+										* (existing_it->second[h_index] - existing_average);
+								}
+								double existing_standard_deviation = sqrt(existing_sum_variance / (double)existing_it->second.size());
+								double existing_denom = existing_standard_deviation / sqrt((double)existing_it->second.size());
+
+								double new_sum_vals = 0.0;
+								for (int h_index = 0; h_index < (int)new_it->second.size(); h_index++) {
+									new_sum_vals += new_it->second[h_index];
+								}
+								double new_average = new_sum_vals / (double)new_it->second.size();
+
+								double new_sum_variance = 0.0;
+								for (int h_index = 0; h_index < (int)new_it->second.size(); h_index++) {
+									new_sum_variance += (new_it->second[h_index] - new_average)
+										* (new_it->second[h_index] - new_average);
+								}
+								double new_standard_deviation = sqrt(new_sum_variance / (double)new_it->second.size());
+								double new_denom = new_standard_deviation / sqrt((double)new_it->second.size());
+
+								double diff = new_average - existing_average;
+								double t_score = diff / sqrt(existing_denom * existing_denom
+									+ new_denom * new_denom);
+
+								if (t_score > 2.326) {
+									add_to_trap = true;
+									break;
+								}
+							}
+						}
+					}
 				}
-			}
-			cout << endl;
+				if (add_to_trap) {
+					Solution* solution_copy = new Solution(wrapper->solution);
+					/**
+					 * - TODO: move scope_histories over
+					 */
 
-			if (this->best_exit_next_node == NULL) {
-				cout << "this->best_exit_next_node->id: " << -1 << endl;
+					add(wrapper);
+
+					for (int h_index = 0; h_index < (int)wrapper->solution->existing_scope_histories.size(); h_index++) {
+						delete wrapper->solution->existing_scope_histories[h_index];
+					}
+					wrapper->solution->existing_scope_histories.clear();
+					wrapper->solution->existing_target_val_histories.clear();
+
+					wrapper->solution->existing_scope_histories = this->new_scope_histories;
+					this->new_scope_histories.clear();
+					wrapper->solution->existing_target_val_histories = this->new_target_val_histories;
+					clean_scope(this->scope_context,
+								wrapper);
+
+					wrapper->solution->clean();
+
+					wrapper->solution->measure_update();
+
+					wrapper->trap_solutions.push_back(wrapper->solution);
+					wrapper->solution = solution_copy;
+				}
+
+				this->result = EXPERIMENT_RESULT_FAIL;
 			} else {
-				cout << "this->best_exit_next_node->id: " << this->best_exit_next_node->id << endl;
+				this->improvement = new_score_average - existing_score_average;
+
+				cout << "BranchExperiment" << endl;
+				cout << "this->scope_context->id: " << this->scope_context->id << endl;
+				cout << "this->node_context->id: " << this->node_context->id << endl;
+				cout << "this->is_branch: " << this->is_branch << endl;
+				cout << "new explore path:";
+				for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+					if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+						cout << " " << this->best_actions[s_index];
+					} else {
+						cout << " E" << this->best_scopes[s_index]->id;
+					}
+				}
+				cout << endl;
+
+				if (this->best_exit_next_node == NULL) {
+					cout << "this->best_exit_next_node->id: " << -1 << endl;
+				} else {
+					cout << "this->best_exit_next_node->id: " << this->best_exit_next_node->id << endl;
+				}
+
+				cout << "this->select_percentage: " << this->select_percentage << endl;
+
+				cout << "this->improvement: " << this->improvement << endl;
+
+				cout << endl;
+
+				#if defined(MDEBUG) && MDEBUG
+				this->verify_problems = vector<Problem*>(NUM_VERIFY_SAMPLES, NULL);
+				this->verify_seeds = vector<unsigned long>(NUM_VERIFY_SAMPLES);
+
+				this->state = BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY;
+				this->state_iter = 0;
+				#else
+				Solution* solution_copy = new Solution(wrapper->solution);
+				/**
+				 * - TODO: move scope_histories over
+				 */
+
+				add(wrapper);
+
+				for (int h_index = 0; h_index < (int)wrapper->solution->existing_scope_histories.size(); h_index++) {
+					delete wrapper->solution->existing_scope_histories[h_index];
+				}
+				wrapper->solution->existing_scope_histories.clear();
+				wrapper->solution->existing_target_val_histories.clear();
+
+				wrapper->solution->existing_scope_histories = this->new_scope_histories;
+				this->new_scope_histories.clear();
+				wrapper->solution->existing_target_val_histories = this->new_target_val_histories;
+				clean_scope(this->scope_context,
+							wrapper);
+
+				wrapper->solution->clean();
+
+				wrapper->solution->measure_update();
+
+				this->resulting_solution = wrapper->solution;
+				wrapper->solution = solution_copy;
+
+				this->result = EXPERIMENT_RESULT_SUCCESS;
+				#endif /* MDEBUG */
 			}
-
-			cout << "this->select_percentage: " << this->select_percentage << endl;
-
-			cout << "this->improvement: " << this->improvement << endl;
-
-			cout << endl;
-
-			#if defined(MDEBUG) && MDEBUG
-			this->verify_problems = vector<Problem*>(NUM_VERIFY_SAMPLES, NULL);
-			this->verify_seeds = vector<unsigned long>(NUM_VERIFY_SAMPLES);
-
-			this->state = BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY;
-			this->state_iter = 0;
-			#else
-			Solution* solution_copy = new Solution(wrapper->solution);
-			/**
-			 * - TODO: move scope_histories over
-			 */
-
-			add(wrapper);
-
-			for (int h_index = 0; h_index < (int)wrapper->solution->existing_scope_histories.size(); h_index++) {
-				delete wrapper->solution->existing_scope_histories[h_index];
-			}
-			wrapper->solution->existing_scope_histories.clear();
-			wrapper->solution->existing_target_val_histories.clear();
-
-			wrapper->solution->existing_scope_histories = this->new_scope_histories;
-			this->new_scope_histories.clear();
-			wrapper->solution->existing_target_val_histories = this->new_target_val_histories;
-			clean_scope(this->scope_context,
-						wrapper);
-
-			wrapper->solution->clean();
-
-			wrapper->solution->measure_update();
-
-			this->resulting_solution = wrapper->solution;
-			wrapper->positive_solutions.push_back(this->resulting_solution);
-			wrapper->solution = solution_copy;
-
-			this->result = EXPERIMENT_RESULT_SUCCESS;
-			#endif /* MDEBUG */
 		}
 	}
 }
