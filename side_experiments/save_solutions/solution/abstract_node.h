@@ -29,6 +29,10 @@ public:
 
 	bool is_init;
 
+	int num_experiments;
+	/**
+	 * - number of times experimented from without being selected
+	 */
 	AbstractExperiment* experiment;
 
 	virtual ~AbstractNode() {};

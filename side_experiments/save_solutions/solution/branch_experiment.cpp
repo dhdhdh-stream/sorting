@@ -82,6 +82,7 @@ BranchExperiment::BranchExperiment(Scope* scope_context,
 
 	if (is_success) {
 		this->node_context->experiment = this;
+		this->node_context->num_experiments++;
 
 		this->existing_average_score = average_score;
 		this->existing_inputs = factor_inputs;

@@ -10,6 +10,8 @@ StartNode::StartNode() {
 
 	this->is_init = false;
 
+	this->num_experiments = 0;
+
 	this->experiment = NULL;
 }
 
@@ -19,6 +21,8 @@ StartNode::StartNode(StartNode* original) {
 	this->next_node_id = original->next_node_id;
 
 	this->is_init = true;
+
+	this->num_experiments = original->num_experiments;
 
 	this->experiment = NULL;
 }
@@ -33,12 +37,18 @@ void StartNode::measure_update(int total_count) {
 
 void StartNode::save(ofstream& output_file) {
 	output_file << this->next_node_id << endl;
+
+	output_file << this->num_experiments << endl;
 }
 
 void StartNode::load(ifstream& input_file) {
 	string next_node_id_line;
 	getline(input_file, next_node_id_line);
 	this->next_node_id = stoi(next_node_id_line);
+
+	string num_experiments_line;
+	getline(input_file, num_experiments_line);
+	this->num_experiments = stoi(num_experiments_line);
 
 	this->is_init = true;
 }

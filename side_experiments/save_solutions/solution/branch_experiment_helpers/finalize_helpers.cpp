@@ -509,4 +509,6 @@ void BranchExperiment::add(SolutionWrapper* wrapper) {
 	}
 
 	this->new_nodes.clear();
+
+	this->node_context->num_experiments = 0;
 }

@@ -15,6 +15,8 @@ ScopeNode::ScopeNode() {
 
 	this->is_init = false;
 
+	this->num_experiments = 0;
+
 	this->experiment = NULL;
 
 	this->last_updated_run_index = -1;
@@ -34,6 +36,8 @@ ScopeNode::ScopeNode(ScopeNode* original,
 	this->ancestor_ids = original->ancestor_ids;
 
 	this->is_init = true;
+
+	this->num_experiments = original->num_experiments;
 
 	this->experiment = NULL;
 
@@ -63,6 +67,8 @@ void ScopeNode::save(ofstream& output_file) {
 	for (int a_index = 0; a_index < (int)this->ancestor_ids.size(); a_index++) {
 		output_file << this->ancestor_ids[a_index] << endl;
 	}
+
+	output_file << this->num_experiments << endl;
 }
 
 void ScopeNode::load(ifstream& input_file,
@@ -91,6 +97,10 @@ void ScopeNode::load(ifstream& input_file,
 		getline(input_file, ancestor_id_line);
 		this->ancestor_ids.push_back(stoi(ancestor_id_line));
 	}
+
+	string num_experiments_line;
+	getline(input_file, num_experiments_line);
+	this->num_experiments = stoi(num_experiments_line);
 
 	this->is_init = true;
 }
