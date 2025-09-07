@@ -4,6 +4,14 @@
 // - first split, then fully train score
 //   - then train match according to whether helps
 
+// TODO: examine explore, train
+
+// TODO: compare progress with signal and without
+// - could just be problem is capped
+
+// TODO: focus on exploring places that are new
+// - don't waste time in the same spots again and again with no progress
+
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -55,6 +63,13 @@ int main(int argc, char* argv[]) {
 		solution_wrapper = new SolutionWrapper(
 			problem_type->num_obs());
 	}
+
+	// temp
+	for (map<int, Signal*>::iterator it = solution_wrapper->signals.begin();
+			it != solution_wrapper->signals.end(); it++) {
+		delete it->second;
+	}
+	solution_wrapper->signals.clear();
 
 	#if defined(MDEBUG) && MDEBUG
 	while (true) {
@@ -125,7 +140,7 @@ int main(int argc, char* argv[]) {
 			}
 		}
 
-		solution_wrapper->save("saves/", filename);
+		// solution_wrapper->save("saves/", filename);
 
 		solution_wrapper->save_for_display("../", "display.txt");
 
@@ -141,7 +156,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	solution_wrapper->clean_scopes();
-	solution_wrapper->save("saves/", filename);
+	// solution_wrapper->save("saves/", filename);
 
 	delete problem_type;
 	delete solution_wrapper;

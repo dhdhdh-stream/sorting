@@ -59,6 +59,7 @@ public:
 	 */
 	BranchExperiment* curr_experiment;
 	BranchExperiment* best_experiment;
+	std::vector<Solution*> next_positive_solutions;
 
 	SignalExperiment* curr_signal_experiment;
 	SignalExperiment* best_signal_experiment;

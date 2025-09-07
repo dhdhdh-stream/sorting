@@ -129,7 +129,7 @@ void SignalExperiment::find_safe_backprop(
 
 		this->solution_index++;
 		if (this->solution_index >= (int)wrapper->positive_solutions.size()) {
-			this->solution_index = 0;
+			this->solution_type = SIGNAL_EXPERIMENT_SOLUTION_TYPE_CURRENT;
 			this->state_iter++;
 
 			bool is_fail = false;

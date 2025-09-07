@@ -135,6 +135,11 @@ void Simpler::print() {
 	cout << "curr_index: " << this->curr_index << endl;
 
 	cout << "curr_target_index: " << curr_target_index << endl;
+	if (curr_target_index >= (int)this->targets.size()) {
+		cout << "target: -1" << endl;
+	} else {
+		cout << "target: " << this->targets[this->curr_target_index] << endl;
+	}
 }
 
 Problem* TypeSimpler::get_problem() {

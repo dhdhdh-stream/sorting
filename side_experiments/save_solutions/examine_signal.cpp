@@ -48,11 +48,14 @@ int main(int argc, char* argv[]) {
 	Problem* problem = problem_type->get_problem();
 
 	scope_history->signal_pre_obs.push_back(problem->get_observations());
+	cout << "pre_actions:";
 	for (int a_index = 0; a_index < (int)signal->signal_pre_actions.size(); a_index++) {
 		problem->perform_action(signal->signal_pre_actions[a_index]);
+		cout << " " << signal->signal_pre_actions[a_index];
 
 		scope_history->signal_pre_obs.push_back(problem->get_observations());
 	}
+	cout << endl;
 
 	while (true) {
 		problem->print();
@@ -61,15 +64,22 @@ int main(int argc, char* argv[]) {
 
 		int action;
 		cin >> action;
-		problem->perform_action(action);
+		if (action == -1) {
+			break;
+		} else {
+			problem->perform_action(action);
+		}
 	}
 
 	scope_history->signal_post_obs.push_back(problem->get_observations());
+	cout << "post_actions:";
 	for (int a_index = 0; a_index < (int)signal->signal_post_actions.size(); a_index++) {
 		problem->perform_action(signal->signal_post_actions[a_index]);
+		cout << " " << signal->signal_post_actions[a_index];
 
 		scope_history->signal_post_obs.push_back(problem->get_observations());
 	}
+	cout << endl;
 
 	problem->print();
 
@@ -77,6 +87,8 @@ int main(int argc, char* argv[]) {
 									solution_wrapper);
 
 	cout << "signal_val: " << signal_val << endl;
+
+	cout << "signal->default_guess: " << signal->default_guess << endl;
 
 	delete problem;
 

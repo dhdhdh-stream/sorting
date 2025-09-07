@@ -1,4 +1,5 @@
 /**
+ * TODO:
  * - predict score relative to current average
  *   - more likely for signal to predict relative than global true
  *     - so predicting relative leads to less adjustments

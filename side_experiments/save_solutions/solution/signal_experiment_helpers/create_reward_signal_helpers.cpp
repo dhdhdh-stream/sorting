@@ -42,12 +42,10 @@ bool SignalExperiment::check_instance_still_good(SignalInstance* instance,
 	vector<double> match_target_vals;
 	vector<double> match_predicted_vals;
 
-	double curr_val_average = wrapper->solution->curr_val_average;
-
 	for (int h_index = 0; h_index < (int)this->positive_pre_obs.size(); h_index++) {
 		if (instance->is_match(this->positive_pre_obs[h_index],
 							   this->positive_post_obs[h_index])) {
-			match_target_vals.push_back(this->positive_scores[h_index] - curr_val_average);
+			match_target_vals.push_back(this->positive_scores[h_index]);
 			match_predicted_vals.push_back(instance->calc_score(
 				this->positive_pre_obs[h_index],
 				this->positive_post_obs[h_index]));
@@ -57,7 +55,7 @@ bool SignalExperiment::check_instance_still_good(SignalInstance* instance,
 	for (int h_index = 0; h_index < (int)this->trap_pre_obs.size(); h_index++) {
 		if (instance->is_match(this->trap_pre_obs[h_index],
 							   this->trap_post_obs[h_index])) {
-			match_target_vals.push_back(this->trap_scores[h_index] - curr_val_average);
+			match_target_vals.push_back(this->trap_scores[h_index]);
 			match_predicted_vals.push_back(instance->calc_score(
 				this->trap_pre_obs[h_index],
 				this->trap_post_obs[h_index]));
@@ -67,7 +65,7 @@ bool SignalExperiment::check_instance_still_good(SignalInstance* instance,
 	for (int h_index = 0; h_index < (int)this->current_pre_obs.size(); h_index++) {
 		if (instance->is_match(this->current_pre_obs[h_index],
 							   this->current_post_obs[h_index])) {
-			match_target_vals.push_back(this->current_scores[h_index] - curr_val_average);
+			match_target_vals.push_back(this->current_scores[h_index]);
 			match_predicted_vals.push_back(instance->calc_score(
 				this->current_pre_obs[h_index],
 				this->current_post_obs[h_index]));
@@ -77,7 +75,7 @@ bool SignalExperiment::check_instance_still_good(SignalInstance* instance,
 	for (int h_index = 0; h_index < (int)this->explore_pre_obs.size(); h_index++) {
 		if (instance->is_match(this->explore_pre_obs[h_index],
 							   this->explore_post_obs[h_index])) {
-			match_target_vals.push_back(this->explore_scores[h_index] - curr_val_average);
+			match_target_vals.push_back(this->explore_scores[h_index]);
 			match_predicted_vals.push_back(instance->calc_score(
 				this->explore_pre_obs[h_index],
 				this->explore_post_obs[h_index]));
@@ -398,12 +396,14 @@ void SignalExperiment::create_reward_signal_helper(SolutionWrapper* wrapper) {
 						switch (match_type[m_index]) {
 						case MATCH_TYPE_POSITIVE:
 							positive_predicted[match_index[m_index]] = match_new_predicted[m_index];
+							positive_has_match[match_index[m_index]] = true;
 							break;
 						case MATCH_TYPE_TRAP:
 							trap_predicted[match_index[m_index]] = match_new_predicted[m_index];
 							break;
 						case MATCH_TYPE_CURRENT:
 							current_predicted[match_index[m_index]] = match_new_predicted[m_index];
+							current_has_match[match_index[m_index]] = true;
 							break;
 						case MATCH_TYPE_EXPLORE:
 							explore_predicted[match_index[m_index]] = match_new_predicted[m_index];
@@ -425,6 +425,24 @@ void SignalExperiment::create_reward_signal_helper(SolutionWrapper* wrapper) {
 
 	// temp
 	cout << "this->instances.size(): " << this->instances.size() << endl;
+
+	int current_num_match = 0;
+	for (int h_index = 0; h_index < (int)this->current_pre_obs.size(); h_index++) {
+		if (current_has_match[h_index]) {
+			current_num_match++;
+		}
+	}
+	cout << "current_num_match: " << current_num_match << endl;
+	cout << "this->current_pre_obs.size(): " << this->current_pre_obs.size() << endl;
+
+	int positive_num_match = 0;
+	for (int h_index = 0; h_index < (int)this->positive_pre_obs.size(); h_index++) {
+		if (positive_has_match[h_index]) {
+			positive_num_match++;
+		}
+	}
+	cout << "positive_num_match: " << positive_num_match << endl;
+	cout << "this->positive_pre_obs.size(): " << this->positive_pre_obs.size() << endl;
 
 	double sum_misguess = 0.0;
 	for (int h_index = 0; h_index < (int)this->positive_pre_obs.size(); h_index++) {

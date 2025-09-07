@@ -10,9 +10,9 @@
 using namespace std;
 
 #if defined(MDEBUG) && MDEBUG
-const int GATHER_CURRENT_NUM_ITERS = 19;
+const int GATHER_CURRENT_NUM_ITERS = 4;
 #else
-const int GATHER_CURRENT_NUM_ITERS = 3900;
+const int GATHER_CURRENT_NUM_ITERS = 900;
 #endif /* MDEBUG */
 
 bool SignalExperiment::gather_current_check_signal(

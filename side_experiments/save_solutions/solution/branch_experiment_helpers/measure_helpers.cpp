@@ -223,6 +223,50 @@ void BranchExperiment::measure_backprop(double target_val,
 			cout << "new_score_average: " << new_score_average << endl;
 			cout << "score_t_score: " << score_t_score << endl;
 
+			for (map<Scope*, vector<double>>::iterator existing_it = existing_signals.begin();
+					existing_it != existing_signals.end(); existing_it++) {
+				if (existing_it->second.size() >= SIGNAL_CHECK_MIN_NUM) {
+					map<Scope*, vector<double>>::iterator new_it = new_signals.find(existing_it->first);
+					if (new_it != new_signals.end() && new_it->second.size() >= SIGNAL_CHECK_MIN_NUM) {
+						double existing_sum_vals = 0.0;
+						for (int h_index = 0; h_index < (int)existing_it->second.size(); h_index++) {
+							existing_sum_vals += existing_it->second[h_index];
+						}
+						double existing_average = existing_sum_vals / (double)existing_it->second.size();
+
+						double existing_sum_variance = 0.0;
+						for (int h_index = 0; h_index < (int)existing_it->second.size(); h_index++) {
+							existing_sum_variance += (existing_it->second[h_index] - existing_average)
+								* (existing_it->second[h_index] - existing_average);
+						}
+						double existing_standard_deviation = sqrt(existing_sum_variance / (double)existing_it->second.size());
+						double existing_denom = existing_standard_deviation / sqrt((double)existing_it->second.size());
+
+						double new_sum_vals = 0.0;
+						for (int h_index = 0; h_index < (int)new_it->second.size(); h_index++) {
+							new_sum_vals += new_it->second[h_index];
+						}
+						double new_average = new_sum_vals / (double)new_it->second.size();
+
+						double new_sum_variance = 0.0;
+						for (int h_index = 0; h_index < (int)new_it->second.size(); h_index++) {
+							new_sum_variance += (new_it->second[h_index] - new_average)
+								* (new_it->second[h_index] - new_average);
+						}
+						double new_standard_deviation = sqrt(new_sum_variance / (double)new_it->second.size());
+						double new_denom = new_standard_deviation / sqrt((double)new_it->second.size());
+
+						double diff = new_average - existing_average;
+						double t_score = diff / sqrt(existing_denom * existing_denom
+							+ new_denom * new_denom);
+
+						cout << "existing_average: " << existing_average << endl;
+						cout << "new_average: " << new_average << endl;
+						cout << "t_score: " << t_score << endl;
+					}
+				}
+			}
+
 			#if defined(MDEBUG) && MDEBUG
 			if (new_score_average <= existing_score_average && rand()%2 == 0) {
 			#else
@@ -249,9 +293,6 @@ void BranchExperiment::measure_backprop(double target_val,
 									new_sum_vals += new_it->second[h_index];
 								}
 								double new_average = new_sum_vals / (double)new_it->second.size();
-
-								cout << "existing_average: " << existing_average << endl;
-								cout << "new_average: " << new_average << endl;
 
 								if (new_average > existing_average) {
 									add_to_trap = true;
@@ -297,10 +338,6 @@ void BranchExperiment::measure_backprop(double target_val,
 								double diff = new_average - existing_average;
 								double t_score = diff / sqrt(existing_denom * existing_denom
 									+ new_denom * new_denom);
-
-								cout << "existing_average: " << existing_average << endl;
-								cout << "new_average: " << new_average << endl;
-								cout << "t_score: " << t_score << endl;
 
 								if (t_score > 2.326) {
 									add_to_trap = true;
