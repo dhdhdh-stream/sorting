@@ -238,15 +238,6 @@ void BranchExperiment::explore_backprop(
 		#else
 		if (curr_surprise > this->best_surprise) {
 		#endif /* MDEBUG */
-			// temp
-			if (instance_history->signal_needed_from != NULL) {
-				cout << "explore" << endl;
-				wrapper->problem->print();
-				cout << "inner_targel_val: " << inner_targel_val << endl;
-				cout << "instance_history->existing_predicted_score: " << instance_history->existing_predicted_score << endl;
-				cout << endl;
-			}
-
 			this->best_surprise = curr_surprise;
 			if (this->best_new_scope != NULL) {
 				delete this->best_new_scope;

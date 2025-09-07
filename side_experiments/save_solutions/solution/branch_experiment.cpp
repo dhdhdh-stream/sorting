@@ -128,8 +128,6 @@ BranchExperiment::BranchExperiment(Scope* scope_context,
 		uniform_int_distribution<int> until_distribution(0, (int)this->average_instances_per_run-1.0);
 		this->num_instances_until_target = 1 + until_distribution(generator);
 
-		// temp
-		cout << "BRANCH_EXPERIMENT_STATE_EXPLORE" << endl;
 		this->state = BRANCH_EXPERIMENT_STATE_EXPLORE;
 		this->state_iter = 0;
 

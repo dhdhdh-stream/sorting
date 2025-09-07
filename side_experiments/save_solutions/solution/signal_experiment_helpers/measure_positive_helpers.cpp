@@ -1,6 +1,7 @@
 #include "signal_experiment.h"
 
 #include <cmath>
+#include <iostream>
 
 #include "scope.h"
 #include "signal.h"
@@ -89,6 +90,8 @@ void SignalExperiment::measure_positive_backprop(
 
 			set_actions(wrapper);
 
+			// temp
+			cout << "SIGNAL_EXPERIMENT_STATE_FIND_SAFE" << endl;
 			this->state = SIGNAL_EXPERIMENT_STATE_FIND_SAFE;
 			this->state_iter = 0;
 			this->solution_type = SIGNAL_EXPERIMENT_SOLUTION_TYPE_CURRENT;

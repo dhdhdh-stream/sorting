@@ -24,7 +24,7 @@ const int CHECK_3_NUM_ITERS = 100;
 
 const double CURRENT_MIN_T_SCORE = -0.674;
 const double AVERAGE_MIN_T_SCORE = -0.674;
-const double INDIVIDUAL_MIN_T_SCORE = -1.960;
+const double INDIVIDUAL_MIN_T_SCORE = -2.326;
 
 bool SignalExperiment::find_safe_check_signal(vector<double>& obs,
 											  int& action,
@@ -231,11 +231,15 @@ void SignalExperiment::find_safe_backprop(
 				cout << endl;
 
 				if (wrapper->trap_solutions.size() > 0) {
-					this->state = SIGNAL_EXPERIMENT_STATE_GATHER_TRAPS;
+					// temp
+					cout << "SIGNAL_EXPERIMENT_STATE_GATHER_TRAP" << endl;
+					this->state = SIGNAL_EXPERIMENT_STATE_GATHER_TRAP;
 					this->state_iter = 0;
 					this->solution_type = SIGNAL_EXPERIMENT_SOLUTION_TYPE_TRAP;
 					this->solution_index = 0;
 				} else {
+					// temp
+					cout << "SIGNAL_EXPERIMENT_STATE_GATHER_CURRENT" << endl;
 					this->state = SIGNAL_EXPERIMENT_STATE_GATHER_CURRENT;
 					this->state_iter = 0;
 					this->solution_type = SIGNAL_EXPERIMENT_SOLUTION_TYPE_CURRENT;

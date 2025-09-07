@@ -26,6 +26,9 @@ const int MEASURE_ITERS = 1000;
 
 #if defined(MDEBUG) && MDEBUG
 const int IMPROVEMENTS_PER_ITER = 2;
+
+const int POSITIVE_MAX_NUM_SOLUTIONS = 8;
+const int TRAP_MAX_NUM_SOLUTIONS = 4;
 #else
 /**
  * - large number to try to mitigate bad variance
@@ -35,6 +38,9 @@ const int IMPROVEMENTS_PER_ITER = 2;
  *   - but if can backslide, then likely will backslide to nothing
  */
 const int IMPROVEMENTS_PER_ITER = 10;
+
+const int POSITIVE_MAX_NUM_SOLUTIONS = 40;
+const int TRAP_MAX_NUM_SOLUTIONS = 20;
 #endif /* MDEBUG */
 
 #if defined(MDEBUG) && MDEBUG
@@ -42,8 +48,6 @@ const int EXPLORE_TARGET_NUM_SAMPLES = 10;
 #else
 const int EXPLORE_TARGET_NUM_SAMPLES = 4000;
 #endif /* MDEBUG */
-
-const int MAX_NUM_SOLUTIONS = 40;
 
 #if defined(MDEBUG) && MDEBUG
 const int NUM_VERIFY_SAMPLES = 10;

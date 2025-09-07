@@ -100,6 +100,15 @@ SolutionWrapper::SolutionWrapper(int num_obs,
 		this->positive_solutions.push_back(l_solution);
 	}
 
+	string num_trap_solutions_line;
+	getline(input_file, num_trap_solutions_line);
+	int num_trap_solutions = stoi(num_trap_solutions_line);
+	for (int s_index = 0; s_index < num_trap_solutions; s_index++) {
+		Solution* l_solution = new Solution();
+		l_solution->load(input_file);
+		this->trap_solutions.push_back(l_solution);
+	}
+
 	string num_signals_line;
 	getline(input_file, num_signals_line);
 	int num_signals = stoi(num_signals_line);
@@ -193,11 +202,14 @@ void SolutionWrapper::save(string path,
 
 	this->solution->save(output_file);
 
-	cout << "this->positive_solutions.size(): " << this->positive_solutions.size() << endl;
-
 	output_file << this->positive_solutions.size() << endl;
 	for (int s_index = 0; s_index < (int)this->positive_solutions.size(); s_index++) {
 		this->positive_solutions[s_index]->save(output_file);
+	}
+
+	output_file << this->trap_solutions.size() << endl;
+	for (int s_index = 0; s_index < (int)this->trap_solutions.size(); s_index++) {
+		this->trap_solutions[s_index]->save(output_file);
 	}
 
 	output_file << this->signals.size() << endl;

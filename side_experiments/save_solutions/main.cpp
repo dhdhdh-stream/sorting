@@ -4,44 +4,6 @@
 // - first split, then fully train score
 //   - then train match according to whether helps
 
-// - save failed experiments as confusion to train against?
-//   - to help signal learn edge cases
-
-// - maybe also put extra emphasis on current solution
-//   - to best make improvements
-
-// - learn good
-// - learn true explore
-// - learn traps
-// - learn current?
-
-// - don't save solutions
-//   - instead save scopes
-//     - so apply all the different scope variations everywhere where scope is used
-//     - discard scope variations that no longer work with current solution
-//       - not independent anyways
-
-// - practice snapshot alarm/reward
-//   - but can worry later
-//     - still need to solve issue of bad signal
-//       - i.e., learning traps
-
-// - only activate signal when needed?
-
-// - don't have average misguess
-//   - return that missed, and have different situations handle differently
-
-// - add to trap when signal significantly better, but result worse
-// - or if result significantly worse
-
-// - TODO: evaluate current solution to see if is trap?
-
-// TODO: add solution index
-// - on trap, save both positive miss and negative miss
-
-// - or try to always guarantee that current solution fully guessed
-//   - if there's anything not guessed, likely to be mistake
-
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -163,7 +125,7 @@ int main(int argc, char* argv[]) {
 			}
 		}
 
-		// solution_wrapper->save("saves/", filename);
+		solution_wrapper->save("saves/", filename);
 
 		solution_wrapper->save_for_display("../", "display.txt");
 
@@ -179,7 +141,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	solution_wrapper->clean_scopes();
-	// solution_wrapper->save("saves/", filename);
+	solution_wrapper->save("saves/", filename);
 
 	delete problem_type;
 	delete solution_wrapper;

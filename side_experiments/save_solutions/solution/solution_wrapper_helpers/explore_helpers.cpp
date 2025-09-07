@@ -10,6 +10,7 @@
 #include "scope_node.h"
 #include "signal_experiment.h"
 #include "solution.h"
+#include "utilities.h"
 
 using namespace std;
 
@@ -124,7 +125,11 @@ void SolutionWrapper::explore_end(double result) {
 
 			this->curr_experiment = NULL;
 
-			if (this->trap_solutions.size() >= MAX_NUM_SOLUTIONS) {
+			// temp
+			cout << "this->trap_solutions.size(): " << this->trap_solutions.size() << endl;
+
+			if (this->positive_solutions.size() >= POSITIVE_MAX_NUM_SOLUTIONS
+					&& this->trap_solutions.size() >= TRAP_MAX_NUM_SOLUTIONS) {
 				this->curr_signal_experiment = new SignalExperiment(0,
 																	this);
 
@@ -137,7 +142,7 @@ void SolutionWrapper::explore_end(double result) {
 				this->best_experiment = this->curr_experiment;
 			} else {
 				if (this->curr_experiment->improvement > this->best_experiment->improvement) {
-					if (this->positive_solutions.size() >= MAX_NUM_SOLUTIONS) {
+					if (this->positive_solutions.size() >= POSITIVE_MAX_NUM_SOLUTIONS) {
 						uniform_int_distribution<int> distribution(0, this->positive_solutions.size()-1);
 						int random_index = distribution(generator);
 						delete this->positive_solutions[random_index];
@@ -148,7 +153,7 @@ void SolutionWrapper::explore_end(double result) {
 					delete this->best_experiment;
 					this->best_experiment = this->curr_experiment;
 				} else {
-					if (this->positive_solutions.size() >= MAX_NUM_SOLUTIONS) {
+					if (this->positive_solutions.size() >= POSITIVE_MAX_NUM_SOLUTIONS) {
 						uniform_int_distribution<int> distribution(0, this->positive_solutions.size()-1);
 						int random_index = distribution(generator);
 						delete this->positive_solutions[random_index];
@@ -167,7 +172,14 @@ void SolutionWrapper::explore_end(double result) {
 				cout << "update" << endl;
 
 				delete this->solution;
-				this->positive_solutions.push_back(new Solution(this->best_experiment->resulting_solution));
+				if (this->positive_solutions.size() >= POSITIVE_MAX_NUM_SOLUTIONS) {
+					uniform_int_distribution<int> distribution(0, this->positive_solutions.size()-1);
+					int random_index = distribution(generator);
+					delete this->positive_solutions[random_index];
+					this->positive_solutions[random_index] = new Solution(this->best_experiment->resulting_solution);
+				} else {
+					this->positive_solutions.push_back(new Solution(this->best_experiment->resulting_solution));
+				}
 				this->solution = this->best_experiment->resulting_solution;
 
 				cout << "this->best_experiment->resulting_solution->curr_val_average: " << this->best_experiment->resulting_solution->curr_val_average << endl;
@@ -178,7 +190,7 @@ void SolutionWrapper::explore_end(double result) {
 				this->solution->timestamp++;
 
 				if (this->solution->timestamp >= this->last_signal_experiment_timestamp + 4
-						&& (int)this->positive_solutions.size() >= MAX_NUM_SOLUTIONS) {
+						&& (int)this->positive_solutions.size() >= POSITIVE_MAX_NUM_SOLUTIONS) {
 					this->curr_signal_experiment = new SignalExperiment(0,
 																		this);
 				}

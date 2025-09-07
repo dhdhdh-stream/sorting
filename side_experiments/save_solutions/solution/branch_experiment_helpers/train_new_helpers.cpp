@@ -121,15 +121,6 @@ void BranchExperiment::train_new_backprop(
 			} else {
 				inner_targel_val = calc_signal(instance_history->signal_needed_from,
 											   wrapper);
-
-				// temp
-				if (this->state_iter%10 == 0) {
-					cout << "train_new" << endl;
-					wrapper->problem->print();
-					cout << "inner_targel_val: " << inner_targel_val << endl;
-					cout << "instance_history->existing_predicted_score: " << instance_history->existing_predicted_score << endl;
-					cout << endl;
-				}
 			}
 
 			this->i_target_val_histories.push_back(inner_targel_val - instance_history->existing_predicted_score);
@@ -160,9 +151,6 @@ void BranchExperiment::train_new_backprop(
 										network_inputs,
 										network,
 										select_percentage);
-
-			// temp
-			cout << "select_percentage: " << select_percentage << endl;
 
 			for (int h_index = 0; h_index < (int)this->scope_histories.size(); h_index++) {
 				delete this->scope_histories[h_index];

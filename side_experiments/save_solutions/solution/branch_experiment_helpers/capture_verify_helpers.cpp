@@ -193,7 +193,6 @@ void BranchExperiment::capture_verify_backprop(SolutionWrapper* wrapper) {
 			wrapper->solution->measure_update();
 
 			this->resulting_solution = wrapper->solution;
-			wrapper->solutions.push_back(this->resulting_solution);
 			wrapper->solution = solution_copy;
 
 			this->result = EXPERIMENT_RESULT_SUCCESS;

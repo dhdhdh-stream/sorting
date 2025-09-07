@@ -164,7 +164,7 @@ void Solution::measure_update() {
 	}
 	double new_score = sum_vals / (double)this->existing_target_val_histories.size();
 
-	cout << "measure_update new_score: " << new_score << endl;
+	cout << "new_score: " << new_score << endl;
 
 	if (this->timestamp >= RUN_TIMESTEPS) {
 		this->timestamp = -1;

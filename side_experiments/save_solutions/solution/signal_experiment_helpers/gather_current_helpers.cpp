@@ -1,5 +1,7 @@
 #include "signal_experiment.h"
 
+#include <iostream>
+
 #include "globals.h"
 #include "helpers.h"
 #include "scope.h"
@@ -93,6 +95,8 @@ void SignalExperiment::gather_current_backprop(
 
 	this->state_iter++;
 	if (this->state_iter >= GATHER_CURRENT_NUM_ITERS) {
+		// temp
+		cout << "SIGNAL_EXPERIMENT_STATE_EXPLORE" << endl;
 		this->state = SIGNAL_EXPERIMENT_STATE_EXPLORE;
 		this->state_iter = 0;
 		this->solution_type = SIGNAL_EXPERIMENT_SOLUTION_TYPE_POSITIVE;

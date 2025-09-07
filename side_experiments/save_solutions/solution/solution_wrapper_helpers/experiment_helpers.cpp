@@ -42,7 +42,7 @@ void SolutionWrapper::experiment_end(double result) {
 	if (this->curr_signal_experiment != NULL) {
 		signal_experiment_end(result);
 	} else if (this->solution->existing_scope_histories.size() < MEASURE_ITERS) {
-		experiment_end(result);
+		measure_end(result);
 	} else {
 		explore_end(result);
 	}

@@ -20,6 +20,16 @@ bool SignalExperiment::check_signal(vector<double>& obs,
 									  action,
 									  is_next,
 									  wrapper);
+	case SIGNAL_EXPERIMENT_STATE_GATHER_TRAP:
+		return gather_trap_check_signal(obs,
+										action,
+										is_next,
+										wrapper);
+	case SIGNAL_EXPERIMENT_STATE_GATHER_CURRENT:
+		return gather_current_check_signal(obs,
+										   action,
+										   is_next,
+										   wrapper);
 	case SIGNAL_EXPERIMENT_STATE_EXPLORE:
 		return explore_check_signal(obs,
 									action,
@@ -86,6 +96,14 @@ void SignalExperiment::backprop(double target_val,
 	case SIGNAL_EXPERIMENT_STATE_FIND_SAFE:
 		find_safe_backprop(target_val,
 						   wrapper);
+		break;
+	case SIGNAL_EXPERIMENT_STATE_GATHER_TRAP:
+		gather_trap_backprop(target_val,
+							 wrapper);
+		break;
+	case SIGNAL_EXPERIMENT_STATE_GATHER_CURRENT:
+		gather_current_backprop(target_val,
+								wrapper);
 		break;
 	case SIGNAL_EXPERIMENT_STATE_EXPLORE:
 		explore_backprop(target_val,

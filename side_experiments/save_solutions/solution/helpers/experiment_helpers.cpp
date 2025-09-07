@@ -88,5 +88,8 @@ void create_experiment(SolutionWrapper* wrapper) {
 		delete new_experiment;
 	} else {
 		wrapper->curr_experiment = new_experiment;
+
+		// temp
+		cout << "BranchExperiment" << endl;
 	}
 }

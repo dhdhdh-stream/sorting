@@ -151,6 +151,8 @@ void SolutionWrapper::signal_experiment_end(double result) {
 			delete this->best_signal_experiment;
 			this->best_signal_experiment = NULL;
 
+			this->last_signal_experiment_timestamp = this->solution->timestamp;
+
 			for (int s_index = 0; s_index < (int)this->trap_solutions.size(); s_index++) {
 				delete this->trap_solutions[s_index];
 			}

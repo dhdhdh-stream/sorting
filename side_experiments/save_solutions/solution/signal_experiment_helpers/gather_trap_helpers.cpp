@@ -1,5 +1,7 @@
 #include "signal_experiment.h"
 
+#include <iostream>
+
 #include "helpers.h"
 #include "scope.h"
 #include "solution_wrapper.h"
@@ -91,10 +93,12 @@ void SignalExperiment::gather_trap_backprop(
 	}
 
 	this->solution_index++;
-	if (this->solution_index >= (int)wrapper->positive_solutions.size()) {
+	if (this->solution_index >= (int)wrapper->trap_solutions.size()) {
 		this->solution_index = 0;
 		this->state_iter++;
 		if (this->state_iter >= GATHER_TRAP_NUM_ITERS) {
+			// temp
+			cout << "SIGNAL_EXPERIMENT_STATE_GATHER_CURRENT" << endl;
 			this->state = SIGNAL_EXPERIMENT_STATE_GATHER_CURRENT;
 			this->state_iter = 0;
 			this->solution_type = SIGNAL_EXPERIMENT_SOLUTION_TYPE_CURRENT;

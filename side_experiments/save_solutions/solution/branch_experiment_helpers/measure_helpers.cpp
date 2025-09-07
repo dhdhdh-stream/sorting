@@ -184,6 +184,7 @@ void BranchExperiment::measure_backprop(double target_val,
 							 this->new_signals,
 							 wrapper);
 
+		this->state_iter++;
 		if (this->state_iter >= MEASURE_ITERS) {
 			double existing_sum_score = 0.0;
 			for (int h_index = 0; h_index < (int)this->existing_scores.size(); h_index++) {
@@ -218,6 +219,10 @@ void BranchExperiment::measure_backprop(double target_val,
 				existing_score_standard_error * existing_score_standard_error
 					+ new_score_standard_error * new_score_standard_error);
 
+			cout << "existing_score_average: " << existing_score_average << endl;
+			cout << "new_score_average: " << new_score_average << endl;
+			cout << "score_t_score: " << score_t_score << endl;
+
 			#if defined(MDEBUG) && MDEBUG
 			if (new_score_average <= existing_score_average && rand()%2 == 0) {
 			#else
@@ -244,6 +249,9 @@ void BranchExperiment::measure_backprop(double target_val,
 									new_sum_vals += new_it->second[h_index];
 								}
 								double new_average = new_sum_vals / (double)new_it->second.size();
+
+								cout << "existing_average: " << existing_average << endl;
+								cout << "new_average: " << new_average << endl;
 
 								if (new_average > existing_average) {
 									add_to_trap = true;
@@ -289,6 +297,10 @@ void BranchExperiment::measure_backprop(double target_val,
 								double diff = new_average - existing_average;
 								double t_score = diff / sqrt(existing_denom * existing_denom
 									+ new_denom * new_denom);
+
+								cout << "existing_average: " << existing_average << endl;
+								cout << "new_average: " << new_average << endl;
+								cout << "t_score: " << t_score << endl;
 
 								if (t_score > 2.326) {
 									add_to_trap = true;

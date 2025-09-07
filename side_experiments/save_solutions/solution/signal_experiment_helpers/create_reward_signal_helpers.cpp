@@ -11,6 +11,7 @@
 #include "signal_experiment.h"
 
 #include <cmath>
+#include <iostream>
 
 #include "constants.h"
 #include "helpers.h"
@@ -27,7 +28,7 @@ const int MATCH_TYPE_CURRENT = 2;
 const int MATCH_TYPE_EXPLORE = 3;
 
 #if defined(MDEBUG) && MDEBUG
-const int SPLIT_NUM_TRIES = 3;
+const int SPLIT_NUM_TRIES = 4;
 #else
 const int SPLIT_NUM_TRIES = 20;
 #endif /* MDEBUG */
@@ -123,11 +124,14 @@ bool SignalExperiment::check_instance_still_good(SignalInstance* instance,
 }
 
 void SignalExperiment::create_reward_signal_helper(SolutionWrapper* wrapper) {
+	// temp
+	cout << "create_reward_signal" << endl;
+
 	double sum_explore_vals = 0.0;
 	for (int h_index = 0; h_index < (int)this->explore_scores.size(); h_index++) {
 		sum_explore_vals += this->explore_scores[h_index];
 	}
-	double new_default_guess = sum_explore_vals / (double)this->explore_scores.size();
+	this->default_guess = sum_explore_vals / (double)this->explore_scores.size();
 
 	vector<double> positive_predicted(this->positive_pre_obs.size());
 	vector<bool> positive_has_match(this->positive_pre_obs.size(), false);
@@ -143,7 +147,7 @@ void SignalExperiment::create_reward_signal_helper(SolutionWrapper* wrapper) {
 			positive_predicted[h_index] = val;
 			positive_has_match[h_index] = true;
 		} else {
-			positive_predicted[h_index] = new_default_guess;
+			positive_predicted[h_index] = this->default_guess;
 		}
 	}
 
@@ -152,7 +156,7 @@ void SignalExperiment::create_reward_signal_helper(SolutionWrapper* wrapper) {
 		trap_predicted[h_index] = calc_signal(this->trap_pre_obs[h_index],
 											  this->trap_post_obs[h_index],
 											  this->instances,
-											  new_default_guess);
+											  this->default_guess);
 	}
 
 	vector<double> current_predicted(this->current_pre_obs.size());
@@ -169,7 +173,7 @@ void SignalExperiment::create_reward_signal_helper(SolutionWrapper* wrapper) {
 			current_predicted[h_index] = val;
 			current_has_match[h_index] = true;
 		} else {
-			current_predicted[h_index] = new_default_guess;
+			current_predicted[h_index] = this->default_guess;
 		}
 	}
 
@@ -178,7 +182,7 @@ void SignalExperiment::create_reward_signal_helper(SolutionWrapper* wrapper) {
 		explore_predicted[h_index] = calc_signal(this->explore_pre_obs[h_index],
 												 this->explore_post_obs[h_index],
 												 this->instances,
-												 new_default_guess);
+												 this->default_guess);
 	}
 
 	int num_min_match = MIN_MATCH_RATIO * (double)(this->positive_pre_obs.size()
@@ -419,6 +423,9 @@ void SignalExperiment::create_reward_signal_helper(SolutionWrapper* wrapper) {
 		}
 	}
 
+	// temp
+	cout << "this->instances.size(): " << this->instances.size() << endl;
+
 	double sum_misguess = 0.0;
 	for (int h_index = 0; h_index < (int)this->positive_pre_obs.size(); h_index++) {
 		sum_misguess += (this->positive_scores[h_index] - positive_predicted[h_index])
@@ -438,4 +445,6 @@ void SignalExperiment::create_reward_signal_helper(SolutionWrapper* wrapper) {
 	}
 	this->misguess_average = sum_misguess / (double)(this->positive_pre_obs.size()
 		+ this->trap_pre_obs.size() + this->current_pre_obs.size() + this->explore_pre_obs.size());
+
+	cout << "this->misguess_average: " << this->misguess_average << endl;
 }

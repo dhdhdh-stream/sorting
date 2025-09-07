@@ -1,5 +1,7 @@
 #include "signal_experiment.h"
 
+#include <iostream>
+
 #include "globals.h"
 #include "helpers.h"
 #include "problem.h"
@@ -19,6 +21,8 @@ SignalExperiment::SignalExperiment(int scope_context_id,
 	this->existing_positive_scores = vector<vector<double>>(
 		wrapper->positive_solutions.size());
 
+	// temp
+	cout << "SIGNAL_EXPERIMENT_STATE_MEASURE_POSITIVE" << endl;
 	this->state = SIGNAL_EXPERIMENT_STATE_MEASURE_POSITIVE;
 	this->state_iter = 0;
 	this->solution_type = SIGNAL_EXPERIMENT_SOLUTION_TYPE_POSITIVE;
