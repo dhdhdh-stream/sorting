@@ -1,11 +1,53 @@
 #include "explore_experiment.h"
 
 #include "globals.h"
+#include "scope.h"
 #include "solution_wrapper.h"
 
 using namespace std;
 
+ExploreExperiment::ExploreExperiment(Scope* scope_context,
+									 AbstractNode* node_context,
+									 bool is_branch,
+									 AbstractNode* exit_next_node) {
+	this->scope_context = scope_context;
+	this->node_context = node_context;
+	this->is_branch = is_branch;
+	this->exit_next_node = exit_next_node;
 
+	this->sum_num_explore = 0;
+	this->sum_num_instances = 0;
+
+	this->curr_new_scope = NULL;
+	this->curr_scope_history = NULL;
+	this->best_new_scope = NULL;
+	this->best_scope_history = NULL;
+
+	this->state = EXPLORE_EXPERIMENT_STATE_TRAIN_EXISTING;
+	this->state_iter = 0;
+}
+
+ExploreExperiment::~ExploreExperiment() {
+	if (this->curr_new_scope != NULL) {
+		delete this->curr_new_scope;
+	}
+
+	if (this->curr_scope_history != NULL) {
+		delete this->curr_scope_history;
+	}
+
+	if (this->best_new_scope != NULL) {
+		delete this->best_new_scope;
+	}
+
+	if (this->best_scope_history != NULL) {
+		delete this->best_scope_history;
+	}
+
+	for (int h_index = 0; h_index < (int)this->scope_histories.size(); h_index++) {
+		delete this->scope_histories[h_index];
+	}
+}
 
 ExploreExperimentHistory::ExploreExperimentHistory(
 		ExploreExperiment* experiment,

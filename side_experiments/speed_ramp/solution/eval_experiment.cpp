@@ -9,7 +9,15 @@ EvalExperiment::EvalExperiment() {
 	this->state_iter = 0;
 }
 
+EvalExperiment::~EvalExperiment() {
+	if (this->new_network != NULL) {
+		delete this->new_network;
+	}
 
+	if (this->new_scope != NULL) {
+		delete this->new_scope;
+	}
+}
 
 EvalExperimentHistory::EvalExperimentHistory(EvalExperiment* experiment) {
 	switch (experiment->state) {

@@ -77,8 +77,6 @@ SolutionWrapper::SolutionWrapper(int num_obs,
 
 	input_file.close();
 
-	// this->experiment_overall_history = NULL;
-
 	#if defined(MDEBUG) && MDEBUG
 	this->run_index = 0;
 	#endif /* MDEBUG */

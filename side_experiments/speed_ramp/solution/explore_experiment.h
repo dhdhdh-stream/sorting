@@ -55,7 +55,11 @@ public:
 	std::vector<ScopeHistory*> scope_histories;
 	std::vector<double> target_val_histories;
 
-
+	ExploreExperiment(Scope* scope_context,
+					  AbstractNode* node_context,
+					  bool is_branch,
+					  AbstractNode* exit_next_node);
+	~ExploreExperiment();
 
 	void check_activate(AbstractNode* experiment_node,
 						bool is_branch,

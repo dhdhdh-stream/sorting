@@ -27,7 +27,7 @@ const int EVAL_EXPERIMENT_STATE_EVAL = 1;
 #if defined(MDEBUG) && MDEBUG
 const int EVAL_EXPERIMENT_NUM_GEARS = 4;
 #else
-const int EVAL_EXPERIMENT_NUM_GEARS = 20;
+const int EVAL_EXPERIMENT_NUM_GEARS = 10;
 #endif /* MDEBUG */
 
 class EvalExperimentHistory;
@@ -58,8 +58,7 @@ public:
 	std::vector<double> new_scores;
 
 	EvalExperiment();
-
-
+	~EvalExperiment();
 
 	void check_activate(AbstractNode* experiment_node,
 						bool is_branch,

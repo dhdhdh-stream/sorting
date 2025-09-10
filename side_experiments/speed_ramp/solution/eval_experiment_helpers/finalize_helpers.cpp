@@ -509,4 +509,6 @@ void EvalExperiment::add(SolutionWrapper* wrapper) {
 
 		next_node->ancestor_ids.push_back(new_nodes[n_index]->id);
 	}
+
+	wrapper->solution->timestamp++;
 }
