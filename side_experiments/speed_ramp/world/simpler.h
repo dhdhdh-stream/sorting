@@ -2,9 +2,6 @@
  * target fixed signal fixed target
  */
 
-// - actually not a good problem for this setup
-//   - gets too fractured
-
 #ifndef SIMPLER_H
 #define SIMPLER_H
 
