@@ -114,6 +114,11 @@ void SolutionWrapper::experiment_end(double result) {
 		create_experiment(this);
 	}
 
+	delete this->scope_histories[0];
+	this->scope_histories.clear();
+	this->node_context.clear();
+	this->experiment_context.clear();
+
 	for (map<ExploreExperiment*, ExploreExperimentHistory*>::iterator it = this->explore_histories.begin();
 			it != this->explore_histories.end(); it++) {
 		it->first->backprop(result,
@@ -131,9 +136,4 @@ void SolutionWrapper::experiment_end(double result) {
 		delete it->second;
 	}
 	this->eval_histories.clear();
-
-	delete this->scope_histories[0];
-	this->scope_histories.clear();
-	this->node_context.clear();
-	this->experiment_context.clear();
 }

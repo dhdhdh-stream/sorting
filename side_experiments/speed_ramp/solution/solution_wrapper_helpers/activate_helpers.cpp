@@ -63,7 +63,6 @@ void SolutionWrapper::end() {
 	}
 
 	delete this->scope_histories[0];
-
 	this->scope_histories.clear();
 	this->node_context.clear();
 }

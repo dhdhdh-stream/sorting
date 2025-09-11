@@ -4,6 +4,7 @@
 #include <iostream>
 
 #include "abstract_node.h"
+#include "helpers.h"
 
 using namespace std;
 
@@ -84,6 +85,8 @@ void EvalExperiment::eval_backprop(double target_val,
 				add(wrapper);
 				this->node_context->experiment = NULL;
 				delete this;
+
+				measure_score(wrapper);
 			}
 		} else {
 			this->curr_ramp--;

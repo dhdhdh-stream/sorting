@@ -98,4 +98,6 @@ Scope* create_new_scope(Scope* scope_context);
 void clean_scope(Scope* scope,
 				 SolutionWrapper* wrapper);
 
+void measure_score(SolutionWrapper* wrapper);
+
 #endif /* HELPERS_H */
