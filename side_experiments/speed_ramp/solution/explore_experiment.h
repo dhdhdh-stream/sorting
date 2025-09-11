@@ -23,8 +23,8 @@ class ExploreExperimentHistory;
 class ExploreExperimentState;
 class ExploreExperiment : public AbstractExperiment {
 public:
-	std::list<int> last_num_explore;
-	int sum_num_explore;
+	std::list<int> last_num_following_explores;
+	int sum_num_following_explores;
 	std::list<int> last_num_instances;
 	int sum_num_instances;
 

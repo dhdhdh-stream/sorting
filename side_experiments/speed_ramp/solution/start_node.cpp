@@ -19,6 +19,12 @@ StartNode::StartNode(StartNode* original) {
 	this->experiment = NULL;
 }
 
+StartNode::~StartNode() {
+	if (this->experiment != NULL) {
+		delete this->experiment;
+	}
+}
+
 void StartNode::save(ofstream& output_file) {
 	output_file << this->next_node_id << endl;
 }

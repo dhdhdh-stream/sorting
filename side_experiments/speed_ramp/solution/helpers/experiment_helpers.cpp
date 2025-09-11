@@ -104,7 +104,7 @@ void create_experiment(SolutionWrapper* wrapper) {
 			possible_exits);
 
 		int random_index;
-		geometric_distribution<int> exit_distribution(0.2);
+		geometric_distribution<int> exit_distribution(0.1);
 		while (true) {
 			random_index = exit_distribution(generator);
 			if (random_index < (int)possible_exits.size()) {

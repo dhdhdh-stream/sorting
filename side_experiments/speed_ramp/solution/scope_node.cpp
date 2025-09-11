@@ -29,6 +29,12 @@ ScopeNode::ScopeNode(ScopeNode* original,
 	this->experiment = NULL;
 }
 
+ScopeNode::~ScopeNode() {
+	if (this->experiment != NULL) {
+		delete this->experiment;
+	}
+}
+
 void ScopeNode::save(ofstream& output_file) {
 	output_file << this->scope->id << endl;
 

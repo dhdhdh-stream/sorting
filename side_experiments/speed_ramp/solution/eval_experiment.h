@@ -73,7 +73,8 @@ public:
 	void experiment_exit_step(SolutionWrapper* wrapper);
 	void backprop(double target_val,
 				  EvalExperimentHistory* history,
-				  SolutionWrapper* wrapper);
+				  SolutionWrapper* wrapper,
+				  std::vector<Scope*>& updated_scopes);
 
 	void initial_backprop(double target_val,
 						  EvalExperimentHistory* history,
@@ -81,7 +82,8 @@ public:
 
 	void eval_backprop(double target_val,
 					   EvalExperimentHistory* history,
-					   SolutionWrapper* wrapper);
+					   SolutionWrapper* wrapper,
+					   std::vector<Scope*>& updated_scopes);
 
 	void add(SolutionWrapper* wrapper);
 };

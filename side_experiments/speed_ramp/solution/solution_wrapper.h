@@ -40,6 +40,7 @@ public:
 	bool should_explore;
 	ExploreExperiment* curr_explore;
 	std::map<ExploreExperiment*, ExploreExperimentHistory*> explore_histories;
+	std::vector<ExploreExperiment*> explore_order_seen;
 
 	std::map<EvalExperiment*, EvalExperimentHistory*> eval_histories;
 

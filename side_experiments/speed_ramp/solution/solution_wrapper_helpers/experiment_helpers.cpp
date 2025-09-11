@@ -119,6 +119,17 @@ void SolutionWrapper::experiment_end(double result) {
 	this->node_context.clear();
 	this->experiment_context.clear();
 
+	for (int e_index = 0; e_index < (int)this->explore_order_seen.size(); e_index++) {
+		ExploreExperiment* experiment = this->explore_order_seen[e_index];
+		int num_following = (int)this->explore_order_seen.size() - 1 - e_index;
+		if (experiment->last_num_following_explores.size() >= LAST_NUM_TRACK) {
+			experiment->sum_num_following_explores -= experiment->last_num_following_explores.front();
+			experiment->last_num_following_explores.pop_front();
+		}
+		experiment->last_num_following_explores.push_back(num_following);
+		experiment->sum_num_following_explores += num_following;
+	}
+	this->explore_order_seen.clear();
 	for (map<ExploreExperiment*, ExploreExperimentHistory*>::iterator it = this->explore_histories.begin();
 			it != this->explore_histories.end(); it++) {
 		it->first->backprop(result,
@@ -128,12 +139,19 @@ void SolutionWrapper::experiment_end(double result) {
 	}
 	this->explore_histories.clear();
 
+	vector<Scope*> updated_scopes;
 	for (map<EvalExperiment*, EvalExperimentHistory*>::iterator it = this->eval_histories.begin();
 			it != this->eval_histories.end(); it++) {
 		it->first->backprop(result,
 							it->second,
-							this);
+							this,
+							updated_scopes);
 		delete it->second;
 	}
 	this->eval_histories.clear();
+
+	for (int s_index = 0; s_index < (int)updated_scopes.size(); s_index++) {
+		clean_scope(updated_scopes[s_index],
+					this);
+	}
 }

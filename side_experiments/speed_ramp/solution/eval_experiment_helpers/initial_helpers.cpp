@@ -10,7 +10,7 @@ using namespace std;
 #if defined(MDEBUG) && MDEBUG
 const int INITIAL_NUM_SAMPLES = 2;
 #else
-const int INITIAL_NUM_SAMPLES = 100;
+const int INITIAL_NUM_SAMPLES = 200;
 #endif /* MDEBUG */
 
 void EvalExperiment::initial_backprop(double target_val,
@@ -56,10 +56,17 @@ void EvalExperiment::initial_backprop(double target_val,
 			existing_score_standard_error * existing_score_standard_error
 				+ new_score_standard_error * new_score_standard_error);
 
+		double target_t_score;
+		if (this->new_scope != NULL) {
+			target_t_score = 0.0;
+		} else {
+			target_t_score = -0.674;
+		}
+
 		#if defined(MDEBUG) && MDEBUG
-		if (score_t_score >= -0.674 || rand()%3 != 0) {
+		if (score_t_score >= target_t_score || rand()%3 != 0) {
 		#else
-		if (score_t_score >= -0.674) {
+		if (score_t_score >= target_t_score) {
 		#endif /* MDEBUG */
 			this->existing_scores.clear();
 			this->new_scores.clear();

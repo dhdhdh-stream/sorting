@@ -31,6 +31,7 @@ public:
 	BranchNode();
 	BranchNode(BranchNode* original,
 			   Solution* parent_solution);
+	~BranchNode();
 
 	void step(std::vector<double>& obs,
 			  int& action,

@@ -12,6 +12,7 @@ public:
 
 	StartNode();
 	StartNode(StartNode* original);
+	~StartNode();
 
 	void step(std::vector<double>& obs,
 			  int& action,

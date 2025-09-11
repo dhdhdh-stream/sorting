@@ -19,6 +19,7 @@ public:
 
 	ActionNode();
 	ActionNode(ActionNode* original);
+	~ActionNode();
 
 	void step(std::vector<double>& obs,
 			  int& action,

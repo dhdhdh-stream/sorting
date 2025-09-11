@@ -2,11 +2,10 @@
 
 #include <iostream>
 
+#include "constants.h"
 #include "solution_wrapper.h"
 
 using namespace std;
-
-const int LAST_NUM_TRACK = 1000;
 
 void ExploreExperiment::check_activate(AbstractNode* experiment_node,
 									   bool is_branch,
@@ -19,6 +18,9 @@ void ExploreExperiment::check_activate(AbstractNode* experiment_node,
 			history = new ExploreExperimentHistory(this,
 												   wrapper);
 			wrapper->explore_histories[this] = history;
+			if (this->state != EXPLORE_EXPERIMENT_STATE_TRAIN_EXISTING) {
+				wrapper->explore_order_seen.push_back(this);
+			}
 		} else {
 			history = it->second;
 		}
@@ -78,7 +80,7 @@ void ExploreExperiment::set_action(int action,
 }
 
 void ExploreExperiment::experiment_exit_step(SolutionWrapper* wrapper) {
-	ExploreExperimentState* experiment_state = (ExploreExperimentState*)wrapper->experiment_context.back();
+	ExploreExperimentState* experiment_state = (ExploreExperimentState*)wrapper->experiment_context[wrapper->experiment_context.size() - 2];
 	switch (this->state) {
 	case EXPLORE_EXPERIMENT_STATE_EXPLORE:
 		explore_exit_step(wrapper,
@@ -94,25 +96,12 @@ void ExploreExperiment::experiment_exit_step(SolutionWrapper* wrapper) {
 void ExploreExperiment::backprop(double target_val,
 								 ExploreExperimentHistory* history,
 								 SolutionWrapper* wrapper) {
-	if (this->last_num_explore.size() >= LAST_NUM_TRACK) {
-		this->sum_num_explore -= this->last_num_explore.front();
-		this->last_num_explore.pop_front();
-		this->last_num_explore.push_back((int)wrapper->explore_histories.size());
-		this->sum_num_explore += (int)wrapper->explore_histories.size();
-	} else {
-		this->last_num_explore.push_back((int)wrapper->explore_histories.size());
-		this->sum_num_explore += (int)wrapper->explore_histories.size();
-	}
-
 	if (this->last_num_instances.size() >= LAST_NUM_TRACK) {
 		this->sum_num_instances -= this->last_num_instances.front();
 		this->last_num_instances.pop_front();
-		this->last_num_instances.push_back(history->num_instances);
-		this->sum_num_instances += history->num_instances;
-	} else {
-		this->last_num_instances.push_back(history->num_instances);
-		this->sum_num_instances += history->num_instances;
 	}
+	this->last_num_instances.push_back(history->num_instances);
+	this->sum_num_instances += history->num_instances;
 
 	switch (this->state) {
 	case EXPLORE_EXPERIMENT_STATE_TRAIN_EXISTING:

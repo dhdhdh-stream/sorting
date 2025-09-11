@@ -11,12 +11,13 @@ using namespace std;
 #if defined(MDEBUG) && MDEBUG
 const int EVAL_EPOCH_NUM_ITERS = 20;
 #else
-const int EVAL_EPOCH_NUM_ITERS = 4000;
+const int EVAL_EPOCH_NUM_ITERS = 8000;
 #endif /* MDEBUG */
 
 void EvalExperiment::eval_backprop(double target_val,
 								   EvalExperimentHistory* history,
-								   SolutionWrapper* wrapper) {
+								   SolutionWrapper* wrapper,
+								   vector<Scope*>& updated_scopes) {
 	if (history->is_on) {
 		this->new_scores.push_back(target_val);
 	} else {
@@ -64,15 +65,22 @@ void EvalExperiment::eval_backprop(double target_val,
 			existing_score_standard_error * existing_score_standard_error
 				+ new_score_standard_error * new_score_standard_error);
 
+		double target_t_score;
+		if (this->new_scope != NULL) {
+			target_t_score = 0.0;
+		} else {
+			target_t_score = -0.674;
+		}
+
 		this->existing_scores.clear();
 		this->new_scores.clear();
 
 		this->state_iter = 0;
 
 		#if defined(MDEBUG) && MDEBUG
-		if (score_t_score >= -0.674 || rand()%3 != 0) {
+		if (score_t_score >= target_t_score || rand()%3 != 0) {
 		#else
-		if (score_t_score >= -0.674) {
+		if (score_t_score >= target_t_score) {
 		#endif /* MDEBUG */
 			this->curr_ramp++;
 			if (this->curr_ramp >= EVAL_EXPERIMENT_NUM_GEARS-1) {
@@ -81,6 +89,8 @@ void EvalExperiment::eval_backprop(double target_val,
 				cout << "new_score_average: " << new_score_average << endl;
 				cout << "score_t_score: " << score_t_score << endl;
 				cout << endl;
+
+				updated_scopes.push_back(this->scope_context);
 
 				add(wrapper);
 				this->node_context->experiment = NULL;

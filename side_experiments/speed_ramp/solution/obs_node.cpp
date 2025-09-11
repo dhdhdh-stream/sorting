@@ -26,6 +26,12 @@ ObsNode::ObsNode(ObsNode* original) {
 	this->experiment = NULL;
 }
 
+ObsNode::~ObsNode() {
+	if (this->experiment != NULL) {
+		delete this->experiment;
+	}
+}
+
 void ObsNode::save(ofstream& output_file) {
 	output_file << this->next_node_id << endl;
 

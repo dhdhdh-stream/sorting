@@ -7,6 +7,11 @@
 using namespace std;
 
 EvalExperiment::EvalExperiment() {
+	this->type = EXPERIMENT_TYPE_EVAL;
+
+	this->new_network = NULL;
+	this->new_scope = NULL;
+
 	this->state = EVAL_EXPERIMENT_STATE_INITIAL;
 	this->state_iter = 0;
 }

@@ -8,8 +8,13 @@ class AbstractNode;
 class Scope;
 class SolutionWrapper;
 
+const int EXPERIMENT_TYPE_EXPLORE = 0;
+const int EXPERIMENT_TYPE_EVAL = 1;
+
 class AbstractExperiment {
 public:
+	int type;
+
 	Scope* scope_context;
 	AbstractNode* node_context;
 	bool is_branch;

@@ -37,6 +37,7 @@ public:
 	ScopeNode();
 	ScopeNode(ScopeNode* original,
 			  Solution* parent_solution);
+	~ScopeNode();
 
 	void step(std::vector<double>& obs,
 			  int& action,

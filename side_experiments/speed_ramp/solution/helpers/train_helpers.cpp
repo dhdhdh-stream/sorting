@@ -67,74 +67,31 @@ void gather_t_scores_helper(ScopeHistory* scope_history,
 
 	for (map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
 			it != scope_history->node_histories.end(); it++) {
-		AbstractNode* node = it->second->node;
-		switch (node->type) {
-		case NODE_TYPE_SCOPE:
-			{
-				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)it->second;
+		if (scope->nodes.find(it->first) != scope->nodes.end()) {
+			AbstractNode* node = it->second->node;
+			switch (node->type) {
+			case NODE_TYPE_SCOPE:
+				{
+					ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)it->second;
 
-				scope_context.push_back(scope);
-				node_context.push_back(it->first);
+					scope_context.push_back(scope);
+					node_context.push_back(it->first);
 
-				gather_t_scores_helper(scope_node_history->scope_history,
-									   scope_context,
-									   node_context,
-									   t_scores,
-									   scope_histories,
-									   input_tracker);
+					gather_t_scores_helper(scope_node_history->scope_history,
+										   scope_context,
+										   node_context,
+										   t_scores,
+										   scope_histories,
+										   input_tracker);
 
-				scope_context.pop_back();
-				node_context.pop_back();
-			}
-			break;
-		case NODE_TYPE_BRANCH:
-			{
-				BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
-
-				scope_context.push_back(scope);
-				node_context.push_back(it->first);
-
-				Input input;
-				input.scope_context = scope_context;
-				input.factor_index = -1;
-				input.node_context = node_context;
-				input.obs_index = -1;
-
-				map<Input, InputData>::iterator it = input_tracker.find(input);
-				if (it == input_tracker.end()) {
-					InputData input_data;
-					analyze_input(input,
-								  scope_histories,
-								  input_data);
-
-					it = input_tracker.insert({input, input_data}).first;
+					scope_context.pop_back();
+					node_context.pop_back();
 				}
+				break;
+			case NODE_TYPE_BRANCH:
+				{
+					BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
 
-				if (it->second.hit_percent >= MIN_CONSIDER_HIT_PERCENT
-						&& it->second.standard_deviation >= MIN_STANDARD_DEVIATION) {
-					double curr_val;
-					if (branch_node_history->is_branch) {
-						curr_val = 1.0;
-					} else {
-						curr_val = -1.0;
-					}
-					double curr_t_score = (curr_val - it->second.average) / it->second.standard_deviation;
-					map<Input, double>::iterator t_it = t_scores.find(input);
-					if (t_it == t_scores.end()) {
-						t_it = t_scores.insert({input, 0.0}).first;
-					}
-					t_it->second += curr_t_score;
-				}
-
-				scope_context.pop_back();
-				node_context.pop_back();
-			}
-			break;
-		case NODE_TYPE_OBS:
-			{
-				ObsNodeHistory* obs_node_history = (ObsNodeHistory*)it->second;
-
-				for (int o_index = 0; o_index < (int)obs_node_history->obs_history.size(); o_index++) {
 					scope_context.push_back(scope);
 					node_context.push_back(it->first);
 
@@ -142,7 +99,7 @@ void gather_t_scores_helper(ScopeHistory* scope_history,
 					input.scope_context = scope_context;
 					input.factor_index = -1;
 					input.node_context = node_context;
-					input.obs_index = o_index;
+					input.obs_index = -1;
 
 					map<Input, InputData>::iterator it = input_tracker.find(input);
 					if (it == input_tracker.end()) {
@@ -156,7 +113,12 @@ void gather_t_scores_helper(ScopeHistory* scope_history,
 
 					if (it->second.hit_percent >= MIN_CONSIDER_HIT_PERCENT
 							&& it->second.standard_deviation >= MIN_STANDARD_DEVIATION) {
-						double curr_val = obs_node_history->obs_history[o_index];
+						double curr_val;
+						if (branch_node_history->is_branch) {
+							curr_val = 1.0;
+						} else {
+							curr_val = -1.0;
+						}
 						double curr_t_score = (curr_val - it->second.average) / it->second.standard_deviation;
 						map<Input, double>::iterator t_it = t_scores.find(input);
 						if (t_it == t_scores.end()) {
@@ -168,8 +130,48 @@ void gather_t_scores_helper(ScopeHistory* scope_history,
 					scope_context.pop_back();
 					node_context.pop_back();
 				}
+				break;
+			case NODE_TYPE_OBS:
+				{
+					ObsNodeHistory* obs_node_history = (ObsNodeHistory*)it->second;
+
+					for (int o_index = 0; o_index < (int)obs_node_history->obs_history.size(); o_index++) {
+						scope_context.push_back(scope);
+						node_context.push_back(it->first);
+
+						Input input;
+						input.scope_context = scope_context;
+						input.factor_index = -1;
+						input.node_context = node_context;
+						input.obs_index = o_index;
+
+						map<Input, InputData>::iterator it = input_tracker.find(input);
+						if (it == input_tracker.end()) {
+							InputData input_data;
+							analyze_input(input,
+										  scope_histories,
+										  input_data);
+
+							it = input_tracker.insert({input, input_data}).first;
+						}
+
+						if (it->second.hit_percent >= MIN_CONSIDER_HIT_PERCENT
+								&& it->second.standard_deviation >= MIN_STANDARD_DEVIATION) {
+							double curr_val = obs_node_history->obs_history[o_index];
+							double curr_t_score = (curr_val - it->second.average) / it->second.standard_deviation;
+							map<Input, double>::iterator t_it = t_scores.find(input);
+							if (t_it == t_scores.end()) {
+								t_it = t_scores.insert({input, 0.0}).first;
+							}
+							t_it->second += curr_t_score;
+						}
+
+						scope_context.pop_back();
+						node_context.pop_back();
+					}
+				}
+				break;
 			}
-			break;
 		}
 	}
 

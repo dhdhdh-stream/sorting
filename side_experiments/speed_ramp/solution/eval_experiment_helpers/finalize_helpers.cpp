@@ -8,6 +8,7 @@
 #include "factor.h"
 #include "globals.h"
 #include "helpers.h"
+#include "network.h"
 #include "obs_node.h"
 #include "scope.h"
 #include "scope_node.h"
@@ -40,6 +41,21 @@ void recursive_add_child(Scope* curr_parent,
 			recursive_add_child(it->second,
 								wrapper,
 								new_scope);
+		}
+	}
+}
+
+void clean_inputs(vector<Input>& inputs,
+				  Network* network) {
+	for (int i_index = (int)inputs.size()-1; i_index >= 0; i_index--) {
+		for (int l_index = 0; l_index < (int)inputs[i_index].scope_context.size(); l_index++) {
+			Scope* scope = inputs[i_index].scope_context[l_index];
+			int node_id = inputs[i_index].node_context[l_index];
+			if (scope->nodes.find(node_id) == scope->nodes.end()) {
+				inputs.erase(inputs.begin() + i_index);
+				network->remove_input(i_index);
+				break;
+			}
 		}
 	}
 }
@@ -451,6 +467,9 @@ void EvalExperiment::add(SolutionWrapper* wrapper) {
 		new_branch_node->ancestor_ids.push_back(this->node_context->id);
 
 		if (this->new_network != NULL) {
+			clean_inputs(this->new_network_inputs,
+						 this->new_network);
+
 			Factor* new_factor = new Factor();
 			new_factor->inputs = this->new_network_inputs;
 			new_factor->network = this->new_network;

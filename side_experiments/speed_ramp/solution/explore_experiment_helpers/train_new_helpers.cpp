@@ -47,7 +47,7 @@ void ExploreExperiment::train_new_check_activate(
 
 			int average_instances_per_run = (this->sum_num_instances + (int)this->last_num_instances.size() - 1)
 				/ (int)this->last_num_instances.size();
-			uniform_int_distribution<int> until_distribution(1, 2 * average_instances_per_run);
+			uniform_int_distribution<int> until_distribution(1, average_instances_per_run);
 			this->num_instances_until_target = until_distribution(generator);
 
 			ExploreExperimentState* new_experiment_state = new ExploreExperimentState(this);
@@ -99,7 +99,7 @@ void ExploreExperiment::train_new_backprop(
 		double target_val,
 		ExploreExperimentHistory* history,
 		SolutionWrapper* wrapper) {
-	if (history->is_on) {
+	if (history->existing_predicted_scores.size() > 0) {
 		for (int i_index = 0; i_index < (int)history->existing_predicted_scores.size(); i_index++) {
 			this->target_val_histories.push_back(target_val - history->existing_predicted_scores[i_index]);
 		}

@@ -40,6 +40,12 @@ BranchNode::BranchNode(BranchNode* original,
 	this->experiment = NULL;
 }
 
+BranchNode::~BranchNode() {
+	if (this->experiment != NULL) {
+		delete this->experiment;
+	}
+}
+
 void BranchNode::clean_inputs(Scope* scope,
 							  int node_id) {
 	for (int i_index = (int)this->inputs.size()-1; i_index >= 0; i_index--) {

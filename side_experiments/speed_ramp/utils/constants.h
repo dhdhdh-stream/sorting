@@ -12,8 +12,6 @@ const double MATCH_WEIGHT = 0.5;
 const int STEP_TYPE_ACTION = 0;
 const int STEP_TYPE_SCOPE = 1;
 
-#if defined(MDEBUG) && MDEBUG
-const int NUM_VERIFY_SAMPLES = 10;
-#endif /* MDEBUG */
+const int LAST_NUM_TRACK = 1000;
 
 #endif /* CONSTANTS_H */

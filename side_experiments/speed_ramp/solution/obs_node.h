@@ -21,6 +21,7 @@ public:
 
 	ObsNode();
 	ObsNode(ObsNode* original);
+	~ObsNode();
 
 	void step(std::vector<double>& obs,
 			  int& action,

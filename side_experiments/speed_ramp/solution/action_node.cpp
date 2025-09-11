@@ -26,6 +26,12 @@ ActionNode::ActionNode(ActionNode* original) {
 	this->experiment = NULL;
 }
 
+ActionNode::~ActionNode() {
+	if (this->experiment != NULL) {
+		delete this->experiment;
+	}
+}
+
 void ActionNode::save(ofstream& output_file) {
 	output_file << this->action << endl;
 
