@@ -15,6 +15,9 @@ using namespace std;
 BranchNode::BranchNode() {
 	this->type = NODE_TYPE_BRANCH;
 
+	this->original_num_experiments = 0;
+	this->branch_num_experiments = 0;
+
 	this->experiment = NULL;
 }
 
@@ -36,6 +39,9 @@ BranchNode::BranchNode(BranchNode* original,
 	this->branch_next_node_id = original->branch_next_node_id;
 
 	this->ancestor_ids = original->ancestor_ids;
+
+	this->original_num_experiments = original->original_num_experiments;
+	this->branch_num_experiments = original->branch_num_experiments;
 
 	this->experiment = NULL;
 }
@@ -114,6 +120,9 @@ void BranchNode::save(ofstream& output_file) {
 	for (int a_index = 0; a_index < (int)this->ancestor_ids.size(); a_index++) {
 		output_file << this->ancestor_ids[a_index] << endl;
 	}
+
+	output_file << this->original_num_experiments << endl;
+	output_file << this->branch_num_experiments << endl;
 }
 
 void BranchNode::load(ifstream& input_file,
@@ -158,6 +167,14 @@ void BranchNode::load(ifstream& input_file,
 		getline(input_file, ancestor_id_line);
 		this->ancestor_ids.push_back(stoi(ancestor_id_line));
 	}
+
+	string original_num_experiments_line;
+	getline(input_file, original_num_experiments_line);
+	this->original_num_experiments = stoi(original_num_experiments_line);
+
+	string branch_num_experiments_line;
+	getline(input_file, branch_num_experiments_line);
+	this->branch_num_experiments = stoi(branch_num_experiments_line);
 }
 
 void BranchNode::link(Solution* parent_solution) {

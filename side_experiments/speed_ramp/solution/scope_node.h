@@ -34,6 +34,8 @@ public:
 
 	std::vector<int> impacted_factors;
 
+	int num_experiments;
+
 	ScopeNode();
 	ScopeNode(ScopeNode* original,
 			  Solution* parent_solution);

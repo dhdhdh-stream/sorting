@@ -52,10 +52,77 @@ void create_experiment(SolutionWrapper* wrapper) {
 				  possible_starts);
 
 	if (possible_starts.size() > 0) {
-		uniform_int_distribution<int> possible_distribution(0, possible_starts.size()-1);
-		pair<AbstractNode*, bool> start = *next(possible_starts.begin(), possible_distribution(generator));
-		AbstractNode* node_context = start.first;
-		bool is_branch = start.second;
+		/**
+		 * - prioritize exploring new nodes
+		 * 
+		 * - even if changes made later, unlikely to influence old
+		 *   - old still needs to also match everything else
+		 */
+		AbstractNode* node_context;
+		bool is_branch;
+		while (true) {
+			vector<pair<AbstractNode*, bool>> selected_nodes;
+			uniform_real_distribution<double> distribution(0.0, 1.0);
+			for (set<pair<AbstractNode*, bool>>::iterator it = possible_starts.begin();
+					it != possible_starts.end(); it++) {
+				switch ((*it).first->type) {
+				case NODE_TYPE_START:
+					{
+						StartNode* start_node = (StartNode*)(*it).first;
+						if (distribution(generator) <= 1.0 / (1.0 + sqrt(start_node->num_experiments))) {
+							selected_nodes.push_back(*it);
+						}
+					}
+					break;
+				case NODE_TYPE_ACTION:
+					{
+						ActionNode* action_node = (ActionNode*)(*it).first;
+						if (distribution(generator) <= 1.0 / (1.0 + sqrt(action_node->num_experiments))) {
+							selected_nodes.push_back(*it);
+						}
+					}
+					break;
+				case NODE_TYPE_SCOPE:
+					{
+						ScopeNode* scope_node = (ScopeNode*)(*it).first;
+						if (distribution(generator) <= 1.0 / (1.0 + sqrt(scope_node->num_experiments))) {
+							selected_nodes.push_back(*it);
+						}
+					}
+					break;
+				case NODE_TYPE_BRANCH:
+					{
+						BranchNode* branch_node = (BranchNode*)(*it).first;
+						if ((*it).second) {
+							if (distribution(generator) <= 1.0 / (1.0 + sqrt(branch_node->branch_num_experiments))) {
+								selected_nodes.push_back(*it);
+							}
+						} else {
+							if (distribution(generator) <= 1.0 / (1.0 + sqrt(branch_node->original_num_experiments))) {
+								selected_nodes.push_back(*it);
+							}
+						}
+					}
+					break;
+				case NODE_TYPE_OBS:
+					{
+						ObsNode* obs_node = (ObsNode*)(*it).first;
+						if (distribution(generator) <= 1.0 / (1.0 + sqrt(obs_node->num_experiments))) {
+							selected_nodes.push_back(*it);
+						}
+					}
+					break;
+				}
+			}
+
+			if (selected_nodes.size() > 0) {
+				uniform_int_distribution<int> select_distribution(0, selected_nodes.size()-1);
+				int select_index = select_distribution(generator);
+				node_context = selected_nodes[select_index].first;
+				is_branch = selected_nodes[select_index].second;
+				break;
+			}
+		}
 
 		Scope* scope_context = node_context->parent;
 
@@ -119,5 +186,42 @@ void create_experiment(SolutionWrapper* wrapper) {
 			is_branch,
 			exit_next_node);
 		node_context->experiment = new_experiment;
+
+		switch (node_context->type) {
+		case NODE_TYPE_START:
+			{
+				StartNode* start_node = (StartNode*)node_context;
+				start_node->num_experiments++;
+			}
+			break;
+		case NODE_TYPE_ACTION:
+			{
+				ActionNode* action_node = (ActionNode*)node_context;
+				action_node->num_experiments++;
+			}
+			break;
+		case NODE_TYPE_SCOPE:
+			{
+				ScopeNode* scope_node = (ScopeNode*)node_context;
+				scope_node->num_experiments++;
+			}
+			break;
+		case NODE_TYPE_BRANCH:
+			{
+				BranchNode* branch_node = (BranchNode*)node_context;
+				if (is_branch) {
+					branch_node->branch_num_experiments++;
+				} else {
+					branch_node->original_num_experiments++;
+				}
+			}
+			break;
+		case NODE_TYPE_OBS:
+			{
+				ObsNode* obs_node = (ObsNode*)node_context;
+				obs_node->num_experiments++;
+			}
+			break;
+		}
 	}
 }

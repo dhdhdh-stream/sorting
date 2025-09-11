@@ -28,6 +28,9 @@ public:
 
 	std::vector<int> impacted_factors;
 
+	int original_num_experiments;
+	int branch_num_experiments;
+
 	BranchNode();
 	BranchNode(BranchNode* original,
 			   Solution* parent_solution);

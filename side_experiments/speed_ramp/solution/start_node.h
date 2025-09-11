@@ -10,6 +10,8 @@ public:
 	int next_node_id;
 	AbstractNode* next_node;
 
+	int num_experiments;
+
 	StartNode();
 	StartNode(StartNode* original);
 	~StartNode();

@@ -13,6 +13,8 @@ using namespace std;
 ObsNode::ObsNode() {
 	this->type = NODE_TYPE_OBS;
 
+	this->num_experiments = 0;
+
 	this->experiment = NULL;
 }
 
@@ -22,6 +24,8 @@ ObsNode::ObsNode(ObsNode* original) {
 	this->next_node_id = original->next_node_id;
 
 	this->ancestor_ids = original->ancestor_ids;
+
+	this->num_experiments = original->num_experiments;
 
 	this->experiment = NULL;
 }
@@ -39,6 +43,8 @@ void ObsNode::save(ofstream& output_file) {
 	for (int a_index = 0; a_index < (int)this->ancestor_ids.size(); a_index++) {
 		output_file << this->ancestor_ids[a_index] << endl;
 	}
+
+	output_file << this->num_experiments << endl;
 }
 
 void ObsNode::load(ifstream& input_file,
@@ -55,6 +61,10 @@ void ObsNode::load(ifstream& input_file,
 		getline(input_file, ancestor_id_line);
 		this->ancestor_ids.push_back(stoi(ancestor_id_line));
 	}
+
+	string num_experiments_line;
+	getline(input_file, num_experiments_line);
+	this->num_experiments = stoi(num_experiments_line);
 }
 
 void ObsNode::link(Solution* parent_solution) {

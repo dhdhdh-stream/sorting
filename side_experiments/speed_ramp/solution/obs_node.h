@@ -19,6 +19,8 @@ public:
 
 	std::vector<int> impacted_factors;
 
+	int num_experiments;
+
 	ObsNode();
 	ObsNode(ObsNode* original);
 	~ObsNode();

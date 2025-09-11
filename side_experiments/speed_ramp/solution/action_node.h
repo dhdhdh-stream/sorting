@@ -17,6 +17,8 @@ public:
 	int next_node_id;
 	AbstractNode* next_node;
 
+	int num_experiments;
+
 	ActionNode();
 	ActionNode(ActionNode* original);
 	~ActionNode();
