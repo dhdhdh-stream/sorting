@@ -1,5 +1,7 @@
 #include "start_node.h"
 
+#include <iostream>
+
 #include "abstract_experiment.h"
 #include "scope.h"
 #include "solution_wrapper.h"

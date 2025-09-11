@@ -1,5 +1,7 @@
 #include "explore_experiment.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
@@ -20,8 +22,6 @@ const int EXPLORE_EXPERIMENT_EXPLORE_ITERS = 100;
 #endif /* MDEBUG */
 
 void ExploreExperiment::explore_check_activate(
-		AbstractNode* experiment_node,
-		bool is_branch,
 		SolutionWrapper* wrapper,
 		ExploreExperimentHistory* history) {
 	if (history->is_on) {

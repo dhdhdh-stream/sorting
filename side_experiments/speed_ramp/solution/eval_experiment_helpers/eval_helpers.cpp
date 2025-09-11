@@ -1,6 +1,7 @@
 #include "eval_experiment.h"
 
 #include <cmath>
+#include <iostream>
 
 #include "abstract_node.h"
 
@@ -74,6 +75,12 @@ void EvalExperiment::eval_backprop(double target_val,
 		#endif /* MDEBUG */
 			this->curr_ramp++;
 			if (this->curr_ramp >= EVAL_EXPERIMENT_NUM_GEARS-1) {
+				cout << "success" << endl;
+				cout << "existing_score_average: " << existing_score_average << endl;
+				cout << "new_score_average: " << new_score_average << endl;
+				cout << "score_t_score: " << score_t_score << endl;
+				cout << endl;
+
 				add(wrapper);
 				this->node_context->experiment = NULL;
 				delete this;

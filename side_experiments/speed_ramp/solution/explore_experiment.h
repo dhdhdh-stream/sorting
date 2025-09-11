@@ -80,9 +80,7 @@ public:
 	void train_existing_backprop(double target_val,
 								 SolutionWrapper* wrapper);
 
-	void explore_check_activate(AbstractNode* experiment_node,
-								bool is_branch,
-								SolutionWrapper* wrapper,
+	void explore_check_activate(SolutionWrapper* wrapper,
 								ExploreExperimentHistory* history);
 	void explore_step(std::vector<double>& obs,
 					  int& action,

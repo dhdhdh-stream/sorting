@@ -95,8 +95,7 @@ void children_helper(AbstractNode* curr_node,
 }
 
 Scope* create_new_scope(Scope* scope_context) {
-	// if (scope_context->nodes.size() < NEW_SCOPE_MIN_NODES) {
-	if (true) {
+	if (scope_context->nodes.size() < NEW_SCOPE_MIN_NODES) {
 		return NULL;
 	}
 

@@ -10,6 +10,8 @@ const int ACTION_LEFT = 0;
 const int ACTION_RIGHT = 1;
 const int ACTION_CLICK = 2;
 
+const int NUM_TARGETS = 20;
+
 Simpler::Simpler() {
 	this->world = vector<double>(5);
 
@@ -22,10 +24,8 @@ Simpler::Simpler() {
 
 	this->curr_index = 2;
 
-	geometric_distribution<int> num_targets_distribution(0.1);
 	uniform_int_distribution<int> target_distribution(0, 1);
-	int num_targets = num_targets_distribution(generator);
-	for (int t_index = 0; t_index < num_targets; t_index++) {
+	for (int t_index = 0; t_index < NUM_TARGETS; t_index++) {
 		this->targets.push_back(target_distribution(generator));
 	}
 	this->curr_target_index = 0;

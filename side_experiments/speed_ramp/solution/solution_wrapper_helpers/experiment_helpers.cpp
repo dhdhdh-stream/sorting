@@ -24,7 +24,11 @@ void SolutionWrapper::experiment_init() {
 	this->curr_run_seed = xorshift(this->starting_run_seed);
 	#endif /* MDEBUG */
 
+	#if defined(MDEBUG) && MDEBUG
+	uniform_int_distribution<int> explore_distribution(0, 9);
+	#else
 	uniform_int_distribution<int> explore_distribution(0, 99);
+	#endif /* MDEBUG */
 	if (explore_distribution(generator) == 0) {
 		this->should_explore = true;
 	} else {
@@ -115,15 +119,20 @@ void SolutionWrapper::experiment_end(double result) {
 		it->first->backprop(result,
 							it->second,
 							this);
+		delete it->second;
 	}
+	this->explore_histories.clear();
 
 	for (map<EvalExperiment*, EvalExperimentHistory*>::iterator it = this->eval_histories.begin();
 			it != this->eval_histories.end(); it++) {
 		it->first->backprop(result,
 							it->second,
 							this);
+		delete it->second;
 	}
+	this->eval_histories.clear();
 
+	delete this->scope_histories[0];
 	this->scope_histories.clear();
 	this->node_context.clear();
 	this->experiment_context.clear();

@@ -1,6 +1,8 @@
 #include "eval_experiment.h"
 
 #include "globals.h"
+#include "network.h"
+#include "scope.h"
 
 using namespace std;
 

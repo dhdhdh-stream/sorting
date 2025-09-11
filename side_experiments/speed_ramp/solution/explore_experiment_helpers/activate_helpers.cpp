@@ -1,5 +1,7 @@
 #include "explore_experiment.h"
 
+#include <iostream>
+
 #include "solution_wrapper.h"
 
 using namespace std;
@@ -25,13 +27,15 @@ void ExploreExperiment::check_activate(AbstractNode* experiment_node,
 
 		switch (this->state) {
 		case EXPLORE_EXPERIMENT_STATE_TRAIN_EXISTING:
-
+			train_existing_check_activate(wrapper);
 			break;
 		case EXPLORE_EXPERIMENT_STATE_EXPLORE:
-
+			explore_check_activate(wrapper,
+								   history);
 			break;
 		case EXPLORE_EXPERIMENT_STATE_TRAIN_NEW:
-
+			train_new_check_activate(wrapper,
+									 history);
 			break;
 		}
 	}
@@ -42,16 +46,49 @@ void ExploreExperiment::experiment_step(vector<double>& obs,
 										bool& is_next,
 										bool& fetch_action,
 										SolutionWrapper* wrapper) {
-
+	ExploreExperimentState* experiment_state = (ExploreExperimentState*)wrapper->experiment_context.back();
+	switch (this->state) {
+	case EXPLORE_EXPERIMENT_STATE_EXPLORE:
+		explore_step(obs,
+					 action,
+					 is_next,
+					 fetch_action,
+					 wrapper,
+					 experiment_state);
+		break;
+	case EXPLORE_EXPERIMENT_STATE_TRAIN_NEW:
+		train_new_step(obs,
+					   action,
+					   is_next,
+					   wrapper,
+					   experiment_state);
+		break;
+	}
 }
 
 void ExploreExperiment::set_action(int action,
 								   SolutionWrapper* wrapper) {
-
+	ExploreExperimentState* experiment_state = (ExploreExperimentState*)wrapper->experiment_context.back();
+	switch (this->state) {
+	case EXPLORE_EXPERIMENT_STATE_EXPLORE:
+		explore_set_action(action,
+						   experiment_state);
+		break;
+	}
 }
 
 void ExploreExperiment::experiment_exit_step(SolutionWrapper* wrapper) {
-
+	ExploreExperimentState* experiment_state = (ExploreExperimentState*)wrapper->experiment_context.back();
+	switch (this->state) {
+	case EXPLORE_EXPERIMENT_STATE_EXPLORE:
+		explore_exit_step(wrapper,
+						  experiment_state);
+		break;
+	case EXPLORE_EXPERIMENT_STATE_TRAIN_NEW:
+		train_new_exit_step(wrapper,
+							experiment_state);
+		break;
+	}
 }
 
 void ExploreExperiment::backprop(double target_val,
@@ -77,6 +114,20 @@ void ExploreExperiment::backprop(double target_val,
 		this->sum_num_instances += history->num_instances;
 	}
 
-
-
+	switch (this->state) {
+	case EXPLORE_EXPERIMENT_STATE_TRAIN_EXISTING:
+		train_existing_backprop(target_val,
+								wrapper);
+		break;
+	case EXPLORE_EXPERIMENT_STATE_EXPLORE:
+		explore_backprop(target_val,
+						 history,
+						 wrapper);
+		break;
+	case EXPLORE_EXPERIMENT_STATE_TRAIN_NEW:
+		train_new_backprop(target_val,
+						   history,
+						   wrapper);
+		break;
+	}
 }

@@ -1,5 +1,7 @@
 #include "explore_experiment.h"
 
+#include <iostream>
+
 #include "abstract_node.h"
 #include "constants.h"
 #include "eval_experiment.h"
@@ -105,6 +107,7 @@ void ExploreExperiment::train_new_backprop(
 		this->state_iter++;
 		if (this->state_iter >= TRAIN_NEW_NUM_DATAPOINTS) {
 			this->scope_histories.insert(this->scope_histories.begin(), this->best_scope_history);
+			this->best_scope_history = NULL;
 			this->target_val_histories.insert(this->target_val_histories.begin(), this->best_surprise);
 
 			double average_score;
@@ -157,14 +160,15 @@ void ExploreExperiment::train_new_backprop(
 				new_eval_experiment->scopes = this->best_scopes;
 
 				this->node_context->experiment = new_eval_experiment;
+				delete this;
 			} else {
 				if (network != NULL) {
 					delete network;
 				}
-			}
 
-			this->node_context->experiment = NULL;
-			delete this;
+				this->node_context->experiment = NULL;
+				delete this;
+			}
 		}
 	}
 }

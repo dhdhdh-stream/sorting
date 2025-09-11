@@ -96,23 +96,13 @@ int main(int argc, char* argv[]) {
 			}
 		}
 
-		// solution_wrapper->save("saves/", filename);
+		solution_wrapper->save("saves/", filename);
 
 		solution_wrapper->save_for_display("../", "display.txt");
-
-		#if defined(MDEBUG) && MDEBUG
-		if (rand()%4 == 0) {
-			delete solution_wrapper;
-			solution_wrapper = new SolutionWrapper(
-				problem_type->num_obs(),
-				"saves/",
-				filename);
-		}
-		#endif /* MDEBUG */
 	}
 
 	solution_wrapper->clean_scopes();
-	// solution_wrapper->save("saves/", filename);
+	solution_wrapper->save("saves/", filename);
 
 	delete problem_type;
 	delete solution_wrapper;
