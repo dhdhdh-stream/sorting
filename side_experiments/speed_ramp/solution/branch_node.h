@@ -64,6 +64,8 @@ class BranchNodeHistory : public AbstractNodeHistory {
 public:
 	bool is_branch;
 
+	int num_actions_snapshot;
+
 	BranchNodeHistory(BranchNode* node);
 	BranchNodeHistory(BranchNodeHistory* original);
 };

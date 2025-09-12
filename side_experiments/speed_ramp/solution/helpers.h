@@ -24,6 +24,12 @@ void fetch_input_helper(ScopeHistory* scope_history,
 						int l_index,
 						double& obs,
 						bool& is_on);
+void fetch_input_helper(ScopeHistory* scope_history,
+						Input& input,
+						int l_index,
+						double& obs,
+						bool& is_on,
+						int& num_actions_snapshot);
 
 const double MIN_CONSIDER_HIT_PERCENT = 0.2;
 
@@ -44,6 +50,9 @@ public:
 	double hit_percent;
 	double average;
 	double standard_deviation;
+	double average_distance;
+
+	bool include;
 };
 
 void analyze_input(Input& input,

@@ -18,7 +18,6 @@ void ActionNode::experiment_step(vector<double>& obs,
 	ScopeHistory* scope_history = wrapper->scope_histories.back();
 
 	ActionNodeHistory* history = new ActionNodeHistory(this);
-	history->index = (int)scope_history->node_histories.size();
 	scope_history->node_histories[this->id] = history;
 
 	action = this->action;

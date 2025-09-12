@@ -63,7 +63,7 @@ bool train_new(vector<ScopeHistory*>& scope_histories,
 					  input_data);
 		input_tracker[input] = input_data;
 
-		if (input_data.standard_deviation >= MIN_STANDARD_DEVIATION) {
+		if (input_data.include) {
 			vector<double> curr_factor_vals(num_instances);
 			for (int h_index = 0; h_index < num_instances; h_index++) {
 				double val;

@@ -46,6 +46,8 @@ class ObsNodeHistory : public AbstractNodeHistory {
 public:
 	std::vector<double> obs_history;
 
+	int num_actions_snapshot;
+
 	ObsNodeHistory(ObsNode* node);
 	ObsNodeHistory(ObsNodeHistory* original);
 };

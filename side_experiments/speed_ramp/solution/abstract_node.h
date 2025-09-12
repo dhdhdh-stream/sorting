@@ -50,8 +50,6 @@ class AbstractNodeHistory {
 public:
 	AbstractNode* node;
 
-	int index;
-
 	virtual ~AbstractNodeHistory() {};
 };
 

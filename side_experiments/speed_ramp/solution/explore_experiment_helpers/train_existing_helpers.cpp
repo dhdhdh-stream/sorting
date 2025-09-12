@@ -22,7 +22,9 @@ void ExploreExperiment::train_existing_check_activate(
 	/**
 	 * - add even if explore
 	 */
-	this->scope_histories.push_back(new ScopeHistory(wrapper->scope_histories.back()));
+	ScopeHistory* scope_history_copy = new ScopeHistory(wrapper->scope_histories.back());
+	scope_history_copy->num_actions_snapshot = wrapper->num_actions;
+	this->scope_histories.push_back(scope_history_copy);
 }
 
 void ExploreExperiment::train_existing_backprop(

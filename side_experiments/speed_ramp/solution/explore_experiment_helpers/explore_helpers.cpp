@@ -48,6 +48,7 @@ void ExploreExperiment::explore_check_activate(
 				history->existing_predicted_scores.push_back(sum_vals);
 
 				this->curr_scope_history = new ScopeHistory(scope_history);
+				this->curr_scope_history->num_actions_snapshot = wrapper->num_actions;
 
 				#if defined(MDEBUG) && MDEBUG
 				uniform_int_distribution<int> new_scope_distribution(0, 1);

@@ -43,7 +43,9 @@ void ExploreExperiment::train_new_check_activate(
 			}
 			history->existing_predicted_scores.push_back(sum_vals);
 
-			this->scope_histories.push_back(new ScopeHistory(scope_history));
+			ScopeHistory* scope_history_copy = new ScopeHistory(wrapper->scope_histories.back());
+			scope_history_copy->num_actions_snapshot = wrapper->num_actions;
+			this->scope_histories.push_back(scope_history_copy);
 
 			int average_instances_per_run = (this->sum_num_instances + (int)this->last_num_instances.size() - 1)
 				/ (int)this->last_num_instances.size();

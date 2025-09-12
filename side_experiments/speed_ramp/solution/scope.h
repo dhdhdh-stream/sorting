@@ -72,10 +72,10 @@ public:
 	std::vector<bool> factor_initialized;
 	std::vector<double> factor_values;
 
+	int num_actions_snapshot;
+
 	ScopeHistory(Scope* scope);
 	ScopeHistory(ScopeHistory* original);
-	ScopeHistory(ScopeHistory* original,
-				 int max_index);
 	~ScopeHistory();
 };
 

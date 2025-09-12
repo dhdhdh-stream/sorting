@@ -27,19 +27,27 @@ void analyze_input(Input& input,
 				   InputData& input_data) {
 	vector<double> vals;
 	int num_is_on = 0;
+	int sum_num_distance = 0;
 	for (int h_index = 0; h_index < (int)scope_histories.size(); h_index++) {
+		int ending_num_actions = scope_histories[h_index]->num_actions_snapshot;
+
 		double val;
 		bool is_on;
+		int num_actions_snapshot;
 		fetch_input_helper(scope_histories[h_index],
 						   input,
 						   0,
 						   val,
-						   is_on);
+						   is_on,
+						   num_actions_snapshot);
 		if (is_on) {
 			vals.push_back(val);
 			num_is_on++;
+			sum_num_distance += (ending_num_actions - num_actions_snapshot);
 		}
 	}
+
+	input_data.include = false;
 
 	input_data.hit_percent = (double)num_is_on / (double)scope_histories.size();
 	if (input_data.hit_percent >= MIN_CONSIDER_HIT_PERCENT) {
@@ -54,6 +62,15 @@ void analyze_input(Input& input,
 			sum_variance += (input_data.average - vals[v_index]) * (input_data.average - vals[v_index]);
 		}
 		input_data.standard_deviation = sqrt(sum_variance / (double)vals.size());
+
+		if (input_data.standard_deviation >= MIN_STANDARD_DEVIATION) {
+			input_data.average_distance = (double)sum_num_distance / (double)num_is_on;
+
+			uniform_real_distribution<double> distribution(0.0, 1.0);
+			if (distribution(generator) <= 1.0 / (1.0 + sqrt(input_data.average_distance))) {
+				input_data.include = true;
+			}
+		}
 	}
 }
 
@@ -111,8 +128,7 @@ void gather_t_scores_helper(ScopeHistory* scope_history,
 						it = input_tracker.insert({input, input_data}).first;
 					}
 
-					if (it->second.hit_percent >= MIN_CONSIDER_HIT_PERCENT
-							&& it->second.standard_deviation >= MIN_STANDARD_DEVIATION) {
+					if (it->second.include) {
 						double curr_val;
 						if (branch_node_history->is_branch) {
 							curr_val = 1.0;
@@ -155,8 +171,7 @@ void gather_t_scores_helper(ScopeHistory* scope_history,
 							it = input_tracker.insert({input, input_data}).first;
 						}
 
-						if (it->second.hit_percent >= MIN_CONSIDER_HIT_PERCENT
-								&& it->second.standard_deviation >= MIN_STANDARD_DEVIATION) {
+						if (it->second.include) {
 							double curr_val = obs_node_history->obs_history[o_index];
 							double curr_t_score = (curr_val - it->second.average) / it->second.standard_deviation;
 							map<Input, double>::iterator t_it = t_scores.find(input);
@@ -196,8 +211,7 @@ void gather_t_scores_helper(ScopeHistory* scope_history,
 				it = input_tracker.insert({input, input_data}).first;
 			}
 
-			if (it->second.hit_percent >= MIN_CONSIDER_HIT_PERCENT
-					&& it->second.standard_deviation >= MIN_STANDARD_DEVIATION) {
+			if (it->second.include) {
 				double curr_val = scope_history->factor_values[f_index];
 				double curr_t_score = (curr_val - it->second.average) / it->second.standard_deviation;
 				map<Input, double>::iterator t_it = t_scores.find(input);
