@@ -6,6 +6,7 @@
 #include "abstract_experiment.h"
 #include "action_node.h"
 #include "branch_node.h"
+#include "eval_experiment.h"
 #include "factor.h"
 #include "globals.h"
 #include "obs_node.h"
@@ -110,6 +111,13 @@ void Scope::clean_inputs(Scope* scope,
 			}
 			break;
 		}
+
+		if (it->second->experiment != NULL
+				&& it->second->experiment->type == EXPERIMENT_TYPE_EVAL) {
+			EvalExperiment* eval_experiment = (EvalExperiment*)it->second->experiment;
+			eval_experiment->clean_inputs(scope,
+										  node_id);
+		}
 	}
 
 	for (int f_index = 0; f_index < (int)this->factors.size(); f_index++) {
@@ -150,6 +158,14 @@ void Scope::replace_obs_node(Scope* scope,
 											  new_node_id);
 			}
 			break;
+		}
+
+		if (it->second->experiment != NULL
+				&& it->second->experiment->type == EXPERIMENT_TYPE_EVAL) {
+			EvalExperiment* eval_experiment = (EvalExperiment*)it->second->experiment;
+			eval_experiment->replace_obs_node(scope,
+											  original_node_id,
+											  new_node_id);
 		}
 	}
 

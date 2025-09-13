@@ -85,6 +85,12 @@ public:
 					   SolutionWrapper* wrapper,
 					   std::vector<Scope*>& updated_scopes);
 
+	void clean_inputs(Scope* scope,
+					  int node_id);
+	void replace_obs_node(Scope* scope,
+						  int original_node_id,
+						  int new_node_id);
+
 	void add(SolutionWrapper* wrapper);
 };
 
