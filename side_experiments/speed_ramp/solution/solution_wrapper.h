@@ -19,15 +19,15 @@ class Solution;
 
 class SolutionWrapper {
 public:
-	int num_obs;
+	Solution* solution;
 
 	int scope_counter;
-
-	Solution* solution;
 
 	/**
 	 * - run variables
 	 */
+	int num_obs;
+
 	std::vector<ScopeHistory*> scope_histories;
 	std::vector<AbstractNode*> node_context;
 	std::vector<AbstractExperimentState*> experiment_context;

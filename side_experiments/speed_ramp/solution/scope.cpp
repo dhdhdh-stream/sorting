@@ -402,6 +402,8 @@ ScopeHistory::ScopeHistory(ScopeHistory* original) {
 
 	this->factor_initialized = original->factor_initialized;
 	this->factor_values = original->factor_values;
+
+	this->num_actions_snapshot = original->num_actions_snapshot;
 }
 
 ScopeHistory::~ScopeHistory() {

@@ -4,7 +4,11 @@
 #include <iostream>
 
 #include "abstract_node.h"
+#include "constants.h"
 #include "helpers.h"
+#include "scope.h"
+#include "solution.h"
+#include "solution_wrapper.h"
 
 using namespace std;
 
@@ -89,6 +93,28 @@ void EvalExperiment::eval_backprop(double target_val,
 				cout << "new_score_average: " << new_score_average << endl;
 				cout << "score_t_score: " << score_t_score << endl;
 				cout << endl;
+
+				cout << "EvalExperiment" << endl;
+				cout << "this->scope_context->id: " << this->scope_context->id << endl;
+				cout << "this->node_context->id: " << this->node_context->id << endl;
+				cout << "this->is_branch: " << this->is_branch << endl;
+				cout << "new explore path:";
+				for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {
+					if (this->step_types[s_index] == STEP_TYPE_ACTION) {
+						cout << " " << this->actions[s_index];
+					} else {
+						cout << " E" << this->scopes[s_index]->id;
+					}
+				}
+				cout << endl;
+
+				if (this->exit_next_node == NULL) {
+					cout << "this->exit_next_node->id: " << -1 << endl;
+				} else {
+					cout << "this->exit_next_node->id: " << this->exit_next_node->id << endl;
+				}
+
+				cout << "this->select_percentage: " << this->select_percentage << endl;
 
 				updated_scopes.push_back(this->scope_context);
 

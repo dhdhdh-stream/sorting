@@ -30,6 +30,7 @@ class ScopeHistory;
 class Solution {
 public:
 	int timestamp;
+	double curr_score;
 
 	std::map<int, Scope*> scopes;
 

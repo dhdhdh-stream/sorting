@@ -260,34 +260,13 @@ void ExploreExperiment::explore_backprop(double target_val,
 			#else
 			if (this->best_surprise > 0.0) {
 			#endif /* MDEBUG */
-				uniform_int_distribution<int> pass_through_distribution(0, 1);
-				if (pass_through_distribution(generator)) {
-					EvalExperiment* new_eval_experiment = new EvalExperiment();
+				int average_instances_per_run = (this->sum_num_instances + (int)this->last_num_instances.size() - 1)
+					/ (int)this->last_num_instances.size();
+				uniform_int_distribution<int> until_distribution(1, average_instances_per_run);
+				this->num_instances_until_target = until_distribution(generator);
 
-					new_eval_experiment->scope_context = this->scope_context;
-					new_eval_experiment->node_context = this->node_context;
-					new_eval_experiment->is_branch = this->is_branch;
-					new_eval_experiment->exit_next_node = this->exit_next_node;
-
-					new_eval_experiment->select_percentage = 1.0;
-
-					new_eval_experiment->new_scope = this->best_new_scope;
-					this->best_new_scope = NULL;
-					new_eval_experiment->step_types = this->best_step_types;
-					new_eval_experiment->actions = this->best_actions;
-					new_eval_experiment->scopes = this->best_scopes;
-
-					this->node_context->experiment = new_eval_experiment;
-					delete this;
-				} else {
-					int average_instances_per_run = (this->sum_num_instances + (int)this->last_num_instances.size() - 1)
-						/ (int)this->last_num_instances.size();
-					uniform_int_distribution<int> until_distribution(1, average_instances_per_run);
-					this->num_instances_until_target = until_distribution(generator);
-
-					this->state = EXPLORE_EXPERIMENT_STATE_TRAIN_NEW;
-					this->state_iter = 0;
-				}
+				this->state = EXPLORE_EXPERIMENT_STATE_TRAIN_NEW;
+				this->state_iter = 0;
 			} else {
 				this->node_context->experiment = NULL;
 				delete this;

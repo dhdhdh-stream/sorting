@@ -29,6 +29,7 @@ Solution::Solution() {
 
 Solution::Solution(Solution* original) {
 	this->timestamp = original->timestamp;
+	this->curr_score = original->curr_score;
 
 	for (map<int, Scope*>::iterator it = original->scopes.begin();
 			it != original->scopes.end(); it++) {
@@ -60,6 +61,10 @@ void Solution::load(ifstream& input_file) {
 	string timestamp_line;
 	getline(input_file, timestamp_line);
 	this->timestamp = stoi(timestamp_line);
+
+	string curr_score_line;
+	getline(input_file, curr_score_line);
+	this->curr_score = stod(curr_score_line);
 
 	string num_scopes_line;
 	getline(input_file, num_scopes_line);
@@ -161,6 +166,7 @@ void Solution::clean_scopes() {
 
 void Solution::save(ofstream& output_file) {
 	output_file << this->timestamp << endl;
+	output_file << this->curr_score << endl;
 
 	output_file << this->scopes.size() << endl;
 	for (map<int, Scope*>::iterator it = this->scopes.begin();

@@ -19,6 +19,7 @@ SolutionWrapper::SolutionWrapper(int num_obs) {
 	this->solution = new Solution();
 	{
 		this->solution->timestamp = 0;
+		this->solution->curr_score = 0.0;
 
 		/**
 		 * - even though scopes[0] will not be reused, still good to start with:
@@ -68,12 +69,12 @@ SolutionWrapper::SolutionWrapper(int num_obs,
 	ifstream input_file;
 	input_file.open(path + name);
 
+	this->solution = new Solution();
+	this->solution->load(input_file);
+
 	string scope_counter_line;
 	getline(input_file, scope_counter_line);
 	this->scope_counter = stoi(scope_counter_line);
-
-	this->solution = new Solution();
-	this->solution->load(input_file);
 
 	input_file.close();
 
@@ -130,9 +131,9 @@ void SolutionWrapper::save(string path,
 	ofstream output_file;
 	output_file.open(path + "temp_" + name);
 
-	output_file << this->scope_counter << endl;
-
 	this->solution->save(output_file);
+
+	output_file << this->scope_counter << endl;
 
 	output_file.close();
 
