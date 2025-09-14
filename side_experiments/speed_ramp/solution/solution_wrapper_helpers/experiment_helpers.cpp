@@ -139,7 +139,7 @@ void SolutionWrapper::experiment_end(double result) {
 	}
 	this->explore_histories.clear();
 
-	vector<Scope*> updated_scopes;
+	set<Scope*> updated_scopes;
 	for (map<EvalExperiment*, EvalExperimentHistory*>::iterator it = this->eval_histories.begin();
 			it != this->eval_histories.end(); it++) {
 		it->first->backprop(result,
@@ -150,8 +150,9 @@ void SolutionWrapper::experiment_end(double result) {
 	}
 	this->eval_histories.clear();
 
-	for (int s_index = 0; s_index < (int)updated_scopes.size(); s_index++) {
-		clean_scope(updated_scopes[s_index],
+	for (set<Scope*>::iterator it = updated_scopes.begin();
+			it != updated_scopes.end(); it++) {
+		clean_scope(*it,
 					this);
 	}
 }

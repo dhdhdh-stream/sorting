@@ -141,7 +141,7 @@ void EvalExperiment::experiment_exit_step(SolutionWrapper* wrapper) {
 void EvalExperiment::backprop(double target_val,
 							  EvalExperimentHistory* history,
 							  SolutionWrapper* wrapper,
-							  vector<Scope*>& updated_scopes) {
+							  set<Scope*>& updated_scopes) {
 	switch (this->state) {
 	case EVAL_EXPERIMENT_STATE_INITIAL:
 		initial_backprop(target_val,

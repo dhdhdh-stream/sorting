@@ -37,7 +37,6 @@ void fetch_input_helper(ScopeHistory* scope_history,
 	} else {
 		map<int, AbstractNodeHistory*>::iterator it = scope_history
 			->node_histories.find(input.node_context[l_index]);
-		// TODO: clean experiment inputs
 		if (it != scope_history->node_histories.end()) {
 			if (l_index == (int)input.scope_context.size()-1) {
 				switch (it->second->node->type) {

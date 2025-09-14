@@ -369,7 +369,9 @@ void clean_scope(Scope* scope,
 				BranchNode* branch_node = (BranchNode*)it->second;
 				ObsNode* original_obs_node = (ObsNode*)branch_node->original_next_node;
 				ObsNode* branch_obs_node = (ObsNode*)branch_node->branch_next_node;
-				if (original_obs_node->next_node == branch_obs_node->next_node) {
+				if (original_obs_node->next_node == branch_obs_node->next_node
+						&& experiment_endpoints.find(original_obs_node) == experiment_endpoints.end()
+						&& experiment_endpoints.find(branch_obs_node) == experiment_endpoints.end()) {
 					ObsNode* merge_obs_node = (ObsNode*)original_obs_node->next_node;
 
 					wrapper->solution->replace_obs_node(scope,

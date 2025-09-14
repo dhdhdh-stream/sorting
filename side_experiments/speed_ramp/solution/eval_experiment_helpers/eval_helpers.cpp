@@ -21,7 +21,7 @@ const int EVAL_EPOCH_NUM_ITERS = 8000;
 void EvalExperiment::eval_backprop(double target_val,
 								   EvalExperimentHistory* history,
 								   SolutionWrapper* wrapper,
-								   vector<Scope*>& updated_scopes) {
+								   set<Scope*>& updated_scopes) {
 	if (history->is_on) {
 		this->new_scores.push_back(target_val);
 	} else {
@@ -116,7 +116,7 @@ void EvalExperiment::eval_backprop(double target_val,
 
 				cout << "this->select_percentage: " << this->select_percentage << endl;
 
-				updated_scopes.push_back(this->scope_context);
+				updated_scopes.insert(this->scope_context);
 
 				add(wrapper);
 				this->node_context->experiment = NULL;

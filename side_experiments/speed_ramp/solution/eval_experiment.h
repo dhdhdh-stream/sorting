@@ -11,6 +11,7 @@
 #ifndef EVAL_EXPERIMENT_H
 #define EVAL_EXPERIMENT_H
 
+#include <set>
 #include <vector>
 
 #include "abstract_experiment.h"
@@ -74,7 +75,7 @@ public:
 	void backprop(double target_val,
 				  EvalExperimentHistory* history,
 				  SolutionWrapper* wrapper,
-				  std::vector<Scope*>& updated_scopes);
+				  std::set<Scope*>& updated_scopes);
 
 	void initial_backprop(double target_val,
 						  EvalExperimentHistory* history,
@@ -83,7 +84,7 @@ public:
 	void eval_backprop(double target_val,
 					   EvalExperimentHistory* history,
 					   SolutionWrapper* wrapper,
-					   std::vector<Scope*>& updated_scopes);
+					   std::set<Scope*>& updated_scopes);
 
 	void clean_inputs(Scope* scope,
 					  int node_id);

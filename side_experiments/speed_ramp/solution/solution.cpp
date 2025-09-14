@@ -165,6 +165,9 @@ void Solution::clean_scopes() {
 }
 
 void Solution::save(ofstream& output_file) {
+	/**
+	 * TODO: swap endl to '\n' to avoid flushing
+	 */
 	output_file << this->timestamp << endl;
 	output_file << this->curr_score << endl;
 
