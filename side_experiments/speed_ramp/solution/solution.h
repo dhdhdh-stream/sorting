@@ -35,7 +35,6 @@ public:
 	std::map<int, Scope*> scopes;
 
 	Solution();
-	Solution(Solution* original);
 	~Solution();
 
 	void load(std::ifstream& input_file);

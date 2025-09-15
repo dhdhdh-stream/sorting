@@ -22,7 +22,6 @@ public:
 	int num_experiments;
 
 	ObsNode();
-	ObsNode(ObsNode* original);
 	~ObsNode();
 
 	void step(std::vector<double>& obs,

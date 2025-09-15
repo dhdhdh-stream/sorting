@@ -18,18 +18,6 @@ ObsNode::ObsNode() {
 	this->experiment = NULL;
 }
 
-ObsNode::ObsNode(ObsNode* original) {
-	this->type = NODE_TYPE_OBS;
-
-	this->next_node_id = original->next_node_id;
-
-	this->ancestor_ids = original->ancestor_ids;
-
-	this->num_experiments = original->num_experiments;
-
-	this->experiment = NULL;
-}
-
 ObsNode::~ObsNode() {
 	if (this->experiment != NULL) {
 		delete this->experiment;

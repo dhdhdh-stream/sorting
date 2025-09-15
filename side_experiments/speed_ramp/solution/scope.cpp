@@ -6,6 +6,7 @@
 #include "abstract_experiment.h"
 #include "action_node.h"
 #include "branch_node.h"
+#include "default_signal.h"
 #include "eval_experiment.h"
 #include "factor.h"
 #include "globals.h"
@@ -18,7 +19,11 @@
 using namespace std;
 
 Scope::Scope() {
-	// do nothing
+	this->default_signal = NULL;
+
+	this->curr_signal_eval_experiment = NULL;
+	this->best_signal_eval_experiment = NULL;
+	this->experiment_iter = 0;
 }
 
 Scope::~Scope() {
@@ -29,6 +34,14 @@ Scope::~Scope() {
 
 	for (int f_index = 0; f_index < (int)this->factors.size(); f_index++) {
 		delete this->factors[f_index];
+	}
+
+	for (int s_index = 0; s_index < (int)this->signals.size(); s_index++) {
+		delete this->signals[s_index];
+	}
+
+	if (this->default_signal != NULL) {
+		delete this->default_signal;
 	}
 }
 
@@ -177,73 +190,6 @@ void Scope::replace_obs_node(Scope* scope,
 	}
 }
 
-void Scope::copy_from(Scope* original,
-					  Solution* parent_solution) {
-	this->node_counter = original->node_counter;
-
-	for (map<int, AbstractNode*>::iterator it = original->nodes.begin();
-			it != original->nodes.end(); it++) {
-		switch (it->second->type) {
-		case NODE_TYPE_START:
-			{
-				StartNode* original_start_node = (StartNode*)it->second;
-				StartNode* new_start_node = new StartNode(original_start_node);
-				new_start_node->parent = this;
-				new_start_node->id = it->first;
-				this->nodes[new_start_node->id] = new_start_node;
-			}
-			break;
-		case NODE_TYPE_ACTION:
-			{
-				ActionNode* original_action_node = (ActionNode*)it->second;
-				ActionNode* new_action_node = new ActionNode(original_action_node);
-				new_action_node->parent = this;
-				new_action_node->id = it->first;
-				this->nodes[new_action_node->id] = new_action_node;
-			}
-			break;
-		case NODE_TYPE_SCOPE:
-			{
-				ScopeNode* original_scope_node = (ScopeNode*)it->second;
-				ScopeNode* new_scope_node = new ScopeNode(original_scope_node,
-														  parent_solution);
-				new_scope_node->parent = this;
-				new_scope_node->id = it->first;
-				this->nodes[new_scope_node->id] = new_scope_node;
-			}
-			break;
-		case NODE_TYPE_BRANCH:
-			{
-				BranchNode* original_branch_node = (BranchNode*)it->second;
-				BranchNode* new_branch_node = new BranchNode(original_branch_node,
-															 parent_solution);
-				new_branch_node->parent = this;
-				new_branch_node->id = it->first;
-				this->nodes[new_branch_node->id] = new_branch_node;
-			}
-			break;
-		case NODE_TYPE_OBS:
-			{
-				ObsNode* original_obs_node = (ObsNode*)it->second;
-				ObsNode* new_obs_node = new ObsNode(original_obs_node);
-				new_obs_node->parent = this;
-				new_obs_node->id = it->first;
-				this->nodes[new_obs_node->id] = new_obs_node;
-			}
-			break;
-		}
-	}
-
-	for (int f_index = 0; f_index < (int)original->factors.size(); f_index++) {
-		this->factors.push_back(new Factor(original->factors[f_index],
-										   parent_solution));
-	}
-
-	for (int c_index = 0; c_index < (int)original->child_scopes.size(); c_index++) {
-		this->child_scopes.push_back(parent_solution->scopes[original->child_scopes[c_index]->id]);
-	}
-}
-
 void Scope::save(ofstream& output_file) {
 	output_file << this->node_counter << endl;
 
@@ -259,6 +205,23 @@ void Scope::save(ofstream& output_file) {
 	for (int f_index = 0; f_index < (int)this->factors.size(); f_index++) {
 		this->factors[f_index]->save(output_file);
 	}
+
+	output_file << this->signal_pre_actions.size() << endl;
+	for (int a_index = 0; a_index < (int)this->signal_pre_actions.size(); a_index++) {
+		output_file << this->signal_pre_actions[a_index] << endl;
+	}
+
+	output_file << this->signal_post_actions.size() << endl;
+	for (int a_index = 0; a_index < (int)this->signal_post_actions.size(); a_index++) {
+		output_file << this->signal_post_actions[a_index] << endl;
+	}
+
+	output_file << this->signals.size() << endl;
+	for (int s_index = 0; s_index < (int)this->signals.size(); s_index++) {
+		this->signals[s_index]->save(output_file);
+	}
+
+	this->default_signal->save(output_file);
 
 	output_file << this->child_scopes.size() << endl;
 	for (int c_index = 0; c_index < (int)this->child_scopes.size(); c_index++) {
@@ -344,6 +307,33 @@ void Scope::load(ifstream& input_file,
 					 parent_solution);
 		this->factors.push_back(factor);
 	}
+
+	string num_pre_actions_line;
+	getline(input_file, num_pre_actions_line);
+	int num_pre_actions = stoi(num_pre_actions_line);
+	for (int a_index = 0; a_index < num_pre_actions; a_index++) {
+		string action_line;
+		getline(input_file, action_line);
+		this->signal_pre_actions.push_back(stoi(action_line));
+	}
+
+	string num_post_actions_line;
+	getline(input_file, num_post_actions_line);
+	int num_post_actions = stoi(num_post_actions_line);
+	for (int a_index = 0; a_index < num_post_actions; a_index++) {
+		string action_line;
+		getline(input_file, action_line);
+		this->signal_post_actions.push_back(stoi(action_line));
+	}
+
+	string num_signals_line;
+	getline(input_file, num_signals_line);
+	int num_signals = stoi(num_signals_line);
+	for (int s_index = 0; s_index < num_signals; s_index++) {
+		this->signals.push_back(new Signal(input_file));
+	}
+
+	this->default_signal = new DefaultSignal(input_file);
 
 	string num_child_scopes_line;
 	getline(input_file, num_child_scopes_line);

@@ -20,7 +20,6 @@ public:
 	int num_experiments;
 
 	ActionNode();
-	ActionNode(ActionNode* original);
 	~ActionNode();
 
 	void step(std::vector<double>& obs,

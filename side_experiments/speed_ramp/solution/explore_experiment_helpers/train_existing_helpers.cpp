@@ -18,20 +18,35 @@ const int TRAIN_EXISTING_ITERS = 1000;
 #endif /* MDEBUG */
 
 void ExploreExperiment::train_existing_check_activate(
-		SolutionWrapper* wrapper) {
+		SolutionWrapper* wrapper,
+		ExploreExperimentHistory* history) {
 	/**
 	 * - add even if explore
 	 */
 	ScopeHistory* scope_history_copy = new ScopeHistory(wrapper->scope_histories.back());
 	scope_history_copy->num_actions_snapshot = wrapper->num_actions;
 	this->scope_histories.push_back(scope_history_copy);
+
+	history->signal_is_set.push_back(false);
+	history->signal_vals.push_back(0.0);
+
+	for (int l_index = (int)wrapper->scope_histories.size()-1; l_index >= 0; l_index--) {
+		if (wrapper->scope_histories[l_index]->scope->signals.size() > 0) {
+			wrapper->scope_histories[l_index]->explore_experiment_callbacks.push_back(history);
+			break;
+		}
+	}
 }
 
 void ExploreExperiment::train_existing_backprop(
 		double target_val,
-		SolutionWrapper* wrapper) {
-	while (this->target_val_histories.size() < this->scope_histories.size()) {
-		this->target_val_histories.push_back(target_val);
+		ExploreExperimentHistory* history) {
+	for (int i_index = 0; i_index < (int)history->signal_is_set.size(); i_index++) {
+		if (history->signal_is_set[i_index]) {
+			this->target_val_histories.push_back(history->signal_vals[i_index]);
+		} else {
+			this->target_val_histories.push_back(target_val);
+		}
 	}
 
 	this->state_iter++;

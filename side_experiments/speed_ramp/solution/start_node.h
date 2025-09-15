@@ -13,7 +13,6 @@ public:
 	int num_experiments;
 
 	StartNode();
-	StartNode(StartNode* original);
 	~StartNode();
 
 	void step(std::vector<double>& obs,

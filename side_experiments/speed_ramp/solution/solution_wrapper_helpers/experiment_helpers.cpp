@@ -10,12 +10,36 @@
 #include "helpers.h"
 #include "scope.h"
 #include "scope_node.h"
+#include "signal_eval_experiment.h"
 #include "solution.h"
 #include "utilities.h"
 
 using namespace std;
 
+#if defined(MDEBUG) && MDEBUG
+const int SIGNAL_IMPROVEMENTS_PER_ITER = 2;
+#else
+const int SIGNAL_IMPROVEMENTS_PER_ITER = 10;
+#endif /* MDEBUG */
+
 void SolutionWrapper::experiment_init() {
+	// temp
+	if (this->solution->scopes[0]->curr_signal_eval_experiment == NULL) {
+		SignalEvalExperiment* new_signal_eval_experiment = new SignalEvalExperiment();
+
+		new_signal_eval_experiment->scope_context = this->solution->scopes[0];
+
+		vector<int> post_actions{0, 0, 0, 0, 1, 1, 1, 1};
+		new_signal_eval_experiment->post_actions = post_actions;
+
+		for (int s_index = 0; s_index < (int)this->solution->scopes[0]->signals.size(); s_index++) {
+			new_signal_eval_experiment->previous_signals.push_back(
+				new Signal(this->solution->scopes[0]->signals[s_index]));
+		}
+
+		this->solution->scopes[0]->curr_signal_eval_experiment = new_signal_eval_experiment;
+	}
+
 	this->num_actions = 1;
 
 	#if defined(MDEBUG) && MDEBUG
@@ -35,6 +59,7 @@ void SolutionWrapper::experiment_init() {
 		this->should_explore = false;
 	}
 	this->curr_explore = NULL;
+	this->has_explore = false;
 
 	ScopeHistory* scope_history = new ScopeHistory(this->solution->scopes[0]);
 	this->scope_histories.push_back(scope_history);
@@ -133,8 +158,7 @@ void SolutionWrapper::experiment_end(double result) {
 	for (map<ExploreExperiment*, ExploreExperimentHistory*>::iterator it = this->explore_histories.begin();
 			it != this->explore_histories.end(); it++) {
 		it->first->backprop(result,
-							it->second,
-							this);
+							it->second);
 		delete it->second;
 	}
 	this->explore_histories.clear();
@@ -149,6 +173,39 @@ void SolutionWrapper::experiment_end(double result) {
 		delete it->second;
 	}
 	this->eval_histories.clear();
+
+	for (map<SignalEvalExperiment*, SignalEvalExperimentHistory*>::iterator it = this->signal_eval_histories.begin();
+			it != this->signal_eval_histories.end(); it++) {
+		it->first->backprop(result,
+							it->second);
+		delete it->second;
+
+		if (it->first->state == SIGNAL_EVAL_EXPERIMENT_STATE_DONE) {
+			Scope* scope = it->first->scope_context;
+			if (scope->best_signal_eval_experiment == NULL) {
+				scope->best_signal_eval_experiment = it->first;
+			} else {
+				if (it->first->misguess_average < scope->best_signal_eval_experiment->misguess_average) {
+					delete scope->best_signal_eval_experiment;
+					scope->best_signal_eval_experiment = it->first;
+				} else {
+					delete it->first;
+				}
+			}
+			scope->curr_signal_eval_experiment = NULL;
+
+			scope->experiment_iter++;
+			if (scope->experiment_iter >= SIGNAL_IMPROVEMENTS_PER_ITER) {
+				scope->best_signal_eval_experiment->add();
+
+				delete scope->best_signal_eval_experiment;
+				scope->best_signal_eval_experiment = NULL;
+
+				scope->experiment_iter = 0;
+			}
+		}
+	}
+	this->signal_eval_histories.clear();
 
 	for (set<Scope*>::iterator it = updated_scopes.begin();
 			it != updated_scopes.end(); it++) {

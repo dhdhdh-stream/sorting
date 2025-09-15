@@ -29,7 +29,8 @@ void ExploreExperiment::check_activate(AbstractNode* experiment_node,
 
 		switch (this->state) {
 		case EXPLORE_EXPERIMENT_STATE_TRAIN_EXISTING:
-			train_existing_check_activate(wrapper);
+			train_existing_check_activate(wrapper,
+										  history);
 			break;
 		case EXPLORE_EXPERIMENT_STATE_EXPLORE:
 			explore_check_activate(wrapper,
@@ -94,8 +95,7 @@ void ExploreExperiment::experiment_exit_step(SolutionWrapper* wrapper) {
 }
 
 void ExploreExperiment::backprop(double target_val,
-								 ExploreExperimentHistory* history,
-								 SolutionWrapper* wrapper) {
+								 ExploreExperimentHistory* history) {
 	if (this->last_num_instances.size() >= LAST_NUM_TRACK) {
 		this->sum_num_instances -= this->last_num_instances.front();
 		this->last_num_instances.pop_front();
@@ -106,17 +106,15 @@ void ExploreExperiment::backprop(double target_val,
 	switch (this->state) {
 	case EXPLORE_EXPERIMENT_STATE_TRAIN_EXISTING:
 		train_existing_backprop(target_val,
-								wrapper);
+								history);
 		break;
 	case EXPLORE_EXPERIMENT_STATE_EXPLORE:
 		explore_backprop(target_val,
-						 history,
-						 wrapper);
+						 history);
 		break;
 	case EXPLORE_EXPERIMENT_STATE_TRAIN_NEW:
 		train_new_backprop(target_val,
-						   history,
-						   wrapper);
+						   history);
 		break;
 	}
 }

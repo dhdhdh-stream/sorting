@@ -14,6 +14,7 @@ class Problem;
 class Scope;
 class ScopeHistory;
 class ScopeNode;
+class Signal;
 class Solution;
 class SolutionWrapper;
 
@@ -101,6 +102,16 @@ bool train_new(std::vector<ScopeHistory*>& scope_histories,
 			   std::vector<Input>& network_inputs,
 			   Network*& network,
 			   double& select_percentage);
+
+double calc_signal(ScopeHistory* signal_needed_from);
+bool check_signal_activate(std::vector<double>& obs,
+						   int& action,
+						   bool& is_next,
+						   SolutionWrapper* wrapper);
+bool experiment_check_signal_activate(std::vector<double>& obs,
+									  int& action,
+									  bool& is_next,
+									  SolutionWrapper* wrapper);
 
 Scope* create_new_scope(Scope* scope_context);
 

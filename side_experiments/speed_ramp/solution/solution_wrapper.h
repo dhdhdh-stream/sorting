@@ -15,6 +15,8 @@ class ExploreExperimentHistory;
 class Problem;
 class Scope;
 class ScopeHistory;
+class SignalEvalExperiment;
+class SignalEvalExperimentHistory;
 class Solution;
 
 class SolutionWrapper {
@@ -39,10 +41,13 @@ public:
 	 */
 	bool should_explore;
 	ExploreExperiment* curr_explore;
+	bool has_explore;
 	std::map<ExploreExperiment*, ExploreExperimentHistory*> explore_histories;
 	std::vector<ExploreExperiment*> explore_order_seen;
 
 	std::map<EvalExperiment*, EvalExperimentHistory*> eval_histories;
+
+	std::map<SignalEvalExperiment*, SignalEvalExperimentHistory*> signal_eval_histories;
 
 	Problem* problem;
 	/**

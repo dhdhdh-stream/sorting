@@ -29,6 +29,8 @@ void ExploreExperiment::explore_check_activate(
 		if (history->existing_predicted_scores.size() == 0) {
 			this->num_instances_until_target--;
 			if (this->num_instances_until_target <= 0) {
+				wrapper->has_explore = true;
+
 				ScopeHistory* scope_history = wrapper->scope_histories.back();
 
 				double sum_vals = this->existing_average_score;
@@ -46,6 +48,16 @@ void ExploreExperiment::explore_check_activate(
 					}
 				}
 				history->existing_predicted_scores.push_back(sum_vals);
+
+				history->signal_is_set.push_back(false);
+				history->signal_vals.push_back(0.0);
+
+				for (int l_index = (int)wrapper->scope_histories.size()-1; l_index >= 0; l_index--) {
+					if (wrapper->scope_histories[l_index]->scope->signals.size() > 0) {
+						wrapper->scope_histories[l_index]->explore_experiment_callbacks.push_back(history);
+						break;
+					}
+				}
 
 				this->curr_scope_history = new ScopeHistory(scope_history);
 				this->curr_scope_history->num_actions_snapshot = wrapper->num_actions;
@@ -215,10 +227,14 @@ void ExploreExperiment::explore_exit_step(SolutionWrapper* wrapper,
 }
 
 void ExploreExperiment::explore_backprop(double target_val,
-										 ExploreExperimentHistory* history,
-										 SolutionWrapper* wrapper) {
+										 ExploreExperimentHistory* history) {
 	if (history->existing_predicted_scores.size() > 0) {
-		double curr_surprise = target_val - history->existing_predicted_scores[0];
+		double curr_surprise;
+		if (history->signal_is_set[0]) {
+			curr_surprise = history->signal_vals[0] - history->existing_predicted_scores[0];
+		} else {
+			curr_surprise = target_val - history->existing_predicted_scores[0];
+		}
 
 		#if defined(MDEBUG) && MDEBUG
 		if (true) {

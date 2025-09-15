@@ -32,8 +32,6 @@ public:
 	int branch_num_experiments;
 
 	BranchNode();
-	BranchNode(BranchNode* original,
-			   Solution* parent_solution);
 	~BranchNode();
 
 	void step(std::vector<double>& obs,

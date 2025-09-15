@@ -13,16 +13,6 @@ StartNode::StartNode() {
 	this->experiment = NULL;
 }
 
-StartNode::StartNode(StartNode* original) {
-	this->type = NODE_TYPE_START;
-
-	this->next_node_id = original->next_node_id;
-
-	this->num_experiments = original->num_experiments;
-
-	this->experiment = NULL;
-}
-
 StartNode::~StartNode() {
 	if (this->experiment != NULL) {
 		delete this->experiment;

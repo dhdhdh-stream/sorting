@@ -21,31 +21,6 @@ BranchNode::BranchNode() {
 	this->experiment = NULL;
 }
 
-BranchNode::BranchNode(BranchNode* original,
-					   Solution* parent_solution) {
-	this->type = NODE_TYPE_BRANCH;
-
-	this->average_val = original->average_val;
-
-	for (int i_index = 0; i_index < (int)original->inputs.size(); i_index++) {
-		this->inputs.push_back(Input(original->inputs[i_index],
-									 parent_solution));
-		this->input_averages.push_back(original->input_averages[i_index]);
-		this->input_standard_deviations.push_back(original->input_standard_deviations[i_index]);
-		this->weights.push_back(original->weights[i_index]);
-	}
-
-	this->original_next_node_id = original->original_next_node_id;
-	this->branch_next_node_id = original->branch_next_node_id;
-
-	this->ancestor_ids = original->ancestor_ids;
-
-	this->original_num_experiments = original->original_num_experiments;
-	this->branch_num_experiments = original->branch_num_experiments;
-
-	this->experiment = NULL;
-}
-
 BranchNode::~BranchNode() {
 	if (this->experiment != NULL) {
 		delete this->experiment;

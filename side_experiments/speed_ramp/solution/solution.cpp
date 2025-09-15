@@ -27,29 +27,6 @@ Solution::Solution() {
 	// do nothing
 }
 
-Solution::Solution(Solution* original) {
-	this->timestamp = original->timestamp;
-	this->curr_score = original->curr_score;
-
-	for (map<int, Scope*>::iterator it = original->scopes.begin();
-			it != original->scopes.end(); it++) {
-		Scope* scope = new Scope();
-		scope->id = it->first;
-		this->scopes[scope->id] = scope;
-	}
-
-	for (map<int, Scope*>::iterator it = original->scopes.begin();
-			it != original->scopes.end(); it++) {
-		this->scopes[it->first]->copy_from(original->scopes[it->first],
-										   this);
-	}
-
-	for (map<int, Scope*>::iterator it = this->scopes.begin();
-			it != this->scopes.end(); it++) {
-		it->second->link(this);
-	}
-}
-
 Solution::~Solution() {
 	for (map<int, Scope*>::iterator it = this->scopes.begin();
 			it != this->scopes.end(); it++) {
