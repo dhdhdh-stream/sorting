@@ -4,6 +4,8 @@
 #include "globals.h"
 #include "scope.h"
 #include "signal.h"
+#include "solution.h"
+#include "solution_wrapper.h"
 
 using namespace std;
 

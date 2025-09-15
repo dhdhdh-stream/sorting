@@ -22,6 +22,8 @@ const int SIGNAL_IMPROVEMENTS_PER_ITER = 2;
 const int SIGNAL_IMPROVEMENTS_PER_ITER = 10;
 #endif /* MDEBUG */
 
+const int MIN_EXPLORE_PER_RUN = 10;
+
 void SolutionWrapper::experiment_init() {
 	// temp
 	if (this->solution->scopes[0]->curr_signal_eval_experiment == NULL) {
@@ -48,11 +50,7 @@ void SolutionWrapper::experiment_init() {
 	this->curr_run_seed = xorshift(this->starting_run_seed);
 	#endif /* MDEBUG */
 
-	#if defined(MDEBUG) && MDEBUG
-	uniform_int_distribution<int> explore_distribution(0, 9);
-	#else
-	uniform_int_distribution<int> explore_distribution(0, 99);
-	#endif /* MDEBUG */
+	uniform_int_distribution<int> explore_distribution(0, 4);
 	if (explore_distribution(generator) == 0) {
 		this->should_explore = true;
 	} else {
@@ -141,7 +139,7 @@ void SolutionWrapper::experiment_end(double result) {
 		}
 	}
 
-	if (this->explore_histories.size() == 0) {
+	if (this->explore_histories.size() < MIN_EXPLORE_PER_RUN) {
 		create_experiment(this);
 	}
 

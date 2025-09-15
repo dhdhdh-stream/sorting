@@ -1,12 +1,3 @@
-// TODO: to increase explore ratio, need explore locations to be random
-// - which means need good eval everywhere
-// - perhaps train existing not worth
-//   - if signal is relative anyways
-// - or each explore experiment only activate 1/10 of the time, but explore happens 10x
-//   - and each path wants 10 experiments
-
-// TODO: add examine_signal
-
 #include <chrono>
 #include <iostream>
 #include <map>
