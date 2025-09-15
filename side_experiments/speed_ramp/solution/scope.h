@@ -108,6 +108,7 @@ public:
 
 	int num_actions_snapshot;
 
+	bool signal_is_experiment;
 	std::vector<ExploreExperimentHistory*> explore_experiment_callbacks;
 	std::vector<SignalEvalExperimentHistory*> signal_eval_experiment_callbacks;
 

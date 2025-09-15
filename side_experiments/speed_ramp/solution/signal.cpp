@@ -1,5 +1,6 @@
 #include "signal.h"
 
+#include "constants.h"
 #include "signal_network.h"
 
 using namespace std;

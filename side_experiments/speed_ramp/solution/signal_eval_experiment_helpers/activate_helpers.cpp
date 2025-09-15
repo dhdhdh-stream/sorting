@@ -1,19 +1,27 @@
 #include "signal_eval_experiment.h"
 
+#include <iostream>
+
 #include "globals.h"
 #include "scope.h"
 #include "solution_wrapper.h"
 
 using namespace std;
 
+#if defined(MDEBUG) && MDEBUG
+const int MAX_SAMPLES = 40;
+const int EXPLORE_TARGET_SAMPLES = 20;
+#else
 const int MAX_SAMPLES = 8000;
 const int EXPLORE_TARGET_SAMPLES = 4000;
+#endif /* MDEBUG */
 
 bool SignalEvalExperiment::check_signal_activate(
 		vector<double>& obs,
 		int& action,
 		bool& is_next,
-		SolutionWrapper* wrapper) {
+		SolutionWrapper* wrapper,
+		SignalEvalExperimentHistory* history) {
 	ScopeHistory* scope_history = wrapper->scope_histories.back();
 
 	/**
@@ -29,13 +37,16 @@ bool SignalEvalExperiment::check_signal_activate(
 			wrapper->num_actions++;
 
 			return true;
+		} else {
+			scope_history->signal_is_experiment = true;
 		}
 	}
 
 	/**
 	 * - check post
 	 */
-	if (wrapper->node_context.back() == NULL) {
+	if (wrapper->node_context.back() == NULL
+			&& wrapper->experiment_context.back() == NULL) {
 		scope_history->signal_post_obs.push_back(obs);
 
 		if (scope_history->signal_post_obs.size() <= this->post_actions.size()) {
@@ -46,16 +57,6 @@ bool SignalEvalExperiment::check_signal_activate(
 
 			return true;
 		} else {
-			SignalEvalExperimentHistory* history;
-			map<SignalEvalExperiment*, SignalEvalExperimentHistory*>::iterator it =
-				wrapper->signal_eval_histories.find(this);
-			if (it == wrapper->signal_eval_histories.end()) {
-				history = new SignalEvalExperimentHistory();
-				wrapper->signal_eval_histories[this] = history;
-			} else {
-				history = it->second;
-			}
-
 			history->pre_obs.push_back(scope_history->signal_pre_obs);
 			history->post_obs.push_back(scope_history->signal_post_obs);
 			history->inner_is_explore.push_back(wrapper->has_explore);
@@ -80,34 +81,55 @@ bool SignalEvalExperiment::check_signal_activate(
 }
 
 void SignalEvalExperiment::backprop(double target_val,
-									SignalEvalExperimentHistory* history) {
+									SignalEvalExperimentHistory* history,
+									SolutionWrapper* wrapper) {
 	for (int i_index = 0; i_index < (int)history->pre_obs.size(); i_index++) {
-		if (history->inner_is_explore[i_index] == history->outer_is_explore[i_index]) {
-			if (history->inner_is_explore[i_index]) {
-				this->explore_pre_obs.push_back(history->pre_obs[i_index]);
-				this->explore_post_obs.push_back(history->post_obs[i_index]);
-				if (history->signal_is_set[i_index]) {
+		if (history->signal_is_set[i_index]) {
+			if (history->inner_is_explore[i_index] == history->outer_is_explore[i_index]) {
+				if (history->inner_is_explore[i_index]) {
+					this->explore_pre_obs.push_back(history->pre_obs[i_index]);
+					this->explore_post_obs.push_back(history->post_obs[i_index]);
 					this->explore_scores.push_back(history->signal_vals[i_index]);
-				} else {
-					this->explore_scores.push_back(target_val);
-				}
-			} else {
-				if (this->pre_obs.size() >= MAX_SAMPLES) {
-					uniform_int_distribution<int> distribution(0, this->pre_obs.size()-1);
-					int index = distribution(generator);
-					this->pre_obs[index] = history->pre_obs[i_index];
-					this->post_obs[index] = history->post_obs[i_index];
-					if (history->signal_is_set[i_index]) {
-						this->scores[index] = history->signal_vals[i_index];
-					} else {
-						this->scores[index] = target_val;
+
+					// temp
+					if (this->explore_scores.size()%100 == 0) {
+						cout << "this->explore_scores.size(): " << this->explore_scores.size() << endl;
 					}
 				} else {
-					this->pre_obs.push_back(history->pre_obs[i_index]);
-					this->post_obs.push_back(history->post_obs[i_index]);
-					if (history->signal_is_set[i_index]) {
-						this->scores.push_back(history->signal_vals[i_index]);
+					if (this->pre_obs.size() >= MAX_SAMPLES) {
+						uniform_int_distribution<int> distribution(0, this->pre_obs.size()-1);
+						int index = distribution(generator);
+						this->pre_obs[index] = history->pre_obs[i_index];
+						this->post_obs[index] = history->post_obs[i_index];
+						this->scores[index] = history->signal_vals[i_index];
 					} else {
+						this->pre_obs.push_back(history->pre_obs[i_index]);
+						this->post_obs.push_back(history->post_obs[i_index]);
+						this->scores.push_back(history->signal_vals[i_index]);
+					}
+				}
+			}
+		} else {
+			if (history->inner_is_explore[i_index] == wrapper->has_explore) {
+				if (history->inner_is_explore[i_index]) {
+					this->explore_pre_obs.push_back(history->pre_obs[i_index]);
+					this->explore_post_obs.push_back(history->post_obs[i_index]);
+					this->explore_scores.push_back(target_val);
+
+					// temp
+					if (this->explore_scores.size()%100 == 0) {
+						cout << "this->explore_scores.size(): " << this->explore_scores.size() << endl;
+					}
+				} else {
+					if (this->pre_obs.size() >= MAX_SAMPLES) {
+						uniform_int_distribution<int> distribution(0, this->pre_obs.size()-1);
+						int index = distribution(generator);
+						this->pre_obs[index] = history->pre_obs[i_index];
+						this->post_obs[index] = history->post_obs[i_index];
+						this->scores[index] = target_val;
+					} else {
+						this->pre_obs.push_back(history->pre_obs[i_index]);
+						this->post_obs.push_back(history->post_obs[i_index]);
 						this->scores.push_back(target_val);
 					}
 				}
@@ -116,6 +138,8 @@ void SignalEvalExperiment::backprop(double target_val,
 	}
 
 	if (this->explore_pre_obs.size() >= EXPLORE_TARGET_SAMPLES) {
+		create_reward_signal_helper();
 
+		this->state = SIGNAL_EVAL_EXPERIMENT_STATE_DONE;
 	}
 }

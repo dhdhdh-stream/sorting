@@ -1,3 +1,9 @@
+// TODO: on failure, wind actions back down?
+
+// - actually, how to schedule when signals still needed for inner?
+//   - don't activate all the time
+//   - use outer when needed
+
 #ifndef SIGNAL_EVAL_EXPERIMENT_H
 #define SIGNAL_EVAL_EXPERIMENT_H
 
@@ -46,11 +52,13 @@ public:
 	bool check_signal_activate(std::vector<double>& obs,
 							   int& action,
 							   bool& is_next,
-							   SolutionWrapper* wrapper);
+							   SolutionWrapper* wrapper,
+							   SignalEvalExperimentHistory* history);
 	void backprop(double target_val,
-				  SignalEvalExperimentHistory* history);
+				  SignalEvalExperimentHistory* history,
+				  SolutionWrapper* wrapper);
 
-	void add();
+	void add(SolutionWrapper* wrapper);
 
 private:
 	bool split_helper(std::vector<bool>& new_match_input_is_pre,
@@ -69,6 +77,8 @@ private:
 
 class SignalEvalExperimentHistory {
 public:
+	bool is_on;
+
 	std::vector<std::vector<std::vector<double>>> pre_obs;
 	std::vector<std::vector<std::vector<double>>> post_obs;
 	std::vector<bool> inner_is_explore;
@@ -76,6 +86,8 @@ public:
 	std::vector<bool> signal_is_set;
 	std::vector<double> signal_vals;
 	std::vector<bool> outer_is_explore;
+
+	SignalEvalExperimentHistory();
 };
 
 #endif /* SIGNAL_EVAL_EXPERIMENT_H */

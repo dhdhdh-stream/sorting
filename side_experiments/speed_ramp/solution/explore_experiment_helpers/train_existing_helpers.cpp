@@ -31,7 +31,8 @@ void ExploreExperiment::train_existing_check_activate(
 	history->signal_vals.push_back(0.0);
 
 	for (int l_index = (int)wrapper->scope_histories.size()-1; l_index >= 0; l_index--) {
-		if (wrapper->scope_histories[l_index]->scope->signals.size() > 0) {
+		if (wrapper->scope_histories[l_index]->scope->signals.size() > 0
+				&& !wrapper->scope_histories[l_index]->signal_is_experiment) {
 			wrapper->scope_histories[l_index]->explore_experiment_callbacks.push_back(history);
 			break;
 		}

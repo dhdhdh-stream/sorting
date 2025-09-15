@@ -74,32 +74,38 @@ tuple<bool,bool,int> SolutionWrapper::experiment_step(vector<double> obs) {
 	bool fetch_action = false;
 
 	while (!is_next) {
-		if (this->node_context.back() == NULL
-				&& this->experiment_context.back() == NULL) {
-			if (this->scope_histories.size() == 1) {
-				is_next = true;
-				is_done = true;
-			} else {
-				if (this->experiment_context[this->experiment_context.size() - 2] != NULL) {
-					AbstractExperiment* experiment = this->experiment_context[this->experiment_context.size() - 2]->experiment;
-					experiment->experiment_exit_step(this);
+		bool is_signal = experiment_check_signal_activate(obs,
+														  action,
+														  is_next,
+														  this);
+		if (!is_signal) {
+			if (this->node_context.back() == NULL
+					&& this->experiment_context.back() == NULL) {
+				if (this->scope_histories.size() == 1) {
+					is_next = true;
+					is_done = true;
 				} else {
-					ScopeNode* scope_node = (ScopeNode*)this->node_context[this->node_context.size() - 2];
-					scope_node->experiment_exit_step(this);
+					if (this->experiment_context[this->experiment_context.size() - 2] != NULL) {
+						AbstractExperiment* experiment = this->experiment_context[this->experiment_context.size() - 2]->experiment;
+						experiment->experiment_exit_step(this);
+					} else {
+						ScopeNode* scope_node = (ScopeNode*)this->node_context[this->node_context.size() - 2];
+						scope_node->experiment_exit_step(this);
+					}
 				}
+			} else if (this->experiment_context.back() != NULL) {
+				AbstractExperiment* experiment = this->experiment_context.back()->experiment;
+				experiment->experiment_step(obs,
+											action,
+											is_next,
+											fetch_action,
+											this);
+			} else {
+				this->node_context.back()->experiment_step(obs,
+														   action,
+														   is_next,
+														   this);
 			}
-		} else if (this->experiment_context.back() != NULL) {
-			AbstractExperiment* experiment = this->experiment_context.back()->experiment;
-			experiment->experiment_step(obs,
-										action,
-										is_next,
-										fetch_action,
-										this);
-		} else {
-			this->node_context.back()->experiment_step(obs,
-													   action,
-													   is_next,
-													   this);
 		}
 	}
 
@@ -177,7 +183,8 @@ void SolutionWrapper::experiment_end(double result) {
 	for (map<SignalEvalExperiment*, SignalEvalExperimentHistory*>::iterator it = this->signal_eval_histories.begin();
 			it != this->signal_eval_histories.end(); it++) {
 		it->first->backprop(result,
-							it->second);
+							it->second,
+							this);
 		delete it->second;
 
 		if (it->first->state == SIGNAL_EVAL_EXPERIMENT_STATE_DONE) {
@@ -196,7 +203,7 @@ void SolutionWrapper::experiment_end(double result) {
 
 			scope->experiment_iter++;
 			if (scope->experiment_iter >= SIGNAL_IMPROVEMENTS_PER_ITER) {
-				scope->best_signal_eval_experiment->add();
+				scope->best_signal_eval_experiment->add(this);
 
 				delete scope->best_signal_eval_experiment;
 				scope->best_signal_eval_experiment = NULL;

@@ -1,6 +1,7 @@
 #include "signal_eval_experiment.h"
 
 #include "default_signal.h"
+#include "globals.h"
 #include "scope.h"
 #include "signal.h"
 
@@ -26,7 +27,7 @@ SignalEvalExperiment::~SignalEvalExperiment() {
 	}
 }
 
-void SignalEvalExperiment::add() {
+void SignalEvalExperiment::add(SolutionWrapper* wrapper) {
 	this->scope_context->signal_pre_actions = this->pre_actions;
 	this->scope_context->signal_post_actions = this->post_actions;
 	for (int s_index = 0; s_index < (int)this->scope_context->signals.size(); s_index++) {
@@ -38,4 +39,20 @@ void SignalEvalExperiment::add() {
 		delete this->scope_context->default_signal;
 	}
 	this->scope_context->default_signal = this->default_signal;
+	this->default_signal = NULL;
+
+	wrapper->solution->timestamp++;
+}
+
+SignalEvalExperimentHistory::SignalEvalExperimentHistory() {
+	/**
+	 * - high probability of signal experiment
+	 *   - but existing signals still impactful as layers increase
+	 */
+	uniform_int_distribution<int> experiment_distribution(0, 1);
+	if (experiment_distribution(generator) == 0) {
+		this->is_on = true;
+	} else {
+		this->is_on = false;
+	}
 }

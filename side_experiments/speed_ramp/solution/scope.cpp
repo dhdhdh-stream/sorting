@@ -221,7 +221,10 @@ void Scope::save(ofstream& output_file) {
 		this->signals[s_index]->save(output_file);
 	}
 
-	this->default_signal->save(output_file);
+	output_file << (this->default_signal == NULL) << endl;
+	if (this->default_signal != NULL) {
+		this->default_signal->save(output_file);
+	}
 
 	output_file << this->child_scopes.size() << endl;
 	for (int c_index = 0; c_index < (int)this->child_scopes.size(); c_index++) {
@@ -333,7 +336,12 @@ void Scope::load(ifstream& input_file,
 		this->signals.push_back(new Signal(input_file));
 	}
 
-	this->default_signal = new DefaultSignal(input_file);
+	string default_signal_is_null_line;
+	getline(input_file, default_signal_is_null_line);
+	bool default_signal_is_null = stoi(default_signal_is_null_line);
+	if (!default_signal_is_null) {
+		this->default_signal = new DefaultSignal(input_file);
+	}
 
 	string num_child_scopes_line;
 	getline(input_file, num_child_scopes_line);
@@ -371,6 +379,8 @@ ScopeHistory::ScopeHistory(Scope* scope) {
 
 	this->factor_initialized = vector<bool>(scope->factors.size(), false);
 	this->factor_values = vector<double>(scope->factors.size());
+
+	this->signal_is_experiment = false;
 }
 
 ScopeHistory::ScopeHistory(ScopeHistory* original) {

@@ -3,6 +3,7 @@
 #include <cmath>
 #include <iostream>
 
+#include "constants.h"
 #include "default_signal.h"
 #include "signal.h"
 #include "signal_network.h"
