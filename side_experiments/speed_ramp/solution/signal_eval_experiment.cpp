@@ -1,5 +1,7 @@
 #include "signal_eval_experiment.h"
 
+#include <iostream>
+
 #include "default_signal.h"
 #include "globals.h"
 #include "scope.h"
@@ -51,7 +53,8 @@ SignalEvalExperimentHistory::SignalEvalExperimentHistory() {
 	 * - high probability of signal experiment
 	 *   - but existing signals still impactful as layers increase
 	 */
-	uniform_int_distribution<int> experiment_distribution(0, 1);
+	// uniform_int_distribution<int> experiment_distribution(0, 1);
+	uniform_int_distribution<int> experiment_distribution(0, 3);
 	if (experiment_distribution(generator) == 0) {
 		this->is_on = true;
 	} else {

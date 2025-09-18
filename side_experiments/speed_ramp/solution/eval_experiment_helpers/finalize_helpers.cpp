@@ -82,6 +82,11 @@ void EvalExperiment::add(SolutionWrapper* wrapper) {
 			this->scope_context->nodes[new_scope_node->id] = new_scope_node;
 
 			new_scope_node->scope = this->scopes[s_index];
+			// temp
+			if (this->scopes[s_index]->id == -1) {
+				cout << "this->scopes[s_index]->id == -1" << endl;
+				throw invalid_argument("this->scopes[s_index]->id == -1");
+			}
 
 			new_nodes.push_back(new_scope_node);
 		}

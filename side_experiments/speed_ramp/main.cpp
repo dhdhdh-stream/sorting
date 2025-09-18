@@ -1,3 +1,17 @@
+// - stagger signal experiments
+//   - currently measured in too different circumstances
+
+// - at some point, signal diverges from reality
+//   - then gets stuck
+
+// - signal difficult to learn, then doesn't generalize far?
+//   - so what's the point?
+//   - issue is that any offset in the signal becomes a trap
+//     - so signal needs to constantly update?
+
+// TODO: make large problem with lots of pieces to test signal
+// - progression not gated by actions, but by time
+
 #include <chrono>
 #include <iostream>
 #include <map>

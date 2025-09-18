@@ -11,6 +11,7 @@
 #include "obs_node.h"
 #include "scope.h"
 #include "scope_node.h"
+#include "solution.h"
 #include "solution_wrapper.h"
 #include "start_node.h"
 
@@ -53,7 +54,7 @@ void ExploreExperiment::explore_check_activate(
 				history->signal_vals.push_back(0.0);
 
 				for (int l_index = (int)wrapper->scope_histories.size()-1; l_index >= 0; l_index--) {
-					if (wrapper->scope_histories[l_index]->scope->signals.size() > 0
+					if (wrapper->scope_histories[l_index]->scope->default_signal != NULL
 							&& !wrapper->scope_histories[l_index]->signal_is_experiment) {
 						wrapper->scope_histories[l_index]->explore_experiment_callbacks.push_back(history);
 						break;
@@ -228,8 +229,22 @@ void ExploreExperiment::explore_exit_step(SolutionWrapper* wrapper,
 }
 
 void ExploreExperiment::explore_backprop(double target_val,
-										 ExploreExperimentHistory* history) {
+										 ExploreExperimentHistory* history,
+										 SolutionWrapper* wrapper) {
+	// temp
+	bool is_valid = false;
 	if (history->existing_predicted_scores.size() > 0) {
+		if (wrapper->solution->scopes[0]->signals.size() > 0)  {
+			if (history->signal_is_set[0]) {
+				is_valid = true;
+			}
+		} else {
+			is_valid = true;
+		}
+	}
+
+	// if (history->existing_predicted_scores.size() > 0) {
+	if (is_valid) {
 		double curr_surprise;
 		if (history->signal_is_set[0]) {
 			curr_surprise = history->signal_vals[0] - history->existing_predicted_scores[0];
@@ -288,6 +303,18 @@ void ExploreExperiment::explore_backprop(double target_val,
 				this->node_context->experiment = NULL;
 				delete this;
 			}
+		}
+	} else {
+		if (this->curr_new_scope != NULL) {
+			delete this->curr_new_scope;
+			this->curr_new_scope = NULL;
+		}
+		this->curr_step_types.clear();
+		this->curr_actions.clear();
+		this->curr_scopes.clear();
+		if (this->curr_scope_history != NULL) {
+			delete this->curr_scope_history;
+			this->curr_scope_history = NULL;
 		}
 	}
 }

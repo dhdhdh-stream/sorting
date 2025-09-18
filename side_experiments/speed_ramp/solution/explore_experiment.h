@@ -73,12 +73,14 @@ public:
 					SolutionWrapper* wrapper);
 	void experiment_exit_step(SolutionWrapper* wrapper);
 	void backprop(double target_val,
-				  ExploreExperimentHistory* history);
+				  ExploreExperimentHistory* history,
+				  SolutionWrapper* wrapper);
 
 	void train_existing_check_activate(SolutionWrapper* wrapper,
 									   ExploreExperimentHistory* history);
 	void train_existing_backprop(double target_val,
-								 ExploreExperimentHistory* history);
+								 ExploreExperimentHistory* history,
+								 SolutionWrapper* wrapper);
 
 	void explore_check_activate(SolutionWrapper* wrapper,
 								ExploreExperimentHistory* history);
@@ -93,7 +95,8 @@ public:
 	void explore_exit_step(SolutionWrapper* wrapper,
 						   ExploreExperimentState* experiment_state);
 	void explore_backprop(double target_val,
-						  ExploreExperimentHistory* history);
+						  ExploreExperimentHistory* history,
+						  SolutionWrapper* wrapper);
 
 	void train_new_check_activate(SolutionWrapper* wrapper,
 								  ExploreExperimentHistory* history);
@@ -105,7 +108,8 @@ public:
 	void train_new_exit_step(SolutionWrapper* wrapper,
 							 ExploreExperimentState* experiment_state);
 	void train_new_backprop(double target_val,
-							ExploreExperimentHistory* history);
+							ExploreExperimentHistory* history,
+							SolutionWrapper* wrapper);
 };
 
 class ExploreExperimentHistory {

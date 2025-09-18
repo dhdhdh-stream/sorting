@@ -1,5 +1,7 @@
 #include "eval_experiment.h"
 
+#include <iostream>
+
 #include "constants.h"
 #include "helpers.h"
 #include "network.h"

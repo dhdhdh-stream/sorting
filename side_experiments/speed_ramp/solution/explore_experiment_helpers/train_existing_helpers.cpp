@@ -7,6 +7,7 @@
 #include "globals.h"
 #include "helpers.h"
 #include "scope.h"
+#include "solution.h"
 #include "solution_wrapper.h"
 
 using namespace std;
@@ -31,7 +32,7 @@ void ExploreExperiment::train_existing_check_activate(
 	history->signal_vals.push_back(0.0);
 
 	for (int l_index = (int)wrapper->scope_histories.size()-1; l_index >= 0; l_index--) {
-		if (wrapper->scope_histories[l_index]->scope->signals.size() > 0
+		if (wrapper->scope_histories[l_index]->scope->default_signal != NULL
 				&& !wrapper->scope_histories[l_index]->signal_is_experiment) {
 			wrapper->scope_histories[l_index]->explore_experiment_callbacks.push_back(history);
 			break;
@@ -41,55 +42,73 @@ void ExploreExperiment::train_existing_check_activate(
 
 void ExploreExperiment::train_existing_backprop(
 		double target_val,
-		ExploreExperimentHistory* history) {
-	for (int i_index = 0; i_index < (int)history->signal_is_set.size(); i_index++) {
-		if (history->signal_is_set[i_index]) {
-			this->target_val_histories.push_back(history->signal_vals[i_index]);
-		} else {
-			this->target_val_histories.push_back(target_val);
+		ExploreExperimentHistory* history,
+		SolutionWrapper* wrapper) {
+	// temp
+	bool is_valid = false;
+	if (wrapper->solution->scopes[0]->signals.size() > 0)  {
+		if (history->signal_is_set[0]) {
+			is_valid = true;
 		}
+	} else {
+		is_valid = true;
 	}
 
-	this->state_iter++;
-	if (this->state_iter >= TRAIN_EXISTING_ITERS) {
-		double average_score;
-		vector<Input> factor_inputs;
-		vector<double> factor_input_averages;
-		vector<double> factor_input_standard_deviations;
-		vector<double> factor_weights;
-		bool is_success = train_existing(scope_histories,
-										 target_val_histories,
-										 average_score,
-										 factor_inputs,
-										 factor_input_averages,
-										 factor_input_standard_deviations,
-										 factor_weights);
-
-		for (int h_index = 0; h_index < (int)this->scope_histories.size(); h_index++) {
-			delete this->scope_histories[h_index];
+	if (is_valid) {
+		for (int i_index = 0; i_index < (int)history->signal_is_set.size(); i_index++) {
+			if (history->signal_is_set[i_index]) {
+				this->target_val_histories.push_back(history->signal_vals[i_index]);
+			} else {
+				this->target_val_histories.push_back(target_val);
+			}
 		}
-		this->scope_histories.clear();
-		this->target_val_histories.clear();
 
-		if (is_success) {
-			this->existing_average_score = average_score;
-			this->existing_inputs = factor_inputs;
-			this->existing_input_averages = factor_input_averages;
-			this->existing_input_standard_deviations = factor_input_standard_deviations;
-			this->existing_weights = factor_weights;
+		this->state_iter++;
+		if (this->state_iter >= TRAIN_EXISTING_ITERS) {
+			double average_score;
+			vector<Input> factor_inputs;
+			vector<double> factor_input_averages;
+			vector<double> factor_input_standard_deviations;
+			vector<double> factor_weights;
+			bool is_success = train_existing(scope_histories,
+											 target_val_histories,
+											 average_score,
+											 factor_inputs,
+											 factor_input_averages,
+											 factor_input_standard_deviations,
+											 factor_weights);
 
-			this->best_surprise = 0.0;
+			for (int h_index = 0; h_index < (int)this->scope_histories.size(); h_index++) {
+				delete this->scope_histories[h_index];
+			}
+			this->scope_histories.clear();
+			this->target_val_histories.clear();
 
-			int average_instances_per_run = (this->sum_num_instances + (int)this->last_num_instances.size() - 1)
-				/ (int)this->last_num_instances.size();
-			uniform_int_distribution<int> until_distribution(1, 2 * average_instances_per_run);
-			this->num_instances_until_target = until_distribution(generator);
+			if (is_success) {
+				this->existing_average_score = average_score;
+				this->existing_inputs = factor_inputs;
+				this->existing_input_averages = factor_input_averages;
+				this->existing_input_standard_deviations = factor_input_standard_deviations;
+				this->existing_weights = factor_weights;
 
-			this->state = EXPLORE_EXPERIMENT_STATE_EXPLORE;
-			this->state_iter = 0;
-		} else {
-			this->node_context->experiment = NULL;
-			delete this;
+				this->best_surprise = 0.0;
+
+				int average_instances_per_run = (this->sum_num_instances + (int)this->last_num_instances.size() - 1)
+					/ (int)this->last_num_instances.size();
+				uniform_int_distribution<int> until_distribution(1, 2 * average_instances_per_run);
+				this->num_instances_until_target = until_distribution(generator);
+
+				this->state = EXPLORE_EXPERIMENT_STATE_EXPLORE;
+				this->state_iter = 0;
+			} else {
+				this->node_context->experiment = NULL;
+				delete this;
+			}
+		}
+	} else {
+		while (this->scope_histories.size() > this->target_val_histories.size()) {
+			delete this->scope_histories.back();
+			this->scope_histories.pop_back();
 		}
 	}
 }

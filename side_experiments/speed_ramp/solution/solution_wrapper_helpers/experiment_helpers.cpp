@@ -19,10 +19,12 @@ using namespace std;
 #if defined(MDEBUG) && MDEBUG
 const int SIGNAL_IMPROVEMENTS_PER_ITER = 2;
 #else
-const int SIGNAL_IMPROVEMENTS_PER_ITER = 10;
+// const int SIGNAL_IMPROVEMENTS_PER_ITER = 10;
+const int SIGNAL_IMPROVEMENTS_PER_ITER = 2;
 #endif /* MDEBUG */
 
 const int MIN_EXPLORE_PER_RUN = 10;
+const double MAX_EXPLORE_RATIO_PER_RUN = 0.2;
 
 void SolutionWrapper::experiment_init() {
 	// temp
@@ -139,7 +141,8 @@ void SolutionWrapper::experiment_end(double result) {
 		}
 	}
 
-	if (this->explore_histories.size() < MIN_EXPLORE_PER_RUN) {
+	if (this->explore_histories.size() < MIN_EXPLORE_PER_RUN
+			&& this->explore_histories.size() < MAX_EXPLORE_RATIO_PER_RUN * (double)this->num_actions) {
 		create_experiment(this);
 	}
 
@@ -162,7 +165,8 @@ void SolutionWrapper::experiment_end(double result) {
 	for (map<ExploreExperiment*, ExploreExperimentHistory*>::iterator it = this->explore_histories.begin();
 			it != this->explore_histories.end(); it++) {
 		it->first->backprop(result,
-							it->second);
+							it->second,
+							this);
 		delete it->second;
 	}
 	this->explore_histories.clear();
@@ -200,6 +204,7 @@ void SolutionWrapper::experiment_end(double result) {
 			scope->curr_signal_eval_experiment = NULL;
 
 			scope->experiment_iter++;
+			cout << "scope->experiment_iter: " << scope->experiment_iter << endl;
 			if (scope->experiment_iter >= SIGNAL_IMPROVEMENTS_PER_ITER) {
 				scope->best_signal_eval_experiment->add(this);
 

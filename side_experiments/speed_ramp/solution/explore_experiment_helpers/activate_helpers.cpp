@@ -95,7 +95,8 @@ void ExploreExperiment::experiment_exit_step(SolutionWrapper* wrapper) {
 }
 
 void ExploreExperiment::backprop(double target_val,
-								 ExploreExperimentHistory* history) {
+								 ExploreExperimentHistory* history,
+								 SolutionWrapper* wrapper) {
 	if (this->last_num_instances.size() >= LAST_NUM_TRACK) {
 		this->sum_num_instances -= this->last_num_instances.front();
 		this->last_num_instances.pop_front();
@@ -106,15 +107,18 @@ void ExploreExperiment::backprop(double target_val,
 	switch (this->state) {
 	case EXPLORE_EXPERIMENT_STATE_TRAIN_EXISTING:
 		train_existing_backprop(target_val,
-								history);
+								history,
+								wrapper);
 		break;
 	case EXPLORE_EXPERIMENT_STATE_EXPLORE:
 		explore_backprop(target_val,
-						 history);
+						 history,
+						 wrapper);
 		break;
 	case EXPLORE_EXPERIMENT_STATE_TRAIN_NEW:
 		train_new_backprop(target_val,
-						   history);
+						   history,
+						   wrapper);
 		break;
 	}
 }
