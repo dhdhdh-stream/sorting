@@ -6,6 +6,9 @@
  *   - e.g., train at a train station
  *     - could be correct to follow train or follow train station
  * - the option that should be chosen is the one that produces the best signal
+ * 
+ * - don't have rolling signal
+ *   - not scalable if every layer has its own
  */
 
 #ifndef SIGNAL_H

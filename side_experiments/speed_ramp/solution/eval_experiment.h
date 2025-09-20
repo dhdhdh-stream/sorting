@@ -23,13 +23,7 @@ class Scope;
 class SolutionWrapper;
 
 const int EVAL_EXPERIMENT_STATE_INITIAL = 0;
-const int EVAL_EXPERIMENT_STATE_EVAL = 1;
-
-#if defined(MDEBUG) && MDEBUG
-const int EVAL_EXPERIMENT_NUM_GEARS = 4;
-#else
-const int EVAL_EXPERIMENT_NUM_GEARS = 10;
-#endif /* MDEBUG */
+const int EVAL_EXPERIMENT_STATE_RAMP = 1;
 
 class EvalExperimentHistory;
 class EvalExperimentState;
@@ -81,7 +75,7 @@ public:
 						  EvalExperimentHistory* history,
 						  SolutionWrapper* wrapper);
 
-	void eval_backprop(double target_val,
+	void ramp_backprop(double target_val,
 					   EvalExperimentHistory* history,
 					   SolutionWrapper* wrapper,
 					   std::set<Scope*>& updated_scopes);

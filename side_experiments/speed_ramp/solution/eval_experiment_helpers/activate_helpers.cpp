@@ -150,8 +150,8 @@ void EvalExperiment::backprop(double target_val,
 						 history,
 						 wrapper);
 		break;
-	case EVAL_EXPERIMENT_STATE_EVAL:
-		eval_backprop(target_val,
+	case EVAL_EXPERIMENT_STATE_RAMP:
+		ramp_backprop(target_val,
 					  history,
 					  wrapper,
 					  updated_scopes);

@@ -9,6 +9,7 @@
 #include "helpers.h"
 #include "network.h"
 #include "scope.h"
+#include "signal_experiment.h"
 #include "solution.h"
 #include "solution_wrapper.h"
 
@@ -50,10 +51,15 @@ void ExploreExperiment::train_new_check_activate(
 			history->signal_vals.push_back(0.0);
 
 			for (int l_index = (int)wrapper->scope_histories.size()-1; l_index >= 0; l_index--) {
-				if (wrapper->scope_histories[l_index]->scope->default_signal != NULL
-						&& !wrapper->scope_histories[l_index]->signal_is_experiment) {
-					wrapper->scope_histories[l_index]->explore_experiment_callbacks.push_back(history);
-					break;
+				Scope* scope = wrapper->scope_histories[l_index]->scope;
+				if (scope->signal_experiment_history != NULL) {
+					/**
+					 * - assuming no signal if no SignalExperiment
+					 */
+					if (!scope->signal_experiment_history->is_on) {
+						wrapper->scope_histories[l_index]->explore_experiment_callbacks.push_back(history);
+						break;
+					}
 				}
 			}
 

@@ -14,6 +14,7 @@ public:
 	SignalNetwork* score_network;
 
 	DefaultSignal();
+	DefaultSignal(DefaultSignal* original);
 	DefaultSignal(std::ifstream& input_file);
 	~DefaultSignal();
 

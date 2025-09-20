@@ -111,6 +111,7 @@ bool check_signal_activate(std::vector<double>& obs,
 bool experiment_check_signal_activate(std::vector<double>& obs,
 									  int& action,
 									  bool& is_next,
+									  bool& fetch_action,
 									  SolutionWrapper* wrapper);
 
 Scope* create_new_scope(Scope* scope_context);

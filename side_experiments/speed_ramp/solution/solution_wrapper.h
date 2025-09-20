@@ -4,6 +4,7 @@
 #include <map>
 #include <string>
 #include <tuple>
+#include <utility>
 #include <vector>
 
 class AbstractExperimentState;
@@ -15,8 +16,8 @@ class ExploreExperimentHistory;
 class Problem;
 class Scope;
 class ScopeHistory;
-class SignalEvalExperiment;
-class SignalEvalExperimentHistory;
+class SignalExperiment;
+class SignalExperimentHistory;
 class Solution;
 
 class SolutionWrapper {
@@ -36,9 +37,6 @@ public:
 
 	int num_actions;
 
-	/**
-	 * - explore can fail catastrophically, so need to limit number
-	 */
 	bool should_explore;
 	ExploreExperiment* curr_explore;
 	bool has_explore;
@@ -47,7 +45,7 @@ public:
 
 	std::map<EvalExperiment*, EvalExperimentHistory*> eval_histories;
 
-	std::map<SignalEvalExperiment*, SignalEvalExperimentHistory*> signal_eval_histories;
+	std::vector<std::pair<SignalExperiment*, SignalExperimentHistory*>> signal_experiment_histories;
 
 	Problem* problem;
 	/**

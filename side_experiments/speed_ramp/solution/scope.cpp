@@ -21,9 +21,8 @@ using namespace std;
 Scope::Scope() {
 	this->default_signal = NULL;
 
-	this->curr_signal_eval_experiment = NULL;
-	this->best_signal_eval_experiment = NULL;
-	this->experiment_iter = 0;
+	this->signal_experiment = NULL;
+	this->signal_experiment_history = NULL;
 }
 
 Scope::~Scope() {
@@ -379,8 +378,6 @@ ScopeHistory::ScopeHistory(Scope* scope) {
 
 	this->factor_initialized = vector<bool>(scope->factors.size(), false);
 	this->factor_values = vector<double>(scope->factors.size());
-
-	this->signal_is_experiment = false;
 }
 
 ScopeHistory::ScopeHistory(ScopeHistory* original) {

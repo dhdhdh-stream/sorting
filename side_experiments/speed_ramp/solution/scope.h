@@ -23,8 +23,8 @@ class ExploreExperiment;
 class ExploreExperimentHistory;
 class Factor;
 class Signal;
-class SignalEvalExperiment;
-class SignalEvalExperimentHistory;
+class SignalExperiment;
+class SignalExperimentHistory;
 class Solution;
 class SolutionWrapper;
 
@@ -61,9 +61,8 @@ public:
 
 	std::vector<Scope*> child_scopes;
 
-	SignalEvalExperiment* curr_signal_eval_experiment;
-	SignalEvalExperiment* best_signal_eval_experiment;
-	int experiment_iter;
+	SignalExperiment* signal_experiment;
+	SignalExperimentHistory* signal_experiment_history;
 
 	Scope();
 	~Scope();
@@ -108,9 +107,8 @@ public:
 
 	int num_actions_snapshot;
 
-	bool signal_is_experiment;
 	std::vector<ExploreExperimentHistory*> explore_experiment_callbacks;
-	std::vector<SignalEvalExperimentHistory*> signal_eval_experiment_callbacks;
+	std::vector<SignalExperimentHistory*> signal_experiment_callbacks;
 
 	ScopeHistory(Scope* scope);
 	ScopeHistory(ScopeHistory* original);

@@ -1,5 +1,6 @@
 #include "eval_experiment.h"
 
+#include "constants.h"
 #include "globals.h"
 #include "network.h"
 #include "obs_node.h"
@@ -69,9 +70,9 @@ EvalExperimentHistory::EvalExperimentHistory(EvalExperiment* experiment) {
 			}
 		}
 		break;
-	case EVAL_EXPERIMENT_STATE_EVAL:
+	case EVAL_EXPERIMENT_STATE_RAMP:
 		{
-			uniform_int_distribution<int> on_distribution(0, EVAL_EXPERIMENT_NUM_GEARS-1);
+			uniform_int_distribution<int> on_distribution(0, EXPERIMENT_NUM_GEARS-1);
 			if (experiment->curr_ramp >= on_distribution(generator)) {
 				this->is_on = true;
 			} else {

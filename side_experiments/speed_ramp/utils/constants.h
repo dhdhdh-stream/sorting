@@ -14,4 +14,12 @@ const int STEP_TYPE_SCOPE = 1;
 
 const int LAST_NUM_TRACK = 1000;
 
+#if defined(MDEBUG) && MDEBUG
+const int EXPERIMENT_NUM_GEARS = 4;
+const int RAMP_EPOCH_NUM_ITERS = 20;
+#else
+const int EXPERIMENT_NUM_GEARS = 10;
+const int RAMP_EPOCH_NUM_ITERS = 8000;
+#endif /* MDEBUG */
+
 #endif /* CONSTANTS_H */

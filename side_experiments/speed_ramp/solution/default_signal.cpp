@@ -8,6 +8,13 @@ DefaultSignal::DefaultSignal() {
 	this->score_network = NULL;
 }
 
+DefaultSignal::DefaultSignal(DefaultSignal* original) {
+	this->score_input_is_pre = original->score_input_is_pre;
+	this->score_input_indexes = original->score_input_indexes;
+	this->score_input_obs_indexes = original->score_input_obs_indexes;
+	this->score_network = new SignalNetwork(original->score_network);
+}
+
 DefaultSignal::DefaultSignal(ifstream& input_file) {
 	string score_input_size_line;
 	getline(input_file, score_input_size_line);
