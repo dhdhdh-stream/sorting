@@ -16,11 +16,11 @@ const int SIGNAL_EXPERIMENT_STATE_INITIAL_C2 = 1;
 const int SIGNAL_EXPERIMENT_STATE_INITIAL_C3 = 2;
 const int SIGNAL_EXPERIMENT_STATE_INITIAL_C4 = 3;
 const int SIGNAL_EXPERIMENT_STATE_RAMP = 4;
-const int SIGNAL_EXPERIMENT_STATE_WRAPUP = 5;
+const int SIGNAL_EXPERIMENT_STATE_GATHER = 5;
+const int SIGNAL_EXPERIMENT_STATE_WRAPUP = 6;
 /**
  * - if new better, add to scope, and swap existing and new
  */
-const int SIGNAL_EXPERIMENT_STATE_DONE = 6;
 
 #if defined(MDEBUG) && MDEBUG
 const int EXISTING_CURRENT_SAMPLES = 80;
@@ -100,6 +100,10 @@ public:
 	void ramp_backprop(double target_val,
 					   SignalExperimentHistory* history,
 					   SolutionWrapper* wrapper);
+
+	void gather_backprop(double target_val,
+						 SignalExperimentHistory* history,
+						 SolutionWrapper* wrapper);
 
 	void wrapup_backprop();
 

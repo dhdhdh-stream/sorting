@@ -56,7 +56,8 @@ void ExploreExperiment::explore_check_activate(
 
 				for (int l_index = (int)wrapper->scope_histories.size()-1; l_index >= 0; l_index--) {
 					Scope* scope = wrapper->scope_histories[l_index]->scope;
-					if (scope->signal_experiment_history != NULL) {
+					if (scope->signal_experiment_history != NULL
+							&& scope->default_signal != NULL) {
 						/**
 						 * - assuming no signal if no SignalExperiment
 						 */
@@ -237,20 +238,7 @@ void ExploreExperiment::explore_exit_step(SolutionWrapper* wrapper,
 void ExploreExperiment::explore_backprop(double target_val,
 										 ExploreExperimentHistory* history,
 										 SolutionWrapper* wrapper) {
-	// temp
-	bool is_valid = false;
 	if (history->existing_predicted_scores.size() > 0) {
-		if (wrapper->solution->scopes[0]->signals.size() > 0)  {
-			if (history->signal_is_set[0]) {
-				is_valid = true;
-			}
-		} else {
-			is_valid = true;
-		}
-	}
-
-	// if (history->existing_predicted_scores.size() > 0) {
-	if (is_valid) {
 		double curr_surprise;
 		if (history->signal_is_set[0]) {
 			curr_surprise = history->signal_vals[0] - history->existing_predicted_scores[0];
@@ -309,18 +297,6 @@ void ExploreExperiment::explore_backprop(double target_val,
 				this->node_context->experiment = NULL;
 				delete this;
 			}
-		}
-	} else {
-		if (this->curr_new_scope != NULL) {
-			delete this->curr_new_scope;
-			this->curr_new_scope = NULL;
-		}
-		this->curr_step_types.clear();
-		this->curr_actions.clear();
-		this->curr_scopes.clear();
-		if (this->curr_scope_history != NULL) {
-			delete this->curr_scope_history;
-			this->curr_scope_history = NULL;
 		}
 	}
 }

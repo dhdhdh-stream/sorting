@@ -1,5 +1,7 @@
 #include "signal_experiment.h"
 
+#include <iostream>
+
 #include "constants.h"
 #include "globals.h"
 #include "signal.h"
@@ -37,6 +39,8 @@ SignalExperimentHistory::SignalExperimentHistory(SignalExperiment* experiment) {
 		}
 		break;
 	case SIGNAL_EXPERIMENT_STATE_RAMP:
+	case SIGNAL_EXPERIMENT_STATE_GATHER:
+	case SIGNAL_EXPERIMENT_STATE_WRAPUP:
 		{
 			uniform_int_distribution<int> on_distribution(0, EXPERIMENT_NUM_GEARS-1);
 			if (experiment->curr_ramp >= on_distribution(generator)) {

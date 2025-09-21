@@ -60,7 +60,11 @@ bool SignalExperiment::split_helper(vector<vector<vector<double>>>& current_pre_
 
 	new_match_network = new SignalNetwork(new_match_input_is_pre.size());
 
+	#if defined(MDEBUG) && MDEBUG
+	int num_positive_seeds = max(1, (int)(POSITIVE_SEED_RATIO * (double)current_pre_obs.size()));
+	#else
 	int num_positive_seeds = POSITIVE_SEED_RATIO * (double)current_pre_obs.size();
+	#endif /* MDEBUG */
 	vector<int> positive_seeds;
 	{
 		vector<int> possible_indexes;
@@ -75,7 +79,11 @@ bool SignalExperiment::split_helper(vector<vector<vector<double>>>& current_pre_
 		}
 	}
 
+	#if defined(MDEBUG) && MDEBUG
+	int num_negative_seeds = max(1, (int)(NEGATIVE_SEED_RATIO * (double)explore_pre_obs.size()));
+	#else
 	int num_negative_seeds = NEGATIVE_SEED_RATIO * (double)explore_pre_obs.size();
+	#endif /* MDEBUG */
 	vector<int> negative_seeds;
 	{
 		vector<int> possible_indexes;

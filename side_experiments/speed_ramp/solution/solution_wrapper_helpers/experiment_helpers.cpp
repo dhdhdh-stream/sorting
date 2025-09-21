@@ -165,13 +165,14 @@ void SolutionWrapper::experiment_end(double result) {
 	this->eval_histories.clear();
 
 	for (int e_index = 0; e_index < (int)this->signal_experiment_histories.size(); e_index++) {
+		this->signal_experiment_histories[e_index].first->scope_context->signal_experiment_history = NULL;
+
 		this->signal_experiment_histories[e_index].first->backprop(
 			result,
 			this->signal_experiment_histories[e_index].second,
 			this);
 
 		delete this->signal_experiment_histories[e_index].second;
-		this->signal_experiment_histories[e_index].first->scope_context->signal_experiment_history = NULL;
 	}
 	this->signal_experiment_histories.clear();
 

@@ -162,7 +162,8 @@ bool experiment_check_signal_activate(vector<double>& obs,
 					 */
 					for (int l_index = (int)wrapper->scope_histories.size()-2; l_index >= 0; l_index--) {
 						Scope* scope = wrapper->scope_histories[l_index]->scope;
-						if (scope->signal_experiment_history != NULL) {
+						if (scope->signal_experiment_history != NULL
+								&& scope->default_signal != NULL) {
 							/**
 							 * - assuming no signal if no SignalExperiment
 							 */
@@ -234,7 +235,8 @@ bool experiment_check_signal_activate(vector<double>& obs,
 					 */
 					for (int l_index = (int)wrapper->scope_histories.size()-2; l_index >= 0; l_index--) {
 						Scope* scope = wrapper->scope_histories[l_index]->scope;
-						if (scope->signal_experiment_history != NULL) {
+						if (scope->signal_experiment_history != NULL
+								&& scope->default_signal != NULL) {
 							/**
 							 * - assuming no signal if no SignalExperiment
 							 */

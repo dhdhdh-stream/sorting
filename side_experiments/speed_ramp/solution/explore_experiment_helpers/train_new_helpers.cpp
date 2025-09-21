@@ -52,7 +52,8 @@ void ExploreExperiment::train_new_check_activate(
 
 			for (int l_index = (int)wrapper->scope_histories.size()-1; l_index >= 0; l_index--) {
 				Scope* scope = wrapper->scope_histories[l_index]->scope;
-				if (scope->signal_experiment_history != NULL) {
+				if (scope->signal_experiment_history != NULL
+						&& scope->default_signal != NULL) {
 					/**
 					 * - assuming no signal if no SignalExperiment
 					 */
@@ -121,20 +122,7 @@ void ExploreExperiment::train_new_backprop(
 		double target_val,
 		ExploreExperimentHistory* history,
 		SolutionWrapper* wrapper) {
-	// temp
-	bool is_valid = false;
 	if (history->existing_predicted_scores.size() > 0) {
-		if (wrapper->solution->scopes[0]->signals.size() > 0)  {
-			if (history->signal_is_set[0]) {
-				is_valid = true;
-			}
-		} else {
-			is_valid = true;
-		}
-	}
-
-	// if (history->existing_predicted_scores.size() > 0) {
-	if (is_valid) {
 		for (int i_index = 0; i_index < (int)history->existing_predicted_scores.size(); i_index++) {
 			if (history->signal_is_set[i_index]) {
 				this->target_val_histories.push_back(history->signal_vals[i_index] - history->existing_predicted_scores[i_index]);
@@ -208,11 +196,6 @@ void ExploreExperiment::train_new_backprop(
 				this->node_context->experiment = NULL;
 				delete this;
 			}
-		}
-	} else {
-		while (this->scope_histories.size() > this->target_val_histories.size()) {
-			delete this->scope_histories.back();
-			this->scope_histories.pop_back();
 		}
 	}
 }
