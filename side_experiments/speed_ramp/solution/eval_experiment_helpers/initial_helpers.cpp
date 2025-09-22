@@ -64,9 +64,9 @@ void EvalExperiment::initial_backprop(double target_val,
 		}
 
 		#if defined(MDEBUG) && MDEBUG
-		if (score_t_score >= target_t_score || rand()%3 != 0) {
+		if (score_t_score > target_t_score || rand()%3 != 0) {
 		#else
-		if (score_t_score >= target_t_score) {
+		if (score_t_score > target_t_score) {
 		#endif /* MDEBUG */
 			this->existing_scores.clear();
 			this->new_scores.clear();

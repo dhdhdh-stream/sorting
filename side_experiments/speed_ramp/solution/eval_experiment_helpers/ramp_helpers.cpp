@@ -76,9 +76,9 @@ void EvalExperiment::ramp_backprop(double target_val,
 		this->state_iter = 0;
 
 		#if defined(MDEBUG) && MDEBUG
-		if (score_t_score >= target_t_score || rand()%3 != 0) {
+		if (score_t_score > target_t_score || rand()%3 != 0) {
 		#else
-		if (score_t_score >= target_t_score) {
+		if (score_t_score > target_t_score) {
 		#endif /* MDEBUG */
 			this->curr_ramp++;
 			if (this->curr_ramp >= EXPERIMENT_NUM_GEARS-1) {

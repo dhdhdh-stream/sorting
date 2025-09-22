@@ -161,13 +161,13 @@ bool experiment_check_signal_activate(vector<double>& obs,
 					 * - start from layer above
 					 */
 					for (int l_index = (int)wrapper->scope_histories.size()-2; l_index >= 0; l_index--) {
-						Scope* scope = wrapper->scope_histories[l_index]->scope;
-						if (scope->signal_experiment_history != NULL
-								&& scope->default_signal != NULL) {
+						Scope* l_scope = wrapper->scope_histories[l_index]->scope;
+						if (l_scope->signal_experiment_history != NULL
+								&& l_scope->default_signal != NULL) {
 							/**
 							 * - assuming no signal if no SignalExperiment
 							 */
-							if (!scope->signal_experiment_history->is_on) {
+							if (!l_scope->signal_experiment_history->is_on) {
 								wrapper->scope_histories[l_index]->signal_experiment_callbacks
 									.push_back(scope->signal_experiment_history);
 								break;
@@ -234,13 +234,13 @@ bool experiment_check_signal_activate(vector<double>& obs,
 					 * - start from layer above
 					 */
 					for (int l_index = (int)wrapper->scope_histories.size()-2; l_index >= 0; l_index--) {
-						Scope* scope = wrapper->scope_histories[l_index]->scope;
-						if (scope->signal_experiment_history != NULL
-								&& scope->default_signal != NULL) {
+						Scope* l_scope = wrapper->scope_histories[l_index]->scope;
+						if (l_scope->signal_experiment_history != NULL
+								&& l_scope->default_signal != NULL) {
 							/**
 							 * - assuming no signal if no SignalExperiment
 							 */
-							if (!scope->signal_experiment_history->is_on) {
+							if (!l_scope->signal_experiment_history->is_on) {
 								wrapper->scope_histories[l_index]->signal_experiment_callbacks
 									.push_back(scope->signal_experiment_history);
 								break;

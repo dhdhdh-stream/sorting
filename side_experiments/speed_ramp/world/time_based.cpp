@@ -28,7 +28,7 @@ TimeBased::TimeBased() {
 		this->curr_target = TARGET_RIGHT;
 	}
 	this->curr_clicked = false;
-	this->curr_success = false;
+	this->curr_success = 0;
 
 	this->final_score = 0.0;
 }
@@ -78,25 +78,21 @@ void TimeBased::perform_action(int action) {
 				break;
 			case ACTION_CLICK:
 				if (this->curr_clicked) {
-					this->curr_success = false;
+					this->curr_success = -1;
 				} else {
 					switch (this->curr_target) {
 					case TARGET_LEFT:
 						if (this->curr_index == 1) {
 							this->curr_success = 1;
-							this->final_score += 1.0;
 						} else {
 							this->curr_success = -1;
-							this->final_score -= 1.0;
 						}
 						break;
 					case TARGET_RIGHT:
 						if (this->curr_index == 5) {
 							this->curr_success = 1;
-							this->final_score += 1.0;
 						} else {
 							this->curr_success = -1;
-							this->final_score -= 1.0;
 						}
 						break;
 					}
@@ -109,6 +105,12 @@ void TimeBased::perform_action(int action) {
 
 		this->iter++;
 		if (this->iter >= MAX_ITERS) {
+			if (this->curr_success == 1) {
+				this->final_score += 1.0;
+			} else if (this->curr_success == -1) {
+				this->final_score -= 1.0;
+			}
+
 			this->iter = 0;
 
 			this->curr_index = 3;
@@ -119,7 +121,7 @@ void TimeBased::perform_action(int action) {
 				this->curr_target = TARGET_RIGHT;
 			}
 			this->curr_clicked = false;
-			this->curr_success = false;
+			this->curr_success = 0;
 
 			this->epoch++;
 		}
@@ -129,6 +131,12 @@ void TimeBased::perform_action(int action) {
 }
 
 double TimeBased::score_result() {
+	if (this->curr_success == 1) {
+		this->final_score += 1.0;
+	} else if (this->curr_success == -1) {
+		this->final_score -= 1.0;
+	}
+
 	return this->final_score;
 }
 

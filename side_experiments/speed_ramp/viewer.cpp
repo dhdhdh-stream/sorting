@@ -39,6 +39,10 @@ int main(int argc, char* argv[]) {
 		"saves/",
 		filename);
 
+	// temp
+	cout << "solution_wrapper->solution->scopes[0]->signals.size(): " << solution_wrapper->solution->scopes[0]->signals.size() << endl;
+	cout << "solution_wrapper->solution->scopes[0]->default_signal: " << solution_wrapper->solution->scopes[0]->default_signal << endl;
+
 	{
 		Problem* problem = problem_type->get_problem();
 
@@ -56,7 +60,6 @@ int main(int argc, char* argv[]) {
 		}
 
 		double target_val = problem->score_result();
-		target_val -= 0.0001 * solution_wrapper->num_actions;
 		cout << "target_val: " << target_val << endl;
 
 		solution_wrapper->end();

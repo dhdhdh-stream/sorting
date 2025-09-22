@@ -45,7 +45,8 @@ int main(int argc, char* argv[]) {
 
 	auto start_time = chrono::high_resolution_clock::now();
 
-	while (!solution_wrapper->is_done()) {
+	// while (!solution_wrapper->is_done()) {
+	while (true) {
 		int starting_timestamp = solution_wrapper->solution->timestamp;
 
 		while (true) {
@@ -54,7 +55,7 @@ int main(int argc, char* argv[]) {
 			if (time_diff.count() >= 20) {
 				start_time = curr_time;
 
-				// cout << "solution_wrapper->improvement_iter: " << solution_wrapper->improvement_iter << endl;
+				cout << "a" << endl;
 			}
 
 			Problem* problem = problem_type->get_problem();
@@ -80,7 +81,6 @@ int main(int argc, char* argv[]) {
 			}
 
 			double target_val = problem->score_result();
-			target_val -= 0.0001 * solution_wrapper->num_actions;
 
 			solution_wrapper->experiment_end(target_val);
 

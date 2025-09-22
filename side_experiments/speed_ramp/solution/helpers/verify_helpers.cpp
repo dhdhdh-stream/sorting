@@ -6,9 +6,9 @@
 #include "abstract_node.h"
 #include "problem.h"
 #include "scope.h"
-#include "simpler.h"
 #include "solution.h"
 #include "solution_wrapper.h"
+#include "time_based.h"
 
 using namespace std;
 
@@ -19,7 +19,7 @@ const int NUM_MEASURE = 4000;
 #endif /* MDEBUG */
 
 void measure_score(SolutionWrapper* solution_wrapper) {
-	ProblemType* problem_type = new TypeSimpler();
+	ProblemType* problem_type = new TypeTimeBased();
 
 	double sum_scores = 0.0;
 	for (int iter_index = 0; iter_index < NUM_MEASURE; iter_index++) {
@@ -39,7 +39,6 @@ void measure_score(SolutionWrapper* solution_wrapper) {
 		}
 
 		double target_val = problem->score_result();
-		target_val -= 0.0001 * solution_wrapper->num_actions;
 
 		solution_wrapper->end();
 

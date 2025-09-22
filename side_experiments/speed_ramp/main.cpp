@@ -29,7 +29,8 @@ default_random_engine generator;
 int main(int argc, char* argv[]) {
 	cout << "Starting..." << endl;
 
-	seed = (unsigned)time(NULL);
+	// seed = (unsigned)time(NULL);
+	seed = 1758521818;
 	srand(seed);
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
@@ -80,7 +81,6 @@ int main(int argc, char* argv[]) {
 			}
 
 			double target_val = problem->score_result();
-			target_val -= 0.0001 * solution_wrapper->num_actions;
 
 			solution_wrapper->experiment_end(target_val);
 
