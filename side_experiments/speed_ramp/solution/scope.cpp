@@ -12,6 +12,7 @@
 #include "globals.h"
 #include "obs_node.h"
 #include "scope_node.h"
+#include "signal_experiment.h"
 #include "solution.h"
 #include "solution_wrapper.h"
 #include "start_node.h"
@@ -350,6 +351,8 @@ void Scope::load(ifstream& input_file,
 		getline(input_file, scope_id_line);
 		this->child_scopes.push_back(parent_solution->scopes[stoi(scope_id_line)]);
 	}
+
+	this->signal_experiment = new SignalExperiment(this);
 }
 
 void Scope::link(Solution* parent_solution) {

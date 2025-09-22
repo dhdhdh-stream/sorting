@@ -9,7 +9,6 @@
 #include "constants.h"
 #include "globals.h"
 #include "helpers.h"
-#include "minesweeper.h"
 #include "scope.h"
 #include "solution.h"
 #include "solution_wrapper.h"
@@ -35,14 +34,10 @@ int main(int argc, char* argv[]) {
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
 
-	ProblemType* problem_type = new TypeMinesweeper();
-
-	SolutionWrapper* solution_wrapper = new SolutionWrapper(
-		problem_type->num_obs());
+	SolutionWrapper* solution_wrapper = new SolutionWrapper();
 
 	solution_wrapper->save("saves/", filename);
 
-	delete problem_type;
 	delete solution_wrapper;
 
 	cout << "Done" << endl;

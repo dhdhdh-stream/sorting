@@ -29,8 +29,6 @@ public:
 	/**
 	 * - run variables
 	 */
-	int num_obs;
-
 	std::vector<ScopeHistory*> scope_histories;
 	std::vector<AbstractNode*> node_context;
 	std::vector<AbstractExperimentState*> experiment_context;
@@ -58,9 +56,8 @@ public:
 	unsigned long curr_run_seed;
 	#endif /* MDEBUG */
 
-	SolutionWrapper(int num_obs);
-	SolutionWrapper(int num_obs,
-					std::string path,
+	SolutionWrapper();
+	SolutionWrapper(std::string path,
 					std::string name);
 	~SolutionWrapper();
 

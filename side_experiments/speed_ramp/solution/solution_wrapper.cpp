@@ -6,14 +6,13 @@
 #include "obs_node.h"
 #include "scope.h"
 #include "signal.h"
+#include "signal_experiment.h"
 #include "solution.h"
 #include "start_node.h"
 
 using namespace std;
 
-SolutionWrapper::SolutionWrapper(int num_obs) {
-	this->num_obs = num_obs;
-
+SolutionWrapper::SolutionWrapper() {
 	this->scope_counter = 0;
 
 	this->solution = new Solution();
@@ -32,6 +31,7 @@ SolutionWrapper::SolutionWrapper(int num_obs) {
 		new_scope->id = this->scope_counter;
 		this->scope_counter++;
 		this->solution->scopes[new_scope->id] = new_scope;
+		new_scope->signal_experiment = new SignalExperiment(new_scope);
 
 		new_scope->node_counter = 0;
 
@@ -61,11 +61,8 @@ SolutionWrapper::SolutionWrapper(int num_obs) {
 	#endif /* MDEBUG */
 }
 
-SolutionWrapper::SolutionWrapper(int num_obs,
-								 std::string path,
+SolutionWrapper::SolutionWrapper(std::string path,
 								 std::string name) {
-	this->num_obs = num_obs;
-
 	ifstream input_file;
 	input_file.open(path + name);
 

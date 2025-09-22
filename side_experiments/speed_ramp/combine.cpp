@@ -43,7 +43,7 @@ int main(int argc, char* argv[]) {
 	ProblemType* problem_type = new TypeMinesweeper();
 
 	SolutionWrapper* solution_wrapper = new SolutionWrapper(
-		problem_type->num_obs(), "saves/", target_file);
+		"saves/", target_file);
 
 	for (int other_index = 0; other_index < BRANCH_FACTOR-1; other_index++) {
 		solution_wrapper->combine("saves/", other_files[other_index]);

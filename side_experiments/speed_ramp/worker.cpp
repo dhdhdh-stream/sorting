@@ -13,9 +13,9 @@
 #include "obs_node.h"
 #include "scope.h"
 #include "scope_node.h"
-#include "simpler.h"
 #include "solution.h"
 #include "solution_wrapper.h"
+#include "time_based.h"
 
 using namespace std;
 
@@ -38,10 +38,10 @@ int main(int argc, char* argv[]) {
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
 
-	ProblemType* problem_type = new TypeSimpler();
+	ProblemType* problem_type = new TypeTimeBased();
 
 	SolutionWrapper* solution_wrapper = new SolutionWrapper(
-		problem_type->num_obs(), path, filename);
+		path, filename);
 
 	auto start_time = chrono::high_resolution_clock::now();
 

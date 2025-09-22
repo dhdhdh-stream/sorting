@@ -9,12 +9,6 @@ public:
 	virtual void perform_action(int action) = 0;
 	virtual double score_result() = 0;
 
-	/**
-	 * - for debugging
-	 */
-	virtual Problem* copy_and_reset() = 0;
-	virtual Problem* copy_snapshot() = 0;
-
 	virtual void print() = 0;
 };
 

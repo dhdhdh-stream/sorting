@@ -1,6 +1,3 @@
-// TODO: make large problem with lots of pieces to test signal
-// - progression not gated by actions, but by time
-
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -17,10 +14,10 @@
 #include "problem.h"
 #include "scope.h"
 #include "scope_node.h"
-#include "simpler.h"
 #include "solution.h"
 #include "solution_wrapper.h"
 #include "start_node.h"
+#include "time_based.h"
 #include "utilities.h"
 
 using namespace std;
@@ -37,20 +34,18 @@ int main(int argc, char* argv[]) {
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
 
-	ProblemType* problem_type = new TypeSimpler();
+	ProblemType* problem_type = new TypeTimeBased();
 
 	string filename;
 	SolutionWrapper* solution_wrapper;
 	if (argc > 1) {
 		filename = argv[1];
 		solution_wrapper = new SolutionWrapper(
-			problem_type->num_obs(),
 			"saves/",
 			filename);
 	} else {
 		filename = "main.txt";
-		solution_wrapper = new SolutionWrapper(
-			problem_type->num_obs());
+		solution_wrapper = new SolutionWrapper();
 	}
 
 	#if defined(MDEBUG) && MDEBUG

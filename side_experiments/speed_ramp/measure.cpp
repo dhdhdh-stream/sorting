@@ -6,9 +6,9 @@
 
 #include "globals.h"
 #include "scope.h"
-#include "simpler.h"
 #include "solution.h"
 #include "solution_wrapper.h"
+#include "time_based.h"
 
 using namespace std;
 
@@ -24,7 +24,7 @@ int main(int argc, char* argv[]) {
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
 
-	ProblemType* problem_type = new TypeSimpler();
+	ProblemType* problem_type = new TypeTimeBased();
 
 	string filename;
 	SolutionWrapper* solution_wrapper;
@@ -34,7 +34,6 @@ int main(int argc, char* argv[]) {
 		filename = "main.txt";
 	}
 	solution_wrapper = new SolutionWrapper(
-		problem_type->num_obs(),
 		"saves/",
 		filename);
 

@@ -12,6 +12,7 @@
 #include "obs_node.h"
 #include "scope.h"
 #include "scope_node.h"
+#include "signal_experiment.h"
 #include "solution.h"
 #include "solution_wrapper.h"
 #include "start_node.h"
@@ -50,6 +51,7 @@ void EvalExperiment::add(SolutionWrapper* wrapper) {
 		this->new_scope->id = wrapper->scope_counter;
 		wrapper->scope_counter++;
 		wrapper->solution->scopes[this->new_scope->id] = this->new_scope;
+		this->new_scope->signal_experiment = new SignalExperiment(this->new_scope);
 
 		clean_scope(this->new_scope,
 					wrapper);
@@ -82,11 +84,6 @@ void EvalExperiment::add(SolutionWrapper* wrapper) {
 			this->scope_context->nodes[new_scope_node->id] = new_scope_node;
 
 			new_scope_node->scope = this->scopes[s_index];
-			// temp
-			if (this->scopes[s_index]->id == -1) {
-				cout << "this->scopes[s_index]->id == -1" << endl;
-				throw invalid_argument("this->scopes[s_index]->id == -1");
-			}
 
 			new_nodes.push_back(new_scope_node);
 		}

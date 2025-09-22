@@ -20,11 +20,6 @@ const int MIN_EXPLORE_PER_RUN = 10;
 const double MAX_EXPLORE_RATIO_PER_RUN = 0.2;
 
 void SolutionWrapper::experiment_init() {
-	// temp
-	if (this->solution->scopes[0]->signal_experiment == NULL) {
-		this->solution->scopes[0]->signal_experiment = new SignalExperiment(this->solution->scopes[0]);
-	}
-
 	this->num_actions = 1;
 
 	#if defined(MDEBUG) && MDEBUG
