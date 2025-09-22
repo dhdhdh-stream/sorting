@@ -153,7 +153,8 @@ void ExploreExperiment::explore_check_activate(
 					uniform_int_distribution<int> scope_distribution(0, 1);
 					vector<Scope*> possible_scopes;
 					for (int c_index = 0; c_index < (int)this->scope_context->child_scopes.size(); c_index++) {
-						if (this->scope_context->child_scopes[c_index]->nodes.size() > 1) {
+						if (this->scope_context->child_scopes[c_index]->can_generalize
+								&& this->scope_context->child_scopes[c_index]->nodes.size() > 1) {
 							possible_scopes.push_back(this->scope_context->child_scopes[c_index]);
 						}
 					}
@@ -163,7 +164,16 @@ void ExploreExperiment::explore_check_activate(
 							this->curr_actions.push_back(-1);
 
 							uniform_int_distribution<int> child_scope_distribution(0, possible_scopes.size()-1);
-							this->curr_scopes.push_back(possible_scopes[child_scope_distribution(generator)]);
+							Scope* scope = possible_scopes[child_scope_distribution(generator)];
+
+							this->curr_scopes.push_back(scope);
+
+							scope->num_generalize_tries++;
+							if (scope->num_generalize_tries > 1000 * pow(2, scope->num_generalize_successes)) {
+								scope->can_generalize = false;
+							} else {
+								scope->can_generalize = true;
+							}
 						} else {
 							this->curr_step_types.push_back(STEP_TYPE_ACTION);
 

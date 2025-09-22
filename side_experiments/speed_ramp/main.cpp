@@ -1,3 +1,6 @@
+// TODO: improve explore quality
+// - world modeling, etc.
+
 #include <chrono>
 #include <iostream>
 #include <map>

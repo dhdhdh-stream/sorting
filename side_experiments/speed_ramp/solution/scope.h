@@ -61,6 +61,16 @@ public:
 
 	std::vector<Scope*> child_scopes;
 
+	int num_generalize_tries;
+	int num_generalize_successes;
+	bool can_generalize;
+	/**
+	 * - 2 in 2000
+	 * - 3 in 4000
+	 * - 4 in 8000
+	 * ...
+	 */
+
 	SignalExperiment* signal_experiment;
 	SignalExperimentHistory* signal_experiment_history;
 

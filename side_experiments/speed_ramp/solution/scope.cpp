@@ -22,6 +22,10 @@ using namespace std;
 Scope::Scope() {
 	this->default_signal = NULL;
 
+	this->num_generalize_tries = 0;
+	this->num_generalize_successes = 0;
+	this->can_generalize = true;
+
 	this->signal_experiment = NULL;
 	this->signal_experiment_history = NULL;
 }
@@ -230,6 +234,9 @@ void Scope::save(ofstream& output_file) {
 	for (int c_index = 0; c_index < (int)this->child_scopes.size(); c_index++) {
 		output_file << this->child_scopes[c_index]->id << endl;
 	}
+
+	output_file << this->num_generalize_tries << endl;
+	output_file << this->num_generalize_successes << endl;
 }
 
 void Scope::load(ifstream& input_file,
@@ -352,7 +359,23 @@ void Scope::load(ifstream& input_file,
 		this->child_scopes.push_back(parent_solution->scopes[stoi(scope_id_line)]);
 	}
 
-	this->signal_experiment = new SignalExperiment(this);
+	string num_generalize_tries_line;
+	getline(input_file, num_generalize_tries_line);
+	this->num_generalize_tries = stoi(num_generalize_tries_line);
+
+	string num_generalize_successes_line;
+	getline(input_file, num_generalize_successes_line);
+	this->num_generalize_successes = stoi(num_generalize_successes_line);
+
+	if (this->num_generalize_tries > 1000 * pow(2, this->num_generalize_successes)) {
+		this->can_generalize = false;
+	} else {
+		this->can_generalize = true;
+	}
+
+	if (this->num_generalize_successes >= 3 || this->id == 0) {
+		this->signal_experiment = new SignalExperiment(this);
+	}
 }
 
 void Scope::link(Solution* parent_solution) {
