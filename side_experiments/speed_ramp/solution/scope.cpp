@@ -373,9 +373,14 @@ void Scope::load(ifstream& input_file,
 		this->can_generalize = true;
 	}
 
-	if (this->num_generalize_successes >= 3 || this->id == 0) {
-		this->signal_experiment = new SignalExperiment(this);
-	}
+	// if (this->num_generalize_successes >= 3 || this->id == 0) {
+	// 	this->signal_experiment = new SignalExperiment(this);
+	// }
+
+	// temp
+	cout << "this->id: " << this->id << endl;
+	cout << "this->num_generalize_tries: " << this->num_generalize_tries << endl;
+	cout << "this->num_generalize_successes: " << this->num_generalize_successes << endl;
 }
 
 void Scope::link(Solution* parent_solution) {

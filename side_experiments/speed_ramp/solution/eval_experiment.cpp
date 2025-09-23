@@ -16,6 +16,7 @@ EvalExperiment::EvalExperiment() {
 
 	this->state = EVAL_EXPERIMENT_STATE_INITIAL;
 	this->state_iter = 0;
+	this->num_fail = 0;
 }
 
 EvalExperiment::~EvalExperiment() {

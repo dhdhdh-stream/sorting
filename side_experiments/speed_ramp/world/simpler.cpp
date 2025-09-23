@@ -32,6 +32,8 @@ Simpler::Simpler() {
 
 	uniform_int_distribution<int> random_factor_distribution(-5, 5);
 	this->random_factor = random_factor_distribution(generator);
+
+	this->timesteps = 0;
 }
 
 vector<double> Simpler::get_observations() {
@@ -93,37 +95,15 @@ void Simpler::perform_action(int action) {
 		}
 		break;
 	}
+
+	this->timesteps++;
 }
 
 double Simpler::score_result() {
 	double score = this->random_factor;
 	score += this->world[2];
+	score -= 0.0001 * this->timesteps;
 	return score;
-}
-
-Problem* Simpler::copy_and_reset() {
-	Simpler* new_problem = new Simpler();
-
-	new_problem->world = this->world;
-	new_problem->world[2] = 0;
-
-	new_problem->targets = this->targets;
-
-	new_problem->random_factor = this->random_factor;
-
-	return new_problem;
-}
-
-Problem* Simpler::copy_snapshot() {
-	Simpler* new_problem = new Simpler();
-
-	new_problem->world = this->world;
-	new_problem->curr_index = this->curr_index;
-	new_problem->targets = this->targets;
-	new_problem->curr_target_index = this->curr_target_index;
-	new_problem->random_factor = this->random_factor;
-
-	return new_problem;
 }
 
 void Simpler::print() {

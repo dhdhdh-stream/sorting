@@ -43,6 +43,7 @@ public:
 
 	int state;
 	int state_iter;
+	int num_fail;
 
 	std::vector<bool> pre_action_initialized;
 	std::vector<int> pre_actions;

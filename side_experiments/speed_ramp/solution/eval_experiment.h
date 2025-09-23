@@ -8,6 +8,8 @@
  * - accept even if slightly negative to drive change
  */
 
+// TODO: measure how good each experiment is
+
 #ifndef EVAL_EXPERIMENT_H
 #define EVAL_EXPERIMENT_H
 
@@ -31,6 +33,12 @@ class EvalExperiment : public AbstractExperiment {
 public:
 	int state;
 	int state_iter;
+	int num_fail;
+	/**
+	 * - don't rely on t-test to drive exploration
+	 *   - can gradually lead to worse and worse results
+	 *   - doesn't always enable where a small penalty leads to greater score anyways
+	 */
 
 	double select_percentage;
 

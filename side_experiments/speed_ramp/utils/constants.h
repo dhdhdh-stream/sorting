@@ -19,7 +19,7 @@ const int EXPERIMENT_NUM_GEARS = 4;
 const int RAMP_EPOCH_NUM_ITERS = 20;
 #else
 const int EXPERIMENT_NUM_GEARS = 10;
-const int RAMP_EPOCH_NUM_ITERS = 8000;
+const int RAMP_EPOCH_NUM_ITERS = 2000;
 #endif /* MDEBUG */
 
 #endif /* CONSTANTS_H */

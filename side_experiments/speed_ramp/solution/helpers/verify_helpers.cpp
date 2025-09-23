@@ -8,7 +8,10 @@
 #include "scope.h"
 #include "solution.h"
 #include "solution_wrapper.h"
-#include "time_based.h"
+// #include "time_based.h"
+
+// temp
+#include "simpler.h"
 
 using namespace std;
 
@@ -19,7 +22,8 @@ const int NUM_MEASURE = 4000;
 #endif /* MDEBUG */
 
 void measure_score(SolutionWrapper* solution_wrapper) {
-	ProblemType* problem_type = new TypeTimeBased();
+	// ProblemType* problem_type = new TypeTimeBased();
+	ProblemType* problem_type = new TypeSimpler();
 
 	double sum_scores = 0.0;
 	for (int iter_index = 0; iter_index < NUM_MEASURE; iter_index++) {
@@ -49,6 +53,10 @@ void measure_score(SolutionWrapper* solution_wrapper) {
 
 	double score_average = sum_scores / (double)NUM_MEASURE;
 	cout << "score_average: " << score_average << endl;
+	// temp
+	if (score_average < solution_wrapper->solution->curr_score-1.0) {
+		throw invalid_argument("score_average < solution_wrapper->solution->curr_score-1.0");
+	}
 	solution_wrapper->solution->curr_score = score_average;
 
 	int explores_in_flight = 0;

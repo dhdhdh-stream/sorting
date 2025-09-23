@@ -19,14 +19,13 @@ public:
 
 	double random_factor;
 
+	int timesteps;
+
 	Simpler();
 
 	std::vector<double> get_observations();
 	void perform_action(int action);
 	double score_result();
-
-	Problem* copy_and_reset();
-	Problem* copy_snapshot();
 
 	void print();
 };

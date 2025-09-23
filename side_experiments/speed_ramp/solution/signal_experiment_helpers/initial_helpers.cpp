@@ -57,37 +57,16 @@ void SignalExperiment::initial_backprop(double target_val,
 		}
 		double existing_score_average = existing_sum_score / (double)this->existing_scores.size();
 
-		double existing_sum_variance = 0.0;
-		for (int h_index = 0; h_index < (int)this->existing_scores.size(); h_index++) {
-			existing_sum_variance += (this->existing_scores[h_index] - existing_score_average)
-				* (this->existing_scores[h_index] - existing_score_average);
-		}
-		double existing_score_standard_deviation = sqrt(existing_sum_variance / (double)this->existing_scores.size());
-
 		double new_sum_score = 0.0;
 		for (int h_index = 0; h_index < (int)this->new_scores.size(); h_index++) {
 			new_sum_score += this->new_scores[h_index];
 		}
 		double new_score_average = new_sum_score / (double)this->new_scores.size();
 
-		double new_sum_variance = 0.0;
-		for (int h_index = 0; h_index < (int)this->new_scores.size(); h_index++) {
-			new_sum_variance += (this->new_scores[h_index] - new_score_average)
-				* (this->new_scores[h_index] - new_score_average);
-		}
-		double new_score_standard_deviation = sqrt(new_sum_variance / (double)this->new_scores.size());
-
-		double score_improvement = new_score_average - existing_score_average;
-		double existing_score_standard_error = existing_score_standard_deviation / sqrt((double)this->existing_scores.size());
-		double new_score_standard_error = new_score_standard_deviation / sqrt((double)this->new_scores.size());
-		double score_t_score = score_improvement / sqrt(
-			existing_score_standard_error * existing_score_standard_error
-				+ new_score_standard_error * new_score_standard_error);
-
 		#if defined(MDEBUG) && MDEBUG
-		if (score_t_score >= -0.674 || rand()%5 != 0) {
+		if (new_score_average >= existing_score_average || rand()%5 != 0) {
 		#else
-		if (score_t_score >= -0.674) {
+		if (new_score_average >= existing_score_average) {
 		#endif /* MDEBUG */
 			switch (this->state) {
 			case SIGNAL_EXPERIMENT_STATE_INITIAL_C1:
@@ -107,6 +86,7 @@ void SignalExperiment::initial_backprop(double target_val,
 
 				this->state = SIGNAL_EXPERIMENT_STATE_RAMP;
 				this->state_iter = 0;
+				this->num_fail = 0;
 
 				break;
 			}

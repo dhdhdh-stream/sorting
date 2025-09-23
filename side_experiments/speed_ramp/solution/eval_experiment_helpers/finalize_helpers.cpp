@@ -92,10 +92,10 @@ void EvalExperiment::add(SolutionWrapper* wrapper) {
 			} else {
 				this->scopes[s_index]->can_generalize = true;
 			}
-			if (this->scopes[s_index]->num_generalize_successes >= 3
-					&& this->scopes[s_index]->signal_experiment == NULL) {
-				this->scopes[s_index]->signal_experiment = new SignalExperiment(this->scopes[s_index]);
-			}
+			// if (this->scopes[s_index]->num_generalize_successes >= 3
+			// 		&& this->scopes[s_index]->signal_experiment == NULL) {
+			// 	this->scopes[s_index]->signal_experiment = new SignalExperiment(this->scopes[s_index]);
+			// }
 		}
 	}
 
