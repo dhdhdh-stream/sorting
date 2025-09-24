@@ -54,6 +54,10 @@ SolutionWrapper::SolutionWrapper() {
 
 		end_node->next_node_id = -1;
 		end_node->next_node = NULL;
+
+		for (int e_index = 0; e_index < NUM_LAST_EXPERIMENT_TRACK; e_index++) {
+			this->solution->last_experiment_scores.push_back(0.0);
+		}
 	}
 
 	#if defined(MDEBUG) && MDEBUG

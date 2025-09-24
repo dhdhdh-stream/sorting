@@ -18,6 +18,7 @@
 #define SOLUTION_H
 
 #include <fstream>
+#include <list>
 #include <map>
 #include <vector>
 
@@ -27,12 +28,23 @@ class Problem;
 class Scope;
 class ScopeHistory;
 
+const int NUM_LAST_EXPERIMENT_TRACK = 10;
+const double LAST_EXPERIMENT_BETTER_THAN_RATIO = 0.8;
+
 class Solution {
 public:
 	int timestamp;
 	double curr_score;
 
 	std::map<int, Scope*> scopes;
+
+	std::list<double> last_experiment_scores;
+	/**
+	 * - even if experiment safe to add, doesn't mean should
+	 *   - noise leads to more noise
+	 * 
+	 * - but accept if no progress has been made recently
+	 */
 
 	Solution();
 	~Solution();

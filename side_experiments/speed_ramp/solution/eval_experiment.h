@@ -1,15 +1,3 @@
-/**
- * - initially 1%
- * 
- * - then increment and decrement at 5%
- *   - keep overall number of iters constant to give other experiments time
- *     - even if existing/new numbers don't match
- * 
- * - accept even if slightly negative to drive change
- */
-
-// TODO: measure how good each experiment is
-
 #ifndef EVAL_EXPERIMENT_H
 #define EVAL_EXPERIMENT_H
 
@@ -26,6 +14,10 @@ class SolutionWrapper;
 
 const int EVAL_EXPERIMENT_STATE_INITIAL = 0;
 const int EVAL_EXPERIMENT_STATE_RAMP = 1;
+
+const int EVAL_RESULT_NA = 0;
+const int EVAL_RESULT_FAIL = 1;
+const int EVAL_RESULT_SUCCESS = 2;
 
 class EvalExperimentHistory;
 class EvalExperimentState;
@@ -56,6 +48,8 @@ public:
 	std::vector<Scope*> scopes;
 
 	int curr_ramp;
+
+	int result;
 
 	std::vector<double> existing_scores;
 	std::vector<double> new_scores;

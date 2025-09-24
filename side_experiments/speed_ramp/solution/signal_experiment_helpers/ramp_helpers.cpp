@@ -8,12 +8,6 @@
 
 using namespace std;
 
-#if defined(MDEBUG) && MDEBUG
-const int EVAL_GEAR = 2;
-#else
-const int EVAL_GEAR = 5;
-#endif /* MDEBUG */
-
 void SignalExperiment::ramp_backprop(double target_val,
 									 SignalExperimentHistory* history,
 									 SolutionWrapper* wrapper) {

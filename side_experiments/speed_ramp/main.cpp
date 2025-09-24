@@ -1,5 +1,8 @@
 // TODO: improve explore quality
 // - world modeling, etc.
+// - result will probably also help long problems
+
+// - actions include complex actions, and exiting to certain parts of the solution
 
 #include <chrono>
 #include <iostream>

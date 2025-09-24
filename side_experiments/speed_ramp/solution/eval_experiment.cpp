@@ -14,6 +14,8 @@ EvalExperiment::EvalExperiment() {
 	this->new_network = NULL;
 	this->new_scope = NULL;
 
+	this->result = EVAL_RESULT_NA;
+
 	this->state = EVAL_EXPERIMENT_STATE_INITIAL;
 	this->state_iter = 0;
 	this->num_fail = 0;

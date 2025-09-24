@@ -70,6 +70,15 @@ void Solution::load(ifstream& input_file) {
 			it != this->scopes.end(); it++) {
 		it->second->link(this);
 	}
+
+	string num_experiment_scores_line;
+	getline(input_file, num_experiment_scores_line);
+	int num_experiment_scores = stoi(num_experiment_scores_line);
+	for (int e_index = 0; e_index < num_experiment_scores; e_index++) {
+		string score_line;
+		getline(input_file, score_line);
+		this->last_experiment_scores.push_back(stod(score_line));
+	}
 }
 
 void Solution::clean_inputs(Scope* scope,
@@ -158,6 +167,12 @@ void Solution::save(ofstream& output_file) {
 			it != this->scopes.end(); it++) {
 		output_file << it->first << endl;
 		it->second->save(output_file);
+	}
+
+	output_file << this->last_experiment_scores.size() << endl;
+	for (list<double>::iterator it = this->last_experiment_scores.begin();
+			it != this->last_experiment_scores.begin(); it++) {
+		output_file << *it << endl;
 	}
 }
 
