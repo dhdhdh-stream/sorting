@@ -87,15 +87,10 @@ void EvalExperiment::add(SolutionWrapper* wrapper) {
 			new_nodes.push_back(new_scope_node);
 
 			this->scopes[s_index]->num_generalize_successes++;
-			if (this->scopes[s_index]->num_generalize_tries > 1000 * pow(2, this->scopes[s_index]->num_generalize_successes)) {
-				this->scopes[s_index]->can_generalize = false;
-			} else {
-				this->scopes[s_index]->can_generalize = true;
+			if (this->scopes[s_index]->num_generalize_successes >= 3
+					&& this->scopes[s_index]->signal_experiment == NULL) {
+				this->scopes[s_index]->signal_experiment = new SignalExperiment(this->scopes[s_index]);
 			}
-			// if (this->scopes[s_index]->num_generalize_successes >= 3
-			// 		&& this->scopes[s_index]->signal_experiment == NULL) {
-			// 	this->scopes[s_index]->signal_experiment = new SignalExperiment(this->scopes[s_index]);
-			// }
 		}
 	}
 

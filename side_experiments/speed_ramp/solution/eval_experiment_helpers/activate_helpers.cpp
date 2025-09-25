@@ -6,6 +6,7 @@
 #include "helpers.h"
 #include "network.h"
 #include "scope.h"
+#include "signal_experiment.h"
 #include "solution_wrapper.h"
 #include "utilities.h"
 
@@ -23,6 +24,21 @@ void EvalExperiment::check_activate(AbstractNode* experiment_node,
 			wrapper->eval_histories[this] = history;
 		} else {
 			history = it->second;
+		}
+
+		if (this->curr_ramp == EVAL_GEAR-1) {
+			history->signal_is_set.push_back(false);
+			history->signal_vals.push_back(0.0);
+
+			for (int l_index = (int)wrapper->scope_histories.size()-1; l_index >= 0; l_index--) {
+				Scope* scope = wrapper->scope_histories[l_index]->scope;
+				if (scope->default_signal != NULL) {
+					if (!scope->signal_experiment_history->is_on) {
+						wrapper->scope_histories[l_index]->eval_experiment_callbacks.push_back(history);
+						break;
+					}
+				}
+			}
 		}
 
 		if (history->is_on) {
@@ -153,8 +169,16 @@ void EvalExperiment::backprop(double target_val,
 	case EVAL_EXPERIMENT_STATE_RAMP:
 		ramp_backprop(target_val,
 					  history,
-					  wrapper,
-					  updated_scopes);
+					  wrapper);
+		break;
+	case EVAL_EXPERIMENT_STATE_GATHER:
+		gather_backprop(target_val,
+						history,
+						wrapper);
+		break;
+	case EVAL_EXPERIMENT_STATE_WRAPUP:
+		wrapup_backprop(wrapper,
+						updated_scopes);
 		break;
 	}
 }

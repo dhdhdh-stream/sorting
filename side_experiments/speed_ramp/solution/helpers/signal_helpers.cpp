@@ -5,6 +5,7 @@
 #include "constants.h"
 #include "default_signal.h"
 #include "explore_experiment.h"
+#include "eval_experiment.h"
 #include "scope.h"
 #include "signal.h"
 #include "signal_experiment.h"
@@ -162,11 +163,7 @@ bool experiment_check_signal_activate(vector<double>& obs,
 					 */
 					for (int l_index = (int)wrapper->scope_histories.size()-2; l_index >= 0; l_index--) {
 						Scope* l_scope = wrapper->scope_histories[l_index]->scope;
-						if (l_scope->signal_experiment_history != NULL
-								&& l_scope->default_signal != NULL) {
-							/**
-							 * - assuming no signal if no SignalExperiment
-							 */
+						if (l_scope->default_signal != NULL) {
 							if (!l_scope->signal_experiment_history->is_on) {
 								wrapper->scope_histories[l_index]->signal_experiment_callbacks
 									.push_back(scope->signal_experiment_history);
@@ -209,11 +206,16 @@ bool experiment_check_signal_activate(vector<double>& obs,
 					return true;
 				} else {
 					if (scope_history->explore_experiment_callbacks.size() > 0
+							|| scope_history->eval_experiment_callbacks.size() > 0
 							|| scope_history->signal_experiment_callbacks.size() > 0) {
 						double signal = calc_signal(scope_history);
 						for (int e_index = 0; e_index < (int)scope_history->explore_experiment_callbacks.size(); e_index++) {
 							scope_history->explore_experiment_callbacks[e_index]->signal_is_set.back() = true;
 							scope_history->explore_experiment_callbacks[e_index]->signal_vals.back() = signal;
+						}
+						for (int e_index = 0; e_index < (int)scope_history->eval_experiment_callbacks.size(); e_index++) {
+							scope_history->eval_experiment_callbacks[e_index]->signal_is_set.back() = true;
+							scope_history->eval_experiment_callbacks[e_index]->signal_vals.back() = signal;
 						}
 						for (int e_index = 0; e_index < (int)scope_history->signal_experiment_callbacks.size(); e_index++) {
 							scope_history->signal_experiment_callbacks[e_index]->signal_is_set.back() = true;
@@ -235,11 +237,7 @@ bool experiment_check_signal_activate(vector<double>& obs,
 					 */
 					for (int l_index = (int)wrapper->scope_histories.size()-2; l_index >= 0; l_index--) {
 						Scope* l_scope = wrapper->scope_histories[l_index]->scope;
-						if (l_scope->signal_experiment_history != NULL
-								&& l_scope->default_signal != NULL) {
-							/**
-							 * - assuming no signal if no SignalExperiment
-							 */
+						if (l_scope->default_signal != NULL) {
 							if (!l_scope->signal_experiment_history->is_on) {
 								wrapper->scope_histories[l_index]->signal_experiment_callbacks
 									.push_back(scope->signal_experiment_history);

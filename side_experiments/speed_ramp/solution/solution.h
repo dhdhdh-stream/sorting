@@ -28,8 +28,13 @@ class Problem;
 class Scope;
 class ScopeHistory;
 
+#if defined(MDEBUG) && MDEBUG
 const int NUM_LAST_EXPERIMENT_TRACK = 10;
-const double LAST_EXPERIMENT_BETTER_THAN_RATIO = 0.8;
+const double LAST_EXPERIMENT_BETTER_THAN_RATIO = 0.5;
+#else
+const int NUM_LAST_EXPERIMENT_TRACK = 20;
+const double LAST_EXPERIMENT_BETTER_THAN_RATIO = 0.9;
+#endif /* MDEBUG */
 
 class Solution {
 public:
@@ -45,6 +50,7 @@ public:
 	 * 
 	 * - but accept if no progress has been made recently
 	 */
+	// TODO: per scope, and based on signal rather than true
 
 	Solution();
 	~Solution();

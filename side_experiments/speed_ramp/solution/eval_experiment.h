@@ -14,10 +14,11 @@ class SolutionWrapper;
 
 const int EVAL_EXPERIMENT_STATE_INITIAL = 0;
 const int EVAL_EXPERIMENT_STATE_RAMP = 1;
+const int EVAL_EXPERIMENT_STATE_GATHER = 2;
+const int EVAL_EXPERIMENT_STATE_WRAPUP = 3;
 
-const int EVAL_RESULT_NA = 0;
-const int EVAL_RESULT_FAIL = 1;
-const int EVAL_RESULT_SUCCESS = 2;
+const int EVAL_RESULT_FAIL = 0;
+const int EVAL_RESULT_SUCCESS = 1;
 
 class EvalExperimentHistory;
 class EvalExperimentState;
@@ -54,6 +55,9 @@ public:
 	std::vector<double> existing_scores;
 	std::vector<double> new_scores;
 
+	std::vector<double> existing_signals;
+	std::vector<double> new_signals;
+
 	EvalExperiment();
 	~EvalExperiment();
 
@@ -79,8 +83,14 @@ public:
 
 	void ramp_backprop(double target_val,
 					   EvalExperimentHistory* history,
-					   SolutionWrapper* wrapper,
-					   std::set<Scope*>& updated_scopes);
+					   SolutionWrapper* wrapper);
+
+	void gather_backprop(double target_val,
+						 EvalExperimentHistory* history,
+						 SolutionWrapper* wrapper);
+
+	void wrapup_backprop(SolutionWrapper* wrapper,
+						 std::set<Scope*>& updated_scopes);
 
 	void clean_inputs(Scope* scope,
 					  int node_id);
@@ -94,6 +104,9 @@ public:
 class EvalExperimentHistory {
 public:
 	bool is_on;
+
+	std::vector<bool> signal_is_set;
+	std::vector<double> signal_vals;
 
 	EvalExperimentHistory(EvalExperiment* experiment);
 };

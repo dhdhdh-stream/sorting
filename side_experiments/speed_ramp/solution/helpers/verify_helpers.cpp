@@ -53,10 +53,6 @@ void measure_score(SolutionWrapper* solution_wrapper) {
 
 	double score_average = sum_scores / (double)NUM_MEASURE;
 	cout << "score_average: " << score_average << endl;
-	// temp
-	if (score_average < solution_wrapper->solution->curr_score-1.0) {
-		throw invalid_argument("score_average < solution_wrapper->solution->curr_score-1.0");
-	}
 	solution_wrapper->solution->curr_score = score_average;
 
 	int explores_in_flight = 0;

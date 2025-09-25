@@ -21,6 +21,7 @@ class AbstractNodeHistory;
 class DefaultSignal;
 class ExploreExperiment;
 class ExploreExperimentHistory;
+class EvalExperimentHistory;
 class Factor;
 class Signal;
 class SignalExperiment;
@@ -61,15 +62,7 @@ public:
 
 	std::vector<Scope*> child_scopes;
 
-	int num_generalize_tries;
 	int num_generalize_successes;
-	bool can_generalize;
-	/**
-	 * - 2 in 2000
-	 * - 3 in 4000
-	 * - 4 in 8000
-	 * ...
-	 */
 
 	SignalExperiment* signal_experiment;
 	SignalExperimentHistory* signal_experiment_history;
@@ -118,6 +111,7 @@ public:
 	int num_actions_snapshot;
 
 	std::vector<ExploreExperimentHistory*> explore_experiment_callbacks;
+	std::vector<EvalExperimentHistory*> eval_experiment_callbacks;
 	std::vector<SignalExperimentHistory*> signal_experiment_callbacks;
 
 	ScopeHistory(Scope* scope);

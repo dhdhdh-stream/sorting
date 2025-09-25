@@ -31,7 +31,7 @@ SolutionWrapper::SolutionWrapper() {
 		new_scope->id = this->scope_counter;
 		this->scope_counter++;
 		this->solution->scopes[new_scope->id] = new_scope;
-		// new_scope->signal_experiment = new SignalExperiment(new_scope);
+		new_scope->signal_experiment = new SignalExperiment(new_scope);
 
 		new_scope->node_counter = 0;
 
@@ -54,10 +54,6 @@ SolutionWrapper::SolutionWrapper() {
 
 		end_node->next_node_id = -1;
 		end_node->next_node = NULL;
-
-		for (int e_index = 0; e_index < NUM_LAST_EXPERIMENT_TRACK; e_index++) {
-			this->solution->last_experiment_scores.push_back(0.0);
-		}
 	}
 
 	#if defined(MDEBUG) && MDEBUG

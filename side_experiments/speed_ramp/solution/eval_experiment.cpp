@@ -14,7 +14,7 @@ EvalExperiment::EvalExperiment() {
 	this->new_network = NULL;
 	this->new_scope = NULL;
 
-	this->result = EVAL_RESULT_NA;
+	this->curr_ramp = -1;
 
 	this->state = EVAL_EXPERIMENT_STATE_INITIAL;
 	this->state_iter = 0;
@@ -74,6 +74,8 @@ EvalExperimentHistory::EvalExperimentHistory(EvalExperiment* experiment) {
 		}
 		break;
 	case EVAL_EXPERIMENT_STATE_RAMP:
+	case EVAL_EXPERIMENT_STATE_GATHER:
+	case EVAL_EXPERIMENT_STATE_WRAPUP:
 		{
 			uniform_int_distribution<int> on_distribution(0, EXPERIMENT_NUM_GEARS-1);
 			if (experiment->curr_ramp >= on_distribution(generator)) {

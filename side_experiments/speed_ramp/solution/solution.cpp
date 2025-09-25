@@ -171,7 +171,7 @@ void Solution::save(ofstream& output_file) {
 
 	output_file << this->last_experiment_scores.size() << endl;
 	for (list<double>::iterator it = this->last_experiment_scores.begin();
-			it != this->last_experiment_scores.begin(); it++) {
+			it != this->last_experiment_scores.end(); it++) {
 		output_file << *it << endl;
 	}
 }
