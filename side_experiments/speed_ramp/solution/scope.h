@@ -64,6 +64,8 @@ public:
 
 	int num_generalize_successes;
 
+	int num_experiments;
+
 	SignalExperiment* signal_experiment;
 	SignalExperimentHistory* signal_experiment_history;
 

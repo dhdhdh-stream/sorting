@@ -118,8 +118,19 @@ void SolutionWrapper::experiment_end(double result) {
 		}
 	}
 
-	if (this->explore_histories.size() < MIN_EXPLORE_PER_RUN
-			&& this->explore_histories.size() < MAX_EXPLORE_RATIO_PER_RUN * (double)this->num_actions) {
+	int num_explore = (int)this->explore_histories.size();
+	for (int e_index = 0; e_index < (int)this->signal_experiment_histories.size(); e_index++) {
+		switch (this->signal_experiment_histories[e_index].first->state) {
+		case SIGNAL_EXPERIMENT_STATE_INITIAL_C1:
+		case SIGNAL_EXPERIMENT_STATE_INITIAL_C2:
+		case SIGNAL_EXPERIMENT_STATE_INITIAL_C3:
+		case SIGNAL_EXPERIMENT_STATE_INITIAL_C4:
+			num_explore++;
+			break;
+		}
+	}
+	if (num_explore < MIN_EXPLORE_PER_RUN
+			&& num_explore < MAX_EXPLORE_RATIO_PER_RUN * (double)this->num_actions) {
 		create_experiment(this);
 	}
 
@@ -129,14 +140,32 @@ void SolutionWrapper::experiment_end(double result) {
 	this->experiment_context.clear();
 
 	for (int e_index = 0; e_index < (int)this->explore_order_seen.size(); e_index++) {
-		ExploreExperiment* experiment = this->explore_order_seen[e_index];
-		int num_following = (int)this->explore_order_seen.size() - 1 - e_index;
-		if (experiment->last_num_following_explores.size() >= LAST_NUM_TRACK) {
-			experiment->sum_num_following_explores -= experiment->last_num_following_explores.front();
-			experiment->last_num_following_explores.pop_front();
+		switch (this->explore_order_seen[e_index]->type) {
+		case EXPERIMENT_TYPE_EXPLORE:
+			{
+				ExploreExperiment* experiment = (ExploreExperiment*)this->explore_order_seen[e_index];
+				int num_following = (int)this->explore_order_seen.size() - 1 - e_index;
+				if (experiment->last_num_following_explores.size() >= LAST_NUM_TRACK) {
+					experiment->sum_num_following_explores -= experiment->last_num_following_explores.front();
+					experiment->last_num_following_explores.pop_front();
+				}
+				experiment->last_num_following_explores.push_back(num_following);
+				experiment->sum_num_following_explores += num_following;
+			}
+			break;
+		case EXPERIMENT_TYPE_SIGNAL:
+			{
+				SignalExperiment* experiment = (SignalExperiment*)this->explore_order_seen[e_index];
+				int num_following = (int)this->explore_order_seen.size() - 1 - e_index;
+				if (experiment->last_num_following_explores.size() >= LAST_NUM_TRACK) {
+					experiment->sum_num_following_explores -= experiment->last_num_following_explores.front();
+					experiment->last_num_following_explores.pop_front();
+				}
+				experiment->last_num_following_explores.push_back(num_following);
+				experiment->sum_num_following_explores += num_following;
+			}
+			break;
 		}
-		experiment->last_num_following_explores.push_back(num_following);
-		experiment->sum_num_following_explores += num_following;
 	}
 	this->explore_order_seen.clear();
 	for (map<ExploreExperiment*, ExploreExperimentHistory*>::iterator it = this->explore_histories.begin();

@@ -33,7 +33,8 @@ void EvalExperiment::check_activate(AbstractNode* experiment_node,
 			for (int l_index = (int)wrapper->scope_histories.size()-1; l_index >= 0; l_index--) {
 				Scope* scope = wrapper->scope_histories[l_index]->scope;
 				if (scope->default_signal != NULL) {
-					if (!scope->signal_experiment_history->is_on) {
+					if (scope->signal_experiment_history == NULL
+							|| !scope->signal_experiment_history->is_on) {
 						wrapper->scope_histories[l_index]->eval_experiment_callbacks.push_back(history);
 						break;
 					}

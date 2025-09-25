@@ -10,6 +10,7 @@ class SolutionWrapper;
 
 const int EXPERIMENT_TYPE_EXPLORE = 0;
 const int EXPERIMENT_TYPE_EVAL = 1;
+const int EXPERIMENT_TYPE_SIGNAL = 2;
 
 class AbstractExperiment {
 public:

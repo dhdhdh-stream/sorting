@@ -7,6 +7,7 @@
 #include <utility>
 #include <vector>
 
+class AbstractExperiment;
 class AbstractExperimentState;
 class AbstractNode;
 class EvalExperiment;
@@ -36,10 +37,11 @@ public:
 	int num_actions;
 
 	bool should_explore;
-	ExploreExperiment* curr_explore;
+	AbstractExperiment* curr_explore;
 	bool has_explore;
+	std::vector<AbstractExperiment*> explore_order_seen;
+
 	std::map<ExploreExperiment*, ExploreExperimentHistory*> explore_histories;
-	std::vector<ExploreExperiment*> explore_order_seen;
 
 	std::map<EvalExperiment*, EvalExperimentHistory*> eval_histories;
 

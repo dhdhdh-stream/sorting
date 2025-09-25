@@ -1,6 +1,7 @@
 #ifndef SIGNAL_EXPERIMENT_H
 #define SIGNAL_EXPERIMENT_H
 
+#include <list>
 #include <vector>
 
 #include "abstract_experiment.h"
@@ -39,7 +40,8 @@ const int NEW_EXPLORE_SAMPLES = 4000;
 class SignalExperimentHistory;
 class SignalExperiment : public AbstractExperiment {
 public:
-	Scope* scope_context;
+	std::list<int> last_num_following_explores;
+	int sum_num_following_explores;
 
 	int state;
 	int state_iter;
@@ -79,6 +81,11 @@ public:
 	SignalExperiment(Scope* scope_context);
 	~SignalExperiment();
 
+	bool check_signal_activate(std::vector<double>& obs,
+							   int& action,
+							   bool& is_next,
+							   bool& fetch_action,
+							   SolutionWrapper* wrapper);
 	void check_activate(AbstractNode* experiment_node,
 						bool is_branch,
 						SolutionWrapper* wrapper);
@@ -150,7 +157,8 @@ public:
 	std::vector<double> signal_vals;
 	std::vector<bool> outer_is_explore;
 
-	SignalExperimentHistory(SignalExperiment* experiment);
+	SignalExperimentHistory(SignalExperiment* experiment,
+							SolutionWrapper* wrapper);
 };
 
 class SignalExperimentState : public AbstractExperimentState {

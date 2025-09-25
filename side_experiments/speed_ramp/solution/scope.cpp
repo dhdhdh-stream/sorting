@@ -24,6 +24,8 @@ Scope::Scope() {
 
 	this->num_generalize_successes = 0;
 
+	this->num_experiments = 0;
+
 	this->signal_experiment = NULL;
 	this->signal_experiment_history = NULL;
 }
@@ -234,6 +236,8 @@ void Scope::save(ofstream& output_file) {
 	}
 
 	output_file << this->num_generalize_successes << endl;
+
+	output_file << this->num_experiments << endl;
 }
 
 void Scope::load(ifstream& input_file,
@@ -360,9 +364,9 @@ void Scope::load(ifstream& input_file,
 	getline(input_file, num_generalize_successes_line);
 	this->num_generalize_successes = stoi(num_generalize_successes_line);
 
-	if (this->num_generalize_successes >= 3 || this->id == 0) {
-		this->signal_experiment = new SignalExperiment(this);
-	}
+	string num_experiments_line;
+	getline(input_file, num_experiments_line);
+	this->num_experiments = stoi(num_experiments_line);
 }
 
 void Scope::link(Solution* parent_solution) {

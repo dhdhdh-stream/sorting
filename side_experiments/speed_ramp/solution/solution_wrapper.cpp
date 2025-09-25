@@ -31,7 +31,6 @@ SolutionWrapper::SolutionWrapper() {
 		new_scope->id = this->scope_counter;
 		this->scope_counter++;
 		this->solution->scopes[new_scope->id] = new_scope;
-		new_scope->signal_experiment = new SignalExperiment(new_scope);
 
 		new_scope->node_counter = 0;
 

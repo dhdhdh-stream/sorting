@@ -71,7 +71,7 @@ ExploreExperimentHistory::ExploreExperimentHistory(
 				wrapper->curr_explore = experiment;
 				this->is_on = true;
 			}
-		} 
+		}
 	}
 
 	this->num_instances = 0;
