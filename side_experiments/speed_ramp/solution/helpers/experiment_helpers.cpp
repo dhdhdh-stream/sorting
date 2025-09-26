@@ -23,10 +23,11 @@ void gather_helper(ScopeHistory* scope_history,
 				   set<pair<AbstractNode*, bool>>& possible_starts,
 				   set<Scope*>& possible_signals) {
 	Scope* scope = scope_history->scope;
-
 	if (scope->num_generalize_successes >= SIGNAL_EXPERIMENT_MIN_GENERALIZE_SUCCESSES
-			&& scope->signal_experiment == NULL) {
-		possible_signals.insert(scope);
+			|| scope->id == 0) {
+		if (scope->signal_experiment == NULL) {
+			possible_signals.insert(scope);
+		}
 	}
 
 	for (map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();

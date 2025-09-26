@@ -14,6 +14,8 @@ SignalExperiment::SignalExperiment(Scope* scope_context) {
 
 	this->scope_context = scope_context;
 
+	this->sum_num_following_explores = 0;
+
 	set_actions();
 
 	this->state = SIGNAL_EXPERIMENT_STATE_INITIAL_C1;

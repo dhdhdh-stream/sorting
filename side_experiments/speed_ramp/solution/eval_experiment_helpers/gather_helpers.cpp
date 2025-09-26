@@ -50,22 +50,33 @@ void EvalExperiment::gather_backprop(double target_val,
 
 		double improvement = new_signal_average - existing_signal_average;
 
-		int num_better_than = 0;
-		for (list<double>::iterator it = wrapper->solution->last_experiment_scores.begin();
-				it != wrapper->solution->last_experiment_scores.end(); it++) {
-			if (improvement >= *it) {
-				num_better_than++;
+		bool is_success;
+		if (wrapper->solution->last_experiment_scores.size() >= MIN_NUM_LAST_EXPERIMENT_TRACK) {
+			int num_better_than = 0;
+			for (list<double>::iterator it = wrapper->solution->last_experiment_scores.begin();
+					it != wrapper->solution->last_experiment_scores.end(); it++) {
+				if (improvement >= *it) {
+					num_better_than++;
+				}
 			}
-		}
 
-		int target_better_than = LAST_EXPERIMENT_BETTER_THAN_RATIO * (double)wrapper->solution->last_experiment_scores.size();
+			int target_better_than = LAST_EXPERIMENT_BETTER_THAN_RATIO * (double)wrapper->solution->last_experiment_scores.size();
 
-		if (wrapper->solution->last_experiment_scores.size() >= NUM_LAST_EXPERIMENT_TRACK) {
+			if (num_better_than >= target_better_than) {
+				is_success = true;
+			} else {
+				is_success = false;
+			}
+
 			wrapper->solution->last_experiment_scores.pop_front();
-		}
-		wrapper->solution->last_experiment_scores.push_back(improvement);
+			wrapper->solution->last_experiment_scores.push_back(improvement);
+		} else {
+			is_success = false;
 
-		if (num_better_than >= target_better_than) {
+			wrapper->solution->last_experiment_scores.push_back(improvement);
+		}
+
+		if (is_success) {
 			cout << "success" << endl;
 			cout << "existing_signal_average: " << existing_signal_average << endl;
 			cout << "new_signal_average: " << new_signal_average << endl;

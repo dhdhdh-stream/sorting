@@ -5,6 +5,8 @@
 #include "default_signal.h"
 #include "scope.h"
 #include "signal.h"
+#include "solution.h"
+#include "solution_wrapper.h"
 
 using namespace std;
 
@@ -123,6 +125,8 @@ void SignalExperiment::gather_backprop(double target_val,
 		if (new_default_signal != NULL) {
 			delete new_default_signal;
 		}
+
+		wrapper->solution->timestamp++;
 
 		this->curr_ramp--;
 

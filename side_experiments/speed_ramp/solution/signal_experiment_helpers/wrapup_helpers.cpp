@@ -12,7 +12,7 @@ void SignalExperiment::wrapup_backprop() {
 
 		this->curr_ramp--;
 		if (this->curr_ramp < 0) {
-			this->scope_context->signal_experiment = new SignalExperiment(this->scope_context);
+			this->scope_context->signal_experiment = NULL;
 			delete this;
 		}
 	}

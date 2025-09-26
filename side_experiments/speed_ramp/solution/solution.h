@@ -29,10 +29,12 @@ class Scope;
 class ScopeHistory;
 
 #if defined(MDEBUG) && MDEBUG
-const int NUM_LAST_EXPERIMENT_TRACK = 10;
+const int NUM_LAST_EXPERIMENT_TRACK = 4;
+const int MIN_NUM_LAST_EXPERIMENT_TRACK = 2;
 const double LAST_EXPERIMENT_BETTER_THAN_RATIO = 0.5;
 #else
 const int NUM_LAST_EXPERIMENT_TRACK = 20;
+const int MIN_NUM_LAST_EXPERIMENT_TRACK = 10;
 const double LAST_EXPERIMENT_BETTER_THAN_RATIO = 0.9;
 #endif /* MDEBUG */
 

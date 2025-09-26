@@ -4,6 +4,9 @@
 #include <list>
 #include <vector>
 
+// TODO: need to determine when signal is good enough to use
+// - using when not good enough hinders progress
+
 #include "abstract_experiment.h"
 
 class AbstractNode;
