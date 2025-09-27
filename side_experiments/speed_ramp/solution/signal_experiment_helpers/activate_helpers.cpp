@@ -281,11 +281,11 @@ void SignalExperiment::backprop(double target_val,
 							int index = distribution(generator);
 							this->new_explore_pre_obs[index] = history->pre_obs[i_index];
 							this->new_explore_post_obs[index] = history->post_obs[i_index];
-							this->new_explore_scores[index] = history->signal_vals[i_index];
+							this->new_explore_scores[index] = target_val;
 						} else {
 							this->new_explore_pre_obs.push_back(history->pre_obs[i_index]);
 							this->new_explore_post_obs.push_back(history->post_obs[i_index]);
-							this->new_explore_scores.push_back(history->signal_vals[i_index]);
+							this->new_explore_scores.push_back(target_val);
 						}
 					} else {
 						if (this->new_current_pre_obs.size() >= NEW_CURRENT_SAMPLES) {
@@ -343,11 +343,11 @@ void SignalExperiment::backprop(double target_val,
 							int index = distribution(generator);
 							this->existing_explore_pre_obs[index] = history->pre_obs[i_index];
 							this->existing_explore_post_obs[index] = history->post_obs[i_index];
-							this->existing_explore_scores[index] = history->signal_vals[i_index];
+							this->existing_explore_scores[index] = target_val;
 						} else {
 							this->existing_explore_pre_obs.push_back(history->pre_obs[i_index]);
 							this->existing_explore_post_obs.push_back(history->post_obs[i_index]);
-							this->existing_explore_scores.push_back(history->signal_vals[i_index]);
+							this->existing_explore_scores.push_back(target_val);
 						}
 					} else {
 						if (this->existing_current_pre_obs.size() >= EXISTING_CURRENT_SAMPLES) {
