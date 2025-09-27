@@ -1,7 +1,6 @@
 // TODO: improve explore quality
 // - world modeling, etc.
 // - result will probably also help long problems
-
 // - actions include complex actions, and exiting to certain parts of the solution
 
 #include <chrono>
@@ -16,6 +15,7 @@
 #include "constants.h"
 #include "globals.h"
 #include "helpers.h"
+#include "instance_scores.h"
 #include "obs_node.h"
 #include "problem.h"
 #include "scope.h"
@@ -23,7 +23,6 @@
 #include "solution.h"
 #include "solution_wrapper.h"
 #include "start_node.h"
-#include "time_based.h"
 #include "utilities.h"
 
 using namespace std;
@@ -35,13 +34,12 @@ default_random_engine generator;
 int main(int argc, char* argv[]) {
 	cout << "Starting..." << endl;
 
-	// seed = (unsigned)time(NULL);
-	seed = 1758521818;
+	seed = (unsigned)time(NULL);
 	srand(seed);
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
 
-	ProblemType* problem_type = new TypeTimeBased();
+	ProblemType* problem_type = new TypeInstanceScores();
 
 	string filename;
 	SolutionWrapper* solution_wrapper;

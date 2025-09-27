@@ -5,10 +5,10 @@
 #include <random>
 
 #include "globals.h"
+#include "instance_scores.h"
 #include "scope.h"
 #include "solution.h"
 #include "solution_wrapper.h"
-#include "time_based.h"
 
 using namespace std;
 
@@ -24,7 +24,7 @@ int main(int argc, char* argv[]) {
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
 
-	ProblemType* problem_type = new TypeTimeBased();
+	ProblemType* problem_type = new TypeInstanceScores();
 
 	string filename;
 	SolutionWrapper* solution_wrapper;
