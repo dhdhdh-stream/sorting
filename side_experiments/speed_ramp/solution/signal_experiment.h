@@ -24,17 +24,9 @@ const int SIGNAL_EXPERIMENT_STATE_WRAPUP = 6;
  */
 
 #if defined(MDEBUG) && MDEBUG
-const int EXISTING_CURRENT_SAMPLES = 80;
-const int EXISTING_EXPLORE_SAMPLES = 40;
-
-const int NEW_CURRENT_SAMPLES = 80;
-const int NEW_EXPLORE_SAMPLES = 40;
+const int EXPLORE_SAMPLES = 40;
 #else
-const int EXISTING_CURRENT_SAMPLES = 4000;
-const int EXISTING_EXPLORE_SAMPLES = 2000;
-
-const int NEW_CURRENT_SAMPLES = 4000;
-const int NEW_EXPLORE_SAMPLES = 2000;
+const int EXPLORE_SAMPLES = 2000;
 #endif /* MDEBUG */
 
 class SignalExperimentHistory;
@@ -62,20 +54,15 @@ public:
 	std::vector<double> new_scores;
 
 	/**
-	 * - over time, should naturally include current, diversity, and traps
+	 * - only focus on explores
+	 *   - i.e., don't train on existing
+	 *   - helps distinguish necessity vs. byproduct of existing
+	 *   - may cause issues where existing poorly predicted, so trapped on false improvements
+	 *     - but hopefully, mitigated by explores still biased towards existing
 	 */
-	std::vector<std::vector<std::vector<double>>> existing_current_pre_obs;
-	std::vector<std::vector<std::vector<double>>> existing_current_post_obs;
-	std::vector<double> existing_current_scores;
-
 	std::vector<std::vector<std::vector<double>>> existing_explore_pre_obs;
 	std::vector<std::vector<std::vector<double>>> existing_explore_post_obs;
 	std::vector<double> existing_explore_scores;
-
-	std::vector<std::vector<std::vector<double>>> new_current_pre_obs;
-	std::vector<std::vector<std::vector<double>>> new_current_post_obs;
-	std::vector<double> new_current_scores;
-
 	std::vector<std::vector<std::vector<double>>> new_explore_pre_obs;
 	std::vector<std::vector<std::vector<double>>> new_explore_post_obs;
 	std::vector<double> new_explore_scores;
@@ -118,10 +105,8 @@ public:
 	void wrapup_backprop();
 
 	void set_actions();
-	bool split_helper(std::vector<std::vector<std::vector<double>>>& current_pre_obs,
-					  std::vector<std::vector<std::vector<double>>>& current_post_obs,
-					  std::vector<std::vector<std::vector<double>>>& explore_pre_obs,
-					  std::vector<std::vector<std::vector<double>>>& explore_post_obs,
+	bool split_helper(std::vector<std::vector<std::vector<double>>>& pre_obs,
+					  std::vector<std::vector<std::vector<double>>>& post_obs,
 					  std::vector<bool>& new_match_input_is_pre,
 					  std::vector<int>& new_match_input_indexes,
 					  std::vector<int>& new_match_input_obs_indexes,
@@ -135,12 +120,9 @@ public:
 					 SignalNetwork*& new_score_network);
 	DefaultSignal* train_existing_default();
 	DefaultSignal* train_new_default();
-	void create_reward_signal_helper(std::vector<std::vector<std::vector<double>>>& current_pre_obs,
-									 std::vector<std::vector<std::vector<double>>>& current_post_obs,
-									 std::vector<double>& current_scores,
-									 std::vector<std::vector<std::vector<double>>>& explore_pre_obs,
-									 std::vector<std::vector<std::vector<double>>>& explore_post_obs,
-									 std::vector<double>& explore_scores,
+	void create_reward_signal_helper(std::vector<std::vector<std::vector<double>>>& pre_obs,
+									 std::vector<std::vector<std::vector<double>>>& post_obs,
+									 std::vector<double>& scores,
 									 DefaultSignal* default_signal,
 									 std::vector<Signal*>& previous_signals,
 									 std::vector<Signal*>& signals,
@@ -152,9 +134,7 @@ public:
 	bool is_on;
 
 	std::vector<std::vector<std::vector<double>>> pre_obs;
-	std::vector<bool> start_has_explore;
 	std::vector<std::vector<std::vector<double>>> post_obs;
-	std::vector<bool> end_has_explore;
 
 	std::vector<double> sum_signal_vals;
 	std::vector<int> sum_counts;

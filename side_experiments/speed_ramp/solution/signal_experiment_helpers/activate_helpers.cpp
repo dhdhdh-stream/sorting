@@ -64,7 +64,9 @@ bool SignalExperiment::check_signal_activate(vector<double>& obs,
 
 				return true;
 			} else {
-				history->start_has_explore.push_back(wrapper->has_explore);
+				if (wrapper->should_explore && !wrapper->has_explore) {
+					history->pre_obs.push_back(scope_history->signal_pre_obs);
+				}
 			}
 		}
 
@@ -95,27 +97,30 @@ bool SignalExperiment::check_signal_activate(vector<double>& obs,
 
 				return true;
 			} else {
-				history->end_has_explore.push_back(wrapper->has_explore);
+				if (history->pre_obs.size() > history->post_obs.size()) {
+					if (wrapper->has_explore) {
+						history->post_obs.push_back(scope_history->signal_post_obs);
 
-				history->pre_obs.push_back(scope_history->signal_pre_obs);
-				history->post_obs.push_back(scope_history->signal_post_obs);
+						history->sum_signal_vals.push_back(0.0);
+						history->sum_counts.push_back(0);
 
-				history->sum_signal_vals.push_back(0.0);
-				history->sum_counts.push_back(0);
-
-				/**
-				 * - don't include current layer
-				 */
-				for (int i_index = 0; i_index < (int)wrapper->scope_histories.size()-1; i_index++) {
-					Scope* scope = wrapper->scope_histories[i_index]->scope;
-					if (scope->default_signal != NULL) {
-						if (scope->signal_experiment_history == NULL
-								|| !scope->signal_experiment_history->is_on) {
-							wrapper->scope_histories[i_index]->signal_experiment_callbacks
-								.push_back(history);
-							wrapper->scope_histories[i_index]->signal_experiment_instance_indexes
-								.push_back((int)history->sum_signal_vals.size()-1);
+						/**
+						 * - don't include current layer
+						 */
+						for (int i_index = 0; i_index < (int)wrapper->scope_histories.size()-1; i_index++) {
+							Scope* scope = wrapper->scope_histories[i_index]->scope;
+							if (scope->default_signal != NULL) {
+								if (scope->signal_experiment_history == NULL
+										|| !scope->signal_experiment_history->is_on) {
+									wrapper->scope_histories[i_index]->signal_experiment_callbacks
+										.push_back(history);
+									wrapper->scope_histories[i_index]->signal_experiment_instance_indexes
+										.push_back((int)history->sum_signal_vals.size()-1);
+								}
+							}
 						}
+					} else {
+						history->pre_obs.pop_back();
 					}
 				}
 			}
@@ -135,7 +140,9 @@ bool SignalExperiment::check_signal_activate(vector<double>& obs,
 
 				return true;
 			} else {
-				history->start_has_explore.push_back(wrapper->has_explore);
+				if (wrapper->should_explore && !wrapper->has_explore) {
+					history->pre_obs.push_back(scope_history->signal_pre_obs);
+				}
 			}
 		}
 
@@ -173,27 +180,30 @@ bool SignalExperiment::check_signal_activate(vector<double>& obs,
 					}
 				}
 
-				history->end_has_explore.push_back(wrapper->has_explore);
+				if (history->pre_obs.size() > history->post_obs.size()) {
+					if (wrapper->has_explore) {
+						history->post_obs.push_back(scope_history->signal_post_obs);
 
-				history->pre_obs.push_back(scope_history->signal_pre_obs);
-				history->post_obs.push_back(scope_history->signal_post_obs);
+						history->sum_signal_vals.push_back(0.0);
+						history->sum_counts.push_back(0);
 
-				history->sum_signal_vals.push_back(0.0);
-				history->sum_counts.push_back(0);
-
-				/**
-				 * - don't include current layer
-				 */
-				for (int i_index = 0; i_index < (int)wrapper->scope_histories.size()-1; i_index++) {
-					Scope* scope = wrapper->scope_histories[i_index]->scope;
-					if (scope->default_signal != NULL) {
-						if (scope->signal_experiment_history == NULL
-								|| !scope->signal_experiment_history->is_on) {
-							wrapper->scope_histories[i_index]->signal_experiment_callbacks
-								.push_back(history);
-							wrapper->scope_histories[i_index]->signal_experiment_instance_indexes
-								.push_back((int)history->sum_signal_vals.size()-1);
+						/**
+						 * - don't include current layer
+						 */
+						for (int i_index = 0; i_index < (int)wrapper->scope_histories.size()-1; i_index++) {
+							Scope* scope = wrapper->scope_histories[i_index]->scope;
+							if (scope->default_signal != NULL) {
+								if (scope->signal_experiment_history == NULL
+										|| !scope->signal_experiment_history->is_on) {
+									wrapper->scope_histories[i_index]->signal_experiment_callbacks
+										.push_back(history);
+									wrapper->scope_histories[i_index]->signal_experiment_instance_indexes
+										.push_back((int)history->sum_signal_vals.size()-1);
+								}
+							}
 						}
+					} else {
+						history->pre_obs.pop_back();
 					}
 				}
 			}
@@ -258,32 +268,16 @@ void SignalExperiment::backprop(double target_val,
 			double average_val = history->sum_signal_vals[i_index]
 				/ (double)history->sum_counts[i_index];
 
-			if (wrapper->has_explore) {
-				if (!history->start_has_explore[i_index] && history->end_has_explore[i_index]) {
-					if (this->new_explore_pre_obs.size() >= NEW_EXPLORE_SAMPLES) {
-						uniform_int_distribution<int> distribution(0, this->new_explore_pre_obs.size()-1);
-						int index = distribution(generator);
-						this->new_explore_pre_obs[index] = history->pre_obs[i_index];
-						this->new_explore_post_obs[index] = history->post_obs[i_index];
-						this->new_explore_scores[index] = average_val;
-					} else {
-						this->new_explore_pre_obs.push_back(history->pre_obs[i_index]);
-						this->new_explore_post_obs.push_back(history->post_obs[i_index]);
-						this->new_explore_scores.push_back(average_val);
-					}
-				}
+			if (this->new_explore_pre_obs.size() >= EXPLORE_SAMPLES) {
+				uniform_int_distribution<int> distribution(0, this->new_explore_pre_obs.size()-1);
+				int index = distribution(generator);
+				this->new_explore_pre_obs[index] = history->pre_obs[i_index];
+				this->new_explore_post_obs[index] = history->post_obs[i_index];
+				this->new_explore_scores[index] = average_val;
 			} else {
-				if (this->new_current_pre_obs.size() >= NEW_CURRENT_SAMPLES) {
-					uniform_int_distribution<int> distribution(0, this->new_current_pre_obs.size()-1);
-					int index = distribution(generator);
-					this->new_current_pre_obs[index] = history->pre_obs[i_index];
-					this->new_current_post_obs[index] = history->post_obs[i_index];
-					this->new_current_scores[index] = average_val;
-				} else {
-					this->new_current_pre_obs.push_back(history->pre_obs[i_index]);
-					this->new_current_post_obs.push_back(history->post_obs[i_index]);
-					this->new_current_scores.push_back(average_val);
-				}
+				this->new_explore_pre_obs.push_back(history->pre_obs[i_index]);
+				this->new_explore_post_obs.push_back(history->post_obs[i_index]);
+				this->new_explore_scores.push_back(average_val);
 			}
 		}
 	} else {
@@ -296,32 +290,16 @@ void SignalExperiment::backprop(double target_val,
 			double average_val = history->sum_signal_vals[i_index]
 				/ (double)history->sum_counts[i_index];
 
-			if (wrapper->has_explore) {
-				if (!history->start_has_explore[i_index] && history->end_has_explore[i_index]) {
-					if (this->existing_explore_pre_obs.size() >= EXISTING_EXPLORE_SAMPLES) {
-						uniform_int_distribution<int> distribution(0, this->existing_explore_pre_obs.size()-1);
-						int index = distribution(generator);
-						this->existing_explore_pre_obs[index] = history->pre_obs[i_index];
-						this->existing_explore_post_obs[index] = history->post_obs[i_index];
-						this->existing_explore_scores[index] = average_val;
-					} else {
-						this->existing_explore_pre_obs.push_back(history->pre_obs[i_index]);
-						this->existing_explore_post_obs.push_back(history->post_obs[i_index]);
-						this->existing_explore_scores.push_back(average_val);
-					}
-				}
+			if (this->existing_explore_pre_obs.size() >= EXPLORE_SAMPLES) {
+				uniform_int_distribution<int> distribution(0, this->existing_explore_pre_obs.size()-1);
+				int index = distribution(generator);
+				this->existing_explore_pre_obs[index] = history->pre_obs[i_index];
+				this->existing_explore_post_obs[index] = history->post_obs[i_index];
+				this->existing_explore_scores[index] = average_val;
 			} else {
-				if (this->existing_current_pre_obs.size() >= EXISTING_CURRENT_SAMPLES) {
-					uniform_int_distribution<int> distribution(0, this->existing_current_pre_obs.size()-1);
-					int index = distribution(generator);
-					this->existing_current_pre_obs[index] = history->pre_obs[i_index];
-					this->existing_current_post_obs[index] = history->post_obs[i_index];
-					this->existing_current_scores[index] = average_val;
-				} else {
-					this->existing_current_pre_obs.push_back(history->pre_obs[i_index]);
-					this->existing_current_post_obs.push_back(history->post_obs[i_index]);
-					this->existing_current_scores.push_back(average_val);
-				}
+				this->existing_explore_pre_obs.push_back(history->pre_obs[i_index]);
+				this->existing_explore_post_obs.push_back(history->post_obs[i_index]);
+				this->existing_explore_scores.push_back(average_val);
 			}
 		}
 	}

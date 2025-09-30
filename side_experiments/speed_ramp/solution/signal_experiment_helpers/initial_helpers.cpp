@@ -99,17 +99,9 @@ void SignalExperiment::initial_backprop(double target_val,
 			this->existing_scores.clear();
 			this->new_scores.clear();
 
-			this->existing_current_pre_obs.clear();
-			this->existing_current_post_obs.clear();
-			this->existing_current_scores.clear();
-
 			this->existing_explore_pre_obs.clear();
 			this->existing_explore_post_obs.clear();
 			this->existing_explore_scores.clear();
-
-			this->new_current_pre_obs.clear();
-			this->new_current_post_obs.clear();
-			this->new_current_scores.clear();
 
 			this->new_explore_pre_obs.clear();
 			this->new_explore_post_obs.clear();

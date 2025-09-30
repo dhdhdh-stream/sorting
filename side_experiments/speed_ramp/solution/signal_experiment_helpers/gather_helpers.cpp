@@ -13,10 +13,8 @@ using namespace std;
 void SignalExperiment::gather_backprop(double target_val,
 									   SignalExperimentHistory* history,
 									   SolutionWrapper* wrapper) {
-	if ((int)this->existing_current_pre_obs.size() >= EXISTING_CURRENT_SAMPLES
-			&& (int)this->existing_explore_pre_obs.size() >= EXISTING_EXPLORE_SAMPLES
-			&& (int)this->new_current_pre_obs.size() >= NEW_CURRENT_SAMPLES
-			&& (int)this->new_explore_pre_obs.size() >= NEW_EXPLORE_SAMPLES) {
+	if ((int)this->existing_explore_pre_obs.size() >= EXPLORE_SAMPLES
+			&& (int)this->new_explore_pre_obs.size() >= EXPLORE_SAMPLES) {
 		cout << "SignalExperiment" << endl;
 		cout << "this->scope_context->id: " << this->scope_context->id << endl;
 
@@ -24,10 +22,7 @@ void SignalExperiment::gather_backprop(double target_val,
 
 		vector<Signal*> new_signals;
 		double new_misguess_average;
-		create_reward_signal_helper(this->new_current_pre_obs,
-									this->new_current_post_obs,
-									this->new_current_scores,
-									this->new_explore_pre_obs,
+		create_reward_signal_helper(this->new_explore_pre_obs,
 									this->new_explore_post_obs,
 									this->new_explore_scores,
 									new_default_signal,
@@ -45,10 +40,7 @@ void SignalExperiment::gather_backprop(double target_val,
 
 			vector<Signal*> existing_signals;
 			double existing_misguess_average;
-			create_reward_signal_helper(this->existing_current_pre_obs,
-										this->existing_current_post_obs,
-										this->existing_current_scores,
-										this->existing_explore_pre_obs,
+			create_reward_signal_helper(this->existing_explore_pre_obs,
 										this->existing_explore_post_obs,
 										this->existing_explore_scores,
 										existing_default_signal,

@@ -3,14 +3,6 @@
 // - result will probably also help long problems
 // - actions include complex actions, and exiting to certain parts of the solution
 
-// - thinks doing lots of things is good
-//   - when in reality, doing lots of things correctly is good
-// - perhaps get rid of existing?
-//   - doing lots of things may still be good, but at least in context of explore
-//     - where doing lots of things is good because of good actions
-// - everything is already biased towards current approach
-//   - so want to lessen as much as possible
-
 #include <chrono>
 #include <iostream>
 #include <map>

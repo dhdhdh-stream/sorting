@@ -12,8 +12,7 @@ using namespace std;
 
 const int SPLIT_NUM_INPUTS = 10;
 
-const double POSITIVE_SEED_RATIO = 0.1;
-const double NEGATIVE_SEED_RATIO = 0.2;
+const double SEED_RATIO = 0.1;
 
 #if defined(MDEBUG) && MDEBUG
 const int MAX_EPOCHS = 4;
@@ -25,22 +24,20 @@ const int ITERS_PER_EPOCH = 10000;
 
 const double MAX_AVERAGE_ERROR = 0.1;
 
-bool SignalExperiment::split_helper(vector<vector<vector<double>>>& current_pre_obs,
-									vector<vector<vector<double>>>& current_post_obs,
-									vector<vector<vector<double>>>& explore_pre_obs,
-									vector<vector<vector<double>>>& explore_post_obs,
+bool SignalExperiment::split_helper(vector<vector<vector<double>>>& pre_obs,
+									vector<vector<vector<double>>>& post_obs,
 									vector<bool>& new_match_input_is_pre,
 									vector<int>& new_match_input_indexes,
 									vector<int>& new_match_input_obs_indexes,
 									SignalNetwork*& new_match_network) {
 	vector<pair<bool,pair<int,int>>> possible_inputs;
-	for (int i_index = 0; i_index < (int)explore_pre_obs[0].size(); i_index++) {
-		for (int o_index = 0; o_index < (int)explore_pre_obs[0][i_index].size(); o_index++) {
+	for (int i_index = 0; i_index < (int)pre_obs[0].size(); i_index++) {
+		for (int o_index = 0; o_index < (int)pre_obs[0][i_index].size(); o_index++) {
 			possible_inputs.push_back({true, {i_index, o_index}});
 		}
 	}
-	for (int i_index = 0; i_index < (int)explore_post_obs[0].size(); i_index++) {
-		for (int o_index = 0; o_index < (int)explore_post_obs[0][i_index].size(); o_index++) {
+	for (int i_index = 0; i_index < (int)post_obs[0].size(); i_index++) {
+		for (int o_index = 0; o_index < (int)post_obs[0][i_index].size(); o_index++) {
 			possible_inputs.push_back({false, {i_index, o_index}});
 		}
 	}
@@ -61,46 +58,34 @@ bool SignalExperiment::split_helper(vector<vector<vector<double>>>& current_pre_
 	new_match_network = new SignalNetwork(new_match_input_is_pre.size());
 
 	#if defined(MDEBUG) && MDEBUG
-	int num_positive_seeds = max(1, (int)(POSITIVE_SEED_RATIO * (double)current_pre_obs.size()));
+	int num_seeds = max(1, (int)(SEED_RATIO * (double)pre_obs.size()));
 	#else
-	int num_positive_seeds = POSITIVE_SEED_RATIO * (double)current_pre_obs.size();
+	int num_seeds = SEED_RATIO * (double)pre_obs.size();
 	#endif /* MDEBUG */
-	vector<int> positive_seeds;
-	{
-		vector<int> possible_indexes;
-		for (int h_index = 0; h_index < (int)current_pre_obs.size(); h_index++) {
-			possible_indexes.push_back(h_index);
-		}
-		for (int s_index = 0; s_index < num_positive_seeds; s_index++) {
-			uniform_int_distribution<int> possible_distribution(0, possible_indexes.size()-1);
-			int random_index = possible_distribution(generator);
-			positive_seeds.push_back(possible_indexes[random_index]);
-			possible_indexes.erase(possible_indexes.begin() + random_index);
-		}
+
+	vector<int> possible_indexes;
+	for (int h_index = 0; h_index < (int)pre_obs.size(); h_index++) {
+		possible_indexes.push_back(h_index);
 	}
 
-	#if defined(MDEBUG) && MDEBUG
-	int num_negative_seeds = max(1, (int)(NEGATIVE_SEED_RATIO * (double)explore_pre_obs.size()));
-	#else
-	int num_negative_seeds = NEGATIVE_SEED_RATIO * (double)explore_pre_obs.size();
-	#endif /* MDEBUG */
+	vector<int> positive_seeds;
+	for (int s_index = 0; s_index < num_seeds; s_index++) {
+		uniform_int_distribution<int> possible_distribution(0, possible_indexes.size()-1);
+		int random_index = possible_distribution(generator);
+		positive_seeds.push_back(possible_indexes[random_index]);
+		possible_indexes.erase(possible_indexes.begin() + random_index);
+	}
 	vector<int> negative_seeds;
-	{
-		vector<int> possible_indexes;
-		for (int h_index = 0; h_index < (int)explore_pre_obs.size(); h_index++) {
-			possible_indexes.push_back(h_index);
-		}
-		for (int s_index = 0; s_index < num_negative_seeds; s_index++) {
-			uniform_int_distribution<int> possible_distribution(0, possible_indexes.size()-1);
-			int random_index = possible_distribution(generator);
-			negative_seeds.push_back(possible_indexes[random_index]);
-			possible_indexes.erase(possible_indexes.begin() + random_index);
-		}
+	for (int s_index = 0; s_index < num_seeds; s_index++) {
+		uniform_int_distribution<int> possible_distribution(0, possible_indexes.size()-1);
+		int random_index = possible_distribution(generator);
+		negative_seeds.push_back(possible_indexes[random_index]);
+		possible_indexes.erase(possible_indexes.begin() + random_index);
 	}
 
 	uniform_int_distribution<int> is_positive_distribution(0, 1);
-	uniform_int_distribution<int> positive_distribution(0, num_positive_seeds-1);
-	uniform_int_distribution<int> negative_distribution(0, num_negative_seeds-1);
+	uniform_int_distribution<int> positive_distribution(0, num_seeds-1);
+	uniform_int_distribution<int> negative_distribution(0, num_seeds-1);
 	int e_index = 0;
 	while (true) {
 		for (int iter_index = 0; iter_index < ITERS_PER_EPOCH; iter_index++) {
@@ -113,10 +98,10 @@ bool SignalExperiment::split_helper(vector<vector<vector<double>>>& current_pre_
 				int h_index = positive_seeds[random_index];
 				for (int i_index = 0; i_index < (int)new_match_input_is_pre.size(); i_index++) {
 					if (new_match_input_is_pre[i_index]) {
-						inputs[i_index] = current_pre_obs[h_index][
+						inputs[i_index] = pre_obs[h_index][
 							new_match_input_indexes[i_index]][new_match_input_obs_indexes[i_index]];
 					} else {
-						inputs[i_index] = current_post_obs[h_index][
+						inputs[i_index] = post_obs[h_index][
 							new_match_input_indexes[i_index]][new_match_input_obs_indexes[i_index]];
 					}
 				}
@@ -125,10 +110,10 @@ bool SignalExperiment::split_helper(vector<vector<vector<double>>>& current_pre_
 				int h_index = negative_seeds[random_index];
 				for (int i_index = 0; i_index < (int)new_match_input_is_pre.size(); i_index++) {
 					if (new_match_input_is_pre[i_index]) {
-						inputs[i_index] = explore_pre_obs[h_index][
+						inputs[i_index] = pre_obs[h_index][
 							new_match_input_indexes[i_index]][new_match_input_obs_indexes[i_index]];
 					} else {
-						inputs[i_index] = explore_post_obs[h_index][
+						inputs[i_index] = post_obs[h_index][
 							new_match_input_indexes[i_index]][new_match_input_obs_indexes[i_index]];
 					}
 				}
@@ -150,63 +135,44 @@ bool SignalExperiment::split_helper(vector<vector<vector<double>>>& current_pre_
 			new_match_network->backprop(error);
 		}
 
-		vector<pair<double,int>> positive_acti_vals;
-		for (int h_index = 0; h_index < (int)current_pre_obs.size(); h_index++) {
+		vector<pair<double,int>> acti_vals;
+		for (int h_index = 0; h_index < (int)pre_obs.size(); h_index++) {
 			vector<double> inputs(new_match_input_is_pre.size());
 			for (int i_index = 0; i_index < (int)new_match_input_is_pre.size(); i_index++) {
 				if (new_match_input_is_pre[i_index]) {
-					inputs[i_index] = current_pre_obs[h_index][
+					inputs[i_index] = pre_obs[h_index][
 						new_match_input_indexes[i_index]][new_match_input_obs_indexes[i_index]];
 				} else {
-					inputs[i_index] = current_post_obs[h_index][
+					inputs[i_index] = post_obs[h_index][
 						new_match_input_indexes[i_index]][new_match_input_obs_indexes[i_index]];
 				}
 			}
 
 			new_match_network->activate(inputs);
 
-			positive_acti_vals.push_back({new_match_network->output->acti_vals[0], h_index});
+			acti_vals.push_back({new_match_network->output->acti_vals[0], h_index});
 		}
-		sort(positive_acti_vals.begin(), positive_acti_vals.end());
+		sort(acti_vals.begin(), acti_vals.end());
 
 		double sum_positive_errors = 0.0;
-		for (int s_index = 0; s_index < num_positive_seeds; s_index++) {
-			positive_seeds[s_index] = positive_acti_vals[positive_acti_vals.size() - 1 - s_index].second;
+		for (int s_index = 0; s_index < num_seeds; s_index++) {
+			positive_seeds[s_index] = acti_vals[acti_vals.size() - 1 - s_index].second;
 
-			if (positive_acti_vals[positive_acti_vals.size() - 1 - s_index].first < 1.0) {
-				sum_positive_errors += abs(1.0 - positive_acti_vals[positive_acti_vals.size() - 1 - s_index].first);
+			if (acti_vals[acti_vals.size() - 1 - s_index].first < 1.0) {
+				sum_positive_errors += abs(1.0 - acti_vals[acti_vals.size() - 1 - s_index].first);
 			}
 		}
-		double average_positive_error = sum_positive_errors / (double)num_positive_seeds;
-
-		vector<pair<double,int>> negative_acti_vals;
-		for (int h_index = 0; h_index < (int)explore_pre_obs.size(); h_index++) {
-			vector<double> inputs(new_match_input_is_pre.size());
-			for (int i_index = 0; i_index < (int)new_match_input_is_pre.size(); i_index++) {
-				if (new_match_input_is_pre[i_index]) {
-					inputs[i_index] = explore_pre_obs[h_index][
-						new_match_input_indexes[i_index]][new_match_input_obs_indexes[i_index]];
-				} else {
-					inputs[i_index] = explore_post_obs[h_index][
-						new_match_input_indexes[i_index]][new_match_input_obs_indexes[i_index]];
-				}
-			}
-
-			new_match_network->activate(inputs);
-
-			negative_acti_vals.push_back({new_match_network->output->acti_vals[0], h_index});
-		}
-		sort(negative_acti_vals.begin(), negative_acti_vals.end());
+		double average_positive_error = sum_positive_errors / (double)num_seeds;
 
 		double sum_negative_errors = 0.0;
-		for (int s_index = 0; s_index < num_negative_seeds; s_index++) {
-			negative_seeds[s_index] = negative_acti_vals[s_index].second;
+		for (int s_index = 0; s_index < num_seeds; s_index++) {
+			negative_seeds[s_index] = acti_vals[s_index].second;
 
-			if (negative_acti_vals[s_index].first > -1.0) {
-				sum_negative_errors += abs(-1.0 - negative_acti_vals[s_index].first);
+			if (acti_vals[s_index].first > -1.0) {
+				sum_negative_errors += abs(-1.0 - acti_vals[s_index].first);
 			}
 		}
-		double average_negative_error = sum_negative_errors / (double)num_negative_seeds;
+		double average_negative_error = sum_negative_errors / (double)num_seeds;
 
 		#if defined(MDEBUG) && MDEBUG
 		if ((average_positive_error <= MAX_AVERAGE_ERROR && average_negative_error <= MAX_AVERAGE_ERROR)
