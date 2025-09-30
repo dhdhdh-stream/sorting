@@ -35,7 +35,7 @@ void gather_helper(ScopeHistory* scope_history,
 			|| scope->id == 0) {
 		if (scope->signal_experiment == NULL) {
 			uniform_int_distribution<int> select_distribution(0, potential_seen);
-			if (select_distribution(generator)) {
+			if (select_distribution(generator) == 0) {
 				node_context = NULL;
 
 				signal_scope = scope;
@@ -55,7 +55,7 @@ void gather_helper(ScopeHistory* scope_history,
 					StartNode* start_node = (StartNode*)node;
 					if (distribution(generator) <= 1.0 / (1.0 + sqrt(start_node->num_experiments))) {
 						uniform_int_distribution<int> select_distribution(0, potential_seen);
-						if (select_distribution(generator)) {
+						if (select_distribution(generator) == 0) {
 							node_context = node;
 							is_branch = false;
 
@@ -70,7 +70,7 @@ void gather_helper(ScopeHistory* scope_history,
 					ActionNode* action_node = (ActionNode*)node;
 					if (distribution(generator) <= 1.0 / (1.0 + sqrt(action_node->num_experiments))) {
 						uniform_int_distribution<int> select_distribution(0, potential_seen);
-						if (select_distribution(generator)) {
+						if (select_distribution(generator) == 0) {
 							node_context = node;
 							is_branch = false;
 
@@ -92,7 +92,7 @@ void gather_helper(ScopeHistory* scope_history,
 					ScopeNode* scope_node = (ScopeNode*)node;
 					if (distribution(generator) <= 1.0 / (1.0 + sqrt(scope_node->num_experiments))) {
 						uniform_int_distribution<int> select_distribution(0, potential_seen);
-						if (select_distribution(generator)) {
+						if (select_distribution(generator) == 0) {
 							node_context = node;
 							is_branch = false;
 
@@ -109,7 +109,7 @@ void gather_helper(ScopeHistory* scope_history,
 					if (branch_node_history->is_branch) {
 						if (distribution(generator) <= 1.0 / (1.0 + sqrt(branch_node->branch_num_experiments))) {
 							uniform_int_distribution<int> select_distribution(0, potential_seen);
-							if (select_distribution(generator)) {
+							if (select_distribution(generator) == 0) {
 								node_context = node;
 								is_branch = true;
 
@@ -120,7 +120,7 @@ void gather_helper(ScopeHistory* scope_history,
 					} else {
 						if (distribution(generator) <= 1.0 / (1.0 + sqrt(branch_node->original_num_experiments))) {
 							uniform_int_distribution<int> select_distribution(0, potential_seen);
-							if (select_distribution(generator)) {
+							if (select_distribution(generator) == 0) {
 								node_context = node;
 								is_branch = false;
 
@@ -136,7 +136,7 @@ void gather_helper(ScopeHistory* scope_history,
 					ObsNode* obs_node = (ObsNode*)node;
 					if (distribution(generator) <= 1.0 / (1.0 + sqrt(obs_node->num_experiments))) {
 						uniform_int_distribution<int> select_distribution(0, potential_seen);
-						if (select_distribution(generator)) {
+						if (select_distribution(generator) == 0) {
 							node_context = node;
 							is_branch = false;
 

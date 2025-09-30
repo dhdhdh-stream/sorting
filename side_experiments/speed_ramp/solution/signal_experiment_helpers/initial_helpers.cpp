@@ -18,8 +18,8 @@ const int INITIAL_C4_NUM_SAMPLES = 4;
 const int INITIAL_MIN_EXISTING_NUM_SAMPLES = 100;
 const int INITIAL_C1_NUM_SAMPLES = 2;
 const int INITIAL_C2_NUM_SAMPLES = 10;
-const int INITIAL_C3_NUM_SAMPLES = 50;
-const int INITIAL_C4_NUM_SAMPLES = 200;
+const int INITIAL_C3_NUM_SAMPLES = 40;
+const int INITIAL_C4_NUM_SAMPLES = 100;
 #endif /* MDEBUG */
 
 void SignalExperiment::initial_backprop(double target_val,

@@ -6,6 +6,7 @@
 #include "default_signal.h"
 #include "explore_experiment.h"
 #include "eval_experiment.h"
+#include "problem.h"
 #include "scope.h"
 #include "signal.h"
 #include "signal_experiment.h"

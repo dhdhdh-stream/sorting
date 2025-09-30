@@ -16,12 +16,12 @@ const int MATCH_TYPE_EXPLORE = 1;
 #if defined(MDEBUG) && MDEBUG
 const int SPLIT_NUM_TRIES = 4;
 #else
-const int SPLIT_NUM_TRIES = 20;
+const int SPLIT_NUM_TRIES = 10;
 #endif /* MDEBUG */
 
-const double MIN_MATCH_RATIO = 0.04;
+const double MIN_MATCH_RATIO = 0.1;
 
-const double CHECK_MIN_MATCH_RATIO = 0.02;
+const double CHECK_MIN_MATCH_RATIO = 0.05;
 
 void SignalExperiment::create_reward_signal_helper(vector<vector<vector<double>>>& current_pre_obs,
 												   vector<vector<vector<double>>>& current_post_obs,
