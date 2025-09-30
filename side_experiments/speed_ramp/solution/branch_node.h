@@ -15,7 +15,7 @@ class SolutionWrapper;
 class BranchNodeHistory;
 class BranchNode : public AbstractNode {
 public:
-	double average_val;
+	double constant;
 	std::vector<Input> inputs;
 	std::vector<double> input_averages;
 	std::vector<double> input_standard_deviations;

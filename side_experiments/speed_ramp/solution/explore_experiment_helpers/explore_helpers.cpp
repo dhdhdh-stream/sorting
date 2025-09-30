@@ -35,7 +35,7 @@ void ExploreExperiment::explore_check_activate(
 
 				ScopeHistory* scope_history = wrapper->scope_histories.back();
 
-				double sum_vals = this->existing_average_score;
+				double sum_vals = this->existing_constant;
 				for (int i_index = 0; i_index < (int)this->existing_inputs.size(); i_index++) {
 					double val;
 					bool is_on;
@@ -51,16 +51,18 @@ void ExploreExperiment::explore_check_activate(
 				}
 				history->existing_predicted_scores.push_back(sum_vals);
 
-				history->signal_is_set.push_back(false);
-				history->signal_vals.push_back(0.0);
+				history->sum_signal_vals.push_back(0.0);
+				history->sum_counts.push_back(0);
 
-				for (int l_index = (int)wrapper->scope_histories.size()-1; l_index >= 0; l_index--) {
-					Scope* scope = wrapper->scope_histories[l_index]->scope;
+				for (int i_index = 0; i_index < (int)wrapper->scope_histories.size(); i_index++) {
+					Scope* scope = wrapper->scope_histories[i_index]->scope;
 					if (scope->default_signal != NULL) {
 						if (scope->signal_experiment_history == NULL
 								|| !scope->signal_experiment_history->is_on) {
-							wrapper->scope_histories[l_index]->explore_experiment_callbacks.push_back(history);
-							break;
+							wrapper->scope_histories[i_index]->explore_experiment_callbacks
+								.push_back(history);
+							wrapper->scope_histories[i_index]->explore_experiment_instance_indexes
+								.push_back((int)history->sum_signal_vals.size()-1);
 						}
 					}
 				}
@@ -74,7 +76,7 @@ void ExploreExperiment::explore_check_activate(
 				uniform_int_distribution<int> new_scope_distribution(0, 4);
 				#endif /* MDEBUG */
 				if (new_scope_distribution(generator) == 0) {
-					this->curr_new_scope = create_new_scope(this->scope_context);
+					this->curr_new_scope = create_new_scope(this->node_context->parent);
 				}
 				if (this->curr_new_scope != NULL) {
 					this->curr_step_types.push_back(STEP_TYPE_SCOPE);
@@ -149,9 +151,9 @@ void ExploreExperiment::explore_check_activate(
 					 */
 					uniform_int_distribution<int> scope_distribution(0, 1);
 					vector<Scope*> possible_scopes;
-					for (int c_index = 0; c_index < (int)this->scope_context->child_scopes.size(); c_index++) {
-						if (this->scope_context->child_scopes[c_index]->nodes.size() > 1) {
-							possible_scopes.push_back(this->scope_context->child_scopes[c_index]);
+					for (int c_index = 0; c_index < (int)this->node_context->parent->child_scopes.size(); c_index++) {
+						if (this->node_context->parent->child_scopes[c_index]->nodes.size() > 1) {
+							possible_scopes.push_back(this->node_context->parent->child_scopes[c_index]);
 						}
 					}
 					for (int s_index = 0; s_index < new_num_steps; s_index++) {
@@ -238,12 +240,13 @@ void ExploreExperiment::explore_backprop(double target_val,
 										 ExploreExperimentHistory* history,
 										 SolutionWrapper* wrapper) {
 	if (history->existing_predicted_scores.size() > 0) {
-		double curr_surprise;
-		if (history->signal_is_set[0]) {
-			curr_surprise = history->signal_vals[0] - history->existing_predicted_scores[0];
-		} else {
-			curr_surprise = target_val - history->existing_predicted_scores[0];
-		}
+		history->sum_signal_vals[0] += target_val;
+		history->sum_counts[0]++;
+
+		double average_val = history->sum_signal_vals[0]
+			/ (double)history->sum_counts[0];
+
+		double curr_surprise = average_val - history->existing_predicted_scores[0];
 
 		#if defined(MDEBUG) && MDEBUG
 		if (true) {

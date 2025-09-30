@@ -79,7 +79,7 @@ void BranchNode::replace_obs_node(Scope* scope,
 }
 
 void BranchNode::save(ofstream& output_file) {
-	output_file << this->average_val << endl;
+	output_file << this->constant << endl;
 	output_file << this->inputs.size() << endl;
 	for (int i_index = 0; i_index < (int)this->inputs.size(); i_index++) {
 		this->inputs[i_index].save(output_file);
@@ -102,9 +102,9 @@ void BranchNode::save(ofstream& output_file) {
 
 void BranchNode::load(ifstream& input_file,
 					  Solution* parent_solution) {
-	string average_val_line;
-	getline(input_file, average_val_line);
-	this->average_val = stod(average_val_line);
+	string constant_line;
+	getline(input_file, constant_line);
+	this->constant = stod(constant_line);
 
 	string num_inputs_line;
 	getline(input_file, num_inputs_line);

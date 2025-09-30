@@ -24,7 +24,6 @@ void SignalExperiment::gather_backprop(double target_val,
 
 		vector<Signal*> new_signals;
 		double new_misguess_average;
-		bool new_better_than_default;
 		create_reward_signal_helper(this->new_current_pre_obs,
 									this->new_current_post_obs,
 									this->new_current_scores,
@@ -34,8 +33,7 @@ void SignalExperiment::gather_backprop(double target_val,
 									new_default_signal,
 									this->adjusted_previous_signals,
 									new_signals,
-									new_misguess_average,
-									new_better_than_default);
+									new_misguess_average);
 
 		if (this->scope_context->default_signal != NULL) {
 			DefaultSignal* existing_default_signal = train_existing_default();
@@ -47,7 +45,6 @@ void SignalExperiment::gather_backprop(double target_val,
 
 			vector<Signal*> existing_signals;
 			double existing_misguess_average;
-			bool existing_better_than_default;
 			create_reward_signal_helper(this->existing_current_pre_obs,
 										this->existing_current_post_obs,
 										this->existing_current_scores,
@@ -57,8 +54,7 @@ void SignalExperiment::gather_backprop(double target_val,
 										existing_default_signal,
 										existing_previous_signals,
 										existing_signals,
-										existing_misguess_average,
-										existing_better_than_default);
+										existing_misguess_average);
 
 			if (existing_misguess_average < new_misguess_average) {
 				for (int s_index = 0; s_index < (int)this->scope_context->signals.size(); s_index++) {
@@ -106,30 +102,28 @@ void SignalExperiment::gather_backprop(double target_val,
 
 			wrapper->solution->timestamp++;
 		} else {
-			if (new_better_than_default) {
-				vector<int> temp_pre_actions = this->pre_actions;
-				vector<int> temp_post_actions = this->post_actions;
-				this->pre_actions = this->scope_context->signal_pre_actions;
-				this->post_actions = this->scope_context->signal_post_actions;
-				this->scope_context->signal_pre_actions = temp_pre_actions;
-				this->scope_context->signal_post_actions = temp_post_actions;
+			vector<int> temp_pre_actions = this->pre_actions;
+			vector<int> temp_post_actions = this->post_actions;
+			this->pre_actions = this->scope_context->signal_pre_actions;
+			this->post_actions = this->scope_context->signal_post_actions;
+			this->scope_context->signal_pre_actions = temp_pre_actions;
+			this->scope_context->signal_post_actions = temp_post_actions;
 
-				this->pre_action_initialized = vector<bool>(this->pre_actions.size(), true);
-				this->post_action_initialized = vector<bool>(this->post_actions.size(), true);
+			this->pre_action_initialized = vector<bool>(this->pre_actions.size(), true);
+			this->post_action_initialized = vector<bool>(this->post_actions.size(), true);
 
-				for (int s_index = 0; s_index < (int)this->scope_context->signals.size(); s_index++) {
-					delete this->scope_context->signals[s_index];
-				}
-				this->scope_context->signals = new_signals;
-				new_signals.clear();
-				if (this->scope_context->default_signal != NULL) {
-					delete this->scope_context->default_signal;
-				}
-				this->scope_context->default_signal = new_default_signal;
-				new_default_signal = NULL;
-
-				wrapper->solution->timestamp++;
+			for (int s_index = 0; s_index < (int)this->scope_context->signals.size(); s_index++) {
+				delete this->scope_context->signals[s_index];
 			}
+			this->scope_context->signals = new_signals;
+			new_signals.clear();
+			if (this->scope_context->default_signal != NULL) {
+				delete this->scope_context->default_signal;
+			}
+			this->scope_context->default_signal = new_default_signal;
+			new_default_signal = NULL;
+
+			wrapper->solution->timestamp++;
 		}
 
 		for (int s_index = 0; s_index < (int)new_signals.size(); s_index++) {

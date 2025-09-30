@@ -29,16 +29,18 @@ void ExploreExperiment::train_existing_check_activate(
 	scope_history_copy->num_actions_snapshot = wrapper->num_actions;
 	this->scope_histories.push_back(scope_history_copy);
 
-	history->signal_is_set.push_back(false);
-	history->signal_vals.push_back(0.0);
+	history->sum_signal_vals.push_back(0.0);
+	history->sum_counts.push_back(0);
 
-	for (int l_index = (int)wrapper->scope_histories.size()-1; l_index >= 0; l_index--) {
-		Scope* scope = wrapper->scope_histories[l_index]->scope;
+	for (int i_index = 0; i_index < (int)wrapper->scope_histories.size(); i_index++) {
+		Scope* scope = wrapper->scope_histories[i_index]->scope;
 		if (scope->default_signal != NULL) {
 			if (scope->signal_experiment_history == NULL
 					|| !scope->signal_experiment_history->is_on) {
-				wrapper->scope_histories[l_index]->explore_experiment_callbacks.push_back(history);
-				break;
+				wrapper->scope_histories[i_index]->explore_experiment_callbacks
+					.push_back(history);
+				wrapper->scope_histories[i_index]->explore_experiment_instance_indexes
+					.push_back((int)history->sum_signal_vals.size()-1);
 			}
 		}
 	}
@@ -48,24 +50,26 @@ void ExploreExperiment::train_existing_backprop(
 		double target_val,
 		ExploreExperimentHistory* history,
 		SolutionWrapper* wrapper) {
-	for (int i_index = 0; i_index < (int)history->signal_is_set.size(); i_index++) {
-		if (history->signal_is_set[i_index]) {
-			this->target_val_histories.push_back(history->signal_vals[i_index]);
-		} else {
-			this->target_val_histories.push_back(target_val);
-		}
+	for (int i_index = 0; i_index < (int)history->sum_signal_vals.size(); i_index++) {
+		history->sum_signal_vals[i_index] += target_val;
+		history->sum_counts[i_index]++;
+
+		double average_val = history->sum_signal_vals[i_index]
+			/ (double)history->sum_counts[i_index];
+
+		this->target_val_histories.push_back(average_val);
 	}
 
 	this->state_iter++;
 	if (this->state_iter >= TRAIN_EXISTING_ITERS) {
-		double average_score;
+		double constant;
 		vector<Input> factor_inputs;
 		vector<double> factor_input_averages;
 		vector<double> factor_input_standard_deviations;
 		vector<double> factor_weights;
 		bool is_success = train_existing(scope_histories,
 										 target_val_histories,
-										 average_score,
+										 constant,
 										 factor_inputs,
 										 factor_input_averages,
 										 factor_input_standard_deviations,
@@ -78,7 +82,7 @@ void ExploreExperiment::train_existing_backprop(
 		this->target_val_histories.clear();
 
 		if (is_success) {
-			this->existing_average_score = average_score;
+			this->existing_constant = constant;
 			this->existing_inputs = factor_inputs;
 			this->existing_input_averages = factor_input_averages;
 			this->existing_input_standard_deviations = factor_input_standard_deviations;

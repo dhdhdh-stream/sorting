@@ -32,8 +32,7 @@ void SignalExperiment::create_reward_signal_helper(vector<vector<vector<double>>
 												   DefaultSignal* default_signal,
 												   vector<Signal*>& previous_signals,
 												   vector<Signal*>& signals,
-												   double& misguess_average,
-												   bool& better_than_default) {
+												   double& misguess_average) {
 	vector<double> current_predicted(current_pre_obs.size());
 	for (int h_index = 0; h_index < (int)current_pre_obs.size(); h_index++) {
 		current_predicted[h_index] = default_signal->calc(
@@ -321,56 +320,4 @@ void SignalExperiment::create_reward_signal_helper(vector<vector<vector<double>>
 	misguess_average = sum_misguess / (double)(current_pre_obs.size() + explore_pre_obs.size());
 
 	cout << "misguess_average: " << misguess_average << endl;
-
-	double sum_explore_scores = 0.0;
-	for (int h_index = 0; h_index < (int)explore_pre_obs.size(); h_index++) {
-		sum_explore_scores += explore_scores[h_index];
-	}
-	double explore_score_average = sum_explore_scores / (double)explore_pre_obs.size();
-
-	double sum_default_misguess = 0.0;
-	for (int h_index = 0; h_index < (int)explore_pre_obs.size(); h_index++) {
-		sum_default_misguess += (explore_scores[h_index] - explore_score_average)
-			* (explore_scores[h_index] - explore_score_average);
-	}
-	double default_misguess_average = sum_default_misguess / (double)explore_pre_obs.size();
-
-	double sum_default_misguess_variance = 0.0;
-	for (int h_index = 0; h_index < (int)explore_pre_obs.size(); h_index++) {
-		double curr_misguess = (explore_scores[h_index] - explore_score_average)
-			* (explore_scores[h_index] - explore_score_average);
-		sum_default_misguess_variance += (curr_misguess - default_misguess_average)
-			* (curr_misguess - default_misguess_average);
-	}
-	double default_misguess_standard_deviation = sqrt(sum_default_misguess_variance / (double)explore_pre_obs.size());
-
-	double sum_explore_misguess = 0.0;
-	for (int h_index = 0; h_index < (int)explore_pre_obs.size(); h_index++) {
-		sum_explore_misguess += (explore_scores[h_index] - explore_predicted[h_index])
-			* (explore_scores[h_index] - explore_predicted[h_index]);
-	}
-	double explore_misguess_average = sum_explore_misguess / (double)explore_pre_obs.size();
-
-	double sum_explore_misguess_variance = 0.0;
-	for (int h_index = 0; h_index < (int)explore_pre_obs.size(); h_index++) {
-		double curr_misguess = (explore_scores[h_index] - explore_predicted[h_index])
-			* (explore_scores[h_index] - explore_predicted[h_index]);
-		sum_explore_misguess_variance += (curr_misguess - explore_misguess_average)
-			* (curr_misguess - explore_misguess_average);
-	}
-	double explore_misguess_standard_deviation = sqrt(sum_explore_misguess_variance / (double)explore_pre_obs.size());
-
-	double signal_improvement = default_misguess_average - explore_misguess_average;
-	double min_standard_deviation = min(default_misguess_standard_deviation, explore_misguess_standard_deviation);
-	double signal_improvement_t_score = signal_improvement / (min_standard_deviation / sqrt((double)explore_pre_obs.size()));
-
-	cout << "default_misguess_average: " << default_misguess_average << endl;
-	cout << "explore_misguess_average: " << explore_misguess_average << endl;
-	cout << "signal_improvement_t_score: " << signal_improvement_t_score << endl;
-
-	if (signal_improvement_t_score >= 2.326) {
-		better_than_default = true;
-	} else {
-		better_than_default = false;
-	}
 }

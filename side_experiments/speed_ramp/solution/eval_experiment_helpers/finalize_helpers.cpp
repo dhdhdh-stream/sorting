@@ -47,6 +47,8 @@ void recursive_add_child(Scope* curr_parent,
 }
 
 void EvalExperiment::add(SolutionWrapper* wrapper) {
+	Scope* scope_context = this->node_context->parent;
+
 	if (this->new_scope != NULL) {
 		this->new_scope->id = wrapper->scope_counter;
 		wrapper->scope_counter++;
@@ -55,8 +57,8 @@ void EvalExperiment::add(SolutionWrapper* wrapper) {
 		clean_scope(this->new_scope,
 					wrapper);
 
-		this->new_scope->child_scopes = this->scope_context->child_scopes;
-		recursive_add_child(this->scope_context,
+		this->new_scope->child_scopes = scope_context->child_scopes;
+		recursive_add_child(scope_context,
 							wrapper,
 							this->new_scope);
 
@@ -67,20 +69,20 @@ void EvalExperiment::add(SolutionWrapper* wrapper) {
 	for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {
 		if (this->step_types[s_index] == STEP_TYPE_ACTION) {
 			ActionNode* new_action_node = new ActionNode();
-			new_action_node->parent = this->scope_context;
-			new_action_node->id = this->scope_context->node_counter;
-			this->scope_context->node_counter++;
-			this->scope_context->nodes[new_action_node->id] = new_action_node;
+			new_action_node->parent = scope_context;
+			new_action_node->id = scope_context->node_counter;
+			scope_context->node_counter++;
+			scope_context->nodes[new_action_node->id] = new_action_node;
 
 			new_action_node->action = this->actions[s_index];
 
 			new_nodes.push_back(new_action_node);
 		} else {
 			ScopeNode* new_scope_node = new ScopeNode();
-			new_scope_node->parent = this->scope_context;
-			new_scope_node->id = this->scope_context->node_counter;
-			this->scope_context->node_counter++;
-			this->scope_context->nodes[new_scope_node->id] = new_scope_node;
+			new_scope_node->parent = scope_context;
+			new_scope_node->id = scope_context->node_counter;
+			scope_context->node_counter++;
+			scope_context->nodes[new_scope_node->id] = new_scope_node;
 
 			new_scope_node->scope = this->scopes[s_index];
 
@@ -96,12 +98,12 @@ void EvalExperiment::add(SolutionWrapper* wrapper) {
 	AbstractNode* exit_node;
 	if (this->exit_next_node == NULL) {
 		new_ending_node = new ObsNode();
-		new_ending_node->parent = this->scope_context;
-		new_ending_node->id = this->scope_context->node_counter;
-		this->scope_context->node_counter++;
+		new_ending_node->parent = scope_context;
+		new_ending_node->id = scope_context->node_counter;
+		scope_context->node_counter++;
 
-		for (map<int, AbstractNode*>::iterator it = this->scope_context->nodes.begin();
-				it != this->scope_context->nodes.end(); it++) {
+		for (map<int, AbstractNode*>::iterator it = scope_context->nodes.begin();
+				it != scope_context->nodes.end(); it++) {
 			if (it->second->type == NODE_TYPE_OBS) {
 				ObsNode* obs_node = (ObsNode*)it->second;
 				if (obs_node->next_node == NULL) {
@@ -115,7 +117,7 @@ void EvalExperiment::add(SolutionWrapper* wrapper) {
 			}
 		}
 
-		this->scope_context->nodes[new_ending_node->id] = new_ending_node;
+		scope_context->nodes[new_ending_node->id] = new_ending_node;
 
 		new_ending_node->next_node_id = -1;
 		new_ending_node->next_node = NULL;
@@ -247,10 +249,10 @@ void EvalExperiment::add(SolutionWrapper* wrapper) {
 		}
 	} else {
 		BranchNode* new_branch_node = new BranchNode();
-		new_branch_node->parent = this->scope_context;
-		new_branch_node->id = this->scope_context->node_counter;
-		this->scope_context->node_counter++;
-		this->scope_context->nodes[new_branch_node->id] = new_branch_node;
+		new_branch_node->parent = scope_context;
+		new_branch_node->id = scope_context->node_counter;
+		scope_context->node_counter++;
+		scope_context->nodes[new_branch_node->id] = new_branch_node;
 
 		switch (this->node_context->type) {
 		case NODE_TYPE_START:
@@ -347,12 +349,12 @@ void EvalExperiment::add(SolutionWrapper* wrapper) {
 						new_branch_node->original_next_node = new_ending_node;
 					} else {
 						new_ending_node = new ObsNode();
-						new_ending_node->parent = this->scope_context;
-						new_ending_node->id = this->scope_context->node_counter;
-						this->scope_context->node_counter++;
+						new_ending_node->parent = scope_context;
+						new_ending_node->id = scope_context->node_counter;
+						scope_context->node_counter++;
 
-						for (map<int, AbstractNode*>::iterator it = this->scope_context->nodes.begin();
-								it != this->scope_context->nodes.end(); it++) {
+						for (map<int, AbstractNode*>::iterator it = scope_context->nodes.begin();
+								it != scope_context->nodes.end(); it++) {
 							if (it->second->type == NODE_TYPE_OBS) {
 								ObsNode* p_obs_node = (ObsNode*)it->second;
 								if (p_obs_node->next_node == NULL) {
@@ -366,7 +368,7 @@ void EvalExperiment::add(SolutionWrapper* wrapper) {
 							}
 						}
 
-						this->scope_context->nodes[new_ending_node->id] = new_ending_node;
+						scope_context->nodes[new_ending_node->id] = new_ending_node;
 
 						new_ending_node->next_node_id = -1;
 						new_ending_node->next_node = NULL;
@@ -461,13 +463,13 @@ void EvalExperiment::add(SolutionWrapper* wrapper) {
 			this->new_network = NULL;
 			new_factor->is_meaningful = true;
 
-			this->scope_context->factors.push_back(new_factor);
+			scope_context->factors.push_back(new_factor);
 
-			new_factor->link((int)this->scope_context->factors.size()-1);
+			new_factor->link((int)scope_context->factors.size()-1);
 
 			Input new_input;
-			new_input.scope_context = {this->scope_context};
-			new_input.factor_index = (int)this->scope_context->factors.size()-1;
+			new_input.scope_context = {scope_context};
+			new_input.factor_index = (int)scope_context->factors.size()-1;
 			new_input.node_context = {-1};
 			new_input.obs_index = -1;
 			this->new_inputs.push_back(new_input);
@@ -476,7 +478,7 @@ void EvalExperiment::add(SolutionWrapper* wrapper) {
 			this->new_weights.push_back(1.0);
 		}
 
-		new_branch_node->average_val = this->new_average_score;
+		new_branch_node->constant = this->new_constant;
 		new_branch_node->inputs = this->new_inputs;
 		new_branch_node->input_averages = this->new_input_averages;
 		new_branch_node->input_standard_deviations = this->new_input_standard_deviations;

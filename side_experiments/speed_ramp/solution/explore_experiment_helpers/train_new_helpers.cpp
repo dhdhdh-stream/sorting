@@ -31,7 +31,7 @@ void ExploreExperiment::train_new_check_activate(
 
 			ScopeHistory* scope_history = wrapper->scope_histories.back();
 
-			double sum_vals = this->existing_average_score;
+			double sum_vals = this->existing_constant;
 			for (int i_index = 0; i_index < (int)this->existing_inputs.size(); i_index++) {
 				double val;
 				bool is_on;
@@ -47,16 +47,18 @@ void ExploreExperiment::train_new_check_activate(
 			}
 			history->existing_predicted_scores.push_back(sum_vals);
 
-			history->signal_is_set.push_back(false);
-			history->signal_vals.push_back(0.0);
+			history->sum_signal_vals.push_back(0.0);
+			history->sum_counts.push_back(0);
 
-			for (int l_index = (int)wrapper->scope_histories.size()-1; l_index >= 0; l_index--) {
-				Scope* scope = wrapper->scope_histories[l_index]->scope;
+			for (int i_index = 0; i_index < (int)wrapper->scope_histories.size(); i_index++) {
+				Scope* scope = wrapper->scope_histories[i_index]->scope;
 				if (scope->default_signal != NULL) {
 					if (scope->signal_experiment_history == NULL
 							|| !scope->signal_experiment_history->is_on) {
-						wrapper->scope_histories[l_index]->explore_experiment_callbacks.push_back(history);
-						break;
+						wrapper->scope_histories[i_index]->explore_experiment_callbacks
+							.push_back(history);
+						wrapper->scope_histories[i_index]->explore_experiment_instance_indexes
+							.push_back((int)history->sum_signal_vals.size()-1);
 					}
 				}
 			}
@@ -120,12 +122,14 @@ void ExploreExperiment::train_new_backprop(
 		ExploreExperimentHistory* history,
 		SolutionWrapper* wrapper) {
 	if (history->existing_predicted_scores.size() > 0) {
-		for (int i_index = 0; i_index < (int)history->existing_predicted_scores.size(); i_index++) {
-			if (history->signal_is_set[i_index]) {
-				this->target_val_histories.push_back(history->signal_vals[i_index] - history->existing_predicted_scores[i_index]);
-			} else {
-				this->target_val_histories.push_back(target_val - history->existing_predicted_scores[i_index]);
-			}
+		for (int i_index = 0; i_index < (int)history->sum_signal_vals.size(); i_index++) {
+			history->sum_signal_vals[i_index] += target_val;
+			history->sum_counts[i_index]++;
+
+			double average_val = history->sum_signal_vals[i_index]
+				/ (double)history->sum_counts[i_index];
+
+			this->target_val_histories.push_back(average_val - history->existing_predicted_scores[i_index]);
 		}
 
 		this->state_iter++;
@@ -134,7 +138,7 @@ void ExploreExperiment::train_new_backprop(
 			this->best_scope_history = NULL;
 			this->target_val_histories.insert(this->target_val_histories.begin(), this->best_surprise);
 
-			double average_score;
+			double constant;
 			vector<Input> factor_inputs;
 			vector<double> factor_input_averages;
 			vector<double> factor_input_standard_deviations;
@@ -144,7 +148,7 @@ void ExploreExperiment::train_new_backprop(
 			double select_percentage;
 			bool is_success = train_new(this->scope_histories,
 										this->target_val_histories,
-										average_score,
+										constant,
 										factor_inputs,
 										factor_input_averages,
 										factor_input_standard_deviations,
@@ -162,14 +166,13 @@ void ExploreExperiment::train_new_backprop(
 			if (is_success && select_percentage > 0.0) {
 				EvalExperiment* new_eval_experiment = new EvalExperiment();
 
-				new_eval_experiment->scope_context = this->scope_context;
 				new_eval_experiment->node_context = this->node_context;
 				new_eval_experiment->is_branch = this->is_branch;
 				new_eval_experiment->exit_next_node = this->exit_next_node;
 
 				new_eval_experiment->select_percentage = select_percentage;
 
-				new_eval_experiment->new_average_score = average_score;
+				new_eval_experiment->new_constant = constant;
 				new_eval_experiment->new_inputs = factor_inputs;
 				new_eval_experiment->new_input_averages = factor_input_averages;
 				new_eval_experiment->new_input_standard_deviations = factor_input_standard_deviations;

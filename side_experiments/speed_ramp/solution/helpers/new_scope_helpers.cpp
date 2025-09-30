@@ -316,7 +316,7 @@ Scope* create_new_scope(Scope* scope_context) {
 						BranchNode* original_branch_node = (BranchNode*)node_it->first;
 						BranchNode* new_branch_node = (BranchNode*)node_mappings[original_branch_node];
 
-						new_branch_node->average_val = original_branch_node->average_val;
+						new_branch_node->constant = original_branch_node->constant;
 
 						for (int i_index = 0; i_index < (int)original_branch_node->inputs.size(); i_index++) {
 							if (original_branch_node->inputs[i_index].factor_index != -1

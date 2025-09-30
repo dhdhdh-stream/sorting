@@ -2,6 +2,7 @@
 #define EXPLORE_EXPERIMENT_H
 
 #include <list>
+#include <map>
 #include <vector>
 
 #include "abstract_experiment.h"
@@ -23,6 +24,10 @@ class ExploreExperimentHistory;
 class ExploreExperimentState;
 class ExploreExperiment : public AbstractExperiment {
 public:
+	AbstractNode* node_context;
+	bool is_branch;
+	AbstractNode* exit_next_node;
+
 	std::list<int> last_num_following_explores;
 	int sum_num_following_explores;
 	std::list<int> last_num_instances;
@@ -31,7 +36,7 @@ public:
 	int state;
 	int state_iter;
 
-	double existing_average_score;
+	double existing_constant;
 	std::vector<Input> existing_inputs;
 	std::vector<double> existing_input_averages;
 	std::vector<double> existing_input_standard_deviations;
@@ -55,8 +60,7 @@ public:
 	std::vector<ScopeHistory*> scope_histories;
 	std::vector<double> target_val_histories;
 
-	ExploreExperiment(Scope* scope_context,
-					  AbstractNode* node_context,
+	ExploreExperiment(AbstractNode* node_context,
 					  bool is_branch,
 					  AbstractNode* exit_next_node);
 	~ExploreExperiment();
@@ -118,9 +122,9 @@ public:
 
 	int num_instances;
 
+	std::vector<double> sum_signal_vals;
+	std::vector<int> sum_counts;
 	std::vector<double> existing_predicted_scores;
-	std::vector<bool> signal_is_set;
-	std::vector<double> signal_vals;
 
 	ExploreExperimentHistory(ExploreExperiment* experiment,
 							 SolutionWrapper* wrapper);

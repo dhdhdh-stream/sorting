@@ -52,7 +52,6 @@ public:
 	 * 
 	 * - but accept if no progress has been made recently
 	 */
-	// TODO: per scope, and based on signal rather than true
 
 	Solution();
 	~Solution();

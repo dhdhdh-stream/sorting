@@ -16,49 +16,22 @@ void EvalExperiment::ramp_backprop(double target_val,
 								   EvalExperimentHistory* history,
 								   SolutionWrapper* wrapper) {
 	if (history->is_on) {
-		this->new_scores.push_back(target_val);
-
-		for (int i_index = 0; i_index < (int)history->signal_is_set.size(); i_index++) {
-			if (history->signal_is_set[i_index]) {
-				this->new_signals.push_back(history->signal_vals[i_index]);
-			} else {
-				this->new_signals.push_back(target_val);
-			}
-		}
+		this->new_sum_scores += target_val;
+		this->new_count++;
 	} else {
-		this->existing_scores.push_back(target_val);
-
-		for (int i_index = 0; i_index < (int)history->signal_is_set.size(); i_index++) {
-			if (history->signal_is_set[i_index]) {
-				this->existing_signals.push_back(history->signal_vals[i_index]);
-			} else {
-				this->existing_signals.push_back(target_val);
-			}
-		}
+		this->existing_sum_scores += target_val;
+		this->existing_count++;
 	}
 
 	this->state_iter++;
-	#if defined(MDEBUG) && MDEBUG
-	if (this->state_iter >= RAMP_EPOCH_NUM_ITERS
-			&& this->existing_scores.size() >= 2
-			&& this->new_scores.size() >= 2) {
-	#else
 	if (this->state_iter >= RAMP_EPOCH_NUM_ITERS) {
-	#endif /* MDEBUG */
-		double existing_sum_score = 0.0;
-		for (int h_index = 0; h_index < (int)this->existing_scores.size(); h_index++) {
-			existing_sum_score += this->existing_scores[h_index];
-		}
-		double existing_score_average = existing_sum_score / (double)this->existing_scores.size();
+		double existing_score_average = this->existing_sum_scores / (double)this->existing_count;
+		double new_score_average = this->new_sum_scores / (double)this->new_count;
 
-		double new_sum_score = 0.0;
-		for (int h_index = 0; h_index < (int)this->new_scores.size(); h_index++) {
-			new_sum_score += this->new_scores[h_index];
-		}
-		double new_score_average = new_sum_score / (double)this->new_scores.size();
-
-		this->existing_scores.clear();
-		this->new_scores.clear();
+		this->existing_sum_scores = 0.0;
+		this->existing_count = 0;
+		this->new_sum_scores = 0.0;
+		this->new_count = 0;
 
 		this->state_iter = 0;
 
@@ -71,10 +44,73 @@ void EvalExperiment::ramp_backprop(double target_val,
 			this->num_fail = 0;
 
 			if (this->curr_ramp == EVAL_GEAR) {
-				this->curr_ramp--;
+				double improvement = new_score_average - existing_score_average;
 
-				this->state = EVAL_EXPERIMENT_STATE_GATHER;
-				this->state_iter = 0;
+				bool is_success;
+				if (wrapper->solution->last_experiment_scores.size() >= MIN_NUM_LAST_EXPERIMENT_TRACK) {
+					int num_better_than = 0;
+					for (list<double>::iterator it = wrapper->solution->last_experiment_scores.begin();
+							it != wrapper->solution->last_experiment_scores.end(); it++) {
+						if (improvement >= *it) {
+							num_better_than++;
+						}
+					}
+
+					int target_better_than = LAST_EXPERIMENT_BETTER_THAN_RATIO * (double)wrapper->solution->last_experiment_scores.size();
+
+					if (num_better_than >= target_better_than) {
+						is_success = true;
+					} else {
+						is_success = false;
+					}
+
+					wrapper->solution->last_experiment_scores.pop_front();
+					wrapper->solution->last_experiment_scores.push_back(improvement);
+				} else {
+					is_success = false;
+
+					wrapper->solution->last_experiment_scores.push_back(improvement);
+				}
+
+				if (is_success) {
+					cout << "success" << endl;
+					cout << "existing_score_average: " << existing_score_average << endl;
+					cout << "new_score_average: " << new_score_average << endl;
+					cout << "this->node_context->parent->id: " << this->node_context->parent->id << endl;
+					cout << "this->node_context->id: " << this->node_context->id << endl;
+					cout << "this->is_branch: " << this->is_branch << endl;
+					cout << "new explore path:";
+					for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {
+						if (this->step_types[s_index] == STEP_TYPE_ACTION) {
+							cout << " " << this->actions[s_index];
+						} else {
+							cout << " E" << this->scopes[s_index]->id;
+						}
+					}
+					cout << endl;
+
+					if (this->exit_next_node == NULL) {
+						cout << "this->exit_next_node->id: " << -1 << endl;
+					} else {
+						cout << "this->exit_next_node->id: " << this->exit_next_node->id << endl;
+					}
+
+					cout << "this->select_percentage: " << this->select_percentage << endl;
+
+					cout << endl;
+
+					this->result = EVAL_RESULT_SUCCESS;
+
+					this->state = EVAL_EXPERIMENT_STATE_WRAPUP;
+					this->state_iter = 0;
+				} else {
+					this->result = EVAL_RESULT_FAIL;
+
+					this->curr_ramp -= 2;
+
+					this->state = EVAL_EXPERIMENT_STATE_WRAPUP;
+					this->state_iter = 0;
+				}
 			}
 		} else {
 			this->num_fail++;

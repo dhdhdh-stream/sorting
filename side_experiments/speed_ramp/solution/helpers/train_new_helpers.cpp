@@ -32,7 +32,7 @@ const int NEW_NUM_FACTORS = 10;
 
 bool train_new(vector<ScopeHistory*>& scope_histories,
 			   vector<double>& target_val_histories,
-			   double& average_score,
+			   double& constant,
 			   vector<Input>& factor_inputs,
 			   vector<double>& factor_input_averages,
 			   vector<double>& factor_input_standard_deviations,
@@ -174,7 +174,7 @@ bool train_new(vector<ScopeHistory*>& scope_histories,
 		return false;
 	}
 
-	average_score = weights(0);
+	constant = weights(0);
 	for (int f_index = 0; f_index < (int)factor_inputs.size(); f_index++) {
 		factor_weights.push_back(weights(1 + f_index));
 	}
@@ -195,7 +195,7 @@ bool train_new(vector<ScopeHistory*>& scope_histories,
 	Eigen::VectorXd predicted = inputs * weights;
 	double sum_offset = 0.0;
 	for (int i_index = 0; i_index < num_instances; i_index++) {
-		sum_offset += abs(predicted(i_index) - average_score);
+		sum_offset += abs(predicted(i_index) - constant);
 	}
 	double average_offset = sum_offset / (double)num_instances;
 	double impact_threshold = average_offset * FACTOR_IMPACT_THRESHOLD;
@@ -231,8 +231,8 @@ bool train_new(vector<ScopeHistory*>& scope_histories,
 		}
 
 		remaining_scores[i_index] = target_val_histories[i_index]
-			- average_score - sum_score;
-		sum_vals[i_index] = average_score + sum_score;
+			- constant - sum_score;
+		sum_vals[i_index] = constant + sum_score;
 	}
 
 	vector<int> best_indexes(NEW_GATHER_NUM_SAMPLES, -1);

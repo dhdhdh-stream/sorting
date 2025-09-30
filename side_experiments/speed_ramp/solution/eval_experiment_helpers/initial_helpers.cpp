@@ -17,31 +17,25 @@ void EvalExperiment::initial_backprop(double target_val,
 									  EvalExperimentHistory* history,
 									  SolutionWrapper* wrapper) {
 	if (history->is_on) {
-		this->new_scores.push_back(target_val);
+		this->new_sum_scores += target_val;
+		this->new_count++;
 	} else {
-		this->existing_scores.push_back(target_val);
+		this->existing_sum_scores += target_val;
+		this->existing_count++;
 	}
 
-	if (this->new_scores.size() >= INITIAL_NUM_SAMPLES) {
-		double existing_sum_score = 0.0;
-		for (int h_index = 0; h_index < (int)this->existing_scores.size(); h_index++) {
-			existing_sum_score += this->existing_scores[h_index];
-		}
-		double existing_score_average = existing_sum_score / (double)this->existing_scores.size();
-
-		double new_sum_score = 0.0;
-		for (int h_index = 0; h_index < (int)this->new_scores.size(); h_index++) {
-			new_sum_score += this->new_scores[h_index];
-		}
-		double new_score_average = new_sum_score / (double)this->new_scores.size();
-
+	if (this->new_count >= INITIAL_NUM_SAMPLES) {
+		double existing_score_average = this->existing_sum_scores / (double)this->existing_count;
+		double new_score_average = this->new_sum_scores / (double)this->new_count;
 		#if defined(MDEBUG) && MDEBUG
 		if (new_score_average >= existing_score_average || rand()%3 != 0) {
 		#else
 		if (new_score_average >= existing_score_average) {
 		#endif /* MDEBUG */
-			this->existing_scores.clear();
-			this->new_scores.clear();
+			this->existing_sum_scores = 0.0;
+			this->existing_count = 0;
+			this->new_sum_scores = 0.0;
+			this->new_count = 0;
 
 			this->curr_ramp = 0;
 
@@ -54,8 +48,10 @@ void EvalExperiment::initial_backprop(double target_val,
 				this->node_context->experiment = NULL;
 				delete this;
 			} else {
-				this->existing_scores.clear();
-				this->new_scores.clear();
+				this->existing_sum_scores = 0.0;
+				this->existing_count = 0;
+				this->new_sum_scores = 0.0;
+				this->new_count = 0;
 			}
 		}
 	}

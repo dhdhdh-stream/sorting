@@ -21,7 +21,7 @@ void EvalExperiment::wrapup_backprop(SolutionWrapper* wrapper,
 		case EVAL_RESULT_SUCCESS:
 			this->curr_ramp++;
 			if (this->curr_ramp >= EXPERIMENT_NUM_GEARS-1) {
-				updated_scopes.insert(this->scope_context);
+				updated_scopes.insert(this->node_context->parent);
 
 				add(wrapper);
 				this->node_context->experiment = NULL;

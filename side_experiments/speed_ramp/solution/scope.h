@@ -64,8 +64,6 @@ public:
 
 	int num_generalize_successes;
 
-	int num_experiments;
-
 	SignalExperiment* signal_experiment;
 	SignalExperimentHistory* signal_experiment_history;
 
@@ -113,8 +111,10 @@ public:
 	int num_actions_snapshot;
 
 	std::vector<ExploreExperimentHistory*> explore_experiment_callbacks;
-	std::vector<EvalExperimentHistory*> eval_experiment_callbacks;
+	std::vector<int> explore_experiment_instance_indexes;
+
 	std::vector<SignalExperimentHistory*> signal_experiment_callbacks;
+	std::vector<int> signal_experiment_instance_indexes;
 
 	ScopeHistory(Scope* scope);
 	ScopeHistory(ScopeHistory* original);

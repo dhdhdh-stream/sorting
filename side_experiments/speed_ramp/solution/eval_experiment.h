@@ -14,8 +14,7 @@ class SolutionWrapper;
 
 const int EVAL_EXPERIMENT_STATE_INITIAL = 0;
 const int EVAL_EXPERIMENT_STATE_RAMP = 1;
-const int EVAL_EXPERIMENT_STATE_GATHER = 2;
-const int EVAL_EXPERIMENT_STATE_WRAPUP = 3;
+const int EVAL_EXPERIMENT_STATE_WRAPUP = 2;
 
 const int EVAL_RESULT_FAIL = 0;
 const int EVAL_RESULT_SUCCESS = 1;
@@ -24,6 +23,10 @@ class EvalExperimentHistory;
 class EvalExperimentState;
 class EvalExperiment : public AbstractExperiment {
 public:
+	AbstractNode* node_context;
+	bool is_branch;
+	AbstractNode* exit_next_node;
+
 	int state;
 	int state_iter;
 	int num_fail;
@@ -35,7 +38,7 @@ public:
 
 	double select_percentage;
 
-	double new_average_score;
+	double new_constant;
 	std::vector<Input> new_inputs;
 	std::vector<double> new_input_averages;
 	std::vector<double> new_input_standard_deviations;
@@ -52,11 +55,10 @@ public:
 
 	int result;
 
-	std::vector<double> existing_scores;
-	std::vector<double> new_scores;
-
-	std::vector<double> existing_signals;
-	std::vector<double> new_signals;
+	double existing_sum_scores;
+	int existing_count;
+	double new_sum_scores;
+	int new_count;
 
 	EvalExperiment();
 	~EvalExperiment();
@@ -104,9 +106,6 @@ public:
 class EvalExperimentHistory {
 public:
 	bool is_on;
-
-	std::vector<bool> signal_is_set;
-	std::vector<double> signal_vals;
 
 	EvalExperimentHistory(EvalExperiment* experiment);
 };

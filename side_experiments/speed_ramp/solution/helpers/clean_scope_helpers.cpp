@@ -2,9 +2,10 @@
 
 #include <iostream>
 
-#include "abstract_experiment.h"
 #include "action_node.h"
 #include "branch_node.h"
+#include "eval_experiment.h"
+#include "explore_experiment.h"
 #include "factor.h"
 #include "globals.h"
 #include "obs_node.h"
@@ -63,8 +64,23 @@ void clean_scope(Scope* scope,
 			}
 
 			if (it->second->experiment != NULL) {
-				if (it->second->experiment->exit_next_node != NULL) {
-					next_node_ids.insert(it->second->experiment->exit_next_node->id);
+				switch (it->second->experiment->type) {
+				case EXPERIMENT_TYPE_EXPLORE:
+					{
+						ExploreExperiment* explore_experiment = (ExploreExperiment*)it->second->experiment;
+						if (explore_experiment->exit_next_node != NULL) {
+							next_node_ids.insert(explore_experiment->exit_next_node->id);
+						}
+					}
+					break;
+				case EXPERIMENT_TYPE_EVAL:
+					{
+						EvalExperiment* eval_experiment = (EvalExperiment*)it->second->experiment;
+						if (eval_experiment->exit_next_node != NULL) {
+							next_node_ids.insert(eval_experiment->exit_next_node->id);
+						}
+					}
+					break;
 				}
 			}
 		}
@@ -157,8 +173,23 @@ void clean_scope(Scope* scope,
 	for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
 			it != scope->nodes.end(); it++) {
 		if (it->second->experiment != NULL) {
-			if (it->second->experiment->exit_next_node != NULL) {
-				experiment_endpoints.insert(it->second->experiment->exit_next_node);
+			switch (it->second->experiment->type) {
+			case EXPERIMENT_TYPE_EXPLORE:
+				{
+					ExploreExperiment* explore_experiment = (ExploreExperiment*)it->second->experiment;
+					if (explore_experiment->exit_next_node != NULL) {
+						experiment_endpoints.insert(explore_experiment->exit_next_node);
+					}
+				}
+				break;
+			case EXPERIMENT_TYPE_EVAL:
+				{
+					EvalExperiment* eval_experiment = (EvalExperiment*)it->second->experiment;
+					if (eval_experiment->exit_next_node != NULL) {
+						experiment_endpoints.insert(eval_experiment->exit_next_node);
+					}
+				}
+				break;
 			}
 		}
 	}

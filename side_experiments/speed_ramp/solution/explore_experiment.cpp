@@ -8,13 +8,11 @@
 
 using namespace std;
 
-ExploreExperiment::ExploreExperiment(Scope* scope_context,
-									 AbstractNode* node_context,
+ExploreExperiment::ExploreExperiment(AbstractNode* node_context,
 									 bool is_branch,
 									 AbstractNode* exit_next_node) {
 	this->type = EXPERIMENT_TYPE_EXPLORE;
 
-	this->scope_context = scope_context;
 	this->node_context = node_context;
 	this->is_branch = is_branch;
 	this->exit_next_node = exit_next_node;

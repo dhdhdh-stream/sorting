@@ -26,22 +26,6 @@ void EvalExperiment::check_activate(AbstractNode* experiment_node,
 			history = it->second;
 		}
 
-		if (this->curr_ramp == EVAL_GEAR-1) {
-			history->signal_is_set.push_back(false);
-			history->signal_vals.push_back(0.0);
-
-			for (int l_index = (int)wrapper->scope_histories.size()-1; l_index >= 0; l_index--) {
-				Scope* scope = wrapper->scope_histories[l_index]->scope;
-				if (scope->default_signal != NULL) {
-					if (scope->signal_experiment_history == NULL
-							|| !scope->signal_experiment_history->is_on) {
-						wrapper->scope_histories[l_index]->eval_experiment_callbacks.push_back(history);
-						break;
-					}
-				}
-			}
-		}
-
 		if (history->is_on) {
 			ScopeHistory* scope_history = wrapper->scope_histories.back();
 
@@ -50,7 +34,7 @@ void EvalExperiment::check_activate(AbstractNode* experiment_node,
 				new_experiment_state->step_index = 0;
 				wrapper->experiment_context.back() = new_experiment_state;
 			} else {
-				double sum_vals = this->new_average_score;
+				double sum_vals = this->new_constant;
 
 				for (int i_index = 0; i_index < (int)this->new_inputs.size(); i_index++) {
 					double val;
@@ -171,11 +155,6 @@ void EvalExperiment::backprop(double target_val,
 		ramp_backprop(target_val,
 					  history,
 					  wrapper);
-		break;
-	case EVAL_EXPERIMENT_STATE_GATHER:
-		gather_backprop(target_val,
-						history,
-						wrapper);
 		break;
 	case EVAL_EXPERIMENT_STATE_WRAPUP:
 		wrapup_backprop(wrapper,

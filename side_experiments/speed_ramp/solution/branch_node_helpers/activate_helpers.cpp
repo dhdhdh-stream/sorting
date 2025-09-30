@@ -21,7 +21,7 @@ void BranchNode::step(vector<double>& obs,
 	BranchNodeHistory* history = new BranchNodeHistory(this);
 	scope_history->node_histories[this->id] = history;
 
-	double sum_vals = this->average_val;
+	double sum_vals = this->constant;
 	for (int i_index = 0; i_index < (int)this->inputs.size(); i_index++) {
 		double val;
 		bool is_on;

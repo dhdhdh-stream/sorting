@@ -16,6 +16,11 @@ EvalExperiment::EvalExperiment() {
 
 	this->curr_ramp = -1;
 
+	this->existing_sum_scores = 0.0;
+	this->existing_count = 0;
+	this->new_sum_scores = 0.0;
+	this->new_count = 0;
+
 	this->state = EVAL_EXPERIMENT_STATE_INITIAL;
 	this->state_iter = 0;
 	this->num_fail = 0;
@@ -74,7 +79,6 @@ EvalExperimentHistory::EvalExperimentHistory(EvalExperiment* experiment) {
 		}
 		break;
 	case EVAL_EXPERIMENT_STATE_RAMP:
-	case EVAL_EXPERIMENT_STATE_GATHER:
 	case EVAL_EXPERIMENT_STATE_WRAPUP:
 		{
 			uniform_int_distribution<int> on_distribution(0, EXPERIMENT_NUM_GEARS-1);

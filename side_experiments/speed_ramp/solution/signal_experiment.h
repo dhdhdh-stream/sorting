@@ -30,16 +30,18 @@ const int EXISTING_EXPLORE_SAMPLES = 40;
 const int NEW_CURRENT_SAMPLES = 80;
 const int NEW_EXPLORE_SAMPLES = 40;
 #else
-const int EXISTING_CURRENT_SAMPLES = 8000;
-const int EXISTING_EXPLORE_SAMPLES = 4000;
+const int EXISTING_CURRENT_SAMPLES = 2000;
+const int EXISTING_EXPLORE_SAMPLES = 1000;
 
-const int NEW_CURRENT_SAMPLES = 8000;
-const int NEW_EXPLORE_SAMPLES = 4000;
+const int NEW_CURRENT_SAMPLES = 2000;
+const int NEW_EXPLORE_SAMPLES = 1000;
 #endif /* MDEBUG */
 
 class SignalExperimentHistory;
 class SignalExperiment : public AbstractExperiment {
 public:
+	Scope* scope_context;
+
 	std::list<int> last_num_following_explores;
 	int sum_num_following_explores;
 
@@ -142,8 +144,7 @@ public:
 									 DefaultSignal* default_signal,
 									 std::vector<Signal*>& previous_signals,
 									 std::vector<Signal*>& signals,
-									 double& misguess_average,
-									 bool& better_than_default);
+									 double& misguess_average);
 };
 
 class SignalExperimentHistory {
@@ -151,12 +152,12 @@ public:
 	bool is_on;
 
 	std::vector<std::vector<std::vector<double>>> pre_obs;
+	std::vector<bool> start_has_explore;
 	std::vector<std::vector<std::vector<double>>> post_obs;
-	std::vector<bool> inner_is_explore;
+	std::vector<bool> end_has_explore;
 
-	std::vector<bool> signal_is_set;
-	std::vector<double> signal_vals;
-	std::vector<bool> outer_is_explore;
+	std::vector<double> sum_signal_vals;
+	std::vector<int> sum_counts;
 
 	SignalExperimentHistory(SignalExperiment* experiment,
 							SolutionWrapper* wrapper);

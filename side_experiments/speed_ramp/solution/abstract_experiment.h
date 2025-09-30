@@ -16,11 +16,6 @@ class AbstractExperiment {
 public:
 	int type;
 
-	Scope* scope_context;
-	AbstractNode* node_context;
-	bool is_branch;
-	AbstractNode* exit_next_node;
-
 	virtual ~AbstractExperiment() {};
 
 	virtual void check_activate(AbstractNode* experiment_node,

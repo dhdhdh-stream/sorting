@@ -123,21 +123,21 @@ bool experiment_check_signal_activate(vector<double>& obs,
 				return true;
 			} else {
 				if (scope_history->explore_experiment_callbacks.size() > 0
-						|| scope_history->eval_experiment_callbacks.size() > 0
 						|| scope_history->signal_experiment_callbacks.size() > 0) {
 					double signal = calc_signal(scope_history);
 					for (int e_index = 0; e_index < (int)scope_history->explore_experiment_callbacks.size(); e_index++) {
-						scope_history->explore_experiment_callbacks[e_index]->signal_is_set.back() = true;
-						scope_history->explore_experiment_callbacks[e_index]->signal_vals.back() = signal;
-					}
-					for (int e_index = 0; e_index < (int)scope_history->eval_experiment_callbacks.size(); e_index++) {
-						scope_history->eval_experiment_callbacks[e_index]->signal_is_set.back() = true;
-						scope_history->eval_experiment_callbacks[e_index]->signal_vals.back() = signal;
+						ExploreExperimentHistory* explore_experiment_history = scope_history->explore_experiment_callbacks[e_index];
+						int instance_index = scope_history->explore_experiment_instance_indexes[e_index];
+
+						explore_experiment_history->sum_signal_vals[instance_index] += signal;
+						explore_experiment_history->sum_counts[instance_index]++;
 					}
 					for (int e_index = 0; e_index < (int)scope_history->signal_experiment_callbacks.size(); e_index++) {
-						scope_history->signal_experiment_callbacks[e_index]->signal_is_set.back() = true;
-						scope_history->signal_experiment_callbacks[e_index]->signal_vals.back() = signal;
-						scope_history->signal_experiment_callbacks[e_index]->outer_is_explore.back() = wrapper->has_explore;
+						SignalExperimentHistory* signal_experiment_history = scope_history->signal_experiment_callbacks[e_index];
+						int instance_index = scope_history->signal_experiment_instance_indexes[e_index];
+
+						signal_experiment_history->sum_signal_vals[instance_index] += signal;
+						signal_experiment_history->sum_counts[instance_index]++;
 					}
 				}
 			}
