@@ -24,8 +24,13 @@ const int TRAIN_EXISTING_ITERS = 100000;
 const int TRAIN_NEW_ITERS = 300000;
 #endif /* MDEBUG */
 
-DefaultSignal* SignalExperiment::train_existing_default() {
-	DefaultSignal* default_signal = new DefaultSignal(this->scope_context->default_signal);
+DefaultSignal* SignalExperiment::train_existing_default(bool is_pre) {
+	DefaultSignal* default_signal;
+	if (is_pre) {
+		default_signal = new DefaultSignal(this->scope_context->pre_default_signal);
+	} else {
+		default_signal = new DefaultSignal(this->scope_context->post_default_signal);
+	}
 
 	uniform_int_distribution<int> random_distribution(0, this->existing_explore_pre_obs.size()-1);
 	for (int iter_index = 0; iter_index < TRAIN_EXISTING_ITERS; iter_index++) {
@@ -52,7 +57,7 @@ DefaultSignal* SignalExperiment::train_existing_default() {
 	return default_signal;
 }
 
-DefaultSignal* SignalExperiment::train_new_default() {
+DefaultSignal* SignalExperiment::train_new_default(bool is_pre) {
 	vector<bool> new_score_input_is_pre;
 	vector<int> new_score_input_indexes;
 	vector<int> new_score_input_obs_indexes;
@@ -60,6 +65,7 @@ DefaultSignal* SignalExperiment::train_new_default() {
 	train_score(this->new_explore_pre_obs,
 				this->new_explore_post_obs,
 				this->new_explore_scores,
+				is_pre,
 				new_score_input_is_pre,
 				new_score_input_indexes,
 				new_score_input_obs_indexes,
@@ -77,6 +83,7 @@ DefaultSignal* SignalExperiment::train_new_default() {
 void SignalExperiment::train_score(vector<vector<vector<double>>>& pre_obs,
 								   vector<vector<vector<double>>>& post_obs,
 								   vector<double>& scores,
+								   bool is_pre,
 								   vector<bool>& new_score_input_is_pre,
 								   vector<int>& new_score_input_indexes,
 								   vector<int>& new_score_input_obs_indexes,
@@ -87,9 +94,11 @@ void SignalExperiment::train_score(vector<vector<vector<double>>>& pre_obs,
 			possible_inputs.push_back({true, {i_index, o_index}});
 		}
 	}
-	for (int i_index = 0; i_index < (int)post_obs[0].size(); i_index++) {
-		for (int o_index = 0; o_index < (int)post_obs[0][i_index].size(); o_index++) {
-			possible_inputs.push_back({false, {i_index, o_index}});
+	if (!is_pre) {
+		for (int i_index = 0; i_index < (int)post_obs[0].size(); i_index++) {
+			for (int o_index = 0; o_index < (int)post_obs[0][i_index].size(); o_index++) {
+				possible_inputs.push_back({false, {i_index, o_index}});
+			}
 		}
 	}
 

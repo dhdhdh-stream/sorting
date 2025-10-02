@@ -52,7 +52,7 @@ void ExploreExperiment::train_new_check_activate(
 
 			for (int i_index = 0; i_index < (int)wrapper->scope_histories.size(); i_index++) {
 				Scope* scope = wrapper->scope_histories[i_index]->scope;
-				if (scope->default_signal != NULL) {
+				if (scope->pre_default_signal != NULL) {
 					if (scope->signal_experiment_history == NULL
 							|| !scope->signal_experiment_history->is_on) {
 						wrapper->scope_histories[i_index]->explore_experiment_callbacks

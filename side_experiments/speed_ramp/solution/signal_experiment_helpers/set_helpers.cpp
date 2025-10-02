@@ -7,20 +7,24 @@
 using namespace std;
 
 void SignalExperiment::set_actions() {
-	if (this->scope_context->default_signal == NULL) {
-		geometric_distribution<int> num_actions_distribution(0.2);
+	if (this->scope_context->pre_default_signal == NULL) {
+		geometric_distribution<int> num_actions_distribution(0.1);
 
 		int num_pre = num_actions_distribution(generator);
 		this->pre_action_initialized = vector<bool>(num_pre, false);
 		this->pre_actions = vector<int>(num_pre, -1);
 
-		int num_post = 5 + num_actions_distribution(generator);
+		int num_post = num_actions_distribution(generator);
 		this->post_action_initialized = vector<bool>(num_post, false);
 		this->post_actions = vector<int>(num_post, -1);
 	} else {
-		for (int s_index = 0; s_index < (int)this->scope_context->signals.size(); s_index++) {
-			this->adjusted_previous_signals.push_back(
-				new Signal(this->scope_context->signals[s_index]));
+		for (int s_index = 0; s_index < (int)this->scope_context->pre_signals.size(); s_index++) {
+			this->adjusted_previous_pre_signals.push_back(
+				new Signal(this->scope_context->pre_signals[s_index]));
+		}
+		for (int s_index = 0; s_index < (int)this->scope_context->post_signals.size(); s_index++) {
+			this->adjusted_previous_post_signals.push_back(
+				new Signal(this->scope_context->post_signals[s_index]));
 		}
 
 		/**
@@ -52,8 +56,15 @@ void SignalExperiment::set_actions() {
 			this->pre_action_initialized.insert(this->pre_action_initialized.begin() + pre_index, false);
 			this->pre_actions.insert(this->pre_actions.begin() + pre_index, -1);
 		}
-		for (int s_index = 0; s_index < (int)this->adjusted_previous_signals.size(); s_index++) {
-			this->adjusted_previous_signals[s_index]->insert(
+		for (int s_index = 0; s_index < (int)this->adjusted_previous_pre_signals.size(); s_index++) {
+			this->adjusted_previous_pre_signals[s_index]->insert(
+				true,
+				pre_index,
+				pre_exit_index,
+				pre_insert_length);
+		}
+		for (int s_index = 0; s_index < (int)this->adjusted_previous_post_signals.size(); s_index++) {
+			this->adjusted_previous_post_signals[s_index]->insert(
 				true,
 				pre_index,
 				pre_exit_index,
@@ -78,8 +89,8 @@ void SignalExperiment::set_actions() {
 			this->post_action_initialized.insert(this->post_action_initialized.begin() + post_index, false);
 			this->post_actions.insert(this->post_actions.begin() + post_index, -1);
 		}
-		for (int s_index = 0; s_index < (int)this->adjusted_previous_signals.size(); s_index++) {
-			this->adjusted_previous_signals[s_index]->insert(
+		for (int s_index = 0; s_index < (int)this->adjusted_previous_post_signals.size(); s_index++) {
+			this->adjusted_previous_post_signals[s_index]->insert(
 				false,
 				post_index,
 				post_exit_index,

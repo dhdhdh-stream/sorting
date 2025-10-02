@@ -39,10 +39,6 @@ int main(int argc, char* argv[]) {
 		"saves/",
 		filename);
 
-	// temp
-	cout << "solution_wrapper->solution->scopes[0]->signals.size(): " << solution_wrapper->solution->scopes[0]->signals.size() << endl;
-	cout << "solution_wrapper->solution->scopes[0]->default_signal: " << solution_wrapper->solution->scopes[0]->default_signal << endl;
-
 	{
 		Problem* problem = problem_type->get_problem();
 

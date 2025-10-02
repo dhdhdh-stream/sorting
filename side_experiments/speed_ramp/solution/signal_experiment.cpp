@@ -23,8 +23,11 @@ SignalExperiment::SignalExperiment(Scope* scope_context) {
 }
 
 SignalExperiment::~SignalExperiment() {
-	for (int s_index = 0; s_index < (int)this->adjusted_previous_signals.size(); s_index++) {
-		delete this->adjusted_previous_signals[s_index];
+	for (int s_index = 0; s_index < (int)this->adjusted_previous_pre_signals.size(); s_index++) {
+		delete this->adjusted_previous_pre_signals[s_index];
+	}
+	for (int s_index = 0; s_index < (int)this->adjusted_previous_post_signals.size(); s_index++) {
+		delete this->adjusted_previous_post_signals[s_index];
 	}
 }
 

@@ -20,7 +20,8 @@
 using namespace std;
 
 Scope::Scope() {
-	this->default_signal = NULL;
+	this->pre_default_signal = NULL;
+	this->post_default_signal = NULL;
 
 	this->num_generalize_successes = 0;
 
@@ -38,12 +39,20 @@ Scope::~Scope() {
 		delete this->factors[f_index];
 	}
 
-	for (int s_index = 0; s_index < (int)this->signals.size(); s_index++) {
-		delete this->signals[s_index];
+	for (int s_index = 0; s_index < (int)this->pre_signals.size(); s_index++) {
+		delete this->pre_signals[s_index];
 	}
 
-	if (this->default_signal != NULL) {
-		delete this->default_signal;
+	if (this->pre_default_signal != NULL) {
+		delete this->pre_default_signal;
+	}
+
+	for (int s_index = 0; s_index < (int)this->post_signals.size(); s_index++) {
+		delete this->post_signals[s_index];
+	}
+
+	if (this->post_default_signal != NULL) {
+		delete this->post_default_signal;
 	}
 }
 
@@ -218,14 +227,24 @@ void Scope::save(ofstream& output_file) {
 		output_file << this->signal_post_actions[a_index] << endl;
 	}
 
-	output_file << this->signals.size() << endl;
-	for (int s_index = 0; s_index < (int)this->signals.size(); s_index++) {
-		this->signals[s_index]->save(output_file);
+	output_file << this->pre_signals.size() << endl;
+	for (int s_index = 0; s_index < (int)this->pre_signals.size(); s_index++) {
+		this->pre_signals[s_index]->save(output_file);
 	}
 
-	output_file << (this->default_signal == NULL) << endl;
-	if (this->default_signal != NULL) {
-		this->default_signal->save(output_file);
+	output_file << (this->pre_default_signal == NULL) << endl;
+	if (this->pre_default_signal != NULL) {
+		this->pre_default_signal->save(output_file);
+	}
+
+	output_file << this->post_signals.size() << endl;
+	for (int s_index = 0; s_index < (int)this->post_signals.size(); s_index++) {
+		this->post_signals[s_index]->save(output_file);
+	}
+
+	output_file << (this->post_default_signal == NULL) << endl;
+	if (this->post_default_signal != NULL) {
+		this->post_default_signal->save(output_file);
 	}
 
 	output_file << this->child_scopes.size() << endl;
@@ -333,18 +352,32 @@ void Scope::load(ifstream& input_file,
 		this->signal_post_actions.push_back(stoi(action_line));
 	}
 
-	string num_signals_line;
-	getline(input_file, num_signals_line);
-	int num_signals = stoi(num_signals_line);
-	for (int s_index = 0; s_index < num_signals; s_index++) {
-		this->signals.push_back(new Signal(input_file));
+	string num_pre_signals_line;
+	getline(input_file, num_pre_signals_line);
+	int num_pre_signals = stoi(num_pre_signals_line);
+	for (int s_index = 0; s_index < num_pre_signals; s_index++) {
+		this->pre_signals.push_back(new Signal(input_file));
 	}
 
-	string default_signal_is_null_line;
-	getline(input_file, default_signal_is_null_line);
-	bool default_signal_is_null = stoi(default_signal_is_null_line);
-	if (!default_signal_is_null) {
-		this->default_signal = new DefaultSignal(input_file);
+	string pre_default_signal_is_null_line;
+	getline(input_file, pre_default_signal_is_null_line);
+	bool pre_default_signal_is_null = stoi(pre_default_signal_is_null_line);
+	if (!pre_default_signal_is_null) {
+		this->pre_default_signal = new DefaultSignal(input_file);
+	}
+
+	string num_post_signals_line;
+	getline(input_file, num_post_signals_line);
+	int num_post_signals = stoi(num_post_signals_line);
+	for (int s_index = 0; s_index < num_post_signals; s_index++) {
+		this->post_signals.push_back(new Signal(input_file));
+	}
+
+	string post_default_signal_is_null_line;
+	getline(input_file, post_default_signal_is_null_line);
+	bool post_default_signal_is_null = stoi(post_default_signal_is_null_line);
+	if (!post_default_signal_is_null) {
+		this->post_default_signal = new DefaultSignal(input_file);
 	}
 
 	string num_child_scopes_line;

@@ -26,6 +26,7 @@ const double MAX_AVERAGE_ERROR = 0.1;
 
 bool SignalExperiment::split_helper(vector<vector<vector<double>>>& pre_obs,
 									vector<vector<vector<double>>>& post_obs,
+									bool is_pre,
 									vector<bool>& new_match_input_is_pre,
 									vector<int>& new_match_input_indexes,
 									vector<int>& new_match_input_obs_indexes,
@@ -36,9 +37,11 @@ bool SignalExperiment::split_helper(vector<vector<vector<double>>>& pre_obs,
 			possible_inputs.push_back({true, {i_index, o_index}});
 		}
 	}
-	for (int i_index = 0; i_index < (int)post_obs[0].size(); i_index++) {
-		for (int o_index = 0; o_index < (int)post_obs[0][i_index].size(); o_index++) {
-			possible_inputs.push_back({false, {i_index, o_index}});
+	if (!is_pre) {
+		for (int i_index = 0; i_index < (int)post_obs[0].size(); i_index++) {
+			for (int o_index = 0; o_index < (int)post_obs[0][i_index].size(); o_index++) {
+				possible_inputs.push_back({false, {i_index, o_index}});
+			}
 		}
 	}
 

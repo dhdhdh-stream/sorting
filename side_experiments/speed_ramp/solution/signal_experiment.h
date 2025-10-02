@@ -1,3 +1,7 @@
+/**
+ * - simply add pre and post misguess as final score
+ */
+
 #ifndef SIGNAL_EXPERIMENT_H
 #define SIGNAL_EXPERIMENT_H
 
@@ -46,7 +50,8 @@ public:
 	std::vector<bool> post_action_initialized;
 	std::vector<int> post_actions;
 
-	std::vector<Signal*> adjusted_previous_signals;
+	std::vector<Signal*> adjusted_previous_pre_signals;
+	std::vector<Signal*> adjusted_previous_post_signals;
 
 	int curr_ramp;
 
@@ -107,22 +112,25 @@ public:
 	void set_actions();
 	bool split_helper(std::vector<std::vector<std::vector<double>>>& pre_obs,
 					  std::vector<std::vector<std::vector<double>>>& post_obs,
+					  bool is_pre,
 					  std::vector<bool>& new_match_input_is_pre,
 					  std::vector<int>& new_match_input_indexes,
 					  std::vector<int>& new_match_input_obs_indexes,
 					  SignalNetwork*& new_match_network);
-	void train_score(std::vector<std::vector<std::vector<double>>>& pre_obs_histories,
-					 std::vector<std::vector<std::vector<double>>>& post_obs_histories,
+	void train_score(std::vector<std::vector<std::vector<double>>>& pre_obs,
+					 std::vector<std::vector<std::vector<double>>>& post_obs,
 					 std::vector<double>& target_val_histories,
+					 bool is_pre,
 					 std::vector<bool>& new_score_input_is_pre,
 					 std::vector<int>& new_score_input_indexes,
 					 std::vector<int>& new_score_input_obs_indexes,
 					 SignalNetwork*& new_score_network);
-	DefaultSignal* train_existing_default();
-	DefaultSignal* train_new_default();
+	DefaultSignal* train_existing_default(bool is_pre);
+	DefaultSignal* train_new_default(bool is_pre);
 	void create_reward_signal_helper(std::vector<std::vector<std::vector<double>>>& pre_obs,
 									 std::vector<std::vector<std::vector<double>>>& post_obs,
 									 std::vector<double>& scores,
+									 bool is_pre,
 									 DefaultSignal* default_signal,
 									 std::vector<Signal*>& previous_signals,
 									 std::vector<Signal*>& signals,

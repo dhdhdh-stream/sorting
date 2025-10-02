@@ -91,10 +91,14 @@ void SignalExperiment::initial_backprop(double target_val,
 				break;
 			}
 		} else {
-			for (int s_index = 0; s_index < (int)this->adjusted_previous_signals.size(); s_index++) {
-				delete this->adjusted_previous_signals[s_index];
+			for (int s_index = 0; s_index < (int)this->adjusted_previous_pre_signals.size(); s_index++) {
+				delete this->adjusted_previous_pre_signals[s_index];
 			}
-			this->adjusted_previous_signals.clear();
+			this->adjusted_previous_pre_signals.clear();
+			for (int s_index = 0; s_index < (int)this->adjusted_previous_post_signals.size(); s_index++) {
+				delete this->adjusted_previous_post_signals[s_index];
+			}
+			this->adjusted_previous_post_signals.clear();
 
 			this->existing_scores.clear();
 			this->new_scores.clear();

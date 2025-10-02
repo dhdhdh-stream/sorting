@@ -109,7 +109,7 @@ bool SignalExperiment::check_signal_activate(vector<double>& obs,
 						 */
 						for (int i_index = 0; i_index < (int)wrapper->scope_histories.size()-1; i_index++) {
 							Scope* scope = wrapper->scope_histories[i_index]->scope;
-							if (scope->default_signal != NULL) {
+							if (scope->pre_default_signal != NULL) {
 								if (scope->signal_experiment_history == NULL
 										|| !scope->signal_experiment_history->is_on) {
 									wrapper->scope_histories[i_index]->signal_experiment_callbacks
@@ -192,7 +192,7 @@ bool SignalExperiment::check_signal_activate(vector<double>& obs,
 						 */
 						for (int i_index = 0; i_index < (int)wrapper->scope_histories.size()-1; i_index++) {
 							Scope* scope = wrapper->scope_histories[i_index]->scope;
-							if (scope->default_signal != NULL) {
+							if (scope->pre_default_signal != NULL) {
 								if (scope->signal_experiment_history == NULL
 										|| !scope->signal_experiment_history->is_on) {
 									wrapper->scope_histories[i_index]->signal_experiment_callbacks

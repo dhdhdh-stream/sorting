@@ -18,20 +18,51 @@ using namespace std;
 double calc_signal(ScopeHistory* signal_needed_from) {
 	Scope* scope = signal_needed_from->scope;
 
-	for (int s_index = 0; s_index < (int)scope->signals.size(); s_index++) {
-		bool is_match;
-		double val;
-		scope->signals[s_index]->calc(signal_needed_from->signal_pre_obs,
-									  signal_needed_from->signal_post_obs,
-									  is_match,
-									  val);
-		if (is_match) {
-			return val;
+	double pre_val;
+	{
+		bool use_default = true;
+		for (int s_index = 0; s_index < (int)scope->pre_signals.size(); s_index++) {
+			bool is_match;
+			double val;
+			scope->pre_signals[s_index]->calc(signal_needed_from->signal_pre_obs,
+											  signal_needed_from->signal_post_obs,
+											  is_match,
+											  val);
+			if (is_match) {
+				use_default = false;
+				pre_val = val;
+			}
+		}
+
+		if (use_default) {
+			pre_val = scope->pre_default_signal->calc(signal_needed_from->signal_pre_obs,
+													  signal_needed_from->signal_post_obs);
 		}
 	}
 
-	return scope->default_signal->calc(signal_needed_from->signal_pre_obs,
-									   signal_needed_from->signal_post_obs);
+	double post_val;
+	{
+		bool use_default = true;
+		for (int s_index = 0; s_index < (int)scope->post_signals.size(); s_index++) {
+			bool is_match;
+			double val;
+			scope->post_signals[s_index]->calc(signal_needed_from->signal_pre_obs,
+											   signal_needed_from->signal_post_obs,
+											   is_match,
+											   val);
+			if (is_match) {
+				use_default = false;
+				post_val = val;
+			}
+		}
+
+		if (use_default) {
+			post_val = scope->post_default_signal->calc(signal_needed_from->signal_pre_obs,
+														signal_needed_from->signal_post_obs);
+		}
+	}
+
+	return post_val - pre_val;
 }
 
 bool check_signal_activate(vector<double>& obs,

@@ -23,6 +23,7 @@ const double CHECK_MIN_MATCH_RATIO = 0.05;
 void SignalExperiment::create_reward_signal_helper(vector<vector<vector<double>>>& pre_obs,
 												   vector<vector<vector<double>>>& post_obs,
 												   vector<double>& scores,
+												   bool is_pre,
 												   DefaultSignal* default_signal,
 												   vector<Signal*>& previous_signals,
 												   vector<Signal*>& signals,
@@ -95,6 +96,7 @@ void SignalExperiment::create_reward_signal_helper(vector<vector<vector<double>>
 		SignalNetwork* new_match_network = NULL;
 		bool split_is_success = split_helper(pre_obs,
 											 post_obs,
+											 is_pre,
 											 new_match_input_is_pre,
 											 new_match_input_indexes,
 											 new_match_input_obs_indexes,
@@ -140,6 +142,7 @@ void SignalExperiment::create_reward_signal_helper(vector<vector<vector<double>>
 				train_score(match_pre_obs,
 							match_post_obs,
 							match_target_vals,
+							is_pre,
 							new_score_input_is_pre,
 							new_score_input_indexes,
 							new_score_input_obs_indexes,

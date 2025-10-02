@@ -1,10 +1,3 @@
-/**
- * TODO:
- * - predict score relative to current average
- *   - more likely for signal to predict relative than global true
- *     - so predicting relative leads to less adjustments
- */
-
 #ifndef SCOPE_H
 #define SCOPE_H
 
@@ -41,24 +34,19 @@ public:
 
 	/**
 	 * - separate actions/obs for signal
-	 *   - don't have to worry about changes destroying signal
+	 *   - don't have to worry about solution destroying signal
+	 *     - and vice versa
 	 *   - don't have to worry about branching
-	 * 
-	 * - simply only worry about signal at end
-	 *   - impact of an explore will be calculated through train_existing step
-	 * 
-	 * - signals need to be perfect
-	 *   - at least for everything so far
-	 *   - at least when predicting good
-	 *   - anytime a trap is hit, either learn to recognize or give up on signal
 	 * 
 	 * - always perform signal actions
 	 *   - as experiments done in their presence
 	 */
 	std::vector<int> signal_pre_actions;
 	std::vector<int> signal_post_actions;
-	std::vector<Signal*> signals;
-	DefaultSignal* default_signal;
+	std::vector<Signal*> pre_signals;
+	DefaultSignal* pre_default_signal;
+	std::vector<Signal*> post_signals;
+	DefaultSignal* post_default_signal;
 
 	std::vector<Scope*> child_scopes;
 
