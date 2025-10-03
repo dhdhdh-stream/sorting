@@ -50,6 +50,14 @@ void EvalExperiment::add(SolutionWrapper* wrapper) {
 	Scope* scope_context = this->node_context->parent;
 
 	if (this->new_scope != NULL) {
+		for (map<int, AbstractNode*>::iterator it = this->new_scope->nodes.begin();
+				it != this->new_scope->nodes.end(); it++) {
+			if (it->second->type == NODE_TYPE_SCOPE) {
+				ScopeNode* scope_node = (ScopeNode*)it->second;
+				scope_node->scope->num_generalize_successes++;
+			}
+		}
+
 		this->new_scope->id = wrapper->scope_counter;
 		wrapper->scope_counter++;
 		wrapper->solution->scopes[this->new_scope->id] = this->new_scope;
