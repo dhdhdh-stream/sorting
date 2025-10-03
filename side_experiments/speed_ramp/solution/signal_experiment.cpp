@@ -57,7 +57,6 @@ SignalExperimentHistory::SignalExperimentHistory(
 		}
 		break;
 	case SIGNAL_EXPERIMENT_STATE_RAMP:
-	case SIGNAL_EXPERIMENT_STATE_GATHER:
 	case SIGNAL_EXPERIMENT_STATE_WRAPUP:
 		{
 			uniform_int_distribution<int> on_distribution(0, EXPERIMENT_NUM_GEARS-1);

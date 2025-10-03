@@ -318,11 +318,6 @@ void SignalExperiment::backprop(double target_val,
 					  history,
 					  wrapper);
 		break;
-	case SIGNAL_EXPERIMENT_STATE_GATHER:
-		gather_backprop(target_val,
-						history,
-						wrapper);
-		break;
 	case SIGNAL_EXPERIMENT_STATE_WRAPUP:
 		wrapup_backprop();
 		break;

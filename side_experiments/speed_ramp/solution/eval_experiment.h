@@ -91,7 +91,9 @@ public:
 						 EvalExperimentHistory* history,
 						 SolutionWrapper* wrapper);
 
-	void wrapup_backprop(SolutionWrapper* wrapper,
+	void wrapup_backprop(double target_val,
+						 EvalExperimentHistory* history,
+						 SolutionWrapper* wrapper,
 						 std::set<Scope*>& updated_scopes);
 
 	void clean_inputs(Scope* scope,
