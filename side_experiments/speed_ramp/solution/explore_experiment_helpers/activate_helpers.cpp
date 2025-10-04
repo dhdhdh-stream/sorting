@@ -18,9 +18,8 @@ void ExploreExperiment::check_activate(AbstractNode* experiment_node,
 			history = new ExploreExperimentHistory(this,
 												   wrapper);
 			wrapper->explore_histories[this] = history;
-			if (this->state != EXPLORE_EXPERIMENT_STATE_TRAIN_EXISTING) {
-				wrapper->explore_order_seen.push_back(this);
-			}
+
+			wrapper->explore_order_seen.push_back(this);
 		} else {
 			history = it->second;
 		}
@@ -39,6 +38,10 @@ void ExploreExperiment::check_activate(AbstractNode* experiment_node,
 		case EXPLORE_EXPERIMENT_STATE_TRAIN_NEW:
 			train_new_check_activate(wrapper,
 									 history);
+			break;
+		case EXPLORE_EXPERIMENT_STATE_MEASURE:
+			measure_check_activate(wrapper,
+								   history);
 			break;
 		}
 	}
@@ -66,6 +69,13 @@ void ExploreExperiment::experiment_step(vector<double>& obs,
 					   wrapper,
 					   experiment_state);
 		break;
+	case EXPLORE_EXPERIMENT_STATE_MEASURE:
+		measure_step(obs,
+					 action,
+					 is_next,
+					 wrapper,
+					 experiment_state);
+		break;
 	}
 }
 
@@ -90,6 +100,10 @@ void ExploreExperiment::experiment_exit_step(SolutionWrapper* wrapper) {
 	case EXPLORE_EXPERIMENT_STATE_TRAIN_NEW:
 		train_new_exit_step(wrapper,
 							experiment_state);
+		break;
+	case EXPLORE_EXPERIMENT_STATE_MEASURE:
+		measure_exit_step(wrapper,
+						  experiment_state);
 		break;
 	}
 }
@@ -119,6 +133,11 @@ void ExploreExperiment::backprop(double target_val,
 		train_new_backprop(target_val,
 						   history,
 						   wrapper);
+		break;
+	case EXPLORE_EXPERIMENT_STATE_MEASURE:
+		measure_backprop(target_val,
+						 history,
+						 wrapper);
 		break;
 	}
 }

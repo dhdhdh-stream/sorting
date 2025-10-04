@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "globals.h"
+#include "network.h"
 #include "scope.h"
 #include "solution_wrapper.h"
 
@@ -25,6 +26,8 @@ ExploreExperiment::ExploreExperiment(AbstractNode* node_context,
 	this->best_new_scope = NULL;
 	this->best_scope_history = NULL;
 
+	this->new_network = NULL;
+
 	this->state = EXPLORE_EXPERIMENT_STATE_TRAIN_EXISTING;
 	this->state_iter = 0;
 }
@@ -44,6 +47,10 @@ ExploreExperiment::~ExploreExperiment() {
 
 	if (this->best_scope_history != NULL) {
 		delete this->best_scope_history;
+	}
+
+	if (this->new_network != NULL) {
+		delete this->new_network;
 	}
 
 	for (int h_index = 0; h_index < (int)this->scope_histories.size(); h_index++) {

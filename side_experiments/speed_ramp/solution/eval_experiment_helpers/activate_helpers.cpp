@@ -146,11 +146,6 @@ void EvalExperiment::backprop(double target_val,
 							  SolutionWrapper* wrapper,
 							  set<Scope*>& updated_scopes) {
 	switch (this->state) {
-	case EVAL_EXPERIMENT_STATE_INITIAL:
-		initial_backprop(target_val,
-						 history,
-						 wrapper);
-		break;
 	case EVAL_EXPERIMENT_STATE_RAMP:
 		ramp_backprop(target_val,
 					  history,

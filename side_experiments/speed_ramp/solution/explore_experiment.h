@@ -9,6 +9,7 @@
 #include "input.h"
 
 class AbstractNode;
+class Network;
 class Scope;
 class ScopeHistory;
 class SolutionWrapper;
@@ -19,6 +20,7 @@ const int EXPLORE_EXPERIMENT_STATE_TRAIN_EXISTING = 0;
  */
 const int EXPLORE_EXPERIMENT_STATE_EXPLORE = 1;
 const int EXPLORE_EXPERIMENT_STATE_TRAIN_NEW = 2;
+const int EXPLORE_EXPERIMENT_STATE_MEASURE = 3;
 
 class ExploreExperimentHistory;
 class ExploreExperimentState;
@@ -57,8 +59,23 @@ public:
 	std::vector<Scope*> best_scopes;
 	ScopeHistory* best_scope_history;
 
+	double select_percentage;
+
+	double new_constant;
+	std::vector<Input> new_inputs;
+	std::vector<double> new_input_averages;
+	std::vector<double> new_input_standard_deviations;
+	std::vector<double> new_weights;
+	std::vector<Input> new_network_inputs;
+	Network* new_network;
+
 	std::vector<ScopeHistory*> scope_histories;
 	std::vector<double> target_val_histories;
+
+	double existing_sum_scores;
+	int existing_count;
+	double new_sum_scores;
+	int new_count;
 
 	ExploreExperiment(AbstractNode* node_context,
 					  bool is_branch,
@@ -114,6 +131,19 @@ public:
 	void train_new_backprop(double target_val,
 							ExploreExperimentHistory* history,
 							SolutionWrapper* wrapper);
+
+	void measure_check_activate(SolutionWrapper* wrapper,
+								  ExploreExperimentHistory* history);
+	void measure_step(std::vector<double>& obs,
+					  int& action,
+					  bool& is_next,
+					  SolutionWrapper* wrapper,
+					  ExploreExperimentState* experiment_state);
+	void measure_exit_step(SolutionWrapper* wrapper,
+						   ExploreExperimentState* experiment_state);
+	void measure_backprop(double target_val,
+						  ExploreExperimentHistory* history,
+						  SolutionWrapper* wrapper);
 };
 
 class ExploreExperimentHistory {

@@ -14,14 +14,14 @@ EvalExperiment::EvalExperiment() {
 	this->new_network = NULL;
 	this->new_scope = NULL;
 
-	this->curr_ramp = -1;
-
 	this->existing_sum_scores = 0.0;
 	this->existing_count = 0;
 	this->new_sum_scores = 0.0;
 	this->new_count = 0;
 
-	this->state = EVAL_EXPERIMENT_STATE_INITIAL;
+	this->curr_ramp = 0;
+
+	this->state = EVAL_EXPERIMENT_STATE_RAMP;
 	this->state_iter = 0;
 	this->num_fail = 0;
 }
@@ -67,28 +67,11 @@ void EvalExperiment::replace_obs_node(Scope* scope,
 }
 
 EvalExperimentHistory::EvalExperimentHistory(EvalExperiment* experiment) {
-	switch (experiment->state) {
-	case EVAL_EXPERIMENT_STATE_INITIAL:
-		{
-			uniform_int_distribution<int> on_distribution(0, 99);
-			if (on_distribution(generator) == 0) {
-				this->is_on = true;
-			} else {
-				this->is_on = false;
-			}
-		}
-		break;
-	case EVAL_EXPERIMENT_STATE_RAMP:
-	case EVAL_EXPERIMENT_STATE_WRAPUP:
-		{
-			uniform_int_distribution<int> on_distribution(0, EXPERIMENT_NUM_GEARS-1);
-			if (experiment->curr_ramp >= on_distribution(generator)) {
-				this->is_on = true;
-			} else {
-				this->is_on = false;
-			}
-		}
-		break;
+	uniform_int_distribution<int> on_distribution(0, EXPERIMENT_NUM_GEARS-1);
+	if (experiment->curr_ramp >= on_distribution(generator)) {
+		this->is_on = true;
+	} else {
+		this->is_on = false;
 	}
 }
 

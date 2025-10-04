@@ -117,10 +117,9 @@ void ExploreExperiment::train_new_exit_step(SolutionWrapper* wrapper,
 	experiment_state->step_index++;
 }
 
-void ExploreExperiment::train_new_backprop(
-		double target_val,
-		ExploreExperimentHistory* history,
-		SolutionWrapper* wrapper) {
+void ExploreExperiment::train_new_backprop(double target_val,
+										   ExploreExperimentHistory* history,
+										   SolutionWrapper* wrapper) {
 	if (history->existing_predicted_scores.size() > 0) {
 		for (int i_index = 0; i_index < (int)history->sum_signal_vals.size(); i_index++) {
 			history->sum_signal_vals[i_index] += target_val;
@@ -164,30 +163,22 @@ void ExploreExperiment::train_new_backprop(
 			this->target_val_histories.clear();
 
 			if (is_success && select_percentage > 0.0) {
-				EvalExperiment* new_eval_experiment = new EvalExperiment();
+				this->select_percentage = select_percentage;
 
-				new_eval_experiment->node_context = this->node_context;
-				new_eval_experiment->is_branch = this->is_branch;
-				new_eval_experiment->exit_next_node = this->exit_next_node;
+				this->new_constant = constant;
+				this->new_inputs = factor_inputs;
+				this->new_input_averages = factor_input_averages;
+				this->new_input_standard_deviations = factor_input_standard_deviations;
+				this->new_weights = factor_weights;
+				this->new_network_inputs = network_inputs;
+				this->new_network = network;
 
-				new_eval_experiment->select_percentage = select_percentage;
+				this->existing_sum_scores = 0.0;
+				this->existing_count = 0;
+				this->new_sum_scores = 0.0;
+				this->new_count = 0;
 
-				new_eval_experiment->new_constant = constant;
-				new_eval_experiment->new_inputs = factor_inputs;
-				new_eval_experiment->new_input_averages = factor_input_averages;
-				new_eval_experiment->new_input_standard_deviations = factor_input_standard_deviations;
-				new_eval_experiment->new_weights = factor_weights;
-				new_eval_experiment->new_network_inputs = network_inputs;
-				new_eval_experiment->new_network = network;
-
-				new_eval_experiment->new_scope = this->best_new_scope;
-				this->best_new_scope = NULL;
-				new_eval_experiment->step_types = this->best_step_types;
-				new_eval_experiment->actions = this->best_actions;
-				new_eval_experiment->scopes = this->best_scopes;
-
-				this->node_context->experiment = new_eval_experiment;
-				delete this;
+				this->state = EXPLORE_EXPERIMENT_STATE_MEASURE;
 			} else {
 				if (network != NULL) {
 					delete network;

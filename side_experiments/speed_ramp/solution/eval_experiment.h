@@ -12,9 +12,8 @@ class Network;
 class Scope;
 class SolutionWrapper;
 
-const int EVAL_EXPERIMENT_STATE_INITIAL = 0;
-const int EVAL_EXPERIMENT_STATE_RAMP = 1;
-const int EVAL_EXPERIMENT_STATE_WRAPUP = 2;
+const int EVAL_EXPERIMENT_STATE_RAMP = 0;
+const int EVAL_EXPERIMENT_STATE_WRAPUP = 1;
 
 const int EVAL_RESULT_FAIL = 0;
 const int EVAL_RESULT_SUCCESS = 1;
@@ -78,10 +77,6 @@ public:
 				  EvalExperimentHistory* history,
 				  SolutionWrapper* wrapper,
 				  std::set<Scope*>& updated_scopes);
-
-	void initial_backprop(double target_val,
-						  EvalExperimentHistory* history,
-						  SolutionWrapper* wrapper);
 
 	void ramp_backprop(double target_val,
 					   EvalExperimentHistory* history,
