@@ -91,7 +91,9 @@ bool train_existing(std::vector<ScopeHistory*>& scope_histories,
 					std::vector<Input>& factor_inputs,
 					std::vector<double>& factor_input_averages,
 					std::vector<double>& factor_input_standard_deviations,
-					std::vector<double>& factor_weights);
+					std::vector<double>& factor_weights,
+					std::vector<Input>& network_inputs,
+					Network*& network);
 bool train_new(std::vector<ScopeHistory*>& scope_histories,
 			   std::vector<double>& target_val_histories,
 			   double& constant,

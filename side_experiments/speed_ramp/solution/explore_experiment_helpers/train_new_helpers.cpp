@@ -45,6 +45,22 @@ void ExploreExperiment::train_new_check_activate(
 					sum_vals += this->existing_weights[i_index] * normalized_val;
 				}
 			}
+			vector<double> input_vals(this->existing_network_inputs.size());
+			vector<bool> input_is_on(this->existing_network_inputs.size());
+			for (int i_index = 0; i_index < (int)this->existing_network_inputs.size(); i_index++) {
+				double val;
+				bool is_on;
+				fetch_input_helper(scope_history,
+								   this->existing_network_inputs[i_index],
+								   0,
+								   val,
+								   is_on);
+				input_vals[i_index] = val;
+				input_is_on[i_index] = is_on;
+			}
+			this->existing_network->activate(input_vals,
+										input_is_on);
+			sum_vals += this->existing_network->output->acti_vals[0];
 			history->existing_predicted_scores.push_back(sum_vals);
 
 			history->sum_signal_vals.push_back(0.0);

@@ -26,6 +26,7 @@ ExploreExperiment::ExploreExperiment(AbstractNode* node_context,
 	this->best_new_scope = NULL;
 	this->best_scope_history = NULL;
 
+	this->existing_network = NULL;
 	this->new_network = NULL;
 
 	this->state = EXPLORE_EXPERIMENT_STATE_TRAIN_EXISTING;
@@ -47,6 +48,10 @@ ExploreExperiment::~ExploreExperiment() {
 
 	if (this->best_scope_history != NULL) {
 		delete this->best_scope_history;
+	}
+
+	if (this->existing_network != NULL) {
+		delete this->existing_network;
 	}
 
 	if (this->new_network != NULL) {

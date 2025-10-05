@@ -39,7 +39,9 @@ bool train_existing(vector<ScopeHistory*>& scope_histories,
 					vector<Input>& factor_inputs,
 					vector<double>& factor_input_averages,
 					vector<double>& factor_input_standard_deviations,
-					vector<double>& factor_weights) {
+					vector<double>& factor_weights,
+					vector<Input>& network_inputs,
+					Network*& network) {
 	Scope* scope = scope_histories[0]->scope;
 
 	int num_instances = (int)target_val_histories.size();
@@ -344,7 +346,6 @@ bool train_existing(vector<ScopeHistory*>& scope_histories,
 	}
 	sort(s_contrast_t_scores.begin(), s_contrast_t_scores.end());
 
-	vector<Input> network_inputs;
 	vector<double> input_averages;
 	vector<double> input_standard_deviations;
 	vector<vector<double>> v_input_vals;
@@ -493,158 +494,14 @@ bool train_existing(vector<ScopeHistory*>& scope_histories,
 		misguess_standard_deviation = MIN_STANDARD_DEVIATION;
 	}
 
-	Network* new_network = new Network((int)network_inputs.size(),
-									   input_averages,
-									   input_standard_deviations);
+	network = new Network((int)network_inputs.size(),
+						  input_averages,
+						  input_standard_deviations);
 
 	train_network(input_vals,
 				  input_is_on,
 				  remaining_scores,
-				  new_network);
-
-	vector<double> network_vals(num_instances);
-	for (int i_index = 0; i_index < num_instances; i_index++) {
-		new_network->activate(input_vals[i_index],
-							  input_is_on[i_index]);
-		network_vals[i_index] = new_network->output->acti_vals[0];
-	}
-
-	double sum_network_vals = 0.0;
-	for (int i_index = 0; i_index < num_instances; i_index++) {
-		sum_network_vals += network_vals[i_index];
-	}
-	double network_average = sum_network_vals / (double)num_instances;
-
-	double sum_variances = 0.0;
-	for (int i_index = 0; i_index < num_instances; i_index++) {
-		sum_variances += (network_vals[i_index] - network_average)
-			* (network_vals[i_index] - network_average);
-	}
-	double network_standard_deviation = sqrt(sum_variances / (double)num_instances);
-
-	bool should_add = true;
-	for (int f_index = 0; f_index < (int)scope->factors.size(); f_index++) {
-		if (a_factor_vals[f_index].size() > 0) {
-			double sum_covariance = 0.0;
-			for (int h_index = 0; h_index < num_instances; h_index++) {
-				sum_covariance += (a_factor_vals[f_index][h_index] - a_factor_averages[f_index])
-					* (network_vals[h_index] - network_average);
-			}
-			double covariance = sum_covariance / (double)num_instances;
-
-			double pcc = covariance / a_factor_standard_deviations[f_index] / network_standard_deviation;
-			if (abs(pcc) > UNIQUE_MAX_PCC) {
-				should_add = false;
-				break;
-			}
-		}
-	}
-
-	double sum_new_misguess = 0.0;
-	for (int h_index = 0; h_index < num_instances; h_index++) {
-		sum_new_misguess += (remaining_scores[h_index] - network_vals[h_index])
-			* (remaining_scores[h_index] - network_vals[h_index]);
-	}
-	double new_average_misguess = sum_new_misguess / (double)num_instances;
-
-	double sum_new_misguess_variance = 0.0;
-	for (int h_index = 0; h_index < num_instances; h_index++) {
-		double curr_misguess = (remaining_scores[h_index] - network_vals[h_index])
-			* (remaining_scores[h_index] - network_vals[h_index]);
-		sum_new_misguess_variance += (curr_misguess - new_average_misguess)
-			* (curr_misguess - new_average_misguess);
-	}
-	double new_misguess_standard_deviation = sqrt(sum_new_misguess_variance / (double)num_instances);
-	if (new_misguess_standard_deviation < MIN_STANDARD_DEVIATION) {
-		new_misguess_standard_deviation = MIN_STANDARD_DEVIATION;
-	}
-
-	#if defined(MDEBUG) && MDEBUG
-	if (should_add && rand()%2 == 0) {
-	#else
-	double new_improvement = average_misguess - new_average_misguess;
-	double new_standard_deviation = min(misguess_standard_deviation, new_misguess_standard_deviation);
-	double new_t_score = new_improvement / (new_standard_deviation / sqrt((double)num_instances));
-
-	if (should_add && new_t_score > 2.326) {
-	#endif /* MDEBUG */
-		average_misguess = new_average_misguess;
-
-		for (int i_index = (int)network_inputs.size()-1; i_index >= 0; i_index--) {
-			vector<Input> remove_inputs = network_inputs;
-			remove_inputs.erase(remove_inputs.begin() + i_index);
-
-			Network* remove_network = new Network(new_network);
-			remove_network->remove_input(i_index);
-
-			vector<vector<double>> remove_input_vals = input_vals;
-			vector<vector<bool>> remove_input_is_on = input_is_on;
-			for (int d_index = 0; d_index < num_instances; d_index++) {
-				remove_input_vals[d_index].erase(remove_input_vals[d_index].begin() + i_index);
-				remove_input_is_on[d_index].erase(remove_input_is_on[d_index].begin() + i_index);
-			}
-
-			optimize_network(remove_input_vals,
-							 remove_input_is_on,
-							 remaining_scores,
-							 remove_network);
-
-			double remove_average_misguess;
-			double remove_misguess_standard_deviation;
-			measure_network(remove_input_vals,
-							remove_input_is_on,
-							remaining_scores,
-							remove_network,
-							remove_average_misguess,
-							remove_misguess_standard_deviation);
-
-			#if defined(MDEBUG) && MDEBUG
-			if (rand()%2 == 0) {
-			#else
-			double remove_improvement = average_misguess - remove_average_misguess;
-			double remove_standard_deviation = min(misguess_standard_deviation, remove_misguess_standard_deviation);
-			double remove_t_score = remove_improvement / (remove_standard_deviation / sqrt(num_instances));
-
-			if (remove_t_score > -0.674) {
-			#endif /* MDEBUG */
-				network_inputs = remove_inputs;
-
-				delete new_network;
-				new_network = remove_network;
-
-				input_vals = remove_input_vals;
-				input_is_on = remove_input_is_on;
-			} else {
-				delete remove_network;
-			}
-		}
-
-		if (network_inputs.size() > 0) {
-			Factor* new_factor = new Factor();
-			new_factor->inputs = network_inputs;
-			new_factor->network = new_network;
-			new_factor->is_meaningful = true;
-
-			scope->factors.push_back(new_factor);
-
-			new_factor->link((int)scope->factors.size()-1);
-
-			Input new_input;
-			new_input.scope_context = {scope};
-			new_input.factor_index = (int)scope->factors.size()-1;
-			new_input.node_context = {-1};
-			new_input.obs_index = -1;
-
-			factor_inputs.push_back(new_input);
-			factor_input_averages.push_back(0.0);
-			factor_input_standard_deviations.push_back(1.0);
-			factor_weights.push_back(1.0);
-		} else {
-			delete new_network;
-		}
-	} else {
-		delete new_network;
-	}
+				  network);
 
 	return true;
 }

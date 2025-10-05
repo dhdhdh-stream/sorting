@@ -43,6 +43,11 @@ public:
 	std::vector<double> existing_input_averages;
 	std::vector<double> existing_input_standard_deviations;
 	std::vector<double> existing_weights;
+	std::vector<Input> existing_network_inputs;
+	Network* existing_network;
+	/**
+	 * - simply don't bother reusing existing_network
+	 */
 
 	int num_instances_until_target;
 
