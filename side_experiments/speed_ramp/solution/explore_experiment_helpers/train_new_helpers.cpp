@@ -18,7 +18,7 @@ using namespace std;
 #if defined(MDEBUG) && MDEBUG
 const int TRAIN_NEW_NUM_DATAPOINTS = 20;
 #else
-const int TRAIN_NEW_NUM_DATAPOINTS = 100;
+const int TRAIN_NEW_NUM_DATAPOINTS = 200;
 #endif /* MDEBUG */
 
 void ExploreExperiment::train_new_check_activate(
@@ -149,10 +149,6 @@ void ExploreExperiment::train_new_backprop(double target_val,
 
 		this->state_iter++;
 		if (this->state_iter >= TRAIN_NEW_NUM_DATAPOINTS) {
-			this->scope_histories.insert(this->scope_histories.begin(), this->best_scope_history);
-			this->best_scope_history = NULL;
-			this->target_val_histories.insert(this->target_val_histories.begin(), this->best_surprise);
-
 			double constant;
 			vector<Input> factor_inputs;
 			vector<double> factor_input_averages;

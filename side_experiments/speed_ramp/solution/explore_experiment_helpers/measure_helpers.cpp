@@ -1,4 +1,13 @@
+/**
+ * - existing with experiment while new without
+ *   - so not perfect comparison
+ * 
+ * TODO: perhaps allow one pure explore and one measure explore
+ */
+
 #include "explore_experiment.h"
+
+#include <iostream>
 
 #include "abstract_node.h"
 #include "constants.h"
@@ -161,6 +170,7 @@ void ExploreExperiment::measure_backprop(double target_val,
 			new_eval_experiment->new_weights = this->new_weights;
 			new_eval_experiment->new_network_inputs = this->new_network_inputs;
 			new_eval_experiment->new_network = this->new_network;
+			this->new_network = NULL;
 
 			new_eval_experiment->new_scope = this->best_new_scope;
 			this->best_new_scope = NULL;

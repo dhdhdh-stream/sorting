@@ -1,3 +1,8 @@
+/**
+ * - discard explore sample
+ *   - would add bias to training
+ */
+
 #include "explore_experiment.h"
 
 #include <iostream>
@@ -22,8 +27,15 @@ using namespace std;
 #if defined(MDEBUG) && MDEBUG
 const int EXPLORE_EXPERIMENT_EXPLORE_ITERS = 5;
 #else
-const int EXPLORE_EXPERIMENT_EXPLORE_ITERS = 100;
+const int EXPLORE_EXPERIMENT_EXPLORE_ITERS = 200;
 #endif /* MDEBUG */
+
+/**
+ * - always give raw actions a large weight
+ *   - existing scopes often learned to avoid certain patterns
+ *     - which can prevent innovation
+ */
+const int RAW_ACTION_WEIGHT = 10;
 
 void ExploreExperiment::explore_check_activate(
 		SolutionWrapper* wrapper,
@@ -83,9 +95,6 @@ void ExploreExperiment::explore_check_activate(
 						}
 					}
 				}
-
-				this->curr_scope_history = new ScopeHistory(scope_history);
-				this->curr_scope_history->num_actions_snapshot = wrapper->num_actions;
 
 				#if defined(MDEBUG) && MDEBUG
 				uniform_int_distribution<int> new_scope_distribution(0, 1);
@@ -161,12 +170,6 @@ void ExploreExperiment::explore_check_activate(
 						new_num_steps = geo_distribution(generator);
 					}
 
-					/**
-					 * - always give raw actions a large weight
-					 *   - existing scopes often learned to avoid certain patterns
-					 *     - which can prevent innovation
-					 */
-					uniform_int_distribution<int> scope_distribution(0, 1);
 					vector<Scope*> possible_scopes;
 					for (int c_index = 0; c_index < (int)this->node_context->parent->child_scopes.size(); c_index++) {
 						if (this->node_context->parent->child_scopes[c_index]->nodes.size() > 1) {
@@ -174,7 +177,22 @@ void ExploreExperiment::explore_check_activate(
 						}
 					}
 					for (int s_index = 0; s_index < new_num_steps; s_index++) {
-						if (scope_distribution(generator) == 0 && possible_scopes.size() > 0) {
+						bool is_scope = false;
+						if (possible_scopes.size() > 0) {
+							if (possible_scopes.size() <= RAW_ACTION_WEIGHT) {
+								uniform_int_distribution<int> scope_distribution(0, possible_scopes.size() + RAW_ACTION_WEIGHT - 1);
+								if (scope_distribution(generator) < (int)possible_scopes.size()) {
+									is_scope = true;
+								}
+
+							} else {
+								uniform_int_distribution<int> scope_distribution(0, 1);
+								if (scope_distribution(generator) == 0) {
+									is_scope = true;
+								}
+							}
+						}
+						if (is_scope) {
 							this->curr_step_types.push_back(STEP_TYPE_SCOPE);
 							this->curr_actions.push_back(-1);
 
@@ -279,11 +297,6 @@ void ExploreExperiment::explore_backprop(double target_val,
 			this->best_step_types = this->curr_step_types;
 			this->best_actions = this->curr_actions;
 			this->best_scopes = this->curr_scopes;
-			if (this->best_scope_history != NULL) {
-				delete this->best_scope_history;
-			}
-			this->best_scope_history = this->curr_scope_history;
-			this->curr_scope_history = NULL;
 		}
 
 		if (this->curr_new_scope != NULL) {
@@ -293,10 +306,6 @@ void ExploreExperiment::explore_backprop(double target_val,
 		this->curr_step_types.clear();
 		this->curr_actions.clear();
 		this->curr_scopes.clear();
-		if (this->curr_scope_history != NULL) {
-			delete this->curr_scope_history;
-			this->curr_scope_history = NULL;
-		}
 
 		this->state_iter++;
 		if (this->state_iter >= EXPLORE_EXPERIMENT_EXPLORE_ITERS) {

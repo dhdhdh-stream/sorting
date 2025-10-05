@@ -22,9 +22,7 @@ ExploreExperiment::ExploreExperiment(AbstractNode* node_context,
 	this->sum_num_instances = 0;
 
 	this->curr_new_scope = NULL;
-	this->curr_scope_history = NULL;
 	this->best_new_scope = NULL;
-	this->best_scope_history = NULL;
 
 	this->existing_network = NULL;
 	this->new_network = NULL;
@@ -38,16 +36,8 @@ ExploreExperiment::~ExploreExperiment() {
 		delete this->curr_new_scope;
 	}
 
-	if (this->curr_scope_history != NULL) {
-		delete this->curr_scope_history;
-	}
-
 	if (this->best_new_scope != NULL) {
 		delete this->best_new_scope;
-	}
-
-	if (this->best_scope_history != NULL) {
-		delete this->best_scope_history;
 	}
 
 	if (this->existing_network != NULL) {

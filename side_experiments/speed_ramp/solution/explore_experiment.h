@@ -55,14 +55,12 @@ public:
 	std::vector<int> curr_step_types;
 	std::vector<int> curr_actions;
 	std::vector<Scope*> curr_scopes;
-	ScopeHistory* curr_scope_history;
 
 	double best_surprise;
 	Scope* best_new_scope;
 	std::vector<int> best_step_types;
 	std::vector<int> best_actions;
 	std::vector<Scope*> best_scopes;
-	ScopeHistory* best_scope_history;
 
 	double select_percentage;
 
