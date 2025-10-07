@@ -70,15 +70,17 @@ void ExploreExperiment::train_existing_backprop(
 		vector<double> factor_weights;
 		vector<Input> network_inputs;
 		Network* network = NULL;
-		bool is_success = train_existing(scope_histories,
-										 target_val_histories,
-										 constant,
-										 factor_inputs,
-										 factor_input_averages,
-										 factor_input_standard_deviations,
-										 factor_weights,
-										 network_inputs,
-										 network);
+		double select_percentage;	// unused
+		bool is_success = train_helper(scope_histories,
+									   target_val_histories,
+									   constant,
+									   factor_inputs,
+									   factor_input_averages,
+									   factor_input_standard_deviations,
+									   factor_weights,
+									   network_inputs,
+									   network,
+									   select_percentage);
 
 		for (int h_index = 0; h_index < (int)this->scope_histories.size(); h_index++) {
 			delete this->scope_histories[h_index];

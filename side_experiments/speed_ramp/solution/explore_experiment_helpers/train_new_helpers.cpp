@@ -157,16 +157,16 @@ void ExploreExperiment::train_new_backprop(double target_val,
 			vector<Input> network_inputs;
 			Network* network = NULL;
 			double select_percentage;
-			bool is_success = train_new(this->scope_histories,
-										this->target_val_histories,
-										constant,
-										factor_inputs,
-										factor_input_averages,
-										factor_input_standard_deviations,
-										factor_weights,
-										network_inputs,
-										network,
-										select_percentage);
+			bool is_success = train_helper(this->scope_histories,
+										   this->target_val_histories,
+										   constant,
+										   factor_inputs,
+										   factor_input_averages,
+										   factor_input_standard_deviations,
+										   factor_weights,
+										   network_inputs,
+										   network,
+										   select_percentage);
 
 			for (int h_index = 0; h_index < (int)this->scope_histories.size(); h_index++) {
 				delete this->scope_histories[h_index];
