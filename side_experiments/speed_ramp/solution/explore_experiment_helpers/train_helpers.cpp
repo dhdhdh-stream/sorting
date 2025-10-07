@@ -314,23 +314,23 @@ bool try_helper(vector<ScopeHistory*>& scope_histories,
 	}
 
 	double sum_seed_vals = 0.0;
-	for (int i_index = 0; i_index < (int)seed_indexes.size(); i_index++) {
-		sum_seed_vals += target_val_histories[seed_indexes[i_index]];
+	for (int s_index = 0; s_index < (int)seed_indexes.size(); s_index++) {
+		sum_seed_vals += target_val_histories[seed_indexes[s_index]];
 	}
 	double seed_val_average = sum_seed_vals / (double)seed_indexes.size();
 
 	double sum_seed_variances = 0.0;
-	for (int i_index = 0; i_index < (int)seed_indexes.size(); i_index++) {
-		sum_seed_variances += (target_val_histories[seed_indexes[i_index]] - seed_val_average)
-			* (target_val_histories[seed_indexes[i_index]] - seed_val_average);
+	for (int s_index = 0; s_index < (int)seed_indexes.size(); s_index++) {
+		sum_seed_variances += (target_val_histories[seed_indexes[s_index]] - seed_val_average)
+			* (target_val_histories[seed_indexes[s_index]] - seed_val_average);
 	}
 	double seed_val_standard_deviation = sqrt(sum_seed_variances / (double)seed_indexes.size());
 
 	vector<InputData*> factor_input_datas;
 	if (seed_val_standard_deviation >= MIN_STANDARD_DEVIATION) {
 		vector<double> normalized_seed_target_vals(seed_indexes.size());
-		for (int i_index = 0; i_index < (int)seed_indexes.size(); i_index++) {
-			normalized_seed_target_vals[i_index] = target_val_histories[seed_indexes[i_index]] - seed_val_average;
+		for (int s_index = 0; s_index < (int)seed_indexes.size(); s_index++) {
+			normalized_seed_target_vals[s_index] = target_val_histories[seed_indexes[s_index]] - seed_val_average;
 		}
 
 		vector<pair<double, pair<Input,InputData*>>> factor_pccs;
@@ -354,23 +354,23 @@ bool try_helper(vector<ScopeHistory*>& scope_histories,
 			if (it->second->hit_percent >= MIN_CONSIDER_HIT_PERCENT
 					&& it->second->standard_deviation >= MIN_STANDARD_DEVIATION) {
 				double sum_vals = 0.0;
-				for (int i_index = 0; i_index < (int)seed_indexes.size(); i_index++) {
-					sum_vals += it->second->normalized_vals[seed_indexes[i_index]];
+				for (int s_index = 0; s_index < (int)seed_indexes.size(); s_index++) {
+					sum_vals += it->second->normalized_vals[seed_indexes[s_index]];
 				}
 				double val_average = sum_vals / (double)seed_indexes.size();
 
 				double sum_variances = 0.0;
-				for (int i_index = 0; i_index < (int)seed_indexes.size(); i_index++) {
-					sum_variances += (it->second->normalized_vals[seed_indexes[i_index]] - val_average)
-						* (it->second->normalized_vals[seed_indexes[i_index]] - val_average);
+				for (int s_index = 0; s_index < (int)seed_indexes.size(); s_index++) {
+					sum_variances += (it->second->normalized_vals[seed_indexes[s_index]] - val_average)
+						* (it->second->normalized_vals[seed_indexes[s_index]] - val_average);
 				}
 				double val_standard_deviation = sqrt(sum_variances / (double)seed_indexes.size());
 
 				if (val_standard_deviation >= MIN_STANDARD_DEVIATION) {
 					double sum_covariance = 0.0;
-					for (int i_index = 0; i_index < (int)seed_indexes.size(); i_index++) {
-						sum_covariance += normalized_seed_target_vals[i_index]
-							* (it->second->normalized_vals[seed_indexes[i_index]] - val_average);
+					for (int s_index = 0; s_index < (int)seed_indexes.size(); s_index++) {
+						sum_covariance += normalized_seed_target_vals[s_index]
+							* (it->second->normalized_vals[seed_indexes[s_index]] - val_average);
 					}
 					double covariance = sum_covariance / (double)seed_indexes.size();
 
@@ -491,22 +491,22 @@ bool try_helper(vector<ScopeHistory*>& scope_histories,
 						 input_tracker);
 
 	double sum_seed_remaining_vals = 0.0;
-	for (int i_index = 0; i_index < (int)seed_indexes.size(); i_index++) {
-		sum_seed_remaining_vals += remaining_scores[seed_indexes[i_index]];
+	for (int s_index = 0; s_index < (int)seed_indexes.size(); s_index++) {
+		sum_seed_remaining_vals += remaining_scores[seed_indexes[s_index]];
 	}
 	double seed_remaining_val_average = sum_seed_remaining_vals / (double)seed_indexes.size();
 
 	double sum_seed_remaining_variances = 0.0;
-	for (int i_index = 0; i_index < (int)seed_indexes.size(); i_index++) {
-		sum_seed_remaining_variances += (remaining_scores[seed_indexes[i_index]] - seed_remaining_val_average)
-			* (remaining_scores[seed_indexes[i_index]] - seed_remaining_val_average);
+	for (int s_index = 0; s_index < (int)seed_indexes.size(); s_index++) {
+		sum_seed_remaining_variances += (remaining_scores[seed_indexes[s_index]] - seed_remaining_val_average)
+			* (remaining_scores[seed_indexes[s_index]] - seed_remaining_val_average);
 	}
 	double seed_remaining_val_standard_deviation = sqrt(sum_seed_remaining_variances / (double)seed_indexes.size());
 
 	if (seed_remaining_val_standard_deviation >= MIN_STANDARD_DEVIATION) {
 		vector<double> normalized_seed_remaining_target_vals(seed_indexes.size());
-		for (int i_index = 0; i_index < (int)seed_indexes.size(); i_index++) {
-			normalized_seed_remaining_target_vals[i_index] = remaining_scores[seed_indexes[i_index]] - seed_remaining_val_average;
+		for (int s_index = 0; s_index < (int)seed_indexes.size(); s_index++) {
+			normalized_seed_remaining_target_vals[s_index] = remaining_scores[seed_indexes[s_index]] - seed_remaining_val_average;
 		}
 
 		vector<pair<double, pair<Input,InputData*>>> input_pccs;
@@ -514,23 +514,23 @@ bool try_helper(vector<ScopeHistory*>& scope_histories,
 			if (inputs_to_consider[i_index].second->hit_percent >= MIN_CONSIDER_HIT_PERCENT
 					&& inputs_to_consider[i_index].second->standard_deviation >= MIN_STANDARD_DEVIATION) {
 				double sum_vals = 0.0;
-				for (int i_index = 0; i_index < (int)seed_indexes.size(); i_index++) {
-					sum_vals += inputs_to_consider[i_index].second->normalized_vals[seed_indexes[i_index]];
+				for (int s_index = 0; s_index < (int)seed_indexes.size(); s_index++) {
+					sum_vals += inputs_to_consider[i_index].second->normalized_vals[seed_indexes[s_index]];
 				}
 				double val_average = sum_vals / (double)seed_indexes.size();
 
 				double sum_variances = 0.0;
-				for (int i_index = 0; i_index < (int)seed_indexes.size(); i_index++) {
-					sum_variances += (inputs_to_consider[i_index].second->normalized_vals[seed_indexes[i_index]] - val_average)
-						* (inputs_to_consider[i_index].second->normalized_vals[seed_indexes[i_index]] - val_average);
+				for (int s_index = 0; s_index < (int)seed_indexes.size(); s_index++) {
+					sum_variances += (inputs_to_consider[i_index].second->normalized_vals[seed_indexes[s_index]] - val_average)
+						* (inputs_to_consider[i_index].second->normalized_vals[seed_indexes[s_index]] - val_average);
 				}
 				double val_standard_deviation = sqrt(sum_variances / (double)seed_indexes.size());
 
 				if (val_standard_deviation >= MIN_STANDARD_DEVIATION) {
 					double sum_covariance = 0.0;
-					for (int i_index = 0; i_index < (int)seed_indexes.size(); i_index++) {
-						sum_covariance += normalized_seed_remaining_target_vals[i_index]
-							* (inputs_to_consider[i_index].second->normalized_vals[seed_indexes[i_index]] - val_average);
+					for (int s_index = 0; s_index < (int)seed_indexes.size(); s_index++) {
+						sum_covariance += normalized_seed_remaining_target_vals[s_index]
+							* (inputs_to_consider[i_index].second->normalized_vals[seed_indexes[s_index]] - val_average);
 					}
 					double covariance = sum_covariance / (double)seed_indexes.size();
 
@@ -646,7 +646,11 @@ bool try_helper(vector<ScopeHistory*>& scope_histories,
 				* (remaining_scores[seed_indexes[s_index]] - network_vals[seed_indexes[s_index]]);
 		}
 
+		#if defined(MDEBUG) && MDEBUG
+		if (sum_network_misguess < sum_default_misguess || rand()%4 != 0) {
+		#else
 		if (sum_network_misguess < sum_default_misguess) {
+		#endif /* MDEBUG */
 			network_inputs = new_network_inputs;
 			network = new_network;
 		} else {
@@ -669,12 +673,12 @@ bool try_helper(vector<ScopeHistory*>& scope_histories,
 	}
 	#else
 	int num_positive = 0;
-	for (int i_index = 0; i_index < num_instances; i_index++) {
+	for (int i_index = 0; i_index < (int)scope_histories.size(); i_index++) {
 		if (sum_vals[i_index] > 0.0) {
 			num_positive++;
 		}
 	}
-	select_percentage = (double)num_positive / (double)num_instances;
+	select_percentage = (double)num_positive / (double)scope_histories.size();
 	#endif /* MDEBUG */
 
 	return true;
@@ -733,6 +737,7 @@ bool train_helper(vector<ScopeHistory*>& scope_histories,
 					delete network;
 				}
 				network = curr_network;
+				curr_network = NULL;
 				select_percentage = curr_select_percentage;
 			}
 		}

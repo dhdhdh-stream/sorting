@@ -1,3 +1,5 @@
+// TODO: for train existing, can try only using non-explores
+
 #ifndef EXPLORE_EXPERIMENT_H
 #define EXPLORE_EXPERIMENT_H
 
