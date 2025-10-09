@@ -173,6 +173,13 @@ void BranchExperiment::measure_backprop(double target_val,
 				}
 				break;
 			}
+
+			// temp
+			cout << "this->scope_context->id: " << this->scope_context->id << endl;
+			cout << "this->node_context->id: " << this->node_context->id << endl;
+			cout << "new_score: " << new_score << endl;
+			cout << "existing_score: " << existing_score << endl;
+
 			#if defined(MDEBUG) && MDEBUG
 			if (rand()%2 == 0) {
 			#else

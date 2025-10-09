@@ -98,4 +98,5 @@ ActionNodeHistory::ActionNodeHistory(ActionNode* node) {
 ActionNodeHistory::ActionNodeHistory(ActionNodeHistory* original) {
 	this->node = original->node;
 	this->index = original->index;
+	this->num_actions_snapshot = original->num_actions_snapshot;
 }

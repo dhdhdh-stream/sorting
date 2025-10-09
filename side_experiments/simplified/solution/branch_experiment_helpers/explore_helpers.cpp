@@ -24,9 +24,9 @@
 using namespace std;
 
 #if defined(MDEBUG) && MDEBUG
-const int BRANCH_EXPERIMENT_EXPLORE_ITERS = 5;
+const int BRANCH_EXPERIMENT_EXPLORE_ITERS = 10;
 #else
-const int BRANCH_EXPERIMENT_EXPLORE_ITERS = 100;
+const int BRANCH_EXPERIMENT_EXPLORE_ITERS = 200;
 #endif /* MDEBUG */
 
 /**
@@ -41,7 +41,7 @@ void BranchExperiment::explore_check_activate(
 		BranchExperimentHistory* history) {
 	this->num_instances_until_target--;
 	if (history->existing_predicted_scores.size() == 0
-			&& this->num_instances_until_target == 0) {
+			&& this->num_instances_until_target <= 0) {
 		double sum_vals = this->existing_constant;
 		for (int i_index = 0; i_index < (int)this->existing_inputs.size(); i_index++) {
 			double val;
@@ -76,6 +76,60 @@ void BranchExperiment::explore_check_activate(
 		}
 		history->existing_predicted_scores.push_back(sum_vals);
 
+		vector<AbstractNode*> possible_exits;
+
+		AbstractNode* starting_node;
+		switch (this->node_context->type) {
+		case NODE_TYPE_START:
+			{
+				StartNode* start_node = (StartNode*)this->node_context;
+				starting_node = start_node->next_node;
+			}
+			break;
+		case NODE_TYPE_ACTION:
+			{
+				ActionNode* action_node = (ActionNode*)this->node_context;
+				starting_node = action_node->next_node;
+			}
+			break;
+		case NODE_TYPE_SCOPE:
+			{
+				ScopeNode* scope_node = (ScopeNode*)this->node_context;
+				starting_node = scope_node->next_node;
+			}
+			break;
+		case NODE_TYPE_BRANCH:
+			{
+				BranchNode* branch_node = (BranchNode*)this->node_context;
+				if (this->is_branch) {
+					starting_node = branch_node->branch_next_node;
+				} else {
+					starting_node = branch_node->original_next_node;
+				}
+			}
+			break;
+		case NODE_TYPE_OBS:
+			{
+				ObsNode* obs_node = (ObsNode*)this->node_context;
+				starting_node = obs_node->next_node;
+			}
+			break;
+		}
+
+		this->scope_context->random_exit_activate(
+			starting_node,
+			possible_exits);
+
+		geometric_distribution<int> exit_distribution(0.1);
+		int random_index;
+		while (true) {
+			random_index = exit_distribution(generator);
+			if (random_index < (int)possible_exits.size()) {
+				break;
+			}
+		}
+		this->curr_exit_next_node = possible_exits[random_index];
+
 		#if defined(MDEBUG) && MDEBUG
 		uniform_int_distribution<int> new_scope_distribution(0, 1);
 		#else
@@ -89,60 +143,6 @@ void BranchExperiment::explore_check_activate(
 			this->curr_actions.push_back(-1);
 			this->curr_scopes.push_back(this->curr_new_scope);
 		} else {
-			vector<AbstractNode*> possible_exits;
-
-			AbstractNode* starting_node;
-			switch (this->node_context->type) {
-			case NODE_TYPE_START:
-				{
-					StartNode* start_node = (StartNode*)this->node_context;
-					starting_node = start_node->next_node;
-				}
-				break;
-			case NODE_TYPE_ACTION:
-				{
-					ActionNode* action_node = (ActionNode*)this->node_context;
-					starting_node = action_node->next_node;
-				}
-				break;
-			case NODE_TYPE_SCOPE:
-				{
-					ScopeNode* scope_node = (ScopeNode*)this->node_context;
-					starting_node = scope_node->next_node;
-				}
-				break;
-			case NODE_TYPE_BRANCH:
-				{
-					BranchNode* branch_node = (BranchNode*)this->node_context;
-					if (this->is_branch) {
-						starting_node = branch_node->branch_next_node;
-					} else {
-						starting_node = branch_node->original_next_node;
-					}
-				}
-				break;
-			case NODE_TYPE_OBS:
-				{
-					ObsNode* obs_node = (ObsNode*)this->node_context;
-					starting_node = obs_node->next_node;
-				}
-				break;
-			}
-
-			this->scope_context->random_exit_activate(
-				starting_node,
-				possible_exits);
-
-			geometric_distribution<int> exit_distribution(0.1);
-			int random_index;
-			while (true) {
-				random_index = exit_distribution(generator);
-				if (random_index < (int)possible_exits.size()) {
-					break;
-				}
-			}
-			this->curr_exit_next_node = possible_exits[random_index];
-
 			int new_num_steps;
 			geometric_distribution<int> geo_distribution(0.3);
 			/**

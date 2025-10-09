@@ -340,6 +340,12 @@ ScopeHistory::ScopeHistory(ScopeHistory* original) {
 	for (map<int, AbstractNodeHistory*>::iterator it = original->node_histories.begin();
 			it != original->node_histories.end(); it++) {
 		switch (it->second->node->type) {
+		case NODE_TYPE_START:
+			{
+				StartNodeHistory* start_node_history = (StartNodeHistory*)it->second;
+				this->node_histories[it->first] = new StartNodeHistory(start_node_history);
+			}
+			break;
 		case NODE_TYPE_ACTION:
 			{
 				ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
@@ -369,16 +375,25 @@ ScopeHistory::ScopeHistory(ScopeHistory* original) {
 
 	this->factor_initialized = original->factor_initialized;
 	this->factor_values = original->factor_values;
+
+	this->num_actions_snapshot = original->num_actions_snapshot;
 }
 
 ScopeHistory::ScopeHistory(ScopeHistory* original,
-						   int max_index) {
+						   int max_index,
+						   int num_actions_snapshot) {
 	this->scope = original->scope;
 
 	for (map<int, AbstractNodeHistory*>::iterator it = original->node_histories.begin();
 			it != original->node_histories.end(); it++) {
 		if (it->second->index <= max_index) {
 			switch (it->second->node->type) {
+			case NODE_TYPE_START:
+				{
+					StartNodeHistory* start_node_history = (StartNodeHistory*)it->second;
+					this->node_histories[it->first] = new StartNodeHistory(start_node_history);
+				}
+				break;
 			case NODE_TYPE_ACTION:
 				{
 					ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
@@ -410,7 +425,7 @@ ScopeHistory::ScopeHistory(ScopeHistory* original,
 	this->factor_initialized = vector<bool>(scope->factors.size(), false);
 	this->factor_values = vector<double>(scope->factors.size());
 
-	this->num_actions_snapshot = original->num_actions_snapshot;
+	this->num_actions_snapshot = num_actions_snapshot;
 }
 
 ScopeHistory::~ScopeHistory() {

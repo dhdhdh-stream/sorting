@@ -71,11 +71,17 @@ class TaskThread:
 
 		temp_client.close()
 
-		rl, wl, xl = select.select([self.channel],[],[],0.0)
-		if len(rl) > 0:
-			message = self.channel.recv(1024)
-			print('l' + str(self.tasknode.layer) + ' ' + self.worker[0] + ' ' + self.tasknode.filenames[self.index])
-			print(message)
+		while True:
+			rl, wl, xl = select.select([self.channel],[],[],0.0)
+			if len(rl) > 0:
+				message = self.channel.recv(1024)
+				print('l' + str(self.tasknode.layer) + ' ' + self.worker[0] + ' ' + self.tasknode.filenames[self.index])
+				print(message)
+
+				if message == b'':
+					break
+			else:
+				break
 
 		if self.channel.closed and self.curr_iter != -1:
 			print('worker ' + self.worker[0] + ' ' + self.tasknode.filenames[self.index] + ' failed')

@@ -68,3 +68,9 @@ void StartNode::save_for_display(ofstream& output_file) {
 StartNodeHistory::StartNodeHistory(StartNode* node) {
 	this->node = node;
 }
+
+StartNodeHistory::StartNodeHistory(StartNodeHistory* original) {
+	this->node = original->node;
+	this->index = original->index;
+	this->num_actions_snapshot = original->num_actions_snapshot;
+}

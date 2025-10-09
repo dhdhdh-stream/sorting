@@ -139,11 +139,11 @@ Scope* create_new_scope(Scope* scope_context) {
 
 			new_scope->node_counter = 0;
 
-			// StartNode* starting_node = new StartNode();
-			// starting_node->parent = new_scope;
-			// starting_node->id = new_scope->node_counter;
-			// new_scope->node_counter++;
-			// new_scope->nodes[starting_node->id] = starting_node;
+			StartNode* starting_node = new StartNode();
+			starting_node->parent = new_scope;
+			starting_node->id = new_scope->node_counter;
+			new_scope->node_counter++;
+			new_scope->nodes[starting_node->id] = starting_node;
 
 			map<AbstractNode*, AbstractNode*> node_mappings;
 			for (set<AbstractNode*>::iterator node_it = potential_included_nodes.begin();
@@ -218,10 +218,10 @@ Scope* create_new_scope(Scope* scope_context) {
 				}
 			}
 
-			// starting_node->next_node_id = node_mappings[potential_start_node]->id;
-			// starting_node->next_node = node_mappings[potential_start_node];
+			starting_node->next_node_id = node_mappings[potential_start_node]->id;
+			starting_node->next_node = node_mappings[potential_start_node];
 
-			// starting_node->next_node->ancestor_ids.push_back(starting_node->id);
+			starting_node->next_node->ancestor_ids.push_back(starting_node->id);
 
 			ObsNode* new_ending_node = new ObsNode();
 			new_ending_node->parent = new_scope;

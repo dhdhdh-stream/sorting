@@ -56,6 +56,7 @@ public:
 	AbstractNode* node;
 
 	int index;
+	int num_actions_snapshot;
 
 	virtual ~AbstractNodeHistory() {};
 };

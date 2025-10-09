@@ -46,9 +46,7 @@ public:
 class StartNodeHistory : public AbstractNodeHistory {
 public:
 	StartNodeHistory(StartNode* node);
-	/**
-	 * - don't bother copying
-	 */
+	StartNodeHistory(StartNodeHistory* original);
 };
 
 #endif /* START_NODE_H */

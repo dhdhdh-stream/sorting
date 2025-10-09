@@ -74,7 +74,8 @@ public:
 	ScopeHistory(Scope* scope);
 	ScopeHistory(ScopeHistory* original);
 	ScopeHistory(ScopeHistory* original,
-				 int max_index);
+				 int max_index,
+				 int num_actions_snapshot);
 	~ScopeHistory();
 };
 

@@ -64,6 +64,8 @@ public:
 
 	std::vector<ScopeHistory*> scope_histories;
 	std::vector<double> i_target_val_histories;
+	// temp
+	std::vector<double> existing_predicted_score_histories;
 
 	#if defined(MDEBUG) && MDEBUG
 	std::vector<Problem*> verify_problems;
@@ -163,15 +165,24 @@ public:
 	BranchExperimentState(BranchExperiment* experiment);
 };
 
-bool train_helper(std::vector<ScopeHistory*>& scope_histories,
-				  std::vector<double>& target_val_histories,
-				  double& constant,
-				  std::vector<Input>& factor_inputs,
-				  std::vector<double>& factor_input_averages,
-				  std::vector<double>& factor_input_standard_deviations,
-				  std::vector<double>& factor_weights,
-				  std::vector<Input>& network_inputs,
-				  Network*& network,
-				  double& select_percentage);
+bool train_existing_helper(std::vector<ScopeHistory*>& scope_histories,
+						   std::vector<double>& target_val_histories,
+						   double& constant,
+						   std::vector<Input>& factor_inputs,
+						   std::vector<double>& factor_input_averages,
+						   std::vector<double>& factor_input_standard_deviations,
+						   std::vector<double>& factor_weights,
+						   std::vector<Input>& network_inputs,
+						   Network*& network);
+bool train_new_helper(std::vector<ScopeHistory*>& scope_histories,
+					  std::vector<double>& target_val_histories,
+					  double& constant,
+					  std::vector<Input>& factor_inputs,
+					  std::vector<double>& factor_input_averages,
+					  std::vector<double>& factor_input_standard_deviations,
+					  std::vector<double>& factor_weights,
+					  std::vector<Input>& network_inputs,
+					  Network*& network,
+					  double& select_percentage);
 
 #endif /* BRANCH_EXPERIMENT_H */

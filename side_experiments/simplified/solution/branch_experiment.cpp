@@ -51,7 +51,10 @@ BranchExperiment::BranchExperiment(Scope* scope_context,
 		}
 
 		if (has_match) {
-			ScopeHistory* cleaned_scope_history = new ScopeHistory(scope_history, match_it->second->index);
+			ScopeHistory* cleaned_scope_history = new ScopeHistory(
+				scope_history,
+				match_it->second->index,
+				match_it->second->num_actions_snapshot);
 			scope_histories.push_back(cleaned_scope_history);
 			target_val_histories.push_back(this->scope_context->existing_target_val_histories[h_index]);
 		}
@@ -64,17 +67,15 @@ BranchExperiment::BranchExperiment(Scope* scope_context,
 	vector<double> factor_weights;
 	vector<Input> network_inputs;
 	Network* network = NULL;
-	double select_percentage;	// unused
-	bool is_success = train_helper(scope_histories,
-								   target_val_histories,
-								   constant,
-								   factor_inputs,
-								   factor_input_averages,
-								   factor_input_standard_deviations,
-								   factor_weights,
-								   network_inputs,
-								   network,
-								   select_percentage);
+	bool is_success = train_existing_helper(scope_histories,
+											target_val_histories,
+											constant,
+											factor_inputs,
+											factor_input_averages,
+											factor_input_standard_deviations,
+											factor_weights,
+											network_inputs,
+											network);
 
 	for (int h_index = 0; h_index < (int)scope_histories.size(); h_index++) {
 		delete scope_histories[h_index];

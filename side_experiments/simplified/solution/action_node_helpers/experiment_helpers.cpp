@@ -31,6 +31,8 @@ void ActionNode::experiment_step(vector<double>& obs,
 			this->impacted_factors[f_index]] = false;
 	}
 
+	history->num_actions_snapshot = wrapper->num_actions;
+
 	wrapper->node_context.back() = this->next_node;
 
 	if (this->experiment != NULL) {

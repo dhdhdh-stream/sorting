@@ -40,6 +40,8 @@ void ScopeNode::experiment_exit_step(SolutionWrapper* wrapper) {
 			this->impacted_factors[f_index]] = false;
 	}
 
+	wrapper->scope_histories.back()->node_histories[this->id]->num_actions_snapshot = wrapper->num_actions;
+
 	wrapper->node_context.back() = this->next_node;
 
 	if (this->experiment != NULL) {

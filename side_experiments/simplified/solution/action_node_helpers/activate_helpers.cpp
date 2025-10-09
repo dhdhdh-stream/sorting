@@ -12,6 +12,12 @@ void ActionNode::step(vector<double>& obs,
 					  int& action,
 					  bool& is_next,
 					  SolutionWrapper* wrapper) {
+	ScopeHistory* scope_history = wrapper->scope_histories.back();
+
+	ActionNodeHistory* history = new ActionNodeHistory(this);
+	history->index = (int)scope_history->node_histories.size();
+	scope_history->node_histories[this->id] = history;
+
 	action = this->action;
 	is_next = true;
 
@@ -21,6 +27,8 @@ void ActionNode::step(vector<double>& obs,
 		wrapper->scope_histories.back()->factor_initialized[
 			this->impacted_factors[f_index]] = false;
 	}
+
+	history->num_actions_snapshot = wrapper->num_actions;
 
 	wrapper->node_context.back() = this->next_node;
 }

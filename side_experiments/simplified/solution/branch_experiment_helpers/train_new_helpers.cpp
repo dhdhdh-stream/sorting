@@ -18,7 +18,7 @@ using namespace std;
 #if defined(MDEBUG) && MDEBUG
 const int TRAIN_NEW_NUM_DATAPOINTS = 20;
 #else
-const int TRAIN_NEW_NUM_DATAPOINTS = 100;
+const int TRAIN_NEW_NUM_DATAPOINTS = 200;
 #endif /* MDEBUG */
 
 void BranchExperiment::train_new_check_activate(
@@ -117,11 +117,22 @@ void BranchExperiment::train_new_backprop(
 	if (history->is_hit) {
 		for (int i_index = 0; i_index < (int)history->existing_predicted_scores.size(); i_index++) {
 			this->i_target_val_histories.push_back(target_val - history->existing_predicted_scores[i_index]);
+
+			// temp
+			this->existing_predicted_score_histories.push_back(history->existing_predicted_scores[i_index]);
 		}
 
 		this->state_iter++;
 		if (this->state_iter >= TRAIN_NEW_NUM_DATAPOINTS
 				&& (int)this->i_target_val_histories.size() >= TRAIN_NEW_NUM_DATAPOINTS) {
+			// temp
+			double sum_predicted_scores = 0.0;
+			for (int h_index = 0; h_index < (int)this->existing_predicted_score_histories.size(); h_index++) {
+				sum_predicted_scores += this->existing_predicted_score_histories[h_index];
+			}
+			double average_existing_predicted = sum_predicted_scores / (double)this->existing_predicted_score_histories.size();
+			cout << "average_existing_predicted: " << average_existing_predicted << endl;
+
 			double constant;
 			vector<Input> factor_inputs;
 			vector<double> factor_input_averages;
@@ -130,16 +141,16 @@ void BranchExperiment::train_new_backprop(
 			vector<Input> network_inputs;
 			Network* network = NULL;
 			double select_percentage;
-			bool is_success = train_helper(this->scope_histories,
-										   this->i_target_val_histories,
-										   constant,
-										   factor_inputs,
-										   factor_input_averages,
-										   factor_input_standard_deviations,
-										   factor_weights,
-										   network_inputs,
-										   network,
-										   select_percentage);
+			bool is_success = train_new_helper(this->scope_histories,
+											   this->i_target_val_histories,
+											   constant,
+											   factor_inputs,
+											   factor_input_averages,
+											   factor_input_standard_deviations,
+											   factor_weights,
+											   network_inputs,
+											   network,
+											   select_percentage);
 
 			for (int h_index = 0; h_index < (int)this->scope_histories.size(); h_index++) {
 				delete this->scope_histories[h_index];
