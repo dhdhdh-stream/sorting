@@ -67,80 +67,76 @@ BranchExperiment::BranchExperiment(Scope* scope_context,
 	vector<double> factor_weights;
 	vector<Input> network_inputs;
 	Network* network = NULL;
-	bool is_success = train_existing_helper(scope_histories,
-											target_val_histories,
-											constant,
-											factor_inputs,
-											factor_input_averages,
-											factor_input_standard_deviations,
-											factor_weights,
-											network_inputs,
-											network);
+	train_existing_helper(scope_histories,
+						  target_val_histories,
+						  constant,
+						  factor_inputs,
+						  factor_input_averages,
+						  factor_input_standard_deviations,
+						  factor_weights,
+						  network_inputs,
+						  network);
 
 	for (int h_index = 0; h_index < (int)scope_histories.size(); h_index++) {
 		delete scope_histories[h_index];
 	}
 
-	if (is_success) {
-		this->node_context->experiment = this;
+	this->node_context->experiment = this;
 
-		this->existing_constant = constant;
-		this->existing_inputs = factor_inputs;
-		this->existing_input_averages = factor_input_averages;
-		this->existing_input_standard_deviations = factor_input_standard_deviations;
-		this->existing_weights = factor_weights;
-		this->existing_network_inputs = network_inputs;
-		this->existing_network = network;
+	this->existing_constant = constant;
+	this->existing_inputs = factor_inputs;
+	this->existing_input_averages = factor_input_averages;
+	this->existing_input_standard_deviations = factor_input_standard_deviations;
+	this->existing_weights = factor_weights;
+	this->existing_network_inputs = network_inputs;
+	this->existing_network = network;
 
-		this->best_surprise = numeric_limits<double>::lowest();
+	this->best_surprise = numeric_limits<double>::lowest();
 
-		switch (this->node_context->type) {
-		case NODE_TYPE_START:
-			{
-				StartNode* start_node = (StartNode*)this->node_context;
-				this->average_instances_per_run = start_node->average_instances_per_run;
-			}
-			break;
-		case NODE_TYPE_ACTION:
-			{
-				ActionNode* action_node = (ActionNode*)this->node_context;
-				this->average_instances_per_run = action_node->average_instances_per_run;
-			}
-			break;
-		case NODE_TYPE_SCOPE:
-			{
-				ScopeNode* scope_node = (ScopeNode*)this->node_context;
-				this->average_instances_per_run = scope_node->average_instances_per_run;
-			}
-			break;
-		case NODE_TYPE_BRANCH:
-			{
-				BranchNode* branch_node = (BranchNode*)this->node_context;
-				if (this->is_branch) {
-					this->average_instances_per_run = branch_node->branch_average_instances_per_run;
-				} else {
-					this->average_instances_per_run = branch_node->original_average_instances_per_run;
-				}
-			}
-			break;
-		case NODE_TYPE_OBS:
-			{
-				ObsNode* obs_node = (ObsNode*)this->node_context;
-				this->average_instances_per_run = obs_node->average_instances_per_run;
-			}
-			break;
+	switch (this->node_context->type) {
+	case NODE_TYPE_START:
+		{
+			StartNode* start_node = (StartNode*)this->node_context;
+			this->average_instances_per_run = start_node->average_instances_per_run;
 		}
-
-		uniform_int_distribution<int> until_distribution(1, 2 * this->average_instances_per_run);
-		this->num_instances_until_target = until_distribution(generator);
-
-		this->state = BRANCH_EXPERIMENT_STATE_EXPLORE;
-		this->state_iter = 0;
-
-		this->result = EXPERIMENT_RESULT_NA;
-	} else {
-		this->result = EXPERIMENT_RESULT_FAIL;
+		break;
+	case NODE_TYPE_ACTION:
+		{
+			ActionNode* action_node = (ActionNode*)this->node_context;
+			this->average_instances_per_run = action_node->average_instances_per_run;
+		}
+		break;
+	case NODE_TYPE_SCOPE:
+		{
+			ScopeNode* scope_node = (ScopeNode*)this->node_context;
+			this->average_instances_per_run = scope_node->average_instances_per_run;
+		}
+		break;
+	case NODE_TYPE_BRANCH:
+		{
+			BranchNode* branch_node = (BranchNode*)this->node_context;
+			if (this->is_branch) {
+				this->average_instances_per_run = branch_node->branch_average_instances_per_run;
+			} else {
+				this->average_instances_per_run = branch_node->original_average_instances_per_run;
+			}
+		}
+		break;
+	case NODE_TYPE_OBS:
+		{
+			ObsNode* obs_node = (ObsNode*)this->node_context;
+			this->average_instances_per_run = obs_node->average_instances_per_run;
+		}
+		break;
 	}
+
+	uniform_int_distribution<int> until_distribution(1, 2 * this->average_instances_per_run);
+	this->num_instances_until_target = until_distribution(generator);
+
+	this->state = BRANCH_EXPERIMENT_STATE_EXPLORE;
+	this->state_iter = 0;
+
+	this->result = EXPERIMENT_RESULT_NA;
 }
 
 BranchExperiment::~BranchExperiment() {

@@ -152,48 +152,43 @@ void create_experiment(SolutionWrapper* wrapper,
 			explore_node->parent,
 			explore_node,
 			explore_is_branch);
+		curr_experiment = new_experiment;
 
-		if (new_experiment->result == EXPERIMENT_RESULT_FAIL) {
-			delete new_experiment;
-		} else {
-			curr_experiment = new_experiment;
-
-			switch (explore_node->type) {
-			case NODE_TYPE_START:
-				{
-					StartNode* start_node = (StartNode*)explore_node;
-					start_node->num_experiments++;
-				}
-				break;
-			case NODE_TYPE_ACTION:
-				{
-					ActionNode* action_node = (ActionNode*)explore_node;
-					action_node->num_experiments++;
-				}
-				break;
-			case NODE_TYPE_SCOPE:
-				{
-					ScopeNode* scope_node = (ScopeNode*)explore_node;
-					scope_node->num_experiments++;
-				}
-				break;
-			case NODE_TYPE_BRANCH:
-				{
-					BranchNode* branch_node = (BranchNode*)explore_node;
-					if (explore_is_branch) {
-						branch_node->branch_num_experiments++;
-					} else {
-						branch_node->original_num_experiments++;
-					}
-				}
-				break;
-			case NODE_TYPE_OBS:
-				{
-					ObsNode* obs_node = (ObsNode*)explore_node;
-					obs_node->num_experiments++;
-				}
-				break;
+		switch (explore_node->type) {
+		case NODE_TYPE_START:
+			{
+				StartNode* start_node = (StartNode*)explore_node;
+				start_node->num_experiments++;
 			}
+			break;
+		case NODE_TYPE_ACTION:
+			{
+				ActionNode* action_node = (ActionNode*)explore_node;
+				action_node->num_experiments++;
+			}
+			break;
+		case NODE_TYPE_SCOPE:
+			{
+				ScopeNode* scope_node = (ScopeNode*)explore_node;
+				scope_node->num_experiments++;
+			}
+			break;
+		case NODE_TYPE_BRANCH:
+			{
+				BranchNode* branch_node = (BranchNode*)explore_node;
+				if (explore_is_branch) {
+					branch_node->branch_num_experiments++;
+				} else {
+					branch_node->original_num_experiments++;
+				}
+			}
+			break;
+		case NODE_TYPE_OBS:
+			{
+				ObsNode* obs_node = (ObsNode*)explore_node;
+				obs_node->num_experiments++;
+			}
+			break;
 		}
 	}
 }

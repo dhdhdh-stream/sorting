@@ -288,7 +288,7 @@ void gather_inputs_helper(ScopeHistory* scope_history,
 	}
 }
 
-bool try_helper(vector<ScopeHistory*>& scope_histories,
+void try_helper(vector<ScopeHistory*>& scope_histories,
 				vector<double>& target_val_histories,
 				map<Input, InputData*>& input_tracker,
 				double& constant,
@@ -333,6 +333,8 @@ bool try_helper(vector<ScopeHistory*>& scope_histories,
 			* (target_val_histories[seed_indexes[s_index]] - seed_val_average);
 	}
 	double seed_val_standard_deviation = sqrt(sum_seed_variances / (double)seed_indexes.size());
+
+	bool train_factor_success = false;
 
 	vector<InputData*> factor_input_datas;
 	if (seed_val_standard_deviation >= MIN_STANDARD_DEVIATION) {
@@ -390,12 +392,14 @@ bool try_helper(vector<ScopeHistory*>& scope_histories,
 		}
 		sort(factor_pccs.begin(), factor_pccs.end());
 
+		vector<Input> new_factor_inputs;
+		vector<InputData*> new_factor_input_datas;
 		for (int f_index = (int)factor_pccs.size()-1; f_index >= 0; f_index--) {
 			InputData* potential_input_data = factor_pccs[f_index].second.second;
 
 			bool should_add = true;
-			for (int e_index = 0; e_index < (int)factor_inputs.size(); e_index++) {
-				InputData* existing_input_data = factor_input_datas[e_index];
+			for (int e_index = 0; e_index < (int)new_factor_inputs.size(); e_index++) {
+				InputData* existing_input_data = new_factor_input_datas[e_index];
 
 				double sum_covariance = 0.0;
 				for (int h_index = 0; h_index < (int)potential_input_data->normalized_vals.size(); h_index++) {
@@ -413,66 +417,104 @@ bool try_helper(vector<ScopeHistory*>& scope_histories,
 			}
 
 			if (should_add) {
-				factor_inputs.push_back(factor_pccs[f_index].second.first);
-				factor_input_averages.push_back(factor_pccs[f_index].second.second->average);
-				factor_input_standard_deviations.push_back(factor_pccs[f_index].second.second->standard_deviation);
-
-				factor_input_datas.push_back(factor_pccs[f_index].second.second);
+				new_factor_inputs.push_back(factor_pccs[f_index].second.first);
+				new_factor_input_datas.push_back(factor_pccs[f_index].second.second);
 			}
 
 			factor_pccs.pop_back();
 
-			if (factor_inputs.size() >= NUM_FACTORS) {
+			if (new_factor_inputs.size() >= NUM_FACTORS) {
 				break;
+			}
+		}
+
+		Eigen::MatrixXd inputs(remaining_indexes.size(), 1 + new_factor_inputs.size());
+		uniform_real_distribution<double> noise_distribution(-0.001, 0.001);
+		/**
+		 * - add some noise to prevent extremes
+		 */
+		for (int i_index = 0; i_index < (int)remaining_indexes.size(); i_index++) {
+			inputs(i_index, 0) = 1.0;
+			for (int f_index = 0; f_index < (int)new_factor_inputs.size(); f_index++) {
+				inputs(i_index, 1 + f_index) = new_factor_input_datas[f_index]
+					->normalized_vals[remaining_indexes[i_index]]
+						+ noise_distribution(generator);
+			}
+		}
+
+		Eigen::VectorXd outputs(remaining_indexes.size());
+		for (int i_index = 0; i_index < (int)remaining_indexes.size(); i_index++) {
+			outputs(i_index) = target_val_histories[remaining_indexes[i_index]];
+		}
+
+		train_factor_success = true;
+		Eigen::VectorXd weights;
+		try {
+			weights = inputs.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(outputs);
+		} catch (std::invalid_argument &e) {
+			cout << "Eigen error" << endl;
+			train_factor_success = false;
+		}
+
+		#if defined(MDEBUG) && MDEBUG
+		#else
+		if (train_factor_success) {
+			if (abs(weights(0)) > REGRESSION_WEIGHT_LIMIT) {
+				cout << "abs(weights(0)): " << abs(weights(0)) << endl;
+				train_factor_success = false;
+			}
+			for (int f_index = 0; f_index < (int)factor_inputs.size(); f_index++) {
+				if (abs(weights(1 + f_index)) > REGRESSION_WEIGHT_LIMIT) {
+					cout << "abs(weights(1 + f_index)): " << abs(weights(1 + f_index)) << endl;
+					train_factor_success = false;
+				}
+			}
+		}
+		#endif /* MDEBUG */
+
+		if (train_factor_success) {
+			vector<double> seed_predicted_vals(seed_indexes.size());
+			for (int s_index = 0; s_index < (int)seed_indexes.size(); s_index++) {
+				double sum_score = weights(0);
+				for (int f_index = 0; f_index < (int)new_factor_inputs.size(); f_index++) {
+					sum_score += weights(1 + f_index) * new_factor_input_datas[f_index]->normalized_vals[seed_indexes[s_index]];
+				}
+				seed_predicted_vals[s_index] = sum_score;
+			}
+
+			double sum_seed_factor_misguess = 0.0;
+			for (int s_index = 0; s_index < (int)seed_indexes.size(); s_index++) {
+				sum_seed_factor_misguess += (target_val_histories[seed_indexes[s_index]] - seed_predicted_vals[s_index])
+					* (target_val_histories[seed_indexes[s_index]] - seed_predicted_vals[s_index]);
+			}
+
+			if (sum_seed_factor_misguess >= sum_seed_variances) {
+				train_factor_success = false;
+			}
+		}
+
+		if (train_factor_success) {
+			factor_inputs = new_factor_inputs;
+			for (int f_index = 0; f_index < (int)new_factor_inputs.size(); f_index++) {
+				factor_input_averages.push_back(new_factor_input_datas[f_index]->average);
+				factor_input_standard_deviations.push_back(new_factor_input_datas[f_index]->standard_deviation);
+			}
+			factor_input_datas = new_factor_input_datas;
+
+			constant = weights(0);
+			for (int f_index = 0; f_index < (int)new_factor_inputs.size(); f_index++) {
+				factor_weights.push_back(weights(1 + f_index));
 			}
 		}
 	}
 
-	Eigen::MatrixXd inputs(remaining_indexes.size(), 1 + factor_inputs.size());
-	uniform_real_distribution<double> noise_distribution(-0.001, 0.001);
-	/**
-	 * - add some noise to prevent extremes
-	 */
-	for (int i_index = 0; i_index < (int)remaining_indexes.size(); i_index++) {
-		inputs(i_index, 0) = 1.0;
-		for (int f_index = 0; f_index < (int)factor_inputs.size(); f_index++) {
-			inputs(i_index, 1 + f_index) = factor_input_datas[f_index]
-				->normalized_vals[remaining_indexes[i_index]]
-					+ noise_distribution(generator);
+	if (!train_factor_success) {
+		double sum_remaining_scores = 0.0;
+		for (int i_index = 0; i_index < (int)remaining_indexes.size(); i_index++) {
+			sum_remaining_scores += target_val_histories[remaining_indexes[i_index]];
 		}
+		constant = sum_remaining_scores / (double)remaining_indexes.size();
 	}
-
-	Eigen::VectorXd outputs(remaining_indexes.size());
-	for (int i_index = 0; i_index < (int)remaining_indexes.size(); i_index++) {
-		outputs(i_index) = target_val_histories[remaining_indexes[i_index]];
-	}
-
-	Eigen::VectorXd weights;
-	try {
-		weights = inputs.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(outputs);
-	} catch (std::invalid_argument &e) {
-		cout << "Eigen error" << endl;
-		return false;
-	}
-
-	constant = weights(0);
-	for (int f_index = 0; f_index < (int)factor_inputs.size(); f_index++) {
-		factor_weights.push_back(weights(1 + f_index));
-	}
-
-	#if defined(MDEBUG) && MDEBUG
-	#else
-	if (abs(weights(0)) > REGRESSION_WEIGHT_LIMIT) {
-		cout << "abs(weights(0)): " << abs(weights(0)) << endl;
-		return false;
-	}
-	for (int f_index = 0; f_index < (int)factor_inputs.size(); f_index++) {
-		if (abs(weights(1 + f_index)) > REGRESSION_WEIGHT_LIMIT) {
-			cout << "abs(weights(1 + f_index)): " << abs(weights(1 + f_index)) << endl;
-			return false;
-		}
-	}
-	#endif /* MDEBUG */
 
 	vector<double> sum_vals(scope_histories.size());
 	vector<double> remaining_scores(scope_histories.size());
@@ -485,30 +527,6 @@ bool try_helper(vector<ScopeHistory*>& scope_histories,
 
 		sum_vals[h_index] = sum_score;
 		remaining_scores[h_index] = target_val_histories[h_index] - sum_score;
-	}
-
-	// temp
-	{
-		double sum_seed_scores = 0.0;
-		for (int s_index = 0; s_index < (int)seed_indexes.size(); s_index++) {
-			sum_seed_scores += target_val_histories[seed_indexes[s_index]];
-		}
-		double seed_score_average = sum_seed_scores / (double)seed_indexes.size();
-
-		double sum_seed_default_misguess = 0.0;
-		for (int s_index = 0; s_index < (int)seed_indexes.size(); s_index++) {
-			sum_seed_default_misguess += (target_val_histories[seed_indexes[s_index]] - seed_score_average)
-				* (target_val_histories[seed_indexes[s_index]] - seed_score_average);
-		}
-
-		double sum_seed_factor_misguess = 0.0;
-		for (int s_index = 0; s_index < (int)seed_indexes.size(); s_index++) {
-			sum_seed_factor_misguess += (target_val_histories[seed_indexes[s_index]] - sum_vals[seed_indexes[s_index]])
-				* (target_val_histories[seed_indexes[s_index]] - sum_vals[seed_indexes[s_index]]);
-		}
-
-		cout << "sum_seed_default_misguess: " << sum_seed_default_misguess << endl;
-		cout << "sum_seed_factor_misguess: " << sum_seed_factor_misguess << endl;
 	}
 
 	/**
@@ -823,11 +841,9 @@ bool try_helper(vector<ScopeHistory*>& scope_histories,
 	}
 	select_percentage = (double)num_positive / (double)scope_histories.size();
 	#endif /* MDEBUG */
-
-	return true;
 }
 
-bool train_existing_helper(vector<ScopeHistory*>& scope_histories,
+void train_existing_helper(vector<ScopeHistory*>& scope_histories,
 						   vector<double>& target_val_histories,
 						   double& constant,
 						   vector<Input>& factor_inputs,
@@ -839,7 +855,6 @@ bool train_existing_helper(vector<ScopeHistory*>& scope_histories,
 	map<Input, InputData*> input_tracker;
 
 	double best_average_misguess = numeric_limits<double>::max();
-	bool is_success = false;
 	for (int t_index = 0; t_index < TRAIN_TRIES; t_index++) {
 		double curr_constant;
 		vector<Input> curr_factor_inputs;
@@ -851,38 +866,34 @@ bool train_existing_helper(vector<ScopeHistory*>& scope_histories,
 		double curr_average_misguess;
 		double curr_seed_average_predicted_score;
 		double curr_select_percentage;
-		bool curr_is_success = try_helper(scope_histories,
-										  target_val_histories,
-										  input_tracker,
-										  curr_constant,
-										  curr_factor_inputs,
-										  curr_factor_input_averages,
-										  curr_factor_input_standard_deviations,
-										  curr_factor_weights,
-										  curr_network_inputs,
-										  curr_network,
-										  curr_average_misguess,
-										  curr_seed_average_predicted_score,
-										  curr_select_percentage);
+		try_helper(scope_histories,
+				   target_val_histories,
+				   input_tracker,
+				   curr_constant,
+				   curr_factor_inputs,
+				   curr_factor_input_averages,
+				   curr_factor_input_standard_deviations,
+				   curr_factor_weights,
+				   curr_network_inputs,
+				   curr_network,
+				   curr_average_misguess,
+				   curr_seed_average_predicted_score,
+				   curr_select_percentage);
 
-		if (curr_is_success) {
-			is_success = true;
+		if (curr_average_misguess < best_average_misguess) {
+			best_average_misguess = curr_average_misguess;
 
-			if (curr_average_misguess < best_average_misguess) {
-				best_average_misguess = curr_average_misguess;
-
-				constant = curr_constant;
-				factor_inputs = curr_factor_inputs;
-				factor_input_averages = curr_factor_input_averages;
-				factor_input_standard_deviations = curr_factor_input_standard_deviations;
-				factor_weights = curr_factor_weights;
-				network_inputs = curr_network_inputs;
-				if (network != NULL) {
-					delete network;
-				}
-				network = curr_network;
-				curr_network = NULL;
+			constant = curr_constant;
+			factor_inputs = curr_factor_inputs;
+			factor_input_averages = curr_factor_input_averages;
+			factor_input_standard_deviations = curr_factor_input_standard_deviations;
+			factor_weights = curr_factor_weights;
+			network_inputs = curr_network_inputs;
+			if (network != NULL) {
+				delete network;
 			}
+			network = curr_network;
+			curr_network = NULL;
 		}
 
 		if (curr_network != NULL) {
@@ -894,8 +905,6 @@ bool train_existing_helper(vector<ScopeHistory*>& scope_histories,
 			it != input_tracker.end(); it++) {
 		delete it->second;
 	}
-
-	return is_success;
 }
 
 bool train_new_helper(vector<ScopeHistory*>& scope_histories,
@@ -923,19 +932,19 @@ bool train_new_helper(vector<ScopeHistory*>& scope_histories,
 		double curr_average_misguess;
 		double curr_seed_average_predicted_score;
 		double curr_select_percentage;
-		bool curr_is_success = try_helper(scope_histories,
-										  target_val_histories,
-										  input_tracker,
-										  curr_constant,
-										  curr_factor_inputs,
-										  curr_factor_input_averages,
-										  curr_factor_input_standard_deviations,
-										  curr_factor_weights,
-										  curr_network_inputs,
-										  curr_network,
-										  curr_average_misguess,
-										  curr_seed_average_predicted_score,
-										  curr_select_percentage);
+		try_helper(scope_histories,
+				   target_val_histories,
+				   input_tracker,
+				   curr_constant,
+				   curr_factor_inputs,
+				   curr_factor_input_averages,
+				   curr_factor_input_standard_deviations,
+				   curr_factor_weights,
+				   curr_network_inputs,
+				   curr_network,
+				   curr_average_misguess,
+				   curr_seed_average_predicted_score,
+				   curr_select_percentage);
 
 		// temp
 		cout << t_index << endl;
@@ -943,8 +952,7 @@ bool train_new_helper(vector<ScopeHistory*>& scope_histories,
 		cout << "curr_seed_average_predicted_score: " << curr_seed_average_predicted_score << endl;
 		cout << "curr_select_percentage: " << curr_select_percentage << endl;
 
-		if (curr_is_success
-				&& curr_seed_average_predicted_score >= 0.0) {
+		if (curr_seed_average_predicted_score >= 0.0) {
 			is_success = true;
 
 			if (curr_average_misguess < best_average_misguess) {

@@ -165,7 +165,7 @@ public:
 	BranchExperimentState(BranchExperiment* experiment);
 };
 
-bool train_existing_helper(std::vector<ScopeHistory*>& scope_histories,
+void train_existing_helper(std::vector<ScopeHistory*>& scope_histories,
 						   std::vector<double>& target_val_histories,
 						   double& constant,
 						   std::vector<Input>& factor_inputs,
