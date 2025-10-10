@@ -53,11 +53,6 @@ const double MIN_CONSIDER_HIT_PERCENT = 0.2;
 
 const double UNIQUE_MAX_PCC = 0.7;
 
-/**
- * - when there's correlation, weights can get strange values(?)
- */
-const double REGRESSION_WEIGHT_LIMIT = 100000.0;
-
 const double FACTOR_IMPACT_THRESHOLD = 0.1;
 
 const int INPUT_NUM_HIGHEST = 4;
@@ -313,7 +308,7 @@ void try_helper(vector<ScopeHistory*>& scope_histories,
 	vector<int> seed_indexes;
 	vector<int> remaining_indexes(scope_histories.size());
 	for (int i_index = 0; i_index < (int)scope_histories.size(); i_index++) {
-		remaining_indexes.push_back(i_index);
+		remaining_indexes[i_index] = i_index;
 	}
 	for (int s_index = 0; s_index < num_seeds; s_index++) {
 		uniform_int_distribution<int> distribution(0, remaining_indexes.size()-1);

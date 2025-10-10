@@ -18,6 +18,8 @@
 
 using namespace std;
 
+const int RETRAIN_NUM_CHANCES = 3;
+
 void BranchExperiment::measure_check_activate(SolutionWrapper* wrapper,
 											  BranchExperimentHistory* history) {
 	double sum_vals = this->existing_constant;
@@ -263,7 +265,13 @@ void BranchExperiment::measure_backprop(double target_val,
 				this->result = EXPERIMENT_RESULT_SUCCESS;
 				#endif /* MDEBUG */
 			} else {
-				bool retrain_is_success = retrain_helper();
+				bool retrain_is_success = false;
+				for (int t_index = 0; t_index < RETRAIN_NUM_CHANCES; t_index++) {
+					if (retrain_helper()) {
+						retrain_is_success = true;
+						break;
+					}
+				}
 				if (retrain_is_success) {
 					for (int h_index = 0; h_index < (int)this->new_scope_histories.size(); h_index++) {
 						delete this->new_scope_histories[h_index];
