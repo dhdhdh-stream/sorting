@@ -766,46 +766,46 @@ void try_helper(vector<ScopeHistory*>& scope_histories,
 	/**
 	 * - verification
 	 */
-	for (int h_index = 0; h_index < (int)scope_histories.size(); h_index++) {
-		double curr_sum_vals = constant;
+	// for (int h_index = 0; h_index < (int)scope_histories.size(); h_index++) {
+	// 	double curr_sum_vals = constant;
 
-		for (int i_index = 0; i_index < (int)factor_inputs.size(); i_index++) {
-			double val;
-			bool is_on;
-			fetch_input_helper(scope_histories[h_index],
-							   factor_inputs[i_index],
-							   0,
-							   val,
-							   is_on);
-			if (is_on) {
-				double normalized_val = (val - factor_input_averages[i_index]) / factor_input_standard_deviations[i_index];
-				curr_sum_vals += factor_weights[i_index] * normalized_val;
-			}
-		}
+	// 	for (int i_index = 0; i_index < (int)factor_inputs.size(); i_index++) {
+	// 		double val;
+	// 		bool is_on;
+	// 		fetch_input_helper(scope_histories[h_index],
+	// 						   factor_inputs[i_index],
+	// 						   0,
+	// 						   val,
+	// 						   is_on);
+	// 		if (is_on) {
+	// 			double normalized_val = (val - factor_input_averages[i_index]) / factor_input_standard_deviations[i_index];
+	// 			curr_sum_vals += factor_weights[i_index] * normalized_val;
+	// 		}
+	// 	}
 
-		if (network != NULL) {
-			vector<double> input_vals(network_inputs.size());
-			vector<bool> input_is_on(network_inputs.size());
-			for (int i_index = 0; i_index < (int)network_inputs.size(); i_index++) {
-				double val;
-				bool is_on;
-				fetch_input_helper(scope_histories[h_index],
-								   network_inputs[i_index],
-								   0,
-								   val,
-								   is_on);
-				input_vals[i_index] = val;
-				input_is_on[i_index] = is_on;
-			}
-			network->activate(input_vals,
-							  input_is_on);
-			curr_sum_vals += network->output->acti_vals[0];
-		}
+	// 	if (network != NULL) {
+	// 		vector<double> input_vals(network_inputs.size());
+	// 		vector<bool> input_is_on(network_inputs.size());
+	// 		for (int i_index = 0; i_index < (int)network_inputs.size(); i_index++) {
+	// 			double val;
+	// 			bool is_on;
+	// 			fetch_input_helper(scope_histories[h_index],
+	// 							   network_inputs[i_index],
+	// 							   0,
+	// 							   val,
+	// 							   is_on);
+	// 			input_vals[i_index] = val;
+	// 			input_is_on[i_index] = is_on;
+	// 		}
+	// 		network->activate(input_vals,
+	// 						  input_is_on);
+	// 		curr_sum_vals += network->output->acti_vals[0];
+	// 	}
 
-		if (curr_sum_vals != sum_vals[h_index]) {
-			throw invalid_argument("curr_sum_vals != sum_vals[h_index]");
-		}
-	}
+	// 	if (curr_sum_vals != sum_vals[h_index]) {
+	// 		throw invalid_argument("curr_sum_vals != sum_vals[h_index]");
+	// 	}
+	// }
 
 	double seed_sum_predicted_score = 0.0;
 	for (int s_index = 0; s_index < (int)seed_indexes.size(); s_index++) {

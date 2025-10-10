@@ -30,7 +30,8 @@ void BranchExperiment::check_activate(AbstractNode* experiment_node,
 									 history);
 			break;
 		case BRANCH_EXPERIMENT_STATE_MEASURE:
-			measure_check_activate(wrapper);
+			measure_check_activate(wrapper,
+								   history);
 			break;
 		#if defined(MDEBUG) && MDEBUG
 		case BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY:

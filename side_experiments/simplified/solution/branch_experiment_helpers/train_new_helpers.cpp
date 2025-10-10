@@ -18,8 +18,7 @@ using namespace std;
 #if defined(MDEBUG) && MDEBUG
 const int TRAIN_NEW_NUM_DATAPOINTS = 20;
 #else
-// const int TRAIN_NEW_NUM_DATAPOINTS = 200;
-const int TRAIN_NEW_NUM_DATAPOINTS = 4000;
+const int TRAIN_NEW_NUM_DATAPOINTS = 200;
 #endif /* MDEBUG */
 
 void BranchExperiment::train_new_check_activate(
@@ -63,7 +62,7 @@ void BranchExperiment::train_new_check_activate(
 
 		ScopeHistory* scope_history_copy = new ScopeHistory(wrapper->scope_histories.back());
 		scope_history_copy->num_actions_snapshot = wrapper->num_actions;
-		this->scope_histories.push_back(scope_history_copy);
+		this->explore_scope_histories.push_back(scope_history_copy);
 
 		uniform_int_distribution<int> until_distribution(1, this->average_instances_per_run);
 		this->num_instances_until_target = until_distribution(generator);
@@ -117,23 +116,12 @@ void BranchExperiment::train_new_backprop(
 		BranchExperimentHistory* history) {
 	if (history->is_hit) {
 		for (int i_index = 0; i_index < (int)history->existing_predicted_scores.size(); i_index++) {
-			this->i_target_val_histories.push_back(target_val - history->existing_predicted_scores[i_index]);
-
-			// temp
-			this->existing_predicted_score_histories.push_back(history->existing_predicted_scores[i_index]);
+			this->explore_target_val_histories.push_back(target_val - history->existing_predicted_scores[i_index]);
 		}
 
 		this->state_iter++;
 		if (this->state_iter >= TRAIN_NEW_NUM_DATAPOINTS
-				&& (int)this->i_target_val_histories.size() >= TRAIN_NEW_NUM_DATAPOINTS) {
-			// temp
-			double sum_predicted_scores = 0.0;
-			for (int h_index = 0; h_index < (int)this->existing_predicted_score_histories.size(); h_index++) {
-				sum_predicted_scores += this->existing_predicted_score_histories[h_index];
-			}
-			double average_existing_predicted = sum_predicted_scores / (double)this->existing_predicted_score_histories.size();
-			cout << "average_existing_predicted: " << average_existing_predicted << endl;
-
+				&& (int)this->explore_target_val_histories.size() >= TRAIN_NEW_NUM_DATAPOINTS) {
 			double constant;
 			vector<Input> factor_inputs;
 			vector<double> factor_input_averages;
@@ -142,8 +130,8 @@ void BranchExperiment::train_new_backprop(
 			vector<Input> network_inputs;
 			Network* network = NULL;
 			double select_percentage;
-			bool is_success = train_new_helper(this->scope_histories,
-											   this->i_target_val_histories,
+			bool is_success = train_new_helper(this->explore_scope_histories,
+											   this->explore_target_val_histories,
 											   constant,
 											   factor_inputs,
 											   factor_input_averages,
@@ -152,12 +140,6 @@ void BranchExperiment::train_new_backprop(
 											   network_inputs,
 											   network,
 											   select_percentage);
-
-			for (int h_index = 0; h_index < (int)this->scope_histories.size(); h_index++) {
-				delete this->scope_histories[h_index];
-			}
-			this->scope_histories.clear();
-			this->i_target_val_histories.clear();
 
 			if (is_success && select_percentage > 0.0) {
 				this->new_constant = constant;
@@ -169,6 +151,8 @@ void BranchExperiment::train_new_backprop(
 				this->new_network = network;
 
 				this->select_percentage = select_percentage;
+
+				this->new_sum_scores = 0.0;
 
 				this->state = BRANCH_EXPERIMENT_STATE_MEASURE;
 				this->state_iter = 0;

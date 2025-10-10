@@ -18,7 +18,46 @@
 
 using namespace std;
 
-void BranchExperiment::measure_check_activate(SolutionWrapper* wrapper) {
+void BranchExperiment::measure_check_activate(SolutionWrapper* wrapper,
+											  BranchExperimentHistory* history) {
+	double sum_vals = this->existing_constant;
+	for (int i_index = 0; i_index < (int)this->existing_inputs.size(); i_index++) {
+		double val;
+		bool is_on;
+		fetch_input_helper(wrapper->scope_histories.back(),
+						   this->existing_inputs[i_index],
+						   0,
+						   val,
+						   is_on);
+		if (is_on) {
+			double normalized_val = (val - this->existing_input_averages[i_index]) / this->existing_input_standard_deviations[i_index];
+			sum_vals += this->existing_weights[i_index] * normalized_val;
+		}
+	}
+	if (this->existing_network != NULL) {
+		vector<double> input_vals(this->existing_network_inputs.size());
+		vector<bool> input_is_on(this->existing_network_inputs.size());
+		for (int i_index = 0; i_index < (int)this->existing_network_inputs.size(); i_index++) {
+			double val;
+			bool is_on;
+			fetch_input_helper(wrapper->scope_histories.back(),
+							   this->existing_network_inputs[i_index],
+							   0,
+							   val,
+							   is_on);
+			input_vals[i_index] = val;
+			input_is_on[i_index] = is_on;
+		}
+		this->existing_network->activate(input_vals,
+									input_is_on);
+		sum_vals += this->existing_network->output->acti_vals[0];
+	}
+	history->existing_predicted_scores.push_back(sum_vals);
+
+	ScopeHistory* scope_history_copy = new ScopeHistory(wrapper->scope_histories.back());
+	scope_history_copy->num_actions_snapshot = wrapper->num_actions;
+	this->measure_scope_histories.push_back(scope_history_copy);
+
 	if (this->select_percentage == 1.0) {
 		BranchExperimentState* new_experiment_state = new BranchExperimentState(this);
 		new_experiment_state->step_index = 0;
@@ -126,15 +165,15 @@ void BranchExperiment::measure_exit_step(SolutionWrapper* wrapper,
 void BranchExperiment::measure_backprop(double target_val,
 										BranchExperimentHistory* history) {
 	if (history->is_hit) {
-		this->i_target_val_histories.push_back(target_val);
+		for (int i_index = 0; i_index < (int)history->existing_predicted_scores.size(); i_index++) {
+			this->measure_target_val_histories.push_back(target_val - history->existing_predicted_scores[i_index]);
+		}
+
+		this->new_sum_scores += target_val;
 
 		this->state_iter++;
 		if (this->state_iter >= MEASURE_ITERS) {
-			double sum_score = 0.0;
-			for (int h_index = 0; h_index < (int)this->i_target_val_histories.size(); h_index++) {
-				sum_score += this->i_target_val_histories[h_index];
-			}
-			double new_score = sum_score / (double)this->state_iter;
+			double new_score = this->new_sum_scores / (double)this->state_iter;
 
 			double existing_score;
 			switch (this->node_context->type) {
@@ -224,7 +263,20 @@ void BranchExperiment::measure_backprop(double target_val,
 				this->result = EXPERIMENT_RESULT_SUCCESS;
 				#endif /* MDEBUG */
 			} else {
-				this->result = EXPERIMENT_RESULT_FAIL;
+				bool retrain_is_success = retrain_helper();
+				if (retrain_is_success) {
+					for (int h_index = 0; h_index < (int)this->new_scope_histories.size(); h_index++) {
+						delete this->new_scope_histories[h_index];
+					}
+					this->new_scope_histories.clear();
+					this->new_target_val_histories.clear();
+
+					this->new_sum_scores = 0.0;
+
+					this->state_iter = 0;
+				} else {
+					this->result = EXPERIMENT_RESULT_FAIL;
+				}
 			}
 		}
 	}

@@ -1,10 +1,3 @@
-// TODO: add 2nd effort for train
-// - if think bad, then probably hopeless, and can stop
-//   - but if think good, but is bad, then means some information is missing
-//     - an issue that can be corrected by additional samples
-//       - for certain problems, a large number of samples may simple be needed?
-// - so 2nd effort until actually good, or think bad
-
 #include <chrono>
 #include <iostream>
 #include <map>

@@ -62,10 +62,20 @@ public:
 
 	double select_percentage;
 
-	std::vector<ScopeHistory*> scope_histories;
-	std::vector<double> i_target_val_histories;
-	// temp
-	std::vector<double> existing_predicted_score_histories;
+	/**
+	 * - explore for negatives
+	 */
+	std::vector<ScopeHistory*> explore_scope_histories;
+	std::vector<double> explore_target_val_histories;
+
+	/**
+	 * - measure for edge cases not seen in explore
+	 *   - but still need to give explore large weight
+	 */
+	std::vector<ScopeHistory*> measure_scope_histories;
+	std::vector<double> measure_target_val_histories;
+
+	double new_sum_scores;
 
 	#if defined(MDEBUG) && MDEBUG
 	std::vector<Problem*> verify_problems;
@@ -124,7 +134,8 @@ public:
 	void train_new_backprop(double target_val,
 							BranchExperimentHistory* history);
 
-	void measure_check_activate(SolutionWrapper* wrapper);
+	void measure_check_activate(SolutionWrapper* wrapper,
+								BranchExperimentHistory* history);
 	void measure_step(std::vector<double>& obs,
 					  int& action,
 					  bool& is_next,
@@ -134,6 +145,8 @@ public:
 						   BranchExperimentState* experiment_state);
 	void measure_backprop(double target_val,
 						  BranchExperimentHistory* history);
+
+	bool retrain_helper();
 
 	#if defined(MDEBUG) && MDEBUG
 	void capture_verify_check_activate(SolutionWrapper* wrapper);
