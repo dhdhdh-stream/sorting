@@ -137,7 +137,7 @@ void BranchExperiment::add(SolutionWrapper* wrapper) {
 		exit_node = this->best_exit_next_node;
 	}
 
-	if (this->best_select_percentage == 1.0) {
+	if (this->select_percentage == 1.0) {
 		int starting_node_id;
 		AbstractNode* starting_node;
 		if (this->best_step_types.size() == 0) {
@@ -464,11 +464,11 @@ void BranchExperiment::add(SolutionWrapper* wrapper) {
 		}
 		new_branch_node->ancestor_ids.push_back(this->node_context->id);
 
-		if (this->best_network != NULL) {
+		if (this->new_network != NULL) {
 			Factor* new_factor = new Factor();
-			new_factor->inputs = this->best_network_inputs;
-			new_factor->network = this->best_network;
-			this->best_network = NULL;
+			new_factor->inputs = this->new_network_inputs;
+			new_factor->network = this->new_network;
+			this->new_network = NULL;
 			new_factor->is_meaningful = true;
 
 			this->scope_context->factors.push_back(new_factor);
@@ -480,17 +480,17 @@ void BranchExperiment::add(SolutionWrapper* wrapper) {
 			new_input.factor_index = (int)this->scope_context->factors.size()-1;
 			new_input.node_context = {-1};
 			new_input.obs_index = -1;
-			this->best_inputs.push_back(new_input);
-			this->best_input_averages.push_back(0.0);
-			this->best_input_standard_deviations.push_back(1.0);
-			this->best_weights.push_back(1.0);
+			this->new_inputs.push_back(new_input);
+			this->new_input_averages.push_back(0.0);
+			this->new_input_standard_deviations.push_back(1.0);
+			this->new_weights.push_back(1.0);
 		}
 
-		new_branch_node->constant = this->best_constant;
-		new_branch_node->inputs = this->best_inputs;
-		new_branch_node->input_averages = this->best_input_averages;
-		new_branch_node->input_standard_deviations = this->best_input_standard_deviations;
-		new_branch_node->weights = this->best_weights;
+		new_branch_node->constant = this->new_constant;
+		new_branch_node->inputs = this->new_inputs;
+		new_branch_node->input_averages = this->new_input_averages;
+		new_branch_node->input_standard_deviations = this->new_input_standard_deviations;
+		new_branch_node->weights = this->new_weights;
 
 		#if defined(MDEBUG) && MDEBUG
 		if (this->verify_problems.size() > 0) {

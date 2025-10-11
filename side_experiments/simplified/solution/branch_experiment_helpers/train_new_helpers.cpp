@@ -122,48 +122,16 @@ void BranchExperiment::train_new_backprop(
 		this->state_iter++;
 		if (this->state_iter >= TRAIN_NEW_NUM_DATAPOINTS
 				&& (int)this->target_val_histories.size() >= TRAIN_NEW_NUM_DATAPOINTS) {
-			double constant;
-			vector<Input> factor_inputs;
-			vector<double> factor_input_averages;
-			vector<double> factor_input_standard_deviations;
-			vector<double> factor_weights;
-			vector<Input> network_inputs;
-			Network* network = NULL;
-			double select_percentage;
-			bool is_success = train_new_helper(this->scope_histories,
-											   this->target_val_histories,
-											   constant,
-											   factor_inputs,
-											   factor_input_averages,
-											   factor_input_standard_deviations,
-											   factor_weights,
-											   network_inputs,
-											   network,
-											   select_percentage,
-											   0.0);
-
-			if (is_success && select_percentage > 0.0) {
-				this->new_constant = constant;
-				this->new_inputs = factor_inputs;
-				this->new_input_averages = factor_input_averages;
-				this->new_input_standard_deviations = factor_input_standard_deviations;
-				this->new_weights = factor_weights;
-				this->new_network_inputs = network_inputs;
-				this->new_network = network;
-
-				this->select_percentage = select_percentage;
-
-				this->best_new_score = numeric_limits<double>::lowest();
-
+			bool is_success = train_new_helper();
+			if (is_success) {
 				this->new_sum_scores = 0.0;
+
+				this->sum_predicted_improvement = 0.0;
+				this->sum_actual_improvement = 0.0;
 
 				this->state = BRANCH_EXPERIMENT_STATE_MEASURE;
 				this->state_iter = 0;
 			} else {
-				if (network != NULL) {
-					delete network;
-				}
-
 				this->result = EXPERIMENT_RESULT_FAIL;
 			}
 		}

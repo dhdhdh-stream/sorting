@@ -30,7 +30,6 @@ BranchExperiment::BranchExperiment(Scope* scope_context,
 
 	this->existing_network = NULL;
 	this->new_network = NULL;
-	this->best_network = NULL;
 
 	vector<ScopeHistory*> scope_histories;
 	vector<double> target_val_histories;
@@ -61,36 +60,14 @@ BranchExperiment::BranchExperiment(Scope* scope_context,
 		}
 	}
 
-	double constant;
-	vector<Input> factor_inputs;
-	vector<double> factor_input_averages;
-	vector<double> factor_input_standard_deviations;
-	vector<double> factor_weights;
-	vector<Input> network_inputs;
-	Network* network = NULL;
 	train_existing_helper(scope_histories,
-						  target_val_histories,
-						  constant,
-						  factor_inputs,
-						  factor_input_averages,
-						  factor_input_standard_deviations,
-						  factor_weights,
-						  network_inputs,
-						  network);
+						  target_val_histories);
 
 	for (int h_index = 0; h_index < (int)scope_histories.size(); h_index++) {
 		delete scope_histories[h_index];
 	}
 
 	this->node_context->experiment = this;
-
-	this->existing_constant = constant;
-	this->existing_inputs = factor_inputs;
-	this->existing_input_averages = factor_input_averages;
-	this->existing_input_standard_deviations = factor_input_standard_deviations;
-	this->existing_weights = factor_weights;
-	this->existing_network_inputs = network_inputs;
-	this->existing_network = network;
 
 	this->best_surprise = numeric_limits<double>::lowest();
 
@@ -157,16 +134,8 @@ BranchExperiment::~BranchExperiment() {
 		delete this->new_network;
 	}
 
-	if (this->best_network != NULL) {
-		delete this->best_network;
-	}
-
 	for (int h_index = 0; h_index < (int)this->scope_histories.size(); h_index++) {
 		delete this->scope_histories[h_index];
-	}
-
-	for (int h_index = 0; h_index < (int)this->curr_new_scope_histories.size(); h_index++) {
-		delete this->curr_new_scope_histories[h_index];
 	}
 
 	for (int h_index = 0; h_index < (int)this->new_scope_histories.size(); h_index++) {

@@ -72,20 +72,8 @@ public:
 
 	double new_sum_scores;
 
-	double best_new_score;
-
-	double best_constant;
-	std::vector<Input> best_inputs;
-	std::vector<double> best_input_averages;
-	std::vector<double> best_input_standard_deviations;
-	std::vector<double> best_weights;
-	std::vector<Input> best_network_inputs;
-	Network* best_network;
-
-	double best_select_percentage;
-
-	std::vector<ScopeHistory*> curr_new_scope_histories;
-	std::vector<double> curr_new_target_val_histories;
+	double sum_predicted_improvement;
+	double sum_actual_improvement;
 
 	#if defined(MDEBUG) && MDEBUG
 	std::vector<Problem*> verify_problems;
@@ -168,6 +156,15 @@ public:
 	void capture_verify_backprop(BranchExperimentHistory* history);
 	#endif /* MDEBUG */
 
+	void train_existing_helper(std::vector<ScopeHistory*>& scope_histories,
+						   std::vector<double>& target_val_histories);
+	bool train_new_helper();
+	bool update_helper(double& average_misguess,
+					   double& seed_average_predicted_score,
+					   double& average_predicted_score,
+					   double& select_percentage);
+	bool retrain_helper();
+
 	void clean();
 	void add(SolutionWrapper* wrapper);
 };
@@ -185,26 +182,5 @@ public:
 
 	BranchExperimentState(BranchExperiment* experiment);
 };
-
-void train_existing_helper(std::vector<ScopeHistory*>& scope_histories,
-						   std::vector<double>& target_val_histories,
-						   double& constant,
-						   std::vector<Input>& factor_inputs,
-						   std::vector<double>& factor_input_averages,
-						   std::vector<double>& factor_input_standard_deviations,
-						   std::vector<double>& factor_weights,
-						   std::vector<Input>& network_inputs,
-						   Network*& network);
-bool train_new_helper(std::vector<ScopeHistory*>& scope_histories,
-					  std::vector<double>& target_val_histories,
-					  double& constant,
-					  std::vector<Input>& factor_inputs,
-					  std::vector<double>& factor_input_averages,
-					  std::vector<double>& factor_input_standard_deviations,
-					  std::vector<double>& factor_weights,
-					  std::vector<Input>& network_inputs,
-					  Network*& network,
-					  double& select_percentage,
-					  double target);
 
 #endif /* BRANCH_EXPERIMENT_H */
