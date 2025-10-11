@@ -15,7 +15,7 @@ using namespace std;
 const int REGATHER_COUNTER_LIMIT = 20;
 
 void SolutionWrapper::experiment_init() {
-	if (this->solution->existing_scope_histories.size() < MEASURE_ITERS) {
+	if ((int)this->solution->existing_scope_histories.size() < MEASURE_ITERS * (1 + this->num_regather)) {
 		this->num_actions = 1;
 
 		#if defined(MDEBUG) && MDEBUG
@@ -63,7 +63,7 @@ tuple<bool,bool,int> SolutionWrapper::experiment_step(vector<double> obs) {
 	bool is_done = false;
 	bool fetch_action = false;
 	
-	if (this->solution->existing_scope_histories.size() < MEASURE_ITERS) {
+	if ((int)this->solution->existing_scope_histories.size() < MEASURE_ITERS * (1 + this->num_regather)) {
 		while (!is_next) {
 			if (this->node_context.back() == NULL) {
 				if (this->scope_histories.size() == 1) {
@@ -122,7 +122,7 @@ void SolutionWrapper::set_action(int action) {
 }
 
 void SolutionWrapper::experiment_end(double result) {
-	if (this->solution->existing_scope_histories.size() < MEASURE_ITERS) {
+	if ((int)this->solution->existing_scope_histories.size() < MEASURE_ITERS * (1 + this->num_regather)) {
 		while (true) {
 			if (this->node_context.back() == NULL) {
 				if (this->scope_histories.size() == 1) {
@@ -142,7 +142,7 @@ void SolutionWrapper::experiment_end(double result) {
 		this->scope_histories.clear();
 		this->node_context.clear();
 
-		if (this->solution->existing_scope_histories.size() == MEASURE_ITERS) {
+		if ((int)this->solution->existing_scope_histories.size() == MEASURE_ITERS * (1 + this->num_regather)) {
 			this->solution->measure_update();
 		}
 	} else {
@@ -189,15 +189,10 @@ void SolutionWrapper::experiment_end(double result) {
 				this->curr_experiment = NULL;
 
 				if (this->regather_counter >= REGATHER_COUNTER_LIMIT) {
-					for (int h_index = 0; h_index < (int)this->solution->existing_scope_histories.size(); h_index++) {
-						delete this->solution->existing_scope_histories[h_index];
-					}
-					this->solution->existing_scope_histories.clear();
-					this->solution->existing_target_val_histories.clear();
-
 					this->solution->clean();
 
 					this->regather_counter = 0;
+					this->num_regather++;
 				}
 			} else if (this->curr_experiment->result == EXPERIMENT_RESULT_SUCCESS) {
 				this->curr_experiment->clean();
@@ -241,15 +236,14 @@ void SolutionWrapper::experiment_end(double result) {
 
 					this->solution->clean();
 
-					if (this->solution->existing_scope_histories.size() >= MEASURE_ITERS) {
-						this->solution->measure_update();
-					}
+					this->solution->measure_update();
 
 					this->solution->timestamp++;
 
 					this->improvement_iter = 0;
 
 					this->regather_counter = 0;
+					this->num_regather = 0;
 				}
 			}
 		}

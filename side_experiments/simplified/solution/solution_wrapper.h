@@ -25,6 +25,7 @@ public:
 	int improvement_iter;
 
 	int regather_counter;
+	int num_regather;
 
 	/**
 	 * - run variables

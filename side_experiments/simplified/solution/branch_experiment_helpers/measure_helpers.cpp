@@ -171,6 +171,32 @@ void BranchExperiment::measure_backprop(double target_val,
 			this->target_val_histories.push_back(target_val - history->existing_predicted_scores[i_index]);
 		}
 
+		// TODO: comparison isn't good
+		// - measure samples are chosen from instances where existing is likely bad
+		//   - so doesn't align with the full this->existing_score vs. this->new_score
+		// - so whether or not to continue is entirely on samples that are chosen
+		//   - if bad samples can be removed while keeping good samples, then continue
+		//     - so comparison not against existing, but against current
+		//       - and just looking for >0.0
+
+		// - keep in mind samples are no longer fully representative
+		//   - which means that changes can now change distribution
+		//     - so what is positive vs. negative is meaningless
+
+		// - selection will likely get more and more restrictive?
+		// - perhaps just look for if additional negative samples are removed
+		//   - but may also be variance
+
+		// - how about just vs. expectation
+		//   - if match or exceed (through variance) expectation, then not much more to do
+		//     - if below expectation, then try to retrain
+
+		// - and don't worry about improvement
+		//   - has lots of variance
+		//     - just worry about vs expectation
+		//       - i.e., overall predicted can decrease, but be more accurate, which means more bad paths are rejected, which actually leads to improvement
+		// - so simply success as long as seed and overall > 0.0
+
 		this->new_sum_scores += target_val;
 
 		this->state_iter++;
@@ -242,6 +268,11 @@ void BranchExperiment::measure_backprop(double target_val,
 				this->new_network = NULL;
 
 				this->best_select_percentage = this->select_percentage;
+
+				this->new_scope_histories = this->curr_new_scope_histories;
+				this->curr_new_scope_histories.clear();
+				this->new_target_val_histories = this->curr_new_target_val_histories;
+				this->curr_new_target_val_histories.clear();
 			}
 
 			double target = max(0.0, this->best_new_score - existing_score);
@@ -286,6 +317,12 @@ void BranchExperiment::measure_backprop(double target_val,
 				this->select_percentage = select_percentage;
 
 				this->new_sum_scores = 0.0;
+
+				for (int h_index = 0; h_index < (int)this->curr_new_scope_histories.size(); h_index++) {
+					delete this->curr_new_scope_histories[h_index];
+				}
+				this->curr_new_scope_histories.clear();
+				this->curr_new_target_val_histories.clear();
 
 				this->state_iter = 0;
 			} else {

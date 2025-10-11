@@ -14,6 +14,7 @@ SolutionWrapper::SolutionWrapper() {
 	this->improvement_iter = 0;
 
 	this->regather_counter = 0;
+	this->num_regather = 0;
 
 	this->experiment_history = NULL;
 
@@ -32,6 +33,7 @@ SolutionWrapper::SolutionWrapper(std::string path,
 	this->improvement_iter = 0;
 
 	this->regather_counter = 0;
+	this->num_regather = 0;
 
 	this->experiment_history = NULL;
 

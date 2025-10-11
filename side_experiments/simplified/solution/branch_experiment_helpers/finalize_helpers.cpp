@@ -480,10 +480,10 @@ void BranchExperiment::add(SolutionWrapper* wrapper) {
 			new_input.factor_index = (int)this->scope_context->factors.size()-1;
 			new_input.node_context = {-1};
 			new_input.obs_index = -1;
-			this->new_inputs.push_back(new_input);
-			this->new_input_averages.push_back(0.0);
-			this->new_input_standard_deviations.push_back(1.0);
-			this->new_weights.push_back(1.0);
+			this->best_inputs.push_back(new_input);
+			this->best_input_averages.push_back(0.0);
+			this->best_input_standard_deviations.push_back(1.0);
+			this->best_weights.push_back(1.0);
 		}
 
 		new_branch_node->constant = this->best_constant;

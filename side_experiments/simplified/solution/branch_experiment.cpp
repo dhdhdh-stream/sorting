@@ -165,6 +165,10 @@ BranchExperiment::~BranchExperiment() {
 		delete this->scope_histories[h_index];
 	}
 
+	for (int h_index = 0; h_index < (int)this->curr_new_scope_histories.size(); h_index++) {
+		delete this->curr_new_scope_histories[h_index];
+	}
+
 	for (int h_index = 0; h_index < (int)this->new_scope_histories.size(); h_index++) {
 		delete this->new_scope_histories[h_index];
 	}

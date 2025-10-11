@@ -544,6 +544,7 @@ void try_helper(vector<ScopeHistory*>& scope_histories,
 
 	// temp
 	cout << "inputs_to_consider.size(): " << inputs_to_consider.size() << endl;
+	cout << "scope_histories.size(): " << scope_histories.size() << endl;
 
 	double sum_seed_remaining_vals = 0.0;
 	for (int s_index = 0; s_index < (int)seed_indexes.size(); s_index++) {

@@ -84,6 +84,9 @@ public:
 
 	double best_select_percentage;
 
+	std::vector<ScopeHistory*> curr_new_scope_histories;
+	std::vector<double> curr_new_target_val_histories;
+
 	#if defined(MDEBUG) && MDEBUG
 	std::vector<Problem*> verify_problems;
 	std::vector<unsigned long> verify_seeds;
