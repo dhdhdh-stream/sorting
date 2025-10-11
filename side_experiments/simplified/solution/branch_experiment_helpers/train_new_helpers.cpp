@@ -139,7 +139,8 @@ void BranchExperiment::train_new_backprop(
 											   factor_weights,
 											   network_inputs,
 											   network,
-											   select_percentage);
+											   select_percentage,
+											   0.0);
 
 			if (is_success && select_percentage > 0.0) {
 				this->new_constant = constant;

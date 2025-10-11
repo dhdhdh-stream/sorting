@@ -189,6 +189,7 @@ bool train_new_helper(std::vector<ScopeHistory*>& scope_histories,
 					  std::vector<double>& factor_weights,
 					  std::vector<Input>& network_inputs,
 					  Network*& network,
-					  double& select_percentage);
+					  double& select_percentage,
+					  double target);
 
 #endif /* BRANCH_EXPERIMENT_H */

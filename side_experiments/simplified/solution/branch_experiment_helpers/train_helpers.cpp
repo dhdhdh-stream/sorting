@@ -921,7 +921,8 @@ bool train_new_helper(vector<ScopeHistory*>& scope_histories,
 					  vector<double>& factor_weights,
 					  vector<Input>& network_inputs,
 					  Network*& network,
-					  double& select_percentage) {
+					  double& select_percentage,
+					  double target) {
 	map<Input, InputData*> input_tracker;
 
 	double best_average_misguess = numeric_limits<double>::max();
@@ -960,8 +961,8 @@ bool train_new_helper(vector<ScopeHistory*>& scope_histories,
 		cout << "curr_average_predicted_score: " << curr_average_predicted_score << endl;
 		cout << "curr_select_percentage: " << curr_select_percentage << endl;
 
-		if (curr_seed_average_predicted_score >= 0.0
-				&& curr_average_predicted_score >= 0.0) {
+		if (curr_seed_average_predicted_score >= target
+				&& curr_average_predicted_score >= target) {
 			is_success = true;
 
 			if (curr_average_misguess < best_average_misguess) {

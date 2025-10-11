@@ -221,97 +221,99 @@ void BranchExperiment::measure_backprop(double target_val,
 			cout << "new_score: " << new_score << endl;
 			cout << "existing_score: " << existing_score << endl;
 
-			#if defined(MDEBUG) && MDEBUG
-			if (rand()%2 == 0) {
-			#else
-			if (new_score >= existing_score) {
-			#endif /* MDEBUG */
-				this->new_score = new_score;
+			double target = max(0.0, new_score - existing_score);
 
-				cout << "BranchExperiment" << endl;
-				cout << "this->scope_context->id: " << this->scope_context->id << endl;
-				cout << "this->node_context->id: " << this->node_context->id << endl;
-				cout << "this->is_branch: " << this->is_branch << endl;
-				cout << "new explore path:";
-				for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-					if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-						cout << " " << this->best_actions[s_index];
-					} else {
-						cout << " E" << this->best_scopes[s_index]->id;
-					}
+			/**
+			 * - if predicted good, but actual bad, then training samples must not be representative
+			 *   - which may be corrected with additional samples from measure
+			 *     - so retry until success or predicted becomes bad
+			 */
+			double constant;
+			vector<Input> factor_inputs;
+			vector<double> factor_input_averages;
+			vector<double> factor_input_standard_deviations;
+			vector<double> factor_weights;
+			vector<Input> network_inputs;
+			Network* network = NULL;
+			double select_percentage;
+			bool is_success = train_new_helper(this->scope_histories,
+											   this->target_val_histories,
+											   constant,
+											   factor_inputs,
+											   factor_input_averages,
+											   factor_input_standard_deviations,
+											   factor_weights,
+											   network_inputs,
+											   network,
+											   select_percentage,
+											   target);
+
+			if (is_success && select_percentage > 0.0) {
+				this->new_constant = constant;
+				this->new_inputs = factor_inputs;
+				this->new_input_averages = factor_input_averages;
+				this->new_input_standard_deviations = factor_input_standard_deviations;
+				this->new_weights = factor_weights;
+				this->new_network_inputs = network_inputs;
+				if (this->new_network != NULL) {
+					delete this->new_network;
 				}
-				cout << endl;
+				this->new_network = network;
 
-				if (this->best_exit_next_node == NULL) {
-					cout << "this->best_exit_next_node->id: " << -1 << endl;
-				} else {
-					cout << "this->best_exit_next_node->id: " << this->best_exit_next_node->id << endl;
+				this->select_percentage = select_percentage;
+
+				this->new_sum_scores = 0.0;
+
+				this->state_iter = 0;
+			} else {
+				if (network != NULL) {
+					delete network;
 				}
-
-				cout << "this->select_percentage: " << this->select_percentage << endl;
-
-				double improvement = new_score - existing_score;
-				cout << "improvement: " << improvement << endl;
-
-				cout << endl;
 
 				#if defined(MDEBUG) && MDEBUG
-				this->verify_problems = vector<Problem*>(NUM_VERIFY_SAMPLES, NULL);
-				this->verify_seeds = vector<unsigned long>(NUM_VERIFY_SAMPLES);
-
-				this->state = BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY;
-				this->state_iter = 0;
+				if (rand()%2 == 0) {
 				#else
-				this->result = EXPERIMENT_RESULT_SUCCESS;
+				if (new_score >= existing_score) {
 				#endif /* MDEBUG */
-			} else {
-				/**
-				 * - if predicted good, but actual bad, then training samples must not be representative
-				 *   - which may be corrected with additional samples from measure
-				 *     - so retry until success or predicted becomes bad
-				 */
-				double constant;
-				vector<Input> factor_inputs;
-				vector<double> factor_input_averages;
-				vector<double> factor_input_standard_deviations;
-				vector<double> factor_weights;
-				vector<Input> network_inputs;
-				Network* network = NULL;
-				double select_percentage;
-				bool is_success = train_new_helper(this->scope_histories,
-												   this->target_val_histories,
-												   constant,
-												   factor_inputs,
-												   factor_input_averages,
-												   factor_input_standard_deviations,
-												   factor_weights,
-												   network_inputs,
-												   network,
-												   select_percentage);
+					this->new_score = new_score;
 
-				if (is_success && select_percentage > 0.0) {
-					this->new_constant = constant;
-					this->new_inputs = factor_inputs;
-					this->new_input_averages = factor_input_averages;
-					this->new_input_standard_deviations = factor_input_standard_deviations;
-					this->new_weights = factor_weights;
-					this->new_network_inputs = network_inputs;
-					if (this->new_network != NULL) {
-						delete this->new_network;
+					cout << "BranchExperiment" << endl;
+					cout << "this->scope_context->id: " << this->scope_context->id << endl;
+					cout << "this->node_context->id: " << this->node_context->id << endl;
+					cout << "this->is_branch: " << this->is_branch << endl;
+					cout << "new explore path:";
+					for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+						if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+							cout << " " << this->best_actions[s_index];
+						} else {
+							cout << " E" << this->best_scopes[s_index]->id;
+						}
 					}
-					this->new_network = network;
+					cout << endl;
 
-					this->select_percentage = select_percentage;
+					if (this->best_exit_next_node == NULL) {
+						cout << "this->best_exit_next_node->id: " << -1 << endl;
+					} else {
+						cout << "this->best_exit_next_node->id: " << this->best_exit_next_node->id << endl;
+					}
 
-					this->new_sum_scores = 0.0;
+					cout << "this->select_percentage: " << this->select_percentage << endl;
 
-					this->state = BRANCH_EXPERIMENT_STATE_MEASURE;
+					double improvement = new_score - existing_score;
+					cout << "improvement: " << improvement << endl;
+
+					cout << endl;
+
+					#if defined(MDEBUG) && MDEBUG
+					this->verify_problems = vector<Problem*>(NUM_VERIFY_SAMPLES, NULL);
+					this->verify_seeds = vector<unsigned long>(NUM_VERIFY_SAMPLES);
+
+					this->state = BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY;
 					this->state_iter = 0;
+					#else
+					this->result = EXPERIMENT_RESULT_SUCCESS;
+					#endif /* MDEBUG */
 				} else {
-					if (network != NULL) {
-						delete network;
-					}
-
 					this->result = EXPERIMENT_RESULT_FAIL;
 				}
 			}
