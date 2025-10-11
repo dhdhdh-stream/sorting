@@ -63,17 +63,12 @@ public:
 	double select_percentage;
 
 	/**
-	 * - explore for negatives
+	 * - simply merge explore and measure samples
+	 *   - OK for samples to weigh more and more towards measure
+	 *     - i.e., more towards catching edge cases than innovation
 	 */
-	std::vector<ScopeHistory*> explore_scope_histories;
-	std::vector<double> explore_target_val_histories;
-
-	/**
-	 * - measure for edge cases not seen in explore
-	 *   - but still need to give explore large weight
-	 */
-	std::vector<ScopeHistory*> measure_scope_histories;
-	std::vector<double> measure_target_val_histories;
+	std::vector<ScopeHistory*> scope_histories;
+	std::vector<double> target_val_histories;
 
 	double new_sum_scores;
 
@@ -145,8 +140,6 @@ public:
 						   BranchExperimentState* experiment_state);
 	void measure_backprop(double target_val,
 						  BranchExperimentHistory* history);
-
-	bool retrain_helper();
 
 	#if defined(MDEBUG) && MDEBUG
 	void capture_verify_check_activate(SolutionWrapper* wrapper);

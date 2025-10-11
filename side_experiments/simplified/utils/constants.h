@@ -17,11 +17,7 @@ const double EXPERIMENT_MIN_AVERAGE_HITS_PER_RUN = 0.2;
 #if defined(MDEBUG) && MDEBUG
 const int MEASURE_ITERS = 10;
 #else
-/**
- * - need large number of samples
- *   - otherwise trapped by lottery + local maxima
- */
-const int MEASURE_ITERS = 1000;
+const int MEASURE_ITERS = 400;
 #endif /* MDEBUG */
 
 #if defined(MDEBUG) && MDEBUG

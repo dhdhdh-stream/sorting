@@ -62,7 +62,7 @@ void BranchExperiment::train_new_check_activate(
 
 		ScopeHistory* scope_history_copy = new ScopeHistory(wrapper->scope_histories.back());
 		scope_history_copy->num_actions_snapshot = wrapper->num_actions;
-		this->explore_scope_histories.push_back(scope_history_copy);
+		this->scope_histories.push_back(scope_history_copy);
 
 		uniform_int_distribution<int> until_distribution(1, this->average_instances_per_run);
 		this->num_instances_until_target = until_distribution(generator);
@@ -116,12 +116,12 @@ void BranchExperiment::train_new_backprop(
 		BranchExperimentHistory* history) {
 	if (history->is_hit) {
 		for (int i_index = 0; i_index < (int)history->existing_predicted_scores.size(); i_index++) {
-			this->explore_target_val_histories.push_back(target_val - history->existing_predicted_scores[i_index]);
+			this->target_val_histories.push_back(target_val - history->existing_predicted_scores[i_index]);
 		}
 
 		this->state_iter++;
 		if (this->state_iter >= TRAIN_NEW_NUM_DATAPOINTS
-				&& (int)this->explore_target_val_histories.size() >= TRAIN_NEW_NUM_DATAPOINTS) {
+				&& (int)this->target_val_histories.size() >= TRAIN_NEW_NUM_DATAPOINTS) {
 			double constant;
 			vector<Input> factor_inputs;
 			vector<double> factor_input_averages;
@@ -130,8 +130,8 @@ void BranchExperiment::train_new_backprop(
 			vector<Input> network_inputs;
 			Network* network = NULL;
 			double select_percentage;
-			bool is_success = train_new_helper(this->explore_scope_histories,
-											   this->explore_target_val_histories,
+			bool is_success = train_new_helper(this->scope_histories,
+											   this->target_val_histories,
 											   constant,
 											   factor_inputs,
 											   factor_input_averages,

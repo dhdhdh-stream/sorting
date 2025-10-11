@@ -156,12 +156,8 @@ BranchExperiment::~BranchExperiment() {
 		delete this->new_network;
 	}
 
-	for (int h_index = 0; h_index < (int)this->explore_scope_histories.size(); h_index++) {
-		delete this->explore_scope_histories[h_index];
-	}
-
-	for (int h_index = 0; h_index < (int)this->measure_scope_histories.size(); h_index++) {
-		delete this->measure_scope_histories[h_index];
+	for (int h_index = 0; h_index < (int)this->scope_histories.size(); h_index++) {
+		delete this->scope_histories[h_index];
 	}
 
 	for (int h_index = 0; h_index < (int)this->new_scope_histories.size(); h_index++) {

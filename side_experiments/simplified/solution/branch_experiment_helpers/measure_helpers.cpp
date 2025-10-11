@@ -58,7 +58,7 @@ void BranchExperiment::measure_check_activate(SolutionWrapper* wrapper,
 
 	ScopeHistory* scope_history_copy = new ScopeHistory(wrapper->scope_histories.back());
 	scope_history_copy->num_actions_snapshot = wrapper->num_actions;
-	this->measure_scope_histories.push_back(scope_history_copy);
+	this->scope_histories.push_back(scope_history_copy);
 
 	if (this->select_percentage == 1.0) {
 		BranchExperimentState* new_experiment_state = new BranchExperimentState(this);
@@ -168,7 +168,7 @@ void BranchExperiment::measure_backprop(double target_val,
 										BranchExperimentHistory* history) {
 	if (history->is_hit) {
 		for (int i_index = 0; i_index < (int)history->existing_predicted_scores.size(); i_index++) {
-			this->measure_target_val_histories.push_back(target_val - history->existing_predicted_scores[i_index]);
+			this->target_val_histories.push_back(target_val - history->existing_predicted_scores[i_index]);
 		}
 
 		this->new_sum_scores += target_val;
@@ -265,24 +265,53 @@ void BranchExperiment::measure_backprop(double target_val,
 				this->result = EXPERIMENT_RESULT_SUCCESS;
 				#endif /* MDEBUG */
 			} else {
-				bool retrain_is_success = false;
-				for (int t_index = 0; t_index < RETRAIN_NUM_CHANCES; t_index++) {
-					if (retrain_helper()) {
-						retrain_is_success = true;
-						break;
+				/**
+				 * - if predicted good, but actual bad, then training samples must not be representative
+				 *   - which may be corrected with additional samples from measure
+				 *     - so retry until success or predicted becomes bad
+				 */
+				double constant;
+				vector<Input> factor_inputs;
+				vector<double> factor_input_averages;
+				vector<double> factor_input_standard_deviations;
+				vector<double> factor_weights;
+				vector<Input> network_inputs;
+				Network* network = NULL;
+				double select_percentage;
+				bool is_success = train_new_helper(this->scope_histories,
+												   this->target_val_histories,
+												   constant,
+												   factor_inputs,
+												   factor_input_averages,
+												   factor_input_standard_deviations,
+												   factor_weights,
+												   network_inputs,
+												   network,
+												   select_percentage);
+
+				if (is_success && select_percentage > 0.0) {
+					this->new_constant = constant;
+					this->new_inputs = factor_inputs;
+					this->new_input_averages = factor_input_averages;
+					this->new_input_standard_deviations = factor_input_standard_deviations;
+					this->new_weights = factor_weights;
+					this->new_network_inputs = network_inputs;
+					if (this->new_network != NULL) {
+						delete this->new_network;
 					}
-				}
-				if (retrain_is_success) {
-					for (int h_index = 0; h_index < (int)this->new_scope_histories.size(); h_index++) {
-						delete this->new_scope_histories[h_index];
-					}
-					this->new_scope_histories.clear();
-					this->new_target_val_histories.clear();
+					this->new_network = network;
+
+					this->select_percentage = select_percentage;
 
 					this->new_sum_scores = 0.0;
 
+					this->state = BRANCH_EXPERIMENT_STATE_MEASURE;
 					this->state_iter = 0;
 				} else {
+					if (network != NULL) {
+						delete network;
+					}
+
 					this->result = EXPERIMENT_RESULT_FAIL;
 				}
 			}
