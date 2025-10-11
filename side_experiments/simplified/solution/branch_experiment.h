@@ -72,6 +72,18 @@ public:
 
 	double new_sum_scores;
 
+	double best_new_score;
+
+	double best_constant;
+	std::vector<Input> best_inputs;
+	std::vector<double> best_input_averages;
+	std::vector<double> best_input_standard_deviations;
+	std::vector<double> best_weights;
+	std::vector<Input> best_network_inputs;
+	Network* best_network;
+
+	double best_select_percentage;
+
 	#if defined(MDEBUG) && MDEBUG
 	std::vector<Problem*> verify_problems;
 	std::vector<unsigned long> verify_seeds;

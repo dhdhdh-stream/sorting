@@ -221,7 +221,30 @@ void BranchExperiment::measure_backprop(double target_val,
 			cout << "new_score: " << new_score << endl;
 			cout << "existing_score: " << existing_score << endl;
 
-			double target = max(0.0, new_score - existing_score);
+			#if defined(MDEBUG) && MDEBUG
+			if (true) {
+			#else
+			if (new_score - existing_score >= 0.0
+					&& new_score > this->best_new_score) {
+			#endif /* MDEBUG */
+				this->best_new_score = new_score;
+
+				this->best_constant = this->new_constant;
+				this->best_inputs = this->new_inputs;
+				this->best_input_averages = this->new_input_averages;
+				this->best_input_standard_deviations = this->new_input_standard_deviations;
+				this->best_weights = this->new_weights;
+				this->best_network_inputs = this->new_network_inputs;
+				if (this->best_network != NULL) {
+					delete this->best_network;
+				}
+				this->best_network = this->new_network;
+				this->new_network = NULL;
+
+				this->best_select_percentage = this->select_percentage;
+			}
+
+			double target = max(0.0, this->best_new_score - existing_score);
 
 			/**
 			 * - if predicted good, but actual bad, then training samples must not be representative
@@ -271,11 +294,11 @@ void BranchExperiment::measure_backprop(double target_val,
 				}
 
 				#if defined(MDEBUG) && MDEBUG
-				if (rand()%2 == 0) {
+				if (this->best_new_score - existing_score >= 0.0 || rand()%2 == 0) {
 				#else
-				if (new_score >= existing_score) {
+				if (this->best_new_score - existing_score >= 0.0) {
 				#endif /* MDEBUG */
-					this->new_score = new_score;
+					this->new_score = this->best_new_score;
 
 					cout << "BranchExperiment" << endl;
 					cout << "this->scope_context->id: " << this->scope_context->id << endl;
@@ -299,17 +322,21 @@ void BranchExperiment::measure_backprop(double target_val,
 
 					cout << "this->select_percentage: " << this->select_percentage << endl;
 
-					double improvement = new_score - existing_score;
+					double improvement = this->new_score - existing_score;
 					cout << "improvement: " << improvement << endl;
 
 					cout << endl;
 
 					#if defined(MDEBUG) && MDEBUG
-					this->verify_problems = vector<Problem*>(NUM_VERIFY_SAMPLES, NULL);
-					this->verify_seeds = vector<unsigned long>(NUM_VERIFY_SAMPLES);
+					if (this->best_select_percentage == 1.0) {
+						this->result = EXPERIMENT_RESULT_SUCCESS;
+					} else {
+						this->verify_problems = vector<Problem*>(NUM_VERIFY_SAMPLES, NULL);
+						this->verify_seeds = vector<unsigned long>(NUM_VERIFY_SAMPLES);
 
-					this->state = BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY;
-					this->state_iter = 0;
+						this->state = BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY;
+						this->state_iter = 0;
+					}
 					#else
 					this->result = EXPERIMENT_RESULT_SUCCESS;
 					#endif /* MDEBUG */

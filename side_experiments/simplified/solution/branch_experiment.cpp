@@ -30,6 +30,7 @@ BranchExperiment::BranchExperiment(Scope* scope_context,
 
 	this->existing_network = NULL;
 	this->new_network = NULL;
+	this->best_network = NULL;
 
 	vector<ScopeHistory*> scope_histories;
 	vector<double> target_val_histories;
@@ -154,6 +155,10 @@ BranchExperiment::~BranchExperiment() {
 
 	if (this->new_network != NULL) {
 		delete this->new_network;
+	}
+
+	if (this->best_network != NULL) {
+		delete this->best_network;
 	}
 
 	for (int h_index = 0; h_index < (int)this->scope_histories.size(); h_index++) {

@@ -153,6 +153,8 @@ void BranchExperiment::train_new_backprop(
 
 				this->select_percentage = select_percentage;
 
+				this->best_new_score = numeric_limits<double>::lowest();
+
 				this->new_sum_scores = 0.0;
 
 				this->state = BRANCH_EXPERIMENT_STATE_MEASURE;
