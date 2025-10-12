@@ -20,9 +20,44 @@ using namespace std;
 
 const int RETRAIN_NUM_CHANCES = 3;
 
+const double IMPROVEMENT_LEEWAY = 0.75;
+
 void BranchExperiment::measure_check_activate(SolutionWrapper* wrapper,
 											  BranchExperimentHistory* history) {
 	ScopeHistory* scope_history = wrapper->scope_histories.back();
+
+	double existing_sum_vals = this->existing_constant;
+	for (int i_index = 0; i_index < (int)this->existing_inputs.size(); i_index++) {
+		double val;
+		bool is_on;
+		fetch_input_helper(wrapper->scope_histories.back(),
+						   this->existing_inputs[i_index],
+						   0,
+						   val,
+						   is_on);
+		if (is_on) {
+			double normalized_val = (val - this->existing_input_averages[i_index]) / this->existing_input_standard_deviations[i_index];
+			existing_sum_vals += this->existing_weights[i_index] * normalized_val;
+		}
+	}
+	if (this->existing_network != NULL) {
+		vector<double> input_vals(this->existing_network_inputs.size());
+		vector<bool> input_is_on(this->existing_network_inputs.size());
+		for (int i_index = 0; i_index < (int)this->existing_network_inputs.size(); i_index++) {
+			double val;
+			bool is_on;
+			fetch_input_helper(wrapper->scope_histories.back(),
+							   this->existing_network_inputs[i_index],
+							   0,
+							   val,
+							   is_on);
+			input_vals[i_index] = val;
+			input_is_on[i_index] = is_on;
+		}
+		this->existing_network->activate(input_vals,
+									input_is_on);
+		existing_sum_vals += this->existing_network->output->acti_vals[0];
+	}
 
 	double new_sum_vals = this->new_constant;
 
@@ -71,7 +106,7 @@ void BranchExperiment::measure_check_activate(SolutionWrapper* wrapper,
 		}
 		wrapper->curr_run_seed = xorshift(wrapper->curr_run_seed);
 		#else
-		if (sum_vals >= 0.0) {
+		if (new_sum_vals >= 0.0) {
 			decision_is_branch = true;
 		} else {
 			decision_is_branch = false;
@@ -80,49 +115,33 @@ void BranchExperiment::measure_check_activate(SolutionWrapper* wrapper,
 	}
 
 	if (decision_is_branch) {
-		double existing_sum_vals = this->existing_constant;
-		for (int i_index = 0; i_index < (int)this->existing_inputs.size(); i_index++) {
-			double val;
-			bool is_on;
-			fetch_input_helper(wrapper->scope_histories.back(),
-							   this->existing_inputs[i_index],
-							   0,
-							   val,
-							   is_on);
-			if (is_on) {
-				double normalized_val = (val - this->existing_input_averages[i_index]) / this->existing_input_standard_deviations[i_index];
-				existing_sum_vals += this->existing_weights[i_index] * normalized_val;
-			}
-		}
-		if (this->existing_network != NULL) {
-			vector<double> input_vals(this->existing_network_inputs.size());
-			vector<bool> input_is_on(this->existing_network_inputs.size());
-			for (int i_index = 0; i_index < (int)this->existing_network_inputs.size(); i_index++) {
-				double val;
-				bool is_on;
-				fetch_input_helper(wrapper->scope_histories.back(),
-								   this->existing_network_inputs[i_index],
-								   0,
-								   val,
-								   is_on);
-				input_vals[i_index] = val;
-				input_is_on[i_index] = is_on;
-			}
-			this->existing_network->activate(input_vals,
-										input_is_on);
-			existing_sum_vals += this->existing_network->output->acti_vals[0];
-		}
 		history->existing_predicted_scores.push_back(existing_sum_vals);
 
-		this->sum_predicted_improvement += (new_sum_vals - existing_sum_vals);
+		// temp
+		if (this->state_iter%20 == 0) {
+			cout << "new_sum_vals: " << new_sum_vals << endl;
+			cout << "existing_sum_vals: " << existing_sum_vals << endl;
+		}
+
+		this->sum_predicted_improvement += new_sum_vals;
 
 		ScopeHistory* scope_history_copy = new ScopeHistory(wrapper->scope_histories.back());
 		scope_history_copy->num_actions_snapshot = wrapper->num_actions;
-		this->scope_histories.push_back(scope_history_copy);
+		history->scope_histories.push_back(scope_history_copy);
 
 		BranchExperimentState* new_experiment_state = new BranchExperimentState(this);
 		new_experiment_state->step_index = 0;
 		wrapper->experiment_context.back() = new_experiment_state;
+	} else {
+		/**
+		 * - to make train distribution still representative of true distribution
+		 */
+
+		this->target_val_histories.push_back(new_sum_vals);
+
+		ScopeHistory* scope_history_copy = new ScopeHistory(wrapper->scope_histories.back());
+		scope_history_copy->num_actions_snapshot = wrapper->num_actions;
+		this->scope_histories.push_back(scope_history_copy);
 	}
 }
 
@@ -167,18 +186,32 @@ void BranchExperiment::measure_exit_step(SolutionWrapper* wrapper,
 void BranchExperiment::measure_backprop(double target_val,
 										BranchExperimentHistory* history) {
 	if (history->is_hit) {
-		for (int i_index = 0; i_index < (int)history->existing_predicted_scores.size(); i_index++) {
-			this->target_val_histories.push_back(target_val - history->existing_predicted_scores[i_index]);
+		for (int h_index = 0; h_index < (int)history->scope_histories.size(); h_index++) {
+			this->scope_histories.push_back(history->scope_histories[h_index]);
+			this->target_val_histories.push_back(target_val - history->existing_predicted_scores[h_index]);
 
-			this->sum_actual_improvement += (target_val - history->existing_predicted_scores[i_index]);
+			this->sum_actual_improvement += (target_val - history->existing_predicted_scores[h_index]);
+
+			// temp
+			if (this->state_iter%20 == 0) {
+				cout << "target_val: " << target_val << endl;
+			}
 		}
 
 		this->new_sum_scores += target_val;
 
 		this->state_iter++;
 		if (this->state_iter >= MEASURE_ITERS) {
+			// temp
+			cout << "this->sum_predicted_improvement: " << this->sum_predicted_improvement << endl;
+			cout << "this->sum_actual_improvement: " << this->sum_actual_improvement << endl;
+
 			bool is_continue = false;
-			if (this->sum_actual_improvement < this->sum_predicted_improvement) {
+			#if defined(MDEBUG) && MDEBUG
+			if (rand()%2 == 0) {
+			#else
+			if (this->sum_actual_improvement < IMPROVEMENT_LEEWAY * this->sum_predicted_improvement) {
+			#endif /* MDEBUG */
 				/**
 				 * - if predicted good, but actual bad, then training samples must not be representative
 				 *   - which may be corrected with additional samples from measure

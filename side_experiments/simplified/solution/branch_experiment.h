@@ -1,3 +1,5 @@
+// - weigh towards newest samples to try to converge quicker?
+
 #ifndef BRANCH_EXPERIMENT_H
 #define BRANCH_EXPERIMENT_H
 
@@ -159,10 +161,7 @@ public:
 	void train_existing_helper(std::vector<ScopeHistory*>& scope_histories,
 						   std::vector<double>& target_val_histories);
 	bool train_new_helper();
-	bool update_helper(double& average_misguess,
-					   double& seed_average_predicted_score,
-					   double& average_predicted_score,
-					   double& select_percentage);
+	bool update_helper(double& average_misguess);
 	bool retrain_helper();
 
 	void clean();
@@ -171,6 +170,7 @@ public:
 
 class BranchExperimentHistory : public AbstractExperimentHistory {
 public:
+	std::vector<ScopeHistory*> scope_histories;
 	std::vector<double> existing_predicted_scores;
 
 	BranchExperimentHistory(BranchExperiment* experiment);

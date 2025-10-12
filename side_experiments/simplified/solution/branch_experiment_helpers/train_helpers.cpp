@@ -9,6 +9,8 @@
  *   - (with every dependency, XOR can be learned incrementally pattern by pattern)
  */
 
+// TODO: choose purely by average_misguess, regardless of whether will be successful
+
 #include "branch_experiment.h"
 
 #include <algorithm>
@@ -847,10 +849,11 @@ void try_helper(vector<ScopeHistory*>& scope_histories,
 	#endif /* MDEBUG */
 }
 
-bool BranchExperiment::update_helper(double& average_misguess,
-									 double& seed_average_predicted_score,
-									 double& average_predicted_score,
-									 double& select_percentage) {
+bool BranchExperiment::update_helper(double& average_misguess) {
+	double potential_constant;
+	vector<double> potential_weights;
+	Network* potential_network = NULL;
+
 	int num_seeds = SEED_RATIO * (double)this->scope_histories.size();
 	vector<int> seed_indexes;
 	vector<int> remaining_indexes(this->scope_histories.size());
@@ -925,17 +928,17 @@ bool BranchExperiment::update_helper(double& average_misguess,
 	/**
 	 * - assume train factor always reasonable due to additional samples
 	 */
-	this->new_constant = weights(0);
+	potential_constant = weights(0);
 	for (int f_index = 0; f_index < (int)this->new_inputs.size(); f_index++) {
-		this->new_weights[f_index] = weights(1 + f_index);
+		potential_weights.push_back(weights(1 + f_index));
 	}
 
 	vector<double> sum_vals(this->scope_histories.size());
 	vector<double> remaining_scores(this->scope_histories.size());
 	for (int h_index = 0; h_index < (int)this->scope_histories.size(); h_index++) {
-		double sum_score = this->new_constant;
+		double sum_score = potential_constant;
 		for (int f_index = 0; f_index < (int)this->new_inputs.size(); f_index++) {
-			sum_score += this->new_weights[f_index] * factor_normalized_vals[h_index][f_index];
+			sum_score += potential_weights[f_index] * factor_normalized_vals[h_index][f_index];
 		}
 
 		sum_vals[h_index] = sum_score;
@@ -963,9 +966,9 @@ bool BranchExperiment::update_helper(double& average_misguess,
 			is_on[h_index] = curr_is_on;
 		}
 
-		Network* network = new Network((int)this->new_network_inputs.size(),
-									   this->new_network->input_averages,
-									   this->new_network->input_standard_deviations);
+		potential_network = new Network((int)this->new_network_inputs.size(),
+										this->new_network->input_averages,
+										this->new_network->input_standard_deviations);
 
 		uniform_int_distribution<int> input_distribution(0, remaining_indexes.size()-1);
 		uniform_int_distribution<int> drop_distribution(0, 9);
@@ -981,26 +984,23 @@ bool BranchExperiment::update_helper(double& average_misguess,
 				}
 			}
 
-			network->activate(vals[rand_index],
-							  w_drop);
-			double error = remaining_scores[rand_index] - network->output->acti_vals[0];
-			network->backprop(error);
+			potential_network->activate(vals[rand_index],
+										w_drop);
+			double error = remaining_scores[rand_index] - potential_network->output->acti_vals[0];
+			potential_network->backprop(error);
 		}
 
 		vector<double> network_vals(this->scope_histories.size());
 		for (int h_index = 0; h_index < (int)this->scope_histories.size(); h_index++) {
-			network->activate(vals[h_index],
-							  is_on[h_index]);
+			potential_network->activate(vals[h_index],
+										is_on[h_index]);
 
-			network_vals[h_index] = network->output->acti_vals[0];
+			network_vals[h_index] = potential_network->output->acti_vals[0];
 		}
 
 		for (int h_index = 0; h_index < (int)this->scope_histories.size(); h_index++) {
 			sum_vals[h_index] += network_vals[h_index];
 		}
-
-		delete this->new_network;
-		this->new_network = network;
 	}
 
 	double sum_misguess = 0.0;
@@ -1016,7 +1016,6 @@ bool BranchExperiment::update_helper(double& average_misguess,
 			seed_sum_predicted_score += this->target_val_histories[seed_indexes[s_index]];
 		}
 	}
-	seed_average_predicted_score = seed_sum_predicted_score / (double)seed_indexes.size();
 
 	double sum_predicted_score = 0.0;
 	for (int h_index = 0; h_index < (int)this->scope_histories.size(); h_index++) {
@@ -1024,17 +1023,51 @@ bool BranchExperiment::update_helper(double& average_misguess,
 			sum_predicted_score += this->target_val_histories[h_index];
 		}
 	}
-	average_predicted_score = sum_predicted_score / (double)this->scope_histories.size();
 
+	#if defined(MDEBUG) && MDEBUG
+	if (rand()%2 == 0) {
+		this->select_percentage = 0.5;
+	} else {
+		this->select_percentage = 0.0;
+	}
+	#else
 	int num_positive = 0;
 	for (int h_index = 0; h_index < (int)this->scope_histories.size(); h_index++) {
 		if (sum_vals[h_index] >= 0.0) {
 			num_positive++;
 		}
 	}
-	select_percentage = (double)num_positive / (double)this->scope_histories.size();
+	this->select_percentage = (double)num_positive / (double)this->scope_histories.size();
+	#endif /* MDEBUG */
 
-	return true;
+	// temp
+	cout << "update" << endl;
+	cout << "average_misguess: " << average_misguess << endl;
+	cout << "seed_sum_predicted_score: " << seed_sum_predicted_score << endl;
+	cout << "sum_predicted_score: " << sum_predicted_score << endl;
+	cout << "this->select_percentage: " << this->select_percentage << endl;
+
+	if (seed_sum_predicted_score >= 0.0
+			&& sum_predicted_score >= 0.0
+			&& this->select_percentage > 0.0) {
+		// temp
+		cout << "update success" << endl;
+
+		this->new_constant = potential_constant;
+		this->new_weights = potential_weights;
+		if (this->new_network != NULL) {
+			delete this->new_network;
+		}
+		this->new_network = potential_network;
+
+		return true;
+	} else {
+		if (potential_network != NULL) {
+			delete potential_network;
+		}
+
+		return false;
+	}
 }
 
 void BranchExperiment::train_existing_helper(vector<ScopeHistory*>& scope_histories,
@@ -1069,7 +1102,11 @@ void BranchExperiment::train_existing_helper(vector<ScopeHistory*>& scope_histor
 				   curr_average_predicted_score,
 				   curr_select_percentage);
 
+		#if defined(MDEBUG) && MDEBUG
+		if (curr_average_misguess < best_average_misguess || rand()%2 == 0) {
+		#else
 		if (curr_average_misguess < best_average_misguess) {
+		#endif /* MDEBUG */
 			best_average_misguess = curr_average_misguess;
 
 			this->existing_constant = curr_constant;
@@ -1135,12 +1172,20 @@ bool BranchExperiment::train_new_helper() {
 		cout << "curr_average_predicted_score: " << curr_average_predicted_score << endl;
 		cout << "curr_select_percentage: " << curr_select_percentage << endl;
 
+		#if defined(MDEBUG) && MDEBUG
+		if (true) {
+		#else
 		if (curr_seed_average_predicted_score >= 0.0
 				&& curr_average_predicted_score >= 0.0
 				&& curr_select_percentage > 0) {
+		#endif /* MDEBUG */
 			is_success = true;
 
+			#if defined(MDEBUG) && MDEBUG
+			if (curr_average_misguess < best_average_misguess || rand()%2 == 0) {
+			#else
 			if (curr_average_misguess < best_average_misguess) {
+			#endif /* MDEBUG */
 				// temp
 				cout << "update" << endl;
 
@@ -1181,19 +1226,8 @@ bool BranchExperiment::retrain_helper() {
 
 	{
 		double curr_average_misguess;
-		double curr_seed_average_predicted_score;
-		double curr_average_predicted_score;
-		double curr_select_percentage;
-		bool is_success = update_helper(curr_average_misguess,
-										curr_seed_average_predicted_score,
-										curr_average_predicted_score,
-										curr_select_percentage);
-
-		if (is_success
-				&& curr_seed_average_predicted_score >= 0.0
-				&& curr_average_predicted_score >= 0.0
-				&& curr_select_percentage > 0.0
-				&& curr_average_misguess < best_average_misguess) {
+		bool is_success = update_helper(curr_average_misguess);
+		if (is_success) {
 			best_average_misguess = curr_average_misguess;
 		}
 	}
@@ -1233,12 +1267,20 @@ bool BranchExperiment::retrain_helper() {
 		cout << "curr_average_predicted_score: " << curr_average_predicted_score << endl;
 		cout << "curr_select_percentage: " << curr_select_percentage << endl;
 
+		#if defined(MDEBUG) && MDEBUG
+		if (true) {
+		#else
 		if (curr_seed_average_predicted_score >= 0.0
 				&& curr_average_predicted_score >= 0.0
-				&& select_percentage > 0) {
+				&& curr_select_percentage > 0) {
+		#endif /* MDEBUG */
 			is_success = true;
 
+			#if defined(MDEBUG) && MDEBUG
+			if (curr_average_misguess < best_average_misguess || rand()%2 == 0) {
+			#else
 			if (curr_average_misguess < best_average_misguess) {
+			#endif /* MDEBUG */
 				// temp
 				cout << "update" << endl;
 
