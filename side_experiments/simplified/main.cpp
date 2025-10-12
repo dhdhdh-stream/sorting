@@ -1,3 +1,7 @@
+// - perhaps fail if too many failures in an iter?
+//   - need to stop and try to look for inspiration
+//     - and if stuck again, abandon as hopeless
+
 #include <chrono>
 #include <iostream>
 #include <map>

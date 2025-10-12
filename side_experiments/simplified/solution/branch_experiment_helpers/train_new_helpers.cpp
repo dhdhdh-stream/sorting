@@ -128,6 +128,7 @@ void BranchExperiment::train_new_backprop(
 
 				this->sum_predicted_improvement = 0.0;
 				this->sum_actual_improvement = 0.0;
+				this->num_retrains = 0;
 
 				this->state = BRANCH_EXPERIMENT_STATE_MEASURE;
 				this->state_iter = 0;

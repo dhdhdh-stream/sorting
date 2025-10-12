@@ -9,8 +9,6 @@
  *   - (with every dependency, XOR can be learned incrementally pattern by pattern)
  */
 
-// TODO: choose purely by average_misguess, regardless of whether will be successful
-
 #include "branch_experiment.h"
 
 #include <algorithm>
@@ -544,10 +542,6 @@ void try_helper(vector<ScopeHistory*>& scope_histories,
 						 inputs_to_consider,
 						 input_tracker);
 
-	// temp
-	cout << "inputs_to_consider.size(): " << inputs_to_consider.size() << endl;
-	cout << "scope_histories.size(): " << scope_histories.size() << endl;
-
 	double sum_seed_remaining_vals = 0.0;
 	for (int s_index = 0; s_index < (int)seed_indexes.size(); s_index++) {
 		sum_seed_remaining_vals += remaining_scores[seed_indexes[s_index]];
@@ -849,11 +843,13 @@ void try_helper(vector<ScopeHistory*>& scope_histories,
 	#endif /* MDEBUG */
 }
 
-bool BranchExperiment::update_helper(double& average_misguess) {
-	double potential_constant;
-	vector<double> potential_weights;
-	Network* potential_network = NULL;
-
+bool BranchExperiment::update_helper(double& constant,
+									 vector<double>& factor_weights,
+									 Network*& network,
+									 double& average_misguess,
+									 double& seed_average_predicted_score,
+									 double& average_predicted_score,
+									 double& select_percentage) {
 	int num_seeds = SEED_RATIO * (double)this->scope_histories.size();
 	vector<int> seed_indexes;
 	vector<int> remaining_indexes(this->scope_histories.size());
@@ -928,17 +924,17 @@ bool BranchExperiment::update_helper(double& average_misguess) {
 	/**
 	 * - assume train factor always reasonable due to additional samples
 	 */
-	potential_constant = weights(0);
+	constant = weights(0);
 	for (int f_index = 0; f_index < (int)this->new_inputs.size(); f_index++) {
-		potential_weights.push_back(weights(1 + f_index));
+		factor_weights.push_back(weights(1 + f_index));
 	}
 
 	vector<double> sum_vals(this->scope_histories.size());
 	vector<double> remaining_scores(this->scope_histories.size());
 	for (int h_index = 0; h_index < (int)this->scope_histories.size(); h_index++) {
-		double sum_score = potential_constant;
+		double sum_score = constant;
 		for (int f_index = 0; f_index < (int)this->new_inputs.size(); f_index++) {
-			sum_score += potential_weights[f_index] * factor_normalized_vals[h_index][f_index];
+			sum_score += factor_weights[f_index] * factor_normalized_vals[h_index][f_index];
 		}
 
 		sum_vals[h_index] = sum_score;
@@ -966,9 +962,9 @@ bool BranchExperiment::update_helper(double& average_misguess) {
 			is_on[h_index] = curr_is_on;
 		}
 
-		potential_network = new Network((int)this->new_network_inputs.size(),
-										this->new_network->input_averages,
-										this->new_network->input_standard_deviations);
+		network = new Network((int)this->new_network_inputs.size(),
+							  this->new_network->input_averages,
+							  this->new_network->input_standard_deviations);
 
 		uniform_int_distribution<int> input_distribution(0, remaining_indexes.size()-1);
 		uniform_int_distribution<int> drop_distribution(0, 9);
@@ -984,18 +980,18 @@ bool BranchExperiment::update_helper(double& average_misguess) {
 				}
 			}
 
-			potential_network->activate(vals[rand_index],
-										w_drop);
-			double error = remaining_scores[rand_index] - potential_network->output->acti_vals[0];
-			potential_network->backprop(error);
+			network->activate(vals[rand_index],
+							  w_drop);
+			double error = remaining_scores[rand_index] - network->output->acti_vals[0];
+			network->backprop(error);
 		}
 
 		vector<double> network_vals(this->scope_histories.size());
 		for (int h_index = 0; h_index < (int)this->scope_histories.size(); h_index++) {
-			potential_network->activate(vals[h_index],
-										is_on[h_index]);
+			network->activate(vals[h_index],
+							  is_on[h_index]);
 
-			network_vals[h_index] = potential_network->output->acti_vals[0];
+			network_vals[h_index] = network->output->acti_vals[0];
 		}
 
 		for (int h_index = 0; h_index < (int)this->scope_histories.size(); h_index++) {
@@ -1016,6 +1012,7 @@ bool BranchExperiment::update_helper(double& average_misguess) {
 			seed_sum_predicted_score += this->target_val_histories[seed_indexes[s_index]];
 		}
 	}
+	seed_average_predicted_score = seed_sum_predicted_score / (double)seed_indexes.size();
 
 	double sum_predicted_score = 0.0;
 	for (int h_index = 0; h_index < (int)this->scope_histories.size(); h_index++) {
@@ -1023,12 +1020,13 @@ bool BranchExperiment::update_helper(double& average_misguess) {
 			sum_predicted_score += this->target_val_histories[h_index];
 		}
 	}
+	average_predicted_score = sum_predicted_score / (double)this->scope_histories.size();
 
 	#if defined(MDEBUG) && MDEBUG
 	if (rand()%2 == 0) {
-		this->select_percentage = 0.5;
+		select_percentage = 0.5;
 	} else {
-		this->select_percentage = 0.0;
+		select_percentage = 0.0;
 	}
 	#else
 	int num_positive = 0;
@@ -1037,37 +1035,17 @@ bool BranchExperiment::update_helper(double& average_misguess) {
 			num_positive++;
 		}
 	}
-	this->select_percentage = (double)num_positive / (double)this->scope_histories.size();
+	select_percentage = (double)num_positive / (double)this->scope_histories.size();
 	#endif /* MDEBUG */
 
-	// temp
-	cout << "update" << endl;
-	cout << "average_misguess: " << average_misguess << endl;
-	cout << "seed_sum_predicted_score: " << seed_sum_predicted_score << endl;
-	cout << "sum_predicted_score: " << sum_predicted_score << endl;
-	cout << "this->select_percentage: " << this->select_percentage << endl;
+	// // temp
+	// cout << "update" << endl;
+	// cout << "average_misguess: " << average_misguess << endl;
+	// cout << "seed_sum_predicted_score: " << seed_sum_predicted_score << endl;
+	// cout << "sum_predicted_score: " << sum_predicted_score << endl;
+	// cout << "select_percentage: " << select_percentage << endl;
 
-	if (seed_sum_predicted_score >= 0.0
-			&& sum_predicted_score >= 0.0
-			&& this->select_percentage > 0.0) {
-		// temp
-		cout << "update success" << endl;
-
-		this->new_constant = potential_constant;
-		this->new_weights = potential_weights;
-		if (this->new_network != NULL) {
-			delete this->new_network;
-		}
-		this->new_network = potential_network;
-
-		return true;
-	} else {
-		if (potential_network != NULL) {
-			delete potential_network;
-		}
-
-		return false;
-	}
+	return true;
 }
 
 void BranchExperiment::train_existing_helper(vector<ScopeHistory*>& scope_histories,
@@ -1137,7 +1115,18 @@ bool BranchExperiment::train_new_helper() {
 	map<Input, InputData*> input_tracker;
 
 	double best_average_misguess = numeric_limits<double>::max();
-	bool is_success = false;
+
+	double best_constant;
+	vector<Input> best_factor_inputs;
+	vector<double> best_factor_input_averages;
+	vector<double> best_factor_input_standard_deviations;
+	vector<double> best_factor_weights;
+	vector<Input> best_network_inputs;
+	Network* best_network = NULL;
+	double best_seed_average_predicted_score = 0.0;
+	double best_average_predicted_score = 0.0;
+	double best_select_percentage = 0.0;
+
 	for (int t_index = 0; t_index < TRAIN_TRIES; t_index++) {
 		double curr_constant;
 		vector<Input> curr_factor_inputs;
@@ -1165,45 +1154,37 @@ bool BranchExperiment::train_new_helper() {
 				   curr_average_predicted_score,
 				   curr_select_percentage);
 
-		// temp
-		cout << t_index << endl;
-		cout << "curr_average_misguess: " << curr_average_misguess << endl;
-		cout << "curr_seed_average_predicted_score: " << curr_seed_average_predicted_score << endl;
-		cout << "curr_average_predicted_score: " << curr_average_predicted_score << endl;
-		cout << "curr_select_percentage: " << curr_select_percentage << endl;
+		// // temp
+		// cout << t_index << endl;
+		// cout << "curr_average_misguess: " << curr_average_misguess << endl;
+		// cout << "curr_seed_average_predicted_score: " << curr_seed_average_predicted_score << endl;
+		// cout << "curr_average_predicted_score: " << curr_average_predicted_score << endl;
+		// cout << "curr_select_percentage: " << curr_select_percentage << endl;
 
 		#if defined(MDEBUG) && MDEBUG
-		if (true) {
+		if (curr_average_misguess < best_average_misguess || rand()%2 == 0) {
 		#else
-		if (curr_seed_average_predicted_score >= 0.0
-				&& curr_average_predicted_score >= 0.0
-				&& curr_select_percentage > 0) {
+		if (curr_average_misguess < best_average_misguess) {
 		#endif /* MDEBUG */
-			is_success = true;
+			// // temp
+			// cout << "update" << endl;
 
-			#if defined(MDEBUG) && MDEBUG
-			if (curr_average_misguess < best_average_misguess || rand()%2 == 0) {
-			#else
-			if (curr_average_misguess < best_average_misguess) {
-			#endif /* MDEBUG */
-				// temp
-				cout << "update" << endl;
+			best_average_misguess = curr_average_misguess;
 
-				best_average_misguess = curr_average_misguess;
-
-				this->new_constant = curr_constant;
-				this->new_inputs = curr_factor_inputs;
-				this->new_input_averages = curr_factor_input_averages;
-				this->new_input_standard_deviations = curr_factor_input_standard_deviations;
-				this->new_weights = curr_factor_weights;
-				this->new_network_inputs = curr_network_inputs;
-				if (this->new_network != NULL) {
-					delete this->new_network;
-				}
-				this->new_network = curr_network;
-				curr_network = NULL;
-				this->select_percentage = curr_select_percentage;
+			best_constant = curr_constant;
+			best_factor_inputs = curr_factor_inputs;
+			best_factor_input_averages = curr_factor_input_averages;
+			best_factor_input_standard_deviations = curr_factor_input_standard_deviations;
+			best_factor_weights = curr_factor_weights;
+			best_network_inputs = curr_network_inputs;
+			if (best_network != NULL) {
+				delete best_network;
 			}
+			best_network = curr_network;
+			curr_network = NULL;
+			best_seed_average_predicted_score = curr_seed_average_predicted_score;
+			best_average_predicted_score = curr_average_predicted_score;
+			best_select_percentage = curr_select_percentage;
 		}
 
 		if (curr_network != NULL) {
@@ -1216,7 +1197,34 @@ bool BranchExperiment::train_new_helper() {
 		delete it->second;
 	}
 
-	return is_success;
+	#if defined(MDEBUG) && MDEBUG
+	if (rand()%2 == 0) {
+	#else
+	if (best_seed_average_predicted_score >= 0.0
+				&& best_average_predicted_score >= 0.0
+				&& best_select_percentage > 0) {
+	#endif /* MDEBUG */
+		this->new_constant = best_constant;
+		this->new_inputs = best_factor_inputs;
+		this->new_input_averages = best_factor_input_averages;
+		this->new_input_standard_deviations = best_factor_input_standard_deviations;
+		this->new_weights = best_factor_weights;
+		this->new_network_inputs = best_network_inputs;
+		if (this->new_network != NULL) {
+			delete this->new_network;
+		}
+		this->new_network = best_network;
+		best_network = NULL;
+		this->select_percentage = best_select_percentage;
+
+		return true;
+	} else {
+		if (best_network != NULL) {
+			delete best_network;
+		}
+
+		return false;
+	}
 }
 
 bool BranchExperiment::retrain_helper() {
@@ -1224,15 +1232,53 @@ bool BranchExperiment::retrain_helper() {
 
 	double best_average_misguess = numeric_limits<double>::max();
 
+	double best_constant;
+	vector<Input> best_factor_inputs;
+	vector<double> best_factor_input_averages;
+	vector<double> best_factor_input_standard_deviations;
+	vector<double> best_factor_weights;
+	vector<Input> best_network_inputs;
+	Network* best_network = NULL;
+	double best_seed_average_predicted_score = 0.0;
+	double best_average_predicted_score = 0.0;
+	double best_select_percentage = 0.0;
+
 	{
+		double curr_constant;
+		vector<double> curr_factor_weights;
+		Network* curr_network = NULL;
 		double curr_average_misguess;
-		bool is_success = update_helper(curr_average_misguess);
+		double curr_seed_average_predicted_score;
+		double curr_average_predicted_score;
+		double curr_select_percentage;
+		bool is_success = update_helper(curr_constant,
+										curr_factor_weights,
+										curr_network,
+										curr_average_misguess,
+										curr_seed_average_predicted_score,
+										curr_average_predicted_score,
+										curr_select_percentage);
 		if (is_success) {
 			best_average_misguess = curr_average_misguess;
+
+			best_constant = curr_constant;
+			best_factor_inputs = this->new_inputs;
+			best_factor_input_averages = this->new_input_averages;
+			best_factor_input_standard_deviations = this->new_input_standard_deviations;
+			best_factor_weights = curr_factor_weights;
+			best_network_inputs = this->new_network_inputs;
+			best_network = curr_network;
+			curr_network = NULL;
+			best_seed_average_predicted_score = curr_seed_average_predicted_score;
+			best_average_predicted_score = curr_average_predicted_score;
+			best_select_percentage = curr_select_percentage;
+		}
+
+		if (curr_network != NULL) {
+			delete curr_network;
 		}
 	}
 
-	bool is_success = false;
 	for (int t_index = 0; t_index < TRAIN_TRIES; t_index++) {
 		double curr_constant;
 		vector<Input> curr_factor_inputs;
@@ -1260,45 +1306,37 @@ bool BranchExperiment::retrain_helper() {
 				   curr_average_predicted_score,
 				   curr_select_percentage);
 
-		// temp
-		cout << t_index << endl;
-		cout << "curr_average_misguess: " << curr_average_misguess << endl;
-		cout << "curr_seed_average_predicted_score: " << curr_seed_average_predicted_score << endl;
-		cout << "curr_average_predicted_score: " << curr_average_predicted_score << endl;
-		cout << "curr_select_percentage: " << curr_select_percentage << endl;
+		// // temp
+		// cout << t_index << endl;
+		// cout << "curr_average_misguess: " << curr_average_misguess << endl;
+		// cout << "curr_seed_average_predicted_score: " << curr_seed_average_predicted_score << endl;
+		// cout << "curr_average_predicted_score: " << curr_average_predicted_score << endl;
+		// cout << "curr_select_percentage: " << curr_select_percentage << endl;
 
 		#if defined(MDEBUG) && MDEBUG
-		if (true) {
+		if (curr_average_misguess < best_average_misguess || rand()%2 == 0) {
 		#else
-		if (curr_seed_average_predicted_score >= 0.0
-				&& curr_average_predicted_score >= 0.0
-				&& curr_select_percentage > 0) {
+		if (curr_average_misguess < best_average_misguess) {
 		#endif /* MDEBUG */
-			is_success = true;
+			// // temp
+			// cout << "update" << endl;
 
-			#if defined(MDEBUG) && MDEBUG
-			if (curr_average_misguess < best_average_misguess || rand()%2 == 0) {
-			#else
-			if (curr_average_misguess < best_average_misguess) {
-			#endif /* MDEBUG */
-				// temp
-				cout << "update" << endl;
+			best_average_misguess = curr_average_misguess;
 
-				best_average_misguess = curr_average_misguess;
-
-				this->new_constant = curr_constant;
-				this->new_inputs = curr_factor_inputs;
-				this->new_input_averages = curr_factor_input_averages;
-				this->new_input_standard_deviations = curr_factor_input_standard_deviations;
-				this->new_weights = curr_factor_weights;
-				this->new_network_inputs = curr_network_inputs;
-				if (this->new_network != NULL) {
-					delete this->new_network;
-				}
-				this->new_network = curr_network;
-				curr_network = NULL;
-				this->select_percentage = curr_select_percentage;
+			best_constant = curr_constant;
+			best_factor_inputs = curr_factor_inputs;
+			best_factor_input_averages = curr_factor_input_averages;
+			best_factor_input_standard_deviations = curr_factor_input_standard_deviations;
+			best_factor_weights = curr_factor_weights;
+			best_network_inputs = curr_network_inputs;
+			if (best_network != NULL) {
+				delete best_network;
 			}
+			best_network = curr_network;
+			curr_network = NULL;
+			best_seed_average_predicted_score = curr_seed_average_predicted_score;
+			best_average_predicted_score = curr_average_predicted_score;
+			best_select_percentage = curr_select_percentage;
 		}
 
 		if (curr_network != NULL) {
@@ -1311,5 +1349,32 @@ bool BranchExperiment::retrain_helper() {
 		delete it->second;
 	}
 
-	return is_success;
+	#if defined(MDEBUG) && MDEBUG
+	if (rand()%2 == 0) {
+	#else
+	if (best_seed_average_predicted_score >= 0.0
+				&& best_average_predicted_score >= 0.0
+				&& best_select_percentage > 0) {
+	#endif /* MDEBUG */
+		this->new_constant = best_constant;
+		this->new_inputs = best_factor_inputs;
+		this->new_input_averages = best_factor_input_averages;
+		this->new_input_standard_deviations = best_factor_input_standard_deviations;
+		this->new_weights = best_factor_weights;
+		this->new_network_inputs = best_network_inputs;
+		if (this->new_network != NULL) {
+			delete this->new_network;
+		}
+		this->new_network = best_network;
+		best_network = NULL;
+		this->select_percentage = best_select_percentage;
+
+		return true;
+	} else {
+		if (best_network != NULL) {
+			delete best_network;
+		}
+
+		return false;
+	}
 }

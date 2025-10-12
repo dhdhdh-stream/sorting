@@ -1,5 +1,3 @@
-// - weigh towards newest samples to try to converge quicker?
-
 #ifndef BRANCH_EXPERIMENT_H
 #define BRANCH_EXPERIMENT_H
 
@@ -64,11 +62,6 @@ public:
 
 	double select_percentage;
 
-	/**
-	 * - simply merge explore and measure samples
-	 *   - OK for samples to weigh more and more towards measure
-	 *     - i.e., more towards catching edge cases than innovation
-	 */
 	std::vector<ScopeHistory*> scope_histories;
 	std::vector<double> target_val_histories;
 
@@ -76,6 +69,7 @@ public:
 
 	double sum_predicted_improvement;
 	double sum_actual_improvement;
+	int num_retrains;
 
 	#if defined(MDEBUG) && MDEBUG
 	std::vector<Problem*> verify_problems;
@@ -161,7 +155,13 @@ public:
 	void train_existing_helper(std::vector<ScopeHistory*>& scope_histories,
 						   std::vector<double>& target_val_histories);
 	bool train_new_helper();
-	bool update_helper(double& average_misguess);
+	bool update_helper(double& constant,
+					   std::vector<double>& factor_weights,
+					   Network*& network,
+					   double& average_misguess,
+					   double& seed_average_predicted_score,
+					   double& average_predicted_score,
+					   double& select_percentage);
 	bool retrain_helper();
 
 	void clean();

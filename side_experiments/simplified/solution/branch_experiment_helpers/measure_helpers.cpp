@@ -20,7 +20,12 @@ using namespace std;
 
 const int RETRAIN_NUM_CHANCES = 3;
 
-const double IMPROVEMENT_LEEWAY = 0.75;
+const double IMPROVEMENT_LEEWAY = 0.7;
+const int MAX_NUM_RETRAINS = 2;
+/**
+ * - limit retrains as predicted and actual improvement may never converge
+ *   - due to reusing previous predicted on no branch(?)
+ */
 
 void BranchExperiment::measure_check_activate(SolutionWrapper* wrapper,
 											  BranchExperimentHistory* history) {
@@ -117,12 +122,6 @@ void BranchExperiment::measure_check_activate(SolutionWrapper* wrapper,
 	if (decision_is_branch) {
 		history->existing_predicted_scores.push_back(existing_sum_vals);
 
-		// temp
-		if (this->state_iter%20 == 0) {
-			cout << "new_sum_vals: " << new_sum_vals << endl;
-			cout << "existing_sum_vals: " << existing_sum_vals << endl;
-		}
-
 		this->sum_predicted_improvement += new_sum_vals;
 
 		ScopeHistory* scope_history_copy = new ScopeHistory(wrapper->scope_histories.back());
@@ -191,26 +190,26 @@ void BranchExperiment::measure_backprop(double target_val,
 			this->target_val_histories.push_back(target_val - history->existing_predicted_scores[h_index]);
 
 			this->sum_actual_improvement += (target_val - history->existing_predicted_scores[h_index]);
-
-			// temp
-			if (this->state_iter%20 == 0) {
-				cout << "target_val: " << target_val << endl;
-			}
 		}
 
 		this->new_sum_scores += target_val;
 
 		this->state_iter++;
 		if (this->state_iter >= MEASURE_ITERS) {
-			// temp
-			cout << "this->sum_predicted_improvement: " << this->sum_predicted_improvement << endl;
-			cout << "this->sum_actual_improvement: " << this->sum_actual_improvement << endl;
+			// // temp
+			// cout << "this->sum_predicted_improvement: " << this->sum_predicted_improvement << endl;
+			// cout << "this->sum_actual_improvement: " << this->sum_actual_improvement << endl;
+			// {
+			// 	double new_score = this->new_sum_scores / (double)this->state_iter;
+			// 	cout << "new_score: " << new_score << endl;
+			// }
 
 			bool is_continue = false;
 			#if defined(MDEBUG) && MDEBUG
 			if (rand()%2 == 0) {
 			#else
-			if (this->sum_actual_improvement < IMPROVEMENT_LEEWAY * this->sum_predicted_improvement) {
+			if (this->sum_actual_improvement < IMPROVEMENT_LEEWAY * this->sum_predicted_improvement
+					&& this->num_retrains < MAX_NUM_RETRAINS) {
 			#endif /* MDEBUG */
 				/**
 				 * - if predicted good, but actual bad, then training samples must not be representative
@@ -224,6 +223,7 @@ void BranchExperiment::measure_backprop(double target_val,
 
 					this->sum_predicted_improvement = 0.0;
 					this->sum_actual_improvement = 0.0;
+					this->num_retrains++;
 
 					for (int h_index = 0; h_index < (int)this->new_scope_histories.size(); h_index++) {
 						delete this->new_scope_histories[h_index];
@@ -276,16 +276,16 @@ void BranchExperiment::measure_backprop(double target_val,
 					break;
 				}
 
-				// temp
-				cout << "this->scope_context->id: " << this->scope_context->id << endl;
-				cout << "this->node_context->id: " << this->node_context->id << endl;
-				cout << "new_score: " << new_score << endl;
-				cout << "existing_score: " << existing_score << endl;
+				// // temp
+				// cout << "this->scope_context->id: " << this->scope_context->id << endl;
+				// cout << "this->node_context->id: " << this->node_context->id << endl;
+				// cout << "new_score: " << new_score << endl;
+				// cout << "existing_score: " << existing_score << endl;
 
 				#if defined(MDEBUG) && MDEBUG
-				if (new_score - existing_score >= 0.0 || rand()%2 == 0) {
+				if ((new_score - existing_score >= 0.0 && this->sum_actual_improvement >= 0.0) || rand()%2 == 0) {
 				#else
-				if (new_score - existing_score >= 0.0) {
+				if (new_score - existing_score >= 0.0 && this->sum_actual_improvement >= 0.0) {
 				#endif /* MDEBUG */
 					this->new_score = new_score;
 
