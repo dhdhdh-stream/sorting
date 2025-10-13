@@ -30,9 +30,9 @@ const int BRANCH_EXPERIMENT_EXPLORE_ITERS = 200;
 #endif /* MDEBUG */
 
 /**
- * - always give raw actions a large weight
- *   - existing scopes often learned to avoid certain patterns
- *     - which can prevent innovation
+ * - simply give raw actions a fixed weight
+ *   - cannot track success/count if continuous
+ *   - raw actions can also drive innovation anyways
  */
 const int RAW_ACTION_WEIGHT = 10;
 
@@ -154,18 +154,26 @@ void BranchExperiment::explore_check_activate(
 				new_num_steps = geo_distribution(generator);
 			}
 
-			vector<Scope*> possible_scopes;
+			vector<int> possible_child_indexes;
+			vector<double> possible_child_index_weights;
+			double sum_weights = 0.0;
 			for (int c_index = 0; c_index < (int)this->node_context->parent->child_scopes.size(); c_index++) {
 				if (this->node_context->parent->child_scopes[c_index]->nodes.size() > 1) {
-					possible_scopes.push_back(this->node_context->parent->child_scopes[c_index]);
+					possible_child_indexes.push_back(c_index);
+
+					double weight = sqrt(this->node_context->parent->child_scope_successes[c_index])
+						/ log(this->node_context->parent->child_scope_tries[c_index]);
+					possible_child_index_weights.push_back(weight);
+					sum_weights += weight;
 				}
 			}
+			uniform_real_distribution<double> child_index_distribution(0.0, sum_weights);
 			for (int s_index = 0; s_index < new_num_steps; s_index++) {
 				bool is_scope = false;
-				if (possible_scopes.size() > 0) {
-					if (possible_scopes.size() <= RAW_ACTION_WEIGHT) {
-						uniform_int_distribution<int> scope_distribution(0, possible_scopes.size() + RAW_ACTION_WEIGHT - 1);
-						if (scope_distribution(generator) < (int)possible_scopes.size()) {
+				if (possible_child_indexes.size() > 0) {
+					if (possible_child_indexes.size() <= RAW_ACTION_WEIGHT) {
+						uniform_int_distribution<int> scope_distribution(0, possible_child_indexes.size() + RAW_ACTION_WEIGHT - 1);
+						if (scope_distribution(generator) < (int)possible_child_indexes.size()) {
 							is_scope = true;
 						}
 
@@ -180,10 +188,16 @@ void BranchExperiment::explore_check_activate(
 					this->curr_step_types.push_back(STEP_TYPE_SCOPE);
 					this->curr_actions.push_back(-1);
 
-					uniform_int_distribution<int> child_scope_distribution(0, possible_scopes.size()-1);
-					Scope* scope = possible_scopes[child_scope_distribution(generator)];
-
-					this->curr_scopes.push_back(scope);
+					double rand_val = child_index_distribution(generator);
+					for (int c_index = 0; c_index < (int)possible_child_indexes.size(); c_index++) {
+						rand_val -= possible_child_index_weights[c_index];
+						if (rand_val <= 0.0) {
+							int child_index = possible_child_indexes[c_index];
+							this->curr_scopes.push_back(this->node_context->parent->child_scopes[child_index]);
+							this->node_context->parent->child_scope_tries[child_index]++;
+							break;
+						}
+					}
 				} else {
 					this->curr_step_types.push_back(STEP_TYPE_ACTION);
 

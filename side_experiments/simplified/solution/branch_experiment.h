@@ -13,9 +13,14 @@ class SolutionWrapper;
 
 const int BRANCH_EXPERIMENT_STATE_EXPLORE = 0;
 const int BRANCH_EXPERIMENT_STATE_TRAIN_NEW = 1;
-const int BRANCH_EXPERIMENT_STATE_MEASURE = 2;
+const int BRANCH_EXPERIMENT_STATE_REFINE = 2;
+/**
+ * - practice for ramp
+ *   - not actually better than just gathering more samples
+ */
+const int BRANCH_EXPERIMENT_STATE_MEASURE = 3;
 #if defined(MDEBUG) && MDEBUG
-const int BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY = 3;
+const int BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY = 4;
 #endif /* MDEBUG */
 
 class BranchExperimentHistory;
@@ -65,11 +70,13 @@ public:
 	std::vector<ScopeHistory*> scope_histories;
 	std::vector<double> target_val_histories;
 
-	double new_sum_scores;
+	std::vector<std::vector<double>> factor_vals;
+	std::vector<std::vector<double>> network_vals;
+	std::vector<std::vector<bool>> network_is_on;
 
-	double sum_predicted_improvement;
-	double sum_actual_improvement;
-	int num_retrains;
+	int num_refines;
+
+	double new_sum_scores;
 
 	#if defined(MDEBUG) && MDEBUG
 	std::vector<Problem*> verify_problems;
@@ -128,6 +135,18 @@ public:
 	void train_new_backprop(double target_val,
 							BranchExperimentHistory* history);
 
+	void refine_check_activate(SolutionWrapper* wrapper,
+							   BranchExperimentHistory* history);
+	void refine_step(std::vector<double>& obs,
+					 int& action,
+					 bool& is_next,
+					 SolutionWrapper* wrapper,
+					 BranchExperimentState* experiment_state);
+	void refine_exit_step(SolutionWrapper* wrapper,
+						  BranchExperimentState* experiment_state);
+	void refine_backprop(double target_val,
+						 BranchExperimentHistory* history);
+
 	void measure_check_activate(SolutionWrapper* wrapper,
 								BranchExperimentHistory* history);
 	void measure_step(std::vector<double>& obs,
@@ -155,14 +174,7 @@ public:
 	void train_existing_helper(std::vector<ScopeHistory*>& scope_histories,
 						   std::vector<double>& target_val_histories);
 	bool train_new_helper();
-	bool update_helper(double& constant,
-					   std::vector<double>& factor_weights,
-					   Network*& network,
-					   double& average_misguess,
-					   double& seed_average_predicted_score,
-					   double& average_predicted_score,
-					   double& select_percentage);
-	bool retrain_helper();
+	bool refine_helper();
 
 	void clean();
 	void add(SolutionWrapper* wrapper);
@@ -170,8 +182,11 @@ public:
 
 class BranchExperimentHistory : public AbstractExperimentHistory {
 public:
-	std::vector<ScopeHistory*> scope_histories;
 	std::vector<double> existing_predicted_scores;
+
+	std::vector<std::vector<double>> factor_vals;
+	std::vector<std::vector<double>> network_vals;
+	std::vector<std::vector<bool>> network_is_on;
 
 	BranchExperimentHistory(BranchExperiment* experiment);
 };

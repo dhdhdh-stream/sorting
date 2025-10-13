@@ -124,13 +124,17 @@ void BranchExperiment::train_new_backprop(
 				&& (int)this->target_val_histories.size() >= TRAIN_NEW_NUM_DATAPOINTS) {
 			bool is_success = train_new_helper();
 			if (is_success) {
-				this->new_sum_scores = 0.0;
+				for (int h_index = 0; h_index < (int)this->scope_histories.size(); h_index++) {
+					delete this->scope_histories[h_index];
+				}
+				this->scope_histories.clear();
+				/**
+				 * - don't clear this->target_val_histories
+				 */
 
-				this->sum_predicted_improvement = 0.0;
-				this->sum_actual_improvement = 0.0;
-				this->num_retrains = 0;
+				this->num_refines = 0;
 
-				this->state = BRANCH_EXPERIMENT_STATE_MEASURE;
+				this->state = BRANCH_EXPERIMENT_STATE_REFINE;
 				this->state_iter = 0;
 			} else {
 				this->result = EXPERIMENT_RESULT_FAIL;

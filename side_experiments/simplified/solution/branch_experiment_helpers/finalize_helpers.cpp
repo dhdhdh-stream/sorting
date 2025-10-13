@@ -25,6 +25,8 @@ void recursive_add_child(Scope* curr_parent,
 						 SolutionWrapper* wrapper,
 						 Scope* new_scope) {
 	curr_parent->child_scopes.push_back(new_scope);
+	curr_parent->child_scope_tries.push_back(1);
+	curr_parent->child_scope_successes.push_back(1);
 
 	for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
 		bool is_needed = false;
@@ -97,6 +99,12 @@ void BranchExperiment::add(SolutionWrapper* wrapper) {
 			new_nodes.push_back(new_scope_node);
 
 			this->best_scopes[s_index]->num_generalize_successes++;
+			for (int c_index = 0; c_index < (int)this->node_context->parent->child_scopes.size(); c_index++) {
+				if (this->best_scopes[s_index] == this->node_context->parent->child_scopes[c_index]) {
+					this->node_context->parent->child_scope_successes[c_index]++;
+					break;
+				}
+			}
 		}
 	}
 

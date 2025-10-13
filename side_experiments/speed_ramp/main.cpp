@@ -10,6 +10,13 @@
 
 // - when combining, only try scopes that generalize
 
+// TODO: save full runs and use to train existing instead of saving separate ScopeHistorys
+// - maybe 4000 samples with 5% min hit ratio
+//   - saves won't include explores
+//   - calc and save signal val on exit scope
+// - can also save vals, and retrain existing too
+//   - maybe for each stage for the right contrast
+
 #include <chrono>
 #include <iostream>
 #include <map>

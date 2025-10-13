@@ -208,6 +208,8 @@ void Scope::save(ofstream& output_file) {
 	output_file << this->child_scopes.size() << endl;
 	for (int c_index = 0; c_index < (int)this->child_scopes.size(); c_index++) {
 		output_file << this->child_scopes[c_index]->id << endl;
+		output_file << this->child_scope_tries.size() << endl;
+		output_file << this->child_scope_successes.size() << endl;
 	}
 
 	output_file << this->num_generalize_successes << endl;
@@ -299,6 +301,14 @@ void Scope::load(ifstream& input_file,
 		string scope_id_line;
 		getline(input_file, scope_id_line);
 		this->child_scopes.push_back(parent_solution->scopes[stoi(scope_id_line)]);
+
+		string tries_line;
+		getline(input_file, tries_line);
+		this->child_scope_tries.push_back(stoi(tries_line));
+
+		string successes_line;
+		getline(input_file, successes_line);
+		this->child_scope_successes.push_back(stoi(successes_line));
 	}
 
 	string num_generalize_successes_line;

@@ -18,51 +18,9 @@
 
 using namespace std;
 
-const int RETRAIN_NUM_CHANCES = 3;
-
-const double IMPROVEMENT_LEEWAY = 0.7;
-const int MAX_NUM_RETRAINS = 2;
-/**
- * - limit retrains as predicted and actual improvement may never converge
- *   - due to reusing previous predicted on no branch(?)
- */
-
 void BranchExperiment::measure_check_activate(SolutionWrapper* wrapper,
 											  BranchExperimentHistory* history) {
 	ScopeHistory* scope_history = wrapper->scope_histories.back();
-
-	double existing_sum_vals = this->existing_constant;
-	for (int i_index = 0; i_index < (int)this->existing_inputs.size(); i_index++) {
-		double val;
-		bool is_on;
-		fetch_input_helper(wrapper->scope_histories.back(),
-						   this->existing_inputs[i_index],
-						   0,
-						   val,
-						   is_on);
-		if (is_on) {
-			double normalized_val = (val - this->existing_input_averages[i_index]) / this->existing_input_standard_deviations[i_index];
-			existing_sum_vals += this->existing_weights[i_index] * normalized_val;
-		}
-	}
-	if (this->existing_network != NULL) {
-		vector<double> input_vals(this->existing_network_inputs.size());
-		vector<bool> input_is_on(this->existing_network_inputs.size());
-		for (int i_index = 0; i_index < (int)this->existing_network_inputs.size(); i_index++) {
-			double val;
-			bool is_on;
-			fetch_input_helper(wrapper->scope_histories.back(),
-							   this->existing_network_inputs[i_index],
-							   0,
-							   val,
-							   is_on);
-			input_vals[i_index] = val;
-			input_is_on[i_index] = is_on;
-		}
-		this->existing_network->activate(input_vals,
-									input_is_on);
-		existing_sum_vals += this->existing_network->output->acti_vals[0];
-	}
 
 	double new_sum_vals = this->new_constant;
 
@@ -120,27 +78,9 @@ void BranchExperiment::measure_check_activate(SolutionWrapper* wrapper,
 	}
 
 	if (decision_is_branch) {
-		history->existing_predicted_scores.push_back(existing_sum_vals);
-
-		this->sum_predicted_improvement += new_sum_vals;
-
-		ScopeHistory* scope_history_copy = new ScopeHistory(wrapper->scope_histories.back());
-		scope_history_copy->num_actions_snapshot = wrapper->num_actions;
-		history->scope_histories.push_back(scope_history_copy);
-
 		BranchExperimentState* new_experiment_state = new BranchExperimentState(this);
 		new_experiment_state->step_index = 0;
 		wrapper->experiment_context.back() = new_experiment_state;
-	} else {
-		/**
-		 * - to make train distribution still representative of true distribution
-		 */
-
-		this->target_val_histories.push_back(new_sum_vals);
-
-		ScopeHistory* scope_history_copy = new ScopeHistory(wrapper->scope_histories.back());
-		scope_history_copy->num_actions_snapshot = wrapper->num_actions;
-		this->scope_histories.push_back(scope_history_copy);
 	}
 }
 
@@ -185,153 +125,105 @@ void BranchExperiment::measure_exit_step(SolutionWrapper* wrapper,
 void BranchExperiment::measure_backprop(double target_val,
 										BranchExperimentHistory* history) {
 	if (history->is_hit) {
-		for (int h_index = 0; h_index < (int)history->scope_histories.size(); h_index++) {
-			this->scope_histories.push_back(history->scope_histories[h_index]);
-			this->target_val_histories.push_back(target_val - history->existing_predicted_scores[h_index]);
-
-			this->sum_actual_improvement += (target_val - history->existing_predicted_scores[h_index]);
-		}
-
 		this->new_sum_scores += target_val;
 
 		this->state_iter++;
 		if (this->state_iter >= MEASURE_ITERS) {
-			// // temp
-			// cout << "this->sum_predicted_improvement: " << this->sum_predicted_improvement << endl;
-			// cout << "this->sum_actual_improvement: " << this->sum_actual_improvement << endl;
-			// {
-			// 	double new_score = this->new_sum_scores / (double)this->state_iter;
-			// 	cout << "new_score: " << new_score << endl;
-			// }
+			double new_score = this->new_sum_scores / (double)this->state_iter;
 
-			bool is_continue = false;
-			#if defined(MDEBUG) && MDEBUG
-			if (rand()%2 == 0) {
-			#else
-			if (this->sum_actual_improvement < IMPROVEMENT_LEEWAY * this->sum_predicted_improvement
-					&& this->num_retrains < MAX_NUM_RETRAINS) {
-			#endif /* MDEBUG */
-				/**
-				 * - if predicted good, but actual bad, then training samples must not be representative
-				 *   - which may be corrected with additional samples from measure
-				 */
-				bool is_success = retrain_helper();
-				if (is_success) {
-					is_continue = true;
-
-					this->new_sum_scores = 0.0;
-
-					this->sum_predicted_improvement = 0.0;
-					this->sum_actual_improvement = 0.0;
-					this->num_retrains++;
-
-					for (int h_index = 0; h_index < (int)this->new_scope_histories.size(); h_index++) {
-						delete this->new_scope_histories[h_index];
-					}
-					this->new_scope_histories.clear();
-					this->new_target_val_histories.clear();
-
-					this->state_iter = 0;
+			double existing_score;
+			switch (this->node_context->type) {
+			case NODE_TYPE_START:
+				{
+					StartNode* start_node = (StartNode*)this->node_context;
+					existing_score = start_node->average_score;
 				}
+				break;
+			case NODE_TYPE_ACTION:
+				{
+					ActionNode* action_node = (ActionNode*)this->node_context;
+					existing_score = action_node->average_score;
+				}
+				break;
+			case NODE_TYPE_SCOPE:
+				{
+					ScopeNode* scope_node = (ScopeNode*)this->node_context;
+					existing_score = scope_node->average_score;
+				}
+				break;
+			case NODE_TYPE_BRANCH:
+				{
+					BranchNode* branch_node = (BranchNode*)this->node_context;
+					if (this->is_branch) {
+						existing_score = branch_node->branch_average_score;
+					} else {
+						existing_score = branch_node->original_average_score;
+					}
+				}
+				break;
+			case NODE_TYPE_OBS:
+				{
+					ObsNode* obs_node = (ObsNode*)this->node_context;
+					existing_score = obs_node->average_score;
+				}
+				break;
 			}
 
-			if (!is_continue) {
-				double new_score = this->new_sum_scores / (double)this->state_iter;
+			// // temp
+			// cout << "this->scope_context->id: " << this->scope_context->id << endl;
+			// cout << "this->node_context->id: " << this->node_context->id << endl;
+			// cout << "new_score: " << new_score << endl;
+			// cout << "existing_score: " << existing_score << endl;
 
-				double existing_score;
-				switch (this->node_context->type) {
-				case NODE_TYPE_START:
-					{
-						StartNode* start_node = (StartNode*)this->node_context;
-						existing_score = start_node->average_score;
+			#if defined(MDEBUG) && MDEBUG
+			if (new_score - existing_score >= 0.0 || rand()%2 == 0) {
+			#else
+			if (new_score - existing_score >= 0.0) {
+			#endif /* MDEBUG */
+				this->new_score = new_score;
+
+				cout << "BranchExperiment" << endl;
+				cout << "this->scope_context->id: " << this->scope_context->id << endl;
+				cout << "this->node_context->id: " << this->node_context->id << endl;
+				cout << "this->is_branch: " << this->is_branch << endl;
+				cout << "new explore path:";
+				for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+					if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+						cout << " " << this->best_actions[s_index];
+					} else {
+						cout << " E" << this->best_scopes[s_index]->id;
 					}
-					break;
-				case NODE_TYPE_ACTION:
-					{
-						ActionNode* action_node = (ActionNode*)this->node_context;
-						existing_score = action_node->average_score;
-					}
-					break;
-				case NODE_TYPE_SCOPE:
-					{
-						ScopeNode* scope_node = (ScopeNode*)this->node_context;
-						existing_score = scope_node->average_score;
-					}
-					break;
-				case NODE_TYPE_BRANCH:
-					{
-						BranchNode* branch_node = (BranchNode*)this->node_context;
-						if (this->is_branch) {
-							existing_score = branch_node->branch_average_score;
-						} else {
-							existing_score = branch_node->original_average_score;
-						}
-					}
-					break;
-				case NODE_TYPE_OBS:
-					{
-						ObsNode* obs_node = (ObsNode*)this->node_context;
-						existing_score = obs_node->average_score;
-					}
-					break;
+				}
+				cout << endl;
+
+				if (this->best_exit_next_node == NULL) {
+					cout << "this->best_exit_next_node->id: " << -1 << endl;
+				} else {
+					cout << "this->best_exit_next_node->id: " << this->best_exit_next_node->id << endl;
 				}
 
-				// // temp
-				// cout << "this->scope_context->id: " << this->scope_context->id << endl;
-				// cout << "this->node_context->id: " << this->node_context->id << endl;
-				// cout << "new_score: " << new_score << endl;
-				// cout << "existing_score: " << existing_score << endl;
+				cout << "this->select_percentage: " << this->select_percentage << endl;
+
+				double improvement = this->new_score - existing_score;
+				cout << "improvement: " << improvement << endl;
+
+				cout << endl;
 
 				#if defined(MDEBUG) && MDEBUG
-				if ((new_score - existing_score >= 0.0 && this->sum_actual_improvement >= 0.0) || rand()%2 == 0) {
-				#else
-				if (new_score - existing_score >= 0.0 && this->sum_actual_improvement >= 0.0) {
-				#endif /* MDEBUG */
-					this->new_score = new_score;
-
-					cout << "BranchExperiment" << endl;
-					cout << "this->scope_context->id: " << this->scope_context->id << endl;
-					cout << "this->node_context->id: " << this->node_context->id << endl;
-					cout << "this->is_branch: " << this->is_branch << endl;
-					cout << "new explore path:";
-					for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-						if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-							cout << " " << this->best_actions[s_index];
-						} else {
-							cout << " E" << this->best_scopes[s_index]->id;
-						}
-					}
-					cout << endl;
-
-					if (this->best_exit_next_node == NULL) {
-						cout << "this->best_exit_next_node->id: " << -1 << endl;
-					} else {
-						cout << "this->best_exit_next_node->id: " << this->best_exit_next_node->id << endl;
-					}
-
-					cout << "this->select_percentage: " << this->select_percentage << endl;
-
-					double improvement = this->new_score - existing_score;
-					cout << "improvement: " << improvement << endl;
-
-					cout << endl;
-
-					#if defined(MDEBUG) && MDEBUG
-					if (this->select_percentage == 1.0) {
-						this->result = EXPERIMENT_RESULT_SUCCESS;
-					} else {
-						this->verify_problems = vector<Problem*>(NUM_VERIFY_SAMPLES, NULL);
-						this->verify_seeds = vector<unsigned long>(NUM_VERIFY_SAMPLES);
-
-						this->state = BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY;
-						this->state_iter = 0;
-					}
-					#else
+				if (this->select_percentage == 1.0) {
 					this->result = EXPERIMENT_RESULT_SUCCESS;
-					#endif /* MDEBUG */
 				} else {
-					this->result = EXPERIMENT_RESULT_FAIL;
+					this->verify_problems = vector<Problem*>(NUM_VERIFY_SAMPLES, NULL);
+					this->verify_seeds = vector<unsigned long>(NUM_VERIFY_SAMPLES);
+
+					this->state = BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY;
+					this->state_iter = 0;
 				}
+				#else
+				this->result = EXPERIMENT_RESULT_SUCCESS;
+				#endif /* MDEBUG */
+			} else {
+				this->result = EXPERIMENT_RESULT_FAIL;
 			}
 		}
 	}

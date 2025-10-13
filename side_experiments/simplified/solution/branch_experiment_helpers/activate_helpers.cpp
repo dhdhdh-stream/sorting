@@ -29,6 +29,10 @@ void BranchExperiment::check_activate(AbstractNode* experiment_node,
 			train_new_check_activate(wrapper,
 									 history);
 			break;
+		case BRANCH_EXPERIMENT_STATE_REFINE:
+			refine_check_activate(wrapper,
+								  history);
+			break;
 		case BRANCH_EXPERIMENT_STATE_MEASURE:
 			measure_check_activate(wrapper,
 								   history);
@@ -63,6 +67,13 @@ void BranchExperiment::experiment_step(vector<double>& obs,
 					   is_next,
 					   wrapper,
 					   experiment_state);
+		break;
+	case BRANCH_EXPERIMENT_STATE_REFINE:
+		refine_step(obs,
+					action,
+					is_next,
+					wrapper,
+					experiment_state);
 		break;
 	case BRANCH_EXPERIMENT_STATE_MEASURE:
 		measure_step(obs,
@@ -101,6 +112,10 @@ void BranchExperiment::experiment_exit_step(SolutionWrapper* wrapper) {
 		train_new_exit_step(wrapper,
 							experiment_state);
 		break;
+	case BRANCH_EXPERIMENT_STATE_REFINE:
+		refine_exit_step(wrapper,
+						 experiment_state);
+		break;
 	case BRANCH_EXPERIMENT_STATE_MEASURE:
 		measure_exit_step(wrapper,
 						  experiment_state);
@@ -128,6 +143,13 @@ void BranchExperiment::backprop(double target_val,
 	case BRANCH_EXPERIMENT_STATE_TRAIN_NEW:
 		train_new_backprop(target_val,
 						   history);
+
+		delete wrapper->scope_histories[0];
+
+		break;
+	case BRANCH_EXPERIMENT_STATE_REFINE:
+		refine_backprop(target_val,
+						history);
 
 		delete wrapper->scope_histories[0];
 

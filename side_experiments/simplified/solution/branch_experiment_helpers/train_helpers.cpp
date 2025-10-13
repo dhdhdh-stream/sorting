@@ -288,10 +288,13 @@ void try_helper(vector<ScopeHistory*>& scope_histories,
 				map<Input, InputData*>& input_tracker,
 				double& constant,
 				vector<Input>& factor_inputs,
+				vector<vector<double>>& factor_vals,
 				vector<double>& factor_input_averages,
 				vector<double>& factor_input_standard_deviations,
 				vector<double>& factor_weights,
 				vector<Input>& network_inputs,
+				vector<vector<double>>& network_vals,
+				vector<vector<bool>>& network_is_on,
 				Network*& network,
 				double& average_misguess,
 				double& seed_average_predicted_score,
@@ -501,6 +504,14 @@ void try_helper(vector<ScopeHistory*>& scope_histories,
 			}
 			factor_input_datas = new_factor_input_datas;
 
+			for (int h_index = 0; h_index < (int)scope_histories.size(); h_index++) {
+				vector<double> curr_factor_vals(new_factor_inputs.size());
+				for (int f_index = 0; f_index < (int)new_factor_inputs.size(); f_index++) {
+					curr_factor_vals[f_index] = new_factor_input_datas[f_index]->normalized_vals[h_index];
+				}
+				factor_vals.push_back(curr_factor_vals);
+			}
+
 			constant = weights(0);
 			for (int f_index = 0; f_index < (int)new_factor_inputs.size(); f_index++) {
 				factor_weights.push_back(weights(1 + f_index));
@@ -675,17 +686,15 @@ void try_helper(vector<ScopeHistory*>& scope_histories,
 			}
 		}
 
-		vector<vector<double>> input_vals(remaining_indexes.size());
-		vector<vector<bool>> input_is_on(remaining_indexes.size());
-		for (int h_index = 0; h_index < (int)remaining_indexes.size(); h_index++) {
+		for (int h_index = 0; h_index < (int)scope_histories.size(); h_index++) {
 			vector<double> curr_input_vals(new_network_inputs.size());
 			vector<bool> curr_input_is_on(new_network_inputs.size());
 			for (int i_index = 0; i_index < (int)new_network_inputs.size(); i_index++) {
-				curr_input_vals[i_index] = new_network_input_datas[i_index]->vals[remaining_indexes[h_index]];
-				curr_input_is_on[i_index] = new_network_input_datas[i_index]->is_on[remaining_indexes[h_index]];
+				curr_input_vals[i_index] = new_network_input_datas[i_index]->vals[h_index];
+				curr_input_is_on[i_index] = new_network_input_datas[i_index]->is_on[h_index];
 			}
-			input_vals[h_index] = curr_input_vals;
-			input_is_on[h_index] = curr_input_is_on;
+			network_vals.push_back(curr_input_vals);
+			network_is_on.push_back(curr_input_is_on);
 		}
 
 		Network* new_network = new Network((int)new_network_inputs.size(),
@@ -695,37 +704,31 @@ void try_helper(vector<ScopeHistory*>& scope_histories,
 		uniform_int_distribution<int> input_distribution(0, remaining_indexes.size()-1);
 		uniform_int_distribution<int> drop_distribution(0, 9);
 		for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
-			int rand_index = input_distribution(generator);
+			int rand_index = remaining_indexes[input_distribution(generator)];
 
 			vector<bool> w_drop(new_network_inputs.size());
 			for (int i_index = 0; i_index < (int)new_network_inputs.size(); i_index++) {
 				if (drop_distribution(generator) == 0) {
 					w_drop[i_index] = false;
 				} else {
-					w_drop[i_index] = input_is_on[rand_index][i_index];
+					w_drop[i_index] = network_is_on[rand_index][i_index];
 				}
 			}
 
-			new_network->activate(input_vals[rand_index],
+			new_network->activate(network_vals[rand_index],
 								  w_drop);
 
-			double error = remaining_scores[remaining_indexes[rand_index]] - new_network->output->acti_vals[0];
+			double error = remaining_scores[rand_index] - new_network->output->acti_vals[0];
 
 			new_network->backprop(error);
 		}
 
-		vector<double> network_vals(scope_histories.size());
+		vector<double> network_outputs(scope_histories.size());
 		for (int h_index = 0; h_index < (int)scope_histories.size(); h_index++) {
-			vector<double> curr_input_vals(new_network_inputs.size());
-			vector<bool> curr_input_is_on(new_network_inputs.size());
-			for (int i_index = 0; i_index < (int)new_network_inputs.size(); i_index++) {
-				curr_input_vals[i_index] = new_network_input_datas[i_index]->vals[h_index];
-				curr_input_is_on[i_index] = new_network_input_datas[i_index]->is_on[h_index];
-			}
-			new_network->activate(curr_input_vals,
-								  curr_input_is_on);
+			new_network->activate(network_vals[h_index],
+								  network_is_on[h_index]);
 
-			network_vals[h_index] = new_network->output->acti_vals[0];
+			network_outputs[h_index] = new_network->output->acti_vals[0];
 		}
 
 		double sum_default_misguess = 0.0;
@@ -735,8 +738,8 @@ void try_helper(vector<ScopeHistory*>& scope_histories,
 
 		double sum_network_misguess = 0.0;
 		for (int s_index = 0; s_index < (int)seed_indexes.size(); s_index++) {
-			sum_network_misguess += (remaining_scores[seed_indexes[s_index]] - network_vals[seed_indexes[s_index]])
-				* (remaining_scores[seed_indexes[s_index]] - network_vals[seed_indexes[s_index]]);
+			sum_network_misguess += (remaining_scores[seed_indexes[s_index]] - network_outputs[seed_indexes[s_index]])
+				* (remaining_scores[seed_indexes[s_index]] - network_outputs[seed_indexes[s_index]]);
 		}
 
 		#if defined(MDEBUG) && MDEBUG
@@ -745,7 +748,7 @@ void try_helper(vector<ScopeHistory*>& scope_histories,
 		if (sum_network_misguess < sum_default_misguess) {
 		#endif /* MDEBUG */
 			for (int h_index = 0; h_index < (int)scope_histories.size(); h_index++) {
-				sum_vals[h_index] += network_vals[h_index];
+				sum_vals[h_index] += network_outputs[h_index];
 			}
 
 			network_inputs = new_network_inputs;
@@ -843,211 +846,6 @@ void try_helper(vector<ScopeHistory*>& scope_histories,
 	#endif /* MDEBUG */
 }
 
-bool BranchExperiment::update_helper(double& constant,
-									 vector<double>& factor_weights,
-									 Network*& network,
-									 double& average_misguess,
-									 double& seed_average_predicted_score,
-									 double& average_predicted_score,
-									 double& select_percentage) {
-	int num_seeds = SEED_RATIO * (double)this->scope_histories.size();
-	vector<int> seed_indexes;
-	vector<int> remaining_indexes(this->scope_histories.size());
-	for (int i_index = 0; i_index < (int)this->scope_histories.size(); i_index++) {
-		remaining_indexes[i_index] = i_index;
-	}
-	for (int s_index = 0; s_index < num_seeds; s_index++) {
-		uniform_int_distribution<int> distribution(0, remaining_indexes.size()-1);
-		int index = distribution(generator);
-		seed_indexes.push_back(remaining_indexes[index]);
-		remaining_indexes.erase(remaining_indexes.begin() + index);
-	}
-
-	vector<vector<double>> factor_normalized_vals(this->scope_histories.size());
-	for (int h_index = 0; h_index < (int)this->scope_histories.size(); h_index++) {
-		vector<double> curr_vals(this->new_inputs.size());
-		for (int i_index = 0; i_index < (int)this->new_inputs.size(); i_index++) {
-			double val;
-			bool is_on;
-			fetch_input_helper(this->scope_histories[h_index],
-							   this->new_inputs[i_index],
-							   0,
-							   val,
-							   is_on);
-			if (is_on) {
-				double normalized_val = (val - this->new_input_averages[i_index]) / this->new_input_standard_deviations[i_index];
-				curr_vals[i_index] = normalized_val;
-			} else {
-				curr_vals[i_index] = 0.0;
-			}
-		}
-		factor_normalized_vals[h_index] = curr_vals;
-	}
-
-	Eigen::MatrixXd inputs(remaining_indexes.size(), 1 + this->new_inputs.size());
-	Eigen::VectorXd outputs(remaining_indexes.size());
-	uniform_real_distribution<double> noise_distribution(-0.001, 0.001);
-	/**
-	 * - add some noise to prevent extremes
-	 */
-	for (int i_index = 0; i_index < (int)remaining_indexes.size(); i_index++) {
-		inputs(i_index, 0) = 1.0;
-		for (int f_index = 0; f_index < (int)this->new_inputs.size(); f_index++) {
-			inputs(i_index, 1 + f_index) = factor_normalized_vals[remaining_indexes[i_index]][f_index]
-					+ noise_distribution(generator);
-		}
-		outputs(i_index) = this->target_val_histories[remaining_indexes[i_index]];
-	}
-
-	Eigen::VectorXd weights;
-	try {
-		weights = inputs.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(outputs);
-	} catch (std::invalid_argument &e) {
-		cout << "Eigen error" << endl;
-		return false;
-	}
-
-	#if defined(MDEBUG) && MDEBUG
-	#else
-	if (abs(weights(0)) > REGRESSION_WEIGHT_LIMIT) {
-		cout << "abs(weights(0)): " << abs(weights(0)) << endl;
-		return false;
-	}
-	for (int f_index = 0; f_index < (int)this->new_inputs.size(); f_index++) {
-		if (abs(weights(1 + f_index)) > REGRESSION_WEIGHT_LIMIT) {
-			cout << "abs(weights(1 + f_index)): " << abs(weights(1 + f_index)) << endl;
-			return false;
-		}
-	}
-	#endif /* MDEBUG */
-
-	/**
-	 * - assume train factor always reasonable due to additional samples
-	 */
-	constant = weights(0);
-	for (int f_index = 0; f_index < (int)this->new_inputs.size(); f_index++) {
-		factor_weights.push_back(weights(1 + f_index));
-	}
-
-	vector<double> sum_vals(this->scope_histories.size());
-	vector<double> remaining_scores(this->scope_histories.size());
-	for (int h_index = 0; h_index < (int)this->scope_histories.size(); h_index++) {
-		double sum_score = constant;
-		for (int f_index = 0; f_index < (int)this->new_inputs.size(); f_index++) {
-			sum_score += factor_weights[f_index] * factor_normalized_vals[h_index][f_index];
-		}
-
-		sum_vals[h_index] = sum_score;
-		remaining_scores[h_index] = this->target_val_histories[h_index] - sum_score;
-	}
-
-	if (this->new_network != NULL) {
-		vector<vector<double>> vals(this->scope_histories.size());
-		vector<vector<bool>> is_on(this->scope_histories.size());
-		for (int h_index = 0; h_index < (int)this->scope_histories.size(); h_index++) {
-			vector<double> curr_vals(this->new_network_inputs.size());
-			vector<bool> curr_is_on(this->new_network_inputs.size());
-			for (int i_index = 0; i_index < (int)this->new_network_inputs.size(); i_index++) {
-				double val;
-				bool is_on;
-				fetch_input_helper(this->scope_histories[h_index],
-								   this->new_network_inputs[i_index],
-								   0,
-								   val,
-								   is_on);
-				curr_vals[i_index] = val;
-				curr_is_on[i_index] = is_on;
-			}
-			vals[h_index] = curr_vals;
-			is_on[h_index] = curr_is_on;
-		}
-
-		network = new Network((int)this->new_network_inputs.size(),
-							  this->new_network->input_averages,
-							  this->new_network->input_standard_deviations);
-
-		uniform_int_distribution<int> input_distribution(0, remaining_indexes.size()-1);
-		uniform_int_distribution<int> drop_distribution(0, 9);
-		for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
-			int rand_index = remaining_indexes[input_distribution(generator)];
-
-			vector<bool> w_drop(this->new_network_inputs.size());
-			for (int i_index = 0; i_index < (int)this->new_network_inputs.size(); i_index++) {
-				if (drop_distribution(generator) == 0) {
-					w_drop[i_index] = false;
-				} else {
-					w_drop[i_index] = is_on[rand_index][i_index];
-				}
-			}
-
-			network->activate(vals[rand_index],
-							  w_drop);
-			double error = remaining_scores[rand_index] - network->output->acti_vals[0];
-			network->backprop(error);
-		}
-
-		vector<double> network_vals(this->scope_histories.size());
-		for (int h_index = 0; h_index < (int)this->scope_histories.size(); h_index++) {
-			network->activate(vals[h_index],
-							  is_on[h_index]);
-
-			network_vals[h_index] = network->output->acti_vals[0];
-		}
-
-		for (int h_index = 0; h_index < (int)this->scope_histories.size(); h_index++) {
-			sum_vals[h_index] += network_vals[h_index];
-		}
-	}
-
-	double sum_misguess = 0.0;
-	for (int h_index = 0; h_index < (int)this->scope_histories.size(); h_index++) {
-		sum_misguess += (this->target_val_histories[h_index] - sum_vals[h_index])
-			* (this->target_val_histories[h_index] - sum_vals[h_index]);
-	}
-	average_misguess = sum_misguess / (double)this->scope_histories.size();
-
-	double seed_sum_predicted_score = 0.0;
-	for (int s_index = 0; s_index < (int)seed_indexes.size(); s_index++) {
-		if (sum_vals[seed_indexes[s_index]] >= 0.0) {
-			seed_sum_predicted_score += this->target_val_histories[seed_indexes[s_index]];
-		}
-	}
-	seed_average_predicted_score = seed_sum_predicted_score / (double)seed_indexes.size();
-
-	double sum_predicted_score = 0.0;
-	for (int h_index = 0; h_index < (int)this->scope_histories.size(); h_index++) {
-		if (sum_vals[h_index] >= 0.0) {
-			sum_predicted_score += this->target_val_histories[h_index];
-		}
-	}
-	average_predicted_score = sum_predicted_score / (double)this->scope_histories.size();
-
-	#if defined(MDEBUG) && MDEBUG
-	if (rand()%2 == 0) {
-		select_percentage = 0.5;
-	} else {
-		select_percentage = 0.0;
-	}
-	#else
-	int num_positive = 0;
-	for (int h_index = 0; h_index < (int)this->scope_histories.size(); h_index++) {
-		if (sum_vals[h_index] >= 0.0) {
-			num_positive++;
-		}
-	}
-	select_percentage = (double)num_positive / (double)this->scope_histories.size();
-	#endif /* MDEBUG */
-
-	// // temp
-	// cout << "update" << endl;
-	// cout << "average_misguess: " << average_misguess << endl;
-	// cout << "seed_sum_predicted_score: " << seed_sum_predicted_score << endl;
-	// cout << "sum_predicted_score: " << sum_predicted_score << endl;
-	// cout << "select_percentage: " << select_percentage << endl;
-
-	return true;
-}
-
 void BranchExperiment::train_existing_helper(vector<ScopeHistory*>& scope_histories,
 											 vector<double>& target_val_histories) {
 	map<Input, InputData*> input_tracker;
@@ -1056,10 +854,13 @@ void BranchExperiment::train_existing_helper(vector<ScopeHistory*>& scope_histor
 	for (int t_index = 0; t_index < TRAIN_TRIES; t_index++) {
 		double curr_constant;
 		vector<Input> curr_factor_inputs;
+		vector<vector<double>> curr_factor_vals;
 		vector<double> curr_factor_input_averages;
 		vector<double> curr_factor_input_standard_deviations;
 		vector<double> curr_factor_weights;
 		vector<Input> curr_network_inputs;
+		vector<vector<double>> curr_network_vals;
+		vector<vector<bool>> curr_network_is_on;
 		Network* curr_network = NULL;
 		double curr_average_misguess;
 		double curr_seed_average_predicted_score;
@@ -1070,10 +871,13 @@ void BranchExperiment::train_existing_helper(vector<ScopeHistory*>& scope_histor
 				   input_tracker,
 				   curr_constant,
 				   curr_factor_inputs,
+				   curr_factor_vals,
 				   curr_factor_input_averages,
 				   curr_factor_input_standard_deviations,
 				   curr_factor_weights,
 				   curr_network_inputs,
+				   curr_network_vals,
+				   curr_network_is_on,
 				   curr_network,
 				   curr_average_misguess,
 				   curr_seed_average_predicted_score,
@@ -1118,10 +922,13 @@ bool BranchExperiment::train_new_helper() {
 
 	double best_constant;
 	vector<Input> best_factor_inputs;
+	vector<vector<double>> best_factor_vals;
 	vector<double> best_factor_input_averages;
 	vector<double> best_factor_input_standard_deviations;
 	vector<double> best_factor_weights;
 	vector<Input> best_network_inputs;
+	vector<vector<double>> best_network_vals;
+	vector<vector<bool>> best_network_is_on;
 	Network* best_network = NULL;
 	double best_seed_average_predicted_score = 0.0;
 	double best_average_predicted_score = 0.0;
@@ -1130,10 +937,13 @@ bool BranchExperiment::train_new_helper() {
 	for (int t_index = 0; t_index < TRAIN_TRIES; t_index++) {
 		double curr_constant;
 		vector<Input> curr_factor_inputs;
+		vector<vector<double>> curr_factor_vals;
 		vector<double> curr_factor_input_averages;
 		vector<double> curr_factor_input_standard_deviations;
 		vector<double> curr_factor_weights;
 		vector<Input> curr_network_inputs;
+		vector<vector<double>> curr_network_vals;
+		vector<vector<bool>> curr_network_is_on;
 		Network* curr_network = NULL;
 		double curr_average_misguess;
 		double curr_seed_average_predicted_score;
@@ -1144,10 +954,13 @@ bool BranchExperiment::train_new_helper() {
 				   input_tracker,
 				   curr_constant,
 				   curr_factor_inputs,
+				   curr_factor_vals,
 				   curr_factor_input_averages,
 				   curr_factor_input_standard_deviations,
 				   curr_factor_weights,
 				   curr_network_inputs,
+				   curr_network_vals,
+				   curr_network_is_on,
 				   curr_network,
 				   curr_average_misguess,
 				   curr_seed_average_predicted_score,
@@ -1173,10 +986,13 @@ bool BranchExperiment::train_new_helper() {
 
 			best_constant = curr_constant;
 			best_factor_inputs = curr_factor_inputs;
+			best_factor_vals = curr_factor_vals;
 			best_factor_input_averages = curr_factor_input_averages;
 			best_factor_input_standard_deviations = curr_factor_input_standard_deviations;
 			best_factor_weights = curr_factor_weights;
 			best_network_inputs = curr_network_inputs;
+			best_network_vals = curr_network_vals;
+			best_network_is_on = curr_network_is_on;
 			if (best_network != NULL) {
 				delete best_network;
 			}
@@ -1198,7 +1014,9 @@ bool BranchExperiment::train_new_helper() {
 	}
 
 	#if defined(MDEBUG) && MDEBUG
-	if (rand()%2 == 0) {
+	if ((best_seed_average_predicted_score >= 0.0
+				&& best_average_predicted_score >= 0.0
+				&& best_select_percentage > 0) || rand()%2 == 0) {
 	#else
 	if (best_seed_average_predicted_score >= 0.0
 				&& best_average_predicted_score >= 0.0
@@ -1206,162 +1024,13 @@ bool BranchExperiment::train_new_helper() {
 	#endif /* MDEBUG */
 		this->new_constant = best_constant;
 		this->new_inputs = best_factor_inputs;
+		this->factor_vals = best_factor_vals;
 		this->new_input_averages = best_factor_input_averages;
 		this->new_input_standard_deviations = best_factor_input_standard_deviations;
 		this->new_weights = best_factor_weights;
 		this->new_network_inputs = best_network_inputs;
-		if (this->new_network != NULL) {
-			delete this->new_network;
-		}
-		this->new_network = best_network;
-		best_network = NULL;
-		this->select_percentage = best_select_percentage;
-
-		return true;
-	} else {
-		if (best_network != NULL) {
-			delete best_network;
-		}
-
-		return false;
-	}
-}
-
-bool BranchExperiment::retrain_helper() {
-	map<Input, InputData*> input_tracker;
-
-	double best_average_misguess = numeric_limits<double>::max();
-
-	double best_constant;
-	vector<Input> best_factor_inputs;
-	vector<double> best_factor_input_averages;
-	vector<double> best_factor_input_standard_deviations;
-	vector<double> best_factor_weights;
-	vector<Input> best_network_inputs;
-	Network* best_network = NULL;
-	double best_seed_average_predicted_score = 0.0;
-	double best_average_predicted_score = 0.0;
-	double best_select_percentage = 0.0;
-
-	{
-		double curr_constant;
-		vector<double> curr_factor_weights;
-		Network* curr_network = NULL;
-		double curr_average_misguess;
-		double curr_seed_average_predicted_score;
-		double curr_average_predicted_score;
-		double curr_select_percentage;
-		bool is_success = update_helper(curr_constant,
-										curr_factor_weights,
-										curr_network,
-										curr_average_misguess,
-										curr_seed_average_predicted_score,
-										curr_average_predicted_score,
-										curr_select_percentage);
-		if (is_success) {
-			best_average_misguess = curr_average_misguess;
-
-			best_constant = curr_constant;
-			best_factor_inputs = this->new_inputs;
-			best_factor_input_averages = this->new_input_averages;
-			best_factor_input_standard_deviations = this->new_input_standard_deviations;
-			best_factor_weights = curr_factor_weights;
-			best_network_inputs = this->new_network_inputs;
-			best_network = curr_network;
-			curr_network = NULL;
-			best_seed_average_predicted_score = curr_seed_average_predicted_score;
-			best_average_predicted_score = curr_average_predicted_score;
-			best_select_percentage = curr_select_percentage;
-		}
-
-		if (curr_network != NULL) {
-			delete curr_network;
-		}
-	}
-
-	for (int t_index = 0; t_index < TRAIN_TRIES; t_index++) {
-		double curr_constant;
-		vector<Input> curr_factor_inputs;
-		vector<double> curr_factor_input_averages;
-		vector<double> curr_factor_input_standard_deviations;
-		vector<double> curr_factor_weights;
-		vector<Input> curr_network_inputs;
-		Network* curr_network = NULL;
-		double curr_average_misguess;
-		double curr_seed_average_predicted_score;
-		double curr_average_predicted_score;
-		double curr_select_percentage;
-		try_helper(this->scope_histories,
-				   this->target_val_histories,
-				   input_tracker,
-				   curr_constant,
-				   curr_factor_inputs,
-				   curr_factor_input_averages,
-				   curr_factor_input_standard_deviations,
-				   curr_factor_weights,
-				   curr_network_inputs,
-				   curr_network,
-				   curr_average_misguess,
-				   curr_seed_average_predicted_score,
-				   curr_average_predicted_score,
-				   curr_select_percentage);
-
-		// // temp
-		// cout << t_index << endl;
-		// cout << "curr_average_misguess: " << curr_average_misguess << endl;
-		// cout << "curr_seed_average_predicted_score: " << curr_seed_average_predicted_score << endl;
-		// cout << "curr_average_predicted_score: " << curr_average_predicted_score << endl;
-		// cout << "curr_select_percentage: " << curr_select_percentage << endl;
-
-		#if defined(MDEBUG) && MDEBUG
-		if (curr_average_misguess < best_average_misguess || rand()%2 == 0) {
-		#else
-		if (curr_average_misguess < best_average_misguess) {
-		#endif /* MDEBUG */
-			// // temp
-			// cout << "update" << endl;
-
-			best_average_misguess = curr_average_misguess;
-
-			best_constant = curr_constant;
-			best_factor_inputs = curr_factor_inputs;
-			best_factor_input_averages = curr_factor_input_averages;
-			best_factor_input_standard_deviations = curr_factor_input_standard_deviations;
-			best_factor_weights = curr_factor_weights;
-			best_network_inputs = curr_network_inputs;
-			if (best_network != NULL) {
-				delete best_network;
-			}
-			best_network = curr_network;
-			curr_network = NULL;
-			best_seed_average_predicted_score = curr_seed_average_predicted_score;
-			best_average_predicted_score = curr_average_predicted_score;
-			best_select_percentage = curr_select_percentage;
-		}
-
-		if (curr_network != NULL) {
-			delete curr_network;
-		}
-	}
-
-	for (map<Input, InputData*>::iterator it = input_tracker.begin();
-			it != input_tracker.end(); it++) {
-		delete it->second;
-	}
-
-	#if defined(MDEBUG) && MDEBUG
-	if (rand()%2 == 0) {
-	#else
-	if (best_seed_average_predicted_score >= 0.0
-				&& best_average_predicted_score >= 0.0
-				&& best_select_percentage > 0) {
-	#endif /* MDEBUG */
-		this->new_constant = best_constant;
-		this->new_inputs = best_factor_inputs;
-		this->new_input_averages = best_factor_input_averages;
-		this->new_input_standard_deviations = best_factor_input_standard_deviations;
-		this->new_weights = best_factor_weights;
-		this->new_network_inputs = best_network_inputs;
+		this->network_vals = best_network_vals;
+		this->network_is_on = best_network_is_on;
 		if (this->new_network != NULL) {
 			delete this->new_network;
 		}
