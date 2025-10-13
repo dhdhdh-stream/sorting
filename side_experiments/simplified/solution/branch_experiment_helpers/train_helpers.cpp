@@ -504,14 +504,6 @@ void try_helper(vector<ScopeHistory*>& scope_histories,
 			}
 			factor_input_datas = new_factor_input_datas;
 
-			for (int h_index = 0; h_index < (int)scope_histories.size(); h_index++) {
-				vector<double> curr_factor_vals(new_factor_inputs.size());
-				for (int f_index = 0; f_index < (int)new_factor_inputs.size(); f_index++) {
-					curr_factor_vals[f_index] = new_factor_input_datas[f_index]->normalized_vals[h_index];
-				}
-				factor_vals.push_back(curr_factor_vals);
-			}
-
 			constant = weights(0);
 			for (int f_index = 0; f_index < (int)new_factor_inputs.size(); f_index++) {
 				factor_weights.push_back(weights(1 + f_index));
@@ -525,6 +517,14 @@ void try_helper(vector<ScopeHistory*>& scope_histories,
 			sum_remaining_scores += target_val_histories[remaining_indexes[i_index]];
 		}
 		constant = sum_remaining_scores / (double)remaining_indexes.size();
+	}
+
+	for (int h_index = 0; h_index < (int)scope_histories.size(); h_index++) {
+		vector<double> curr_factor_vals(factor_inputs.size());
+		for (int f_index = 0; f_index < (int)factor_inputs.size(); f_index++) {
+			curr_factor_vals[f_index] = factor_input_datas[f_index]->normalized_vals[h_index];
+		}
+		factor_vals.push_back(curr_factor_vals);
 	}
 
 	vector<double> sum_vals(scope_histories.size());

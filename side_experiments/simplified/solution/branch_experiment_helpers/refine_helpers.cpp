@@ -302,8 +302,18 @@ bool BranchExperiment::refine_helper() {
 	this->select_percentage = (double)num_positive / (double)this->target_val_histories.size();
 	#endif /* MDEBUG */
 
+	// // temp
+	// cout << "refine" << endl;
+	// cout << "sum_predicted_score: " << sum_predicted_score << endl;
+	// cout << "this->select_percentage: " << this->select_percentage << endl;
+
+	#if defined(MDEBUG) && MDEBUG
+	if ((sum_predicted_score >= 0.0
+			&& this->select_percentage > 0.0) || rand()%2 == 0) {
+	#else
 	if (sum_predicted_score >= 0.0
 			&& this->select_percentage > 0.0) {
+	#endif /* MDEBUG */
 		return true;
 	} else {
 		return false;

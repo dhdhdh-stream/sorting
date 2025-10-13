@@ -25,7 +25,7 @@ void recursive_add_child(Scope* curr_parent,
 						 SolutionWrapper* wrapper,
 						 Scope* new_scope) {
 	curr_parent->child_scopes.push_back(new_scope);
-	curr_parent->child_scope_tries.push_back(1);
+	curr_parent->child_scope_tries.push_back(2);
 	curr_parent->child_scope_successes.push_back(1);
 
 	for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
@@ -68,6 +68,8 @@ void BranchExperiment::add(SolutionWrapper* wrapper) {
 					wrapper);
 
 		this->best_new_scope->child_scopes = scope_context->child_scopes;
+		this->best_new_scope->child_scope_tries = vector<int>(scope_context->child_scope_tries.size(), 2);
+		this->best_new_scope->child_scope_successes = vector<int>(scope_context->child_scope_successes.size(), 1);
 		recursive_add_child(scope_context,
 							wrapper,
 							this->best_new_scope);
