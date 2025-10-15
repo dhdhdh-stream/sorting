@@ -11,14 +11,17 @@
 #include "problem.h"
 #include "scope.h"
 #include "scope_node.h"
+#include "solution.h"
 #include "solution_helpers.h"
+#include "solution_wrapper.h"
 #include "start_node.h"
 
 using namespace std;
 
 BranchExperiment::BranchExperiment(Scope* scope_context,
 								   AbstractNode* node_context,
-								   bool is_branch) {
+								   bool is_branch,
+								   SolutionWrapper* wrapper) {
 	this->type = EXPERIMENT_TYPE_BRANCH;
 
 	this->scope_context = scope_context;
@@ -56,7 +59,8 @@ BranchExperiment::BranchExperiment(Scope* scope_context,
 				match_it->second->index,
 				match_it->second->num_actions_snapshot);
 			scope_histories.push_back(cleaned_scope_history);
-			target_val_histories.push_back(this->scope_context->existing_target_val_histories[h_index]);
+			target_val_histories.push_back(this->scope_context->existing_target_val_histories[h_index]
+					- wrapper->solution->curr_score);
 		}
 	}
 

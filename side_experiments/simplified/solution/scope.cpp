@@ -208,8 +208,8 @@ void Scope::save(ofstream& output_file) {
 	output_file << this->child_scopes.size() << endl;
 	for (int c_index = 0; c_index < (int)this->child_scopes.size(); c_index++) {
 		output_file << this->child_scopes[c_index]->id << endl;
-		output_file << this->child_scope_tries.size() << endl;
-		output_file << this->child_scope_successes.size() << endl;
+		output_file << this->child_scope_tries[c_index] << endl;
+		output_file << this->child_scope_successes[c_index] << endl;
 	}
 
 	output_file << this->num_generalize_successes << endl;

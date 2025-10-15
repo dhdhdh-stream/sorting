@@ -86,7 +86,8 @@ public:
 
 	BranchExperiment(Scope* scope_context,
 					 AbstractNode* node_context,
-					 bool is_branch);
+					 bool is_branch,
+					 SolutionWrapper* wrapper);
 	~BranchExperiment();
 
 	void check_activate(AbstractNode* experiment_node,
@@ -103,11 +104,6 @@ public:
 	void backprop(double target_val,
 				  SolutionWrapper* wrapper);
 
-	void train_existing_check_activate(SolutionWrapper* wrapper,
-									   BranchExperimentHistory* history);
-	void train_existing_backprop(double target_val,
-								 BranchExperimentHistory* history);
-
 	void explore_check_activate(SolutionWrapper* wrapper,
 								BranchExperimentHistory* history);
 	void explore_step(std::vector<double>& obs,
@@ -121,7 +117,7 @@ public:
 	void explore_exit_step(SolutionWrapper* wrapper,
 						   BranchExperimentState* experiment_state);
 	void explore_backprop(double target_val,
-						  BranchExperimentHistory* history);
+						  SolutionWrapper* wrapper);
 
 	void train_new_check_activate(SolutionWrapper* wrapper,
 								  BranchExperimentHistory* history);
@@ -133,7 +129,7 @@ public:
 	void train_new_exit_step(SolutionWrapper* wrapper,
 							 BranchExperimentState* experiment_state);
 	void train_new_backprop(double target_val,
-							BranchExperimentHistory* history);
+							SolutionWrapper* wrapper);
 
 	void refine_check_activate(SolutionWrapper* wrapper,
 							   BranchExperimentHistory* history);
@@ -145,7 +141,7 @@ public:
 	void refine_exit_step(SolutionWrapper* wrapper,
 						  BranchExperimentState* experiment_state);
 	void refine_backprop(double target_val,
-						 BranchExperimentHistory* history);
+						 SolutionWrapper* wrapper);
 
 	void measure_check_activate(SolutionWrapper* wrapper,
 								BranchExperimentHistory* history);
@@ -157,7 +153,7 @@ public:
 	void measure_exit_step(SolutionWrapper* wrapper,
 						   BranchExperimentState* experiment_state);
 	void measure_backprop(double target_val,
-						  BranchExperimentHistory* history);
+						  SolutionWrapper* wrapper);
 
 	#if defined(MDEBUG) && MDEBUG
 	void capture_verify_check_activate(SolutionWrapper* wrapper);
@@ -168,7 +164,7 @@ public:
 							 BranchExperimentState* experiment_state);
 	void capture_verify_exit_step(SolutionWrapper* wrapper,
 								  BranchExperimentState* experiment_state);
-	void capture_verify_backprop(BranchExperimentHistory* history);
+	void capture_verify_backprop(SolutionWrapper* wrapper);
 	#endif /* MDEBUG */
 
 	void train_existing_helper(std::vector<ScopeHistory*>& scope_histories,

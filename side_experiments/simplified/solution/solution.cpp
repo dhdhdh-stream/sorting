@@ -162,9 +162,9 @@ void Solution::measure_update() {
 
 	cout << "new_score: " << new_score << endl;
 
-	if (this->timestamp >= RUN_TIMESTEPS) {
-		this->timestamp = -1;
-	}
+	// if (this->timestamp >= RUN_TIMESTEPS) {
+	// 	this->timestamp = -1;
+	// }
 
 	this->curr_score = new_score;
 

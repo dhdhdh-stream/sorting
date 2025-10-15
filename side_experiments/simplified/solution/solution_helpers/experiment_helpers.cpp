@@ -151,7 +151,8 @@ void create_experiment(SolutionWrapper* wrapper,
 		BranchExperiment* new_experiment = new BranchExperiment(
 			explore_node->parent,
 			explore_node,
-			explore_is_branch);
+			explore_is_branch,
+			wrapper);
 		curr_experiment = new_experiment;
 
 		switch (explore_node->type) {

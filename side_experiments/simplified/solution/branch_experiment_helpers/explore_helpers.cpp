@@ -263,9 +263,11 @@ void BranchExperiment::explore_exit_step(SolutionWrapper* wrapper,
 
 void BranchExperiment::explore_backprop(
 		double target_val,
-		BranchExperimentHistory* history) {
+		SolutionWrapper* wrapper) {
+	BranchExperimentHistory* history = (BranchExperimentHistory*)wrapper->experiment_history;
 	if (history->existing_predicted_scores.size() > 0) {
-		double curr_surprise = target_val - history->existing_predicted_scores[0];
+		double curr_surprise = (target_val - wrapper->solution->curr_score)
+			- history->existing_predicted_scores[0];
 
 		#if defined(MDEBUG) && MDEBUG
 		if (true) {

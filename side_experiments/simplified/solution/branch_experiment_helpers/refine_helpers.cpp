@@ -12,6 +12,7 @@
 #include "globals.h"
 #include "network.h"
 #include "scope.h"
+#include "solution.h"
 #include "solution_helpers.h"
 #include "solution_wrapper.h"
 #include "utilities.h"
@@ -321,10 +322,12 @@ bool BranchExperiment::refine_helper() {
 }
 
 void BranchExperiment::refine_backprop(double target_val,
-									   BranchExperimentHistory* history) {
+									   SolutionWrapper* wrapper) {
+	BranchExperimentHistory* history = (BranchExperimentHistory*)wrapper->experiment_history;
 	if (history->is_hit) {
 		for (int h_index = 0; h_index < (int)history->existing_predicted_scores.size(); h_index++) {
-			this->target_val_histories.push_back(target_val - history->existing_predicted_scores[h_index]);
+			this->target_val_histories.push_back((target_val - wrapper->solution->curr_score)
+				- history->existing_predicted_scores[h_index]);
 			this->factor_vals.push_back(history->factor_vals[h_index]);
 			this->network_vals.push_back(history->network_vals[h_index]);
 			this->network_is_on.push_back(history->network_is_on[h_index]);

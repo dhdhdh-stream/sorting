@@ -123,7 +123,8 @@ void BranchExperiment::measure_exit_step(SolutionWrapper* wrapper,
 }
 
 void BranchExperiment::measure_backprop(double target_val,
-										BranchExperimentHistory* history) {
+										SolutionWrapper* wrapper) {
+	BranchExperimentHistory* history = (BranchExperimentHistory*)wrapper->experiment_history;
 	if (history->is_hit) {
 		this->new_sum_scores += target_val;
 

@@ -126,7 +126,8 @@ void BranchExperiment::capture_verify_exit_step(SolutionWrapper* wrapper,
 	experiment_state->step_index++;
 }
 
-void BranchExperiment::capture_verify_backprop(BranchExperimentHistory* history) {
+void BranchExperiment::capture_verify_backprop(SolutionWrapper* wrapper) {
+	BranchExperimentHistory* history = (BranchExperimentHistory*)wrapper->experiment_history;
 	if (history->is_hit) {
 		this->state_iter++;
 		if (this->state_iter >= NUM_VERIFY_SAMPLES) {

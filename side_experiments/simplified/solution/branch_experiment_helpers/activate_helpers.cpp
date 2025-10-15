@@ -131,32 +131,31 @@ void BranchExperiment::experiment_exit_step(SolutionWrapper* wrapper) {
 
 void BranchExperiment::backprop(double target_val,
 								SolutionWrapper* wrapper) {
-	BranchExperimentHistory* history = (BranchExperimentHistory*)wrapper->experiment_history;
 	switch (this->state) {
 	case BRANCH_EXPERIMENT_STATE_EXPLORE:
 		explore_backprop(target_val,
-						 history);
+						 wrapper);
 
 		delete wrapper->scope_histories[0];
 
 		break;
 	case BRANCH_EXPERIMENT_STATE_TRAIN_NEW:
 		train_new_backprop(target_val,
-						   history);
+						   wrapper);
 
 		delete wrapper->scope_histories[0];
 
 		break;
 	case BRANCH_EXPERIMENT_STATE_REFINE:
 		refine_backprop(target_val,
-						history);
+						wrapper);
 
 		delete wrapper->scope_histories[0];
 
 		break;
 	case BRANCH_EXPERIMENT_STATE_MEASURE:
 		measure_backprop(target_val,
-						 history);
+						 wrapper);
 
 		if (this->new_scope_histories.size() < MEASURE_ITERS) {
 			this->new_scope_histories.push_back(wrapper->scope_histories[0]);
@@ -172,7 +171,7 @@ void BranchExperiment::backprop(double target_val,
 		break;
 	#if defined(MDEBUG) && MDEBUG
 	case BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY:
-		capture_verify_backprop(history);
+		capture_verify_backprop(wrapper);
 
 		delete wrapper->scope_histories[0];
 

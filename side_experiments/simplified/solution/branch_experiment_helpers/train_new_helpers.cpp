@@ -10,6 +10,7 @@
 #include "obs_node.h"
 #include "scope.h"
 #include "scope_node.h"
+#include "solution.h"
 #include "solution_helpers.h"
 #include "solution_wrapper.h"
 
@@ -113,10 +114,12 @@ void BranchExperiment::train_new_exit_step(SolutionWrapper* wrapper,
 
 void BranchExperiment::train_new_backprop(
 		double target_val,
-		BranchExperimentHistory* history) {
+		SolutionWrapper* wrapper) {
+	BranchExperimentHistory* history = (BranchExperimentHistory*)wrapper->experiment_history;
 	if (history->is_hit) {
 		for (int i_index = 0; i_index < (int)history->existing_predicted_scores.size(); i_index++) {
-			this->target_val_histories.push_back(target_val - history->existing_predicted_scores[i_index]);
+			this->target_val_histories.push_back((target_val - wrapper->solution->curr_score)
+				- history->existing_predicted_scores[i_index]);
 		}
 
 		this->state_iter++;
