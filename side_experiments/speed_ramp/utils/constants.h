@@ -12,6 +12,14 @@ const double MATCH_WEIGHT = 0.5;
 const int STEP_TYPE_ACTION = 0;
 const int STEP_TYPE_SCOPE = 1;
 
+#if defined(MDEBUG) && MDEBUG
+const int HISTORIES_NUM_SAVE = 100;
+const int EXPERIMENT_MIN_HIT = 20;
+#else
+const int HISTORIES_NUM_SAVE = 4000;
+const int EXPERIMENT_MIN_HIT = 200;
+#endif /* MDEBUG */
+
 const int LAST_NUM_TRACK = 1000;
 
 #if defined(MDEBUG) && MDEBUG

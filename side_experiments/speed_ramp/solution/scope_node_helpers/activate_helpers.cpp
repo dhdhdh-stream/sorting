@@ -14,8 +14,11 @@ void ScopeNode::step(vector<double>& obs,
 					 int& action,
 					 bool& is_next,
 					 SolutionWrapper* wrapper) {
+	ScopeHistory* scope_history = wrapper->scope_histories.back();
+
 	ScopeNodeHistory* history = new ScopeNodeHistory(this);
-	wrapper->scope_histories.back()->node_histories[this->id] = history;
+	history->index = (int)scope_history->node_histories.size();
+	scope_history->node_histories[this->id] = history;
 
 	ScopeHistory* inner_scope_history = new ScopeHistory(this->scope);
 	history->scope_history = inner_scope_history;
@@ -33,6 +36,8 @@ void ScopeNode::exit_step(SolutionWrapper* wrapper) {
 		this->parent->invalidate_factor(wrapper->scope_histories.back(),
 										this->impacted_factors[f_index]);
 	}
+
+	wrapper->scope_histories.back()->node_histories[this->id]->num_actions_snapshot = wrapper->num_actions;
 
 	wrapper->node_context.back() = this->next_node;
 }

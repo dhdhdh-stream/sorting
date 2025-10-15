@@ -15,6 +15,8 @@ class EvalExperimentHistory;
 class ExploreExperiment;
 class ExploreExperimentHistory;
 class Problem;
+class RefineExperiment;
+class RefineExperimentHistory;
 class Scope;
 class ScopeHistory;
 class SignalExperiment;
@@ -42,7 +44,7 @@ public:
 	std::vector<AbstractExperiment*> explore_order_seen;
 
 	std::map<ExploreExperiment*, ExploreExperimentHistory*> explore_histories;
-
+	std::map<RefineExperiment*, RefineExperimentHistory*> refine_histories;
 	std::map<EvalExperiment*, EvalExperimentHistory*> eval_histories;
 
 	std::vector<std::pair<SignalExperiment*, SignalExperimentHistory*>> signal_experiment_histories;

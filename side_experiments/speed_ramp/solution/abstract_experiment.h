@@ -9,8 +9,9 @@ class Scope;
 class SolutionWrapper;
 
 const int EXPERIMENT_TYPE_EXPLORE = 0;
-const int EXPERIMENT_TYPE_EVAL = 1;
-const int EXPERIMENT_TYPE_SIGNAL = 2;
+const int EXPERIMENT_TYPE_REFINE = 1;
+const int EXPERIMENT_TYPE_EVAL = 2;
+const int EXPERIMENT_TYPE_SIGNAL = 3;
 
 class AbstractExperiment {
 public:

@@ -35,9 +35,5 @@ class StartNodeHistory : public AbstractNodeHistory {
 public:
 	StartNodeHistory(StartNode* node);
 };
-/**
- * - only a hack for signal implementation
- *   - don't bother copying
- */
 
 #endif /* START_NODE_H */

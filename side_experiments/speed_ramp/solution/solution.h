@@ -20,7 +20,7 @@
 #include <fstream>
 #include <list>
 #include <map>
-#include <vector>
+#include <utility>
 
 class AbstractExperiment;
 class AbstractNode;
@@ -52,6 +52,9 @@ public:
 	 * 
 	 * - but accept if no progress has been made recently
 	 */
+
+	std::list<std::pair<ScopeHistory*,double>> existing_scope_histories;
+	double sum_scores;
 
 	Solution();
 	~Solution();

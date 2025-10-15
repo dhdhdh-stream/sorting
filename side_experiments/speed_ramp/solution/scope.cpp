@@ -250,6 +250,8 @@ void Scope::save(ofstream& output_file) {
 	output_file << this->child_scopes.size() << endl;
 	for (int c_index = 0; c_index < (int)this->child_scopes.size(); c_index++) {
 		output_file << this->child_scopes[c_index]->id << endl;
+		output_file << this->child_scope_tries[c_index] << endl;
+		output_file << this->child_scope_successes[c_index] << endl;
 	}
 
 	output_file << this->num_generalize_successes << endl;
@@ -387,6 +389,14 @@ void Scope::load(ifstream& input_file,
 		string scope_id_line;
 		getline(input_file, scope_id_line);
 		this->child_scopes.push_back(parent_solution->scopes[stoi(scope_id_line)]);
+
+		string tries_line;
+		getline(input_file, tries_line);
+		this->child_scope_tries.push_back(stoi(tries_line));
+
+		string successes_line;
+		getline(input_file, successes_line);
+		this->child_scope_successes.push_back(stoi(successes_line));
 	}
 
 	string num_generalize_successes_line;
@@ -420,6 +430,8 @@ ScopeHistory::ScopeHistory(Scope* scope) {
 
 	this->factor_initialized = vector<bool>(scope->factors.size(), false);
 	this->factor_values = vector<double>(scope->factors.size());
+
+	this->signal_initialized = false;
 }
 
 ScopeHistory::ScopeHistory(ScopeHistory* original) {
@@ -428,12 +440,6 @@ ScopeHistory::ScopeHistory(ScopeHistory* original) {
 	for (map<int, AbstractNodeHistory*>::iterator it = original->node_histories.begin();
 			it != original->node_histories.end(); it++) {
 		switch (it->second->node->type) {
-		case NODE_TYPE_ACTION:
-			{
-				ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
-				this->node_histories[it->first] = new ActionNodeHistory(action_node_history);
-			}
-			break;
 		case NODE_TYPE_SCOPE:
 			{
 				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)it->second;
@@ -459,6 +465,43 @@ ScopeHistory::ScopeHistory(ScopeHistory* original) {
 	this->factor_values = original->factor_values;
 
 	this->num_actions_snapshot = original->num_actions_snapshot;
+}
+
+ScopeHistory::ScopeHistory(ScopeHistory* original,
+						   int max_index,
+						   int num_actions_snapshot) {
+	this->scope = original->scope;
+
+	for (map<int, AbstractNodeHistory*>::iterator it = original->node_histories.begin();
+			it != original->node_histories.end(); it++) {
+		if (it->second->index <= max_index) {
+			switch (it->second->node->type) {
+			case NODE_TYPE_SCOPE:
+				{
+					ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)it->second;
+					this->node_histories[it->first] = new ScopeNodeHistory(scope_node_history);
+				}
+				break;
+			case NODE_TYPE_BRANCH:
+				{
+					BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
+					this->node_histories[it->first] = new BranchNodeHistory(branch_node_history);
+				}
+				break;
+			case NODE_TYPE_OBS:
+				{
+					ObsNodeHistory* obs_node_history = (ObsNodeHistory*)it->second;
+					this->node_histories[it->first] = new ObsNodeHistory(obs_node_history);
+				}
+				break;
+			}
+		}
+	}
+
+	this->factor_initialized = vector<bool>(scope->factors.size(), false);
+	this->factor_values = vector<double>(scope->factors.size());
+
+	this->num_actions_snapshot = num_actions_snapshot;
 }
 
 ScopeHistory::~ScopeHistory() {

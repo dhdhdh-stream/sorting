@@ -138,3 +138,81 @@ void fetch_input_helper(ScopeHistory* scope_history,
 		}
 	}
 }
+
+void fetch_histories_helper(ScopeHistory* scope_history,
+							vector<ScopeHistory*>& scope_context_histories,
+							double true_diff,
+							AbstractNode* node_context,
+							bool is_branch,
+							vector<ScopeHistory*>& scope_histories,
+							vector<double>& target_val_histories) {
+	scope_context_histories.push_back(scope_history);
+
+	Scope* scope = scope_history->scope;
+
+	if (scope == node_context->parent) {
+		bool has_match = false;
+
+		map<int, AbstractNodeHistory*>::iterator match_it = scope_history->node_histories.find(node_context->id);
+		if (match_it != scope_history->node_histories.end()) {
+			if (node_context->type == NODE_TYPE_BRANCH) {
+				BranchNodeHistory* branch_node_history = (BranchNodeHistory*)match_it->second;
+				if (branch_node_history->is_branch == is_branch) {
+					has_match = true;
+				}
+			} else {
+				has_match = true;
+			}
+		}
+
+		if (has_match) {
+			ScopeHistory* cleaned_scope_history = new ScopeHistory(
+				scope_history,
+				match_it->second->index,
+				match_it->second->num_actions_snapshot);
+			scope_histories.push_back(cleaned_scope_history);
+
+			double sum_vals = true_diff;
+			int sum_count = 1;
+			for (int l_index = 0; l_index < (int)scope_context_histories.size(); l_index++) {
+				if (scope_context_histories[l_index]->signal_initialized) {
+					sum_vals += scope_context_histories[l_index]->signal_val;
+					sum_count++;
+				}
+			}
+			double average_val = sum_vals / (double)sum_count;
+			target_val_histories.push_back(average_val);
+		}
+	} else {
+		bool is_child = false;
+		for (int c_index = 0; c_index < (int)scope->child_scopes.size(); c_index++) {
+			if (scope->child_scopes[c_index] == node_context->parent) {
+				is_child = true;
+				break;
+			}
+		}
+		if (is_child) {
+			map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
+			while (it != scope_history->node_histories.end()) {
+				if (scope->nodes.find(it->first) == scope->nodes.end()) {
+					delete it->second;
+					it = scope_history->node_histories.erase(it);
+				} else {
+					AbstractNode* node = it->second->node;
+					if (node->type == NODE_TYPE_SCOPE) {
+						ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)it->second;
+						fetch_histories_helper(scope_node_history->scope_history,
+											   scope_context_histories,
+											   true_diff,
+											   node_context,
+											   is_branch,
+											   scope_histories,
+											   target_val_histories);
+					}
+				}
+			}
+		}
+	}
+
+	scope_context_histories.pop_back();
+}

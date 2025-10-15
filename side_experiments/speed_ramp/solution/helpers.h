@@ -31,6 +31,13 @@ void fetch_input_helper(ScopeHistory* scope_history,
 						double& obs,
 						bool& is_on,
 						int& num_actions_snapshot);
+void fetch_histories_helper(ScopeHistory* scope_history,
+							std::vector<ScopeHistory*>& scope_context_histories,
+							double true_diff,
+							AbstractNode* node_context,
+							bool is_branch,
+							std::vector<ScopeHistory*>& scope_histories,
+							std::vector<double>& target_val_histories);
 
 double calc_signal(ScopeHistory* signal_needed_from);
 bool check_signal_activate(std::vector<double>& obs,
@@ -47,7 +54,5 @@ Scope* create_new_scope(Scope* scope_context);
 
 void clean_scope(Scope* scope,
 				 SolutionWrapper* wrapper);
-
-void measure_score(SolutionWrapper* wrapper);
 
 #endif /* HELPERS_H */

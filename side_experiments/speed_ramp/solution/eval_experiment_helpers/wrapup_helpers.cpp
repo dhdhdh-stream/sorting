@@ -1,8 +1,13 @@
 #include "eval_experiment.h"
 
+#include <iostream>
+
 #include "abstract_node.h"
 #include "constants.h"
 #include "helpers.h"
+#include "scope.h"
+#include "solution.h"
+#include "solution_wrapper.h"
 
 using namespace std;
 
@@ -55,7 +60,30 @@ void EvalExperiment::wrapup_backprop(double target_val,
 						this->node_context->experiment = NULL;
 						delete this;
 
-						measure_score(wrapper);
+						// temp
+						double score_average = wrapper->solution->sum_scores / (double)HISTORIES_NUM_SAVE;
+						cout << "score_average: " << score_average << endl;
+
+						int explores_in_flight = 0;
+						int evals_in_flight = 0;
+						for (map<int, Scope*>::iterator scope_it = wrapper->solution->scopes.begin();
+								scope_it != wrapper->solution->scopes.end(); scope_it++) {
+							for (map<int, AbstractNode*>::iterator node_it = scope_it->second->nodes.begin();
+									node_it != scope_it->second->nodes.end(); node_it++) {
+								if (node_it->second->experiment != NULL) {
+									switch (node_it->second->experiment->type) {
+									case EXPERIMENT_TYPE_EXPLORE:
+										explores_in_flight++;
+										break;
+									case EXPERIMENT_TYPE_EVAL:
+										evals_in_flight++;
+										break;
+									}
+								}
+							}
+						}
+						cout << "explores_in_flight: " << explores_in_flight << endl;
+						cout << "evals_in_flight: " << evals_in_flight << endl;
 					}
 				} else {
 					this->num_fail++;

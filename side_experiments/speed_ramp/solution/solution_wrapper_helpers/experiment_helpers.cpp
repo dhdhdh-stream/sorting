@@ -8,6 +8,7 @@
 #include "explore_experiment.h"
 #include "globals.h"
 #include "helpers.h"
+#include "refine_experiment.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "signal_experiment.h"
@@ -129,12 +130,24 @@ void SolutionWrapper::experiment_end(double result) {
 			break;
 		}
 	}
-	if (num_explore < MIN_EXPLORE_PER_RUN
+	if (this->solution->existing_scope_histories.size() >= HISTORIES_NUM_SAVE
+			&& num_explore < MIN_EXPLORE_PER_RUN
 			&& num_explore < MAX_EXPLORE_RATIO_PER_RUN * (double)this->num_actions) {
 		create_experiment(this);
 	}
 
-	delete this->scope_histories[0];
+	if (this->should_explore) {
+		delete this->scope_histories[0];
+	} else {
+		if (this->solution->existing_scope_histories.size() >= HISTORIES_NUM_SAVE) {
+			delete this->solution->existing_scope_histories.front().first;
+			this->solution->sum_scores -= this->solution->existing_scope_histories.front().second;
+			this->solution->existing_scope_histories.pop_front();
+		}
+		this->solution->existing_scope_histories.push_back({this->scope_histories[0], result});
+		this->solution->sum_scores += result;
+	}
+
 	this->scope_histories.clear();
 	this->node_context.clear();
 	this->experiment_context.clear();
@@ -176,6 +189,15 @@ void SolutionWrapper::experiment_end(double result) {
 		delete it->second;
 	}
 	this->explore_histories.clear();
+
+	for (map<RefineExperiment*, RefineExperimentHistory*>::iterator it = this->refine_histories.begin();
+			it != this->refine_histories.end(); it++) {
+		it->first->backprop(result,
+							it->second,
+							this);
+		delete it->second;
+	}
+	this->refine_histories.clear();
 
 	set<Scope*> updated_scopes;
 	for (map<EvalExperiment*, EvalExperimentHistory*>::iterator it = this->eval_histories.begin();

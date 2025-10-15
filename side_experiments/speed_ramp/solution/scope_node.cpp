@@ -81,6 +81,8 @@ ScopeNodeHistory::ScopeNodeHistory(ScopeNode* node) {
 
 ScopeNodeHistory::ScopeNodeHistory(ScopeNodeHistory* original) {
 	this->node = original->node;
+	this->index = original->index;
+	this->num_actions_snapshot = original->num_actions_snapshot;
 
 	this->scope_history = new ScopeHistory(original->scope_history);
 }

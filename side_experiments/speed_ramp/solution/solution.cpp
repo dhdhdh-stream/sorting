@@ -32,6 +32,11 @@ Solution::~Solution() {
 			it != this->scopes.end(); it++) {
 		delete it->second;
 	}
+
+	for (list<pair<ScopeHistory*,double>>::iterator it = this->existing_scope_histories.begin();
+			it != this->existing_scope_histories.end(); it++) {
+		delete it->first;
+	}
 }
 
 void Solution::load(ifstream& input_file) {

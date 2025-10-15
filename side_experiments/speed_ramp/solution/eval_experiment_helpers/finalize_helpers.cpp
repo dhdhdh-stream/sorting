@@ -23,6 +23,8 @@ void recursive_add_child(Scope* curr_parent,
 						 SolutionWrapper* wrapper,
 						 Scope* new_scope) {
 	curr_parent->child_scopes.push_back(new_scope);
+	curr_parent->child_scope_tries.push_back(2);
+	curr_parent->child_scope_successes.push_back(1);
 
 	for (map<int, Scope*>::iterator it = wrapper->solution->scopes.begin();
 			it != wrapper->solution->scopes.end(); it++) {
@@ -66,6 +68,8 @@ void EvalExperiment::add(SolutionWrapper* wrapper) {
 					wrapper);
 
 		this->new_scope->child_scopes = scope_context->child_scopes;
+		this->new_scope->child_scope_tries = vector<int>(scope_context->child_scope_tries.size(), 2);
+		this->new_scope->child_scope_successes = vector<int>(scope_context->child_scope_successes.size(), 1);
 		recursive_add_child(scope_context,
 							wrapper,
 							this->new_scope);
@@ -97,6 +101,12 @@ void EvalExperiment::add(SolutionWrapper* wrapper) {
 			new_nodes.push_back(new_scope_node);
 
 			this->scopes[s_index]->num_generalize_successes++;
+			for (int c_index = 0; c_index < (int)this->node_context->parent->child_scopes.size(); c_index++) {
+				if (this->scopes[s_index] == this->node_context->parent->child_scopes[c_index]) {
+					this->node_context->parent->child_scope_successes[c_index]++;
+					break;
+				}
+			}
 		}
 	}
 

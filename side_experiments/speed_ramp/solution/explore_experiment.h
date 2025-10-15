@@ -1,5 +1,3 @@
-// TODO: for train existing, can try only using non-explores
-
 #ifndef EXPLORE_EXPERIMENT_H
 #define EXPLORE_EXPERIMENT_H
 
@@ -16,13 +14,8 @@ class Scope;
 class ScopeHistory;
 class SolutionWrapper;
 
-const int EXPLORE_EXPERIMENT_STATE_TRAIN_EXISTING = 0;
-/**
- * - simply train existing before explore
- */
-const int EXPLORE_EXPERIMENT_STATE_EXPLORE = 1;
-const int EXPLORE_EXPERIMENT_STATE_TRAIN_NEW = 2;
-const int EXPLORE_EXPERIMENT_STATE_MEASURE = 3;
+const int EXPLORE_EXPERIMENT_STATE_EXPLORE = 0;
+const int EXPLORE_EXPERIMENT_STATE_TRAIN_NEW = 1;
 
 class ExploreExperimentHistory;
 class ExploreExperimentState;
@@ -77,6 +70,10 @@ public:
 	std::vector<ScopeHistory*> scope_histories;
 	std::vector<double> target_val_histories;
 
+	std::vector<std::vector<double>> factor_vals;
+	std::vector<std::vector<double>> network_vals;
+	std::vector<std::vector<bool>> network_is_on;
+
 	double existing_sum_scores;
 	int existing_count;
 	double new_sum_scores;
@@ -84,7 +81,14 @@ public:
 
 	ExploreExperiment(AbstractNode* node_context,
 					  bool is_branch,
-					  AbstractNode* exit_next_node);
+					  AbstractNode* exit_next_node,
+					  double& existing_constant,
+					  std::vector<Input>& existing_inputs,
+					  std::vector<double>& existing_input_averages,
+					  std::vector<double>& existing_input_standard_deviations,
+					  std::vector<double>& existing_weights,
+					  std::vector<Input>& existing_network_inputs,
+					  Network*& existing_network);
 	~ExploreExperiment();
 
 	void check_activate(AbstractNode* experiment_node,
@@ -101,12 +105,6 @@ public:
 	void backprop(double target_val,
 				  ExploreExperimentHistory* history,
 				  SolutionWrapper* wrapper);
-
-	void train_existing_check_activate(SolutionWrapper* wrapper,
-									   ExploreExperimentHistory* history);
-	void train_existing_backprop(double target_val,
-								 ExploreExperimentHistory* history,
-								 SolutionWrapper* wrapper);
 
 	void explore_check_activate(SolutionWrapper* wrapper,
 								ExploreExperimentHistory* history);
@@ -137,18 +135,7 @@ public:
 							ExploreExperimentHistory* history,
 							SolutionWrapper* wrapper);
 
-	void measure_check_activate(SolutionWrapper* wrapper,
-								  ExploreExperimentHistory* history);
-	void measure_step(std::vector<double>& obs,
-					  int& action,
-					  bool& is_next,
-					  SolutionWrapper* wrapper,
-					  ExploreExperimentState* experiment_state);
-	void measure_exit_step(SolutionWrapper* wrapper,
-						   ExploreExperimentState* experiment_state);
-	void measure_backprop(double target_val,
-						  ExploreExperimentHistory* history,
-						  SolutionWrapper* wrapper);
+	bool train_new_helper();
 };
 
 class ExploreExperimentHistory {
@@ -172,15 +159,15 @@ public:
 	ExploreExperimentState(ExploreExperiment* experiment);
 };
 
-bool train_helper(std::vector<ScopeHistory*>& scope_histories,
-				  std::vector<double>& target_val_histories,
-				  double& constant,
-				  std::vector<Input>& factor_inputs,
-				  std::vector<double>& factor_input_averages,
-				  std::vector<double>& factor_input_standard_deviations,
-				  std::vector<double>& factor_weights,
-				  std::vector<Input>& network_inputs,
-				  Network*& network,
-				  double& select_percentage);
+bool train_existing_helper(AbstractNode* node_context,
+						   bool is_branch,
+						   SolutionWrapper* wrapper,
+						   double& constant,
+						   std::vector<Input>& inputs,
+						   std::vector<double>& input_averages,
+						   std::vector<double>& input_standard_deviations,
+						   std::vector<double>& weights,
+						   std::vector<Input>& network_inputs,
+						   Network*& network);
 
 #endif /* EXPLORE_EXPERIMENT_H */

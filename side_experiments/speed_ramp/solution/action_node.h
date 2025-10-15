@@ -41,7 +41,6 @@ public:
 class ActionNodeHistory : public AbstractNodeHistory {
 public:
 	ActionNodeHistory(ActionNode* node);
-	ActionNodeHistory(ActionNodeHistory* original);
 };
 
 #endif /* ACTION_NODE_H */

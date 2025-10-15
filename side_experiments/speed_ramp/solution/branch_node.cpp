@@ -177,6 +177,7 @@ BranchNodeHistory::BranchNodeHistory(BranchNode* node) {
 
 BranchNodeHistory::BranchNodeHistory(BranchNodeHistory* original) {
 	this->node = original->node;
+	this->index = original->index;
 	this->num_actions_snapshot = original->num_actions_snapshot;
 
 	this->is_branch = original->is_branch;

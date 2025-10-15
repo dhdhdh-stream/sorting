@@ -17,6 +17,9 @@
 // - can also save vals, and retrain existing too
 //   - maybe for each stage for the right contrast
 
+// TODO: try using combined signal instead of just true
+// - might be better now that combined always contains true
+
 #include <chrono>
 #include <iostream>
 #include <map>

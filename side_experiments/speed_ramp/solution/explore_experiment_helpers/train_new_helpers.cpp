@@ -8,6 +8,7 @@
 #include "globals.h"
 #include "helpers.h"
 #include "network.h"
+#include "refine_experiment.h"
 #include "scope.h"
 #include "signal_experiment.h"
 #include "solution.h"
@@ -139,8 +140,9 @@ void ExploreExperiment::train_new_backprop(double target_val,
 										   ExploreExperimentHistory* history,
 										   SolutionWrapper* wrapper) {
 	if (history->existing_predicted_scores.size() > 0) {
+		double average_score = wrapper->solution->sum_scores / (double)HISTORIES_NUM_SAVE;
 		for (int i_index = 0; i_index < (int)history->sum_signal_vals.size(); i_index++) {
-			history->sum_signal_vals[i_index] += target_val;
+			history->sum_signal_vals[i_index] += (target_val - average_score);
 			history->sum_counts[i_index]++;
 
 			double average_val = history->sum_signal_vals[i_index]
@@ -151,53 +153,52 @@ void ExploreExperiment::train_new_backprop(double target_val,
 
 		this->state_iter++;
 		if (this->state_iter >= TRAIN_NEW_NUM_DATAPOINTS) {
-			double constant;
-			vector<Input> factor_inputs;
-			vector<double> factor_input_averages;
-			vector<double> factor_input_standard_deviations;
-			vector<double> factor_weights;
-			vector<Input> network_inputs;
-			Network* network = NULL;
-			double select_percentage;
-			bool is_success = train_helper(this->scope_histories,
-										   this->target_val_histories,
-										   constant,
-										   factor_inputs,
-										   factor_input_averages,
-										   factor_input_standard_deviations,
-										   factor_weights,
-										   network_inputs,
-										   network,
-										   select_percentage);
+			bool is_success = train_new_helper();
+			if (is_success) {
+				RefineExperiment* new_refine_experiment = new RefineExperiment();
 
-			for (int h_index = 0; h_index < (int)this->scope_histories.size(); h_index++) {
-				delete this->scope_histories[h_index];
-			}
-			this->scope_histories.clear();
-			this->target_val_histories.clear();
+				new_refine_experiment->node_context = this->node_context;
+				new_refine_experiment->is_branch = this->is_branch;
+				new_refine_experiment->exit_next_node = this->exit_next_node;
 
-			if (is_success && select_percentage > 0.0) {
-				this->select_percentage = select_percentage;
+				new_refine_experiment->existing_constant = this->existing_constant;
+				new_refine_experiment->existing_inputs = this->existing_inputs;
+				new_refine_experiment->existing_input_averages = this->existing_input_averages;
+				new_refine_experiment->existing_input_standard_deviations = this->existing_input_standard_deviations;
+				new_refine_experiment->existing_weights = this->existing_weights;
+				new_refine_experiment->existing_network_inputs = this->existing_network_inputs;
+				new_refine_experiment->existing_network = this->existing_network;
+				this->existing_network = NULL;
 
-				this->new_constant = constant;
-				this->new_inputs = factor_inputs;
-				this->new_input_averages = factor_input_averages;
-				this->new_input_standard_deviations = factor_input_standard_deviations;
-				this->new_weights = factor_weights;
-				this->new_network_inputs = network_inputs;
-				this->new_network = network;
+				new_refine_experiment->select_percentage = this->select_percentage;
 
-				this->existing_sum_scores = 0.0;
-				this->existing_count = 0;
-				this->new_sum_scores = 0.0;
-				this->new_count = 0;
+				new_refine_experiment->new_constant = this->new_constant;
+				new_refine_experiment->new_inputs = this->new_inputs;
+				new_refine_experiment->new_input_averages = this->new_input_averages;
+				new_refine_experiment->new_input_standard_deviations = this->new_input_standard_deviations;
+				new_refine_experiment->new_weights = this->new_weights;
+				new_refine_experiment->new_network_inputs = this->new_network_inputs;
+				new_refine_experiment->new_network = this->new_network;
+				this->new_network = NULL;
 
-				this->state = EXPLORE_EXPERIMENT_STATE_MEASURE;
+				new_refine_experiment->new_factor_vals = this->factor_vals;
+				new_refine_experiment->new_network_vals = this->network_vals;
+				new_refine_experiment->new_network_is_on = this->network_is_on;
+				new_refine_experiment->new_target_val_status = vector<int>(this->target_val_histories.size(), STATUS_TYPE_DONE);
+				new_refine_experiment->new_target_vals = this->target_val_histories;
+				new_refine_experiment->new_existing_factor_vals = vector<vector<double>>(this->target_val_histories.size());
+				new_refine_experiment->new_existing_network_vals = vector<vector<double>>(this->target_val_histories.size());
+				new_refine_experiment->new_existing_network_is_on = vector<vector<bool>>(this->target_val_histories.size());
+
+				new_refine_experiment->new_scope = this->best_new_scope;
+				this->best_new_scope = NULL;
+				new_refine_experiment->step_types = this->best_step_types;
+				new_refine_experiment->actions = this->best_actions;
+				new_refine_experiment->scopes = this->best_scopes;
+
+				this->node_context->experiment = new_refine_experiment;
+				delete this;
 			} else {
-				if (network != NULL) {
-					delete network;
-				}
-
 				this->node_context->experiment = NULL;
 				delete this;
 			}

@@ -6,6 +6,7 @@
 #include "explore_experiment.h"
 #include "globals.h"
 #include "helpers.h"
+#include "refine_experiment.h"
 #include "scope.h"
 #include "solution_wrapper.h"
 
@@ -161,24 +162,50 @@ bool SignalExperiment::check_signal_activate(vector<double>& obs,
 
 				return true;
 			} else {
-				if (scope_history->explore_experiment_callbacks.size() > 0
-						|| scope_history->signal_experiment_callbacks.size() > 0) {
-					double signal = calc_signal(scope_history);
+				if (this->scope_context->pre_default_signal != NULL) {
+					scope_history->signal_initialized = true;
+					scope_history->signal_val = calc_signal(scope_history);
+
 					for (int e_index = 0; e_index < (int)scope_history->explore_experiment_callbacks.size(); e_index++) {
 						ExploreExperimentHistory* explore_experiment_history = scope_history->explore_experiment_callbacks[e_index];
 						int instance_index = scope_history->explore_experiment_instance_indexes[e_index];
 
-						explore_experiment_history->sum_signal_vals[instance_index] += signal;
+						explore_experiment_history->sum_signal_vals[instance_index] += scope_history->signal_val;
 						explore_experiment_history->sum_counts[instance_index]++;
+					}
+					for (int e_index = 0; e_index < (int)scope_history->refine_experiment_callbacks.size(); e_index++) {
+						RefineExperimentHistory* refine_experiment_history = scope_history->refine_experiment_callbacks[e_index];
+						int instance_index = scope_history->refine_experiment_instance_indexes[e_index];
+
+						refine_experiment_history->sum_signal_vals[instance_index] += scope_history->signal_val;
+						refine_experiment_history->sum_counts[instance_index]++;
 					}
 					for (int e_index = 0; e_index < (int)scope_history->signal_experiment_callbacks.size(); e_index++) {
 						SignalExperimentHistory* signal_experiment_history = scope_history->signal_experiment_callbacks[e_index];
 						int instance_index = scope_history->signal_experiment_instance_indexes[e_index];
 
-						signal_experiment_history->sum_signal_vals[instance_index] += signal;
+						signal_experiment_history->sum_signal_vals[instance_index] += scope_history->signal_val;
 						signal_experiment_history->sum_counts[instance_index]++;
 					}
 				}
+				// if (scope_history->explore_experiment_callbacks.size() > 0
+				// 		|| scope_history->signal_experiment_callbacks.size() > 0) {
+				// 	double signal = calc_signal(scope_history);
+				// 	for (int e_index = 0; e_index < (int)scope_history->explore_experiment_callbacks.size(); e_index++) {
+				// 		ExploreExperimentHistory* explore_experiment_history = scope_history->explore_experiment_callbacks[e_index];
+				// 		int instance_index = scope_history->explore_experiment_instance_indexes[e_index];
+
+				// 		explore_experiment_history->sum_signal_vals[instance_index] += signal;
+				// 		explore_experiment_history->sum_counts[instance_index]++;
+				// 	}
+				// 	for (int e_index = 0; e_index < (int)scope_history->signal_experiment_callbacks.size(); e_index++) {
+				// 		SignalExperimentHistory* signal_experiment_history = scope_history->signal_experiment_callbacks[e_index];
+				// 		int instance_index = scope_history->signal_experiment_instance_indexes[e_index];
+
+				// 		signal_experiment_history->sum_signal_vals[instance_index] += signal;
+				// 		signal_experiment_history->sum_counts[instance_index]++;
+				// 	}
+				// }
 
 				if (history->pre_obs.size() > history->post_obs.size()) {
 					if (wrapper->has_explore) {

@@ -74,7 +74,3 @@ void ActionNode::save_for_display(ofstream& output_file) {
 ActionNodeHistory::ActionNodeHistory(ActionNode* node) {
 	this->node = node;
 }
-
-ActionNodeHistory::ActionNodeHistory(ActionNodeHistory* original) {
-	this->node = original->node;
-}
