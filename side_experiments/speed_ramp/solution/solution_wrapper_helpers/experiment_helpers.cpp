@@ -17,7 +17,7 @@
 
 using namespace std;
 
-const int MIN_EXPLORE_PER_RUN = 10;
+const int TARGET_EXPLORE_PER_RUN = 20;
 const double MAX_EXPLORE_RATIO_PER_RUN = 0.2;
 
 void SolutionWrapper::experiment_init() {
@@ -131,7 +131,7 @@ void SolutionWrapper::experiment_end(double result) {
 		}
 	}
 	if (this->solution->existing_scope_histories.size() >= HISTORIES_NUM_SAVE
-			&& num_explore < MIN_EXPLORE_PER_RUN
+			&& num_explore < TARGET_EXPLORE_PER_RUN
 			&& num_explore < MAX_EXPLORE_RATIO_PER_RUN * (double)this->num_actions) {
 		create_experiment(this);
 	}
@@ -152,12 +152,13 @@ void SolutionWrapper::experiment_end(double result) {
 	this->node_context.clear();
 	this->experiment_context.clear();
 
+	int padded_num_seen = max(20, (int)this->explore_order_seen.size());
 	for (int e_index = 0; e_index < (int)this->explore_order_seen.size(); e_index++) {
 		switch (this->explore_order_seen[e_index]->type) {
 		case EXPERIMENT_TYPE_EXPLORE:
 			{
 				ExploreExperiment* experiment = (ExploreExperiment*)this->explore_order_seen[e_index];
-				int num_following = (int)this->explore_order_seen.size() - 1 - e_index;
+				int num_following = padded_num_seen - 1 - e_index;
 				if (experiment->last_num_following_explores.size() >= LAST_NUM_TRACK) {
 					experiment->sum_num_following_explores -= experiment->last_num_following_explores.front();
 					experiment->last_num_following_explores.pop_front();
@@ -169,7 +170,7 @@ void SolutionWrapper::experiment_end(double result) {
 		case EXPERIMENT_TYPE_SIGNAL:
 			{
 				SignalExperiment* experiment = (SignalExperiment*)this->explore_order_seen[e_index];
-				int num_following = (int)this->explore_order_seen.size() - 1 - e_index;
+				int num_following = padded_num_seen - 1 - e_index;
 				if (experiment->last_num_following_explores.size() >= LAST_NUM_TRACK) {
 					experiment->sum_num_following_explores -= experiment->last_num_following_explores.front();
 					experiment->last_num_following_explores.pop_front();

@@ -209,6 +209,8 @@ void fetch_histories_helper(ScopeHistory* scope_history,
 											   scope_histories,
 											   target_val_histories);
 					}
+
+					it++;
 				}
 			}
 		}

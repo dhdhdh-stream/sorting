@@ -48,11 +48,8 @@ SignalExperimentHistory::SignalExperimentHistory(
 			uniform_real_distribution<double> distribution(0.0, 1.0);
 			double rand_val = distribution(generator);
 			if (rand_val <= 1.0 / (1.0 + average_num_follow)) {
-				uniform_int_distribution<int> on_distribution(0, 19);
-				if (on_distribution(generator) == 0) {
-					wrapper->curr_explore = experiment;
-					this->is_on = true;
-				}
+				wrapper->curr_explore = experiment;
+				this->is_on = true;
 			}
 		}
 		break;

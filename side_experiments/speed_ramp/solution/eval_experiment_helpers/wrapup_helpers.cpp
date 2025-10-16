@@ -60,10 +60,11 @@ void EvalExperiment::wrapup_backprop(double target_val,
 						this->node_context->experiment = NULL;
 						delete this;
 
-						// temp
 						double score_average = wrapper->solution->sum_scores / (double)HISTORIES_NUM_SAVE;
 						cout << "score_average: " << score_average << endl;
+						wrapper->solution->curr_score = score_average;
 
+						// temp
 						int explores_in_flight = 0;
 						int evals_in_flight = 0;
 						for (map<int, Scope*>::iterator scope_it = wrapper->solution->scopes.begin();

@@ -1,3 +1,5 @@
+// TODO: limit num existing saved?
+
 #ifndef REFINE_EXPERIMENT_H
 #define REFINE_EXPERIMENT_H
 
@@ -66,6 +68,7 @@ public:
 	std::vector<std::vector<double>> new_existing_factor_vals;
 	std::vector<std::vector<double>> new_existing_network_vals;
 	std::vector<std::vector<bool>> new_existing_network_is_on;
+	int new_index;
 
 	RefineExperiment();
 	~RefineExperiment();

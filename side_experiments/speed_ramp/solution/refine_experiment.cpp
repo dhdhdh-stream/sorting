@@ -1,5 +1,7 @@
 #include "refine_experiment.h"
 
+#include <iostream>
+
 #include "globals.h"
 #include "network.h"
 #include "scope.h"

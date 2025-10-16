@@ -24,7 +24,7 @@ using namespace std;
 const int RUN_TIMESTEPS = 30;
 
 Solution::Solution() {
-	// do nothing
+	this->sum_scores = 0.0;
 }
 
 Solution::~Solution() {

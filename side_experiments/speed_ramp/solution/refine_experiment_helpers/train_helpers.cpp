@@ -8,6 +8,7 @@
 #define eigen_assert(x) if (!(x)) {throw std::invalid_argument("Eigen error");}
 #include <Eigen/Dense>
 
+#include "constants.h"
 #include "globals.h"
 #include "network.h"
 
@@ -216,11 +217,7 @@ bool RefineExperiment::refine() {
 	}
 
 	#if defined(MDEBUG) && MDEBUG
-	if (rand()%2 == 0) {
-		this->select_percentage = 0.5;
-	} else {
-		this->select_percentage = 0.0;
-	}
+	this->select_percentage = 0.5;
 	#else
 	int num_positive = 0;
 	for (int h_index = 0; h_index < (int)this->new_target_vals.size(); h_index++) {
@@ -231,17 +228,43 @@ bool RefineExperiment::refine() {
 	this->select_percentage = (double)num_positive / (double)this->new_target_vals.size();
 	#endif /* MDEBUG */
 
-	// // temp
-	// cout << "refine" << endl;
-	// cout << "sum_predicted_score: " << sum_predicted_score << endl;
-	// cout << "this->select_percentage: " << this->select_percentage << endl;
+	double sum_latest_predicted_score = 0.0;
+	for (int h_index = this->new_index; h_index < (int)this->new_target_vals.size(); h_index++) {
+		if (sum_vals[h_index] >= 0.0) {
+			sum_latest_predicted_score += this->new_target_vals[h_index];
+		}
+	}
+
+	#if defined(MDEBUG) && MDEBUG
+	double latest_select_percentage = 0.5;
+	#else
+	int num_latest_positive = 0;
+	for (int h_index = this->new_index; h_index < (int)this->new_target_vals.size(); h_index++) {
+		if (sum_vals[h_index] >= 0.0) {
+			num_latest_positive++;
+		}
+	}
+	double latest_select_percentage = (double)num_latest_positive
+		/ (double)(this->new_target_vals.size() - this->new_index);
+	#endif /* MDEBUG */
+
+	// temp
+	cout << "this->num_refines: " << this->num_refines << endl;
+	cout << "sum_predicted_score: " << sum_predicted_score << endl;
+	cout << "this->select_percentage: " << this->select_percentage << endl;
+	cout << "sum_latest_predicted_score: " << sum_latest_predicted_score << endl;
+	cout << "latest_select_percentage: " << latest_select_percentage << endl;
 
 	#if defined(MDEBUG) && MDEBUG
 	if ((sum_predicted_score >= 0.0
-			&& this->select_percentage > 0.0) || rand()%2 == 0) {
+			&& this->select_percentage > 0.0
+			&& sum_latest_predicted_score >= 0.0
+			&& latest_select_percentage > 0.0) || rand()%2 == 0) {
 	#else
 	if (sum_predicted_score >= 0.0
-			&& this->select_percentage > 0.0) {
+			&& this->select_percentage > 0.0
+			&& sum_latest_predicted_score >= 0.0
+			&& latest_select_percentage > 0.0) {
 	#endif /* MDEBUG */
 		return true;
 	} else {

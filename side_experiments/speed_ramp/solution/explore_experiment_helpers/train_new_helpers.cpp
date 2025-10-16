@@ -189,6 +189,7 @@ void ExploreExperiment::train_new_backprop(double target_val,
 				new_refine_experiment->new_existing_factor_vals = vector<vector<double>>(this->target_val_histories.size());
 				new_refine_experiment->new_existing_network_vals = vector<vector<double>>(this->target_val_histories.size());
 				new_refine_experiment->new_existing_network_is_on = vector<vector<bool>>(this->target_val_histories.size());
+				new_refine_experiment->new_index = (int)this->target_val_histories.size();
 
 				new_refine_experiment->new_scope = this->best_new_scope;
 				this->best_new_scope = NULL;

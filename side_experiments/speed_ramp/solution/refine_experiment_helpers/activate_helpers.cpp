@@ -1,5 +1,7 @@
 #include "refine_experiment.h"
 
+#include <iostream>
+
 #include "abstract_node.h"
 #include "constants.h"
 #include "eval_experiment.h"
@@ -153,6 +155,10 @@ void RefineExperiment::check_activate(AbstractNode* experiment_node,
 				history->existing_factor_vals.push_back(curr_existing_factor_vals);
 				history->existing_network_vals.push_back(curr_existing_network_vals);
 				history->existing_network_is_on.push_back(curr_existing_network_is_on);
+
+				RefineExperimentState* new_experiment_state = new RefineExperimentState(this);
+				new_experiment_state->step_index = 0;
+				wrapper->experiment_context.back() = new_experiment_state;
 			} else {
 				this->new_factor_vals.push_back(curr_new_factor_vals);
 				this->new_network_vals.push_back(curr_new_network_vals);
@@ -323,6 +329,8 @@ void RefineExperiment::backprop(double target_val,
 					this->existing_network_vals.clear();
 					this->existing_network_is_on.clear();
 					this->existing_target_vals.clear();
+
+					this->new_index = (int)this->new_target_vals.size();
 
 					this->state_iter = 0;
 				}

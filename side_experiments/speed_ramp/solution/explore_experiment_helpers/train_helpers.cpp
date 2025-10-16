@@ -34,9 +34,11 @@
 using namespace std;
 
 #if defined(MDEBUG) && MDEBUG
-const int TRAIN_TRIES = 2;
+const int TRAIN_EXISTING_TRIES = 2;
+const int TRAIN_NEW_TRIES = 2;
 #else
-const int TRAIN_TRIES = 10;
+const int TRAIN_EXISTING_TRIES = 4;
+const int TRAIN_NEW_TRIES = 10;
 #endif /* MDEBUG */
 
 const double SEED_RATIO = 0.3;
@@ -885,7 +887,7 @@ bool train_existing_helper(AbstractNode* node_context,
 		map<Input, InputData*> input_tracker;
 
 		double best_average_misguess = numeric_limits<double>::max();
-		for (int t_index = 0; t_index < TRAIN_TRIES; t_index++) {
+		for (int t_index = 0; t_index < TRAIN_EXISTING_TRIES; t_index++) {
 			double curr_constant;
 			vector<Input> curr_factor_inputs;
 			vector<vector<double>> curr_factor_vals;
@@ -948,8 +950,16 @@ bool train_existing_helper(AbstractNode* node_context,
 			delete it->second;
 		}
 
+		for (int h_index = 0; h_index < (int)scope_histories.size(); h_index++) {
+			delete scope_histories[h_index];
+		}
+
 		return true;
 	} else {
+		for (int h_index = 0; h_index < (int)scope_histories.size(); h_index++) {
+			delete scope_histories[h_index];
+		}
+
 		return false;
 	}
 }
@@ -973,7 +983,7 @@ bool ExploreExperiment::train_new_helper() {
 	double best_average_predicted_score = 0.0;
 	double best_select_percentage = 0.0;
 
-	for (int t_index = 0; t_index < TRAIN_TRIES; t_index++) {
+	for (int t_index = 0; t_index < TRAIN_NEW_TRIES; t_index++) {
 		double curr_constant;
 		vector<Input> curr_factor_inputs;
 		vector<vector<double>> curr_factor_vals;
