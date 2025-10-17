@@ -236,9 +236,9 @@ void SolutionWrapper::experiment_end(double result) {
 
 					this->solution->clean();
 
-					this->solution->measure_update();
-
 					this->solution->timestamp++;
+
+					this->solution->measure_update();
 
 					this->improvement_iter = 0;
 

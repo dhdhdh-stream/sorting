@@ -1,6 +1,7 @@
-// - perhaps fail if too many failures in an iter?
-//   - need to stop and try to look for inspiration
-//     - and if stuck again, abandon as hopeless
+// TODO: try using more factors
+
+// TODO: probably all the focus on scope stuff from earlier really helps
+// - multiple passthrough + forcing further changes
 
 #include <chrono>
 #include <iostream>

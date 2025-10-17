@@ -70,7 +70,8 @@ public:
 	void clean_scopes();
 
 	void combine(std::string other_path,
-				 std::string other_name);
+				 std::string other_name,
+				 int starting_size);
 
 	void save(std::string path,
 			  std::string name);

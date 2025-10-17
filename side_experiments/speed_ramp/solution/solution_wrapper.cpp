@@ -92,7 +92,8 @@ void SolutionWrapper::clean_scopes() {
 }
 
 void SolutionWrapper::combine(string other_path,
-							  string other_name) {
+							  string other_name,
+							  int starting_scope_counter) {
 	ifstream input_file;
 	input_file.open(other_path + other_name);
 
@@ -101,8 +102,6 @@ void SolutionWrapper::combine(string other_path,
 
 	input_file.close();
 
-	map<int, Scope*> existing_scopes = this->solution->scopes;
-
 	for (map<int, Scope*>::iterator new_it = other->scopes.begin();
 			new_it != other->scopes.end(); new_it++) {
 		new_it->second->id = this->scope_counter;
@@ -110,9 +109,13 @@ void SolutionWrapper::combine(string other_path,
 
 		this->solution->scopes[new_it->second->id] = new_it->second;
 
-		for (map<int, Scope*>::iterator existing_it = existing_scopes.begin();
-				existing_it != existing_scopes.end(); existing_it++) {
-			existing_it->second->child_scopes.push_back(new_it->second);
+		for (map<int, Scope*>::iterator existing_it = this->solution->scopes.begin();
+				existing_it != this->solution->scopes.end(); existing_it++) {
+			if (existing_it->second->id < starting_scope_counter) {
+				existing_it->second->child_scopes.push_back(new_it->second);
+				existing_it->second->child_scope_tries.push_back(2);
+				existing_it->second->child_scope_successes.push_back(1);
+			}
 		}
 	}
 	other->scopes.clear();

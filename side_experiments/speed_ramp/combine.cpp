@@ -42,8 +42,12 @@ int main(int argc, char* argv[]) {
 	SolutionWrapper* solution_wrapper = new SolutionWrapper(
 		"saves/", target_file);
 
+	int starting_scope_counter = solution_wrapper->scope_counter;
+
 	for (int other_index = 0; other_index < BRANCH_FACTOR-1; other_index++) {
-		solution_wrapper->combine("saves/", other_files[other_index]);
+		solution_wrapper->combine("saves/",
+								  other_files[other_index],
+								  starting_scope_counter);
 	}
 
 	solution_wrapper->save("saves/", output_file);

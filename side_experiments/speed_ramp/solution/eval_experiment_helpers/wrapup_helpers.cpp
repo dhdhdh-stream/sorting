@@ -63,28 +63,6 @@ void EvalExperiment::wrapup_backprop(double target_val,
 						double score_average = wrapper->solution->sum_scores / (double)HISTORIES_NUM_SAVE;
 						cout << "score_average: " << score_average << endl;
 						wrapper->solution->curr_score = score_average;
-
-						// temp
-						int explores_in_flight = 0;
-						int evals_in_flight = 0;
-						for (map<int, Scope*>::iterator scope_it = wrapper->solution->scopes.begin();
-								scope_it != wrapper->solution->scopes.end(); scope_it++) {
-							for (map<int, AbstractNode*>::iterator node_it = scope_it->second->nodes.begin();
-									node_it != scope_it->second->nodes.end(); node_it++) {
-								if (node_it->second->experiment != NULL) {
-									switch (node_it->second->experiment->type) {
-									case EXPERIMENT_TYPE_EXPLORE:
-										explores_in_flight++;
-										break;
-									case EXPERIMENT_TYPE_EVAL:
-										evals_in_flight++;
-										break;
-									}
-								}
-							}
-						}
-						cout << "explores_in_flight: " << explores_in_flight << endl;
-						cout << "evals_in_flight: " << evals_in_flight << endl;
 					}
 				} else {
 					this->num_fail++;

@@ -5,6 +5,8 @@
 
 using namespace std;
 
+const int COMBINE_MIN_GENERALIZE_SUCCESSES = 3;
+
 SolutionWrapper::SolutionWrapper() {
 	this->solution = new Solution();
 	this->solution->init();
@@ -55,17 +57,20 @@ void SolutionWrapper::clean_scopes() {
 }
 
 void SolutionWrapper::combine(string other_path,
-							  string other_name) {
+							  string other_name,
+							  int starting_size) {
 	Solution* other = new Solution();
 	other->load(other_path, other_name);
-
-	int existing_num_scopes = (int)this->solution->scopes.size();
 
 	for (int scope_index = 1; scope_index < (int)other->scopes.size(); scope_index++) {
 		this->solution->scopes.push_back(other->scopes[scope_index]);
 
-		for (int i_index = 0; i_index < existing_num_scopes; i_index++) {
-			this->solution->scopes[i_index]->child_scopes.push_back(other->scopes[scope_index]);
+		if (other->scopes[scope_index]->num_generalize_successes >= COMBINE_MIN_GENERALIZE_SUCCESSES) {
+			for (int i_index = 0; i_index < starting_size; i_index++) {
+				this->solution->scopes[i_index]->child_scopes.push_back(other->scopes[scope_index]);
+				this->solution->scopes[i_index]->child_scope_tries.push_back(2);
+				this->solution->scopes[i_index]->child_scope_successes.push_back(1);
+			}
 		}
 	}
 

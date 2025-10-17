@@ -162,9 +162,9 @@ void Solution::measure_update() {
 
 	cout << "new_score: " << new_score << endl;
 
-	// if (this->timestamp >= RUN_TIMESTEPS) {
-	// 	this->timestamp = -1;
-	// }
+	if (this->timestamp >= RUN_TIMESTEPS) {
+		this->timestamp = -1;
+	}
 
 	this->curr_score = new_score;
 
@@ -174,45 +174,54 @@ void Solution::measure_update() {
 }
 
 void Solution::clean_scopes() {
-	for (int s_index = (int)this->scopes.size()-1; s_index >= 1; s_index--) {
-		bool still_used = false;
-		for (int is_index = 0; is_index < (int)this->scopes.size(); is_index++) {
-			if (s_index != is_index) {
-				for (map<int, AbstractNode*>::iterator it = this->scopes[is_index]->nodes.begin();
-						it != this->scopes[is_index]->nodes.end(); it++) {
-					switch (it->second->type) {
-					case NODE_TYPE_SCOPE:
-						{
-							ScopeNode* scope_node = (ScopeNode*)it->second;
-							if (scope_node->scope == this->scopes[s_index]) {
-								still_used = true;
-								break;
+	bool removed_scope = false;
+	while (true) {
+		for (int s_index = (int)this->scopes.size()-1; s_index >= 1; s_index--) {
+			bool still_used = false;
+			for (int is_index = 0; is_index < (int)this->scopes.size(); is_index++) {
+				if (s_index != is_index) {
+					for (map<int, AbstractNode*>::iterator it = this->scopes[is_index]->nodes.begin();
+							it != this->scopes[is_index]->nodes.end(); it++) {
+						switch (it->second->type) {
+						case NODE_TYPE_SCOPE:
+							{
+								ScopeNode* scope_node = (ScopeNode*)it->second;
+								if (scope_node->scope == this->scopes[s_index]) {
+									still_used = true;
+									break;
+								}
 							}
+							break;
 						}
-						break;
 					}
+				}
+
+				if (still_used) {
+					break;
 				}
 			}
 
-			if (still_used) {
-				break;
+			if (!still_used) {
+				removed_scope = true;
+
+				for (int is_index = 0; is_index < (int)this->scopes.size(); is_index++) {
+					this->scopes[is_index]->clean_inputs(this->scopes[s_index]);
+
+					for (int c_index = 0; c_index < (int)this->scopes[is_index]->child_scopes.size(); c_index++) {
+						if (this->scopes[is_index]->child_scopes[c_index] == this->scopes[s_index]) {
+							this->scopes[is_index]->child_scopes.erase(this->scopes[is_index]->child_scopes.begin() + c_index);
+							break;
+						}
+					}
+				}
+
+				delete this->scopes[s_index];
+				this->scopes.erase(this->scopes.begin() + s_index);
 			}
 		}
 
-		if (!still_used) {
-			for (int is_index = 0; is_index < (int)this->scopes.size(); is_index++) {
-				this->scopes[is_index]->clean_inputs(this->scopes[s_index]);
-
-				for (int c_index = 0; c_index < (int)this->scopes[is_index]->child_scopes.size(); c_index++) {
-					if (this->scopes[is_index]->child_scopes[c_index] == this->scopes[s_index]) {
-						this->scopes[is_index]->child_scopes.erase(this->scopes[is_index]->child_scopes.begin() + c_index);
-						break;
-					}
-				}
-			}
-
-			delete this->scopes[s_index];
-			this->scopes.erase(this->scopes.begin() + s_index);
+		if (!removed_scope) {
+			break;
 		}
 	}
 
