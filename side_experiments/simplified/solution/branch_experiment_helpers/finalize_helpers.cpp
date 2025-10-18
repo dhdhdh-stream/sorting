@@ -21,61 +21,8 @@ void BranchExperiment::clean() {
 	this->node_context->experiment = NULL;
 }
 
-void recursive_add_child(Scope* curr_parent,
-						 SolutionWrapper* wrapper,
-						 Scope* new_scope) {
-	curr_parent->child_scopes.push_back(new_scope);
-	curr_parent->child_scope_tries.push_back(2);
-	curr_parent->child_scope_successes.push_back(1);
-
-	for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
-		bool is_needed = false;
-		bool is_added = false;
-		for (int c_index = 0; c_index < (int)wrapper->solution->scopes[s_index]->child_scopes.size(); c_index++) {
-			if (wrapper->solution->scopes[s_index]->child_scopes[c_index] == curr_parent) {
-				is_needed = true;
-			}
-
-			if (wrapper->solution->scopes[s_index]->child_scopes[c_index] == new_scope) {
-				is_added = true;
-			}
-		}
-
-		if (is_needed && !is_added) {
-			recursive_add_child(wrapper->solution->scopes[s_index],
-								wrapper,
-								new_scope);
-		}
-	}
-}
-
 void BranchExperiment::add(SolutionWrapper* wrapper) {
 	cout << "BranchExperiment add" << endl;
-
-	if (this->best_new_scope != NULL) {
-		for (map<int, AbstractNode*>::iterator it = this->best_new_scope->nodes.begin();
-				it != this->best_new_scope->nodes.end(); it++) {
-			if (it->second->type == NODE_TYPE_SCOPE) {
-				ScopeNode* scope_node = (ScopeNode*)it->second;
-				scope_node->scope->num_generalize_successes++;
-			}
-		}
-
-		wrapper->solution->scopes.push_back(this->best_new_scope);
-		this->best_new_scope->id = wrapper->solution->scopes.size()-1;
-
-		clean_scope(this->best_new_scope,
-					wrapper);
-
-		this->best_new_scope->child_scopes = scope_context->child_scopes;
-		this->best_new_scope->child_scope_tries = vector<int>(scope_context->child_scope_tries.size(), 2);
-		this->best_new_scope->child_scope_successes = vector<int>(scope_context->child_scope_successes.size(), 1);
-		recursive_add_child(scope_context,
-							wrapper,
-							this->best_new_scope);
-
-		this->best_new_scope = NULL;
-	}
 
 	vector<AbstractNode*> new_nodes;
 	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {

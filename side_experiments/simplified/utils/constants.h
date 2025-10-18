@@ -12,6 +12,8 @@ const double REGRESSION_WEIGHT_LIMIT = 100000.0;
 const int STEP_TYPE_ACTION = 0;
 const int STEP_TYPE_SCOPE = 1;
 
+const int NEW_SCOPE_MIN_NODES = 20;
+
 const double EXPERIMENT_MIN_AVERAGE_HITS_PER_RUN = 0.2;
 
 #if defined(MDEBUG) && MDEBUG

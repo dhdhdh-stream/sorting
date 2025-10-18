@@ -24,7 +24,7 @@ using namespace std;
 const int RUN_TIMESTEPS = 30;
 
 Solution::Solution() {
-	// do nothing
+	this->last_new_scope = NULL;
 }
 
 Solution::~Solution() {

@@ -29,6 +29,9 @@ public:
 
 	int node_counter;
 	std::map<int, AbstractNode*> nodes;
+	/**
+	 * TODO: can hardcode link to starting node
+	 */
 
 	std::vector<Factor*> factors;
 

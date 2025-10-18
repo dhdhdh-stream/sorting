@@ -12,6 +12,7 @@ class Solution;
 class SolutionWrapper;
 
 const int EXPERIMENT_TYPE_BRANCH = 0;
+const int EXPERIMENT_TYPE_NEW_SCOPE = 1;
 
 const int EXPERIMENT_RESULT_NA = 0;
 const int EXPERIMENT_RESULT_FAIL = 1;

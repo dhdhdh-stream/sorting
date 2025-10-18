@@ -4,6 +4,7 @@
 
 #include "action_node.h"
 #include "branch_node.h"
+#include "constants.h"
 #include "factor.h"
 #include "globals.h"
 #include "network.h"
@@ -13,8 +14,6 @@
 #include "start_node.h"
 
 using namespace std;
-
-const int NEW_SCOPE_MIN_NODES = 20;
 
 const int NEW_SCOPE_MIN_NUM_NODES = 3;
 const int CREATE_NEW_SCOPE_NUM_TRIES = 50;

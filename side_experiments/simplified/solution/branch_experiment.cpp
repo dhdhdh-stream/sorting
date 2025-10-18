@@ -28,9 +28,6 @@ BranchExperiment::BranchExperiment(Scope* scope_context,
 	this->node_context = node_context;
 	this->is_branch = is_branch;
 
-	this->curr_new_scope = NULL;
-	this->best_new_scope = NULL;
-
 	this->existing_network = NULL;
 	this->new_network = NULL;
 
@@ -122,14 +119,6 @@ BranchExperiment::BranchExperiment(Scope* scope_context,
 }
 
 BranchExperiment::~BranchExperiment() {
-	if (this->curr_new_scope != NULL) {
-		delete this->curr_new_scope;
-	}
-
-	if (this->best_new_scope != NULL) {
-		delete this->best_new_scope;
-	}
-
 	if (this->existing_network != NULL) {
 		delete this->existing_network;
 	}

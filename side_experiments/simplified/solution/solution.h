@@ -39,6 +39,9 @@ public:
 	std::vector<ScopeHistory*> existing_scope_histories;
 	std::vector<double> existing_target_val_histories;
 
+	Scope* last_new_scope;
+	int new_scope_iters;
+
 	#if defined(MDEBUG) && MDEBUG
 	std::vector<Problem*> verify_problems;
 	std::vector<unsigned long> verify_seeds;

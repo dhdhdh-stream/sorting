@@ -130,81 +130,67 @@ void BranchExperiment::explore_check_activate(
 		}
 		this->curr_exit_next_node = possible_exits[random_index];
 
-		#if defined(MDEBUG) && MDEBUG
-		uniform_int_distribution<int> new_scope_distribution(0, 1);
-		#else
-		uniform_int_distribution<int> new_scope_distribution(0, 4);
-		#endif /* MDEBUG */
-		if (new_scope_distribution(generator) == 0) {
-			this->curr_new_scope = create_new_scope(this->node_context->parent);
-		}
-		if (this->curr_new_scope != NULL) {
-			this->curr_step_types.push_back(STEP_TYPE_SCOPE);
-			this->curr_actions.push_back(-1);
-			this->curr_scopes.push_back(this->curr_new_scope);
+		int new_num_steps;
+		geometric_distribution<int> geo_distribution(0.3);
+		/**
+		 * - num_steps less than exit length on average to reduce solution size
+		 */
+		if (random_index == 0) {
+			new_num_steps = 1 + geo_distribution(generator);
 		} else {
-			int new_num_steps;
-			geometric_distribution<int> geo_distribution(0.3);
-			/**
-			 * - num_steps less than exit length on average to reduce solution size
-			 */
-			if (random_index == 0) {
-				new_num_steps = 1 + geo_distribution(generator);
-			} else {
-				new_num_steps = geo_distribution(generator);
+			new_num_steps = geo_distribution(generator);
+		}
+
+		vector<int> possible_child_indexes;
+		vector<double> possible_child_index_weights;
+		double sum_weights = 0.0;
+		for (int c_index = 0; c_index < (int)this->node_context->parent->child_scopes.size(); c_index++) {
+			if (this->node_context->parent->child_scopes[c_index]->nodes.size() > 1) {
+				possible_child_indexes.push_back(c_index);
+
+				double weight = sqrt(this->node_context->parent->child_scope_successes[c_index])
+					/ log(this->node_context->parent->child_scope_tries[c_index]);
+				possible_child_index_weights.push_back(weight);
+				sum_weights += weight;
 			}
-
-			vector<int> possible_child_indexes;
-			vector<double> possible_child_index_weights;
-			double sum_weights = 0.0;
-			for (int c_index = 0; c_index < (int)this->node_context->parent->child_scopes.size(); c_index++) {
-				if (this->node_context->parent->child_scopes[c_index]->nodes.size() > 1) {
-					possible_child_indexes.push_back(c_index);
-
-					double weight = sqrt(this->node_context->parent->child_scope_successes[c_index])
-						/ log(this->node_context->parent->child_scope_tries[c_index]);
-					possible_child_index_weights.push_back(weight);
-					sum_weights += weight;
-				}
-			}
-			uniform_real_distribution<double> child_index_distribution(0.0, sum_weights);
-			for (int s_index = 0; s_index < new_num_steps; s_index++) {
-				bool is_scope = false;
-				if (possible_child_indexes.size() > 0) {
-					if (possible_child_indexes.size() <= RAW_ACTION_WEIGHT) {
-						uniform_int_distribution<int> scope_distribution(0, possible_child_indexes.size() + RAW_ACTION_WEIGHT - 1);
-						if (scope_distribution(generator) < (int)possible_child_indexes.size()) {
-							is_scope = true;
-						}
-
-					} else {
-						uniform_int_distribution<int> scope_distribution(0, 1);
-						if (scope_distribution(generator) == 0) {
-							is_scope = true;
-						}
+		}
+		uniform_real_distribution<double> child_index_distribution(0.0, sum_weights);
+		for (int s_index = 0; s_index < new_num_steps; s_index++) {
+			bool is_scope = false;
+			if (possible_child_indexes.size() > 0) {
+				if (possible_child_indexes.size() <= RAW_ACTION_WEIGHT) {
+					uniform_int_distribution<int> scope_distribution(0, possible_child_indexes.size() + RAW_ACTION_WEIGHT - 1);
+					if (scope_distribution(generator) < (int)possible_child_indexes.size()) {
+						is_scope = true;
 					}
-				}
-				if (is_scope) {
-					this->curr_step_types.push_back(STEP_TYPE_SCOPE);
-					this->curr_actions.push_back(-1);
 
-					double rand_val = child_index_distribution(generator);
-					for (int c_index = 0; c_index < (int)possible_child_indexes.size(); c_index++) {
-						rand_val -= possible_child_index_weights[c_index];
-						if (rand_val <= 0.0) {
-							int child_index = possible_child_indexes[c_index];
-							this->curr_scopes.push_back(this->node_context->parent->child_scopes[child_index]);
-							this->node_context->parent->child_scope_tries[child_index]++;
-							break;
-						}
-					}
 				} else {
-					this->curr_step_types.push_back(STEP_TYPE_ACTION);
-
-					this->curr_actions.push_back(-1);
-
-					this->curr_scopes.push_back(NULL);
+					uniform_int_distribution<int> scope_distribution(0, 1);
+					if (scope_distribution(generator) == 0) {
+						is_scope = true;
+					}
 				}
+			}
+			if (is_scope) {
+				this->curr_step_types.push_back(STEP_TYPE_SCOPE);
+				this->curr_actions.push_back(-1);
+
+				double rand_val = child_index_distribution(generator);
+				for (int c_index = 0; c_index < (int)possible_child_indexes.size(); c_index++) {
+					rand_val -= possible_child_index_weights[c_index];
+					if (rand_val <= 0.0) {
+						int child_index = possible_child_indexes[c_index];
+						this->curr_scopes.push_back(this->node_context->parent->child_scopes[child_index]);
+						this->node_context->parent->child_scope_tries[child_index]++;
+						break;
+					}
+				}
+			} else {
+				this->curr_step_types.push_back(STEP_TYPE_ACTION);
+
+				this->curr_actions.push_back(-1);
+
+				this->curr_scopes.push_back(NULL);
 			}
 		}
 
@@ -275,21 +261,12 @@ void BranchExperiment::explore_backprop(
 		if (curr_surprise > this->best_surprise) {
 		#endif /* MDEBUG */
 			this->best_surprise = curr_surprise;
-			if (this->best_new_scope != NULL) {
-				delete this->best_new_scope;
-			}
-			this->best_new_scope = this->curr_new_scope;
-			this->curr_new_scope = NULL;
 			this->best_step_types = this->curr_step_types;
 			this->best_actions = this->curr_actions;
 			this->best_scopes = this->curr_scopes;
 			this->best_exit_next_node = this->curr_exit_next_node;
 		}
 
-		if (this->curr_new_scope != NULL) {
-			delete this->curr_new_scope;
-			this->curr_new_scope = NULL;
-		}
 		this->curr_step_types.clear();
 		this->curr_actions.clear();
 		this->curr_scopes.clear();

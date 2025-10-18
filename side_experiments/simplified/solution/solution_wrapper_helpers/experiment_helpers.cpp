@@ -14,6 +14,8 @@ using namespace std;
 
 const int REGATHER_COUNTER_LIMIT = 20;
 
+const int NEW_SCOPE_FOCUS_ITERS = 5;
+
 void SolutionWrapper::experiment_init() {
 	if ((int)this->solution->existing_scope_histories.size() < MEASURE_ITERS * (1 + this->num_regather)) {
 		this->num_actions = 1;
@@ -214,6 +216,13 @@ void SolutionWrapper::experiment_end(double result) {
 
 				improvement_iter++;
 				if (improvement_iter >= IMPROVEMENTS_PER_ITER) {
+					if (this->solution->last_new_scope != NULL) {
+						this->solution->new_scope_iters++;
+						if (this->solution->new_scope_iters >= NEW_SCOPE_FOCUS_ITERS) {
+							this->solution->last_new_scope = NULL;
+						}
+					}
+
 					Scope* last_updated_scope = this->best_experiment->scope_context;
 
 					this->best_experiment->add(this);
