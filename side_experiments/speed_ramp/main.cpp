@@ -5,20 +5,20 @@
 
 // TODO: with GPU, don't use any libraries, but use CUDA directly
 
-// TODO: try really cutting down on number of samples
-// - really rely on rampup to make things safe
-
-// - when combining, only try scopes that generalize
-
-// TODO: save full runs and use to train existing instead of saving separate ScopeHistorys
-// - maybe 4000 samples with 5% min hit ratio
-//   - saves won't include explores
-//   - calc and save signal val on exit scope
-// - can also save vals, and retrain existing too
-//   - maybe for each stage for the right contrast
-
 // TODO: try using combined signal instead of just true
 // - might be better now that combined always contains true
+
+// TODO: actually, easy to retry until signal becomes good
+// - since (trying something + checking signal + trying something) also counts as trying something
+// - gives more options to keep a run alive?
+// - on post, can have score if stop vs. score if keep going
+// - maybe just use to save a run
+//   - enabling more than one explore per run
+//     - but have to practice catching and saving runs
+//     - alternatively, can count on solution to learn to be robust through ramp?
+//       - but perhaps on different distribution matters:
+//         - solution learned on relatively good
+//         - catch learned on relatively bad
 
 #include <chrono>
 #include <iostream>

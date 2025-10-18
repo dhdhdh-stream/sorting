@@ -9,6 +9,10 @@
  * 
  * - don't have rolling signal
  *   - not scalable if every layer has its own
+ * 
+ * - signal doesn't need to fully predict true
+ *   - can even predict XOR of true
+ *     - findable/maintainable if initial solution leans towards one side of XOR
  */
 
 #ifndef SIGNAL_H

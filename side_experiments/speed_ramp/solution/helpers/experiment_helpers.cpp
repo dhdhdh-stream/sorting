@@ -17,8 +17,6 @@
 
 using namespace std;
 
-const int SIGNAL_EXPERIMENT_MIN_GENERALIZE_SUCCESSES = 3;
-
 /**
  * - prioritize exploring new nodes
  * 
@@ -30,19 +28,16 @@ void gather_helper(ScopeHistory* scope_history,
 				   bool& is_branch,
 				   Scope*& signal_scope,
 				   int& potential_seen) {
-	// Scope* scope = scope_history->scope;
-	// if (scope->num_generalize_successes >= SIGNAL_EXPERIMENT_MIN_GENERALIZE_SUCCESSES
-	// 		|| scope->id == 0) {
-	// 	if (scope->signal_experiment == NULL) {
-	// 		uniform_int_distribution<int> select_distribution(0, potential_seen);
-	// 		if (select_distribution(generator) == 0) {
-	// 			node_context = NULL;
+	Scope* scope = scope_history->scope;
+	if (scope->signal_experiment == NULL) {
+		uniform_int_distribution<int> select_distribution(0, potential_seen);
+		if (select_distribution(generator) == 0) {
+			node_context = NULL;
 
-	// 			signal_scope = scope;
-	// 		}
-	// 		potential_seen++;
-	// 	}
-	// }
+			signal_scope = scope;
+		}
+		potential_seen++;
+	}
 
 	uniform_real_distribution<double> distribution(0.0, 1.0);
 	for (map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
