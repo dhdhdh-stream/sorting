@@ -19,8 +19,9 @@ Scope::Scope() {
 }
 
 Scope::~Scope() {
-	for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {
-		delete this->nodes[n_index];
+	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
+			it != this->nodes.end(); it++) {
+		delete it->second;
 	}
 
 	for (int f_index = 0; f_index < (int)this->factors.size(); f_index++) {
@@ -309,6 +310,11 @@ void Scope::load(ifstream& input_file,
 		string successes_line;
 		getline(input_file, successes_line);
 		this->child_scope_successes.push_back(stoi(successes_line));
+
+		// temp
+		cout << c_index << endl;
+		cout << "this->child_scope_tries[c_index]: " << this->child_scope_tries[c_index] << endl;
+		cout << "this->child_scope_successes[c_index]: " << this->child_scope_successes[c_index] << endl;
 	}
 
 	string num_generalize_successes_line;

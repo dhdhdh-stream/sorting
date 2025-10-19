@@ -4,6 +4,8 @@
 
 #include "action_node.h"
 #include "branch_node.h"
+#include "constants.h"
+#include "globals.h"
 #include "obs_node.h"
 #include "scope.h"
 #include "scope_node.h"
@@ -69,6 +71,17 @@ void NewScopeExperiment::experiment_exit_step(SolutionWrapper* wrapper) {
 
 void NewScopeExperiment::backprop(double target_val,
 								  SolutionWrapper* wrapper) {
+	if (this->new_scope_histories.size() < MEASURE_ITERS) {
+		this->new_scope_histories.push_back(wrapper->scope_histories[0]);
+		this->new_target_val_histories.push_back(target_val);
+	} else {
+		uniform_int_distribution<int> distribution(0, this->new_scope_histories.size()-1);
+		int random_index = distribution(generator);
+		delete this->new_scope_histories[random_index];
+		this->new_scope_histories[random_index] = wrapper->scope_histories[0];
+		this->new_target_val_histories[random_index] = target_val;
+	}
+
 	NewScopeExperimentHistory* history = (NewScopeExperimentHistory*)wrapper->experiment_history;
 	if (history->is_hit) {
 		this->new_sum_scores += target_val;

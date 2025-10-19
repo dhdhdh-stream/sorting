@@ -4,6 +4,7 @@
 
 #include "branch_experiment.h"
 #include "constants.h"
+#include "new_scope_experiment.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
@@ -13,11 +14,12 @@
 using namespace std;
 
 const int REGATHER_COUNTER_LIMIT = 20;
+const int NEW_SCOPE_REGATHER_COUNTER_LIMIT = 400;
 
-const int NEW_SCOPE_FOCUS_ITERS = 5;
+const int NEW_SCOPE_FOCUS_ITERS = 4;
 
 void SolutionWrapper::experiment_init() {
-	if ((int)this->solution->existing_scope_histories.size() < MEASURE_ITERS * (1 + this->num_regather)) {
+	if ((int)this->solution->existing_scope_histories.size() < MEASURE_ITERS) {
 		this->num_actions = 1;
 
 		#if defined(MDEBUG) && MDEBUG
@@ -50,6 +52,12 @@ void SolutionWrapper::experiment_init() {
 				this->experiment_history = new BranchExperimentHistory(branch_experiment);
 			}
 			break;
+		case EXPERIMENT_TYPE_NEW_SCOPE:
+			{
+				NewScopeExperiment* new_scope_experiment = (NewScopeExperiment*)this->curr_experiment;
+				this->experiment_history = new NewScopeExperimentHistory(new_scope_experiment);
+			}
+			break;
 		}
 
 		ScopeHistory* scope_history = new ScopeHistory(this->solution->scopes[0]);
@@ -65,7 +73,7 @@ tuple<bool,bool,int> SolutionWrapper::experiment_step(vector<double> obs) {
 	bool is_done = false;
 	bool fetch_action = false;
 	
-	if ((int)this->solution->existing_scope_histories.size() < MEASURE_ITERS * (1 + this->num_regather)) {
+	if ((int)this->solution->existing_scope_histories.size() < MEASURE_ITERS) {
 		while (!is_next) {
 			if (this->node_context.back() == NULL) {
 				if (this->scope_histories.size() == 1) {
@@ -124,7 +132,7 @@ void SolutionWrapper::set_action(int action) {
 }
 
 void SolutionWrapper::experiment_end(double result) {
-	if ((int)this->solution->existing_scope_histories.size() < MEASURE_ITERS * (1 + this->num_regather)) {
+	if ((int)this->solution->existing_scope_histories.size() < MEASURE_ITERS) {
 		while (true) {
 			if (this->node_context.back() == NULL) {
 				if (this->scope_histories.size() == 1) {
@@ -144,7 +152,7 @@ void SolutionWrapper::experiment_end(double result) {
 		this->scope_histories.clear();
 		this->node_context.clear();
 
-		if ((int)this->solution->existing_scope_histories.size() == MEASURE_ITERS * (1 + this->num_regather)) {
+		if ((int)this->solution->existing_scope_histories.size() == MEASURE_ITERS) {
 			this->solution->measure_update();
 		}
 	} else {
@@ -190,11 +198,26 @@ void SolutionWrapper::experiment_end(double result) {
 
 				this->curr_experiment = NULL;
 
-				if (this->regather_counter >= REGATHER_COUNTER_LIMIT) {
+				bool is_regather = false;
+				if (this->solution->timestamp % 10 == 5) {
+					if (this->regather_counter >= NEW_SCOPE_REGATHER_COUNTER_LIMIT) {
+						is_regather = true;
+					}
+				} else {
+					if (this->regather_counter >= REGATHER_COUNTER_LIMIT) {
+						is_regather = true;
+					}
+				}
+				if (is_regather) {
+					for (int h_index = 0; h_index < (int)this->solution->existing_scope_histories.size(); h_index++) {
+						delete this->solution->existing_scope_histories[h_index];
+					}
+					this->solution->existing_scope_histories.clear();
+					this->solution->existing_target_val_histories.clear();
+
 					this->solution->clean();
 
 					this->regather_counter = 0;
-					this->num_regather++;
 				}
 			} else if (this->curr_experiment->result == EXPERIMENT_RESULT_SUCCESS) {
 				this->curr_experiment->clean();
@@ -215,7 +238,17 @@ void SolutionWrapper::experiment_end(double result) {
 				this->curr_experiment = NULL;
 
 				improvement_iter++;
-				if (improvement_iter >= IMPROVEMENTS_PER_ITER) {
+				bool is_next = false;
+				if (this->solution->timestamp % 10 == 5) {
+					if (improvement_iter >= NEW_SCOPE_IMPROVEMENTS_PER_ITER) {
+						is_next = true;
+					}
+				} else {
+					if (improvement_iter >= IMPROVEMENTS_PER_ITER) {
+						is_next = true;
+					}
+				}
+				if (is_next) {
 					if (this->solution->last_new_scope != NULL) {
 						this->solution->new_scope_iters++;
 						if (this->solution->new_scope_iters >= NEW_SCOPE_FOCUS_ITERS) {
@@ -252,7 +285,6 @@ void SolutionWrapper::experiment_end(double result) {
 					this->improvement_iter = 0;
 
 					this->regather_counter = 0;
-					this->num_regather = 0;
 				}
 			}
 		}

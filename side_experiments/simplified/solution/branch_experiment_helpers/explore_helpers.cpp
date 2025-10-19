@@ -34,7 +34,7 @@ const int BRANCH_EXPERIMENT_EXPLORE_ITERS = 200;
  *   - cannot track success/count if continuous
  *   - raw actions can also drive innovation anyways
  */
-const int RAW_ACTION_WEIGHT = 10;
+const int RAW_ACTION_WEIGHT = 8;
 
 void BranchExperiment::explore_check_activate(
 		SolutionWrapper* wrapper,

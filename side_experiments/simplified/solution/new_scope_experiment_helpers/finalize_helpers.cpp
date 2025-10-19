@@ -1,5 +1,7 @@
 #include "new_scope_experiment.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_node.h"
 #include "obs_node.h"
@@ -45,6 +47,8 @@ void recursive_add_child(Scope* curr_parent,
 }
 
 void NewScopeExperiment::add(SolutionWrapper* wrapper) {
+	cout << "NewScopeExperiment add" << endl;
+
 	if (this->is_new) {
 		for (map<int, AbstractNode*>::iterator it = this->new_scope->nodes.begin();
 				it != this->new_scope->nodes.end(); it++) {
@@ -60,24 +64,22 @@ void NewScopeExperiment::add(SolutionWrapper* wrapper) {
 		clean_scope(this->new_scope,
 					wrapper);
 
-		this->new_scope->child_scopes = scope_context->child_scopes;
-		this->new_scope->child_scope_tries = vector<int>(scope_context->child_scope_tries.size(), 2);
-		this->new_scope->child_scope_successes = vector<int>(scope_context->child_scope_successes.size(), 1);
-		recursive_add_child(scope_context,
+		this->new_scope->child_scopes = this->scope_context->child_scopes;
+		this->new_scope->child_scope_tries = vector<int>(this->scope_context->child_scope_tries.size(), 2);
+		this->new_scope->child_scope_successes = vector<int>(this->scope_context->child_scope_successes.size(), 1);
+		recursive_add_child(this->scope_context,
 							wrapper,
 							this->new_scope);
-
-		this->new_scope = NULL;
 
 		wrapper->solution->last_new_scope = this->new_scope;
 		wrapper->solution->new_scope_iters = 0;
 	}
 
 	ScopeNode* new_scope_node = new ScopeNode();
-	new_scope_node->parent = scope_context;
-	new_scope_node->id = scope_context->node_counter;
-	scope_context->node_counter++;
-	scope_context->nodes[new_scope_node->id] = new_scope_node;
+	new_scope_node->parent = this->scope_context;
+	new_scope_node->id = this->scope_context->node_counter;
+	this->scope_context->node_counter++;
+	this->scope_context->nodes[new_scope_node->id] = new_scope_node;
 
 	new_scope_node->scope = this->new_scope;
 

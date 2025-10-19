@@ -5,8 +5,6 @@
 
 using namespace std;
 
-const int COMBINE_MIN_GENERALIZE_SUCCESSES = 3;
-
 SolutionWrapper::SolutionWrapper() {
 	this->solution = new Solution();
 	this->solution->init();
@@ -16,7 +14,6 @@ SolutionWrapper::SolutionWrapper() {
 	this->improvement_iter = 0;
 
 	this->regather_counter = 0;
-	this->num_regather = 0;
 
 	this->experiment_history = NULL;
 
@@ -35,7 +32,6 @@ SolutionWrapper::SolutionWrapper(std::string path,
 	this->improvement_iter = 0;
 
 	this->regather_counter = 0;
-	this->num_regather = 0;
 
 	this->experiment_history = NULL;
 
@@ -65,12 +61,10 @@ void SolutionWrapper::combine(string other_path,
 	for (int scope_index = 1; scope_index < (int)other->scopes.size(); scope_index++) {
 		this->solution->scopes.push_back(other->scopes[scope_index]);
 
-		if (other->scopes[scope_index]->num_generalize_successes >= COMBINE_MIN_GENERALIZE_SUCCESSES) {
-			for (int i_index = 0; i_index < starting_size; i_index++) {
-				this->solution->scopes[i_index]->child_scopes.push_back(other->scopes[scope_index]);
-				this->solution->scopes[i_index]->child_scope_tries.push_back(2);
-				this->solution->scopes[i_index]->child_scope_successes.push_back(1);
-			}
+		for (int i_index = 0; i_index < starting_size; i_index++) {
+			this->solution->scopes[i_index]->child_scopes.push_back(other->scopes[scope_index]);
+			this->solution->scopes[i_index]->child_scope_tries.push_back(2);
+			this->solution->scopes[i_index]->child_scope_successes.push_back(1);
 		}
 	}
 

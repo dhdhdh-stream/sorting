@@ -211,18 +211,18 @@ void create_experiment(SolutionWrapper* wrapper,
 				}
 			}
 		} else {
-			uniform_int_distribution<int> new_scope_distribution(0, 19);
-			if (explore_node->parent->nodes.size() >= NEW_SCOPE_MIN_NODES
-					&& new_scope_distribution(generator) != 0) {
-				Scope* new_scope = create_new_scope(explore_node->parent);
-				if (new_scope != NULL) {
-					NewScopeExperiment* new_scope_experiment = new NewScopeExperiment(
-						explore_node->parent,
-						explore_node,
-						explore_is_branch,
-						new_scope,
-						true);
-					curr_experiment = new_scope_experiment;
+			if (wrapper->solution->timestamp % 10 == 5) {
+				if (explore_node->parent->nodes.size() >= NEW_SCOPE_MIN_NODES) {
+					Scope* new_scope = create_new_scope(explore_node->parent);
+					if (new_scope != NULL) {
+						NewScopeExperiment* new_scope_experiment = new NewScopeExperiment(
+							explore_node->parent,
+							explore_node,
+							explore_is_branch,
+							new_scope,
+							true);
+						curr_experiment = new_scope_experiment;
+					}
 				}
 			} else {
 				BranchExperiment* new_experiment = new BranchExperiment(

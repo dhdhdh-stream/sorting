@@ -21,10 +21,10 @@ using namespace std;
  * - simply merge every fixed number of timesteps
  *   - hopefully prevents solution from getting too stale and thrashing
  */
-const int RUN_TIMESTEPS = 30;
+const int RUN_TIMESTEPS = 40;
 
 Solution::Solution() {
-	this->last_new_scope = NULL;
+	// do nothing
 }
 
 Solution::~Solution() {
@@ -73,6 +73,8 @@ void Solution::init() {
 	end_node->next_node_id = -1;
 	end_node->next_node = NULL;
 
+	this->last_new_scope = NULL;
+
 	clean();
 }
 
@@ -106,6 +108,23 @@ void Solution::load(string path,
 
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
 		this->scopes[s_index]->link(this);
+	}
+
+	string last_new_scope_id_line;
+	getline(input_file, last_new_scope_id_line);
+	int last_new_scope_id = stoi(last_new_scope_id_line);
+	if (last_new_scope_id == -1) {
+		this->last_new_scope = NULL;
+		this->new_scope_iters = 0;
+	} else {
+		this->last_new_scope = this->scopes[last_new_scope_id];
+
+		string new_scope_iters_line;
+		getline(input_file, new_scope_iters_line);
+		this->new_scope_iters = stoi(new_scope_iters_line);
+
+		// temp
+		cout << "this->new_scope_iters: " << this->new_scope_iters << endl;
 	}
 
 	input_file.close();
@@ -174,8 +193,8 @@ void Solution::measure_update() {
 }
 
 void Solution::clean_scopes() {
-	bool removed_scope = false;
 	while (true) {
+		bool removed_scope = false;
 		for (int s_index = (int)this->scopes.size()-1; s_index >= 1; s_index--) {
 			bool still_used = false;
 			for (int is_index = 0; is_index < (int)this->scopes.size(); is_index++) {
@@ -242,6 +261,13 @@ void Solution::save(string path,
 
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
 		this->scopes[s_index]->save(output_file);
+	}
+
+	if (this->last_new_scope == NULL) {
+		output_file << -1 << endl;
+	} else {
+		output_file << this->last_new_scope->id << endl;
+		output_file << this->new_scope_iters << endl;
 	}
 
 	output_file.close();
