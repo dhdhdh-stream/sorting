@@ -14,6 +14,14 @@ const int NEW_SCOPE_EXPERIMENT_STATE_C2 = 1;
 const int NEW_SCOPE_EXPERIMENT_STATE_C3 = 2;
 const int NEW_SCOPE_EXPERIMENT_STATE_C4 = 3;
 
+#if defined(MDEBUG) && MDEBUG
+const int NEW_SCOPE_NUM_GENERALIZE_TRIES = 10;
+const int NEW_SCOPE_MIN_NUM_LOCATIONS = 2;
+#else
+const int NEW_SCOPE_NUM_GENERALIZE_TRIES = 500;
+const int NEW_SCOPE_MIN_NUM_LOCATIONS = 3;
+#endif /* MDEBUG */
+
 class NewScopeExperimentHistory;
 class NewScopeExperimentState;
 class NewScopeExperiment : public AbstractExperiment {
@@ -22,7 +30,6 @@ public:
 	int state_iter;
 
 	Scope* new_scope;
-	bool is_new;
 
 	AbstractNode* exit_next_node;
 
@@ -31,8 +38,7 @@ public:
 	NewScopeExperiment(Scope* scope_context,
 					   AbstractNode* node_context,
 					   bool is_branch,
-					   Scope* new_scope,
-					   bool is_new);
+					   Scope* new_scope);
 	~NewScopeExperiment();
 
 	void check_activate(AbstractNode* experiment_node,
@@ -61,6 +67,28 @@ public:
 class NewScopeExperimentState : public AbstractExperimentState {
 public:
 	NewScopeExperimentState(NewScopeExperiment* experiment);
+};
+
+class NewScopeOverallExperiment {
+public:
+	Scope* scope_context;
+
+	Scope* new_scope;
+
+	int generalize_iter;
+
+	NewScopeExperiment* curr_experiment;
+	std::vector<NewScopeExperiment*> successful_experiments;
+
+	std::vector<ScopeHistory*> new_scope_histories;
+	std::vector<double> new_target_val_histories;
+
+	NewScopeOverallExperiment(Scope* new_scope,
+							  Scope* scope_context);
+	~NewScopeOverallExperiment();
+
+	void clean();
+	void add(SolutionWrapper* wrapper);
 };
 
 #endif /* NEW_SCOPE_EXPERIMENT_H */

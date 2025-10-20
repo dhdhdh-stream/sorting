@@ -15,8 +15,7 @@ using namespace std;
 NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 									   AbstractNode* node_context,
 									   bool is_branch,
-									   Scope* new_scope,
-									   bool is_new) {
+									   Scope* new_scope) {
 	this->type = EXPERIMENT_TYPE_NEW_SCOPE;
 
 	this->scope_context = scope_context;
@@ -24,7 +23,6 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 	this->is_branch = is_branch;
 
 	this->new_scope = new_scope;
-	this->is_new = is_new;
 
 	this->node_context->experiment = this;
 
@@ -91,11 +89,6 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 }
 
 NewScopeExperiment::~NewScopeExperiment() {
-	if (this->new_scope != NULL
-			&& this->is_new) {
-		delete this->new_scope;
-	}
-
 	for (int h_index = 0; h_index < (int)this->new_scope_histories.size(); h_index++) {
 		delete this->new_scope_histories[h_index];
 	}
@@ -109,4 +102,30 @@ NewScopeExperimentHistory::NewScopeExperimentHistory(NewScopeExperiment* experim
 
 NewScopeExperimentState::NewScopeExperimentState(NewScopeExperiment* experiment) {
 	this->experiment = experiment;
+}
+
+NewScopeOverallExperiment::NewScopeOverallExperiment(
+		Scope* new_scope,
+		Scope* scope_context) {
+	this->scope_context = scope_context;
+
+	this->new_scope = new_scope;
+
+	this->generalize_iter = 0;
+
+	this->curr_experiment = NULL;
+}
+
+NewScopeOverallExperiment::~NewScopeOverallExperiment() {
+	if (this->new_scope != NULL) {
+		delete this->new_scope;
+	}
+
+	if (this->curr_experiment != NULL) {
+		delete this->curr_experiment;
+	}
+
+	for (int e_index = 0; e_index < (int)this->successful_experiments.size(); e_index++) {
+		delete this->successful_experiments[e_index];
+	}
 }

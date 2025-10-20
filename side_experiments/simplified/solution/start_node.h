@@ -19,8 +19,6 @@ public:
 	int sum_hits;
 	int sum_instances;
 
-	int num_experiments;
-
 	StartNode();
 	~StartNode();
 

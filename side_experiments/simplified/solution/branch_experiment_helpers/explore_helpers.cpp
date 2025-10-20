@@ -142,19 +142,12 @@ void BranchExperiment::explore_check_activate(
 		}
 
 		vector<int> possible_child_indexes;
-		vector<double> possible_child_index_weights;
-		double sum_weights = 0.0;
 		for (int c_index = 0; c_index < (int)this->node_context->parent->child_scopes.size(); c_index++) {
 			if (this->node_context->parent->child_scopes[c_index]->nodes.size() > 1) {
 				possible_child_indexes.push_back(c_index);
-
-				double weight = sqrt(this->node_context->parent->child_scope_successes[c_index])
-					/ log(this->node_context->parent->child_scope_tries[c_index]);
-				possible_child_index_weights.push_back(weight);
-				sum_weights += weight;
 			}
 		}
-		uniform_real_distribution<double> child_index_distribution(0.0, sum_weights);
+		uniform_int_distribution<int> child_index_distribution(0, possible_child_indexes.size()-1);
 		for (int s_index = 0; s_index < new_num_steps; s_index++) {
 			bool is_scope = false;
 			if (possible_child_indexes.size() > 0) {
@@ -163,7 +156,6 @@ void BranchExperiment::explore_check_activate(
 					if (scope_distribution(generator) < (int)possible_child_indexes.size()) {
 						is_scope = true;
 					}
-
 				} else {
 					uniform_int_distribution<int> scope_distribution(0, 1);
 					if (scope_distribution(generator) == 0) {
@@ -175,16 +167,8 @@ void BranchExperiment::explore_check_activate(
 				this->curr_step_types.push_back(STEP_TYPE_SCOPE);
 				this->curr_actions.push_back(-1);
 
-				double rand_val = child_index_distribution(generator);
-				for (int c_index = 0; c_index < (int)possible_child_indexes.size(); c_index++) {
-					rand_val -= possible_child_index_weights[c_index];
-					if (rand_val <= 0.0) {
-						int child_index = possible_child_indexes[c_index];
-						this->curr_scopes.push_back(this->node_context->parent->child_scopes[child_index]);
-						this->node_context->parent->child_scope_tries[child_index]++;
-						break;
-					}
-				}
+				int child_index = possible_child_indexes[child_index_distribution(generator)];
+				this->curr_scopes.push_back(this->node_context->parent->child_scopes[child_index]);
 			} else {
 				this->curr_step_types.push_back(STEP_TYPE_ACTION);
 

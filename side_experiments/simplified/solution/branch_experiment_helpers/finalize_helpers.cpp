@@ -46,14 +46,6 @@ void BranchExperiment::add(SolutionWrapper* wrapper) {
 			new_scope_node->scope = this->best_scopes[s_index];
 
 			new_nodes.push_back(new_scope_node);
-
-			this->best_scopes[s_index]->num_generalize_successes++;
-			for (int c_index = 0; c_index < (int)this->node_context->parent->child_scopes.size(); c_index++) {
-				if (this->best_scopes[s_index] == this->node_context->parent->child_scopes[c_index]) {
-					this->node_context->parent->child_scope_successes[c_index]++;
-					break;
-				}
-			}
 		}
 	}
 

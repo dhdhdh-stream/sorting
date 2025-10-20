@@ -38,9 +38,6 @@ public:
 	double branch_average_instances_per_run;
 	double branch_average_score;
 
-	int original_num_experiments;
-	int branch_num_experiments;
-
 	int original_last_updated_run_index;
 	double original_sum_score;
 	int original_sum_hits;

@@ -25,10 +25,6 @@ public:
 	std::vector<Factor*> factors;
 
 	std::vector<Scope*> child_scopes;
-	std::vector<int> child_scope_tries;
-	std::vector<int> child_scope_successes;
-
-	int num_generalize_successes;
 
 	/**
 	 * - will not include new nodes

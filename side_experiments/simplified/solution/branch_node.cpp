@@ -19,9 +19,6 @@ BranchNode::BranchNode() {
 	this->verify_key = NULL;
 	#endif /* MDEBUG */
 
-	this->original_num_experiments = 0;
-	this->branch_num_experiments = 0;
-
 	this->original_last_updated_run_index = -1;
 	this->branch_last_updated_run_index = -1;
 
@@ -138,9 +135,6 @@ void BranchNode::save(ofstream& output_file) {
 	for (int a_index = 0; a_index < (int)this->ancestor_ids.size(); a_index++) {
 		output_file << this->ancestor_ids[a_index] << endl;
 	}
-
-	output_file << this->original_num_experiments << endl;
-	output_file << this->branch_num_experiments << endl;
 }
 
 void BranchNode::load(ifstream& input_file,
@@ -185,14 +179,6 @@ void BranchNode::load(ifstream& input_file,
 		getline(input_file, ancestor_id_line);
 		this->ancestor_ids.push_back(stoi(ancestor_id_line));
 	}
-
-	string original_num_experiments_line;
-	getline(input_file, original_num_experiments_line);
-	this->original_num_experiments = stoi(original_num_experiments_line);
-
-	string branch_num_experiments_line;
-	getline(input_file, branch_num_experiments_line);
-	this->branch_num_experiments = stoi(branch_num_experiments_line);
 }
 
 void BranchNode::link(Solution* parent_solution) {

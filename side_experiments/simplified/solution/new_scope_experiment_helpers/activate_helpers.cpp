@@ -30,8 +30,10 @@ void NewScopeExperiment::check_activate(AbstractNode* experiment_node,
 										bool is_branch,
 										SolutionWrapper* wrapper) {
 	if (is_branch == this->is_branch) {
-		NewScopeExperimentHistory* history = (NewScopeExperimentHistory*)wrapper->experiment_history;
-		history->is_hit = true;
+		if (wrapper->curr_new_scope_experiment->curr_experiment == this) {
+			NewScopeExperimentHistory* history = (NewScopeExperimentHistory*)wrapper->experiment_history;
+			history->is_hit = true;
+		}
 
 		NewScopeExperimentState* new_experiment_state = new NewScopeExperimentState(this);
 		wrapper->experiment_context.back() = new_experiment_state;

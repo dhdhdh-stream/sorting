@@ -18,78 +18,13 @@ void NewScopeExperiment::clean() {
 	this->node_context->experiment = NULL;
 }
 
-void recursive_add_child(Scope* curr_parent,
-						 SolutionWrapper* wrapper,
-						 Scope* new_scope) {
-	curr_parent->child_scopes.push_back(new_scope);
-	curr_parent->child_scope_tries.push_back(2);
-	curr_parent->child_scope_successes.push_back(1);
-
-	for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
-		bool is_needed = false;
-		bool is_added = false;
-		for (int c_index = 0; c_index < (int)wrapper->solution->scopes[s_index]->child_scopes.size(); c_index++) {
-			if (wrapper->solution->scopes[s_index]->child_scopes[c_index] == curr_parent) {
-				is_needed = true;
-			}
-
-			if (wrapper->solution->scopes[s_index]->child_scopes[c_index] == new_scope) {
-				is_added = true;
-			}
-		}
-
-		if (is_needed && !is_added) {
-			recursive_add_child(wrapper->solution->scopes[s_index],
-								wrapper,
-								new_scope);
-		}
-	}
-}
-
 void NewScopeExperiment::add(SolutionWrapper* wrapper) {
-	cout << "NewScopeExperiment add" << endl;
-
-	if (this->is_new) {
-		for (map<int, AbstractNode*>::iterator it = this->new_scope->nodes.begin();
-				it != this->new_scope->nodes.end(); it++) {
-			if (it->second->type == NODE_TYPE_SCOPE) {
-				ScopeNode* scope_node = (ScopeNode*)it->second;
-				scope_node->scope->num_generalize_successes++;
-			}
-		}
-
-		wrapper->solution->scopes.push_back(this->new_scope);
-		this->new_scope->id = wrapper->solution->scopes.size()-1;
-
-		clean_scope(this->new_scope,
-					wrapper);
-
-		this->new_scope->child_scopes = this->scope_context->child_scopes;
-		this->new_scope->child_scope_tries = vector<int>(this->scope_context->child_scope_tries.size(), 2);
-		this->new_scope->child_scope_successes = vector<int>(this->scope_context->child_scope_successes.size(), 1);
-		recursive_add_child(this->scope_context,
-							wrapper,
-							this->new_scope);
-
-		wrapper->solution->last_new_scope = this->new_scope;
-		wrapper->solution->new_scope_iters = 0;
-	}
-
 	ScopeNode* new_scope_node = new ScopeNode();
 	new_scope_node->parent = this->scope_context;
 	new_scope_node->id = this->scope_context->node_counter;
 	this->scope_context->node_counter++;
 	this->scope_context->nodes[new_scope_node->id] = new_scope_node;
-
 	new_scope_node->scope = this->new_scope;
-
-	this->new_scope->num_generalize_successes++;
-	for (int c_index = 0; c_index < (int)this->node_context->parent->child_scopes.size(); c_index++) {
-		if (this->new_scope == this->node_context->parent->child_scopes[c_index]) {
-			this->node_context->parent->child_scope_successes[c_index]++;
-			break;
-		}
-	}
 
 	ObsNode* new_ending_node = NULL;
 
@@ -240,6 +175,58 @@ void NewScopeExperiment::add(SolutionWrapper* wrapper) {
 	new_scope_node->next_node = exit_node;
 
 	exit_node->ancestor_ids.push_back(new_scope_node->id);
+}
 
-	this->new_scope = NULL;
+void NewScopeOverallExperiment::clean() {
+	for (int e_index = 0; e_index < (int)this->successful_experiments.size(); e_index++) {
+		this->successful_experiments[e_index]->clean();
+	}
+}
+
+void recursive_add_child(Scope* curr_parent,
+						 SolutionWrapper* wrapper,
+						 Scope* new_scope) {
+	curr_parent->child_scopes.push_back(new_scope);
+
+	for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
+		bool is_needed = false;
+		bool is_added = false;
+		for (int c_index = 0; c_index < (int)wrapper->solution->scopes[s_index]->child_scopes.size(); c_index++) {
+			if (wrapper->solution->scopes[s_index]->child_scopes[c_index] == curr_parent) {
+				is_needed = true;
+			}
+
+			if (wrapper->solution->scopes[s_index]->child_scopes[c_index] == new_scope) {
+				is_added = true;
+			}
+		}
+
+		if (is_needed && !is_added) {
+			recursive_add_child(wrapper->solution->scopes[s_index],
+								wrapper,
+								new_scope);
+		}
+	}
+}
+
+void NewScopeOverallExperiment::add(SolutionWrapper* wrapper) {
+	cout << "NewScopeExperiment add" << endl;
+
+	wrapper->solution->scopes.push_back(this->new_scope);
+	this->new_scope->id = wrapper->solution->scopes.size()-1;
+
+	clean_scope(this->new_scope,
+				wrapper);
+
+	this->new_scope->child_scopes = this->scope_context->child_scopes;
+	recursive_add_child(this->scope_context,
+						wrapper,
+						this->new_scope);
+
+	wrapper->solution->last_new_scope = this->new_scope;
+	wrapper->solution->new_scope_iters = 0;
+
+	for (int e_index = 0; e_index < (int)this->successful_experiments.size(); e_index++) {
+		this->successful_experiments[e_index]->add(wrapper);
+	}
 }

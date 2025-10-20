@@ -11,8 +11,6 @@ using namespace std;
 ActionNode::ActionNode() {
 	this->type = NODE_TYPE_ACTION;
 
-	this->num_experiments = 0;
-
 	this->last_updated_run_index = -1;
 
 	this->experiment = NULL;
@@ -51,8 +49,6 @@ void ActionNode::save(ofstream& output_file) {
 	for (int a_index = 0; a_index < (int)this->ancestor_ids.size(); a_index++) {
 		output_file << this->ancestor_ids[a_index] << endl;
 	}
-
-	output_file << this->num_experiments << endl;
 }
 
 void ActionNode::load(ifstream& input_file) {
@@ -72,10 +68,6 @@ void ActionNode::load(ifstream& input_file) {
 		getline(input_file, ancestor_id_line);
 		this->ancestor_ids.push_back(stoi(ancestor_id_line));
 	}
-
-	string num_experiments_line;
-	getline(input_file, num_experiments_line);
-	this->num_experiments = stoi(num_experiments_line);
 }
 
 void ActionNode::link(Solution* parent_solution) {

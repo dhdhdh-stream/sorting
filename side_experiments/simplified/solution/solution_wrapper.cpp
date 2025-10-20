@@ -9,9 +9,10 @@ SolutionWrapper::SolutionWrapper() {
 	this->solution = new Solution();
 	this->solution->init();
 
-	this->curr_experiment = NULL;
-	this->best_experiment = NULL;
 	this->improvement_iter = 0;
+
+	this->curr_branch_experiment = NULL;
+	this->best_branch_experiment = NULL;
 
 	this->regather_counter = 0;
 
@@ -27,9 +28,10 @@ SolutionWrapper::SolutionWrapper(std::string path,
 	this->solution = new Solution();
 	this->solution->load(path, name);
 
-	this->curr_experiment = NULL;
-	this->best_experiment = NULL;
 	this->improvement_iter = 0;
+
+	this->curr_branch_experiment = NULL;
+	this->best_branch_experiment = NULL;
 
 	this->regather_counter = 0;
 
@@ -63,8 +65,6 @@ void SolutionWrapper::combine(string other_path,
 
 		for (int i_index = 0; i_index < starting_size; i_index++) {
 			this->solution->scopes[i_index]->child_scopes.push_back(other->scopes[scope_index]);
-			this->solution->scopes[i_index]->child_scope_tries.push_back(2);
-			this->solution->scopes[i_index]->child_scope_successes.push_back(1);
 		}
 	}
 

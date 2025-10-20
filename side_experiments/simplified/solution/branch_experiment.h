@@ -166,7 +166,7 @@ public:
 	#endif /* MDEBUG */
 
 	void train_existing_helper(std::vector<ScopeHistory*>& scope_histories,
-						   std::vector<double>& target_val_histories);
+							   std::vector<double>& target_val_histories);
 	bool train_new_helper();
 	bool refine_helper();
 

@@ -7,9 +7,10 @@
 
 #include "input.h"
 
-class AbstractExperiment;
 class AbstractNode;
+class BranchExperiment;
 class Network;
+class NewScopeOverallExperiment;
 class Problem;
 class Scope;
 class ScopeHistory;
@@ -17,8 +18,10 @@ class ScopeNode;
 class Solution;
 class SolutionWrapper;
 
-void create_experiment(SolutionWrapper* wrapper,
-					   AbstractExperiment*& curr_experiment);
+void create_branch_experiment(SolutionWrapper* wrapper);
+void create_new_scope_overall_experiment(SolutionWrapper* wrapper);
+void create_new_scope_experiment(SolutionWrapper* wrapper);
+bool still_instances_possible(NewScopeOverallExperiment* experiment);
 
 void fetch_input_helper(ScopeHistory* scope_history,
 						Input& input,
@@ -34,7 +37,8 @@ void fetch_input_helper(ScopeHistory* scope_history,
 
 Scope* create_new_scope(Scope* scope_context);
 
-double get_experiment_impact(AbstractExperiment* experiment);
+double get_experiment_impact(BranchExperiment* experiment);
+double get_experiment_impact(NewScopeOverallExperiment* experiment);
 
 void clean_scope(Scope* scope,
 				 SolutionWrapper* wrapper);

@@ -15,7 +15,7 @@
 using namespace std;
 
 Scope::Scope() {
-	this->num_generalize_successes = 0;
+	// do nothing
 }
 
 Scope::~Scope() {
@@ -209,11 +209,7 @@ void Scope::save(ofstream& output_file) {
 	output_file << this->child_scopes.size() << endl;
 	for (int c_index = 0; c_index < (int)this->child_scopes.size(); c_index++) {
 		output_file << this->child_scopes[c_index]->id << endl;
-		output_file << this->child_scope_tries[c_index] << endl;
-		output_file << this->child_scope_successes[c_index] << endl;
 	}
-
-	output_file << this->num_generalize_successes << endl;
 }
 
 void Scope::load(ifstream& input_file,
@@ -302,24 +298,7 @@ void Scope::load(ifstream& input_file,
 		string scope_id_line;
 		getline(input_file, scope_id_line);
 		this->child_scopes.push_back(parent_solution->scopes[stoi(scope_id_line)]);
-
-		string tries_line;
-		getline(input_file, tries_line);
-		this->child_scope_tries.push_back(stoi(tries_line));
-
-		string successes_line;
-		getline(input_file, successes_line);
-		this->child_scope_successes.push_back(stoi(successes_line));
-
-		// temp
-		cout << c_index << endl;
-		cout << "this->child_scope_tries[c_index]: " << this->child_scope_tries[c_index] << endl;
-		cout << "this->child_scope_successes[c_index]: " << this->child_scope_successes[c_index] << endl;
 	}
-
-	string num_generalize_successes_line;
-	getline(input_file, num_generalize_successes_line);
-	this->num_generalize_successes = stoi(num_generalize_successes_line);
 }
 
 void Scope::link(Solution* parent_solution) {

@@ -23,8 +23,6 @@ public:
 	double average_instances_per_run;
 	double average_score;
 
-	int num_experiments;
-
 	int last_updated_run_index;
 	double sum_score;
 	int sum_hits;
