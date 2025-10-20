@@ -40,6 +40,13 @@ public:
 	int sum_hits;
 	int sum_instances;
 
+	double new_scope_average_hits_per_run;
+	double new_scope_average_score;
+
+	int new_scope_last_updated_run_index;
+	double new_scope_sum_score;
+	int new_scope_sum_hits;
+
 	ScopeNode();
 	~ScopeNode();
 
@@ -57,6 +64,9 @@ public:
 
 	void clean();
 	void measure_update(int total_count);
+
+	void new_scope_clean();
+	void new_scope_measure_update(int total_count);
 
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file,

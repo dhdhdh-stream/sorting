@@ -118,6 +118,22 @@ void BranchNode::measure_update(int total_count) {
 	this->branch_average_score = this->branch_sum_score / (double)this->branch_sum_hits;
 }
 
+void BranchNode::new_scope_clean() {
+	this->new_scope_original_last_updated_run_index = -1;
+	this->new_scope_original_sum_score = 0.0;
+	this->new_scope_original_sum_hits = 0;
+	this->new_scope_branch_last_updated_run_index = -1;
+	this->new_scope_branch_sum_score = 0.0;
+	this->new_scope_branch_sum_hits = 0;
+}
+
+void BranchNode::new_scope_measure_update(int total_count) {
+	this->new_scope_original_average_hits_per_run = (double)this->new_scope_original_sum_hits / (double)total_count;
+	this->new_scope_original_average_score = this->new_scope_original_sum_score / (double)this->new_scope_original_sum_hits;
+	this->new_scope_branch_average_hits_per_run = (double)this->new_scope_branch_sum_hits / (double)total_count;
+	this->new_scope_branch_average_score = this->new_scope_branch_sum_score / (double)this->new_scope_branch_sum_hits;
+}
+
 void BranchNode::save(ofstream& output_file) {
 	output_file << this->constant << endl;
 	output_file << this->inputs.size() << endl;

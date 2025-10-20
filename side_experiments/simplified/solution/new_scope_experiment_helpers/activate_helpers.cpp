@@ -115,41 +115,80 @@ void NewScopeExperiment::backprop(double target_val,
 
 		if (is_eval) {
 			double existing_score;
-			switch (this->node_context->type) {
-			case NODE_TYPE_START:
-				{
-					StartNode* start_node = (StartNode*)this->node_context;
-					existing_score = start_node->average_score;
-				}
-				break;
-			case NODE_TYPE_ACTION:
-				{
-					ActionNode* action_node = (ActionNode*)this->node_context;
-					existing_score = action_node->average_score;
-				}
-				break;
-			case NODE_TYPE_SCOPE:
-				{
-					ScopeNode* scope_node = (ScopeNode*)this->node_context;
-					existing_score = scope_node->average_score;
-				}
-				break;
-			case NODE_TYPE_BRANCH:
-				{
-					BranchNode* branch_node = (BranchNode*)this->node_context;
-					if (this->is_branch) {
-						existing_score = branch_node->branch_average_score;
-					} else {
-						existing_score = branch_node->original_average_score;
+			if (wrapper->curr_new_scope_experiment->successful_experiments.size() == 0) {
+				switch (this->node_context->type) {
+				case NODE_TYPE_START:
+					{
+						StartNode* start_node = (StartNode*)this->node_context;
+						existing_score = start_node->average_score;
 					}
+					break;
+				case NODE_TYPE_ACTION:
+					{
+						ActionNode* action_node = (ActionNode*)this->node_context;
+						existing_score = action_node->average_score;
+					}
+					break;
+				case NODE_TYPE_SCOPE:
+					{
+						ScopeNode* scope_node = (ScopeNode*)this->node_context;
+						existing_score = scope_node->average_score;
+					}
+					break;
+				case NODE_TYPE_BRANCH:
+					{
+						BranchNode* branch_node = (BranchNode*)this->node_context;
+						if (this->is_branch) {
+							existing_score = branch_node->branch_average_score;
+						} else {
+							existing_score = branch_node->original_average_score;
+						}
+					}
+					break;
+				case NODE_TYPE_OBS:
+					{
+						ObsNode* obs_node = (ObsNode*)this->node_context;
+						existing_score = obs_node->average_score;
+					}
+					break;
 				}
-				break;
-			case NODE_TYPE_OBS:
-				{
-					ObsNode* obs_node = (ObsNode*)this->node_context;
-					existing_score = obs_node->average_score;
+			} else {
+				switch (this->node_context->type) {
+				case NODE_TYPE_START:
+					{
+						StartNode* start_node = (StartNode*)this->node_context;
+						existing_score = start_node->new_scope_average_score;
+					}
+					break;
+				case NODE_TYPE_ACTION:
+					{
+						ActionNode* action_node = (ActionNode*)this->node_context;
+						existing_score = action_node->new_scope_average_score;
+					}
+					break;
+				case NODE_TYPE_SCOPE:
+					{
+						ScopeNode* scope_node = (ScopeNode*)this->node_context;
+						existing_score = scope_node->new_scope_average_score;
+					}
+					break;
+				case NODE_TYPE_BRANCH:
+					{
+						BranchNode* branch_node = (BranchNode*)this->node_context;
+						if (this->is_branch) {
+							existing_score = branch_node->new_scope_branch_average_score;
+						} else {
+							existing_score = branch_node->new_scope_original_average_score;
+						}
+					}
+					break;
+				case NODE_TYPE_OBS:
+					{
+						ObsNode* obs_node = (ObsNode*)this->node_context;
+						existing_score = obs_node->new_scope_average_score;
+					}
+					break;
 				}
-				break;
 			}
 
 			double new_score_average = this->new_sum_scores / (double)this->state_iter;

@@ -46,5 +46,9 @@ void clean_scope(Scope* scope,
 void update_scores(ScopeHistory* scope_history,
 				   double target_val,
 				   int h_index);
+void new_scope_update_scores(ScopeHistory* scope_history,
+							 double target_val,
+							 int h_index,
+							 Scope* scope_context);
 
 #endif /* SOLUTION_HELPERS_H */

@@ -191,17 +191,16 @@ void SolutionWrapper::experiment_end(double result) {
 
 		if (this->solution->timestamp % 10 == 5) {
 			bool check_overall = false;
+			bool early_exit = false;
 			if (this->curr_new_scope_experiment->curr_experiment->result == EXPERIMENT_RESULT_FAIL) {
-				check_overall = true;
-
 				this->curr_new_scope_experiment->generalize_iter++;
 
 				this->curr_new_scope_experiment->curr_experiment->clean();
 				delete this->curr_new_scope_experiment->curr_experiment;
 				this->curr_new_scope_experiment->curr_experiment = NULL;
-			} else if (this->curr_new_scope_experiment->curr_experiment->result == EXPERIMENT_RESULT_SUCCESS) {
-				check_overall = true;
 
+				check_overall = true;
+			} else if (this->curr_new_scope_experiment->curr_experiment->result == EXPERIMENT_RESULT_SUCCESS) {
 				this->curr_new_scope_experiment->generalize_iter++;
 
 				for (int h_index = 0; h_index < (int)this->curr_new_scope_experiment->new_scope_histories.size(); h_index++) {
@@ -215,6 +214,18 @@ void SolutionWrapper::experiment_end(double result) {
 				this->curr_new_scope_experiment->successful_experiments.push_back(
 					this->curr_new_scope_experiment->curr_experiment);
 				this->curr_new_scope_experiment->curr_experiment = NULL;
+
+				this->curr_new_scope_experiment->scope_context->new_scope_clean();
+				for (int h_index = 0; h_index < (int)this->curr_new_scope_experiment->new_scope_histories.size(); h_index++) {
+					new_scope_update_scores(this->curr_new_scope_experiment->new_scope_histories[h_index],
+											this->curr_new_scope_experiment->new_target_val_histories[h_index],
+											h_index,
+											this->curr_new_scope_experiment->scope_context);
+				}
+				this->curr_new_scope_experiment->scope_context->new_scope_measure_update((int)this->curr_new_scope_experiment->new_scope_histories.size());
+
+				check_overall = true;
+				early_exit = !still_instances_possible(this->curr_new_scope_experiment);
 			}
 
 			if (check_overall) {
@@ -238,7 +249,7 @@ void SolutionWrapper::experiment_end(double result) {
 						this->regather_counter = 0;
 					}
 				} else if (this->curr_new_scope_experiment->generalize_iter >= NEW_SCOPE_NUM_GENERALIZE_TRIES
-						|| !still_instances_possible(this->curr_new_scope_experiment)) {
+						|| early_exit) {
 					if (this->curr_new_scope_experiment->successful_experiments.size() >= NEW_SCOPE_MIN_NUM_LOCATIONS) {
 						cout << "NewScopeOverallExperiment success" << endl;
 

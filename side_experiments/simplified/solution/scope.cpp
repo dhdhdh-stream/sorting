@@ -190,6 +190,20 @@ void Scope::measure_update(int total_count) {
 	}
 }
 
+void Scope::new_scope_clean() {
+	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
+			it != this->nodes.end(); it++) {
+		it->second->new_scope_clean();
+	}
+}
+
+void Scope::new_scope_measure_update(int total_count) {
+	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
+			it != this->nodes.end(); it++) {
+		it->second->new_scope_measure_update(total_count);
+	}
+}
+
 void Scope::save(ofstream& output_file) {
 	output_file << this->node_counter << endl;
 
