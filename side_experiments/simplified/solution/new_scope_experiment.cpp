@@ -128,4 +128,8 @@ NewScopeOverallExperiment::~NewScopeOverallExperiment() {
 	for (int e_index = 0; e_index < (int)this->successful_experiments.size(); e_index++) {
 		delete this->successful_experiments[e_index];
 	}
+
+	for (int h_index = 0; h_index < (int)this->new_scope_histories.size(); h_index++) {
+		delete this->new_scope_histories[h_index];
+	}
 }

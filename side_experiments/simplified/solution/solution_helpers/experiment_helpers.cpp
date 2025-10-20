@@ -20,6 +20,8 @@ using namespace std;
 /**
  * - don't prioritize exploring new nodes as new scopes change explore
  */
+// TODO: need to use new_scope average_hits_per_run
+// TODO: for score, need to compare against new_scope score
 void gather_helper(ScopeHistory* scope_history,
 				   int& node_count,
 				   AbstractNode*& explore_node,
@@ -178,9 +180,16 @@ void create_new_scope_overall_experiment(SolutionWrapper* wrapper) {
 }
 
 void create_new_scope_experiment(SolutionWrapper* wrapper) {
-	uniform_int_distribution<int> scope_history_distribution(0,
-		wrapper->solution->existing_scope_histories.size()-1);
-	ScopeHistory* scope_history = wrapper->solution->existing_scope_histories[scope_history_distribution(generator)];
+	ScopeHistory* scope_history;
+	if (wrapper->curr_new_scope_experiment->successful_experiments.size() == 0) {
+		uniform_int_distribution<int> scope_history_distribution(0,
+			wrapper->solution->existing_scope_histories.size()-1);
+		scope_history = wrapper->solution->existing_scope_histories[scope_history_distribution(generator)];
+	} else {
+		uniform_int_distribution<int> scope_history_distribution(0,
+			wrapper->curr_new_scope_experiment->new_scope_histories.size()-1);
+		scope_history = wrapper->curr_new_scope_experiment->new_scope_histories[scope_history_distribution(generator)];
+	}
 
 	int node_count = 0;
 	AbstractNode* explore_node = NULL;
@@ -207,20 +216,65 @@ bool still_instances_possible_helper(ScopeHistory* scope_history,
 	for (map<int, AbstractNodeHistory*>::iterator h_it = scope_history->node_histories.begin();
 			h_it != scope_history->node_histories.end(); h_it++) {
 		AbstractNode* node = h_it->second->node;
-
 		if (scope_history->scope == scope_context
 				&& node->experiment == NULL) {
-			return true;
-		}
+			switch (node->type) {
+			case NODE_TYPE_START:
+				{
+					StartNode* start_node = (StartNode*)node;
+					if (start_node->average_hits_per_run > EXPERIMENT_MIN_AVERAGE_HITS_PER_RUN) {
+						return true;
+					}
+				}
+				break;
+			case NODE_TYPE_ACTION:
+				{
+					ActionNode* action_node = (ActionNode*)node;
+					if (action_node->average_hits_per_run > EXPERIMENT_MIN_AVERAGE_HITS_PER_RUN) {
+						return true;
+					}
+				}
+				break;
+			case NODE_TYPE_SCOPE:
+				{
+					ScopeNode* scope_node = (ScopeNode*)node;
+					ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)h_it->second;
 
-		if (node->type == NODE_TYPE_SCOPE) {
-			ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)h_it->second;
+					if (scope_node->average_hits_per_run > EXPERIMENT_MIN_AVERAGE_HITS_PER_RUN) {
+						return true;
+					}
 
-			bool inner_result = still_instances_possible_helper(
-				scope_node_history->scope_history,
-				scope_context);
-			if (inner_result) {
-				return true;
+					bool inner_result = still_instances_possible_helper(
+						scope_node_history->scope_history,
+						scope_context);
+					if (inner_result) {
+						return true;
+					}
+				}
+				break;
+			case NODE_TYPE_BRANCH:
+				{
+					BranchNode* branch_node = (BranchNode*)node;
+					BranchNodeHistory* branch_node_history = (BranchNodeHistory*)h_it->second;
+					if (branch_node_history->is_branch) {
+						if (branch_node->branch_average_hits_per_run > EXPERIMENT_MIN_AVERAGE_HITS_PER_RUN) {
+							return true;
+						}
+					} else {
+						if (branch_node->original_average_hits_per_run > EXPERIMENT_MIN_AVERAGE_HITS_PER_RUN) {
+							return true;
+						}
+					}
+				}
+				break;
+			case NODE_TYPE_OBS:
+				{
+					ObsNode* obs_node = (ObsNode*)node;
+					if (obs_node->average_hits_per_run > EXPERIMENT_MIN_AVERAGE_HITS_PER_RUN) {
+						return true;
+					}
+				}
+				break;
 			}
 		}
 	}

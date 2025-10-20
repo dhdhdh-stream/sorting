@@ -1,16 +1,7 @@
 // TODO: try using more factors
 
-// TODO: probably all the focus on scope stuff from earlier really helps
-// - multiple passthrough + forcing further changes
-
-// TODO: for speed ramp, can track how new each scope is and scale explore by it
-
 // - maybe lower vision encourages better scopes?
 //   - less sharp, more general?
-
-// - scopes still not good enough
-
-// - also don't keep trying new spots with scopes
 
 #include <chrono>
 #include <iostream>
@@ -132,7 +123,7 @@ int main(int argc, char* argv[]) {
 			}
 		}
 
-		solution_wrapper->save("saves/", filename);
+		// solution_wrapper->save("saves/", filename);
 
 		solution_wrapper->save_for_display("../", "display.txt");
 
@@ -147,7 +138,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	solution_wrapper->clean_scopes();
-	solution_wrapper->save("saves/", filename);
+	// solution_wrapper->save("saves/", filename);
 
 	delete problem_type;
 	delete solution_wrapper;

@@ -229,4 +229,6 @@ void NewScopeOverallExperiment::add(SolutionWrapper* wrapper) {
 	for (int e_index = 0; e_index < (int)this->successful_experiments.size(); e_index++) {
 		this->successful_experiments[e_index]->add(wrapper);
 	}
+
+	this->new_scope = NULL;
 }

@@ -14,7 +14,7 @@
 using namespace std;
 
 const int REGATHER_COUNTER_LIMIT = 20;
-const int NEW_SCOPE_REGATHER_COUNTER_LIMIT = 400;
+const int NEW_SCOPE_REGATHER_COUNTER_LIMIT = 200;
 
 const int NEW_SCOPE_FOCUS_ITERS = 4;
 
@@ -199,19 +199,6 @@ void SolutionWrapper::experiment_end(double result) {
 				this->curr_new_scope_experiment->curr_experiment->clean();
 				delete this->curr_new_scope_experiment->curr_experiment;
 				this->curr_new_scope_experiment->curr_experiment = NULL;
-
-				this->regather_counter++;
-				if (this->regather_counter >= NEW_SCOPE_REGATHER_COUNTER_LIMIT) {
-					for (int h_index = 0; h_index < (int)this->solution->existing_scope_histories.size(); h_index++) {
-						delete this->solution->existing_scope_histories[h_index];
-					}
-					this->solution->existing_scope_histories.clear();
-					this->solution->existing_target_val_histories.clear();
-
-					this->solution->clean();
-
-					this->regather_counter = 0;
-				}
 			} else if (this->curr_new_scope_experiment->curr_experiment->result == EXPERIMENT_RESULT_SUCCESS) {
 				check_overall = true;
 
@@ -233,11 +220,28 @@ void SolutionWrapper::experiment_end(double result) {
 			if (check_overall) {
 				if (this->curr_new_scope_experiment->generalize_iter > 0
 						&& this->curr_new_scope_experiment->successful_experiments.size() == 0) {
+					this->curr_new_scope_experiment->clean();
+
 					delete this->curr_new_scope_experiment;
 					this->curr_new_scope_experiment = NULL;
+
+					this->regather_counter++;
+					if (this->regather_counter >= NEW_SCOPE_REGATHER_COUNTER_LIMIT) {
+						for (int h_index = 0; h_index < (int)this->solution->existing_scope_histories.size(); h_index++) {
+							delete this->solution->existing_scope_histories[h_index];
+						}
+						this->solution->existing_scope_histories.clear();
+						this->solution->existing_target_val_histories.clear();
+
+						this->solution->clean();
+
+						this->regather_counter = 0;
+					}
 				} else if (this->curr_new_scope_experiment->generalize_iter >= NEW_SCOPE_NUM_GENERALIZE_TRIES
 						|| !still_instances_possible(this->curr_new_scope_experiment)) {
 					if (this->curr_new_scope_experiment->successful_experiments.size() >= NEW_SCOPE_MIN_NUM_LOCATIONS) {
+						cout << "NewScopeOverallExperiment success" << endl;
+
 						this->curr_new_scope_experiment->clean();
 
 						if (this->best_new_scope_experiment == NULL) {
@@ -255,8 +259,8 @@ void SolutionWrapper::experiment_end(double result) {
 
 						this->curr_new_scope_experiment = NULL;
 
-						improvement_iter++;
-						if (improvement_iter >= NEW_SCOPE_IMPROVEMENTS_PER_ITER) {
+						this->improvement_iter++;
+						if (this->improvement_iter >= NEW_SCOPE_IMPROVEMENTS_PER_ITER) {
 							Scope* last_updated_scope = this->best_new_scope_experiment->scope_context;
 
 							this->best_new_scope_experiment->add(this);
@@ -267,9 +271,10 @@ void SolutionWrapper::experiment_end(double result) {
 							this->solution->existing_scope_histories.clear();
 							this->solution->existing_target_val_histories.clear();
 
-							this->solution->existing_scope_histories = this->best_new_scope_experiment->new_scope_histories;
-							this->best_new_scope_experiment->new_scope_histories.clear();
-							this->solution->existing_target_val_histories = this->best_new_scope_experiment->new_target_val_histories;
+							/**
+							 * - don't use this->best_new_scope_experiment->new_scope_histories
+							 *   - doesn't contain new scope histories
+							 */
 
 							delete this->best_new_scope_experiment;
 							this->best_new_scope_experiment = NULL;
@@ -281,15 +286,28 @@ void SolutionWrapper::experiment_end(double result) {
 
 							this->solution->timestamp++;
 
-							this->solution->measure_update();
-
 							this->improvement_iter = 0;
 
 							this->regather_counter = 0;
 						}
 					} else {
+						this->curr_new_scope_experiment->clean();
+
 						delete this->curr_new_scope_experiment;
 						this->curr_new_scope_experiment = NULL;
+
+						this->regather_counter++;
+						if (this->regather_counter >= NEW_SCOPE_REGATHER_COUNTER_LIMIT) {
+							for (int h_index = 0; h_index < (int)this->solution->existing_scope_histories.size(); h_index++) {
+								delete this->solution->existing_scope_histories[h_index];
+							}
+							this->solution->existing_scope_histories.clear();
+							this->solution->existing_target_val_histories.clear();
+
+							this->solution->clean();
+
+							this->regather_counter = 0;
+						}
 					}
 				}
 			}
@@ -331,8 +349,8 @@ void SolutionWrapper::experiment_end(double result) {
 
 				this->curr_branch_experiment = NULL;
 
-				improvement_iter++;
-				if (improvement_iter >= IMPROVEMENTS_PER_ITER) {
+				this->improvement_iter++;
+				if (this->improvement_iter >= IMPROVEMENTS_PER_ITER) {
 					if (this->solution->last_new_scope != NULL) {
 						this->solution->new_scope_iters++;
 						if (this->solution->new_scope_iters >= NEW_SCOPE_FOCUS_ITERS) {

@@ -14,6 +14,9 @@ SolutionWrapper::SolutionWrapper() {
 	this->curr_branch_experiment = NULL;
 	this->best_branch_experiment = NULL;
 
+	this->curr_new_scope_experiment = NULL;
+	this->best_new_scope_experiment = NULL;
+
 	this->regather_counter = 0;
 
 	this->experiment_history = NULL;
@@ -32,6 +35,9 @@ SolutionWrapper::SolutionWrapper(std::string path,
 
 	this->curr_branch_experiment = NULL;
 	this->best_branch_experiment = NULL;
+
+	this->curr_new_scope_experiment = NULL;
+	this->best_new_scope_experiment = NULL;
 
 	this->regather_counter = 0;
 

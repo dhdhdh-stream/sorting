@@ -172,15 +172,15 @@ void NewScopeExperiment::backprop(double target_val,
 				case NEW_SCOPE_EXPERIMENT_STATE_C4:
 					this->new_score = new_score_average;
 
-					cout << "NewScopeExperiment" << endl;
-					cout << "this->scope_context->id: " << this->scope_context->id << endl;
-					cout << "this->node_context->id: " << this->node_context->id << endl;
-					cout << "this->is_branch: " << this->is_branch << endl;
+					// cout << "NewScopeExperiment" << endl;
+					// cout << "this->scope_context->id: " << this->scope_context->id << endl;
+					// cout << "this->node_context->id: " << this->node_context->id << endl;
+					// cout << "this->is_branch: " << this->is_branch << endl;
 
-					double improvement = this->new_score - existing_score;
-					cout << "improvement: " << improvement << endl;
+					// double improvement = this->new_score - existing_score;
+					// cout << "improvement: " << improvement << endl;
 
-					cout << endl;
+					// cout << endl;
 
 					this->result = EXPERIMENT_RESULT_SUCCESS;
 					break;
