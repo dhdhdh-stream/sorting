@@ -257,7 +257,11 @@ void BranchExperiment::explore_backprop(
 
 		this->state_iter++;
 		if (this->state_iter >= BRANCH_EXPERIMENT_EXPLORE_ITERS) {
+			#if defined(MDEBUG) && MDEBUG
+			if (rand()%2 == 0) {
+			#else
 			if (this->best_surprise >= 0.0) {
+			#endif /* MDEBUG */
 				uniform_int_distribution<int> until_distribution(1, this->average_instances_per_run);
 				this->num_instances_until_target = until_distribution(generator);
 

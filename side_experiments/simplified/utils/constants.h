@@ -30,7 +30,7 @@ const int NEW_SCOPE_IMPROVEMENTS_PER_ITER = 2;
  * - large number to select good paths to prevent noise
  */
 const int IMPROVEMENTS_PER_ITER = 6;
-const int NEW_SCOPE_IMPROVEMENTS_PER_ITER = 20;
+const int NEW_SCOPE_IMPROVEMENTS_PER_ITER = 40;
 #endif /* MDEBUG */
 
 #if defined(MDEBUG) && MDEBUG

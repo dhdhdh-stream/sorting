@@ -18,6 +18,8 @@ class ScopeNode;
 class Solution;
 class SolutionWrapper;
 
+bool is_new_scope_iter(SolutionWrapper* wrapper);
+
 void create_branch_experiment(SolutionWrapper* wrapper);
 void create_new_scope_overall_experiment(SolutionWrapper* wrapper);
 void create_new_scope_experiment(SolutionWrapper* wrapper);

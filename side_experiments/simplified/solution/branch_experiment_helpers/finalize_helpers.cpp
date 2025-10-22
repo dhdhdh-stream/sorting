@@ -23,6 +23,26 @@ void BranchExperiment::clean() {
 
 void BranchExperiment::add(SolutionWrapper* wrapper) {
 	cout << "BranchExperiment add" << endl;
+	cout << "this->scope_context->id: " << this->scope_context->id << endl;
+	cout << "this->node_context->id: " << this->node_context->id << endl;
+	cout << "this->is_branch: " << this->is_branch << endl;
+	cout << "new explore path:";
+	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+			cout << " " << this->best_actions[s_index];
+		} else {
+			cout << " E" << this->best_scopes[s_index]->id;
+		}
+	}
+	cout << endl;
+
+	if (this->best_exit_next_node == NULL) {
+		cout << "this->best_exit_next_node->id: " << -1 << endl;
+	} else {
+		cout << "this->best_exit_next_node->id: " << this->best_exit_next_node->id << endl;
+	}
+
+	cout << "this->select_percentage: " << this->select_percentage << endl;
 
 	vector<AbstractNode*> new_nodes;
 	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {

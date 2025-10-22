@@ -19,7 +19,8 @@ using namespace std;
 #if defined(MDEBUG) && MDEBUG
 const int TRAIN_NEW_NUM_DATAPOINTS = 20;
 #else
-const int TRAIN_NEW_NUM_DATAPOINTS = 200;
+// const int TRAIN_NEW_NUM_DATAPOINTS = 200;
+const int TRAIN_NEW_NUM_DATAPOINTS = 1000;
 #endif /* MDEBUG */
 
 void BranchExperiment::train_new_check_activate(
@@ -135,9 +136,14 @@ void BranchExperiment::train_new_backprop(
 				 * - don't clear this->target_val_histories
 				 */
 
-				this->num_refines = 0;
+				// this->num_refines = 0;
 
-				this->state = BRANCH_EXPERIMENT_STATE_REFINE;
+				// this->state = BRANCH_EXPERIMENT_STATE_REFINE;
+				// this->state_iter = 0;
+
+				this->new_sum_scores = 0.0;
+
+				this->state = BRANCH_EXPERIMENT_STATE_MEASURE;
 				this->state_iter = 0;
 			} else {
 				this->result = EXPERIMENT_RESULT_FAIL;

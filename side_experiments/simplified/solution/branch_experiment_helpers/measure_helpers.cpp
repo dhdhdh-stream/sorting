@@ -133,23 +133,27 @@ void BranchExperiment::measure_backprop(double target_val,
 			double new_score = this->new_sum_scores / (double)this->state_iter;
 
 			double existing_score;
+			double average_hits_per_run;
 			switch (this->node_context->type) {
 			case NODE_TYPE_START:
 				{
 					StartNode* start_node = (StartNode*)this->node_context;
 					existing_score = start_node->average_score;
+					average_hits_per_run = start_node->average_hits_per_run;
 				}
 				break;
 			case NODE_TYPE_ACTION:
 				{
 					ActionNode* action_node = (ActionNode*)this->node_context;
 					existing_score = action_node->average_score;
+					average_hits_per_run = action_node->average_hits_per_run;
 				}
 				break;
 			case NODE_TYPE_SCOPE:
 				{
 					ScopeNode* scope_node = (ScopeNode*)this->node_context;
 					existing_score = scope_node->average_score;
+					average_hits_per_run = scope_node->average_hits_per_run;
 				}
 				break;
 			case NODE_TYPE_BRANCH:
@@ -157,8 +161,10 @@ void BranchExperiment::measure_backprop(double target_val,
 					BranchNode* branch_node = (BranchNode*)this->node_context;
 					if (this->is_branch) {
 						existing_score = branch_node->branch_average_score;
+						average_hits_per_run = branch_node->branch_average_hits_per_run;
 					} else {
 						existing_score = branch_node->original_average_score;
+						average_hits_per_run = branch_node->original_average_hits_per_run;
 					}
 				}
 				break;
@@ -166,6 +172,7 @@ void BranchExperiment::measure_backprop(double target_val,
 				{
 					ObsNode* obs_node = (ObsNode*)this->node_context;
 					existing_score = obs_node->average_score;
+					average_hits_per_run = obs_node->average_hits_per_run;
 				}
 				break;
 			}
@@ -206,6 +213,9 @@ void BranchExperiment::measure_backprop(double target_val,
 				cout << "this->select_percentage: " << this->select_percentage << endl;
 
 				double improvement = this->new_score - existing_score;
+				cout << "average_hits_per_run: " << average_hits_per_run << endl;
+				cout << "this->new_score: " << this->new_score << endl;
+				cout << "existing_score: " << existing_score << endl;
 				cout << "improvement: " << improvement << endl;
 
 				cout << endl;

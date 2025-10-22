@@ -144,12 +144,152 @@ void analyze_input(Input& input,
 	}
 }
 
+// void gather_inputs_helper(ScopeHistory* scope_history,
+// 						  vector<Scope*>& scope_context,
+// 						  vector<int>& node_context,
+// 						  vector<ScopeHistory*>& scope_histories,
+// 						  vector<pair<Input,InputData*>>& inputs_to_consider,
+// 						  map<Input, InputData*>& input_tracker) {
+// 	Scope* scope = scope_history->scope;
+
+// 	uniform_int_distribution<int> inner_distribution(0, 2);
+// 	uniform_real_distribution<double> distribution(0.0, 1.0);
+// 	for (map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
+// 			it != scope_history->node_histories.end(); it++) {
+// 		if (scope->nodes.find(it->first) != scope->nodes.end()) {
+// 			AbstractNode* node = it->second->node;
+// 			switch (node->type) {
+// 			case NODE_TYPE_SCOPE:
+// 				if (inner_distribution(generator) != 0) {
+// 					ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)it->second;
+
+// 					scope_context.push_back(scope);
+// 					node_context.push_back(it->first);
+
+// 					gather_inputs_helper(scope_node_history->scope_history,
+// 										 scope_context,
+// 										 node_context,
+// 										 scope_histories,
+// 										 inputs_to_consider,
+// 										 input_tracker);
+
+// 					scope_context.pop_back();
+// 					node_context.pop_back();
+// 				}
+// 				break;
+// 			case NODE_TYPE_BRANCH:
+// 				{
+// 					scope_context.push_back(scope);
+// 					node_context.push_back(it->first);
+
+// 					Input input;
+// 					input.scope_context = scope_context;
+// 					input.factor_index = -1;
+// 					input.node_context = node_context;
+// 					input.obs_index = -1;
+
+// 					map<Input, InputData*>::iterator it = input_tracker.find(input);
+// 					if (it == input_tracker.end()) {
+// 						InputData* input_data = new InputData();
+// 						analyze_input(input,
+// 									  scope_histories,
+// 									  input_data);
+
+// 						it = input_tracker.insert({input, input_data}).first;
+// 					}
+
+// 					if (it->second->hit_percent >= MIN_CONSIDER_HIT_PERCENT
+// 							&& it->second->standard_deviation >= MIN_STANDARD_DEVIATION) {
+// 						if (distribution(generator) <= 1.0 / (1.0 + sqrt(it->second->average_distance))) {
+// 							inputs_to_consider.push_back({input, it->second});
+// 						}
+// 					}
+
+// 					scope_context.pop_back();
+// 					node_context.pop_back();
+// 				}
+// 				break;
+// 			case NODE_TYPE_OBS:
+// 				{
+// 					ObsNodeHistory* obs_node_history = (ObsNodeHistory*)it->second;
+
+// 					for (int o_index = 0; o_index < (int)obs_node_history->obs_history.size(); o_index++) {
+// 						scope_context.push_back(scope);
+// 						node_context.push_back(it->first);
+
+// 						Input input;
+// 						input.scope_context = scope_context;
+// 						input.factor_index = -1;
+// 						input.node_context = node_context;
+// 						input.obs_index = o_index;
+
+// 						map<Input, InputData*>::iterator it = input_tracker.find(input);
+// 						if (it == input_tracker.end()) {
+// 							InputData* input_data = new InputData();
+// 							analyze_input(input,
+// 										  scope_histories,
+// 										  input_data);
+
+// 							it = input_tracker.insert({input, input_data}).first;
+// 						}
+
+// 						if (it->second->hit_percent >= MIN_CONSIDER_HIT_PERCENT
+// 								&& it->second->standard_deviation >= MIN_STANDARD_DEVIATION) {
+// 							if (distribution(generator) <= 1.0 / (1.0 + sqrt(it->second->average_distance))) {
+// 								inputs_to_consider.push_back({input, it->second});
+// 							}
+// 						}
+
+// 						scope_context.pop_back();
+// 						node_context.pop_back();
+// 					}
+// 				}
+// 				break;
+// 			}
+// 		}
+// 	}
+
+// 	for (int f_index = 0; f_index < (int)scope->factors.size(); f_index++) {
+// 		if (scope->factors[f_index]->is_meaningful) {
+// 			scope_context.push_back(scope);
+// 			node_context.push_back(-1);
+
+// 			Input input;
+// 			input.scope_context = scope_context;
+// 			input.factor_index = f_index;
+// 			input.node_context = node_context;
+// 			input.obs_index = -1;
+
+// 			map<Input, InputData*>::iterator it = input_tracker.find(input);
+// 			if (it == input_tracker.end()) {
+// 				InputData* input_data = new InputData();
+// 				analyze_input(input,
+// 							  scope_histories,
+// 							  input_data);
+
+// 				it = input_tracker.insert({input, input_data}).first;
+// 			}
+
+// 			if (it->second->hit_percent >= MIN_CONSIDER_HIT_PERCENT
+// 					&& it->second->standard_deviation >= MIN_STANDARD_DEVIATION) {
+// 				if (distribution(generator) <= 1.0 / (1.0 + sqrt(it->second->average_distance))) {
+// 					inputs_to_consider.push_back({input, it->second});
+// 				}
+// 			}
+
+// 			scope_context.pop_back();
+// 			node_context.pop_back();
+// 		}
+// 	}
+// }
+
 void gather_inputs_helper(ScopeHistory* scope_history,
 						  vector<Scope*>& scope_context,
 						  vector<int>& node_context,
 						  vector<ScopeHistory*>& scope_histories,
 						  vector<pair<Input,InputData*>>& inputs_to_consider,
-						  map<Input, InputData*>& input_tracker) {
+						  map<Input, InputData*>& input_tracker,
+						  AbstractNode* experiment_node_context) {
 	Scope* scope = scope_history->scope;
 
 	uniform_int_distribution<int> inner_distribution(0, 2);
@@ -171,7 +311,8 @@ void gather_inputs_helper(ScopeHistory* scope_history,
 										 node_context,
 										 scope_histories,
 										 inputs_to_consider,
-										 input_tracker);
+										 input_tracker,
+										 experiment_node_context);
 
 					scope_context.pop_back();
 					node_context.pop_back();
@@ -210,7 +351,7 @@ void gather_inputs_helper(ScopeHistory* scope_history,
 				}
 				break;
 			case NODE_TYPE_OBS:
-				{
+				if (node == experiment_node_context) {
 					ObsNodeHistory* obs_node_history = (ObsNodeHistory*)it->second;
 
 					for (int o_index = 0; o_index < (int)obs_node_history->obs_history.size(); o_index++) {
@@ -248,41 +389,25 @@ void gather_inputs_helper(ScopeHistory* scope_history,
 			}
 		}
 	}
-
-	for (int f_index = 0; f_index < (int)scope->factors.size(); f_index++) {
-		if (scope->factors[f_index]->is_meaningful) {
-			scope_context.push_back(scope);
-			node_context.push_back(-1);
-
-			Input input;
-			input.scope_context = scope_context;
-			input.factor_index = f_index;
-			input.node_context = node_context;
-			input.obs_index = -1;
-
-			map<Input, InputData*>::iterator it = input_tracker.find(input);
-			if (it == input_tracker.end()) {
-				InputData* input_data = new InputData();
-				analyze_input(input,
-							  scope_histories,
-							  input_data);
-
-				it = input_tracker.insert({input, input_data}).first;
-			}
-
-			if (it->second->hit_percent >= MIN_CONSIDER_HIT_PERCENT
-					&& it->second->standard_deviation >= MIN_STANDARD_DEVIATION) {
-				if (distribution(generator) <= 1.0 / (1.0 + sqrt(it->second->average_distance))) {
-					inputs_to_consider.push_back({input, it->second});
-				}
-			}
-
-			scope_context.pop_back();
-			node_context.pop_back();
-		}
-	}
 }
 
+// void try_helper(vector<ScopeHistory*>& scope_histories,
+// 				vector<double>& target_val_histories,
+// 				map<Input, InputData*>& input_tracker,
+// 				double& constant,
+// 				vector<Input>& factor_inputs,
+// 				vector<vector<double>>& factor_vals,
+// 				vector<double>& factor_input_averages,
+// 				vector<double>& factor_input_standard_deviations,
+// 				vector<double>& factor_weights,
+// 				vector<Input>& network_inputs,
+// 				vector<vector<double>>& network_vals,
+// 				vector<vector<bool>>& network_is_on,
+// 				Network*& network,
+// 				double& average_misguess,
+// 				double& seed_average_predicted_score,
+// 				double& average_predicted_score,
+// 				double& select_percentage) {
 void try_helper(vector<ScopeHistory*>& scope_histories,
 				vector<double>& target_val_histories,
 				map<Input, InputData*>& input_tracker,
@@ -299,8 +424,9 @@ void try_helper(vector<ScopeHistory*>& scope_histories,
 				double& average_misguess,
 				double& seed_average_predicted_score,
 				double& average_predicted_score,
-				double& select_percentage) {
-	Scope* scope = scope_histories[0]->scope;
+				double& select_percentage,
+				AbstractNode* experiment_node_context) {
+	// Scope* scope = scope_histories[0]->scope;
 
 	#if defined(MDEBUG) && MDEBUG
 	int num_seeds = max(1.0, SEED_RATIO * (double)scope_histories.size());
@@ -320,196 +446,196 @@ void try_helper(vector<ScopeHistory*>& scope_histories,
 		remaining_indexes.erase(remaining_indexes.begin() + index);
 	}
 
-	double sum_seed_vals = 0.0;
-	for (int s_index = 0; s_index < (int)seed_indexes.size(); s_index++) {
-		sum_seed_vals += target_val_histories[seed_indexes[s_index]];
-	}
-	double seed_val_average = sum_seed_vals / (double)seed_indexes.size();
+	// double sum_seed_vals = 0.0;
+	// for (int s_index = 0; s_index < (int)seed_indexes.size(); s_index++) {
+	// 	sum_seed_vals += target_val_histories[seed_indexes[s_index]];
+	// }
+	// double seed_val_average = sum_seed_vals / (double)seed_indexes.size();
 
-	double sum_seed_variances = 0.0;
-	for (int s_index = 0; s_index < (int)seed_indexes.size(); s_index++) {
-		sum_seed_variances += (target_val_histories[seed_indexes[s_index]] - seed_val_average)
-			* (target_val_histories[seed_indexes[s_index]] - seed_val_average);
-	}
-	double seed_val_standard_deviation = sqrt(sum_seed_variances / (double)seed_indexes.size());
+	// double sum_seed_variances = 0.0;
+	// for (int s_index = 0; s_index < (int)seed_indexes.size(); s_index++) {
+	// 	sum_seed_variances += (target_val_histories[seed_indexes[s_index]] - seed_val_average)
+	// 		* (target_val_histories[seed_indexes[s_index]] - seed_val_average);
+	// }
+	// double seed_val_standard_deviation = sqrt(sum_seed_variances / (double)seed_indexes.size());
 
 	bool train_factor_success = false;
 
 	vector<InputData*> factor_input_datas;
-	if (seed_val_standard_deviation >= MIN_STANDARD_DEVIATION) {
-		vector<double> normalized_seed_target_vals(seed_indexes.size());
-		for (int s_index = 0; s_index < (int)seed_indexes.size(); s_index++) {
-			normalized_seed_target_vals[s_index] = target_val_histories[seed_indexes[s_index]] - seed_val_average;
-		}
+	// if (seed_val_standard_deviation >= MIN_STANDARD_DEVIATION) {
+	// 	vector<double> normalized_seed_target_vals(seed_indexes.size());
+	// 	for (int s_index = 0; s_index < (int)seed_indexes.size(); s_index++) {
+	// 		normalized_seed_target_vals[s_index] = target_val_histories[seed_indexes[s_index]] - seed_val_average;
+	// 	}
 
-		vector<pair<double, pair<Input,InputData*>>> factor_pccs;
-		for (int f_index = 0; f_index < (int)scope->factors.size(); f_index++) {
-			Input input;
-			input.scope_context = {scope};
-			input.factor_index = f_index;
-			input.node_context = {-1};
-			input.obs_index = -1;
+	// 	vector<pair<double, pair<Input,InputData*>>> factor_pccs;
+	// 	for (int f_index = 0; f_index < (int)scope->factors.size(); f_index++) {
+	// 		Input input;
+	// 		input.scope_context = {scope};
+	// 		input.factor_index = f_index;
+	// 		input.node_context = {-1};
+	// 		input.obs_index = -1;
 
-			map<Input, InputData*>::iterator it = input_tracker.find(input);
-			if (it == input_tracker.end()) {
-				InputData* input_data = new InputData();
-				analyze_input(input,
-							  scope_histories,
-							  input_data);
+	// 		map<Input, InputData*>::iterator it = input_tracker.find(input);
+	// 		if (it == input_tracker.end()) {
+	// 			InputData* input_data = new InputData();
+	// 			analyze_input(input,
+	// 						  scope_histories,
+	// 						  input_data);
 
-				it = input_tracker.insert({input, input_data}).first;
-			}
+	// 			it = input_tracker.insert({input, input_data}).first;
+	// 		}
 
-			if (it->second->hit_percent >= MIN_CONSIDER_HIT_PERCENT
-					&& it->second->standard_deviation >= MIN_STANDARD_DEVIATION) {
-				double sum_vals = 0.0;
-				for (int s_index = 0; s_index < (int)seed_indexes.size(); s_index++) {
-					sum_vals += it->second->normalized_vals[seed_indexes[s_index]];
-				}
-				double val_average = sum_vals / (double)seed_indexes.size();
+	// 		if (it->second->hit_percent >= MIN_CONSIDER_HIT_PERCENT
+	// 				&& it->second->standard_deviation >= MIN_STANDARD_DEVIATION) {
+	// 			double sum_vals = 0.0;
+	// 			for (int s_index = 0; s_index < (int)seed_indexes.size(); s_index++) {
+	// 				sum_vals += it->second->normalized_vals[seed_indexes[s_index]];
+	// 			}
+	// 			double val_average = sum_vals / (double)seed_indexes.size();
 
-				double sum_variances = 0.0;
-				for (int s_index = 0; s_index < (int)seed_indexes.size(); s_index++) {
-					sum_variances += (it->second->normalized_vals[seed_indexes[s_index]] - val_average)
-						* (it->second->normalized_vals[seed_indexes[s_index]] - val_average);
-				}
-				double val_standard_deviation = sqrt(sum_variances / (double)seed_indexes.size());
+	// 			double sum_variances = 0.0;
+	// 			for (int s_index = 0; s_index < (int)seed_indexes.size(); s_index++) {
+	// 				sum_variances += (it->second->normalized_vals[seed_indexes[s_index]] - val_average)
+	// 					* (it->second->normalized_vals[seed_indexes[s_index]] - val_average);
+	// 			}
+	// 			double val_standard_deviation = sqrt(sum_variances / (double)seed_indexes.size());
 
-				if (val_standard_deviation >= MIN_STANDARD_DEVIATION) {
-					double sum_covariance = 0.0;
-					for (int s_index = 0; s_index < (int)seed_indexes.size(); s_index++) {
-						sum_covariance += normalized_seed_target_vals[s_index]
-							* (it->second->normalized_vals[seed_indexes[s_index]] - val_average);
-					}
-					double covariance = sum_covariance / (double)seed_indexes.size();
+	// 			if (val_standard_deviation >= MIN_STANDARD_DEVIATION) {
+	// 				double sum_covariance = 0.0;
+	// 				for (int s_index = 0; s_index < (int)seed_indexes.size(); s_index++) {
+	// 					sum_covariance += normalized_seed_target_vals[s_index]
+	// 						* (it->second->normalized_vals[seed_indexes[s_index]] - val_average);
+	// 				}
+	// 				double covariance = sum_covariance / (double)seed_indexes.size();
 
-					double pcc = covariance / seed_val_standard_deviation / val_standard_deviation;
+	// 				double pcc = covariance / seed_val_standard_deviation / val_standard_deviation;
 
-					factor_pccs.push_back({abs(pcc), {input, it->second}});
-				}
-			}
-		}
-		sort(factor_pccs.begin(), factor_pccs.end());
+	// 				factor_pccs.push_back({abs(pcc), {input, it->second}});
+	// 			}
+	// 		}
+	// 	}
+	// 	sort(factor_pccs.begin(), factor_pccs.end());
 
-		vector<Input> new_factor_inputs;
-		vector<InputData*> new_factor_input_datas;
-		for (int f_index = (int)factor_pccs.size()-1; f_index >= 0; f_index--) {
-			InputData* potential_input_data = factor_pccs[f_index].second.second;
+	// 	vector<Input> new_factor_inputs;
+	// 	vector<InputData*> new_factor_input_datas;
+	// 	for (int f_index = (int)factor_pccs.size()-1; f_index >= 0; f_index--) {
+	// 		InputData* potential_input_data = factor_pccs[f_index].second.second;
 
-			bool should_add = true;
-			for (int e_index = 0; e_index < (int)new_factor_inputs.size(); e_index++) {
-				InputData* existing_input_data = new_factor_input_datas[e_index];
+	// 		bool should_add = true;
+	// 		for (int e_index = 0; e_index < (int)new_factor_inputs.size(); e_index++) {
+	// 			InputData* existing_input_data = new_factor_input_datas[e_index];
 
-				double sum_covariance = 0.0;
-				for (int h_index = 0; h_index < (int)potential_input_data->normalized_vals.size(); h_index++) {
-					sum_covariance += (potential_input_data->normalized_vals[h_index] - potential_input_data->normalized_average)
-						* (existing_input_data->normalized_vals[h_index] - existing_input_data->normalized_average);
-				}
-				double covariance = sum_covariance / (double)potential_input_data->normalized_vals.size();
+	// 			double sum_covariance = 0.0;
+	// 			for (int h_index = 0; h_index < (int)potential_input_data->normalized_vals.size(); h_index++) {
+	// 				sum_covariance += (potential_input_data->normalized_vals[h_index] - potential_input_data->normalized_average)
+	// 					* (existing_input_data->normalized_vals[h_index] - existing_input_data->normalized_average);
+	// 			}
+	// 			double covariance = sum_covariance / (double)potential_input_data->normalized_vals.size();
 
-				double pcc = covariance / potential_input_data->normalized_standard_deviation / existing_input_data->normalized_standard_deviation;
+	// 			double pcc = covariance / potential_input_data->normalized_standard_deviation / existing_input_data->normalized_standard_deviation;
 
-				if (abs(pcc) > UNIQUE_MAX_PCC) {
-					should_add = false;
-					break;
-				}
-			}
+	// 			if (abs(pcc) > UNIQUE_MAX_PCC) {
+	// 				should_add = false;
+	// 				break;
+	// 			}
+	// 		}
 
-			if (should_add) {
-				new_factor_inputs.push_back(factor_pccs[f_index].second.first);
-				new_factor_input_datas.push_back(factor_pccs[f_index].second.second);
-			}
+	// 		if (should_add) {
+	// 			new_factor_inputs.push_back(factor_pccs[f_index].second.first);
+	// 			new_factor_input_datas.push_back(factor_pccs[f_index].second.second);
+	// 		}
 
-			factor_pccs.pop_back();
+	// 		factor_pccs.pop_back();
 
-			if (new_factor_inputs.size() >= NUM_FACTORS) {
-				break;
-			}
-		}
+	// 		if (new_factor_inputs.size() >= NUM_FACTORS) {
+	// 			break;
+	// 		}
+	// 	}
 
-		Eigen::MatrixXd inputs(remaining_indexes.size(), 1 + new_factor_inputs.size());
-		uniform_real_distribution<double> noise_distribution(-0.001, 0.001);
-		/**
-		 * - add some noise to prevent extremes
-		 */
-		for (int i_index = 0; i_index < (int)remaining_indexes.size(); i_index++) {
-			inputs(i_index, 0) = 1.0;
-			for (int f_index = 0; f_index < (int)new_factor_inputs.size(); f_index++) {
-				inputs(i_index, 1 + f_index) = new_factor_input_datas[f_index]
-					->normalized_vals[remaining_indexes[i_index]]
-						+ noise_distribution(generator);
-			}
-		}
+	// 	Eigen::MatrixXd inputs(remaining_indexes.size(), 1 + new_factor_inputs.size());
+	// 	uniform_real_distribution<double> noise_distribution(-0.001, 0.001);
+	// 	/**
+	// 	 * - add some noise to prevent extremes
+	// 	 */
+	// 	for (int i_index = 0; i_index < (int)remaining_indexes.size(); i_index++) {
+	// 		inputs(i_index, 0) = 1.0;
+	// 		for (int f_index = 0; f_index < (int)new_factor_inputs.size(); f_index++) {
+	// 			inputs(i_index, 1 + f_index) = new_factor_input_datas[f_index]
+	// 				->normalized_vals[remaining_indexes[i_index]]
+	// 					+ noise_distribution(generator);
+	// 		}
+	// 	}
 
-		Eigen::VectorXd outputs(remaining_indexes.size());
-		for (int i_index = 0; i_index < (int)remaining_indexes.size(); i_index++) {
-			outputs(i_index) = target_val_histories[remaining_indexes[i_index]];
-		}
+	// 	Eigen::VectorXd outputs(remaining_indexes.size());
+	// 	for (int i_index = 0; i_index < (int)remaining_indexes.size(); i_index++) {
+	// 		outputs(i_index) = target_val_histories[remaining_indexes[i_index]];
+	// 	}
 
-		train_factor_success = true;
-		Eigen::VectorXd weights;
-		try {
-			weights = inputs.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(outputs);
-		} catch (std::invalid_argument &e) {
-			cout << "Eigen error" << endl;
-			train_factor_success = false;
-		}
+	// 	train_factor_success = true;
+	// 	Eigen::VectorXd weights;
+	// 	try {
+	// 		weights = inputs.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(outputs);
+	// 	} catch (std::invalid_argument &e) {
+	// 		cout << "Eigen error" << endl;
+	// 		train_factor_success = false;
+	// 	}
 
-		#if defined(MDEBUG) && MDEBUG
-		#else
-		if (train_factor_success) {
-			if (abs(weights(0)) > REGRESSION_WEIGHT_LIMIT) {
-				cout << "abs(weights(0)): " << abs(weights(0)) << endl;
-				train_factor_success = false;
-			}
-			for (int f_index = 0; f_index < (int)factor_inputs.size(); f_index++) {
-				if (abs(weights(1 + f_index)) > REGRESSION_WEIGHT_LIMIT) {
-					cout << "abs(weights(1 + f_index)): " << abs(weights(1 + f_index)) << endl;
-					train_factor_success = false;
-				}
-			}
-		}
-		#endif /* MDEBUG */
+	// 	#if defined(MDEBUG) && MDEBUG
+	// 	#else
+	// 	if (train_factor_success) {
+	// 		if (abs(weights(0)) > REGRESSION_WEIGHT_LIMIT) {
+	// 			cout << "abs(weights(0)): " << abs(weights(0)) << endl;
+	// 			train_factor_success = false;
+	// 		}
+	// 		for (int f_index = 0; f_index < (int)factor_inputs.size(); f_index++) {
+	// 			if (abs(weights(1 + f_index)) > REGRESSION_WEIGHT_LIMIT) {
+	// 				cout << "abs(weights(1 + f_index)): " << abs(weights(1 + f_index)) << endl;
+	// 				train_factor_success = false;
+	// 			}
+	// 		}
+	// 	}
+	// 	#endif /* MDEBUG */
 
-		if (train_factor_success) {
-			vector<double> seed_predicted_vals(seed_indexes.size());
-			for (int s_index = 0; s_index < (int)seed_indexes.size(); s_index++) {
-				double sum_score = weights(0);
-				for (int f_index = 0; f_index < (int)new_factor_inputs.size(); f_index++) {
-					sum_score += weights(1 + f_index) * new_factor_input_datas[f_index]->normalized_vals[seed_indexes[s_index]];
-				}
-				seed_predicted_vals[s_index] = sum_score;
-			}
+	// 	if (train_factor_success) {
+	// 		vector<double> seed_predicted_vals(seed_indexes.size());
+	// 		for (int s_index = 0; s_index < (int)seed_indexes.size(); s_index++) {
+	// 			double sum_score = weights(0);
+	// 			for (int f_index = 0; f_index < (int)new_factor_inputs.size(); f_index++) {
+	// 				sum_score += weights(1 + f_index) * new_factor_input_datas[f_index]->normalized_vals[seed_indexes[s_index]];
+	// 			}
+	// 			seed_predicted_vals[s_index] = sum_score;
+	// 		}
 
-			double sum_seed_factor_misguess = 0.0;
-			for (int s_index = 0; s_index < (int)seed_indexes.size(); s_index++) {
-				sum_seed_factor_misguess += (target_val_histories[seed_indexes[s_index]] - seed_predicted_vals[s_index])
-					* (target_val_histories[seed_indexes[s_index]] - seed_predicted_vals[s_index]);
-			}
+	// 		double sum_seed_factor_misguess = 0.0;
+	// 		for (int s_index = 0; s_index < (int)seed_indexes.size(); s_index++) {
+	// 			sum_seed_factor_misguess += (target_val_histories[seed_indexes[s_index]] - seed_predicted_vals[s_index])
+	// 				* (target_val_histories[seed_indexes[s_index]] - seed_predicted_vals[s_index]);
+	// 		}
 
-			#if defined(MDEBUG) && MDEBUG
-			if (sum_seed_factor_misguess >= sum_seed_variances && rand()%2 == 0) {
-			#else
-			if (sum_seed_factor_misguess >= sum_seed_variances) {
-			#endif /* MDEBUG */
-				train_factor_success = false;
-			}
-		}
+	// 		#if defined(MDEBUG) && MDEBUG
+	// 		if (sum_seed_factor_misguess >= sum_seed_variances && rand()%2 == 0) {
+	// 		#else
+	// 		if (sum_seed_factor_misguess >= sum_seed_variances) {
+	// 		#endif /* MDEBUG */
+	// 			train_factor_success = false;
+	// 		}
+	// 	}
 
-		if (train_factor_success) {
-			factor_inputs = new_factor_inputs;
-			for (int f_index = 0; f_index < (int)new_factor_inputs.size(); f_index++) {
-				factor_input_averages.push_back(new_factor_input_datas[f_index]->average);
-				factor_input_standard_deviations.push_back(new_factor_input_datas[f_index]->standard_deviation);
-			}
-			factor_input_datas = new_factor_input_datas;
+	// 	if (train_factor_success) {
+	// 		factor_inputs = new_factor_inputs;
+	// 		for (int f_index = 0; f_index < (int)new_factor_inputs.size(); f_index++) {
+	// 			factor_input_averages.push_back(new_factor_input_datas[f_index]->average);
+	// 			factor_input_standard_deviations.push_back(new_factor_input_datas[f_index]->standard_deviation);
+	// 		}
+	// 		factor_input_datas = new_factor_input_datas;
 
-			constant = weights(0);
-			for (int f_index = 0; f_index < (int)new_factor_inputs.size(); f_index++) {
-				factor_weights.push_back(weights(1 + f_index));
-			}
-		}
-	}
+	// 		constant = weights(0);
+	// 		for (int f_index = 0; f_index < (int)new_factor_inputs.size(); f_index++) {
+	// 			factor_weights.push_back(weights(1 + f_index));
+	// 		}
+	// 	}
+	// }
 
 	if (!train_factor_success) {
 		double sum_remaining_scores = 0.0;
@@ -551,7 +677,8 @@ void try_helper(vector<ScopeHistory*>& scope_histories,
 						 node_context,
 						 scope_histories,
 						 inputs_to_consider,
-						 input_tracker);
+						 input_tracker,
+						 experiment_node_context);
 
 	double sum_seed_remaining_vals = 0.0;
 	for (int s_index = 0; s_index < (int)seed_indexes.size(); s_index++) {
@@ -866,6 +993,23 @@ void BranchExperiment::train_existing_helper(vector<ScopeHistory*>& scope_histor
 		double curr_seed_average_predicted_score;
 		double curr_average_predicted_score;
 		double curr_select_percentage;
+		// try_helper(scope_histories,
+		// 		   target_val_histories,
+		// 		   input_tracker,
+		// 		   curr_constant,
+		// 		   curr_factor_inputs,
+		// 		   curr_factor_vals,
+		// 		   curr_factor_input_averages,
+		// 		   curr_factor_input_standard_deviations,
+		// 		   curr_factor_weights,
+		// 		   curr_network_inputs,
+		// 		   curr_network_vals,
+		// 		   curr_network_is_on,
+		// 		   curr_network,
+		// 		   curr_average_misguess,
+		// 		   curr_seed_average_predicted_score,
+		// 		   curr_average_predicted_score,
+		// 		   curr_select_percentage);
 		try_helper(scope_histories,
 				   target_val_histories,
 				   input_tracker,
@@ -882,7 +1026,8 @@ void BranchExperiment::train_existing_helper(vector<ScopeHistory*>& scope_histor
 				   curr_average_misguess,
 				   curr_seed_average_predicted_score,
 				   curr_average_predicted_score,
-				   curr_select_percentage);
+				   curr_select_percentage,
+				   this->node_context);
 
 		#if defined(MDEBUG) && MDEBUG
 		if (curr_average_misguess < best_average_misguess || rand()%2 == 0) {
@@ -949,6 +1094,23 @@ bool BranchExperiment::train_new_helper() {
 		double curr_seed_average_predicted_score;
 		double curr_average_predicted_score;
 		double curr_select_percentage;
+		// try_helper(this->scope_histories,
+		// 		   this->target_val_histories,
+		// 		   input_tracker,
+		// 		   curr_constant,
+		// 		   curr_factor_inputs,
+		// 		   curr_factor_vals,
+		// 		   curr_factor_input_averages,
+		// 		   curr_factor_input_standard_deviations,
+		// 		   curr_factor_weights,
+		// 		   curr_network_inputs,
+		// 		   curr_network_vals,
+		// 		   curr_network_is_on,
+		// 		   curr_network,
+		// 		   curr_average_misguess,
+		// 		   curr_seed_average_predicted_score,
+		// 		   curr_average_predicted_score,
+		// 		   curr_select_percentage);
 		try_helper(this->scope_histories,
 				   this->target_val_histories,
 				   input_tracker,
@@ -965,7 +1127,8 @@ bool BranchExperiment::train_new_helper() {
 				   curr_average_misguess,
 				   curr_seed_average_predicted_score,
 				   curr_average_predicted_score,
-				   curr_select_percentage);
+				   curr_select_percentage,
+				   this->node_context);
 
 		// // temp
 		// cout << t_index << endl;

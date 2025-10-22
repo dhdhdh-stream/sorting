@@ -3,6 +3,44 @@
 // - maybe lower vision encourages better scopes?
 //   - less sharp, more general?
 
+// - for inputs, maybe only focus on very very close inputs
+//   - at least in terms of index
+
+// - maybe if things are too mixed, decision making becomes hard?
+
+// - also possible a signal issue
+
+// - with input/decision difficulties, made worse by signal issues, probably better to simply count on PassThrough
+
+// - could go back to measuring by overall, instead of by path
+
+// - possible that refine is taking away too much impact when signal is bad?
+//   - yeah, doesn't work when there is noise
+// - but maybe train new in stages
+//   - so can at least adjust for multiple instances
+
+// TODO:
+// - track score improvement history
+//   - save not by final solution, but by incremental
+
+// - depending on early hurts long term?
+//   - difficult to make changes between early and decision?
+//   - or locks decision to only being able to help early
+//     - so changes between early and decision will destroy decision
+//     - whereas if depends on later, decision might be able to adjust
+// - and is committal
+//   - as the same change but depending on later will never be added
+// - so if at all possible, use later
+// - possibly why getting trapped?
+//   - no good spots to add scopes
+
+// - perhaps good to reuse scopes[0]?
+//   - for new scopes, unlikely to replace key improvements of scopes[0]
+//     - so new scopes always built around what's already in scopes[0]?
+//       - so impact ends up low
+
+// - perhaps metric isn't how good result is? but how small resulting solution is?
+
 #include <chrono>
 #include <iostream>
 #include <map>

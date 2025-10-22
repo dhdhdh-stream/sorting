@@ -14,7 +14,7 @@
 using namespace std;
 
 const int REGATHER_COUNTER_LIMIT = 20;
-const int NEW_SCOPE_REGATHER_COUNTER_LIMIT = 200;
+const int NEW_SCOPE_REGATHER_COUNTER_LIMIT = 800;
 
 const int NEW_SCOPE_FOCUS_ITERS = 4;
 
@@ -32,7 +32,7 @@ void SolutionWrapper::experiment_init() {
 		this->scope_histories.push_back(scope_history);
 		this->node_context.push_back(this->solution->scopes[0]->nodes[0]);
 	} else {
-		if (this->solution->timestamp % 10 == 5) {
+		if (is_new_scope_iter(this)) {
 			while (this->curr_new_scope_experiment == NULL) {
 				create_new_scope_overall_experiment(this);
 			}
@@ -53,7 +53,7 @@ void SolutionWrapper::experiment_init() {
 		this->curr_run_seed = xorshift(this->starting_run_seed);
 		#endif /* MDEBUG */
 
-		if (this->solution->timestamp % 10 == 5) {
+		if (is_new_scope_iter(this)) {
 			this->experiment_history = new NewScopeExperimentHistory(
 				this->curr_new_scope_experiment->curr_experiment);
 		} else {
@@ -189,7 +189,7 @@ void SolutionWrapper::experiment_end(double result) {
 		this->node_context.clear();
 		this->experiment_context.clear();
 
-		if (this->solution->timestamp % 10 == 5) {
+		if (is_new_scope_iter(this)) {
 			bool check_overall = false;
 			bool early_exit = false;
 			if (this->curr_new_scope_experiment->curr_experiment->result == EXPERIMENT_RESULT_FAIL) {

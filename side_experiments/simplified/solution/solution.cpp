@@ -21,7 +21,7 @@ using namespace std;
  * - simply merge every fixed number of timesteps
  *   - hopefully prevents solution from getting too stale and thrashing
  */
-const int RUN_TIMESTEPS = 40;
+const int RUN_TIMESTEPS = 30;
 
 Solution::Solution() {
 	// do nothing
