@@ -17,7 +17,8 @@ class ScopeNode;
 class Solution;
 class SolutionWrapper;
 
-void create_branch_experiment(SolutionWrapper* wrapper);
+void create_branch_experiment(ScopeHistory* scope_history,
+							  SolutionWrapper* wrapper);
 
 AbstractNode* fetch_path_end(AbstractNode* node_context);
 

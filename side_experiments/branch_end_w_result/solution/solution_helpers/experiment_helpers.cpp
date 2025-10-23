@@ -116,11 +116,8 @@ void gather_helper(ScopeHistory* scope_history,
 	}
 }
 
-void create_branch_experiment(SolutionWrapper* wrapper) {
-	uniform_int_distribution<int> scope_history_distribution(0,
-		wrapper->solution->existing_scope_histories.size()-1);
-	ScopeHistory* scope_history = wrapper->solution->existing_scope_histories[scope_history_distribution(generator)];
-
+void create_branch_experiment(ScopeHistory* scope_history,
+							  SolutionWrapper* wrapper) {
 	int node_count = 0;
 	AbstractNode* explore_node = NULL;
 	bool explore_is_branch = false;
@@ -132,64 +129,11 @@ void create_branch_experiment(SolutionWrapper* wrapper) {
 	// if (explore_node != NULL) {
 	if (explore_node != NULL
 			&& explore_node->type == NODE_TYPE_OBS) {
-		if (wrapper->solution->last_new_scope != NULL) {
-			if (explore_node->parent == wrapper->solution->last_new_scope) {
-				BranchExperiment* new_experiment = new BranchExperiment(
-					explore_node->parent,
-					explore_node,
-					explore_is_branch,
-					wrapper);
-				wrapper->curr_branch_experiment = new_experiment;
-			}
-		} else {
-			BranchExperiment* new_experiment = new BranchExperiment(
-				explore_node->parent,
-				explore_node,
-				explore_is_branch,
-				wrapper);
-			wrapper->curr_branch_experiment = new_experiment;
-		}
+		BranchExperiment* new_experiment = new BranchExperiment(
+			explore_node->parent,
+			explore_node,
+			explore_is_branch,
+			wrapper);
+		wrapper->curr_branch_experiment = new_experiment;
 	}
-}
-
-double get_experiment_impact(BranchExperiment* experiment) {
-	double existing_score;
-	switch (experiment->node_context->type) {
-	case NODE_TYPE_START:
-		{
-			StartNode* start_node = (StartNode*)experiment->node_context;
-			existing_score = start_node->average_score;
-		}
-		break;
-	case NODE_TYPE_ACTION:
-		{
-			ActionNode* action_node = (ActionNode*)experiment->node_context;
-			existing_score = action_node->average_score;
-		}
-		break;
-	case NODE_TYPE_SCOPE:
-		{
-			ScopeNode* scope_node = (ScopeNode*)experiment->node_context;
-			existing_score = scope_node->average_score;
-		}
-		break;
-	case NODE_TYPE_BRANCH:
-		{
-			BranchNode* branch_node = (BranchNode*)experiment->node_context;
-			if (experiment->is_branch) {
-				existing_score = branch_node->branch_average_score;
-			} else {
-				existing_score = branch_node->original_average_score;
-			}
-		}
-		break;
-	case NODE_TYPE_OBS:
-		{
-			ObsNode* obs_node = (ObsNode*)experiment->node_context;
-			existing_score = obs_node->average_score;
-		}
-		break;
-	}
-
-	return experiment->new_score - existing_score;
 }

@@ -48,6 +48,9 @@ void ObsNode::save(ofstream& output_file) {
 
 	output_file << this->branch_start_node_id << endl;
 
+	output_file << this->average_hits_per_run << endl;
+	output_file << this->average_instances_per_run << endl;
+
 	output_file << this->ancestor_ids.size() << endl;
 	for (int a_index = 0; a_index < (int)this->ancestor_ids.size(); a_index++) {
 		output_file << this->ancestor_ids[a_index] << endl;
@@ -63,6 +66,14 @@ void ObsNode::load(ifstream& input_file,
 	string branch_start_node_id_line;
 	getline(input_file, branch_start_node_id_line);
 	this->branch_start_node_id = stoi(branch_start_node_id_line);
+
+	string average_hits_per_run_line;
+	getline(input_file, average_hits_per_run_line);
+	this->average_hits_per_run = stod(average_hits_per_run_line);
+
+	string average_instances_per_run_line;
+	getline(input_file, average_instances_per_run_line);
+	this->average_instances_per_run = stod(average_instances_per_run_line);
 
 	string num_ancestors_line;
 	getline(input_file, num_ancestors_line);

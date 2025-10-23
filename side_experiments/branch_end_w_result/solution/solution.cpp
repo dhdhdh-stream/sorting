@@ -48,12 +48,16 @@ void Solution::init() {
 	start_node->id = new_scope->node_counter;
 	new_scope->node_counter++;
 	new_scope->nodes[start_node->id] = start_node;
+	start_node->average_hits_per_run = 1.0;
+	start_node->average_instances_per_run = 1.0;
 
 	ObsNode* end_node = new ObsNode();
 	end_node->parent = new_scope;
 	end_node->id = new_scope->node_counter;
 	new_scope->node_counter++;
 	new_scope->nodes[end_node->id] = end_node;
+	end_node->average_hits_per_run = 1.0;
+	end_node->average_instances_per_run = 1.0;
 
 	start_node->next_node_id = end_node->id;
 	start_node->next_node = end_node;

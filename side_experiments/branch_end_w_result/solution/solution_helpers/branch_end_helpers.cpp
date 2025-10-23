@@ -11,24 +11,28 @@ using namespace std;
 AbstractNode* fetch_path_end(AbstractNode* node_context) {
 	set<int> branch_node_ids_seen;
 
+	AbstractNode* prev_node = NULL;
 	AbstractNode* curr_node = node_context;
 	while (true) {
 		switch (curr_node->type) {
 		case NODE_TYPE_START:
 			{
 				StartNode* node = (StartNode*)curr_node;
+				prev_node = curr_node;
 				curr_node = node->next_node;
 			}
 			break;
 		case NODE_TYPE_ACTION:
 			{
 				ActionNode* node = (ActionNode*)curr_node;
+				prev_node = curr_node;
 				curr_node = node->next_node;
 			}
 			break;
 		case NODE_TYPE_SCOPE:
 			{
 				ScopeNode* node = (ScopeNode*)curr_node;
+				prev_node = curr_node;
 				curr_node = node->next_node;
 			}
 			break;
@@ -38,6 +42,7 @@ AbstractNode* fetch_path_end(AbstractNode* node_context) {
 
 				branch_node_ids_seen.insert(node->id);
 
+				prev_node = curr_node;
 				/**
 				 * - simply always choose original
 				 */
@@ -48,15 +53,18 @@ AbstractNode* fetch_path_end(AbstractNode* node_context) {
 			{
 				ObsNode* node = (ObsNode*)curr_node;
 
-				if (node->branch_start_node_id != -1) {
-					set<int>::iterator it = branch_node_ids_seen.find(node->branch_start_node_id);
-					if (it == branch_node_ids_seen.end()) {
-						return curr_node;
-					} else {
-						branch_node_ids_seen.erase(it);
+				if (node != node_context) {
+					if (node->branch_start_node_id != -1) {
+						set<int>::iterator it = branch_node_ids_seen.find(node->branch_start_node_id);
+						if (it == branch_node_ids_seen.end()) {
+							return prev_node;
+						} else {
+							branch_node_ids_seen.erase(it);
+						}
 					}
 				}
 
+				prev_node = curr_node;
 				curr_node = node->next_node;
 			}
 			break;

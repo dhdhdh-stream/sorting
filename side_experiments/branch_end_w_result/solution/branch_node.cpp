@@ -129,6 +129,11 @@ void BranchNode::save(ofstream& output_file) {
 
 	output_file << this->branch_end_node_id << endl;
 
+	output_file << this->original_average_hits_per_run << endl;
+	output_file << this->original_average_instances_per_run << endl;
+	output_file << this->branch_average_hits_per_run << endl;
+	output_file << this->branch_average_instances_per_run << endl;
+
 	output_file << this->ancestor_ids.size() << endl;
 	for (int a_index = 0; a_index < (int)this->ancestor_ids.size(); a_index++) {
 		output_file << this->ancestor_ids[a_index] << endl;
@@ -172,6 +177,22 @@ void BranchNode::load(ifstream& input_file,
 	string branch_end_node_id_line;
 	getline(input_file, branch_end_node_id_line);
 	this->branch_end_node_id = stoi(branch_end_node_id_line);
+
+	string original_average_hits_per_run_line;
+	getline(input_file, original_average_hits_per_run_line);
+	this->original_average_hits_per_run = stod(original_average_hits_per_run_line);
+
+	string original_average_instances_per_run_line;
+	getline(input_file, original_average_instances_per_run_line);
+	this->original_average_instances_per_run = stod(original_average_instances_per_run_line);
+
+	string branch_average_hits_per_run_line;
+	getline(input_file, branch_average_hits_per_run_line);
+	this->branch_average_hits_per_run = stod(branch_average_hits_per_run_line);
+
+	string branch_average_instances_per_run_line;
+	getline(input_file, branch_average_instances_per_run_line);
+	this->branch_average_instances_per_run = stod(branch_average_instances_per_run_line);
 
 	string num_ancestors_line;
 	getline(input_file, num_ancestors_line);

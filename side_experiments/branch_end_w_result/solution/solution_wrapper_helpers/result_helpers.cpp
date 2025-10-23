@@ -10,11 +10,9 @@
 using namespace std;
 
 void SolutionWrapper::result_init() {
-	while (this->curr_branch_experiment == NULL) {
-		create_branch_experiment(this);
+	if (this->curr_branch_experiment != NULL) {
+		this->experiment_history = new BranchExperimentHistory(this->curr_branch_experiment);
 	}
-
-	this->experiment_history = new BranchExperimentHistory(this->curr_branch_experiment);
 
 	this->num_actions = 1;
 
@@ -67,19 +65,31 @@ bool SolutionWrapper::result_end(double result) {
 		}
 	}
 
-	delete this->scope_histories[0];
+	if (this->curr_branch_experiment == NULL) {
+		create_branch_experiment(this->scope_histories[0],
+								 this);
 
-	this->scope_histories.clear();
-	this->node_context.clear();
+		delete this->scope_histories[0];
 
-	this->existing_result = result;
-
-	if (this->experiment_history->is_hit) {
-		return true;
-	} else {
-		delete this->experiment_history;
-		this->experiment_history = NULL;
+		this->scope_histories.clear();
+		this->node_context.clear();
 
 		return false;
+	} else {
+		delete this->scope_histories[0];
+
+		this->scope_histories.clear();
+		this->node_context.clear();
+
+		if (this->experiment_history->is_hit) {
+			this->existing_result = result;
+
+			return true;
+		} else {
+			delete this->experiment_history;
+			this->experiment_history = NULL;
+
+			return false;
+		}
 	}
 }

@@ -398,7 +398,6 @@ double Minesweeper::score_result() {
 	return score_result_helper();
 }
 
-#if defined(MDEBUG) && MDEBUG
 Problem* Minesweeper::copy_and_reset() {
 	Minesweeper* new_problem = new Minesweeper();
 
@@ -427,7 +426,6 @@ Problem* Minesweeper::copy_snapshot() {
 
 	return new_problem;
 }
-#endif /* MDEBUG */
 
 void Minesweeper::print() {
 	for (int y_index = HEIGHT-1; y_index >= 0; y_index--) {

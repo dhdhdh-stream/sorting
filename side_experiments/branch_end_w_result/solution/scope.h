@@ -24,6 +24,9 @@ public:
 
 	std::vector<Factor*> factors;
 
+	// TODO: don't worry about child_scopes
+	// TODO: replace original spot with new scope
+	// - need to add extra ObsNode
 	std::vector<Scope*> child_scopes;
 
 	Scope();

@@ -16,7 +16,7 @@
 using namespace std;
 
 const int NEW_SCOPE_MIN_NUM_NODES = 3;
-const int CREATE_NEW_SCOPE_NUM_TRIES = 50;
+const int CREATE_NEW_SCOPE_NUM_TRIES = 100;
 
 void ancestor_helper(AbstractNode* curr_node,
 					 set<AbstractNode*>& ancestors) {
@@ -149,6 +149,9 @@ Scope* create_new_scope(Scope* scope_context) {
 		scope_context->random_exit_activate(
 			starting_node,
 			possible_exits);
+		if (possible_exits.size() < 2) {
+			continue;
+		}
 		uniform_int_distribution<int> exit_distribution(0, possible_exits.size()-2);
 		/**
 		 * - don't include possible_exits end
@@ -432,10 +435,6 @@ Scope* create_new_scope(Scope* scope_context) {
 
 						map<AbstractNode*, AbstractNode*>::iterator end_it = node_mappings
 							.find(original_branch_node->branch_end_node);
-						// temp
-						if (end_it == node_mappings.end()) {
-							throw invalid_argument("end_it == node_mappings.end()");
-						}
 						new_branch_node->branch_end_node_id = end_it->second->id;
 						new_branch_node->branch_end_node = (ObsNode*)end_it->second;
 					}
@@ -459,16 +458,13 @@ Scope* create_new_scope(Scope* scope_context) {
 							it->second->ancestor_ids.push_back(new_obs_node->id);
 						}
 
-						if (original_obs_node->branch_start_node == NULL) {
+						if (original_obs_node->branch_start_node == NULL
+								|| original_obs_node == potential_start_node) {
 							new_obs_node->branch_start_node_id = -1;
 							new_obs_node->branch_start_node = NULL;
 						} else {
 							map<AbstractNode*, AbstractNode*>::iterator start_it = node_mappings
 								.find(original_obs_node->branch_start_node);
-							// temp
-							if (start_it == node_mappings.end()) {
-								throw invalid_argument("start_it == node_mappings.end()");
-							}
 							new_obs_node->branch_start_node_id = start_it->second->id;
 							new_obs_node->branch_start_node = (BranchNode*)start_it->second;
 						}
