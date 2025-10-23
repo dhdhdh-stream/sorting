@@ -41,6 +41,35 @@
 
 // - perhaps metric isn't how good result is? but how small resulting solution is?
 
+// - what is an important scope/sequence isn't what appears most often in the solution?
+//   - but what is performed the most?
+
+// - when a branch is created, 2 possibilities:
+//   - branch locally improves result
+//     - later situation unchanged
+//   - branch improves later situation
+
+// - perhaps start with a long sequence at end to know what's local
+//   - then always be aware of what's local vs. what changes global
+
+// - what if change partial?
+//   - then count as change
+//     - but what if global change bad, but local impact good?
+
+// - but also, what if change to global situation is to make it have less entropy
+//   - maybe just don't worry about global
+//     - only focus on changes that are entirely local
+// - but capturing good local changes still doesn't capture global strategy
+
+// - always include all scopes
+//   - try to turn original into linear sequence of 3 scopes
+//     - each scope between 20% and 50%?
+//       - randomly 3, try a ton, and select best?
+
+// - try with branch end again
+//   - leads to clean abstraction, which leads to better generalization/sharing
+//     - more committal in the short run, but the better sharing is better
+
 #include <chrono>
 #include <iostream>
 #include <map>
