@@ -73,11 +73,11 @@ void BranchExperiment::add(SolutionWrapper* wrapper) {
 	if (this->best_new_scope != NULL) {
 		wrapper->solution->scopes.push_back(this->best_new_scope);
 		this->best_new_scope->id = (int)wrapper->solution->scopes.size()-1;
+		this->best_new_scope->is_external = false;
 
 		clean_scope(this->best_new_scope,
 					wrapper);
 
-		this->best_new_scope->child_scopes = scope_context->child_scopes;
 		recursive_add_child(scope_context,
 							wrapper,
 							this->best_new_scope);

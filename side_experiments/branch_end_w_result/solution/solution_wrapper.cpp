@@ -56,20 +56,16 @@ void SolutionWrapper::combine(string other_path,
 	Solution* other = new Solution();
 	other->load(other_path, other_name);
 
-	for (int scope_index = 1; scope_index < (int)other->scopes.size(); scope_index++) {
-		this->solution->scopes.push_back(other->scopes[scope_index]);
-
-		for (int i_index = 0; i_index < starting_size; i_index++) {
-			this->solution->scopes[i_index]->child_scopes.push_back(other->scopes[scope_index]);
-		}
+	for (int scope_index = 0; scope_index < (int)other->scopes.size(); scope_index++) {
+		this->solution->external_scopes.push_back(other->scopes[scope_index]);
 	}
-
-	other->scopes.erase(other->scopes.begin() + 1, other->scopes.end());
+	other->scopes.clear();
 
 	delete other;
 
-	for (int scope_index = 1; scope_index < (int)this->solution->scopes.size(); scope_index++) {
-		this->solution->scopes[scope_index]->id = scope_index;
+	for (int scope_index = 0; scope_index < (int)this->solution->external_scopes.size(); scope_index++) {
+		this->solution->external_scopes[scope_index]->id = scope_index;
+		this->solution->external_scopes[scope_index]->is_external = true;
 	}
 
 	this->solution->timestamp = 0;

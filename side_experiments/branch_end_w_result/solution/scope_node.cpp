@@ -42,6 +42,7 @@ void ScopeNode::measure_update(int total_count) {
 
 void ScopeNode::save(ofstream& output_file) {
 	output_file << this->scope->id << endl;
+	output_file << this->scope->is_external << endl;
 
 	output_file << this->next_node_id << endl;
 
@@ -58,7 +59,17 @@ void ScopeNode::load(ifstream& input_file,
 					 Solution* parent_solution) {
 	string scope_id_line;
 	getline(input_file, scope_id_line);
-	this->scope = parent_solution->scopes[stoi(scope_id_line)];
+	int scope_id = stoi(scope_id_line);
+
+	string is_external_line;
+	getline(input_file, is_external_line);
+	bool is_external = stoi(is_external_line);
+
+	if (is_external) {
+		this->scope = parent_solution->external_scopes[scope_id];
+	} else {
+		this->scope = parent_solution->scopes[scope_id];
+	}
 
 	string next_node_id_line;
 	getline(input_file, next_node_id_line);

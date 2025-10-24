@@ -19,7 +19,17 @@ Input::Input(ifstream& input_file,
 	for (int l_index = 0; l_index < num_layers; l_index++) {
 		string scope_id_line;
 		getline(input_file, scope_id_line);
-		this->scope_context.push_back(parent_solution->scopes[stoi(scope_id_line)]);
+		int scope_id = stoi(scope_id_line);
+
+		string is_external_line;
+		getline(input_file, is_external_line);
+		bool is_external = stoi(is_external_line);
+
+		if (is_external) {
+			this->scope_context.push_back(parent_solution->external_scopes[scope_id]);
+		} else {
+			this->scope_context.push_back(parent_solution->scopes[scope_id]);
+		}
 
 		string node_id_line;
 		getline(input_file, node_id_line);
@@ -141,6 +151,7 @@ void Input::save(ofstream& output_file) {
 	output_file << this->scope_context.size() << endl;
 	for (int l_index = 0; l_index < (int)this->scope_context.size(); l_index++) {
 		output_file << this->scope_context[l_index]->id << endl;
+		output_file << this->scope_context[l_index]->is_external << endl;
 		output_file << this->node_context[l_index] << endl;
 	}
 

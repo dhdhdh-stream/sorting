@@ -11,6 +11,8 @@
 #include "obs_node.h"
 #include "scope.h"
 #include "scope_node.h"
+#include "solution.h"
+#include "solution_wrapper.h"
 #include "start_node.h"
 
 using namespace std;
@@ -95,17 +97,30 @@ void children_helper(AbstractNode* curr_node,
 	}
 }
 
-/**
- * TODO: also create new scopes from external
- */
-Scope* create_new_scope(Scope* scope_context) {
-	if (scope_context->nodes.size() < NEW_SCOPE_MIN_NODES) {
+Scope* create_new_scope(Scope* scope_context,
+						SolutionWrapper* wrapper) {
+	if (scope_context->nodes.size() < NEW_SCOPE_MIN_NODES
+			&& wrapper->solution->external_scopes.size() == 0) {
 		return NULL;
 	}
 
+	uniform_int_distribution<int> use_external_distribution(0, 2);
+	uniform_int_distribution<int> external_distribution(0, wrapper->solution->external_scopes.size()-1);
 	for (int t_index = 0; t_index < CREATE_NEW_SCOPE_NUM_TRIES; t_index++) {
-		uniform_int_distribution<int> node_distribution(1, scope_context->nodes.size()-1);
-		AbstractNode* potential_start_node = next(scope_context->nodes.begin(), node_distribution(generator))->second;
+		Scope* parent_scope = NULL;
+		if (wrapper->solution->external_scopes.size() > 0
+				&& use_external_distribution(generator) != 0) {
+			parent_scope = wrapper->solution->external_scopes[external_distribution(generator)];
+		} else if (scope_context->nodes.size() < NEW_SCOPE_MIN_NODES) {
+			parent_scope = scope_context;
+		}
+
+		if (parent_scope == NULL) {
+			continue;
+		}
+
+		uniform_int_distribution<int> node_distribution(1, parent_scope->nodes.size()-1);
+		AbstractNode* potential_start_node = next(parent_scope->nodes.begin(), node_distribution(generator))->second;
 
 		AbstractNode* starting_node;
 		switch (potential_start_node->type) {
@@ -146,7 +161,7 @@ Scope* create_new_scope(Scope* scope_context) {
 			break;
 		}
 		vector<AbstractNode*> possible_exits;
-		scope_context->random_exit_activate(
+		parent_scope->random_exit_activate(
 			starting_node,
 			possible_exits);
 		if (possible_exits.size() < 2) {
@@ -283,8 +298,8 @@ Scope* create_new_scope(Scope* scope_context) {
 			new_ending_node->next_node_id = -1;
 			new_ending_node->next_node = NULL;
 
-			for (int f_index = 0; f_index < (int)scope_context->factors.size(); f_index++) {
-				Factor* original_factor = scope_context->factors[f_index];
+			for (int f_index = 0; f_index < (int)parent_scope->factors.size(); f_index++) {
+				Factor* original_factor = parent_scope->factors[f_index];
 				Factor* new_factor = new Factor();
 
 				new_factor->network = new Network(original_factor->network);
@@ -295,7 +310,7 @@ Scope* create_new_scope(Scope* scope_context) {
 						new_input.scope_context[0] = new_scope;
 						new_factor->inputs.insert(new_factor->inputs.begin(), new_input);
 					} else {
-						AbstractNode* original_input_node = scope_context->nodes[
+						AbstractNode* original_input_node = parent_scope->nodes[
 							original_factor->inputs[i_index].node_context[0]];
 						map<AbstractNode*, AbstractNode*>::iterator it = node_mappings.find(original_input_node);
 						/**
@@ -383,7 +398,7 @@ Scope* create_new_scope(Scope* scope_context) {
 								new_branch_node->weights.push_back(
 									original_branch_node->weights[i_index]);
 							} else {
-								AbstractNode* original_input_node = scope_context->nodes[
+								AbstractNode* original_input_node = parent_scope->nodes[
 									original_branch_node->inputs[i_index].node_context[0]];
 								map<AbstractNode*, AbstractNode*>::iterator input_it = node_mappings
 									.find(original_input_node);
@@ -471,6 +486,12 @@ Scope* create_new_scope(Scope* scope_context) {
 					}
 					break;
 				}
+			}
+
+			new_scope->child_scopes = scope_context->child_scopes;
+			if (parent_scope != scope_context) {
+				new_scope->child_scopes.insert(new_scope->child_scopes.end(),
+					parent_scope->child_scopes.begin(), parent_scope->child_scopes.end());
 			}
 
 			return new_scope;

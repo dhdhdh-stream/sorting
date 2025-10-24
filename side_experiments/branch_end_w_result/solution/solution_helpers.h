@@ -34,7 +34,8 @@ void fetch_input_helper(ScopeHistory* scope_history,
 						bool& is_on,
 						int& num_actions_snapshot);
 
-Scope* create_new_scope(Scope* scope_context);
+Scope* create_new_scope(Scope* scope_context,
+						SolutionWrapper* wrapper);
 
 void clean_scope(Scope* scope,
 				 SolutionWrapper* wrapper);

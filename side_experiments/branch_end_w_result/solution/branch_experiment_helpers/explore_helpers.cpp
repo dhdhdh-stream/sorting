@@ -98,13 +98,10 @@ void BranchExperiment::explore_check_activate(
 		}
 		this->curr_exit_next_node = possible_exits[random_index];
 
-		#if defined(MDEBUG) && MDEBUG
-		uniform_int_distribution<int> new_scope_distribution(0, 1);
-		#else
-		uniform_int_distribution<int> new_scope_distribution(0, 4);
-		#endif /* MDEBUG */
+		uniform_int_distribution<int> new_scope_distribution(0, 2);
 		if (new_scope_distribution(generator) == 0) {
-			this->curr_new_scope = create_new_scope(this->node_context->parent);
+			this->curr_new_scope = create_new_scope(this->node_context->parent,
+													wrapper);
 		}
 		if (this->curr_new_scope != NULL) {
 			this->curr_step_types.push_back(STEP_TYPE_SCOPE);

@@ -25,6 +25,10 @@ Solution::~Solution() {
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
 		delete this->scopes[s_index];
 	}
+
+	for (int s_index = 0; s_index < (int)this->external_scopes.size(); s_index++) {
+		delete this->external_scopes[s_index];
+	}
 }
 
 void Solution::init() {
@@ -40,6 +44,7 @@ void Solution::init() {
 
 	Scope* new_scope = new Scope();
 	new_scope->id = this->scopes.size();
+	new_scope->is_external = false;
 	new_scope->node_counter = 0;
 	this->scopes.push_back(new_scope);
 
@@ -90,7 +95,19 @@ void Solution::load(string path,
 	for (int s_index = 0; s_index < num_scopes; s_index++) {
 		Scope* scope = new Scope();
 		scope->id = s_index;
+		scope->is_external = false;
 		this->scopes.push_back(scope);
+	}
+
+	string num_external_scopes_line;
+	getline(input_file, num_external_scopes_line);
+	int num_external_scopes = stoi(num_external_scopes_line);
+
+	for (int s_index = 0; s_index < num_external_scopes; s_index++) {
+		Scope* scope = new Scope();
+		scope->id = s_index;
+		scope->is_external = true;
+		this->external_scopes.push_back(scope);
 	}
 
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
@@ -98,8 +115,17 @@ void Solution::load(string path,
 									this);
 	}
 
+	for (int s_index = 0; s_index < (int)this->external_scopes.size(); s_index++) {
+		this->external_scopes[s_index]->load(input_file,
+											 this);
+	}
+
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
 		this->scopes[s_index]->link(this);
+	}
+
+	for (int s_index = 0; s_index < (int)this->external_scopes.size(); s_index++) {
+		this->external_scopes[s_index]->link(this);
 	}
 
 	input_file.close();
@@ -113,6 +139,10 @@ void Solution::clear_verify() {
 		this->scopes[s_index]->clear_verify();
 	}
 
+	for (int s_index = 0; s_index < (int)this->external_scopes.size(); s_index++) {
+		this->external_scopes[s_index]->clear_verify();
+	}
+
 	this->verify_problems.clear();
 }
 #endif /* MDEBUG */
@@ -122,6 +152,11 @@ void Solution::clean_inputs(Scope* scope,
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
 		this->scopes[s_index]->clean_inputs(scope,
 											node_id);
+	}
+
+	for (int s_index = 0; s_index < (int)this->external_scopes.size(); s_index++) {
+		this->external_scopes[s_index]->clean_inputs(scope,
+													 node_id);
 	}
 }
 
@@ -133,15 +168,31 @@ void Solution::replace_obs_node(Scope* scope,
 												original_node_id,
 												new_node_id);
 	}
+
+	for (int s_index = 0; s_index < (int)this->external_scopes.size(); s_index++) {
+		this->external_scopes[s_index]->replace_obs_node(
+			scope,
+			original_node_id,
+			new_node_id);
+	}
 }
 
 void Solution::clean() {
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
 		this->scopes[s_index]->clean();
 	}
+
+	for (int s_index = 0; s_index < (int)this->external_scopes.size(); s_index++) {
+		this->external_scopes[s_index]->clean();
+	}
 }
 
 void Solution::clean_scopes() {
+	for (int s_index = 0; s_index < (int)this->external_scopes.size(); s_index++) {
+		this->scopes.push_back(this->external_scopes[s_index]);
+	}
+	this->external_scopes.clear();
+
 	while (true) {
 		bool removed_scope = false;
 		for (int s_index = (int)this->scopes.size()-1; s_index >= 1; s_index--) {
@@ -195,6 +246,7 @@ void Solution::clean_scopes() {
 
 	for (int s_index = 1; s_index < (int)this->scopes.size(); s_index++) {
 		this->scopes[s_index]->id = s_index;
+		this->scopes[s_index]->is_external = false;
 	}
 }
 
@@ -208,8 +260,14 @@ void Solution::save(string path,
 
 	output_file << this->scopes.size() << endl;
 
+	output_file << this->external_scopes.size() << endl;
+
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
 		this->scopes[s_index]->save(output_file);
+	}
+
+	for (int s_index = 0; s_index < (int)this->external_scopes.size(); s_index++) {
+		this->external_scopes[s_index]->save(output_file);
 	}
 
 	output_file.close();
