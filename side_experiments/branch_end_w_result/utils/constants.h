@@ -31,11 +31,7 @@ const int IMPROVEMENTS_PER_ITER = 2;
 const int IMPROVEMENTS_PER_ITER = 6;
 #endif /* MDEBUG */
 
-/**
- * - simply merge every fixed number of timesteps
- *   - hopefully prevents solution from getting too stale and thrashing
- */
-const int RUN_TIMESTEPS = 30;
+const int RUN_TIMESTEPS = 20;
 
 #if defined(MDEBUG) && MDEBUG
 const int NUM_VERIFY_SAMPLES = 10;

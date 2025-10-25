@@ -98,7 +98,7 @@ void BranchExperiment::explore_check_activate(
 		}
 		this->curr_exit_next_node = possible_exits[random_index];
 
-		uniform_int_distribution<int> new_scope_distribution(0, 2);
+		uniform_int_distribution<int> new_scope_distribution(0, 1);
 		if (new_scope_distribution(generator) == 0) {
 			this->curr_new_scope = create_new_scope(this->node_context->parent,
 													wrapper);
@@ -119,19 +119,20 @@ void BranchExperiment::explore_check_activate(
 				new_num_steps = geo_distribution(generator);
 			}
 
-			vector<int> possible_child_indexes;
-			for (int c_index = 0; c_index < (int)this->node_context->parent->child_scopes.size(); c_index++) {
-				if (this->node_context->parent->child_scopes[c_index]->nodes.size() > 1) {
-					possible_child_indexes.push_back(c_index);
+			vector<Scope*> possible_child_scopes;
+			for (set<Scope*>::iterator it = this->node_context->parent->child_scopes.begin();
+					it != this->node_context->parent->child_scopes.end(); it++) {
+				if ((*it)->nodes.size() > 1) {
+					possible_child_scopes.push_back(*it);
 				}
 			}
-			uniform_int_distribution<int> child_index_distribution(0, possible_child_indexes.size()-1);
+			uniform_int_distribution<int> child_distribution(0, possible_child_scopes.size()-1);
 			for (int s_index = 0; s_index < new_num_steps; s_index++) {
 				bool is_scope = false;
-				if (possible_child_indexes.size() > 0) {
-					if (possible_child_indexes.size() <= RAW_ACTION_WEIGHT) {
-						uniform_int_distribution<int> scope_distribution(0, possible_child_indexes.size() + RAW_ACTION_WEIGHT - 1);
-						if (scope_distribution(generator) < (int)possible_child_indexes.size()) {
+				if (possible_child_scopes.size() > 0) {
+					if (possible_child_scopes.size() <= RAW_ACTION_WEIGHT) {
+						uniform_int_distribution<int> scope_distribution(0, possible_child_scopes.size() + RAW_ACTION_WEIGHT - 1);
+						if (scope_distribution(generator) < (int)possible_child_scopes.size()) {
 							is_scope = true;
 						}
 					} else {
@@ -145,8 +146,7 @@ void BranchExperiment::explore_check_activate(
 					this->curr_step_types.push_back(STEP_TYPE_SCOPE);
 					this->curr_actions.push_back(-1);
 
-					int child_index = possible_child_indexes[child_index_distribution(generator)];
-					this->curr_scopes.push_back(this->node_context->parent->child_scopes[child_index]);
+					this->curr_scopes.push_back(possible_child_scopes[child_distribution(generator)]);
 				} else {
 					this->curr_step_types.push_back(STEP_TYPE_ACTION);
 

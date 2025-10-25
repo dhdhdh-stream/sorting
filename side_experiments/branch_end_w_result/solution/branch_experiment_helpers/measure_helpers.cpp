@@ -137,7 +137,45 @@ void BranchExperiment::measure_backprop(double target_val,
 			#else
 			if (new_score >= 0.0) {
 			#endif /* MDEBUG */
-				this->improvement = new_score;
+				double average_hits_per_run;
+				switch (this->node_context->type) {
+				case NODE_TYPE_START:
+					{
+						StartNode* start_node = (StartNode*)this->node_context;
+						average_hits_per_run = start_node->average_hits_per_run;
+					}
+					break;
+				case NODE_TYPE_ACTION:
+					{
+						ActionNode* action_node = (ActionNode*)this->node_context;
+						average_hits_per_run = action_node->average_hits_per_run;
+					}
+					break;
+				case NODE_TYPE_SCOPE:
+					{
+						ScopeNode* scope_node = (ScopeNode*)this->node_context;
+						average_hits_per_run = scope_node->average_hits_per_run;
+					}
+					break;
+				case NODE_TYPE_BRANCH:
+					{
+						BranchNode* branch_node = (BranchNode*)this->node_context;
+						if (this->is_branch) {
+							average_hits_per_run = branch_node->branch_average_hits_per_run;
+						} else {
+							average_hits_per_run = branch_node->original_average_hits_per_run;
+						}
+					}
+					break;
+				case NODE_TYPE_OBS:
+					{
+						ObsNode* obs_node = (ObsNode*)this->node_context;
+						average_hits_per_run = obs_node->average_hits_per_run;
+					}
+					break;
+				}
+
+				this->improvement = average_hits_per_run * new_score;
 
 				cout << "BranchExperiment" << endl;
 				cout << "this->scope_context->id: " << this->scope_context->id << endl;
@@ -159,8 +197,14 @@ void BranchExperiment::measure_backprop(double target_val,
 					cout << "this->best_exit_next_node->id: " << this->best_exit_next_node->id << endl;
 				}
 
+				if (this->best_new_scope != NULL
+						&& this->best_new_scope->child_scopes.size() > this->scope_context->child_scopes.size()) {
+					cout << "is_external" << endl;
+				}
+
 				cout << "this->select_percentage: " << this->select_percentage << endl;
 
+				cout << "average_hits_per_run: " << average_hits_per_run << endl;
 				cout << "improvement: " << improvement << endl;
 
 				cout << endl;

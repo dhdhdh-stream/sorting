@@ -30,6 +30,10 @@ public:
 	int result;
 
 	double improvement;
+	/**
+	 * - scale by hit percentage
+	 *   - hopefully encourages more generalizable scopes
+	 */
 
 	std::vector<ScopeHistory*> new_scope_histories;
 	std::vector<double> new_target_val_histories;

@@ -37,6 +37,11 @@ public:
 	std::vector<Scope*> scopes;
 
 	std::vector<Scope*> external_scopes;
+	// temp
+	std::vector<bool> external_is_root;
+
+	std::vector<double> improvement_history;
+	std::vector<std::string> change_history;
 
 	#if defined(MDEBUG) && MDEBUG
 	std::vector<Problem*> verify_problems;

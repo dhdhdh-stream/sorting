@@ -51,13 +51,17 @@ void SolutionWrapper::clean_scopes() {
 }
 
 void SolutionWrapper::combine(string other_path,
-							  string other_name,
-							  int starting_size) {
+							  string other_name) {
 	Solution* other = new Solution();
 	other->load(other_path, other_name);
 
-	for (int scope_index = 0; scope_index < (int)other->scopes.size(); scope_index++) {
+	{
+		this->solution->external_scopes.push_back(other->scopes[0]);
+		this->solution->external_is_root.push_back(true);
+	}
+	for (int scope_index = 1; scope_index < (int)other->scopes.size(); scope_index++) {
 		this->solution->external_scopes.push_back(other->scopes[scope_index]);
+		this->solution->external_is_root.push_back(false);
 	}
 	other->scopes.clear();
 

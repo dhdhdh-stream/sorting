@@ -118,6 +118,10 @@ void Solution::load(string path,
 	for (int s_index = 0; s_index < (int)this->external_scopes.size(); s_index++) {
 		this->external_scopes[s_index]->load(input_file,
 											 this);
+
+		string is_root_line;
+		getline(input_file, is_root_line);
+		this->external_is_root.push_back(stoi(is_root_line));
 	}
 
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
@@ -126,6 +130,19 @@ void Solution::load(string path,
 
 	for (int s_index = 0; s_index < (int)this->external_scopes.size(); s_index++) {
 		this->external_scopes[s_index]->link(this);
+	}
+
+	string history_size_line;
+	getline(input_file, history_size_line);
+	int history_size = stoi(history_size_line);
+	for (int h_index = 0; h_index < history_size; h_index++) {
+		string improvement_line;
+		getline(input_file, improvement_line);
+		this->improvement_history.push_back(stod(improvement_line));
+
+		string change_line;
+		getline(input_file, change_line);
+		this->change_history.push_back(change_line);
 	}
 
 	input_file.close();
@@ -192,6 +209,8 @@ void Solution::clean_scopes() {
 		this->scopes.push_back(this->external_scopes[s_index]);
 	}
 	this->external_scopes.clear();
+	// temp
+	this->external_is_root.clear();
 
 	while (true) {
 		bool removed_scope = false;
@@ -226,9 +245,10 @@ void Solution::clean_scopes() {
 				for (int is_index = 0; is_index < (int)this->scopes.size(); is_index++) {
 					this->scopes[is_index]->clean_inputs(this->scopes[s_index]);
 
-					for (int c_index = 0; c_index < (int)this->scopes[is_index]->child_scopes.size(); c_index++) {
-						if (this->scopes[is_index]->child_scopes[c_index] == this->scopes[s_index]) {
-							this->scopes[is_index]->child_scopes.erase(this->scopes[is_index]->child_scopes.begin() + c_index);
+					for (set<Scope*>::iterator it = this->scopes[is_index]->child_scopes.begin();
+							it != this->scopes[is_index]->child_scopes.end(); it++) {
+						if (*it == this->scopes[s_index]) {
+							this->scopes[is_index]->child_scopes.erase(*it);
 							break;
 						}
 					}
@@ -268,6 +288,14 @@ void Solution::save(string path,
 
 	for (int s_index = 0; s_index < (int)this->external_scopes.size(); s_index++) {
 		this->external_scopes[s_index]->save(output_file);
+		// temp
+		output_file << this->external_is_root[s_index] << endl;
+	}
+
+	output_file << this->improvement_history.size() << endl;
+	for (int h_index = 0; h_index < (int)this->improvement_history.size(); h_index++) {
+		output_file << this->improvement_history[h_index] << endl;
+		output_file << this->change_history[h_index] << endl;
 	}
 
 	output_file.close();

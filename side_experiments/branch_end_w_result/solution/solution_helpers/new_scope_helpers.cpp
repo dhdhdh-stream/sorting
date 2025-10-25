@@ -18,7 +18,7 @@
 using namespace std;
 
 const int NEW_SCOPE_MIN_NUM_NODES = 3;
-const int CREATE_NEW_SCOPE_NUM_TRIES = 100;
+const int CREATE_NEW_SCOPE_NUM_TRIES = 50;
 
 void ancestor_helper(AbstractNode* curr_node,
 					 set<AbstractNode*>& ancestors) {
@@ -99,25 +99,25 @@ void children_helper(AbstractNode* curr_node,
 
 Scope* create_new_scope(Scope* scope_context,
 						SolutionWrapper* wrapper) {
-	if (scope_context->nodes.size() < NEW_SCOPE_MIN_NODES
-			&& wrapper->solution->external_scopes.size() == 0) {
+	vector<Scope*> possible_parent_scopes;
+	if (scope_context->nodes.size() >= NEW_SCOPE_MIN_NODES) {
+		possible_parent_scopes.push_back(scope_context);
+	}
+	if (!scope_context->is_external) {
+		for (int e_index = 0; e_index < (int)wrapper->solution->external_scopes.size(); e_index++) {
+			if (wrapper->solution->external_is_root[e_index]) {
+				possible_parent_scopes.push_back(wrapper->solution->external_scopes[e_index]);
+			}
+		}
+	}
+
+	if (possible_parent_scopes.size() == 0) {
 		return NULL;
 	}
 
-	uniform_int_distribution<int> use_external_distribution(0, 2);
-	uniform_int_distribution<int> external_distribution(0, wrapper->solution->external_scopes.size()-1);
+	uniform_int_distribution<int> parent_distribution(0, possible_parent_scopes.size()-1);
 	for (int t_index = 0; t_index < CREATE_NEW_SCOPE_NUM_TRIES; t_index++) {
-		Scope* parent_scope = NULL;
-		if (wrapper->solution->external_scopes.size() > 0
-				&& use_external_distribution(generator) != 0) {
-			parent_scope = wrapper->solution->external_scopes[external_distribution(generator)];
-		} else if (scope_context->nodes.size() < NEW_SCOPE_MIN_NODES) {
-			parent_scope = scope_context;
-		}
-
-		if (parent_scope == NULL) {
-			continue;
-		}
+		Scope* parent_scope = possible_parent_scopes[parent_distribution(generator)];
 
 		uniform_int_distribution<int> node_distribution(1, parent_scope->nodes.size()-1);
 		AbstractNode* potential_start_node = next(parent_scope->nodes.begin(), node_distribution(generator))->second;
@@ -490,8 +490,10 @@ Scope* create_new_scope(Scope* scope_context,
 
 			new_scope->child_scopes = scope_context->child_scopes;
 			if (parent_scope != scope_context) {
-				new_scope->child_scopes.insert(new_scope->child_scopes.end(),
-					parent_scope->child_scopes.begin(), parent_scope->child_scopes.end());
+				for (set<Scope*>::iterator it = parent_scope->child_scopes.begin();
+						it != parent_scope->child_scopes.end(); it++) {
+					new_scope->child_scopes.insert(*it);
+				}
 			}
 
 			return new_scope;

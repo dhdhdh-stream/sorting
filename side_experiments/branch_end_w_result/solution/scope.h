@@ -3,6 +3,7 @@
 
 #include <fstream>
 #include <map>
+#include <set>
 #include <vector>
 
 class AbstractNode;
@@ -25,7 +26,7 @@ public:
 
 	std::vector<Factor*> factors;
 
-	std::vector<Scope*> child_scopes;
+	std::set<Scope*> child_scopes;
 
 	Scope();
 	~Scope();

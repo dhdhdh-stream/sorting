@@ -224,8 +224,10 @@ void Scope::save(ofstream& output_file) {
 	}
 
 	output_file << this->child_scopes.size() << endl;
-	for (int c_index = 0; c_index < (int)this->child_scopes.size(); c_index++) {
-		output_file << this->child_scopes[c_index]->id << endl;
+	for (set<Scope*>::iterator it = this->child_scopes.begin();
+			it != this->child_scopes.end(); it++) {
+		output_file << (*it)->id << endl;
+		output_file << (*it)->is_external << endl;
 	}
 }
 
@@ -314,7 +316,17 @@ void Scope::load(ifstream& input_file,
 	for (int c_index = 0; c_index < num_child_scopes; c_index++) {
 		string scope_id_line;
 		getline(input_file, scope_id_line);
-		this->child_scopes.push_back(parent_solution->scopes[stoi(scope_id_line)]);
+		int scope_id = stoi(scope_id_line);
+
+		string is_external_line;
+		getline(input_file, is_external_line);
+		bool is_external = stoi(is_external_line);
+
+		if (is_external) {
+			this->child_scopes.insert(parent_solution->external_scopes[scope_id]);
+		} else {
+			this->child_scopes.insert(parent_solution->scopes[scope_id]);
+		}
 	}
 }
 

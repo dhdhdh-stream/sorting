@@ -76,18 +76,25 @@ bool SolutionWrapper::result_end(double result) {
 
 		return false;
 	} else {
-		delete this->scope_histories[0];
-
-		this->scope_histories.clear();
-		this->node_context.clear();
-
 		if (this->experiment_history->is_hit) {
 			this->existing_result = result;
 
+			delete this->scope_histories[0];
+
+			this->scope_histories.clear();
+			this->node_context.clear();
+
 			return true;
 		} else {
+			this->experiment_history->experiment->backprop(
+				result,
+				this);
+
 			delete this->experiment_history;
 			this->experiment_history = NULL;
+
+			this->scope_histories.clear();
+			this->node_context.clear();
 
 			return false;
 		}

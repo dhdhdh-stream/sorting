@@ -249,4 +249,8 @@ void update_scores(vector<ScopeHistory*>& scope_histories,
 	for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
 		wrapper->solution->scopes[s_index]->measure_update((int)scope_histories.size());
 	}
+
+	for (int s_index = 0; s_index < (int)wrapper->solution->external_scopes.size(); s_index++) {
+		wrapper->solution->external_scopes[s_index]->measure_update((int)scope_histories.size());
+	}
 }
