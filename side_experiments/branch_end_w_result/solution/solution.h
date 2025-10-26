@@ -43,6 +43,9 @@ public:
 	std::vector<double> improvement_history;
 	std::vector<std::string> change_history;
 
+	Scope* last_new_scope;
+	int new_scope_iters;
+
 	#if defined(MDEBUG) && MDEBUG
 	std::vector<Problem*> verify_problems;
 	std::vector<unsigned long> verify_seeds;

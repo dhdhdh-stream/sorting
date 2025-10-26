@@ -98,12 +98,14 @@ void children_helper(AbstractNode* curr_node,
 }
 
 Scope* create_new_scope(Scope* scope_context,
-						SolutionWrapper* wrapper) {
+						SolutionWrapper* wrapper,
+						bool include_external) {
 	vector<Scope*> possible_parent_scopes;
 	if (scope_context->nodes.size() >= NEW_SCOPE_MIN_NODES) {
 		possible_parent_scopes.push_back(scope_context);
 	}
-	if (!scope_context->is_external) {
+	if (include_external
+			&& !scope_context->is_external) {
 		for (int e_index = 0; e_index < (int)wrapper->solution->external_scopes.size(); e_index++) {
 			if (wrapper->solution->external_is_root[e_index]) {
 				possible_parent_scopes.push_back(wrapper->solution->external_scopes[e_index]);
@@ -501,4 +503,31 @@ Scope* create_new_scope(Scope* scope_context,
 	}
 
 	return NULL;
+}
+
+void recursive_add_child(Scope* curr_parent,
+						 SolutionWrapper* wrapper,
+						 Scope* new_scope) {
+	curr_parent->child_scopes.insert(new_scope);
+
+	for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
+		bool is_needed = false;
+		bool is_added = false;
+		for (set<Scope*>::iterator it = wrapper->solution->scopes[s_index]->child_scopes.begin();
+				it != wrapper->solution->scopes[s_index]->child_scopes.end(); it++) {
+			if (*it == curr_parent) {
+				is_needed = true;
+			}
+
+			if (*it == new_scope) {
+				is_added = true;
+			}
+		}
+
+		if (is_needed && !is_added) {
+			recursive_add_child(wrapper->solution->scopes[s_index],
+								wrapper,
+								new_scope);
+		}
+	}
 }

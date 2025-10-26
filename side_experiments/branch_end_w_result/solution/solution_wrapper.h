@@ -9,6 +9,7 @@ class AbstractExperimentHistory;
 class AbstractExperimentState;
 class AbstractNode;
 class BranchExperiment;
+class NewScopeOverallExperiment;
 class Problem;
 class ScopeHistory;
 class Solution;
@@ -24,6 +25,9 @@ public:
 
 	BranchExperiment* curr_branch_experiment;
 	BranchExperiment* best_branch_experiment;
+
+	NewScopeOverallExperiment* curr_new_scope_experiment;
+	NewScopeOverallExperiment* best_new_scope_experiment;
 
 	/**
 	 * - run variables

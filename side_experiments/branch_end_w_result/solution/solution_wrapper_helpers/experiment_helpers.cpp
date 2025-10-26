@@ -4,6 +4,7 @@
 
 #include "branch_experiment.h"
 #include "constants.h"
+#include "new_scope_experiment.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
@@ -103,48 +104,140 @@ void SolutionWrapper::experiment_end(double result) {
 	this->node_context.clear();
 	this->experiment_context.clear();
 
-	if (this->curr_branch_experiment->result == EXPERIMENT_RESULT_FAIL) {
-		this->curr_branch_experiment->clean();
-		delete this->curr_branch_experiment;
+	if (is_new_scope_iter(this)) {
+		bool early_exit = false;
+		if (this->curr_new_scope_experiment->curr_experiment->result == EXPERIMENT_RESULT_FAIL) {
+			this->curr_new_scope_experiment->generalize_iter++;
 
-		this->curr_branch_experiment = NULL;
-	} else if (this->curr_branch_experiment->result == EXPERIMENT_RESULT_SUCCESS) {
-		this->curr_branch_experiment->clean();
+			this->curr_new_scope_experiment->curr_experiment->clean();
+			delete this->curr_new_scope_experiment->curr_experiment;
+			this->curr_new_scope_experiment->curr_experiment = NULL;
+		} else if (this->curr_new_scope_experiment->curr_experiment->result == EXPERIMENT_RESULT_SUCCESS) {
+			this->curr_new_scope_experiment->generalize_iter++;
 
-		if (this->best_branch_experiment == NULL) {
-			this->best_branch_experiment = this->curr_branch_experiment;
-		} else {
-			if (this->curr_branch_experiment->improvement > this->best_branch_experiment->improvement) {
-				delete this->best_branch_experiment;
-				this->best_branch_experiment = this->curr_branch_experiment;
-			} else {
-				delete this->curr_branch_experiment;
+			for (int h_index = 0; h_index < (int)this->curr_new_scope_experiment->new_scope_histories.size(); h_index++) {
+				delete this->curr_new_scope_experiment->new_scope_histories[h_index];
 			}
+			this->curr_new_scope_experiment->new_scope_histories = this->curr_new_scope_experiment->curr_experiment->new_scope_histories;
+			this->curr_new_scope_experiment->curr_experiment->new_scope_histories.clear();
+			this->curr_new_scope_experiment->new_target_val_histories = this->curr_new_scope_experiment->curr_experiment->new_target_val_histories;
+			this->curr_new_scope_experiment->curr_experiment->new_target_val_histories.clear();
+
+			this->curr_new_scope_experiment->successful_experiments.push_back(
+				this->curr_new_scope_experiment->curr_experiment);
+			this->curr_new_scope_experiment->curr_experiment = NULL;
+
+			early_exit = !still_instances_possible(this->curr_new_scope_experiment);
 		}
 
-		this->curr_branch_experiment = NULL;
+		if (this->curr_new_scope_experiment->generalize_iter > 0
+				&& this->curr_new_scope_experiment->successful_experiments.size() == 0) {
+			this->curr_new_scope_experiment->clean();
 
-		this->improvement_iter++;
-		if (this->improvement_iter >= IMPROVEMENTS_PER_ITER) {
-			Scope* last_updated_scope = this->best_branch_experiment->scope_context;
+			delete this->curr_new_scope_experiment;
+			this->curr_new_scope_experiment = NULL;
+		} else if (this->curr_new_scope_experiment->generalize_iter >= NEW_SCOPE_NUM_GENERALIZE_TRIES
+				|| early_exit) {
+			if (this->curr_new_scope_experiment->successful_experiments.size() >= NEW_SCOPE_MIN_NUM_LOCATIONS) {
+				cout << "NewScopeOverallExperiment success" << endl;
 
-			this->best_branch_experiment->add(this);
+				this->curr_new_scope_experiment->clean();
 
-			clean_scope(last_updated_scope,
-						this);
+				if (this->best_new_scope_experiment == NULL) {
+					this->best_new_scope_experiment = this->curr_new_scope_experiment;
+				} else {
+					double curr_impact = this->curr_new_scope_experiment->calc_impact();
+					double best_impact = this->best_new_scope_experiment->calc_impact();
+					if (curr_impact > best_impact) {
+						delete this->best_new_scope_experiment;
+						this->best_new_scope_experiment = this->curr_new_scope_experiment;
+					} else {
+						delete this->curr_new_scope_experiment;
+					}
+				}
 
-			this->solution->clean();
+				this->curr_new_scope_experiment = NULL;
 
-			this->solution->timestamp++;
+				this->improvement_iter++;
+				if (this->improvement_iter >= IMPROVEMENTS_PER_ITER) {
+					Scope* last_updated_scope = this->best_new_scope_experiment->scope_context;
 
-			update_scores(this->best_branch_experiment->new_scope_histories,
-						  this->best_branch_experiment->new_target_val_histories,
-						  this);
+					this->best_new_scope_experiment->add(this);
 
-			delete this->best_branch_experiment;
-			this->best_branch_experiment = NULL;
+					clean_scope(last_updated_scope,
+								this);
 
-			this->improvement_iter = 0;
+					this->solution->clean();
+
+					this->solution->timestamp++;
+
+					update_scores(this->best_new_scope_experiment->new_scope_histories,
+								  this->best_new_scope_experiment->new_target_val_histories,
+								  this);
+
+					delete this->best_new_scope_experiment;
+					this->best_new_scope_experiment = NULL;
+
+					this->improvement_iter = 0;
+				}
+			} else {
+				this->curr_new_scope_experiment->clean();
+
+				delete this->curr_new_scope_experiment;
+				this->curr_new_scope_experiment = NULL;
+			}
+		}
+	} else {
+		if (this->curr_branch_experiment->result == EXPERIMENT_RESULT_FAIL) {
+			this->curr_branch_experiment->clean();
+			delete this->curr_branch_experiment;
+
+			this->curr_branch_experiment = NULL;
+		} else if (this->curr_branch_experiment->result == EXPERIMENT_RESULT_SUCCESS) {
+			this->curr_branch_experiment->clean();
+
+			if (this->best_branch_experiment == NULL) {
+				this->best_branch_experiment = this->curr_branch_experiment;
+			} else {
+				if (this->curr_branch_experiment->improvement > this->best_branch_experiment->improvement) {
+					delete this->best_branch_experiment;
+					this->best_branch_experiment = this->curr_branch_experiment;
+				} else {
+					delete this->curr_branch_experiment;
+				}
+			}
+
+			this->curr_branch_experiment = NULL;
+
+			this->improvement_iter++;
+			if (this->improvement_iter >= IMPROVEMENTS_PER_ITER) {
+				if (this->solution->last_new_scope != NULL) {
+					this->solution->new_scope_iters++;
+					if (this->solution->new_scope_iters >= NEW_SCOPE_FOCUS_ITERS) {
+						this->solution->last_new_scope = NULL;
+					}
+				}
+
+				Scope* last_updated_scope = this->best_branch_experiment->scope_context;
+
+				this->best_branch_experiment->add(this);
+
+				clean_scope(last_updated_scope,
+							this);
+
+				this->solution->clean();
+
+				this->solution->timestamp++;
+
+				update_scores(this->best_branch_experiment->new_scope_histories,
+							  this->best_branch_experiment->new_target_val_histories,
+							  this);
+
+				delete this->best_branch_experiment;
+				this->best_branch_experiment = NULL;
+
+				this->improvement_iter = 0;
+			}
 		}
 	}
 }

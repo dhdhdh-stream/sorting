@@ -10,6 +10,7 @@
 class AbstractNode;
 class BranchExperiment;
 class Network;
+class NewScopeOverallExperiment;
 class Problem;
 class Scope;
 class ScopeHistory;
@@ -17,8 +18,15 @@ class ScopeNode;
 class Solution;
 class SolutionWrapper;
 
+bool is_new_scope_iter(SolutionWrapper* wrapper);
+
 void create_branch_experiment(ScopeHistory* scope_history,
 							  SolutionWrapper* wrapper);
+void create_new_scope_overall_experiment(ScopeHistory* scope_history,
+										 SolutionWrapper* wrapper);
+void create_new_scope_experiment(ScopeHistory* scope_history,
+								 SolutionWrapper* wrapper);
+bool still_instances_possible(NewScopeOverallExperiment* experiment);
 
 AbstractNode* fetch_path_end(AbstractNode* node_context);
 
@@ -35,7 +43,11 @@ void fetch_input_helper(ScopeHistory* scope_history,
 						int& num_actions_snapshot);
 
 Scope* create_new_scope(Scope* scope_context,
-						SolutionWrapper* wrapper);
+						SolutionWrapper* wrapper,
+						bool include_external);
+void recursive_add_child(Scope* curr_parent,
+						 SolutionWrapper* wrapper,
+						 Scope* new_scope);
 
 void clean_scope(Scope* scope,
 				 SolutionWrapper* wrapper);

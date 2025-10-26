@@ -22,33 +22,6 @@ void BranchExperiment::clean() {
 	this->node_context->experiment = NULL;
 }
 
-void recursive_add_child(Scope* curr_parent,
-						 SolutionWrapper* wrapper,
-						 Scope* new_scope) {
-	curr_parent->child_scopes.insert(new_scope);
-
-	for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
-		bool is_needed = false;
-		bool is_added = false;
-		for (set<Scope*>::iterator it = wrapper->solution->scopes[s_index]->child_scopes.begin();
-				it != wrapper->solution->scopes[s_index]->child_scopes.end(); it++) {
-			if (*it == curr_parent) {
-				is_needed = true;
-			}
-
-			if (*it == new_scope) {
-				is_added = true;
-			}
-		}
-
-		if (is_needed && !is_added) {
-			recursive_add_child(wrapper->solution->scopes[s_index],
-								wrapper,
-								new_scope);
-		}
-	}
-}
-
 void BranchExperiment::add(SolutionWrapper* wrapper) {
 	stringstream ss;
 	ss << "this->scope_context->id: " << this->scope_context->id << "; ";

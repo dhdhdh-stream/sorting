@@ -33,7 +33,6 @@ public:
 	std::vector<int> curr_actions;
 	std::vector<Scope*> curr_scopes;
 	AbstractNode* curr_exit_next_node;
-	// TODO: check if exit has branch_start
 
 	double best_surprise;
 	Scope* best_new_scope;

@@ -101,7 +101,8 @@ void BranchExperiment::explore_check_activate(
 		uniform_int_distribution<int> new_scope_distribution(0, 1);
 		if (new_scope_distribution(generator) == 0) {
 			this->curr_new_scope = create_new_scope(this->node_context->parent,
-													wrapper);
+													wrapper,
+													true);
 		}
 		if (this->curr_new_scope != NULL) {
 			this->curr_step_types.push_back(STEP_TYPE_SCOPE);

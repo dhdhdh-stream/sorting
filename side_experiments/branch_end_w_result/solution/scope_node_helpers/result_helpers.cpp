@@ -25,6 +25,7 @@ void ScopeNode::result_step(vector<double>& obs,
 	history->scope_history = inner_scope_history;
 	wrapper->scope_histories.push_back(inner_scope_history);
 	wrapper->node_context.push_back(this->scope->nodes[0]);
+	wrapper->experiment_context.push_back(NULL);
 }
 
 void ScopeNode::result_exit_step(SolutionWrapper* wrapper) {
@@ -32,6 +33,7 @@ void ScopeNode::result_exit_step(SolutionWrapper* wrapper) {
 
 	wrapper->scope_histories.pop_back();
 	wrapper->node_context.pop_back();
+	wrapper->experiment_context.pop_back();
 
 	for (int f_index = 0; f_index < (int)this->impacted_factors.size(); f_index++) {
 		wrapper->scope_histories.back()->factor_initialized[

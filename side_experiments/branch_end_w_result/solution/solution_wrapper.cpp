@@ -14,6 +14,9 @@ SolutionWrapper::SolutionWrapper() {
 	this->curr_branch_experiment = NULL;
 	this->best_branch_experiment = NULL;
 
+	this->curr_new_scope_experiment = NULL;
+	this->best_new_scope_experiment = NULL;
+
 	this->experiment_history = NULL;
 
 	#if defined(MDEBUG) && MDEBUG
@@ -30,6 +33,9 @@ SolutionWrapper::SolutionWrapper(std::string path,
 
 	this->curr_branch_experiment = NULL;
 	this->best_branch_experiment = NULL;
+
+	this->curr_new_scope_experiment = NULL;
+	this->best_new_scope_experiment = NULL;
 
 	this->experiment_history = NULL;
 
