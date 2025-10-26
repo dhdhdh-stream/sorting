@@ -68,8 +68,6 @@ public:
 						  int original_node_id,
 						  int new_node_id);
 
-	void clean();
-
 	void clean_scopes();
 
 	void save(std::string path,

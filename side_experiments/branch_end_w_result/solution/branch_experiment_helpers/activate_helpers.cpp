@@ -20,6 +20,7 @@ void BranchExperiment::result_check_activate(
 	if (is_branch == this->is_branch) {
 		BranchExperimentHistory* history = (BranchExperimentHistory*)wrapper->experiment_history;
 		history->is_hit = true;
+		history->num_instances++;
 	}
 }
 
@@ -28,8 +29,6 @@ void BranchExperiment::check_activate(AbstractNode* experiment_node,
 									  SolutionWrapper* wrapper) {
 	if (is_branch == this->is_branch) {
 		BranchExperimentHistory* history = (BranchExperimentHistory*)wrapper->experiment_history;
-		history->is_hit = true;
-
 		switch (this->state) {
 		case BRANCH_EXPERIMENT_STATE_EXPLORE:
 			explore_check_activate(wrapper,
@@ -126,6 +125,12 @@ void BranchExperiment::experiment_exit_step(SolutionWrapper* wrapper) {
 
 void BranchExperiment::backprop(double target_val,
 								SolutionWrapper* wrapper) {
+	BranchExperimentHistory* history = (BranchExperimentHistory*)wrapper->experiment_history;
+	if (history->is_hit) {
+		this->sum_hits++;
+		this->sum_instances += history->num_instances;
+	}
+
 	switch (this->state) {
 	case BRANCH_EXPERIMENT_STATE_EXPLORE:
 		explore_backprop(target_val,

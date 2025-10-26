@@ -158,7 +158,7 @@ void BranchExperiment::explore_check_activate(
 			}
 		}
 
-		uniform_int_distribution<int> until_distribution(1, 2 * this->average_instances_per_run);
+		uniform_int_distribution<int> until_distribution(1, 2 * (this->sum_instances / this->sum_hits));
 		this->num_instances_until_target = until_distribution(generator);
 
 		BranchExperimentState* new_experiment_state = new BranchExperimentState(this);
@@ -250,7 +250,7 @@ void BranchExperiment::explore_backprop(
 			#else
 			if (this->best_surprise >= 0.0) {
 			#endif /* MDEBUG */
-				uniform_int_distribution<int> until_distribution(1, this->average_instances_per_run);
+				uniform_int_distribution<int> until_distribution(1, (this->sum_instances / this->sum_hits));
 				this->num_instances_until_target = until_distribution(generator);
 
 				this->state = BRANCH_EXPERIMENT_STATE_TRAIN_NEW;

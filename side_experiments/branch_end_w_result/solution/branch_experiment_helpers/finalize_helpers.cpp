@@ -24,6 +24,7 @@ void BranchExperiment::clean() {
 
 void BranchExperiment::add(SolutionWrapper* wrapper) {
 	stringstream ss;
+	ss << "BranchExperiment" << "; ";
 	ss << "this->scope_context->id: " << this->scope_context->id << "; ";
 	ss << "this->node_context->id: " << this->node_context->id << "; ";
 	ss << "this->is_branch: " << this->is_branch << "; ";

@@ -99,6 +99,8 @@ void NewScopeExperiment::backprop(double target_val,
 		this->new_target_val_histories[random_index] = target_val;
 	}
 
+	this->total_count++;
+
 	NewScopeExperimentHistory* history = (NewScopeExperimentHistory*)wrapper->experiment_history;
 	if (history->is_hit) {
 		this->new_sum_scores += target_val - wrapper->existing_result;
@@ -132,9 +134,9 @@ void NewScopeExperiment::backprop(double target_val,
 			double new_score_average = this->new_sum_scores / (double)this->state_iter;
 
 			#if defined(MDEBUG) && MDEBUG
-			if (new_score_average > 0.0 || rand()%5 != 0) {
+			if (new_score_average >= 0.0 || rand()%5 != 0) {
 			#else
-			if (new_score_average > 0.0) {
+			if (new_score_average >= 0.0) {
 			#endif /* MDEBUG */
 				switch (this->state) {
 				case NEW_SCOPE_EXPERIMENT_STATE_C1:
@@ -147,43 +149,7 @@ void NewScopeExperiment::backprop(double target_val,
 					this->state = NEW_SCOPE_EXPERIMENT_STATE_C4;
 					break;
 				case NEW_SCOPE_EXPERIMENT_STATE_C4:
-					double average_hits_per_run;
-					switch (this->node_context->type) {
-					case NODE_TYPE_START:
-						{
-							StartNode* start_node = (StartNode*)this->node_context;
-							average_hits_per_run = start_node->average_hits_per_run;
-						}
-						break;
-					case NODE_TYPE_ACTION:
-						{
-							ActionNode* action_node = (ActionNode*)this->node_context;
-							average_hits_per_run = action_node->average_hits_per_run;
-						}
-						break;
-					case NODE_TYPE_SCOPE:
-						{
-							ScopeNode* scope_node = (ScopeNode*)this->node_context;
-							average_hits_per_run = scope_node->average_hits_per_run;
-						}
-						break;
-					case NODE_TYPE_BRANCH:
-						{
-							BranchNode* branch_node = (BranchNode*)this->node_context;
-							if (this->is_branch) {
-								average_hits_per_run = branch_node->branch_average_hits_per_run;
-							} else {
-								average_hits_per_run = branch_node->original_average_hits_per_run;
-							}
-						}
-						break;
-					case NODE_TYPE_OBS:
-						{
-							ObsNode* obs_node = (ObsNode*)this->node_context;
-							average_hits_per_run = obs_node->average_hits_per_run;
-						}
-						break;
-					}
+					double average_hits_per_run = (double)INITIAL_C4_NUM_SAMPLES / (double)this->total_count;
 
 					this->improvement = average_hits_per_run * new_score_average;
 

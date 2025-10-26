@@ -22,13 +22,6 @@ public:
 	int branch_start_node_id;
 	BranchNode* branch_start_node;
 
-	double average_hits_per_run;
-	double average_instances_per_run;
-
-	int last_updated_run_index;
-	int sum_hits;
-	int sum_instances;
-
 	ObsNode();
 	~ObsNode();
 
@@ -46,9 +39,6 @@ public:
 						 int& action,
 						 bool& is_next,
 						 SolutionWrapper* wrapper);
-
-	void clean();
-	void measure_update(int total_count);
 
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file,

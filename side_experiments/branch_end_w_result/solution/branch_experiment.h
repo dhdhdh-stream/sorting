@@ -25,7 +25,8 @@ public:
 	int state;
 	int state_iter;
 
-	double average_instances_per_run;
+	int sum_hits;
+	int sum_instances;
 	int num_instances_until_target;
 
 	Scope* curr_new_scope;
@@ -58,6 +59,7 @@ public:
 	std::vector<std::vector<double>> network_vals;
 	std::vector<std::vector<bool>> network_is_on;
 
+	int total_count;
 	double new_sum_scores;
 
 	#if defined(MDEBUG) && MDEBUG
@@ -150,6 +152,8 @@ public:
 class BranchExperimentHistory : public AbstractExperimentHistory {
 public:
 	bool has_explore;
+
+	int num_instances;
 
 	BranchExperimentHistory(BranchExperiment* experiment);
 };

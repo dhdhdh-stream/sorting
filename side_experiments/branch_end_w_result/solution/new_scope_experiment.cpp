@@ -80,6 +80,7 @@ NewScopeExperiment::NewScopeExperiment(Scope* scope_context,
 	}
 	this->exit_next_node = possible_exits[random_index];
 
+	this->total_count = 0;
 	this->new_sum_scores = 0.0;
 
 	this->state = NEW_SCOPE_EXPERIMENT_STATE_C1;

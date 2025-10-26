@@ -35,6 +35,7 @@ public:
 
 	AbstractNode* exit_next_node;
 
+	int total_count;
 	double new_sum_scores;
 
 	NewScopeExperiment(Scope* scope_context,

@@ -19,9 +19,6 @@ BranchNode::BranchNode() {
 	this->verify_key = NULL;
 	#endif /* MDEBUG */
 
-	this->original_last_updated_run_index = -1;
-	this->branch_last_updated_run_index = -1;
-
 	this->experiment = NULL;
 }
 
@@ -93,27 +90,6 @@ void BranchNode::replace_obs_node(Scope* scope,
 	}
 }
 
-void BranchNode::clean() {
-	if (this->experiment != NULL) {
-		delete this->experiment;
-		this->experiment = NULL;
-	}
-
-	this->original_last_updated_run_index = -1;
-	this->original_sum_hits = 0;
-	this->original_sum_instances = 0;
-	this->branch_last_updated_run_index = -1;
-	this->branch_sum_hits = 0;
-	this->branch_sum_instances = 0;
-}
-
-void BranchNode::measure_update(int total_count) {
-	this->original_average_hits_per_run = (double)this->original_sum_hits / (double)total_count;
-	this->original_average_instances_per_run = (double)this->original_sum_instances / (double)this->original_sum_hits;
-	this->branch_average_hits_per_run = (double)this->branch_sum_hits / (double)total_count;
-	this->branch_average_instances_per_run = (double)this->branch_sum_instances / (double)this->branch_sum_hits;
-}
-
 void BranchNode::save(ofstream& output_file) {
 	output_file << this->constant << endl;
 	output_file << this->inputs.size() << endl;
@@ -128,11 +104,6 @@ void BranchNode::save(ofstream& output_file) {
 	output_file << this->branch_next_node_id << endl;
 
 	output_file << this->branch_end_node_id << endl;
-
-	output_file << this->original_average_hits_per_run << endl;
-	output_file << this->original_average_instances_per_run << endl;
-	output_file << this->branch_average_hits_per_run << endl;
-	output_file << this->branch_average_instances_per_run << endl;
 
 	output_file << this->ancestor_ids.size() << endl;
 	for (int a_index = 0; a_index < (int)this->ancestor_ids.size(); a_index++) {
@@ -177,22 +148,6 @@ void BranchNode::load(ifstream& input_file,
 	string branch_end_node_id_line;
 	getline(input_file, branch_end_node_id_line);
 	this->branch_end_node_id = stoi(branch_end_node_id_line);
-
-	string original_average_hits_per_run_line;
-	getline(input_file, original_average_hits_per_run_line);
-	this->original_average_hits_per_run = stod(original_average_hits_per_run_line);
-
-	string original_average_instances_per_run_line;
-	getline(input_file, original_average_instances_per_run_line);
-	this->original_average_instances_per_run = stod(original_average_instances_per_run_line);
-
-	string branch_average_hits_per_run_line;
-	getline(input_file, branch_average_hits_per_run_line);
-	this->branch_average_hits_per_run = stod(branch_average_hits_per_run_line);
-
-	string branch_average_instances_per_run_line;
-	getline(input_file, branch_average_instances_per_run_line);
-	this->branch_average_instances_per_run = stod(branch_average_instances_per_run_line);
 
 	string num_ancestors_line;
 	getline(input_file, num_ancestors_line);

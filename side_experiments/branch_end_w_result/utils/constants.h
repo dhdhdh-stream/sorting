@@ -24,14 +24,16 @@ const int MEASURE_ITERS = 1000;
 
 #if defined(MDEBUG) && MDEBUG
 const int IMPROVEMENTS_PER_ITER = 2;
+const int NEW_SCOPE_IMPROVEMENTS_PER_ITER = 2;
 #else
 /**
  * - large number to select good paths to prevent noise
  */
 const int IMPROVEMENTS_PER_ITER = 6;
+const int NEW_SCOPE_IMPROVEMENTS_PER_ITER = 40;
 #endif /* MDEBUG */
 
-const int RUN_TIMESTEPS = 20;
+const int RUN_TIMESTEPS = 24;
 
 #if defined(MDEBUG) && MDEBUG
 const int NUM_VERIFY_SAMPLES = 10;

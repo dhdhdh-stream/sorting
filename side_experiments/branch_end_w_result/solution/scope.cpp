@@ -193,20 +193,6 @@ void Scope::replace_obs_node(Scope* scope,
 	}
 }
 
-void Scope::clean() {
-	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
-			it != this->nodes.end(); it++) {
-		it->second->clean();
-	}
-}
-
-void Scope::measure_update(int total_count) {
-	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
-			it != this->nodes.end(); it++) {
-		it->second->measure_update(total_count);
-	}
-}
-
 void Scope::save(ofstream& output_file) {
 	output_file << this->node_counter << endl;
 

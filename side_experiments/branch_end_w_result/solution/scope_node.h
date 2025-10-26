@@ -31,13 +31,6 @@ public:
 	int next_node_id;
 	AbstractNode* next_node;
 
-	double average_hits_per_run;
-	double average_instances_per_run;
-
-	int last_updated_run_index;
-	int sum_hits;
-	int sum_instances;
-
 	ScopeNode();
 	~ScopeNode();
 
@@ -58,9 +51,6 @@ public:
 						 bool& is_next,
 						 SolutionWrapper* wrapper);
 	void experiment_exit_step(SolutionWrapper* wrapper);
-
-	void clean();
-	void measure_update(int total_count);
 
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file,

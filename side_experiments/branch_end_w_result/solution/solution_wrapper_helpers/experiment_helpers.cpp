@@ -159,15 +159,13 @@ void SolutionWrapper::experiment_end(double result) {
 				this->curr_new_scope_experiment = NULL;
 
 				this->improvement_iter++;
-				if (this->improvement_iter >= IMPROVEMENTS_PER_ITER) {
+				if (this->improvement_iter >= NEW_SCOPE_IMPROVEMENTS_PER_ITER) {
 					Scope* last_updated_scope = this->best_new_scope_experiment->scope_context;
 
 					this->best_new_scope_experiment->add(this);
 
 					clean_scope(last_updated_scope,
 								this);
-
-					this->solution->clean();
 
 					this->solution->timestamp++;
 
@@ -224,8 +222,6 @@ void SolutionWrapper::experiment_end(double result) {
 
 				clean_scope(last_updated_scope,
 							this);
-
-				this->solution->clean();
 
 				this->solution->timestamp++;
 

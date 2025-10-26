@@ -53,16 +53,12 @@ void Solution::init() {
 	start_node->id = new_scope->node_counter;
 	new_scope->node_counter++;
 	new_scope->nodes[start_node->id] = start_node;
-	start_node->average_hits_per_run = 1.0;
-	start_node->average_instances_per_run = 1.0;
 
 	ObsNode* end_node = new ObsNode();
 	end_node->parent = new_scope;
 	end_node->id = new_scope->node_counter;
 	new_scope->node_counter++;
 	new_scope->nodes[end_node->id] = end_node;
-	end_node->average_hits_per_run = 1.0;
-	end_node->average_instances_per_run = 1.0;
 
 	start_node->next_node_id = end_node->id;
 	start_node->next_node = end_node;
@@ -73,8 +69,6 @@ void Solution::init() {
 	end_node->next_node = NULL;
 
 	this->last_new_scope = NULL;
-
-	clean();
 }
 
 void Solution::load(string path,
@@ -162,8 +156,6 @@ void Solution::load(string path,
 	}
 
 	input_file.close();
-
-	clean();
 }
 
 #if defined(MDEBUG) && MDEBUG
@@ -207,16 +199,6 @@ void Solution::replace_obs_node(Scope* scope,
 			scope,
 			original_node_id,
 			new_node_id);
-	}
-}
-
-void Solution::clean() {
-	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
-		this->scopes[s_index]->clean();
-	}
-
-	for (int s_index = 0; s_index < (int)this->external_scopes.size(); s_index++) {
-		this->external_scopes[s_index]->clean();
 	}
 }
 

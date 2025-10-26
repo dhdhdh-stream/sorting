@@ -1,6 +1,7 @@
 #include "new_scope_experiment.h"
 
 #include <iostream>
+#include <sstream>
 
 #include "action_node.h"
 #include "branch_node.h"
@@ -186,8 +187,24 @@ void NewScopeOverallExperiment::clean() {
 void NewScopeOverallExperiment::add(SolutionWrapper* wrapper) {
 	cout << "NewScopeExperiment add" << endl;
 
+	wrapper->solution->improvement_history.push_back(calc_impact());
+	stringstream ss;
+	ss << "NewScopeExperiment" << "; ";
+	ss << "scope_context->id: " << this->scope_context->id << "; ";
+	for (int e_index = 0; e_index < (int)this->successful_experiments.size(); e_index++) {
+		ss << "node_context->id: " << this->successful_experiments[e_index]->node_context->id << "; ";
+		ss << "is_branch: " << this->successful_experiments[e_index]->is_branch << "; ";
+		if (this->successful_experiments[e_index]->exit_next_node == NULL) {
+			ss << "exit_next_node->id: " << -1 << "; ";
+		} else {
+			ss << "exit_next_node->id: " << this->successful_experiments[e_index]->exit_next_node->id << "; ";
+		}
+	}
+	wrapper->solution->change_history.push_back(ss.str());
+
 	wrapper->solution->scopes.push_back(this->new_scope);
 	this->new_scope->id = wrapper->solution->scopes.size()-1;
+	this->new_scope->is_external = false;
 
 	clean_scope(this->new_scope,
 				wrapper);

@@ -136,102 +136,9 @@ void fetch_input_helper(ScopeHistory* scope_history,
 	}
 }
 
-void update_scores_helper(ScopeHistory* scope_history,
-						  int h_index) {
-	Scope* scope = scope_history->scope;
-
-	map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
-	while (it != scope_history->node_histories.end()) {
-		if (scope->nodes.find(it->first) == scope->nodes.end()) {
-			delete it->second;
-			it = scope_history->node_histories.erase(it);
-		} else {
-			AbstractNode* node = it->second->node;
-			switch (node->type) {
-			case NODE_TYPE_START:
-				{
-					StartNode* start_node = (StartNode*)node;
-					if (h_index != start_node->last_updated_run_index) {
-						start_node->sum_hits++;
-						start_node->last_updated_run_index = h_index;
-					}
-					start_node->sum_instances++;
-				}
-				break;
-			case NODE_TYPE_ACTION:
-				{
-					ActionNode* action_node = (ActionNode*)node;
-					if (h_index != action_node->last_updated_run_index) {
-						action_node->sum_hits++;
-						action_node->last_updated_run_index = h_index;
-					}
-					action_node->sum_instances++;
-				}
-				break;
-			case NODE_TYPE_SCOPE:
-				{
-					ScopeNode* scope_node = (ScopeNode*)node;
-					ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)it->second;
-
-					update_scores_helper(scope_node_history->scope_history,
-										 h_index);
-
-					if (h_index != scope_node->last_updated_run_index) {
-						scope_node->sum_hits++;
-						scope_node->last_updated_run_index = h_index;
-					}
-					scope_node->sum_instances++;
-				}
-				break;
-			case NODE_TYPE_BRANCH:
-				{
-					BranchNode* branch_node = (BranchNode*)node;
-					BranchNodeHistory* branch_node_history = (BranchNodeHistory*)it->second;
-					if (branch_node_history->is_branch) {
-						if (h_index != branch_node->branch_last_updated_run_index) {
-							branch_node->branch_sum_hits++;
-							branch_node->branch_last_updated_run_index = h_index;
-						}
-						branch_node->branch_sum_instances++;
-					} else {
-						if (h_index != branch_node->original_last_updated_run_index) {
-							branch_node->original_sum_hits++;
-							branch_node->original_last_updated_run_index = h_index;
-						}
-						branch_node->original_sum_instances++;
-					}
-				}
-				break;
-			case NODE_TYPE_OBS:
-				{
-					ObsNode* obs_node = (ObsNode*)node;
-					if (h_index != obs_node->last_updated_run_index) {
-						obs_node->sum_hits++;
-						obs_node->last_updated_run_index = h_index;
-					}
-					obs_node->sum_instances++;
-				}
-				break;
-			}
-
-			it++;
-		}
-	}
-
-	while (scope_history->factor_initialized.size() < scope->factors.size()) {
-		scope_history->factor_initialized.push_back(false);
-		scope_history->factor_values.push_back(0.0);
-	}
-}
-
 void update_scores(vector<ScopeHistory*>& scope_histories,
 				   vector<double>& target_val_histories,
 				   SolutionWrapper* wrapper) {
-	for (int h_index = 0; h_index < (int)scope_histories.size(); h_index++) {
-		update_scores_helper(scope_histories[h_index],
-							 h_index);
-	}
-
 	double sum_score = 0.0;
 	for (int h_index = 0; h_index < (int)target_val_histories.size(); h_index++) {
 		sum_score += target_val_histories[h_index];
@@ -245,12 +152,4 @@ void update_scores(vector<ScopeHistory*>& scope_histories,
 	}
 
 	wrapper->solution->curr_score = new_score;
-
-	for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
-		wrapper->solution->scopes[s_index]->measure_update((int)scope_histories.size());
-	}
-
-	for (int s_index = 0; s_index < (int)wrapper->solution->external_scopes.size(); s_index++) {
-		wrapper->solution->external_scopes[s_index]->measure_update((int)scope_histories.size());
-	}
 }

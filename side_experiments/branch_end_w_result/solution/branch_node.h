@@ -35,18 +35,6 @@ public:
 	std::vector<double> verify_scores;
 	#endif /* MDEBUG */
 
-	double original_average_hits_per_run;
-	double original_average_instances_per_run;
-	double branch_average_hits_per_run;
-	double branch_average_instances_per_run;
-
-	int original_last_updated_run_index;
-	int original_sum_hits;
-	int original_sum_instances;
-	int branch_last_updated_run_index;
-	int branch_sum_hits;
-	int branch_sum_instances;
-
 	BranchNode();
 	~BranchNode();
 
@@ -79,9 +67,6 @@ public:
 	void replace_obs_node(Scope* scope,
 						  int original_node_id,
 						  int new_node_id);
-
-	void clean();
-	void measure_update(int total_count);
 
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file,

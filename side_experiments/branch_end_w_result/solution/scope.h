@@ -45,9 +45,6 @@ public:
 						  int original_node_id,
 						  int new_node_id);
 
-	void clean();
-	void measure_update(int total_count);
-
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file,
 			  Solution* parent_solution);

@@ -11,8 +11,6 @@ using namespace std;
 ActionNode::ActionNode() {
 	this->type = NODE_TYPE_ACTION;
 
-	this->last_updated_run_index = -1;
-
 	this->experiment = NULL;
 }
 
@@ -22,29 +20,10 @@ ActionNode::~ActionNode() {
 	}
 }
 
-void ActionNode::clean() {
-	if (this->experiment != NULL) {
-		delete this->experiment;
-		this->experiment = NULL;
-	}
-
-	this->last_updated_run_index = -1;
-	this->sum_hits = 0;
-	this->sum_instances = 0;
-}
-
-void ActionNode::measure_update(int total_count) {
-	this->average_hits_per_run = (double)this->sum_hits / (double)total_count;
-	this->average_instances_per_run = (double)this->sum_instances / (double)this->sum_hits;
-}
-
 void ActionNode::save(ofstream& output_file) {
 	output_file << this->action << endl;
 
 	output_file << this->next_node_id << endl;
-
-	output_file << this->average_hits_per_run << endl;
-	output_file << this->average_instances_per_run << endl;
 
 	output_file << this->ancestor_ids.size() << endl;
 	for (int a_index = 0; a_index < (int)this->ancestor_ids.size(); a_index++) {
@@ -60,14 +39,6 @@ void ActionNode::load(ifstream& input_file) {
 	string next_node_id_line;
 	getline(input_file, next_node_id_line);
 	this->next_node_id = stoi(next_node_id_line);
-
-	string average_hits_per_run_line;
-	getline(input_file, average_hits_per_run_line);
-	this->average_hits_per_run = stod(average_hits_per_run_line);
-
-	string average_instances_per_run_line;
-	getline(input_file, average_instances_per_run_line);
-	this->average_instances_per_run = stod(average_instances_per_run_line);
 
 	string num_ancestors_line;
 	getline(input_file, num_ancestors_line);
