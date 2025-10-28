@@ -25,29 +25,9 @@ void BranchExperiment::capture_verify_check_activate(
 	}
 	this->verify_seeds[this->state_iter] = wrapper->starting_run_seed;
 
-	this->new_network->activate(obs);
-
-	this->verify_scores.push_back(this->new_network->output->acti_vals[0]);
-
-	cout << "wrapper->starting_run_seed: " << wrapper->starting_run_seed << endl;
-	cout << "wrapper->curr_run_seed: " << wrapper->curr_run_seed << endl;
-	wrapper->problem->print();
-
-	bool decision_is_branch;
-	if (wrapper->curr_run_seed%2 == 0) {
-		decision_is_branch = true;
-	} else {
-		decision_is_branch = false;
-	}
-	wrapper->curr_run_seed = xorshift(wrapper->curr_run_seed);
-
-	cout << "decision_is_branch: " << decision_is_branch << endl;
-
-	if (decision_is_branch) {
-		BranchExperimentState* new_experiment_state = new BranchExperimentState(this);
-		new_experiment_state->step_index = 0;
-		wrapper->experiment_context.back() = new_experiment_state;
-	}
+	BranchExperimentState* new_experiment_state = new BranchExperimentState(this);
+	new_experiment_state->step_index = 0;
+	wrapper->experiment_context.back() = new_experiment_state;
 }
 
 void BranchExperiment::capture_verify_step(vector<double>& obs,
@@ -55,6 +35,32 @@ void BranchExperiment::capture_verify_step(vector<double>& obs,
 										   bool& is_next,
 										   SolutionWrapper* wrapper,
 										   BranchExperimentState* experiment_state) {
+	if (experiment_state->step_index == 0) {
+		this->new_network->activate(obs);
+
+		this->verify_scores.push_back(this->new_network->output->acti_vals[0]);
+
+		cout << "wrapper->starting_run_seed: " << wrapper->starting_run_seed << endl;
+		cout << "wrapper->curr_run_seed: " << wrapper->curr_run_seed << endl;
+		wrapper->problem->print();
+
+		bool decision_is_branch;
+		if (wrapper->curr_run_seed%2 == 0) {
+			decision_is_branch = true;
+		} else {
+			decision_is_branch = false;
+		}
+		wrapper->curr_run_seed = xorshift(wrapper->curr_run_seed);
+
+		cout << "decision_is_branch: " << decision_is_branch << endl;
+
+		if (!decision_is_branch) {
+			delete experiment_state;
+			wrapper->experiment_context.back() = NULL;
+			return;
+		}
+	}
+
 	if (experiment_state->step_index >= (int)this->best_step_types.size()) {
 		wrapper->node_context.back() = this->best_exit_next_node;
 

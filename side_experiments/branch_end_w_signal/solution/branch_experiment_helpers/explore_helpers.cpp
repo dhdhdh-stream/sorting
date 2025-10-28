@@ -43,9 +43,6 @@ void BranchExperiment::explore_check_activate(
 	this->num_instances_until_target--;
 	if (history->existing_predicted_scores.size() == 0
 			&& this->num_instances_until_target <= 0) {
-		this->existing_network->activate(obs);
-		history->existing_predicted_scores.push_back(this->existing_network->output->acti_vals[0]);
-
 		vector<AbstractNode*> possible_exits;
 
 		AbstractNode* starting_node;
@@ -161,11 +158,6 @@ void BranchExperiment::explore_check_activate(
 		uniform_int_distribution<int> until_distribution(1, 2 * this->average_instances_per_run);
 		this->num_instances_until_target = until_distribution(generator);
 
-		history->signal_sum_vals.push_back(0.0);
-		history->signal_sum_counts.push_back(0);
-
-		wrapper->experiment_callbacks.push_back(wrapper->branch_node_stack);
-
 		BranchExperimentState* new_experiment_state = new BranchExperimentState(this);
 		new_experiment_state->step_index = 0;
 		wrapper->experiment_context.back() = new_experiment_state;
@@ -178,6 +170,18 @@ void BranchExperiment::explore_step(vector<double>& obs,
 									bool& fetch_action,
 									SolutionWrapper* wrapper,
 									BranchExperimentState* experiment_state) {
+	if (experiment_state->step_index == 0) {
+		BranchExperimentHistory* history = (BranchExperimentHistory*)wrapper->experiment_history;
+
+		this->existing_network->activate(obs);
+		history->existing_predicted_scores.push_back(this->existing_network->output->acti_vals[0]);
+
+		history->signal_sum_vals.push_back(0.0);
+		history->signal_sum_counts.push_back(0);
+
+		wrapper->experiment_callbacks.push_back(wrapper->branch_node_stack);
+	}
+
 	if (experiment_state->step_index >= (int)this->curr_step_types.size()) {
 		wrapper->node_context.back() = this->curr_exit_next_node;
 

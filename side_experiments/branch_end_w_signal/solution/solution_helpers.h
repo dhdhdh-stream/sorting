@@ -18,7 +18,8 @@ class SolutionWrapper;
 void create_branch_experiment(ScopeHistory* scope_history,
 							  SolutionWrapper* wrapper);
 
-AbstractNode* fetch_path_end(AbstractNode* node_context);
+AbstractNode* fetch_path_end(AbstractNode* node_context,
+							 bool is_branch);
 
 Scope* create_new_scope(Scope* scope_context);
 

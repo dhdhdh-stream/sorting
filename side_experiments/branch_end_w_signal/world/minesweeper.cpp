@@ -146,16 +146,16 @@ double Minesweeper::get_observation_helper(int x, int y) {
 vector<double> Minesweeper::get_observations() {
 	vector<double> obs;
 
-	obs.push_back(get_observation_helper(this->current_x, this->current_y));
+	// obs.push_back(get_observation_helper(this->current_x, this->current_y));
 
-	// for (int x_index = -2; x_index <= 2; x_index++) {
-	// 	for (int y_index = -2; y_index <= 2; y_index++) {
-	// 		obs.push_back(get_observation_helper(
-	// 			this->current_x + x_index,
-	// 			this->current_y + y_index
-	// 		));
-	// 	}
-	// }
+	for (int x_index = -2; x_index <= 2; x_index++) {
+		for (int y_index = -2; y_index <= 2; y_index++) {
+			obs.push_back(get_observation_helper(
+				this->current_x + x_index,
+				this->current_y + y_index
+			));
+		}
+	}
 
 	return obs;
 }
@@ -193,39 +193,39 @@ void Minesweeper::perform_action(int action) {
 	switch (action) {
 	case MINESWEEPER_ACTION_UP:
 		this->current_y++;
-		if (this->current_y > HEIGHT) {
-			this->current_y = HEIGHT;
-		}
-		// if (this->current_y > HEIGHT-1) {
-		// 	this->current_y = HEIGHT-1;
+		// if (this->current_y > HEIGHT) {
+		// 	this->current_y = HEIGHT;
 		// }
+		if (this->current_y > HEIGHT-1) {
+			this->current_y = HEIGHT-1;
+		}
 		break;
 	case MINESWEEPER_ACTION_RIGHT:
 		this->current_x++;
-		if (this->current_x > WIDTH) {
-			this->current_x = WIDTH;
-		}
-		// if (this->current_x > WIDTH-1) {
-		// 	this->current_x = WIDTH-1;
+		// if (this->current_x > WIDTH) {
+		// 	this->current_x = WIDTH;
 		// }
+		if (this->current_x > WIDTH-1) {
+			this->current_x = WIDTH-1;
+		}
 		break;
 	case MINESWEEPER_ACTION_DOWN:
 		this->current_y--;
-		if (this->current_y < -1) {
-			this->current_y = -1;
-		}
-		// if (this->current_y < 0) {
-		// 	this->current_y = 0;
+		// if (this->current_y < -1) {
+		// 	this->current_y = -1;
 		// }
+		if (this->current_y < 0) {
+			this->current_y = 0;
+		}
 		break;
 	case MINESWEEPER_ACTION_LEFT:
 		this->current_x--;
-		if (this->current_x < -1) {
-			this->current_x = -1;
-		}
-		// if (this->current_x < 0) {
-		// 	this->current_x = 0;
+		// if (this->current_x < -1) {
+		// 	this->current_x = -1;
 		// }
+		if (this->current_x < 0) {
+			this->current_x = 0;
+		}
 		break;
 	case MINESWEEPER_ACTION_CLICK:
 		if (!this->hit_mine) {
@@ -472,8 +472,8 @@ Problem* TypeMinesweeper::get_problem() {
 }
 
 int TypeMinesweeper::num_obs() {
-	return 1;
-	// return 25;
+	// return 1;
+	return 25;
 }
 
 int TypeMinesweeper::num_possible_actions() {

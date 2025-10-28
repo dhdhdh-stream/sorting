@@ -1,5 +1,7 @@
 #include "branch_end_node.h"
 
+#include <iostream>
+
 #include "branch_experiment.h"
 #include "network.h"
 #include "scope.h"
@@ -33,32 +35,34 @@ void BranchEndNode::experiment_step(vector<double>& obs,
 		}
 	}
 
-	if (need_callback && this->pre_network != NULL) {
-		this->pre_network->activate(wrapper->branch_node_stack_obs.back());
+	if (need_callback) {
+		if (this->pre_network != NULL) {
+			this->pre_network->activate(wrapper->branch_node_stack_obs.back());
 
-		vector<double> input = wrapper->branch_node_stack_obs.back();
-		input.insert(input.end(), obs.begin(), obs.end());
-		this->post_network->activate(input);
+			vector<double> input = wrapper->branch_node_stack_obs.back();
+			input.insert(input.end(), obs.begin(), obs.end());
+			this->post_network->activate(input);
 
-		double signal = this->post_network->output->acti_vals[0] - this->pre_network->output->acti_vals[0];
+			double signal = this->post_network->output->acti_vals[0] - this->pre_network->output->acti_vals[0];
 
-		for (int c_index = 0; c_index < (int)wrapper->experiment_callbacks.size(); c_index++) {
-			if (wrapper->experiment_callbacks[c_index].size() > 0
-					&& wrapper->experiment_callbacks[c_index].back() == this->branch_start_node) {
-				BranchExperimentHistory* branch_experiment_history = (BranchExperimentHistory*)wrapper->experiment_history;
-				branch_experiment_history->signal_sum_vals[c_index] += signal;
-				branch_experiment_history->signal_sum_counts[c_index]++;
+			for (int c_index = 0; c_index < (int)wrapper->experiment_callbacks.size(); c_index++) {
+				if (wrapper->experiment_callbacks[c_index].size() > 0
+						&& wrapper->experiment_callbacks[c_index].back() == this->branch_start_node) {
+					BranchExperimentHistory* branch_experiment_history = (BranchExperimentHistory*)wrapper->experiment_history;
+					branch_experiment_history->signal_sum_vals[c_index] += signal;
+					branch_experiment_history->signal_sum_counts[c_index]++;
 
-				wrapper->experiment_callbacks[c_index].pop_back();
+					wrapper->experiment_callbacks[c_index].pop_back();
+				}
 			}
-		}
-		for (int c_index = 0; c_index < (int)wrapper->branch_end_node_callbacks.size(); c_index++) {
-			if (wrapper->branch_end_node_callbacks[c_index].size() > 0
-					&& wrapper->branch_end_node_callbacks[c_index].back() == this->branch_start_node) {
-				wrapper->branch_end_node_callback_histories[c_index]->signal_sum_vals += signal;
-				wrapper->branch_end_node_callback_histories[c_index]->signal_sum_counts++;
+			for (int c_index = 0; c_index < (int)wrapper->branch_end_node_callbacks.size(); c_index++) {
+				if (wrapper->branch_end_node_callbacks[c_index].size() > 0
+						&& wrapper->branch_end_node_callbacks[c_index].back() == this->branch_start_node) {
+					wrapper->branch_end_node_callback_histories[c_index]->signal_sum_vals += signal;
+					wrapper->branch_end_node_callback_histories[c_index]->signal_sum_counts++;
 
-				wrapper->branch_end_node_callbacks[c_index].pop_back();
+					wrapper->branch_end_node_callbacks[c_index].pop_back();
+				}
 			}
 		}
 

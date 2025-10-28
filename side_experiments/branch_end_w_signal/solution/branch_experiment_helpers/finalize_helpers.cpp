@@ -166,7 +166,8 @@ void BranchExperiment::add(SolutionWrapper* wrapper) {
 	} else {
 		AbstractNode* previous_node;
 		if (this->best_exit_next_node->type == NODE_TYPE_BRANCH_END) {
-			previous_node = fetch_path_end(this->node_context);
+			previous_node = fetch_path_end(this->node_context,
+										   this->is_branch);
 		} else {
 			previous_node = this->scope_context->nodes[this->best_exit_next_node->ancestor_ids[0]];
 		}

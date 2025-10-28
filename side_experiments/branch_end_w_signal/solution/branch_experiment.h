@@ -26,6 +26,7 @@ public:
 	int state_iter;
 
 	double existing_score;
+	double existing_signal;
 
 	Network* existing_network;
 
@@ -87,6 +88,11 @@ public:
 	void train_existing_check_activate(std::vector<double>& obs,
 									   SolutionWrapper* wrapper,
 									   BranchExperimentHistory* history);
+	void train_existing_step(std::vector<double>& obs,
+							 int& action,
+							 bool& is_next,
+							 SolutionWrapper* wrapper,
+							 BranchExperimentState* experiment_state);
 	void train_existing_backprop(double target_val,
 								 SolutionWrapper* wrapper);
 

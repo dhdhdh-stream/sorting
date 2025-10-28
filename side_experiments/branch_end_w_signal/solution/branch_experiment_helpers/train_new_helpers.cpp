@@ -28,16 +28,6 @@ void BranchExperiment::train_new_check_activate(
 		BranchExperimentHistory* history) {
 	this->num_instances_until_target--;
 	if (this->num_instances_until_target <= 0) {
-		this->existing_network->activate(obs);
-		history->existing_predicted_scores.push_back(this->existing_network->output->acti_vals[0]);
-
-		this->obs_histories.push_back(obs);
-
-		history->signal_sum_vals.push_back(0.0);
-		history->signal_sum_counts.push_back(0);
-
-		wrapper->experiment_callbacks.push_back(wrapper->branch_node_stack);
-
 		uniform_int_distribution<int> until_distribution(1, this->average_instances_per_run);
 		this->num_instances_until_target = until_distribution(generator);
 
@@ -52,6 +42,20 @@ void BranchExperiment::train_new_step(vector<double>& obs,
 									  bool& is_next,
 									  SolutionWrapper* wrapper,
 									  BranchExperimentState* experiment_state) {
+	if (experiment_state->step_index == 0) {
+		BranchExperimentHistory* history = (BranchExperimentHistory*)wrapper->experiment_history;
+
+		this->existing_network->activate(obs);
+		history->existing_predicted_scores.push_back(this->existing_network->output->acti_vals[0]);
+
+		this->obs_histories.push_back(obs);
+
+		history->signal_sum_vals.push_back(0.0);
+		history->signal_sum_counts.push_back(0);
+
+		wrapper->experiment_callbacks.push_back(wrapper->branch_node_stack);
+	}
+
 	if (experiment_state->step_index >= (int)this->best_step_types.size()) {
 		wrapper->node_context.back() = this->best_exit_next_node;
 
@@ -127,6 +131,9 @@ void BranchExperiment::train_new_backprop(
 					num_positive++;
 				}
 			}
+
+			this->obs_histories.clear();
+			this->target_val_histories.clear();
 
 			#if defined(MDEBUG) && MDEBUG
 			if (num_positive > 0 || rand()%2 == 0) {

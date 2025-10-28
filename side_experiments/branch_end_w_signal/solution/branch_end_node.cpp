@@ -1,5 +1,7 @@
 #include "branch_end_node.h"
 
+#include <iostream>
+
 #include "abstract_experiment.h"
 #include "network.h"
 #include "scope.h"

@@ -59,6 +59,13 @@ void BranchExperiment::experiment_step(vector<double>& obs,
 									   SolutionWrapper* wrapper) {
 	BranchExperimentState* experiment_state = (BranchExperimentState*)wrapper->experiment_context.back();
 	switch (this->state) {
+	case BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING:
+		train_existing_step(obs,
+							action,
+							is_next,
+							wrapper,
+							experiment_state);
+		break;
 	case BRANCH_EXPERIMENT_STATE_EXPLORE:
 		explore_step(obs,
 					 action,

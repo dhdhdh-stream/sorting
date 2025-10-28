@@ -6,13 +6,59 @@
 #include "scope_node.h"
 #include "start_node.h"
 
+#include <iostream>
+
 using namespace std;
 
-AbstractNode* fetch_path_end(AbstractNode* node_context) {
+AbstractNode* fetch_path_end(AbstractNode* node_context,
+							 bool is_branch) {
 	set<BranchNode*> branch_nodes_seen;
 
 	AbstractNode* prev_node = NULL;
 	AbstractNode* curr_node = node_context;
+	switch (curr_node->type) {
+	case NODE_TYPE_START:
+		{
+			StartNode* node = (StartNode*)curr_node;
+			prev_node = curr_node;
+			curr_node = node->next_node;
+		}
+		break;
+	case NODE_TYPE_ACTION:
+		{
+			ActionNode* node = (ActionNode*)curr_node;
+			prev_node = curr_node;
+			curr_node = node->next_node;
+		}
+		break;
+	case NODE_TYPE_SCOPE:
+		{
+			ScopeNode* node = (ScopeNode*)curr_node;
+			prev_node = curr_node;
+			curr_node = node->next_node;
+		}
+		break;
+	case NODE_TYPE_BRANCH:
+		{
+			BranchNode* node = (BranchNode*)curr_node;
+
+			prev_node = curr_node;
+			if (is_branch) {
+				curr_node = node->branch_next_node;
+			} else {
+				curr_node = node->original_next_node;
+			}
+		}
+		break;
+	case NODE_TYPE_BRANCH_END:
+		{
+			BranchEndNode* node = (BranchEndNode*)curr_node;
+
+			prev_node = curr_node;
+			curr_node = node->next_node;
+		}
+		break;
+	}
 	while (true) {
 		switch (curr_node->type) {
 		case NODE_TYPE_START:
@@ -53,13 +99,11 @@ AbstractNode* fetch_path_end(AbstractNode* node_context) {
 			{
 				BranchEndNode* node = (BranchEndNode*)curr_node;
 
-				if (node != node_context) {
-					set<BranchNode*>::iterator it = branch_nodes_seen.find(node->branch_start_node);
-					if (it == branch_nodes_seen.end()) {
-						return prev_node;
-					} else {
-						branch_nodes_seen.erase(it);
-					}
+				set<BranchNode*>::iterator it = branch_nodes_seen.find(node->branch_start_node);
+				if (it == branch_nodes_seen.end()) {
+					return prev_node;
+				} else {
+					branch_nodes_seen.erase(it);
 				}
 
 				prev_node = curr_node;

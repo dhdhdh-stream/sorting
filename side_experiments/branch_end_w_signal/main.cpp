@@ -1,6 +1,12 @@
 // TODO: add PassThrough
 // TODO: test if eval using signal is better than true
 
+// - perhaps have to chase after signal always?
+//   - allows signals to converge?
+//     - which allows actual improvements begin to matter?
+//   - otherwise, signals constantly triggering over something that isn't being pursued?
+//     - and becomes a negative?
+
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -118,7 +124,7 @@ int main(int argc, char* argv[]) {
 			}
 		}
 
-		// solution_wrapper->save("saves/", filename);
+		solution_wrapper->save("saves/", filename);
 
 		solution_wrapper->save_for_display("../", "display.txt");
 
@@ -133,7 +139,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	solution_wrapper->clean_scopes();
-	// solution_wrapper->save("saves/", filename);
+	solution_wrapper->save("saves/", filename);
 
 	delete problem_type;
 	delete solution_wrapper;

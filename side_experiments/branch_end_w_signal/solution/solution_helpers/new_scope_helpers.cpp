@@ -45,55 +45,65 @@ void children_helper(AbstractNode* curr_node,
 	case NODE_TYPE_ACTION:
 		{
 			ActionNode* action_node = (ActionNode*)curr_node;
-			set<AbstractNode*>::iterator it = children.find(action_node->next_node);
-			if (it == children.end()) {
-				children.insert(action_node->next_node);
+			if (action_node->next_node != NULL) {
+				set<AbstractNode*>::iterator it = children.find(action_node->next_node);
+				if (it == children.end()) {
+					children.insert(action_node->next_node);
 
-				children_helper(action_node->next_node,
-								children);
+					children_helper(action_node->next_node,
+									children);
+				}
 			}
 		}
 		break;
 	case NODE_TYPE_SCOPE:
 		{
 			ScopeNode* scope_node = (ScopeNode*)curr_node;
-			set<AbstractNode*>::iterator it = children.find(scope_node->next_node);
-			if (it == children.end()) {
-				children.insert(scope_node->next_node);
+			if (scope_node->next_node != NULL) {
+				set<AbstractNode*>::iterator it = children.find(scope_node->next_node);
+				if (it == children.end()) {
+					children.insert(scope_node->next_node);
 
-				children_helper(scope_node->next_node,
-								children);
+					children_helper(scope_node->next_node,
+									children);
+				}
 			}
 		}
 		break;
 	case NODE_TYPE_BRANCH:
 		{
 			BranchNode* branch_node = (BranchNode*)curr_node;
-			set<AbstractNode*>::iterator original_it = children.find(branch_node->original_next_node);
-			if (original_it == children.end()) {
-				children.insert(branch_node->original_next_node);
+			if (branch_node->original_next_node != NULL) {
+				set<AbstractNode*>::iterator original_it = children.find(branch_node->original_next_node);
+				if (original_it == children.end()) {
+					children.insert(branch_node->original_next_node);
 
-				children_helper(branch_node->original_next_node,
-								children);
+					children_helper(branch_node->original_next_node,
+									children);
+				}
 			}
-			set<AbstractNode*>::iterator branch_it = children.find(branch_node->branch_next_node);
-			if (branch_it == children.end()) {
-				children.insert(branch_node->branch_next_node);
+			if (branch_node->branch_next_node != NULL) {
+				set<AbstractNode*>::iterator branch_it = children.find(branch_node->branch_next_node);
+				if (branch_it == children.end()) {
+					children.insert(branch_node->branch_next_node);
 
-				children_helper(branch_node->branch_next_node,
-								children);
+					children_helper(branch_node->branch_next_node,
+									children);
+				}
 			}
 		}
 		break;
 	case NODE_TYPE_BRANCH_END:
 		{
 			BranchEndNode* branch_end_node = (BranchEndNode*)curr_node;
-			set<AbstractNode*>::iterator it = children.find(branch_end_node->next_node);
-			if (it == children.end()) {
-				children.insert(branch_end_node->next_node);
+			if (branch_end_node->next_node != NULL) {
+				set<AbstractNode*>::iterator it = children.find(branch_end_node->next_node);
+				if (it == children.end()) {
+					children.insert(branch_end_node->next_node);
 
-				children_helper(branch_end_node->next_node,
-								children);
+					children_helper(branch_end_node->next_node,
+									children);
+				}
 			}
 		}
 		break;
@@ -105,56 +115,27 @@ Scope* create_new_scope(Scope* scope_context) {
 		return NULL;
 	}
 
-	for (int t_index = 0; t_index < CREATE_NEW_SCOPE_NUM_TRIES; t_index++) {
-		uniform_int_distribution<int> node_distribution(1, scope_context->nodes.size()-1);
-		AbstractNode* potential_start_node = next(scope_context->nodes.begin(), node_distribution(generator))->second;
-		
-		AbstractNode* starting_node;
-		switch (potential_start_node->type) {
-		case NODE_TYPE_START:
-			{
-				StartNode* start_node = (StartNode*)potential_start_node;
-				starting_node = start_node->next_node;
-			}
-			break;
+	vector<AbstractNode*> possible_starting_nodes;
+	for (map<int, AbstractNode*>::iterator it = scope_context->nodes.begin();
+			it != scope_context->nodes.end(); it++) {
+		switch (it->second->type) {
 		case NODE_TYPE_ACTION:
-			{
-				ActionNode* action_node = (ActionNode*)potential_start_node;
-				starting_node = action_node->next_node;
-			}
-			break;
 		case NODE_TYPE_SCOPE:
-			{
-				ScopeNode* scope_node = (ScopeNode*)potential_start_node;
-				starting_node = scope_node->next_node;
-			}
-			break;
 		case NODE_TYPE_BRANCH:
-			{
-				BranchNode* branch_node = (BranchNode*)potential_start_node;
-				uniform_int_distribution<int> branch_distribution(0, 1);
-				if (branch_distribution(generator) == 0) {
-					starting_node = branch_node->branch_next_node;
-				} else {
-					starting_node = branch_node->original_next_node;
-				}
-			}
-			break;
-		case NODE_TYPE_BRANCH_END:
-			{
-				BranchEndNode* branch_end_node = (BranchEndNode*)potential_start_node;
-				starting_node = branch_end_node->next_node;
-			}
+			possible_starting_nodes.push_back(it->second);
 			break;
 		}
+	}
+	uniform_int_distribution<int> starting_node_distribution(0, possible_starting_nodes.size()-1);
+
+	for (int t_index = 0; t_index < CREATE_NEW_SCOPE_NUM_TRIES; t_index++) {
+		AbstractNode* potential_start_node = possible_starting_nodes[starting_node_distribution(generator)];
+
 		vector<AbstractNode*> possible_exits;
-		scope_context->random_exit_activate(
-			starting_node,
+		scope_context->random_new_scope_end_activate(
+			potential_start_node,
 			possible_exits);
-		if (possible_exits.size() < 2) {
-			continue;
-		}
-		uniform_int_distribution<int> exit_distribution(0, possible_exits.size()-2);
+		uniform_int_distribution<int> exit_distribution(0, possible_exits.size()-1);
 		/**
 		 * - don't include possible_exits end
 		 */

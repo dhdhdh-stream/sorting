@@ -29,6 +29,8 @@ public:
 
 	void random_exit_activate(AbstractNode* starting_node,
 							  std::vector<AbstractNode*>& possible_exits);
+	void random_new_scope_end_activate(AbstractNode* starting_node,
+									   std::vector<AbstractNode*>& possible_ends);
 
 	#if defined(MDEBUG) && MDEBUG
 	void clear_verify();

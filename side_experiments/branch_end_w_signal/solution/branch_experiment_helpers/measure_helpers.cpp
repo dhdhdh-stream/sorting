@@ -10,6 +10,7 @@
 #include "problem.h"
 #include "scope.h"
 #include "scope_node.h"
+#include "solution.h"
 #include "solution_helpers.h"
 #include "solution_wrapper.h"
 #include "start_node.h"
@@ -21,29 +22,9 @@ void BranchExperiment::measure_check_activate(
 		vector<double>& obs,
 		SolutionWrapper* wrapper,
 		BranchExperimentHistory* history) {
-	this->new_network->activate(obs);
-
-	bool decision_is_branch;
-	#if defined(MDEBUG) && MDEBUG
-	if (wrapper->curr_run_seed%2 == 0) {
-		decision_is_branch = true;
-	} else {
-		decision_is_branch = false;
-	}
-	wrapper->curr_run_seed = xorshift(wrapper->curr_run_seed);
-	#else
-	if (this->new_network->output->acti_vals[0] >= 0.0) {
-		decision_is_branch = true;
-	} else {
-		decision_is_branch = false;
-	}
-	#endif /* MDEBUG */
-
-	if (decision_is_branch) {
-		BranchExperimentState* new_experiment_state = new BranchExperimentState(this);
-		new_experiment_state->step_index = 0;
-		wrapper->experiment_context.back() = new_experiment_state;
-	}
+	BranchExperimentState* new_experiment_state = new BranchExperimentState(this);
+	new_experiment_state->step_index = 0;
+	wrapper->experiment_context.back() = new_experiment_state;
 }
 
 void BranchExperiment::measure_step(vector<double>& obs,
@@ -51,6 +32,42 @@ void BranchExperiment::measure_step(vector<double>& obs,
 									bool& is_next,
 									SolutionWrapper* wrapper,
 									BranchExperimentState* experiment_state) {
+	if (experiment_state->step_index == 0) {
+		// temp
+		{
+			BranchExperimentHistory* history = (BranchExperimentHistory*)wrapper->experiment_history;
+
+			history->signal_sum_vals.push_back(0.0);
+			history->signal_sum_counts.push_back(0);
+
+			wrapper->experiment_callbacks.push_back(wrapper->branch_node_stack);
+		}
+
+		this->new_network->activate(obs);
+
+		bool decision_is_branch;
+		#if defined(MDEBUG) && MDEBUG
+		if (wrapper->curr_run_seed%2 == 0) {
+			decision_is_branch = true;
+		} else {
+			decision_is_branch = false;
+		}
+		wrapper->curr_run_seed = xorshift(wrapper->curr_run_seed);
+		#else
+		if (this->new_network->output->acti_vals[0] >= 0.0) {
+			decision_is_branch = true;
+		} else {
+			decision_is_branch = false;
+		}
+		#endif /* MDEBUG */
+
+		if (!decision_is_branch) {
+			delete experiment_state;
+			wrapper->experiment_context.back() = NULL;
+			return;
+		}
+	}
+
 	if (experiment_state->step_index >= (int)this->best_step_types.size()) {
 		wrapper->node_context.back() = this->best_exit_next_node;
 
@@ -91,11 +108,20 @@ void BranchExperiment::measure_backprop(double target_val,
 
 	BranchExperimentHistory* history = (BranchExperimentHistory*)wrapper->experiment_history;
 	if (history->is_hit) {
+		for (int s_index = 0; s_index < (int)history->signal_sum_vals.size(); s_index++) {
+			history->signal_sum_vals[s_index] += (target_val - wrapper->solution->curr_score);
+			history->signal_sum_counts[s_index]++;
+
+			double average_val = history->signal_sum_vals[s_index] / history->signal_sum_counts[s_index];
+
+			this->target_val_histories.push_back(average_val);
+		}
+
 		this->sum_scores += target_val;
 
 		this->state_iter++;
 		if (this->state_iter >= MEASURE_ITERS) {
-			double new_score = this->sum_scores / (double)this->state_iter;
+			// double new_score = this->sum_scores / (double)this->state_iter;
 
 			// // temp
 			// cout << "this->scope_context->id: " << this->scope_context->id << endl;
@@ -103,14 +129,26 @@ void BranchExperiment::measure_backprop(double target_val,
 			// cout << "new_score: " << new_score << endl;
 			// cout << "existing_score: " << existing_score << endl;
 
+			double sum_signal = 0.0;
+			for (int h_index = 0; h_index < (int)this->target_val_histories.size(); h_index++) {
+				sum_signal += this->target_val_histories[h_index];
+			}
+			double new_signal = sum_signal / (double)this->target_val_histories.size();
+
+			// #if defined(MDEBUG) && MDEBUG
+			// if (new_score - this->existing_score >= 0.0 || rand()%2 == 0) {
+			// #else
+			// if (new_score - this->existing_score >= 0.0) {
+			// #endif /* MDEBUG */
 			#if defined(MDEBUG) && MDEBUG
-			if (new_score - this->existing_score >= 0.0 || rand()%2 == 0) {
+			if (new_signal - this->existing_signal >= 0.0 || rand()%2 == 0) {
 			#else
-			if (new_score - this->existing_score >= 0.0) {
+			if (new_signal - this->existing_signal >= 0.0) {
 			#endif /* MDEBUG */
 				double average_hits_per_run = (double)MEASURE_ITERS / (double)this->total_count;
 
-				this->improvement = average_hits_per_run * (new_score - this->existing_score);
+				// this->improvement = average_hits_per_run * (new_score - this->existing_score);
+				this->improvement = average_hits_per_run * (new_signal - this->existing_signal);
 
 				cout << "BranchExperiment" << endl;
 				cout << "this->scope_context->id: " << this->scope_context->id << endl;
@@ -133,8 +171,10 @@ void BranchExperiment::measure_backprop(double target_val,
 				}
 
 				cout << "average_hits_per_run: " << average_hits_per_run << endl;
-				cout << "new_score: " << new_score << endl;
-				cout << "existing_score: " << existing_score << endl;
+				// cout << "new_score: " << new_score << endl;
+				cout << "new_signal: " << new_signal << endl;
+				// cout << "existing_score: " << existing_score << endl;
+				cout << "existing_signal: " << existing_signal << endl;
 				cout << "this->improvement: " << this->improvement << endl;
 
 				cout << endl;

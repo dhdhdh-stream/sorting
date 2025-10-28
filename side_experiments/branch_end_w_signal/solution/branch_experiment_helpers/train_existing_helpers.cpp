@@ -1,5 +1,7 @@
 #include "branch_experiment.h"
 
+#include <iostream>
+
 #include "constants.h"
 #include "globals.h"
 #include "network.h"
@@ -18,6 +20,20 @@ void BranchExperiment::train_existing_check_activate(
 		vector<double>& obs,
 		SolutionWrapper* wrapper,
 		BranchExperimentHistory* history) {
+	this->sum_instances++;
+
+	BranchExperimentState* new_experiment_state = new BranchExperimentState(this);
+	new_experiment_state->step_index = 0;
+	wrapper->experiment_context.back() = new_experiment_state;
+}
+
+void BranchExperiment::train_existing_step(vector<double>& obs,
+										   int& action,
+										   bool& is_next,
+										   SolutionWrapper* wrapper,
+										   BranchExperimentState* experiment_state) {
+	BranchExperimentHistory* history = (BranchExperimentHistory*)wrapper->experiment_history;
+
 	this->obs_histories.push_back(obs);
 
 	history->signal_sum_vals.push_back(0.0);
@@ -25,7 +41,8 @@ void BranchExperiment::train_existing_check_activate(
 
 	wrapper->experiment_callbacks.push_back(wrapper->branch_node_stack);
 
-	this->sum_instances++;
+	delete experiment_state;
+	wrapper->experiment_context.back() = NULL;
 }
 
 void BranchExperiment::train_existing_backprop(
@@ -47,6 +64,12 @@ void BranchExperiment::train_existing_backprop(
 		this->state_iter++;
 		if (this->state_iter >= TRAIN_EXISTING_NUM_DATAPOINTS) {
 			this->existing_score = this->sum_scores / TRAIN_EXISTING_NUM_DATAPOINTS;
+
+			double sum_signal = 0.0;
+			for (int h_index = 0; h_index < (int)this->target_val_histories.size(); h_index++) {
+				sum_signal += this->target_val_histories[h_index];
+			}
+			this->existing_signal = sum_signal / (double)this->target_val_histories.size();
 
 			this->existing_network = new Network(this->obs_histories[0].size());
 			uniform_int_distribution<int> input_distribution(0, this->obs_histories.size()-1);
