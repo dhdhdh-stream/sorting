@@ -17,9 +17,7 @@ const int TRAIN_EXISTING_NUM_DATAPOINTS = 1000;
 #endif /* MDEBUG */
 
 void BranchExperiment::train_existing_check_activate(
-		vector<double>& obs,
-		SolutionWrapper* wrapper,
-		BranchExperimentHistory* history) {
+		SolutionWrapper* wrapper) {
 	this->sum_instances++;
 
 	BranchExperimentState* new_experiment_state = new BranchExperimentState(this);
@@ -30,9 +28,9 @@ void BranchExperiment::train_existing_check_activate(
 void BranchExperiment::train_existing_step(vector<double>& obs,
 										   int& action,
 										   bool& is_next,
-										   SolutionWrapper* wrapper,
-										   BranchExperimentState* experiment_state) {
+										   SolutionWrapper* wrapper) {
 	BranchExperimentHistory* history = (BranchExperimentHistory*)wrapper->experiment_history;
+	BranchExperimentState* experiment_state = (BranchExperimentState*)wrapper->experiment_context.back();
 
 	this->obs_histories.push_back(obs);
 
@@ -59,12 +57,8 @@ void BranchExperiment::train_existing_backprop(
 			this->target_val_histories.push_back(average_val);
 		}
 
-		this->sum_scores += target_val;
-
 		this->state_iter++;
 		if (this->state_iter >= TRAIN_EXISTING_NUM_DATAPOINTS) {
-			this->existing_score = this->sum_scores / TRAIN_EXISTING_NUM_DATAPOINTS;
-
 			double sum_signal = 0.0;
 			for (int h_index = 0; h_index < (int)this->target_val_histories.size(); h_index++) {
 				sum_signal += this->target_val_histories[h_index];

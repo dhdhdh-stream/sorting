@@ -15,7 +15,6 @@ using namespace std;
 
 void BranchExperiment::check_activate(AbstractNode* experiment_node,
 									  bool is_branch,
-									  vector<double>& obs,
 									  SolutionWrapper* wrapper) {
 	if (is_branch == this->is_branch) {
 		BranchExperimentHistory* history = (BranchExperimentHistory*)wrapper->experiment_history;
@@ -23,29 +22,20 @@ void BranchExperiment::check_activate(AbstractNode* experiment_node,
 
 		switch (this->state) {
 		case BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING:
-			train_existing_check_activate(obs,
-										  wrapper,
-										  history);
+			train_existing_check_activate(wrapper);
 			break;
 		case BRANCH_EXPERIMENT_STATE_EXPLORE:
-			explore_check_activate(obs,
-								   wrapper,
-								   history);
+			explore_check_activate(wrapper);
 			break;
 		case BRANCH_EXPERIMENT_STATE_TRAIN_NEW:
-			train_new_check_activate(obs,
-									 wrapper,
-									 history);
+			train_new_check_activate(wrapper);
 			break;
 		case BRANCH_EXPERIMENT_STATE_MEASURE:
-			measure_check_activate(obs,
-								   wrapper,
-								   history);
+			measure_check_activate(wrapper);
 			break;
 		#if defined(MDEBUG) && MDEBUG
 		case BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY:
-			capture_verify_check_activate(obs,
-										  wrapper);
+			capture_verify_check_activate(wrapper);
 			break;
 		#endif /* MDEBUG */
 		}
@@ -57,44 +47,38 @@ void BranchExperiment::experiment_step(vector<double>& obs,
 									   bool& is_next,
 									   bool& fetch_action,
 									   SolutionWrapper* wrapper) {
-	BranchExperimentState* experiment_state = (BranchExperimentState*)wrapper->experiment_context.back();
 	switch (this->state) {
 	case BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING:
 		train_existing_step(obs,
 							action,
 							is_next,
-							wrapper,
-							experiment_state);
+							wrapper);
 		break;
 	case BRANCH_EXPERIMENT_STATE_EXPLORE:
 		explore_step(obs,
 					 action,
 					 is_next,
 					 fetch_action,
-					 wrapper,
-					 experiment_state);
+					 wrapper);
 		break;
 	case BRANCH_EXPERIMENT_STATE_TRAIN_NEW:
 		train_new_step(obs,
 					   action,
 					   is_next,
-					   wrapper,
-					   experiment_state);
+					   wrapper);
 		break;
 	case BRANCH_EXPERIMENT_STATE_MEASURE:
 		measure_step(obs,
 					 action,
 					 is_next,
-					 wrapper,
-					 experiment_state);
+					 wrapper);
 		break;
 	#if defined(MDEBUG) && MDEBUG
 	case BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY:
 		capture_verify_step(obs,
 							action,
 							is_next,
-							wrapper,
-							experiment_state);
+							wrapper);
 		break;
 	#endif /* MDEBUG */
 	}

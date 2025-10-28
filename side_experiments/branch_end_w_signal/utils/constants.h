@@ -12,6 +12,13 @@ const int TRAIN_ITERS = 300000;
 const int UPDATE_ITERS = 100000;
 #endif /* MDEBUG */
 
+/**
+ * - simply give raw actions a fixed weight
+ *   - cannot track success/count if continuous
+ *   - raw actions can also drive innovation anyways
+ */
+const int RAW_ACTION_WEIGHT = 8;
+
 const int STEP_TYPE_ACTION = 0;
 const int STEP_TYPE_SCOPE = 1;
 

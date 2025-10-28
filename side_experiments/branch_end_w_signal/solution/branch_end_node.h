@@ -53,7 +53,8 @@ public:
 						 SolutionWrapper* wrapper);
 
 	void update(double result,
-				BranchEndNodeHistory* history);
+				BranchEndNodeHistory* history,
+				SolutionWrapper* wrapper);
 	void backprop();
 
 	void save(std::ofstream& output_file);

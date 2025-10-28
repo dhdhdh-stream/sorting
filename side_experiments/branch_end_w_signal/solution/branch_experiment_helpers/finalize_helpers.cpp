@@ -1,6 +1,7 @@
 #include "branch_experiment.h"
 
 #include <iostream>
+#include <sstream>
 
 #include "action_node.h"
 #include "branch_end_node.h"
@@ -16,60 +17,36 @@
 
 using namespace std;
 
-double BranchExperiment::calc_new_score() {
-	return this->total_sum_scores / this->total_count;
-}
-
 void BranchExperiment::clean() {
 	this->node_context->experiment = NULL;
 }
 
-void recursive_add_child(Scope* curr_parent,
-						 SolutionWrapper* wrapper,
-						 Scope* new_scope) {
-	curr_parent->child_scopes.push_back(new_scope);
-
-	for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
-		bool is_needed = false;
-		bool is_added = false;
-		for (int c_index = 0; c_index < (int)wrapper->solution->scopes[s_index]->child_scopes.size(); c_index++) {
-			if (wrapper->solution->scopes[s_index]->child_scopes[c_index] == curr_parent) {
-				is_needed = true;
-			}
-
-			if (wrapper->solution->scopes[s_index]->child_scopes[c_index] == new_scope) {
-				is_added = true;
-			}
-		}
-
-		if (is_needed && !is_added) {
-			recursive_add_child(wrapper->solution->scopes[s_index],
-								wrapper,
-								new_scope);
-		}
-	}
-}
-
 void BranchExperiment::add(SolutionWrapper* wrapper) {
-	cout << "BranchExperiment add" << endl;
-	cout << "this->scope_context->id: " << this->scope_context->id << endl;
-	cout << "this->node_context->id: " << this->node_context->id << endl;
-	cout << "this->is_branch: " << this->is_branch << endl;
-	cout << "new explore path:";
+	stringstream ss;
+	ss << "BranchExperiment" << "; ";
+	ss << "this->scope_context->id: " << this->scope_context->id << "; ";
+	ss << "this->node_context->id: " << this->node_context->id << "; ";
+	ss << "this->is_branch: " << this->is_branch << "; ";
+	ss << "new explore path:";
 	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-			cout << " " << this->best_actions[s_index];
+			ss << " " << this->best_actions[s_index];
 		} else {
-			cout << " E" << this->best_scopes[s_index]->id;
+			ss << " E" << this->best_scopes[s_index]->id;
 		}
 	}
-	cout << endl;
+	ss << "; ";
 
 	if (this->best_exit_next_node == NULL) {
-		cout << "this->best_exit_next_node->id: " << -1 << endl;
+		ss << "this->best_exit_next_node->id: " << -1 << "; ";
 	} else {
-		cout << "this->best_exit_next_node->id: " << this->best_exit_next_node->id << endl;
+		ss << "this->best_exit_next_node->id: " << this->best_exit_next_node->id << "; ";
 	}
+
+	wrapper->solution->improvement_history.push_back(calc_new_score());
+	wrapper->solution->change_history.push_back(ss.str());
+
+	cout << ss.str() << endl;
 
 	if (this->best_new_scope != NULL) {
 		wrapper->solution->scopes.push_back(this->best_new_scope);
@@ -451,4 +428,8 @@ void BranchExperiment::add(SolutionWrapper* wrapper) {
 
 		next_node->ancestor_ids.push_back(new_nodes[n_index]->id);
 	}
+}
+
+double BranchExperiment::calc_new_score() {
+	return this->total_sum_scores / this->total_count;
 }

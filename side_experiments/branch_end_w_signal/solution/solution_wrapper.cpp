@@ -11,8 +11,8 @@ SolutionWrapper::SolutionWrapper() {
 
 	this->improvement_iter = 0;
 
-	this->curr_branch_experiment = NULL;
-	this->best_branch_experiment = NULL;
+	this->curr_experiment = NULL;
+	this->best_experiment = NULL;
 
 	this->experiment_history = NULL;
 
@@ -28,8 +28,8 @@ SolutionWrapper::SolutionWrapper(std::string path,
 
 	this->improvement_iter = 0;
 
-	this->curr_branch_experiment = NULL;
-	this->best_branch_experiment = NULL;
+	this->curr_experiment = NULL;
+	this->best_experiment = NULL;
 
 	this->experiment_history = NULL;
 

@@ -51,7 +51,6 @@ void BranchNode::experiment_step(vector<double>& obs,
 		this->experiment->check_activate(
 			this,
 			is_branch,
-			obs,
 			wrapper);
 	}
 }

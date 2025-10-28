@@ -7,6 +7,7 @@
 #include "branch_node.h"
 #include "constants.h"
 #include "globals.h"
+#include "pass_through_experiment.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
@@ -81,8 +82,8 @@ void gather_helper(ScopeHistory* scope_history,
 	}
 }
 
-void create_branch_experiment(ScopeHistory* scope_history,
-							  SolutionWrapper* wrapper) {
+void create_experiment(ScopeHistory* scope_history,
+					   SolutionWrapper* wrapper) {
 	int node_count = 0;
 	AbstractNode* explore_node = NULL;
 	bool explore_is_branch = false;
@@ -92,11 +93,20 @@ void create_branch_experiment(ScopeHistory* scope_history,
 				  explore_is_branch);
 
 	if (explore_node != NULL) {
-		BranchExperiment* new_experiment = new BranchExperiment(
-			explore_node->parent,
-			explore_node,
-			explore_is_branch,
-			wrapper);
-		wrapper->curr_branch_experiment = new_experiment;
+		if (wrapper->solution->timestamp % 3 == 0) {
+			BranchExperiment* new_experiment = new BranchExperiment(
+				explore_node->parent,
+				explore_node,
+				explore_is_branch,
+				wrapper);
+			wrapper->curr_experiment = new_experiment;
+		} else {
+			PassThroughExperiment* new_experiment = new PassThroughExperiment(
+				explore_node->parent,
+				explore_node,
+				explore_is_branch,
+				wrapper);
+			wrapper->curr_experiment = new_experiment;
+		}
 	}
 }

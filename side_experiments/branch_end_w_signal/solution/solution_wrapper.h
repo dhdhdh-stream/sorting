@@ -5,11 +5,11 @@
 #include <tuple>
 #include <vector>
 
+class AbstractExperiment;
 class AbstractExperimentHistory;
 class AbstractExperimentState;
 class AbstractNode;
 class BranchEndNodeHistory;
-class BranchExperiment;
 class BranchNode;
 class Problem;
 class ScopeHistory;
@@ -24,8 +24,8 @@ public:
 	 */
 	int improvement_iter;
 
-	BranchExperiment* curr_branch_experiment;
-	BranchExperiment* best_branch_experiment;
+	AbstractExperiment* curr_experiment;
+	AbstractExperiment* best_experiment;
 
 	/**
 	 * - run variables

@@ -48,9 +48,8 @@ void BranchEndNode::experiment_step(vector<double>& obs,
 			for (int c_index = 0; c_index < (int)wrapper->experiment_callbacks.size(); c_index++) {
 				if (wrapper->experiment_callbacks[c_index].size() > 0
 						&& wrapper->experiment_callbacks[c_index].back() == this->branch_start_node) {
-					BranchExperimentHistory* branch_experiment_history = (BranchExperimentHistory*)wrapper->experiment_history;
-					branch_experiment_history->signal_sum_vals[c_index] += signal;
-					branch_experiment_history->signal_sum_counts[c_index]++;
+					wrapper->experiment_history->signal_sum_vals[c_index] += signal;
+					wrapper->experiment_history->signal_sum_counts[c_index]++;
 
 					wrapper->experiment_callbacks[c_index].pop_back();
 				}
@@ -66,11 +65,18 @@ void BranchEndNode::experiment_step(vector<double>& obs,
 			}
 		}
 
-		switch (wrapper->curr_branch_experiment->state) {
-		case BRANCH_EXPERIMENT_STATE_EXPLORE:
-		case BRANCH_EXPERIMENT_STATE_TRAIN_NEW:
-			history->pre_histories = wrapper->branch_node_stack_obs.back();
-			history->post_histories = obs;
+		switch (wrapper->curr_experiment->type) {
+		case EXPERIMENT_TYPE_BRANCH:
+			{
+				BranchExperiment* branch_experiment = (BranchExperiment*)wrapper->curr_experiment;
+				switch (branch_experiment->state) {
+				case BRANCH_EXPERIMENT_STATE_EXPLORE:
+				case BRANCH_EXPERIMENT_STATE_TRAIN_NEW:
+					history->pre_histories = wrapper->branch_node_stack_obs.back();
+					history->post_histories = obs;
+					break;
+				}
+			}
 			break;
 		}
 	}
@@ -79,11 +85,18 @@ void BranchEndNode::experiment_step(vector<double>& obs,
 	wrapper->branch_node_stack_obs.pop_back();
 
 	if (need_callback) {
-		switch (wrapper->curr_branch_experiment->state) {
-		case BRANCH_EXPERIMENT_STATE_EXPLORE:
-		case BRANCH_EXPERIMENT_STATE_TRAIN_NEW:
-			wrapper->branch_end_node_callbacks.push_back(wrapper->branch_node_stack);
-			wrapper->branch_end_node_callback_histories.push_back(history);
+		switch (wrapper->curr_experiment->type) {
+		case EXPERIMENT_TYPE_BRANCH:
+			{
+				BranchExperiment* branch_experiment = (BranchExperiment*)wrapper->curr_experiment;
+				switch (branch_experiment->state) {
+				case BRANCH_EXPERIMENT_STATE_EXPLORE:
+				case BRANCH_EXPERIMENT_STATE_TRAIN_NEW:
+					wrapper->branch_end_node_callbacks.push_back(wrapper->branch_node_stack);
+					wrapper->branch_end_node_callback_histories.push_back(history);
+					break;
+				}
+			}
 			break;
 		}
 	}
@@ -94,7 +107,6 @@ void BranchEndNode::experiment_step(vector<double>& obs,
 		this->experiment->check_activate(
 			this,
 			false,
-			obs,
 			wrapper);
 	}
 }

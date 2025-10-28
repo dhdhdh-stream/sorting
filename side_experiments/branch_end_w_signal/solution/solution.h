@@ -36,6 +36,9 @@ public:
 
 	std::vector<Scope*> scopes;
 
+	std::vector<double> improvement_history;
+	std::vector<std::string> change_history;
+
 	#if defined(MDEBUG) && MDEBUG
 	std::vector<Problem*> verify_problems;
 	std::vector<unsigned long> verify_seeds;

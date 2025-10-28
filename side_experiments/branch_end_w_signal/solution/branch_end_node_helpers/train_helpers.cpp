@@ -3,12 +3,15 @@
 #include "constants.h"
 #include "globals.h"
 #include "network.h"
+#include "solution.h"
+#include "solution_wrapper.h"
 
 using namespace std;
 
 void BranchEndNode::update(double result,
-						   BranchEndNodeHistory* history) {
-	history->signal_sum_vals += result;
+						   BranchEndNodeHistory* history,
+						   SolutionWrapper* wrapper) {
+	history->signal_sum_vals += (result - wrapper->solution->curr_score);
 	history->signal_sum_counts++;
 
 	double average_val = history->signal_sum_vals / history->signal_sum_counts;

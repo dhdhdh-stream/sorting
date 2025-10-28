@@ -25,7 +25,6 @@ public:
 	int state;
 	int state_iter;
 
-	double existing_score;
 	double existing_signal;
 
 	Network* existing_network;
@@ -56,8 +55,6 @@ public:
 	std::vector<std::vector<double>> obs_histories;
 	std::vector<double> target_val_histories;
 
-	double sum_scores;
-
 	#if defined(MDEBUG) && MDEBUG
 	std::vector<Problem*> verify_problems;
 	std::vector<unsigned long> verify_seeds;
@@ -72,7 +69,6 @@ public:
 
 	void check_activate(AbstractNode* experiment_node,
 						bool is_branch,
-						std::vector<double>& obs,
 						SolutionWrapper* wrapper);
 	void experiment_step(std::vector<double>& obs,
 						 int& action,
@@ -85,26 +81,20 @@ public:
 	void backprop(double target_val,
 				  SolutionWrapper* wrapper);
 
-	void train_existing_check_activate(std::vector<double>& obs,
-									   SolutionWrapper* wrapper,
-									   BranchExperimentHistory* history);
+	void train_existing_check_activate(SolutionWrapper* wrapper);
 	void train_existing_step(std::vector<double>& obs,
 							 int& action,
 							 bool& is_next,
-							 SolutionWrapper* wrapper,
-							 BranchExperimentState* experiment_state);
+							 SolutionWrapper* wrapper);
 	void train_existing_backprop(double target_val,
 								 SolutionWrapper* wrapper);
 
-	void explore_check_activate(std::vector<double>& obs,
-								SolutionWrapper* wrapper,
-								BranchExperimentHistory* history);
+	void explore_check_activate(SolutionWrapper* wrapper);
 	void explore_step(std::vector<double>& obs,
 					  int& action,
 					  bool& is_next,
 					  bool& fetch_action,
-					  SolutionWrapper* wrapper,
-					  BranchExperimentState* experiment_state);
+					  SolutionWrapper* wrapper);
 	void explore_set_action(int action,
 							BranchExperimentState* experiment_state);
 	void explore_exit_step(SolutionWrapper* wrapper,
@@ -112,57 +102,45 @@ public:
 	void explore_backprop(double target_val,
 						  SolutionWrapper* wrapper);
 
-	void train_new_check_activate(std::vector<double>& obs,
-								  SolutionWrapper* wrapper,
-								  BranchExperimentHistory* history);
+	void train_new_check_activate(SolutionWrapper* wrapper);
 	void train_new_step(std::vector<double>& obs,
 						int& action,
 						bool& is_next,
-						SolutionWrapper* wrapper,
-						BranchExperimentState* experiment_state);
+						SolutionWrapper* wrapper);
 	void train_new_exit_step(SolutionWrapper* wrapper,
 							 BranchExperimentState* experiment_state);
 	void train_new_backprop(double target_val,
 							SolutionWrapper* wrapper);
 
-	void measure_check_activate(std::vector<double>& obs,
-								SolutionWrapper* wrapper,
-								BranchExperimentHistory* history);
+	void measure_check_activate(SolutionWrapper* wrapper);
 	void measure_step(std::vector<double>& obs,
 					  int& action,
 					  bool& is_next,
-					  SolutionWrapper* wrapper,
-					  BranchExperimentState* experiment_state);
+					  SolutionWrapper* wrapper);
 	void measure_exit_step(SolutionWrapper* wrapper,
 						   BranchExperimentState* experiment_state);
 	void measure_backprop(double target_val,
 						  SolutionWrapper* wrapper);
 
 	#if defined(MDEBUG) && MDEBUG
-	void capture_verify_check_activate(std::vector<double>& obs,
-									   SolutionWrapper* wrapper);
+	void capture_verify_check_activate(SolutionWrapper* wrapper);
 	void capture_verify_step(std::vector<double>& obs,
 							 int& action,
 							 bool& is_next,
-							 SolutionWrapper* wrapper,
-							 BranchExperimentState* experiment_state);
+							 SolutionWrapper* wrapper);
 	void capture_verify_exit_step(SolutionWrapper* wrapper,
 								  BranchExperimentState* experiment_state);
 	void capture_verify_backprop(SolutionWrapper* wrapper);
 	#endif /* MDEBUG */
 
-	double calc_new_score();
-
 	void clean();
 	void add(SolutionWrapper* wrapper);
+	double calc_new_score();
 };
 
 class BranchExperimentHistory : public AbstractExperimentHistory {
 public:
 	std::vector<double> existing_predicted_scores;
-
-	std::vector<double> signal_sum_vals;
-	std::vector<int> signal_sum_counts;
 
 	BranchExperimentHistory(BranchExperiment* experiment);
 };

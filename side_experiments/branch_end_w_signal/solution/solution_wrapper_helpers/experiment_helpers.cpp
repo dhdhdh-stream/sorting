@@ -13,7 +13,6 @@
 
 using namespace std;
 
-// const int RUN_TIMESTEPS = 30;
 const int RUN_TIMESTEPS = 100;
 
 void SolutionWrapper::experiment_init() {
@@ -25,8 +24,15 @@ void SolutionWrapper::experiment_init() {
 	this->curr_run_seed = xorshift(this->starting_run_seed);
 	#endif /* MDEBUG */
 
-	if (this->curr_branch_experiment != NULL) {
-		this->experiment_history = new BranchExperimentHistory(this->curr_branch_experiment);
+	if (this->curr_experiment != NULL) {
+		switch (this->curr_experiment->type) {
+		case EXPERIMENT_TYPE_BRANCH:
+			{
+				BranchExperiment* branch_experiment = (BranchExperiment*)this->curr_experiment;
+				this->experiment_history = new BranchExperimentHistory(branch_experiment);
+			}
+			break;
+		}
 	}
 
 	ScopeHistory* scope_history = new ScopeHistory(this->solution->scopes[0]);
@@ -52,8 +58,7 @@ tuple<bool,bool,int> SolutionWrapper::experiment_step(vector<double> obs) {
 					experiment->experiment_exit_step(this);
 				} else {
 					ScopeNode* scope_node = (ScopeNode*)this->node_context[this->node_context.size() - 2];
-					scope_node->experiment_exit_step(obs,
-													 this);
+					scope_node->experiment_exit_step(this);
 				}
 			}
 		} else if (this->experiment_context.back() != NULL) {
@@ -81,15 +86,16 @@ void SolutionWrapper::set_action(int action) {
 }
 
 void SolutionWrapper::experiment_end(double result) {
-	if (this->curr_branch_experiment == NULL) {
-		create_branch_experiment(this->scope_histories[0],
-								 this);
+	if (this->curr_experiment == NULL) {
+		create_experiment(this->scope_histories[0],
+						  this);
 	} else {
 		set<BranchEndNode*> updated_nodes;
 		for (int h_index = 0; h_index < (int)this->branch_end_node_callback_histories.size(); h_index++) {
 			BranchEndNode* branch_end_node = (BranchEndNode*)this->branch_end_node_callback_histories[h_index]->node;
 			branch_end_node->update(result,
-									this->branch_end_node_callback_histories[h_index]);
+									this->branch_end_node_callback_histories[h_index],
+									this);
 			updated_nodes.insert(branch_end_node);
 		}
 		this->branch_end_node_callbacks.clear();
@@ -104,7 +110,7 @@ void SolutionWrapper::experiment_end(double result) {
 
 		this->experiment_callbacks.clear();
 
-		if (this->curr_branch_experiment->result == EXPERIMENT_RESULT_FAIL) {
+		if (this->curr_experiment->result == EXPERIMENT_RESULT_FAIL) {
 			for (int s_index = 0; s_index < (int)this->solution->scopes.size(); s_index++) {
 				for (map<int, AbstractNode*>::iterator it = this->solution->scopes[s_index]->nodes.begin();
 						it != this->solution->scopes[s_index]->nodes.end(); it++) {
@@ -115,11 +121,11 @@ void SolutionWrapper::experiment_end(double result) {
 				}
 			}
 
-			this->curr_branch_experiment->clean();
-			delete this->curr_branch_experiment;
+			this->curr_experiment->clean();
+			delete this->curr_experiment;
 
-			this->curr_branch_experiment = NULL;
-		} else if (this->curr_branch_experiment->result == EXPERIMENT_RESULT_SUCCESS) {
+			this->curr_experiment = NULL;
+		} else if (this->curr_experiment->result == EXPERIMENT_RESULT_SUCCESS) {
 			for (int s_index = 0; s_index < (int)this->solution->scopes.size(); s_index++) {
 				for (map<int, AbstractNode*>::iterator it = this->solution->scopes[s_index]->nodes.begin();
 						it != this->solution->scopes[s_index]->nodes.end(); it++) {
@@ -130,33 +136,33 @@ void SolutionWrapper::experiment_end(double result) {
 				}
 			}
 
-			this->curr_branch_experiment->clean();
+			this->curr_experiment->clean();
 
-			if (this->best_branch_experiment == NULL) {
-				this->best_branch_experiment = this->curr_branch_experiment;
+			if (this->best_experiment == NULL) {
+				this->best_experiment = this->curr_experiment;
 			} else {
-				double curr_impact = this->curr_branch_experiment->improvement;
-				double best_impact = this->best_branch_experiment->improvement;
+				double curr_impact = this->curr_experiment->improvement;
+				double best_impact = this->best_experiment->improvement;
 				if (curr_impact > best_impact) {
-					delete this->best_branch_experiment;
-					this->best_branch_experiment = this->curr_branch_experiment;
+					delete this->best_experiment;
+					this->best_experiment = this->curr_experiment;
 				} else {
-					delete this->curr_branch_experiment;
+					delete this->curr_experiment;
 				}
 			}
 
-			this->curr_branch_experiment = NULL;
+			this->curr_experiment = NULL;
 
 			this->improvement_iter++;
 			if (this->improvement_iter >= IMPROVEMENTS_PER_ITER) {
-				Scope* last_updated_scope = this->best_branch_experiment->scope_context;
+				Scope* last_updated_scope = this->best_experiment->scope_context;
 
-				this->best_branch_experiment->add(this);
+				this->best_experiment->add(this);
 
-				this->solution->curr_score = this->best_branch_experiment->calc_new_score();
+				this->solution->curr_score = this->best_experiment->calc_new_score();
 
-				delete this->best_branch_experiment;
-				this->best_branch_experiment = NULL;
+				delete this->best_experiment;
+				this->best_experiment = NULL;
 
 				clean_scope(last_updated_scope,
 							this);

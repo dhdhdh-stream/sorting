@@ -25,8 +25,7 @@ void ScopeNode::step(vector<double>& obs,
 	wrapper->node_context.push_back(this->scope->nodes[0]);
 }
 
-void ScopeNode::exit_step(vector<double>& obs,
-						  SolutionWrapper* wrapper) {
+void ScopeNode::exit_step(SolutionWrapper* wrapper) {
 	wrapper->scope_histories.pop_back();
 	wrapper->node_context.pop_back();
 

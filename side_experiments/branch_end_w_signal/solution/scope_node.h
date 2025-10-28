@@ -38,15 +38,13 @@ public:
 			  int& action,
 			  bool& is_next,
 			  SolutionWrapper* wrapper);
-	void exit_step(std::vector<double>& obs,
-				   SolutionWrapper* wrapper);
+	void exit_step(SolutionWrapper* wrapper);
 
 	void experiment_step(std::vector<double>& obs,
 						 int& action,
 						 bool& is_next,
 						 SolutionWrapper* wrapper);
-	void experiment_exit_step(std::vector<double>& obs,
-							  SolutionWrapper* wrapper);
+	void experiment_exit_step(SolutionWrapper* wrapper);
 
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file,

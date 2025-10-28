@@ -1,6 +1,3 @@
-// TODO: add PassThrough
-// TODO: test if eval using signal is better than true
-
 // - perhaps have to chase after signal always?
 //   - allows signals to converge?
 //     - which allows actual improvements begin to matter?

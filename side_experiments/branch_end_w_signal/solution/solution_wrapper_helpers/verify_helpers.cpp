@@ -36,8 +36,7 @@ pair<bool,int> SolutionWrapper::verify_step(vector<double> obs) {
 				is_done = true;
 			} else {
 				ScopeNode* scope_node = (ScopeNode*)this->node_context[this->node_context.size() - 2];
-				scope_node->exit_step(obs,
-									  this);
+				scope_node->exit_step(this);
 			}
 		} else {
 			if (this->node_context.back()->type == NODE_TYPE_BRANCH) {

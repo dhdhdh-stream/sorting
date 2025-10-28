@@ -18,7 +18,6 @@
 using namespace std;
 
 void BranchExperiment::capture_verify_check_activate(
-		vector<double>& obs,
 		SolutionWrapper* wrapper) {
 	if (this->verify_problems[this->state_iter] == NULL) {
 		this->verify_problems[this->state_iter] = wrapper->problem->copy_and_reset();
@@ -33,8 +32,9 @@ void BranchExperiment::capture_verify_check_activate(
 void BranchExperiment::capture_verify_step(vector<double>& obs,
 										   int& action,
 										   bool& is_next,
-										   SolutionWrapper* wrapper,
-										   BranchExperimentState* experiment_state) {
+										   SolutionWrapper* wrapper) {
+	BranchExperimentState* experiment_state = (BranchExperimentState*)wrapper->experiment_context.back();
+
 	if (experiment_state->step_index == 0) {
 		this->new_network->activate(obs);
 

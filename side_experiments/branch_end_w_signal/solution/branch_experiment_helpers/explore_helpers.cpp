@@ -29,17 +29,10 @@ const int BRANCH_EXPERIMENT_EXPLORE_ITERS = 10;
 const int BRANCH_EXPERIMENT_EXPLORE_ITERS = 200;
 #endif /* MDEBUG */
 
-/**
- * - simply give raw actions a fixed weight
- *   - cannot track success/count if continuous
- *   - raw actions can also drive innovation anyways
- */
-const int RAW_ACTION_WEIGHT = 8;
-
 void BranchExperiment::explore_check_activate(
-		vector<double>& obs,
-		SolutionWrapper* wrapper,
-		BranchExperimentHistory* history) {
+		SolutionWrapper* wrapper) {
+	BranchExperimentHistory* history = (BranchExperimentHistory*)wrapper->experiment_history;
+
 	this->num_instances_until_target--;
 	if (history->existing_predicted_scores.size() == 0
 			&& this->num_instances_until_target <= 0) {
@@ -168,8 +161,9 @@ void BranchExperiment::explore_step(vector<double>& obs,
 									int& action,
 									bool& is_next,
 									bool& fetch_action,
-									SolutionWrapper* wrapper,
-									BranchExperimentState* experiment_state) {
+									SolutionWrapper* wrapper) {
+	BranchExperimentState* experiment_state = (BranchExperimentState*)wrapper->experiment_context.back();
+
 	if (experiment_state->step_index == 0) {
 		BranchExperimentHistory* history = (BranchExperimentHistory*)wrapper->experiment_history;
 
@@ -220,9 +214,8 @@ void BranchExperiment::explore_exit_step(SolutionWrapper* wrapper,
 	experiment_state->step_index++;
 }
 
-void BranchExperiment::explore_backprop(
-		double target_val,
-		SolutionWrapper* wrapper) {
+void BranchExperiment::explore_backprop(double target_val,
+										SolutionWrapper* wrapper) {
 	BranchExperimentHistory* history = (BranchExperimentHistory*)wrapper->experiment_history;
 	if (history->existing_predicted_scores.size() > 0) {
 		history->signal_sum_vals[0] += (target_val - wrapper->solution->curr_score);

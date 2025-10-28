@@ -83,6 +83,19 @@ void Solution::load(string path,
 		this->scopes[s_index]->link(this);
 	}
 
+	string history_size_line;
+	getline(input_file, history_size_line);
+	int history_size = stoi(history_size_line);
+	for (int h_index = 0; h_index < history_size; h_index++) {
+		string improvement_line;
+		getline(input_file, improvement_line);
+		this->improvement_history.push_back(stod(improvement_line));
+
+		string change_line;
+		getline(input_file, change_line);
+		this->change_history.push_back(change_line);
+	}
+
 	input_file.close();
 }
 
@@ -163,6 +176,12 @@ void Solution::save(string path,
 
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
 		this->scopes[s_index]->save(output_file);
+	}
+
+	output_file << this->improvement_history.size() << endl;
+	for (int h_index = 0; h_index < (int)this->improvement_history.size(); h_index++) {
+		output_file << this->improvement_history[h_index] << endl;
+		output_file << this->change_history[h_index] << endl;
 	}
 
 	output_file.close();

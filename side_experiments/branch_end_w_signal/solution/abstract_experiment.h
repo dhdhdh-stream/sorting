@@ -12,6 +12,7 @@ class Solution;
 class SolutionWrapper;
 
 const int EXPERIMENT_TYPE_BRANCH = 0;
+const int EXPERIMENT_TYPE_PASS_THROUGH = 1;
 
 const int EXPERIMENT_RESULT_NA = 0;
 const int EXPERIMENT_RESULT_FAIL = 1;
@@ -34,7 +35,6 @@ public:
 
 	virtual void check_activate(AbstractNode* experiment_node,
 								bool is_branch,
-								std::vector<double>& obs,
 								SolutionWrapper* wrapper) = 0;
 	virtual void experiment_step(std::vector<double>& obs,
 								 int& action,
@@ -49,6 +49,7 @@ public:
 
 	virtual void clean() = 0;
 	virtual void add(SolutionWrapper* wrapper) = 0;
+	virtual double calc_new_score() = 0;
 };
 
 class AbstractExperimentHistory {
@@ -56,6 +57,9 @@ public:
 	AbstractExperiment* experiment;
 
 	bool is_hit;
+
+	std::vector<double> signal_sum_vals;
+	std::vector<int> signal_sum_counts;
 
 	virtual ~AbstractExperimentHistory() {};
 };
