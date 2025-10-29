@@ -1,58 +1,77 @@
 #include "branch_experiment.h"
 
-#include <iostream>
-
-#include "action_node.h"
-#include "branch_node.h"
 #include "constants.h"
 #include "globals.h"
 #include "network.h"
-#include "problem.h"
 #include "scope.h"
-#include "scope_node.h"
 #include "solution.h"
-#include "solution_helpers.h"
 #include "solution_wrapper.h"
+#include "utilities.h"
 
 using namespace std;
 
 #if defined(MDEBUG) && MDEBUG
-const int TRAIN_NEW_NUM_DATAPOINTS = 20;
+const int REFINE_NEW_NUM_DATAPOINTS = 20;
 #else
-const int TRAIN_NEW_NUM_DATAPOINTS = 200;
+const int REFINE_NEW_NUM_DATAPOINTS = 200;
 #endif /* MDEBUG */
 
-void BranchExperiment::train_new_check_activate(
-		SolutionWrapper* wrapper) {
-	this->num_instances_until_target--;
-	if (this->num_instances_until_target <= 0) {
-		uniform_int_distribution<int> until_distribution(1, this->average_instances_per_run);
-		this->num_instances_until_target = until_distribution(generator);
+const int MAX_NUM_REFINES = 2;
 
-		BranchExperimentState* new_experiment_state = new BranchExperimentState(this);
-		new_experiment_state->step_index = 0;
-		wrapper->experiment_context.back() = new_experiment_state;
-	}
+void BranchExperiment::refine_new_check_activate(SolutionWrapper* wrapper) {
+	BranchExperimentState* new_experiment_state = new BranchExperimentState(this);
+	new_experiment_state->step_index = 0;
+	wrapper->experiment_context.back() = new_experiment_state;
 }
 
-void BranchExperiment::train_new_step(vector<double>& obs,
-									  int& action,
-									  bool& is_next,
-									  SolutionWrapper* wrapper) {
+void BranchExperiment::refine_new_step(vector<double>& obs,
+									   int& action,
+									   bool& is_next,
+									   SolutionWrapper* wrapper) {
 	BranchExperimentState* experiment_state = (BranchExperimentState*)wrapper->experiment_context.back();
 
 	if (experiment_state->step_index == 0) {
-		BranchExperimentHistory* history = (BranchExperimentHistory*)wrapper->experiment_history;
+		this->num_instances_until_target--;
+		if (this->num_instances_until_target <= 0) {
+			BranchExperimentHistory* history = (BranchExperimentHistory*)wrapper->experiment_history;
 
-		this->existing_network->activate(obs);
-		history->existing_predicted_scores.push_back(this->existing_network->output->acti_vals[0]);
+			this->existing_network->activate(obs);
+			history->existing_predicted_scores.push_back(this->existing_network->output->acti_vals[0]);
 
-		this->obs_histories.push_back(obs);
+			this->obs_histories.push_back(obs);
 
-		history->signal_sum_vals.push_back(0.0);
-		history->signal_sum_counts.push_back(0);
+			history->signal_sum_vals.push_back(0.0);
+			history->signal_sum_counts.push_back(0);
 
-		wrapper->experiment_callbacks.push_back(wrapper->branch_node_stack);
+			wrapper->experiment_callbacks.push_back(wrapper->branch_node_stack);
+
+			uniform_int_distribution<int> until_distribution(1, this->average_instances_per_run);
+			this->num_instances_until_target = until_distribution(generator);
+		} else {
+			this->new_network->activate(obs);
+
+			bool decision_is_branch;
+			#if defined(MDEBUG) && MDEBUG
+			if (wrapper->curr_run_seed%2 == 0) {
+				decision_is_branch = true;
+			} else {
+				decision_is_branch = false;
+			}
+			wrapper->curr_run_seed = xorshift(wrapper->curr_run_seed);
+			#else
+			if (this->new_network->output->acti_vals[0] >= 0.0) {
+				decision_is_branch = true;
+			} else {
+				decision_is_branch = false;
+			}
+			#endif /* MDEBUG */
+
+			if (!decision_is_branch) {
+				delete experiment_state;
+				wrapper->experiment_context.back() = NULL;
+				return;
+			}
+		}
 	}
 
 	if (experiment_state->step_index >= (int)this->best_step_types.size()) {
@@ -77,8 +96,8 @@ void BranchExperiment::train_new_step(vector<double>& obs,
 	}
 }
 
-void BranchExperiment::train_new_exit_step(SolutionWrapper* wrapper,
-										   BranchExperimentState* experiment_state) {
+void BranchExperiment::refine_new_exit_step(SolutionWrapper* wrapper,
+											BranchExperimentState* experiment_state) {
 	delete wrapper->scope_histories.back();
 
 	wrapper->scope_histories.pop_back();
@@ -88,9 +107,8 @@ void BranchExperiment::train_new_exit_step(SolutionWrapper* wrapper,
 	experiment_state->step_index++;
 }
 
-void BranchExperiment::train_new_backprop(
-		double target_val,
-		SolutionWrapper* wrapper) {
+void BranchExperiment::refine_new_backprop(double target_val,
+										   SolutionWrapper* wrapper) {
 	BranchExperimentHistory* history = (BranchExperimentHistory*)wrapper->experiment_history;
 	if (history->is_hit) {
 		for (int s_index = 0; s_index < (int)history->signal_sum_vals.size(); s_index++) {
@@ -103,12 +121,10 @@ void BranchExperiment::train_new_backprop(
 		}
 
 		this->state_iter++;
-		if (this->state_iter >= TRAIN_NEW_NUM_DATAPOINTS
-				&& (int)this->target_val_histories.size() >= TRAIN_NEW_NUM_DATAPOINTS) {
-			this->new_network = new Network(this->obs_histories[0].size(),
-											NETWORK_SIZE_SMALL);
+		if (this->state_iter >= REFINE_NEW_NUM_DATAPOINTS
+				&& (int)this->target_val_histories.size() >= REFINE_NEW_NUM_DATAPOINTS) {
 			uniform_int_distribution<int> input_distribution(0, this->obs_histories.size()-1);
-			for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
+			for (int iter_index = 0; iter_index < UPDATE_ITERS; iter_index++) {
 				int rand_index = input_distribution(generator);
 
 				this->new_network->activate(this->obs_histories[rand_index]);
@@ -140,13 +156,19 @@ void BranchExperiment::train_new_backprop(
 			#else
 			if (num_positive > 0) {
 			#endif /* MDEBUG */
-				this->num_refines = 0;
+				this->num_refines++;
+				if (this->num_refines >= MAX_NUM_REFINES) {
+					this->total_count = 0;
+					this->total_sum_scores = 0.0;
 
-				uniform_int_distribution<int> until_distribution(1, this->average_instances_per_run);
-				this->num_instances_until_target = until_distribution(generator);
+					this->sum_scores = 0.0;
 
-				this->state = BRANCH_EXPERIMENT_STATE_REFINE_EXISTING;
-				this->state_iter = 0;
+					this->state = BRANCH_EXPERIMENT_STATE_MEASURE;
+					this->state_iter = 0;
+				} else {
+					this->state = BRANCH_EXPERIMENT_STATE_REFINE_EXISTING;
+					this->state_iter = 0;
+				}
 			} else {
 				this->result = EXPERIMENT_RESULT_FAIL;
 			}

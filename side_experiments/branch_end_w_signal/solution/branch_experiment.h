@@ -13,12 +13,11 @@ class SolutionWrapper;
 const int BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING = 0;
 const int BRANCH_EXPERIMENT_STATE_EXPLORE = 1;
 const int BRANCH_EXPERIMENT_STATE_TRAIN_NEW = 2;
-/**
- * TODO: add refine
- */
-const int BRANCH_EXPERIMENT_STATE_MEASURE = 3;
+const int BRANCH_EXPERIMENT_STATE_REFINE_EXISTING = 3;
+const int BRANCH_EXPERIMENT_STATE_REFINE_NEW = 4;
+const int BRANCH_EXPERIMENT_STATE_MEASURE = 5;
 #if defined(MDEBUG) && MDEBUG
-const int BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY = 4;
+const int BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY = 6;
 #endif /* MDEBUG */
 
 class BranchExperimentHistory;
@@ -51,6 +50,8 @@ public:
 	AbstractNode* best_exit_next_node;
 
 	Network* new_network;
+
+	int num_refines;
 
 	int total_count;
 	double total_sum_scores;
@@ -115,6 +116,26 @@ public:
 							 BranchExperimentState* experiment_state);
 	void train_new_backprop(double target_val,
 							SolutionWrapper* wrapper);
+
+	void refine_existing_check_activate(SolutionWrapper* wrapper);
+	void refine_existing_step(std::vector<double>& obs,
+							  int& action,
+							  bool& is_next,
+							  SolutionWrapper* wrapper);
+	void refine_existing_exit_step(SolutionWrapper* wrapper,
+								   BranchExperimentState* experiment_state);
+	void refine_existing_backprop(double target_val,
+								  SolutionWrapper* wrapper);
+
+	void refine_new_check_activate(SolutionWrapper* wrapper);
+	void refine_new_step(std::vector<double>& obs,
+						 int& action,
+						 bool& is_next,
+						 SolutionWrapper* wrapper);
+	void refine_new_exit_step(SolutionWrapper* wrapper,
+							  BranchExperimentState* experiment_state);
+	void refine_new_backprop(double target_val,
+							 SolutionWrapper* wrapper);
 
 	void measure_check_activate(SolutionWrapper* wrapper);
 	void measure_step(std::vector<double>& obs,
