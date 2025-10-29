@@ -97,17 +97,11 @@ void SolutionWrapper::experiment_end(double result) {
 		create_experiment(this->scope_histories[0],
 						  this);
 	} else {
-		set<BranchEndNode*> updated_nodes;
 		for (int h_index = 0; h_index < (int)this->branch_end_node_callback_histories.size(); h_index++) {
 			BranchEndNode* branch_end_node = (BranchEndNode*)this->branch_end_node_callback_histories[h_index]->node;
 			branch_end_node->update(result,
 									this->branch_end_node_callback_histories[h_index],
 									this);
-			updated_nodes.insert(branch_end_node);
-		}
-		for (set<BranchEndNode*>::iterator it = updated_nodes.begin();
-				it != updated_nodes.end(); it++) {
-			(*it)->state_iter++;
 		}
 		this->branch_end_node_callbacks.clear();
 		this->branch_end_node_callback_histories.clear();
@@ -122,31 +116,11 @@ void SolutionWrapper::experiment_end(double result) {
 		this->experiment_callbacks.clear();
 
 		if (this->curr_experiment->result == EXPERIMENT_RESULT_FAIL) {
-			for (int s_index = 0; s_index < (int)this->solution->scopes.size(); s_index++) {
-				for (map<int, AbstractNode*>::iterator it = this->solution->scopes[s_index]->nodes.begin();
-						it != this->solution->scopes[s_index]->nodes.end(); it++) {
-					if (it->second->type == NODE_TYPE_BRANCH_END) {
-						BranchEndNode* branch_end_node = (BranchEndNode*)it->second;
-						branch_end_node->backprop();
-					}
-				}
-			}
-
 			this->curr_experiment->clean();
 			delete this->curr_experiment;
 
 			this->curr_experiment = NULL;
 		} else if (this->curr_experiment->result == EXPERIMENT_RESULT_SUCCESS) {
-			for (int s_index = 0; s_index < (int)this->solution->scopes.size(); s_index++) {
-				for (map<int, AbstractNode*>::iterator it = this->solution->scopes[s_index]->nodes.begin();
-						it != this->solution->scopes[s_index]->nodes.end(); it++) {
-					if (it->second->type == NODE_TYPE_BRANCH_END) {
-						BranchEndNode* branch_end_node = (BranchEndNode*)it->second;
-						branch_end_node->backprop();
-					}
-				}
-			}
-
 			this->curr_experiment->clean();
 
 			if (this->best_experiment == NULL) {
@@ -189,6 +163,16 @@ void SolutionWrapper::experiment_end(double result) {
 							this);
 
 				this->solution->clean_scopes();
+
+				for (int s_index = 0; s_index < (int)this->solution->scopes.size(); s_index++) {
+					for (map<int, AbstractNode*>::iterator it = this->solution->scopes[s_index]->nodes.begin();
+							it != this->solution->scopes[s_index]->nodes.end(); it++) {
+						if (it->second->type == NODE_TYPE_BRANCH_END) {
+							BranchEndNode* branch_end_node = (BranchEndNode*)it->second;
+							branch_end_node->backprop();
+						}
+					}
+				}
 
 				this->solution->timestamp++;
 				if (this->solution->timestamp >= RUN_TIMESTEPS) {

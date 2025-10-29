@@ -1,5 +1,7 @@
 #include "pass_through_experiment.h"
 
+#include "constants.h"
+#include "scope.h"
 #include "solution_wrapper.h"
 
 using namespace std;

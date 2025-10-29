@@ -335,10 +335,9 @@ Scope* create_new_scope(Scope* scope_context) {
 						new_branch_end_node->branch_start_node_id = branch_start_node->id;
 						new_branch_end_node->branch_start_node = branch_start_node;
 
-						new_branch_end_node->pre_histories = original_branch_end_node->pre_histories;
-						new_branch_end_node->post_histories = original_branch_end_node->post_histories;
-						new_branch_end_node->target_val_histories = original_branch_end_node->target_val_histories;
-						new_branch_end_node->state_iter = original_branch_end_node->state_iter;
+						/**
+						 * - simply don't copy histories
+						 */
 
 						map<AbstractNode*, AbstractNode*>::iterator it = node_mappings
 							.find(original_branch_end_node->next_node);

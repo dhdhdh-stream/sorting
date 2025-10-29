@@ -1,6 +1,11 @@
 /**
  * - don't use pre vs. post
  *   - removes variation but may focus on scenarios where pre is bad
+ * 
+ * - focus signals on consistency
+ *   - if innovation occurs enough to be recognized, it will likely already have been added
+ *   - so don't worry about explore samples being good/innovative
+ *     - just capture a wide variety
  */
 
 #ifndef BRANCH_END_NODE_H
@@ -18,14 +23,12 @@ class Solution;
 class SolutionWrapper;
 
 #if defined(MDEBUG) && MDEBUG
-const int INITIAL_NUM_DATAPOINTS = 20;
-const int UPDATE_NUM_DATAPOINTS = 20;
+const int MIN_NUM_DATAPOINTS = 10;
 #else
-const int INITIAL_NUM_DATAPOINTS = 4000;
-const int UPDATE_NUM_DATAPOINTS = 2000;
+const int MIN_NUM_DATAPOINTS = 1000;
 #endif /* MDEBUG */
 
-const int MAX_NUM_DATAPOINTS = 20000;
+const int MAX_NUM_DATAPOINTS = 4000;
 
 class BranchEndNodeHistory;
 class BranchEndNode : public AbstractNode {
@@ -35,10 +38,13 @@ public:
 	int branch_start_node_id;
 	BranchNode* branch_start_node;
 
-	std::vector<std::vector<double>> pre_histories;
-	std::vector<std::vector<double>> post_histories;
-	std::vector<double> target_val_histories;
-	int state_iter;
+	std::vector<std::vector<double>> existing_pre_histories;
+	std::vector<std::vector<double>> existing_post_histories;
+	std::vector<double> existing_target_val_histories;
+
+	std::vector<std::vector<double>> explore_pre_histories;
+	std::vector<std::vector<double>> explore_post_histories;
+	std::vector<double> explore_target_val_histories;
 
 	int next_node_id;
 	AbstractNode* next_node;

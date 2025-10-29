@@ -140,12 +140,12 @@ void BranchExperiment::train_new_backprop(
 			#else
 			if (num_positive > 0) {
 			#endif /* MDEBUG */
-				this->num_refines = 0;
+				this->total_count = 0;
+				this->total_sum_scores = 0.0;
 
-				uniform_int_distribution<int> until_distribution(1, this->average_instances_per_run);
-				this->num_instances_until_target = until_distribution(generator);
+				this->sum_scores = 0.0;
 
-				this->state = BRANCH_EXPERIMENT_STATE_REFINE_EXISTING;
+				this->state = BRANCH_EXPERIMENT_STATE_MEASURE;
 				this->state_iter = 0;
 			} else {
 				this->result = EXPERIMENT_RESULT_FAIL;

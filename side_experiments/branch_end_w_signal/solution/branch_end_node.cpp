@@ -13,8 +13,6 @@ BranchEndNode::BranchEndNode() {
 
 	this->signal_network = NULL;
 
-	this->state_iter = 0;
-
 	this->experiment = NULL;
 }
 
