@@ -5,6 +5,7 @@
 #include "branch_end_node.h"
 #include "branch_experiment.h"
 #include "constants.h"
+#include "pass_through_experiment.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
@@ -30,6 +31,12 @@ void SolutionWrapper::experiment_init() {
 			{
 				BranchExperiment* branch_experiment = (BranchExperiment*)this->curr_experiment;
 				this->experiment_history = new BranchExperimentHistory(branch_experiment);
+			}
+			break;
+		case EXPERIMENT_TYPE_PASS_THROUGH:
+			{
+				PassThroughExperiment* pass_through_experiment = (PassThroughExperiment*)this->curr_experiment;
+				this->experiment_history = new PassThroughExperimentHistory(pass_through_experiment);
 			}
 			break;
 		}
@@ -98,6 +105,10 @@ void SolutionWrapper::experiment_end(double result) {
 									this);
 			updated_nodes.insert(branch_end_node);
 		}
+		for (set<BranchEndNode*>::iterator it = updated_nodes.begin();
+				it != updated_nodes.end(); it++) {
+			(*it)->state_iter++;
+		}
 		this->branch_end_node_callbacks.clear();
 		this->branch_end_node_callback_histories.clear();
 
@@ -154,7 +165,17 @@ void SolutionWrapper::experiment_end(double result) {
 			this->curr_experiment = NULL;
 
 			this->improvement_iter++;
-			if (this->improvement_iter >= IMPROVEMENTS_PER_ITER) {
+			bool is_done = false;
+			if (this->solution->timestamp % 3 == 0) {
+				if (this->improvement_iter >= BRANCH_IMPROVEMENTS_PER_ITER) {
+					is_done = true;
+				}
+			} else {
+				if (this->improvement_iter >= PASS_THROUGH_IMPROVEMENTS_PER_ITER) {
+					is_done = true;
+				}
+			}
+			if (is_done) {
 				Scope* last_updated_scope = this->best_experiment->scope_context;
 
 				this->best_experiment->add(this);
@@ -166,6 +187,8 @@ void SolutionWrapper::experiment_end(double result) {
 
 				clean_scope(last_updated_scope,
 							this);
+
+				this->solution->clean_scopes();
 
 				this->solution->timestamp++;
 				if (this->solution->timestamp >= RUN_TIMESTEPS) {

@@ -11,8 +11,7 @@ using namespace std;
 BranchEndNode::BranchEndNode() {
 	this->type = NODE_TYPE_BRANCH_END;
 
-	this->pre_network = NULL;
-	this->post_network = NULL;
+	this->signal_network = NULL;
 
 	this->state_iter = 0;
 
@@ -20,12 +19,8 @@ BranchEndNode::BranchEndNode() {
 }
 
 BranchEndNode::~BranchEndNode() {
-	if (this->pre_network != NULL) {
-		delete this->pre_network;
-	}
-
-	if (this->post_network != NULL) {
-		delete this->post_network;
+	if (this->signal_network != NULL) {
+		delete this->signal_network;
 	}
 
 	if (this->experiment != NULL) {
@@ -34,14 +29,9 @@ BranchEndNode::~BranchEndNode() {
 }
 
 void BranchEndNode::save(ofstream& output_file) {
-	output_file << (this->pre_network == NULL) << endl;
-	if (this->pre_network != NULL) {
-		this->pre_network->save(output_file);
-	}
-
-	output_file << (this->post_network == NULL) << endl;
-	if (this->post_network != NULL) {
-		this->post_network->save(output_file);
+	output_file << (this->signal_network == NULL) << endl;
+	if (this->signal_network != NULL) {
+		this->signal_network->save(output_file);
 	}
 
 	output_file << this->next_node_id << endl;
@@ -56,18 +46,11 @@ void BranchEndNode::save(ofstream& output_file) {
 
 void BranchEndNode::load(ifstream& input_file,
 						 Solution* parent_solution) {
-	string pre_network_is_null_line;
-	getline(input_file, pre_network_is_null_line);
-	bool pre_network_is_null = stoi(pre_network_is_null_line);
-	if (!pre_network_is_null) {
-		this->pre_network = new Network(input_file);
-	}
-
-	string post_network_is_null_line;
-	getline(input_file, post_network_is_null_line);
-	bool post_network_is_null = stoi(post_network_is_null_line);
-	if (!post_network_is_null) {
-		this->post_network = new Network(input_file);
+	string signal_network_is_null_line;
+	getline(input_file, signal_network_is_null_line);
+	bool signal_network_is_null = stoi(signal_network_is_null_line);
+	if (!signal_network_is_null) {
+		this->signal_network = new Network(input_file);
 	}
 
 	string next_node_id_line;

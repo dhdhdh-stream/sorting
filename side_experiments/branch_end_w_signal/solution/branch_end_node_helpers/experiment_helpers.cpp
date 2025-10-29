@@ -1,9 +1,15 @@
+/**
+ * - note, currently, samples dominated by PassThroughExperiment
+ * - weigh samples towards positive
+ */
+
 #include "branch_end_node.h"
 
 #include <iostream>
 
 #include "branch_experiment.h"
 #include "network.h"
+#include "pass_through_experiment.h"
 #include "scope.h"
 #include "solution_wrapper.h"
 
@@ -36,14 +42,12 @@ void BranchEndNode::experiment_step(vector<double>& obs,
 	}
 
 	if (need_callback) {
-		if (this->pre_network != NULL) {
-			this->pre_network->activate(wrapper->branch_node_stack_obs.back());
-
+		if (this->signal_network != NULL) {
 			vector<double> input = wrapper->branch_node_stack_obs.back();
 			input.insert(input.end(), obs.begin(), obs.end());
-			this->post_network->activate(input);
+			this->signal_network->activate(input);
 
-			double signal = this->post_network->output->acti_vals[0] - this->pre_network->output->acti_vals[0];
+			double signal = this->signal_network->output->acti_vals[0];
 
 			for (int c_index = 0; c_index < (int)wrapper->experiment_callbacks.size(); c_index++) {
 				if (wrapper->experiment_callbacks[c_index].size() > 0
@@ -78,6 +82,20 @@ void BranchEndNode::experiment_step(vector<double>& obs,
 				}
 			}
 			break;
+		case EXPERIMENT_TYPE_PASS_THROUGH:
+			{
+				PassThroughExperiment* pass_through_experiment = (PassThroughExperiment*)wrapper->curr_experiment;
+				switch (pass_through_experiment->state) {
+				case PASS_THROUGH_EXPERIMENT_STATE_C1:
+				case PASS_THROUGH_EXPERIMENT_STATE_C2:
+				case PASS_THROUGH_EXPERIMENT_STATE_C3:
+				case PASS_THROUGH_EXPERIMENT_STATE_C4:
+					history->pre_histories = wrapper->branch_node_stack_obs.back();
+					history->post_histories = obs;
+					break;
+				}
+			}
+			break;
 		}
 	}
 
@@ -92,6 +110,20 @@ void BranchEndNode::experiment_step(vector<double>& obs,
 				switch (branch_experiment->state) {
 				case BRANCH_EXPERIMENT_STATE_EXPLORE:
 				case BRANCH_EXPERIMENT_STATE_TRAIN_NEW:
+					wrapper->branch_end_node_callbacks.push_back(wrapper->branch_node_stack);
+					wrapper->branch_end_node_callback_histories.push_back(history);
+					break;
+				}
+			}
+			break;
+		case EXPERIMENT_TYPE_PASS_THROUGH:
+			{
+				PassThroughExperiment* pass_through_experiment = (PassThroughExperiment*)wrapper->curr_experiment;
+				switch (pass_through_experiment->state) {
+				case PASS_THROUGH_EXPERIMENT_STATE_C1:
+				case PASS_THROUGH_EXPERIMENT_STATE_C2:
+				case PASS_THROUGH_EXPERIMENT_STATE_C3:
+				case PASS_THROUGH_EXPERIMENT_STATE_C4:
 					wrapper->branch_end_node_callbacks.push_back(wrapper->branch_node_stack);
 					wrapper->branch_end_node_callback_histories.push_back(history);
 					break;

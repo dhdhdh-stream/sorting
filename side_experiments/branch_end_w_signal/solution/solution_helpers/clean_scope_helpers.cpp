@@ -72,11 +72,13 @@ void clean_scope(Scope* scope,
 					{
 						ActionNode* action_node = (ActionNode*)it->second;
 
-						for (int a_index = 0; a_index < (int)action_node->next_node->ancestor_ids.size(); a_index++) {
-							if (action_node->next_node->ancestor_ids[a_index] == it->second->id) {
-								action_node->next_node->ancestor_ids.erase(
-									action_node->next_node->ancestor_ids.begin() + a_index);
-								break;
+						if (action_node->next_node != NULL) {
+							for (int a_index = 0; a_index < (int)action_node->next_node->ancestor_ids.size(); a_index++) {
+								if (action_node->next_node->ancestor_ids[a_index] == it->second->id) {
+									action_node->next_node->ancestor_ids.erase(
+										action_node->next_node->ancestor_ids.begin() + a_index);
+									break;
+								}
 							}
 						}
 					}
@@ -85,11 +87,13 @@ void clean_scope(Scope* scope,
 					{
 						ScopeNode* scope_node = (ScopeNode*)it->second;
 
-						for (int a_index = 0; a_index < (int)scope_node->next_node->ancestor_ids.size(); a_index++) {
-							if (scope_node->next_node->ancestor_ids[a_index] == it->second->id) {
-								scope_node->next_node->ancestor_ids.erase(
-									scope_node->next_node->ancestor_ids.begin() + a_index);
-								break;
+						if (scope_node->next_node != NULL) {
+							for (int a_index = 0; a_index < (int)scope_node->next_node->ancestor_ids.size(); a_index++) {
+								if (scope_node->next_node->ancestor_ids[a_index] == it->second->id) {
+									scope_node->next_node->ancestor_ids.erase(
+										scope_node->next_node->ancestor_ids.begin() + a_index);
+									break;
+								}
 							}
 						}
 					}
@@ -119,11 +123,13 @@ void clean_scope(Scope* scope,
 					{
 						BranchEndNode* branch_end_node = (BranchEndNode*)it->second;
 
-						for (int a_index = 0; a_index < (int)branch_end_node->next_node->ancestor_ids.size(); a_index++) {
-							if (branch_end_node->next_node->ancestor_ids[a_index] == it->second->id) {
-								branch_end_node->next_node->ancestor_ids.erase(
-									branch_end_node->next_node->ancestor_ids.begin() + a_index);
-								break;
+						if (branch_end_node->next_node != NULL) {
+							for (int a_index = 0; a_index < (int)branch_end_node->next_node->ancestor_ids.size(); a_index++) {
+								if (branch_end_node->next_node->ancestor_ids[a_index] == it->second->id) {
+									branch_end_node->next_node->ancestor_ids.erase(
+										branch_end_node->next_node->ancestor_ids.begin() + a_index);
+									break;
+								}
 							}
 						}
 					}

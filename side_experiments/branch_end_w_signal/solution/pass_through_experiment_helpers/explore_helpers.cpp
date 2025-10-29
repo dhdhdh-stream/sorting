@@ -44,6 +44,10 @@ void PassThroughExperiment::explore_step(vector<double>& obs,
 										 SolutionWrapper* wrapper) {
 	PassThroughExperimentState* experiment_state = (PassThroughExperimentState*)wrapper->experiment_context.back();
 
+	/**
+	 * - add to train signals
+	 *   - but don't use in evaluation
+	 */
 	if (experiment_state->step_index == 0) {
 		wrapper->experiment_history->signal_sum_vals.push_back(0.0);
 		wrapper->experiment_history->signal_sum_counts.push_back(0);
@@ -105,14 +109,7 @@ void PassThroughExperiment::explore_backprop(double target_val,
 
 	PassThroughExperimentHistory* history = (PassThroughExperimentHistory*)wrapper->experiment_history;
 	if (history->is_hit) {
-		for (int s_index = 0; s_index < (int)history->signal_sum_vals.size(); s_index++) {
-			history->signal_sum_vals[s_index] += (target_val - wrapper->solution->curr_score);
-			history->signal_sum_counts[s_index]++;
-
-			double average_val = history->signal_sum_vals[s_index] / history->signal_sum_counts[s_index];
-
-			this->target_val_histories.push_back(average_val);
-		}
+		this->sum_scores += target_val;
 
 		this->state_iter++;
 		bool is_eval = false;
@@ -140,16 +137,12 @@ void PassThroughExperiment::explore_backprop(double target_val,
 		}
 
 		if (is_eval) {
-			double sum_signal = 0.0;
-			for (int h_index = 0; h_index < (int)this->target_val_histories.size(); h_index++) {
-				sum_signal += this->target_val_histories[h_index];
-			}
-			double new_signal = sum_signal / (double)this->target_val_histories.size();
+			double new_score = this->sum_scores / this->state_iter;
 
 			#if defined(MDEBUG) && MDEBUG
-			if (new_signal >= this->existing_signal || rand()%5 != 0) {
+			if (new_score >= this->existing_score || rand()%5 != 0) {
 			#else
-			if (new_signal >= this->existing_signal) {
+			if (new_score >= this->existing_score) {
 			#endif /* MDEBUG */
 				switch (this->state) {
 				case PASS_THROUGH_EXPERIMENT_STATE_C1:
@@ -164,17 +157,7 @@ void PassThroughExperiment::explore_backprop(double target_val,
 				case PASS_THROUGH_EXPERIMENT_STATE_C4:
 					double average_hits_per_run = (double)C4_NUM_SAMPLES / (double)this->total_count;
 
-					this->improvement = average_hits_per_run * (new_signal - this->existing_signal);
-
-					// cout << "NewScopeExperiment" << endl;
-					// cout << "this->scope_context->id: " << this->scope_context->id << endl;
-					// cout << "this->node_context->id: " << this->node_context->id << endl;
-					// cout << "this->is_branch: " << this->is_branch << endl;
-
-					// double improvement = this->new_score - existing_score;
-					// cout << "improvement: " << improvement << endl;
-
-					// cout << endl;
+					this->improvement = average_hits_per_run * (new_score - this->existing_score);
 
 					this->result = EXPERIMENT_RESULT_SUCCESS;
 					break;
@@ -191,8 +174,6 @@ void PassThroughExperiment::explore_backprop(double target_val,
 					this->step_types.clear();
 					this->actions.clear();
 					this->scopes.clear();
-
-					this->target_val_histories.clear();
 
 					vector<AbstractNode*> possible_exits;
 
@@ -308,6 +289,8 @@ void PassThroughExperiment::explore_backprop(double target_val,
 
 					this->total_count = 0;
 					this->total_sum_scores = 0.0;
+
+					this->sum_scores = 0.0;
 
 					this->state = PASS_THROUGH_EXPERIMENT_STATE_C1;
 					this->state_iter = 0;

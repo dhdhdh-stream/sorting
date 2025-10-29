@@ -89,8 +89,13 @@ void PassThroughExperiment::add(SolutionWrapper* wrapper) {
 	int starting_node_id;
 	AbstractNode* starting_node;
 	if (this->step_types.size() == 0) {
-		starting_node_id = this->exit_next_node->id;
-		starting_node = this->exit_next_node;
+		if (this->exit_next_node == NULL) {
+			starting_node_id = -1;
+			starting_node = NULL;
+		} else {
+			starting_node_id = this->exit_next_node->id;
+			starting_node = this->exit_next_node;
+		}
 	} else {
 		starting_node_id = new_nodes[0]->id;
 		starting_node = new_nodes[0];
@@ -101,54 +106,66 @@ void PassThroughExperiment::add(SolutionWrapper* wrapper) {
 		{
 			StartNode* start_node = (StartNode*)this->node_context;
 
-			for (int a_index = 0; a_index < (int)start_node->next_node->ancestor_ids.size(); a_index++) {
-				if (start_node->next_node->ancestor_ids[a_index] == start_node->id) {
-					start_node->next_node->ancestor_ids.erase(
-						start_node->next_node->ancestor_ids.begin() + a_index);
-					break;
+			if (start_node->next_node != NULL) {
+				for (int a_index = 0; a_index < (int)start_node->next_node->ancestor_ids.size(); a_index++) {
+					if (start_node->next_node->ancestor_ids[a_index] == start_node->id) {
+						start_node->next_node->ancestor_ids.erase(
+							start_node->next_node->ancestor_ids.begin() + a_index);
+						break;
+					}
 				}
 			}
 
 			start_node->next_node_id = starting_node_id;
 			start_node->next_node = starting_node;
 
-			starting_node->ancestor_ids.push_back(start_node->id);
+			if (starting_node != NULL) {
+				starting_node->ancestor_ids.push_back(start_node->id);
+			}
 		}
 		break;
 	case NODE_TYPE_ACTION:
 		{
 			ActionNode* action_node = (ActionNode*)this->node_context;
 
-			for (int a_index = 0; a_index < (int)action_node->next_node->ancestor_ids.size(); a_index++) {
-				if (action_node->next_node->ancestor_ids[a_index] == action_node->id) {
-					action_node->next_node->ancestor_ids.erase(
-						action_node->next_node->ancestor_ids.begin() + a_index);
-					break;
+			if (action_node->next_node != NULL) {
+				for (int a_index = 0; a_index < (int)action_node->next_node->ancestor_ids.size(); a_index++) {
+					if (action_node->next_node->ancestor_ids[a_index] == action_node->id) {
+						action_node->next_node->ancestor_ids.erase(
+							action_node->next_node->ancestor_ids.begin() + a_index);
+						break;
+					}
 				}
 			}
 
 			action_node->next_node_id = starting_node_id;
 			action_node->next_node = starting_node;
 
-			starting_node->ancestor_ids.push_back(action_node->id);
+			if (starting_node != NULL) {
+				starting_node->ancestor_ids.push_back(action_node->id);
+			}
 		}
 		break;
 	case NODE_TYPE_SCOPE:
 		{
 			ScopeNode* scope_node = (ScopeNode*)this->node_context;
 
-			for (int a_index = 0; a_index < (int)scope_node->next_node->ancestor_ids.size(); a_index++) {
-				if (scope_node->next_node->ancestor_ids[a_index] == scope_node->id) {
-					scope_node->next_node->ancestor_ids.erase(
-						scope_node->next_node->ancestor_ids.begin() + a_index);
-					break;
+			if (scope_node->next_node != NULL) {
+				for (int a_index = 0; a_index < (int)scope_node->next_node->ancestor_ids.size(); a_index++) {
+					if (scope_node->next_node->ancestor_ids[a_index] == scope_node->id) {
+						scope_node->next_node->ancestor_ids.erase(
+							scope_node->next_node->ancestor_ids.begin() + a_index);
+						break;
+					}
 				}
 			}
 
 			scope_node->next_node_id = starting_node_id;
 			scope_node->next_node = starting_node;
 
-			starting_node->ancestor_ids.push_back(scope_node->id);
+			if (starting_node != NULL) {
+				starting_node->ancestor_ids.push_back(scope_node->id);
+			}
 		}
 		break;
 	case NODE_TYPE_BRANCH:
@@ -156,22 +173,26 @@ void PassThroughExperiment::add(SolutionWrapper* wrapper) {
 			BranchNode* branch_node = (BranchNode*)this->node_context;
 
 			if (this->is_branch) {
-				for (int a_index = 0; a_index < (int)branch_node->branch_next_node->ancestor_ids.size(); a_index++) {
-					if (branch_node->branch_next_node->ancestor_ids[a_index] == branch_node->id) {
-						branch_node->branch_next_node->ancestor_ids.erase(
-							branch_node->branch_next_node->ancestor_ids.begin() + a_index);
-						break;
+				if (branch_node->branch_next_node != NULL) {
+					for (int a_index = 0; a_index < (int)branch_node->branch_next_node->ancestor_ids.size(); a_index++) {
+						if (branch_node->branch_next_node->ancestor_ids[a_index] == branch_node->id) {
+							branch_node->branch_next_node->ancestor_ids.erase(
+								branch_node->branch_next_node->ancestor_ids.begin() + a_index);
+							break;
+						}
 					}
 				}
 
 				branch_node->branch_next_node_id = starting_node_id;
 				branch_node->branch_next_node = starting_node;
 			} else {
-				for (int a_index = 0; a_index < (int)branch_node->original_next_node->ancestor_ids.size(); a_index++) {
-					if (branch_node->original_next_node->ancestor_ids[a_index] == branch_node->id) {
-						branch_node->original_next_node->ancestor_ids.erase(
-							branch_node->original_next_node->ancestor_ids.begin() + a_index);
-						break;
+				if (branch_node->original_next_node != NULL) {
+					for (int a_index = 0; a_index < (int)branch_node->original_next_node->ancestor_ids.size(); a_index++) {
+						if (branch_node->original_next_node->ancestor_ids[a_index] == branch_node->id) {
+							branch_node->original_next_node->ancestor_ids.erase(
+								branch_node->original_next_node->ancestor_ids.begin() + a_index);
+							break;
+						}
 					}
 				}
 
@@ -199,7 +220,9 @@ void PassThroughExperiment::add(SolutionWrapper* wrapper) {
 			branch_end_node->next_node_id = starting_node_id;
 			branch_end_node->next_node = starting_node;
 
-			starting_node->ancestor_ids.push_back(branch_end_node->id);
+			if (starting_node != NULL) {
+				starting_node->ancestor_ids.push_back(branch_end_node->id);
+			}
 		}
 		break;
 	}
@@ -208,8 +231,13 @@ void PassThroughExperiment::add(SolutionWrapper* wrapper) {
 		int next_node_id;
 		AbstractNode* next_node;
 		if (n_index == (int)new_nodes.size()-1) {
-			next_node_id = this->exit_next_node->id;
-			next_node = this->exit_next_node;
+			if (this->exit_next_node == NULL) {
+				next_node_id = -1;
+				next_node = NULL;
+			} else {
+				next_node_id = this->exit_next_node->id;
+				next_node = this->exit_next_node;
+			}
 		} else {
 			next_node_id = new_nodes[n_index+1]->id;
 			next_node = new_nodes[n_index+1];
@@ -232,7 +260,9 @@ void PassThroughExperiment::add(SolutionWrapper* wrapper) {
 			break;
 		}
 
-		next_node->ancestor_ids.push_back(new_nodes[n_index]->id);
+		if (next_node != NULL) {
+			next_node->ancestor_ids.push_back(new_nodes[n_index]->id);
+		}
 	}
 }
 

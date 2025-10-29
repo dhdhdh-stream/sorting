@@ -5,6 +5,9 @@
 
 #include "layer.h"
 
+const int NETWORK_SIZE_SMALL = 0;
+const int NETWORK_SIZE_LARGE = 1;
+
 class Network {
 public:
 	Layer* input;
@@ -20,7 +23,8 @@ public:
 	double hidden_3_average_max_update;
 	double output_average_max_update;
 
-	Network(int input_size);
+	Network(int input_size,
+			int size);
 	Network(Network* original);
 	Network(std::ifstream& input_file);
 	~Network();

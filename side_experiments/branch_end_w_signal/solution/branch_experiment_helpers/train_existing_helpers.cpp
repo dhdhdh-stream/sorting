@@ -57,15 +57,14 @@ void BranchExperiment::train_existing_backprop(
 			this->target_val_histories.push_back(average_val);
 		}
 
+		this->sum_scores += target_val;
+
 		this->state_iter++;
 		if (this->state_iter >= TRAIN_EXISTING_NUM_DATAPOINTS) {
-			double sum_signal = 0.0;
-			for (int h_index = 0; h_index < (int)this->target_val_histories.size(); h_index++) {
-				sum_signal += this->target_val_histories[h_index];
-			}
-			this->existing_signal = sum_signal / (double)this->target_val_histories.size();
+			this->existing_score = this->sum_scores / this->state_iter;
 
-			this->existing_network = new Network(this->obs_histories[0].size());
+			this->existing_network = new Network(this->obs_histories[0].size(),
+												 NETWORK_SIZE_SMALL);
 			uniform_int_distribution<int> input_distribution(0, this->obs_histories.size()-1);
 			for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
 				int rand_index = input_distribution(generator);

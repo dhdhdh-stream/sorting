@@ -325,15 +325,10 @@ Scope* create_new_scope(Scope* scope_context) {
 						BranchEndNode* original_branch_end_node = (BranchEndNode*)node_it->first;
 						BranchEndNode* new_branch_end_node = (BranchEndNode*)node_mappings[original_branch_end_node];
 
-						if (original_branch_end_node->pre_network == NULL) {
-							new_branch_end_node->pre_network = NULL;
+						if (original_branch_end_node->signal_network == NULL) {
+							new_branch_end_node->signal_network = NULL;
 						} else {
-							new_branch_end_node->pre_network = new Network(original_branch_end_node->pre_network);
-						}
-						if (original_branch_end_node->post_network == NULL) {
-							new_branch_end_node->post_network = NULL;
-						} else {
-							new_branch_end_node->post_network = new Network(original_branch_end_node->post_network);
+							new_branch_end_node->signal_network = new Network(original_branch_end_node->signal_network);
 						}
 
 						BranchNode* branch_start_node = (BranchNode*)node_mappings[original_branch_end_node->branch_start_node];

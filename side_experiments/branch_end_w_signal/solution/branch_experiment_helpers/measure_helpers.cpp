@@ -32,13 +32,6 @@ void BranchExperiment::measure_step(vector<double>& obs,
 	BranchExperimentState* experiment_state = (BranchExperimentState*)wrapper->experiment_context.back();
 
 	if (experiment_state->step_index == 0) {
-		BranchExperimentHistory* history = (BranchExperimentHistory*)wrapper->experiment_history;
-
-		history->signal_sum_vals.push_back(0.0);
-		history->signal_sum_counts.push_back(0);
-
-		wrapper->experiment_callbacks.push_back(wrapper->branch_node_stack);
-
 		this->new_network->activate(obs);
 
 		bool decision_is_branch;
@@ -104,31 +97,20 @@ void BranchExperiment::measure_backprop(double target_val,
 
 	BranchExperimentHistory* history = (BranchExperimentHistory*)wrapper->experiment_history;
 	if (history->is_hit) {
-		for (int s_index = 0; s_index < (int)history->signal_sum_vals.size(); s_index++) {
-			history->signal_sum_vals[s_index] += (target_val - wrapper->solution->curr_score);
-			history->signal_sum_counts[s_index]++;
-
-			double average_val = history->signal_sum_vals[s_index] / history->signal_sum_counts[s_index];
-
-			this->target_val_histories.push_back(average_val);
-		}
+		this->sum_scores += target_val;
 
 		this->state_iter++;
 		if (this->state_iter >= MEASURE_ITERS) {
-			double sum_signal = 0.0;
-			for (int h_index = 0; h_index < (int)this->target_val_histories.size(); h_index++) {
-				sum_signal += this->target_val_histories[h_index];
-			}
-			double new_signal = sum_signal / (double)this->target_val_histories.size();
+			double new_score = this->sum_scores / this->state_iter;
 
 			#if defined(MDEBUG) && MDEBUG
-			if (new_signal - this->existing_signal >= 0.0 || rand()%2 == 0) {
+			if (new_score - this->existing_score >= 0.0 || rand()%2 == 0) {
 			#else
-			if (new_signal - this->existing_signal >= 0.0) {
+			if (new_score - this->existing_score >= 0.0) {
 			#endif /* MDEBUG */
 				double average_hits_per_run = (double)MEASURE_ITERS / (double)this->total_count;
 
-				this->improvement = average_hits_per_run * (new_signal - this->existing_signal);
+				this->improvement = average_hits_per_run * (new_score - this->existing_score);
 
 				cout << "BranchExperiment" << endl;
 				cout << "this->scope_context->id: " << this->scope_context->id << endl;
@@ -151,8 +133,8 @@ void BranchExperiment::measure_backprop(double target_val,
 				}
 
 				cout << "average_hits_per_run: " << average_hits_per_run << endl;
-				cout << "new_signal: " << new_signal << endl;
-				cout << "existing_signal: " << existing_signal << endl;
+				cout << "new_score: " << new_score << endl;
+				cout << "existing_score: " << existing_score << endl;
 				cout << "this->improvement: " << this->improvement << endl;
 
 				cout << endl;

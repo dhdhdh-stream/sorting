@@ -54,6 +54,12 @@ void BranchNode::verify_step(vector<double>& obs,
 
 	history->is_branch = is_branch;
 
+	/**
+	 * - debug
+	 */
+	wrapper->branch_node_stack.push_back(this);
+	wrapper->branch_node_stack_obs.push_back(obs);
+
 	if (is_branch) {
 		wrapper->node_context.back() = this->branch_next_node;
 	} else {

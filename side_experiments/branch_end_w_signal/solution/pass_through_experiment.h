@@ -22,7 +22,7 @@ public:
 	int state;
 	int state_iter;
 
-	double existing_signal;
+	double existing_score;
 
 	int num_explores;
 
@@ -35,7 +35,7 @@ public:
 	int total_count;
 	double total_sum_scores;
 
-	std::vector<double> target_val_histories;
+	double sum_scores;
 
 	PassThroughExperiment(Scope* scope_context,
 						  AbstractNode* node_context,
@@ -57,7 +57,6 @@ public:
 	void backprop(double target_val,
 				  SolutionWrapper* wrapper);
 
-	void measure_existing_check_activate(SolutionWrapper* wrapper);
 	void measure_existing_backprop(double target_val,
 								   SolutionWrapper* wrapper);
 

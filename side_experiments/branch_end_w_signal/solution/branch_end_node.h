@@ -1,3 +1,8 @@
+/**
+ * - don't use pre vs. post
+ *   - removes variation but may focus on scenarios where pre is bad
+ */
+
 #ifndef BRANCH_END_NODE_H
 #define BRANCH_END_NODE_H
 
@@ -20,13 +25,12 @@ const int INITIAL_NUM_DATAPOINTS = 4000;
 const int UPDATE_NUM_DATAPOINTS = 2000;
 #endif /* MDEBUG */
 
-const int MAX_NUM_DATAPOINTS = 4000;
+const int MAX_NUM_DATAPOINTS = 20000;
 
 class BranchEndNodeHistory;
 class BranchEndNode : public AbstractNode {
 public:
-	Network* pre_network;
-	Network* post_network;
+	Network* signal_network;
 
 	int branch_start_node_id;
 	BranchNode* branch_start_node;

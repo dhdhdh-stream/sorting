@@ -13,6 +13,9 @@ class SolutionWrapper;
 const int BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING = 0;
 const int BRANCH_EXPERIMENT_STATE_EXPLORE = 1;
 const int BRANCH_EXPERIMENT_STATE_TRAIN_NEW = 2;
+/**
+ * TODO: add refine
+ */
 const int BRANCH_EXPERIMENT_STATE_MEASURE = 3;
 #if defined(MDEBUG) && MDEBUG
 const int BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY = 4;
@@ -25,7 +28,7 @@ public:
 	int state;
 	int state_iter;
 
-	double existing_signal;
+	double existing_score;
 
 	Network* existing_network;
 
@@ -54,6 +57,7 @@ public:
 
 	std::vector<std::vector<double>> obs_histories;
 	std::vector<double> target_val_histories;
+	double sum_scores;
 
 	#if defined(MDEBUG) && MDEBUG
 	std::vector<Problem*> verify_problems;

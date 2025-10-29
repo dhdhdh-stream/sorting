@@ -19,7 +19,7 @@ using namespace std;
 #if defined(MDEBUG) && MDEBUG
 const int TRAIN_NEW_NUM_DATAPOINTS = 20;
 #else
-const int TRAIN_NEW_NUM_DATAPOINTS = 200;
+const int TRAIN_NEW_NUM_DATAPOINTS = 1000;
 #endif /* MDEBUG */
 
 void BranchExperiment::train_new_check_activate(
@@ -105,7 +105,8 @@ void BranchExperiment::train_new_backprop(
 		this->state_iter++;
 		if (this->state_iter >= TRAIN_NEW_NUM_DATAPOINTS
 				&& (int)this->target_val_histories.size() >= TRAIN_NEW_NUM_DATAPOINTS) {
-			this->new_network = new Network(this->obs_histories[0].size());
+			this->new_network = new Network(this->obs_histories[0].size(),
+											NETWORK_SIZE_SMALL);
 			uniform_int_distribution<int> input_distribution(0, this->obs_histories.size()-1);
 			for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
 				int rand_index = input_distribution(generator);
@@ -141,6 +142,8 @@ void BranchExperiment::train_new_backprop(
 			#endif /* MDEBUG */
 				this->total_count = 0;
 				this->total_sum_scores = 0.0;
+
+				this->sum_scores = 0.0;
 
 				this->state = BRANCH_EXPERIMENT_STATE_MEASURE;
 				this->state_iter = 0;

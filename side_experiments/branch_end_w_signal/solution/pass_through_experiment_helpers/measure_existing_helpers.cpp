@@ -20,39 +20,16 @@ const int MEASURE_EXISTING_NUM_DATAPOINTS = 20;
 const int MEASURE_EXISTING_NUM_DATAPOINTS = 1000;
 #endif /* MDEBUG */
 
-void PassThroughExperiment::measure_existing_check_activate(
-		SolutionWrapper* wrapper) {
-	PassThroughExperimentHistory* history = (PassThroughExperimentHistory*)wrapper->experiment_history;
-
-	history->signal_sum_vals.push_back(0.0);
-	history->signal_sum_counts.push_back(0);
-
-	wrapper->experiment_callbacks.push_back(wrapper->branch_node_stack);
-};
-
 void PassThroughExperiment::measure_existing_backprop(
 		double target_val,
 		SolutionWrapper* wrapper) {
 	PassThroughExperimentHistory* history = (PassThroughExperimentHistory*)wrapper->experiment_history;
 	if (history->is_hit) {
-		for (int s_index = 0; s_index < (int)history->signal_sum_vals.size(); s_index++) {
-			history->signal_sum_vals[s_index] += (target_val - wrapper->solution->curr_score);
-			history->signal_sum_counts[s_index]++;
-
-			double average_val = history->signal_sum_vals[s_index] / history->signal_sum_counts[s_index];
-
-			this->target_val_histories.push_back(average_val);
-		}
+		this->sum_scores += target_val;
 
 		this->state_iter++;
 		if (this->state_iter >= MEASURE_EXISTING_NUM_DATAPOINTS) {
-			double sum_signal = 0.0;
-			for (int h_index = 0; h_index < (int)this->target_val_histories.size(); h_index++) {
-				sum_signal += this->target_val_histories[h_index];
-			}
-			this->existing_signal = sum_signal / (double)this->target_val_histories.size();
-
-			this->target_val_histories.clear();
+			this->existing_score = this->sum_scores / this->state_iter;
 
 			this->num_explores = 0;
 
@@ -170,6 +147,8 @@ void PassThroughExperiment::measure_existing_backprop(
 
 			this->total_count = 0;
 			this->total_sum_scores = 0.0;
+
+			this->sum_scores = 0.0;
 
 			this->state = PASS_THROUGH_EXPERIMENT_STATE_C1;
 			this->state_iter = 0;

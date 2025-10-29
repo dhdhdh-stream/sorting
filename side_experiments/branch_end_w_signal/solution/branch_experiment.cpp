@@ -36,6 +36,8 @@ BranchExperiment::BranchExperiment(Scope* scope_context,
 
 	this->sum_instances = 0;
 
+	this->sum_scores = 0.0;
+
 	this->state = BRANCH_EXPERIMENT_STATE_TRAIN_EXISTING;
 	this->state_iter = 0;
 
