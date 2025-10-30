@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "abstract_experiment.h"
+#include "globals.h"
 #include "network.h"
 #include "scope.h"
 
@@ -46,10 +47,52 @@ void BranchEndNode::save(ofstream& output_file) {
 
 	output_file << this->branch_start_node_id << endl;
 
-	// temp
-	output_file << this->travel_counts.size() << endl;
-	for (int c_index = 0; c_index < (int)this->travel_counts.size(); c_index++) {
-		output_file << this->travel_counts[c_index] << endl;
+	/**
+	 * - randomly save samples for debug
+	 */
+	int existing_num_save = max(20, (int)this->existing_pre_histories.size());
+	output_file << existing_num_save << endl;
+	vector<int> existing_indexes(this->existing_pre_histories.size());
+	for (int i_index = 0; i_index < (int)this->existing_pre_histories.size(); i_index++) {
+		existing_indexes[i_index] = i_index;
+	}
+	for (int s_index = 0; s_index < existing_num_save; s_index++) {
+		uniform_int_distribution<int> distribution(0, existing_indexes.size()-1);
+		int index = distribution(generator);
+
+		for (int i_index = 0; i_index < 25; i_index++) {
+			output_file << this->existing_pre_histories[index][i_index] << endl;
+		}
+
+		for (int i_index = 0; i_index < 25; i_index++) {
+			output_file << this->existing_post_histories[index][i_index] << endl;
+		}
+
+		output_file << this->existing_target_val_histories[index] << endl;
+
+		existing_indexes.erase(existing_indexes.begin() + index);
+	}
+	int explore_num_save = max(20, (int)this->explore_pre_histories.size());
+	output_file << explore_num_save << endl;
+	vector<int> explore_indexes(this->explore_pre_histories.size());
+	for (int i_index = 0; i_index < (int)this->explore_pre_histories.size(); i_index++) {
+		explore_indexes[i_index] = i_index;
+	}
+	for (int s_index = 0; s_index < explore_num_save; s_index++) {
+		uniform_int_distribution<int> distribution(0, explore_indexes.size()-1);
+		int index = distribution(generator);
+
+		for (int i_index = 0; i_index < 25; i_index++) {
+			output_file << this->explore_pre_histories[index][i_index] << endl;
+		}
+
+		for (int i_index = 0; i_index < 25; i_index++) {
+			output_file << this->explore_post_histories[index][i_index] << endl;
+		}
+
+		output_file << this->explore_target_val_histories[index] << endl;
+
+		explore_indexes.erase(explore_indexes.begin() + index);
 	}
 
 	output_file << this->ancestor_ids.size() << endl;
@@ -82,13 +125,90 @@ void BranchEndNode::load(ifstream& input_file,
 	getline(input_file, branch_start_node_id_line);
 	this->branch_start_node_id = stoi(branch_start_node_id_line);
 
-	string travel_counts_size_line;
-	getline(input_file, travel_counts_size_line);
-	int travel_counts_size = stoi(travel_counts_size_line);
-	for (int c_index = 0; c_index < travel_counts_size; c_index++) {
-		string count_line;
-		getline(input_file, count_line);
-		this->travel_counts.push_back(stoi(count_line));
+	// temp
+	cout << "this->parent->id: " << this->parent->id << endl;
+	cout << "this->id: " << this->id << endl;
+
+	string existing_num_save_line;
+	getline(input_file, existing_num_save_line);
+	int existing_num_save = stoi(existing_num_save_line);
+	for (int s_index = 0; s_index < existing_num_save; s_index++) {
+		vector<double> pre_obs;
+		for (int i_index = 0; i_index < 25; i_index++) {
+			string obs_line;
+			getline(input_file, obs_line);
+			pre_obs.push_back(stod(obs_line));
+		}
+
+		vector<double> post_obs;
+		for (int i_index = 0; i_index < 25; i_index++) {
+			string obs_line;
+			getline(input_file, obs_line);
+			post_obs.push_back(stod(obs_line));
+		}
+
+		string target_val_line;
+		getline(input_file, target_val_line);
+		double target_val = stod(target_val_line);
+
+		cout << "existing " << s_index << endl;
+		cout << "pre_obs:" << endl;
+		for (int i_index = 0; i_index < 5; i_index++) {
+			for (int j_index = 0; j_index < 5; j_index++) {
+				cout << pre_obs[5 * i_index + j_index] << " ";
+			}
+			cout << endl;
+		}
+		cout << "post_obs:" << endl;
+		for (int i_index = 0; i_index < 5; i_index++) {
+			for (int j_index = 0; j_index < 5; j_index++) {
+				cout << post_obs[5 * i_index + j_index] << " ";
+			}
+			cout << endl;
+		}
+		cout << "target_val: " << target_val << endl;
+		cout << endl;
+	}
+
+	string explore_num_save_line;
+	getline(input_file, explore_num_save_line);
+	int explore_num_save = stoi(explore_num_save_line);
+	for (int s_index = 0; s_index < explore_num_save; s_index++) {
+		vector<double> pre_obs;
+		for (int i_index = 0; i_index < 25; i_index++) {
+			string obs_line;
+			getline(input_file, obs_line);
+			pre_obs.push_back(stod(obs_line));
+		}
+
+		vector<double> post_obs;
+		for (int i_index = 0; i_index < 25; i_index++) {
+			string obs_line;
+			getline(input_file, obs_line);
+			post_obs.push_back(stod(obs_line));
+		}
+
+		string target_val_line;
+		getline(input_file, target_val_line);
+		double target_val = stod(target_val_line);
+
+		cout << "explore " << s_index << endl;
+		cout << "pre_obs:" << endl;
+		for (int i_index = 0; i_index < 5; i_index++) {
+			for (int j_index = 0; j_index < 5; j_index++) {
+				cout << pre_obs[5 * i_index + j_index] << " ";
+			}
+			cout << endl;
+		}
+		cout << "post_obs:" << endl;
+		for (int i_index = 0; i_index < 5; i_index++) {
+			for (int j_index = 0; j_index < 5; j_index++) {
+				cout << post_obs[5 * i_index + j_index] << " ";
+			}
+			cout << endl;
+		}
+		cout << "target_val: " << target_val << endl;
+		cout << endl;
 	}
 
 	string num_ancestors_line;

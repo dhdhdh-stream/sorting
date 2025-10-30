@@ -40,9 +40,6 @@ public:
 	std::vector<std::vector<double>> existing_pre_histories;
 	std::vector<std::vector<double>> existing_post_histories;
 	std::vector<double> existing_target_val_histories;
-	// temp
-	std::vector<std::pair<int, int>> start_locations;
-	std::vector<std::pair<int, int>> end_locations;
 
 	std::vector<std::vector<double>> explore_pre_histories;
 	std::vector<std::vector<double>> explore_post_histories;
@@ -50,9 +47,6 @@ public:
 
 	int next_node_id;
 	AbstractNode* next_node;
-
-	// temp
-	std::vector<int> travel_counts;
 
 	BranchEndNode();
 	~BranchEndNode();

@@ -56,16 +56,10 @@ void BranchEndNode::update(double result,
 			this->existing_pre_histories[index] = history->pre_histories;
 			this->existing_post_histories[index] = history->post_histories;
 			this->existing_target_val_histories[index] = average_val;
-			// temp
-			this->start_locations[index] = history->start_location;
-			this->end_locations[index] = history->end_location;
 		} else {
 			this->existing_pre_histories.push_back(history->pre_histories);
 			this->existing_post_histories.push_back(history->post_histories);
 			this->existing_target_val_histories.push_back(average_val);
-			// temp
-			this->start_locations.push_back(history->start_location);
-			this->end_locations.push_back(history->end_location);
 		}
 	} else {
 		if (this->explore_pre_histories.size() >= MAX_NUM_DATAPOINTS) {
@@ -190,27 +184,6 @@ void BranchEndNode::backprop() {
 					this->post_network->backprop(error);
 				}
 			}
-		}
-
-		// temp
-		map<pair<int,int>, int> travel_tracker;
-		for (int h_index = 0; h_index < (int)this->start_locations.size(); h_index++) {
-			pair<int, int> travel = {
-				this->end_locations[h_index].first - this->start_locations[h_index].first,
-				this->end_locations[h_index].second - this->start_locations[h_index].second,
-			};
-
-			map<pair<int,int>, int>::iterator it = travel_tracker.find(travel);
-			if (it == travel_tracker.end()) {
-				travel_tracker[travel] = 1;
-			} else {
-				it->second++;
-			}
-		}
-		this->travel_counts.clear();
-		for (map<pair<int,int>, int>::iterator it = travel_tracker.begin();
-				it != travel_tracker.end(); it++) {
-			this->travel_counts.push_back(it->second);
 		}
 	}
 }

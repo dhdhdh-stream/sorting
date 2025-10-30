@@ -7,9 +7,6 @@
 #include "solution_wrapper.h"
 #include "utilities.h"
 
-// temp
-#include "minesweeper.h"
-
 using namespace std;
 
 void BranchNode::experiment_step(vector<double>& obs,
@@ -43,9 +40,6 @@ void BranchNode::experiment_step(vector<double>& obs,
 
 	wrapper->branch_node_stack.push_back(this);
 	wrapper->branch_node_stack_obs.push_back(obs);
-	// temp
-	Minesweeper* minesweeper = (Minesweeper*)wrapper->problem;
-	wrapper->branch_node_location.push_back({minesweeper->current_x, minesweeper->current_y});
 
 	if (is_branch) {
 		wrapper->node_context.back() = this->branch_next_node;

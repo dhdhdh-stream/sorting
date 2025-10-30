@@ -8,9 +8,6 @@
 #include "scope.h"
 #include "solution_wrapper.h"
 
-// temp
-#include "minesweeper.h"
-
 using namespace std;
 
 void BranchEndNode::experiment_step(vector<double>& obs,
@@ -149,17 +146,10 @@ void BranchEndNode::experiment_step(vector<double>& obs,
 	if (is_existing || need_callback) {
 		history->pre_histories = wrapper->branch_node_stack_obs.back();
 		history->post_histories = obs;
-
-		// temp
-		history->start_location = wrapper->branch_node_location.back();
-		Minesweeper* minesweeper = (Minesweeper*)wrapper->problem;
-		history->end_location = {minesweeper->current_x, minesweeper->current_y};
 	}
 
 	wrapper->branch_node_stack.pop_back();
 	wrapper->branch_node_stack_obs.pop_back();
-	// temp
-	wrapper->branch_node_location.pop_back();
 
 	if (is_existing || need_callback) {
 		wrapper->branch_end_node_callbacks.push_back(wrapper->branch_node_stack);
