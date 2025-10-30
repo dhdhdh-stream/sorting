@@ -1,7 +1,4 @@
 /**
- * - don't use pre vs. post
- *   - removes variation but may focus on scenarios where pre is bad
- * 
  * - focus signals on consistency
  *   - if innovation occurs enough to be recognized, it will likely already have been added
  *   - so don't worry about explore samples being good/innovative
@@ -33,7 +30,8 @@ const int MAX_NUM_DATAPOINTS = 4000;
 class BranchEndNodeHistory;
 class BranchEndNode : public AbstractNode {
 public:
-	Network* signal_network;
+	Network* pre_network;
+	Network* post_network;
 
 	int branch_start_node_id;
 	BranchNode* branch_start_node;

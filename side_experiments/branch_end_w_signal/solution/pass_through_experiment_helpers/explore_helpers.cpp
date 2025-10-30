@@ -1,5 +1,7 @@
 #include "pass_through_experiment.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_end_node.h"
 #include "branch_node.h"
@@ -32,6 +34,11 @@ const int MAX_NUM_EXPLORES = 100;
 
 void PassThroughExperiment::explore_check_activate(
 		SolutionWrapper* wrapper) {
+	wrapper->experiment_history->signal_sum_vals.push_back(0.0);
+	wrapper->experiment_history->signal_sum_counts.push_back(0);
+
+	wrapper->experiment_callbacks.push_back(wrapper->branch_node_stack);
+
 	PassThroughExperimentState* new_experiment_state = new PassThroughExperimentState(this);
 	new_experiment_state->step_index = 0;
 	wrapper->experiment_context.back() = new_experiment_state;
@@ -43,17 +50,6 @@ void PassThroughExperiment::explore_step(vector<double>& obs,
 										 bool& fetch_action,
 										 SolutionWrapper* wrapper) {
 	PassThroughExperimentState* experiment_state = (PassThroughExperimentState*)wrapper->experiment_context.back();
-
-	/**
-	 * - add to train signals
-	 *   - but don't use in evaluation
-	 */
-	if (experiment_state->step_index == 0) {
-		wrapper->experiment_history->signal_sum_vals.push_back(0.0);
-		wrapper->experiment_history->signal_sum_counts.push_back(0);
-
-		wrapper->experiment_callbacks.push_back(wrapper->branch_node_stack);
-	}
 
 	if (experiment_state->step_index >= (int)this->step_types.size()) {
 		wrapper->node_context.back() = this->exit_next_node;
@@ -109,6 +105,17 @@ void PassThroughExperiment::explore_backprop(double target_val,
 
 	PassThroughExperimentHistory* history = (PassThroughExperimentHistory*)wrapper->experiment_history;
 	if (history->is_hit) {
+		double curr_sum_signals = 0.0;
+		for (int s_index = 0; s_index < (int)history->signal_sum_vals.size(); s_index++) {
+			history->signal_sum_vals[s_index] += (target_val - wrapper->solution->curr_score);
+			history->signal_sum_counts[s_index]++;
+
+			double average_val = history->signal_sum_vals[s_index] / history->signal_sum_counts[s_index];
+
+			curr_sum_signals += average_val;
+		}
+		this->sum_signals += curr_sum_signals / (double)history->signal_sum_vals.size();
+
 		this->sum_scores += target_val;
 
 		this->state_iter++;
@@ -138,11 +145,14 @@ void PassThroughExperiment::explore_backprop(double target_val,
 
 		if (is_eval) {
 			double new_score = this->sum_scores / this->state_iter;
+			double new_signal = this->sum_signals / this->state_iter;
 
 			#if defined(MDEBUG) && MDEBUG
-			if (new_score >= this->existing_score || rand()%5 != 0) {
+			if ((new_score >= this->existing_score
+					&& new_signal > this->existing_signal) || rand()%5 != 0) {
 			#else
-			if (new_score >= this->existing_score) {
+			if (new_score >= this->existing_score
+					&& new_signal > this->existing_signal) {
 			#endif /* MDEBUG */
 				switch (this->state) {
 				case PASS_THROUGH_EXPERIMENT_STATE_C1:
@@ -291,6 +301,7 @@ void PassThroughExperiment::explore_backprop(double target_val,
 					this->total_sum_scores = 0.0;
 
 					this->sum_scores = 0.0;
+					this->sum_signals = 0.0;
 
 					this->state = PASS_THROUGH_EXPERIMENT_STATE_C1;
 					this->state_iter = 0;

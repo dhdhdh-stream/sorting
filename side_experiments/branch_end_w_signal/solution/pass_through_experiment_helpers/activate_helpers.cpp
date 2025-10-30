@@ -15,6 +15,9 @@ void PassThroughExperiment::check_activate(
 		history->is_hit = true;
 
 		switch (this->state) {
+		case PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING:
+			measure_existing_check_activate(wrapper);
+			break;
 		case PASS_THROUGH_EXPERIMENT_STATE_C1:
 		case PASS_THROUGH_EXPERIMENT_STATE_C2:
 		case PASS_THROUGH_EXPERIMENT_STATE_C3:

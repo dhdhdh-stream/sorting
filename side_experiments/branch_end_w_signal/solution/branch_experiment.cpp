@@ -35,6 +35,8 @@ BranchExperiment::BranchExperiment(Scope* scope_context,
 	this->node_context->experiment = this;
 
 	this->sum_instances = 0;
+	// temp
+	this->sum_depth = 0;
 
 	this->sum_scores = 0.0;
 

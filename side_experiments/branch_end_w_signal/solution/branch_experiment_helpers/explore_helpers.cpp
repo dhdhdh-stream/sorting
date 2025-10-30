@@ -26,7 +26,9 @@ using namespace std;
 #if defined(MDEBUG) && MDEBUG
 const int BRANCH_EXPERIMENT_EXPLORE_ITERS = 10;
 #else
-const int BRANCH_EXPERIMENT_EXPLORE_ITERS = 1000;
+// const int BRANCH_EXPERIMENT_EXPLORE_ITERS = 1000;
+// const int BRANCH_EXPERIMENT_EXPLORE_ITERS = 4000;
+const int BRANCH_EXPERIMENT_EXPLORE_ITERS = 10000;
 #endif /* MDEBUG */
 
 void BranchExperiment::explore_check_activate(
@@ -225,6 +227,12 @@ void BranchExperiment::explore_backprop(double target_val,
 
 		double curr_surprise = average_val - history->existing_predicted_scores[0];
 
+		// // temp
+		// cout << "target_val: " << target_val << endl;
+		// cout << "average_val: " << average_val << endl;
+		// cout << "history->signal_sum_counts[0]: " << history->signal_sum_counts[0] << endl;
+		// cout << "history->existing_predicted_scores[0]: " << history->existing_predicted_scores[0] << endl;
+
 		#if defined(MDEBUG) && MDEBUG
 		if (true) {
 		#else
@@ -252,6 +260,9 @@ void BranchExperiment::explore_backprop(double target_val,
 
 		this->state_iter++;
 		if (this->state_iter >= BRANCH_EXPERIMENT_EXPLORE_ITERS) {
+			// // temp
+			// cout << "this->best_surprise: " << this->best_surprise << endl;
+
 			#if defined(MDEBUG) && MDEBUG
 			if (rand()%2 == 0) {
 			#else

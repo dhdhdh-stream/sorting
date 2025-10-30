@@ -4,6 +4,14 @@
 //   - otherwise, signals constantly triggering over something that isn't being pursued?
 //     - and becomes a negative?
 
+// - maybe need more explore samples?
+//   - more difficult to find sample that does well on all signals in addition to true?
+
+// - looks pretty consistent?
+//   - examine with evaluating signals, but ignoring in experiments
+
+// - track movement at branches and compare
+
 #include <chrono>
 #include <iostream>
 #include <map>

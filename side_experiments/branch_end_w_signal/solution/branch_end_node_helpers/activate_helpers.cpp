@@ -20,7 +20,7 @@ void BranchEndNode::step(vector<double>& obs,
 	/**
 	 * - debug
 	 */
-	if (this->signal_network != NULL) {
+	if (this->pre_network != NULL) {
 		cout << "this->parent->id: " << this->parent->id << endl;
 		cout << "this->id: " << this->id << endl;
 		cout << "pre_obs:" << endl;
@@ -38,10 +38,13 @@ void BranchEndNode::step(vector<double>& obs,
 			cout << endl;
 		}
 
+		this->pre_network->activate(wrapper->branch_node_stack_obs.back());
+		cout << "this->pre_network->output->acti_vals[0]: " << this->pre_network->output->acti_vals[0] << endl;
+
 		vector<double> input = wrapper->branch_node_stack_obs.back();
 		input.insert(input.end(), obs.begin(), obs.end());
-		this->signal_network->activate(input);
-		cout << "this->signal_network->output->acti_vals[0]: " << this->signal_network->output->acti_vals[0] << endl;
+		this->post_network->activate(input);
+		cout << "this->post_network->output->acti_vals[0]: " << this->post_network->output->acti_vals[0] << endl;
 
 		cout << endl;
 	}

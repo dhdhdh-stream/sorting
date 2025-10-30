@@ -21,6 +21,7 @@ PassThroughExperiment::PassThroughExperiment(
 	this->node_context->experiment = this;
 
 	this->sum_scores = 0.0;
+	this->sum_signals = 0.0;
 
 	this->state = PASS_THROUGH_EXPERIMENT_STATE_MEASURE_EXISTING;
 	this->state_iter = 0;

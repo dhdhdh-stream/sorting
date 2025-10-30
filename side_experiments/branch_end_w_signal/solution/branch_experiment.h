@@ -35,6 +35,8 @@ public:
 	Network* existing_network;
 
 	int sum_instances;
+	// temp
+	int sum_depth;
 
 	double average_instances_per_run;
 	int num_instances_until_target;

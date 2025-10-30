@@ -55,6 +55,9 @@ void BranchExperiment::train_existing_backprop(
 			double average_val = history->signal_sum_vals[s_index] / history->signal_sum_counts[s_index];
 
 			this->target_val_histories.push_back(average_val);
+
+			// temp
+			this->sum_depth += history->signal_sum_counts[s_index];
 		}
 
 		this->sum_scores += target_val;
@@ -62,6 +65,10 @@ void BranchExperiment::train_existing_backprop(
 		this->state_iter++;
 		if (this->state_iter >= TRAIN_EXISTING_NUM_DATAPOINTS) {
 			this->existing_score = this->sum_scores / this->state_iter;
+
+			// temp
+			// double average_depth = (double)this->sum_depth / (double)this->sum_instances;
+			// cout << "average_depth: " << average_depth << endl;
 
 			this->existing_network = new Network(this->obs_histories[0].size(),
 												 NETWORK_SIZE_SMALL);

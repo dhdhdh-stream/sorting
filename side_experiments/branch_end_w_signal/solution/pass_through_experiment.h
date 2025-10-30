@@ -23,6 +23,7 @@ public:
 	int state_iter;
 
 	double existing_score;
+	double existing_signal;
 
 	int num_explores;
 
@@ -36,6 +37,7 @@ public:
 	double total_sum_scores;
 
 	double sum_scores;
+	double sum_signals;
 
 	PassThroughExperiment(Scope* scope_context,
 						  AbstractNode* node_context,
@@ -57,6 +59,7 @@ public:
 	void backprop(double target_val,
 				  SolutionWrapper* wrapper);
 
+	void measure_existing_check_activate(SolutionWrapper* wrapper);
 	void measure_existing_backprop(double target_val,
 								   SolutionWrapper* wrapper);
 

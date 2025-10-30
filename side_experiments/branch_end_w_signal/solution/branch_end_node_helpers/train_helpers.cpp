@@ -79,13 +79,36 @@ void BranchEndNode::update(double result,
 void BranchEndNode::backprop() {
 	if (this->existing_pre_histories.size() >= MIN_NUM_DATAPOINTS
 			&& this->explore_pre_histories.size() >= MIN_NUM_DATAPOINTS) {
-		if (this->signal_network == NULL) {
-			this->signal_network = new Network(this->existing_pre_histories[0].size() + this->existing_post_histories[0].size(),
-											   NETWORK_SIZE_LARGE);
+		if (this->pre_network == NULL) {
+			this->pre_network = new Network(this->existing_pre_histories[0].size(),
+											NETWORK_SIZE_SMALL);
+			this->post_network = new Network(this->existing_pre_histories[0].size() + this->existing_post_histories[0].size(),
+											 NETWORK_SIZE_LARGE);
 
 			uniform_int_distribution<int> is_existing_distribution(0, 1);
 			uniform_int_distribution<int> existing_distribution(0, this->existing_pre_histories.size()-1);
 			uniform_int_distribution<int> explore_distribution(0, this->explore_pre_histories.size()-1);
+
+			for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
+				if (is_existing_distribution(generator) == 0) {
+					int rand_index = existing_distribution(generator);
+
+					this->pre_network->activate(this->existing_pre_histories[rand_index]);
+
+					double error = this->existing_target_val_histories[rand_index] - this->pre_network->output->acti_vals[0];
+
+					this->pre_network->backprop(error);
+				} else {
+					int rand_index = explore_distribution(generator);
+
+					this->pre_network->activate(this->explore_pre_histories[rand_index]);
+
+					double error = this->explore_target_val_histories[rand_index] - this->pre_network->output->acti_vals[0];
+
+					this->pre_network->backprop(error);
+				}
+			}
+
 			for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
 				if (is_existing_distribution(generator) == 0) {
 					int rand_index = existing_distribution(generator);
@@ -93,28 +116,49 @@ void BranchEndNode::backprop() {
 					vector<double> input = this->existing_pre_histories[rand_index];
 					input.insert(input.end(), this->existing_post_histories[rand_index].begin(), this->existing_post_histories[rand_index].end());
 
-					this->signal_network->activate(input);
+					this->post_network->activate(input);
 
-					double error = this->existing_target_val_histories[rand_index] - this->signal_network->output->acti_vals[0];
+					double error = this->existing_target_val_histories[rand_index] - this->post_network->output->acti_vals[0];
 
-					this->signal_network->backprop(error);
+					this->post_network->backprop(error);
 				} else {
 					int rand_index = explore_distribution(generator);
 
 					vector<double> input = this->explore_pre_histories[rand_index];
 					input.insert(input.end(), this->explore_post_histories[rand_index].begin(), this->explore_post_histories[rand_index].end());
 
-					this->signal_network->activate(input);
+					this->post_network->activate(input);
 
-					double error = this->explore_target_val_histories[rand_index] - this->signal_network->output->acti_vals[0];
+					double error = this->explore_target_val_histories[rand_index] - this->post_network->output->acti_vals[0];
 
-					this->signal_network->backprop(error);
+					this->post_network->backprop(error);
 				}
 			}
 		} else {
 			uniform_int_distribution<int> is_existing_distribution(0, 1);
 			uniform_int_distribution<int> existing_distribution(0, this->existing_pre_histories.size()-1);
 			uniform_int_distribution<int> explore_distribution(0, this->explore_pre_histories.size()-1);
+
+			for (int iter_index = 0; iter_index < UPDATE_ITERS; iter_index++) {
+				if (is_existing_distribution(generator) == 0) {
+					int rand_index = existing_distribution(generator);
+
+					this->pre_network->activate(this->existing_pre_histories[rand_index]);
+
+					double error = this->existing_target_val_histories[rand_index] - this->pre_network->output->acti_vals[0];
+
+					this->pre_network->backprop(error);
+				} else {
+					int rand_index = explore_distribution(generator);
+
+					this->pre_network->activate(this->explore_pre_histories[rand_index]);
+
+					double error = this->explore_target_val_histories[rand_index] - this->pre_network->output->acti_vals[0];
+
+					this->pre_network->backprop(error);
+				}
+			}
+
 			for (int iter_index = 0; iter_index < UPDATE_ITERS; iter_index++) {
 				if (is_existing_distribution(generator) == 0) {
 					int rand_index = existing_distribution(generator);
@@ -122,22 +166,22 @@ void BranchEndNode::backprop() {
 					vector<double> input = this->existing_pre_histories[rand_index];
 					input.insert(input.end(), this->existing_post_histories[rand_index].begin(), this->existing_post_histories[rand_index].end());
 
-					this->signal_network->activate(input);
+					this->post_network->activate(input);
 
-					double error = this->existing_target_val_histories[rand_index] - this->signal_network->output->acti_vals[0];
+					double error = this->existing_target_val_histories[rand_index] - this->post_network->output->acti_vals[0];
 
-					this->signal_network->backprop(error);
+					this->post_network->backprop(error);
 				} else {
 					int rand_index = explore_distribution(generator);
 
 					vector<double> input = this->explore_pre_histories[rand_index];
 					input.insert(input.end(), this->explore_post_histories[rand_index].begin(), this->explore_post_histories[rand_index].end());
 
-					this->signal_network->activate(input);
+					this->post_network->activate(input);
 
-					double error = this->explore_target_val_histories[rand_index] - this->signal_network->output->acti_vals[0];
+					double error = this->explore_target_val_histories[rand_index] - this->post_network->output->acti_vals[0];
 
-					this->signal_network->backprop(error);
+					this->post_network->backprop(error);
 				}
 			}
 		}

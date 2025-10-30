@@ -19,7 +19,7 @@ using namespace std;
 #if defined(MDEBUG) && MDEBUG
 const int TRAIN_NEW_NUM_DATAPOINTS = 20;
 #else
-const int TRAIN_NEW_NUM_DATAPOINTS = 200;
+const int TRAIN_NEW_NUM_DATAPOINTS = 1000;
 #endif /* MDEBUG */
 
 void BranchExperiment::train_new_check_activate(
