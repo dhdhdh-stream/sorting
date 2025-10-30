@@ -3,6 +3,7 @@
 
 #include <string>
 #include <tuple>
+#include <utility>
 #include <vector>
 
 class AbstractExperiment;
@@ -36,6 +37,8 @@ public:
 
 	std::vector<BranchNode*> branch_node_stack;
 	std::vector<std::vector<double>> branch_node_stack_obs;
+	// temp
+	std::vector<std::pair<int, int>> branch_node_location;
 
 	int num_actions;
 

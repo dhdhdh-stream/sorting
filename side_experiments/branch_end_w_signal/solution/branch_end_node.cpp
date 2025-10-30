@@ -46,6 +46,12 @@ void BranchEndNode::save(ofstream& output_file) {
 
 	output_file << this->branch_start_node_id << endl;
 
+	// temp
+	output_file << this->travel_counts.size() << endl;
+	for (int c_index = 0; c_index < (int)this->travel_counts.size(); c_index++) {
+		output_file << this->travel_counts[c_index] << endl;
+	}
+
 	output_file << this->ancestor_ids.size() << endl;
 	for (int a_index = 0; a_index < (int)this->ancestor_ids.size(); a_index++) {
 		output_file << this->ancestor_ids[a_index] << endl;
@@ -75,6 +81,15 @@ void BranchEndNode::load(ifstream& input_file,
 	string branch_start_node_id_line;
 	getline(input_file, branch_start_node_id_line);
 	this->branch_start_node_id = stoi(branch_start_node_id_line);
+
+	string travel_counts_size_line;
+	getline(input_file, travel_counts_size_line);
+	int travel_counts_size = stoi(travel_counts_size_line);
+	for (int c_index = 0; c_index < travel_counts_size; c_index++) {
+		string count_line;
+		getline(input_file, count_line);
+		this->travel_counts.push_back(stoi(count_line));
+	}
 
 	string num_ancestors_line;
 	getline(input_file, num_ancestors_line);
