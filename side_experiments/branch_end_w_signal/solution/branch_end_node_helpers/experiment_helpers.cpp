@@ -70,15 +70,15 @@ void BranchEndNode::experiment_step(vector<double>& obs,
 
 		double signal = this->post_network->output->acti_vals[0] - this->pre_network->output->acti_vals[0];
 
-		// for (int c_index = 0; c_index < (int)wrapper->experiment_callbacks.size(); c_index++) {
-		// 	if (wrapper->experiment_callbacks[c_index].size() > 0
-		// 			&& wrapper->experiment_callbacks[c_index].back() == this->branch_start_node) {
-		// 		wrapper->experiment_history->signal_sum_vals[c_index] += signal;
-		// 		wrapper->experiment_history->signal_sum_counts[c_index]++;
+		for (int c_index = 0; c_index < (int)wrapper->experiment_callbacks.size(); c_index++) {
+			if (wrapper->experiment_callbacks[c_index].size() > 0
+					&& wrapper->experiment_callbacks[c_index].back() == this->branch_start_node) {
+				wrapper->experiment_history->signal_sum_vals[c_index] += signal;
+				wrapper->experiment_history->signal_sum_counts[c_index]++;
 
-		// 		wrapper->experiment_callbacks[c_index].pop_back();
-		// 	}
-		// }
+				wrapper->experiment_callbacks[c_index].pop_back();
+			}
+		}
 		for (int c_index = 0; c_index < (int)wrapper->branch_end_node_callbacks.size(); c_index++) {
 			if (wrapper->branch_end_node_callbacks[c_index].size() > 0
 					&& wrapper->branch_end_node_callbacks[c_index].back() == this->branch_start_node) {

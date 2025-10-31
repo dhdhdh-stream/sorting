@@ -10,7 +10,17 @@
 // - looks pretty consistent?
 //   - examine with evaluating signals, but ignoring in experiments
 
-// - track movement at branches and compare
+// - maybe track whether change on original or branch
+//   - and only train when both reach a certain count
+
+// TODO: can try forcing the usage of lots of signals
+
+// - add dedicated signal train phase
+//   - actually, have dedicated signal training experiment
+
+// - current samples seem pretty meaningless
+//   - perhaps focus on remembering bad explores?
+//   - maybe try 1/3 existing, 1/3 worst, 1/3 best?
 
 #include <chrono>
 #include <iostream>

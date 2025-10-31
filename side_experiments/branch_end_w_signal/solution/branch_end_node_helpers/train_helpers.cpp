@@ -62,16 +62,42 @@ void BranchEndNode::update(double result,
 			this->existing_target_val_histories.push_back(average_val);
 		}
 	} else {
-		if (this->explore_pre_histories.size() >= MAX_NUM_DATAPOINTS) {
-			uniform_int_distribution<int> distribution(0, this->explore_pre_histories.size()-1);
-			int index = distribution(generator);
-			this->explore_pre_histories[index] = history->pre_histories;
-			this->explore_post_histories[index] = history->post_histories;
-			this->explore_target_val_histories[index] = average_val;
-		} else {
-			this->explore_pre_histories.push_back(history->pre_histories);
-			this->explore_post_histories.push_back(history->post_histories);
-			this->explore_target_val_histories.push_back(average_val);
+		bool add_explore = false;
+		switch (wrapper->curr_experiment->type) {
+		case EXPERIMENT_TYPE_BRANCH:
+			{
+				BranchExperiment* branch_experiment = (BranchExperiment*)wrapper->curr_experiment;
+				switch (branch_experiment->state) {
+				case BRANCH_EXPERIMENT_STATE_EXPLORE:
+					add_explore = true;
+					break;
+				}
+			}
+			break;
+		case EXPERIMENT_TYPE_PASS_THROUGH:
+			{
+				PassThroughExperiment* pass_through_experiment = (PassThroughExperiment*)wrapper->curr_experiment;
+				switch (pass_through_experiment->state) {
+				case PASS_THROUGH_EXPERIMENT_STATE_C1:
+				case PASS_THROUGH_EXPERIMENT_STATE_C2:
+					add_explore = true;
+					break;
+				}
+			}
+			break;
+		}
+		if (add_explore) {
+			if (this->explore_pre_histories.size() >= MAX_NUM_DATAPOINTS) {
+				uniform_int_distribution<int> distribution(0, this->explore_pre_histories.size()-1);
+				int index = distribution(generator);
+				this->explore_pre_histories[index] = history->pre_histories;
+				this->explore_post_histories[index] = history->post_histories;
+				this->explore_target_val_histories[index] = average_val;
+			} else {
+				this->explore_pre_histories.push_back(history->pre_histories);
+				this->explore_post_histories.push_back(history->post_histories);
+				this->explore_target_val_histories.push_back(average_val);
+			}
 		}
 	}
 }

@@ -50,7 +50,7 @@ void BranchEndNode::save(ofstream& output_file) {
 	/**
 	 * - randomly save samples for debug
 	 */
-	int existing_num_save = max(20, (int)this->existing_pre_histories.size());
+	int existing_num_save = min(20, (int)this->existing_pre_histories.size());
 	output_file << existing_num_save << endl;
 	vector<int> existing_indexes(this->existing_pre_histories.size());
 	for (int i_index = 0; i_index < (int)this->existing_pre_histories.size(); i_index++) {
@@ -72,7 +72,7 @@ void BranchEndNode::save(ofstream& output_file) {
 
 		existing_indexes.erase(existing_indexes.begin() + index);
 	}
-	int explore_num_save = max(20, (int)this->explore_pre_histories.size());
+	int explore_num_save = min(20, (int)this->explore_pre_histories.size());
 	output_file << explore_num_save << endl;
 	vector<int> explore_indexes(this->explore_pre_histories.size());
 	for (int i_index = 0; i_index < (int)this->explore_pre_histories.size(); i_index++) {
@@ -125,7 +125,6 @@ void BranchEndNode::load(ifstream& input_file,
 	getline(input_file, branch_start_node_id_line);
 	this->branch_start_node_id = stoi(branch_start_node_id_line);
 
-	// temp
 	cout << "this->parent->id: " << this->parent->id << endl;
 	cout << "this->id: " << this->id << endl;
 
@@ -139,6 +138,7 @@ void BranchEndNode::load(ifstream& input_file,
 			getline(input_file, obs_line);
 			pre_obs.push_back(stod(obs_line));
 		}
+		this->existing_pre_histories.push_back(pre_obs);
 
 		vector<double> post_obs;
 		for (int i_index = 0; i_index < 25; i_index++) {
@@ -146,10 +146,12 @@ void BranchEndNode::load(ifstream& input_file,
 			getline(input_file, obs_line);
 			post_obs.push_back(stod(obs_line));
 		}
+		this->existing_post_histories.push_back(post_obs);
 
 		string target_val_line;
 		getline(input_file, target_val_line);
 		double target_val = stod(target_val_line);
+		this->existing_target_val_histories.push_back(target_val);
 
 		cout << "existing " << s_index << endl;
 		cout << "pre_obs:" << endl;
@@ -180,6 +182,7 @@ void BranchEndNode::load(ifstream& input_file,
 			getline(input_file, obs_line);
 			pre_obs.push_back(stod(obs_line));
 		}
+		this->explore_pre_histories.push_back(pre_obs);
 
 		vector<double> post_obs;
 		for (int i_index = 0; i_index < 25; i_index++) {
@@ -187,10 +190,12 @@ void BranchEndNode::load(ifstream& input_file,
 			getline(input_file, obs_line);
 			post_obs.push_back(stod(obs_line));
 		}
+		this->explore_post_histories.push_back(post_obs);
 
 		string target_val_line;
 		getline(input_file, target_val_line);
 		double target_val = stod(target_val_line);
+		this->explore_target_val_histories.push_back(target_val);
 
 		cout << "explore " << s_index << endl;
 		cout << "pre_obs:" << endl;
