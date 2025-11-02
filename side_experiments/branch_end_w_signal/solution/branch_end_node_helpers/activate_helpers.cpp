@@ -17,39 +17,5 @@ void BranchEndNode::step(vector<double>& obs,
 	BranchEndNodeHistory* history = new BranchEndNodeHistory(this);
 	scope_history->node_histories[this->id] = history;
 
-	/**
-	 * - debug
-	 */
-	if (this->pre_network != NULL) {
-		cout << "this->parent->id: " << this->parent->id << endl;
-		cout << "this->id: " << this->id << endl;
-		cout << "pre_obs:" << endl;
-		for (int i_index = 0; i_index < 5; i_index++) {
-			for (int j_index = 0; j_index < 5; j_index++) {
-				cout << wrapper->branch_node_stack_obs.back()[5 * i_index + j_index] << " ";
-			}
-			cout << endl;
-		}
-		cout << "post_obs:" << endl;
-		for (int i_index = 0; i_index < 5; i_index++) {
-			for (int j_index = 0; j_index < 5; j_index++) {
-				cout << obs[5 * i_index + j_index] << " ";
-			}
-			cout << endl;
-		}
-
-		this->pre_network->activate(wrapper->branch_node_stack_obs.back());
-		cout << "this->pre_network->output->acti_vals[0]: " << this->pre_network->output->acti_vals[0] << endl;
-
-		vector<double> input = wrapper->branch_node_stack_obs.back();
-		input.insert(input.end(), obs.begin(), obs.end());
-		this->post_network->activate(input);
-		cout << "this->post_network->output->acti_vals[0]: " << this->post_network->output->acti_vals[0] << endl;
-
-		cout << endl;
-	}
-	wrapper->branch_node_stack.pop_back();
-	wrapper->branch_node_stack_obs.pop_back();
-
 	wrapper->node_context.back() = this->next_node;
 }

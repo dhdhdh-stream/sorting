@@ -30,13 +30,12 @@ BranchExperiment::BranchExperiment(Scope* scope_context,
 	this->best_new_scope = NULL;
 
 	this->existing_network = NULL;
-	this->new_network = NULL;
+	this->new_consistency_network = NULL;
+	this->new_val_network = NULL;
 
 	this->node_context->experiment = this;
 
 	this->sum_instances = 0;
-	// temp
-	this->sum_depth = 0;
 
 	this->sum_scores = 0.0;
 
@@ -59,8 +58,12 @@ BranchExperiment::~BranchExperiment() {
 		delete this->existing_network;
 	}
 
-	if (this->new_network != NULL) {
-		delete this->new_network;
+	if (this->new_consistency_network != NULL) {
+		delete this->new_consistency_network;
+	}
+
+	if (this->new_val_network != NULL) {
+		delete this->new_val_network;
 	}
 
 	#if defined(MDEBUG) && MDEBUG

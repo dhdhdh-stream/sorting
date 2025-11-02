@@ -32,7 +32,21 @@ void BranchExperiment::measure_step(vector<double>& obs,
 	BranchExperimentState* experiment_state = (BranchExperimentState*)wrapper->experiment_context.back();
 
 	if (experiment_state->step_index == 0) {
-		this->new_network->activate(obs);
+		bool is_consistent;
+		if (this->new_consistency_network == NULL) {
+			is_consistent = true;
+		} else {
+			this->new_consistency_network->activate(obs);
+			if (this->new_consistency_network->output->acti_vals[0] >= CONSISTENCY_MATCH_WEIGHT) {
+				is_consistent = true;
+			} else {
+				is_consistent = false;
+			}
+		}
+
+		if (is_consistent) {
+			this->new_val_network->activate(obs);
+		}
 
 		bool decision_is_branch;
 		#if defined(MDEBUG) && MDEBUG
@@ -43,7 +57,7 @@ void BranchExperiment::measure_step(vector<double>& obs,
 		}
 		wrapper->curr_run_seed = xorshift(wrapper->curr_run_seed);
 		#else
-		if (this->new_network->output->acti_vals[0] >= 0.0) {
+		if (is_consistent && this->new_val_network->output->acti_vals[0] >= 0.0) {
 			decision_is_branch = true;
 		} else {
 			decision_is_branch = false;

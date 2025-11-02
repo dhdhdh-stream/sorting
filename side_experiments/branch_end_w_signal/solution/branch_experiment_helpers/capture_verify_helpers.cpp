@@ -36,9 +36,9 @@ void BranchExperiment::capture_verify_step(vector<double>& obs,
 	BranchExperimentState* experiment_state = (BranchExperimentState*)wrapper->experiment_context.back();
 
 	if (experiment_state->step_index == 0) {
-		this->new_network->activate(obs);
+		this->new_val_network->activate(obs);
 
-		this->verify_scores.push_back(this->new_network->output->acti_vals[0]);
+		this->verify_scores.push_back(this->new_val_network->output->acti_vals[0]);
 
 		cout << "wrapper->starting_run_seed: " << wrapper->starting_run_seed << endl;
 		cout << "wrapper->curr_run_seed: " << wrapper->curr_run_seed << endl;

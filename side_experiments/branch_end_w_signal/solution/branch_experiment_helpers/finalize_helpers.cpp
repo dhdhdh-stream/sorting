@@ -384,8 +384,10 @@ void BranchExperiment::add(SolutionWrapper* wrapper) {
 	}
 	new_branch_node->ancestor_ids.push_back(this->node_context->id);
 
-	new_branch_node->network = this->new_network;
-	this->new_network = NULL;
+	new_branch_node->consistency_network = this->new_consistency_network;
+	this->new_consistency_network = NULL;
+	new_branch_node->val_network = this->new_val_network;
+	this->new_val_network = NULL;
 
 	#if defined(MDEBUG) && MDEBUG
 	if (this->verify_problems.size() > 0) {

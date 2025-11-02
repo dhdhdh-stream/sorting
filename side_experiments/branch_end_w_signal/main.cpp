@@ -1,26 +1,4 @@
-// - perhaps have to chase after signal always?
-//   - allows signals to converge?
-//     - which allows actual improvements begin to matter?
-//   - otherwise, signals constantly triggering over something that isn't being pursued?
-//     - and becomes a negative?
-
-// - maybe need more explore samples?
-//   - more difficult to find sample that does well on all signals in addition to true?
-
-// - looks pretty consistent?
-//   - examine with evaluating signals, but ignoring in experiments
-
-// - maybe track whether change on original or branch
-//   - and only train when both reach a certain count
-
-// TODO: can try forcing the usage of lots of signals
-
-// - add dedicated signal train phase
-//   - actually, have dedicated signal training experiment
-
-// - current samples seem pretty meaningless
-//   - perhaps focus on remembering bad explores?
-//   - maybe try 1/3 existing, 1/3 worst, 1/3 best?
+// - potentially don't worry about child scopes during explore for now
 
 #include <chrono>
 #include <iostream>

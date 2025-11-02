@@ -2,7 +2,9 @@
 
 #include <iostream>
 
+#include "constants.h"
 #include "globals.h"
+#include "network.h"
 #include "problem.h"
 #include "scope.h"
 #include "solution.h"
@@ -23,9 +25,55 @@ void ScopeNode::step(vector<double>& obs,
 	history->scope_history = inner_scope_history;
 	wrapper->scope_histories.push_back(inner_scope_history);
 	wrapper->node_context.push_back(this->scope->nodes[0]);
+
+	inner_scope_history->pre_obs = wrapper->problem->get_observations();
 }
 
 void ScopeNode::exit_step(SolutionWrapper* wrapper) {
+	wrapper->scope_histories.back()->post_obs = wrapper->problem->get_observations();
+
+	/**
+	 * - debug
+	 */
+	if (this->scope->pre_network != NULL) {
+		cout << "this->parent->id: " << this->parent->id << endl;
+		cout << "this->id: " << this->id << endl;
+		cout << "pre_obs:" << endl;
+		for (int i_index = 0; i_index < 5; i_index++) {
+			for (int j_index = 0; j_index < 5; j_index++) {
+				cout << wrapper->scope_histories.back()->pre_obs[5 * i_index + j_index] << " ";
+			}
+			cout << endl;
+		}
+		cout << "post_obs:" << endl;
+		for (int i_index = 0; i_index < 5; i_index++) {
+			for (int j_index = 0; j_index < 5; j_index++) {
+				cout << wrapper->scope_histories.back()->post_obs[5 * i_index + j_index] << " ";
+			}
+			cout << endl;
+		}
+
+		vector<double> input = wrapper->scope_histories.back()->pre_obs;
+		input.insert(input.end(), wrapper->scope_histories.back()->post_obs.begin(),
+			wrapper->scope_histories.back()->post_obs.end());
+
+		if (this->scope->consistency_network != NULL) {
+			this->scope->consistency_network->activate(input);
+			cout << "this->scope->consistency_network->output->acti_vals[0]: " << this->scope->consistency_network->output->acti_vals[0] << endl;
+		}
+
+		if (this->scope->consistency_network == NULL
+				|| this->scope->consistency_network->output->acti_vals[0] >= CONSISTENCY_MATCH_WEIGHT) {
+			this->scope->pre_network->activate(wrapper->scope_histories.back()->pre_obs);
+			cout << "this->scope->pre_network->output->acti_vals[0]: " << this->scope->pre_network->output->acti_vals[0] << endl;
+
+			this->scope->post_network->activate(input);
+			cout << "this->scope->post_network->output->acti_vals[0]: " << this->scope->post_network->output->acti_vals[0] << endl;
+		}
+
+		cout << endl;
+	}
+
 	wrapper->scope_histories.pop_back();
 	wrapper->node_context.pop_back();
 

@@ -294,7 +294,12 @@ Scope* create_new_scope(Scope* scope_context) {
 						BranchNode* original_branch_node = (BranchNode*)node_it->first;
 						BranchNode* new_branch_node = (BranchNode*)node_mappings[original_branch_node];
 
-						new_branch_node->network = new Network(original_branch_node->network);
+						if (original_branch_node->consistency_network == NULL) {
+							new_branch_node->consistency_network = NULL;
+						} else {
+							new_branch_node->consistency_network = new Network(original_branch_node->consistency_network);
+						}
+						new_branch_node->val_network = new Network(original_branch_node->val_network);
 
 						map<AbstractNode*, AbstractNode*>::iterator original_it = node_mappings
 							.find(original_branch_node->original_next_node);
@@ -325,24 +330,9 @@ Scope* create_new_scope(Scope* scope_context) {
 						BranchEndNode* original_branch_end_node = (BranchEndNode*)node_it->first;
 						BranchEndNode* new_branch_end_node = (BranchEndNode*)node_mappings[original_branch_end_node];
 
-						if (original_branch_end_node->pre_network == NULL) {
-							new_branch_end_node->pre_network = NULL;
-						} else {
-							new_branch_end_node->pre_network = new Network(original_branch_end_node->pre_network);
-						}
-						if (original_branch_end_node->post_network == NULL) {
-							new_branch_end_node->post_network = NULL;
-						} else {
-							new_branch_end_node->post_network = new Network(original_branch_end_node->post_network);
-						}
-
 						BranchNode* branch_start_node = (BranchNode*)node_mappings[original_branch_end_node->branch_start_node];
 						new_branch_end_node->branch_start_node_id = branch_start_node->id;
 						new_branch_end_node->branch_start_node = branch_start_node;
-
-						/**
-						 * - simply don't copy histories
-						 */
 
 						map<AbstractNode*, AbstractNode*>::iterator it = node_mappings
 							.find(original_branch_end_node->next_node);

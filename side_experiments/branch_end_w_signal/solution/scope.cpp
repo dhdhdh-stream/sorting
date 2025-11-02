@@ -2,11 +2,13 @@
 
 #include <algorithm>
 #include <iostream>
+#include <sstream>
 
 #include "action_node.h"
 #include "branch_end_node.h"
 #include "branch_node.h"
 #include "globals.h"
+#include "network.h"
 #include "scope_node.h"
 #include "solution.h"
 #include "start_node.h"
@@ -14,13 +16,27 @@
 using namespace std;
 
 Scope::Scope() {
-	// do nothing
+	this->consistency_network = NULL;
+	this->pre_network = NULL;
+	this->post_network = NULL;
 }
 
 Scope::~Scope() {
 	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
 			it != this->nodes.end(); it++) {
 		delete it->second;
+	}
+
+	if (this->consistency_network != NULL) {
+		delete this->consistency_network;
+	}
+
+	if (this->pre_network != NULL) {
+		delete this->pre_network;
+	}
+
+	if (this->post_network != NULL) {
+		delete this->post_network;
 	}
 }
 
@@ -208,6 +224,52 @@ void Scope::save(ofstream& output_file) {
 	for (int c_index = 0; c_index < (int)this->child_scopes.size(); c_index++) {
 		output_file << this->child_scopes[c_index]->id << endl;
 	}
+
+	output_file << (this->consistency_network == NULL) << endl;
+	if (this->consistency_network != NULL) {
+		this->consistency_network->save(output_file);
+	}
+
+	output_file << (this->pre_network == NULL) << endl;
+	if (this->pre_network != NULL) {
+		this->pre_network->save(output_file);
+	}
+
+	output_file << (this->post_network == NULL) << endl;
+	if (this->post_network != NULL) {
+		this->post_network->save(output_file);
+	}
+
+	output_file << this->existing_pre_obs.size() << endl;
+	for (int t_index = 0; t_index < (int)this->existing_pre_obs.size(); t_index++) {
+		output_file << this->existing_pre_obs[t_index].size() << endl;
+		for (int h_index = 0; h_index < (int)this->existing_pre_obs[t_index].size(); h_index++) {
+			for (int i_index = 0; i_index < 25; i_index++) {
+				output_file << this->existing_pre_obs[t_index][h_index][i_index] << ",";
+			}
+			output_file << endl;
+
+			for (int i_index = 0; i_index < 25; i_index++) {
+				output_file << this->existing_post_obs[t_index][h_index][i_index] << ",";
+			}
+			output_file << endl;
+
+			output_file << this->existing_target_vals[t_index][h_index] << endl;
+		}
+
+		output_file << this->explore_pre_obs[t_index].size() << endl;
+		for (int h_index = 0; h_index < (int)this->explore_pre_obs[t_index].size(); h_index++) {
+			for (int i_index = 0; i_index < 25; i_index++) {
+				output_file << this->explore_pre_obs[t_index][h_index][i_index] << ",";
+			}
+			output_file << endl;
+
+			for (int i_index = 0; i_index < 25; i_index++) {
+				output_file << this->explore_post_obs[t_index][h_index][i_index] << ",";
+			}
+			output_file << endl;
+		}
+	}
 }
 
 void Scope::load(ifstream& input_file,
@@ -286,6 +348,115 @@ void Scope::load(ifstream& input_file,
 		string scope_id_line;
 		getline(input_file, scope_id_line);
 		this->child_scopes.push_back(parent_solution->scopes[stoi(scope_id_line)]);
+	}
+
+	string consistency_network_is_null_line;
+	getline(input_file, consistency_network_is_null_line);
+	bool consistency_network_is_null = stoi(consistency_network_is_null_line);
+	if (consistency_network_is_null) {
+		this->consistency_network = NULL;
+	} else {
+		this->consistency_network = new Network(input_file);
+	}
+
+	string pre_network_is_null_line;
+	getline(input_file, pre_network_is_null_line);
+	bool pre_network_is_null = stoi(pre_network_is_null_line);
+	if (pre_network_is_null) {
+		this->pre_network = NULL;
+	} else {
+		this->pre_network = new Network(input_file);
+	}
+
+	string post_network_is_null_line;
+	getline(input_file, post_network_is_null_line);
+	bool post_network_is_null = stoi(post_network_is_null_line);
+	if (post_network_is_null) {
+		this->post_network = NULL;
+	} else {
+		this->post_network = new Network(input_file);
+	}
+
+	string num_timestamps_line;
+	getline(input_file, num_timestamps_line);
+	int num_timestamps = stoi(num_timestamps_line);
+	for (int t_index = 0; t_index < num_timestamps; t_index++) {
+		this->existing_pre_obs.push_back(vector<vector<double>>());
+		this->existing_post_obs.push_back(vector<vector<double>>());
+		this->existing_target_vals.push_back(vector<double>());
+
+		this->explore_pre_obs.push_back(vector<vector<double>>());
+		this->explore_post_obs.push_back(vector<vector<double>>());
+
+		string num_existing_line;
+		getline(input_file, num_existing_line);
+		int num_existing = stoi(num_existing_line);
+		for (int h_index = 0; h_index < num_existing; h_index++) {
+			{
+				string line;
+				getline(input_file, line);
+				stringstream stream;
+				stream.str(line);
+				vector<double> obs;
+				for (int i_index = 0; i_index < 25; i_index++) {
+					string item;
+					getline(stream, item, ',');
+					obs.push_back(stod(item));
+				}
+				this->existing_pre_obs[t_index].push_back(obs);
+			}
+
+			{
+				string line;
+				getline(input_file, line);
+				stringstream stream;
+				stream.str(line);
+				vector<double> obs;
+				for (int i_index = 0; i_index < 25; i_index++) {
+					string item;
+					getline(stream, item, ',');
+					obs.push_back(stod(item));
+				}
+				this->existing_post_obs[t_index].push_back(obs);
+			}
+
+			string target_val_line;
+			getline(input_file, target_val_line);
+			this->existing_target_vals[t_index].push_back(stod(target_val_line));
+		}
+
+		string num_explore_line;
+		getline(input_file, num_explore_line);
+		int num_explore = stoi(num_explore_line);
+		for (int h_index = 0; h_index < num_explore; h_index++) {
+			{
+				string line;
+				getline(input_file, line);
+				stringstream stream;
+				stream.str(line);
+				vector<double> obs;
+				for (int i_index = 0; i_index < 25; i_index++) {
+					string item;
+					getline(stream, item, ',');
+					obs.push_back(stod(item));
+				}
+				this->explore_pre_obs[t_index].push_back(obs);
+			}
+
+			{
+				string line;
+				getline(input_file, line);
+				stringstream stream;
+				stream.str(line);
+				vector<double> obs;
+				for (int i_index = 0; i_index < 25; i_index++) {
+					string item;
+					getline(stream, item, ',');
+					obs.push_back(stod(item));
+				}
+				this->explore_post_obs[t_index].push_back(obs);
+			}
+		}
 	}
 }
 

@@ -26,6 +26,9 @@ void recursive_add_child(Scope* curr_parent,
 						 SolutionWrapper* wrapper,
 						 Scope* new_scope);
 
+void add_existing_samples(ScopeHistory* scope_history,
+						  double target_val);
+
 void clean_scope(Scope* scope,
 				 SolutionWrapper* wrapper);
 

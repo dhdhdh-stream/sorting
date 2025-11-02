@@ -5,6 +5,7 @@
 #include "branch_node.h"
 #include "constants.h"
 #include "globals.h"
+#include "network.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
@@ -22,27 +23,55 @@ const int MEASURE_EXISTING_NUM_DATAPOINTS = 1000;
 
 void PassThroughExperiment::measure_existing_check_activate(
 		SolutionWrapper* wrapper) {
-	wrapper->experiment_history->signal_sum_vals.push_back(0.0);
-	wrapper->experiment_history->signal_sum_counts.push_back(0);
-
-	wrapper->experiment_callbacks.push_back(wrapper->branch_node_stack);
+	wrapper->experiment_history->stack_traces.push_back(wrapper->scope_histories);
 }
 
 void PassThroughExperiment::measure_existing_backprop(
 		double target_val,
 		SolutionWrapper* wrapper) {
+	add_existing_samples(wrapper->scope_histories[0],
+						 target_val);
+
 	PassThroughExperimentHistory* history = (PassThroughExperimentHistory*)wrapper->experiment_history;
 	if (history->is_hit) {
 		double curr_sum_signals = 0.0;
-		for (int s_index = 0; s_index < (int)history->signal_sum_vals.size(); s_index++) {
-			history->signal_sum_vals[s_index] += (target_val - wrapper->solution->curr_score);
-			history->signal_sum_counts[s_index]++;
+		for (int s_index = 0; s_index < (int)history->stack_traces.size(); s_index++) {
+			double sum_vals = target_val - wrapper->solution->curr_score;
+			int sum_counts = 1;
 
-			double average_val = history->signal_sum_vals[s_index] / history->signal_sum_counts[s_index];
+			for (int l_index = 0; l_index < (int)history->stack_traces[s_index].size(); l_index++) {
+				ScopeHistory* scope_history = history->stack_traces[s_index][l_index];
+				Scope* scope = scope_history->scope;
+				if (scope->consistency_network != NULL) {
+					if (!scope_history->signal_initialized) {
+						vector<double> inputs = scope_history->pre_obs;
+						inputs.insert(inputs.end(), scope_history->post_obs.begin(), scope_history->post_obs.end());
+
+						scope->consistency_network->activate(inputs);
+						scope_history->signal_initialized = true;
+						#if defined(MDEBUG) && MDEBUG
+						scope_history->consistency_val = 2 * (rand()%2) - 1;
+						#else
+						scope_history->consistency_val = scope->consistency_network->output->acti_vals[0];
+						#endif /* MDEBUG */
+
+						scope->pre_network->activate(scope_history->pre_obs);
+						scope_history->pre_val = scope->pre_network->output->acti_vals[0];
+
+						scope->post_network->activate(inputs);
+						scope_history->post_val = scope->post_network->output->acti_vals[0];
+					}
+
+					sum_vals += (scope_history->post_val - scope_history->pre_val);
+					sum_counts++;
+				}
+			}
+
+			double average_val = sum_vals / sum_counts;
 
 			curr_sum_signals += average_val;
 		}
-		this->sum_signals += curr_sum_signals / (double)history->signal_sum_vals.size();
+		this->sum_signals += curr_sum_signals / (double)history->stack_traces.size();
 
 		this->sum_scores += target_val;
 

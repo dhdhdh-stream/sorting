@@ -35,19 +35,9 @@ public:
 	std::vector<AbstractNode*> node_context;
 	std::vector<AbstractExperimentState*> experiment_context;
 
-	std::vector<BranchNode*> branch_node_stack;
-	std::vector<std::vector<double>> branch_node_stack_obs;
-
 	int num_actions;
 
 	AbstractExperimentHistory* experiment_history;
-
-	std::vector<std::vector<BranchNode*>> experiment_callbacks;
-	/**
-	 * - when callback hit, also add to BranchEndNode histories
-	 */
-	std::vector<std::vector<BranchNode*>> branch_end_node_callbacks;
-	std::vector<BranchEndNodeHistory*> branch_end_node_callback_histories;
 
 	Problem* problem;
 

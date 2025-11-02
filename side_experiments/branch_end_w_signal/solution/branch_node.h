@@ -15,7 +15,12 @@ class SolutionWrapper;
 class BranchNodeHistory;
 class BranchNode : public AbstractNode {
 public:
-	Network* network;
+	/**
+	 * - non-NULL if need to check
+	 */
+	Network* consistency_network;
+
+	Network* val_network;
 
 	int original_next_node_id;
 	AbstractNode* original_next_node;

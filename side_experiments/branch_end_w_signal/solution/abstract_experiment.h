@@ -58,8 +58,7 @@ public:
 
 	bool is_hit;
 
-	std::vector<double> signal_sum_vals;
-	std::vector<int> signal_sum_counts;
+	std::vector<std::vector<ScopeHistory*>> stack_traces;
 
 	virtual ~AbstractExperimentHistory() {};
 };

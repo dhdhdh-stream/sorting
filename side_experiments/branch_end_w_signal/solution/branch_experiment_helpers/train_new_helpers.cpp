@@ -22,6 +22,8 @@ const int TRAIN_NEW_NUM_DATAPOINTS = 20;
 const int TRAIN_NEW_NUM_DATAPOINTS = 1000;
 #endif /* MDEBUG */
 
+const double MIN_CONSISTENCY_RATIO = 0.2;
+
 void BranchExperiment::train_new_check_activate(
 		SolutionWrapper* wrapper) {
 	this->num_instances_until_target--;
@@ -49,10 +51,7 @@ void BranchExperiment::train_new_step(vector<double>& obs,
 
 		this->obs_histories.push_back(obs);
 
-		history->signal_sum_vals.push_back(0.0);
-		history->signal_sum_counts.push_back(0);
-
-		wrapper->experiment_callbacks.push_back(wrapper->branch_node_stack);
+		history->stack_traces.push_back(wrapper->scope_histories);
 	}
 
 	if (experiment_state->step_index >= (int)this->best_step_types.size()) {
@@ -93,47 +92,154 @@ void BranchExperiment::train_new_backprop(
 		SolutionWrapper* wrapper) {
 	BranchExperimentHistory* history = (BranchExperimentHistory*)wrapper->experiment_history;
 	if (history->is_hit) {
-		for (int s_index = 0; s_index < (int)history->signal_sum_vals.size(); s_index++) {
-			history->signal_sum_vals[s_index] += (target_val - wrapper->solution->curr_score);
-			history->signal_sum_counts[s_index]++;
+		map<Scope*, pair<int,ScopeHistory*>> to_add;
+		for (int s_index = 0; s_index < (int)history->stack_traces.size(); s_index++) {
+			bool is_consistent = true;
+			double sum_vals = target_val - wrapper->solution->curr_score;
+			int sum_counts = 1;
 
-			double average_val = history->signal_sum_vals[s_index] / history->signal_sum_counts[s_index];
+			for (int l_index = 0; l_index < (int)history->stack_traces[s_index].size(); l_index++) {
+				ScopeHistory* scope_history = history->stack_traces[s_index][l_index];
+				Scope* scope = scope_history->scope;
 
+				if (scope->pre_network != NULL) {
+					if (!scope_history->signal_initialized) {
+						vector<double> inputs = scope_history->pre_obs;
+						inputs.insert(inputs.end(), scope_history->post_obs.begin(), scope_history->post_obs.end());
+
+						if (scope->consistency_network != NULL) {
+							scope->consistency_network->activate(inputs);
+							scope_history->signal_initialized = true;
+							#if defined(MDEBUG) && MDEBUG
+							scope_history->consistency_val = 2 * (rand()%2) - 1;
+							#else
+							scope_history->consistency_val = scope->consistency_network->output->acti_vals[0];
+							#endif /* MDEBUG */
+						}
+
+						if (scope->consistency_network == NULL
+								|| scope_history->consistency_val >= CONSISTENCY_MATCH_WEIGHT) {
+							scope->pre_network->activate(scope_history->pre_obs);
+							scope_history->pre_val = scope->pre_network->output->acti_vals[0];
+
+							scope->post_network->activate(inputs);
+							scope_history->post_val = scope->post_network->output->acti_vals[0];
+						}
+					}
+
+					if (scope->consistency_network != NULL
+							&& scope_history->consistency_val < CONSISTENCY_MATCH_WEIGHT) {
+						is_consistent = false;
+						break;
+					} else {
+						sum_vals += (scope_history->post_val - scope_history->pre_val);
+						sum_counts++;
+					}
+				}
+
+				map<Scope*, pair<int,ScopeHistory*>>::iterator it = to_add.find(scope);
+				if (it == to_add.end()) {
+					to_add[scope] = {1, scope_history};
+				} else {
+					uniform_int_distribution<int> add_distribution(0, it->second.first);
+					if (add_distribution(generator) == 0) {
+						it->second.second = scope_history;
+					}
+					it->second.first++;
+				}
+			}
+
+			double average_val = sum_vals / sum_counts;
+
+			this->consistency_histories.push_back(is_consistent);
 			this->target_val_histories.push_back(average_val - history->existing_predicted_scores[s_index]);
+		}
+
+		for (map<Scope*, pair<int,ScopeHistory*>>::iterator it = to_add.begin();
+				it != to_add.end(); it++) {
+			Scope* scope = it->first;
+			ScopeHistory* scope_history = it->second.second;
+			scope->explore_pre_obs.back().push_back(scope_history->pre_obs);
+			scope->explore_post_obs.back().push_back(scope_history->post_obs);
 		}
 
 		this->state_iter++;
 		if (this->state_iter >= TRAIN_NEW_NUM_DATAPOINTS
 				&& (int)this->target_val_histories.size() >= TRAIN_NEW_NUM_DATAPOINTS) {
-			this->new_network = new Network(this->obs_histories[0].size(),
-											NETWORK_SIZE_SMALL);
-			uniform_int_distribution<int> input_distribution(0, this->obs_histories.size()-1);
-			for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
-				int rand_index = input_distribution(generator);
-
-				this->new_network->activate(this->obs_histories[rand_index]);
-
-				double error = this->target_val_histories[rand_index] - this->new_network->output->acti_vals[0];
-
-				this->new_network->backprop(error);
+			int num_consistent = 0;
+			for (int h_index = 0; h_index < (int)this->consistency_histories.size(); h_index++) {
+				if (this->consistency_histories[h_index]) {
+					num_consistent++;
+				}
 			}
 
-			vector<double> network_outputs(this->obs_histories.size());
-			for (int h_index = 0; h_index < (int)this->obs_histories.size(); h_index++) {
-				this->new_network->activate(this->obs_histories[h_index]);
+			if (num_consistent < MIN_CONSISTENCY_RATIO * (double)this->consistency_histories.size()) {
+				this->result = EXPERIMENT_RESULT_FAIL;
+				return;
+			}
 
-				network_outputs[h_index] = new_network->output->acti_vals[0];
+			if (num_consistent != (int)this->consistency_histories.size()) {
+				this->new_consistency_network = new Network(this->obs_histories[0].size(),
+															NETWORK_SIZE_SMALL);
+				uniform_int_distribution<int> consistency_input_distribution(0, this->obs_histories.size()-1);
+				for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
+					int rand_index = consistency_input_distribution(generator);
+
+					this->new_consistency_network->activate(this->obs_histories[rand_index]);
+
+					double error;
+					if (this->consistency_histories[rand_index]) {
+						if (this->new_consistency_network->output->acti_vals[0] >= 1.0) {
+							error = 0.0;
+						} else {
+							error = 1.0 - this->new_consistency_network->output->acti_vals[0];
+						}
+					} else {
+						if (this->new_consistency_network->output->acti_vals[0] <= -1.0) {
+							error = 0.0;
+						} else {
+							error = -1.0 - this->new_consistency_network->output->acti_vals[0];
+						}
+					}
+
+					this->new_consistency_network->backprop(error);
+				}
+			}
+
+			this->new_val_network = new Network(this->obs_histories[0].size(),
+												NETWORK_SIZE_SMALL);
+			vector<vector<double>> consistent_obs_histories;
+			vector<double> consistent_target_val_histories;
+			for (int h_index = 0; h_index < (int)this->obs_histories.size(); h_index++) {
+				if (this->consistency_histories[h_index]) {
+					consistent_obs_histories.push_back(this->obs_histories[h_index]);
+					consistent_target_val_histories.push_back(this->target_val_histories[h_index]);
+				}
+			}
+			uniform_int_distribution<int> val_input_distribution(0, consistent_obs_histories.size()-1);
+			for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
+				int rand_index = val_input_distribution(generator);
+
+				this->new_val_network->activate(consistent_obs_histories[rand_index]);
+
+				double error = consistent_target_val_histories[rand_index] - this->new_val_network->output->acti_vals[0];
+
+				this->new_val_network->backprop(error);
+			}
+
+			vector<double> network_outputs(consistent_obs_histories.size());
+			for (int h_index = 0; h_index < (int)consistent_obs_histories.size(); h_index++) {
+				this->new_val_network->activate(consistent_obs_histories[h_index]);
+
+				network_outputs[h_index] = this->new_val_network->output->acti_vals[0];
 			}
 
 			int num_positive = 0;
-			for (int i_index = 0; i_index < (int)this->obs_histories.size(); i_index++) {
+			for (int i_index = 0; i_index < (int)consistent_obs_histories.size(); i_index++) {
 				if (network_outputs[i_index] >= 0.0) {
 					num_positive++;
 				}
 			}
-
-			this->obs_histories.clear();
-			this->target_val_histories.clear();
 
 			#if defined(MDEBUG) && MDEBUG
 			if (num_positive > 0 || rand()%4 != 0) {

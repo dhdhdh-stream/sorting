@@ -5,7 +5,9 @@
 #include "constants.h"
 #include "globals.h"
 #include "network.h"
+#include "scope.h"
 #include "solution.h"
+#include "solution_helpers.h"
 #include "solution_wrapper.h"
 
 using namespace std;
@@ -34,10 +36,7 @@ void BranchExperiment::train_existing_step(vector<double>& obs,
 
 	this->obs_histories.push_back(obs);
 
-	history->signal_sum_vals.push_back(0.0);
-	history->signal_sum_counts.push_back(0);
-
-	wrapper->experiment_callbacks.push_back(wrapper->branch_node_stack);
+	history->stack_traces.push_back(wrapper->scope_histories);
 
 	delete experiment_state;
 	wrapper->experiment_context.back() = NULL;
@@ -46,18 +45,46 @@ void BranchExperiment::train_existing_step(vector<double>& obs,
 void BranchExperiment::train_existing_backprop(
 		double target_val,
 		SolutionWrapper* wrapper) {
+	add_existing_samples(wrapper->scope_histories[0],
+						 target_val);
+
 	BranchExperimentHistory* history = (BranchExperimentHistory*)wrapper->experiment_history;
 	if (history->is_hit) {
-		for (int s_index = 0; s_index < (int)history->signal_sum_vals.size(); s_index++) {
-			history->signal_sum_vals[s_index] += (target_val - wrapper->solution->curr_score);
-			history->signal_sum_counts[s_index]++;
+		for (int s_index = 0; s_index < (int)history->stack_traces.size(); s_index++) {
+			double sum_vals = target_val - wrapper->solution->curr_score;
+			int sum_counts = 1;
 
-			double average_val = history->signal_sum_vals[s_index] / history->signal_sum_counts[s_index];
+			for (int l_index = 0; l_index < (int)history->stack_traces[s_index].size(); l_index++) {
+				ScopeHistory* scope_history = history->stack_traces[s_index][l_index];
+				Scope* scope = scope_history->scope;
+				if (scope->consistency_network != NULL) {
+					if (!scope_history->signal_initialized) {
+						vector<double> inputs = scope_history->pre_obs;
+						inputs.insert(inputs.end(), scope_history->post_obs.begin(), scope_history->post_obs.end());
+
+						scope->consistency_network->activate(inputs);
+						scope_history->signal_initialized = true;
+						#if defined(MDEBUG) && MDEBUG
+						scope_history->consistency_val = 2 * (rand()%2) - 1;
+						#else
+						scope_history->consistency_val = scope->consistency_network->output->acti_vals[0];
+						#endif /* MDEBUG */
+
+						scope->pre_network->activate(scope_history->pre_obs);
+						scope_history->pre_val = scope->pre_network->output->acti_vals[0];
+
+						scope->post_network->activate(inputs);
+						scope_history->post_val = scope->post_network->output->acti_vals[0];
+					}
+
+					sum_vals += (scope_history->post_val - scope_history->pre_val);
+					sum_counts++;
+				}
+			}
+
+			double average_val = sum_vals / sum_counts;
 
 			this->target_val_histories.push_back(average_val);
-
-			// temp
-			this->sum_depth += history->signal_sum_counts[s_index];
 		}
 
 		this->sum_scores += target_val;
@@ -65,10 +92,6 @@ void BranchExperiment::train_existing_backprop(
 		this->state_iter++;
 		if (this->state_iter >= TRAIN_EXISTING_NUM_DATAPOINTS) {
 			this->existing_score = this->sum_scores / this->state_iter;
-
-			// temp
-			// double average_depth = (double)this->sum_depth / (double)this->sum_instances;
-			// cout << "average_depth: " << average_depth << endl;
 
 			this->existing_network = new Network(this->obs_histories[0].size(),
 												 NETWORK_SIZE_SMALL);

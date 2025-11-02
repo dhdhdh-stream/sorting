@@ -2,6 +2,7 @@
 
 #include <iostream>
 
+#include "constants.h"
 #include "globals.h"
 #include "network.h"
 #include "problem.h"
@@ -22,7 +23,21 @@ void BranchNode::step(vector<double>& obs,
 	BranchNodeHistory* history = new BranchNodeHistory(this);
 	scope_history->node_histories[this->id] = history;
 
-	this->network->activate(obs);
+	bool is_consistent;
+	if (this->consistency_network == NULL) {
+		is_consistent = true;
+	} else {
+		this->consistency_network->activate(obs);
+		if (this->consistency_network->output->acti_vals[0] >= CONSISTENCY_MATCH_WEIGHT) {
+			is_consistent = true;
+		} else {
+			is_consistent = false;
+		}
+	}
+
+	if (is_consistent) {
+		this->val_network->activate(obs);
+	}
 
 	bool is_branch;
 	#if defined(MDEBUG) && MDEBUG
@@ -33,7 +48,7 @@ void BranchNode::step(vector<double>& obs,
 	}
 	wrapper->curr_run_seed = xorshift(wrapper->curr_run_seed);
 	#else
-	if (this->network->output->acti_vals[0] >= 0.0) {
+	if (is_consistent && this->val_network->output->acti_vals[0] >= 0.0) {
 		is_branch = true;
 	} else {
 		is_branch = false;
@@ -41,12 +56,6 @@ void BranchNode::step(vector<double>& obs,
 	#endif /* MDEBUG */
 
 	history->is_branch = is_branch;
-
-	/**
-	 * - debug
-	 */
-	wrapper->branch_node_stack.push_back(this);
-	wrapper->branch_node_stack_obs.push_back(obs);
 
 	if (is_branch) {
 		wrapper->node_context.back() = this->branch_next_node;

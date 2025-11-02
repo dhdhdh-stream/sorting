@@ -35,8 +35,6 @@ public:
 	Network* existing_network;
 
 	int sum_instances;
-	// temp
-	int sum_depth;
 
 	double average_instances_per_run;
 	int num_instances_until_target;
@@ -45,6 +43,9 @@ public:
 	std::vector<int> curr_step_types;
 	std::vector<int> curr_actions;
 	std::vector<Scope*> curr_scopes;
+	/**
+	 * TODO: check consistency on explore
+	 */
 	AbstractNode* curr_exit_next_node;
 
 	double best_surprise;
@@ -54,7 +55,8 @@ public:
 	std::vector<Scope*> best_scopes;
 	AbstractNode* best_exit_next_node;
 
-	Network* new_network;
+	Network* new_consistency_network;
+	Network* new_val_network;
 
 	int num_refines;
 
@@ -62,6 +64,7 @@ public:
 	double total_sum_scores;
 
 	std::vector<std::vector<double>> obs_histories;
+	std::vector<bool> consistency_histories;
 	std::vector<double> target_val_histories;
 	double sum_scores;
 

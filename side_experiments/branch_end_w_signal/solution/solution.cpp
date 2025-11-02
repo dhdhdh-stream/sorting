@@ -49,6 +49,13 @@ void Solution::init() {
 
 	start_node->next_node_id = -1;
 	start_node->next_node = NULL;
+
+	new_scope->existing_pre_obs.push_back(vector<vector<double>>());
+	new_scope->existing_post_obs.push_back(vector<vector<double>>());
+	new_scope->existing_target_vals.push_back(vector<double>());
+
+	new_scope->explore_pre_obs.push_back(vector<vector<double>>());
+	new_scope->explore_post_obs.push_back(vector<vector<double>>());
 }
 
 void Solution::load(string path,

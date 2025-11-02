@@ -4,6 +4,8 @@
 const double MIN_WEIGHT = 0.00001;
 const double MIN_STANDARD_DEVIATION = 0.00001;
 
+const double CONSISTENCY_MATCH_WEIGHT = 0.5;
+
 #if defined(MDEBUG) && MDEBUG
 const int TRAIN_ITERS = 30;
 const int UPDATE_ITERS = 10;

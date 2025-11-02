@@ -26,9 +26,11 @@ using namespace std;
 #if defined(MDEBUG) && MDEBUG
 const int BRANCH_EXPERIMENT_EXPLORE_ITERS = 10;
 #else
-// const int BRANCH_EXPERIMENT_EXPLORE_ITERS = 1000;
-// const int BRANCH_EXPERIMENT_EXPLORE_ITERS = 4000;
-const int BRANCH_EXPERIMENT_EXPLORE_ITERS = 10000;
+const int BRANCH_EXPERIMENT_EXPLORE_ITERS = 1000;
+/**
+ * - need large amount
+ *   - more difficult to find sample that does well on all signals in addition to true
+ */
 #endif /* MDEBUG */
 
 void BranchExperiment::explore_check_activate(
@@ -172,10 +174,7 @@ void BranchExperiment::explore_step(vector<double>& obs,
 		this->existing_network->activate(obs);
 		history->existing_predicted_scores.push_back(this->existing_network->output->acti_vals[0]);
 
-		history->signal_sum_vals.push_back(0.0);
-		history->signal_sum_counts.push_back(0);
-
-		wrapper->experiment_callbacks.push_back(wrapper->branch_node_stack);
+		history->stack_traces.push_back(wrapper->scope_histories);
 	}
 
 	if (experiment_state->step_index >= (int)this->curr_step_types.size()) {
@@ -220,23 +219,61 @@ void BranchExperiment::explore_backprop(double target_val,
 										SolutionWrapper* wrapper) {
 	BranchExperimentHistory* history = (BranchExperimentHistory*)wrapper->experiment_history;
 	if (history->existing_predicted_scores.size() > 0) {
-		history->signal_sum_vals[0] += (target_val - wrapper->solution->curr_score);
-		history->signal_sum_counts[0]++;
+		bool is_consistent = true;
+		double sum_vals = target_val - wrapper->solution->curr_score;
+		int sum_counts = 1;
 
-		double average_val = history->signal_sum_vals[0] / history->signal_sum_counts[0];
+		for (int l_index = 0; l_index < (int)history->stack_traces[0].size(); l_index++) {
+			ScopeHistory* scope_history = history->stack_traces[0][l_index];
+			Scope* scope = scope_history->scope;
+
+			if (scope->pre_network != NULL) {
+				if (!scope_history->signal_initialized) {
+					vector<double> inputs = scope_history->pre_obs;
+					inputs.insert(inputs.end(), scope_history->post_obs.begin(), scope_history->post_obs.end());
+
+					if (scope->consistency_network != NULL) {
+						scope->consistency_network->activate(inputs);
+						scope_history->signal_initialized = true;
+						#if defined(MDEBUG) && MDEBUG
+						scope_history->consistency_val = 2 * (rand()%2) - 1;
+						#else
+						scope_history->consistency_val = scope->consistency_network->output->acti_vals[0];
+						#endif /* MDEBUG */
+					}
+
+					if (scope->consistency_network == NULL
+							|| scope_history->consistency_val >= CONSISTENCY_MATCH_WEIGHT) {
+						scope->pre_network->activate(scope_history->pre_obs);
+						scope_history->pre_val = scope->pre_network->output->acti_vals[0];
+
+						scope->post_network->activate(inputs);
+						scope_history->post_val = scope->post_network->output->acti_vals[0];
+					}
+				}
+
+				if (scope->consistency_network != NULL
+						&& scope_history->consistency_val < CONSISTENCY_MATCH_WEIGHT) {
+					is_consistent = false;
+					break;
+				} else {
+					sum_vals += (scope_history->post_val - scope_history->pre_val);
+					sum_counts++;
+				}
+			}
+
+			scope->explore_pre_obs.back().push_back(scope_history->pre_obs);
+			scope->explore_post_obs.back().push_back(scope_history->post_obs);
+		}
+
+		double average_val = sum_vals / sum_counts;
 
 		double curr_surprise = average_val - history->existing_predicted_scores[0];
 
-		// // temp
-		// cout << "target_val: " << target_val << endl;
-		// cout << "average_val: " << average_val << endl;
-		// cout << "history->signal_sum_counts[0]: " << history->signal_sum_counts[0] << endl;
-		// cout << "history->existing_predicted_scores[0]: " << history->existing_predicted_scores[0] << endl;
-
 		#if defined(MDEBUG) && MDEBUG
-		if (true) {
+		if ((is_consistent && curr_surprise > this->best_surprise) || true) {
 		#else
-		if (curr_surprise > this->best_surprise) {
+		if (is_consistent && curr_surprise > this->best_surprise) {
 		#endif /* MDEBUG */
 			this->best_surprise = curr_surprise;
 			if (this->best_new_scope != NULL) {
@@ -260,9 +297,6 @@ void BranchExperiment::explore_backprop(double target_val,
 
 		this->state_iter++;
 		if (this->state_iter >= BRANCH_EXPERIMENT_EXPLORE_ITERS) {
-			// // temp
-			// cout << "this->best_surprise: " << this->best_surprise << endl;
-
 			#if defined(MDEBUG) && MDEBUG
 			if (rand()%2 == 0) {
 			#else
