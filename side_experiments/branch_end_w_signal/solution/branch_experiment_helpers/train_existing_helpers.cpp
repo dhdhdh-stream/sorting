@@ -54,6 +54,8 @@ void BranchExperiment::train_existing_backprop(
 			double sum_vals = target_val - wrapper->solution->curr_score;
 			int sum_counts = 1;
 
+			double sum_consistency = 0.0;
+
 			for (int l_index = 0; l_index < (int)history->stack_traces[s_index].size(); l_index++) {
 				ScopeHistory* scope_history = history->stack_traces[s_index][l_index];
 				Scope* scope = scope_history->scope;
@@ -63,28 +65,34 @@ void BranchExperiment::train_existing_backprop(
 						inputs.insert(inputs.end(), scope_history->post_obs.begin(), scope_history->post_obs.end());
 
 						scope->consistency_network->activate(inputs);
-						scope_history->signal_initialized = true;
-						#if defined(MDEBUG) && MDEBUG
-						scope_history->consistency_val = 2 * (rand()%2) - 1;
-						#else
 						scope_history->consistency_val = scope->consistency_network->output->acti_vals[0];
-						#endif /* MDEBUG */
 
 						scope->pre_network->activate(scope_history->pre_obs);
 						scope_history->pre_val = scope->pre_network->output->acti_vals[0];
 
 						scope->post_network->activate(inputs);
 						scope_history->post_val = scope->post_network->output->acti_vals[0];
+
+						scope_history->signal_initialized = true;
 					}
 
 					sum_vals += (scope_history->post_val - scope_history->pre_val);
 					sum_counts++;
+
+					sum_consistency += scope_history->consistency_val;
 				}
 			}
 
 			double average_val = sum_vals / sum_counts;
-
 			this->target_val_histories.push_back(average_val);
+
+			double average_consistency;
+			if (sum_counts == 1) {
+				average_consistency = 0.0;
+			} else {
+				average_consistency = sum_consistency / (sum_counts - 1);
+			}
+			this->consistency_histories.push_back(average_consistency);
 		}
 
 		this->sum_scores += target_val;
@@ -93,17 +101,30 @@ void BranchExperiment::train_existing_backprop(
 		if (this->state_iter >= TRAIN_EXISTING_NUM_DATAPOINTS) {
 			this->existing_score = this->sum_scores / this->state_iter;
 
-			this->existing_network = new Network(this->obs_histories[0].size(),
-												 NETWORK_SIZE_SMALL);
 			uniform_int_distribution<int> input_distribution(0, this->obs_histories.size()-1);
+
+			this->existing_consistency_network = new Network(this->obs_histories[0].size(),
+															 NETWORK_SIZE_SMALL);
 			for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
 				int rand_index = input_distribution(generator);
 
-				this->existing_network->activate(this->obs_histories[rand_index]);
+				this->existing_consistency_network->activate(this->obs_histories[rand_index]);
 
-				double error = this->target_val_histories[rand_index] - this->existing_network->output->acti_vals[0];
+				double error = this->target_val_histories[rand_index] - this->existing_consistency_network->output->acti_vals[0];
 
-				this->existing_network->backprop(error);
+				this->existing_consistency_network->backprop(error);
+			}
+
+			this->existing_val_network = new Network(this->obs_histories[0].size(),
+													 NETWORK_SIZE_SMALL);
+			for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
+				int rand_index = input_distribution(generator);
+
+				this->existing_val_network->activate(this->obs_histories[rand_index]);
+
+				double error = this->target_val_histories[rand_index] - this->existing_val_network->output->acti_vals[0];
+
+				this->existing_val_network->backprop(error);
 			}
 
 			this->obs_histories.clear();

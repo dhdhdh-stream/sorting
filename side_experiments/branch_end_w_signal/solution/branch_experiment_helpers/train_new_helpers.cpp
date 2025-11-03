@@ -46,8 +46,11 @@ void BranchExperiment::train_new_step(vector<double>& obs,
 	if (experiment_state->step_index == 0) {
 		BranchExperimentHistory* history = (BranchExperimentHistory*)wrapper->experiment_history;
 
-		this->existing_network->activate(obs);
-		history->existing_predicted_scores.push_back(this->existing_network->output->acti_vals[0]);
+		this->existing_consistency_network->activate(obs);
+		history->existing_predicted_consistency.push_back(this->existing_consistency_network->output->acti_vals[0]);
+
+		this->existing_val_network->activate(obs);
+		history->existing_predicted_scores.push_back(this->existing_val_network->output->acti_vals[0]);
 
 		this->obs_histories.push_back(obs);
 
@@ -94,9 +97,10 @@ void BranchExperiment::train_new_backprop(
 	if (history->is_hit) {
 		map<Scope*, pair<int,ScopeHistory*>> to_add;
 		for (int s_index = 0; s_index < (int)history->stack_traces.size(); s_index++) {
-			bool is_consistent = true;
 			double sum_vals = target_val - wrapper->solution->curr_score;
 			int sum_counts = 1;
+
+			double sum_consistency = 0.0;
 
 			for (int l_index = 0; l_index < (int)history->stack_traces[s_index].size(); l_index++) {
 				ScopeHistory* scope_history = history->stack_traces[s_index][l_index];
@@ -108,29 +112,21 @@ void BranchExperiment::train_new_backprop(
 						inputs.insert(inputs.end(), scope_history->post_obs.begin(), scope_history->post_obs.end());
 
 						scope->consistency_network->activate(inputs);
-						scope_history->signal_initialized = true;
-						#if defined(MDEBUG) && MDEBUG
-						scope_history->consistency_val = 2 * (rand()%2) - 1;
-						#else
 						scope_history->consistency_val = scope->consistency_network->output->acti_vals[0];
-						#endif /* MDEBUG */
 
-						if (scope_history->consistency_val >= CONSISTENCY_MATCH_WEIGHT) {
-							scope->pre_network->activate(scope_history->pre_obs);
-							scope_history->pre_val = scope->pre_network->output->acti_vals[0];
+						scope->pre_network->activate(scope_history->pre_obs);
+						scope_history->pre_val = scope->pre_network->output->acti_vals[0];
 
-							scope->post_network->activate(inputs);
-							scope_history->post_val = scope->post_network->output->acti_vals[0];
-						}
+						scope->post_network->activate(inputs);
+						scope_history->post_val = scope->post_network->output->acti_vals[0];
+
+						scope_history->signal_initialized = true;
 					}
 
-					if (scope_history->consistency_val < CONSISTENCY_MATCH_WEIGHT) {
-						is_consistent = false;
-						break;
-					} else {
-						sum_vals += (scope_history->post_val - scope_history->pre_val);
-						sum_counts++;
-					}
+					sum_vals += (scope_history->post_val - scope_history->pre_val);
+					sum_counts++;
+
+					sum_consistency += scope_history->consistency_val;
 				}
 
 				if (scope->signal_status != SIGNAL_STATUS_FAIL) {
@@ -148,9 +144,15 @@ void BranchExperiment::train_new_backprop(
 			}
 
 			double average_val = sum_vals / sum_counts;
-
-			this->consistency_histories.push_back(is_consistent);
 			this->target_val_histories.push_back(average_val - history->existing_predicted_scores[s_index]);
+
+			double average_consistency;
+			if (sum_counts == 1) {
+				average_consistency = 0.0;
+			} else {
+				average_consistency = sum_consistency / (sum_counts - 1);
+			}
+			this->consistency_histories.push_back(average_consistency - history->existing_predicted_consistency[s_index]);
 		}
 
 		for (map<Scope*, pair<int,ScopeHistory*>>::iterator it = to_add.begin();
@@ -174,7 +176,7 @@ void BranchExperiment::train_new_backprop(
 				&& (int)this->target_val_histories.size() >= TRAIN_NEW_NUM_DATAPOINTS) {
 			int num_consistent = 0;
 			for (int h_index = 0; h_index < (int)this->consistency_histories.size(); h_index++) {
-				if (this->consistency_histories[h_index]) {
+				if (this->consistency_histories[h_index] >= 0.0) {
 					num_consistent++;
 				}
 			}
@@ -193,20 +195,7 @@ void BranchExperiment::train_new_backprop(
 
 					this->new_consistency_network->activate(this->obs_histories[rand_index]);
 
-					double error;
-					if (this->consistency_histories[rand_index]) {
-						if (this->new_consistency_network->output->acti_vals[0] >= 1.0) {
-							error = 0.0;
-						} else {
-							error = 1.0 - this->new_consistency_network->output->acti_vals[0];
-						}
-					} else {
-						if (this->new_consistency_network->output->acti_vals[0] <= -1.0) {
-							error = 0.0;
-						} else {
-							error = -1.0 - this->new_consistency_network->output->acti_vals[0];
-						}
-					}
+					double error = this->consistency_histories[rand_index] - this->new_consistency_network->output->acti_vals[0];
 
 					this->new_consistency_network->backprop(error);
 				}
@@ -217,7 +206,7 @@ void BranchExperiment::train_new_backprop(
 			vector<vector<double>> consistent_obs_histories;
 			vector<double> consistent_target_val_histories;
 			for (int h_index = 0; h_index < (int)this->obs_histories.size(); h_index++) {
-				if (this->consistency_histories[h_index]) {
+				if (this->consistency_histories[h_index] >= 0.0) {
 					consistent_obs_histories.push_back(this->obs_histories[h_index]);
 					consistent_target_val_histories.push_back(this->target_val_histories[h_index]);
 				}

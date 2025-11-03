@@ -32,7 +32,8 @@ public:
 
 	double existing_score;
 
-	Network* existing_network;
+	Network* existing_consistency_network;
+	Network* existing_val_network;
 
 	int sum_instances;
 
@@ -64,8 +65,8 @@ public:
 	double total_sum_scores;
 
 	std::vector<std::vector<double>> obs_histories;
-	std::vector<bool> consistency_histories;
 	std::vector<double> target_val_histories;
+	std::vector<double> consistency_histories;
 	double sum_scores;
 
 	#if defined(MDEBUG) && MDEBUG
@@ -154,6 +155,7 @@ public:
 class BranchExperimentHistory : public AbstractExperimentHistory {
 public:
 	std::vector<double> existing_predicted_scores;
+	std::vector<double> existing_predicted_consistency;
 
 	BranchExperimentHistory(BranchExperiment* experiment);
 };

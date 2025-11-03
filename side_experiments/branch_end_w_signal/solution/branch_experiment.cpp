@@ -29,7 +29,8 @@ BranchExperiment::BranchExperiment(Scope* scope_context,
 	this->curr_new_scope = NULL;
 	this->best_new_scope = NULL;
 
-	this->existing_network = NULL;
+	this->existing_consistency_network = NULL;
+	this->existing_val_network = NULL;
 	this->new_consistency_network = NULL;
 	this->new_val_network = NULL;
 
@@ -54,8 +55,12 @@ BranchExperiment::~BranchExperiment() {
 		delete this->best_new_scope;
 	}
 
-	if (this->existing_network != NULL) {
-		delete this->existing_network;
+	if (this->existing_consistency_network != NULL) {
+		delete this->existing_consistency_network;
+	}
+
+	if (this->existing_val_network != NULL) {
+		delete this->existing_val_network;
 	}
 
 	if (this->new_consistency_network != NULL) {

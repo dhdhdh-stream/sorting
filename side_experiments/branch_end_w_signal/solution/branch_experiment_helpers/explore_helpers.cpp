@@ -171,8 +171,11 @@ void BranchExperiment::explore_step(vector<double>& obs,
 	if (experiment_state->step_index == 0) {
 		BranchExperimentHistory* history = (BranchExperimentHistory*)wrapper->experiment_history;
 
-		this->existing_network->activate(obs);
-		history->existing_predicted_scores.push_back(this->existing_network->output->acti_vals[0]);
+		this->existing_consistency_network->activate(obs);
+		history->existing_predicted_consistency.push_back(this->existing_consistency_network->output->acti_vals[0]);
+
+		this->existing_val_network->activate(obs);
+		history->existing_predicted_scores.push_back(this->existing_val_network->output->acti_vals[0]);
 
 		history->stack_traces.push_back(wrapper->scope_histories);
 	}
@@ -219,9 +222,10 @@ void BranchExperiment::explore_backprop(double target_val,
 										SolutionWrapper* wrapper) {
 	BranchExperimentHistory* history = (BranchExperimentHistory*)wrapper->experiment_history;
 	if (history->existing_predicted_scores.size() > 0) {
-		bool is_consistent = true;
 		double sum_vals = target_val - wrapper->solution->curr_score;
 		int sum_counts = 1;
+
+		double sum_consistency = 0.0;
 
 		for (int l_index = 0; l_index < (int)history->stack_traces[0].size(); l_index++) {
 			ScopeHistory* scope_history = history->stack_traces[0][l_index];
@@ -233,29 +237,21 @@ void BranchExperiment::explore_backprop(double target_val,
 					inputs.insert(inputs.end(), scope_history->post_obs.begin(), scope_history->post_obs.end());
 
 					scope->consistency_network->activate(inputs);
-					scope_history->signal_initialized = true;
-					#if defined(MDEBUG) && MDEBUG
-					scope_history->consistency_val = 2 * (rand()%2) - 1;
-					#else
 					scope_history->consistency_val = scope->consistency_network->output->acti_vals[0];
-					#endif /* MDEBUG */
 
-					if (scope_history->consistency_val >= CONSISTENCY_MATCH_WEIGHT) {
-						scope->pre_network->activate(scope_history->pre_obs);
-						scope_history->pre_val = scope->pre_network->output->acti_vals[0];
+					scope->pre_network->activate(scope_history->pre_obs);
+					scope_history->pre_val = scope->pre_network->output->acti_vals[0];
 
-						scope->post_network->activate(inputs);
-						scope_history->post_val = scope->post_network->output->acti_vals[0];
-					}
+					scope->post_network->activate(inputs);
+					scope_history->post_val = scope->post_network->output->acti_vals[0];
+
+					scope_history->signal_initialized = true;
 				}
 
-				if (scope_history->consistency_val < CONSISTENCY_MATCH_WEIGHT) {
-					is_consistent = false;
-					break;
-				} else {
-					sum_vals += (scope_history->post_val - scope_history->pre_val);
-					sum_counts++;
-				}
+				sum_vals += (scope_history->post_val - scope_history->pre_val);
+				sum_counts++;
+
+				sum_consistency += scope_history->consistency_val;
 			}
 
 			if (scope->signal_status != SIGNAL_STATUS_FAIL) {
@@ -273,13 +269,20 @@ void BranchExperiment::explore_backprop(double target_val,
 		}
 
 		double average_val = sum_vals / sum_counts;
-
 		double curr_surprise = average_val - history->existing_predicted_scores[0];
 
+		double average_consistency;
+		if (sum_counts == 1) {
+			average_consistency = 0.0;
+		} else {
+			average_consistency = sum_consistency / (sum_counts - 1);
+		}
+		double consistency_improvement = average_consistency - history->existing_predicted_consistency[0];
+
 		#if defined(MDEBUG) && MDEBUG
-		if ((is_consistent && curr_surprise > this->best_surprise) || true) {
+		if ((consistency_improvement >= 0.0 && curr_surprise > this->best_surprise) || true) {
 		#else
-		if (is_consistent && curr_surprise > this->best_surprise) {
+		if (consistency_improvement >= 0.0 && curr_surprise > this->best_surprise) {
 		#endif /* MDEBUG */
 			this->best_surprise = curr_surprise;
 			if (this->best_new_scope != NULL) {
