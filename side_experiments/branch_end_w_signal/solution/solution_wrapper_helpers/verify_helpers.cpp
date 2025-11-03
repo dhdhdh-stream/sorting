@@ -5,6 +5,7 @@
 #include <iostream>
 
 #include "branch_node.h"
+#include "problem.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"

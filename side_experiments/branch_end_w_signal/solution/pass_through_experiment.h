@@ -24,6 +24,7 @@ public:
 
 	double existing_score;
 	double existing_signal;
+	double existing_consistency;
 
 	int num_explores;
 
@@ -38,6 +39,9 @@ public:
 
 	double sum_scores;
 	double sum_signals;
+
+	double sum_consistency;
+	double consistency_count;
 
 	PassThroughExperiment(Scope* scope_context,
 						  AbstractNode* node_context,

@@ -1,6 +1,3 @@
-// - have to compare consistency
-//   - instead of strictly all is consistent
-
 #include "pass_through_experiment.h"
 
 #include "action_node.h"
@@ -51,7 +48,6 @@ void PassThroughExperiment::measure_existing_backprop(
 						inputs.insert(inputs.end(), scope_history->post_obs.begin(), scope_history->post_obs.end());
 
 						scope->consistency_network->activate(inputs);
-						scope_history->signal_initialized = true;
 						#if defined(MDEBUG) && MDEBUG
 						scope_history->consistency_val = 2 * (rand()%2) - 1;
 						#else
@@ -63,15 +59,19 @@ void PassThroughExperiment::measure_existing_backprop(
 
 						scope->post_network->activate(inputs);
 						scope_history->post_val = scope->post_network->output->acti_vals[0];
+
+						scope_history->signal_initialized = true;
 					}
 
 					sum_vals += (scope_history->post_val - scope_history->pre_val);
 					sum_counts++;
+
+					this->sum_consistency += scope_history->consistency_val;
+					this->consistency_count++;
 				}
 			}
 
 			double average_val = sum_vals / sum_counts;
-
 			curr_sum_signals += average_val;
 		}
 		this->sum_signals += curr_sum_signals / (double)history->stack_traces.size();
@@ -82,6 +82,7 @@ void PassThroughExperiment::measure_existing_backprop(
 		if (this->state_iter >= MEASURE_EXISTING_NUM_DATAPOINTS) {
 			this->existing_score = this->sum_scores / this->state_iter;
 			this->existing_signal = this->sum_signals / this->state_iter;
+			this->existing_consistency = this->sum_consistency / this->consistency_count;
 
 			this->num_explores = 0;
 
@@ -202,6 +203,9 @@ void PassThroughExperiment::measure_existing_backprop(
 
 			this->sum_scores = 0.0;
 			this->sum_signals = 0.0;
+
+			this->sum_consistency = 0.0;
+			this->consistency_count = 0;
 
 			this->state = PASS_THROUGH_EXPERIMENT_STATE_C1;
 			this->state_iter = 0;
