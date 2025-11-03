@@ -2,6 +2,8 @@
 
 // - save counterexamples from previous iter
 
+// - branch experiment also needs to check consistency
+
 #include <chrono>
 #include <iostream>
 #include <map>

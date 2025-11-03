@@ -101,7 +101,11 @@ void Scope::update_signals() {
 
 						this->consistency_network->activate(input);
 
-						existing_sum_val += this->consistency_network->output->acti_vals[0];
+						if (this->consistency_network->output->acti_vals[0] >= 1.0) {
+							existing_sum_val += 1.0;
+						} else {
+							existing_sum_val += this->consistency_network->output->acti_vals[0];
+						}
 						existing_count++;
 					}
 
@@ -111,14 +115,25 @@ void Scope::update_signals() {
 
 						this->consistency_network->activate(input);
 
-						explore_sum_val += this->consistency_network->output->acti_vals[0];
+						if (this->consistency_network->output->acti_vals[0] <= -1.0) {
+							explore_sum_val += -1.0;
+						} else {
+							explore_sum_val += this->consistency_network->output->acti_vals[0];
+						}
 						explore_count++;
 					}
 				}
 				double existing_average = existing_sum_val / existing_count;
+				cout << "existing_average: " << existing_average << endl;
 				double explore_average = explore_sum_val / explore_count;
+				cout << "explore_average: " << explore_average << endl;
+				#if defined(MDEBUG) && MDEBUG
+				if ((existing_average >= SIGNAL_EXISTING_MIN_AVERAGE
+						&& explore_average <= SIGNAL_EXPLORE_MAX_AVERAGE) || rand()%2 == 0) {
+				#else
 				if (existing_average >= SIGNAL_EXISTING_MIN_AVERAGE
 						&& explore_average <= SIGNAL_EXPLORE_MAX_AVERAGE) {
+				#endif /* MDEBUG */
 					this->pre_network = new Network(this->existing_pre_obs[0][0].size(),
 												NETWORK_SIZE_SMALL);
 					for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
@@ -249,6 +264,8 @@ void Scope::update_signals() {
 				}
 			}
 
+			#if defined(MDEBUG) && MDEBUG
+			#else
 			double existing_sum_val = 0.0;
 			int existing_count = 0;
 			double explore_sum_val = 0.0;
@@ -260,7 +277,11 @@ void Scope::update_signals() {
 
 					this->consistency_network->activate(input);
 
-					existing_sum_val += this->consistency_network->output->acti_vals[0];
+					if (this->consistency_network->output->acti_vals[0] >= 1.0) {
+						existing_sum_val += 1.0;
+					} else {
+						existing_sum_val += this->consistency_network->output->acti_vals[0];
+					}
 					existing_count++;
 				}
 
@@ -270,18 +291,25 @@ void Scope::update_signals() {
 
 					this->consistency_network->activate(input);
 
-					explore_sum_val += this->consistency_network->output->acti_vals[0];
+					if (this->consistency_network->output->acti_vals[0] <= -1.0) {
+						explore_sum_val += -1.0;
+					} else {
+						explore_sum_val += this->consistency_network->output->acti_vals[0];
+					}
 					explore_count++;
 				}
 			}
 			double existing_average = existing_sum_val / existing_count;
+			cout << "existing_average: " << existing_average << endl;
+			double explore_average = explore_sum_val / explore_count;
+			cout << "explore_average: " << explore_average << endl;
 			if (existing_average < SIGNAL_EXISTING_MIN_AVERAGE) {
 				throw invalid_argument("existing_average < SIGNAL_EXISTING_MIN_AVERAGE");
 			}
-			double explore_average = explore_sum_val / explore_count;
 			if (explore_average > SIGNAL_EXPLORE_MAX_AVERAGE) {
 				throw invalid_argument("explore_average > SIGNAL_EXPLORE_MAX_AVERAGE");
 			}
+			#endif /* MDEBUG */
 
 			for (int iter_index = 0; iter_index < UPDATE_ITERS; iter_index++) {
 				int timestamp = timestamp_distribution(generator);
