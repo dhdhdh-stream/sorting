@@ -35,7 +35,7 @@ void ScopeNode::exit_step(SolutionWrapper* wrapper) {
 	/**
 	 * - debug
 	 */
-	if (this->scope->pre_network != NULL) {
+	if (this->scope->consistency_network != NULL) {
 		cout << "this->parent->id: " << this->parent->id << endl;
 		cout << "this->id: " << this->id << endl;
 		cout << "pre_obs:" << endl;
@@ -57,13 +57,10 @@ void ScopeNode::exit_step(SolutionWrapper* wrapper) {
 		input.insert(input.end(), wrapper->scope_histories.back()->post_obs.begin(),
 			wrapper->scope_histories.back()->post_obs.end());
 
-		if (this->scope->consistency_network != NULL) {
-			this->scope->consistency_network->activate(input);
-			cout << "this->scope->consistency_network->output->acti_vals[0]: " << this->scope->consistency_network->output->acti_vals[0] << endl;
-		}
+		this->scope->consistency_network->activate(input);
+		cout << "this->scope->consistency_network->output->acti_vals[0]: " << this->scope->consistency_network->output->acti_vals[0] << endl;
 
-		if (this->scope->consistency_network == NULL
-				|| this->scope->consistency_network->output->acti_vals[0] >= CONSISTENCY_MATCH_WEIGHT) {
+		if (this->scope->consistency_network->output->acti_vals[0] >= CONSISTENCY_MATCH_WEIGHT) {
 			this->scope->pre_network->activate(wrapper->scope_histories.back()->pre_obs);
 			cout << "this->scope->pre_network->output->acti_vals[0]: " << this->scope->pre_network->output->acti_vals[0] << endl;
 

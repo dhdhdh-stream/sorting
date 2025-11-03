@@ -102,23 +102,20 @@ void BranchExperiment::train_new_backprop(
 				ScopeHistory* scope_history = history->stack_traces[s_index][l_index];
 				Scope* scope = scope_history->scope;
 
-				if (scope->pre_network != NULL) {
+				if (scope->consistency_network != NULL) {
 					if (!scope_history->signal_initialized) {
 						vector<double> inputs = scope_history->pre_obs;
 						inputs.insert(inputs.end(), scope_history->post_obs.begin(), scope_history->post_obs.end());
 
-						if (scope->consistency_network != NULL) {
-							scope->consistency_network->activate(inputs);
-							scope_history->signal_initialized = true;
-							#if defined(MDEBUG) && MDEBUG
-							scope_history->consistency_val = 2 * (rand()%2) - 1;
-							#else
-							scope_history->consistency_val = scope->consistency_network->output->acti_vals[0];
-							#endif /* MDEBUG */
-						}
+						scope->consistency_network->activate(inputs);
+						scope_history->signal_initialized = true;
+						#if defined(MDEBUG) && MDEBUG
+						scope_history->consistency_val = 2 * (rand()%2) - 1;
+						#else
+						scope_history->consistency_val = scope->consistency_network->output->acti_vals[0];
+						#endif /* MDEBUG */
 
-						if (scope->consistency_network == NULL
-								|| scope_history->consistency_val >= CONSISTENCY_MATCH_WEIGHT) {
+						if (scope_history->consistency_val >= CONSISTENCY_MATCH_WEIGHT) {
 							scope->pre_network->activate(scope_history->pre_obs);
 							scope_history->pre_val = scope->pre_network->output->acti_vals[0];
 
@@ -127,8 +124,7 @@ void BranchExperiment::train_new_backprop(
 						}
 					}
 
-					if (scope->consistency_network != NULL
-							&& scope_history->consistency_val < CONSISTENCY_MATCH_WEIGHT) {
+					if (scope_history->consistency_val < CONSISTENCY_MATCH_WEIGHT) {
 						is_consistent = false;
 						break;
 					} else {
@@ -159,8 +155,16 @@ void BranchExperiment::train_new_backprop(
 				it != to_add.end(); it++) {
 			Scope* scope = it->first;
 			ScopeHistory* scope_history = it->second.second;
-			scope->explore_pre_obs.back().push_back(scope_history->pre_obs);
-			scope->explore_post_obs.back().push_back(scope_history->post_obs);
+			int max_sample_per_timestamp = (TOTAL_MAX_SAMPLES + (int)scope->existing_pre_obs.size() - 1) / (int)scope->existing_pre_obs.size();
+			if ((int)scope->explore_pre_obs.back().size() < max_sample_per_timestamp) {
+				scope->explore_pre_obs.back().push_back(scope_history->pre_obs);
+				scope->explore_post_obs.back().push_back(scope_history->post_obs);
+			} else {
+				uniform_int_distribution<int> distribution(0, scope->explore_pre_obs.back().size()-1);
+				int index = distribution(generator);
+				scope->explore_pre_obs.back()[index] = scope_history->pre_obs;
+				scope->explore_post_obs.back()[index] = scope_history->post_obs;
+			}
 		}
 
 		this->state_iter++;

@@ -20,6 +20,8 @@ class Network;
 class Problem;
 class Solution;
 
+const int TOTAL_MAX_SAMPLES = 4000;
+
 class ScopeHistory;
 class Scope {
 public:

@@ -25,9 +25,13 @@ void ScopeNode::experiment_step(vector<double>& obs,
 	wrapper->scope_histories.push_back(inner_scope_history);
 	wrapper->node_context.push_back(this->scope->nodes[0]);
 	wrapper->experiment_context.push_back(NULL);
+
+	inner_scope_history->pre_obs = wrapper->problem->get_observations();
 }
 
 void ScopeNode::experiment_exit_step(SolutionWrapper* wrapper) {
+	wrapper->scope_histories.back()->post_obs = wrapper->problem->get_observations();
+
 	wrapper->scope_histories.pop_back();
 	wrapper->node_context.pop_back();
 	wrapper->experiment_context.pop_back();

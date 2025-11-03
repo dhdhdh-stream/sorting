@@ -43,6 +43,7 @@ int main(int argc, char* argv[]) {
 	auto start_time = chrono::high_resolution_clock::now();
 	for (int i_index = 0; i_index < 2000; i_index++) {
 		Problem* problem = problem_type->get_problem();
+		solution_wrapper->problem = problem;
 
 		solution_wrapper->init();
 

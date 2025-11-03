@@ -1,5 +1,6 @@
 #include "solution_wrapper.h"
 
+#include "problem.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
@@ -19,6 +20,8 @@ void SolutionWrapper::init() {
 	ScopeHistory* scope_history = new ScopeHistory(this->solution->scopes[0]);
 	this->scope_histories.push_back(scope_history);
 	this->node_context.push_back(this->solution->scopes[0]->nodes[0]);
+
+	scope_history->pre_obs = this->problem->get_observations();
 }
 
 pair<bool,int> SolutionWrapper::step(vector<double> obs) {
@@ -46,6 +49,8 @@ pair<bool,int> SolutionWrapper::step(vector<double> obs) {
 }
 
 void SolutionWrapper::end() {
+	this->scope_histories[0]->post_obs = this->problem->get_observations();
+
 	delete this->scope_histories[0];
 
 	this->scope_histories.clear();

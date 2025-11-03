@@ -67,8 +67,17 @@ void add_existing_samples(ScopeHistory* scope_history,
 
 	for (map<Scope*, pair<int,pair<ScopeHistory*,double>>>::iterator it = to_add.begin();
 			it != to_add.end(); it++) {
-		it->first->existing_pre_obs.back().push_back(it->second.second.first->pre_obs);
-		it->first->existing_post_obs.back().push_back(it->second.second.first->post_obs);
-		it->first->existing_target_vals.back().push_back(it->second.second.second);
+		int max_sample_per_timestamp = (TOTAL_MAX_SAMPLES + (int)it->first->existing_pre_obs.size() - 1) / (int)it->first->existing_pre_obs.size();
+		if ((int)it->first->existing_pre_obs.back().size() < max_sample_per_timestamp) {
+			it->first->existing_pre_obs.back().push_back(it->second.second.first->pre_obs);
+			it->first->existing_post_obs.back().push_back(it->second.second.first->post_obs);
+			it->first->existing_target_vals.back().push_back(it->second.second.second);
+		} else {
+			uniform_int_distribution<int> distribution(0, it->first->existing_pre_obs.back().size()-1);
+			int index = distribution(generator);
+			it->first->existing_pre_obs.back()[index] = it->second.second.first->pre_obs;
+			it->first->existing_post_obs.back()[index] = it->second.second.first->post_obs;
+			it->first->existing_target_vals.back()[index] = it->second.second.second;
+		}
 	}
 }

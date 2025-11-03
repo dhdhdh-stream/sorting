@@ -6,6 +6,7 @@
 #include "branch_experiment.h"
 #include "constants.h"
 #include "pass_through_experiment.h"
+#include "problem.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
@@ -46,6 +47,8 @@ void SolutionWrapper::experiment_init() {
 	this->scope_histories.push_back(scope_history);
 	this->node_context.push_back(this->solution->scopes[0]->nodes[0]);
 	this->experiment_context.push_back(NULL);
+
+	scope_history->pre_obs = this->problem->get_observations();
 }
 
 tuple<bool,bool,int> SolutionWrapper::experiment_step(vector<double> obs) {
@@ -93,6 +96,8 @@ void SolutionWrapper::set_action(int action) {
 }
 
 void SolutionWrapper::experiment_end(double result) {
+	this->scope_histories[0]->post_obs = this->problem->get_observations();
+
 	if (this->curr_experiment == NULL) {
 		create_experiment(this->scope_histories[0],
 						  this);

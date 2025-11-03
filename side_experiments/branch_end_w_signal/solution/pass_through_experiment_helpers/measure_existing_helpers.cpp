@@ -1,3 +1,6 @@
+// - have to compare consistency
+//   - instead of strictly all is consistent
+
 #include "pass_through_experiment.h"
 
 #include "action_node.h"

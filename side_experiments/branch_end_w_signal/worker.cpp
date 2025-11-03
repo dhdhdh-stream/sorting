@@ -57,9 +57,9 @@ int main(int argc, char* argv[]) {
 			}
 
 			Problem* problem = problem_type->get_problem();
+			solution_wrapper->problem = problem;
 
 			solution_wrapper->experiment_init();
-			solution_wrapper->problem = problem;
 
 			while (true) {
 				vector<double> obs = problem->get_observations();
