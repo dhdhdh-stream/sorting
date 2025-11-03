@@ -20,6 +20,10 @@ class Network;
 class Problem;
 class Solution;
 
+const int SIGNAL_STATUS_INIT = 0;
+const int SIGNAL_STATUS_FAIL = 1;
+const int SIGNAL_STATUS_SUCCESS = 2;
+
 const int TOTAL_MAX_SAMPLES = 4000;
 
 class ScopeHistory;
@@ -35,6 +39,7 @@ public:
 
 	std::vector<Scope*> child_scopes;
 
+	int signal_status;
 	Network* consistency_network;
 	Network* pre_network;
 	Network* post_network;

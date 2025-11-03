@@ -140,15 +140,17 @@ void PassThroughExperiment::explore_backprop(double target_val,
 					this->consistency_count++;
 				}
 
-				map<Scope*, pair<int,ScopeHistory*>>::iterator it = to_add.find(scope);
-				if (it == to_add.end()) {
-					to_add[scope] = {1, scope_history};
-				} else {
-					uniform_int_distribution<int> add_distribution(0, it->second.first);
-					if (add_distribution(generator) == 0) {
-						it->second.second = scope_history;
+				if (scope->signal_status != SIGNAL_STATUS_FAIL) {
+					map<Scope*, pair<int,ScopeHistory*>>::iterator it = to_add.find(scope);
+					if (it == to_add.end()) {
+						to_add[scope] = {1, scope_history};
+					} else {
+						uniform_int_distribution<int> add_distribution(0, it->second.first);
+						if (add_distribution(generator) == 0) {
+							it->second.second = scope_history;
+						}
+						it->second.first++;
 					}
-					it->second.first++;
 				}
 			}
 
@@ -204,7 +206,12 @@ void PassThroughExperiment::explore_backprop(double target_val,
 		if (is_eval) {
 			double new_score = this->sum_scores / this->state_iter;
 			double new_signal = this->sum_signals / this->state_iter;
-			double new_consistency = this->sum_consistency / this->consistency_count;
+			double new_consistency;
+			if (this->consistency_count == 0) {
+				new_consistency = 0.0;
+			} else {
+				new_consistency = this->sum_consistency / this->consistency_count;
+			}
 
 			#if defined(MDEBUG) && MDEBUG
 			if ((new_score >= this->existing_score

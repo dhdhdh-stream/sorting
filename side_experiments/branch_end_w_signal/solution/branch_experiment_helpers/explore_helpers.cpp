@@ -258,15 +258,17 @@ void BranchExperiment::explore_backprop(double target_val,
 				}
 			}
 
-			int max_sample_per_timestamp = (TOTAL_MAX_SAMPLES + (int)scope->existing_pre_obs.size() - 1) / (int)scope->existing_pre_obs.size();
-			if ((int)scope->explore_pre_obs.back().size() < max_sample_per_timestamp) {
-				scope->explore_pre_obs.back().push_back(scope_history->pre_obs);
-				scope->explore_post_obs.back().push_back(scope_history->post_obs);
-			} else {
-				uniform_int_distribution<int> distribution(0, scope->explore_pre_obs.back().size()-1);
-				int index = distribution(generator);
-				scope->explore_pre_obs.back()[index] = scope_history->pre_obs;
-				scope->explore_post_obs.back()[index] = scope_history->post_obs;
+			if (scope->signal_status != SIGNAL_STATUS_FAIL) {
+				int max_sample_per_timestamp = (TOTAL_MAX_SAMPLES + (int)scope->existing_pre_obs.size() - 1) / (int)scope->existing_pre_obs.size();
+				if ((int)scope->explore_pre_obs.back().size() < max_sample_per_timestamp) {
+					scope->explore_pre_obs.back().push_back(scope_history->pre_obs);
+					scope->explore_post_obs.back().push_back(scope_history->post_obs);
+				} else {
+					uniform_int_distribution<int> distribution(0, scope->explore_pre_obs.back().size()-1);
+					int index = distribution(generator);
+					scope->explore_pre_obs.back()[index] = scope_history->pre_obs;
+					scope->explore_post_obs.back()[index] = scope_history->post_obs;
+				}
 			}
 		}
 

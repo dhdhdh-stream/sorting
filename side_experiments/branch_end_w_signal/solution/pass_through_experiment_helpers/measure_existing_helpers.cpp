@@ -82,7 +82,11 @@ void PassThroughExperiment::measure_existing_backprop(
 		if (this->state_iter >= MEASURE_EXISTING_NUM_DATAPOINTS) {
 			this->existing_score = this->sum_scores / this->state_iter;
 			this->existing_signal = this->sum_signals / this->state_iter;
-			this->existing_consistency = this->sum_consistency / this->consistency_count;
+			if (this->consistency_count == 0) {
+				this->existing_consistency = 0.0;
+			} else {
+				this->existing_consistency = this->sum_consistency / this->consistency_count;
+			}
 
 			this->num_explores = 0;
 

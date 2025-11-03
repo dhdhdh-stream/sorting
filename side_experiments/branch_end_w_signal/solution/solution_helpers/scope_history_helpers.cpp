@@ -13,26 +13,28 @@ void add_existing_samples_helper(ScopeHistory* scope_history,
 								 map<Scope*, pair<int,pair<ScopeHistory*,double>>>& to_add) {
 	Scope* scope = scope_history->scope;
 
-	map<Scope*, pair<int,pair<ScopeHistory*,double>>>::iterator it = to_add.find(scope);
-	if (it == to_add.end()) {
-		it = to_add.insert({scope, {0, {NULL, 0.0}}}).first;
-	}
-	uniform_int_distribution<int> add_distribution(0, it->second.first);
-	if (add_distribution(generator) == 0) {
-		double sum_vals = target_val;
-		int sum_counts = 1;
-		for (int l_index = 0; l_index < (int)scope_histories.size(); l_index++) {
-			if (scope_histories[l_index]->scope->pre_network != NULL) {
-				sum_vals += scope_histories[l_index]->post_val;
-				sum_counts++;
-			}
+	if (scope->signal_status != SIGNAL_STATUS_FAIL) {
+		map<Scope*, pair<int,pair<ScopeHistory*,double>>>::iterator it = to_add.find(scope);
+		if (it == to_add.end()) {
+			it = to_add.insert({scope, {0, {NULL, 0.0}}}).first;
 		}
-		double average_val = sum_vals / sum_counts;
-		it->second.second = {scope_history, average_val};
+		uniform_int_distribution<int> add_distribution(0, it->second.first);
+		if (add_distribution(generator) == 0) {
+			double sum_vals = target_val;
+			int sum_counts = 1;
+			for (int l_index = 0; l_index < (int)scope_histories.size(); l_index++) {
+				if (scope_histories[l_index]->scope->consistency_network != NULL) {
+					sum_vals += scope_histories[l_index]->post_val;
+					sum_counts++;
+				}
+			}
+			double average_val = sum_vals / sum_counts;
+			it->second.second = {scope_history, average_val};
+		}
+		it->second.first++;
 	}
-	it->second.first++;
 
-	if (scope->pre_network != NULL) {
+	if (scope->consistency_network != NULL) {
 		vector<double> inputs = scope_history->pre_obs;
 		inputs.insert(inputs.end(), scope_history->post_obs.begin(), scope_history->post_obs.end());
 

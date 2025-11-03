@@ -133,15 +133,17 @@ void BranchExperiment::train_new_backprop(
 					}
 				}
 
-				map<Scope*, pair<int,ScopeHistory*>>::iterator it = to_add.find(scope);
-				if (it == to_add.end()) {
-					to_add[scope] = {1, scope_history};
-				} else {
-					uniform_int_distribution<int> add_distribution(0, it->second.first);
-					if (add_distribution(generator) == 0) {
-						it->second.second = scope_history;
+				if (scope->signal_status != SIGNAL_STATUS_FAIL) {
+					map<Scope*, pair<int,ScopeHistory*>>::iterator it = to_add.find(scope);
+					if (it == to_add.end()) {
+						to_add[scope] = {1, scope_history};
+					} else {
+						uniform_int_distribution<int> add_distribution(0, it->second.first);
+						if (add_distribution(generator) == 0) {
+							it->second.second = scope_history;
+						}
+						it->second.first++;
 					}
-					it->second.first++;
 				}
 			}
 

@@ -16,6 +16,7 @@
 using namespace std;
 
 Scope::Scope() {
+	this->signal_status = SIGNAL_STATUS_INIT;
 	this->consistency_network = NULL;
 	this->pre_network = NULL;
 	this->post_network = NULL;
@@ -225,6 +226,8 @@ void Scope::save(ofstream& output_file) {
 		output_file << this->child_scopes[c_index]->id << endl;
 	}
 
+	output_file << this->signal_status << endl;
+
 	output_file << (this->consistency_network == NULL) << endl;
 	if (this->consistency_network != NULL) {
 		this->consistency_network->save(output_file);
@@ -349,6 +352,10 @@ void Scope::load(ifstream& input_file,
 		getline(input_file, scope_id_line);
 		this->child_scopes.push_back(parent_solution->scopes[stoi(scope_id_line)]);
 	}
+
+	string signal_status_line;
+	getline(input_file, signal_status_line);
+	this->signal_status = stoi(signal_status_line);
 
 	string consistency_network_is_null_line;
 	getline(input_file, consistency_network_is_null_line);
