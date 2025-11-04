@@ -466,74 +466,76 @@ void Scope::load(ifstream& input_file,
 		}
 	}
 
-	// // temp
-	// if (this->id == 0) {
-	// 	for (int t_index = 0; t_index < (int)this->existing_pre_obs.size(); t_index++) {
-	// 		cout << "t_index: " << t_index << endl;
+	// temp
+	if (this->consistency_network != NULL) {
+		cout << "this->id: " << this->id << endl;
 
-	// 		if (this->existing_pre_obs[t_index].size() > 0) {
-	// 			cout << "existing" << endl;
-	// 			cout << "pre_obs:" << endl;
-	// 			for (int i_index = 0; i_index < 5; i_index++) {
-	// 				for (int j_index = 0; j_index < 5; j_index++) {
-	// 					cout << this->existing_pre_obs[t_index][0][5 * i_index + j_index] << " ";
-	// 				}
-	// 				cout << endl;
-	// 			}
+		for (int t_index = 0; t_index < (int)this->existing_pre_obs.size(); t_index++) {
+			cout << "t_index: " << t_index << endl;
 
-	// 			cout << "post_obs:" << endl;
-	// 			for (int i_index = 0; i_index < 5; i_index++) {
-	// 				for (int j_index = 0; j_index < 5; j_index++) {
-	// 					cout << this->existing_post_obs[t_index][0][5 * i_index + j_index] << " ";
-	// 				}
-	// 				cout << endl;
-	// 			}
+			if (this->existing_pre_obs[t_index].size() > 0) {
+				cout << "existing" << endl;
+				cout << "pre_obs:" << endl;
+				for (int i_index = 0; i_index < 5; i_index++) {
+					for (int j_index = 0; j_index < 5; j_index++) {
+						cout << this->existing_pre_obs[t_index][0][5 * i_index + j_index] << " ";
+					}
+					cout << endl;
+				}
 
-	// 			cout << "this->existing_target_vals[t_index][0]: " << this->existing_target_vals[t_index][0] << endl;
+				cout << "post_obs:" << endl;
+				for (int i_index = 0; i_index < 5; i_index++) {
+					for (int j_index = 0; j_index < 5; j_index++) {
+						cout << this->existing_post_obs[t_index][0][5 * i_index + j_index] << " ";
+					}
+					cout << endl;
+				}
 
-	// 			vector<double> input = this->existing_pre_obs[t_index][0];
-	// 			input.insert(input.end(), this->existing_post_obs[t_index][0].begin(),
-	// 				this->existing_post_obs[t_index][0].end());
+				cout << "this->existing_target_vals[t_index][0]: " << this->existing_target_vals[t_index][0] << endl;
 
-	// 			this->consistency_network->activate(input);
-	// 			cout << "this->consistency_network->output->acti_vals[0]: " << this->consistency_network->output->acti_vals[0] << endl;
+				vector<double> input = this->existing_pre_obs[t_index][0];
+				input.insert(input.end(), this->existing_post_obs[t_index][0].begin(),
+					this->existing_post_obs[t_index][0].end());
 
-	// 			this->pre_network->activate(this->existing_pre_obs[t_index][0]);
-	// 			cout << "this->pre_network->output->acti_vals[0]: " << this->pre_network->output->acti_vals[0] << endl;
+				this->consistency_network->activate(input);
+				cout << "this->consistency_network->output->acti_vals[0]: " << this->consistency_network->output->acti_vals[0] << endl;
 
-	// 			this->post_network->activate(input);
-	// 			cout << "this->post_network->output->acti_vals[0]: " << this->post_network->output->acti_vals[0] << endl;
-	// 		}
+				this->pre_network->activate(this->existing_pre_obs[t_index][0]);
+				cout << "this->pre_network->output->acti_vals[0]: " << this->pre_network->output->acti_vals[0] << endl;
 
-	// 		if (this->explore_pre_obs[t_index].size() > 0) {
-	// 			cout << "explore" << endl;
-	// 			cout << "pre_obs:" << endl;
-	// 			for (int i_index = 0; i_index < 5; i_index++) {
-	// 				for (int j_index = 0; j_index < 5; j_index++) {
-	// 					cout << this->explore_pre_obs[t_index][0][5 * i_index + j_index] << " ";
-	// 				}
-	// 				cout << endl;
-	// 			}
+				this->post_network->activate(input);
+				cout << "this->post_network->output->acti_vals[0]: " << this->post_network->output->acti_vals[0] << endl;
+			}
 
-	// 			cout << "post_obs:" << endl;
-	// 			for (int i_index = 0; i_index < 5; i_index++) {
-	// 				for (int j_index = 0; j_index < 5; j_index++) {
-	// 					cout << this->explore_post_obs[t_index][0][5 * i_index + j_index] << " ";
-	// 				}
-	// 				cout << endl;
-	// 			}
+			if (this->explore_pre_obs[t_index].size() > 0) {
+				cout << "explore" << endl;
+				cout << "pre_obs:" << endl;
+				for (int i_index = 0; i_index < 5; i_index++) {
+					for (int j_index = 0; j_index < 5; j_index++) {
+						cout << this->explore_pre_obs[t_index][0][5 * i_index + j_index] << " ";
+					}
+					cout << endl;
+				}
 
-	// 			vector<double> input = this->explore_pre_obs[t_index][0];
-	// 			input.insert(input.end(), this->explore_post_obs[t_index][0].begin(),
-	// 				this->explore_post_obs[t_index][0].end());
+				cout << "post_obs:" << endl;
+				for (int i_index = 0; i_index < 5; i_index++) {
+					for (int j_index = 0; j_index < 5; j_index++) {
+						cout << this->explore_post_obs[t_index][0][5 * i_index + j_index] << " ";
+					}
+					cout << endl;
+				}
 
-	// 			this->consistency_network->activate(input);
-	// 			cout << "this->consistency_network->output->acti_vals[0]: " << this->consistency_network->output->acti_vals[0] << endl;
-	// 		}
+				vector<double> input = this->explore_pre_obs[t_index][0];
+				input.insert(input.end(), this->explore_post_obs[t_index][0].begin(),
+					this->explore_post_obs[t_index][0].end());
 
-	// 		cout << endl;
-	// 	}
-	// }
+				this->consistency_network->activate(input);
+				cout << "this->consistency_network->output->acti_vals[0]: " << this->consistency_network->output->acti_vals[0] << endl;
+			}
+
+			cout << endl;
+		}
+	}
 }
 
 void Scope::link(Solution* parent_solution) {

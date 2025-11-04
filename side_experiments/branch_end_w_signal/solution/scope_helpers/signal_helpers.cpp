@@ -1,6 +1,8 @@
 /**
  * - train signals on signals
  *   - but eval experiments on true
+ * 
+ * - even if experiments increase consistency, consistency can drop due to new explore samples
  */
 
 #include "scope.h"
@@ -15,8 +17,8 @@ using namespace std;
 
 const int MIN_TRAIN_SIZE = 3;
 
-const double SIGNAL_EXISTING_MIN_AVERAGE = 0.5;
-const double SIGNAL_EXPLORE_MAX_AVERAGE = -0.5;
+const double SIGNAL_EXISTING_MIN_AVERAGE = 0.4;
+const double SIGNAL_EXPLORE_MAX_AVERAGE = -0.4;
 
 void Scope::update_signals() {
 	switch (this->signal_status) {
@@ -43,6 +45,8 @@ void Scope::update_signals() {
 			}
 
 			if (this->existing_pre_obs.size() >= MIN_TRAIN_SIZE) {
+				cout << "this->id: " << this->id << endl;
+
 				uniform_int_distribution<int> timestamp_distribution(0, this->existing_pre_obs.size()-1);
 
 				this->consistency_network = new Network(this->existing_pre_obs[0][0].size() + this->existing_post_obs[0][0].size(),
@@ -199,6 +203,8 @@ void Scope::update_signals() {
 		break;
 	case SIGNAL_STATUS_SUCCESS:
 		{
+			cout << "this->id: " << this->id << endl;
+
 			if (this->existing_pre_obs.size() > 0) {
 				int max_sample_per_timestamp = (TOTAL_MAX_SAMPLES + (int)this->existing_pre_obs.size() - 1) / (int)this->existing_pre_obs.size();
 				for (int t_index = 0; t_index < (int)this->existing_pre_obs.size(); t_index++) {
@@ -264,8 +270,6 @@ void Scope::update_signals() {
 				}
 			}
 
-			#if defined(MDEBUG) && MDEBUG
-			#else
 			double existing_sum_val = 0.0;
 			int existing_count = 0;
 			double explore_sum_val = 0.0;
@@ -303,13 +307,6 @@ void Scope::update_signals() {
 			cout << "existing_average: " << existing_average << endl;
 			double explore_average = explore_sum_val / explore_count;
 			cout << "explore_average: " << explore_average << endl;
-			if (existing_average < SIGNAL_EXISTING_MIN_AVERAGE) {
-				throw invalid_argument("existing_average < SIGNAL_EXISTING_MIN_AVERAGE");
-			}
-			if (explore_average > SIGNAL_EXPLORE_MAX_AVERAGE) {
-				throw invalid_argument("explore_average > SIGNAL_EXPLORE_MAX_AVERAGE");
-			}
-			#endif /* MDEBUG */
 
 			for (int iter_index = 0; iter_index < UPDATE_ITERS; iter_index++) {
 				int timestamp = timestamp_distribution(generator);
@@ -338,6 +335,8 @@ void Scope::update_signals() {
 				this->post_network->backprop(error);
 			}
 
+			// TODO: only increment if not empty
+			// TODO: on train existing, only add if on path
 			this->existing_pre_obs.push_back(vector<vector<double>>());
 			this->existing_post_obs.push_back(vector<vector<double>>());
 			this->existing_target_vals.push_back(vector<double>());

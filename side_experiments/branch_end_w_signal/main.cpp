@@ -2,7 +2,7 @@
 
 // - save counterexamples from previous iter
 
-// - branch experiment also needs to check consistency
+// TODO: experiment just with consistency for now
 
 #include <chrono>
 #include <iostream>

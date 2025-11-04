@@ -97,7 +97,7 @@ void BranchExperiment::train_new_backprop(
 	if (history->is_hit) {
 		map<Scope*, pair<int,ScopeHistory*>> to_add;
 		for (int s_index = 0; s_index < (int)history->stack_traces.size(); s_index++) {
-			double sum_vals = target_val - wrapper->solution->curr_score;
+			// double sum_vals = target_val - wrapper->solution->curr_score;
 			int sum_counts = 1;
 
 			double sum_consistency = 0.0;
@@ -123,7 +123,7 @@ void BranchExperiment::train_new_backprop(
 						scope_history->signal_initialized = true;
 					}
 
-					sum_vals += (scope_history->post_val - scope_history->pre_val);
+					// sum_vals += (scope_history->post_val - scope_history->pre_val);
 					sum_counts++;
 
 					sum_consistency += scope_history->consistency_val;
@@ -143,7 +143,8 @@ void BranchExperiment::train_new_backprop(
 				}
 			}
 
-			double average_val = sum_vals / sum_counts;
+			// double average_val = sum_vals / sum_counts;
+			double average_val = target_val - wrapper->solution->curr_score;
 			this->target_val_histories.push_back(average_val - history->existing_predicted_scores[s_index]);
 
 			double average_consistency;

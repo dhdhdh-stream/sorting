@@ -51,7 +51,7 @@ void BranchExperiment::train_existing_backprop(
 	BranchExperimentHistory* history = (BranchExperimentHistory*)wrapper->experiment_history;
 	if (history->is_hit) {
 		for (int s_index = 0; s_index < (int)history->stack_traces.size(); s_index++) {
-			double sum_vals = target_val - wrapper->solution->curr_score;
+			// double sum_vals = target_val - wrapper->solution->curr_score;
 			int sum_counts = 1;
 
 			double sum_consistency = 0.0;
@@ -76,14 +76,15 @@ void BranchExperiment::train_existing_backprop(
 						scope_history->signal_initialized = true;
 					}
 
-					sum_vals += (scope_history->post_val - scope_history->pre_val);
+					// sum_vals += (scope_history->post_val - scope_history->pre_val);
 					sum_counts++;
 
 					sum_consistency += scope_history->consistency_val;
 				}
 			}
 
-			double average_val = sum_vals / sum_counts;
+			// double average_val = sum_vals / sum_counts;
+			double average_val = target_val - wrapper->solution->curr_score;
 			this->target_val_histories.push_back(average_val);
 
 			double average_consistency;
@@ -110,7 +111,7 @@ void BranchExperiment::train_existing_backprop(
 
 				this->existing_consistency_network->activate(this->obs_histories[rand_index]);
 
-				double error = this->target_val_histories[rand_index] - this->existing_consistency_network->output->acti_vals[0];
+				double error = this->consistency_histories[rand_index] - this->existing_consistency_network->output->acti_vals[0];
 
 				this->existing_consistency_network->backprop(error);
 			}
@@ -129,6 +130,7 @@ void BranchExperiment::train_existing_backprop(
 
 			this->obs_histories.clear();
 			this->target_val_histories.clear();
+			this->consistency_histories.clear();
 
 			this->average_instances_per_run = this->sum_instances / TRAIN_EXISTING_NUM_DATAPOINTS;
 

@@ -134,15 +134,15 @@ void SolutionWrapper::experiment_end(double result) {
 
 			this->improvement_iter++;
 			bool is_done = false;
-			if (this->solution->timestamp % 3 == 0) {
+			// if (this->solution->timestamp % 3 == 0) {
 				if (this->improvement_iter >= BRANCH_IMPROVEMENTS_PER_ITER) {
 					is_done = true;
 				}
-			} else {
-				if (this->improvement_iter >= PASS_THROUGH_IMPROVEMENTS_PER_ITER) {
-					is_done = true;
-				}
-			}
+			// } else {
+			// 	if (this->improvement_iter >= PASS_THROUGH_IMPROVEMENTS_PER_ITER) {
+			// 		is_done = true;
+			// 	}
+			// }
 			if (is_done) {
 				Scope* last_updated_scope = this->best_experiment->scope_context;
 

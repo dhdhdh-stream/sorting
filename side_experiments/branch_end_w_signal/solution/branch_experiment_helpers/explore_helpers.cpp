@@ -222,7 +222,7 @@ void BranchExperiment::explore_backprop(double target_val,
 										SolutionWrapper* wrapper) {
 	BranchExperimentHistory* history = (BranchExperimentHistory*)wrapper->experiment_history;
 	if (history->existing_predicted_scores.size() > 0) {
-		double sum_vals = target_val - wrapper->solution->curr_score;
+		// double sum_vals = target_val - wrapper->solution->curr_score;
 		int sum_counts = 1;
 
 		double sum_consistency = 0.0;
@@ -248,7 +248,7 @@ void BranchExperiment::explore_backprop(double target_val,
 					scope_history->signal_initialized = true;
 				}
 
-				sum_vals += (scope_history->post_val - scope_history->pre_val);
+				// sum_vals += (scope_history->post_val - scope_history->pre_val);
 				sum_counts++;
 
 				sum_consistency += scope_history->consistency_val;
@@ -268,7 +268,8 @@ void BranchExperiment::explore_backprop(double target_val,
 			}
 		}
 
-		double average_val = sum_vals / sum_counts;
+		// double average_val = sum_vals / sum_counts;
+		double average_val = target_val - wrapper->solution->curr_score;
 		double curr_surprise = average_val - history->existing_predicted_scores[0];
 
 		double average_consistency;

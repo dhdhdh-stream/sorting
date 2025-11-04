@@ -93,20 +93,20 @@ void create_experiment(ScopeHistory* scope_history,
 				  explore_is_branch);
 
 	if (explore_node != NULL) {
-		if (wrapper->solution->timestamp % 3 == 0) {
+		// if (wrapper->solution->timestamp % 3 == 0) {
 			BranchExperiment* new_experiment = new BranchExperiment(
 				explore_node->parent,
 				explore_node,
 				explore_is_branch,
 				wrapper);
 			wrapper->curr_experiment = new_experiment;
-		} else {
-			PassThroughExperiment* new_experiment = new PassThroughExperiment(
-				explore_node->parent,
-				explore_node,
-				explore_is_branch,
-				wrapper);
-			wrapper->curr_experiment = new_experiment;
-		}
+		// } else {
+		// 	PassThroughExperiment* new_experiment = new PassThroughExperiment(
+		// 		explore_node->parent,
+		// 		explore_node,
+		// 		explore_is_branch,
+		// 		wrapper);
+		// 	wrapper->curr_experiment = new_experiment;
+		// }
 	}
 }

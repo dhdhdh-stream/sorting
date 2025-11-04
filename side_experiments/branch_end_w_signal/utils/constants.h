@@ -9,7 +9,7 @@ const int TRAIN_ITERS = 30;
 const int UPDATE_ITERS = 10;
 #else
 const int TRAIN_ITERS = 300000;
-const int UPDATE_ITERS = 100000;
+const int UPDATE_ITERS = 200000;
 #endif /* MDEBUG */
 
 /**
@@ -35,10 +35,10 @@ const int MEASURE_ITERS = 1000;
  */
 #if defined(MDEBUG) && MDEBUG
 const int BRANCH_IMPROVEMENTS_PER_ITER = 2;
-const int PASS_THROUGH_IMPROVEMENTS_PER_ITER = 2;
+// const int PASS_THROUGH_IMPROVEMENTS_PER_ITER = 2;
 #else
 const int BRANCH_IMPROVEMENTS_PER_ITER = 6;
-const int PASS_THROUGH_IMPROVEMENTS_PER_ITER = 50;
+// const int PASS_THROUGH_IMPROVEMENTS_PER_ITER = 50;
 #endif /* MDEBUG */
 
 #if defined(MDEBUG) && MDEBUG
