@@ -19,10 +19,6 @@ void BranchNode::experiment_step(vector<double>& obs,
 	BranchNodeHistory* history = new BranchNodeHistory(this);
 	scope_history->node_histories[this->id] = history;
 
-	if (this->consistency_network != NULL) {
-		this->consistency_network->activate(obs);
-	}
-
 	this->val_network->activate(obs);
 
 	bool is_branch;
@@ -34,8 +30,7 @@ void BranchNode::experiment_step(vector<double>& obs,
 	}
 	wrapper->curr_run_seed = xorshift(wrapper->curr_run_seed);
 	#else
-	if ((this->consistency_network == NULL || this->consistency_network->output->acti_vals[0] >= CONSISTENCY_MIN_WEIGHT)
-			&& this->val_network->output->acti_vals[0] >= 0.0) {
+	if (this->val_network->output->acti_vals[0] >= 0.0) {
 		is_branch = true;
 	} else {
 		is_branch = false;

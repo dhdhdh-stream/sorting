@@ -6,10 +6,8 @@ const double MIN_STANDARD_DEVIATION = 0.00001;
 
 #if defined(MDEBUG) && MDEBUG
 const int TRAIN_ITERS = 30;
-const int UPDATE_ITERS = 10;
 #else
 const int TRAIN_ITERS = 300000;
-const int UPDATE_ITERS = 200000;
 #endif /* MDEBUG */
 
 /**
@@ -21,8 +19,6 @@ const int RAW_ACTION_WEIGHT = 8;
 
 const int STEP_TYPE_ACTION = 0;
 const int STEP_TYPE_SCOPE = 1;
-
-const double CONSISTENCY_MIN_WEIGHT = 0.5;
 
 const int NEW_SCOPE_MIN_NODES = 10;
 
@@ -36,9 +32,11 @@ const int MEASURE_ITERS = 1000;
  * - large number to select good paths to prevent noise
  */
 #if defined(MDEBUG) && MDEBUG
-const int BRANCH_IMPROVEMENTS_PER_ITER = 2;
+const int IMPROVEMENTS_PER_ITER = 4;
+const int SAVE_PER_ITER = 2;
 #else
-const int BRANCH_IMPROVEMENTS_PER_ITER = 6;
+const int IMPROVEMENTS_PER_ITER = 60;
+const int SAVE_PER_ITER = 10;
 #endif /* MDEBUG */
 
 #if defined(MDEBUG) && MDEBUG

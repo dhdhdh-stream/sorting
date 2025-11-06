@@ -93,44 +93,70 @@ void SolutionWrapper::experiment_end(double result) {
 	} else if (this->curr_experiment->result == EXPERIMENT_RESULT_SUCCESS) {
 		this->curr_experiment->clean();
 
-		if (this->best_experiment == NULL) {
-			this->best_experiment = this->curr_experiment;
-		} else {
-			double curr_impact = this->curr_experiment->improvement;
-			double best_impact = this->best_experiment->improvement;
-			if (curr_impact > best_impact) {
-				delete this->best_experiment;
-				this->best_experiment = this->curr_experiment;
-			} else {
-				delete this->curr_experiment;
+		if ((this->best_experiments.back() == NULL
+				|| this->best_experiments.back()->improvement < this->curr_experiment->improvement)) {
+			if (this->best_experiments.back() != NULL) {
+				delete this->best_experiments.back();
 			}
+			this->best_experiments.back() = this->curr_experiment;
+
+			int index = this->best_experiments.size()-1;
+			while (true) {
+				if (this->best_experiments[index-1] == NULL
+						|| this->best_experiments[index-1]->improvement < this->best_experiments[index]->improvement) {
+					AbstractExperiment* temp = this->best_experiments[index];
+					this->best_experiments[index] = this->best_experiments[index-1];
+					this->best_experiments[index-1] = temp;
+				} else {
+					break;
+				}
+
+				index--;
+				if (index == 0) {
+					break;
+				}
+			}
+		} else {
+			delete this->curr_experiment;
 		}
 
 		this->curr_experiment = NULL;
 
 		this->improvement_iter++;
 		bool is_done = false;
-		if (this->improvement_iter >= BRANCH_IMPROVEMENTS_PER_ITER) {
+		if (this->improvement_iter >= IMPROVEMENTS_PER_ITER) {
 			is_done = true;
 		}
 		if (is_done) {
-			Scope* last_updated_scope = this->best_experiment->scope_context;
+			for (int s_index = 0; s_index < (int)this->solution->scopes.size(); s_index++) {
+				this->solution->scopes[s_index]->update_signals();
+			}
 
-			this->best_experiment->add(this);
+			double best_consistency = calc_consistency(this->best_experiments[0]->new_scope_histories);
+			int best_index = 0;
+			for (int e_index = 1; e_index < SAVE_PER_ITER; e_index++) {
+				double curr_consistency = calc_consistency(this->best_experiments[e_index]->new_scope_histories);
+				if (curr_consistency > best_consistency) {
+					best_consistency = curr_consistency;
+					best_index = e_index;
+				}
+			}
 
-			this->solution->curr_score = this->best_experiment->calc_new_score();
+			Scope* last_updated_scope = this->best_experiments[best_index]->scope_context;
 
-			delete this->best_experiment;
-			this->best_experiment = NULL;
+			this->best_experiments[best_index]->add(this);
+
+			this->solution->curr_score = this->best_experiments[best_index]->calc_new_score();
+
+			for (int e_index = 0; e_index < SAVE_PER_ITER; e_index++) {
+				delete this->best_experiments[e_index];
+				this->best_experiments[e_index] = NULL;
+			}
 
 			clean_scope(last_updated_scope,
 						this);
 
 			this->solution->clean_scopes();
-
-			for (int s_index = 0; s_index < (int)this->solution->scopes.size(); s_index++) {
-				this->solution->scopes[s_index]->update_signals();
-			}
 
 			this->solution->timestamp++;
 			if (this->solution->timestamp >= RUN_TIMESTEPS) {
@@ -140,8 +166,6 @@ void SolutionWrapper::experiment_end(double result) {
 			this->improvement_iter = 0;
 		}
 	}
-
-	delete this->scope_histories[0];
 
 	this->scope_histories.clear();
 	this->node_context.clear();

@@ -26,11 +26,7 @@ using namespace std;
 #if defined(MDEBUG) && MDEBUG
 const int BRANCH_EXPERIMENT_EXPLORE_ITERS = 10;
 #else
-const int BRANCH_EXPERIMENT_EXPLORE_ITERS = 4000;
-/**
- * - need large amount
- *   - more difficult to find sample that does well on all signals in addition to true
- */
+const int BRANCH_EXPERIMENT_EXPLORE_ITERS = 1000;
 #endif /* MDEBUG */
 
 void BranchExperiment::explore_result_check_activate(
@@ -40,29 +36,12 @@ void BranchExperiment::explore_result_check_activate(
 	uniform_int_distribution<int> select_distribution(0, history->num_instances);
 	if (select_distribution(generator) == 0) {
 		history->explore_index = history->num_instances;
-		history->stack_trace = wrapper->scope_histories;
 	}
 	history->num_instances++;
 }
 
 void BranchExperiment::explore_result_backprop(SolutionWrapper* wrapper) {
 	BranchExperimentHistory* history = (BranchExperimentHistory*)wrapper->experiment_history;
-
-	for (int l_index = 0; l_index < (int)history->stack_trace.size(); l_index++) {
-		ScopeHistory* scope_history = history->stack_trace[l_index];
-		Scope* scope = scope_history->scope;
-		if (scope->consistency_network == NULL) {
-			history->existing_predicted_consistency.push_back(0.0);
-		} else {
-			vector<double> input = scope_history->pre_obs;
-			input.insert(input.end(), scope_history->post_obs.begin(),
-				scope_history->post_obs.end());
-
-			scope->consistency_network->activate(input);
-			history->existing_predicted_consistency.push_back(
-				scope->consistency_network->output->acti_vals[0]);
-		}
-	}
 
 	history->num_instances = 0;
 }
@@ -247,41 +226,27 @@ void BranchExperiment::explore_backprop(double target_val,
 										SolutionWrapper* wrapper) {
 	BranchExperimentHistory* history = (BranchExperimentHistory*)wrapper->experiment_history;
 
-	bool is_consistent = true;
 	for (int l_index = 0; l_index < (int)history->stack_trace.size(); l_index++) {
 		ScopeHistory* scope_history = history->stack_trace[l_index];
 		Scope* scope = scope_history->scope;
-		if (scope->consistency_network != NULL) {
-			vector<double> inputs = scope_history->pre_obs;
-			inputs.insert(inputs.end(), scope_history->post_obs.begin(), scope_history->post_obs.end());
 
-			scope->consistency_network->activate(inputs);
-
-			if (scope->consistency_network->output->acti_vals[0] < history->existing_predicted_consistency[l_index]) {
-				is_consistent = false;
-			}
-		}
-
-		if (scope->signal_status != SIGNAL_STATUS_FAIL) {
-			int max_sample_per_timestamp = (TOTAL_MAX_SAMPLES + (int)scope->existing_pre_obs.size() - 1) / (int)scope->existing_pre_obs.size();
-			if ((int)scope->explore_pre_obs.back().size() < max_sample_per_timestamp) {
-				scope->explore_pre_obs.back().push_back(scope_history->pre_obs);
-				scope->explore_post_obs.back().push_back(scope_history->post_obs);
-			} else {
-				uniform_int_distribution<int> distribution(0, scope->explore_pre_obs.back().size()-1);
-				int index = distribution(generator);
-				scope->explore_pre_obs.back()[index] = scope_history->pre_obs;
-				scope->explore_post_obs.back()[index] = scope_history->post_obs;
-			}
+		if ((int)scope->explore_pre_obs.back().size() < MEASURE_ITERS) {
+			scope->explore_pre_obs.back().push_back(scope_history->pre_obs);
+			scope->explore_post_obs.back().push_back(scope_history->post_obs);
+		} else {
+			uniform_int_distribution<int> distribution(0, scope->explore_pre_obs.back().size()-1);
+			int index = distribution(generator);
+			scope->explore_pre_obs.back()[index] = scope_history->pre_obs;
+			scope->explore_post_obs.back()[index] = scope_history->post_obs;
 		}
 	}
 
 	double curr_surprise = target_val - wrapper->existing_result;
 
 	#if defined(MDEBUG) && MDEBUG
-	if ((is_consistent && curr_surprise > this->best_surprise) || true) {
+	if (curr_surprise > this->best_surprise || true) {
 	#else
-	if (is_consistent && curr_surprise > this->best_surprise) {
+	if (curr_surprise > this->best_surprise) {
 	#endif /* MDEBUG */
 		this->best_surprise = curr_surprise;
 		if (this->best_new_scope != NULL) {

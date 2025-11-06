@@ -33,9 +33,6 @@ public:
 	std::vector<int> curr_step_types;
 	std::vector<int> curr_actions;
 	std::vector<Scope*> curr_scopes;
-	/**
-	 * TODO: check consistency on explore
-	 */
 	AbstractNode* curr_exit_next_node;
 
 	double best_surprise;
@@ -45,15 +42,15 @@ public:
 	std::vector<Scope*> best_scopes;
 	AbstractNode* best_exit_next_node;
 
-	Network* new_consistency_network;
 	Network* new_val_network;
+
+	std::vector<AbstractNode*> new_nodes;
 
 	int total_count;
 	double total_sum_scores;
 
 	std::vector<std::vector<double>> obs_histories;
 	std::vector<double> target_val_histories;
-	std::vector<bool> consistency_histories;
 
 	double sum_scores;
 
@@ -153,7 +150,6 @@ public:
 
 	int explore_index;
 	std::vector<ScopeHistory*> stack_trace;
-	std::vector<double> existing_predicted_consistency;
 
 	BranchExperimentHistory(BranchExperiment* experiment);
 };

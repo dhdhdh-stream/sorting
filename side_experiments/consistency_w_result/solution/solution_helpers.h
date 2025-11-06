@@ -27,6 +27,7 @@ void recursive_add_child(Scope* curr_parent,
 						 Scope* new_scope);
 
 void add_existing_samples_helper(ScopeHistory* scope_history);
+double calc_consistency(std::vector<ScopeHistory*>& scope_histories);
 
 void clean_scope(Scope* scope,
 				 SolutionWrapper* wrapper);

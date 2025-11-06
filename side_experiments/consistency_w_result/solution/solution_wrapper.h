@@ -26,7 +26,7 @@ public:
 	int improvement_iter;
 
 	AbstractExperiment* curr_experiment;
-	AbstractExperiment* best_experiment;
+	std::vector<AbstractExperiment*> best_experiments;
 
 	/**
 	 * - run variables

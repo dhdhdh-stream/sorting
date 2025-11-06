@@ -1,5 +1,6 @@
 #include "solution_wrapper.h"
 
+#include "constants.h"
 #include "scope.h"
 #include "solution.h"
 
@@ -12,7 +13,7 @@ SolutionWrapper::SolutionWrapper() {
 	this->improvement_iter = 0;
 
 	this->curr_experiment = NULL;
-	this->best_experiment = NULL;
+	this->best_experiments = vector<AbstractExperiment*>(SAVE_PER_ITER, NULL);
 
 	this->experiment_history = NULL;
 
@@ -29,7 +30,7 @@ SolutionWrapper::SolutionWrapper(std::string path,
 	this->improvement_iter = 0;
 
 	this->curr_experiment = NULL;
-	this->best_experiment = NULL;
+	this->best_experiments = vector<AbstractExperiment*>(SAVE_PER_ITER, NULL);
 
 	this->experiment_history = NULL;
 

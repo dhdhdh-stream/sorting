@@ -1,7 +1,3 @@
-// - potentially don't worry about child scopes during explore for now
-
-// - save counterexamples from previous iter
-
 #include <chrono>
 #include <iostream>
 #include <map>

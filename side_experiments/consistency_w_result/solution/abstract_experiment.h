@@ -31,6 +31,8 @@ public:
 
 	double improvement;
 
+	std::vector<ScopeHistory*> new_scope_histories;
+
 	virtual ~AbstractExperiment() {};
 
 	virtual void result_check_activate(AbstractNode* experiment_node,

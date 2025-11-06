@@ -78,6 +78,8 @@ bool SolutionWrapper::result_end(double result) {
 		create_experiment(this->scope_histories[0],
 						  this);
 
+		delete this->scope_histories[0];
+
 		is_continue = false;
 	} else {
 		this->existing_result = result;
@@ -95,8 +97,6 @@ bool SolutionWrapper::result_end(double result) {
 			is_continue = false;
 		}
 	}
-
-	delete this->scope_histories[0];
 
 	this->scope_histories.clear();
 	this->node_context.clear();

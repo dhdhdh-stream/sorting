@@ -23,10 +23,6 @@ void BranchNode::verify_step(vector<double>& obs,
 	BranchNodeHistory* history = new BranchNodeHistory(this);
 	scope_history->node_histories[this->id] = history;
 
-	/**
-	 * - simply don't worry about consistency_network
-	 */
-
 	this->val_network->activate(obs);
 
 	if (this->verify_key != NULL) {

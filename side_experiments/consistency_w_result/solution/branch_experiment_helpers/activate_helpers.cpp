@@ -38,14 +38,39 @@ void BranchExperiment::result_backprop(
 	switch (this->state) {
 	case BRANCH_EXPERIMENT_STATE_EXPLORE:
 		explore_result_backprop(wrapper);
+
+		delete wrapper->scope_histories[0];
+
 		break;
 	case BRANCH_EXPERIMENT_STATE_TRAIN_NEW:
 		train_new_result_backprop(wrapper);
+
+		delete wrapper->scope_histories[0];
+
 		break;
 	case BRANCH_EXPERIMENT_STATE_MEASURE:
 		measure_result_backprop(target_val,
 								wrapper);
+
+		if (wrapper->experiment_history->is_hit) {
+			delete wrapper->scope_histories[0];
+		} else {
+			if (this->new_scope_histories.size() >= MEASURE_ITERS) {
+				uniform_int_distribution<int> distribution(0, this->new_scope_histories.size()-1);
+				int index = distribution(generator);
+				delete this->new_scope_histories[index];
+				this->new_scope_histories[index] = wrapper->scope_histories[0];
+			} else {
+				this->new_scope_histories.push_back(wrapper->scope_histories[0]);
+			}
+		}
+
 		break;
+	#if defined(MDEBUG) && MDEBUG
+	case BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY:
+		delete wrapper->scope_histories[0];
+		break;
+	#endif /* MDEBUG */
 	}
 }
 
@@ -145,18 +170,37 @@ void BranchExperiment::backprop(double target_val,
 	case BRANCH_EXPERIMENT_STATE_EXPLORE:
 		explore_backprop(target_val,
 						 wrapper);
+
+		delete wrapper->scope_histories[0];
+
 		break;
 	case BRANCH_EXPERIMENT_STATE_TRAIN_NEW:
 		train_new_backprop(target_val,
 						   wrapper);
+
+		delete wrapper->scope_histories[0];
+
 		break;
 	case BRANCH_EXPERIMENT_STATE_MEASURE:
 		measure_backprop(target_val,
 						 wrapper);
+
+		if (this->new_scope_histories.size() >= MEASURE_ITERS) {
+			uniform_int_distribution<int> distribution(0, this->new_scope_histories.size()-1);
+			int index = distribution(generator);
+			delete this->new_scope_histories[index];
+			this->new_scope_histories[index] = wrapper->scope_histories[0];
+		} else {
+			this->new_scope_histories.push_back(wrapper->scope_histories[0]);
+		}
+
 		break;
 	#if defined(MDEBUG) && MDEBUG
 	case BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY:
 		capture_verify_backprop(wrapper);
+
+		delete wrapper->scope_histories[0];
+
 		break;
 	#endif /* MDEBUG */
 	}

@@ -294,11 +294,6 @@ Scope* create_new_scope(Scope* scope_context) {
 						BranchNode* original_branch_node = (BranchNode*)node_it->first;
 						BranchNode* new_branch_node = (BranchNode*)node_mappings[original_branch_node];
 
-						if (original_branch_node->consistency_network == NULL) {
-							new_branch_node->consistency_network = NULL;
-						} else {
-							new_branch_node->consistency_network = new Network(original_branch_node->consistency_network);
-						}
 						new_branch_node->val_network = new Network(original_branch_node->val_network);
 
 						map<AbstractNode*, AbstractNode*>::iterator original_it = node_mappings

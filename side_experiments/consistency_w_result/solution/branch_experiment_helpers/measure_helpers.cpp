@@ -42,10 +42,6 @@ void BranchExperiment::measure_step(vector<double>& obs,
 	BranchExperimentState* experiment_state = (BranchExperimentState*)wrapper->experiment_context.back();
 
 	if (experiment_state->step_index == 0) {
-		if (this->new_consistency_network != NULL) {
-			this->new_consistency_network->activate(obs);
-		}
-
 		this->new_val_network->activate(obs);
 
 		bool decision_is_branch;
@@ -57,8 +53,7 @@ void BranchExperiment::measure_step(vector<double>& obs,
 		}
 		wrapper->curr_run_seed = xorshift(wrapper->curr_run_seed);
 		#else
-		if ((this->new_consistency_network == NULL || this->new_consistency_network->output->acti_vals[0] >= CONSISTENCY_MIN_WEIGHT)
-				&& this->new_val_network->output->acti_vals[0] >= 0.0) {
+		if (this->new_val_network->output->acti_vals[0] >= 0.0) {
 			decision_is_branch = true;
 		} else {
 			decision_is_branch = false;
@@ -86,17 +81,27 @@ void BranchExperiment::measure_step(vector<double>& obs,
 
 			experiment_state->step_index++;
 		} else {
+			ScopeNode* scope_node = (ScopeNode*)this->new_nodes[experiment_state->step_index];
+
+			ScopeHistory* scope_history = wrapper->scope_histories.back();
+
+			ScopeNodeHistory* history = new ScopeNodeHistory(scope_node);
+			scope_history->node_histories[scope_node->id] = history;
+
 			ScopeHistory* inner_scope_history = new ScopeHistory(this->best_scopes[experiment_state->step_index]);
+			history->scope_history = inner_scope_history;
 			wrapper->scope_histories.push_back(inner_scope_history);
 			wrapper->node_context.push_back(this->best_scopes[experiment_state->step_index]->nodes[0]);
 			wrapper->experiment_context.push_back(NULL);
+
+			inner_scope_history->pre_obs = wrapper->problem->get_observations();
 		}
 	}
 }
 
 void BranchExperiment::measure_exit_step(SolutionWrapper* wrapper,
 										 BranchExperimentState* experiment_state) {
-	delete wrapper->scope_histories.back();
+	wrapper->scope_histories.back()->post_obs = wrapper->problem->get_observations();
 
 	wrapper->scope_histories.pop_back();
 	wrapper->node_context.pop_back();

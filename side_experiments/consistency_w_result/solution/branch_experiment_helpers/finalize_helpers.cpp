@@ -62,28 +62,14 @@ void BranchExperiment::add(SolutionWrapper* wrapper) {
 		this->best_new_scope = NULL;
 	}
 
-	vector<AbstractNode*> new_nodes;
 	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-			ActionNode* new_action_node = new ActionNode();
-			new_action_node->parent = scope_context;
+			ActionNode* new_action_node = (ActionNode*)this->new_nodes[s_index];
 			new_action_node->id = scope_context->node_counter;
 			scope_context->node_counter++;
 			scope_context->nodes[new_action_node->id] = new_action_node;
-
-			new_action_node->action = this->best_actions[s_index];
-
-			new_nodes.push_back(new_action_node);
 		} else {
-			ScopeNode* new_scope_node = new ScopeNode();
-			new_scope_node->parent = scope_context;
-			new_scope_node->id = scope_context->node_counter;
-			scope_context->node_counter++;
-			scope_context->nodes[new_scope_node->id] = new_scope_node;
-
-			new_scope_node->scope = this->best_scopes[s_index];
-
-			new_nodes.push_back(new_scope_node);
+			scope_context->nodes[this->new_nodes[s_index]->id] = this->new_nodes[s_index];
 		}
 	}
 
@@ -326,10 +312,10 @@ void BranchExperiment::add(SolutionWrapper* wrapper) {
 		new_branch_node->branch_next_node_id = new_ending_node->id;
 		new_branch_node->branch_next_node = new_ending_node;
 	} else {
-		new_nodes[0]->ancestor_ids.push_back(new_branch_node->id);
+		this->new_nodes[0]->ancestor_ids.push_back(new_branch_node->id);
 
-		new_branch_node->branch_next_node_id = new_nodes[0]->id;
-		new_branch_node->branch_next_node = new_nodes[0];
+		new_branch_node->branch_next_node_id = this->new_nodes[0]->id;
+		new_branch_node->branch_next_node = this->new_nodes[0];
 	}
 
 	new_ending_node->branch_start_node_id = new_branch_node->id;
@@ -384,8 +370,6 @@ void BranchExperiment::add(SolutionWrapper* wrapper) {
 	}
 	new_branch_node->ancestor_ids.push_back(this->node_context->id);
 
-	new_branch_node->consistency_network = this->new_consistency_network;
-	this->new_consistency_network = NULL;
 	new_branch_node->val_network = this->new_val_network;
 	this->new_val_network = NULL;
 
@@ -400,35 +384,35 @@ void BranchExperiment::add(SolutionWrapper* wrapper) {
 	}
 	#endif /* MDEBUG */
 
-	for (int n_index = 0; n_index < (int)new_nodes.size(); n_index++) {
+	for (int n_index = 0; n_index < (int)this->new_nodes.size(); n_index++) {
 		int next_node_id;
 		AbstractNode* next_node;
-		if (n_index == (int)new_nodes.size()-1) {
+		if (n_index == (int)this->new_nodes.size()-1) {
 			next_node_id = new_ending_node->id;
 			next_node = new_ending_node;
 		} else {
-			next_node_id = new_nodes[n_index+1]->id;
-			next_node = new_nodes[n_index+1];
+			next_node_id = this->new_nodes[n_index+1]->id;
+			next_node = this->new_nodes[n_index+1];
 		}
 
-		switch (new_nodes[n_index]->type) {
+		switch (this->new_nodes[n_index]->type) {
 		case NODE_TYPE_ACTION:
 			{
-				ActionNode* action_node = (ActionNode*)new_nodes[n_index];
+				ActionNode* action_node = (ActionNode*)this->new_nodes[n_index];
 				action_node->next_node_id = next_node_id;
 				action_node->next_node = next_node;
 			}
 			break;
 		case NODE_TYPE_SCOPE:
 			{
-				ScopeNode* scope_node = (ScopeNode*)new_nodes[n_index];
+				ScopeNode* scope_node = (ScopeNode*)this->new_nodes[n_index];
 				scope_node->next_node_id = next_node_id;
 				scope_node->next_node = next_node;
 			}
 			break;
 		}
 
-		next_node->ancestor_ids.push_back(new_nodes[n_index]->id);
+		next_node->ancestor_ids.push_back(this->new_nodes[n_index]->id);
 	}
 }
 

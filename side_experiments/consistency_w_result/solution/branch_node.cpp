@@ -22,10 +22,6 @@ BranchNode::BranchNode() {
 }
 
 BranchNode::~BranchNode() {
-	if (this->consistency_network != NULL) {
-		delete this->consistency_network;
-	}
-
 	delete this->val_network;
 
 	if (this->experiment != NULL) {
@@ -45,11 +41,6 @@ void BranchNode::clear_verify() {
 #endif /* MDEBUG */
 
 void BranchNode::save(ofstream& output_file) {
-	output_file << (this->consistency_network == NULL) << endl;
-	if (this->consistency_network != NULL) {
-		this->consistency_network->save(output_file);
-	}
-
 	this->val_network->save(output_file);
 
 	output_file << this->original_next_node_id << endl;
@@ -63,15 +54,6 @@ void BranchNode::save(ofstream& output_file) {
 
 void BranchNode::load(ifstream& input_file,
 					  Solution* parent_solution) {
-	string consistency_network_is_null_line;
-	getline(input_file, consistency_network_is_null_line);
-	bool consistency_network_is_null = stoi(consistency_network_is_null_line);
-	if (consistency_network_is_null) {
-		this->consistency_network = NULL;
-	} else {
-		this->consistency_network = new Network(input_file);
-	}
-
 	this->val_network = new Network(input_file);
 
 	string original_next_node_id_line;
