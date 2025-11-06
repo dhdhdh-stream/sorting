@@ -58,7 +58,11 @@ void Scope::update_signals() {
 			uniform_int_distribution<int> timestamp_distribution(0, this->existing_pre_obs.size()-1);
 			uniform_int_distribution<int> is_existing_distribution(0, 1);
 			for (int epoch_iter = 0; epoch_iter < 15; epoch_iter++) {
+				#if defined(MDEBUG) && MDEBUG
+				for (int iter_index = 0; iter_index < 10; iter_index++) {
+				#else
 				for (int iter_index = 0; iter_index < 10000; iter_index++) {
+				#endif /* MDEBUG */
 					if (is_existing_distribution(generator) == 0) {
 						int timestamp;
 						if (focus_new_distribution(generator) - 5 - epoch_iter >= 0) {

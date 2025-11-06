@@ -414,6 +414,7 @@ void BranchExperiment::add(SolutionWrapper* wrapper) {
 
 		next_node->ancestor_ids.push_back(this->new_nodes[n_index]->id);
 	}
+	this->new_nodes.clear();
 }
 
 double BranchExperiment::calc_new_score() {

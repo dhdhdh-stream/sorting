@@ -20,7 +20,11 @@ class Network;
 class Problem;
 class Solution;
 
+#if defined(MDEBUG) && MDEBUG
+const int TOTAL_MAX_SAMPLES = 40;
+#else
 const int TOTAL_MAX_SAMPLES = 4000;
+#endif /* MDEBUG */
 
 class ScopeHistory;
 class Scope {
