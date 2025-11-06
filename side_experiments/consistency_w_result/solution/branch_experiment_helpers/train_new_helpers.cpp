@@ -133,21 +133,12 @@ void BranchExperiment::train_new_backprop(
 
 			scope->consistency_network->activate(inputs);
 
+			#if defined(MDEBUG) && MDEBUG
+			if (rand()%4 == 0) {
+			#else
 			if (scope->consistency_network->output->acti_vals[0] < history->existing_predicted_consistency[l_index]) {
+			#endif /* MDEBUG */
 				is_consistent = false;
-			}
-		}
-
-		if (scope->signal_status != SIGNAL_STATUS_FAIL) {
-			int max_sample_per_timestamp = (TOTAL_MAX_SAMPLES + (int)scope->existing_pre_obs.size() - 1) / (int)scope->existing_pre_obs.size();
-			if ((int)scope->explore_pre_obs.back().size() < max_sample_per_timestamp) {
-				scope->explore_pre_obs.back().push_back(scope_history->pre_obs);
-				scope->explore_post_obs.back().push_back(scope_history->post_obs);
-			} else {
-				uniform_int_distribution<int> distribution(0, scope->explore_pre_obs.back().size()-1);
-				int index = distribution(generator);
-				scope->explore_pre_obs.back()[index] = scope_history->pre_obs;
-				scope->explore_post_obs.back()[index] = scope_history->post_obs;
 			}
 		}
 	}
