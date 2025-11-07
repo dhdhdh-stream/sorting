@@ -347,12 +347,6 @@ Scope* create_new_scope(Scope* scope_context) {
 
 			new_scope->child_scopes = scope_context->child_scopes;
 
-			new_scope->existing_pre_obs.push_back(vector<vector<double>>());
-			new_scope->existing_post_obs.push_back(vector<vector<double>>());
-
-			new_scope->explore_pre_obs.push_back(vector<vector<double>>());
-			new_scope->explore_post_obs.push_back(vector<vector<double>>());
-
 			return new_scope;
 		}
 	}

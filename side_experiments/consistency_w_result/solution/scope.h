@@ -20,12 +20,6 @@ class Network;
 class Problem;
 class Solution;
 
-#if defined(MDEBUG) && MDEBUG
-const int TOTAL_MAX_SAMPLES = 40;
-#else
-const int TOTAL_MAX_SAMPLES = 4000;
-#endif /* MDEBUG */
-
 class ScopeHistory;
 class Scope {
 public:
@@ -41,11 +35,11 @@ public:
 
 	Network* consistency_network;
 
-	std::vector<std::vector<std::vector<double>>> existing_pre_obs;
-	std::vector<std::vector<std::vector<double>>> existing_post_obs;
+	std::vector<std::vector<double>> existing_pre_obs;
+	std::vector<std::vector<double>> existing_post_obs;
 
-	std::vector<std::vector<std::vector<double>>> explore_pre_obs;
-	std::vector<std::vector<std::vector<double>>> explore_post_obs;
+	std::vector<std::vector<double>> explore_pre_obs;
+	std::vector<std::vector<double>> explore_post_obs;
 
 	Scope();
 	~Scope();

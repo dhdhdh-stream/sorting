@@ -5,6 +5,7 @@
 #include "branch_end_node.h"
 #include "branch_experiment.h"
 #include "constants.h"
+#include "pass_through_experiment.h"
 #include "problem.h"
 #include "scope.h"
 #include "scope_node.h"
@@ -31,6 +32,12 @@ void SolutionWrapper::result_init() {
 			{
 				BranchExperiment* branch_experiment = (BranchExperiment*)this->curr_experiment;
 				this->experiment_history = new BranchExperimentHistory(branch_experiment);
+			}
+			break;
+		case EXPERIMENT_TYPE_PASS_THROUGH:
+			{
+				PassThroughExperiment* pass_through_experiment = (PassThroughExperiment*)this->curr_experiment;
+				this->experiment_history = new PassThroughExperimentHistory(pass_through_experiment);
 			}
 			break;
 		}

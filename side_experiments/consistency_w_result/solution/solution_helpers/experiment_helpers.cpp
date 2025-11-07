@@ -7,6 +7,7 @@
 #include "branch_node.h"
 #include "constants.h"
 #include "globals.h"
+#include "pass_through_experiment.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
@@ -14,6 +15,14 @@
 #include "start_node.h"
 
 using namespace std;
+
+bool is_pass_through(SolutionWrapper* wrapper) {
+	if (wrapper->solution->timestamp % 3 == 0) {
+		return false;
+	} else {
+		return true;
+	}
+}
 
 /**
  * - don't prioritize exploring new nodes as new scopes change explore
@@ -92,11 +101,20 @@ void create_experiment(ScopeHistory* scope_history,
 				  explore_is_branch);
 
 	if (explore_node != NULL) {
-		BranchExperiment* new_experiment = new BranchExperiment(
-			explore_node->parent,
-			explore_node,
-			explore_is_branch,
-			wrapper);
-		wrapper->curr_experiment = new_experiment;
+		if (is_pass_through(wrapper)) {
+			PassThroughExperiment* new_experiment = new PassThroughExperiment(
+				explore_node->parent,
+				explore_node,
+				explore_is_branch,
+				wrapper);
+			wrapper->curr_experiment = new_experiment;
+		} else {
+			BranchExperiment* new_experiment = new BranchExperiment(
+				explore_node->parent,
+				explore_node,
+				explore_is_branch,
+				wrapper);
+			wrapper->curr_experiment = new_experiment;
+		}
 	}
 }

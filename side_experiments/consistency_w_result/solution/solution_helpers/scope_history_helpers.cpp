@@ -11,14 +11,14 @@ using namespace std;
 void add_existing_samples_helper(ScopeHistory* scope_history) {
 	Scope* scope = scope_history->scope;
 
-	if ((int)scope->existing_pre_obs.back().size() < MEASURE_ITERS) {
-		scope->existing_pre_obs.back().push_back(scope_history->pre_obs);
-		scope->existing_post_obs.back().push_back(scope_history->post_obs);
+	if ((int)scope->existing_pre_obs.size() < MEASURE_ITERS) {
+		scope->existing_pre_obs.push_back(scope_history->pre_obs);
+		scope->existing_post_obs.push_back(scope_history->post_obs);
 	} else {
-		uniform_int_distribution<int> distribution(0, scope->existing_pre_obs.back().size()-1);
+		uniform_int_distribution<int> distribution(0, scope->existing_pre_obs.size()-1);
 		int index = distribution(generator);
-		scope->existing_pre_obs.back()[index] = scope_history->pre_obs;
-		scope->existing_post_obs.back()[index] = scope_history->post_obs;
+		scope->existing_pre_obs[index] = scope_history->pre_obs;
+		scope->existing_post_obs[index] = scope_history->post_obs;
 	}
 
 	for (map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();

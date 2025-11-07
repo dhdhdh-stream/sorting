@@ -6,8 +6,10 @@ const double MIN_STANDARD_DEVIATION = 0.00001;
 
 #if defined(MDEBUG) && MDEBUG
 const int TRAIN_ITERS = 30;
+const int UPDATE_ITERS = 10;
 #else
 const int TRAIN_ITERS = 300000;
+const int UPDATE_ITERS = 100000;
 #endif /* MDEBUG */
 
 /**
@@ -32,10 +34,12 @@ const int MEASURE_ITERS = 1000;
  * - large number to select good paths to prevent noise
  */
 #if defined(MDEBUG) && MDEBUG
-const int IMPROVEMENTS_PER_ITER = 4;
+const int BRANCH_IMPROVEMENTS_PER_ITER = 4;
+const int PASS_THROUGH_IMPROVEMENTS_PER_ITER = 4;
 const int SAVE_PER_ITER = 2;
 #else
-const int IMPROVEMENTS_PER_ITER = 60;
+const int BRANCH_IMPROVEMENTS_PER_ITER = 60;
+const int PASS_THROUGH_IMPROVEMENTS_PER_ITER = 300;
 const int SAVE_PER_ITER = 10;
 #endif /* MDEBUG */
 

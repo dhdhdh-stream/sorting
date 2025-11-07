@@ -126,8 +126,14 @@ void SolutionWrapper::experiment_end(double result) {
 		// temp
 		cout << "this->improvement_iter: " << this->improvement_iter << endl;
 		bool is_done = false;
-		if (this->improvement_iter >= IMPROVEMENTS_PER_ITER) {
-			is_done = true;
+		if (is_pass_through(this)) {
+			if (this->improvement_iter >= PASS_THROUGH_IMPROVEMENTS_PER_ITER) {
+				is_done = true;
+			}
+		} else {
+			if (this->improvement_iter >= BRANCH_IMPROVEMENTS_PER_ITER) {
+				is_done = true;
+			}
 		}
 		if (is_done) {
 			for (int s_index = 0; s_index < (int)this->solution->scopes.size(); s_index++) {
@@ -135,36 +141,9 @@ void SolutionWrapper::experiment_end(double result) {
 			}
 
 			double best_consistency = calc_consistency(this->best_experiments[0]->new_scope_histories);
-			{
-				BranchExperiment* branch_experiment = (BranchExperiment*)this->best_experiments[0];
-				cout << "new explore path:";
-				for (int s_index = 0; s_index < (int)branch_experiment->best_step_types.size(); s_index++) {
-					if (branch_experiment->best_step_types[s_index] == STEP_TYPE_ACTION) {
-						cout << " " << branch_experiment->best_actions[s_index];
-					} else {
-						cout << " E" << branch_experiment->best_scopes[s_index]->id;
-					}
-				}
-				cout << endl;
-				cout << "best_consistency: " << best_consistency << endl;
-			}
 			int best_index = 0;
 			for (int e_index = 1; e_index < SAVE_PER_ITER; e_index++) {
 				double curr_consistency = calc_consistency(this->best_experiments[e_index]->new_scope_histories);
-				// temp
-				{
-					BranchExperiment* branch_experiment = (BranchExperiment*)this->best_experiments[e_index];
-					cout << "new explore path:";
-					for (int s_index = 0; s_index < (int)branch_experiment->best_step_types.size(); s_index++) {
-						if (branch_experiment->best_step_types[s_index] == STEP_TYPE_ACTION) {
-							cout << " " << branch_experiment->best_actions[s_index];
-						} else {
-							cout << " E" << branch_experiment->best_scopes[s_index]->id;
-						}
-					}
-					cout << endl;
-					cout << "curr_consistency: " << curr_consistency << endl;
-				}
 				if (curr_consistency > best_consistency) {
 					best_consistency = curr_consistency;
 					best_index = e_index;

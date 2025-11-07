@@ -15,6 +15,7 @@ class ScopeNode;
 class Solution;
 class SolutionWrapper;
 
+bool is_pass_through(SolutionWrapper* wrapper);
 void create_experiment(ScopeHistory* scope_history,
 					   SolutionWrapper* wrapper);
 
