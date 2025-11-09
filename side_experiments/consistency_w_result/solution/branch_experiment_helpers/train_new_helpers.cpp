@@ -151,8 +151,7 @@ void BranchExperiment::train_new_backprop(
 				} else {
 					ScopeNode* new_scope_node = new ScopeNode();
 					new_scope_node->parent = scope_context;
-					new_scope_node->id = scope_context->node_counter;
-					scope_context->node_counter++;
+					new_scope_node->id = scope_context->node_counter + s_index;
 
 					new_scope_node->scope = this->best_scopes[s_index];
 

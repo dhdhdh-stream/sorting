@@ -65,13 +65,13 @@ void BranchExperiment::add(SolutionWrapper* wrapper) {
 	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 			ActionNode* new_action_node = (ActionNode*)this->new_nodes[s_index];
-			new_action_node->id = scope_context->node_counter;
-			scope_context->node_counter++;
+			new_action_node->id = scope_context->node_counter + s_index;
 			scope_context->nodes[new_action_node->id] = new_action_node;
 		} else {
 			scope_context->nodes[this->new_nodes[s_index]->id] = this->new_nodes[s_index];
 		}
 	}
+	scope_context->node_counter += (int)this->best_step_types.size();
 
 	BranchEndNode* new_ending_node = new BranchEndNode();
 	new_ending_node->parent = this->scope_context;

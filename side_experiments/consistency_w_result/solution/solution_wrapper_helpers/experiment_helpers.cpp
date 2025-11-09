@@ -123,8 +123,6 @@ void SolutionWrapper::experiment_end(double result) {
 		this->curr_experiment = NULL;
 
 		this->improvement_iter++;
-		// temp
-		cout << "this->improvement_iter: " << this->improvement_iter << endl;
 		bool is_done = false;
 		if (is_pass_through(this)) {
 			if (this->improvement_iter >= PASS_THROUGH_IMPROVEMENTS_PER_ITER) {
@@ -142,8 +140,16 @@ void SolutionWrapper::experiment_end(double result) {
 
 			double best_consistency = calc_consistency(this->best_experiments[0]->new_scope_histories);
 			int best_index = 0;
+			{
+				cout << "0" << endl;
+				cout << "consistency: " << best_consistency << endl;
+				cout << "improvement: " << this->best_experiments[0]->improvement << endl;
+			}
 			for (int e_index = 1; e_index < SAVE_PER_ITER; e_index++) {
 				double curr_consistency = calc_consistency(this->best_experiments[e_index]->new_scope_histories);
+				cout << e_index << endl;
+				cout << "consistency: " << curr_consistency << endl;
+				cout << "improvement: " << this->best_experiments[e_index]->improvement << endl;
 				if (curr_consistency > best_consistency) {
 					best_consistency = curr_consistency;
 					best_index = e_index;

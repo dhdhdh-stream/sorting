@@ -234,7 +234,7 @@ void BranchExperiment::explore_backprop(double target_val,
 			scope->explore_pre_obs.push_back(scope_history->pre_obs);
 			scope->explore_post_obs.push_back(scope_history->post_obs);
 		} else {
-			uniform_int_distribution<int> distribution(0, scope->explore_pre_obs.back().size()-1);
+			uniform_int_distribution<int> distribution(0, scope->explore_pre_obs.size()-1);
 			int index = distribution(generator);
 			scope->explore_pre_obs[index] = scope_history->pre_obs;
 			scope->explore_post_obs[index] = scope_history->post_obs;

@@ -1,5 +1,7 @@
 #include "pass_through_experiment.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_end_node.h"
 #include "branch_node.h"
@@ -149,7 +151,7 @@ void PassThroughExperiment::backprop(double target_val,
 				scope->explore_pre_obs.push_back(scope_history->pre_obs);
 				scope->explore_post_obs.push_back(scope_history->post_obs);
 			} else {
-				uniform_int_distribution<int> distribution(0, scope->explore_pre_obs.back().size()-1);
+				uniform_int_distribution<int> distribution(0, scope->explore_pre_obs.size()-1);
 				int index = distribution(generator);
 				scope->explore_pre_obs[index] = scope_history->pre_obs;
 				scope->explore_post_obs[index] = scope_history->post_obs;
@@ -187,9 +189,11 @@ void PassThroughExperiment::backprop(double target_val,
 		double new_score = this->sum_scores / this->state_iter;
 
 		#if defined(MDEBUG) && MDEBUG
-		if (new_score >= 0.0 || rand()%5 != 0) {
+		// if (new_score >= 0.0 || rand()%5 != 0) {
+		if (new_score > 0.0 || rand()%5 != 0) {
 		#else
-		if (new_score >= 0.0) {
+		// if (new_score >= 0.0) {
+		if (new_score > 0.0) {
 		#endif /* MDEBUG */
 			switch (this->state) {
 			case PASS_THROUGH_EXPERIMENT_STATE_C1:
@@ -353,8 +357,7 @@ void PassThroughExperiment::backprop(double target_val,
 					} else {
 						ScopeNode* new_scope_node = new ScopeNode();
 						new_scope_node->parent = scope_context;
-						new_scope_node->id = scope_context->node_counter;
-						scope_context->node_counter++;
+						new_scope_node->id = scope_context->node_counter + s_index;
 
 						new_scope_node->scope = this->scopes[s_index];
 

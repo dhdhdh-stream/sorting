@@ -1,3 +1,10 @@
+// TODO: during explore phase for BranchExperiment, also do the same result + consistency trick
+// - merge Branch and PassThrough
+//   - i.e., always perform on all instances
+//   - if PassThrough fails, train
+//   - do the same result + consistency trick to select initial
+//   - train signal on history of all instances after explore
+
 #include <chrono>
 #include <iostream>
 #include <map>
