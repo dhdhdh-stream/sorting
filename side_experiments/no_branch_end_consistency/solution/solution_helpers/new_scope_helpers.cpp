@@ -153,6 +153,14 @@ Scope* create_new_scope(Scope* scope_context) {
 			new_scope->node_counter++;
 			new_scope->nodes[starting_node->id] = starting_node;
 
+			ObsNode* new_ending_node = new ObsNode();
+			new_ending_node->parent = new_scope;
+			new_ending_node->id = new_scope->node_counter;
+			new_scope->node_counter++;
+			new_scope->nodes[new_ending_node->id] = new_ending_node;
+			new_ending_node->next_node_id = -1;
+			new_ending_node->next_node = NULL;
+
 			map<AbstractNode*, AbstractNode*> node_mappings;
 			for (set<AbstractNode*>::iterator node_it = potential_included_nodes.begin();
 					node_it != potential_included_nodes.end(); node_it++) {
@@ -187,19 +195,6 @@ Scope* create_new_scope(Scope* scope_context) {
 						node_mappings[original_scope_node] = new_scope_node;
 					}
 					break;
-				case NODE_TYPE_BRANCH:
-					{
-						BranchNode* original_branch_node = (BranchNode*)(*node_it);
-
-						BranchNode* new_branch_node = new BranchNode();
-						new_branch_node->parent = new_scope;
-						new_branch_node->id = new_scope->node_counter;
-						new_scope->node_counter++;
-						new_scope->nodes[new_branch_node->id] = new_branch_node;
-
-						node_mappings[original_branch_node] = new_branch_node;
-					}
-					break;
 				case NODE_TYPE_OBS:
 					{
 						ObsNode* original_obs_node = (ObsNode*)(*node_it);
@@ -215,33 +210,27 @@ Scope* create_new_scope(Scope* scope_context) {
 					break;
 				}
 			}
-			while (true) {
-				bool node_removed = false;
+			for (set<AbstractNode*>::iterator node_it = potential_included_nodes.begin();
+					node_it != potential_included_nodes.end(); node_it++) {
+				if ((*node_it)->type == NODE_TYPE_BRANCH) {
+					BranchNode* original_branch_node = (BranchNode*)(*node_it);
 
-				for (map<AbstractNode*, AbstractNode*>::iterator node_it = node_mappings.begin();
-						node_it != node_mappings.end(); node_it++) {
-					if (node_it->first->type == NODE_TYPE_BRANCH
-							&& node_it->first->type == node_it->second->type) {
-						BranchNode* original_branch_node = (BranchNode*)node_it->first;
+					map<AbstractNode*, AbstractNode*>::iterator original_it = node_mappings.find(original_branch_node->original_next_node);
+					map<AbstractNode*, AbstractNode*>::iterator branch_it = node_mappings.find(original_branch_node->branch_next_node);
+					if (original_it != node_mappings.end()
+							&& branch_it != node_mappings.end()) {
+						BranchNode* new_branch_node = new BranchNode();
+						new_branch_node->parent = new_scope;
+						new_branch_node->id = new_scope->node_counter;
+						new_scope->node_counter++;
+						new_scope->nodes[new_branch_node->id] = new_branch_node;
 
-						map<AbstractNode*, AbstractNode*>::iterator original_it = node_mappings.find(original_branch_node->original_next_node);
-						map<AbstractNode*, AbstractNode*>::iterator branch_it = node_mappings.find(original_branch_node->branch_next_node);
-						if (original_it == node_mappings.end()) {
-							delete node_it->second;
-							node_it->second = branch_it->second;
-
-							node_removed = true;
-						} else if (branch_it == node_mappings.end()) {
-							delete node_it->second;
-							node_it->second = original_it->second;
-
-							node_removed = true;
-						}
+						node_mappings[original_branch_node] = new_branch_node;
+					} else if (original_it != node_mappings.end()) {
+						node_mappings[original_branch_node] = original_it->second;
+					} else if (branch_it != node_mappings.end()) {
+						node_mappings[original_branch_node] = branch_it->second;
 					}
-				}
-
-				if (!node_removed) {
-					break;
 				}
 			}
 
@@ -249,14 +238,6 @@ Scope* create_new_scope(Scope* scope_context) {
 			starting_node->next_node = node_mappings[potential_start_node];
 
 			starting_node->next_node->ancestor_ids.push_back(starting_node->id);
-
-			ObsNode* new_ending_node = new ObsNode();
-			new_ending_node->parent = new_scope;
-			new_ending_node->id = new_scope->node_counter;
-			new_scope->node_counter++;
-			new_scope->nodes[new_ending_node->id] = new_ending_node;
-			new_ending_node->next_node_id = -1;
-			new_ending_node->next_node = NULL;
 
 			for (map<AbstractNode*, AbstractNode*>::iterator node_it = node_mappings.begin();
 					node_it != node_mappings.end(); node_it++) {
@@ -302,7 +283,7 @@ Scope* create_new_scope(Scope* scope_context) {
 					}
 					break;
 				case NODE_TYPE_BRANCH:
-					{
+					if (node_it->first->type == node_it->second->type) {
 						BranchNode* original_branch_node = (BranchNode*)node_it->first;
 						BranchNode* new_branch_node = (BranchNode*)node_mappings[original_branch_node];
 
@@ -360,6 +341,8 @@ Scope* create_new_scope(Scope* scope_context) {
 			}
 
 			new_scope->child_scopes = scope_context->child_scopes;
+
+			clean_scope(new_scope);
 
 			return new_scope;
 		}

@@ -5,10 +5,6 @@
 //   - do the same result + consistency trick to select initial
 //   - train signal on history of all instances after explore
 
-// - remove BranchEnd again
-//   - but do allow sampling from external
-//     - (instead of only using new scopes)
-
 #include <chrono>
 #include <iostream>
 #include <map>

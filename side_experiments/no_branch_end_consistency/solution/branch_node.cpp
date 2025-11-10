@@ -14,6 +14,8 @@ using namespace std;
 BranchNode::BranchNode() {
 	this->type = NODE_TYPE_BRANCH;
 
+	this->val_network = NULL;
+
 	#if defined(MDEBUG) && MDEBUG
 	this->verify_key = NULL;
 	#endif /* MDEBUG */
@@ -22,7 +24,9 @@ BranchNode::BranchNode() {
 }
 
 BranchNode::~BranchNode() {
-	delete this->val_network;
+	if (this->val_network != NULL) {
+		delete this->val_network;
+	}
 
 	if (this->experiment != NULL) {
 		delete this->experiment;

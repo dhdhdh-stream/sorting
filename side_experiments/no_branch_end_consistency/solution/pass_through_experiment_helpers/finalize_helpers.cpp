@@ -51,9 +51,6 @@ void PassThroughExperiment::add(SolutionWrapper* wrapper) {
 		wrapper->solution->scopes.push_back(this->new_scope);
 		this->new_scope->id = (int)wrapper->solution->scopes.size()-1;
 
-		clean_scope(this->new_scope,
-					wrapper);
-
 		recursive_add_child(scope_context,
 							wrapper,
 							this->new_scope);

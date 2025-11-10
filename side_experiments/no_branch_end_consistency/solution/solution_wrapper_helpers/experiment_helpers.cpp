@@ -166,8 +166,7 @@ void SolutionWrapper::experiment_end(double result) {
 				this->best_experiments[e_index] = NULL;
 			}
 
-			clean_scope(last_updated_scope,
-						this);
+			clean_scope(last_updated_scope);
 
 			this->solution->clean_scopes();
 

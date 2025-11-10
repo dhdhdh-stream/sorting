@@ -52,9 +52,6 @@ void BranchExperiment::add(SolutionWrapper* wrapper) {
 		wrapper->solution->scopes.push_back(this->best_new_scope);
 		this->best_new_scope->id = (int)wrapper->solution->scopes.size()-1;
 
-		clean_scope(this->best_new_scope,
-					wrapper);
-
 		recursive_add_child(scope_context,
 							wrapper,
 							this->best_new_scope);
@@ -258,7 +255,7 @@ void BranchExperiment::add(SolutionWrapper* wrapper) {
 	}
 
 	if (this->best_step_types.size() == 0) {
-		new_ending_node->ancestor_ids.push_back(new_branch_node->id);
+		exit_node->ancestor_ids.push_back(new_branch_node->id);
 
 		new_branch_node->branch_next_node_id = exit_node_id;
 		new_branch_node->branch_next_node = exit_node;
