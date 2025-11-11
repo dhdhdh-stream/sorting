@@ -4,6 +4,7 @@
 
 #include "branch_experiment.h"
 #include "constants.h"
+#include "explore_experiment.h"
 #include "problem.h"
 #include "scope.h"
 #include "scope_node.h"
@@ -26,7 +27,9 @@ void SolutionWrapper::result_init() {
 
 	switch (this->state) {
 	case STATE_EXPLORE:
-
+		if (this->curr_explore_experiment != NULL) {
+			this->experiment_history = new ExploreExperimentHistory(this->curr_explore_experiment);
+		}
 		break;
 	case STATE_EXPERIMENT:
 		this->experiment_history = new BranchExperimentHistory(this->curr_branch_experiment);

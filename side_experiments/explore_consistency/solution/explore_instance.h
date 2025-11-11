@@ -27,6 +27,8 @@ public:
 
 	ExploreInstance();
 	~ExploreInstance();
+
+	void print();
 };
 
 #endif /* EXPLORE_INSTANCE_H */

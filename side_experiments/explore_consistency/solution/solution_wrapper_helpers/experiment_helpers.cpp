@@ -143,6 +143,13 @@ void SolutionWrapper::experiment_end(double result) {
 					this->best_explore_instances[s_index] = NULL;
 				}
 
+				// temp
+				for (int e_index = 0; e_index < (int)this->consistent_explore_instances.size(); e_index++) {
+					cout << e_index << endl;
+					this->consistent_explore_instances[e_index]->print();
+					cout << "consistency: " << this->consistent_explore_instances[e_index]->consistency << endl;
+				}
+
 				this->state = STATE_EXPERIMENT;
 				this->state_iter = 0;
 
@@ -180,27 +187,29 @@ void SolutionWrapper::experiment_end(double result) {
 		if (this->curr_branch_experiment == NULL) {
 			this->state_iter++;
 			if (this->state_iter >= NUM_EXPERIMENTS) {
-				Scope* last_updated_scope = this->best_branch_experiment->scope_context;
-
-				this->best_branch_experiment->add(this);
-
-				this->solution->curr_score = this->best_branch_experiment->calc_new_score();
-
-				delete this->best_branch_experiment;
-				this->best_branch_experiment = NULL;
-
 				for (int e_index = 0; e_index < (int)this->explore_experiments.size(); e_index++) {
 					delete this->explore_experiments[e_index];
 				}
 				this->explore_experiments.clear();
 
-				clean_scope(last_updated_scope);
+				if (this->best_branch_experiment != NULL) {
+					Scope* last_updated_scope = this->best_branch_experiment->scope_context;
 
-				this->solution->clean_scopes();
+					this->best_branch_experiment->add(this);
 
-				this->solution->timestamp++;
-				if (this->solution->timestamp >= RUN_TIMESTEPS) {
-					this->solution->timestamp = -1;
+					this->solution->curr_score = this->best_branch_experiment->calc_new_score();
+
+					delete this->best_branch_experiment;
+					this->best_branch_experiment = NULL;
+
+					clean_scope(last_updated_scope);
+
+					this->solution->clean_scopes();
+
+					this->solution->timestamp++;
+					if (this->solution->timestamp >= RUN_TIMESTEPS) {
+						this->solution->timestamp = -1;
+					}
 				}
 
 				this->state = STATE_EXPLORE;
