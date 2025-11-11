@@ -58,6 +58,8 @@ public:
 	virtual void clean() = 0;
 	virtual void add(SolutionWrapper* wrapper) = 0;
 	virtual double calc_new_score() = 0;
+
+	virtual void print() = 0;
 };
 
 class AbstractExperimentHistory {

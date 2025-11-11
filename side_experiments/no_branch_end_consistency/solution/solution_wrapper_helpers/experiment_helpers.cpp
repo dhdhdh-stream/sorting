@@ -143,12 +143,14 @@ void SolutionWrapper::experiment_end(double result) {
 				cout << "0" << endl;
 				cout << "consistency: " << best_consistency << endl;
 				cout << "improvement: " << this->best_experiments[0]->improvement << endl;
+				this->best_experiments[0]->print();
 			}
 			for (int e_index = 1; e_index < SAVE_PER_ITER; e_index++) {
 				double curr_consistency = calc_consistency(this->best_experiments[e_index]->new_scope_histories);
 				cout << e_index << endl;
 				cout << "consistency: " << curr_consistency << endl;
 				cout << "improvement: " << this->best_experiments[e_index]->improvement << endl;
+				this->best_experiments[e_index]->print();
 				if (curr_consistency > best_consistency) {
 					best_consistency = curr_consistency;
 					best_index = e_index;

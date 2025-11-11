@@ -42,10 +42,13 @@ void calc_consistency_helper(ScopeHistory* scope_history,
 
 		scope->consistency_network->activate(input);
 		double consistency = scope->consistency_network->output->acti_vals[0];
-		if (consistency >= 1.0) {
-			sum_val += consistency;
-		} else if (consistency <= -1.0) {
-			sum_val += consistency;
+		/**
+		 * - allow to go below -1.0 to help distinguish between bad and very bad
+		 */
+		if (consistency >= 3.0) {
+			sum_val += 3.0;
+		} else if (consistency <= -3.0) {
+			sum_val += -3.0;
 		} else {
 			sum_val += consistency;
 		}

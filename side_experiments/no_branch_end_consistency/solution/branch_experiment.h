@@ -142,6 +142,8 @@ public:
 	void clean();
 	void add(SolutionWrapper* wrapper);
 	double calc_new_score();
+
+	void print();
 };
 
 class BranchExperimentHistory : public AbstractExperimentHistory {

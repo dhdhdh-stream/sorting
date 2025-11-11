@@ -264,3 +264,28 @@ void PassThroughExperiment::add(SolutionWrapper* wrapper) {
 double PassThroughExperiment::calc_new_score() {
 	return this->total_sum_scores / this->total_count;
 }
+
+void PassThroughExperiment::print() {
+	stringstream ss;
+	ss << "PassThroughExperiment" << "; ";
+	ss << "this->scope_context->id: " << this->scope_context->id << "; ";
+	ss << "this->node_context->id: " << this->node_context->id << "; ";
+	ss << "this->is_branch: " << this->is_branch << "; ";
+	ss << "new explore path:";
+	for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {
+		if (this->step_types[s_index] == STEP_TYPE_ACTION) {
+			ss << " " << this->actions[s_index];
+		} else {
+			ss << " E" << this->scopes[s_index]->id;
+		}
+	}
+	ss << "; ";
+
+	if (this->exit_next_node == NULL) {
+		ss << "this->exit_next_node->id: " << -1 << "; ";
+	} else {
+		ss << "this->exit_next_node->id: " << this->exit_next_node->id << "; ";
+	}
+
+	cout << ss.str() << endl;
+}

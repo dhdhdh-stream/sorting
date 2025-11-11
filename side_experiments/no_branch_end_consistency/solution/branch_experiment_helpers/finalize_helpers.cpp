@@ -365,3 +365,28 @@ void BranchExperiment::add(SolutionWrapper* wrapper) {
 double BranchExperiment::calc_new_score() {
 	return this->total_sum_scores / this->total_count;
 }
+
+void BranchExperiment::print() {
+	stringstream ss;
+	ss << "BranchExperiment" << "; ";
+	ss << "this->scope_context->id: " << this->scope_context->id << "; ";
+	ss << "this->node_context->id: " << this->node_context->id << "; ";
+	ss << "this->is_branch: " << this->is_branch << "; ";
+	ss << "new explore path:";
+	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+			ss << " " << this->best_actions[s_index];
+		} else {
+			ss << " E" << this->best_scopes[s_index]->id;
+		}
+	}
+	ss << "; ";
+
+	if (this->best_exit_next_node == NULL) {
+		ss << "this->best_exit_next_node->id: " << -1 << "; ";
+	} else {
+		ss << "this->best_exit_next_node->id: " << this->best_exit_next_node->id << "; ";
+	}
+
+	cout << ss.str() << endl;
+}

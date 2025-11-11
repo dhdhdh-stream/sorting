@@ -7,6 +7,7 @@
 #include "constants.h"
 #include "globals.h"
 #include "obs_node.h"
+#include "problem.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution_helpers.h"
@@ -107,10 +108,20 @@ void PassThroughExperiment::experiment_step(vector<double>& obs,
 				experiment_state->step_index++;
 			}
 		} else {
+			ScopeNode* scope_node = (ScopeNode*)this->new_nodes[experiment_state->step_index];
+
+			ScopeHistory* scope_history = wrapper->scope_histories.back();
+
+			ScopeNodeHistory* history = new ScopeNodeHistory(scope_node);
+			scope_history->node_histories[scope_node->id] = history;
+
 			ScopeHistory* inner_scope_history = new ScopeHistory(this->scopes[experiment_state->step_index]);
+			history->scope_history = inner_scope_history;
 			wrapper->scope_histories.push_back(inner_scope_history);
 			wrapper->node_context.push_back(this->scopes[experiment_state->step_index]->nodes[0]);
 			wrapper->experiment_context.push_back(NULL);
+
+			inner_scope_history->pre_obs = wrapper->problem->get_observations();
 		}
 	}
 }
@@ -125,7 +136,7 @@ void PassThroughExperiment::set_action(int action,
 void PassThroughExperiment::experiment_exit_step(SolutionWrapper* wrapper) {
 	PassThroughExperimentState* experiment_state = (PassThroughExperimentState*)wrapper->experiment_context[wrapper->experiment_context.size() - 2];
 
-	delete wrapper->scope_histories.back();
+	wrapper->scope_histories.back()->post_obs = wrapper->problem->get_observations();
 
 	wrapper->scope_histories.pop_back();
 	wrapper->node_context.pop_back();
@@ -139,6 +150,15 @@ void PassThroughExperiment::backprop(double target_val,
 									 SolutionWrapper* wrapper) {
 	this->total_count++;
 	this->total_sum_scores += target_val;
+
+	if (this->new_scope_histories.size() >= MEASURE_ITERS) {
+		uniform_int_distribution<int> distribution(0, this->new_scope_histories.size()-1);
+		int index = distribution(generator);
+		delete this->new_scope_histories[index];
+		this->new_scope_histories[index] = wrapper->scope_histories[0];
+	} else {
+		this->new_scope_histories.push_back(wrapper->scope_histories[0]);
+	}
 
 	PassThroughExperimentHistory* history = (PassThroughExperimentHistory*)wrapper->experiment_history;
 
@@ -374,14 +394,5 @@ void PassThroughExperiment::backprop(double target_val,
 				this->state_iter = 0;
 			}
 		}
-	}
-
-	if (this->new_scope_histories.size() >= MEASURE_ITERS) {
-		uniform_int_distribution<int> distribution(0, this->new_scope_histories.size()-1);
-		int index = distribution(generator);
-		delete this->new_scope_histories[index];
-		this->new_scope_histories[index] = wrapper->scope_histories[0];
-	} else {
-		this->new_scope_histories.push_back(wrapper->scope_histories[0]);
 	}
 }

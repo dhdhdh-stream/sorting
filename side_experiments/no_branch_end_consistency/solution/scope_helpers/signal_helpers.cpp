@@ -104,8 +104,8 @@ void Scope::update_signals() {
 
 			this->consistency_network->activate(input);
 
-			if (this->consistency_network->output->acti_vals[0] >= 1.0) {
-				existing_sum_val += 1.0;
+			if (this->consistency_network->output->acti_vals[0] >= 3.0) {
+				existing_sum_val += 3.0;
 			} else {
 				existing_sum_val += this->consistency_network->output->acti_vals[0];
 			}
@@ -117,8 +117,8 @@ void Scope::update_signals() {
 
 			this->consistency_network->activate(input);
 
-			if (this->consistency_network->output->acti_vals[0] <= -1.0) {
-				explore_sum_val += -1.0;
+			if (this->consistency_network->output->acti_vals[0] <= -3.0) {
+				explore_sum_val += -3.0;
 			} else {
 				explore_sum_val += this->consistency_network->output->acti_vals[0];
 			}
