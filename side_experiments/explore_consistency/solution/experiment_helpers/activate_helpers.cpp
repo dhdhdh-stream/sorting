@@ -1,4 +1,4 @@
-#include "branch_experiment.h"
+#include "experiment.h"
 
 #include <iostream>
 
@@ -13,49 +13,49 @@
 
 using namespace std;
 
-void BranchExperiment::result_check_activate(
+void Experiment::result_check_activate(
 		AbstractNode* experiment_node,
 		bool is_branch,
 		SolutionWrapper* wrapper) {
 	if (is_branch == this->is_branch) {
-		BranchExperimentHistory* history = (BranchExperimentHistory*)wrapper->experiment_history;
+		ExperimentHistory* history = (ExperimentHistory*)wrapper->experiment_history;
 		history->is_hit = true;
 
 		switch (this->state) {
-		case BRANCH_EXPERIMENT_STATE_TRAIN_NEW:
+		case EXPERIMENT_STATE_TRAIN_NEW:
 			train_new_result_check_activate(wrapper);
 			break;
 		}
 	}
 }
 
-void BranchExperiment::result_backprop(
+void Experiment::result_backprop(
 		double target_val,
 		SolutionWrapper* wrapper) {
 	switch (this->state) {
-	case BRANCH_EXPERIMENT_STATE_TRAIN_NEW:
+	case EXPERIMENT_STATE_TRAIN_NEW:
 		train_new_result_backprop(wrapper);
 		break;
-	case BRANCH_EXPERIMENT_STATE_MEASURE:
+	case EXPERIMENT_STATE_MEASURE:
 		measure_result_backprop(target_val,
 								wrapper);
 		break;
 	}
 }
 
-void BranchExperiment::check_activate(AbstractNode* experiment_node,
-									  bool is_branch,
-									  SolutionWrapper* wrapper) {
+void Experiment::check_activate(AbstractNode* experiment_node,
+								bool is_branch,
+								SolutionWrapper* wrapper) {
 	if (is_branch == this->is_branch) {
 		switch (this->state) {
-		case BRANCH_EXPERIMENT_STATE_TRAIN_NEW:
+		case EXPERIMENT_STATE_TRAIN_NEW:
 			train_new_check_activate(wrapper);
 			break;
-		case BRANCH_EXPERIMENT_STATE_MEASURE:
+		case EXPERIMENT_STATE_MEASURE:
 			measure_check_activate(wrapper);
 			break;
 		#if defined(MDEBUG) && MDEBUG
-		case BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY:
+		case EXPERIMENT_STATE_CAPTURE_VERIFY:
 			capture_verify_check_activate(wrapper);
 			break;
 		#endif /* MDEBUG */
@@ -63,26 +63,26 @@ void BranchExperiment::check_activate(AbstractNode* experiment_node,
 	}
 }
 
-void BranchExperiment::experiment_step(vector<double>& obs,
-									   int& action,
-									   bool& is_next,
-									   bool& fetch_action,
-									   SolutionWrapper* wrapper) {
+void Experiment::experiment_step(vector<double>& obs,
+								 int& action,
+								 bool& is_next,
+								 bool& fetch_action,
+								 SolutionWrapper* wrapper) {
 	switch (this->state) {
-	case BRANCH_EXPERIMENT_STATE_TRAIN_NEW:
+	case EXPERIMENT_STATE_TRAIN_NEW:
 		train_new_step(obs,
 					   action,
 					   is_next,
 					   wrapper);
 		break;
-	case BRANCH_EXPERIMENT_STATE_MEASURE:
+	case EXPERIMENT_STATE_MEASURE:
 		measure_step(obs,
 					 action,
 					 is_next,
 					 wrapper);
 		break;
 	#if defined(MDEBUG) && MDEBUG
-	case BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY:
+	case EXPERIMENT_STATE_CAPTURE_VERIFY:
 		capture_verify_step(obs,
 							action,
 							is_next,
@@ -92,24 +92,24 @@ void BranchExperiment::experiment_step(vector<double>& obs,
 	}
 }
 
-void BranchExperiment::set_action(int action,
-								  SolutionWrapper* wrapper) {
+void Experiment::set_action(int action,
+							SolutionWrapper* wrapper) {
 	// do nothing
 }
 
-void BranchExperiment::experiment_exit_step(SolutionWrapper* wrapper) {
-	BranchExperimentState* experiment_state = (BranchExperimentState*)wrapper->experiment_context[wrapper->experiment_context.size() - 2];
+void Experiment::experiment_exit_step(SolutionWrapper* wrapper) {
+	ExperimentState* experiment_state = (ExperimentState*)wrapper->experiment_context[wrapper->experiment_context.size() - 2];
 	switch (this->state) {
-	case BRANCH_EXPERIMENT_STATE_TRAIN_NEW:
+	case EXPERIMENT_STATE_TRAIN_NEW:
 		train_new_exit_step(wrapper,
 							experiment_state);
 		break;
-	case BRANCH_EXPERIMENT_STATE_MEASURE:
+	case EXPERIMENT_STATE_MEASURE:
 		measure_exit_step(wrapper,
 						  experiment_state);
 		break;
 	#if defined(MDEBUG) && MDEBUG
-	case BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY:
+	case EXPERIMENT_STATE_CAPTURE_VERIFY:
 		capture_verify_exit_step(wrapper,
 								 experiment_state);
 		break;
@@ -117,19 +117,19 @@ void BranchExperiment::experiment_exit_step(SolutionWrapper* wrapper) {
 	}
 }
 
-void BranchExperiment::backprop(double target_val,
-								SolutionWrapper* wrapper) {
+void Experiment::backprop(double target_val,
+						  SolutionWrapper* wrapper) {
 	switch (this->state) {
-	case BRANCH_EXPERIMENT_STATE_TRAIN_NEW:
+	case EXPERIMENT_STATE_TRAIN_NEW:
 		train_new_backprop(target_val,
 						   wrapper);
 		break;
-	case BRANCH_EXPERIMENT_STATE_MEASURE:
+	case EXPERIMENT_STATE_MEASURE:
 		measure_backprop(target_val,
 						 wrapper);
 		break;
 	#if defined(MDEBUG) && MDEBUG
-	case BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY:
+	case EXPERIMENT_STATE_CAPTURE_VERIFY:
 		capture_verify_backprop(wrapper);
 		break;
 	#endif /* MDEBUG */

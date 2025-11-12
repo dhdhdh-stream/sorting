@@ -10,8 +10,8 @@ class AbstractExperimentHistory;
 class AbstractExperimentState;
 class AbstractNode;
 class BranchEndNodeHistory;
-class BranchExperiment;
 class BranchNode;
+class Experiment;
 class ExploreExperiment;
 class ExploreInstance;
 class Problem;
@@ -40,8 +40,8 @@ public:
 
 	std::vector<ExploreInstance*> consistent_explore_instances;
 
-	BranchExperiment* curr_branch_experiment;
-	BranchExperiment* best_branch_experiment;
+	Experiment* curr_experiment;
+	Experiment* best_experiment;
 
 	/**
 	 * - run variables

@@ -12,7 +12,7 @@ class Solution;
 class SolutionWrapper;
 
 const int EXPERIMENT_TYPE_EXPLORE = 0;
-const int EXPERIMENT_TYPE_BRANCH = 1;
+const int EXPERIMENT_TYPE_EXPERIMENT = 1;
 
 const int EXPERIMENT_RESULT_NA = 0;
 const int EXPERIMENT_RESULT_FAIL = 1;

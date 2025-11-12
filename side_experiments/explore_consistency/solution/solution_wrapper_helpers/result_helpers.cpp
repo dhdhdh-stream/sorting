@@ -2,8 +2,8 @@
 
 #include <iostream>
 
-#include "branch_experiment.h"
 #include "constants.h"
+#include "experiment.h"
 #include "explore_experiment.h"
 #include "problem.h"
 #include "scope.h"
@@ -32,7 +32,7 @@ void SolutionWrapper::result_init() {
 		}
 		break;
 	case STATE_EXPERIMENT:
-		this->experiment_history = new BranchExperimentHistory(this->curr_branch_experiment);
+		this->experiment_history = new ExperimentHistory(this->curr_experiment);
 		break;
 	}
 

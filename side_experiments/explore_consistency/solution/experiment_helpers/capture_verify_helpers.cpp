@@ -1,6 +1,6 @@
 #if defined(MDEBUG) && MDEBUG
 
-#include "branch_experiment.h"
+#include "experiment.h"
 
 #include <iostream>
 
@@ -17,23 +17,23 @@
 
 using namespace std;
 
-void BranchExperiment::capture_verify_check_activate(
+void Experiment::capture_verify_check_activate(
 		SolutionWrapper* wrapper) {
 	if (this->verify_problems[this->state_iter] == NULL) {
 		this->verify_problems[this->state_iter] = wrapper->problem->copy_and_reset();
 	}
 	this->verify_seeds[this->state_iter] = wrapper->starting_run_seed;
 
-	BranchExperimentState* new_experiment_state = new BranchExperimentState(this);
+	ExperimentState* new_experiment_state = new ExperimentState(this);
 	new_experiment_state->step_index = 0;
 	wrapper->experiment_context.back() = new_experiment_state;
 }
 
-void BranchExperiment::capture_verify_step(vector<double>& obs,
-										   int& action,
-										   bool& is_next,
-										   SolutionWrapper* wrapper) {
-	BranchExperimentState* experiment_state = (BranchExperimentState*)wrapper->experiment_context.back();
+void Experiment::capture_verify_step(vector<double>& obs,
+									 int& action,
+									 bool& is_next,
+									 SolutionWrapper* wrapper) {
+	ExperimentState* experiment_state = (ExperimentState*)wrapper->experiment_context.back();
 
 	if (experiment_state->step_index == 0) {
 		this->new_val_network->activate(obs);
@@ -83,8 +83,8 @@ void BranchExperiment::capture_verify_step(vector<double>& obs,
 	}
 }
 
-void BranchExperiment::capture_verify_exit_step(SolutionWrapper* wrapper,
-												BranchExperimentState* experiment_state) {
+void Experiment::capture_verify_exit_step(SolutionWrapper* wrapper,
+										  ExperimentState* experiment_state) {
 	delete wrapper->scope_histories.back();
 
 	wrapper->scope_histories.pop_back();
@@ -94,8 +94,8 @@ void BranchExperiment::capture_verify_exit_step(SolutionWrapper* wrapper,
 	experiment_state->step_index++;
 }
 
-void BranchExperiment::capture_verify_backprop(SolutionWrapper* wrapper) {
-	BranchExperimentHistory* history = (BranchExperimentHistory*)wrapper->experiment_history;
+void Experiment::capture_verify_backprop(SolutionWrapper* wrapper) {
+	ExperimentHistory* history = (ExperimentHistory*)wrapper->experiment_history;
 	if (history->is_hit) {
 		this->state_iter++;
 		if (this->state_iter >= NUM_VERIFY_SAMPLES) {

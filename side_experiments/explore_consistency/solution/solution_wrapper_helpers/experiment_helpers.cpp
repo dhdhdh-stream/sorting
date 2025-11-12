@@ -2,8 +2,8 @@
 
 #include <iostream>
 
-#include "branch_experiment.h"
 #include "constants.h"
+#include "experiment.h"
 #include "explore_experiment.h"
 #include "explore_instance.h"
 #include "problem.h"
@@ -153,7 +153,7 @@ void SolutionWrapper::experiment_end(double result) {
 				this->state = STATE_EXPERIMENT;
 				this->state_iter = 0;
 
-				this->curr_branch_experiment = new BranchExperiment(this->consistent_explore_instances[this->state_iter]);
+				this->curr_experiment = new Experiment(this->consistent_explore_instances[this->state_iter]);
 				delete this->consistent_explore_instances[this->state_iter];
 				this->consistent_explore_instances[this->state_iter] = NULL;
 			}
@@ -162,29 +162,29 @@ void SolutionWrapper::experiment_end(double result) {
 	case STATE_EXPERIMENT:
 		delete this->scope_histories[0];
 
-		if (this->curr_branch_experiment->result == EXPERIMENT_RESULT_FAIL) {
-			this->curr_branch_experiment->clean();
-			delete this->curr_branch_experiment;
+		if (this->curr_experiment->result == EXPERIMENT_RESULT_FAIL) {
+			this->curr_experiment->clean();
+			delete this->curr_experiment;
 
-			this->curr_branch_experiment = NULL;
-		} else if (this->curr_branch_experiment->result == EXPERIMENT_RESULT_SUCCESS) {
-			this->curr_branch_experiment->clean();
+			this->curr_experiment = NULL;
+		} else if (this->curr_experiment->result == EXPERIMENT_RESULT_SUCCESS) {
+			this->curr_experiment->clean();
 
-			if (this->best_branch_experiment == NULL) {
-				this->best_branch_experiment = this->curr_branch_experiment;
+			if (this->best_experiment == NULL) {
+				this->best_experiment = this->curr_experiment;
 			} else {
-				if (this->curr_branch_experiment->improvement > this->best_branch_experiment->improvement) {
-					delete this->best_branch_experiment;
-					this->best_branch_experiment = this->curr_branch_experiment;
+				if (this->curr_experiment->improvement > this->best_experiment->improvement) {
+					delete this->best_experiment;
+					this->best_experiment = this->curr_experiment;
 				} else {
-					delete this->curr_branch_experiment;
+					delete this->curr_experiment;
 				}
 			}
 
-			this->curr_branch_experiment = NULL;
+			this->curr_experiment = NULL;
 		}
 
-		if (this->curr_branch_experiment == NULL) {
+		if (this->curr_experiment == NULL) {
 			this->state_iter++;
 			if (this->state_iter >= NUM_EXPERIMENTS) {
 				for (int e_index = 0; e_index < (int)this->explore_experiments.size(); e_index++) {
@@ -192,15 +192,15 @@ void SolutionWrapper::experiment_end(double result) {
 				}
 				this->explore_experiments.clear();
 
-				if (this->best_branch_experiment != NULL) {
-					Scope* last_updated_scope = this->best_branch_experiment->scope_context;
+				if (this->best_experiment != NULL) {
+					Scope* last_updated_scope = this->best_experiment->scope_context;
 
-					this->best_branch_experiment->add(this);
+					this->best_experiment->add(this);
 
-					this->solution->curr_score = this->best_branch_experiment->calc_new_score();
+					this->solution->curr_score = this->best_experiment->calc_new_score();
 
-					delete this->best_branch_experiment;
-					this->best_branch_experiment = NULL;
+					delete this->best_experiment;
+					this->best_experiment = NULL;
 
 					clean_scope(last_updated_scope);
 
@@ -215,7 +215,7 @@ void SolutionWrapper::experiment_end(double result) {
 				this->state = STATE_EXPLORE;
 				this->state_iter = 0;
 			} else {
-				this->curr_branch_experiment = new BranchExperiment(this->consistent_explore_instances[this->state_iter]);
+				this->curr_experiment = new Experiment(this->consistent_explore_instances[this->state_iter]);
 				delete this->consistent_explore_instances[this->state_iter];
 				this->consistent_explore_instances[this->state_iter] = NULL;
 			}

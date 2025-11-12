@@ -1,4 +1,4 @@
-#include "branch_experiment.h"
+#include "experiment.h"
 
 #include <iostream>
 
@@ -22,9 +22,9 @@ const int TRAIN_NEW_NUM_DATAPOINTS = 20;
 const int TRAIN_NEW_NUM_DATAPOINTS = 1000;
 #endif /* MDEBUG */
 
-void BranchExperiment::train_new_result_check_activate(
+void Experiment::train_new_result_check_activate(
 		SolutionWrapper* wrapper) {
-	BranchExperimentHistory* history = (BranchExperimentHistory*)wrapper->experiment_history;
+	ExperimentHistory* history = (ExperimentHistory*)wrapper->experiment_history;
 
 	uniform_int_distribution<int> select_distribution(0, history->num_instances);
 	if (select_distribution(generator) == 0) {
@@ -33,18 +33,18 @@ void BranchExperiment::train_new_result_check_activate(
 	history->num_instances++;
 }
 
-void BranchExperiment::train_new_result_backprop(SolutionWrapper* wrapper) {
-	BranchExperimentHistory* history = (BranchExperimentHistory*)wrapper->experiment_history;
+void Experiment::train_new_result_backprop(SolutionWrapper* wrapper) {
+	ExperimentHistory* history = (ExperimentHistory*)wrapper->experiment_history;
 
 	history->num_instances = 0;
 }
 
-void BranchExperiment::train_new_check_activate(
+void Experiment::train_new_check_activate(
 		SolutionWrapper* wrapper) {
-	BranchExperimentHistory* history = (BranchExperimentHistory*)wrapper->experiment_history;
+	ExperimentHistory* history = (ExperimentHistory*)wrapper->experiment_history;
 
 	if (history->num_instances == history->explore_index) {
-		BranchExperimentState* new_experiment_state = new BranchExperimentState(this);
+		ExperimentState* new_experiment_state = new ExperimentState(this);
 		new_experiment_state->step_index = 0;
 		wrapper->experiment_context.back() = new_experiment_state;
 	}
@@ -52,11 +52,11 @@ void BranchExperiment::train_new_check_activate(
 	history->num_instances++;
 }
 
-void BranchExperiment::train_new_step(vector<double>& obs,
-									  int& action,
-									  bool& is_next,
-									  SolutionWrapper* wrapper) {
-	BranchExperimentState* experiment_state = (BranchExperimentState*)wrapper->experiment_context.back();
+void Experiment::train_new_step(vector<double>& obs,
+								int& action,
+								bool& is_next,
+								SolutionWrapper* wrapper) {
+	ExperimentState* experiment_state = (ExperimentState*)wrapper->experiment_context.back();
 
 	if (experiment_state->step_index == 0) {
 		this->obs_histories.push_back(obs);
@@ -84,8 +84,8 @@ void BranchExperiment::train_new_step(vector<double>& obs,
 	}
 }
 
-void BranchExperiment::train_new_exit_step(SolutionWrapper* wrapper,
-										   BranchExperimentState* experiment_state) {
+void Experiment::train_new_exit_step(SolutionWrapper* wrapper,
+									 ExperimentState* experiment_state) {
 	delete wrapper->scope_histories.back();
 
 	wrapper->scope_histories.pop_back();
@@ -95,7 +95,7 @@ void BranchExperiment::train_new_exit_step(SolutionWrapper* wrapper,
 	experiment_state->step_index++;
 }
 
-void BranchExperiment::train_new_backprop(
+void Experiment::train_new_backprop(
 		double target_val,
 		SolutionWrapper* wrapper) {
 	this->target_val_histories.push_back(target_val - wrapper->existing_result);
@@ -140,7 +140,7 @@ void BranchExperiment::train_new_backprop(
 
 			this->sum_scores = 0.0;
 
-			this->state = BRANCH_EXPERIMENT_STATE_MEASURE;
+			this->state = EXPERIMENT_STATE_MEASURE;
 			this->state_iter = 0;
 		} else {
 			this->result = EXPERIMENT_RESULT_FAIL;

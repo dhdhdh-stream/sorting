@@ -1,4 +1,4 @@
-#include "branch_experiment.h"
+#include "experiment.h"
 
 #include <iostream>
 
@@ -18,8 +18,8 @@
 
 using namespace std;
 
-BranchExperiment::BranchExperiment(ExploreInstance* explore_instance) {
-	this->type = EXPERIMENT_TYPE_BRANCH;
+Experiment::Experiment(ExploreInstance* explore_instance) {
+	this->type = EXPERIMENT_TYPE_EXPERIMENT;
 
 	this->scope_context = explore_instance->experiment->scope_context;
 	this->node_context = explore_instance->experiment->node_context;
@@ -39,13 +39,18 @@ BranchExperiment::BranchExperiment(ExploreInstance* explore_instance) {
 
 	this->node_context->experiment = this;
 
-	this->state = BRANCH_EXPERIMENT_STATE_TRAIN_NEW;
+	this->total_count = 0;
+	this->total_sum_scores = 0.0;
+
+	this->sum_scores = 0.0;
+
+	this->state = EXPERIMENT_STATE_PASS_THROUGH_C1;
 	this->state_iter = 0;
 
 	this->result = EXPERIMENT_RESULT_NA;
 }
 
-BranchExperiment::~BranchExperiment() {
+Experiment::~Experiment() {
 	if (this->new_scope != NULL) {
 		delete this->new_scope;
 	}
@@ -65,7 +70,7 @@ BranchExperiment::~BranchExperiment() {
 	#endif /* MDEBUG */
 }
 
-BranchExperimentHistory::BranchExperimentHistory(BranchExperiment* experiment) {
+ExperimentHistory::ExperimentHistory(Experiment* experiment) {
 	this->experiment = experiment;
 
 	this->is_hit = false;
@@ -73,6 +78,6 @@ BranchExperimentHistory::BranchExperimentHistory(BranchExperiment* experiment) {
 	this->num_instances = 0;
 }
 
-BranchExperimentState::BranchExperimentState(BranchExperiment* experiment) {
+ExperimentState::ExperimentState(Experiment* experiment) {
 	this->experiment = experiment;
 }

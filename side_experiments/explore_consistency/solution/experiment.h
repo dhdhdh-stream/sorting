@@ -1,5 +1,5 @@
-#ifndef BRANCH_EXPERIMENT_H
-#define BRANCH_EXPERIMENT_H
+#ifndef EXPERIMENT_H
+#define EXPERIMENT_H
 
 #include <vector>
 
@@ -11,20 +11,23 @@ class Network;
 class Scope;
 class SolutionWrapper;
 
-const int BRANCH_EXPERIMENT_STATE_TRAIN_NEW = 0;
+const int EXPERIMENT_STATE_PASS_THROUGH_C1 = 0;
+const int EXPERIMENT_STATE_PASS_THROUGH_C2 = 1;
+const int EXPERIMENT_STATE_PASS_THROUGH_C3 = 2;
+const int EXPERIMENT_STATE_TRAIN_NEW = 3;
 /**
  * - don't bother with trying to refine
  *   - impact low
  *     - not worth the samples
  */
-const int BRANCH_EXPERIMENT_STATE_MEASURE = 1;
+const int EXPERIMENT_STATE_MEASURE = 4;
 #if defined(MDEBUG) && MDEBUG
-const int BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY = 2;
+const int EXPERIMENT_STATE_CAPTURE_VERIFY = 5;
 #endif /* MDEBUG */
 
-class BranchExperimentHistory;
-class BranchExperimentState;
-class BranchExperiment : public AbstractExperiment {
+class ExperimentHistory;
+class ExperimentState;
+class Experiment : public AbstractExperiment {
 public:
 	int state;
 	int state_iter;
@@ -36,6 +39,8 @@ public:
 	AbstractNode* exit_next_node;
 
 	std::vector<AbstractNode*> new_nodes;
+
+	bool is_pass_through;
 
 	Network* new_val_network;
 
@@ -53,8 +58,8 @@ public:
 	std::vector<double> verify_scores;
 	#endif /* MDEBUG */
 
-	BranchExperiment(ExploreInstance* explore_instance);
-	~BranchExperiment();
+	Experiment(ExploreInstance* explore_instance);
+	~Experiment();
 
 	void result_check_activate(AbstractNode* experiment_node,
 							   bool is_branch,
@@ -76,6 +81,18 @@ public:
 	void backprop(double target_val,
 				  SolutionWrapper* wrapper);
 
+	void pass_through_result_backprop(double target_val,
+									  SolutionWrapper* wrapper);
+	void pass_through_check_activate(SolutionWrapper* wrapper);
+	void pass_through_step(std::vector<double>& obs,
+						   int& action,
+						   bool& is_next,
+						   SolutionWrapper* wrapper);
+	void pass_through_exit_step(SolutionWrapper* wrapper,
+								ExperimentState* experiment_state);
+	void pass_through_backprop(double target_val,
+							   SolutionWrapper* wrapper);
+
 	void train_new_result_check_activate(SolutionWrapper* wrapper);
 	void train_new_result_backprop(SolutionWrapper* wrapper);
 
@@ -85,7 +102,7 @@ public:
 						bool& is_next,
 						SolutionWrapper* wrapper);
 	void train_new_exit_step(SolutionWrapper* wrapper,
-							 BranchExperimentState* experiment_state);
+							 ExperimentState* experiment_state);
 	void train_new_backprop(double target_val,
 							SolutionWrapper* wrapper);
 
@@ -98,7 +115,7 @@ public:
 					  bool& is_next,
 					  SolutionWrapper* wrapper);
 	void measure_exit_step(SolutionWrapper* wrapper,
-						   BranchExperimentState* experiment_state);
+						   ExperimentState* experiment_state);
 	void measure_backprop(double target_val,
 						  SolutionWrapper* wrapper);
 
@@ -109,7 +126,7 @@ public:
 							 bool& is_next,
 							 SolutionWrapper* wrapper);
 	void capture_verify_exit_step(SolutionWrapper* wrapper,
-								  BranchExperimentState* experiment_state);
+								  ExperimentState* experiment_state);
 	void capture_verify_backprop(SolutionWrapper* wrapper);
 	#endif /* MDEBUG */
 
@@ -118,20 +135,20 @@ public:
 	double calc_new_score();
 };
 
-class BranchExperimentHistory : public AbstractExperimentHistory {
+class ExperimentHistory : public AbstractExperimentHistory {
 public:
 	int num_instances;
 
 	int explore_index;
 
-	BranchExperimentHistory(BranchExperiment* experiment);
+	ExperimentHistory(Experiment* experiment);
 };
 
-class BranchExperimentState : public AbstractExperimentState {
+class ExperimentState : public AbstractExperimentState {
 public:
 	int step_index;
 
-	BranchExperimentState(BranchExperiment* experiment);
+	ExperimentState(Experiment* experiment);
 };
 
-#endif /* BRANCH_EXPERIMENT_H */
+#endif /* EXPERIMENT_H */

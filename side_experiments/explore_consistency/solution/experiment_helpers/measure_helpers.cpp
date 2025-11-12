@@ -1,4 +1,4 @@
-#include "branch_experiment.h"
+#include "experiment.h"
 
 #include <cmath>
 #include <iostream>
@@ -18,28 +18,28 @@
 
 using namespace std;
 
-void BranchExperiment::measure_result_backprop(
+void Experiment::measure_result_backprop(
 		double target_val,
 		SolutionWrapper* wrapper) {
-	BranchExperimentHistory* history = (BranchExperimentHistory*)wrapper->experiment_history;
+	ExperimentHistory* history = (ExperimentHistory*)wrapper->experiment_history;
 	if (!history->is_hit) {
 		this->total_count++;
 		this->total_sum_scores += target_val;
 	}
 }
 
-void BranchExperiment::measure_check_activate(
+void Experiment::measure_check_activate(
 		SolutionWrapper* wrapper) {
-	BranchExperimentState* new_experiment_state = new BranchExperimentState(this);
+	ExperimentState* new_experiment_state = new ExperimentState(this);
 	new_experiment_state->step_index = 0;
 	wrapper->experiment_context.back() = new_experiment_state;
 }
 
-void BranchExperiment::measure_step(vector<double>& obs,
-									int& action,
-									bool& is_next,
-									SolutionWrapper* wrapper) {
-	BranchExperimentState* experiment_state = (BranchExperimentState*)wrapper->experiment_context.back();
+void Experiment::measure_step(vector<double>& obs,
+							  int& action,
+							  bool& is_next,
+							  SolutionWrapper* wrapper) {
+	ExperimentState* experiment_state = (ExperimentState*)wrapper->experiment_context.back();
 
 	if (experiment_state->step_index == 0) {
 		this->new_val_network->activate(obs);
@@ -89,8 +89,8 @@ void BranchExperiment::measure_step(vector<double>& obs,
 	}
 }
 
-void BranchExperiment::measure_exit_step(SolutionWrapper* wrapper,
-										 BranchExperimentState* experiment_state) {
+void Experiment::measure_exit_step(SolutionWrapper* wrapper,
+								   ExperimentState* experiment_state) {
 	delete wrapper->scope_histories.back();
 
 	wrapper->scope_histories.pop_back();
@@ -100,8 +100,8 @@ void BranchExperiment::measure_exit_step(SolutionWrapper* wrapper,
 	experiment_state->step_index++;
 }
 
-void BranchExperiment::measure_backprop(double target_val,
-										SolutionWrapper* wrapper) {
+void Experiment::measure_backprop(double target_val,
+								  SolutionWrapper* wrapper) {
 	this->total_count++;
 	this->total_sum_scores += target_val;
 
@@ -120,7 +120,7 @@ void BranchExperiment::measure_backprop(double target_val,
 
 			this->improvement = average_hits_per_run * new_score;
 
-			cout << "BranchExperiment" << endl;
+			cout << "branch" << endl;
 			cout << "this->scope_context->id: " << this->scope_context->id << endl;
 			cout << "this->node_context->id: " << this->node_context->id << endl;
 			cout << "this->is_branch: " << this->is_branch << endl;
@@ -149,7 +149,7 @@ void BranchExperiment::measure_backprop(double target_val,
 			this->verify_problems = vector<Problem*>(NUM_VERIFY_SAMPLES, NULL);
 			this->verify_seeds = vector<unsigned long>(NUM_VERIFY_SAMPLES);
 
-			this->state = BRANCH_EXPERIMENT_STATE_CAPTURE_VERIFY;
+			this->state = EXPERIMENT_STATE_CAPTURE_VERIFY;
 			this->state_iter = 0;
 			#else
 			this->result = EXPERIMENT_RESULT_SUCCESS;
