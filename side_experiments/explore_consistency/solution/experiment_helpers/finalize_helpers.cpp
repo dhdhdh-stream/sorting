@@ -24,6 +24,7 @@ void Experiment::clean() {
 void Experiment::add(SolutionWrapper* wrapper) {
 	stringstream ss;
 	ss << "Experiment" << "; ";
+	ss << "this->is_pass_through: " << this->is_pass_through << "; ";
 	ss << "this->scope_context->id: " << this->scope_context->id << "; ";
 	ss << "this->node_context->id: " << this->node_context->id << "; ";
 	ss << "this->is_branch: " << this->is_branch << "; ";

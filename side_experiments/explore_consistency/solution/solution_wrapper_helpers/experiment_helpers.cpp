@@ -113,6 +113,9 @@ void SolutionWrapper::experiment_end(double result) {
 						this->best_explore_instances[s_index]->consistency = sum_val / count;
 					}
 
+					// cout << s_index << endl;
+					// cout << "consistency: " << this->best_explore_instances[s_index]->consistency << endl;
+
 					if ((this->consistent_explore_instances.back() == NULL
 							|| this->consistent_explore_instances.back()->consistency < this->best_explore_instances[s_index]->consistency)) {
 						if (this->consistent_explore_instances.back() != NULL) {
@@ -142,6 +145,16 @@ void SolutionWrapper::experiment_end(double result) {
 
 					this->best_explore_instances[s_index] = NULL;
 				}
+
+				// for (int s_index = 0; s_index < (int)this->best_explore_instances.size(); s_index++) {
+				// 	if (s_index < NUM_EXPERIMENTS) {
+				// 		this->consistent_explore_instances[s_index] = this->best_explore_instances[s_index];
+				// 	} else {
+				// 		delete this->best_explore_instances[s_index];
+				// 	}
+
+				// 	this->best_explore_instances[s_index] = NULL;
+				// }
 
 				// temp
 				for (int e_index = 0; e_index < (int)this->consistent_explore_instances.size(); e_index++) {

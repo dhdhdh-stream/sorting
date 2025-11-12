@@ -7,6 +7,8 @@
 
 // - for explore phase without result, still have existing training phase
 
+// TODO: scale surprise by hit rate
+
 #include <chrono>
 #include <iostream>
 #include <map>
