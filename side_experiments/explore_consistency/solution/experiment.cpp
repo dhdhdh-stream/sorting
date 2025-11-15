@@ -32,9 +32,6 @@ Experiment::Experiment(ExploreInstance* explore_instance) {
 	this->scopes = explore_instance->scopes;
 	this->exit_next_node = explore_instance->exit_next_node;
 
-	this->new_nodes = explore_instance->new_nodes;
-	explore_instance->new_nodes.clear();
-
 	this->new_val_network = NULL;
 
 	this->node_context->experiment = this;

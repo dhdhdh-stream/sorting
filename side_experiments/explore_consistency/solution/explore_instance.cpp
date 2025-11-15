@@ -1,17 +1,21 @@
 #include "explore_instance.h"
 
 #include <iostream>
+#include <limits>
 #include <sstream>
 
 #include "abstract_node.h"
 #include "constants.h"
 #include "explore_experiment.h"
+#include "network.h"
 #include "scope.h"
 
 using namespace std;
 
 ExploreInstance::ExploreInstance() {
 	this->new_scope = NULL;
+
+	this->best_surprise = numeric_limits<double>::lowest();
 }
 
 ExploreInstance::~ExploreInstance() {
@@ -19,11 +23,50 @@ ExploreInstance::~ExploreInstance() {
 		delete this->new_scope;
 	}
 
-	for (int n_index = 0; n_index < (int)this->new_nodes.size(); n_index++) {
-		delete this->new_nodes[n_index];
+	for (int i_index = 0; i_index < (int)this->post_scope_histories.size(); i_index++) {
+		for (int h_index = 0; h_index < (int)this->post_scope_histories[i_index].size(); h_index++) {
+			delete this->post_scope_histories[i_index][h_index];
+		}
+	}
+}
+
+void ExploreInstance::calc_consistency() {
+	double total_sum = 0.0;
+	for (int i_index = 0; i_index < (int)this->post_scope_histories.size(); i_index++) {
+		double sum_consistency = 0.0;
+		int count = 0;
+		for (int h_index = 0; h_index < (int)this->post_scope_histories[i_index].size(); h_index++) {
+			Scope* scope = this->post_scope_histories[i_index][h_index]->scope;
+			if (scope->consistency_network != NULL) {
+				vector<double> input = this->post_scope_histories[i_index][h_index]->pre_obs;
+				input.insert(input.end(), this->post_scope_histories[i_index][h_index]->post_obs.begin(),
+					this->post_scope_histories[i_index][h_index]->post_obs.end());
+
+				scope->consistency_network->activate(input);
+				double consistency = scope->consistency_network->output->acti_vals[0];
+				/**
+				 * - allow to go below -1.0 to help distinguish between bad and very bad
+				 *   - sigmoid not better (?)
+				 */
+				if (consistency >= 3.0) {
+					sum_consistency += 3.0;
+					count++;
+				} else if (consistency <= -3.0) {
+					sum_consistency += -3.0;
+					count++;
+				} else {
+					sum_consistency += consistency;
+					count++;
+				}
+			}
+		}
+
+		if (count != 0) {
+			total_sum += sum_consistency / (double)count;
+		}
 	}
 
-	delete this->scope_history;
+	this->consistency = total_sum / (double)this->post_scope_histories.size();
 }
 
 void ExploreInstance::print() {

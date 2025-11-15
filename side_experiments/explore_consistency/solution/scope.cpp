@@ -244,3 +244,12 @@ ScopeHistory::~ScopeHistory() {
 		delete it->second;
 	}
 }
+
+ScopeHistory* ScopeHistory::copy_signal() {
+	ScopeHistory* new_scope_history = new ScopeHistory(this->scope);
+
+	new_scope_history->pre_obs = this->pre_obs;
+	new_scope_history->post_obs = this->post_obs;
+
+	return new_scope_history;
+}

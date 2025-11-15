@@ -13,6 +13,12 @@ class ExploreExperiment : public AbstractExperiment {
 public:
 	int state_iter;
 
+	ExploreInstance* curr_explore_instance;
+	std::vector<ExploreInstance*> explore_instances;
+
+	int total_count;
+	double average_hits_per_run;
+
 	ExploreExperiment(Scope* scope_context,
 					  AbstractNode* node_context,
 					  bool is_branch,
@@ -46,8 +52,6 @@ public:
 	int num_instances;
 
 	int explore_index;
-
-	ExploreInstance* explore_instance;
 
 	std::vector<ScopeHistory*> stack_trace;
 

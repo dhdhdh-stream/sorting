@@ -56,6 +56,9 @@ public:
 
 	AbstractExperimentHistory* experiment_history;
 
+	bool has_explore;
+	std::vector<ScopeHistory*> post_scope_histories;
+
 	Problem* problem;
 
 	#if defined(MDEBUG) && MDEBUG

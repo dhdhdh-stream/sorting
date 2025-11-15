@@ -135,6 +135,23 @@ void Experiment::train_new_backprop(
 		#else
 		if (num_positive > 0) {
 		#endif /* MDEBUG */
+			for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {
+				if (this->step_types[s_index] == STEP_TYPE_ACTION) {
+					ActionNode* new_action_node = new ActionNode();
+					new_action_node->parent = this->scope_context;
+
+					this->new_nodes.push_back(new_action_node);
+				} else {
+					ScopeNode* new_scope_node = new ScopeNode();
+					new_scope_node->parent = this->scope_context;
+					new_scope_node->id = this->scope_context->node_counter + s_index;
+
+					new_scope_node->scope = this->scopes[s_index];
+
+					this->new_nodes.push_back(new_scope_node);
+				}
+			}
+
 			this->total_count = 0;
 			this->total_sum_scores = 0.0;
 

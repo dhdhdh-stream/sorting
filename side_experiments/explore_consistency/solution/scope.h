@@ -72,6 +72,8 @@ public:
 
 	ScopeHistory(Scope* scope);
 	~ScopeHistory();
+
+	ScopeHistory* copy_signal();
 };
 
 #endif /* SCOPE_H */

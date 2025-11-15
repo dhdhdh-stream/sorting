@@ -79,6 +79,10 @@ void SolutionWrapper::set_action(int action) {
 void SolutionWrapper::experiment_end(double result) {
 	this->scope_histories[0]->post_obs = this->problem->get_observations();
 
+	if (this->has_explore) {
+		this->post_scope_histories.push_back(this->scope_histories[0]->copy_signal());
+	}
+
 	this->experiment_history->experiment->backprop(
 		result,
 		this);
@@ -100,18 +104,8 @@ void SolutionWrapper::experiment_end(double result) {
 					this->solution->scopes[s_index]->update_signals();
 				}
 
-				for (int s_index = 0; s_index < (int)this->best_explore_instances.size(); s_index++) {
-					double sum_val = 0.0;
-					int count = 0;
-					calc_consistency_helper(this->best_explore_instances[s_index]->scope_history,
-											sum_val,
-											count);
-
-					if (count == 0) {
-						this->best_explore_instances[s_index]->consistency = 0.0;
-					} else {
-						this->best_explore_instances[s_index]->consistency = sum_val / count;
-					}
+				for (int s_index = (int)this->best_explore_instances.size()-1; s_index >= 1; s_index--) {
+					this->best_explore_instances[s_index]->calc_consistency();
 
 					// cout << s_index << endl;
 					// cout << "consistency: " << this->best_explore_instances[s_index]->consistency << endl;
@@ -145,6 +139,14 @@ void SolutionWrapper::experiment_end(double result) {
 
 					this->best_explore_instances[s_index] = NULL;
 				}
+				/**
+				 * - always include most surprising instance
+				 */
+				{
+					delete this->consistent_explore_instances.back();
+					this->consistent_explore_instances.back() = this->best_explore_instances[0];
+					this->best_explore_instances[0] = NULL;
+				}
 
 				// for (int s_index = 0; s_index < (int)this->best_explore_instances.size(); s_index++) {
 				// 	if (s_index < NUM_EXPERIMENTS) {
@@ -173,8 +175,6 @@ void SolutionWrapper::experiment_end(double result) {
 		}
 		break;
 	case STATE_EXPERIMENT:
-		delete this->scope_histories[0];
-
 		if (this->curr_experiment->result == EXPERIMENT_RESULT_FAIL) {
 			this->curr_experiment->clean();
 			delete this->curr_experiment;
@@ -236,6 +236,8 @@ void SolutionWrapper::experiment_end(double result) {
 
 		break;
 	}
+
+	delete this->scope_histories[0];
 
 	this->scope_histories.clear();
 	this->node_context.clear();

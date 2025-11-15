@@ -18,15 +18,15 @@ public:
 	std::vector<Scope*> scopes;
 	AbstractNode* exit_next_node;
 
-	std::vector<AbstractNode*> new_nodes;
+	double best_surprise;
 
-	double surprise;
-
-	ScopeHistory* scope_history;
+	std::vector<std::vector<ScopeHistory*>> post_scope_histories;
 	double consistency;
 
 	ExploreInstance();
 	~ExploreInstance();
+
+	void calc_consistency();
 
 	void print();
 };

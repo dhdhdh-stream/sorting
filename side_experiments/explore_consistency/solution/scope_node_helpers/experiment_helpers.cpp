@@ -32,6 +32,10 @@ void ScopeNode::experiment_step(vector<double>& obs,
 void ScopeNode::experiment_exit_step(SolutionWrapper* wrapper) {
 	wrapper->scope_histories.back()->post_obs = wrapper->problem->get_observations();
 
+	if (wrapper->has_explore) {
+		wrapper->post_scope_histories.push_back(wrapper->scope_histories.back()->copy_signal());
+	}
+
 	wrapper->scope_histories.pop_back();
 	wrapper->node_context.pop_back();
 	wrapper->experiment_context.pop_back();

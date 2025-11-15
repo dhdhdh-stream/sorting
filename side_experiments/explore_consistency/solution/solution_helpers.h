@@ -24,9 +24,6 @@ void recursive_add_child(Scope* curr_parent,
 						 Scope* new_scope);
 
 void add_existing_samples_helper(ScopeHistory* scope_history);
-void calc_consistency_helper(ScopeHistory* scope_history,
-							 double& sum_val,
-							 int& count);
 
 void clean_scope(Scope* scope);
 

@@ -9,7 +9,7 @@
 using namespace std;
 
 void Scope::update_signals() {
-	if (this->explore_pre_obs.size() > 0) {
+	if (this->explore_pre_obs.size() > MIN_TRAIN_SAMPLES) {
 		cout << "this->id: " << this->id << endl;
 
 		if (this->consistency_network == NULL) {

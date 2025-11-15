@@ -47,6 +47,14 @@ const int NUM_EXPERIMENTS = 40;
 #endif /* MDEBUG */
 
 #if defined(MDEBUG) && MDEBUG
+const int MIN_TRAIN_SAMPLES = 10;
+#else
+const int MIN_TRAIN_SAMPLES = 1000;
+#endif /* MDEBUG */
+
+const int MAX_SAMPLES = 4000;
+
+#if defined(MDEBUG) && MDEBUG
 const int NUM_VERIFY_SAMPLES = 10;
 #endif /* MDEBUG */
 
