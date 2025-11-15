@@ -61,6 +61,8 @@ void Solution::init() {
 
 	end_node->next_node_id = -1;
 	end_node->next_node = NULL;
+
+	this->best_scores = vector<double>(NUM_BEST_SCORES, numeric_limits<double>::lowest());
 }
 
 void Solution::load(string path,
@@ -93,6 +95,12 @@ void Solution::load(string path,
 
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
 		this->scopes[s_index]->link(this);
+	}
+
+	for (int s_index = 0; s_index < NUM_BEST_SCORES; s_index++) {
+		string score_line;
+		getline(input_file, score_line);
+		this->best_scores.push_back(stod(score_line));
 	}
 
 	string history_size_line;
@@ -188,6 +196,10 @@ void Solution::save(string path,
 
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
 		this->scopes[s_index]->save(output_file);
+	}
+
+	for (int s_index = 0; s_index < NUM_BEST_SCORES; s_index++) {
+		output_file << this->best_scores[s_index] << endl;
 	}
 
 	output_file << this->improvement_history.size() << endl;

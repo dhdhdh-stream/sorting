@@ -100,7 +100,7 @@ void Experiment::train_new_backprop(
 				ScopeHistory* scope_history = history->stack_traces[s_index][l_index];
 				Scope* scope = scope_history->scope;
 
-				if (scope->consistency_network != NULL) {
+				if (scope->pre_network != NULL) {
 					if (!scope_history->signal_initialized) {
 						scope->pre_network->activate(scope_history->pre_obs);
 						scope_history->pre_val = scope->pre_network->output->acti_vals[0];
@@ -118,7 +118,8 @@ void Experiment::train_new_backprop(
 					sum_counts++;
 				}
 
-				if (this->state_iter < EXPERIMENT_SIGNAL_SAMPLES) {
+				if (this->state_iter < EXPERIMENT_SAMPLES
+						&& wrapper->state_iter < NUM_EXPERIMENTS-1) {
 					double average_val = sum_vals / sum_counts;
 
 					if ((int)scope->signal_pre_obs.size() < MAX_SAMPLES) {

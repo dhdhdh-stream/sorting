@@ -33,6 +33,10 @@ void Experiment::measure_step(vector<double>& obs,
 	ExperimentState* experiment_state = (ExperimentState*)wrapper->experiment_context.back();
 
 	if (experiment_state->step_index == 0) {
+		// // temp
+		// ExploreExperimentHistory* history = (ExploreExperimentHistory*)wrapper->experiment_history;
+		// history->stack_traces.push_back(wrapper->scope_histories);
+
 		this->new_val_network->activate(obs);
 
 		bool decision_is_branch;
@@ -98,15 +102,67 @@ void Experiment::measure_backprop(double target_val,
 
 	ExperimentHistory* history = (ExperimentHistory*)wrapper->experiment_history;
 	if (history->is_hit) {
+		// // temp
+		// for (int s_index = 0; s_index < (int)history->stack_traces.size(); s_index++) {
+		// 	double sum_vals = 0.0;
+		// 	int sum_counts = 0;
+
+		// 	for (int l_index = 0; l_index < (int)history->stack_traces[s_index].size(); l_index++) {
+		// 		ScopeHistory* scope_history = history->stack_traces[s_index][l_index];
+		// 		Scope* scope = scope_history->scope;
+		// 		if (scope->pre_network != NULL) {
+		// 			if (!scope_history->signal_initialized) {
+		// 				scope->pre_network->activate(scope_history->pre_obs);
+		// 				scope_history->pre_val = scope->pre_network->output->acti_vals[0];
+
+		// 				vector<double> inputs = scope_history->pre_obs;
+		// 				inputs.insert(inputs.end(), scope_history->post_obs.begin(), scope_history->post_obs.end());
+
+		// 				scope->post_network->activate(inputs);
+		// 				scope_history->post_val = scope->post_network->output->acti_vals[0];
+
+		// 				scope_history->signal_initialized = true;
+		// 			}
+
+		// 			sum_vals += (scope_history->post_val - scope_history->pre_val);
+		// 			sum_counts++;
+		// 		}
+		// 	}
+
+		// 	double average_signal;
+		// 	if (sum_counts == 0) {
+		// 		average_signal = 0.0;
+		// 	} else {
+		// 		average_signal = sum_vals / sum_counts;
+		// 	}
+		// 	this->signal_histories.push_back(average_signal);
+		// }
+
 		this->sum_scores += target_val;
 
 		this->state_iter++;
 		if (this->state_iter >= MEASURE_ITERS) {
 			double new_score = this->sum_scores / this->state_iter;
+			// double total_score = calc_new_score();
+			// // temp
+			// {
+			// 	double sum_vals = 0.0;
+			// 	for (int h_index = 0; h_index < (int)this->signal_histories.size(); h_index++) {
+			// 		sum_vals += this->signal_histories[h_index];
+			// 	}
+			// 	double new_signal = sum_vals / (double)this->signal_histories.size();
+
+			// 	cout << "existing_signal: " << this->explore_experiment->existing_signal << endl;
+			// 	cout << "new_signal: " << new_signal << endl;
+			// }
 
 			#if defined(MDEBUG) && MDEBUG
+			// if ((new_score >= this->explore_experiment->existing_score
+			// 		&& total_score > wrapper->solution->best_scores.back()) || rand()%2 == 0) {
 			if (new_score >= this->explore_experiment->existing_score || rand()%2 == 0) {
 			#else
+			// if (new_score >= this->explore_experiment->existing_score
+			// 		&& total_score > wrapper->solution->best_scores.back()) {
 			if (new_score >= this->explore_experiment->existing_score) {
 			#endif /* MDEBUG */
 				double average_hits_per_run = (double)MEASURE_ITERS / (double)this->total_count;

@@ -21,6 +21,8 @@ using namespace std;
 Experiment::Experiment(ExploreInstance* explore_instance) {
 	this->type = EXPERIMENT_TYPE_EXPERIMENT;
 
+	this->explore_experiment = explore_instance->experiment;
+
 	this->scope_context = explore_instance->experiment->scope_context;
 	this->node_context = explore_instance->experiment->node_context;
 	this->is_branch = explore_instance->experiment->is_branch;

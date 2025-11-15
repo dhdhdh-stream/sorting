@@ -1,5 +1,7 @@
 #include "explore_experiment.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
@@ -20,14 +22,14 @@ using namespace std;
 #if defined(MDEBUG) && MDEBUG
 const int EXPLORE_EXPERIMENT_EXPLORE_ITERS = 10;
 #else
-const int EXPLORE_EXPERIMENT_EXPLORE_ITERS = 400;
+const int EXPLORE_EXPERIMENT_EXPLORE_ITERS = 1000;
 #endif /* MDEBUG */
 
 void ExploreExperiment::explore_check_activate(SolutionWrapper* wrapper) {
 	ExploreExperimentHistory* history = (ExploreExperimentHistory*)wrapper->experiment_history;
 
 	this->num_instances_until_target--;
-	if (history->explore_instance != NULL
+	if (history->explore_instance == NULL
 			&& this->num_instances_until_target <= 0) {
 		wrapper->has_explore = true;
 
@@ -235,7 +237,7 @@ void ExploreExperiment::explore_backprop(double target_val,
 			ScopeHistory* scope_history = history->stack_traces[0][l_index];
 			Scope* scope = scope_history->scope;
 
-			if (scope->consistency_network != NULL) {
+			if (scope->pre_network != NULL) {
 				if (!scope_history->signal_initialized) {
 					scope->pre_network->activate(scope_history->pre_obs);
 					scope_history->pre_val = scope->pre_network->output->acti_vals[0];
@@ -253,16 +255,18 @@ void ExploreExperiment::explore_backprop(double target_val,
 				sum_counts++;
 			}
 
-			if ((int)scope->consistency_explore_pre_obs.size() < MAX_SAMPLES) {
-				scope->consistency_explore_pre_obs.push_back(scope_history->pre_obs);
-				scope->consistency_explore_post_obs.push_back(scope_history->post_obs);
-			} else {
-				scope->consistency_explore_pre_obs[scope->consistency_explore_index] = scope_history->pre_obs;
-				scope->consistency_explore_post_obs[scope->consistency_explore_index] = scope_history->post_obs;
-			}
-			scope->consistency_explore_index++;
-			if (scope->consistency_explore_index >= MAX_SAMPLES) {
-				scope->consistency_explore_index = 0;
+			if (this->state_iter < EXPERIMENT_SAMPLES) {
+				if ((int)scope->consistency_explore_pre_obs.size() < MAX_SAMPLES) {
+					scope->consistency_explore_pre_obs.push_back(scope_history->pre_obs);
+					scope->consistency_explore_post_obs.push_back(scope_history->post_obs);
+				} else {
+					scope->consistency_explore_pre_obs[scope->consistency_explore_index] = scope_history->pre_obs;
+					scope->consistency_explore_post_obs[scope->consistency_explore_index] = scope_history->post_obs;
+				}
+				scope->consistency_explore_index++;
+				if (scope->consistency_explore_index >= MAX_SAMPLES) {
+					scope->consistency_explore_index = 0;
+				}
 			}
 		}
 

@@ -39,10 +39,10 @@ const int NUM_EXPLORE_INSTANCES_SAVE = 4;
 const int NUM_EXPERIMENTS = 2;
 #else
 /**
- * - 100000 instances -> 1000 best -> 40 experiments
+ * - 40000 instances -> 400 best -> 40 experiments
  */
-const int NUM_EXPLORE_EXPERIMENTS = 250;
-const int NUM_EXPLORE_INSTANCES_SAVE = 1000;
+const int NUM_EXPLORE_EXPERIMENTS = 40;
+const int NUM_EXPLORE_INSTANCES_SAVE = 400;
 const int NUM_EXPERIMENTS = 40;
 #endif /* MDEBUG */
 
@@ -53,7 +53,7 @@ const int MIN_TRAIN_SAMPLES = 1000;
 #endif /* MDEBUG */
 
 const int MAX_SAMPLES = 4000;
-const int EXPERIMENT_SIGNAL_SAMPLES = 100;
+const int EXPERIMENT_SAMPLES = 50;
 
 #if defined(MDEBUG) && MDEBUG
 const int NUM_VERIFY_SAMPLES = 10;

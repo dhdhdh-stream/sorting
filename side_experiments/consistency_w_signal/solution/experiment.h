@@ -54,6 +54,8 @@ public:
 
 	std::vector<std::vector<double>> obs_histories;
 	std::vector<double> target_val_histories;
+	// // temp
+	// std::vector<double> signal_histories;
 
 	double sum_scores;
 

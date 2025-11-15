@@ -1,5 +1,7 @@
 #include "explore_experiment.h"
 
+#include <iostream>
+
 #include "constants.h"
 #include "globals.h"
 #include "network.h"
@@ -45,8 +47,8 @@ void ExploreExperiment::train_existing_backprop(double target_val,
 	ExploreExperimentHistory* history = (ExploreExperimentHistory*)wrapper->experiment_history;
 	if (history->is_hit) {
 		for (int s_index = 0; s_index < (int)history->stack_traces.size(); s_index++) {
-			double sum_vals = target_val - wrapper->solution->curr_score;
-			int sum_counts = 1;
+			double sum_vals = 0.0;
+			int sum_counts = 0;
 
 			for (int l_index = 0; l_index < (int)history->stack_traces[s_index].size(); l_index++) {
 				ScopeHistory* scope_history = history->stack_traces[s_index][l_index];
@@ -70,6 +72,20 @@ void ExploreExperiment::train_existing_backprop(double target_val,
 				}
 			}
 
+			// // temp
+			// {
+			// 	double average_signal;
+			// 	if (sum_counts == 0) {
+			// 		average_signal = 0.0;
+			// 	} else {
+			// 		average_signal = sum_vals / sum_counts;
+			// 	}
+			// 	this->signal_histories.push_back(average_signal);
+			// }
+
+			sum_vals += (target_val - wrapper->solution->curr_score);
+			sum_counts++;
+
 			double average_val = sum_vals / sum_counts;
 			this->target_val_histories.push_back(average_val);
 		}
@@ -79,6 +95,14 @@ void ExploreExperiment::train_existing_backprop(double target_val,
 		this->state_iter++;
 		if (this->state_iter >= TRAIN_EXISTING_NUM_DATAPOINTS) {
 			this->existing_score = this->sum_scores / this->state_iter;
+			// // temp
+			// {
+			// 	double sum_vals = 0.0;
+			// 	for (int h_index = 0; h_index < (int)this->signal_histories.size(); h_index++) {
+			// 		sum_vals += this->signal_histories[h_index];
+			// 	}
+			// 	this->existing_signal = sum_vals / (double)this->signal_histories.size();
+			// }
 
 			this->average_hits_per_run = (double)TRAIN_EXISTING_NUM_DATAPOINTS / (double)this->total_count;
 

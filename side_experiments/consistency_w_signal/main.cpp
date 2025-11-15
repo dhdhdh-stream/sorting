@@ -1,5 +1,3 @@
-// TODO: allow external when creating new scopes
-
 #include <chrono>
 #include <iostream>
 #include <map>

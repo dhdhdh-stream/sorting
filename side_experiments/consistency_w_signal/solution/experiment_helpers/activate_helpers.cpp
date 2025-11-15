@@ -17,6 +17,9 @@ void Experiment::check_activate(AbstractNode* experiment_node,
 								bool is_branch,
 								SolutionWrapper* wrapper) {
 	if (is_branch == this->is_branch) {
+		ExperimentHistory* history = (ExperimentHistory*)wrapper->experiment_history;
+		history->is_hit = true;
+
 		switch (this->state) {
 		case EXPERIMENT_STATE_TRAIN_NEW:
 			train_new_check_activate(wrapper);

@@ -26,6 +26,8 @@ class Problem;
 class Scope;
 class ScopeHistory;
 
+const int NUM_BEST_SCORES = 5;
+
 class Solution {
 public:
 	/**
@@ -35,6 +37,11 @@ public:
 	double curr_score;
 
 	std::vector<Scope*> scopes;
+
+	/**
+	 * - temp
+	 */
+	std::vector<double> best_scores;
 
 	std::vector<double> improvement_history;
 	std::vector<std::string> change_history;

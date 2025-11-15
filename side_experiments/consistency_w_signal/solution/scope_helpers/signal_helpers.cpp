@@ -132,63 +132,63 @@ void Scope::update_consistency() {
 }
 
 void Scope::update_signals() {
-	if (this->signal_pre_obs.size() > MIN_TRAIN_SAMPLES) {
-		cout << "this->id: " << this->id << endl;
+	// if (this->signal_pre_obs.size() > MIN_TRAIN_SAMPLES) {
+	// 	cout << "this->id: " << this->id << endl;
 
-		if (this->pre_network == NULL) {
-			uniform_int_distribution<int> distribution(0, this->signal_pre_obs.size()-1);
+	// 	if (this->pre_network == NULL) {
+	// 		uniform_int_distribution<int> distribution(0, this->signal_pre_obs.size()-1);
 
-			this->pre_network = new Network(this->signal_pre_obs[0].size(),
-											NETWORK_SIZE_SMALL);
-			for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
-				int index = distribution(generator);
+	// 		this->pre_network = new Network(this->signal_pre_obs[0].size(),
+	// 										NETWORK_SIZE_SMALL);
+	// 		for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
+	// 			int index = distribution(generator);
 
-				this->pre_network->activate(this->signal_pre_obs[index]);
+	// 			this->pre_network->activate(this->signal_pre_obs[index]);
 
-				double error = this->signal_target_vals[index] - this->pre_network->output->acti_vals[0];
+	// 			double error = this->signal_target_vals[index] - this->pre_network->output->acti_vals[0];
 
-				this->pre_network->backprop(error);
-			}
+	// 			this->pre_network->backprop(error);
+	// 		}
 
-			this->post_network = new Network(this->signal_pre_obs[0].size() + this->signal_post_obs[0].size(),
-											 NETWORK_SIZE_LARGE);
-			for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
-				int index = distribution(generator);
+	// 		this->post_network = new Network(this->signal_pre_obs[0].size() + this->signal_post_obs[0].size(),
+	// 										 NETWORK_SIZE_LARGE);
+	// 		for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
+	// 			int index = distribution(generator);
 
-				vector<double> input = this->signal_pre_obs[index];
-				input.insert(input.end(), this->signal_post_obs[index].begin(), this->signal_post_obs[index].end());
+	// 			vector<double> input = this->signal_pre_obs[index];
+	// 			input.insert(input.end(), this->signal_post_obs[index].begin(), this->signal_post_obs[index].end());
 
-				this->post_network->activate(input);
+	// 			this->post_network->activate(input);
 
-				double error = this->signal_target_vals[index] - this->post_network->output->acti_vals[0];
+	// 			double error = this->signal_target_vals[index] - this->post_network->output->acti_vals[0];
 
-				this->post_network->backprop(error);
-			}
-		} else {
-			uniform_int_distribution<int> distribution(0, this->signal_pre_obs.size()-1);
+	// 			this->post_network->backprop(error);
+	// 		}
+	// 	} else {
+	// 		uniform_int_distribution<int> distribution(0, this->signal_pre_obs.size()-1);
 
-			for (int iter_index = 0; iter_index < UPDATE_ITERS; iter_index++) {
-				int index = distribution(generator);
+	// 		for (int iter_index = 0; iter_index < UPDATE_ITERS; iter_index++) {
+	// 			int index = distribution(generator);
 
-				this->pre_network->activate(this->signal_pre_obs[index]);
+	// 			this->pre_network->activate(this->signal_pre_obs[index]);
 
-				double error = this->signal_target_vals[index] - this->pre_network->output->acti_vals[0];
+	// 			double error = this->signal_target_vals[index] - this->pre_network->output->acti_vals[0];
 
-				this->pre_network->backprop(error);
-			}
+	// 			this->pre_network->backprop(error);
+	// 		}
 
-			for (int iter_index = 0; iter_index < UPDATE_ITERS; iter_index++) {
-				int index = distribution(generator);
+	// 		for (int iter_index = 0; iter_index < UPDATE_ITERS; iter_index++) {
+	// 			int index = distribution(generator);
 
-				vector<double> input = this->signal_pre_obs[index];
-				input.insert(input.end(), this->signal_post_obs[index].begin(), this->signal_post_obs[index].end());
+	// 			vector<double> input = this->signal_pre_obs[index];
+	// 			input.insert(input.end(), this->signal_post_obs[index].begin(), this->signal_post_obs[index].end());
 
-				this->post_network->activate(input);
+	// 			this->post_network->activate(input);
 
-				double error = this->signal_target_vals[index] - this->post_network->output->acti_vals[0];
+	// 			double error = this->signal_target_vals[index] - this->post_network->output->acti_vals[0];
 
-				this->post_network->backprop(error);
-			}
-		}
-	}
+	// 			this->post_network->backprop(error);
+	// 		}
+	// 	}
+	// }
 }

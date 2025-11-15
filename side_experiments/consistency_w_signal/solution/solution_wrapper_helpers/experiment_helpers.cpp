@@ -121,7 +121,7 @@ void SolutionWrapper::experiment_end(double result) {
 						this->solution->scopes[s_index]->update_consistency();
 					}
 
-					for (int s_index = 0; s_index < (int)this->best_explore_instances.size(); s_index++) {
+					for (int s_index = (int)this->best_explore_instances.size()-1; s_index >= 1; s_index--) {
 						this->best_explore_instances[s_index]->calc_consistency();
 
 						// cout << s_index << endl;
@@ -156,6 +156,14 @@ void SolutionWrapper::experiment_end(double result) {
 
 						this->best_explore_instances[s_index] = NULL;
 					}
+					/**
+					 * - always include most surprising instance
+					 */
+					{
+						delete this->consistent_explore_instances.back();
+						this->consistent_explore_instances.back() = this->best_explore_instances[0];
+						this->best_explore_instances[0] = NULL;
+					}
 
 					// for (int s_index = 0; s_index < (int)this->best_explore_instances.size(); s_index++) {
 					// 	if (s_index < NUM_EXPERIMENTS) {
@@ -167,12 +175,12 @@ void SolutionWrapper::experiment_end(double result) {
 					// 	this->best_explore_instances[s_index] = NULL;
 					// }
 
-					// temp
-					for (int e_index = 0; e_index < (int)this->consistent_explore_instances.size(); e_index++) {
-						cout << e_index << endl;
-						this->consistent_explore_instances[e_index]->print();
-						cout << "consistency: " << this->consistent_explore_instances[e_index]->consistency << endl;
-					}
+					// // temp
+					// for (int e_index = 0; e_index < (int)this->consistent_explore_instances.size(); e_index++) {
+					// 	cout << e_index << endl;
+					// 	this->consistent_explore_instances[e_index]->print();
+					// 	cout << "consistency: " << this->consistent_explore_instances[e_index]->consistency << endl;
+					// }
 
 					this->state = STATE_EXPERIMENT;
 					this->state_iter = 0;
@@ -228,6 +236,23 @@ void SolutionWrapper::experiment_end(double result) {
 					this->best_experiment->add(this);
 
 					this->solution->curr_score = this->best_experiment->calc_new_score();
+
+					this->solution->best_scores.back() = this->solution->curr_score;
+					int index = NUM_BEST_SCORES - 1;
+					while (true) {
+						if (this->solution->best_scores[index-1] < this->solution->best_scores[index]) {
+							double temp = this->solution->best_scores[index];
+							this->solution->best_scores[index] = this->solution->best_scores[index-1];
+							this->solution->best_scores[index-1] = temp;
+						} else {
+							break;
+						}
+
+						index--;
+						if (index == 0) {
+							break;
+						}
+					}
 
 					delete this->best_experiment;
 					this->best_experiment = NULL;

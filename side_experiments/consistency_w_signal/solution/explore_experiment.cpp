@@ -45,6 +45,8 @@ ExploreExperimentHistory::ExploreExperimentHistory(ExploreExperiment* experiment
 	this->experiment = experiment;
 
 	this->is_hit = false;
+
+	this->explore_instance = NULL;
 }
 
 ExploreExperimentState::ExploreExperimentState(ExploreExperiment* experiment) {
