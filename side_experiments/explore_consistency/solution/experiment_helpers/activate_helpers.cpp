@@ -33,12 +33,6 @@ void Experiment::result_backprop(
 		double target_val,
 		SolutionWrapper* wrapper) {
 	switch (this->state) {
-	case EXPERIMENT_STATE_PASS_THROUGH_C1:
-	case EXPERIMENT_STATE_PASS_THROUGH_C2:
-	case EXPERIMENT_STATE_PASS_THROUGH_C3:
-		pass_through_result_backprop(target_val,
-									 wrapper);
-		break;
 	case EXPERIMENT_STATE_TRAIN_NEW:
 		train_new_result_backprop(wrapper);
 		break;
@@ -54,11 +48,6 @@ void Experiment::check_activate(AbstractNode* experiment_node,
 								SolutionWrapper* wrapper) {
 	if (is_branch == this->is_branch) {
 		switch (this->state) {
-		case EXPERIMENT_STATE_PASS_THROUGH_C1:
-		case EXPERIMENT_STATE_PASS_THROUGH_C2:
-		case EXPERIMENT_STATE_PASS_THROUGH_C3:
-			pass_through_check_activate(wrapper);
-			break;
 		case EXPERIMENT_STATE_TRAIN_NEW:
 			train_new_check_activate(wrapper);
 			break;
@@ -80,14 +69,6 @@ void Experiment::experiment_step(vector<double>& obs,
 								 bool& fetch_action,
 								 SolutionWrapper* wrapper) {
 	switch (this->state) {
-	case EXPERIMENT_STATE_PASS_THROUGH_C1:
-	case EXPERIMENT_STATE_PASS_THROUGH_C2:
-	case EXPERIMENT_STATE_PASS_THROUGH_C3:
-		pass_through_step(obs,
-						  action,
-						  is_next,
-						  wrapper);
-		break;
 	case EXPERIMENT_STATE_TRAIN_NEW:
 		train_new_step(obs,
 					   action,
@@ -119,12 +100,6 @@ void Experiment::set_action(int action,
 void Experiment::experiment_exit_step(SolutionWrapper* wrapper) {
 	ExperimentState* experiment_state = (ExperimentState*)wrapper->experiment_context[wrapper->experiment_context.size() - 2];
 	switch (this->state) {
-	case EXPERIMENT_STATE_PASS_THROUGH_C1:
-	case EXPERIMENT_STATE_PASS_THROUGH_C2:
-	case EXPERIMENT_STATE_PASS_THROUGH_C3:
-		pass_through_exit_step(wrapper,
-							   experiment_state);
-		break;
 	case EXPERIMENT_STATE_TRAIN_NEW:
 		train_new_exit_step(wrapper,
 							experiment_state);
@@ -145,12 +120,6 @@ void Experiment::experiment_exit_step(SolutionWrapper* wrapper) {
 void Experiment::backprop(double target_val,
 						  SolutionWrapper* wrapper) {
 	switch (this->state) {
-	case EXPERIMENT_STATE_PASS_THROUGH_C1:
-	case EXPERIMENT_STATE_PASS_THROUGH_C2:
-	case EXPERIMENT_STATE_PASS_THROUGH_C3:
-		pass_through_backprop(target_val,
-							  wrapper);
-		break;
 	case EXPERIMENT_STATE_TRAIN_NEW:
 		train_new_backprop(target_val,
 						   wrapper);

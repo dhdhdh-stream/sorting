@@ -1,3 +1,8 @@
+/**
+ * - don't bother with incidental pass_through
+ *   - impact low
+ */
+
 #ifndef EXPERIMENT_H
 #define EXPERIMENT_H
 
@@ -11,18 +16,15 @@ class Network;
 class Scope;
 class SolutionWrapper;
 
-const int EXPERIMENT_STATE_PASS_THROUGH_C1 = 0;
-const int EXPERIMENT_STATE_PASS_THROUGH_C2 = 1;
-const int EXPERIMENT_STATE_PASS_THROUGH_C3 = 2;
-const int EXPERIMENT_STATE_TRAIN_NEW = 3;
+const int EXPERIMENT_STATE_TRAIN_NEW = 0;
 /**
  * - don't bother with trying to refine
  *   - impact low
  *     - not worth the samples
  */
-const int EXPERIMENT_STATE_MEASURE = 4;
+const int EXPERIMENT_STATE_MEASURE = 1;
 #if defined(MDEBUG) && MDEBUG
-const int EXPERIMENT_STATE_CAPTURE_VERIFY = 5;
+const int EXPERIMENT_STATE_CAPTURE_VERIFY = 2;
 #endif /* MDEBUG */
 
 class ExperimentHistory;
@@ -38,11 +40,9 @@ public:
 	std::vector<Scope*> scopes;
 	AbstractNode* exit_next_node;
 
-	std::vector<AbstractNode*> new_nodes;
-
-	bool is_pass_through;
-
 	Network* new_val_network;
+
+	std::vector<AbstractNode*> new_nodes;
 
 	int total_count;
 	double total_sum_scores;
@@ -80,18 +80,6 @@ public:
 	void experiment_exit_step(SolutionWrapper* wrapper);
 	void backprop(double target_val,
 				  SolutionWrapper* wrapper);
-
-	void pass_through_result_backprop(double target_val,
-									  SolutionWrapper* wrapper);
-	void pass_through_check_activate(SolutionWrapper* wrapper);
-	void pass_through_step(std::vector<double>& obs,
-						   int& action,
-						   bool& is_next,
-						   SolutionWrapper* wrapper);
-	void pass_through_exit_step(SolutionWrapper* wrapper,
-								ExperimentState* experiment_state);
-	void pass_through_backprop(double target_val,
-							   SolutionWrapper* wrapper);
 
 	void train_new_result_check_activate(SolutionWrapper* wrapper);
 	void train_new_result_backprop(SolutionWrapper* wrapper);

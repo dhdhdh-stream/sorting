@@ -36,12 +36,7 @@ Experiment::Experiment(ExploreInstance* explore_instance) {
 
 	this->node_context->experiment = this;
 
-	this->total_count = 0;
-	this->total_sum_scores = 0.0;
-
-	this->sum_scores = 0.0;
-
-	this->state = EXPERIMENT_STATE_PASS_THROUGH_C1;
+	this->state = EXPERIMENT_STATE_TRAIN_NEW;
 	this->state_iter = 0;
 
 	this->result = EXPERIMENT_RESULT_NA;

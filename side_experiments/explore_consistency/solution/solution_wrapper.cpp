@@ -22,6 +22,8 @@ SolutionWrapper::SolutionWrapper() {
 
 	this->experiment_history = NULL;
 
+	this->has_explore = false;
+
 	#if defined(MDEBUG) && MDEBUG
 	this->run_index = 0;
 	#endif /* MDEBUG */
@@ -43,6 +45,8 @@ SolutionWrapper::SolutionWrapper(std::string path,
 	this->best_experiment = NULL;
 
 	this->experiment_history = NULL;
+
+	this->has_explore = false;
 
 	#if defined(MDEBUG) && MDEBUG
 	this->run_index = 0;

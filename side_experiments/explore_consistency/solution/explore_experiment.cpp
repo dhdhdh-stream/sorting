@@ -25,6 +25,8 @@ ExploreExperiment::ExploreExperiment(Scope* scope_context,
 
 	this->node_context->experiment = this;
 
+	this->total_count = 0;
+
 	this->curr_explore_instance = new ExploreInstance();
 	this->curr_explore_instance->experiment = this;
 

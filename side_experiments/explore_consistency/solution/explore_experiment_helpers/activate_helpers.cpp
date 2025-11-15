@@ -1,5 +1,7 @@
 #include "explore_experiment.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
@@ -20,7 +22,8 @@ const int EXPLORE_EXPERIMENT_EXPLORE_ITERS = 10;
 const int EXPLORE_NUM_INSTANCES = 2;
 #else
 const int EXPLORE_EXPERIMENT_EXPLORE_ITERS = 400;
-const int EXPLORE_NUM_INSTANCES = 5;
+// const int EXPLORE_NUM_INSTANCES = 5;
+const int EXPLORE_NUM_INSTANCES = 1;
 #endif /* MDEBUG */
 
 void ExploreExperiment::result_check_activate(

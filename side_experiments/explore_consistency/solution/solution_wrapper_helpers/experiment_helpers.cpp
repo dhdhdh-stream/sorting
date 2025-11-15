@@ -104,7 +104,8 @@ void SolutionWrapper::experiment_end(double result) {
 					this->solution->scopes[s_index]->update_signals();
 				}
 
-				for (int s_index = (int)this->best_explore_instances.size()-1; s_index >= 1; s_index--) {
+				// for (int s_index = (int)this->best_explore_instances.size()-1; s_index >= 1; s_index--) {
+				for (int s_index = (int)this->best_explore_instances.size()-1; s_index >= 0; s_index--) {
 					this->best_explore_instances[s_index]->calc_consistency();
 
 					// cout << s_index << endl;
@@ -139,14 +140,16 @@ void SolutionWrapper::experiment_end(double result) {
 
 					this->best_explore_instances[s_index] = NULL;
 				}
-				/**
-				 * - always include most surprising instance
-				 */
-				{
-					delete this->consistent_explore_instances.back();
-					this->consistent_explore_instances.back() = this->best_explore_instances[0];
-					this->best_explore_instances[0] = NULL;
-				}
+				// /**
+				//  * - always include most surprising instance
+				//  */
+				// {
+				// 	this->best_explore_instances[0]->calc_consistency();
+
+				// 	delete this->consistent_explore_instances.back();
+				// 	this->consistent_explore_instances.back() = this->best_explore_instances[0];
+				// 	this->best_explore_instances[0] = NULL;
+				// }
 
 				// for (int s_index = 0; s_index < (int)this->best_explore_instances.size(); s_index++) {
 				// 	if (s_index < NUM_EXPERIMENTS) {
