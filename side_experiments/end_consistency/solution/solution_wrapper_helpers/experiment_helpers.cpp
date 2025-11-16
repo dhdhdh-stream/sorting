@@ -2,10 +2,8 @@
 
 #include <iostream>
 
+#include "branch_experiment.h"
 #include "constants.h"
-#include "experiment.h"
-#include "explore_experiment.h"
-#include "explore_instance.h"
 #include "problem.h"
 #include "scope.h"
 #include "scope_node.h"
@@ -90,146 +88,95 @@ void SolutionWrapper::experiment_end(double result) {
 	delete this->experiment_history;
 	this->experiment_history = NULL;
 
-	switch (this->state) {
-	case STATE_EXPLORE:
-		if (this->curr_explore_experiment->result == EXPERIMENT_RESULT_FAIL) {
-			this->curr_explore_experiment->clean();
-			this->explore_experiments.push_back(this->curr_explore_experiment);
+	if (this->curr_experiment->result == EXPERIMENT_RESULT_FAIL) {
+		this->curr_experiment->clean();
+		delete this->curr_experiment;
 
-			this->curr_explore_experiment = NULL;
+		this->curr_experiment = NULL;
+	} else if (this->curr_experiment->result == EXPERIMENT_RESULT_SUCCESS) {
+		this->curr_experiment->clean();
 
-			this->state_iter++;
-			if (this->state_iter >= NUM_EXPLORE_EXPERIMENTS) {
-				for (int s_index = 0; s_index < (int)this->solution->scopes.size(); s_index++) {
-					this->solution->scopes[s_index]->update_signals();
-				}
-
-				if (allow_break_consistency(this)) {
-					for (int s_index = 0; s_index < (int)this->best_explore_instances.size(); s_index++) {
-						if (s_index < NUM_EXPERIMENTS) {
-							this->consistent_explore_instances[s_index] = this->best_explore_instances[s_index];
-						} else {
-							delete this->best_explore_instances[s_index];
-						}
-
-						this->best_explore_instances[s_index] = NULL;
-					}
-				} else {
-					for (int s_index = (int)this->best_explore_instances.size()-1; s_index >= 0; s_index--) {
-						this->best_explore_instances[s_index]->calc_consistency();
-
-						// cout << s_index << endl;
-						// cout << "best_surprise: " << this->best_explore_instances[s_index]->best_surprise << endl;
-						// cout << "consistency: " << this->best_explore_instances[s_index]->consistency << endl;
-
-						if ((this->consistent_explore_instances.back() == NULL
-								|| this->consistent_explore_instances.back()->consistency < this->best_explore_instances[s_index]->consistency)) {
-							if (this->consistent_explore_instances.back() != NULL) {
-								delete this->consistent_explore_instances.back();
-							}
-							this->consistent_explore_instances.back() = this->best_explore_instances[s_index];
-
-							int index = this->consistent_explore_instances.size()-1;
-							while (true) {
-								if (this->consistent_explore_instances[index-1] == NULL
-										|| this->consistent_explore_instances[index-1]->consistency < this->consistent_explore_instances[index]->consistency) {
-									ExploreInstance* temp = this->consistent_explore_instances[index];
-									this->consistent_explore_instances[index] = this->consistent_explore_instances[index-1];
-									this->consistent_explore_instances[index-1] = temp;
-								} else {
-									break;
-								}
-
-								index--;
-								if (index == 0) {
-									break;
-								}
-							}
-						} else {
-							delete this->best_explore_instances[s_index];
-						}
-
-						this->best_explore_instances[s_index] = NULL;
-					}
-				}
-
-				this->state = STATE_EXPERIMENT;
-				this->state_iter = 0;
-
-				this->curr_experiment = new Experiment(this->consistent_explore_instances[this->state_iter]);
-				delete this->consistent_explore_instances[this->state_iter];
-				this->consistent_explore_instances[this->state_iter] = NULL;
+		if ((this->best_experiments.back() == NULL
+				|| this->best_experiments.back()->improvement < this->curr_experiment->improvement)) {
+			if (this->best_experiments.back() != NULL) {
+				delete this->best_experiments.back();
 			}
-		}
-		break;
-	case STATE_EXPERIMENT:
-		if (this->curr_experiment->result == EXPERIMENT_RESULT_FAIL) {
-			this->curr_experiment->clean();
+			this->best_experiments.back() = this->curr_experiment;
+
+			int index = this->best_experiments.size()-1;
+			while (true) {
+				if (this->best_experiments[index-1] == NULL
+						|| this->best_experiments[index-1]->improvement < this->best_experiments[index]->improvement) {
+					AbstractExperiment* temp = this->best_experiments[index];
+					this->best_experiments[index] = this->best_experiments[index-1];
+					this->best_experiments[index-1] = temp;
+				} else {
+					break;
+				}
+
+				index--;
+				if (index == 0) {
+					break;
+				}
+			}
+		} else {
 			delete this->curr_experiment;
+		}
 
-			this->curr_experiment = NULL;
-		} else if (this->curr_experiment->result == EXPERIMENT_RESULT_SUCCESS) {
-			this->curr_experiment->clean();
+		this->curr_experiment = NULL;
 
-			if (this->best_experiment == NULL) {
-				this->best_experiment = this->curr_experiment;
-			} else {
-				if (this->curr_experiment->improvement > this->best_experiment->improvement) {
-					delete this->best_experiment;
-					this->best_experiment = this->curr_experiment;
-				} else {
-					delete this->curr_experiment;
+		this->improvement_iter++;
+		bool is_done = false;
+		if (this->improvement_iter >= BRANCH_IMPROVEMENTS_PER_ITER) {
+			is_done = true;
+		}
+		if (is_done) {
+			for (int s_index = 0; s_index < (int)this->solution->scopes.size(); s_index++) {
+				this->solution->scopes[s_index]->update_signals();
+			}
+
+			double best_consistency = calc_consistency(this->best_experiments[0]);
+			int best_index = 0;
+			{
+				cout << "0" << endl;
+				cout << "consistency: " << best_consistency << endl;
+				cout << "improvement: " << this->best_experiments[0]->improvement << endl;
+				this->best_experiments[0]->print();
+			}
+			for (int e_index = 1; e_index < SAVE_PER_ITER; e_index++) {
+				double curr_consistency = calc_consistency(this->best_experiments[e_index]);
+				cout << e_index << endl;
+				cout << "consistency: " << curr_consistency << endl;
+				cout << "improvement: " << this->best_experiments[e_index]->improvement << endl;
+				this->best_experiments[e_index]->print();
+				if (curr_consistency > best_consistency) {
+					best_consistency = curr_consistency;
+					best_index = e_index;
 				}
 			}
 
-			this->curr_experiment = NULL;
+			Scope* last_updated_scope = this->best_experiments[best_index]->scope_context;
 
-			this->num_curr_cycle_success++;
-		}
+			this->best_experiments[best_index]->add(this);
 
-		if (this->curr_experiment == NULL) {
-			this->state_iter++;
-			if (this->state_iter >= NUM_EXPERIMENTS) {
-				for (int e_index = 0; e_index < (int)this->explore_experiments.size(); e_index++) {
-					delete this->explore_experiments[e_index];
-				}
-				this->explore_experiments.clear();
+			this->solution->curr_score = this->best_experiments[best_index]->calc_new_score();
 
-				if (this->best_experiment != NULL) {
-					Scope* last_updated_scope = this->best_experiment->scope_context;
-
-					this->best_experiment->add(this);
-
-					this->solution->curr_score = this->best_experiment->calc_new_score();
-
-					delete this->best_experiment;
-					this->best_experiment = NULL;
-
-					clean_scope(last_updated_scope);
-
-					this->solution->clean_scopes();
-
-					this->solution->timestamp++;
-					if (this->solution->timestamp >= RUN_TIMESTEPS) {
-						this->solution->timestamp = -1;
-					}
-				}
-
-				this->cycle_iter++;
-				cout << "this->cycle_iter: " << this->cycle_iter << endl;
-				this->num_last_cycle_success = this->num_curr_cycle_success;
-				this->num_curr_cycle_success = 0;
-
-				this->state = STATE_EXPLORE;
-				this->state_iter = 0;
-			} else {
-				this->curr_experiment = new Experiment(this->consistent_explore_instances[this->state_iter]);
-				delete this->consistent_explore_instances[this->state_iter];
-				this->consistent_explore_instances[this->state_iter] = NULL;
+			for (int e_index = 0; e_index < SAVE_PER_ITER; e_index++) {
+				delete this->best_experiments[e_index];
+				this->best_experiments[e_index] = NULL;
 			}
-		}
 
-		break;
+			clean_scope(last_updated_scope);
+
+			this->solution->clean_scopes();
+
+			this->solution->timestamp++;
+			if (this->solution->timestamp >= RUN_TIMESTEPS) {
+				this->solution->timestamp = -1;
+			}
+
+			this->improvement_iter = 0;
+		}
 	}
 
 	delete this->scope_histories[0];

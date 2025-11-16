@@ -1,3 +1,8 @@
+/**
+ * - every change degrades consistency
+ *   - so goal is to improve results while degrading consistency as gently as possible
+ */
+
 #ifndef SOLUTION_WRAPPER_H
 #define SOLUTION_WRAPPER_H
 

@@ -1,3 +1,8 @@
+/**
+ * - every change degrades consistency
+ *   - so goal is to improve results while degrading consistency as gently as possible
+ */
+
 #ifndef SOLUTION_WRAPPER_H
 #define SOLUTION_WRAPPER_H
 
@@ -6,46 +11,27 @@
 #include <utility>
 #include <vector>
 
+class AbstractExperiment;
 class AbstractExperimentHistory;
 class AbstractExperimentState;
 class AbstractNode;
 class BranchEndNodeHistory;
 class BranchNode;
-class Experiment;
-class ExploreExperiment;
-class ExploreInstance;
 class Problem;
 class ScopeHistory;
 class Solution;
-
-const int STATE_EXPLORE = 0;
-const int STATE_EXPERIMENT = 1;
 
 class SolutionWrapper {
 public:
 	Solution* solution;
 
-	int state;
-	int state_iter;
-
-	int cycle_iter;
-	int num_curr_cycle_success;
-	int num_last_cycle_success;
-
 	/**
 	 * - iter variables
 	 */
-	ExploreExperiment* curr_explore_experiment;
-	std::vector<ExploreExperiment*> explore_experiments;
-	/**
-	 * - save so can be referenced
-	 */
-	std::vector<ExploreInstance*> best_explore_instances;
+	int improvement_iter;
 
-	std::vector<ExploreInstance*> consistent_explore_instances;
-
-	Experiment* curr_experiment;
-	Experiment* best_experiment;
+	AbstractExperiment* curr_experiment;
+	std::vector<AbstractExperiment*> best_experiments;
 
 	/**
 	 * - run variables

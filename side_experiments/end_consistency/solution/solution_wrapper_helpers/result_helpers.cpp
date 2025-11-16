@@ -2,9 +2,8 @@
 
 #include <iostream>
 
+#include "branch_experiment.h"
 #include "constants.h"
-#include "experiment.h"
-#include "explore_experiment.h"
 #include "problem.h"
 #include "scope.h"
 #include "scope_node.h"
@@ -25,15 +24,15 @@ void SolutionWrapper::result_init() {
 	this->curr_run_seed = xorshift(this->starting_run_seed);
 	#endif /* MDEBUG */
 
-	switch (this->state) {
-	case STATE_EXPLORE:
-		if (this->curr_explore_experiment != NULL) {
-			this->experiment_history = new ExploreExperimentHistory(this->curr_explore_experiment);
+	if (this->curr_experiment != NULL) {
+		switch (this->curr_experiment->type) {
+		case EXPERIMENT_TYPE_BRANCH:
+			{
+				BranchExperiment* branch_experiment = (BranchExperiment*)this->curr_experiment;
+				this->experiment_history = new BranchExperimentHistory(branch_experiment);
+			}
+			break;
 		}
-		break;
-	case STATE_EXPERIMENT:
-		this->experiment_history = new ExperimentHistory(this->curr_experiment);
-		break;
 	}
 
 	ScopeHistory* scope_history = new ScopeHistory(this->solution->scopes[0]);
@@ -76,34 +75,14 @@ bool SolutionWrapper::result_end(double result) {
 		this->post_scope_histories.push_back(this->scope_histories[0]->copy_signal());
 	}
 
-	switch (this->state) {
-	case STATE_EXPLORE:
-		add_existing_samples_helper(this->scope_histories[0]);
+	add_existing_samples_helper(this->scope_histories[0]);
 
-		if (this->curr_explore_experiment == NULL) {
-			create_experiment(this->scope_histories[0],
-							  this);
+	if (this->curr_experiment == NULL) {
+		create_experiment(this->scope_histories[0],
+						  this);
 
-			is_continue = false;
-		} else {
-			this->existing_result = result;
-
-			this->experiment_history->experiment->result_backprop(
-				result,
-				this);
-
-			if (this->experiment_history->is_hit) {
-				is_continue = true;
-			} else {
-				delete this->experiment_history;
-				this->experiment_history = NULL;
-
-				is_continue = false;
-			}
-		}
-
-		break;
-	case STATE_EXPERIMENT:
+		is_continue = false;
+	} else {
 		this->existing_result = result;
 
 		this->experiment_history->experiment->result_backprop(
@@ -118,8 +97,6 @@ bool SolutionWrapper::result_end(double result) {
 
 			is_continue = false;
 		}
-
-		break;
 	}
 
 	delete this->scope_histories[0];

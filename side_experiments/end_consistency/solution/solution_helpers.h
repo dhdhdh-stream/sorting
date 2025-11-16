@@ -5,8 +5,8 @@
 #include <utility>
 #include <vector>
 
+class AbstractExperiment;
 class AbstractNode;
-class BranchExperiment;
 class Network;
 class Problem;
 class Scope;
@@ -24,8 +24,7 @@ void recursive_add_child(Scope* curr_parent,
 						 Scope* new_scope);
 
 void add_existing_samples_helper(ScopeHistory* scope_history);
-
-bool allow_break_consistency(SolutionWrapper* wrapper);
+double calc_consistency(AbstractExperiment* experiment);
 
 void clean_scope(Scope* scope);
 

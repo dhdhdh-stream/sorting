@@ -10,23 +10,12 @@ SolutionWrapper::SolutionWrapper() {
 	this->solution = new Solution();
 	this->solution->init();
 
-	this->state = STATE_EXPLORE;
-	this->state_iter = 0;
-
-	this->cycle_iter = 0;
-	this->num_curr_cycle_success = 0;
-	this->num_last_cycle_success = NUM_EXPERIMENTS;	// init to non-0
-
-	this->curr_explore_experiment = NULL;
-	this->best_explore_instances = vector<ExploreInstance*>(NUM_EXPLORE_INSTANCES_SAVE, NULL);
-	this->consistent_explore_instances = vector<ExploreInstance*>(NUM_EXPERIMENTS, NULL);
+	this->improvement_iter = 0;
 
 	this->curr_experiment = NULL;
-	this->best_experiment = NULL;
+	this->best_experiments = vector<AbstractExperiment*>(SAVE_PER_ITER, NULL);
 
 	this->experiment_history = NULL;
-
-	this->has_explore = false;
 
 	#if defined(MDEBUG) && MDEBUG
 	this->run_index = 0;
@@ -38,23 +27,12 @@ SolutionWrapper::SolutionWrapper(std::string path,
 	this->solution = new Solution();
 	this->solution->load(path, name);
 
-	this->state = STATE_EXPLORE;
-	this->state_iter = 0;
-
-	this->cycle_iter = 0;
-	this->num_curr_cycle_success = 0;
-	this->num_last_cycle_success = NUM_EXPERIMENTS;	// init to non-0
-
-	this->curr_explore_experiment = NULL;
-	this->best_explore_instances = vector<ExploreInstance*>(NUM_EXPLORE_INSTANCES_SAVE, NULL);
-	this->consistent_explore_instances = vector<ExploreInstance*>(NUM_EXPERIMENTS, NULL);
+	this->improvement_iter = 0;
 
 	this->curr_experiment = NULL;
-	this->best_experiment = NULL;
+	this->best_experiments = vector<AbstractExperiment*>(SAVE_PER_ITER, NULL);
 
 	this->experiment_history = NULL;
-
-	this->has_explore = false;
 
 	#if defined(MDEBUG) && MDEBUG
 	this->run_index = 0;

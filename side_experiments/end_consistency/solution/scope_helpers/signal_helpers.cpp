@@ -128,11 +128,5 @@ void Scope::update_signals() {
 		cout << "existing_average: " << existing_average << endl;
 		double explore_average = explore_sum_val / explore_count;
 		cout << "explore_average: " << explore_average << endl;
-
-		this->existing_pre_obs.clear();
-		this->existing_post_obs.clear();
-
-		this->explore_pre_obs.clear();
-		this->explore_post_obs.clear();
 	}
 }

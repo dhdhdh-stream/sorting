@@ -11,8 +11,8 @@ class ScopeHistory;
 class Solution;
 class SolutionWrapper;
 
-const int EXPERIMENT_TYPE_EXPLORE = 0;
-const int EXPERIMENT_TYPE_EXPERIMENT = 1;
+const int EXPERIMENT_TYPE_BRANCH = 0;
+const int EXPERIMENT_TYPE_PASS_THROUGH = 1;
 
 const int EXPERIMENT_RESULT_NA = 0;
 const int EXPERIMENT_RESULT_FAIL = 1;
@@ -30,6 +30,9 @@ public:
 	int result;
 
 	double improvement;
+
+	std::vector<std::vector<ScopeHistory*>> existing_post_scope_histories;
+	std::vector<std::vector<ScopeHistory*>> new_post_scope_histories;
 
 	virtual ~AbstractExperiment() {};
 
@@ -52,6 +55,12 @@ public:
 	virtual void experiment_exit_step(SolutionWrapper* wrapper) = 0;
 	virtual void backprop(double target_val,
 						  SolutionWrapper* wrapper) = 0;
+
+	virtual void clean() = 0;
+	virtual void add(SolutionWrapper* wrapper) = 0;
+	virtual double calc_new_score() = 0;
+
+	virtual void print() = 0;
 };
 
 class AbstractExperimentHistory {
@@ -59,6 +68,8 @@ public:
 	AbstractExperiment* experiment;
 
 	bool is_hit;
+
+	std::vector<std::vector<ScopeHistory*>> stack_traces;
 
 	virtual ~AbstractExperimentHistory() {};
 };

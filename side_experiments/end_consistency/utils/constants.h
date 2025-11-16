@@ -34,16 +34,11 @@ const int MEASURE_ITERS = 1000;
  * - large number to select good paths to prevent noise
  */
 #if defined(MDEBUG) && MDEBUG
-const int NUM_EXPLORE_EXPERIMENTS = 2;
-const int NUM_EXPLORE_INSTANCES_SAVE = 4;
-const int NUM_EXPERIMENTS = 2;
+const int BRANCH_IMPROVEMENTS_PER_ITER = 4;
+const int SAVE_PER_ITER = 2;
 #else
-/**
- * - 40000 instances -> 400 best -> 40 experiments
- */
-const int NUM_EXPLORE_EXPERIMENTS = 100;
-const int NUM_EXPLORE_INSTANCES_SAVE = 400;
-const int NUM_EXPERIMENTS = 40;
+const int BRANCH_IMPROVEMENTS_PER_ITER = 60;
+const int SAVE_PER_ITER = 10;
 #endif /* MDEBUG */
 
 #if defined(MDEBUG) && MDEBUG
