@@ -29,6 +29,8 @@ public:
 	int state_iter;
 
 	int cycle_iter;
+	int num_curr_cycle_success;
+	int num_last_cycle_success;
 
 	/**
 	 * - iter variables

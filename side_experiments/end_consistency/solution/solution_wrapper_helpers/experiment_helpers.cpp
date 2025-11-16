@@ -104,7 +104,7 @@ void SolutionWrapper::experiment_end(double result) {
 					this->solution->scopes[s_index]->update_signals();
 				}
 
-				if (allow_break_consistency(wrapper)) {
+				if (allow_break_consistency(this)) {
 					for (int s_index = 0; s_index < (int)this->best_explore_instances.size(); s_index++) {
 						if (s_index < NUM_EXPERIMENTS) {
 							this->consistent_explore_instances[s_index] = this->best_explore_instances[s_index];
@@ -119,6 +119,7 @@ void SolutionWrapper::experiment_end(double result) {
 						this->best_explore_instances[s_index]->calc_consistency();
 
 						// cout << s_index << endl;
+						// cout << "best_surprise: " << this->best_explore_instances[s_index]->best_surprise << endl;
 						// cout << "consistency: " << this->best_explore_instances[s_index]->consistency << endl;
 
 						if ((this->consistent_explore_instances.back() == NULL
@@ -182,6 +183,8 @@ void SolutionWrapper::experiment_end(double result) {
 			}
 
 			this->curr_experiment = NULL;
+
+			this->num_curr_cycle_success++;
 		}
 
 		if (this->curr_experiment == NULL) {
@@ -213,6 +216,9 @@ void SolutionWrapper::experiment_end(double result) {
 				}
 
 				this->cycle_iter++;
+				cout << "this->cycle_iter: " << this->cycle_iter << endl;
+				this->num_last_cycle_success = this->num_curr_cycle_success;
+				this->num_curr_cycle_success = 0;
 
 				this->state = STATE_EXPLORE;
 				this->state_iter = 0;

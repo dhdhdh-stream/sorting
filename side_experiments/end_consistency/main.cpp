@@ -1,4 +1,8 @@
-// allow break every 10 iters?
+// - most changes degrade consistency
+//   - goal is to degrade gently while improving?
+
+// - perhaps original 60 -> 10 -> 1 approach is just the best?
+//   - though doesn't incorporate signals
 
 #include <chrono>
 #include <iostream>

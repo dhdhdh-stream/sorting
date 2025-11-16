@@ -205,13 +205,15 @@ void Experiment::measure_backprop(double target_val,
 
 		bool is_success;
 		if (allow_break_consistency(wrapper)) {
-			if (new_score >= 0.0) {
+			// if (new_score >= 0.0) {
+			if (new_score > 0.0) {
 				is_success = true;
 			} else {
 				is_success = false;
 			}
 		} else {
-			if (new_score >= 0.0 && this->sum_consistency >= 0.0) {
+			// if (new_score >= 0.0 && this->sum_consistency >= 0.0) {
+			if (new_score > 0.0 && this->sum_consistency >= 0.0) {
 				is_success = true;
 			} else {
 				is_success = false;

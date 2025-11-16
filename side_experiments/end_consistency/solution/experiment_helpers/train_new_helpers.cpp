@@ -156,6 +156,7 @@ void Experiment::train_new_backprop(
 			this->total_sum_scores = 0.0;
 
 			this->sum_scores = 0.0;
+			this->sum_consistency = 0.0;
 
 			this->state = EXPERIMENT_STATE_MEASURE;
 			this->state_iter = 0;

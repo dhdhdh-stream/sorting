@@ -14,6 +14,8 @@ SolutionWrapper::SolutionWrapper() {
 	this->state_iter = 0;
 
 	this->cycle_iter = 0;
+	this->num_curr_cycle_success = 0;
+	this->num_last_cycle_success = NUM_EXPERIMENTS;	// init to non-0
 
 	this->curr_explore_experiment = NULL;
 	this->best_explore_instances = vector<ExploreInstance*>(NUM_EXPLORE_INSTANCES_SAVE, NULL);
@@ -40,6 +42,8 @@ SolutionWrapper::SolutionWrapper(std::string path,
 	this->state_iter = 0;
 
 	this->cycle_iter = 0;
+	this->num_curr_cycle_success = 0;
+	this->num_last_cycle_success = NUM_EXPERIMENTS;	// init to non-0
 
 	this->curr_explore_experiment = NULL;
 	this->best_explore_instances = vector<ExploreInstance*>(NUM_EXPLORE_INSTANCES_SAVE, NULL);
