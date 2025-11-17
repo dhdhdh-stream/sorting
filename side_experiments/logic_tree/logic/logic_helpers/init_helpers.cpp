@@ -1,5 +1,7 @@
 #include "logic_helpers.h"
 
+#include <iostream>
+
 #include "abstract_problem.h"
 #include "constants.h"
 #include "eval_node.h"
@@ -49,6 +51,22 @@ LogicTree* init_helper(AbstractProblem* problem) {
 
 		new_eval_node->network->backprop(error);
 	}
+
+	// // temp
+	// for (int h_index = 0; h_index < (int)obs_histories.size(); h_index++) {
+	// 	new_eval_node->network->activate(obs_histories[h_index]);
+
+	// 	// temp
+	// 	for (int x_index = 0; x_index < 5; x_index++) {
+	// 		for (int y_index = 0; y_index < 5; y_index++) {
+	// 			cout << obs_histories[h_index][x_index * 5 + y_index] << " ";
+	// 		}
+	// 		cout << endl;
+	// 	}
+	// 	cout << "target_val_histories[h_index]: " << target_val_histories[h_index] << endl;
+	// 	cout << "new_eval_node->network->output->acti_vals[0]: " << new_eval_node->network->output->acti_vals[0] << endl;
+	// 	cout << endl;
+	// }
 
 	new_eval_node->weight = 1.0;
 

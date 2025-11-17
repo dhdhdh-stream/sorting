@@ -1,5 +1,7 @@
 #include "logic_wrapper.h"
 
+#include <iostream>
+
 #include "abstract_logic_node.h"
 #include "logic_experiment.h"
 #include "logic_helpers.h"
@@ -66,7 +68,10 @@ void LogicWrapper::update() {
 			}
 		}
 
+		cout << "this->best_experiment->improvement: " << this->best_experiment->improvement << endl;
+
 		this->best_experiment->add(this->logic_tree);
+		delete this->best_experiment;
 		this->best_experiment = NULL;
 		this->improvement_iter = 0;
 	}

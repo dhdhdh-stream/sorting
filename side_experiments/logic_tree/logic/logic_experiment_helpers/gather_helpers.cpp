@@ -1,6 +1,11 @@
+// TODO: split not good enough
+// - then overfits
+// - basing on random seeds averages out to nothing
+
 #include "logic_experiment.h"
 
 #include <algorithm>
+#include <iostream>
 
 #include "constants.h"
 #include "globals.h"
@@ -125,12 +130,20 @@ void LogicExperiment::gather_activate(vector<double>& obs,
 		vector<vector<double>> match_obs;
 		vector<double> match_target_vals;
 		for (int h_index = 0; h_index < (int)this->obs_histories.size(); h_index++) {
-			this->split_network->activate(this->obs_histories[h_index]);
-			if (this->split_network->output->acti_vals[0] > 0.0) {
+			// this->split_network->activate(this->obs_histories[h_index]);
+			// #if defined(MDEBUG) && MDEBUG
+			// if (this->split_network->output->acti_vals[0] > 0.0 || rand()%2 == 0) {
+			// #else
+			// if (this->split_network->output->acti_vals[0] > 0.0) {
+			// #endif /* MDEBUG */
+			// temp
+			if (this->obs_histories[h_index][0] == 20.0) {
 				match_obs.push_back(this->obs_histories[h_index]);
 				match_target_vals.push_back(this->target_val_histories[h_index]);
 			}
 		}
+
+		cout << "match_obs.size(): " << match_obs.size() << endl;
 
 		uniform_int_distribution<int> match_distribution(0, match_obs.size()-1);
 		for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
@@ -143,6 +156,10 @@ void LogicExperiment::gather_activate(vector<double>& obs,
 			this->eval_network->backprop(error);
 		}
 
+		this->sum_improvement = 0.0;
+		this->count = 0;
+
 		this->state = LOGIC_EXPERIMENT_STATE_MEASURE;
+		this->state_iter = 0;
 	}
 }
