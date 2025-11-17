@@ -1,6 +1,3 @@
-// - if don't want separate signal actions
-//   - can try explicitly including nodes as pre vs. post
-
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -32,33 +29,29 @@ int main(int argc, char* argv[]) {
 	LogicWrapper* logic_wrapper;
 	if (argc > 1) {
 		filename = argv[1];
-		logic_wrapper = new LogicWrapper(
-			"saves/",
-			filename);
 	} else {
 		filename = "main.txt";
-		logic_wrapper = new LogicWrapper(problem);
 	}
+	logic_wrapper = new LogicWrapper(
+		"saves/",
+		filename);
 
-	while (true) {
-		auto starting_num_nodes = logic_wrapper->logic_tree->nodes.size();
+	vector<double> obs;
+	double target_val;
+	problem->get_instance(obs,
+						  target_val);
 
-		vector<double> obs;
-		double target_val;
-		problem->get_instance(obs,
-							  target_val);
+	double eval = logic_eval_helper(logic_wrapper->logic_tree->root,
+									obs);
 
-		logic_experiment_helper(logic_wrapper->logic_tree->root,
-								obs,
-								target_val,
-								logic_wrapper);
-
-		logic_wrapper->update(problem);
-
-		if (logic_wrapper->logic_tree->nodes.size() != starting_num_nodes) {
-			logic_wrapper->save("saves/", filename);
+	for (int x_index = 0; x_index < 5; x_index++) {
+		for (int y_index = 0; y_index < 5; y_index++) {
+			cout << obs[x_index * 5 + y_index] << " ";
 		}
+		cout << endl;
 	}
+	cout << "target_val: " << target_val << endl;
+	cout << "eval: " << eval << endl;
 
 	delete problem;
 	delete logic_wrapper;

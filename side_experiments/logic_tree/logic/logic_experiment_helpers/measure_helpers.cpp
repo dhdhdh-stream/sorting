@@ -54,17 +54,17 @@ void LogicExperiment::measure_activate(vector<double>& obs,
 		double new_misguess = (target_val - new_predicted)
 			* (target_val - new_predicted);
 
-		// temp
-		for (int x_index = 0; x_index < 5; x_index++) {
-			for (int y_index = 0; y_index < 5; y_index++) {
-				cout << obs[x_index * 5 + y_index] << " ";
-			}
-			cout << endl;
-		}
-		cout << "target_val: " << target_val << endl;
-		cout << "existing_predicted: " << existing_predicted << endl;
-		cout << "new_predicted: " << new_predicted << endl;
-		cout << endl;
+		// // temp
+		// for (int x_index = 0; x_index < 5; x_index++) {
+		// 	for (int y_index = 0; y_index < 5; y_index++) {
+		// 		cout << obs[x_index * 5 + y_index] << " ";
+		// 	}
+		// 	cout << endl;
+		// }
+		// cout << "target_val: " << target_val << endl;
+		// cout << "existing_predicted: " << existing_predicted << endl;
+		// cout << "new_predicted: " << new_predicted << endl;
+		// cout << endl;
 
 		this->sum_improvement += (existing_misguess - new_misguess);
 		this->count++;
@@ -72,11 +72,15 @@ void LogicExperiment::measure_activate(vector<double>& obs,
 
 	this->state_iter++;
 	if (this->state_iter >= MEASURE_ITERS) {
-		// temp
-		cout << "this->sum_improvement: " << this->sum_improvement << endl;
-		cout << "this->count: " << this->count << endl;
-
 		this->improvement = this->sum_improvement * this->node_context->weight;
+
+		// temp
+		if (this->sum_improvement > 0.0) {
+			cout << "this->sum_improvement: " << this->sum_improvement << endl;
+			cout << "this->node_context->weight: " << this->node_context->weight << endl;
+			cout << "this->count: " << this->count << endl;
+			cout << "this->improvement: " << this->improvement << endl;
+		}
 
 		this->state = LOGIC_EXPERIMENT_STATE_DONE;
 	}

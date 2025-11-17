@@ -19,7 +19,7 @@ public:
 				 std::string name);
 	~LogicWrapper();
 
-	void update();
+	void update(AbstractProblem* problem);
 
 	void save(std::string path,
 			  std::string name);

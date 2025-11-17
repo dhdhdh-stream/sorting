@@ -25,4 +25,7 @@ void find_parent(AbstractLogicNode* node,
 void update_weight_helper(AbstractLogicNode* node,
 						  double multiplier);
 
+double measure_helper(AbstractProblem* problem,
+					  LogicWrapper* logic_wrapper);
+
 #endif /* LOGIC_HELPERS_H */

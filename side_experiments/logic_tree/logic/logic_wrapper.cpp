@@ -12,7 +12,7 @@ using namespace std;
 #if defined(MDEBUG) && MDEBUG
 const int IMPROVEMENTS_PER_ITER = 2;
 #else
-const int IMPROVEMENTS_PER_ITER = 20;
+const int IMPROVEMENTS_PER_ITER = 10;
 #endif /* MDEBUG */
 
 LogicWrapper::LogicWrapper(AbstractProblem* problem) {
@@ -35,7 +35,7 @@ LogicWrapper::~LogicWrapper() {
 	delete this->logic_tree;
 }
 
-void LogicWrapper::update() {
+void LogicWrapper::update(AbstractProblem* problem) {
 	for (map<int, AbstractLogicNode*>::iterator it = this->logic_tree->nodes.begin();
 			it != this->logic_tree->nodes.end(); it++) {
 		if (it->second->experiment != NULL
@@ -51,6 +51,7 @@ void LogicWrapper::update() {
 				}
 
 				this->improvement_iter++;
+				cout << "this->improvement_iter: " << this->improvement_iter << endl;
 			} else {
 				delete it->second->experiment;
 			}
@@ -73,6 +74,11 @@ void LogicWrapper::update() {
 		this->best_experiment->add(this->logic_tree);
 		delete this->best_experiment;
 		this->best_experiment = NULL;
+
+		double curr_misguess = measure_helper(problem,
+											  this);
+		this->logic_tree->improvement_history.push_back(curr_misguess);
+
 		this->improvement_iter = 0;
 	}
 }

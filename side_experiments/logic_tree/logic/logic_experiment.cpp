@@ -26,6 +26,13 @@ LogicExperiment::~LogicExperiment() {
 void LogicExperiment::add(LogicTree* logic_tree) {
 	double branch_percent = (double)this->count / (double)MEASURE_ITERS;
 
+	SplitNode* parent = NULL;
+	bool is_branch;
+	find_parent(this->node_context,
+				logic_tree,
+				parent,
+				is_branch);
+
 	EvalNode* new_eval_node = new EvalNode();
 	new_eval_node->id = logic_tree->node_counter;
 	logic_tree->node_counter++;
@@ -52,12 +59,6 @@ void LogicExperiment::add(LogicTree* logic_tree) {
 
 	new_split_node->weight = this->node_context->weight;
 
-	SplitNode* parent = NULL;
-	bool is_branch;
-	find_parent(this->node_context,
-				logic_tree,
-				parent,
-				is_branch);
 	if (parent == NULL) {
 		logic_tree->root = new_split_node;
 	} else {

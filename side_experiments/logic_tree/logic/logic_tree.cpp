@@ -1,5 +1,7 @@
 #include "logic_tree.h"
 
+#include <iostream>
+
 #include "eval_node.h"
 #include "split_node.h"
 
@@ -28,6 +30,11 @@ void LogicTree::save(string path,
 	}
 
 	output_file << this->root->id << endl;
+
+	output_file << this->improvement_history.size() << endl;
+	for (int h_index = 0; h_index < (int)this->improvement_history.size(); h_index++) {
+		output_file << this->improvement_history[h_index] << endl;
+	}
 
 	output_file.close();
 
@@ -91,6 +98,15 @@ void LogicTree::load(string path,
 	string root_id_line;
 	getline(input_file, root_id_line);
 	this->root = this->nodes[stoi(root_id_line)];
+
+	string history_size_line;
+	getline(input_file, history_size_line);
+	int history_size = stoi(history_size_line);
+	for (int h_index = 0; h_index < history_size; h_index++) {
+		string improvement_line;
+		getline(input_file, improvement_line);
+		this->improvement_history.push_back(stod(improvement_line));
+	}
 
 	input_file.close();
 }

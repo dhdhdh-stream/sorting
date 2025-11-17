@@ -3,6 +3,7 @@
 
 #include <fstream>
 #include <map>
+#include <vector>
 
 class AbstractLogicNode;
 
@@ -12,6 +13,8 @@ public:
 	std::map<int, AbstractLogicNode*> nodes;
 
 	AbstractLogicNode* root;
+
+	std::vector<double> improvement_history;
 
 	~LogicTree();
 
