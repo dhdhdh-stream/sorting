@@ -12,17 +12,12 @@ using namespace std;
 LogicExperiment::LogicExperiment(AbstractLogicNode* node_context) {
 	this->node_context = node_context;
 
-	this->split_network = NULL;
 	this->eval_network = NULL;
 
 	this->state = LOGIC_EXPERIMENT_STATE_GATHER;
 }
 
 LogicExperiment::~LogicExperiment() {
-	if (this->split_network != NULL) {
-		delete this->split_network;
-	}
-
 	if (this->eval_network != NULL) {
 		delete this->eval_network;
 	}
@@ -46,8 +41,9 @@ void LogicExperiment::add(LogicTree* logic_tree) {
 	logic_tree->node_counter++;
 	logic_tree->nodes[new_split_node->id] = new_split_node;
 
-	new_split_node->network = this->split_network;
-	this->split_network = NULL;
+	new_split_node->obs_index = this->obs_index;
+	new_split_node->split_type = this->split_type;
+	new_split_node->split_target = this->split_target;
 
 	new_split_node->original_node_id = this->node_context->id;
 	new_split_node->original_node = this->node_context;

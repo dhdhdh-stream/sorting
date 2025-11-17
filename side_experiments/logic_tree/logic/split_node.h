@@ -7,11 +7,12 @@
 
 class AbstractLogicNode;
 class LogicTree;
-class Network;
 
 class SplitNode : public AbstractLogicNode {
 public:
-	Network* network;
+	int obs_index;
+	int split_type;
+	double split_target;
 
 	int original_node_id;
 	AbstractLogicNode* original_node;

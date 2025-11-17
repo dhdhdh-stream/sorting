@@ -11,10 +11,38 @@ using namespace std;
 
 void LogicExperiment::measure_activate(vector<double>& obs,
 									   double target_val) {
-	// this->split_network->activate(obs);
-	// if (this->split_network->output->acti_vals[0] > 0.0) {
-	// temp
-	if (obs[0] == 20.0) {
+	bool is_match;
+	switch (this->split_type) {
+	case SPLIT_TYPE_GREATER:
+		if (obs[this->obs_index] > this->split_target) {
+			is_match = true;
+		} else {
+			is_match = false;
+		}
+		break;
+	case SPLIT_TYPE_GREATER_EQUAL:
+		if (obs[this->obs_index] >= this->split_target) {
+			is_match = true;
+		} else {
+			is_match = false;
+		}
+		break;
+	case SPLIT_TYPE_LESSER_EQUAL:
+		if (obs[this->obs_index] <= this->split_target) {
+			is_match = true;
+		} else {
+			is_match = false;
+		}
+		break;
+	case SPLIT_TYPE_LESSER:
+		if (obs[this->obs_index] < this->split_target) {
+			is_match = true;
+		} else {
+			is_match = false;
+		}
+		break;
+	}
+	if (is_match) {
 		double existing_predicted = logic_eval_helper(
 			this->node_context,
 			obs);

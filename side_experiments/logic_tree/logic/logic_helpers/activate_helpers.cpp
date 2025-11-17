@@ -1,5 +1,6 @@
 #include "logic_helpers.h"
 
+#include "constants.h"
 #include "eval_node.h"
 #include "logic_experiment.h"
 #include "network.h"
@@ -13,8 +14,38 @@ double logic_eval_helper(AbstractLogicNode* node,
 	case LOGIC_NODE_TYPE_SPLIT:
 		{
 			SplitNode* split_node = (SplitNode*)node;
-			split_node->network->activate(obs);
-			if (split_node->network->output->acti_vals[0] > 0.0) {
+			bool is_branch;
+			switch (split_node->split_type) {
+			case SPLIT_TYPE_GREATER:
+				if (obs[split_node->obs_index] > split_node->split_target) {
+					is_branch = true;
+				} else {
+					is_branch = false;
+				}
+				break;
+			case SPLIT_TYPE_GREATER_EQUAL:
+				if (obs[split_node->obs_index] >= split_node->split_target) {
+					is_branch = true;
+				} else {
+					is_branch = false;
+				}
+				break;
+			case SPLIT_TYPE_LESSER_EQUAL:
+				if (obs[split_node->obs_index] <= split_node->split_target) {
+					is_branch = true;
+				} else {
+					is_branch = false;
+				}
+				break;
+			case SPLIT_TYPE_LESSER:
+				if (obs[split_node->obs_index] < split_node->split_target) {
+					is_branch = true;
+				} else {
+					is_branch = false;
+				}
+				break;
+			}
+			if (is_branch) {
 				return logic_eval_helper(split_node->branch_node,
 										 obs);
 			} else {
@@ -50,8 +81,38 @@ void logic_experiment_helper(AbstractLogicNode* node,
 	case LOGIC_NODE_TYPE_SPLIT:
 		{
 			SplitNode* split_node = (SplitNode*)node;
-			split_node->network->activate(obs);
-			if (split_node->network->output->acti_vals[0] > 0.0) {
+			bool is_branch;
+			switch (split_node->split_type) {
+			case SPLIT_TYPE_GREATER:
+				if (obs[split_node->obs_index] > split_node->split_target) {
+					is_branch = true;
+				} else {
+					is_branch = false;
+				}
+				break;
+			case SPLIT_TYPE_GREATER_EQUAL:
+				if (obs[split_node->obs_index] >= split_node->split_target) {
+					is_branch = true;
+				} else {
+					is_branch = false;
+				}
+				break;
+			case SPLIT_TYPE_LESSER_EQUAL:
+				if (obs[split_node->obs_index] <= split_node->split_target) {
+					is_branch = true;
+				} else {
+					is_branch = false;
+				}
+				break;
+			case SPLIT_TYPE_LESSER:
+				if (obs[split_node->obs_index] < split_node->split_target) {
+					is_branch = true;
+				} else {
+					is_branch = false;
+				}
+				break;
+			}
+			if (is_branch) {
 				logic_experiment_helper(split_node->branch_node,
 										obs,
 										target_val,

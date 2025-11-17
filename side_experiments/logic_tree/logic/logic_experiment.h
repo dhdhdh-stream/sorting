@@ -20,7 +20,10 @@ public:
 	int state;
 	int state_iter;
 
-	Network* split_network;
+	int obs_index;
+	int split_type;
+	double split_target;
+
 	Network* eval_network;
 
 	std::vector<std::vector<double>> obs_histories;
