@@ -1,6 +1,10 @@
 // - if don't want separate signal actions
 //   - can try explicitly including nodes as pre vs. post
 
+// - don't rely on this for algorithmic
+//   - solution handles that
+//   - so goal is just to improve eval
+
 #include <chrono>
 #include <iostream>
 #include <map>

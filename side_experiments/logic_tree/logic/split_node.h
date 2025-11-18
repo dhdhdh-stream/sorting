@@ -1,3 +1,18 @@
+// - split conditions could be a lot more complex
+//   - equals
+//   - relative
+//   - relative equals
+//   - relative between multiple
+//   - algorithmic
+
+// - how to find?
+//   - thing is, you can easily find all kinds of relations
+//     - vast majority of which are not useful
+
+// - BTW, for scopes, context can be useful to pass in as an input
+//   - number of actions
+//   - number of times scope has already appeared
+
 #ifndef SPLIT_NODE_H
 #define SPLIT_NODE_H
 
