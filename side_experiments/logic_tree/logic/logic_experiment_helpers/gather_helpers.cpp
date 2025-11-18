@@ -31,11 +31,81 @@ void LogicExperiment::gather_activate(vector<double>& obs,
 		vector<double> match_target_vals;
 
 		uniform_int_distribution<int> obs_distribution(0, this->obs_histories[0].size()-1);
-		uniform_int_distribution<int> type_distribution(0, 3);
+		uniform_int_distribution<int> type_distribution(0, 13);
 		while (true) {
-			this->obs_index = obs_distribution(generator);
-			this->split_type = type_distribution(generator);
-			this->split_target = this->obs_histories[0][this->obs_index];
+			if (this->obs_histories[0].size() > 1) {
+				uniform_int_distribution<int> type_distribution(0, 7);
+				this->split_type = type_distribution(generator);
+				switch (this->split_type) {
+				case SPLIT_TYPE_GREATER:
+				case SPLIT_TYPE_GREATER_EQUAL:
+				case SPLIT_TYPE_LESSER:
+				case SPLIT_TYPE_LESSER_EQUAL:
+					this->obs_index = obs_distribution(generator);
+					this->rel_obs_index = -1;
+					this->split_target = this->obs_histories[0][this->obs_index];
+					this->split_range = 0.0;
+					break;
+				case SPLIT_TYPE_WITHIN:
+				case SPLIT_TYPE_WITHIN_EQUAL:
+				case SPLIT_TYPE_WITHOUT:
+				case SPLIT_TYPE_WITHOUT_EQUAL:
+					this->obs_index = obs_distribution(generator);
+					this->rel_obs_index = -1;
+					this->split_target = this->obs_histories[0][this->obs_index];
+					this->split_range = abs(this->split_target - this->obs_histories[1][this->obs_index]);
+					break;
+				}
+			} else {
+				uniform_int_distribution<int> type_distribution(0, 13);
+				this->split_type = type_distribution(generator);
+				switch (this->split_type) {
+				case SPLIT_TYPE_GREATER:
+				case SPLIT_TYPE_GREATER_EQUAL:
+				case SPLIT_TYPE_LESSER:
+				case SPLIT_TYPE_LESSER_EQUAL:
+					this->obs_index = obs_distribution(generator);
+					this->rel_obs_index = -1;
+					this->split_target = this->obs_histories[0][this->obs_index];
+					this->split_range = 0.0;
+					break;
+				case SPLIT_TYPE_WITHIN:
+				case SPLIT_TYPE_WITHIN_EQUAL:
+				case SPLIT_TYPE_WITHOUT:
+				case SPLIT_TYPE_WITHOUT_EQUAL:
+					this->obs_index = obs_distribution(generator);
+					this->rel_obs_index = -1;
+					this->split_target = this->obs_histories[0][this->obs_index];
+					this->split_range = abs(this->split_target - this->obs_histories[1][this->obs_index]);
+					break;
+				case SPLIT_TYPE_REL_GREATER:
+				case SPLIT_TYPE_REL_GREATER_EQUAL:
+					this->obs_index = obs_distribution(generator);
+					while (true) {
+						this->rel_obs_index = obs_distribution(generator);
+						if (this->rel_obs_index != this->obs_index) {
+							break;
+						}
+					}
+					this->split_target = this->obs_histories[0][this->obs_index] - this->obs_histories[0][this->rel_obs_index];
+					this->split_range = 0.0;
+					break;
+				case SPLIT_TYPE_REL_WITHIN:
+				case SPLIT_TYPE_REL_WITHIN_EQUAL:
+				case SPLIT_TYPE_REL_WITHOUT:
+				case SPLIT_TYPE_REL_WITHOUT_EQUAL:
+					this->obs_index = obs_distribution(generator);
+					while (true) {
+						this->rel_obs_index = obs_distribution(generator);
+						if (this->rel_obs_index != this->obs_index) {
+							break;
+						}
+					}
+					this->split_target = this->obs_histories[0][this->obs_index] - this->obs_histories[0][this->rel_obs_index];
+					this->split_range = abs(this->split_target - (this->obs_histories[1][this->obs_index] - this->obs_histories[1][this->rel_obs_index]));
+					break;
+				}
+			}
 
 			for (int h_index = 0; h_index < (int)this->obs_histories.size(); h_index++) {
 				switch (this->split_type) {
@@ -51,14 +121,74 @@ void LogicExperiment::gather_activate(vector<double>& obs,
 						match_target_vals.push_back(this->target_val_histories[h_index]);
 					}
 					break;
+				case SPLIT_TYPE_LESSER:
+					if (this->obs_histories[h_index][this->obs_index] < this->split_target) {
+						match_obs.push_back(this->obs_histories[h_index]);
+						match_target_vals.push_back(this->target_val_histories[h_index]);
+					}
+					break;
 				case SPLIT_TYPE_LESSER_EQUAL:
 					if (this->obs_histories[h_index][this->obs_index] <= this->split_target) {
 						match_obs.push_back(this->obs_histories[h_index]);
 						match_target_vals.push_back(this->target_val_histories[h_index]);
 					}
 					break;
-				case SPLIT_TYPE_LESSER:
-					if (this->obs_histories[h_index][this->obs_index] < this->split_target) {
+				case SPLIT_TYPE_WITHIN:
+					if (abs(this->obs_histories[h_index][this->obs_index] - this->split_target) < this->split_range) {
+						match_obs.push_back(this->obs_histories[h_index]);
+						match_target_vals.push_back(this->target_val_histories[h_index]);
+					}
+					break;
+				case SPLIT_TYPE_WITHIN_EQUAL:
+					if (abs(this->obs_histories[h_index][this->obs_index] - this->split_target) <= this->split_range) {
+						match_obs.push_back(this->obs_histories[h_index]);
+						match_target_vals.push_back(this->target_val_histories[h_index]);
+					}
+					break;
+				case SPLIT_TYPE_WITHOUT:
+					if (abs(this->obs_histories[h_index][this->obs_index] - this->split_target) > this->split_range) {
+						match_obs.push_back(this->obs_histories[h_index]);
+						match_target_vals.push_back(this->target_val_histories[h_index]);
+					}
+					break;
+				case SPLIT_TYPE_WITHOUT_EQUAL:
+					if (abs(this->obs_histories[h_index][this->obs_index] - this->split_target) >= this->split_range) {
+						match_obs.push_back(this->obs_histories[h_index]);
+						match_target_vals.push_back(this->target_val_histories[h_index]);
+					}
+					break;
+				case SPLIT_TYPE_REL_GREATER:
+					if (this->obs_histories[h_index][this->obs_index] - this->obs_histories[h_index][this->rel_obs_index] > this->split_target) {
+						match_obs.push_back(this->obs_histories[h_index]);
+						match_target_vals.push_back(this->target_val_histories[h_index]);
+					}
+					break;
+				case SPLIT_TYPE_REL_GREATER_EQUAL:
+					if (this->obs_histories[h_index][this->obs_index] - this->obs_histories[h_index][this->rel_obs_index] >= this->split_target) {
+						match_obs.push_back(this->obs_histories[h_index]);
+						match_target_vals.push_back(this->target_val_histories[h_index]);
+					}
+					break;
+				case SPLIT_TYPE_REL_WITHIN:
+					if (abs((this->obs_histories[h_index][this->obs_index] - this->obs_histories[h_index][this->rel_obs_index]) - this->split_target) < this->split_range) {
+						match_obs.push_back(this->obs_histories[h_index]);
+						match_target_vals.push_back(this->target_val_histories[h_index]);
+					}
+					break;
+				case SPLIT_TYPE_REL_WITHIN_EQUAL:
+					if (abs((this->obs_histories[h_index][this->obs_index] - this->obs_histories[h_index][this->rel_obs_index]) - this->split_target) <= this->split_range) {
+						match_obs.push_back(this->obs_histories[h_index]);
+						match_target_vals.push_back(this->target_val_histories[h_index]);
+					}
+					break;
+				case SPLIT_TYPE_REL_WITHOUT:
+					if (abs((this->obs_histories[h_index][this->obs_index] - this->obs_histories[h_index][this->rel_obs_index]) - this->split_target) > this->split_range) {
+						match_obs.push_back(this->obs_histories[h_index]);
+						match_target_vals.push_back(this->target_val_histories[h_index]);
+					}
+					break;
+				case SPLIT_TYPE_REL_WITHOUT_EQUAL:
+					if (abs((this->obs_histories[h_index][this->obs_index] - this->obs_histories[h_index][this->rel_obs_index]) - this->split_target) >= this->split_range) {
 						match_obs.push_back(this->obs_histories[h_index]);
 						match_target_vals.push_back(this->target_val_histories[h_index]);
 					}

@@ -1,9 +1,9 @@
 // - if don't want separate signal actions
 //   - can try explicitly including nodes as pre vs. post
 
-// - don't rely on this for algorithmic
-//   - solution handles that
-//   - so goal is just to improve eval
+// - BTW, for scopes, context can be useful to pass in as an input
+//   - number of actions
+//   - number of times scope has already appeared
 
 #include <chrono>
 #include <iostream>

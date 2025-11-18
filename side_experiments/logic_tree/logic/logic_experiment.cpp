@@ -49,8 +49,10 @@ void LogicExperiment::add(LogicTree* logic_tree) {
 	logic_tree->nodes[new_split_node->id] = new_split_node;
 
 	new_split_node->obs_index = this->obs_index;
+	new_split_node->rel_obs_index = this->rel_obs_index;
 	new_split_node->split_type = this->split_type;
 	new_split_node->split_target = this->split_target;
+	new_split_node->split_range = this->split_range;
 
 	new_split_node->original_node_id = this->node_context->id;
 	new_split_node->original_node = this->node_context;

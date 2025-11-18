@@ -30,6 +30,13 @@ double logic_eval_helper(AbstractLogicNode* node,
 					is_branch = false;
 				}
 				break;
+			case SPLIT_TYPE_LESSER:
+				if (obs[split_node->obs_index] < split_node->split_target) {
+					is_branch = true;
+				} else {
+					is_branch = false;
+				}
+				break;
 			case SPLIT_TYPE_LESSER_EQUAL:
 				if (obs[split_node->obs_index] <= split_node->split_target) {
 					is_branch = true;
@@ -37,8 +44,71 @@ double logic_eval_helper(AbstractLogicNode* node,
 					is_branch = false;
 				}
 				break;
-			case SPLIT_TYPE_LESSER:
-				if (obs[split_node->obs_index] < split_node->split_target) {
+			case SPLIT_TYPE_WITHIN:
+				if (abs(obs[split_node->obs_index] - split_node->split_target) < split_node->split_range) {
+					is_branch = true;
+				} else {
+					is_branch = false;
+				}
+				break;
+			case SPLIT_TYPE_WITHIN_EQUAL:
+				if (abs(obs[split_node->obs_index] - split_node->split_target) <= split_node->split_range) {
+					is_branch = true;
+				} else {
+					is_branch = false;
+				}
+				break;
+			case SPLIT_TYPE_WITHOUT:
+				if (abs(obs[split_node->obs_index] - split_node->split_target) > split_node->split_range) {
+					is_branch = true;
+				} else {
+					is_branch = false;
+				}
+				break;
+			case SPLIT_TYPE_WITHOUT_EQUAL:
+				if (abs(obs[split_node->obs_index] - split_node->split_target) >= split_node->split_range) {
+					is_branch = true;
+				} else {
+					is_branch = false;
+				}
+				break;
+			case SPLIT_TYPE_REL_GREATER:
+				if (obs[split_node->obs_index] - obs[split_node->rel_obs_index] > split_node->split_target) {
+					is_branch = true;
+				} else {
+					is_branch = false;
+				}
+				break;
+			case SPLIT_TYPE_REL_GREATER_EQUAL:
+				if (obs[split_node->obs_index] - obs[split_node->rel_obs_index] >= split_node->split_target) {
+					is_branch = true;
+				} else {
+					is_branch = false;
+				}
+				break;
+			case SPLIT_TYPE_REL_WITHIN:
+				if (abs((obs[split_node->obs_index] - obs[split_node->rel_obs_index]) - split_node->split_target) < split_node->split_range) {
+					is_branch = true;
+				} else {
+					is_branch = false;
+				}
+				break;
+			case SPLIT_TYPE_REL_WITHIN_EQUAL:
+				if (abs((obs[split_node->obs_index] - obs[split_node->rel_obs_index]) - split_node->split_target) <= split_node->split_range) {
+					is_branch = true;
+				} else {
+					is_branch = false;
+				}
+				break;
+			case SPLIT_TYPE_REL_WITHOUT:
+				if (abs((obs[split_node->obs_index] - obs[split_node->rel_obs_index]) - split_node->split_target) > split_node->split_range) {
+					is_branch = true;
+				} else {
+					is_branch = false;
+				}
+				break;
+			case SPLIT_TYPE_REL_WITHOUT_EQUAL:
+				if (abs((obs[split_node->obs_index] - obs[split_node->rel_obs_index]) - split_node->split_target) >= split_node->split_range) {
 					is_branch = true;
 				} else {
 					is_branch = false;
@@ -97,6 +167,13 @@ void logic_experiment_helper(AbstractLogicNode* node,
 					is_branch = false;
 				}
 				break;
+			case SPLIT_TYPE_LESSER:
+				if (obs[split_node->obs_index] < split_node->split_target) {
+					is_branch = true;
+				} else {
+					is_branch = false;
+				}
+				break;
 			case SPLIT_TYPE_LESSER_EQUAL:
 				if (obs[split_node->obs_index] <= split_node->split_target) {
 					is_branch = true;
@@ -104,8 +181,71 @@ void logic_experiment_helper(AbstractLogicNode* node,
 					is_branch = false;
 				}
 				break;
-			case SPLIT_TYPE_LESSER:
-				if (obs[split_node->obs_index] < split_node->split_target) {
+			case SPLIT_TYPE_WITHIN:
+				if (abs(obs[split_node->obs_index] - split_node->split_target) < split_node->split_range) {
+					is_branch = true;
+				} else {
+					is_branch = false;
+				}
+				break;
+			case SPLIT_TYPE_WITHIN_EQUAL:
+				if (abs(obs[split_node->obs_index] - split_node->split_target) <= split_node->split_range) {
+					is_branch = true;
+				} else {
+					is_branch = false;
+				}
+				break;
+			case SPLIT_TYPE_WITHOUT:
+				if (abs(obs[split_node->obs_index] - split_node->split_target) > split_node->split_range) {
+					is_branch = true;
+				} else {
+					is_branch = false;
+				}
+				break;
+			case SPLIT_TYPE_WITHOUT_EQUAL:
+				if (abs(obs[split_node->obs_index] - split_node->split_target) >= split_node->split_range) {
+					is_branch = true;
+				} else {
+					is_branch = false;
+				}
+				break;
+			case SPLIT_TYPE_REL_GREATER:
+				if (obs[split_node->obs_index] - obs[split_node->rel_obs_index] > split_node->split_target) {
+					is_branch = true;
+				} else {
+					is_branch = false;
+				}
+				break;
+			case SPLIT_TYPE_REL_GREATER_EQUAL:
+				if (obs[split_node->obs_index] - obs[split_node->rel_obs_index] >= split_node->split_target) {
+					is_branch = true;
+				} else {
+					is_branch = false;
+				}
+				break;
+			case SPLIT_TYPE_REL_WITHIN:
+				if (abs((obs[split_node->obs_index] - obs[split_node->rel_obs_index]) - split_node->split_target) < split_node->split_range) {
+					is_branch = true;
+				} else {
+					is_branch = false;
+				}
+				break;
+			case SPLIT_TYPE_REL_WITHIN_EQUAL:
+				if (abs((obs[split_node->obs_index] - obs[split_node->rel_obs_index]) - split_node->split_target) <= split_node->split_range) {
+					is_branch = true;
+				} else {
+					is_branch = false;
+				}
+				break;
+			case SPLIT_TYPE_REL_WITHOUT:
+				if (abs((obs[split_node->obs_index] - obs[split_node->rel_obs_index]) - split_node->split_target) > split_node->split_range) {
+					is_branch = true;
+				} else {
+					is_branch = false;
+				}
+				break;
+			case SPLIT_TYPE_REL_WITHOUT_EQUAL:
+				if (abs((obs[split_node->obs_index] - obs[split_node->rel_obs_index]) - split_node->split_target) >= split_node->split_range) {
 					is_branch = true;
 				} else {
 					is_branch = false;

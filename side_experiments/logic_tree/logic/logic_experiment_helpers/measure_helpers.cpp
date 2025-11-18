@@ -27,6 +27,13 @@ void LogicExperiment::measure_activate(vector<double>& obs,
 			is_match = false;
 		}
 		break;
+	case SPLIT_TYPE_LESSER:
+		if (obs[this->obs_index] < this->split_target) {
+			is_match = true;
+		} else {
+			is_match = false;
+		}
+		break;
 	case SPLIT_TYPE_LESSER_EQUAL:
 		if (obs[this->obs_index] <= this->split_target) {
 			is_match = true;
@@ -34,8 +41,71 @@ void LogicExperiment::measure_activate(vector<double>& obs,
 			is_match = false;
 		}
 		break;
-	case SPLIT_TYPE_LESSER:
-		if (obs[this->obs_index] < this->split_target) {
+	case SPLIT_TYPE_WITHIN:
+		if (abs(obs[this->obs_index] - this->split_target) < this->split_range) {
+			is_match = true;
+		} else {
+			is_match = false;
+		}
+		break;
+	case SPLIT_TYPE_WITHIN_EQUAL:
+		if (abs(obs[this->obs_index] - this->split_target) <= this->split_range) {
+			is_match = true;
+		} else {
+			is_match = false;
+		}
+		break;
+	case SPLIT_TYPE_WITHOUT:
+		if (abs(obs[this->obs_index] - this->split_target) > this->split_range) {
+			is_match = true;
+		} else {
+			is_match = false;
+		}
+		break;
+	case SPLIT_TYPE_WITHOUT_EQUAL:
+		if (abs(obs[this->obs_index] - this->split_target) >= this->split_range) {
+			is_match = true;
+		} else {
+			is_match = false;
+		}
+		break;
+	case SPLIT_TYPE_REL_GREATER:
+		if (obs[this->obs_index] - obs[this->rel_obs_index] > this->split_target) {
+			is_match = true;
+		} else {
+			is_match = false;
+		}
+		break;
+	case SPLIT_TYPE_REL_GREATER_EQUAL:
+		if (obs[this->obs_index] - obs[this->rel_obs_index] >= this->split_target) {
+			is_match = true;
+		} else {
+			is_match = false;
+		}
+		break;
+	case SPLIT_TYPE_REL_WITHIN:
+		if (abs((obs[this->obs_index] - obs[this->rel_obs_index]) - this->split_target) < this->split_range) {
+			is_match = true;
+		} else {
+			is_match = false;
+		}
+		break;
+	case SPLIT_TYPE_REL_WITHIN_EQUAL:
+		if (abs((obs[this->obs_index] - obs[this->rel_obs_index]) - this->split_target) <= this->split_range) {
+			is_match = true;
+		} else {
+			is_match = false;
+		}
+		break;
+	case SPLIT_TYPE_REL_WITHOUT:
+		if (abs((obs[this->obs_index] - obs[this->rel_obs_index]) - this->split_target) > this->split_range) {
+			is_match = true;
+		} else {
+			is_match = false;
+		}
+		break;
+	case SPLIT_TYPE_REL_WITHOUT_EQUAL:
+		if (abs((obs[this->obs_index] - obs[this->rel_obs_index]) - this->split_target) >= this->split_range) {
 			is_match = true;
 		} else {
 			is_match = false;

@@ -1,5 +1,3 @@
-// TODO: add replace experiment
-
 #ifndef LOGIC_EXPERIMENT_H
 #define LOGIC_EXPERIMENT_H
 
@@ -21,8 +19,10 @@ public:
 	int state_iter;
 
 	int obs_index;
+	int rel_obs_index;
 	int split_type;
 	double split_target;
+	double split_range;
 
 	Network* eval_network;
 
