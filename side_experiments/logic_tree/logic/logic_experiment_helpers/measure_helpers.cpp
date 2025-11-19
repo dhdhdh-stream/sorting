@@ -146,6 +146,50 @@ void LogicExperiment::measure_activate(vector<double>& obs,
 
 		// temp
 		if (this->sum_improvement > 0.0) {
+			switch (this->split_type) {
+			case SPLIT_TYPE_GREATER:
+				cout << this->obs_index << " greater than " << this->split_target << endl;
+				break;
+			case SPLIT_TYPE_GREATER_EQUAL:
+				cout << this->obs_index << " greater equal than " << this->split_target << endl;
+				break;
+			case SPLIT_TYPE_LESSER:
+				cout << this->obs_index << " lesser than " << this->split_target << endl;
+				break;
+			case SPLIT_TYPE_LESSER_EQUAL:
+				cout << this->obs_index << " lesser equal than " << this->split_target << endl;
+				break;
+			case SPLIT_TYPE_WITHIN:
+				cout << this->obs_index << " within " << this->split_range << " of " << this->split_target << endl;
+				break;
+			case SPLIT_TYPE_WITHIN_EQUAL:
+				cout << this->obs_index << " within equal " << this->split_range << " of " << this->split_target << endl;
+				break;
+			case SPLIT_TYPE_WITHOUT:
+				cout << this->obs_index << " without " << this->split_range << " of " << this->split_target << endl;
+				break;
+			case SPLIT_TYPE_WITHOUT_EQUAL:
+				cout << this->obs_index << " without equal " << this->split_range << " of " << this->split_target << endl;
+				break;
+			case SPLIT_TYPE_REL_GREATER:
+				cout << this->obs_index << " greater than " << this->rel_obs_index << " by " << this->split_target << endl;
+				break;
+			case SPLIT_TYPE_REL_GREATER_EQUAL:
+				cout << this->obs_index << " greater equal than " << this->rel_obs_index << " by " << this->split_target << endl;
+				break;
+			case SPLIT_TYPE_REL_WITHIN:
+				cout << this->obs_index << " diff " << this->rel_obs_index << " within " << this->split_range << " of " << this->split_target << endl;
+				break;
+			case SPLIT_TYPE_REL_WITHIN_EQUAL:
+				cout << this->obs_index << " diff " << this->rel_obs_index << " within equal " << this->split_range << " of " << this->split_target << endl;
+				break;
+			case SPLIT_TYPE_REL_WITHOUT:
+				cout << this->obs_index << " diff " << this->rel_obs_index << " without " << this->split_range << " of " << this->split_target << endl;
+				break;
+			case SPLIT_TYPE_REL_WITHOUT_EQUAL:
+				cout << this->obs_index << " diff " << this->rel_obs_index << " without equal " << this->split_range << " of " << this->split_target << endl;
+				break;
+			}
 			cout << "this->sum_improvement: " << this->sum_improvement << endl;
 			cout << "this->node_context->weight: " << this->node_context->weight << endl;
 			cout << "this->count: " << this->count << endl;

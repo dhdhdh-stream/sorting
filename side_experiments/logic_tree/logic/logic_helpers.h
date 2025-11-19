@@ -17,6 +17,8 @@ void logic_experiment_helper(AbstractLogicNode* node,
 							 std::vector<double>& obs,
 							 double target_val,
 							 LogicWrapper* logic_wrapper);
+double view_logic_eval_helper(AbstractLogicNode* node,
+							  std::vector<double>& obs);
 
 void find_parent(AbstractLogicNode* node,
 				 LogicTree* logic_tree,

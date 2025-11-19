@@ -4,7 +4,7 @@
 
 using namespace std;
 
-const int WORLD_SIZE = 25;
+const int WORLD_SIZE = 10;
 
 void SpotDiff::get_instance(vector<double>& obs,
 							double& target_val) {
@@ -15,11 +15,16 @@ void SpotDiff::get_instance(vector<double>& obs,
 		original.push_back(obs_distribution(generator));
 	}
 
-	uniform_int_distribution<int> diff_distribution(0, 24);
+	uniform_int_distribution<int> diff_distribution(0, WORLD_SIZE-1);
 	int diff = diff_distribution(generator);
 
 	vector<double> copy = original;
-	copy[diff] = obs_distribution(generator);
+	while (true) {
+		copy[diff] = obs_distribution(generator);
+		if (original[diff] != copy[diff]) {
+			break;
+		}
+	}
 
 	obs.insert(obs.end(), original.begin(), original.end());
 	obs.insert(obs.end(), copy.begin(), copy.end());

@@ -72,5 +72,22 @@ LogicTree* init_helper(AbstractProblem* problem) {
 
 	new_logic_tree->root = new_eval_node;
 
+	double sum_misguess = 0.0;
+	for (int iter_index = 0; iter_index < MEASURE_ITERS; iter_index++) {
+		vector<double> obs;
+		double target_val;
+		problem->get_instance(obs,
+							  target_val);
+
+		double eval = logic_eval_helper(new_logic_tree->root,
+										obs);
+
+		double misguess = (target_val - eval) * (target_val - eval);
+		sum_misguess += misguess;
+	}
+
+	double curr_misguess = sum_misguess / MEASURE_ITERS;
+	new_logic_tree->improvement_history.push_back(curr_misguess);
+
 	return new_logic_tree;
 }

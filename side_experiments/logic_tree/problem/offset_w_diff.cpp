@@ -17,7 +17,12 @@ void OffsetWDiff::get_instance(vector<double>& obs,
 
 	uniform_int_distribution<int> diff_distribution(5, 9);
 	int diff = diff_distribution(generator);
-	after[diff] = obs_distribution(generator);
+	while (true) {
+		after[diff] = obs_distribution(generator);
+		if (before[diff] != after[diff]) {
+			break;
+		}
+	}
 
 	uniform_int_distribution<int> offset_distribution(0, 5);
 	int offset = offset_distribution(generator);
@@ -25,6 +30,9 @@ void OffsetWDiff::get_instance(vector<double>& obs,
 		after.erase(after.begin());
 		after.push_back(obs_distribution(generator));
 	}
+
+	obs.insert(obs.end(), before.begin(), before.end());
+	obs.insert(obs.end(), after.begin(), after.end());
 
 	target_val = diff;
 }

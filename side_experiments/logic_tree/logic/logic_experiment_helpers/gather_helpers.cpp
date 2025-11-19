@@ -33,79 +33,100 @@ void LogicExperiment::gather_activate(vector<double>& obs,
 		uniform_int_distribution<int> obs_distribution(0, this->obs_histories[0].size()-1);
 		uniform_int_distribution<int> type_distribution(0, 13);
 		while (true) {
-			if (this->obs_histories[0].size() > 1) {
-				uniform_int_distribution<int> type_distribution(0, 7);
-				this->split_type = type_distribution(generator);
-				switch (this->split_type) {
-				case SPLIT_TYPE_GREATER:
-				case SPLIT_TYPE_GREATER_EQUAL:
-				case SPLIT_TYPE_LESSER:
-				case SPLIT_TYPE_LESSER_EQUAL:
-					this->obs_index = obs_distribution(generator);
-					this->rel_obs_index = -1;
-					this->split_target = this->obs_histories[0][this->obs_index];
-					this->split_range = 0.0;
-					break;
-				case SPLIT_TYPE_WITHIN:
-				case SPLIT_TYPE_WITHIN_EQUAL:
-				case SPLIT_TYPE_WITHOUT:
-				case SPLIT_TYPE_WITHOUT_EQUAL:
-					this->obs_index = obs_distribution(generator);
-					this->rel_obs_index = -1;
-					this->split_target = this->obs_histories[0][this->obs_index];
-					this->split_range = abs(this->split_target - this->obs_histories[1][this->obs_index]);
-					break;
+			// temp
+			while (true) {
+				this->split_type = SPLIT_TYPE_REL_WITHIN_EQUAL;
+				this->obs_index = obs_distribution(generator);
+				vector<int> possible_rel;
+				for (int o_index = 0; o_index < (int)this->obs_histories[0].size(); o_index++) {
+					if (o_index != this->obs_index
+							&& this->obs_histories[0][o_index] == this->obs_histories[0][this->obs_index]) {
+						possible_rel.push_back(o_index);
+					}
 				}
-			} else {
-				uniform_int_distribution<int> type_distribution(0, 13);
-				this->split_type = type_distribution(generator);
-				switch (this->split_type) {
-				case SPLIT_TYPE_GREATER:
-				case SPLIT_TYPE_GREATER_EQUAL:
-				case SPLIT_TYPE_LESSER:
-				case SPLIT_TYPE_LESSER_EQUAL:
-					this->obs_index = obs_distribution(generator);
-					this->rel_obs_index = -1;
-					this->split_target = this->obs_histories[0][this->obs_index];
+				if (possible_rel.size() == 0) {
+					continue;
+				} else {
+					uniform_int_distribution<int> distribution(0, possible_rel.size()-1);
+					this->rel_obs_index = possible_rel[distribution(generator)];
+					this->split_target = 0.0;
 					this->split_range = 0.0;
-					break;
-				case SPLIT_TYPE_WITHIN:
-				case SPLIT_TYPE_WITHIN_EQUAL:
-				case SPLIT_TYPE_WITHOUT:
-				case SPLIT_TYPE_WITHOUT_EQUAL:
-					this->obs_index = obs_distribution(generator);
-					this->rel_obs_index = -1;
-					this->split_target = this->obs_histories[0][this->obs_index];
-					this->split_range = abs(this->split_target - this->obs_histories[1][this->obs_index]);
-					break;
-				case SPLIT_TYPE_REL_GREATER:
-				case SPLIT_TYPE_REL_GREATER_EQUAL:
-					this->obs_index = obs_distribution(generator);
-					while (true) {
-						this->rel_obs_index = obs_distribution(generator);
-						if (this->rel_obs_index != this->obs_index) {
-							break;
-						}
-					}
-					this->split_target = this->obs_histories[0][this->obs_index] - this->obs_histories[0][this->rel_obs_index];
-					this->split_range = 0.0;
-					break;
-				case SPLIT_TYPE_REL_WITHIN:
-				case SPLIT_TYPE_REL_WITHIN_EQUAL:
-				case SPLIT_TYPE_REL_WITHOUT:
-				case SPLIT_TYPE_REL_WITHOUT_EQUAL:
-					this->obs_index = obs_distribution(generator);
-					while (true) {
-						this->rel_obs_index = obs_distribution(generator);
-						if (this->rel_obs_index != this->obs_index) {
-							break;
-						}
-					}
-					this->split_target = this->obs_histories[0][this->obs_index] - this->obs_histories[0][this->rel_obs_index];
-					this->split_range = abs(this->split_target - (this->obs_histories[1][this->obs_index] - this->obs_histories[1][this->rel_obs_index]));
 					break;
 				}
 			}
+		// 	if (this->obs_histories[0].size() <= 1) {
+		// 		uniform_int_distribution<int> type_distribution(0, 7);
+		// 		this->split_type = type_distribution(generator);
+		// 		switch (this->split_type) {
+		// 		case SPLIT_TYPE_GREATER:
+		// 		case SPLIT_TYPE_GREATER_EQUAL:
+		// 		case SPLIT_TYPE_LESSER:
+		// 		case SPLIT_TYPE_LESSER_EQUAL:
+		// 			this->obs_index = obs_distribution(generator);
+		// 			this->rel_obs_index = -1;
+		// 			this->split_target = this->obs_histories[0][this->obs_index];
+		// 			this->split_range = 0.0;
+		// 			break;
+		// 		case SPLIT_TYPE_WITHIN:
+		// 		case SPLIT_TYPE_WITHIN_EQUAL:
+		// 		case SPLIT_TYPE_WITHOUT:
+		// 		case SPLIT_TYPE_WITHOUT_EQUAL:
+		// 			this->obs_index = obs_distribution(generator);
+		// 			this->rel_obs_index = -1;
+		// 			this->split_target = this->obs_histories[0][this->obs_index];
+		// 			this->split_range = abs(this->split_target - this->obs_histories[1][this->obs_index]);
+		// 			break;
+		// 		}
+		// 	} else {
+		// 		uniform_int_distribution<int> type_distribution(0, 13);
+		// 		this->split_type = type_distribution(generator);
+		// 		switch (this->split_type) {
+		// 		case SPLIT_TYPE_GREATER:
+		// 		case SPLIT_TYPE_GREATER_EQUAL:
+		// 		case SPLIT_TYPE_LESSER:
+		// 		case SPLIT_TYPE_LESSER_EQUAL:
+		// 			this->obs_index = obs_distribution(generator);
+		// 			this->rel_obs_index = -1;
+		// 			this->split_target = this->obs_histories[0][this->obs_index];
+		// 			this->split_range = 0.0;
+		// 			break;
+		// 		case SPLIT_TYPE_WITHIN:
+		// 		case SPLIT_TYPE_WITHIN_EQUAL:
+		// 		case SPLIT_TYPE_WITHOUT:
+		// 		case SPLIT_TYPE_WITHOUT_EQUAL:
+		// 			this->obs_index = obs_distribution(generator);
+		// 			this->rel_obs_index = -1;
+		// 			this->split_target = this->obs_histories[0][this->obs_index];
+		// 			this->split_range = abs(this->split_target - this->obs_histories[1][this->obs_index]);
+		// 			break;
+		// 		case SPLIT_TYPE_REL_GREATER:
+		// 		case SPLIT_TYPE_REL_GREATER_EQUAL:
+		// 			this->obs_index = obs_distribution(generator);
+		// 			while (true) {
+		// 				this->rel_obs_index = obs_distribution(generator);
+		// 				if (this->rel_obs_index != this->obs_index) {
+		// 					break;
+		// 				}
+		// 			}
+		// 			this->split_target = this->obs_histories[0][this->obs_index] - this->obs_histories[0][this->rel_obs_index];
+		// 			this->split_range = 0.0;
+		// 			break;
+		// 		case SPLIT_TYPE_REL_WITHIN:
+		// 		case SPLIT_TYPE_REL_WITHIN_EQUAL:
+		// 		case SPLIT_TYPE_REL_WITHOUT:
+		// 		case SPLIT_TYPE_REL_WITHOUT_EQUAL:
+		// 			this->obs_index = obs_distribution(generator);
+		// 			while (true) {
+		// 				this->rel_obs_index = obs_distribution(generator);
+		// 				if (this->rel_obs_index != this->obs_index) {
+		// 					break;
+		// 				}
+		// 			}
+		// 			this->split_target = this->obs_histories[0][this->obs_index] - this->obs_histories[0][this->rel_obs_index];
+		// 			this->split_range = abs(this->split_target - (this->obs_histories[1][this->obs_index] - this->obs_histories[1][this->rel_obs_index]));
+		// 			break;
+		// 		}
+		// 	}
 
 			for (int h_index = 0; h_index < (int)this->obs_histories.size(); h_index++) {
 				switch (this->split_type) {
