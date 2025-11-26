@@ -1,6 +1,7 @@
 #include "solution_helpers.h"
 
 #include <fstream>
+#include <iostream>
 
 #include "globals.h"
 #include "problem.h"
@@ -18,7 +19,7 @@ const int SAMPLES_NUM_SAVE = 1000;
 void gather_samples_helper(ProblemType* problem_type,
 						   SolutionWrapper* wrapper) {
 	while (wrapper->solution->explore_pre_obs.back().size() > SAMPLES_NUM_SAVE) {
-		uniform_int_distribution<int> distribution(0, wrapper->solution->signal_pre_obs.back().size()-1);
+		uniform_int_distribution<int> distribution(0, wrapper->solution->explore_pre_obs.back().size()-1);
 		int index = distribution(generator);
 		wrapper->solution->explore_pre_obs.back().erase(wrapper->solution->explore_pre_obs.back().begin() + index);
 		wrapper->solution->explore_post_obs.back().erase(wrapper->solution->explore_post_obs.back().begin() + index);
