@@ -9,6 +9,7 @@ class AbstractExperiment;
 class AbstractNode;
 class Network;
 class Problem;
+class ProblemType;
 class Scope;
 class ScopeHistory;
 class ScopeNode;
@@ -27,5 +28,9 @@ void add_existing_samples_helper(ScopeHistory* scope_history);
 double calc_consistency(AbstractExperiment* experiment);
 
 void clean_scope(Scope* scope);
+
+// temp
+void gather_samples_helper(ProblemType* problem_type,
+						   SolutionWrapper* wrapper);
 
 #endif /* SOLUTION_HELPERS_H */

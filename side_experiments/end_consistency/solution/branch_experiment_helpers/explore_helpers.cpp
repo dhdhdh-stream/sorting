@@ -226,6 +226,11 @@ void BranchExperiment::explore_backprop(double target_val,
 										SolutionWrapper* wrapper) {
 	BranchExperimentHistory* history = (BranchExperimentHistory*)wrapper->experiment_history;
 
+	// temp
+	wrapper->solution->explore_pre_obs.back().push_back(wrapper->scope_histories[0]->pre_obs);
+	wrapper->solution->explore_post_obs.back().push_back(wrapper->scope_histories[0]->post_obs);
+	wrapper->solution->explore_scores.back().push_back(target_val);
+
 	for (int l_index = 0; l_index < (int)history->stack_trace.size(); l_index++) {
 		ScopeHistory* scope_history = history->stack_trace[l_index];
 		Scope* scope = scope_history->scope;

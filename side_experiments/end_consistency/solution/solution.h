@@ -39,6 +39,14 @@ public:
 	std::vector<double> improvement_history;
 	std::vector<std::string> change_history;
 
+	// temp
+	std::vector<std::vector<std::vector<double>>> signal_pre_obs;
+	std::vector<std::vector<std::vector<double>>> signal_post_obs;
+	std::vector<std::vector<double>> signal_scores;
+	std::vector<std::vector<std::vector<double>>> explore_pre_obs;
+	std::vector<std::vector<std::vector<double>>> explore_post_obs;
+	std::vector<std::vector<double>> explore_scores;
+
 	#if defined(MDEBUG) && MDEBUG
 	std::vector<Problem*> verify_problems;
 	std::vector<unsigned long> verify_seeds;

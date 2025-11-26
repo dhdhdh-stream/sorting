@@ -136,6 +136,10 @@ int main(int argc, char* argv[]) {
 				solution_wrapper->solution->clear_verify();
 				#endif /* MDEBUG */
 
+				// temp
+				gather_samples_helper(problem_type,
+									  solution_wrapper);
+
 				break;
 			}
 		}

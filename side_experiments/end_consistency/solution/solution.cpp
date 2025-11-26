@@ -61,6 +61,14 @@ void Solution::init() {
 
 	end_node->next_node_id = -1;
 	end_node->next_node = NULL;
+
+	// temp
+	this->signal_pre_obs.push_back(vector<vector<double>>());
+	this->signal_post_obs.push_back(vector<vector<double>>());
+	this->signal_scores.push_back(vector<double>());
+	this->explore_pre_obs.push_back(vector<vector<double>>());
+	this->explore_post_obs.push_back(vector<vector<double>>());
+	this->explore_scores.push_back(vector<double>());
 }
 
 void Solution::load(string path,
