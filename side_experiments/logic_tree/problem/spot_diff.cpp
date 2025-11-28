@@ -6,8 +6,8 @@ using namespace std;
 
 const int WORLD_SIZE = 10;
 
-void SpotDiff::get_instance(vector<double>& obs,
-							double& target_val) {
+void SpotDiff::get_train_instance(vector<double>& obs,
+								  double& target_val) {
 	uniform_int_distribution<int> obs_distribution(-10, 10);
 
 	vector<double> original;
@@ -30,4 +30,10 @@ void SpotDiff::get_instance(vector<double>& obs,
 	obs.insert(obs.end(), copy.begin(), copy.end());
 
 	target_val = diff;
+}
+
+void SpotDiff::get_test_instance(vector<double>& obs,
+								 double& target_val) {
+	get_train_instance(obs,
+					  target_val);
 }

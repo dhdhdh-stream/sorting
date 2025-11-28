@@ -138,7 +138,12 @@ int main(int argc, char* argv[]) {
 
 				// temp
 				gather_samples_helper(problem_type,
-									  solution_wrapper);
+									  solution_wrapper,
+									  "saves/",
+									  filename);
+				if (solution_wrapper->solution->timestamp >= 20) {
+					throw invalid_argument("done");
+				}
 
 				break;
 			}

@@ -32,26 +32,37 @@ void LogicExperiment::gather_activate(vector<double>& obs,
 
 		uniform_int_distribution<int> obs_distribution(0, this->obs_histories[0].size()-1);
 		uniform_int_distribution<int> type_distribution(0, 13);
+		// temp
+		uniform_int_distribution<int> equals_type_distribution(0, 1);
 		while (true) {
 			// temp
 			while (true) {
-				this->split_type = SPLIT_TYPE_REL_WITHIN_EQUAL;
-				this->obs_index = obs_distribution(generator);
-				vector<int> possible_rel;
-				for (int o_index = 0; o_index < (int)this->obs_histories[0].size(); o_index++) {
-					if (o_index != this->obs_index
-							&& this->obs_histories[0][o_index] == this->obs_histories[0][this->obs_index]) {
-						possible_rel.push_back(o_index);
-					}
-				}
-				if (possible_rel.size() == 0) {
-					continue;
-				} else {
-					uniform_int_distribution<int> distribution(0, possible_rel.size()-1);
-					this->rel_obs_index = possible_rel[distribution(generator)];
-					this->split_target = 0.0;
+				if (equals_type_distribution(generator) == 0) {
+					this->split_type = SPLIT_TYPE_EQUAL;
+					this->obs_index = obs_distribution(generator);
+					this->rel_obs_index = -1;
+					this->split_target = this->obs_histories[0][this->obs_index];
 					this->split_range = 0.0;
 					break;
+				} else {
+					this->split_type = SPLIT_TYPE_REL_WITHIN_EQUAL;
+					this->obs_index = obs_distribution(generator);
+					vector<int> possible_rel;
+					for (int o_index = 0; o_index < (int)this->obs_histories[0].size(); o_index++) {
+						if (o_index != this->obs_index
+								&& this->obs_histories[0][o_index] == this->obs_histories[0][this->obs_index]) {
+							possible_rel.push_back(o_index);
+						}
+					}
+					if (possible_rel.size() == 0) {
+						continue;
+					} else {
+						uniform_int_distribution<int> distribution(0, possible_rel.size()-1);
+						this->rel_obs_index = possible_rel[distribution(generator)];
+						this->split_target = 0.0;
+						this->split_range = 0.0;
+						break;
+					}
 				}
 			}
 		// 	if (this->obs_histories[0].size() <= 1) {
@@ -210,6 +221,12 @@ void LogicExperiment::gather_activate(vector<double>& obs,
 					break;
 				case SPLIT_TYPE_REL_WITHOUT_EQUAL:
 					if (abs((this->obs_histories[h_index][this->obs_index] - this->obs_histories[h_index][this->rel_obs_index]) - this->split_target) >= this->split_range) {
+						match_obs.push_back(this->obs_histories[h_index]);
+						match_target_vals.push_back(this->target_val_histories[h_index]);
+					}
+					break;
+				case SPLIT_TYPE_EQUAL:
+					if (this->obs_histories[h_index][this->obs_index] == this->split_target) {
 						match_obs.push_back(this->obs_histories[h_index]);
 						match_target_vals.push_back(this->target_val_histories[h_index]);
 					}

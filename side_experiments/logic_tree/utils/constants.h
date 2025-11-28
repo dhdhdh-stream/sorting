@@ -18,6 +18,7 @@ const int SPLIT_TYPE_REL_WITHIN = 10;
 const int SPLIT_TYPE_REL_WITHIN_EQUAL = 11;
 const int SPLIT_TYPE_REL_WITHOUT = 12;
 const int SPLIT_TYPE_REL_WITHOUT_EQUAL = 13;
+const int SPLIT_TYPE_EQUAL = 14;
 
 #if defined(MDEBUG) && MDEBUG
 const int TRAIN_ITERS = 30;

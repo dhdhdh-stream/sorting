@@ -4,8 +4,8 @@
 
 using namespace std;
 
-void Multiplicative::get_instance(vector<double>& obs,
-								  double& target_val) {
+void Multiplicative::get_train_instance(vector<double>& obs,
+										double& target_val) {
 	uniform_int_distribution<int> base_distribution(1, 5);
 	uniform_int_distribution<int> val_distribution(0, 25);
 	int base = base_distribution(generator);
@@ -19,4 +19,10 @@ void Multiplicative::get_instance(vector<double>& obs,
 	} else {
 		target_val = -10.0 + noise_distribution(generator);
 	}
+}
+
+void Multiplicative::get_test_instance(vector<double>& obs,
+									   double& target_val) {
+	get_train_instance(obs,
+					   target_val);
 }

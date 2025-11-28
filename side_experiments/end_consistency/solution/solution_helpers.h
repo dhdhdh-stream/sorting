@@ -31,6 +31,8 @@ void clean_scope(Scope* scope);
 
 // temp
 void gather_samples_helper(ProblemType* problem_type,
-						   SolutionWrapper* wrapper);
+						   SolutionWrapper* wrapper,
+						   std::string path,
+						   std::string name);
 
 #endif /* SOLUTION_HELPERS_H */

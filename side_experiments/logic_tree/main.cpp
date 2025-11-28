@@ -24,6 +24,17 @@
 // - try adding to value instead of replacing
 //   - does mean many networks per run
 
+// - random explore too crazy
+//   - too difficult to draw conclusions
+// - using existing solution can lead to poor signals
+//   - where signal based on side effect of solution
+//     - rather than what's fundamental to problem
+// - maybe try filtering?
+//   - costs so much effort, but maybe leads to better progress later?
+//     - (and is what a human would consider "understanding" a problem)
+
+// - maybe use samples from different runs?
+
 using namespace std;
 
 int seed;
@@ -62,8 +73,8 @@ int main(int argc, char* argv[]) {
 
 		vector<double> obs;
 		double target_val;
-		problem->get_instance(obs,
-							  target_val);
+		problem->get_train_instance(obs,
+									target_val);
 
 		logic_experiment_helper(logic_wrapper->logic_tree->root,
 								obs,

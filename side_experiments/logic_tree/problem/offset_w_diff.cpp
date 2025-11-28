@@ -4,8 +4,8 @@
 
 using namespace std;
 
-void OffsetWDiff::get_instance(vector<double>& obs,
-							   double& target_val) {
+void OffsetWDiff::get_train_instance(vector<double>& obs,
+									 double& target_val) {
 	uniform_int_distribution<int> obs_distribution(-10, 10);
 
 	vector<double> before;
@@ -35,4 +35,10 @@ void OffsetWDiff::get_instance(vector<double>& obs,
 	obs.insert(obs.end(), after.begin(), after.end());
 
 	target_val = diff;
+}
+
+void OffsetWDiff::get_test_instance(vector<double>& obs,
+									double& target_val) {
+	get_train_instance(obs,
+					   target_val);
 }

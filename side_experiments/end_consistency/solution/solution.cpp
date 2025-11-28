@@ -117,6 +117,14 @@ void Solution::load(string path,
 	}
 
 	input_file.close();
+
+	// temp
+	this->signal_pre_obs.push_back(vector<vector<double>>());
+	this->signal_post_obs.push_back(vector<vector<double>>());
+	this->signal_scores.push_back(vector<double>());
+	this->explore_pre_obs.push_back(vector<vector<double>>());
+	this->explore_post_obs.push_back(vector<vector<double>>());
+	this->explore_scores.push_back(vector<double>());
 }
 
 #if defined(MDEBUG) && MDEBUG

@@ -112,6 +112,13 @@ int main(int argc, char* argv[]) {
 			delete problem;
 
 			if (solution_wrapper->solution->timestamp != starting_timestamp) {
+				if (solution_wrapper->solution->timestamp <= 20) {
+					gather_samples_helper(problem_type,
+										  solution_wrapper,
+										  path,
+										  filename);
+				}
+
 				break;
 			}
 		}

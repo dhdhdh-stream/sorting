@@ -4,8 +4,8 @@
 
 using namespace std;
 
-void MultiSum::get_instance(vector<double>& obs,
-							double& target_val) {
+void MultiSum::get_train_instance(vector<double>& obs,
+								  double& target_val) {
 	uniform_int_distribution<int> sum_distribution(-5, 5);
 	int true_sum = sum_distribution(generator);
 
@@ -33,4 +33,10 @@ void MultiSum::get_instance(vector<double>& obs,
 	} else {
 		target_val = -10.0 + noise_distribution(generator);
 	}
+}
+
+void MultiSum::get_test_instance(vector<double>& obs,
+								 double& target_val) {
+	get_train_instance(obs,
+					   target_val);
 }

@@ -13,11 +13,13 @@ using namespace std;
 #if defined(MDEBUG) && MDEBUG
 const int SAMPLES_NUM_SAVE = 10;
 #else
-const int SAMPLES_NUM_SAVE = 1000;
+const int SAMPLES_NUM_SAVE = 4000;
 #endif /* MDEBUG */
 
 void gather_samples_helper(ProblemType* problem_type,
-						   SolutionWrapper* wrapper) {
+						   SolutionWrapper* wrapper,
+						   string path,
+						   string name) {
 	while (wrapper->solution->explore_pre_obs.back().size() > SAMPLES_NUM_SAVE) {
 		uniform_int_distribution<int> distribution(0, wrapper->solution->explore_pre_obs.back().size()-1);
 		int index = distribution(generator);
@@ -58,7 +60,7 @@ void gather_samples_helper(ProblemType* problem_type,
 	}
 
 	ofstream output_file;
-	output_file.open("saves/samples.txt");
+	output_file.open(path + "samples_" + name);
 
 	output_file << wrapper->solution->signal_pre_obs.size() << endl;
 	for (int t_index = 0; t_index < (int)wrapper->solution->signal_pre_obs.size(); t_index++) {

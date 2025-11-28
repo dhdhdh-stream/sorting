@@ -23,8 +23,8 @@ LogicTree* init_helper(AbstractProblem* problem) {
 	for (int i_index = 0; i_index < INIT_NUM_GATHER; i_index++) {
 		vector<double> obs;
 		double target_val;
-		problem->get_instance(obs,
-							  target_val);
+		problem->get_train_instance(obs,
+									target_val);
 
 		obs_histories.push_back(obs);
 		target_val_histories.push_back(target_val);
@@ -76,8 +76,8 @@ LogicTree* init_helper(AbstractProblem* problem) {
 	for (int iter_index = 0; iter_index < MEASURE_ITERS; iter_index++) {
 		vector<double> obs;
 		double target_val;
-		problem->get_instance(obs,
-							  target_val);
+		problem->get_test_instance(obs,
+								   target_val);
 
 		double eval = logic_eval_helper(new_logic_tree->root,
 										obs);
