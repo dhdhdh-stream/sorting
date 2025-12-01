@@ -14,8 +14,9 @@
 #include "logic_helpers.h"
 #include "logic_tree.h"
 #include "logic_wrapper.h"
-#include "minesweeper_signal.h"
+// #include "minesweeper_signal.h"
 // #include "moving_signal.h"
+#include "moving_vs_opening.h"
 // #include "multi_sum.h"
 // #include "multiplicative.h"
 // #include "offset_w_diff.h"
@@ -80,6 +81,11 @@
 // TODO: try distinguishing between moving vs. opening
 // TODO: try also changing minesweeper score function to make good signals easier?
 
+// - scale signal by match even in training
+
+// - actually, using history also reinforces existing
+//   - valuing side effects and reinforcing existing really the same ting
+
 using namespace std;
 
 int seed;
@@ -94,8 +100,9 @@ int main(int argc, char* argv[]) {
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
 
-	AbstractProblem* problem = new MinesweeperSignal();
+	// AbstractProblem* problem = new MinesweeperSignal();
 	// AbstractProblem* problem = new MovingSignal();
+	AbstractProblem* problem = new MovingVsOpening();
 	// AbstractProblem* problem = new MultiSum();
 	// AbstractProblem* problem = new Multiplicative();
 	// AbstractProblem* problem = new OffsetWDiff();

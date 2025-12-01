@@ -1,6 +1,7 @@
 #include "moving_vs_opening.h"
 
 #include <algorithm>
+#include <iostream>
 #include <set>
 
 #include "globals.h"
@@ -8,7 +9,6 @@
 using namespace std;
 
 const int WORLD_SIZE = 9;
-const int NUM_MOVES = 20;
 
 void open_helper(int curr_x,
 				 int curr_y,
@@ -18,7 +18,7 @@ void open_helper(int curr_x,
 			&& curr_x < WORLD_SIZE
 			&& curr_y >= 0
 			&& curr_y < WORLD_SIZE) {
-		if (world[curr_x][curr_y] != -10) {
+		if (world[curr_x][curr_y] == -10) {
 			uniform_int_distribution<int> val_distribution(0, 9);
 			world[curr_x][curr_y] = val_distribution(generator);
 			num_open++;
@@ -106,114 +106,92 @@ void MovingVsOpening::get_train_instance(vector<double>& obs,
 				starting_world,
 				starting_num_open);
 
+	vector<pair<int,int>> opened;
+	for (int x_index = 0; x_index < WORLD_SIZE; x_index++) {
+		for (int y_index = 0; y_index < WORLD_SIZE; y_index++) {
+			if (starting_world[x_index][y_index] != -10) {
+				opened.push_back({x_index, y_index});
+			}
+		}
+	}
+
+	set<pair<int,int>> possible_opens;
+	for (int o_index = 0; o_index < (int)opened.size(); o_index++) {
+		if (opened[o_index].first-1 >= 0
+				&& opened[o_index].second-1 >= 0) {
+			if (starting_world[opened[o_index].first-1][opened[o_index].second-1] == -10) {
+				possible_opens.insert({opened[o_index].first-1, opened[o_index].second-1});
+			}
+		}
+
+		if (opened[o_index].first-1 >= 0) {
+			if (starting_world[opened[o_index].first-1][opened[o_index].second] == -10) {
+				possible_opens.insert({opened[o_index].first-1, opened[o_index].second});
+			}
+		}
+
+		if (opened[o_index].first-1 >= 0
+				&& opened[o_index].second+1 < WORLD_SIZE) {
+			if (starting_world[opened[o_index].first-1][opened[o_index].second+1] == -10) {
+				possible_opens.insert({opened[o_index].first-1, opened[o_index].second+1});
+			}
+		}
+
+		if (opened[o_index].second+1 < WORLD_SIZE) {
+			if (starting_world[opened[o_index].first][opened[o_index].second+1] == -10) {
+				possible_opens.insert({opened[o_index].first, opened[o_index].second+1});
+			}
+		}
+
+		if (opened[o_index].first+1 < WORLD_SIZE
+				&& opened[o_index].second+1 < WORLD_SIZE) {
+			if (starting_world[opened[o_index].first+1][opened[o_index].second+1] == -10) {
+				possible_opens.insert({opened[o_index].first+1, opened[o_index].second+1});
+			}
+		}
+
+		if (opened[o_index].first+1 < WORLD_SIZE) {
+			if (starting_world[opened[o_index].first+1][opened[o_index].second] == -10) {
+				possible_opens.insert({opened[o_index].first+1, opened[o_index].second});
+			}
+		}
+
+		if (opened[o_index].first+1 < WORLD_SIZE
+				&& opened[o_index].second-1 >= 0) {
+			if (starting_world[opened[o_index].first+1][opened[o_index].second-1] == -10) {
+				possible_opens.insert({opened[o_index].first+1, opened[o_index].second-1});
+			}
+		}
+
+		if (opened[o_index].second-1 >= 0) {
+			if (starting_world[opened[o_index].first][opened[o_index].second-1] == -10) {
+				possible_opens.insert({opened[o_index].first, opened[o_index].second-1});
+			}
+		}
+	}
+
 	vector<vector<double>> ending_world = starting_world;
 	int ending_num_open = starting_num_open;
-	uniform_int_distribution<int> new_open_distribution(0, 1);
-	if (new_open_distribution(generator) == 0) {
-		vector<pair<int,int>> opened;
-		for (int x_index = 0; x_index < WORLD_SIZE; x_index++) {
-			for (int y_index = 0; y_index < WORLD_SIZE; y_index++) {
-				if (starting_world[x_index][y_index] != -10) {
-					opened.push_back({x_index, y_index});
-				}
-			}
-		}
 
-		set<pair<int,int>> possible_opens;
-		for (int o_index = 0; o_index < (int)opened.size(); o_index++) {
-			if (opened[o_index].first-1 >= 0
-					&& opened[o_index].second-1 >= 0) {
-				if (starting_world[opened[o_index].first-1][opened[o_index].second-1] != -10) {
-					possible_opens.insert({opened[o_index].first-1, opened[o_index].second-1});
-				}
-			}
+	int ending_x;
+	int ending_y;
+	if (possible_opens.size() > 0) {
+		uniform_int_distribution<int> open_distribution(0, possible_opens.size()-1);
+		pair<int,int> open = *next(possible_opens.begin(), open_distribution(generator));
 
-			if (opened[o_index].first-1 >= 0) {
-				if (starting_world[opened[o_index].first-1][opened[o_index].second] != -10) {
-					possible_opens.insert({opened[o_index].first-1, opened[o_index].second});
-				}
-			}
+		ending_x = open.first;
+		ending_y = open.second;
 
-			if (opened[o_index].first-1 >= 0
-					&& opened[o_index].second+1 < WORLD_SIZE) {
-				if (starting_world[opened[o_index].first-1][opened[o_index].second+1] != -10) {
-					possible_opens.insert({opened[o_index].first-1, opened[o_index].second+1});
-				}
-			}
-
-			if (opened[o_index].second+1 < WORLD_SIZE) {
-				if (starting_world[opened[o_index].first][opened[o_index].second+1] != -10) {
-					possible_opens.insert({opened[o_index].first, opened[o_index].second+1});
-				}
-			}
-
-			if (opened[o_index].first+1 < WORLD_SIZE
-					&& opened[o_index].second+1 < WORLD_SIZE) {
-				if (starting_world[opened[o_index].first+1][opened[o_index].second+1] != -10) {
-					possible_opens.insert({opened[o_index].first+1, opened[o_index].second+1});
-				}
-			}
-
-			if (opened[o_index].first+1 < WORLD_SIZE) {
-				if (starting_world[opened[o_index].first+1][opened[o_index].second] != -10) {
-					possible_opens.insert({opened[o_index].first+1, opened[o_index].second});
-				}
-			}
-
-			if (opened[o_index].first+1 < WORLD_SIZE
-					&& opened[o_index].second-1 >= 0) {
-				if (starting_world[opened[o_index].first+1][opened[o_index].second-1] != -10) {
-					possible_opens.insert({opened[o_index].first+1, opened[o_index].second-1});
-				}
-			}
-
-			if (opened[o_index].second-1 >= 0) {
-				if (starting_world[opened[o_index].first][opened[o_index].second-1] != -10) {
-					possible_opens.insert({opened[o_index].first, opened[o_index].second-1});
-				}
-			}
-		}
-
-		if (possible_opens.size() > 0) {
-			uniform_int_distribution<int> open_distribution(0, possible_opens.size()-1);
-			pair<int,int> open = *next(possible_opens.begin(), open_distribution(generator));
+		uniform_int_distribution<int> new_open_distribution(0, 1);
+		if (new_open_distribution(generator) == 0) {
 			open_helper(open.first,
 						open.second,
 						ending_world,
 						ending_num_open);
 		}
-	}
-
-	int ending_x = 4;
-	int ending_y = 4;
-	uniform_int_distribution<int> move_distribution(0, 3);
-	for (int m_index = 0; m_index < NUM_MOVES; m_index++) {
-		switch (move_distribution(generator)) {
-		case 0:
-			ending_x--;
-			if (ending_x < 0) {
-				ending_x = 0;
-			}
-			break;
-		case 1:
-			ending_y++;
-			if (ending_y > WORLD_SIZE-1) {
-				ending_y = WORLD_SIZE-1;
-			}
-			break;
-		case 2:
-			ending_x++;
-			if (ending_x > WORLD_SIZE-1) {
-				ending_x = WORLD_SIZE-1;
-			}
-			break;
-		case 3:
-			ending_y--;
-			if (ending_y < 0) {
-				ending_y = 0;
-			}
-			break;
-		}
+	} else {
+		ending_x = 4;
+		ending_y = 4;
 	}
 
 	for (int x_index = -2; x_index <= 2; x_index++) {

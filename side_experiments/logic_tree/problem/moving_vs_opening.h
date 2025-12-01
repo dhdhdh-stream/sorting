@@ -1,3 +1,6 @@
+// - motion too crazy right now?
+//   - difficult to draw conclusions?
+
 #ifndef MOVING_VS_OPENING_H
 #define MOVING_VS_OPENING_H
 
