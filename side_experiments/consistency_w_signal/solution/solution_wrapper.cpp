@@ -10,12 +10,7 @@ SolutionWrapper::SolutionWrapper() {
 	this->solution = new Solution();
 	this->solution->init();
 
-	this->state = STATE_EXPLORE;
-	this->state_iter = 0;
-
-	this->curr_explore_experiment = NULL;
-	this->best_explore_instances = vector<ExploreInstance*>(NUM_EXPLORE_INSTANCES_SAVE, NULL);
-	this->consistent_explore_instances = vector<ExploreInstance*>(NUM_EXPERIMENTS, NULL);
+	this->improvement_iter = 0;
 
 	this->curr_experiment = NULL;
 	this->best_experiment = NULL;
@@ -34,12 +29,7 @@ SolutionWrapper::SolutionWrapper(std::string path,
 	this->solution = new Solution();
 	this->solution->load(path, name);
 
-	this->state = STATE_EXPLORE;
-	this->state_iter = 0;
-
-	this->curr_explore_experiment = NULL;
-	this->best_explore_instances = vector<ExploreInstance*>(NUM_EXPLORE_INSTANCES_SAVE, NULL);
-	this->consistent_explore_instances = vector<ExploreInstance*>(NUM_EXPERIMENTS, NULL);
+	this->improvement_iter = 0;
 
 	this->curr_experiment = NULL;
 	this->best_experiment = NULL;

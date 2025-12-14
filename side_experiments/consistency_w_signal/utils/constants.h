@@ -30,20 +30,13 @@ const int MEASURE_ITERS = 10;
 const int MEASURE_ITERS = 1000;
 #endif /* MDEBUG */
 
+#if defined(MDEBUG) && MDEBUG
+const int IMPROVEMENTS_PER_ITER = 2;
+#else
 /**
  * - large number to select good paths to prevent noise
  */
-#if defined(MDEBUG) && MDEBUG
-const int NUM_EXPLORE_EXPERIMENTS = 2;
-const int NUM_EXPLORE_INSTANCES_SAVE = 4;
-const int NUM_EXPERIMENTS = 2;
-#else
-/**
- * - 40000 instances -> 400 best -> 40 experiments
- */
-const int NUM_EXPLORE_EXPERIMENTS = 40;
-const int NUM_EXPLORE_INSTANCES_SAVE = 400;
-const int NUM_EXPERIMENTS = 40;
+const int IMPROVEMENTS_PER_ITER = 6;
 #endif /* MDEBUG */
 
 #if defined(MDEBUG) && MDEBUG
@@ -52,8 +45,13 @@ const int MIN_TRAIN_SAMPLES = 10;
 const int MIN_TRAIN_SAMPLES = 1000;
 #endif /* MDEBUG */
 
-const int MAX_SAMPLES = 4000;
-const int EXPERIMENT_SAMPLES = 50;
+#if defined(MDEBUG) && MDEBUG
+const int EXISTING_MAX_SAMPLES = 10;
+const int EXPLORE_MAX_SAMPLES = 10;
+#else
+const int EXISTING_MAX_SAMPLES = 1000;
+const int EXPLORE_MAX_SAMPLES = 10000;
+#endif /* MDEBUG */
 
 #if defined(MDEBUG) && MDEBUG
 const int NUM_VERIFY_SAMPLES = 10;

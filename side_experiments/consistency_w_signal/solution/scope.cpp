@@ -16,15 +16,12 @@
 using namespace std;
 
 Scope::Scope() {
+	this->signal_status = SIGNAL_STATUS_INIT;
 	this->consistency_network = NULL;
-
-	this->consistency_existing_index = 0;
-	this->consistency_explore_index = 0;
-
 	this->pre_network = NULL;
 	this->post_network = NULL;
 
-	this->signal_index = 0;
+	this->existing_index = 0;
 }
 
 Scope::~Scope() {
@@ -139,6 +136,8 @@ void Scope::save(ofstream& output_file) {
 		output_file << this->child_scopes[c_index]->id << endl;
 	}
 
+	output_file << this->signal_status << endl;
+
 	output_file << (this->consistency_network == NULL) << endl;
 	if (this->consistency_network != NULL) {
 		this->consistency_network->save(output_file);
@@ -233,6 +232,10 @@ void Scope::load(ifstream& input_file,
 		this->child_scopes.push_back(parent_solution->scopes[stoi(scope_id_line)]);
 	}
 
+	string signal_status_line;
+	getline(input_file, signal_status_line);
+	this->signal_status = stoi(signal_status_line);
+
 	string consistency_network_is_null_line;
 	getline(input_file, consistency_network_is_null_line);
 	bool consistency_network_is_null = stoi(consistency_network_is_null_line);
@@ -281,6 +284,8 @@ void Scope::save_for_display(ofstream& output_file) {
 ScopeHistory::ScopeHistory(Scope* scope) {
 	this->scope = scope;
 
+	this->has_explore = false;
+
 	this->signal_initialized = false;
 }
 
@@ -289,13 +294,4 @@ ScopeHistory::~ScopeHistory() {
 			it != this->node_histories.end(); it++) {
 		delete it->second;
 	}
-}
-
-ScopeHistory* ScopeHistory::copy_signal() {
-	ScopeHistory* new_scope_history = new ScopeHistory(this->scope);
-
-	new_scope_history->pre_obs = this->pre_obs;
-	new_scope_history->post_obs = this->post_obs;
-
-	return new_scope_history;
 }

@@ -36,9 +36,9 @@ void Experiment::capture_verify_step(vector<double>& obs,
 	ExperimentState* experiment_state = (ExperimentState*)wrapper->experiment_context.back();
 
 	if (experiment_state->step_index == 0) {
-		this->new_val_network->activate(obs);
+		this->new_network->activate(obs);
 
-		this->verify_scores.push_back(this->new_val_network->output->acti_vals[0]);
+		this->verify_scores.push_back(this->new_network->output->acti_vals[0]);
 
 		cout << "wrapper->starting_run_seed: " << wrapper->starting_run_seed << endl;
 		cout << "wrapper->curr_run_seed: " << wrapper->curr_run_seed << endl;
@@ -61,31 +61,42 @@ void Experiment::capture_verify_step(vector<double>& obs,
 		}
 	}
 
-	if (experiment_state->step_index >= (int)this->step_types.size()) {
-		wrapper->node_context.back() = this->exit_next_node;
+	if (experiment_state->step_index >= (int)this->best_step_types.size()) {
+		wrapper->node_context.back() = this->best_exit_next_node;
 
 		delete experiment_state;
 		wrapper->experiment_context.back() = NULL;
 	} else {
-		if (this->step_types[experiment_state->step_index] == STEP_TYPE_ACTION) {
-			action = this->actions[experiment_state->step_index];
+		if (this->best_step_types[experiment_state->step_index] == STEP_TYPE_ACTION) {
+			action = this->best_actions[experiment_state->step_index];
 			is_next = true;
 
 			wrapper->num_actions++;
 
 			experiment_state->step_index++;
 		} else {
-			ScopeHistory* inner_scope_history = new ScopeHistory(this->scopes[experiment_state->step_index]);
+			ScopeNode* scope_node = (ScopeNode*)this->best_new_nodes[experiment_state->step_index];
+
+			ScopeHistory* scope_history = wrapper->scope_histories.back();
+
+			ScopeNodeHistory* history = new ScopeNodeHistory(scope_node);
+			scope_history->node_histories[scope_node->id] = history;
+
+			ScopeHistory* inner_scope_history = new ScopeHistory(this->best_scopes[experiment_state->step_index]);
+			history->scope_history = inner_scope_history;
 			wrapper->scope_histories.push_back(inner_scope_history);
-			wrapper->node_context.push_back(this->scopes[experiment_state->step_index]->nodes[0]);
+			wrapper->node_context.push_back(this->best_scopes[experiment_state->step_index]->nodes[0]);
 			wrapper->experiment_context.push_back(NULL);
+
+			inner_scope_history->pre_obs = wrapper->problem->get_observations();
 		}
 	}
 }
 
-void Experiment::capture_verify_exit_step(SolutionWrapper* wrapper,
-										  ExperimentState* experiment_state) {
-	delete wrapper->scope_histories.back();
+void Experiment::capture_verify_exit_step(SolutionWrapper* wrapper) {
+	ExperimentState* experiment_state = (ExperimentState*)wrapper->experiment_context[wrapper->experiment_context.size() - 2];
+
+	wrapper->scope_histories.back()->post_obs = wrapper->problem->get_observations();
 
 	wrapper->scope_histories.pop_back();
 	wrapper->node_context.pop_back();

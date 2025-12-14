@@ -9,36 +9,20 @@
 class AbstractExperimentHistory;
 class AbstractExperimentState;
 class AbstractNode;
-class BranchEndNodeHistory;
 class BranchNode;
 class Experiment;
-class ExploreExperiment;
-class ExploreInstance;
 class Problem;
 class ScopeHistory;
 class Solution;
-
-const int STATE_EXPLORE = 0;
-const int STATE_EXPERIMENT = 1;
 
 class SolutionWrapper {
 public:
 	Solution* solution;
 
-	int state;
-	int state_iter;
-
 	/**
 	 * - iter variables
 	 */
-	ExploreExperiment* curr_explore_experiment;
-	std::vector<ExploreExperiment*> explore_experiments;
-	/**
-	 * - save so can be referenced
-	 */
-	std::vector<ExploreInstance*> best_explore_instances;
-
-	std::vector<ExploreInstance*> consistent_explore_instances;
+	int improvement_iter;
 
 	Experiment* curr_experiment;
 	Experiment* best_experiment;
@@ -55,7 +39,6 @@ public:
 	AbstractExperimentHistory* experiment_history;
 
 	bool has_explore;
-	std::vector<ScopeHistory*> post_scope_histories;
 
 	Problem* problem;
 

@@ -23,7 +23,15 @@ void recursive_add_child(Scope* curr_parent,
 						 SolutionWrapper* wrapper,
 						 Scope* new_scope);
 
+double calc_signal(std::vector<ScopeHistory*>& post_scope_histories,
+				   double target_val,
+				   SolutionWrapper* wrapper);
+
 void add_existing_samples_helper(ScopeHistory* scope_history);
+void add_explore_samples_helper(ScopeHistory* scope_history,
+								std::vector<ScopeHistory*>& stack_trace,
+								double target_val,
+								SolutionWrapper* wrapper);
 
 void clean_scope(Scope* scope);
 

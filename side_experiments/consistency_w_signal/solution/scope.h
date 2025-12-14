@@ -1,6 +1,7 @@
 /**
- * - update consistency between explore and experiment
- * - update signal after experiment update
+ * - OK if scope used in or moved into new context
+ *   - won't be recognized as existing so signal will be ignored
+ *     - then adjusts later
  */
 
 #ifndef SCOPE_H
@@ -17,6 +18,10 @@ class Network;
 class Problem;
 class Solution;
 
+const int SIGNAL_STATUS_INIT = 0;
+const int SIGNAL_STATUS_VALID = 1;
+const int SIGNAL_STATUS_FAIL = 2;
+
 class ScopeHistory;
 class Scope {
 public:
@@ -30,23 +35,25 @@ public:
 
 	std::vector<Scope*> child_scopes;
 
+	/**
+	 * - simply train both pre_network and post_network on explore
+	 *   - doesn't really matter what pre_network trained on due to experiment's train existing
+	 */
+	int signal_status;
 	Network* consistency_network;
-
-	std::vector<std::vector<double>> consistency_existing_pre_obs;
-	std::vector<std::vector<double>> consistency_existing_post_obs;
-	int consistency_existing_index;
-
-	std::vector<std::vector<double>> consistency_explore_pre_obs;
-	std::vector<std::vector<double>> consistency_explore_post_obs;
-	int consistency_explore_index;
-
 	Network* pre_network;
 	Network* post_network;
 
-	std::vector<std::vector<double>> signal_pre_obs;
-	std::vector<std::vector<double>> signal_post_obs;
-	std::vector<double> signal_target_vals;
-	int signal_index;
+	std::vector<std::vector<double>> existing_pre_obs;
+	std::vector<std::vector<double>> existing_post_obs;
+	int existing_index;
+	/**
+	 * - if not enough samples from new, simply reuse previous
+	 */
+
+	std::vector<std::vector<double>> explore_pre_obs;
+	std::vector<std::vector<double>> explore_post_obs;
+	std::vector<double> explore_target_vals;
 
 	Scope();
 	~Scope();
@@ -54,7 +61,6 @@ public:
 	void random_exit_activate(AbstractNode* starting_node,
 							  std::vector<AbstractNode*>& possible_exits);
 
-	void update_consistency();
 	void update_signals();
 
 	#if defined(MDEBUG) && MDEBUG
@@ -78,14 +84,13 @@ public:
 	std::vector<double> pre_obs;
 	std::vector<double> post_obs;
 
+	bool has_explore;
+
 	bool signal_initialized;
-	double pre_val;
-	double post_val;
+	double signal_val;
 
 	ScopeHistory(Scope* scope);
 	~ScopeHistory();
-
-	ScopeHistory* copy_signal();
 };
 
 #endif /* SCOPE_H */

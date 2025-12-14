@@ -53,8 +53,7 @@ int main(int argc, char* argv[]) {
 			if (time_diff.count() >= 20) {
 				start_time = curr_time;
 
-				cout << "solution_wrapper->state: " << solution_wrapper->state << endl;
-				cout << "solution_wrapper->state_iter: " << solution_wrapper->state_iter << endl;
+				cout << "solution_wrapper->improvement_iter: " << solution_wrapper->improvement_iter << endl;
 			}
 
 			Problem* problem = problem_type->get_problem();

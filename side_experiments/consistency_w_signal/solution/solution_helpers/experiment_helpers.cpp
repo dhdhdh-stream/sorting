@@ -5,7 +5,7 @@
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
-#include "explore_experiment.h"
+#include "experiment.h"
 #include "globals.h"
 #include "scope.h"
 #include "scope_node.h"
@@ -92,11 +92,11 @@ void create_experiment(ScopeHistory* scope_history,
 				  explore_is_branch);
 
 	if (explore_node != NULL) {
-		ExploreExperiment* new_experiment = new ExploreExperiment(
+		Experiment* new_experiment = new Experiment(
 			explore_node->parent,
 			explore_node,
 			explore_is_branch,
 			wrapper);
-		wrapper->curr_explore_experiment = new_experiment;
+		wrapper->curr_experiment = new_experiment;
 	}
 }

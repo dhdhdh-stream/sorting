@@ -33,7 +33,12 @@ void ScopeNode::experiment_exit_step(SolutionWrapper* wrapper) {
 	wrapper->scope_histories.back()->post_obs = wrapper->problem->get_observations();
 
 	if (wrapper->has_explore) {
-		wrapper->post_scope_histories.push_back(wrapper->scope_histories.back()->copy_signal());
+		wrapper->scope_histories.back()->has_explore = true;
+		if (wrapper->scope_histories.back()->scope->signal_status == SIGNAL_STATUS_VALID) {
+			for (int i_index = 0; i_index < (int)wrapper->experiment_history->post_scope_histories.size(); i_index++) {
+				wrapper->experiment_history->post_scope_histories[i_index].push_back(wrapper->scope_histories.back());
+			}
+		}
 	}
 
 	wrapper->scope_histories.pop_back();

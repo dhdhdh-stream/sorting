@@ -38,10 +38,8 @@ public:
 
 	std::vector<Scope*> scopes;
 
-	/**
-	 * - temp
-	 */
-	std::vector<double> best_scores;
+	std::vector<ScopeHistory*> existing_scope_histories;
+	std::vector<double> existing_target_val_histories;
 
 	std::vector<double> improvement_history;
 	std::vector<std::string> change_history;

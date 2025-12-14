@@ -28,19 +28,19 @@ void Experiment::add(SolutionWrapper* wrapper) {
 	ss << "this->node_context->id: " << this->node_context->id << "; ";
 	ss << "this->is_branch: " << this->is_branch << "; ";
 	ss << "new explore path:";
-	for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {
-		if (this->step_types[s_index] == STEP_TYPE_ACTION) {
-			ss << " " << this->actions[s_index];
+	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+			ss << " " << this->best_actions[s_index];
 		} else {
-			ss << " E" << this->scopes[s_index]->id;
+			ss << " E" << this->best_scopes[s_index]->id;
 		}
 	}
 	ss << "; ";
 
-	if (this->exit_next_node == NULL) {
-		ss << "this->exit_next_node->id: " << -1 << "; ";
+	if (this->best_exit_next_node == NULL) {
+		ss << "this->best_exit_next_node->id: " << -1 << "; ";
 	} else {
-		ss << "this->exit_next_node->id: " << this->exit_next_node->id << "; ";
+		ss << "this->best_exit_next_node->id: " << this->best_exit_next_node->id << "; ";
 	}
 
 	wrapper->solution->improvement_history.push_back(calc_new_score());
@@ -48,35 +48,35 @@ void Experiment::add(SolutionWrapper* wrapper) {
 
 	cout << ss.str() << endl;
 
-	if (this->new_scope != NULL) {
-		wrapper->solution->scopes.push_back(this->new_scope);
-		this->new_scope->id = (int)wrapper->solution->scopes.size()-1;
+	if (this->best_new_scope != NULL) {
+		wrapper->solution->scopes.push_back(this->best_new_scope);
+		this->best_new_scope->id = (int)wrapper->solution->scopes.size()-1;
 
 		recursive_add_child(scope_context,
 							wrapper,
-							this->new_scope);
+							this->best_new_scope);
 
-		this->new_scope = NULL;
+		this->best_new_scope = NULL;
 	}
 
-	for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {
-		if (this->step_types[s_index] == STEP_TYPE_ACTION) {
-			ActionNode* new_action_node = (ActionNode*)this->new_nodes[s_index];
+	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+			ActionNode* new_action_node = (ActionNode*)this->best_new_nodes[s_index];
 			new_action_node->id = scope_context->node_counter + s_index;
 			scope_context->nodes[new_action_node->id] = new_action_node;
 
-			new_action_node->action = this->actions[s_index];
+			new_action_node->action = this->best_actions[s_index];
 		} else {
-			scope_context->nodes[this->new_nodes[s_index]->id] = this->new_nodes[s_index];
+			scope_context->nodes[this->best_new_nodes[s_index]->id] = this->best_new_nodes[s_index];
 		}
 	}
-	scope_context->node_counter += (int)this->step_types.size();
+	scope_context->node_counter += (int)this->best_step_types.size();
 
 	ObsNode* new_ending_node = NULL;
 
 	int exit_node_id;
 	AbstractNode* exit_node;
-	if (this->exit_next_node == NULL) {
+	if (this->best_exit_next_node == NULL) {
 		new_ending_node = new ObsNode();
 		new_ending_node->parent = this->scope_context;
 		new_ending_node->id = this->scope_context->node_counter;
@@ -105,8 +105,8 @@ void Experiment::add(SolutionWrapper* wrapper) {
 		exit_node_id = new_ending_node->id;
 		exit_node = new_ending_node;
 	} else {
-		exit_node_id = this->exit_next_node->id;
-		exit_node = this->exit_next_node;
+		exit_node_id = this->best_exit_next_node->id;
+		exit_node = this->best_exit_next_node;
 	}
 
 	BranchNode* new_branch_node = new BranchNode();
@@ -256,16 +256,16 @@ void Experiment::add(SolutionWrapper* wrapper) {
 		break;
 	}
 
-	if (this->step_types.size() == 0) {
+	if (this->best_step_types.size() == 0) {
 		exit_node->ancestor_ids.push_back(new_branch_node->id);
 
 		new_branch_node->branch_next_node_id = exit_node_id;
 		new_branch_node->branch_next_node = exit_node;
 	} else {
-		this->new_nodes[0]->ancestor_ids.push_back(new_branch_node->id);
+		this->best_new_nodes[0]->ancestor_ids.push_back(new_branch_node->id);
 
-		new_branch_node->branch_next_node_id = this->new_nodes[0]->id;
-		new_branch_node->branch_next_node = this->new_nodes[0];
+		new_branch_node->branch_next_node_id = this->best_new_nodes[0]->id;
+		new_branch_node->branch_next_node = this->best_new_nodes[0];
 	}
 
 	switch (this->node_context->type) {
@@ -317,8 +317,8 @@ void Experiment::add(SolutionWrapper* wrapper) {
 	}
 	new_branch_node->ancestor_ids.push_back(this->node_context->id);
 
-	new_branch_node->val_network = this->new_val_network;
-	this->new_val_network = NULL;
+	new_branch_node->val_network = this->new_network;
+	this->new_network = NULL;
 
 	#if defined(MDEBUG) && MDEBUG
 	if (this->verify_problems.size() > 0) {
@@ -331,37 +331,37 @@ void Experiment::add(SolutionWrapper* wrapper) {
 	}
 	#endif /* MDEBUG */
 
-	for (int n_index = 0; n_index < (int)this->new_nodes.size(); n_index++) {
+	for (int n_index = 0; n_index < (int)this->best_new_nodes.size(); n_index++) {
 		int next_node_id;
 		AbstractNode* next_node;
-		if (n_index == (int)this->new_nodes.size()-1) {
+		if (n_index == (int)this->best_new_nodes.size()-1) {
 			next_node_id = exit_node_id;
 			next_node = exit_node;
 		} else {
-			next_node_id = this->new_nodes[n_index+1]->id;
-			next_node = this->new_nodes[n_index+1];
+			next_node_id = this->best_new_nodes[n_index+1]->id;
+			next_node = this->best_new_nodes[n_index+1];
 		}
 
-		switch (this->new_nodes[n_index]->type) {
+		switch (this->best_new_nodes[n_index]->type) {
 		case NODE_TYPE_ACTION:
 			{
-				ActionNode* action_node = (ActionNode*)this->new_nodes[n_index];
+				ActionNode* action_node = (ActionNode*)this->best_new_nodes[n_index];
 				action_node->next_node_id = next_node_id;
 				action_node->next_node = next_node;
 			}
 			break;
 		case NODE_TYPE_SCOPE:
 			{
-				ScopeNode* scope_node = (ScopeNode*)this->new_nodes[n_index];
+				ScopeNode* scope_node = (ScopeNode*)this->best_new_nodes[n_index];
 				scope_node->next_node_id = next_node_id;
 				scope_node->next_node = next_node;
 			}
 			break;
 		}
 
-		next_node->ancestor_ids.push_back(this->new_nodes[n_index]->id);
+		next_node->ancestor_ids.push_back(this->best_new_nodes[n_index]->id);
 	}
-	this->new_nodes.clear();
+	this->best_new_nodes.clear();
 }
 
 double Experiment::calc_new_score() {

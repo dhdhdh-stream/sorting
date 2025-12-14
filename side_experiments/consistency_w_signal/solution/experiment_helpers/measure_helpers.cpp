@@ -6,7 +6,6 @@
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
-#include "explore_experiment.h"
 #include "network.h"
 #include "problem.h"
 #include "scope.h"
@@ -33,11 +32,7 @@ void Experiment::measure_step(vector<double>& obs,
 	ExperimentState* experiment_state = (ExperimentState*)wrapper->experiment_context.back();
 
 	if (experiment_state->step_index == 0) {
-		// // temp
-		// ExploreExperimentHistory* history = (ExploreExperimentHistory*)wrapper->experiment_history;
-		// history->stack_traces.push_back(wrapper->scope_histories);
-
-		this->new_val_network->activate(obs);
+		this->new_network->activate(obs);
 
 		bool decision_is_branch;
 		#if defined(MDEBUG) && MDEBUG
@@ -62,31 +57,42 @@ void Experiment::measure_step(vector<double>& obs,
 		}
 	}
 
-	if (experiment_state->step_index >= (int)this->step_types.size()) {
-		wrapper->node_context.back() = this->exit_next_node;
+	if (experiment_state->step_index >= (int)this->best_step_types.size()) {
+		wrapper->node_context.back() = this->best_exit_next_node;
 
 		delete experiment_state;
 		wrapper->experiment_context.back() = NULL;
 	} else {
-		if (this->step_types[experiment_state->step_index] == STEP_TYPE_ACTION) {
-			action = this->actions[experiment_state->step_index];
+		if (this->best_step_types[experiment_state->step_index] == STEP_TYPE_ACTION) {
+			action = this->best_actions[experiment_state->step_index];
 			is_next = true;
 
 			wrapper->num_actions++;
 
 			experiment_state->step_index++;
 		} else {
-			ScopeHistory* inner_scope_history = new ScopeHistory(this->scopes[experiment_state->step_index]);
+			ScopeNode* scope_node = (ScopeNode*)this->best_new_nodes[experiment_state->step_index];
+
+			ScopeHistory* scope_history = wrapper->scope_histories.back();
+
+			ScopeNodeHistory* history = new ScopeNodeHistory(scope_node);
+			scope_history->node_histories[scope_node->id] = history;
+
+			ScopeHistory* inner_scope_history = new ScopeHistory(this->best_scopes[experiment_state->step_index]);
+			history->scope_history = inner_scope_history;
 			wrapper->scope_histories.push_back(inner_scope_history);
-			wrapper->node_context.push_back(this->scopes[experiment_state->step_index]->nodes[0]);
+			wrapper->node_context.push_back(this->best_scopes[experiment_state->step_index]->nodes[0]);
 			wrapper->experiment_context.push_back(NULL);
+
+			inner_scope_history->pre_obs = wrapper->problem->get_observations();
 		}
 	}
 }
 
-void Experiment::measure_exit_step(SolutionWrapper* wrapper,
-								   ExperimentState* experiment_state) {
-	delete wrapper->scope_histories.back();
+void Experiment::measure_exit_step(SolutionWrapper* wrapper) {
+	ExperimentState* experiment_state = (ExperimentState*)wrapper->experiment_context[wrapper->experiment_context.size() - 2];
+
+	wrapper->scope_histories.back()->post_obs = wrapper->problem->get_observations();
 
 	wrapper->scope_histories.pop_back();
 	wrapper->node_context.pop_back();
@@ -102,91 +108,39 @@ void Experiment::measure_backprop(double target_val,
 
 	ExperimentHistory* history = (ExperimentHistory*)wrapper->experiment_history;
 	if (history->is_hit) {
-		// // temp
-		// for (int s_index = 0; s_index < (int)history->stack_traces.size(); s_index++) {
-		// 	double sum_vals = 0.0;
-		// 	int sum_counts = 0;
-
-		// 	for (int l_index = 0; l_index < (int)history->stack_traces[s_index].size(); l_index++) {
-		// 		ScopeHistory* scope_history = history->stack_traces[s_index][l_index];
-		// 		Scope* scope = scope_history->scope;
-		// 		if (scope->pre_network != NULL) {
-		// 			if (!scope_history->signal_initialized) {
-		// 				scope->pre_network->activate(scope_history->pre_obs);
-		// 				scope_history->pre_val = scope->pre_network->output->acti_vals[0];
-
-		// 				vector<double> inputs = scope_history->pre_obs;
-		// 				inputs.insert(inputs.end(), scope_history->post_obs.begin(), scope_history->post_obs.end());
-
-		// 				scope->post_network->activate(inputs);
-		// 				scope_history->post_val = scope->post_network->output->acti_vals[0];
-
-		// 				scope_history->signal_initialized = true;
-		// 			}
-
-		// 			sum_vals += (scope_history->post_val - scope_history->pre_val);
-		// 			sum_counts++;
-		// 		}
-		// 	}
-
-		// 	double average_signal;
-		// 	if (sum_counts == 0) {
-		// 		average_signal = 0.0;
-		// 	} else {
-		// 		average_signal = sum_vals / sum_counts;
-		// 	}
-		// 	this->signal_histories.push_back(average_signal);
-		// }
-
 		this->sum_scores += target_val;
 
 		this->state_iter++;
 		if (this->state_iter >= MEASURE_ITERS) {
 			double new_score = this->sum_scores / this->state_iter;
-			// double total_score = calc_new_score();
-			// // temp
-			// {
-			// 	double sum_vals = 0.0;
-			// 	for (int h_index = 0; h_index < (int)this->signal_histories.size(); h_index++) {
-			// 		sum_vals += this->signal_histories[h_index];
-			// 	}
-			// 	double new_signal = sum_vals / (double)this->signal_histories.size();
-
-			// 	cout << "existing_signal: " << this->explore_experiment->existing_signal << endl;
-			// 	cout << "new_signal: " << new_signal << endl;
-			// }
 
 			#if defined(MDEBUG) && MDEBUG
-			// if ((new_score >= this->explore_experiment->existing_score
-			// 		&& total_score > wrapper->solution->best_scores.back()) || rand()%2 == 0) {
-			if (new_score >= this->explore_experiment->existing_score || rand()%2 == 0) {
+			if (new_score >= this->existing_score || rand()%2 == 0) {
 			#else
-			// if (new_score >= this->explore_experiment->existing_score
-			// 		&& total_score > wrapper->solution->best_scores.back()) {
-			if (new_score >= this->explore_experiment->existing_score) {
+			if (new_score >= this->existing_score) {
 			#endif /* MDEBUG */
 				double average_hits_per_run = (double)MEASURE_ITERS / (double)this->total_count;
 
-				this->improvement = average_hits_per_run * (new_score - this->explore_experiment->existing_score);
+				this->improvement = average_hits_per_run * (new_score - this->existing_score);
 
 				cout << "branch" << endl;
 				cout << "this->scope_context->id: " << this->scope_context->id << endl;
 				cout << "this->node_context->id: " << this->node_context->id << endl;
 				cout << "this->is_branch: " << this->is_branch << endl;
 				cout << "new explore path:";
-				for (int s_index = 0; s_index < (int)this->step_types.size(); s_index++) {
-					if (this->step_types[s_index] == STEP_TYPE_ACTION) {
-						cout << " " << this->actions[s_index];
+				for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+					if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+						cout << " " << this->best_actions[s_index];
 					} else {
-						cout << " E" << this->scopes[s_index]->id;
+						cout << " E" << this->best_scopes[s_index]->id;
 					}
 				}
 				cout << endl;
 
-				if (this->exit_next_node == NULL) {
-					cout << "this->exit_next_node->id: " << -1 << endl;
+				if (this->best_exit_next_node == NULL) {
+					cout << "this->best_exit_next_node->id: " << -1 << endl;
 				} else {
-					cout << "this->exit_next_node->id: " << this->exit_next_node->id << endl;
+					cout << "this->best_exit_next_node->id: " << this->best_exit_next_node->id << endl;
 				}
 
 				cout << "average_hits_per_run: " << average_hits_per_run << endl;
