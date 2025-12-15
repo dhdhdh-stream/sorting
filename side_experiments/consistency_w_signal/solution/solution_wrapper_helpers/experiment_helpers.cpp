@@ -95,6 +95,8 @@ void SolutionWrapper::experiment_end(double result) {
 	if (this->curr_experiment == NULL) {
 		create_experiment(this->scope_histories[0],
 						  this);
+
+		delete this->scope_histories[0];
 	} else {
 		this->experiment_history->experiment->backprop(
 		result,
@@ -166,8 +168,6 @@ void SolutionWrapper::experiment_end(double result) {
 			}
 		}
 	}
-
-	delete this->scope_histories[0];
 
 	this->scope_histories.clear();
 	this->node_context.clear();

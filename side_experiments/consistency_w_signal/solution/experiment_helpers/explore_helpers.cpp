@@ -143,22 +143,22 @@ void Experiment::explore_check_activate(SolutionWrapper* wrapper) {
 					this->curr_scopes.push_back(NULL);
 				}
 			}
+		}
 
-			for (int s_index = 0; s_index < (int)this->curr_step_types.size(); s_index++) {
-				if (this->curr_step_types[s_index] == STEP_TYPE_ACTION) {
-					ActionNode* new_action_node = new ActionNode();
-					new_action_node->parent = this->scope_context;
+		for (int s_index = 0; s_index < (int)this->curr_step_types.size(); s_index++) {
+			if (this->curr_step_types[s_index] == STEP_TYPE_ACTION) {
+				ActionNode* new_action_node = new ActionNode();
+				new_action_node->parent = this->scope_context;
 
-					this->curr_new_nodes.push_back(new_action_node);
-				} else {
-					ScopeNode* new_scope_node = new ScopeNode();
-					new_scope_node->parent = this->scope_context;
-					new_scope_node->id = this->scope_context->node_counter + s_index;
+				this->curr_new_nodes.push_back(new_action_node);
+			} else {
+				ScopeNode* new_scope_node = new ScopeNode();
+				new_scope_node->parent = this->scope_context;
+				new_scope_node->id = this->scope_context->node_counter + s_index;
 
-					new_scope_node->scope = this->curr_scopes[s_index];
+				new_scope_node->scope = this->curr_scopes[s_index];
 
-					this->curr_new_nodes.push_back(new_scope_node);
-				}
+				this->curr_new_nodes.push_back(new_scope_node);
 			}
 		}
 

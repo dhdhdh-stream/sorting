@@ -82,6 +82,8 @@ void Experiment::train_existing_backprop(double target_val,
 
 			this->average_instances_per_run = this->sum_num_instances / (double)TRAIN_EXISTING_NUM_DATAPOINTS;
 
+			this->best_surprise = numeric_limits<double>::lowest();
+
 			uniform_int_distribution<int> until_distribution(1, 2 * this->average_instances_per_run);
 			this->num_instances_until_target = until_distribution(generator);
 
