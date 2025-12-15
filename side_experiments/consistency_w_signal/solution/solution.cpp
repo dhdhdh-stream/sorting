@@ -30,9 +30,16 @@ Solution::~Solution() {
 	}
 }
 
-void Solution::init() {
+void Solution::init(ProblemType* problem_type) {
+	double sum_score = 0.0;
+	for (int iter_index = 0; iter_index < MEASURE_ITERS; iter_index++) {
+		Problem* problem = problem_type->get_problem();
+		sum_score += problem->score_result();
+		delete problem;
+	}
+
 	this->timestamp = 0;
-	this->curr_score = 0.0;
+	this->curr_score = sum_score / MEASURE_ITERS;
 
 	/**
 	 * - even though scopes[0] will not be reused, still good to start with:
@@ -65,6 +72,9 @@ void Solution::init() {
 
 	end_node->next_node_id = -1;
 	end_node->next_node = NULL;
+
+	// TODO: add measure initial
+	// TODO: then measure correlation between signals and scores
 }
 
 void Solution::load(string path,

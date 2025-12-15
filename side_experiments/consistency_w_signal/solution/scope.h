@@ -55,6 +55,10 @@ public:
 	std::vector<std::vector<double>> explore_post_obs;
 	std::vector<double> explore_target_vals;
 
+	// temp
+	std::vector<double> explore_signals;
+	std::vector<double> explore_true;
+
 	Scope();
 	~Scope();
 
@@ -73,6 +77,9 @@ public:
 	void link(Solution* parent_solution);
 
 	void save_for_display(std::ofstream& output_file);
+
+	// temp
+	void measure_signal_pcc();
 };
 
 class ScopeHistory {

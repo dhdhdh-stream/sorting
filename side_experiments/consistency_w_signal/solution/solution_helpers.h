@@ -35,4 +35,9 @@ void add_explore_samples_helper(ScopeHistory* scope_history,
 
 void clean_scope(Scope* scope);
 
+// temp
+void update_signal_measure(std::vector<ScopeHistory*>& post_scope_histories,
+						   double target_val,
+						   SolutionWrapper* wrapper);
+
 #endif /* SOLUTION_HELPERS_H */

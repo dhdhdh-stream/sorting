@@ -43,7 +43,7 @@ int main(int argc, char* argv[]) {
 			filename);
 	} else {
 		filename = "main.txt";
-		solution_wrapper = new SolutionWrapper();
+		solution_wrapper = new SolutionWrapper(problem_type);
 	}
 
 	#if defined(MDEBUG) && MDEBUG

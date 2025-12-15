@@ -181,3 +181,45 @@ void Scope::update_signals() {
 		}
 	}
 }
+
+// temp
+void Scope::measure_signal_pcc() {
+	if (this->explore_signals.size() > 0) {
+		double sum_signal_vals = 0.0;
+		for (int s_index = 0; s_index < (int)this->explore_signals.size(); s_index++) {
+			sum_signal_vals += this->explore_signals[s_index];
+		}
+		double signal_val_average = sum_signal_vals / (double)this->explore_signals.size();
+
+		double sum_signal_variance = 0.0;
+		for (int s_index = 0; s_index < (int)this->explore_signals.size(); s_index++) {
+			sum_signal_variance += (this->explore_signals[s_index] - signal_val_average)
+				* (this->explore_signals[s_index] - signal_val_average);
+		}
+		double signal_val_standard_deviation = sqrt(sum_signal_variance / (double)this->explore_signals.size());
+
+		double sum_true_vals = 0.0;
+		for (int s_index = 0; s_index < (int)this->explore_true.size(); s_index++) {
+			sum_true_vals += this->explore_true[s_index];
+		}
+		double true_val_average = sum_true_vals / (double)this->explore_true.size();
+
+		double sum_true_variance = 0.0;
+		for (int s_index = 0; s_index < (int)this->explore_true.size(); s_index++) {
+			sum_true_variance += (this->explore_true[s_index] - true_val_average)
+				* (this->explore_true[s_index] - true_val_average);
+		}
+		double true_val_standard_deviation = sqrt(sum_true_variance / (double)this->explore_true.size());
+
+		double sum_covariance = 0.0;
+		for (int s_index = 0; s_index < (int)this->explore_signals.size(); s_index++) {
+			sum_covariance += (this->explore_signals[s_index] - signal_val_average)
+				* (this->explore_true[s_index] - true_val_average);
+		}
+		double covariance_average = sum_covariance / (double)this->explore_signals.size();
+
+		double pcc = covariance_average / signal_val_standard_deviation / true_val_standard_deviation;
+
+		cout << this->id << " pcc: " << pcc << endl;
+	}
+}

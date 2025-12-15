@@ -262,6 +262,11 @@ void Experiment::explore_backprop(double target_val,
 									wrapper);
 		double curr_surprise = signal - history->existing_predicted_scores[0];
 
+		// temp
+		update_signal_measure(history->post_scope_histories[0],
+							  target_val,
+							  wrapper);
+
 		#if defined(MDEBUG) && MDEBUG
 		if (curr_surprise > this->best_surprise || true) {
 		#else

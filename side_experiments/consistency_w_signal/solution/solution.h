@@ -23,6 +23,7 @@
 class AbstractExperiment;
 class AbstractNode;
 class Problem;
+class ProblemType;
 class Scope;
 class ScopeHistory;
 
@@ -52,7 +53,7 @@ public:
 	Solution();
 	~Solution();
 
-	void init();
+	void init(ProblemType* problem_type);
 	void load(std::string path,
 			  std::string name);
 

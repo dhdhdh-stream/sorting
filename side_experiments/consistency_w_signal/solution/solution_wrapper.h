@@ -12,6 +12,7 @@ class AbstractNode;
 class BranchNode;
 class Experiment;
 class Problem;
+class ProblemType;
 class ScopeHistory;
 class Solution;
 
@@ -48,7 +49,7 @@ public:
 	unsigned long curr_run_seed;
 	#endif /* MDEBUG */
 
-	SolutionWrapper();
+	SolutionWrapper(ProblemType* problem_type);
 	SolutionWrapper(std::string path,
 					std::string name);
 	~SolutionWrapper();

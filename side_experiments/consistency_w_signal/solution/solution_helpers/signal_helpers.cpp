@@ -41,3 +41,38 @@ double calc_signal(vector<ScopeHistory*>& post_scope_histories,
 
 	return sum_vals;
 }
+
+// temp
+void update_signal_measure(vector<ScopeHistory*>& post_scope_histories,
+						   double target_val,
+						   SolutionWrapper* wrapper) {
+	for (int h_index = 0; h_index < (int)post_scope_histories.size(); h_index++) {
+		Scope* scope = post_scope_histories[h_index]->scope;
+
+		if (!post_scope_histories[h_index]->signal_initialized) {
+			post_scope_histories[h_index]->signal_initialized = true;
+
+			vector<double> inputs = post_scope_histories[h_index]->pre_obs;
+			inputs.insert(inputs.end(), post_scope_histories[h_index]->post_obs.begin(), post_scope_histories[h_index]->post_obs.end());
+
+			scope->consistency_network->activate(inputs);
+			double consistency = scope->consistency_network->output->acti_vals[0];
+			if (consistency <= 0.0) {
+				post_scope_histories[h_index]->signal_val = 0.0;
+			} else {
+				if (consistency > 1.0) {
+					consistency = 1.0;
+				}
+
+				scope->pre_network->activate(post_scope_histories[h_index]->pre_obs);
+				scope->post_network->activate(inputs);
+				double diff = scope->post_network->output->acti_vals[0] - scope->pre_network->output->acti_vals[0];
+
+				post_scope_histories[h_index]->signal_val = consistency * diff;
+			}
+		}
+
+		scope->explore_signals.push_back(post_scope_histories[h_index]->signal_val);
+		scope->explore_true.push_back(target_val);
+	}
+}

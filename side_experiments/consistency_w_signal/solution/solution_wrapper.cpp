@@ -6,9 +6,9 @@
 
 using namespace std;
 
-SolutionWrapper::SolutionWrapper() {
+SolutionWrapper::SolutionWrapper(ProblemType* problem_type) {
 	this->solution = new Solution();
-	this->solution->init();
+	this->solution->init(problem_type);
 
 	this->improvement_iter = 0;
 

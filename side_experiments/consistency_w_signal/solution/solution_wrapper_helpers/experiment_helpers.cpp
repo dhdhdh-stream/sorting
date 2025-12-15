@@ -128,6 +128,11 @@ void SolutionWrapper::experiment_end(double result) {
 
 			this->improvement_iter++;
 			if (this->improvement_iter >= IMPROVEMENTS_PER_ITER) {
+				// temp
+				for (int s_index = 0; s_index < (int)this->solution->scopes.size(); s_index++) {
+					this->solution->scopes[s_index]->measure_signal_pcc();
+				}
+
 				Scope* last_updated_scope = this->best_experiment->scope_context;
 
 				this->best_experiment->add(this);
