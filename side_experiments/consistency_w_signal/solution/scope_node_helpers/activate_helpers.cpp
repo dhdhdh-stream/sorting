@@ -35,7 +35,7 @@ void ScopeNode::exit_step(SolutionWrapper* wrapper) {
 	/**
 	 * - debug
 	 */
-	if (this->scope->consistency_network != NULL) {
+	if (this->scope->signal_status == SIGNAL_STATUS_VALID) {
 		cout << "this->parent->id: " << this->parent->id << endl;
 		cout << "this->id: " << this->id << endl;
 		cout << "pre_obs:" << endl;
@@ -60,13 +60,8 @@ void ScopeNode::exit_step(SolutionWrapper* wrapper) {
 		this->scope->consistency_network->activate(input);
 		cout << "this->scope->consistency_network->output->acti_vals[0]: " << this->scope->consistency_network->output->acti_vals[0] << endl;
 
-		if (this->scope->pre_network != NULL) {
-			this->scope->pre_network->activate(wrapper->scope_histories.back()->pre_obs);
-			cout << "this->scope->pre_network->output->acti_vals[0]: " << this->scope->pre_network->output->acti_vals[0] << endl;
-
-			this->scope->post_network->activate(input);
-			cout << "this->scope->post_network->output->acti_vals[0]: " << this->scope->post_network->output->acti_vals[0] << endl;
-		}
+		this->scope->signal_network->activate(input);
+		cout << "this->scope->signal_network->output->acti_vals[0]: " << this->scope->signal_network->output->acti_vals[0] << endl;
 
 		cout << endl;
 	}

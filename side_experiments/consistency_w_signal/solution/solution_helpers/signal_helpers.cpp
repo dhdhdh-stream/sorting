@@ -29,9 +29,8 @@ double calc_signal(vector<ScopeHistory*>& post_scope_histories,
 					consistency = 1.0;
 				}
 
-				scope->pre_network->activate(post_scope_histories[h_index]->pre_obs);
-				scope->post_network->activate(inputs);
-				double diff = scope->post_network->output->acti_vals[0] - scope->pre_network->output->acti_vals[0];
+				scope->signal_network->activate(inputs);
+				double diff = scope->signal_network->output->acti_vals[0];
 
 				post_scope_histories[h_index]->signal_val = consistency * diff;
 			}
@@ -64,15 +63,16 @@ void update_signal_measure(vector<ScopeHistory*>& post_scope_histories,
 					consistency = 1.0;
 				}
 
-				scope->pre_network->activate(post_scope_histories[h_index]->pre_obs);
-				scope->post_network->activate(inputs);
-				double diff = scope->post_network->output->acti_vals[0] - scope->pre_network->output->acti_vals[0];
+				scope->signal_network->activate(inputs);
+				double diff = scope->signal_network->output->acti_vals[0];
 
 				post_scope_histories[h_index]->signal_val = consistency * diff;
 			}
 		}
 
-		scope->explore_signals.push_back(post_scope_histories[h_index]->signal_val);
-		scope->explore_true.push_back(target_val);
+		if (post_scope_histories[h_index]->signal_val != 0.0) {
+			scope->explore_signals.push_back(post_scope_histories[h_index]->signal_val);
+			scope->explore_true.push_back(target_val);
+		}
 	}
 }

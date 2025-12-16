@@ -36,13 +36,14 @@ public:
 	std::vector<Scope*> child_scopes;
 
 	/**
-	 * - simply train both pre_network and post_network on explore
-	 *   - doesn't really matter what pre_network trained on due to experiment's train existing
+	 * - train on explore
+	 *   - OK if bad average due to experiment's train existing
+	 * 
+	 * - don't worry about pre vs. post as some scopes will be evaluated fully after explore
 	 */
 	int signal_status;
 	Network* consistency_network;
-	Network* pre_network;
-	Network* post_network;
+	Network* signal_network;
 
 	std::vector<std::vector<double>> existing_pre_obs;
 	std::vector<std::vector<double>> existing_post_obs;

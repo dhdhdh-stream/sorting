@@ -18,8 +18,7 @@ using namespace std;
 Scope::Scope() {
 	this->signal_status = SIGNAL_STATUS_INIT;
 	this->consistency_network = NULL;
-	this->pre_network = NULL;
-	this->post_network = NULL;
+	this->signal_network = NULL;
 
 	this->existing_index = 0;
 }
@@ -34,12 +33,8 @@ Scope::~Scope() {
 		delete this->consistency_network;
 	}
 
-	if (this->pre_network != NULL) {
-		delete this->pre_network;
-	}
-
-	if (this->post_network != NULL) {
-		delete this->post_network;
+	if (this->signal_network != NULL) {
+		delete this->signal_network;
 	}
 }
 
@@ -143,14 +138,9 @@ void Scope::save(ofstream& output_file) {
 		this->consistency_network->save(output_file);
 	}
 
-	output_file << (this->pre_network == NULL) << endl;
-	if (this->pre_network != NULL) {
-		this->pre_network->save(output_file);
-	}
-
-	output_file << (this->post_network == NULL) << endl;
-	if (this->post_network != NULL) {
-		this->post_network->save(output_file);
+	output_file << (this->signal_network == NULL) << endl;
+	if (this->signal_network != NULL) {
+		this->signal_network->save(output_file);
 	}
 }
 
@@ -245,22 +235,13 @@ void Scope::load(ifstream& input_file,
 		this->consistency_network = new Network(input_file);
 	}
 
-	string pre_network_is_null_line;
-	getline(input_file, pre_network_is_null_line);
-	bool pre_network_is_null = stoi(pre_network_is_null_line);
-	if (pre_network_is_null) {
-		this->pre_network = NULL;
+	string signal_network_is_null_line;
+	getline(input_file, signal_network_is_null_line);
+	bool signal_network_is_null = stoi(signal_network_is_null_line);
+	if (signal_network_is_null) {
+		this->signal_network = NULL;
 	} else {
-		this->pre_network = new Network(input_file);
-	}
-
-	string post_network_is_null_line;
-	getline(input_file, post_network_is_null_line);
-	bool post_network_is_null = stoi(post_network_is_null_line);
-	if (post_network_is_null) {
-		this->post_network = NULL;
-	} else {
-		this->post_network = new Network(input_file);
+		this->signal_network = new Network(input_file);
 	}
 }
 

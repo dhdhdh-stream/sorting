@@ -76,9 +76,8 @@ void add_explore_samples_helper(ScopeHistory* scope_history,
 					consistency = 1.0;
 				}
 
-				scope->pre_network->activate(scope_history->pre_obs);
-				scope->post_network->activate(inputs);
-				double diff = scope->post_network->output->acti_vals[0] - scope->pre_network->output->acti_vals[0];
+				scope->signal_network->activate(inputs);
+				double diff = scope->signal_network->output->acti_vals[0];
 
 				scope_history->signal_val = consistency * diff;
 			}

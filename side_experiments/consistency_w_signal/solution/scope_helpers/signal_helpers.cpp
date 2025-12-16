@@ -96,6 +96,18 @@ void Scope::update_signals() {
 			}
 		}
 
+		/**
+		 * - re-average so not biased towards more/less signals
+		 */
+		double sum_explore_vals = 0.0;
+		for (int h_index = 0; h_index < (int)this->explore_pre_obs.size(); h_index++) {
+			sum_explore_vals += this->explore_target_vals[h_index];
+		}
+		double explore_val_average = sum_explore_vals / (double)this->explore_pre_obs.size();
+		for (int h_index = 0; h_index < (int)this->explore_pre_obs.size(); h_index++) {
+			this->explore_target_vals[h_index] -= explore_val_average;
+		}
+
 		vector<double> consistency_vals(this->explore_pre_obs.size());
 		vector<vector<double>> meaningful_pre_obs;
 		vector<vector<double>> meaningful_post_obs;
@@ -123,33 +135,24 @@ void Scope::update_signals() {
 		cout << "meaningful_pre_obs.size(): " << meaningful_pre_obs.size() << endl;
 
 		uniform_int_distribution<int> distribution(0, meaningful_pre_obs.size()-1);
-		if (this->pre_network == NULL) {
-			this->pre_network = new Network(this->explore_pre_obs[0].size(),
-											NETWORK_SIZE_SMALL);
-			this->post_network = new Network(this->explore_pre_obs[0].size() + this->explore_post_obs[0].size(),
-											 NETWORK_SIZE_LARGE);
+		if (this->signal_network == NULL) {
+			this->signal_network = new Network(this->explore_pre_obs[0].size() + this->explore_post_obs[0].size(),
+											   NETWORK_SIZE_LARGE);
 
 			for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
 				int index = distribution(generator);
 
 				double consistency = consistency_vals[index];
 				if (consistency > 0.0) {
-					this->pre_network->activate(meaningful_pre_obs[index]);
-
-					double pre_error = meaningful_target_vals[index] - this->pre_network->output->acti_vals[0];
-					pre_error *= consistency;
-
-					this->pre_network->backprop(pre_error);
-
 					vector<double> input = meaningful_pre_obs[index];
 					input.insert(input.end(), meaningful_post_obs[index].begin(), meaningful_post_obs[index].end());
 
-					this->post_network->activate(input);
+					this->signal_network->activate(input);
 
-					double post_error = meaningful_target_vals[index] - this->post_network->output->acti_vals[0];
+					double post_error = meaningful_target_vals[index] - this->signal_network->output->acti_vals[0];
 					post_error *= consistency;
 
-					this->post_network->backprop(post_error);
+					this->signal_network->backprop(post_error);
 				}
 			}
 
@@ -160,22 +163,15 @@ void Scope::update_signals() {
 
 				double consistency = consistency_vals[index];
 				if (consistency > 0.0) {
-					this->pre_network->activate(meaningful_pre_obs[index]);
-
-					double pre_error = meaningful_target_vals[index] - this->pre_network->output->acti_vals[0];
-					pre_error *= consistency;
-
-					this->pre_network->backprop(pre_error);
-
 					vector<double> input = meaningful_pre_obs[index];
 					input.insert(input.end(), meaningful_post_obs[index].begin(), meaningful_post_obs[index].end());
 
-					this->post_network->activate(input);
+					this->signal_network->activate(input);
 
-					double post_error = meaningful_target_vals[index] - this->post_network->output->acti_vals[0];
+					double post_error = meaningful_target_vals[index] - this->signal_network->output->acti_vals[0];
 					post_error *= consistency;
 
-					this->post_network->backprop(post_error);
+					this->signal_network->backprop(post_error);
 				}
 			}
 		}
@@ -222,4 +218,7 @@ void Scope::measure_signal_pcc() {
 
 		cout << this->id << " pcc: " << pcc << endl;
 	}
+
+	this->explore_signals.clear();
+	this->explore_true.clear();
 }
