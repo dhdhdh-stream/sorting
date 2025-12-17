@@ -27,7 +27,8 @@ double calc_signal(std::vector<ScopeHistory*>& post_scope_histories,
 				   double target_val,
 				   SolutionWrapper* wrapper);
 
-void add_existing_samples_helper(ScopeHistory* scope_history);
+void add_existing_samples_helper(ScopeHistory* scope_history,
+								 std::vector<double>& sum_signals);
 void add_explore_samples_helper(ScopeHistory* scope_history,
 								std::vector<ScopeHistory*>& stack_trace,
 								double target_val,
@@ -35,9 +36,10 @@ void add_explore_samples_helper(ScopeHistory* scope_history,
 
 void clean_scope(Scope* scope);
 
-// temp
-void update_signal_measure(std::vector<ScopeHistory*>& post_scope_histories,
-						   double target_val,
-						   SolutionWrapper* wrapper);
+bool calc_linear_regression(std::vector<std::vector<double>>& inputs,
+							std::vector<double>& outputs,
+							std::vector<double>& weights);
+double calc_pcc(std::vector<double>& val_1s,
+				std::vector<double>& val_2s);
 
 #endif /* SOLUTION_HELPERS_H */

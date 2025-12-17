@@ -228,7 +228,7 @@ void Experiment::explore_exit_step(SolutionWrapper* wrapper) {
 	wrapper->scope_histories.back()->post_obs = wrapper->problem->get_observations();
 
 	wrapper->scope_histories.back()->has_explore = true;
-	if (wrapper->scope_histories.back()->scope->signal_status == SIGNAL_STATUS_VALID) {
+	if (wrapper->scope_histories.back()->scope->signal_status != SIGNAL_STATUS_INIT) {
 		for (int i_index = 0; i_index < (int)wrapper->experiment_history->post_scope_histories.size(); i_index++) {
 			wrapper->experiment_history->post_scope_histories[i_index].push_back(wrapper->scope_histories.back());
 		}
@@ -261,11 +261,6 @@ void Experiment::explore_backprop(double target_val,
 									target_val,
 									wrapper);
 		double curr_surprise = signal - history->existing_predicted_scores[0];
-
-		// temp
-		update_signal_measure(history->post_scope_histories[0],
-							  target_val,
-							  wrapper);
 
 		#if defined(MDEBUG) && MDEBUG
 		if (curr_surprise > this->best_surprise || true) {

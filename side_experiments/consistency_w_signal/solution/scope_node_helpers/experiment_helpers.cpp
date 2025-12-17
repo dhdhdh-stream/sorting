@@ -34,7 +34,7 @@ void ScopeNode::experiment_exit_step(SolutionWrapper* wrapper) {
 
 	if (wrapper->has_explore) {
 		wrapper->scope_histories.back()->has_explore = true;
-		if (wrapper->scope_histories.back()->scope->signal_status == SIGNAL_STATUS_VALID) {
+		if (wrapper->scope_histories.back()->scope->signal_status != SIGNAL_STATUS_INIT) {
 			for (int i_index = 0; i_index < (int)wrapper->experiment_history->post_scope_histories.size(); i_index++) {
 				wrapper->experiment_history->post_scope_histories[i_index].push_back(wrapper->scope_histories.back());
 			}

@@ -85,7 +85,7 @@ void SolutionWrapper::experiment_end(double result) {
 
 	if (this->has_explore) {
 		this->scope_histories.back()->has_explore = true;
-		if (this->scope_histories.back()->scope->signal_status == SIGNAL_STATUS_VALID) {
+		if (this->scope_histories.back()->scope->signal_status != SIGNAL_STATUS_INIT) {
 			for (int i_index = 0; i_index < (int)this->experiment_history->post_scope_histories.size(); i_index++) {
 				this->experiment_history->post_scope_histories[i_index].push_back(this->scope_histories.back());
 			}
@@ -128,11 +128,6 @@ void SolutionWrapper::experiment_end(double result) {
 
 			this->improvement_iter++;
 			if (this->improvement_iter >= IMPROVEMENTS_PER_ITER) {
-				// temp
-				for (int s_index = 0; s_index < (int)this->solution->scopes.size(); s_index++) {
-					this->solution->scopes[s_index]->measure_signal_pcc();
-				}
-
 				Scope* last_updated_scope = this->best_experiment->scope_context;
 
 				this->best_experiment->add(this);
@@ -149,8 +144,17 @@ void SolutionWrapper::experiment_end(double result) {
 				this->best_experiment->new_scope_histories.clear();
 				this->solution->existing_target_val_histories = this->best_experiment->new_target_val_histories;
 
+				vector<double> sum_signals(this->solution->scopes.size(), 0.0);
 				for (int h_index = 0; h_index < (int)this->solution->existing_scope_histories.size(); h_index++) {
-					add_existing_samples_helper(this->solution->existing_scope_histories[h_index]);
+					add_existing_samples_helper(this->solution->existing_scope_histories[h_index],
+												sum_signals);
+				}
+				for (int s_index = 0; s_index < (int)this->solution->scopes.size(); s_index++) {
+					if (this->solution->scopes[s_index]->signal_status != SIGNAL_STATUS_INIT) {
+						sum_signals[s_index] /= (double)this->solution->scopes.size();
+						this->solution->scopes[s_index]->signal_history.push_back(
+							sum_signals[s_index]);
+					}
 				}
 
 				delete this->best_experiment;
@@ -161,7 +165,7 @@ void SolutionWrapper::experiment_end(double result) {
 				this->solution->clean_scopes();
 
 				for (int s_index = 0; s_index < (int)this->solution->scopes.size(); s_index++) {
-					this->solution->scopes[s_index]->update_signals();
+					this->solution->scopes[s_index]->update_signals(this);
 				}
 
 				this->solution->timestamp++;

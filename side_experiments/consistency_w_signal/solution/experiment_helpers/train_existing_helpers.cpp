@@ -43,8 +43,6 @@ void Experiment::train_existing_backprop(double target_val,
 										 SolutionWrapper* wrapper) {
 	this->total_count++;
 
-	add_existing_samples_helper(wrapper->scope_histories[0]);
-
 	ExperimentHistory* history = (ExperimentHistory*)wrapper->experiment_history;
 	if (history->is_hit) {
 		wrapper->has_explore = false;

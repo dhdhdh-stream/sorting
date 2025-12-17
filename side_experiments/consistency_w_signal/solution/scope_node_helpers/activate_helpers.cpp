@@ -35,7 +35,7 @@ void ScopeNode::exit_step(SolutionWrapper* wrapper) {
 	/**
 	 * - debug
 	 */
-	if (this->scope->signal_status == SIGNAL_STATUS_VALID) {
+	if (this->scope->signal_status != SIGNAL_STATUS_INIT) {
 		cout << "this->parent->id: " << this->parent->id << endl;
 		cout << "this->id: " << this->id << endl;
 		cout << "pre_obs:" << endl;
