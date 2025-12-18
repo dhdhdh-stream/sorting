@@ -150,43 +150,35 @@ void SolutionWrapper::experiment_end(double result) {
 					add_existing_samples_helper(this->solution->existing_scope_histories[h_index]);
 				}
 
+				calc_sum_signal(this);
+
+				eval_signal_experiment(this);
+
+				// while (true) {
+				// 	bool has_signal_experiment = false;
+				// 	for (int s_index = 0; s_index < (int)this->solution->scopes.size(); s_index++) {
+				// 		if (this->solution->scopes[s_index]->signal_experiment != NULL) {
+				// 			has_signal_experiment = true;
+				// 			break;
+				// 		}
+				// 	}
+				// 	if (has_signal_experiment) {
+				// 		break;
+				// 	}
+
+				// 	uniform_int_distribution<int> scope_distribution(0, this->solution->scopes.size()-1);
+				// 	int scope_index = scope_distribution(generator);
+				// 	this->solution->scopes[scope_index]->update_signals(this);
+
+				// 	calc_sum_signal(this);
+				// }
+
 				delete this->best_experiment;
 				this->best_experiment = NULL;
 
 				clean_scope(last_updated_scope);
 
 				this->solution->clean_scopes();
-
-				eval_signal_experiment(this);
-
-				while (true) {
-					bool has_signal_experiment = false;
-					for (int s_index = 0; s_index < (int)this->solution->scopes.size(); s_index++) {
-						if (this->solution->scopes[s_index]->signal_experiment != NULL) {
-							has_signal_experiment = true;
-							break;
-						}
-					}
-					if (has_signal_experiment) {
-						break;
-					}
-
-					uniform_int_distribution<int> scope_distribution(0, this->solution->scopes.size()-1);
-					int scope_index = scope_distribution(generator);
-					this->solution->scopes[scope_index]->update_signals(this);
-				}
-
-				double sum_signal = 0.0;
-				for (int h_index = 0; h_index < (int)this->solution->existing_scope_histories.size(); h_index++) {
-					calc_sum_signal_helper(this->solution->existing_scope_histories[h_index],
-										   sum_signal);
-				}
-				for (int s_index = 0; s_index < (int)this->solution->scopes.size(); s_index++) {
-					if (this->solution->scopes[s_index]->signal_experiment != NULL) {
-						this->solution->scopes[s_index]->signal_experiment->signal_history.push_back(sum_signal);
-						break;
-					}
-				}
 
 				this->solution->timestamp++;
 				if (this->solution->timestamp >= RUN_TIMESTEPS) {

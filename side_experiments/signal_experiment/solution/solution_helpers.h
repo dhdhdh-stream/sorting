@@ -28,8 +28,7 @@ double calc_signal(std::vector<ScopeHistory*>& post_scope_histories,
 				   SolutionWrapper* wrapper);
 
 void add_existing_samples_helper(ScopeHistory* scope_history);
-void calc_sum_signal_helper(ScopeHistory* scope_history,
-							double& sum_signal);
+void calc_sum_signal(SolutionWrapper* wrapper);
 void add_explore_samples_helper(ScopeHistory* scope_history,
 								std::vector<ScopeHistory*>& stack_trace,
 								double target_val,

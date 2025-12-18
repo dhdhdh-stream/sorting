@@ -1,6 +1,5 @@
-// - focus on 1 signal at a time
-//   - get rid of consistency
-// - also can measure signal immediately
+// - random signals too damaging
+//   - still probably try to extrapolate from existing
 
 #include <chrono>
 #include <iostream>

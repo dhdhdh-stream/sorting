@@ -39,9 +39,10 @@ void calc_sum_signal_helper(ScopeHistory* scope_history,
 							double& sum_signal) {
 	Scope* scope = scope_history->scope;
 
-	if (scope_history->scope->signal_experiment != NULL
-			&& !scope_history->signal_initialized) {
-		scope_history->signal_initialized = true;
+	if (scope_history->scope->signal_experiment != NULL) {
+		/**
+		 * - re-calc as signal may have changed
+		 */
 
 		vector<double> inputs = scope_history->pre_obs;
 		inputs.insert(inputs.end(), scope_history->post_obs.begin(), scope_history->post_obs.end());
@@ -49,9 +50,9 @@ void calc_sum_signal_helper(ScopeHistory* scope_history,
 		scope->signal_experiment->network->activate(inputs);
 
 		scope_history->signal_val = scope->signal_experiment->network->output->acti_vals[0];
-	}
 
-	sum_signal += scope_history->signal_val;
+		sum_signal += scope_history->signal_val;
+	}
 
 	for (map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
 			it != scope_history->node_histories.end(); it++) {
@@ -59,6 +60,25 @@ void calc_sum_signal_helper(ScopeHistory* scope_history,
 			ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)it->second;
 			calc_sum_signal_helper(scope_node_history->scope_history,
 								   sum_signal);
+		}
+	}
+}
+
+void calc_sum_signal(SolutionWrapper* wrapper) {
+	double sum_signal = 0.0;
+	for (int h_index = 0; h_index < (int)wrapper->solution->existing_scope_histories.size(); h_index++) {
+		calc_sum_signal_helper(wrapper->solution->existing_scope_histories[h_index],
+							   sum_signal);
+	}
+	for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
+		if (wrapper->solution->scopes[s_index]->signal_experiment != NULL) {
+		SignalExperiment* signal_experiment = wrapper->solution->scopes[s_index]->signal_experiment;
+			signal_experiment->signal_history.push_back(sum_signal);
+			if (signal_experiment->signal_history.size() > 5) {
+				signal_experiment->signal_history.erase(
+					signal_experiment->signal_history.begin());
+			}
+			break;
 		}
 	}
 }

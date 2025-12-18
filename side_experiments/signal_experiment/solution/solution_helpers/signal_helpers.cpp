@@ -42,27 +42,32 @@ void eval_signal_experiment(SolutionWrapper* wrapper) {
 	for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
 		if (wrapper->solution->scopes[s_index]->signal_experiment != NULL) {
 			SignalExperiment* signal_experiment = wrapper->solution->scopes[s_index]->signal_experiment;
-
-			vector<double> iter_vals(signal_experiment->signal_history.size());
-			for (int i_index = 0; i_index < (int)signal_experiment->signal_history.size(); i_index++) {
-				iter_vals[i_index] = i_index;
+			// temp
+			for (int h_index = 0; h_index < (int)signal_experiment->signal_history.size(); h_index++) {
+				cout << h_index << ": " << signal_experiment->signal_history[h_index] << endl;
 			}
-			double increase_pcc = calc_pcc(signal_experiment->signal_history,
-										   iter_vals);
-			cout << "increase_pcc: " << increase_pcc << endl;
+			if (signal_experiment->signal_history.size() >= MIN_EVAL_ITERS) {
+				vector<double> iter_vals(signal_experiment->signal_history.size());
+				for (int i_index = 0; i_index < (int)signal_experiment->signal_history.size(); i_index++) {
+					iter_vals[i_index] = i_index;
+				}
+				double increase_pcc = calc_pcc(signal_experiment->signal_history,
+											   iter_vals);
+				cout << "increase_pcc: " << increase_pcc << endl;
 
-			vector<double> score_vals(signal_experiment->signal_history.size());
-			for (int i_index = 0; i_index < (int)signal_experiment->signal_history.size(); i_index++) {
-				score_vals[i_index] = wrapper->solution->improvement_history[
-					wrapper->solution->improvement_history.size() - signal_experiment->signal_history.size() + i_index];
-			}
-			double correlation_pcc = calc_pcc(signal_experiment->signal_history,
-											  score_vals);
-			cout << "correlation_pcc: " << correlation_pcc << endl;
+				vector<double> score_vals(signal_experiment->signal_history.size());
+				for (int i_index = 0; i_index < (int)signal_experiment->signal_history.size(); i_index++) {
+					score_vals[i_index] = wrapper->solution->improvement_history[
+						wrapper->solution->improvement_history.size() - signal_experiment->signal_history.size() + i_index];
+				}
+				double correlation_pcc = calc_pcc(signal_experiment->signal_history,
+												  score_vals);
+				cout << "correlation_pcc: " << correlation_pcc << endl;
 
-			if (increase_pcc < 0.2 || correlation_pcc < 0.2) {
-				delete signal_experiment;
-				wrapper->solution->scopes[s_index]->signal_experiment = NULL;
+				if (increase_pcc < 0.2 || correlation_pcc < 0.2) {
+					delete signal_experiment;
+					wrapper->solution->scopes[s_index]->signal_experiment = NULL;
+				}
 			}
 		}
 	}

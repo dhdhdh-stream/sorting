@@ -8,6 +8,7 @@
 #define eigen_assert(x) if (!(x)) {throw std::invalid_argument("Eigen error");}
 #include <Eigen/Dense>
 
+#include "constants.h"
 #include "globals.h"
 
 using namespace std;
