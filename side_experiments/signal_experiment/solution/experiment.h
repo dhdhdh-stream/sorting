@@ -51,6 +51,8 @@ public:
 	std::vector<AbstractNode*> curr_new_nodes;
 
 	double best_surprise;
+	// temp
+	double best_signal;
 	Scope* best_new_scope;
 	std::vector<int> best_step_types;
 	std::vector<int> best_actions;
@@ -67,6 +69,14 @@ public:
 
 	std::vector<std::vector<double>> obs_histories;
 	std::vector<double> target_val_histories;
+
+	// temp
+	double sum_existing_true;
+	double sum_existing_signal;
+
+	// temp
+	double sum_new_true;
+	double sum_new_signal;
 
 	#if defined(MDEBUG) && MDEBUG
 	std::vector<Problem*> verify_problems;

@@ -31,6 +31,10 @@ Experiment::Experiment(Scope* scope_context,
 
 	this->sum_scores = 0.0;
 
+	// temp
+	this->sum_existing_true = 0.0;
+	this->sum_existing_signal = 0.0;
+
 	this->state = EXPERIMENT_STATE_TRAIN_EXISTING;
 	this->state_iter = 0;
 

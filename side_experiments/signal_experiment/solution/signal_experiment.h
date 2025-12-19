@@ -3,6 +3,7 @@
  *   - OK if bad average due to experiment's train existing
  * 
  * - don't worry about pre vs. post as some scopes will be evaluated fully after explore
+ *   - also, can filter out pre luck but not luck between pre and post
  */
 
 #ifndef SIGNAL_EXPERIMENT_H

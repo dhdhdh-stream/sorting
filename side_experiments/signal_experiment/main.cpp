@@ -1,3 +1,5 @@
+// TODO: use correlation between signal and score in individual runs
+
 #include <chrono>
 #include <iostream>
 #include <map>

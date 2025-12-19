@@ -1,5 +1,7 @@
 #include "solution_helpers.h"
 
+#include <iostream>
+
 #include "constants.h"
 #include "globals.h"
 #include "network.h"
@@ -36,27 +38,31 @@ void add_existing_samples_helper(ScopeHistory* scope_history,
 		scope->existing_target_vals.back()[index] = sum_vals;
 	}
 
-	if (scope->signal_experiment != NULL
-			&& !scope_history->signal_initialized) {
-		scope_history->signal_initialized = true;
+	/**
+	 * TODO: use only established signals
+	 */
+	// if (scope->signal_experiment != NULL
+	// 		&& !scope_history->signal_initialized) {
+	// 	scope_history->signal_initialized = true;
 
-		vector<double> inputs = scope_history->pre_obs;
-		inputs.insert(inputs.end(), scope_history->post_obs.begin(), scope_history->post_obs.end());
+	// 	vector<double> inputs = scope_history->pre_obs;
+	// 	inputs.insert(inputs.end(), scope_history->post_obs.begin(), scope_history->post_obs.end());
 
-		scope->signal_experiment->consistency_network->activate(inputs);
-		double consistency = scope->signal_experiment->consistency_network->output->acti_vals[0];
-		if (consistency <= 0.0) {
-			scope_history->signal_val = 0.0;
-		} else {
-			if (consistency > 1.0) {
-				consistency = 0.0;
-			}
+	// 	scope->signal_experiment->consistency_network->activate(inputs);
+	// 	double consistency = scope->signal_experiment->consistency_network->output->acti_vals[0];
+	// 	if (consistency <= 0.0) {
+	// 		scope_history->signal_val = 0.0;
+	// 	} else {
+	// 		if (consistency > 1.0) {
+	// 			consistency = 1.0;
+	// 		}
 
-			scope->signal_experiment->signal_network->activate(inputs);
+	// 		scope->signal_experiment->signal_network->activate(inputs);
+	// 		double adjusted = consistency * scope->signal_experiment->signal_network->output->acti_vals[0];
 
-			scope_history->signal_val = scope->signal_experiment->signal_network->output->acti_vals[0];
-		}
-	}
+	// 		scope_history->signal_val = adjusted;
+	// 	}
+	// }
 
 	stack_trace.push_back(scope_history);
 
@@ -75,7 +81,8 @@ void add_existing_samples_helper(ScopeHistory* scope_history,
 }
 
 void calc_sum_signal_helper(ScopeHistory* scope_history,
-							double& sum_signal) {
+							double& sum_signal,
+							double target_val) {
 	Scope* scope = scope_history->scope;
 
 	if (scope_history->scope->signal_experiment != NULL) {
@@ -90,12 +97,13 @@ void calc_sum_signal_helper(ScopeHistory* scope_history,
 		double consistency = scope->signal_experiment->consistency_network->output->acti_vals[0];
 		if (consistency > 0.0) {
 			if (consistency > 1.0) {
-				consistency = 0.0;
+				consistency = 1.0;
 			}
 
 			scope->signal_experiment->signal_network->activate(inputs);
+			double adjusted = consistency * scope->signal_experiment->signal_network->output->acti_vals[0];
 
-			sum_signal += scope->signal_experiment->signal_network->output->acti_vals[0];
+			sum_signal += adjusted;
 		}
 	}
 
@@ -104,7 +112,8 @@ void calc_sum_signal_helper(ScopeHistory* scope_history,
 		if (it->second->node->type == NODE_TYPE_SCOPE) {
 			ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)it->second;
 			calc_sum_signal_helper(scope_node_history->scope_history,
-								   sum_signal);
+								   sum_signal,
+								   target_val);
 		}
 	}
 }
@@ -113,11 +122,12 @@ void calc_sum_signal(SolutionWrapper* wrapper) {
 	double sum_signal = 0.0;
 	for (int h_index = 0; h_index < (int)wrapper->solution->existing_scope_histories.size(); h_index++) {
 		calc_sum_signal_helper(wrapper->solution->existing_scope_histories[h_index],
-							   sum_signal);
+							   sum_signal,
+							   wrapper->solution->existing_target_val_histories[h_index]);
 	}
 	for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
 		if (wrapper->solution->scopes[s_index]->signal_experiment != NULL) {
-		SignalExperiment* signal_experiment = wrapper->solution->scopes[s_index]->signal_experiment;
+			SignalExperiment* signal_experiment = wrapper->solution->scopes[s_index]->signal_experiment;
 			signal_experiment->signal_history.push_back(sum_signal);
 			if (signal_experiment->signal_history.size() > 5) {
 				signal_experiment->signal_history.erase(
@@ -166,12 +176,13 @@ void add_explore_samples_helper(ScopeHistory* scope_history,
 			scope_history->signal_val = 0.0;
 		} else {
 			if (consistency > 1.0) {
-				consistency = 0.0;
+				consistency = 1.0;
 			}
 
 			scope->signal_experiment->signal_network->activate(inputs);
+			double adjusted = consistency * scope->signal_experiment->signal_network->output->acti_vals[0];
 
-			scope_history->signal_val = scope->signal_experiment->signal_network->output->acti_vals[0];
+			scope_history->signal_val = adjusted;
 		}
 	}
 

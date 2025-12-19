@@ -12,8 +12,15 @@
 
 using namespace std;
 
+#if defined(MDEBUG) && MDEBUG
+const int TRAIN_SIGNAL_ITERS = 50;
+#else
+const int TRAIN_SIGNAL_ITERS = 500000;
+#endif /* MDEBUG */
+
 void Scope::update_signals(SolutionWrapper* wrapper) {
-	if (this->existing_pre_obs.size() >= 3) {
+	if (this->existing_pre_obs.size() >= 3
+			&& this->existing_pre_obs.back().size() > 0) {
 		SignalExperiment* new_signal_experiment = new SignalExperiment();
 
 		uniform_int_distribution<int> is_existing_distribution(0, 1);
@@ -61,10 +68,58 @@ void Scope::update_signals(SolutionWrapper* wrapper) {
 			}
 		}
 
+		// temp
+		{
+			double sum_existing_consistency = 0.0;
+			int existing_count = 0;
+			for (int i_index = 0; i_index < (int)this->existing_pre_obs.size(); i_index++) {
+				for (int h_index = 0; h_index < (int)this->existing_pre_obs[i_index].size(); h_index++) {
+					vector<double> input = this->existing_pre_obs[i_index][h_index];
+					input.insert(input.end(), this->existing_post_obs[i_index][h_index].begin(), this->existing_post_obs[i_index][h_index].end());
+
+					consistency_network->activate(input);
+
+					double consistency = consistency_network->output->acti_vals[0];
+					if (consistency < 0.0) {
+						consistency = 0.0;
+					} else if (consistency > 1.0) {
+						consistency = 1.0;
+					}
+
+					sum_existing_consistency += consistency;
+					existing_count++;
+				}
+			}
+			double existing_average_consistency = sum_existing_consistency / existing_count;
+			cout << "existing_average_consistency: " << existing_average_consistency << endl;
+
+			double sum_explore_consistency = 0.0;
+			int explore_count = 0;
+			for (int h_index = 0; h_index < (int)this->explore_pre_obs.size(); h_index++) {
+				vector<double> input = this->explore_pre_obs[h_index];
+				input.insert(input.end(), this->explore_post_obs[h_index].begin(), this->explore_post_obs[h_index].end());
+
+				consistency_network->activate(input);
+
+				double consistency = consistency_network->output->acti_vals[0];
+				if (consistency < 0.0) {
+					consistency = 0.0;
+				} else if (consistency > 1.0) {
+					consistency = 1.0;
+				}
+
+				sum_explore_consistency += consistency;
+				explore_count++;
+			}
+			double explore_average_consistency = sum_explore_consistency / explore_count;
+			cout << "explore_average_consistency: " << explore_average_consistency << endl;
+		}
+
 		vector<vector<double>> existing_consistency_vals(this->existing_pre_obs.size());
 		double sum_existing_consistency = 0.0;
 		double sum_adjusted_existing_target_vals = 0.0;
 		for (int i_index = 0; i_index < (int)this->existing_pre_obs.size(); i_index++) {
+			existing_consistency_vals[i_index] = vector<double>(this->existing_pre_obs[i_index].size());
 			for (int h_index = 0; h_index < (int)this->existing_pre_obs[i_index].size(); h_index++) {
 				vector<double> input = this->existing_pre_obs[i_index][h_index];
 				input.insert(input.end(), this->existing_post_obs[i_index][h_index].begin(), this->existing_post_obs[i_index][h_index].end());
@@ -115,8 +170,7 @@ void Scope::update_signals(SolutionWrapper* wrapper) {
 
 		Network* signal_network = new Network(this->explore_pre_obs[0].size() + this->explore_post_obs[0].size(),
 											  NETWORK_SIZE_LARGE);
-		// for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
-		for (int iter_index = 0; iter_index < 500000; iter_index++) {
+		for (int iter_index = 0; iter_index < TRAIN_SIGNAL_ITERS; iter_index++) {
 			if (is_existing_distribution(generator) == 0) {
 				int existing_iter = existing_distribution(generator);
 
@@ -130,7 +184,7 @@ void Scope::update_signals(SolutionWrapper* wrapper) {
 
 					signal_network->activate(input);
 
-					double error = (this->existing_target_vals[existing_iter][iter_index] - average_val) - signal_network->output->acti_vals[0];
+					double error = (this->existing_target_vals[existing_iter][index] - average_val) - signal_network->output->acti_vals[0];
 					error *= consistency;
 
 					signal_network->backprop(error);
@@ -157,4 +211,35 @@ void Scope::update_signals(SolutionWrapper* wrapper) {
 		new_signal_experiment->signal_network = signal_network;
 		this->signal_experiment = new_signal_experiment;
 	}
+
+	// SignalExperiment* new_signal_experiment = new SignalExperiment();
+
+	// uniform_int_distribution<int> explore_distribution(0, this->explore_pre_obs.size()-1);
+
+	// /**
+	//  * - re-average so not biased towards more/less signals
+	//  */
+	// double sum_vals = 0.0;
+	// for (int h_index = 0; h_index < (int)this->explore_pre_obs.size(); h_index++) {
+	// 	sum_vals += this->explore_target_vals[h_index];
+	// }
+	// double average_val = sum_vals / (double)this->explore_pre_obs.size();
+
+	// Network* signal_network = new Network(this->explore_pre_obs[0].size() + this->explore_post_obs[0].size(),
+	// 									  NETWORK_SIZE_LARGE);
+	// for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
+	// 	int index = explore_distribution(generator);
+
+	// 	vector<double> input = this->explore_pre_obs[index];
+	// 	input.insert(input.end(), this->explore_post_obs[index].begin(), this->explore_post_obs[index].end());
+
+	// 	signal_network->activate(input);
+
+	// 	double error = (this->explore_target_vals[index] - average_val) - signal_network->output->acti_vals[0];
+
+	// 	signal_network->backprop(error);
+	// }
+
+	// new_signal_experiment->signal_network = signal_network;
+	// this->signal_experiment = new_signal_experiment;
 }

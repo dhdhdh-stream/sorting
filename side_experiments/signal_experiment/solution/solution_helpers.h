@@ -26,6 +26,10 @@ void recursive_add_child(Scope* curr_parent,
 double calc_signal(std::vector<ScopeHistory*>& post_scope_histories,
 				   double target_val,
 				   SolutionWrapper* wrapper);
+// temp
+double calc_only_signal(std::vector<ScopeHistory*>& post_scope_histories,
+						double target_val,
+						SolutionWrapper* wrapper);
 
 void add_existing_samples_helper(ScopeHistory* scope_history,
 								 std::vector<ScopeHistory*>& stack_trace,

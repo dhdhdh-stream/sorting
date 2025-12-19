@@ -257,10 +257,15 @@ void Experiment::explore_backprop(double target_val,
 								   target_val,
 								   wrapper);
 
-		double signal = calc_signal(history->post_scope_histories[0],
-									target_val,
-									wrapper);
-		double curr_surprise = signal - history->existing_predicted_scores[0];
+		// double signal = calc_signal(history->post_scope_histories[0],
+		// 							target_val,
+		// 							wrapper);
+		// double curr_surprise = signal - history->existing_predicted_scores[0];
+		double true_val = target_val - wrapper->solution->curr_score;
+		double signal = calc_only_signal(history->post_scope_histories[0],
+										 target_val,
+										 wrapper);
+		double curr_surprise = (signal + true_val) - history->existing_predicted_scores[0];
 
 		#if defined(MDEBUG) && MDEBUG
 		if (curr_surprise > this->best_surprise || true) {
@@ -271,6 +276,7 @@ void Experiment::explore_backprop(double target_val,
 			if (this->best_new_scope != NULL) {
 				delete this->best_new_scope;
 			}
+			this->best_signal = signal;
 			this->best_new_scope = this->curr_new_scope;
 			this->curr_new_scope = NULL;
 			this->best_step_types = this->curr_step_types;
@@ -303,6 +309,13 @@ void Experiment::explore_backprop(double target_val,
 			#else
 			if (this->best_surprise >= 0.0) {
 			#endif /* MDEBUG */
+				cout << "this->best_surprise: " << this->best_surprise << endl;
+				cout << "this->best_signal: " << this->best_signal << endl;
+
+				// temp
+				this->sum_new_true = 0.0;
+				this->sum_new_signal = 0.0;
+
 				this->state = EXPERIMENT_STATE_TRAIN_NEW;
 				this->state_iter = 0;
 			} else {

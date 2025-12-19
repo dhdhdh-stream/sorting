@@ -48,16 +48,28 @@ void Experiment::train_existing_backprop(double target_val,
 		wrapper->has_explore = false;
 
 		for (int i_index = 0; i_index < (int)history->post_scope_histories.size(); i_index++) {
-			double signal = calc_signal(history->post_scope_histories[i_index],
-										target_val,
-										wrapper);
-			this->target_val_histories.push_back(signal);
+			// double signal = calc_signal(history->post_scope_histories[i_index],
+			// 							target_val,
+			// 							wrapper);
+
+			// temp
+			double true_val = target_val - wrapper->solution->curr_score;
+			double signal = calc_only_signal(history->post_scope_histories[i_index],
+											 target_val,
+											 wrapper);
+			this->sum_existing_true += abs(true_val);
+			this->sum_existing_signal += abs(signal);
+			this->target_val_histories.push_back(true_val + signal);
 		}
 
 		this->sum_scores += target_val;
 
 		this->state_iter++;
 		if (this->state_iter >= TRAIN_EXISTING_NUM_DATAPOINTS) {
+			// temp
+			cout << "this->sum_existing_true: " << this->sum_existing_true << endl;
+			cout << "this->sum_existing_signal: " << this->sum_existing_signal << endl;
+
 			this->existing_score = this->sum_scores / this->state_iter;
 
 			this->average_hits_per_run = (double)TRAIN_EXISTING_NUM_DATAPOINTS / (double)this->total_count;

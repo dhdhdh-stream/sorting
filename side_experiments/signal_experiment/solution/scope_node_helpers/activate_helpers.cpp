@@ -7,6 +7,7 @@
 #include "network.h"
 #include "problem.h"
 #include "scope.h"
+#include "signal_experiment.h"
 #include "solution.h"
 #include "solution_wrapper.h"
 
@@ -31,6 +32,40 @@ void ScopeNode::step(vector<double>& obs,
 
 void ScopeNode::exit_step(SolutionWrapper* wrapper) {
 	wrapper->scope_histories.back()->post_obs = wrapper->problem->get_observations();
+
+	/**
+	 * - debug
+	 */
+	if (this->scope->signal_experiment != NULL) {
+		cout << "this->parent->id: " << this->parent->id << endl;
+		cout << "this->id: " << this->id << endl;
+		cout << "pre_obs:" << endl;
+		for (int i_index = 0; i_index < 5; i_index++) {
+			for (int j_index = 0; j_index < 5; j_index++) {
+				cout << wrapper->scope_histories.back()->pre_obs[5 * i_index + j_index] << " ";
+			}
+			cout << endl;
+		}
+		cout << "post_obs:" << endl;
+		for (int i_index = 0; i_index < 5; i_index++) {
+			for (int j_index = 0; j_index < 5; j_index++) {
+				cout << wrapper->scope_histories.back()->post_obs[5 * i_index + j_index] << " ";
+			}
+			cout << endl;
+		}
+
+		vector<double> input = wrapper->scope_histories.back()->pre_obs;
+		input.insert(input.end(), wrapper->scope_histories.back()->post_obs.begin(),
+			wrapper->scope_histories.back()->post_obs.end());
+
+		this->scope->signal_experiment->consistency_network->activate(input);
+		cout << "this->scope->signal_experiment->consistency_network->output->acti_vals[0]: " << this->scope->signal_experiment->consistency_network->output->acti_vals[0] << endl;
+
+		this->scope->signal_experiment->signal_network->activate(input);
+		cout << "this->scope->signal_experiment->signal_network->output->acti_vals[0]: " << this->scope->signal_experiment->signal_network->output->acti_vals[0] << endl;
+
+		cout << endl;
+	}
 
 	wrapper->scope_histories.pop_back();
 	wrapper->node_context.pop_back();

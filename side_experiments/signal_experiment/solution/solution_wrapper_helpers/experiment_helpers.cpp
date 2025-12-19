@@ -147,20 +147,23 @@ void SolutionWrapper::experiment_end(double result) {
 				this->solution->existing_target_val_histories = this->best_experiment->new_target_val_histories;
 
 				for (int s_index = 0; s_index < (int)this->solution->scopes.size(); s_index++) {
-					this->solution->scopes[s_index]->existing_pre_obs.push_back(vector<vector<double>>());
-					if (this->solution->scopes[s_index]->existing_pre_obs.size() > 3) {
-						this->solution->scopes[s_index]->existing_pre_obs.erase(
-							this->solution->scopes[s_index]->existing_pre_obs.begin());
-					}
-					this->solution->scopes[s_index]->existing_post_obs.push_back(vector<vector<double>>());
-					if (this->solution->scopes[s_index]->existing_post_obs.size() > 3) {
-						this->solution->scopes[s_index]->existing_post_obs.erase(
-							this->solution->scopes[s_index]->existing_post_obs.begin());
-					}
-					this->solution->scopes[s_index]->existing_target_vals.push_back(vector<double>());
-					if (this->solution->scopes[s_index]->existing_target_vals.size() > 3) {
-						this->solution->scopes[s_index]->existing_target_vals.erase(
-							this->solution->scopes[s_index]->existing_target_vals.begin());
+					if (this->solution->scopes[s_index]->existing_pre_obs.size() == 0
+							|| this->solution->scopes[s_index]->existing_pre_obs.back().size() > 0) {
+						this->solution->scopes[s_index]->existing_pre_obs.push_back(vector<vector<double>>());
+						if (this->solution->scopes[s_index]->existing_pre_obs.size() > 3) {
+							this->solution->scopes[s_index]->existing_pre_obs.erase(
+								this->solution->scopes[s_index]->existing_pre_obs.begin());
+						}
+						this->solution->scopes[s_index]->existing_post_obs.push_back(vector<vector<double>>());
+						if (this->solution->scopes[s_index]->existing_post_obs.size() > 3) {
+							this->solution->scopes[s_index]->existing_post_obs.erase(
+								this->solution->scopes[s_index]->existing_post_obs.begin());
+						}
+						this->solution->scopes[s_index]->existing_target_vals.push_back(vector<double>());
+						if (this->solution->scopes[s_index]->existing_target_vals.size() > 3) {
+							this->solution->scopes[s_index]->existing_target_vals.erase(
+								this->solution->scopes[s_index]->existing_target_vals.begin());
+						}
 					}
 				}
 				for (int h_index = 0; h_index < (int)this->solution->existing_scope_histories.size(); h_index++) {
@@ -175,24 +178,26 @@ void SolutionWrapper::experiment_end(double result) {
 
 				eval_signal_experiment(this);
 
-				while (true) {
-					bool has_signal_experiment = false;
-					for (int s_index = 0; s_index < (int)this->solution->scopes.size(); s_index++) {
-						if (this->solution->scopes[s_index]->signal_experiment != NULL) {
-							has_signal_experiment = true;
-							break;
-						}
-					}
-					if (has_signal_experiment) {
-						break;
-					}
+				// if (this->solution->timestamp >= 3) {
+				// 	for (int i_index = 0; i_index < 10; i_index++) {
+				// 		bool has_signal_experiment = false;
+				// 		for (int s_index = 0; s_index < (int)this->solution->scopes.size(); s_index++) {
+				// 			if (this->solution->scopes[s_index]->signal_experiment != NULL) {
+				// 				has_signal_experiment = true;
+				// 				break;
+				// 			}
+				// 		}
+				// 		if (has_signal_experiment) {
+				// 			break;
+				// 		}
 
-					uniform_int_distribution<int> scope_distribution(0, this->solution->scopes.size()-1);
-					int scope_index = scope_distribution(generator);
-					this->solution->scopes[scope_index]->update_signals(this);
+				// 		uniform_int_distribution<int> scope_distribution(0, this->solution->scopes.size()-1);
+				// 		int scope_index = scope_distribution(generator);
+				// 		this->solution->scopes[scope_index]->update_signals(this);
 
-					calc_sum_signal(this);
-				}
+				// 		calc_sum_signal(this);
+				// 	}
+				// }
 
 				delete this->best_experiment;
 				this->best_experiment = NULL;

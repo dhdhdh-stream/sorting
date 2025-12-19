@@ -115,15 +115,27 @@ void Experiment::train_new_backprop(
 		wrapper->has_explore = false;
 
 		for (int i_index = 0; i_index < (int)history->post_scope_histories.size(); i_index++) {
-			double signal = calc_signal(history->post_scope_histories[i_index],
-										target_val,
-										wrapper);
-			this->target_val_histories.push_back(signal);
+			// double signal = calc_signal(history->post_scope_histories[i_index],
+			// 							target_val,
+			// 							wrapper);
+			// this->target_val_histories.push_back(signal - history->existing_predicted_scores[i_index]);
+
+			// temp
+			double true_val = target_val - wrapper->solution->curr_score;
+			double signal = calc_only_signal(history->post_scope_histories[i_index],
+											 target_val,
+											 wrapper);
+			this->sum_new_true += abs(true_val);
+			this->sum_new_signal += abs(signal);
+			this->target_val_histories.push_back((true_val + signal) - history->existing_predicted_scores[i_index]);
 		}
 
 		this->state_iter++;
 		if (this->state_iter >= TRAIN_NEW_NUM_DATAPOINTS
 				&& (int)this->target_val_histories.size() >= TRAIN_NEW_NUM_DATAPOINTS) {
+			cout << "this->sum_new_true: " << this->sum_new_true << endl;
+			cout << "this->sum_new_signal: " << this->sum_new_signal << endl;
+
 			this->new_network = new Network(this->obs_histories[0].size(),
 											NETWORK_SIZE_SMALL);
 			uniform_int_distribution<int> val_input_distribution(0, this->obs_histories.size()-1);
