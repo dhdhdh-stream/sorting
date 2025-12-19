@@ -1,6 +1,3 @@
-// - random signals too damaging
-//   - still probably try to extrapolate from existing
-
 #include <chrono>
 #include <iostream>
 #include <map>

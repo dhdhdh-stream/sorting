@@ -15,7 +15,8 @@
 
 class SignalExperiment {
 public:
-	Network* network;
+	Network* consistency_network;
+	Network* signal_network;
 
 	std::vector<double> signal_history;
 

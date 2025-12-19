@@ -17,8 +17,6 @@
 using namespace std;
 
 Scope::Scope() {
-	this->existing_index = 0;
-
 	this->signal_experiment = NULL;
 }
 

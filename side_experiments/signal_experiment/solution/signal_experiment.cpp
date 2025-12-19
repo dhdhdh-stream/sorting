@@ -7,7 +7,8 @@ SignalExperiment::SignalExperiment() {
 }
 
 SignalExperiment::SignalExperiment(ifstream& input_file) {
-	this->network = new Network(input_file);
+	this->consistency_network = new Network(input_file);
+	this->signal_network = new Network(input_file);
 
 	string signal_history_size_line;
 	getline(input_file, signal_history_size_line);
@@ -20,11 +21,13 @@ SignalExperiment::SignalExperiment(ifstream& input_file) {
 }
 
 SignalExperiment::~SignalExperiment() {
-	delete this->network;
+	delete this->consistency_network;
+	delete this->signal_network;
 }
 
 void SignalExperiment::save(ofstream& output_file) {
-	this->network->save(output_file);
+	this->consistency_network->save(output_file);
+	this->signal_network->save(output_file);
 
 	output_file << this->signal_history.size() << endl;
 	for (int h_index = 0; h_index < (int)this->signal_history.size(); h_index++) {

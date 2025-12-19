@@ -31,12 +31,9 @@ public:
 
 	std::vector<Scope*> child_scopes;
 
-	std::vector<std::vector<double>> existing_pre_obs;
-	std::vector<std::vector<double>> existing_post_obs;
-	int existing_index;
-	/**
-	 * - if not enough samples from new, simply reuse previous
-	 */
+	std::vector<std::vector<std::vector<double>>> existing_pre_obs;
+	std::vector<std::vector<std::vector<double>>> existing_post_obs;
+	std::vector<std::vector<double>> existing_target_vals;
 
 	std::vector<std::vector<double>> explore_pre_obs;
 	std::vector<std::vector<double>> explore_post_obs;
