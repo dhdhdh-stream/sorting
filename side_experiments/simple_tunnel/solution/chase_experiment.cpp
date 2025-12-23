@@ -22,8 +22,9 @@ ChaseExperiment::ChaseExperiment(Scope* scope_context,
 
 	this->node_context->experiment = this;
 
-	uniform_int_distribution<int> tunnel_distribution(0, wrapper->solution->tunnels.size()-1);
-	this->tunnel = wrapper->solution->tunnels[tunnel_distribution(generator)];
+	// uniform_int_distribution<int> tunnel_distribution(0, wrapper->solution->tunnels.size()-1);
+	// this->tunnel = wrapper->solution->tunnels[tunnel_distribution(generator)];
+	this->tunnel = wrapper->solution->tunnels[3];
 
 	this->existing_true_network = NULL;
 	this->existing_signal_network = NULL;

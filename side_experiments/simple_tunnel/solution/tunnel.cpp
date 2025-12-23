@@ -1,5 +1,7 @@
 #include "tunnel.h"
 
+#include <iostream>
+
 #include "problem.h"
 #include "solution_wrapper.h"
 
@@ -68,4 +70,15 @@ void Tunnel::save(ofstream& output_file) {
 		output_file << this->true_improvements[i_index] << endl;
 		output_file << this->signal_improvements[i_index] << endl;
 	}
+}
+
+void Tunnel::print() {
+	cout << "this->is_default: " << this->is_default << endl;
+	cout << "this->obs_index: " << this->obs_index << endl;
+	cout << "this->num_tries: " << this->num_tries << endl;
+	cout << "this->num_successes: " << this->num_successes << endl;
+	for (int i_index = 0; i_index < (int)this->true_improvements.size(); i_index++) {
+		cout << i_index << " " << this->true_improvements[i_index] << " " << this->signal_improvements[i_index] << endl;
+	}
+	cout << endl;
 }

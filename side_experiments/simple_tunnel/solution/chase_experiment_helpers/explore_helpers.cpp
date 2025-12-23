@@ -22,7 +22,7 @@ using namespace std;
 #if defined(MDEBUG) && MDEBUG
 const int EXPERIMENT_EXPLORE_ITERS = 10;
 #else
-const int EXPERIMENT_EXPLORE_ITERS = 1000;
+const int EXPERIMENT_EXPLORE_ITERS = 200;
 #endif /* MDEBUG */
 
 void ChaseExperiment::explore_check_activate(SolutionWrapper* wrapper) {

@@ -24,6 +24,8 @@ public:
 	double get_signal(SolutionWrapper* wrapper);
 
 	void save(std::ofstream& output_file);
+
+	void print();
 };
 
 #endif /* TUNNEL_H */

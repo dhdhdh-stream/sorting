@@ -113,13 +113,28 @@ void ChaseExperiment::measure_backprop(double target_val,
 		this->state_iter++;
 		if (this->state_iter >= MEASURE_ITERS) {
 			double new_true = this->sum_true / this->state_iter;
+			double new_signal = this->sum_signal / this->state_iter;
+
+			// temp
+			cout << "new_true: " << new_true << endl;
+			cout << "this->existing_true: " << this->existing_true << endl;
+			cout << "new_signal: " << new_signal << endl;
+			cout << "this->existing_signal: " << this->existing_signal << endl;
+			cout << "new explore path:";
+			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+					cout << " " << this->best_actions[s_index];
+				} else {
+					cout << " E" << this->best_scopes[s_index]->id;
+				}
+			}
+			cout << endl;
 
 			#if defined(MDEBUG) && MDEBUG
-			if (new_true >= this->existing_true || rand()%2 == 0) {
+			if ((new_true >= this->existing_true && new_signal >= this->existing_signal) || rand()%2 == 0) {
 			#else
-			if (new_true >= this->existing_true) {
+			if (new_true >= this->existing_true && new_signal >= this->existing_signal) {
 			#endif /* MDEBUG */
-				double new_signal = this->sum_signal / this->state_iter;
 				this->tunnel->num_tries++;
 				this->tunnel->num_successes++;
 				this->tunnel->true_improvements.push_back(new_true - this->existing_true);
@@ -127,7 +142,8 @@ void ChaseExperiment::measure_backprop(double target_val,
 
 				double average_hits_per_run = (double)MEASURE_ITERS / (double)this->total_count;
 
-				this->improvement = average_hits_per_run * (new_true - this->existing_true);
+				// this->improvement = average_hits_per_run * (new_true - this->existing_true);
+				this->improvement = average_hits_per_run * (new_signal - this->existing_signal);
 
 				cout << "this->scope_context->id: " << this->scope_context->id << endl;
 				cout << "this->node_context->id: " << this->node_context->id << endl;
