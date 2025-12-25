@@ -1,5 +1,7 @@
 #include "solution_helpers.h"
 
+#include <iostream>
+
 #include "globals.h"
 #include "network.h"
 #include "tunnel.h"
@@ -9,7 +11,8 @@ using namespace std;
 Tunnel* create_obs_candidate(vector<vector<double>>& obs_histories,
 							 vector<double>& target_val_histories,
 							 SolutionWrapper* wrapper) {
-	geometric_distribution<int> num_obs_distribution(0.3);
+	// geometric_distribution<int> num_obs_distribution(0.3);
+	geometric_distribution<int> num_obs_distribution(0.5);
 	int num_obs;
 	while (true) {
 		num_obs = 1 + num_obs_distribution(generator);
@@ -30,6 +33,11 @@ Tunnel* create_obs_candidate(vector<vector<double>>& obs_histories,
 		obs_indexes.push_back(remaining_indexes[index]);
 		remaining_indexes.erase(remaining_indexes.begin() + index);
 	}
+
+	// // temp
+	// int num_obs = 1;
+	// // vector<int> obs_indexes{2};
+	// vector<int> obs_indexes{3};
 
 	vector<vector<double>> inputs(obs_histories.size());
 	for (int h_index = 0; h_index < (int)obs_histories.size(); h_index++) {
@@ -55,6 +63,19 @@ Tunnel* create_obs_candidate(vector<vector<double>>& obs_histories,
 
 		signal_network->backprop(error);
 	}
+
+	// // temp
+	// for (int iter_index = 0; iter_index < 50; iter_index++) {
+	// 	cout << "inputs:";
+	// 	for (int i_index = 0; i_index < (int)inputs[iter_index].size(); i_index++) {
+	// 		cout << " " << inputs[iter_index][i_index];
+	// 	}
+	// 	cout << endl;
+
+	// 	signal_network->activate(inputs[iter_index]);
+	// 	cout << "signal_network->output->acti_vals[0]: " << signal_network->output->acti_vals[0] << endl;
+	// 	cout << "target_val_histories[iter_index]: " << target_val_histories[iter_index] << endl;
+	// }
 
 	Tunnel* new_tunnel = new Tunnel(obs_indexes,
 									false,

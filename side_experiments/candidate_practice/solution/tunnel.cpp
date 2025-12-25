@@ -23,6 +23,11 @@ Tunnel::Tunnel(std::vector<int>& obs_indexes,
 
 	this->starting_true = wrapper->solution->curr_score;
 	this->ending_true = wrapper->solution->curr_score;
+
+	this->num_tries = 0;
+	this->num_train_fail = 0;
+	this->num_measure_fail = 0;
+	this->num_success = 0;
 }
 
 Tunnel::Tunnel(ifstream& input_file) {
@@ -53,6 +58,22 @@ Tunnel::Tunnel(ifstream& input_file) {
 	string ending_true_line;
 	getline(input_file, ending_true_line);
 	this->ending_true = stod(ending_true_line);
+
+	string num_tries_line;
+	getline(input_file, num_tries_line);
+	this->num_tries = stoi(num_tries_line);
+
+	string num_train_fail_line;
+	getline(input_file, num_train_fail_line);
+	this->num_train_fail = stoi(num_train_fail_line);
+
+	string num_measure_fail_line;
+	getline(input_file, num_measure_fail_line);
+	this->num_measure_fail = stoi(num_measure_fail_line);
+
+	string num_success_line;
+	getline(input_file, num_success_line);
+	this->num_success = stoi(num_success_line);
 }
 
 Tunnel::~Tunnel() {
@@ -105,6 +126,11 @@ void Tunnel::save(ofstream& output_file) {
 
 	output_file << this->starting_true << endl;
 	output_file << this->ending_true << endl;
+
+	output_file << this->num_tries << endl;
+	output_file << this->num_train_fail << endl;
+	output_file << this->num_measure_fail << endl;
+	output_file << this->num_success << endl;
 }
 
 void Tunnel::print() {
@@ -115,4 +141,8 @@ void Tunnel::print() {
 	cout << endl;
 	cout << "this->starting_true: " << this->starting_true << endl;
 	cout << "this->ending_true: " << this->ending_true << endl;
+	cout << "this->num_tries: " << this->num_tries << endl;
+	cout << "this->num_train_fail: " << this->num_train_fail << endl;
+	cout << "this->num_measure_fail: " << this->num_measure_fail << endl;
+	cout << "this->num_success: " << this->num_success << endl;
 }

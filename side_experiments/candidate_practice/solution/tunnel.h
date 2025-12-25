@@ -19,6 +19,11 @@ public:
 	double starting_true;
 	double ending_true;
 
+	int num_tries;
+	int num_train_fail;
+	int num_measure_fail;
+	int num_success;
+
 	Tunnel(std::vector<int>& obs_indexes,
 		   bool is_pattern,
 		   Network* similarity_network,

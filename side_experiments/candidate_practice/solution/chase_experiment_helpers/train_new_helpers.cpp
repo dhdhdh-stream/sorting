@@ -142,6 +142,22 @@ void ChaseExperiment::train_new_backprop(
 				}
 			}
 
+			// - currently, signal so good that it prevents all extremely bad sequences
+			// - but can still be good signals that don't prevent bad, just drive good
+
+			// // temp
+			// cout << "num_positive: " << num_positive << endl;
+			// cout << "sum_predicted_true_improvement: " << sum_predicted_true_improvement << endl;
+			// cout << "new explore path:";
+			// for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+			// 	if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+			// 		cout << " " << this->best_actions[s_index];
+			// 	} else {
+			// 		cout << " E" << this->best_scopes[s_index]->id;
+			// 	}
+			// }
+			// cout << endl;
+
 			#if defined(MDEBUG) && MDEBUG
 			if ((num_positive > 0 && sum_predicted_true_improvement >= 0.0) || rand()%4 != 0) {
 			#else
@@ -156,6 +172,11 @@ void ChaseExperiment::train_new_backprop(
 				this->state = CHASE_EXPERIMENT_STATE_MEASURE;
 				this->state_iter = 0;
 			} else {
+				if (wrapper->solution->curr_tunnel != NULL) {
+					wrapper->solution->curr_tunnel->num_tries++;
+					wrapper->solution->curr_tunnel->num_train_fail++;
+				}
+
 				this->result = EXPERIMENT_RESULT_FAIL;
 			}
 		}

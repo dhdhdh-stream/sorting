@@ -146,7 +146,9 @@ void SolutionWrapper::experiment_end(double result) {
 					this->solution->curr_tunnel->ending_true = this->solution->curr_score;
 				}
 				this->solution->tunnel_iter++;
-				if (this->solution->tunnel_iter >= ITERS_PER_TUNNEL) {
+				// if (this->solution->tunnel_iter >= ITERS_PER_TUNNEL) {
+				if (this->solution->tunnel_iter >= ITERS_PER_TUNNEL
+						|| this->solution->curr_tunnel == NULL) {
 					if (this->solution->curr_tunnel != NULL) {
 						this->solution->tunnel_history.push_back(this->solution->curr_tunnel);
 					}

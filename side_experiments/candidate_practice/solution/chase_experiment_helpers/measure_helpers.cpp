@@ -125,6 +125,11 @@ void ChaseExperiment::measure_backprop(double target_val,
 			#else
 			if (new_true >= this->existing_true && new_signal >= this->existing_signal) {
 			#endif /* MDEBUG */
+				if (wrapper->solution->curr_tunnel != NULL) {
+					wrapper->solution->curr_tunnel->num_tries++;
+					wrapper->solution->curr_tunnel->num_success++;
+				}
+
 				double average_hits_per_run = (double)MEASURE_ITERS / (double)this->total_count;
 
 				this->improvement = average_hits_per_run * (new_signal - this->existing_signal);
@@ -163,6 +168,11 @@ void ChaseExperiment::measure_backprop(double target_val,
 				this->result = EXPERIMENT_RESULT_SUCCESS;
 				#endif /* MDEBUG */
 			} else {
+				if (wrapper->solution->curr_tunnel != NULL) {
+					wrapper->solution->curr_tunnel->num_tries++;
+					wrapper->solution->curr_tunnel->num_measure_fail++;
+				}
+
 				this->result = EXPERIMENT_RESULT_FAIL;
 			}
 		}
