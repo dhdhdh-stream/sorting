@@ -40,12 +40,6 @@ public:
 
 	std::vector<std::vector<double>> obs_histories;
 	std::vector<double> target_val_histories;
-	int tunnel_iter;
-	Tunnel* curr_tunnel;
-	std::vector<Tunnel*> tunnel_history;
-
-	std::vector<ScopeHistory*> existing_scope_histories;
-	std::vector<double> existing_target_val_histories;
 
 	std::vector<double> improvement_history;
 	std::vector<std::string> change_history;
@@ -56,11 +50,11 @@ public:
 	#endif /* MDEBUG */
 
 	Solution();
+	Solution(Solution* original);
 	~Solution();
 
 	void init(ProblemType* problem_type);
-	void load(std::string path,
-			  std::string name);
+	void load(std::ifstream& input_file);
 
 	#if defined(MDEBUG) && MDEBUG
 	void clear_verify();
@@ -68,8 +62,7 @@ public:
 
 	void clean_scopes();
 
-	void save(std::string path,
-			  std::string name);
+	void save(std::ofstream& output_file);
 
 	void save_for_display(std::ofstream& output_file);
 };

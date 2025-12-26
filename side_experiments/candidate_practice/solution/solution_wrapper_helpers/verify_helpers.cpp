@@ -16,14 +16,14 @@ using namespace std;
 void SolutionWrapper::verify_init() {
 	this->num_actions = 1;
 
-	this->starting_run_seed = solution->verify_seeds[0];
+	this->starting_run_seed = this->curr_solution->verify_seeds[0];
 	cout << "this->starting_run_seed: " << this->starting_run_seed << endl;
 	this->curr_run_seed = xorshift(this->starting_run_seed);
-	solution->verify_seeds.erase(solution->verify_seeds.begin());
+	this->curr_solution->verify_seeds.erase(this->curr_solution->verify_seeds.begin());
 
-	ScopeHistory* scope_history = new ScopeHistory(this->solution->scopes[0]);
+	ScopeHistory* scope_history = new ScopeHistory(this->curr_solution->scopes[0]);
 	this->scope_histories.push_back(scope_history);
-	this->node_context.push_back(this->solution->scopes[0]->nodes[0]);
+	this->node_context.push_back(this->curr_solution->scopes[0]->nodes[0]);
 }
 
 pair<bool,int> SolutionWrapper::verify_step(vector<double> obs) {

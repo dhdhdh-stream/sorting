@@ -45,7 +45,12 @@ int main(int argc, char* argv[]) {
 	auto start_time = chrono::high_resolution_clock::now();
 
 	while (!solution_wrapper->is_done()) {
-		int starting_timestamp = solution_wrapper->solution->timestamp;
+		int starting_timestamp;
+		if (solution_wrapper->curr_solution != NULL) {
+			starting_timestamp = solution_wrapper->curr_solution->timestamp;
+		} else {
+			starting_timestamp = solution_wrapper->prev_solution->timestamp;
+		}
 
 		while (true) {
 			auto curr_time = chrono::high_resolution_clock::now();
@@ -86,7 +91,13 @@ int main(int argc, char* argv[]) {
 
 			delete problem;
 
-			if (solution_wrapper->solution->timestamp != starting_timestamp) {
+			int ending_timestamp;
+			if (solution_wrapper->curr_solution != NULL) {
+				ending_timestamp = solution_wrapper->curr_solution->timestamp;
+			} else {
+				ending_timestamp = solution_wrapper->prev_solution->timestamp;
+			}
+			if (ending_timestamp != starting_timestamp) {
 				break;
 			}
 		}

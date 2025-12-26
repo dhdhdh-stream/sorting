@@ -106,10 +106,10 @@ void ChaseExperiment::train_new_backprop(
 		}
 
 		double signal;
-		if (wrapper->solution->curr_tunnel == NULL) {
+		if (wrapper->curr_tunnel == NULL) {
 			signal = target_val;
 		} else {
-			signal = wrapper->solution->curr_tunnel->get_signal(wrapper);
+			signal = wrapper->curr_tunnel->get_signal(wrapper);
 		}
 		for (int i_index = 0; i_index < (int)history->existing_predicted_signals.size(); i_index++) {
 			this->signal_histories.push_back(signal - history->existing_predicted_signals[i_index]);
@@ -172,9 +172,9 @@ void ChaseExperiment::train_new_backprop(
 				this->state = CHASE_EXPERIMENT_STATE_MEASURE;
 				this->state_iter = 0;
 			} else {
-				if (wrapper->solution->curr_tunnel != NULL) {
-					wrapper->solution->curr_tunnel->num_tries++;
-					wrapper->solution->curr_tunnel->num_train_fail++;
+				if (wrapper->curr_tunnel != NULL) {
+					wrapper->curr_tunnel->num_tries++;
+					wrapper->curr_tunnel->num_train_fail++;
 				}
 
 				this->result = EXPERIMENT_RESULT_FAIL;

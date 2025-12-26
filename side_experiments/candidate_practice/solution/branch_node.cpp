@@ -92,6 +92,16 @@ void BranchNode::link(Solution* parent_solution) {
 	}
 }
 
+void BranchNode::copy_from(BranchNode* original,
+						   Solution* parent_solution) {
+	this->val_network = new Network(original->val_network);
+
+	this->original_next_node_id = original->original_next_node_id;
+	this->branch_next_node_id = original->branch_next_node_id;
+
+	this->ancestor_ids = original->ancestor_ids;
+}
+
 void BranchNode::save_for_display(ofstream& output_file) {
 	output_file << this->original_next_node_id << endl;
 	output_file << this->branch_next_node_id << endl;

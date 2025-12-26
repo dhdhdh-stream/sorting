@@ -58,6 +58,14 @@ void ActionNode::link(Solution* parent_solution) {
 	}
 }
 
+void ActionNode::copy_from(ActionNode* original) {
+	this->action = original->action;
+
+	this->next_node_id = original->next_node_id;
+
+	this->ancestor_ids = original->ancestor_ids;
+}
+
 void ActionNode::save_for_display(ofstream& output_file) {
 	output_file << this->action << endl;
 	output_file << this->next_node_id << endl;

@@ -46,10 +46,10 @@ void ChaseExperiment::train_existing_backprop(double target_val,
 		}
 
 		double signal;
-		if (wrapper->solution->curr_tunnel == NULL) {
+		if (wrapper->curr_tunnel == NULL) {
 			signal = target_val;
 		} else {
-			signal = wrapper->solution->curr_tunnel->get_signal(wrapper);
+			signal = wrapper->curr_tunnel->get_signal(wrapper);
 		}
 		while (this->signal_histories.size() < this->obs_histories.size()) {
 			this->signal_histories.push_back(signal);

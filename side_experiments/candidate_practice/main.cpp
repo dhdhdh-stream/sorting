@@ -72,7 +72,12 @@ int main(int argc, char* argv[]) {
 	#else
 	while (!solution_wrapper->is_done()) {
 	#endif /* MDEBUG */
-		int starting_timestamp = solution_wrapper->solution->timestamp;
+		int starting_timestamp;
+		if (solution_wrapper->curr_solution != NULL) {
+			starting_timestamp = solution_wrapper->curr_solution->timestamp;
+		} else {
+			starting_timestamp = solution_wrapper->prev_solution->timestamp;
+		}
 
 		while (true) {
 			Problem* problem = problem_type->get_problem();
@@ -105,10 +110,19 @@ int main(int argc, char* argv[]) {
 
 			delete problem;
 
-			if (solution_wrapper->solution->timestamp != starting_timestamp) {
+			int ending_timestamp;
+			if (solution_wrapper->curr_solution != NULL) {
+				ending_timestamp = solution_wrapper->curr_solution->timestamp;
+			} else {
+				ending_timestamp = solution_wrapper->prev_solution->timestamp;
+			}
+			if (ending_timestamp != starting_timestamp) {
+				/**
+				 * - simply don't bother verifying on tunnel changes
+				 */
 				#if defined(MDEBUG) && MDEBUG
-				while (solution_wrapper->solution->verify_problems.size() > 0) {
-					Problem* problem = solution_wrapper->solution->verify_problems[0];
+				while (solution_wrapper->curr_solution->verify_problems.size() > 0) {
+					Problem* problem = solution_wrapper->curr_solution->verify_problems[0];
 					solution_wrapper->problem = problem;
 
 					solution_wrapper->verify_init();
@@ -126,10 +140,10 @@ int main(int argc, char* argv[]) {
 
 					solution_wrapper->verify_end();
 
-					delete solution_wrapper->solution->verify_problems[0];
-					solution_wrapper->solution->verify_problems.erase(solution_wrapper->solution->verify_problems.begin());
+					delete solution_wrapper->curr_solution->verify_problems[0];
+					solution_wrapper->curr_solution->verify_problems.erase(solution_wrapper->curr_solution->verify_problems.begin());
 				}
-				solution_wrapper->solution->clear_verify();
+				solution_wrapper->curr_solution->clear_verify();
 				#endif /* MDEBUG */
 
 				break;

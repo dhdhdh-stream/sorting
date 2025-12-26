@@ -20,6 +20,10 @@ public:
 	double ending_true;
 
 	int num_tries;
+	/**
+	 * TODO:
+	 * - if num_train_fail low, then means signal guards against bad cases
+	 */
 	int num_train_fail;
 	int num_measure_fail;
 	int num_success;

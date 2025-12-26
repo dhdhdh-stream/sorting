@@ -18,23 +18,38 @@
 using namespace std;
 
 Solution::Solution() {
-	this->curr_tunnel = NULL;
+	// do nothing
+}
+
+Solution::Solution(Solution* original) {
+	this->timestamp = original->timestamp;
+	this->curr_score = original->curr_score;
+
+	for (int s_index = 0; s_index < (int)original->scopes.size(); s_index++) {
+		Scope* scope = new Scope();
+		scope->id = s_index;
+		this->scopes.push_back(scope);
+	}
+
+	for (int s_index = 0; s_index < (int)original->scopes.size(); s_index++) {
+		this->scopes[s_index]->copy_from(original->scopes[s_index],
+										 this);
+	}
+
+	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
+		this->scopes[s_index]->link(this);
+	}
+
+	this->obs_histories = original->obs_histories;
+	this->target_val_histories = original->target_val_histories;
+
+	this->improvement_history = original->improvement_history;
+	this->change_history = original->change_history;
 }
 
 Solution::~Solution() {
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
 		delete this->scopes[s_index];
-	}
-
-	if (this->curr_tunnel != NULL) {
-		delete this->curr_tunnel;
-	}
-	for (int h_index = 0; h_index < (int)this->tunnel_history.size(); h_index++) {
-		delete this->tunnel_history[h_index];
-	}
-
-	for (int h_index = 0; h_index < (int)this->existing_scope_histories.size(); h_index++) {
-		delete this->existing_scope_histories[h_index];
 	}
 }
 
@@ -80,15 +95,9 @@ void Solution::init(ProblemType* problem_type) {
 
 	end_node->next_node_id = -1;
 	end_node->next_node = NULL;
-
-	this->tunnel_iter = 0;
 }
 
-void Solution::load(string path,
-					string name) {
-	ifstream input_file;
-	input_file.open(path + name);
-
+void Solution::load(ifstream& input_file) {
 	string timestamp_line;
 	getline(input_file, timestamp_line);
 	this->timestamp = stoi(timestamp_line);
@@ -116,24 +125,25 @@ void Solution::load(string path,
 		this->scopes[s_index]->link(this);
 	}
 
-	string tunnel_iter_line;
-	getline(input_file, tunnel_iter_line);
-	this->tunnel_iter = stoi(tunnel_iter_line);
+	string obs_size_line;
+	getline(input_file, obs_size_line);
+	int obs_size = stoi(obs_size_line);
 
-	string curr_tunnel_is_null_line;
-	getline(input_file, curr_tunnel_is_null_line);
-	bool curr_tunnel_is_null = stoi(curr_tunnel_is_null_line);
-	if (curr_tunnel_is_null) {
-		this->curr_tunnel = NULL;
-	} else {
-		this->curr_tunnel = new Tunnel(input_file);
-	}
+	string obs_history_size_line;
+	getline(input_file, obs_history_size_line);
+	int obs_history_size = stoi(obs_history_size_line);
+	for (int h_index = 0; h_index < obs_history_size; h_index++) {
+		vector<double> curr_obs(obs_size);
+		for (int o_index = 0; o_index < obs_size; o_index++) {
+			string val_line;
+			getline(input_file, val_line);
+			curr_obs[o_index] = stod(val_line);
+		}
+		this->obs_histories.push_back(curr_obs);
 
-	string tunnel_history_size_line;
-	getline(input_file, tunnel_history_size_line);
-	int tunnel_history_size = stoi(tunnel_history_size_line);
-	for (int h_index = 0; h_index < tunnel_history_size; h_index++) {
-		this->tunnel_history.push_back(new Tunnel(input_file));
+		string target_val_line;
+		getline(input_file, target_val_line);
+		this->target_val_histories.push_back(stod(target_val_line));
 	}
 
 	string history_size_line;
@@ -148,8 +158,6 @@ void Solution::load(string path,
 		getline(input_file, change_line);
 		this->change_history.push_back(change_line);
 	}
-
-	input_file.close();
 }
 
 #if defined(MDEBUG) && MDEBUG
@@ -217,11 +225,7 @@ void Solution::clean_scopes() {
 	}
 }
 
-void Solution::save(string path,
-					string name) {
-	ofstream output_file;
-	output_file.open(path + "temp_" + name);
-
+void Solution::save(ofstream& output_file) {
 	output_file << this->timestamp << endl;
 	output_file << this->curr_score << endl;
 
@@ -231,15 +235,18 @@ void Solution::save(string path,
 		this->scopes[s_index]->save(output_file);
 	}
 
-	output_file << this->tunnel_iter << endl;
-
-	output_file << (this->curr_tunnel == NULL) << endl;
-	if (this->curr_tunnel != NULL) {
-		this->curr_tunnel->save(output_file);
+	if (this->obs_histories.size() > 0) {
+		output_file << this->obs_histories[0].size() << endl;
+	} else {
+		output_file << 0 << endl;
 	}
-	output_file << this->tunnel_history.size() << endl;
-	for (int h_index = 0; h_index < (int)this->tunnel_history.size(); h_index++) {
-		this->tunnel_history[h_index]->save(output_file);
+	output_file << this->obs_histories.size() << endl;
+	for (int h_index = 0; h_index < (int)this->obs_histories.size(); h_index++) {
+		for (int o_index = 0; o_index < (int)this->obs_histories[h_index].size(); o_index++) {
+			output_file << this->obs_histories[h_index][o_index] << endl;
+		}
+
+		output_file << this->target_val_histories[h_index] << endl;
 	}
 
 	output_file << this->improvement_history.size() << endl;
@@ -247,12 +254,6 @@ void Solution::save(string path,
 		output_file << this->improvement_history[h_index] << endl;
 		output_file << this->change_history[h_index] << endl;
 	}
-
-	output_file.close();
-
-	string oldname = path + "temp_" + name;
-	string newname = path + name;
-	rename(oldname.c_str(), newname.c_str());
 }
 
 void Solution::save_for_display(ofstream& output_file) {

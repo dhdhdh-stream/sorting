@@ -108,10 +108,10 @@ void ChaseExperiment::measure_backprop(double target_val,
 		this->sum_true += target_val;
 
 		double signal;
-		if (wrapper->solution->curr_tunnel == NULL) {
+		if (wrapper->curr_tunnel == NULL) {
 			signal = target_val;
 		} else {
-			signal = wrapper->solution->curr_tunnel->get_signal(wrapper);
+			signal = wrapper->curr_tunnel->get_signal(wrapper);
 		}
 		this->sum_signal += signal;
 
@@ -125,9 +125,9 @@ void ChaseExperiment::measure_backprop(double target_val,
 			#else
 			if (new_true >= this->existing_true && new_signal >= this->existing_signal) {
 			#endif /* MDEBUG */
-				if (wrapper->solution->curr_tunnel != NULL) {
-					wrapper->solution->curr_tunnel->num_tries++;
-					wrapper->solution->curr_tunnel->num_success++;
+				if (wrapper->curr_tunnel != NULL) {
+					wrapper->curr_tunnel->num_tries++;
+					wrapper->curr_tunnel->num_success++;
 				}
 
 				double average_hits_per_run = (double)MEASURE_ITERS / (double)this->total_count;
@@ -168,9 +168,9 @@ void ChaseExperiment::measure_backprop(double target_val,
 				this->result = EXPERIMENT_RESULT_SUCCESS;
 				#endif /* MDEBUG */
 			} else {
-				if (wrapper->solution->curr_tunnel != NULL) {
-					wrapper->solution->curr_tunnel->num_tries++;
-					wrapper->solution->curr_tunnel->num_measure_fail++;
+				if (wrapper->curr_tunnel != NULL) {
+					wrapper->curr_tunnel->num_tries++;
+					wrapper->curr_tunnel->num_measure_fail++;
 				}
 
 				this->result = EXPERIMENT_RESULT_FAIL;

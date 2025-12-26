@@ -35,6 +35,10 @@ void StartNode::link(Solution* parent_solution) {
 	}
 }
 
+void StartNode::copy_from(StartNode* original) {
+	this->next_node_id = original->next_node_id;
+}
+
 void StartNode::save_for_display(ofstream& output_file) {
 	output_file << this->next_node_id << endl;
 }

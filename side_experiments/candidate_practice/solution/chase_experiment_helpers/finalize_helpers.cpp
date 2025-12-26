@@ -43,14 +43,14 @@ void ChaseExperiment::add(SolutionWrapper* wrapper) {
 		ss << "this->best_exit_next_node->id: " << this->best_exit_next_node->id << "; ";
 	}
 
-	wrapper->solution->improvement_history.push_back(calc_new_score());
-	wrapper->solution->change_history.push_back(ss.str());
+	wrapper->curr_solution->improvement_history.push_back(calc_new_score());
+	wrapper->curr_solution->change_history.push_back(ss.str());
 
 	cout << ss.str() << endl;
 
 	if (this->best_new_scope != NULL) {
-		wrapper->solution->scopes.push_back(this->best_new_scope);
-		this->best_new_scope->id = (int)wrapper->solution->scopes.size()-1;
+		wrapper->curr_solution->scopes.push_back(this->best_new_scope);
+		this->best_new_scope->id = (int)wrapper->curr_solution->scopes.size()-1;
 
 		recursive_add_child(scope_context,
 							wrapper,
@@ -322,9 +322,9 @@ void ChaseExperiment::add(SolutionWrapper* wrapper) {
 
 	#if defined(MDEBUG) && MDEBUG
 	if (this->verify_problems.size() > 0) {
-		wrapper->solution->verify_problems = this->verify_problems;
+		wrapper->curr_solution->verify_problems = this->verify_problems;
 		this->verify_problems.clear();
-		wrapper->solution->verify_seeds = this->verify_seeds;
+		wrapper->curr_solution->verify_seeds = this->verify_seeds;
 
 		new_branch_node->verify_key = this;
 		new_branch_node->verify_scores = this->verify_scores;

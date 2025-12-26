@@ -20,7 +20,13 @@ class Tunnel;
 
 class SolutionWrapper {
 public:
-	Solution* solution;
+	Solution* prev_solution;
+
+	int tunnel_iter;
+	Tunnel* curr_tunnel;
+	Solution* curr_solution;
+
+	Solution* best_solution;
 
 	/**
 	 * - iter variables

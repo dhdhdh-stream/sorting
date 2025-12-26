@@ -206,6 +206,75 @@ void Scope::link(Solution* parent_solution) {
 	}
 }
 
+void Scope::copy_from(Scope* original,
+					  Solution* parent_solution) {
+	this->node_counter = original->node_counter;
+
+	for (map<int, AbstractNode*>::iterator it = original->nodes.begin();
+			it != original->nodes.end(); it++) {
+		switch (it->second->type) {
+		case NODE_TYPE_START:
+			{
+				StartNode* original_start_node = (StartNode*)it->second;
+				StartNode* start_node = new StartNode();
+				start_node->parent = this;
+				start_node->id = it->first;
+				start_node->copy_from(original_start_node);
+				this->nodes[it->first] = start_node;
+			}
+			break;
+		case NODE_TYPE_ACTION:
+			{
+				ActionNode* original_action_node = (ActionNode*)it->second;
+				ActionNode* action_node = new ActionNode();
+				action_node->parent = this;
+				action_node->id = it->first;
+				action_node->copy_from(original_action_node);
+				this->nodes[it->first] = action_node;
+			}
+			break;
+		case NODE_TYPE_SCOPE:
+			{
+				ScopeNode* original_scope_node = (ScopeNode*)it->second;
+				ScopeNode* scope_node = new ScopeNode();
+				scope_node->parent = this;
+				scope_node->id = it->first;
+				scope_node->copy_from(original_scope_node,
+									  parent_solution);
+				this->nodes[it->first] = scope_node;
+			}
+			break;
+		case NODE_TYPE_BRANCH:
+			{
+				BranchNode* original_branch_node = (BranchNode*)it->second;
+				BranchNode* branch_node = new BranchNode();
+				branch_node->parent = this;
+				branch_node->id = it->first;
+				branch_node->copy_from(original_branch_node,
+									   parent_solution);
+				this->nodes[it->first] = branch_node;
+			}
+			break;
+		case NODE_TYPE_OBS:
+			{
+				ObsNode* original_obs_node = (ObsNode*)it->second;
+				ObsNode* obs_node = new ObsNode();
+				obs_node->parent = this;
+				obs_node->id = it->first;
+				obs_node->copy_from(original_obs_node,
+									parent_solution);
+				this->nodes[it->first] = obs_node;
+			}
+			break;
+		}
+	}
+
+	for (int c_index = 0; c_index < (int)original->child_scopes.size(); c_index++) {
+		this->child_scopes.push_back(parent_solution->scopes[
+			original->child_scopes[c_index]->id]);
+	}
+}
+
 void Scope::save_for_display(ofstream& output_file) {
 	output_file << this->nodes.size() << endl;
 	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();

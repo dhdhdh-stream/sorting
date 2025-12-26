@@ -21,8 +21,8 @@ Tunnel::Tunnel(std::vector<int>& obs_indexes,
 
 	this->signal_network = signal_network;
 
-	this->starting_true = wrapper->solution->curr_score;
-	this->ending_true = wrapper->solution->curr_score;
+	this->starting_true = wrapper->prev_solution->curr_score;
+	this->ending_true = wrapper->prev_solution->curr_score;
 
 	this->num_tries = 0;
 	this->num_train_fail = 0;
