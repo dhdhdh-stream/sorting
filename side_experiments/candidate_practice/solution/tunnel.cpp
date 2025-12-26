@@ -30,6 +30,27 @@ Tunnel::Tunnel(std::vector<int>& obs_indexes,
 	this->num_success = 0;
 }
 
+Tunnel::Tunnel(Tunnel* original) {
+	this->obs_indexes = original->obs_indexes;
+
+	this->is_pattern = original->is_pattern;
+	if (original->similarity_network == NULL) {
+		this->similarity_network = NULL;
+	} else {
+		this->similarity_network = new Network(original->similarity_network);
+	}
+
+	this->signal_network = new Network(original->signal_network);
+
+	this->starting_true = original->starting_true;
+	this->ending_true = original->ending_true;
+
+	this->num_tries = original->num_tries;
+	this->num_train_fail = original->num_train_fail;
+	this->num_measure_fail = original->num_measure_fail;
+	this->num_success = original->num_success;
+}
+
 Tunnel::Tunnel(ifstream& input_file) {
 	string num_obs_indexes_line;
 	getline(input_file, num_obs_indexes_line);

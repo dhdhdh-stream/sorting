@@ -45,12 +45,26 @@ Solution::Solution(Solution* original) {
 
 	this->improvement_history = original->improvement_history;
 	this->change_history = original->change_history;
+
+	for (int h_index = 0; h_index < (int)original->tunnel_history.size(); h_index++) {
+		this->tunnel_history.push_back(new Tunnel(original->tunnel_history[h_index]));
+	}
 }
 
 Solution::~Solution() {
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
 		delete this->scopes[s_index];
 	}
+
+	for (int h_index = 0; h_index < (int)this->tunnel_history.size(); h_index++) {
+		delete this->tunnel_history[h_index];
+	}
+
+	#if defined(MDEBUG) && MDEBUG
+	for (int p_index = 0; p_index < (int)this->verify_problems.size(); p_index++) {
+		delete this->verify_problems[p_index];
+	}
+	#endif /* MDEBUG */
 }
 
 void Solution::init(ProblemType* problem_type) {
@@ -158,6 +172,13 @@ void Solution::load(ifstream& input_file) {
 		getline(input_file, change_line);
 		this->change_history.push_back(change_line);
 	}
+
+	string tunnel_history_size_line;
+	getline(input_file, tunnel_history_size_line);
+	int tunnel_history_size = stoi(tunnel_history_size_line);
+	for (int h_index = 0; h_index < tunnel_history_size; h_index++) {
+		this->tunnel_history.push_back(new Tunnel(input_file));
+	}
 }
 
 #if defined(MDEBUG) && MDEBUG
@@ -253,6 +274,11 @@ void Solution::save(ofstream& output_file) {
 	for (int h_index = 0; h_index < (int)this->improvement_history.size(); h_index++) {
 		output_file << this->improvement_history[h_index] << endl;
 		output_file << this->change_history[h_index] << endl;
+	}
+
+	output_file << this->tunnel_history.size() << endl;
+	for (int h_index = 0; h_index < (int)this->tunnel_history.size(); h_index++) {
+		this->tunnel_history[h_index]->save(output_file);
 	}
 }
 

@@ -114,7 +114,11 @@ SolutionWrapper::~SolutionWrapper() {
 }
 
 bool SolutionWrapper::is_done() {
-	return this->prev_solution->timestamp == -1;
+	if (this->prev_solution != NULL) {
+		return this->prev_solution->timestamp == -1;
+	}
+
+	return false;
 }
 
 void SolutionWrapper::clean_scopes() {

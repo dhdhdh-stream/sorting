@@ -19,6 +19,11 @@
 //   - can generalize in multiple directions anyways, so no simple answer
 //     - instead, constantly retrain tunnel/look for new ones
 
+// - besides tunnel, can also hope to get there from main?
+//   - enough small things add up?
+//     - how to compare against getting lucky with tunnel?
+// - actually, yeah, not currently really better than without tunnel
+
 #include <chrono>
 #include <iostream>
 #include <map>

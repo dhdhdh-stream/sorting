@@ -33,6 +33,7 @@ public:
 		   Network* similarity_network,
 		   Network* signal_network,
 		   SolutionWrapper* wrapper);
+	Tunnel(Tunnel* original);
 	Tunnel(std::ifstream& input_file);
 	~Tunnel();
 

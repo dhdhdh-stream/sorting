@@ -44,6 +44,8 @@ public:
 	std::vector<double> improvement_history;
 	std::vector<std::string> change_history;
 
+	std::vector<Tunnel*> tunnel_history;
+
 	#if defined(MDEBUG) && MDEBUG
 	std::vector<Problem*> verify_problems;
 	std::vector<unsigned long> verify_seeds;

@@ -25,6 +25,9 @@ const int ITERS_PER_TUNNEL = 10;
 const int TUNNEL_NUM_CANDIDATES = 10;
 #endif /* MDEBUG */
 
+const int TUNNEL_EARLY_FAIL_MIN_TRIES = 20;
+const double TUNNEL_EARLY_FAIL_MIN_RATIO = 0.7;
+
 void SolutionWrapper::experiment_init() {
 	this->num_actions = 1;
 
@@ -101,11 +104,49 @@ void SolutionWrapper::experiment_end(double result) {
 		this->experiment_history = NULL;
 
 		if (this->curr_experiment->result == EXPERIMENT_RESULT_FAIL) {
+			if (this->curr_tunnel != NULL) {
+				// temp
+				if (this->curr_tunnel->num_tries % 10 == 0) {
+					this->curr_tunnel->print();
+				}
+
+				if (this->curr_tunnel->num_tries >= TUNNEL_EARLY_FAIL_MIN_TRIES) {
+					double train_fail_ratio = (double)this->curr_tunnel->num_train_fail / (double)this->curr_tunnel->num_tries;
+					if (train_fail_ratio > TUNNEL_EARLY_FAIL_MIN_RATIO) {
+						cout << "tunnel early fail" << endl;
+						delete this->curr_tunnel;
+						this->curr_tunnel = create_obs_candidate(
+							this->prev_solution->obs_histories,
+							this->prev_solution->target_val_histories,
+							this);
+					}
+				}
+			}
+
 			this->curr_experiment->clean();
 			delete this->curr_experiment;
 
 			this->curr_experiment = NULL;
 		} else if (this->curr_experiment->result == EXPERIMENT_RESULT_SUCCESS) {
+			if (this->curr_tunnel != NULL) {
+				// temp
+				if (this->curr_tunnel->num_tries % 10 == 0) {
+					this->curr_tunnel->print();
+				}
+
+				if (this->curr_tunnel->num_tries >= TUNNEL_EARLY_FAIL_MIN_TRIES) {
+					double train_fail_ratio = (double)this->curr_tunnel->num_train_fail / (double)this->curr_tunnel->num_tries;
+					if (train_fail_ratio > TUNNEL_EARLY_FAIL_MIN_RATIO) {
+						cout << "tunnel early fail" << endl;
+						delete this->curr_tunnel;
+						this->curr_tunnel = create_obs_candidate(
+							this->prev_solution->obs_histories,
+							this->prev_solution->target_val_histories,
+							this);
+					}
+				}
+			}
+
 			this->curr_experiment->clean();
 
 			if (this->best_experiment == NULL) {
@@ -141,60 +182,58 @@ void SolutionWrapper::experiment_end(double result) {
 					this->curr_solution->timestamp = -1;
 				}
 
-				if (this->curr_tunnel != NULL) {
-					this->curr_tunnel->ending_true = this->curr_solution->curr_score;
-				}
-				bool is_next_tunnel;
-				if (this->prev_solution == NULL) {
-					if (this->curr_solution->timestamp >= ITERS_PER_TUNNEL) {
-						is_next_tunnel = true;
-					} else {
-						is_next_tunnel = false;
-					}
-				} else {
-					if (this->curr_solution->timestamp >= this->prev_solution->timestamp + ITERS_PER_TUNNEL) {
-						is_next_tunnel = true;
-					} else {
-						is_next_tunnel = false;
-					}
-				}
-				if (is_next_tunnel) {
-					if (this->prev_solution == NULL) {
-						this->prev_solution = new Solution(this->curr_solution);
-					} else {
-						if (this->best_solution == NULL) {
-							this->best_solution = this->curr_solution;
-						} else {
-							if (this->curr_solution->curr_score > this->best_solution->curr_score) {
-								delete this->best_solution;
-								this->best_solution = this->curr_solution;
-							} else {
-								delete this->curr_solution;
-							}
-							this->curr_solution = NULL;
-						}
+				// if (this->curr_tunnel != NULL) {
+				// 	this->curr_tunnel->ending_true = this->curr_solution->curr_score;
+				// }
+				// bool is_next_tunnel;
+				// if (this->prev_solution == NULL) {
+				// 	if (this->curr_solution->timestamp >= ITERS_PER_TUNNEL) {
+				// 		is_next_tunnel = true;
+				// 	} else {
+				// 		is_next_tunnel = false;
+				// 	}
+				// } else {
+				// 	if (this->curr_solution->timestamp >= this->prev_solution->timestamp + ITERS_PER_TUNNEL) {
+				// 		is_next_tunnel = true;
+				// 	} else {
+				// 		is_next_tunnel = false;
+				// 	}
+				// }
+				// if (is_next_tunnel) {
+				// 	if (this->prev_solution == NULL) {
+				// 		this->prev_solution = new Solution(this->curr_solution);
+				// 	} else {
+				// 		this->curr_solution->tunnel_history.push_back(this->curr_tunnel);
+				// 		this->curr_tunnel = NULL;
 
-						this->tunnel_iter++;
-						if (this->tunnel_iter >= TUNNEL_NUM_CANDIDATES) {
-							this->prev_solution = this->best_solution;
-							this->best_solution = NULL;
+				// 		if (this->best_solution == NULL) {
+				// 			this->best_solution = this->curr_solution;
+				// 		} else {
+				// 			if (this->curr_solution->curr_score > this->best_solution->curr_score) {
+				// 				delete this->best_solution;
+				// 				this->best_solution = this->curr_solution;
+				// 			} else {
+				// 				delete this->curr_solution;
+				// 			}
+				// 			this->curr_solution = NULL;
+				// 		}
 
-							this->tunnel_iter = 0;
-						}
+				// 		this->tunnel_iter++;
+				// 		if (this->tunnel_iter >= TUNNEL_NUM_CANDIDATES) {
+				// 			this->prev_solution = this->best_solution;
+				// 			this->best_solution = NULL;
 
-						this->curr_solution = new Solution(this->prev_solution);
-					}
+				// 			this->tunnel_iter = 0;
+				// 		}
 
-					if (this->curr_tunnel != NULL) {
-						delete this->curr_tunnel;
-					}
-					this->curr_tunnel = create_obs_candidate(
-						this->prev_solution->obs_histories,
-						this->prev_solution->target_val_histories,
-						this);
+				// 		this->curr_solution = new Solution(this->prev_solution);
+				// 	}
 
-					this->tunnel_iter = 0;
-				}
+				// 	this->curr_tunnel = create_obs_candidate(
+				// 		this->prev_solution->obs_histories,
+				// 		this->prev_solution->target_val_histories,
+				// 		this);
+				// }
 
 				this->improvement_iter = 0;
 			}
