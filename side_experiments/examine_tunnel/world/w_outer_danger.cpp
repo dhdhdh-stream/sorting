@@ -97,7 +97,20 @@ void WOuterDanger::perform_action(int action) {
 double WOuterDanger::score_result() {
 	double sum_scores = 0.0;
 
-	sum_scores += this->score;
+	// sum_scores += this->score;
+	// if (this->score > 0.0) {
+	// 	sum_scores += sqrt(this->score);
+	// }
+	// if (this->score > 5.0) {
+	// 	sum_scores += 5.0;
+	// } else {
+	// 	sum_scores += this->score;
+	// }
+	if (this->score > 5.0) {
+		sum_scores += 10.0 - this->score;
+	} else {
+		sum_scores += this->score;
+	}
 	sum_scores += this->danger;
 	for (int i_index = 0; i_index < NUM_NOISE; i_index++) {
 		sum_scores += this->noise[i_index];

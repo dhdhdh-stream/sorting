@@ -11,32 +11,32 @@ using namespace std;
 Tunnel* create_obs_candidate(vector<vector<double>>& obs_histories,
 							 vector<double>& target_val_histories,
 							 SolutionWrapper* wrapper) {
-	// geometric_distribution<int> num_obs_distribution(0.3);
-	geometric_distribution<int> num_obs_distribution(0.5);
-	int num_obs;
-	while (true) {
-		num_obs = 1 + num_obs_distribution(generator);
-		if (num_obs <= (int)obs_histories[0].size()) {
-			break;
-		}
-	}
+	// // geometric_distribution<int> num_obs_distribution(0.3);
+	// geometric_distribution<int> num_obs_distribution(0.5);
+	// int num_obs;
+	// while (true) {
+	// 	num_obs = 1 + num_obs_distribution(generator);
+	// 	if (num_obs <= (int)obs_histories[0].size()) {
+	// 		break;
+	// 	}
+	// }
 
-	vector<int> remaining_indexes(obs_histories[0].size());
-	for (int i_index = 0; i_index < (int)obs_histories[0].size(); i_index++) {
-		remaining_indexes[i_index] = i_index;
-	}
+	// vector<int> remaining_indexes(obs_histories[0].size());
+	// for (int i_index = 0; i_index < (int)obs_histories[0].size(); i_index++) {
+	// 	remaining_indexes[i_index] = i_index;
+	// }
 
-	vector<int> obs_indexes;
-	for (int o_index = 0; o_index < num_obs; o_index++) {
-		uniform_int_distribution<int> distribution(0, remaining_indexes.size()-1);
-		int index = distribution(generator);
-		obs_indexes.push_back(remaining_indexes[index]);
-		remaining_indexes.erase(remaining_indexes.begin() + index);
-	}
+	// vector<int> obs_indexes;
+	// for (int o_index = 0; o_index < num_obs; o_index++) {
+	// 	uniform_int_distribution<int> distribution(0, remaining_indexes.size()-1);
+	// 	int index = distribution(generator);
+	// 	obs_indexes.push_back(remaining_indexes[index]);
+	// 	remaining_indexes.erase(remaining_indexes.begin() + index);
+	// }
 
-	// // temp
-	// int num_obs = 1;
-	// // vector<int> obs_indexes{2};
+	// temp
+	int num_obs = 1;
+	vector<int> obs_indexes{2};
 	// vector<int> obs_indexes{3};
 
 	vector<vector<double>> inputs(obs_histories.size());

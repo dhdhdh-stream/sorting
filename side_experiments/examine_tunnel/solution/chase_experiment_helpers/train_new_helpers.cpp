@@ -147,9 +147,6 @@ void ChaseExperiment::train_new_backprop(
 			#else
 			if (num_positive > 0 && sum_predicted_true_improvement >= 0.0) {
 			#endif /* MDEBUG */
-				this->total_count = 0;
-				this->total_sum_scores = 0.0;
-
 				this->sum_true = 0.0;
 				this->sum_signal = 0.0;
 

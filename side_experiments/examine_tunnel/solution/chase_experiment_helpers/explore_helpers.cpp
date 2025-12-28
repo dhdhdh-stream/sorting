@@ -241,14 +241,14 @@ void ChaseExperiment::explore_backprop(double target_val,
 
 	if (history->existing_predicted_trues.size() != 0) {
 		vector<double> obs = wrapper->problem->get_observations();
-		if (wrapper->solution->obs_histories.size() < EXPLORE_MAX_SAMPLES) {
-			wrapper->solution->obs_histories.push_back(obs);
-			wrapper->solution->target_val_histories.push_back(target_val);
+		if (wrapper->solution->explore_obs_histories.size() < EXPLORE_MAX_SAMPLES) {
+			wrapper->solution->explore_obs_histories.push_back(obs);
+			wrapper->solution->explore_target_val_histories.push_back(target_val);
 		} else {
-			uniform_int_distribution<int> distribution(0, wrapper->solution->obs_histories.size()-1);
+			uniform_int_distribution<int> distribution(0, wrapper->solution->explore_obs_histories.size()-1);
 			int index = distribution(generator);
-			wrapper->solution->obs_histories[index] = obs;
-			wrapper->solution->target_val_histories[index] = target_val;
+			wrapper->solution->explore_obs_histories[index] = obs;
+			wrapper->solution->explore_target_val_histories[index] = target_val;
 		}
 
 		double curr_sanity = target_val - history->existing_predicted_trues[0];

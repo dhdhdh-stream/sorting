@@ -43,7 +43,11 @@ void ChaseExperiment::add(SolutionWrapper* wrapper) {
 		ss << "this->best_exit_next_node->id: " << this->best_exit_next_node->id << "; ";
 	}
 
-	wrapper->solution->improvement_history.push_back(calc_new_score());
+	double val_average;
+	double val_standard_deviation;
+	calc_new_score(val_average,
+				   val_standard_deviation);
+	wrapper->solution->improvement_history.push_back(val_average);
 	wrapper->solution->change_history.push_back(ss.str());
 
 	cout << ss.str() << endl;
@@ -364,6 +368,17 @@ void ChaseExperiment::add(SolutionWrapper* wrapper) {
 	this->best_new_nodes.clear();
 }
 
-double ChaseExperiment::calc_new_score() {
-	return this->total_sum_scores / this->total_count;
+void ChaseExperiment::calc_new_score(double& val_average,
+									 double& val_standard_deviation) {
+	double sum_vals = 0.0;
+	for (int h_index = 0; h_index < (int)this->total_scores.size(); h_index++) {
+		sum_vals += this->total_scores[h_index];
+	}
+	val_average = sum_vals / (double)this->total_scores.size();
+
+	double sum_variance = 0.0;
+	for (int h_index = 0; h_index < (int)this->total_scores.size(); h_index++) {
+		sum_variance += (this->total_scores[h_index] - val_average) * (this->total_scores[h_index] - val_average);
+	}
+	val_standard_deviation = sqrt(sum_variance / (double)this->total_scores.size());
 }

@@ -31,6 +31,8 @@ public:
 
 	double improvement;
 
+	std::vector<std::vector<double>> new_obs_histories;
+
 	virtual ~AbstractExperiment() {};
 
 	virtual void check_activate(AbstractNode* experiment_node,

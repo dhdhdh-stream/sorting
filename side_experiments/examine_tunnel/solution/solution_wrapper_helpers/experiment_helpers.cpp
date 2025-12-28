@@ -119,7 +119,14 @@ void SolutionWrapper::experiment_end(double result) {
 
 				this->best_experiment->add(this);
 
-				this->solution->curr_score = this->best_experiment->calc_new_score();
+				double val_average;
+				double val_standard_deviation;
+				this->best_experiment->calc_new_score(val_average,
+													  val_standard_deviation);
+				this->solution->curr_score_average = val_average;
+				this->solution->curr_score_standard_deviation = val_standard_deviation;
+
+				this->solution->existing_obs_histories = this->best_experiment->new_obs_histories;
 
 				delete this->best_experiment;
 				this->best_experiment = NULL;
@@ -133,37 +140,50 @@ void SolutionWrapper::experiment_end(double result) {
 					this->solution->timestamp = -1;
 				}
 
+				if (this->tunnel != NULL) {
+					double val_average;
+					double val_standard_deviation;
+					measure_tunnel_val(this->solution->existing_obs_histories,
+									   this->tunnel,
+									   val_average,
+									   val_standard_deviation);
+
+					this->tunnel->current_true_average = this->solution->curr_score_average;
+					this->tunnel->current_true_standard_deviation = this->solution->curr_score_standard_deviation;
+					this->tunnel->current_val_average = val_average;
+					this->tunnel->current_val_standard_deviation = val_standard_deviation;
+
+					double t_score = (this->tunnel->current_val_average - this->tunnel->starting_val_average)
+						/ (this->tunnel->current_val_standard_deviation / sqrt(1000.0));
+					cout << "t_score: " << t_score << endl;
+
+					this->tunnel->print();
+				}
+
+				if (this->tunnel != NULL
+						&& this->solution->timestamp % 5 == 0) {
+					retrain_and_compare(this->solution->explore_obs_histories,
+										this->solution->explore_target_val_histories,
+										this->tunnel);
+				}
+
 				if (this->solution->timestamp == 5) {
 					this->tunnel = create_obs_candidate(
-						this->solution->obs_histories,
-						this->solution->target_val_histories,
+						this->solution->explore_obs_histories,
+						this->solution->explore_target_val_histories,
 						this);
 
 					double val_average;
 					double val_standard_deviation;
-					measure_tunnel_val(this->solution->obs_histories,
+					measure_tunnel_val(this->solution->existing_obs_histories,
 									   this->tunnel,
 									   val_average,
 									   val_standard_deviation);
 
-					this->tunnel->starting_true = this->solution->curr_score;
+					this->tunnel->starting_true_average = this->solution->curr_score_average;
+					this->tunnel->starting_true_standard_deviation = this->solution->curr_score_standard_deviation;
 					this->tunnel->starting_val_average = val_average;
 					this->tunnel->starting_val_standard_deviation = val_standard_deviation;
-				} else if (this->solution->timestamp == 10) {
-					double val_average;
-					double val_standard_deviation;
-					measure_tunnel_val(this->solution->obs_histories,
-									   this->tunnel,
-									   val_average,
-									   val_standard_deviation);
-
-					this->tunnel->current_true = this->solution->curr_score;
-					this->tunnel->current_val_average = val_average;
-					this->tunnel->current_val_standard_deviation = val_standard_deviation;
-
-					retrain_and_compare(this->solution->obs_histories,
-										this->solution->target_val_histories,
-										this->tunnel);
 				}
 
 				this->improvement_iter = 0;

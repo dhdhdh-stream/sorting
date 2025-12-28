@@ -29,6 +29,8 @@ public:
 	Network* existing_true_network;
 	Network* existing_signal_network;
 
+	int total_count;
+
 	int sum_num_instances;
 
 	double average_instances_per_run;
@@ -56,8 +58,7 @@ public:
 	double sum_true;
 	double sum_signal;
 
-	double total_sum_scores;
-	int total_count;
+	std::vector<double> total_scores;
 
 	std::vector<std::vector<double>> obs_histories;
 	std::vector<double> true_histories;
@@ -137,7 +138,8 @@ public:
 
 	void clean();
 	void add(SolutionWrapper* wrapper);
-	double calc_new_score();
+	void calc_new_score(double& val_average,
+						double& val_standard_deviation);
 };
 
 class ChaseExperimentHistory : public AbstractExperimentHistory {

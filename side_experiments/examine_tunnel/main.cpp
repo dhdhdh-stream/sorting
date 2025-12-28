@@ -32,7 +32,26 @@
 
 // - simply have to be great at filtering
 
-// TODO: test with maxed scenario
+// - statistical significance depends on number of samples
+//   - so, really, just back to choosing something practical
+
+// - when to give up on signal?
+//   - 2 scenarios:
+//     - signal maxed
+//       - can't easily identify
+//         - retraining signal from explore still likely shows strong correlation even though not able to progress
+//         - maybe gradually give up if unable to make progress
+//     - signal reversed
+
+// - but how to arrive at recursive signals?
+//   - maybe about increasing naunce against diminishing returns?
+//   - maybe can use any signal, not just what can be chased?
+//     - so realistically, maxed out signals are OK
+//       - not random positively correlated unchasable signals as will not track
+
+// - the only way to know if a signal is good is to see if it results in improving true?
+
+// TODO: measure sqrt PCC
 
 #include <chrono>
 #include <iostream>

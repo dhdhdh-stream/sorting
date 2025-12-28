@@ -6,6 +6,7 @@
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
+#include "globals.h"
 #include "network.h"
 #include "problem.h"
 #include "scope.h"
@@ -100,8 +101,15 @@ void ChaseExperiment::measure_exit_step(SolutionWrapper* wrapper) {
 
 void ChaseExperiment::measure_backprop(double target_val,
 									   SolutionWrapper* wrapper) {
-	this->total_count++;
-	this->total_sum_scores += target_val;
+	this->total_scores.push_back(target_val);
+	vector<double> obs = wrapper->problem->get_observations();
+	if (this->new_obs_histories.size() < EXISTING_MAX_SAMPLES) {
+		this->new_obs_histories.push_back(obs);
+	} else {
+		uniform_int_distribution<int> distribution(0, this->new_obs_histories.size()-1);
+		int index = distribution(generator);
+		this->new_obs_histories[index] = obs;
+	}
 
 	ChaseExperimentHistory* history = (ChaseExperimentHistory*)wrapper->experiment_history;
 	if (history->is_hit) {
@@ -130,7 +138,7 @@ void ChaseExperiment::measure_backprop(double target_val,
 					wrapper->tunnel->num_success++;
 				}
 
-				double average_hits_per_run = (double)MEASURE_ITERS / (double)this->total_count;
+				double average_hits_per_run = (double)MEASURE_ITERS / (double)this->total_scores.size();
 
 				this->improvement = average_hits_per_run * (new_signal - this->existing_signal);
 

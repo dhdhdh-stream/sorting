@@ -34,12 +34,15 @@ public:
 	 * - -1 if done
 	 */
 	int timestamp;
-	double curr_score;
+	double curr_score_average;
+	double curr_score_standard_deviation;
 
 	std::vector<Scope*> scopes;
 
-	std::vector<std::vector<double>> obs_histories;
-	std::vector<double> target_val_histories;
+	std::vector<std::vector<double>> existing_obs_histories;
+
+	std::vector<std::vector<double>> explore_obs_histories;
+	std::vector<double> explore_target_val_histories;
 
 	std::vector<double> improvement_history;
 	std::vector<std::string> change_history;

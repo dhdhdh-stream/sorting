@@ -21,6 +21,16 @@ Tunnel::Tunnel(std::vector<int>& obs_indexes,
 
 	this->signal_network = signal_network;
 
+	this->starting_true_average = 0.0;
+	this->starting_true_standard_deviation = 0.0;
+	this->starting_val_average = 0.0;
+	this->starting_val_standard_deviation = 0.0;
+
+	this->current_true_average = 0.0;
+	this->current_true_standard_deviation = 0.0;
+	this->current_val_average = 0.0;
+	this->current_val_standard_deviation = 0.0;
+
 	this->num_tries = 0;
 	this->num_train_fail = 0;
 	this->num_measure_fail = 0;
@@ -39,11 +49,13 @@ Tunnel::Tunnel(Tunnel* original) {
 
 	this->signal_network = new Network(original->signal_network);
 
-	this->starting_true = original->starting_true;
+	this->starting_true_average = original->starting_true_average;
+	this->starting_true_standard_deviation = original->starting_true_standard_deviation;
 	this->starting_val_average = original->starting_val_average;
 	this->starting_val_standard_deviation = original->starting_val_standard_deviation;
 
-	this->current_true = original->current_true;
+	this->current_true_average = original->current_true_average;
+	this->current_true_standard_deviation = original->current_true_standard_deviation;
 	this->current_val_average = original->current_val_average;
 	this->current_val_standard_deviation = original->current_val_standard_deviation;
 
@@ -74,9 +86,13 @@ Tunnel::Tunnel(ifstream& input_file) {
 
 	this->signal_network = new Network(input_file);
 
-	string starting_true_line;
-	getline(input_file, starting_true_line);
-	this->starting_true = stod(starting_true_line);
+	string starting_true_average_line;
+	getline(input_file, starting_true_average_line);
+	this->starting_true_average = stod(starting_true_average_line);
+
+	string starting_true_standard_deviation_line;
+	getline(input_file, starting_true_standard_deviation_line);
+	this->starting_true_standard_deviation = stod(starting_true_standard_deviation_line);
 
 	string starting_val_average_line;
 	getline(input_file, starting_val_average_line);
@@ -86,9 +102,13 @@ Tunnel::Tunnel(ifstream& input_file) {
 	getline(input_file, starting_val_standard_deviation_line);
 	this->starting_val_standard_deviation = stod(starting_val_standard_deviation_line);
 
-	string current_true_line;
-	getline(input_file, current_true_line);
-	this->current_true = stod(current_true_line);
+	string current_true_average_line;
+	getline(input_file, current_true_average_line);
+	this->current_true_average = stod(current_true_average_line);
+
+	string current_true_standard_deviation_line;
+	getline(input_file, current_true_standard_deviation_line);
+	this->current_true_standard_deviation = stod(current_true_standard_deviation_line);
 
 	string current_val_average_line;
 	getline(input_file, current_val_average_line);
@@ -163,11 +183,13 @@ void Tunnel::save(ofstream& output_file) {
 
 	this->signal_network->save(output_file);
 
-	output_file << this->starting_true << endl;
+	output_file << this->starting_true_average << endl;
+	output_file << this->starting_true_standard_deviation << endl;
 	output_file << this->starting_val_average << endl;
 	output_file << this->starting_val_standard_deviation << endl;
 
-	output_file << this->current_true << endl;
+	output_file << this->current_true_average << endl;
+	output_file << this->current_true_standard_deviation << endl;
 	output_file << this->current_val_average << endl;
 	output_file << this->current_val_standard_deviation << endl;
 
@@ -184,11 +206,13 @@ void Tunnel::print() {
 	}
 	cout << endl;
 
-	cout << "this->starting_true: " << this->starting_true << endl;
+	cout << "this->starting_true_average: " << this->starting_true_average << endl;
+	cout << "this->starting_true_standard_deviation: " << this->starting_true_standard_deviation << endl;
 	cout << "this->starting_val_average: " << this->starting_val_average << endl;
 	cout << "this->starting_val_standard_deviation: " << this->starting_val_standard_deviation << endl;
 
-	cout << "this->current_true: " << this->current_true << endl;
+	cout << "this->current_true_average: " << this->current_true_average << endl;
+	cout << "this->current_true_standard_deviation: " << this->current_true_standard_deviation << endl;
 	cout << "this->current_val_average: " << this->current_val_average << endl;
 	cout << "this->current_val_standard_deviation: " << this->current_val_standard_deviation << endl;
 

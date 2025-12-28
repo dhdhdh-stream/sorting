@@ -51,8 +51,10 @@ const int MIN_TRAIN_SAMPLES = 1000;
 #endif /* MDEBUG */
 
 #if defined(MDEBUG) && MDEBUG
+const int EXISTING_MAX_SAMPLES = 10;
 const int EXPLORE_MAX_SAMPLES = 10;
 #else
+const int EXISTING_MAX_SAMPLES = 4000;
 const int EXPLORE_MAX_SAMPLES = 10000;
 #endif /* MDEBUG */
 

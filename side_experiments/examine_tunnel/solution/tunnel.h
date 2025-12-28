@@ -16,11 +16,13 @@ public:
 
 	Network* signal_network;
 
-	double starting_true;
+	double starting_true_average;
+	double starting_true_standard_deviation;
 	double starting_val_average;
 	double starting_val_standard_deviation;
 
-	double current_true;
+	double current_true_average;
+	double current_true_standard_deviation;
 	double current_val_average;
 	double current_val_standard_deviation;
 
