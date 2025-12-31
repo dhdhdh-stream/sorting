@@ -1,4 +1,4 @@
-#include "chase_experiment.h"
+#include "experiment.h"
 
 #include <cmath>
 #include <iostream>
@@ -19,34 +19,21 @@
 
 using namespace std;
 
-void ChaseExperiment::measure_check_activate(
+void Experiment::measure_check_activate(
 		SolutionWrapper* wrapper) {
-	bool is_tunnel = false;
-	for (int l_index = 0; l_index < (int)wrapper->scope_histories.size(); l_index++) {
-		if (wrapper->curr_tunnel_parent == wrapper->scope_histories[l_index]->scope) {
-			is_tunnel = true;
-			break;
-		}
-	}
-	if (is_tunnel) {
-		ChaseExperimentHistory* history = (ChaseExperimentHistory*)wrapper->experiment_history;
-		history->tunnel_is_hit = true;
-		history->stack_traces.push_back(wrapper->scope_histories);
-	}
-
-	ChaseExperimentState* new_experiment_state = new ChaseExperimentState(this);
+	ExperimentState* new_experiment_state = new ExperimentState(this);
 	new_experiment_state->step_index = 0;
 	wrapper->experiment_context.back() = new_experiment_state;
 }
 
-void ChaseExperiment::measure_step(vector<double>& obs,
-								   int& action,
-								   bool& is_next,
-								   SolutionWrapper* wrapper) {
-	ChaseExperimentState* experiment_state = (ChaseExperimentState*)wrapper->experiment_context.back();
+void Experiment::measure_step(vector<double>& obs,
+							  int& action,
+							  bool& is_next,
+							  SolutionWrapper* wrapper) {
+	ExperimentState* experiment_state = (ExperimentState*)wrapper->experiment_context.back();
 
 	if (experiment_state->step_index == 0) {
-		this->new_signal_network->activate(obs);
+		this->new_network->activate(obs);
 
 		bool decision_is_branch;
 		#if defined(MDEBUG) && MDEBUG
@@ -57,7 +44,7 @@ void ChaseExperiment::measure_step(vector<double>& obs,
 		}
 		wrapper->curr_run_seed = xorshift(wrapper->curr_run_seed);
 		#else
-		if (this->new_signal_network->output->acti_vals[0] >= 0.0) {
+		if (this->new_network->output->acti_vals[0] >= 0.0) {
 			decision_is_branch = true;
 		} else {
 			decision_is_branch = false;
@@ -101,8 +88,8 @@ void ChaseExperiment::measure_step(vector<double>& obs,
 	}
 }
 
-void ChaseExperiment::measure_exit_step(SolutionWrapper* wrapper) {
-	ChaseExperimentState* experiment_state = (ChaseExperimentState*)wrapper->experiment_context[wrapper->experiment_context.size() - 2];
+void Experiment::measure_exit_step(SolutionWrapper* wrapper) {
+	ExperimentState* experiment_state = (ExperimentState*)wrapper->experiment_context[wrapper->experiment_context.size() - 2];
 
 	wrapper->scope_histories.pop_back();
 	wrapper->node_context.pop_back();
@@ -111,40 +98,29 @@ void ChaseExperiment::measure_exit_step(SolutionWrapper* wrapper) {
 	experiment_state->step_index++;
 }
 
-void ChaseExperiment::measure_backprop(double target_val,
-									   SolutionWrapper* wrapper) {
+void Experiment::measure_backprop(double target_val,
+								  SolutionWrapper* wrapper) {
 	this->total_count++;
 	this->total_sum_scores += target_val;
 
-	ChaseExperimentHistory* history = (ChaseExperimentHistory*)wrapper->experiment_history;
+	ExperimentHistory* history = (ExperimentHistory*)wrapper->experiment_history;
 
 	if (history->is_hit) {
 		this->sum_true += target_val;
 		this->hit_count++;
 	}
 
-	if (history->tunnel_is_hit) {
-		double sum_vals = 0.0;
-		measure_tunnel_vals_helper(wrapper->scope_histories[0],
-								   wrapper->curr_tunnel_parent,
-								   wrapper->curr_tunnel_index,
-								   sum_vals);
-		this->sum_signal += sum_vals;
-		this->tunnel_hit_count++;
-	}
-
-	if (this->tunnel_hit_count >= MEASURE_ITERS) {
+	if (this->hit_count >= MEASURE_ITERS) {
 		double new_true = this->sum_true / this->hit_count;
-		double new_signal = this->sum_signal / this->tunnel_hit_count;
 
 		#if defined(MDEBUG) && MDEBUG
-		if ((new_true >= this->existing_true && new_signal >= this->existing_signal) || rand()%2 == 0) {
+		if (new_true >= this->existing_true || rand()%2 == 0) {
 		#else
-		if (new_true >= this->existing_true && new_signal >= this->existing_signal) {
+		if (new_true >= this->existing_true) {
 		#endif /* MDEBUG */
-			double average_hits_per_run = (double)this->tunnel_hit_count / (double)this->total_count;
+			double average_hits_per_run = (double)this->hit_count / (double)this->total_count;
 
-			this->improvement = average_hits_per_run * (new_signal - this->existing_signal);
+			this->improvement = average_hits_per_run * (new_true - this->existing_true);
 
 			cout << "this->scope_context->id: " << this->scope_context->id << endl;
 			cout << "this->node_context->id: " << this->node_context->id << endl;
@@ -174,7 +150,7 @@ void ChaseExperiment::measure_backprop(double target_val,
 			this->verify_problems = vector<Problem*>(NUM_VERIFY_SAMPLES, NULL);
 			this->verify_seeds = vector<unsigned long>(NUM_VERIFY_SAMPLES);
 
-			this->state = CHASE_EXPERIMENT_STATE_CAPTURE_VERIFY;
+			this->state = EXPERIMENT_STATE_CAPTURE_VERIFY;
 			this->state_iter = 0;
 			#else
 			this->result = EXPERIMENT_RESULT_SUCCESS;

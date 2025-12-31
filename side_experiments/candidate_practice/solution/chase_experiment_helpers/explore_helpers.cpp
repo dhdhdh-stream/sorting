@@ -26,143 +26,154 @@ const int EXPERIMENT_EXPLORE_ITERS = 200;
 #endif /* MDEBUG */
 
 void ChaseExperiment::explore_check_activate(SolutionWrapper* wrapper) {
-	ChaseExperimentHistory* history = (ChaseExperimentHistory*)wrapper->experiment_history;
-
-	this->num_instances_until_target--;
-	if (history->existing_predicted_trues.size() == 0
-			&& this->num_instances_until_target <= 0) {
-		vector<AbstractNode*> possible_exits;
-
-		AbstractNode* starting_node;
-		switch (this->node_context->type) {
-		case NODE_TYPE_START:
-			{
-				StartNode* start_node = (StartNode*)this->node_context;
-				starting_node = start_node->next_node;
-			}
-			break;
-		case NODE_TYPE_ACTION:
-			{
-				ActionNode* action_node = (ActionNode*)this->node_context;
-				starting_node = action_node->next_node;
-			}
-			break;
-		case NODE_TYPE_SCOPE:
-			{
-				ScopeNode* scope_node = (ScopeNode*)this->node_context;
-				starting_node = scope_node->next_node;
-			}
-			break;
-		case NODE_TYPE_BRANCH:
-			{
-				BranchNode* branch_node = (BranchNode*)this->node_context;
-				if (this->is_branch) {
-					starting_node = branch_node->branch_next_node;
-				} else {
-					starting_node = branch_node->original_next_node;
-				}
-			}
-			break;
-		case NODE_TYPE_OBS:
-			{
-				ObsNode* obs_node = (ObsNode*)this->node_context;
-				starting_node = obs_node->next_node;
-			}
+	bool is_tunnel = false;
+	for (int l_index = 0; l_index < (int)wrapper->scope_histories.size(); l_index++) {
+		if (wrapper->curr_tunnel_parent == wrapper->scope_histories[l_index]->scope) {
+			is_tunnel = true;
 			break;
 		}
+	}
+	if (is_tunnel) {
+		ChaseExperimentHistory* history = (ChaseExperimentHistory*)wrapper->experiment_history;
 
-		this->scope_context->random_exit_activate(
-			starting_node,
-			possible_exits);
+		this->num_instances_until_target--;
+		if (history->stack_traces.size() == 0
+				&& this->num_instances_until_target <= 0) {
+			vector<AbstractNode*> possible_exits;
 
-		geometric_distribution<int> exit_distribution(0.1);
-		int random_index;
-		while (true) {
-			random_index = exit_distribution(generator);
-			if (random_index < (int)possible_exits.size()) {
+			AbstractNode* starting_node;
+			switch (this->node_context->type) {
+			case NODE_TYPE_START:
+				{
+					StartNode* start_node = (StartNode*)this->node_context;
+					starting_node = start_node->next_node;
+				}
 				break;
-			}
-		}
-		this->curr_exit_next_node = possible_exits[random_index];
-
-		uniform_int_distribution<int> new_scope_distribution(0, 1);
-		if (new_scope_distribution(generator) == 0) {
-			this->curr_new_scope = create_new_scope(this->node_context->parent);
-		}
-		if (this->curr_new_scope != NULL) {
-			this->curr_step_types.push_back(STEP_TYPE_SCOPE);
-			this->curr_actions.push_back(-1);
-			this->curr_scopes.push_back(this->curr_new_scope);
-		} else {
-			int new_num_steps;
-			geometric_distribution<int> geo_distribution(0.3);
-			/**
-			 * - num_steps less than exit length on average to reduce solution size
-			 */
-			if (random_index == 0) {
-				new_num_steps = 1 + geo_distribution(generator);
-			} else {
-				new_num_steps = geo_distribution(generator);
-			}
-
-			vector<int> possible_child_indexes;
-			for (int c_index = 0; c_index < (int)this->node_context->parent->child_scopes.size(); c_index++) {
-				if (this->node_context->parent->child_scopes[c_index]->nodes.size() > 1) {
-					possible_child_indexes.push_back(c_index);
+			case NODE_TYPE_ACTION:
+				{
+					ActionNode* action_node = (ActionNode*)this->node_context;
+					starting_node = action_node->next_node;
 				}
-			}
-			uniform_int_distribution<int> child_index_distribution(0, possible_child_indexes.size()-1);
-			for (int s_index = 0; s_index < new_num_steps; s_index++) {
-				bool is_scope = false;
-				if (possible_child_indexes.size() > 0) {
-					if (possible_child_indexes.size() <= RAW_ACTION_WEIGHT) {
-						uniform_int_distribution<int> scope_distribution(0, possible_child_indexes.size() + RAW_ACTION_WEIGHT - 1);
-						if (scope_distribution(generator) < (int)possible_child_indexes.size()) {
-							is_scope = true;
-						}
+				break;
+			case NODE_TYPE_SCOPE:
+				{
+					ScopeNode* scope_node = (ScopeNode*)this->node_context;
+					starting_node = scope_node->next_node;
+				}
+				break;
+			case NODE_TYPE_BRANCH:
+				{
+					BranchNode* branch_node = (BranchNode*)this->node_context;
+					if (this->is_branch) {
+						starting_node = branch_node->branch_next_node;
 					} else {
-						uniform_int_distribution<int> scope_distribution(0, 1);
-						if (scope_distribution(generator) == 0) {
-							is_scope = true;
-						}
+						starting_node = branch_node->original_next_node;
 					}
 				}
-				if (is_scope) {
-					this->curr_step_types.push_back(STEP_TYPE_SCOPE);
-					this->curr_actions.push_back(-1);
+				break;
+			case NODE_TYPE_OBS:
+				{
+					ObsNode* obs_node = (ObsNode*)this->node_context;
+					starting_node = obs_node->next_node;
+				}
+				break;
+			}
 
-					int child_index = possible_child_indexes[child_index_distribution(generator)];
-					this->curr_scopes.push_back(this->node_context->parent->child_scopes[child_index]);
-				} else {
-					this->curr_step_types.push_back(STEP_TYPE_ACTION);
+			this->scope_context->random_exit_activate(
+				starting_node,
+				possible_exits);
 
-					this->curr_actions.push_back(-1);
-
-					this->curr_scopes.push_back(NULL);
+			geometric_distribution<int> exit_distribution(0.1);
+			int random_index;
+			while (true) {
+				random_index = exit_distribution(generator);
+				if (random_index < (int)possible_exits.size()) {
+					break;
 				}
 			}
-		}
+			this->curr_exit_next_node = possible_exits[random_index];
 
-		for (int s_index = 0; s_index < (int)this->curr_step_types.size(); s_index++) {
-			if (this->curr_step_types[s_index] == STEP_TYPE_ACTION) {
-				ActionNode* new_action_node = new ActionNode();
-				new_action_node->parent = this->scope_context;
-
-				this->curr_new_nodes.push_back(new_action_node);
-			} else {
-				ScopeNode* new_scope_node = new ScopeNode();
-				new_scope_node->parent = this->scope_context;
-				new_scope_node->id = this->scope_context->node_counter + s_index;
-
-				new_scope_node->scope = this->curr_scopes[s_index];
-
-				this->curr_new_nodes.push_back(new_scope_node);
+			uniform_int_distribution<int> new_scope_distribution(0, 1);
+			if (new_scope_distribution(generator) == 0) {
+				this->curr_new_scope = create_new_scope(this->node_context->parent);
 			}
-		}
+			if (this->curr_new_scope != NULL) {
+				this->curr_step_types.push_back(STEP_TYPE_SCOPE);
+				this->curr_actions.push_back(-1);
+				this->curr_scopes.push_back(this->curr_new_scope);
+			} else {
+				int new_num_steps;
+				geometric_distribution<int> geo_distribution(0.3);
+				/**
+				 * - num_steps less than exit length on average to reduce solution size
+				 */
+				if (random_index == 0) {
+					new_num_steps = 1 + geo_distribution(generator);
+				} else {
+					new_num_steps = geo_distribution(generator);
+				}
 
-		ChaseExperimentState* new_experiment_state = new ChaseExperimentState(this);
-		new_experiment_state->step_index = 0;
-		wrapper->experiment_context.back() = new_experiment_state;
+				vector<int> possible_child_indexes;
+				for (int c_index = 0; c_index < (int)this->node_context->parent->child_scopes.size(); c_index++) {
+					if (this->node_context->parent->child_scopes[c_index]->nodes.size() > 1) {
+						possible_child_indexes.push_back(c_index);
+					}
+				}
+				uniform_int_distribution<int> child_index_distribution(0, possible_child_indexes.size()-1);
+				for (int s_index = 0; s_index < new_num_steps; s_index++) {
+					bool is_scope = false;
+					if (possible_child_indexes.size() > 0) {
+						if (possible_child_indexes.size() <= RAW_ACTION_WEIGHT) {
+							uniform_int_distribution<int> scope_distribution(0, possible_child_indexes.size() + RAW_ACTION_WEIGHT - 1);
+							if (scope_distribution(generator) < (int)possible_child_indexes.size()) {
+								is_scope = true;
+							}
+						} else {
+							uniform_int_distribution<int> scope_distribution(0, 1);
+							if (scope_distribution(generator) == 0) {
+								is_scope = true;
+							}
+						}
+					}
+					if (is_scope) {
+						this->curr_step_types.push_back(STEP_TYPE_SCOPE);
+						this->curr_actions.push_back(-1);
+
+						int child_index = possible_child_indexes[child_index_distribution(generator)];
+						this->curr_scopes.push_back(this->node_context->parent->child_scopes[child_index]);
+					} else {
+						this->curr_step_types.push_back(STEP_TYPE_ACTION);
+
+						this->curr_actions.push_back(-1);
+
+						this->curr_scopes.push_back(NULL);
+					}
+				}
+			}
+
+			for (int s_index = 0; s_index < (int)this->curr_step_types.size(); s_index++) {
+				if (this->curr_step_types[s_index] == STEP_TYPE_ACTION) {
+					ActionNode* new_action_node = new ActionNode();
+					new_action_node->parent = this->scope_context;
+
+					this->curr_new_nodes.push_back(new_action_node);
+				} else {
+					ScopeNode* new_scope_node = new ScopeNode();
+					new_scope_node->parent = this->scope_context;
+					new_scope_node->id = this->scope_context->node_counter + s_index;
+
+					new_scope_node->scope = this->curr_scopes[s_index];
+
+					this->curr_new_nodes.push_back(new_scope_node);
+				}
+			}
+
+			history->stack_traces.push_back(wrapper->scope_histories);
+
+			ChaseExperimentState* new_experiment_state = new ChaseExperimentState(this);
+			new_experiment_state->step_index = 0;
+			wrapper->experiment_context.back() = new_experiment_state;
+		}
 	}
 }
 
@@ -239,25 +250,44 @@ void ChaseExperiment::explore_backprop(double target_val,
 	uniform_int_distribution<int> until_distribution(1, 2 * this->average_instances_per_run);
 	this->num_instances_until_target = until_distribution(generator);
 
-	if (history->existing_predicted_trues.size() != 0) {
-		vector<double> obs = wrapper->problem->get_observations();
-		if (wrapper->curr_solution->obs_histories.size() < EXPLORE_MAX_SAMPLES) {
-			wrapper->curr_solution->obs_histories.push_back(obs);
-			wrapper->curr_solution->target_val_histories.push_back(target_val);
-		} else {
-			uniform_int_distribution<int> distribution(0, wrapper->curr_solution->obs_histories.size()-1);
-			int index = distribution(generator);
-			wrapper->curr_solution->obs_histories[index] = obs;
-			wrapper->curr_solution->target_val_histories[index] = target_val;
+	if (history->stack_traces.size() != 0) {
+		for (int l_index = 0; l_index < (int)history->stack_traces[0].size(); l_index++) {
+			vector<ScopeHistory*> stack_track_copy(l_index + 1);
+			for (int il_index = 0; il_index <= l_index; il_index++) {
+				stack_track_copy[il_index] = history->stack_traces[0][il_index]->copy_obs_history();
+			}
+
+			Scope* scope = history->stack_traces[0][l_index]->scope;
+			if (scope->explore_stack_traces.size() < EXPLORE_MAX_SAMPLES) {
+				scope->explore_stack_traces.push_back(stack_track_copy);
+				scope->explore_target_val_histories.push_back(target_val);
+			} else {
+				uniform_int_distribution<int> distribution(0, scope->explore_stack_traces.size()-1);
+				int index = distribution(generator);
+				for (int l_index = 0; l_index < (int)scope->explore_stack_traces[index].size(); l_index++) {
+					delete scope->explore_stack_traces[index][l_index];
+				}
+				scope->explore_stack_traces[index] = stack_track_copy;
+				scope->explore_target_val_histories[index] = target_val;
+			}
 		}
 
 		double curr_sanity = target_val - history->existing_predicted_trues[0];
 
 		double signal;
-		if (wrapper->curr_tunnel == NULL) {
-			signal = target_val;
-		} else {
-			signal = wrapper->curr_tunnel->get_signal(wrapper);
+		for (int l_index = 0; l_index < (int)history->stack_traces[0].size(); l_index++) {
+			ScopeHistory* scope_history = history->stack_traces[0][l_index];
+			Scope* scope = scope_history->scope;
+			if (scope == wrapper->curr_tunnel_parent) {
+				if (!scope_history->tunnel_is_init[wrapper->curr_tunnel_index]) {
+					scope_history->tunnel_is_init[wrapper->curr_tunnel_index] = true;
+					Tunnel* tunnel = scope->tunnels[wrapper->curr_tunnel_index];
+					scope_history->tunnel_vals[wrapper->curr_tunnel_index] = tunnel->get_signal(scope_history->obs_history);
+				}
+				signal = scope_history->tunnel_vals[wrapper->curr_tunnel_index];
+
+				break;
+			}
 		}
 		double curr_surprise = signal - history->existing_predicted_signals[0];
 

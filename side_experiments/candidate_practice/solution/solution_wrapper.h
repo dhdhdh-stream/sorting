@@ -6,35 +6,36 @@
 #include <utility>
 #include <vector>
 
+class AbstractExperiment;
 class AbstractExperimentHistory;
 class AbstractExperimentState;
 class AbstractNode;
 class BranchNode;
-class ChaseExperiment;
 class Problem;
 class ProblemType;
+class Scope;
 class ScopeHistory;
-class SignalExperiment;
 class Solution;
-class Tunnel;
 
 class SolutionWrapper {
 public:
-	Solution* prev_solution;
-
-	int tunnel_iter;
-	Tunnel* curr_tunnel;
-	Solution* curr_solution;
-
-	Solution* best_solution;
+	Solution* solution;
 
 	/**
 	 * - iter variables
 	 */
+	int tunnel_iter;
+	Scope* curr_tunnel_parent;
+	int curr_tunnel_index;
+	Solution* curr_solution;	// reference
+
+	Solution* potential_solution;
+	Solution* best_solution;
+
 	int improvement_iter;
 
-	ChaseExperiment* curr_experiment;
-	ChaseExperiment* best_experiment;
+	AbstractExperiment* curr_experiment;
+	AbstractExperiment* best_experiment;
 
 	/**
 	 * - run variables

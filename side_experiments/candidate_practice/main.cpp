@@ -1,29 +1,3 @@
-// - how to find candidates?
-//   - look for actions and their impact first?
-//     - thing is can't fixate on actions initially
-//       - so can't distinguish if a pattern is or isn't actionable
-//       - only way to know if an action is actionable is to chase
-//   - perform random amounts of random actions and look for patterns?
-//     - what's a pattern?
-//       - just pick some number of obs
-//       - filter to 5% and train on samples
-//   - test how impactful noise is?
-//     - obviously, enough noise is just like true, and will fail
-//   - look for patterns of different sizes
-//     - even 1 can be good
-//       - i.e., where nothing else besides a single spot needs to matter
-
-// - candidates then need to be refined and extended
-// - what does it mean for a tunnel to be better?
-// - don't worry about generalization
-//   - can generalize in multiple directions anyways, so no simple answer
-//     - instead, constantly retrain tunnel/look for new ones
-
-// - besides tunnel, can also hope to get there from main?
-//   - enough small things add up?
-//     - how to compare against getting lucky with tunnel?
-// - actually, yeah, not currently really better than without tunnel
-
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -77,12 +51,7 @@ int main(int argc, char* argv[]) {
 	#else
 	while (!solution_wrapper->is_done()) {
 	#endif /* MDEBUG */
-		int starting_timestamp;
-		if (solution_wrapper->curr_solution != NULL) {
-			starting_timestamp = solution_wrapper->curr_solution->timestamp;
-		} else {
-			starting_timestamp = solution_wrapper->prev_solution->timestamp;
-		}
+		int starting_timestamp = solution_wrapper->curr_solution->timestamp;
 
 		while (true) {
 			Problem* problem = problem_type->get_problem();
@@ -115,16 +84,8 @@ int main(int argc, char* argv[]) {
 
 			delete problem;
 
-			int ending_timestamp;
-			if (solution_wrapper->curr_solution != NULL) {
-				ending_timestamp = solution_wrapper->curr_solution->timestamp;
-			} else {
-				ending_timestamp = solution_wrapper->prev_solution->timestamp;
-			}
+			int ending_timestamp = solution_wrapper->curr_solution->timestamp;
 			if (ending_timestamp != starting_timestamp) {
-				/**
-				 * - simply don't bother verifying on tunnel changes
-				 */
 				#if defined(MDEBUG) && MDEBUG
 				while (solution_wrapper->curr_solution->verify_problems.size() > 0) {
 					Problem* problem = solution_wrapper->curr_solution->verify_problems[0];

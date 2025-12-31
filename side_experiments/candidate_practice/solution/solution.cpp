@@ -40,15 +40,14 @@ Solution::Solution(Solution* original) {
 		this->scopes[s_index]->link(this);
 	}
 
-	this->obs_histories = original->obs_histories;
-	this->target_val_histories = original->target_val_histories;
+	for (int h_index = 0; h_index < (int)original->existing_scope_histories.size(); h_index++) {
+		this->existing_scope_histories.push_back(new ScopeHistory(original->existing_scope_histories[h_index],
+																  this));
+	}
+	this->existing_target_val_histories = original->existing_target_val_histories;
 
 	this->improvement_history = original->improvement_history;
 	this->change_history = original->change_history;
-
-	for (int h_index = 0; h_index < (int)original->tunnel_history.size(); h_index++) {
-		this->tunnel_history.push_back(new Tunnel(original->tunnel_history[h_index]));
-	}
 }
 
 Solution::~Solution() {
@@ -56,8 +55,8 @@ Solution::~Solution() {
 		delete this->scopes[s_index];
 	}
 
-	for (int h_index = 0; h_index < (int)this->tunnel_history.size(); h_index++) {
-		delete this->tunnel_history[h_index];
+	for (int h_index = 0; h_index < (int)this->existing_scope_histories.size(); h_index++) {
+		delete this->existing_scope_histories[h_index];
 	}
 
 	#if defined(MDEBUG) && MDEBUG
@@ -139,27 +138,6 @@ void Solution::load(ifstream& input_file) {
 		this->scopes[s_index]->link(this);
 	}
 
-	string obs_size_line;
-	getline(input_file, obs_size_line);
-	int obs_size = stoi(obs_size_line);
-
-	string obs_history_size_line;
-	getline(input_file, obs_history_size_line);
-	int obs_history_size = stoi(obs_history_size_line);
-	for (int h_index = 0; h_index < obs_history_size; h_index++) {
-		vector<double> curr_obs(obs_size);
-		for (int o_index = 0; o_index < obs_size; o_index++) {
-			string val_line;
-			getline(input_file, val_line);
-			curr_obs[o_index] = stod(val_line);
-		}
-		this->obs_histories.push_back(curr_obs);
-
-		string target_val_line;
-		getline(input_file, target_val_line);
-		this->target_val_histories.push_back(stod(target_val_line));
-	}
-
 	string history_size_line;
 	getline(input_file, history_size_line);
 	int history_size = stoi(history_size_line);
@@ -171,13 +149,6 @@ void Solution::load(ifstream& input_file) {
 		string change_line;
 		getline(input_file, change_line);
 		this->change_history.push_back(change_line);
-	}
-
-	string tunnel_history_size_line;
-	getline(input_file, tunnel_history_size_line);
-	int tunnel_history_size = stoi(tunnel_history_size_line);
-	for (int h_index = 0; h_index < tunnel_history_size; h_index++) {
-		this->tunnel_history.push_back(new Tunnel(input_file));
 	}
 }
 
@@ -256,29 +227,10 @@ void Solution::save(ofstream& output_file) {
 		this->scopes[s_index]->save(output_file);
 	}
 
-	if (this->obs_histories.size() > 0) {
-		output_file << this->obs_histories[0].size() << endl;
-	} else {
-		output_file << 0 << endl;
-	}
-	output_file << this->obs_histories.size() << endl;
-	for (int h_index = 0; h_index < (int)this->obs_histories.size(); h_index++) {
-		for (int o_index = 0; o_index < (int)this->obs_histories[h_index].size(); o_index++) {
-			output_file << this->obs_histories[h_index][o_index] << endl;
-		}
-
-		output_file << this->target_val_histories[h_index] << endl;
-	}
-
 	output_file << this->improvement_history.size() << endl;
 	for (int h_index = 0; h_index < (int)this->improvement_history.size(); h_index++) {
 		output_file << this->improvement_history[h_index] << endl;
 		output_file << this->change_history[h_index] << endl;
-	}
-
-	output_file << this->tunnel_history.size() << endl;
-	for (int h_index = 0; h_index < (int)this->tunnel_history.size(); h_index++) {
-		this->tunnel_history[h_index]->save(output_file);
 	}
 }
 

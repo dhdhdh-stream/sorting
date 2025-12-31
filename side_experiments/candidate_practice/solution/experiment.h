@@ -1,5 +1,5 @@
-#ifndef CHASE_EXPERIMENT_H
-#define CHASE_EXPERIMENT_H
+#ifndef EXPERIMENT_H
+#define EXPERIMENT_H
 
 #include <vector>
 
@@ -9,32 +9,24 @@ class AbstractNode;
 class Network;
 class SolutionWrapper;
 
-const int CHASE_EXPERIMENT_STATE_TRAIN_EXISTING = 0;
-const int CHASE_EXPERIMENT_STATE_EXPLORE = 1;
-const int CHASE_EXPERIMENT_STATE_TRAIN_NEW = 2;
-const int CHASE_EXPERIMENT_STATE_MEASURE = 3;
+const int EXPERIMENT_STATE_TRAIN_EXISTING = 0;
+const int EXPERIMENT_STATE_EXPLORE = 1;
+const int EXPERIMENT_STATE_TRAIN_NEW = 2;
+const int EXPERIMENT_STATE_MEASURE = 3;
 #if defined(MDEBUG) && MDEBUG
-const int CHASE_EXPERIMENT_STATE_CAPTURE_VERIFY = 4;
+const int EXPERIMENT_STATE_CAPTURE_VERIFY = 4;
 #endif /* MDEBUG */
 
-class ChaseExperiment : public AbstractExperiment {
+class Experiment : public AbstractExperiment {
 public:
 	int state;
 	int state_iter;
 
 	double existing_true;
-	/**
-	 * - measued on is_hit
-	 */
-	double existing_signal;
-	/**
-	 * - measured on tunnel_is_hit
-	 */
 
-	Network* existing_true_network;
-	Network* existing_signal_network;
+	Network* existing_network;
 
-	int sum_num_tunnel_instances;
+	int sum_num_instances;
 
 	double average_instances_per_run;
 	int num_instances_until_target;
@@ -54,12 +46,10 @@ public:
 	AbstractNode* best_exit_next_node;
 	std::vector<AbstractNode*> best_new_nodes;
 
-	Network* new_signal_network;
+	Network* new_network;
 
 	double sum_true;
 	int hit_count;
-	double sum_signal;
-	int tunnel_hit_count;
 
 	double total_sum_scores;
 	int total_count;
@@ -68,7 +58,6 @@ public:
 
 	std::vector<std::vector<double>> obs_histories;
 	std::vector<double> true_histories;
-	std::vector<double> signal_histories;
 
 	#if defined(MDEBUG) && MDEBUG
 	std::vector<Problem*> verify_problems;
@@ -76,10 +65,10 @@ public:
 	std::vector<double> verify_scores;
 	#endif /* MDEBUG */
 
-	ChaseExperiment(Scope* scope_context,
-					AbstractNode* node_context,
-					bool is_branch);
-	~ChaseExperiment();
+	Experiment(Scope* scope_context,
+			   AbstractNode* node_context,
+			   bool is_branch);
+	~Experiment();
 
 	void check_activate(AbstractNode* experiment_node,
 						bool is_branch,
@@ -146,23 +135,20 @@ public:
 	double calc_new_score();
 };
 
-class ChaseExperimentHistory : public AbstractExperimentHistory {
+class ExperimentHistory : public AbstractExperimentHistory {
 public:
-	bool tunnel_is_hit;
-
-	std::vector<std::vector<ScopeHistory*>> stack_traces;
-
 	std::vector<double> existing_predicted_trues;
-	std::vector<double> existing_predicted_signals;
 
-	ChaseExperimentHistory(ChaseExperiment* experiment);
+	std::vector<ScopeHistory*> explore_stack_trace;
+
+	ExperimentHistory(Experiment* experiment);
 };
 
-class ChaseExperimentState : public AbstractExperimentState {
+class ExperimentState : public AbstractExperimentState {
 public:
 	int step_index;
 
-	ChaseExperimentState(ChaseExperiment* experiment);
+	ExperimentState(Experiment* experiment);
 };
 
-#endif /* CHASE_EXPERIMENT_H */
+#endif /* EXPERIMENT_H */

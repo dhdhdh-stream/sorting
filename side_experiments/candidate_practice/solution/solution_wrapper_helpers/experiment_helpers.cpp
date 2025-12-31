@@ -2,8 +2,10 @@
 
 #include <iostream>
 
+#include "candidate_experiment.h"
 #include "chase_experiment.h"
 #include "constants.h"
+#include "experiment.h"
 #include "globals.h"
 #include "problem.h"
 #include "scope.h"
@@ -38,7 +40,26 @@ void SolutionWrapper::experiment_init() {
 	#endif /* MDEBUG */
 
 	if (this->curr_experiment != NULL) {
-		this->experiment_history = new ChaseExperimentHistory(this->curr_experiment);
+		switch (this->curr_experiment->type) {
+		case EXPERIMENT_TYPE_EXPERIMENT:
+			{
+				Experiment* experiment = (Experiment*)this->curr_experiment;
+				this->experiment_history = new ExperimentHistory(experiment);
+			}
+			break;
+		case EXPERIMENT_TYPE_CANDIDATE:
+			{
+				CandidateExperiment* candidate_experiment = (CandidateExperiment*)this->curr_experiment;
+				this->experiment_history = new CandidateExperimentHistory(candidate_experiment);
+			}
+			break;
+		case EXPERIMENT_TYPE_CHASE:
+			{
+				ChaseExperiment* chase_experiment = (ChaseExperiment*)this->curr_experiment;
+				this->experiment_history = new ChaseExperimentHistory(chase_experiment);
+			}
+			break;
+		}
 	}
 
 	ScopeHistory* scope_history = new ScopeHistory(this->curr_solution->scopes[0]);
@@ -95,6 +116,8 @@ void SolutionWrapper::experiment_end(double result) {
 	if (this->curr_experiment == NULL) {
 		create_experiment(this->scope_histories[0],
 						  this);
+
+		delete this->scope_histories[0];
 	} else {
 		this->experiment_history->experiment->backprop(
 		result,
@@ -104,71 +127,87 @@ void SolutionWrapper::experiment_end(double result) {
 		this->experiment_history = NULL;
 
 		if (this->curr_experiment->result == EXPERIMENT_RESULT_FAIL) {
-			if (this->curr_tunnel != NULL) {
-				// temp
-				if (this->curr_tunnel->num_tries % 10 == 0) {
-					this->curr_tunnel->print();
-				}
-
-				if (this->curr_tunnel->num_tries >= TUNNEL_EARLY_FAIL_MIN_TRIES) {
-					double train_fail_ratio = (double)this->curr_tunnel->num_train_fail / (double)this->curr_tunnel->num_tries;
-					if (train_fail_ratio > TUNNEL_EARLY_FAIL_MIN_RATIO) {
-						cout << "tunnel early fail" << endl;
-						delete this->curr_tunnel;
-						this->curr_tunnel = create_obs_candidate(
-							this->prev_solution->obs_histories,
-							this->prev_solution->target_val_histories,
-							this);
-					}
-				}
-			}
-
 			this->curr_experiment->clean();
 			delete this->curr_experiment;
 
 			this->curr_experiment = NULL;
 		} else if (this->curr_experiment->result == EXPERIMENT_RESULT_SUCCESS) {
-			if (this->curr_tunnel != NULL) {
-				// temp
-				if (this->curr_tunnel->num_tries % 10 == 0) {
-					this->curr_tunnel->print();
-				}
-
-				if (this->curr_tunnel->num_tries >= TUNNEL_EARLY_FAIL_MIN_TRIES) {
-					double train_fail_ratio = (double)this->curr_tunnel->num_train_fail / (double)this->curr_tunnel->num_tries;
-					if (train_fail_ratio > TUNNEL_EARLY_FAIL_MIN_RATIO) {
-						cout << "tunnel early fail" << endl;
-						delete this->curr_tunnel;
-						this->curr_tunnel = create_obs_candidate(
-							this->prev_solution->obs_histories,
-							this->prev_solution->target_val_histories,
-							this);
-					}
-				}
-			}
-
 			this->curr_experiment->clean();
 
-			if (this->best_experiment == NULL) {
-				this->best_experiment = this->curr_experiment;
-			} else {
-				if (this->curr_experiment->improvement > this->best_experiment->improvement) {
-					delete this->best_experiment;
+			bool is_next = false;
+			switch (this->curr_experiment->type) {
+			case EXPERIMENT_TYPE_EXPERIMENT:
+				if (this->best_experiment == NULL) {
 					this->best_experiment = this->curr_experiment;
 				} else {
-					delete this->curr_experiment;
+					Experiment* curr = (Experiment*)this->curr_experiment;
+					Experiment* best = (Experiment*)this->best_experiment;
+					if (curr->improvement > best->improvement) {
+						delete this->best_experiment;
+						this->best_experiment = this->curr_experiment;
+					} else {
+						delete this->curr_experiment;
+					}
 				}
+
+				this->improvement_iter++;
+				if (this->improvement_iter >= IMPROVEMENTS_PER_ITER) {
+					is_next = true;
+				}
+
+				break;
+			case EXPERIMENT_TYPE_CANDIDATE:
+				this->best_experiment = this->curr_experiment;
+				is_next = true;
+				break;
+			case EXPERIMENT_TYPE_CHASE:
+				if (this->best_experiment == NULL) {
+					this->best_experiment = this->curr_experiment;
+				} else {
+					ChaseExperiment* curr = (ChaseExperiment*)this->curr_experiment;
+					ChaseExperiment* best = (ChaseExperiment*)this->best_experiment;
+					if (curr->improvement > best->improvement) {
+						delete this->best_experiment;
+						this->best_experiment = this->curr_experiment;
+					} else {
+						delete this->curr_experiment;
+					}
+				}
+
+				this->improvement_iter++;
+				if (this->improvement_iter >= IMPROVEMENTS_PER_ITER) {
+					is_next = true;
+				}
+
+				break;
 			}
 
 			this->curr_experiment = NULL;
 
-			this->improvement_iter++;
-			if (this->improvement_iter >= IMPROVEMENTS_PER_ITER) {
+			if (is_next) {
+				if (this->solution == this->curr_solution) {
+					/**
+					 * - 1st iter
+					 */
+					this->solution = new Solution(this->curr_solution);
+					this->potential_solution = this->curr_solution;
+				}
+
 				Scope* last_updated_scope = this->best_experiment->scope_context;
 
 				this->best_experiment->add(this);
 
 				this->curr_solution->curr_score = this->best_experiment->calc_new_score();
+
+				for (int h_index = 0; h_index < (int)this->curr_solution->existing_scope_histories.size(); h_index++) {
+					delete this->curr_solution->existing_scope_histories[h_index];
+				}
+				this->curr_solution->existing_scope_histories.clear();
+				this->curr_solution->existing_target_val_histories.clear();
+
+				this->curr_solution->existing_scope_histories = this->best_experiment->new_scope_histories;
+				this->best_experiment->new_scope_histories.clear();
+				this->curr_solution->existing_target_val_histories = this->best_experiment->new_target_val_histories;
 
 				delete this->best_experiment;
 				this->best_experiment = NULL;
@@ -182,65 +221,51 @@ void SolutionWrapper::experiment_end(double result) {
 					this->curr_solution->timestamp = -1;
 				}
 
-				// if (this->curr_tunnel != NULL) {
-				// 	this->curr_tunnel->ending_true = this->curr_solution->curr_score;
-				// }
-				// bool is_next_tunnel;
-				// if (this->prev_solution == NULL) {
-				// 	if (this->curr_solution->timestamp >= ITERS_PER_TUNNEL) {
-				// 		is_next_tunnel = true;
-				// 	} else {
-				// 		is_next_tunnel = false;
-				// 	}
-				// } else {
-				// 	if (this->curr_solution->timestamp >= this->prev_solution->timestamp + ITERS_PER_TUNNEL) {
-				// 		is_next_tunnel = true;
-				// 	} else {
-				// 		is_next_tunnel = false;
-				// 	}
-				// }
-				// if (is_next_tunnel) {
-				// 	if (this->prev_solution == NULL) {
-				// 		this->prev_solution = new Solution(this->curr_solution);
-				// 	} else {
-				// 		this->curr_solution->tunnel_history.push_back(this->curr_tunnel);
-				// 		this->curr_tunnel = NULL;
+				if (this->potential_solution->timestamp >= this->solution->timestamp + ITERS_PER_TUNNEL) {
+					update_tunnel_try_history(this);
 
-				// 		if (this->best_solution == NULL) {
-				// 			this->best_solution = this->curr_solution;
-				// 		} else {
-				// 			if (this->curr_solution->curr_score > this->best_solution->curr_score) {
-				// 				delete this->best_solution;
-				// 				this->best_solution = this->curr_solution;
-				// 			} else {
-				// 				delete this->curr_solution;
-				// 			}
-				// 			this->curr_solution = NULL;
-				// 		}
+					if (this->best_solution == NULL) {
+						this->best_solution = this->potential_solution;
+					} else {
+						if (this->potential_solution->curr_score > this->best_solution->curr_score) {
+							delete this->best_solution;
+							this->best_solution = this->potential_solution;
+						} else {
+							delete this->potential_solution;
+						}
+					}
+					this->potential_solution = NULL;
 
-				// 		this->tunnel_iter++;
-				// 		if (this->tunnel_iter >= TUNNEL_NUM_CANDIDATES) {
-				// 			this->prev_solution = this->best_solution;
-				// 			this->best_solution = NULL;
+					this->tunnel_iter++;
+					if (this->tunnel_iter >= TUNNEL_NUM_CANDIDATES) {
+						for (int h_index = 0; h_index < (int)this->best_solution->existing_scope_histories.size(); h_index++) {
+							measure_tunnel_vals_helper(this->best_solution->existing_scope_histories[h_index]);
+						}
+						for (int s_index = 0; s_index < (int)this->best_solution->scopes.size(); s_index++) {
+							for (int t_index = 0; t_index < (int)this->best_solution->scopes[s_index]->tunnels.size(); t_index++) {
+								Tunnel* tunnel = this->best_solution->scopes[s_index]->tunnels[t_index];
+								tunnel->update_vals((int)this->best_solution->existing_scope_histories.size());
+							}
+						}
 
-				// 			this->tunnel_iter = 0;
-				// 		}
+						delete this->solution;
+						this->solution = this->best_solution;
+						this->best_solution = NULL;
 
-				// 		this->curr_solution = new Solution(this->prev_solution);
-				// 	}
+						this->curr_tunnel_parent = NULL;
 
-				// 	this->curr_tunnel = create_obs_candidate(
-				// 		this->prev_solution->obs_histories,
-				// 		this->prev_solution->target_val_histories,
-				// 		this);
-				// }
+						this->tunnel_iter = 0;
+					} else {
+						this->curr_solution = this->solution;
+
+						set_tunnel(this);
+					}
+				}
 
 				this->improvement_iter = 0;
 			}
 		}
 	}
-
-	delete this->scope_histories[0];
 
 	this->scope_histories.clear();
 	this->node_context.clear();

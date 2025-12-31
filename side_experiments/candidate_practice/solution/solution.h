@@ -18,6 +18,7 @@
 #define SOLUTION_H
 
 #include <fstream>
+#include <map>
 #include <vector>
 
 class AbstractExperiment;
@@ -38,13 +39,15 @@ public:
 
 	std::vector<Scope*> scopes;
 
-	std::vector<std::vector<double>> obs_histories;
-	std::vector<double> target_val_histories;
+	std::vector<ScopeHistory*> existing_scope_histories;
+	std::vector<double> existing_target_val_histories;
+	/**
+	 * - don't save/load
+	 *   - can regather on first true iter
+	 */
 
 	std::vector<double> improvement_history;
 	std::vector<std::string> change_history;
-
-	std::vector<Tunnel*> tunnel_history;
 
 	#if defined(MDEBUG) && MDEBUG
 	std::vector<Problem*> verify_problems;

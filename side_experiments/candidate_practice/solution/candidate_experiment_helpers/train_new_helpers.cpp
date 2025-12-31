@@ -1,4 +1,4 @@
-#include "chase_experiment.h"
+#include "candidate_experiment.h"
 
 #include <iostream>
 
@@ -23,41 +23,30 @@ const int TRAIN_NEW_NUM_DATAPOINTS = 20;
 const int TRAIN_NEW_NUM_DATAPOINTS = 1000;
 #endif /* MDEBUG */
 
-void ChaseExperiment::train_new_check_activate(
+void CandidateExperiment::train_new_check_activate(
 		SolutionWrapper* wrapper) {
-	bool is_tunnel = false;
-	for (int l_index = 0; l_index < (int)wrapper->scope_histories.size(); l_index++) {
-		if (wrapper->curr_tunnel_parent == wrapper->scope_histories[l_index]->scope) {
-			is_tunnel = true;
-			break;
-		}
-	}
-	if (is_tunnel) {
-		ChaseExperimentHistory* history = (ChaseExperimentHistory*)wrapper->experiment_history;
-		history->tunnel_is_hit = true;
+	this->num_instances_until_target--;
+	if (this->num_instances_until_target <= 0) {
+		CandidateExperimentHistory* history = (CandidateExperimentHistory*)wrapper->experiment_history;
+		history->stack_traces.push_back(wrapper->scope_histories);
 
-		this->num_instances_until_target--;
-		if (this->num_instances_until_target <= 0) {
-			history->stack_traces.push_back(wrapper->scope_histories);
+		uniform_int_distribution<int> until_distribution(1, this->average_instances_per_run);
+		this->num_instances_until_target = until_distribution(generator);
 
-			uniform_int_distribution<int> until_distribution(1, this->average_instances_per_run);
-			this->num_instances_until_target = until_distribution(generator);
-
-			ChaseExperimentState* new_experiment_state = new ChaseExperimentState(this);
-			new_experiment_state->step_index = 0;
-			wrapper->experiment_context.back() = new_experiment_state;
-		}
+		CandidateExperimentState* new_experiment_state = new CandidateExperimentState(this);
+		new_experiment_state->step_index = 0;
+		wrapper->experiment_context.back() = new_experiment_state;
 	}
 }
 
-void ChaseExperiment::train_new_step(vector<double>& obs,
-									 int& action,
-									 bool& is_next,
-									 SolutionWrapper* wrapper) {
-	ChaseExperimentState* experiment_state = (ChaseExperimentState*)wrapper->experiment_context.back();
+void CandidateExperiment::train_new_step(vector<double>& obs,
+										 int& action,
+										 bool& is_next,
+										 SolutionWrapper* wrapper) {
+	CandidateExperimentState* experiment_state = (CandidateExperimentState*)wrapper->experiment_context.back();
 
 	if (experiment_state->step_index == 0) {
-		ChaseExperimentHistory* history = (ChaseExperimentHistory*)wrapper->experiment_history;
+		CandidateExperimentHistory* history = (CandidateExperimentHistory*)wrapper->experiment_history;
 
 		this->obs_histories.push_back(obs);
 
@@ -100,8 +89,8 @@ void ChaseExperiment::train_new_step(vector<double>& obs,
 	}
 }
 
-void ChaseExperiment::train_new_exit_step(SolutionWrapper* wrapper) {
-	ChaseExperimentState* experiment_state = (ChaseExperimentState*)wrapper->experiment_context[wrapper->experiment_context.size() - 2];
+void CandidateExperiment::train_new_exit_step(SolutionWrapper* wrapper) {
+	CandidateExperimentState* experiment_state = (CandidateExperimentState*)wrapper->experiment_context[wrapper->experiment_context.size() - 2];
 
 	wrapper->scope_histories.pop_back();
 	wrapper->node_context.pop_back();
@@ -110,29 +99,16 @@ void ChaseExperiment::train_new_exit_step(SolutionWrapper* wrapper) {
 	experiment_state->step_index++;
 }
 
-void ChaseExperiment::train_new_backprop(
+void CandidateExperiment::train_new_backprop(
 		double target_val,
 		SolutionWrapper* wrapper) {
-	ChaseExperimentHistory* history = (ChaseExperimentHistory*)wrapper->experiment_history;
-	if (history->tunnel_is_hit) {
+	CandidateExperimentHistory* history = (CandidateExperimentHistory*)wrapper->experiment_history;
+	if (history->is_hit) {
 		for (int i_index = 0; i_index < (int)history->stack_traces.size(); i_index++) {
 			this->true_histories.push_back(target_val - history->existing_predicted_trues[i_index]);
 
-			for (int l_index = 0; l_index < (int)history->stack_traces[i_index].size(); l_index++) {
-				ScopeHistory* scope_history = history->stack_traces[i_index][l_index];
-				Scope* scope = scope_history->scope;
-				if (scope == wrapper->curr_tunnel_parent) {
-					if (!scope_history->tunnel_is_init[wrapper->curr_tunnel_index]) {
-						scope_history->tunnel_is_init[wrapper->curr_tunnel_index] = true;
-						Tunnel* tunnel = scope->tunnels[wrapper->curr_tunnel_index];
-						scope_history->tunnel_vals[wrapper->curr_tunnel_index] = tunnel->get_signal(scope_history->obs_history);
-					}
-					this->signal_histories.push_back(scope_history->tunnel_vals[wrapper->curr_tunnel_index]
-						- history->existing_predicted_signals[i_index]);
-
-					break;
-				}
-			}
+			double signal = this->candidate->get_signal(history->stack_traces[i_index].back()->obs_history);
+			this->signal_histories.push_back(signal);
 		}
 
 		this->state_iter++;
@@ -169,13 +145,11 @@ void ChaseExperiment::train_new_backprop(
 			#endif /* MDEBUG */
 				this->sum_true = 0.0;
 				this->hit_count = 0;
-				this->sum_signal = 0.0;
-				this->tunnel_hit_count = 0;
 
 				this->total_count = 0;
 				this->total_sum_scores = 0.0;
 
-				this->state = CHASE_EXPERIMENT_STATE_MEASURE;
+				this->state = CANDIDATE_EXPERIMENT_STATE_MEASURE;
 				this->state_iter = 0;
 			} else {
 				this->result = EXPERIMENT_RESULT_FAIL;

@@ -8,13 +8,14 @@
 using namespace std;
 
 SolutionWrapper::SolutionWrapper(ProblemType* problem_type) {
-	this->prev_solution = NULL;
+	this->solution = new Solution();
+	this->solution->init(problem_type);
 
 	this->tunnel_iter = 0;
-	this->curr_tunnel = NULL;
-	this->curr_solution = new Solution();
-	this->curr_solution->init(problem_type);
+	this->curr_tunnel_parent = NULL;
+	this->curr_solution = this->solution;
 
+	this->potential_solution = NULL;
 	this->best_solution = NULL;
 
 	this->improvement_iter = 0;
@@ -36,48 +37,15 @@ SolutionWrapper::SolutionWrapper(std::string path,
 	ifstream input_file;
 	input_file.open(path + name);
 
-	string prev_solution_is_null_line;
-	getline(input_file, prev_solution_is_null_line);
-	bool prev_solution_is_null = stoi(prev_solution_is_null_line);
-	if (prev_solution_is_null) {
-		this->prev_solution = NULL;
-	} else {
-		this->prev_solution = new Solution();
-		this->prev_solution->load(input_file);
-	}
+	this->solution = new Solution();
+	this->solution->load(input_file);
 
-	string tunnel_iter_line;
-	getline(input_file, tunnel_iter_line);
-	this->tunnel_iter = stoi(tunnel_iter_line);
+	this->tunnel_iter = 0;
+	this->curr_tunnel_parent = NULL;
+	this->curr_solution = this->solution;
 
-	string curr_tunnel_is_null_line;
-	getline(input_file, curr_tunnel_is_null_line);
-	bool curr_tunnel_is_null = stoi(curr_tunnel_is_null_line);
-	if (curr_tunnel_is_null) {
-		this->curr_tunnel = NULL;
-	} else {
-		this->curr_tunnel = new Tunnel(input_file);
-	}
-
-	string curr_solution_is_null_line;
-	getline(input_file, curr_solution_is_null_line);
-	bool curr_solution_is_null = stoi(curr_solution_is_null_line);
-	if (curr_solution_is_null) {
-		this->curr_solution = NULL;
-	} else {
-		this->curr_solution = new Solution();
-		this->curr_solution->load(input_file);
-	}
-
-	string best_solution_is_null_line;
-	getline(input_file, best_solution_is_null_line);
-	bool best_solution_is_null = stoi(best_solution_is_null_line);
-	if (best_solution_is_null) {
-		this->best_solution = NULL;
-	} else {
-		this->best_solution = new Solution();
-		this->best_solution->load(input_file);
-	}
+	this->potential_solution = NULL;
+	this->best_solution = NULL;
 
 	this->improvement_iter = 0;
 
@@ -96,33 +64,15 @@ SolutionWrapper::SolutionWrapper(std::string path,
 }
 
 SolutionWrapper::~SolutionWrapper() {
-	if (this->prev_solution != NULL) {
-		delete this->prev_solution;
-	}
-
-	if (this->curr_tunnel != NULL) {
-		delete this->curr_tunnel;
-	}
-
-	if (this->curr_solution != NULL) {
-		delete this->curr_solution;
-	}
-
-	if (this->best_solution != NULL) {
-		delete this->best_solution;
-	}
+	delete this->solution;
 }
 
 bool SolutionWrapper::is_done() {
-	if (this->prev_solution != NULL) {
-		return this->prev_solution->timestamp == -1;
-	}
-
-	return false;
+	return this->solution->timestamp == -1;
 }
 
 void SolutionWrapper::clean_scopes() {
-	this->prev_solution->clean_scopes();
+	this->solution->clean_scopes();
 }
 
 void SolutionWrapper::combine(string other_path,
@@ -137,10 +87,10 @@ void SolutionWrapper::combine(string other_path,
 	input_file.close();
 
 	for (int scope_index = 1; scope_index < (int)other->scopes.size(); scope_index++) {
-		this->prev_solution->scopes.push_back(other->scopes[scope_index]);
+		this->solution->scopes.push_back(other->scopes[scope_index]);
 
 		for (int i_index = 0; i_index < starting_size; i_index++) {
-			this->prev_solution->scopes[i_index]->child_scopes.push_back(other->scopes[scope_index]);
+			this->solution->scopes[i_index]->child_scopes.push_back(other->scopes[scope_index]);
 		}
 	}
 
@@ -148,11 +98,11 @@ void SolutionWrapper::combine(string other_path,
 
 	delete other;
 
-	for (int scope_index = 1; scope_index < (int)this->prev_solution->scopes.size(); scope_index++) {
-		this->prev_solution->scopes[scope_index]->id = scope_index;
+	for (int scope_index = 1; scope_index < (int)this->solution->scopes.size(); scope_index++) {
+		this->solution->scopes[scope_index]->id = scope_index;
 	}
 
-	this->prev_solution->timestamp = 0;
+	this->solution->timestamp = 0;
 }
 
 void SolutionWrapper::save(string path,
@@ -160,27 +110,7 @@ void SolutionWrapper::save(string path,
 	ofstream output_file;
 	output_file.open(path + "temp_" + name);
 
-	output_file << (this->prev_solution == NULL) << endl;
-	if (this->prev_solution != NULL) {
-		this->prev_solution->save(output_file);
-	}
-
-	output_file << this->tunnel_iter << endl;
-
-	output_file << (this->curr_tunnel == NULL) << endl;
-	if (this->curr_tunnel != NULL) {
-		this->curr_tunnel->save(output_file);
-	}
-
-	output_file << (this->curr_solution == NULL) << endl;
-	if (this->curr_solution != NULL) {
-		this->curr_solution->save(output_file);
-	}
-
-	output_file << (this->best_solution == NULL) << endl;
-	if (this->best_solution != NULL) {
-		this->best_solution->save(output_file);
-	}
+	this->solution->save(output_file);
 
 	output_file.close();
 
@@ -194,11 +124,7 @@ void SolutionWrapper::save_for_display(string path,
 	ofstream output_file;
 	output_file.open(path + "temp_" + name);
 
-	if (this->curr_solution != NULL) {
-		this->curr_solution->save_for_display(output_file);
-	} else {
-		this->prev_solution->save_for_display(output_file);
-	}
+	this->solution->save_for_display(output_file);
 
 	output_file.close();
 

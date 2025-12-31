@@ -12,6 +12,7 @@
 #include "scope_node.h"
 #include "solution.h"
 #include "start_node.h"
+#include "tunnel.h"
 
 using namespace std;
 
@@ -23,6 +24,10 @@ Scope::~Scope() {
 	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
 			it != this->nodes.end(); it++) {
 		delete it->second;
+	}
+
+	for (int t_index = 0; t_index < (int)this->tunnels.size(); t_index++) {
+		delete this->tunnels[t_index];
 	}
 }
 
@@ -118,6 +123,11 @@ void Scope::save(ofstream& output_file) {
 	for (int c_index = 0; c_index < (int)this->child_scopes.size(); c_index++) {
 		output_file << this->child_scopes[c_index]->id << endl;
 	}
+
+	output_file << this->tunnels.size() << endl;
+	for (int t_index = 0; t_index < (int)this->tunnels.size(); t_index++) {
+		this->tunnels[t_index]->save(output_file);
+	}
 }
 
 void Scope::load(ifstream& input_file,
@@ -197,6 +207,13 @@ void Scope::load(ifstream& input_file,
 		getline(input_file, scope_id_line);
 		this->child_scopes.push_back(parent_solution->scopes[stoi(scope_id_line)]);
 	}
+
+	string num_tunnels_line;
+	getline(input_file, num_tunnels_line);
+	int num_tunnels = stoi(num_tunnels_line);
+	for (int t_index = 0; t_index < num_tunnels; t_index++) {
+		this->tunnels.push_back(new Tunnel(input_file));
+	}
 }
 
 void Scope::link(Solution* parent_solution) {
@@ -273,6 +290,20 @@ void Scope::copy_from(Scope* original,
 		this->child_scopes.push_back(parent_solution->scopes[
 			original->child_scopes[c_index]->id]);
 	}
+
+	for (int t_index = 0; t_index < (int)original->tunnels.size(); t_index++) {
+		this->tunnels.push_back(new Tunnel(original->tunnels[t_index]));
+	}
+
+	for (int h_index = 0; h_index < (int)original->explore_stack_traces.size(); h_index++) {
+		vector<ScopeHistory*> curr_stack_trace(original->explore_stack_traces[h_index].size());
+		for (int l_index = 0; l_index < (int)original->explore_stack_traces[h_index].size(); l_index++) {
+			curr_stack_trace[l_index] = new ScopeHistory(original->explore_stack_traces[h_index][l_index],
+														 parent_solution);
+		}
+		this->explore_stack_traces.push_back(curr_stack_trace);
+	}
+	this->explore_target_val_histories = original->explore_target_val_histories;
 }
 
 void Scope::save_for_display(ofstream& output_file) {
@@ -287,6 +318,65 @@ void Scope::save_for_display(ofstream& output_file) {
 
 ScopeHistory::ScopeHistory(Scope* scope) {
 	this->scope = scope;
+
+	this->tunnel_is_init = vector<bool>(scope->tunnels.size(), false);
+	this->tunnel_vals = vector<double>(scope->tunnels.size());
+}
+
+ScopeHistory::ScopeHistory(ScopeHistory* original,
+						   Solution* parent_solution) {
+	this->scope = parent_solution->scopes[original->scope->id];
+
+	for (map<int, AbstractNodeHistory*>::iterator it = original->node_histories.begin();
+			it != original->node_histories.end(); it++) {
+		AbstractNode* node = it->second->node;
+		switch (node->type) {
+		case NODE_TYPE_START:
+			{
+				StartNode* start_node = (StartNode*)this->scope->nodes[it->first];
+				this->node_histories[it->first] = new StartNodeHistory(start_node);
+			}
+			break;
+		case NODE_TYPE_ACTION:
+			{
+				ActionNode* action_node = (ActionNode*)this->scope->nodes[it->first];
+				this->node_histories[it->first] = new ActionNodeHistory(action_node);
+			}
+			break;
+		case NODE_TYPE_SCOPE:
+			{
+				ScopeNodeHistory* original_scope_node_history = (ScopeNodeHistory*)it->second;
+
+				ScopeNode* scope_node = (ScopeNode*)this->scope->nodes[it->first];
+				ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(scope_node);
+				scope_node_history->scope_history = new ScopeHistory(original_scope_node_history->scope_history,
+																	 parent_solution);
+				this->node_histories[it->first] = scope_node_history;
+			}
+			break;
+		case NODE_TYPE_BRANCH:
+			{
+				BranchNodeHistory* original_branch_node_history = (BranchNodeHistory*)it->second;
+
+				BranchNode* branch_node = (BranchNode*)this->scope->nodes[it->first];
+				BranchNodeHistory* branch_node_history = new BranchNodeHistory(branch_node);
+				branch_node_history->is_branch = original_branch_node_history->is_branch;
+				this->node_histories[it->first] = branch_node_history;
+			}
+			break;
+		case NODE_TYPE_OBS:
+			{
+				ObsNode* obs_node = (ObsNode*)this->scope->nodes[it->first];
+				this->node_histories[it->first] = new ObsNodeHistory(obs_node);
+			}
+			break;
+		}
+	}
+
+	this->obs_history = original->obs_history;
+
+	this->tunnel_is_init = original->tunnel_is_init;
+	this->tunnel_vals = original->tunnel_vals;
 }
 
 ScopeHistory::~ScopeHistory() {
@@ -294,4 +384,14 @@ ScopeHistory::~ScopeHistory() {
 			it != this->node_histories.end(); it++) {
 		delete it->second;
 	}
+}
+
+ScopeHistory* ScopeHistory::copy_obs_history() {
+	ScopeHistory* new_scope_history = new ScopeHistory(this->scope);
+
+	new_scope_history->obs_history = this->obs_history;
+	new_scope_history->tunnel_is_init = this->tunnel_is_init;
+	new_scope_history->tunnel_vals = this->tunnel_vals;
+
+	return new_scope_history;
 }

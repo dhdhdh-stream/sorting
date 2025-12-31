@@ -12,6 +12,7 @@ class Network;
 class Problem;
 class Solution;
 class SolutionWrapper;
+class Tunnel;
 
 class ScopeHistory;
 class Scope {
@@ -25,6 +26,15 @@ public:
 	 */
 
 	std::vector<Scope*> child_scopes;
+
+	std::vector<Tunnel*> tunnels;
+
+	std::vector<std::vector<ScopeHistory*>> explore_stack_traces;
+	std::vector<double> explore_target_val_histories;
+	/**
+	 * - don't save/load
+	 *   - can regather on first iters
+	 */
 
 	Scope();
 	~Scope();
@@ -53,8 +63,17 @@ public:
 
 	std::map<int, AbstractNodeHistory*> node_histories;
 
+	std::vector<double> obs_history;
+
+	std::vector<bool> tunnel_is_init;
+	std::vector<double> tunnel_vals;
+
 	ScopeHistory(Scope* scope);
+	ScopeHistory(ScopeHistory* original,
+				 Solution* parent_solution);
 	~ScopeHistory();
+
+	ScopeHistory* copy_obs_history();
 };
 
 #endif /* SCOPE_H */

@@ -38,10 +38,7 @@ const int MEASURE_ITERS = 1000;
 #if defined(MDEBUG) && MDEBUG
 const int IMPROVEMENTS_PER_ITER = 2;
 #else
-/**
- * - large number to select good paths to prevent noise
- */
-const int IMPROVEMENTS_PER_ITER = 6;
+const int IMPROVEMENTS_PER_ITER = 3;
 #endif /* MDEBUG */
 
 #if defined(MDEBUG) && MDEBUG

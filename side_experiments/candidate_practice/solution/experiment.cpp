@@ -1,4 +1,4 @@
-#include "chase_experiment.h"
+#include "experiment.h"
 
 #include "abstract_node.h"
 #include "globals.h"
@@ -10,10 +10,10 @@
 
 using namespace std;
 
-ChaseExperiment::ChaseExperiment(Scope* scope_context,
-								 AbstractNode* node_context,
-								 bool is_branch) {
-	this->type = EXPERIMENT_TYPE_CHASE;
+Experiment::Experiment(Scope* scope_context,
+					   AbstractNode* node_context,
+					   bool is_branch) {
+	this->type = EXPERIMENT_TYPE_EXPERIMENT;
 
 	this->scope_context = scope_context;
 	this->node_context = node_context;
@@ -21,37 +21,30 @@ ChaseExperiment::ChaseExperiment(Scope* scope_context,
 
 	this->node_context->experiment = this;
 
-	this->existing_true_network = NULL;
-	this->existing_signal_network = NULL;
-	this->new_signal_network = NULL;
+	this->existing_network = NULL;
+	this->new_network = NULL;
 
 	this->curr_new_scope = NULL;
 	this->best_new_scope = NULL;
 
-	this->sum_num_tunnel_instances = 0;
+	this->sum_num_instances = 0;
 
 	this->sum_true = 0.0;
 	this->hit_count = 0;
-	this->sum_signal = 0.0;
-	this->tunnel_hit_count = 0;
 
-	this->state = CHASE_EXPERIMENT_STATE_TRAIN_EXISTING;
+	this->state = EXPERIMENT_STATE_TRAIN_EXISTING;
 	this->state_iter = 0;
 
 	this->result = EXPERIMENT_RESULT_NA;
 }
 
-ChaseExperiment::~ChaseExperiment() {
-	if (this->existing_true_network != NULL) {
-		delete this->existing_true_network;
+Experiment::~Experiment() {
+	if (this->existing_network != NULL) {
+		delete this->existing_network;
 	}
 
-	if (this->existing_signal_network != NULL) {
-		delete this->existing_signal_network;
-	}
-
-	if (this->new_signal_network != NULL) {
-		delete this->new_signal_network;
+	if (this->new_network != NULL) {
+		delete this->new_network;
 	}
 
 	if (this->curr_new_scope != NULL) {
@@ -81,13 +74,12 @@ ChaseExperiment::~ChaseExperiment() {
 	#endif /* MDEBUG */
 }
 
-ChaseExperimentHistory::ChaseExperimentHistory(ChaseExperiment* experiment) {
+ExperimentHistory::ExperimentHistory(Experiment* experiment) {
 	this->experiment = experiment;
 
 	this->is_hit = false;
-	this->tunnel_is_hit = false;
 }
 
-ChaseExperimentState::ChaseExperimentState(ChaseExperiment* experiment) {
+ExperimentState::ExperimentState(Experiment* experiment) {
 	this->experiment = experiment;
 }
