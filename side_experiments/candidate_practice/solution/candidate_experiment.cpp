@@ -1,6 +1,7 @@
 #include "candidate_experiment.h"
 
 #include <algorithm>
+#include <iostream>
 
 #include "constants.h"
 #include "globals.h"
@@ -241,7 +242,11 @@ Tunnel* create_pattern_candidate(vector<vector<double>>& obs_vals,
 	/**
 	 * - refine
 	 */
+	#if defined(MDEBUG) && MDEBUG
+	int num_positive = max(1, (int)(POSITIVE_SEED_RATIO * (double)inputs.size()));
+	#else
 	int num_positive = POSITIVE_SEED_RATIO * (double)inputs.size();
+	#endif /* MDEBUG */
 	vector<int> positive_seed_indexes(num_positive);
 	int num_negative = NEGATIVE_SEED_RATIO * (double)inputs.size();
 	vector<int> negative_seed_indexes(num_negative);

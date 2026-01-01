@@ -31,49 +31,51 @@ void set_tunnel(SolutionWrapper* wrapper) {
 }
 
 void update_tunnel_try_history(SolutionWrapper* wrapper) {
-	Scope* solution_scope = wrapper->solution->scopes[wrapper->curr_tunnel_parent->id];
-	if ((int)solution_scope->tunnels.size() > wrapper->curr_tunnel_index) {
-		vector<double> vals(wrapper->curr_solution->existing_scope_histories.size());
-		for (int h_index = 0; h_index < (int)wrapper->curr_solution->existing_scope_histories.size(); h_index++) {
-			double sum_vals = 0.0;
-			measure_tunnel_vals_helper(wrapper->curr_solution->existing_scope_histories[h_index],
-									   wrapper->curr_tunnel_parent,
-									   wrapper->curr_tunnel_index,
-									   sum_vals);
-			vals[h_index] = sum_vals;
-		}
-
-		double sum_vals = 0.0;
-		for (int h_index = 0; h_index < (int)vals.size(); h_index++) {
-			sum_vals += vals[h_index];
-		}
-		double val_average = sum_vals / (double)vals.size();
-
-		Tunnel* solution_tunnel = solution_scope->tunnels[wrapper->curr_tunnel_index];
-		Tunnel* potential_solution_tunnel = wrapper->curr_tunnel_parent->tunnels[wrapper->curr_tunnel_index];
-		Tunnel* best_solution_tunnel;
-		if (wrapper->best_solution == NULL) {
-			best_solution_tunnel = NULL;
-		} else {
-			Scope* best_solution_scope = wrapper->best_solution->scopes[wrapper->curr_tunnel_parent->id];
-			best_solution_tunnel = best_solution_scope->tunnels[wrapper->curr_tunnel_index];
-		}
-
-		int new_status;
-		if (val_average <= solution_tunnel->vals.back()) {
-			new_status = TUNNEL_TRY_STATUS_SIGNAL_FAIL;
-		} else {
-			if (wrapper->curr_solution->curr_score <= wrapper->solution->curr_score) {
-				new_status = TUNNEL_TRY_STATUS_TRUE_FAIL;
-			} else {
-				new_status = TUNNEL_TRY_STATUS_TRUE_SUCCESS;
+	if (wrapper->curr_tunnel_parent != NULL) {
+		Scope* solution_scope = wrapper->solution->scopes[wrapper->curr_tunnel_parent->id];
+		if ((int)solution_scope->tunnels.size() > wrapper->curr_tunnel_index) {
+			vector<double> vals(wrapper->curr_solution->existing_scope_histories.size());
+			for (int h_index = 0; h_index < (int)wrapper->curr_solution->existing_scope_histories.size(); h_index++) {
+				double sum_vals = 0.0;
+				measure_tunnel_vals_helper(wrapper->curr_solution->existing_scope_histories[h_index],
+										   wrapper->curr_tunnel_parent,
+										   wrapper->curr_tunnel_index,
+										   sum_vals);
+				vals[h_index] = sum_vals;
 			}
-		}
 
-		solution_tunnel->try_history.push_back(new_status);
-		potential_solution_tunnel->try_history.push_back(new_status);
-		if (best_solution_tunnel != NULL) {
-			best_solution_tunnel->try_history.push_back(new_status);
+			double sum_vals = 0.0;
+			for (int h_index = 0; h_index < (int)vals.size(); h_index++) {
+				sum_vals += vals[h_index];
+			}
+			double val_average = sum_vals / (double)vals.size();
+
+			Tunnel* solution_tunnel = solution_scope->tunnels[wrapper->curr_tunnel_index];
+			Tunnel* potential_solution_tunnel = wrapper->curr_tunnel_parent->tunnels[wrapper->curr_tunnel_index];
+			Tunnel* best_solution_tunnel;
+			if (wrapper->best_solution == NULL) {
+				best_solution_tunnel = NULL;
+			} else {
+				Scope* best_solution_scope = wrapper->best_solution->scopes[wrapper->curr_tunnel_parent->id];
+				best_solution_tunnel = best_solution_scope->tunnels[wrapper->curr_tunnel_index];
+			}
+
+			int new_status;
+			if (val_average <= solution_tunnel->val_history.back()) {
+				new_status = TUNNEL_TRY_STATUS_SIGNAL_FAIL;
+			} else {
+				if (wrapper->curr_solution->curr_score <= wrapper->solution->curr_score) {
+					new_status = TUNNEL_TRY_STATUS_TRUE_FAIL;
+				} else {
+					new_status = TUNNEL_TRY_STATUS_TRUE_SUCCESS;
+				}
+			}
+
+			solution_tunnel->try_history.push_back(new_status);
+			potential_solution_tunnel->try_history.push_back(new_status);
+			if (best_solution_tunnel != NULL) {
+				best_solution_tunnel->try_history.push_back(new_status);
+			}
 		}
 	}
 }

@@ -29,6 +29,12 @@ Scope::~Scope() {
 	for (int t_index = 0; t_index < (int)this->tunnels.size(); t_index++) {
 		delete this->tunnels[t_index];
 	}
+
+	for (int h_index = 0; h_index < (int)this->explore_stack_traces.size(); h_index++) {
+		for (int l_index = 0; l_index < (int)this->explore_stack_traces[h_index].size(); l_index++) {
+			delete this->explore_stack_traces[h_index][l_index];
+		}
+	}
 }
 
 void Scope::random_exit_activate(AbstractNode* starting_node,

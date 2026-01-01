@@ -92,6 +92,9 @@ void CandidateExperiment::train_new_step(vector<double>& obs,
 void CandidateExperiment::train_new_exit_step(SolutionWrapper* wrapper) {
 	CandidateExperimentState* experiment_state = (CandidateExperimentState*)wrapper->experiment_context[wrapper->experiment_context.size() - 2];
 
+	vector<double> obs = wrapper->problem->get_observations();
+	wrapper->scope_histories.back()->obs_history = obs;
+
 	wrapper->scope_histories.pop_back();
 	wrapper->node_context.pop_back();
 	wrapper->experiment_context.pop_back();

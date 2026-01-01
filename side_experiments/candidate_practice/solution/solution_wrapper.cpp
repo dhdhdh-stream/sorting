@@ -65,6 +65,14 @@ SolutionWrapper::SolutionWrapper(std::string path,
 
 SolutionWrapper::~SolutionWrapper() {
 	delete this->solution;
+
+	if (this->potential_solution != NULL) {
+		delete this->potential_solution;
+	}
+
+	if (this->best_solution != NULL) {
+		delete this->best_solution;
+	}
 }
 
 bool SolutionWrapper::is_done() {

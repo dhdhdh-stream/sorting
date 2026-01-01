@@ -152,6 +152,8 @@ void Tunnel::print() {
 	}
 	cout << endl;
 
+	cout << "this->is_pattern: " << this->is_pattern << endl;
+
 	cout << "this->try_history:";
 	for (int h_index = 0; h_index < (int)this->try_history.size(); h_index++) {
 		cout << " " << this->try_history[h_index];

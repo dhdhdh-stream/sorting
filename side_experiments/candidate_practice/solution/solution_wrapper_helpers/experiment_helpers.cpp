@@ -23,8 +23,8 @@ const int RUN_TIMESTEPS = 100;
 const int ITERS_PER_TUNNEL = 2;
 const int TUNNEL_NUM_CANDIDATES = 2;
 #else
-const int ITERS_PER_TUNNEL = 10;
-const int TUNNEL_NUM_CANDIDATES = 10;
+const int ITERS_PER_TUNNEL = 5;
+const int TUNNEL_NUM_CANDIDATES = 6;
 #endif /* MDEBUG */
 
 const int TUNNEL_EARLY_FAIL_MIN_TRIES = 20;
@@ -113,6 +113,9 @@ void SolutionWrapper::set_action(int action) {
 }
 
 void SolutionWrapper::experiment_end(double result) {
+	vector<double> obs = this->problem->get_observations();
+	this->scope_histories.back()->obs_history = obs;
+
 	if (this->curr_experiment == NULL) {
 		create_experiment(this->scope_histories[0],
 						  this);
@@ -251,6 +254,8 @@ void SolutionWrapper::experiment_end(double result) {
 						delete this->solution;
 						this->solution = this->best_solution;
 						this->best_solution = NULL;
+
+						this->curr_solution = this->solution;
 
 						this->curr_tunnel_parent = NULL;
 

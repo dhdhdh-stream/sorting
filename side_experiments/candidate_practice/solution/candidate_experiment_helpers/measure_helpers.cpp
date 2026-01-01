@@ -94,6 +94,9 @@ void CandidateExperiment::measure_step(vector<double>& obs,
 void CandidateExperiment::measure_exit_step(SolutionWrapper* wrapper) {
 	CandidateExperimentState* experiment_state = (CandidateExperimentState*)wrapper->experiment_context[wrapper->experiment_context.size() - 2];
 
+	vector<double> obs = wrapper->problem->get_observations();
+	wrapper->scope_histories.back()->obs_history = obs;
+
 	wrapper->scope_histories.pop_back();
 	wrapper->node_context.pop_back();
 	wrapper->experiment_context.pop_back();
@@ -132,11 +135,19 @@ void CandidateExperiment::measure_backprop(double target_val,
 			sum_variance += (this->signal_vals[h_index] - candidate_ending_val_average) * (this->signal_vals[h_index] - candidate_ending_val_average);
 		}
 		double candidate_ending_val_standard_deviation = sqrt(sum_variance / (double)this->signal_vals.size());
+		if (candidate_ending_val_standard_deviation < MIN_STANDARD_DEVIATION) {
+			candidate_ending_val_standard_deviation = MIN_STANDARD_DEVIATION;
+		}
 		double candidate_ending_val_standard_error = candidate_ending_val_standard_deviation / sqrt((double)this->signal_vals.size());
 
 		double denom = sqrt(this->candidate_starting_val_standard_error * this->candidate_starting_val_standard_error
 			+ candidate_ending_val_standard_error * candidate_ending_val_standard_error);
 		double t_score = (candidate_ending_val_average - this->candidate_starting_val_average) / denom;
+
+		// temp
+		cout << "this->scope_context->id " << this->scope_context->id << endl;
+		this->candidate->print();
+		cout << "t_score: " << t_score << endl;
 
 		#if defined(MDEBUG) && MDEBUG
 		if ((new_true >= this->existing_true && t_score >= 2.326) || rand()%2 == 0) {

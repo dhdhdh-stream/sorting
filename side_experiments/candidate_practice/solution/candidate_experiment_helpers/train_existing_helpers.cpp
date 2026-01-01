@@ -73,6 +73,9 @@ void CandidateExperiment::train_existing_backprop(double target_val,
 			sum_variance += (this->signal_vals[h_index] - this->candidate_starting_val_average) * (this->signal_vals[h_index] - this->candidate_starting_val_average);
 		}
 		double candidate_starting_val_standard_deviation = sqrt(sum_variance / (double)this->signal_vals.size());
+		if (candidate_starting_val_standard_deviation < MIN_STANDARD_DEVIATION) {
+			candidate_starting_val_standard_deviation = MIN_STANDARD_DEVIATION;
+		}
 		this->candidate_starting_val_standard_error = candidate_starting_val_standard_deviation / sqrt((double)this->signal_vals.size());
 
 		this->signal_vals.clear();

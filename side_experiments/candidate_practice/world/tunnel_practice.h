@@ -6,33 +6,6 @@
  *   - [10 noise]
  */
 
-// - how to tunnel?
-//   - focus on narrow span of time
-//   - either focus on narrow obs or narrow image?
-//     - look for fuzzy image that correlates with success?
-//     - maybe goal is to make a pattern appear more often?
-
-// - when using tunnel, unless average significantly worse, then completely ignore true?
-
-// - so from good situation, pick pattern
-//   - filter to 5% most similar and see if correlate to success
-//   - if does, then commit
-//     - on train new, check that average is not significantly worse
-//       - if not, fully commit, ignoring everything else
-
-// - continuous or no?
-//   - maybe have trying to match pattern as much as possible
-//     - with closer matches having higher score
-//       - can kind of get continuous without explicitly looking for it
-//         - (which seems impractical)
-// - correlate similarity with true?
-
-// - maybe start with trying to hit a discrete pattern more
-// - maybe have both similarity and signal
-
-// - maybe even if there's noise, trying to optimize will only improve chase
-//   - so even if not similar, will still work?
-
 #ifndef TUNNEL_PRACTICE_H
 #define TUNNEL_PRACTICE_H
 
