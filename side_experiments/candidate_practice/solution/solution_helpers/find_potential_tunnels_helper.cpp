@@ -5,6 +5,7 @@
 #include "solution_helpers.h"
 
 #include <algorithm>
+#include <iostream>
 
 #include "branch_node.h"
 #include "constants.h"
@@ -381,87 +382,94 @@ void find_potential_tunnels(vector<ScopeHistory*>& starting_scope_histories,
 
 		Scope* scope_context = explore_node->parent;
 
-		vector<vector<double>> explore_obs_vals;
-		vector<double> explore_target_vals;
-		gather_training_data_helper(scope_context,
-									explore_obs_vals,
-									explore_target_vals);
+		if (scope_context->explore_stack_traces.size() > 0) {
+			vector<vector<double>> explore_obs_vals;
+			vector<double> explore_target_vals;
+			gather_training_data_helper(scope_context,
+										explore_obs_vals,
+										explore_target_vals);
 
-		vector<vector<double>> starting_existing_obs_vals;
-		for (int h_index = 0; h_index < (int)starting_scope_histories.size(); h_index++) {
-			gather_tunnel_data_helper(starting_scope_histories[h_index],
-									  scope_context,
-									  starting_existing_obs_vals);
-		}
+			vector<vector<double>> starting_existing_obs_vals;
+			for (int h_index = 0; h_index < (int)starting_scope_histories.size(); h_index++) {
+				gather_tunnel_data_helper(starting_scope_histories[h_index],
+										  scope_context,
+										  starting_existing_obs_vals);
+			}
 
-		vector<vector<double>> ending_existing_obs_vals;
-		for (int h_index = 0; h_index < (int)ending_scope_histories.size(); h_index++) {
-			gather_tunnel_data_helper(ending_scope_histories[h_index],
-									  scope_context,
-									  ending_existing_obs_vals);
-		}
+			vector<vector<double>> ending_existing_obs_vals;
+			for (int h_index = 0; h_index < (int)ending_scope_histories.size(); h_index++) {
+				gather_tunnel_data_helper(ending_scope_histories[h_index],
+										  scope_context,
+										  ending_existing_obs_vals);
+			}
 
-		Tunnel* candidate;
-		uniform_int_distribution<int> pattern_distribution(0, 1);
-		if (pattern_distribution(generator) == 0) {
-			candidate = create_pattern_candidate(starting_existing_obs_vals,
-												 ending_existing_obs_vals,
-												 explore_obs_vals,
+			Tunnel* candidate;
+			uniform_int_distribution<int> pattern_distribution(0, 1);
+			if (pattern_distribution(generator) == 0) {
+				candidate = create_pattern_candidate(starting_existing_obs_vals,
+													 ending_existing_obs_vals,
+													 explore_obs_vals,
+													 explore_target_vals);
+			} else {
+				candidate = create_obs_candidate(explore_obs_vals,
 												 explore_target_vals);
-		} else {
-			candidate = create_obs_candidate(explore_obs_vals,
-											 explore_target_vals);
-		}
+			}
 
-		vector<double> starting_vals(starting_existing_obs_vals.size());
-		for (int h_index = 0; h_index < (int)starting_existing_obs_vals.size(); h_index++) {
-			starting_vals[h_index] = candidate->get_signal(starting_existing_obs_vals[h_index]);
-		}
-		vector<double> ending_vals(ending_existing_obs_vals.size());
-		for (int h_index = 0; h_index < (int)ending_existing_obs_vals.size(); h_index++) {
-			ending_vals[h_index] = candidate->get_signal(ending_existing_obs_vals[h_index]);
-		}
+			vector<double> starting_vals(starting_existing_obs_vals.size());
+			for (int h_index = 0; h_index < (int)starting_existing_obs_vals.size(); h_index++) {
+				starting_vals[h_index] = candidate->get_signal(starting_existing_obs_vals[h_index]);
+			}
+			vector<double> ending_vals(ending_existing_obs_vals.size());
+			for (int h_index = 0; h_index < (int)ending_existing_obs_vals.size(); h_index++) {
+				ending_vals[h_index] = candidate->get_signal(ending_existing_obs_vals[h_index]);
+			}
 
-		double starting_sum_vals = 0.0;
-		for (int h_index = 0; h_index < (int)starting_vals.size(); h_index++) {
-			starting_sum_vals += starting_vals[h_index];
-		}
-		double starting_val_average = starting_sum_vals / (double)starting_vals.size();
+			double starting_sum_vals = 0.0;
+			for (int h_index = 0; h_index < (int)starting_vals.size(); h_index++) {
+				starting_sum_vals += starting_vals[h_index];
+			}
+			double starting_val_average = starting_sum_vals / (double)starting_vals.size();
 
-		double starting_sum_variance = 0.0;
-		for (int h_index = 0; h_index < (int)starting_vals.size(); h_index++) {
-			starting_sum_variance += (starting_vals[h_index] - starting_val_average) * (starting_vals[h_index] - starting_val_average);
-		}
-		double starting_val_standard_deviation = sqrt(starting_sum_variance / (double)starting_vals.size());
-		if (starting_val_standard_deviation < MIN_STANDARD_DEVIATION) {
-			starting_val_standard_deviation = MIN_STANDARD_DEVIATION;
-		}
-		double starting_val_standard_error = starting_val_standard_deviation / sqrt((double)starting_vals.size());
+			double starting_sum_variance = 0.0;
+			for (int h_index = 0; h_index < (int)starting_vals.size(); h_index++) {
+				starting_sum_variance += (starting_vals[h_index] - starting_val_average) * (starting_vals[h_index] - starting_val_average);
+			}
+			double starting_val_standard_deviation = sqrt(starting_sum_variance / (double)starting_vals.size());
+			if (starting_val_standard_deviation < MIN_STANDARD_DEVIATION) {
+				starting_val_standard_deviation = MIN_STANDARD_DEVIATION;
+			}
+			double starting_val_standard_error = starting_val_standard_deviation / sqrt((double)starting_vals.size());
 
-		double ending_sum_vals = 0.0;
-		for (int h_index = 0; h_index < (int)ending_vals.size(); h_index++) {
-			ending_sum_vals += ending_vals[h_index];
-		}
-		double ending_val_average = ending_sum_vals / (double)ending_vals.size();
+			double ending_sum_vals = 0.0;
+			for (int h_index = 0; h_index < (int)ending_vals.size(); h_index++) {
+				ending_sum_vals += ending_vals[h_index];
+			}
+			double ending_val_average = ending_sum_vals / (double)ending_vals.size();
 
-		double ending_sum_variance = 0.0;
-		for (int h_index = 0; h_index < (int)ending_vals.size(); h_index++) {
-			ending_sum_variance += (ending_vals[h_index] - ending_val_average) * (ending_vals[h_index] - ending_val_average);
-		}
-		double ending_val_standard_deviation = sqrt(ending_sum_variance / (double)ending_vals.size());
-		if (ending_val_standard_deviation < MIN_STANDARD_DEVIATION) {
-			ending_val_standard_deviation = MIN_STANDARD_DEVIATION;
-		}
-		double ending_val_standard_error = ending_val_standard_deviation / sqrt((double)ending_vals.size());
+			double ending_sum_variance = 0.0;
+			for (int h_index = 0; h_index < (int)ending_vals.size(); h_index++) {
+				ending_sum_variance += (ending_vals[h_index] - ending_val_average) * (ending_vals[h_index] - ending_val_average);
+			}
+			double ending_val_standard_deviation = sqrt(ending_sum_variance / (double)ending_vals.size());
+			if (ending_val_standard_deviation < MIN_STANDARD_DEVIATION) {
+				ending_val_standard_deviation = MIN_STANDARD_DEVIATION;
+			}
+			double ending_val_standard_error = ending_val_standard_deviation / sqrt((double)ending_vals.size());
 
-		double denom = sqrt(starting_val_standard_error * starting_val_standard_error
-			+ ending_val_standard_error * ending_val_standard_error);
-		double t_score = (ending_val_average - starting_val_average) / denom;
+			double denom = sqrt(starting_val_standard_error * starting_val_standard_error
+				+ ending_val_standard_error * ending_val_standard_error);
+			double t_score = (ending_val_average - starting_val_average) / denom;
 
-		if (t_score >= 2.326) {
-			candidate->print();
+			if (t_score >= 2.326) {
+				cout << "starting_val_average: " << starting_val_average << endl;
+				cout << "ending_val_average: " << ending_val_average << endl;
+				double improvement = ending_val_average - starting_val_average;
+				cout << "improvement: " << improvement << endl;
+				cout << "t_score: " << t_score << endl;
+				candidate->print();
+			}
+
+			delete candidate;
 		}
-
-		delete candidate;
 	}
 }

@@ -35,7 +35,9 @@
 // 		 */
 // 		Scope* scope = scope_context->explore_stack_traces[stack_trace_index][l_index]->scope;
 // 		for (int t_index = 0; t_index < (int)scope->tunnels.size(); t_index++) {
-// 			possible_parents.push_back({scope, t_index});
+// 			if (scope->tunnels[t_index]->is_valid()) {
+// 				possible_parents.push_back({scope, t_index});
+// 			}
 // 		}
 // 	}
 // 	bool is_true;

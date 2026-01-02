@@ -121,6 +121,27 @@ void Tunnel::update_vals(int num_runs) {
 	this->vals.clear();
 }
 
+const int LAST_NUM_CHECK = 5;
+const double MIN_SUCCESS_PERCENT = 0.5;
+bool Tunnel::is_valid() {
+	if ((int)this->val_history.size() < LAST_NUM_CHECK) {
+		return true;
+	} else {
+		int num_success = 0;
+		for (int i_index = 0; i_index < LAST_NUM_CHECK; i_index++) {
+			int index = (int)this->val_history.size() - 1 - i_index;
+			if (this->val_history[index] == TUNNEL_TRY_STATUS_TRUE_SUCCESS) {
+				num_success++;
+			}
+		}
+		if (num_success >= MIN_SUCCESS_PERCENT * LAST_NUM_CHECK) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+}
+
 void Tunnel::save(ofstream& output_file) {
 	output_file << this->obs_indexes.size() << endl;
 	for (int o_index = 0; o_index < (int)this->obs_indexes.size(); o_index++) {

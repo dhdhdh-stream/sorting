@@ -252,13 +252,16 @@ void Experiment::explore_backprop(double target_val,
 				scope->explore_stack_traces.push_back(stack_track_copy);
 				scope->explore_target_val_histories.push_back(target_val);
 			} else {
-				uniform_int_distribution<int> distribution(0, scope->explore_stack_traces.size()-1);
-				int index = distribution(generator);
-				for (int l_index = 0; l_index < (int)scope->explore_stack_traces[index].size(); l_index++) {
-					delete scope->explore_stack_traces[index][l_index];
+				for (int l_index = 0; l_index < (int)scope->explore_stack_traces[scope->explore_index].size(); l_index++) {
+					delete scope->explore_stack_traces[scope->explore_index][l_index];
 				}
-				scope->explore_stack_traces[index] = stack_track_copy;
-				scope->explore_target_val_histories[index] = target_val;
+				scope->explore_stack_traces[scope->explore_index] = stack_track_copy;
+				scope->explore_target_val_histories[scope->explore_index] = target_val;
+
+				scope->explore_index++;
+				if (scope->explore_index >= EXPLORE_MAX_SAMPLES) {
+					scope->explore_index = 0;
+				}
 			}
 		}
 

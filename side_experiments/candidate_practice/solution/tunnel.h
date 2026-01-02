@@ -51,6 +51,7 @@ public:
 	double get_signal(std::vector<double>& obs);
 
 	void update_vals(int num_runs);
+	bool is_valid();
 
 	void save(std::ofstream& output_file);
 

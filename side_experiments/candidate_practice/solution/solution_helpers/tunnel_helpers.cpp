@@ -14,7 +14,9 @@ void set_tunnel(SolutionWrapper* wrapper) {
 	for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
 		Scope* scope = wrapper->solution->scopes[s_index];
 		for (int t_index = 0; t_index < (int)scope->tunnels.size(); t_index++) {
-			possible_tunnels.push_back({scope, t_index});
+			if (scope->tunnels[t_index]->is_valid()) {
+				possible_tunnels.push_back({scope, t_index});
+			}
 		}
 	}
 

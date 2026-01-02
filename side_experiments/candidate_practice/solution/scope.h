@@ -31,6 +31,7 @@ public:
 
 	std::vector<std::vector<ScopeHistory*>> explore_stack_traces;
 	std::vector<double> explore_target_val_histories;
+	int explore_index;
 	/**
 	 * - don't save/load
 	 *   - can regather on first iters

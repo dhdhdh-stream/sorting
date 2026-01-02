@@ -17,7 +17,7 @@
 using namespace std;
 
 Scope::Scope() {
-	// do nothing
+	this->explore_index = 0;
 }
 
 Scope::~Scope() {
