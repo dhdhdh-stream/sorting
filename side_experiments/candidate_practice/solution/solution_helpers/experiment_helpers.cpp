@@ -127,16 +127,16 @@ void create_experiment(ScopeHistory* scope_history,
 			cout << "Experiment" << endl;
 		} else {
 			if (wrapper->curr_tunnel_parent == NULL) {
-				if (explore_node->parent->explore_stack_traces.size() != 0) {
-					CandidateExperiment* new_experiment = new CandidateExperiment(
-						explore_node->parent,
-						explore_node,
-						explore_is_branch);
-					wrapper->curr_experiment = new_experiment;
+				// if (explore_node->parent->explore_stack_traces.size() != 0) {
+				// 	CandidateExperiment* new_experiment = new CandidateExperiment(
+				// 		explore_node->parent,
+				// 		explore_node,
+				// 		explore_is_branch);
+				// 	wrapper->curr_experiment = new_experiment;
 
-					// temp
-					cout << "CandidateExperiment" << endl;
-				}
+				// 	// temp
+				// 	cout << "CandidateExperiment" << endl;
+				// }
 			} else {
 				ChaseExperiment* new_experiment = new ChaseExperiment(
 					explore_node->parent,

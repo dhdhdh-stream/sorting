@@ -35,4 +35,7 @@ void recursive_add_child(Scope* curr_parent,
 
 void clean_scope(Scope* scope);
 
+void find_potential_tunnels(std::vector<ScopeHistory*>& starting_scope_histories,
+							std::vector<ScopeHistory*>& ending_scope_histories);
+
 #endif /* SOLUTION_HELPERS_H */
