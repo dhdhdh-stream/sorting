@@ -13,6 +13,7 @@
 #include "network.h"
 #include "scope.h"
 #include "scope_node.h"
+#include "solution_wrapper.h"
 #include "tunnel.h"
 
 using namespace std;
@@ -97,7 +98,9 @@ void select_parent_tunnel_helper(Scope* scope_context,
 		 */
 		Scope* scope = scope_context->explore_stack_traces[stack_trace_index][l_index]->scope;
 		for (int t_index = 0; t_index < (int)scope->tunnels.size(); t_index++) {
-			possible_parents.push_back({scope, t_index});
+			if (scope->tunnels[t_index]->is_long_term()) {
+				possible_parents.push_back({scope, t_index});
+			}
 		}
 	}
 	bool is_true;
@@ -367,8 +370,11 @@ Tunnel* create_pattern_candidate(vector<vector<double>>& starting_existing_obs_v
 	return new_tunnel;
 }
 
+const int MAX_CANDIDATES = 5;
 void find_potential_tunnels(vector<ScopeHistory*>& starting_scope_histories,
-							vector<ScopeHistory*>& ending_scope_histories) {
+							vector<ScopeHistory*>& ending_scope_histories,
+							SolutionWrapper* wrapper) {
+	vector<pair<double, pair<int,Tunnel*>>> potential_candidates;
 	for (int try_index = 0; try_index < FIND_NUM_TRIES; try_index++) {
 		uniform_int_distribution<int> gather_sample_distribution(0, ending_scope_histories.size()-1);
 
@@ -461,15 +467,26 @@ void find_potential_tunnels(vector<ScopeHistory*>& starting_scope_histories,
 			double t_score = (ending_val_average - starting_val_average) / denom;
 
 			if (t_score >= 2.326) {
-				cout << "starting_val_average: " << starting_val_average << endl;
-				cout << "ending_val_average: " << ending_val_average << endl;
-				double improvement = ending_val_average - starting_val_average;
-				cout << "improvement: " << improvement << endl;
-				cout << "t_score: " << t_score << endl;
-				candidate->print();
+				potential_candidates.push_back({t_score, {scope_context->id, candidate}});
+			} else {
+				delete candidate;
 			}
+		}
+	}
 
-			delete candidate;
+	if (potential_candidates.size() <= MAX_CANDIDATES) {
+		for (int c_index = 0; c_index < (int)potential_candidates.size(); c_index++) {
+			wrapper->candidates.push_back(potential_candidates[c_index].second);
+		}
+	} else {
+		sort(potential_candidates.begin(), potential_candidates.end());
+
+		for (int c_index = 0; c_index < (int)potential_candidates.size(); c_index++) {
+			if (c_index + MAX_CANDIDATES >= (int)potential_candidates.size()) {
+				wrapper->candidates.push_back(potential_candidates[c_index].second);
+			} else {
+				delete potential_candidates[c_index].second.second;
+			}
 		}
 	}
 }

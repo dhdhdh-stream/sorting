@@ -1,3 +1,6 @@
+// - maybe for most problems, just helps with optimization?
+//   - difficult to find "global truths" in general
+
 #include <chrono>
 #include <iostream>
 #include <map>

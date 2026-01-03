@@ -27,8 +27,9 @@ const int EXPERIMENT_EXPLORE_ITERS = 200;
 
 void ChaseExperiment::explore_check_activate(SolutionWrapper* wrapper) {
 	bool is_tunnel = false;
+	int tunnel_parent_id = wrapper->candidates[wrapper->tunnel_iter].first;
 	for (int l_index = 0; l_index < (int)wrapper->scope_histories.size(); l_index++) {
-		if (wrapper->curr_tunnel_parent == wrapper->scope_histories[l_index]->scope) {
+		if (tunnel_parent_id == wrapper->scope_histories[l_index]->scope->id) {
 			is_tunnel = true;
 			break;
 		}
@@ -280,17 +281,21 @@ void ChaseExperiment::explore_backprop(double target_val,
 
 		double curr_sanity = target_val - history->existing_predicted_trues[0];
 
+		int tunnel_parent_id = wrapper->candidates[wrapper->tunnel_iter].first;
+		Tunnel* tunnel = wrapper->candidates[wrapper->tunnel_iter].second;
 		double signal;
 		for (int l_index = 0; l_index < (int)history->stack_traces[0].size(); l_index++) {
 			ScopeHistory* scope_history = history->stack_traces[0][l_index];
 			Scope* scope = scope_history->scope;
-			if (scope == wrapper->curr_tunnel_parent) {
-				if (!scope_history->tunnel_is_init[wrapper->curr_tunnel_index]) {
-					scope_history->tunnel_is_init[wrapper->curr_tunnel_index] = true;
-					Tunnel* tunnel = scope->tunnels[wrapper->curr_tunnel_index];
-					scope_history->tunnel_vals[wrapper->curr_tunnel_index] = tunnel->get_signal(scope_history->obs_history);
-				}
-				signal = scope_history->tunnel_vals[wrapper->curr_tunnel_index];
+			if (scope->id == tunnel_parent_id) {
+				// if (!scope_history->tunnel_is_init[wrapper->curr_tunnel_index]) {
+				// 	scope_history->tunnel_is_init[wrapper->curr_tunnel_index] = true;
+				// 	Tunnel* tunnel = scope->tunnels[wrapper->curr_tunnel_index];
+				// 	scope_history->tunnel_vals[wrapper->curr_tunnel_index] = tunnel->get_signal(scope_history->obs_history);
+				// }
+				// signal = scope_history->tunnel_vals[wrapper->curr_tunnel_index];
+
+				signal = tunnel->get_signal(scope_history->obs_history);
 
 				break;
 			}

@@ -12,7 +12,6 @@ SolutionWrapper::SolutionWrapper(ProblemType* problem_type) {
 	this->solution->init(problem_type);
 
 	this->tunnel_iter = 0;
-	this->curr_tunnel_parent = NULL;
 	this->curr_solution = this->solution;
 
 	this->potential_solution = NULL;
@@ -41,7 +40,6 @@ SolutionWrapper::SolutionWrapper(std::string path,
 	this->solution->load(input_file);
 
 	this->tunnel_iter = 0;
-	this->curr_tunnel_parent = NULL;
 	this->curr_solution = this->solution;
 
 	this->potential_solution = NULL;

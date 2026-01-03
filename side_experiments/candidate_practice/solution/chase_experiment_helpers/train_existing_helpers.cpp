@@ -21,8 +21,9 @@ const int TRAIN_EXISTING_NUM_DATAPOINTS = 1000;
 
 void ChaseExperiment::train_existing_check_activate(SolutionWrapper* wrapper) {
 	bool is_tunnel = false;
+	int tunnel_parent_id = wrapper->candidates[wrapper->tunnel_iter].first;
 	for (int l_index = 0; l_index < (int)wrapper->scope_histories.size(); l_index++) {
-		if (wrapper->curr_tunnel_parent == wrapper->scope_histories[l_index]->scope) {
+		if (tunnel_parent_id == wrapper->scope_histories[l_index]->scope->id) {
 			is_tunnel = true;
 			break;
 		}
@@ -60,25 +61,30 @@ void ChaseExperiment::train_existing_backprop(double target_val,
 	if (history->tunnel_is_hit) {
 		double sum_vals = 0.0;
 		measure_tunnel_vals_helper(wrapper->scope_histories[0],
-								   wrapper->curr_tunnel_parent,
-								   wrapper->curr_tunnel_index,
+								   wrapper->candidates[wrapper->tunnel_iter].first,
+								   wrapper->candidates[wrapper->tunnel_iter].second,
 								   sum_vals);
 		this->sum_signal += sum_vals;
 		this->tunnel_hit_count++;
 
+		int tunnel_parent_id = wrapper->candidates[wrapper->tunnel_iter].first;
+		Tunnel* tunnel = wrapper->candidates[wrapper->tunnel_iter].second;
 		for (int i_index = 0; i_index < (int)history->stack_traces.size(); i_index++) {
 			this->true_histories.push_back(target_val);
 
 			for (int l_index = 0; l_index < (int)history->stack_traces[i_index].size(); l_index++) {
 				ScopeHistory* scope_history = history->stack_traces[i_index][l_index];
 				Scope* scope = scope_history->scope;
-				if (scope == wrapper->curr_tunnel_parent) {
-					if (!scope_history->tunnel_is_init[wrapper->curr_tunnel_index]) {
-						scope_history->tunnel_is_init[wrapper->curr_tunnel_index] = true;
-						Tunnel* tunnel = scope->tunnels[wrapper->curr_tunnel_index];
-						scope_history->tunnel_vals[wrapper->curr_tunnel_index] = tunnel->get_signal(scope_history->obs_history);
-					}
-					this->signal_histories.push_back(scope_history->tunnel_vals[wrapper->curr_tunnel_index]);
+				if (scope->id == tunnel_parent_id) {
+					// if (!scope_history->tunnel_is_init[wrapper->curr_tunnel_index]) {
+					// 	scope_history->tunnel_is_init[wrapper->curr_tunnel_index] = true;
+					// 	Tunnel* tunnel = scope->tunnels[wrapper->curr_tunnel_index];
+					// 	scope_history->tunnel_vals[wrapper->curr_tunnel_index] = tunnel->get_signal(scope_history->obs_history);
+					// }
+					// this->signal_histories.push_back(scope_history->tunnel_vals[wrapper->curr_tunnel_index]);
+
+					double signal = tunnel->get_signal(scope_history->obs_history);
+					this->signal_histories.push_back(signal);
 
 					break;
 				}

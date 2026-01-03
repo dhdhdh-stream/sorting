@@ -22,8 +22,9 @@ using namespace std;
 void ChaseExperiment::measure_check_activate(
 		SolutionWrapper* wrapper) {
 	bool is_tunnel = false;
+	int tunnel_parent_id = wrapper->candidates[wrapper->tunnel_iter].first;
 	for (int l_index = 0; l_index < (int)wrapper->scope_histories.size(); l_index++) {
-		if (wrapper->curr_tunnel_parent == wrapper->scope_histories[l_index]->scope) {
+		if (tunnel_parent_id == wrapper->scope_histories[l_index]->scope->id) {
 			is_tunnel = true;
 			break;
 		}
@@ -129,8 +130,8 @@ void ChaseExperiment::measure_backprop(double target_val,
 	if (history->tunnel_is_hit) {
 		double sum_vals = 0.0;
 		measure_tunnel_vals_helper(wrapper->scope_histories[0],
-								   wrapper->curr_tunnel_parent,
-								   wrapper->curr_tunnel_index,
+								   wrapper->candidates[wrapper->tunnel_iter].first,
+								   wrapper->candidates[wrapper->tunnel_iter].second,
 								   sum_vals);
 		this->sum_signal += sum_vals;
 		this->tunnel_hit_count++;
@@ -145,6 +146,8 @@ void ChaseExperiment::measure_backprop(double target_val,
 		#else
 		if (new_true >= this->existing_true && new_signal >= this->existing_signal) {
 		#endif /* MDEBUG */
+			update_tunnel_success(wrapper);
+
 			double average_hits_per_run = (double)this->tunnel_hit_count / (double)this->total_count;
 
 			this->improvement = average_hits_per_run * (new_signal - this->existing_signal);
@@ -183,6 +186,8 @@ void ChaseExperiment::measure_backprop(double target_val,
 			this->result = EXPERIMENT_RESULT_SUCCESS;
 			#endif /* MDEBUG */
 		} else {
+			update_tunnel_measure_fail(wrapper);
+
 			this->result = EXPERIMENT_RESULT_FAIL;
 		}
 	}

@@ -31,6 +31,16 @@ public:
 
 	Network* signal_network;
 
+	/**
+	 * - compare num_tries vs. num_train_fail
+	 *   - if <50%, protects
+	 *   - if >50%, misleads
+	 */
+	int num_tries;
+	int num_train_fail;
+	int num_measure_fail;
+	int num_success;
+
 	std::vector<int> try_history;
 
 	std::vector<double> val_history;
@@ -51,7 +61,8 @@ public:
 	double get_signal(std::vector<double>& obs);
 
 	void update_vals(int num_runs);
-	bool is_valid();
+	bool is_fail();
+	bool is_long_term();
 
 	void save(std::ofstream& output_file);
 

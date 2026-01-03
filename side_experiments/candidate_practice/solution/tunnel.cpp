@@ -1,5 +1,6 @@
 #include "tunnel.h"
 
+#include <cmath>
 #include <iostream>
 
 #include "network.h"
@@ -20,6 +21,11 @@ Tunnel::Tunnel(std::vector<int>& obs_indexes,
 	this->similarity_network = similarity_network;
 
 	this->signal_network = signal_network;
+
+	this->num_tries = 0;
+	this->num_train_fail = 0;
+	this->num_measure_fail = 0;
+	this->num_success = 0;
 }
 
 Tunnel::Tunnel(Tunnel* original) {
@@ -33,6 +39,11 @@ Tunnel::Tunnel(Tunnel* original) {
 	}
 
 	this->signal_network = new Network(original->signal_network);
+
+	this->num_tries = original->num_tries;
+	this->num_train_fail = original->num_train_fail;
+	this->num_measure_fail = original->num_measure_fail;
+	this->num_success = original->num_success;
 
 	this->try_history = original->try_history;
 	this->val_history = original->val_history;
@@ -58,6 +69,22 @@ Tunnel::Tunnel(ifstream& input_file) {
 	}
 
 	this->signal_network = new Network(input_file);
+
+	string num_tries_line;
+	getline(input_file, num_tries_line);
+	this->num_tries = stoi(num_tries_line);
+
+	string num_train_fail_line;
+	getline(input_file, num_train_fail_line);
+	this->num_train_fail = stoi(num_train_fail_line);
+
+	string num_measure_fail_line;
+	getline(input_file, num_measure_fail_line);
+	this->num_measure_fail = stoi(num_measure_fail_line);
+
+	string num_success_line;
+	getline(input_file, num_success_line);
+	this->num_success = stoi(num_success_line);
 
 	string try_history_size_line;
 	getline(input_file, try_history_size_line);
@@ -121,16 +148,49 @@ void Tunnel::update_vals(int num_runs) {
 	this->vals.clear();
 }
 
+const int MIN_CHECK_NUM_TRIES = 10;
 const int LAST_NUM_CHECK = 5;
 const double MIN_SUCCESS_PERCENT = 0.5;
-bool Tunnel::is_valid() {
-	if ((int)this->val_history.size() < LAST_NUM_CHECK) {
-		return true;
+bool Tunnel::is_fail() {
+	if (this->num_tries >= MIN_CHECK_NUM_TRIES) {
+		double sample_mean = 1.0 - (double)this->num_measure_fail / (double)this->num_tries;
+		double sample_standard_deviation = sqrt(sample_mean * (1.0 - sample_mean));
+		double t_score = (sample_mean - 0.5) / (sample_standard_deviation / sqrt((double)this->num_tries));
+		if (t_score < -1.645) {
+			return true;
+		}
+	}
+
+	if ((int)this->try_history.size() < LAST_NUM_CHECK) {
+		return false;
 	} else {
 		int num_success = 0;
 		for (int i_index = 0; i_index < LAST_NUM_CHECK; i_index++) {
-			int index = (int)this->val_history.size() - 1 - i_index;
-			if (this->val_history[index] == TUNNEL_TRY_STATUS_TRUE_SUCCESS) {
+			int index = (int)this->try_history.size() - 1 - i_index;
+			if (this->try_history[index] == TUNNEL_TRY_STATUS_TRUE_SUCCESS) {
+				num_success++;
+			}
+		}
+		if (num_success >= MIN_SUCCESS_PERCENT * LAST_NUM_CHECK) {
+			return false;
+		} else {
+			return true;
+		}
+	}
+}
+
+/**
+ * - if chasing keeps working, and has worked for a long time
+ */
+const int MIN_LONG_TERM_TRIES = 12;
+bool Tunnel::is_long_term() {
+	if ((int)this->try_history.size() < MIN_LONG_TERM_TRIES) {
+		return false;
+	} else {
+		int num_success = 0;
+		for (int i_index = 0; i_index < LAST_NUM_CHECK; i_index++) {
+			int index = (int)this->try_history.size() - 1 - i_index;
+			if (this->try_history[index] == TUNNEL_TRY_STATUS_TRUE_SUCCESS) {
 				num_success++;
 			}
 		}
@@ -155,6 +215,11 @@ void Tunnel::save(ofstream& output_file) {
 
 	this->signal_network->save(output_file);
 
+	output_file << this->num_tries << endl;
+	output_file << this->num_train_fail << endl;
+	output_file << this->num_measure_fail << endl;
+	output_file << this->num_success << endl;
+
 	output_file << this->try_history.size() << endl;
 	for (int h_index = 0; h_index < (int)this->try_history.size(); h_index++) {
 		output_file << this->try_history[h_index] << endl;
@@ -174,6 +239,11 @@ void Tunnel::print() {
 	cout << endl;
 
 	cout << "this->is_pattern: " << this->is_pattern << endl;
+
+	cout << "this->num_tries: " << this->num_tries << endl;
+	cout << "this->num_train_fail: " << this->num_train_fail << endl;
+	cout << "this->num_measure_fail: " << this->num_measure_fail << endl;
+	cout << "this->num_success: " << this->num_success << endl;
 
 	cout << "this->try_history:";
 	for (int h_index = 0; h_index < (int)this->try_history.size(); h_index++) {

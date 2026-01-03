@@ -16,6 +16,7 @@ class ProblemType;
 class Scope;
 class ScopeHistory;
 class Solution;
+class Tunnel;
 
 class SolutionWrapper {
 public:
@@ -24,13 +25,13 @@ public:
 	/**
 	 * - iter variables
 	 */
+	std::vector<std::pair<int, Tunnel*>> candidates;
 	int tunnel_iter;
-	Scope* curr_tunnel_parent;
-	int curr_tunnel_index;
 	Solution* curr_solution;	// reference
 
 	Solution* potential_solution;
 	Solution* best_solution;
+	int best_index;
 
 	int improvement_iter;
 

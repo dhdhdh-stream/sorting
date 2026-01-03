@@ -27,8 +27,13 @@ void gather_helper(bool in_tunnel,
 				   AbstractNode*& explore_node,
 				   bool& explore_is_branch) {
 	bool new_in_tunnel;
-	if (scope_history->scope == wrapper->curr_tunnel_parent) {
-		new_in_tunnel = true;
+	if (wrapper->candidates.size() > 0) {
+		int tunnel_parent_id = wrapper->candidates[wrapper->tunnel_iter].first;
+		if (scope_history->scope->id == tunnel_parent_id) {
+			new_in_tunnel = true;
+		} else {
+			new_in_tunnel = in_tunnel;
+		}
 	} else {
 		new_in_tunnel = in_tunnel;
 	}
@@ -100,7 +105,7 @@ void gather_helper(bool in_tunnel,
 void create_experiment(ScopeHistory* scope_history,
 					   SolutionWrapper* wrapper) {
 	bool in_tunnel;
-	if (wrapper->curr_tunnel_parent == NULL) {
+	if (wrapper->candidates.size() == 0) {
 		in_tunnel = true;
 	} else {
 		in_tunnel = false;
@@ -116,7 +121,7 @@ void create_experiment(ScopeHistory* scope_history,
 				  explore_is_branch);
 
 	if (explore_node != NULL) {
-		if (wrapper->tunnel_iter == 0) {
+		if (wrapper->candidates.size() == 0) {
 			Experiment* new_experiment = new Experiment(
 				explore_node->parent,
 				explore_node,
@@ -126,27 +131,14 @@ void create_experiment(ScopeHistory* scope_history,
 			// temp
 			cout << "Experiment" << endl;
 		} else {
-			if (wrapper->curr_tunnel_parent == NULL) {
-				// if (explore_node->parent->explore_stack_traces.size() != 0) {
-				// 	CandidateExperiment* new_experiment = new CandidateExperiment(
-				// 		explore_node->parent,
-				// 		explore_node,
-				// 		explore_is_branch);
-				// 	wrapper->curr_experiment = new_experiment;
+			ChaseExperiment* new_experiment = new ChaseExperiment(
+				explore_node->parent,
+				explore_node,
+				explore_is_branch);
+			wrapper->curr_experiment = new_experiment;
 
-				// 	// temp
-				// 	cout << "CandidateExperiment" << endl;
-				// }
-			} else {
-				ChaseExperiment* new_experiment = new ChaseExperiment(
-					explore_node->parent,
-					explore_node,
-					explore_is_branch);
-				wrapper->curr_experiment = new_experiment;
-
-				// temp
-				cout << "ChaseExperiment" << endl;
-			}
+			// temp
+			cout << "ChaseExperiment" << endl;
 		}
 	}
 }
