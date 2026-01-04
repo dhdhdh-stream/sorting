@@ -36,10 +36,10 @@ public:
 	 *   - if <50%, protects
 	 *   - if >50%, misleads
 	 */
-	int num_tries;
-	int num_train_fail;
-	int num_measure_fail;
-	int num_success;
+	std::vector<int> num_tries;
+	std::vector<int> num_train_fail;
+	std::vector<int> num_measure_fail;
+	std::vector<int> num_success;
 
 	std::vector<int> try_history;
 

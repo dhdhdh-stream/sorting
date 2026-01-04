@@ -22,10 +22,10 @@ Tunnel::Tunnel(std::vector<int>& obs_indexes,
 
 	this->signal_network = signal_network;
 
-	this->num_tries = 0;
-	this->num_train_fail = 0;
-	this->num_measure_fail = 0;
-	this->num_success = 0;
+	this->num_tries = vector<int>{0};
+	this->num_train_fail = vector<int>{0};
+	this->num_measure_fail = vector<int>{0};
+	this->num_success = vector<int>{0};
 }
 
 Tunnel::Tunnel(Tunnel* original) {
@@ -70,21 +70,33 @@ Tunnel::Tunnel(ifstream& input_file) {
 
 	this->signal_network = new Network(input_file);
 
-	string num_tries_line;
-	getline(input_file, num_tries_line);
-	this->num_tries = stoi(num_tries_line);
+	string num_iters_line;
+	getline(input_file, num_iters_line);
+	int num_iters = stoi(num_iters_line);
 
-	string num_train_fail_line;
-	getline(input_file, num_train_fail_line);
-	this->num_train_fail = stoi(num_train_fail_line);
+	for (int i_index = 0; i_index < num_iters; i_index++) {
+		string num_tries_line;
+		getline(input_file, num_tries_line);
+		this->num_tries.push_back(stoi(num_tries_line));
+	}
 
-	string num_measure_fail_line;
-	getline(input_file, num_measure_fail_line);
-	this->num_measure_fail = stoi(num_measure_fail_line);
+	for (int i_index = 0; i_index < num_iters; i_index++) {
+		string num_train_fail_line;
+		getline(input_file, num_train_fail_line);
+		this->num_train_fail.push_back(stoi(num_train_fail_line));
+	}
 
-	string num_success_line;
-	getline(input_file, num_success_line);
-	this->num_success = stoi(num_success_line);
+	for (int i_index = 0; i_index < num_iters; i_index++) {
+		string num_measure_fail_line;
+		getline(input_file, num_measure_fail_line);
+		this->num_measure_fail.push_back(stoi(num_measure_fail_line));
+	}
+
+	for (int i_index = 0; i_index < num_iters; i_index++) {
+		string num_success_line;
+		getline(input_file, num_success_line);
+		this->num_success.push_back(stoi(num_success_line));
+	}
 
 	string try_history_size_line;
 	getline(input_file, try_history_size_line);
@@ -152,10 +164,37 @@ const int MIN_CHECK_NUM_TRIES = 10;
 const int LAST_NUM_CHECK = 5;
 const double MIN_SUCCESS_PERCENT = 0.5;
 bool Tunnel::is_fail() {
-	if (this->num_tries >= MIN_CHECK_NUM_TRIES) {
-		double sample_mean = 1.0 - (double)this->num_measure_fail / (double)this->num_tries;
+	double sum_num_tries = 0;
+	for (int i_index = 0; i_index < (int)this->num_tries.size(); i_index++) {
+		sum_num_tries += this->num_tries[i_index];
+	}
+
+	double sum_num_success = 0;
+	for (int i_index = 0; i_index < (int)this->num_success.size(); i_index++) {
+		sum_num_success += this->num_success[i_index];
+	}
+
+	double sum_num_train_fail = 0;
+	for (int i_index = 0; i_index < (int)this->num_train_fail.size(); i_index++) {
+		sum_num_train_fail += this->num_train_fail[i_index];
+	}
+
+	if (sum_num_tries >= MIN_CHECK_NUM_TRIES) {
+		if (sum_num_success > 0) {
+			double success_mean = (double)sum_num_success / (double)sum_num_tries;
+			double success_standard_deviation = sqrt(success_mean * (1.0 - success_mean));
+			double success_t_score = (success_mean - 0.25) / (success_standard_deviation / sqrt((double)sum_num_tries));
+			if (success_t_score > -1.645) {
+				return false;
+			}
+		}
+
+		if (sum_num_train_fail == sum_num_tries) {
+			return true;
+		}
+		double sample_mean = 1.0 - (double)sum_num_train_fail / (double)sum_num_tries;
 		double sample_standard_deviation = sqrt(sample_mean * (1.0 - sample_mean));
-		double t_score = (sample_mean - 0.5) / (sample_standard_deviation / sqrt((double)this->num_tries));
+		double t_score = (sample_mean - 0.5) / (sample_standard_deviation / sqrt((double)sum_num_tries));
 		if (t_score < -1.645) {
 			return true;
 		}
@@ -215,10 +254,19 @@ void Tunnel::save(ofstream& output_file) {
 
 	this->signal_network->save(output_file);
 
-	output_file << this->num_tries << endl;
-	output_file << this->num_train_fail << endl;
-	output_file << this->num_measure_fail << endl;
-	output_file << this->num_success << endl;
+	output_file << this->num_tries.size() << endl;
+	for (int i_index = 0; i_index < (int)this->num_tries.size(); i_index++) {
+		output_file << this->num_tries[i_index] << endl;
+	}
+	for (int i_index = 0; i_index < (int)this->num_train_fail.size(); i_index++) {
+		output_file << this->num_train_fail[i_index] << endl;
+	}
+	for (int i_index = 0; i_index < (int)this->num_measure_fail.size(); i_index++) {
+		output_file << this->num_measure_fail[i_index] << endl;
+	}
+	for (int i_index = 0; i_index < (int)this->num_success.size(); i_index++) {
+		output_file << this->num_success[i_index] << endl;
+	}
 
 	output_file << this->try_history.size() << endl;
 	for (int h_index = 0; h_index < (int)this->try_history.size(); h_index++) {
@@ -240,10 +288,26 @@ void Tunnel::print() {
 
 	cout << "this->is_pattern: " << this->is_pattern << endl;
 
-	cout << "this->num_tries: " << this->num_tries << endl;
-	cout << "this->num_train_fail: " << this->num_train_fail << endl;
-	cout << "this->num_measure_fail: " << this->num_measure_fail << endl;
-	cout << "this->num_success: " << this->num_success << endl;
+	cout << "this->num_tries:";
+	for (int i_index = 0; i_index < (int)this->num_tries.size(); i_index++) {
+		cout << " " << this->num_tries[i_index];
+	}
+	cout << endl;
+	cout << "this->num_train_fail:";
+	for (int i_index = 0; i_index < (int)this->num_train_fail.size(); i_index++) {
+		cout << " " << this->num_train_fail[i_index];
+	}
+	cout << endl;
+	cout << "this->num_measure_fail:";
+	for (int i_index = 0; i_index < (int)this->num_measure_fail.size(); i_index++) {
+		cout << " " << this->num_measure_fail[i_index];
+	}
+	cout << endl;
+	cout << "this->num_success:";
+	for (int i_index = 0; i_index < (int)this->num_success.size(); i_index++) {
+		cout << " " << this->num_success[i_index];
+	}
+	cout << endl;
 
 	cout << "this->try_history:";
 	for (int h_index = 0; h_index < (int)this->try_history.size(); h_index++) {

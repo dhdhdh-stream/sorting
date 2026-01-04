@@ -158,13 +158,15 @@ void SolutionWrapper::experiment_end(double result) {
 				this->curr_experiment = NULL;
 
 				this->improvement_iter++;
-				if (this->improvement_iter >= IMPROVEMENTS_PER_ITER) {
+				// if (this->improvement_iter >= IMPROVEMENTS_PER_ITER) {
+				if (this->improvement_iter >= 10) {
 					Scope* last_updated_scope = this->best_experiment->scope_context;
 
 					this->best_experiment->add(this);
 
 					this->curr_solution->curr_score = this->best_experiment->calc_new_score();
 
+					cout << "this->curr_solution->existing_scope_histories.size(): " << this->curr_solution->existing_scope_histories.size() << endl;
 					if (this->curr_solution->existing_scope_histories.size() != 0) {
 						find_potential_tunnels(this->curr_solution->existing_scope_histories,
 											   this->best_experiment->new_scope_histories,
@@ -206,8 +208,30 @@ void SolutionWrapper::experiment_end(double result) {
 
 				Tunnel* tunnel = this->candidates[this->tunnel_iter].second;
 				if (tunnel->is_fail()) {
+					cout << "fail" << endl;
+					tunnel->print();
+
+					if (this->best_experiment != NULL) {
+						delete this->best_experiment;
+						this->best_experiment = NULL;
+					}
+
+					/**
+					 * - tunnel may have been maxed out but was previously useful, so still consider adding
+					 */
 					if (this->potential_solution != NULL) {
-						delete this->potential_solution;
+						if (this->best_solution == NULL) {
+							this->best_solution = this->potential_solution;
+							this->best_index = this->tunnel_iter;
+						} else {
+							if (this->potential_solution->curr_score > this->best_solution->curr_score) {
+								delete this->best_solution;
+								this->best_solution = this->potential_solution;
+								this->best_index = this->tunnel_iter;
+							} else {
+								delete this->potential_solution;
+							}
+						}
 						this->potential_solution = NULL;
 					}
 
@@ -272,6 +296,10 @@ void SolutionWrapper::experiment_end(double result) {
 					}
 
 					if (this->potential_solution->timestamp >= this->solution->timestamp + ITERS_PER_TUNNEL) {
+						cout << "succeed" << endl;
+						Tunnel* tunnel = this->candidates[this->tunnel_iter].second;
+						tunnel->print();
+
 						if (this->best_solution == NULL) {
 							this->best_solution = this->potential_solution;
 							this->best_index = this->tunnel_iter;

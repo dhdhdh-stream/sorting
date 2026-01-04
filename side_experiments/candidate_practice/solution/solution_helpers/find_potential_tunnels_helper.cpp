@@ -252,7 +252,8 @@ Tunnel* create_pattern_candidate(vector<vector<double>>& starting_existing_obs_v
 								 vector<vector<double>>& ending_existing_obs_vals,
 								 vector<vector<double>>& explore_obs_vals,
 								 vector<double>& explore_target_vals) {
-	geometric_distribution<int> num_obs_distribution(0.3);
+	// geometric_distribution<int> num_obs_distribution(0.3);
+	geometric_distribution<int> num_obs_distribution(0.2);
 	int num_obs;
 	while (true) {
 		num_obs = 2 + num_obs_distribution(generator);
@@ -411,7 +412,8 @@ void find_potential_tunnels(vector<ScopeHistory*>& starting_scope_histories,
 
 			Tunnel* candidate;
 			uniform_int_distribution<int> pattern_distribution(0, 1);
-			if (pattern_distribution(generator) == 0) {
+			// if (pattern_distribution(generator) == 0) {
+			if (true) {
 				candidate = create_pattern_candidate(starting_existing_obs_vals,
 													 ending_existing_obs_vals,
 													 explore_obs_vals,
@@ -467,6 +469,10 @@ void find_potential_tunnels(vector<ScopeHistory*>& starting_scope_histories,
 			double t_score = (ending_val_average - starting_val_average) / denom;
 
 			if (t_score >= 2.326) {
+				cout << "t_score: " << t_score << endl;
+				cout << "scope_context->id: " << scope_context->id << endl;
+				candidate->print();
+
 				potential_candidates.push_back({t_score, {scope_context->id, candidate}});
 			} else {
 				delete candidate;

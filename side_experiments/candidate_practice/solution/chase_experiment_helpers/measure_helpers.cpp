@@ -141,6 +141,11 @@ void ChaseExperiment::measure_backprop(double target_val,
 		double new_true = this->sum_true / this->hit_count;
 		double new_signal = this->sum_signal / this->tunnel_hit_count;
 
+		cout << "this->existing_true: " << this->existing_true << endl;
+		cout << "new_true: " << new_true << endl;
+		cout << "this->existing_signal: " << this->existing_signal << endl;
+		cout << "new_signal: " << new_signal << endl;
+
 		#if defined(MDEBUG) && MDEBUG
 		if ((new_true >= this->existing_true && new_signal >= this->existing_signal) || rand()%2 == 0) {
 		#else

@@ -53,8 +53,8 @@ void update_tunnel_train_fail(SolutionWrapper* wrapper) {
 	// }
 
 	Tunnel* tunnel = wrapper->candidates[wrapper->tunnel_iter].second;
-	tunnel->num_tries++;
-	tunnel->num_train_fail++;
+	tunnel->num_tries.back()++;
+	tunnel->num_train_fail.back()++;
 }
 
 void update_tunnel_measure_fail(SolutionWrapper* wrapper) {
@@ -78,8 +78,8 @@ void update_tunnel_measure_fail(SolutionWrapper* wrapper) {
 	// }
 
 	Tunnel* tunnel = wrapper->candidates[wrapper->tunnel_iter].second;
-	tunnel->num_tries++;
-	tunnel->num_measure_fail++;
+	tunnel->num_tries.back()++;
+	tunnel->num_measure_fail.back()++;
 }
 
 void update_tunnel_success(SolutionWrapper* wrapper) {
@@ -103,8 +103,8 @@ void update_tunnel_success(SolutionWrapper* wrapper) {
 	// }
 
 	Tunnel* tunnel = wrapper->candidates[wrapper->tunnel_iter].second;
-	tunnel->num_tries++;
-	tunnel->num_success++;
+	tunnel->num_tries.back()++;
+	tunnel->num_success.back()++;
 }
 
 // void update_tunnel_try_history(SolutionWrapper* wrapper) {
@@ -227,6 +227,10 @@ void measure_tunnel_vals_helper(ScopeHistory* scope_history,
 void measure_tunnel_vals_helper(ScopeHistory* scope_history) {
 	Scope* scope = scope_history->scope;
 
+	while (scope_history->tunnel_is_init.size() < scope->tunnels.size()) {
+		scope_history->tunnel_is_init.push_back(false);
+		scope_history->tunnel_vals.push_back(0.0);
+	}
 	for (int t_index = 0; t_index < (int)scope->tunnels.size(); t_index++) {
 		if (!scope_history->tunnel_is_init[t_index]) {
 			scope_history->tunnel_is_init[t_index] = true;

@@ -64,6 +64,10 @@ SolutionWrapper::SolutionWrapper(std::string path,
 SolutionWrapper::~SolutionWrapper() {
 	delete this->solution;
 
+	for (int c_index = 0; c_index < (int)this->candidates.size(); c_index++) {
+		delete this->candidates[c_index].second;
+	}
+
 	if (this->potential_solution != NULL) {
 		delete this->potential_solution;
 	}

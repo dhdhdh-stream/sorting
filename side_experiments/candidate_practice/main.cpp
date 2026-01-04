@@ -1,6 +1,8 @@
 // - maybe for most problems, just helps with optimization?
 //   - difficult to find "global truths" in general
 
+// TODO: use branch to calc diffs instead of overall
+
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -12,13 +14,14 @@
 #include "branch_node.h"
 #include "constants.h"
 #include "globals.h"
+#include "minesweeper.h"
 #include "problem.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
 #include "solution_helpers.h"
 #include "solution_wrapper.h"
-#include "tunnel_practice.h"
+// #include "tunnel_practice.h"
 #include "utilities.h"
 
 using namespace std;
@@ -35,7 +38,8 @@ int main(int argc, char* argv[]) {
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
 
-	ProblemType* problem_type = new TypeTunnelPractice();
+	// ProblemType* problem_type = new TypeTunnelPractice();
+	ProblemType* problem_type = new TypeMinesweeper();
 
 	string filename;
 	SolutionWrapper* solution_wrapper;

@@ -14,6 +14,7 @@
 #include "solution_helpers.h"
 #include "solution_wrapper.h"
 #include "start_node.h"
+#include "tunnel.h"
 
 using namespace std;
 
@@ -362,6 +363,12 @@ void ChaseExperiment::add(SolutionWrapper* wrapper) {
 		next_node->ancestor_ids.push_back(this->best_new_nodes[n_index]->id);
 	}
 	this->best_new_nodes.clear();
+
+	Tunnel* tunnel = wrapper->candidates[wrapper->tunnel_iter].second;
+	tunnel->num_tries.push_back(0);
+	tunnel->num_train_fail.push_back(0);
+	tunnel->num_measure_fail.push_back(0);
+	tunnel->num_success.push_back(0);
 }
 
 double ChaseExperiment::calc_new_score() {
