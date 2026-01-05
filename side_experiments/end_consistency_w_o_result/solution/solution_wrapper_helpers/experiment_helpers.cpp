@@ -113,41 +113,14 @@ void SolutionWrapper::experiment_end(double result) {
 		} else if (this->curr_experiment->result == EXPERIMENT_RESULT_SUCCESS) {
 			this->curr_experiment->clean();
 
-			if ((this->best_experiments.back() == NULL
-					|| this->best_experiments.back()->improvement < this->curr_experiment->improvement)) {
-				if (this->best_experiments.back() != NULL) {
-					delete this->best_experiments.back();
-				}
-				this->best_experiments.back() = this->curr_experiment;
-
-				int index = this->best_experiments.size()-1;
-				while (true) {
-					if (this->best_experiments[index-1] == NULL
-							|| this->best_experiments[index-1]->improvement < this->best_experiments[index]->improvement) {
-						AbstractExperiment* temp = this->best_experiments[index];
-						this->best_experiments[index] = this->best_experiments[index-1];
-						this->best_experiments[index-1] = temp;
-					} else {
-						break;
-					}
-
-					index--;
-					if (index == 0) {
-						break;
-					}
-				}
-			} else {
-				delete this->curr_experiment;
+			if (this->best_experiments.size() == 0) {
+				this->curr_target = this->curr_experiment->improvement;
 			}
 
+			this->best_experiments.push_back(this->curr_experiment);
 			this->curr_experiment = NULL;
 
-			this->improvement_iter++;
-			bool is_done = false;
-			if (this->improvement_iter >= BRANCH_IMPROVEMENTS_PER_ITER) {
-				is_done = true;
-			}
-			if (is_done) {
+			if (this->best_experiments.size() >= EXPERIMENTS_PER_ITER) {
 				for (int s_index = 0; s_index < (int)this->solution->scopes.size(); s_index++) {
 					this->solution->scopes[s_index]->update_signals();
 				}
@@ -160,7 +133,7 @@ void SolutionWrapper::experiment_end(double result) {
 					cout << "improvement: " << this->best_experiments[0]->improvement << endl;
 					this->best_experiments[0]->print();
 				}
-				for (int e_index = 1; e_index < SAVE_PER_ITER; e_index++) {
+				for (int e_index = 1; e_index < (int)this->best_experiments.size(); e_index++) {
 					double curr_consistency = calc_consistency(this->best_experiments[e_index]);
 					cout << e_index << endl;
 					cout << "consistency: " << curr_consistency << endl;
@@ -178,10 +151,10 @@ void SolutionWrapper::experiment_end(double result) {
 
 				this->solution->curr_score = this->best_experiments[best_index]->calc_new_score();
 
-				for (int e_index = 0; e_index < SAVE_PER_ITER; e_index++) {
-					delete this->best_experiments[e_index];
+				for (int e_index = 0; e_index < (int)this->best_experiments.size(); e_index++) {
 					this->best_experiments[e_index] = NULL;
 				}
+				this->best_experiments.clear();
 
 				clean_scope(last_updated_scope);
 
@@ -191,8 +164,6 @@ void SolutionWrapper::experiment_end(double result) {
 				if (this->solution->timestamp >= RUN_TIMESTEPS) {
 					this->solution->timestamp = -1;
 				}
-
-				this->improvement_iter = 0;
 			}
 		}
 	}

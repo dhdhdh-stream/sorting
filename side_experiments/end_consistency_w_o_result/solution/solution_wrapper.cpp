@@ -10,10 +10,7 @@ SolutionWrapper::SolutionWrapper() {
 	this->solution = new Solution();
 	this->solution->init();
 
-	this->improvement_iter = 0;
-
 	this->curr_experiment = NULL;
-	this->best_experiments = vector<AbstractExperiment*>(SAVE_PER_ITER, NULL);
 
 	this->experiment_history = NULL;
 
@@ -29,10 +26,7 @@ SolutionWrapper::SolutionWrapper(std::string path,
 	this->solution = new Solution();
 	this->solution->load(path, name);
 
-	this->improvement_iter = 0;
-
 	this->curr_experiment = NULL;
-	this->best_experiments = vector<AbstractExperiment*>(SAVE_PER_ITER, NULL);
 
 	this->experiment_history = NULL;
 

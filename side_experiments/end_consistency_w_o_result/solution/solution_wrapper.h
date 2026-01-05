@@ -28,10 +28,9 @@ public:
 	/**
 	 * - iter variables
 	 */
-	int improvement_iter;
-
 	AbstractExperiment* curr_experiment;
 	std::vector<AbstractExperiment*> best_experiments;
+	double curr_target;
 
 	/**
 	 * - run variables

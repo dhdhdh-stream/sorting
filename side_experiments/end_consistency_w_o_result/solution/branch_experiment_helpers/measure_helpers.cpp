@@ -120,15 +120,21 @@ void BranchExperiment::measure_backprop(double target_val,
 		this->state_iter++;
 		if (this->state_iter >= MEASURE_ITERS) {
 			double new_score = this->sum_scores / this->state_iter;
+			this->improvement = average_hits_per_run * (new_score - this->existing_score);
+
+			double target;
+			if (wrapper->best_experiments.size() == 0) {
+				target = 0.0;
+			} else {
+				target = wrapper->curr_target;
+			}
 
 			#if defined(MDEBUG) && MDEBUG
-			if (new_score >= this->existing_score || rand()%2 == 0) {
+			if (this->improvement >= target || rand()%2 == 0) {
 			#else
-			if (new_score >= this->existing_score) {
+			if (this->improvement >= target) {
 			#endif /* MDEBUG */
 				double average_hits_per_run = (double)MEASURE_ITERS / (double)this->total_count;
-
-				this->improvement = average_hits_per_run * (new_score - this->existing_score);
 
 				cout << "BranchExperiment" << endl;
 				cout << "this->scope_context->id: " << this->scope_context->id << endl;
