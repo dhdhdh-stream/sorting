@@ -48,6 +48,26 @@
 //   - mislead is: possibility of making bad decisions
 //     - true cannot fail this way, but signal now can
 
+// - but what about when training on true + signals at the same time?
+//   - true can potentially catch and remove path bad case
+//     - so failure now is just mislead?
+//       - and noise still
+//       - but if there's something significantly bad, can now say that signal misleads?
+//   - noise kind of messes everything up
+//     - because true doesn't 0% everything it's supposed to as well
+
+// - simply put, check overall success rate (i.e., measure success rate) of signal vs true
+//   - without doing any pre-filtering
+//   - with a good, non-misleading signal, signal should be higher
+// - don't even need on measure?
+//   - just measure on test
+
+// - actually, no, there can be branches that true would catch that signal wouldn't
+//   - so signal can mislead on partial
+
+// TODO: use both true network and signal network
+// - if true not significatly worse, then go with signal
+
 #include <chrono>
 #include <iostream>
 #include <map>
