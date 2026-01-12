@@ -33,28 +33,46 @@ void Experiment::measure_step(vector<double>& obs,
 	ExperimentState* experiment_state = (ExperimentState*)wrapper->experiment_context.back();
 
 	if (experiment_state->step_index == 0) {
-		this->new_network->activate(obs);
+		bool is_branch;
+		for (int n_index = 0; n_index < (int)this->networks.size(); n_index++) {
+			this->networks[n_index]->activate(obs);
+			double output = this->networks[n_index]->output->acti_vals[0];
+			if (output >= 0.0) {
+				#if defined(MDEBUG) && MDEBUG
+				if (output >= this->above_min[n_index] || rand()%2 == 0) {
+				#else
+				if (output >= this->above_min[n_index]) {
+				#endif /* MDEBUG */
+					is_branch = true;
+					break;
+				}
+			} else {
+				#if defined(MDEBUG) && MDEBUG
+				if (output <= this->below_max[n_index] || rand()%2 == 0) {
+				#else
+				if (output <= this->below_max[n_index]) {
+				#endif /* MDEBUG */
+					is_branch = false;
+					break;
+				}
+			}
+		}
 
-		bool decision_is_branch;
 		#if defined(MDEBUG) && MDEBUG
 		if (wrapper->curr_run_seed%2 == 0) {
-			decision_is_branch = true;
+			is_branch = true;
 		} else {
-			decision_is_branch = false;
+			is_branch = false;
 		}
 		wrapper->curr_run_seed = xorshift(wrapper->curr_run_seed);
-		#else
-		if (this->new_network->output->acti_vals[0] >= 0.0) {
-			decision_is_branch = true;
-		} else {
-			decision_is_branch = false;
-		}
 		#endif /* MDEBUG */
 
-		if (!decision_is_branch) {
+		if (!is_branch) {
 			delete experiment_state;
 			wrapper->experiment_context.back() = NULL;
 			return;
+		} else {
+			this->branch_stack_traces.push_back(wrapper->scope_histories);
 		}
 	}
 

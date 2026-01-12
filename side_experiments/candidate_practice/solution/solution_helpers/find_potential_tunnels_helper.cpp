@@ -23,68 +23,7 @@ const double MIN_TRUE_RATIO = 0.25;
 
 const int FIND_NUM_TRIES = 100;
 
-void gather_helper(ScopeHistory* scope_history,
-				   int& node_count,
-				   AbstractNode*& explore_node,
-				   bool& explore_is_branch) {
-	for (map<int, AbstractNodeHistory*>::iterator h_it = scope_history->node_histories.begin();
-			h_it != scope_history->node_histories.end(); h_it++) {
-		AbstractNode* node = h_it->second->node;
-		switch (node->type) {
-		case NODE_TYPE_START:
-		case NODE_TYPE_ACTION:
-		case NODE_TYPE_OBS:
-			{
-				uniform_int_distribution<int> select_distribution(0, node_count);
-				node_count++;
-				if (select_distribution(generator) == 0) {
-					explore_node = node;
-					explore_is_branch = false;
-				}
-			}
-			break;
-		case NODE_TYPE_SCOPE:
-			{
-				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)h_it->second;
-
-				gather_helper(scope_node_history->scope_history,
-							  node_count,
-							  explore_node,
-							  explore_is_branch);
-
-				{
-					uniform_int_distribution<int> select_distribution(0, node_count);
-					node_count++;
-					if (select_distribution(generator) == 0) {
-						explore_node = node;
-						explore_is_branch = false;
-					}
-				}
-			}
-			break;
-		case NODE_TYPE_BRANCH:
-			{
-				BranchNodeHistory* branch_node_history = (BranchNodeHistory*)h_it->second;
-				if (branch_node_history->is_branch) {
-					uniform_int_distribution<int> select_distribution(0, node_count);
-					node_count++;
-					if (select_distribution(generator) == 0) {
-						explore_node = node;
-						explore_is_branch = true;
-					}
-				} else {
-					uniform_int_distribution<int> select_distribution(0, node_count);
-					node_count++;
-					if (select_distribution(generator) == 0) {
-						explore_node = node;
-						explore_is_branch = false;
-					}
-				}
-			}
-			break;
-		}
-	}
-}
+const int MAX_CANDIDATES = 5;
 
 void select_parent_tunnel_helper(Scope* scope_context,
 								 Scope*& parent_tunnel_parent,
@@ -98,9 +37,7 @@ void select_parent_tunnel_helper(Scope* scope_context,
 		 */
 		Scope* scope = scope_context->explore_stack_traces[stack_trace_index][l_index]->scope;
 		for (int t_index = 0; t_index < (int)scope->tunnels.size(); t_index++) {
-			if (scope->tunnels[t_index]->is_long_term()) {
-				possible_parents.push_back({scope, t_index});
-			}
+			possible_parents.push_back({scope, t_index});
 		}
 	}
 	bool is_true;
@@ -371,24 +308,13 @@ Tunnel* create_pattern_candidate(vector<vector<double>>& starting_existing_obs_v
 	return new_tunnel;
 }
 
-const int MAX_CANDIDATES = 5;
-void find_potential_tunnels(vector<ScopeHistory*>& starting_scope_histories,
+void find_potential_tunnels(Scope* scope_context,
+							vector<ScopeHistory*>& starting_scope_histories,
 							vector<ScopeHistory*>& ending_scope_histories,
+							vector<vector<ScopeHistory*>>& ending_branch_stack_traces,
 							SolutionWrapper* wrapper) {
-	vector<pair<double, pair<int,Tunnel*>>> potential_candidates;
-	for (int try_index = 0; try_index < FIND_NUM_TRIES; try_index++) {
-		uniform_int_distribution<int> gather_sample_distribution(0, ending_scope_histories.size()-1);
-
-		int node_count = 0;
-		AbstractNode* explore_node = NULL;
-		bool explore_is_branch = false;
-		gather_helper(ending_scope_histories[gather_sample_distribution(generator)],
-					  node_count,
-					  explore_node,
-					  explore_is_branch);
-
-		Scope* scope_context = explore_node->parent;
-
+	int num_tries = 0;
+	while (wrapper->candidates.size() < NUM_CANDIDATES) {
 		if (scope_context->explore_stack_traces.size() > 0) {
 			vector<vector<double>> explore_obs_vals;
 			vector<double> explore_target_vals;
@@ -412,8 +338,7 @@ void find_potential_tunnels(vector<ScopeHistory*>& starting_scope_histories,
 
 			Tunnel* candidate;
 			uniform_int_distribution<int> pattern_distribution(0, 1);
-			// if (pattern_distribution(generator) == 0) {
-			if (true) {
+			if (pattern_distribution(generator) == 0) {
 				candidate = create_pattern_candidate(starting_existing_obs_vals,
 													 ending_existing_obs_vals,
 													 explore_obs_vals,
@@ -427,9 +352,10 @@ void find_potential_tunnels(vector<ScopeHistory*>& starting_scope_histories,
 			for (int h_index = 0; h_index < (int)starting_existing_obs_vals.size(); h_index++) {
 				starting_vals[h_index] = candidate->get_signal(starting_existing_obs_vals[h_index]);
 			}
-			vector<double> ending_vals(ending_existing_obs_vals.size());
-			for (int h_index = 0; h_index < (int)ending_existing_obs_vals.size(); h_index++) {
-				ending_vals[h_index] = candidate->get_signal(ending_existing_obs_vals[h_index]);
+			vector<double> ending_vals;
+			for (int h_index = 0; h_index < (int)ending_branch_stack_traces.size(); h_index++) {
+				ending_vals.push_back(candidate->get_signal(
+					ending_branch_stack_traces[h_index].back()->obs_history));
 			}
 
 			double starting_sum_vals = 0.0;
@@ -473,26 +399,15 @@ void find_potential_tunnels(vector<ScopeHistory*>& starting_scope_histories,
 				cout << "scope_context->id: " << scope_context->id << endl;
 				candidate->print();
 
-				potential_candidates.push_back({t_score, {scope_context->id, candidate}});
+				wrapper->candidates.push_back({scope_context->id, candidate});
 			} else {
 				delete candidate;
 			}
 		}
-	}
 
-	if (potential_candidates.size() <= MAX_CANDIDATES) {
-		for (int c_index = 0; c_index < (int)potential_candidates.size(); c_index++) {
-			wrapper->candidates.push_back(potential_candidates[c_index].second);
-		}
-	} else {
-		sort(potential_candidates.begin(), potential_candidates.end());
-
-		for (int c_index = 0; c_index < (int)potential_candidates.size(); c_index++) {
-			if (c_index + MAX_CANDIDATES >= (int)potential_candidates.size()) {
-				wrapper->candidates.push_back(potential_candidates[c_index].second);
-			} else {
-				delete potential_candidates[c_index].second.second;
-			}
+		num_tries++;
+		if (num_tries >= FIND_NUM_TRIES) {
+			break;
 		}
 	}
 }

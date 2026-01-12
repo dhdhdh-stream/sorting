@@ -36,25 +36,29 @@ void Experiment::capture_verify_step(vector<double>& obs,
 	ExperimentState* experiment_state = (ExperimentState*)wrapper->experiment_context.back();
 
 	if (experiment_state->step_index == 0) {
-		this->new_network->activate(obs);
+		vector<double> scores(this->networks.size());
+		for (int n_index = 0; n_index < (int)this->networks.size(); n_index++) {
+			this->networks[n_index]->activate(obs);
+			scores[n_index] = this->networks[n_index]->output->acti_vals[0];
+		}
 
-		this->verify_scores.push_back(this->new_network->output->acti_vals[0]);
+		this->verify_scores.push_back(scores);
 
 		cout << "wrapper->starting_run_seed: " << wrapper->starting_run_seed << endl;
 		cout << "wrapper->curr_run_seed: " << wrapper->curr_run_seed << endl;
 		wrapper->problem->print();
 
-		bool decision_is_branch;
+		bool is_branch;
 		if (wrapper->curr_run_seed%2 == 0) {
-			decision_is_branch = true;
+			is_branch = true;
 		} else {
-			decision_is_branch = false;
+			is_branch = false;
 		}
 		wrapper->curr_run_seed = xorshift(wrapper->curr_run_seed);
 
-		cout << "decision_is_branch: " << decision_is_branch << endl;
+		cout << "is_branch: " << is_branch << endl;
 
-		if (!decision_is_branch) {
+		if (!is_branch) {
 			delete experiment_state;
 			wrapper->experiment_context.back() = NULL;
 			return;

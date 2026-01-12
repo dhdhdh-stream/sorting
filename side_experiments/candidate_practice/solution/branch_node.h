@@ -15,7 +15,9 @@ class SolutionWrapper;
 class BranchNodeHistory;
 class BranchNode : public AbstractNode {
 public:
-	Network* val_network;
+	std::vector<Network*> networks;
+	std::vector<double> above_min;
+	std::vector<double> below_max;
 
 	int original_next_node_id;
 	AbstractNode* original_next_node;
@@ -24,7 +26,7 @@ public:
 
 	#if defined(MDEBUG) && MDEBUG
 	void* verify_key;
-	std::vector<double> verify_scores;
+	std::vector<std::vector<double>> verify_scores;
 	#endif /* MDEBUG */
 
 	BranchNode();

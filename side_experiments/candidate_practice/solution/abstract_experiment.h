@@ -30,6 +30,8 @@ public:
 
 	int result;
 
+	std::vector<std::vector<ScopeHistory*>> branch_stack_traces;
+
 	std::vector<ScopeHistory*> new_scope_histories;
 	std::vector<double> new_target_val_histories;
 

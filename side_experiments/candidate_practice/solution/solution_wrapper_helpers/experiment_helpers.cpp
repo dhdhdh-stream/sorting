@@ -1,12 +1,7 @@
-// - for now, try to chase tunnel after every update
-//   - don't worry about recursive
-
 #include "solution_wrapper.h"
 
 #include <iostream>
 
-#include "candidate_experiment.h"
-#include "chase_experiment.h"
 #include "constants.h"
 #include "experiment.h"
 #include "globals.h"
@@ -21,17 +16,6 @@
 using namespace std;
 
 const int RUN_TIMESTEPS = 100;
-
-#if defined(MDEBUG) && MDEBUG
-const int ITERS_PER_TUNNEL = 2;
-const int TUNNEL_NUM_CANDIDATES = 2;
-#else
-const int ITERS_PER_TUNNEL = 5;
-const int TUNNEL_NUM_CANDIDATES = 6;
-#endif /* MDEBUG */
-
-const int TUNNEL_EARLY_FAIL_MIN_TRIES = 20;
-const double TUNNEL_EARLY_FAIL_MIN_RATIO = 0.7;
 
 void SolutionWrapper::experiment_init() {
 	this->num_actions = 1;
@@ -50,24 +34,12 @@ void SolutionWrapper::experiment_init() {
 				this->experiment_history = new ExperimentHistory(experiment);
 			}
 			break;
-		// case EXPERIMENT_TYPE_CANDIDATE:
-		// 	{
-		// 		CandidateExperiment* candidate_experiment = (CandidateExperiment*)this->curr_experiment;
-		// 		this->experiment_history = new CandidateExperimentHistory(candidate_experiment);
-		// 	}
-		// 	break;
-		case EXPERIMENT_TYPE_CHASE:
-			{
-				ChaseExperiment* chase_experiment = (ChaseExperiment*)this->curr_experiment;
-				this->experiment_history = new ChaseExperimentHistory(chase_experiment);
-			}
-			break;
 		}
 	}
 
-	ScopeHistory* scope_history = new ScopeHistory(this->curr_solution->scopes[0]);
+	ScopeHistory* scope_history = new ScopeHistory(this->solution->scopes[0]);
 	this->scope_histories.push_back(scope_history);
-	this->node_context.push_back(this->curr_solution->scopes[0]->nodes[0]);
+	this->node_context.push_back(this->solution->scopes[0]->nodes[0]);
 	this->experiment_context.push_back(NULL);
 }
 
@@ -142,219 +114,45 @@ void SolutionWrapper::experiment_end(double result) {
 			} else if (this->curr_experiment->result == EXPERIMENT_RESULT_SUCCESS) {
 				this->curr_experiment->clean();
 
-				if (this->best_experiment == NULL) {
-					this->best_experiment = this->curr_experiment;
-				} else {
-					Experiment* curr = (Experiment*)this->curr_experiment;
-					Experiment* best = (Experiment*)this->best_experiment;
-					if (curr->improvement > best->improvement) {
-						delete this->best_experiment;
-						this->best_experiment = this->curr_experiment;
-					} else {
-						delete this->curr_experiment;
-					}
+				Scope* last_updated_scope = this->curr_experiment->scope_context;
+
+				this->curr_experiment->add(this);
+
+				this->solution->curr_score = this->curr_experiment->calc_new_score();
+
+				if (this->solution->existing_scope_histories.size() != 0) {
+					// find_potential_tunnels(this->curr_solution->existing_scope_histories,
+					// 					   this->curr_experiment->new_scope_histories,
+					// 					   this);
+					find_potential_tunnels(this->curr_experiment->scope_context,
+										   this->solution->existing_scope_histories,
+										   this->curr_experiment->new_scope_histories,
+										   this->curr_experiment->branch_stack_traces,
+										   this);
 				}
 
-				this->curr_experiment = NULL;
-
-				this->improvement_iter++;
-				// if (this->improvement_iter >= IMPROVEMENTS_PER_ITER) {
-				if (this->improvement_iter >= 10) {
-					Scope* last_updated_scope = this->best_experiment->scope_context;
-
-					this->best_experiment->add(this);
-
-					this->curr_solution->curr_score = this->best_experiment->calc_new_score();
-
-					cout << "this->curr_solution->existing_scope_histories.size(): " << this->curr_solution->existing_scope_histories.size() << endl;
-					if (this->curr_solution->existing_scope_histories.size() != 0) {
-						find_potential_tunnels(this->curr_solution->existing_scope_histories,
-											   this->best_experiment->new_scope_histories,
-											   this);
-					}
-
-					for (int h_index = 0; h_index < (int)this->curr_solution->existing_scope_histories.size(); h_index++) {
-						delete this->curr_solution->existing_scope_histories[h_index];
-					}
-					this->curr_solution->existing_scope_histories.clear();
-					this->curr_solution->existing_target_val_histories.clear();
-
-					this->curr_solution->existing_scope_histories = this->best_experiment->new_scope_histories;
-					this->best_experiment->new_scope_histories.clear();
-					this->curr_solution->existing_target_val_histories = this->best_experiment->new_target_val_histories;
-
-					delete this->best_experiment;
-					this->best_experiment = NULL;
-
-					clean_scope(last_updated_scope);
-
-					this->curr_solution->clean_scopes();
-
-					this->curr_solution->timestamp++;
-					if (this->curr_solution->timestamp >= RUN_TIMESTEPS) {
-						this->curr_solution->timestamp = -1;
-					}
-
-					this->improvement_iter = 0;
+				for (int h_index = 0; h_index < (int)this->solution->existing_scope_histories.size(); h_index++) {
+					delete this->solution->existing_scope_histories[h_index];
 				}
-			}
-			break;
-		case EXPERIMENT_TYPE_CHASE:
-			if (this->curr_experiment->result == EXPERIMENT_RESULT_FAIL) {
-				this->curr_experiment->clean();
+				this->solution->existing_scope_histories.clear();
+				this->solution->existing_target_val_histories.clear();
+
+				this->solution->existing_scope_histories = this->curr_experiment->new_scope_histories;
+				this->curr_experiment->new_scope_histories.clear();
+				this->solution->existing_target_val_histories = this->curr_experiment->new_target_val_histories;
+
 				delete this->curr_experiment;
-
 				this->curr_experiment = NULL;
 
-				Tunnel* tunnel = this->candidates[this->tunnel_iter].second;
-				if (tunnel->is_fail()) {
-					cout << "fail" << endl;
-					tunnel->print();
+				clean_scope(last_updated_scope);
 
-					if (this->best_experiment != NULL) {
-						delete this->best_experiment;
-						this->best_experiment = NULL;
-					}
+				this->solution->clean_scopes();
 
-					/**
-					 * - tunnel may have been maxed out but was previously useful, so still consider adding
-					 */
-					if (this->potential_solution != NULL) {
-						if (this->best_solution == NULL) {
-							this->best_solution = this->potential_solution;
-							this->best_index = this->tunnel_iter;
-						} else {
-							if (this->potential_solution->curr_score > this->best_solution->curr_score) {
-								delete this->best_solution;
-								this->best_solution = this->potential_solution;
-								this->best_index = this->tunnel_iter;
-							} else {
-								delete this->potential_solution;
-							}
-						}
-						this->potential_solution = NULL;
-					}
-
-					this->curr_solution = this->solution;
-
-					this->tunnel_iter++;
-				}
-			} else if (this->curr_experiment->result == EXPERIMENT_RESULT_SUCCESS) {
-				this->curr_experiment->clean();
-
-				if (this->best_experiment == NULL) {
-					this->best_experiment = this->curr_experiment;
-				} else {
-					ChaseExperiment* curr = (ChaseExperiment*)this->curr_experiment;
-					ChaseExperiment* best = (ChaseExperiment*)this->best_experiment;
-					if (curr->improvement > best->improvement) {
-						delete this->best_experiment;
-						this->best_experiment = this->curr_experiment;
-					} else {
-						delete this->curr_experiment;
-					}
-				}
-
-				this->curr_experiment = NULL;
-
-				this->improvement_iter++;
-				if (this->improvement_iter >= IMPROVEMENTS_PER_ITER) {
-					if (this->solution == this->curr_solution) {
-						/**
-						 * - 1st iter
-						 */
-						this->solution = new Solution(this->curr_solution);
-						this->potential_solution = this->curr_solution;
-					}
-
-					Scope* last_updated_scope = this->best_experiment->scope_context;
-
-					this->best_experiment->add(this);
-
-					this->curr_solution->curr_score = this->best_experiment->calc_new_score();
-
-					for (int h_index = 0; h_index < (int)this->curr_solution->existing_scope_histories.size(); h_index++) {
-						delete this->curr_solution->existing_scope_histories[h_index];
-					}
-					this->curr_solution->existing_scope_histories.clear();
-					this->curr_solution->existing_target_val_histories.clear();
-
-					this->curr_solution->existing_scope_histories = this->best_experiment->new_scope_histories;
-					this->best_experiment->new_scope_histories.clear();
-					this->curr_solution->existing_target_val_histories = this->best_experiment->new_target_val_histories;
-
-					delete this->best_experiment;
-					this->best_experiment = NULL;
-
-					clean_scope(last_updated_scope);
-
-					this->curr_solution->clean_scopes();
-
-					this->curr_solution->timestamp++;
-					if (this->curr_solution->timestamp >= RUN_TIMESTEPS) {
-						this->curr_solution->timestamp = -1;
-					}
-
-					if (this->potential_solution->timestamp >= this->solution->timestamp + ITERS_PER_TUNNEL) {
-						cout << "succeed" << endl;
-						Tunnel* tunnel = this->candidates[this->tunnel_iter].second;
-						tunnel->print();
-
-						if (this->best_solution == NULL) {
-							this->best_solution = this->potential_solution;
-							this->best_index = this->tunnel_iter;
-						} else {
-							if (this->potential_solution->curr_score > this->best_solution->curr_score) {
-								delete this->best_solution;
-								this->best_solution = this->potential_solution;
-								this->best_index = this->tunnel_iter;
-							} else {
-								delete this->potential_solution;
-							}
-						}
-						this->potential_solution = NULL;
-
-						this->curr_solution = this->solution;
-
-						this->tunnel_iter++;
-					}
-
-					this->improvement_iter = 0;
+				this->solution->timestamp++;
+				if (this->solution->timestamp >= RUN_TIMESTEPS) {
+					this->solution->timestamp = -1;
 				}
 			}
-
-			if (this->tunnel_iter >= (int)this->candidates.size()) {
-				if (this->best_solution != NULL) {
-					int tunnel_parent_id = this->candidates[this->best_index].first;
-					Tunnel* tunnel = this->candidates[this->best_index].second;
-					Scope* best_solution_scope = this->best_solution->scopes[tunnel_parent_id];
-					best_solution_scope->tunnels.push_back(tunnel);
-					this->candidates.erase(this->candidates.begin() + this->best_index);
-
-					for (int h_index = 0; h_index < (int)this->best_solution->existing_scope_histories.size(); h_index++) {
-						measure_tunnel_vals_helper(this->best_solution->existing_scope_histories[h_index]);
-					}
-					for (int s_index = 0; s_index < (int)this->best_solution->scopes.size(); s_index++) {
-						for (int t_index = 0; t_index < (int)this->best_solution->scopes[s_index]->tunnels.size(); t_index++) {
-							Tunnel* tunnel = this->best_solution->scopes[s_index]->tunnels[t_index];
-							tunnel->update_vals((int)this->best_solution->existing_scope_histories.size());
-						}
-					}
-
-					delete this->solution;
-					this->solution = this->best_solution;
-					this->best_solution = NULL;
-
-					this->curr_solution = this->solution;
-				}
-
-				for (int c_index = 0; c_index < (int)this->candidates.size(); c_index++) {
-					delete this->candidates[c_index].second;
-				}
-				this->candidates.clear();
-				this->tunnel_iter = 0;
-			}
-
 			break;
 		}
 	}

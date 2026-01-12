@@ -29,22 +29,12 @@ const int STEP_TYPE_SCOPE = 1;
 
 const int NEW_SCOPE_MIN_NODES = 10;
 
+const double TEST_SAMPLES_PERCENTAGE = 0.2;
+
 #if defined(MDEBUG) && MDEBUG
 const int MEASURE_ITERS = 10;
 #else
 const int MEASURE_ITERS = 1000;
-#endif /* MDEBUG */
-
-#if defined(MDEBUG) && MDEBUG
-const int IMPROVEMENTS_PER_ITER = 2;
-#else
-const int IMPROVEMENTS_PER_ITER = 3;
-#endif /* MDEBUG */
-
-#if defined(MDEBUG) && MDEBUG
-const int MIN_TRAIN_SAMPLES = 10;
-#else
-const int MIN_TRAIN_SAMPLES = 1000;
 #endif /* MDEBUG */
 
 #if defined(MDEBUG) && MDEBUG

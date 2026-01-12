@@ -19,9 +19,9 @@ void SolutionWrapper::init() {
 	this->curr_run_seed = xorshift(this->starting_run_seed);
 	#endif /* MDEBUG */
 
-	ScopeHistory* scope_history = new ScopeHistory(this->curr_solution->scopes[0]);
+	ScopeHistory* scope_history = new ScopeHistory(this->solution->scopes[0]);
 	this->scope_histories.push_back(scope_history);
-	this->node_context.push_back(this->curr_solution->scopes[0]->nodes[0]);
+	this->node_context.push_back(this->solution->scopes[0]->nodes[0]);
 }
 
 pair<bool,int> SolutionWrapper::step(vector<double> obs) {

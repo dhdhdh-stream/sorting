@@ -1,5 +1,6 @@
 #include "experiment.h"
 
+#include <algorithm>
 #include <iostream>
 
 #include "constants.h"
@@ -16,10 +17,13 @@ using namespace std;
 #if defined(MDEBUG) && MDEBUG
 const int TRAIN_EXISTING_NUM_DATAPOINTS = 20;
 #else
-const int TRAIN_EXISTING_NUM_DATAPOINTS = 1000;
+const int TRAIN_EXISTING_NUM_DATAPOINTS = 800;
 #endif /* MDEBUG */
 
 void Experiment::train_existing_check_activate(SolutionWrapper* wrapper) {
+	ExperimentHistory* history = (ExperimentHistory*)wrapper->experiment_history;
+	history->stack_traces.push_back(wrapper->scope_histories);
+
 	ExperimentState* new_experiment_state = new ExperimentState(this);
 	new_experiment_state->step_index = 0;
 	wrapper->experiment_context.back() = new_experiment_state;
@@ -27,7 +31,7 @@ void Experiment::train_existing_check_activate(SolutionWrapper* wrapper) {
 
 void Experiment::train_existing_step(vector<double>& obs,
 									 SolutionWrapper* wrapper) {
-	this->obs_histories.push_back(obs);
+	this->existing_obs_histories.push_back(obs);
 
 	this->sum_num_instances++;
 
@@ -43,30 +47,33 @@ void Experiment::train_existing_backprop(double target_val,
 		this->sum_true += target_val;
 		this->hit_count++;
 
-		while (this->true_histories.size() < this->obs_histories.size()) {
-			this->true_histories.push_back(target_val);
+		for (int i_index = 0; i_index < (int)history->stack_traces.size(); i_index++) {
+			vector<ScopeHistory*> stack_trace_copy(history->stack_traces[i_index].size());
+			for (int l_index = 0; l_index < (int)history->stack_traces[i_index].size(); l_index++) {
+				stack_trace_copy[l_index] = history->stack_traces[i_index][l_index]->copy_obs_history();
+			}
+			this->existing_stack_traces.push_back(stack_trace_copy);
+
+			this->existing_true_histories.push_back(target_val);
 		}
 	}
 
 	if (this->hit_count >= TRAIN_EXISTING_NUM_DATAPOINTS) {
 		this->existing_true = this->sum_true / this->hit_count;
 
-		uniform_int_distribution<int> val_input_distribution(0, this->obs_histories.size()-1);
+		uniform_int_distribution<int> val_input_distribution(0, this->existing_obs_histories.size()-1);
 
-		this->existing_network = new Network(this->obs_histories[0].size(),
-											 NETWORK_SIZE_SMALL);
+		this->existing_true_network = new Network(this->existing_obs_histories[0].size(),
+												  NETWORK_SIZE_SMALL);
 		for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
 			int rand_index = val_input_distribution(generator);
 
-			this->existing_network->activate(this->obs_histories[rand_index]);
+			this->existing_true_network->activate(this->existing_obs_histories[rand_index]);
 
-			double error = this->true_histories[rand_index] - this->existing_network->output->acti_vals[0];
+			double error = this->existing_true_histories[rand_index] - this->existing_true_network->output->acti_vals[0];
 
-			this->existing_network->backprop(error);
+			this->existing_true_network->backprop(error);
 		}
-
-		this->obs_histories.clear();
-		this->true_histories.clear();
 
 		this->average_instances_per_run = (double)this->sum_num_instances / (double)this->hit_count;
 

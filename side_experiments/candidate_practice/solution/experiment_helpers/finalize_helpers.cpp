@@ -43,14 +43,14 @@ void Experiment::add(SolutionWrapper* wrapper) {
 		ss << "this->best_exit_next_node->id: " << this->best_exit_next_node->id << "; ";
 	}
 
-	wrapper->curr_solution->improvement_history.push_back(calc_new_score());
-	wrapper->curr_solution->change_history.push_back(ss.str());
+	wrapper->solution->improvement_history.push_back(calc_new_score());
+	wrapper->solution->change_history.push_back(ss.str());
 
 	cout << ss.str() << endl;
 
 	if (this->best_new_scope != NULL) {
-		wrapper->curr_solution->scopes.push_back(this->best_new_scope);
-		this->best_new_scope->id = (int)wrapper->curr_solution->scopes.size()-1;
+		wrapper->solution->scopes.push_back(this->best_new_scope);
+		this->best_new_scope->id = (int)wrapper->solution->scopes.size()-1;
 
 		recursive_add_child(scope_context,
 							wrapper,
@@ -317,14 +317,16 @@ void Experiment::add(SolutionWrapper* wrapper) {
 	}
 	new_branch_node->ancestor_ids.push_back(this->node_context->id);
 
-	new_branch_node->val_network = this->new_network;
-	this->new_network = NULL;
+	new_branch_node->networks = this->networks;
+	this->networks.clear();
+	new_branch_node->above_min = this->above_min;
+	new_branch_node->below_max = this->below_max;
 
 	#if defined(MDEBUG) && MDEBUG
 	if (this->verify_problems.size() > 0) {
-		wrapper->curr_solution->verify_problems = this->verify_problems;
+		wrapper->solution->verify_problems = this->verify_problems;
 		this->verify_problems.clear();
-		wrapper->curr_solution->verify_seeds = this->verify_seeds;
+		wrapper->solution->verify_seeds = this->verify_seeds;
 
 		new_branch_node->verify_key = this;
 		new_branch_node->verify_scores = this->verify_scores;

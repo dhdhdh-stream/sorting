@@ -4,8 +4,6 @@
 
 #include "action_node.h"
 #include "branch_node.h"
-#include "candidate_experiment.h"
-#include "chase_experiment.h"
 #include "constants.h"
 #include "experiment.h"
 #include "globals.h"
@@ -20,24 +18,10 @@ using namespace std;
 /**
  * - don't prioritize exploring new nodes as new scopes change explore
  */
-void gather_helper(bool in_tunnel,
-				   ScopeHistory* scope_history,
-				   SolutionWrapper* wrapper,
+void gather_helper(ScopeHistory* scope_history,
 				   int& node_count,
 				   AbstractNode*& explore_node,
 				   bool& explore_is_branch) {
-	bool new_in_tunnel;
-	if (wrapper->candidates.size() > 0) {
-		int tunnel_parent_id = wrapper->candidates[wrapper->tunnel_iter].first;
-		if (scope_history->scope->id == tunnel_parent_id) {
-			new_in_tunnel = true;
-		} else {
-			new_in_tunnel = in_tunnel;
-		}
-	} else {
-		new_in_tunnel = in_tunnel;
-	}
-
 	for (map<int, AbstractNodeHistory*>::iterator h_it = scope_history->node_histories.begin();
 			h_it != scope_history->node_histories.end(); h_it++) {
 		AbstractNode* node = h_it->second->node;
@@ -45,8 +29,7 @@ void gather_helper(bool in_tunnel,
 		case NODE_TYPE_START:
 		case NODE_TYPE_ACTION:
 		case NODE_TYPE_OBS:
-			if (new_in_tunnel
-					&& node->experiment == NULL) {
+			if (node->experiment == NULL) {
 				uniform_int_distribution<int> select_distribution(0, node_count);
 				node_count++;
 				if (select_distribution(generator) == 0) {
@@ -59,15 +42,12 @@ void gather_helper(bool in_tunnel,
 			{
 				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)h_it->second;
 
-				gather_helper(new_in_tunnel,
-							  scope_node_history->scope_history,
-							  wrapper,
+				gather_helper(scope_node_history->scope_history,
 							  node_count,
 							  explore_node,
 							  explore_is_branch);
 
-				if (new_in_tunnel
-						&& node->experiment == NULL) {
+				if (node->experiment == NULL) {
 					uniform_int_distribution<int> select_distribution(0, node_count);
 					node_count++;
 					if (select_distribution(generator) == 0) {
@@ -78,8 +58,7 @@ void gather_helper(bool in_tunnel,
 			}
 			break;
 		case NODE_TYPE_BRANCH:
-			if (new_in_tunnel
-					&& node->experiment == NULL) {
+			if (node->experiment == NULL) {
 				BranchNodeHistory* branch_node_history = (BranchNodeHistory*)h_it->second;
 				if (branch_node_history->is_branch) {
 					uniform_int_distribution<int> select_distribution(0, node_count);
@@ -104,41 +83,19 @@ void gather_helper(bool in_tunnel,
 
 void create_experiment(ScopeHistory* scope_history,
 					   SolutionWrapper* wrapper) {
-	bool in_tunnel;
-	if (wrapper->candidates.size() == 0) {
-		in_tunnel = true;
-	} else {
-		in_tunnel = false;
-	}
 	int node_count = 0;
 	AbstractNode* explore_node = NULL;
 	bool explore_is_branch = false;
-	gather_helper(in_tunnel,
-				  scope_history,
-				  wrapper,
+	gather_helper(scope_history,
 				  node_count,
 				  explore_node,
 				  explore_is_branch);
 
 	if (explore_node != NULL) {
-		if (wrapper->candidates.size() == 0) {
-			Experiment* new_experiment = new Experiment(
-				explore_node->parent,
-				explore_node,
-				explore_is_branch);
-			wrapper->curr_experiment = new_experiment;
-
-			// temp
-			cout << "Experiment" << endl;
-		} else {
-			ChaseExperiment* new_experiment = new ChaseExperiment(
-				explore_node->parent,
-				explore_node,
-				explore_is_branch);
-			wrapper->curr_experiment = new_experiment;
-
-			// temp
-			cout << "ChaseExperiment" << endl;
-		}
+		Experiment* new_experiment = new Experiment(
+			explore_node->parent,
+			explore_node,
+			explore_is_branch);
+		wrapper->curr_experiment = new_experiment;
 	}
 }

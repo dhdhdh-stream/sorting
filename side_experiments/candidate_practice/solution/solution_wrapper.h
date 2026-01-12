@@ -18,6 +18,8 @@ class ScopeHistory;
 class Solution;
 class Tunnel;
 
+const int NUM_CANDIDATES = 10;
+
 class SolutionWrapper {
 public:
 	Solution* solution;
@@ -26,17 +28,8 @@ public:
 	 * - iter variables
 	 */
 	std::vector<std::pair<int, Tunnel*>> candidates;
-	int tunnel_iter;
-	Solution* curr_solution;	// reference
-
-	Solution* potential_solution;
-	Solution* best_solution;
-	int best_index;
-
-	int improvement_iter;
 
 	AbstractExperiment* curr_experiment;
-	AbstractExperiment* best_experiment;
 
 	/**
 	 * - run variables
@@ -48,8 +41,6 @@ public:
 	int num_actions;
 
 	AbstractExperimentHistory* experiment_history;
-
-	bool has_explore;
 
 	Problem* problem;
 

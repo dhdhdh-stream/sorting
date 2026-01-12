@@ -18,10 +18,6 @@ class Scope;
 class Solution;
 class SolutionWrapper;
 
-const int TUNNEL_TRY_STATUS_SIGNAL_FAIL = 0;
-const int TUNNEL_TRY_STATUS_TRUE_FAIL = 1;
-const int TUNNEL_TRY_STATUS_TRUE_SUCCESS = 2;
-
 class Tunnel {
 public:
 	std::vector<int> obs_indexes;
@@ -31,24 +27,9 @@ public:
 
 	Network* signal_network;
 
-	/**
-	 * - compare num_tries vs. num_train_fail
-	 *   - if <50%, protects
-	 *   - if >50%, misleads
-	 */
-	std::vector<int> num_tries;
-	std::vector<int> num_train_fail;
-	std::vector<int> num_measure_fail;
-	std::vector<int> num_success;
-
-	std::vector<int> try_history;
-
-	std::vector<double> val_history;
-
-	/**
-	 * - temp for measuring val
-	 */
-	std::vector<double> vals;
+	int num_tries;
+	int num_significant;
+	int num_improve;
 
 	Tunnel(std::vector<int>& obs_indexes,
 		   bool is_pattern,
@@ -59,10 +40,6 @@ public:
 	~Tunnel();
 
 	double get_signal(std::vector<double>& obs);
-
-	void update_vals(int num_runs);
-	bool is_fail();
-	bool is_long_term();
 
 	void save(std::ofstream& output_file);
 

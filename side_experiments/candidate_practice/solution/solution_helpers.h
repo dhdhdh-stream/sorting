@@ -19,16 +19,6 @@ class Tunnel;
 void create_experiment(ScopeHistory* scope_history,
 					   SolutionWrapper* wrapper);
 
-// void set_tunnel(SolutionWrapper* wrapper);
-void update_tunnel_train_fail(SolutionWrapper* wrapper);
-void update_tunnel_measure_fail(SolutionWrapper* wrapper);
-void update_tunnel_success(SolutionWrapper* wrapper);
-// void update_tunnel_try_history(SolutionWrapper* wrapper);
-
-// void measure_tunnel_vals_helper(ScopeHistory* scope_history,
-// 								Scope* tunnel_parent,
-// 								int tunnel_index,
-// 								double& sum_vals);
 void measure_tunnel_vals_helper(ScopeHistory* scope_history,
 								int tunnel_parent_id,
 								Tunnel* tunnel,
@@ -42,8 +32,10 @@ void recursive_add_child(Scope* curr_parent,
 
 void clean_scope(Scope* scope);
 
-void find_potential_tunnels(std::vector<ScopeHistory*>& starting_scope_histories,
+void find_potential_tunnels(Scope* scope_context,
+							std::vector<ScopeHistory*>& starting_scope_histories,
 							std::vector<ScopeHistory*>& ending_scope_histories,
+							std::vector<std::vector<ScopeHistory*>>& ending_branch_stack_traces,
 							SolutionWrapper* wrapper);
 
 #endif /* SOLUTION_HELPERS_H */

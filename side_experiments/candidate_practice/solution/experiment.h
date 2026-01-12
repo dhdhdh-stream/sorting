@@ -8,6 +8,7 @@
 class AbstractNode;
 class Network;
 class SolutionWrapper;
+class Tunnel;
 
 const int EXPERIMENT_STATE_TRAIN_EXISTING = 0;
 const int EXPERIMENT_STATE_EXPLORE = 1;
@@ -22,9 +23,13 @@ public:
 	int state;
 	int state_iter;
 
+	std::vector<std::vector<double>> existing_obs_histories;
+	std::vector<std::vector<ScopeHistory*>> existing_stack_traces;
+	std::vector<double> existing_true_histories;
+
 	double existing_true;
 
-	Network* existing_network;
+	Network* existing_true_network;
 
 	int sum_num_instances;
 
@@ -46,7 +51,13 @@ public:
 	AbstractNode* best_exit_next_node;
 	std::vector<AbstractNode*> best_new_nodes;
 
-	Network* new_network;
+	std::vector<std::vector<double>> new_obs_histories;
+	std::vector<std::vector<ScopeHistory*>> new_stack_traces;
+	std::vector<double> new_true_histories;
+
+	std::vector<Network*> networks;
+	std::vector<double> above_min;
+	std::vector<double> below_max;
 
 	double sum_true;
 	int hit_count;
@@ -56,13 +67,10 @@ public:
 
 	double improvement;
 
-	std::vector<std::vector<double>> obs_histories;
-	std::vector<double> true_histories;
-
 	#if defined(MDEBUG) && MDEBUG
 	std::vector<Problem*> verify_problems;
 	std::vector<unsigned long> verify_seeds;
-	std::vector<double> verify_scores;
+	std::vector<std::vector<double>> verify_scores;
 	#endif /* MDEBUG */
 
 	Experiment(Scope* scope_context,
@@ -137,9 +145,9 @@ public:
 
 class ExperimentHistory : public AbstractExperimentHistory {
 public:
-	std::vector<double> existing_predicted_trues;
+	std::vector<std::vector<ScopeHistory*>> stack_traces;
 
-	std::vector<ScopeHistory*> explore_stack_trace;
+	std::vector<double> existing_predicted_trues;
 
 	ExperimentHistory(Experiment* experiment);
 };

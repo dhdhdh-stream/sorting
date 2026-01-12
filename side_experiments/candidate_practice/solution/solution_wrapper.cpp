@@ -11,20 +11,9 @@ SolutionWrapper::SolutionWrapper(ProblemType* problem_type) {
 	this->solution = new Solution();
 	this->solution->init(problem_type);
 
-	this->tunnel_iter = 0;
-	this->curr_solution = this->solution;
-
-	this->potential_solution = NULL;
-	this->best_solution = NULL;
-
-	this->improvement_iter = 0;
-
 	this->curr_experiment = NULL;
-	this->best_experiment = NULL;
 
 	this->experiment_history = NULL;
-
-	this->has_explore = false;
 
 	#if defined(MDEBUG) && MDEBUG
 	this->run_index = 0;
@@ -39,20 +28,22 @@ SolutionWrapper::SolutionWrapper(std::string path,
 	this->solution = new Solution();
 	this->solution->load(input_file);
 
-	this->tunnel_iter = 0;
-	this->curr_solution = this->solution;
+	string num_candidates_line;
+	getline(input_file, num_candidates_line);
+	int num_candidates = stoi(num_candidates_line);
+	for (int c_index = 0; c_index < num_candidates; c_index++) {
+		string scope_id_line;
+		getline(input_file, scope_id_line);
+		int scope_id = stoi(scope_id_line);
 
-	this->potential_solution = NULL;
-	this->best_solution = NULL;
+		Tunnel* tunnel = new Tunnel(input_file);
 
-	this->improvement_iter = 0;
+		this->candidates.push_back({scope_id, tunnel});
+	}
 
 	this->curr_experiment = NULL;
-	this->best_experiment = NULL;
 
 	this->experiment_history = NULL;
-
-	this->has_explore = false;
 
 	#if defined(MDEBUG) && MDEBUG
 	this->run_index = 0;
@@ -66,14 +57,6 @@ SolutionWrapper::~SolutionWrapper() {
 
 	for (int c_index = 0; c_index < (int)this->candidates.size(); c_index++) {
 		delete this->candidates[c_index].second;
-	}
-
-	if (this->potential_solution != NULL) {
-		delete this->potential_solution;
-	}
-
-	if (this->best_solution != NULL) {
-		delete this->best_solution;
 	}
 }
 
@@ -121,6 +104,13 @@ void SolutionWrapper::save(string path,
 	output_file.open(path + "temp_" + name);
 
 	this->solution->save(output_file);
+
+	output_file << this->candidates.size() << endl;
+	for (int c_index = 0; c_index < (int)this->candidates.size(); c_index++) {
+		output_file << this->candidates[c_index].first << endl;
+
+		this->candidates[c_index].second->save(output_file);
+	}
 
 	output_file.close();
 

@@ -160,7 +160,7 @@ void Experiment::explore_check_activate(SolutionWrapper* wrapper) {
 			}
 		}
 
-		history->explore_stack_trace = wrapper->scope_histories;
+		history->stack_traces.push_back(wrapper->scope_histories);
 
 		ExperimentState* new_experiment_state = new ExperimentState(this);
 		new_experiment_state->step_index = 0;
@@ -178,9 +178,9 @@ void Experiment::explore_step(vector<double>& obs,
 	if (experiment_state->step_index == 0) {
 		ExperimentHistory* history = (ExperimentHistory*)wrapper->experiment_history;
 
-		this->existing_network->activate(obs);
+		this->existing_true_network->activate(obs);
 		history->existing_predicted_trues.push_back(
-			this->existing_network->output->acti_vals[0]);
+			this->existing_true_network->output->acti_vals[0]);
 	}
 
 	if (experiment_state->step_index >= (int)this->curr_step_types.size()) {
@@ -241,13 +241,13 @@ void Experiment::explore_backprop(double target_val,
 	this->num_instances_until_target = until_distribution(generator);
 
 	if (history->existing_predicted_trues.size() != 0) {
-		for (int l_index = 0; l_index < (int)history->explore_stack_trace.size(); l_index++) {
+		for (int l_index = 0; l_index < (int)history->stack_traces[0].size(); l_index++) {
 			vector<ScopeHistory*> stack_track_copy(l_index + 1);
 			for (int il_index = 0; il_index <= l_index; il_index++) {
-				stack_track_copy[il_index] = history->explore_stack_trace[il_index]->copy_obs_history();
+				stack_track_copy[il_index] = history->stack_traces[0][il_index]->copy_obs_history();
 			}
 
-			Scope* scope = history->explore_stack_trace[l_index]->scope;
+			Scope* scope = history->stack_traces[0][l_index]->scope;
 			if (scope->explore_stack_traces.size() < EXPLORE_MAX_SAMPLES) {
 				scope->explore_stack_traces.push_back(stack_track_copy);
 				scope->explore_target_val_histories.push_back(target_val);
