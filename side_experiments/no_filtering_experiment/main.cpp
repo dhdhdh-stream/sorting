@@ -1,3 +1,10 @@
+// - probably main issue is that progress can be destroyed too easily?
+
+// - on the other hand, not as if choosing best from many tries prevents that
+//   - the worst try can have the noisiest run
+
+// - maybe most reliable way is to try and rewind a large number of timesteps
+
 #include <chrono>
 #include <iostream>
 #include <map>

@@ -306,7 +306,14 @@ void eval_tunnel(int tunnel_scope_context_id,
 
 	double t_score = improvement / (existing_signal_val_standard_deviation / sqrt((double)new_signal_obs_histories.size()));
 
+	#if defined(MDEBUG) && MDEBUG
+	if (t_score < 1.960 && rand()%2 == 0) {
+	#else
 	if (t_score < 1.960) {
+	#endif /* MDEBUG */
+		delete tunnel_existing_network;
+		delete tunnel_new_network;
+
 		return;
 	}
 
@@ -404,7 +411,11 @@ void eval_tunnel(int tunnel_scope_context_id,
 		tunnel->num_improve++;
 	}
 
+	#if defined(MDEBUG) && MDEBUG
+	if (sum_vals > best_score || rand()%4 == 0) {
+	#else
 	if (sum_vals > best_score) {
+	#endif /* MDEBUG */
 		best_score = sum_vals;
 		for (int n_index = 1; n_index < (int)networks.size(); n_index++) {
 			delete networks[n_index];
@@ -450,7 +461,7 @@ void Experiment::train_new_backprop(
 				shuffle(this->new_true_histories.begin(), this->new_true_histories.end(), generator_copy);
 			}
 
-			int num_train = VALIDATION_RATIO * TRAIN_NEW_NUM_DATAPOINTS;
+			int num_train = (1.0 - VALIDATION_RATIO) * TRAIN_NEW_NUM_DATAPOINTS;
 
 			vector<vector<double>> train_obs_histories(this->new_obs_histories.begin(), this->new_obs_histories.begin() + num_train);
 			vector<vector<ScopeHistory*>> train_stack_traces(this->new_stack_traces.begin(), this->new_stack_traces.begin() + num_train);

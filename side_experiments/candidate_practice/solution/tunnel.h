@@ -41,6 +41,8 @@ public:
 
 	double get_signal(std::vector<double>& obs);
 
+	bool is_fail();
+
 	void save(std::ofstream& output_file);
 
 	void print();

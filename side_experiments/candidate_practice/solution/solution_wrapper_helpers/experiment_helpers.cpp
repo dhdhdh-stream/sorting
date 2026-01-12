@@ -121,9 +121,16 @@ void SolutionWrapper::experiment_end(double result) {
 				this->solution->curr_score = this->curr_experiment->calc_new_score();
 
 				if (this->solution->existing_scope_histories.size() != 0) {
-					// find_potential_tunnels(this->curr_solution->existing_scope_histories,
-					// 					   this->curr_experiment->new_scope_histories,
-					// 					   this);
+					for (int c_index = this->candidates.size()-1; c_index >= 0; c_index--) {
+						if (this->candidates[c_index].second->is_fail()) {
+							cout << "remove" << endl;
+							this->candidates[c_index].second->print();
+
+							delete this->candidates[c_index].second;
+							this->candidates.erase(this->candidates.begin() + c_index);
+						}
+					}
+
 					find_potential_tunnels(this->curr_experiment->scope_context,
 										   this->solution->existing_scope_histories,
 										   this->curr_experiment->new_scope_histories,
@@ -149,9 +156,9 @@ void SolutionWrapper::experiment_end(double result) {
 				this->solution->clean_scopes();
 
 				this->solution->timestamp++;
-				if (this->solution->timestamp >= RUN_TIMESTEPS) {
-					this->solution->timestamp = -1;
-				}
+				// if (this->solution->timestamp >= RUN_TIMESTEPS) {
+				// 	this->solution->timestamp = -1;
+				// }
 			}
 			break;
 		}

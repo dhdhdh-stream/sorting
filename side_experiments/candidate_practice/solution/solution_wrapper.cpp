@@ -25,9 +25,6 @@ SolutionWrapper::SolutionWrapper(std::string path,
 	ifstream input_file;
 	input_file.open(path + name);
 
-	this->solution = new Solution();
-	this->solution->load(input_file);
-
 	string num_candidates_line;
 	getline(input_file, num_candidates_line);
 	int num_candidates = stoi(num_candidates_line);
@@ -40,6 +37,9 @@ SolutionWrapper::SolutionWrapper(std::string path,
 
 		this->candidates.push_back({scope_id, tunnel});
 	}
+
+	this->solution = new Solution();
+	this->solution->load(input_file);
 
 	this->curr_experiment = NULL;
 
@@ -103,14 +103,14 @@ void SolutionWrapper::save(string path,
 	ofstream output_file;
 	output_file.open(path + "temp_" + name);
 
-	this->solution->save(output_file);
-
 	output_file << this->candidates.size() << endl;
 	for (int c_index = 0; c_index < (int)this->candidates.size(); c_index++) {
 		output_file << this->candidates[c_index].first << endl;
 
 		this->candidates[c_index].second->save(output_file);
 	}
+
+	this->solution->save(output_file);
 
 	output_file.close();
 

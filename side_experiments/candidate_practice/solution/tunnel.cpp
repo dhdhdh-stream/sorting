@@ -111,6 +111,28 @@ double Tunnel::get_signal(vector<double>& obs) {
 	return similarity * signal;
 }
 
+bool Tunnel::is_fail() {
+	if (this->num_tries < 10) {
+		return false;
+	} else {
+		double significant_ratio = (double)this->num_significant / (double)this->num_tries;
+		if (significant_ratio <= 0.2) {
+			return true;
+		} else {
+			if (this->num_significant < 5) {
+				return false;
+			} else {
+				double improve_ratio = (double)this->num_improve / (double)this->num_significant;
+				if (improve_ratio <= 0.1) {
+					return true;
+				} else {
+					return false;
+				}
+			}
+		}
+	}
+}
+
 void Tunnel::save(ofstream& output_file) {
 	output_file << this->obs_indexes.size() << endl;
 	for (int o_index = 0; o_index < (int)this->obs_indexes.size(); o_index++) {

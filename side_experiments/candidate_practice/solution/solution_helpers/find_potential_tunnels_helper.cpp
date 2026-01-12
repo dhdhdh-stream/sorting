@@ -21,9 +21,8 @@ using namespace std;
 const int TRUE_WEIGHT = 4;
 const double MIN_TRUE_RATIO = 0.25;
 
+const int TARGET_CANDIDATES = 2;
 const int FIND_NUM_TRIES = 100;
-
-const int MAX_CANDIDATES = 5;
 
 void select_parent_tunnel_helper(Scope* scope_context,
 								 Scope*& parent_tunnel_parent,
@@ -189,7 +188,6 @@ Tunnel* create_pattern_candidate(vector<vector<double>>& starting_existing_obs_v
 								 vector<vector<double>>& ending_existing_obs_vals,
 								 vector<vector<double>>& explore_obs_vals,
 								 vector<double>& explore_target_vals) {
-	// geometric_distribution<int> num_obs_distribution(0.3);
 	geometric_distribution<int> num_obs_distribution(0.2);
 	int num_obs;
 	while (true) {
@@ -313,6 +311,7 @@ void find_potential_tunnels(Scope* scope_context,
 							vector<ScopeHistory*>& ending_scope_histories,
 							vector<vector<ScopeHistory*>>& ending_branch_stack_traces,
 							SolutionWrapper* wrapper) {
+	int num_added = 0;
 	int num_tries = 0;
 	while (wrapper->candidates.size() < NUM_CANDIDATES) {
 		if (scope_context->explore_stack_traces.size() > 0) {
@@ -395,14 +394,16 @@ void find_potential_tunnels(Scope* scope_context,
 			double t_score = (ending_val_average - starting_val_average) / denom;
 
 			if (t_score >= 2.326) {
-				cout << "t_score: " << t_score << endl;
-				cout << "scope_context->id: " << scope_context->id << endl;
-				candidate->print();
-
 				wrapper->candidates.push_back({scope_context->id, candidate});
+
+				num_added++;
 			} else {
 				delete candidate;
 			}
+		}
+
+		if (num_added >= TARGET_CANDIDATES) {
+			break;
 		}
 
 		num_tries++;
