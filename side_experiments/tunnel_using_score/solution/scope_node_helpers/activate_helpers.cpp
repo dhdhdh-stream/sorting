@@ -26,7 +26,7 @@ void ScopeNode::step(vector<double>& obs,
 	wrapper->scope_histories.push_back(inner_scope_history);
 	wrapper->node_context.push_back(this->scope->nodes[0]);
 
-	scope_history->pre_score = wrapper->problem->score_result();
+	inner_scope_history->pre_score = wrapper->problem->score_result();
 }
 
 void ScopeNode::exit_step(SolutionWrapper* wrapper) {

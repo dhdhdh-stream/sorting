@@ -24,6 +24,8 @@ void SolutionWrapper::verify_init() {
 	ScopeHistory* scope_history = new ScopeHistory(this->solution->scopes[0]);
 	this->scope_histories.push_back(scope_history);
 	this->node_context.push_back(this->solution->scopes[0]->nodes[0]);
+
+	scope_history->pre_score = this->problem->score_result();
 }
 
 pair<bool,int> SolutionWrapper::verify_step(vector<double> obs) {
@@ -59,6 +61,8 @@ pair<bool,int> SolutionWrapper::verify_step(vector<double> obs) {
 }
 
 void SolutionWrapper::verify_end() {
+	this->scope_histories.back()->post_score = this->problem->score_result();
+
 	delete this->scope_histories[0];
 
 	this->scope_histories.clear();

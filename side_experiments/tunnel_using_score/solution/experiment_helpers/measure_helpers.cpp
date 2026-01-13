@@ -100,7 +100,7 @@ void Experiment::measure_step(vector<double>& obs,
 			wrapper->node_context.push_back(this->best_scopes[experiment_state->step_index]->nodes[0]);
 			wrapper->experiment_context.push_back(NULL);
 
-			scope_history->pre_score = wrapper->problem->score_result();
+			inner_scope_history->pre_score = wrapper->problem->score_result();
 		}
 	}
 }
@@ -140,6 +140,9 @@ void Experiment::measure_backprop(double target_val,
 			double average_hits_per_run = (double)this->hit_count / (double)this->total_count;
 
 			this->improvement = average_hits_per_run * (new_true - this->existing_true);
+
+			// temp
+			cout << "this->networks.size(): " << this->networks.size() << endl;
 
 			cout << "this->scope_context->id: " << this->scope_context->id << endl;
 			cout << "this->node_context->id: " << this->node_context->id << endl;

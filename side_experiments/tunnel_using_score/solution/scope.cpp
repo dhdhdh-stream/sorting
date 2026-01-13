@@ -338,6 +338,9 @@ ScopeHistory::ScopeHistory(ScopeHistory* original,
 			break;
 		}
 	}
+
+	this->pre_score = original->pre_score;
+	this->post_score = original->post_score;
 }
 
 ScopeHistory::~ScopeHistory() {

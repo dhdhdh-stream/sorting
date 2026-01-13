@@ -207,7 +207,7 @@ void Experiment::explore_step(vector<double>& obs,
 			wrapper->node_context.push_back(this->curr_scopes[experiment_state->step_index]->nodes[0]);
 			wrapper->experiment_context.push_back(NULL);
 
-			scope_history->pre_score = wrapper->problem->score_result();
+			inner_scope_history->pre_score = wrapper->problem->score_result();
 		}
 	}
 }
