@@ -319,27 +319,33 @@ void eval_tunnel(int tunnel_scope_context_id,
 
 	tunnel->num_significant++;
 
-	vector<double> train_network_vals(train_obs_histories.size());
-	for (int h_index = 0; h_index < (int)train_obs_histories.size(); h_index++) {
-		tunnel_new_network->activate(train_obs_histories[h_index]);
-		train_network_vals[h_index] = tunnel_new_network->output->acti_vals[0];
+	/**
+	 * - eval on validation true
+	 *   - validation will be used twice, but true network trained on train true
+	 *   - as if split into 9 options and tested separately against validation
+	 */
+
+	vector<double> validation_network_vals(validation_obs_histories.size());
+	for (int h_index = 0; h_index < (int)validation_obs_histories.size(); h_index++) {
+		tunnel_new_network->activate(validation_obs_histories[h_index]);
+		validation_network_vals[h_index] = tunnel_new_network->output->acti_vals[0];
 	}
 
 	double above_true_sum_vals = 0.0;
 	double above_dual_sum_vals = 0.0;
 	double above_signal_sum_vals = 0.0;
-	for (int h_index = 0; h_index < (int)train_obs_histories.size(); h_index++) {
-		if (train_true_network_vals[h_index] >= 0.0) {
-			above_true_sum_vals += train_true_histories[h_index];
+	for (int h_index = 0; h_index < (int)validation_obs_histories.size(); h_index++) {
+		if (validation_true_network_vals[h_index] >= 0.0) {
+			above_true_sum_vals += validation_true_histories[h_index];
 
-			if (train_true_network_vals[h_index] >= true_above_min) {
-				above_dual_sum_vals += train_true_histories[h_index];
-			} else if (train_network_vals[h_index] >= 0.0) {
-				above_dual_sum_vals += train_true_histories[h_index];
+			if (validation_true_network_vals[h_index] >= true_above_min) {
+				above_dual_sum_vals += validation_true_histories[h_index];
+			} else if (validation_network_vals[h_index] >= 0.0) {
+				above_dual_sum_vals += validation_true_histories[h_index];
 			}
 
-			if (train_network_vals[h_index] >= 0.0) {
-				above_signal_sum_vals += train_true_histories[h_index];
+			if (validation_network_vals[h_index] >= 0.0) {
+				above_signal_sum_vals += validation_true_histories[h_index];
 			}
 		}
 	}
@@ -359,16 +365,16 @@ void eval_tunnel(int tunnel_scope_context_id,
 	double below_true_sum_vals = 0.0;
 	double below_dual_sum_vals = 0.0;
 	double below_signal_sum_vals = 0.0;
-	for (int h_index = 0; h_index < (int)train_obs_histories.size(); h_index++) {
-		if (train_true_network_vals[h_index] <= 0.0) {
-			if (train_true_network_vals[h_index] > true_below_max) {
-				if (train_network_vals[h_index] >= 0.0) {
-					below_dual_sum_vals += train_true_histories[h_index];
+	for (int h_index = 0; h_index < (int)validation_obs_histories.size(); h_index++) {
+		if (validation_true_network_vals[h_index] <= 0.0) {
+			if (validation_true_network_vals[h_index] > true_below_max) {
+				if (validation_network_vals[h_index] >= 0.0) {
+					below_dual_sum_vals += validation_true_histories[h_index];
 				}
 			}
 
-			if (train_network_vals[h_index] >= 0.0) {
-				below_signal_sum_vals += train_true_histories[h_index];
+			if (validation_network_vals[h_index] >= 0.0) {
+				below_signal_sum_vals += validation_true_histories[h_index];
 			}
 		}
 	}
@@ -391,15 +397,13 @@ void eval_tunnel(int tunnel_scope_context_id,
 			if (validation_true_network_vals[h_index] >= curr_above_min) {
 				sum_vals += validation_true_histories[h_index];
 			} else {
-				tunnel_new_network->activate(validation_obs_histories[h_index]);
-				if (tunnel_new_network->output->acti_vals[0] >= 0.0) {
+				if (validation_network_vals[h_index] >= 0.0) {
 					sum_vals += validation_true_histories[h_index];
 				}
 			}
 		} else {
 			if (validation_true_network_vals[h_index] > curr_below_max) {
-				tunnel_new_network->activate(validation_obs_histories[h_index]);
-				if (tunnel_new_network->output->acti_vals[0] >= 0.0) {
+				if (validation_network_vals[h_index] >= 0.0) {
 					sum_vals += validation_true_histories[h_index];
 				}
 			}
