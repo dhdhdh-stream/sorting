@@ -251,6 +251,15 @@ void eval_tunnel(int tunnel_scope_context_id,
 		return;
 	}
 
+	tunnel->latest_existing_obs.clear();
+	for (int i_index = 0; i_index < 10; i_index++) {
+		tunnel->latest_existing_obs.push_back(existing_signal_obs_histories[i_index]);
+	}
+	tunnel->latest_new_obs.clear();
+	for (int i_index = 0; i_index < 10; i_index++) {
+		tunnel->latest_new_obs.push_back(new_signal_obs_histories[i_index]);
+	}
+
 	tunnel->num_tries++;
 
 	Network* tunnel_existing_network = new Network(existing_signal_obs_histories[0].size(),

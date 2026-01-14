@@ -371,6 +371,30 @@ void find_potential_tunnels(Scope* scope_context,
 		double improvement = ending_val_average - starting_val_average;
 
 		if (improvement > best_improvement) {
+			vector<pair<double,int>> explore_vals(explore_obs_vals.size());
+			for (int i_index = 0; i_index < (int)explore_obs_vals.size(); i_index++) {
+				double signal = candidate->get_signal(explore_obs_vals[i_index]);
+				explore_vals[i_index] = {signal, i_index};
+			}
+			sort(explore_vals.begin(), explore_vals.end());
+
+			for (int i_index = 0; i_index < 10; i_index++) {
+				candidate->starting_best_obs.push_back(explore_obs_vals[explore_vals.back().second]);
+				explore_vals.pop_back();
+			}
+
+			for (int i_index = 0; i_index < 10; i_index++) {
+				candidate->starting_worst_obs.push_back(explore_obs_vals[explore_vals[0].second]);
+				explore_vals.erase(explore_vals.begin());
+			}
+
+			for (int i_index = 0; i_index < 10; i_index++) {
+				uniform_int_distribution<int> distribution(0, explore_vals.size()-1);
+				int index = distribution(generator);
+				candidate->starting_random_obs.push_back(explore_obs_vals[explore_vals[index].second]);
+				explore_vals.erase(explore_vals.begin() + index);
+			}
+
 			if (best_candidate != NULL) {
 				delete best_candidate;
 			}

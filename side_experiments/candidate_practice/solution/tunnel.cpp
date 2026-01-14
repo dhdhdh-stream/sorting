@@ -40,6 +40,13 @@ Tunnel::Tunnel(Tunnel* original) {
 
 	this->num_tries = original->num_tries;
 	this->num_improve = original->num_improve;
+
+	this->starting_best_obs = original->starting_best_obs;
+	this->starting_worst_obs = original->starting_worst_obs;
+	this->starting_random_obs = original->starting_random_obs;
+
+	this->latest_existing_obs = original->latest_existing_obs;
+	this->latest_new_obs = original->latest_new_obs;
 }
 
 Tunnel::Tunnel(ifstream& input_file) {
@@ -70,6 +77,56 @@ Tunnel::Tunnel(ifstream& input_file) {
 	string num_improve_line;
 	getline(input_file, num_improve_line);
 	this->num_improve = stoi(num_improve_line);
+
+	for (int i_index = 0; i_index < 10; i_index++) {
+		vector<double> obs;
+		for (int o_index = 0; o_index < 25; o_index++) {
+			string obs_line;
+			getline(input_file, obs_line);
+			obs.push_back(stod(obs_line));
+		}
+		this->starting_best_obs.push_back(obs);
+	}
+
+	for (int i_index = 0; i_index < 10; i_index++) {
+		vector<double> obs;
+		for (int o_index = 0; o_index < 25; o_index++) {
+			string obs_line;
+			getline(input_file, obs_line);
+			obs.push_back(stod(obs_line));
+		}
+		this->starting_worst_obs.push_back(obs);
+	}
+
+	for (int i_index = 0; i_index < 10; i_index++) {
+		vector<double> obs;
+		for (int o_index = 0; o_index < 25; o_index++) {
+			string obs_line;
+			getline(input_file, obs_line);
+			obs.push_back(stod(obs_line));
+		}
+		this->starting_random_obs.push_back(obs);
+	}
+
+	for (int i_index = 0; i_index < 10; i_index++) {
+		vector<double> obs;
+		for (int o_index = 0; o_index < 25; o_index++) {
+			string obs_line;
+			getline(input_file, obs_line);
+			obs.push_back(stod(obs_line));
+		}
+		this->latest_existing_obs.push_back(obs);
+	}
+
+	for (int i_index = 0; i_index < 10; i_index++) {
+		vector<double> obs;
+		for (int o_index = 0; o_index < 25; o_index++) {
+			string obs_line;
+			getline(input_file, obs_line);
+			obs.push_back(stod(obs_line));
+		}
+		this->latest_new_obs.push_back(obs);
+	}
 }
 
 Tunnel::~Tunnel() {
@@ -133,6 +190,36 @@ void Tunnel::save(ofstream& output_file) {
 
 	output_file << this->num_tries << endl;
 	output_file << this->num_improve << endl;
+
+	for (int i_index = 0; i_index < 10; i_index++) {
+		for (int o_index = 0; o_index < 25; o_index++) {
+			output_file << this->starting_best_obs[i_index][o_index] << endl;
+		}
+	}
+
+	for (int i_index = 0; i_index < 10; i_index++) {
+		for (int o_index = 0; o_index < 25; o_index++) {
+			output_file << this->starting_worst_obs[i_index][o_index] << endl;
+		}
+	}
+
+	for (int i_index = 0; i_index < 10; i_index++) {
+		for (int o_index = 0; o_index < 25; o_index++) {
+			output_file << this->starting_random_obs[i_index][o_index] << endl;
+		}
+	}
+
+	for (int i_index = 0; i_index < 10; i_index++) {
+		for (int o_index = 0; o_index < 25; o_index++) {
+			output_file << this->latest_existing_obs[i_index][o_index] << endl;
+		}
+	}
+
+	for (int i_index = 0; i_index < 10; i_index++) {
+		for (int o_index = 0; o_index < 25; o_index++) {
+			output_file << this->latest_new_obs[i_index][o_index] << endl;
+		}
+	}
 }
 
 void Tunnel::print() {
@@ -146,4 +233,61 @@ void Tunnel::print() {
 
 	cout << "this->num_tries: " << this->num_tries << endl;
 	cout << "this->num_improve: " << this->num_improve << endl;
+}
+
+void Tunnel::print_obs() {
+	cout << "starting_best_obs:" << endl;
+	for (int i_index = 0; i_index < 10; i_index++) {
+		cout << i_index << ":" << endl;
+		for (int x_index = 0; x_index < 5; x_index++) {
+			for (int y_index = 0; y_index < 5; y_index++) {
+				cout << this->starting_best_obs[i_index][5 * x_index + y_index] << " ";
+			}
+			cout << endl;
+		}
+	}
+
+	cout << "starting_worst_obs:" << endl;
+	for (int i_index = 0; i_index < 10; i_index++) {
+		cout << i_index << ":" << endl;
+		for (int x_index = 0; x_index < 5; x_index++) {
+			for (int y_index = 0; y_index < 5; y_index++) {
+				cout << this->starting_best_obs[i_index][5 * x_index + y_index] << " ";
+			}
+			cout << endl;
+		}
+	}
+
+	cout << "starting_random_obs:" << endl;
+	for (int i_index = 0; i_index < 10; i_index++) {
+		cout << i_index << ":" << endl;
+		for (int x_index = 0; x_index < 5; x_index++) {
+			for (int y_index = 0; y_index < 5; y_index++) {
+				cout << this->starting_best_obs[i_index][5 * x_index + y_index] << " ";
+			}
+			cout << endl;
+		}
+	}
+
+	cout << "latest_existing_obs:" << endl;
+	for (int i_index = 0; i_index < 10; i_index++) {
+		cout << i_index << ":" << endl;
+		for (int x_index = 0; x_index < 5; x_index++) {
+			for (int y_index = 0; y_index < 5; y_index++) {
+				cout << this->starting_best_obs[i_index][5 * x_index + y_index] << " ";
+			}
+			cout << endl;
+		}
+	}
+
+	cout << "latest_new_obs:" << endl;
+	for (int i_index = 0; i_index < 10; i_index++) {
+		cout << i_index << ":" << endl;
+		for (int x_index = 0; x_index < 5; x_index++) {
+			for (int y_index = 0; y_index < 5; y_index++) {
+				cout << this->starting_best_obs[i_index][5 * x_index + y_index] << " ";
+			}
+			cout << endl;
+		}
+	}
 }

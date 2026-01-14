@@ -30,6 +30,13 @@ public:
 	int num_tries;
 	int num_improve;
 
+	std::vector<std::vector<double>> starting_best_obs;
+	std::vector<std::vector<double>> starting_worst_obs;
+	std::vector<std::vector<double>> starting_random_obs;
+
+	std::vector<std::vector<double>> latest_existing_obs;
+	std::vector<std::vector<double>> latest_new_obs;
+
 	Tunnel(std::vector<int>& obs_indexes,
 		   bool is_pattern,
 		   Network* similarity_network,
@@ -45,6 +52,8 @@ public:
 	void save(std::ofstream& output_file);
 
 	void print();
+
+	void print_obs();
 };
 
 #endif /* TUNNEL_H */
