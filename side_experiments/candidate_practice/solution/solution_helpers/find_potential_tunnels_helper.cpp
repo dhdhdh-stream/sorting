@@ -22,7 +22,7 @@ const int TRUE_WEIGHT = 4;
 const double MIN_TRUE_RATIO = 0.25;
 
 const int TARGET_CANDIDATES = 2;
-const int FIND_NUM_TRIES = 100;
+const int FIND_NUM_TRIES = 40;
 
 void select_parent_tunnel_helper(Scope* scope_context,
 								 Scope*& parent_tunnel_parent,
@@ -311,104 +311,76 @@ void find_potential_tunnels(Scope* scope_context,
 							vector<ScopeHistory*>& ending_scope_histories,
 							vector<vector<ScopeHistory*>>& ending_branch_stack_traces,
 							SolutionWrapper* wrapper) {
-	int num_added = 0;
-	int num_tries = 0;
-	while (wrapper->candidates.size() < NUM_CANDIDATES) {
-		if (scope_context->explore_stack_traces.size() > 0) {
-			vector<vector<double>> explore_obs_vals;
-			vector<double> explore_target_vals;
-			gather_training_data_helper(scope_context,
-										explore_obs_vals,
-										explore_target_vals);
+	Tunnel* best_candidate = NULL;
+	double best_improvement = 0.0;
+	for (int t_index = 0; t_index < FIND_NUM_TRIES; t_index++) {
+		vector<vector<double>> explore_obs_vals;
+		vector<double> explore_target_vals;
+		gather_training_data_helper(scope_context,
+									explore_obs_vals,
+									explore_target_vals);
 
-			vector<vector<double>> starting_existing_obs_vals;
-			for (int h_index = 0; h_index < (int)starting_scope_histories.size(); h_index++) {
-				gather_tunnel_data_helper(starting_scope_histories[h_index],
-										  scope_context,
-										  starting_existing_obs_vals);
-			}
+		vector<vector<double>> starting_existing_obs_vals;
+		for (int h_index = 0; h_index < (int)starting_scope_histories.size(); h_index++) {
+			gather_tunnel_data_helper(starting_scope_histories[h_index],
+									  scope_context,
+									  starting_existing_obs_vals);
+		}
 
-			vector<vector<double>> ending_existing_obs_vals;
-			for (int h_index = 0; h_index < (int)ending_scope_histories.size(); h_index++) {
-				gather_tunnel_data_helper(ending_scope_histories[h_index],
-										  scope_context,
-										  ending_existing_obs_vals);
-			}
+		vector<vector<double>> ending_existing_obs_vals;
+		for (int h_index = 0; h_index < (int)ending_scope_histories.size(); h_index++) {
+			gather_tunnel_data_helper(ending_scope_histories[h_index],
+									  scope_context,
+									  ending_existing_obs_vals);
+		}
 
-			Tunnel* candidate;
-			uniform_int_distribution<int> pattern_distribution(0, 1);
-			if (pattern_distribution(generator) == 0) {
-				candidate = create_pattern_candidate(starting_existing_obs_vals,
-													 ending_existing_obs_vals,
-													 explore_obs_vals,
-													 explore_target_vals);
-			} else {
-				candidate = create_obs_candidate(explore_obs_vals,
+		Tunnel* candidate;
+		uniform_int_distribution<int> pattern_distribution(0, 1);
+		if (pattern_distribution(generator) == 0) {
+			candidate = create_pattern_candidate(starting_existing_obs_vals,
+												 ending_existing_obs_vals,
+												 explore_obs_vals,
 												 explore_target_vals);
-			}
-
-			vector<double> starting_vals(starting_existing_obs_vals.size());
-			for (int h_index = 0; h_index < (int)starting_existing_obs_vals.size(); h_index++) {
-				starting_vals[h_index] = candidate->get_signal(starting_existing_obs_vals[h_index]);
-			}
-			vector<double> ending_vals;
-			for (int h_index = 0; h_index < (int)ending_branch_stack_traces.size(); h_index++) {
-				ending_vals.push_back(candidate->get_signal(
-					ending_branch_stack_traces[h_index].back()->obs_history));
-			}
-
-			double starting_sum_vals = 0.0;
-			for (int h_index = 0; h_index < (int)starting_vals.size(); h_index++) {
-				starting_sum_vals += starting_vals[h_index];
-			}
-			double starting_val_average = starting_sum_vals / (double)starting_vals.size();
-
-			double starting_sum_variance = 0.0;
-			for (int h_index = 0; h_index < (int)starting_vals.size(); h_index++) {
-				starting_sum_variance += (starting_vals[h_index] - starting_val_average) * (starting_vals[h_index] - starting_val_average);
-			}
-			double starting_val_standard_deviation = sqrt(starting_sum_variance / (double)starting_vals.size());
-			if (starting_val_standard_deviation < MIN_STANDARD_DEVIATION) {
-				starting_val_standard_deviation = MIN_STANDARD_DEVIATION;
-			}
-			double starting_val_standard_error = starting_val_standard_deviation / sqrt((double)starting_vals.size());
-
-			double ending_sum_vals = 0.0;
-			for (int h_index = 0; h_index < (int)ending_vals.size(); h_index++) {
-				ending_sum_vals += ending_vals[h_index];
-			}
-			double ending_val_average = ending_sum_vals / (double)ending_vals.size();
-
-			double ending_sum_variance = 0.0;
-			for (int h_index = 0; h_index < (int)ending_vals.size(); h_index++) {
-				ending_sum_variance += (ending_vals[h_index] - ending_val_average) * (ending_vals[h_index] - ending_val_average);
-			}
-			double ending_val_standard_deviation = sqrt(ending_sum_variance / (double)ending_vals.size());
-			if (ending_val_standard_deviation < MIN_STANDARD_DEVIATION) {
-				ending_val_standard_deviation = MIN_STANDARD_DEVIATION;
-			}
-			double ending_val_standard_error = ending_val_standard_deviation / sqrt((double)ending_vals.size());
-
-			double denom = sqrt(starting_val_standard_error * starting_val_standard_error
-				+ ending_val_standard_error * ending_val_standard_error);
-			double t_score = (ending_val_average - starting_val_average) / denom;
-
-			if (t_score >= 2.326) {
-				wrapper->candidates.push_back({scope_context->id, candidate});
-
-				num_added++;
-			} else {
-				delete candidate;
-			}
+		} else {
+			candidate = create_obs_candidate(explore_obs_vals,
+											 explore_target_vals);
 		}
 
-		if (num_added >= TARGET_CANDIDATES) {
-			break;
+		vector<double> starting_vals(starting_existing_obs_vals.size());
+		for (int h_index = 0; h_index < (int)starting_existing_obs_vals.size(); h_index++) {
+			starting_vals[h_index] = candidate->get_signal(starting_existing_obs_vals[h_index]);
+		}
+		vector<double> ending_vals;
+		for (int h_index = 0; h_index < (int)ending_branch_stack_traces.size(); h_index++) {
+			ending_vals.push_back(candidate->get_signal(
+				ending_branch_stack_traces[h_index].back()->obs_history));
 		}
 
-		num_tries++;
-		if (num_tries >= FIND_NUM_TRIES) {
-			break;
+		double starting_sum_vals = 0.0;
+		for (int h_index = 0; h_index < (int)starting_vals.size(); h_index++) {
+			starting_sum_vals += starting_vals[h_index];
 		}
+		double starting_val_average = starting_sum_vals / (double)starting_vals.size();
+
+		double ending_sum_vals = 0.0;
+		for (int h_index = 0; h_index < (int)ending_vals.size(); h_index++) {
+			ending_sum_vals += ending_vals[h_index];
+		}
+		double ending_val_average = ending_sum_vals / (double)ending_vals.size();
+
+		double improvement = ending_val_average - starting_val_average;
+
+		if (improvement > best_improvement) {
+			if (best_candidate != NULL) {
+				delete best_candidate;
+			}
+			best_candidate = candidate;
+		} else {
+			delete candidate;
+		}
+	}
+
+	if (best_candidate != NULL) {
+		wrapper->candidates.push_back({scope_context->id, best_candidate});
 	}
 }

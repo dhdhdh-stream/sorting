@@ -11,6 +11,10 @@ SolutionWrapper::SolutionWrapper(ProblemType* problem_type) {
 	this->solution = new Solution();
 	this->solution->init(problem_type);
 
+	this->solution_snapshots.push_back(new Solution(this->solution));
+	this->num_resets.push_back(0);
+	this->reset_count = 0;
+
 	this->curr_experiment = NULL;
 
 	this->experiment_history = NULL;
@@ -25,6 +29,9 @@ SolutionWrapper::SolutionWrapper(std::string path,
 	ifstream input_file;
 	input_file.open(path + name);
 
+	this->solution = new Solution();
+	this->solution->load(input_file);
+
 	string num_candidates_line;
 	getline(input_file, num_candidates_line);
 	int num_candidates = stoi(num_candidates_line);
@@ -38,8 +45,22 @@ SolutionWrapper::SolutionWrapper(std::string path,
 		this->candidates.push_back({scope_id, tunnel});
 	}
 
-	this->solution = new Solution();
-	this->solution->load(input_file);
+	string num_snapshots_line;
+	getline(input_file, num_snapshots_line);
+	int num_snapshots = stoi(num_snapshots_line);
+	for (int s_index = 0; s_index < num_snapshots; s_index++) {
+		Solution* snapshot = new Solution();
+		snapshot->load(input_file);
+		this->solution_snapshots.push_back(snapshot);
+
+		string num_resets_line;
+		getline(input_file, num_resets_line);
+		this->num_resets.push_back(stoi(num_resets_line));
+	}
+
+	string reset_count_line;
+	getline(input_file, reset_count_line);
+	this->reset_count = stoi(reset_count_line);
 
 	this->curr_experiment = NULL;
 
@@ -103,6 +124,8 @@ void SolutionWrapper::save(string path,
 	ofstream output_file;
 	output_file.open(path + "temp_" + name);
 
+	this->solution->save(output_file);
+
 	output_file << this->candidates.size() << endl;
 	for (int c_index = 0; c_index < (int)this->candidates.size(); c_index++) {
 		output_file << this->candidates[c_index].first << endl;
@@ -110,7 +133,14 @@ void SolutionWrapper::save(string path,
 		this->candidates[c_index].second->save(output_file);
 	}
 
-	this->solution->save(output_file);
+	output_file << this->solution_snapshots.size() << endl;
+	for (int s_index = 0; s_index < (int)this->solution_snapshots.size(); s_index++) {
+		this->solution_snapshots[s_index]->save(output_file);
+
+		output_file << this->num_resets[s_index] << endl;
+	}
+
+	output_file << this->reset_count << endl;
 
 	output_file.close();
 

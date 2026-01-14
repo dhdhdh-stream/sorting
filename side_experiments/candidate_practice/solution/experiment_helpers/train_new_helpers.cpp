@@ -211,6 +211,7 @@ void eval_tunnel(int tunnel_scope_context_id,
 				 vector<vector<ScopeHistory*>>& validation_stack_traces,
 				 vector<double>& validation_true_histories,
 				 vector<double>& validation_true_network_vals,
+				 double true_score,
 				 double& best_score,
 				 vector<Network*>& networks,
 				 vector<double>& above_min,
@@ -283,135 +284,32 @@ void eval_tunnel(int tunnel_scope_context_id,
 		tunnel_new_network->backprop(error);
 	}
 
-	double existing_signal_sum_vals = 0.0;
-	for (int h_index = 0; h_index < (int)existing_signal_target_vals.size(); h_index++) {
-		existing_signal_sum_vals += existing_signal_target_vals[h_index];
-	}
-	double existing_signal_val_average = existing_signal_sum_vals / (double)existing_signal_target_vals.size();
-
-	double existing_signal_sum_variance = 0.0;
-	for (int h_index = 0; h_index < (int)existing_signal_target_vals.size(); h_index++) {
-		existing_signal_sum_variance += (existing_signal_target_vals[h_index] - existing_signal_val_average) * (existing_signal_target_vals[h_index] - existing_signal_val_average);
-	}
-	double existing_signal_val_standard_deviation = sqrt(existing_signal_sum_variance / (double)existing_signal_target_vals.size());
-
-	double new_signal_sum_vals = 0.0;
-	for (int h_index = 0; h_index < (int)new_signal_obs_histories.size(); h_index++) {
-		tunnel_new_network->activate(new_signal_obs_histories[h_index]);
-		if (tunnel_new_network->output->acti_vals[0] >= 0.0) {
-			new_signal_sum_vals += new_signal_target_vals[h_index];
-		}
-	}
-	double improvement = new_signal_sum_vals / (double)new_signal_obs_histories.size();
-
-	double t_score = improvement / (existing_signal_val_standard_deviation / sqrt((double)new_signal_obs_histories.size()));
-
-	#if defined(MDEBUG) && MDEBUG
-	if (t_score < 1.960 && rand()%2 == 0) {
-	#else
-	if (t_score < 1.960) {
-	#endif /* MDEBUG */
-		delete tunnel_existing_network;
-		delete tunnel_new_network;
-
-		return;
-	}
-
-	tunnel->num_significant++;
-
 	/**
-	 * - eval on validation true
-	 *   - validation will be used twice, but true network trained on train true
-	 *   - as if split into 9 options and tested separately against validation
+	 * - simply always use true_above_min and true_below_max
 	 */
-
-	vector<double> validation_network_vals(validation_obs_histories.size());
-	for (int h_index = 0; h_index < (int)validation_obs_histories.size(); h_index++) {
-		tunnel_new_network->activate(validation_obs_histories[h_index]);
-		validation_network_vals[h_index] = tunnel_new_network->output->acti_vals[0];
-	}
-
-	double above_true_sum_vals = 0.0;
-	double above_dual_sum_vals = 0.0;
-	double above_signal_sum_vals = 0.0;
-	for (int h_index = 0; h_index < (int)validation_obs_histories.size(); h_index++) {
-		if (validation_true_network_vals[h_index] >= 0.0) {
-			above_true_sum_vals += validation_true_histories[h_index];
-
-			if (validation_true_network_vals[h_index] >= true_above_min) {
-				above_dual_sum_vals += validation_true_histories[h_index];
-			} else if (validation_network_vals[h_index] >= 0.0) {
-				above_dual_sum_vals += validation_true_histories[h_index];
-			}
-
-			if (validation_network_vals[h_index] >= 0.0) {
-				above_signal_sum_vals += validation_true_histories[h_index];
-			}
-		}
-	}
-
-	double curr_above_min;
-	if (above_true_sum_vals >= above_dual_sum_vals
-			&& above_true_sum_vals >= above_signal_sum_vals) {
-		curr_above_min = 0.0;
-	} else {
-		if (above_dual_sum_vals >= above_signal_sum_vals) {
-			curr_above_min = true_above_min;
-		} else {
-			curr_above_min = numeric_limits<double>::max();
-		}
-	}
-
-	double below_true_sum_vals = 0.0;
-	double below_dual_sum_vals = 0.0;
-	double below_signal_sum_vals = 0.0;
-	for (int h_index = 0; h_index < (int)validation_obs_histories.size(); h_index++) {
-		if (validation_true_network_vals[h_index] <= 0.0) {
-			if (validation_true_network_vals[h_index] > true_below_max) {
-				if (validation_network_vals[h_index] >= 0.0) {
-					below_dual_sum_vals += validation_true_histories[h_index];
-				}
-			}
-
-			if (validation_network_vals[h_index] >= 0.0) {
-				below_signal_sum_vals += validation_true_histories[h_index];
-			}
-		}
-	}
-
-	double curr_below_max;
-	if (below_true_sum_vals >= below_dual_sum_vals
-			&& below_true_sum_vals >= below_signal_sum_vals) {
-		curr_below_max = 0.0;
-	} else {
-		if (below_dual_sum_vals >= below_signal_sum_vals) {
-			curr_below_max = true_below_max;
-		} else {
-			curr_below_max = numeric_limits<double>::lowest();
-		}
-	}
 
 	double sum_vals = 0.0;
 	for (int h_index = 0; h_index < (int)validation_obs_histories.size(); h_index++) {
 		if (validation_true_network_vals[h_index] >= 0.0) {
-			if (validation_true_network_vals[h_index] >= curr_above_min) {
+			if (validation_true_network_vals[h_index] >= true_above_min) {
 				sum_vals += validation_true_histories[h_index];
 			} else {
-				if (validation_network_vals[h_index] >= 0.0) {
+				tunnel_new_network->activate(validation_obs_histories[h_index]);
+				if (tunnel_new_network->output->acti_vals[0] >= 0.0) {
 					sum_vals += validation_true_histories[h_index];
 				}
 			}
 		} else {
-			if (validation_true_network_vals[h_index] > curr_below_max) {
-				if (validation_network_vals[h_index] >= 0.0) {
+			if (validation_true_network_vals[h_index] > true_below_max) {
+				tunnel_new_network->activate(validation_obs_histories[h_index]);
+				if (tunnel_new_network->output->acti_vals[0] >= 0.0) {
 					sum_vals += validation_true_histories[h_index];
 				}
 			}
 		}
 	}
 
-	if (sum_vals > 0.0
-			&& (curr_above_min > 0.0 || curr_below_max < 0.0)) {
+	if (sum_vals > true_score) {
 		tunnel->num_improve++;
 	}
 
@@ -425,8 +323,8 @@ void eval_tunnel(int tunnel_scope_context_id,
 			delete networks[n_index];
 		}
 		networks = {networks[0], tunnel_new_network};
-		above_min = {curr_above_min, 0.0};
-		below_max = {curr_below_max, 0.0};
+		above_min = {true_above_min, 0.0};
+		below_max = {true_below_max, 0.0};
 	} else {
 		delete tunnel_new_network;
 	}
@@ -536,6 +434,7 @@ void Experiment::train_new_backprop(
 							validation_stack_traces,
 							validation_true_histories,
 							validation_true_network_vals,
+							sum_vals,
 							best_score,
 							this->networks,
 							this->above_min,

@@ -18,17 +18,22 @@ class ScopeHistory;
 class Solution;
 class Tunnel;
 
-const int NUM_CANDIDATES = 10;
-
 class SolutionWrapper {
 public:
 	Solution* solution;
 
 	/**
-	 * - iter variables
+	 * - simply carry over across snapshots
 	 */
 	std::vector<std::pair<int, Tunnel*>> candidates;
 
+	std::vector<Solution*> solution_snapshots;
+	std::vector<int> num_resets;
+	int reset_count;
+
+	/**
+	 * - iter variables
+	 */
 	AbstractExperiment* curr_experiment;
 
 	/**

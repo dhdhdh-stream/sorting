@@ -28,7 +28,6 @@ public:
 	Network* signal_network;
 
 	int num_tries;
-	int num_significant;
 	int num_improve;
 
 	Tunnel(std::vector<int>& obs_indexes,

@@ -23,7 +23,6 @@ Tunnel::Tunnel(std::vector<int>& obs_indexes,
 	this->signal_network = signal_network;
 
 	this->num_tries = 0;
-	this->num_significant = 0;
 	this->num_improve = 0;
 }
 
@@ -40,7 +39,6 @@ Tunnel::Tunnel(Tunnel* original) {
 	this->signal_network = new Network(original->signal_network);
 
 	this->num_tries = original->num_tries;
-	this->num_significant = original->num_significant;
 	this->num_improve = original->num_improve;
 }
 
@@ -68,10 +66,6 @@ Tunnel::Tunnel(ifstream& input_file) {
 	string num_tries_line;
 	getline(input_file, num_tries_line);
 	this->num_tries = stoi(num_tries_line);
-
-	string num_significant_line;
-	getline(input_file, num_significant_line);
-	this->num_significant = stoi(num_significant_line);
 
 	string num_improve_line;
 	getline(input_file, num_improve_line);
@@ -115,20 +109,11 @@ bool Tunnel::is_fail() {
 	if (this->num_tries < 10) {
 		return false;
 	} else {
-		double significant_ratio = (double)this->num_significant / (double)this->num_tries;
-		if (significant_ratio <= 0.2) {
+		double improve_ratio = (double)this->num_improve / (double)this->num_tries;
+		if (improve_ratio <= 0.2) {
 			return true;
 		} else {
-			if (this->num_significant < 5) {
-				return false;
-			} else {
-				double improve_ratio = (double)this->num_improve / (double)this->num_significant;
-				if (improve_ratio <= 0.1) {
-					return true;
-				} else {
-					return false;
-				}
-			}
+			return false;
 		}
 	}
 }
@@ -147,7 +132,6 @@ void Tunnel::save(ofstream& output_file) {
 	this->signal_network->save(output_file);
 
 	output_file << this->num_tries << endl;
-	output_file << this->num_significant << endl;
 	output_file << this->num_improve << endl;
 }
 
@@ -161,6 +145,5 @@ void Tunnel::print() {
 	cout << "this->is_pattern: " << this->is_pattern << endl;
 
 	cout << "this->num_tries: " << this->num_tries << endl;
-	cout << "this->num_significant: " << this->num_significant << endl;
 	cout << "this->num_improve: " << this->num_improve << endl;
 }
