@@ -122,17 +122,17 @@ void Experiment::train_new_backprop(
 			vector<vector<double>> validation_obs_histories(this->new_obs_histories.begin() + num_train, this->new_obs_histories.end());
 			vector<double> validation_true_histories(this->new_true_histories.begin() + num_train, this->new_true_histories.end());
 
-			Network* new_true_network = new Network(train_obs_histories[0].size(),
-													NETWORK_SIZE_SMALL);
+			this->new_true_network = new Network(train_obs_histories[0].size(),
+												 NETWORK_SIZE_SMALL);
 			uniform_int_distribution<int> val_input_distribution(0, train_obs_histories.size()-1);
 			for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
 				int rand_index = val_input_distribution(generator);
 
-				new_true_network->activate(train_obs_histories[rand_index]);
+				this->new_true_network->activate(train_obs_histories[rand_index]);
 
-				double error = train_true_histories[rand_index] - new_true_network->output->acti_vals[0];
+				double error = train_true_histories[rand_index] - this->new_true_network->output->acti_vals[0];
 
-				new_true_network->backprop(error);
+				this->new_true_network->backprop(error);
 			}
 
 			vector<double> validation_true_network_vals(validation_obs_histories.size());
@@ -141,17 +141,19 @@ void Experiment::train_new_backprop(
 				validation_true_network_vals[h_index] = new_true_network->output->acti_vals[0];
 			}
 
+			int positive_count = 0;
 			double sum_vals = 0.0;
 			for (int h_index = 0; h_index < (int)validation_obs_histories.size(); h_index++) {
 				if (validation_true_network_vals[h_index] >= 0.0) {
+					positive_count++;
 					sum_vals += validation_true_histories[h_index];
 				}
 			}
 
 			#if defined(MDEBUG) && MDEBUG
-			if (sum_vals >= 0.0 || rand()%4 != 0) {
+			if ((positive_count > 0 && sum_vals >= 0.0) || rand()%4 != 0) {
 			#else
-			if (sum_vals >= 0.0) {
+			if (positive_count > 0 && sum_vals >= 0.0) {
 			#endif /* MDEBUG */
 				this->sum_true = 0.0;
 				this->hit_count = 0;

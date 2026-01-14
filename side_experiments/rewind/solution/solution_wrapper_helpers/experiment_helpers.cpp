@@ -133,21 +133,24 @@ void SolutionWrapper::experiment_end(double result) {
 				if (this->solution->timestamp % SNAPSHOT_ITERS == 0) {
 					if (this->solution->curr_score > this->solution_snapshots.back()->curr_score) {
 						this->solution_snapshots.push_back(new Solution(this->solution));
+						this->num_resets.push_back(0);
 						if (this->solution_snapshots.size() > MAX_SNAPSHOTS) {
 							delete this->solution_snapshots[0];
 							this->solution_snapshots.erase(this->solution_snapshots.begin());
-						}
 
-						this->num_resets = 0;
+							this->num_resets.erase(this->num_resets.begin());
+						}
 					} else {
-						this->num_resets++;
+						this->num_resets.back()++;
 						if (this->solution_snapshots.size() > 1
-								&& this->num_resets >= MAX_SNAPSHOT_RESETS) {
+								&& this->num_resets.back() >= MAX_SNAPSHOT_RESETS) {
 							delete this->solution_snapshots.back();
 							this->solution_snapshots.erase(this->solution_snapshots.end()-1);
 
-							this->num_resets = 0;
+							this->num_resets.erase(this->num_resets.end()-1);
 						}
+
+						this->reset_count++;
 
 						delete this->solution;
 						this->solution = new Solution(this->solution_snapshots.back());

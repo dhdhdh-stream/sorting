@@ -84,7 +84,7 @@ void Experiment::explore_check_activate(SolutionWrapper* wrapper) {
 		}
 		this->curr_exit_next_node = possible_exits[random_index];
 
-		uniform_int_distribution<int> new_scope_distribution(0, 1);
+		uniform_int_distribution<int> new_scope_distribution(0, 3);
 		if (new_scope_distribution(generator) == 0) {
 			this->curr_new_scope = create_new_scope(this->node_context->parent);
 		}

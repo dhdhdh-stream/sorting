@@ -22,7 +22,8 @@ public:
 	Solution* solution;
 
 	std::vector<Solution*> solution_snapshots;
-	int num_resets;
+	std::vector<int> num_resets;
+	int reset_count;
 
 	AbstractExperiment* curr_experiment;
 
