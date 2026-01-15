@@ -45,6 +45,8 @@ int main(int argc, char* argv[]) {
 	auto start_time = chrono::high_resolution_clock::now();
 
 	while (!solution_wrapper->is_done()) {
+		int starting_timestamp = solution_wrapper->solution->timestamp;
+
 		while (true) {
 			auto curr_time = chrono::high_resolution_clock::now();
 			auto time_diff = chrono::duration_cast<chrono::seconds>(curr_time - start_time);
@@ -83,6 +85,10 @@ int main(int argc, char* argv[]) {
 			solution_wrapper->experiment_end(target_val);
 
 			delete problem;
+
+			if (solution_wrapper->solution->timestamp != starting_timestamp) {
+				break;
+			}
 		}
 
 		solution_wrapper->save(path, filename);

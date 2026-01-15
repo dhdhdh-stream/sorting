@@ -25,12 +25,15 @@ class SolutionWrapper {
 public:
 	Solution* solution;
 
+	Solution* solution_snapshot;
+
 	/**
 	 * - iter variables
 	 */
 	AbstractExperiment* curr_experiment;
 	std::vector<AbstractExperiment*> best_experiments;
 	double curr_target;
+	int curr_tries;
 
 	/**
 	 * - run variables

@@ -21,8 +21,7 @@ using namespace std;
 const int TRUE_WEIGHT = 4;
 const double MIN_TRUE_RATIO = 0.25;
 
-const int TARGET_CANDIDATES = 2;
-const int FIND_NUM_TRIES = 40;
+const int FIND_NUM_TRIES = 20;
 
 void select_parent_tunnel_helper(Scope* scope_context,
 								 Scope*& parent_tunnel_parent,

@@ -19,6 +19,8 @@ const int TRAIN_EXISTING_NUM_DATAPOINTS = 1000;
 #endif /* MDEBUG */
 
 void BranchExperiment::train_existing_check_activate(SolutionWrapper* wrapper) {
+	wrapper->has_explore = true;
+
 	BranchExperimentState* new_experiment_state = new BranchExperimentState(this);
 	new_experiment_state->step_index = 0;
 	wrapper->experiment_context.back() = new_experiment_state;
@@ -42,6 +44,10 @@ void BranchExperiment::train_existing_backprop(double target_val,
 
 	BranchExperimentHistory* history = (BranchExperimentHistory*)wrapper->experiment_history;
 	if (history->is_hit) {
+		this->existing_post_scope_histories.push_back(wrapper->post_scope_histories);
+		wrapper->post_scope_histories.clear();
+		wrapper->has_explore = false;
+
 		while (this->target_val_histories.size() < this->obs_histories.size()) {
 			this->target_val_histories.push_back(target_val - wrapper->solution->curr_score);
 		}

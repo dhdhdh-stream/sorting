@@ -21,9 +21,6 @@ Tunnel::Tunnel(std::vector<int>& obs_indexes,
 	this->similarity_network = similarity_network;
 
 	this->signal_network = signal_network;
-
-	this->num_tries = 0;
-	this->num_improve = 0;
 }
 
 Tunnel::Tunnel(Tunnel* original) {
@@ -38,8 +35,7 @@ Tunnel::Tunnel(Tunnel* original) {
 
 	this->signal_network = new Network(original->signal_network);
 
-	this->num_tries = original->num_tries;
-	this->num_improve = original->num_improve;
+	this->try_history = original->try_history;
 
 	this->starting_best_obs = original->starting_best_obs;
 	this->starting_worst_obs = original->starting_worst_obs;
@@ -70,13 +66,14 @@ Tunnel::Tunnel(ifstream& input_file) {
 
 	this->signal_network = new Network(input_file);
 
-	string num_tries_line;
-	getline(input_file, num_tries_line);
-	this->num_tries = stoi(num_tries_line);
-
-	string num_improve_line;
-	getline(input_file, num_improve_line);
-	this->num_improve = stoi(num_improve_line);
+	string try_history_size_line;
+	getline(input_file, try_history_size_line);
+	int try_history_size = stoi(try_history_size_line);
+	for (int t_index = 0; t_index < try_history_size; t_index++) {
+		string try_line;
+		getline(input_file, try_line);
+		this->try_history.push_back(stoi(try_line));
+	}
 
 	for (int i_index = 0; i_index < 10; i_index++) {
 		vector<double> obs;
@@ -108,7 +105,10 @@ Tunnel::Tunnel(ifstream& input_file) {
 		this->starting_random_obs.push_back(obs);
 	}
 
-	for (int i_index = 0; i_index < 10; i_index++) {
+	string latest_existing_obs_size_line;
+	getline(input_file, latest_existing_obs_size_line);
+	int latest_existing_obs_size = stoi(latest_existing_obs_size_line);
+	for (int i_index = 0; i_index < latest_existing_obs_size; i_index++) {
 		vector<double> obs;
 		for (int o_index = 0; o_index < 25; o_index++) {
 			string obs_line;
@@ -118,7 +118,10 @@ Tunnel::Tunnel(ifstream& input_file) {
 		this->latest_existing_obs.push_back(obs);
 	}
 
-	for (int i_index = 0; i_index < 10; i_index++) {
+	string latest_new_obs_size_line;
+	getline(input_file, latest_new_obs_size_line);
+	int latest_new_obs_size = stoi(latest_new_obs_size_line);
+	for (int i_index = 0; i_index < latest_new_obs_size; i_index++) {
 		vector<double> obs;
 		for (int o_index = 0; o_index < 25; o_index++) {
 			string obs_line;
@@ -163,10 +166,16 @@ double Tunnel::get_signal(vector<double>& obs) {
 }
 
 bool Tunnel::is_fail() {
-	if (this->num_tries < 10) {
+	if (this->try_history.size() < 10) {
 		return false;
 	} else {
-		double improve_ratio = (double)this->num_improve / (double)this->num_tries;
+		int num_improve = 0;
+		for (int t_index = 0; t_index < (int)this->try_history.size(); t_index++) {
+			if (this->try_history[t_index] == TRY_IMPROVE) {
+				num_improve++;
+			}
+		}
+		double improve_ratio = (double)num_improve / (double)this->try_history.size();
 		if (improve_ratio <= 0.2) {
 			return true;
 		} else {
@@ -188,8 +197,10 @@ void Tunnel::save(ofstream& output_file) {
 
 	this->signal_network->save(output_file);
 
-	output_file << this->num_tries << endl;
-	output_file << this->num_improve << endl;
+	output_file << this->try_history.size() << endl;
+	for (int t_index = 0; t_index < (int)this->try_history.size(); t_index++) {
+		output_file << this->try_history[t_index] << endl;
+	}
 
 	for (int i_index = 0; i_index < 10; i_index++) {
 		for (int o_index = 0; o_index < 25; o_index++) {
@@ -209,13 +220,15 @@ void Tunnel::save(ofstream& output_file) {
 		}
 	}
 
-	for (int i_index = 0; i_index < 10; i_index++) {
+	output_file << this->latest_existing_obs.size() << endl;
+	for (int i_index = 0; i_index < (int)this->latest_existing_obs.size(); i_index++) {
 		for (int o_index = 0; o_index < 25; o_index++) {
 			output_file << this->latest_existing_obs[i_index][o_index] << endl;
 		}
 	}
 
-	for (int i_index = 0; i_index < 10; i_index++) {
+	output_file << this->latest_new_obs.size() << endl;
+	for (int i_index = 0; i_index < (int)this->latest_new_obs.size(); i_index++) {
 		for (int o_index = 0; o_index < 25; o_index++) {
 			output_file << this->latest_new_obs[i_index][o_index] << endl;
 		}
@@ -231,8 +244,11 @@ void Tunnel::print() {
 
 	cout << "this->is_pattern: " << this->is_pattern << endl;
 
-	cout << "this->num_tries: " << this->num_tries << endl;
-	cout << "this->num_improve: " << this->num_improve << endl;
+	cout << "this->try_history:";
+	for (int t_index = 0; t_index < (int)this->try_history.size(); t_index++) {
+		cout << " " << this->try_history[t_index];
+	}
+	cout << endl;
 }
 
 void Tunnel::print_obs() {
@@ -245,6 +261,18 @@ void Tunnel::print_obs() {
 			}
 			cout << endl;
 		}
+
+		vector<double> inputs(this->obs_indexes.size());
+		for (int o_index = 0; o_index < (int)this->obs_indexes.size(); o_index++) {
+			inputs[o_index] = this->starting_best_obs[i_index][this->obs_indexes[o_index]];
+		}
+		cout << "inputs:";
+		for (int i_index = 0; i_index < (int)inputs.size(); i_index++) {
+			cout << " " << inputs[i_index];
+		}
+		cout << endl;
+		double signal = get_signal(this->starting_best_obs[i_index]);
+		cout << "signal: " << signal << endl;
 	}
 
 	cout << "starting_worst_obs:" << endl;
@@ -252,10 +280,22 @@ void Tunnel::print_obs() {
 		cout << i_index << ":" << endl;
 		for (int x_index = 0; x_index < 5; x_index++) {
 			for (int y_index = 0; y_index < 5; y_index++) {
-				cout << this->starting_best_obs[i_index][5 * x_index + y_index] << " ";
+				cout << this->starting_worst_obs[i_index][5 * x_index + y_index] << " ";
 			}
 			cout << endl;
 		}
+
+		vector<double> inputs(this->obs_indexes.size());
+		for (int o_index = 0; o_index < (int)this->obs_indexes.size(); o_index++) {
+			inputs[o_index] = this->starting_worst_obs[i_index][this->obs_indexes[o_index]];
+		}
+		cout << "inputs:";
+		for (int i_index = 0; i_index < (int)inputs.size(); i_index++) {
+			cout << " " << inputs[i_index];
+		}
+		cout << endl;
+		double signal = get_signal(this->starting_worst_obs[i_index]);
+		cout << "signal: " << signal << endl;
 	}
 
 	cout << "starting_random_obs:" << endl;
@@ -263,31 +303,67 @@ void Tunnel::print_obs() {
 		cout << i_index << ":" << endl;
 		for (int x_index = 0; x_index < 5; x_index++) {
 			for (int y_index = 0; y_index < 5; y_index++) {
-				cout << this->starting_best_obs[i_index][5 * x_index + y_index] << " ";
+				cout << this->starting_random_obs[i_index][5 * x_index + y_index] << " ";
 			}
 			cout << endl;
 		}
+
+		vector<double> inputs(this->obs_indexes.size());
+		for (int o_index = 0; o_index < (int)this->obs_indexes.size(); o_index++) {
+			inputs[o_index] = this->starting_random_obs[i_index][this->obs_indexes[o_index]];
+		}
+		cout << "inputs:";
+		for (int i_index = 0; i_index < (int)inputs.size(); i_index++) {
+			cout << " " << inputs[i_index];
+		}
+		cout << endl;
+		double signal = get_signal(this->starting_random_obs[i_index]);
+		cout << "signal: " << signal << endl;
 	}
 
 	cout << "latest_existing_obs:" << endl;
-	for (int i_index = 0; i_index < 10; i_index++) {
+	for (int i_index = 0; i_index < (int)this->latest_existing_obs.size(); i_index++) {
 		cout << i_index << ":" << endl;
 		for (int x_index = 0; x_index < 5; x_index++) {
 			for (int y_index = 0; y_index < 5; y_index++) {
-				cout << this->starting_best_obs[i_index][5 * x_index + y_index] << " ";
+				cout << this->latest_existing_obs[i_index][5 * x_index + y_index] << " ";
 			}
 			cout << endl;
 		}
+
+		vector<double> inputs(this->obs_indexes.size());
+		for (int o_index = 0; o_index < (int)this->obs_indexes.size(); o_index++) {
+			inputs[o_index] = this->latest_existing_obs[i_index][this->obs_indexes[o_index]];
+		}
+		cout << "inputs:";
+		for (int i_index = 0; i_index < (int)inputs.size(); i_index++) {
+			cout << " " << inputs[i_index];
+		}
+		cout << endl;
+		double signal = get_signal(this->latest_existing_obs[i_index]);
+		cout << "signal: " << signal << endl;
 	}
 
 	cout << "latest_new_obs:" << endl;
-	for (int i_index = 0; i_index < 10; i_index++) {
+	for (int i_index = 0; i_index < (int)this->latest_new_obs.size(); i_index++) {
 		cout << i_index << ":" << endl;
 		for (int x_index = 0; x_index < 5; x_index++) {
 			for (int y_index = 0; y_index < 5; y_index++) {
-				cout << this->starting_best_obs[i_index][5 * x_index + y_index] << " ";
+				cout << this->latest_new_obs[i_index][5 * x_index + y_index] << " ";
 			}
 			cout << endl;
 		}
+
+		vector<double> inputs(this->obs_indexes.size());
+		for (int o_index = 0; o_index < (int)this->obs_indexes.size(); o_index++) {
+			inputs[o_index] = this->latest_new_obs[i_index][this->obs_indexes[o_index]];
+		}
+		cout << "inputs:";
+		for (int i_index = 0; i_index < (int)inputs.size(); i_index++) {
+			cout << " " << inputs[i_index];
+		}
+		cout << endl;
+		double signal = get_signal(this->latest_new_obs[i_index]);
+		cout << "signal: " << signal << endl;
 	}
 }

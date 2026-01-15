@@ -335,47 +335,49 @@ ScopeHistory::ScopeHistory(ScopeHistory* original,
 
 	for (map<int, AbstractNodeHistory*>::iterator it = original->node_histories.begin();
 			it != original->node_histories.end(); it++) {
-		AbstractNode* node = it->second->node;
-		switch (node->type) {
-		case NODE_TYPE_START:
-			{
-				StartNode* start_node = (StartNode*)this->scope->nodes[it->first];
-				this->node_histories[it->first] = new StartNodeHistory(start_node);
-			}
-			break;
-		case NODE_TYPE_ACTION:
-			{
-				ActionNode* action_node = (ActionNode*)this->scope->nodes[it->first];
-				this->node_histories[it->first] = new ActionNodeHistory(action_node);
-			}
-			break;
-		case NODE_TYPE_SCOPE:
-			{
-				ScopeNodeHistory* original_scope_node_history = (ScopeNodeHistory*)it->second;
+		if (this->scope->nodes.find(it->first) != this->scope->nodes.end()) {
+			AbstractNode* node = it->second->node;
+			switch (node->type) {
+			case NODE_TYPE_START:
+				{
+					StartNode* start_node = (StartNode*)this->scope->nodes[it->first];
+					this->node_histories[it->first] = new StartNodeHistory(start_node);
+				}
+				break;
+			case NODE_TYPE_ACTION:
+				{
+					ActionNode* action_node = (ActionNode*)this->scope->nodes[it->first];
+					this->node_histories[it->first] = new ActionNodeHistory(action_node);
+				}
+				break;
+			case NODE_TYPE_SCOPE:
+				{
+					ScopeNodeHistory* original_scope_node_history = (ScopeNodeHistory*)it->second;
 
-				ScopeNode* scope_node = (ScopeNode*)this->scope->nodes[it->first];
-				ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(scope_node);
-				scope_node_history->scope_history = new ScopeHistory(original_scope_node_history->scope_history,
-																	 parent_solution);
-				this->node_histories[it->first] = scope_node_history;
-			}
-			break;
-		case NODE_TYPE_BRANCH:
-			{
-				BranchNodeHistory* original_branch_node_history = (BranchNodeHistory*)it->second;
+					ScopeNode* scope_node = (ScopeNode*)this->scope->nodes[it->first];
+					ScopeNodeHistory* scope_node_history = new ScopeNodeHistory(scope_node);
+					scope_node_history->scope_history = new ScopeHistory(original_scope_node_history->scope_history,
+																		 parent_solution);
+					this->node_histories[it->first] = scope_node_history;
+				}
+				break;
+			case NODE_TYPE_BRANCH:
+				{
+					BranchNodeHistory* original_branch_node_history = (BranchNodeHistory*)it->second;
 
-				BranchNode* branch_node = (BranchNode*)this->scope->nodes[it->first];
-				BranchNodeHistory* branch_node_history = new BranchNodeHistory(branch_node);
-				branch_node_history->is_branch = original_branch_node_history->is_branch;
-				this->node_histories[it->first] = branch_node_history;
+					BranchNode* branch_node = (BranchNode*)this->scope->nodes[it->first];
+					BranchNodeHistory* branch_node_history = new BranchNodeHistory(branch_node);
+					branch_node_history->is_branch = original_branch_node_history->is_branch;
+					this->node_histories[it->first] = branch_node_history;
+				}
+				break;
+			case NODE_TYPE_OBS:
+				{
+					ObsNode* obs_node = (ObsNode*)this->scope->nodes[it->first];
+					this->node_histories[it->first] = new ObsNodeHistory(obs_node);
+				}
+				break;
 			}
-			break;
-		case NODE_TYPE_OBS:
-			{
-				ObsNode* obs_node = (ObsNode*)this->scope->nodes[it->first];
-				this->node_histories[it->first] = new ObsNodeHistory(obs_node);
-			}
-			break;
 		}
 	}
 

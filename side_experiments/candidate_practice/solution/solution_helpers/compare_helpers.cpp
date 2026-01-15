@@ -26,5 +26,7 @@ double fetch_compare(SolutionWrapper* wrapper) {
 
 	wrapper->compare_end();
 
+	delete copy_problem;
+
 	return target_val;
 }

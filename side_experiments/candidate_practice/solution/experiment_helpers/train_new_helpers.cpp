@@ -115,6 +115,11 @@ void split_above(std::vector<double>& vals,
 		}
 	}
 
+	if (above_vals.size() <= 1) {
+		split = 0.0;
+		return;
+	}
+
 	sort(above_vals.begin(), above_vals.end());
 
 	double best_sum_variance = numeric_limits<double>::max();
@@ -158,6 +163,11 @@ void split_below(std::vector<double>& vals,
 		if (vals[h_index] <= 0.0) {
 			below_vals.push_back(vals[h_index]);
 		}
+	}
+
+	if (below_vals.size() <= 1) {
+		split = 0.0;
+		return;
 	}
 
 	sort(below_vals.begin(), below_vals.end());
@@ -260,8 +270,6 @@ void eval_tunnel(int tunnel_scope_context_id,
 		tunnel->latest_new_obs.push_back(new_signal_obs_histories[i_index]);
 	}
 
-	tunnel->num_tries++;
-
 	Network* tunnel_existing_network = new Network(existing_signal_obs_histories[0].size(),
 												   NETWORK_SIZE_SMALL);
 	uniform_int_distribution<int> tunnel_existing_input_distribution(0, existing_signal_obs_histories.size()-1);
@@ -319,7 +327,9 @@ void eval_tunnel(int tunnel_scope_context_id,
 	}
 
 	if (sum_vals > true_score) {
-		tunnel->num_improve++;
+		tunnel->try_history.push_back(TRY_IMPROVE);
+	} else {
+		tunnel->try_history.push_back(TRY_FAIL);
 	}
 
 	#if defined(MDEBUG) && MDEBUG

@@ -10,6 +10,8 @@ SolutionWrapper::SolutionWrapper() {
 	this->solution = new Solution();
 	this->solution->init();
 
+	this->solution_snapshot = new Solution(this->solution);
+
 	this->curr_experiment = NULL;
 
 	this->experiment_history = NULL;
@@ -23,8 +25,16 @@ SolutionWrapper::SolutionWrapper() {
 
 SolutionWrapper::SolutionWrapper(std::string path,
 								 std::string name) {
+	ifstream input_file;
+	input_file.open(path + name);
+
 	this->solution = new Solution();
-	this->solution->load(path, name);
+	this->solution->load(input_file);
+
+	this->solution_snapshot = new Solution();
+	this->solution_snapshot->load(input_file);
+
+	input_file.close();
 
 	this->curr_experiment = NULL;
 
@@ -39,6 +49,8 @@ SolutionWrapper::SolutionWrapper(std::string path,
 
 SolutionWrapper::~SolutionWrapper() {
 	delete this->solution;
+
+	delete this->solution_snapshot;
 }
 
 bool SolutionWrapper::is_done() {
@@ -52,8 +64,13 @@ void SolutionWrapper::clean_scopes() {
 void SolutionWrapper::combine(string other_path,
 							  string other_name,
 							  int starting_size) {
+	ifstream input_file;
+	input_file.open(other_path + other_name);
+
 	Solution* other = new Solution();
-	other->load(other_path, other_name);
+	other->load(input_file);
+
+	input_file.close();
 
 	for (int scope_index = 1; scope_index < (int)other->scopes.size(); scope_index++) {
 		this->solution->scopes.push_back(other->scopes[scope_index]);
@@ -76,7 +93,18 @@ void SolutionWrapper::combine(string other_path,
 
 void SolutionWrapper::save(string path,
 						   string name) {
-	this->solution->save(path, name);
+	ofstream output_file;
+	output_file.open(path + "temp_" + name);
+
+	this->solution->save(output_file);
+
+	this->solution_snapshot->save(output_file);
+
+	output_file.close();
+
+	string oldname = path + "temp_" + name;
+	string newname = path + name;
+	rename(oldname.c_str(), newname.c_str());
 }
 
 void SolutionWrapper::save_for_display(string path,

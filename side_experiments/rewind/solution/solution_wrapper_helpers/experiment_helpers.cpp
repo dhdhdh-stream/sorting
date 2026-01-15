@@ -17,8 +17,6 @@ using namespace std;
 const int RUN_TIMESTEPS = 100;
 
 const int SNAPSHOT_ITERS = 10;
-const int MAX_SNAPSHOTS = 5;
-const int MAX_SNAPSHOT_RESETS = 4;
 
 void SolutionWrapper::experiment_init() {
 	this->num_actions = 1;
@@ -131,29 +129,24 @@ void SolutionWrapper::experiment_end(double result) {
 				// }
 
 				if (this->solution->timestamp % SNAPSHOT_ITERS == 0) {
-					if (this->solution->curr_score > this->solution_snapshots.back()->curr_score) {
-						this->solution_snapshots.push_back(new Solution(this->solution));
-						this->num_resets.push_back(0);
-						if (this->solution_snapshots.size() > MAX_SNAPSHOTS) {
-							delete this->solution_snapshots[0];
-							this->solution_snapshots.erase(this->solution_snapshots.begin());
+					double curr_score = 0.0;
+					for (int i_index = 0; i_index < 3; i_index++) {
+						curr_score += this->solution->improvement_history[this->solution->improvement_history.size()-1 - i_index];
+					}
 
-							this->num_resets.erase(this->num_resets.begin());
+					double existing_score = 0.0;
+					if (this->solution_snapshot->improvement_history.size() > 0) {
+						for (int i_index = 0; i_index < 3; i_index++) {
+							existing_score += this->solution_snapshot->improvement_history[this->solution_snapshot->improvement_history.size()-1 - i_index];
 						}
+					}
+
+					if (curr_score > existing_score) {
+						delete this->solution_snapshot;
+						this->solution_snapshot = new Solution(this->solution);
 					} else {
-						this->num_resets.back()++;
-						if (this->solution_snapshots.size() > 1
-								&& this->num_resets.back() >= MAX_SNAPSHOT_RESETS) {
-							delete this->solution_snapshots.back();
-							this->solution_snapshots.erase(this->solution_snapshots.end()-1);
-
-							this->num_resets.erase(this->num_resets.end()-1);
-						}
-
-						this->reset_count++;
-
 						delete this->solution;
-						this->solution = new Solution(this->solution_snapshots.back());
+						this->solution = new Solution(this->solution_snapshot);
 					}
 				}
 			}

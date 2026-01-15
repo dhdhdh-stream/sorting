@@ -21,9 +21,7 @@ class SolutionWrapper {
 public:
 	Solution* solution;
 
-	std::vector<Solution*> solution_snapshots;
-	std::vector<int> num_resets;
-	int reset_count;
+	Solution* solution_snapshot;
 
 	AbstractExperiment* curr_experiment;
 

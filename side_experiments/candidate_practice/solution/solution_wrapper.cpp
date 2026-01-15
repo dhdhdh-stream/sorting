@@ -90,6 +90,10 @@ SolutionWrapper::~SolutionWrapper() {
 	for (int c_index = 0; c_index < (int)this->candidates.size(); c_index++) {
 		delete this->candidates[c_index].second;
 	}
+
+	for (int s_index = 0; s_index < (int)this->solution_snapshots.size(); s_index++) {
+		delete this->solution_snapshots[s_index];
+	}
 }
 
 bool SolutionWrapper::is_done() {

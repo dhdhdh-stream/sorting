@@ -334,6 +334,8 @@ void clean_scope(Scope* scope) {
 	/**
 	 * - remove useless BranchNodes
 	 */
+	#if defined(MDEBUG) && MDEBUG
+	#else
 	while (true) {
 		bool removed_node = false;
 
@@ -382,6 +384,7 @@ void clean_scope(Scope* scope) {
 			break;
 		}
 	}
+	#endif /* MDEBUG */
 
 	/**
 	 * - remove duplicate ObsNodes

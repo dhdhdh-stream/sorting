@@ -45,11 +45,11 @@ public:
 	#endif /* MDEBUG */
 
 	Solution();
+	Solution(Solution* original);
 	~Solution();
 
 	void init();
-	void load(std::string path,
-			  std::string name);
+	void load(std::ifstream& input_file);
 
 	#if defined(MDEBUG) && MDEBUG
 	void clear_verify();
@@ -57,8 +57,7 @@ public:
 
 	void clean_scopes();
 
-	void save(std::string path,
-			  std::string name);
+	void save(std::ofstream& output_file);
 
 	void save_for_display(std::ofstream& output_file);
 };

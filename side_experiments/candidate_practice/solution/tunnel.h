@@ -18,6 +18,9 @@ class Scope;
 class Solution;
 class SolutionWrapper;
 
+const int TRY_FAIL = 0;
+const int TRY_IMPROVE = 1;
+
 class Tunnel {
 public:
 	std::vector<int> obs_indexes;
@@ -27,8 +30,7 @@ public:
 
 	Network* signal_network;
 
-	int num_tries;
-	int num_improve;
+	std::vector<int> try_history;
 
 	std::vector<std::vector<double>> starting_best_obs;
 	std::vector<std::vector<double>> starting_worst_obs;

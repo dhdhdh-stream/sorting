@@ -10,9 +10,7 @@ SolutionWrapper::SolutionWrapper(ProblemType* problem_type) {
 	this->solution = new Solution();
 	this->solution->init(problem_type);
 
-	this->solution_snapshots.push_back(new Solution(this->solution));
-	this->num_resets.push_back(0);
-	this->reset_count = 0;
+	this->solution_snapshot = new Solution(this->solution);
 
 	this->curr_experiment = NULL;
 
@@ -31,22 +29,8 @@ SolutionWrapper::SolutionWrapper(std::string path,
 	this->solution = new Solution();
 	this->solution->load(input_file);
 
-	string num_snapshots_line;
-	getline(input_file, num_snapshots_line);
-	int num_snapshots = stoi(num_snapshots_line);
-	for (int s_index = 0; s_index < num_snapshots; s_index++) {
-		Solution* snapshot = new Solution();
-		snapshot->load(input_file);
-		this->solution_snapshots.push_back(snapshot);
-
-		string num_resets_line;
-		getline(input_file, num_resets_line);
-		this->num_resets.push_back(stoi(num_resets_line));
-	}
-
-	string reset_count_line;
-	getline(input_file, reset_count_line);
-	this->reset_count = stoi(reset_count_line);
+	this->solution_snapshot = new Solution();
+	this->solution_snapshot->load(input_file);
 
 	this->curr_experiment = NULL;
 
@@ -62,9 +46,7 @@ SolutionWrapper::SolutionWrapper(std::string path,
 SolutionWrapper::~SolutionWrapper() {
 	delete this->solution;
 
-	for (int s_index = 0; s_index < (int)this->solution_snapshots.size(); s_index++) {
-		delete this->solution_snapshots[s_index];
-	}
+	delete this->solution_snapshot;
 }
 
 bool SolutionWrapper::is_done() {
@@ -112,14 +94,7 @@ void SolutionWrapper::save(string path,
 
 	this->solution->save(output_file);
 
-	output_file << this->solution_snapshots.size() << endl;
-	for (int s_index = 0; s_index < (int)this->solution_snapshots.size(); s_index++) {
-		this->solution_snapshots[s_index]->save(output_file);
-
-		output_file << this->num_resets[s_index] << endl;
-	}
-
-	output_file << this->reset_count << endl;
+	this->solution_snapshot->save(output_file);
 
 	output_file.close();
 

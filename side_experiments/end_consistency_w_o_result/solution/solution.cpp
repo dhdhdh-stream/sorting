@@ -24,6 +24,35 @@ Solution::~Solution() {
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
 		delete this->scopes[s_index];
 	}
+
+	#if defined(MDEBUG) && MDEBUG
+	for (int p_index = 0; p_index < (int)this->verify_problems.size(); p_index++) {
+		delete this->verify_problems[p_index];
+	}
+	#endif /* MDEBUG */
+}
+
+Solution::Solution(Solution* original) {
+	this->timestamp = original->timestamp;
+	this->curr_score = original->curr_score;
+
+	for (int s_index = 0; s_index < (int)original->scopes.size(); s_index++) {
+		Scope* scope = new Scope();
+		scope->id = s_index;
+		this->scopes.push_back(scope);
+	}
+
+	for (int s_index = 0; s_index < (int)original->scopes.size(); s_index++) {
+		this->scopes[s_index]->copy_from(original->scopes[s_index],
+										 this);
+	}
+
+	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
+		this->scopes[s_index]->link(this);
+	}
+
+	this->improvement_history = original->improvement_history;
+	this->change_history = original->change_history;
 }
 
 void Solution::init() {
@@ -63,11 +92,7 @@ void Solution::init() {
 	end_node->next_node = NULL;
 }
 
-void Solution::load(string path,
-					string name) {
-	ifstream input_file;
-	input_file.open(path + name);
-
+void Solution::load(ifstream& input_file) {
 	string timestamp_line;
 	getline(input_file, timestamp_line);
 	this->timestamp = stoi(timestamp_line);
@@ -107,8 +132,6 @@ void Solution::load(string path,
 		getline(input_file, change_line);
 		this->change_history.push_back(change_line);
 	}
-
-	input_file.close();
 }
 
 #if defined(MDEBUG) && MDEBUG
@@ -176,11 +199,7 @@ void Solution::clean_scopes() {
 	}
 }
 
-void Solution::save(string path,
-					string name) {
-	ofstream output_file;
-	output_file.open(path + "temp_" + name);
-
+void Solution::save(ofstream& output_file) {
 	output_file << this->timestamp << endl;
 	output_file << this->curr_score << endl;
 
@@ -195,12 +214,6 @@ void Solution::save(string path,
 		output_file << this->improvement_history[h_index] << endl;
 		output_file << this->change_history[h_index] << endl;
 	}
-
-	output_file.close();
-
-	string oldname = path + "temp_" + name;
-	string newname = path + name;
-	rename(oldname.c_str(), newname.c_str());
 }
 
 void Solution::save_for_display(ofstream& output_file) {

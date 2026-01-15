@@ -45,7 +45,7 @@ void BranchExperiment::measure_step(vector<double>& obs,
 		}
 		wrapper->curr_run_seed = xorshift(wrapper->curr_run_seed);
 		#else
-		if (this->new_val_network->output->acti_vals[0] >= 0.0) {
+		if (this->new_network->output->acti_vals[0] >= 0.0) {
 			decision_is_branch = true;
 		} else {
 			decision_is_branch = false;
@@ -127,6 +127,12 @@ void BranchExperiment::measure_backprop(double target_val,
 				target = 0.0;
 			} else {
 				target = wrapper->curr_target;
+			}
+
+			if (wrapper->best_experiments.size() == 1) {
+				if (this->improvement >= 0.0) {
+					wrapper->curr_tries++;
+				}
 			}
 
 			#if defined(MDEBUG) && MDEBUG

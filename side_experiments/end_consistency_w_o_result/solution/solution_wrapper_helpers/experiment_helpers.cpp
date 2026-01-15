@@ -15,6 +15,8 @@ using namespace std;
 
 const int RUN_TIMESTEPS = 100;
 
+const int SNAPSHOT_ITERS = 10;
+
 void SolutionWrapper::experiment_init() {
 	this->num_actions = 1;
 
@@ -110,11 +112,21 @@ void SolutionWrapper::experiment_end(double result) {
 			delete this->curr_experiment;
 
 			this->curr_experiment = NULL;
+
+			if (this->best_experiments.size() == 1) {
+				if (this->curr_tries >= 10) {
+					cout << "reset" << endl;
+
+					delete this->best_experiments[0];
+					this->best_experiments.clear();
+				}
+			}
 		} else if (this->curr_experiment->result == EXPERIMENT_RESULT_SUCCESS) {
 			this->curr_experiment->clean();
 
 			if (this->best_experiments.size() == 0) {
 				this->curr_target = this->curr_experiment->improvement;
+				this->curr_tries = 0;
 			}
 
 			this->best_experiments.push_back(this->curr_experiment);
@@ -127,18 +139,18 @@ void SolutionWrapper::experiment_end(double result) {
 
 				double best_consistency = calc_consistency(this->best_experiments[0]);
 				int best_index = 0;
-				{
-					cout << "0" << endl;
-					cout << "consistency: " << best_consistency << endl;
-					cout << "improvement: " << this->best_experiments[0]->improvement << endl;
-					this->best_experiments[0]->print();
-				}
+				// {
+				// 	cout << "0" << endl;
+				// 	cout << "consistency: " << best_consistency << endl;
+				// 	cout << "improvement: " << this->best_experiments[0]->improvement << endl;
+				// 	this->best_experiments[0]->print();
+				// }
 				for (int e_index = 1; e_index < (int)this->best_experiments.size(); e_index++) {
 					double curr_consistency = calc_consistency(this->best_experiments[e_index]);
-					cout << e_index << endl;
-					cout << "consistency: " << curr_consistency << endl;
-					cout << "improvement: " << this->best_experiments[e_index]->improvement << endl;
-					this->best_experiments[e_index]->print();
+					// cout << e_index << endl;
+					// cout << "consistency: " << curr_consistency << endl;
+					// cout << "improvement: " << this->best_experiments[e_index]->improvement << endl;
+					// this->best_experiments[e_index]->print();
 					if (curr_consistency > best_consistency) {
 						best_consistency = curr_consistency;
 						best_index = e_index;
@@ -152,7 +164,7 @@ void SolutionWrapper::experiment_end(double result) {
 				this->solution->curr_score = this->best_experiments[best_index]->calc_new_score();
 
 				for (int e_index = 0; e_index < (int)this->best_experiments.size(); e_index++) {
-					this->best_experiments[e_index] = NULL;
+					delete this->best_experiments[e_index];
 				}
 				this->best_experiments.clear();
 
@@ -161,8 +173,30 @@ void SolutionWrapper::experiment_end(double result) {
 				this->solution->clean_scopes();
 
 				this->solution->timestamp++;
-				if (this->solution->timestamp >= RUN_TIMESTEPS) {
-					this->solution->timestamp = -1;
+				// if (this->solution->timestamp >= RUN_TIMESTEPS) {
+				// 	this->solution->timestamp = -1;
+				// }
+
+				if (this->solution->timestamp % SNAPSHOT_ITERS == 0) {
+					double curr_score = 0.0;
+					for (int i_index = 0; i_index < 3; i_index++) {
+						curr_score += this->solution->improvement_history[this->solution->improvement_history.size()-1 - i_index];
+					}
+
+					double existing_score = 0.0;
+					if (this->solution_snapshot->improvement_history.size() > 0) {
+						for (int i_index = 0; i_index < 3; i_index++) {
+							existing_score += this->solution_snapshot->improvement_history[this->solution_snapshot->improvement_history.size()-1 - i_index];
+						}
+					}
+
+					if (curr_score > existing_score) {
+						delete this->solution_snapshot;
+						this->solution_snapshot = new Solution(this->solution);
+					} else {
+						delete this->solution;
+						this->solution = new Solution(this->solution_snapshot);
+					}
 				}
 			}
 		}

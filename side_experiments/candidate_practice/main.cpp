@@ -3,6 +3,10 @@
 // TODO: for rewind, instead of comparing last, average last 3
 // - and don't rewind multiple
 
+// - currently, tunnels bad on average
+//   - so any selected tunnels are more likely noise
+//     - maybe have tunnels proven to be reasonable first before starting to chase?
+
 #include <chrono>
 #include <iostream>
 #include <map>
