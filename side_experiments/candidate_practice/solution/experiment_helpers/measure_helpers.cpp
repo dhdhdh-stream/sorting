@@ -129,6 +129,12 @@ void Experiment::measure_backprop(double target_val,
 	if (history->is_hit) {
 		this->sum_true += target_val;
 		this->hit_count++;
+
+		if (this->networks.size() >= 2) {
+			double compare = fetch_compare(wrapper);
+			wrapper->compare_sum_diff += target_val - compare;
+			wrapper->compare_count++;
+		}
 	}
 
 	if (this->hit_count >= MEASURE_ITERS) {
@@ -180,4 +186,76 @@ void Experiment::measure_backprop(double target_val,
 			this->result = EXPERIMENT_RESULT_FAIL;
 		}
 	}
+}
+
+void Experiment::compare_check_activate(AbstractNode* experiment_node,
+										bool is_branch,
+										SolutionWrapper* wrapper) {
+	if (is_branch == this->is_branch) {
+		ExperimentState* new_experiment_state = new ExperimentState(this);
+		new_experiment_state->step_index = 0;
+		wrapper->compare_experiment_context.back() = new_experiment_state;
+	}
+}
+
+void Experiment::compare_step(vector<double>& obs,
+							  int& action,
+							  bool& is_next,
+							  SolutionWrapper* wrapper) {
+	ExperimentState* experiment_state = (ExperimentState*)wrapper->compare_experiment_context.back();
+
+	if (experiment_state->step_index == 0) {
+		bool is_branch;
+		this->networks[0]->activate(obs);
+		if (this->networks[0]->output->acti_vals[0] >= 0.0) {
+			is_branch = true;
+		} else {
+			is_branch = false;
+		}
+
+		if (!is_branch) {
+			delete experiment_state;
+			wrapper->compare_experiment_context.back() = NULL;
+			return;
+		}
+	}
+
+	if (experiment_state->step_index >= (int)this->best_step_types.size()) {
+		wrapper->compare_node_context.back() = this->best_exit_next_node;
+
+		delete experiment_state;
+		wrapper->compare_experiment_context.back() = NULL;
+	} else {
+		if (this->best_step_types[experiment_state->step_index] == STEP_TYPE_ACTION) {
+			action = this->best_actions[experiment_state->step_index];
+			is_next = true;
+
+			wrapper->compare_num_actions++;
+
+			experiment_state->step_index++;
+		} else {
+			ScopeNode* scope_node = (ScopeNode*)this->best_new_nodes[experiment_state->step_index];
+
+			ScopeHistory* scope_history = wrapper->compare_scope_histories.back();
+
+			ScopeNodeHistory* history = new ScopeNodeHistory(scope_node);
+			scope_history->node_histories[scope_node->id] = history;
+
+			ScopeHistory* inner_scope_history = new ScopeHistory(this->best_scopes[experiment_state->step_index]);
+			history->scope_history = inner_scope_history;
+			wrapper->compare_scope_histories.push_back(inner_scope_history);
+			wrapper->compare_node_context.push_back(this->best_scopes[experiment_state->step_index]->nodes[0]);
+			wrapper->compare_experiment_context.push_back(NULL);
+		}
+	}
+}
+
+void Experiment::compare_exit_step(SolutionWrapper* wrapper) {
+	ExperimentState* experiment_state = (ExperimentState*)wrapper->compare_experiment_context[wrapper->compare_experiment_context.size() - 2];
+
+	wrapper->compare_scope_histories.pop_back();
+	wrapper->compare_node_context.pop_back();
+	wrapper->compare_experiment_context.pop_back();
+
+	experiment_state->step_index++;
 }

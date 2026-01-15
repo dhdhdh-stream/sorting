@@ -32,6 +32,11 @@ public:
 						 bool& is_next,
 						 SolutionWrapper* wrapper);
 
+	void compare_step(std::vector<double>& obs,
+					  int& action,
+					  bool& is_next,
+					  SolutionWrapper* wrapper);
+
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file);
 	void link(Solution* parent_solution);

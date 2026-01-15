@@ -1,3 +1,8 @@
+// TODO: try adding curr score to obs
+
+// TODO: for rewind, instead of comparing last, average last 3
+// - and don't rewind multiple
+
 #include <chrono>
 #include <iostream>
 #include <map>

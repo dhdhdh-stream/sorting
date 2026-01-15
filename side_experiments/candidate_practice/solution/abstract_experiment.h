@@ -51,6 +51,15 @@ public:
 	virtual void backprop(double target_val,
 						  SolutionWrapper* wrapper) = 0;
 
+	virtual void compare_check_activate(AbstractNode* experiment_node,
+										bool is_branch,
+										SolutionWrapper* wrapper) = 0;
+	virtual void compare_step(std::vector<double>& obs,
+							  int& action,
+							  bool& is_next,
+							  SolutionWrapper* wrapper) = 0;
+	virtual void compare_exit_step(SolutionWrapper* wrapper) = 0;
+
 	virtual void clean() = 0;
 	virtual void add(SolutionWrapper* wrapper) = 0;
 	virtual double calc_new_score() = 0;

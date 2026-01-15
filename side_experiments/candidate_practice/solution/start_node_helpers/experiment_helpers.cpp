@@ -26,3 +26,22 @@ void StartNode::experiment_step(vector<double>& obs,
 			wrapper);
 	}
 }
+
+void StartNode::compare_step(vector<double>& obs,
+							 int& action,
+							 bool& is_next,
+							 SolutionWrapper* wrapper) {
+	ScopeHistory* scope_history = wrapper->compare_scope_histories.back();
+
+	StartNodeHistory* history = new StartNodeHistory(this);
+	scope_history->node_histories[this->id] = history;
+
+	wrapper->compare_node_context.back() = this->next_node;
+
+	if (this->experiment != NULL) {
+		this->experiment->compare_check_activate(
+			this,
+			false,
+			wrapper);
+	}
+}

@@ -42,6 +42,11 @@ public:
 						 bool& is_next,
 						 SolutionWrapper* wrapper);
 
+	void compare_step(std::vector<double>& obs,
+					  int& action,
+					  bool& is_next,
+					  SolutionWrapper* wrapper);
+
 	#if defined(MDEBUG) && MDEBUG
 	void verify_step(std::vector<double>& obs,
 					 int& action,

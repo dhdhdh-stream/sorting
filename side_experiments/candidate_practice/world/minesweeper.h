@@ -27,9 +27,6 @@ public:
 
 	bool hit_mine;
 
-	// temp
-	double starting_score;
-
 	Minesweeper();
 
 	std::vector<double> get_observations();

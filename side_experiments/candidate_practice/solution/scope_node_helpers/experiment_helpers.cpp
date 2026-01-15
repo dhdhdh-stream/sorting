@@ -44,3 +44,34 @@ void ScopeNode::experiment_exit_step(SolutionWrapper* wrapper) {
 			wrapper);
 	}
 }
+
+void ScopeNode::compare_step(vector<double>& obs,
+							 int& action,
+							 bool& is_next,
+							 SolutionWrapper* wrapper) {
+	ScopeHistory* scope_history = wrapper->compare_scope_histories.back();
+
+	ScopeNodeHistory* history = new ScopeNodeHistory(this);
+	scope_history->node_histories[this->id] = history;
+
+	ScopeHistory* inner_scope_history = new ScopeHistory(this->scope);
+	history->scope_history = inner_scope_history;
+	wrapper->compare_scope_histories.push_back(inner_scope_history);
+	wrapper->compare_node_context.push_back(this->scope->nodes[0]);
+	wrapper->compare_experiment_context.push_back(NULL);
+}
+
+void ScopeNode::compare_exit_step(SolutionWrapper* wrapper) {
+	wrapper->compare_scope_histories.pop_back();
+	wrapper->compare_node_context.pop_back();
+	wrapper->compare_experiment_context.pop_back();
+
+	wrapper->compare_node_context.back() = this->next_node;
+
+	if (this->experiment != NULL) {
+		this->experiment->compare_check_activate(
+			this,
+			false,
+			wrapper);
+	}
+}

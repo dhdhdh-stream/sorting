@@ -19,6 +19,9 @@ SolutionWrapper::SolutionWrapper(ProblemType* problem_type) {
 
 	this->experiment_history = NULL;
 
+	this->compare_sum_diff = 0.0;
+	this->compare_count = 0;
+
 	#if defined(MDEBUG) && MDEBUG
 	this->run_index = 0;
 	#endif /* MDEBUG */
@@ -61,6 +64,14 @@ SolutionWrapper::SolutionWrapper(std::string path,
 	string reset_count_line;
 	getline(input_file, reset_count_line);
 	this->reset_count = stoi(reset_count_line);
+
+	string compare_sum_diff_line;
+	getline(input_file, compare_sum_diff_line);
+	this->compare_sum_diff = stod(compare_sum_diff_line);
+
+	string compare_count_line;
+	getline(input_file, compare_count_line);
+	this->compare_count = stoi(compare_count_line);
 
 	this->curr_experiment = NULL;
 
@@ -141,6 +152,9 @@ void SolutionWrapper::save(string path,
 	}
 
 	output_file << this->reset_count << endl;
+
+	output_file << this->compare_sum_diff << endl;
+	output_file << this->compare_count << endl;
 
 	output_file.close();
 

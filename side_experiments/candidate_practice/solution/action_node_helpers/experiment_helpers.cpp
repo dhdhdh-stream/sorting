@@ -34,3 +34,27 @@ void ActionNode::experiment_step(vector<double>& obs,
 			wrapper);
 	}
 }
+
+void ActionNode::compare_step(vector<double>& obs,
+							  int& action,
+							  bool& is_next,
+							  SolutionWrapper* wrapper) {
+	ScopeHistory* scope_history = wrapper->compare_scope_histories.back();
+
+	ActionNodeHistory* history = new ActionNodeHistory(this);
+	scope_history->node_histories[this->id] = history;
+
+	action = this->action;
+	is_next = true;
+
+	wrapper->compare_num_actions++;
+
+	wrapper->compare_node_context.back() = this->next_node;
+
+	if (this->experiment != NULL) {
+		this->experiment->compare_check_activate(
+			this,
+			false,
+			wrapper);
+	}
+}

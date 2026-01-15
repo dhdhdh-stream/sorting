@@ -49,6 +49,15 @@ public:
 
 	Problem* problem;
 
+	std::vector<ScopeHistory*> compare_scope_histories;
+	std::vector<AbstractNode*> compare_node_context;
+	std::vector<AbstractExperimentState*> compare_experiment_context;
+
+	int compare_num_actions;
+
+	double compare_sum_diff;
+	int compare_count;
+
 	#if defined(MDEBUG) && MDEBUG
 	int run_index;
 	unsigned long starting_run_seed;
@@ -68,6 +77,10 @@ public:
 	std::tuple<bool,bool,int> experiment_step(std::vector<double> obs);
 	void set_action(int action);
 	void experiment_end(double result);
+
+	void compare_init();
+	std::pair<bool,int> compare_step(std::vector<double> obs);
+	void compare_end();
 
 	#if defined(MDEBUG) && MDEBUG
 	void verify_init();

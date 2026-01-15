@@ -104,8 +104,6 @@ Minesweeper::Minesweeper() {
 	this->hit_mine = false;
 
 	reveal_helper(STARTING_X, STARTING_Y);
-
-	this->starting_score = score_result_helper();
 }
 
 double Minesweeper::get_observation_helper(int x, int y) {

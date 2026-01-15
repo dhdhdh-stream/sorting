@@ -38,4 +38,6 @@ void find_potential_tunnels(Scope* scope_context,
 							std::vector<std::vector<ScopeHistory*>>& ending_branch_stack_traces,
 							SolutionWrapper* wrapper);
 
+double fetch_compare(SolutionWrapper* wrapper);
+
 #endif /* SOLUTION_HELPERS_H */

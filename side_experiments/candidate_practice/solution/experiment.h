@@ -128,6 +128,15 @@ public:
 	void measure_backprop(double target_val,
 						  SolutionWrapper* wrapper);
 
+	void compare_check_activate(AbstractNode* experiment_node,
+								bool is_branch,
+								SolutionWrapper* wrapper);
+	void compare_step(std::vector<double>& obs,
+					  int& action,
+					  bool& is_next,
+					  SolutionWrapper* wrapper);
+	void compare_exit_step(SolutionWrapper* wrapper);
+
 	#if defined(MDEBUG) && MDEBUG
 	void capture_verify_check_activate(SolutionWrapper* wrapper);
 	void capture_verify_step(std::vector<double>& obs,
