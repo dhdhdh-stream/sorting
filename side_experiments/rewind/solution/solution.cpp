@@ -39,6 +39,8 @@ Solution::Solution(Solution* original) {
 		this->scopes[s_index]->link(this);
 	}
 
+	this->last_experiment_scores = original->last_experiment_scores;
+
 	this->improvement_history = original->improvement_history;
 	this->change_history = original->change_history;
 }
@@ -125,6 +127,15 @@ void Solution::load(ifstream& input_file) {
 
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
 		this->scopes[s_index]->link(this);
+	}
+
+	string num_experiment_scores_line;
+	getline(input_file, num_experiment_scores_line);
+	int num_experiment_scores = stoi(num_experiment_scores_line);
+	for (int e_index = 0; e_index < num_experiment_scores; e_index++) {
+		string score_line;
+		getline(input_file, score_line);
+		this->last_experiment_scores.push_back(stod(score_line));
 	}
 
 	string history_size_line;
@@ -214,6 +225,12 @@ void Solution::save(ofstream& output_file) {
 
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
 		this->scopes[s_index]->save(output_file);
+	}
+
+	output_file << this->last_experiment_scores.size() << endl;
+	for (list<double>::iterator it = this->last_experiment_scores.begin();
+			it != this->last_experiment_scores.end(); it++) {
+		output_file << *it << endl;
 	}
 
 	output_file << this->improvement_history.size() << endl;

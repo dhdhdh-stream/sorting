@@ -18,6 +18,7 @@
 #define SOLUTION_H
 
 #include <fstream>
+#include <list>
 #include <map>
 #include <vector>
 
@@ -37,6 +38,14 @@ public:
 	double curr_score;
 
 	std::vector<Scope*> scopes;
+
+	std::list<double> last_experiment_scores;
+	/**
+	 * - even if experiment safe to add, doesn't mean should
+	 *   - noise leads to more noise
+	 * 
+	 * - but accept if no progress has been made recently
+	 */
 
 	std::vector<double> improvement_history;
 	std::vector<std::string> change_history;

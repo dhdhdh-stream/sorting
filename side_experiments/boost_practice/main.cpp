@@ -1,11 +1,7 @@
-// TODO: try adding curr score to obs
-
-// TODO: for rewind, instead of comparing last, average last 3
-// - and don't rewind multiple
-
-// - currently, tunnels bad on average
-//   - so any selected tunnels are more likely noise
-//     - maybe have tunnels proven to be reasonable first before starting to chase?
+// - actually, not meaningful
+//   - any noise is now just on the signal
+//   - reduces "noise" on true, but need true to have the correct variance on new to be greater than existing
+// - selecting the right obs for signal no different than selecting the right obs for decision
 
 #include <chrono>
 #include <iostream>
