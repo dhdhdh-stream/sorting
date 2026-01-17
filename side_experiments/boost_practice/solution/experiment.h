@@ -65,6 +65,10 @@ public:
 
 	double improvement;
 
+	// temp
+	bool existing_is_boost;
+	bool new_is_boost;
+
 	#if defined(MDEBUG) && MDEBUG
 	std::vector<Problem*> verify_problems;
 	std::vector<unsigned long> verify_seeds;
@@ -163,8 +167,9 @@ void boost_try(std::vector<std::vector<double>>& train_obs_histories,
 			   std::vector<std::vector<double>>& validation_obs_histories,
 			   std::vector<std::vector<ScopeHistory*>>& validation_stack_traces,
 			   std::vector<double>& validation_true_histories,
-			   Network* best_true_network,
+			   Network*& best_true_network,
 			   double& best_sum_misguess,
-			   int& best_num_positive);
+			   int& best_num_positive,
+			   double& best_sum_predicted_score);
 
 #endif /* EXPERIMENT_H */

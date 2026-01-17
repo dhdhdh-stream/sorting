@@ -157,6 +157,7 @@ void Experiment::train_new_backprop(
 
 			double best_sum_misguess = 0.0;
 			int best_num_positive = 0;
+			double best_sum_predicted_score = 0.0;
 			for (int h_index = 0; h_index < (int)validation_obs_histories.size(); h_index++) {
 				this->new_true_network->activate(validation_obs_histories[h_index]);
 				double predicted_score = this->new_true_network->output->acti_vals[0];
@@ -165,7 +166,14 @@ void Experiment::train_new_backprop(
 				if (predicted_score > 0.0) {
 					best_num_positive++;
 				}
+
+				if (predicted_score >= 0.0) {
+					best_sum_predicted_score += validation_true_histories[h_index];
+				}
 			}
+
+			// temp
+			Network* starting_true_network = this->new_true_network;
 
 			for (int t_index = 0; t_index < NEW_BOOST_NUM_TRIES; t_index++) {
 				boost_try(train_obs_histories,
@@ -174,15 +182,25 @@ void Experiment::train_new_backprop(
 						  validation_obs_histories,
 						  validation_stack_traces,
 						  validation_true_histories,
-						  this->existing_true_network,
+						  this->new_true_network,
 						  best_sum_misguess,
-						  best_num_positive);
+						  best_num_positive,
+						  best_sum_predicted_score);
+			}
+
+			// temp
+			Network* ending_true_network = this->new_true_network;
+
+			if (starting_true_network == ending_true_network) {
+				this->new_is_boost = false;
+			} else {
+				this->new_is_boost = true;
 			}
 
 			#if defined(MDEBUG) && MDEBUG
-			if (best_num_positive > 0 || rand()%4 != 0) {
+			if ((best_num_positive > 0 && best_sum_predicted_score >= 0.0) || rand()%4 != 0) {
 			#else
-			if (best_num_positive > 0) {
+			if (best_num_positive > 0 && best_sum_predicted_score >= 0.0) {
 			#endif /* MDEBUG */
 				this->sum_true = 0.0;
 				this->hit_count = 0;

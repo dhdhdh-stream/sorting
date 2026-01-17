@@ -1,5 +1,7 @@
 #include "experiment.h"
 
+#include <iostream>
+
 #include "constants.h"
 #include "globals.h"
 #include "network.h"
@@ -13,9 +15,10 @@ void boost_try(vector<vector<double>>& train_obs_histories,
 			   vector<vector<double>>& validation_obs_histories,
 			   vector<vector<ScopeHistory*>>& validation_stack_traces,
 			   vector<double>& validation_true_histories,
-			   Network* best_true_network,
+			   Network*& best_true_network,
 			   double& best_sum_misguess,
-			   int& best_num_positive) {
+			   int& best_num_positive,
+			   double& best_sum_predicted_score) {
 	geometric_distribution<int> num_obs_distribution(0.2);
 	int num_obs;
 	while (true) {
@@ -60,11 +63,13 @@ void boost_try(vector<vector<double>>& train_obs_histories,
 		signal_network->backprop(error);
 	}
 
-	vector<double> train_signals(train_obs_histories.size());
-	for (int h_index = 0; h_index < (int)train_obs_histories.size(); h_index++) {
-		signal_network->activate(train_obs_histories[h_index]);
+	vector<double> train_signals(train_inputs.size());
+	for (int h_index = 0; h_index < (int)train_inputs.size(); h_index++) {
+		signal_network->activate(train_inputs[h_index]);
 		train_signals[h_index] = signal_network->output->acti_vals[0];
 	}
+
+	delete signal_network;
 
 	Network* true_network = new Network(train_obs_histories[0].size(),
 										NETWORK_SIZE_SMALL);
@@ -80,6 +85,7 @@ void boost_try(vector<vector<double>>& train_obs_histories,
 
 	double sum_misguess = 0.0;
 	int num_positive = 0;
+	double sum_predicted_score = 0.0;
 	for (int h_index = 0; h_index < (int)validation_obs_histories.size(); h_index++) {
 		true_network->activate(validation_obs_histories[h_index]);
 		double predicted_score = true_network->output->acti_vals[0];
@@ -88,6 +94,10 @@ void boost_try(vector<vector<double>>& train_obs_histories,
 		if (predicted_score > 0.0) {
 			num_positive++;
 		}
+
+		if (predicted_score >= 0.0) {
+			sum_predicted_score += validation_true_histories[h_index];
+		}
 	}
 
 	if (sum_misguess < best_sum_misguess) {
@@ -95,5 +105,8 @@ void boost_try(vector<vector<double>>& train_obs_histories,
 		best_true_network = true_network;
 		best_sum_misguess = sum_misguess;
 		best_num_positive = num_positive;
+		best_sum_predicted_score = sum_predicted_score;
+	} else {
+		delete true_network;
 	}
 }

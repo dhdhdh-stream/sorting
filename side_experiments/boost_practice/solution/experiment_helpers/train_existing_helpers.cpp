@@ -106,8 +106,12 @@ void Experiment::train_existing_backprop(double target_val,
 			best_sum_misguess += (validation_true_histories[h_index] - predicted_score) * (validation_true_histories[h_index] - predicted_score);
 		}
 
+		// temp
+		Network* starting_true_network = this->existing_true_network;
+
 		for (int t_index = 0; t_index < EXISTING_BOOST_NUM_TRIES; t_index++) {
-			int best_num_positive = 0;	// unused
+			int best_num_positive = 0;				// unused
+			double best_sum_predicted_score = 0.0;	// unused
 			boost_try(train_obs_histories,
 					  train_stack_traces,
 					  train_true_histories,
@@ -116,7 +120,16 @@ void Experiment::train_existing_backprop(double target_val,
 					  validation_true_histories,
 					  this->existing_true_network,
 					  best_sum_misguess,
-					  best_num_positive);
+					  best_num_positive,
+					  best_sum_predicted_score);
+		}
+
+		Network* ending_true_network = this->existing_true_network;
+
+		if (starting_true_network == ending_true_network) {
+			this->existing_is_boost = false;
+		} else {
+			this->existing_is_boost = true;
 		}
 
 		this->average_instances_per_run = (double)this->sum_num_instances / (double)this->hit_count;

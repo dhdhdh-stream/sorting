@@ -42,6 +42,12 @@ public:
 
 	Problem* problem;
 
+	// temp
+	int num_existing_original;
+	int num_existing_boost;
+	int num_new_original;
+	int num_new_boost;
+
 	#if defined(MDEBUG) && MDEBUG
 	int run_index;
 	unsigned long starting_run_seed;

@@ -19,6 +19,12 @@ SolutionWrapper::SolutionWrapper(ProblemType* problem_type) {
 	#if defined(MDEBUG) && MDEBUG
 	this->run_index = 0;
 	#endif /* MDEBUG */
+
+	// temp
+	this->num_existing_original = 0;
+	this->num_existing_boost = 0;
+	this->num_new_original = 0;
+	this->num_new_boost = 0;
 }
 
 SolutionWrapper::SolutionWrapper(std::string path,
@@ -39,6 +45,22 @@ SolutionWrapper::SolutionWrapper(std::string path,
 	#if defined(MDEBUG) && MDEBUG
 	this->run_index = 0;
 	#endif /* MDEBUG */
+
+	string num_existing_original_line;
+	getline(input_file, num_existing_original_line);
+	this->num_existing_original = stoi(num_existing_original_line);
+
+	string num_existing_boost_line;
+	getline(input_file, num_existing_boost_line);
+	this->num_existing_boost = stoi(num_existing_boost_line);
+
+	string num_new_original_line;
+	getline(input_file, num_new_original_line);
+	this->num_new_original = stoi(num_new_original_line);
+
+	string num_new_boost_line;
+	getline(input_file, num_new_boost_line);
+	this->num_new_boost = stoi(num_new_boost_line);
 
 	input_file.close();
 }
@@ -95,6 +117,11 @@ void SolutionWrapper::save(string path,
 	this->solution->save(output_file);
 
 	this->solution_snapshot->save(output_file);
+
+	output_file << this->num_existing_original << endl;
+	output_file << this->num_existing_boost << endl;
+	output_file << this->num_new_original << endl;
+	output_file << this->num_new_boost << endl;
 
 	output_file.close();
 
