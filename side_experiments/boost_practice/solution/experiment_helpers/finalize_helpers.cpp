@@ -44,12 +44,6 @@ void Experiment::add(SolutionWrapper* wrapper) {
 	}
 
 	// temp
-	ss << "this->existing_is_boost: " << this->existing_is_boost << "; ";
-	if (this->existing_is_boost) {
-		wrapper->num_existing_boost++;
-	} else {
-		wrapper->num_existing_original++;
-	}
 	ss << "this->new_is_boost: " << this->new_is_boost << "; ";
 	if (this->new_is_boost) {
 		wrapper->num_new_boost++;

@@ -43,8 +43,6 @@ public:
 	Problem* problem;
 
 	// temp
-	int num_existing_original;
-	int num_existing_boost;
 	int num_new_original;
 	int num_new_boost;
 

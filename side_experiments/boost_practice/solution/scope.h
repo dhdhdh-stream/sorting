@@ -54,14 +54,10 @@ public:
 
 	std::map<int, AbstractNodeHistory*> node_histories;
 
-	std::vector<double> obs_history;
-
 	ScopeHistory(Scope* scope);
 	ScopeHistory(ScopeHistory* original,
 				 Solution* parent_solution);
 	~ScopeHistory();
-
-	ScopeHistory* copy_obs_history();
 };
 
 #endif /* SCOPE_H */

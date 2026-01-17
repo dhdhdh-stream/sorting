@@ -33,9 +33,6 @@ void Experiment::train_new_check_activate(
 		uniform_int_distribution<int> until_distribution(1, this->average_instances_per_run);
 		this->num_instances_until_target = until_distribution(generator);
 
-		ExperimentHistory* history = (ExperimentHistory*)wrapper->experiment_history;
-		history->stack_traces.push_back(wrapper->scope_histories);
-
 		ExperimentState* new_experiment_state = new ExperimentState(this);
 		new_experiment_state->step_index = 0;
 		wrapper->experiment_context.back() = new_experiment_state;
@@ -53,12 +50,19 @@ void Experiment::train_new_step(vector<double>& obs,
 
 		this->new_obs_histories.push_back(obs);
 
+		this->new_outer_histories.push_back(obs);
+
 		this->existing_true_network->activate(obs);
 		history->existing_predicted_trues.push_back(
 			this->existing_true_network->output->acti_vals[0]);
 	}
 
 	if (experiment_state->step_index >= (int)this->best_step_types.size()) {
+		if (this->best_step_types.size() != 0) {
+			this->new_outer_histories.back().insert(this->new_outer_histories.back().end(),
+				obs.begin(), obs.end());
+		}
+
 		wrapper->node_context.back() = this->best_exit_next_node;
 
 		delete experiment_state;
@@ -91,14 +95,112 @@ void Experiment::train_new_step(vector<double>& obs,
 void Experiment::train_new_exit_step(SolutionWrapper* wrapper) {
 	ExperimentState* experiment_state = (ExperimentState*)wrapper->experiment_context[wrapper->experiment_context.size() - 2];
 
-	vector<double> obs = wrapper->problem->get_observations();
-	wrapper->scope_histories.back()->obs_history = obs;
-
 	wrapper->scope_histories.pop_back();
 	wrapper->node_context.pop_back();
 	wrapper->experiment_context.pop_back();
 
 	experiment_state->step_index++;
+}
+
+void boost_try(vector<vector<double>>& train_obs_histories,
+			   vector<vector<double>>& train_outer_histories,
+			   vector<double>& train_true_histories,
+			   vector<vector<double>>& validation_obs_histories,
+			   vector<double>& validation_true_histories,
+			   Network*& best_true_network,
+			   double& best_sum_misguess,
+			   int& best_num_positive,
+			   double& best_sum_predicted_score) {
+	geometric_distribution<int> num_obs_distribution(0.2);
+	int num_obs;
+	while (true) {
+		num_obs = 2 + num_obs_distribution(generator);
+		if (num_obs <= (int)train_outer_histories[0].size()) {
+			break;
+		}
+	}
+
+	vector<int> remaining_indexes(train_outer_histories[0].size());
+	for (int i_index = 0; i_index < (int)train_outer_histories[0].size(); i_index++) {
+		remaining_indexes[i_index] = i_index;
+	}
+
+	vector<int> obs_indexes;
+	for (int o_index = 0; o_index < num_obs; o_index++) {
+		uniform_int_distribution<int> distribution(0, remaining_indexes.size()-1);
+		int index = distribution(generator);
+		obs_indexes.push_back(remaining_indexes[index]);
+		remaining_indexes.erase(remaining_indexes.begin() + index);
+	}
+
+	vector<vector<double>> train_inputs(train_outer_histories.size());
+	for (int h_index = 0; h_index < (int)train_outer_histories.size(); h_index++) {
+		train_inputs[h_index] = vector<double>(num_obs);
+		for (int o_index = 0; o_index < num_obs; o_index++) {
+			train_inputs[h_index][o_index] = train_outer_histories[h_index][obs_indexes[o_index]];
+		}
+	}
+
+	uniform_int_distribution<int> input_distribution(0, train_obs_histories.size()-1);
+
+	Network* signal_network = new Network(num_obs,
+										  NETWORK_SIZE_SMALL);
+	for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
+		int rand_index = input_distribution(generator);
+
+		signal_network->activate(train_inputs[rand_index]);
+
+		double error = train_true_histories[rand_index] - signal_network->output->acti_vals[0];
+
+		signal_network->backprop(error);
+	}
+
+	vector<double> train_signals(train_inputs.size());
+	for (int h_index = 0; h_index < (int)train_inputs.size(); h_index++) {
+		signal_network->activate(train_inputs[h_index]);
+		train_signals[h_index] = signal_network->output->acti_vals[0];
+	}
+
+	delete signal_network;
+
+	Network* true_network = new Network(train_obs_histories[0].size(),
+										NETWORK_SIZE_SMALL);
+	for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
+		int rand_index = input_distribution(generator);
+
+		true_network->activate(train_obs_histories[rand_index]);
+
+		double error = train_signals[rand_index] - true_network->output->acti_vals[0];
+
+		true_network->backprop(error);
+	}
+
+	double sum_misguess = 0.0;
+	int num_positive = 0;
+	double sum_predicted_score = 0.0;
+	for (int h_index = 0; h_index < (int)validation_obs_histories.size(); h_index++) {
+		true_network->activate(validation_obs_histories[h_index]);
+		double predicted_score = true_network->output->acti_vals[0];
+		sum_misguess += (validation_true_histories[h_index] - predicted_score) * (validation_true_histories[h_index] - predicted_score);
+
+		if (predicted_score > 0.0) {
+			num_positive++;
+		}
+
+		if (predicted_score >= 0.0) {
+			sum_predicted_score += validation_true_histories[h_index];
+		}
+	}
+
+	if (sum_misguess < best_sum_misguess) {
+		delete best_true_network;
+		best_true_network = true_network;
+		best_sum_misguess = sum_misguess;
+		best_num_positive = num_positive;
+		best_sum_predicted_score = sum_predicted_score;
+	} else {
+		delete true_network;
+	}
 }
 
 void Experiment::train_new_backprop(
@@ -107,12 +209,6 @@ void Experiment::train_new_backprop(
 	ExperimentHistory* history = (ExperimentHistory*)wrapper->experiment_history;
 	if (history->is_hit) {
 		for (int i_index = 0; i_index < (int)history->existing_predicted_trues.size(); i_index++) {
-			vector<ScopeHistory*> stack_trace_copy(history->stack_traces[i_index].size());
-			for (int l_index = 0; l_index < (int)history->stack_traces[i_index].size(); l_index++) {
-				stack_trace_copy[l_index] = history->stack_traces[i_index][l_index]->copy_obs_history();
-			}
-			this->new_stack_traces.push_back(stack_trace_copy);
-
 			this->new_true_histories.push_back(target_val - history->existing_predicted_trues[i_index]);
 		}
 
@@ -125,7 +221,7 @@ void Experiment::train_new_backprop(
 			}
 			{
 				default_random_engine generator_copy = generator;
-				shuffle(this->new_stack_traces.begin(), this->new_stack_traces.end(), generator_copy);
+				shuffle(this->new_outer_histories.begin(), this->new_outer_histories.end(), generator_copy);
 			}
 			{
 				default_random_engine generator_copy = generator;
@@ -135,11 +231,10 @@ void Experiment::train_new_backprop(
 			int num_train = (1.0 - TRAIN_NEW_VALIDATION_RATIO) * TRAIN_NEW_NUM_DATAPOINTS;
 
 			vector<vector<double>> train_obs_histories(this->new_obs_histories.begin(), this->new_obs_histories.begin() + num_train);
-			vector<vector<ScopeHistory*>> train_stack_traces(this->new_stack_traces.begin(), this->new_stack_traces.begin() + num_train);
+			vector<vector<double>> train_outer_histories(this->new_outer_histories.begin(), this->new_outer_histories.begin() + num_train);
 			vector<double> train_true_histories(this->new_true_histories.begin(), this->new_true_histories.begin() + num_train);
 
 			vector<vector<double>> validation_obs_histories(this->new_obs_histories.begin() + num_train, this->new_obs_histories.end());
-			vector<vector<ScopeHistory*>> validation_stack_traces(this->new_stack_traces.begin() + num_train, this->new_stack_traces.end());
 			vector<double> validation_true_histories(this->new_true_histories.begin() + num_train, this->new_true_histories.end());
 
 			this->new_true_network = new Network(train_obs_histories[0].size(),
@@ -177,10 +272,9 @@ void Experiment::train_new_backprop(
 
 			for (int t_index = 0; t_index < NEW_BOOST_NUM_TRIES; t_index++) {
 				boost_try(train_obs_histories,
-						  train_stack_traces,
+						  train_outer_histories,
 						  train_true_histories,
 						  validation_obs_histories,
-						  validation_stack_traces,
 						  validation_true_histories,
 						  this->new_true_network,
 						  best_sum_misguess,

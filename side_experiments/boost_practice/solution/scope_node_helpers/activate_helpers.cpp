@@ -28,9 +28,6 @@ void ScopeNode::step(vector<double>& obs,
 }
 
 void ScopeNode::exit_step(SolutionWrapper* wrapper) {
-	vector<double> obs = wrapper->problem->get_observations();
-	wrapper->scope_histories.back()->obs_history = obs;
-
 	wrapper->scope_histories.pop_back();
 	wrapper->node_context.pop_back();
 

@@ -63,18 +63,6 @@ Experiment::~Experiment() {
 		delete this->best_new_nodes[n_index];
 	}
 
-	for (int h_index = 0; h_index < (int)this->existing_stack_traces.size(); h_index++) {
-		for (int l_index = 0; l_index < (int)this->existing_stack_traces[h_index].size(); l_index++) {
-			delete this->existing_stack_traces[h_index][l_index];
-		}
-	}
-
-	for (int h_index = 0; h_index < (int)this->new_stack_traces.size(); h_index++) {
-		for (int l_index = 0; l_index < (int)this->new_stack_traces[h_index].size(); l_index++) {
-			delete this->new_stack_traces[h_index][l_index];
-		}
-	}
-
 	#if defined(MDEBUG) && MDEBUG
 	for (int p_index = 0; p_index < (int)this->verify_problems.size(); p_index++) {
 		delete this->verify_problems[p_index];

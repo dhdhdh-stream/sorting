@@ -340,8 +340,6 @@ ScopeHistory::ScopeHistory(ScopeHistory* original,
 			}
 		}
 	}
-
-	this->obs_history = original->obs_history;
 }
 
 ScopeHistory::~ScopeHistory() {
@@ -349,12 +347,4 @@ ScopeHistory::~ScopeHistory() {
 			it != this->node_histories.end(); it++) {
 		delete it->second;
 	}
-}
-
-ScopeHistory* ScopeHistory::copy_obs_history() {
-	ScopeHistory* new_scope_history = new ScopeHistory(this->scope);
-
-	new_scope_history->obs_history = this->obs_history;
-
-	return new_scope_history;
 }

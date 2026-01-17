@@ -159,8 +159,6 @@ void Experiment::explore_check_activate(SolutionWrapper* wrapper) {
 			}
 		}
 
-		history->stack_traces.push_back(wrapper->scope_histories);
-
 		ExperimentState* new_experiment_state = new ExperimentState(this);
 		new_experiment_state->step_index = 0;
 		wrapper->experiment_context.back() = new_experiment_state;
@@ -221,9 +219,6 @@ void Experiment::explore_set_action(int action,
 
 void Experiment::explore_exit_step(SolutionWrapper* wrapper) {
 	ExperimentState* experiment_state = (ExperimentState*)wrapper->experiment_context[wrapper->experiment_context.size() - 2];
-
-	vector<double> obs = wrapper->problem->get_observations();
-	wrapper->scope_histories.back()->obs_history = obs;
 
 	wrapper->scope_histories.pop_back();
 	wrapper->node_context.pop_back();

@@ -24,8 +24,14 @@ public:
 	int state_iter;
 
 	std::vector<std::vector<double>> existing_obs_histories;
-	std::vector<std::vector<ScopeHistory*>> existing_stack_traces;
 	std::vector<double> existing_true_histories;
+	/**
+	 * - simply don't boost existing
+	 *   - existing made up of: initial + current status + later noise
+	 *     - all of which is useful to predict
+	 *   - new made up of: initial + current status + new impact + later noise
+	 *     - want to use existing to remove initial + current status, and use boost to focus only on new impact
+	 */
 
 	double existing_true;
 
@@ -52,7 +58,7 @@ public:
 	std::vector<AbstractNode*> best_new_nodes;
 
 	std::vector<std::vector<double>> new_obs_histories;
-	std::vector<std::vector<ScopeHistory*>> new_stack_traces;
+	std::vector<std::vector<double>> new_outer_histories;
 	std::vector<double> new_true_histories;
 
 	Network* new_true_network;
@@ -66,7 +72,6 @@ public:
 	double improvement;
 
 	// temp
-	bool existing_is_boost;
 	bool new_is_boost;
 
 	#if defined(MDEBUG) && MDEBUG
@@ -147,8 +152,6 @@ public:
 
 class ExperimentHistory : public AbstractExperimentHistory {
 public:
-	std::vector<std::vector<ScopeHistory*>> stack_traces;
-
 	std::vector<double> existing_predicted_trues;
 
 	ExperimentHistory(Experiment* experiment);
@@ -160,16 +163,5 @@ public:
 
 	ExperimentState(Experiment* experiment);
 };
-
-void boost_try(std::vector<std::vector<double>>& train_obs_histories,
-			   std::vector<std::vector<ScopeHistory*>>& train_stack_traces,
-			   std::vector<double>& train_true_histories,
-			   std::vector<std::vector<double>>& validation_obs_histories,
-			   std::vector<std::vector<ScopeHistory*>>& validation_stack_traces,
-			   std::vector<double>& validation_true_histories,
-			   Network*& best_true_network,
-			   double& best_sum_misguess,
-			   int& best_num_positive,
-			   double& best_sum_predicted_score);
 
 #endif /* EXPERIMENT_H */

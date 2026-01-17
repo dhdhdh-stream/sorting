@@ -89,9 +89,6 @@ void SolutionWrapper::set_action(int action) {
 }
 
 void SolutionWrapper::experiment_end(double result) {
-	vector<double> obs = this->problem->get_observations();
-	this->scope_histories.back()->obs_history = obs;
-
 	if (this->curr_experiment == NULL) {
 		create_experiment(this->scope_histories[0],
 						  this);
