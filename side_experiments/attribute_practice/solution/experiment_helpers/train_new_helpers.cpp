@@ -72,6 +72,7 @@ void Experiment::train_new_step(vector<double>& obs,
 			ScopeHistory* scope_history = wrapper->scope_histories.back();
 
 			ScopeNodeHistory* history = new ScopeNodeHistory(scope_node);
+			history->index = (int)scope_history->node_histories.size();
 			scope_history->node_histories[scope_node->id] = history;
 
 			ScopeHistory* inner_scope_history = new ScopeHistory(this->best_scopes[experiment_state->step_index]);
@@ -155,6 +156,10 @@ void Experiment::train_new_backprop(
 			#else
 			if (positive_count > 0 && sum_vals >= 0.0) {
 			#endif /* MDEBUG */
+				this->new_branch_node = new BranchNode();
+				this->new_branch_node->parent = this->scope_context;
+				this->new_branch_node->id = this->scope_context->node_counter + (int)this->best_step_types.size();
+
 				this->sum_true = 0.0;
 				this->hit_count = 0;
 

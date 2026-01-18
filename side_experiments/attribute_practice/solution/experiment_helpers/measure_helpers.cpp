@@ -31,7 +31,13 @@ void Experiment::measure_step(vector<double>& obs,
 							  SolutionWrapper* wrapper) {
 	ExperimentState* experiment_state = (ExperimentState*)wrapper->experiment_context.back();
 
+	ScopeHistory* scope_history = wrapper->scope_histories.back();
+
 	if (experiment_state->step_index == 0) {
+		BranchNodeHistory* history = new BranchNodeHistory(this->new_branch_node);
+		history->index = (int)scope_history->node_histories.size();
+		scope_history->node_histories[this->new_branch_node->id] = history;
+
 		this->new_true_network->activate(obs);
 
 		bool is_branch;
@@ -49,6 +55,8 @@ void Experiment::measure_step(vector<double>& obs,
 			is_branch = false;
 		}
 		#endif /* MDEBUG */
+
+		history->is_branch = is_branch;
 
 		if (!is_branch) {
 			delete experiment_state;
@@ -73,9 +81,8 @@ void Experiment::measure_step(vector<double>& obs,
 		} else {
 			ScopeNode* scope_node = (ScopeNode*)this->best_new_nodes[experiment_state->step_index];
 
-			ScopeHistory* scope_history = wrapper->scope_histories.back();
-
 			ScopeNodeHistory* history = new ScopeNodeHistory(scope_node);
+			history->index = (int)scope_history->node_histories.size();
 			scope_history->node_histories[scope_node->id] = history;
 
 			ScopeHistory* inner_scope_history = new ScopeHistory(this->best_scopes[experiment_state->step_index]);

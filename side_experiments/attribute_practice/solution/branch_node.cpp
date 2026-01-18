@@ -11,8 +11,15 @@
 
 using namespace std;
 
+const double ATTRIBUTE_UPDATE_RATE = 0.02;
+
 BranchNode::BranchNode() {
 	this->type = NODE_TYPE_BRANCH;
+
+	this->network = NULL;
+
+	this->original_impact = 0.0;
+	this->branch_impact = 0.0;
 
 	this->original_update_sum_vals = 0.0;
 	this->original_update_counts = 0;
@@ -27,7 +34,9 @@ BranchNode::BranchNode() {
 }
 
 BranchNode::~BranchNode() {
-	delete this->network;
+	if (this->network != NULL) {
+		delete this->network;
+	}
 
 	if (this->experiment != NULL) {
 		delete this->experiment;
@@ -47,13 +56,13 @@ void BranchNode::clear_verify() {
 
 void BranchNode::attribute_update() {
 	if (this->original_update_counts > 0) {
-		this->original_impact += this->original_update_sum_vals / this->original_update_counts;
+		this->original_impact += ATTRIBUTE_UPDATE_RATE * this->original_update_sum_vals / this->original_update_counts;
 
 		this->original_update_sum_vals = 0.0;
 		this->original_update_counts = 0;
 	}
 	if (this->branch_update_counts > 0) {
-		this->branch_impact += this->branch_update_sum_vals / this->branch_update_counts;
+		this->branch_impact += ATTRIBUTE_UPDATE_RATE * this->branch_update_sum_vals / this->branch_update_counts;
 
 		this->branch_update_sum_vals = 0.0;
 		this->branch_update_counts = 0;

@@ -70,7 +70,8 @@ void Experiment::add(SolutionWrapper* wrapper) {
 			scope_context->nodes[this->best_new_nodes[s_index]->id] = this->best_new_nodes[s_index];
 		}
 	}
-	scope_context->node_counter += (int)this->best_step_types.size();
+	scope_context->nodes[this->new_branch_node->id] = this->new_branch_node;
+	scope_context->node_counter += (int)this->best_step_types.size() + 1;
 
 	ObsNode* new_ending_node = NULL;
 
@@ -109,12 +110,6 @@ void Experiment::add(SolutionWrapper* wrapper) {
 		exit_node = this->best_exit_next_node;
 	}
 
-	BranchNode* new_branch_node = new BranchNode();
-	new_branch_node->parent = scope_context;
-	new_branch_node->id = scope_context->node_counter;
-	scope_context->node_counter++;
-	scope_context->nodes[new_branch_node->id] = new_branch_node;
-
 	switch (this->node_context->type) {
 	case NODE_TYPE_START:
 		{
@@ -127,10 +122,10 @@ void Experiment::add(SolutionWrapper* wrapper) {
 					break;
 				}
 			}
-			start_node->next_node->ancestor_ids.push_back(new_branch_node->id);
+			start_node->next_node->ancestor_ids.push_back(this->new_branch_node->id);
 
-			new_branch_node->original_next_node_id = start_node->next_node_id;
-			new_branch_node->original_next_node = start_node->next_node;
+			this->new_branch_node->original_next_node_id = start_node->next_node_id;
+			this->new_branch_node->original_next_node = start_node->next_node;
 		}
 		break;
 	case NODE_TYPE_ACTION:
@@ -144,10 +139,10 @@ void Experiment::add(SolutionWrapper* wrapper) {
 					break;
 				}
 			}
-			action_node->next_node->ancestor_ids.push_back(new_branch_node->id);
+			action_node->next_node->ancestor_ids.push_back(this->new_branch_node->id);
 
-			new_branch_node->original_next_node_id = action_node->next_node_id;
-			new_branch_node->original_next_node = action_node->next_node;
+			this->new_branch_node->original_next_node_id = action_node->next_node_id;
+			this->new_branch_node->original_next_node = action_node->next_node;
 		}
 		break;
 	case NODE_TYPE_SCOPE:
@@ -161,10 +156,10 @@ void Experiment::add(SolutionWrapper* wrapper) {
 					break;
 				}
 			}
-			scope_node->next_node->ancestor_ids.push_back(new_branch_node->id);
+			scope_node->next_node->ancestor_ids.push_back(this->new_branch_node->id);
 
-			new_branch_node->original_next_node_id = scope_node->next_node_id;
-			new_branch_node->original_next_node = scope_node->next_node;
+			this->new_branch_node->original_next_node_id = scope_node->next_node_id;
+			this->new_branch_node->original_next_node = scope_node->next_node;
 		}
 		break;
 	case NODE_TYPE_BRANCH:
@@ -179,10 +174,10 @@ void Experiment::add(SolutionWrapper* wrapper) {
 						break;
 					}
 				}
-				branch_node->branch_next_node->ancestor_ids.push_back(new_branch_node->id);
+				branch_node->branch_next_node->ancestor_ids.push_back(this->new_branch_node->id);
 
-				new_branch_node->original_next_node_id = branch_node->branch_next_node_id;
-				new_branch_node->original_next_node = branch_node->branch_next_node;
+				this->new_branch_node->original_next_node_id = branch_node->branch_next_node_id;
+				this->new_branch_node->original_next_node = branch_node->branch_next_node;
 			} else {
 				for (int a_index = 0; a_index < (int)branch_node->original_next_node->ancestor_ids.size(); a_index++) {
 					if (branch_node->original_next_node->ancestor_ids[a_index] == branch_node->id) {
@@ -191,10 +186,10 @@ void Experiment::add(SolutionWrapper* wrapper) {
 						break;
 					}
 				}
-				branch_node->original_next_node->ancestor_ids.push_back(new_branch_node->id);
+				branch_node->original_next_node->ancestor_ids.push_back(this->new_branch_node->id);
 
-				new_branch_node->original_next_node_id = branch_node->original_next_node_id;
-				new_branch_node->original_next_node = branch_node->original_next_node;
+				this->new_branch_node->original_next_node_id = branch_node->original_next_node_id;
+				this->new_branch_node->original_next_node = branch_node->original_next_node;
 			}
 		}
 		break;
@@ -204,10 +199,10 @@ void Experiment::add(SolutionWrapper* wrapper) {
 
 			if (obs_node->next_node == NULL) {
 				if (new_ending_node != NULL) {
-					new_ending_node->ancestor_ids.push_back(new_branch_node->id);
+					new_ending_node->ancestor_ids.push_back(this->new_branch_node->id);
 
-					new_branch_node->original_next_node_id = new_ending_node->id;
-					new_branch_node->original_next_node = new_ending_node;
+					this->new_branch_node->original_next_node_id = new_ending_node->id;
+					this->new_branch_node->original_next_node = new_ending_node;
 				} else {
 					new_ending_node = new ObsNode();
 					new_ending_node->parent = this->scope_context;
@@ -234,10 +229,10 @@ void Experiment::add(SolutionWrapper* wrapper) {
 					new_ending_node->next_node_id = -1;
 					new_ending_node->next_node = NULL;
 
-					new_ending_node->ancestor_ids.push_back(new_branch_node->id);
+					new_ending_node->ancestor_ids.push_back(this->new_branch_node->id);
 
-					new_branch_node->original_next_node_id = new_ending_node->id;
-					new_branch_node->original_next_node = new_ending_node;
+					this->new_branch_node->original_next_node_id = new_ending_node->id;
+					this->new_branch_node->original_next_node = new_ending_node;
 				}
 			} else {
 				for (int a_index = 0; a_index < (int)obs_node->next_node->ancestor_ids.size(); a_index++) {
@@ -247,25 +242,25 @@ void Experiment::add(SolutionWrapper* wrapper) {
 						break;
 					}
 				}
-				obs_node->next_node->ancestor_ids.push_back(new_branch_node->id);
+				obs_node->next_node->ancestor_ids.push_back(this->new_branch_node->id);
 
-				new_branch_node->original_next_node_id = obs_node->next_node_id;
-				new_branch_node->original_next_node = obs_node->next_node;
+				this->new_branch_node->original_next_node_id = obs_node->next_node_id;
+				this->new_branch_node->original_next_node = obs_node->next_node;
 			}
 		}
 		break;
 	}
 
 	if (this->best_step_types.size() == 0) {
-		exit_node->ancestor_ids.push_back(new_branch_node->id);
+		exit_node->ancestor_ids.push_back(this->new_branch_node->id);
 
-		new_branch_node->branch_next_node_id = exit_node_id;
-		new_branch_node->branch_next_node = exit_node;
+		this->new_branch_node->branch_next_node_id = exit_node_id;
+		this->new_branch_node->branch_next_node = exit_node;
 	} else {
-		this->best_new_nodes[0]->ancestor_ids.push_back(new_branch_node->id);
+		this->best_new_nodes[0]->ancestor_ids.push_back(this->new_branch_node->id);
 
-		new_branch_node->branch_next_node_id = this->best_new_nodes[0]->id;
-		new_branch_node->branch_next_node = this->best_new_nodes[0];
+		this->new_branch_node->branch_next_node_id = this->best_new_nodes[0]->id;
+		this->new_branch_node->branch_next_node = this->best_new_nodes[0];
 	}
 
 	switch (this->node_context->type) {
@@ -273,24 +268,24 @@ void Experiment::add(SolutionWrapper* wrapper) {
 		{
 			StartNode* start_node = (StartNode*)this->node_context;
 
-			start_node->next_node_id = new_branch_node->id;
-			start_node->next_node = new_branch_node;
+			start_node->next_node_id = this->new_branch_node->id;
+			start_node->next_node = this->new_branch_node;
 		}
 		break;
 	case NODE_TYPE_ACTION:
 		{
 			ActionNode* action_node = (ActionNode*)this->node_context;
 
-			action_node->next_node_id = new_branch_node->id;
-			action_node->next_node = new_branch_node;
+			action_node->next_node_id = this->new_branch_node->id;
+			action_node->next_node = this->new_branch_node;
 		}
 		break;
 	case NODE_TYPE_SCOPE:
 		{
 			ScopeNode* scope_node = (ScopeNode*)this->node_context;
 
-			scope_node->next_node_id = new_branch_node->id;
-			scope_node->next_node = new_branch_node;
+			scope_node->next_node_id = this->new_branch_node->id;
+			scope_node->next_node = this->new_branch_node;
 		}
 		break;
 	case NODE_TYPE_BRANCH:
@@ -298,11 +293,11 @@ void Experiment::add(SolutionWrapper* wrapper) {
 			BranchNode* branch_node = (BranchNode*)this->node_context;
 
 			if (this->is_branch) {
-				branch_node->branch_next_node_id = new_branch_node->id;
-				branch_node->branch_next_node = new_branch_node;
+				branch_node->branch_next_node_id = this->new_branch_node->id;
+				branch_node->branch_next_node = this->new_branch_node;
 			} else {
-				branch_node->original_next_node_id = new_branch_node->id;
-				branch_node->original_next_node = new_branch_node;
+				branch_node->original_next_node_id = this->new_branch_node->id;
+				branch_node->original_next_node = this->new_branch_node;
 			}
 		}
 		break;
@@ -310,14 +305,14 @@ void Experiment::add(SolutionWrapper* wrapper) {
 		{
 			ObsNode* obs_node = (ObsNode*)this->node_context;
 
-			obs_node->next_node_id = new_branch_node->id;
-			obs_node->next_node = new_branch_node;
+			obs_node->next_node_id = this->new_branch_node->id;
+			obs_node->next_node = this->new_branch_node;
 		}
 		break;
 	}
-	new_branch_node->ancestor_ids.push_back(this->node_context->id);
+	this->new_branch_node->ancestor_ids.push_back(this->node_context->id);
 
-	new_branch_node->network = this->new_true_network;
+	this->new_branch_node->network = this->new_true_network;
 	this->new_true_network = NULL;
 
 	#if defined(MDEBUG) && MDEBUG
@@ -326,8 +321,8 @@ void Experiment::add(SolutionWrapper* wrapper) {
 		this->verify_problems.clear();
 		wrapper->solution->verify_seeds = this->verify_seeds;
 
-		new_branch_node->verify_key = this;
-		new_branch_node->verify_scores = this->verify_scores;
+		this->new_branch_node->verify_key = this;
+		this->new_branch_node->verify_scores = this->verify_scores;
 	}
 	#endif /* MDEBUG */
 
@@ -361,7 +356,9 @@ void Experiment::add(SolutionWrapper* wrapper) {
 
 		next_node->ancestor_ids.push_back(this->best_new_nodes[n_index]->id);
 	}
+
 	this->best_new_nodes.clear();
+	this->new_branch_node = NULL;
 }
 
 double Experiment::calc_new_score() {

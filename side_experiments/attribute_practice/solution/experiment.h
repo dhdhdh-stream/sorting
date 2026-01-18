@@ -6,6 +6,7 @@
 #include "abstract_experiment.h"
 
 class AbstractNode;
+class BranchNode;
 class Network;
 class SolutionWrapper;
 
@@ -53,6 +54,8 @@ public:
 	std::vector<double> new_true_histories;
 
 	Network* new_true_network;
+
+	BranchNode* new_branch_node;
 
 	double sum_true;
 	int hit_count;

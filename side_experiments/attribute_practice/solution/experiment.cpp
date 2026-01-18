@@ -1,6 +1,6 @@
 #include "experiment.h"
 
-#include "abstract_node.h"
+#include "branch_node.h"
 #include "globals.h"
 #include "network.h"
 #include "problem.h"
@@ -26,6 +26,8 @@ Experiment::Experiment(Scope* scope_context,
 
 	this->curr_new_scope = NULL;
 	this->best_new_scope = NULL;
+
+	this->new_branch_node = NULL;
 
 	this->sum_num_instances = 0;
 
@@ -61,6 +63,10 @@ Experiment::~Experiment() {
 
 	for (int n_index = 0; n_index < (int)this->best_new_nodes.size(); n_index++) {
 		delete this->best_new_nodes[n_index];
+	}
+
+	if (this->new_branch_node != NULL) {
+		delete this->new_branch_node;
 	}
 
 	for (int h_index = 0; h_index < (int)this->new_scope_histories.size(); h_index++) {

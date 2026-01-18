@@ -197,6 +197,7 @@ void Experiment::explore_step(vector<double>& obs,
 			ScopeHistory* scope_history = wrapper->scope_histories.back();
 
 			ScopeNodeHistory* history = new ScopeNodeHistory(scope_node);
+			history->index = (int)scope_history->node_histories.size();
 			scope_history->node_histories[scope_node->id] = history;
 
 			ScopeHistory* inner_scope_history = new ScopeHistory(this->curr_scopes[experiment_state->step_index]);
