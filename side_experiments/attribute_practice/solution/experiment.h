@@ -23,6 +23,8 @@ public:
 	int state;
 	int state_iter;
 
+	bool remove_impact;
+
 	std::vector<std::vector<double>> existing_obs_histories;
 	std::vector<double> existing_true_histories;
 

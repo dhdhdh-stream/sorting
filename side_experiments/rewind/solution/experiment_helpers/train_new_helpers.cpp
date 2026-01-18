@@ -98,8 +98,13 @@ void Experiment::train_new_backprop(
 		SolutionWrapper* wrapper) {
 	ExperimentHistory* history = (ExperimentHistory*)wrapper->experiment_history;
 	if (history->is_hit) {
+		// for (int i_index = 0; i_index < (int)history->existing_predicted_trues.size(); i_index++) {
+		// 	this->new_true_histories.push_back(target_val - history->existing_predicted_trues[i_index]);
+		// }
+
+		double existing_result = get_existing_result(wrapper);
 		for (int i_index = 0; i_index < (int)history->existing_predicted_trues.size(); i_index++) {
-			this->new_true_histories.push_back(target_val - history->existing_predicted_trues[i_index]);
+			this->new_true_histories.push_back(target_val - existing_result);
 		}
 
 		this->state_iter++;

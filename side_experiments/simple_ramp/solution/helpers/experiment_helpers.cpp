@@ -47,34 +47,36 @@ void create_experiment(SolutionWrapper* wrapper) {
 				  node_context,
 				  potential_seen);
 
-	Network* network = NULL;
-	bool is_success = train_existing_helper(node_context,
-											wrapper,
-											network);
-	if (is_success) {
-		Scope* scope_context = node_context->parent;
+	if (node_context != NULL) {
+		Network* network = NULL;
+		bool is_success = train_existing_helper(node_context,
+												wrapper,
+												network);
+		if (is_success) {
+			Scope* scope_context = node_context->parent;
 
-		vector<AbstractNode*> possible_exits;
+			vector<AbstractNode*> possible_exits;
 
-		AbstractNode* starting_node = node_context->next_node;
-		scope_context->random_exit_activate(
-			starting_node,
-			possible_exits);
+			AbstractNode* starting_node = node_context->next_node;
+			scope_context->random_exit_activate(
+				starting_node,
+				possible_exits);
 
-		int random_index;
-		geometric_distribution<int> exit_distribution(0.1);
-		while (true) {
-			random_index = exit_distribution(generator);
-			if (random_index < (int)possible_exits.size()) {
-				break;
+			int random_index;
+			geometric_distribution<int> exit_distribution(0.1);
+			while (true) {
+				random_index = exit_distribution(generator);
+				if (random_index < (int)possible_exits.size()) {
+					break;
+				}
 			}
-		}
-		AbstractNode* exit_next_node = possible_exits[random_index];
+			AbstractNode* exit_next_node = possible_exits[random_index];
 
-		ExploreExperiment* new_experiment = new ExploreExperiment(
-			node_context,
-			exit_next_node,
-			network);
-		node_context->experiment = new_experiment;
+			ExploreExperiment* new_experiment = new ExploreExperiment(
+				node_context,
+				exit_next_node,
+				network);
+			node_context->experiment = new_experiment;
+		}
 	}
 }

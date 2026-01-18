@@ -43,6 +43,10 @@ void Experiment::add(SolutionWrapper* wrapper) {
 		ss << "this->best_exit_next_node->id: " << this->best_exit_next_node->id << "; ";
 	}
 
+	ss << "this->remove_impact: " << this->remove_impact << "; ";
+
+	ss << "this->improvement: " << this->improvement << "; ";
+
 	wrapper->solution->improvement_history.push_back(calc_new_score());
 	wrapper->solution->change_history.push_back(ss.str());
 

@@ -104,6 +104,12 @@ void BranchNode::load(ifstream& input_file,
 	getline(input_file, branch_impact_line);
 	this->branch_impact = stod(branch_impact_line);
 
+	// temp
+	cout << "this->parent->id: " << this->parent->id << endl;
+	cout << "this->id: " << this->id << endl;
+	cout << "this->original_impact: " << this->original_impact << endl;
+	cout << "this->branch_impact: " << this->branch_impact << endl;
+
 	string num_ancestors_line;
 	getline(input_file, num_ancestors_line);
 	int num_ancestors = stoi(num_ancestors_line);
@@ -134,6 +140,9 @@ void BranchNode::copy_from(BranchNode* original,
 
 	this->original_next_node_id = original->original_next_node_id;
 	this->branch_next_node_id = original->branch_next_node_id;
+
+	this->original_impact = original->original_impact;
+	this->branch_impact = original->branch_impact;
 
 	this->ancestor_ids = original->ancestor_ids;
 }

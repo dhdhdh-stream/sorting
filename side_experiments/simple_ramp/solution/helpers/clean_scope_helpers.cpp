@@ -404,10 +404,6 @@ void clean_scope(Scope* scope,
 						&& experiment_endpoints.find(branch_obs_node) == experiment_endpoints.end()) {
 					ObsNode* merge_obs_node = (ObsNode*)original_obs_node->next_node;
 
-					wrapper->solution->replace_obs_node(scope,
-														original_obs_node->id,
-														merge_obs_node->id);
-
 					for (int a_index = 0; a_index < (int)merge_obs_node->ancestor_ids.size(); a_index++) {
 						if (merge_obs_node->ancestor_ids[a_index] == original_obs_node->id) {
 							merge_obs_node->ancestor_ids.erase(merge_obs_node->ancestor_ids.begin() + a_index);
@@ -415,25 +411,12 @@ void clean_scope(Scope* scope,
 						}
 					}
 
-					wrapper->solution->clean_inputs(scope,
-													original_obs_node->id);
-
-					wrapper->solution->replace_obs_node(scope,
-														branch_obs_node->id,
-														merge_obs_node->id);
-
 					for (int a_index = 0; a_index < (int)merge_obs_node->ancestor_ids.size(); a_index++) {
 						if (merge_obs_node->ancestor_ids[a_index] == branch_obs_node->id) {
 							merge_obs_node->ancestor_ids.erase(merge_obs_node->ancestor_ids.begin() + a_index);
 							break;
 						}
 					}
-
-					wrapper->solution->clean_inputs(scope,
-													branch_obs_node->id);
-
-					wrapper->solution->clean_inputs(scope,
-													branch_node->id);
 
 					ObsNode* previous_obs_node = (ObsNode*)scope->nodes[branch_node->ancestor_ids[0]];
 					previous_obs_node->next_node_id = merge_obs_node->id;

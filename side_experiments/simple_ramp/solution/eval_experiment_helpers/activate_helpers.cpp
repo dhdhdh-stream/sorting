@@ -139,7 +139,7 @@ void EvalExperiment::backprop(double target_val,
 
 			if (this->curr_ramp == RAMP_ITER) {
 				this->state = EVAL_EXPERIMENT_STATE_RAMP;
-			} else if (this->curr_ramp >= EXPERIMENT_NUM_GEARS-1) {
+			} else if (this->curr_ramp == EXPERIMENT_NUM_GEARS) {
 				updated_scopes.insert(this->node_context->parent);
 
 				add(wrapper);

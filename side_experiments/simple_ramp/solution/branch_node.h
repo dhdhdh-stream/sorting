@@ -23,6 +23,7 @@ public:
 	AbstractNode* branch_next_node;
 
 	BranchNode();
+	~BranchNode();
 
 	void step(std::vector<double>& obs,
 			  int& action,

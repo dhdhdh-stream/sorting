@@ -1,3 +1,5 @@
+// - decision making/training definitely the bottleneck
+
 #include <chrono>
 #include <iostream>
 #include <map>

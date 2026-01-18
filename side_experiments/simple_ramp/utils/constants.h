@@ -25,11 +25,9 @@ const int LAST_NUM_TRACK = 1000;
 
 #if defined(MDEBUG) && MDEBUG
 const int EXPERIMENT_NUM_GEARS = 4;
-const int EVAL_GEAR = 2;
 const int RAMP_EPOCH_NUM_ITERS = 200;
 #else
 const int EXPERIMENT_NUM_GEARS = 10;
-const int EVAL_GEAR = 5;
 const int RAMP_EPOCH_NUM_ITERS = 2000;
 #endif /* MDEBUG */
 

@@ -16,6 +16,10 @@ BranchNode::BranchNode() {
 	this->type = NODE_TYPE_BRANCH;
 }
 
+BranchNode::~BranchNode() {
+	delete this->network;
+}
+
 void BranchNode::save(ofstream& output_file) {
 	this->network->save(output_file);
 

@@ -21,6 +21,13 @@ Experiment::Experiment(Scope* scope_context,
 
 	this->node_context->experiment = this;
 
+	uniform_int_distribution<int> remove_impact_distribution(0, 1);
+	if (remove_impact_distribution(generator) == 0) {
+		this->remove_impact = true;
+	} else {
+		this->remove_impact = false;
+	}
+
 	this->existing_true_network = NULL;
 	this->new_true_network = NULL;
 

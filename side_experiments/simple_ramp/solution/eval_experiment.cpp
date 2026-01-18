@@ -37,7 +37,7 @@ EvalExperiment::~EvalExperiment() {
 }
 
 EvalExperimentHistory::EvalExperimentHistory(EvalExperiment* experiment) {
-	uniform_int_distribution<int> on_distribution(0, EXPERIMENT_NUM_GEARS-1);
+	uniform_int_distribution<int> on_distribution(0, EXPERIMENT_NUM_GEARS);
 	if (experiment->curr_ramp >= on_distribution(generator)) {
 		this->is_on = true;
 	} else {

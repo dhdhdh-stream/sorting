@@ -1,3 +1,7 @@
+// - essentially assumes independence everywhere
+//   - like, the benefit of a branch could be that it improves decisions later
+//     - but this removes that
+
 #include <chrono>
 #include <iostream>
 #include <map>
