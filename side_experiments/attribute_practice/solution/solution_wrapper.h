@@ -33,6 +33,7 @@ public:
 	std::vector<AbstractExperimentState*> experiment_context;
 
 	int num_actions;
+	int curr_impact;
 
 	AbstractExperimentHistory* experiment_history;
 

@@ -12,6 +12,7 @@ using namespace std;
 
 void SolutionWrapper::init() {
 	this->num_actions = 1;
+	this->curr_impact = 0.0;
 
 	#if defined(MDEBUG) && MDEBUG
 	this->run_index++;

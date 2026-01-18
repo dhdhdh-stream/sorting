@@ -44,7 +44,8 @@ void Experiment::train_existing_backprop(double target_val,
 		this->hit_count++;
 
 		while (this->existing_true_histories.size() < this->existing_obs_histories.size()) {
-			this->existing_true_histories.push_back(target_val);
+			double curr_val = (target_val - wrapper->solution->curr_score) - wrapper->curr_impact;
+			this->existing_true_histories.push_back(curr_val);
 		}
 	}
 

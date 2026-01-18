@@ -170,17 +170,20 @@ void Experiment::explore_step(vector<double>& obs,
 							  bool& is_next,
 							  bool& fetch_action,
 							  SolutionWrapper* wrapper) {
+	ExperimentHistory* history = (ExperimentHistory*)wrapper->experiment_history;
 	ExperimentState* experiment_state = (ExperimentState*)wrapper->experiment_context.back();
 
 	if (experiment_state->step_index == 0) {
-		ExperimentHistory* history = (ExperimentHistory*)wrapper->experiment_history;
-
 		this->existing_true_network->activate(obs);
 		history->existing_predicted_trues.push_back(
 			this->existing_true_network->output->acti_vals[0]);
+
+		history->starting_impacts.push_back(wrapper->curr_impact);
 	}
 
 	if (experiment_state->step_index >= (int)this->curr_step_types.size()) {
+		history->ending_impacts.push_back(wrapper->curr_impact);
+
 		wrapper->node_context.back() = this->curr_exit_next_node;
 
 		delete experiment_state;
@@ -236,7 +239,9 @@ void Experiment::explore_backprop(double target_val,
 	this->num_instances_until_target = until_distribution(generator);
 
 	if (history->existing_predicted_trues.size() != 0) {
-		double curr_surprise = target_val - history->existing_predicted_trues[0];
+		double curr_surprise = target_val
+			- (wrapper->curr_impact - (history->ending_impacts[0] - history->starting_impacts[0]))
+			- history->existing_predicted_trues[0];
 
 		#if defined(MDEBUG) && MDEBUG
 		if (curr_surprise > this->best_surprise || true) {
