@@ -5,6 +5,8 @@
 
 #include "abstract_node.h"
 
+class ScopeHistory;
+
 class StartNode : public AbstractNode {
 public:
 	int next_node_id;
@@ -17,6 +19,12 @@ public:
 			  int& action,
 			  bool& is_next,
 			  SolutionWrapper* wrapper);
+	void step(std::vector<double>& obs,
+			  int& action,
+			  bool& is_next,
+			  std::vector<ScopeHistory*>& scope_histories,
+			  std::vector<AbstractNode*>& node_context,
+			  int& num_actions);
 
 	void experiment_step(std::vector<double>& obs,
 						 int& action,

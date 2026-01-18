@@ -235,7 +235,10 @@ void Experiment::explore_backprop(double target_val,
 	this->num_instances_until_target = until_distribution(generator);
 
 	if (history->existing_predicted_trues.size() != 0) {
-		double curr_surprise = target_val - history->existing_predicted_trues[0];
+		// double curr_surprise = target_val - history->existing_predicted_trues[0];
+
+		double existing_result = get_existing_result(wrapper);
+		double curr_surprise = target_val - existing_result;
 
 		#if defined(MDEBUG) && MDEBUG
 		if (curr_surprise > this->best_surprise || true) {

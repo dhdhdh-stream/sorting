@@ -6,6 +6,7 @@
 
 class AbstractExperiment;
 class Scope;
+class ScopeHistory;
 class Solution;
 class SolutionWrapper;
 
@@ -35,6 +36,12 @@ public:
 					  int& action,
 					  bool& is_next,
 					  SolutionWrapper* wrapper) = 0;
+	virtual void step(std::vector<double>& obs,
+					  int& action,
+					  bool& is_next,
+					  std::vector<ScopeHistory*>& scope_histories,
+					  std::vector<AbstractNode*>& node_context,
+					  int& num_actions) = 0;
 
 	virtual void experiment_step(std::vector<double>& obs,
 								 int& action,
