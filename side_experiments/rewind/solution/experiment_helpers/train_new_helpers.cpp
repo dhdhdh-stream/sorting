@@ -24,6 +24,8 @@ const int TRAIN_NEW_NUM_DATAPOINTS = 1000;
 #endif /* MDEBUG */
 const double VALIDATION_RATIO = 0.2;
 
+const double MIN_POSITIVE_RATIO = 0.05;
+
 void Experiment::train_new_check_activate(
 		SolutionWrapper* wrapper) {
 	this->num_instances_until_target--;
@@ -93,19 +95,72 @@ void Experiment::train_new_exit_step(SolutionWrapper* wrapper) {
 	experiment_state->step_index++;
 }
 
+/**
+ * - noise can make it seem like there's a gradient when there isn't
+ */
+void binarize(vector<vector<double>>& train_obs_histories,
+			  vector<double>& train_true_histories,
+			  vector<double>& train_true_network_vals,
+			  vector<vector<double>>& validation_obs_histories,
+			  vector<double>& validation_true_histories,
+			  double& best_sum_vals,
+			  Network*& best_network) {
+	Network* binary_network = new Network(train_obs_histories[0].size(),
+										  NETWORK_SIZE_SMALL);
+	uniform_int_distribution<int> input_distribution(0, train_obs_histories.size()-1);
+	for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
+		int rand_index = input_distribution(generator);
+
+		binary_network->activate(train_obs_histories[rand_index]);
+
+		double error;
+		if (train_true_network_vals[rand_index] > 0.0) {
+			if (binary_network->output->acti_vals[0] > 1.0) {
+				error = 0.0;
+			} else {
+				error = 1.0 - binary_network->output->acti_vals[0];
+			}
+		} else {
+			if (binary_network->output->acti_vals[0] < -1.0) {
+				error = 0.0;
+			} else {
+				error = -1.0 - binary_network->output->acti_vals[0];
+			}
+		}
+
+		binary_network->backprop(error);
+	}
+
+	double sum_vals = 0.0;
+	for (int h_index = 0; h_index < (int)validation_obs_histories.size(); h_index++) {
+		binary_network->activate(validation_obs_histories[h_index]);
+		if (binary_network->output->acti_vals[0] >= 0.0) {
+			sum_vals += validation_true_histories[h_index];
+		}
+	}
+
+	if (sum_vals > best_sum_vals) {
+		best_sum_vals = sum_vals;
+		delete best_network;
+		best_network = binary_network;
+	} else {
+		delete binary_network;
+	}
+}
+
 void Experiment::train_new_backprop(
 		double target_val,
 		SolutionWrapper* wrapper) {
 	ExperimentHistory* history = (ExperimentHistory*)wrapper->experiment_history;
 	if (history->is_hit) {
-		// for (int i_index = 0; i_index < (int)history->existing_predicted_trues.size(); i_index++) {
-		// 	this->new_true_histories.push_back(target_val - history->existing_predicted_trues[i_index]);
-		// }
-
-		double existing_result = get_existing_result(wrapper);
 		for (int i_index = 0; i_index < (int)history->existing_predicted_trues.size(); i_index++) {
-			this->new_true_histories.push_back(target_val - existing_result);
+			this->new_true_histories.push_back(target_val - history->existing_predicted_trues[i_index]);
 		}
+
+		// double existing_result = get_existing_result(wrapper);
+		// for (int i_index = 0; i_index < (int)history->existing_predicted_trues.size(); i_index++) {
+		// 	this->new_true_histories.push_back(target_val - existing_result);
+		// }
 
 		this->state_iter++;
 		if (this->state_iter >= TRAIN_NEW_NUM_DATAPOINTS
@@ -129,9 +184,9 @@ void Experiment::train_new_backprop(
 
 			this->new_true_network = new Network(train_obs_histories[0].size(),
 												 NETWORK_SIZE_SMALL);
-			uniform_int_distribution<int> val_input_distribution(0, train_obs_histories.size()-1);
+			uniform_int_distribution<int> input_distribution(0, train_obs_histories.size()-1);
 			for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
-				int rand_index = val_input_distribution(generator);
+				int rand_index = input_distribution(generator);
 
 				this->new_true_network->activate(train_obs_histories[rand_index]);
 
@@ -140,26 +195,39 @@ void Experiment::train_new_backprop(
 				this->new_true_network->backprop(error);
 			}
 
-			vector<double> validation_true_network_vals(validation_obs_histories.size());
-			for (int h_index = 0; h_index < (int)validation_obs_histories.size(); h_index++) {
-				new_true_network->activate(validation_obs_histories[h_index]);
-				validation_true_network_vals[h_index] = new_true_network->output->acti_vals[0];
+			vector<double> train_true_network_vals(train_obs_histories.size());
+			int positive_count = 0;
+			for (int h_index = 0; h_index < (int)train_obs_histories.size(); h_index++) {
+				this->new_true_network->activate(train_obs_histories[h_index]);
+				train_true_network_vals[h_index] = this->new_true_network->output->acti_vals[0];
+
+				if (this->new_true_network->output->acti_vals[0] > 0.0) {
+					positive_count++;
+				}
 			}
 
-			int positive_count = 0;
 			double sum_vals = 0.0;
 			for (int h_index = 0; h_index < (int)validation_obs_histories.size(); h_index++) {
-				if (validation_true_network_vals[h_index] >= 0.0) {
-					positive_count++;
+				this->new_true_network->activate(validation_obs_histories[h_index]);
+				if (this->new_true_network->output->acti_vals[0] >= 0.0) {
 					sum_vals += validation_true_histories[h_index];
 				}
 			}
 
 			#if defined(MDEBUG) && MDEBUG
-			if ((positive_count > 0 && sum_vals >= 0.0) || rand()%4 != 0) {
+			if ((positive_count > MIN_POSITIVE_RATIO * (double)train_obs_histories.size() && sum_vals >= 0.0)
+					|| rand()%4 != 0) {
 			#else
-			if (positive_count > 0 && sum_vals >= 0.0) {
+			if (positive_count > MIN_POSITIVE_RATIO * (double)train_obs_histories.size() && sum_vals >= 0.0) {
 			#endif /* MDEBUG */
+				binarize(train_obs_histories,
+						 train_true_histories,
+						 train_true_network_vals,
+						 validation_obs_histories,
+						 validation_true_histories,
+						 sum_vals,
+						 this->new_true_network);
+
 				this->sum_true = 0.0;
 				this->hit_count = 0;
 
