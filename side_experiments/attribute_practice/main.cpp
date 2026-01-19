@@ -2,6 +2,8 @@
 //   - like, the benefit of a branch could be that it improves decisions later
 //     - but this removes that
 
+// TODO: attribute not on existing, but on explore
+
 #include <chrono>
 #include <iostream>
 #include <map>

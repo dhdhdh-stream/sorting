@@ -45,6 +45,8 @@ void Experiment::add(SolutionWrapper* wrapper) {
 
 	ss << "this->remove_impact: " << this->remove_impact << "; ";
 
+	ss << "this->is_binarize: " << this->is_binarize << "; ";
+
 	ss << "this->improvement: " << this->improvement << "; ";
 
 	wrapper->solution->improvement_history.push_back(calc_new_score());

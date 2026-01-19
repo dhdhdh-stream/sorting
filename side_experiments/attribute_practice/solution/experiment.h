@@ -60,6 +60,8 @@ public:
 
 	Network* new_true_network;
 
+	bool is_binarize;
+
 	BranchNode* new_branch_node;
 
 	double sum_true;

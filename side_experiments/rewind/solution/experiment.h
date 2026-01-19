@@ -54,6 +54,8 @@ public:
 
 	Network* new_true_network;
 
+	bool is_binarize;
+
 	double sum_true;
 	int hit_count;
 

@@ -114,38 +114,36 @@ void Experiment::measure_backprop(double target_val,
 		double average_hits_per_run = (double)this->hit_count / (double)this->total_count;
 		this->improvement = average_hits_per_run * (new_true - this->existing_true);
 
-		bool is_success;
-		if (wrapper->solution->last_experiment_scores.size() >= MIN_NUM_LAST_EXPERIMENT_TRACK) {
-			int num_better_than = 0;
-			// // temp
-			// cout << "last_experiment_scores:";
-			for (list<double>::iterator it = wrapper->solution->last_experiment_scores.begin();
-					it != wrapper->solution->last_experiment_scores.end(); it++) {
+		bool is_success = false;
+		if (this->improvement >= 0.0) {
+			if (wrapper->solution->last_experiment_scores.size() >= MIN_NUM_LAST_EXPERIMENT_TRACK) {
+				int num_better_than = 0;
 				// // temp
-				// cout << " " << *it;
-				if (improvement >= *it) {
-					num_better_than++;
+				// cout << "last_experiment_scores:";
+				for (list<double>::iterator it = wrapper->solution->last_experiment_scores.begin();
+						it != wrapper->solution->last_experiment_scores.end(); it++) {
+					// // temp
+					// cout << " " << *it;
+					if (improvement >= *it) {
+						num_better_than++;
+					}
 				}
-			}
-			// // temp
-			// cout << endl;
+				// // temp
+				// cout << endl;
 
-			int target_better_than = LAST_EXPERIMENT_BETTER_THAN_RATIO * (double)wrapper->solution->last_experiment_scores.size();
+				int target_better_than = LAST_EXPERIMENT_BETTER_THAN_RATIO * (double)wrapper->solution->last_experiment_scores.size();
 
-			if (num_better_than >= target_better_than) {
-				is_success = true;
+				if (num_better_than >= target_better_than) {
+					is_success = true;
+				}
+
+				if (wrapper->solution->last_experiment_scores.size() >= NUM_LAST_EXPERIMENT_TRACK) {
+					wrapper->solution->last_experiment_scores.pop_front();
+				}
+				wrapper->solution->last_experiment_scores.push_back(improvement);
 			} else {
-				is_success = false;
+				wrapper->solution->last_experiment_scores.push_back(improvement);
 			}
-
-			if (wrapper->solution->last_experiment_scores.size() >= NUM_LAST_EXPERIMENT_TRACK) {
-				wrapper->solution->last_experiment_scores.pop_front();
-			}
-			wrapper->solution->last_experiment_scores.push_back(improvement);
-		} else {
-			is_success = false;
-
-			wrapper->solution->last_experiment_scores.push_back(improvement);
 		}
 
 		#if defined(MDEBUG) && MDEBUG
