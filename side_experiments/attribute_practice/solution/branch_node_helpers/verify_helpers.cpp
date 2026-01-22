@@ -53,12 +53,8 @@ void BranchNode::verify_step(vector<double>& obs,
 	history->is_branch = is_branch;
 
 	if (is_branch) {
-		wrapper->curr_impact += this->branch_impact;
-
 		wrapper->node_context.back() = this->branch_next_node;
 	} else {
-		wrapper->curr_impact += this->original_impact;
-
 		wrapper->node_context.back() = this->original_next_node;
 	}
 }

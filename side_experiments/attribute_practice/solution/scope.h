@@ -8,6 +8,7 @@
 class AbstractNode;
 class AbstractNodeHistory;
 class Factor;
+class LongNetwork;
 class Network;
 class Problem;
 class Solution;
@@ -25,6 +26,14 @@ public:
 	 */
 
 	std::vector<Scope*> child_scopes;
+
+	std::vector<std::vector<double>> init_pre_obs;
+	std::vector<double> init_pre_targets;
+	std::vector<std::vector<double>> init_post_obs;
+	std::vector<double> init_post_targets;
+
+	LongNetwork* pre_network;
+	LongNetwork* post_network;
 
 	Scope();
 	~Scope();
@@ -52,6 +61,11 @@ public:
 	Scope* scope;
 
 	std::map<int, AbstractNodeHistory*> node_histories;
+
+	std::vector<double> pre_obs_history;
+	double pre_impact;
+	std::vector<double> post_obs_history;
+	double post_impact;
 
 	ScopeHistory(Scope* scope);
 	ScopeHistory(ScopeHistory* original,

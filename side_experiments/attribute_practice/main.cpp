@@ -1,9 +1,3 @@
-// - essentially assumes independence everywhere
-//   - like, the benefit of a branch could be that it improves decisions later
-//     - but this removes that
-
-// TODO: attribute not on existing, but on explore
-
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -15,14 +9,14 @@
 #include "branch_node.h"
 #include "constants.h"
 #include "globals.h"
-#include "minesweeper.h"
+// #include "minesweeper.h"
+#include "overwhelming_noise.h"
 #include "problem.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
 #include "solution_helpers.h"
 #include "solution_wrapper.h"
-// #include "tunnel_practice.h"
 #include "utilities.h"
 
 using namespace std;
@@ -39,8 +33,8 @@ int main(int argc, char* argv[]) {
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
 
-	// ProblemType* problem_type = new TypeTunnelPractice();
-	ProblemType* problem_type = new TypeMinesweeper();
+	// ProblemType* problem_type = new TypeMinesweeper();
+	ProblemType* problem_type = new TypeOverwhelmingNoise();
 
 	string filename;
 	SolutionWrapper* solution_wrapper;

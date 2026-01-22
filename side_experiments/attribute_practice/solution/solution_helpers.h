@@ -23,7 +23,9 @@ void recursive_add_child(Scope* curr_parent,
 						 SolutionWrapper* wrapper,
 						 Scope* new_scope);
 
-void update_attribute(SolutionWrapper* wrapper);
+void update_attribute(ScopeHistory* scope_history,
+					  double target_val);
+void check_attribute_init(SolutionWrapper* wrapper);
 
 void clean_scope(Scope* scope);
 

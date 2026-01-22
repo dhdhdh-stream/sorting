@@ -7,6 +7,7 @@
 #include "action_node.h"
 #include "branch_node.h"
 #include "globals.h"
+#include "long_network.h"
 #include "network.h"
 #include "obs_node.h"
 #include "scope_node.h"
@@ -23,6 +24,14 @@ Scope::~Scope() {
 	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
 			it != this->nodes.end(); it++) {
 		delete it->second;
+	}
+
+	if (this->pre_network != NULL) {
+		delete this->pre_network;
+	}
+
+	if (this->post_network != NULL) {
+		delete this->post_network;
 	}
 }
 
@@ -118,6 +127,15 @@ void Scope::save(ofstream& output_file) {
 	for (int c_index = 0; c_index < (int)this->child_scopes.size(); c_index++) {
 		output_file << this->child_scopes[c_index]->id << endl;
 	}
+
+	output_file << (this->pre_network == NULL) << endl;
+	if (this->pre_network != NULL) {
+		this->pre_network->save(output_file);
+	}
+	output_file << (this->post_network == NULL) << endl;
+	if (this->post_network != NULL) {
+		this->post_network->save(output_file);
+	}
 }
 
 void Scope::load(ifstream& input_file,
@@ -197,6 +215,24 @@ void Scope::load(ifstream& input_file,
 		getline(input_file, scope_id_line);
 		this->child_scopes.push_back(parent_solution->scopes[stoi(scope_id_line)]);
 	}
+
+	string pre_network_is_null_line;
+	getline(input_file, pre_network_is_null_line);
+	bool pre_network_is_null = stoi(pre_network_is_null_line);
+	if (pre_network_is_null) {
+		this->pre_network = NULL;
+	} else {
+		this->pre_network = new LongNetwork(input_file);
+	}
+
+	string post_network_is_null_line;
+	getline(input_file, post_network_is_null_line);
+	bool post_network_is_null = stoi(post_network_is_null_line);
+	if (post_network_is_null) {
+		this->post_network = NULL;
+	} else {
+		this->post_network = new LongNetwork(input_file);
+	}
 }
 
 void Scope::link(Solution* parent_solution) {
@@ -272,6 +308,18 @@ void Scope::copy_from(Scope* original,
 	for (int c_index = 0; c_index < (int)original->child_scopes.size(); c_index++) {
 		this->child_scopes.push_back(parent_solution->scopes[
 			original->child_scopes[c_index]->id]);
+	}
+
+	if (original->pre_network == NULL) {
+		this->pre_network = NULL;
+	} else {
+		this->pre_network = new LongNetwork(original->pre_network);
+	}
+
+	if (original->post_network == NULL) {
+		this->post_network = NULL;
+	} else {
+		this->post_network = new LongNetwork(original->post_network);
 	}
 }
 

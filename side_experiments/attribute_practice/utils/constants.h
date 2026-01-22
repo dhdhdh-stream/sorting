@@ -48,12 +48,6 @@ const double LAST_EXPERIMENT_BETTER_THAN_RATIO = 0.9;
 #endif /* MDEBUG */
 
 #if defined(MDEBUG) && MDEBUG
-const int EXPLORE_MAX_SAMPLES = 10;
-#else
-const int EXPLORE_MAX_SAMPLES = 10000;
-#endif /* MDEBUG */
-
-#if defined(MDEBUG) && MDEBUG
 const int NUM_VERIFY_SAMPLES = 10;
 #endif /* MDEBUG */
 

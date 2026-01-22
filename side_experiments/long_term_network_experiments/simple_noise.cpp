@@ -163,6 +163,7 @@ int main(int argc, char* argv[]) {
 		Network* network = new Network(NUM_INPUTS);
 
 		for (int iter_index = 0; iter_index < 300000; iter_index++) {
+		// for (int iter_index = 0; iter_index < 100000; iter_index++) {
 		// for (int iter_index = 0; iter_index < 1000000; iter_index++) {
 		// for (int iter_index = 0; iter_index < 10000000; iter_index++) {
 			vector<double> inputs(NUM_INPUTS);

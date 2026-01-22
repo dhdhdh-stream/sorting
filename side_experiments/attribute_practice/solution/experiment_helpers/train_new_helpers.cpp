@@ -43,22 +43,19 @@ void Experiment::train_new_step(vector<double>& obs,
 								int& action,
 								bool& is_next,
 								SolutionWrapper* wrapper) {
-	ExperimentHistory* history = (ExperimentHistory*)wrapper->experiment_history;
 	ExperimentState* experiment_state = (ExperimentState*)wrapper->experiment_context.back();
 
 	if (experiment_state->step_index == 0) {
+		ExperimentHistory* history = (ExperimentHistory*)wrapper->experiment_history;
+
 		this->new_obs_histories.push_back(obs);
 
 		this->existing_true_network->activate(obs);
 		history->existing_predicted_trues.push_back(
 			this->existing_true_network->output->acti_vals[0]);
-
-		history->starting_impacts.push_back(wrapper->curr_impact);
 	}
 
 	if (experiment_state->step_index >= (int)this->best_step_types.size()) {
-		history->ending_impacts.push_back(wrapper->curr_impact);
-
 		wrapper->node_context.back() = this->best_exit_next_node;
 
 		delete experiment_state;
@@ -185,14 +182,7 @@ void Experiment::train_new_backprop(
 	ExperimentHistory* history = (ExperimentHistory*)wrapper->experiment_history;
 	if (history->is_hit) {
 		for (int i_index = 0; i_index < (int)history->existing_predicted_trues.size(); i_index++) {
-			if (this->remove_impact) {
-				double curr_val = (target_val - wrapper->solution->curr_score)
-					- (wrapper->curr_impact - (history->ending_impacts[i_index] - history->starting_impacts[i_index]))
-					- history->existing_predicted_trues[i_index];
-				this->new_true_histories.push_back(curr_val);
-			} else {
-				this->new_true_histories.push_back(target_val - history->existing_predicted_trues[i_index]);
-			}
+			this->new_true_histories.push_back(target_val - history->existing_predicted_trues[i_index]);
 		}
 
 		this->state_iter++;

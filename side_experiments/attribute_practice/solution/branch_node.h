@@ -22,14 +22,6 @@ public:
 	int branch_next_node_id;
 	AbstractNode* branch_next_node;
 
-	double original_impact;
-	double branch_impact;
-
-	double original_update_sum_vals;
-	double original_update_counts;
-	double branch_update_sum_vals;
-	double branch_update_counts;
-
 	#if defined(MDEBUG) && MDEBUG
 	void* verify_key;
 	std::vector<double> verify_scores;
@@ -55,8 +47,6 @@ public:
 					 SolutionWrapper* wrapper);
 	void clear_verify();
 	#endif /* MDEBUG */
-
-	void attribute_update();
 
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file,

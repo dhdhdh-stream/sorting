@@ -23,8 +23,6 @@ public:
 	int state;
 	int state_iter;
 
-	bool remove_impact;
-
 	std::vector<std::vector<double>> existing_obs_histories;
 	std::vector<double> existing_true_histories;
 
@@ -53,10 +51,7 @@ public:
 	std::vector<AbstractNode*> best_new_nodes;
 
 	std::vector<std::vector<double>> new_obs_histories;
-	std::vector<double> new_inner_starting_impact_histories;
-	std::vector<double> new_inner_ending_impact_histories;
 	std::vector<double> new_true_histories;
-	std::vector<double> new_impact_histories;
 
 	Network* new_true_network;
 
@@ -151,8 +146,6 @@ public:
 class ExperimentHistory : public AbstractExperimentHistory {
 public:
 	std::vector<double> existing_predicted_trues;
-	std::vector<double> starting_impacts;
-	std::vector<double> ending_impacts;
 
 	ExperimentHistory(Experiment* experiment);
 };
