@@ -1,5 +1,6 @@
 #include "start_node.h"
 
+#include "long_network.h"
 #include "scope.h"
 #include "solution_wrapper.h"
 
@@ -10,6 +11,11 @@ void StartNode::step(vector<double>& obs,
 					 bool& is_next,
 					 SolutionWrapper* wrapper) {
 	ScopeHistory* scope_history = wrapper->scope_histories.back();
+
+	if (this->parent->pre_network != NULL) {
+		this->parent->pre_network->activate(obs);
+		wrapper->curr_impact += this->parent->pre_network->output->acti_vals[0];
+	}
 
 	StartNodeHistory* history = new StartNodeHistory(this);
 	history->index = (int)scope_history->node_histories.size();

@@ -110,9 +110,6 @@ void Solution::init(ProblemType* problem_type) {
 
 	end_node->next_node_id = -1;
 	end_node->next_node = NULL;
-
-	new_scope->pre_network = new LongNetwork(problem_type->num_obs());
-	new_scope->post_network = new LongNetwork(problem_type->num_obs());
 }
 
 void Solution::load(ifstream& input_file) {

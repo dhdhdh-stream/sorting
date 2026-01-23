@@ -34,6 +34,8 @@ public:
 
 	LongNetwork* pre_network;
 	LongNetwork* post_network;
+	// temp
+	int long_iters;
 
 	Scope();
 	~Scope();

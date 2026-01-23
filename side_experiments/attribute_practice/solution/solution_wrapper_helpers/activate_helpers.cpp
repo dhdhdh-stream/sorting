@@ -2,6 +2,7 @@
 
 #include <iostream>
 
+#include "long_network.h"
 #include "problem.h"
 #include "scope.h"
 #include "scope_node.h"
@@ -12,6 +13,7 @@ using namespace std;
 
 void SolutionWrapper::init() {
 	this->num_actions = 1;
+	this->curr_impact = 0.0;
 
 	#if defined(MDEBUG) && MDEBUG
 	this->run_index++;
@@ -30,6 +32,13 @@ pair<bool,int> SolutionWrapper::step(vector<double> obs) {
 	bool is_done = false;
 	while (!is_next) {
 		if (this->node_context.back() == NULL) {
+			ScopeHistory* scope_history = this->scope_histories.back();
+
+			if (scope_history->scope->post_network != NULL) {
+				scope_history->scope->post_network->activate(obs);
+				this->curr_impact += scope_history->scope->post_network->output->acti_vals[0];
+			}
+
 			if (this->scope_histories.size() == 1) {
 				is_next = true;
 				is_done = true;

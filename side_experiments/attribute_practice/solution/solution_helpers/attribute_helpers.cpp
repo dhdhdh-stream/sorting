@@ -10,10 +10,14 @@
 
 using namespace std;
 
+#if defined(MDEBUG) && MDEBUG
+const int LONG_INIT_NUM_SAMPLES = 100;
+#else
 const int LONG_INIT_NUM_SAMPLES = 10000;
 /**
  * - enough to handle 10% impact
  */
+#endif /* MDEBUG */
 
 void update_attribute(ScopeHistory* scope_history,
 					  double target_val) {
@@ -35,6 +39,9 @@ void update_attribute(ScopeHistory* scope_history,
 		double post_error = post_target - scope->post_network->output->acti_vals[0];
 		scope->post_network->backprop(post_error);
 	}
+
+	// temp
+	scope->long_iters++;
 
 	for (map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
 			it != scope_history->node_histories.end(); it++) {

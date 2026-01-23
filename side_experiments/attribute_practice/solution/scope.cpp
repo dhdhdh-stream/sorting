@@ -17,7 +17,10 @@
 using namespace std;
 
 Scope::Scope() {
-	// do nothing
+	this->pre_network = NULL;
+	this->post_network = NULL;
+	// temp
+	this->long_iters = 0;
 }
 
 Scope::~Scope() {
@@ -136,6 +139,8 @@ void Scope::save(ofstream& output_file) {
 	if (this->post_network != NULL) {
 		this->post_network->save(output_file);
 	}
+	// temp
+	output_file << this->long_iters << endl;
 }
 
 void Scope::load(ifstream& input_file,
@@ -233,6 +238,11 @@ void Scope::load(ifstream& input_file,
 	} else {
 		this->post_network = new LongNetwork(input_file);
 	}
+
+	// temp
+	string long_iters_line;
+	getline(input_file, long_iters_line);
+	this->long_iters = stoi(long_iters_line);
 }
 
 void Scope::link(Solution* parent_solution) {
@@ -321,6 +331,9 @@ void Scope::copy_from(Scope* original,
 	} else {
 		this->post_network = new LongNetwork(original->post_network);
 	}
+
+	// temp
+	this->long_iters = original->long_iters;
 }
 
 void Scope::save_for_display(ofstream& output_file) {
