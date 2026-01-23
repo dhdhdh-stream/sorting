@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-#include "long_network.h"
+#include "network.h"
 #include "problem.h"
 #include "scope.h"
 #include "scope_node.h"

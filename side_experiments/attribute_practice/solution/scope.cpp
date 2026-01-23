@@ -7,7 +7,6 @@
 #include "action_node.h"
 #include "branch_node.h"
 #include "globals.h"
-#include "long_network.h"
 #include "network.h"
 #include "obs_node.h"
 #include "scope_node.h"
@@ -19,8 +18,7 @@ using namespace std;
 Scope::Scope() {
 	this->pre_network = NULL;
 	this->post_network = NULL;
-	// temp
-	this->long_iters = 0;
+	this->long_iter = 0;
 }
 
 Scope::~Scope() {
@@ -139,8 +137,7 @@ void Scope::save(ofstream& output_file) {
 	if (this->post_network != NULL) {
 		this->post_network->save(output_file);
 	}
-	// temp
-	output_file << this->long_iters << endl;
+	output_file << this->long_iter << endl;
 }
 
 void Scope::load(ifstream& input_file,
@@ -227,7 +224,7 @@ void Scope::load(ifstream& input_file,
 	if (pre_network_is_null) {
 		this->pre_network = NULL;
 	} else {
-		this->pre_network = new LongNetwork(input_file);
+		this->pre_network = new Network(input_file);
 	}
 
 	string post_network_is_null_line;
@@ -236,13 +233,12 @@ void Scope::load(ifstream& input_file,
 	if (post_network_is_null) {
 		this->post_network = NULL;
 	} else {
-		this->post_network = new LongNetwork(input_file);
+		this->post_network = new Network(input_file);
 	}
 
-	// temp
-	string long_iters_line;
-	getline(input_file, long_iters_line);
-	this->long_iters = stoi(long_iters_line);
+	string long_iter_line;
+	getline(input_file, long_iter_line);
+	this->long_iter = stoi(long_iter_line);
 }
 
 void Scope::link(Solution* parent_solution) {
@@ -323,17 +319,16 @@ void Scope::copy_from(Scope* original,
 	if (original->pre_network == NULL) {
 		this->pre_network = NULL;
 	} else {
-		this->pre_network = new LongNetwork(original->pre_network);
+		this->pre_network = new Network(original->pre_network);
 	}
 
 	if (original->post_network == NULL) {
 		this->post_network = NULL;
 	} else {
-		this->post_network = new LongNetwork(original->post_network);
+		this->post_network = new Network(original->post_network);
 	}
 
-	// temp
-	this->long_iters = original->long_iters;
+	this->long_iter = original->long_iter;
 }
 
 void Scope::save_for_display(ofstream& output_file) {

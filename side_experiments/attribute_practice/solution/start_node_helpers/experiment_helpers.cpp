@@ -3,7 +3,7 @@
 #include <iostream>
 
 #include "abstract_experiment.h"
-#include "long_network.h"
+#include "network.h"
 #include "scope.h"
 #include "solution_wrapper.h"
 

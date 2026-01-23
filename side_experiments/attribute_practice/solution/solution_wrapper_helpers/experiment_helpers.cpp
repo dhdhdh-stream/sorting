@@ -5,7 +5,7 @@
 #include "constants.h"
 #include "experiment.h"
 #include "globals.h"
-#include "long_network.h"
+#include "network.h"
 #include "problem.h"
 #include "scope.h"
 #include "scope_node.h"

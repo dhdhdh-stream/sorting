@@ -1,6 +1,6 @@
 #include "start_node.h"
 
-#include "long_network.h"
+#include "network.h"
 #include "scope.h"
 #include "solution_wrapper.h"
 

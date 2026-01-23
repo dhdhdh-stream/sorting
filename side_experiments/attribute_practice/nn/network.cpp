@@ -8,7 +8,11 @@
 using namespace std;
 
 const double NETWORK_TARGET_MAX_UPDATE = 0.01;
-const int EPOCH_SIZE = 20;
+const int EPOCH_SIZE = 1000;
+/**
+ * - higher helps against noise
+ *   - (lower leads to faster convergence)
+ */
 
 Network::Network(int input_size,
 				 int size) {

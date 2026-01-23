@@ -7,7 +7,6 @@
 #include "branch_node.h"
 #include "constants.h"
 #include "globals.h"
-#include "long_network.h"
 #include "obs_node.h"
 #include "problem.h"
 #include "scope.h"
