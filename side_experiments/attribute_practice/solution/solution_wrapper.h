@@ -23,6 +23,11 @@ public:
 
 	Solution* solution_snapshot;
 
+	/**
+	 * - iter variables
+	 */
+	Scope* curr_tunnel;
+
 	AbstractExperiment* curr_experiment;
 
 	/**

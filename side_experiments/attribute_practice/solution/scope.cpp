@@ -16,6 +16,8 @@
 using namespace std;
 
 Scope::Scope() {
+	this->data_index = 0;
+
 	this->pre_network = NULL;
 	this->post_network = NULL;
 	this->long_iter = 0;
@@ -315,6 +317,12 @@ void Scope::copy_from(Scope* original,
 		this->child_scopes.push_back(parent_solution->scopes[
 			original->child_scopes[c_index]->id]);
 	}
+
+	this->pre_obs = original->pre_obs;
+	this->pre_targets = original->pre_targets;
+	this->post_obs = original->post_obs;
+	this->post_targets = original->post_targets;
+	this->data_index = original->data_index;
 
 	if (original->pre_network == NULL) {
 		this->pre_network = NULL;

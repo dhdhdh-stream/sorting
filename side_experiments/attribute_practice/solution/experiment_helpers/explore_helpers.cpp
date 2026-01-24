@@ -178,6 +178,8 @@ void Experiment::explore_step(vector<double>& obs,
 	if (experiment_state->step_index == 0) {
 		ExperimentHistory* history = (ExperimentHistory*)wrapper->experiment_history;
 
+		history->stack_traces.push_back(wrapper->scope_histories);
+
 		this->existing_true_network->activate(obs);
 		history->existing_predicted_trues.push_back(
 			this->existing_true_network->output->acti_vals[0]);
@@ -241,7 +243,13 @@ void Experiment::explore_backprop(double target_val,
 	if (history->existing_predicted_trues.size() != 0) {
 		wrapper->is_explore = false;
 
-		double curr_surprise = target_val - history->existing_predicted_trues[0];
+		double curr_surprise;
+		if (wrapper->curr_tunnel == NULL) {
+			curr_surprise = target_val - history->existing_predicted_trues[0];
+		} else {
+			this->scope_context->post_network->activate(history->stack_traces[0].back()->post_obs_history);
+			curr_surprise = this->scope_context->post_network->output->acti_vals[0] - history->existing_predicted_trues[0];
+		}
 
 		#if defined(MDEBUG) && MDEBUG
 		if (curr_surprise > this->best_surprise || true) {

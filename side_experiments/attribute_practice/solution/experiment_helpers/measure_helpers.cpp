@@ -112,7 +112,15 @@ void Experiment::measure_backprop(double target_val,
 	ExperimentHistory* history = (ExperimentHistory*)wrapper->experiment_history;
 
 	if (history->is_hit) {
-		this->sum_true += target_val;
+		if (wrapper->curr_tunnel == NULL) {
+			this->sum_true += target_val;
+		} else {
+			double sum_vals = 0.0;
+			eval_curr_tunnel_helper(wrapper->scope_histories[0],
+									wrapper,
+									sum_vals);
+			this->sum_true += sum_vals;
+		}
 		this->hit_count++;
 	}
 

@@ -29,6 +29,9 @@ void Experiment::train_existing_step(vector<double>& obs,
 									 SolutionWrapper* wrapper) {
 	this->existing_obs_histories.push_back(obs);
 
+	ExperimentHistory* history = (ExperimentHistory*)wrapper->experiment_history;
+	history->stack_traces.push_back(wrapper->scope_histories);
+
 	this->sum_num_instances++;
 
 	delete wrapper->experiment_context.back();
@@ -40,11 +43,26 @@ void Experiment::train_existing_backprop(double target_val,
 	ExperimentHistory* history = (ExperimentHistory*)wrapper->experiment_history;
 
 	if (history->is_hit) {
-		this->sum_true += target_val;
+		if (wrapper->curr_tunnel == NULL) {
+			this->sum_true += target_val;
+		} else {
+			double sum_vals = 0.0;
+			eval_curr_tunnel_helper(wrapper->scope_histories[0],
+									wrapper,
+									sum_vals);
+			this->sum_true += sum_vals;
+		}
 		this->hit_count++;
 
-		while (this->existing_true_histories.size() < this->existing_obs_histories.size()) {
-			this->existing_true_histories.push_back(target_val);
+		if (wrapper->curr_tunnel == NULL) {
+			for (int i_index = 0; i_index < (int)history->stack_traces.size(); i_index++) {
+				this->existing_true_histories.push_back(target_val);
+			}
+		} else {
+			for (int i_index = 0; i_index < (int)history->stack_traces.size(); i_index++) {
+				this->scope_context->post_network->activate(history->stack_traces[i_index].back()->post_obs_history);
+				this->existing_true_histories.push_back(this->scope_context->post_network->output->acti_vals[0]);
+			}
 		}
 	}
 

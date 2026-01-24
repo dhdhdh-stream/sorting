@@ -25,7 +25,10 @@ void recursive_add_child(Scope* curr_parent,
 
 void update_attribute(ScopeHistory* scope_history,
 					  double target_val);
-void check_attribute_init(SolutionWrapper* wrapper);
+
+void eval_curr_tunnel_helper(ScopeHistory* scope_history,
+							 SolutionWrapper* wrapper,
+							 double& sum_vals);
 
 void clean_scope(Scope* scope);
 

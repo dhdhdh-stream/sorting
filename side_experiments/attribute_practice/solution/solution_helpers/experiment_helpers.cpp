@@ -21,7 +21,19 @@ using namespace std;
 void gather_helper(ScopeHistory* scope_history,
 				   int& node_count,
 				   AbstractNode*& explore_node,
-				   bool& explore_is_branch) {
+				   bool& explore_is_branch,
+				   SolutionWrapper* wrapper) {
+	bool tunnel_is_match;
+	if (wrapper->curr_tunnel == NULL) {
+		tunnel_is_match = true;
+	} else {
+		if (wrapper->curr_tunnel == scope_history->scope) {
+			tunnel_is_match = true;
+		} else {
+			tunnel_is_match = false;
+		}
+	}
+
 	for (map<int, AbstractNodeHistory*>::iterator h_it = scope_history->node_histories.begin();
 			h_it != scope_history->node_histories.end(); h_it++) {
 		AbstractNode* node = h_it->second->node;
@@ -29,7 +41,7 @@ void gather_helper(ScopeHistory* scope_history,
 		case NODE_TYPE_START:
 		case NODE_TYPE_ACTION:
 		case NODE_TYPE_OBS:
-			if (node->experiment == NULL) {
+			if (tunnel_is_match && node->experiment == NULL) {
 				uniform_int_distribution<int> select_distribution(0, node_count);
 				node_count++;
 				if (select_distribution(generator) == 0) {
@@ -45,9 +57,10 @@ void gather_helper(ScopeHistory* scope_history,
 				gather_helper(scope_node_history->scope_history,
 							  node_count,
 							  explore_node,
-							  explore_is_branch);
+							  explore_is_branch,
+							  wrapper);
 
-				if (node->experiment == NULL) {
+				if (tunnel_is_match && node->experiment == NULL) {
 					uniform_int_distribution<int> select_distribution(0, node_count);
 					node_count++;
 					if (select_distribution(generator) == 0) {
@@ -58,7 +71,7 @@ void gather_helper(ScopeHistory* scope_history,
 			}
 			break;
 		case NODE_TYPE_BRANCH:
-			if (node->experiment == NULL) {
+			if (tunnel_is_match && node->experiment == NULL) {
 				BranchNodeHistory* branch_node_history = (BranchNodeHistory*)h_it->second;
 				if (branch_node_history->is_branch) {
 					uniform_int_distribution<int> select_distribution(0, node_count);
@@ -89,7 +102,8 @@ void create_experiment(ScopeHistory* scope_history,
 	gather_helper(scope_history,
 				  node_count,
 				  explore_node,
-				  explore_is_branch);
+				  explore_is_branch,
+				  wrapper);
 
 	if (explore_node != NULL) {
 		Experiment* new_experiment = new Experiment(

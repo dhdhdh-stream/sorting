@@ -55,8 +55,6 @@ public:
 
 	Network* new_true_network;
 
-	bool is_binarize;
-
 	BranchNode* new_branch_node;
 
 	double sum_true;
@@ -145,6 +143,8 @@ public:
 
 class ExperimentHistory : public AbstractExperimentHistory {
 public:
+	std::vector<std::vector<ScopeHistory*>> stack_traces;
+
 	std::vector<double> existing_predicted_trues;
 
 	ExperimentHistory(Experiment* experiment);

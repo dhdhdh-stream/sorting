@@ -50,6 +50,8 @@ void Experiment::train_new_step(vector<double>& obs,
 
 		this->new_obs_histories.push_back(obs);
 
+		history->stack_traces.push_back(wrapper->scope_histories);
+
 		this->existing_true_network->activate(obs);
 		history->existing_predicted_trues.push_back(
 			this->existing_true_network->output->acti_vals[0]);
@@ -96,93 +98,20 @@ void Experiment::train_new_exit_step(SolutionWrapper* wrapper) {
 	experiment_state->step_index++;
 }
 
-void binarize_with_leeway(vector<vector<double>>& train_obs_histories,
-						  vector<double>& train_true_histories,
-						  vector<double>& train_true_network_vals,
-						  vector<vector<double>>& validation_obs_histories,
-						  vector<double>& validation_true_histories,
-						  double& best_sum_vals,
-						  Network*& best_network,
-						  bool& is_binarize) {
-	vector<pair<double, int>> positive_samples;
-	vector<pair<double, int>> negative_samples;
-	for (int h_index = 0; h_index < (int)train_true_network_vals.size(); h_index++) {
-		if (train_true_network_vals[h_index] >= 0.0) {
-			positive_samples.push_back({train_true_network_vals[h_index], h_index});
-		} else {
-			negative_samples.push_back({train_true_network_vals[h_index], h_index});
-		}
-	}
-
-	vector<vector<double>> binary_train_obs;
-	vector<bool> binary_train_targets;
-
-	sort(positive_samples.begin(), positive_samples.end());
-	for (int h_index = (int)positive_samples.size() / 2; h_index < (int)positive_samples.size(); h_index++) {
-		binary_train_obs.push_back(train_obs_histories[positive_samples[h_index].second]);
-		binary_train_targets.push_back(true);
-	}
-	sort(negative_samples.begin(), negative_samples.end());
-	for (int h_index = 0; h_index < (int)negative_samples.size() / 2; h_index++) {
-		binary_train_obs.push_back(train_obs_histories[negative_samples[h_index].second]);
-		binary_train_targets.push_back(false);
-	}
-
-	Network* binary_network = new Network(train_obs_histories[0].size(),
-										  NETWORK_SIZE_SMALL);
-	uniform_int_distribution<int> input_distribution(0, binary_train_obs.size()-1);
-	for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
-		int rand_index = input_distribution(generator);
-
-		binary_network->activate(binary_train_obs[rand_index]);
-
-		double error;
-		if (binary_train_targets[rand_index]) {
-			if (binary_network->output->acti_vals[0] > 1.0) {
-				error = 0.0;
-			} else {
-				error = 1.0 - binary_network->output->acti_vals[0];
-			}
-		} else {
-			if (binary_network->output->acti_vals[0] < -1.0) {
-				error = 0.0;
-			} else {
-				error = -1.0 - binary_network->output->acti_vals[0];
-			}
-		}
-
-		binary_network->backprop(error);
-	}
-
-	double sum_vals = 0.0;
-	for (int h_index = 0; h_index < (int)validation_obs_histories.size(); h_index++) {
-		binary_network->activate(validation_obs_histories[h_index]);
-		if (binary_network->output->acti_vals[0] >= 0.0) {
-			sum_vals += validation_true_histories[h_index];
-		}
-	}
-
-	// if (sum_vals > best_sum_vals) {
-	if (true) {
-		best_sum_vals = sum_vals;
-		delete best_network;
-		best_network = binary_network;
-
-		is_binarize = true;
-	} else {
-		delete binary_network;
-
-		is_binarize = false;
-	}
-}
-
 void Experiment::train_new_backprop(
 		double target_val,
 		SolutionWrapper* wrapper) {
 	ExperimentHistory* history = (ExperimentHistory*)wrapper->experiment_history;
 	if (history->is_hit) {
-		for (int i_index = 0; i_index < (int)history->existing_predicted_trues.size(); i_index++) {
-			this->new_true_histories.push_back(target_val - history->existing_predicted_trues[i_index]);
+		if (wrapper->curr_tunnel == NULL) {
+			for (int i_index = 0; i_index < (int)history->existing_predicted_trues.size(); i_index++) {
+				this->new_true_histories.push_back(target_val - history->existing_predicted_trues[i_index]);
+			}
+		} else {
+			for (int i_index = 0; i_index < (int)history->existing_predicted_trues.size(); i_index++) {
+				this->scope_context->post_network->activate(history->stack_traces[i_index].back()->post_obs_history);
+				this->new_true_histories.push_back(this->scope_context->post_network->output->acti_vals[0] - history->existing_predicted_trues[i_index]);
+			}
 		}
 
 		this->state_iter++;
@@ -243,15 +172,6 @@ void Experiment::train_new_backprop(
 			#else
 			if (positive_count > MIN_POSITIVE_RATIO * (double)train_obs_histories.size() && sum_vals >= 0.0) {
 			#endif /* MDEBUG */
-				binarize_with_leeway(train_obs_histories,
-									 train_true_histories,
-									 train_true_network_vals,
-									 validation_obs_histories,
-									 validation_true_histories,
-									 sum_vals,
-									 this->new_true_network,
-									 this->is_binarize);
-
 				this->new_branch_node = new BranchNode();
 				this->new_branch_node->parent = this->scope_context;
 				this->new_branch_node->id = this->scope_context->node_counter + (int)this->best_step_types.size();

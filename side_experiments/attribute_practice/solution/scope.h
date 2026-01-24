@@ -30,6 +30,7 @@ public:
 	std::vector<double> pre_targets;
 	std::vector<std::vector<double>> post_obs;
 	std::vector<double> post_targets;
+	int data_index;
 
 	Network* pre_network;
 	Network* post_network;

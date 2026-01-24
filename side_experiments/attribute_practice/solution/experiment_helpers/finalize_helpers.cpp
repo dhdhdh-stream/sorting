@@ -43,8 +43,6 @@ void Experiment::add(SolutionWrapper* wrapper) {
 		ss << "this->best_exit_next_node->id: " << this->best_exit_next_node->id << "; ";
 	}
 
-	ss << "this->is_binarize: " << this->is_binarize << "; ";
-
 	ss << "this->improvement: " << this->improvement << "; ";
 
 	wrapper->solution->improvement_history.push_back(calc_new_score());

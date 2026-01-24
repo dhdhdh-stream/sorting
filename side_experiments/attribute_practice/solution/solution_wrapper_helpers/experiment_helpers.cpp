@@ -110,8 +110,6 @@ void SolutionWrapper::experiment_end(double result) {
 		if (this->is_explore) {
 			update_attribute(this->scope_histories[0],
 							 result);
-
-			check_attribute_init(this);
 		}
 
 		this->experiment_history->experiment->backprop(
@@ -159,26 +157,31 @@ void SolutionWrapper::experiment_end(double result) {
 				// 	this->solution->timestamp = -1;
 				// }
 
-				if (this->solution->timestamp % SNAPSHOT_ITERS == 0) {
-					double curr_score = 0.0;
-					for (int i_index = 0; i_index < 3; i_index++) {
-						curr_score += this->solution->improvement_history[this->solution->improvement_history.size()-1 - i_index];
-					}
+				// if (this->solution->timestamp % SNAPSHOT_ITERS == 0) {
+				// 	double curr_score = 0.0;
+				// 	for (int i_index = 0; i_index < 3; i_index++) {
+				// 		curr_score += this->solution->improvement_history[this->solution->improvement_history.size()-1 - i_index];
+				// 	}
 
-					double existing_score = 0.0;
-					if (this->solution_snapshot->improvement_history.size() > 0) {
-						for (int i_index = 0; i_index < 3; i_index++) {
-							existing_score += this->solution_snapshot->improvement_history[this->solution_snapshot->improvement_history.size()-1 - i_index];
-						}
-					}
+				// 	double existing_score = 0.0;
+				// 	if (this->solution_snapshot->improvement_history.size() > 0) {
+				// 		for (int i_index = 0; i_index < 3; i_index++) {
+				// 			existing_score += this->solution_snapshot->improvement_history[this->solution_snapshot->improvement_history.size()-1 - i_index];
+				// 		}
+				// 	}
 
-					if (curr_score > existing_score) {
-						delete this->solution_snapshot;
-						this->solution_snapshot = new Solution(this->solution);
-					} else {
-						delete this->solution;
-						this->solution = new Solution(this->solution_snapshot);
-					}
+				// 	if (curr_score > existing_score) {
+				// 		delete this->solution_snapshot;
+				// 		this->solution_snapshot = new Solution(this->solution);
+				// 	} else {
+				// 		delete this->solution;
+				// 		this->solution = new Solution(this->solution_snapshot);
+				// 	}
+				// }
+
+				// temp
+				if (this->solution->timestamp >= 10) {
+					this->curr_tunnel = this->solution->scopes[0];
 				}
 			}
 			break;
