@@ -12,17 +12,20 @@ using namespace std;
 
 Experiment::Experiment(Scope* scope_context,
 					   AbstractNode* node_context,
-					   bool is_branch) {
+					   bool is_branch,
+					   int signal_depth) {
 	this->type = EXPERIMENT_TYPE_EXPERIMENT;
 
 	this->scope_context = scope_context;
 	this->node_context = node_context;
 	this->is_branch = is_branch;
 
+	this->signal_depth = signal_depth;
+
 	this->node_context->experiment = this;
 
-	this->existing_true_network = NULL;
-	this->new_true_network = NULL;
+	this->existing_network = NULL;
+	this->new_network = NULL;
 
 	this->curr_new_scope = NULL;
 	this->best_new_scope = NULL;
@@ -41,12 +44,12 @@ Experiment::Experiment(Scope* scope_context,
 }
 
 Experiment::~Experiment() {
-	if (this->existing_true_network != NULL) {
-		delete this->existing_true_network;
+	if (this->existing_network != NULL) {
+		delete this->existing_network;
 	}
 
-	if (this->new_true_network != NULL) {
-		delete this->new_true_network;
+	if (this->new_network != NULL) {
+		delete this->new_network;
 	}
 
 	if (this->curr_new_scope != NULL) {

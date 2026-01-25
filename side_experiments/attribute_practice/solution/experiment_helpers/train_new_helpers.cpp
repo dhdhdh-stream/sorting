@@ -20,11 +20,8 @@ using namespace std;
 #if defined(MDEBUG) && MDEBUG
 const int TRAIN_NEW_NUM_DATAPOINTS = 20;
 #else
-const int TRAIN_NEW_NUM_DATAPOINTS = 1000;
+const int TRAIN_NEW_NUM_DATAPOINTS = 800;
 #endif /* MDEBUG */
-const double VALIDATION_RATIO = 0.2;
-
-const double MIN_POSITIVE_RATIO = 0.05;
 
 void Experiment::train_new_check_activate(
 		SolutionWrapper* wrapper) {
@@ -50,11 +47,22 @@ void Experiment::train_new_step(vector<double>& obs,
 
 		this->new_obs_histories.push_back(obs);
 
-		history->stack_traces.push_back(wrapper->scope_histories);
+		this->existing_network->activate(obs);
+		history->existing_predicted.push_back(
+			this->existing_network->output->acti_vals[0]);
 
-		this->existing_true_network->activate(obs);
-		history->existing_predicted_trues.push_back(
-			this->existing_true_network->output->acti_vals[0]);
+		if (this->signal_depth != -1) {
+			history->starting_impact.push_back(wrapper->curr_impact);
+			history->ending_impact.push_back(0.0);
+			if (this->signal_depth >= (int)wrapper->scope_histories.size()) {
+				wrapper->scope_histories[0]->experiment_callback_histories.push_back(history);
+				wrapper->scope_histories[0]->experiment_callback_indexes.push_back(history->ending_impact.size()-1);
+			} else {
+				int index = wrapper->scope_histories.size()-1 - this->signal_depth;
+				wrapper->scope_histories[index]->experiment_callback_histories.push_back(history);
+				wrapper->scope_histories[index]->experiment_callback_indexes.push_back(history->ending_impact.size()-1);
+			}
+		}
 	}
 
 	if (experiment_state->step_index >= (int)this->best_step_types.size()) {
@@ -103,74 +111,54 @@ void Experiment::train_new_backprop(
 		SolutionWrapper* wrapper) {
 	ExperimentHistory* history = (ExperimentHistory*)wrapper->experiment_history;
 	if (history->is_hit) {
-		if (wrapper->curr_tunnel == NULL) {
-			for (int i_index = 0; i_index < (int)history->existing_predicted_trues.size(); i_index++) {
-				this->new_true_histories.push_back(target_val - history->existing_predicted_trues[i_index]);
+		if (this->signal_depth == -1) {
+			for (int i_index = 0; i_index < (int)history->existing_predicted.size(); i_index++) {
+				this->new_target_vals.push_back(target_val - history->existing_predicted[i_index]);
 			}
 		} else {
-			for (int i_index = 0; i_index < (int)history->existing_predicted_trues.size(); i_index++) {
-				this->scope_context->post_network->activate(history->stack_traces[i_index].back()->post_obs_history);
-				this->new_true_histories.push_back(this->scope_context->post_network->output->acti_vals[0] - history->existing_predicted_trues[i_index]);
+			for (int i_index = 0; i_index < (int)history->existing_predicted.size(); i_index++) {
+				this->new_target_vals.push_back(
+					(history->ending_impact[i_index] - history->starting_impact[i_index]) - history->existing_predicted[i_index]);
 			}
 		}
 
 		this->state_iter++;
 		if (this->state_iter >= TRAIN_NEW_NUM_DATAPOINTS
-				&& (int)this->new_true_histories.size() >= TRAIN_NEW_NUM_DATAPOINTS) {
+				&& (int)this->new_target_vals.size() >= TRAIN_NEW_NUM_DATAPOINTS) {
 			{
 				default_random_engine generator_copy = generator;
 				shuffle(this->new_obs_histories.begin(), this->new_obs_histories.end(), generator_copy);
 			}
 			{
 				default_random_engine generator_copy = generator;
-				shuffle(this->new_true_histories.begin(), this->new_true_histories.end(), generator_copy);
+				shuffle(this->new_target_vals.begin(), this->new_target_vals.end(), generator_copy);
 			}
 
-			int num_train = (1.0 - VALIDATION_RATIO) * TRAIN_NEW_NUM_DATAPOINTS;
-
-			vector<vector<double>> train_obs_histories(this->new_obs_histories.begin(), this->new_obs_histories.begin() + num_train);
-			vector<double> train_true_histories(this->new_true_histories.begin(), this->new_true_histories.begin() + num_train);
-
-			vector<vector<double>> validation_obs_histories(this->new_obs_histories.begin() + num_train, this->new_obs_histories.end());
-			vector<double> validation_true_histories(this->new_true_histories.begin() + num_train, this->new_true_histories.end());
-
-			this->new_true_network = new Network(train_obs_histories[0].size(),
-												 NETWORK_SIZE_SMALL);
-			uniform_int_distribution<int> val_input_distribution(0, train_obs_histories.size()-1);
+			this->new_network = new Network(this->new_obs_histories[0].size(),
+											NETWORK_SIZE_SMALL);
+			uniform_int_distribution<int> val_input_distribution(0, this->new_obs_histories.size()-1);
 			for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
 				int rand_index = val_input_distribution(generator);
 
-				this->new_true_network->activate(train_obs_histories[rand_index]);
+				this->new_network->activate(this->new_obs_histories[rand_index]);
 
-				double error = train_true_histories[rand_index] - this->new_true_network->output->acti_vals[0];
+				double error = this->new_target_vals[rand_index] - this->new_network->output->acti_vals[0];
 
-				this->new_true_network->backprop(error);
+				this->new_network->backprop(error);
 			}
 
-			vector<double> train_true_network_vals(train_obs_histories.size());
 			int positive_count = 0;
-			for (int h_index = 0; h_index < (int)train_obs_histories.size(); h_index++) {
-				this->new_true_network->activate(train_obs_histories[h_index]);
-				train_true_network_vals[h_index] = this->new_true_network->output->acti_vals[0];
-
-				if (this->new_true_network->output->acti_vals[0] > 0.0) {
+			for (int h_index = 0; h_index < (int)this->new_obs_histories.size(); h_index++) {
+				this->new_network->activate(this->new_obs_histories[h_index]);
+				if (this->new_network->output->acti_vals[0] > 0.0) {
 					positive_count++;
 				}
 			}
 
-			double sum_vals = 0.0;
-			for (int h_index = 0; h_index < (int)validation_obs_histories.size(); h_index++) {
-				this->new_true_network->activate(validation_obs_histories[h_index]);
-				if (this->new_true_network->output->acti_vals[0] >= 0.0) {
-					sum_vals += validation_true_histories[h_index];
-				}
-			}
-
 			#if defined(MDEBUG) && MDEBUG
-			if ((positive_count > MIN_POSITIVE_RATIO * (double)train_obs_histories.size() && sum_vals >= 0.0)
-					|| rand()%4 != 0) {
+			if (positive_count > 0 || rand()%4 != 0) {
 			#else
-			if (positive_count > MIN_POSITIVE_RATIO * (double)train_obs_histories.size() && sum_vals >= 0.0) {
+			if (positive_count > 0) {
 			#endif /* MDEBUG */
 				this->new_branch_node = new BranchNode();
 				this->new_branch_node->parent = this->scope_context;
@@ -180,7 +168,7 @@ void Experiment::train_new_backprop(
 				this->hit_count = 0;
 
 				this->total_count = 0;
-				this->total_sum_scores = 0.0;
+				this->total_sum_true = 0.0;
 
 				this->state = EXPERIMENT_STATE_MEASURE;
 				this->state_iter = 0;

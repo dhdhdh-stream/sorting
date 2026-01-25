@@ -12,8 +12,6 @@ SolutionWrapper::SolutionWrapper(ProblemType* problem_type) {
 
 	this->solution_snapshot = new Solution(this->solution);
 
-	this->curr_tunnel = NULL;
-
 	this->curr_experiment = NULL;
 
 	this->is_explore = false;
@@ -35,8 +33,6 @@ SolutionWrapper::SolutionWrapper(std::string path,
 
 	this->solution_snapshot = new Solution();
 	this->solution_snapshot->load(input_file);
-
-	this->curr_tunnel = NULL;
 
 	this->curr_experiment = NULL;
 

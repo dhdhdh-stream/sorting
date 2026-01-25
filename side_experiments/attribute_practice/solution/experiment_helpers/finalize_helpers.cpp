@@ -27,6 +27,7 @@ void Experiment::add(SolutionWrapper* wrapper) {
 	ss << "this->scope_context->id: " << this->scope_context->id << "; ";
 	ss << "this->node_context->id: " << this->node_context->id << "; ";
 	ss << "this->is_branch: " << this->is_branch << "; ";
+	ss << "this->signal_depth: " << this->signal_depth << "; ";
 	ss << "new explore path:";
 	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
@@ -314,8 +315,8 @@ void Experiment::add(SolutionWrapper* wrapper) {
 	}
 	this->new_branch_node->ancestor_ids.push_back(this->node_context->id);
 
-	this->new_branch_node->network = this->new_true_network;
-	this->new_true_network = NULL;
+	this->new_branch_node->network = this->new_network;
+	this->new_network = NULL;
 
 	#if defined(MDEBUG) && MDEBUG
 	if (this->verify_problems.size() > 0) {
@@ -364,5 +365,5 @@ void Experiment::add(SolutionWrapper* wrapper) {
 }
 
 double Experiment::calc_new_score() {
-	return this->total_sum_scores / this->total_count;
+	return this->total_sum_true / this->total_count;
 }

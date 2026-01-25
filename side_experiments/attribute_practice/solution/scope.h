@@ -5,6 +5,7 @@
 #include <map>
 #include <vector>
 
+class AbstractExperimentHistory;
 class AbstractNode;
 class AbstractNodeHistory;
 class Factor;
@@ -67,6 +68,9 @@ public:
 	double pre_impact;
 	std::vector<double> post_obs_history;
 	double post_impact;
+
+	std::vector<AbstractExperimentHistory*> experiment_callback_histories;
+	std::vector<double> experiment_callback_indexes;
 
 	ScopeHistory(Scope* scope);
 	ScopeHistory(ScopeHistory* original,

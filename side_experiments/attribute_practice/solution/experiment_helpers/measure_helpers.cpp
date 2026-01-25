@@ -38,7 +38,7 @@ void Experiment::measure_step(vector<double>& obs,
 		history->index = (int)scope_history->node_histories.size();
 		scope_history->node_histories[this->new_branch_node->id] = history;
 
-		this->new_true_network->activate(obs);
+		this->new_network->activate(obs);
 
 		bool is_branch;
 		#if defined(MDEBUG) && MDEBUG
@@ -107,20 +107,12 @@ void Experiment::measure_exit_step(SolutionWrapper* wrapper) {
 void Experiment::measure_backprop(double target_val,
 								  SolutionWrapper* wrapper) {
 	this->total_count++;
-	this->total_sum_scores += target_val;
+	this->total_sum_true += target_val;
 
 	ExperimentHistory* history = (ExperimentHistory*)wrapper->experiment_history;
 
 	if (history->is_hit) {
-		if (wrapper->curr_tunnel == NULL) {
-			this->sum_true += target_val;
-		} else {
-			double sum_vals = 0.0;
-			eval_curr_tunnel_helper(wrapper->scope_histories[0],
-									wrapper,
-									sum_vals);
-			this->sum_true += sum_vals;
-		}
+		this->sum_true += target_val;
 		this->hit_count++;
 	}
 

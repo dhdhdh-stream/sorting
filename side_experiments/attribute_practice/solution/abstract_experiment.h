@@ -26,6 +26,8 @@ public:
 	AbstractNode* node_context;
 	bool is_branch;
 
+	int signal_depth;
+
 	int result;
 
 	std::vector<ScopeHistory*> new_scope_histories;
@@ -57,6 +59,9 @@ public:
 	AbstractExperiment* experiment;
 
 	bool is_hit;
+
+	std::vector<double> starting_impact;
+	std::vector<double> ending_impact;
 
 	virtual ~AbstractExperimentHistory() {};
 };

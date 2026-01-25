@@ -24,11 +24,11 @@ public:
 	int state_iter;
 
 	std::vector<std::vector<double>> existing_obs_histories;
-	std::vector<double> existing_true_histories;
+	std::vector<double> existing_target_vals;
 
 	double existing_true;
 
-	Network* existing_true_network;
+	Network* existing_network;
 
 	int sum_num_instances;
 
@@ -51,16 +51,16 @@ public:
 	std::vector<AbstractNode*> best_new_nodes;
 
 	std::vector<std::vector<double>> new_obs_histories;
-	std::vector<double> new_true_histories;
+	std::vector<double> new_target_vals;
 
-	Network* new_true_network;
+	Network* new_network;
 
 	BranchNode* new_branch_node;
 
 	double sum_true;
 	int hit_count;
 
-	double total_sum_scores;
+	double total_sum_true;
 	int total_count;
 
 	double improvement;
@@ -73,7 +73,8 @@ public:
 
 	Experiment(Scope* scope_context,
 			   AbstractNode* node_context,
-			   bool is_branch);
+			   bool is_branch,
+			   int signal_depth);
 	~Experiment();
 
 	void check_activate(AbstractNode* experiment_node,
@@ -143,9 +144,7 @@ public:
 
 class ExperimentHistory : public AbstractExperimentHistory {
 public:
-	std::vector<std::vector<ScopeHistory*>> stack_traces;
-
-	std::vector<double> existing_predicted_trues;
+	std::vector<double> existing_predicted;
 
 	ExperimentHistory(Experiment* experiment);
 };

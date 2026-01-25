@@ -64,6 +64,11 @@ tuple<bool,bool,int> SolutionWrapper::experiment_step(vector<double> obs) {
 			scope_history->post_obs_history = obs;
 			scope_history->post_impact = this->curr_impact;
 
+			for (int i_index = 0; i_index < (int)scope_history->experiment_callback_histories.size(); i_index++) {
+				scope_history->experiment_callback_histories[i_index]
+					->ending_impact[scope_history->experiment_callback_indexes[i_index]] = this->curr_impact;
+			}
+
 			if (this->scope_histories.size() == 1) {
 				is_next = true;
 				is_done = true;
@@ -178,11 +183,6 @@ void SolutionWrapper::experiment_end(double result) {
 				// 		this->solution = new Solution(this->solution_snapshot);
 				// 	}
 				// }
-
-				// temp
-				if (this->solution->timestamp >= 10) {
-					this->curr_tunnel = this->solution->scopes[0];
-				}
 			}
 			break;
 		}

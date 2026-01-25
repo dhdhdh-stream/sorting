@@ -28,7 +28,7 @@ void Experiment::explore_check_activate(SolutionWrapper* wrapper) {
 	ExperimentHistory* history = (ExperimentHistory*)wrapper->experiment_history;
 
 	this->num_instances_until_target--;
-	if (history->existing_predicted_trues.size() == 0
+	if (history->existing_predicted.size() == 0
 			&& this->num_instances_until_target <= 0) {
 		wrapper->is_explore = true;
 
@@ -87,8 +87,7 @@ void Experiment::explore_check_activate(SolutionWrapper* wrapper) {
 		this->curr_exit_next_node = possible_exits[random_index];
 
 		uniform_int_distribution<int> new_scope_distribution(0, 3);
-		// if (new_scope_distribution(generator) == 0) {
-		if (false) {
+		if (new_scope_distribution(generator) == 0) {
 			this->curr_new_scope = create_new_scope(this->node_context->parent);
 		}
 		if (this->curr_new_scope != NULL) {
@@ -178,11 +177,20 @@ void Experiment::explore_step(vector<double>& obs,
 	if (experiment_state->step_index == 0) {
 		ExperimentHistory* history = (ExperimentHistory*)wrapper->experiment_history;
 
-		history->stack_traces.push_back(wrapper->scope_histories);
+		this->existing_network->activate(obs);
+		history->existing_predicted.push_back(
+			this->existing_network->output->acti_vals[0]);
 
-		this->existing_true_network->activate(obs);
-		history->existing_predicted_trues.push_back(
-			this->existing_true_network->output->acti_vals[0]);
+		history->starting_impact.push_back(wrapper->curr_impact);
+		history->ending_impact.push_back(0.0);
+		if (this->signal_depth >= (int)wrapper->scope_histories.size()) {
+			wrapper->scope_histories[0]->experiment_callback_histories.push_back(history);
+			wrapper->scope_histories[0]->experiment_callback_indexes.push_back(history->ending_impact.size()-1);
+		} else {
+			int index = wrapper->scope_histories.size()-1 - this->signal_depth;
+			wrapper->scope_histories[index]->experiment_callback_histories.push_back(history);
+			wrapper->scope_histories[index]->experiment_callback_indexes.push_back(history->ending_impact.size()-1);
+		}
 	}
 
 	if (experiment_state->step_index >= (int)this->curr_step_types.size()) {
@@ -240,15 +248,14 @@ void Experiment::explore_backprop(double target_val,
 	uniform_int_distribution<int> until_distribution(1, 2 * this->average_instances_per_run);
 	this->num_instances_until_target = until_distribution(generator);
 
-	if (history->existing_predicted_trues.size() != 0) {
+	if (history->existing_predicted.size() != 0) {
 		wrapper->is_explore = false;
 
 		double curr_surprise;
-		if (wrapper->curr_tunnel == NULL) {
-			curr_surprise = target_val - history->existing_predicted_trues[0];
+		if (this->signal_depth == -1) {
+			curr_surprise = target_val - history->existing_predicted[0];
 		} else {
-			this->scope_context->post_network->activate(history->stack_traces[0].back()->post_obs_history);
-			curr_surprise = this->scope_context->post_network->output->acti_vals[0] - history->existing_predicted_trues[0];
+			curr_surprise = (history->ending_impact[0] - history->starting_impact[0]) - history->existing_predicted[0];
 		}
 
 		#if defined(MDEBUG) && MDEBUG
