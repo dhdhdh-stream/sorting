@@ -148,6 +148,7 @@ void Experiment::explore_check_activate(SolutionWrapper* wrapper) {
 			if (this->curr_step_types[s_index] == STEP_TYPE_ACTION) {
 				ActionNode* new_action_node = new ActionNode();
 				new_action_node->parent = this->scope_context;
+				new_action_node->id = this->scope_context->node_counter + s_index;
 
 				this->curr_new_nodes.push_back(new_action_node);
 			} else {
@@ -181,15 +182,17 @@ void Experiment::explore_step(vector<double>& obs,
 		history->existing_predicted.push_back(
 			this->existing_network->output->acti_vals[0]);
 
-		history->starting_impact.push_back(wrapper->curr_impact);
-		history->ending_impact.push_back(0.0);
-		if (this->signal_depth >= (int)wrapper->scope_histories.size()) {
-			wrapper->scope_histories[0]->experiment_callback_histories.push_back(history);
-			wrapper->scope_histories[0]->experiment_callback_indexes.push_back(history->ending_impact.size()-1);
-		} else {
-			int index = wrapper->scope_histories.size()-1 - this->signal_depth;
-			wrapper->scope_histories[index]->experiment_callback_histories.push_back(history);
-			wrapper->scope_histories[index]->experiment_callback_indexes.push_back(history->ending_impact.size()-1);
+		if (this->signal_depth != -1) {
+			history->starting_impact.push_back(wrapper->curr_impact);
+			history->ending_impact.push_back(0.0);
+			if (this->signal_depth >= (int)wrapper->scope_histories.size()) {
+				wrapper->scope_histories[0]->experiment_callback_histories.push_back(history);
+				wrapper->scope_histories[0]->experiment_callback_indexes.push_back(history->ending_impact.size()-1);
+			} else {
+				int index = wrapper->scope_histories.size()-1 - this->signal_depth;
+				wrapper->scope_histories[index]->experiment_callback_histories.push_back(history);
+				wrapper->scope_histories[index]->experiment_callback_indexes.push_back(history->ending_impact.size()-1);
+			}
 		}
 	}
 
@@ -227,6 +230,27 @@ void Experiment::explore_set_action(int action,
 	ExperimentState* experiment_state = (ExperimentState*)wrapper->experiment_context.back();
 
 	this->curr_actions[experiment_state->step_index] = action;
+
+	ActionNode* action_node = (ActionNode*)this->curr_new_nodes[experiment_state->step_index];
+	action_node->action = action;
+
+	// temp
+	map<int, Network*>::iterator it = wrapper->solution->action_impact_networks.find(action);
+	if (it != wrapper->solution->action_impact_networks.end()) {
+		vector<double> obs = wrapper->problem->get_observations();
+
+		it->second->activate(obs);
+		wrapper->curr_impact += it->second->output->acti_vals[0];
+
+		ScopeHistory* scope_history = wrapper->scope_histories.back();
+
+		ActionNodeHistory* history = new ActionNodeHistory(action_node);
+		history->index = (int)scope_history->node_histories.size();
+		scope_history->node_histories[action_node->id] = history;
+
+		history->obs_history = obs;
+		history->curr_impact = wrapper->curr_impact;
+	}
 
 	experiment_state->step_index++;
 }

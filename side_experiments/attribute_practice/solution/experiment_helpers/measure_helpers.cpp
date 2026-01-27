@@ -49,7 +49,7 @@ void Experiment::measure_step(vector<double>& obs,
 		}
 		wrapper->curr_run_seed = xorshift(wrapper->curr_run_seed);
 		#else
-		if (this->new_true_network->output->acti_vals[0] >= 0.0) {
+		if (this->new_network->output->acti_vals[0] >= 0.0) {
 			is_branch = true;
 		} else {
 			is_branch = false;

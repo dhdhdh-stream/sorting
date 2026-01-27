@@ -63,15 +63,7 @@ void Experiment::add(SolutionWrapper* wrapper) {
 	}
 
 	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-			ActionNode* new_action_node = (ActionNode*)this->best_new_nodes[s_index];
-			new_action_node->id = scope_context->node_counter + s_index;
-			scope_context->nodes[new_action_node->id] = new_action_node;
-
-			new_action_node->action = this->best_actions[s_index];
-		} else {
-			scope_context->nodes[this->best_new_nodes[s_index]->id] = this->best_new_nodes[s_index];
-		}
+		scope_context->nodes[this->best_new_nodes[s_index]->id] = this->best_new_nodes[s_index];
 	}
 	scope_context->nodes[this->new_branch_node->id] = this->new_branch_node;
 	scope_context->node_counter += (int)this->best_step_types.size() + 1;

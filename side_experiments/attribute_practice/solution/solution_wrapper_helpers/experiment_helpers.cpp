@@ -109,8 +109,6 @@ void SolutionWrapper::experiment_end(double result) {
 	if (this->curr_experiment == NULL) {
 		create_experiment(this->scope_histories[0],
 						  this);
-
-		delete this->scope_histories[0];
 	} else {
 		if (this->is_explore) {
 			update_attribute(this->scope_histories[0],
@@ -140,16 +138,6 @@ void SolutionWrapper::experiment_end(double result) {
 				this->curr_experiment->add(this);
 
 				this->solution->curr_score = this->curr_experiment->calc_new_score();
-
-				for (int h_index = 0; h_index < (int)this->solution->existing_scope_histories.size(); h_index++) {
-					delete this->solution->existing_scope_histories[h_index];
-				}
-				this->solution->existing_scope_histories.clear();
-				this->solution->existing_target_val_histories.clear();
-
-				this->solution->existing_scope_histories = this->curr_experiment->new_scope_histories;
-				this->curr_experiment->new_scope_histories.clear();
-				this->solution->existing_target_val_histories = this->curr_experiment->new_target_val_histories;
 
 				delete this->curr_experiment;
 				this->curr_experiment = NULL;
@@ -188,6 +176,8 @@ void SolutionWrapper::experiment_end(double result) {
 			break;
 		}
 	}
+
+	delete this->scope_histories[0];
 
 	this->scope_histories.clear();
 	this->node_context.clear();

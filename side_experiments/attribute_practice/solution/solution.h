@@ -51,9 +51,6 @@ public:
 	 * - but accept if no progress has been made recently
 	 */
 
-	std::vector<ScopeHistory*> existing_scope_histories;
-	std::vector<double> existing_target_val_histories;
-
 	std::vector<double> improvement_history;
 	std::vector<std::string> change_history;
 

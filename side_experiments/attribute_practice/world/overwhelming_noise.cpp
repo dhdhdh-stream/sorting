@@ -29,7 +29,7 @@ vector<double> OverwhelmingNoise::get_observations() {
 	vector<double> obs;
 
 	obs = this->curr_obs;
-	this->curr_obs.push_back(this->score);
+	obs.push_back(this->score);
 
 	return obs;
 }

@@ -30,9 +30,6 @@ public:
 
 	int result;
 
-	std::vector<ScopeHistory*> new_scope_histories;
-	std::vector<double> new_target_val_histories;
-
 	virtual ~AbstractExperiment() {};
 
 	virtual void check_activate(AbstractNode* experiment_node,

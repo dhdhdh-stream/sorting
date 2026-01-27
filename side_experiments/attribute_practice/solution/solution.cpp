@@ -40,13 +40,12 @@ Solution::Solution(Solution* original) {
 		this->scopes[s_index]->link(this);
 	}
 
-	this->last_experiment_scores = original->last_experiment_scores;
+	// temp
+	this->action_impact_networks[4] = new Network(original->action_impact_networks[4]);
+	this->action_impact_networks[5] = new Network(original->action_impact_networks[5]);
+	this->action_impact_networks[6] = new Network(original->action_impact_networks[6]);
 
-	for (int h_index = 0; h_index < (int)original->existing_scope_histories.size(); h_index++) {
-		this->existing_scope_histories.push_back(new ScopeHistory(original->existing_scope_histories[h_index],
-																  this));
-	}
-	this->existing_target_val_histories = original->existing_target_val_histories;
+	this->last_experiment_scores = original->last_experiment_scores;
 
 	this->improvement_history = original->improvement_history;
 	this->change_history = original->change_history;
@@ -57,8 +56,10 @@ Solution::~Solution() {
 		delete this->scopes[s_index];
 	}
 
-	for (int h_index = 0; h_index < (int)this->existing_scope_histories.size(); h_index++) {
-		delete this->existing_scope_histories[h_index];
+	// temp
+	for (map<int, Network*>::iterator it = this->action_impact_networks.begin();
+			it != this->action_impact_networks.end(); it++) {
+		delete it->second;
 	}
 
 	#if defined(MDEBUG) && MDEBUG
