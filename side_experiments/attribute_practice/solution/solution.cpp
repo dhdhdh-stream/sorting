@@ -7,6 +7,7 @@
 #include "branch_node.h"
 #include "constants.h"
 #include "globals.h"
+#include "network.h"
 #include "obs_node.h"
 #include "problem.h"
 #include "scope.h"
@@ -109,6 +110,14 @@ void Solution::init(ProblemType* problem_type) {
 
 	end_node->next_node_id = -1;
 	end_node->next_node = NULL;
+
+	// temp
+	this->action_impact_networks[4] = new Network(problem_type->num_obs(),
+												  NETWORK_SIZE_LARGE);
+	this->action_impact_networks[5] = new Network(problem_type->num_obs(),
+												  NETWORK_SIZE_LARGE);
+	this->action_impact_networks[6] = new Network(problem_type->num_obs(),
+												  NETWORK_SIZE_LARGE);
 }
 
 void Solution::load(ifstream& input_file) {
@@ -138,6 +147,11 @@ void Solution::load(ifstream& input_file) {
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
 		this->scopes[s_index]->link(this);
 	}
+
+	// temp
+	this->action_impact_networks[4] = new Network(input_file);
+	this->action_impact_networks[5] = new Network(input_file);
+	this->action_impact_networks[6] = new Network(input_file);
 
 	string num_experiment_scores_line;
 	getline(input_file, num_experiment_scores_line);
@@ -236,6 +250,11 @@ void Solution::save(ofstream& output_file) {
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
 		this->scopes[s_index]->save(output_file);
 	}
+
+	// temp
+	this->action_impact_networks[4]->save(output_file);
+	this->action_impact_networks[5]->save(output_file);
+	this->action_impact_networks[6]->save(output_file);
 
 	output_file << this->last_experiment_scores.size() << endl;
 	for (list<double>::iterator it = this->last_experiment_scores.begin();

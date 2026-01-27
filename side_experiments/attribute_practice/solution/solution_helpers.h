@@ -24,7 +24,8 @@ void recursive_add_child(Scope* curr_parent,
 						 Scope* new_scope);
 
 void update_attribute(ScopeHistory* scope_history,
-					  double target_val);
+					  double target_val,
+					  SolutionWrapper* wrapper);
 
 void clean_scope(Scope* scope);
 

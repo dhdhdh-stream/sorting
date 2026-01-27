@@ -114,7 +114,8 @@ void SolutionWrapper::experiment_end(double result) {
 	} else {
 		if (this->is_explore) {
 			update_attribute(this->scope_histories[0],
-							 result);
+							 result,
+							 this);
 		}
 
 		this->experiment_history->experiment->backprop(

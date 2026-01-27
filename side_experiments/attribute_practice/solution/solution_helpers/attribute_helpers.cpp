@@ -1,5 +1,6 @@
 #include "solution_helpers.h"
 
+#include "action_node.h"
 #include "constants.h"
 #include "globals.h"
 #include "network.h"
@@ -100,7 +101,8 @@ void train_helper(Scope* scope) {
 }
 
 void update_attribute(ScopeHistory* scope_history,
-					  double target_val) {
+					  double target_val,
+					  SolutionWrapper* wrapper) {
 	Scope* scope = scope_history->scope;
 
 	if (scope->pre_obs.size() < LONG_NUM_SAMPLES) {
@@ -133,10 +135,31 @@ void update_attribute(ScopeHistory* scope_history,
 
 	for (map<int, AbstractNodeHistory*>::iterator it = scope_history->node_histories.begin();
 			it != scope_history->node_histories.end(); it++) {
-		if (it->second->node->type == NODE_TYPE_SCOPE) {
-			ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)it->second;
-			update_attribute(scope_node_history->scope_history,
-							 target_val);
+		switch (it->second->node->type) {
+		case NODE_TYPE_ACTION:
+			{
+				ActionNode* action_node = (ActionNode*)it->second->node;
+				ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
+				map<int, Network*>::iterator network_it = wrapper->solution->action_impact_networks.find(action_node->action);
+				if (network_it != wrapper->solution->action_impact_networks.end()) {
+					network_it->second->activate(action_node_history->obs_history);
+
+					double error = target_val - action_node_history->curr_impact;
+
+					network_it->second->backprop(error);
+				}
+			}
+
+			break;
+		case NODE_TYPE_SCOPE:
+			{
+				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)it->second;
+				update_attribute(scope_node_history->scope_history,
+								 target_val,
+								 wrapper);
+			}
+
+			break;
 		}
 	}
 }
