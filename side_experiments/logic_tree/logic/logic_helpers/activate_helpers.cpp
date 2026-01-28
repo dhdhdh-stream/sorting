@@ -116,12 +116,6 @@ double logic_eval_helper(AbstractLogicNode* node,
 					is_branch = false;
 				}
 				break;
-			case SPLIT_TYPE_EQUAL:
-				if (obs[split_node->obs_index] == split_node->split_target) {
-					is_branch = true;
-				} else {
-					is_branch = false;
-				}
 			}
 			if (is_branch) {
 				return logic_eval_helper(split_node->branch_node,
@@ -259,12 +253,6 @@ void logic_experiment_helper(AbstractLogicNode* node,
 					is_branch = false;
 				}
 				break;
-			case SPLIT_TYPE_EQUAL:
-				if (obs[split_node->obs_index] == split_node->split_target) {
-					is_branch = true;
-				} else {
-					is_branch = false;
-				}
 			}
 			if (is_branch) {
 				logic_experiment_helper(split_node->branch_node,
@@ -402,13 +390,6 @@ double view_logic_eval_helper(AbstractLogicNode* node,
 					is_branch = false;
 				}
 				break;
-			case SPLIT_TYPE_EQUAL:
-				cout << split_node->obs_index << " equals " << split_node->split_target << endl;
-				if (obs[split_node->obs_index] == split_node->split_target) {
-					is_branch = true;
-				} else {
-					is_branch = false;
-				}
 			}
 			if (is_branch) {
 				return view_logic_eval_helper(split_node->branch_node,

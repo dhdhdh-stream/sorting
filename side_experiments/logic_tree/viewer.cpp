@@ -7,7 +7,7 @@
 #include "logic_helpers.h"
 #include "logic_tree.h"
 #include "logic_wrapper.h"
-#include "minesweeper_signal.h"
+#include "minesweeper_flag.h"
 // #include "moving_signal.h"
 // #include "multi_sum.h"
 // #include "multiplicative.h"
@@ -28,7 +28,7 @@ int main(int argc, char* argv[]) {
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
 
-	AbstractProblem* problem = new MinesweeperSignal();
+	AbstractProblem* problem = new MinesweeperFlag();
 	// AbstractProblem* problem = new MovingSignal();
 	// AbstractProblem* problem = new MultiSum();
 	// AbstractProblem* problem = new Multiplicative();
@@ -69,17 +69,9 @@ int main(int argc, char* argv[]) {
 	// 	cout << endl;
 	// }
 	{
-		cout << "pre:" << endl;
 		for (int x_index = 0; x_index < 5; x_index++) {
 			for (int y_index = 0; y_index < 5; y_index++) {
 				cout << obs[x_index * 5 + y_index] << " ";
-			}
-			cout << endl;
-		}
-		cout << "post:" << endl;
-		for (int x_index = 0; x_index < 5; x_index++) {
-			for (int y_index = 0; y_index < 5; y_index++) {
-				cout << obs[25 + x_index * 5 + y_index] << " ";
 			}
 			cout << endl;
 		}

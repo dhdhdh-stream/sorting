@@ -111,12 +111,6 @@ void LogicExperiment::measure_activate(vector<double>& obs,
 			is_match = false;
 		}
 		break;
-	case SPLIT_TYPE_EQUAL:
-		if (obs[this->obs_index] == this->split_target) {
-			is_match = true;
-		} else {
-			is_match = false;
-		}
 	}
 	if (is_match) {
 		double existing_predicted = logic_eval_helper(
@@ -194,9 +188,6 @@ void LogicExperiment::measure_activate(vector<double>& obs,
 				break;
 			case SPLIT_TYPE_REL_WITHOUT_EQUAL:
 				cout << this->obs_index << " diff " << this->rel_obs_index << " without equal " << this->split_range << " of " << this->split_target << endl;
-				break;
-			case SPLIT_TYPE_EQUAL:
-				cout << this->obs_index << " equals " << this->split_target << endl;
 				break;
 			}
 			cout << "this->sum_improvement: " << this->sum_improvement << endl;
