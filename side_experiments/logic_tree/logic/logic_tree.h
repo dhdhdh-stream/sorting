@@ -18,6 +18,8 @@ public:
 
 	~LogicTree();
 
+	void clean();
+
 	void save(std::string path,
 			  std::string name);
 	void load(std::string path,

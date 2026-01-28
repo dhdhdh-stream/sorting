@@ -53,21 +53,19 @@ int main(int argc, char* argv[]) {
 	}
 
 	while (true) {
-		auto starting_num_nodes = logic_wrapper->logic_tree->nodes.size();
+		int starting_node_counter = logic_wrapper->logic_tree->node_counter;
 
 		vector<double> obs;
 		double target_val;
 		problem->get_train_instance(obs,
 									target_val);
 
-		logic_experiment_helper(logic_wrapper->logic_tree->root,
-								obs,
+		logic_experiment_helper(obs,
 								target_val,
-								logic_wrapper);
+								logic_wrapper,
+								problem);
 
-		logic_wrapper->update(problem);
-
-		if (logic_wrapper->logic_tree->nodes.size() != starting_num_nodes) {
+		if (logic_wrapper->logic_tree->node_counter != starting_node_counter) {
 			logic_wrapper->save("saves/", filename);
 		}
 	}

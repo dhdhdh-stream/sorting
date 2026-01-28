@@ -11,15 +11,10 @@ class LogicWrapper {
 public:
 	LogicTree* logic_tree;
 
-	LogicExperiment* best_experiment;
-	int improvement_iter;
-
 	LogicWrapper(AbstractProblem* problem);
 	LogicWrapper(std::string path,
 				 std::string name);
 	~LogicWrapper();
-
-	void update(AbstractProblem* problem);
 
 	void save(std::string path,
 			  std::string name);

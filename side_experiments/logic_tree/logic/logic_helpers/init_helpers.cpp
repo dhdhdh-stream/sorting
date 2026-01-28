@@ -68,8 +68,6 @@ LogicTree* init_helper(AbstractProblem* problem) {
 	// 	cout << endl;
 	// }
 
-	new_eval_node->weight = 1.0;
-
 	new_logic_tree->root = new_eval_node;
 
 	double sum_misguess = 0.0;

@@ -2,6 +2,7 @@
 #define ABSTRACT_LOGIC_NODE_H
 
 #include <fstream>
+#include <vector>
 
 class LogicExperiment;
 
@@ -14,9 +15,9 @@ public:
 
 	int id;
 
-	double weight;
-
-	LogicExperiment* experiment;
+	std::vector<std::vector<double>> obs_histories;
+	std::vector<double> target_val_histories;
+	std::vector<double> existing_predicted_histories;
 
 	virtual ~AbstractLogicNode() {};
 

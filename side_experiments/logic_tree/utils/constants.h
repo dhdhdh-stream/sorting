@@ -26,6 +26,15 @@ const int TRAIN_ITERS = 300000;
 #endif /* MDEBUG */
 
 #if defined(MDEBUG) && MDEBUG
+const int NUM_TRAIN_SAMPLES = 40;
+const int NUM_TEST_SAMPLES = 10;
+#else
+const int NUM_TRAIN_SAMPLES = 4000;
+const int NUM_TEST_SAMPLES = 1000;
+#endif /* MDEBUG */
+const int NUM_TOTAL_SAMPLES = NUM_TRAIN_SAMPLES + NUM_TEST_SAMPLES;
+
+#if defined(MDEBUG) && MDEBUG
 const int MEASURE_ITERS = 40;
 #else
 const int MEASURE_ITERS = 4000;

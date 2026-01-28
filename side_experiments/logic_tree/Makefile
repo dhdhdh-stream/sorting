@@ -15,7 +15,7 @@ HEADERS = ${SOURCES:.cpp=.h}
 OBJECTS = ${HEADERS:.h=.o}
 DEPENDS = ${OBJECTS:.o=.d}
 
-all: main viewer pre_vs_post
+all: main viewer
 
 main: ${OBJECTS} main.o
 	${CXX} ${CXXFLAGS} ${OBJECTS} main.o -o main ${LIBS}
@@ -23,13 +23,9 @@ main: ${OBJECTS} main.o
 viewer: ${OBJECTS} viewer.o
 	${CXX} ${CXXFLAGS} ${OBJECTS} viewer.o -o viewer ${LIBS}
 
-pre_vs_post: ${OBJECTS} pre_vs_post.o
-	${CXX} ${CXXFLAGS} ${OBJECTS} pre_vs_post.o -o pre_vs_post ${LIBS}
-
--include ${DEPENDS} main.d viewer.d pre_vs_post.d
+-include ${DEPENDS} main.d viewer.d
 
 clean:
 	rm -f ${OBJECTS} ${DEPENDS} \
 	main.o main.d main \
-	viewer.o viewer.d viewer \
-	pre_vs_post.o pre_vs_post.d pre_vs_post
+	viewer.o viewer.d viewer

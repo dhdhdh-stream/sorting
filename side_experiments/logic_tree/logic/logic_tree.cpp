@@ -1,6 +1,7 @@
 #include "logic_tree.h"
 
 #include <iostream>
+#include <set>
 
 #include "eval_node.h"
 #include "split_node.h"
@@ -11,6 +12,32 @@ LogicTree::~LogicTree() {
 	for (map<int, AbstractLogicNode*>::iterator it = this->nodes.begin();
 			it != this->nodes.end(); it++) {
 		delete it->second;
+	}
+}
+
+void LogicTree::clean() {
+	set<int> accessible_node_indexes;
+	accessible_node_indexes.insert(this->root->id);
+	for (map<int, AbstractLogicNode*>::iterator it = this->nodes.begin();
+			it != this->nodes.end(); it++) {
+		switch (it->second->type) {
+		case LOGIC_NODE_TYPE_SPLIT:
+			{
+				SplitNode* split_node = (SplitNode*)it->second;
+				accessible_node_indexes.insert(split_node->original_node_id);
+				accessible_node_indexes.insert(split_node->branch_node_id);
+			}
+			break;
+		}
+	}
+
+	map<int, AbstractLogicNode*>::iterator it = this->nodes.begin();
+	while (it != this->nodes.end()) {
+		if (accessible_node_indexes.find(it->first) == accessible_node_indexes.end()) {
+			it = this->nodes.erase(it);
+		} else {
+			it++;
+		}
 	}
 }
 

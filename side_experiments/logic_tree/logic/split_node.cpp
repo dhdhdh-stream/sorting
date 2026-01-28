@@ -7,12 +7,6 @@ using namespace std;
 
 SplitNode::SplitNode() {
 	this->type = LOGIC_NODE_TYPE_SPLIT;
-
-	this->experiment = NULL;
-}
-
-SplitNode::~SplitNode() {
-	// do nothing
 }
 
 void SplitNode::save(ofstream& output_file) {
@@ -24,8 +18,6 @@ void SplitNode::save(ofstream& output_file) {
 
 	output_file << this->original_node_id << endl;
 	output_file << this->branch_node_id << endl;
-
-	output_file << this->weight << endl;
 }
 
 void SplitNode::load(ifstream& input_file) {
@@ -56,10 +48,6 @@ void SplitNode::load(ifstream& input_file) {
 	string branch_node_id_line;
 	getline(input_file, branch_node_id_line);
 	this->branch_node_id = stoi(branch_node_id_line);
-
-	string weight_line;
-	getline(input_file, weight_line);
-	this->weight = stod(weight_line);
 }
 
 void SplitNode::link(LogicTree* logic_tree) {
