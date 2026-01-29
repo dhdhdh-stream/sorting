@@ -16,7 +16,7 @@ using namespace std;
 #if defined(MDEBUG) && MDEBUG
 const int TRAIN_EXISTING_NUM_DATAPOINTS = 20;
 #else
-const int TRAIN_EXISTING_NUM_DATAPOINTS = 800;
+const int TRAIN_EXISTING_NUM_DATAPOINTS = 1000;
 #endif /* MDEBUG */
 
 void Experiment::train_existing_check_activate(SolutionWrapper* wrapper) {
@@ -75,8 +75,7 @@ void Experiment::train_existing_backprop(double target_val,
 
 		uniform_int_distribution<int> val_input_distribution(0, this->existing_obs_histories.size()-1);
 
-		this->existing_network = new Network(this->existing_obs_histories[0].size(),
-											 NETWORK_SIZE_SMALL);
+		this->existing_network = new Network(this->existing_obs_histories[0].size());
 		for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
 			int rand_index = val_input_distribution(generator);
 

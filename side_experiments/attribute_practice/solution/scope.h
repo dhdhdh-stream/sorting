@@ -27,15 +27,15 @@ public:
 
 	std::vector<Scope*> child_scopes;
 
-	std::vector<std::vector<double>> pre_obs;
-	std::vector<double> pre_targets;
-	std::vector<std::vector<double>> post_obs;
-	std::vector<double> post_targets;
-	int data_index;
+	// std::vector<std::vector<double>> pre_obs;
+	// std::vector<double> pre_targets;
+	// std::vector<std::vector<double>> post_obs;
+	// std::vector<double> post_targets;
+	// int data_index;
 
-	Network* pre_network;
-	Network* post_network;
-	int long_iter;
+	// Network* pre_network;
+	// Network* post_network;
+	// int long_iter;
 
 	Scope();
 	~Scope();
@@ -64,10 +64,10 @@ public:
 
 	std::map<int, AbstractNodeHistory*> node_histories;
 
-	std::vector<double> pre_obs_history;
-	double pre_impact;
-	std::vector<double> post_obs_history;
-	double post_impact;
+	// std::vector<double> pre_obs_history;
+	// double pre_impact;
+	// std::vector<double> post_obs_history;
+	// double post_impact;
 
 	std::vector<AbstractExperimentHistory*> experiment_callback_histories;
 	std::vector<double> experiment_callback_indexes;

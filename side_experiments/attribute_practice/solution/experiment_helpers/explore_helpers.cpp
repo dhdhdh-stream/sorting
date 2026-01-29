@@ -5,6 +5,7 @@
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
+#include "decision_tree.h"
 #include "globals.h"
 #include "network.h"
 #include "obs_node.h"
@@ -235,12 +236,9 @@ void Experiment::explore_set_action(int action,
 	action_node->action = action;
 
 	// temp
-	map<int, Network*>::iterator it = wrapper->solution->action_impact_networks.find(action);
+	map<int, DecisionTree*>::iterator it = wrapper->solution->action_impact_networks.find(action);
 	if (it != wrapper->solution->action_impact_networks.end()) {
 		vector<double> obs = wrapper->problem->get_observations();
-
-		it->second->activate(obs);
-		wrapper->curr_impact += it->second->output->acti_vals[0];
 
 		ScopeHistory* scope_history = wrapper->scope_histories.back();
 
@@ -250,6 +248,8 @@ void Experiment::explore_set_action(int action,
 
 		history->obs_history = obs;
 		history->curr_impact = wrapper->curr_impact;
+
+		wrapper->curr_impact += it->second->activate(obs);
 	}
 
 	experiment_state->step_index++;

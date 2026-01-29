@@ -24,6 +24,7 @@
 
 class AbstractExperiment;
 class AbstractNode;
+class DecisionTree;
 class Network;
 class Problem;
 class ProblemType;
@@ -41,7 +42,7 @@ public:
 	std::vector<Scope*> scopes;
 
 	// temp
-	std::map<int, Network*> action_impact_networks;
+	std::map<int, DecisionTree*> action_impact_networks;
 
 	std::list<double> last_experiment_scores;
 	/**

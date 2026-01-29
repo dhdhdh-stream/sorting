@@ -32,12 +32,12 @@ pair<bool,int> SolutionWrapper::step(vector<double> obs) {
 	bool is_done = false;
 	while (!is_next) {
 		if (this->node_context.back() == NULL) {
-			ScopeHistory* scope_history = this->scope_histories.back();
+			// ScopeHistory* scope_history = this->scope_histories.back();
 
-			if (scope_history->scope->post_network != NULL) {
-				scope_history->scope->post_network->activate(obs);
-				this->curr_impact += scope_history->scope->post_network->output->acti_vals[0];
-			}
+			// if (scope_history->scope->post_network != NULL) {
+			// 	scope_history->scope->post_network->activate(obs);
+			// 	this->curr_impact += scope_history->scope->post_network->output->acti_vals[0];
+			// }
 
 			if (this->scope_histories.size() == 1) {
 				is_next = true;

@@ -56,13 +56,13 @@ tuple<bool,bool,int> SolutionWrapper::experiment_step(vector<double> obs) {
 				&& this->experiment_context.back() == NULL) {
 			ScopeHistory* scope_history = this->scope_histories.back();
 
-			if (scope_history->scope->post_network != NULL) {
-				scope_history->scope->post_network->activate(obs);
-				this->curr_impact += scope_history->scope->post_network->output->acti_vals[0];
-			}
+			// if (scope_history->scope->post_network != NULL) {
+			// 	scope_history->scope->post_network->activate(obs);
+			// 	this->curr_impact += scope_history->scope->post_network->output->acti_vals[0];
+			// }
 
-			scope_history->post_obs_history = obs;
-			scope_history->post_impact = this->curr_impact;
+			// scope_history->post_obs_history = obs;
+			// scope_history->post_impact = this->curr_impact;
 
 			for (int i_index = 0; i_index < (int)scope_history->experiment_callback_histories.size(); i_index++) {
 				scope_history->experiment_callback_histories[i_index]
