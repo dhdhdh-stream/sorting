@@ -36,7 +36,9 @@ public:
 	std::vector<AbstractExperimentState*> experiment_context;
 
 	int num_actions;
+
 	double curr_impact;
+	int num_sources;
 
 	bool is_explore;
 

@@ -8,7 +8,7 @@
 #include "constants.h"
 #include "decision_tree.h"
 #include "globals.h"
-#include "network.h"
+#include "long_network.h"
 #include "obs_node.h"
 #include "problem.h"
 #include "scope.h"
@@ -42,12 +42,9 @@ Solution::Solution(Solution* original) {
 	}
 
 	// temp
-	this->action_impact_networks[4] = new DecisionTree();
-	this->action_impact_networks[4]->copy_from(original->action_impact_networks[4]);
-	this->action_impact_networks[5] = new DecisionTree();
-	this->action_impact_networks[5]->copy_from(original->action_impact_networks[5]);
-	this->action_impact_networks[6] = new DecisionTree();
-	this->action_impact_networks[6]->copy_from(original->action_impact_networks[6]);
+	this->action_impact_networks[4] = new LongNetwork(original->action_impact_networks[4]);
+	this->action_impact_networks[5] = new LongNetwork(original->action_impact_networks[5]);
+	this->action_impact_networks[6] = new LongNetwork(original->action_impact_networks[6]);
 
 	this->last_experiment_scores = original->last_experiment_scores;
 
@@ -61,7 +58,7 @@ Solution::~Solution() {
 	}
 
 	// temp
-	for (map<int, DecisionTree*>::iterator it = this->action_impact_networks.begin();
+	for (map<int, LongNetwork*>::iterator it = this->action_impact_networks.begin();
 			it != this->action_impact_networks.end(); it++) {
 		delete it->second;
 	}
@@ -117,9 +114,9 @@ void Solution::init(ProblemType* problem_type) {
 	end_node->next_node = NULL;
 
 	// temp
-	this->action_impact_networks[4] = new DecisionTree();
-	this->action_impact_networks[5] = new DecisionTree();
-	this->action_impact_networks[6] = new DecisionTree();
+	this->action_impact_networks[4] = new LongNetwork(problem_type->num_obs());
+	this->action_impact_networks[5] = new LongNetwork(problem_type->num_obs());
+	this->action_impact_networks[6] = new LongNetwork(problem_type->num_obs());
 }
 
 void Solution::load(ifstream& input_file) {
@@ -151,12 +148,9 @@ void Solution::load(ifstream& input_file) {
 	}
 
 	// temp
-	this->action_impact_networks[4] = new DecisionTree();
-	this->action_impact_networks[4]->load(input_file);
-	this->action_impact_networks[5] = new DecisionTree();
-	this->action_impact_networks[5]->load(input_file);
-	this->action_impact_networks[6] = new DecisionTree();
-	this->action_impact_networks[6]->load(input_file);
+	this->action_impact_networks[4] = new LongNetwork(input_file);
+	this->action_impact_networks[5] = new LongNetwork(input_file);
+	this->action_impact_networks[6] = new LongNetwork(input_file);
 
 	string num_experiment_scores_line;
 	getline(input_file, num_experiment_scores_line);

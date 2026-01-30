@@ -7,6 +7,7 @@
 #include "constants.h"
 #include "decision_tree.h"
 #include "globals.h"
+#include "long_network.h"
 #include "network.h"
 #include "obs_node.h"
 #include "problem.h"
@@ -237,7 +238,7 @@ void Experiment::explore_set_action(int action,
 	action_node->action = action;
 
 	// temp
-	map<int, DecisionTree*>::iterator it = wrapper->solution->action_impact_networks.find(action);
+	map<int, LongNetwork*>::iterator it = wrapper->solution->action_impact_networks.find(action);
 	if (it != wrapper->solution->action_impact_networks.end()) {
 		vector<double> obs = wrapper->problem->get_observations();
 
@@ -248,9 +249,11 @@ void Experiment::explore_set_action(int action,
 		scope_history->node_histories[action_node->id] = history;
 
 		history->obs_history = obs;
-		history->curr_impact = wrapper->curr_impact;
 
-		wrapper->curr_impact += it->second->activate(obs);
+		it->second->activate(obs);
+
+		wrapper->curr_impact += it->second->output->acti_vals[0];
+		wrapper->num_sources++;
 	}
 
 	experiment_state->step_index++;

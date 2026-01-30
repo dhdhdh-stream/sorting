@@ -45,7 +45,6 @@ class ActionNodeHistory : public AbstractNodeHistory {
 public:
 	// temp
 	std::vector<double> obs_history;
-	double curr_impact;
 
 	ActionNodeHistory(ActionNode* node);
 };

@@ -111,8 +111,9 @@ void SolutionWrapper::experiment_end(double result) {
 						  this);
 	} else {
 		if (this->is_explore) {
+			double error = (result - this->curr_impact) / (double)this->num_sources;
 			update_attribute(this->scope_histories[0],
-							 result,
+							 error,
 							 this);
 		}
 

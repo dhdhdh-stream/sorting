@@ -1,3 +1,10 @@
+/**
+ * - simply distribute error evenly across all sources
+ *   - unstable to try to solve each spot optimally
+ *     - any mistakes lead to overcorrection, which lead to even bigger mistakes
+ *   - should end up with equivalent results anyways
+ */
+
 #include "solution_helpers.h"
 
 #include <iostream>
@@ -6,7 +13,7 @@
 #include "constants.h"
 #include "decision_tree.h"
 #include "globals.h"
-#include "network.h"
+#include "long_network.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
@@ -102,7 +109,7 @@ const int EXISTING_MAX_WEIGHT = 9;
 // }
 
 void update_attribute(ScopeHistory* scope_history,
-					  double target_val,
+					  double error,
 					  SolutionWrapper* wrapper) {
 	// Scope* scope = scope_history->scope;
 
@@ -141,17 +148,11 @@ void update_attribute(ScopeHistory* scope_history,
 			{
 				ActionNode* action_node = (ActionNode*)it->second->node;
 				ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
-				map<int, DecisionTree*>::iterator network_it = wrapper->solution->action_impact_networks.find(action_node->action);
+				map<int, LongNetwork*>::iterator network_it = wrapper->solution->action_impact_networks.find(action_node->action);
 				if (network_it != wrapper->solution->action_impact_networks.end()) {
-					// temp
-					int starting_node_counter = network_it->second->node_counter;
-
+					network_it->second->activate(action_node_history->obs_history);
 					network_it->second->backprop(action_node_history->obs_history,
-												 target_val - action_node_history->curr_impact);
-
-					if (network_it->second->node_counter != starting_node_counter) {
-						cout << "updated" << endl;
-					}
+												 error);
 				}
 			}
 
@@ -160,7 +161,7 @@ void update_attribute(ScopeHistory* scope_history,
 			{
 				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)it->second;
 				update_attribute(scope_node_history->scope_history,
-								 target_val,
+								 error,
 								 wrapper);
 			}
 

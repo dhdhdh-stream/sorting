@@ -5,7 +5,7 @@
 #include "abstract_experiment.h"
 #include "decision_tree.h"
 #include "globals.h"
-#include "network.h"
+#include "long_network.h"
 #include "problem.h"
 #include "scope.h"
 #include "solution.h"
@@ -29,12 +29,14 @@ void ActionNode::experiment_step(vector<double>& obs,
 	wrapper->num_actions++;
 
 	// temp
-	map<int, DecisionTree*>::iterator it = wrapper->solution->action_impact_networks.find(this->action);
+	map<int, LongNetwork*>::iterator it = wrapper->solution->action_impact_networks.find(this->action);
 	if (it != wrapper->solution->action_impact_networks.end()) {
 		history->obs_history = obs;
-		history->curr_impact = wrapper->curr_impact;
 
-		wrapper->curr_impact += it->second->activate(obs);
+		it->second->activate(obs);
+
+		wrapper->curr_impact += it->second->output->acti_vals[0];
+		wrapper->num_sources++;
 	}
 
 	wrapper->node_context.back() = this->next_node;

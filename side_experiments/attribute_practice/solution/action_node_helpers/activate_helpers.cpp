@@ -3,7 +3,7 @@
 #include <iostream>
 
 #include "decision_tree.h"
-#include "network.h"
+#include "long_network.h"
 #include "problem.h"
 #include "scope.h"
 #include "solution.h"
@@ -27,13 +27,15 @@ void ActionNode::step(vector<double>& obs,
 	wrapper->num_actions++;
 
 	// temp
-	map<int, DecisionTree*>::iterator it = wrapper->solution->action_impact_networks.find(this->action);
+	map<int, LongNetwork*>::iterator it = wrapper->solution->action_impact_networks.find(this->action);
 	if (it != wrapper->solution->action_impact_networks.end()) {
 		history->obs_history = obs;
-		history->curr_impact = wrapper->curr_impact;
 
-		double val = it->second->activate(obs);
+		it->second->activate(obs);
+		double val = it->second->output->acti_vals[0];
+
 		wrapper->curr_impact += val;
+		wrapper->num_sources++;
 
 		// temp
 		cout << "this->action: " << this->action << endl;
@@ -44,7 +46,7 @@ void ActionNode::step(vector<double>& obs,
 			cout << endl;
 		}
 		cout << "val: " << val << endl;
-		cout << "history->curr_impact: " << history->curr_impact << endl;
+		cout << "wrapper->curr_impact: " << wrapper->curr_impact << endl;
 		cout << endl;
 	}
 

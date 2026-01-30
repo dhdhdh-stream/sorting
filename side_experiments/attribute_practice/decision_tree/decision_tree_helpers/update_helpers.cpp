@@ -13,8 +13,8 @@ using namespace std;
 const double MAX_RATIO = 0.8;
 const double MIN_RATIO = 0.2;
 
-const int NUM_PRE_FILTER = 40;
-const int NUM_TRIES = 20;
+const int NUM_PRE_FILTER = 20;
+const int NUM_TRIES = 10;
 
 void find_parent(AbstractDecisionTreeNode* node,
 				 DecisionTree* decision_tree,

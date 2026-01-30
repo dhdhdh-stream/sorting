@@ -1,10 +1,8 @@
-// - current approach leads to instability
-//   - mistakes add up, forcing future spots to way overcorrect
-//     - which then makes even bigger mistakes happen in other spots
-//       - creating even bigger and bigger mistakes
-
-// TODO: independent is better
-// - split miss among all
+// TODO: for decision trees, constantly update
+// - but check for split every x iters
+// - or duplicate initially to have: original vs. dupe + dupe
+//   - activate/train 50/50 on both
+//     - after a while, see if dupe + dupe significantly better?
 
 #include <chrono>
 #include <iostream>
