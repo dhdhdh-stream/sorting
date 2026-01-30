@@ -1,5 +1,7 @@
 #include "decision_tree.h"
 
+#include <iostream>
+
 #include "constants.h"
 #include "eval_node.h"
 #include "globals.h"
@@ -40,6 +42,9 @@ void find_parent(AbstractDecisionTreeNode* node,
 }
 
 void DecisionTree::update_helper(EvalNode* node) {
+	// temp
+	cout << "update_helper" << endl;
+
 	vector<double> existing_predicted(EVAL_NUM_TEST_SAMPLES);
 	for (int i_index = 0; i_index < EVAL_NUM_TEST_SAMPLES; i_index++) {
 		node->network->activate(node->obs_histories[EVAL_NUM_TRAIN_SAMPLES + i_index]);

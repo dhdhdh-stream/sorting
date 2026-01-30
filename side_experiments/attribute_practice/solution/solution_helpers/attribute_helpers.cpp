@@ -1,5 +1,7 @@
 #include "solution_helpers.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "constants.h"
 #include "decision_tree.h"
@@ -141,8 +143,15 @@ void update_attribute(ScopeHistory* scope_history,
 				ActionNodeHistory* action_node_history = (ActionNodeHistory*)it->second;
 				map<int, DecisionTree*>::iterator network_it = wrapper->solution->action_impact_networks.find(action_node->action);
 				if (network_it != wrapper->solution->action_impact_networks.end()) {
+					// temp
+					int starting_node_counter = network_it->second->node_counter;
+
 					network_it->second->backprop(action_node_history->obs_history,
 												 target_val - action_node_history->curr_impact);
+
+					if (network_it->second->node_counter != starting_node_counter) {
+						cout << "updated" << endl;
+					}
 				}
 			}
 

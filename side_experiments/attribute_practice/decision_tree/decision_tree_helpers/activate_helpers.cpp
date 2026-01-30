@@ -57,8 +57,10 @@ void DecisionTree::backprop(vector<double>& obs,
 		}
 	}
 
-	if (this->root == NULL && (int)this->obs_histories.size() >= DECISION_TREE_MEASURE_NUM_SAMPLES) {
-		init_helper();
+	if (this->root == NULL) {
+		if ((int)this->obs_histories.size() >= DECISION_TREE_MEASURE_NUM_SAMPLES) {
+			init_helper();
+		}
 	} else {
 		AbstractDecisionTreeNode* curr_node = this->root;
 		while (true) {

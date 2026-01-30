@@ -34,7 +34,11 @@ void DecisionTree::save(ofstream& output_file) {
 		it->second->save(output_file);
 	}
 
-	output_file << this->root->id << endl;
+	if (this->root == NULL) {
+		output_file << -1 << endl;
+	} else {
+		output_file << this->root->id << endl;
+	}
 
 	output_file << this->improvement_history.size() << endl;
 	for (int h_index = 0; h_index < (int)this->improvement_history.size(); h_index++) {
@@ -92,7 +96,12 @@ void DecisionTree::load(ifstream& input_file) {
 
 	string root_id_line;
 	getline(input_file, root_id_line);
-	this->root = this->nodes[stoi(root_id_line)];
+	int root_id = stoi(root_id_line);
+	if (root_id == -1) {
+		this->root = NULL;
+	} else {
+		this->root = this->nodes[root_id];
+	}
 
 	string history_size_line;
 	getline(input_file, history_size_line);
@@ -131,7 +140,11 @@ void DecisionTree::copy_from(DecisionTree* original) {
 		}
 	}
 
-	this->root = this->nodes[original->root->id];
+	if (original->root == NULL) {
+		this->root = NULL;
+	} else {
+		this->root = this->nodes[original->root->id];
+	}
 
 	this->improvement_history = original->improvement_history;
 

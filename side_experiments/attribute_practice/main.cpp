@@ -1,3 +1,11 @@
+// - current approach leads to instability
+//   - mistakes add up, forcing future spots to way overcorrect
+//     - which then makes even bigger mistakes happen in other spots
+//       - creating even bigger and bigger mistakes
+
+// TODO: independent is better
+// - split miss among all
+
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -9,8 +17,8 @@
 #include "branch_node.h"
 #include "constants.h"
 #include "globals.h"
-// #include "minesweeper.h"
-#include "overwhelming_noise.h"
+#include "minesweeper.h"
+// #include "overwhelming_noise.h"
 #include "problem.h"
 #include "scope.h"
 #include "scope_node.h"
@@ -33,8 +41,8 @@ int main(int argc, char* argv[]) {
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
 
-	// ProblemType* problem_type = new TypeMinesweeper();
-	ProblemType* problem_type = new TypeOverwhelmingNoise();
+	ProblemType* problem_type = new TypeMinesweeper();
+	// ProblemType* problem_type = new TypeOverwhelmingNoise();
 
 	string filename;
 	SolutionWrapper* solution_wrapper;
