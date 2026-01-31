@@ -63,6 +63,8 @@ LongNetwork::LongNetwork(int input_size) {
 	this->output_average_max_update = 0.0;
 
 	this->history_index = 0;
+
+	this->total_num_samples = 0;
 }
 
 LongNetwork::LongNetwork(LongNetwork* original) {
@@ -118,6 +120,12 @@ LongNetwork::LongNetwork(LongNetwork* original) {
 	this->output_average_max_update = 0.0;
 
 	this->history_index = 0;
+
+	this->input_histories = original->input_histories;
+	this->target_val_histories = original->target_val_histories;
+	this->history_index = original->history_index;
+
+	this->total_num_samples = original->total_num_samples;
 }
 
 LongNetwork::LongNetwork(ifstream& input_file) {
@@ -186,6 +194,10 @@ LongNetwork::LongNetwork(ifstream& input_file) {
 	this->output_average_max_update = 0.0;
 
 	this->history_index = 0;
+
+	string total_num_samples_line;
+	getline(input_file, total_num_samples_line);
+	this->total_num_samples = stoi(total_num_samples_line);
 }
 
 LongNetwork::~LongNetwork() {
@@ -241,6 +253,8 @@ void LongNetwork::backprop(vector<double>& input_vals,
 			this->history_index = 0;
 		}
 	}
+
+	this->total_num_samples++;
 }
 
 void LongNetwork::backprop_cycle_helper() {
@@ -332,4 +346,6 @@ void LongNetwork::save(ofstream& output_file) {
 	this->hidden_2->save_weights(output_file);
 	this->hidden_3->save_weights(output_file);
 	this->output->save_weights(output_file);
+
+	output_file << this->total_num_samples << endl;
 }

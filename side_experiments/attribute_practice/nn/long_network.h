@@ -24,6 +24,8 @@ public:
 	std::vector<double> target_val_histories;
 	int history_index;
 
+	int total_num_samples;
+
 	LongNetwork(int input_size);
 	LongNetwork(LongNetwork* original);
 	LongNetwork(std::ifstream& input_file);

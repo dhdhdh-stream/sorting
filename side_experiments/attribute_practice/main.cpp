@@ -4,6 +4,17 @@
 //   - activate/train 50/50 on both
 //     - after a while, see if dupe + dupe significantly better?
 
+// - actually, attributing is bad
+//   - don't want to attribute future success to the future
+//     - want to correlate it with current actions
+//   - current setup and future execution equally responsible for success
+
+// - maybe just take average of a bunch of signals?
+//   - then when situation is good, will try to keep going?
+//   - when situation is bad, will try to end quick?
+//   - important signals can be averaged out?
+// TODO: try with both averaging and solo
+
 #include <chrono>
 #include <iostream>
 #include <map>

@@ -16,6 +16,7 @@ using namespace std;
 void SolutionWrapper::verify_init() {
 	this->num_actions = 1;
 	this->curr_impact = 0.0;
+	this->num_sources = 0;
 
 	this->starting_run_seed = this->solution->verify_seeds[0];
 	cout << "this->starting_run_seed: " << this->starting_run_seed << endl;

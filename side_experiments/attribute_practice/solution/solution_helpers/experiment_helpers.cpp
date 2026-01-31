@@ -7,6 +7,8 @@
 #include "constants.h"
 #include "experiment.h"
 #include "globals.h"
+// temp
+#include "long_network.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
@@ -114,7 +116,23 @@ void create_experiment(ScopeHistory* scope_history,
 		// 		break;
 		// 	}
 		// }
-		int signal_depth = -1;
+
+		// temp
+		int signal_depth;
+		if (wrapper->solution->action_impact_networks[5]->total_num_samples < 100000) {
+			signal_depth = -1;
+		} else {
+			geometric_distribution<int> depth_distribution(0.5);
+			while (true) {
+				signal_depth = depth_distribution(generator);
+				if (signal_depth == explore_depth + 1) {
+					signal_depth = -1;
+					break;
+				} else if (signal_depth <= explore_depth) {
+					break;
+				}
+			}
+		}
 
 		Experiment* new_experiment = new Experiment(
 			explore_node->parent,

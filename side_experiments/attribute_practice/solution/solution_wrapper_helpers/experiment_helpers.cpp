@@ -22,6 +22,7 @@ const int SNAPSHOT_ITERS = 10;
 void SolutionWrapper::experiment_init() {
 	this->num_actions = 1;
 	this->curr_impact = 0.0;
+	this->num_sources = 0;
 
 	#if defined(MDEBUG) && MDEBUG
 	this->run_index++;
