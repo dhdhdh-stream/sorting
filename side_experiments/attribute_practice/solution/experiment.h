@@ -27,6 +27,7 @@ public:
 	std::vector<double> existing_target_vals;
 
 	double existing_true;
+	double existing_signal;
 
 	Network* existing_network;
 
@@ -74,7 +75,8 @@ public:
 	Experiment(Scope* scope_context,
 			   AbstractNode* node_context,
 			   bool is_branch,
-			   int signal_depth);
+			   int signal_depth,
+			   bool average_signals);
 	~Experiment();
 
 	void check_activate(AbstractNode* experiment_node,

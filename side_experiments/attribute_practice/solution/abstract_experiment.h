@@ -27,6 +27,7 @@ public:
 	bool is_branch;
 
 	int signal_depth;
+	bool average_signals;
 
 	int result;
 
@@ -56,6 +57,11 @@ public:
 	AbstractExperiment* experiment;
 
 	bool is_hit;
+
+	std::vector<double> starting_sum_signals;
+	std::vector<int> starting_signal_count;
+	std::vector<double> ending_sum_signals;
+	std::vector<int> ending_signal_count;
 
 	virtual ~AbstractExperimentHistory() {};
 };

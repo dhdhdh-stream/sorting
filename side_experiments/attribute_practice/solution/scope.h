@@ -62,6 +62,9 @@ public:
 
 	std::vector<double> obs_history;
 
+	std::vector<AbstractExperimentHistory*> experiment_callback_histories;
+	std::vector<double> experiment_callback_indexes;
+
 	ScopeHistory(Scope* scope);
 	ScopeHistory(ScopeHistory* original,
 				 Solution* parent_solution);

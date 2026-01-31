@@ -30,7 +30,24 @@ void Experiment::train_existing_step(vector<double>& obs,
 									 SolutionWrapper* wrapper) {
 	ExperimentHistory* history = (ExperimentHistory*)wrapper->experiment_history;
 
-	history->stack_traces.push_back(wrapper->scope_histories);
+	if (this->signal_depth != -1) {
+		if (this->average_signals) {
+			history->starting_sum_signals.push_back(wrapper->sum_signals);
+			history->starting_signal_count.push_back(wrapper->signal_count);
+			history->ending_sum_signals.push_back(0.0);
+			history->ending_signal_count.push_back(0.0);
+			if (this->signal_depth >= (int)wrapper->scope_histories.size()) {
+				wrapper->scope_histories[0]->experiment_callback_histories.push_back(history);
+				wrapper->scope_histories[0]->experiment_callback_indexes.push_back(history->ending_sum_signals.size()-1);
+			} else {
+				int index = wrapper->scope_histories.size()-1 - this->signal_depth;
+				wrapper->scope_histories[index]->experiment_callback_histories.push_back(history);
+				wrapper->scope_histories[index]->experiment_callback_indexes.push_back(history->ending_sum_signals.size()-1);
+			}
+		} else {
+			history->stack_traces.push_back(wrapper->scope_histories);
+		}
+	}
 
 	this->existing_obs_histories.push_back(obs);
 
@@ -53,16 +70,24 @@ void Experiment::train_existing_backprop(double target_val,
 				this->existing_target_vals.push_back(target_val);
 			}
 		} else {
-			for (int i_index = 0; i_index < (int)history->stack_traces.size(); i_index++) {
-				if (this->signal_depth >= (int)history->stack_traces[i_index].size()) {
-					ScopeHistory* scope_history = history->stack_traces[i_index][0];
-					Scope* scope = scope_history->scope;
-					this->existing_target_vals.push_back(scope->signal->activate(scope_history->obs_history));
-				} else {
-					int index = history->stack_traces[i_index].size()-1 - this->signal_depth;
-					ScopeHistory* scope_history = history->stack_traces[i_index][index];
-					Scope* scope = scope_history->scope;
-					this->existing_target_vals.push_back(scope->signal->activate(scope_history->obs_history));
+			if (this->average_signals) {
+				for (int i_index = 0; i_index < (int)history->starting_sum_signals.size(); i_index++) {
+					double average_signal = (history->ending_sum_signals[i_index] - history->starting_sum_signals[i_index])
+						/ (history->ending_signal_count[i_index] - history->starting_signal_count[i_index]);
+					this->existing_target_vals.push_back(average_signal);
+				}
+			} else {
+				for (int i_index = 0; i_index < (int)history->stack_traces.size(); i_index++) {
+					if (this->signal_depth >= (int)history->stack_traces[i_index].size()) {
+						ScopeHistory* scope_history = history->stack_traces[i_index][0];
+						Scope* scope = scope_history->scope;
+						this->existing_target_vals.push_back(scope->signal->activate(scope_history->obs_history));
+					} else {
+						int index = history->stack_traces[i_index].size()-1 - this->signal_depth;
+						ScopeHistory* scope_history = history->stack_traces[i_index][index];
+						Scope* scope = scope_history->scope;
+						this->existing_target_vals.push_back(scope->signal->activate(scope_history->obs_history));
+					}
 				}
 			}
 		}
@@ -70,6 +95,14 @@ void Experiment::train_existing_backprop(double target_val,
 
 	if (this->hit_count >= TRAIN_EXISTING_NUM_DATAPOINTS) {
 		this->existing_true = this->sum_true / this->hit_count;
+
+		if (this->signal_depth != -1) {
+			double sum_signals = 0.0;
+			for (int h_index = 0; h_index < (int)this->existing_target_vals.size(); h_index++) {
+				sum_signals += this->existing_target_vals[h_index];
+			}
+			this->existing_signal = sum_signals / (double)this->existing_target_vals.size();
+		}
 
 		uniform_int_distribution<int> val_input_distribution(0, this->existing_obs_histories.size()-1);
 

@@ -22,7 +22,6 @@ using namespace std;
 #if defined(MDEBUG) && MDEBUG
 const int EXPERIMENT_EXPLORE_ITERS = 10;
 #else
-// const int EXPERIMENT_EXPLORE_ITERS = 200;
 const int EXPERIMENT_EXPLORE_ITERS = 500;
 #endif /* MDEBUG */
 
@@ -180,6 +179,23 @@ void Experiment::explore_step(vector<double>& obs,
 
 		history->stack_traces.push_back(wrapper->scope_histories);
 
+		if (this->signal_depth != -1) {
+			if (this->average_signals) {
+				history->starting_sum_signals.push_back(wrapper->sum_signals);
+				history->starting_signal_count.push_back(wrapper->signal_count);
+				history->ending_sum_signals.push_back(0.0);
+				history->ending_signal_count.push_back(0.0);
+				if (this->signal_depth >= (int)wrapper->scope_histories.size()) {
+					wrapper->scope_histories[0]->experiment_callback_histories.push_back(history);
+					wrapper->scope_histories[0]->experiment_callback_indexes.push_back(history->ending_sum_signals.size()-1);
+				} else {
+					int index = wrapper->scope_histories.size()-1 - this->signal_depth;
+					wrapper->scope_histories[index]->experiment_callback_histories.push_back(history);
+					wrapper->scope_histories[index]->experiment_callback_indexes.push_back(history->ending_sum_signals.size()-1);
+				}
+			}
+		}
+
 		this->existing_network->activate(obs);
 		history->existing_predicted.push_back(
 			this->existing_network->output->acti_vals[0]);
@@ -220,6 +236,9 @@ void Experiment::explore_set_action(int action,
 
 	this->curr_actions[experiment_state->step_index] = action;
 
+	ActionNode* action_node = (ActionNode*)this->curr_new_nodes[experiment_state->step_index];
+	action_node->action = action;
+
 	experiment_state->step_index++;
 }
 
@@ -245,15 +264,32 @@ void Experiment::explore_backprop(double target_val,
 		if (this->signal_depth == -1) {
 			curr_surprise = target_val - history->existing_predicted[0];
 		} else {
-			if (this->signal_depth >= (int)history->stack_traces[0].size()) {
-				ScopeHistory* scope_history = history->stack_traces[0][0];
-				Scope* scope = scope_history->scope;
-				curr_surprise = scope->signal->activate(scope_history->obs_history) - history->existing_predicted[0];
+			double new_signal;
+			if (this->average_signals) {
+				new_signal = (history->ending_sum_signals[0] - history->starting_sum_signals[0])
+					/ (history->ending_signal_count[0] - history->starting_signal_count[0]);
 			} else {
-				int index = history->stack_traces[0].size()-1 - this->signal_depth;
-				ScopeHistory* scope_history = history->stack_traces[0][index];
-				Scope* scope = scope_history->scope;
-				curr_surprise = scope->signal->activate(scope_history->obs_history) - history->existing_predicted[0];
+				if (this->signal_depth >= (int)history->stack_traces[0].size()) {
+					ScopeHistory* scope_history = history->stack_traces[0][0];
+					Scope* scope = scope_history->scope;
+					new_signal = scope->signal->activate(scope_history->obs_history);
+				} else {
+					int index = history->stack_traces[0].size()-1 - this->signal_depth;
+					ScopeHistory* scope_history = history->stack_traces[0][index];
+					Scope* scope = scope_history->scope;
+					new_signal = scope->signal->activate(scope_history->obs_history);
+				}
+			}
+
+			/**
+			 * - quick sanity check
+			 */
+			double true_rel = target_val - this->existing_true;
+			double signal_rel = new_signal - this->existing_signal;
+			if (signal_rel < true_rel) {
+				curr_surprise = numeric_limits<double>::lowest();
+			} else {
+				curr_surprise = new_signal - history->existing_predicted[0];
 			}
 		}
 

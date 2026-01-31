@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "constants.h"
+#include "decision_tree.h"
 #include "experiment.h"
 #include "globals.h"
 #include "network.h"
@@ -21,6 +22,9 @@ const int SNAPSHOT_ITERS = 10;
 
 void SolutionWrapper::experiment_init() {
 	this->num_actions = 1;
+
+	this->sum_signals = 0.0;
+	this->signal_count = 0;
 
 	#if defined(MDEBUG) && MDEBUG
 	this->run_index++;
@@ -55,6 +59,17 @@ tuple<bool,bool,int> SolutionWrapper::experiment_step(vector<double> obs) {
 				&& this->experiment_context.back() == NULL) {
 			ScopeHistory* scope_history = this->scope_histories.back();
 			scope_history->obs_history = obs;
+
+			Scope* scope = scope_history->scope;
+			this->sum_signals += scope->signal->activate(obs);
+			this->signal_count++;
+
+			for (int i_index = 0; i_index < (int)scope_history->experiment_callback_histories.size(); i_index++) {
+				scope_history->experiment_callback_histories[i_index]
+					->ending_sum_signals[scope_history->experiment_callback_indexes[i_index]] = this->sum_signals;
+				scope_history->experiment_callback_histories[i_index]
+					->ending_signal_count[scope_history->experiment_callback_indexes[i_index]] = this->signal_count;
+			}
 
 			if (this->scope_histories.size() == 1) {
 				is_next = true;

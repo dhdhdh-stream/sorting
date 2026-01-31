@@ -37,6 +37,9 @@ public:
 
 	int num_actions;
 
+	double sum_signals;
+	int signal_count;
+
 	AbstractExperimentHistory* experiment_history;
 
 	Problem* problem;

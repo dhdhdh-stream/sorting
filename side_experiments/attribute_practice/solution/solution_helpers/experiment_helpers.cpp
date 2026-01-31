@@ -115,11 +115,20 @@ void create_experiment(ScopeHistory* scope_history,
 			}
 		}
 
+		bool average_signals;
+		if (signal_depth == -1) {
+			average_signals = false;
+		} else {
+			uniform_int_distribution<int> average_signals_distribution(0, 1);
+			average_signals = average_signals_distribution(generator);
+		}
+
 		Experiment* new_experiment = new Experiment(
 			explore_node->parent,
 			explore_node,
 			explore_is_branch,
-			signal_depth);
+			signal_depth,
+			average_signals);
 		wrapper->curr_experiment = new_experiment;
 
 		// temp

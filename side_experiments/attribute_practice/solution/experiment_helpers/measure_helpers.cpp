@@ -121,6 +121,13 @@ void Experiment::measure_backprop(double target_val,
 		double average_hits_per_run = (double)this->hit_count / (double)this->total_count;
 		this->improvement = average_hits_per_run * (new_true - this->existing_true);
 
+		// temp
+		cout << "this->scope_context->id: " << this->scope_context->id << endl;
+		cout << "this->signal_depth: " << this->signal_depth << endl;
+		cout << "this->average_signals: " << this->average_signals << endl;
+		cout << "this->existing_true: " << this->existing_true << endl;
+		cout << "new_true: " << new_true << endl;
+
 		bool is_success = false;
 		if (this->improvement >= 0.0) {
 			if (wrapper->solution->last_experiment_scores.size() >= MIN_NUM_LAST_EXPERIMENT_TRACK) {
