@@ -2,8 +2,6 @@
 
 #include <iostream>
 
-#include "decision_tree.h"
-#include "long_network.h"
 #include "problem.h"
 #include "scope.h"
 #include "solution.h"
@@ -25,30 +23,6 @@ void ActionNode::step(vector<double>& obs,
 	is_next = true;
 
 	wrapper->num_actions++;
-
-	// temp
-	map<int, LongNetwork*>::iterator it = wrapper->solution->action_impact_networks.find(this->action);
-	if (it != wrapper->solution->action_impact_networks.end()) {
-		history->obs_history = obs;
-
-		it->second->activate(obs);
-		double val = it->second->output->acti_vals[0];
-
-		wrapper->curr_impact += val;
-		wrapper->num_sources++;
-
-		// temp
-		cout << "this->action: " << this->action << endl;
-		for (int x_index = 0; x_index < 5; x_index++) {
-			for (int y_index = 0; y_index < 5; y_index++) {
-				cout << obs[5 * y_index + x_index] << " ";
-			}
-			cout << endl;
-		}
-		cout << "val: " << val << endl;
-		cout << "wrapper->curr_impact: " << wrapper->curr_impact << endl;
-		cout << endl;
-	}
 
 	wrapper->node_context.back() = this->next_node;
 }

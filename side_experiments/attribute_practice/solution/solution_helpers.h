@@ -23,10 +23,6 @@ void recursive_add_child(Scope* curr_parent,
 						 SolutionWrapper* wrapper,
 						 Scope* new_scope);
 
-void update_attribute(ScopeHistory* scope_history,
-					  double error,
-					  SolutionWrapper* wrapper);
-
 void clean_scope(Scope* scope);
 
 #endif /* SOLUTION_HELPERS_H */

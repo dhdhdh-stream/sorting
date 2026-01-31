@@ -21,8 +21,6 @@ const int SNAPSHOT_ITERS = 10;
 
 void SolutionWrapper::experiment_init() {
 	this->num_actions = 1;
-	this->curr_impact = 0.0;
-	this->num_sources = 0;
 
 	#if defined(MDEBUG) && MDEBUG
 	this->run_index++;
@@ -56,19 +54,7 @@ tuple<bool,bool,int> SolutionWrapper::experiment_step(vector<double> obs) {
 		if (this->node_context.back() == NULL
 				&& this->experiment_context.back() == NULL) {
 			ScopeHistory* scope_history = this->scope_histories.back();
-
-			// if (scope_history->scope->post_network != NULL) {
-			// 	scope_history->scope->post_network->activate(obs);
-			// 	this->curr_impact += scope_history->scope->post_network->output->acti_vals[0];
-			// }
-
-			// scope_history->post_obs_history = obs;
-			// scope_history->post_impact = this->curr_impact;
-
-			for (int i_index = 0; i_index < (int)scope_history->experiment_callback_histories.size(); i_index++) {
-				scope_history->experiment_callback_histories[i_index]
-					->ending_impact[scope_history->experiment_callback_indexes[i_index]] = this->curr_impact;
-			}
+			scope_history->obs_history = obs;
 
 			if (this->scope_histories.size() == 1) {
 				is_next = true;
@@ -111,13 +97,6 @@ void SolutionWrapper::experiment_end(double result) {
 		create_experiment(this->scope_histories[0],
 						  this);
 	} else {
-		if (this->is_explore) {
-			double error = (result - this->curr_impact) / (double)this->num_sources;
-			update_attribute(this->scope_histories[0],
-							 error,
-							 this);
-		}
-
 		this->experiment_history->experiment->backprop(
 		result,
 		this);

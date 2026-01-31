@@ -6,6 +6,7 @@
 
 #include "action_node.h"
 #include "branch_node.h"
+#include "decision_tree.h"
 #include "globals.h"
 #include "network.h"
 #include "obs_node.h"
@@ -16,11 +17,7 @@
 using namespace std;
 
 Scope::Scope() {
-	// this->data_index = 0;
-
-	// this->pre_network = NULL;
-	// this->post_network = NULL;
-	// this->long_iter = 0;
+	this->signal = new DecisionTree();
 }
 
 Scope::~Scope() {
@@ -29,13 +26,7 @@ Scope::~Scope() {
 		delete it->second;
 	}
 
-	// if (this->pre_network != NULL) {
-	// 	delete this->pre_network;
-	// }
-
-	// if (this->post_network != NULL) {
-	// 	delete this->post_network;
-	// }
+	delete this->signal;
 }
 
 void Scope::random_exit_activate(AbstractNode* starting_node,
@@ -131,15 +122,7 @@ void Scope::save(ofstream& output_file) {
 		output_file << this->child_scopes[c_index]->id << endl;
 	}
 
-	// output_file << (this->pre_network == NULL) << endl;
-	// if (this->pre_network != NULL) {
-	// 	this->pre_network->save(output_file);
-	// }
-	// output_file << (this->post_network == NULL) << endl;
-	// if (this->post_network != NULL) {
-	// 	this->post_network->save(output_file);
-	// }
-	// output_file << this->long_iter << endl;
+	this->signal->save(output_file);
 }
 
 void Scope::load(ifstream& input_file,
@@ -220,27 +203,7 @@ void Scope::load(ifstream& input_file,
 		this->child_scopes.push_back(parent_solution->scopes[stoi(scope_id_line)]);
 	}
 
-	// string pre_network_is_null_line;
-	// getline(input_file, pre_network_is_null_line);
-	// bool pre_network_is_null = stoi(pre_network_is_null_line);
-	// if (pre_network_is_null) {
-	// 	this->pre_network = NULL;
-	// } else {
-	// 	this->pre_network = new Network(input_file);
-	// }
-
-	// string post_network_is_null_line;
-	// getline(input_file, post_network_is_null_line);
-	// bool post_network_is_null = stoi(post_network_is_null_line);
-	// if (post_network_is_null) {
-	// 	this->post_network = NULL;
-	// } else {
-	// 	this->post_network = new Network(input_file);
-	// }
-
-	// string long_iter_line;
-	// getline(input_file, long_iter_line);
-	// this->long_iter = stoi(long_iter_line);
+	this->signal->load(input_file);
 }
 
 void Scope::link(Solution* parent_solution) {
@@ -318,25 +281,7 @@ void Scope::copy_from(Scope* original,
 			original->child_scopes[c_index]->id]);
 	}
 
-	// this->pre_obs = original->pre_obs;
-	// this->pre_targets = original->pre_targets;
-	// this->post_obs = original->post_obs;
-	// this->post_targets = original->post_targets;
-	// this->data_index = original->data_index;
-
-	// if (original->pre_network == NULL) {
-	// 	this->pre_network = NULL;
-	// } else {
-	// 	this->pre_network = new Network(original->pre_network);
-	// }
-
-	// if (original->post_network == NULL) {
-	// 	this->post_network = NULL;
-	// } else {
-	// 	this->post_network = new Network(original->post_network);
-	// }
-
-	// this->long_iter = original->long_iter;
+	this->signal->copy_from(original->signal);
 }
 
 void Scope::save_for_display(ofstream& output_file) {

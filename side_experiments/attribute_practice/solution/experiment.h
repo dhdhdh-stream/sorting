@@ -144,6 +144,7 @@ public:
 
 class ExperimentHistory : public AbstractExperimentHistory {
 public:
+	std::vector<std::vector<ScopeHistory*>> stack_traces;
 	std::vector<double> existing_predicted;
 
 	ExperimentHistory(Experiment* experiment);

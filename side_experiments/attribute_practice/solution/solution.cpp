@@ -6,9 +6,7 @@
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
-#include "decision_tree.h"
 #include "globals.h"
-#include "long_network.h"
 #include "obs_node.h"
 #include "problem.h"
 #include "scope.h"
@@ -41,11 +39,6 @@ Solution::Solution(Solution* original) {
 		this->scopes[s_index]->link(this);
 	}
 
-	// temp
-	// this->action_impact_networks[4] = new LongNetwork(original->action_impact_networks[4]);
-	this->action_impact_networks[5] = new LongNetwork(original->action_impact_networks[5]);
-	// this->action_impact_networks[6] = new LongNetwork(original->action_impact_networks[6]);
-
 	this->last_experiment_scores = original->last_experiment_scores;
 
 	this->improvement_history = original->improvement_history;
@@ -55,12 +48,6 @@ Solution::Solution(Solution* original) {
 Solution::~Solution() {
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
 		delete this->scopes[s_index];
-	}
-
-	// temp
-	for (map<int, LongNetwork*>::iterator it = this->action_impact_networks.begin();
-			it != this->action_impact_networks.end(); it++) {
-		delete it->second;
 	}
 
 	#if defined(MDEBUG) && MDEBUG
@@ -112,11 +99,6 @@ void Solution::init(ProblemType* problem_type) {
 
 	end_node->next_node_id = -1;
 	end_node->next_node = NULL;
-
-	// temp
-	// this->action_impact_networks[4] = new LongNetwork(problem_type->num_obs());
-	this->action_impact_networks[5] = new LongNetwork(problem_type->num_obs());
-	// this->action_impact_networks[6] = new LongNetwork(problem_type->num_obs());
 }
 
 void Solution::load(ifstream& input_file) {
@@ -146,11 +128,6 @@ void Solution::load(ifstream& input_file) {
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
 		this->scopes[s_index]->link(this);
 	}
-
-	// temp
-	// this->action_impact_networks[4] = new LongNetwork(input_file);
-	this->action_impact_networks[5] = new LongNetwork(input_file);
-	// this->action_impact_networks[6] = new LongNetwork(input_file);
 
 	string num_experiment_scores_line;
 	getline(input_file, num_experiment_scores_line);
@@ -249,11 +226,6 @@ void Solution::save(ofstream& output_file) {
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
 		this->scopes[s_index]->save(output_file);
 	}
-
-	// temp
-	// this->action_impact_networks[4]->save(output_file);
-	this->action_impact_networks[5]->save(output_file);
-	// this->action_impact_networks[6]->save(output_file);
 
 	output_file << this->last_experiment_scores.size() << endl;
 	for (list<double>::iterator it = this->last_experiment_scores.begin();

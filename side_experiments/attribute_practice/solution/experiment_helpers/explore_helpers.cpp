@@ -7,7 +7,6 @@
 #include "constants.h"
 #include "decision_tree.h"
 #include "globals.h"
-#include "long_network.h"
 #include "network.h"
 #include "obs_node.h"
 #include "problem.h"
@@ -33,8 +32,6 @@ void Experiment::explore_check_activate(SolutionWrapper* wrapper) {
 	this->num_instances_until_target--;
 	if (history->existing_predicted.size() == 0
 			&& this->num_instances_until_target <= 0) {
-		wrapper->is_explore = true;
-
 		vector<AbstractNode*> possible_exits;
 
 		AbstractNode* starting_node;
@@ -181,22 +178,11 @@ void Experiment::explore_step(vector<double>& obs,
 	if (experiment_state->step_index == 0) {
 		ExperimentHistory* history = (ExperimentHistory*)wrapper->experiment_history;
 
+		history->stack_traces.push_back(wrapper->scope_histories);
+
 		this->existing_network->activate(obs);
 		history->existing_predicted.push_back(
 			this->existing_network->output->acti_vals[0]);
-
-		if (this->signal_depth != -1) {
-			history->starting_impact.push_back(wrapper->curr_impact);
-			history->ending_impact.push_back(0.0);
-			if (this->signal_depth >= (int)wrapper->scope_histories.size()) {
-				wrapper->scope_histories[0]->experiment_callback_histories.push_back(history);
-				wrapper->scope_histories[0]->experiment_callback_indexes.push_back(history->ending_impact.size()-1);
-			} else {
-				int index = wrapper->scope_histories.size()-1 - this->signal_depth;
-				wrapper->scope_histories[index]->experiment_callback_histories.push_back(history);
-				wrapper->scope_histories[index]->experiment_callback_indexes.push_back(history->ending_impact.size()-1);
-			}
-		}
 	}
 
 	if (experiment_state->step_index >= (int)this->curr_step_types.size()) {
@@ -234,28 +220,6 @@ void Experiment::explore_set_action(int action,
 
 	this->curr_actions[experiment_state->step_index] = action;
 
-	ActionNode* action_node = (ActionNode*)this->curr_new_nodes[experiment_state->step_index];
-	action_node->action = action;
-
-	// temp
-	map<int, LongNetwork*>::iterator it = wrapper->solution->action_impact_networks.find(action);
-	if (it != wrapper->solution->action_impact_networks.end()) {
-		vector<double> obs = wrapper->problem->get_observations();
-
-		ScopeHistory* scope_history = wrapper->scope_histories.back();
-
-		ActionNodeHistory* history = new ActionNodeHistory(action_node);
-		history->index = (int)scope_history->node_histories.size();
-		scope_history->node_histories[action_node->id] = history;
-
-		history->obs_history = obs;
-
-		it->second->activate(obs);
-
-		wrapper->curr_impact += it->second->output->acti_vals[0];
-		wrapper->num_sources++;
-	}
-
 	experiment_state->step_index++;
 }
 
@@ -277,13 +241,27 @@ void Experiment::explore_backprop(double target_val,
 	this->num_instances_until_target = until_distribution(generator);
 
 	if (history->existing_predicted.size() != 0) {
-		wrapper->is_explore = false;
-
 		double curr_surprise;
 		if (this->signal_depth == -1) {
 			curr_surprise = target_val - history->existing_predicted[0];
 		} else {
-			curr_surprise = (history->ending_impact[0] - history->starting_impact[0]) - history->existing_predicted[0];
+			if (this->signal_depth >= (int)history->stack_traces[0].size()) {
+				ScopeHistory* scope_history = history->stack_traces[0][0];
+				Scope* scope = scope_history->scope;
+				curr_surprise = scope->signal->activate(scope_history->obs_history) - history->existing_predicted[0];
+			} else {
+				int index = history->stack_traces[0].size()-1 - this->signal_depth;
+				ScopeHistory* scope_history = history->stack_traces[0][index];
+				Scope* scope = scope_history->scope;
+				curr_surprise = scope->signal->activate(scope_history->obs_history) - history->existing_predicted[0];
+			}
+		}
+
+		for (int l_index = 0; l_index < (int)history->stack_traces[0].size(); l_index++) {
+			ScopeHistory* scope_history = history->stack_traces[0][l_index];
+			Scope* scope = scope_history->scope;
+			scope->signal->backprop(scope_history->obs_history,
+									target_val);
 		}
 
 		#if defined(MDEBUG) && MDEBUG

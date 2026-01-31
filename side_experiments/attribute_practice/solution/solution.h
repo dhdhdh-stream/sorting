@@ -41,9 +41,6 @@ public:
 
 	std::vector<Scope*> scopes;
 
-	// temp
-	std::map<int, LongNetwork*> action_impact_networks;
-
 	std::list<double> last_experiment_scores;
 	/**
 	 * - even if experiment safe to add, doesn't mean should

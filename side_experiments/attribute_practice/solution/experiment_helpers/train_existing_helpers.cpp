@@ -4,6 +4,7 @@
 #include <iostream>
 
 #include "constants.h"
+#include "decision_tree.h"
 #include "globals.h"
 #include "network.h"
 #include "scope.h"
@@ -27,22 +28,11 @@ void Experiment::train_existing_check_activate(SolutionWrapper* wrapper) {
 
 void Experiment::train_existing_step(vector<double>& obs,
 									 SolutionWrapper* wrapper) {
+	ExperimentHistory* history = (ExperimentHistory*)wrapper->experiment_history;
+
+	history->stack_traces.push_back(wrapper->scope_histories);
+
 	this->existing_obs_histories.push_back(obs);
-
-	if (this->signal_depth != -1) {
-		ExperimentHistory* history = (ExperimentHistory*)wrapper->experiment_history;
-
-		history->starting_impact.push_back(wrapper->curr_impact);
-		history->ending_impact.push_back(0.0);
-		if (this->signal_depth >= (int)wrapper->scope_histories.size()) {
-			wrapper->scope_histories[0]->experiment_callback_histories.push_back(history);
-			wrapper->scope_histories[0]->experiment_callback_indexes.push_back(history->ending_impact.size()-1);
-		} else {
-			int index = wrapper->scope_histories.size()-1 - this->signal_depth;
-			wrapper->scope_histories[index]->experiment_callback_histories.push_back(history);
-			wrapper->scope_histories[index]->experiment_callback_indexes.push_back(history->ending_impact.size()-1);
-		}
-	}
 
 	this->sum_num_instances++;
 
@@ -63,9 +53,17 @@ void Experiment::train_existing_backprop(double target_val,
 				this->existing_target_vals.push_back(target_val);
 			}
 		} else {
-			for (int i_index = 0; i_index < (int)history->starting_impact.size(); i_index++) {
-				this->existing_target_vals.push_back(
-					history->ending_impact[i_index] - history->starting_impact[i_index]);
+			for (int i_index = 0; i_index < (int)history->stack_traces.size(); i_index++) {
+				if (this->signal_depth >= (int)history->stack_traces[i_index].size()) {
+					ScopeHistory* scope_history = history->stack_traces[i_index][0];
+					Scope* scope = scope_history->scope;
+					this->existing_target_vals.push_back(scope->signal->activate(scope_history->obs_history));
+				} else {
+					int index = history->stack_traces[i_index].size()-1 - this->signal_depth;
+					ScopeHistory* scope_history = history->stack_traces[i_index][index];
+					Scope* scope = scope_history->scope;
+					this->existing_target_vals.push_back(scope->signal->activate(scope_history->obs_history));
+				}
 			}
 		}
 	}

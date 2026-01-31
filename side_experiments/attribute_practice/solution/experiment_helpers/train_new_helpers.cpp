@@ -6,6 +6,7 @@
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
+#include "decision_tree.h"
 #include "globals.h"
 #include "network.h"
 #include "problem.h"
@@ -47,24 +48,13 @@ void Experiment::train_new_step(vector<double>& obs,
 	if (experiment_state->step_index == 0) {
 		ExperimentHistory* history = (ExperimentHistory*)wrapper->experiment_history;
 
+		history->stack_traces.push_back(wrapper->scope_histories);
+
 		this->new_obs_histories.push_back(obs);
 
 		this->existing_network->activate(obs);
 		history->existing_predicted.push_back(
 			this->existing_network->output->acti_vals[0]);
-
-		if (this->signal_depth != -1) {
-			history->starting_impact.push_back(wrapper->curr_impact);
-			history->ending_impact.push_back(0.0);
-			if (this->signal_depth >= (int)wrapper->scope_histories.size()) {
-				wrapper->scope_histories[0]->experiment_callback_histories.push_back(history);
-				wrapper->scope_histories[0]->experiment_callback_indexes.push_back(history->ending_impact.size()-1);
-			} else {
-				int index = wrapper->scope_histories.size()-1 - this->signal_depth;
-				wrapper->scope_histories[index]->experiment_callback_histories.push_back(history);
-				wrapper->scope_histories[index]->experiment_callback_indexes.push_back(history->ending_impact.size()-1);
-			}
-		}
 	}
 
 	if (experiment_state->step_index >= (int)this->best_step_types.size()) {
@@ -178,8 +168,16 @@ void Experiment::train_new_backprop(
 			}
 		} else {
 			for (int i_index = 0; i_index < (int)history->existing_predicted.size(); i_index++) {
-				this->new_target_vals.push_back(
-					(history->ending_impact[i_index] - history->starting_impact[i_index]) - history->existing_predicted[i_index]);
+				if (this->signal_depth >= (int)history->stack_traces[i_index].size()) {
+					ScopeHistory* scope_history = history->stack_traces[i_index][0];
+					Scope* scope = scope_history->scope;
+					this->new_target_vals.push_back(scope->signal->activate(scope_history->obs_history) - history->existing_predicted[i_index]);
+				} else {
+					int index = history->stack_traces[i_index].size()-1 - this->signal_depth;
+					ScopeHistory* scope_history = history->stack_traces[i_index][index];
+					Scope* scope = scope_history->scope;
+					this->new_target_vals.push_back(scope->signal->activate(scope_history->obs_history) - history->existing_predicted[i_index]);
+				}
 			}
 		}
 

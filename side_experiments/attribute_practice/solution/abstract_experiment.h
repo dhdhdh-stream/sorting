@@ -57,9 +57,6 @@ public:
 
 	bool is_hit;
 
-	std::vector<double> starting_impact;
-	std::vector<double> ending_impact;
-
 	virtual ~AbstractExperimentHistory() {};
 };
 

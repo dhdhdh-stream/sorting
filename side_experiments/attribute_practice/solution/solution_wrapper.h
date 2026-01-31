@@ -37,11 +37,6 @@ public:
 
 	int num_actions;
 
-	double curr_impact;
-	int num_sources;
-
-	bool is_explore;
-
 	AbstractExperimentHistory* experiment_history;
 
 	Problem* problem;

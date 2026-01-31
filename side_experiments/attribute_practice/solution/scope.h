@@ -8,8 +8,7 @@
 class AbstractExperimentHistory;
 class AbstractNode;
 class AbstractNodeHistory;
-class Factor;
-class Network;
+class DecisionTree;
 class Problem;
 class Solution;
 class SolutionWrapper;
@@ -27,15 +26,12 @@ public:
 
 	std::vector<Scope*> child_scopes;
 
-	// std::vector<std::vector<double>> pre_obs;
-	// std::vector<double> pre_targets;
-	// std::vector<std::vector<double>> post_obs;
-	// std::vector<double> post_targets;
-	// int data_index;
-
-	// Network* pre_network;
-	// Network* post_network;
-	// int long_iter;
+	/**
+	 * - predict directly against final result
+	 *   - don't try to attribute impact to each part of solution
+	 *     - setup and actual execution equally responsible for success
+	 */
+	DecisionTree* signal;
 
 	Scope();
 	~Scope();
@@ -64,13 +60,7 @@ public:
 
 	std::map<int, AbstractNodeHistory*> node_histories;
 
-	// std::vector<double> pre_obs_history;
-	// double pre_impact;
-	// std::vector<double> post_obs_history;
-	// double post_impact;
-
-	std::vector<AbstractExperimentHistory*> experiment_callback_histories;
-	std::vector<double> experiment_callback_indexes;
+	std::vector<double> obs_history;
 
 	ScopeHistory(Scope* scope);
 	ScopeHistory(ScopeHistory* original,
