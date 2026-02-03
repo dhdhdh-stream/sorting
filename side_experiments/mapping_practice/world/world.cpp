@@ -48,13 +48,13 @@ void World::perform_action(int action) {
 		{
 			uniform_int_distribution<int> x_change_distribution(-1, 1);
 			this->curr_x += x_change_distribution(generator);
-			uniform_int_distribution<int> y_change_distribution(-1, -2);
+			uniform_int_distribution<int> y_change_distribution(-2, -1);
 			this->curr_y += y_change_distribution(generator);
 		}
 		break;
 	case ACTION_LEFT:
 		{
-			uniform_int_distribution<int> x_change_distribution(-1, -2);
+			uniform_int_distribution<int> x_change_distribution(-2, -1);
 			this->curr_x += x_change_distribution(generator);
 			uniform_int_distribution<int> y_change_distribution(-1, 1);
 			this->curr_y += y_change_distribution(generator);

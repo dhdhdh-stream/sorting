@@ -1,7 +1,5 @@
-// - can't make an adjustment and the appropriate pair adjustment at the same time
-
-// - should just split into assignment and Markov
-// - to assign, random run, then fix obs+spots in random order
+// - just use optical flow
+//   - and doesn't need to be perfect of course
 
 #include <chrono>
 #include <iostream>
@@ -9,6 +7,7 @@
 #include <thread>
 #include <random>
 
+#include "assign_node.h"
 #include "mapping_helpers.h"
 #include "world.h"
 
@@ -28,6 +27,9 @@ int main(int argc, char* argv[]) {
 
 	World world;
 
+	// int starting_x = world.curr_x;
+	// int starting_y = world.curr_y;
+
 	vector<int> obs;
 	vector<int> actions;
 
@@ -35,17 +37,16 @@ int main(int argc, char* argv[]) {
 
 	uniform_int_distribution<int> action_distribution(0, 3);
 	// for (int a_index = 0; a_index < 30; a_index++) {
-	for (int a_index = 0; a_index < 80; a_index++) {
+	for (int a_index = 0; a_index < 60; a_index++) {
 		int action = action_distribution(generator);
 		world.perform_action(action);
 		obs.push_back(world.get_observation());
 		actions.push_back(action);
 	}
 
-	Assignment best_assignment;
-	double best_conflict = numeric_limits<double>::max();
-	for (int try_index = 0; try_index < 100; try_index++) {
-		cout << "try_index: " << try_index << endl;
+	int num_tries = 0;
+	while (true) {
+		num_tries++;
 
 		Assignment curr_assigment;
 		init_assignment_helper(actions,
@@ -93,23 +94,59 @@ int main(int argc, char* argv[]) {
 
 		cout << "curr_conflict: " << curr_conflict << endl;
 
-		if (curr_conflict < best_conflict) {
-			best_assignment = curr_assigment;
-			best_conflict = curr_conflict;
+		Mapping mapping;
+		calc_mapping_helper(obs,
+							curr_assigment,
+							mapping);
+
+		bool is_done = false;
+		// for (int i_index = 0; i_index < 100; i_index++) {
+		for (int i_index = 0; i_index < 200; i_index++) {
+			vector<vector<int>> instance;
+			simple_assign(mapping,
+						  instance);
+			// instance = world.world;
+
+			bool is_valid = check_valid(obs,
+										actions,
+										instance);
+
+			if (is_valid) {
+				cout << "num_tries: " << num_tries << endl;
+
+				cout << "world:" << endl;
+				world.print();
+
+				cout << "instance:" << endl;
+				for (int x_index = 0; x_index < WORLD_WIDTH; x_index++) {
+					for (int y_index = 0; y_index < WORLD_HEIGHT; y_index++) {
+						cout << instance[x_index][y_index] << " ";
+					}
+					cout << endl;
+				}
+
+				is_done = true;
+				break;
+			}
+		}
+
+		if (is_done) {
+			break;
 		}
 	}
 
-	cout << "best_conflict: " << best_conflict << endl;
+	// vector<vector<int>> map_vals(WORLD_WIDTH, vector<int>(WORLD_HEIGHT, 0));
+	// vector<vector<bool>> map_assigned(WORLD_WIDTH, vector<bool>(WORLD_HEIGHT, false));
+	// AssignNode* node = new AssignNode();
+	// node->solve(obs,
+	// 			actions,
+	// 			0,
+	// 			starting_x,
+	// 			starting_y,
+	// 			map_vals,
+	// 			map_assigned);
 
-	world.print();
-	{
-		Mapping mapping;
-		calc_mapping_helper(obs,
-							best_assignment,
-							mapping);
-
-		mapping.print();
-	}
+	// world.print();
 
 	cout << "Done" << endl;
 }
