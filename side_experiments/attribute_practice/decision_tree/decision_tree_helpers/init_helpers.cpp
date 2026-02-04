@@ -1,5 +1,7 @@
 #include "decision_tree.h"
 
+#include <iostream>
+
 #include "constants.h"
 #include "eval_node.h"
 #include "globals.h"

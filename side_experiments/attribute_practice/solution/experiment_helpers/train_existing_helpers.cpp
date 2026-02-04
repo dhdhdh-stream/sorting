@@ -78,16 +78,20 @@ void Experiment::train_existing_backprop(double target_val,
 				}
 			} else {
 				for (int i_index = 0; i_index < (int)history->stack_traces.size(); i_index++) {
+					ScopeHistory* scope_history;
 					if (this->signal_depth >= (int)history->stack_traces[i_index].size()) {
-						ScopeHistory* scope_history = history->stack_traces[i_index][0];
-						Scope* scope = scope_history->scope;
-						this->existing_target_vals.push_back(scope->signal->activate(scope_history->obs_history));
+						scope_history = history->stack_traces[i_index][0];
 					} else {
 						int index = history->stack_traces[i_index].size()-1 - this->signal_depth;
-						ScopeHistory* scope_history = history->stack_traces[i_index][index];
-						Scope* scope = scope_history->scope;
-						this->existing_target_vals.push_back(scope->signal->activate(scope_history->obs_history));
+						scope_history = history->stack_traces[i_index][index];
 					}
+
+					vector<double> input;
+					input.insert(input.end(), scope_history->pre_obs_history.begin(), scope_history->pre_obs_history.end());
+					input.insert(input.end(), scope_history->post_obs_history.begin(), scope_history->post_obs_history.end());
+
+					Scope* scope = scope_history->scope;
+					this->existing_target_vals.push_back(scope->signal->activate(input));
 				}
 			}
 		}

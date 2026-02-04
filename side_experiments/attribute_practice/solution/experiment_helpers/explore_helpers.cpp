@@ -269,16 +269,20 @@ void Experiment::explore_backprop(double target_val,
 				new_signal = (history->ending_sum_signals[0] - history->starting_sum_signals[0])
 					/ (history->ending_signal_count[0] - history->starting_signal_count[0]);
 			} else {
+				ScopeHistory* scope_history;
 				if (this->signal_depth >= (int)history->stack_traces[0].size()) {
-					ScopeHistory* scope_history = history->stack_traces[0][0];
-					Scope* scope = scope_history->scope;
-					new_signal = scope->signal->activate(scope_history->obs_history);
+					scope_history = history->stack_traces[0][0];
 				} else {
 					int index = history->stack_traces[0].size()-1 - this->signal_depth;
-					ScopeHistory* scope_history = history->stack_traces[0][index];
-					Scope* scope = scope_history->scope;
-					new_signal = scope->signal->activate(scope_history->obs_history);
+					scope_history = history->stack_traces[0][index];
 				}
+
+				vector<double> input;
+				input.insert(input.end(), scope_history->pre_obs_history.begin(), scope_history->pre_obs_history.end());
+				input.insert(input.end(), scope_history->post_obs_history.begin(), scope_history->post_obs_history.end());
+
+				Scope* scope = scope_history->scope;
+				new_signal = scope->signal->activate(input);
 			}
 
 			/**
@@ -295,8 +299,13 @@ void Experiment::explore_backprop(double target_val,
 
 		for (int l_index = 0; l_index < (int)history->stack_traces[0].size(); l_index++) {
 			ScopeHistory* scope_history = history->stack_traces[0][l_index];
+
+			vector<double> input;
+			input.insert(input.end(), scope_history->pre_obs_history.begin(), scope_history->pre_obs_history.end());
+			input.insert(input.end(), scope_history->post_obs_history.begin(), scope_history->post_obs_history.end());
+
 			Scope* scope = scope_history->scope;
-			scope->signal->backprop(scope_history->obs_history,
+			scope->signal->backprop(input,
 									target_val);
 		}
 

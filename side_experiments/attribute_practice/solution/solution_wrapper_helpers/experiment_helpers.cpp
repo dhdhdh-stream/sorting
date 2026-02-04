@@ -58,10 +58,14 @@ tuple<bool,bool,int> SolutionWrapper::experiment_step(vector<double> obs) {
 		if (this->node_context.back() == NULL
 				&& this->experiment_context.back() == NULL) {
 			ScopeHistory* scope_history = this->scope_histories.back();
-			scope_history->obs_history = obs;
+			scope_history->post_obs_history = obs;
+
+			vector<double> input;
+			input.insert(input.end(), scope_history->pre_obs_history.begin(), scope_history->pre_obs_history.end());
+			input.insert(input.end(), scope_history->post_obs_history.begin(), scope_history->post_obs_history.end());
 
 			Scope* scope = scope_history->scope;
-			this->sum_signals += scope->signal->activate(obs);
+			this->sum_signals += scope->signal->activate(input);
 			this->signal_count++;
 
 			for (int i_index = 0; i_index < (int)scope_history->experiment_callback_histories.size(); i_index++) {

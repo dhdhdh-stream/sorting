@@ -120,7 +120,7 @@ void create_experiment(ScopeHistory* scope_history,
 			average_signals = false;
 		} else {
 			uniform_int_distribution<int> average_signals_distribution(0, 1);
-			average_signals = average_signals_distribution(generator);
+			average_signals = average_signals_distribution(generator) == 0;
 		}
 
 		Experiment* new_experiment = new Experiment(
@@ -130,8 +130,5 @@ void create_experiment(ScopeHistory* scope_history,
 			signal_depth,
 			average_signals);
 		wrapper->curr_experiment = new_experiment;
-
-		// temp
-		cout << "Experiment" << endl;
 	}
 }

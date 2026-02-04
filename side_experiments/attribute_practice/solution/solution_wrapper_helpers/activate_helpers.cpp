@@ -32,7 +32,7 @@ pair<bool,int> SolutionWrapper::step(vector<double> obs) {
 	while (!is_next) {
 		if (this->node_context.back() == NULL) {
 			ScopeHistory* scope_history = this->scope_histories.back();
-			scope_history->obs_history = obs;
+			scope_history->post_obs_history = obs;
 
 			if (this->scope_histories.size() == 1) {
 				is_next = true;

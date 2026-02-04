@@ -60,7 +60,8 @@ public:
 
 	std::map<int, AbstractNodeHistory*> node_histories;
 
-	std::vector<double> obs_history;
+	std::vector<double> pre_obs_history;
+	std::vector<double> post_obs_history;
 
 	std::vector<AbstractExperimentHistory*> experiment_callback_histories;
 	std::vector<double> experiment_callback_indexes;
