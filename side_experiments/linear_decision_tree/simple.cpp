@@ -1,0 +1,54 @@
+#include <chrono>
+#include <iostream>
+#include <map>
+#include <thread>
+#include <random>
+
+#include "decision_tree.h"
+
+using namespace std;
+
+int seed;
+
+default_random_engine generator;
+
+const int NUM_INPUTS = 10;
+
+int main(int argc, char* argv[]) {
+	cout << "Starting..." << endl;
+
+	seed = (unsigned)time(NULL);
+	srand(seed);
+	generator.seed(seed);
+	cout << "Seed: " << seed << endl;
+
+	DecisionTree* decision_tree = new DecisionTree();
+
+	uniform_int_distribution<int> input_distribution(-10, 10);
+	while (true) {
+		vector<double> inputs;
+		double target_val = 0.0;
+
+		for (int i_index = 0; i_index < NUM_INPUTS; i_index++) {
+			double val = input_distribution(generator);
+			inputs.push_back(val);
+			target_val += val;
+		}
+
+		auto starting_history_size = decision_tree->improvement_history.size();
+
+		decision_tree->backprop(inputs,
+								target_val);
+
+		if (starting_history_size != decision_tree->improvement_history.size()) {
+			ofstream output_file;
+			output_file.open("saves/main.txt");
+
+			decision_tree->save(output_file);
+
+			output_file.close();
+		}
+	}
+
+	cout << "Done" << endl;
+}

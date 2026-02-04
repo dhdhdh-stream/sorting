@@ -285,6 +285,13 @@ void DecisionTree::update_helper(EvalNode* node) {
 		}
 
 		if (best_improvement > 0.0) {
+			SplitNode* parent = NULL;
+			bool is_branch;
+			find_parent(node,
+						this,
+						parent,
+						is_branch);
+
 			EvalNode* new_eval_node = new EvalNode();
 			new_eval_node->id = this->node_counter;
 			this->node_counter++;
@@ -307,13 +314,6 @@ void DecisionTree::update_helper(EvalNode* node) {
 			new_split_node->original_node = node;
 			new_split_node->branch_node_id = new_eval_node->id;
 			new_split_node->branch_node = new_eval_node;
-
-			SplitNode* parent = NULL;
-			bool is_branch;
-			find_parent(node,
-						this,
-						parent,
-						is_branch);
 
 			if (parent == NULL) {
 				this->root = new_split_node;
