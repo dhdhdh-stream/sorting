@@ -16,6 +16,8 @@ SolutionWrapper::SolutionWrapper(ProblemType* problem_type) {
 
 	this->experiment_history = NULL;
 
+	this->measure_decisions = false;
+
 	#if defined(MDEBUG) && MDEBUG
 	this->run_index = 0;
 	#endif /* MDEBUG */
@@ -35,6 +37,8 @@ SolutionWrapper::SolutionWrapper(std::string path,
 	this->curr_experiment = NULL;
 
 	this->experiment_history = NULL;
+
+	this->measure_decisions = false;
 
 	#if defined(MDEBUG) && MDEBUG
 	this->run_index = 0;

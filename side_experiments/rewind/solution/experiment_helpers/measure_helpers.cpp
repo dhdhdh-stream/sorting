@@ -20,6 +20,8 @@ using namespace std;
 
 void Experiment::measure_check_activate(
 		SolutionWrapper* wrapper) {
+	wrapper->measure_decisions = true;
+
 	ExperimentState* new_experiment_state = new ExperimentState(this);
 	new_experiment_state->step_index = 0;
 	wrapper->experiment_context.back() = new_experiment_state;
@@ -51,9 +53,13 @@ void Experiment::measure_step(vector<double>& obs,
 		#endif /* MDEBUG */
 
 		if (!is_branch) {
+			this->original_count++;
+
 			delete experiment_state;
 			wrapper->experiment_context.back() = NULL;
 			return;
+		} else {
+			this->branch_count++;
 		}
 	}
 
@@ -107,12 +113,27 @@ void Experiment::measure_backprop(double target_val,
 	if (history->is_hit) {
 		this->sum_true += target_val;
 		this->hit_count++;
+
+		wrapper->measure_decisions = false;
 	}
 
 	if (this->hit_count >= MEASURE_ITERS) {
 		double new_true = this->sum_true / this->hit_count;
 		double average_hits_per_run = (double)this->hit_count / (double)this->total_count;
 		this->improvement = average_hits_per_run * (new_true - this->existing_true);
+
+		double new_decision_cost = wrapper->solution->calc_decision_cost();
+		{
+			double weight = (double)this->original_count
+				/ (double)(this->original_count + this->branch_count);
+			if (weight > 0.5) {
+				weight = 1.0 - weight;
+			}
+
+			new_decision_cost += weight * (this->original_count + this->branch_count);
+		}
+		cout << "this->existing_decision_cost: " << this->existing_decision_cost << endl;
+		cout << "new_decision_cost: " << new_decision_cost << endl;
 
 		bool is_success = false;
 		if (this->improvement >= 0.0) {

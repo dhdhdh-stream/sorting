@@ -328,6 +328,9 @@ void Experiment::train_new_backprop(
 				this->total_count = 0;
 				this->total_sum_scores = 0.0;
 
+				this->original_count = 0;
+				this->branch_count = 0;
+
 				this->state = EXPERIMENT_STATE_MEASURE;
 				this->state_iter = 0;
 			} else {

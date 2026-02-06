@@ -22,6 +22,9 @@ public:
 	int branch_next_node_id;
 	AbstractNode* branch_next_node;
 
+	int original_count;
+	int branch_count;
+
 	#if defined(MDEBUG) && MDEBUG
 	void* verify_key;
 	std::vector<double> verify_scores;

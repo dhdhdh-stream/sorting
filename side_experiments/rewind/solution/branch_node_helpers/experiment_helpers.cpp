@@ -45,6 +45,14 @@ void BranchNode::experiment_step(vector<double>& obs,
 		wrapper->node_context.back() = this->original_next_node;
 	}
 
+	if (wrapper->measure_decisions) {
+		if (is_branch) {
+			this->branch_count++;
+		} else {
+			this->original_count++;
+		}
+	}
+
 	if (this->experiment != NULL) {
 		this->experiment->check_activate(
 			this,

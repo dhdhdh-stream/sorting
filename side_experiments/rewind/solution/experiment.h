@@ -26,6 +26,7 @@ public:
 	std::vector<double> existing_true_histories;
 
 	double existing_true;
+	double existing_decision_cost;
 
 	Network* existing_true_network;
 
@@ -61,6 +62,9 @@ public:
 
 	double total_sum_scores;
 	int total_count;
+
+	int original_count;
+	int branch_count;
 
 	double improvement;
 

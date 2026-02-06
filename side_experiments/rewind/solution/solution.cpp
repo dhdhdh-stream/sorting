@@ -152,6 +152,31 @@ void Solution::load(ifstream& input_file) {
 	}
 }
 
+double Solution::calc_decision_cost() {
+	double sum_cost = 0.0;
+	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
+		for (map<int, AbstractNode*>::iterator it = this->scopes[s_index]->nodes.begin();
+				it != this->scopes[s_index]->nodes.end(); it++) {
+			if (it->second->type == NODE_TYPE_BRANCH) {
+				BranchNode* branch_node = (BranchNode*)it->second;
+
+				double weight = (double)branch_node->original_count
+					/ (double)(branch_node->original_count + branch_node->branch_count);
+				if (weight > 0.5) {
+					weight = 1.0 - weight;
+				}
+
+				sum_cost += weight * (branch_node->original_count + branch_node->branch_count);
+
+				branch_node->original_count = 0;
+				branch_node->branch_count = 0;
+			}
+		}
+	}
+
+	return sum_cost;
+}
+
 #if defined(MDEBUG) && MDEBUG
 void Solution::clear_verify() {
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {

@@ -62,6 +62,8 @@ public:
 	void init(ProblemType* problem_type);
 	void load(std::ifstream& input_file);
 
+	double calc_decision_cost();
+
 	#if defined(MDEBUG) && MDEBUG
 	void clear_verify();
 	#endif /* MDEBUG */
