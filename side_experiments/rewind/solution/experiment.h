@@ -66,6 +66,9 @@ public:
 	int original_count;
 	int branch_count;
 
+	// - not that impactful?
+	double new_decision_cost;
+
 	double improvement;
 
 	#if defined(MDEBUG) && MDEBUG

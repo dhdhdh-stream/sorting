@@ -20,8 +20,6 @@ const int TRAIN_EXISTING_NUM_DATAPOINTS = 800;
 #endif /* MDEBUG */
 
 void Experiment::train_existing_check_activate(SolutionWrapper* wrapper) {
-	wrapper->measure_decisions = true;
-
 	ExperimentState* new_experiment_state = new ExperimentState(this);
 	new_experiment_state->step_index = 0;
 	wrapper->experiment_context.back() = new_experiment_state;
@@ -39,6 +37,8 @@ void Experiment::train_existing_step(vector<double>& obs,
 
 void Experiment::train_existing_backprop(double target_val,
 										 SolutionWrapper* wrapper) {
+	this->total_count++;
+
 	ExperimentHistory* history = (ExperimentHistory*)wrapper->experiment_history;
 
 	if (history->is_hit) {
@@ -48,14 +48,13 @@ void Experiment::train_existing_backprop(double target_val,
 		while (this->existing_true_histories.size() < this->existing_obs_histories.size()) {
 			this->existing_true_histories.push_back(target_val);
 		}
-
-		wrapper->measure_decisions = false;
 	}
 
 	if (this->hit_count >= TRAIN_EXISTING_NUM_DATAPOINTS) {
 		this->existing_true = this->sum_true / this->hit_count;
 
 		this->existing_decision_cost = wrapper->solution->calc_decision_cost();
+		this->existing_decision_cost /= this->total_count;
 
 		uniform_int_distribution<int> val_input_distribution(0, this->existing_obs_histories.size()-1);
 

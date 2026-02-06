@@ -21,12 +21,17 @@ OverwhelmingNoise::OverwhelmingNoise() {
 
 	this->score = 0.0;
 
-	uniform_int_distribution<int> noise_distribution(-1000, 1000);
+	uniform_int_distribution<int> noise_distribution(-100, 100);
 	this->noise = noise_distribution(generator);
 }
 
 vector<double> OverwhelmingNoise::get_observations() {
-	return this->curr_obs;
+	vector<double> obs;
+
+	obs = this->curr_obs;
+	obs.push_back(this->score);
+
+	return obs;
 }
 
 void OverwhelmingNoise::perform_action(int action) {
@@ -84,7 +89,7 @@ Problem* TypeOverwhelmingNoise::get_problem() {
 }
 
 int TypeOverwhelmingNoise::num_obs() {
-	return NUM_OBS;
+	return NUM_OBS + 1;
 }
 
 int TypeOverwhelmingNoise::num_possible_actions() {

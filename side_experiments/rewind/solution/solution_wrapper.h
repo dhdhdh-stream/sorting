@@ -36,8 +36,6 @@ public:
 
 	AbstractExperimentHistory* experiment_history;
 
-	bool measure_decisions;
-
 	Problem* problem;
 
 	#if defined(MDEBUG) && MDEBUG

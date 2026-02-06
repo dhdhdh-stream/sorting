@@ -97,5 +97,7 @@ void create_experiment(ScopeHistory* scope_history,
 			explore_node,
 			explore_is_branch);
 		wrapper->curr_experiment = new_experiment;
+
+		wrapper->solution->calc_decision_cost();	// clear
 	}
 }

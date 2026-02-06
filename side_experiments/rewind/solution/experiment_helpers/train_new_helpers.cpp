@@ -24,7 +24,8 @@ const int TRAIN_NEW_NUM_DATAPOINTS = 1000;
 #endif /* MDEBUG */
 const double VALIDATION_RATIO = 0.2;
 
-const double MIN_POSITIVE_RATIO = 0.05;
+// const double MIN_POSITIVE_RATIO = 0.05;
+const double MIN_POSITIVE_RATIO = 0.1;
 
 void Experiment::train_new_check_activate(
 		SolutionWrapper* wrapper) {
@@ -175,12 +176,13 @@ void binarize_with_leeway(vector<vector<double>>& train_obs_histories,
 	vector<bool> binary_train_targets;
 
 	sort(positive_samples.begin(), positive_samples.end());
-	for (int h_index = (int)positive_samples.size() / 2; h_index < (int)positive_samples.size(); h_index++) {
+	// for (int h_index = (int)positive_samples.size() / 2; h_index < (int)positive_samples.size(); h_index++) {
+	for (int h_index = (int)positive_samples.size() * 3/4; h_index < (int)positive_samples.size(); h_index++) {
 		binary_train_obs.push_back(train_obs_histories[positive_samples[h_index].second]);
 		binary_train_targets.push_back(true);
 	}
 	sort(negative_samples.begin(), negative_samples.end());
-	for (int h_index = 0; h_index < (int)negative_samples.size() / 2; h_index++) {
+	for (int h_index = 0; h_index < (int)negative_samples.size() / 4; h_index++) {
 		binary_train_obs.push_back(train_obs_histories[negative_samples[h_index].second]);
 		binary_train_targets.push_back(false);
 	}
@@ -238,14 +240,14 @@ void Experiment::train_new_backprop(
 		SolutionWrapper* wrapper) {
 	ExperimentHistory* history = (ExperimentHistory*)wrapper->experiment_history;
 	if (history->is_hit) {
-		for (int i_index = 0; i_index < (int)history->existing_predicted_trues.size(); i_index++) {
-			this->new_true_histories.push_back(target_val - history->existing_predicted_trues[i_index]);
-		}
-
-		// double existing_result = get_existing_result(wrapper);
 		// for (int i_index = 0; i_index < (int)history->existing_predicted_trues.size(); i_index++) {
-		// 	this->new_true_histories.push_back(target_val - existing_result);
+		// 	this->new_true_histories.push_back(target_val - history->existing_predicted_trues[i_index]);
 		// }
+
+		double existing_result = get_existing_result(wrapper);
+		for (int i_index = 0; i_index < (int)history->existing_predicted_trues.size(); i_index++) {
+			this->new_true_histories.push_back(target_val - existing_result);
+		}
 
 		this->state_iter++;
 		if (this->state_iter >= TRAIN_NEW_NUM_DATAPOINTS
@@ -313,20 +315,33 @@ void Experiment::train_new_backprop(
 				// 		 sum_vals,
 				// 		 this->new_true_network,
 				// 		 this->is_binarize);
-				binarize_with_leeway(train_obs_histories,
-									 train_true_histories,
-									 train_true_network_vals,
-									 validation_obs_histories,
-									 validation_true_histories,
-									 sum_vals,
-									 this->new_true_network,
-									 this->is_binarize);
+				// binarize_with_leeway(train_obs_histories,
+				// 					 train_true_histories,
+				// 					 train_true_network_vals,
+				// 					 validation_obs_histories,
+				// 					 validation_true_histories,
+				// 					 sum_vals,
+				// 					 this->new_true_network,
+				// 					 this->is_binarize);
+				this->is_binarize = false;
 
 				this->sum_true = 0.0;
 				this->hit_count = 0;
 
 				this->total_count = 0;
 				this->total_sum_scores = 0.0;
+
+				wrapper->solution->calc_decision_cost();	// clear
+				if (this->best_new_scope != NULL) {
+					for (map<int, AbstractNode*>::iterator it = this->best_new_scope->nodes.begin();
+							it != this->best_new_scope->nodes.end(); it++) {
+						if (it->second->type == NODE_TYPE_BRANCH) {
+							BranchNode* branch_node = (BranchNode*)it->second;
+							branch_node->original_count = 0;
+							branch_node->branch_count = 0;
+						}
+					}
+				}
 
 				this->original_count = 0;
 				this->branch_count = 0;

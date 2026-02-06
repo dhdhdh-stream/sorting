@@ -159,17 +159,18 @@ double Solution::calc_decision_cost() {
 				it != this->scopes[s_index]->nodes.end(); it++) {
 			if (it->second->type == NODE_TYPE_BRANCH) {
 				BranchNode* branch_node = (BranchNode*)it->second;
+				if (branch_node->original_count + branch_node->branch_count > 0) {
+					double weight = (double)branch_node->original_count
+						/ (double)(branch_node->original_count + branch_node->branch_count);
+					if (weight > 0.5) {
+						weight = 1.0 - weight;
+					}
 
-				double weight = (double)branch_node->original_count
-					/ (double)(branch_node->original_count + branch_node->branch_count);
-				if (weight > 0.5) {
-					weight = 1.0 - weight;
+					sum_cost += weight * (branch_node->original_count + branch_node->branch_count);
+
+					branch_node->original_count = 0;
+					branch_node->branch_count = 0;
 				}
-
-				sum_cost += weight * (branch_node->original_count + branch_node->branch_count);
-
-				branch_node->original_count = 0;
-				branch_node->branch_count = 0;
 			}
 		}
 	}

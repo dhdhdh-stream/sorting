@@ -47,6 +47,9 @@ void Experiment::add(SolutionWrapper* wrapper) {
 
 	ss << "this->improvement: " << this->improvement << "; ";
 
+	ss << "this->existing_decision_cost: " << this->existing_decision_cost << "; ";
+	ss << "this->new_decision_cost: " << this->new_decision_cost << "; ";
+
 	wrapper->solution->improvement_history.push_back(calc_new_score());
 	wrapper->solution->change_history.push_back(ss.str());
 

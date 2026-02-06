@@ -20,8 +20,6 @@ using namespace std;
 
 void Experiment::measure_check_activate(
 		SolutionWrapper* wrapper) {
-	wrapper->measure_decisions = true;
-
 	ExperimentState* new_experiment_state = new ExperimentState(this);
 	new_experiment_state->step_index = 0;
 	wrapper->experiment_context.back() = new_experiment_state;
@@ -114,15 +112,18 @@ void Experiment::measure_backprop(double target_val,
 		this->sum_true += target_val;
 		this->hit_count++;
 
-		wrapper->measure_decisions = false;
+		// double existing_result = get_existing_result(wrapper);
+		// this->sum_true += target_val - existing_result;
+		// this->hit_count++;
 	}
 
 	if (this->hit_count >= MEASURE_ITERS) {
 		double new_true = this->sum_true / this->hit_count;
 		double average_hits_per_run = (double)this->hit_count / (double)this->total_count;
 		this->improvement = average_hits_per_run * (new_true - this->existing_true);
+		// this->improvement = average_hits_per_run * new_true;
 
-		double new_decision_cost = wrapper->solution->calc_decision_cost();
+		this->new_decision_cost = wrapper->solution->calc_decision_cost();
 		{
 			double weight = (double)this->original_count
 				/ (double)(this->original_count + this->branch_count);
@@ -130,10 +131,30 @@ void Experiment::measure_backprop(double target_val,
 				weight = 1.0 - weight;
 			}
 
-			new_decision_cost += weight * (this->original_count + this->branch_count);
+			this->new_decision_cost += weight * (this->original_count + this->branch_count);
+
+			if (this->best_new_scope != NULL) {
+				for (map<int, AbstractNode*>::iterator it = this->best_new_scope->nodes.begin();
+						it != this->best_new_scope->nodes.end(); it++) {
+					if (it->second->type == NODE_TYPE_BRANCH) {
+						BranchNode* branch_node = (BranchNode*)it->second;
+						if (branch_node->original_count + branch_node->branch_count > 0) {
+							double weight = (double)branch_node->original_count
+								/ (double)(branch_node->original_count + branch_node->branch_count);
+							if (weight > 0.5) {
+								weight = 1.0 - weight;
+							}
+
+							this->new_decision_cost += weight * (branch_node->original_count + branch_node->branch_count);
+
+							branch_node->original_count = 0;
+							branch_node->branch_count = 0;
+						}
+					}
+				}
+			}
 		}
-		cout << "this->existing_decision_cost: " << this->existing_decision_cost << endl;
-		cout << "new_decision_cost: " << new_decision_cost << endl;
+		this->new_decision_cost /= this->total_count;
 
 		bool is_success = false;
 		if (this->improvement >= 0.0) {
@@ -165,6 +186,10 @@ void Experiment::measure_backprop(double target_val,
 			} else {
 				wrapper->solution->last_experiment_scores.push_back(improvement);
 			}
+
+			// if (this->new_decision_cost < this->existing_decision_cost) {
+			// 	is_success = true;
+			// }
 		}
 
 		#if defined(MDEBUG) && MDEBUG
@@ -193,6 +218,9 @@ void Experiment::measure_backprop(double target_val,
 
 			cout << "average_hits_per_run: " << average_hits_per_run << endl;
 			cout << "this->improvement: " << this->improvement << endl;
+
+			cout << "this->existing_decision_cost: " << this->existing_decision_cost << endl;
+			cout << "this->new_decision_cost: " << this->new_decision_cost << endl;
 
 			cout << endl;
 
