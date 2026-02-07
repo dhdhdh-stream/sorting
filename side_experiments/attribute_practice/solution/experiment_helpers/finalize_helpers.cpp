@@ -47,6 +47,41 @@ void Experiment::add(SolutionWrapper* wrapper) {
 
 	ss << "this->improvement: " << this->improvement << "; ";
 
+	// // temp
+	// for (int i_index = 0; i_index < (int)this->existing_pre_obs.size(); i_index++) {
+	// 	cout << "this->existing_pre_obs:" << endl;
+	// 	for (int x_index = 0; x_index < 5; x_index++) {
+	// 		for (int y_index = 0; y_index < 5; y_index++) {
+	// 			cout << this->existing_pre_obs[i_index][5 * y_index + x_index] << " ";
+	// 		}
+	// 		cout << endl;
+	// 	}
+	// 	cout << "this->existing_post_obs:" << endl;
+	// 	for (int x_index = 0; x_index < 5; x_index++) {
+	// 		for (int y_index = 0; y_index < 5; y_index++) {
+	// 			cout << this->existing_post_obs[i_index][5 * y_index + x_index] << " ";
+	// 		}
+	// 		cout << endl;
+	// 	}
+	// 	cout << "this->existing_signal_vals[i_index]: " << this->existing_signal_vals[i_index] << endl;
+
+	// 	cout << "this->new_pre_obs:" << endl;
+	// 	for (int x_index = 0; x_index < 5; x_index++) {
+	// 		for (int y_index = 0; y_index < 5; y_index++) {
+	// 			cout << this->new_pre_obs[i_index][5 * y_index + x_index] << " ";
+	// 		}
+	// 		cout << endl;
+	// 	}
+	// 	cout << "this->new_post_obs:" << endl;
+	// 	for (int x_index = 0; x_index < 5; x_index++) {
+	// 		for (int y_index = 0; y_index < 5; y_index++) {
+	// 			cout << this->new_post_obs[i_index][5 * y_index + x_index] << " ";
+	// 		}
+	// 		cout << endl;
+	// 	}
+	// 	cout << "this->new_signal_vals[i_index]: " << this->new_signal_vals[i_index] << endl;
+	// }
+
 	wrapper->solution->improvement_history.push_back(calc_new_score());
 	wrapper->solution->change_history.push_back(ss.str());
 

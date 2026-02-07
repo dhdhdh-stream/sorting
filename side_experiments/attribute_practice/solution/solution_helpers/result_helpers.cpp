@@ -52,8 +52,15 @@ void get_existing_result(SolutionWrapper* wrapper) {
 				scope_history->post_obs_history = obs;
 
 				for (int i_index = 0; i_index < (int)scope_history->experiment_callback_histories.size(); i_index++) {
+					vector<double> input;
+					input.insert(input.end(), scope_history->pre_obs_history.begin(), scope_history->pre_obs_history.end());
+					input.insert(input.end(), scope_history->post_obs_history.begin(), scope_history->post_obs_history.end());
+
+					Scope* scope = scope_history->scope;
+
 					wrapper->curr_experiment->existing_pre_obs.push_back(scope_history->pre_obs_history);
 					wrapper->curr_experiment->existing_post_obs.push_back(scope_history->post_obs_history);
+					wrapper->curr_experiment->existing_signal_vals.push_back(scope->signal->activate(input));
 				}
 
 				if (wrapper->result_scope_histories.size() == 1) {

@@ -13,6 +13,7 @@
 #include "solution.h"
 #include "solution_helpers.h"
 #include "solution_wrapper.h"
+#include "sum_tree.h"
 #include "start_node.h"
 #include "utilities.h"
 
@@ -63,7 +64,7 @@ void Experiment::measure_step(vector<double>& obs,
 			wrapper->experiment_context.back() = NULL;
 			return;
 		} else {
-			if (this->signal_depth != -1 && this->hit_count < 10) {
+			if (this->signal_depth != -1 && this->existing_pre_obs.size() < 20) {
 				ExperimentHistory* history = (ExperimentHistory*)wrapper->experiment_history;
 
 				history->stack_traces.push_back(wrapper->scope_histories);
@@ -217,8 +218,15 @@ void Experiment::measure_backprop(double target_val,
 				scope_history = history->stack_traces[i_index][index];
 			}
 
+			vector<double> input;
+			input.insert(input.end(), scope_history->pre_obs_history.begin(), scope_history->pre_obs_history.end());
+			input.insert(input.end(), scope_history->post_obs_history.begin(), scope_history->post_obs_history.end());
+
+			Scope* scope = scope_history->scope;
+
 			this->new_pre_obs.push_back(scope_history->pre_obs_history);
 			this->new_post_obs.push_back(scope_history->post_obs_history);
+			this->new_signal_vals.push_back(scope->signal->activate(input));
 		}
 	}
 

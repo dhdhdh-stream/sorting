@@ -1,8 +1,7 @@
-// - maybe just take average of a bunch of signals?
-//   - then when situation is good, will try to keep going?
-//   - when situation is bad, will try to end quick?
-//   - but important signals can be averaged out?
-// TODO: try with both averaging and solo
+// TODO: experiment with how good if can see whole board initially
+
+// TODO: don't train just against true
+// - train against the average of all upper layers
 
 #include <chrono>
 #include <iostream>

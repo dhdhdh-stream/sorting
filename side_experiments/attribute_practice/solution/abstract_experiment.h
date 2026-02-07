@@ -33,8 +33,10 @@ public:
 
 	std::vector<std::vector<double>> existing_pre_obs;
 	std::vector<std::vector<double>> existing_post_obs;
+	std::vector<double> existing_signal_vals;
 	std::vector<std::vector<double>> new_pre_obs;
 	std::vector<std::vector<double>> new_post_obs;
+	std::vector<double> new_signal_vals;
 
 	virtual ~AbstractExperiment() {};
 

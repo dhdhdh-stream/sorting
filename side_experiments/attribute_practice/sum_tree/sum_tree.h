@@ -9,6 +9,9 @@
  * - only gather 1 sample per run(?)
  */
 
+// - linear just too poor at making comparisons/checks
+// - allow all previous vals to be selected as inputs?
+
 #ifndef SUM_TREE_H
 #define SUM_TREE_H
 
