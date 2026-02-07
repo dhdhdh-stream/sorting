@@ -12,11 +12,12 @@ double SumTree::activate(vector<double>& obs) {
 	}
 
 	SumTreeNode* curr_node = this->root;
-	double sum_vals = 0.0;
+	double previous_val = 0.0;
 	while (true) {
-		sum_vals += curr_node->activate(obs);
-
 		if (curr_node->has_split) {
+			previous_val = curr_node->activate(obs,
+											   previous_val);
+
 			bool is_branch = is_match_helper(obs,
 											 curr_node->obs_index,
 											 curr_node->rel_obs_index,
@@ -29,7 +30,8 @@ double SumTree::activate(vector<double>& obs) {
 				curr_node = curr_node->original_node;
 			}
 		} else {
-			return sum_vals;
+			return curr_node->activate(obs,
+									   previous_val);
 		}
 	}
 
@@ -57,10 +59,11 @@ void SumTree::backprop(vector<double>& obs,
 		}
 	} else {
 		SumTreeNode* curr_node = this->root;
-		double sum_vals = 0.0;
+		double previous_val = 0.0;
 		while (true) {
 			if (curr_node->has_split) {
-				sum_vals += curr_node->activate(obs);
+				previous_val = curr_node->activate(obs,
+												   previous_val);
 
 				bool is_branch = is_match_helper(obs,
 												 curr_node->obs_index,
@@ -75,7 +78,8 @@ void SumTree::backprop(vector<double>& obs,
 				}
 			} else {
 				curr_node->obs_histories.push_back(obs);
-				curr_node->target_val_histories.push_back(target_val - sum_vals);
+				curr_node->previous_val_histories.push_back(previous_val);
+				curr_node->target_val_histories.push_back(target_val);
 				if (curr_node->obs_histories.size() >= ST_NUM_TOTAL_SAMPLES) {
 					update_helper(curr_node);
 				}

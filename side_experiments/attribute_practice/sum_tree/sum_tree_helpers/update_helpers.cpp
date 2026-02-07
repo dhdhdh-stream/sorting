@@ -22,21 +22,23 @@ const int NUM_PRE_FILTER = 20;
 const int NUM_TRAIN_TRIES = 20;
 
 void SumTree::update_helper(SumTreeNode* node) {
-	vector<double> existing_predicted(ST_NUM_TEST_SAMPLES);
-	for (int h_index = 0; h_index < ST_NUM_TEST_SAMPLES; h_index++) {
+	vector<double> existing_predicted(node->obs_histories.size());
+	for (int h_index = 0; h_index < (int)node->obs_histories.size(); h_index++) {
 		double sum_vals = node->constant;
 		for (int i_index = 0; i_index < (int)node->input_indexes.size(); i_index++) {
-			sum_vals += node->input_weights[i_index] * node->obs_histories[ST_NUM_TRAIN_SAMPLES + h_index][node->input_indexes[i_index]];
+			sum_vals += node->input_weights[i_index] * node->obs_histories[h_index][node->input_indexes[i_index]];
 		}
+		sum_vals += node->previous_weight * node->previous_val_histories[h_index];
 
 		existing_predicted[h_index] = sum_vals;
 	}
 
 	double new_default_constant;
 	vector<double> new_default_input_weights;
+	double new_default_previous_weight;
 	double new_default_improvement = 0.0;
 	{
-		Eigen::MatrixXd inputs(ST_NUM_TRAIN_SAMPLES, 1 + node->input_indexes.size());
+		Eigen::MatrixXd inputs(ST_NUM_TRAIN_SAMPLES, 1 + node->input_indexes.size() + 1);
 		uniform_real_distribution<double> noise_distribution(-0.001, 0.001);
 		/**
 		 * - add some noise to prevent extremes
@@ -46,6 +48,7 @@ void SumTree::update_helper(SumTreeNode* node) {
 			for (int i_index = 0; i_index < (int)node->input_indexes.size(); i_index++) {
 				inputs(h_index, 1 + i_index) = node->obs_histories[h_index][node->input_indexes[i_index]];
 			}
+			inputs(h_index, 1 + node->input_indexes.size()) = node->previous_val_histories[h_index];
 		}
 
 		Eigen::VectorXd outputs(ST_NUM_TRAIN_SAMPLES);
@@ -77,6 +80,10 @@ void SumTree::update_helper(SumTreeNode* node) {
 					limit_exceeded = true;
 				}
 			}
+			if (abs(weights(1 + node->input_indexes.size())) > REGRESSION_WEIGHT_LIMIT) {
+				cout << "abs(weights(1 + node->input_indexes.size())): " << abs(weights(1 + node->input_indexes.size())) << endl;
+				limit_exceeded = true;
+			}
 		}
 		#endif /* MDEBUG */
 
@@ -86,17 +93,19 @@ void SumTree::update_helper(SumTreeNode* node) {
 			for (int i_index = 0; i_index < (int)node->input_indexes.size(); i_index++) {
 				new_default_input_weights[i_index] = weights(1 + i_index);
 			}
+			new_default_previous_weight = weights(1 + node->input_indexes.size());
 
 			for (int h_index = 0; h_index < ST_NUM_TEST_SAMPLES; h_index++) {
 				double sum_vals = new_default_constant;
 				for (int i_index = 0; i_index < (int)node->input_indexes.size(); i_index++) {
 					sum_vals += new_default_input_weights[i_index] * node->obs_histories[ST_NUM_TRAIN_SAMPLES + h_index][node->input_indexes[i_index]];
 				}
+				sum_vals += new_default_previous_weight * node->previous_val_histories[ST_NUM_TRAIN_SAMPLES + h_index];
 
 				double new_misguess = (node->target_val_histories[ST_NUM_TRAIN_SAMPLES + h_index] - sum_vals)
 					* (node->target_val_histories[ST_NUM_TRAIN_SAMPLES + h_index] - sum_vals);
-				double existing_misguess = (node->target_val_histories[ST_NUM_TRAIN_SAMPLES + h_index] - existing_predicted[h_index])
-					* (node->target_val_histories[ST_NUM_TRAIN_SAMPLES + h_index] - existing_predicted[h_index]);
+				double existing_misguess = (node->target_val_histories[ST_NUM_TRAIN_SAMPLES + h_index] - existing_predicted[ST_NUM_TRAIN_SAMPLES + h_index])
+					* (node->target_val_histories[ST_NUM_TRAIN_SAMPLES + h_index] - existing_predicted[ST_NUM_TRAIN_SAMPLES + h_index]);
 
 				new_default_improvement += (existing_misguess - new_misguess);
 			}
@@ -106,17 +115,8 @@ void SumTree::update_helper(SumTreeNode* node) {
 	if (new_default_improvement > 0.0) {
 		node->constant = new_default_constant;
 		node->input_weights = new_default_input_weights;
+		node->previous_weight = new_default_previous_weight;
 	} else {
-		vector<double> remaining_vals(ST_NUM_TRAIN_SAMPLES);
-		for (int h_index = 0; h_index < ST_NUM_TRAIN_SAMPLES; h_index++) {
-			double sum_vals = node->constant;
-			for (int i_index = 0; i_index < (int)node->input_indexes.size(); i_index++) {
-				sum_vals += node->input_weights[i_index] * node->obs_histories[h_index][node->input_indexes[i_index]];
-			}
-
-			remaining_vals[h_index] = node->target_val_histories[h_index] - sum_vals;
-		}
-
 		int best_obs_index;
 		int best_rel_obs_index;
 		int best_split_type;
@@ -126,10 +126,12 @@ void SumTree::update_helper(SumTreeNode* node) {
 		double best_match_constant;
 		vector<int> best_match_input_indexes;
 		vector<double> best_match_input_weights;
+		double best_match_previous_weight;
 
 		double best_non_match_constant;
 		vector<int> best_non_match_input_indexes;
 		vector<double> best_non_match_input_weights;
+		double best_non_match_previous_weight;
 
 		double best_improvement = 0.0;
 
@@ -143,8 +145,10 @@ void SumTree::update_helper(SumTreeNode* node) {
 			double best_potential_split_range;
 
 			vector<vector<double>> best_match_obs;
+			vector<double> best_match_previous_vals;
 			vector<double> best_match_target_vals;
 			vector<vector<double>> best_non_match_obs;
+			vector<double> best_non_match_previous_vals;
 			vector<double> best_non_match_target_vals;
 
 			double best_diff = 0.0;
@@ -225,8 +229,10 @@ void SumTree::update_helper(SumTreeNode* node) {
 				}
 
 				vector<vector<double>> match_obs;
+				vector<double> match_previous_vals;
 				vector<double> match_target_vals;
 				vector<vector<double>> non_match_obs;
+				vector<double> non_match_previous_vals;
 				vector<double> non_match_target_vals;
 				for (int h_index = 0; h_index < ST_NUM_TRAIN_SAMPLES; h_index++) {
 					bool is_match = is_match_helper(node->obs_histories[h_index],
@@ -238,10 +244,12 @@ void SumTree::update_helper(SumTreeNode* node) {
 
 					if (is_match) {
 						match_obs.push_back(node->obs_histories[h_index]);
-						match_target_vals.push_back(remaining_vals[h_index]);
+						match_previous_vals.push_back(existing_predicted[h_index]);
+						match_target_vals.push_back(node->target_val_histories[h_index]);
 					} else {
 						non_match_obs.push_back(node->obs_histories[h_index]);
-						non_match_target_vals.push_back(remaining_vals[h_index]);
+						non_match_previous_vals.push_back(existing_predicted[h_index]);
+						non_match_target_vals.push_back(node->target_val_histories[h_index]);
 					}
 				}
 
@@ -272,8 +280,10 @@ void SumTree::update_helper(SumTreeNode* node) {
 					best_potential_split_range = potential_split_range;
 
 					best_match_obs = match_obs;
+					best_match_previous_vals = match_previous_vals;
 					best_match_target_vals = match_target_vals;
 					best_non_match_obs = non_match_obs;
+					best_non_match_previous_vals = non_match_previous_vals;
 					best_non_match_target_vals = non_match_target_vals;
 
 					best_diff = curr_diff;
@@ -288,6 +298,7 @@ void SumTree::update_helper(SumTreeNode* node) {
 			double best_potential_match_constant;
 			vector<int> best_potential_match_input_indexes;
 			vector<double> best_potential_match_input_weights;
+			double best_potential_match_previous_weight;
 
 			double best_potential_match_improvement = 0.0;
 
@@ -315,7 +326,7 @@ void SumTree::update_helper(SumTreeNode* node) {
 					}
 				}
 
-				Eigen::MatrixXd inputs(best_match_obs.size(), 1 + curr_input_indexes.size());
+				Eigen::MatrixXd inputs(best_match_obs.size(), 1 + curr_input_indexes.size() + 1);
 				uniform_real_distribution<double> noise_distribution(-0.001, 0.001);
 				/**
 				 * - add some noise to prevent extremes
@@ -325,6 +336,7 @@ void SumTree::update_helper(SumTreeNode* node) {
 					for (int i_index = 0; i_index < (int)curr_input_indexes.size(); i_index++) {
 						inputs(h_index, 1 + i_index) = best_match_obs[h_index][curr_input_indexes[i_index]];
 					}
+					inputs(h_index, 1 + curr_input_indexes.size()) = best_match_previous_vals[h_index];
 				}
 
 				Eigen::VectorXd outputs(best_match_obs.size());
@@ -353,6 +365,10 @@ void SumTree::update_helper(SumTreeNode* node) {
 						limit_exceeded = true;
 					}
 				}
+				if (abs(weights(1 + curr_input_indexes.size())) > REGRESSION_WEIGHT_LIMIT) {
+					cout << "abs(weights(1 + curr_input_indexes.size())): " << abs(weights(1 + curr_input_indexes.size())) << endl;
+					limit_exceeded = true;
+				}
 				if (limit_exceeded) {
 					continue;
 				}
@@ -363,6 +379,7 @@ void SumTree::update_helper(SumTreeNode* node) {
 				for (int i_index = 0; i_index < (int)curr_input_indexes.size(); i_index++) {
 					curr_input_weights[i_index] = weights(1 + i_index);
 				}
+				double curr_previous_weight = weights(1 + curr_input_indexes.size());
 
 				double potential_improvement = 0.0;
 				for (int h_index = 0; h_index < ST_NUM_TEST_SAMPLES; h_index++) {
@@ -374,15 +391,16 @@ void SumTree::update_helper(SumTreeNode* node) {
 													best_potential_split_range);
 
 					if (is_match) {
-						double sum_vals = existing_predicted[h_index] + curr_constant;
+						double sum_vals = curr_constant;
 						for (int i_index = 0; i_index < (int)curr_input_indexes.size(); i_index++) {
 							sum_vals += curr_input_weights[i_index] * node->obs_histories[ST_NUM_TRAIN_SAMPLES + h_index][curr_input_indexes[i_index]];
 						}
+						sum_vals += curr_previous_weight * existing_predicted[ST_NUM_TRAIN_SAMPLES + h_index];
 
 						double new_misguess = (node->target_val_histories[ST_NUM_TRAIN_SAMPLES + h_index] - sum_vals)
 							* (node->target_val_histories[ST_NUM_TRAIN_SAMPLES + h_index] - sum_vals);
-						double existing_misguess = (node->target_val_histories[ST_NUM_TRAIN_SAMPLES + h_index] - existing_predicted[h_index])
-							* (node->target_val_histories[ST_NUM_TRAIN_SAMPLES + h_index] - existing_predicted[h_index]);
+						double existing_misguess = (node->target_val_histories[ST_NUM_TRAIN_SAMPLES + h_index] - existing_predicted[ST_NUM_TRAIN_SAMPLES + h_index])
+							* (node->target_val_histories[ST_NUM_TRAIN_SAMPLES + h_index] - existing_predicted[ST_NUM_TRAIN_SAMPLES + h_index]);
 
 						potential_improvement += (existing_misguess - new_misguess);
 					}
@@ -392,6 +410,7 @@ void SumTree::update_helper(SumTreeNode* node) {
 					best_potential_match_constant = curr_constant;
 					best_potential_match_input_indexes = curr_input_indexes;
 					best_potential_match_input_weights = curr_input_weights;
+					best_potential_match_previous_weight = curr_previous_weight;
 
 					best_potential_match_improvement = potential_improvement;
 				}
@@ -400,6 +419,7 @@ void SumTree::update_helper(SumTreeNode* node) {
 			double best_potential_non_match_constant;
 			vector<int> best_potential_non_match_input_indexes;
 			vector<double> best_potential_non_match_input_weights;
+			double best_potential_non_match_previous_weight;
 
 			double best_potential_non_match_improvement = 0.0;
 
@@ -427,7 +447,7 @@ void SumTree::update_helper(SumTreeNode* node) {
 					}
 				}
 
-				Eigen::MatrixXd inputs(best_non_match_obs.size(), 1 + curr_input_indexes.size());
+				Eigen::MatrixXd inputs(best_non_match_obs.size(), 1 + curr_input_indexes.size() + 1);
 				uniform_real_distribution<double> noise_distribution(-0.001, 0.001);
 				/**
 				 * - add some noise to prevent extremes
@@ -437,6 +457,7 @@ void SumTree::update_helper(SumTreeNode* node) {
 					for (int i_index = 0; i_index < (int)curr_input_indexes.size(); i_index++) {
 						inputs(h_index, 1 + i_index) = best_non_match_obs[h_index][curr_input_indexes[i_index]];
 					}
+					inputs(h_index, 1 + curr_input_indexes.size()) = best_non_match_previous_vals[h_index];
 				}
 
 				Eigen::VectorXd outputs(best_non_match_obs.size());
@@ -465,6 +486,10 @@ void SumTree::update_helper(SumTreeNode* node) {
 						limit_exceeded = true;
 					}
 				}
+				if (abs(weights(1 + curr_input_indexes.size())) > REGRESSION_WEIGHT_LIMIT) {
+					cout << "abs(weights(1 + curr_input_indexes.size())): " << abs(weights(1 + curr_input_indexes.size())) << endl;
+					limit_exceeded = true;
+				}
 				if (limit_exceeded) {
 					continue;
 				}
@@ -475,6 +500,7 @@ void SumTree::update_helper(SumTreeNode* node) {
 				for (int i_index = 0; i_index < (int)curr_input_indexes.size(); i_index++) {
 					curr_input_weights[i_index] = weights(1 + i_index);
 				}
+				double curr_previous_weight = weights(1 + curr_input_indexes.size());
 
 				double potential_improvement = 0.0;
 				for (int h_index = 0; h_index < ST_NUM_TEST_SAMPLES; h_index++) {
@@ -486,15 +512,16 @@ void SumTree::update_helper(SumTreeNode* node) {
 													best_potential_split_range);
 
 					if (!is_match) {
-						double sum_vals = existing_predicted[h_index] + curr_constant;
+						double sum_vals = curr_constant;
 						for (int i_index = 0; i_index < (int)curr_input_indexes.size(); i_index++) {
 							sum_vals += curr_input_weights[i_index] * node->obs_histories[ST_NUM_TRAIN_SAMPLES + h_index][curr_input_indexes[i_index]];
 						}
+						sum_vals += curr_previous_weight * existing_predicted[ST_NUM_TRAIN_SAMPLES + h_index];
 
 						double new_misguess = (node->target_val_histories[ST_NUM_TRAIN_SAMPLES + h_index] - sum_vals)
 							* (node->target_val_histories[ST_NUM_TRAIN_SAMPLES + h_index] - sum_vals);
-						double existing_misguess = (node->target_val_histories[ST_NUM_TRAIN_SAMPLES + h_index] - existing_predicted[h_index])
-							* (node->target_val_histories[ST_NUM_TRAIN_SAMPLES + h_index] - existing_predicted[h_index]);
+						double existing_misguess = (node->target_val_histories[ST_NUM_TRAIN_SAMPLES + h_index] - existing_predicted[ST_NUM_TRAIN_SAMPLES + h_index])
+							* (node->target_val_histories[ST_NUM_TRAIN_SAMPLES + h_index] - existing_predicted[ST_NUM_TRAIN_SAMPLES + h_index]);
 
 						potential_improvement += (existing_misguess - new_misguess);
 					}
@@ -504,6 +531,7 @@ void SumTree::update_helper(SumTreeNode* node) {
 					best_potential_non_match_constant = curr_constant;
 					best_potential_non_match_input_indexes = curr_input_indexes;
 					best_potential_non_match_input_weights = curr_input_weights;
+					best_potential_non_match_previous_weight = curr_previous_weight;
 
 					best_potential_non_match_improvement = potential_improvement;
 				}
@@ -521,10 +549,12 @@ void SumTree::update_helper(SumTreeNode* node) {
 				best_match_constant = best_potential_match_constant;
 				best_match_input_indexes = best_potential_match_input_indexes;
 				best_match_input_weights = best_potential_match_input_weights;
+				best_match_previous_weight = best_potential_match_previous_weight;
 
 				best_non_match_constant = best_potential_non_match_constant;
 				best_non_match_input_indexes = best_potential_non_match_input_indexes;
 				best_non_match_input_weights = best_potential_non_match_input_weights;
+				best_non_match_previous_weight = best_potential_non_match_previous_weight;
 
 				best_improvement = best_potential_match_improvement + best_potential_non_match_improvement;
 			}
@@ -539,6 +569,7 @@ void SumTree::update_helper(SumTreeNode* node) {
 			new_match_node->constant = best_match_constant;
 			new_match_node->input_indexes = best_match_input_indexes;
 			new_match_node->input_weights = best_match_input_weights;
+			new_match_node->previous_weight = best_match_previous_weight;
 
 			new_match_node->has_split = false;
 			new_match_node->obs_index = -1;
@@ -560,6 +591,7 @@ void SumTree::update_helper(SumTreeNode* node) {
 			new_non_match_node->constant = best_non_match_constant;
 			new_non_match_node->input_indexes = best_non_match_input_indexes;
 			new_non_match_node->input_weights = best_non_match_input_weights;
+			new_non_match_node->previous_weight = best_non_match_previous_weight;
 
 			new_non_match_node->has_split = false;
 			new_non_match_node->obs_index = -1;
@@ -588,6 +620,7 @@ void SumTree::update_helper(SumTreeNode* node) {
 	}
 
 	node->obs_histories.clear();
+	node->previous_val_histories.clear();
 	node->target_val_histories.clear();
 
 	measure_helper();

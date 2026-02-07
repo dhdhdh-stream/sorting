@@ -125,6 +125,7 @@ void SumTree::init_helper() {
 	new_node->constant = best_constant;
 	new_node->input_indexes = best_input_indexes;
 	new_node->input_weights = best_input_weights;
+	new_node->previous_weight = 0.0;
 
 	new_node->has_split = false;
 	new_node->obs_index = -1;

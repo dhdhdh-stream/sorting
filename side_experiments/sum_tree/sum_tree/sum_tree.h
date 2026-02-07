@@ -2,10 +2,11 @@
  * - only update/split leaves
  *   - otherwise, too easy to destroy progress/naunce
  *     - especially with noise
- */
-
-/**
- * TODO: only gather 1 sample per run(?)
+ * 
+ * - don't simply sum
+ *   - later won't be able to override early
+ * 
+ * - only gather 1 sample per run(?)
  */
 
 #ifndef SUM_TREE_H

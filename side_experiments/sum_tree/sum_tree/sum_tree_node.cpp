@@ -4,11 +4,13 @@
 
 using namespace std;
 
-double SumTreeNode::activate(std::vector<double>& obs) {
+double SumTreeNode::activate(std::vector<double>& obs,
+							 double previous_val) {
 	double sum_vals = this->constant;
 	for (int i_index = 0; i_index < (int)this->input_indexes.size(); i_index++) {
 		sum_vals += this->input_weights[i_index] * obs[this->input_indexes[i_index]];
 	}
+	sum_vals += this->previous_weight * previous_val;
 
 	return sum_vals;
 }
@@ -20,6 +22,7 @@ void SumTreeNode::save(ofstream& output_file) {
 		output_file << this->input_indexes[i_index] << endl;
 		output_file << this->input_weights[i_index] << endl;
 	}
+	output_file << this->previous_weight << endl;
 
 	output_file << this->has_split << endl;
 	output_file << this->obs_index << endl;
@@ -49,6 +52,10 @@ void SumTreeNode::load(ifstream& input_file) {
 		getline(input_file, weight_line);
 		this->input_weights.push_back(stod(weight_line));
 	}
+
+	string previous_weight_line;
+	getline(input_file, previous_weight_line);
+	this->previous_weight = stod(previous_weight_line);
 
 	string has_split_line;
 	getline(input_file, has_split_line);
@@ -100,6 +107,7 @@ void SumTreeNode::copy_from(SumTreeNode* original) {
 	this->constant = original->constant;
 	this->input_indexes = original->input_indexes;
 	this->input_weights = original->input_weights;
+	this->previous_weight = original->previous_weight;
 
 	this->has_split = original->has_split;
 	this->obs_index = original->obs_index;

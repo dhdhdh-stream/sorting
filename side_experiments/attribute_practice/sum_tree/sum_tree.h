@@ -3,6 +3,9 @@
  *   - otherwise, too easy to destroy progress/naunce
  *     - especially with noise
  * 
+ * - don't simply sum
+ *   - later won't be able to override early
+ * 
  * - only gather 1 sample per run(?)
  */
 

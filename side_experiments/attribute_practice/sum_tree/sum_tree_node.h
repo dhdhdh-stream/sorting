@@ -15,6 +15,7 @@ public:
 	double constant;
 	std::vector<int> input_indexes;
 	std::vector<double> input_weights;
+	double previous_weight;
 
 	bool has_split;
 	int obs_index;
@@ -29,9 +30,11 @@ public:
 	SumTreeNode* branch_node;
 
 	std::vector<std::vector<double>> obs_histories;
+	std::vector<double> previous_val_histories;
 	std::vector<double> target_val_histories;
 
-	double activate(std::vector<double>& obs);
+	double activate(std::vector<double>& obs,
+					double previous_val);
 
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file);
