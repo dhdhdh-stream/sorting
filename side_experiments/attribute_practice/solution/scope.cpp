@@ -6,18 +6,18 @@
 
 #include "action_node.h"
 #include "branch_node.h"
-#include "decision_tree.h"
 #include "globals.h"
 #include "network.h"
 #include "obs_node.h"
 #include "scope_node.h"
 #include "solution.h"
 #include "start_node.h"
+#include "sum_tree.h"
 
 using namespace std;
 
 Scope::Scope() {
-	this->signal = new DecisionTree();
+	this->signal = new SumTree();
 }
 
 Scope::~Scope() {

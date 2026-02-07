@@ -8,10 +8,10 @@
 class AbstractExperimentHistory;
 class AbstractNode;
 class AbstractNodeHistory;
-class DecisionTree;
 class Problem;
 class Solution;
 class SolutionWrapper;
+class SumTree;
 
 class ScopeHistory;
 class Scope {
@@ -31,7 +31,7 @@ public:
 	 *   - don't try to attribute impact to each part of solution
 	 *     - setup and actual execution equally responsible for success
 	 */
-	DecisionTree* signal;
+	SumTree* signal;
 
 	Scope();
 	~Scope();

@@ -31,6 +31,11 @@ public:
 
 	int result;
 
+	std::vector<std::vector<double>> existing_pre_obs;
+	std::vector<std::vector<double>> existing_post_obs;
+	std::vector<std::vector<double>> new_pre_obs;
+	std::vector<std::vector<double>> new_post_obs;
+
 	virtual ~AbstractExperiment() {};
 
 	virtual void check_activate(AbstractNode* experiment_node,
@@ -46,6 +51,15 @@ public:
 	virtual void experiment_exit_step(SolutionWrapper* wrapper) = 0;
 	virtual void backprop(double target_val,
 						  SolutionWrapper* wrapper) = 0;
+
+	virtual void result_check_activate(AbstractNode* experiment_node,
+									   bool is_branch,
+									   SolutionWrapper* wrapper) = 0;
+	virtual void result_experiment_step(std::vector<double>& obs,
+										int& action,
+										bool& is_next,
+										SolutionWrapper* wrapper) = 0;
+	virtual void result_experiment_exit_step(SolutionWrapper* wrapper) = 0;
 
 	virtual void clean() = 0;
 	virtual void add(SolutionWrapper* wrapper) = 0;

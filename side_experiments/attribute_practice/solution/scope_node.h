@@ -46,6 +46,12 @@ public:
 						 SolutionWrapper* wrapper);
 	void experiment_exit_step(SolutionWrapper* wrapper);
 
+	void result_step(std::vector<double>& obs,
+					 int& action,
+					 bool& is_next,
+					 SolutionWrapper* wrapper);
+	void result_exit_step(SolutionWrapper* wrapper);
+
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file,
 			  Solution* parent_solution);

@@ -62,6 +62,23 @@ void Experiment::measure_step(vector<double>& obs,
 			delete experiment_state;
 			wrapper->experiment_context.back() = NULL;
 			return;
+		} else {
+			if (this->signal_depth != -1 && this->hit_count < 10) {
+				ExperimentHistory* history = (ExperimentHistory*)wrapper->experiment_history;
+
+				history->stack_traces.push_back(wrapper->scope_histories);
+
+				get_existing_result_init(wrapper);
+
+				if (this->signal_depth >= (int)wrapper->result_scope_histories.size()) {
+					wrapper->result_scope_histories[0]->experiment_callback_histories.push_back(history);
+				} else {
+					int index = wrapper->result_scope_histories.size()-1 - this->signal_depth;
+					wrapper->result_scope_histories[index]->experiment_callback_histories.push_back(history);
+				}
+
+				get_existing_result(wrapper);
+			}
 		}
 	}
 
@@ -104,6 +121,82 @@ void Experiment::measure_exit_step(SolutionWrapper* wrapper) {
 	experiment_state->step_index++;
 }
 
+void Experiment::result_check_activate(AbstractNode* experiment_node,
+									   bool is_branch,
+									   SolutionWrapper* wrapper) {
+	if (is_branch == this->is_branch) {
+		ExperimentState* new_experiment_state = new ExperimentState(this);
+		new_experiment_state->step_index = 0;
+		wrapper->result_experiment_context.back() = new_experiment_state;
+	}
+}
+
+void Experiment::result_experiment_step(vector<double>& obs,
+										int& action,
+										bool& is_next,
+										SolutionWrapper* wrapper) {
+	ExperimentState* experiment_state = (ExperimentState*)wrapper->result_experiment_context.back();
+
+	if (experiment_state->step_index == 0) {
+		this->new_network->activate(obs);
+
+		bool is_branch;
+		#if defined(MDEBUG) && MDEBUG
+		if (wrapper->curr_run_seed%2 == 0) {
+			is_branch = true;
+		} else {
+			is_branch = false;
+		}
+		wrapper->curr_run_seed = xorshift(wrapper->curr_run_seed);
+		#else
+		if (this->new_network->output->acti_vals[0] >= 0.0) {
+			is_branch = true;
+		} else {
+			is_branch = false;
+		}
+		#endif /* MDEBUG */
+
+		if (!is_branch) {
+			delete experiment_state;
+			wrapper->result_experiment_context.back() = NULL;
+			return;
+		}
+	}
+
+	if (experiment_state->step_index >= (int)this->best_step_types.size()) {
+		wrapper->result_node_context.back() = this->best_exit_next_node;
+
+		delete experiment_state;
+		wrapper->result_experiment_context.back() = NULL;
+	} else {
+		if (this->best_step_types[experiment_state->step_index] == STEP_TYPE_ACTION) {
+			action = this->best_actions[experiment_state->step_index];
+			is_next = true;
+
+			wrapper->result_num_actions++;
+
+			experiment_state->step_index++;
+		} else {
+			ScopeHistory* inner_scope_history = new ScopeHistory(this->best_scopes[experiment_state->step_index]);
+			wrapper->result_scope_histories.push_back(inner_scope_history);
+			wrapper->result_node_context.push_back(this->best_scopes[experiment_state->step_index]->nodes[0]);
+			wrapper->result_experiment_context.push_back(NULL);
+		}
+	}
+}
+
+void Experiment::result_experiment_exit_step(SolutionWrapper* wrapper) {
+	ExperimentState* experiment_state = (ExperimentState*)wrapper->result_experiment_context[wrapper->result_experiment_context.size() - 2];
+
+	delete wrapper->result_scope_histories.back();
+
+	wrapper->result_scope_histories.pop_back();
+	wrapper->result_node_context.pop_back();
+	wrapper->result_experiment_context.pop_back();
+
+	experiment_state->step_index++;
+}
+
 void Experiment::measure_backprop(double target_val,
 								  SolutionWrapper* wrapper) {
 	this->total_count++;
@@ -114,6 +207,19 @@ void Experiment::measure_backprop(double target_val,
 	if (history->is_hit) {
 		this->sum_true += target_val;
 		this->hit_count++;
+
+		for (int i_index = 0; i_index < (int)history->stack_traces.size(); i_index++) {
+			ScopeHistory* scope_history;
+			if (this->signal_depth >= (int)history->stack_traces[i_index].size()) {
+				scope_history = history->stack_traces[i_index][0];
+			} else {
+				int index = history->stack_traces[i_index].size()-1 - this->signal_depth;
+				scope_history = history->stack_traces[i_index][index];
+			}
+
+			this->new_pre_obs.push_back(scope_history->pre_obs_history);
+			this->new_post_obs.push_back(scope_history->post_obs_history);
+		}
 	}
 
 	if (this->hit_count >= MEASURE_ITERS) {

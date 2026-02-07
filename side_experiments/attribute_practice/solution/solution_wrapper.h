@@ -44,6 +44,15 @@ public:
 
 	Problem* problem;
 
+	std::vector<ScopeHistory*> result_scope_histories;
+	std::vector<AbstractNode*> result_node_context;
+	std::vector<AbstractExperimentState*> result_experiment_context;
+
+	int result_num_actions;
+
+	double result_sum_signals;
+	int result_signal_count;
+
 	#if defined(MDEBUG) && MDEBUG
 	int run_index;
 	unsigned long starting_run_seed;
