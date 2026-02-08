@@ -1,10 +1,7 @@
 #include "decision_tree.h"
 
-#include <iostream>
-
-#include "eval_node.h"
+#include "decision_tree_node.h"
 #include "network.h"
-#include "split_node.h"
 
 using namespace std;
 
@@ -13,24 +10,27 @@ double DecisionTree::activate(vector<double>& obs) {
 		return 0.0;
 	}
 
-	AbstractDecisionTreeNode* curr_node = this->root;
+	DecisionTreeNode* curr_node = this->root;
+	double previous_val = 0.0;
 	while (true) {
-		if (curr_node->type == DECISION_TREE_NODE_TYPE_SPLIT) {
-			SplitNode* split_node = (SplitNode*)curr_node;
+		if (curr_node->has_split) {
+			previous_val = curr_node->activate(obs,
+											   previous_val);
+
 			bool is_branch = is_match_helper(obs,
-											 split_node->obs_index,
-											 split_node->rel_obs_index,
-											 split_node->split_type,
-											 split_node->split_target,
-											 split_node->split_range);
+											 curr_node->obs_index,
+											 curr_node->rel_obs_index,
+											 curr_node->split_type,
+											 curr_node->split_target,
+											 curr_node->split_range);
 			if (is_branch) {
-				curr_node = split_node->branch_node;
+				curr_node = curr_node->branch_node;
 			} else {
-				curr_node = split_node->original_node;
+				curr_node = curr_node->original_node;
 			}
 		} else {
-			EvalNode* eval_node = (EvalNode*)curr_node;
-			return eval_node->activate(obs);
+			return curr_node->activate(obs,
+									   previous_val);
 		}
 	}
 
@@ -57,28 +57,30 @@ void DecisionTree::backprop(vector<double>& obs,
 			init_helper();
 		}
 	} else {
-		AbstractDecisionTreeNode* curr_node = this->root;
+		DecisionTreeNode* curr_node = this->root;
+		double previous_val = 0.0;
 		while (true) {
-			if (curr_node->type == DECISION_TREE_NODE_TYPE_SPLIT) {
-				SplitNode* split_node = (SplitNode*)curr_node;
+			if (curr_node->has_split) {
+				previous_val = curr_node->activate(obs,
+												   previous_val);
+
 				bool is_branch = is_match_helper(obs,
-												 split_node->obs_index,
-												 split_node->rel_obs_index,
-												 split_node->split_type,
-												 split_node->split_target,
-												 split_node->split_range);
+												 curr_node->obs_index,
+												 curr_node->rel_obs_index,
+												 curr_node->split_type,
+												 curr_node->split_target,
+												 curr_node->split_range);
 				if (is_branch) {
-					curr_node = split_node->branch_node;
+					curr_node = curr_node->branch_node;
 				} else {
-					curr_node = split_node->original_node;
+					curr_node = curr_node->original_node;
 				}
 			} else {
-				EvalNode* eval_node = (EvalNode*)curr_node;
-
-				eval_node->obs_histories.push_back(obs);
-				eval_node->target_val_histories.push_back(target_val);
-				if (eval_node->obs_histories.size() >= DT_NUM_TOTAL_SAMPLES) {
-					update_helper(eval_node);
+				curr_node->obs_histories.push_back(obs);
+				curr_node->previous_val_histories.push_back(previous_val);
+				curr_node->target_val_histories.push_back(target_val);
+				if (curr_node->obs_histories.size() >= DT_NUM_TOTAL_SAMPLES) {
+					update_helper(curr_node);
 				}
 
 				break;
@@ -93,8 +95,6 @@ void DecisionTree::measure_helper() {
 		double predicted_val = activate(this->obs_histories[h_index]);
 		sum_misguess += (this->target_val_histories[h_index] - predicted_val) * (this->target_val_histories[h_index] - predicted_val);
 	}
-
-	cout << "sum_misguess: " << sum_misguess << endl;
 
 	this->improvement_history.push_back(sum_misguess / this->obs_histories.size());
 }

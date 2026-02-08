@@ -2,38 +2,33 @@
  * - only update/split leaves
  *   - otherwise, too easy to destroy progress/naunce
  *     - especially with noise
- * 
- * - don't simply sum
- *   - later won't be able to override early
- * 
- * - only gather 1 sample per run(?)
  */
 
-#ifndef SUM_TREE_H
-#define SUM_TREE_H
+#ifndef DECISION_TREE_H
+#define DECISION_TREE_H
 
 #include <fstream>
 #include <map>
 #include <utility>
 #include <vector>
 
-class SumTreeNode;
+class DecisionTreeNode;
 
 #if defined(MDEBUG) && MDEBUG
-const int ST_NUM_TRAIN_SAMPLES = 40;
-const int ST_NUM_TEST_SAMPLES = 10;
+const int DT_NUM_TRAIN_SAMPLES = 40;
+const int DT_NUM_TEST_SAMPLES = 10;
 #else
-const int ST_NUM_TRAIN_SAMPLES = 4000;
-const int ST_NUM_TEST_SAMPLES = 1000;
+const int DT_NUM_TRAIN_SAMPLES = 4000;
+const int DT_NUM_TEST_SAMPLES = 1000;
 #endif /* MDEBUG */
-const int ST_NUM_TOTAL_SAMPLES = ST_NUM_TRAIN_SAMPLES + ST_NUM_TEST_SAMPLES;
+const int DT_NUM_TOTAL_SAMPLES = DT_NUM_TRAIN_SAMPLES + DT_NUM_TEST_SAMPLES;
 
-class SumTree {
+class DecisionTree {
 public:
 	int node_counter;
-	std::map<int, SumTreeNode*> nodes;
+	std::map<int, DecisionTreeNode*> nodes;
 
-	SumTreeNode* root;
+	DecisionTreeNode* root;
 
 	std::vector<double> improvement_history;
 
@@ -41,8 +36,8 @@ public:
 	std::vector<double> target_val_histories;
 	int history_index;
 
-	SumTree();
-	~SumTree();
+	DecisionTree();
+	~DecisionTree();
 
 	double activate(std::vector<double>& obs);
 	void backprop(std::vector<double>& obs,
@@ -51,10 +46,10 @@ public:
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file);
 
-	void copy_from(SumTree* original);
+	void copy_from(DecisionTree* original);
 
 	void init_helper();
-	void update_helper(SumTreeNode* node);
+	void update_helper(DecisionTreeNode* node);
 	void measure_helper();
 };
 
@@ -80,4 +75,4 @@ bool is_match_helper(std::vector<double>& obs,
 					 double split_target,
 					 double split_range);
 
-#endif /* SUM_TREE_H */
+#endif /* DECISION_TREE_H */

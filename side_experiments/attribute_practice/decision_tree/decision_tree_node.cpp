@@ -1,28 +1,46 @@
-#include "sum_tree_node.h"
+#include "decision_tree_node.h"
 
-#include "sum_tree.h"
+#include "decision_tree.h"
+#include "network.h"
 
 using namespace std;
 
-double SumTreeNode::activate(std::vector<double>& obs,
-							 double previous_val) {
-	double sum_vals = this->constant;
-	for (int i_index = 0; i_index < (int)this->input_indexes.size(); i_index++) {
-		sum_vals += this->input_weights[i_index] * obs[this->input_indexes[i_index]];
-	}
-	sum_vals += this->previous_weight * previous_val;
-
-	return sum_vals;
+DecisionTreeNode::DecisionTreeNode() {
+	this->network = NULL;
 }
 
-void SumTreeNode::save(ofstream& output_file) {
-	output_file << this->constant << endl;
+DecisionTreeNode::~DecisionTreeNode() {
+	if (this->network != NULL) {
+		delete this->network;
+	}
+}
+
+double DecisionTreeNode::activate(std::vector<double>& obs,
+								  double previous_val) {
+	if (this->is_previous) {
+		return previous_val;
+	} else {
+		vector<double> inputs(1 + this->input_indexes.size());
+		inputs[0] = previous_val;
+		for (int i_index = 0; i_index < (int)this->input_indexes.size(); i_index++) {
+			inputs[1 + i_index] = obs[this->input_indexes[i_index]];
+		}
+
+		this->network->activate(inputs);
+
+		return this->network->output->acti_vals[0];
+	}
+}
+
+void DecisionTreeNode::save(ofstream& output_file) {
+	output_file << this->is_previous << endl;
 	output_file << this->input_indexes.size() << endl;
 	for (int i_index = 0; i_index < (int)this->input_indexes.size(); i_index++) {
 		output_file << this->input_indexes[i_index] << endl;
-		output_file << this->input_weights[i_index] << endl;
 	}
-	output_file << this->previous_weight << endl;
+	if (!this->is_previous) {
+		this->network->save(output_file);
+	}
 
 	output_file << this->has_split << endl;
 	output_file << this->obs_index << endl;
@@ -35,10 +53,10 @@ void SumTreeNode::save(ofstream& output_file) {
 	output_file << this->branch_node_id << endl;
 }
 
-void SumTreeNode::load(ifstream& input_file) {
-	string constant_line;
-	getline(input_file, constant_line);
-	this->constant = stod(constant_line);
+void DecisionTreeNode::load(ifstream& input_file) {
+	string is_previous_line;
+	getline(input_file, is_previous_line);
+	this->is_previous = stoi(is_previous_line);
 
 	string num_inputs_line;
 	getline(input_file, num_inputs_line);
@@ -47,15 +65,13 @@ void SumTreeNode::load(ifstream& input_file) {
 		string index_line;
 		getline(input_file, index_line);
 		this->input_indexes.push_back(stoi(index_line));
-
-		string weight_line;
-		getline(input_file, weight_line);
-		this->input_weights.push_back(stod(weight_line));
 	}
 
-	string previous_weight_line;
-	getline(input_file, previous_weight_line);
-	this->previous_weight = stod(previous_weight_line);
+	if (this->is_previous) {
+		this->network = NULL;
+	} else {
+		this->network = new Network(input_file);
+	}
 
 	string has_split_line;
 	getline(input_file, has_split_line);
@@ -90,24 +106,27 @@ void SumTreeNode::load(ifstream& input_file) {
 	this->branch_node_id = stoi(branch_node_id_line);
 }
 
-void SumTreeNode::link(SumTree* sum_tree) {
+void DecisionTreeNode::link(DecisionTree* decision_tree) {
 	if (this->original_node_id == -1) {
 		this->original_node = NULL;
 	} else {
-		this->original_node = sum_tree->nodes[this->original_node_id];
+		this->original_node = decision_tree->nodes[this->original_node_id];
 	}
 	if (this->branch_node_id == -1) {
 		this->branch_node = NULL;
 	} else {
-		this->branch_node = sum_tree->nodes[this->branch_node_id];
+		this->branch_node = decision_tree->nodes[this->branch_node_id];
 	}
 }
 
-void SumTreeNode::copy_from(SumTreeNode* original) {
-	this->constant = original->constant;
+void DecisionTreeNode::copy_from(DecisionTreeNode* original) {
+	this->is_previous = original->is_previous;
 	this->input_indexes = original->input_indexes;
-	this->input_weights = original->input_weights;
-	this->previous_weight = original->previous_weight;
+	if (original->network == NULL) {
+		this->network = NULL;
+	} else {
+		this->network = new Network(original->network);
+	}
 
 	this->has_split = original->has_split;
 	this->obs_index = original->obs_index;
@@ -120,5 +139,6 @@ void SumTreeNode::copy_from(SumTreeNode* original) {
 	this->branch_node_id = original->branch_node_id;
 
 	this->obs_histories = original->obs_histories;
+	this->previous_val_histories = original->previous_val_histories;
 	this->target_val_histories = original->target_val_histories;
 }

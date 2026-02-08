@@ -3,8 +3,7 @@
 #include <iostream>
 #include <set>
 
-#include "eval_node.h"
-#include "split_node.h"
+#include "decision_tree_node.h"
 
 using namespace std;
 
@@ -17,7 +16,7 @@ DecisionTree::DecisionTree() {
 }
 
 DecisionTree::~DecisionTree() {
-	for (map<int, AbstractDecisionTreeNode*>::iterator it = this->nodes.begin();
+	for (map<int, DecisionTreeNode*>::iterator it = this->nodes.begin();
 			it != this->nodes.end(); it++) {
 		delete it->second;
 	}
@@ -27,10 +26,9 @@ void DecisionTree::save(ofstream& output_file) {
 	output_file << this->node_counter << endl;
 
 	output_file << this->nodes.size() << endl;
-	for (map<int, AbstractDecisionTreeNode*>::iterator it = this->nodes.begin();
+	for (map<int, DecisionTreeNode*>::iterator it = this->nodes.begin();
 			it != this->nodes.end(); it++) {
 		output_file << it->first << endl;
-		output_file << it->second->type << endl;
 		it->second->save(output_file);
 	}
 
@@ -59,39 +57,15 @@ void DecisionTree::load(ifstream& input_file) {
 		getline(input_file, id_line);
 		int id = stoi(id_line);
 
-		string type_line;
-		getline(input_file, type_line);
-		int type = stoi(type_line);
-		switch (type) {
-		case DECISION_TREE_NODE_TYPE_SPLIT:
-			{
-				SplitNode* split_node = new SplitNode();
-				split_node->id = id;
-				split_node->load(input_file);
-				this->nodes[split_node->id] = split_node;
-			}
-			break;
-		case DECISION_TREE_NODE_TYPE_EVAL:
-			{
-				EvalNode* eval_node = new EvalNode();
-				eval_node->id = id;
-				eval_node->load(input_file);
-				this->nodes[eval_node->id] = eval_node;
-			}
-			break;
-		}
+		DecisionTreeNode* decision_tree_node = new DecisionTreeNode();
+		decision_tree_node->id = id;
+		decision_tree_node->load(input_file);
+		this->nodes[decision_tree_node->id] = decision_tree_node;
 	}
 
-	for (map<int, AbstractDecisionTreeNode*>::iterator it = this->nodes.begin();
+	for (map<int, DecisionTreeNode*>::iterator it = this->nodes.begin();
 			it != this->nodes.end(); it++) {
-		switch (it->second->type) {
-		case DECISION_TREE_NODE_TYPE_SPLIT:
-			{
-				SplitNode* split_node = (SplitNode*)it->second;
-				split_node->link(this);
-			}
-			break;
-		}
+		it->second->link(this);
 	}
 
 	string root_id_line;
@@ -116,28 +90,12 @@ void DecisionTree::load(ifstream& input_file) {
 void DecisionTree::copy_from(DecisionTree* original) {
 	this->node_counter = original->node_counter;
 
-	for (map<int, AbstractDecisionTreeNode*>::iterator it = original->nodes.begin();
+	for (map<int, DecisionTreeNode*>::iterator it = original->nodes.begin();
 			it != original->nodes.end(); it++) {
-		switch (it->second->type) {
-		case DECISION_TREE_NODE_TYPE_SPLIT:
-			{
-				SplitNode* original_split_node = (SplitNode*)it->second;
-				SplitNode* split_node = new SplitNode();
-				split_node->id = it->first;
-				split_node->copy_from(original_split_node);
-				this->nodes[it->first] = split_node;
-			}
-			break;
-		case DECISION_TREE_NODE_TYPE_EVAL:
-			{
-				EvalNode* original_eval_node = (EvalNode*)it->second;
-				EvalNode* eval_node = new EvalNode();
-				eval_node->id = it->first;
-				eval_node->copy_from(original_eval_node);
-				this->nodes[it->first] = eval_node;
-			}
-			break;
-		}
+		DecisionTreeNode* decision_tree_node = new DecisionTreeNode();
+		decision_tree_node->id = it->first;
+		decision_tree_node->copy_from(it->second);
+		this->nodes[it->first] = decision_tree_node;
 	}
 
 	if (original->root == NULL) {

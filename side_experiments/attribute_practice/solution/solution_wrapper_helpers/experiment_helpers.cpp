@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "constants.h"
+#include "decision_tree.h"
 #include "experiment.h"
 #include "globals.h"
 #include "network.h"
@@ -11,7 +12,6 @@
 #include "scope_node.h"
 #include "solution.h"
 #include "solution_helpers.h"
-#include "sum_tree.h"
 #include "utilities.h"
 
 using namespace std;

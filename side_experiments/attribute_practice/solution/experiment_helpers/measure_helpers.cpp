@@ -6,6 +6,7 @@
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
+#include "decision_tree.h"
 #include "network.h"
 #include "problem.h"
 #include "scope.h"
@@ -13,7 +14,6 @@
 #include "solution.h"
 #include "solution_helpers.h"
 #include "solution_wrapper.h"
-#include "sum_tree.h"
 #include "start_node.h"
 #include "utilities.h"
 

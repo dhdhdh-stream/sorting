@@ -5,6 +5,7 @@
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
+#include "decision_tree.h"
 #include "globals.h"
 #include "network.h"
 #include "obs_node.h"
@@ -15,7 +16,6 @@
 #include "solution_helpers.h"
 #include "solution_wrapper.h"
 #include "start_node.h"
-#include "sum_tree.h"
 
 using namespace std;
 
