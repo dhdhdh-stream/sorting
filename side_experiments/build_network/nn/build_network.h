@@ -47,6 +47,7 @@ public:
 	void load(std::ifstream& input_file);
 
 	void update_helper();
+	void measure_helper();
 };
 
 #endif /* BUILD_NETWORK_H */

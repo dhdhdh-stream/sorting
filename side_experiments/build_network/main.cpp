@@ -1,3 +1,6 @@
+// - not good enough
+//   - try training new while modifying old
+
 #include <chrono>
 #include <iostream>
 #include <map>

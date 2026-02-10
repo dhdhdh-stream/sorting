@@ -1,6 +1,7 @@
 #include "build_network.h"
 
 #include <cmath>
+#include <iostream>
 
 #include "build_node.h"
 #include "globals.h"
@@ -67,6 +68,10 @@ void BuildNetwork::backprop(std::vector<double>& obs,
 
 			update_helper();
 		}
+		// temp
+		if (this->history_index % 1000 == 0) {
+			measure_helper();
+		}
 
 		uniform_int_distribution<int> sample_distribution(0, this->obs_histories.size()-1);
 		for (int s_index = 0; s_index < SAMPLES_PER_ITER; s_index++) {
@@ -128,6 +133,8 @@ void BuildNetwork::backprop(std::vector<double>& obs,
 						this->output_constant_update = 0.0;
 						this->output_constant += update;
 					}
+
+					this->epoch_iter = 0;
 				}
 			}
 		}
@@ -177,4 +184,15 @@ void BuildNetwork::load(ifstream& input_file) {
 	for (int n_index = 0; n_index < num_nodes; n_index++) {
 		this->output_weight_updates.push_back(0.0);
 	}
+}
+
+void BuildNetwork::measure_helper() {
+	double sum_misguess = 0.0;
+	for (int h_index = 0; h_index < (int)this->obs_histories.size(); h_index++) {
+		double val = activate(this->obs_histories[h_index]);
+
+		sum_misguess += (this->target_val_histories[h_index] - val)
+			* (this->target_val_histories[h_index] - val);
+	}
+	cout << "sum_misguess: " << sum_misguess << endl;
 }

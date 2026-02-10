@@ -1,5 +1,7 @@
 #include "build_network.h"
 
+#include <iostream>
+
 #include "build_node.h"
 #include "constants.h"
 #include "globals.h"
@@ -8,6 +10,9 @@
 using namespace std;
 
 const int NUM_TRIES = 10;
+
+const double INIT_NETWORK_TARGET_MAX_UPDATE = 0.01;
+const int INIT_EPOCH_SIZE = 20;
 
 void BuildNetwork::update_helper() {
 	vector<vector<double>> node_vals(this->obs_histories.size());
@@ -63,6 +68,8 @@ void BuildNetwork::update_helper() {
 		BuildNode* curr_node = new BuildNode(input_types,
 											 input_indexes);
 
+		int epoch_iter = 0;
+		double average_max_update = 0.0;
 		uniform_int_distribution<int> train_distribution(0, BUILD_NUM_TRAIN_SAMPLES-1);
 		for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
 			int index = train_distribution(generator);
@@ -73,6 +80,24 @@ void BuildNetwork::update_helper() {
 			double error = remaining_vals[index] - curr_node->output->acti_vals[0];
 			curr_node->output->errors[0] = error;
 			curr_node->init_backprop();
+
+			epoch_iter++;
+			if (epoch_iter == INIT_EPOCH_SIZE) {
+				double max_update = 0.0;
+				curr_node->get_max_update(max_update);
+
+				average_max_update = 0.999*average_max_update + 0.001*max_update;
+				if (max_update > 0.0) {
+					double learning_rate = (0.3*INIT_NETWORK_TARGET_MAX_UPDATE)/average_max_update;
+					if (learning_rate * max_update > INIT_NETWORK_TARGET_MAX_UPDATE) {
+						learning_rate = INIT_NETWORK_TARGET_MAX_UPDATE/max_update;
+					}
+
+					curr_node->update_weights(learning_rate);
+				}
+
+				epoch_iter = 0;
+			}
 		}
 
 		double curr_sum_misguess = 0.0;
@@ -85,7 +110,7 @@ void BuildNetwork::update_helper() {
 		}
 
 		double curr_improvement = existing_sum_misguess - curr_sum_misguess;
-		if (curr_improvement < best_improvement) {
+		if (curr_improvement > best_improvement) {
 			if (best_node != NULL) {
 				delete best_node;
 			}
