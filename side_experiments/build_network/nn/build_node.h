@@ -24,6 +24,7 @@ public:
 
 	BuildNode(std::vector<int>& input_types,
 			  std::vector<int>& input_indexes);
+	BuildNode(BuildNode* original);
 	BuildNode(std::ifstream& input_file);
 	~BuildNode();
 

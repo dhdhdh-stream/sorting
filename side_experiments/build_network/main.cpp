@@ -1,6 +1,3 @@
-// - not good enough
-//   - try training new while modifying old
-
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -8,6 +5,7 @@
 #include <random>
 
 #include "build_network.h"
+#include "build_network_helpers.h"
 
 using namespace std;
 
@@ -52,8 +50,11 @@ int main(int argc, char* argv[]) {
 
 		auto starting_num_nodes = build_network->nodes.size();
 
-		build_network->backprop(inputs,
-								target_val);
+		bool should_update = build_network->backprop(inputs,
+													 target_val);
+		if (should_update) {
+			update_network(build_network);
+		}
 
 		if (starting_num_nodes != build_network->nodes.size()) {
 			ofstream output_file;

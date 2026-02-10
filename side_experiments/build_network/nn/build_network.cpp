@@ -26,6 +26,26 @@ BuildNetwork::BuildNetwork(int num_inputs) {
 	this->history_index = 0;
 }
 
+BuildNetwork::BuildNetwork(BuildNetwork* original) {
+	this->inputs = original->inputs;
+
+	for (int n_index = 0; n_index < (int)original->nodes.size(); n_index++) {
+		this->nodes.push_back(new BuildNode(original->nodes[n_index]));
+	}
+
+	this->output_weights = original->output_weights;
+	this->output_constant = original->output_constant;
+	this->output_weight_updates = original->output_weight_updates;
+	this->output_constant_update = original->output_constant_update;
+
+	this->epoch_iter = original->epoch_iter;
+	this->average_max_update = original->average_max_update;
+
+	this->obs_histories = original->obs_histories;
+	this->target_val_histories = original->target_val_histories;
+	this->history_index = original->history_index;
+}
+
 BuildNetwork::~BuildNetwork() {
 	for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {
 		delete this->nodes[n_index];
@@ -49,14 +69,15 @@ double BuildNetwork::activate(vector<double>& obs) {
 	return sum_vals;
 }
 
-void BuildNetwork::backprop(std::vector<double>& obs,
+bool BuildNetwork::backprop(std::vector<double>& obs,
 							double target_val) {
+	bool should_update = false;
 	if (this->obs_histories.size() < BUILD_NUM_TOTAL_SAMPLES) {
 		this->obs_histories.push_back(obs);
 		this->target_val_histories.push_back(target_val);
 
 		if (this->obs_histories.size() >= BUILD_NUM_TOTAL_SAMPLES) {
-			update_helper();
+			should_update = true;
 		}
 	} else {
 		this->obs_histories[this->history_index] = obs;
@@ -66,7 +87,7 @@ void BuildNetwork::backprop(std::vector<double>& obs,
 		if (this->history_index >= BUILD_NUM_TOTAL_SAMPLES) {
 			this->history_index = 0;
 
-			update_helper();
+			should_update = true;
 		}
 		// temp
 		if (this->history_index % 1000 == 0) {
@@ -76,69 +97,11 @@ void BuildNetwork::backprop(std::vector<double>& obs,
 		uniform_int_distribution<int> sample_distribution(0, this->obs_histories.size()-1);
 		for (int s_index = 0; s_index < SAMPLES_PER_ITER; s_index++) {
 			int sample_index = sample_distribution(generator);
-
-			double val = activate(this->obs_histories[sample_index]);
-
-			double error = this->target_val_histories[sample_index] - val;
-
-			for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {
-				this->nodes[n_index]->output->errors[0] += error * this->output_weights[n_index];
-
-				this->output_weight_updates[n_index] += error * this->nodes[n_index]->output->acti_vals[0];
-			}
-			this->output_constant_update += error;
-
-			for (int n_index = (int)this->nodes.size()-1; n_index >= 0; n_index--) {
-				this->nodes[n_index]->backprop(this);
-			}
-
-			this->epoch_iter++;
-			if (this->epoch_iter == EPOCH_SIZE) {
-				double max_update = 0.0;
-				for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {
-					double update_size = abs(this->output_weight_updates[n_index]);
-					if (update_size > max_update) {
-						max_update = update_size;
-					}
-				}
-				{
-					double update_size = abs(this->output_constant_update);
-					if (update_size > max_update) {
-						max_update = update_size;
-					}
-				}
-
-				for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {
-					this->nodes[n_index]->get_max_update(max_update);
-				}
-
-				this->average_max_update = 0.999*this->average_max_update + 0.001*max_update;
-				if (max_update > 0.0) {
-					double learning_rate = (0.3*NETWORK_TARGET_MAX_UPDATE)/this->average_max_update;
-					if (learning_rate * max_update > NETWORK_TARGET_MAX_UPDATE) {
-						learning_rate = NETWORK_TARGET_MAX_UPDATE/max_update;
-					}
-
-					for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {
-						this->nodes[n_index]->update_weights(learning_rate);
-					}
-
-					for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {
-						double update = learning_rate * this->output_weight_updates[n_index];
-						this->output_weight_updates[n_index] = 0.0;
-						this->output_weights[n_index] += update;
-					}
-					{
-						double update = learning_rate * this->output_constant_update;
-						this->output_constant_update = 0.0;
-						this->output_constant += update;
-					}
-
-					this->epoch_iter = 0;
-				}
-			}
+			backprop_iter_helper(sample_index);
 		}
 	}
+
+	return should_update;
 }
 
 void BuildNetwork::save(ofstream& output_file) {
@@ -183,6 +146,69 @@ void BuildNetwork::load(ifstream& input_file) {
 
 	for (int n_index = 0; n_index < num_nodes; n_index++) {
 		this->output_weight_updates.push_back(0.0);
+	}
+}
+
+void BuildNetwork::backprop_iter_helper(int index) {
+	double val = activate(this->obs_histories[index]);
+
+	double error = this->target_val_histories[index] - val;
+
+	for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {
+		this->nodes[n_index]->output->errors[0] += error * this->output_weights[n_index];
+
+		this->output_weight_updates[n_index] += error * this->nodes[n_index]->output->acti_vals[0];
+	}
+	this->output_constant_update += error;
+
+	for (int n_index = (int)this->nodes.size()-1; n_index >= 0; n_index--) {
+		this->nodes[n_index]->backprop(this);
+	}
+
+	this->epoch_iter++;
+	if (this->epoch_iter == EPOCH_SIZE) {
+		double max_update = 0.0;
+		for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {
+			double update_size = abs(this->output_weight_updates[n_index]);
+			if (update_size > max_update) {
+				max_update = update_size;
+			}
+		}
+		{
+			double update_size = abs(this->output_constant_update);
+			if (update_size > max_update) {
+				max_update = update_size;
+			}
+		}
+
+		for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {
+			this->nodes[n_index]->get_max_update(max_update);
+		}
+
+		this->average_max_update = 0.999*this->average_max_update + 0.001*max_update;
+		if (max_update > 0.0) {
+			double learning_rate = (0.3*NETWORK_TARGET_MAX_UPDATE)/this->average_max_update;
+			if (learning_rate * max_update > NETWORK_TARGET_MAX_UPDATE) {
+				learning_rate = NETWORK_TARGET_MAX_UPDATE/max_update;
+			}
+
+			for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {
+				this->nodes[n_index]->update_weights(learning_rate);
+			}
+
+			for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {
+				double update = learning_rate * this->output_weight_updates[n_index];
+				this->output_weight_updates[n_index] = 0.0;
+				this->output_weights[n_index] += update;
+			}
+			{
+				double update = learning_rate * this->output_constant_update;
+				this->output_constant_update = 0.0;
+				this->output_constant += update;
+			}
+
+			this->epoch_iter = 0;
+		}
 	}
 }
 

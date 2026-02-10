@@ -37,16 +37,17 @@ public:
 	int history_index;
 
 	BuildNetwork(int num_inputs);
+	BuildNetwork(BuildNetwork* original);
 	~BuildNetwork();
 
 	double activate(std::vector<double>& obs);
-	void backprop(std::vector<double>& obs,
+	bool backprop(std::vector<double>& obs,
 				  double target_val);
 
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file);
 
-	void update_helper();
+	void backprop_iter_helper(int index);
 	void measure_helper();
 };
 

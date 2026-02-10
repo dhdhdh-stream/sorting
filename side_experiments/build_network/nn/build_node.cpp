@@ -52,6 +52,56 @@ BuildNode::BuildNode(vector<int>& input_types,
 	this->output->update_structure();
 }
 
+BuildNode::BuildNode(BuildNode* original) {
+	this->input_types = original->input_types;
+	this->input_indexes = original->input_indexes;
+
+	this->input = new Layer(LINEAR_LAYER);
+	for (int i_index = 0; i_index < (int)original->input->acti_vals.size(); i_index++) {
+		this->input->acti_vals.push_back(0.0);
+		this->input->errors.push_back(0.0);
+	}
+
+	this->hidden_1 = new Layer(LEAKY_LAYER);
+	for (int i_index = 0; i_index < (int)original->hidden_1->acti_vals.size(); i_index++) {
+		this->hidden_1->acti_vals.push_back(0.0);
+		this->hidden_1->errors.push_back(0.0);
+	}
+	this->hidden_1->input_layers.push_back(this->input);
+	this->hidden_1->update_structure();
+	this->hidden_1->copy_weights_from(original->hidden_1);
+
+	this->hidden_2 = new Layer(LEAKY_LAYER);
+	for (int i_index = 0; i_index < (int)original->hidden_2->acti_vals.size(); i_index++) {
+		this->hidden_2->acti_vals.push_back(0.0);
+		this->hidden_2->errors.push_back(0.0);
+	}
+	this->hidden_2->input_layers.push_back(this->input);
+	this->hidden_2->input_layers.push_back(this->hidden_1);
+	this->hidden_2->update_structure();
+	this->hidden_2->copy_weights_from(original->hidden_2);
+
+	this->hidden_3 = new Layer(LEAKY_LAYER);
+	for (int i_index = 0; i_index < (int)original->hidden_3->acti_vals.size(); i_index++) {
+		this->hidden_3->acti_vals.push_back(0.0);
+		this->hidden_3->errors.push_back(0.0);
+	}
+	this->hidden_3->input_layers.push_back(this->input);
+	this->hidden_3->input_layers.push_back(this->hidden_1);
+	this->hidden_3->input_layers.push_back(this->hidden_2);
+	this->hidden_3->update_structure();
+	this->hidden_3->copy_weights_from(original->hidden_3);
+
+	this->output = new Layer(LINEAR_LAYER);
+	this->output->acti_vals.push_back(0.0);
+	this->output->errors.push_back(0.0);
+	this->output->input_layers.push_back(this->hidden_1);
+	this->output->input_layers.push_back(this->hidden_2);
+	this->output->input_layers.push_back(this->hidden_3);
+	this->output->update_structure();
+	this->output->copy_weights_from(original->output);
+}
+
 BuildNode::BuildNode(ifstream& input_file) {
 	string num_inputs_line;
 	getline(input_file, num_inputs_line);
