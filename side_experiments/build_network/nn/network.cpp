@@ -7,9 +7,6 @@
 
 using namespace std;
 
-const double NETWORK_TARGET_MAX_UPDATE = 0.01;
-const int EPOCH_SIZE = 20;
-
 Network::Network(int input_size) {
 	this->input = new Layer(LINEAR_LAYER);
 	for (int i_index = 0; i_index < input_size; i_index++) {
@@ -204,7 +201,7 @@ void Network::backprop(double error) {
 	this->hidden_1->backprop();
 
 	this->epoch_iter++;
-	if (this->epoch_iter == EPOCH_SIZE) {
+	if (this->epoch_iter == NETWORK_EPOCH_SIZE) {
 		double hidden_1_max_update = 0.0;
 		this->hidden_1->get_max_update(hidden_1_max_update);
 		this->hidden_1_average_max_update = 0.999*this->hidden_1_average_max_update+0.001*hidden_1_max_update;

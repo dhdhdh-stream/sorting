@@ -20,9 +20,6 @@ const int INIT_ITERS = 100000;
 const int REFINE_ITERS = 200000;
 #endif /* MDEBUG */
 
-const double INIT_NETWORK_TARGET_MAX_UPDATE = 0.01;
-const int INIT_EPOCH_SIZE = 20;
-
 void update_network(BuildNetwork*& network) {
 	vector<vector<double>> node_vals(network->obs_histories.size());
 	vector<double> remaining_vals(network->obs_histories.size());
@@ -79,8 +76,6 @@ void update_network(BuildNetwork*& network) {
 
 		uniform_int_distribution<int> train_distribution(0, BUILD_NUM_TRAIN_SAMPLES-1);
 
-		int epoch_iter = 0;
-		double average_max_update = 0.0;
 		for (int iter_index = 0; iter_index < INIT_ITERS; iter_index++) {
 			int index = train_distribution(generator);
 
@@ -90,24 +85,6 @@ void update_network(BuildNetwork*& network) {
 			double error = remaining_vals[index] - curr_node->output->acti_vals[0];
 			curr_node->output->errors[0] = error;
 			curr_node->init_backprop();
-
-			epoch_iter++;
-			if (epoch_iter == INIT_EPOCH_SIZE) {
-				double max_update = 0.0;
-				curr_node->get_max_update(max_update);
-
-				average_max_update = 0.999*average_max_update + 0.001*max_update;
-				if (max_update > 0.0) {
-					double learning_rate = (0.3*INIT_NETWORK_TARGET_MAX_UPDATE)/average_max_update;
-					if (learning_rate * max_update > INIT_NETWORK_TARGET_MAX_UPDATE) {
-						learning_rate = INIT_NETWORK_TARGET_MAX_UPDATE/max_update;
-					}
-
-					curr_node->update_weights(learning_rate);
-				}
-
-				epoch_iter = 0;
-			}
 		}
 
 		BuildNetwork* curr_network = new BuildNetwork(network);
