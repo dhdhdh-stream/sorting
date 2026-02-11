@@ -15,7 +15,10 @@ public:
 	std::vector<int> input_types;
 	std::vector<int> input_indexes;
 	/**
-	 * TODO: normalize inputs
+	 * TODO:
+	 * - normalize inputs
+	 *   - base on init snapshot
+	 *     - so different nodes will have different averages/standard deviations
 	 */
 
 	Layer* input;

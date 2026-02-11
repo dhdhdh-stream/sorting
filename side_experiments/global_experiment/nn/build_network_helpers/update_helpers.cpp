@@ -20,11 +20,25 @@ const int INIT_ITERS = 150000;
 const int REFINE_ITERS = 150000;
 #endif /* MDEBUG */
 
-void update_network(BuildNetwork*& network) {
-	vector<vector<double>> node_vals(network->obs_histories.size());
-	vector<double> remaining_vals(network->obs_histories.size());
-	for (int h_index = 0; h_index < (int)network->obs_histories.size(); h_index++) {
-		double val = network->activate(network->obs_histories[h_index]);
+const double VALIDATION_RATIO = 0.2;
+
+void update_network(vector<vector<double>>& obs_histories,
+					vector<double>& target_val_histories,
+					BuildNetwork*& network) {
+	int num_train_samples = (1.0 - VALIDATION_RATIO) * (int)obs_histories.size();
+
+	if (network->nodes.size() == 0) {
+		double sum_vals = 0.0;
+		for (int h_index = 0; h_index < num_train_samples; h_index++) {
+			sum_vals += target_val_histories[h_index];
+		}
+		network->output_constant = sum_vals / num_train_samples;
+	}
+
+	vector<vector<double>> node_vals(obs_histories.size());
+	vector<double> remaining_vals(obs_histories.size());
+	for (int h_index = 0; h_index < (int)obs_histories.size(); h_index++) {
+		double val = network->activate(obs_histories[h_index]);
 
 		vector<double> curr_node_vals(network->nodes.size());
 		for (int n_index = 0; n_index < (int)network->nodes.size(); n_index++) {
@@ -32,11 +46,11 @@ void update_network(BuildNetwork*& network) {
 		}
 		node_vals[h_index] = curr_node_vals;
 
-		remaining_vals[h_index] = network->target_val_histories[h_index] - val;
+		remaining_vals[h_index] = target_val_histories[h_index] - val;
 	}
 
 	double existing_sum_misguess = 0.0;
-	for (int h_index = BUILD_NUM_TRAIN_SAMPLES; h_index < BUILD_NUM_TOTAL_SAMPLES; h_index++) {
+	for (int h_index = num_train_samples; h_index < (int)obs_histories.size(); h_index++) {
 		existing_sum_misguess += remaining_vals[h_index] * remaining_vals[h_index];
 	}
 
@@ -74,7 +88,7 @@ void update_network(BuildNetwork*& network) {
 		BuildNode* curr_node = new BuildNode(input_types,
 											 input_indexes);
 
-		uniform_int_distribution<int> train_distribution(0, BUILD_NUM_TRAIN_SAMPLES-1);
+		uniform_int_distribution<int> train_distribution(0, num_train_samples-1);
 
 		/**
 		 * - initially, update layers independently to drive convergence
@@ -88,7 +102,7 @@ void update_network(BuildNetwork*& network) {
 		for (int iter_index = 0; iter_index < INIT_ITERS; iter_index++) {
 			int index = train_distribution(generator);
 
-			curr_node->init_activate(network->obs_histories[index],
+			curr_node->init_activate(obs_histories[index],
 									 node_vals[index]);
 
 			double error = remaining_vals[index] - curr_node->output->acti_vals[0];
@@ -145,7 +159,12 @@ void update_network(BuildNetwork*& network) {
 			}
 		}
 
-		BuildNetwork* curr_network = new BuildNetwork(network);
+		BuildNetwork* curr_network = new BuildNetwork();
+		curr_network->copy_from(network);
+
+		if (curr_network->nodes.size() == 0) {
+			curr_network->inputs = vector<double>(obs_histories[0].size());
+		}
 
 		curr_network->nodes.push_back(curr_node);
 
@@ -154,15 +173,16 @@ void update_network(BuildNetwork*& network) {
 
 		for (int iter_index = 0; iter_index < REFINE_ITERS; iter_index++) {
 			int index = train_distribution(generator);
-			curr_network->backprop_iter_helper(index);
+			curr_network->backprop(obs_histories[index],
+								   target_val_histories[index]);
 		}
 
 		double curr_sum_misguess = 0.0;
-		for (int h_index = BUILD_NUM_TRAIN_SAMPLES; h_index < BUILD_NUM_TOTAL_SAMPLES; h_index++) {
-			double val = curr_network->activate(network->obs_histories[h_index]);
+		for (int h_index = num_train_samples; h_index < (int)obs_histories.size(); h_index++) {
+			double val = curr_network->activate(obs_histories[h_index]);
 
-			curr_sum_misguess += (network->target_val_histories[h_index] - val)
-				* (network->target_val_histories[h_index] - val);
+			curr_sum_misguess += (target_val_histories[h_index] - val)
+				* (target_val_histories[h_index] - val);
 		}
 
 		double curr_improvement = existing_sum_misguess - curr_sum_misguess;
