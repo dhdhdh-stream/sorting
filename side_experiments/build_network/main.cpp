@@ -13,8 +13,8 @@ int seed;
 
 default_random_engine generator;
 
-// const int NUM_INPUTS = 100;
-const int NUM_INPUTS = 20;
+const int NUM_INPUTS = 100;
+// const int NUM_INPUTS = 20;
 
 int main(int argc, char* argv[]) {
 	cout << "Starting..." << endl;
@@ -28,13 +28,15 @@ int main(int argc, char* argv[]) {
 
 	uniform_int_distribution<int> xor_distribution(0, 1);
 	uniform_int_distribution<int> input_distribution(-10, 10);
-	for (int iter_index = 0; iter_index < 100000; iter_index++) {
+	for (int iter_index = 0; iter_index < 200000; iter_index++) {
 		vector<double> inputs;
 		double target_val = 0.0;
 
-		int val_1 = xor_distribution(generator);
+		// int val_1 = xor_distribution(generator);
+		int val_1 = 20.0 * xor_distribution(generator);
 		inputs.push_back(val_1);
-		int val_2 = xor_distribution(generator);
+		// int val_2 = xor_distribution(generator);
+		int val_2 = 20.0 * xor_distribution(generator);
 		inputs.push_back(val_2);
 		if (val_1 == val_2) {
 			target_val += 10.0;

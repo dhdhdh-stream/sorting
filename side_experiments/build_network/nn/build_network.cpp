@@ -179,11 +179,19 @@ void BuildNetwork::backprop_iter_helper(int index) {
 			}
 		}
 
+		for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {
+			this->nodes[n_index]->get_max_update(max_update);
+		}
+
 		this->average_max_update = 0.999*this->average_max_update + 0.001*max_update;
 		if (max_update > 0.0) {
 			double learning_rate = (0.3*NETWORK_TARGET_MAX_UPDATE)/this->average_max_update;
 			if (learning_rate * max_update > NETWORK_TARGET_MAX_UPDATE) {
 				learning_rate = NETWORK_TARGET_MAX_UPDATE/max_update;
+			}
+
+			for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {
+				this->nodes[n_index]->update_weights(learning_rate);
 			}
 
 			for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {

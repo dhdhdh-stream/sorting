@@ -13,12 +13,17 @@ using namespace std;
 const int NUM_TRIES = 10;
 
 #if defined(MDEBUG) && MDEBUG
-const int INIT_ITERS = 10;
+const int INIT_ITERS = 20;
 const int REFINE_ITERS = 20;
 #else
-const int INIT_ITERS = 100000;
-const int REFINE_ITERS = 200000;
+const int INIT_ITERS = 150000;
+// const int INIT_ITERS = 300000;
+const int REFINE_ITERS = 150000;
+// const int REFINE_ITERS = 0;
 #endif /* MDEBUG */
+
+const double INIT_NETWORK_TARGET_MAX_UPDATE = 0.01;
+const int INIT_EPOCH_SIZE = 20;
 
 void update_network(BuildNetwork*& network) {
 	vector<vector<double>> node_vals(network->obs_histories.size());
@@ -120,6 +125,7 @@ void update_network(BuildNetwork*& network) {
 	}
 
 	if (best_improvement > 0.0) {
+		delete network;
 		network = best_network;
 	}
 }

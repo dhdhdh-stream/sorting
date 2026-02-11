@@ -41,6 +41,9 @@ public:
 	void activate(BuildNetwork* network);
 	void backprop(BuildNetwork* network);
 
+	void get_max_update(double& max_update);
+	void update_weights(double learning_rate);
+
 	void save(std::ofstream& output_file);
 };
 
