@@ -40,6 +40,7 @@ Solution::Solution(Solution* original) {
 	}
 
 	this->last_experiment_scores = original->last_experiment_scores;
+	this->last_clean_scores = original->last_clean_scores;
 
 	this->improvement_history = original->improvement_history;
 	this->change_history = original->change_history;
@@ -138,6 +139,15 @@ void Solution::load(ifstream& input_file) {
 		this->last_experiment_scores.push_back(stod(score_line));
 	}
 
+	string num_clean_scores_line;
+	getline(input_file, num_clean_scores_line);
+	int num_clean_scores = stoi(num_clean_scores_line);
+	for (int e_index = 0; e_index < num_clean_scores; e_index++) {
+		string score_line;
+		getline(input_file, score_line);
+		this->last_clean_scores.push_back(stod(score_line));
+	}
+
 	string history_size_line;
 	getline(input_file, history_size_line);
 	int history_size = stoi(history_size_line);
@@ -150,32 +160,6 @@ void Solution::load(ifstream& input_file) {
 		getline(input_file, change_line);
 		this->change_history.push_back(change_line);
 	}
-}
-
-double Solution::calc_decision_cost() {
-	double sum_cost = 0.0;
-	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
-		for (map<int, AbstractNode*>::iterator it = this->scopes[s_index]->nodes.begin();
-				it != this->scopes[s_index]->nodes.end(); it++) {
-			if (it->second->type == NODE_TYPE_BRANCH) {
-				BranchNode* branch_node = (BranchNode*)it->second;
-				if (branch_node->original_count + branch_node->branch_count > 0) {
-					double weight = (double)branch_node->original_count
-						/ (double)(branch_node->original_count + branch_node->branch_count);
-					if (weight > 0.5) {
-						weight = 1.0 - weight;
-					}
-
-					sum_cost += weight * (branch_node->original_count + branch_node->branch_count);
-
-					branch_node->original_count = 0;
-					branch_node->branch_count = 0;
-				}
-			}
-		}
-	}
-
-	return sum_cost;
 }
 
 #if defined(MDEBUG) && MDEBUG
@@ -256,6 +240,12 @@ void Solution::save(ofstream& output_file) {
 	output_file << this->last_experiment_scores.size() << endl;
 	for (list<double>::iterator it = this->last_experiment_scores.begin();
 			it != this->last_experiment_scores.end(); it++) {
+		output_file << *it << endl;
+	}
+
+	output_file << this->last_clean_scores.size() << endl;
+	for (list<double>::iterator it = this->last_clean_scores.begin();
+			it != this->last_clean_scores.end(); it++) {
 		output_file << *it << endl;
 	}
 

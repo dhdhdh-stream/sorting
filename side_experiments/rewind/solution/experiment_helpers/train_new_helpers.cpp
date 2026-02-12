@@ -57,7 +57,7 @@ void Experiment::train_new_step(vector<double>& obs,
 	}
 
 	if (experiment_state->step_index >= (int)this->best_step_types.size()) {
-		wrapper->node_context.back() = this->best_exit_next_node;
+		wrapper->node_context.back() = this->exit_next_node;
 
 		delete experiment_state;
 		wrapper->experiment_context.back() = NULL;
@@ -330,21 +330,6 @@ void Experiment::train_new_backprop(
 
 				this->total_count = 0;
 				this->total_sum_scores = 0.0;
-
-				wrapper->solution->calc_decision_cost();	// clear
-				if (this->best_new_scope != NULL) {
-					for (map<int, AbstractNode*>::iterator it = this->best_new_scope->nodes.begin();
-							it != this->best_new_scope->nodes.end(); it++) {
-						if (it->second->type == NODE_TYPE_BRANCH) {
-							BranchNode* branch_node = (BranchNode*)it->second;
-							branch_node->original_count = 0;
-							branch_node->branch_count = 0;
-						}
-					}
-				}
-
-				this->original_count = 0;
-				this->branch_count = 0;
 
 				this->state = EXPERIMENT_STATE_MEASURE;
 				this->state_iter = 0;

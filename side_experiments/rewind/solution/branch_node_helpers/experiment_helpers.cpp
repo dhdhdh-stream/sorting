@@ -40,12 +40,8 @@ void BranchNode::experiment_step(vector<double>& obs,
 	history->is_branch = is_branch;
 
 	if (is_branch) {
-		this->branch_count++;
-
 		wrapper->node_context.back() = this->branch_next_node;
 	} else {
-		this->original_count++;
-
 		wrapper->node_context.back() = this->original_next_node;
 	}
 

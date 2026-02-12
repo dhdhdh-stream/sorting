@@ -36,6 +36,7 @@ public:
 	 * - predict directly against final result
 	 *   - don't try to attribute impact to each part of solution
 	 *     - setup and actual execution equally responsible for success
+	 *     - subtracting many signals from true instable
 	 */
 	BuildNetwork* signal;
 

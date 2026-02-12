@@ -25,6 +25,7 @@ public:
 	Scope* scope_context;
 	AbstractNode* node_context;
 	bool is_branch;
+	AbstractNode* exit_next_node;
 
 	int result;
 

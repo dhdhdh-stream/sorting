@@ -22,6 +22,170 @@ void Experiment::clean() {
 }
 
 void Experiment::add(SolutionWrapper* wrapper) {
+	if (this->clean_success) {
+		clean_add_helper(wrapper);
+	} else {
+		experiment_add_helper(wrapper);
+	}
+}
+
+void Experiment::clean_add_helper(SolutionWrapper* wrapper) {
+	stringstream ss;
+	ss << "Experiment" << "; ";
+	ss << "this->scope_context->id: " << this->scope_context->id << "; ";
+	ss << "this->node_context->id: " << this->node_context->id << "; ";
+	ss << "this->is_branch: " << this->is_branch << "; ";
+	if (this->exit_next_node == NULL) {
+		ss << "this->exit_next_node->id: " << -1 << "; ";
+	} else {
+		ss << "this->exit_next_node->id: " << this->exit_next_node->id << "; ";
+	}
+
+	ss << "clean_success" << "; ";
+
+	ss << "this->improvement: " << this->improvement << "; ";
+
+	wrapper->solution->improvement_history.push_back(calc_new_score());
+	wrapper->solution->change_history.push_back(ss.str());
+
+	cout << ss.str() << endl;
+
+	ObsNode* new_ending_node = NULL;
+
+	int exit_node_id;
+	AbstractNode* exit_node;
+	if (this->exit_next_node == NULL) {
+		new_ending_node = new ObsNode();
+		new_ending_node->parent = this->scope_context;
+		new_ending_node->id = this->scope_context->node_counter;
+		this->scope_context->node_counter++;
+
+		for (map<int, AbstractNode*>::iterator it = this->scope_context->nodes.begin();
+				it != this->scope_context->nodes.end(); it++) {
+			if (it->second->type == NODE_TYPE_OBS) {
+				ObsNode* obs_node = (ObsNode*)it->second;
+				if (obs_node->next_node == NULL) {
+					obs_node->next_node_id = new_ending_node->id;
+					obs_node->next_node = new_ending_node;
+
+					new_ending_node->ancestor_ids.push_back(obs_node->id);
+
+					break;
+				}
+			}
+		}
+
+		this->scope_context->nodes[new_ending_node->id] = new_ending_node;
+
+		new_ending_node->next_node_id = -1;
+		new_ending_node->next_node = NULL;
+
+		exit_node_id = new_ending_node->id;
+		exit_node = new_ending_node;
+	} else {
+		exit_node_id = this->exit_next_node->id;
+		exit_node = this->exit_next_node;
+	}
+
+	switch (this->node_context->type) {
+	case NODE_TYPE_START:
+		{
+			StartNode* start_node = (StartNode*)this->node_context;
+
+			for (int a_index = 0; a_index < (int)start_node->next_node->ancestor_ids.size(); a_index++) {
+				if (start_node->next_node->ancestor_ids[a_index] == start_node->id) {
+					start_node->next_node->ancestor_ids.erase(
+						start_node->next_node->ancestor_ids.begin() + a_index);
+					break;
+				}
+			}
+
+			start_node->next_node_id = exit_node_id;
+			start_node->next_node = exit_node;
+		}
+		break;
+	case NODE_TYPE_ACTION:
+		{
+			ActionNode* action_node = (ActionNode*)this->node_context;
+
+			for (int a_index = 0; a_index < (int)action_node->next_node->ancestor_ids.size(); a_index++) {
+				if (action_node->next_node->ancestor_ids[a_index] == action_node->id) {
+					action_node->next_node->ancestor_ids.erase(
+						action_node->next_node->ancestor_ids.begin() + a_index);
+					break;
+				}
+			}
+
+			action_node->next_node_id = exit_node_id;
+			action_node->next_node = exit_node;
+		}
+		break;
+	case NODE_TYPE_SCOPE:
+		{
+			ScopeNode* scope_node = (ScopeNode*)this->node_context;
+
+			for (int a_index = 0; a_index < (int)scope_node->next_node->ancestor_ids.size(); a_index++) {
+				if (scope_node->next_node->ancestor_ids[a_index] == scope_node->id) {
+					scope_node->next_node->ancestor_ids.erase(
+						scope_node->next_node->ancestor_ids.begin() + a_index);
+					break;
+				}
+			}
+
+			scope_node->next_node_id = exit_node_id;
+			scope_node->next_node = exit_node;
+		}
+		break;
+	case NODE_TYPE_BRANCH:
+		{
+			BranchNode* branch_node = (BranchNode*)this->node_context;
+
+			if (this->is_branch) {
+				for (int a_index = 0; a_index < (int)branch_node->branch_next_node->ancestor_ids.size(); a_index++) {
+					if (branch_node->branch_next_node->ancestor_ids[a_index] == branch_node->id) {
+						branch_node->branch_next_node->ancestor_ids.erase(
+							branch_node->branch_next_node->ancestor_ids.begin() + a_index);
+						break;
+					}
+				}
+
+				branch_node->branch_next_node_id = exit_node_id;
+				branch_node->branch_next_node = exit_node;
+			} else {
+				for (int a_index = 0; a_index < (int)branch_node->original_next_node->ancestor_ids.size(); a_index++) {
+					if (branch_node->original_next_node->ancestor_ids[a_index] == branch_node->id) {
+						branch_node->original_next_node->ancestor_ids.erase(
+							branch_node->original_next_node->ancestor_ids.begin() + a_index);
+						break;
+					}
+				}
+
+				branch_node->original_next_node_id = exit_node_id;
+				branch_node->original_next_node = exit_node;
+			}
+		}
+		break;
+	case NODE_TYPE_OBS:
+		{
+			ObsNode* obs_node = (ObsNode*)this->node_context;
+
+			for (int a_index = 0; a_index < (int)obs_node->next_node->ancestor_ids.size(); a_index++) {
+				if (obs_node->next_node->ancestor_ids[a_index] == obs_node->id) {
+					obs_node->next_node->ancestor_ids.erase(
+						obs_node->next_node->ancestor_ids.begin() + a_index);
+					break;
+				}
+			}
+
+			obs_node->next_node_id = exit_node_id;
+			obs_node->next_node = exit_node;
+		}
+		break;
+	}
+	exit_node->ancestor_ids.push_back(this->node_context->id);
+}
+
+void Experiment::experiment_add_helper(SolutionWrapper* wrapper) {
 	stringstream ss;
 	ss << "Experiment" << "; ";
 	ss << "this->scope_context->id: " << this->scope_context->id << "; ";
@@ -37,18 +201,15 @@ void Experiment::add(SolutionWrapper* wrapper) {
 	}
 	ss << "; ";
 
-	if (this->best_exit_next_node == NULL) {
-		ss << "this->best_exit_next_node->id: " << -1 << "; ";
+	if (this->exit_next_node == NULL) {
+		ss << "this->exit_next_node->id: " << -1 << "; ";
 	} else {
-		ss << "this->best_exit_next_node->id: " << this->best_exit_next_node->id << "; ";
+		ss << "this->exit_next_node->id: " << this->exit_next_node->id << "; ";
 	}
 
 	ss << "this->is_binarize: " << this->is_binarize << "; ";
 
 	ss << "this->improvement: " << this->improvement << "; ";
-
-	ss << "this->existing_decision_cost: " << this->existing_decision_cost << "; ";
-	ss << "this->new_decision_cost: " << this->new_decision_cost << "; ";
 
 	wrapper->solution->improvement_history.push_back(calc_new_score());
 	wrapper->solution->change_history.push_back(ss.str());
@@ -83,7 +244,7 @@ void Experiment::add(SolutionWrapper* wrapper) {
 
 	int exit_node_id;
 	AbstractNode* exit_node;
-	if (this->best_exit_next_node == NULL) {
+	if (this->exit_next_node == NULL) {
 		new_ending_node = new ObsNode();
 		new_ending_node->parent = this->scope_context;
 		new_ending_node->id = this->scope_context->node_counter;
@@ -112,8 +273,8 @@ void Experiment::add(SolutionWrapper* wrapper) {
 		exit_node_id = new_ending_node->id;
 		exit_node = new_ending_node;
 	} else {
-		exit_node_id = this->best_exit_next_node->id;
-		exit_node = this->best_exit_next_node;
+		exit_node_id = this->exit_next_node->id;
+		exit_node = this->exit_next_node;
 	}
 
 	BranchNode* new_branch_node = new BranchNode();

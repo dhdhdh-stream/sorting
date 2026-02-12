@@ -51,18 +51,14 @@ void Experiment::measure_step(vector<double>& obs,
 		#endif /* MDEBUG */
 
 		if (!is_branch) {
-			this->original_count++;
-
 			delete experiment_state;
 			wrapper->experiment_context.back() = NULL;
 			return;
-		} else {
-			this->branch_count++;
 		}
 	}
 
 	if (experiment_state->step_index >= (int)this->best_step_types.size()) {
-		wrapper->node_context.back() = this->best_exit_next_node;
+		wrapper->node_context.back() = this->exit_next_node;
 
 		delete experiment_state;
 		wrapper->experiment_context.back() = NULL;
@@ -123,39 +119,6 @@ void Experiment::measure_backprop(double target_val,
 		this->improvement = average_hits_per_run * (new_true - this->existing_true);
 		// this->improvement = average_hits_per_run * new_true;
 
-		this->new_decision_cost = wrapper->solution->calc_decision_cost();
-		{
-			double weight = (double)this->original_count
-				/ (double)(this->original_count + this->branch_count);
-			if (weight > 0.5) {
-				weight = 1.0 - weight;
-			}
-
-			this->new_decision_cost += weight * (this->original_count + this->branch_count);
-
-			if (this->best_new_scope != NULL) {
-				for (map<int, AbstractNode*>::iterator it = this->best_new_scope->nodes.begin();
-						it != this->best_new_scope->nodes.end(); it++) {
-					if (it->second->type == NODE_TYPE_BRANCH) {
-						BranchNode* branch_node = (BranchNode*)it->second;
-						if (branch_node->original_count + branch_node->branch_count > 0) {
-							double weight = (double)branch_node->original_count
-								/ (double)(branch_node->original_count + branch_node->branch_count);
-							if (weight > 0.5) {
-								weight = 1.0 - weight;
-							}
-
-							this->new_decision_cost += weight * (branch_node->original_count + branch_node->branch_count);
-
-							branch_node->original_count = 0;
-							branch_node->branch_count = 0;
-						}
-					}
-				}
-			}
-		}
-		this->new_decision_cost /= this->total_count;
-
 		bool is_success = false;
 		if (this->improvement >= 0.0) {
 			if (wrapper->solution->last_experiment_scores.size() >= MIN_NUM_LAST_EXPERIMENT_TRACK) {
@@ -210,17 +173,14 @@ void Experiment::measure_backprop(double target_val,
 			}
 			cout << endl;
 
-			if (this->best_exit_next_node == NULL) {
-				cout << "this->best_exit_next_node->id: " << -1 << endl;
+			if (this->exit_next_node == NULL) {
+				cout << "this->exit_next_node->id: " << -1 << endl;
 			} else {
-				cout << "this->best_exit_next_node->id: " << this->best_exit_next_node->id << endl;
+				cout << "this->exit_next_node->id: " << this->exit_next_node->id << endl;
 			}
 
 			cout << "average_hits_per_run: " << average_hits_per_run << endl;
 			cout << "this->improvement: " << this->improvement << endl;
-
-			cout << "this->existing_decision_cost: " << this->existing_decision_cost << endl;
-			cout << "this->new_decision_cost: " << this->new_decision_cost << endl;
 
 			cout << endl;
 

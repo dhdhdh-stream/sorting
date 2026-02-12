@@ -10,15 +10,18 @@ class Network;
 class SolutionWrapper;
 
 const int EXPERIMENT_STATE_TRAIN_EXISTING = 0;
-const int EXPERIMENT_STATE_EXPLORE = 1;
-const int EXPERIMENT_STATE_TRAIN_NEW = 2;
-const int EXPERIMENT_STATE_MEASURE = 3;
+const int EXPERIMENT_STATE_CLEAN = 1;
+const int EXPERIMENT_STATE_EXPLORE = 2;
+const int EXPERIMENT_STATE_TRAIN_NEW = 3;
+const int EXPERIMENT_STATE_MEASURE = 4;
 #if defined(MDEBUG) && MDEBUG
-const int EXPERIMENT_STATE_CAPTURE_VERIFY = 4;
+const int EXPERIMENT_STATE_CAPTURE_VERIFY = 5;
 #endif /* MDEBUG */
 
 class Experiment : public AbstractExperiment {
 public:
+	bool can_clean;
+
 	int state;
 	int state_iter;
 
@@ -35,11 +38,12 @@ public:
 	double average_instances_per_run;
 	int num_instances_until_target;
 
+	bool clean_success;
+
 	Scope* curr_new_scope;
 	std::vector<int> curr_step_types;
 	std::vector<int> curr_actions;
 	std::vector<Scope*> curr_scopes;
-	AbstractNode* curr_exit_next_node;
 	std::vector<AbstractNode*> curr_new_nodes;
 
 	double best_surprise;
@@ -47,7 +51,6 @@ public:
 	std::vector<int> best_step_types;
 	std::vector<int> best_actions;
 	std::vector<Scope*> best_scopes;
-	AbstractNode* best_exit_next_node;
 	std::vector<AbstractNode*> best_new_nodes;
 
 	std::vector<std::vector<double>> new_obs_histories;
@@ -63,12 +66,6 @@ public:
 	double total_sum_scores;
 	int total_count;
 
-	int original_count;
-	int branch_count;
-
-	// - not that impactful?
-	double new_decision_cost;
-
 	double improvement;
 
 	#if defined(MDEBUG) && MDEBUG
@@ -79,7 +76,9 @@ public:
 
 	Experiment(Scope* scope_context,
 			   AbstractNode* node_context,
-			   bool is_branch);
+			   bool is_branch,
+			   AbstractNode* exit_next_node,
+			   bool can_clean);
 	~Experiment();
 
 	void check_activate(AbstractNode* experiment_node,
@@ -101,6 +100,10 @@ public:
 							 SolutionWrapper* wrapper);
 	void train_existing_backprop(double target_val,
 								 SolutionWrapper* wrapper);
+
+	void clean_check_activate(SolutionWrapper* wrapper);
+	void clean_backprop(double target_val,
+						SolutionWrapper* wrapper);
 
 	void explore_check_activate(SolutionWrapper* wrapper);
 	void explore_step(std::vector<double>& obs,
@@ -145,6 +148,9 @@ public:
 	void clean();
 	void add(SolutionWrapper* wrapper);
 	double calc_new_score();
+
+	void clean_add_helper(SolutionWrapper* wrapper);
+	void experiment_add_helper(SolutionWrapper* wrapper);
 };
 
 class ExperimentHistory : public AbstractExperimentHistory {

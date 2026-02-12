@@ -46,6 +46,7 @@ public:
 	 * 
 	 * - but accept if no progress has been made recently
 	 */
+	std::list<double> last_clean_scores;
 
 	std::vector<double> improvement_history;
 	std::vector<std::string> change_history;
@@ -61,8 +62,6 @@ public:
 
 	void init(ProblemType* problem_type);
 	void load(std::ifstream& input_file);
-
-	double calc_decision_cost();
 
 	#if defined(MDEBUG) && MDEBUG
 	void clear_verify();

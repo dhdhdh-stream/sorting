@@ -62,7 +62,7 @@ void Experiment::capture_verify_step(vector<double>& obs,
 	}
 
 	if (experiment_state->step_index >= (int)this->best_step_types.size()) {
-		wrapper->node_context.back() = this->best_exit_next_node;
+		wrapper->node_context.back() = this->exit_next_node;
 
 		delete experiment_state;
 		wrapper->experiment_context.back() = NULL;

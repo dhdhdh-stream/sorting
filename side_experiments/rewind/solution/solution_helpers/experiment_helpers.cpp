@@ -7,6 +7,7 @@
 #include "constants.h"
 #include "experiment.h"
 #include "globals.h"
+#include "obs_node.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
@@ -92,12 +93,74 @@ void create_experiment(ScopeHistory* scope_history,
 				  explore_is_branch);
 
 	if (explore_node != NULL) {
+		vector<AbstractNode*> possible_exits;
+
+		AbstractNode* starting_node;
+		switch (explore_node->type) {
+		case NODE_TYPE_START:
+			{
+				StartNode* start_node = (StartNode*)explore_node;
+				starting_node = start_node->next_node;
+			}
+			break;
+		case NODE_TYPE_ACTION:
+			{
+				ActionNode* action_node = (ActionNode*)explore_node;
+				starting_node = action_node->next_node;
+			}
+			break;
+		case NODE_TYPE_SCOPE:
+			{
+				ScopeNode* scope_node = (ScopeNode*)explore_node;
+				starting_node = scope_node->next_node;
+			}
+			break;
+		case NODE_TYPE_BRANCH:
+			{
+				BranchNode* branch_node = (BranchNode*)explore_node;
+				if (explore_is_branch) {
+					starting_node = branch_node->branch_next_node;
+				} else {
+					starting_node = branch_node->original_next_node;
+				}
+			}
+			break;
+		case NODE_TYPE_OBS:
+			{
+				ObsNode* obs_node = (ObsNode*)explore_node;
+				starting_node = obs_node->next_node;
+			}
+			break;
+		}
+
+		explore_node->parent->random_exit_activate(
+			starting_node,
+			possible_exits);
+
+		geometric_distribution<int> exit_distribution(0.1);
+		int random_index;
+		bool can_clean;
+		while (true) {
+			random_index = exit_distribution(generator);
+			if (random_index < (int)possible_exits.size()) {
+				can_clean = false;
+				for (int n_index = 0; n_index < random_index; n_index++) {
+					if (possible_exits[n_index]->type != NODE_TYPE_OBS) {
+						can_clean = true;
+						break;
+					}
+				}
+				break;
+			}
+		}
+		AbstractNode* exit_next_node = possible_exits[random_index];
+
 		Experiment* new_experiment = new Experiment(
 			explore_node->parent,
 			explore_node,
-			explore_is_branch);
+			explore_is_branch,
+			exit_next_node,
+			can_clean);
 		wrapper->curr_experiment = new_experiment;
-
-		wrapper->solution->calc_decision_cost();	// clear
 	}
 }

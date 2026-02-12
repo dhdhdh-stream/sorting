@@ -21,8 +21,7 @@ using namespace std;
 #if defined(MDEBUG) && MDEBUG
 const int EXPERIMENT_EXPLORE_ITERS = 10;
 #else
-// const int EXPERIMENT_EXPLORE_ITERS = 200;
-const int EXPERIMENT_EXPLORE_ITERS = 1000;
+const int EXPERIMENT_EXPLORE_ITERS = 500;
 #endif /* MDEBUG */
 
 void Experiment::explore_check_activate(SolutionWrapper* wrapper) {
@@ -31,60 +30,6 @@ void Experiment::explore_check_activate(SolutionWrapper* wrapper) {
 	this->num_instances_until_target--;
 	if (history->existing_predicted_trues.size() == 0
 			&& this->num_instances_until_target <= 0) {
-		vector<AbstractNode*> possible_exits;
-
-		AbstractNode* starting_node;
-		switch (this->node_context->type) {
-		case NODE_TYPE_START:
-			{
-				StartNode* start_node = (StartNode*)this->node_context;
-				starting_node = start_node->next_node;
-			}
-			break;
-		case NODE_TYPE_ACTION:
-			{
-				ActionNode* action_node = (ActionNode*)this->node_context;
-				starting_node = action_node->next_node;
-			}
-			break;
-		case NODE_TYPE_SCOPE:
-			{
-				ScopeNode* scope_node = (ScopeNode*)this->node_context;
-				starting_node = scope_node->next_node;
-			}
-			break;
-		case NODE_TYPE_BRANCH:
-			{
-				BranchNode* branch_node = (BranchNode*)this->node_context;
-				if (this->is_branch) {
-					starting_node = branch_node->branch_next_node;
-				} else {
-					starting_node = branch_node->original_next_node;
-				}
-			}
-			break;
-		case NODE_TYPE_OBS:
-			{
-				ObsNode* obs_node = (ObsNode*)this->node_context;
-				starting_node = obs_node->next_node;
-			}
-			break;
-		}
-
-		this->scope_context->random_exit_activate(
-			starting_node,
-			possible_exits);
-
-		geometric_distribution<int> exit_distribution(0.1);
-		int random_index;
-		while (true) {
-			random_index = exit_distribution(generator);
-			if (random_index < (int)possible_exits.size()) {
-				break;
-			}
-		}
-		this->curr_exit_next_node = possible_exits[random_index];
-
 		uniform_int_distribution<int> new_scope_distribution(0, 3);
 		if (new_scope_distribution(generator) == 0) {
 			this->curr_new_scope = create_new_scope(this->node_context->parent);
@@ -94,12 +39,74 @@ void Experiment::explore_check_activate(SolutionWrapper* wrapper) {
 			this->curr_actions.push_back(-1);
 			this->curr_scopes.push_back(this->curr_new_scope);
 		} else {
+			bool exit_is_next;
+			switch (this->node_context->type) {
+			case NODE_TYPE_START:
+				{
+					StartNode* start_node = (StartNode*)this->node_context;
+					if (this->exit_next_node == start_node->next_node) {
+						exit_is_next = true;
+					} else {
+						exit_is_next = false;
+					}
+				}
+				break;
+			case NODE_TYPE_ACTION:
+				{
+					ActionNode* action_node = (ActionNode*)this->node_context;
+					if (this->exit_next_node == action_node->next_node) {
+						exit_is_next = true;
+					} else {
+						exit_is_next = false;
+					}
+				}
+				break;
+			case NODE_TYPE_SCOPE:
+				{
+					ScopeNode* scope_node = (ScopeNode*)this->node_context;
+					if (this->exit_next_node == scope_node->next_node) {
+						exit_is_next = true;
+					} else {
+						exit_is_next = false;
+					}
+				}
+				break;
+			case NODE_TYPE_BRANCH:
+				{
+					BranchNode* branch_node = (BranchNode*)this->node_context;
+					if (this->is_branch) {
+						if (this->exit_next_node == branch_node->branch_next_node) {
+							exit_is_next = true;
+						} else {
+							exit_is_next = false;
+						}
+					} else {
+						if (this->exit_next_node == branch_node->original_next_node) {
+							exit_is_next = true;
+						} else {
+							exit_is_next = false;
+						}
+					}
+				}
+				break;
+			case NODE_TYPE_OBS:
+				{
+					ObsNode* obs_node = (ObsNode*)this->node_context;
+					if (this->exit_next_node == obs_node->next_node) {
+						exit_is_next = true;
+					} else {
+						exit_is_next = false;
+					}
+				}
+				break;
+			}
+
 			int new_num_steps;
 			geometric_distribution<int> geo_distribution(0.3);
 			/**
 			 * - num_steps less than exit length on average to reduce solution size
 			 */
-			if (random_index == 0) {
+			if (exit_is_next) {
 				new_num_steps = 1 + geo_distribution(generator);
 			} else {
 				new_num_steps = geo_distribution(generator);
@@ -182,7 +189,7 @@ void Experiment::explore_step(vector<double>& obs,
 	}
 
 	if (experiment_state->step_index >= (int)this->curr_step_types.size()) {
-		wrapper->node_context.back() = this->curr_exit_next_node;
+		wrapper->node_context.back() = this->exit_next_node;
 
 		delete experiment_state;
 		wrapper->experiment_context.back() = NULL;
@@ -255,7 +262,6 @@ void Experiment::explore_backprop(double target_val,
 			this->best_step_types = this->curr_step_types;
 			this->best_actions = this->curr_actions;
 			this->best_scopes = this->curr_scopes;
-			this->best_exit_next_node = this->curr_exit_next_node;
 			for (int n_index = 0; n_index < (int)this->best_new_nodes.size(); n_index++) {
 				delete this->best_new_nodes[n_index];
 			}

@@ -12,12 +12,17 @@ using namespace std;
 
 Experiment::Experiment(Scope* scope_context,
 					   AbstractNode* node_context,
-					   bool is_branch) {
+					   bool is_branch,
+					   AbstractNode* exit_next_node,
+					   bool can_clean) {
 	this->type = EXPERIMENT_TYPE_EXPERIMENT;
 
 	this->scope_context = scope_context;
 	this->node_context = node_context;
 	this->is_branch = is_branch;
+	this->exit_next_node = exit_next_node;
+
+	this->can_clean = can_clean;
 
 	this->node_context->experiment = this;
 
