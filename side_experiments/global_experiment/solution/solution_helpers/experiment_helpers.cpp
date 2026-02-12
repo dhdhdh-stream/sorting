@@ -103,17 +103,18 @@ void create_experiment(ScopeHistory* scope_history,
 				  explore_depth);
 
 	if (explore_node != NULL) {
-		geometric_distribution<int> depth_distribution(0.3);
-		int signal_depth;
-		while (true) {
-			signal_depth = depth_distribution(generator);
-			if (signal_depth == explore_depth + 1) {
-				signal_depth = -1;
-				break;
-			} else if (signal_depth <= explore_depth) {
-				break;
-			}
-		}
+		// geometric_distribution<int> depth_distribution(0.3);
+		// int signal_depth;
+		// while (true) {
+		// 	signal_depth = depth_distribution(generator);
+		// 	if (signal_depth == explore_depth + 1) {
+		// 		signal_depth = -1;
+		// 		break;
+		// 	} else if (signal_depth <= explore_depth) {
+		// 		break;
+		// 	}
+		// }
+		int signal_depth = -1;
 
 		Experiment* new_experiment = new Experiment(
 			explore_node->parent,

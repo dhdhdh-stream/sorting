@@ -277,6 +277,38 @@ void Experiment::explore_backprop(double target_val,
 		for (int l_index = 0; l_index < (int)history->stack_traces[0].size(); l_index++) {
 			signal_add_sample(history->stack_traces[0][l_index],
 							  target_val);
+
+			// temp
+			if (this->state_iter < 5) {
+				ScopeHistory* scope_history = history->stack_traces[0][l_index];
+				vector<double> input;
+				input.insert(input.end(), scope_history->pre_obs_history.begin(), scope_history->pre_obs_history.end());
+				input.insert(input.end(), scope_history->post_obs_history.begin(), scope_history->post_obs_history.end());
+				Scope* scope = scope_history->scope;
+				double signal = scope->signal->activate(input);
+				cout << "scope->id: " << scope->id << endl;
+				cout << "pre:" << endl;
+				cout << scope_history->pre_obs_history[0] << endl;
+				cout << scope_history->pre_obs_history[1] << endl;
+				for (int x_index = 0; x_index < 9; x_index++) {
+					for (int y_index = 0; y_index < 9; y_index++) {
+						cout << scope_history->pre_obs_history[2 + 9*y_index + x_index] << " ";
+					}
+					cout << endl;
+				}
+				cout << "post:" << endl;
+				cout << scope_history->post_obs_history[0] << endl;
+				cout << scope_history->post_obs_history[1] << endl;
+				for (int x_index = 0; x_index < 9; x_index++) {
+					for (int y_index = 0; y_index < 9; y_index++) {
+						cout << scope_history->post_obs_history[2 + 9*y_index + x_index] << " ";
+					}
+					cout << endl;
+				}
+				cout << "signal: " << signal << endl;
+				cout << "target_val: " << target_val << endl;
+				cout << endl;
+			}
 		}
 
 		#if defined(MDEBUG) && MDEBUG

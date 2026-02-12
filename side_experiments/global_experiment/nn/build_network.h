@@ -7,7 +7,7 @@
 
 class BuildNode;
 
-const int BUILD_MAX_NUM_INPUTS = 10;
+const int BUILD_MAX_NUM_INPUTS = 20;
 
 class BuildNetwork {
 public:

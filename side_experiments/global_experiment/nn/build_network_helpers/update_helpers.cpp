@@ -13,11 +13,11 @@ using namespace std;
 const int NUM_TRIES = 10;
 
 #if defined(MDEBUG) && MDEBUG
-const int INIT_ITERS = 15;
-const int REFINE_ITERS = 15;
+const int INIT_ITERS = 20;
+const int REFINE_ITERS = 10;
 #else
-const int INIT_ITERS = 150000;
-const int REFINE_ITERS = 150000;
+const int INIT_ITERS = 200000;
+const int REFINE_ITERS = 100000;
 #endif /* MDEBUG */
 
 const double VALIDATION_RATIO = 0.2;

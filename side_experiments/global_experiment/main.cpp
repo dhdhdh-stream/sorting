@@ -1,6 +1,27 @@
 // TODO: don't train just against true
 // - train against the average of all upper layers
 
+// - maybe always global relative to scope starting point
+//   - so scope can be applied to other spots that make sense
+//     - and signal will keep making sense
+
+// - maybe learn impact of scope
+//   - and use during explore to see if makes sense
+//   - i.e., literally don't perform scope sometimes, but eval impact
+
+// - maybe don't force it
+//   - for some problems/situations, might be something extremely obvious
+//     - otherwise, don't worry about it too much
+//   - then maybe also add focus on existing too
+
+// - maybe focus on cleaning up solution for now
+//   - try to compact solution down to a small number of scopes
+//     - try to focus on things that are repetitive
+
+// - input can be relative to either start or end
+
+// - yeah, not about giant global, but local global
+
 #include <chrono>
 #include <iostream>
 #include <map>
