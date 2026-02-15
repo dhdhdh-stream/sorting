@@ -5,8 +5,8 @@
 
 #include "action_node.h"
 #include "branch_node.h"
+#include "build_network.h"
 #include "constants.h"
-#include "decision_tree.h"
 #include "globals.h"
 #include "network.h"
 #include "problem.h"
@@ -49,22 +49,7 @@ void Experiment::train_new_step(vector<double>& obs,
 		ExperimentHistory* history = (ExperimentHistory*)wrapper->experiment_history;
 
 		if (this->signal_depth != -1) {
-			if (this->average_signals) {
-				history->starting_sum_signals.push_back(wrapper->sum_signals);
-				history->starting_signal_count.push_back(wrapper->signal_count);
-				history->ending_sum_signals.push_back(0.0);
-				history->ending_signal_count.push_back(0.0);
-				if (this->signal_depth >= (int)wrapper->scope_histories.size()) {
-					wrapper->scope_histories[0]->experiment_callback_histories.push_back(history);
-					wrapper->scope_histories[0]->experiment_callback_indexes.push_back(history->ending_sum_signals.size()-1);
-				} else {
-					int index = wrapper->scope_histories.size()-1 - this->signal_depth;
-					wrapper->scope_histories[index]->experiment_callback_histories.push_back(history);
-					wrapper->scope_histories[index]->experiment_callback_indexes.push_back(history->ending_sum_signals.size()-1);
-				}
-			} else {
-				history->stack_traces.push_back(wrapper->scope_histories);
-			}
+			history->stack_traces.push_back(wrapper->scope_histories);
 		}
 
 		this->new_obs_histories.push_back(obs);
@@ -184,29 +169,28 @@ void Experiment::train_new_backprop(
 				this->new_target_vals.push_back(target_val - history->existing_predicted[i_index]);
 			}
 		} else {
-			if (this->average_signals) {
-				for (int i_index = 0; i_index < (int)history->starting_sum_signals.size(); i_index++) {
-					double average_signal = (history->ending_sum_signals[i_index] - history->starting_sum_signals[i_index])
-						/ (history->ending_signal_count[i_index] - history->starting_signal_count[i_index]);
-					this->new_target_vals.push_back(average_signal - history->existing_predicted[i_index]);
+			for (int i_index = 0; i_index < (int)history->existing_predicted.size(); i_index++) {
+				ScopeHistory* scope_history;
+				if (this->signal_depth >= (int)history->stack_traces[i_index].size()) {
+					scope_history = history->stack_traces[i_index][0];
+				} else {
+					int index = history->stack_traces[i_index].size()-1 - this->signal_depth;
+					scope_history = history->stack_traces[i_index][index];
 				}
-			} else {
-				for (int i_index = 0; i_index < (int)history->existing_predicted.size(); i_index++) {
-					ScopeHistory* scope_history;
-					if (this->signal_depth >= (int)history->stack_traces[i_index].size()) {
-						scope_history = history->stack_traces[i_index][0];
-					} else {
-						int index = history->stack_traces[i_index].size()-1 - this->signal_depth;
-						scope_history = history->stack_traces[i_index][index];
-					}
 
-					vector<double> input;
-					input.insert(input.end(), scope_history->pre_obs_history.begin(), scope_history->pre_obs_history.end());
-					input.insert(input.end(), scope_history->post_obs_history.begin(), scope_history->post_obs_history.end());
+				Scope* scope = scope_history->scope;
 
-					Scope* scope = scope_history->scope;
-					this->new_target_vals.push_back(scope->signal->activate(input) - history->existing_predicted[i_index]);
-				}
+				double pre_signal = scope->pre_signal->activate(scope_history->pre_obs_history);
+
+				vector<double> input;
+				input.insert(input.end(), scope_history->pre_obs_history.begin(), scope_history->pre_obs_history.end());
+				input.insert(input.end(), scope_history->post_obs_history.begin(), scope_history->post_obs_history.end());
+
+				double post_signal = scope->post_signal->activate(input);
+
+				double new_signal = post_signal - pre_signal;
+
+				this->new_target_vals.push_back(new_signal - history->existing_predicted[i_index]);
 			}
 		}
 

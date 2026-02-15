@@ -2,8 +2,8 @@
 
 #include <iostream>
 
+#include "build_network.h"
 #include "constants.h"
-#include "decision_tree.h"
 #include "experiment.h"
 #include "globals.h"
 #include "network.h"
@@ -19,9 +19,6 @@ using namespace std;
 
 void get_existing_result_init(SolutionWrapper* wrapper) {
 	wrapper->result_num_actions = wrapper->result_num_actions;
-
-	wrapper->sum_signals = wrapper->result_sum_signals;
-	wrapper->signal_count = wrapper->result_signal_count;
 
 	for (int l_index = 0; l_index < (int)wrapper->scope_histories.size(); l_index++) {
 		ScopeHistory* scope_history = new ScopeHistory(wrapper->scope_histories[l_index]->scope);
@@ -52,15 +49,19 @@ void get_existing_result(SolutionWrapper* wrapper) {
 				scope_history->post_obs_history = obs;
 
 				for (int i_index = 0; i_index < (int)scope_history->experiment_callback_histories.size(); i_index++) {
+					Scope* scope = scope_history->scope;
+
+					double pre_signal = scope->pre_signal->activate(scope_history->pre_obs_history);
+
 					vector<double> input;
 					input.insert(input.end(), scope_history->pre_obs_history.begin(), scope_history->pre_obs_history.end());
 					input.insert(input.end(), scope_history->post_obs_history.begin(), scope_history->post_obs_history.end());
 
-					Scope* scope = scope_history->scope;
+					double post_signal = scope->post_signal->activate(input);
 
 					wrapper->curr_experiment->existing_pre_obs.push_back(scope_history->pre_obs_history);
 					wrapper->curr_experiment->existing_post_obs.push_back(scope_history->post_obs_history);
-					wrapper->curr_experiment->existing_signal_vals.push_back(scope->signal->activate(input));
+					wrapper->curr_experiment->existing_signal_vals.push_back(post_signal - pre_signal);
 				}
 
 				if (wrapper->result_scope_histories.size() == 1) {

@@ -23,7 +23,13 @@ void gather_helper(ScopeHistory* scope_history,
 				   int& node_count,
 				   AbstractNode*& explore_node,
 				   bool& explore_is_branch,
-				   int& explore_depth) {
+				   int& explore_depth,
+				   Scope* experiment_scope) {
+	bool can_explore = false;
+	if (experiment_scope == NULL || experiment_scope == scope_history->scope) {
+		can_explore = true;
+	}
+
 	for (map<int, AbstractNodeHistory*>::iterator h_it = scope_history->node_histories.begin();
 			h_it != scope_history->node_histories.end(); h_it++) {
 		AbstractNode* node = h_it->second->node;
@@ -31,7 +37,7 @@ void gather_helper(ScopeHistory* scope_history,
 		case NODE_TYPE_START:
 		case NODE_TYPE_ACTION:
 		case NODE_TYPE_OBS:
-			if (node->experiment == NULL) {
+			if (can_explore && node->experiment == NULL) {
 				uniform_int_distribution<int> select_distribution(0, node_count);
 				node_count++;
 				if (select_distribution(generator) == 0) {
@@ -50,9 +56,10 @@ void gather_helper(ScopeHistory* scope_history,
 							  node_count,
 							  explore_node,
 							  explore_is_branch,
-							  explore_depth);
+							  explore_depth,
+							  experiment_scope);
 
-				if (node->experiment == NULL) {
+				if (can_explore && node->experiment == NULL) {
 					uniform_int_distribution<int> select_distribution(0, node_count);
 					node_count++;
 					if (select_distribution(generator) == 0) {
@@ -64,7 +71,7 @@ void gather_helper(ScopeHistory* scope_history,
 			}
 			break;
 		case NODE_TYPE_BRANCH:
-			if (node->experiment == NULL) {
+			if (can_explore && node->experiment == NULL) {
 				BranchNodeHistory* branch_node_history = (BranchNodeHistory*)h_it->second;
 				if (branch_node_history->is_branch) {
 					uniform_int_distribution<int> select_distribution(0, node_count);
@@ -100,35 +107,46 @@ void create_experiment(ScopeHistory* scope_history,
 				  node_count,
 				  explore_node,
 				  explore_is_branch,
-				  explore_depth);
+				  explore_depth,
+				  wrapper->experiment_scope);
 
 	if (explore_node != NULL) {
-		geometric_distribution<int> depth_distribution(0.3);
-		int signal_depth;
-		while (true) {
-			signal_depth = depth_distribution(generator);
-			if (signal_depth == explore_depth + 1) {
-				signal_depth = -1;
-				break;
-			} else if (signal_depth <= explore_depth) {
-				break;
-			}
-		}
-
-		bool average_signals;
-		if (signal_depth == -1) {
-			average_signals = false;
+		if (wrapper->experiment_scope == NULL) {
+			Experiment* new_experiment = new Experiment(
+				explore_node->parent,
+				explore_node,
+				explore_is_branch,
+				-1,
+				false);
+			wrapper->curr_experiment = new_experiment;
 		} else {
-			uniform_int_distribution<int> average_signals_distribution(0, 1);
-			average_signals = average_signals_distribution(generator) == 0;
+			Experiment* new_experiment = new Experiment(
+				explore_node->parent,
+				explore_node,
+				explore_is_branch,
+				0,
+				true);
+			wrapper->curr_experiment = new_experiment;
 		}
 
-		Experiment* new_experiment = new Experiment(
-			explore_node->parent,
-			explore_node,
-			explore_is_branch,
-			signal_depth,
-			average_signals);
-		wrapper->curr_experiment = new_experiment;
+		// geometric_distribution<int> depth_distribution(0.3);
+		// int signal_depth;
+		// while (true) {
+		// 	signal_depth = depth_distribution(generator);
+		// 	if (signal_depth == explore_depth + 1) {
+		// 		signal_depth = -1;
+		// 		break;
+		// 	} else if (signal_depth <= explore_depth) {
+		// 		break;
+		// 	}
+		// }
+
+		// Experiment* new_experiment = new Experiment(
+		// 	explore_node->parent,
+		// 	explore_node,
+		// 	explore_is_branch,
+		// 	signal_depth,
+		// 	false);
+		// wrapper->curr_experiment = new_experiment;
 	}
 }

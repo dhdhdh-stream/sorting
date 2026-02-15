@@ -2,8 +2,8 @@
 
 #include <iostream>
 
+#include "build_network.h"
 #include "constants.h"
-#include "decision_tree.h"
 #include "experiment.h"
 #include "globals.h"
 #include "network.h"
@@ -22,9 +22,6 @@ const int SNAPSHOT_ITERS = 10;
 
 void SolutionWrapper::experiment_init() {
 	this->num_actions = 1;
-
-	this->sum_signals = 0.0;
-	this->signal_count = 0;
 
 	#if defined(MDEBUG) && MDEBUG
 	this->run_index++;
@@ -59,21 +56,6 @@ tuple<bool,bool,int> SolutionWrapper::experiment_step(vector<double> obs) {
 				&& this->experiment_context.back() == NULL) {
 			ScopeHistory* scope_history = this->scope_histories.back();
 			scope_history->post_obs_history = obs;
-
-			vector<double> input;
-			input.insert(input.end(), scope_history->pre_obs_history.begin(), scope_history->pre_obs_history.end());
-			input.insert(input.end(), scope_history->post_obs_history.begin(), scope_history->post_obs_history.end());
-
-			Scope* scope = scope_history->scope;
-			this->sum_signals += scope->signal->activate(input);
-			this->signal_count++;
-
-			for (int i_index = 0; i_index < (int)scope_history->experiment_callback_histories.size(); i_index++) {
-				scope_history->experiment_callback_histories[i_index]
-					->ending_sum_signals[scope_history->experiment_callback_indexes[i_index]] = this->sum_signals;
-				scope_history->experiment_callback_histories[i_index]
-					->ending_signal_count[scope_history->experiment_callback_indexes[i_index]] = this->signal_count;
-			}
 
 			if (this->scope_histories.size() == 1) {
 				is_next = true;
@@ -145,6 +127,14 @@ void SolutionWrapper::experiment_end(double result) {
 				clean_scope(last_updated_scope);
 
 				this->solution->clean_scopes();
+
+				if (this->experiment_scope != NULL) {
+					this->experiment_scope_iters++;
+					if (this->experiment_scope_iters >= ITERS_PER_EXPERIMENT_SCOPE) {
+						this->experiment_scope = NULL;
+						this->experiment_scope_iters = -1;
+					}
+				}
 
 				this->solution->timestamp++;
 				// if (this->solution->timestamp >= RUN_TIMESTEPS) {

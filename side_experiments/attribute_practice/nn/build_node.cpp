@@ -1,15 +1,18 @@
-#include "network.h"
+#include "build_node.h"
 
-#include <iostream>
-
+#include "build_network.h"
 #include "constants.h"
-#include "globals.h"
+#include "layer.h"
 
 using namespace std;
 
-Network::Network(int input_size) {
+BuildNode::BuildNode(vector<int>& input_types,
+					 vector<int>& input_indexes) {
+	this->input_types = input_types;
+	this->input_indexes = input_indexes;
+
 	this->input = new Layer(LINEAR_LAYER);
-	for (int i_index = 0; i_index < input_size; i_index++) {
+	for (int i_index = 0; i_index < (int)this->input_types.size(); i_index++) {
 		this->input->acti_vals.push_back(0.0);
 		this->input->errors.push_back(0.0);
 	}
@@ -48,15 +51,12 @@ Network::Network(int input_size) {
 	this->output->input_layers.push_back(this->hidden_2);
 	this->output->input_layers.push_back(this->hidden_3);
 	this->output->update_structure();
-
-	this->epoch_iter = 0;
-	this->hidden_1_average_max_update = 0.0;
-	this->hidden_2_average_max_update = 0.0;
-	this->hidden_3_average_max_update = 0.0;
-	this->output_average_max_update = 0.0;
 }
 
-Network::Network(Network* original) {
+BuildNode::BuildNode(BuildNode* original) {
+	this->input_types = original->input_types;
+	this->input_indexes = original->input_indexes;
+
 	this->input = new Layer(LINEAR_LAYER);
 	for (int i_index = 0; i_index < (int)original->input->acti_vals.size(); i_index++) {
 		this->input->acti_vals.push_back(0.0);
@@ -101,20 +101,24 @@ Network::Network(Network* original) {
 	this->output->input_layers.push_back(this->hidden_3);
 	this->output->update_structure();
 	this->output->copy_weights_from(original->output);
-
-	this->epoch_iter = 0;
-	this->hidden_1_average_max_update = 0.0;
-	this->hidden_2_average_max_update = 0.0;
-	this->hidden_3_average_max_update = 0.0;
-	this->output_average_max_update = 0.0;
 }
 
-Network::Network(ifstream& input_file) {
+BuildNode::BuildNode(ifstream& input_file) {
+	string num_inputs_line;
+	getline(input_file, num_inputs_line);
+	int num_inputs = stoi(num_inputs_line);
+	for (int i_index = 0; i_index < num_inputs; i_index++) {
+		string type_line;
+		getline(input_file, type_line);
+		this->input_types.push_back(stoi(type_line));
+
+		string index_line;
+		getline(input_file, index_line);
+		this->input_indexes.push_back(stoi(index_line));
+	}
+
 	this->input = new Layer(LINEAR_LAYER);
-	string input_size_line;
-	getline(input_file, input_size_line);
-	int input_size = stoi(input_size_line);
-	for (int i_index = 0; i_index < input_size; i_index++) {
+	for (int i_index = 0; i_index < num_inputs; i_index++) {
 		this->input->acti_vals.push_back(0.0);
 		this->input->errors.push_back(0.0);
 	}
@@ -167,15 +171,9 @@ Network::Network(ifstream& input_file) {
 	this->hidden_2->load_weights_from(input_file);
 	this->hidden_3->load_weights_from(input_file);
 	this->output->load_weights_from(input_file);
-
-	this->epoch_iter = 0;
-	this->hidden_1_average_max_update = 0.0;
-	this->hidden_2_average_max_update = 0.0;
-	this->hidden_3_average_max_update = 0.0;
-	this->output_average_max_update = 0.0;
 }
 
-Network::~Network() {
+BuildNode::~BuildNode() {
 	delete this->input;
 	delete this->hidden_1;
 	delete this->hidden_2;
@@ -183,9 +181,17 @@ Network::~Network() {
 	delete this->output;
 }
 
-void Network::activate(vector<double>& input_vals) {
-	for (int i_index = 0; i_index < (int)input_vals.size(); i_index++) {
-		this->input->acti_vals[i_index] = input_vals[i_index];
+void BuildNode::init_activate(vector<double>& input_vals,
+							  vector<double>& node_vals) {
+	for (int i_index = 0; i_index < (int)this->input_types.size(); i_index++) {
+		switch (this->input_types[i_index]) {
+		case INPUT_TYPE_INPUT:
+			this->input->acti_vals[i_index] = input_vals[this->input_indexes[i_index]];
+			break;
+		case INPUT_TYPE_NODE:
+			this->input->acti_vals[i_index] = node_vals[this->input_indexes[i_index]];
+			break;
+		}
 	}
 	this->hidden_1->activate();
 	this->hidden_2->activate();
@@ -193,65 +199,69 @@ void Network::activate(vector<double>& input_vals) {
 	this->output->activate();
 }
 
-void Network::backprop(double error) {
-	this->output->errors[0] = error;
+void BuildNode::init_backprop() {
 	this->output->backprop();
 	this->hidden_3->backprop();
 	this->hidden_2->backprop();
 	this->hidden_1->backprop();
-
-	this->epoch_iter++;
-	if (this->epoch_iter == NETWORK_EPOCH_SIZE) {
-		double hidden_1_max_update = 0.0;
-		this->hidden_1->get_max_update(hidden_1_max_update);
-		this->hidden_1_average_max_update = 0.999*this->hidden_1_average_max_update+0.001*hidden_1_max_update;
-		if (hidden_1_max_update > 0.0) {
-			double hidden_1_learning_rate = (0.3*NETWORK_TARGET_MAX_UPDATE)/this->hidden_1_average_max_update;
-			if (hidden_1_learning_rate*hidden_1_max_update > NETWORK_TARGET_MAX_UPDATE) {
-				hidden_1_learning_rate = NETWORK_TARGET_MAX_UPDATE/hidden_1_max_update;
-			}
-			this->hidden_1->update_weights(hidden_1_learning_rate);
-		}
-
-		double hidden_2_max_update = 0.0;
-		this->hidden_2->get_max_update(hidden_2_max_update);
-		this->hidden_2_average_max_update = 0.999*this->hidden_2_average_max_update+0.001*hidden_2_max_update;
-		if (hidden_2_max_update > 0.0) {
-			double hidden_2_learning_rate = (0.3*NETWORK_TARGET_MAX_UPDATE)/this->hidden_2_average_max_update;
-			if (hidden_2_learning_rate*hidden_2_max_update > NETWORK_TARGET_MAX_UPDATE) {
-				hidden_2_learning_rate = NETWORK_TARGET_MAX_UPDATE/hidden_2_max_update;
-			}
-			this->hidden_2->update_weights(hidden_2_learning_rate);
-		}
-
-		double hidden_3_max_update = 0.0;
-		this->hidden_3->get_max_update(hidden_3_max_update);
-		this->hidden_3_average_max_update = 0.999*this->hidden_3_average_max_update+0.001*hidden_3_max_update;
-		if (hidden_3_max_update > 0.0) {
-			double hidden_3_learning_rate = (0.3*NETWORK_TARGET_MAX_UPDATE)/this->hidden_3_average_max_update;
-			if (hidden_3_learning_rate*hidden_3_max_update > NETWORK_TARGET_MAX_UPDATE) {
-				hidden_3_learning_rate = NETWORK_TARGET_MAX_UPDATE/hidden_3_max_update;
-			}
-			this->hidden_3->update_weights(hidden_3_learning_rate);
-		}
-
-		double output_max_update = 0.0;
-		this->output->get_max_update(output_max_update);
-		this->output_average_max_update = 0.999*this->output_average_max_update+0.001*output_max_update;
-		if (output_max_update > 0.0) {
-			double output_learning_rate = (0.3*NETWORK_TARGET_MAX_UPDATE)/this->output_average_max_update;
-			if (output_learning_rate*output_max_update > NETWORK_TARGET_MAX_UPDATE) {
-				output_learning_rate = NETWORK_TARGET_MAX_UPDATE/output_max_update;
-			}
-			this->output->update_weights(output_learning_rate);
-		}
-
-		this->epoch_iter = 0;
+	for (int i_index = 0; i_index < (int)this->input_types.size(); i_index++) {
+		this->input->errors[i_index] = 0.0;
 	}
 }
 
-void Network::save(ofstream& output_file) {
-	output_file << this->input->acti_vals.size() << endl;
+void BuildNode::activate(BuildNetwork* network) {
+	for (int i_index = 0; i_index < (int)this->input_types.size(); i_index++) {
+		switch (this->input_types[i_index]) {
+		case INPUT_TYPE_INPUT:
+			this->input->acti_vals[i_index] = network->inputs[this->input_indexes[i_index]];
+			break;
+		case INPUT_TYPE_NODE:
+			this->input->acti_vals[i_index] = network->nodes[this->input_indexes[i_index]]->output->acti_vals[0];
+			break;
+		}
+	}
+	this->hidden_1->activate();
+	this->hidden_2->activate();
+	this->hidden_3->activate();
+	this->output->activate();
+}
+
+void BuildNode::backprop(BuildNetwork* network) {
+	this->output->backprop();
+	this->hidden_3->backprop();
+	this->hidden_2->backprop();
+	this->hidden_1->backprop();
+	for (int i_index = 0; i_index < (int)this->input_types.size(); i_index++) {
+		switch (this->input_types[i_index]) {
+		case INPUT_TYPE_NODE:
+			network->nodes[this->input_indexes[i_index]]->output->errors[0] += this->input->errors[i_index];
+			break;
+		}
+		this->input->errors[i_index] = 0.0;
+	}
+}
+
+void BuildNode::get_max_update(double& max_update) {
+	this->hidden_1->get_max_update(max_update);
+	this->hidden_2->get_max_update(max_update);
+	this->hidden_3->get_max_update(max_update);
+	this->output->get_max_update(max_update);
+}
+
+void BuildNode::update_weights(double learning_rate) {
+	this->hidden_1->update_weights(learning_rate);
+	this->hidden_2->update_weights(learning_rate);
+	this->hidden_3->update_weights(learning_rate);
+	this->output->update_weights(learning_rate);
+}
+
+void BuildNode::save(ofstream& output_file) {
+	output_file << this->input_types.size() << endl;
+	for (int i_index = 0; i_index < (int)this->input_types.size(); i_index++) {
+		output_file << this->input_types[i_index] << endl;
+		output_file << this->input_indexes[i_index] << endl;
+	}
+
 	output_file << this->hidden_1->acti_vals.size() << endl;
 	output_file << this->hidden_2->acti_vals.size() << endl;
 	output_file << this->hidden_3->acti_vals.size() << endl;

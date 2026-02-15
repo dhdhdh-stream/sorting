@@ -22,6 +22,26 @@
 
 // - yeah, not about giant global, but local global
 
+// - issues:
+//   - currently:
+//     (1) find something
+//     (2) learn locally how it looks with a bit of generalization
+//     (3) max out that thing
+//     - not good at recognizing innovation
+//     - maybe learn signal per change
+//       - using change as seed
+//   - signals predict good result due to luck rather than due to change that was made
+//   - change beyond what signal can currently predict
+
+// - recognizing something takes samples and training iters
+//   - can't afford to try to recognize everything
+
+// - maybe everytime make a change, learn new network
+
+// - yeah, expecting signal to innovate doesn't make sense
+//   - signal only reinforces itself with some slight generalization
+// - need to constantly be adding signals
+
 #include <chrono>
 #include <iostream>
 #include <map>

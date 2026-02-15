@@ -5,8 +5,8 @@
 
 #include "action_node.h"
 #include "branch_node.h"
+#include "build_network.h"
 #include "constants.h"
-#include "decision_tree.h"
 #include "network.h"
 #include "problem.h"
 #include "scope.h"
@@ -218,15 +218,19 @@ void Experiment::measure_backprop(double target_val,
 				scope_history = history->stack_traces[i_index][index];
 			}
 
+			Scope* scope = scope_history->scope;
+
+			double pre_signal = scope->pre_signal->activate(scope_history->pre_obs_history);
+
 			vector<double> input;
 			input.insert(input.end(), scope_history->pre_obs_history.begin(), scope_history->pre_obs_history.end());
 			input.insert(input.end(), scope_history->post_obs_history.begin(), scope_history->post_obs_history.end());
 
-			Scope* scope = scope_history->scope;
+			double post_signal = scope->post_signal->activate(input);
 
 			this->new_pre_obs.push_back(scope_history->pre_obs_history);
 			this->new_post_obs.push_back(scope_history->post_obs_history);
-			this->new_signal_vals.push_back(scope->signal->activate(input));
+			this->new_signal_vals.push_back(post_signal - pre_signal);
 		}
 	}
 

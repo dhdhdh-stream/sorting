@@ -23,6 +23,11 @@ void recursive_add_child(Scope* curr_parent,
 						 SolutionWrapper* wrapper,
 						 Scope* new_scope);
 
+void signal_add_existing_sample(ScopeHistory* scope_history,
+								double target_val);
+void signal_add_explore_sample(ScopeHistory* scope_history,
+							   double target_val);
+
 void clean_scope(Scope* scope);
 
 void get_existing_result_init(SolutionWrapper* wrapper);

@@ -76,7 +76,7 @@ public:
 			   AbstractNode* node_context,
 			   bool is_branch,
 			   int signal_depth,
-			   bool average_signals);
+			   bool create_signal);
 	~Experiment();
 
 	void check_activate(AbstractNode* experiment_node,

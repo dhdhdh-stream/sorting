@@ -17,6 +17,8 @@ class Scope;
 class ScopeHistory;
 class Solution;
 
+const int ITERS_PER_EXPERIMENT_SCOPE = 3;
+
 class SolutionWrapper {
 public:
 	Solution* solution;
@@ -26,6 +28,9 @@ public:
 	/**
 	 * - iter variables
 	 */
+	Scope* experiment_scope;
+	int experiment_scope_iters;
+
 	AbstractExperiment* curr_experiment;
 
 	/**
@@ -37,9 +42,6 @@ public:
 
 	int num_actions;
 
-	double sum_signals;
-	int signal_count;
-
 	AbstractExperimentHistory* experiment_history;
 
 	Problem* problem;
@@ -49,9 +51,6 @@ public:
 	std::vector<AbstractExperimentState*> result_experiment_context;
 
 	int result_num_actions;
-
-	double result_sum_signals;
-	int result_signal_count;
 
 	#if defined(MDEBUG) && MDEBUG
 	int run_index;

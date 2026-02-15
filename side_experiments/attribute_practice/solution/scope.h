@@ -8,10 +8,16 @@
 class AbstractExperimentHistory;
 class AbstractNode;
 class AbstractNodeHistory;
-class DecisionTree;
+class BuildNetwork;
 class Problem;
 class Solution;
 class SolutionWrapper;
+
+#if defined(MDEBUG) && MDEBUG
+const int SIGNAL_NUM_SAMPLES = 50;
+#else
+const int SIGNAL_NUM_SAMPLES = 5000;
+#endif /* MDEBUG */
 
 class ScopeHistory;
 class Scope {
@@ -32,7 +38,18 @@ public:
 	 *     - setup and actual execution equally responsible for success
 	 *     - subtracting many signals from true instable
 	 */
-	DecisionTree* signal;
+	BuildNetwork* pre_signal;
+	BuildNetwork* post_signal;
+
+	std::vector<std::vector<double>> explore_pre_obs_histories;
+	std::vector<std::vector<double>> explore_post_obs_histories;
+	std::vector<double> explore_target_val_histories;
+	int explore_history_index;
+
+	std::vector<std::vector<double>> existing_pre_obs_histories;
+	std::vector<std::vector<double>> existing_post_obs_histories;
+	std::vector<double> existing_target_val_histories;
+	int existing_history_index;
 
 	Scope();
 	~Scope();
