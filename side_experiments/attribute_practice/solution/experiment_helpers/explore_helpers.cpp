@@ -405,12 +405,15 @@ void Experiment::explore_backprop(double target_val,
 			} else {
 				curr_surprise = new_signal - history->existing_predicted[0];
 			}
-		}
 
-		for (int l_index = 0; l_index < (int)history->stack_traces[0].size(); l_index++) {
-			signal_add_explore_sample(history->stack_traces[0][l_index],
+			signal_add_explore_sample(scope_history,
 									  target_val);
 		}
+
+		// for (int l_index = 0; l_index < (int)history->stack_traces[0].size(); l_index++) {
+		// 	signal_add_explore_sample(history->stack_traces[0][l_index],
+		// 							  target_val);
+		// }
 
 		#if defined(MDEBUG) && MDEBUG
 		if (curr_surprise > this->best_surprise || true) {

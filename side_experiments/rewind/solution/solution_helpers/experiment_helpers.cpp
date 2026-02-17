@@ -144,12 +144,12 @@ void create_experiment(ScopeHistory* scope_history,
 			random_index = exit_distribution(generator);
 			if (random_index < (int)possible_exits.size()) {
 				can_clean = false;
-				for (int n_index = 0; n_index < random_index; n_index++) {
-					if (possible_exits[n_index]->type != NODE_TYPE_OBS) {
-						can_clean = true;
-						break;
-					}
-				}
+				// for (int n_index = 0; n_index < random_index; n_index++) {
+				// 	if (possible_exits[n_index]->type != NODE_TYPE_OBS) {
+				// 		can_clean = true;
+				// 		break;
+				// 	}
+				// }
 				break;
 			}
 		}

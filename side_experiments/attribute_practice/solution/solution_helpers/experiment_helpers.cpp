@@ -117,7 +117,7 @@ void create_experiment(ScopeHistory* scope_history,
 				explore_node,
 				explore_is_branch,
 				-1,
-				false);
+				true);
 			wrapper->curr_experiment = new_experiment;
 		} else {
 			Experiment* new_experiment = new Experiment(
@@ -125,7 +125,7 @@ void create_experiment(ScopeHistory* scope_history,
 				explore_node,
 				explore_is_branch,
 				0,
-				true);
+				false);
 			wrapper->curr_experiment = new_experiment;
 		}
 

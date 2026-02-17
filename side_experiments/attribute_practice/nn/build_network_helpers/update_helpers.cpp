@@ -204,13 +204,32 @@ void update_network(vector<vector<double>>& obs_histories,
 }
 
 /**
- * - existing vs. explore = 25% vs. 75%
+ * - weigh existing vs. explore 1-to-1
+ *   - existing may have high variance
+ *   - only rely on explore to generalize slightly off of existing
  */
 void update_network(vector<vector<double>>& existing_obs_histories,
 					vector<double>& existing_target_val_histories,
 					vector<vector<double>>& explore_obs_histories,
 					vector<double>& explore_target_val_histories,
 					BuildNetwork*& network) {
+	// ofstream output_file("saves/data_" + to_string(time(NULL)) + ".txt");
+	// output_file << existing_obs_histories.size() << endl;
+	// for (int h_index = 0; h_index < (int)existing_obs_histories.size(); h_index++) {
+	// 	for (int i_index = 0; i_index < (int)existing_obs_histories[h_index].size(); i_index++) {
+	// 		output_file << existing_obs_histories[h_index][i_index] << endl;
+	// 	}
+	// 	output_file << existing_target_val_histories[h_index] << endl;
+	// }
+	// output_file << explore_obs_histories.size() << endl;
+	// for (int h_index = 0; h_index < (int)explore_obs_histories.size(); h_index++) {
+	// 	for (int i_index = 0; i_index < (int)explore_obs_histories[h_index].size(); i_index++) {
+	// 		output_file << explore_obs_histories[h_index][i_index] << endl;
+	// 	}
+	// 	output_file << explore_target_val_histories[h_index] << endl;
+	// }
+	// output_file.close();
+
 	int num_train_samples = (1.0 - VALIDATION_RATIO) * (int)explore_obs_histories.size();
 
 	if (network->nodes.size() == 0) {
@@ -226,7 +245,7 @@ void update_network(vector<vector<double>>& existing_obs_histories,
 		}
 		double explore_val_average = explore_sum_vals / num_train_samples;
 
-		network->output_constant = (existing_val_average + 3.0 * explore_val_average) / 4.0;
+		network->output_constant = (existing_val_average + explore_val_average) / 2.0;
 	}
 
 	vector<vector<double>> existing_node_vals(existing_obs_histories.size());
@@ -267,12 +286,12 @@ void update_network(vector<vector<double>>& existing_obs_histories,
 		explore_existing_sum_misguess += explore_remaining_vals[h_index] * explore_remaining_vals[h_index];
 	}
 
-	double existing_sum_misguess = (existing_existing_sum_misguess + 3.0 * explore_existing_sum_misguess) / 4.0;
+	double existing_sum_misguess = (existing_existing_sum_misguess + explore_existing_sum_misguess) / 2.0;
 
 	BuildNetwork* best_network = NULL;
 	double best_improvement = 0.0;
 
-	uniform_int_distribution<int> existing_distribution(0, 3);
+	uniform_int_distribution<int> existing_distribution(0, 1);
 	for (int try_index = 0; try_index < 10; try_index++) {
 		vector<pair<int,int>> possible_inputs;
 		for (int i_index = 0; i_index < (int)network->inputs.size(); i_index++) {
@@ -426,7 +445,7 @@ void update_network(vector<vector<double>>& existing_obs_histories,
 				* (explore_target_val_histories[h_index] - val);
 		}
 
-		double curr_sum_misguess = (existing_curr_sum_misguess + 3.0 * explore_curr_sum_misguess) / 4.0;
+		double curr_sum_misguess = (existing_curr_sum_misguess + explore_curr_sum_misguess) / 2.0;
 
 		double curr_improvement = existing_sum_misguess - curr_sum_misguess;
 		if (curr_improvement > best_improvement) {

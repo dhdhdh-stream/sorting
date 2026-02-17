@@ -75,15 +75,21 @@ void Experiment::train_existing_backprop(double target_val,
 				double new_signal = post_signal - pre_signal;
 
 				this->existing_target_vals.push_back(new_signal);
-			}
-		}
 
-		for (int i_index = 0; i_index < (int)history->stack_traces.size(); i_index++) {
-			for (int l_index = 0; l_index < (int)history->stack_traces[i_index].size(); l_index++) {
-				signal_add_existing_sample(history->stack_traces[i_index][l_index],
+				/**
+				 * TODO: only add 1 sample per run
+				 */
+				signal_add_existing_sample(scope_history,
 										   target_val);
 			}
 		}
+
+		// for (int i_index = 0; i_index < (int)history->stack_traces.size(); i_index++) {
+		// 	for (int l_index = 0; l_index < (int)history->stack_traces[i_index].size(); l_index++) {
+		// 		signal_add_existing_sample(history->stack_traces[i_index][l_index],
+		// 								   target_val);
+		// 	}
+		// }
 	}
 
 	if (this->hit_count >= TRAIN_EXISTING_NUM_DATAPOINTS) {

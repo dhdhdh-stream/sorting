@@ -114,9 +114,15 @@ void Experiment::measure_backprop(double target_val,
 	}
 
 	if (this->hit_count >= MEASURE_ITERS) {
+		/**
+		 * - don't multiply by average_hits_per_run
+		 *   - does lead to better generalization/results early...
+		 *   - ...but as solution becomes fractured, becomes dominated by noise
+		 */
 		double new_true = this->sum_true / this->hit_count;
-		double average_hits_per_run = (double)this->hit_count / (double)this->total_count;
-		this->improvement = average_hits_per_run * (new_true - this->existing_true);
+		// double average_hits_per_run = (double)this->hit_count / (double)this->total_count;
+		// this->improvement = average_hits_per_run * (new_true - this->existing_true);
+		this->improvement = new_true - this->existing_true;
 		// this->improvement = average_hits_per_run * new_true;
 
 		bool is_success = false;
@@ -149,10 +155,6 @@ void Experiment::measure_backprop(double target_val,
 			} else {
 				wrapper->solution->last_experiment_scores.push_back(improvement);
 			}
-
-			// if (this->new_decision_cost < this->existing_decision_cost) {
-			// 	is_success = true;
-			// }
 		}
 
 		#if defined(MDEBUG) && MDEBUG
@@ -179,7 +181,7 @@ void Experiment::measure_backprop(double target_val,
 				cout << "this->exit_next_node->id: " << this->exit_next_node->id << endl;
 			}
 
-			cout << "average_hits_per_run: " << average_hits_per_run << endl;
+			// cout << "average_hits_per_run: " << average_hits_per_run << endl;
 			cout << "this->improvement: " << this->improvement << endl;
 
 			cout << endl;

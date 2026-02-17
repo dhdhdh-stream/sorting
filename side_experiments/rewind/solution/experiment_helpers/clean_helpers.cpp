@@ -5,6 +5,7 @@
 #include "abstract_node.h"
 #include "constants.h"
 #include "globals.h"
+#include "network.h"
 #include "scope.h"
 #include "solution.h"
 #include "solution_wrapper.h"
@@ -29,12 +30,13 @@ void Experiment::clean_backprop(double target_val,
 
 	if (this->hit_count >= MEASURE_ITERS) {
 		double new_true = this->sum_true / this->hit_count;
-		double average_hits_per_run = (double)this->hit_count / (double)this->total_count;
-		this->improvement = average_hits_per_run * (new_true - this->existing_true);
+		// double average_hits_per_run = (double)this->hit_count / (double)this->total_count;
+		// this->improvement = average_hits_per_run * (new_true - this->existing_true);
+		this->improvement = new_true - this->existing_true;
 
 		bool is_success = false;
 		if (this->improvement >= 0.0) {
-			if (wrapper->solution->last_clean_scores.size() >= MIN_NUM_LAST_EXPERIMENT_TRACK) {
+			if (wrapper->solution->last_clean_scores.size() >= MIN_NUM_LAST_CLEAN_TRACK) {
 				int num_better_than = 0;
 				// // temp
 				// cout << "last_clean_scores:";
@@ -49,23 +51,19 @@ void Experiment::clean_backprop(double target_val,
 				// // temp
 				// cout << endl;
 
-				int target_better_than = LAST_EXPERIMENT_BETTER_THAN_RATIO * (double)wrapper->solution->last_clean_scores.size();
+				int target_better_than = LAST_CLEAN_BETTER_THAN_RATIO * (double)wrapper->solution->last_clean_scores.size();
 
 				if (num_better_than >= target_better_than) {
 					is_success = true;
 				}
 
-				if (wrapper->solution->last_clean_scores.size() >= NUM_LAST_EXPERIMENT_TRACK) {
+				if (wrapper->solution->last_clean_scores.size() >= NUM_LAST_CLEAN_TRACK) {
 					wrapper->solution->last_clean_scores.pop_front();
 				}
 				wrapper->solution->last_clean_scores.push_back(improvement);
 			} else {
 				wrapper->solution->last_clean_scores.push_back(improvement);
 			}
-
-			// if (this->new_decision_cost < this->existing_decision_cost) {
-			// 	is_success = true;
-			// }
 		}
 
 		#if defined(MDEBUG) && MDEBUG
@@ -86,13 +84,29 @@ void Experiment::clean_backprop(double target_val,
 
 			cout << "clean_success" << endl;
 
-			cout << "average_hits_per_run: " << average_hits_per_run << endl;
+			// cout << "average_hits_per_run: " << average_hits_per_run << endl;
 			cout << "this->improvement: " << this->improvement << endl;
 
 			cout << endl;
 
 			this->result = EXPERIMENT_RESULT_SUCCESS;
 		} else {
+			uniform_int_distribution<int> val_input_distribution(0, this->existing_obs_histories.size()-1);
+
+			this->existing_true_network = new Network(this->existing_obs_histories[0].size(),
+													  NETWORK_SIZE_SMALL);
+			for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
+				int rand_index = val_input_distribution(generator);
+
+				this->existing_true_network->activate(this->existing_obs_histories[rand_index]);
+
+				double error = this->existing_true_histories[rand_index] - this->existing_true_network->output->acti_vals[0];
+
+				this->existing_true_network->backprop(error);
+			}
+
+			this->clean_success = false;
+
 			this->best_surprise = numeric_limits<double>::lowest();
 
 			uniform_int_distribution<int> until_distribution(1, 2 * this->average_instances_per_run);

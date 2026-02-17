@@ -113,6 +113,14 @@ void SolutionWrapper::experiment_end(double result) {
 
 				this->curr_experiment = NULL;
 			} else if (this->curr_experiment->result == EXPERIMENT_RESULT_SUCCESS) {
+				if (this->experiment_scope != NULL) {
+					this->experiment_scope_iters++;
+					if (this->experiment_scope_iters >= ITERS_PER_EXPERIMENT_SCOPE) {
+						this->experiment_scope = NULL;
+						this->experiment_scope_iters = -1;
+					}
+				}
+
 				this->curr_experiment->clean();
 
 				Scope* last_updated_scope = this->curr_experiment->scope_context;
@@ -127,14 +135,6 @@ void SolutionWrapper::experiment_end(double result) {
 				clean_scope(last_updated_scope);
 
 				this->solution->clean_scopes();
-
-				if (this->experiment_scope != NULL) {
-					this->experiment_scope_iters++;
-					if (this->experiment_scope_iters >= ITERS_PER_EXPERIMENT_SCOPE) {
-						this->experiment_scope = NULL;
-						this->experiment_scope_iters = -1;
-					}
-				}
 
 				this->solution->timestamp++;
 				// if (this->solution->timestamp >= RUN_TIMESTEPS) {

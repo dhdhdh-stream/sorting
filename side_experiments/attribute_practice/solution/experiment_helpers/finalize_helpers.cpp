@@ -86,6 +86,11 @@ void Experiment::add(SolutionWrapper* wrapper) {
 
 	cout << ss.str() << endl;
 
+	if (this->create_signal) {
+		wrapper->experiment_scope = this->best_new_scope;
+		wrapper->experiment_scope_iters = 0;
+	}
+
 	if (this->best_new_scope != NULL) {
 		wrapper->solution->scopes.push_back(this->best_new_scope);
 		this->best_new_scope->id = (int)wrapper->solution->scopes.size()-1;

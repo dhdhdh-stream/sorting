@@ -240,14 +240,14 @@ void Experiment::train_new_backprop(
 		SolutionWrapper* wrapper) {
 	ExperimentHistory* history = (ExperimentHistory*)wrapper->experiment_history;
 	if (history->is_hit) {
-		// for (int i_index = 0; i_index < (int)history->existing_predicted_trues.size(); i_index++) {
-		// 	this->new_true_histories.push_back(target_val - history->existing_predicted_trues[i_index]);
-		// }
-
-		double existing_result = get_existing_result(wrapper);
 		for (int i_index = 0; i_index < (int)history->existing_predicted_trues.size(); i_index++) {
-			this->new_true_histories.push_back(target_val - existing_result);
+			this->new_true_histories.push_back(target_val - history->existing_predicted_trues[i_index]);
 		}
+
+		// double existing_result = get_existing_result(wrapper);
+		// for (int i_index = 0; i_index < (int)history->existing_predicted_trues.size(); i_index++) {
+		// 	this->new_true_histories.push_back(target_val - existing_result);
+		// }
 
 		this->state_iter++;
 		if (this->state_iter >= TRAIN_NEW_NUM_DATAPOINTS
@@ -315,15 +315,15 @@ void Experiment::train_new_backprop(
 				// 		 sum_vals,
 				// 		 this->new_true_network,
 				// 		 this->is_binarize);
-				// binarize_with_leeway(train_obs_histories,
-				// 					 train_true_histories,
-				// 					 train_true_network_vals,
-				// 					 validation_obs_histories,
-				// 					 validation_true_histories,
-				// 					 sum_vals,
-				// 					 this->new_true_network,
-				// 					 this->is_binarize);
-				this->is_binarize = false;
+				binarize_with_leeway(train_obs_histories,
+									 train_true_histories,
+									 train_true_network_vals,
+									 validation_obs_histories,
+									 validation_true_histories,
+									 sum_vals,
+									 this->new_true_network,
+									 this->is_binarize);
+				// this->is_binarize = false;
 
 				this->sum_true = 0.0;
 				this->hit_count = 0;

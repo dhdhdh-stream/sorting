@@ -239,12 +239,47 @@ void Experiment::measure_backprop(double target_val,
 		double average_hits_per_run = (double)this->hit_count / (double)this->total_count;
 		this->improvement = average_hits_per_run * (new_true - this->existing_true);
 
-		// // temp
-		// cout << "this->scope_context->id: " << this->scope_context->id << endl;
-		// cout << "this->signal_depth: " << this->signal_depth << endl;
-		// cout << "this->average_signals: " << this->average_signals << endl;
-		// cout << "this->existing_true: " << this->existing_true << endl;
-		// cout << "new_true: " << new_true << endl;
+		// temp
+		cout << "this->scope_context->id: " << this->scope_context->id << endl;
+		cout << "this->signal_depth: " << this->signal_depth << endl;
+		cout << "this->existing_true: " << this->existing_true << endl;
+		cout << "new_true: " << new_true << endl;
+
+		// for (int i_index = 0; i_index < (int)this->existing_pre_obs.size(); i_index++) {
+		// 	cout << "this->existing_pre_obs:" << endl;
+		// 	for (int x_index = 0; x_index < 5; x_index++) {
+		// 		for (int y_index = 0; y_index < 5; y_index++) {
+		// 			cout << this->existing_pre_obs[i_index][5 * y_index + x_index] << " ";
+		// 		}
+		// 		cout << endl;
+		// 	}
+		// 	cout << "this->existing_post_obs:" << endl;
+		// 	for (int x_index = 0; x_index < 5; x_index++) {
+		// 		for (int y_index = 0; y_index < 5; y_index++) {
+		// 			cout << this->existing_post_obs[i_index][5 * y_index + x_index] << " ";
+		// 		}
+		// 		cout << endl;
+		// 	}
+		// 	cout << "this->existing_signal_vals[i_index]: " << this->existing_signal_vals[i_index] << endl;
+
+		// 	cout << "this->new_pre_obs:" << endl;
+		// 	for (int x_index = 0; x_index < 5; x_index++) {
+		// 		for (int y_index = 0; y_index < 5; y_index++) {
+		// 			cout << this->new_pre_obs[i_index][5 * y_index + x_index] << " ";
+		// 		}
+		// 		cout << endl;
+		// 	}
+		// 	cout << "this->new_post_obs:" << endl;
+		// 	for (int x_index = 0; x_index < 5; x_index++) {
+		// 		for (int y_index = 0; y_index < 5; y_index++) {
+		// 			cout << this->new_post_obs[i_index][5 * y_index + x_index] << " ";
+		// 		}
+		// 		cout << endl;
+		// 	}
+		// 	cout << "this->new_signal_vals[i_index]: " << this->new_signal_vals[i_index] << endl;
+		// }
+
+		cout << endl;
 
 		bool is_success = false;
 		if (this->improvement >= 0.0) {
