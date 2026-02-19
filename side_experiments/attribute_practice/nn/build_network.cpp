@@ -30,7 +30,7 @@ double BuildNetwork::activate(vector<double>& obs) {
 	}
 
 	for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {
-		this->nodes[n_index]->activate(this);
+		this->nodes[n_index]->activate(this->inputs);
 	}
 
 	double sum_vals = this->output_constant;
@@ -55,7 +55,7 @@ void BuildNetwork::backprop(std::vector<double>& obs,
 	this->output_constant_update += error;
 
 	for (int n_index = (int)this->nodes.size()-1; n_index >= 0; n_index--) {
-		this->nodes[n_index]->backprop(this);
+		this->nodes[n_index]->backprop();
 	}
 
 	this->epoch_iter++;

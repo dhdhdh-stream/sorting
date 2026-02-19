@@ -1,3 +1,8 @@
+/**
+ * - for signal, need big network
+ *   - need to predict parts that are not actionable to "filter" them out
+ */
+
 #ifndef BUILD_NETWORK_H
 #define BUILD_NETWORK_H
 

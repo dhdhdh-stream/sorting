@@ -235,9 +235,13 @@ void Experiment::measure_backprop(double target_val,
 	}
 
 	if (this->hit_count >= MEASURE_ITERS) {
+		/**
+		 * - don't multiply by average_hits_per_run
+		 *   - does lead to better generalization/results early...
+		 *   - ...but as solution becomes fractured, becomes dominated by noise
+		 */
 		double new_true = this->sum_true / this->hit_count;
-		double average_hits_per_run = (double)this->hit_count / (double)this->total_count;
-		this->improvement = average_hits_per_run * (new_true - this->existing_true);
+		this->improvement = new_true - this->existing_true;
 
 		// temp
 		cout << "this->scope_context->id: " << this->scope_context->id << endl;
@@ -337,7 +341,6 @@ void Experiment::measure_backprop(double target_val,
 				cout << "this->best_exit_next_node->id: " << this->best_exit_next_node->id << endl;
 			}
 
-			cout << "average_hits_per_run: " << average_hits_per_run << endl;
 			cout << "this->improvement: " << this->improvement << endl;
 
 			cout << endl;
