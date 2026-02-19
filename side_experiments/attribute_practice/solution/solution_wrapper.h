@@ -28,9 +28,6 @@ public:
 	/**
 	 * - iter variables
 	 */
-	Scope* experiment_scope;
-	int experiment_scope_iters;
-
 	AbstractExperiment* curr_experiment;
 
 	/**

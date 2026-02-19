@@ -13,8 +13,7 @@ using namespace std;
 Experiment::Experiment(Scope* scope_context,
 					   AbstractNode* node_context,
 					   bool is_branch,
-					   int signal_depth,
-					   bool create_signal) {
+					   int signal_depth) {
 	this->type = EXPERIMENT_TYPE_EXPERIMENT;
 
 	this->scope_context = scope_context;
@@ -22,8 +21,6 @@ Experiment::Experiment(Scope* scope_context,
 	this->is_branch = is_branch;
 
 	this->signal_depth = signal_depth;
-
-	this->create_signal = create_signal;
 
 	this->node_context->experiment = this;
 

@@ -12,9 +12,6 @@ SolutionWrapper::SolutionWrapper(ProblemType* problem_type) {
 
 	this->solution_snapshot = new Solution(this->solution);
 
-	this->experiment_scope = NULL;
-	this->experiment_scope_iters = -1;
-
 	this->curr_experiment = NULL;
 
 	this->experiment_history = NULL;
@@ -34,9 +31,6 @@ SolutionWrapper::SolutionWrapper(std::string path,
 
 	this->solution_snapshot = new Solution();
 	this->solution_snapshot->load(input_file);
-
-	this->experiment_scope = NULL;
-	this->experiment_scope_iters = -1;
 
 	this->curr_experiment = NULL;
 

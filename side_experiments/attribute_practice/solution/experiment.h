@@ -18,6 +18,12 @@ const int EXPERIMENT_STATE_MEASURE = 3;
 const int EXPERIMENT_STATE_CAPTURE_VERIFY = 4;
 #endif /* MDEBUG */
 
+#if defined(MDEBUG) && MDEBUG
+const int EXPERIMENT_EXPLORE_ITERS = 10;
+#else
+const int EXPERIMENT_EXPLORE_ITERS = 200;
+#endif /* MDEBUG */
+
 class Experiment : public AbstractExperiment {
 public:
 	int state;
@@ -75,8 +81,7 @@ public:
 	Experiment(Scope* scope_context,
 			   AbstractNode* node_context,
 			   bool is_branch,
-			   int signal_depth,
-			   bool create_signal);
+			   int signal_depth);
 	~Experiment();
 
 	void check_activate(AbstractNode* experiment_node,

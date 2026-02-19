@@ -28,8 +28,6 @@ public:
 
 	int signal_depth;
 
-	bool create_signal;
-
 	int result;
 
 	std::vector<std::vector<double>> existing_pre_obs;

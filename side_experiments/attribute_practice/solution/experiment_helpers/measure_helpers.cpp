@@ -64,22 +64,22 @@ void Experiment::measure_step(vector<double>& obs,
 			wrapper->experiment_context.back() = NULL;
 			return;
 		} else {
-			if (this->signal_depth != -1 && this->existing_pre_obs.size() < 20) {
-				ExperimentHistory* history = (ExperimentHistory*)wrapper->experiment_history;
+			// if (this->signal_depth != -1 && this->existing_pre_obs.size() < 20) {
+			// 	ExperimentHistory* history = (ExperimentHistory*)wrapper->experiment_history;
 
-				history->stack_traces.push_back(wrapper->scope_histories);
+			// 	history->stack_traces.push_back(wrapper->scope_histories);
 
-				get_existing_result_init(wrapper);
+			// 	get_existing_result_init(wrapper);
 
-				if (this->signal_depth >= (int)wrapper->result_scope_histories.size()) {
-					wrapper->result_scope_histories[0]->experiment_callback_histories.push_back(history);
-				} else {
-					int index = wrapper->result_scope_histories.size()-1 - this->signal_depth;
-					wrapper->result_scope_histories[index]->experiment_callback_histories.push_back(history);
-				}
+			// 	if (this->signal_depth >= (int)wrapper->result_scope_histories.size()) {
+			// 		wrapper->result_scope_histories[0]->experiment_callback_histories.push_back(history);
+			// 	} else {
+			// 		int index = wrapper->result_scope_histories.size()-1 - this->signal_depth;
+			// 		wrapper->result_scope_histories[index]->experiment_callback_histories.push_back(history);
+			// 	}
 
-				get_existing_result(wrapper);
-			}
+			// 	get_existing_result(wrapper);
+			// }
 		}
 	}
 
@@ -209,29 +209,29 @@ void Experiment::measure_backprop(double target_val,
 		this->sum_true += target_val;
 		this->hit_count++;
 
-		for (int i_index = 0; i_index < (int)history->stack_traces.size(); i_index++) {
-			ScopeHistory* scope_history;
-			if (this->signal_depth >= (int)history->stack_traces[i_index].size()) {
-				scope_history = history->stack_traces[i_index][0];
-			} else {
-				int index = history->stack_traces[i_index].size()-1 - this->signal_depth;
-				scope_history = history->stack_traces[i_index][index];
-			}
+		// for (int i_index = 0; i_index < (int)history->stack_traces.size(); i_index++) {
+		// 	ScopeHistory* scope_history;
+		// 	if (this->signal_depth >= (int)history->stack_traces[i_index].size()) {
+		// 		scope_history = history->stack_traces[i_index][0];
+		// 	} else {
+		// 		int index = history->stack_traces[i_index].size()-1 - this->signal_depth;
+		// 		scope_history = history->stack_traces[i_index][index];
+		// 	}
 
-			Scope* scope = scope_history->scope;
+		// 	Scope* scope = scope_history->scope;
 
-			double pre_signal = scope->pre_signal->activate(scope_history->pre_obs_history);
+		// 	double pre_signal = scope->pre_signal->activate(scope_history->pre_obs_history);
 
-			vector<double> input;
-			input.insert(input.end(), scope_history->pre_obs_history.begin(), scope_history->pre_obs_history.end());
-			input.insert(input.end(), scope_history->post_obs_history.begin(), scope_history->post_obs_history.end());
+		// 	vector<double> input;
+		// 	input.insert(input.end(), scope_history->pre_obs_history.begin(), scope_history->pre_obs_history.end());
+		// 	input.insert(input.end(), scope_history->post_obs_history.begin(), scope_history->post_obs_history.end());
 
-			double post_signal = scope->post_signal->activate(input);
+		// 	double post_signal = scope->post_signal->activate(input);
 
-			this->new_pre_obs.push_back(scope_history->pre_obs_history);
-			this->new_post_obs.push_back(scope_history->post_obs_history);
-			this->new_signal_vals.push_back(post_signal - pre_signal);
-		}
+		// 	this->new_pre_obs.push_back(scope_history->pre_obs_history);
+		// 	this->new_post_obs.push_back(scope_history->post_obs_history);
+		// 	this->new_signal_vals.push_back(post_signal - pre_signal);
+		// }
 	}
 
 	if (this->hit_count >= MEASURE_ITERS) {
@@ -243,11 +243,11 @@ void Experiment::measure_backprop(double target_val,
 		double new_true = this->sum_true / this->hit_count;
 		this->improvement = new_true - this->existing_true;
 
-		// temp
-		cout << "this->scope_context->id: " << this->scope_context->id << endl;
-		cout << "this->signal_depth: " << this->signal_depth << endl;
-		cout << "this->existing_true: " << this->existing_true << endl;
-		cout << "new_true: " << new_true << endl;
+		// // temp
+		// cout << "this->scope_context->id: " << this->scope_context->id << endl;
+		// cout << "this->signal_depth: " << this->signal_depth << endl;
+		// cout << "this->existing_true: " << this->existing_true << endl;
+		// cout << "new_true: " << new_true << endl;
 
 		// for (int i_index = 0; i_index < (int)this->existing_pre_obs.size(); i_index++) {
 		// 	cout << "this->existing_pre_obs:" << endl;
@@ -283,7 +283,7 @@ void Experiment::measure_backprop(double target_val,
 		// 	cout << "this->new_signal_vals[i_index]: " << this->new_signal_vals[i_index] << endl;
 		// }
 
-		cout << endl;
+		// cout << endl;
 
 		bool is_success = false;
 		if (this->improvement >= 0.0) {

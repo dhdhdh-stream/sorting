@@ -75,21 +75,33 @@ void Experiment::train_existing_backprop(double target_val,
 				double new_signal = post_signal - pre_signal;
 
 				this->existing_target_vals.push_back(new_signal);
-
-				/**
-				 * TODO: only add 1 sample per run
-				 */
-				signal_add_existing_sample(scope_history,
-										   target_val);
 			}
 		}
 
-		// for (int i_index = 0; i_index < (int)history->stack_traces.size(); i_index++) {
-		// 	for (int l_index = 0; l_index < (int)history->stack_traces[i_index].size(); l_index++) {
-		// 		signal_add_existing_sample(history->stack_traces[i_index][l_index],
-		// 								   target_val);
-		// 	}
-		// }
+		if (this->hit_count <= EXPERIMENT_EXPLORE_ITERS) {
+			map<Scope*, pair<int,ScopeHistory*>> to_add;
+			for (int i_index = 0; i_index < (int)history->stack_traces.size(); i_index++) {
+				for (int l_index = 0; l_index < (int)history->stack_traces[i_index].size(); l_index++) {
+					ScopeHistory* scope_history = history->stack_traces[i_index][l_index];
+
+					map<Scope*, pair<int,ScopeHistory*>>::iterator it = to_add.find(scope_history->scope);
+					if (it == to_add.end()) {
+						to_add[scope_history->scope] = {1, scope_history};
+					} else {
+						uniform_int_distribution<int> distribution(0, it->second.first);
+						if (distribution(generator) == 0) {
+							it->second.second = scope_history;
+						}
+						it->second.first++;
+					}
+				}
+			}
+			for (map<Scope*, pair<int,ScopeHistory*>>::iterator it = to_add.begin();
+					it != to_add.end(); it++) {
+				signal_add_existing_sample(it->second.second,
+										   target_val);
+			}
+		}
 	}
 
 	if (this->hit_count >= TRAIN_EXISTING_NUM_DATAPOINTS) {

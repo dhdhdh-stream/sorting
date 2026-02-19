@@ -241,6 +241,9 @@ void clean_network_helper(vector<vector<double>>& existing_obs_histories,
 	double curr_sum_misguess = (existing_curr_sum_misguess + explore_curr_sum_misguess) / 2.0;
 
 	if (curr_sum_misguess < existing_sum_misguess) {
+		// // temp
+		// cout << "clean" << endl;
+
 		existing_sum_misguess = curr_sum_misguess;
 
 		delete network;
