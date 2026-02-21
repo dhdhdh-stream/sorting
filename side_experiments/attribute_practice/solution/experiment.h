@@ -31,6 +31,8 @@ public:
 
 	std::vector<std::vector<double>> existing_obs_histories;
 	std::vector<double> existing_target_vals;
+	std::vector<std::vector<double>> existing_all_target_vals;
+	std::vector<std::vector<bool>> existing_all_target_vals_is_on;
 
 	double existing_true;
 	double existing_signal;
@@ -59,6 +61,8 @@ public:
 
 	std::vector<std::vector<double>> new_obs_histories;
 	std::vector<double> new_target_vals;
+	std::vector<std::vector<double>> new_all_target_vals;
+	std::vector<std::vector<bool>> new_all_target_vals_is_on;
 
 	Network* new_network;
 
@@ -156,6 +160,9 @@ public:
 	void clean();
 	void add(SolutionWrapper* wrapper);
 	double calc_new_score();
+
+	void train_and_eval_helper(int layer,
+							   double& best_improvement);
 };
 
 class ExperimentHistory : public AbstractExperimentHistory {

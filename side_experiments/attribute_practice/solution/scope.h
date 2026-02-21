@@ -38,8 +38,9 @@ public:
 	 *     - setup and actual execution equally responsible for success
 	 *     - subtracting many signals from true instable
 	 */
-	BuildNetwork* pre_signal;
-	BuildNetwork* post_signal;
+	// BuildNetwork* pre_signal;
+	// BuildNetwork* post_signal;
+	BuildNetwork* signal;
 
 	std::vector<std::vector<double>> explore_pre_obs_histories;
 	std::vector<std::vector<double>> explore_post_obs_histories;

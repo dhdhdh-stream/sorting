@@ -51,17 +51,20 @@ void get_existing_result(SolutionWrapper* wrapper) {
 				for (int i_index = 0; i_index < (int)scope_history->experiment_callback_histories.size(); i_index++) {
 					Scope* scope = scope_history->scope;
 
-					double pre_signal = scope->pre_signal->activate(scope_history->pre_obs_history);
+					// double pre_signal = scope->pre_signal->activate(scope_history->pre_obs_history);
 
 					vector<double> input;
 					input.insert(input.end(), scope_history->pre_obs_history.begin(), scope_history->pre_obs_history.end());
 					input.insert(input.end(), scope_history->post_obs_history.begin(), scope_history->post_obs_history.end());
 
-					double post_signal = scope->post_signal->activate(input);
+					// double post_signal = scope->post_signal->activate(input);
+
+					double new_signal = scope->signal->activate(input);
 
 					wrapper->curr_experiment->existing_pre_obs.push_back(scope_history->pre_obs_history);
 					wrapper->curr_experiment->existing_post_obs.push_back(scope_history->post_obs_history);
-					wrapper->curr_experiment->existing_signal_vals.push_back(post_signal - pre_signal);
+					// wrapper->curr_experiment->existing_signal_vals.push_back(post_signal - pre_signal);
+					wrapper->curr_experiment->existing_signal_vals.push_back(new_signal);
 				}
 
 				if (wrapper->result_scope_histories.size() == 1) {

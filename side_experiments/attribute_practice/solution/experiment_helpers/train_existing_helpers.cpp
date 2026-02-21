@@ -64,18 +64,49 @@ void Experiment::train_existing_backprop(double target_val,
 
 				Scope* scope = scope_history->scope;
 
-				double pre_signal = scope->pre_signal->activate(scope_history->pre_obs_history);
+				// double pre_signal = scope->pre_signal->activate(scope_history->pre_obs_history);
 
 				vector<double> input;
 				input.insert(input.end(), scope_history->pre_obs_history.begin(), scope_history->pre_obs_history.end());
 				input.insert(input.end(), scope_history->post_obs_history.begin(), scope_history->post_obs_history.end());
 
-				double post_signal = scope->post_signal->activate(input);
+				// double post_signal = scope->post_signal->activate(input);
 
-				double new_signal = post_signal - pre_signal;
+				// double new_signal = post_signal - pre_signal;
+
+				double new_signal = scope->signal->activate(input);
 
 				this->existing_target_vals.push_back(new_signal);
 			}
+		}
+
+		for (int i_index = 0; i_index < (int)history->stack_traces.size(); i_index++) {
+			vector<double> curr_target_vals;
+			vector<bool> curr_target_vals_is_on;
+
+			curr_target_vals.push_back(target_val);
+			curr_target_vals_is_on.push_back(true);
+
+			for (int l_index = 0; l_index < (int)history->stack_traces[i_index].size(); l_index++) {
+				ScopeHistory* scope_history = history->stack_traces[i_index][l_index];
+				Scope* scope = scope_history->scope;
+				if (scope->signal->nodes.size() > 0) {
+					vector<double> input;
+					input.insert(input.end(), scope_history->pre_obs_history.begin(), scope_history->pre_obs_history.end());
+					input.insert(input.end(), scope_history->post_obs_history.begin(), scope_history->post_obs_history.end());
+
+					double new_signal = scope->signal->activate(input);
+
+					curr_target_vals.push_back(new_signal);
+					curr_target_vals_is_on.push_back(true);
+				} else {
+					curr_target_vals.push_back(0.0);
+					curr_target_vals_is_on.push_back(false);
+				}
+			}
+
+			this->existing_all_target_vals.push_back(curr_target_vals);
+			this->existing_all_target_vals_is_on.push_back(curr_target_vals_is_on);
 		}
 
 		if (this->hit_count <= EXPERIMENT_EXPLORE_ITERS) {
@@ -104,8 +135,27 @@ void Experiment::train_existing_backprop(double target_val,
 
 			uniform_int_distribution<int> distribution(0, history->stack_traces.size()-1);
 			int index = distribution(generator);
+
+			// signal_add_existing_sample(history->stack_traces[index].back(),
+			// 						   target_val);
+
+			double sum_vals = target_val;
+			int count = 1;
+			for (int l_index = 0; l_index < (int)history->stack_traces[index].size()-1; l_index++) {
+				ScopeHistory* scope_history = history->stack_traces[index][l_index];
+				if (scope_history->scope->signal->nodes.size() > 0) {
+					vector<double> input;
+					input.insert(input.end(), scope_history->pre_obs_history.begin(), scope_history->pre_obs_history.end());
+					input.insert(input.end(), scope_history->post_obs_history.begin(), scope_history->post_obs_history.end());
+
+					double val = scope_history->scope->signal->activate(input);
+					sum_vals += val;
+					count++;
+				}
+			}
+
 			signal_add_existing_sample(history->stack_traces[index].back(),
-									   target_val);
+									   sum_vals / count);
 		}
 	}
 

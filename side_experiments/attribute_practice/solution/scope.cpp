@@ -17,8 +17,9 @@
 using namespace std;
 
 Scope::Scope() {
-	this->pre_signal = new BuildNetwork();
-	this->post_signal = new BuildNetwork();
+	// this->pre_signal = new BuildNetwork();
+	// this->post_signal = new BuildNetwork();
+	this->signal = new BuildNetwork();
 
 	this->explore_history_index = 0;
 	this->existing_history_index = 0;
@@ -30,8 +31,9 @@ Scope::~Scope() {
 		delete it->second;
 	}
 
-	delete this->pre_signal;
-	delete this->post_signal;
+	// delete this->pre_signal;
+	// delete this->post_signal;
+	delete this->signal;
 }
 
 void Scope::random_exit_activate(AbstractNode* starting_node,
@@ -127,8 +129,9 @@ void Scope::save(ofstream& output_file) {
 		output_file << this->child_scopes[c_index]->id << endl;
 	}
 
-	this->pre_signal->save(output_file);
-	this->post_signal->save(output_file);
+	// this->pre_signal->save(output_file);
+	// this->post_signal->save(output_file);
+	this->signal->save(output_file);
 }
 
 void Scope::load(ifstream& input_file,
@@ -209,8 +212,9 @@ void Scope::load(ifstream& input_file,
 		this->child_scopes.push_back(parent_solution->scopes[stoi(scope_id_line)]);
 	}
 
-	this->pre_signal->load(input_file);
-	this->post_signal->load(input_file);
+	// this->pre_signal->load(input_file);
+	// this->post_signal->load(input_file);
+	this->signal->load(input_file);
 }
 
 void Scope::link(Solution* parent_solution) {
@@ -288,8 +292,9 @@ void Scope::copy_from(Scope* original,
 			original->child_scopes[c_index]->id]);
 	}
 
-	this->pre_signal->copy_from(original->pre_signal);
-	this->post_signal->copy_from(original->post_signal);
+	// this->pre_signal->copy_from(original->pre_signal);
+	// this->post_signal->copy_from(original->post_signal);
+	this->signal->copy_from(original->signal);
 
 	this->explore_pre_obs_histories = original->explore_pre_obs_histories;
 	this->explore_post_obs_histories = original->explore_post_obs_histories;

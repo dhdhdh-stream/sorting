@@ -120,7 +120,8 @@ void create_experiment(ScopeHistory* scope_history,
 				signal_depth = -1;
 				break;
 			} else if (signal_depth < (int)explore_scope_context.size()
-					&& explore_scope_context[signal_depth]->post_signal->nodes.size() > 0) {
+					// && explore_scope_context[signal_depth]->post_signal->nodes.size() > 0) {
+					&& explore_scope_context[signal_depth]->signal->nodes.size() > 0) {
 				break;
 			}
 		}

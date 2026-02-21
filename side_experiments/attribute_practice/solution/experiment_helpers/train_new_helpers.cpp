@@ -100,65 +100,6 @@ void Experiment::train_new_exit_step(SolutionWrapper* wrapper) {
 	experiment_state->step_index++;
 }
 
-/**
- * - noise can make it seem like there's a gradient when there isn't
- */
-void binarize_with_leeway(vector<vector<double>>& train_obs_histories,
-						  vector<double>& train_network_vals,
-						  Network*& best_network) {
-	vector<pair<double, int>> positive_samples;
-	vector<pair<double, int>> negative_samples;
-	for (int h_index = 0; h_index < (int)train_network_vals.size(); h_index++) {
-		if (train_network_vals[h_index] >= 0.0) {
-			positive_samples.push_back({train_network_vals[h_index], h_index});
-		} else {
-			negative_samples.push_back({train_network_vals[h_index], h_index});
-		}
-	}
-
-	vector<vector<double>> binary_train_obs;
-	vector<bool> binary_train_targets;
-
-	sort(positive_samples.begin(), positive_samples.end());
-	for (int h_index = (int)positive_samples.size() * 3/4; h_index < (int)positive_samples.size(); h_index++) {
-		binary_train_obs.push_back(train_obs_histories[positive_samples[h_index].second]);
-		binary_train_targets.push_back(true);
-	}
-	sort(negative_samples.begin(), negative_samples.end());
-	for (int h_index = 0; h_index < (int)negative_samples.size() / 4; h_index++) {
-		binary_train_obs.push_back(train_obs_histories[negative_samples[h_index].second]);
-		binary_train_targets.push_back(false);
-	}
-
-	Network* binary_network = new Network(train_obs_histories[0].size());
-	uniform_int_distribution<int> input_distribution(0, binary_train_obs.size()-1);
-	for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
-		int rand_index = input_distribution(generator);
-
-		binary_network->activate(binary_train_obs[rand_index]);
-
-		double error;
-		if (binary_train_targets[rand_index]) {
-			if (binary_network->output->acti_vals[0] > 1.0) {
-				error = 0.0;
-			} else {
-				error = 1.0 - binary_network->output->acti_vals[0];
-			}
-		} else {
-			if (binary_network->output->acti_vals[0] < -1.0) {
-				error = 0.0;
-			} else {
-				error = -1.0 - binary_network->output->acti_vals[0];
-			}
-		}
-
-		binary_network->backprop(error);
-	}
-
-	delete best_network;
-	best_network = binary_network;
-}
-
 void Experiment::train_new_backprop(
 		double target_val,
 		SolutionWrapper* wrapper) {
@@ -180,56 +121,88 @@ void Experiment::train_new_backprop(
 
 				Scope* scope = scope_history->scope;
 
-				double pre_signal = scope->pre_signal->activate(scope_history->pre_obs_history);
+				// double pre_signal = scope->pre_signal->activate(scope_history->pre_obs_history);
 
 				vector<double> input;
 				input.insert(input.end(), scope_history->pre_obs_history.begin(), scope_history->pre_obs_history.end());
 				input.insert(input.end(), scope_history->post_obs_history.begin(), scope_history->post_obs_history.end());
 
-				double post_signal = scope->post_signal->activate(input);
+				// double post_signal = scope->post_signal->activate(input);
 
-				double new_signal = post_signal - pre_signal;
+				// double new_signal = post_signal - pre_signal;
+
+				double new_signal = scope->signal->activate(input);
 
 				this->new_target_vals.push_back(new_signal - history->existing_predicted[i_index]);
 			}
 		}
 
-		this->state_iter++;
-		if (this->state_iter >= TRAIN_NEW_NUM_DATAPOINTS
-				&& (int)this->new_target_vals.size() >= TRAIN_NEW_NUM_DATAPOINTS) {
-			this->new_network = new Network(this->new_obs_histories[0].size());
-			uniform_int_distribution<int> input_distribution(0, this->new_obs_histories.size()-1);
-			for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
-				int rand_index = input_distribution(generator);
+		for (int i_index = 0; i_index < (int)history->stack_traces.size(); i_index++) {
+			vector<double> curr_target_vals;
+			vector<bool> curr_target_vals_is_on;
 
-				this->new_network->activate(this->new_obs_histories[rand_index]);
+			curr_target_vals.push_back(target_val);
+			curr_target_vals_is_on.push_back(true);
 
-				double error = this->new_target_vals[rand_index] - this->new_network->output->acti_vals[0];
+			for (int l_index = 0; l_index < (int)history->stack_traces[i_index].size(); l_index++) {
+				ScopeHistory* scope_history = history->stack_traces[i_index][l_index];
+				Scope* scope = scope_history->scope;
+				if (scope->signal->nodes.size() > 0) {
+					vector<double> input;
+					input.insert(input.end(), scope_history->pre_obs_history.begin(), scope_history->pre_obs_history.end());
+					input.insert(input.end(), scope_history->post_obs_history.begin(), scope_history->post_obs_history.end());
 
-				this->new_network->backprop(error);
-			}
+					double new_signal = scope->signal->activate(input);
 
-			vector<double> train_network_vals(this->new_obs_histories.size());
-			int positive_count = 0;
-			for (int h_index = 0; h_index < (int)this->new_obs_histories.size(); h_index++) {
-				this->new_network->activate(this->new_obs_histories[h_index]);
-				train_network_vals[h_index] = this->new_network->output->acti_vals[0];
-
-				if (this->new_network->output->acti_vals[0] > 0.0) {
-					positive_count++;
+					curr_target_vals.push_back(new_signal);
+					curr_target_vals_is_on.push_back(true);
+				} else {
+					curr_target_vals.push_back(0.0);
+					curr_target_vals_is_on.push_back(false);
 				}
 			}
 
-			#if defined(MDEBUG) && MDEBUG
-			if ((positive_count > MIN_POSITIVE_RATIO * (double)this->new_obs_histories.size())
-					|| rand()%4 != 0) {
-			#else
-			if (positive_count > MIN_POSITIVE_RATIO * (double)this->new_obs_histories.size()) {
-			#endif /* MDEBUG */
-				binarize_with_leeway(this->new_obs_histories,
-									 train_network_vals,
-									 this->new_network);
+			this->new_all_target_vals.push_back(curr_target_vals);
+			this->new_all_target_vals_is_on.push_back(curr_target_vals_is_on);
+		}
 
+		this->state_iter++;
+		if (this->state_iter >= TRAIN_NEW_NUM_DATAPOINTS
+				&& (int)this->new_target_vals.size() >= TRAIN_NEW_NUM_DATAPOINTS) {
+			{
+				default_random_engine generator_copy = generator;
+				shuffle(this->new_obs_histories.begin(), this->new_obs_histories.end(), generator_copy);
+			}
+			{
+				default_random_engine generator_copy = generator;
+				shuffle(this->new_target_vals.begin(), this->new_target_vals.end(), generator_copy);
+			}
+			{
+				default_random_engine generator_copy = generator;
+				shuffle(this->new_all_target_vals.begin(), this->new_all_target_vals.end(), generator_copy);
+			}
+			{
+				default_random_engine generator_copy = generator;
+				shuffle(this->new_all_target_vals_is_on.begin(), this->new_all_target_vals_is_on.end(), generator_copy);
+			}
+
+			int max_layer = 0;
+			for (int h_index = 0; h_index < (int)this->new_all_target_vals.size(); h_index++) {
+				if ((int)this->new_all_target_vals[h_index].size() > max_layer) {
+					max_layer = (int)this->new_all_target_vals[h_index].size();
+				}
+			}
+			double best_val_average = 0.0;
+			for (int l_index = 0; l_index < max_layer; l_index++) {
+				train_and_eval_helper(l_index,
+									  best_val_average);
+			}
+
+			#if defined(MDEBUG) && MDEBUG
+			if (best_val_average > 0.0 || rand()%4 != 0) {
+			#else
+			if (best_val_average > 0.0) {
+			#endif /* MDEBUG */
 				this->new_branch_node = new BranchNode();
 				this->new_branch_node->parent = this->scope_context;
 				this->new_branch_node->id = this->scope_context->node_counter + (int)this->best_step_types.size();
