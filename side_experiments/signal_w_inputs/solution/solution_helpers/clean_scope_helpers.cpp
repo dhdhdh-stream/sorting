@@ -9,11 +9,13 @@
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
+#include "solution_wrapper.h"
 #include "start_node.h"
 
 using namespace std;
 
-void clean_scope(Scope* scope) {
+void clean_scope(Scope* scope,
+				 SolutionWrapper* wrapper) {
 	/**
 	 * - remove no longer accessible nodes
 	 */
@@ -64,6 +66,9 @@ void clean_scope(Scope* scope) {
 			set<int>::iterator needed_it = next_node_ids.find(it->first);
 			if (needed_it == next_node_ids.end()) {
 				removed_node = true;
+
+				wrapper->solution->clean_inputs(scope,
+												it->first);
 
 				switch (it->second->type) {
 				case NODE_TYPE_ACTION:
@@ -346,6 +351,10 @@ void clean_scope(Scope* scope) {
 				if (original_obs_node->next_node == branch_obs_node->next_node) {
 					ObsNode* merge_obs_node = (ObsNode*)original_obs_node->next_node;
 
+					wrapper->solution->replace_obs_node(scope,
+														original_obs_node->id,
+														merge_obs_node->id);
+
 					for (int a_index = 0; a_index < (int)merge_obs_node->ancestor_ids.size(); a_index++) {
 						if (merge_obs_node->ancestor_ids[a_index] == original_obs_node->id) {
 							merge_obs_node->ancestor_ids.erase(merge_obs_node->ancestor_ids.begin() + a_index);
@@ -353,12 +362,25 @@ void clean_scope(Scope* scope) {
 						}
 					}
 
+					wrapper->solution->clean_inputs(scope,
+													original_obs_node->id);
+
+					wrapper->solution->replace_obs_node(scope,
+														branch_obs_node->id,
+														merge_obs_node->id);
+
 					for (int a_index = 0; a_index < (int)merge_obs_node->ancestor_ids.size(); a_index++) {
 						if (merge_obs_node->ancestor_ids[a_index] == branch_obs_node->id) {
 							merge_obs_node->ancestor_ids.erase(merge_obs_node->ancestor_ids.begin() + a_index);
 							break;
 						}
 					}
+
+					wrapper->solution->clean_inputs(scope,
+													branch_obs_node->id);
+
+					wrapper->solution->clean_inputs(scope,
+													branch_node->id);
 
 					ObsNode* previous_obs_node = (ObsNode*)scope->nodes[branch_node->ancestor_ids[0]];
 					previous_obs_node->next_node_id = merge_obs_node->id;
@@ -398,6 +420,10 @@ void clean_scope(Scope* scope) {
 						&& curr_obs_node->next_node->ancestor_ids.size() == 1) {
 					ObsNode* next_obs_node = (ObsNode*)curr_obs_node->next_node;
 
+					wrapper->solution->replace_obs_node(scope,
+														next_obs_node->id,
+														curr_obs_node->id);
+
 					if (next_obs_node->next_node != NULL) {
 						for (int a_index = 0; a_index < (int)next_obs_node->next_node->ancestor_ids.size(); a_index++) {
 							if (next_obs_node->next_node->ancestor_ids[a_index] == next_obs_node->id) {
@@ -410,6 +436,9 @@ void clean_scope(Scope* scope) {
 					}
 					curr_obs_node->next_node_id = next_obs_node->next_node_id;
 					curr_obs_node->next_node = next_obs_node->next_node;
+
+					wrapper->solution->clean_inputs(scope,
+													next_obs_node->id);
 
 					scope->nodes.erase(next_obs_node->id);
 					delete next_obs_node;

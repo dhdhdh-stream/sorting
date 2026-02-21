@@ -118,7 +118,8 @@ void SolutionWrapper::experiment_end(double result) {
 				delete this->curr_experiment;
 				this->curr_experiment = NULL;
 
-				clean_scope(last_updated_scope);
+				clean_scope(last_updated_scope,
+							this);
 
 				this->solution->clean_scopes();
 

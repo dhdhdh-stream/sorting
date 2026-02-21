@@ -65,6 +65,13 @@ public:
 	double activate(ScopeHistory* scope_history,
 					std::vector<int>& explore_index);
 
+	void clean_inputs(Scope* scope,
+					  int node_id);
+	void clean_inputs(Scope* scope);
+	void replace_obs_node(Scope* scope,
+						  int original_node_id,
+						  int new_node_id);
+
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file,
 			  Solution* parent_solution);

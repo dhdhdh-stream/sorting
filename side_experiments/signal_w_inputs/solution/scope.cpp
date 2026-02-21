@@ -106,6 +106,24 @@ void Scope::clear_verify() {
 }
 #endif /* MDEBUG */
 
+void Scope::clean_inputs(Scope* scope,
+						 int node_id) {
+	this->signal->clean_inputs(scope,
+							   node_id);
+}
+
+void Scope::clean_inputs(Scope* scope) {
+	this->signal->clean_inputs(scope);
+}
+
+void Scope::replace_obs_node(Scope* scope,
+							 int original_node_id,
+							 int new_node_id) {
+	this->signal->replace_obs_node(scope,
+								   original_node_id,
+								   new_node_id);
+}
+
 void Scope::save(ofstream& output_file) {
 	output_file << this->node_counter << endl;
 

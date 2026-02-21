@@ -53,6 +53,9 @@ void Experiment::add(SolutionWrapper* wrapper) {
 	cout << ss.str() << endl;
 
 	if (this->best_new_scope != NULL) {
+		clean_scope(this->best_new_scope,
+					wrapper);
+
 		wrapper->solution->scopes.push_back(this->best_new_scope);
 		this->best_new_scope->id = (int)wrapper->solution->scopes.size()-1;
 

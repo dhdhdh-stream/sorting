@@ -346,8 +346,6 @@ Scope* create_new_scope(Scope* scope_context) {
 
 			new_scope->child_scopes = scope_context->child_scopes;
 
-			clean_scope(new_scope);
-
 			return new_scope;
 		}
 	}

@@ -66,6 +66,12 @@ public:
 	void clear_verify();
 	#endif /* MDEBUG */
 
+	void clean_inputs(Scope* scope,
+					  int node_id);
+	void replace_obs_node(Scope* scope,
+						  int original_node_id,
+						  int new_node_id);
+
 	void clean_scopes();
 
 	void save(std::ofstream& output_file);

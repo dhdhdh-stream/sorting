@@ -290,6 +290,16 @@ void Scope::copy_from(Scope* original,
 
 	this->pre_signal->copy_from(original->pre_signal);
 	this->post_signal->copy_from(original->post_signal);
+
+	this->explore_pre_obs_histories = original->explore_pre_obs_histories;
+	this->explore_post_obs_histories = original->explore_post_obs_histories;
+	this->explore_target_val_histories = original->explore_target_val_histories;
+	this->explore_history_index = original->explore_history_index;
+
+	this->existing_pre_obs_histories = original->existing_pre_obs_histories;
+	this->existing_post_obs_histories = original->existing_post_obs_histories;
+	this->existing_target_val_histories = original->existing_target_val_histories;
+	this->existing_history_index = original->existing_history_index;
 }
 
 void Scope::save_for_display(ofstream& output_file) {

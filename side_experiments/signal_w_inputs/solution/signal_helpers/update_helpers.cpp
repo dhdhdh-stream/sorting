@@ -1,6 +1,7 @@
 #include "signal_helpers.h"
 
 #include <algorithm>
+#include <iostream>
 
 #include "constants.h"
 #include "globals.h"
@@ -231,6 +232,9 @@ void update_signal(Scope* scope,
 					}
 				}
 				double val_standard_deviation = sqrt(sum_variances / count);
+				if (val_standard_deviation < MIN_STANDARD_DEVIATION) {
+					val_standard_deviation = MIN_STANDARD_DEVIATION;
+				}
 
 				input_averages.push_back(val_average);
 				input_standard_deviations.push_back(val_standard_deviation);
