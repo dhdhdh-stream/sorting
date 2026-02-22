@@ -142,7 +142,7 @@ void Experiment::train_new_backprop(
 				shuffle(this->new_target_vals_is_on.begin(), this->new_target_vals_is_on.end(), generator_copy);
 			}
 
-			double best_val_average = 0.0;
+			double best_val_average = numeric_limits<double>::lowest();
 			for (int l_index = 0; l_index < (int)this->existing_networks.size(); l_index++) {
 				if (this->existing_networks[l_index] != NULL) {
 					train_and_eval_helper(l_index,
@@ -150,26 +150,18 @@ void Experiment::train_new_backprop(
 				}
 			}
 
-			#if defined(MDEBUG) && MDEBUG
-			if (best_val_average > 0.0 || rand()%4 != 0) {
-			#else
-			if (best_val_average > 0.0) {
-			#endif /* MDEBUG */
-				this->new_branch_node = new BranchNode();
-				this->new_branch_node->parent = this->scope_context;
-				this->new_branch_node->id = this->scope_context->node_counter + (int)this->best_step_types.size();
+			this->new_branch_node = new BranchNode();
+			this->new_branch_node->parent = this->scope_context;
+			this->new_branch_node->id = this->scope_context->node_counter + (int)this->best_step_types.size();
 
-				this->sum_true = 0.0;
-				this->hit_count = 0;
+			this->sum_true = 0.0;
+			this->hit_count = 0;
 
-				this->total_count = 0;
-				this->total_sum_true = 0.0;
+			this->total_count = 0;
+			this->total_sum_true = 0.0;
 
-				this->state = EXPERIMENT_STATE_MEASURE;
-				this->state_iter = 0;
-			} else {
-				this->result = EXPERIMENT_RESULT_FAIL;
-			}
+			this->state = EXPERIMENT_STATE_MEASURE;
+			this->state_iter = 0;
 		}
 	}
 }

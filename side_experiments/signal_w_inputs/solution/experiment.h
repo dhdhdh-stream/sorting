@@ -30,18 +30,20 @@ public:
 	int state_iter;
 
 	std::vector<std::vector<double>> existing_obs_histories;
-	std::vector<double> existing_target_vals;
+	std::vector<std::vector<double>> existing_target_vals;
+	std::vector<std::vector<bool>> existing_target_vals_is_on;
 
 	double existing_true;
-	double existing_signal;
 
-	Network* existing_network;
+	std::vector<Network*> existing_networks;
+	std::vector<double> existing_misguess_standard_deviations;
 
 	int sum_num_instances;
 
 	double average_instances_per_run;
 	int num_instances_until_target;
 
+	std::vector<double> curr_explore_obs_history;
 	Scope* curr_new_scope;
 	std::vector<int> curr_step_types;
 	std::vector<int> curr_actions;
@@ -58,9 +60,13 @@ public:
 	std::vector<AbstractNode*> best_new_nodes;
 
 	std::vector<std::vector<double>> new_obs_histories;
-	std::vector<double> new_target_vals;
+	std::vector<std::vector<double>> new_target_vals;
+	std::vector<std::vector<bool>> new_target_vals_is_on;
 
 	Network* new_network;
+
+	// temp
+	int best_layer;
 
 	BranchNode* new_branch_node;
 
@@ -80,8 +86,7 @@ public:
 
 	Experiment(Scope* scope_context,
 			   AbstractNode* node_context,
-			   bool is_branch,
-			   int signal_depth);
+			   bool is_branch);
 	~Experiment();
 
 	void check_activate(AbstractNode* experiment_node,
@@ -147,13 +152,15 @@ public:
 	void clean();
 	void add(SolutionWrapper* wrapper);
 	double calc_new_score();
+
+	void train_and_eval_helper(int layer,
+							   double& best_improvement);
 };
 
 class ExperimentHistory : public AbstractExperimentHistory {
 public:
 	std::vector<std::vector<ScopeHistory*>> stack_traces;
 	std::vector<std::vector<int>> explore_indexes;
-	std::vector<double> existing_predicted;
 
 	ExperimentHistory(Experiment* experiment);
 };

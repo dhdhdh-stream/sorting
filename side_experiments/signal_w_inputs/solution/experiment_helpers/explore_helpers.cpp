@@ -24,7 +24,7 @@ void Experiment::explore_check_activate(SolutionWrapper* wrapper) {
 	ExperimentHistory* history = (ExperimentHistory*)wrapper->experiment_history;
 
 	this->num_instances_until_target--;
-	if (history->existing_predicted.size() == 0
+	if (history->stack_traces.size() == 0
 			&& this->num_instances_until_target <= 0) {
 		vector<AbstractNode*> possible_exits;
 
@@ -179,9 +179,7 @@ void Experiment::explore_step(vector<double>& obs,
 		}
 		history->explore_indexes.push_back(curr_explore_index);
 
-		this->existing_network->activate(obs);
-		history->existing_predicted.push_back(
-			this->existing_network->output->acti_vals[0]);
+		this->curr_explore_obs_history = obs;
 	}
 
 	if (experiment_state->step_index >= (int)this->curr_step_types.size()) {
@@ -242,40 +240,45 @@ void Experiment::explore_backprop(double target_val,
 	uniform_int_distribution<int> until_distribution(1, 2 * this->average_instances_per_run);
 	this->num_instances_until_target = until_distribution(generator);
 
-	if (history->existing_predicted.size() != 0) {
-		double curr_surprise;
-		if (this->signal_depth == -1) {
-			curr_surprise = target_val - history->existing_predicted[0];
-		} else {
-			ScopeHistory* scope_history;
-			vector<int> trimmed_explore_index;
-			if (this->signal_depth >= (int)history->stack_traces[0].size()) {
-				scope_history = history->stack_traces[0][0];
-				trimmed_explore_index = history->explore_indexes[0];
+	if (history->stack_traces.size() != 0) {
+		vector<double> curr_target_vals;
+		vector<bool> curr_target_vals_is_on;
+
+		curr_target_vals.push_back(target_val);
+		curr_target_vals_is_on.push_back(true);
+
+		vector<int> trimmed_explore_index = history->explore_indexes[0];
+		for (int l_index = 0; l_index < (int)history->stack_traces[0].size(); l_index++) {
+			ScopeHistory* scope_history = history->stack_traces[0][l_index];
+			Scope* scope = scope_history->scope;
+			if (scope->signal->nodes.size() > 0) {
+				double new_signal = scope->signal->activate(scope_history,
+															trimmed_explore_index);
+
+				curr_target_vals.push_back(new_signal);
+				curr_target_vals_is_on.push_back(true);
 			} else {
-				int index = history->stack_traces[0].size()-1 - this->signal_depth;
-				scope_history = history->stack_traces[0][index];
-				trimmed_explore_index = vector<int>(
-					history->explore_indexes[0].end() - (this->signal_depth + 1),
-					history->explore_indexes[0].end());
+				curr_target_vals.push_back(0.0);
+				curr_target_vals_is_on.push_back(false);
 			}
 
-			Scope* scope = scope_history->scope;
+			trimmed_explore_index.erase(trimmed_explore_index.begin());
+		}
 
-			double new_signal = scope->signal->activate(scope_history,
-														trimmed_explore_index);
+		double sum_surprise = 0.0;
+		int count = 0;
+		for (int l_index = 0; l_index < (int)curr_target_vals.size(); l_index++) {
+			if (curr_target_vals_is_on[l_index] && this->existing_networks[l_index] != NULL) {
+				this->existing_networks[l_index]->activate(this->curr_explore_obs_history);
 
-			/**
-			 * - quick sanity check
-			 */
-			double true_rel = target_val - this->existing_true;
-			double signal_rel = new_signal - this->existing_signal;
-			if (signal_rel < true_rel) {
-				curr_surprise = numeric_limits<double>::lowest();
-			} else {
-				curr_surprise = new_signal - history->existing_predicted[0];
+				double diff = curr_target_vals[l_index] - this->existing_networks[l_index]->output->acti_vals[0];
+
+				sum_surprise += diff / this->existing_misguess_standard_deviations[l_index];
+				count++;
 			}
 		}
+
+		double curr_surprise = sum_surprise / count;
 
 		{
 			double sum_vals = target_val;
