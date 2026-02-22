@@ -65,6 +65,8 @@ public:
 	std::vector<std::vector<bool>> new_all_target_vals_is_on;
 
 	Network* new_network;
+	// temp
+	int best_layer;
 
 	BranchNode* new_branch_node;
 

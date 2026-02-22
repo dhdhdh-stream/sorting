@@ -24,8 +24,6 @@ const int TRAIN_NEW_NUM_DATAPOINTS = 20;
 const int TRAIN_NEW_NUM_DATAPOINTS = 1000;
 #endif /* MDEBUG */
 
-const double MIN_POSITIVE_RATIO = 0.1;
-
 void Experiment::train_new_check_activate(
 		SolutionWrapper* wrapper) {
 	this->num_instances_until_target--;
@@ -48,9 +46,7 @@ void Experiment::train_new_step(vector<double>& obs,
 	if (experiment_state->step_index == 0) {
 		ExperimentHistory* history = (ExperimentHistory*)wrapper->experiment_history;
 
-		if (this->signal_depth != -1) {
-			history->stack_traces.push_back(wrapper->scope_histories);
-		}
+		history->stack_traces.push_back(wrapper->scope_histories);
 
 		this->new_obs_histories.push_back(obs);
 

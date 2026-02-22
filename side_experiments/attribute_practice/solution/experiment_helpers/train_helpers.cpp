@@ -1,6 +1,7 @@
 #include "experiment.h"
 
 #include <algorithm>
+#include <iostream>
 
 #include "constants.h"
 #include "globals.h"
@@ -139,7 +140,8 @@ void Experiment::train_and_eval_helper(int layer,
 	for (int h_index = num_train_samples; h_index < (int)this->new_obs_histories.size(); h_index++) {
 		binary_network->activate(this->new_obs_histories[h_index]);
 		if (binary_network->output->acti_vals[0] >= 0.0) {
-			sum_scores += this->new_target_vals[h_index];
+			sum_scores += this->new_all_target_vals[h_index][0];
+			count++;
 		}
 	}
 
@@ -155,6 +157,7 @@ void Experiment::train_and_eval_helper(int layer,
 			delete this->new_network;
 		}
 		this->new_network = binary_network;
+		this->best_layer = layer;
 	} else {
 		delete binary_network;
 	}
