@@ -49,10 +49,6 @@ void Experiment::train_new_step(vector<double>& obs,
 		history->stack_traces.push_back(wrapper->scope_histories);
 
 		this->new_obs_histories.push_back(obs);
-
-		this->existing_network->activate(obs);
-		history->existing_predicted.push_back(
-			this->existing_network->output->acti_vals[0]);
 	}
 
 	if (experiment_state->step_index >= (int)this->best_step_types.size()) {
@@ -101,38 +97,6 @@ void Experiment::train_new_backprop(
 		SolutionWrapper* wrapper) {
 	ExperimentHistory* history = (ExperimentHistory*)wrapper->experiment_history;
 	if (history->is_hit) {
-		if (this->signal_depth == -1) {
-			for (int i_index = 0; i_index < (int)history->existing_predicted.size(); i_index++) {
-				this->new_target_vals.push_back(target_val - history->existing_predicted[i_index]);
-			}
-		} else {
-			for (int i_index = 0; i_index < (int)history->existing_predicted.size(); i_index++) {
-				ScopeHistory* scope_history;
-				if (this->signal_depth >= (int)history->stack_traces[i_index].size()) {
-					scope_history = history->stack_traces[i_index][0];
-				} else {
-					int index = history->stack_traces[i_index].size()-1 - this->signal_depth;
-					scope_history = history->stack_traces[i_index][index];
-				}
-
-				Scope* scope = scope_history->scope;
-
-				// double pre_signal = scope->pre_signal->activate(scope_history->pre_obs_history);
-
-				vector<double> input;
-				input.insert(input.end(), scope_history->pre_obs_history.begin(), scope_history->pre_obs_history.end());
-				input.insert(input.end(), scope_history->post_obs_history.begin(), scope_history->post_obs_history.end());
-
-				// double post_signal = scope->post_signal->activate(input);
-
-				// double new_signal = post_signal - pre_signal;
-
-				double new_signal = scope->signal->activate(input);
-
-				this->new_target_vals.push_back(new_signal - history->existing_predicted[i_index]);
-			}
-		}
-
 		for (int i_index = 0; i_index < (int)history->stack_traces.size(); i_index++) {
 			vector<double> curr_target_vals;
 			vector<bool> curr_target_vals_is_on;
@@ -158,8 +122,8 @@ void Experiment::train_new_backprop(
 				}
 			}
 
-			this->new_all_target_vals.push_back(curr_target_vals);
-			this->new_all_target_vals_is_on.push_back(curr_target_vals_is_on);
+			this->new_target_vals.push_back(curr_target_vals);
+			this->new_target_vals_is_on.push_back(curr_target_vals_is_on);
 		}
 
 		this->state_iter++;
@@ -175,23 +139,15 @@ void Experiment::train_new_backprop(
 			}
 			{
 				default_random_engine generator_copy = generator;
-				shuffle(this->new_all_target_vals.begin(), this->new_all_target_vals.end(), generator_copy);
-			}
-			{
-				default_random_engine generator_copy = generator;
-				shuffle(this->new_all_target_vals_is_on.begin(), this->new_all_target_vals_is_on.end(), generator_copy);
+				shuffle(this->new_target_vals_is_on.begin(), this->new_target_vals_is_on.end(), generator_copy);
 			}
 
-			int max_layer = 0;
-			for (int h_index = 0; h_index < (int)this->new_all_target_vals.size(); h_index++) {
-				if ((int)this->new_all_target_vals[h_index].size() > max_layer) {
-					max_layer = (int)this->new_all_target_vals[h_index].size();
-				}
-			}
 			double best_val_average = 0.0;
-			for (int l_index = 0; l_index < max_layer; l_index++) {
-				train_and_eval_helper(l_index,
-									  best_val_average);
+			for (int l_index = 0; l_index < (int)this->existing_networks.size(); l_index++) {
+				if (this->existing_networks[l_index] != NULL) {
+					train_and_eval_helper(l_index,
+										  best_val_average);
+				}
 			}
 
 			#if defined(MDEBUG) && MDEBUG

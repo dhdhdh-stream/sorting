@@ -27,7 +27,6 @@ void Experiment::add(SolutionWrapper* wrapper) {
 	ss << "this->scope_context->id: " << this->scope_context->id << "; ";
 	ss << "this->node_context->id: " << this->node_context->id << "; ";
 	ss << "this->is_branch: " << this->is_branch << "; ";
-	ss << "this->signal_depth: " << this->signal_depth << "; ";
 	ss << "this->best_layer: " << this->best_layer << "; ";
 	ss << "new explore path:";
 	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {

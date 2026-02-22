@@ -9,65 +9,27 @@
 
 using namespace std;
 
-#if defined(MDEBUG) && MDEBUG
-const int MIN_NUM_SAMPLES = 10;
-#else
-const int MIN_NUM_SAMPLES = 400;
-#endif /* MDEBUG */
-
 const double VALIDATION_RATIO = 0.2;
 
 void Experiment::train_and_eval_helper(int layer,
 									   double& best_val_average) {
-	vector<vector<double>> existing_on_obs_histories;
-	vector<double> existing_on_target_vals;
-	for (int h_index = 0; h_index < (int)this->existing_obs_histories.size(); h_index++) {
-		if (layer < (int)this->existing_all_target_vals[h_index].size()) {
-			if (this->existing_all_target_vals_is_on[h_index][layer]) {
-				existing_on_obs_histories.push_back(this->existing_obs_histories[h_index]);
-				existing_on_target_vals.push_back(this->existing_all_target_vals[h_index][layer]);
-			}
-		}
-	}
-
-	if (existing_on_obs_histories.size() < MIN_NUM_SAMPLES) {
-		return;
-	}
-
 	int num_train_samples = (1.0 - VALIDATION_RATIO) * (int)this->new_obs_histories.size();
 
 	vector<vector<double>> new_on_obs_histories;
 	vector<double> new_on_target_vals;
 	for (int h_index = 0; h_index < num_train_samples; h_index++) {
-		if (layer < (int)this->new_all_target_vals[h_index].size()) {
-			if (this->new_all_target_vals_is_on[h_index][layer]) {
+		if (layer < (int)this->new_target_vals[h_index].size()) {
+			if (this->new_target_vals_is_on[h_index][layer]) {
 				new_on_obs_histories.push_back(this->new_obs_histories[h_index]);
-				new_on_target_vals.push_back(this->new_all_target_vals[h_index][layer]);
+				new_on_target_vals.push_back(this->new_target_vals[h_index][layer]);
 			}
 		}
 	}
 
-	if (new_on_obs_histories.size() < MIN_NUM_SAMPLES) {
-		return;
-	}
-
-	Network* curr_existing_network = new Network(existing_on_obs_histories[0].size());
-	uniform_int_distribution<int> existing_distribution(0, existing_on_obs_histories.size()-1);
-	for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
-		int index = existing_distribution(generator);
-
-		curr_existing_network->activate(existing_on_obs_histories[index]);
-
-		double error = existing_on_target_vals[index] - curr_existing_network->output->acti_vals[0];
-
-		curr_existing_network->backprop(error);
-	}
-
 	for (int h_index = 0; h_index < (int)new_on_obs_histories.size(); h_index++) {
-		curr_existing_network->activate(new_on_obs_histories[h_index]);
-		new_on_target_vals[h_index] -= curr_existing_network->output->acti_vals[0];
+		this->existing_networks[layer]->activate(new_on_obs_histories[h_index]);
+		new_on_target_vals[h_index] -= this->existing_networks[layer]->output->acti_vals[0];
 	}
-	delete curr_existing_network;
 
 	Network* curr_new_network = new Network(new_on_obs_histories[0].size());
 	uniform_int_distribution<int> new_distribution(0, new_on_obs_histories.size()-1);
@@ -140,7 +102,7 @@ void Experiment::train_and_eval_helper(int layer,
 	for (int h_index = num_train_samples; h_index < (int)this->new_obs_histories.size(); h_index++) {
 		binary_network->activate(this->new_obs_histories[h_index]);
 		if (binary_network->output->acti_vals[0] >= 0.0) {
-			sum_scores += this->new_all_target_vals[h_index][0];
+			sum_scores += this->new_target_vals[h_index][0];
 			count++;
 		}
 	}

@@ -26,8 +26,6 @@ public:
 	AbstractNode* node_context;
 	bool is_branch;
 
-	int signal_depth;
-
 	int result;
 
 	std::vector<std::vector<double>> existing_pre_obs;

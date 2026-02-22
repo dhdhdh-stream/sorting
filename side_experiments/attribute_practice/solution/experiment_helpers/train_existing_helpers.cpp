@@ -48,38 +48,6 @@ void Experiment::train_existing_backprop(double target_val,
 		this->sum_true += target_val;
 		this->hit_count++;
 
-		if (this->signal_depth == -1) {
-			while (this->existing_target_vals.size() < this->existing_obs_histories.size()) {
-				this->existing_target_vals.push_back(target_val);
-			}
-		} else {
-			for (int i_index = 0; i_index < (int)history->stack_traces.size(); i_index++) {
-				ScopeHistory* scope_history;
-				if (this->signal_depth >= (int)history->stack_traces[i_index].size()) {
-					scope_history = history->stack_traces[i_index][0];
-				} else {
-					int index = history->stack_traces[i_index].size()-1 - this->signal_depth;
-					scope_history = history->stack_traces[i_index][index];
-				}
-
-				Scope* scope = scope_history->scope;
-
-				// double pre_signal = scope->pre_signal->activate(scope_history->pre_obs_history);
-
-				vector<double> input;
-				input.insert(input.end(), scope_history->pre_obs_history.begin(), scope_history->pre_obs_history.end());
-				input.insert(input.end(), scope_history->post_obs_history.begin(), scope_history->post_obs_history.end());
-
-				// double post_signal = scope->post_signal->activate(input);
-
-				// double new_signal = post_signal - pre_signal;
-
-				double new_signal = scope->signal->activate(input);
-
-				this->existing_target_vals.push_back(new_signal);
-			}
-		}
-
 		for (int i_index = 0; i_index < (int)history->stack_traces.size(); i_index++) {
 			vector<double> curr_target_vals;
 			vector<bool> curr_target_vals_is_on;
@@ -105,8 +73,8 @@ void Experiment::train_existing_backprop(double target_val,
 				}
 			}
 
-			this->existing_all_target_vals.push_back(curr_target_vals);
-			this->existing_all_target_vals_is_on.push_back(curr_target_vals_is_on);
+			this->existing_target_vals.push_back(curr_target_vals);
+			this->existing_target_vals_is_on.push_back(curr_target_vals_is_on);
 		}
 
 		if (this->hit_count <= EXPERIMENT_EXPLORE_ITERS) {
@@ -162,25 +130,52 @@ void Experiment::train_existing_backprop(double target_val,
 	if (this->hit_count >= TRAIN_EXISTING_NUM_DATAPOINTS) {
 		this->existing_true = this->sum_true / this->hit_count;
 
-		if (this->signal_depth != -1) {
-			double sum_signals = 0.0;
-			for (int h_index = 0; h_index < (int)this->existing_target_vals.size(); h_index++) {
-				sum_signals += this->existing_target_vals[h_index];
+		int max_layer = 0;
+		for (int h_index = 0; h_index < (int)this->existing_target_vals.size(); h_index++) {
+			if ((int)this->existing_target_vals[h_index].size() > max_layer) {
+				max_layer = (int)this->existing_target_vals[h_index].size();
 			}
-			this->existing_signal = sum_signals / (double)this->existing_target_vals.size();
 		}
+		this->existing_networks = vector<Network*>(max_layer, NULL);
+		this->existing_misguess_standard_deviations = vector<double>(max_layer);
+		for (int l_index = 0; l_index < max_layer; l_index++) {
+			vector<vector<double>> existing_on_obs_histories;
+			vector<double> existing_on_target_vals;
+			for (int h_index = 0; h_index < (int)this->existing_obs_histories.size(); h_index++) {
+				if (l_index < (int)this->existing_target_vals[h_index].size()) {
+					if (this->existing_target_vals_is_on[h_index][l_index]) {
+						existing_on_obs_histories.push_back(this->existing_obs_histories[h_index]);
+						existing_on_target_vals.push_back(this->existing_target_vals[h_index][l_index]);
+					}
+				}
+			}
 
-		uniform_int_distribution<int> val_input_distribution(0, this->existing_obs_histories.size()-1);
+			if (existing_on_obs_histories.size() < MIN_TRAIN_NUM_SAMPLES) {
+				continue;
+			}
 
-		this->existing_network = new Network(this->existing_obs_histories[0].size());
-		for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
-			int rand_index = val_input_distribution(generator);
+			Network* network = new Network(existing_on_obs_histories[0].size());
+			uniform_int_distribution<int> existing_distribution(0, existing_on_obs_histories.size()-1);
+			for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
+				int index = existing_distribution(generator);
 
-			this->existing_network->activate(this->existing_obs_histories[rand_index]);
+				network->activate(existing_on_obs_histories[index]);
 
-			double error = this->existing_target_vals[rand_index] - this->existing_network->output->acti_vals[0];
+				double error = existing_on_target_vals[index] - network->output->acti_vals[0];
 
-			this->existing_network->backprop(error);
+				network->backprop(error);
+			}
+
+			double sum_misguess = 0.0;
+			for (int h_index = 0; h_index < (int)existing_on_obs_histories.size(); h_index++) {
+				network->activate(existing_on_obs_histories[h_index]);
+				sum_misguess += (existing_on_target_vals[h_index] - network->output->acti_vals[0])
+					* (existing_on_target_vals[h_index] - network->output->acti_vals[0]);
+			}
+			double misguess_standard_deviation = sqrt(sum_misguess / (double)existing_on_obs_histories.size());
+
+			this->existing_networks[l_index] = network;
+			this->existing_misguess_standard_deviations[l_index] = misguess_standard_deviation;
 		}
 
 		this->average_instances_per_run = (double)this->sum_num_instances / (double)this->hit_count;

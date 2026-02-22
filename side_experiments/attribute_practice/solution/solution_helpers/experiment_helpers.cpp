@@ -19,15 +19,10 @@ using namespace std;
 /**
  * - don't prioritize exploring new nodes as new scopes change explore
  */
-void gather_helper(vector<Scope*>& scope_context,
-				   ScopeHistory* scope_history,
-				   int curr_depth,
+void gather_helper(ScopeHistory* scope_history,
 				   int& node_count,
 				   AbstractNode*& explore_node,
-				   bool& explore_is_branch,
-				   vector<Scope*>& explore_scope_context) {
-	scope_context.push_back(scope_history->scope);
-
+				   bool& explore_is_branch) {
 	for (map<int, AbstractNodeHistory*>::iterator h_it = scope_history->node_histories.begin();
 			h_it != scope_history->node_histories.end(); h_it++) {
 		AbstractNode* node = h_it->second->node;
@@ -41,7 +36,6 @@ void gather_helper(vector<Scope*>& scope_context,
 				if (select_distribution(generator) == 0) {
 					explore_node = node;
 					explore_is_branch = false;
-					explore_scope_context = scope_context;
 				}
 			}
 			break;
@@ -49,13 +43,10 @@ void gather_helper(vector<Scope*>& scope_context,
 			{
 				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)h_it->second;
 
-				gather_helper(scope_context,
-							  scope_node_history->scope_history,
-							  curr_depth + 1,
+				gather_helper(scope_node_history->scope_history,
 							  node_count,
 							  explore_node,
-							  explore_is_branch,
-							  explore_scope_context);
+							  explore_is_branch);
 
 				if (node->experiment == NULL) {
 					uniform_int_distribution<int> select_distribution(0, node_count);
@@ -63,7 +54,6 @@ void gather_helper(vector<Scope*>& scope_context,
 					if (select_distribution(generator) == 0) {
 						explore_node = node;
 						explore_is_branch = false;
-						explore_scope_context = scope_context;
 					}
 				}
 			}
@@ -77,7 +67,6 @@ void gather_helper(vector<Scope*>& scope_context,
 					if (select_distribution(generator) == 0) {
 						explore_node = node;
 						explore_is_branch = true;
-						explore_scope_context = scope_context;
 					}
 				} else {
 					uniform_int_distribution<int> select_distribution(0, node_count);
@@ -85,52 +74,29 @@ void gather_helper(vector<Scope*>& scope_context,
 					if (select_distribution(generator) == 0) {
 						explore_node = node;
 						explore_is_branch = false;
-						explore_scope_context = scope_context;
 					}
 				}
 			}
 			break;
 		}
 	}
-
-	scope_context.pop_back();
 }
 
 void create_experiment(ScopeHistory* scope_history,
 					   SolutionWrapper* wrapper) {
-	vector<Scope*> scope_context;
 	int node_count = 0;
 	AbstractNode* explore_node = NULL;
 	bool explore_is_branch = false;
-	vector<Scope*> explore_scope_context;
-	gather_helper(scope_context,
-				  scope_history,
-				  0,
+	gather_helper(scope_history,
 				  node_count,
 				  explore_node,
-				  explore_is_branch,
-				  explore_scope_context);
+				  explore_is_branch);
 
 	if (explore_node != NULL) {
-		geometric_distribution<int> depth_distribution(0.3);
-		int signal_depth;
-		while (true) {
-			signal_depth = depth_distribution(generator);
-			if (signal_depth == (int)explore_scope_context.size()) {
-				signal_depth = -1;
-				break;
-			} else if (signal_depth < (int)explore_scope_context.size()
-					// && explore_scope_context[signal_depth]->post_signal->nodes.size() > 0) {
-					&& explore_scope_context[signal_depth]->signal->nodes.size() > 0) {
-				break;
-			}
-		}
-
 		Experiment* new_experiment = new Experiment(
 			explore_node->parent,
 			explore_node,
-			explore_is_branch,
-			signal_depth);
+			explore_is_branch);
 		wrapper->curr_experiment = new_experiment;
 	}
 }
