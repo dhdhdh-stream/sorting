@@ -379,7 +379,14 @@ void Signal::copy_from(Signal* original,
 	this->explore_target_val_histories = original->explore_target_val_histories;
 	this->explore_history_index = original->explore_history_index;
 
-	this->potential_inputs = original->potential_inputs;
+	for (int p_index = 0; p_index < (int)original->potential_inputs.size(); p_index++) {
+		vector<SignalInput> inputs;
+		for (int i_index = 0; i_index < (int)original->potential_inputs[p_index].size(); i_index++) {
+			inputs.push_back(SignalInput(original->potential_inputs[p_index][i_index],
+										 parent_solution));
+		}
+		this->potential_inputs.push_back(inputs);
+	}
 	this->potential_existing_input_val_histories = original->potential_existing_input_val_histories;
 	this->potential_existing_input_is_on_histories = original->potential_existing_input_is_on_histories;
 	this->potential_existing_count = original->potential_existing_count;

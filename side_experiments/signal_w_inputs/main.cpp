@@ -1,6 +1,3 @@
-// TODO: don't train just against true
-// - train against the average of all upper layers
-
 #include <chrono>
 #include <iostream>
 #include <map>

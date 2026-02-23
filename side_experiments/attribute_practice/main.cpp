@@ -1,7 +1,28 @@
-// TODO: experiment with how good if can see whole board initially
+// TODO: compare with and without signal
 
-// TODO: don't train just against true
-// - train against the average of all upper layers
+// TODO: number of samples needs to be dynamic?
+
+// TODO: for pre network, train with all post inputs unavailable
+// - or maybe not that relevant with train_existing
+
+// TODO: try to predict what changes will lead to improvement?
+// - then experiment on those changes
+//   - if predicted change does lead to improvement, then "understand" problem?
+// - or maybe doesn't help innovation
+//   - any good sequences in explore is already tried
+//   - and cannot find good obs without heavily trying
+
+// - maybe don't even need train existing
+//   - just use pre signal
+//   - but train existing not a big cost
+//   - maybe pre signal is more costly and less effective?
+
+// - train pre signal only on existing
+//   - no explore
+//   - for ramp, use any non-explore run
+// - maybe more efficient overall
+
+// TODO: not a big cost to compare binarize vs. non-binarize
 
 #include <chrono>
 #include <iostream>

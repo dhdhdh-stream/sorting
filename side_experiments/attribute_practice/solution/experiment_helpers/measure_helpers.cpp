@@ -245,7 +245,6 @@ void Experiment::measure_backprop(double target_val,
 
 		// // temp
 		// cout << "this->scope_context->id: " << this->scope_context->id << endl;
-		// cout << "this->signal_depth: " << this->signal_depth << endl;
 		// cout << "this->existing_true: " << this->existing_true << endl;
 		// cout << "new_true: " << new_true << endl;
 

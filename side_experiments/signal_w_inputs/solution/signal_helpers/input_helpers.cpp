@@ -18,6 +18,11 @@ void create_input_helper(Scope* scope,
 
 	uniform_int_distribution<int> inner_distribution(0, 1);
 	uniform_int_distribution<int> pre_distribution(0, 1);
+	// uniform_int_distribution<int> obs_distribution(0, 24);
+	uniform_int_distribution<int> obs_distribution(0, 0);
+	/**
+	 * TODO: obs_size
+	 */
 	for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
 			it != scope->nodes.end(); it++) {
 		switch (it->second->type) {
@@ -61,10 +66,7 @@ void create_input_helper(Scope* scope,
 					input.is_pre = pre_distribution(generator) == 0;
 					input.scope_context = scope_context;
 					input.node_context = node_context;
-					input.obs_index = 0;
-					/**
-					 * TODO: obs_size
-					 */
+					input.obs_index = obs_distribution(generator);
 
 					node_context.pop_back();
 				}

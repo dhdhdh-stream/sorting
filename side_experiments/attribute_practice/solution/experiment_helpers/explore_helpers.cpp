@@ -262,7 +262,9 @@ void Experiment::explore_backprop(double target_val,
 		double sum_surprise = 0.0;
 		int count = 0;
 		for (int l_index = 0; l_index < (int)curr_target_vals.size(); l_index++) {
-			if (curr_target_vals_is_on[l_index] && this->existing_networks[l_index] != NULL) {
+			if (l_index < (int)this->existing_networks.size()
+					&& curr_target_vals_is_on[l_index]
+					&& this->existing_networks[l_index] != NULL) {
 				this->existing_networks[l_index]->activate(this->curr_explore_obs_history);
 
 				double diff = curr_target_vals[l_index] - this->existing_networks[l_index]->output->acti_vals[0];

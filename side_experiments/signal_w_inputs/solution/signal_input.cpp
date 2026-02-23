@@ -19,6 +19,16 @@ SignalInput::SignalInput(SignalInput& original,
 	}
 	this->node_context = original.node_context;
 	this->obs_index = original.obs_index;
+
+	// temp
+	for (int l_index = 0; l_index < (int)this->scope_context.size(); l_index++) {
+		if (this->scope_context[l_index]->nodes.find(this->node_context[l_index]) == this->scope_context[l_index]->nodes.end()) {
+			cout << "l_index: " << l_index << endl;
+			cout << "this->scope_context[l_index]->id: " << this->scope_context[l_index]->id << endl;
+			cout << "this->node_context[l_index]: " << this->node_context[l_index] << endl;
+			throw invalid_argument("this->scope_context[l_index]->nodes.find(this->node_context[l_index]) == this->scope_context[l_index]->nodes.end()");
+		}
+	}
 }
 
 SignalInput::SignalInput(ifstream& input_file,

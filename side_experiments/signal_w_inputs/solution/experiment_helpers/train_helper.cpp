@@ -55,6 +55,10 @@ void Experiment::train_and_eval_helper(int layer,
 	}
 	delete curr_new_network;
 
+	if (positive_samples.size() == 0) {
+		return;
+	}
+
 	/**
 	 * - noise can make it seem like there's a gradient when there isn't
 	 */

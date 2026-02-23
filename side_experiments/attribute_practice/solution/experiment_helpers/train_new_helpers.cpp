@@ -21,7 +21,8 @@ using namespace std;
 #if defined(MDEBUG) && MDEBUG
 const int TRAIN_NEW_NUM_DATAPOINTS = 20;
 #else
-const int TRAIN_NEW_NUM_DATAPOINTS = 1000;
+// const int TRAIN_NEW_NUM_DATAPOINTS = 1000;
+const int TRAIN_NEW_NUM_DATAPOINTS = 250;
 #endif /* MDEBUG */
 
 void Experiment::train_new_check_activate(

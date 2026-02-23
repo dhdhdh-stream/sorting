@@ -15,7 +15,8 @@ const int NETWORK_EPOCH_SIZE = 20;
 #if defined(MDEBUG) && MDEBUG
 const int MIN_TRAIN_NUM_SAMPLES = 10;
 #else
-const int MIN_TRAIN_NUM_SAMPLES = 400;
+// const int MIN_TRAIN_NUM_SAMPLES = 400;
+const int MIN_TRAIN_NUM_SAMPLES = 200;
 #endif /* MDEBUG */
 
 #if defined(MDEBUG) && MDEBUG
