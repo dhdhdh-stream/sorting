@@ -27,7 +27,10 @@ void Experiment::add(SolutionWrapper* wrapper) {
 	ss << "this->scope_context->id: " << this->scope_context->id << "; ";
 	ss << "this->node_context->id: " << this->node_context->id << "; ";
 	ss << "this->is_branch: " << this->is_branch << "; ";
-	ss << "this->best_layer: " << this->best_layer << "; ";
+	ss << "this->best_new_layer: " << this->best_new_layer << "; ";
+	ss << "this->best_new_is_binarize: " << this->best_new_is_binarize << "; ";
+	ss << "this->best_refine_layer: " << this->best_refine_layer << "; ";
+	ss << "this->best_refine_is_binarize: " << this->best_refine_is_binarize << "; ";
 	ss << "new explore path:";
 	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
@@ -342,8 +345,11 @@ void Experiment::add(SolutionWrapper* wrapper) {
 	}
 	this->new_branch_node->ancestor_ids.push_back(this->node_context->id);
 
-	this->new_branch_node->network = this->new_network;
+	this->new_branch_node->networks = vector<Network*>{
+		this->new_network,
+		this->refine_network};
 	this->new_network = NULL;
+	this->refine_network = NULL;
 
 	#if defined(MDEBUG) && MDEBUG
 	if (this->verify_problems.size() > 0) {

@@ -16,9 +16,10 @@ using namespace std;
 
 #if defined(MDEBUG) && MDEBUG
 const int TRAIN_EXISTING_NUM_DATAPOINTS = 20;
+const int MIN_TRAIN_NUM_SAMPLES = 10;
 #else
-// const int TRAIN_EXISTING_NUM_DATAPOINTS = 800;
 const int TRAIN_EXISTING_NUM_DATAPOINTS = 4000;
+const int MIN_TRAIN_NUM_SAMPLES = 2000;
 #endif /* MDEBUG */
 
 void Experiment::train_existing_check_activate(SolutionWrapper* wrapper) {

@@ -14,8 +14,6 @@ using namespace std;
 BranchNode::BranchNode() {
 	this->type = NODE_TYPE_BRANCH;
 
-	this->network = NULL;
-
 	#if defined(MDEBUG) && MDEBUG
 	this->verify_key = NULL;
 	#endif /* MDEBUG */
@@ -24,8 +22,8 @@ BranchNode::BranchNode() {
 }
 
 BranchNode::~BranchNode() {
-	if (this->network != NULL) {
-		delete this->network;
+	for (int n_index = 0; n_index < (int)this->networks.size(); n_index++) {
+		delete this->networks[n_index];
 	}
 
 	if (this->experiment != NULL) {
@@ -45,7 +43,10 @@ void BranchNode::clear_verify() {
 #endif /* MDEBUG */
 
 void BranchNode::save(ofstream& output_file) {
-	this->network->save(output_file);
+	output_file << this->networks.size() << endl;
+	for (int n_index = 0; n_index < (int)this->networks.size(); n_index++) {
+		this->networks[n_index]->save(output_file);
+	}
 
 	output_file << this->original_next_node_id << endl;
 	output_file << this->branch_next_node_id << endl;
@@ -58,7 +59,12 @@ void BranchNode::save(ofstream& output_file) {
 
 void BranchNode::load(ifstream& input_file,
 					  Solution* parent_solution) {
-	this->network = new Network(input_file);
+	string num_networks_line;
+	getline(input_file, num_networks_line);
+	int num_networks = stoi(num_networks_line);
+	for (int n_index = 0; n_index < num_networks; n_index++) {
+		this->networks.push_back(new Network(input_file));
+	}
 
 	string original_next_node_id_line;
 	getline(input_file, original_next_node_id_line);
@@ -94,7 +100,9 @@ void BranchNode::link(Solution* parent_solution) {
 
 void BranchNode::copy_from(BranchNode* original,
 						   Solution* parent_solution) {
-	this->network = new Network(original->network);
+	for (int n_index = 0; n_index < (int)original->networks.size(); n_index++) {
+		this->networks.push_back(new Network(original->networks[n_index]));
+	}
 
 	this->original_next_node_id = original->original_next_node_id;
 	this->branch_next_node_id = original->branch_next_node_id;

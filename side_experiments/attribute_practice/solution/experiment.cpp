@@ -22,6 +22,7 @@ Experiment::Experiment(Scope* scope_context,
 	this->node_context->experiment = this;
 
 	this->new_network = NULL;
+	this->refine_network = NULL;
 
 	this->curr_new_scope = NULL;
 	this->best_new_scope = NULL;
@@ -46,6 +47,10 @@ Experiment::~Experiment() {
 
 	if (this->new_network != NULL) {
 		delete this->new_network;
+	}
+
+	if (this->refine_network != NULL) {
+		delete this->refine_network;
 	}
 
 	if (this->curr_new_scope != NULL) {

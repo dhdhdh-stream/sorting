@@ -39,9 +39,17 @@ void Experiment::measure_step(vector<double>& obs,
 		history->index = (int)scope_history->node_histories.size();
 		scope_history->node_histories[this->new_branch_node->id] = history;
 
+		bool is_branch = true;
 		this->new_network->activate(obs);
+		if (this->new_network->output->acti_vals[0] < 0.0) {
+			is_branch = false;
+		} else {
+			this->refine_network->activate(obs);
+			if (this->refine_network->output->acti_vals[0] < 0.0) {
+				is_branch = false;
+			}
+		}
 
-		bool is_branch;
 		#if defined(MDEBUG) && MDEBUG
 		if (wrapper->curr_run_seed%2 == 0) {
 			is_branch = true;
@@ -49,12 +57,6 @@ void Experiment::measure_step(vector<double>& obs,
 			is_branch = false;
 		}
 		wrapper->curr_run_seed = xorshift(wrapper->curr_run_seed);
-		#else
-		if (this->new_network->output->acti_vals[0] >= 0.0) {
-			is_branch = true;
-		} else {
-			is_branch = false;
-		}
 		#endif /* MDEBUG */
 
 		history->is_branch = is_branch;

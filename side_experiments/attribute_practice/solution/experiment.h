@@ -13,9 +13,10 @@ class SolutionWrapper;
 const int EXPERIMENT_STATE_TRAIN_EXISTING = 0;
 const int EXPERIMENT_STATE_EXPLORE = 1;
 const int EXPERIMENT_STATE_TRAIN_NEW = 2;
-const int EXPERIMENT_STATE_MEASURE = 3;
+const int EXPERIMENT_STATE_REFINE = 3;
+const int EXPERIMENT_STATE_MEASURE = 4;
 #if defined(MDEBUG) && MDEBUG
-const int EXPERIMENT_STATE_CAPTURE_VERIFY = 4;
+const int EXPERIMENT_STATE_CAPTURE_VERIFY = 5;
 #endif /* MDEBUG */
 
 #if defined(MDEBUG) && MDEBUG
@@ -64,8 +65,15 @@ public:
 	std::vector<std::vector<bool>> new_target_vals_is_on;
 
 	Network* new_network;
-	// temp
-	int best_layer;
+	Network* refine_network;
+
+	/**
+	 * - for debugging
+	 */
+	int best_new_layer;
+	bool best_new_is_binarize;
+	int best_refine_layer;
+	bool best_refine_is_binarize;
 
 	BranchNode* new_branch_node;
 
@@ -80,7 +88,7 @@ public:
 	#if defined(MDEBUG) && MDEBUG
 	std::vector<Problem*> verify_problems;
 	std::vector<unsigned long> verify_seeds;
-	std::vector<double> verify_scores;
+	std::vector<std::vector<double>> verify_scores;
 	#endif /* MDEBUG */
 
 	Experiment(Scope* scope_context,
@@ -129,6 +137,15 @@ public:
 	void train_new_backprop(double target_val,
 							SolutionWrapper* wrapper);
 
+	void refine_check_activate(SolutionWrapper* wrapper);
+	void refine_step(std::vector<double>& obs,
+					 int& action,
+					 bool& is_next,
+					 SolutionWrapper* wrapper);
+	void refine_exit_step(SolutionWrapper* wrapper);
+	void refine_backprop(double target_val,
+						 SolutionWrapper* wrapper);
+
 	void measure_check_activate(SolutionWrapper* wrapper);
 	void measure_step(std::vector<double>& obs,
 					  int& action,
@@ -162,7 +179,10 @@ public:
 	double calc_new_score();
 
 	void train_and_eval_helper(int layer,
-							   double& best_improvement);
+							   double& best_improvement,
+							   Network*& best_network,
+							   int& best_layer,
+							   bool& best_is_binarize);
 };
 
 class ExperimentHistory : public AbstractExperimentHistory {

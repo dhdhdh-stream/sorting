@@ -24,7 +24,9 @@ void BranchNode::verify_step(vector<double>& obs,
 	history->index = (int)scope_history->node_histories.size();
 	scope_history->node_histories[this->id] = history;
 
-	this->network->activate(obs);
+	for (int n_index = 0; n_index < (int)this->networks.size(); n_index++) {
+		this->networks[n_index]->activate(obs);
+	}
 
 	if (this->verify_key != NULL) {
 		cout << "this->id: " << this->id << endl;
@@ -33,10 +35,12 @@ void BranchNode::verify_step(vector<double>& obs,
 		cout << "wrapper->curr_run_seed: " << wrapper->curr_run_seed << endl;
 		wrapper->problem->print();
 
-		if (this->verify_scores[0] != this->network->output->acti_vals[0]) {
-			cout << "seed: " << seed << endl;
+		for (int n_index = 0; n_index < (int)this->networks.size(); n_index++) {
+			if (this->verify_scores[0][n_index] != this->networks[n_index]->output->acti_vals[0]) {
+				cout << "seed: " << seed << endl;
 
-			throw invalid_argument("branch node verify fail");
+				throw invalid_argument("branch node verify fail");
+			}
 		}
 
 		this->verify_scores.erase(this->verify_scores.begin());

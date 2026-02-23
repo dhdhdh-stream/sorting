@@ -1,7 +1,5 @@
 // TODO: compare with and without signal
 
-// TODO: number of samples needs to be dynamic?
-
 // TODO: for pre network, train with all post inputs unavailable
 // - or maybe not that relevant with train_existing
 
@@ -22,7 +20,7 @@
 //   - for ramp, use any non-explore run
 // - maybe more efficient overall
 
-// TODO: not a big cost to compare binarize vs. non-binarize
+// - on refine, assume train existing doesn't change too much on 1/100 ratio
 
 #include <chrono>
 #include <iostream>

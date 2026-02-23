@@ -291,7 +291,9 @@ Scope* create_new_scope(Scope* scope_context) {
 						BranchNode* original_branch_node = (BranchNode*)node_it->first;
 						BranchNode* new_branch_node = (BranchNode*)node_mappings[original_branch_node];
 
-						new_branch_node->network = new Network(original_branch_node->network);
+						for (int n_index = 0; n_index < (int)original_branch_node->networks.size(); n_index++) {
+							new_branch_node->networks.push_back(new Network(original_branch_node->networks[n_index]));
+						}
 
 						map<AbstractNode*, AbstractNode*>::iterator original_it = node_mappings
 							.find(original_branch_node->original_next_node);

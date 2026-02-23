@@ -24,9 +24,15 @@ void BranchNode::step(vector<double>& obs,
 	history->index = (int)scope_history->node_histories.size();
 	scope_history->node_histories[this->id] = history;
 
-	this->network->activate(obs);
+	bool is_branch = true;
+	for (int n_index = 0; n_index < (int)this->networks.size(); n_index++) {
+		this->networks[n_index]->activate(obs);
+		if (this->networks[n_index]->output->acti_vals[0] < 0.0) {
+			is_branch = false;
+			break;
+		}
+	}
 
-	bool is_branch;
 	#if defined(MDEBUG) && MDEBUG
 	if (wrapper->curr_run_seed%2 == 0) {
 		is_branch = true;
@@ -34,12 +40,6 @@ void BranchNode::step(vector<double>& obs,
 		is_branch = false;
 	}
 	wrapper->curr_run_seed = xorshift(wrapper->curr_run_seed);
-	#else
-	if (this->network->output->acti_vals[0] >= 0.0) {
-		is_branch = true;
-	} else {
-		is_branch = false;
-	}
 	#endif /* MDEBUG */
 
 	history->is_branch = is_branch;
