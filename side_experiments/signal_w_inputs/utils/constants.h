@@ -15,12 +15,6 @@ const double NETWORK_TARGET_MAX_UPDATE = 0.01;
 const int NETWORK_EPOCH_SIZE = 20;
 
 #if defined(MDEBUG) && MDEBUG
-const int MIN_TRAIN_NUM_SAMPLES = 10;
-#else
-const int MIN_TRAIN_NUM_SAMPLES = 400;
-#endif /* MDEBUG */
-
-#if defined(MDEBUG) && MDEBUG
 const int TRAIN_ITERS = 30;
 #else
 const int TRAIN_ITERS = 300000;

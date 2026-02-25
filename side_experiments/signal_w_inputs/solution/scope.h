@@ -26,7 +26,12 @@ public:
 
 	std::vector<Scope*> child_scopes;
 
-	Signal* signal;
+	Signal* pre_signal;
+	/**
+	 * - pre_signal for each layer
+	 *   - post_signal can't see outside, so its matching pre_signal should not see outside
+	 */
+	Signal* post_signal;
 
 	Scope();
 	~Scope();

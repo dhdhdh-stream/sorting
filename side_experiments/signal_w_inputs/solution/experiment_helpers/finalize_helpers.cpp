@@ -10,6 +10,7 @@
 #include "obs_node.h"
 #include "scope.h"
 #include "scope_node.h"
+#include "signal.h"
 #include "signal_helpers.h"
 #include "solution.h"
 #include "solution_helpers.h"
@@ -28,7 +29,8 @@ void Experiment::add(SolutionWrapper* wrapper) {
 	ss << "this->scope_context->id: " << this->scope_context->id << "; ";
 	ss << "this->node_context->id: " << this->node_context->id << "; ";
 	ss << "this->is_branch: " << this->is_branch << "; ";
-	ss << "this->best_layer: " << this->best_layer << "; ";
+	ss << "this->best_new_layer: " << this->best_new_layer << "; ";
+	ss << "this->best_new_is_binarize: " << this->best_new_is_binarize << "; ";
 	ss << "new explore path:";
 	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
@@ -47,7 +49,11 @@ void Experiment::add(SolutionWrapper* wrapper) {
 
 	ss << "this->improvement: " << this->improvement << "; ";
 
-	wrapper->solution->improvement_history.push_back(calc_new_score());
+	double new_average;
+	double new_standard_deviation;
+	calc_new_score(new_average,
+				   new_standard_deviation);
+	wrapper->solution->improvement_history.push_back(new_average);
 	wrapper->solution->change_history.push_back(ss.str());
 
 	cout << ss.str() << endl;
@@ -63,7 +69,12 @@ void Experiment::add(SolutionWrapper* wrapper) {
 							wrapper,
 							this->best_new_scope);
 
-		set_potential_inputs(this->best_new_scope);
+		this->best_new_scope->pre_signal->output_constant = new_average;
+		this->best_new_scope->pre_signal->val_standard_deviation = new_standard_deviation;
+		set_pre_signal_potential_inputs(this->best_new_scope);
+		this->best_new_scope->post_signal->output_constant = new_average;
+		this->best_new_scope->post_signal->val_standard_deviation = new_standard_deviation;
+		set_post_signal_potential_inputs(this->best_new_scope);
 
 		this->best_new_scope = NULL;
 	}
@@ -362,6 +373,16 @@ void Experiment::add(SolutionWrapper* wrapper) {
 	this->new_branch_node = NULL;
 }
 
-double Experiment::calc_new_score() {
-	return this->total_sum_true / this->total_count;
+void Experiment::calc_new_score(double& new_average,
+								double& new_standard_deviation) {
+	double sum_score = 0.0;
+	for (int h_index = 0; h_index < (int)this->total_scores.size(); h_index++) {
+		sum_score += this->total_scores[h_index];
+	}
+	new_average = sum_score / (double)this->total_scores.size();
+	double sum_variance = 0.0;
+	for (int h_index = 0; h_index < (int)this->total_scores.size(); h_index++) {
+		sum_variance += (this->total_scores[h_index] - new_average) * (this->total_scores[h_index] - new_average);
+	}
+	new_standard_deviation = sqrt(sum_variance / (double)this->total_scores.size());
 }

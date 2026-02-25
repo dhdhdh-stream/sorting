@@ -57,6 +57,11 @@ void Experiment::train_and_eval_helper(int layer,
 		}
 	}
 
+	if (positive_samples.size() == 0) {
+		delete curr_new_network;
+		return;
+	}
+
 	{
 		double sum_scores = 0.0;
 		int count = 0;

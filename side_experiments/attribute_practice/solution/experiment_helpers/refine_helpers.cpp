@@ -170,18 +170,22 @@ void Experiment::refine_backprop(
 			this->new_target_vals.clear();
 			this->new_target_vals_is_on.clear();
 
-			this->new_branch_node = new BranchNode();
-			this->new_branch_node->parent = this->scope_context;
-			this->new_branch_node->id = this->scope_context->node_counter + (int)this->best_step_types.size();
+			if (this->refine_network != NULL) {
+				this->new_branch_node = new BranchNode();
+				this->new_branch_node->parent = this->scope_context;
+				this->new_branch_node->id = this->scope_context->node_counter + (int)this->best_step_types.size();
 
-			this->sum_true = 0.0;
-			this->hit_count = 0;
+				this->sum_true = 0.0;
+				this->hit_count = 0;
 
-			this->total_count = 0;
-			this->total_sum_true = 0.0;
+				this->total_count = 0;
+				this->total_sum_true = 0.0;
 
-			this->state = EXPERIMENT_STATE_MEASURE;
-			this->state_iter = 0;
+				this->state = EXPERIMENT_STATE_MEASURE;
+				this->state_iter = 0;
+			} else {
+				this->result = EXPERIMENT_RESULT_FAIL;
+			}
 		}
 	}
 }

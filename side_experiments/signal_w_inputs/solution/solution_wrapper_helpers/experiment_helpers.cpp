@@ -113,7 +113,12 @@ void SolutionWrapper::experiment_end(double result) {
 
 				this->curr_experiment->add(this);
 
-				this->solution->curr_score = this->curr_experiment->calc_new_score();
+				double new_average;
+				double new_standard_deviation;
+				this->curr_experiment->calc_new_score(new_average,
+													  new_standard_deviation);
+				this->solution->curr_score = new_average;
+				this->solution->curr_standard_deviation = new_standard_deviation;
 
 				delete this->curr_experiment;
 				this->curr_experiment = NULL;

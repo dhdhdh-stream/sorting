@@ -40,9 +40,9 @@ Experiment::Experiment(Scope* scope_context,
 }
 
 Experiment::~Experiment() {
-	for (int n_index = 0; n_index < (int)this->existing_networks.size(); n_index++) {
-		delete this->existing_networks[n_index];
-	}
+	// for (int n_index = 0; n_index < (int)this->existing_networks.size(); n_index++) {
+	// 	delete this->existing_networks[n_index];
+	// }
 
 	if (this->new_network != NULL) {
 		delete this->new_network;

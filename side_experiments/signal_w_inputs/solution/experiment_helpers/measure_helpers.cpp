@@ -106,8 +106,7 @@ void Experiment::measure_exit_step(SolutionWrapper* wrapper) {
 
 void Experiment::measure_backprop(double target_val,
 								  SolutionWrapper* wrapper) {
-	this->total_count++;
-	this->total_sum_true += target_val;
+	this->total_scores.push_back(target_val);
 
 	ExperimentHistory* history = (ExperimentHistory*)wrapper->experiment_history;
 

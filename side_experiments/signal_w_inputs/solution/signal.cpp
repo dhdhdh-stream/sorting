@@ -327,6 +327,8 @@ void Signal::save(ofstream& output_file) {
 		output_file << this->output_weights[n_index] << endl;
 	}
 	output_file << this->output_constant << endl;
+
+	output_file << this->val_standard_deviation << endl;
 }
 
 void Signal::load(ifstream& input_file,
@@ -353,6 +355,10 @@ void Signal::load(ifstream& input_file,
 	for (int n_index = 0; n_index < num_nodes; n_index++) {
 		this->output_weight_updates.push_back(0.0);
 	}
+
+	string val_standard_deviation_line;
+	getline(input_file, val_standard_deviation_line);
+	this->val_standard_deviation = stod(val_standard_deviation_line);
 }
 
 void Signal::copy_from(Signal* original,
@@ -366,6 +372,8 @@ void Signal::copy_from(Signal* original,
 	this->output_constant = original->output_constant;
 	this->output_weight_updates = original->output_weight_updates;
 	this->output_constant_update = original->output_constant_update;
+
+	this->val_standard_deviation = original->val_standard_deviation;
 
 	this->epoch_iter = original->epoch_iter;
 	this->average_max_update = original->average_max_update;

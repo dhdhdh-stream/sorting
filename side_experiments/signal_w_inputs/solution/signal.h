@@ -39,6 +39,8 @@ public:
 	std::vector<double> output_weight_updates;
 	double output_constant_update;
 
+	double val_standard_deviation;
+
 	int epoch_iter;
 	double average_max_update;
 

@@ -11,6 +11,7 @@
 #include "problem.h"
 #include "scope.h"
 #include "scope_node.h"
+#include "signal.h"
 #include "signal_helpers.h"
 #include "solution_helpers.h"
 #include "start_node.h"
@@ -24,6 +25,7 @@ Solution::Solution() {
 Solution::Solution(Solution* original) {
 	this->timestamp = original->timestamp;
 	this->curr_score = original->curr_score;
+	this->curr_standard_deviation = original->curr_standard_deviation;
 
 	for (int s_index = 0; s_index < (int)original->scopes.size(); s_index++) {
 		Scope* scope = new Scope();
@@ -59,15 +61,27 @@ Solution::~Solution() {
 }
 
 void Solution::init(ProblemType* problem_type) {
-	double sum_score = 0.0;
+	this->timestamp = 0;
+
+	vector<double> scores(MEASURE_ITERS);
 	for (int iter_index = 0; iter_index < MEASURE_ITERS; iter_index++) {
 		Problem* problem = problem_type->get_problem();
-		sum_score += problem->score_result();
+		scores[iter_index] = problem->score_result();
 		delete problem;
 	}
-
-	this->timestamp = 0;
-	this->curr_score = sum_score / MEASURE_ITERS;
+	double sum_score = 0.0;
+	for (int h_index = 0; h_index < (int)scores.size(); h_index++) {
+		sum_score += scores[h_index];
+	}
+	this->curr_score = sum_score / (double)scores.size();
+	double sum_variance = 0.0;
+	for (int h_index = 0; h_index < (int)scores.size(); h_index++) {
+		sum_variance += (scores[h_index] - this->curr_score) * (scores[h_index] - this->curr_score);
+	}
+	this->curr_standard_deviation = sqrt(sum_variance / (double)scores.size());
+	if (this->curr_standard_deviation < MIN_STANDARD_DEVIATION) {
+		this->curr_standard_deviation = MIN_STANDARD_DEVIATION;
+	}
 
 	/**
 	 * - even though scopes[0] will not be reused, still good to start with:
@@ -101,7 +115,12 @@ void Solution::init(ProblemType* problem_type) {
 	end_node->next_node_id = -1;
 	end_node->next_node = NULL;
 
-	set_potential_inputs(new_scope);
+	new_scope->pre_signal->output_constant = this->curr_score;
+	new_scope->pre_signal->val_standard_deviation = this->curr_standard_deviation;
+	set_pre_signal_potential_inputs(new_scope);
+	new_scope->post_signal->output_constant = this->curr_score;
+	new_scope->post_signal->val_standard_deviation = this->curr_standard_deviation;
+	set_post_signal_potential_inputs(new_scope);
 }
 
 void Solution::load(ifstream& input_file) {
@@ -112,6 +131,10 @@ void Solution::load(ifstream& input_file) {
 	string curr_score_line;
 	getline(input_file, curr_score_line);
 	this->curr_score = stod(curr_score_line);
+
+	string curr_standard_deviation_line;
+	getline(input_file, curr_standard_deviation_line);
+	this->curr_standard_deviation = stod(curr_standard_deviation_line);
 
 	string num_scopes_line;
 	getline(input_file, num_scopes_line);
@@ -133,7 +156,8 @@ void Solution::load(ifstream& input_file) {
 	}
 
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
-		set_potential_inputs(this->scopes[s_index]);
+		set_pre_signal_potential_inputs(this->scopes[s_index]);
+		set_post_signal_potential_inputs(this->scopes[s_index]);
 	}
 
 	string num_experiment_scores_line;
@@ -247,6 +271,7 @@ void Solution::clean_scopes() {
 void Solution::save(ofstream& output_file) {
 	output_file << this->timestamp << endl;
 	output_file << this->curr_score << endl;
+	output_file << this->curr_standard_deviation << endl;
 
 	output_file << this->scopes.size() << endl;
 

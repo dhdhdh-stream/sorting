@@ -36,6 +36,7 @@ public:
 	 */
 	int timestamp;
 	double curr_score;
+	double curr_standard_deviation;
 
 	std::vector<Scope*> scopes;
 

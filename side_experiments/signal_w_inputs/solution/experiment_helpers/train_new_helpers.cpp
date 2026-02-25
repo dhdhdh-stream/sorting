@@ -104,22 +104,62 @@ void Experiment::train_new_backprop(
 		SolutionWrapper* wrapper) {
 	ExperimentHistory* history = (ExperimentHistory*)wrapper->experiment_history;
 	if (history->is_hit) {
+		// for (int i_index = 0; i_index < (int)history->stack_traces.size(); i_index++) {
+		// 	vector<double> curr_target_vals;
+		// 	vector<bool> curr_target_vals_is_on;
+
+		// 	curr_target_vals.push_back(target_val);
+		// 	curr_target_vals_is_on.push_back(true);
+
+		// 	vector<int> trimmed_explore_index = history->explore_indexes[i_index];
+		// 	for (int l_index = 0; l_index < (int)history->stack_traces[i_index].size(); l_index++) {
+		// 		ScopeHistory* scope_history = history->stack_traces[i_index][l_index];
+		// 		Scope* scope = scope_history->scope;
+		// 		if (scope->post_signal->nodes.size() > 0) {
+		// 			double new_signal = scope->post_signal->activate(
+		// 				scope_history,
+		// 				trimmed_explore_index);
+
+		// 			curr_target_vals.push_back(new_signal);
+		// 			curr_target_vals_is_on.push_back(true);
+		// 		} else {
+		// 			curr_target_vals.push_back(0.0);
+		// 			curr_target_vals_is_on.push_back(false);
+		// 		}
+
+		// 		trimmed_explore_index.erase(trimmed_explore_index.begin());
+		// 	}
+
+		// 	this->new_target_vals.push_back(curr_target_vals);
+		// 	this->new_target_vals_is_on.push_back(curr_target_vals_is_on);
+		// }
+
 		for (int i_index = 0; i_index < (int)history->stack_traces.size(); i_index++) {
 			vector<double> curr_target_vals;
 			vector<bool> curr_target_vals_is_on;
 
-			curr_target_vals.push_back(target_val);
-			curr_target_vals_is_on.push_back(true);
-
 			vector<int> trimmed_explore_index = history->explore_indexes[i_index];
+			{
+				ScopeHistory* scope_history = history->stack_traces[i_index][0];
+				Scope* scope = scope_history->scope;
+				double existing_val = scope->pre_signal->activate(
+					scope_history,
+					trimmed_explore_index);
+				double diff = target_val - existing_val;
+				curr_target_vals.push_back(diff);
+				curr_target_vals_is_on.push_back(true);
+			}
 			for (int l_index = 0; l_index < (int)history->stack_traces[i_index].size(); l_index++) {
 				ScopeHistory* scope_history = history->stack_traces[i_index][l_index];
 				Scope* scope = scope_history->scope;
-				if (scope->signal->nodes.size() > 0) {
-					double new_signal = scope->signal->activate(scope_history,
-																trimmed_explore_index);
-
-					curr_target_vals.push_back(new_signal);
+				if (scope->post_signal->nodes.size() > 0) {
+					double existing_val = scope->pre_signal->activate(
+						scope_history,
+						trimmed_explore_index);
+					double new_signal = scope->post_signal->activate(
+						scope_history,
+						trimmed_explore_index);
+					curr_target_vals.push_back(new_signal - existing_val);
 					curr_target_vals_is_on.push_back(true);
 				} else {
 					curr_target_vals.push_back(0.0);
@@ -149,12 +189,25 @@ void Experiment::train_new_backprop(
 				shuffle(this->new_target_vals_is_on.begin(), this->new_target_vals_is_on.end(), generator_copy);
 			}
 
-			double best_val_average = numeric_limits<double>::lowest();
-			for (int l_index = 0; l_index < (int)this->existing_networks.size(); l_index++) {
-				if (this->existing_networks[l_index] != NULL) {
-					train_and_eval_helper(l_index,
-										  best_val_average);
+			int max_layer = 0;
+			for (int h_index = 0; h_index < (int)this->new_target_vals.size(); h_index++) {
+				if ((int)this->new_target_vals[h_index].size() > max_layer) {
+					max_layer = (int)this->new_target_vals[h_index].size();
 				}
+			}
+			double best_val_average = numeric_limits<double>::lowest();
+			// for (int l_index = 0; l_index < (int)this->existing_networks.size(); l_index++) {
+			// 	if (this->existing_networks[l_index] != NULL) {
+			// 		train_and_eval_helper(l_index,
+			// 							  best_val_average);
+			// 	}
+			// }
+			for (int l_index = 0; l_index < max_layer; l_index++) {
+				train_and_eval_helper(l_index,
+									  best_val_average,
+									  this->new_network,
+									  this->best_new_layer,
+									  this->best_new_is_binarize);
 			}
 
 			this->new_branch_node = new BranchNode();
@@ -163,9 +216,6 @@ void Experiment::train_new_backprop(
 
 			this->sum_true = 0.0;
 			this->hit_count = 0;
-
-			this->total_count = 0;
-			this->total_sum_true = 0.0;
 
 			this->state = EXPERIMENT_STATE_MEASURE;
 			this->state_iter = 0;

@@ -35,8 +35,8 @@ public:
 
 	double existing_true;
 
-	std::vector<Network*> existing_networks;
-	std::vector<double> existing_misguess_standard_deviations;
+	// std::vector<Network*> existing_networks;
+	// std::vector<double> existing_misguess_standard_deviations;
 
 	int sum_num_instances;
 
@@ -65,16 +65,18 @@ public:
 
 	Network* new_network;
 
-	// temp
-	int best_layer;
+	/**
+	 * - for debugging
+	 */
+	int best_new_layer;
+	bool best_new_is_binarize;
 
 	BranchNode* new_branch_node;
 
 	double sum_true;
 	int hit_count;
 
-	double total_sum_true;
-	int total_count;
+	std::vector<double> total_scores;
 
 	double improvement;
 
@@ -151,10 +153,14 @@ public:
 
 	void clean();
 	void add(SolutionWrapper* wrapper);
-	double calc_new_score();
+	void calc_new_score(double& new_average,
+						double& new_standard_deviation);
 
 	void train_and_eval_helper(int layer,
-							   double& best_improvement);
+							   double& best_improvement,
+							   Network*& best_network,
+							   int& best_layer,
+							   bool& best_is_binarize);
 };
 
 class ExperimentHistory : public AbstractExperimentHistory {

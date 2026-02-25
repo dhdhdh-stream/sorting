@@ -157,8 +157,12 @@ void Experiment::train_new_backprop(
 			this->new_target_vals.clear();
 			this->new_target_vals_is_on.clear();
 
-			this->state = EXPERIMENT_STATE_REFINE;
-			this->state_iter = 0;
+			if (this->new_network != NULL) {
+				this->state = EXPERIMENT_STATE_REFINE;
+				this->state_iter = 0;
+			} else {
+				this->result = EXPERIMENT_RESULT_FAIL;
+			}
 		}
 	}
 }
