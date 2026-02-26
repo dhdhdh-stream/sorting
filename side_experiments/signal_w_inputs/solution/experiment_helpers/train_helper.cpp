@@ -10,7 +10,7 @@
 using namespace std;
 
 #if defined(MDEBUG) && MDEBUG
-const int MIN_TRAIN_NUM_SAMPLES = 20;
+const int MIN_TRAIN_NUM_SAMPLES = 10;
 #else
 const int MIN_TRAIN_NUM_SAMPLES = 200;
 #endif /* MDEBUG */
@@ -60,7 +60,11 @@ void Experiment::train_and_eval_helper(int layer,
 	vector<pair<double, int>> negative_samples;
 	for (int h_index = 0; h_index < (int)new_on_obs_histories.size(); h_index++) {
 		curr_new_network->activate(new_on_obs_histories[h_index]);
+		#if defined(MDEBUG) && MDEBUG
+		if (rand()%2 == 0) {
+		#else
 		if (curr_new_network->output->acti_vals[0] >= 0.0) {
+		#endif /* MDEBUG */
 			positive_samples.push_back({curr_new_network->output->acti_vals[0], h_index});
 		} else {
 			negative_samples.push_back({curr_new_network->output->acti_vals[0], h_index});

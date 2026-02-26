@@ -17,6 +17,7 @@
 using namespace std;
 
 Scope::Scope() {
+	this->pre_signal = new Signal();
 	this->post_signal = new Signal();
 }
 
@@ -26,6 +27,7 @@ Scope::~Scope() {
 		delete it->second;
 	}
 
+	delete this->pre_signal;
 	delete this->post_signal;
 }
 
@@ -108,17 +110,23 @@ void Scope::clear_verify() {
 
 void Scope::clean_inputs(Scope* scope,
 						 int node_id) {
+	this->pre_signal->clean_inputs(scope,
+								   node_id);
 	this->post_signal->clean_inputs(scope,
 									node_id);
 }
 
 void Scope::clean_inputs(Scope* scope) {
+	this->pre_signal->clean_inputs(scope);
 	this->post_signal->clean_inputs(scope);
 }
 
 void Scope::replace_obs_node(Scope* scope,
 							 int original_node_id,
 							 int new_node_id) {
+	this->pre_signal->replace_obs_node(scope,
+									   original_node_id,
+									   new_node_id);
 	this->post_signal->replace_obs_node(scope,
 										original_node_id,
 										new_node_id);
@@ -140,6 +148,7 @@ void Scope::save(ofstream& output_file) {
 		output_file << this->child_scopes[c_index]->id << endl;
 	}
 
+	this->pre_signal->save(output_file);
 	this->post_signal->save(output_file);
 }
 
@@ -221,6 +230,8 @@ void Scope::load(ifstream& input_file,
 		this->child_scopes.push_back(parent_solution->scopes[stoi(scope_id_line)]);
 	}
 
+	this->pre_signal->load(input_file,
+						   parent_solution);
 	this->post_signal->load(input_file,
 							parent_solution);
 }
@@ -300,6 +311,8 @@ void Scope::copy_from(Scope* original,
 			original->child_scopes[c_index]->id]);
 	}
 
+	this->pre_signal->copy_from(original->pre_signal,
+								parent_solution);
 	this->post_signal->copy_from(original->post_signal,
 								 parent_solution);
 }

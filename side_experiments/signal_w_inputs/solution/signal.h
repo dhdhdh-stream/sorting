@@ -33,6 +33,7 @@ const int SIGNAL_NODE_MAX_NUM_INPUTS = 20;
 class Signal {
 public:
 	std::vector<SignalNode*> nodes;
+	std::vector<int> num_fails;
 
 	std::vector<double> output_weights;
 	double output_constant;

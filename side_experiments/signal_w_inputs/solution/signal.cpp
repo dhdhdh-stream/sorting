@@ -321,6 +321,8 @@ void Signal::save(ofstream& output_file) {
 	output_file << this->nodes.size() << endl;
 	for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {
 		this->nodes[n_index]->save(output_file);
+
+		output_file << this->num_fails[n_index] << endl;
 	}
 
 	for (int n_index = 0; n_index < (int)this->nodes.size(); n_index++) {
@@ -340,6 +342,10 @@ void Signal::load(ifstream& input_file,
 		SignalNode* signal_node = new SignalNode(input_file,
 												 parent_solution);
 		this->nodes.push_back(signal_node);
+
+		string num_fail_line;
+		getline(input_file, num_fail_line);
+		this->num_fails.push_back(stoi(num_fail_line));
 	}
 
 	for (int n_index = 0; n_index < num_nodes; n_index++) {
@@ -367,6 +373,7 @@ void Signal::copy_from(Signal* original,
 		this->nodes.push_back(new SignalNode(original->nodes[n_index],
 											 parent_solution));
 	}
+	this->num_fails = original->num_fails;
 
 	this->output_weights = original->output_weights;
 	this->output_constant = original->output_constant;

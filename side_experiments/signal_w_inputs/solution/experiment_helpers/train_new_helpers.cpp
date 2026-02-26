@@ -210,15 +210,19 @@ void Experiment::train_new_backprop(
 									  this->best_new_is_binarize);
 			}
 
-			this->new_branch_node = new BranchNode();
-			this->new_branch_node->parent = this->scope_context;
-			this->new_branch_node->id = this->scope_context->node_counter + (int)this->best_step_types.size();
+			if (this->new_network != NULL) {
+				this->new_branch_node = new BranchNode();
+				this->new_branch_node->parent = this->scope_context;
+				this->new_branch_node->id = this->scope_context->node_counter + (int)this->best_step_types.size();
 
-			this->sum_true = 0.0;
-			this->hit_count = 0;
+				this->sum_true = 0.0;
+				this->hit_count = 0;
 
-			this->state = EXPERIMENT_STATE_MEASURE;
-			this->state_iter = 0;
+				this->state = EXPERIMENT_STATE_MEASURE;
+				this->state_iter = 0;
+			} else {
+				this->result = EXPERIMENT_RESULT_FAIL;
+			}
 		}
 	}
 }

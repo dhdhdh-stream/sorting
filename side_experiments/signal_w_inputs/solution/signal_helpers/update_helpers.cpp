@@ -25,6 +25,8 @@ const int CLEAN_ITERS = 100000;
 
 const double VALIDATION_RATIO = 0.2;
 
+const int MAX_NUM_FAIL = 2;
+
 void clean_pre_signal_helper(double& existing_sum_misguess,
 							 Scope* scope,
 							 int node_index,
@@ -55,6 +57,16 @@ void clean_pre_signal_helper(double& existing_sum_misguess,
 									 index);
 	}
 
+	// // temp
+	// double train_curr_sum_misguess = 0.0;
+	// for (int h_index = 0; h_index < num_train_samples; h_index++) {
+	// 	double val = curr_signal->activate_helper(true,
+	// 											  h_index);
+	// 	train_curr_sum_misguess += (curr_signal->existing_target_val_histories[h_index] - val)
+	// 		* (curr_signal->existing_target_val_histories[h_index] - val);
+	// }
+	// cout << "train_curr_sum_misguess: " << train_curr_sum_misguess << endl;
+
 	vector<double> predicted_scores;
 
 	double existing_curr_sum_misguess = 0.0;
@@ -70,56 +82,126 @@ void clean_pre_signal_helper(double& existing_sum_misguess,
 
 	double curr_sum_misguess = existing_curr_sum_misguess;
 
+	// // temp
+	// cout << "clear " << node_index << " " << curr_sum_misguess << endl;
+
 	if (curr_sum_misguess < existing_sum_misguess) {
-		existing_sum_misguess = curr_sum_misguess;
+		scope->pre_signal->num_fails[node_index]++;
+		// cout << "scope->pre_signal->num_fails[node_index]: " << scope->pre_signal->num_fails[node_index] << endl;
+		if (scope->pre_signal->num_fails[node_index] >= MAX_NUM_FAIL) {
+			existing_sum_misguess = curr_sum_misguess;
 
-		double sum_score = 0.0;
-		for (int h_index = 0; h_index < (int)predicted_scores.size(); h_index++) {
-			sum_score += predicted_scores[h_index];
-		}
-		double val_average = sum_score / (double)predicted_scores.size();
-		double sum_variance = 0.0;
-		for (int h_index = 0; h_index < (int)predicted_scores.size(); h_index++) {
-			sum_variance += (predicted_scores[h_index] - val_average) * (predicted_scores[h_index] - val_average);
-		}
-		curr_signal->val_standard_deviation = sqrt(sum_variance / (double)predicted_scores.size());
-		if (curr_signal->val_standard_deviation < MIN_STANDARD_DEVIATION) {
-			curr_signal->val_standard_deviation = MIN_STANDARD_DEVIATION;
-		}
+			double sum_score = 0.0;
+			for (int h_index = 0; h_index < (int)predicted_scores.size(); h_index++) {
+				sum_score += predicted_scores[h_index];
+			}
+			double val_average = sum_score / (double)predicted_scores.size();
+			double sum_variance = 0.0;
+			for (int h_index = 0; h_index < (int)predicted_scores.size(); h_index++) {
+				sum_variance += (predicted_scores[h_index] - val_average) * (predicted_scores[h_index] - val_average);
+			}
+			curr_signal->val_standard_deviation = sqrt(sum_variance / (double)predicted_scores.size());
+			if (curr_signal->val_standard_deviation < MIN_STANDARD_DEVIATION) {
+				curr_signal->val_standard_deviation = MIN_STANDARD_DEVIATION;
+			}
 
-		delete scope->post_signal;
-		scope->post_signal = curr_signal;
+			delete scope->pre_signal;
+			scope->pre_signal = curr_signal;
+		} else {
+			delete curr_signal;
+		}
 	} else {
+		scope->pre_signal->num_fails[node_index] = 0;
+
 		delete curr_signal;
 	}
 }
 
 void update_pre_signal(Scope* scope,
 					   SolutionWrapper* wrapper) {
+	// temp
+	cout << "update_pre_signal" << endl;
+
 	Signal* signal = scope->pre_signal;
 
-	{
-		default_random_engine generator_copy = generator;
-		shuffle(signal->existing_input_val_histories.begin(), signal->existing_input_val_histories.end(), generator_copy);
-	}
-	{
-		default_random_engine generator_copy = generator;
-		shuffle(signal->existing_input_is_on_histories.begin(), signal->existing_input_is_on_histories.end(), generator_copy);
-	}
-	{
-		default_random_engine generator_copy = generator;
-		shuffle(signal->existing_target_val_histories.begin(), signal->existing_target_val_histories.end(), generator_copy);
-	}
-	{
-		default_random_engine generator_copy = generator;
-		shuffle(signal->potential_existing_input_val_histories.begin(), signal->potential_existing_input_val_histories.end(), generator_copy);
-	}
-	{
-		default_random_engine generator_copy = generator;
-		shuffle(signal->potential_existing_input_is_on_histories.begin(), signal->potential_existing_input_is_on_histories.end(), generator_copy);
-	}
+	// {
+	// 	default_random_engine generator_copy = generator;
+	// 	shuffle(signal->existing_input_val_histories.begin(), signal->existing_input_val_histories.end(), generator_copy);
+	// }
+	// {
+	// 	default_random_engine generator_copy = generator;
+	// 	shuffle(signal->existing_input_is_on_histories.begin(), signal->existing_input_is_on_histories.end(), generator_copy);
+	// }
+	// {
+	// 	default_random_engine generator_copy = generator;
+	// 	shuffle(signal->existing_target_val_histories.begin(), signal->existing_target_val_histories.end(), generator_copy);
+	// }
+	// {
+	// 	default_random_engine generator_copy = generator;
+	// 	shuffle(signal->potential_existing_input_val_histories.begin(), signal->potential_existing_input_val_histories.end(), generator_copy);
+	// }
+	// {
+	// 	default_random_engine generator_copy = generator;
+	// 	shuffle(signal->potential_existing_input_is_on_histories.begin(), signal->potential_existing_input_is_on_histories.end(), generator_copy);
+	// }
+
+	// // temp
+	// for (int n_index = 0; n_index < (int)signal->nodes.size(); n_index++) {
+	// 	cout << "signal->existing_input_val_histories[0][n_index]:" << endl;
+	// 	for (int i_index = 0; i_index < (int)signal->nodes[n_index]->inputs.size(); i_index++) {
+	// 		cout << signal->existing_input_val_histories[0][n_index][i_index] << " ";
+	// 	}
+	// 	cout << endl;
+	// 	cout << "signal->existing_input_is_on_histories[0][n_index]:" << endl;
+	// 	for (int i_index = 0; i_index < (int)signal->nodes[n_index]->inputs.size(); i_index++) {
+	// 		cout << signal->existing_input_is_on_histories[0][n_index][i_index] << " ";
+	// 	}
+	// 	cout << endl;
+	// }
+	// cout << "signal->existing_target_val_histories[0]: " << signal->existing_target_val_histories[0] << endl;
+	// for (int p_index = 0; p_index < (int)signal->potential_inputs.size(); p_index++) {
+	// 	cout << "signal->potential_existing_input_val_histories[0][p_index]:" << endl;
+	// 	for (int i_index = 0; i_index < (int)signal->potential_inputs[p_index].size(); i_index++) {
+	// 		cout << signal->potential_existing_input_val_histories[0][p_index][i_index] << " ";
+	// 	}
+	// 	cout << endl;
+	// 	cout << "signal->potential_existing_input_is_on_histories[0][n_index]:" << endl;
+	// 	for (int i_index = 0; i_index < (int)signal->potential_inputs[p_index].size(); i_index++) {
+	// 		cout << signal->potential_existing_input_is_on_histories[0][p_index][i_index] << " ";
+	// 	}
+	// 	cout << endl;
+	// }
 
 	int num_train_samples = (1.0 - VALIDATION_RATIO) * SIGNAL_NUM_SAMPLES;
+
+	// // temp
+	// double pre_train_sum_misguess = 0.0;
+	// for (int h_index = 0; h_index < num_train_samples; h_index++) {
+	// 	double val = signal->activate_helper(true,
+	// 										 h_index);
+	// 	double diff = signal->existing_target_val_histories[h_index] - val;
+	// 	pre_train_sum_misguess += diff * diff;
+	// }
+	// cout << "pre_train_sum_misguess: " << pre_train_sum_misguess << endl;
+
+	// double pre_existing_sum_misguess = 0.0;
+	// for (int h_index = num_train_samples; h_index < SIGNAL_NUM_SAMPLES; h_index++) {
+	// 	double val = signal->activate_helper(true,
+	// 										 h_index);
+	// 	double diff = signal->existing_target_val_histories[h_index] - val;
+	// 	pre_existing_sum_misguess += diff * diff;
+	// }
+	// cout << "pre_existing_sum_misguess: " << pre_existing_sum_misguess << endl;
+
+	// // temp
+	// {
+	// 	uniform_int_distribution<int> train_distribution(0, SIGNAL_NUM_SAMPLES-1);
+	// 	for (int iter_index = 0; iter_index < CLEAN_ITERS; iter_index++) {
+	// 		int index = train_distribution(generator);
+	// 		signal->backprop_helper(true,
+	// 								index);
+	// 	}
+	// }
 
 	vector<double> existing_remaining_vals(SIGNAL_NUM_SAMPLES);
 	for (int h_index = 0; h_index < SIGNAL_NUM_SAMPLES; h_index++) {
@@ -128,12 +210,22 @@ void update_pre_signal(Scope* scope,
 		existing_remaining_vals[h_index] = signal->existing_target_val_histories[h_index] - val;
 	}
 
+	// // temp
+	// double train_sum_misguess = 0.0;
+	// for (int h_index = 0; h_index < num_train_samples; h_index++) {
+	// 	train_sum_misguess += existing_remaining_vals[h_index] * existing_remaining_vals[h_index];
+	// }
+	// cout << "train_sum_misguess: " << train_sum_misguess << endl;
+
 	double existing_existing_sum_misguess = 0.0;
 	for (int h_index = num_train_samples; h_index < SIGNAL_NUM_SAMPLES; h_index++) {
 		existing_existing_sum_misguess += existing_remaining_vals[h_index] * existing_remaining_vals[h_index];
 	}
 
 	double existing_sum_misguess = existing_existing_sum_misguess;
+
+	// // temp
+	// cout << "existing_sum_misguess: " << existing_sum_misguess << endl;
 
 	Signal* best_signal = NULL;
 	double best_sum_misguess = numeric_limits<double>::max();
@@ -251,6 +343,7 @@ void update_pre_signal(Scope* scope,
 							   wrapper->solution);
 
 		curr_signal->nodes.push_back(curr_node);
+		curr_signal->num_fails.push_back(0);
 
 		curr_signal->output_weights.push_back(1.0);
 		curr_signal->output_weight_updates.push_back(0.0);
@@ -270,6 +363,16 @@ void update_pre_signal(Scope* scope,
 										 index);
 		}
 
+		// // temp
+		// double train_curr_sum_misguess = 0.0;
+		// for (int h_index = 0; h_index < num_train_samples; h_index++) {
+		// 	double val = curr_signal->activate_helper(true,
+		// 											  h_index);
+		// 	train_curr_sum_misguess += (curr_signal->existing_target_val_histories[h_index] - val)
+		// 		* (curr_signal->existing_target_val_histories[h_index] - val);
+		// }
+		// cout << "train_curr_sum_misguess: " << train_curr_sum_misguess << endl;
+
 		vector<double> predicted_scores;
 
 		double existing_curr_sum_misguess = 0.0;
@@ -284,6 +387,8 @@ void update_pre_signal(Scope* scope,
 		}
 
 		double curr_sum_misguess = existing_curr_sum_misguess;
+
+		// cout << "curr_sum_misguess: " << curr_sum_misguess << endl;
 
 		if (curr_sum_misguess < existing_sum_misguess && curr_sum_misguess < best_sum_misguess) {
 			double sum_score = 0.0;
@@ -313,13 +418,13 @@ void update_pre_signal(Scope* scope,
 	if (best_sum_misguess < existing_sum_misguess) {
 		existing_sum_misguess = best_sum_misguess;
 
-		delete scope->post_signal;
-		scope->post_signal = best_signal;
+		delete scope->pre_signal;
+		scope->pre_signal = best_signal;
 	}
 
-	scope->post_signal->potential_inputs.clear();
+	scope->pre_signal->potential_inputs.clear();
 
-	for (int n_index = (int)scope->post_signal->nodes.size()-1; n_index >= 0; n_index--) {
+	for (int n_index = (int)scope->pre_signal->nodes.size()-1; n_index >= 0; n_index--) {
 		clean_pre_signal_helper(existing_sum_misguess,
 								scope,
 								n_index,
@@ -397,25 +502,32 @@ void clean_post_signal_helper(double& existing_sum_misguess,
 	double curr_sum_misguess = (existing_curr_sum_misguess + explore_curr_sum_misguess) / 2.0;
 
 	if (curr_sum_misguess < existing_sum_misguess) {
-		existing_sum_misguess = curr_sum_misguess;
+		scope->post_signal->num_fails[node_index]++;
+		if (scope->post_signal->num_fails[node_index] >= MAX_NUM_FAIL) {
+			existing_sum_misguess = curr_sum_misguess;
 
-		double sum_score = 0.0;
-		for (int h_index = 0; h_index < (int)predicted_scores.size(); h_index++) {
-			sum_score += predicted_scores[h_index];
-		}
-		double val_average = sum_score / (double)predicted_scores.size();
-		double sum_variance = 0.0;
-		for (int h_index = 0; h_index < (int)predicted_scores.size(); h_index++) {
-			sum_variance += (predicted_scores[h_index] - val_average) * (predicted_scores[h_index] - val_average);
-		}
-		curr_signal->val_standard_deviation = sqrt(sum_variance / (double)predicted_scores.size());
-		if (curr_signal->val_standard_deviation < MIN_STANDARD_DEVIATION) {
-			curr_signal->val_standard_deviation = MIN_STANDARD_DEVIATION;
-		}
+			double sum_score = 0.0;
+			for (int h_index = 0; h_index < (int)predicted_scores.size(); h_index++) {
+				sum_score += predicted_scores[h_index];
+			}
+			double val_average = sum_score / (double)predicted_scores.size();
+			double sum_variance = 0.0;
+			for (int h_index = 0; h_index < (int)predicted_scores.size(); h_index++) {
+				sum_variance += (predicted_scores[h_index] - val_average) * (predicted_scores[h_index] - val_average);
+			}
+			curr_signal->val_standard_deviation = sqrt(sum_variance / (double)predicted_scores.size());
+			if (curr_signal->val_standard_deviation < MIN_STANDARD_DEVIATION) {
+				curr_signal->val_standard_deviation = MIN_STANDARD_DEVIATION;
+			}
 
-		delete scope->post_signal;
-		scope->post_signal = curr_signal;
+			delete scope->post_signal;
+			scope->post_signal = curr_signal;
+		} else {
+			delete curr_signal;
+		}
 	} else {
+		scope->post_signal->num_fails[node_index] = 0;
+
 		delete curr_signal;
 	}
 }
@@ -654,6 +766,7 @@ void update_post_signal(Scope* scope,
 							   wrapper->solution);
 
 		curr_signal->nodes.push_back(curr_node);
+		curr_signal->num_fails.push_back(0);
 
 		curr_signal->output_weights.push_back(1.0);
 		curr_signal->output_weight_updates.push_back(0.0);

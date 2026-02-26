@@ -6,8 +6,10 @@
 #include "constants.h"
 #include "globals.h"
 #include "network.h"
+#include "problem.h"
 #include "scope.h"
 #include "signal.h"
+#include "signal_node.h"
 #include "signal_helpers.h"
 #include "solution.h"
 #include "solution_helpers.h"
@@ -18,7 +20,7 @@ using namespace std;
 #if defined(MDEBUG) && MDEBUG
 const int TRAIN_EXISTING_NUM_DATAPOINTS = 20;
 #else
-const int TRAIN_EXISTING_NUM_DATAPOINTS = 800;
+const int TRAIN_EXISTING_NUM_DATAPOINTS = 4000;
 #endif /* MDEBUG */
 
 void Experiment::train_existing_check_activate(SolutionWrapper* wrapper) {
@@ -82,6 +84,33 @@ void Experiment::train_existing_backprop(double target_val,
 
 			this->existing_target_vals.push_back(curr_target_vals);
 			this->existing_target_vals_is_on.push_back(curr_target_vals_is_on);
+
+			// temp
+			{
+				vector<double> curr_existing_predicted;
+
+				vector<int> trimmed_explore_index = history->explore_indexes[i_index];
+				{
+					ScopeHistory* scope_history = history->stack_traces[i_index][0];
+					Scope* scope = scope_history->scope;
+					double existing_val = scope->pre_signal->activate(
+						scope_history,
+						trimmed_explore_index);
+					curr_existing_predicted.push_back(existing_val);
+				}
+				for (int l_index = 0; l_index < (int)history->stack_traces[i_index].size(); l_index++) {
+					ScopeHistory* scope_history = history->stack_traces[i_index][l_index];
+					Scope* scope = scope_history->scope;
+					double existing_val = scope->pre_signal->activate(
+						scope_history,
+						trimmed_explore_index);
+					curr_existing_predicted.push_back(existing_val);
+
+					trimmed_explore_index.erase(trimmed_explore_index.begin());
+				}
+
+				this->existing_predicted.push_back(curr_existing_predicted);
+			}
 		}
 
 		if (this->hit_count <= EXPERIMENT_EXPLORE_ITERS) {
@@ -91,6 +120,18 @@ void Experiment::train_existing_backprop(double target_val,
 			{
 				vector<int> trimmed_explore_index = history->explore_indexes[index];
 				for (int l_index = 0; l_index < (int)history->stack_traces[index].size(); l_index++) {
+					// // temp
+					// if (this->hit_count <= 10) {
+					// 	ScopeHistory* scope_history = history->stack_traces[index][l_index];
+					// 	Scope* scope = scope_history->scope;
+					// 	double existing_val = scope->pre_signal->activate(
+					// 		scope_history,
+					// 		trimmed_explore_index);
+					// 	wrapper->problem->print();
+					// 	cout << "target_val: " << target_val << endl;
+					// 	cout << "existing_val: " << existing_val << endl;
+					// }
+
 					pre_signal_add_sample(history->stack_traces[index][l_index],
 										  trimmed_explore_index,
 										  target_val,
@@ -176,6 +217,45 @@ void Experiment::train_existing_backprop(double target_val,
 		// 	this->existing_networks[l_index] = network;
 		// 	this->existing_misguess_standard_deviations[l_index] = misguess_standard_deviation;
 		// }
+
+		// temp
+		{
+			int num_train_samples = 0.8 * (double)this->existing_obs_histories.size();
+
+			double default_sum_misguess = 0.0;
+			for (int h_index = num_train_samples; h_index < (int)this->existing_predicted.size(); h_index++) {
+				default_sum_misguess += (this->existing_target_vals[h_index][0] - this->existing_true)
+					* (this->existing_target_vals[h_index][0] - this->existing_true);
+			}
+			cout << "default_sum_misguess: " << default_sum_misguess << endl;
+			double predicted_sum_misguess = 0.0;
+			for (int h_index = num_train_samples; h_index < (int)this->existing_predicted.size(); h_index++) {
+				predicted_sum_misguess += (this->existing_target_vals[h_index][0] - this->existing_predicted[h_index].back())
+					* (this->existing_target_vals[h_index][0] - this->existing_predicted[h_index].back());
+			}
+			cout << "predicted_sum_misguess: " << predicted_sum_misguess << endl;
+
+			Network* existing_network = new Network(this->existing_obs_histories[0].size());
+			uniform_int_distribution<int> existing_distribution(0, num_train_samples);
+			for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
+				int index = existing_distribution(generator);
+
+				existing_network->activate(this->existing_obs_histories[index]);
+
+				double error = this->existing_target_vals[index][0] - existing_network->output->acti_vals[0];
+
+				existing_network->backprop(error);
+			}
+			double train_sum_misguess = 0.0;
+			for (int h_index = num_train_samples; h_index < (int)this->existing_target_vals.size(); h_index++) {
+				existing_network->activate(this->existing_obs_histories[h_index]);
+				train_sum_misguess += (this->existing_target_vals[h_index][0] - existing_network->output->acti_vals[0])
+					* (this->existing_target_vals[h_index][0] - existing_network->output->acti_vals[0]);
+			}
+			cout << "train_sum_misguess: " << train_sum_misguess << endl;
+			delete existing_network;
+			cout << endl;
+		}
 
 		this->average_instances_per_run = (double)this->sum_num_instances / (double)this->hit_count;
 

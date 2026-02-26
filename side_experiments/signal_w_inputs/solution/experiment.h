@@ -33,6 +33,9 @@ public:
 	std::vector<std::vector<double>> existing_target_vals;
 	std::vector<std::vector<bool>> existing_target_vals_is_on;
 
+	// temp
+	std::vector<std::vector<double>> existing_predicted;
+
 	double existing_true;
 
 	// std::vector<Network*> existing_networks;

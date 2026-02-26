@@ -17,8 +17,8 @@ void create_pre_input_helper(Scope* scope,
 	scope_context.push_back(scope);
 
 	uniform_int_distribution<int> inner_distribution(0, 1);
-	// uniform_int_distribution<int> obs_distribution(0, 24);
-	uniform_int_distribution<int> obs_distribution(0, 0);
+	uniform_int_distribution<int> obs_distribution(0, 24);
+	// uniform_int_distribution<int> obs_distribution(0, 0);
 	/**
 	 * TODO: obs_size
 	 */
@@ -118,8 +118,8 @@ void create_post_input_helper(Scope* scope,
 
 	uniform_int_distribution<int> inner_distribution(0, 1);
 	uniform_int_distribution<int> pre_distribution(0, 1);
-	// uniform_int_distribution<int> obs_distribution(0, 24);
-	uniform_int_distribution<int> obs_distribution(0, 0);
+	uniform_int_distribution<int> obs_distribution(0, 24);
+	// uniform_int_distribution<int> obs_distribution(0, 0);
 	/**
 	 * TODO: obs_size
 	 */

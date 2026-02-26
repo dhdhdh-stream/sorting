@@ -163,16 +163,16 @@ vector<double> Minesweeper::get_observations() {
 vector<double> Minesweeper::get_signal_obs() {
 	vector<double> obs;
 
-	obs.push_back(get_observation_helper(this->current_x, this->current_y));
+	// obs.push_back(get_observation_helper(this->current_x, this->current_y));
 
-	// for (int x_index = -2; x_index <= 2; x_index++) {
-	// 	for (int y_index = -2; y_index <= 2; y_index++) {
-	// 		obs.push_back(get_observation_helper(
-	// 			this->current_x + x_index,
-	// 			this->current_y + y_index
-	// 		));
-	// 	}
-	// }
+	for (int x_index = -2; x_index <= 2; x_index++) {
+		for (int y_index = -2; y_index <= 2; y_index++) {
+			obs.push_back(get_observation_helper(
+				this->current_x + x_index,
+				this->current_y + y_index
+			));
+		}
+	}
 
 	return obs;
 }

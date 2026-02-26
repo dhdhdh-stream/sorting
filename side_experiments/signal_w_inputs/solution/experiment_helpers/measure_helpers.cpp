@@ -124,6 +124,12 @@ void Experiment::measure_backprop(double target_val,
 		double new_true = this->sum_true / this->hit_count;
 		this->improvement = new_true - this->existing_true;
 
+		// // temp
+		// cout << "this->scope_context->id: " << this->scope_context->id << endl;
+		// cout << "this->existing_true: " << this->existing_true << endl;
+		// cout << "new_true: " << new_true << endl;
+		// cout << endl;
+
 		bool is_success = false;
 		if (this->improvement >= 0.0) {
 			if (wrapper->solution->last_experiment_scores.size() >= MIN_NUM_LAST_EXPERIMENT_TRACK) {
