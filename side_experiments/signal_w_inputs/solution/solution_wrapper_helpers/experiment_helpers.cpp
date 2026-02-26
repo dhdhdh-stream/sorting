@@ -9,6 +9,7 @@
 #include "problem.h"
 #include "scope.h"
 #include "scope_node.h"
+#include "signal_helpers.h"
 #include "solution.h"
 #include "solution_helpers.h"
 #include "utilities.h"
@@ -127,6 +128,15 @@ void SolutionWrapper::experiment_end(double result) {
 							this);
 
 				this->solution->clean_scopes();
+
+				// temp
+				#if defined(MDEBUG) && MDEBUG
+				for (int iter_index = 0; iter_index < 10; iter_index++) {
+				#else
+				for (int iter_index = 0; iter_index < 8000; iter_index++) {
+				#endif /* MDEBUG */
+					random_from_existing_iter(this);
+				}
 
 				this->solution->timestamp++;
 			}

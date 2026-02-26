@@ -5,6 +5,7 @@
 
 #include "signal_input.h"
 
+class ProblemType;
 class Scope;
 class ScopeHistory;
 class SolutionWrapper;
@@ -40,5 +41,7 @@ void update_pre_signal(Scope* scope,
 					   SolutionWrapper* wrapper);
 void update_post_signal(Scope* scope,
 						SolutionWrapper* wrapper);
+
+void random_from_existing_iter(SolutionWrapper* wrapper);
 
 #endif /* SIGNAL_HELPERS_H */
