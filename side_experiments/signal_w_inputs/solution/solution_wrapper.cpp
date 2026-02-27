@@ -25,7 +25,7 @@ SolutionWrapper::SolutionWrapper(ProblemType* problem_type) {
 	#if defined(MDEBUG) && MDEBUG
 	for (int iter_index = 0; iter_index < 10; iter_index++) {
 	#else
-	for (int iter_index = 0; iter_index < 8000; iter_index++) {
+	for (int iter_index = 0; iter_index < 10000; iter_index++) {
 	#endif /* MDEBUG */
 		random_from_existing_iter(this);
 	}

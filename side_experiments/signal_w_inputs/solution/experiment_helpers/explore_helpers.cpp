@@ -283,38 +283,40 @@ void Experiment::explore_backprop(double target_val,
 
 		// double curr_surprise = sum_surprise / count;
 
-		double sum_surprise = 0.0;
-		int count = 0;
-		vector<int> trimmed_explore_index = history->explore_indexes[0];
-		{
-			ScopeHistory* scope_history = history->stack_traces[0][0];
-			Scope* scope = scope_history->scope;
-			double existing_val = scope->pre_signal->activate(
-				scope_history,
-				trimmed_explore_index);
-			double diff = target_val - existing_val;
-			sum_surprise += diff / wrapper->solution->curr_standard_deviation;
-			count++;
-		}
-		for (int l_index = 0; l_index < (int)history->stack_traces[0].size(); l_index++) {
-			ScopeHistory* scope_history = history->stack_traces[0][l_index];
-			Scope* scope = scope_history->scope;
-			if (scope->post_signal->nodes.size() > 0) {
-				double existing_val = scope->pre_signal->activate(
-					scope_history,
-					trimmed_explore_index);
-				double new_signal = scope->post_signal->activate(
-					scope_history,
-					trimmed_explore_index);
-				double diff = new_signal - existing_val;
-				sum_surprise += diff / scope->post_signal->val_standard_deviation;
-				count++;
-			}
+		// double sum_surprise = 0.0;
+		// int count = 0;
+		// vector<int> trimmed_explore_index = history->explore_indexes[0];
+		// {
+		// 	ScopeHistory* scope_history = history->stack_traces[0][0];
+		// 	Scope* scope = scope_history->scope;
+		// 	double existing_val = scope->pre_signal->activate(
+		// 		scope_history,
+		// 		trimmed_explore_index);
+		// 	double diff = target_val - existing_val;
+		// 	sum_surprise += diff / wrapper->solution->curr_standard_deviation;
+		// 	count++;
+		// }
+		// for (int l_index = 0; l_index < (int)history->stack_traces[0].size(); l_index++) {
+		// 	ScopeHistory* scope_history = history->stack_traces[0][l_index];
+		// 	Scope* scope = scope_history->scope;
+		// 	if (scope->post_signal->nodes.size() > 0) {
+		// 		double existing_val = scope->pre_signal->activate(
+		// 			scope_history,
+		// 			trimmed_explore_index);
+		// 		double new_signal = scope->post_signal->activate(
+		// 			scope_history,
+		// 			trimmed_explore_index);
+		// 		double diff = new_signal - existing_val;
+		// 		sum_surprise += diff / scope->post_signal->val_standard_deviation;
+		// 		count++;
+		// 	}
 
-			trimmed_explore_index.erase(trimmed_explore_index.begin());
-		}
+		// 	trimmed_explore_index.erase(trimmed_explore_index.begin());
+		// }
 
-		double curr_surprise = sum_surprise / count;
+		// double curr_surprise = sum_surprise / count;
+
+		double curr_surprise = target_val - this->existing_true;
 
 		{
 			double sum_vals = target_val;

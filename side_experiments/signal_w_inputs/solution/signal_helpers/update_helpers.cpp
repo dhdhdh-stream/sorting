@@ -120,7 +120,12 @@ void clean_pre_signal_helper(double& existing_sum_misguess,
 void update_pre_signal(Scope* scope,
 					   SolutionWrapper* wrapper) {
 	// temp
-	cout << "update_pre_signal" << endl;
+	if (true) {
+		return;
+	}
+
+	// // temp
+	// cout << "update_pre_signal" << endl;
 
 	Signal* signal = scope->pre_signal;
 

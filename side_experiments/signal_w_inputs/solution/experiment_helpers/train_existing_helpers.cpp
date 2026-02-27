@@ -218,44 +218,44 @@ void Experiment::train_existing_backprop(double target_val,
 		// 	this->existing_misguess_standard_deviations[l_index] = misguess_standard_deviation;
 		// }
 
-		// temp
-		{
-			int num_train_samples = 0.8 * (double)this->existing_obs_histories.size();
+		// // temp
+		// {
+		// 	int num_train_samples = 0.8 * (double)this->existing_obs_histories.size();
 
-			double default_sum_misguess = 0.0;
-			for (int h_index = num_train_samples; h_index < (int)this->existing_predicted.size(); h_index++) {
-				default_sum_misguess += (this->existing_target_vals[h_index][0] - this->existing_true)
-					* (this->existing_target_vals[h_index][0] - this->existing_true);
-			}
-			cout << "default_sum_misguess: " << default_sum_misguess << endl;
-			double predicted_sum_misguess = 0.0;
-			for (int h_index = num_train_samples; h_index < (int)this->existing_predicted.size(); h_index++) {
-				predicted_sum_misguess += (this->existing_target_vals[h_index][0] - this->existing_predicted[h_index].back())
-					* (this->existing_target_vals[h_index][0] - this->existing_predicted[h_index].back());
-			}
-			cout << "predicted_sum_misguess: " << predicted_sum_misguess << endl;
+		// 	double default_sum_misguess = 0.0;
+		// 	for (int h_index = num_train_samples; h_index < (int)this->existing_predicted.size(); h_index++) {
+		// 		default_sum_misguess += (this->existing_target_vals[h_index][0] - this->existing_true)
+		// 			* (this->existing_target_vals[h_index][0] - this->existing_true);
+		// 	}
+		// 	cout << "default_sum_misguess: " << default_sum_misguess << endl;
+		// 	double predicted_sum_misguess = 0.0;
+		// 	for (int h_index = num_train_samples; h_index < (int)this->existing_predicted.size(); h_index++) {
+		// 		predicted_sum_misguess += (this->existing_target_vals[h_index][0] - this->existing_predicted[h_index].back())
+		// 			* (this->existing_target_vals[h_index][0] - this->existing_predicted[h_index].back());
+		// 	}
+		// 	cout << "predicted_sum_misguess: " << predicted_sum_misguess << endl;
 
-			Network* existing_network = new Network(this->existing_obs_histories[0].size());
-			uniform_int_distribution<int> existing_distribution(0, num_train_samples);
-			for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
-				int index = existing_distribution(generator);
+		// 	Network* existing_network = new Network(this->existing_obs_histories[0].size());
+		// 	uniform_int_distribution<int> existing_distribution(0, num_train_samples);
+		// 	for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
+		// 		int index = existing_distribution(generator);
 
-				existing_network->activate(this->existing_obs_histories[index]);
+		// 		existing_network->activate(this->existing_obs_histories[index]);
 
-				double error = this->existing_target_vals[index][0] - existing_network->output->acti_vals[0];
+		// 		double error = this->existing_target_vals[index][0] - existing_network->output->acti_vals[0];
 
-				existing_network->backprop(error);
-			}
-			double train_sum_misguess = 0.0;
-			for (int h_index = num_train_samples; h_index < (int)this->existing_target_vals.size(); h_index++) {
-				existing_network->activate(this->existing_obs_histories[h_index]);
-				train_sum_misguess += (this->existing_target_vals[h_index][0] - existing_network->output->acti_vals[0])
-					* (this->existing_target_vals[h_index][0] - existing_network->output->acti_vals[0]);
-			}
-			cout << "train_sum_misguess: " << train_sum_misguess << endl;
-			delete existing_network;
-			cout << endl;
-		}
+		// 		existing_network->backprop(error);
+		// 	}
+		// 	double train_sum_misguess = 0.0;
+		// 	for (int h_index = num_train_samples; h_index < (int)this->existing_target_vals.size(); h_index++) {
+		// 		existing_network->activate(this->existing_obs_histories[h_index]);
+		// 		train_sum_misguess += (this->existing_target_vals[h_index][0] - existing_network->output->acti_vals[0])
+		// 			* (this->existing_target_vals[h_index][0] - existing_network->output->acti_vals[0]);
+		// 	}
+		// 	cout << "train_sum_misguess: " << train_sum_misguess << endl;
+		// 	delete existing_network;
+		// 	cout << endl;
+		// }
 
 		this->average_instances_per_run = (double)this->sum_num_instances / (double)this->hit_count;
 

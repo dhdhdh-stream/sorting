@@ -336,6 +336,8 @@ void clean_scope(Scope* scope,
 		}
 	}
 
+	// #if defined(MDEBUG) && MDEBUG
+	// #else
 	/**
 	 * - remove useless BranchNodes
 	 */
@@ -394,6 +396,10 @@ void clean_scope(Scope* scope,
 					scope->nodes.erase(branch_node->id);
 					delete branch_node;
 
+					#if defined(MDEBUG) && MDEBUG
+					cout << "removed useless BranchNode" << endl;
+					#endif /* MDEBUG */
+
 					removed_node = true;
 					break;
 				}
@@ -404,6 +410,7 @@ void clean_scope(Scope* scope,
 			break;
 		}
 	}
+	// #endif /* MDEBUG */
 
 	/**
 	 * - remove duplicate ObsNodes

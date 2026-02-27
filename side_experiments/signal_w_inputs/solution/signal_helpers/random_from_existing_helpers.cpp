@@ -116,4 +116,5 @@ void random_from_existing_iter(SolutionWrapper* wrapper) {
 	wrapper->node_context.clear();
 
 	delete problem;
+	delete problem_type;
 }

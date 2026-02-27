@@ -138,36 +138,39 @@ void Experiment::train_new_backprop(
 			vector<double> curr_target_vals;
 			vector<bool> curr_target_vals_is_on;
 
-			vector<int> trimmed_explore_index = history->explore_indexes[i_index];
-			{
-				ScopeHistory* scope_history = history->stack_traces[i_index][0];
-				Scope* scope = scope_history->scope;
-				double existing_val = scope->pre_signal->activate(
-					scope_history,
-					trimmed_explore_index);
-				double diff = target_val - existing_val;
-				curr_target_vals.push_back(diff);
-				curr_target_vals_is_on.push_back(true);
-			}
-			for (int l_index = 0; l_index < (int)history->stack_traces[i_index].size(); l_index++) {
-				ScopeHistory* scope_history = history->stack_traces[i_index][l_index];
-				Scope* scope = scope_history->scope;
-				if (scope->post_signal->nodes.size() > 0) {
-					double existing_val = scope->pre_signal->activate(
-						scope_history,
-						trimmed_explore_index);
-					double new_signal = scope->post_signal->activate(
-						scope_history,
-						trimmed_explore_index);
-					curr_target_vals.push_back(new_signal - existing_val);
-					curr_target_vals_is_on.push_back(true);
-				} else {
-					curr_target_vals.push_back(0.0);
-					curr_target_vals_is_on.push_back(false);
-				}
+			// vector<int> trimmed_explore_index = history->explore_indexes[i_index];
+			// {
+			// 	ScopeHistory* scope_history = history->stack_traces[i_index][0];
+			// 	Scope* scope = scope_history->scope;
+			// 	double existing_val = scope->pre_signal->activate(
+			// 		scope_history,
+			// 		trimmed_explore_index);
+			// 	double diff = target_val - existing_val;
+			// 	curr_target_vals.push_back(diff);
+			// 	curr_target_vals_is_on.push_back(true);
+			// }
+			// for (int l_index = 0; l_index < (int)history->stack_traces[i_index].size(); l_index++) {
+			// 	ScopeHistory* scope_history = history->stack_traces[i_index][l_index];
+			// 	Scope* scope = scope_history->scope;
+			// 	if (scope->post_signal->nodes.size() > 0) {
+			// 		double existing_val = scope->pre_signal->activate(
+			// 			scope_history,
+			// 			trimmed_explore_index);
+			// 		double new_signal = scope->post_signal->activate(
+			// 			scope_history,
+			// 			trimmed_explore_index);
+			// 		curr_target_vals.push_back(new_signal - existing_val);
+			// 		curr_target_vals_is_on.push_back(true);
+			// 	} else {
+			// 		curr_target_vals.push_back(0.0);
+			// 		curr_target_vals_is_on.push_back(false);
+			// 	}
 
-				trimmed_explore_index.erase(trimmed_explore_index.begin());
-			}
+			// 	trimmed_explore_index.erase(trimmed_explore_index.begin());
+			// }
+
+			curr_target_vals.push_back(target_val - this->existing_true);
+			curr_target_vals_is_on.push_back(true);
 
 			this->new_target_vals.push_back(curr_target_vals);
 			this->new_target_vals_is_on.push_back(curr_target_vals_is_on);

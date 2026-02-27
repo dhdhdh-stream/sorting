@@ -92,6 +92,12 @@ void SolutionWrapper::experiment_end(double result) {
 	if (this->curr_experiment == NULL) {
 		create_experiment(this->scope_histories[0],
 						  this);
+
+		delete this->scope_histories[0];
+
+		this->scope_histories.clear();
+		this->node_context.clear();
+		this->experiment_context.clear();
 	} else {
 		this->experiment_history->experiment->backprop(
 		result,
@@ -99,6 +105,12 @@ void SolutionWrapper::experiment_end(double result) {
 
 		delete this->experiment_history;
 		this->experiment_history = NULL;
+
+		delete this->scope_histories[0];
+
+		this->scope_histories.clear();
+		this->node_context.clear();
+		this->experiment_context.clear();
 
 		switch (this->curr_experiment->type) {
 		case EXPERIMENT_TYPE_EXPERIMENT:
@@ -133,7 +145,7 @@ void SolutionWrapper::experiment_end(double result) {
 				#if defined(MDEBUG) && MDEBUG
 				for (int iter_index = 0; iter_index < 10; iter_index++) {
 				#else
-				for (int iter_index = 0; iter_index < 8000; iter_index++) {
+				for (int iter_index = 0; iter_index < 10000; iter_index++) {
 				#endif /* MDEBUG */
 					random_from_existing_iter(this);
 				}
@@ -143,10 +155,4 @@ void SolutionWrapper::experiment_end(double result) {
 			break;
 		}
 	}
-
-	delete this->scope_histories[0];
-
-	this->scope_histories.clear();
-	this->node_context.clear();
-	this->experiment_context.clear();
 }
