@@ -18,7 +18,8 @@ class SolutionWrapper;
 void create_experiment(ScopeHistory* scope_history,
 					   SolutionWrapper* wrapper);
 
-Scope* create_new_scope(Scope* scope_context);
+Scope* create_new_scope(Scope* scope_context,
+						SolutionWrapper* wrapper);
 void recursive_add_child(Scope* curr_parent,
 						 SolutionWrapper* wrapper,
 						 Scope* new_scope);

@@ -14,9 +14,8 @@
 
 using namespace std;
 
-const int RUN_TIMESTEPS = 100;
-
-const int SNAPSHOT_ITERS = 10;
+const int NON_OUTER_ITERS = 30;
+const int OUTER_ITERS = 30;
 
 void SolutionWrapper::experiment_init() {
 	this->num_actions = 1;
@@ -124,31 +123,23 @@ void SolutionWrapper::experiment_end(double result) {
 				this->solution->clean_scopes();
 
 				this->solution->timestamp++;
-				// if (this->solution->timestamp >= RUN_TIMESTEPS) {
-				// 	this->solution->timestamp = -1;
-				// }
+				switch (this->solution->state) {
+				case SOLUTION_STATE_NON_OUTER:
+					if (this->solution->timestamp >= NON_OUTER_ITERS) {
+						this->solution->timestamp = -1;
 
-				// if (this->solution->timestamp % SNAPSHOT_ITERS == 0) {
-				// 	double curr_score = 0.0;
-				// 	for (int i_index = 0; i_index < 3; i_index++) {
-				// 		curr_score += this->solution->improvement_history[this->solution->improvement_history.size()-1 - i_index];
-				// 	}
+						this->solution->wrapup();
+					}
+					break;
+				case SOLUTION_STATE_OUTER:
+					if (this->solution->timestamp >= OUTER_ITERS) {
+						this->solution->state = SOLUTION_STATE_NON_OUTER;
+						this->solution->timestamp = 0;
 
-				// 	double existing_score = 0.0;
-				// 	if (this->solution_snapshot->improvement_history.size() > 0) {
-				// 		for (int i_index = 0; i_index < 3; i_index++) {
-				// 			existing_score += this->solution_snapshot->improvement_history[this->solution_snapshot->improvement_history.size()-1 - i_index];
-				// 		}
-				// 	}
-
-				// 	if (curr_score > existing_score) {
-				// 		delete this->solution_snapshot;
-				// 		this->solution_snapshot = new Solution(this->solution);
-				// 	} else {
-				// 		delete this->solution;
-				// 		this->solution = new Solution(this->solution_snapshot);
-				// 	}
-				// }
+						this->solution->merge_outer();
+					}
+					break;
+				}
 			}
 			break;
 		}

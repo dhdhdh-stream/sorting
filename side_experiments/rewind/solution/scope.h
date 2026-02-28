@@ -16,6 +16,7 @@ class SolutionWrapper;
 class ScopeHistory;
 class Scope {
 public:
+	bool is_outer;
 	int id;
 
 	int node_counter;

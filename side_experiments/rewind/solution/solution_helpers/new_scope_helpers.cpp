@@ -108,15 +108,26 @@ void children_helper(AbstractNode* curr_node,
 	}
 }
 
-Scope* create_new_scope(Scope* scope_context) {
-	if (scope_context->nodes.size() < NEW_SCOPE_MIN_NODES) {
+Scope* create_new_scope(Scope* scope_context,
+						SolutionWrapper* wrapper) {
+	Scope* parent_scope;
+	uniform_int_distribution<int> is_outer_distribution(0, 1);
+	if (wrapper->solution->outer_scopes.size() > 0
+			&& is_outer_distribution(generator) == 0) {
+		uniform_int_distribution<int> outer_distribution(0, wrapper->solution->outer_scopes.size()-1);
+		parent_scope = wrapper->solution->outer_scopes[outer_distribution(generator)];
+	} else {
+		parent_scope = scope_context;
+	}
+
+	if (parent_scope->nodes.size() < NEW_SCOPE_MIN_NODES) {
 		return NULL;
 	}
 
-	uniform_int_distribution<int> node_distribution(1, scope_context->nodes.size()-1);
+	uniform_int_distribution<int> node_distribution(1, parent_scope->nodes.size()-1);
 	for (int t_index = 0; t_index < CREATE_NEW_SCOPE_NUM_TRIES; t_index++) {
-		AbstractNode* potential_start_node = next(scope_context->nodes.begin(), node_distribution(generator))->second;
-		AbstractNode* potential_end_node = next(scope_context->nodes.begin(), node_distribution(generator))->second;
+		AbstractNode* potential_start_node = next(parent_scope->nodes.begin(), node_distribution(generator))->second;
+		AbstractNode* potential_end_node = next(parent_scope->nodes.begin(), node_distribution(generator))->second;
 
 		set<AbstractNode*> children;
 		children_helper(potential_start_node,
@@ -147,6 +158,7 @@ Scope* create_new_scope(Scope* scope_context) {
 		}
 		if (num_meaningful_nodes >= NEW_SCOPE_MIN_NUM_NODES) {
 			Scope* new_scope = new Scope();
+			new_scope->is_outer = false;
 			new_scope->id = -1;
 
 			new_scope->node_counter = 0;
@@ -344,7 +356,7 @@ Scope* create_new_scope(Scope* scope_context) {
 				}
 			}
 
-			new_scope->child_scopes = scope_context->child_scopes;
+			new_scope->child_scopes = parent_scope->child_scopes;
 
 			clean_scope(new_scope);
 

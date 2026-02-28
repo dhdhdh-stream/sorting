@@ -10,8 +10,6 @@ SolutionWrapper::SolutionWrapper(ProblemType* problem_type) {
 	this->solution = new Solution();
 	this->solution->init(problem_type);
 
-	this->solution_snapshot = new Solution(this->solution);
-
 	this->curr_experiment = NULL;
 
 	this->experiment_history = NULL;
@@ -29,9 +27,6 @@ SolutionWrapper::SolutionWrapper(std::string path,
 	this->solution = new Solution();
 	this->solution->load(input_file);
 
-	this->solution_snapshot = new Solution();
-	this->solution_snapshot->load(input_file);
-
 	this->curr_experiment = NULL;
 
 	this->experiment_history = NULL;
@@ -45,8 +40,6 @@ SolutionWrapper::SolutionWrapper(std::string path,
 
 SolutionWrapper::~SolutionWrapper() {
 	delete this->solution;
-
-	delete this->solution_snapshot;
 }
 
 bool SolutionWrapper::is_done() {
@@ -58,8 +51,7 @@ void SolutionWrapper::clean_scopes() {
 }
 
 void SolutionWrapper::combine(string other_path,
-							  string other_name,
-							  int starting_size) {
+							  string other_name) {
 	ifstream input_file;
 	input_file.open(other_path + other_name);
 
@@ -68,22 +60,20 @@ void SolutionWrapper::combine(string other_path,
 
 	input_file.close();
 
-	for (int scope_index = 1; scope_index < (int)other->scopes.size(); scope_index++) {
-		this->solution->scopes.push_back(other->scopes[scope_index]);
-
-		for (int i_index = 0; i_index < starting_size; i_index++) {
-			this->solution->scopes[i_index]->child_scopes.push_back(other->scopes[scope_index]);
-		}
+	for (int scope_index = 0; scope_index < (int)other->scopes.size(); scope_index++) {
+		this->solution->outer_scopes.push_back(other->scopes[scope_index]);
 	}
 
-	other->scopes.erase(other->scopes.begin() + 1, other->scopes.end());
+	other->scopes.clear();
 
 	delete other;
 
-	for (int scope_index = 1; scope_index < (int)this->solution->scopes.size(); scope_index++) {
-		this->solution->scopes[scope_index]->id = scope_index;
+	for (int scope_index = 0; scope_index < (int)this->solution->outer_scopes.size(); scope_index++) {
+		this->solution->outer_scopes[scope_index]->is_outer = true;
+		this->solution->outer_scopes[scope_index]->id = scope_index;
 	}
 
+	this->solution->state = SOLUTION_STATE_OUTER;
 	this->solution->timestamp = 0;
 }
 
@@ -93,8 +83,6 @@ void SolutionWrapper::save(string path,
 	output_file.open(path + "temp_" + name);
 
 	this->solution->save(output_file);
-
-	this->solution_snapshot->save(output_file);
 
 	output_file.close();
 

@@ -218,9 +218,10 @@ void Experiment::experiment_add_helper(SolutionWrapper* wrapper) {
 
 	if (this->best_new_scope != NULL) {
 		wrapper->solution->scopes.push_back(this->best_new_scope);
+		this->best_new_scope->is_outer = false;
 		this->best_new_scope->id = (int)wrapper->solution->scopes.size()-1;
 
-		recursive_add_child(scope_context,
+		recursive_add_child(this->scope_context,
 							wrapper,
 							this->best_new_scope);
 
@@ -230,15 +231,26 @@ void Experiment::experiment_add_helper(SolutionWrapper* wrapper) {
 	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 			ActionNode* new_action_node = (ActionNode*)this->best_new_nodes[s_index];
-			new_action_node->id = scope_context->node_counter + s_index;
-			scope_context->nodes[new_action_node->id] = new_action_node;
+			new_action_node->id = this->scope_context->node_counter + s_index;
+			this->scope_context->nodes[new_action_node->id] = new_action_node;
 
 			new_action_node->action = this->best_actions[s_index];
 		} else {
-			scope_context->nodes[this->best_new_nodes[s_index]->id] = this->best_new_nodes[s_index];
+			this->scope_context->nodes[this->best_new_nodes[s_index]->id] = this->best_new_nodes[s_index];
+
+			bool is_child = false;
+			for (int c_index = 0; c_index < (int)this->scope_context->child_scopes.size(); c_index++) {
+				if (this->scope_context->child_scopes[c_index] == this->best_scopes[s_index]) {
+					is_child = true;
+					break;
+				}
+			}
+			if (!is_child) {
+				this->scope_context->child_scopes.push_back(this->best_scopes[s_index]);
+			}
 		}
 	}
-	scope_context->node_counter += (int)this->best_step_types.size();
+	this->scope_context->node_counter += (int)this->best_step_types.size();
 
 	ObsNode* new_ending_node = NULL;
 

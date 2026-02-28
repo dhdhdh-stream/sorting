@@ -116,6 +116,7 @@ void Scope::save(ofstream& output_file) {
 
 	output_file << this->child_scopes.size() << endl;
 	for (int c_index = 0; c_index < (int)this->child_scopes.size(); c_index++) {
+		output_file << this->child_scopes[c_index]->is_outer << endl;
 		output_file << this->child_scopes[c_index]->id << endl;
 	}
 }
@@ -193,9 +194,19 @@ void Scope::load(ifstream& input_file,
 	getline(input_file, num_child_scopes_line);
 	int num_child_scopes = stoi(num_child_scopes_line);
 	for (int c_index = 0; c_index < num_child_scopes; c_index++) {
+		string is_outer_line;
+		getline(input_file, is_outer_line);
+		bool is_outer = stoi(is_outer_line);
+
 		string scope_id_line;
 		getline(input_file, scope_id_line);
-		this->child_scopes.push_back(parent_solution->scopes[stoi(scope_id_line)]);
+		int scope_id = stoi(scope_id_line);
+
+		if (is_outer) {
+			this->child_scopes.push_back(parent_solution->outer_scopes[scope_id]);
+		} else {
+			this->child_scopes.push_back(parent_solution->scopes[scope_id]);
+		}
 	}
 }
 
@@ -270,8 +281,13 @@ void Scope::copy_from(Scope* original,
 	}
 
 	for (int c_index = 0; c_index < (int)original->child_scopes.size(); c_index++) {
-		this->child_scopes.push_back(parent_solution->scopes[
-			original->child_scopes[c_index]->id]);
+		if (original->child_scopes[c_index]->is_outer) {
+			this->child_scopes.push_back(parent_solution->outer_scopes[
+				original->child_scopes[c_index]->id]);
+		} else {
+			this->child_scopes.push_back(parent_solution->scopes[
+				original->child_scopes[c_index]->id]);
+		}
 	}
 }
 

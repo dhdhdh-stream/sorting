@@ -120,10 +120,7 @@ void Experiment::measure_backprop(double target_val,
 		 *   - ...but as solution becomes fractured, becomes dominated by noise
 		 */
 		double new_true = this->sum_true / this->hit_count;
-		// double average_hits_per_run = (double)this->hit_count / (double)this->total_count;
-		// this->improvement = average_hits_per_run * (new_true - this->existing_true);
 		this->improvement = new_true - this->existing_true;
-		// this->improvement = average_hits_per_run * new_true;
 
 		bool is_success = false;
 		if (this->improvement >= 0.0) {
@@ -181,7 +178,6 @@ void Experiment::measure_backprop(double target_val,
 				cout << "this->exit_next_node->id: " << this->exit_next_node->id << endl;
 			}
 
-			// cout << "average_hits_per_run: " << average_hits_per_run << endl;
 			cout << "this->improvement: " << this->improvement << endl;
 
 			cout << endl;

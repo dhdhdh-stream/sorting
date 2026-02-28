@@ -29,6 +29,9 @@ class ProblemType;
 class Scope;
 class ScopeHistory;
 
+const int SOLUTION_STATE_NON_OUTER = 0;
+const int SOLUTION_STATE_OUTER = 1;
+
 class Solution {
 public:
 	/**
@@ -37,7 +40,11 @@ public:
 	int timestamp;
 	double curr_score;
 
+	int state;
+
 	std::vector<Scope*> scopes;
+
+	std::vector<Scope*> outer_scopes;
 
 	std::list<double> last_experiment_scores;
 	/**
@@ -68,6 +75,9 @@ public:
 	#endif /* MDEBUG */
 
 	void clean_scopes();
+
+	void merge_outer();
+	void wrapup();
 
 	void save(std::ofstream& output_file);
 

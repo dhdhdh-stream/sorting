@@ -32,7 +32,8 @@ void Experiment::explore_check_activate(SolutionWrapper* wrapper) {
 			&& this->num_instances_until_target <= 0) {
 		uniform_int_distribution<int> new_scope_distribution(0, 3);
 		if (new_scope_distribution(generator) == 0) {
-			this->curr_new_scope = create_new_scope(this->node_context->parent);
+			this->curr_new_scope = create_new_scope(this->node_context->parent,
+													wrapper);
 		}
 		if (this->curr_new_scope != NULL) {
 			this->curr_step_types.push_back(STEP_TYPE_SCOPE);
@@ -119,33 +120,43 @@ void Experiment::explore_check_activate(SolutionWrapper* wrapper) {
 				}
 			}
 			uniform_int_distribution<int> child_index_distribution(0, possible_child_indexes.size()-1);
+			uniform_int_distribution<int> is_outer_distribution(0, 2);
+			uniform_int_distribution<int> outer_distribution(0, wrapper->solution->outer_scopes.size()-1);
 			for (int s_index = 0; s_index < new_num_steps; s_index++) {
-				bool is_scope = false;
-				if (possible_child_indexes.size() > 0) {
-					if (possible_child_indexes.size() <= RAW_ACTION_WEIGHT) {
-						uniform_int_distribution<int> scope_distribution(0, possible_child_indexes.size() + RAW_ACTION_WEIGHT - 1);
-						if (scope_distribution(generator) < (int)possible_child_indexes.size()) {
-							is_scope = true;
-						}
-					} else {
-						uniform_int_distribution<int> scope_distribution(0, 1);
-						if (scope_distribution(generator) == 0) {
-							is_scope = true;
-						}
-					}
-				}
-				if (is_scope) {
+				if (wrapper->solution->outer_scopes.size() > 0
+						&& is_outer_distribution(generator) == 0) {
 					this->curr_step_types.push_back(STEP_TYPE_SCOPE);
 					this->curr_actions.push_back(-1);
 
-					int child_index = possible_child_indexes[child_index_distribution(generator)];
-					this->curr_scopes.push_back(this->node_context->parent->child_scopes[child_index]);
+					this->curr_scopes.push_back(wrapper->solution->outer_scopes[outer_distribution(generator)]);
 				} else {
-					this->curr_step_types.push_back(STEP_TYPE_ACTION);
+					bool is_scope = false;
+					if (possible_child_indexes.size() > 0) {
+						if (possible_child_indexes.size() <= RAW_ACTION_WEIGHT) {
+							uniform_int_distribution<int> scope_distribution(0, possible_child_indexes.size() + RAW_ACTION_WEIGHT - 1);
+							if (scope_distribution(generator) < (int)possible_child_indexes.size()) {
+								is_scope = true;
+							}
+						} else {
+							uniform_int_distribution<int> scope_distribution(0, 1);
+							if (scope_distribution(generator) == 0) {
+								is_scope = true;
+							}
+						}
+					}
+					if (is_scope) {
+						this->curr_step_types.push_back(STEP_TYPE_SCOPE);
+						this->curr_actions.push_back(-1);
 
-					this->curr_actions.push_back(-1);
+						int child_index = possible_child_indexes[child_index_distribution(generator)];
+						this->curr_scopes.push_back(this->node_context->parent->child_scopes[child_index]);
+					} else {
+						this->curr_step_types.push_back(STEP_TYPE_ACTION);
 
-					this->curr_scopes.push_back(NULL);
+						this->curr_actions.push_back(-1);
+
+						this->curr_scopes.push_back(NULL);
+					}
 				}
 			}
 		}

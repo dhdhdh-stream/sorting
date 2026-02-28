@@ -24,10 +24,20 @@ Solution::Solution(Solution* original) {
 	this->timestamp = original->timestamp;
 	this->curr_score = original->curr_score;
 
+	this->state = original->state;
+
 	for (int s_index = 0; s_index < (int)original->scopes.size(); s_index++) {
 		Scope* scope = new Scope();
+		scope->is_outer = false;
 		scope->id = s_index;
 		this->scopes.push_back(scope);
+	}
+
+	for (int s_index = 0; s_index < (int)original->outer_scopes.size(); s_index++) {
+		Scope* scope = new Scope();
+		scope->is_outer = true;
+		scope->id = s_index;
+		this->outer_scopes.push_back(scope);
 	}
 
 	for (int s_index = 0; s_index < (int)original->scopes.size(); s_index++) {
@@ -35,8 +45,17 @@ Solution::Solution(Solution* original) {
 										 this);
 	}
 
+	for (int s_index = 0; s_index < (int)original->outer_scopes.size(); s_index++) {
+		this->outer_scopes[s_index]->copy_from(original->outer_scopes[s_index],
+											   this);
+	}
+
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
 		this->scopes[s_index]->link(this);
+	}
+
+	for (int s_index = 0; s_index < (int)this->outer_scopes.size(); s_index++) {
+		this->outer_scopes[s_index]->link(this);
 	}
 
 	this->last_experiment_scores = original->last_experiment_scores;
@@ -49,6 +68,10 @@ Solution::Solution(Solution* original) {
 Solution::~Solution() {
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
 		delete this->scopes[s_index];
+	}
+
+	for (int s_index = 0; s_index < (int)this->outer_scopes.size(); s_index++) {
+		delete this->outer_scopes[s_index];
 	}
 
 	#if defined(MDEBUG) && MDEBUG
@@ -69,6 +92,8 @@ void Solution::init(ProblemType* problem_type) {
 	this->timestamp = 0;
 	this->curr_score = sum_score / MEASURE_ITERS;
 
+	this->state = SOLUTION_STATE_NON_OUTER;
+
 	/**
 	 * - even though scopes[0] will not be reused, still good to start with:
 	 *   - if artificially add empty scopes, may be difficult to extend from
@@ -77,6 +102,7 @@ void Solution::init(ProblemType* problem_type) {
 	 */
 
 	Scope* new_scope = new Scope();
+	new_scope->is_outer = false;
 	new_scope->id = this->scopes.size();
 	new_scope->node_counter = 0;
 	this->scopes.push_back(new_scope);
@@ -111,14 +137,30 @@ void Solution::load(ifstream& input_file) {
 	getline(input_file, curr_score_line);
 	this->curr_score = stod(curr_score_line);
 
+	string state_line;
+	getline(input_file, state_line);
+	this->state = stoi(state_line);
+
 	string num_scopes_line;
 	getline(input_file, num_scopes_line);
 	int num_scopes = stoi(num_scopes_line);
 
 	for (int s_index = 0; s_index < num_scopes; s_index++) {
 		Scope* scope = new Scope();
+		scope->is_outer = false;
 		scope->id = s_index;
 		this->scopes.push_back(scope);
+	}
+
+	string num_outer_scopes_line;
+	getline(input_file, num_outer_scopes_line);
+	int num_outer_scopes = stoi(num_outer_scopes_line);
+
+	for (int s_index = 0; s_index < num_outer_scopes; s_index++) {
+		Scope* scope = new Scope();
+		scope->is_outer = true;
+		scope->id = s_index;
+		this->outer_scopes.push_back(scope);
 	}
 
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
@@ -126,8 +168,17 @@ void Solution::load(ifstream& input_file) {
 									this);
 	}
 
+	for (int s_index = 0; s_index < (int)this->outer_scopes.size(); s_index++) {
+		this->outer_scopes[s_index]->load(input_file,
+										  this);
+	}
+
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
 		this->scopes[s_index]->link(this);
+	}
+
+	for (int s_index = 0; s_index < (int)this->outer_scopes.size(); s_index++) {
+		this->outer_scopes[s_index]->link(this);
 	}
 
 	string num_experiment_scores_line;
@@ -227,14 +278,39 @@ void Solution::clean_scopes() {
 	}
 }
 
+void Solution::merge_outer() {
+	for (int s_index = 0; s_index < (int)this->outer_scopes.size(); s_index++) {
+		this->scopes.push_back(this->outer_scopes[s_index]);
+	}
+	this->outer_scopes.clear();
+
+	for (int s_index = 1; s_index < (int)this->scopes.size(); s_index++) {
+		this->scopes[s_index]->is_outer = false;
+		this->scopes[s_index]->id = s_index;
+	}
+
+	clean_scopes();
+}
+
+void Solution::wrapup() {
+	this->last_clean_scores.clear();
+}
+
 void Solution::save(ofstream& output_file) {
 	output_file << this->timestamp << endl;
 	output_file << this->curr_score << endl;
 
+	output_file << this->state << endl;
+
 	output_file << this->scopes.size() << endl;
+	output_file << this->outer_scopes.size() << endl;
 
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
 		this->scopes[s_index]->save(output_file);
+	}
+
+	for (int s_index = 0; s_index < (int)this->outer_scopes.size(); s_index++) {
+		this->outer_scopes[s_index]->save(output_file);
 	}
 
 	output_file << this->last_experiment_scores.size() << endl;
