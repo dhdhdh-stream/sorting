@@ -30,10 +30,10 @@ void Experiment::clean_backprop(double target_val,
 
 	if (this->hit_count >= MEASURE_ITERS) {
 		double new_true = this->sum_true / this->hit_count;
-		this->improvement = new_true - this->existing_true;
+		this->local_improvement = new_true - this->existing_true;
 
 		bool is_success = false;
-		if (this->improvement >= 0.0) {
+		if (this->local_improvement >= 0.0) {
 			if (wrapper->solution->last_clean_scores.size() >= MIN_NUM_LAST_CLEAN_TRACK) {
 				int num_better_than = 0;
 				// // temp
@@ -42,7 +42,7 @@ void Experiment::clean_backprop(double target_val,
 						it != wrapper->solution->last_clean_scores.end(); it++) {
 					// // temp
 					// cout << " " << *it;
-					if (improvement >= *it) {
+					if (this->local_improvement >= *it) {
 						num_better_than++;
 					}
 				}
@@ -58,9 +58,9 @@ void Experiment::clean_backprop(double target_val,
 				if (wrapper->solution->last_clean_scores.size() >= NUM_LAST_CLEAN_TRACK) {
 					wrapper->solution->last_clean_scores.pop_front();
 				}
-				wrapper->solution->last_clean_scores.push_back(improvement);
+				wrapper->solution->last_clean_scores.push_back(this->local_improvement);
 			} else {
-				wrapper->solution->last_clean_scores.push_back(improvement);
+				wrapper->solution->last_clean_scores.push_back(this->local_improvement);
 			}
 		}
 
@@ -82,7 +82,7 @@ void Experiment::clean_backprop(double target_val,
 
 			cout << "clean_success" << endl;
 
-			cout << "this->improvement: " << this->improvement << endl;
+			cout << "this->local_improvement: " << this->local_improvement << endl;
 
 			cout << endl;
 

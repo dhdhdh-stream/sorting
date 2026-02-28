@@ -66,7 +66,8 @@ public:
 	double total_sum_scores;
 	int total_count;
 
-	double improvement;
+	double global_improvement;
+	double local_improvement;
 
 	#if defined(MDEBUG) && MDEBUG
 	std::vector<Problem*> verify_problems;

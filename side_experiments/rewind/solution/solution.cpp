@@ -58,7 +58,8 @@ Solution::Solution(Solution* original) {
 		this->outer_scopes[s_index]->link(this);
 	}
 
-	this->last_experiment_scores = original->last_experiment_scores;
+	this->last_global_scores = original->last_global_scores;
+	this->last_local_scores = original->last_local_scores;
 	this->last_clean_scores = original->last_clean_scores;
 
 	this->improvement_history = original->improvement_history;
@@ -181,13 +182,22 @@ void Solution::load(ifstream& input_file) {
 		this->outer_scopes[s_index]->link(this);
 	}
 
-	string num_experiment_scores_line;
-	getline(input_file, num_experiment_scores_line);
-	int num_experiment_scores = stoi(num_experiment_scores_line);
-	for (int e_index = 0; e_index < num_experiment_scores; e_index++) {
+	string num_global_scores_line;
+	getline(input_file, num_global_scores_line);
+	int num_global_scores = stoi(num_global_scores_line);
+	for (int e_index = 0; e_index < num_global_scores; e_index++) {
 		string score_line;
 		getline(input_file, score_line);
-		this->last_experiment_scores.push_back(stod(score_line));
+		this->last_global_scores.push_back(stod(score_line));
+	}
+
+	string num_local_scores_line;
+	getline(input_file, num_local_scores_line);
+	int num_local_scores = stoi(num_local_scores_line);
+	for (int e_index = 0; e_index < num_local_scores; e_index++) {
+		string score_line;
+		getline(input_file, score_line);
+		this->last_local_scores.push_back(stod(score_line));
 	}
 
 	string num_clean_scores_line;
@@ -293,6 +303,8 @@ void Solution::merge_outer() {
 }
 
 void Solution::wrapup() {
+	this->last_global_scores.clear();
+	this->last_local_scores.clear();
 	this->last_clean_scores.clear();
 }
 
@@ -313,9 +325,15 @@ void Solution::save(ofstream& output_file) {
 		this->outer_scopes[s_index]->save(output_file);
 	}
 
-	output_file << this->last_experiment_scores.size() << endl;
-	for (list<double>::iterator it = this->last_experiment_scores.begin();
-			it != this->last_experiment_scores.end(); it++) {
+	output_file << this->last_global_scores.size() << endl;
+	for (list<double>::iterator it = this->last_global_scores.begin();
+			it != this->last_global_scores.end(); it++) {
+		output_file << *it << endl;
+	}
+
+	output_file << this->last_local_scores.size() << endl;
+	for (list<double>::iterator it = this->last_local_scores.begin();
+			it != this->last_local_scores.end(); it++) {
 		output_file << *it << endl;
 	}
 

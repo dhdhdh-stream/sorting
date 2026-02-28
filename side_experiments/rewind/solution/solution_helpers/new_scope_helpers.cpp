@@ -1,7 +1,3 @@
-/**
- * TODO: allow creating new scopes from external
- */
-
 #include "solution_helpers.h"
 
 #include <iostream>

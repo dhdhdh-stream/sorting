@@ -114,43 +114,75 @@ void Experiment::measure_backprop(double target_val,
 	}
 
 	if (this->hit_count >= MEASURE_ITERS) {
-		/**
-		 * - don't multiply by average_hits_per_run
-		 *   - does lead to better generalization/results early...
-		 *   - ...but as solution becomes fractured, becomes dominated by noise
-		 */
 		double new_true = this->sum_true / this->hit_count;
-		this->improvement = new_true - this->existing_true;
+		this->local_improvement = new_true - this->existing_true;
+		double average_hits_per_run = (double)this->hit_count / (double)this->total_count;
+		this->global_improvement = average_hits_per_run * this->local_improvement;
 
 		bool is_success = false;
-		if (this->improvement >= 0.0) {
-			if (wrapper->solution->last_experiment_scores.size() >= MIN_NUM_LAST_EXPERIMENT_TRACK) {
+		if (this->local_improvement >= 0.0) {
+			bool is_global_success = false;
+			if (wrapper->solution->last_global_scores.size() >= MIN_NUM_LAST_GLOBAL_TRACK) {
 				int num_better_than = 0;
 				// // temp
-				// cout << "last_experiment_scores:";
-				for (list<double>::iterator it = wrapper->solution->last_experiment_scores.begin();
-						it != wrapper->solution->last_experiment_scores.end(); it++) {
+				// cout << "last_global_scores:";
+				for (list<double>::iterator it = wrapper->solution->last_global_scores.begin();
+						it != wrapper->solution->last_global_scores.end(); it++) {
 					// // temp
 					// cout << " " << *it;
-					if (improvement >= *it) {
+					if (this->global_improvement >= *it) {
 						num_better_than++;
 					}
 				}
 				// // temp
 				// cout << endl;
 
-				int target_better_than = LAST_EXPERIMENT_BETTER_THAN_RATIO * (double)wrapper->solution->last_experiment_scores.size();
+				int target_better_than = LAST_GLOBAL_BETTER_THAN_RATIO * (double)wrapper->solution->last_global_scores.size();
 
 				if (num_better_than >= target_better_than) {
-					is_success = true;
+					is_global_success = true;
 				}
 
-				if (wrapper->solution->last_experiment_scores.size() >= NUM_LAST_EXPERIMENT_TRACK) {
-					wrapper->solution->last_experiment_scores.pop_front();
+				if (wrapper->solution->last_global_scores.size() >= NUM_LAST_GLOBAL_TRACK) {
+					wrapper->solution->last_global_scores.pop_front();
 				}
-				wrapper->solution->last_experiment_scores.push_back(improvement);
+				wrapper->solution->last_global_scores.push_back(this->global_improvement);
 			} else {
-				wrapper->solution->last_experiment_scores.push_back(improvement);
+				wrapper->solution->last_global_scores.push_back(this->global_improvement);
+			}
+
+			bool is_local_success = false;
+			if (wrapper->solution->last_local_scores.size() >= MIN_NUM_LAST_LOCAL_TRACK) {
+				int num_better_than = 0;
+				// // temp
+				// cout << "last_local_scores:";
+				for (list<double>::iterator it = wrapper->solution->last_local_scores.begin();
+						it != wrapper->solution->last_local_scores.end(); it++) {
+					// // temp
+					// cout << " " << *it;
+					if (this->local_improvement >= *it) {
+						num_better_than++;
+					}
+				}
+				// // temp
+				// cout << endl;
+
+				int target_better_than = LAST_LOCAL_BETTER_THAN_RATIO * (double)wrapper->solution->last_local_scores.size();
+
+				if (num_better_than >= target_better_than) {
+					is_local_success = true;
+				}
+
+				if (wrapper->solution->last_local_scores.size() >= NUM_LAST_LOCAL_TRACK) {
+					wrapper->solution->last_local_scores.pop_front();
+				}
+				wrapper->solution->last_local_scores.push_back(this->local_improvement);
+			} else {
+				wrapper->solution->last_local_scores.push_back(this->local_improvement);
+			}
+
+			if (is_global_success && is_local_success) {
+				is_success = true;
 			}
 		}
 
@@ -178,7 +210,9 @@ void Experiment::measure_backprop(double target_val,
 				cout << "this->exit_next_node->id: " << this->exit_next_node->id << endl;
 			}
 
-			cout << "this->improvement: " << this->improvement << endl;
+			cout << "this->local_improvement: " << this->local_improvement << endl;
+			cout << "average_hits_per_run: " << average_hits_per_run << endl;
+			cout << "this->global_improvement: " << this->global_improvement << endl;
 
 			cout << endl;
 

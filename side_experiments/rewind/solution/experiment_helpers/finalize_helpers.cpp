@@ -43,7 +43,7 @@ void Experiment::clean_add_helper(SolutionWrapper* wrapper) {
 
 	ss << "clean_success" << "; ";
 
-	ss << "this->improvement: " << this->improvement << "; ";
+	ss << "this->local_improvement: " << this->local_improvement << "; ";
 
 	wrapper->solution->improvement_history.push_back(calc_new_score());
 	wrapper->solution->change_history.push_back(ss.str());
@@ -209,7 +209,8 @@ void Experiment::experiment_add_helper(SolutionWrapper* wrapper) {
 
 	ss << "this->is_binarize: " << this->is_binarize << "; ";
 
-	ss << "this->improvement: " << this->improvement << "; ";
+	ss << "this->local_improvement: " << this->local_improvement << "; ";
+	ss << "this->global_improvement: " << this->global_improvement << "; ";
 
 	wrapper->solution->improvement_history.push_back(calc_new_score());
 	wrapper->solution->change_history.push_back(ss.str());
@@ -246,7 +247,9 @@ void Experiment::experiment_add_helper(SolutionWrapper* wrapper) {
 				}
 			}
 			if (!is_child) {
-				this->scope_context->child_scopes.push_back(this->best_scopes[s_index]);
+				recursive_add_child(this->scope_context,
+									wrapper,
+									this->best_scopes[s_index]);
 			}
 		}
 	}
