@@ -1,3 +1,6 @@
+// - not good enough
+//   - explore/experiment paths too bad
+
 #include <chrono>
 #include <iostream>
 #include <map>

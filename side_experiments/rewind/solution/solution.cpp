@@ -303,9 +303,9 @@ void Solution::merge_outer() {
 }
 
 void Solution::wrapup() {
-	this->last_global_scores.clear();
-	this->last_local_scores.clear();
-	this->last_clean_scores.clear();
+	// this->last_global_scores.clear();
+	// this->last_local_scores.clear();
+	// this->last_clean_scores.clear();
 }
 
 void Solution::save(ofstream& output_file) {

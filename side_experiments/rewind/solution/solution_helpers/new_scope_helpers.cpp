@@ -104,9 +104,10 @@ void children_helper(AbstractNode* curr_node,
 	}
 }
 
-Scope* create_new_scope(Scope* scope_context,
-						SolutionWrapper* wrapper) {
-	Scope* parent_scope;
+void create_new_scope(Scope* scope_context,
+					  SolutionWrapper* wrapper,
+					  Scope*& new_scope,
+					  Scope*& parent_scope) {
 	uniform_int_distribution<int> is_outer_distribution(0, 1);
 	if (wrapper->solution->outer_scopes.size() > 0
 			&& is_outer_distribution(generator) == 0) {
@@ -117,7 +118,8 @@ Scope* create_new_scope(Scope* scope_context,
 	}
 
 	if (parent_scope->nodes.size() < NEW_SCOPE_MIN_NODES) {
-		return NULL;
+		new_scope = NULL;
+		return;
 	}
 
 	uniform_int_distribution<int> node_distribution(1, parent_scope->nodes.size()-1);
@@ -153,7 +155,7 @@ Scope* create_new_scope(Scope* scope_context,
 			}
 		}
 		if (num_meaningful_nodes >= NEW_SCOPE_MIN_NUM_NODES) {
-			Scope* new_scope = new Scope();
+			new_scope = new Scope();
 			new_scope->is_outer = false;
 			new_scope->id = -1;
 
@@ -358,11 +360,12 @@ Scope* create_new_scope(Scope* scope_context,
 
 			clean_scope(new_scope);
 
-			return new_scope;
+			return;
 		}
 	}
 
-	return NULL;
+	new_scope = NULL;
+	return;
 }
 
 void recursive_add_child(Scope* curr_parent,

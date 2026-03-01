@@ -21,7 +21,7 @@ using namespace std;
 #if defined(MDEBUG) && MDEBUG
 const int EXPERIMENT_EXPLORE_ITERS = 10;
 #else
-const int EXPERIMENT_EXPLORE_ITERS = 500;
+const int EXPERIMENT_EXPLORE_ITERS = 200;
 #endif /* MDEBUG */
 
 void Experiment::explore_check_activate(SolutionWrapper* wrapper) {
@@ -32,8 +32,10 @@ void Experiment::explore_check_activate(SolutionWrapper* wrapper) {
 			&& this->num_instances_until_target <= 0) {
 		uniform_int_distribution<int> new_scope_distribution(0, 3);
 		if (new_scope_distribution(generator) == 0) {
-			this->curr_new_scope = create_new_scope(this->node_context->parent,
-													wrapper);
+			create_new_scope(this->node_context->parent,
+							 wrapper,
+							 this->curr_new_scope,
+							 this->curr_parent_scope);
 		}
 		if (this->curr_new_scope != NULL) {
 			this->curr_step_types.push_back(STEP_TYPE_SCOPE);
@@ -270,6 +272,7 @@ void Experiment::explore_backprop(double target_val,
 			}
 			this->best_new_scope = this->curr_new_scope;
 			this->curr_new_scope = NULL;
+			this->best_parent_scope = this->curr_parent_scope;
 			this->best_step_types = this->curr_step_types;
 			this->best_actions = this->curr_actions;
 			this->best_scopes = this->curr_scopes;

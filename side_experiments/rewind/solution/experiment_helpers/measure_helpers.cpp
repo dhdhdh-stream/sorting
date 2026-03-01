@@ -196,12 +196,23 @@ void Experiment::measure_backprop(double target_val,
 			cout << "this->scope_context->id: " << this->scope_context->id << endl;
 			cout << "this->node_context->id: " << this->node_context->id << endl;
 			cout << "this->is_branch: " << this->is_branch << endl;
+			if (this->best_new_scope != NULL) {
+				if (this->best_parent_scope == this->scope_context) {
+					cout << "new local scope" << endl;
+				} else {
+					cout << "new outer scope" << endl;
+				}
+			}
 			cout << "new explore path:";
 			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 					cout << " " << this->best_actions[s_index];
 				} else {
-					cout << " E" << this->best_scopes[s_index]->id;
+					if (this->best_scopes[s_index]->is_outer) {
+						cout << " O" << this->best_scopes[s_index]->id;
+					} else {
+						cout << " E" << this->best_scopes[s_index]->id;
+					}
 				}
 			}
 			cout << endl;

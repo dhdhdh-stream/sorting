@@ -41,6 +41,7 @@ public:
 	bool clean_success;
 
 	Scope* curr_new_scope;
+	Scope* curr_parent_scope;
 	std::vector<int> curr_step_types;
 	std::vector<int> curr_actions;
 	std::vector<Scope*> curr_scopes;
@@ -48,6 +49,7 @@ public:
 
 	double best_surprise;
 	Scope* best_new_scope;
+	Scope* best_parent_scope;
 	std::vector<int> best_step_types;
 	std::vector<int> best_actions;
 	std::vector<Scope*> best_scopes;

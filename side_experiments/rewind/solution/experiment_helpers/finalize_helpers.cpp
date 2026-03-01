@@ -31,6 +31,7 @@ void Experiment::add(SolutionWrapper* wrapper) {
 
 void Experiment::clean_add_helper(SolutionWrapper* wrapper) {
 	stringstream ss;
+	ss << "timestamp: " << wrapper->solution->timestamp << "; ";
 	ss << "Experiment" << "; ";
 	ss << "this->scope_context->id: " << this->scope_context->id << "; ";
 	ss << "this->node_context->id: " << this->node_context->id << "; ";
@@ -187,16 +188,28 @@ void Experiment::clean_add_helper(SolutionWrapper* wrapper) {
 
 void Experiment::experiment_add_helper(SolutionWrapper* wrapper) {
 	stringstream ss;
+	ss << "timestamp: " << wrapper->solution->timestamp << "; ";
 	ss << "Experiment" << "; ";
 	ss << "this->scope_context->id: " << this->scope_context->id << "; ";
 	ss << "this->node_context->id: " << this->node_context->id << "; ";
 	ss << "this->is_branch: " << this->is_branch << "; ";
+	if (this->best_new_scope != NULL) {
+		if (this->best_parent_scope == this->scope_context) {
+			ss << "new local scope" << "; ";
+		} else {
+			ss << "new outer scope" << "; ";
+		}
+	}
 	ss << "new explore path:";
 	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
 			ss << " " << this->best_actions[s_index];
 		} else {
-			ss << " E" << this->best_scopes[s_index]->id;
+			if (this->best_scopes[s_index]->is_outer) {
+				ss << " O" << this->best_scopes[s_index]->id;
+			} else {
+				ss << " E" << this->best_scopes[s_index]->id;
+			}
 		}
 	}
 	ss << "; ";

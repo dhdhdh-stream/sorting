@@ -53,8 +53,8 @@ const int NUM_LAST_LOCAL_TRACK = 10;
 const int MIN_NUM_LAST_LOCAL_TRACK = 2;
 const double LAST_LOCAL_BETTER_THAN_RATIO = 0.7;
 const int NUM_LAST_CLEAN_TRACK = 10;
-const int MIN_NUM_LAST_CLEAN_TRACK = 4;
-const double LAST_CLEAN_BETTER_THAN_RATIO = 0.8;
+const int MIN_NUM_LAST_CLEAN_TRACK = 1;
+const double LAST_CLEAN_BETTER_THAN_RATIO = 0.5;
 #endif /* MDEBUG */
 
 #if defined(MDEBUG) && MDEBUG
