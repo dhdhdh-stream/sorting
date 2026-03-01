@@ -29,6 +29,9 @@ void Experiment::check_activate(AbstractNode* experiment_node,
 		case EXPERIMENT_STATE_TRAIN_NEW:
 			train_new_check_activate(wrapper);
 			break;
+		case EXPERIMENT_STATE_REFINE:
+			refine_check_activate(wrapper);
+			break;
 		case EXPERIMENT_STATE_MEASURE:
 			measure_check_activate(wrapper);
 			break;
@@ -64,6 +67,12 @@ void Experiment::experiment_step(vector<double>& obs,
 					   is_next,
 					   wrapper);
 		break;
+	case EXPERIMENT_STATE_REFINE:
+		refine_step(obs,
+					action,
+					is_next,
+					wrapper);
+		break;
 	case EXPERIMENT_STATE_MEASURE:
 		measure_step(obs,
 					 action,
@@ -95,6 +104,9 @@ void Experiment::experiment_exit_step(SolutionWrapper* wrapper) {
 	case EXPERIMENT_STATE_TRAIN_NEW:
 		train_new_exit_step(wrapper);
 		break;
+	case EXPERIMENT_STATE_REFINE:
+		refine_exit_step(wrapper);
+		break;
 	case EXPERIMENT_STATE_MEASURE:
 		measure_exit_step(wrapper);
 		break;
@@ -124,6 +136,10 @@ void Experiment::backprop(double target_val,
 	case EXPERIMENT_STATE_TRAIN_NEW:
 		train_new_backprop(target_val,
 						   wrapper);
+		break;
+	case EXPERIMENT_STATE_REFINE:
+		refine_backprop(target_val,
+						wrapper);
 		break;
 	case EXPERIMENT_STATE_MEASURE:
 		measure_backprop(target_val,

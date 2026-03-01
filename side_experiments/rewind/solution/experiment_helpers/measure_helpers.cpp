@@ -32,9 +32,17 @@ void Experiment::measure_step(vector<double>& obs,
 	ExperimentState* experiment_state = (ExperimentState*)wrapper->experiment_context.back();
 
 	if (experiment_state->step_index == 0) {
+		bool is_branch = true;
 		this->new_true_network->activate(obs);
+		if (this->new_true_network->output->acti_vals[0] < 0.0) {
+			is_branch = false;
+		} else {
+			this->refine_network->activate(obs);
+			if (this->refine_network->output->acti_vals[0] < 0.0) {
+				is_branch = false;
+			}
+		}
 
-		bool is_branch;
 		#if defined(MDEBUG) && MDEBUG
 		if (wrapper->curr_run_seed%2 == 0) {
 			is_branch = true;
@@ -42,12 +50,6 @@ void Experiment::measure_step(vector<double>& obs,
 			is_branch = false;
 		}
 		wrapper->curr_run_seed = xorshift(wrapper->curr_run_seed);
-		#else
-		if (this->new_true_network->output->acti_vals[0] >= 0.0) {
-			is_branch = true;
-		} else {
-			is_branch = false;
-		}
 		#endif /* MDEBUG */
 
 		if (!is_branch) {

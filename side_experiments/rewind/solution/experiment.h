@@ -13,9 +13,10 @@ const int EXPERIMENT_STATE_TRAIN_EXISTING = 0;
 const int EXPERIMENT_STATE_CLEAN = 1;
 const int EXPERIMENT_STATE_EXPLORE = 2;
 const int EXPERIMENT_STATE_TRAIN_NEW = 3;
-const int EXPERIMENT_STATE_MEASURE = 4;
+const int EXPERIMENT_STATE_REFINE = 4;
+const int EXPERIMENT_STATE_MEASURE = 5;
 #if defined(MDEBUG) && MDEBUG
-const int EXPERIMENT_STATE_CAPTURE_VERIFY = 5;
+const int EXPERIMENT_STATE_CAPTURE_VERIFY = 6;
 #endif /* MDEBUG */
 
 class Experiment : public AbstractExperiment {
@@ -29,7 +30,6 @@ public:
 	std::vector<double> existing_true_histories;
 
 	double existing_true;
-	double existing_decision_cost;
 
 	Network* existing_true_network;
 
@@ -57,8 +57,10 @@ public:
 	std::vector<double> new_true_histories;
 
 	Network* new_true_network;
+	Network* refine_network;
 
-	bool is_binarize;
+	bool best_new_is_binarize;
+	bool best_refine_is_binarize;
 
 	double sum_true;
 	int hit_count;
@@ -72,7 +74,7 @@ public:
 	#if defined(MDEBUG) && MDEBUG
 	std::vector<Problem*> verify_problems;
 	std::vector<unsigned long> verify_seeds;
-	std::vector<double> verify_scores;
+	std::vector<std::vector<double>> verify_scores;
 	#endif /* MDEBUG */
 
 	Experiment(Scope* scope_context,
@@ -127,6 +129,15 @@ public:
 	void train_new_backprop(double target_val,
 							SolutionWrapper* wrapper);
 
+	void refine_check_activate(SolutionWrapper* wrapper);
+	void refine_step(std::vector<double>& obs,
+					 int& action,
+					 bool& is_next,
+					 SolutionWrapper* wrapper);
+	void refine_exit_step(SolutionWrapper* wrapper);
+	void refine_backprop(double target_val,
+						 SolutionWrapper* wrapper);
+
 	void measure_check_activate(SolutionWrapper* wrapper);
 	void measure_step(std::vector<double>& obs,
 					  int& action,
@@ -149,6 +160,10 @@ public:
 	void clean();
 	void add(SolutionWrapper* wrapper);
 	double calc_new_score();
+
+	void train_and_eval_helper(double& best_improvement,
+							   Network*& best_network,
+							   bool& best_is_binarize);
 
 	void clean_add_helper(SolutionWrapper* wrapper);
 	void experiment_add_helper(SolutionWrapper* wrapper);

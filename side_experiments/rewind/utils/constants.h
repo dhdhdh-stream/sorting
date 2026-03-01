@@ -29,12 +29,10 @@ const int STEP_TYPE_SCOPE = 1;
 
 const int NEW_SCOPE_MIN_NODES = 10;
 
-const double TEST_SAMPLES_PERCENTAGE = 0.2;
-
 #if defined(MDEBUG) && MDEBUG
 const int MEASURE_ITERS = 10;
 #else
-const int MEASURE_ITERS = 1000;
+const int MEASURE_ITERS = 4000;
 #endif /* MDEBUG */
 
 #if defined(MDEBUG) && MDEBUG
@@ -57,12 +55,6 @@ const double LAST_LOCAL_BETTER_THAN_RATIO = 0.7;
 const int NUM_LAST_CLEAN_TRACK = 10;
 const int MIN_NUM_LAST_CLEAN_TRACK = 4;
 const double LAST_CLEAN_BETTER_THAN_RATIO = 0.8;
-#endif /* MDEBUG */
-
-#if defined(MDEBUG) && MDEBUG
-const int EXPLORE_MAX_SAMPLES = 10;
-#else
-const int EXPLORE_MAX_SAMPLES = 10000;
 #endif /* MDEBUG */
 
 #if defined(MDEBUG) && MDEBUG

@@ -207,7 +207,8 @@ void Experiment::experiment_add_helper(SolutionWrapper* wrapper) {
 		ss << "this->exit_next_node->id: " << this->exit_next_node->id << "; ";
 	}
 
-	ss << "this->is_binarize: " << this->is_binarize << "; ";
+	ss << "this->best_new_is_binarize: " << this->best_new_is_binarize << "; ";
+	ss << "this->best_refine_is_binarize: " << this->best_refine_is_binarize << "; ";
 
 	ss << "this->local_improvement: " << this->local_improvement << "; ";
 	ss << "this->global_improvement: " << this->global_improvement << "; ";
@@ -500,8 +501,11 @@ void Experiment::experiment_add_helper(SolutionWrapper* wrapper) {
 	}
 	new_branch_node->ancestor_ids.push_back(this->node_context->id);
 
-	new_branch_node->network = this->new_true_network;
+	new_branch_node->networks = vector<Network*>{
+		this->new_true_network,
+		this->refine_network};
 	this->new_true_network = NULL;
+	this->refine_network = NULL;
 
 	#if defined(MDEBUG) && MDEBUG
 	if (this->verify_problems.size() > 0) {
