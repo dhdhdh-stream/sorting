@@ -225,6 +225,17 @@ void Solution::init(ProblemType* problem_type) {
 		l1_scope->nodes[start_node->id] = start_node;
 
 		vector<ScopeNode*> scope_nodes;
+		{
+			ScopeNode* scope_node = new ScopeNode();
+			scope_node->parent = l1_scope;
+			scope_node->id = l1_scope->node_counter;
+			l1_scope->node_counter++;
+			l1_scope->nodes[scope_node->id] = scope_node;
+
+			scope_node->scope = l1_front_scope;
+
+			scope_nodes.push_back(scope_node);
+		}
 		for (int n_index = 0; n_index < 10; n_index++) {
 			ScopeNode* scope_node = new ScopeNode();
 			scope_node->parent = l1_scope;
@@ -233,6 +244,17 @@ void Solution::init(ProblemType* problem_type) {
 			l1_scope->nodes[scope_node->id] = scope_node;
 
 			scope_node->scope = l2_scope;
+
+			scope_nodes.push_back(scope_node);
+		}
+		{
+			ScopeNode* scope_node = new ScopeNode();
+			scope_node->parent = l1_scope;
+			scope_node->id = l1_scope->node_counter;
+			l1_scope->node_counter++;
+			l1_scope->nodes[scope_node->id] = scope_node;
+
+			scope_node->scope = l1_back_scope;
 
 			scope_nodes.push_back(scope_node);
 		}
@@ -248,14 +270,17 @@ void Solution::init(ProblemType* problem_type) {
 
 		scope_nodes[0]->ancestor_ids.push_back(start_node->id);
 
-		for (int n_index = 1; n_index < 10; n_index++) {
+		for (int n_index = 1; n_index < (int)scope_nodes.size(); n_index++) {
 			scope_nodes[n_index-1]->next_node_id = scope_nodes[n_index]->id;
 			scope_nodes[n_index-1]->next_node = scope_nodes[n_index];
 
 			scope_nodes[n_index]->ancestor_ids.push_back(scope_nodes[n_index-1]->id);
 		}
 
-		end_node->ancestor_ids.push_back(scope_nodes[9]->id);
+		scope_nodes.back()->next_node_id = end_node->id;
+		scope_nodes.back()->next_node = end_node;
+
+		end_node->ancestor_ids.push_back(scope_nodes.back()->id);
 
 		end_node->next_node_id = -1;
 		end_node->next_node = NULL;
@@ -313,6 +338,17 @@ void Solution::init(ProblemType* problem_type) {
 		l0_scope->nodes[start_node->id] = start_node;
 
 		vector<ScopeNode*> scope_nodes;
+		{
+			ScopeNode* scope_node = new ScopeNode();
+			scope_node->parent = l0_scope;
+			scope_node->id = l0_scope->node_counter;
+			l0_scope->node_counter++;
+			l0_scope->nodes[scope_node->id] = scope_node;
+
+			scope_node->scope = l0_front_scope;
+
+			scope_nodes.push_back(scope_node);
+		}
 		for (int n_index = 0; n_index < 10; n_index++) {
 			ScopeNode* scope_node = new ScopeNode();
 			scope_node->parent = l0_scope;
@@ -321,6 +357,17 @@ void Solution::init(ProblemType* problem_type) {
 			l0_scope->nodes[scope_node->id] = scope_node;
 
 			scope_node->scope = l1_scope;
+
+			scope_nodes.push_back(scope_node);
+		}
+		{
+			ScopeNode* scope_node = new ScopeNode();
+			scope_node->parent = l0_scope;
+			scope_node->id = l0_scope->node_counter;
+			l0_scope->node_counter++;
+			l0_scope->nodes[scope_node->id] = scope_node;
+
+			scope_node->scope = l0_back_scope;
 
 			scope_nodes.push_back(scope_node);
 		}
@@ -336,14 +383,17 @@ void Solution::init(ProblemType* problem_type) {
 
 		scope_nodes[0]->ancestor_ids.push_back(start_node->id);
 
-		for (int n_index = 1; n_index < 10; n_index++) {
+		for (int n_index = 1; n_index < (int)scope_nodes.size(); n_index++) {
 			scope_nodes[n_index-1]->next_node_id = scope_nodes[n_index]->id;
 			scope_nodes[n_index-1]->next_node = scope_nodes[n_index];
 
 			scope_nodes[n_index]->ancestor_ids.push_back(scope_nodes[n_index-1]->id);
 		}
 
-		end_node->ancestor_ids.push_back(scope_nodes[9]->id);
+		scope_nodes.back()->next_node_id = end_node->id;
+		scope_nodes.back()->next_node = end_node;
+
+		end_node->ancestor_ids.push_back(scope_nodes.back()->id);
 
 		end_node->next_node_id = -1;
 		end_node->next_node = NULL;

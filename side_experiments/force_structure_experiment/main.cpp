@@ -1,6 +1,3 @@
-// init scope + 10x repeat scope + end scope
-// recurse twice
-
 #include <chrono>
 #include <iostream>
 #include <map>
