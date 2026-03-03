@@ -50,7 +50,10 @@ void Experiment::measure_step(vector<double>& obs,
 		wrapper->curr_run_seed = xorshift(wrapper->curr_run_seed);
 		#endif /* MDEBUG */
 
-		if (!is_branch) {
+		if (is_branch) {
+			ExperimentHistory* history = (ExperimentHistory*)wrapper->experiment_history;
+			history->hit_branch = true;
+		} else {
 			delete experiment_state;
 			wrapper->experiment_context.back() = NULL;
 			return;
@@ -104,7 +107,7 @@ void Experiment::measure_backprop(double target_val,
 
 	ExperimentHistory* history = (ExperimentHistory*)wrapper->experiment_history;
 
-	if (history->is_hit) {
+	if (history->hit_branch) {
 		this->true_scores.push_back(target_val);
 
 		// double existing_result = get_existing_result(wrapper);
@@ -126,13 +129,6 @@ void Experiment::measure_backprop(double target_val,
 			sum_variance += (this->true_scores[h_index] - new_true) * (this->true_scores[h_index] - new_true);
 		}
 		this->score_standard_deviation = sqrt(sum_variance / (double)this->true_scores.size());
-
-		// temp
-		cout << "this->local_improvement: " << this->local_improvement << endl;
-		cout << "this->total_count: " << this->total_count << endl;
-		cout << "average_hits_per_run: " << average_hits_per_run << endl;
-		cout << "this->global_improvement: " << this->global_improvement << endl;
-		cout << "this->score_standard_deviation: " << this->score_standard_deviation << endl;
 
 		bool is_success = false;
 		if (this->local_improvement >= 0.0) {

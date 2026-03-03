@@ -1,8 +1,3 @@
-/**
- * TODO: don't explicitly worry about passthrough
- * - 100% vs 90% branch not significantly different in terms of fracturing
- */
-
 #ifndef EXPERIMENT_H
 #define EXPERIMENT_H
 
@@ -18,9 +13,14 @@ const int EXPERIMENT_STATE_TRAIN_EXISTING = 0;
 const int EXPERIMENT_STATE_EXPLORE = 1;
 const int EXPERIMENT_STATE_TRAIN_NEW = 2;
 const int EXPERIMENT_STATE_REFINE = 3;
-const int EXPERIMENT_STATE_MEASURE = 4;
+/**
+ * - compare specifically on branch path
+ *   - so previous partial progress is not penalized
+ */
+const int EXPERIMENT_STATE_REMEASURE_EXISTING = 4;
+const int EXPERIMENT_STATE_MEASURE = 5;
 #if defined(MDEBUG) && MDEBUG
-const int EXPERIMENT_STATE_CAPTURE_VERIFY = 5;
+const int EXPERIMENT_STATE_CAPTURE_VERIFY = 6;
 #endif /* MDEBUG */
 
 class Experiment : public AbstractExperiment {
@@ -134,6 +134,14 @@ public:
 	void refine_backprop(double target_val,
 						 SolutionWrapper* wrapper);
 
+	void remeasure_existing_check_activate(SolutionWrapper* wrapper);
+	void remeasure_existing_step(std::vector<double>& obs,
+								 int& action,
+								 bool& is_next,
+								 SolutionWrapper* wrapper);
+	void remeasure_existing_backprop(double target_val,
+									 SolutionWrapper* wrapper);
+
 	void measure_check_activate(SolutionWrapper* wrapper);
 	void measure_step(std::vector<double>& obs,
 					  int& action,
@@ -165,6 +173,8 @@ public:
 class ExperimentHistory : public AbstractExperimentHistory {
 public:
 	std::vector<double> existing_predicted_trues;
+
+	bool hit_branch;
 
 	ExperimentHistory(Experiment* experiment);
 };

@@ -74,6 +74,8 @@ ExperimentHistory::ExperimentHistory(Experiment* experiment) {
 	this->experiment = experiment;
 
 	this->is_hit = false;
+
+	this->hit_branch = false;
 }
 
 ExperimentState::ExperimentState(Experiment* experiment) {

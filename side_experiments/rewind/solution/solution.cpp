@@ -59,7 +59,6 @@ Solution::Solution(Solution* original) {
 	}
 
 	this->last_scores = original->last_scores;
-	this->last_passthrough_scores = original->last_passthrough_scores;
 
 	this->num_experiments = original->num_experiments;
 
@@ -194,15 +193,6 @@ void Solution::load(ifstream& input_file) {
 		this->last_scores.push_back(stod(score_line));
 	}
 
-	string num_passthrough_scores_line;
-	getline(input_file, num_passthrough_scores_line);
-	int num_passthrough_scores = stoi(num_passthrough_scores_line);
-	for (int e_index = 0; e_index < num_passthrough_scores; e_index++) {
-		string score_line;
-		getline(input_file, score_line);
-		this->last_passthrough_scores.push_back(stod(score_line));
-	}
-
 	string num_experiments_line;
 	getline(input_file, num_experiments_line);
 	this->num_experiments = stoi(num_experiments_line);
@@ -301,10 +291,7 @@ void Solution::merge_outer() {
 }
 
 void Solution::wrapup() {
-	// this->last_global_scores.clear();
-	// this->last_local_scores.clear();
-	// this->last_passthrough_global_scores.clear();
-	// this->last_passthrough_local_scores.clear();
+	// this->last_scores.clear();
 }
 
 void Solution::save(ofstream& output_file) {
@@ -327,12 +314,6 @@ void Solution::save(ofstream& output_file) {
 	output_file << this->last_scores.size() << endl;
 	for (list<double>::iterator it = this->last_scores.begin();
 			it != this->last_scores.end(); it++) {
-		output_file << *it << endl;
-	}
-
-	output_file << this->last_passthrough_scores.size() << endl;
-	for (list<double>::iterator it = this->last_passthrough_scores.begin();
-			it != this->last_passthrough_scores.end(); it++) {
 		output_file << *it << endl;
 	}
 

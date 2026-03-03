@@ -29,6 +29,9 @@ void Experiment::check_activate(AbstractNode* experiment_node,
 		case EXPERIMENT_STATE_REFINE:
 			refine_check_activate(wrapper);
 			break;
+		case EXPERIMENT_STATE_REMEASURE_EXISTING:
+			remeasure_existing_check_activate(wrapper);
+			break;
 		case EXPERIMENT_STATE_MEASURE:
 			measure_check_activate(wrapper);
 			break;
@@ -69,6 +72,12 @@ void Experiment::experiment_step(vector<double>& obs,
 					action,
 					is_next,
 					wrapper);
+		break;
+	case EXPERIMENT_STATE_REMEASURE_EXISTING:
+		remeasure_existing_step(obs,
+								action,
+								is_next,
+								wrapper);
 		break;
 	case EXPERIMENT_STATE_MEASURE:
 		measure_step(obs,
@@ -133,6 +142,10 @@ void Experiment::backprop(double target_val,
 	case EXPERIMENT_STATE_REFINE:
 		refine_backprop(target_val,
 						wrapper);
+		break;
+	case EXPERIMENT_STATE_REMEASURE_EXISTING:
+		remeasure_existing_backprop(target_val,
+									wrapper);
 		break;
 	case EXPERIMENT_STATE_MEASURE:
 		measure_backprop(target_val,

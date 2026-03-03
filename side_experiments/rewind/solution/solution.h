@@ -57,7 +57,6 @@ public:
 	 *   - if experiment has good local, but poor global, will add anyways
 	 */
 	std::list<double> last_scores;
-	std::list<double> last_passthrough_scores;
 
 	int num_experiments;
 

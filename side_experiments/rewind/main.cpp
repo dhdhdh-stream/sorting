@@ -13,8 +13,6 @@
 //   - check standard deviation/t-score around that area
 //   - t-score ~= 0.5
 
-// TODO: remeasure existing specifically on when branch is chosen
-
 #include <chrono>
 #include <iostream>
 #include <map>
