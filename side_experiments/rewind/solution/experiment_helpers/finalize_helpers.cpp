@@ -24,6 +24,7 @@ void Experiment::clean() {
 void Experiment::add(SolutionWrapper* wrapper) {
 	stringstream ss;
 	ss << "timestamp: " << wrapper->solution->timestamp << "; ";
+	ss << "num_experiments: " << wrapper->solution->num_experiments << "; ";
 	ss << "Experiment" << "; ";
 	ss << "this->scope_context->id: " << this->scope_context->id << "; ";
 	ss << "this->node_context->id: " << this->node_context->id << "; ";

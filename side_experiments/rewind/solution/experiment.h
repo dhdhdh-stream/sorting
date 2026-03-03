@@ -1,3 +1,8 @@
+/**
+ * TODO: don't explicitly worry about passthrough
+ * - 100% vs 90% branch not significantly different in terms of fracturing
+ */
+
 #ifndef EXPERIMENT_H
 #define EXPERIMENT_H
 
@@ -64,8 +69,8 @@ public:
 	double total_sum_scores;
 	int total_count;
 
-	double global_improvement;
 	double local_improvement;
+	double global_improvement;
 
 	#if defined(MDEBUG) && MDEBUG
 	std::vector<Problem*> verify_problems;

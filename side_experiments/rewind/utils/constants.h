@@ -36,19 +36,17 @@ const int MEASURE_ITERS = 4000;
 #endif /* MDEBUG */
 
 #if defined(MDEBUG) && MDEBUG
-const int NUM_LAST_GLOBAL_TRACK = 4;
-const int MIN_NUM_LAST_GLOBAL_TRACK = 2;
-const double LAST_GLOBAL_BETTER_THAN_RATIO = 0.5;
-const int NUM_LAST_LOCAL_TRACK = 4;
-const int MIN_NUM_LAST_LOCAL_TRACK = 2;
-const double LAST_LOCAL_BETTER_THAN_RATIO = 0.5;
+const int NUM_LAST_TRACK = 4;
+const int MIN_NUM_LAST_TRACK = 2;
+const double LAST_BETTER_THAN_RATIO = 0.5;
 #else
-const int NUM_LAST_GLOBAL_TRACK = 10;
-const int MIN_NUM_LAST_GLOBAL_TRACK = 2;
-const double LAST_GLOBAL_BETTER_THAN_RATIO = 0.7;
-const int NUM_LAST_LOCAL_TRACK = 10;
-const int MIN_NUM_LAST_LOCAL_TRACK = 2;
-const double LAST_LOCAL_BETTER_THAN_RATIO = 0.7;
+/**
+ * - track relatively large number
+ *   - to help prevent string of bad luck from adding bad changes
+ */
+const int NUM_LAST_TRACK = 40;
+const int MIN_NUM_LAST_TRACK = 5;
+const double LAST_BETTER_THAN_RATIO = 0.8;
 #endif /* MDEBUG */
 
 #if defined(MDEBUG) && MDEBUG

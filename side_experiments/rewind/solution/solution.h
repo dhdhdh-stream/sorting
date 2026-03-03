@@ -52,13 +52,14 @@ public:
 	 * 
 	 * - but accept if no progress has been made recently
 	 * 
-	 * - don't just track global
+	 * - don't track global
 	 *   - as solution becomes fractured, becomes dominated by noise
+	 *   - if experiment has good local, but poor global, will add anyways
 	 */
-	std::list<double> last_global_scores;
-	std::list<double> last_local_scores;
-	std::list<double> last_passthrough_global_scores;
-	std::list<double> last_passthrough_local_scores;
+	std::list<double> last_scores;
+	std::list<double> last_passthrough_scores;
+
+	int num_experiments;
 
 	std::vector<double> improvement_history;
 	std::vector<std::string> change_history;
