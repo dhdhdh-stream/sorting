@@ -10,19 +10,16 @@ class Network;
 class SolutionWrapper;
 
 const int EXPERIMENT_STATE_TRAIN_EXISTING = 0;
-const int EXPERIMENT_STATE_CLEAN = 1;
-const int EXPERIMENT_STATE_EXPLORE = 2;
-const int EXPERIMENT_STATE_TRAIN_NEW = 3;
-const int EXPERIMENT_STATE_REFINE = 4;
-const int EXPERIMENT_STATE_MEASURE = 5;
+const int EXPERIMENT_STATE_EXPLORE = 1;
+const int EXPERIMENT_STATE_TRAIN_NEW = 2;
+const int EXPERIMENT_STATE_REFINE = 3;
+const int EXPERIMENT_STATE_MEASURE = 4;
 #if defined(MDEBUG) && MDEBUG
-const int EXPERIMENT_STATE_CAPTURE_VERIFY = 6;
+const int EXPERIMENT_STATE_CAPTURE_VERIFY = 5;
 #endif /* MDEBUG */
 
 class Experiment : public AbstractExperiment {
 public:
-	bool can_clean;
-
 	int state;
 	int state_iter;
 
@@ -37,8 +34,6 @@ public:
 
 	double average_instances_per_run;
 	int num_instances_until_target;
-
-	bool clean_success;
 
 	Scope* curr_new_scope;
 	Scope* curr_parent_scope;
@@ -58,8 +53,7 @@ public:
 	std::vector<std::vector<double>> new_obs_histories;
 	std::vector<double> new_true_histories;
 
-	Network* new_true_network;
-	Network* refine_network;
+	std::vector<Network*> new_networks;
 
 	bool best_new_is_binarize;
 	bool best_refine_is_binarize;
@@ -82,8 +76,7 @@ public:
 	Experiment(Scope* scope_context,
 			   AbstractNode* node_context,
 			   bool is_branch,
-			   AbstractNode* exit_next_node,
-			   bool can_clean);
+			   AbstractNode* exit_next_node);
 	~Experiment();
 
 	void check_activate(AbstractNode* experiment_node,
@@ -105,10 +98,6 @@ public:
 							 SolutionWrapper* wrapper);
 	void train_existing_backprop(double target_val,
 								 SolutionWrapper* wrapper);
-
-	void clean_check_activate(SolutionWrapper* wrapper);
-	void clean_backprop(double target_val,
-						SolutionWrapper* wrapper);
 
 	void explore_check_activate(SolutionWrapper* wrapper);
 	void explore_step(std::vector<double>& obs,
@@ -166,9 +155,6 @@ public:
 	void train_and_eval_helper(double& best_improvement,
 							   Network*& best_network,
 							   bool& best_is_binarize);
-
-	void clean_add_helper(SolutionWrapper* wrapper);
-	void experiment_add_helper(SolutionWrapper* wrapper);
 };
 
 class ExperimentHistory : public AbstractExperimentHistory {

@@ -107,30 +107,59 @@ void Experiment::train_new_backprop(
 		// }
 
 		this->state_iter++;
-		if (this->state_iter >= TRAIN_NEW_NUM_DATAPOINTS
-				&& (int)this->new_true_histories.size() >= TRAIN_NEW_NUM_DATAPOINTS) {
-			{
-				default_random_engine generator_copy = generator;
-				shuffle(this->new_obs_histories.begin(), this->new_obs_histories.end(), generator_copy);
-			}
-			{
-				default_random_engine generator_copy = generator;
-				shuffle(this->new_true_histories.begin(), this->new_true_histories.end(), generator_copy);
+		if (this->state_iter >= TRAIN_NEW_NUM_DATAPOINTS) {
+			double sum_vals = 0.0;
+			for (int h_index = 0; h_index < (int)this->new_true_histories.size(); h_index++) {
+				sum_vals += this->new_true_histories[h_index];
 			}
 
-			double best_val_average = numeric_limits<double>::lowest();
-			train_and_eval_helper(best_val_average,
-								  this->new_true_network,
-								  this->best_new_is_binarize);
+			if (sum_vals >= 0.0) {
+				this->best_new_is_binarize = false;
 
-			this->new_obs_histories.clear();
-			this->new_true_histories.clear();
+				this->new_obs_histories.clear();
+				this->new_true_histories.clear();
 
-			if (this->new_true_network != NULL) {
+				this->sum_true = 0.0;
+				this->hit_count = 0;
+
+				this->total_count = 0;
+				this->total_sum_scores = 0.0;
+
 				this->state = EXPERIMENT_STATE_REFINE;
 				this->state_iter = 0;
 			} else {
-				this->result = EXPERIMENT_RESULT_FAIL;
+				{
+					default_random_engine generator_copy = generator;
+					shuffle(this->new_obs_histories.begin(), this->new_obs_histories.end(), generator_copy);
+				}
+				{
+					default_random_engine generator_copy = generator;
+					shuffle(this->new_true_histories.begin(), this->new_true_histories.end(), generator_copy);
+				}
+
+				double best_val_average = numeric_limits<double>::lowest();
+				Network* new_network = NULL;
+				train_and_eval_helper(best_val_average,
+									  new_network,
+									  this->best_new_is_binarize);
+
+				this->new_obs_histories.clear();
+				this->new_true_histories.clear();
+
+				if (new_network != NULL) {
+					this->new_networks.push_back(new_network);
+
+					this->sum_true = 0.0;
+					this->hit_count = 0;
+
+					this->total_count = 0;
+					this->total_sum_scores = 0.0;
+
+					this->state = EXPERIMENT_STATE_REFINE;
+					this->state_iter = 0;
+				} else {
+					this->result = EXPERIMENT_RESULT_FAIL;
+				}
 			}
 		}
 	}

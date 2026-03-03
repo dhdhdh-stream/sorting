@@ -143,17 +143,9 @@ void create_experiment(ScopeHistory* scope_history,
 
 		geometric_distribution<int> exit_distribution(0.1);
 		int random_index;
-		bool can_clean;
 		while (true) {
 			random_index = exit_distribution(generator);
 			if (random_index < (int)possible_exits.size()) {
-				can_clean = false;
-				for (int n_index = 0; n_index < random_index; n_index++) {
-					if (possible_exits[n_index]->type != NODE_TYPE_OBS) {
-						can_clean = true;
-						break;
-					}
-				}
 				break;
 			}
 		}
@@ -163,8 +155,7 @@ void create_experiment(ScopeHistory* scope_history,
 			explore_node->parent,
 			explore_node,
 			explore_is_branch,
-			exit_next_node,
-			can_clean);
+			exit_next_node);
 		wrapper->curr_experiment = new_experiment;
 	}
 }

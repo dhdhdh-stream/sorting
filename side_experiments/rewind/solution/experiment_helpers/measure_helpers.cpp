@@ -33,13 +33,11 @@ void Experiment::measure_step(vector<double>& obs,
 
 	if (experiment_state->step_index == 0) {
 		bool is_branch = true;
-		this->new_true_network->activate(obs);
-		if (this->new_true_network->output->acti_vals[0] < 0.0) {
-			is_branch = false;
-		} else {
-			this->refine_network->activate(obs);
-			if (this->refine_network->output->acti_vals[0] < 0.0) {
+		for (int n_index = 0; n_index < (int)this->new_networks.size(); n_index++) {
+			this->new_networks[n_index]->activate(obs);
+			if (this->new_networks[n_index]->output->acti_vals[0] < 0.0) {
 				is_branch = false;
+				break;
 			}
 		}
 

@@ -13,8 +13,7 @@ using namespace std;
 Experiment::Experiment(Scope* scope_context,
 					   AbstractNode* node_context,
 					   bool is_branch,
-					   AbstractNode* exit_next_node,
-					   bool can_clean) {
+					   AbstractNode* exit_next_node) {
 	this->type = EXPERIMENT_TYPE_EXPERIMENT;
 
 	this->scope_context = scope_context;
@@ -22,13 +21,9 @@ Experiment::Experiment(Scope* scope_context,
 	this->is_branch = is_branch;
 	this->exit_next_node = exit_next_node;
 
-	this->can_clean = can_clean;
-
 	this->node_context->experiment = this;
 
 	this->existing_true_network = NULL;
-	this->new_true_network = NULL;
-	this->refine_network = NULL;
 
 	this->curr_new_scope = NULL;
 	this->best_new_scope = NULL;
@@ -51,12 +46,8 @@ Experiment::~Experiment() {
 		delete this->existing_true_network;
 	}
 
-	if (this->new_true_network != NULL) {
-		delete this->new_true_network;
-	}
-
-	if (this->refine_network != NULL) {
-		delete this->refine_network;
+	for (int n_index = 0; n_index < (int)this->new_networks.size(); n_index++) {
+		delete this->new_networks[n_index];
 	}
 
 	if (this->curr_new_scope != NULL) {

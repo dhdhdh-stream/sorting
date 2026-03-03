@@ -36,12 +36,13 @@ void Experiment::capture_verify_step(vector<double>& obs,
 	ExperimentState* experiment_state = (ExperimentState*)wrapper->experiment_context.back();
 
 	if (experiment_state->step_index == 0) {
-		this->new_true_network->activate(obs);
-		this->refine_network->activate(obs);
+		vector<double> curr_verify_scores(this->new_networks.size());
+		for (int n_index = 0; n_index < (int)this->new_networks.size(); n_index++) {
+			this->new_networks[n_index]->activate(obs);
+			curr_verify_scores[n_index] = this->new_networks[n_index]->output->acti_vals[0];
+		}
 
-		this->verify_scores.push_back(vector<double>{
-			this->new_true_network->output->acti_vals[0],
-			this->refine_network->output->acti_vals[0]});
+		this->verify_scores.push_back(curr_verify_scores);
 
 		cout << "wrapper->starting_run_seed: " << wrapper->starting_run_seed << endl;
 		cout << "wrapper->curr_run_seed: " << wrapper->curr_run_seed << endl;

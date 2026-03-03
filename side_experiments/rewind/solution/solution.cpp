@@ -60,7 +60,8 @@ Solution::Solution(Solution* original) {
 
 	this->last_global_scores = original->last_global_scores;
 	this->last_local_scores = original->last_local_scores;
-	this->last_clean_scores = original->last_clean_scores;
+	this->last_passthrough_global_scores = original->last_passthrough_global_scores;
+	this->last_passthrough_local_scores = original->last_passthrough_local_scores;
 
 	this->improvement_history = original->improvement_history;
 	this->change_history = original->change_history;
@@ -200,13 +201,22 @@ void Solution::load(ifstream& input_file) {
 		this->last_local_scores.push_back(stod(score_line));
 	}
 
-	string num_clean_scores_line;
-	getline(input_file, num_clean_scores_line);
-	int num_clean_scores = stoi(num_clean_scores_line);
-	for (int e_index = 0; e_index < num_clean_scores; e_index++) {
+	string num_passthrough_global_scores_line;
+	getline(input_file, num_passthrough_global_scores_line);
+	int num_passthrough_global_scores = stoi(num_passthrough_global_scores_line);
+	for (int e_index = 0; e_index < num_passthrough_global_scores; e_index++) {
 		string score_line;
 		getline(input_file, score_line);
-		this->last_clean_scores.push_back(stod(score_line));
+		this->last_passthrough_global_scores.push_back(stod(score_line));
+	}
+
+	string num_passthrough_local_scores_line;
+	getline(input_file, num_passthrough_local_scores_line);
+	int num_passthrough_local_scores = stoi(num_passthrough_local_scores_line);
+	for (int e_index = 0; e_index < num_passthrough_local_scores; e_index++) {
+		string score_line;
+		getline(input_file, score_line);
+		this->last_passthrough_local_scores.push_back(stod(score_line));
 	}
 
 	string history_size_line;
@@ -305,7 +315,8 @@ void Solution::merge_outer() {
 void Solution::wrapup() {
 	// this->last_global_scores.clear();
 	// this->last_local_scores.clear();
-	// this->last_clean_scores.clear();
+	// this->last_passthrough_global_scores.clear();
+	// this->last_passthrough_local_scores.clear();
 }
 
 void Solution::save(ofstream& output_file) {
@@ -337,9 +348,15 @@ void Solution::save(ofstream& output_file) {
 		output_file << *it << endl;
 	}
 
-	output_file << this->last_clean_scores.size() << endl;
-	for (list<double>::iterator it = this->last_clean_scores.begin();
-			it != this->last_clean_scores.end(); it++) {
+	output_file << this->last_passthrough_global_scores.size() << endl;
+	for (list<double>::iterator it = this->last_passthrough_global_scores.begin();
+			it != this->last_passthrough_global_scores.end(); it++) {
+		output_file << *it << endl;
+	}
+
+	output_file << this->last_passthrough_local_scores.size() << endl;
+	for (list<double>::iterator it = this->last_passthrough_local_scores.begin();
+			it != this->last_passthrough_local_scores.end(); it++) {
 		output_file << *it << endl;
 	}
 

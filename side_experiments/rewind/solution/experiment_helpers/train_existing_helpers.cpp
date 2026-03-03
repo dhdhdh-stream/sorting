@@ -55,39 +55,26 @@ void Experiment::train_existing_backprop(double target_val,
 
 		this->average_instances_per_run = (double)this->sum_num_instances / (double)this->hit_count;
 
-		if (this->can_clean) {
-			this->sum_true = 0.0;
-			this->hit_count = 0;
+		uniform_int_distribution<int> val_input_distribution(0, this->existing_obs_histories.size()-1);
 
-			this->total_count = 0;
-			this->total_sum_scores = 0.0;
+		this->existing_true_network = new Network(this->existing_obs_histories[0].size(),
+												  NETWORK_SIZE_SMALL);
+		for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
+			int rand_index = val_input_distribution(generator);
 
-			this->state = EXPERIMENT_STATE_CLEAN;
-			this->state_iter = 0;
-		} else {
-			uniform_int_distribution<int> val_input_distribution(0, this->existing_obs_histories.size()-1);
+			this->existing_true_network->activate(this->existing_obs_histories[rand_index]);
 
-			this->existing_true_network = new Network(this->existing_obs_histories[0].size(),
-													  NETWORK_SIZE_SMALL);
-			for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
-				int rand_index = val_input_distribution(generator);
+			double error = this->existing_true_histories[rand_index] - this->existing_true_network->output->acti_vals[0];
 
-				this->existing_true_network->activate(this->existing_obs_histories[rand_index]);
-
-				double error = this->existing_true_histories[rand_index] - this->existing_true_network->output->acti_vals[0];
-
-				this->existing_true_network->backprop(error);
-			}
-
-			this->clean_success = false;
-
-			this->best_surprise = numeric_limits<double>::lowest();
-
-			uniform_int_distribution<int> until_distribution(1, 2 * this->average_instances_per_run);
-			this->num_instances_until_target = until_distribution(generator);
-
-			this->state = EXPERIMENT_STATE_EXPLORE;
-			this->state_iter = 0;
+			this->existing_true_network->backprop(error);
 		}
+
+		this->best_surprise = numeric_limits<double>::lowest();
+
+		uniform_int_distribution<int> until_distribution(1, 2 * this->average_instances_per_run);
+		this->num_instances_until_target = until_distribution(generator);
+
+		this->state = EXPERIMENT_STATE_EXPLORE;
+		this->state_iter = 0;
 	}
 }

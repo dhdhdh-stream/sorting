@@ -20,9 +20,6 @@ void Experiment::check_activate(AbstractNode* experiment_node,
 		case EXPERIMENT_STATE_TRAIN_EXISTING:
 			train_existing_check_activate(wrapper);
 			break;
-		case EXPERIMENT_STATE_CLEAN:
-			clean_check_activate(wrapper);
-			break;
 		case EXPERIMENT_STATE_EXPLORE:
 			explore_check_activate(wrapper);
 			break;
@@ -124,10 +121,6 @@ void Experiment::backprop(double target_val,
 	case EXPERIMENT_STATE_TRAIN_EXISTING:
 		train_existing_backprop(target_val,
 								wrapper);
-		break;
-	case EXPERIMENT_STATE_CLEAN:
-		clean_backprop(target_val,
-					   wrapper);
 		break;
 	case EXPERIMENT_STATE_EXPLORE:
 		explore_backprop(target_val,

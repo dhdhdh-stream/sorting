@@ -46,8 +46,6 @@ public:
 
 	std::vector<Scope*> outer_scopes;
 
-	std::list<double> last_global_scores;
-	std::list<double> last_local_scores;
 	/**
 	 * - even if experiment safe to add, doesn't mean should
 	 *   - noise leads to more noise
@@ -57,7 +55,10 @@ public:
 	 * - don't just track global
 	 *   - as solution becomes fractured, becomes dominated by noise
 	 */
-	std::list<double> last_clean_scores;
+	std::list<double> last_global_scores;
+	std::list<double> last_local_scores;
+	std::list<double> last_passthrough_global_scores;
+	std::list<double> last_passthrough_local_scores;
 
 	std::vector<double> improvement_history;
 	std::vector<std::string> change_history;

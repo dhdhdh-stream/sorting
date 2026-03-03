@@ -1,6 +1,7 @@
 #include "experiment.h"
 
 #include <algorithm>
+#include <iostream>
 
 #include "branch_node.h"
 #include "constants.h"
@@ -8,16 +9,11 @@
 #include "network.h"
 #include "scope.h"
 #include "scope_node.h"
+#include "solution.h"
 #include "solution_wrapper.h"
 #include "utilities.h"
 
 using namespace std;
-
-#if defined(MDEBUG) && MDEBUG
-const int REFINE_NUM_DATAPOINTS = 20;
-#else
-const int REFINE_NUM_DATAPOINTS = 4000;
-#endif /* MDEBUG */
 
 void Experiment::refine_check_activate(SolutionWrapper* wrapper) {
 	ExperimentState* new_experiment_state = new ExperimentState(this);
@@ -34,9 +30,15 @@ void Experiment::refine_step(vector<double>& obs,
 	ScopeHistory* scope_history = wrapper->scope_histories.back();
 
 	if (experiment_state->step_index == 0) {
-		this->new_true_network->activate(obs);
+		bool is_branch = true;
+		for (int n_index = 0; n_index < (int)this->new_networks.size(); n_index++) {
+			this->new_networks[n_index]->activate(obs);
+			if (this->new_networks[n_index]->output->acti_vals[0] < 0.0) {
+				is_branch = false;
+				break;
+			}
+		}
 
-		bool is_branch;
 		#if defined(MDEBUG) && MDEBUG
 		if (wrapper->curr_run_seed%2 == 0) {
 			is_branch = true;
@@ -44,12 +46,6 @@ void Experiment::refine_step(vector<double>& obs,
 			is_branch = false;
 		}
 		wrapper->curr_run_seed = xorshift(wrapper->curr_run_seed);
-		#else
-		if (this->new_true_network->output->acti_vals[0] >= 0.0) {
-			is_branch = true;
-		} else {
-			is_branch = false;
-		}
 		#endif /* MDEBUG */
 
 		if (!is_branch) {
@@ -108,43 +104,170 @@ void Experiment::refine_exit_step(SolutionWrapper* wrapper) {
 void Experiment::refine_backprop(
 		double target_val,
 		SolutionWrapper* wrapper) {
+	this->total_count++;
+	this->total_sum_scores += target_val;
+
 	ExperimentHistory* history = (ExperimentHistory*)wrapper->experiment_history;
 	if (history->existing_predicted_trues.size() > 0) {
+		this->sum_true += target_val;
+		this->hit_count++;
+
 		for (int i_index = 0; i_index < (int)history->existing_predicted_trues.size(); i_index++) {
 			this->new_true_histories.push_back(target_val - history->existing_predicted_trues[i_index]);
 		}
 
 		this->state_iter++;
-		if (this->state_iter >= REFINE_NUM_DATAPOINTS
-				&& (int)this->new_true_histories.size() >= REFINE_NUM_DATAPOINTS) {
-			{
-				default_random_engine generator_copy = generator;
-				shuffle(this->new_obs_histories.begin(), this->new_obs_histories.end(), generator_copy);
+		if (this->state_iter >= MEASURE_ITERS) {
+			bool is_success = false;
+			if (this->new_networks.size() == 0) {
+				double new_true = this->sum_true / this->hit_count;
+				this->local_improvement = new_true - this->existing_true;
+				double average_hits_per_run = (double)this->hit_count / (double)this->total_count;
+				this->global_improvement = average_hits_per_run * this->local_improvement;
+
+				bool is_global_success = false;
+				if (wrapper->solution->last_passthrough_global_scores.size() >= MIN_NUM_LAST_GLOBAL_TRACK) {
+					int num_better_than = 0;
+					// // temp
+					// cout << "last_global_scores:";
+					for (list<double>::iterator it = wrapper->solution->last_passthrough_global_scores.begin();
+							it != wrapper->solution->last_passthrough_global_scores.end(); it++) {
+						// // temp
+						// cout << " " << *it;
+						if (this->global_improvement >= *it) {
+							num_better_than++;
+						}
+					}
+					// // temp
+					// cout << endl;
+
+					int target_better_than = LAST_GLOBAL_BETTER_THAN_RATIO * (double)wrapper->solution->last_passthrough_global_scores.size();
+
+					if (num_better_than >= target_better_than) {
+						is_global_success = true;
+					}
+
+					if (wrapper->solution->last_passthrough_global_scores.size() >= NUM_LAST_GLOBAL_TRACK) {
+						wrapper->solution->last_passthrough_global_scores.pop_front();
+					}
+					wrapper->solution->last_passthrough_global_scores.push_back(this->global_improvement);
+				} else {
+					wrapper->solution->last_passthrough_global_scores.push_back(this->global_improvement);
+				}
+
+				bool is_local_success = false;
+				if (wrapper->solution->last_passthrough_local_scores.size() >= MIN_NUM_LAST_LOCAL_TRACK) {
+					int num_better_than = 0;
+					// // temp
+					// cout << "last_local_scores:";
+					for (list<double>::iterator it = wrapper->solution->last_passthrough_local_scores.begin();
+							it != wrapper->solution->last_passthrough_local_scores.end(); it++) {
+						// // temp
+						// cout << " " << *it;
+						if (this->local_improvement >= *it) {
+							num_better_than++;
+						}
+					}
+					// // temp
+					// cout << endl;
+
+					int target_better_than = LAST_LOCAL_BETTER_THAN_RATIO * (double)wrapper->solution->last_passthrough_local_scores.size();
+
+					if (num_better_than >= target_better_than) {
+						is_local_success = true;
+					}
+
+					if (wrapper->solution->last_passthrough_local_scores.size() >= NUM_LAST_LOCAL_TRACK) {
+						wrapper->solution->last_passthrough_local_scores.pop_front();
+					}
+					wrapper->solution->last_passthrough_local_scores.push_back(this->local_improvement);
+				} else {
+					wrapper->solution->last_passthrough_local_scores.push_back(this->local_improvement);
+				}
+
+				if (is_global_success && is_local_success) {
+					is_success = true;
+				}
 			}
-			{
-				default_random_engine generator_copy = generator;
-				shuffle(this->new_true_histories.begin(), this->new_true_histories.end(), generator_copy);
-			}
 
-			double best_val_average = numeric_limits<double>::lowest();
-			train_and_eval_helper(best_val_average,
-								  this->refine_network,
-								  this->best_refine_is_binarize);
+			if (is_success) {
+				cout << "this->scope_context->id: " << this->scope_context->id << endl;
+				cout << "this->node_context->id: " << this->node_context->id << endl;
+				cout << "this->is_branch: " << this->is_branch << endl;
+				if (this->best_new_scope != NULL) {
+					if (this->best_parent_scope == this->scope_context) {
+						cout << "new local scope" << endl;
+					} else {
+						cout << "new outer scope" << endl;
+					}
+				}
+				cout << "new explore path:";
+				for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+					if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+						cout << " " << this->best_actions[s_index];
+					} else {
+						if (this->best_scopes[s_index]->is_outer) {
+							cout << " O" << this->best_scopes[s_index]->id;
+						} else {
+							cout << " E" << this->best_scopes[s_index]->id;
+						}
+					}
+				}
+				cout << endl;
 
-			this->new_obs_histories.clear();
-			this->new_true_histories.clear();
+				if (this->exit_next_node == NULL) {
+					cout << "this->exit_next_node->id: " << -1 << endl;
+				} else {
+					cout << "this->exit_next_node->id: " << this->exit_next_node->id << endl;
+				}
 
-			if (this->refine_network != NULL) {
-				this->sum_true = 0.0;
-				this->hit_count = 0;
+				cout << "this->local_improvement: " << this->local_improvement << endl;
+				cout << "this->global_improvement: " << this->global_improvement << endl;
 
-				this->total_count = 0;
-				this->total_sum_scores = 0.0;
+				cout << endl;
 
-				this->state = EXPERIMENT_STATE_MEASURE;
+				#if defined(MDEBUG) && MDEBUG
+				this->verify_problems = vector<Problem*>(NUM_VERIFY_SAMPLES, NULL);
+				this->verify_seeds = vector<unsigned long>(NUM_VERIFY_SAMPLES);
+
+				this->state = EXPERIMENT_STATE_CAPTURE_VERIFY;
 				this->state_iter = 0;
+				#else
+				this->result = EXPERIMENT_RESULT_SUCCESS;
+				#endif /* MDEBUG */
 			} else {
-				this->result = EXPERIMENT_RESULT_FAIL;
+				{
+					default_random_engine generator_copy = generator;
+					shuffle(this->new_obs_histories.begin(), this->new_obs_histories.end(), generator_copy);
+				}
+				{
+					default_random_engine generator_copy = generator;
+					shuffle(this->new_true_histories.begin(), this->new_true_histories.end(), generator_copy);
+				}
+
+				double best_val_average = numeric_limits<double>::lowest();
+				Network* new_network = NULL;
+				train_and_eval_helper(best_val_average,
+									  new_network,
+									  this->best_refine_is_binarize);
+
+				this->new_obs_histories.clear();
+				this->new_true_histories.clear();
+
+				if (new_network != NULL) {
+					this->new_networks.push_back(new_network);
+
+					this->sum_true = 0.0;
+					this->hit_count = 0;
+
+					this->total_count = 0;
+					this->total_sum_scores = 0.0;
+
+					this->state = EXPERIMENT_STATE_MEASURE;
+					this->state_iter = 0;
+				} else {
+					this->result = EXPERIMENT_RESULT_FAIL;
+				}
 			}
 		}
 	}
