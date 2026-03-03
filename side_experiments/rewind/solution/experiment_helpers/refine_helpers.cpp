@@ -125,72 +125,76 @@ void Experiment::refine_backprop(
 				double average_hits_per_run = (double)this->hit_count / (double)this->total_count;
 				this->global_improvement = average_hits_per_run * this->local_improvement;
 
-				bool is_global_success = false;
-				if (wrapper->solution->last_passthrough_global_scores.size() >= MIN_NUM_LAST_GLOBAL_TRACK) {
-					int num_better_than = 0;
-					// // temp
-					// cout << "last_global_scores:";
-					for (list<double>::iterator it = wrapper->solution->last_passthrough_global_scores.begin();
-							it != wrapper->solution->last_passthrough_global_scores.end(); it++) {
+				if (this->local_improvement >= 0.0) {
+					bool is_global_success = false;
+					if (wrapper->solution->last_passthrough_global_scores.size() >= MIN_NUM_LAST_GLOBAL_TRACK) {
+						int num_better_than = 0;
 						// // temp
-						// cout << " " << *it;
-						if (this->global_improvement >= *it) {
-							num_better_than++;
+						// cout << "last_global_scores:";
+						for (list<double>::iterator it = wrapper->solution->last_passthrough_global_scores.begin();
+								it != wrapper->solution->last_passthrough_global_scores.end(); it++) {
+							// // temp
+							// cout << " " << *it;
+							if (this->global_improvement >= *it) {
+								num_better_than++;
+							}
 						}
-					}
-					// // temp
-					// cout << endl;
-
-					int target_better_than = LAST_GLOBAL_BETTER_THAN_RATIO * (double)wrapper->solution->last_passthrough_global_scores.size();
-
-					if (num_better_than >= target_better_than) {
-						is_global_success = true;
-					}
-
-					if (wrapper->solution->last_passthrough_global_scores.size() >= NUM_LAST_GLOBAL_TRACK) {
-						wrapper->solution->last_passthrough_global_scores.pop_front();
-					}
-					wrapper->solution->last_passthrough_global_scores.push_back(this->global_improvement);
-				} else {
-					wrapper->solution->last_passthrough_global_scores.push_back(this->global_improvement);
-				}
-
-				bool is_local_success = false;
-				if (wrapper->solution->last_passthrough_local_scores.size() >= MIN_NUM_LAST_LOCAL_TRACK) {
-					int num_better_than = 0;
-					// // temp
-					// cout << "last_local_scores:";
-					for (list<double>::iterator it = wrapper->solution->last_passthrough_local_scores.begin();
-							it != wrapper->solution->last_passthrough_local_scores.end(); it++) {
 						// // temp
-						// cout << " " << *it;
-						if (this->local_improvement >= *it) {
-							num_better_than++;
+						// cout << endl;
+
+						int target_better_than = LAST_GLOBAL_BETTER_THAN_RATIO * (double)wrapper->solution->last_passthrough_global_scores.size();
+
+						if (num_better_than >= target_better_than) {
+							is_global_success = true;
 						}
+
+						if (wrapper->solution->last_passthrough_global_scores.size() >= NUM_LAST_GLOBAL_TRACK) {
+							wrapper->solution->last_passthrough_global_scores.pop_front();
+						}
+						wrapper->solution->last_passthrough_global_scores.push_back(this->global_improvement);
+					} else {
+						wrapper->solution->last_passthrough_global_scores.push_back(this->global_improvement);
 					}
-					// // temp
-					// cout << endl;
 
-					int target_better_than = LAST_LOCAL_BETTER_THAN_RATIO * (double)wrapper->solution->last_passthrough_local_scores.size();
+					bool is_local_success = false;
+					if (wrapper->solution->last_passthrough_local_scores.size() >= MIN_NUM_LAST_LOCAL_TRACK) {
+						int num_better_than = 0;
+						// // temp
+						// cout << "last_local_scores:";
+						for (list<double>::iterator it = wrapper->solution->last_passthrough_local_scores.begin();
+								it != wrapper->solution->last_passthrough_local_scores.end(); it++) {
+							// // temp
+							// cout << " " << *it;
+							if (this->local_improvement >= *it) {
+								num_better_than++;
+							}
+						}
+						// // temp
+						// cout << endl;
 
-					if (num_better_than >= target_better_than) {
-						is_local_success = true;
+						int target_better_than = LAST_LOCAL_BETTER_THAN_RATIO * (double)wrapper->solution->last_passthrough_local_scores.size();
+
+						if (num_better_than >= target_better_than) {
+							is_local_success = true;
+						}
+
+						if (wrapper->solution->last_passthrough_local_scores.size() >= NUM_LAST_LOCAL_TRACK) {
+							wrapper->solution->last_passthrough_local_scores.pop_front();
+						}
+						wrapper->solution->last_passthrough_local_scores.push_back(this->local_improvement);
+					} else {
+						wrapper->solution->last_passthrough_local_scores.push_back(this->local_improvement);
 					}
 
-					if (wrapper->solution->last_passthrough_local_scores.size() >= NUM_LAST_LOCAL_TRACK) {
-						wrapper->solution->last_passthrough_local_scores.pop_front();
+					if (is_global_success && is_local_success) {
+						is_success = true;
 					}
-					wrapper->solution->last_passthrough_local_scores.push_back(this->local_improvement);
-				} else {
-					wrapper->solution->last_passthrough_local_scores.push_back(this->local_improvement);
-				}
-
-				if (is_global_success && is_local_success) {
-					is_success = true;
 				}
 			}
 
 			if (is_success) {
+				this->best_refine_is_binarize = false;
+
 				cout << "this->scope_context->id: " << this->scope_context->id << endl;
 				cout << "this->node_context->id: " << this->node_context->id << endl;
 				cout << "this->is_branch: " << this->is_branch << endl;

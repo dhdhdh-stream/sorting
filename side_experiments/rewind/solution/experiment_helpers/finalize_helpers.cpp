@@ -55,6 +55,8 @@ void Experiment::add(SolutionWrapper* wrapper) {
 		ss << "this->exit_next_node->id: " << this->exit_next_node->id << "; ";
 	}
 
+	ss << "this->new_networks.size(): " << this->new_networks.size() << "; ";
+
 	ss << "this->best_new_is_binarize: " << this->best_new_is_binarize << "; ";
 	ss << "this->best_refine_is_binarize: " << this->best_refine_is_binarize << "; ";
 
