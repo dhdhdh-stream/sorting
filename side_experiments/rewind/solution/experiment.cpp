@@ -30,9 +30,6 @@ Experiment::Experiment(Scope* scope_context,
 
 	this->sum_num_instances = 0;
 
-	this->sum_true = 0.0;
-	this->hit_count = 0;
-
 	this->total_count = 0;
 
 	this->state = EXPERIMENT_STATE_TRAIN_EXISTING;

@@ -63,14 +63,14 @@ public:
 	bool best_new_is_binarize;
 	bool best_refine_is_binarize;
 
-	double sum_true;
-	int hit_count;
+	std::vector<double> true_scores;
 
 	double total_sum_scores;
 	int total_count;
 
 	double local_improvement;
 	double global_improvement;
+	double score_standard_deviation;
 
 	#if defined(MDEBUG) && MDEBUG
 	std::vector<Problem*> verify_problems;

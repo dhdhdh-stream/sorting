@@ -109,8 +109,7 @@ void Experiment::refine_backprop(
 
 	ExperimentHistory* history = (ExperimentHistory*)wrapper->experiment_history;
 	if (history->existing_predicted_trues.size() > 0) {
-		this->sum_true += target_val;
-		this->hit_count++;
+		this->true_scores.push_back(target_val);
 
 		for (int i_index = 0; i_index < (int)history->existing_predicted_trues.size(); i_index++) {
 			this->new_true_histories.push_back(target_val - history->existing_predicted_trues[i_index]);
@@ -120,10 +119,19 @@ void Experiment::refine_backprop(
 		if (this->state_iter >= MEASURE_ITERS) {
 			bool is_success = false;
 			if (this->new_networks.size() == 0) {
-				double new_true = this->sum_true / this->hit_count;
+				double sum_vals = 0.0;
+				for (int h_index = 0; h_index < (int)this->true_scores.size(); h_index++) {
+					sum_vals += this->true_scores[h_index];
+				}
+				double new_true = sum_vals / (double)this->true_scores.size();
 				this->local_improvement = new_true - this->existing_true;
-				double average_hits_per_run = (double)this->hit_count / (double)this->total_count;
+				double average_hits_per_run = (double)this->true_scores.size() / (double)this->total_count;
 				this->global_improvement = average_hits_per_run * this->local_improvement;
+				double sum_variance = 0.0;
+				for (int h_index = 0; h_index < (int)this->true_scores.size(); h_index++) {
+					sum_variance += (this->true_scores[h_index] - new_true) * (this->true_scores[h_index] - new_true);
+				}
+				this->score_standard_deviation = sqrt(sum_variance / (double)this->true_scores.size());
 
 				if (this->local_improvement >= 0.0) {
 					if (wrapper->solution->last_passthrough_scores.size() >= MIN_NUM_LAST_TRACK) {
@@ -199,6 +207,8 @@ void Experiment::refine_backprop(
 				this->result = EXPERIMENT_RESULT_SUCCESS;
 				#endif /* MDEBUG */
 			} else {
+				this->true_scores.clear();
+
 				{
 					default_random_engine generator_copy = generator;
 					shuffle(this->new_obs_histories.begin(), this->new_obs_histories.end(), generator_copy);
@@ -219,9 +229,6 @@ void Experiment::refine_backprop(
 
 				if (new_network != NULL) {
 					this->new_networks.push_back(new_network);
-
-					this->sum_true = 0.0;
-					this->hit_count = 0;
 
 					this->total_count = 0;
 					this->total_sum_scores = 0.0;

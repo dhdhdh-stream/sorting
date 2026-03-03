@@ -105,19 +105,34 @@ void Experiment::measure_backprop(double target_val,
 	ExperimentHistory* history = (ExperimentHistory*)wrapper->experiment_history;
 
 	if (history->is_hit) {
-		this->sum_true += target_val;
-		this->hit_count++;
+		this->true_scores.push_back(target_val);
 
 		// double existing_result = get_existing_result(wrapper);
 		// this->sum_true += target_val - existing_result;
 		// this->hit_count++;
 	}
 
-	if (this->hit_count >= MEASURE_ITERS) {
-		double new_true = this->sum_true / this->hit_count;
+	if ((int)this->true_scores.size() >= MEASURE_ITERS) {
+		double sum_vals = 0.0;
+		for (int h_index = 0; h_index < (int)this->true_scores.size(); h_index++) {
+			sum_vals += this->true_scores[h_index];
+		}
+		double new_true = sum_vals / (double)this->true_scores.size();
 		this->local_improvement = new_true - this->existing_true;
-		double average_hits_per_run = (double)this->hit_count / (double)this->total_count;
+		double average_hits_per_run = (double)this->true_scores.size() / (double)this->total_count;
 		this->global_improvement = average_hits_per_run * this->local_improvement;
+		double sum_variance = 0.0;
+		for (int h_index = 0; h_index < (int)this->true_scores.size(); h_index++) {
+			sum_variance += (this->true_scores[h_index] - new_true) * (this->true_scores[h_index] - new_true);
+		}
+		this->score_standard_deviation = sqrt(sum_variance / (double)this->true_scores.size());
+
+		// temp
+		cout << "this->local_improvement: " << this->local_improvement << endl;
+		cout << "this->total_count: " << this->total_count << endl;
+		cout << "average_hits_per_run: " << average_hits_per_run << endl;
+		cout << "this->global_improvement: " << this->global_improvement << endl;
+		cout << "this->score_standard_deviation: " << this->score_standard_deviation << endl;
 
 		bool is_success = false;
 		if (this->local_improvement >= 0.0) {

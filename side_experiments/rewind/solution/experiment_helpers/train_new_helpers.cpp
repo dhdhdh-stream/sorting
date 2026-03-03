@@ -119,9 +119,6 @@ void Experiment::train_new_backprop(
 				this->new_obs_histories.clear();
 				this->new_true_histories.clear();
 
-				this->sum_true = 0.0;
-				this->hit_count = 0;
-
 				this->total_count = 0;
 				this->total_sum_scores = 0.0;
 
@@ -148,9 +145,6 @@ void Experiment::train_new_backprop(
 
 				if (new_network != NULL) {
 					this->new_networks.push_back(new_network);
-
-					this->sum_true = 0.0;
-					this->hit_count = 0;
 
 					this->total_count = 0;
 					this->total_sum_scores = 0.0;
