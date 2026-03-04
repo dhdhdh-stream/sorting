@@ -44,8 +44,12 @@ void Experiment::remeasure_existing_step(vector<double>& obs,
 	#endif /* MDEBUG */
 
 	if (is_branch) {
+		this->num_branch++;
+
 		ExperimentHistory* history = (ExperimentHistory*)wrapper->experiment_history;
 		history->hit_branch = true;
+	} else {
+		this->num_original++;
 	}
 
 	delete experiment_state;
@@ -54,6 +58,13 @@ void Experiment::remeasure_existing_step(vector<double>& obs,
 
 void Experiment::remeasure_existing_backprop(double target_val,
 											 SolutionWrapper* wrapper) {
+	if (this->num_original > 20000) {
+		double branch_ratio = (double)this->num_branch / ((double)this->num_original + (double)this->num_branch);
+		if (branch_ratio < 0.05) {
+			this->result = EXPERIMENT_RESULT_FAIL;
+		}
+	}
+
 	ExperimentHistory* history = (ExperimentHistory*)wrapper->experiment_history;
 	if (history->hit_branch) {
 		this->true_scores.push_back(target_val);
@@ -66,6 +77,9 @@ void Experiment::remeasure_existing_backprop(double target_val,
 			this->existing_true = sum_vals / (double)this->true_scores.size();
 
 			this->true_scores.clear();
+
+			this->num_original = 0;
+			this->num_branch = 0;
 
 			this->total_count = 0;
 			this->total_sum_scores = 0.0;

@@ -13,6 +13,10 @@
 //   - check standard deviation/t-score around that area
 //   - t-score ~= 0.5
 
+// TODO: use t-score for last scores instead of true
+
+// TODO: if experiments keep failing, increase sample size
+
 #include <chrono>
 #include <iostream>
 #include <map>

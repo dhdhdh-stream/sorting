@@ -129,6 +129,9 @@ void Experiment::train_new_backprop(
 			if (new_network != NULL) {
 				this->new_networks.push_back(new_network);
 
+				this->num_original = 0;
+				this->num_branch = 0;
+
 				this->state = EXPERIMENT_STATE_REFINE;
 				this->state_iter = 0;
 			} else {

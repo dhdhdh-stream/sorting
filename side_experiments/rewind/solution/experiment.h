@@ -65,6 +65,9 @@ public:
 
 	std::vector<double> true_scores;
 
+	int num_original;
+	int num_branch;
+
 	double total_sum_scores;
 	int total_count;
 

@@ -51,9 +51,13 @@ void Experiment::measure_step(vector<double>& obs,
 		#endif /* MDEBUG */
 
 		if (is_branch) {
+			this->num_branch++;
+
 			ExperimentHistory* history = (ExperimentHistory*)wrapper->experiment_history;
 			history->hit_branch = true;
 		} else {
+			this->num_original++;
+
 			delete experiment_state;
 			wrapper->experiment_context.back() = NULL;
 			return;
@@ -115,6 +119,13 @@ void Experiment::measure_backprop(double target_val,
 		// this->hit_count++;
 	}
 
+	if (this->num_original > 20000) {
+		double branch_ratio = (double)this->num_branch / ((double)this->num_original + (double)this->num_branch);
+		if (branch_ratio < 0.05) {
+			this->result = EXPERIMENT_RESULT_FAIL;
+		}
+	}
+
 	if ((int)this->true_scores.size() >= MEASURE_ITERS) {
 		double sum_vals = 0.0;
 		for (int h_index = 0; h_index < (int)this->true_scores.size(); h_index++) {
@@ -130,13 +141,21 @@ void Experiment::measure_backprop(double target_val,
 		}
 		this->score_standard_deviation = sqrt(sum_variance / (double)this->true_scores.size());
 
+		// // temp
+		// cout << "this->existing_true: " << this->existing_true << endl;
+		// cout << "new_true: " << new_true << endl;
+		// cout << "average_hits_per_run: " << average_hits_per_run << endl;
+
+		double t_score = this->local_improvement
+			/ (this->score_standard_deviation / sqrt(MEASURE_ITERS));
 		bool is_success = false;
-		if (this->local_improvement >= 0.0) {
+		if (t_score >= 1.645) {
 			if (wrapper->solution->last_scores.size() >= MIN_NUM_LAST_TRACK) {
 				int num_better_than = 0;
 				for (list<double>::iterator it = wrapper->solution->last_scores.begin();
 						it != wrapper->solution->last_scores.end(); it++) {
-					if (this->local_improvement >= *it) {
+					// if (this->local_improvement >= *it) {
+					if (this->global_improvement >= *it) {
 						num_better_than++;
 					}
 				}
@@ -150,9 +169,11 @@ void Experiment::measure_backprop(double target_val,
 				if (wrapper->solution->last_scores.size() >= NUM_LAST_TRACK) {
 					wrapper->solution->last_scores.pop_front();
 				}
-				wrapper->solution->last_scores.push_back(this->local_improvement);
+				// wrapper->solution->last_scores.push_back(this->local_improvement);
+				wrapper->solution->last_scores.push_back(this->global_improvement);
 			} else {
-				wrapper->solution->last_scores.push_back(this->local_improvement);
+				// wrapper->solution->last_scores.push_back(this->local_improvement);
+				wrapper->solution->last_scores.push_back(this->global_improvement);
 			}
 		}
 

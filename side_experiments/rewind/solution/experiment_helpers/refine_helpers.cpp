@@ -48,11 +48,9 @@ void Experiment::refine_step(vector<double>& obs,
 		wrapper->curr_run_seed = xorshift(wrapper->curr_run_seed);
 		#endif /* MDEBUG */
 
-		if (!is_branch) {
-			delete experiment_state;
-			wrapper->experiment_context.back() = NULL;
-			return;
-		} else {
+		if (is_branch) {
+			this->num_branch++;
+
 			ExperimentHistory* history = (ExperimentHistory*)wrapper->experiment_history;
 
 			this->new_obs_histories.push_back(obs);
@@ -60,6 +58,12 @@ void Experiment::refine_step(vector<double>& obs,
 			this->existing_true_network->activate(obs);
 			history->existing_predicted_trues.push_back(
 				this->existing_true_network->output->acti_vals[0]);
+		} else {
+			this->num_original++;
+
+			delete experiment_state;
+			wrapper->experiment_context.back() = NULL;
+			return;
 		}
 	}
 
@@ -104,6 +108,13 @@ void Experiment::refine_exit_step(SolutionWrapper* wrapper) {
 void Experiment::refine_backprop(
 		double target_val,
 		SolutionWrapper* wrapper) {
+	if (this->num_original > 20000) {
+		double branch_ratio = (double)this->num_branch / ((double)this->num_original + (double)this->num_branch);
+		if (branch_ratio < 0.05) {
+			this->result = EXPERIMENT_RESULT_FAIL;
+		}
+	}
+
 	ExperimentHistory* history = (ExperimentHistory*)wrapper->experiment_history;
 	if (history->existing_predicted_trues.size() > 0) {
 		for (int i_index = 0; i_index < (int)history->existing_predicted_trues.size(); i_index++) {
@@ -132,6 +143,9 @@ void Experiment::refine_backprop(
 
 			if (new_network != NULL) {
 				this->new_networks.push_back(new_network);
+
+				this->num_original = 0;
+				this->num_branch = 0;
 
 				this->state = EXPERIMENT_STATE_REMEASURE_EXISTING;
 				this->state_iter = 0;
