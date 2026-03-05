@@ -27,30 +27,20 @@ void EvalExperiment::check_activate(AbstractNode* experiment_node,
 		history = it->second;
 	}
 
-	if (history->is_on) {
-		this->new_network->activate(obs);
-
-		bool decision_is_branch;
-		#if defined(MDEBUG) && MDEBUG
-		if (wrapper->curr_run_seed%2 == 0) {
-			decision_is_branch = true;
-		} else {
-			decision_is_branch = false;
-		}
-		wrapper->curr_run_seed = xorshift(wrapper->curr_run_seed);
-		#else
-		if (this->new_network->output->acti_vals[0] >= 0.0) {
-			decision_is_branch = true;
-		} else {
-			decision_is_branch = false;
-		}
-		#endif /* MDEBUG */
-
-		if (decision_is_branch) {
-			EvalExperimentState* new_experiment_state = new EvalExperimentState(this);
-			new_experiment_state->step_index = 0;
-			wrapper->experiment_context.back() = new_experiment_state;
-		}
+	switch (this->state) {
+	case EVAL_EXPERIMENT_STATE_REFINE:
+		refine_check_activate(experiment_node,
+							  obs,
+							  wrapper,
+							  history);
+		break;
+	case EVAL_EXPERIMENT_STATE_INIT:
+	case EVAL_EXPERIMENT_STATE_RAMP:
+		ramp_check_activate(experiment_node,
+							obs,
+							wrapper,
+							history);
+		break;
 	}
 }
 
@@ -104,66 +94,18 @@ void EvalExperiment::backprop(double target_val,
 							  EvalExperimentHistory* history,
 							  SolutionWrapper* wrapper,
 							  set<Scope*>& updated_scopes) {
-	if (history->is_on) {
-		this->new_sum_scores += target_val;
-		this->new_count++;
-	} else {
-		this->existing_sum_scores += target_val;
-		this->existing_count++;
-	}
-
-	this->state_iter++;
-	if (this->state_iter >= RAMP_EPOCH_NUM_ITERS) {
-		double existing_score_average = this->existing_sum_scores / (double)this->existing_count;
-		double new_score_average = this->new_sum_scores / (double)this->new_count;
-
-		// temp
-		cout << "this->curr_ramp: " << this->curr_ramp << endl;
-		cout << "existing_score_average: " << existing_score_average << endl;
-		cout << "new_score_average: " << new_score_average << endl;
-
-		this->existing_sum_scores = 0.0;
-		this->existing_count = 0;
-		this->new_sum_scores = 0.0;
-		this->new_count = 0;
-
-		this->state_iter = 0;
-
-		#if defined(MDEBUG) && MDEBUG
-		if (new_score_average >= existing_score_average || rand()%3 != 0) {
-		#else
-		if (new_score_average >= existing_score_average) {
-		#endif /* MDEBUG */
-			this->curr_ramp++;
-			this->num_fail = 0;
-
-			if (this->curr_ramp == RAMP_ITER) {
-				this->state = EVAL_EXPERIMENT_STATE_RAMP;
-			} else if (this->curr_ramp == EXPERIMENT_NUM_GEARS) {
-				updated_scopes.insert(this->node_context->parent);
-
-				add(wrapper);
-				this->node_context->experiment = NULL;
-				delete this;
-			}
-		} else {
-			switch (this->state) {
-			case EVAL_EXPERIMENT_STATE_INIT:
-				this->num_fail++;
-				if (this->num_fail >= 2) {
-					this->curr_ramp--;
-					this->num_fail = 0;
-				}
-				break;
-			case EVAL_EXPERIMENT_STATE_RAMP:
-				this->curr_ramp--;
-				break;
-			}
-
-			if (this->curr_ramp < 0) {
-				this->node_context->experiment = NULL;
-				delete this;
-			}
-		}
+	switch (this->state) {
+	case EVAL_EXPERIMENT_STATE_REFINE:
+		refine_backprop(target_val,
+						history,
+						wrapper);
+		break;
+	case EVAL_EXPERIMENT_STATE_INIT:
+	case EVAL_EXPERIMENT_STATE_RAMP:
+		ramp_backprop(target_val,
+					  history,
+					  wrapper,
+					  updated_scopes);
+		break;
 	}
 }

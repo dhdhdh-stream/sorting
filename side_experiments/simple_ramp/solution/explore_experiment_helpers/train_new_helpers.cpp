@@ -130,7 +130,7 @@ void ExploreExperiment::train_new_backprop(double target_val,
 				new_eval_experiment->node_context = this->node_context;
 				new_eval_experiment->exit_next_node = this->exit_next_node;
 
-				new_eval_experiment->new_network = this->new_network;
+				new_eval_experiment->new_networks = vector<Network*>{this->new_network};
 				this->new_network = NULL;
 
 				new_eval_experiment->new_scope = this->best_new_scope;

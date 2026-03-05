@@ -18,10 +18,6 @@ class SolutionWrapper;
 
 void create_experiment(SolutionWrapper* wrapper);
 
-void fetch_histories_helper(ScopeHistory* scope_history,
-							ObsNode* node_context,
-							std::vector<std::vector<double>>& obs_histories);
-
 Scope* create_new_scope(Scope* scope_context);
 
 void clean_scope(Scope* scope,

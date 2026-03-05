@@ -15,7 +15,7 @@ class SolutionWrapper;
 class BranchNodeHistory;
 class BranchNode : public AbstractNode {
 public:
-	Network* network;
+	std::vector<Network*> networks;
 
 	int original_next_node_id;
 	AbstractNode* original_next_node;

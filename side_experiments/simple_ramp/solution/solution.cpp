@@ -17,18 +17,13 @@
 using namespace std;
 
 Solution::Solution() {
-	this->sum_scores = 0.0;
+	this->score_index = 0;
 }
 
 Solution::~Solution() {
 	for (map<int, Scope*>::iterator it = this->scopes.begin();
 			it != this->scopes.end(); it++) {
 		delete it->second;
-	}
-
-	for (list<pair<ScopeHistory*,double>>::iterator it = this->existing_scope_histories.begin();
-			it != this->existing_scope_histories.end(); it++) {
-		delete it->first;
 	}
 }
 
@@ -67,6 +62,15 @@ void Solution::load(ifstream& input_file) {
 	for (map<int, Scope*>::iterator it = this->scopes.begin();
 			it != this->scopes.end(); it++) {
 		it->second->link(this);
+	}
+
+	string num_last_scores_line;
+	getline(input_file, num_last_scores_line);
+	int num_last_scores = stoi(num_last_scores_line);
+	for (int e_index = 0; e_index < num_last_scores; e_index++) {
+		string score_line;
+		getline(input_file, score_line);
+		this->last_scores.push_back(stod(score_line));
 	}
 
 	string history_size_line;
@@ -147,6 +151,12 @@ void Solution::save(ofstream& output_file) {
 			it != this->scopes.end(); it++) {
 		output_file << it->first << endl;
 		it->second->save(output_file);
+	}
+
+	output_file << this->last_scores.size() << endl;
+	for (list<double>::iterator it = this->last_scores.begin();
+			it != this->last_scores.end(); it++) {
+		output_file << *it << endl;
 	}
 
 	output_file << this->improvement_history.size() << endl;

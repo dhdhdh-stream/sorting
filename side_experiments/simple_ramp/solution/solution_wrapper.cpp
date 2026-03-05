@@ -54,6 +54,8 @@ SolutionWrapper::SolutionWrapper() {
 		end_node->next_node = NULL;
 	}
 
+	this->experiment_iter = 0;
+
 	#if defined(MDEBUG) && MDEBUG
 	this->run_index = 0;
 	#endif /* MDEBUG */
@@ -72,6 +74,8 @@ SolutionWrapper::SolutionWrapper(std::string path,
 	this->scope_counter = stoi(scope_counter_line);
 
 	input_file.close();
+
+	this->experiment_iter = 0;
 
 	#if defined(MDEBUG) && MDEBUG
 	this->run_index = 0;

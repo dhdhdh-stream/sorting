@@ -11,24 +11,18 @@ using namespace std;
 EvalExperiment::EvalExperiment() {
 	this->type = EXPERIMENT_TYPE_EVAL;
 
-	this->new_network = NULL;
 	this->new_scope = NULL;
 
-	this->existing_sum_scores = 0.0;
-	this->existing_count = 0;
-	this->new_sum_scores = 0.0;
-	this->new_count = 0;
+	this->num_original = 0;
+	this->num_branch = 0;
 
-	this->curr_ramp = 0;
-
-	this->state = EVAL_EXPERIMENT_STATE_INIT;
+	this->state = EVAL_EXPERIMENT_STATE_REFINE;
 	this->state_iter = 0;
-	this->num_fail = 0;
 }
 
 EvalExperiment::~EvalExperiment() {
-	if (this->new_network != NULL) {
-		delete this->new_network;
+	for (int n_index = 0; n_index < (int)this->new_networks.size(); n_index++) {
+		delete this->new_networks[n_index];
 	}
 
 	if (this->new_scope != NULL) {
@@ -37,12 +31,32 @@ EvalExperiment::~EvalExperiment() {
 }
 
 EvalExperimentHistory::EvalExperimentHistory(EvalExperiment* experiment) {
-	uniform_int_distribution<int> on_distribution(0, EXPERIMENT_NUM_GEARS);
-	if (experiment->curr_ramp >= on_distribution(generator)) {
-		this->is_on = true;
-	} else {
-		this->is_on = false;
+	switch (experiment->state) {
+	case EVAL_EXPERIMENT_STATE_REFINE:
+		{
+			uniform_int_distribution<int> on_distribution(0, 99);
+			if (experiment->curr_ramp >= on_distribution(generator)) {
+				this->is_on = true;
+			} else {
+				this->is_on = false;
+			}
+		}
+		break;
+	case EVAL_EXPERIMENT_STATE_INIT:
+	case EVAL_EXPERIMENT_STATE_RAMP:
+	case EVAL_EXPERIMENT_STATE_MEASURE:
+		{
+			uniform_int_distribution<int> on_distribution(0, EXPERIMENT_NUM_GEARS);
+			if (experiment->curr_ramp >= on_distribution(generator)) {
+				this->is_on = true;
+			} else {
+				this->is_on = false;
+			}
+		}
+		break;
 	}
+
+	this->hit_branch = false;
 }
 
 EvalExperimentState::EvalExperimentState(EvalExperiment* experiment) {

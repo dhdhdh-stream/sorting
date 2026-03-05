@@ -42,8 +42,6 @@ public:
 
 class ObsNodeHistory : public AbstractNodeHistory {
 public:
-	std::vector<double> obs_history;
-
 	ObsNodeHistory(ObsNode* node);
 };
 

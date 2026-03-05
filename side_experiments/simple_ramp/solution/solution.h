@@ -36,8 +36,20 @@ public:
 
 	std::map<int, Scope*> scopes;
 
-	std::list<std::pair<ScopeHistory*,double>> existing_scope_histories;
-	double sum_scores;
+	std::vector<double> score_histories;
+	int score_index;
+
+	/**
+	 * - even if experiment safe to add, doesn't mean should
+	 *   - noise leads to more noise
+	 * 
+	 * - but accept if no progress has been made recently
+	 * 
+	 * - don't track global
+	 *   - as solution becomes fractured, becomes dominated by noise
+	 *   - if experiment has good local, but poor global, will add anyways
+	 */
+	std::list<double> last_scores;
 
 	std::vector<double> improvement_history;
 	std::vector<std::string> change_history;

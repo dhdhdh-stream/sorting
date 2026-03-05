@@ -14,8 +14,9 @@ class Scope;
 class ScopeHistory;
 class SolutionWrapper;
 
-const int EXPLORE_EXPERIMENT_STATE_EXPLORE = 0;
-const int EXPLORE_EXPERIMENT_STATE_TRAIN_NEW = 1;
+const int EXPLORE_EXPERIMENT_STATE_TRAIN_EXISTING = 0;
+const int EXPLORE_EXPERIMENT_STATE_EXPLORE = 1;
+const int EXPLORE_EXPERIMENT_STATE_TRAIN_NEW = 2;
 
 class ExploreExperimentHistory;
 class ExploreExperimentState;
@@ -58,8 +59,7 @@ public:
 	int new_count;
 
 	ExploreExperiment(ObsNode* node_context,
-					  AbstractNode* exit_next_node,
-					  Network*& existing_network);
+					  AbstractNode* exit_next_node);
 	~ExploreExperiment();
 
 	void check_activate(AbstractNode* experiment_node,
@@ -76,6 +76,13 @@ public:
 	void backprop(double target_val,
 				  ExploreExperimentHistory* history,
 				  SolutionWrapper* wrapper);
+
+	void train_existing_check_activate(std::vector<double>& obs,
+									   SolutionWrapper* wrapper,
+									   ExploreExperimentHistory* history);
+	void train_existing_backprop(double target_val,
+								 ExploreExperimentHistory* history,
+								 SolutionWrapper* wrapper);
 
 	void explore_check_activate(std::vector<double>& obs,
 								SolutionWrapper* wrapper,
@@ -127,9 +134,5 @@ public:
 
 	ExploreExperimentState(ExploreExperiment* experiment);
 };
-
-bool train_existing_helper(ObsNode* node_context,
-						   SolutionWrapper* wrapper,
-						   Network*& network);
 
 #endif /* EXPLORE_EXPERIMENT_H */

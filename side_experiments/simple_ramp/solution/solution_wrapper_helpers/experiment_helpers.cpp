@@ -111,23 +111,26 @@ void SolutionWrapper::experiment_end(double result) {
 	}
 
 	int num_explore = (int)this->explore_histories.size();
-	if (this->solution->existing_scope_histories.size() >= HISTORIES_NUM_SAVE
-			&& num_explore < TARGET_EXPLORE_PER_RUN
+	if (num_explore < TARGET_EXPLORE_PER_RUN
 			&& num_explore < MAX_EXPLORE_RATIO_PER_RUN * (double)this->num_actions) {
 		create_experiment(this);
 	}
 
-	if (this->should_explore) {
-		delete this->scope_histories[0];
-	} else {
-		if (this->solution->existing_scope_histories.size() >= HISTORIES_NUM_SAVE) {
-			delete this->solution->existing_scope_histories.front().first;
-			this->solution->sum_scores -= this->solution->existing_scope_histories.front().second;
-			this->solution->existing_scope_histories.pop_front();
+	if (!this->should_explore) {
+		if (this->solution->score_histories.size() < HISTORIES_NUM_SAVE) {
+			this->solution->score_histories.push_back(result);
+		} else {
+			this->solution->score_histories[this->solution->score_index] = result;
+			this->solution->score_index++;
+			if (this->solution->score_index >= HISTORIES_NUM_SAVE) {
+				this->solution->score_index = 0;
+			}
 		}
-		this->solution->existing_scope_histories.push_back({this->scope_histories[0], result});
-		this->solution->sum_scores += result;
+
+		this->experiment_iter++;
 	}
+
+	delete this->scope_histories[0];
 
 	this->scope_histories.clear();
 	this->node_context.clear();

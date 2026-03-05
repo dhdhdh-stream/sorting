@@ -15,8 +15,7 @@
 using namespace std;
 
 ExploreExperiment::ExploreExperiment(ObsNode* node_context,
-									 AbstractNode* exit_next_node,
-									 Network*& existing_network) {
+									 AbstractNode* exit_next_node) {
 	this->type = EXPERIMENT_TYPE_EXPLORE;
 
 	this->node_context = node_context;
@@ -25,21 +24,13 @@ ExploreExperiment::ExploreExperiment(ObsNode* node_context,
 	this->sum_num_following_explores = 0;
 	this->sum_num_instances = 0;
 
-	this->existing_network = existing_network;
+	this->existing_network = NULL;
+	this->new_network = NULL;
 
 	this->curr_new_scope = NULL;
 	this->best_new_scope = NULL;
 
-	this->new_network = NULL;
-
-	this->best_surprise = 0.0;
-
-	/**
-	 * - simply initialize to 1
-	 */
-	this->num_instances_until_target = 1;
-
-	this->state = EXPLORE_EXPERIMENT_STATE_EXPLORE;
+	this->state = EXPLORE_EXPERIMENT_STATE_TRAIN_EXISTING;
 	this->state_iter = 0;
 }
 
@@ -65,17 +56,22 @@ ExploreExperimentHistory::ExploreExperimentHistory(
 		ExploreExperiment* experiment,
 		SolutionWrapper* wrapper) {
 	this->is_on = false;
-	if (wrapper->should_explore
-			&& wrapper->curr_explore == NULL
-			&& experiment->last_num_following_explores.size() > 0) {
-		double average_num_follow = (double)experiment->sum_num_following_explores
-			/ (double)experiment->last_num_following_explores.size();
-		uniform_real_distribution<double> distribution(0.0, 1.0);
-		double rand_val = distribution(generator);
-		if (rand_val <= 1.0 / (1.0 + average_num_follow)) {
-			wrapper->curr_explore = experiment;
-			this->is_on = true;
+	switch (experiment->state) {
+	case EXPLORE_EXPERIMENT_STATE_EXPLORE:
+	case EXPLORE_EXPERIMENT_STATE_TRAIN_NEW:
+		if (wrapper->should_explore
+				&& wrapper->curr_explore == NULL
+				&& experiment->last_num_following_explores.size() > 0) {
+			double average_num_follow = (double)experiment->sum_num_following_explores
+				/ (double)experiment->last_num_following_explores.size();
+			uniform_real_distribution<double> distribution(0.0, 1.0);
+			double rand_val = distribution(generator);
+			if (rand_val <= 1.0 / (1.0 + average_num_follow)) {
+				wrapper->curr_explore = experiment;
+				this->is_on = true;
+			}
 		}
+		break;
 	}
 
 	this->num_instances = 0;

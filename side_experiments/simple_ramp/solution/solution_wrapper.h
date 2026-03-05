@@ -47,6 +47,8 @@ public:
 	 * - for debugging
 	 */
 
+	int experiment_iter;
+
 	#if defined(MDEBUG) && MDEBUG
 	int run_index;
 	unsigned long starting_run_seed;

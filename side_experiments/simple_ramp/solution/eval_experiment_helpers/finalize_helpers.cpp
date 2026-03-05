@@ -47,6 +47,7 @@ void recursive_add_child(Scope* curr_parent,
 
 void EvalExperiment::add(SolutionWrapper* wrapper) {
 	stringstream ss;
+	ss << "timestamp: " << wrapper->solution->timestamp << "; ";
 	ss << "this->node_context->parent->id: " << this->node_context->parent->id << "; ";
 	ss << "this->node_context->id: " << this->node_context->id << "; ";
 	ss << "new explore path:";
@@ -65,7 +66,15 @@ void EvalExperiment::add(SolutionWrapper* wrapper) {
 		ss << "this->exit_next_node->id: " << this->exit_next_node->id << "; ";
 	}
 
-	double score_average = wrapper->solution->sum_scores / (double)wrapper->solution->existing_scope_histories.size();
+	ss << "this->local_improvement: " << this->local_improvement << "; ";
+	ss << "this->global_improvement: " << this->global_improvement << "; ";
+	ss << "this->score_standard_deviation: " << this->score_standard_deviation << "; ";
+
+	double sum_vals = 0.0;
+	for (int h_index = 0; h_index < (int)wrapper->solution->score_histories.size(); h_index++) {
+		sum_vals += wrapper->solution->score_histories[h_index];
+	}
+	double score_average = sum_vals / (double)wrapper->solution->score_histories.size();
 	cout << "score_average: " << score_average << endl;
 	wrapper->solution->curr_score = score_average;
 
@@ -228,8 +237,8 @@ void EvalExperiment::add(SolutionWrapper* wrapper) {
 
 	new_branch_node->ancestor_ids.push_back(this->node_context->id);
 
-	new_branch_node->network = this->new_network;
-	this->new_network = NULL;
+	new_branch_node->networks = this->new_networks;
+	this->new_networks.clear();
 
 	for (int n_index = 0; n_index < (int)new_nodes.size(); n_index++) {
 		int next_node_id;
