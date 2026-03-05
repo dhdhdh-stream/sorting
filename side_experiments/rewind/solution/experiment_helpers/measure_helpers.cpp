@@ -51,13 +51,9 @@ void Experiment::measure_step(vector<double>& obs,
 		#endif /* MDEBUG */
 
 		if (is_branch) {
-			this->num_branch++;
-
 			ExperimentHistory* history = (ExperimentHistory*)wrapper->experiment_history;
 			history->hit_branch = true;
 		} else {
-			this->num_original++;
-
 			delete experiment_state;
 			wrapper->experiment_context.back() = NULL;
 			return;
@@ -112,123 +108,140 @@ void Experiment::measure_backprop(double target_val,
 	ExperimentHistory* history = (ExperimentHistory*)wrapper->experiment_history;
 
 	if (history->hit_branch) {
-		this->true_scores.push_back(target_val);
+		this->num_branch++;
+	} else {
+		this->num_original++;
+		if (this->num_original == BRANCH_RATIO_CHECK_ITER) {
+			double branch_ratio = (double)this->num_branch / ((double)this->num_original + (double)this->num_branch);
+			if (branch_ratio < BRANCH_MIN_RATIO) {
+				this->result = EXPERIMENT_RESULT_FAIL;
+				return;
+			}
+		}
+	}
+
+	if (history->hit_branch) {
+		this->new_scores.push_back(target_val);
 
 		// double existing_result = get_existing_result(wrapper);
 		// this->sum_true += target_val - existing_result;
 		// this->hit_count++;
-	}
 
-	if (this->num_original > 20000) {
-		double branch_ratio = (double)this->num_branch / ((double)this->num_original + (double)this->num_branch);
-		if (branch_ratio < 0.05) {
-			this->result = EXPERIMENT_RESULT_FAIL;
-		}
-	}
-
-	if ((int)this->true_scores.size() >= MEASURE_ITERS) {
-		double sum_vals = 0.0;
-		for (int h_index = 0; h_index < (int)this->true_scores.size(); h_index++) {
-			sum_vals += this->true_scores[h_index];
-		}
-		double new_true = sum_vals / (double)this->true_scores.size();
-		this->local_improvement = new_true - this->existing_true;
-		double average_hits_per_run = (double)this->true_scores.size() / (double)this->total_count;
-		this->global_improvement = average_hits_per_run * this->local_improvement;
-		double sum_variance = 0.0;
-		for (int h_index = 0; h_index < (int)this->true_scores.size(); h_index++) {
-			sum_variance += (this->true_scores[h_index] - new_true) * (this->true_scores[h_index] - new_true);
-		}
-		this->score_standard_deviation = sqrt(sum_variance / (double)this->true_scores.size());
-
-		// // temp
-		// cout << "this->existing_true: " << this->existing_true << endl;
-		// cout << "new_true: " << new_true << endl;
-		// cout << "average_hits_per_run: " << average_hits_per_run << endl;
-
-		double t_score = this->local_improvement
-			/ (this->score_standard_deviation / sqrt(MEASURE_ITERS));
-		bool is_success = false;
-		if (t_score >= 1.645) {
-			if (wrapper->solution->last_scores.size() >= MIN_NUM_LAST_TRACK) {
-				int num_better_than = 0;
-				for (list<double>::iterator it = wrapper->solution->last_scores.begin();
-						it != wrapper->solution->last_scores.end(); it++) {
-					// if (this->local_improvement >= *it) {
-					if (this->global_improvement >= *it) {
-						num_better_than++;
-					}
-				}
-
-				int target_better_than = LAST_BETTER_THAN_RATIO * (double)wrapper->solution->last_scores.size();
-
-				if (num_better_than >= target_better_than) {
-					is_success = true;
-				}
-
-				if (wrapper->solution->last_scores.size() >= NUM_LAST_TRACK) {
-					wrapper->solution->last_scores.pop_front();
-				}
-				// wrapper->solution->last_scores.push_back(this->local_improvement);
-				wrapper->solution->last_scores.push_back(this->global_improvement);
-			} else {
-				// wrapper->solution->last_scores.push_back(this->local_improvement);
-				wrapper->solution->last_scores.push_back(this->global_improvement);
+		this->state_iter++;
+		if (this->state_iter >= MEASURE_STEP_NUM_ITERS) {
+			double existing_sum_vals = 0.0;
+			for (int h_index = 0; h_index < (int)this->existing_scores.size(); h_index++) {
+				existing_sum_vals += this->existing_scores[h_index];
 			}
-		}
-
-		#if defined(MDEBUG) && MDEBUG
-		if (is_success || rand()%2 == 0) {
-		#else
-		if (is_success) {
-		#endif /* MDEBUG */
-			cout << "this->scope_context->id: " << this->scope_context->id << endl;
-			cout << "this->node_context->id: " << this->node_context->id << endl;
-			cout << "this->is_branch: " << this->is_branch << endl;
-			if (this->best_new_scope != NULL) {
-				if (this->best_parent_scope == this->scope_context) {
-					cout << "new local scope" << endl;
-				} else {
-					cout << "new outer scope" << endl;
-				}
+			double existing_true = existing_sum_vals / (double)this->existing_scores.size();
+			double new_sum_vals = 0.0;
+			for (int h_index = 0; h_index < (int)this->new_scores.size(); h_index++) {
+				new_sum_vals += this->new_scores[h_index];
 			}
-			cout << "new explore path:";
-			for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-				if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-					cout << " " << this->best_actions[s_index];
-				} else {
-					if (this->best_scopes[s_index]->is_outer) {
-						cout << " O" << this->best_scopes[s_index]->id;
-					} else {
-						cout << " E" << this->best_scopes[s_index]->id;
-					}
-				}
+			double new_true = new_sum_vals / (double)this->new_scores.size();
+			this->local_improvement = new_true - existing_true;
+			double average_hits_per_run = (double)this->new_scores.size() / (double)this->total_count;
+			this->global_improvement = average_hits_per_run * this->local_improvement;
+			double sum_variance = 0.0;
+			for (int h_index = 0; h_index < (int)this->new_scores.size(); h_index++) {
+				sum_variance += (this->new_scores[h_index] - new_true) * (this->new_scores[h_index] - new_true);
 			}
-			cout << endl;
+			this->score_standard_deviation = sqrt(sum_variance / (double)this->new_scores.size());
 
-			if (this->exit_next_node == NULL) {
-				cout << "this->exit_next_node->id: " << -1 << endl;
-			} else {
-				cout << "this->exit_next_node->id: " << this->exit_next_node->id << endl;
-			}
+			double t_score = this->local_improvement
+				/ (this->score_standard_deviation / sqrt((double)this->new_scores.size()));
 
-			cout << "this->local_improvement: " << this->local_improvement << endl;
+			// temp
+			cout << "existing_true: " << existing_true << endl;
+			cout << "new_true: " << new_true << endl;
+			cout << "this->new_scores.size(): " << this->new_scores.size() << endl;
 			cout << "average_hits_per_run: " << average_hits_per_run << endl;
-			cout << "this->global_improvement: " << this->global_improvement << endl;
+			cout << "t_score: " << t_score << endl;
 
-			cout << endl;
+			if (t_score >= SUCCESS_T_SCORE) {
+				bool is_success = false;
+				if (wrapper->solution->last_scores.size() >= MIN_NUM_LAST_TRACK) {
+					int num_better_than = 0;
+					for (list<double>::iterator it = wrapper->solution->last_scores.begin();
+							it != wrapper->solution->last_scores.end(); it++) {
+						if (this->global_improvement >= *it) {
+							num_better_than++;
+						}
+					}
 
-			#if defined(MDEBUG) && MDEBUG
-			this->verify_problems = vector<Problem*>(NUM_VERIFY_SAMPLES, NULL);
-			this->verify_seeds = vector<unsigned long>(NUM_VERIFY_SAMPLES);
+					double target_better_than = LAST_BETTER_THAN_RATIO * (double)wrapper->solution->last_scores.size();
 
-			this->state = EXPERIMENT_STATE_CAPTURE_VERIFY;
-			this->state_iter = 0;
-			#else
-			this->result = EXPERIMENT_RESULT_SUCCESS;
-			#endif /* MDEBUG */
-		} else {
-			this->result = EXPERIMENT_RESULT_FAIL;
+					if (num_better_than >= target_better_than) {
+						is_success = true;
+					}
+
+					if (wrapper->solution->last_scores.size() >= NUM_LAST_TRACK) {
+						wrapper->solution->last_scores.pop_front();
+					}
+					wrapper->solution->last_scores.push_back(this->global_improvement);
+				} else {
+					wrapper->solution->last_scores.push_back(this->global_improvement);
+				}
+
+				#if defined(MDEBUG) && MDEBUG
+				if (is_success || rand()%2 == 0) {
+				#else
+				if (is_success) {
+				#endif /* MDEBUG */
+					cout << "this->scope_context->id: " << this->scope_context->id << endl;
+					cout << "this->node_context->id: " << this->node_context->id << endl;
+					cout << "this->is_branch: " << this->is_branch << endl;
+					if (this->best_new_scope != NULL) {
+						if (this->best_parent_scope == this->scope_context) {
+							cout << "new local scope" << endl;
+						} else {
+							cout << "new outer scope" << endl;
+						}
+					}
+					cout << "new explore path:";
+					for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+						if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+							cout << " " << this->best_actions[s_index];
+						} else {
+							if (this->best_scopes[s_index]->is_outer) {
+								cout << " O" << this->best_scopes[s_index]->id;
+							} else {
+								cout << " E" << this->best_scopes[s_index]->id;
+							}
+						}
+					}
+					cout << endl;
+
+					if (this->exit_next_node == NULL) {
+						cout << "this->exit_next_node->id: " << -1 << endl;
+					} else {
+						cout << "this->exit_next_node->id: " << this->exit_next_node->id << endl;
+					}
+
+					cout << "this->local_improvement: " << this->local_improvement << endl;
+					cout << "average_hits_per_run: " << average_hits_per_run << endl;
+					cout << "this->global_improvement: " << this->global_improvement << endl;
+
+					cout << endl;
+
+					#if defined(MDEBUG) && MDEBUG
+					this->verify_problems = vector<Problem*>(NUM_VERIFY_SAMPLES, NULL);
+					this->verify_seeds = vector<unsigned long>(NUM_VERIFY_SAMPLES);
+
+					this->state = EXPERIMENT_STATE_CAPTURE_VERIFY;
+					this->state_iter = 0;
+					#else
+					this->result = EXPERIMENT_RESULT_SUCCESS;
+					#endif /* MDEBUG */
+				} else {
+					this->result = EXPERIMENT_RESULT_FAIL;
+				}
+			} else if (t_score < FAIL_T_SCORE) {
+				this->result = EXPERIMENT_RESULT_FAIL;
+			} else {
+				this->state = EXPERIMENT_STATE_REFINE;
+				this->state_iter = 0;
+			}
 		}
 	}
 }

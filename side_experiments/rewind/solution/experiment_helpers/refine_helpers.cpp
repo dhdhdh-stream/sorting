@@ -15,6 +15,12 @@
 
 using namespace std;
 
+#if defined(MDEBUG) && MDEBUG
+const int REFINE_ITERS = 10;
+#else
+const int REFINE_ITERS = 4000;
+#endif /* MDEBUG */
+
 void Experiment::refine_check_activate(SolutionWrapper* wrapper) {
 	ExperimentState* new_experiment_state = new ExperimentState(this);
 	new_experiment_state->step_index = 0;
@@ -122,7 +128,7 @@ void Experiment::refine_backprop(
 		}
 
 		this->state_iter++;
-		if (this->state_iter >= MEASURE_ITERS) {
+		if (this->state_iter >= REFINE_ITERS) {
 			{
 				default_random_engine generator_copy = generator;
 				shuffle(this->new_obs_histories.begin(), this->new_obs_histories.end(), generator_copy);
@@ -146,6 +152,9 @@ void Experiment::refine_backprop(
 
 				this->num_original = 0;
 				this->num_branch = 0;
+
+				this->total_count = 0;
+				this->total_sum_scores = 0.0;
 
 				this->state = EXPERIMENT_STATE_REMEASURE_EXISTING;
 				this->state_iter = 0;

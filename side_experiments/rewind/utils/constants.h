@@ -30,10 +30,16 @@ const int STEP_TYPE_SCOPE = 1;
 const int NEW_SCOPE_MIN_NODES = 10;
 
 #if defined(MDEBUG) && MDEBUG
-const int MEASURE_ITERS = 10;
+const int MEASURE_STEP_NUM_ITERS = 10;
 #else
-const int MEASURE_ITERS = 4000;
+const int MEASURE_STEP_NUM_ITERS = 100;
 #endif /* MDEBUG */
+
+const int BRANCH_RATIO_CHECK_ITER = 1000;
+const double BRANCH_MIN_RATIO = 0.03;
+
+const double FAIL_T_SCORE = 0.674;
+const double SUCCESS_T_SCORE = 2.326;
 
 #if defined(MDEBUG) && MDEBUG
 const int NUM_LAST_TRACK = 4;

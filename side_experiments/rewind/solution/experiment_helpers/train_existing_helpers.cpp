@@ -42,23 +42,14 @@ void Experiment::train_existing_backprop(double target_val,
 	ExperimentHistory* history = (ExperimentHistory*)wrapper->experiment_history;
 
 	if (history->is_hit) {
-		this->true_scores.push_back(target_val);
-
 		while (this->existing_true_histories.size() < this->existing_obs_histories.size()) {
 			this->existing_true_histories.push_back(target_val);
 		}
 	}
 
-	if ((int)this->true_scores.size() >= TRAIN_EXISTING_NUM_DATAPOINTS) {
-		double sum_vals = 0.0;
-		for (int h_index = 0; h_index < (int)this->true_scores.size(); h_index++) {
-			sum_vals += this->true_scores[h_index];
-		}
-		this->existing_true = sum_vals / (double)this->true_scores.size();
-
-		this->average_instances_per_run = (double)this->sum_num_instances / (double)this->true_scores.size();
-
-		this->true_scores.clear();
+	this->state_iter++;
+	if (this->state_iter >= TRAIN_EXISTING_NUM_DATAPOINTS) {
+		this->average_instances_per_run = (double)this->sum_num_instances / this->state_iter;
 
 		uniform_int_distribution<int> val_input_distribution(0, this->existing_obs_histories.size()-1);
 

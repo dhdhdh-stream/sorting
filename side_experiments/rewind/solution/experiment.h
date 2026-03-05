@@ -31,8 +31,6 @@ public:
 	std::vector<std::vector<double>> existing_obs_histories;
 	std::vector<double> existing_true_histories;
 
-	double existing_true;
-
 	Network* existing_true_network;
 
 	int sum_num_instances;
@@ -63,7 +61,8 @@ public:
 	bool best_new_is_binarize;
 	bool best_refine_is_binarize;
 
-	std::vector<double> true_scores;
+	std::vector<double> existing_scores;
+	std::vector<double> new_scores;
 
 	int num_original;
 	int num_branch;

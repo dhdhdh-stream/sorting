@@ -1,22 +1,3 @@
-// - first change to ramp
-// - then experiment with signals
-//   - to break bottleneck
-
-// - issue is:
-//   - solution becomes fractured
-//     - every spot is in half states, half solved
-//   - progress becomes difficult, even per spot
-//   - indistinguishable from noise
-//   - begin to make mistakes
-
-// - around 0.005 is when mistakes start to happen
-//   - check standard deviation/t-score around that area
-//   - t-score ~= 0.5
-
-// TODO: use t-score for last scores instead of true
-
-// TODO: if experiments keep failing, increase sample size
-
 #include <chrono>
 #include <iostream>
 #include <map>

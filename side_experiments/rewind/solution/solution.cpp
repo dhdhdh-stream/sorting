@@ -16,6 +16,12 @@
 
 using namespace std;
 
+#if defined(MDEBUG) && MDEBUG
+const int INIT_MEASURE_ITERS = 10;
+#else
+const int INIT_MEASURE_ITERS = 4000;
+#endif /* MDEBUG */
+
 Solution::Solution() {
 	// do nothing
 }
@@ -84,14 +90,14 @@ Solution::~Solution() {
 
 void Solution::init(ProblemType* problem_type) {
 	double sum_score = 0.0;
-	for (int iter_index = 0; iter_index < MEASURE_ITERS; iter_index++) {
+	for (int iter_index = 0; iter_index < INIT_MEASURE_ITERS; iter_index++) {
 		Problem* problem = problem_type->get_problem();
 		sum_score += problem->score_result();
 		delete problem;
 	}
 
 	this->timestamp = 0;
-	this->curr_score = sum_score / MEASURE_ITERS;
+	this->curr_score = sum_score / INIT_MEASURE_ITERS;
 
 	this->state = SOLUTION_STATE_NON_OUTER;
 
