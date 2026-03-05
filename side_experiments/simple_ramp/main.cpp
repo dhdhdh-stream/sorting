@@ -1,3 +1,7 @@
+// TODO: maybe initialize with a number of actions
+
+// TODO: force repetition
+
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -94,6 +98,15 @@ int main(int argc, char* argv[]) {
 			iter_index++;
 			if (iter_index%100000 == 0) {
 				cout << "iter_index: " << iter_index << endl;
+				cout << "solution_wrapper->curr_num_explore: " << solution_wrapper->curr_num_explore << endl;
+				cout << "solution_wrapper->curr_num_refine: " << solution_wrapper->curr_num_refine << endl;
+				cout << "solution_wrapper->curr_num_ramp: " << solution_wrapper->curr_num_ramp << endl;
+				double sum_vals = 0.0;
+				for (int h_index = 0; h_index < (int)solution_wrapper->solution->score_histories.size(); h_index++) {
+					sum_vals += solution_wrapper->solution->score_histories[h_index];
+				}
+				double score_average = sum_vals / (double)solution_wrapper->solution->score_histories.size();
+				cout << "score_average: " << score_average << endl;
 			}
 
 			if (solution_wrapper->solution->timestamp != starting_timestamp) {

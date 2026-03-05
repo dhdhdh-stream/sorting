@@ -64,6 +64,7 @@ void Experiment::add(SolutionWrapper* wrapper) {
 	ss << "this->local_improvement: " << this->local_improvement << "; ";
 	ss << "this->global_improvement: " << this->global_improvement << "; ";
 	ss << "this->score_standard_deviation: " << this->score_standard_deviation << "; ";
+	ss << "this->new_scores.size(): " << this->new_scores.size() << "; ";
 
 	wrapper->solution->improvement_history.push_back(calc_new_score());
 	wrapper->solution->change_history.push_back(ss.str());

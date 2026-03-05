@@ -34,7 +34,8 @@ EvalExperimentHistory::EvalExperimentHistory(EvalExperiment* experiment) {
 	switch (experiment->state) {
 	case EVAL_EXPERIMENT_STATE_REFINE:
 		{
-			uniform_int_distribution<int> on_distribution(0, 99);
+			// uniform_int_distribution<int> on_distribution(0, 99);
+			uniform_int_distribution<int> on_distribution(0, 39);
 			if (on_distribution(generator) == 0) {
 				this->is_on = true;
 			} else {

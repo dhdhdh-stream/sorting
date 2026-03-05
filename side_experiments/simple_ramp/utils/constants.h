@@ -31,7 +31,7 @@ const int MEASURE_EPOCH_NUM_ITERS = 80;
 const int EXPERIMENT_NUM_GEARS = 10;
 const int RAMP_GEAR = 2;
 const int MEASURE_GEAR = 4;
-const int RAMP_EPOCH_NUM_ITERS = 2000;
+const int RAMP_EPOCH_NUM_ITERS = 4000;
 const int MEASURE_EPOCH_NUM_ITERS = 8000;
 #endif /* MDEBUG */
 

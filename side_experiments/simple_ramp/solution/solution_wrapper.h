@@ -49,6 +49,10 @@ public:
 
 	int experiment_iter;
 
+	int curr_num_explore;
+	int curr_num_refine;
+	int curr_num_ramp;
+
 	#if defined(MDEBUG) && MDEBUG
 	int run_index;
 	unsigned long starting_run_seed;

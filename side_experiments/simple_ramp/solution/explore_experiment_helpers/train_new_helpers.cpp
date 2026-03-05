@@ -17,7 +17,8 @@ using namespace std;
 #if defined(MDEBUG) && MDEBUG
 const int TRAIN_NEW_NUM_DATAPOINTS = 20;
 #else
-const int TRAIN_NEW_NUM_DATAPOINTS = 200;
+// const int TRAIN_NEW_NUM_DATAPOINTS = 200;
+const int TRAIN_NEW_NUM_DATAPOINTS = 400;
 #endif /* MDEBUG */
 
 void ExploreExperiment::train_new_check_activate(
@@ -142,12 +143,16 @@ void ExploreExperiment::train_new_backprop(double target_val,
 				new_eval_experiment->actions = this->best_actions;
 				new_eval_experiment->scopes = this->best_scopes;
 
+				wrapper->curr_num_refine++;
+
 				this->node_context->experiment = new_eval_experiment;
 				delete this;
 			} else {
 				this->node_context->experiment = NULL;
 				delete this;
 			}
+
+			wrapper->curr_num_explore--;
 		}
 	}
 }

@@ -57,6 +57,8 @@ void EvalExperiment::ramp_backprop(double target_val,
 		if (this->num_original == BRANCH_RATIO_CHECK_ITER) {
 			double branch_ratio = (double)this->num_branch / ((double)this->num_original + (double)this->num_branch);
 			if (branch_ratio < BRANCH_MIN_RATIO) {
+				wrapper->curr_num_ramp--;
+
 				this->node_context->experiment = NULL;
 				delete this;
 				return;
@@ -124,6 +126,8 @@ void EvalExperiment::ramp_backprop(double target_val,
 					add(wrapper);
 					this->node_context->experiment = NULL;
 					delete this;
+
+					wrapper->curr_num_ramp--;
 				}
 			} else {
 				switch (this->state) {
@@ -142,6 +146,8 @@ void EvalExperiment::ramp_backprop(double target_val,
 				if (this->curr_ramp < 0) {
 					this->node_context->experiment = NULL;
 					delete this;
+
+					wrapper->curr_num_ramp--;
 				}
 			}
 		}
@@ -172,7 +178,7 @@ void EvalExperiment::ramp_backprop(double target_val,
 			if (total_iters < 0) {
 				total_iters += numeric_limits<int>::max();
 			}
-			double average_hits_per_run = (double)MEASURE_EPOCH_NUM_ITERS / (double)total_iters;
+			double average_hits_per_run = ((double)MEASURE_EPOCH_NUM_ITERS / 2.0) / (double)total_iters;
 
 			this->local_improvement = new_score_average - existing_score_average;
 			this->global_improvement = average_hits_per_run * this->local_improvement;
@@ -202,7 +208,7 @@ void EvalExperiment::ramp_backprop(double target_val,
 					}
 				}
 
-				int target_better_than = LAST_BETTER_THAN_RATIO * (double)wrapper->solution->last_scores.size();
+				double target_better_than = LAST_BETTER_THAN_RATIO * (double)wrapper->solution->last_scores.size();
 
 				if (num_better_than >= target_better_than) {
 					is_success = true;

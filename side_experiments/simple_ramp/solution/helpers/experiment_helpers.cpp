@@ -35,6 +35,15 @@ void gather_helper(ScopeHistory* scope_history,
 				}
 			}
 			break;
+		case NODE_TYPE_SCOPE:
+			{
+				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)it->second;
+
+				gather_helper(scope_node_history->scope_history,
+							  node_context,
+							  potential_seen);
+			}
+			break;
 		}
 	}
 }
@@ -70,5 +79,7 @@ void create_experiment(SolutionWrapper* wrapper) {
 			node_context,
 			exit_next_node);
 		node_context->experiment = new_experiment;
+
+		wrapper->curr_num_explore++;
 	}
 }

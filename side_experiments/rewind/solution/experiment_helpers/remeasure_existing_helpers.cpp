@@ -1,5 +1,7 @@
 #include "experiment.h"
 
+#include <iostream>
+
 #include "constants.h"
 #include "network.h"
 #include "solution_wrapper.h"

@@ -14,6 +14,7 @@ using namespace std;
 #if defined(MDEBUG) && MDEBUG
 const int REFINE_NUM_DATAPOINTS = 20;
 #else
+// const int REFINE_NUM_DATAPOINTS = 2000;
 const int REFINE_NUM_DATAPOINTS = 4000;
 #endif /* MDEBUG */
 
@@ -71,6 +72,8 @@ void EvalExperiment::refine_backprop(double target_val,
 			if (this->num_original == BRANCH_RATIO_CHECK_ITER) {
 				double branch_ratio = (double)this->num_branch / ((double)this->num_original + (double)this->num_branch);
 				if (branch_ratio < BRANCH_MIN_RATIO) {
+					wrapper->curr_num_refine--;
+
 					this->node_context->experiment = NULL;
 					delete this;
 					return;
@@ -120,6 +123,14 @@ void EvalExperiment::refine_backprop(double target_val,
 				new_network->backprop(error);
 			}
 
+			this->existing_obs_histories.clear();
+			this->existing_target_val_histories.clear();
+			this->new_obs_histories.clear();
+			this->new_target_val_histories.clear();
+			/**
+			 * TODO: perhaps shrink_to_fit()
+			 */
+
 			this->new_networks.push_back(new_network);
 
 			this->num_original = 0;
@@ -131,6 +142,9 @@ void EvalExperiment::refine_backprop(double target_val,
 			this->state = EVAL_EXPERIMENT_STATE_INIT;
 			this->state_iter = 0;
 			this->num_fail = 0;
+
+			wrapper->curr_num_refine--;
+			wrapper->curr_num_ramp++;
 		}
 	}
 }

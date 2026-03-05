@@ -151,14 +151,18 @@ void Experiment::measure_backprop(double target_val,
 			double t_score = this->local_improvement
 				/ (this->score_standard_deviation / sqrt((double)this->new_scores.size()));
 
-			// temp
-			cout << "existing_true: " << existing_true << endl;
-			cout << "new_true: " << new_true << endl;
-			cout << "this->new_scores.size(): " << this->new_scores.size() << endl;
-			cout << "average_hits_per_run: " << average_hits_per_run << endl;
-			cout << "t_score: " << t_score << endl;
+			// // temp
+			// cout << "existing_true: " << existing_true << endl;
+			// cout << "new_true: " << new_true << endl;
+			// cout << "this->new_scores.size(): " << this->new_scores.size() << endl;
+			// cout << "average_hits_per_run: " << average_hits_per_run << endl;
+			// cout << "t_score: " << t_score << endl;
 
+			#if defined(MDEBUG) && MDEBUG
+			if (t_score >= SUCCESS_T_SCORE || rand()%3 == 0) {
+			#else
 			if (t_score >= SUCCESS_T_SCORE) {
+			#endif /* MDEBUG */
 				bool is_success = false;
 				if (wrapper->solution->last_scores.size() >= MIN_NUM_LAST_TRACK) {
 					int num_better_than = 0;
@@ -183,11 +187,7 @@ void Experiment::measure_backprop(double target_val,
 					wrapper->solution->last_scores.push_back(this->global_improvement);
 				}
 
-				#if defined(MDEBUG) && MDEBUG
-				if (is_success || rand()%2 == 0) {
-				#else
 				if (is_success) {
-				#endif /* MDEBUG */
 					cout << "this->scope_context->id: " << this->scope_context->id << endl;
 					cout << "this->node_context->id: " << this->node_context->id << endl;
 					cout << "this->is_branch: " << this->is_branch << endl;
@@ -236,10 +236,14 @@ void Experiment::measure_backprop(double target_val,
 				} else {
 					this->result = EXPERIMENT_RESULT_FAIL;
 				}
+			#if defined(MDEBUG) && MDEBUG
+			} else if (t_score < FAIL_T_SCORE && rand()%2 == 0) {
+			#else
 			} else if (t_score < FAIL_T_SCORE) {
+			#endif /* MDEBUG */
 				this->result = EXPERIMENT_RESULT_FAIL;
 			} else {
-				this->state = EXPERIMENT_STATE_REFINE;
+				this->state = EXPERIMENT_STATE_REMEASURE_EXISTING;
 				this->state_iter = 0;
 			}
 		}

@@ -56,6 +56,10 @@ SolutionWrapper::SolutionWrapper() {
 
 	this->experiment_iter = 0;
 
+	this->curr_num_explore = 0;
+	this->curr_num_refine = 0;
+	this->curr_num_ramp = 0;
+
 	#if defined(MDEBUG) && MDEBUG
 	this->run_index = 0;
 	#endif /* MDEBUG */
@@ -76,6 +80,10 @@ SolutionWrapper::SolutionWrapper(std::string path,
 	input_file.close();
 
 	this->experiment_iter = 0;
+
+	this->curr_num_explore = 0;
+	this->curr_num_refine = 0;
+	this->curr_num_ramp = 0;
 
 	#if defined(MDEBUG) && MDEBUG
 	this->run_index = 0;

@@ -218,6 +218,8 @@ void ExploreExperiment::explore_backprop(double target_val,
 			} else {
 				this->node_context->experiment = NULL;
 				delete this;
+
+				wrapper->curr_num_explore--;
 			}
 		}
 	}
