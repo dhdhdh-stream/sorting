@@ -62,13 +62,13 @@ public:
 
 	int curr_ramp;
 
+	int measure_status;
+
 	int starting_experiment_iter;
 
 	double local_improvement;
 	double global_improvement;
 	double score_standard_deviation;
-
-	int measure_status;
 
 	int result;
 

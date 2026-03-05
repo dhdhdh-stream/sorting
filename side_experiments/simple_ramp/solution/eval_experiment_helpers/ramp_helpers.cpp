@@ -50,18 +50,16 @@ void EvalExperiment::ramp_backprop(double target_val,
 								   EvalExperimentHistory* history,
 								   SolutionWrapper* wrapper,
 								   set<Scope*>& updated_scopes) {
-	if (history->is_on) {
-		if (history->hit_branch) {
-			this->num_branch++;
-		} else {
-			this->num_original++;
-			if (this->num_original == BRANCH_RATIO_CHECK_ITER) {
-				double branch_ratio = (double)this->num_branch / ((double)this->num_original + (double)this->num_branch);
-				if (branch_ratio < BRANCH_MIN_RATIO) {
-					this->node_context->experiment = NULL;
-					delete this;
-					return;
-				}
+	if (history->hit_branch) {
+		this->num_branch++;
+	} else {
+		this->num_original++;
+		if (this->num_original == BRANCH_RATIO_CHECK_ITER) {
+			double branch_ratio = (double)this->num_branch / ((double)this->num_original + (double)this->num_branch);
+			if (branch_ratio < BRANCH_MIN_RATIO) {
+				this->node_context->experiment = NULL;
+				delete this;
+				return;
 			}
 		}
 	}
@@ -69,14 +67,17 @@ void EvalExperiment::ramp_backprop(double target_val,
 	if (history->is_on) {
 		if (history->hit_branch) {
 			this->new_scores.push_back(target_val);
+
+			this->state_iter++;
 		}
 	} else {
 		if (history->hit_branch) {
 			this->existing_scores.push_back(target_val);
+
+			this->state_iter++;
 		}
 	}
 
-	this->state_iter++;
 	switch (this->state) {
 	case EVAL_EXPERIMENT_STATE_INIT:
 	case EVAL_EXPERIMENT_STATE_RAMP:
@@ -178,8 +179,21 @@ void EvalExperiment::ramp_backprop(double target_val,
 			double t_score = this->local_improvement
 				/ (this->score_standard_deviation / sqrt(MEASURE_EPOCH_NUM_ITERS / 2.0));
 
+			// temp
+			cout << "new_score_average: " << new_score_average << endl;
+			cout << "existing_score_average: " << existing_score_average << endl;
+			cout << "this->local_improvement: " << this->local_improvement << endl;
+			cout << "this->global_improvement: " << this->global_improvement << endl;
+			cout << "t_score: " << t_score << endl;
+
+			this->state_iter = 0;
+
 			bool is_success = false;
+			#if defined(MDEBUG) && MDEBUG
+			if (t_score >= 1.645 || rand()%2 == 0) {
+			#else
 			if (t_score >= 1.645) {
+			#endif /* MDEBUG */
 				int num_better_than = 0;
 				for (list<double>::iterator it = wrapper->solution->last_scores.begin();
 						it != wrapper->solution->last_scores.end(); it++) {

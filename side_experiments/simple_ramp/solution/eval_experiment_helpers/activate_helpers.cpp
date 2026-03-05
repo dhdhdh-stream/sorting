@@ -36,6 +36,7 @@ void EvalExperiment::check_activate(AbstractNode* experiment_node,
 		break;
 	case EVAL_EXPERIMENT_STATE_INIT:
 	case EVAL_EXPERIMENT_STATE_RAMP:
+	case EVAL_EXPERIMENT_STATE_MEASURE:
 		ramp_check_activate(experiment_node,
 							obs,
 							wrapper,
@@ -102,6 +103,7 @@ void EvalExperiment::backprop(double target_val,
 		break;
 	case EVAL_EXPERIMENT_STATE_INIT:
 	case EVAL_EXPERIMENT_STATE_RAMP:
+	case EVAL_EXPERIMENT_STATE_MEASURE:
 		ramp_backprop(target_val,
 					  history,
 					  wrapper,

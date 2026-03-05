@@ -35,7 +35,7 @@ EvalExperimentHistory::EvalExperimentHistory(EvalExperiment* experiment) {
 	case EVAL_EXPERIMENT_STATE_REFINE:
 		{
 			uniform_int_distribution<int> on_distribution(0, 99);
-			if (experiment->curr_ramp >= on_distribution(generator)) {
+			if (on_distribution(generator) == 0) {
 				this->is_on = true;
 			} else {
 				this->is_on = false;

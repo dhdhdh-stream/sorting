@@ -125,6 +125,9 @@ void ExploreExperiment::train_new_backprop(double target_val,
 			#else
 			if (num_positive > 0) {
 			#endif /* MDEBUG */
+				// temp
+				cout << "EvalExperiment" << endl;
+
 				EvalExperiment* new_eval_experiment = new EvalExperiment();
 
 				new_eval_experiment->node_context = this->node_context;

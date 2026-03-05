@@ -26,6 +26,11 @@ void ExploreExperiment::check_activate(AbstractNode* experiment_node,
 	history->num_instances++;
 
 	switch (this->state) {
+	case EXPLORE_EXPERIMENT_STATE_TRAIN_EXISTING:
+		train_existing_check_activate(obs,
+									  wrapper,
+									  history);
+		break;
 	case EXPLORE_EXPERIMENT_STATE_EXPLORE:
 		explore_check_activate(obs,
 							   wrapper,
@@ -100,6 +105,11 @@ void ExploreExperiment::backprop(double target_val,
 	this->sum_num_instances += history->num_instances;
 
 	switch (this->state) {
+	case EXPLORE_EXPERIMENT_STATE_TRAIN_EXISTING:
+		train_existing_backprop(target_val,
+								history,
+								wrapper);
+		break;
 	case EXPLORE_EXPERIMENT_STATE_EXPLORE:
 		explore_backprop(target_val,
 						 history,

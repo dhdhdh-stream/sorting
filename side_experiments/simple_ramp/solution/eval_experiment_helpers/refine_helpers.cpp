@@ -1,5 +1,7 @@
 #include "eval_experiment.h"
 
+#include <iostream>
+
 #include "constants.h"
 #include "globals.h"
 #include "network.h"
@@ -52,7 +54,7 @@ void EvalExperiment::refine_check_activate(
 		/**
 		 * - to guarantee enough samples
 		 */
-		if (this->existing_obs_histories.size() < 2 * this->existing_obs_histories.size()) {
+		if (this->existing_obs_histories.size() < 2 * this->new_obs_histories.size()) {
 			this->existing_obs_histories.push_back(obs);
 		}
 	}
@@ -120,7 +122,11 @@ void EvalExperiment::refine_backprop(double target_val,
 
 			this->new_networks.push_back(new_network);
 
+			this->num_original = 0;
+			this->num_branch = 0;
+
 			this->curr_ramp = 0;
+			this->measure_status = MEASURE_STATUS_N_A;
 
 			this->state = EVAL_EXPERIMENT_STATE_INIT;
 			this->state_iter = 0;
