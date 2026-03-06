@@ -18,6 +18,9 @@ class SolutionWrapper;
 void create_experiment(ScopeHistory* scope_history,
 					   SolutionWrapper* wrapper);
 
+void create_new_scope(AbstractNode* potential_start_node,
+					  AbstractNode* potential_end_node,
+					  Scope*& new_scope);
 void create_new_scope(Scope* scope_context,
 					  SolutionWrapper* wrapper,
 					  Scope*& new_scope,

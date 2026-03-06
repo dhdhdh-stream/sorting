@@ -19,6 +19,7 @@ void ScopeNode::step(vector<double>& obs,
 	ScopeHistory* scope_history = wrapper->scope_histories.back();
 
 	ScopeNodeHistory* history = new ScopeNodeHistory(this);
+	history->index = (int)scope_history->node_histories.size();
 	scope_history->node_histories[this->id] = history;
 
 	ScopeHistory* inner_scope_history = new ScopeHistory(this->scope);
@@ -43,6 +44,7 @@ void ScopeNode::step(vector<double>& obs,
 	ScopeHistory* scope_history = scope_histories.back();
 
 	ScopeNodeHistory* history = new ScopeNodeHistory(this);
+	history->index = (int)scope_history->node_histories.size();
 	scope_history->node_histories[this->id] = history;
 
 	ScopeHistory* inner_scope_history = new ScopeHistory(this->scope);

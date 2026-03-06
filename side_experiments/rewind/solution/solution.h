@@ -57,6 +57,7 @@ public:
 	 *   - if experiment has good local, but poor global, will add anyways
 	 */
 	std::list<double> last_scores;
+	std::list<double> repetition_last_scores;
 
 	int num_experiments;
 

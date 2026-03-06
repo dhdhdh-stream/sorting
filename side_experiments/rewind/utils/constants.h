@@ -17,6 +17,9 @@ const int TRAIN_ITERS = 300000;
 const int UPDATE_ITERS = 100000;
 #endif /* MDEBUG */
 
+const int NEW_SCOPE_MIN_NUM_NODES = 3;
+const int CREATE_NEW_SCOPE_NUM_TRIES = 50;
+
 /**
  * - simply give raw actions a fixed weight
  *   - cannot track success/count if continuous

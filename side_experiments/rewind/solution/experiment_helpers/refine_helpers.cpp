@@ -88,6 +88,7 @@ void Experiment::refine_step(vector<double>& obs,
 			ScopeNode* scope_node = (ScopeNode*)this->best_new_nodes[experiment_state->step_index];
 
 			ScopeNodeHistory* history = new ScopeNodeHistory(scope_node);
+			history->index = (int)scope_history->node_histories.size();
 			scope_history->node_histories[scope_node->id] = history;
 
 			ScopeHistory* inner_scope_history = new ScopeHistory(this->best_scopes[experiment_state->step_index]);

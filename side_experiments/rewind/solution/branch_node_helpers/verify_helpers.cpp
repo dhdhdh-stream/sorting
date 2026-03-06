@@ -21,6 +21,7 @@ void BranchNode::verify_step(vector<double>& obs,
 	ScopeHistory* scope_history = wrapper->scope_histories.back();
 
 	BranchNodeHistory* history = new BranchNodeHistory(this);
+	history->index = (int)scope_history->node_histories.size();
 	scope_history->node_histories[this->id] = history;
 
 	for (int n_index = 0; n_index < (int)this->networks.size(); n_index++) {
