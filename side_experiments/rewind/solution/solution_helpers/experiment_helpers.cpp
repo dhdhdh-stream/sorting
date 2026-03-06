@@ -125,6 +125,7 @@ void repetition_gather_helper(ScopeHistory* scope_history,
 				if (end_index - start_index >= NEW_SCOPE_MIN_NUM_NODES-1) {
 					start_node = nodes[start_index];
 					end_node = nodes[end_index];
+					break;
 				}
 			}
 		}

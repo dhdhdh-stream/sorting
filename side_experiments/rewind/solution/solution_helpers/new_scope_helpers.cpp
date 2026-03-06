@@ -372,7 +372,7 @@ void create_new_scope(Scope* scope_context,
 
 		if (potential_new_scope != NULL) {
 			new_scope = potential_new_scope;
-			break;
+			return;
 		}
 	}
 

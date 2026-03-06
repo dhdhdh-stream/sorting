@@ -6,6 +6,7 @@
 #include "experiment.h"
 #include "globals.h"
 #include "problem.h"
+#include "repetition_experiment.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
@@ -32,6 +33,12 @@ void SolutionWrapper::experiment_init() {
 			{
 				Experiment* experiment = (Experiment*)this->curr_experiment;
 				this->experiment_history = new ExperimentHistory(experiment);
+			}
+			break;
+		case EXPERIMENT_TYPE_REPETITION:
+			{
+				RepetitionExperiment* experiment = (RepetitionExperiment*)this->curr_experiment;
+				this->experiment_history = new RepetitionExperimentHistory(experiment);
 			}
 			break;
 		}
@@ -99,49 +106,45 @@ void SolutionWrapper::experiment_end(double result) {
 		delete this->experiment_history;
 		this->experiment_history = NULL;
 
-		switch (this->curr_experiment->type) {
-		case EXPERIMENT_TYPE_EXPERIMENT:
-			if (this->curr_experiment->result == EXPERIMENT_RESULT_FAIL) {
-				this->curr_experiment->clean();
-				delete this->curr_experiment;
+		if (this->curr_experiment->result == EXPERIMENT_RESULT_FAIL) {
+			this->curr_experiment->clean();
+			delete this->curr_experiment;
 
-				this->curr_experiment = NULL;
-			} else if (this->curr_experiment->result == EXPERIMENT_RESULT_SUCCESS) {
-				this->curr_experiment->clean();
+			this->curr_experiment = NULL;
+		} else if (this->curr_experiment->result == EXPERIMENT_RESULT_SUCCESS) {
+			this->curr_experiment->clean();
 
-				Scope* last_updated_scope = this->curr_experiment->scope_context;
+			Scope* last_updated_scope = this->curr_experiment->scope_context;
 
-				this->curr_experiment->add(this);
+			this->curr_experiment->add(this);
 
-				this->solution->curr_score = this->curr_experiment->calc_new_score();
+			this->solution->curr_score = this->curr_experiment->calc_new_score();
 
-				delete this->curr_experiment;
-				this->curr_experiment = NULL;
+			delete this->curr_experiment;
+			this->curr_experiment = NULL;
 
-				clean_scope(last_updated_scope);
+			clean_scope(last_updated_scope);
 
-				this->solution->clean_scopes();
+			this->solution->clean_scopes();
 
-				this->solution->timestamp++;
-				switch (this->solution->state) {
-				case SOLUTION_STATE_NON_OUTER:
-					if (this->solution->timestamp >= NON_OUTER_ITERS) {
-						this->solution->timestamp = -1;
+			this->solution->timestamp++;
+			switch (this->solution->state) {
+			case SOLUTION_STATE_NON_OUTER:
+				if (this->solution->timestamp >= NON_OUTER_ITERS) {
+					this->solution->timestamp = -1;
 
-						this->solution->wrapup();
-					}
-					break;
-				case SOLUTION_STATE_OUTER:
-					if (this->solution->timestamp >= OUTER_ITERS) {
-						this->solution->state = SOLUTION_STATE_NON_OUTER;
-						this->solution->timestamp = 0;
-
-						this->solution->merge_outer();
-					}
-					break;
+					this->solution->wrapup();
 				}
+				break;
+			case SOLUTION_STATE_OUTER:
+				if (this->solution->timestamp >= OUTER_ITERS) {
+					this->solution->state = SOLUTION_STATE_NON_OUTER;
+					this->solution->timestamp = 0;
+
+					this->solution->merge_outer();
+				}
+				break;
 			}
-			break;
 		}
 	}
 

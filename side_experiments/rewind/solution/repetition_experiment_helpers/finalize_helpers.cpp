@@ -39,6 +39,7 @@ void RepetitionExperiment::add(SolutionWrapper* wrapper) {
 	new_scope_node->parent = this->node_context->parent;
 	new_scope_node->id = this->node_context->parent->node_counter;
 	this->node_context->parent->node_counter++;
+	this->node_context->parent->nodes[new_scope_node->id] = new_scope_node;
 
 	new_scope_node->scope = this->new_scope;
 

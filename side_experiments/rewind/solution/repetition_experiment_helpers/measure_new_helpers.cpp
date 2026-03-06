@@ -30,6 +30,8 @@ void RepetitionExperiment::measure_new_step(vector<double>& obs,
 void RepetitionExperiment::measure_new_exit_step(SolutionWrapper* wrapper) {
 	RepetitionExperimentState* experiment_state = (RepetitionExperimentState*)wrapper->experiment_context[wrapper->experiment_context.size() - 2];
 
+	delete wrapper->scope_histories.back();
+
 	wrapper->scope_histories.pop_back();
 	wrapper->node_context.pop_back();
 	wrapper->experiment_context.pop_back();
@@ -87,31 +89,32 @@ void RepetitionExperiment::measure_new_backprop(
 			#else
 			if (t_score >= SUCCESS_T_SCORE) {
 			#endif /* MDEBUG */
-				bool is_success = false;
-				if (wrapper->solution->repetition_last_scores.size() >= MIN_NUM_LAST_TRACK) {
-					int num_better_than = 0;
-					for (list<double>::iterator it = wrapper->solution->repetition_last_scores.begin();
-							it != wrapper->solution->repetition_last_scores.end(); it++) {
-						if (this->global_improvement >= *it) {
-							num_better_than++;
-						}
-					}
+				// bool is_success = false;
+				// if (wrapper->solution->repetition_last_scores.size() >= MIN_NUM_LAST_TRACK) {
+				// 	int num_better_than = 0;
+				// 	for (list<double>::iterator it = wrapper->solution->repetition_last_scores.begin();
+				// 			it != wrapper->solution->repetition_last_scores.end(); it++) {
+				// 		if (this->global_improvement >= *it) {
+				// 			num_better_than++;
+				// 		}
+				// 	}
 
-					double target_better_than = LAST_BETTER_THAN_RATIO * (double)wrapper->solution->repetition_last_scores.size();
+				// 	double target_better_than = LAST_BETTER_THAN_RATIO * (double)wrapper->solution->repetition_last_scores.size();
 
-					if (num_better_than >= target_better_than) {
-						is_success = true;
-					}
+				// 	if (num_better_than >= target_better_than) {
+				// 		is_success = true;
+				// 	}
 
-					if (wrapper->solution->repetition_last_scores.size() >= NUM_LAST_TRACK) {
-						wrapper->solution->repetition_last_scores.pop_front();
-					}
-					wrapper->solution->repetition_last_scores.push_back(this->global_improvement);
-				} else {
-					wrapper->solution->repetition_last_scores.push_back(this->global_improvement);
-				}
+				// 	if (wrapper->solution->repetition_last_scores.size() >= NUM_LAST_TRACK) {
+				// 		wrapper->solution->repetition_last_scores.pop_front();
+				// 	}
+				// 	wrapper->solution->repetition_last_scores.push_back(this->global_improvement);
+				// } else {
+				// 	wrapper->solution->repetition_last_scores.push_back(this->global_improvement);
+				// }
 
-				if (is_success) {
+				// if (is_success) {
+				if (true) {
 					cout << "RepetitionExperiment" << endl;
 					cout << "this->node_context->parent->id: " << this->node_context->parent->id << endl;
 					cout << "this->node_context->id: " << this->node_context->id << endl;

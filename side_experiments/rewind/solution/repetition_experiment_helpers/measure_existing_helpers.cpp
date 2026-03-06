@@ -1,5 +1,7 @@
 #include "repetition_experiment.h"
 
+#include <iostream>
+
 #include "constants.h"
 #include "solution_wrapper.h"
 
