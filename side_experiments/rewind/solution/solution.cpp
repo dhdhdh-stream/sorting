@@ -65,7 +65,6 @@ Solution::Solution(Solution* original) {
 	}
 
 	this->last_scores = original->last_scores;
-	this->repetition_last_scores = original->repetition_last_scores;
 
 	this->num_experiments = original->num_experiments;
 
@@ -200,15 +199,6 @@ void Solution::load(ifstream& input_file) {
 		this->last_scores.push_back(stod(score_line));
 	}
 
-	string num_repetition_last_scores_line;
-	getline(input_file, num_repetition_last_scores_line);
-	int num_repetition_last_scores = stoi(num_repetition_last_scores_line);
-	for (int e_index = 0; e_index < num_repetition_last_scores; e_index++) {
-		string score_line;
-		getline(input_file, score_line);
-		this->last_scores.push_back(stod(score_line));
-	}
-
 	string num_experiments_line;
 	getline(input_file, num_experiments_line);
 	this->num_experiments = stoi(num_experiments_line);
@@ -308,7 +298,6 @@ void Solution::merge_outer() {
 
 void Solution::wrapup() {
 	// this->last_scores.clear();
-	// this->repetition_last_scores.clear();
 }
 
 void Solution::save(ofstream& output_file) {
@@ -331,12 +320,6 @@ void Solution::save(ofstream& output_file) {
 	output_file << this->last_scores.size() << endl;
 	for (list<double>::iterator it = this->last_scores.begin();
 			it != this->last_scores.end(); it++) {
-		output_file << *it << endl;
-	}
-
-	output_file << this->repetition_last_scores.size() << endl;
-	for (list<double>::iterator it = this->repetition_last_scores.begin();
-			it != this->repetition_last_scores.end(); it++) {
 		output_file << *it << endl;
 	}
 

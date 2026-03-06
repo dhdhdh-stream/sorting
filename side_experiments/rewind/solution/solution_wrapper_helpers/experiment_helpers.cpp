@@ -6,7 +6,6 @@
 #include "experiment.h"
 #include "globals.h"
 #include "problem.h"
-#include "repetition_experiment.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
@@ -33,12 +32,6 @@ void SolutionWrapper::experiment_init() {
 			{
 				Experiment* experiment = (Experiment*)this->curr_experiment;
 				this->experiment_history = new ExperimentHistory(experiment);
-			}
-			break;
-		case EXPERIMENT_TYPE_REPETITION:
-			{
-				RepetitionExperiment* experiment = (RepetitionExperiment*)this->curr_experiment;
-				this->experiment_history = new RepetitionExperimentHistory(experiment);
 			}
 			break;
 		}
@@ -128,22 +121,27 @@ void SolutionWrapper::experiment_end(double result) {
 			this->solution->clean_scopes();
 
 			this->solution->timestamp++;
-			switch (this->solution->state) {
-			case SOLUTION_STATE_NON_OUTER:
-				if (this->solution->timestamp >= NON_OUTER_ITERS) {
-					this->solution->timestamp = -1;
+			// switch (this->solution->state) {
+			// case SOLUTION_STATE_NON_OUTER:
+			// 	if (this->solution->timestamp >= NON_OUTER_ITERS) {
+			// 		this->solution->timestamp = -1;
 
-					this->solution->wrapup();
-				}
-				break;
-			case SOLUTION_STATE_OUTER:
-				if (this->solution->timestamp >= OUTER_ITERS) {
-					this->solution->state = SOLUTION_STATE_NON_OUTER;
-					this->solution->timestamp = 0;
+			// 		this->solution->wrapup();
+			// 	}
+			// 	break;
+			// case SOLUTION_STATE_OUTER:
+			// 	if (this->solution->timestamp >= OUTER_ITERS) {
+			// 		this->solution->state = SOLUTION_STATE_NON_OUTER;
+			// 		this->solution->timestamp = 0;
 
-					this->solution->merge_outer();
-				}
-				break;
+			// 		this->solution->merge_outer();
+			// 	}
+			// 	break;
+			// }
+			if (this->solution->timestamp % 10 == 5) {
+				add_focus_helper(this);
+			} else if (this->solution->timestamp % 10 == 0) {
+				this->focus_scope = NULL;
 			}
 		}
 	}

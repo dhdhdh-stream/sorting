@@ -31,6 +31,8 @@ void recursive_add_child(Scope* curr_parent,
 
 void clean_scope(Scope* scope);
 
+void add_focus_helper(SolutionWrapper* wrapper);
+
 double get_existing_result(SolutionWrapper* wrapper);
 
 #endif /* SOLUTION_HELPERS_H */

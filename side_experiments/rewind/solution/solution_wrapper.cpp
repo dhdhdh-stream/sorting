@@ -10,6 +10,8 @@ SolutionWrapper::SolutionWrapper(ProblemType* problem_type) {
 	this->solution = new Solution();
 	this->solution->init(problem_type);
 
+	this->focus_scope = NULL;
+
 	this->curr_experiment = NULL;
 
 	this->experiment_history = NULL;
@@ -26,6 +28,15 @@ SolutionWrapper::SolutionWrapper(std::string path,
 
 	this->solution = new Solution();
 	this->solution->load(input_file);
+
+	string focus_scope_id_line;
+	getline(input_file, focus_scope_id_line);
+	int focus_scope_id = stoi(focus_scope_id_line);
+	if (focus_scope_id == -1) {
+		this->focus_scope = NULL;
+	} else {
+		this->focus_scope = this->solution->scopes[focus_scope_id];
+	}
 
 	this->curr_experiment = NULL;
 
@@ -83,6 +94,12 @@ void SolutionWrapper::save(string path,
 	output_file.open(path + "temp_" + name);
 
 	this->solution->save(output_file);
+
+	if (this->focus_scope == NULL) {
+		output_file << -1 << endl;
+	} else {
+		output_file << this->focus_scope->id << endl;
+	}
 
 	output_file.close();
 
