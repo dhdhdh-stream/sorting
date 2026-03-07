@@ -140,8 +140,12 @@ void SolutionWrapper::experiment_end(double result) {
 			// }
 			if (this->solution->timestamp % 10 == 5) {
 				add_focus_helper(this);
+
+				this->solution->last_scores.clear();
 			} else if (this->solution->timestamp % 10 == 0) {
 				this->focus_scope = NULL;
+
+				this->solution->last_scores.clear();
 			}
 		}
 	}

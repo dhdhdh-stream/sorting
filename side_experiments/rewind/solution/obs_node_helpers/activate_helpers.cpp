@@ -31,6 +31,10 @@ void ObsNode::step(vector<double>& obs,
 
 	ObsNodeHistory* history = new ObsNodeHistory(this);
 	history->index = (int)scope_history->node_histories.size();
+	// temp
+	if (scope_history->node_histories.find(this->id) != scope_history->node_histories.end()) {
+		throw invalid_argument("scope_history->node_histories.find(this->id) != scope_history->node_histories.end()");
+	}
 	scope_history->node_histories[this->id] = history;
 
 	node_context.back() = this->next_node;

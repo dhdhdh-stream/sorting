@@ -152,12 +152,13 @@ void Experiment::measure_backprop(double target_val,
 			double t_score = this->local_improvement
 				/ (this->score_standard_deviation / sqrt((double)this->new_scores.size()));
 
-			// // temp
-			// cout << "existing_true: " << existing_true << endl;
-			// cout << "new_true: " << new_true << endl;
-			// cout << "this->new_scores.size(): " << this->new_scores.size() << endl;
-			// cout << "average_hits_per_run: " << average_hits_per_run << endl;
-			// cout << "t_score: " << t_score << endl;
+			// temp
+			cout << "existing_true: " << existing_true << endl;
+			cout << "new_true: " << new_true << endl;
+			cout << "this->new_scores.size(): " << this->new_scores.size() << endl;
+			cout << "average_hits_per_run: " << average_hits_per_run << endl;
+			cout << "t_score: " << t_score << endl;
+			cout << endl;
 
 			#if defined(MDEBUG) && MDEBUG
 			if (t_score >= SUCCESS_T_SCORE || rand()%3 == 0) {

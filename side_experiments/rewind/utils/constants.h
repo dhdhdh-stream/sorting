@@ -35,7 +35,7 @@ const int NEW_SCOPE_MIN_NODES = 10;
 #if defined(MDEBUG) && MDEBUG
 const int MEASURE_STEP_NUM_ITERS = 10;
 #else
-const int MEASURE_STEP_NUM_ITERS = 1000;
+const int MEASURE_STEP_NUM_ITERS = 2000;
 #endif /* MDEBUG */
 
 const int BRANCH_RATIO_CHECK_ITER = 1000;

@@ -1,5 +1,7 @@
 #include "solution_helpers.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_node.h"
 #include "globals.h"
@@ -20,6 +22,8 @@ const int MEASURE_ITERS = 1000;
 #endif /* MDEBUG */
 
 const double MIN_AVG_HITS = 2.0;
+const int MIN_LOCATIONS = 3;
+const double MIN_LOCATION_IMPACT = 0.3;
 
 void hit_helper(ScopeHistory* scope_history,
 				int& hit_count,
@@ -104,7 +108,8 @@ double measure_avg_hits_helper(SolutionWrapper* wrapper) {
 void gather_helper(ScopeHistory* scope_history,
 				   int& node_count,
 				   AbstractNode*& explore_node,
-				   bool& explore_is_branch) {
+				   bool& explore_is_branch,
+				   SolutionWrapper* wrapper) {
 	if (scope_history->scope->is_outer) {
 		return;
 	}
@@ -129,10 +134,13 @@ void gather_helper(ScopeHistory* scope_history,
 			{
 				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)h_it->second;
 
-				gather_helper(scope_node_history->scope_history,
-							  node_count,
-							  explore_node,
-							  explore_is_branch);
+				if (scope_node_history->scope_history->scope != wrapper->focus_scope) {
+					gather_helper(scope_node_history->scope_history,
+								  node_count,
+								  explore_node,
+								  explore_is_branch,
+								  wrapper);
+				}
 
 				if (node->experiment == NULL) {
 					uniform_int_distribution<int> select_distribution(0, node_count);
@@ -220,7 +228,8 @@ void add_scope_node_helper(SolutionWrapper* wrapper) {
 	gather_helper(scope_history,
 				  node_count,
 				  explore_node,
-				  explore_is_branch);
+				  explore_is_branch,
+				  wrapper);
 
 	if (explore_node != NULL) {
 		ScopeNode* new_scope_node = new ScopeNode();
@@ -348,18 +357,34 @@ void add_scope_node_helper(SolutionWrapper* wrapper) {
 			{
 				ObsNode* obs_node = (ObsNode*)explore_node;
 
-				for (int a_index = 0; a_index < (int)obs_node->next_node->ancestor_ids.size(); a_index++) {
-					if (obs_node->next_node->ancestor_ids[a_index] == obs_node->id) {
-						obs_node->next_node->ancestor_ids.erase(
-							obs_node->next_node->ancestor_ids.begin() + a_index);
-						break;
+				if (obs_node->next_node == NULL) {
+					ObsNode* new_ending_node = new ObsNode();
+					new_ending_node->parent = explore_node->parent;
+					new_ending_node->id = explore_node->parent->node_counter;
+					explore_node->parent->node_counter++;
+					explore_node->parent->nodes[new_ending_node->id] = new_ending_node;
+
+					new_ending_node->next_node_id = -1;
+					new_ending_node->next_node = NULL;
+
+					new_scope_node->next_node_id = new_ending_node->id;
+					new_scope_node->next_node = new_ending_node;
+
+					new_ending_node->ancestor_ids.push_back(new_scope_node->id);
+				} else {
+					for (int a_index = 0; a_index < (int)obs_node->next_node->ancestor_ids.size(); a_index++) {
+						if (obs_node->next_node->ancestor_ids[a_index] == obs_node->id) {
+							obs_node->next_node->ancestor_ids.erase(
+								obs_node->next_node->ancestor_ids.begin() + a_index);
+							break;
+						}
 					}
+
+					new_scope_node->next_node_id = obs_node->next_node->id;
+					new_scope_node->next_node = obs_node->next_node;
+
+					obs_node->next_node->ancestor_ids.push_back(new_scope_node->id);
 				}
-
-				new_scope_node->next_node_id = obs_node->next_node->id;
-				new_scope_node->next_node = obs_node->next_node;
-
-				obs_node->next_node->ancestor_ids.push_back(new_scope_node->id);
 
 				obs_node->next_node_id = new_scope_node->id;
 				obs_node->next_node = new_scope_node;
@@ -368,7 +393,11 @@ void add_scope_node_helper(SolutionWrapper* wrapper) {
 			}
 			break;
 		}
+
+		clean_scope(explore_node->parent);
 	}
+
+	delete scope_histories[0];
 
 	delete problem;
 
@@ -407,14 +436,25 @@ void add_focus_helper(SolutionWrapper* wrapper) {
 	end_node->next_node_id = -1;
 	end_node->next_node = NULL;
 
+	wrapper->focus_scope = new_scope;
+
+	double curr_avg_hits = 0.0;
+	int num_locations = 0;
 	while (true) {
+		// temp
+		cout << "iter" << endl;
+
 		add_scope_node_helper(wrapper);
 
 		double avg_hits = measure_avg_hits_helper(wrapper);
-		if (avg_hits >= MIN_AVG_HITS) {
+
+		if (avg_hits - curr_avg_hits >= MIN_LOCATION_IMPACT) {
+			num_locations++;
+		}
+		curr_avg_hits = avg_hits;
+
+		if (curr_avg_hits >= MIN_AVG_HITS && num_locations >= MIN_LOCATIONS) {
 			break;
 		}
 	}
-
-	wrapper->focus_scope = new_scope;
 }
