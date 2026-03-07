@@ -21,8 +21,6 @@ class SolutionWrapper {
 public:
 	Solution* solution;
 
-	Scope* focus_scope;
-
 	AbstractExperiment* curr_experiment;
 
 	/**

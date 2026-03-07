@@ -20,8 +20,7 @@ using namespace std;
 #if defined(MDEBUG) && MDEBUG
 const int TRAIN_NEW_NUM_DATAPOINTS = 20;
 #else
-// const int TRAIN_NEW_NUM_DATAPOINTS = 250;
-const int TRAIN_NEW_NUM_DATAPOINTS = 4000;
+const int TRAIN_NEW_NUM_DATAPOINTS = 250;
 #endif /* MDEBUG */
 
 void Experiment::train_new_check_activate(
@@ -134,13 +133,7 @@ void Experiment::train_new_backprop(
 				this->num_original = 0;
 				this->num_branch = 0;
 
-				// this->state = EXPERIMENT_STATE_REFINE;
-				// this->state_iter = 0;
-
-				this->total_count = 0;
-				this->total_sum_scores = 0.0;
-
-				this->state = EXPERIMENT_STATE_REMEASURE_EXISTING;
+				this->state = EXPERIMENT_STATE_REFINE;
 				this->state_iter = 0;
 			} else {
 				this->result = EXPERIMENT_RESULT_FAIL;

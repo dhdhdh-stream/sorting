@@ -26,6 +26,12 @@ public:
 	 */
 
 	std::vector<Scope*> child_scopes;
+	/**
+	 * - main goal of reusing scopes is generalization
+	 *   - want to use the same scopes as often as possible
+	 *     - so for outer, only add if used
+	 * - if goal is for explore to cover large distance, also have create_new_scope()
+	 */
 
 	Scope();
 	~Scope();

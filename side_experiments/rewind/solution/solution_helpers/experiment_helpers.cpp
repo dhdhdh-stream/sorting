@@ -20,18 +20,11 @@ using namespace std;
  * - don't prioritize exploring new nodes as new scopes change explore
  */
 void gather_helper(ScopeHistory* scope_history,
-				   bool can_explore,
 				   int& node_count,
 				   AbstractNode*& explore_node,
-				   bool& explore_is_branch,
-				   SolutionWrapper* wrapper) {
+				   bool& explore_is_branch) {
 	if (scope_history->scope->is_outer) {
 		return;
-	}
-
-	bool curr_can_explore = can_explore;
-	if (scope_history->scope == wrapper->focus_scope) {
-		curr_can_explore = true;
 	}
 
 	for (map<int, AbstractNodeHistory*>::iterator h_it = scope_history->node_histories.begin();
@@ -41,7 +34,7 @@ void gather_helper(ScopeHistory* scope_history,
 		case NODE_TYPE_START:
 		case NODE_TYPE_ACTION:
 		case NODE_TYPE_OBS:
-			if (curr_can_explore && node->experiment == NULL) {
+			if (node->experiment == NULL) {
 				uniform_int_distribution<int> select_distribution(0, node_count);
 				node_count++;
 				if (select_distribution(generator) == 0) {
@@ -55,13 +48,11 @@ void gather_helper(ScopeHistory* scope_history,
 				ScopeNodeHistory* scope_node_history = (ScopeNodeHistory*)h_it->second;
 
 				gather_helper(scope_node_history->scope_history,
-							  curr_can_explore,
 							  node_count,
 							  explore_node,
-							  explore_is_branch,
-							  wrapper);
+							  explore_is_branch);
 
-				if (curr_can_explore && node->experiment == NULL) {
+				if (node->experiment == NULL) {
 					uniform_int_distribution<int> select_distribution(0, node_count);
 					node_count++;
 					if (select_distribution(generator) == 0) {
@@ -72,7 +63,7 @@ void gather_helper(ScopeHistory* scope_history,
 			}
 			break;
 		case NODE_TYPE_BRANCH:
-			if (curr_can_explore && node->experiment == NULL) {
+			if (node->experiment == NULL) {
 				BranchNodeHistory* branch_node_history = (BranchNodeHistory*)h_it->second;
 				if (branch_node_history->is_branch) {
 					uniform_int_distribution<int> select_distribution(0, node_count);
@@ -97,21 +88,13 @@ void gather_helper(ScopeHistory* scope_history,
 
 void create_experiment(ScopeHistory* scope_history,
 					   SolutionWrapper* wrapper) {
-	bool can_explore;
-	if (wrapper->focus_scope == NULL) {
-		can_explore = true;
-	} else {
-		can_explore = false;
-	}
 	int node_count = 0;
 	AbstractNode* explore_node = NULL;
 	bool explore_is_branch = false;
 	gather_helper(scope_history,
-				  can_explore,
 				  node_count,
 				  explore_node,
-				  explore_is_branch,
-				  wrapper);
+				  explore_is_branch);
 
 	if (explore_node != NULL) {
 		vector<AbstractNode*> possible_exits;

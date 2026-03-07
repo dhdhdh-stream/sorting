@@ -14,8 +14,8 @@
 
 using namespace std;
 
-const int NON_OUTER_ITERS = 30;
-const int OUTER_ITERS = 30;
+const int NON_OUTER_ITERS = 10;
+const int OUTER_ITERS = 5;
 
 void SolutionWrapper::experiment_init() {
 	this->num_actions = 1;
@@ -121,31 +121,22 @@ void SolutionWrapper::experiment_end(double result) {
 			this->solution->clean_scopes();
 
 			this->solution->timestamp++;
-			// switch (this->solution->state) {
-			// case SOLUTION_STATE_NON_OUTER:
-			// 	if (this->solution->timestamp >= NON_OUTER_ITERS) {
-			// 		this->solution->timestamp = -1;
+			switch (this->solution->state) {
+			case SOLUTION_STATE_NON_OUTER:
+				if (this->solution->timestamp >= NON_OUTER_ITERS) {
+					this->solution->timestamp = -1;
 
-			// 		this->solution->wrapup();
-			// 	}
-			// 	break;
-			// case SOLUTION_STATE_OUTER:
-			// 	if (this->solution->timestamp >= OUTER_ITERS) {
-			// 		this->solution->state = SOLUTION_STATE_NON_OUTER;
-			// 		this->solution->timestamp = 0;
+					this->solution->wrapup();
+				}
+				break;
+			case SOLUTION_STATE_OUTER:
+				if (this->solution->timestamp >= OUTER_ITERS) {
+					this->solution->state = SOLUTION_STATE_NON_OUTER;
+					this->solution->timestamp = 0;
 
-			// 		this->solution->merge_outer();
-			// 	}
-			// 	break;
-			// }
-			if (this->solution->timestamp % 10 == 5) {
-				add_focus_helper(this);
-
-				this->solution->last_scores.clear();
-			} else if (this->solution->timestamp % 10 == 0) {
-				this->focus_scope = NULL;
-
-				this->solution->last_scores.clear();
+					this->solution->merge_outer();
+				}
+				break;
 			}
 		}
 	}

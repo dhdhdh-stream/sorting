@@ -1,10 +1,3 @@
-// - random scopes too difficult to make progress from
-//   - also low impact
-
-// - key has to be combine
-//   - and need matching solutions
-//     - so increase branch size
-
 #include <chrono>
 #include <iostream>
 #include <map>

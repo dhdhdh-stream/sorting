@@ -405,3 +405,46 @@ void recursive_add_child(Scope* curr_parent,
 		}
 	}
 }
+
+void gather_outer_helper(Scope* scope,
+						 set<Scope*>& outer_scopes) {
+	for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
+			it != scope->nodes.end(); it++) {
+		if (it->second->type == NODE_TYPE_SCOPE) {
+			ScopeNode* scope_node = (ScopeNode*)it->second;
+			set<Scope*>::iterator s_it = outer_scopes.find(scope_node->scope);
+			if (s_it == outer_scopes.end()) {
+				outer_scopes.insert(scope_node->scope);
+
+				gather_outer_helper(scope_node->scope,
+									outer_scopes);
+			}
+		}
+	}
+}
+
+void add_outer_helper(Scope* curr_parent,
+					  SolutionWrapper* wrapper,
+					  Scope* new_scope) {
+	set<Scope*> outer_scopes;
+	gather_outer_helper(new_scope,
+						outer_scopes);
+	outer_scopes.insert(new_scope);
+
+	for (set<Scope*>::iterator it = outer_scopes.begin();
+			it != outer_scopes.end(); it++) {
+		bool is_added = false;
+		for (int c_index = 0; c_index < (int)curr_parent->child_scopes.size(); c_index++) {
+			if (curr_parent->child_scopes[c_index] == *it) {
+				is_added = true;
+				break;
+			}
+		}
+
+		if (!is_added) {
+			recursive_add_child(curr_parent,
+								wrapper,
+								*it);
+		}
+	}
+}
