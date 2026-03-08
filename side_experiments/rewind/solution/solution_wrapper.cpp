@@ -60,6 +60,8 @@ void SolutionWrapper::combine(string other_path,
 
 	input_file.close();
 
+	this->solution->outer_root_scope_ids.push_back(this->solution->outer_scopes.size());
+
 	for (int scope_index = 0; scope_index < (int)other->scopes.size(); scope_index++) {
 		this->solution->outer_scopes.push_back(other->scopes[scope_index]);
 	}

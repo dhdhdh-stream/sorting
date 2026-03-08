@@ -64,6 +64,8 @@ Solution::Solution(Solution* original) {
 		this->outer_scopes[s_index]->link(this);
 	}
 
+	this->outer_root_scope_ids = original->outer_root_scope_ids;
+
 	this->last_scores = original->last_scores;
 
 	this->num_experiments = original->num_experiments;
@@ -190,6 +192,15 @@ void Solution::load(ifstream& input_file) {
 		this->outer_scopes[s_index]->link(this);
 	}
 
+	string num_outer_root_scope_ids_line;
+	getline(input_file, num_outer_root_scope_ids_line);
+	int num_outer_root_scope_ids = stoi(num_outer_root_scope_ids_line);
+	for (int r_index = 0; r_index < num_outer_root_scope_ids; r_index++) {
+		string scope_id_line;
+		getline(input_file, scope_id_line);
+		this->outer_root_scope_ids.push_back(stoi(scope_id_line));
+	}
+
 	string num_last_scores_line;
 	getline(input_file, num_last_scores_line);
 	int num_last_scores = stoi(num_last_scores_line);
@@ -287,6 +298,7 @@ void Solution::merge_outer() {
 		this->scopes.push_back(this->outer_scopes[s_index]);
 	}
 	this->outer_scopes.clear();
+	this->outer_root_scope_ids.clear();
 
 	for (int s_index = 1; s_index < (int)this->scopes.size(); s_index++) {
 		this->scopes[s_index]->is_outer = false;
@@ -315,6 +327,11 @@ void Solution::save(ofstream& output_file) {
 
 	for (int s_index = 0; s_index < (int)this->outer_scopes.size(); s_index++) {
 		this->outer_scopes[s_index]->save(output_file);
+	}
+
+	output_file << this->outer_root_scope_ids.size() << endl;
+	for (int r_index = 0; r_index < (int)this->outer_root_scope_ids.size(); r_index++) {
+		output_file << this->outer_root_scope_ids[r_index] << endl;
 	}
 
 	output_file << this->last_scores.size() << endl;

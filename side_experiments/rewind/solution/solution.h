@@ -46,6 +46,8 @@ public:
 
 	std::vector<Scope*> outer_scopes;
 
+	std::vector<int> outer_root_scope_ids;
+
 	/**
 	 * - even if experiment safe to add, doesn't mean should
 	 *   - noise leads to more noise

@@ -378,8 +378,9 @@ void outer_create_new_scope(Scope* scope_context,
 							Scope*& new_scope,
 							Scope*& parent_scope) {
 	while (true) {
-		uniform_int_distribution<int> outer_distribution(0, wrapper->solution->outer_scopes.size()-1);
-		parent_scope = wrapper->solution->outer_scopes[outer_distribution(generator)];
+		uniform_int_distribution<int> outer_distribution(0, wrapper->solution->outer_root_scope_ids.size()-1);
+		int scope_id = wrapper->solution->outer_root_scope_ids[outer_distribution(generator)];
+		parent_scope = wrapper->solution->outer_scopes[scope_id];
 
 		if (parent_scope->nodes.size() < NEW_SCOPE_MIN_NODES) {
 			new_scope = NULL;
@@ -388,28 +389,8 @@ void outer_create_new_scope(Scope* scope_context,
 
 		uniform_int_distribution<int> node_distribution(1, parent_scope->nodes.size()-1);
 		for (int t_index = 0; t_index < CREATE_NEW_SCOPE_NUM_TRIES; t_index++) {
-			// AbstractNode* potential_start_node = next(parent_scope->nodes.begin(), node_distribution(generator))->second;
-			// AbstractNode* potential_end_node = next(parent_scope->nodes.begin(), node_distribution(generator))->second;
-
-			// temp
-			AbstractNode* potential_start_node;
-			for (map<int, AbstractNode*>::iterator it = parent_scope->nodes.begin();
-					it != parent_scope->nodes.end(); it++) {
-				if (it->second->type == NODE_TYPE_START) {
-					StartNode* start_node = (StartNode*)it->second;
-					potential_start_node = start_node->next_node;
-				}
-			}
-			AbstractNode* potential_end_node;
-			for (map<int, AbstractNode*>::iterator it = parent_scope->nodes.begin();
-					it != parent_scope->nodes.end(); it++) {
-				if (it->second->type == NODE_TYPE_OBS) {
-					ObsNode* obs_node = (ObsNode*)it->second;
-					if (obs_node->next_node == NULL) {
-						potential_end_node = obs_node;
-					}
-				}
-			}
+			AbstractNode* potential_start_node = next(parent_scope->nodes.begin(), node_distribution(generator))->second;
+			AbstractNode* potential_end_node = next(parent_scope->nodes.begin(), node_distribution(generator))->second;
 
 			Scope* potential_new_scope = NULL;
 			create_new_scope(potential_start_node,
