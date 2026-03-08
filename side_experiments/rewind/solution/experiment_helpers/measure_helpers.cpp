@@ -189,7 +189,14 @@ void Experiment::measure_backprop(double target_val,
 					wrapper->solution->last_scores.push_back(this->global_improvement);
 				}
 
-				if (is_success) {
+				// temp
+				ofstream output_file;
+				output_file.open("saves/scores.txt", ios::app);
+				output_file << this->global_improvement << endl;
+				output_file.close();
+
+				// if (is_success) {
+				if (is_success && false) {
 					cout << "this->scope_context->id: " << this->scope_context->id << endl;
 					cout << "this->node_context->id: " << this->node_context->id << endl;
 					cout << "this->is_branch: " << this->is_branch << endl;

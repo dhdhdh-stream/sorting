@@ -31,8 +31,12 @@ void Experiment::explore_check_activate(SolutionWrapper* wrapper) {
 	if (history->existing_predicted_trues.size() == 0
 			&& this->num_instances_until_target <= 0) {
 		uniform_int_distribution<int> new_scope_distribution(0, 3);
-		if (wrapper->solution->state == SOLUTION_STATE_OUTER
-				|| new_scope_distribution(generator) == 0) {
+		if (wrapper->solution->state == SOLUTION_STATE_OUTER) {
+			outer_create_new_scope(this->node_context->parent,
+								   wrapper,
+								   this->curr_new_scope,
+								   this->curr_parent_scope);
+		} else if (new_scope_distribution(generator) == 0) {
 			create_new_scope(this->node_context->parent,
 							 wrapper,
 							 this->curr_new_scope,

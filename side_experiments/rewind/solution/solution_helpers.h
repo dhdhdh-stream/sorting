@@ -25,6 +25,10 @@ void create_new_scope(Scope* scope_context,
 					  SolutionWrapper* wrapper,
 					  Scope*& new_scope,
 					  Scope*& parent_scope);
+void outer_create_new_scope(Scope* scope_context,
+							SolutionWrapper* wrapper,
+							Scope*& new_scope,
+							Scope*& parent_scope);
 void recursive_add_child(Scope* curr_parent,
 						 SolutionWrapper* wrapper,
 						 Scope* new_scope);

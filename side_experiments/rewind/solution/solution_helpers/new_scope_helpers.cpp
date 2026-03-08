@@ -346,14 +346,7 @@ void create_new_scope(Scope* scope_context,
 					  SolutionWrapper* wrapper,
 					  Scope*& new_scope,
 					  Scope*& parent_scope) {
-	uniform_int_distribution<int> is_outer_distribution(0, 1);
-	if (wrapper->solution->outer_scopes.size() > 0
-			&& is_outer_distribution(generator) == 0) {
-		uniform_int_distribution<int> outer_distribution(0, wrapper->solution->outer_scopes.size()-1);
-		parent_scope = wrapper->solution->outer_scopes[outer_distribution(generator)];
-	} else {
-		parent_scope = scope_context;
-	}
+	parent_scope = scope_context;
 
 	if (parent_scope->nodes.size() < NEW_SCOPE_MIN_NODES) {
 		new_scope = NULL;
@@ -378,6 +371,57 @@ void create_new_scope(Scope* scope_context,
 
 	new_scope = NULL;
 	return;
+}
+
+void outer_create_new_scope(Scope* scope_context,
+							SolutionWrapper* wrapper,
+							Scope*& new_scope,
+							Scope*& parent_scope) {
+	while (true) {
+		uniform_int_distribution<int> outer_distribution(0, wrapper->solution->outer_scopes.size()-1);
+		parent_scope = wrapper->solution->outer_scopes[outer_distribution(generator)];
+
+		if (parent_scope->nodes.size() < NEW_SCOPE_MIN_NODES) {
+			new_scope = NULL;
+			continue;
+		}
+
+		uniform_int_distribution<int> node_distribution(1, parent_scope->nodes.size()-1);
+		for (int t_index = 0; t_index < CREATE_NEW_SCOPE_NUM_TRIES; t_index++) {
+			// AbstractNode* potential_start_node = next(parent_scope->nodes.begin(), node_distribution(generator))->second;
+			// AbstractNode* potential_end_node = next(parent_scope->nodes.begin(), node_distribution(generator))->second;
+
+			// temp
+			AbstractNode* potential_start_node;
+			for (map<int, AbstractNode*>::iterator it = parent_scope->nodes.begin();
+					it != parent_scope->nodes.end(); it++) {
+				if (it->second->type == NODE_TYPE_START) {
+					StartNode* start_node = (StartNode*)it->second;
+					potential_start_node = start_node->next_node;
+				}
+			}
+			AbstractNode* potential_end_node;
+			for (map<int, AbstractNode*>::iterator it = parent_scope->nodes.begin();
+					it != parent_scope->nodes.end(); it++) {
+				if (it->second->type == NODE_TYPE_OBS) {
+					ObsNode* obs_node = (ObsNode*)it->second;
+					if (obs_node->next_node == NULL) {
+						potential_end_node = obs_node;
+					}
+				}
+			}
+
+			Scope* potential_new_scope = NULL;
+			create_new_scope(potential_start_node,
+							 potential_end_node,
+							 potential_new_scope);
+
+			if (potential_new_scope != NULL) {
+				new_scope = potential_new_scope;
+				return;
+			}
+		}
+	}
 }
 
 void recursive_add_child(Scope* curr_parent,
