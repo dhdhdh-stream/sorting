@@ -152,13 +152,15 @@ void Experiment::measure_backprop(double target_val,
 			double t_score = this->local_improvement
 				/ (this->score_standard_deviation / sqrt((double)this->new_scores.size()));
 
-			// temp
-			cout << "existing_true: " << existing_true << endl;
-			cout << "new_true: " << new_true << endl;
-			cout << "this->new_scores.size(): " << this->new_scores.size() << endl;
-			cout << "average_hits_per_run: " << average_hits_per_run << endl;
-			cout << "t_score: " << t_score << endl;
-			cout << endl;
+			// // temp
+			// cout << "existing_true: " << existing_true << endl;
+			// cout << "new_true: " << new_true << endl;
+			// cout << "this->new_scores.size(): " << this->new_scores.size() << endl;
+			// cout << "this->local_improvement: " << this->local_improvement << endl;
+			// cout << "average_hits_per_run: " << average_hits_per_run << endl;
+			// cout << "this->global_improvement: " << this->global_improvement << endl;
+			// cout << "t_score: " << t_score << endl;
+			// cout << endl;
 
 			#if defined(MDEBUG) && MDEBUG
 			if (t_score >= SUCCESS_T_SCORE || rand()%3 == 0) {
@@ -189,14 +191,7 @@ void Experiment::measure_backprop(double target_val,
 					wrapper->solution->last_scores.push_back(this->global_improvement);
 				}
 
-				// temp
-				ofstream output_file;
-				output_file.open("saves/scores.txt", ios::app);
-				output_file << this->global_improvement << endl;
-				output_file.close();
-
-				// if (is_success) {
-				if (is_success && false) {
+				if (is_success) {
 					cout << "this->scope_context->id: " << this->scope_context->id << endl;
 					cout << "this->node_context->id: " << this->node_context->id << endl;
 					cout << "this->is_branch: " << this->is_branch << endl;

@@ -84,7 +84,6 @@ public:
 	void clean_scopes();
 
 	void merge_outer();
-	void wrapup();
 
 	void save(std::ofstream& output_file);
 

@@ -448,6 +448,9 @@ void gather_outer_helper(Scope* scope,
 	}
 }
 
+/**
+ * TODO: can simply add all, and let clean_scopes() clean
+ */
 void add_outer_helper(Scope* curr_parent,
 					  SolutionWrapper* wrapper,
 					  Scope* new_scope) {

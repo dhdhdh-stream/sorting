@@ -14,8 +14,8 @@
 
 using namespace std;
 
-const int NON_OUTER_ITERS = 10;
-const int OUTER_ITERS = 5;
+const int NON_OUTER_ITERS = 20;
+const int OUTER_ITERS = 10;
 
 void SolutionWrapper::experiment_init() {
 	this->num_actions = 1;
@@ -125,8 +125,6 @@ void SolutionWrapper::experiment_end(double result) {
 			case SOLUTION_STATE_NON_OUTER:
 				if (this->solution->timestamp >= NON_OUTER_ITERS) {
 					this->solution->timestamp = -1;
-
-					this->solution->wrapup();
 				}
 				break;
 			case SOLUTION_STATE_OUTER:

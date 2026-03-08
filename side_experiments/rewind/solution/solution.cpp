@@ -308,10 +308,6 @@ void Solution::merge_outer() {
 	clean_scopes();
 }
 
-void Solution::wrapup() {
-	// this->last_scores.clear();
-}
-
 void Solution::save(ofstream& output_file) {
 	output_file << this->timestamp << endl;
 	output_file << this->curr_score << endl;

@@ -19,10 +19,6 @@
 // #include "tunnel_practice.h"
 #include "utilities.h"
 
-// temp
-#include "start_node.h"
-#include "obs_node.h"
-
 using namespace std;
 
 int seed;
@@ -50,36 +46,6 @@ int main(int argc, char* argv[]) {
 	} else {
 		filename = "main.txt";
 		solution_wrapper = new SolutionWrapper(problem_type);
-	}
-
-	{
-		delete solution_wrapper->solution->scopes[0];
-
-		Scope* new_scope = new Scope();
-		new_scope->is_outer = false;
-		new_scope->id = 0;
-		new_scope->node_counter = 0;
-		solution_wrapper->solution->scopes[0] = new_scope;
-
-		StartNode* start_node = new StartNode();
-		start_node->parent = new_scope;
-		start_node->id = new_scope->node_counter;
-		new_scope->node_counter++;
-		new_scope->nodes[start_node->id] = start_node;
-
-		ObsNode* end_node = new ObsNode();
-		end_node->parent = new_scope;
-		end_node->id = new_scope->node_counter;
-		new_scope->node_counter++;
-		new_scope->nodes[end_node->id] = end_node;
-
-		start_node->next_node_id = end_node->id;
-		start_node->next_node = end_node;
-
-		end_node->ancestor_ids.push_back(start_node->id);
-
-		end_node->next_node_id = -1;
-		end_node->next_node = NULL;
 	}
 
 	#if defined(MDEBUG) && MDEBUG
