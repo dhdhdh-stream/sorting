@@ -14,8 +14,7 @@ using namespace std;
 #if defined(MDEBUG) && MDEBUG
 const int REFINE_NUM_DATAPOINTS = 20;
 #else
-// const int REFINE_NUM_DATAPOINTS = 2000;
-const int REFINE_NUM_DATAPOINTS = 4000;
+const int REFINE_NUM_DATAPOINTS = 1000;
 #endif /* MDEBUG */
 
 void EvalExperiment::refine_check_activate(
@@ -23,40 +22,37 @@ void EvalExperiment::refine_check_activate(
 		vector<double>& obs,
 		SolutionWrapper* wrapper,
 		EvalExperimentHistory* history) {
-	if (history->is_on) {
-		bool is_branch = true;
-		for (int n_index = 0; n_index < (int)this->new_networks.size(); n_index++) {
-			this->new_networks[n_index]->activate(obs);
-			if (this->new_networks[n_index]->output->acti_vals[0] < 0.0) {
-				is_branch = false;
-				break;
-			}
-		}
-
-		#if defined(MDEBUG) && MDEBUG
-		if (wrapper->curr_run_seed%2 == 0) {
-			is_branch = true;
-		} else {
+	bool is_branch = true;
+	for (int n_index = 0; n_index < (int)this->new_networks.size(); n_index++) {
+		this->new_networks[n_index]->activate(obs);
+		if (this->new_networks[n_index]->output->acti_vals[0] < 0.0) {
 			is_branch = false;
+			break;
 		}
-		wrapper->curr_run_seed = xorshift(wrapper->curr_run_seed);
-		#endif /* MDEBUG */
+	}
 
-		if (is_branch) {
-			history->hit_branch = true;
+	#if defined(MDEBUG) && MDEBUG
+	if (wrapper->curr_run_seed%2 == 0) {
+		is_branch = true;
+	} else {
+		is_branch = false;
+	}
+	wrapper->curr_run_seed = xorshift(wrapper->curr_run_seed);
+	#endif /* MDEBUG */
 
+	if (is_branch) {
+		history->hit_branch = true;
+
+		if (history->is_on) {
 			this->new_obs_histories.push_back(obs);
 
 			EvalExperimentState* new_experiment_state = new EvalExperimentState(this);
 			new_experiment_state->step_index = 0;
 			wrapper->experiment_context.back() = new_experiment_state;
-		}
-	} else {
-		/**
-		 * - to guarantee enough samples
-		 */
-		if (this->existing_obs_histories.size() < 2 * this->new_obs_histories.size()) {
-			this->existing_obs_histories.push_back(obs);
+		} else {
+			if (this->existing_obs_histories.size() < 2 * this->new_obs_histories.size()) {
+				this->existing_obs_histories.push_back(obs);
+			}
 		}
 	}
 }
@@ -64,20 +60,18 @@ void EvalExperiment::refine_check_activate(
 void EvalExperiment::refine_backprop(double target_val,
 									 EvalExperimentHistory* history,
 									 SolutionWrapper* wrapper) {
-	if (history->is_on) {
-		if (history->hit_branch) {
-			this->num_branch++;
-		} else {
-			this->num_original++;
-			if (this->num_original == BRANCH_RATIO_CHECK_ITER) {
-				double branch_ratio = (double)this->num_branch / ((double)this->num_original + (double)this->num_branch);
-				if (branch_ratio < BRANCH_MIN_RATIO) {
-					wrapper->curr_num_refine--;
+	if (history->hit_branch) {
+		this->num_branch++;
+	} else {
+		this->num_original++;
+		if (this->num_original == BRANCH_RATIO_CHECK_ITER) {
+			double branch_ratio = (double)this->num_branch / ((double)this->num_original + (double)this->num_branch);
+			if (branch_ratio < BRANCH_MIN_RATIO) {
+				wrapper->curr_num_eval--;
 
-					this->node_context->experiment = NULL;
-					delete this;
-					return;
-				}
+				this->node_context->experiment = NULL;
+				delete this;
+				return;
 			}
 		}
 	}
@@ -136,15 +130,13 @@ void EvalExperiment::refine_backprop(double target_val,
 			this->num_original = 0;
 			this->num_branch = 0;
 
-			this->curr_ramp = 0;
-			this->measure_status = MEASURE_STATUS_N_A;
+			this->starting_experiment_iter = wrapper->experiment_iter;
 
-			this->state = EVAL_EXPERIMENT_STATE_INIT;
+			this->existing_sum_scores = 0.0;
+			this->existing_count = 0;
+
+			this->state = EVAL_EXPERIMENT_STATE_MEASURE;
 			this->state_iter = 0;
-			this->num_fail = 0;
-
-			wrapper->curr_num_refine--;
-			wrapper->curr_num_ramp++;
 		}
 	}
 }

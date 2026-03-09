@@ -23,22 +23,21 @@ void recursive_add_child(Scope* curr_parent,
 						 Scope* new_scope) {
 	curr_parent->child_scopes.push_back(new_scope);
 
-	for (map<int, Scope*>::iterator it = wrapper->solution->scopes.begin();
-			it != wrapper->solution->scopes.end(); it++) {
+	for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
 		bool is_needed = false;
 		bool is_added = false;
-		for (int c_index = 0; c_index < (int)it->second->child_scopes.size(); c_index++) {
-			if (it->second->child_scopes[c_index] == curr_parent) {
+		for (int c_index = 0; c_index < (int)wrapper->solution->scopes[s_index]->child_scopes.size(); c_index++) {
+			if (wrapper->solution->scopes[s_index]->child_scopes[c_index] == curr_parent) {
 				is_needed = true;
 			}
 
-			if (it->second->child_scopes[c_index] == new_scope) {
+			if (wrapper->solution->scopes[s_index]->child_scopes[c_index] == new_scope) {
 				is_added = true;
 			}
 		}
 
 		if (is_needed && !is_added) {
-			recursive_add_child(it->second,
+			recursive_add_child(wrapper->solution->scopes[s_index],
 								wrapper,
 								new_scope);
 		}
@@ -86,9 +85,9 @@ void EvalExperiment::add(SolutionWrapper* wrapper) {
 	Scope* scope_context = this->node_context->parent;
 
 	if (this->new_scope != NULL) {
-		this->new_scope->id = wrapper->scope_counter;
-		wrapper->scope_counter++;
-		wrapper->solution->scopes[this->new_scope->id] = this->new_scope;
+		wrapper->solution->scopes.push_back(this->new_scope);
+		this->new_scope->is_outer = false;
+		this->new_scope->id = (int)wrapper->solution->scopes.size()-1;
 
 		clean_scope(this->new_scope,
 					wrapper);

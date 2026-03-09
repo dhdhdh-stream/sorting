@@ -24,18 +24,14 @@ const int LAST_NUM_TRACK = 1000;
 #if defined(MDEBUG) && MDEBUG
 const int EXPERIMENT_NUM_GEARS = 6;
 const int RAMP_GEAR = 1;
-const int MEASURE_GEAR = 2;
 const int RAMP_EPOCH_NUM_ITERS = 20;
-const int MEASURE_EPOCH_NUM_ITERS = 80;
 #else
 const int EXPERIMENT_NUM_GEARS = 10;
 const int RAMP_GEAR = 2;
-const int MEASURE_GEAR = 4;
 const int RAMP_EPOCH_NUM_ITERS = 4000;
-const int MEASURE_EPOCH_NUM_ITERS = 8000;
 #endif /* MDEBUG */
 
-const int BRANCH_RATIO_CHECK_ITER = 1000;
+const int BRANCH_RATIO_CHECK_ITER = 200;
 const double BRANCH_MIN_RATIO = 0.03;
 
 /**
@@ -43,6 +39,11 @@ const double BRANCH_MIN_RATIO = 0.03;
  *   - to help prevent string of bad luck from adding bad changes
  */
 const int NUM_LAST_TRACK = 40;
+#if defined(MDEBUG) && MDEBUG
+const int MIN_NUM_LAST_TRACK = 1;
+#else
+const int MIN_NUM_LAST_TRACK = 5;
+#endif /* MDEBUG */
 const double LAST_BETTER_THAN_RATIO = 0.8;
 
 #endif /* CONSTANTS_H */

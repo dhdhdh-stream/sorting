@@ -17,6 +17,7 @@ class SolutionWrapper;
 class ScopeHistory;
 class Scope {
 public:
+	bool is_outer;
 	int id;
 
 	int node_counter;
@@ -32,6 +33,7 @@ public:
 
 	void random_exit_activate(AbstractNode* starting_node,
 							  std::vector<AbstractNode*>& possible_exits);
+	void random_activate(std::vector<AbstractNode*>& path);
 
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file,

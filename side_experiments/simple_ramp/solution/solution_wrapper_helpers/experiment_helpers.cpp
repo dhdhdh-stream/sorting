@@ -18,6 +18,9 @@ using namespace std;
 const int TARGET_EXPLORE_PER_RUN = 20;
 const double MAX_EXPLORE_RATIO_PER_RUN = 0.2;
 
+const int NON_OUTER_ITERS = 15;
+const int OUTER_ITERS = 8;
+
 void SolutionWrapper::experiment_init() {
 	this->num_actions = 1;
 
@@ -47,7 +50,6 @@ tuple<bool,bool,int> SolutionWrapper::experiment_step(vector<double> obs) {
 	bool is_next = false;
 	bool is_done = false;
 	bool fetch_action = false;
-
 	while (!is_next) {
 		if (this->node_context.back() == NULL
 				&& this->experiment_context.back() == NULL) {
@@ -178,5 +180,23 @@ void SolutionWrapper::experiment_end(double result) {
 			it != updated_scopes.end(); it++) {
 		clean_scope(*it,
 					this);
+	}
+
+	switch (this->solution->state) {
+	case SOLUTION_STATE_NON_OUTER:
+		if (this->solution->timestamp >= NON_OUTER_ITERS) {
+			this->solution->timestamp = -1;
+		}
+		break;
+	case SOLUTION_STATE_OUTER:
+		if (this->solution->timestamp >= OUTER_ITERS) {
+			this->solution->state = SOLUTION_STATE_NON_OUTER;
+			this->solution->timestamp = 0;
+
+			this->solution->merge_outer();
+			this->curr_num_explore = 0;
+			this->curr_num_eval = 0;
+		}
+		break;
 	}
 }

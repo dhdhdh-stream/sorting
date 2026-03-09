@@ -17,8 +17,7 @@ using namespace std;
 #if defined(MDEBUG) && MDEBUG
 const int TRAIN_NEW_NUM_DATAPOINTS = 20;
 #else
-// const int TRAIN_NEW_NUM_DATAPOINTS = 200;
-const int TRAIN_NEW_NUM_DATAPOINTS = 400;
+const int TRAIN_NEW_NUM_DATAPOINTS = 200;
 #endif /* MDEBUG */
 
 void ExploreExperiment::train_new_check_activate(
@@ -129,7 +128,7 @@ void ExploreExperiment::train_new_backprop(double target_val,
 				// temp
 				cout << "EvalExperiment" << endl;
 
-				EvalExperiment* new_eval_experiment = new EvalExperiment();
+				EvalExperiment* new_eval_experiment = new EvalExperiment(wrapper);
 
 				new_eval_experiment->node_context = this->node_context;
 				new_eval_experiment->exit_next_node = this->exit_next_node;
@@ -143,7 +142,7 @@ void ExploreExperiment::train_new_backprop(double target_val,
 				new_eval_experiment->actions = this->best_actions;
 				new_eval_experiment->scopes = this->best_scopes;
 
-				wrapper->curr_num_refine++;
+				wrapper->curr_num_eval++;
 
 				this->node_context->experiment = new_eval_experiment;
 				delete this;

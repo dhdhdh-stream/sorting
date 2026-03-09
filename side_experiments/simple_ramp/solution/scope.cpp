@@ -83,6 +83,55 @@ void Scope::random_exit_activate(AbstractNode* starting_node,
 	possible_exits.push_back(NULL);
 }
 
+void Scope::random_activate(vector<AbstractNode*>& path) {
+	AbstractNode* curr_node = this->nodes[0];
+	while (true) {
+		if (curr_node == NULL) {
+			break;
+		}
+
+		path.push_back(curr_node);
+
+		switch (curr_node->type) {
+		case NODE_TYPE_START:
+			{
+				StartNode* node = (StartNode*)curr_node;
+				curr_node = node->next_node;
+			}
+			break;
+		case NODE_TYPE_ACTION:
+			{
+				ActionNode* node = (ActionNode*)curr_node;
+				curr_node = node->next_node;
+			}
+			break;
+		case NODE_TYPE_SCOPE:
+			{
+				ScopeNode* node = (ScopeNode*)curr_node;
+				curr_node = node->next_node;
+			}
+			break;
+		case NODE_TYPE_BRANCH:
+			{
+				BranchNode* node = (BranchNode*)curr_node;
+				uniform_int_distribution<int> distribution(0, 1);
+				if (distribution(generator) == 0) {
+					curr_node = node->branch_next_node;
+				} else {
+					curr_node = node->original_next_node;
+				}
+			}
+			break;
+		case NODE_TYPE_OBS:
+			{
+				ObsNode* node = (ObsNode*)curr_node;
+				curr_node = node->next_node;
+			}
+			break;
+		}
+	}
+}
+
 void Scope::save(ofstream& output_file) {
 	output_file << this->node_counter << endl;
 
@@ -96,6 +145,7 @@ void Scope::save(ofstream& output_file) {
 
 	output_file << this->child_scopes.size() << endl;
 	for (int c_index = 0; c_index < (int)this->child_scopes.size(); c_index++) {
+		output_file << this->child_scopes[c_index]->is_outer << endl;
 		output_file << this->child_scopes[c_index]->id << endl;
 	}
 }
@@ -173,9 +223,19 @@ void Scope::load(ifstream& input_file,
 	getline(input_file, num_child_scopes_line);
 	int num_child_scopes = stoi(num_child_scopes_line);
 	for (int c_index = 0; c_index < num_child_scopes; c_index++) {
+		string is_outer_line;
+		getline(input_file, is_outer_line);
+		bool is_outer = stoi(is_outer_line);
+
 		string scope_id_line;
 		getline(input_file, scope_id_line);
-		this->child_scopes.push_back(parent_solution->scopes[stoi(scope_id_line)]);
+		int scope_id = stoi(scope_id_line);
+
+		if (is_outer) {
+			this->child_scopes.push_back(parent_solution->outer_scopes[scope_id]);
+		} else {
+			this->child_scopes.push_back(parent_solution->scopes[scope_id]);
+		}
 	}
 }
 

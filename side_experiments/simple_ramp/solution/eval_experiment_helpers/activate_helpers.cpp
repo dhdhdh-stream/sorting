@@ -12,8 +12,6 @@
 
 using namespace std;
 
-const int RAMP_ITER = 3;
-
 void EvalExperiment::check_activate(AbstractNode* experiment_node,
 									vector<double>& obs,
 									SolutionWrapper* wrapper) {
@@ -34,9 +32,14 @@ void EvalExperiment::check_activate(AbstractNode* experiment_node,
 							  wrapper,
 							  history);
 		break;
+	case EVAL_EXPERIMENT_STATE_MEASURE:
+		measure_check_activate(experiment_node,
+							   obs,
+							   wrapper,
+							   history);
+		break;
 	case EVAL_EXPERIMENT_STATE_INIT:
 	case EVAL_EXPERIMENT_STATE_RAMP:
-	case EVAL_EXPERIMENT_STATE_MEASURE:
 		ramp_check_activate(experiment_node,
 							obs,
 							wrapper,
@@ -101,9 +104,13 @@ void EvalExperiment::backprop(double target_val,
 						history,
 						wrapper);
 		break;
+	case EVAL_EXPERIMENT_STATE_MEASURE:
+		measure_backprop(target_val,
+						 history,
+						 wrapper);
+		break;
 	case EVAL_EXPERIMENT_STATE_INIT:
 	case EVAL_EXPERIMENT_STATE_RAMP:
-	case EVAL_EXPERIMENT_STATE_MEASURE:
 		ramp_backprop(target_val,
 					  history,
 					  wrapper,

@@ -2,7 +2,11 @@
 
 #include <iostream>
 
+#include "action_node.h"
 #include "constants.h"
+#include "globals.h"
+#include "helpers.h"
+#include "problem.h"
 #include "obs_node.h"
 #include "scope.h"
 #include "signal.h"
@@ -11,9 +15,9 @@
 
 using namespace std;
 
-SolutionWrapper::SolutionWrapper() {
-	this->scope_counter = 0;
+const int INIT_NUM_ACTIONS = 10;
 
+SolutionWrapper::SolutionWrapper(ProblemType* problem_type) {
 	this->solution = new Solution();
 	{
 		this->solution->timestamp = 0;
@@ -27,9 +31,8 @@ SolutionWrapper::SolutionWrapper() {
 		 */
 
 		Scope* new_scope = new Scope();
-		new_scope->id = this->scope_counter;
-		this->scope_counter++;
-		this->solution->scopes[new_scope->id] = new_scope;
+		new_scope->id = this->solution->scopes.size();
+		this->solution->scopes.push_back(new_scope);
 
 		new_scope->node_counter = 0;
 
@@ -39,26 +42,52 @@ SolutionWrapper::SolutionWrapper() {
 		new_scope->node_counter++;
 		new_scope->nodes[start_node->id] = start_node;
 
+		vector<ActionNode*> action_nodes;
+		uniform_int_distribution<int> action_distribution(0, problem_type->num_possible_actions()-1);
+		for (int n_index = 0; n_index < INIT_NUM_ACTIONS; n_index++) {
+			ActionNode* action_node = new ActionNode();
+			action_node->parent = new_scope;
+			action_node->id = new_scope->node_counter;
+			new_scope->node_counter++;
+			new_scope->nodes[action_node->id] = action_node;
+
+			action_node->action = action_distribution(generator);
+		}
+
 		ObsNode* end_node = new ObsNode();
 		end_node->parent = new_scope;
 		end_node->id = new_scope->node_counter;
 		new_scope->node_counter++;
 		new_scope->nodes[end_node->id] = end_node;
 
-		start_node->next_node_id = end_node->id;
-		start_node->next_node = end_node;
+		start_node->next_node_id = action_nodes[0]->id;
+		start_node->next_node = action_nodes[0];
 
-		end_node->ancestor_ids.push_back(start_node->id);
+		action_nodes[0]->ancestor_ids.push_back(start_node->id);
+
+		for (int a_index = 1; a_index < (int)action_nodes.size(); a_index++) {
+			action_nodes[a_index-1]->next_node_id = action_nodes[a_index]->id;
+			action_nodes[a_index-1]->next_node = action_nodes[a_index];
+
+			action_nodes[a_index]->ancestor_ids.push_back(action_nodes[a_index-1]->id);
+		}
+
+		action_nodes.back()->next_node_id = end_node->id;
+		action_nodes.back()->next_node = end_node;
+
+		end_node->ancestor_ids.push_back(action_nodes.back()->id);
 
 		end_node->next_node_id = -1;
 		end_node->next_node = NULL;
+
+		clean_scope(new_scope,
+					this);
 	}
 
 	this->experiment_iter = 0;
 
 	this->curr_num_explore = 0;
-	this->curr_num_refine = 0;
-	this->curr_num_ramp = 0;
+	this->curr_num_eval = 0;
 
 	#if defined(MDEBUG) && MDEBUG
 	this->run_index = 0;
@@ -73,17 +102,12 @@ SolutionWrapper::SolutionWrapper(std::string path,
 	this->solution = new Solution();
 	this->solution->load(input_file);
 
-	string scope_counter_line;
-	getline(input_file, scope_counter_line);
-	this->scope_counter = stoi(scope_counter_line);
-
 	input_file.close();
 
 	this->experiment_iter = 0;
 
 	this->curr_num_explore = 0;
-	this->curr_num_refine = 0;
-	this->curr_num_ramp = 0;
+	this->curr_num_eval = 0;
 
 	#if defined(MDEBUG) && MDEBUG
 	this->run_index = 0;
@@ -103,8 +127,7 @@ void SolutionWrapper::clean_scopes() {
 }
 
 void SolutionWrapper::combine(string other_path,
-							  string other_name,
-							  int starting_scope_counter) {
+							  string other_name) {
 	ifstream input_file;
 	input_file.open(other_path + other_name);
 
@@ -113,24 +136,28 @@ void SolutionWrapper::combine(string other_path,
 
 	input_file.close();
 
-	for (map<int, Scope*>::iterator new_it = other->scopes.begin();
-			new_it != other->scopes.end(); new_it++) {
-		new_it->second->id = this->scope_counter;
-		this->scope_counter++;
+	this->solution->outer_root_scope_ids.push_back(this->solution->outer_scopes.size());
 
-		this->solution->scopes[new_it->second->id] = new_it->second;
+	for (int o_index = 0; o_index < (int)other->scopes.size(); o_index++) {
+		this->solution->outer_scopes.push_back(other->scopes[o_index]);
 
-		for (map<int, Scope*>::iterator existing_it = this->solution->scopes.begin();
-				existing_it != this->solution->scopes.end(); existing_it++) {
-			if (existing_it->second->id < starting_scope_counter) {
-				existing_it->second->child_scopes.push_back(new_it->second);
-			}
+		for (int s_index = 0; s_index < (int)this->solution->scopes.size(); s_index++) {
+			this->solution->scopes[s_index]->child_scopes.push_back(other->scopes[o_index]);
 		}
 	}
+
 	other->scopes.clear();
 
 	delete other;
 
+	for (int scope_index = 0; scope_index < (int)this->solution->outer_scopes.size(); scope_index++) {
+		this->solution->outer_scopes[scope_index]->is_outer = true;
+		this->solution->outer_scopes[scope_index]->id = scope_index;
+	}
+
+	this->solution->last_scores.clear();
+
+	this->solution->state = SOLUTION_STATE_OUTER;
 	this->solution->timestamp = 0;
 }
 
@@ -140,8 +167,6 @@ void SolutionWrapper::save(string path,
 	output_file.open(path + "temp_" + name);
 
 	this->solution->save(output_file);
-
-	output_file << this->scope_counter << endl;
 
 	output_file.close();
 

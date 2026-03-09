@@ -29,12 +29,20 @@ class Problem;
 class Scope;
 class ScopeHistory;
 
+const int SOLUTION_STATE_NON_OUTER = 0;
+const int SOLUTION_STATE_OUTER = 1;
+
 class Solution {
 public:
 	int timestamp;
 	double curr_score;
 
-	std::map<int, Scope*> scopes;
+	int state;
+
+	std::vector<Scope*> scopes;
+
+	std::vector<Scope*> outer_scopes;
+	std::vector<int> outer_root_scope_ids;
 
 	std::vector<double> score_histories;
 	int score_index;
@@ -60,6 +68,8 @@ public:
 	void load(std::ifstream& input_file);
 
 	void clean_scopes();
+
+	void merge_outer();
 
 	void save(std::ofstream& output_file);
 

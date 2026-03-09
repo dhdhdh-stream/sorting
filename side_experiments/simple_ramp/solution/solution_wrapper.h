@@ -15,6 +15,7 @@ class EvalExperimentHistory;
 class ExploreExperiment;
 class ExploreExperimentHistory;
 class Problem;
+class ProblemType;
 class Scope;
 class ScopeHistory;
 class Solution;
@@ -22,8 +23,6 @@ class Solution;
 class SolutionWrapper {
 public:
 	Solution* solution;
-
-	int scope_counter;
 
 	/**
 	 * - run variables
@@ -50,8 +49,7 @@ public:
 	int experiment_iter;
 
 	int curr_num_explore;
-	int curr_num_refine;
-	int curr_num_ramp;
+	int curr_num_eval;
 
 	#if defined(MDEBUG) && MDEBUG
 	int run_index;
@@ -59,7 +57,7 @@ public:
 	unsigned long curr_run_seed;
 	#endif /* MDEBUG */
 
-	SolutionWrapper();
+	SolutionWrapper(ProblemType* problem_type);
 	SolutionWrapper(std::string path,
 					std::string name);
 	~SolutionWrapper();
@@ -78,8 +76,7 @@ public:
 	void clean_scopes();
 
 	void combine(std::string other_path,
-				 std::string other_name,
-				 int starting_scope_counter);
+				 std::string other_name);
 
 	void save(std::string path,
 			  std::string name);

@@ -1,7 +1,3 @@
-// TODO: maybe initialize with a number of actions
-
-// TODO: force repetition
-
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -53,7 +49,7 @@ int main(int argc, char* argv[]) {
 			filename);
 	} else {
 		filename = "main.txt";
-		solution_wrapper = new SolutionWrapper();
+		solution_wrapper = new SolutionWrapper(problem_type);
 	}
 
 	int iter_index = 0;
@@ -99,8 +95,7 @@ int main(int argc, char* argv[]) {
 			if (iter_index%100000 == 0) {
 				cout << "iter_index: " << iter_index << endl;
 				cout << "solution_wrapper->curr_num_explore: " << solution_wrapper->curr_num_explore << endl;
-				cout << "solution_wrapper->curr_num_refine: " << solution_wrapper->curr_num_refine << endl;
-				cout << "solution_wrapper->curr_num_ramp: " << solution_wrapper->curr_num_ramp << endl;
+				cout << "solution_wrapper->curr_num_eval: " << solution_wrapper->curr_num_eval << endl;
 				double sum_vals = 0.0;
 				for (int h_index = 0; h_index < (int)solution_wrapper->solution->score_histories.size(); h_index++) {
 					sum_vals += solution_wrapper->solution->score_histories[h_index];

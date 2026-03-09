@@ -21,9 +21,12 @@ Solution::Solution() {
 }
 
 Solution::~Solution() {
-	for (map<int, Scope*>::iterator it = this->scopes.begin();
-			it != this->scopes.end(); it++) {
-		delete it->second;
+	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
+		delete this->scopes[s_index];
+	}
+
+	for (int s_index = 0; s_index < (int)this->outer_scopes.size(); s_index++) {
+		delete this->outer_scopes[s_index];
 	}
 }
 
@@ -36,32 +39,57 @@ void Solution::load(ifstream& input_file) {
 	getline(input_file, curr_score_line);
 	this->curr_score = stod(curr_score_line);
 
+	string state_line;
+	getline(input_file, state_line);
+	this->state = stoi(state_line);
+
 	string num_scopes_line;
 	getline(input_file, num_scopes_line);
 	int num_scopes = stoi(num_scopes_line);
 
 	for (int s_index = 0; s_index < num_scopes; s_index++) {
-		string scope_id_line;
-		getline(input_file, scope_id_line);
-		int scope_id = stoi(scope_id_line);
-
 		Scope* scope = new Scope();
-		scope->id = scope_id;
-		this->scopes[scope_id] = scope;
+		scope->is_outer = false;
+		scope->id = s_index;
+		this->scopes.push_back(scope);
 	}
 
-	for (int s_index = 0; s_index < num_scopes; s_index++) {
+	string num_outer_scopes_line;
+	getline(input_file, num_outer_scopes_line);
+	int num_outer_scopes = stoi(num_outer_scopes_line);
+
+	for (int s_index = 0; s_index < num_outer_scopes; s_index++) {
+		Scope* scope = new Scope();
+		scope->is_outer = true;
+		scope->id = s_index;
+		this->outer_scopes.push_back(scope);
+	}
+
+	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
+		this->scopes[s_index]->load(input_file,
+									this);
+	}
+
+	for (int s_index = 0; s_index < (int)this->outer_scopes.size(); s_index++) {
+		this->outer_scopes[s_index]->load(input_file,
+										  this);
+	}
+
+	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
+		this->scopes[s_index]->link(this);
+	}
+
+	for (int s_index = 0; s_index < (int)this->outer_scopes.size(); s_index++) {
+		this->outer_scopes[s_index]->link(this);
+	}
+
+	string num_outer_root_scope_ids_line;
+	getline(input_file, num_outer_root_scope_ids_line);
+	int num_outer_root_scope_ids = stoi(num_outer_root_scope_ids_line);
+	for (int r_index = 0; r_index < num_outer_root_scope_ids; r_index++) {
 		string scope_id_line;
 		getline(input_file, scope_id_line);
-		int scope_id = stoi(scope_id_line);
-
-		this->scopes[scope_id]->load(input_file,
-									 this);
-	}
-
-	for (map<int, Scope*>::iterator it = this->scopes.begin();
-			it != this->scopes.end(); it++) {
-		it->second->link(this);
+		this->outer_root_scope_ids.push_back(stoi(scope_id_line));
 	}
 
 	string num_last_scores_line;
@@ -88,50 +116,89 @@ void Solution::load(ifstream& input_file) {
 }
 
 void Solution::clean_scopes() {
-	map<int, Scope*>::iterator it = this->scopes.begin();
-	while (it != this->scopes.end()) {
-		bool still_used = false;
-		for (map<int, Scope*>::iterator i_it = this->scopes.begin();
-				i_it != this->scopes.end(); i_it++) {
-			if (it->first != i_it->first) {
-				for (map<int, AbstractNode*>::iterator node_it = i_it->second->nodes.begin();
-						node_it != i_it->second->nodes.end(); node_it++) {
-					switch (node_it->second->type) {
-					case NODE_TYPE_SCOPE:
-						{
-							ScopeNode* scope_node = (ScopeNode*)node_it->second;
-							if (scope_node->scope == it->second) {
-								still_used = true;
-								break;
+	while (true) {
+		bool removed_scope = false;
+		for (int s_index = (int)this->scopes.size()-1; s_index >= 1; s_index--) {
+			bool still_used = false;
+			for (int is_index = 0; is_index < (int)this->scopes.size(); is_index++) {
+				if (s_index != is_index) {
+					for (map<int, AbstractNode*>::iterator it = this->scopes[is_index]->nodes.begin();
+							it != this->scopes[is_index]->nodes.end(); it++) {
+						switch (it->second->type) {
+						case NODE_TYPE_SCOPE:
+							{
+								ScopeNode* scope_node = (ScopeNode*)it->second;
+								if (scope_node->scope == this->scopes[s_index]) {
+									still_used = true;
+									break;
+								}
 							}
+							break;
 						}
-						break;
 					}
+				}
+
+				if (still_used) {
+					break;
 				}
 			}
 
-			if (still_used) {
-				break;
+			if (!still_used) {
+				removed_scope = true;
+
+				for (int is_index = 0; is_index < (int)this->scopes.size(); is_index++) {
+					for (int c_index = 0; c_index < (int)this->scopes[is_index]->child_scopes.size(); c_index++) {
+						if (this->scopes[is_index]->child_scopes[c_index] == this->scopes[s_index]) {
+							this->scopes[is_index]->child_scopes.erase(this->scopes[is_index]->child_scopes.begin() + c_index);
+							break;
+						}
+					}
+				}
+
+				delete this->scopes[s_index];
+				this->scopes.erase(this->scopes.begin() + s_index);
 			}
 		}
 
-		if (!still_used) {
-			for (map<int, Scope*>::iterator i_it = this->scopes.begin();
-					i_it != this->scopes.end(); i_it++) {
-				for (int c_index = 0; c_index < (int)i_it->second->child_scopes.size(); c_index++) {
-					if (i_it->second->child_scopes[c_index] == it->second) {
-						i_it->second->child_scopes.erase(i_it->second->child_scopes.begin() + c_index);
-						break;
-					}
-				}
-			}
-
-			delete it->second;
-			it = this->scopes.erase(it);
-		} else {
-			it++;
+		if (!removed_scope) {
+			break;
 		}
 	}
+
+	for (int s_index = 1; s_index < (int)this->scopes.size(); s_index++) {
+		this->scopes[s_index]->id = s_index;
+	}
+}
+
+void Solution::merge_outer() {
+	/**
+	 * - clear experiments
+	 */
+	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
+		for (map<int, AbstractNode*>::iterator it = this->scopes[s_index]->nodes.begin();
+				it != this->scopes[s_index]->nodes.end(); it++) {
+			if (it->second->type == NODE_TYPE_OBS) {
+				ObsNode* obs_node = (ObsNode*)it->second;
+				if (obs_node->experiment != NULL) {
+					delete obs_node->experiment;
+					obs_node->experiment = NULL;
+				}
+			}
+		}
+	}
+
+	for (int s_index = 0; s_index < (int)this->outer_scopes.size(); s_index++) {
+		this->scopes.push_back(this->outer_scopes[s_index]);
+	}
+	this->outer_scopes.clear();
+	this->outer_root_scope_ids.clear();
+
+	for (int s_index = 1; s_index < (int)this->scopes.size(); s_index++) {
+		this->scopes[s_index]->is_outer = false;
+		this->scopes[s_index]->id = s_index;
+	}
+
+	clean_scopes();
 }
 
 void Solution::save(ofstream& output_file) {
@@ -141,16 +208,22 @@ void Solution::save(ofstream& output_file) {
 	output_file << this->timestamp << endl;
 	output_file << this->curr_score << endl;
 
+	output_file << this->state << endl;
+
 	output_file << this->scopes.size() << endl;
-	for (map<int, Scope*>::iterator it = this->scopes.begin();
-			it != this->scopes.end(); it++) {
-		output_file << it->first << endl;
+	output_file << this->outer_scopes.size() << endl;
+
+	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
+		this->scopes[s_index]->save(output_file);
 	}
 
-	for (map<int, Scope*>::iterator it = this->scopes.begin();
-			it != this->scopes.end(); it++) {
-		output_file << it->first << endl;
-		it->second->save(output_file);
+	for (int s_index = 0; s_index < (int)this->outer_scopes.size(); s_index++) {
+		this->outer_scopes[s_index]->save(output_file);
+	}
+
+	output_file << this->outer_root_scope_ids.size() << endl;
+	for (int r_index = 0; r_index < (int)this->outer_root_scope_ids.size(); r_index++) {
+		output_file << this->outer_root_scope_ids[r_index] << endl;
 	}
 
 	output_file << this->last_scores.size() << endl;
@@ -168,9 +241,7 @@ void Solution::save(ofstream& output_file) {
 
 void Solution::save_for_display(ofstream& output_file) {
 	output_file << this->scopes.size() << endl;
-	for (map<int, Scope*>::iterator it = this->scopes.begin();
-			it != this->scopes.end(); it++) {
-		output_file << it->first << endl;
-		it->second->save_for_display(output_file);
+	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
+		this->scopes[s_index]->save_for_display(output_file);
 	}
 }

@@ -15,6 +15,7 @@ ScopeNode::ScopeNode() {
 }
 
 void ScopeNode::save(ofstream& output_file) {
+	output_file << this->scope->is_outer << endl;
 	output_file << this->scope->id << endl;
 
 	output_file << this->next_node_id << endl;
@@ -27,9 +28,19 @@ void ScopeNode::save(ofstream& output_file) {
 
 void ScopeNode::load(ifstream& input_file,
 					 Solution* parent_solution) {
+	string is_outer_line;
+	getline(input_file, is_outer_line);
+	int is_outer = stoi(is_outer_line);
+
 	string scope_id_line;
 	getline(input_file, scope_id_line);
-	this->scope = parent_solution->scopes[stoi(scope_id_line)];
+	int scope_id = stoi(scope_id_line);
+
+	if (is_outer) {
+		this->scope = parent_solution->outer_scopes[scope_id];
+	} else {
+		this->scope = parent_solution->scopes[scope_id];
+	}
 
 	string next_node_id_line;
 	getline(input_file, next_node_id_line);

@@ -18,16 +18,9 @@ class Scope;
 class SolutionWrapper;
 
 const int EVAL_EXPERIMENT_STATE_REFINE = 0;
-const int EVAL_EXPERIMENT_STATE_INIT = 1;
-const int EVAL_EXPERIMENT_STATE_RAMP = 2;
-const int EVAL_EXPERIMENT_STATE_MEASURE = 3;
-
-const int MEASURE_STATUS_N_A = 0;
-const int MEASURE_STATUS_SUCCESS = 1;
-const int MEASURE_STATUS_FAIL = 2;
-
-const int EVAL_RESULT_FAIL = 0;
-const int EVAL_RESULT_SUCCESS = 1;
+const int EVAL_EXPERIMENT_STATE_MEASURE = 1;
+const int EVAL_EXPERIMENT_STATE_INIT = 2;
+const int EVAL_EXPERIMENT_STATE_RAMP = 3;
 
 class EvalExperimentHistory;
 class EvalExperimentState;
@@ -40,7 +33,7 @@ public:
 	int state_iter;
 	int num_fail;
 	/**
-	 * - don't rely on t-test to drive exploration
+	 * - don't rely on negative t-test to drive exploration
 	 *   - can gradually lead to worse and worse results
 	 *   - doesn't always enable where a small penalty leads to greater score anyways
 	 */
@@ -60,22 +53,22 @@ public:
 	std::vector<std::vector<double>> new_obs_histories;
 	std::vector<double> new_target_val_histories;
 
-	int curr_ramp;
-
-	int measure_status;
-
 	int starting_experiment_iter;
+
+	std::vector<double> new_scores;
 
 	double local_improvement;
 	double global_improvement;
 	double score_standard_deviation;
 
-	int result;
+	int curr_ramp;
 
-	std::vector<double> existing_scores;
-	std::vector<double> new_scores;
+	double existing_sum_scores;
+	int existing_count;
+	double new_sum_scores;
+	int new_count;
 
-	EvalExperiment();
+	EvalExperiment(SolutionWrapper* wrapper);
 	~EvalExperiment();
 
 	void check_activate(AbstractNode* experiment_node,
@@ -101,6 +94,14 @@ public:
 	void refine_backprop(double target_val,
 						 EvalExperimentHistory* history,
 						 SolutionWrapper* wrapper);
+
+	void measure_check_activate(AbstractNode* experiment_node,
+								std::vector<double>& obs,
+								SolutionWrapper* wrapper,
+								EvalExperimentHistory* history);
+	void measure_backprop(double target_val,
+						  EvalExperimentHistory* history,
+						  SolutionWrapper* wrapper);
 
 	void ramp_check_activate(AbstractNode* experiment_node,
 							 std::vector<double>& obs,

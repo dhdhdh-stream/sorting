@@ -5,10 +5,11 @@
 #include "network.h"
 #include "obs_node.h"
 #include "scope.h"
+#include "solution_wrapper.h"
 
 using namespace std;
 
-EvalExperiment::EvalExperiment() {
+EvalExperiment::EvalExperiment(SolutionWrapper* wrapper) {
 	this->type = EXPERIMENT_TYPE_EVAL;
 
 	this->new_scope = NULL;
@@ -33,9 +34,9 @@ EvalExperiment::~EvalExperiment() {
 EvalExperimentHistory::EvalExperimentHistory(EvalExperiment* experiment) {
 	switch (experiment->state) {
 	case EVAL_EXPERIMENT_STATE_REFINE:
+	case EVAL_EXPERIMENT_STATE_MEASURE:
 		{
-			// uniform_int_distribution<int> on_distribution(0, 99);
-			uniform_int_distribution<int> on_distribution(0, 39);
+			uniform_int_distribution<int> on_distribution(0, 99);
 			if (on_distribution(generator) == 0) {
 				this->is_on = true;
 			} else {
@@ -45,7 +46,6 @@ EvalExperimentHistory::EvalExperimentHistory(EvalExperiment* experiment) {
 		break;
 	case EVAL_EXPERIMENT_STATE_INIT:
 	case EVAL_EXPERIMENT_STATE_RAMP:
-	case EVAL_EXPERIMENT_STATE_MEASURE:
 		{
 			uniform_int_distribution<int> on_distribution(0, EXPERIMENT_NUM_GEARS);
 			if (experiment->curr_ramp >= on_distribution(generator)) {
