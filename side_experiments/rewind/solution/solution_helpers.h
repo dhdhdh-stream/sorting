@@ -32,9 +32,6 @@ void outer_create_new_scope(Scope* scope_context,
 void recursive_add_child(Scope* curr_parent,
 						 SolutionWrapper* wrapper,
 						 Scope* new_scope);
-void add_outer_helper(Scope* curr_parent,
-					  SolutionWrapper* wrapper,
-					  Scope* new_scope);
 
 void clean_scope(Scope* scope);
 

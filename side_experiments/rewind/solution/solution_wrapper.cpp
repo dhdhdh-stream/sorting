@@ -62,8 +62,12 @@ void SolutionWrapper::combine(string other_path,
 
 	this->solution->outer_root_scope_ids.push_back(this->solution->outer_scopes.size());
 
-	for (int scope_index = 0; scope_index < (int)other->scopes.size(); scope_index++) {
-		this->solution->outer_scopes.push_back(other->scopes[scope_index]);
+	for (int o_index = 0; o_index < (int)other->scopes.size(); o_index++) {
+		this->solution->outer_scopes.push_back(other->scopes[o_index]);
+
+		for (int s_index = 0; s_index < (int)this->solution->scopes.size(); s_index++) {
+			this->solution->scopes[s_index]->child_scopes.push_back(other->scopes[o_index]);
+		}
 	}
 
 	other->scopes.clear();

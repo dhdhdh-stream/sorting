@@ -387,10 +387,21 @@ void outer_create_new_scope(Scope* scope_context,
 			continue;
 		}
 
-		uniform_int_distribution<int> node_distribution(1, parent_scope->nodes.size()-1);
 		for (int t_index = 0; t_index < CREATE_NEW_SCOPE_NUM_TRIES; t_index++) {
-			AbstractNode* potential_start_node = next(parent_scope->nodes.begin(), node_distribution(generator))->second;
-			AbstractNode* potential_end_node = next(parent_scope->nodes.begin(), node_distribution(generator))->second;
+			vector<AbstractNode*> meaningful_nodes;
+			parent_scope->random_activate(meaningful_nodes);
+
+			if (meaningful_nodes.size() < NEW_SCOPE_MIN_NUM_NODES) {
+				continue;
+			}
+
+			uniform_int_distribution<int> length_distribution(NEW_SCOPE_MIN_NUM_NODES, meaningful_nodes.size());
+			int length = length_distribution(generator);
+			uniform_int_distribution<int> start_distribution(0, meaningful_nodes.size() - length);
+			int start_index = start_distribution(generator);
+
+			AbstractNode* potential_start_node = meaningful_nodes[start_index];
+			AbstractNode* potential_end_node = meaningful_nodes[start_index + length-1];
 
 			Scope* potential_new_scope = NULL;
 			create_new_scope(potential_start_node,
@@ -427,52 +438,6 @@ void recursive_add_child(Scope* curr_parent,
 			recursive_add_child(wrapper->solution->scopes[s_index],
 								wrapper,
 								new_scope);
-		}
-	}
-}
-
-void gather_outer_helper(Scope* scope,
-						 set<Scope*>& outer_scopes) {
-	for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
-			it != scope->nodes.end(); it++) {
-		if (it->second->type == NODE_TYPE_SCOPE) {
-			ScopeNode* scope_node = (ScopeNode*)it->second;
-			set<Scope*>::iterator s_it = outer_scopes.find(scope_node->scope);
-			if (s_it == outer_scopes.end()) {
-				outer_scopes.insert(scope_node->scope);
-
-				gather_outer_helper(scope_node->scope,
-									outer_scopes);
-			}
-		}
-	}
-}
-
-/**
- * TODO: can simply add all, and let clean_scopes() clean
- */
-void add_outer_helper(Scope* curr_parent,
-					  SolutionWrapper* wrapper,
-					  Scope* new_scope) {
-	set<Scope*> outer_scopes;
-	gather_outer_helper(new_scope,
-						outer_scopes);
-	outer_scopes.insert(new_scope);
-
-	for (set<Scope*>::iterator it = outer_scopes.begin();
-			it != outer_scopes.end(); it++) {
-		bool is_added = false;
-		for (int c_index = 0; c_index < (int)curr_parent->child_scopes.size(); c_index++) {
-			if (curr_parent->child_scopes[c_index] == *it) {
-				is_added = true;
-				break;
-			}
-		}
-
-		if (!is_added) {
-			recursive_add_child(curr_parent,
-								wrapper,
-								*it);
 		}
 	}
 }

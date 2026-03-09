@@ -91,6 +91,66 @@ void Scope::random_exit_activate(AbstractNode* starting_node,
 	possible_exits.push_back(NULL);
 }
 
+void Scope::random_activate(vector<AbstractNode*>& meaningful_nodes) {
+	AbstractNode* curr_node = this->nodes[0];
+	while (true) {
+		if (curr_node == NULL) {
+			break;
+		}
+
+		switch (curr_node->type) {
+		case NODE_TYPE_START:
+			{
+				StartNode* node = (StartNode*)curr_node;
+
+				/**
+				 * - special case insert start_node->next_node
+				 */
+				meaningful_nodes.push_back(node->next_node);
+
+				curr_node = node->next_node;
+			}
+			break;
+		case NODE_TYPE_ACTION:
+			{
+				ActionNode* node = (ActionNode*)curr_node;
+
+				meaningful_nodes.push_back(curr_node);
+
+				curr_node = node->next_node;
+			}
+			break;
+		case NODE_TYPE_SCOPE:
+			{
+				ScopeNode* node = (ScopeNode*)curr_node;
+
+				meaningful_nodes.push_back(curr_node);
+
+				curr_node = node->next_node;
+			}
+			break;
+		case NODE_TYPE_BRANCH:
+			{
+				BranchNode* node = (BranchNode*)curr_node;
+
+				uniform_int_distribution<int> distribution(0, 1);
+				if (distribution(generator) == 0) {
+					curr_node = node->branch_next_node;
+				} else {
+					curr_node = node->original_next_node;
+				}
+			}
+			break;
+		case NODE_TYPE_OBS:
+			{
+				ObsNode* node = (ObsNode*)curr_node;
+				curr_node = node->next_node;
+			}
+			break;
+		}
+	}
+}
+
 #if defined(MDEBUG) && MDEBUG
 void Scope::clear_verify() {
 	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();

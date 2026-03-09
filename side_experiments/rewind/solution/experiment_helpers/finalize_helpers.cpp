@@ -76,15 +76,9 @@ void Experiment::add(SolutionWrapper* wrapper) {
 		this->best_new_scope->is_outer = false;
 		this->best_new_scope->id = (int)wrapper->solution->scopes.size()-1;
 
-		if (wrapper->solution->state == SOLUTION_STATE_OUTER) {
-			add_outer_helper(this->scope_context,
-							 wrapper,
-							 this->best_new_scope);
-		} else {
-			recursive_add_child(this->scope_context,
-								wrapper,
-								this->best_new_scope);
-		}
+		recursive_add_child(this->scope_context,
+							wrapper,
+							this->best_new_scope);
 
 		this->best_new_scope = NULL;
 	}
