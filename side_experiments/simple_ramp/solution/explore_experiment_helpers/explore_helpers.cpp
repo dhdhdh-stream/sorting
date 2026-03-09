@@ -26,7 +26,7 @@ using namespace std;
 #if defined(MDEBUG) && MDEBUG
 const int EXPLORE_EXPERIMENT_EXPLORE_ITERS = 5;
 #else
-const int EXPLORE_EXPERIMENT_EXPLORE_ITERS = 200;
+const int EXPLORE_EXPERIMENT_EXPLORE_ITERS = 400;
 #endif /* MDEBUG */
 
 /**

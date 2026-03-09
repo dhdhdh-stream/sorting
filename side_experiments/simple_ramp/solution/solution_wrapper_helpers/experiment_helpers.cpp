@@ -195,7 +195,8 @@ void SolutionWrapper::experiment_end(double result) {
 
 			this->solution->merge_outer();
 			this->curr_num_explore = 0;
-			this->curr_num_eval = 0;
+			this->curr_num_measure = 0;
+			this->curr_num_ramp = 0;
 		}
 		break;
 	}

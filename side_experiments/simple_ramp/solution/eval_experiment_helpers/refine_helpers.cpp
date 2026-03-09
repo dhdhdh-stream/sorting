@@ -67,7 +67,7 @@ void EvalExperiment::refine_backprop(double target_val,
 		if (this->num_original == BRANCH_RATIO_CHECK_ITER) {
 			double branch_ratio = (double)this->num_branch / ((double)this->num_original + (double)this->num_branch);
 			if (branch_ratio < BRANCH_MIN_RATIO) {
-				wrapper->curr_num_eval--;
+				wrapper->curr_num_measure--;
 
 				this->node_context->experiment = NULL;
 				delete this;

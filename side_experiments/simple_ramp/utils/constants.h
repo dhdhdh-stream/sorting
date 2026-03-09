@@ -34,11 +34,7 @@ const int RAMP_EPOCH_NUM_ITERS = 4000;
 const int BRANCH_RATIO_CHECK_ITER = 200;
 const double BRANCH_MIN_RATIO = 0.03;
 
-/**
- * - track relatively large number
- *   - to help prevent string of bad luck from adding bad changes
- */
-const int NUM_LAST_TRACK = 40;
+const int NUM_LAST_TRACK = 10;
 #if defined(MDEBUG) && MDEBUG
 const int MIN_NUM_LAST_TRACK = 1;
 #else

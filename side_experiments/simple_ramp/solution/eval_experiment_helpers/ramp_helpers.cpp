@@ -70,10 +70,10 @@ void EvalExperiment::ramp_backprop(double target_val,
 		double existing_score_average = this->existing_sum_scores / this->existing_count;
 		double new_score_average = this->new_sum_scores / this->new_count;
 
-		// temp
-		cout << "this->curr_ramp: " << this->curr_ramp << endl;
-		cout << "existing_score_average: " << existing_score_average << endl;
-		cout << "new_score_average: " << new_score_average << endl;
+		// // temp
+		// cout << "this->curr_ramp: " << this->curr_ramp << endl;
+		// cout << "existing_score_average: " << existing_score_average << endl;
+		// cout << "new_score_average: " << new_score_average << endl;
 
 		this->existing_sum_scores = 0.0;
 		this->existing_count = 0;
@@ -99,7 +99,7 @@ void EvalExperiment::ramp_backprop(double target_val,
 				this->node_context->experiment = NULL;
 				delete this;
 
-				wrapper->curr_num_eval--;
+				wrapper->curr_num_ramp--;
 			}
 		} else {
 			switch (this->state) {
@@ -119,7 +119,7 @@ void EvalExperiment::ramp_backprop(double target_val,
 				this->node_context->experiment = NULL;
 				delete this;
 
-				wrapper->curr_num_eval--;
+				wrapper->curr_num_ramp--;
 			}
 		}
 	}

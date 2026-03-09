@@ -10,7 +10,7 @@
 #include "constants.h"
 #include "globals.h"
 #include "helpers.h"
-#include "instance_scores.h"
+#include "minesweeper.h"
 #include "obs_node.h"
 #include "scope.h"
 #include "scope_node.h"
@@ -38,15 +38,14 @@ int main(int argc, char* argv[]) {
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
 
-	ProblemType* problem_type = new TypeInstanceScores();
+	ProblemType* problem_type = new TypeMinesweeper();
 
 	SolutionWrapper* solution_wrapper = new SolutionWrapper(
 		path, filename);
 
 	auto start_time = chrono::high_resolution_clock::now();
 
-	// while (!solution_wrapper->is_done()) {
-	while (true) {
+	while (!solution_wrapper->is_done()) {
 		int starting_timestamp = solution_wrapper->solution->timestamp;
 
 		while (true) {

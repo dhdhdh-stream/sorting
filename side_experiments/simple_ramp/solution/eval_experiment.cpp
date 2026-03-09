@@ -17,7 +17,15 @@ EvalExperiment::EvalExperiment(SolutionWrapper* wrapper) {
 	this->num_original = 0;
 	this->num_branch = 0;
 
-	this->state = EVAL_EXPERIMENT_STATE_REFINE;
+	// this->state = EVAL_EXPERIMENT_STATE_REFINE;
+	// this->state_iter = 0;
+
+	this->starting_experiment_iter = wrapper->experiment_iter;
+
+	this->existing_sum_scores = 0.0;
+	this->existing_count = 0;
+
+	this->state = EVAL_EXPERIMENT_STATE_MEASURE;
 	this->state_iter = 0;
 }
 
@@ -36,7 +44,7 @@ EvalExperimentHistory::EvalExperimentHistory(EvalExperiment* experiment) {
 	case EVAL_EXPERIMENT_STATE_REFINE:
 	case EVAL_EXPERIMENT_STATE_MEASURE:
 		{
-			uniform_int_distribution<int> on_distribution(0, 99);
+			uniform_int_distribution<int> on_distribution(0, 39);
 			if (on_distribution(generator) == 0) {
 				this->is_on = true;
 			} else {

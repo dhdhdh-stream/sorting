@@ -52,6 +52,8 @@ SolutionWrapper::SolutionWrapper(ProblemType* problem_type) {
 			new_scope->nodes[action_node->id] = action_node;
 
 			action_node->action = action_distribution(generator);
+
+			action_nodes.push_back(action_node);
 		}
 
 		ObsNode* end_node = new ObsNode();
@@ -82,12 +84,15 @@ SolutionWrapper::SolutionWrapper(ProblemType* problem_type) {
 
 		clean_scope(new_scope,
 					this);
+
+		this->solution->state = SOLUTION_STATE_NON_OUTER;
 	}
 
 	this->experiment_iter = 0;
 
 	this->curr_num_explore = 0;
-	this->curr_num_eval = 0;
+	this->curr_num_measure = 0;
+	this->curr_num_ramp = 0;
 
 	#if defined(MDEBUG) && MDEBUG
 	this->run_index = 0;
@@ -107,7 +112,8 @@ SolutionWrapper::SolutionWrapper(std::string path,
 	this->experiment_iter = 0;
 
 	this->curr_num_explore = 0;
-	this->curr_num_eval = 0;
+	this->curr_num_measure = 0;
+	this->curr_num_ramp = 0;
 
 	#if defined(MDEBUG) && MDEBUG
 	this->run_index = 0;

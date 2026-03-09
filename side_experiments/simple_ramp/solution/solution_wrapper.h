@@ -49,7 +49,8 @@ public:
 	int experiment_iter;
 
 	int curr_num_explore;
-	int curr_num_eval;
+	int curr_num_measure;
+	int curr_num_ramp;
 
 	#if defined(MDEBUG) && MDEBUG
 	int run_index;

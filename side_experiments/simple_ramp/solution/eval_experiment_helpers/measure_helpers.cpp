@@ -65,7 +65,7 @@ void EvalExperiment::measure_backprop(double target_val,
 		if (this->num_original == BRANCH_RATIO_CHECK_ITER) {
 			double branch_ratio = (double)this->num_branch / ((double)this->num_original + (double)this->num_branch);
 			if (branch_ratio < BRANCH_MIN_RATIO) {
-				wrapper->curr_num_eval--;
+				wrapper->curr_num_measure--;
 
 				this->node_context->experiment = NULL;
 				delete this;
@@ -112,12 +112,13 @@ void EvalExperiment::measure_backprop(double target_val,
 		double t_score = this->local_improvement
 			/ (this->score_standard_deviation / sqrt((double)this->new_scores.size()));
 
-		// temp
-		cout << "new_score_average: " << new_score_average << endl;
-		cout << "existing_score_average: " << existing_score_average << endl;
-		cout << "this->local_improvement: " << this->local_improvement << endl;
-		cout << "this->global_improvement: " << this->global_improvement << endl;
-		cout << "t_score: " << t_score << endl;
+		// // temp
+		// cout << "new_score_average: " << new_score_average << endl;
+		// cout << "this->new_scores.size(): " << this->new_scores.size() << endl;
+		// cout << "existing_score_average: " << existing_score_average << endl;
+		// cout << "this->local_improvement: " << this->local_improvement << endl;
+		// cout << "this->global_improvement: " << this->global_improvement << endl;
+		// cout << "t_score: " << t_score << endl;
 
 		#if defined(MDEBUG) && MDEBUG
 		if (t_score >= SUCCESS_T_SCORE || rand()%3 == 0) {
@@ -165,8 +166,11 @@ void EvalExperiment::measure_backprop(double target_val,
 				this->state = EVAL_EXPERIMENT_STATE_INIT;
 				this->state_iter = 0;
 				this->num_fail = 0;
+
+				wrapper->curr_num_measure--;
+				wrapper->curr_num_ramp++;
 			} else {
-				wrapper->curr_num_eval--;
+				wrapper->curr_num_measure--;
 
 				this->node_context->experiment = NULL;
 				delete this;
@@ -176,7 +180,7 @@ void EvalExperiment::measure_backprop(double target_val,
 		#else
 		} else if (t_score < FAIL_T_SCORE) {
 		#endif /* MDEBUG */
-			wrapper->curr_num_eval--;
+			wrapper->curr_num_measure--;
 
 			this->node_context->experiment = NULL;
 			delete this;
