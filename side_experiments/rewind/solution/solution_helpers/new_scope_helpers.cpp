@@ -16,6 +16,11 @@
 
 using namespace std;
 
+const double OUTER_PATH_MIN_RATIO = 0.2;
+/**
+ * - since outer discarded afterwards, simply try to pull as much as possible
+ */
+
 void ancestor_helper(AbstractNode* curr_node,
 					 set<AbstractNode*>& ancestors) {
 	for (int a_index = 0; a_index < (int)curr_node->ancestor_ids.size(); a_index++) {
@@ -388,20 +393,17 @@ void outer_create_new_scope(Scope* scope_context,
 		}
 
 		for (int t_index = 0; t_index < CREATE_NEW_SCOPE_NUM_TRIES; t_index++) {
-			vector<AbstractNode*> meaningful_nodes;
-			parent_scope->random_activate(meaningful_nodes);
+			vector<AbstractNode*> path;
+			parent_scope->random_activate(path);
 
-			if (meaningful_nodes.size() < NEW_SCOPE_MIN_NUM_NODES) {
-				continue;
-			}
-
-			uniform_int_distribution<int> length_distribution(NEW_SCOPE_MIN_NUM_NODES, meaningful_nodes.size());
+			int min_length = OUTER_PATH_MIN_RATIO * (double)path.size();
+			uniform_int_distribution<int> length_distribution(min_length, path.size());
 			int length = length_distribution(generator);
-			uniform_int_distribution<int> start_distribution(0, meaningful_nodes.size() - length);
+			uniform_int_distribution<int> start_distribution(0, path.size() - length);
 			int start_index = start_distribution(generator);
 
-			AbstractNode* potential_start_node = meaningful_nodes[start_index];
-			AbstractNode* potential_end_node = meaningful_nodes[start_index + length-1];
+			AbstractNode* potential_start_node = path[start_index];
+			AbstractNode* potential_end_node = path[start_index + length-1];
 
 			Scope* potential_new_scope = NULL;
 			create_new_scope(potential_start_node,

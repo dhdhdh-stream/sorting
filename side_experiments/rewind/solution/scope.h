@@ -38,7 +38,7 @@ public:
 
 	void random_exit_activate(AbstractNode* starting_node,
 							  std::vector<AbstractNode*>& possible_exits);
-	void random_activate(std::vector<AbstractNode*>& meaningful_nodes);
+	void random_activate(std::vector<AbstractNode*>& path);
 
 	#if defined(MDEBUG) && MDEBUG
 	void clear_verify();
