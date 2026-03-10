@@ -139,7 +139,7 @@ void ExploreExperiment::train_new_backprop(double target_val,
 				new_eval_experiment->actions = this->best_actions;
 				new_eval_experiment->scopes = this->best_scopes;
 
-				wrapper->curr_num_measure++;
+				wrapper->curr_num_eval++;
 
 				this->node_context->experiment = new_eval_experiment;
 				delete this;

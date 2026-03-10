@@ -1,3 +1,11 @@
+/**
+ * - 20 * 600 = 12000 iters per ExploreExperiment
+ * 
+ * - there will be more ExploreExperiments on long paths
+ *   - so will damage long paths more
+ *     - but that's preferable
+ */
+
 #ifndef EXPLORE_EXPERIMENT_H
 #define EXPLORE_EXPERIMENT_H
 

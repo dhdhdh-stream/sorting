@@ -1,8 +1,3 @@
-/**
- * - 60000 iters per ExploreExperiment
- * - 40000 iters per initial measure of EvalExperiment
- */
-
 #ifndef ABSTRACT_EXPERIMENT_H
 #define ABSTRACT_EXPERIMENT_H
 

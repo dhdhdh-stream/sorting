@@ -22,6 +22,8 @@ class Solution;
 
 class SolutionWrapper {
 public:
+	int iter;
+
 	Solution* solution;
 
 	/**
@@ -46,11 +48,8 @@ public:
 	 * - for debugging
 	 */
 
-	int experiment_iter;
-
 	int curr_num_explore;
-	int curr_num_measure;
-	int curr_num_ramp;
+	int curr_num_eval;
 
 	#if defined(MDEBUG) && MDEBUG
 	int run_index;

@@ -52,8 +52,6 @@ int main(int argc, char* argv[]) {
 		solution_wrapper = new SolutionWrapper(problem_type);
 	}
 
-	int iter_index = 0;
-
 	#if defined(MDEBUG) && MDEBUG
 	while (true) {
 	#else
@@ -91,12 +89,10 @@ int main(int argc, char* argv[]) {
 
 			delete problem;
 
-			iter_index++;
-			if (iter_index%100000 == 0) {
-				cout << "iter_index: " << iter_index << endl;
+			if (solution_wrapper->iter%100000 == 0) {
+				cout << "solution_wrapper->iter: " << solution_wrapper->iter << endl;
 				cout << "solution_wrapper->curr_num_explore: " << solution_wrapper->curr_num_explore << endl;
-				cout << "solution_wrapper->curr_num_measure: " << solution_wrapper->curr_num_measure << endl;
-				cout << "solution_wrapper->curr_num_ramp: " << solution_wrapper->curr_num_ramp << endl;
+				cout << "solution_wrapper->curr_num_eval: " << solution_wrapper->curr_num_eval << endl;
 				double sum_vals = 0.0;
 				for (int h_index = 0; h_index < (int)solution_wrapper->solution->score_histories.size(); h_index++) {
 					sum_vals += solution_wrapper->solution->score_histories[h_index];

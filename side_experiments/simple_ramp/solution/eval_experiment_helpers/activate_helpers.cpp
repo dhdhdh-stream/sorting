@@ -25,27 +25,10 @@ void EvalExperiment::check_activate(AbstractNode* experiment_node,
 		history = it->second;
 	}
 
-	switch (this->state) {
-	case EVAL_EXPERIMENT_STATE_REFINE:
-		refine_check_activate(experiment_node,
-							  obs,
-							  wrapper,
-							  history);
-		break;
-	case EVAL_EXPERIMENT_STATE_MEASURE:
-		measure_check_activate(experiment_node,
-							   obs,
-							   wrapper,
-							   history);
-		break;
-	case EVAL_EXPERIMENT_STATE_INIT:
-	case EVAL_EXPERIMENT_STATE_RAMP:
-		ramp_check_activate(experiment_node,
-							obs,
-							wrapper,
-							history);
-		break;
-	}
+	ramp_check_activate(experiment_node,
+						obs,
+						wrapper,
+						history);
 }
 
 void EvalExperiment::experiment_step(vector<double>& obs,
@@ -98,23 +81,8 @@ void EvalExperiment::backprop(double target_val,
 							  EvalExperimentHistory* history,
 							  SolutionWrapper* wrapper,
 							  set<Scope*>& updated_scopes) {
-	switch (this->state) {
-	case EVAL_EXPERIMENT_STATE_REFINE:
-		refine_backprop(target_val,
-						history,
-						wrapper);
-		break;
-	case EVAL_EXPERIMENT_STATE_MEASURE:
-		measure_backprop(target_val,
-						 history,
-						 wrapper);
-		break;
-	case EVAL_EXPERIMENT_STATE_INIT:
-	case EVAL_EXPERIMENT_STATE_RAMP:
-		ramp_backprop(target_val,
-					  history,
-					  wrapper,
-					  updated_scopes);
-		break;
-	}
+	ramp_backprop(target_val,
+				  history,
+				  wrapper,
+				  updated_scopes);
 }

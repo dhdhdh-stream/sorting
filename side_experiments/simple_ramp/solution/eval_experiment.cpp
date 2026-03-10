@@ -17,15 +17,12 @@ EvalExperiment::EvalExperiment(SolutionWrapper* wrapper) {
 	this->num_original = 0;
 	this->num_branch = 0;
 
-	// this->state = EVAL_EXPERIMENT_STATE_REFINE;
-	// this->state_iter = 0;
+	this->starting_iter = wrapper->iter;
 
-	this->starting_experiment_iter = wrapper->experiment_iter;
+	this->curr_ramp = 0;
+	this->measure_status = MEASURE_STATUS_N_A;
 
-	this->existing_sum_scores = 0.0;
-	this->existing_count = 0;
-
-	this->state = EVAL_EXPERIMENT_STATE_MEASURE;
+	this->state = EVAL_EXPERIMENT_STATE_RAMP;
 	this->state_iter = 0;
 }
 
@@ -40,29 +37,11 @@ EvalExperiment::~EvalExperiment() {
 }
 
 EvalExperimentHistory::EvalExperimentHistory(EvalExperiment* experiment) {
-	switch (experiment->state) {
-	case EVAL_EXPERIMENT_STATE_REFINE:
-	case EVAL_EXPERIMENT_STATE_MEASURE:
-		{
-			uniform_int_distribution<int> on_distribution(0, 39);
-			if (on_distribution(generator) == 0) {
-				this->is_on = true;
-			} else {
-				this->is_on = false;
-			}
-		}
-		break;
-	case EVAL_EXPERIMENT_STATE_INIT:
-	case EVAL_EXPERIMENT_STATE_RAMP:
-		{
-			uniform_int_distribution<int> on_distribution(0, EXPERIMENT_NUM_GEARS);
-			if (experiment->curr_ramp >= on_distribution(generator)) {
-				this->is_on = true;
-			} else {
-				this->is_on = false;
-			}
-		}
-		break;
+	uniform_int_distribution<int> on_distribution(0, EXPERIMENT_NUM_GEARS);
+	if (experiment->curr_ramp >= on_distribution(generator)) {
+		this->is_on = true;
+	} else {
+		this->is_on = false;
 	}
 
 	this->hit_branch = false;

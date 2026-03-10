@@ -15,13 +15,17 @@
 
 using namespace std;
 
-const int TARGET_EXPLORE_PER_RUN = 20;
-const double MAX_EXPLORE_RATIO_PER_RUN = 0.2;
+/**
+ * - 40% / 8 = 5%
+ */
+const int TARGET_EXPLORE_PER_RUN = 8;
 
 const int NON_OUTER_ITERS = 15;
 const int OUTER_ITERS = 8;
 
 void SolutionWrapper::experiment_init() {
+	this->iter++;
+
 	this->num_actions = 1;
 
 	#if defined(MDEBUG) && MDEBUG
@@ -30,8 +34,11 @@ void SolutionWrapper::experiment_init() {
 	this->curr_run_seed = xorshift(this->starting_run_seed);
 	#endif /* MDEBUG */
 
+	/**
+	 * - 40%
+	 */
 	uniform_int_distribution<int> explore_distribution(0, 4);
-	if (explore_distribution(generator) == 0) {
+	if (explore_distribution(generator) <= 1) {
 		this->should_explore = true;
 	} else {
 		this->should_explore = false;
@@ -113,8 +120,7 @@ void SolutionWrapper::experiment_end(double result) {
 	}
 
 	int num_explore = (int)this->explore_histories.size();
-	if (num_explore < TARGET_EXPLORE_PER_RUN
-			&& num_explore < MAX_EXPLORE_RATIO_PER_RUN * (double)this->num_actions) {
+	if (num_explore < TARGET_EXPLORE_PER_RUN) {
 		create_experiment(this);
 	}
 
@@ -128,8 +134,6 @@ void SolutionWrapper::experiment_end(double result) {
 				this->solution->score_index = 0;
 			}
 		}
-
-		this->experiment_iter++;
 	}
 
 	delete this->scope_histories[0];
@@ -138,7 +142,7 @@ void SolutionWrapper::experiment_end(double result) {
 	this->node_context.clear();
 	this->experiment_context.clear();
 
-	int padded_num_seen = max(20, (int)this->explore_order_seen.size());
+	int padded_num_seen = max(TARGET_EXPLORE_PER_RUN, (int)this->explore_order_seen.size());
 	for (int e_index = 0; e_index < (int)this->explore_order_seen.size(); e_index++) {
 		switch (this->explore_order_seen[e_index]->type) {
 		case EXPERIMENT_TYPE_EXPLORE:
@@ -195,8 +199,7 @@ void SolutionWrapper::experiment_end(double result) {
 
 			this->solution->merge_outer();
 			this->curr_num_explore = 0;
-			this->curr_num_measure = 0;
-			this->curr_num_ramp = 0;
+			this->curr_num_eval = 0;
 		}
 		break;
 	}

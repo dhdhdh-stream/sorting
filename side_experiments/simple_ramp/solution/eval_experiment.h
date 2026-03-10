@@ -17,10 +17,12 @@ class ObsNode;
 class Scope;
 class SolutionWrapper;
 
-const int EVAL_EXPERIMENT_STATE_REFINE = 0;
+const int EVAL_EXPERIMENT_STATE_RAMP = 0;
 const int EVAL_EXPERIMENT_STATE_MEASURE = 1;
-const int EVAL_EXPERIMENT_STATE_INIT = 2;
-const int EVAL_EXPERIMENT_STATE_RAMP = 3;
+
+const int MEASURE_STATUS_N_A = 0;
+const int MEASURE_STATUS_SUCCESS = 1;
+const int MEASURE_STATUS_FAIL = 2;
 
 class EvalExperimentHistory;
 class EvalExperimentState;
@@ -31,7 +33,6 @@ public:
 
 	int state;
 	int state_iter;
-	int num_fail;
 	/**
 	 * - don't rely on negative t-test to drive exploration
 	 *   - can gradually lead to worse and worse results
@@ -48,25 +49,20 @@ public:
 	int num_original;
 	int num_branch;
 
-	std::vector<std::vector<double>> existing_obs_histories;
-	std::vector<double> existing_target_val_histories;
-	std::vector<std::vector<double>> new_obs_histories;
-	std::vector<double> new_target_val_histories;
+	int starting_iter;
 
-	int starting_experiment_iter;
-
+	std::vector<double> existing_scores;
 	std::vector<double> new_scores;
+
+	int curr_ramp;
+	/**
+	 * - simply init to 0 and fast fail
+	 */
+	int measure_status;
 
 	double local_improvement;
 	double global_improvement;
 	double score_standard_deviation;
-
-	int curr_ramp;
-
-	double existing_sum_scores;
-	int existing_count;
-	double new_sum_scores;
-	int new_count;
 
 	EvalExperiment(SolutionWrapper* wrapper);
 	~EvalExperiment();
@@ -86,22 +82,6 @@ public:
 				  EvalExperimentHistory* history,
 				  SolutionWrapper* wrapper,
 				  std::set<Scope*>& updated_scopes);
-
-	void refine_check_activate(AbstractNode* experiment_node,
-							   std::vector<double>& obs,
-							   SolutionWrapper* wrapper,
-							   EvalExperimentHistory* history);
-	void refine_backprop(double target_val,
-						 EvalExperimentHistory* history,
-						 SolutionWrapper* wrapper);
-
-	void measure_check_activate(AbstractNode* experiment_node,
-								std::vector<double>& obs,
-								SolutionWrapper* wrapper,
-								EvalExperimentHistory* history);
-	void measure_backprop(double target_val,
-						  EvalExperimentHistory* history,
-						  SolutionWrapper* wrapper);
 
 	void ramp_check_activate(AbstractNode* experiment_node,
 							 std::vector<double>& obs,
