@@ -74,10 +74,11 @@ void Experiment::add(SolutionWrapper* wrapper) {
 		sum_vals += wrapper->solution->score_histories[h_index];
 	}
 	double score_average = sum_vals / (double)wrapper->solution->score_histories.size();
-	cout << "score_average: " << score_average << endl;
-	wrapper->solution->curr_score = score_average;
+	ss << "score_average: " << score_average << "; ";
+	// cout << "score_average: " << score_average << endl;
+	// wrapper->solution->curr_score = score_average;
 
-	wrapper->solution->improvement_history.push_back(score_average);
+	// wrapper->solution->improvement_history.push_back(score_average);
 	wrapper->solution->change_history.push_back(ss.str());
 
 	cout << ss.str() << endl;

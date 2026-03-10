@@ -136,10 +136,10 @@ void Experiment::ramp_backprop(double target_val,
 			}
 			double new_score_average = new_sum_vals / (double)this->new_scores.size();
 
-			// // temp
-			// cout << "this->curr_ramp: " << this->curr_ramp << endl;
-			// cout << "existing_score_average: " << existing_score_average << endl;
-			// cout << "new_score_average: " << new_score_average << endl;
+			// temp
+			cout << "this->curr_ramp: " << this->curr_ramp << endl;
+			cout << "existing_score_average: " << existing_score_average << endl;
+			cout << "new_score_average: " << new_score_average << endl;
 
 			this->existing_scores.clear();
 			this->new_scores.clear();
@@ -163,8 +163,14 @@ void Experiment::ramp_backprop(double target_val,
 
 					add(wrapper);
 					this->node_context->experiment = NULL;
-					create_experiments(wrapper);
 					delete this;
+
+					double curr_score = result_helper(wrapper);
+					cout << "curr_score: " << curr_score << endl;
+					wrapper->solution->curr_score = curr_score;
+					wrapper->solution->improvement_history.push_back(curr_score);
+
+					create_experiments(wrapper);
 				}
 			} else {
 				this->curr_ramp--;
@@ -209,6 +215,7 @@ void Experiment::ramp_backprop(double target_val,
 
 			// temp
 			cout << "new_score_average: " << new_score_average << endl;
+			cout << "this->new_scores.size(): " << this->new_scores.size() << endl;
 			cout << "existing_score_average: " << existing_score_average << endl;
 			cout << "this->local_improvement: " << this->local_improvement << endl;
 			cout << "this->global_improvement: " << this->global_improvement << endl;

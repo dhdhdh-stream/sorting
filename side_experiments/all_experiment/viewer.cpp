@@ -56,6 +56,7 @@ int main(int argc, char* argv[]) {
 		}
 
 		double target_val = problem->score_result();
+		target_val -= 0.0001 * solution_wrapper->num_actions;
 		cout << "target_val: " << target_val << endl;
 
 		solution_wrapper->end();

@@ -16,6 +16,8 @@ const int TRAIN_NEW_NUM_DATAPOINTS = 20;
 const int TRAIN_NEW_NUM_DATAPOINTS = 4000;
 #endif /* MDEBUG */
 
+const double MIN_EXPERIMENT_DIFF_RATIO = 0.8;
+
 void Experiment::train_new_check_activate(
 		vector<double>& obs,
 		SolutionWrapper* wrapper,
@@ -77,6 +79,14 @@ void Experiment::train_new_exit_step(SolutionWrapper* wrapper,
 void Experiment::train_new_backprop(double target_val,
 									ExperimentHistory* history,
 									SolutionWrapper* wrapper) {
+	if (history->is_on) {
+		this->new_num_experiments += (int)wrapper->experiment_histories.size();
+		this->new_count++;
+	} else {
+		this->existing_num_experiments += (int)wrapper->experiment_histories.size();
+		this->existing_count++;
+	}
+
 	while (this->existing_target_val_histories.size() < this->existing_obs_histories.size()) {
 		this->existing_target_val_histories.push_back(target_val);
 	}
@@ -88,6 +98,16 @@ void Experiment::train_new_backprop(double target_val,
 
 		this->state_iter++;
 		if (this->state_iter >= TRAIN_NEW_NUM_DATAPOINTS) {
+			double existing_average_num_experiments = (double)this->existing_num_experiments / (double)this->existing_count;
+			double new_average_num_experiments = (double)this->new_num_experiments / (double)this->new_count;
+			if (new_average_num_experiments < MIN_EXPERIMENT_DIFF_RATIO * existing_average_num_experiments) {
+				this->node_context->experiment = NULL;
+				create_experiment(this->node_context,
+								  wrapper);
+				delete this;
+				return;
+			}
+
 			Network* existing_network = new Network(this->existing_obs_histories[0].size());
 			uniform_int_distribution<int> existing_input_distribution(0, this->existing_obs_histories.size()-1);
 			for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {

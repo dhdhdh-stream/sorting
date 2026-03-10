@@ -25,4 +25,7 @@ Scope* create_new_scope(Scope* scope_context);
 void clean_scope(Scope* scope,
 				 SolutionWrapper* wrapper);
 
+// temp
+double result_helper(SolutionWrapper* wrapper);
+
 #endif /* HELPERS_H */

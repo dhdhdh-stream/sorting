@@ -47,7 +47,7 @@ void create_experiments(SolutionWrapper* wrapper) {
 				it != scope->nodes.end(); it++) {
 			if (it->second->type == NODE_TYPE_OBS) {
 				ObsNode* obs_node = (ObsNode*)it->second;
-				if (obs_node->experiment != NULL) {
+				if (obs_node->experiment == NULL) {
 					create_experiment(obs_node,
 									  wrapper);
 				}

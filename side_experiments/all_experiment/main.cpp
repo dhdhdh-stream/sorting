@@ -1,3 +1,22 @@
+// - unstable
+//   - deleted something useful
+//     - that was sharp? and/or moved into sharp territory?
+
+// - big gap between experiment scores and clean scores anyways
+//   - doubt any measurements can be that great
+
+// - randomness itself makes sharp solutions bad
+
+// - there simply has to be potentially infinite experiments per run
+//   - so the key must be about controlling the temperature
+//     - experiments must be kept at a level in which solution can learn to recover?
+
+// - maybe measure how much experiments are damaging for each part
+//   - for parts where experiments are especially damaging, lower temperature
+// TODO; measure separately
+// - messy to do as part of solution building because experiments have fixed endpoint
+// - for safest spot, set to 1/10, everywhere else, scale accordingly
+
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -80,6 +99,7 @@ int main(int argc, char* argv[]) {
 			}
 
 			double target_val = problem->score_result();
+			target_val -= 0.0001 * solution_wrapper->num_actions;
 
 			solution_wrapper->experiment_end(target_val);
 
@@ -87,6 +107,7 @@ int main(int argc, char* argv[]) {
 
 			if (solution_wrapper->iter%100000 == 0) {
 				cout << "solution_wrapper->iter: " << solution_wrapper->iter << endl;
+				solution_wrapper->solution->print_experiment_statuses();
 				double sum_vals = 0.0;
 				for (int h_index = 0; h_index < (int)solution_wrapper->solution->score_histories.size(); h_index++) {
 					sum_vals += solution_wrapper->solution->score_histories[h_index];

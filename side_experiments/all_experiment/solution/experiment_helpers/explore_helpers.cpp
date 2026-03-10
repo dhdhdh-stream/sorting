@@ -203,6 +203,11 @@ void Experiment::explore_backprop(double target_val,
 				delete this->existing_network;
 				this->existing_network = NULL;
 
+				this->existing_num_experiments = 0;
+				this->existing_count = 0;
+				this->new_num_experiments = 0;
+				this->new_count = 0;
+
 				this->state = EXPERIMENT_STATE_TRAIN_NEW;
 				this->state_iter = 0;
 			} else {

@@ -41,7 +41,7 @@ int main(int argc, char* argv[]) {
 	int max_num_actions = 0;
 
 	auto start_time = chrono::high_resolution_clock::now();
-	for (int i_index = 0; i_index < 2000; i_index++) {
+	for (int i_index = 0; i_index < 4000; i_index++) {
 		Problem* problem = problem_type->get_problem();
 
 		solution_wrapper->init();
@@ -58,6 +58,7 @@ int main(int argc, char* argv[]) {
 		}
 
 		double target_val = problem->score_result();
+		target_val -= 0.0001 * solution_wrapper->num_actions;
 
 		solution_wrapper->end();
 
@@ -70,7 +71,7 @@ int main(int argc, char* argv[]) {
 		delete problem;
 	}
 
-	cout << "average score: " << sum_vals/2000 << endl;
+	cout << "average score: " << sum_vals/4000 << endl;
 	cout << "max_num_actions: " << max_num_actions << endl;
 
 	auto curr_time = chrono::high_resolution_clock::now();

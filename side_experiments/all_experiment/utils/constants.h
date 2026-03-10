@@ -22,15 +22,15 @@ const int HISTORIES_NUM_SAVE = 4000;
 const int LAST_NUM_TRACK = 1000;
 
 #if defined(MDEBUG) && MDEBUG
-const int EXPERIMENT_NUM_GEARS = 6;
+const int EXPERIMENT_NUM_GEARS = 5;
 const int MEASURE_GEAR = 2;
-const int RAMP_EPOCH_NUM_ITERS = 20;
-const int MEASURE_STEP_NUM_ITERS = 20;
+const int RAMP_EPOCH_NUM_ITERS = 40;
+const int MEASURE_STEP_NUM_ITERS = 40;
 #else
-const int EXPERIMENT_NUM_GEARS = 10;
+const int EXPERIMENT_NUM_GEARS = 9;
 const int MEASURE_GEAR = 4;
-const int RAMP_EPOCH_NUM_ITERS = 2000;
-const int MEASURE_STEP_NUM_ITERS = 2000;
+const int RAMP_EPOCH_NUM_ITERS = 4000;
+const int MEASURE_STEP_NUM_ITERS = 4000;
 #endif /* MDEBUG */
 
 const int BRANCH_RATIO_CHECK_ITER = 200;

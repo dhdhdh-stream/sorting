@@ -64,6 +64,11 @@ public:
 	std::vector<std::vector<double>> new_obs_histories;
 	std::vector<double> new_target_val_histories;
 
+	int existing_num_experiments;
+	int existing_count;
+	int new_num_experiments;
+	int new_count;
+
 	std::vector<Network*> new_networks;
 
 	int num_original;
