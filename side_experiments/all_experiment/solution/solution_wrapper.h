@@ -64,6 +64,8 @@ public:
 	void set_action(int action);
 	void experiment_end(double result);
 
+	std::pair<bool,int> damage_step(std::vector<double> obs);
+
 	bool is_done();
 
 	void clean_scopes();

@@ -35,4 +35,9 @@ public:
 	void save_for_display(std::ofstream& output_file);
 };
 
+class ActionNodeHistory : public AbstractNodeHistory {
+public:
+	ActionNodeHistory(ActionNode* node);
+};
+
 #endif /* ACTION_NODE_H */

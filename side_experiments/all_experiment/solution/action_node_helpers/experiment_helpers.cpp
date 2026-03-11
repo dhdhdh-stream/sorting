@@ -15,6 +15,11 @@ void ActionNode::experiment_step(vector<double>& obs,
 								 int& action,
 								 bool& is_next,
 								 SolutionWrapper* wrapper) {
+	ScopeHistory* scope_history = wrapper->scope_histories.back();
+
+	ActionNodeHistory* history = new ActionNodeHistory(this);
+	scope_history->node_histories[this->id] = history;
+
 	action = this->action;
 	is_next = true;
 

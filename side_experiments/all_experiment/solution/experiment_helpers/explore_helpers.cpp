@@ -21,13 +21,6 @@ const int EXPERIMENT_EXPLORE_ITERS = 5;
 const int EXPERIMENT_EXPLORE_ITERS = 200;
 #endif /* MDEBUG */
 
-/**
- * - always give raw actions a large weight
- *   - existing scopes often learned to avoid certain patterns
- *     - which can prevent innovation
- */
-const int RAW_ACTION_WEIGHT = 10;
-
 void Experiment::explore_check_activate(
 		vector<double>& obs,
 		SolutionWrapper* wrapper,

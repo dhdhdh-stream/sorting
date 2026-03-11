@@ -33,6 +33,8 @@ public:
 						 bool& is_next,
 						 SolutionWrapper* wrapper);
 
+	void damage_step(SolutionWrapper* wrapper);
+
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file,
 			  Solution* parent_solution);
@@ -42,7 +44,13 @@ public:
 
 class ObsNodeHistory : public AbstractNodeHistory {
 public:
+	bool is_damage;
+	Scope* damage_new_scope;
+	std::vector<AbstractNode*> damage_nodes;
+	AbstractNode* end_damage;
+
 	ObsNodeHistory(ObsNode* node);
+	~ObsNodeHistory();
 };
 
 #endif /* OBS_NODE_H */

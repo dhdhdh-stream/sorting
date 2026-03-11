@@ -13,6 +13,13 @@ const int TRAIN_ITERS = 300000;
 const int STEP_TYPE_ACTION = 0;
 const int STEP_TYPE_SCOPE = 1;
 
+/**
+ * - always give raw actions a large weight
+ *   - existing scopes often learned to avoid certain patterns
+ *     - which can prevent innovation
+ */
+const int RAW_ACTION_WEIGHT = 10;
+
 #if defined(MDEBUG) && MDEBUG
 const int HISTORIES_NUM_SAVE = 100;
 #else

@@ -26,6 +26,17 @@ public:
 	 * - if both paths of BranchNode point to same node, add twice
 	 */
 
+	double val_average;
+	double start_damage;
+	double end_damage;
+
+	double sum_vals;
+	int val_count;
+	double sum_start_damage;
+	int start_damage_count;
+	double sum_end_damage;
+	int end_damage_count;
+
 	virtual ~AbstractNode() {};
 
 	virtual void step(std::vector<double>& obs,
