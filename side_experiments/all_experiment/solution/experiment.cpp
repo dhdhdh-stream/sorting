@@ -47,6 +47,7 @@ ExperimentHistory::ExperimentHistory(Experiment* experiment) {
 	case EXPERIMENT_STATE_TRAIN_NEW:
 		{
 			uniform_int_distribution<int> on_distribution(0, 99);
+			// uniform_int_distribution<int> on_distribution(0, 29);
 			if (on_distribution(generator) == 0) {
 				this->is_on = true;
 			} else {

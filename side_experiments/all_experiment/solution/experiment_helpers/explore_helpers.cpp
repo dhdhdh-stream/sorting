@@ -11,6 +11,7 @@
 #include "network.h"
 #include "obs_node.h"
 #include "scope.h"
+#include "solution.h"
 #include "solution_wrapper.h"
 
 using namespace std;
@@ -33,8 +34,18 @@ void Experiment::explore_check_activate(
 				history->existing_predicted_scores.push_back(this->existing_network->output->acti_vals[0]);
 
 				uniform_int_distribution<int> new_scope_distribution(0, 3);
-				if (new_scope_distribution(generator) == 0) {
-					this->curr_new_scope = create_new_scope(this->node_context->parent);
+				if (wrapper->solution->state == SOLUTION_STATE_OUTER) {
+					Scope* parent_scope;
+					outer_create_new_scope(this->node_context->parent,
+										   wrapper,
+										   this->curr_new_scope,
+										   parent_scope);
+				} else if (new_scope_distribution(generator) == 0) {
+					Scope* parent_scope;
+					create_new_scope(this->node_context->parent,
+									 wrapper,
+									 this->curr_new_scope,
+									 parent_scope);
 				}
 				if (this->curr_new_scope != NULL) {
 					this->curr_step_types.push_back(STEP_TYPE_SCOPE);

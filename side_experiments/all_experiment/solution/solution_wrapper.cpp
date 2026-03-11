@@ -84,8 +84,7 @@ SolutionWrapper::SolutionWrapper(ProblemType* problem_type) {
 		end_node->next_node_id = -1;
 		end_node->next_node = NULL;
 
-		clean_scope(new_scope,
-					this);
+		clean_scope(new_scope);
 
 		this->solution->state = SOLUTION_STATE_NON_OUTER;
 	}

@@ -17,6 +17,25 @@
 // - messy to do as part of solution building because experiments have fixed endpoint
 // - for safest spot, set to 1/10, everywhere else, scale accordingly
 
+// - solutions built under sharpness don't work when there's a lot of uncertainty
+
+// - maybe being precise has a higher ceiling? but expensive to iterate on?
+//   - and good to have at least a bit of robustness that randomness drives
+//     - likely helps generalization
+
+// - maybe simply have to live with randomness
+//  - not that different from actions having random chance to fail anyways
+//  - maybe resulting solution will be extremely robust
+//    - which likely means it generalizes extremely well
+
+// - maybe tied to how much effort needed to make safe
+//   - if uncertainty is so much that even trying to make safe is unsafe, then impossible to progress
+
+// - temperature tied to difficulty of the problem?
+//   - mainly tied to how low temperature needs to be for saves to work
+
+// - maybe when creating new scopes, need to experiment as well
+
 #include <chrono>
 #include <iostream>
 #include <map>

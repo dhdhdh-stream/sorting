@@ -66,6 +66,10 @@ int main(int argc, char* argv[]) {
 	update_vals(solution_wrapper);
 
 	for (int i_index = 0; i_index < 1000000; i_index++) {
+		if (i_index % 100000 == 0) {
+			cout << i_index << endl;
+		}
+
 		Problem* problem = problem_type->get_problem();
 
 		solution_wrapper->init();

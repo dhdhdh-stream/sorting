@@ -90,9 +90,6 @@ void Experiment::add(SolutionWrapper* wrapper) {
 		this->best_new_scope->is_outer = false;
 		this->best_new_scope->id = (int)wrapper->solution->scopes.size()-1;
 
-		clean_scope(this->best_new_scope,
-					wrapper);
-
 		this->best_new_scope->child_scopes = scope_context->child_scopes;
 		recursive_add_child(scope_context,
 							wrapper,

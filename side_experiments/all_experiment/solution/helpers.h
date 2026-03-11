@@ -20,10 +20,19 @@ void create_experiment(ObsNode* obs_node,
 					   SolutionWrapper* wrapper);
 void create_experiments(SolutionWrapper* wrapper);
 
-Scope* create_new_scope(Scope* scope_context);
+void create_new_scope(AbstractNode* potential_start_node,
+					  AbstractNode* potential_end_node,
+					  Scope*& new_scope);
+void create_new_scope(Scope* scope_context,
+					  SolutionWrapper* wrapper,
+					  Scope*& new_scope,
+					  Scope*& parent_scope);
+void outer_create_new_scope(Scope* scope_context,
+							SolutionWrapper* wrapper,
+							Scope*& new_scope,
+							Scope*& parent_scope);
 
-void clean_scope(Scope* scope,
-				 SolutionWrapper* wrapper);
+void clean_scope(Scope* scope);
 
 // temp
 double result_helper(SolutionWrapper* wrapper);

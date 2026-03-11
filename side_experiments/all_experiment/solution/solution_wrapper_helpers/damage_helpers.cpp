@@ -1,3 +1,9 @@
+// - low impact?
+//   - would probably not have been realistic to measure anyways
+//     - experiments have fixed endpoint
+//       - and would at least cost latency otherwise
+//     - not worth to try random
+
 #include "solution_wrapper.h"
 
 #include <iostream>

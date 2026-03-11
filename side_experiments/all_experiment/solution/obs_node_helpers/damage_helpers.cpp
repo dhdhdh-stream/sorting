@@ -1,5 +1,7 @@
 #include "obs_node.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "constants.h"
 #include "globals.h"
@@ -17,7 +19,7 @@ void ObsNode::damage_step(SolutionWrapper* wrapper) {
 	scope_history->node_histories[this->id] = history;
 
 	uniform_int_distribution<int> damage_distribution(0, 99);
-	if (damage_distribution(generator) == 0) {		
+	if (this->parent->id != -1 && damage_distribution(generator) == 0) {		
 		history->is_damage = true;
 
 		AbstractNode* starting_node = this->next_node;
@@ -39,10 +41,16 @@ void ObsNode::damage_step(SolutionWrapper* wrapper) {
 
 		uniform_int_distribution<int> new_scope_distribution(0, 3);
 		if (new_scope_distribution(generator) == 0) {
-			history->damage_new_scope = create_new_scope(this->parent);
+			Scope* parent_scope;
+			create_new_scope(this->parent,
+			 				 wrapper,
+			 				 history->damage_new_scope,
+			 				 parent_scope);
 		}
 		if (history->damage_new_scope != NULL) {
 			ScopeNode* new_scope_node = new ScopeNode();
+			new_scope_node->id = this->parent->damage_index;
+			this->parent->damage_index++;
 			new_scope_node->scope = history->damage_new_scope;
 			history->damage_nodes.push_back(new_scope_node);
 		} else {
@@ -88,11 +96,15 @@ void ObsNode::damage_step(SolutionWrapper* wrapper) {
 				}
 				if (is_scope) {
 					ScopeNode* new_scope_node = new ScopeNode();
+					new_scope_node->id = this->parent->damage_index;
+					this->parent->damage_index++;
 					int child_index = possible_child_indexes[child_index_distribution(generator)];
 					new_scope_node->scope = this->parent->child_scopes[child_index];
 					history->damage_nodes.push_back(new_scope_node);
 				} else {
 					ActionNode* new_action_node = new ActionNode();
+					new_action_node->id = this->parent->damage_index;
+					this->parent->damage_index++;
 					uniform_int_distribution<int> action_distribution(0, 6);
 					new_action_node->action = action_distribution(generator);
 					history->damage_nodes.push_back(new_action_node);
@@ -108,13 +120,13 @@ void ObsNode::damage_step(SolutionWrapper* wrapper) {
 				case NODE_TYPE_ACTION:
 					{
 						ActionNode* action_node = (ActionNode*)history->damage_nodes[n_index];
-						action_node->next_node = exit_next_node;
+						action_node->next_node = history->damage_nodes[n_index+1];
 					}
 					break;
 				case NODE_TYPE_SCOPE:
 					{
 						ScopeNode* scope_node = (ScopeNode*)history->damage_nodes[n_index];
-						scope_node->next_node = exit_next_node;
+						scope_node->next_node = history->damage_nodes[n_index+1];
 					}
 					break;
 				}
@@ -133,6 +145,8 @@ void ObsNode::damage_step(SolutionWrapper* wrapper) {
 				}
 				break;
 			}
+
+			wrapper->node_context.back() = history->damage_nodes[0];
 		}
 	} else {
 		wrapper->node_context.back() = this->next_node;

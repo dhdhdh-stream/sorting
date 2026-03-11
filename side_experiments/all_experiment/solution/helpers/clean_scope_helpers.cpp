@@ -9,14 +9,11 @@
 #include "obs_node.h"
 #include "scope.h"
 #include "scope_node.h"
-#include "solution.h"
-#include "solution_wrapper.h"
 #include "start_node.h"
 
 using namespace std;
 
-void clean_scope(Scope* scope,
-				 SolutionWrapper* wrapper) {
+void clean_scope(Scope* scope) {
 	/**
 	 * - remove no longer accessible nodes
 	 */

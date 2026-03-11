@@ -1,5 +1,7 @@
 #include "helpers.h"
 
+#include <iostream>
+
 #include "obs_node.h"
 #include "scope.h"
 #include "scope_node.h"
@@ -80,6 +82,8 @@ void update_damage(SolutionWrapper* wrapper) {
 			} else {
 				double val_average = it->second->sum_start_damage / it->second->start_damage_count;
 				it->second->start_damage = val_average - it->second->val_average;
+				// temp
+				cout << "it->second->start_damage_count: " << it->second->start_damage_count << endl;
 
 				it->second->sum_start_damage = 0.0;
 				it->second->start_damage_count;
