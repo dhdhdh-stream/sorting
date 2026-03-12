@@ -342,6 +342,8 @@ void create_new_scope(AbstractNode* potential_start_node,
 		new_scope->child_scopes = parent_scope->child_scopes;
 
 		clean_scope(new_scope);
+
+		new_scope->damage_index = new_scope->node_counter;
 	} else {
 		new_scope = NULL;
 	}

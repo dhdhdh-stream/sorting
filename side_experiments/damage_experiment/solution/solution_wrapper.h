@@ -56,12 +56,6 @@ public:
 	void set_action(int action);
 	void experiment_end(double result);
 
-	#if defined(MDEBUG) && MDEBUG
-	void verify_init();
-	std::pair<bool,int> verify_step(std::vector<double> obs);
-	void verify_end();
-	#endif /* MDEBUG */
-
 	bool is_done();
 
 	void clean_scopes();

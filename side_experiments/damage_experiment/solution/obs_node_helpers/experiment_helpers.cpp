@@ -24,7 +24,11 @@ void ObsNode::experiment_step(vector<double>& obs,
 	history->index = (int)scope_history->node_histories.size();
 	scope_history->node_histories[this->id] = history;
 
+	#if defined(MDEBUG) && MDEBUG
+	uniform_int_distribution<int> damage_distribution(0, 9);
+	#else
 	uniform_int_distribution<int> damage_distribution(0, 99);
+	#endif /* MDEBUG */
 	if (damage_distribution(generator) == 0) {
 		AbstractNode* starting_node = this->next_node;
 		vector<AbstractNode*> possible_exits;

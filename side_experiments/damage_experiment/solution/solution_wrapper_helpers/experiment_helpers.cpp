@@ -14,7 +14,7 @@
 
 using namespace std;
 
-const int NON_OUTER_ITERS = 15;
+const int NON_OUTER_ITERS = 30;
 const int OUTER_ITERS = 8;
 
 void SolutionWrapper::experiment_init() {

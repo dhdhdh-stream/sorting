@@ -59,14 +59,15 @@ void Experiment::add(SolutionWrapper* wrapper) {
 	ss << "this->new_networks.size(): " << this->new_networks.size() << "; ";
 
 	ss << "this->best_new_is_binarize: " << this->best_new_is_binarize << "; ";
-	ss << "this->best_refine_is_binarize: " << this->best_refine_is_binarize << "; ";
 
 	ss << "this->local_improvement: " << this->local_improvement << "; ";
 	ss << "this->global_improvement: " << this->global_improvement << "; ";
 	ss << "this->score_standard_deviation: " << this->score_standard_deviation << "; ";
 	ss << "this->new_scores.size(): " << this->new_scores.size() << "; ";
 
-	wrapper->solution->improvement_history.push_back(calc_new_score());
+	double new_score = calc_new_score();
+	ss << "new_score: " << new_score << "; ";
+
 	wrapper->solution->change_history.push_back(ss.str());
 
 	cout << ss.str() << endl;
@@ -343,17 +344,6 @@ void Experiment::add(SolutionWrapper* wrapper) {
 
 	new_branch_node->networks = this->new_networks;
 	this->new_networks.clear();
-
-	#if defined(MDEBUG) && MDEBUG
-	if (this->verify_problems.size() > 0) {
-		wrapper->solution->verify_problems = this->verify_problems;
-		this->verify_problems.clear();
-		wrapper->solution->verify_seeds = this->verify_seeds;
-
-		new_branch_node->verify_key = this;
-		new_branch_node->verify_scores = this->verify_scores;
-	}
-	#endif /* MDEBUG */
 
 	for (int n_index = 0; n_index < (int)this->best_new_nodes.size(); n_index++) {
 		int next_node_id;

@@ -86,31 +86,9 @@ int main(int argc, char* argv[]) {
 
 			int ending_timestamp = solution_wrapper->solution->timestamp;
 			if (ending_timestamp != starting_timestamp) {
-				#if defined(MDEBUG) && MDEBUG
-				while (solution_wrapper->solution->verify_problems.size() > 0) {
-					Problem* problem = solution_wrapper->solution->verify_problems[0];
-					solution_wrapper->problem = problem;
-
-					solution_wrapper->verify_init();
-
-					while (true) {
-						vector<double> obs = problem->get_observations();
-
-						pair<bool,int> next = solution_wrapper->verify_step(obs);
-						if (next.first) {
-							break;
-						} else {
-							problem->perform_action(next.second);
-						}
-					}
-
-					solution_wrapper->verify_end();
-
-					delete solution_wrapper->solution->verify_problems[0];
-					solution_wrapper->solution->verify_problems.erase(solution_wrapper->solution->verify_problems.begin());
-				}
-				solution_wrapper->solution->clear_verify();
-				#endif /* MDEBUG */
+				double clean_result = result_helper(solution_wrapper);
+				cout << "clean_result: " << clean_result << endl;
+				solution_wrapper->solution->improvement_history.push_back(clean_result);
 
 				break;
 			}

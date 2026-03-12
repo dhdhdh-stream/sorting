@@ -23,12 +23,18 @@ void gather_helper(ScopeHistory* scope_history,
 				   int& node_count,
 				   AbstractNode*& explore_node,
 				   bool& explore_is_branch) {
-	if (scope_history->scope->is_outer) {
+	Scope* scope = scope_history->scope;
+
+	if (scope->is_outer) {
 		return;
 	}
 
 	for (map<int, AbstractNodeHistory*>::iterator h_it = scope_history->node_histories.begin();
 			h_it != scope_history->node_histories.end(); h_it++) {
+		if (scope->nodes.find(h_it->first) == scope->nodes.end()) {
+			continue;
+		}
+
 		AbstractNode* node = h_it->second->node;
 		switch (node->type) {
 		case NODE_TYPE_START:

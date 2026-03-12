@@ -14,10 +14,6 @@ using namespace std;
 BranchNode::BranchNode() {
 	this->type = NODE_TYPE_BRANCH;
 
-	#if defined(MDEBUG) && MDEBUG
-	this->verify_key = NULL;
-	#endif /* MDEBUG */
-
 	this->experiment = NULL;
 }
 
@@ -30,17 +26,6 @@ BranchNode::~BranchNode() {
 		delete this->experiment;
 	}
 }
-
-#if defined(MDEBUG) && MDEBUG
-void BranchNode::clear_verify() {
-	this->verify_key = NULL;
-	if (this->verify_scores.size() > 0) {
-		cout << "seed: " << seed << endl;
-
-		throw invalid_argument("branch node remaining verify");
-	}
-}
-#endif /* MDEBUG */
 
 void BranchNode::save(ofstream& output_file) {
 	output_file << this->networks.size() << endl;

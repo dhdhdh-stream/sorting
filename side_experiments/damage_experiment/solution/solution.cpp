@@ -82,12 +82,6 @@ Solution::~Solution() {
 	for (int s_index = 0; s_index < (int)this->outer_scopes.size(); s_index++) {
 		delete this->outer_scopes[s_index];
 	}
-
-	#if defined(MDEBUG) && MDEBUG
-	for (int p_index = 0; p_index < (int)this->verify_problems.size(); p_index++) {
-		delete this->verify_problems[p_index];
-	}
-	#endif /* MDEBUG */
 }
 
 void Solution::init(ProblemType* problem_type) {
@@ -227,16 +221,6 @@ void Solution::load(ifstream& input_file) {
 		this->change_history.push_back(change_line);
 	}
 }
-
-#if defined(MDEBUG) && MDEBUG
-void Solution::clear_verify() {
-	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
-		this->scopes[s_index]->clear_verify();
-	}
-
-	this->verify_problems.clear();
-}
-#endif /* MDEBUG */
 
 void Solution::clean_scopes() {
 	while (true) {

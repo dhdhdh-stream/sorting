@@ -88,6 +88,10 @@ int main(int argc, char* argv[]) {
 
 			int ending_timestamp = solution_wrapper->solution->timestamp;
 			if (ending_timestamp != starting_timestamp) {
+				double clean_result = result_helper(solution_wrapper);
+				cout << "clean_result: " << clean_result << endl;
+				solution_wrapper->solution->improvement_history.push_back(clean_result);
+
 				break;
 			}
 		}

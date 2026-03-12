@@ -22,11 +22,6 @@ public:
 	int branch_next_node_id;
 	AbstractNode* branch_next_node;
 
-	#if defined(MDEBUG) && MDEBUG
-	void* verify_key;
-	std::vector<std::vector<double>> verify_scores;
-	#endif /* MDEBUG */
-
 	BranchNode();
 	~BranchNode();
 
@@ -39,14 +34,6 @@ public:
 						 int& action,
 						 bool& is_next,
 						 SolutionWrapper* wrapper);
-
-	#if defined(MDEBUG) && MDEBUG
-	void verify_step(std::vector<double>& obs,
-					 int& action,
-					 bool& is_next,
-					 SolutionWrapper* wrapper);
-	void clear_verify();
-	#endif /* MDEBUG */
 
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file,

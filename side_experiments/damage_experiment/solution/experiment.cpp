@@ -62,12 +62,6 @@ Experiment::~Experiment() {
 	for (int n_index = 0; n_index < (int)this->best_new_nodes.size(); n_index++) {
 		delete this->best_new_nodes[n_index];
 	}
-
-	#if defined(MDEBUG) && MDEBUG
-	for (int p_index = 0; p_index < (int)this->verify_problems.size(); p_index++) {
-		delete this->verify_problems[p_index];
-	}
-	#endif /* MDEBUG */
 }
 
 ExperimentHistory::ExperimentHistory(Experiment* experiment) {

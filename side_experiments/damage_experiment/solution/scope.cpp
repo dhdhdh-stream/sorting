@@ -140,18 +140,6 @@ void Scope::random_activate(vector<AbstractNode*>& path) {
 	}
 }
 
-#if defined(MDEBUG) && MDEBUG
-void Scope::clear_verify() {
-	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
-			it != this->nodes.end(); it++) {
-		if (it->second->type == NODE_TYPE_BRANCH) {
-			BranchNode* branch_node = (BranchNode*)it->second;
-			branch_node->clear_verify();
-		}
-	}
-}
-#endif /* MDEBUG */
-
 void Scope::save(ofstream& output_file) {
 	output_file << this->node_counter << endl;
 

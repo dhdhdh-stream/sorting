@@ -18,9 +18,6 @@ const int EXPERIMENT_STATE_TRAIN_NEW = 2;
  */
 const int EXPERIMENT_STATE_REMEASURE_EXISTING = 3;
 const int EXPERIMENT_STATE_MEASURE = 4;
-#if defined(MDEBUG) && MDEBUG
-const int EXPERIMENT_STATE_CAPTURE_VERIFY = 5;
-#endif /* MDEBUG */
 
 class Experiment : public AbstractExperiment {
 public:
@@ -58,7 +55,6 @@ public:
 	std::vector<Network*> new_networks;
 
 	bool best_new_is_binarize;
-	bool best_refine_is_binarize;
 
 	std::vector<double> existing_scores;
 	std::vector<double> new_scores;
@@ -72,12 +68,6 @@ public:
 	double local_improvement;
 	double global_improvement;
 	double score_standard_deviation;
-
-	#if defined(MDEBUG) && MDEBUG
-	std::vector<Problem*> verify_problems;
-	std::vector<unsigned long> verify_seeds;
-	std::vector<std::vector<double>> verify_scores;
-	#endif /* MDEBUG */
 
 	Experiment(Scope* scope_context,
 			   AbstractNode* node_context,
@@ -142,16 +132,6 @@ public:
 	void measure_exit_step(SolutionWrapper* wrapper);
 	void measure_backprop(double target_val,
 						  SolutionWrapper* wrapper);
-
-	#if defined(MDEBUG) && MDEBUG
-	void capture_verify_check_activate(SolutionWrapper* wrapper);
-	void capture_verify_step(std::vector<double>& obs,
-							 int& action,
-							 bool& is_next,
-							 SolutionWrapper* wrapper);
-	void capture_verify_exit_step(SolutionWrapper* wrapper);
-	void capture_verify_backprop(SolutionWrapper* wrapper);
-	#endif /* MDEBUG */
 
 	void clean();
 	void add(SolutionWrapper* wrapper);

@@ -32,11 +32,6 @@ void Experiment::check_activate(AbstractNode* experiment_node,
 		case EXPERIMENT_STATE_MEASURE:
 			measure_check_activate(wrapper);
 			break;
-		#if defined(MDEBUG) && MDEBUG
-		case EXPERIMENT_STATE_CAPTURE_VERIFY:
-			capture_verify_check_activate(wrapper);
-			break;
-		#endif /* MDEBUG */
 		}
 	}
 }
@@ -76,14 +71,6 @@ void Experiment::experiment_step(vector<double>& obs,
 					 is_next,
 					 wrapper);
 		break;
-	#if defined(MDEBUG) && MDEBUG
-	case EXPERIMENT_STATE_CAPTURE_VERIFY:
-		capture_verify_step(obs,
-							action,
-							is_next,
-							wrapper);
-		break;
-	#endif /* MDEBUG */
 	}
 }
 
@@ -104,11 +91,6 @@ void Experiment::experiment_exit_step(SolutionWrapper* wrapper) {
 	case EXPERIMENT_STATE_MEASURE:
 		measure_exit_step(wrapper);
 		break;
-	#if defined(MDEBUG) && MDEBUG
-	case EXPERIMENT_STATE_CAPTURE_VERIFY:
-		capture_verify_exit_step(wrapper);
-		break;
-	#endif /* MDEBUG */
 	}
 }
 
@@ -135,10 +117,5 @@ void Experiment::backprop(double target_val,
 		measure_backprop(target_val,
 						 wrapper);
 		break;
-	#if defined(MDEBUG) && MDEBUG
-	case EXPERIMENT_STATE_CAPTURE_VERIFY:
-		capture_verify_backprop(wrapper);
-		break;
-	#endif /* MDEBUG */
 	}
 }

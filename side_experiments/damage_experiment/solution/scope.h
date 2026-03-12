@@ -42,10 +42,6 @@ public:
 							  std::vector<AbstractNode*>& possible_exits);
 	void random_activate(std::vector<AbstractNode*>& path);
 
-	#if defined(MDEBUG) && MDEBUG
-	void clear_verify();
-	#endif /* MDEBUG */
-
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file,
 			  Solution* parent_solution);
