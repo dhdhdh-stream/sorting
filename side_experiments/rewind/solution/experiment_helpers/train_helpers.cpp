@@ -74,73 +74,73 @@ void Experiment::train_and_eval_helper(double& best_val_average,
 		}
 	}
 
-	/**
-	 * - noise can make it seem like there's a gradient when there isn't
-	 */
-	vector<vector<double>> binary_train_obs;
-	vector<bool> binary_train_targets;
+	// /**
+	//  * - noise can make it seem like there's a gradient when there isn't
+	//  */
+	// vector<vector<double>> binary_train_obs;
+	// vector<bool> binary_train_targets;
 
-	sort(positive_samples.begin(), positive_samples.end());
-	for (int h_index = (int)positive_samples.size() * 3/4; h_index < (int)positive_samples.size(); h_index++) {
-		binary_train_obs.push_back(this->new_obs_histories[positive_samples[h_index].second]);
-		binary_train_targets.push_back(true);
-	}
-	sort(negative_samples.begin(), negative_samples.end());
-	for (int h_index = 0; h_index < (int)negative_samples.size() / 4; h_index++) {
-		binary_train_obs.push_back(this->new_obs_histories[negative_samples[h_index].second]);
-		binary_train_targets.push_back(false);
-	}
+	// sort(positive_samples.begin(), positive_samples.end());
+	// for (int h_index = (int)positive_samples.size() * 3/4; h_index < (int)positive_samples.size(); h_index++) {
+	// 	binary_train_obs.push_back(this->new_obs_histories[positive_samples[h_index].second]);
+	// 	binary_train_targets.push_back(true);
+	// }
+	// sort(negative_samples.begin(), negative_samples.end());
+	// for (int h_index = 0; h_index < (int)negative_samples.size() / 4; h_index++) {
+	// 	binary_train_obs.push_back(this->new_obs_histories[negative_samples[h_index].second]);
+	// 	binary_train_targets.push_back(false);
+	// }
 
-	Network* binary_network = new Network(binary_train_obs[0].size(),
-										  NETWORK_SIZE_SMALL);
-	uniform_int_distribution<int> input_distribution(0, binary_train_obs.size()-1);
-	for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
-		int index = input_distribution(generator);
+	// Network* binary_network = new Network(binary_train_obs[0].size(),
+	// 									  NETWORK_SIZE_SMALL);
+	// uniform_int_distribution<int> input_distribution(0, binary_train_obs.size()-1);
+	// for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
+	// 	int index = input_distribution(generator);
 
-		binary_network->activate(binary_train_obs[index]);
+	// 	binary_network->activate(binary_train_obs[index]);
 
-		double error;
-		if (binary_train_targets[index]) {
-			if (binary_network->output->acti_vals[0] > 1.0) {
-				error = 0.0;
-			} else {
-				error = 1.0 - binary_network->output->acti_vals[0];
-			}
-		} else {
-			if (binary_network->output->acti_vals[0] < -1.0) {
-				error = 0.0;
-			} else {
-				error = -1.0 - binary_network->output->acti_vals[0];
-			}
-		}
+	// 	double error;
+	// 	if (binary_train_targets[index]) {
+	// 		if (binary_network->output->acti_vals[0] > 1.0) {
+	// 			error = 0.0;
+	// 		} else {
+	// 			error = 1.0 - binary_network->output->acti_vals[0];
+	// 		}
+	// 	} else {
+	// 		if (binary_network->output->acti_vals[0] < -1.0) {
+	// 			error = 0.0;
+	// 		} else {
+	// 			error = -1.0 - binary_network->output->acti_vals[0];
+	// 		}
+	// 	}
 
-		binary_network->backprop(error);
-	}
+	// 	binary_network->backprop(error);
+	// }
 
-	double sum_scores = 0.0;
-	int count = 0;
-	for (int h_index = num_train_samples; h_index < (int)this->new_obs_histories.size(); h_index++) {
-		binary_network->activate(this->new_obs_histories[h_index]);
-		if (binary_network->output->acti_vals[0] >= 0.0) {
-			sum_scores += this->new_true_histories[h_index];
-			count++;
-		}
-	}
+	// double sum_scores = 0.0;
+	// int count = 0;
+	// for (int h_index = num_train_samples; h_index < (int)this->new_obs_histories.size(); h_index++) {
+	// 	binary_network->activate(this->new_obs_histories[h_index]);
+	// 	if (binary_network->output->acti_vals[0] >= 0.0) {
+	// 		sum_scores += this->new_true_histories[h_index];
+	// 		count++;
+	// 	}
+	// }
 
-	#if defined(MDEBUG) && MDEBUG
-	if ((count > 0 && sum_scores / count > best_val_average)
-			|| true) {
-	#else
-	if (count > 0 && sum_scores / count > best_val_average) {
-	#endif /* MDEBUG */
-		best_val_average = sum_scores / count;
+	// #if defined(MDEBUG) && MDEBUG
+	// if ((count > 0 && sum_scores / count > best_val_average)
+	// 		|| true) {
+	// #else
+	// if (count > 0 && sum_scores / count > best_val_average) {
+	// #endif /* MDEBUG */
+	// 	best_val_average = sum_scores / count;
 
-		if (best_network != NULL) {
-			delete best_network;
-		}
-		best_network = binary_network;
-		best_is_binarize = true;
-	} else {
-		delete binary_network;
-	}
+	// 	if (best_network != NULL) {
+	// 		delete best_network;
+	// 	}
+	// 	best_network = binary_network;
+	// 	best_is_binarize = true;
+	// } else {
+	// 	delete binary_network;
+	// }
 }

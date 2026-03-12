@@ -22,7 +22,11 @@ void Experiment::train_new_check_activate(
 		vector<double>& obs,
 		SolutionWrapper* wrapper,
 		ExperimentHistory* history) {
+	#if defined(MDEBUG) && MDEBUG
+	uniform_int_distribution<int> on_distribution(0, 9);
+	#else
 	uniform_int_distribution<int> on_distribution(0, 99);
+	#endif /* MDEBUG */
 	if (on_distribution(generator) == 0) {
 		this->new_obs_histories.push_back(obs);
 

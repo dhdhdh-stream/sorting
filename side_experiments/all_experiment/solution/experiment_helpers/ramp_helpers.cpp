@@ -134,10 +134,10 @@ void Experiment::ramp_backprop(double target_val,
 			}
 			double new_score_average = new_sum_vals / (double)this->new_scores.size();
 
-			// // temp
-			// cout << "this->curr_ramp: " << this->curr_ramp << endl;
-			// cout << "existing_score_average: " << existing_score_average << endl;
-			// cout << "new_score_average: " << new_score_average << endl;
+			// temp
+			cout << "this->curr_ramp: " << this->curr_ramp << endl;
+			cout << "existing_score_average: " << existing_score_average << endl;
+			cout << "new_score_average: " << new_score_average << endl;
 
 			this->existing_scores.clear();
 			this->new_scores.clear();
@@ -207,13 +207,13 @@ void Experiment::ramp_backprop(double target_val,
 			double t_score = this->local_improvement
 				/ (this->score_standard_deviation / sqrt((double)this->new_scores.size()));
 
-			// // temp
-			// cout << "new_score_average: " << new_score_average << endl;
-			// cout << "this->new_scores.size(): " << this->new_scores.size() << endl;
-			// cout << "existing_score_average: " << existing_score_average << endl;
-			// cout << "this->local_improvement: " << this->local_improvement << endl;
-			// cout << "this->global_improvement: " << this->global_improvement << endl;
-			// cout << "t_score: " << t_score << endl;
+			// temp
+			cout << "new_score_average: " << new_score_average << endl;
+			cout << "this->new_scores.size(): " << this->new_scores.size() << endl;
+			cout << "existing_score_average: " << existing_score_average << endl;
+			cout << "this->local_improvement: " << this->local_improvement << endl;
+			cout << "this->global_improvement: " << this->global_improvement << endl;
+			cout << "t_score: " << t_score << endl;
 
 			#if defined(MDEBUG) && MDEBUG
 			if (t_score >= SUCCESS_T_SCORE || rand()%3 == 0) {

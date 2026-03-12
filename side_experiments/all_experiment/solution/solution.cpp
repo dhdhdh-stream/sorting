@@ -184,7 +184,7 @@ void Solution::merge_outer() {
 				ObsNode* obs_node = (ObsNode*)it->second;
 				if (obs_node->experiment != NULL) {
 					delete obs_node->experiment;
-					obs_node->experiment = NULL;
+					obs_node->experiment = new Experiment(obs_node);
 				}
 			}
 		}

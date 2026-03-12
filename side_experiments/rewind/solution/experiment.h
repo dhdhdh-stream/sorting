@@ -12,15 +12,14 @@ class SolutionWrapper;
 const int EXPERIMENT_STATE_TRAIN_EXISTING = 0;
 const int EXPERIMENT_STATE_EXPLORE = 1;
 const int EXPERIMENT_STATE_TRAIN_NEW = 2;
-const int EXPERIMENT_STATE_REFINE = 3;
 /**
  * - compare specifically on branch path
  *   - so previous partial progress is not penalized
  */
-const int EXPERIMENT_STATE_REMEASURE_EXISTING = 4;
-const int EXPERIMENT_STATE_MEASURE = 5;
+const int EXPERIMENT_STATE_REMEASURE_EXISTING = 3;
+const int EXPERIMENT_STATE_MEASURE = 4;
 #if defined(MDEBUG) && MDEBUG
-const int EXPERIMENT_STATE_CAPTURE_VERIFY = 6;
+const int EXPERIMENT_STATE_CAPTURE_VERIFY = 5;
 #endif /* MDEBUG */
 
 class Experiment : public AbstractExperiment {
@@ -59,7 +58,6 @@ public:
 	std::vector<Network*> new_networks;
 
 	bool best_new_is_binarize;
-	bool best_refine_is_binarize;
 
 	std::vector<double> existing_scores;
 	std::vector<double> new_scores;

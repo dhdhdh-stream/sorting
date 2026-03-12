@@ -59,7 +59,6 @@ void Experiment::add(SolutionWrapper* wrapper) {
 	ss << "this->new_networks.size(): " << this->new_networks.size() << "; ";
 
 	ss << "this->best_new_is_binarize: " << this->best_new_is_binarize << "; ";
-	ss << "this->best_refine_is_binarize: " << this->best_refine_is_binarize << "; ";
 
 	ss << "this->local_improvement: " << this->local_improvement << "; ";
 	ss << "this->global_improvement: " << this->global_improvement << "; ";

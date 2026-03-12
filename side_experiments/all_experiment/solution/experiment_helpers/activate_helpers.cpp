@@ -1,5 +1,7 @@
 #include "experiment.h"
 
+#include "obs_node.h"
+#include "scope.h"
 #include "solution_wrapper.h"
 
 using namespace std;
@@ -8,13 +10,20 @@ void Experiment::check_activate(AbstractNode* experiment_node,
 								vector<double>& obs,
 								SolutionWrapper* wrapper) {
 	ExperimentHistory* history;
-	map<Experiment*, ExperimentHistory*>::iterator it =
-		wrapper->experiment_histories.find(this);
-	if (it == wrapper->experiment_histories.end()) {
+	if (this->node_context->parent->id == -1) {
+		/**
+		 * - damage, but simply don't update
+		 */
 		history = new ExperimentHistory(this);
-		wrapper->experiment_histories[this] = history;
 	} else {
-		history = it->second;
+		map<Experiment*, ExperimentHistory*>::iterator it =
+			wrapper->experiment_histories.find(this);
+		if (it == wrapper->experiment_histories.end()) {
+			history = new ExperimentHistory(this);
+			wrapper->experiment_histories[this] = history;
+		} else {
+			history = it->second;
+		}
 	}
 
 	switch (this->state) {
@@ -34,6 +43,10 @@ void Experiment::check_activate(AbstractNode* experiment_node,
 							wrapper,
 							history);
 		break;
+	}
+
+	if (this->node_context->parent->id == -1) {
+		delete history;
 	}
 }
 

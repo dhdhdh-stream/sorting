@@ -34,7 +34,10 @@
 // - temperature tied to difficulty of the problem?
 //   - mainly tied to how low temperature needs to be for saves to work
 
-// - maybe when creating new scopes, need to experiment as well
+// - new scopes extremely damaging
+// TODO: try with no new scopes? except from outer?
+
+// - maybe new scopes try single
 
 #include <chrono>
 #include <iostream>

@@ -26,7 +26,11 @@ void Experiment::explore_check_activate(
 		vector<double>& obs,
 		SolutionWrapper* wrapper,
 		ExperimentHistory* history) {
+	#if defined(MDEBUG) && MDEBUG
+	uniform_int_distribution<int> on_distribution(0, 9);
+	#else
 	uniform_int_distribution<int> on_distribution(0, 99);
+	#endif /* MDEBUG */
 	if (on_distribution(generator) == 0) {
 		AbstractNode* starting_node = this->node_context->next_node;
 		vector<AbstractNode*> possible_exits;
@@ -45,13 +49,17 @@ void Experiment::explore_check_activate(
 		this->temp_exit_next_node = possible_exits[random_index];
 
 		uniform_int_distribution<int> new_scope_distribution(0, 3);
-		if (wrapper->solution->state == SOLUTION_STATE_OUTER) {
+		if (!this->node_context->parent->is_outer
+				&& this->node_context->parent->id != -1
+				&& wrapper->solution->state == SOLUTION_STATE_OUTER) {
 			Scope* parent_scope;
 			outer_create_new_scope(this->node_context->parent,
 								   wrapper,
 								   this->temp_new_scope,
 								   parent_scope);
-		} else if (new_scope_distribution(generator) == 0) {
+		// } else if (this->node_context->parent->id != -1
+		// 		&& new_scope_distribution(generator) == 0) {
+		} else if (false) {
 			Scope* parent_scope;
 			create_new_scope(this->node_context->parent,
 							 wrapper,
@@ -89,21 +97,22 @@ void Experiment::explore_check_activate(
 			}
 			uniform_int_distribution<int> child_index_distribution(0, possible_child_indexes.size()-1);
 			for (int s_index = 0; s_index < new_num_steps; s_index++) {
-				bool is_scope = false;
-				if (possible_child_indexes.size() > 0) {
-					if (possible_child_indexes.size() <= RAW_ACTION_WEIGHT) {
-						uniform_int_distribution<int> scope_distribution(0, possible_child_indexes.size() + RAW_ACTION_WEIGHT - 1);
-						if (scope_distribution(generator) < (int)possible_child_indexes.size()) {
-							is_scope = true;
-						}
-					} else {
-						uniform_int_distribution<int> scope_distribution(0, 1);
-						if (scope_distribution(generator) == 0) {
-							is_scope = true;
-						}
-					}
-				}
-				if (is_scope) {
+				// bool is_scope = false;
+				// if (possible_child_indexes.size() > 0) {
+				// 	if (possible_child_indexes.size() <= RAW_ACTION_WEIGHT) {
+				// 		uniform_int_distribution<int> scope_distribution(0, possible_child_indexes.size() + RAW_ACTION_WEIGHT - 1);
+				// 		if (scope_distribution(generator) < (int)possible_child_indexes.size()) {
+				// 			is_scope = true;
+				// 		}
+				// 	} else {
+				// 		uniform_int_distribution<int> scope_distribution(0, 1);
+				// 		if (scope_distribution(generator) == 0) {
+				// 			is_scope = true;
+				// 		}
+				// 	}
+				// }
+				// if (is_scope) {
+				if (false) {
 					this->temp_step_types.push_back(STEP_TYPE_SCOPE);
 					this->temp_actions.push_back(-1);
 
