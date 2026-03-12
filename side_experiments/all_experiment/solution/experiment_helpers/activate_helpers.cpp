@@ -18,11 +18,6 @@ void Experiment::check_activate(AbstractNode* experiment_node,
 	}
 
 	switch (this->state) {
-	case EXPERIMENT_STATE_TRAIN_EXISTING:
-		train_existing_check_activate(obs,
-									  wrapper,
-									  history);
-		break;
 	case EXPERIMENT_STATE_EXPLORE:
 		explore_check_activate(obs,
 							   wrapper,
@@ -110,11 +105,6 @@ void Experiment::backprop(double target_val,
 						  SolutionWrapper* wrapper,
 						  set<Scope*>& updated_scopes) {
 	switch (this->state) {
-	case EXPERIMENT_STATE_TRAIN_EXISTING:
-		train_existing_backprop(target_val,
-								history,
-								wrapper);
-		break;
 	case EXPERIMENT_STATE_EXPLORE:
 		explore_backprop(target_val,
 						 history,

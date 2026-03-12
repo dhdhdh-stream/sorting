@@ -7,33 +7,24 @@
 
 using namespace std;
 
-Experiment::Experiment(ObsNode* node_context,
-					   AbstractNode* exit_next_node) {
+Experiment::Experiment(ObsNode* node_context) {
 	this->type = EXPERIMENT_TYPE_EXPERIMENT;
 
 	this->node_context = node_context;
-	this->exit_next_node = exit_next_node;
 
-	this->existing_network = NULL;
-
+	this->temp_new_scope = NULL;
 	this->curr_new_scope = NULL;
 	this->best_new_scope = NULL;
 
-	this->state = EXPERIMENT_STATE_TRAIN_EXISTING;
+	this->best_surprise = numeric_limits<double>::lowest();
+
+	this->state = EXPERIMENT_STATE_EXPLORE;
 	this->state_iter = 0;
 }
 
 Experiment::~Experiment() {
-	if (this->curr_new_scope != NULL) {
-		delete this->curr_new_scope;
-	}
-
 	if (this->best_new_scope != NULL) {
 		delete this->best_new_scope;
-	}
-
-	if (this->existing_network != NULL) {
-		delete this->existing_network;
 	}
 
 	for (int n_index = 0; n_index < (int)this->new_networks.size(); n_index++) {
@@ -43,18 +34,6 @@ Experiment::~Experiment() {
 
 ExperimentHistory::ExperimentHistory(Experiment* experiment) {
 	switch (experiment->state) {
-	case EXPERIMENT_STATE_EXPLORE:
-	case EXPERIMENT_STATE_TRAIN_NEW:
-		{
-			uniform_int_distribution<int> on_distribution(0, 99);
-			// uniform_int_distribution<int> on_distribution(0, 29);
-			if (on_distribution(generator) == 0) {
-				this->is_on = true;
-			} else {
-				this->is_on = false;
-			}
-		}
-		break;
 	case EXPERIMENT_STATE_RAMP:
 	case EXPERIMENT_STATE_MEASURE:
 		{

@@ -92,8 +92,6 @@ SolutionWrapper::SolutionWrapper(ProblemType* problem_type) {
 	#if defined(MDEBUG) && MDEBUG
 	this->run_index = 0;
 	#endif /* MDEBUG */
-
-	create_experiments(this);
 }
 
 SolutionWrapper::SolutionWrapper(std::string path,
@@ -111,8 +109,6 @@ SolutionWrapper::SolutionWrapper(std::string path,
 	#if defined(MDEBUG) && MDEBUG
 	this->run_index = 0;
 	#endif /* MDEBUG */
-
-	create_experiments(this);
 }
 
 SolutionWrapper::~SolutionWrapper() {

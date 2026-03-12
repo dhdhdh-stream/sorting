@@ -22,15 +22,13 @@ void Experiment::train_new_check_activate(
 		vector<double>& obs,
 		SolutionWrapper* wrapper,
 		ExperimentHistory* history) {
-	if (history->is_on) {
-		uniform_int_distribution<int> is_new_distribution(0, 3);
-		if (is_new_distribution(generator) == 0) {
-			this->new_obs_histories.push_back(obs);
+	uniform_int_distribution<int> on_distribution(0, 99);
+	if (on_distribution(generator) == 0) {
+		this->new_obs_histories.push_back(obs);
 
-			ExperimentState* new_experiment_state = new ExperimentState(this);
-			new_experiment_state->step_index = 0;
-			wrapper->experiment_context.back() = new_experiment_state;
-		}
+		ExperimentState* new_experiment_state = new ExperimentState(this);
+		new_experiment_state->step_index = 0;
+		wrapper->experiment_context.back() = new_experiment_state;
 	} else {
 		if (this->existing_obs_histories.size() < 2 * this->new_obs_histories.size()) {
 			this->existing_obs_histories.push_back(obs);
@@ -44,7 +42,7 @@ void Experiment::train_new_step(vector<double>& obs,
 								SolutionWrapper* wrapper,
 								ExperimentState* experiment_state) {
 	if (experiment_state->step_index >= (int)this->best_step_types.size()) {
-		wrapper->node_context.back() = this->exit_next_node;
+		wrapper->node_context.back() = this->best_exit_next_node;
 
 		delete experiment_state;
 		wrapper->experiment_context.back() = NULL;
@@ -79,14 +77,6 @@ void Experiment::train_new_exit_step(SolutionWrapper* wrapper,
 void Experiment::train_new_backprop(double target_val,
 									ExperimentHistory* history,
 									SolutionWrapper* wrapper) {
-	if (history->is_on) {
-		this->new_num_experiments += (int)wrapper->experiment_histories.size();
-		this->new_count++;
-	} else {
-		this->existing_num_experiments += (int)wrapper->experiment_histories.size();
-		this->existing_count++;
-	}
-
 	while (this->existing_target_val_histories.size() < this->existing_obs_histories.size()) {
 		this->existing_target_val_histories.push_back(target_val);
 	}
@@ -98,16 +88,6 @@ void Experiment::train_new_backprop(double target_val,
 
 		this->state_iter++;
 		if (this->state_iter >= TRAIN_NEW_NUM_DATAPOINTS) {
-			double existing_average_num_experiments = (double)this->existing_num_experiments / (double)this->existing_count;
-			double new_average_num_experiments = (double)this->new_num_experiments / (double)this->new_count;
-			if (new_average_num_experiments < MIN_EXPERIMENT_DIFF_RATIO * existing_average_num_experiments) {
-				this->node_context->experiment = NULL;
-				create_experiment(this->node_context,
-								  wrapper);
-				delete this;
-				return;
-			}
-
 			Network* existing_network = new Network(this->existing_obs_histories[0].size());
 			uniform_int_distribution<int> existing_input_distribution(0, this->existing_obs_histories.size()-1);
 			for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
@@ -176,9 +156,7 @@ void Experiment::train_new_backprop(double target_val,
 			} else {
 				delete new_network;
 
-				this->node_context->experiment = NULL;
-				create_experiment(this->node_context,
-								  wrapper);
+				this->node_context->experiment = new Experiment(this->node_context);
 				delete this;
 			}
 		}

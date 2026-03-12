@@ -20,14 +20,13 @@ class ObsNode;
 class Scope;
 class SolutionWrapper;
 
-const int EXPERIMENT_STATE_TRAIN_EXISTING = 0;
-const int EXPERIMENT_STATE_EXPLORE = 1;
-const int EXPERIMENT_STATE_TRAIN_NEW = 2;
+const int EXPERIMENT_STATE_EXPLORE = 0;
+const int EXPERIMENT_STATE_TRAIN_NEW = 1;
 /**
  * - retrain existing during train_new
  */
-const int EXPERIMENT_STATE_RAMP = 3;
-const int EXPERIMENT_STATE_MEASURE = 4;
+const int EXPERIMENT_STATE_RAMP = 2;
+const int EXPERIMENT_STATE_MEASURE = 3;
 
 const int MEASURE_STATUS_N_A = 0;
 const int MEASURE_STATUS_SUCCESS = 1;
@@ -38,36 +37,34 @@ class ExperimentState;
 class Experiment : public AbstractExperiment {
 public:
 	ObsNode* node_context;
-	AbstractNode* exit_next_node;
 
 	int state;
 	int state_iter;
 
-	Network* existing_network;
+	Scope* temp_new_scope;
+	std::vector<int> temp_step_types;
+	std::vector<int> temp_actions;
+	std::vector<Scope*> temp_scopes;
+	AbstractNode* temp_exit_next_node;
 
-	double average_instances_per_run;
-	int num_instances_until_target;
-
+	int explore_index;
 	Scope* curr_new_scope;
 	std::vector<int> curr_step_types;
 	std::vector<int> curr_actions;
 	std::vector<Scope*> curr_scopes;
+	AbstractNode* curr_exit_next_node;
 
 	double best_surprise;
 	Scope* best_new_scope;
 	std::vector<int> best_step_types;
 	std::vector<int> best_actions;
 	std::vector<Scope*> best_scopes;
+	AbstractNode* best_exit_next_node;
 
 	std::vector<std::vector<double>> existing_obs_histories;
 	std::vector<double> existing_target_val_histories;
 	std::vector<std::vector<double>> new_obs_histories;
 	std::vector<double> new_target_val_histories;
-
-	int existing_num_experiments;
-	int existing_count;
-	int new_num_experiments;
-	int new_count;
 
 	std::vector<Network*> new_networks;
 
@@ -89,8 +86,7 @@ public:
 	double global_improvement;
 	double score_standard_deviation;
 
-	Experiment(ObsNode* node_context,
-			   AbstractNode* exit_next_node);
+	Experiment(ObsNode* node_context);
 	~Experiment();
 
 	void check_activate(AbstractNode* experiment_node,
@@ -108,13 +104,6 @@ public:
 				  ExperimentHistory* history,
 				  SolutionWrapper* wrapper,
 				  std::set<Scope*>& updated_scopes);
-
-	void train_existing_check_activate(std::vector<double>& obs,
-									   SolutionWrapper* wrapper,
-									   ExperimentHistory* history);
-	void train_existing_backprop(double target_val,
-								 ExperimentHistory* history,
-								 SolutionWrapper* wrapper);
 
 	void explore_check_activate(std::vector<double>& obs,
 								SolutionWrapper* wrapper,
@@ -168,8 +157,6 @@ public:
 class ExperimentHistory {
 public:
 	bool is_on;
-
-	std::vector<double> existing_predicted_scores;
 
 	bool hit_branch;
 

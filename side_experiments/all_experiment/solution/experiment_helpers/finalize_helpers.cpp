@@ -59,10 +59,10 @@ void Experiment::add(SolutionWrapper* wrapper) {
 	}
 	ss << "; ";
 
-	if (this->exit_next_node == NULL) {
-		ss << "this->exit_next_node->id: " << -1 << "; ";
+	if (this->best_exit_next_node == NULL) {
+		ss << "this->best_exit_next_node->id: " << -1 << "; ";
 	} else {
-		ss << "this->exit_next_node->id: " << this->exit_next_node->id << "; ";
+		ss << "this->best_exit_next_node->id: " << this->best_exit_next_node->id << "; ";
 	}
 
 	ss << "this->local_improvement: " << this->local_improvement << "; ";
@@ -127,7 +127,7 @@ void Experiment::add(SolutionWrapper* wrapper) {
 
 	int exit_node_id;
 	AbstractNode* exit_node;
-	if (this->exit_next_node == NULL) {
+	if (this->best_exit_next_node == NULL) {
 		new_ending_node = new ObsNode();
 		new_ending_node->parent = scope_context;
 		new_ending_node->id = scope_context->node_counter;
@@ -156,8 +156,8 @@ void Experiment::add(SolutionWrapper* wrapper) {
 		exit_node_id = new_ending_node->id;
 		exit_node = new_ending_node;
 	} else {
-		exit_node_id = this->exit_next_node->id;
-		exit_node = this->exit_next_node;
+		exit_node_id = this->best_exit_next_node->id;
+		exit_node = this->best_exit_next_node;
 	}
 
 	BranchNode* new_branch_node = new BranchNode();

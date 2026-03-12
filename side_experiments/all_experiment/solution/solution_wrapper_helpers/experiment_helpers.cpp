@@ -144,7 +144,6 @@ void SolutionWrapper::experiment_end(double result) {
 			this->solution->timestamp = 0;
 
 			this->solution->merge_outer();
-			create_experiments(this);
 		}
 		break;
 	}

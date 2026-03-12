@@ -16,10 +16,6 @@ class ScopeNode;
 class Solution;
 class SolutionWrapper;
 
-void create_experiment(ObsNode* obs_node,
-					   SolutionWrapper* wrapper);
-void create_experiments(SolutionWrapper* wrapper);
-
 void create_new_scope(AbstractNode* potential_start_node,
 					  AbstractNode* potential_end_node,
 					  Scope*& new_scope);
@@ -36,12 +32,5 @@ void clean_scope(Scope* scope);
 
 // temp
 double result_helper(SolutionWrapper* wrapper);
-
-void iter_update_vals_helper(ScopeHistory* scope_history,
-							 double target_val);
-void update_vals(SolutionWrapper* wrapper);
-void iter_update_damage_helper(ScopeHistory* scope_history,
-							   double target_val);
-void update_damage(SolutionWrapper* wrapper);
 
 #endif /* HELPERS_H */

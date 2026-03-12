@@ -15,7 +15,7 @@ HEADERS = ${SOURCES:.cpp=.h}
 OBJECTS = ${HEADERS:.h=.o}
 DEPENDS = ${OBJECTS:.o=.d}
 
-all: main viewer worker simple_init measure combine measure_damage
+all: main viewer worker simple_init measure combine
 
 main: ${OBJECTS} main.o
 	${CXX} ${CXXFLAGS} ${OBJECTS} main.o -o main ${LIBS}
@@ -35,10 +35,7 @@ measure: ${OBJECTS} measure.o
 combine: ${OBJECTS} combine.o
 	${CXX} ${CXXFLAGS} ${OBJECTS} combine.o -o combine ${LIBS}
 
-measure_damage: ${OBJECTS} measure_damage.o
-	${CXX} ${CXXFLAGS} ${OBJECTS} measure_damage.o -o measure_damage ${LIBS}
-
--include ${DEPENDS} main.d viewer.d worker.d simple_init.d measure.d combine.d measure_damage.d
+-include ${DEPENDS} main.d viewer.d worker.d simple_init.d measure.d combine.d
 
 clean:
 	rm -f ${OBJECTS} ${DEPENDS} \
@@ -47,5 +44,4 @@ clean:
 	worker.o worker.d worker \
 	simple_init.o simple_init.d simple_init \
 	measure.o measure.d measure \
-	combine.o combine.d combine \
-	measure_damage.o measure_damage.d measure_damage
+	combine.o combine.d combine

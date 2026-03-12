@@ -56,7 +56,7 @@ void Experiment::ramp_step(vector<double>& obs,
 						   SolutionWrapper* wrapper,
 						   ExperimentState* experiment_state) {
 	if (experiment_state->step_index >= (int)this->best_step_types.size()) {
-		wrapper->node_context.back() = this->exit_next_node;
+		wrapper->node_context.back() = this->best_exit_next_node;
 
 		delete experiment_state;
 		wrapper->experiment_context.back() = NULL;
@@ -99,9 +99,7 @@ void Experiment::ramp_backprop(double target_val,
 		if (this->num_original == BRANCH_RATIO_CHECK_ITER) {
 			double branch_ratio = (double)this->num_branch / ((double)this->num_original + (double)this->num_branch);
 			if (branch_ratio < BRANCH_MIN_RATIO) {
-				this->node_context->experiment = NULL;
-				create_experiment(this->node_context,
-								  wrapper);
+				this->node_context->experiment = new Experiment(this->node_context);
 				delete this;
 				return;
 			}
@@ -162,22 +160,18 @@ void Experiment::ramp_backprop(double target_val,
 					updated_scopes.insert(this->node_context->parent);
 
 					add(wrapper);
-					this->node_context->experiment = NULL;
+					this->node_context->experiment = new Experiment(this->node_context);
 					delete this;
 
 					double curr_score = result_helper(wrapper);
 					cout << "curr_score: " << curr_score << endl;
 					wrapper->solution->curr_score = curr_score;
 					wrapper->solution->improvement_history.push_back(curr_score);
-
-					create_experiments(wrapper);
 				}
 			} else {
 				this->curr_ramp--;
 				if (this->curr_ramp < 0) {
-					this->node_context->experiment = NULL;
-					create_experiment(this->node_context,
-									  wrapper);
+					this->node_context->experiment = new Experiment(this->node_context);
 					delete this;
 				}
 			}
