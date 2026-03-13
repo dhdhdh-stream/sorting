@@ -11,6 +11,10 @@ class ObsNode;
 class Scope;
 class SolutionWrapper;
 
+const int SCOPE_EXPERIMENT_STATE_INIT = 0;
+const int SCOPE_EXPERIMENT_STATE_MEASURE_EXISTING = 1;
+const int SCOPE_EXPERIMENT_STATE_MEASURE_NEW = 2;
+
 class ScopeExperimentHistory;
 class ScopeExperimentState;
 class ScopeExperiment : public AbstractExperiment {
@@ -19,14 +23,18 @@ public:
 	Scope* new_scope;
 	AbstractNode* exit_next_node;
 
-	double sum_scores;
-	int count;
+	int state;
+	int state_iter;
+
+	std::vector<double> existing_scores;
+	std::vector<double> new_scores;
 
 	double total_sum_scores;
 	int total_count;
 
 	double local_improvement;
 	double global_improvement;
+	double score_standard_deviation;
 
 	ScopeExperiment(ObsNode* node_context,
 					Scope* new_scope,

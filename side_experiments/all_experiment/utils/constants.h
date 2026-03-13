@@ -43,6 +43,9 @@ const int MEASURE_STEP_NUM_ITERS = 4000;
 const int BRANCH_RATIO_CHECK_ITER = 200;
 const double BRANCH_MIN_RATIO = 0.03;
 
+const double FAIL_T_SCORE = 0.674;
+const double SUCCESS_T_SCORE = 2.326;
+
 const int NUM_LAST_TRACK = 10;
 #if defined(MDEBUG) && MDEBUG
 const int MIN_NUM_LAST_TRACK = 1;

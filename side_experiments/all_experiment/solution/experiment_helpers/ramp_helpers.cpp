@@ -14,9 +14,6 @@
 
 using namespace std;
 
-const double FAIL_T_SCORE = 0.674;
-const double SUCCESS_T_SCORE = 2.326;
-
 void Experiment::ramp_check_activate(
 		vector<double>& obs,
 		SolutionWrapper* wrapper,

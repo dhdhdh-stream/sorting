@@ -13,11 +13,10 @@ ScopeExperiment::ScopeExperiment(ObsNode* node_context,
 	this->new_scope = new_scope;
 	this->exit_next_node = exit_next_node;
 
-	this->sum_scores = 0.0;
-	this->count = 0;
-
 	this->total_sum_scores = 0.0;
 	this->total_count = 0;
+
+	this->state = SCOPE_EXPERIMENT_STATE_INIT;
 }
 
 ScopeExperiment::~ScopeExperiment() {
