@@ -29,8 +29,9 @@ class Problem;
 class Scope;
 class ScopeHistory;
 
-const int SOLUTION_STATE_NON_OUTER = 0;
-const int SOLUTION_STATE_OUTER = 1;
+const int SOLUTION_STATE_ALL = 0;
+const int SOLUTION_STATE_SCOPE = 1;
+const int SOLUTION_STATE_OUTER = 2;
 
 class Solution {
 public:
@@ -74,9 +75,6 @@ public:
 	void save(std::ofstream& output_file);
 
 	void save_for_display(std::ofstream& output_file);
-
-	// temp
-	void print_experiment_statuses();
 };
 
 #endif /* SOLUTION_H */

@@ -18,32 +18,6 @@
 
 using namespace std;
 
-void recursive_add_child(Scope* curr_parent,
-						 SolutionWrapper* wrapper,
-						 Scope* new_scope) {
-	curr_parent->child_scopes.push_back(new_scope);
-
-	for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
-		bool is_needed = false;
-		bool is_added = false;
-		for (int c_index = 0; c_index < (int)wrapper->solution->scopes[s_index]->child_scopes.size(); c_index++) {
-			if (wrapper->solution->scopes[s_index]->child_scopes[c_index] == curr_parent) {
-				is_needed = true;
-			}
-
-			if (wrapper->solution->scopes[s_index]->child_scopes[c_index] == new_scope) {
-				is_added = true;
-			}
-		}
-
-		if (is_needed && !is_added) {
-			recursive_add_child(wrapper->solution->scopes[s_index],
-								wrapper,
-								new_scope);
-		}
-	}
-}
-
 void Experiment::add(SolutionWrapper* wrapper) {
 	stringstream ss;
 	ss << "timestamp: " << wrapper->solution->timestamp << "; ";
@@ -84,19 +58,6 @@ void Experiment::add(SolutionWrapper* wrapper) {
 	cout << ss.str() << endl;
 
 	Scope* scope_context = this->node_context->parent;
-
-	if (this->best_new_scope != NULL) {
-		wrapper->solution->scopes.push_back(this->best_new_scope);
-		this->best_new_scope->is_outer = false;
-		this->best_new_scope->id = (int)wrapper->solution->scopes.size()-1;
-
-		this->best_new_scope->child_scopes = scope_context->child_scopes;
-		recursive_add_child(scope_context,
-							wrapper,
-							this->best_new_scope);
-
-		this->best_new_scope = NULL;
-	}
 
 	vector<AbstractNode*> new_nodes;
 	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
@@ -267,6 +228,4 @@ void Experiment::add(SolutionWrapper* wrapper) {
 
 		next_node->ancestor_ids.push_back(new_nodes[n_index]->id);
 	}
-
-	wrapper->solution->timestamp++;
 }

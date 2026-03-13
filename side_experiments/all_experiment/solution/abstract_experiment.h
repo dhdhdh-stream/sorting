@@ -9,6 +9,7 @@ class Scope;
 class SolutionWrapper;
 
 const int EXPERIMENT_TYPE_EXPERIMENT = 0;
+const int EXPERIMENT_TYPE_SCOPE = 1;
 
 class AbstractExperiment {
 public:

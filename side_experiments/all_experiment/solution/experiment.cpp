@@ -12,29 +12,14 @@ Experiment::Experiment(ObsNode* node_context) {
 
 	this->node_context = node_context;
 
-	this->temp_new_scope = NULL;
 	this->explore_index = 0;
-	this->curr_new_scope = NULL;
 	this->best_surprise = numeric_limits<double>::lowest();
-	this->best_new_scope = NULL;
 
 	this->state = EXPERIMENT_STATE_EXPLORE;
 	this->state_iter = 0;
 }
 
 Experiment::~Experiment() {
-	if (this->temp_new_scope != NULL) {
-		delete this->temp_new_scope;
-	}
-
-	if (this->curr_new_scope != NULL) {
-		delete this->curr_new_scope;
-	}
-
-	if (this->best_new_scope != NULL) {
-		delete this->best_new_scope;
-	}
-
 	for (int n_index = 0; n_index < (int)this->new_networks.size(); n_index++) {
 		delete this->new_networks[n_index];
 	}

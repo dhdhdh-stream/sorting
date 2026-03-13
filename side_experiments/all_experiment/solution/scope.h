@@ -26,9 +26,6 @@ public:
 
 	std::vector<Scope*> child_scopes;
 
-	// temp
-	int damage_index;
-
 	Scope();
 	~Scope();
 

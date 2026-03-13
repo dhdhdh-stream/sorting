@@ -10,15 +10,13 @@
 class AbstractExperiment;
 class AbstractExperimentState;
 class AbstractNode;
-class EvalExperiment;
-class EvalExperimentHistory;
 class Experiment;
 class ExperimentHistory;
-class ExploreExperiment;
-class ExploreExperimentHistory;
 class Problem;
 class ProblemType;
 class Scope;
+class ScopeExperiment;
+class ScopeExperimentHistory;
 class ScopeHistory;
 class Solution;
 
@@ -27,6 +25,8 @@ public:
 	int iter;
 
 	Solution* solution;
+
+	ScopeExperiment* curr_scope_experiment;
 
 	/**
 	 * - run variables
@@ -38,6 +38,7 @@ public:
 	int num_actions;
 
 	std::map<Experiment*, ExperimentHistory*> experiment_histories;
+	ScopeExperimentHistory* scope_experiment_history;
 
 	Problem* problem;
 	/**

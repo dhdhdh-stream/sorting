@@ -14,164 +14,131 @@
 using namespace std;
 
 void clean_scope(Scope* scope) {
-	// /**
-	//  * - remove no longer accessible nodes
-	//  */
-	// while (true) {
-	// 	bool removed_node = false;
+	/**
+	 * - remove no longer accessible nodes
+	 */
+	while (true) {
+		bool removed_node = false;
 
-	// 	set<int> next_node_ids;
-	// 	next_node_ids.insert(0);
-	// 	for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
-	// 			it != scope->nodes.end(); it++) {
-	// 		switch (it->second->type) {
-	// 		case NODE_TYPE_START:
-	// 			{
-	// 				StartNode* start_node = (StartNode*)it->second;
-	// 				next_node_ids.insert(start_node->next_node_id);
-	// 			}
-	// 			break;
-	// 		case NODE_TYPE_ACTION:
-	// 			{
-	// 				ActionNode* action_node = (ActionNode*)it->second;
-	// 				next_node_ids.insert(action_node->next_node_id);
-	// 			}
-	// 			break;
-	// 		case NODE_TYPE_SCOPE:
-	// 			{
-	// 				ScopeNode* scope_node = (ScopeNode*)it->second;
-	// 				next_node_ids.insert(scope_node->next_node_id);
-	// 			}
-	// 			break;
-	// 		case NODE_TYPE_BRANCH:
-	// 			{
-	// 				BranchNode* branch_node = (BranchNode*)it->second;
-	// 				next_node_ids.insert(branch_node->original_next_node_id);
-	// 				next_node_ids.insert(branch_node->branch_next_node_id);
-	// 			}
-	// 			break;
-	// 		case NODE_TYPE_OBS:
-	// 			{
-	// 				ObsNode* obs_node = (ObsNode*)it->second;
-	// 				next_node_ids.insert(obs_node->next_node_id);
+		set<int> next_node_ids;
+		next_node_ids.insert(0);
+		for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
+				it != scope->nodes.end(); it++) {
+			switch (it->second->type) {
+			case NODE_TYPE_START:
+				{
+					StartNode* start_node = (StartNode*)it->second;
+					next_node_ids.insert(start_node->next_node_id);
+				}
+				break;
+			case NODE_TYPE_ACTION:
+				{
+					ActionNode* action_node = (ActionNode*)it->second;
+					next_node_ids.insert(action_node->next_node_id);
+				}
+				break;
+			case NODE_TYPE_SCOPE:
+				{
+					ScopeNode* scope_node = (ScopeNode*)it->second;
+					next_node_ids.insert(scope_node->next_node_id);
+				}
+				break;
+			case NODE_TYPE_BRANCH:
+				{
+					BranchNode* branch_node = (BranchNode*)it->second;
+					next_node_ids.insert(branch_node->original_next_node_id);
+					next_node_ids.insert(branch_node->branch_next_node_id);
+				}
+				break;
+			case NODE_TYPE_OBS:
+				{
+					ObsNode* obs_node = (ObsNode*)it->second;
+					next_node_ids.insert(obs_node->next_node_id);
+				}
+				break;
+			}
+		}
 
-	// 				if (obs_node->experiment != NULL) {
-	// 					switch (obs_node->experiment->type) {
-	// 					case EXPERIMENT_TYPE_EXPERIMENT:
-	// 						{
-	// 							Experiment* experiment = (Experiment*)obs_node->experiment;
-	// 							if (experiment->exit_next_node != NULL) {
-	// 								next_node_ids.insert(experiment->exit_next_node->id);
-	// 							}
-	// 						}
-	// 						break;
-	// 					}
-	// 				}
-	// 			}
-	// 			break;
-	// 		}
-	// 	}
+		map<int, AbstractNode*>::iterator it = scope->nodes.begin();
+		while (it != scope->nodes.end()) {
+			set<int>::iterator needed_it = next_node_ids.find(it->first);
+			if (needed_it == next_node_ids.end()) {
+				removed_node = true;
 
-	// 	map<int, AbstractNode*>::iterator it = scope->nodes.begin();
-	// 	while (it != scope->nodes.end()) {
-	// 		set<int>::iterator needed_it = next_node_ids.find(it->first);
-	// 		if (needed_it == next_node_ids.end()) {
-	// 			removed_node = true;
+				switch (it->second->type) {
+				case NODE_TYPE_ACTION:
+					{
+						ActionNode* action_node = (ActionNode*)it->second;
 
-	// 			switch (it->second->type) {
-	// 			case NODE_TYPE_ACTION:
-	// 				{
-	// 					ActionNode* action_node = (ActionNode*)it->second;
+						for (int a_index = 0; a_index < (int)action_node->next_node->ancestor_ids.size(); a_index++) {
+							if (action_node->next_node->ancestor_ids[a_index] == it->second->id) {
+								action_node->next_node->ancestor_ids.erase(
+									action_node->next_node->ancestor_ids.begin() + a_index);
+								break;
+							}
+						}
+					}
+					break;
+				case NODE_TYPE_SCOPE:
+					{
+						ScopeNode* scope_node = (ScopeNode*)it->second;
 
-	// 					for (int a_index = 0; a_index < (int)action_node->next_node->ancestor_ids.size(); a_index++) {
-	// 						if (action_node->next_node->ancestor_ids[a_index] == it->second->id) {
-	// 							action_node->next_node->ancestor_ids.erase(
-	// 								action_node->next_node->ancestor_ids.begin() + a_index);
-	// 							break;
-	// 						}
-	// 					}
-	// 				}
-	// 				break;
-	// 			case NODE_TYPE_SCOPE:
-	// 				{
-	// 					ScopeNode* scope_node = (ScopeNode*)it->second;
+						for (int a_index = 0; a_index < (int)scope_node->next_node->ancestor_ids.size(); a_index++) {
+							if (scope_node->next_node->ancestor_ids[a_index] == it->second->id) {
+								scope_node->next_node->ancestor_ids.erase(
+									scope_node->next_node->ancestor_ids.begin() + a_index);
+								break;
+							}
+						}
+					}
+					break;
+				case NODE_TYPE_BRANCH:
+					{
+						BranchNode* branch_node = (BranchNode*)it->second;
 
-	// 					for (int a_index = 0; a_index < (int)scope_node->next_node->ancestor_ids.size(); a_index++) {
-	// 						if (scope_node->next_node->ancestor_ids[a_index] == it->second->id) {
-	// 							scope_node->next_node->ancestor_ids.erase(
-	// 								scope_node->next_node->ancestor_ids.begin() + a_index);
-	// 							break;
-	// 						}
-	// 					}
-	// 				}
-	// 				break;
-	// 			case NODE_TYPE_BRANCH:
-	// 				{
-	// 					BranchNode* branch_node = (BranchNode*)it->second;
+						for (int a_index = 0; a_index < (int)branch_node->original_next_node->ancestor_ids.size(); a_index++) {
+							if (branch_node->original_next_node->ancestor_ids[a_index] == it->second->id) {
+								branch_node->original_next_node->ancestor_ids.erase(
+									branch_node->original_next_node->ancestor_ids.begin() + a_index);
+								break;
+							}
+						}
 
-	// 					for (int a_index = 0; a_index < (int)branch_node->original_next_node->ancestor_ids.size(); a_index++) {
-	// 						if (branch_node->original_next_node->ancestor_ids[a_index] == it->second->id) {
-	// 							branch_node->original_next_node->ancestor_ids.erase(
-	// 								branch_node->original_next_node->ancestor_ids.begin() + a_index);
-	// 							break;
-	// 						}
-	// 					}
+						for (int a_index = 0; a_index < (int)branch_node->branch_next_node->ancestor_ids.size(); a_index++) {
+							if (branch_node->branch_next_node->ancestor_ids[a_index] == it->second->id) {
+								branch_node->branch_next_node->ancestor_ids.erase(
+									branch_node->branch_next_node->ancestor_ids.begin() + a_index);
+								break;
+							}
+						}
+					}
+					break;
+				case NODE_TYPE_OBS:
+					{
+						ObsNode* obs_node = (ObsNode*)it->second;
 
-	// 					for (int a_index = 0; a_index < (int)branch_node->branch_next_node->ancestor_ids.size(); a_index++) {
-	// 						if (branch_node->branch_next_node->ancestor_ids[a_index] == it->second->id) {
-	// 							branch_node->branch_next_node->ancestor_ids.erase(
-	// 								branch_node->branch_next_node->ancestor_ids.begin() + a_index);
-	// 							break;
-	// 						}
-	// 					}
-	// 				}
-	// 				break;
-	// 			case NODE_TYPE_OBS:
-	// 				{
-	// 					ObsNode* obs_node = (ObsNode*)it->second;
+						for (int a_index = 0; a_index < (int)obs_node->next_node->ancestor_ids.size(); a_index++) {
+							if (obs_node->next_node->ancestor_ids[a_index] == it->second->id) {
+								obs_node->next_node->ancestor_ids.erase(
+									obs_node->next_node->ancestor_ids.begin() + a_index);
+								break;
+							}
+						}
+					}
+					break;
+				}
 
-	// 					for (int a_index = 0; a_index < (int)obs_node->next_node->ancestor_ids.size(); a_index++) {
-	// 						if (obs_node->next_node->ancestor_ids[a_index] == it->second->id) {
-	// 							obs_node->next_node->ancestor_ids.erase(
-	// 								obs_node->next_node->ancestor_ids.begin() + a_index);
-	// 							break;
-	// 						}
-	// 					}
-	// 				}
-	// 				break;
-	// 			}
+				delete it->second;
+				it = scope->nodes.erase(it);
+			} else {
+				it++;
+			}
+		}
 
-	// 			delete it->second;
-	// 			it = scope->nodes.erase(it);
-	// 		} else {
-	// 			it++;
-	// 		}
-	// 	}
-
-	// 	if (!removed_node) {
-	// 		break;
-	// 	}
-	// }
-
-	// set<AbstractNode*> experiment_endpoints;
-	// for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
-	// 		it != scope->nodes.end(); it++) {
-	// 	if (it->second->type == NODE_TYPE_OBS) {
-	// 		ObsNode* obs_node = (ObsNode*)it->second;
-	// 		if (obs_node->experiment != NULL) {
-	// 			switch (obs_node->experiment->type) {
-	// 			case EXPERIMENT_TYPE_EXPERIMENT:
-	// 				{
-	// 					Experiment* experiment = (Experiment*)obs_node->experiment;
-	// 					if (experiment->exit_next_node != NULL) {
-	// 						experiment_endpoints.insert(experiment->exit_next_node);
-	// 					}
-	// 				}
-	// 				break;
-	// 			}
-	// 		}
-	// 	}
-	// }
+		if (!removed_node) {
+			break;
+		}
+	}
 
 	/**
 	 * - add needed ObsNodes
@@ -364,104 +331,103 @@ void clean_scope(Scope* scope) {
 		}
 	}
 
-	// /**
-	//  * - remove useless BranchNodes
-	//  */
-	// #if defined(MDEBUG) && MDEBUG
-	// #else
-	// while (true) {
-	// 	bool removed_node = false;
+	/**
+	 * - remove useless BranchNodes
+	 */
+	#if defined(MDEBUG) && MDEBUG
+	#else
+	while (true) {
+		bool removed_node = false;
 
-	// 	for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
-	// 			it != scope->nodes.end(); it++) {
-	// 		if (it->second->type == NODE_TYPE_BRANCH
-	// 				&& experiment_endpoints.find(it->second) == experiment_endpoints.end()) {
-	// 			BranchNode* branch_node = (BranchNode*)it->second;
-	// 			ObsNode* original_obs_node = (ObsNode*)branch_node->original_next_node;
-	// 			ObsNode* branch_obs_node = (ObsNode*)branch_node->branch_next_node;
-	// 			if (original_obs_node->next_node == branch_obs_node->next_node
-	// 					&& experiment_endpoints.find(original_obs_node) == experiment_endpoints.end()
-	// 					&& experiment_endpoints.find(branch_obs_node) == experiment_endpoints.end()) {
-	// 				ObsNode* merge_obs_node = (ObsNode*)original_obs_node->next_node;
+		for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
+				it != scope->nodes.end(); it++) {
+			if (it->second->type == NODE_TYPE_BRANCH
+					&& experiment_endpoints.find(it->second) == experiment_endpoints.end()) {
+				BranchNode* branch_node = (BranchNode*)it->second;
+				ObsNode* original_obs_node = (ObsNode*)branch_node->original_next_node;
+				ObsNode* branch_obs_node = (ObsNode*)branch_node->branch_next_node;
+				if (original_obs_node->next_node == branch_obs_node->next_node
+						&& experiment_endpoints.find(original_obs_node) == experiment_endpoints.end()
+						&& experiment_endpoints.find(branch_obs_node) == experiment_endpoints.end()) {
+					ObsNode* merge_obs_node = (ObsNode*)original_obs_node->next_node;
 
-	// 				for (int a_index = 0; a_index < (int)merge_obs_node->ancestor_ids.size(); a_index++) {
-	// 					if (merge_obs_node->ancestor_ids[a_index] == original_obs_node->id) {
-	// 						merge_obs_node->ancestor_ids.erase(merge_obs_node->ancestor_ids.begin() + a_index);
-	// 						break;
-	// 					}
-	// 				}
+					for (int a_index = 0; a_index < (int)merge_obs_node->ancestor_ids.size(); a_index++) {
+						if (merge_obs_node->ancestor_ids[a_index] == original_obs_node->id) {
+							merge_obs_node->ancestor_ids.erase(merge_obs_node->ancestor_ids.begin() + a_index);
+							break;
+						}
+					}
 
-	// 				for (int a_index = 0; a_index < (int)merge_obs_node->ancestor_ids.size(); a_index++) {
-	// 					if (merge_obs_node->ancestor_ids[a_index] == branch_obs_node->id) {
-	// 						merge_obs_node->ancestor_ids.erase(merge_obs_node->ancestor_ids.begin() + a_index);
-	// 						break;
-	// 					}
-	// 				}
+					for (int a_index = 0; a_index < (int)merge_obs_node->ancestor_ids.size(); a_index++) {
+						if (merge_obs_node->ancestor_ids[a_index] == branch_obs_node->id) {
+							merge_obs_node->ancestor_ids.erase(merge_obs_node->ancestor_ids.begin() + a_index);
+							break;
+						}
+					}
 
-	// 				ObsNode* previous_obs_node = (ObsNode*)scope->nodes[branch_node->ancestor_ids[0]];
-	// 				previous_obs_node->next_node_id = merge_obs_node->id;
-	// 				previous_obs_node->next_node = merge_obs_node;
-	// 				merge_obs_node->ancestor_ids.push_back(previous_obs_node->id);
+					ObsNode* previous_obs_node = (ObsNode*)scope->nodes[branch_node->ancestor_ids[0]];
+					previous_obs_node->next_node_id = merge_obs_node->id;
+					previous_obs_node->next_node = merge_obs_node;
+					merge_obs_node->ancestor_ids.push_back(previous_obs_node->id);
 
-	// 				scope->nodes.erase(original_obs_node->id);
-	// 				delete original_obs_node;
-	// 				scope->nodes.erase(branch_obs_node->id);
-	// 				delete branch_obs_node;
-	// 				scope->nodes.erase(branch_node->id);
-	// 				delete branch_node;
+					scope->nodes.erase(original_obs_node->id);
+					delete original_obs_node;
+					scope->nodes.erase(branch_obs_node->id);
+					delete branch_obs_node;
+					scope->nodes.erase(branch_node->id);
+					delete branch_node;
 
-	// 				removed_node = true;
-	// 				break;
-	// 			}
-	// 		}
-	// 	}
+					removed_node = true;
+					break;
+				}
+			}
+		}
 
-	// 	if (!removed_node) {
-	// 		break;
-	// 	}
-	// }
-	// #endif /* MDEBUG */
+		if (!removed_node) {
+			break;
+		}
+	}
+	#endif /* MDEBUG */
 
-	// /**
-	//  * - remove duplicate ObsNodes
-	//  */
-	// while (true) {
-	// 	bool removed_node = false;
+	/**
+	 * - remove duplicate ObsNodes
+	 */
+	while (true) {
+		bool removed_node = false;
 
-	// 	for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
-	// 			it != scope->nodes.end(); it++) {
-	// 		if (it->second->type == NODE_TYPE_OBS) {
-	// 			ObsNode* curr_obs_node = (ObsNode*)it->second;
-	// 			if (curr_obs_node->next_node != NULL
-	// 					&& curr_obs_node->next_node->type == NODE_TYPE_OBS
-	// 					&& curr_obs_node->next_node->ancestor_ids.size() == 1
-	// 					&& experiment_endpoints.find(curr_obs_node->next_node) == experiment_endpoints.end()) {
-	// 				ObsNode* next_obs_node = (ObsNode*)curr_obs_node->next_node;
+		for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
+				it != scope->nodes.end(); it++) {
+			if (it->second->type == NODE_TYPE_OBS) {
+				ObsNode* curr_obs_node = (ObsNode*)it->second;
+				if (curr_obs_node->next_node != NULL
+						&& curr_obs_node->next_node->type == NODE_TYPE_OBS
+						&& curr_obs_node->next_node->ancestor_ids.size() == 1) {
+					ObsNode* next_obs_node = (ObsNode*)curr_obs_node->next_node;
 
-	// 				if (next_obs_node->next_node != NULL) {
-	// 					for (int a_index = 0; a_index < (int)next_obs_node->next_node->ancestor_ids.size(); a_index++) {
-	// 						if (next_obs_node->next_node->ancestor_ids[a_index] == next_obs_node->id) {
-	// 							next_obs_node->next_node->ancestor_ids.erase(
-	// 								next_obs_node->next_node->ancestor_ids.begin() + a_index);
-	// 							break;
-	// 						}
-	// 					}
-	// 					next_obs_node->next_node->ancestor_ids.push_back(curr_obs_node->id);
-	// 				}
-	// 				curr_obs_node->next_node_id = next_obs_node->next_node_id;
-	// 				curr_obs_node->next_node = next_obs_node->next_node;
+					if (next_obs_node->next_node != NULL) {
+						for (int a_index = 0; a_index < (int)next_obs_node->next_node->ancestor_ids.size(); a_index++) {
+							if (next_obs_node->next_node->ancestor_ids[a_index] == next_obs_node->id) {
+								next_obs_node->next_node->ancestor_ids.erase(
+									next_obs_node->next_node->ancestor_ids.begin() + a_index);
+								break;
+							}
+						}
+						next_obs_node->next_node->ancestor_ids.push_back(curr_obs_node->id);
+					}
+					curr_obs_node->next_node_id = next_obs_node->next_node_id;
+					curr_obs_node->next_node = next_obs_node->next_node;
 
-	// 				scope->nodes.erase(next_obs_node->id);
-	// 				delete next_obs_node;
+					scope->nodes.erase(next_obs_node->id);
+					delete next_obs_node;
 
-	// 				removed_node = true;
-	// 				break;
-	// 			}
-	// 		}
-	// 	}
+					removed_node = true;
+					break;
+				}
+			}
+		}
 
-	// 	if (!removed_node) {
-	// 		break;
-	// 	}
-	// }
+		if (!removed_node) {
+			break;
+		}
+	}
 }

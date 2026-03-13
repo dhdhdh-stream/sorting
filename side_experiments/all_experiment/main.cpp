@@ -39,6 +39,8 @@
 
 // - maybe new scopes try single
 
+// TODO: measure damage of reusing scopes
+
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -129,13 +131,6 @@ int main(int argc, char* argv[]) {
 
 			if (solution_wrapper->iter%100000 == 0) {
 				cout << "solution_wrapper->iter: " << solution_wrapper->iter << endl;
-				solution_wrapper->solution->print_experiment_statuses();
-				double sum_vals = 0.0;
-				for (int h_index = 0; h_index < (int)solution_wrapper->solution->score_histories.size(); h_index++) {
-					sum_vals += solution_wrapper->solution->score_histories[h_index];
-				}
-				double score_average = sum_vals / (double)solution_wrapper->solution->score_histories.size();
-				cout << "score_average: " << score_average << endl;
 			}
 
 			if (solution_wrapper->solution->timestamp != starting_timestamp) {

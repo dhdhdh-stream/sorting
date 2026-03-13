@@ -4,6 +4,7 @@
 
 #include "action_node.h"
 #include "constants.h"
+#include "experiment.h"
 #include "globals.h"
 #include "helpers.h"
 #include "problem.h"
@@ -86,8 +87,20 @@ SolutionWrapper::SolutionWrapper(ProblemType* problem_type) {
 
 		clean_scope(new_scope);
 
-		this->solution->state = SOLUTION_STATE_NON_OUTER;
+		this->solution->state = SOLUTION_STATE_ALL;
+		for (int s_index = 0; s_index < (int)this->solution->scopes.size(); s_index++) {
+			Scope* scope = this->solution->scopes[s_index];
+			for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
+					it != scope->nodes.end(); it++) {
+				if (it->second->type == NODE_TYPE_OBS) {
+					ObsNode* obs_node = (ObsNode*)it->second;
+					obs_node->experiment = new Experiment(obs_node);
+				}
+			}
+		}
 	}
+
+	this->curr_scope_experiment = NULL;
 
 	#if defined(MDEBUG) && MDEBUG
 	this->run_index = 0;
@@ -105,6 +118,21 @@ SolutionWrapper::SolutionWrapper(std::string path,
 	this->solution->load(input_file);
 
 	input_file.close();
+
+	if (this->solution->state == SOLUTION_STATE_ALL) {
+		for (int s_index = 0; s_index < (int)this->solution->scopes.size(); s_index++) {
+			Scope* scope = this->solution->scopes[s_index];
+			for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
+					it != scope->nodes.end(); it++) {
+				if (it->second->type == NODE_TYPE_OBS) {
+					ObsNode* obs_node = (ObsNode*)it->second;
+					obs_node->experiment = new Experiment(obs_node);
+				}
+			}
+		}
+	}
+
+	this->curr_scope_experiment = NULL;
 
 	#if defined(MDEBUG) && MDEBUG
 	this->run_index = 0;

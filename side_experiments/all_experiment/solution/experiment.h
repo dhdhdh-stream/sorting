@@ -41,21 +41,18 @@ public:
 	int state;
 	int state_iter;
 
-	Scope* temp_new_scope;
 	std::vector<int> temp_step_types;
 	std::vector<int> temp_actions;
 	std::vector<Scope*> temp_scopes;
 	AbstractNode* temp_exit_next_node;
 
 	int explore_index;
-	Scope* curr_new_scope;
 	std::vector<int> curr_step_types;
 	std::vector<int> curr_actions;
 	std::vector<Scope*> curr_scopes;
 	AbstractNode* curr_exit_next_node;
 
 	double best_surprise;
-	Scope* best_new_scope;
 	std::vector<int> best_step_types;
 	std::vector<int> best_actions;
 	std::vector<Scope*> best_scopes;

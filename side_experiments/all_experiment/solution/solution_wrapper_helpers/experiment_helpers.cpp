@@ -6,17 +6,24 @@
 #include "experiment.h"
 #include "globals.h"
 #include "helpers.h"
+#include "obs_node.h"
 #include "scope.h"
+#include "scope_experiment.h"
 #include "scope_node.h"
 #include "solution.h"
 #include "utilities.h"
 
 using namespace std;
 
-const int NON_OUTER_ITERS = 20;
-const int OUTER_ITERS = 8;
-
 void SolutionWrapper::experiment_init() {
+	if (this->solution->state != SOLUTION_STATE_ALL) {
+		while (this->curr_scope_experiment == NULL) {
+			create_scope_experiment(this);
+		}
+
+		this->scope_experiment_history = new ScopeExperimentHistory(this->curr_scope_experiment);
+	}
+
 	this->iter++;
 
 	this->num_actions = 1;
@@ -117,34 +124,105 @@ void SolutionWrapper::experiment_end(double result) {
 	this->experiment_context.clear();
 
 	set<Scope*> updated_scopes;
-	for (map<Experiment*, ExperimentHistory*>::iterator it = this->experiment_histories.begin();
-			it != this->experiment_histories.end(); it++) {
-		it->first->backprop(result,
-							it->second,
-							this,
-							updated_scopes);
-		delete it->second;
-	}
-	this->experiment_histories.clear();
-
-	for (set<Scope*>::iterator it = updated_scopes.begin();
-			it != updated_scopes.end(); it++) {
-		clean_scope(*it);
-	}
-
-	switch (this->solution->state) {
-	case SOLUTION_STATE_NON_OUTER:
-		if (this->solution->timestamp >= NON_OUTER_ITERS) {
-			this->solution->timestamp = -1;
+	if (this->solution->state == SOLUTION_STATE_ALL) {
+		for (map<Experiment*, ExperimentHistory*>::iterator it = this->experiment_histories.begin();
+				it != this->experiment_histories.end(); it++) {
+			it->first->backprop(result,
+								it->second,
+								this,
+								updated_scopes);
+			delete it->second;
 		}
-		break;
-	case SOLUTION_STATE_OUTER:
-		if (this->solution->timestamp >= OUTER_ITERS) {
-			this->solution->state = SOLUTION_STATE_NON_OUTER;
-			this->solution->timestamp = 0;
+		this->experiment_histories.clear();
+	} else {
+		this->curr_scope_experiment->backprop(result,
+											  this,
+											  updated_scopes);
 
-			this->solution->merge_outer();
+		delete this->scope_experiment_history;
+		this->scope_experiment_history = NULL;
+	}
+
+	if (updated_scopes.size() > 0) {
+		for (set<Scope*>::iterator it = updated_scopes.begin();
+				it != updated_scopes.end(); it++) {
+			clean_scope(*it);
 		}
-		break;
+
+		this->solution->timestamp++;
+		switch (this->solution->state) {
+		case SOLUTION_STATE_ALL:
+			if (this->solution->timestamp >= NON_OUTER_ITERS) {
+				measure_vals(this);
+
+				this->solution->timestamp = -1;
+			} else if (this->solution->timestamp % (NUM_ALL_ITERS + NUM_SCOPE_ITERS) >= NUM_ALL_ITERS) {
+				this->solution->state = SOLUTION_STATE_SCOPE;
+
+				this->solution->last_scores.clear();
+
+				for (int s_index = 0; s_index < (int)this->solution->scopes.size(); s_index++) {
+					Scope* scope = this->solution->scopes[s_index];
+					for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
+							it != scope->nodes.end(); it++) {
+						if (it->second->type == NODE_TYPE_OBS) {
+							ObsNode* obs_node = (ObsNode*)it->second;
+							delete obs_node->experiment;
+							obs_node->experiment = NULL;
+						}
+					}
+				}
+
+				measure_vals(this);
+			}
+			break;
+		case SOLUTION_STATE_SCOPE:
+			if (this->solution->timestamp >= NON_OUTER_ITERS) {
+				measure_vals(this);
+
+				this->solution->timestamp = -1;
+			} else if (this->solution->timestamp % (NUM_ALL_ITERS + NUM_SCOPE_ITERS) < NUM_ALL_ITERS) {
+				this->solution->state = SOLUTION_STATE_ALL;
+
+				this->solution->last_scores.clear();
+
+				for (int s_index = 0; s_index < (int)this->solution->scopes.size(); s_index++) {
+					Scope* scope = this->solution->scopes[s_index];
+					for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
+							it != scope->nodes.end(); it++) {
+						if (it->second->type == NODE_TYPE_OBS) {
+							ObsNode* obs_node = (ObsNode*)it->second;
+							obs_node->experiment = new Experiment(obs_node);
+						}
+					}
+				}
+			} else {
+				measure_vals(this);
+			}
+			break;
+		case SOLUTION_STATE_OUTER:
+			if (this->solution->timestamp >= OUTER_ITERS) {
+				this->solution->state = SOLUTION_STATE_ALL;
+				this->solution->timestamp = 0;
+
+				this->solution->merge_outer();
+
+				this->solution->last_scores.clear();
+
+				for (int s_index = 0; s_index < (int)this->solution->scopes.size(); s_index++) {
+					Scope* scope = this->solution->scopes[s_index];
+					for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
+							it != scope->nodes.end(); it++) {
+						if (it->second->type == NODE_TYPE_OBS) {
+							ObsNode* obs_node = (ObsNode*)it->second;
+							obs_node->experiment = new Experiment(obs_node);
+						}
+					}
+				}
+			} else {
+				measure_vals(this);
+			}
+			break;
+		}
 	}
 }

@@ -51,4 +51,17 @@ const int MIN_NUM_LAST_TRACK = 5;
 #endif /* MDEBUG */
 const double LAST_BETTER_THAN_RATIO = 0.8;
 
+#if defined(MDEBUG) && MDEBUG
+const int MEASURE_NUM_ITERS = 40;
+#else
+const int MEASURE_NUM_ITERS = 4000;
+#endif /* MDEBUG */
+const double SCOPE_EXPERIMENT_MIN_HIT = 0.3;
+
+const int NON_OUTER_ITERS = 20;
+const int OUTER_ITERS = 8;
+
+const int NUM_ALL_ITERS = 5;
+const int NUM_SCOPE_ITERS = 3;
+
 #endif /* CONSTANTS_H */

@@ -20,6 +20,12 @@ public:
 
 	AbstractExperiment* experiment;
 
+	double val_average;
+	double average_hits_per_run;
+
+	double sum_vals;
+	int hit_count;
+
 	ObsNode();
 	~ObsNode();
 
@@ -32,6 +38,8 @@ public:
 						 int& action,
 						 bool& is_next,
 						 SolutionWrapper* wrapper);
+
+	void update_val();
 
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file,

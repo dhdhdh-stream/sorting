@@ -344,20 +344,15 @@ void create_new_scope(AbstractNode* potential_start_node,
 }
 
 void create_new_scope(Scope* scope_context,
-					  SolutionWrapper* wrapper,
-					  Scope*& new_scope,
-					  Scope*& parent_scope) {
-	parent_scope = scope_context;
-
-	if (parent_scope->nodes.size() < NEW_SCOPE_MIN_NODES) {
-		new_scope = NULL;
+					  Scope*& new_scope) {
+	if (scope_context->nodes.size() < NEW_SCOPE_MIN_NODES) {
 		return;
 	}
 
-	uniform_int_distribution<int> node_distribution(1, parent_scope->nodes.size()-1);
+	uniform_int_distribution<int> node_distribution(1, scope_context->nodes.size()-1);
 	for (int t_index = 0; t_index < CREATE_NEW_SCOPE_NUM_TRIES; t_index++) {
-		AbstractNode* potential_start_node = next(parent_scope->nodes.begin(), node_distribution(generator))->second;
-		AbstractNode* potential_end_node = next(parent_scope->nodes.begin(), node_distribution(generator))->second;
+		AbstractNode* potential_start_node = next(scope_context->nodes.begin(), node_distribution(generator))->second;
+		AbstractNode* potential_end_node = next(scope_context->nodes.begin(), node_distribution(generator))->second;
 
 		Scope* potential_new_scope = NULL;
 		create_new_scope(potential_start_node,
@@ -369,22 +364,16 @@ void create_new_scope(Scope* scope_context,
 			return;
 		}
 	}
-
-	new_scope = NULL;
-	return;
 }
 
-void outer_create_new_scope(Scope* scope_context,
-							SolutionWrapper* wrapper,
-							Scope*& new_scope,
-							Scope*& parent_scope) {
+void outer_create_new_scope(SolutionWrapper* wrapper,
+							Scope*& new_scope) {
 	while (true) {
 		uniform_int_distribution<int> outer_distribution(0, wrapper->solution->outer_root_scope_ids.size()-1);
 		int scope_id = wrapper->solution->outer_root_scope_ids[outer_distribution(generator)];
-		parent_scope = wrapper->solution->outer_scopes[scope_id];
+		Scope* parent_scope = wrapper->solution->outer_scopes[scope_id];
 
 		if (parent_scope->nodes.size() < NEW_SCOPE_MIN_NODES) {
-			new_scope = NULL;
 			continue;
 		}
 
@@ -410,6 +399,32 @@ void outer_create_new_scope(Scope* scope_context,
 				new_scope = potential_new_scope;
 				return;
 			}
+		}
+	}
+}
+
+void recursive_add_child(Scope* curr_parent,
+						 SolutionWrapper* wrapper,
+						 Scope* new_scope) {
+	curr_parent->child_scopes.push_back(new_scope);
+
+	for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
+		bool is_needed = false;
+		bool is_added = false;
+		for (int c_index = 0; c_index < (int)wrapper->solution->scopes[s_index]->child_scopes.size(); c_index++) {
+			if (wrapper->solution->scopes[s_index]->child_scopes[c_index] == curr_parent) {
+				is_needed = true;
+			}
+
+			if (wrapper->solution->scopes[s_index]->child_scopes[c_index] == new_scope) {
+				is_added = true;
+			}
+		}
+
+		if (is_needed && !is_added) {
+			recursive_add_child(wrapper->solution->scopes[s_index],
+								wrapper,
+								new_scope);
 		}
 	}
 }

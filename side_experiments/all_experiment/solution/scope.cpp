@@ -16,8 +16,7 @@
 using namespace std;
 
 Scope::Scope() {
-	// temp
-	this->damage_index = 0;
+	// do nothing
 }
 
 Scope::~Scope() {
@@ -237,9 +236,6 @@ void Scope::load(ifstream& input_file,
 			this->child_scopes.push_back(parent_solution->scopes[scope_id]);
 		}
 	}
-
-	// temp
-	this->damage_index = this->node_counter;
 }
 
 void Scope::link(Solution* parent_solution) {
