@@ -50,6 +50,13 @@ const int MIN_NUM_LAST_TRACK = 1;
 const int MIN_NUM_LAST_TRACK = 5;
 #endif /* MDEBUG */
 const double LAST_BETTER_THAN_RATIO = 0.8;
+const int SCOPE_NUM_LAST_TRACK = 20;
+#if defined(MDEBUG) && MDEBUG
+const int SCOPE_MIN_NUM_LAST_TRACK = 1;
+#else
+const int SCOPE_MIN_NUM_LAST_TRACK = 10;
+#endif /* MDEBUG */
+const double SCOPE_LAST_BETTER_THAN_RATIO = 0.9;
 
 #if defined(MDEBUG) && MDEBUG
 const int MEASURE_NUM_ITERS = 40;

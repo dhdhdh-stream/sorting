@@ -159,8 +159,6 @@ void SolutionWrapper::experiment_end(double result) {
 			} else if (this->solution->timestamp % (NUM_ALL_ITERS + NUM_SCOPE_ITERS) >= NUM_ALL_ITERS) {
 				this->solution->state = SOLUTION_STATE_SCOPE;
 
-				this->solution->last_scores.clear();
-
 				for (int s_index = 0; s_index < (int)this->solution->scopes.size(); s_index++) {
 					Scope* scope = this->solution->scopes[s_index];
 					for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
@@ -184,8 +182,6 @@ void SolutionWrapper::experiment_end(double result) {
 			} else if (this->solution->timestamp % (NUM_ALL_ITERS + NUM_SCOPE_ITERS) < NUM_ALL_ITERS) {
 				this->solution->state = SOLUTION_STATE_ALL;
 
-				this->solution->last_scores.clear();
-
 				for (int s_index = 0; s_index < (int)this->solution->scopes.size(); s_index++) {
 					Scope* scope = this->solution->scopes[s_index];
 					for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
@@ -206,8 +202,6 @@ void SolutionWrapper::experiment_end(double result) {
 				this->solution->timestamp = 0;
 
 				this->solution->merge_outer();
-
-				this->solution->last_scores.clear();
 
 				for (int s_index = 0; s_index < (int)this->solution->scopes.size(); s_index++) {
 					Scope* scope = this->solution->scopes[s_index];

@@ -59,6 +59,7 @@ public:
 	 *   - if experiment has good local, but poor global, will add anyways
 	 */
 	std::list<double> last_scores;
+	std::list<double> scope_last_scores;
 
 	std::vector<double> improvement_history;
 	std::vector<std::string> change_history;

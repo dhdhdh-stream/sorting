@@ -74,21 +74,22 @@ void Experiment::explore_check_activate(
 		}
 		uniform_int_distribution<int> child_index_distribution(0, possible_child_indexes.size()-1);
 		for (int s_index = 0; s_index < new_num_steps; s_index++) {
-			bool is_scope = false;
-			if (possible_child_indexes.size() > 0) {
-				if (possible_child_indexes.size() <= RAW_ACTION_WEIGHT) {
-					uniform_int_distribution<int> scope_distribution(0, possible_child_indexes.size() + RAW_ACTION_WEIGHT - 1);
-					if (scope_distribution(generator) < (int)possible_child_indexes.size()) {
-						is_scope = true;
-					}
-				} else {
-					uniform_int_distribution<int> scope_distribution(0, 1);
-					if (scope_distribution(generator) == 0) {
-						is_scope = true;
-					}
-				}
-			}
-			if (is_scope) {
+			// bool is_scope = false;
+			// if (possible_child_indexes.size() > 0) {
+			// 	if (possible_child_indexes.size() <= RAW_ACTION_WEIGHT) {
+			// 		uniform_int_distribution<int> scope_distribution(0, possible_child_indexes.size() + RAW_ACTION_WEIGHT - 1);
+			// 		if (scope_distribution(generator) < (int)possible_child_indexes.size()) {
+			// 			is_scope = true;
+			// 		}
+			// 	} else {
+			// 		uniform_int_distribution<int> scope_distribution(0, 1);
+			// 		if (scope_distribution(generator) == 0) {
+			// 			is_scope = true;
+			// 		}
+			// 	}
+			// }
+			// if (is_scope) {
+			if (false) {
 				this->temp_step_types.push_back(STEP_TYPE_SCOPE);
 				this->temp_actions.push_back(-1);
 

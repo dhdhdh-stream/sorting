@@ -50,8 +50,6 @@ void ScopeExperiment::add(SolutionWrapper* wrapper) {
 						wrapper,
 						this->new_scope);
 
-	this->new_scope = NULL;
-
 	ScopeNode* new_scope_node = new ScopeNode();
 	new_scope_node->parent = scope_context;
 	new_scope_node->id = scope_context->node_counter;
@@ -59,6 +57,8 @@ void ScopeExperiment::add(SolutionWrapper* wrapper) {
 	scope_context->nodes[new_scope_node->id] = new_scope_node;
 
 	new_scope_node->scope = this->new_scope;
+
+	this->new_scope = NULL;
 
 	ObsNode* new_ending_node = NULL;
 

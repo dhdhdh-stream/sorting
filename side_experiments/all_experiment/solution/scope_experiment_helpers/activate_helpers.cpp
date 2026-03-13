@@ -1,5 +1,7 @@
 #include "scope_experiment.h"
 
+#include <iostream>
+
 #include "constants.h"
 #include "obs_node.h"
 #include "scope.h"
@@ -8,11 +10,19 @@
 
 using namespace std;
 
+#if defined(MDEBUG) && MDEBUG
+const int CHECK_ITERS_I0 = 1;
+const int CHECK_ITERS_I1 = 2;
+const int CHECK_ITERS_I2 = 3;
+const int CHECK_ITERS_I3 = 4;
+const int CHECK_ITERS_I4 = 5;
+#else
 const int CHECK_ITERS_I0 = 1;
 const int CHECK_ITERS_I1 = 20;
 const int CHECK_ITERS_I2 = 200;
 const int CHECK_ITERS_I3 = 1000;
 const int CHECK_ITERS_I4 = 4000;
+#endif /* MDEBUG */
 
 void ScopeExperiment::check_activate(AbstractNode* experiment_node,
 									 vector<double>& obs,
@@ -69,42 +79,54 @@ void ScopeExperiment::backprop(double target_val,
 				|| this->count == CHECK_ITERS_I2
 				|| this->count == CHECK_ITERS_I3) {
 			double average_score = this->sum_scores / this->count;
+			#if defined(MDEBUG) && MDEBUG
+			if (average_score < this->node_context->val_average || false) {
+			#else
 			if (average_score < this->node_context->val_average) {
+			#endif /* MDEBUG */
 				this->node_context->experiment = NULL;
 				wrapper->curr_scope_experiment = NULL;
 				delete this;
 			}
 		} else if (this->count == CHECK_ITERS_I4) {
 			double average_score = this->sum_scores / this->count;
+			#if defined(MDEBUG) && MDEBUG
+			if (average_score >= this->node_context->val_average || rand()%2 == 0) {
+			#else
 			if (average_score >= this->node_context->val_average) {
+			#endif /* MDEBUG */
 				this->local_improvement = average_score - this->node_context->val_average;
-				this->global_improvement = this->local_improvement / this->node_context->average_hits_per_run;
+				this->global_improvement = this->local_improvement * this->node_context->average_hits_per_run;
 
 				bool is_success = false;
-				if (wrapper->solution->last_scores.size() >= MIN_NUM_LAST_TRACK) {
+				if (wrapper->solution->scope_last_scores.size() >= SCOPE_MIN_NUM_LAST_TRACK) {
 					int num_better_than = 0;
-					for (list<double>::iterator it = wrapper->solution->last_scores.begin();
-							it != wrapper->solution->last_scores.end(); it++) {
+					for (list<double>::iterator it = wrapper->solution->scope_last_scores.begin();
+							it != wrapper->solution->scope_last_scores.end(); it++) {
 						if (this->global_improvement >= *it) {
 							num_better_than++;
 						}
 					}
 
-					double target_better_than = LAST_BETTER_THAN_RATIO * (double)wrapper->solution->last_scores.size();
+					double target_better_than = SCOPE_LAST_BETTER_THAN_RATIO * (double)wrapper->solution->scope_last_scores.size();
 
 					if (num_better_than >= target_better_than) {
 						is_success = true;
 					}
 
-					if (wrapper->solution->last_scores.size() >= NUM_LAST_TRACK) {
-						wrapper->solution->last_scores.pop_front();
+					if (wrapper->solution->scope_last_scores.size() >= SCOPE_NUM_LAST_TRACK) {
+						wrapper->solution->scope_last_scores.pop_front();
 					}
-					wrapper->solution->last_scores.push_back(this->global_improvement);
+					wrapper->solution->scope_last_scores.push_back(this->global_improvement);
 				} else {
-					wrapper->solution->last_scores.push_back(this->global_improvement);
+					wrapper->solution->scope_last_scores.push_back(this->global_improvement);
 				}
 
+				#if defined(MDEBUG) && MDEBUG
+				if (is_success || rand()%3 != 0) {
+				#else
 				if (is_success) {
+				#endif /* MDEBUG */
 					updated_scopes.insert(this->node_context->parent);
 
 					this->node_context->experiment = NULL;

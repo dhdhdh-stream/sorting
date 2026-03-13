@@ -10,7 +10,11 @@ double result_helper(SolutionWrapper* wrapper) {
 
 	double sum_vals = 0.0;
 
+	#if defined(MDEBUG) && MDEBUG
+	for (int i_index = 0; i_index < 10; i_index++) {
+	#else
 	for (int i_index = 0; i_index < 4000; i_index++) {
+	#endif /* MDEBUG */
 		Problem* problem = problem_type->get_problem();
 
 		wrapper->init();

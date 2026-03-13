@@ -341,14 +341,11 @@ void clean_scope(Scope* scope) {
 
 		for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
 				it != scope->nodes.end(); it++) {
-			if (it->second->type == NODE_TYPE_BRANCH
-					&& experiment_endpoints.find(it->second) == experiment_endpoints.end()) {
+			if (it->second->type == NODE_TYPE_BRANCH) {
 				BranchNode* branch_node = (BranchNode*)it->second;
 				ObsNode* original_obs_node = (ObsNode*)branch_node->original_next_node;
 				ObsNode* branch_obs_node = (ObsNode*)branch_node->branch_next_node;
-				if (original_obs_node->next_node == branch_obs_node->next_node
-						&& experiment_endpoints.find(original_obs_node) == experiment_endpoints.end()
-						&& experiment_endpoints.find(branch_obs_node) == experiment_endpoints.end()) {
+				if (original_obs_node->next_node == branch_obs_node->next_node) {
 					ObsNode* merge_obs_node = (ObsNode*)original_obs_node->next_node;
 
 					for (int a_index = 0; a_index < (int)merge_obs_node->ancestor_ids.size(); a_index++) {
