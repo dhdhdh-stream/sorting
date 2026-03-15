@@ -34,7 +34,10 @@ public:
 	virtual void result_step(std::vector<double>& obs,
 							 int& action,
 							 bool& is_next,
+							 bool& fetch_action,
 							 SolutionWrapper* wrapper) = 0;
+	virtual void result_set_action(int action,
+								   SolutionWrapper* wrapper) = 0;
 	virtual void result_exit_step(SolutionWrapper* wrapper) = 0;
 };
 

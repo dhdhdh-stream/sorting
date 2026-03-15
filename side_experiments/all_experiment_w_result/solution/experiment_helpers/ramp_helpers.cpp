@@ -45,6 +45,8 @@ void Experiment::ramp_check_activate(
 			double original_clean_result = clean_result_helper(wrapper);
 			this->new_scores.push_back(wrapper->prev_clean_result - original_clean_result);
 			this->state_iter++;
+			// temp
+			this->existing_scores.push_back(original_clean_result);
 
 			ExperimentState* new_experiment_state = new ExperimentState(this);
 			new_experiment_state->step_index = 0;
@@ -107,15 +109,24 @@ void Experiment::ramp_backprop(double target_val,
 			// temp
 			cout << "this->curr_ramp: " << this->curr_ramp << endl;
 			cout << "new_score_average: " << new_score_average << endl;
+			// temp
+			double existing_sum_vals = 0.0;
+			for (int h_index = 0; h_index < (int)this->existing_scores.size(); h_index++) {
+				existing_sum_vals += this->existing_scores[h_index];
+			}
+			double existing_score_average = existing_sum_vals / (double)this->existing_scores.size();
+			cout << "existing_score_average: " << existing_score_average << endl;
 
 			this->new_scores.clear();
+			// temp
+			this->existing_scores.clear();
 
 			this->state_iter = 0;
 
 			#if defined(MDEBUG) && MDEBUG
-			if ((this->measure_status != MEASURE_STATUS_FAIL && new_score_average >= 0.0) || rand()%3 != 0) {
+			if ((this->measure_status != MEASURE_STATUS_FAIL && new_score_average > 0.0) || rand()%3 != 0) {
 			#else
-			if (this->measure_status != MEASURE_STATUS_FAIL && new_score_average >= 0.0) {
+			if (this->measure_status != MEASURE_STATUS_FAIL && new_score_average > 0.0) {
 			#endif /* MDEBUG */
 				this->curr_ramp++;
 
@@ -177,6 +188,15 @@ void Experiment::ramp_backprop(double target_val,
 			cout << "this->global_improvement: " << this->global_improvement << endl;
 			cout << "t_score: " << t_score << endl;
 
+			// temp
+			double existing_sum_vals = 0.0;
+			for (int h_index = 0; h_index < (int)this->existing_scores.size(); h_index++) {
+				existing_sum_vals += this->existing_scores[h_index];
+			}
+			double existing_score_average = existing_sum_vals / (double)this->existing_scores.size();
+			cout << "existing_score_average: " << existing_score_average << endl;
+			this->m_existing_score_average = existing_score_average;
+
 			#if defined(MDEBUG) && MDEBUG
 			if (t_score >= SUCCESS_T_SCORE || rand()%3 == 0) {
 			#else
@@ -212,6 +232,8 @@ void Experiment::ramp_backprop(double target_val,
 				if (is_success) {
 				#endif /* MDEBUG */
 					this->new_scores.clear();
+					// temp
+					this->existing_scores.clear();
 
 					this->measure_status = MEASURE_STATUS_SUCCESS;
 
@@ -221,6 +243,8 @@ void Experiment::ramp_backprop(double target_val,
 					this->curr_ramp++;
 				} else {
 					this->new_scores.clear();
+					// temp
+					this->existing_scores.clear();
 
 					this->measure_status = MEASURE_STATUS_FAIL;
 
@@ -235,6 +259,8 @@ void Experiment::ramp_backprop(double target_val,
 			} else if (t_score < FAIL_T_SCORE) {
 			#endif /* MDEBUG */
 				this->new_scores.clear();
+				// temp
+				this->existing_scores.clear();
 
 				this->measure_status = MEASURE_STATUS_FAIL;
 

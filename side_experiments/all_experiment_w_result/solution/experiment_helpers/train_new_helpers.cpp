@@ -131,3 +131,41 @@ void Experiment::train_new_backprop(double target_val,
 		}
 	}
 }
+
+void Experiment::result_train_new_step(vector<double>& obs,
+									   int& action,
+									   bool& is_next,
+									   SolutionWrapper* wrapper,
+									   ExperimentState* experiment_state) {
+	if (experiment_state->step_index >= (int)this->best_step_types.size()) {
+		wrapper->result_node_context.back() = this->best_exit_next_node;
+
+		delete experiment_state;
+		wrapper->result_experiment_context.back() = NULL;
+	} else {
+		if (this->best_step_types[experiment_state->step_index] == STEP_TYPE_ACTION) {
+			action = this->best_actions[experiment_state->step_index];
+			is_next = true;
+
+			wrapper->result_num_actions++;
+
+			experiment_state->step_index++;
+		} else {
+			ScopeHistory* inner_scope_history = new ScopeHistory(this->best_scopes[experiment_state->step_index]);
+			wrapper->result_scope_histories.push_back(inner_scope_history);
+			wrapper->result_node_context.push_back(this->best_scopes[experiment_state->step_index]->nodes[0]);
+			wrapper->result_experiment_context.push_back(NULL);
+		}
+	}
+}
+
+void Experiment::result_train_new_exit_step(SolutionWrapper* wrapper,
+											ExperimentState* experiment_state) {
+	delete wrapper->result_scope_histories.back();
+
+	wrapper->result_scope_histories.pop_back();
+	wrapper->result_node_context.pop_back();
+	wrapper->result_experiment_context.pop_back();
+
+	experiment_state->step_index++;
+}

@@ -63,6 +63,8 @@ public:
 	int starting_iter;
 
 	std::vector<double> new_scores;
+	// temp
+	std::vector<double> existing_scores;
 
 	int curr_ramp;
 	/**
@@ -73,6 +75,8 @@ public:
 	double local_improvement;
 	double global_improvement;
 	double score_standard_deviation;
+	// temp
+	double m_existing_score_average;
 
 	Experiment(ObsNode* node_context);
 	~Experiment();
@@ -99,7 +103,10 @@ public:
 	void result_step(std::vector<double>& obs,
 					 int& action,
 					 bool& is_next,
+					 bool& fetch_action,
 					 SolutionWrapper* wrapper);
+	void result_set_action(int action,
+						   SolutionWrapper* wrapper);
 	void result_exit_step(SolutionWrapper* wrapper);
 
 	void explore_check_activate(std::vector<double>& obs,
@@ -119,6 +126,17 @@ public:
 						  ExperimentHistory* history,
 						  SolutionWrapper* wrapper);
 
+	void result_explore_step(std::vector<double>& obs,
+							 int& action,
+							 bool& is_next,
+							 bool& fetch_action,
+							 SolutionWrapper* wrapper,
+							 ExperimentState* experiment_state);
+	void result_explore_set_action(int action,
+								   ExperimentState* experiment_state);
+	void result_explore_exit_step(SolutionWrapper* wrapper,
+								  ExperimentState* experiment_state);
+
 	void train_new_check_activate(std::vector<double>& obs,
 								  SolutionWrapper* wrapper,
 								  ExperimentHistory* history);
@@ -132,6 +150,14 @@ public:
 	void train_new_backprop(double target_val,
 							ExperimentHistory* history,
 							SolutionWrapper* wrapper);
+
+	void result_train_new_step(std::vector<double>& obs,
+							   int& action,
+							   bool& is_next,
+							   SolutionWrapper* wrapper,
+							   ExperimentState* experiment_state);
+	void result_train_new_exit_step(SolutionWrapper* wrapper,
+									ExperimentState* experiment_state);
 
 	void ramp_check_activate(std::vector<double>& obs,
 							 SolutionWrapper* wrapper,

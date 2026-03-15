@@ -5,6 +5,8 @@
 
 #include "experiment.h"
 
+#include <iostream>
+
 #include "constants.h"
 #include "globals.h"
 #include "helpers.h"
@@ -49,8 +51,8 @@ void Experiment::explore_check_activate(
 		this->curr_exit_next_node = possible_exits[random_index];
 
 		uniform_int_distribution<int> new_scope_distribution(0, 3);
-		if (!this->node_context->parent->is_outer
-				&& this->node_context->parent->id != -1
+		if (this->node_context->parent->id != -1
+				&& !this->node_context->parent->is_outer
 				&& wrapper->solution->state == SOLUTION_STATE_OUTER) {
 			Scope* parent_scope;
 			outer_create_new_scope(this->node_context->parent,
@@ -176,10 +178,19 @@ void Experiment::explore_step(vector<double>& obs,
 		this->state_iter++;
 	} else {
 		if (this->curr_step_types[experiment_state->step_index] == STEP_TYPE_ACTION) {
-			is_next = true;
-			fetch_action = true;
+			if (this->curr_actions[experiment_state->step_index] == -1) {
+				is_next = true;
+				fetch_action = true;
 
-			wrapper->num_actions++;
+				wrapper->num_actions++;
+			} else {
+				action = this->curr_actions[experiment_state->step_index];
+				is_next = true;
+
+				wrapper->num_actions++;
+
+				experiment_state->step_index++;
+			}
 		} else {
 			ScopeHistory* inner_scope_history = new ScopeHistory(this->curr_scopes[experiment_state->step_index]);
 			wrapper->scope_histories.push_back(inner_scope_history);
@@ -227,4 +238,57 @@ void Experiment::explore_backprop(double target_val,
 			delete this;
 		}
 	}
+}
+
+void Experiment::result_explore_step(vector<double>& obs,
+									 int& action,
+									 bool& is_next,
+									 bool& fetch_action,
+									 SolutionWrapper* wrapper,
+									 ExperimentState* experiment_state) {
+	if (experiment_state->step_index >= (int)this->curr_step_types.size()) {
+		wrapper->result_node_context.back() = this->curr_exit_next_node;
+
+		delete experiment_state;
+		wrapper->result_experiment_context.back() = NULL;
+	} else {
+		if (this->curr_step_types[experiment_state->step_index] == STEP_TYPE_ACTION) {
+			if (this->curr_actions[experiment_state->step_index] == -1) {
+				is_next = true;
+				fetch_action = true;
+
+				wrapper->result_num_actions++;
+			} else {
+				action = this->curr_actions[experiment_state->step_index];
+				is_next = true;
+
+				wrapper->result_num_actions++;
+
+				experiment_state->step_index++;
+			}
+		} else {
+			ScopeHistory* inner_scope_history = new ScopeHistory(this->curr_scopes[experiment_state->step_index]);
+			wrapper->result_scope_histories.push_back(inner_scope_history);
+			wrapper->result_node_context.push_back(this->curr_scopes[experiment_state->step_index]->nodes[0]);
+			wrapper->result_experiment_context.push_back(NULL);
+		}
+	}
+}
+
+void Experiment::result_explore_set_action(int action,
+										   ExperimentState* experiment_state) {
+	this->curr_actions[experiment_state->step_index] = action;
+
+	experiment_state->step_index++;
+}
+
+void Experiment::result_explore_exit_step(SolutionWrapper* wrapper,
+										  ExperimentState* experiment_state) {
+	delete wrapper->result_scope_histories.back();
+
+	wrapper->result_scope_histories.pop_back();
+	wrapper->result_node_context.pop_back();
+	wrapper->result_experiment_context.pop_back();
+
+	experiment_state->step_index++;
 }

@@ -33,6 +33,7 @@ SolutionWrapper::SolutionWrapper(ProblemType* problem_type) {
 		 */
 
 		Scope* new_scope = new Scope();
+		new_scope->is_outer = false;
 		new_scope->id = this->solution->scopes.size();
 		this->solution->scopes.push_back(new_scope);
 

@@ -1,43 +1,9 @@
-// - unstable
-//   - deleted something useful
-//     - that was sharp? and/or moved into sharp territory?
+// - can fail if leadup has lots of failures and remainder is sharp?
+//   - will choose to ditch remainder since it's unstable?
+//     - but maybe this is reasonable?
 
-// - big gap between experiment scores and clean scores anyways
-//   - doubt any measurements can be that great
-
-// - randomness itself makes sharp solutions bad
-
-// - there simply has to be potentially infinite experiments per run
-//   - so the key must be about controlling the temperature
-//     - experiments must be kept at a level in which solution can learn to recover?
-
-// - maybe measure how much experiments are damaging for each part
-//   - for parts where experiments are especially damaging, lower temperature
-// TODO; measure separately
-// - messy to do as part of solution building because experiments have fixed endpoint
-// - for safest spot, set to 1/10, everywhere else, scale accordingly
-
-// - solutions built under sharpness don't work when there's a lot of uncertainty
-
-// - maybe being precise has a higher ceiling? but expensive to iterate on?
-//   - and good to have at least a bit of robustness that randomness drives
-//     - likely helps generalization
-
-// - maybe simply have to live with randomness
-//  - not that different from actions having random chance to fail anyways
-//  - maybe resulting solution will be extremely robust
-//    - which likely means it generalizes extremely well
-
-// - maybe tied to how much effort needed to make safe
-//   - if uncertainty is so much that even trying to make safe is unsafe, then impossible to progress
-
-// - temperature tied to difficulty of the problem?
-//   - mainly tied to how low temperature needs to be for saves to work
-
-// - new scopes extremely damaging
-// TODO: try with no new scopes? except from outer?
-
-// - maybe new scopes try single
+// - single/clean optimizes for a clean situation
+// - all optimizes for a messy situation
 
 #include <chrono>
 #include <iostream>

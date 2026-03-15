@@ -167,31 +167,62 @@ void Experiment::result_check_activate(AbstractNode* experiment_node,
 void Experiment::result_step(vector<double>& obs,
 							 int& action,
 							 bool& is_next,
+							 bool& fetch_action,
 							 SolutionWrapper* wrapper) {
+	ExperimentState* experiment_state = (ExperimentState*)wrapper->result_experiment_context.back();
 	switch (this->state) {
+	case EXPERIMENT_STATE_EXPLORE:
+		result_explore_step(obs,
+							action,
+							is_next,
+							fetch_action,
+							wrapper,
+							experiment_state);
+		break;
+	case EXPERIMENT_STATE_TRAIN_NEW:
+		result_train_new_step(obs,
+							  action,
+							  is_next,
+							  wrapper,
+							  experiment_state);
+		break;
 	case EXPERIMENT_STATE_RAMP:
 	case EXPERIMENT_STATE_MEASURE:
-		{
-			ExperimentState* experiment_state = (ExperimentState*)wrapper->result_experiment_context.back();
-			result_ramp_step(obs,
-							 action,
-							 is_next,
-							 wrapper,
-							 experiment_state);
-		}
+		result_ramp_step(obs,
+						 action,
+						 is_next,
+						 wrapper,
+						 experiment_state);
+		break;
+	}
+}
+
+void Experiment::result_set_action(int action,
+								   SolutionWrapper* wrapper) {
+	ExperimentState* experiment_state = (ExperimentState*)wrapper->result_experiment_context.back();
+	switch (this->state) {
+	case EXPERIMENT_STATE_EXPLORE:
+		result_explore_set_action(action,
+								  experiment_state);
 		break;
 	}
 }
 
 void Experiment::result_exit_step(SolutionWrapper* wrapper) {
+	ExperimentState* experiment_state = (ExperimentState*)wrapper->result_experiment_context[wrapper->result_experiment_context.size() - 2];
 	switch (this->state) {
+	case EXPERIMENT_STATE_EXPLORE:
+		result_explore_exit_step(wrapper,
+								 experiment_state);
+		break;
+	case EXPERIMENT_STATE_TRAIN_NEW:
+		result_train_new_exit_step(wrapper,
+								   experiment_state);
+		break;
 	case EXPERIMENT_STATE_RAMP:
 	case EXPERIMENT_STATE_MEASURE:
-		{
-			ExperimentState* experiment_state = (ExperimentState*)wrapper->result_experiment_context[wrapper->result_experiment_context.size() - 2];
-			result_ramp_exit_step(wrapper,
-								  experiment_state);
-		}
+		result_ramp_exit_step(wrapper,
+							  experiment_state);
 		break;
 	}
 }

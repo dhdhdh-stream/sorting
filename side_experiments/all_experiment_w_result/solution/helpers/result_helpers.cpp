@@ -1,12 +1,15 @@
 #include "helpers.h"
 
-using namespace std;
+#include <iostream>
 
 #include "experiment.h"
+#include "globals.h"
 #include "minesweeper.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution_wrapper.h"
+
+using namespace std;
 
 double result_helper(SolutionWrapper* wrapper) {
 	ProblemType* problem_type = new TypeMinesweeper();
@@ -45,6 +48,8 @@ double result_helper(SolutionWrapper* wrapper) {
 }
 
 double clean_result_helper(SolutionWrapper* wrapper) {
+	ProblemType* problem_type = new TypeMinesweeper();
+
 	for (int l_index = 0; l_index < (int)wrapper->scope_histories.size(); l_index++) {
 		ScopeHistory* scope_history = new ScopeHistory(wrapper->scope_histories[l_index]->scope);
 		wrapper->result_scope_histories.push_back(scope_history);
@@ -69,6 +74,7 @@ double clean_result_helper(SolutionWrapper* wrapper) {
 		int action;
 		bool is_next = false;
 		bool is_done = false;
+		bool fetch_action = false;
 		while (!is_next) {
 			if (wrapper->result_node_context.back() == NULL
 					&& wrapper->result_experiment_context.back() == NULL) {
@@ -89,16 +95,26 @@ double clean_result_helper(SolutionWrapper* wrapper) {
 				experiment->result_step(obs,
 										action,
 										is_next,
+										fetch_action,
 										wrapper);
 			} else {
-				wrapper->node_context.back()->result_step(obs,
-														  action,
-														  is_next,
-														  wrapper);
+				wrapper->result_node_context.back()->result_step(obs,
+																 action,
+																 is_next,
+																 wrapper);
 			}
 		}
 		if (is_done) {
 			break;
+		} else if (fetch_action) {
+			uniform_int_distribution<int> action_distribution(0, problem_type->num_possible_actions()-1);
+			int new_action = action_distribution(generator);
+
+			AbstractExperiment* experiment = wrapper->result_experiment_context.back()->experiment;
+			experiment->result_set_action(new_action,
+										  wrapper);
+
+			copy_problem->perform_action(new_action);
 		} else {
 			copy_problem->perform_action(action);
 		}
@@ -107,7 +123,15 @@ double clean_result_helper(SolutionWrapper* wrapper) {
 	double target_val = copy_problem->score_result();
 	target_val -= 0.0001 * wrapper->result_num_actions;
 
+	delete wrapper->result_scope_histories[0];
+
+	wrapper->result_scope_histories.clear();
+	wrapper->result_node_context.clear();
+	wrapper->result_experiment_context.clear();
+
 	delete copy_problem;
+
+	delete problem_type;
 
 	return target_val;
 }

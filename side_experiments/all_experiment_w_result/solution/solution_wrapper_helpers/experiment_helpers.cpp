@@ -134,19 +134,19 @@ void SolutionWrapper::experiment_end(double result) {
 		clean_scope(*it);
 	}
 
-	switch (this->solution->state) {
-	case SOLUTION_STATE_NON_OUTER:
-		if (this->solution->timestamp >= NON_OUTER_ITERS) {
-			this->solution->timestamp = -1;
-		}
-		break;
-	case SOLUTION_STATE_OUTER:
-		if (this->solution->timestamp >= OUTER_ITERS) {
-			this->solution->state = SOLUTION_STATE_NON_OUTER;
-			this->solution->timestamp = 0;
+	// switch (this->solution->state) {
+	// case SOLUTION_STATE_NON_OUTER:
+	// 	if (this->solution->timestamp >= NON_OUTER_ITERS) {
+	// 		this->solution->timestamp = -1;
+	// 	}
+	// 	break;
+	// case SOLUTION_STATE_OUTER:
+	// 	if (this->solution->timestamp >= OUTER_ITERS) {
+	// 		this->solution->state = SOLUTION_STATE_NON_OUTER;
+	// 		this->solution->timestamp = 0;
 
-			this->solution->merge_outer();
-		}
-		break;
-	}
+	// 		this->solution->merge_outer();
+	// 	}
+	// 	break;
+	// }
 }
