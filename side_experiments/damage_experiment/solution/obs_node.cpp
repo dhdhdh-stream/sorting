@@ -13,6 +13,8 @@ ObsNode::ObsNode() {
 	this->type = NODE_TYPE_OBS;
 
 	this->experiment = NULL;
+
+	this->protect_type = PROTECT_TYPE_NA;
 }
 
 ObsNode::~ObsNode() {

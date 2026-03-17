@@ -9,6 +9,8 @@ StartNode::StartNode() {
 	this->type = NODE_TYPE_START;
 
 	this->experiment = NULL;
+
+	this->protect_type = PROTECT_TYPE_NA;
 }
 
 StartNode::~StartNode() {

@@ -15,6 +15,8 @@ BranchNode::BranchNode() {
 	this->type = NODE_TYPE_BRANCH;
 
 	this->experiment = NULL;
+
+	this->protect_type = PROTECT_TYPE_NA;
 }
 
 BranchNode::~BranchNode() {

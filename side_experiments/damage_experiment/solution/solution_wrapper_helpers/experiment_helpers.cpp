@@ -110,11 +110,25 @@ void SolutionWrapper::experiment_end(double result) {
 		this->experiment_history = NULL;
 
 		if (this->curr_experiment->result == EXPERIMENT_RESULT_FAIL) {
+			this->curr_experiment->protect_pre_node->protect_type = PROTECT_TYPE_NA;
+			if (this->curr_experiment->protect_exit_node == NULL) {
+				this->curr_experiment->scope_context->is_protect_end = false;
+			} else {
+				this->curr_experiment->protect_exit_node->protect_type = PROTECT_TYPE_NA;
+			}
+
 			this->curr_experiment->clean();
 			delete this->curr_experiment;
 
 			this->curr_experiment = NULL;
 		} else if (this->curr_experiment->result == EXPERIMENT_RESULT_SUCCESS) {
+			this->curr_experiment->protect_pre_node->protect_type = PROTECT_TYPE_NA;
+			if (this->curr_experiment->protect_exit_node == NULL) {
+				this->curr_experiment->scope_context->is_protect_end = false;
+			} else {
+				this->curr_experiment->protect_exit_node->protect_type = PROTECT_TYPE_NA;
+			}
+
 			this->curr_experiment->clean();
 
 			Scope* last_updated_scope = this->curr_experiment->scope_context;
@@ -131,21 +145,21 @@ void SolutionWrapper::experiment_end(double result) {
 			this->solution->clean_scopes();
 
 			this->solution->timestamp++;
-			switch (this->solution->state) {
-			case SOLUTION_STATE_NON_OUTER:
-				if (this->solution->timestamp >= NON_OUTER_ITERS) {
-					this->solution->timestamp = -1;
-				}
-				break;
-			case SOLUTION_STATE_OUTER:
-				if (this->solution->timestamp >= OUTER_ITERS) {
-					this->solution->state = SOLUTION_STATE_NON_OUTER;
-					this->solution->timestamp = 0;
+			// switch (this->solution->state) {
+			// case SOLUTION_STATE_NON_OUTER:
+			// 	if (this->solution->timestamp >= NON_OUTER_ITERS) {
+			// 		this->solution->timestamp = -1;
+			// 	}
+			// 	break;
+			// case SOLUTION_STATE_OUTER:
+			// 	if (this->solution->timestamp >= OUTER_ITERS) {
+			// 		this->solution->state = SOLUTION_STATE_NON_OUTER;
+			// 		this->solution->timestamp = 0;
 
-					this->solution->merge_outer();
-				}
-				break;
-			}
+			// 		this->solution->merge_outer();
+			// 	}
+			// 	break;
+			// }
 		}
 	}
 

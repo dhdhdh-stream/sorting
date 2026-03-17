@@ -27,6 +27,9 @@ public:
 	bool is_branch;
 	AbstractNode* exit_next_node;
 
+	AbstractNode* protect_pre_node;
+	AbstractNode* protect_exit_node;
+
 	int result;
 
 	virtual ~AbstractExperiment() {};

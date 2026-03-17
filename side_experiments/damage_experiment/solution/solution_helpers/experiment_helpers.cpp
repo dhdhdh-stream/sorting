@@ -158,19 +158,28 @@ void create_experiment(ScopeHistory* scope_history,
 		int exit_index = exit_distribution(generator);
 		AbstractNode* exit_node = possible_exits[exit_index];
 
+		// // temp
+		// cout << "possible_pres.size(): " << possible_pres.size() << endl;
+		// cout << "possible_exits.size(): " << possible_exits.size() << endl;
+
 		bool can_protect = check_can_protect(pre_node,
 											 exit_node);
 		if (can_protect) {
-			for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
-				Scope* scope = wrapper->solution->scopes[s_index];
+			// // temp
+			// for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
+			// 	Scope* scope = wrapper->solution->scopes[s_index];
 
-				for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
-						it != scope->nodes.end(); it++) {
-					it->second->protect_type = PROTECT_TYPE_NA;
-				}
+			// 	for (map<int, AbstractNode*>::iterator it = scope->nodes.begin();
+			// 			it != scope->nodes.end(); it++) {
+			// 		if (it->second->protect_type != PROTECT_TYPE_NA) {
+			// 			throw invalid_argument("it->second->protect_type != PROTECT_TYPE_NA");
+			// 		}
+			// 	}
 
-				scope->is_protect_end = false;
-			}
+			// 	if (scope->is_protect_end) {
+			// 		throw invalid_argument("scope->is_protect_end");
+			// 	}
+			// }
 
 			pre_node->protect_type = PROTECT_TYPE_START;
 			if (exit_node == NULL) {
@@ -189,12 +198,32 @@ void create_experiment(ScopeHistory* scope_history,
 			}
 			AbstractNode* exit_next_node = possible_exits[random_index];
 
+			// // temp
+			// cout << "explore_node->parent->id: " << explore_node->parent->id << endl;
+			// cout << "pre_index: " << pre_index << endl;
+			// cout << "pre_node->id: " << pre_node->id << endl;
+			// cout << "exit_index: " << exit_index << endl;
+			// if (exit_node == NULL) {
+			// 	cout << "exit_node->id: -1" << endl;
+			// } else {
+			// 	cout << "exit_node->id: " << exit_node->id << endl;
+			// }
+			// cout << "random_index: " << random_index << endl;
+			// if (exit_next_node == NULL) {
+			// 	cout << "exit_next_node->id: -1" << endl;
+			// } else {
+			// 	cout << "exit_next_node->id: " << exit_next_node->id << endl;
+			// }
+
 			Experiment* new_experiment = new Experiment(
 				explore_node->parent,
 				explore_node,
 				explore_is_branch,
 				exit_next_node);
 			wrapper->curr_experiment = new_experiment;
+
+			new_experiment->protect_pre_node = pre_node;
+			new_experiment->protect_exit_node = exit_node;
 
 			wrapper->solution->num_experiments++;
 		}

@@ -14,6 +14,8 @@ ScopeNode::ScopeNode() {
 	this->type = NODE_TYPE_SCOPE;
 
 	this->experiment = NULL;
+
+	this->protect_type = PROTECT_TYPE_NA;
 }
 
 ScopeNode::~ScopeNode() {

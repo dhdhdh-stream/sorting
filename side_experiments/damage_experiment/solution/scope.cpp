@@ -16,7 +16,7 @@
 using namespace std;
 
 Scope::Scope() {
-	// do nothing
+	this->is_protect_end = false;
 }
 
 Scope::~Scope() {
@@ -30,7 +30,7 @@ void Scope::random_pre(AbstractNode* starting_node,
 					   vector<AbstractNode*>& possible_pres) {
 	AbstractNode* curr_node = starting_node;
 	while (true) {
-		possible_pres.push_back(curr_node);
+		possible_pres.insert(possible_pres.begin(), curr_node);
 
 		if (curr_node->ancestor_ids.size() == 0) {
 			break;

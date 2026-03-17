@@ -65,6 +65,13 @@ void Experiment::add(SolutionWrapper* wrapper) {
 	ss << "this->score_standard_deviation: " << this->score_standard_deviation << "; ";
 	ss << "this->new_scores.size(): " << this->new_scores.size() << "; ";
 
+	ss << "this->protect_pre_node->id: " << this->protect_pre_node->id << "; ";
+	if (this->protect_exit_node == NULL) {
+		ss << "this->protect_exit_node->id: " << "-1" << "; ";
+	} else {
+		ss << "this->protect_exit_node->id: " << this->protect_exit_node->id << "; ";
+	}
+
 	double new_score = calc_new_score();
 	ss << "new_score: " << new_score << "; ";
 

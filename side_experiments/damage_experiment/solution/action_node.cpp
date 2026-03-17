@@ -12,6 +12,8 @@ ActionNode::ActionNode() {
 	this->type = NODE_TYPE_ACTION;
 
 	this->experiment = NULL;
+
+	this->protect_type = PROTECT_TYPE_NA;
 }
 
 ActionNode::~ActionNode() {
