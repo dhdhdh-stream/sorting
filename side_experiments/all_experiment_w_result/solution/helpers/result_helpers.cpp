@@ -33,7 +33,7 @@ double result_helper(SolutionWrapper* wrapper) {
 		}
 
 		double target_val = problem->score_result();
-		target_val -= 0.0001 * wrapper->num_actions;
+		// target_val -= 0.0001 * wrapper->num_actions;
 
 		wrapper->end();
 
@@ -121,7 +121,7 @@ double clean_result_helper(SolutionWrapper* wrapper) {
 	}
 
 	double target_val = copy_problem->score_result();
-	target_val -= 0.0001 * wrapper->result_num_actions;
+	// target_val -= 0.0001 * wrapper->result_num_actions;
 
 	delete wrapper->result_scope_histories[0];
 

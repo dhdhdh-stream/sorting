@@ -62,9 +62,8 @@ public:
 
 	int starting_iter;
 
-	std::vector<double> new_scores;
-	// temp
 	std::vector<double> existing_scores;
+	std::vector<double> new_scores;
 
 	int curr_ramp;
 	/**
@@ -75,14 +74,14 @@ public:
 	double local_improvement;
 	double global_improvement;
 	double score_standard_deviation;
-	// temp
-	double m_existing_score_average;
 
 	Experiment(ObsNode* node_context);
 	~Experiment();
 
 	void check_activate(AbstractNode* experiment_node,
 						std::vector<double>& obs,
+						bool& is_next,
+						bool& is_done,
 						SolutionWrapper* wrapper);
 	void experiment_step(std::vector<double>& obs,
 						 int& action,
@@ -110,6 +109,8 @@ public:
 	void result_exit_step(SolutionWrapper* wrapper);
 
 	void explore_check_activate(std::vector<double>& obs,
+								bool& is_next,
+								bool& is_done,
 								SolutionWrapper* wrapper,
 								ExperimentHistory* history);
 	void explore_step(std::vector<double>& obs,
@@ -138,6 +139,8 @@ public:
 								  ExperimentState* experiment_state);
 
 	void train_new_check_activate(std::vector<double>& obs,
+								  bool& is_next,
+								  bool& is_done,
 								  SolutionWrapper* wrapper,
 								  ExperimentHistory* history);
 	void train_new_step(std::vector<double>& obs,
@@ -190,6 +193,8 @@ public:
 class ExperimentHistory {
 public:
 	bool is_on;
+
+	bool hit_branch;
 
 	ExperimentHistory(Experiment* experiment);
 };

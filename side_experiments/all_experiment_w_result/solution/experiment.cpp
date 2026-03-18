@@ -12,9 +12,9 @@ Experiment::Experiment(ObsNode* node_context) {
 
 	this->node_context = node_context;
 
-	this->curr_surprise = numeric_limits<double>::lowest();
+	this->curr_surprise = 0.0;
 	this->curr_new_scope = NULL;
-	this->best_surprise = numeric_limits<double>::lowest();
+	this->best_surprise = 0.0;
 	this->best_new_scope = NULL;
 
 	this->state = EXPERIMENT_STATE_EXPLORE;
@@ -49,6 +49,8 @@ ExperimentHistory::ExperimentHistory(Experiment* experiment) {
 		}
 		break;
 	}
+
+	this->hit_branch = false;
 }
 
 ExperimentState::ExperimentState(Experiment* experiment) {

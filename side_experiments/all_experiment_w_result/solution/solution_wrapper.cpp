@@ -18,8 +18,6 @@ using namespace std;
 const int INIT_NUM_ACTIONS = 10;
 
 SolutionWrapper::SolutionWrapper(ProblemType* problem_type) {
-	this->iter = 0;
-
 	this->solution = new Solution();
 	{
 		this->solution->timestamp = 0;
@@ -90,6 +88,8 @@ SolutionWrapper::SolutionWrapper(ProblemType* problem_type) {
 		this->solution->state = SOLUTION_STATE_NON_OUTER;
 	}
 
+	this->eval_iter = 0;
+
 	#if defined(MDEBUG) && MDEBUG
 	this->run_index = 0;
 	#endif /* MDEBUG */
@@ -97,8 +97,6 @@ SolutionWrapper::SolutionWrapper(ProblemType* problem_type) {
 
 SolutionWrapper::SolutionWrapper(std::string path,
 								 std::string name) {
-	this->iter = 0;
-
 	ifstream input_file;
 	input_file.open(path + name);
 
@@ -106,6 +104,8 @@ SolutionWrapper::SolutionWrapper(std::string path,
 	this->solution->load(input_file);
 
 	input_file.close();
+
+	this->eval_iter = 0;
 
 	#if defined(MDEBUG) && MDEBUG
 	this->run_index = 0;

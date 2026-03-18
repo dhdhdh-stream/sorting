@@ -1,9 +1,8 @@
-// - can fail if leadup has lots of failures and remainder is sharp?
-//   - will choose to ditch remainder since it's unstable?
-//     - but maybe this is reasonable?
+// - maybe key is to look for safe signal
+//   - if resulting signal better than predicted, continue
+//   - otherwise, ditch run, and don't update from it
 
-// - single/clean optimizes for a clean situation
-// - all optimizes for a messy situation
+// - one explore per safe signal
 
 #include <chrono>
 #include <iostream>
@@ -87,22 +86,11 @@ int main(int argc, char* argv[]) {
 			}
 
 			double target_val = problem->score_result();
-			target_val -= 0.0001 * solution_wrapper->num_actions;
+			// target_val -= 0.0001 * solution_wrapper->num_actions;
 
 			solution_wrapper->experiment_end(target_val);
 
 			delete problem;
-
-			if (solution_wrapper->iter%100000 == 0) {
-				cout << "solution_wrapper->iter: " << solution_wrapper->iter << endl;
-				solution_wrapper->solution->print_experiment_statuses();
-				double sum_vals = 0.0;
-				for (int h_index = 0; h_index < (int)solution_wrapper->solution->score_histories.size(); h_index++) {
-					sum_vals += solution_wrapper->solution->score_histories[h_index];
-				}
-				double score_average = sum_vals / (double)solution_wrapper->solution->score_histories.size();
-				cout << "score_average: " << score_average << endl;
-			}
 
 			if (solution_wrapper->solution->timestamp != starting_timestamp) {
 				break;

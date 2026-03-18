@@ -16,6 +16,12 @@ class ScopeNode;
 class Solution;
 class SolutionWrapper;
 
+void count_eval_helper(ScopeHistory* scope_history,
+					   int& node_count,
+					   int& eval_count);
+void create_experiment(ScopeHistory* scope_history,
+					   SolutionWrapper* wrapper);
+
 void create_new_scope(AbstractNode* potential_start_node,
 					  AbstractNode* potential_end_node,
 					  Scope*& new_scope);

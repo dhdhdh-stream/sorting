@@ -36,6 +36,7 @@ public:
 	virtual void experiment_step(std::vector<double>& obs,
 								 int& action,
 								 bool& is_next,
+								 bool& is_done,
 								 SolutionWrapper* wrapper) = 0;
 
 	virtual void result_step(std::vector<double>& obs,

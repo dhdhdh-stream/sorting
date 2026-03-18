@@ -12,6 +12,7 @@ using namespace std;
 void ObsNode::experiment_step(vector<double>& obs,
 							  int& action,
 							  bool& is_next,
+							  bool& is_done,
 							  SolutionWrapper* wrapper) {
 	ScopeHistory* scope_history = wrapper->scope_histories.back();
 
@@ -24,6 +25,8 @@ void ObsNode::experiment_step(vector<double>& obs,
 		this->experiment->check_activate(
 			this,
 			obs,
+			is_next,
+			is_done,
 			wrapper);
 	}
 }

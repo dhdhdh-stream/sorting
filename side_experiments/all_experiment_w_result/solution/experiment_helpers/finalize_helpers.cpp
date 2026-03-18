@@ -68,8 +68,6 @@ void Experiment::add(SolutionWrapper* wrapper) {
 	ss << "this->local_improvement: " << this->local_improvement << "; ";
 	ss << "this->global_improvement: " << this->global_improvement << "; ";
 	ss << "this->score_standard_deviation: " << this->score_standard_deviation << "; ";
-	// temp
-	ss << "this->m_existing_score_average: " << this->m_existing_score_average << "; ";
 
 	double sum_vals = 0.0;
 	for (int h_index = 0; h_index < (int)wrapper->solution->score_histories.size(); h_index++) {

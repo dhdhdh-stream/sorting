@@ -14,7 +14,7 @@ using namespace std;
 ObsNode::ObsNode() {
 	this->type = NODE_TYPE_OBS;
 
-	this->experiment = new Experiment(this);
+	this->experiment = NULL;
 }
 
 ObsNode::~ObsNode() {

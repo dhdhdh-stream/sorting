@@ -18,6 +18,8 @@ public:
 
 	virtual void check_activate(AbstractNode* experiment_node,
 								std::vector<double>& obs,
+								bool& is_next,
+								bool& is_done,
 								SolutionWrapper* wrapper) = 0;
 	virtual void experiment_step(std::vector<double>& obs,
 								 int& action,

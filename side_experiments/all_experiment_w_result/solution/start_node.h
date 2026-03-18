@@ -20,6 +20,7 @@ public:
 	void experiment_step(std::vector<double>& obs,
 						 int& action,
 						 bool& is_next,
+						 bool& is_done,
 						 SolutionWrapper* wrapper);
 
 	void result_step(std::vector<double>& obs,

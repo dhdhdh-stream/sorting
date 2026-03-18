@@ -43,6 +43,7 @@ public:
 	void experiment_step(std::vector<double>& obs,
 						 int& action,
 						 bool& is_next,
+						 bool& is_done,
 						 SolutionWrapper* wrapper);
 	void experiment_exit_step(SolutionWrapper* wrapper);
 

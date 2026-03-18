@@ -20,23 +20,23 @@ const double MIN_EXPERIMENT_DIFF_RATIO = 0.8;
 
 void Experiment::train_new_check_activate(
 		vector<double>& obs,
+		bool& is_next,
+		bool& is_done,
 		SolutionWrapper* wrapper,
 		ExperimentHistory* history) {
-	#if defined(MDEBUG) && MDEBUG
-	uniform_int_distribution<int> on_distribution(0, 9);
-	#else
-	uniform_int_distribution<int> on_distribution(0, 99);
-	#endif /* MDEBUG */
-	if (on_distribution(generator) == 0) {
-		this->new_obs_histories.push_back(obs);
+	this->new_obs_histories.push_back(obs);
 
-		ExperimentState* new_experiment_state = new ExperimentState(this);
-		new_experiment_state->step_index = 0;
-		wrapper->experiment_context.back() = new_experiment_state;
+	ExperimentState* new_experiment_state = new ExperimentState(this);
+	new_experiment_state->step_index = 0;
+	wrapper->experiment_context.back() = new_experiment_state;
 
-		double next_clean_result = clean_result_helper(wrapper);
-		this->new_target_val_histories.push_back(next_clean_result - wrapper->prev_clean_result);
-		wrapper->prev_clean_result = next_clean_result;
+	double next_clean_result = clean_result_helper(wrapper);
+	this->new_target_val_histories.push_back(next_clean_result - wrapper->prev_clean_result);
+	wrapper->prev_clean_result = next_clean_result;
+
+	if (next_clean_result - wrapper->prev_clean_result < 0.0) {
+		is_next = true;
+		is_done = true;
 	}
 }
 
@@ -126,7 +126,7 @@ void Experiment::train_new_backprop(double target_val,
 		} else {
 			delete new_network;
 
-			this->node_context->experiment = new Experiment(this->node_context);
+			this->node_context->experiment = NULL;
 			delete this;
 		}
 	}

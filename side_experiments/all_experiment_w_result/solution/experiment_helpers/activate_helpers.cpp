@@ -8,32 +8,31 @@ using namespace std;
 
 void Experiment::check_activate(AbstractNode* experiment_node,
 								vector<double>& obs,
+								bool& is_next,
+								bool& is_done,
 								SolutionWrapper* wrapper) {
 	ExperimentHistory* history;
-	if (this->node_context->parent->id == -1) {
-		/**
-		 * - damage, but simply don't update
-		 */
+	map<Experiment*, ExperimentHistory*>::iterator it =
+		wrapper->experiment_histories.find(this);
+	if (it == wrapper->experiment_histories.end()) {
 		history = new ExperimentHistory(this);
+		wrapper->experiment_histories[this] = history;
 	} else {
-		map<Experiment*, ExperimentHistory*>::iterator it =
-			wrapper->experiment_histories.find(this);
-		if (it == wrapper->experiment_histories.end()) {
-			history = new ExperimentHistory(this);
-			wrapper->experiment_histories[this] = history;
-		} else {
-			history = it->second;
-		}
+		history = it->second;
 	}
 
 	switch (this->state) {
 	case EXPERIMENT_STATE_EXPLORE:
 		explore_check_activate(obs,
+							   is_next,
+							   is_done,
 							   wrapper,
 							   history);
 		break;
 	case EXPERIMENT_STATE_TRAIN_NEW:
 		train_new_check_activate(obs,
+								 is_next,
+								 is_done,
 								 wrapper,
 								 history);
 		break;
@@ -43,10 +42,6 @@ void Experiment::check_activate(AbstractNode* experiment_node,
 							wrapper,
 							history);
 		break;
-	}
-
-	if (this->node_context->parent->id == -1) {
-		delete history;
 	}
 }
 
