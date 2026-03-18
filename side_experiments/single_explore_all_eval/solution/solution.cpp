@@ -270,6 +270,16 @@ void Solution::clean_scopes() {
 }
 
 void Solution::merge_outer() {
+	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
+		for (map<int, AbstractNode*>::iterator it = this->scopes[s_index]->nodes.begin();
+				it != this->scopes[s_index]->nodes.end(); it++) {
+			if (it->second->experiment != NULL) {
+				delete it->second->experiment;
+				it->second->experiment = NULL;
+			}
+		}
+	}
+
 	for (int s_index = 0; s_index < (int)this->outer_scopes.size(); s_index++) {
 		this->scopes.push_back(this->outer_scopes[s_index]);
 	}

@@ -15,7 +15,8 @@
 
 using namespace std;
 
-const int NON_OUTER_ITERS = 15;
+const int STUCK_NUM_ITERS = 10;
+
 const int OUTER_ITERS = 8;
 
 const int TARGET_NODES_PER_EVAL = 10;
@@ -106,7 +107,6 @@ void SolutionWrapper::experiment_end(double result) {
 								this,
 								updated_scopes);
 		}
-		this->eval_experiment_histories.clear();
 
 		if (updated_scopes.size() > 0) {
 			for (set<Scope*>::iterator it = updated_scopes.begin();
@@ -115,6 +115,32 @@ void SolutionWrapper::experiment_end(double result) {
 			}
 
 			this->solution->timestamp++;
+			switch (this->solution->state) {
+			case SOLUTION_STATE_NON_OUTER:
+				if ((int)this->solution->improvement_history.size() >= STUCK_NUM_ITERS) {
+					double prev_val = this->solution->improvement_history[this->solution->improvement_history.size() - STUCK_NUM_ITERS];
+					bool improved = false;
+					for (int h_index = 0; h_index < STUCK_NUM_ITERS-1; h_index++) {
+						if (this->solution->improvement_history[this->solution->improvement_history.size() - 1 - h_index] > prev_val) {
+							improved = true;
+							break;
+						}
+					}
+
+					if (!improved) {
+						this->solution->timestamp = -1;
+					}
+				}
+				break;
+			case SOLUTION_STATE_OUTER:
+				if (this->solution->timestamp >= OUTER_ITERS) {
+					this->solution->state = SOLUTION_STATE_NON_OUTER;
+					this->solution->timestamp = 0;
+
+					this->solution->merge_outer();
+				}
+				break;
+			}
 		} else {
 			int node_count = 0;
 			int eval_count = 0;
@@ -124,6 +150,10 @@ void SolutionWrapper::experiment_end(double result) {
 
 			int target_count = (node_count + (TARGET_NODES_PER_EVAL-1)) / TARGET_NODES_PER_EVAL;
 			if (eval_count < target_count) {
+				// cout << "node_count: " << node_count << endl;
+				// cout << "eval_count: " << eval_count << endl;
+				// cout << "target_count: " << target_count << endl;
+
 				create_experiment(this->scope_histories[0],
 								  this);
 			}

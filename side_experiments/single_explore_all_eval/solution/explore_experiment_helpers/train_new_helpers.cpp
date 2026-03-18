@@ -136,6 +136,12 @@ void ExploreExperiment::train_new_backprop(
 				this->new_networks.push_back(new_network);
 
 				EvalExperiment* new_eval_experiment = new EvalExperiment();
+
+				new_eval_experiment->scope_context = this->scope_context;
+				new_eval_experiment->node_context = this->node_context;
+				new_eval_experiment->is_branch = this->is_branch;
+				new_eval_experiment->exit_next_node = this->exit_next_node;
+
 				new_eval_experiment->best_new_scope = this->best_new_scope;
 				this->best_new_scope = NULL;
 				new_eval_experiment->best_step_types = this->best_step_types;
