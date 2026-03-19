@@ -8,6 +8,7 @@
 #include "explore_experiment.h"
 #include "globals.h"
 #include "obs_node.h"
+#include "outer_experiment.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
@@ -175,11 +176,20 @@ void create_experiment(ScopeHistory* scope_history,
 		}
 		AbstractNode* exit_next_node = possible_exits[random_index];
 
-		ExploreExperiment* new_experiment = new ExploreExperiment(
-			explore_node->parent,
-			explore_node,
-			explore_is_branch,
-			exit_next_node);
-		wrapper->curr_explore_experiment = new_experiment;
+		if (wrapper->solution->state == SOLUTION_STATE_NON_OUTER) {
+			ExploreExperiment* new_experiment = new ExploreExperiment(
+				explore_node->parent,
+				explore_node,
+				explore_is_branch,
+				exit_next_node);
+			wrapper->curr_explore_experiment = new_experiment;
+		} else {
+			OuterExperiment* new_experiment = new OuterExperiment(
+				explore_node->parent,
+				explore_node,
+				explore_is_branch,
+				exit_next_node);
+			wrapper->curr_outer_experiment = new_experiment;
+		}
 	}
 }

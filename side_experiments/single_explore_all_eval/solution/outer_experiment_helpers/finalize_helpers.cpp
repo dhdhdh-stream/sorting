@@ -1,6 +1,5 @@
-#include "eval_experiment.h"
+#include "outer_experiment.h"
 
-#include <ctime>
 #include <iostream>
 #include <sstream>
 
@@ -19,11 +18,11 @@
 
 using namespace std;
 
-void EvalExperiment::add(SolutionWrapper* wrapper) {
+void OuterExperiment::add(SolutionWrapper* wrapper) {
 	stringstream ss;
 	ss << get_time() << "; ";
 	ss << "timestamp: " << wrapper->solution->timestamp << "; ";
-	ss << "Experiment" << "; ";
+	ss << "OuterExperiment" << "; ";
 	ss << "this->scope_context->id: " << this->scope_context->id << "; ";
 	ss << "this->node_context->id: " << this->node_context->id << "; ";
 	ss << "this->is_branch: " << this->is_branch << "; ";
@@ -53,14 +52,7 @@ void EvalExperiment::add(SolutionWrapper* wrapper) {
 	ss << "this->global_improvement: " << this->global_improvement << "; ";
 	ss << "this->score_standard_deviation: " << this->score_standard_deviation << "; ";
 
-	double sum_vals = 0.0;
-	for (int h_index = 0; h_index < (int)wrapper->score_histories.size(); h_index++) {
-		sum_vals += wrapper->score_histories[h_index];
-	}
-	double val_average = sum_vals / (double)wrapper->score_histories.size();
-	wrapper->solution->curr_score = val_average;
-
-	wrapper->solution->improvement_history.push_back(val_average);
+	wrapper->solution->improvement_history.push_back(this->total_sum_scores / this->total_count);
 	wrapper->solution->change_history.push_back(ss.str());
 
 	cout << ss.str() << endl;
@@ -380,4 +372,6 @@ void EvalExperiment::add(SolutionWrapper* wrapper) {
 
 		next_node->ancestor_ids.push_back(new_nodes[n_index]->id);
 	}
+
+	wrapper->solution->timestamp++;
 }

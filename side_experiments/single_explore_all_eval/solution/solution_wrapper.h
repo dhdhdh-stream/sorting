@@ -16,6 +16,8 @@ class EvalExperiment;
 class EvalExperimentHistory;
 class ExploreExperiment;
 class ExploreExperimentHistory;
+class OuterExperiment;
+class OuterExperimentHistory;
 class Problem;
 class ProblemType;
 class Scope;
@@ -27,6 +29,7 @@ public:
 	Solution* solution;
 
 	ExploreExperiment* curr_explore_experiment;
+	OuterExperiment* curr_outer_experiment;
 
 	int eval_iter;
 
@@ -44,6 +47,7 @@ public:
 
 	ExploreExperimentHistory* explore_experiment_history;
 	std::map<EvalExperiment*, EvalExperimentHistory*> eval_experiment_histories;
+	OuterExperimentHistory* outer_experiment_history;
 
 	Problem* problem;
 
