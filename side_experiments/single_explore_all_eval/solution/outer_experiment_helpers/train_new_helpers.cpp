@@ -91,8 +91,13 @@ void OuterExperiment::train_new_backprop(
 		SolutionWrapper* wrapper) {
 	OuterExperimentHistory* history = (OuterExperimentHistory*)wrapper->outer_experiment_history;
 	if (history->existing_predicted_trues.size() > 0) {
+		// for (int i_index = 0; i_index < (int)history->existing_predicted_trues.size(); i_index++) {
+		// 	this->new_true_histories.push_back(target_val - history->existing_predicted_trues[i_index]);
+		// }
+
+		double existing_result = get_existing_result(wrapper);
 		for (int i_index = 0; i_index < (int)history->existing_predicted_trues.size(); i_index++) {
-			this->new_true_histories.push_back(target_val - history->existing_predicted_trues[i_index]);
+			this->new_true_histories.push_back(target_val - existing_result);
 		}
 
 		this->state_iter++;

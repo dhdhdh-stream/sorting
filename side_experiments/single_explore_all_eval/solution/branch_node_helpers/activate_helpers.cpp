@@ -50,3 +50,33 @@ void BranchNode::step(vector<double>& obs,
 		wrapper->node_context.back() = this->original_next_node;
 	}
 }
+
+void BranchNode::step(vector<double>& obs,
+					  int& action,
+					  bool& is_next,
+					  vector<ScopeHistory*>& scope_histories,
+					  vector<AbstractNode*>& node_context,
+					  int& num_actions) {
+	ScopeHistory* scope_history = scope_histories.back();
+
+	BranchNodeHistory* history = new BranchNodeHistory(this);
+	history->index = (int)scope_history->node_histories.size();
+	scope_history->node_histories[this->id] = history;
+
+	bool is_branch = true;
+	for (int n_index = 0; n_index < (int)this->networks.size(); n_index++) {
+		this->networks[n_index]->activate(obs);
+		if (this->networks[n_index]->output->acti_vals[0] < 0.0) {
+			is_branch = false;
+			break;
+		}
+	}
+
+	history->is_branch = is_branch;
+
+	if (is_branch) {
+		node_context.back() = this->branch_next_node;
+	} else {
+		node_context.back() = this->original_next_node;
+	}
+}
