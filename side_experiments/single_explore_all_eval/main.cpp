@@ -1,3 +1,12 @@
+// TODO: measure explore vs eval cost
+
+// - outer combine success rate simply extremely low
+
+// - getting dominated by noise?
+//   - maybe hitting the point where signals are good?
+
+// - check with results
+
 #include <chrono>
 #include <iostream>
 #include <map>

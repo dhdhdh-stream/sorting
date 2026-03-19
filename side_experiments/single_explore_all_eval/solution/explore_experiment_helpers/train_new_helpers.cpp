@@ -125,14 +125,14 @@ void ExploreExperiment::train_new_backprop(
 				}
 			}
 
-			this->new_obs_histories.clear();
-			this->new_true_histories.clear();
-
 			#if defined(MDEBUG) && MDEBUG
 			if (num_positive > BRANCH_MIN_RATIO * (double)this->new_obs_histories.size() || rand()%4 != 0) {
 			#else
 			if (num_positive > BRANCH_MIN_RATIO * (double)this->new_obs_histories.size()) {
 			#endif /* MDEBUG */
+				this->new_obs_histories.clear();
+				this->new_true_histories.clear();
+
 				this->new_networks.push_back(new_network);
 
 				EvalExperiment* new_eval_experiment = new EvalExperiment();

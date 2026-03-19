@@ -11,12 +11,14 @@ SolutionWrapper::SolutionWrapper(ProblemType* problem_type) {
 	this->solution->init(problem_type);
 
 	this->curr_explore_experiment = NULL;
+	this->curr_outer_experiment = NULL;
 
 	this->eval_iter = 0;
 
 	this->history_index = 0;
 
 	this->explore_experiment_history = NULL;
+	this->outer_experiment_history = NULL;
 
 	#if defined(MDEBUG) && MDEBUG
 	this->run_index = 0;
@@ -32,12 +34,14 @@ SolutionWrapper::SolutionWrapper(std::string path,
 	this->solution->load(input_file);
 
 	this->curr_explore_experiment = NULL;
+	this->curr_outer_experiment = NULL;
 
 	this->eval_iter = 0;
 
 	this->history_index = 0;
 
 	this->explore_experiment_history = NULL;
+	this->outer_experiment_history = NULL;
 
 	#if defined(MDEBUG) && MDEBUG
 	this->run_index = 0;

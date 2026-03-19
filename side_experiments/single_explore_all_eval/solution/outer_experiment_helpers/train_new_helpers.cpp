@@ -124,14 +124,19 @@ void OuterExperiment::train_new_backprop(
 				}
 			}
 
-			this->new_obs_histories.clear();
-			this->new_true_histories.clear();
+			// // temp
+			// cout << "this->scope_context->id: " << this->scope_context->id << endl;
+			// cout << "this->new_obs_histories.size(): " << this->new_obs_histories.size() << endl;
+			// cout << "num_positive: " << num_positive << endl;
 
 			#if defined(MDEBUG) && MDEBUG
 			if (num_positive > BRANCH_MIN_RATIO * (double)this->new_obs_histories.size() || rand()%4 != 0) {
 			#else
 			if (num_positive > BRANCH_MIN_RATIO * (double)this->new_obs_histories.size()) {
 			#endif /* MDEBUG */
+				this->new_obs_histories.clear();
+				this->new_true_histories.clear();
+
 				this->new_networks.push_back(new_network);
 
 				this->total_count = 0;
