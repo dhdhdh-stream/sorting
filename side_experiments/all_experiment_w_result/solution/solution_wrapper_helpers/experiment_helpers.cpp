@@ -19,6 +19,7 @@ const int OUTER_ITERS = 8;
 const int TARGET_NODES_PER_EVAL = 5;
 
 void SolutionWrapper::experiment_init() {
+	this->num_experiments = 0;
 	this->run_is_fail = false;
 
 	this->num_actions = 1;
@@ -108,8 +109,10 @@ void SolutionWrapper::experiment_end(double result) {
 	if (!this->run_is_fail) {
 		if (this->solution->score_histories.size() < HISTORIES_NUM_SAVE) {
 			this->solution->score_histories.push_back(result);
+			this->solution->num_experiment_histories.push_back(this->num_experiments);
 		} else {
 			this->solution->score_histories[this->solution->score_index] = result;
+			this->solution->num_experiment_histories[this->solution->score_index] = this->num_experiments;
 			this->solution->score_index++;
 			if (this->solution->score_index >= HISTORIES_NUM_SAVE) {
 				this->solution->score_index = 0;

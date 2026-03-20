@@ -38,7 +38,4 @@ void clean_scope(Scope* scope);
 
 double clean_result_helper(SolutionWrapper* wrapper);
 
-// temp
-double result_helper(SolutionWrapper* wrapper);
-
 #endif /* HELPERS_H */

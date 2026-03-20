@@ -45,6 +45,7 @@ public:
 	std::vector<int> outer_root_scope_ids;
 
 	std::vector<double> score_histories;
+	std::vector<int> num_experiment_histories;
 	int score_index;
 
 	/**

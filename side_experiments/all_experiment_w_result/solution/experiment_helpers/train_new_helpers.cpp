@@ -24,19 +24,28 @@ void Experiment::train_new_check_activate(
 		bool& is_done,
 		SolutionWrapper* wrapper,
 		ExperimentHistory* history) {
-	this->new_obs_histories.push_back(obs);
+	/**
+	 * - still only activate some of the time to prevent correlation with other experiments
+	 */
+	uniform_int_distribution<int> on_distribution(0, 9);
+	if (on_distribution(generator) == 0) {
+		this->new_obs_histories.push_back(obs);
 
-	ExperimentState* new_experiment_state = new ExperimentState(this);
-	new_experiment_state->step_index = 0;
-	wrapper->experiment_context.back() = new_experiment_state;
+		ExperimentState* new_experiment_state = new ExperimentState(this);
+		new_experiment_state->step_index = 0;
+		wrapper->experiment_context.back() = new_experiment_state;
 
-	double next_clean_result = clean_result_helper(wrapper);
-	this->new_target_val_histories.push_back(next_clean_result - wrapper->prev_clean_result);
-	wrapper->prev_clean_result = next_clean_result;
+		double next_clean_result = clean_result_helper(wrapper);
+		double diff = next_clean_result - wrapper->prev_clean_result;
+		this->new_target_val_histories.push_back(diff);
+		wrapper->prev_clean_result = next_clean_result;
 
-	if (next_clean_result - wrapper->prev_clean_result < 0.0) {
-		is_next = true;
-		is_done = true;
+		wrapper->num_experiments++;
+		if (diff < 0.0) {
+			wrapper->run_is_fail = true;
+			is_next = true;
+			is_done = true;
+		}
 	}
 }
 
@@ -108,14 +117,14 @@ void Experiment::train_new_backprop(double target_val,
 			}
 		}
 
-		this->new_obs_histories.clear();
-		this->new_target_val_histories.clear();
-
 		#if defined(MDEBUG) && MDEBUG
 		if (num_positive > BRANCH_MIN_RATIO * (double)this->new_obs_histories.size() || rand()%4 != 0) {
 		#else
 		if (num_positive > BRANCH_MIN_RATIO * (double)this->new_obs_histories.size()) {
 		#endif /* MDEBUG */
+			this->new_obs_histories.clear();
+			this->new_target_val_histories.clear();
+
 			this->new_networks.push_back(new_network);
 
 			this->curr_ramp = 0;

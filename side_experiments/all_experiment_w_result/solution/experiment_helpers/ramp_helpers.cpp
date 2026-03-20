@@ -111,10 +111,10 @@ void Experiment::ramp_backprop(double target_val,
 		case EXPERIMENT_STATE_RAMP:
 			if (this->state_iter >= RAMP_EPOCH_NUM_ITERS) {
 				double existing_sum_vals = 0.0;
-			for (int h_index = 0; h_index < (int)this->existing_scores.size(); h_index++) {
-				existing_sum_vals += this->existing_scores[h_index];
-			}
-			double existing_score_average = existing_sum_vals / (double)this->existing_scores.size();
+				for (int h_index = 0; h_index < (int)this->existing_scores.size(); h_index++) {
+					existing_sum_vals += this->existing_scores[h_index];
+				}
+				double existing_score_average = existing_sum_vals / (double)this->existing_scores.size();
 				double new_sum_vals = 0.0;
 				for (int h_index = 0; h_index < (int)this->new_scores.size(); h_index++) {
 					new_sum_vals += this->new_scores[h_index];
@@ -132,9 +132,9 @@ void Experiment::ramp_backprop(double target_val,
 				this->state_iter = 0;
 
 				#if defined(MDEBUG) && MDEBUG
-				if ((this->measure_status != MEASURE_STATUS_FAIL && new_score_average > 0.0) || rand()%3 != 0) {
+				if ((this->measure_status != MEASURE_STATUS_FAIL && new_score_average > existing_score_average) || rand()%3 != 0) {
 				#else
-				if (this->measure_status != MEASURE_STATUS_FAIL && new_score_average > 0.0) {
+				if (this->measure_status != MEASURE_STATUS_FAIL && new_score_average > existing_score_average) {
 				#endif /* MDEBUG */
 					this->curr_ramp++;
 
@@ -149,11 +149,6 @@ void Experiment::ramp_backprop(double target_val,
 						add(wrapper);
 						this->node_context->experiment = NULL;
 						delete this;
-
-						double curr_score = result_helper(wrapper);
-						cout << "curr_score: " << curr_score << endl;
-						wrapper->solution->curr_score = curr_score;
-						wrapper->solution->improvement_history.push_back(curr_score);
 					}
 				} else {
 					this->curr_ramp--;
@@ -189,7 +184,7 @@ void Experiment::ramp_backprop(double target_val,
 				}
 				double average_hits_per_run = (2.0 * (double)this->new_scores.size()) / (double)total_iters;
 
-				this->local_improvement = new_score_average;
+				this->local_improvement = new_score_average - existing_score_average;
 				this->global_improvement = average_hits_per_run * this->local_improvement;
 				double t_score = this->local_improvement
 					/ (this->score_standard_deviation / sqrt((double)this->new_scores.size()));

@@ -30,119 +30,127 @@ void Experiment::explore_check_activate(
 		bool& is_done,
 		SolutionWrapper* wrapper,
 		ExperimentHistory* history) {
-	AbstractNode* starting_node = this->node_context->next_node;
-	vector<AbstractNode*> possible_exits;
-	this->node_context->parent->random_exit_activate(
-		starting_node,
-		possible_exits);
+	/**
+	 * - still only activate some of the time to prevent correlation with other experiments
+	 */
+	uniform_int_distribution<int> on_distribution(0, 9);
+	if (on_distribution(generator) == 0) {
+		AbstractNode* starting_node = this->node_context->next_node;
+		vector<AbstractNode*> possible_exits;
+		this->node_context->parent->random_exit_activate(
+			starting_node,
+			possible_exits);
 
-	geometric_distribution<int> exit_distribution(0.1);
-	int random_index;
-	while (true) {
-		random_index = exit_distribution(generator);
-		if (random_index < (int)possible_exits.size()) {
-			break;
-		}
-	}
-	this->curr_exit_next_node = possible_exits[random_index];
-
-	uniform_int_distribution<int> new_scope_distribution(0, 3);
-	if (this->node_context->parent->id != -1
-			&& !this->node_context->parent->is_outer
-			&& wrapper->solution->state == SOLUTION_STATE_OUTER) {
-		Scope* parent_scope;
-		outer_create_new_scope(this->node_context->parent,
-							   wrapper,
-							   this->curr_new_scope,
-							   parent_scope);
-	} else if (this->node_context->parent->id != -1
-			&& new_scope_distribution(generator) == 0) {
-		Scope* parent_scope;
-		create_new_scope(this->node_context->parent,
-						 wrapper,
-						 this->curr_new_scope,
-						 parent_scope);
-	}
-	if (this->curr_new_scope != NULL) {
-		this->curr_step_types.push_back(STEP_TYPE_SCOPE);
-		this->curr_actions.push_back(-1);
-		this->curr_scopes.push_back(this->curr_new_scope);
-	} else {
-		bool is_in_place;
-		if (this->curr_exit_next_node == this->node_context->next_node) {
-			is_in_place = true;
-		} else {
-			is_in_place = false;
-		}
-
-		int new_num_steps;
-		geometric_distribution<int> geo_distribution(0.3);
-		/**
-		 * - num_steps less than exit length on average to reduce solution size
-		 */
-		if (is_in_place) {
-			new_num_steps = 1 + geo_distribution(generator);
-		} else {
-			new_num_steps = geo_distribution(generator);
-		}
-
-		vector<int> possible_child_indexes;
-		for (int c_index = 0; c_index < (int)this->node_context->parent->child_scopes.size(); c_index++) {
-			if (this->node_context->parent->child_scopes[c_index]->nodes.size() > 1) {
-				possible_child_indexes.push_back(c_index);
+		geometric_distribution<int> exit_distribution(0.1);
+		int random_index;
+		while (true) {
+			random_index = exit_distribution(generator);
+			if (random_index < (int)possible_exits.size()) {
+				break;
 			}
 		}
-		uniform_int_distribution<int> child_index_distribution(0, possible_child_indexes.size()-1);
-		for (int s_index = 0; s_index < new_num_steps; s_index++) {
-			bool is_scope = false;
-			if (possible_child_indexes.size() > 0) {
-				if (possible_child_indexes.size() <= RAW_ACTION_WEIGHT) {
-					uniform_int_distribution<int> scope_distribution(0, possible_child_indexes.size() + RAW_ACTION_WEIGHT - 1);
-					if (scope_distribution(generator) < (int)possible_child_indexes.size()) {
-						is_scope = true;
-					}
-				} else {
-					uniform_int_distribution<int> scope_distribution(0, 1);
-					if (scope_distribution(generator) == 0) {
-						is_scope = true;
-					}
+		this->curr_exit_next_node = possible_exits[random_index];
+
+		uniform_int_distribution<int> new_scope_distribution(0, 3);
+		if (this->node_context->parent->id != -1
+				&& !this->node_context->parent->is_outer
+				&& wrapper->solution->state == SOLUTION_STATE_OUTER) {
+			Scope* parent_scope;
+			outer_create_new_scope(this->node_context->parent,
+								   wrapper,
+								   this->curr_new_scope,
+								   parent_scope);
+		} else if (this->node_context->parent->id != -1
+				&& new_scope_distribution(generator) == 0) {
+			Scope* parent_scope;
+			create_new_scope(this->node_context->parent,
+							 wrapper,
+							 this->curr_new_scope,
+							 parent_scope);
+		}
+		if (this->curr_new_scope != NULL) {
+			this->curr_step_types.push_back(STEP_TYPE_SCOPE);
+			this->curr_actions.push_back(-1);
+			this->curr_scopes.push_back(this->curr_new_scope);
+		} else {
+			bool is_in_place;
+			if (this->curr_exit_next_node == this->node_context->next_node) {
+				is_in_place = true;
+			} else {
+				is_in_place = false;
+			}
+
+			int new_num_steps;
+			geometric_distribution<int> geo_distribution(0.3);
+			/**
+			 * - num_steps less than exit length on average to reduce solution size
+			 */
+			if (is_in_place) {
+				new_num_steps = 1 + geo_distribution(generator);
+			} else {
+				new_num_steps = geo_distribution(generator);
+			}
+
+			vector<int> possible_child_indexes;
+			for (int c_index = 0; c_index < (int)this->node_context->parent->child_scopes.size(); c_index++) {
+				if (this->node_context->parent->child_scopes[c_index]->nodes.size() > 1) {
+					possible_child_indexes.push_back(c_index);
 				}
 			}
-			if (is_scope) {
-				this->curr_step_types.push_back(STEP_TYPE_SCOPE);
-				this->curr_actions.push_back(-1);
+			uniform_int_distribution<int> child_index_distribution(0, possible_child_indexes.size()-1);
+			for (int s_index = 0; s_index < new_num_steps; s_index++) {
+				bool is_scope = false;
+				if (possible_child_indexes.size() > 0) {
+					if (possible_child_indexes.size() <= RAW_ACTION_WEIGHT) {
+						uniform_int_distribution<int> scope_distribution(0, possible_child_indexes.size() + RAW_ACTION_WEIGHT - 1);
+						if (scope_distribution(generator) < (int)possible_child_indexes.size()) {
+							is_scope = true;
+						}
+					} else {
+						uniform_int_distribution<int> scope_distribution(0, 1);
+						if (scope_distribution(generator) == 0) {
+							is_scope = true;
+						}
+					}
+				}
+				if (is_scope) {
+					this->curr_step_types.push_back(STEP_TYPE_SCOPE);
+					this->curr_actions.push_back(-1);
 
-				int child_index = possible_child_indexes[child_index_distribution(generator)];
-				this->curr_scopes.push_back(this->node_context->parent->child_scopes[child_index]);
-			} else {
-				this->curr_step_types.push_back(STEP_TYPE_ACTION);
+					int child_index = possible_child_indexes[child_index_distribution(generator)];
+					this->curr_scopes.push_back(this->node_context->parent->child_scopes[child_index]);
+				} else {
+					this->curr_step_types.push_back(STEP_TYPE_ACTION);
 
-				this->curr_actions.push_back(-1);
+					this->curr_actions.push_back(-1);
 
-				this->curr_scopes.push_back(NULL);
+					this->curr_scopes.push_back(NULL);
+				}
 			}
 		}
-	}
 
-	ExperimentState* new_experiment_state = new ExperimentState(this);
-	new_experiment_state->step_index = 0;
-	wrapper->experiment_context.back() = new_experiment_state;
+		ExperimentState* new_experiment_state = new ExperimentState(this);
+		new_experiment_state->step_index = 0;
+		wrapper->experiment_context.back() = new_experiment_state;
 
-	double next_clean_result = clean_result_helper(wrapper);
-	this->curr_surprise = next_clean_result - wrapper->prev_clean_result;
-	wrapper->prev_clean_result = next_clean_result;
+		double next_clean_result = clean_result_helper(wrapper);
+		this->curr_surprise = next_clean_result - wrapper->prev_clean_result;
+		wrapper->prev_clean_result = next_clean_result;
 
-	if (this->curr_surprise < 0.0) {
-		if (this->curr_new_scope != NULL) {
-			delete this->curr_new_scope;
-			this->curr_new_scope = NULL;
+		wrapper->num_experiments++;
+		if (this->curr_surprise < 0.0) {
+			if (this->curr_new_scope != NULL) {
+				delete this->curr_new_scope;
+				this->curr_new_scope = NULL;
+			}
+			this->curr_step_types.clear();
+			this->curr_actions.clear();
+			this->curr_scopes.clear();
+
+			wrapper->run_is_fail = true;
+			is_next = true;
+			is_done = true;
 		}
-		this->curr_step_types.clear();
-		this->curr_actions.clear();
-		this->curr_scopes.clear();
-
-		is_next = true;
-		is_done = true;
 	}
 }
 

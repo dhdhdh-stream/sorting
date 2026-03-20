@@ -15,6 +15,7 @@
 #include "solution.h"
 #include "solution_wrapper.h"
 #include "start_node.h"
+#include "utilities.h"
 
 using namespace std;
 
@@ -46,6 +47,7 @@ void recursive_add_child(Scope* curr_parent,
 
 void Experiment::add(SolutionWrapper* wrapper) {
 	stringstream ss;
+	ss << get_time() << "; ";
 	ss << "timestamp: " << wrapper->solution->timestamp << "; ";
 	ss << "this->node_context->parent->id: " << this->node_context->parent->id << "; ";
 	ss << "this->node_context->id: " << this->node_context->id << "; ";
@@ -74,11 +76,17 @@ void Experiment::add(SolutionWrapper* wrapper) {
 		sum_vals += wrapper->solution->score_histories[h_index];
 	}
 	double score_average = sum_vals / (double)wrapper->solution->score_histories.size();
-	ss << "score_average: " << score_average << "; ";
-	// cout << "score_average: " << score_average << endl;
-	// wrapper->solution->curr_score = score_average;
+	cout << "score_average: " << score_average << endl;
+	wrapper->solution->curr_score = score_average;
 
-	// wrapper->solution->improvement_history.push_back(score_average);
+	double sum_num_experiments = 0.0;
+	for (int h_index = 0; h_index < (int)wrapper->solution->num_experiment_histories.size(); h_index++) {
+		sum_num_experiments += wrapper->solution->num_experiment_histories[h_index];
+	}
+	double num_experiment_average = sum_num_experiments / (double)wrapper->solution->num_experiment_histories.size();
+	ss << "num_experiment_average: " << num_experiment_average << "; ";
+
+	wrapper->solution->improvement_history.push_back(score_average);
 	wrapper->solution->change_history.push_back(ss.str());
 
 	cout << ss.str() << endl;
