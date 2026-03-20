@@ -147,6 +147,8 @@ void Experiment::explore_check_activate(
 			this->curr_actions.clear();
 			this->curr_scopes.clear();
 
+			this->state_iter++;
+
 			wrapper->run_is_fail = true;
 			is_next = true;
 			is_done = true;
@@ -237,6 +239,17 @@ void Experiment::explore_exit_step(SolutionWrapper* wrapper,
 void Experiment::explore_backprop(double target_val,
 								  ExperimentHistory* history,
 								  SolutionWrapper* wrapper) {
+	/**
+	 * - in case inner early exit
+	 */
+	if (this->curr_new_scope != NULL) {
+		delete this->curr_new_scope;
+		this->curr_new_scope = NULL;
+	}
+	this->curr_step_types.clear();
+	this->curr_actions.clear();
+	this->curr_scopes.clear();
+
 	if (this->state_iter >= EXPERIMENT_EXPLORE_ITERS) {
 		#if defined(MDEBUG) && MDEBUG
 		if (this->best_surprise > 0.0 || true) {
