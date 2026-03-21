@@ -52,6 +52,7 @@ public:
 	 */
 
 	double prev_clean_result;
+	double prev_signal;
 
 	std::vector<ScopeHistory*> result_scope_histories;
 	std::vector<AbstractNode*> result_node_context;

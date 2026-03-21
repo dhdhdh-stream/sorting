@@ -75,9 +75,6 @@ public:
 	void save(std::ofstream& output_file);
 
 	void save_for_display(std::ofstream& output_file);
-
-	// temp
-	void print_experiment_statuses();
 };
 
 #endif /* SOLUTION_H */

@@ -8,6 +8,11 @@
 //   - so average will be low?
 //   - so if average better, then means have good confidence?
 
+// - see if any safe with weak signal
+
+// - maybe keep going if signal not confident enough
+//   - but as soon as any signal confident, then can experiment again?
+
 #include <chrono>
 #include <iostream>
 #include <map>

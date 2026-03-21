@@ -14,9 +14,6 @@
 #include "scope_node.h"
 #include "start_node.h"
 
-// temp
-#include "experiment.h"
-
 using namespace std;
 
 Solution::Solution() {
@@ -184,7 +181,7 @@ void Solution::merge_outer() {
 				ObsNode* obs_node = (ObsNode*)it->second;
 				if (obs_node->experiment != NULL) {
 					delete obs_node->experiment;
-					obs_node->experiment = new Experiment(obs_node);
+					obs_node->experiment = NULL;
 				}
 			}
 		}
@@ -247,38 +244,4 @@ void Solution::save_for_display(ofstream& output_file) {
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
 		this->scopes[s_index]->save_for_display(output_file);
 	}
-}
-
-// temp
-void Solution::print_experiment_statuses() {
-	int num_explore = 0;
-	int num_train_new = 0;
-	int num_ramp = 0;
-	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
-		for (map<int, AbstractNode*>::iterator it = this->scopes[s_index]->nodes.begin();
-				it != this->scopes[s_index]->nodes.end(); it++) {
-			if (it->second->type == NODE_TYPE_OBS) {
-				ObsNode* obs_node = (ObsNode*)it->second;
-				if (obs_node->experiment != NULL) {
-					Experiment* experiment = (Experiment*)obs_node->experiment;
-					switch (experiment->state) {
-					case EXPERIMENT_STATE_EXPLORE:
-						num_explore++;
-						break;
-					case EXPERIMENT_STATE_TRAIN_NEW:
-						num_train_new++;
-						break;
-					case EXPERIMENT_STATE_RAMP:
-					case EXPERIMENT_STATE_MEASURE:
-						num_ramp++;
-						break;
-					}
-				}
-			}
-		}
-	}
-
-	cout << "num_explore: " << num_explore << endl;
-	cout << "num_train_new: " << num_train_new << endl;
-	cout << "num_ramp: " << num_ramp << endl;
 }

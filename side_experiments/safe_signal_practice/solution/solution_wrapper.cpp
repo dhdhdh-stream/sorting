@@ -6,8 +6,9 @@
 #include "constants.h"
 #include "globals.h"
 #include "helpers.h"
-#include "problem.h"
+#include "network.h"
 #include "obs_node.h"
+#include "problem.h"
 #include "scope.h"
 #include "signal.h"
 #include "solution.h"
@@ -84,6 +85,9 @@ SolutionWrapper::SolutionWrapper(ProblemType* problem_type) {
 		end_node->next_node = NULL;
 
 		clean_scope(new_scope);
+
+		new_scope->simple_existing_signal = new Network(problem_type->num_obs());
+		new_scope->simple_explore_signal = new Network(problem_type->num_obs());
 
 		this->solution->state = SOLUTION_STATE_NON_OUTER;
 	}

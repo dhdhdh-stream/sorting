@@ -34,11 +34,27 @@ void Experiment::train_new_check_activate(
 		wrapper->experiment_context.back() = new_experiment_state;
 
 		this->existing_network->activate(obs);
+		// temp
+		this->existing_signal_network->activate(obs);
 
-		double next_clean_result = clean_result_helper(wrapper);
+		double next_clean_result;
+		double signal;
+		explore_clean_result_helper(wrapper,
+									next_clean_result,
+									signal);
+
 		double diff = next_clean_result - this->existing_network->output->acti_vals[0];
 		this->target_val_histories.push_back(diff);
+
+		if (next_clean_result > this->existing_network->output->acti_vals[0]) {
+			this->num_train_new_true_better++;
+		}
+		if (signal > this->existing_signal_network->output->acti_vals[0]) {
+			this->num_train_new_signal_better++;
+		}
+
 		wrapper->prev_clean_result = next_clean_result;
+		wrapper->prev_signal = signal;
 
 		wrapper->num_experiments++;
 		if (diff < 0.0) {

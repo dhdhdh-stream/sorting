@@ -35,7 +35,9 @@ void SolutionWrapper::experiment_init() {
 	this->node_context.push_back(this->solution->scopes[0]->nodes[0]);
 	this->experiment_context.push_back(NULL);
 
-	this->prev_clean_result = clean_result_helper(this);
+	existing_clean_result_helper(this,
+								 this->prev_clean_result,
+								 this->prev_signal);
 }
 
 tuple<bool,bool,int> SolutionWrapper::experiment_step(vector<double> obs) {

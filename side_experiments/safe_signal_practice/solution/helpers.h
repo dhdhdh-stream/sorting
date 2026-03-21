@@ -36,6 +36,11 @@ void outer_create_new_scope(Scope* scope_context,
 
 void clean_scope(Scope* scope);
 
-double clean_result_helper(SolutionWrapper* wrapper);
+void existing_clean_result_helper(SolutionWrapper* wrapper,
+								  double& result,
+								  double& signal);
+void explore_clean_result_helper(SolutionWrapper* wrapper,
+								 double& result,
+								 double& signal);
 
 #endif /* HELPERS_H */

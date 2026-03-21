@@ -9,6 +9,7 @@
 class AbstractExperiment;
 class AbstractNode;
 class AbstractNodeHistory;
+class Network;
 class Solution;
 class SolutionWrapper;
 
@@ -25,6 +26,19 @@ public:
 	 */
 
 	std::vector<Scope*> child_scopes;
+
+	Network* simple_existing_signal;
+	std::vector<std::vector<double>> existing_obs_histories;
+	std::vector<double> existing_target_val_histories;
+	int existing_history_index;
+	/**
+	 * - have existing signal to reduce noise
+	 */
+
+	Network* simple_explore_signal;
+	std::vector<std::vector<double>> explore_obs_histories;
+	std::vector<double> explore_target_val_histories;
+	int explore_history_index;
 
 	Scope();
 	~Scope();

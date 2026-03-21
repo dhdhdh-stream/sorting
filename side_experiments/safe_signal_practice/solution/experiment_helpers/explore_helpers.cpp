@@ -134,10 +134,26 @@ void Experiment::explore_check_activate(
 		wrapper->experiment_context.back() = new_experiment_state;
 
 		this->existing_network->activate(obs);
+		// temp
+		this->existing_signal_network->activate(obs);
 
-		double next_clean_result = clean_result_helper(wrapper);
+		double next_clean_result;
+		double signal;
+		explore_clean_result_helper(wrapper,
+									next_clean_result,
+									signal);
+
 		this->curr_surprise = next_clean_result - this->existing_network->output->acti_vals[0];
+
+		if (next_clean_result > this->existing_network->output->acti_vals[0]) {
+			this->num_explore_true_better++;
+		}
+		if (signal > this->existing_signal_network->output->acti_vals[0]) {
+			this->num_explore_signal_better++;
+		}
+
 		wrapper->prev_clean_result = next_clean_result;
+		wrapper->prev_signal = signal;
 
 		wrapper->num_experiments++;
 		if (this->curr_surprise < 0.0) {
@@ -258,6 +274,9 @@ void Experiment::explore_backprop(double target_val,
 		#else
 		if (this->best_surprise > 0.0) {
 		#endif /* MDEBUG */
+			this->num_train_new_true_better = 0;
+			this->num_train_new_signal_better = 0;
+
 			this->state = EXPERIMENT_STATE_TRAIN_NEW;
 			this->state_iter = 0;
 		} else {

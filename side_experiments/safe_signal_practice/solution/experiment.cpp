@@ -13,6 +13,7 @@ Experiment::Experiment(ObsNode* node_context) {
 	this->node_context = node_context;
 
 	this->existing_network = NULL;
+	this->existing_signal_network = NULL;
 
 	this->state = EXPERIMENT_STATE_TRAIN_EXISTING;
 	this->state_iter = 0;
@@ -21,6 +22,10 @@ Experiment::Experiment(ObsNode* node_context) {
 Experiment::~Experiment() {
 	if (this->existing_network != NULL) {
 		delete this->existing_network;
+	}
+
+	if (this->existing_signal_network != NULL) {
+		delete this->existing_signal_network;
 	}
 
 	if (this->curr_new_scope != NULL) {

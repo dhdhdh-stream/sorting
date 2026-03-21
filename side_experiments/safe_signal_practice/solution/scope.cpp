@@ -7,6 +7,7 @@
 #include "action_node.h"
 #include "branch_node.h"
 #include "globals.h"
+#include "network.h"
 #include "obs_node.h"
 #include "scope_node.h"
 #include "solution.h"
@@ -16,13 +17,24 @@
 using namespace std;
 
 Scope::Scope() {
-	// do nothing
+	this->simple_existing_signal = NULL;
+	this->existing_history_index = 0;
+	this->simple_explore_signal = NULL;
+	this->explore_history_index = 0;
 }
 
 Scope::~Scope() {
 	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
 			it != this->nodes.end(); it++) {
 		delete it->second;
+	}
+
+	if (this->simple_existing_signal != NULL) {
+		delete this->simple_existing_signal;
+	}
+
+	if (this->simple_explore_signal != NULL) {
+		delete this->simple_explore_signal;
 	}
 }
 
@@ -147,6 +159,16 @@ void Scope::save(ofstream& output_file) {
 		output_file << this->child_scopes[c_index]->is_outer << endl;
 		output_file << this->child_scopes[c_index]->id << endl;
 	}
+
+	output_file << (this->simple_existing_signal == NULL) << endl;
+	if (this->simple_existing_signal != NULL) {
+		this->simple_existing_signal->save(output_file);
+	}
+
+	output_file << (this->simple_explore_signal == NULL) << endl;
+	if (this->simple_explore_signal != NULL) {
+		this->simple_explore_signal->save(output_file);
+	}
 }
 
 void Scope::load(ifstream& input_file,
@@ -235,6 +257,24 @@ void Scope::load(ifstream& input_file,
 		} else {
 			this->child_scopes.push_back(parent_solution->scopes[scope_id]);
 		}
+	}
+
+	string simple_existing_signal_is_null_line;
+	getline(input_file, simple_existing_signal_is_null_line);
+	bool simple_existing_signal_is_null = stoi(simple_existing_signal_is_null_line);
+	if (simple_existing_signal_is_null) {
+		this->simple_existing_signal = NULL;
+	} else {
+		this->simple_existing_signal = new Network(input_file);
+	}
+
+	string simple_explore_signal_is_null_line;
+	getline(input_file, simple_explore_signal_is_null_line);
+	bool simple_explore_signal_is_null = stoi(simple_explore_signal_is_null_line);
+	if (simple_explore_signal_is_null) {
+		this->simple_explore_signal = NULL;
+	} else {
+		this->simple_explore_signal = new Network(input_file);
 	}
 }
 

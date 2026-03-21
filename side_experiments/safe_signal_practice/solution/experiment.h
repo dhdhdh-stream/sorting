@@ -43,6 +43,7 @@ public:
 	int state_iter;
 
 	Network* existing_network;
+	Network* existing_signal_network;
 
 	double curr_surprise;
 	Scope* curr_new_scope;
@@ -77,6 +78,13 @@ public:
 
 	std::vector<std::vector<double>> obs_histories;
 	std::vector<double> target_val_histories;
+	std::vector<double> signal_histories;
+
+	// temp
+	int num_explore_true_better;
+	int num_explore_signal_better;
+	int num_train_new_true_better;
+	int num_train_new_signal_better;
 
 	Experiment(ObsNode* node_context);
 	~Experiment();
