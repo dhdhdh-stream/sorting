@@ -1,5 +1,7 @@
 #include "experiment.h"
 
+#include <iostream>
+
 #include "constants.h"
 #include "globals.h"
 #include "helpers.h"
@@ -43,6 +45,13 @@ void Experiment::train_new_check_activate(
 									next_clean_result,
 									signal);
 
+		bool true_better;
+		if (next_clean_result >= wrapper->prev_clean_result) {
+			true_better = true;
+		} else {
+			true_better = false;
+		}
+
 		double diff = next_clean_result - this->existing_network->output->acti_vals[0];
 		this->target_val_histories.push_back(diff);
 
@@ -51,6 +60,22 @@ void Experiment::train_new_check_activate(
 		}
 		if (signal > this->existing_signal_network->output->acti_vals[0]) {
 			this->num_train_new_signal_better++;
+		}
+
+		if (true_better) {
+			if (next_clean_result >= this->existing_network->output->acti_vals[0]) {
+				this->num_train_new_true_match++;
+			}
+			if (signal >= this->existing_signal_network->output->acti_vals[0]) {
+				this->num_train_new_signal_match++;
+			}
+		} else {
+			if (next_clean_result < this->existing_network->output->acti_vals[0]) {
+				this->num_train_new_true_match++;
+			}
+			if (signal < this->existing_signal_network->output->acti_vals[0]) {
+				this->num_train_new_signal_match++;
+			}
 		}
 
 		wrapper->prev_clean_result = next_clean_result;
@@ -107,6 +132,11 @@ void Experiment::train_new_backprop(double target_val,
 									ExperimentHistory* history,
 									SolutionWrapper* wrapper) {
 	if ((int)this->obs_histories.size() >= TRAIN_NEW_NUM_DATAPOINTS) {
+		cout << "this->num_train_new_true_better: " << this->num_train_new_true_better << endl;
+		cout << "this->num_train_new_signal_better: " << this->num_train_new_signal_better << endl;
+		cout << "this->num_train_new_true_match: " << this->num_train_new_true_match << endl;
+		cout << "this->num_train_new_signal_match: " << this->num_train_new_signal_match << endl;
+
 		Network* new_network = new Network(this->obs_histories[0].size());
 		uniform_int_distribution<int> new_input_distribution(0, this->obs_histories.size()-1);
 		for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {

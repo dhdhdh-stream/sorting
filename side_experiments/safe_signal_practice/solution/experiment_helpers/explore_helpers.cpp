@@ -143,6 +143,13 @@ void Experiment::explore_check_activate(
 									next_clean_result,
 									signal);
 
+		bool true_better;
+		if (next_clean_result >= wrapper->prev_clean_result) {
+			true_better = true;
+		} else {
+			true_better = false;
+		}
+
 		this->curr_surprise = next_clean_result - this->existing_network->output->acti_vals[0];
 
 		if (next_clean_result > this->existing_network->output->acti_vals[0]) {
@@ -150,6 +157,22 @@ void Experiment::explore_check_activate(
 		}
 		if (signal > this->existing_signal_network->output->acti_vals[0]) {
 			this->num_explore_signal_better++;
+		}
+
+		if (true_better) {
+			if (next_clean_result >= this->existing_network->output->acti_vals[0]) {
+				this->num_explore_true_match++;
+			}
+			if (signal >= this->existing_signal_network->output->acti_vals[0]) {
+				this->num_explore_signal_match++;
+			}
+		} else {
+			if (next_clean_result < this->existing_network->output->acti_vals[0]) {
+				this->num_explore_true_match++;
+			}
+			if (signal < this->existing_signal_network->output->acti_vals[0]) {
+				this->num_explore_signal_match++;
+			}
 		}
 
 		wrapper->prev_clean_result = next_clean_result;
@@ -269,6 +292,12 @@ void Experiment::explore_backprop(double target_val,
 	this->curr_scopes.clear();
 
 	if (this->state_iter >= EXPERIMENT_EXPLORE_ITERS) {
+		// temp
+		cout << "this->num_explore_true_better: " << this->num_explore_true_better << endl;
+		cout << "this->num_explore_signal_better: " << this->num_explore_signal_better << endl;
+		cout << "this->num_explore_true_match: " << this->num_explore_true_match << endl;
+		cout << "this->num_explore_signal_match: " << this->num_explore_signal_match << endl;
+
 		#if defined(MDEBUG) && MDEBUG
 		if (this->best_surprise > 0.0 || true) {
 		#else
@@ -276,6 +305,8 @@ void Experiment::explore_backprop(double target_val,
 		#endif /* MDEBUG */
 			this->num_train_new_true_better = 0;
 			this->num_train_new_signal_better = 0;
+			this->num_train_new_true_match = 0;
+			this->num_train_new_signal_match = 0;
 
 			this->state = EXPERIMENT_STATE_TRAIN_NEW;
 			this->state_iter = 0;

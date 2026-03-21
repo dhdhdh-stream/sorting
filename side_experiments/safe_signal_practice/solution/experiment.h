@@ -83,8 +83,12 @@ public:
 	// temp
 	int num_explore_true_better;
 	int num_explore_signal_better;
+	int num_explore_true_match;
+	int num_explore_signal_match;
 	int num_train_new_true_better;
 	int num_train_new_signal_better;
+	int num_train_new_true_match;
+	int num_train_new_signal_match;
 
 	Experiment(ObsNode* node_context);
 	~Experiment();
