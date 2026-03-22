@@ -123,20 +123,20 @@ void SolutionWrapper::experiment_end(double result) {
 				}
 
 				this->solution->timestamp++;
-				if ((int)this->solution->improvement_history.size() >= STUCK_NUM_ITERS) {
-					double prev_val = this->solution->improvement_history[this->solution->improvement_history.size() - STUCK_NUM_ITERS];
-					bool improved = false;
-					for (int h_index = 0; h_index < STUCK_NUM_ITERS-1; h_index++) {
-						if (this->solution->improvement_history[this->solution->improvement_history.size() - 1 - h_index] > prev_val) {
-							improved = true;
-							break;
-						}
-					}
+				// if ((int)this->solution->improvement_history.size() >= STUCK_NUM_ITERS) {
+				// 	double prev_val = this->solution->improvement_history[this->solution->improvement_history.size() - STUCK_NUM_ITERS];
+				// 	bool improved = false;
+				// 	for (int h_index = 0; h_index < STUCK_NUM_ITERS-1; h_index++) {
+				// 		if (this->solution->improvement_history[this->solution->improvement_history.size() - 1 - h_index] > prev_val) {
+				// 			improved = true;
+				// 			break;
+				// 		}
+				// 	}
 
-					if (!improved) {
-						this->solution->timestamp = -1;
-					}
-				}
+				// 	if (!improved) {
+				// 		this->solution->timestamp = -1;
+				// 	}
+				// }
 			} else {
 				int node_count = 0;
 				int eval_count = 0;

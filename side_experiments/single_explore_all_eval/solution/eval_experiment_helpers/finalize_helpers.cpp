@@ -51,7 +51,6 @@ void EvalExperiment::add(SolutionWrapper* wrapper) {
 
 	ss << "this->local_improvement: " << this->local_improvement << "; ";
 	ss << "this->global_improvement: " << this->global_improvement << "; ";
-	ss << "this->score_standard_deviation: " << this->score_standard_deviation << "; ";
 
 	double sum_vals = 0.0;
 	for (int h_index = 0; h_index < (int)wrapper->score_histories.size(); h_index++) {

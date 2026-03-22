@@ -42,6 +42,8 @@ public:
 	std::vector<std::vector<double>> new_obs_histories;
 	std::vector<double> new_true_histories;
 
+	int total_count;
+
 	std::vector<Network*> new_networks;
 
 	ExploreExperiment(Scope* scope_context,

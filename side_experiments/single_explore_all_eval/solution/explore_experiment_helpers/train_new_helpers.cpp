@@ -21,8 +21,10 @@ using namespace std;
 #if defined(MDEBUG) && MDEBUG
 const int TRAIN_NEW_NUM_DATAPOINTS = 20;
 #else
-const int TRAIN_NEW_NUM_DATAPOINTS = 4000;
+const int TRAIN_NEW_NUM_DATAPOINTS = 5000;
 #endif /* MDEBUG */
+
+const double VERIFY_RATIO = 0.2;
 
 void ExploreExperiment::train_new_check_activate(
 		SolutionWrapper* wrapper) {
@@ -90,6 +92,8 @@ void ExploreExperiment::train_new_exit_step(SolutionWrapper* wrapper) {
 void ExploreExperiment::train_new_backprop(
 		double target_val,
 		SolutionWrapper* wrapper) {
+	this->total_count++;
+
 	ExploreExperimentHistory* history = (ExploreExperimentHistory*)wrapper->explore_experiment_history;
 	if (history->existing_predicted_trues.size() > 0) {
 		for (int i_index = 0; i_index < (int)history->existing_predicted_trues.size(); i_index++) {
@@ -98,11 +102,23 @@ void ExploreExperiment::train_new_backprop(
 
 		this->state_iter++;
 		if (this->state_iter >= TRAIN_NEW_NUM_DATAPOINTS) {
+			{
+				default_random_engine generator_copy = generator;
+				shuffle(this->new_obs_histories.begin(), this->new_obs_histories.end(), generator_copy);
+			}
+			{
+				default_random_engine generator_copy = generator;
+				shuffle(this->new_true_histories.begin(), this->new_true_histories.end(), generator_copy);
+			}
+
 			Network* new_network = new Network(this->new_obs_histories[0].size(),
 											   NETWORK_SIZE_SMALL);
-			uniform_int_distribution<int> new_input_distribution(0, this->new_obs_histories.size()-1);
+
+			int num_train = (1.0 - VERIFY_RATIO) * (double)this->new_obs_histories.size();
+
+			uniform_int_distribution<int> distribution(0, num_train-1);
 			for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
-				int rand_index = new_input_distribution(generator);
+				int rand_index = distribution(generator);
 
 				new_network->activate(this->new_obs_histories[rand_index]);
 
@@ -111,24 +127,46 @@ void ExploreExperiment::train_new_backprop(
 				new_network->backprop(error);
 			}
 
-			vector<double> network_outputs(this->new_obs_histories.size());
-			for (int h_index = 0; h_index < (int)this->new_obs_histories.size(); h_index++) {
+			double sum_vals = 0.0;
+			for (int h_index = num_train; h_index < (int)this->new_obs_histories.size(); h_index++) {
 				new_network->activate(this->new_obs_histories[h_index]);
 
-				network_outputs[h_index] = new_network->output->acti_vals[0];
-			}
-
-			int num_positive = 0;
-			for (int i_index = 0; i_index < (int)this->new_obs_histories.size(); i_index++) {
-				if (network_outputs[i_index] >= 0.0) {
-					num_positive++;
+				if (new_network->output->acti_vals[0] >= 0.0) {
+					sum_vals += this->new_true_histories[h_index];
 				}
+			}
+			double local_improvement = sum_vals / ((double)this->new_obs_histories.size() - (double)num_train);
+			double average_hits_per_run = (double)this->state_iter / (double)this->total_count;
+			double global_improvement = average_hits_per_run * local_improvement;
+
+			bool is_success = false;
+			if (wrapper->solution->last_scores.size() >= MIN_NUM_LAST_TRACK) {
+				int num_better_than = 0;
+				for (list<double>::iterator it = wrapper->solution->last_scores.begin();
+						it != wrapper->solution->last_scores.end(); it++) {
+					if (global_improvement >= *it) {
+						num_better_than++;
+					}
+				}
+
+				double target_better_than = LAST_BETTER_THAN_RATIO * (double)wrapper->solution->last_scores.size();
+
+				if (num_better_than >= target_better_than) {
+					is_success = true;
+				}
+
+				if (wrapper->solution->last_scores.size() >= NUM_LAST_TRACK) {
+					wrapper->solution->last_scores.pop_front();
+				}
+				wrapper->solution->last_scores.push_back(global_improvement);
+			} else {
+				wrapper->solution->last_scores.push_back(global_improvement);
 			}
 
 			#if defined(MDEBUG) && MDEBUG
-			if (num_positive > BRANCH_MIN_RATIO * (double)this->new_obs_histories.size() || rand()%4 != 0) {
+			if (is_success || rand()%3 != 0) {
 			#else
-			if (num_positive > BRANCH_MIN_RATIO * (double)this->new_obs_histories.size()) {
+			if (is_success) {
 			#endif /* MDEBUG */
 				this->new_obs_histories.clear();
 				this->new_true_histories.clear();
@@ -150,6 +188,9 @@ void ExploreExperiment::train_new_backprop(
 
 				new_eval_experiment->new_networks = this->new_networks;
 				this->new_networks.clear();
+
+				new_eval_experiment->local_improvement = local_improvement;
+				new_eval_experiment->global_improvement = global_improvement;
 
 				wrapper->curr_explore_experiment = NULL;
 				this->node_context->experiment = new_eval_experiment;

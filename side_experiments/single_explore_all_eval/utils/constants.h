@@ -32,14 +32,10 @@ const int NEW_SCOPE_MIN_NODES = 10;
 
 #if defined(MDEBUG) && MDEBUG
 const int EXPERIMENT_NUM_GEARS = 5;
-const int MEASURE_GEAR = 2;
 const int RAMP_EPOCH_NUM_ITERS = 40;
-const int MEASURE_STEP_NUM_ITERS = 40;
 #else
 const int EXPERIMENT_NUM_GEARS = 9;
-const int MEASURE_GEAR = 4;
 const int RAMP_EPOCH_NUM_ITERS = 4000;
-const int MEASURE_STEP_NUM_ITERS = 4000;
 #endif /* MDEBUG */
 
 const double BRANCH_MIN_RATIO = 0.1;
