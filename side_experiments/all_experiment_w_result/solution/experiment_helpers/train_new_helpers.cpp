@@ -127,10 +127,13 @@ void Experiment::train_new_backprop(double target_val,
 
 			this->new_networks.push_back(new_network);
 
-			this->curr_ramp = 0;
-			this->measure_status = MEASURE_STATUS_N_A;
+			// this->curr_ramp = 0;
+			// this->measure_status = MEASURE_STATUS_N_A;
 
-			this->state = EXPERIMENT_STATE_RAMP;
+			// this->state = EXPERIMENT_STATE_RAMP;
+			// this->state_iter = 0;
+
+			this->state = EXPERIMENT_STATE_INIT_MEASURE;
 			this->state_iter = 0;
 		} else {
 			delete new_network;

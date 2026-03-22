@@ -25,8 +25,9 @@ const int EXPERIMENT_STATE_TRAIN_NEW = 1;
 /**
  * - retrain existing during train_new
  */
-const int EXPERIMENT_STATE_RAMP = 2;
-const int EXPERIMENT_STATE_MEASURE = 3;
+const int EXPERIMENT_STATE_INIT_MEASURE = 2;
+const int EXPERIMENT_STATE_RAMP = 3;
+const int EXPERIMENT_STATE_MEASURE = 4;
 
 const int MEASURE_STATUS_N_A = 0;
 const int MEASURE_STATUS_SUCCESS = 1;
@@ -161,6 +162,30 @@ public:
 							   ExperimentState* experiment_state);
 	void result_train_new_exit_step(SolutionWrapper* wrapper,
 									ExperimentState* experiment_state);
+
+	void init_measure_check_activate(std::vector<double>& obs,
+									 bool& is_next,
+									 bool& is_done,
+									 SolutionWrapper* wrapper,
+									 ExperimentHistory* history);
+	void init_measure_step(std::vector<double>& obs,
+						   int& action,
+						   bool& is_next,
+						   SolutionWrapper* wrapper,
+						   ExperimentState* experiment_state);
+	void init_measure_exit_step(SolutionWrapper* wrapper,
+								ExperimentState* experiment_state);
+	void init_measure_backprop(double target_val,
+							   ExperimentHistory* history,
+							   SolutionWrapper* wrapper);
+
+	void result_init_measure_step(std::vector<double>& obs,
+								  int& action,
+								  bool& is_next,
+								  SolutionWrapper* wrapper,
+								  ExperimentState* experiment_state);
+	void result_init_measure_exit_step(SolutionWrapper* wrapper,
+									   ExperimentState* experiment_state);
 
 	void ramp_check_activate(std::vector<double>& obs,
 							 SolutionWrapper* wrapper,

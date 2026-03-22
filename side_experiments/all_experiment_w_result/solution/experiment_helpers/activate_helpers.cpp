@@ -36,6 +36,13 @@ void Experiment::check_activate(AbstractNode* experiment_node,
 								 wrapper,
 								 history);
 		break;
+	case EXPERIMENT_STATE_INIT_MEASURE:
+		init_measure_check_activate(obs,
+									is_next,
+									is_done,
+									wrapper,
+									history);
+		break;
 	case EXPERIMENT_STATE_RAMP:
 	case EXPERIMENT_STATE_MEASURE:
 		ramp_check_activate(obs,
@@ -66,6 +73,13 @@ void Experiment::experiment_step(vector<double>& obs,
 					   is_next,
 					   wrapper,
 					   experiment_state);
+		break;
+	case EXPERIMENT_STATE_INIT_MEASURE:
+		init_measure_step(obs,
+						  action,
+						  is_next,
+						  wrapper,
+						  experiment_state);
 		break;
 	case EXPERIMENT_STATE_RAMP:
 	case EXPERIMENT_STATE_MEASURE:
@@ -100,6 +114,10 @@ void Experiment::experiment_exit_step(SolutionWrapper* wrapper) {
 		train_new_exit_step(wrapper,
 							experiment_state);
 		break;
+	case EXPERIMENT_STATE_INIT_MEASURE:
+		init_measure_exit_step(wrapper,
+							   experiment_state);
+		break;
 	case EXPERIMENT_STATE_RAMP:
 	case EXPERIMENT_STATE_MEASURE:
 		ramp_exit_step(wrapper,
@@ -122,6 +140,11 @@ void Experiment::backprop(double target_val,
 		train_new_backprop(target_val,
 						   history,
 						   wrapper);
+		break;
+	case EXPERIMENT_STATE_INIT_MEASURE:
+		init_measure_backprop(target_val,
+							  history,
+							  wrapper);
 		break;
 	case EXPERIMENT_STATE_RAMP:
 	case EXPERIMENT_STATE_MEASURE:
@@ -181,6 +204,13 @@ void Experiment::result_step(vector<double>& obs,
 							  wrapper,
 							  experiment_state);
 		break;
+	case EXPERIMENT_STATE_INIT_MEASURE:
+		result_init_measure_step(obs,
+								 action,
+								 is_next,
+								 wrapper,
+								 experiment_state);
+		break;
 	case EXPERIMENT_STATE_RAMP:
 	case EXPERIMENT_STATE_MEASURE:
 		result_ramp_step(obs,
@@ -213,6 +243,10 @@ void Experiment::result_exit_step(SolutionWrapper* wrapper) {
 	case EXPERIMENT_STATE_TRAIN_NEW:
 		result_train_new_exit_step(wrapper,
 								   experiment_state);
+		break;
+	case EXPERIMENT_STATE_INIT_MEASURE:
+		result_init_measure_exit_step(wrapper,
+									  experiment_state);
 		break;
 	case EXPERIMENT_STATE_RAMP:
 	case EXPERIMENT_STATE_MEASURE:
