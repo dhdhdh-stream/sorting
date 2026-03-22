@@ -38,7 +38,6 @@ Experiment::~Experiment() {
 ExperimentHistory::ExperimentHistory(Experiment* experiment) {
 	switch (experiment->state) {
 	case EXPERIMENT_STATE_RAMP:
-	case EXPERIMENT_STATE_MEASURE:
 		{
 			uniform_int_distribution<int> on_distribution(0, EXPERIMENT_NUM_GEARS);
 			if (experiment->curr_ramp >= on_distribution(generator)) {

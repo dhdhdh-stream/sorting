@@ -6,6 +6,7 @@
 #include "network.h"
 #include "obs_node.h"
 #include "scope.h"
+#include "solution.h"
 #include "solution_wrapper.h"
 
 using namespace std;
@@ -13,10 +14,10 @@ using namespace std;
 #if defined(MDEBUG) && MDEBUG
 const int TRAIN_NEW_NUM_DATAPOINTS = 20;
 #else
-const int TRAIN_NEW_NUM_DATAPOINTS = 4000;
+const int TRAIN_NEW_NUM_DATAPOINTS = 5000;
 #endif /* MDEBUG */
 
-const double MIN_EXPERIMENT_DIFF_RATIO = 0.8;
+const double VERIFY_RATIO = 0.2;
 
 void Experiment::train_new_check_activate(
 		vector<double>& obs,
@@ -92,9 +93,12 @@ void Experiment::train_new_backprop(double target_val,
 									SolutionWrapper* wrapper) {
 	if ((int)this->new_obs_histories.size() >= TRAIN_NEW_NUM_DATAPOINTS) {
 		Network* new_network = new Network(this->new_obs_histories[0].size());
-		uniform_int_distribution<int> new_input_distribution(0, this->new_obs_histories.size()-1);
+
+		int num_train = (1.0 - VERIFY_RATIO) * (double)this->new_obs_histories.size();
+
+		uniform_int_distribution<int> distribution(0, num_train-1);
 		for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
-			int rand_index = new_input_distribution(generator);
+			int rand_index = distribution(generator);
 
 			new_network->activate(this->new_obs_histories[rand_index]);
 
@@ -103,38 +107,72 @@ void Experiment::train_new_backprop(double target_val,
 			new_network->backprop(error);
 		}
 
-		vector<double> network_outputs(this->new_obs_histories.size());
-		for (int h_index = 0; h_index < (int)this->new_obs_histories.size(); h_index++) {
+		double sum_vals = 0.0;
+		for (int h_index = num_train; h_index < (int)this->new_obs_histories.size(); h_index++) {
 			new_network->activate(this->new_obs_histories[h_index]);
 
-			network_outputs[h_index] = new_network->output->acti_vals[0];
-		}
-
-		int num_positive = 0;
-		for (int i_index = 0; i_index < (int)this->new_obs_histories.size(); i_index++) {
-			if (network_outputs[i_index] >= 0.0) {
-				num_positive++;
+			if (new_network->output->acti_vals[0] >= 0.0) {
+				sum_vals += this->new_target_val_histories[h_index];
 			}
+		}
+		this->local_improvement = sum_vals / ((double)this->new_obs_histories.size() - (double)num_train);
+
+		int total_iters = wrapper->eval_iter - this->starting_iter;
+		if (total_iters < 0) {
+			total_iters += numeric_limits<int>::max();
+		}
+		double average_hits_per_run = (10.0 * (double)this->new_obs_histories.size()) / (double)total_iters;
+		this->global_improvement = average_hits_per_run * this->local_improvement;
+
+		bool is_success = false;
+		if (wrapper->solution->last_scores.size() >= MIN_NUM_LAST_TRACK) {
+			int num_better_than = 0;
+			for (list<double>::iterator it = wrapper->solution->last_scores.begin();
+					it != wrapper->solution->last_scores.end(); it++) {
+				if (this->global_improvement >= *it) {
+					num_better_than++;
+				}
+			}
+
+			double target_better_than = LAST_BETTER_THAN_RATIO * (double)wrapper->solution->last_scores.size();
+
+			if (num_better_than >= target_better_than) {
+				is_success = true;
+			}
+
+			if (wrapper->solution->last_scores.size() >= NUM_LAST_TRACK) {
+				wrapper->solution->last_scores.pop_front();
+			}
+			wrapper->solution->last_scores.push_back(this->global_improvement);
+		} else {
+			wrapper->solution->last_scores.push_back(this->global_improvement);
 		}
 
 		#if defined(MDEBUG) && MDEBUG
-		if (num_positive > BRANCH_MIN_RATIO * (double)this->new_obs_histories.size() || rand()%4 != 0) {
+		if (is_success || rand()%3 != 0) {
 		#else
-		if (num_positive > BRANCH_MIN_RATIO * (double)this->new_obs_histories.size()) {
+		if (is_success) {
 		#endif /* MDEBUG */
 			this->new_obs_histories.clear();
 			this->new_target_val_histories.clear();
 
 			this->new_networks.push_back(new_network);
 
-			// this->curr_ramp = 0;
-			// this->measure_status = MEASURE_STATUS_N_A;
+			this->curr_ramp = 0;
 
-			// this->state = EXPERIMENT_STATE_RAMP;
-			// this->state_iter = 0;
+			this->existing_sum_scores = 0.0;
+			this->existing_count = 0;
+			this->new_sum_scores = 0.0;
+			this->new_count = 0;
 
-			this->state = EXPERIMENT_STATE_INIT_MEASURE;
+			this->state = EXPERIMENT_STATE_RAMP;
 			this->state_iter = 0;
+
+			// this->new_sum_scores = 0.0;
+			// this->new_count = 0;
+
+			// this->state = EXPERIMENT_STATE_INIT_MEASURE;
+			// this->state_iter = 0;
 		} else {
 			delete new_network;
 

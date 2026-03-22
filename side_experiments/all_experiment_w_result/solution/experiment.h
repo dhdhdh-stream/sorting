@@ -27,11 +27,6 @@ const int EXPERIMENT_STATE_TRAIN_NEW = 1;
  */
 const int EXPERIMENT_STATE_INIT_MEASURE = 2;
 const int EXPERIMENT_STATE_RAMP = 3;
-const int EXPERIMENT_STATE_MEASURE = 4;
-
-const int MEASURE_STATUS_N_A = 0;
-const int MEASURE_STATUS_SUCCESS = 1;
-const int MEASURE_STATUS_FAIL = 2;
 
 class ExperimentHistory;
 class ExperimentState;
@@ -56,25 +51,25 @@ public:
 	std::vector<Scope*> best_scopes;
 	AbstractNode* best_exit_next_node;
 
+	int starting_iter;
+
 	std::vector<std::vector<double>> new_obs_histories;
 	std::vector<double> new_target_val_histories;
 
 	std::vector<Network*> new_networks;
 
-	int starting_iter;
-
-	std::vector<double> existing_scores;
-	std::vector<double> new_scores;
+	double existing_sum_scores;
+	int existing_count;
+	double new_sum_scores;
+	int new_count;
 
 	int curr_ramp;
 	/**
 	 * - simply init to 0 and fast fail
 	 */
-	int measure_status;
 
 	double local_improvement;
 	double global_improvement;
-	double score_standard_deviation;
 
 	Experiment(ObsNode* node_context);
 	~Experiment();
