@@ -10,10 +10,18 @@ class AbstractNode;
 class Network;
 class SolutionWrapper;
 
+const int EVAL_EXPERIMENT_STATE_RAMP = 0;
+const int EVAL_EXPERIMENT_STATE_MEASURE = 1;
+
+const int MEASURE_STATUS_N_A = 0;
+const int MEASURE_STATUS_SUCCESS = 1;
+const int MEASURE_STATUS_FAIL = 2;
+
 class EvalExperimentHistory;
 class EvalExperimentState;
 class EvalExperiment : public AbstractExperiment {
 public:
+	int state;
 	int state_iter;
 
 	Scope* best_new_scope;
@@ -23,18 +31,20 @@ public:
 
 	std::vector<Network*> new_networks;
 
-	double existing_sum_scores;
-	int existing_count;
-	double new_sum_scores;
-	int new_count;
+	std::vector<double> existing_scores;
+	std::vector<double> new_scores;
 
 	int curr_ramp;
 	/**
 	 * - simply init to 0 and fast fail
 	 */
+	int measure_status;
+
+	int starting_iter;
 
 	double local_improvement;
 	double global_improvement;
+	double score_standard_deviation;
 
 	EvalExperiment();
 	~EvalExperiment();

@@ -14,13 +14,10 @@ using namespace std;
 EvalExperiment::EvalExperiment() {
 	this->best_new_scope = NULL;
 
-	this->existing_sum_scores = 0.0;
-	this->existing_count = 0;
-	this->new_sum_scores = 0.0;
-	this->new_count = 0;
-
 	this->curr_ramp = 0;
+	this->measure_status = MEASURE_STATUS_N_A;
 
+	this->state = EVAL_EXPERIMENT_STATE_RAMP;
 	this->state_iter = 0;
 }
 
