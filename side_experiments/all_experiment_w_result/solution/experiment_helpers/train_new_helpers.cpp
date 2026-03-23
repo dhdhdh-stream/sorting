@@ -1,5 +1,7 @@
 #include "experiment.h"
 
+#include <algorithm>
+
 #include "constants.h"
 #include "globals.h"
 #include "helpers.h"
@@ -15,6 +17,7 @@ using namespace std;
 const int TRAIN_NEW_NUM_DATAPOINTS = 20;
 #else
 const int TRAIN_NEW_NUM_DATAPOINTS = 5000;
+// const int TRAIN_NEW_NUM_DATAPOINTS = 250;
 #endif /* MDEBUG */
 
 const double VERIFY_RATIO = 0.2;
@@ -42,11 +45,18 @@ void Experiment::train_new_check_activate(
 		wrapper->prev_clean_result = next_clean_result;
 
 		wrapper->num_experiments++;
-		if (diff < 0.0) {
-			wrapper->run_is_fail = true;
-			is_next = true;
-			is_done = true;
-		}
+		// if (diff < 0.0) {
+		// 	// wrapper->run_is_fail = true;
+		// 	// is_next = true;
+		// 	// is_done = true;
+
+		// 	uniform_int_distribution<int> continue_distribution(0, 9);
+		// 	if (continue_distribution(generator) == 0) {
+		// 		wrapper->run_is_fail = true;
+		// 		is_next = true;
+		// 		is_done = true;
+		// 	}
+		// }
 	}
 }
 
@@ -92,6 +102,15 @@ void Experiment::train_new_backprop(double target_val,
 									ExperimentHistory* history,
 									SolutionWrapper* wrapper) {
 	if ((int)this->new_obs_histories.size() >= TRAIN_NEW_NUM_DATAPOINTS) {
+		{
+			default_random_engine generator_copy = generator;
+			shuffle(this->new_obs_histories.begin(), this->new_obs_histories.end(), generator_copy);
+		}
+		{
+			default_random_engine generator_copy = generator;
+			shuffle(this->new_target_val_histories.begin(), this->new_target_val_histories.end(), generator_copy);
+		}
+
 		Network* new_network = new Network(this->new_obs_histories[0].size());
 
 		int num_train = (1.0 - VERIFY_RATIO) * (double)this->new_obs_histories.size();
@@ -125,27 +144,29 @@ void Experiment::train_new_backprop(double target_val,
 		double global_improvement = average_hits_per_run * local_improvement;
 
 		bool is_success = false;
-		if (wrapper->solution->train_new_last_scores.size() >= MIN_NUM_LAST_TRACK) {
-			int num_better_than = 0;
-			for (list<double>::iterator it = wrapper->solution->train_new_last_scores.begin();
-					it != wrapper->solution->train_new_last_scores.end(); it++) {
-				if (global_improvement >= *it) {
-					num_better_than++;
+		if (local_improvement > 0.0) {
+			if (wrapper->solution->train_new_last_scores.size() >= MIN_NUM_LAST_TRACK) {
+				int num_better_than = 0;
+				for (list<double>::iterator it = wrapper->solution->train_new_last_scores.begin();
+						it != wrapper->solution->train_new_last_scores.end(); it++) {
+					if (global_improvement >= *it) {
+						num_better_than++;
+					}
 				}
-			}
 
-			double target_better_than = LAST_BETTER_THAN_RATIO * (double)wrapper->solution->train_new_last_scores.size();
+				double target_better_than = LAST_BETTER_THAN_RATIO * (double)wrapper->solution->train_new_last_scores.size();
 
-			if (num_better_than >= target_better_than) {
-				is_success = true;
-			}
+				if (num_better_than >= target_better_than) {
+					is_success = true;
+				}
 
-			if (wrapper->solution->train_new_last_scores.size() >= NUM_LAST_TRACK) {
-				wrapper->solution->train_new_last_scores.pop_front();
+				if (wrapper->solution->train_new_last_scores.size() >= NUM_LAST_TRACK) {
+					wrapper->solution->train_new_last_scores.pop_front();
+				}
+				wrapper->solution->train_new_last_scores.push_back(global_improvement);
+			} else {
+				wrapper->solution->train_new_last_scores.push_back(global_improvement);
 			}
-			wrapper->solution->train_new_last_scores.push_back(global_improvement);
-		} else {
-			wrapper->solution->train_new_last_scores.push_back(global_improvement);
 		}
 
 		#if defined(MDEBUG) && MDEBUG

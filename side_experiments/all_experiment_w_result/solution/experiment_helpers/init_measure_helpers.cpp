@@ -7,6 +7,7 @@
 #include "obs_node.h"
 #include "scope.h"
 #include "solution_wrapper.h"
+#include "utilities.h"
 
 using namespace std;
 

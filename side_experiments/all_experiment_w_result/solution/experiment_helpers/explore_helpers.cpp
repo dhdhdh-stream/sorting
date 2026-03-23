@@ -138,21 +138,38 @@ void Experiment::explore_check_activate(
 		wrapper->prev_clean_result = next_clean_result;
 
 		wrapper->num_experiments++;
-		if (this->curr_surprise < 0.0) {
-			if (this->curr_new_scope != NULL) {
-				delete this->curr_new_scope;
-				this->curr_new_scope = NULL;
-			}
-			this->curr_step_types.clear();
-			this->curr_actions.clear();
-			this->curr_scopes.clear();
+		// if (this->curr_surprise < 0.0) {
+		// 	// if (this->curr_new_scope != NULL) {
+		// 	// 	delete this->curr_new_scope;
+		// 	// 	this->curr_new_scope = NULL;
+		// 	// }
+		// 	// this->curr_step_types.clear();
+		// 	// this->curr_actions.clear();
+		// 	// this->curr_scopes.clear();
 
-			this->state_iter++;
+		// 	// this->state_iter++;
 
-			wrapper->run_is_fail = true;
-			is_next = true;
-			is_done = true;
-		}
+		// 	// wrapper->run_is_fail = true;
+		// 	// is_next = true;
+		// 	// is_done = true;
+
+		// 	uniform_int_distribution<int> continue_distribution(0, 9);
+		// 	if (continue_distribution(generator) == 0) {
+		// 		if (this->curr_new_scope != NULL) {
+		// 			delete this->curr_new_scope;
+		// 			this->curr_new_scope = NULL;
+		// 		}
+		// 		this->curr_step_types.clear();
+		// 		this->curr_actions.clear();
+		// 		this->curr_scopes.clear();
+
+		// 		this->state_iter++;
+
+		// 		wrapper->run_is_fail = true;
+		// 		is_next = true;
+		// 		is_done = true;
+		// 	}
+		// }
 	}
 }
 

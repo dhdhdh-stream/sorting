@@ -140,27 +140,29 @@ void ExploreExperiment::train_new_backprop(
 			double global_improvement = average_hits_per_run * local_improvement;
 
 			bool is_success = false;
-			if (wrapper->solution->train_new_last_scores.size() >= MIN_NUM_LAST_TRACK) {
-				int num_better_than = 0;
-				for (list<double>::iterator it = wrapper->solution->train_new_last_scores.begin();
-						it != wrapper->solution->train_new_last_scores.end(); it++) {
-					if (global_improvement >= *it) {
-						num_better_than++;
+			if (local_improvement > 0.0) {
+				if (wrapper->solution->train_new_last_scores.size() >= MIN_NUM_LAST_TRACK) {
+					int num_better_than = 0;
+					for (list<double>::iterator it = wrapper->solution->train_new_last_scores.begin();
+							it != wrapper->solution->train_new_last_scores.end(); it++) {
+						if (global_improvement >= *it) {
+							num_better_than++;
+						}
 					}
-				}
 
-				double target_better_than = LAST_BETTER_THAN_RATIO * (double)wrapper->solution->train_new_last_scores.size();
+					double target_better_than = LAST_BETTER_THAN_RATIO * (double)wrapper->solution->train_new_last_scores.size();
 
-				if (num_better_than >= target_better_than) {
-					is_success = true;
-				}
+					if (num_better_than >= target_better_than) {
+						is_success = true;
+					}
 
-				if (wrapper->solution->train_new_last_scores.size() >= NUM_LAST_TRACK) {
-					wrapper->solution->train_new_last_scores.pop_front();
+					if (wrapper->solution->train_new_last_scores.size() >= NUM_LAST_TRACK) {
+						wrapper->solution->train_new_last_scores.pop_front();
+					}
+					wrapper->solution->train_new_last_scores.push_back(global_improvement);
+				} else {
+					wrapper->solution->train_new_last_scores.push_back(global_improvement);
 				}
-				wrapper->solution->train_new_last_scores.push_back(global_improvement);
-			} else {
-				wrapper->solution->train_new_last_scores.push_back(global_improvement);
 			}
 
 			#if defined(MDEBUG) && MDEBUG

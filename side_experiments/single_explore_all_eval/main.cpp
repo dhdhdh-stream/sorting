@@ -7,6 +7,14 @@
 
 // - check with results
 
+// - actually, outer combine simply very difficult
+
+// - maybe early on, try to get number of experiments above 10
+//   - but later on, go for 1 in 20?
+
+// - with 10 percent filter every 10, not worse, but slower?
+//   - every 40 faster
+
 #include <chrono>
 #include <iostream>
 #include <map>

@@ -4,6 +4,16 @@
 
 // - one explore per safe signal
 
+// - 200 sample train new very slow
+//   - but not too bad actually?
+
+// TODO: try with 10% of explore going through
+// - true results better
+// - actually not that bad
+
+// - not exactly safe/unsafe
+//   - but what do you want to include as something to solve
+
 #include <chrono>
 #include <iostream>
 #include <map>
