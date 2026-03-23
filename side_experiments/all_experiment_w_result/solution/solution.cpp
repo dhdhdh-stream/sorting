@@ -92,13 +92,22 @@ void Solution::load(ifstream& input_file) {
 		this->outer_root_scope_ids.push_back(stoi(scope_id_line));
 	}
 
-	string num_last_scores_line;
-	getline(input_file, num_last_scores_line);
-	int num_last_scores = stoi(num_last_scores_line);
-	for (int e_index = 0; e_index < num_last_scores; e_index++) {
+	string num_train_new_last_scores_line;
+	getline(input_file, num_train_new_last_scores_line);
+	int num_train_new_last_scores = stoi(num_train_new_last_scores_line);
+	for (int e_index = 0; e_index < num_train_new_last_scores; e_index++) {
 		string score_line;
 		getline(input_file, score_line);
-		this->last_scores.push_back(stod(score_line));
+		this->train_new_last_scores.push_back(stod(score_line));
+	}
+
+	string num_ramp_last_scores_line;
+	getline(input_file, num_ramp_last_scores_line);
+	int num_ramp_last_scores = stoi(num_ramp_last_scores_line);
+	for (int e_index = 0; e_index < num_ramp_last_scores; e_index++) {
+		string score_line;
+		getline(input_file, score_line);
+		this->ramp_last_scores.push_back(stod(score_line));
 	}
 
 	string history_size_line;
@@ -226,9 +235,15 @@ void Solution::save(ofstream& output_file) {
 		output_file << this->outer_root_scope_ids[r_index] << endl;
 	}
 
-	output_file << this->last_scores.size() << endl;
-	for (list<double>::iterator it = this->last_scores.begin();
-			it != this->last_scores.end(); it++) {
+	output_file << this->train_new_last_scores.size() << endl;
+	for (list<double>::iterator it = this->train_new_last_scores.begin();
+			it != this->train_new_last_scores.end(); it++) {
+		output_file << *it << endl;
+	}
+
+	output_file << this->ramp_last_scores.size() << endl;
+	for (list<double>::iterator it = this->ramp_last_scores.begin();
+			it != this->ramp_last_scores.end(); it++) {
 		output_file << *it << endl;
 	}
 

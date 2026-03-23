@@ -153,7 +153,8 @@ void SolutionWrapper::combine(string other_path,
 		this->solution->outer_scopes[scope_index]->id = scope_index;
 	}
 
-	this->solution->last_scores.clear();
+	this->solution->train_new_last_scores.clear();
+	this->solution->ramp_last_scores.clear();
 
 	this->solution->state = SOLUTION_STATE_OUTER;
 	this->solution->timestamp = 0;

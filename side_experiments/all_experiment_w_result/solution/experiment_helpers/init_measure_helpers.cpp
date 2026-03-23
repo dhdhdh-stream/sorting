@@ -49,8 +49,7 @@ void Experiment::init_measure_check_activate(
 
 			double next_clean_result = clean_result_helper(wrapper);
 			double diff = next_clean_result - wrapper->prev_clean_result;
-			this->new_sum_scores += diff;
-			this->new_count++;
+			this->new_scores.push_back(diff);
 			wrapper->prev_clean_result = next_clean_result;
 
 			if (diff < 0.0) {
@@ -103,14 +102,17 @@ void Experiment::init_measure_exit_step(SolutionWrapper* wrapper,
 void Experiment::init_measure_backprop(double target_val,
 									   ExperimentHistory* history,
 									   SolutionWrapper* wrapper) {
-	if (this->new_count >= INIT_MEASURE_NUM_DATAPOINTS) {
-		if (this->new_sum_scores > 0.0) {
-			this->curr_ramp = 0;
+	if (this->new_scores.size() >= INIT_MEASURE_NUM_DATAPOINTS) {
+		double sum_vals = 0.0;
+		for (int h_index = 0; h_index < (int)this->new_scores.size(); h_index++) {
+			sum_vals += this->new_scores[h_index];
+		}
 
-			this->existing_sum_scores = 0.0;
-			this->existing_count = 0;
-			this->new_sum_scores = 0.0;
-			this->new_count = 0;
+		if (sum_vals > 0.0) {
+			this->new_scores.clear();
+
+			this->curr_ramp = 0;
+			this->measure_status = MEASURE_STATUS_N_A;
 
 			this->state = EXPERIMENT_STATE_RAMP;
 			this->state_iter = 0;

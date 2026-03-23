@@ -27,6 +27,11 @@ const int EXPERIMENT_STATE_TRAIN_NEW = 1;
  */
 const int EXPERIMENT_STATE_INIT_MEASURE = 2;
 const int EXPERIMENT_STATE_RAMP = 3;
+const int EXPERIMENT_STATE_MEASURE = 4;
+
+const int MEASURE_STATUS_N_A = 0;
+const int MEASURE_STATUS_SUCCESS = 1;
+const int MEASURE_STATUS_FAIL = 2;
 
 class ExperimentHistory;
 class ExperimentState;
@@ -58,10 +63,9 @@ public:
 
 	std::vector<Network*> new_networks;
 
-	double existing_sum_scores;
-	int existing_count;
-	double new_sum_scores;
-	int new_count;
+	std::vector<double> existing_scores;
+	std::vector<double> new_scores;
+	int measure_status;
 
 	int curr_ramp;
 	/**

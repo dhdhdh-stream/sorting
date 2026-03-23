@@ -44,6 +44,7 @@ void Experiment::check_activate(AbstractNode* experiment_node,
 									history);
 		break;
 	case EXPERIMENT_STATE_RAMP:
+	case EXPERIMENT_STATE_MEASURE:
 		ramp_check_activate(obs,
 							wrapper,
 							history);
@@ -81,6 +82,7 @@ void Experiment::experiment_step(vector<double>& obs,
 						  experiment_state);
 		break;
 	case EXPERIMENT_STATE_RAMP:
+	case EXPERIMENT_STATE_MEASURE:
 		ramp_step(obs,
 				  action,
 				  is_next,
@@ -117,6 +119,7 @@ void Experiment::experiment_exit_step(SolutionWrapper* wrapper) {
 							   experiment_state);
 		break;
 	case EXPERIMENT_STATE_RAMP:
+	case EXPERIMENT_STATE_MEASURE:
 		ramp_exit_step(wrapper,
 					   experiment_state);
 		break;
@@ -144,6 +147,7 @@ void Experiment::backprop(double target_val,
 							  wrapper);
 		break;
 	case EXPERIMENT_STATE_RAMP:
+	case EXPERIMENT_STATE_MEASURE:
 		ramp_backprop(target_val,
 					  history,
 					  wrapper,
@@ -157,6 +161,7 @@ void Experiment::result_check_activate(AbstractNode* experiment_node,
 									   SolutionWrapper* wrapper) {
 	switch (this->state) {
 	case EXPERIMENT_STATE_RAMP:
+	case EXPERIMENT_STATE_MEASURE:
 		{
 			ExperimentHistory* history;
 			map<Experiment*, ExperimentHistory*>::iterator it =
@@ -207,6 +212,7 @@ void Experiment::result_step(vector<double>& obs,
 								 experiment_state);
 		break;
 	case EXPERIMENT_STATE_RAMP:
+	case EXPERIMENT_STATE_MEASURE:
 		result_ramp_step(obs,
 						 action,
 						 is_next,
@@ -243,6 +249,7 @@ void Experiment::result_exit_step(SolutionWrapper* wrapper) {
 									  experiment_state);
 		break;
 	case EXPERIMENT_STATE_RAMP:
+	case EXPERIMENT_STATE_MEASURE:
 		result_ramp_exit_step(wrapper,
 							  experiment_state);
 		break;

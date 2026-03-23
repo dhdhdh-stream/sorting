@@ -115,37 +115,37 @@ void Experiment::train_new_backprop(double target_val,
 				sum_vals += this->new_target_val_histories[h_index];
 			}
 		}
-		this->local_improvement = sum_vals / ((double)this->new_obs_histories.size() - (double)num_train);
+		double local_improvement = sum_vals / ((double)this->new_obs_histories.size() - (double)num_train);
 
 		int total_iters = wrapper->eval_iter - this->starting_iter;
 		if (total_iters < 0) {
 			total_iters += numeric_limits<int>::max();
 		}
 		double average_hits_per_run = (10.0 * (double)this->new_obs_histories.size()) / (double)total_iters;
-		this->global_improvement = average_hits_per_run * this->local_improvement;
+		double global_improvement = average_hits_per_run * local_improvement;
 
 		bool is_success = false;
-		if (wrapper->solution->last_scores.size() >= MIN_NUM_LAST_TRACK) {
+		if (wrapper->solution->train_new_last_scores.size() >= MIN_NUM_LAST_TRACK) {
 			int num_better_than = 0;
-			for (list<double>::iterator it = wrapper->solution->last_scores.begin();
-					it != wrapper->solution->last_scores.end(); it++) {
-				if (this->global_improvement >= *it) {
+			for (list<double>::iterator it = wrapper->solution->train_new_last_scores.begin();
+					it != wrapper->solution->train_new_last_scores.end(); it++) {
+				if (global_improvement >= *it) {
 					num_better_than++;
 				}
 			}
 
-			double target_better_than = LAST_BETTER_THAN_RATIO * (double)wrapper->solution->last_scores.size();
+			double target_better_than = LAST_BETTER_THAN_RATIO * (double)wrapper->solution->train_new_last_scores.size();
 
 			if (num_better_than >= target_better_than) {
 				is_success = true;
 			}
 
-			if (wrapper->solution->last_scores.size() >= NUM_LAST_TRACK) {
-				wrapper->solution->last_scores.pop_front();
+			if (wrapper->solution->train_new_last_scores.size() >= NUM_LAST_TRACK) {
+				wrapper->solution->train_new_last_scores.pop_front();
 			}
-			wrapper->solution->last_scores.push_back(this->global_improvement);
+			wrapper->solution->train_new_last_scores.push_back(global_improvement);
 		} else {
-			wrapper->solution->last_scores.push_back(this->global_improvement);
+			wrapper->solution->train_new_last_scores.push_back(global_improvement);
 		}
 
 		#if defined(MDEBUG) && MDEBUG
@@ -159,17 +159,10 @@ void Experiment::train_new_backprop(double target_val,
 			this->new_networks.push_back(new_network);
 
 			this->curr_ramp = 0;
-
-			this->existing_sum_scores = 0.0;
-			this->existing_count = 0;
-			this->new_sum_scores = 0.0;
-			this->new_count = 0;
+			this->measure_status = MEASURE_STATUS_N_A;
 
 			this->state = EXPERIMENT_STATE_RAMP;
 			this->state_iter = 0;
-
-			// this->new_sum_scores = 0.0;
-			// this->new_count = 0;
 
 			// this->state = EXPERIMENT_STATE_INIT_MEASURE;
 			// this->state_iter = 0;
