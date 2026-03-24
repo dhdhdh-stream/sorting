@@ -12,7 +12,23 @@
 // - actually not that bad
 
 // - not exactly safe/unsafe
-//   - but what do you want to include as something to solve
+//   - but: what do you want to include as something to solve
+
+// - even no save/explore always going through not that bad
+//   - w/ result probably making things way too good
+//     - or indicates how impactful signals can be
+// - means clean not important besides explore/train new
+//   - ramp either works regardless, or options that are best in damage get selected
+
+// - can have clean vs. damage phase
+//   - train existing signal on clean
+
+// TODO: try not safe, but familiar
+// - so while recent nodes are in unfamiliar spots, don't try/register stuff
+// - but once back to familiar spots, begin trying things again
+
+// - should one bad signal halt progress?
+// - should one good signal restart it?
 
 #include <chrono>
 #include <iostream>

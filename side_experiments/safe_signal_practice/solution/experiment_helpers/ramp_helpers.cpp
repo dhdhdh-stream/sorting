@@ -203,27 +203,27 @@ void Experiment::ramp_backprop(double target_val,
 				if (t_score >= SUCCESS_T_SCORE) {
 				#endif /* MDEBUG */
 					bool is_success = false;
-					if (wrapper->solution->last_scores.size() >= MIN_NUM_LAST_TRACK) {
+					if (wrapper->solution->ramp_last_scores.size() >= MIN_NUM_LAST_TRACK) {
 						int num_better_than = 0;
-						for (list<double>::iterator it = wrapper->solution->last_scores.begin();
-								it != wrapper->solution->last_scores.end(); it++) {
+						for (list<double>::iterator it = wrapper->solution->ramp_last_scores.begin();
+								it != wrapper->solution->ramp_last_scores.end(); it++) {
 							if (this->global_improvement >= *it) {
 								num_better_than++;
 							}
 						}
 
-						double target_better_than = LAST_BETTER_THAN_RATIO * (double)wrapper->solution->last_scores.size();
+						double target_better_than = LAST_BETTER_THAN_RATIO * (double)wrapper->solution->ramp_last_scores.size();
 
 						if (num_better_than >= target_better_than) {
 							is_success = true;
 						}
 
-						if (wrapper->solution->last_scores.size() >= NUM_LAST_TRACK) {
-							wrapper->solution->last_scores.pop_front();
+						if (wrapper->solution->ramp_last_scores.size() >= NUM_LAST_TRACK) {
+							wrapper->solution->ramp_last_scores.pop_front();
 						}
-						wrapper->solution->last_scores.push_back(this->global_improvement);
+						wrapper->solution->ramp_last_scores.push_back(this->global_improvement);
 					} else {
-						wrapper->solution->last_scores.push_back(this->global_improvement);
+						wrapper->solution->ramp_last_scores.push_back(this->global_improvement);
 					}
 
 					#if defined(MDEBUG) && MDEBUG

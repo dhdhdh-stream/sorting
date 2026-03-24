@@ -150,7 +150,8 @@ void Experiment::explore_check_activate(
 			true_better = false;
 		}
 
-		this->curr_surprise = next_clean_result - this->existing_network->output->acti_vals[0];
+		// this->curr_surprise = next_clean_result - this->existing_network->output->acti_vals[0];
+		this->curr_surprise = next_clean_result - wrapper->prev_clean_result;
 
 		if (next_clean_result > this->existing_network->output->acti_vals[0]) {
 			this->num_explore_true_better++;
@@ -179,7 +180,8 @@ void Experiment::explore_check_activate(
 		wrapper->prev_signal = signal;
 
 		wrapper->num_experiments++;
-		if (this->curr_surprise < 0.0) {
+		// if (this->curr_surprise < 0.0) {
+		if (signal < this->existing_signal_network->output->acti_vals[0]) {
 			if (this->curr_new_scope != NULL) {
 				delete this->curr_new_scope;
 				this->curr_new_scope = NULL;
@@ -307,6 +309,8 @@ void Experiment::explore_backprop(double target_val,
 			this->num_train_new_signal_better = 0;
 			this->num_train_new_true_match = 0;
 			this->num_train_new_signal_match = 0;
+
+			this->starting_iter = wrapper->eval_iter;
 
 			this->state = EXPERIMENT_STATE_TRAIN_NEW;
 			this->state_iter = 0;
