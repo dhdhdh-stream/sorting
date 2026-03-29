@@ -17,7 +17,6 @@ using namespace std;
 const int TRAIN_NEW_NUM_DATAPOINTS = 20;
 #else
 const int TRAIN_NEW_NUM_DATAPOINTS = 5000;
-// const int TRAIN_NEW_NUM_DATAPOINTS = 250;
 #endif /* MDEBUG */
 
 const double VERIFY_RATIO = 0.2;
@@ -32,7 +31,8 @@ void Experiment::train_new_check_activate(
 	 * - still only activate some of the time to prevent correlation with other experiments
 	 */
 	uniform_int_distribution<int> on_distribution(0, 9);
-	if (on_distribution(generator) == 0) {
+	if (wrapper->is_explore
+			&& on_distribution(generator) == 0) {
 		this->new_obs_histories.push_back(obs);
 
 		ExperimentState* new_experiment_state = new ExperimentState(this);
@@ -43,20 +43,6 @@ void Experiment::train_new_check_activate(
 		double diff = next_clean_result - wrapper->prev_clean_result;
 		this->new_target_val_histories.push_back(diff);
 		wrapper->prev_clean_result = next_clean_result;
-
-		wrapper->num_experiments++;
-		// if (diff < 0.0) {
-		// 	// wrapper->run_is_fail = true;
-		// 	// is_next = true;
-		// 	// is_done = true;
-
-		// 	uniform_int_distribution<int> continue_distribution(0, 9);
-		// 	if (continue_distribution(generator) == 0) {
-		// 		wrapper->run_is_fail = true;
-		// 		is_next = true;
-		// 		is_done = true;
-		// 	}
-		// }
 	}
 }
 
@@ -136,7 +122,7 @@ void Experiment::train_new_backprop(double target_val,
 		}
 		double local_improvement = sum_vals / ((double)this->new_obs_histories.size() - (double)num_train);
 
-		int total_iters = wrapper->eval_iter - this->starting_iter;
+		int total_iters = wrapper->iter - this->starting_iter;
 		if (total_iters < 0) {
 			total_iters += numeric_limits<int>::max();
 		}
@@ -184,9 +170,6 @@ void Experiment::train_new_backprop(double target_val,
 
 			this->state = EXPERIMENT_STATE_RAMP;
 			this->state_iter = 0;
-
-			// this->state = EXPERIMENT_STATE_INIT_MEASURE;
-			// this->state_iter = 0;
 		} else {
 			delete new_network;
 

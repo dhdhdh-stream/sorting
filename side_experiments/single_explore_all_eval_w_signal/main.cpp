@@ -1,3 +1,27 @@
+// - don't constantly update signals
+//   - because explore/post signal needs to block
+//     - and existing/pre signal needs to match
+
+// TODO: one issue is that wil be dominated by early explore
+// - and by the time middle explore, early already finished eval
+//   - so late never explores
+
+// - 50% single crazy explore, 50% all safe explore with signals
+
+// TODO: always have at least 1 explore per run
+// - pick first each run
+//   - even if correlation, hopefully caught by ramp
+
+// - only way to have more than 1 crazy explore per run is good signal
+//   - where there is still no exit
+//     - simply accept damage
+
+// - what if train crazy, eval clean?
+//   - doesn't make much sense without signals though
+//     - each explore has to report a score for this to be worth it
+
+// - can also split between explore, train new, and eval
+
 #include <chrono>
 #include <iostream>
 #include <map>

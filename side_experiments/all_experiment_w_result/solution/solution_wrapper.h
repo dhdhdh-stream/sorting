@@ -26,7 +26,7 @@ class SolutionWrapper {
 public:
 	Solution* solution;
 
-	int eval_iter;
+	int iter;
 
 	/**
 	 * - run variables
@@ -35,10 +35,9 @@ public:
 	std::vector<AbstractNode*> node_context;
 	std::vector<AbstractExperimentState*> experiment_context;
 
-	int num_experiments;
-	bool run_is_fail;
-
 	int num_actions;
+
+	bool is_explore;
 
 	std::map<Experiment*, ExperimentHistory*> experiment_histories;
 	/**

@@ -88,7 +88,7 @@ SolutionWrapper::SolutionWrapper(ProblemType* problem_type) {
 		this->solution->state = SOLUTION_STATE_NON_OUTER;
 	}
 
-	this->eval_iter = 0;
+	this->iter = 0;
 
 	#if defined(MDEBUG) && MDEBUG
 	this->run_index = 0;
@@ -105,7 +105,7 @@ SolutionWrapper::SolutionWrapper(std::string path,
 
 	input_file.close();
 
-	this->eval_iter = 0;
+	this->iter = 0;
 
 	#if defined(MDEBUG) && MDEBUG
 	this->run_index = 0;

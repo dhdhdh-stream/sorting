@@ -92,7 +92,7 @@ void Experiment::ramp_backprop(double target_val,
 							   ExperimentHistory* history,
 							   SolutionWrapper* wrapper,
 							   set<Scope*>& updated_scopes) {
-	if (!wrapper->run_is_fail) {
+	if (!wrapper->is_explore) {
 		if (history->is_on) {
 			if (history->hit_branch) {
 				this->new_scores.push_back(target_val);
@@ -140,7 +140,7 @@ void Experiment::ramp_backprop(double target_val,
 
 					if (this->curr_ramp == MEASURE_GEAR
 							&& this->measure_status == MEASURE_STATUS_N_A) {
-						this->starting_iter = wrapper->eval_iter;
+						this->starting_iter = wrapper->iter;
 
 						this->state = EXPERIMENT_STATE_MEASURE;
 					} else if (this->curr_ramp == EXPERIMENT_NUM_GEARS) {
@@ -178,7 +178,7 @@ void Experiment::ramp_backprop(double target_val,
 				}
 				double score_standard_deviation = sqrt(sum_variance / (double)this->new_scores.size());
 
-				int total_iters = wrapper->eval_iter - this->starting_iter;
+				int total_iters = wrapper->iter - this->starting_iter;
 				if (total_iters < 0) {
 					total_iters += numeric_limits<int>::max();
 				}

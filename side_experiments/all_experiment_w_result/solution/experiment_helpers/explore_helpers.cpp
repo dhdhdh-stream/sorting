@@ -34,7 +34,8 @@ void Experiment::explore_check_activate(
 	 * - still only activate some of the time to prevent correlation with other experiments
 	 */
 	uniform_int_distribution<int> on_distribution(0, 9);
-	if (on_distribution(generator) == 0) {
+	if (wrapper->is_explore
+			&& on_distribution(generator) == 0) {
 		AbstractNode* starting_node = this->node_context->next_node;
 		vector<AbstractNode*> possible_exits;
 		this->node_context->parent->random_exit_activate(
@@ -136,40 +137,6 @@ void Experiment::explore_check_activate(
 		double next_clean_result = clean_result_helper(wrapper);
 		this->curr_surprise = next_clean_result - wrapper->prev_clean_result;
 		wrapper->prev_clean_result = next_clean_result;
-
-		wrapper->num_experiments++;
-		// if (this->curr_surprise < 0.0) {
-		// 	// if (this->curr_new_scope != NULL) {
-		// 	// 	delete this->curr_new_scope;
-		// 	// 	this->curr_new_scope = NULL;
-		// 	// }
-		// 	// this->curr_step_types.clear();
-		// 	// this->curr_actions.clear();
-		// 	// this->curr_scopes.clear();
-
-		// 	// this->state_iter++;
-
-		// 	// wrapper->run_is_fail = true;
-		// 	// is_next = true;
-		// 	// is_done = true;
-
-		// 	uniform_int_distribution<int> continue_distribution(0, 9);
-		// 	if (continue_distribution(generator) == 0) {
-		// 		if (this->curr_new_scope != NULL) {
-		// 			delete this->curr_new_scope;
-		// 			this->curr_new_scope = NULL;
-		// 		}
-		// 		this->curr_step_types.clear();
-		// 		this->curr_actions.clear();
-		// 		this->curr_scopes.clear();
-
-		// 		this->state_iter++;
-
-		// 		wrapper->run_is_fail = true;
-		// 		is_next = true;
-		// 		is_done = true;
-		// 	}
-		// }
 	}
 }
 
@@ -273,7 +240,7 @@ void Experiment::explore_backprop(double target_val,
 		#else
 		if (this->best_surprise > 0.0) {
 		#endif /* MDEBUG */
-			this->starting_iter = wrapper->eval_iter;
+			this->starting_iter = wrapper->iter;
 
 			this->state = EXPERIMENT_STATE_TRAIN_NEW;
 			this->state_iter = 0;

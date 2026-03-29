@@ -78,13 +78,6 @@ void Experiment::add(SolutionWrapper* wrapper) {
 	cout << "score_average: " << score_average << endl;
 	wrapper->solution->curr_score = score_average;
 
-	double sum_num_experiments = 0.0;
-	for (int h_index = 0; h_index < (int)wrapper->solution->num_experiment_histories.size(); h_index++) {
-		sum_num_experiments += wrapper->solution->num_experiment_histories[h_index];
-	}
-	double num_experiment_average = sum_num_experiments / (double)wrapper->solution->num_experiment_histories.size();
-	ss << "num_experiment_average: " << num_experiment_average << "; ";
-
 	wrapper->solution->improvement_history.push_back(score_average);
 	wrapper->solution->change_history.push_back(ss.str());
 

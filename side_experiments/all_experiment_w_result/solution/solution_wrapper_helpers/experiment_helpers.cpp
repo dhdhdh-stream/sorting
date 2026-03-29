@@ -19,10 +19,16 @@ const int OUTER_ITERS = 8;
 const int TARGET_NODES_PER_EVAL = 5;
 
 void SolutionWrapper::experiment_init() {
-	this->num_experiments = 0;
-	this->run_is_fail = false;
+	this->iter++;
 
 	this->num_actions = 1;
+
+	uniform_int_distribution<int> is_explore_distribution(0, 1);
+	if (is_explore_distribution(generator) == 0) {
+		this->is_explore = true;
+	} else {
+		this->is_explore = false;
+	}
 
 	#if defined(MDEBUG) && MDEBUG
 	this->run_index++;
@@ -106,20 +112,16 @@ void SolutionWrapper::experiment_end(double result) {
 		}
 	}
 
-	if (!this->run_is_fail) {
+	if (!this->is_explore) {
 		if (this->solution->score_histories.size() < HISTORIES_NUM_SAVE) {
 			this->solution->score_histories.push_back(result);
-			this->solution->num_experiment_histories.push_back(this->num_experiments);
 		} else {
 			this->solution->score_histories[this->solution->score_index] = result;
-			this->solution->num_experiment_histories[this->solution->score_index] = this->num_experiments;
 			this->solution->score_index++;
 			if (this->solution->score_index >= HISTORIES_NUM_SAVE) {
 				this->solution->score_index = 0;
 			}
 		}
-
-		this->eval_iter++;
 	}
 
 	set<Scope*> updated_scopes;
