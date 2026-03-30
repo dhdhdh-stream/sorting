@@ -92,7 +92,8 @@ void Experiment::ramp_backprop(double target_val,
 							   ExperimentHistory* history,
 							   SolutionWrapper* wrapper,
 							   set<Scope*>& updated_scopes) {
-	if (!wrapper->is_explore) {
+	// if (!wrapper->is_explore) {
+	if (true) {
 		if (history->is_on) {
 			if (history->hit_branch) {
 				this->new_scores.push_back(target_val);

@@ -30,6 +30,25 @@
 // - should one bad signal halt progress?
 // - should one good signal restart it?
 
+// - no exit makes progress difficult, even with perfect signal
+//   - means lots of bad candidates are being produced
+//     - what explore is training for is not similar to eval
+
+// - just not meaningful to keep going after bad mistakes?
+//   - better and efficient to simply give up and start anew
+//     - but how to reach later half to experiment?
+//       - need to practice/simulate?
+//       - need later spot that is consistently reachable
+//       - need world model to capture what later spot looks like
+//       - need to find spot that matches conditions
+//     - not achievable within the context of the problem?
+
+// - though, if same scope is used at start and end...
+//   - ...explore will be done on start, but eval will also apply to end
+
+// - though if 50% of the time, running through fully for eval anyways...
+//   - ...then not a big deal to run through first half to reach explore
+
 #include <chrono>
 #include <iostream>
 #include <map>
