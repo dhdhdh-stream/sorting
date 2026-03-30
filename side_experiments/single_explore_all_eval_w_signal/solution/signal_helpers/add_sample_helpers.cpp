@@ -11,7 +11,7 @@ using namespace std;
 const int SAMPLES_PER_RUN = 5;
 
 #if defined(MDEBUG) && MDEBUG
-const int TRAIN_MIN_SAMPLES = 20;
+const int TRAIN_MIN_SAMPLES = 200;
 #else
 const int TRAIN_MIN_SAMPLES = 20000;
 #endif /* MDEBUG */
@@ -105,7 +105,7 @@ void pre_signal_add_sample(ScopeHistory* scope_history,
 		potential_input_is_on.push_back(input_is_on);
 	}
 
-	if (signal->input_val_histories.size() < TRAIN_MIN_SAMPLES) {
+	if (signal->input_val_histories.size() < SIGNAL_NUM_SAMPLES) {
 		signal->input_val_histories.push_back(node_input_vals);
 		signal->input_is_on_histories.push_back(node_input_is_on);
 		signal->target_val_histories.push_back(target_val);
@@ -119,11 +119,10 @@ void pre_signal_add_sample(ScopeHistory* scope_history,
 
 		signal->potential_input_val_histories[signal->history_index] = potential_input_vals;
 		signal->potential_input_is_on_histories[signal->history_index] = potential_input_is_on;
-
-		signal->history_index++;
-		if (signal->history_index >= SIGNAL_NUM_SAMPLES) {
-			signal->history_index = 0;
-		}
+	}
+	signal->history_index++;
+	if (signal->history_index >= SIGNAL_NUM_SAMPLES) {
+		signal->history_index = 0;
 	}
 	signal->potential_count++;
 

@@ -22,7 +22,7 @@ class SignalNode;
 class Solution;
 
 #if defined(MDEBUG) && MDEBUG
-const int SIGNAL_NUM_SAMPLES = 50;
+const int SIGNAL_NUM_SAMPLES = 500;
 #else
 const int SIGNAL_NUM_SAMPLES = 50000;
 #endif /* MDEBUG */

@@ -1,5 +1,7 @@
 #include "signal.h"
 
+#include <iostream>
+
 #include "constants.h"
 #include "globals.h"
 #include "layer.h"
