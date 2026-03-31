@@ -35,6 +35,7 @@ void Experiment::explore_check_activate(
 	 */
 	uniform_int_distribution<int> on_distribution(0, 9);
 	if (wrapper->is_explore
+			&& wrapper->num_actions >= wrapper->is_explore_num_actions
 			&& on_distribution(generator) == 0) {
 		AbstractNode* starting_node = this->node_context->next_node;
 		vector<AbstractNode*> possible_exits;

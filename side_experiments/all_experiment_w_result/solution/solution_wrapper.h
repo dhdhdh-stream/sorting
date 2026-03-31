@@ -38,6 +38,7 @@ public:
 	int num_actions;
 
 	bool is_explore;
+	int is_explore_num_actions;
 
 	std::map<Experiment*, ExperimentHistory*> experiment_histories;
 	/**

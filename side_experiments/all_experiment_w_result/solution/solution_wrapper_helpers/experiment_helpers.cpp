@@ -42,6 +42,8 @@ void SolutionWrapper::experiment_init() {
 	this->experiment_context.push_back(NULL);
 
 	this->prev_clean_result = clean_result_helper(this);
+	uniform_int_distribution<int> is_explore_num_actions_distribution(0, this->result_num_actions);
+	this->is_explore_num_actions = is_explore_num_actions_distribution(generator);
 }
 
 tuple<bool,bool,int> SolutionWrapper::experiment_step(vector<double> obs) {

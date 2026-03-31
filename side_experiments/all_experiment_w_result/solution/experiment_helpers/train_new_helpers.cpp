@@ -1,6 +1,7 @@
 #include "experiment.h"
 
 #include <algorithm>
+#include <iostream>
 
 #include "constants.h"
 #include "globals.h"
@@ -32,6 +33,7 @@ void Experiment::train_new_check_activate(
 	 */
 	uniform_int_distribution<int> on_distribution(0, 9);
 	if (wrapper->is_explore
+			&& wrapper->num_actions >= wrapper->is_explore_num_actions
 			&& on_distribution(generator) == 0) {
 		this->new_obs_histories.push_back(obs);
 
@@ -128,6 +130,11 @@ void Experiment::train_new_backprop(double target_val,
 		}
 		double average_hits_per_run = (10.0 * (double)this->new_obs_histories.size()) / (double)total_iters;
 		double global_improvement = average_hits_per_run * local_improvement;
+
+		// // temp
+		// cout << "local_improvement: " << local_improvement << endl;
+		// cout << "average_hits_per_run: " << average_hits_per_run << endl;
+		// cout << "global_improvement: " << global_improvement << endl;
 
 		bool is_success = false;
 		if (local_improvement > 0.0) {

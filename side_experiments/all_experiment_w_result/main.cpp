@@ -49,6 +49,17 @@
 // - though if 50% of the time, running through fully for eval anyways...
 //   - ...then not a big deal to run through first half to reach explore
 
+// TODO: can also start halfway through but have save
+// - without save might not be good enough
+//   - explore at the back are in an inconsistent state most of the time
+//   - and front not explored enough
+
+// TODO: only possible option remaining is to only explore safely
+// - perhaps take into account situation to decide what's safe
+//   - e.g., only flag when safe...
+//     - ...but maybe doing so doesn't help since going to later
+//     - or doing so does help and is improvement
+
 #include <chrono>
 #include <iostream>
 #include <map>
