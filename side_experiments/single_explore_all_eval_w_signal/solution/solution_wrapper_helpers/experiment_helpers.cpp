@@ -116,6 +116,10 @@ void SolutionWrapper::experiment_end(double result) {
 							this);
 			}
 
+			for (int s_index = 0; s_index < (int)this->solution->scopes.size(); s_index++) {
+				set_pre_signal_potential_inputs(this->solution->scopes[s_index]);
+			}
+
 			this->solution->timestamp++;
 			switch (this->solution->state) {
 			case SOLUTION_STATE_NON_OUTER:

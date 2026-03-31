@@ -181,5 +181,7 @@ void create_experiment(ScopeHistory* scope_history,
 			explore_is_branch,
 			exit_next_node);
 		wrapper->curr_explore_experiment = new_experiment;
+
+		wrapper->solution->num_experiments++;
 	}
 }

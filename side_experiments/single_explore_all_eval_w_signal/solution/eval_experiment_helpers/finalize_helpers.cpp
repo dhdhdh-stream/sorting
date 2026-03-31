@@ -25,6 +25,7 @@ void EvalExperiment::add(SolutionWrapper* wrapper) {
 	stringstream ss;
 	ss << get_time() << "; ";
 	ss << "timestamp: " << wrapper->solution->timestamp << "; ";
+	ss << "num_experiments: " << wrapper->solution->num_experiments << "; ";
 	ss << "Experiment" << "; ";
 	ss << "this->scope_context->id: " << this->scope_context->id << "; ";
 	ss << "this->node_context->id: " << this->node_context->id << "; ";
@@ -75,7 +76,6 @@ void EvalExperiment::add(SolutionWrapper* wrapper) {
 							this->best_new_scope);
 
 		this->best_new_scope->pre_signal->output_constant = val_average;
-		set_pre_signal_potential_inputs(this->best_new_scope);
 
 		this->best_new_scope = NULL;
 	}

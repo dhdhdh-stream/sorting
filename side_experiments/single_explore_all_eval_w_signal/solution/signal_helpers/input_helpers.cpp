@@ -78,6 +78,8 @@ void create_pre_input_helper(Scope* scope,
 }
 
 void set_pre_signal_potential_inputs(Scope* scope) {
+	scope->pre_signal->potential_inputs.clear();
+
 	for (int t_index = 0; t_index < POTENTIAL_NUM_TRIES; t_index++) {
 		vector<SignalInput> inputs;
 		for (int i_index = 0; i_index < SIGNAL_NODE_MAX_NUM_INPUTS; i_index++) {

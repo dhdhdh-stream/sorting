@@ -68,11 +68,17 @@ Solution::Solution(Solution* original) {
 
 	this->outer_root_scope_ids = original->outer_root_scope_ids;
 
+	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
+		set_pre_signal_potential_inputs(this->scopes[s_index]);
+	}
+
 	this->train_new_last_scores = original->train_new_last_scores;
 	this->ramp_last_scores = original->ramp_last_scores;
 
 	this->improvement_history = original->improvement_history;
 	this->change_history = original->change_history;
+
+	this->num_experiments = original->num_experiments;
 }
 
 Solution::~Solution() {
@@ -133,6 +139,8 @@ void Solution::init(ProblemType* problem_type) {
 
 	new_scope->pre_signal->output_constant = this->curr_score;
 	set_pre_signal_potential_inputs(new_scope);
+
+	this->num_experiments = 0;
 }
 
 void Solution::load(ifstream& input_file) {
@@ -197,6 +205,10 @@ void Solution::load(ifstream& input_file) {
 		this->outer_root_scope_ids.push_back(stoi(scope_id_line));
 	}
 
+	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
+		set_pre_signal_potential_inputs(this->scopes[s_index]);
+	}
+
 	string num_train_new_last_scores_line;
 	getline(input_file, num_train_new_last_scores_line);
 	int num_train_new_last_scores = stoi(num_train_new_last_scores_line);
@@ -227,6 +239,10 @@ void Solution::load(ifstream& input_file) {
 		getline(input_file, change_line);
 		this->change_history.push_back(change_line);
 	}
+
+	string num_experiments_line;
+	getline(input_file, num_experiments_line);
+	this->num_experiments = stoi(num_experiments_line);
 }
 
 void Solution::clean_inputs(Scope* scope,
@@ -368,6 +384,8 @@ void Solution::save(ofstream& output_file) {
 		output_file << this->improvement_history[h_index] << endl;
 		output_file << this->change_history[h_index] << endl;
 	}
+
+	output_file << this->num_experiments << endl;
 }
 
 void Solution::save_for_display(ofstream& output_file) {

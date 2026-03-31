@@ -1,5 +1,7 @@
 #include "signal_helpers.h"
 
+#include <iostream>
+
 #include "globals.h"
 #include "scope.h"
 #include "scope_node.h"
@@ -124,7 +126,6 @@ void pre_signal_add_sample(ScopeHistory* scope_history,
 	if (signal->history_index >= SIGNAL_NUM_SAMPLES) {
 		signal->history_index = 0;
 	}
-	signal->potential_count++;
 
 	if (signal->input_val_histories.size() >= TRAIN_MIN_SAMPLES) {
 		uniform_int_distribution<int> sample_distribution(1, TRAIN_MIN_SAMPLES);
@@ -137,7 +138,11 @@ void pre_signal_add_sample(ScopeHistory* scope_history,
 		}
 	}
 
-	if (signal->potential_count >= SIGNAL_NUM_SAMPLES) {
+	signal->potential_count++;
+	/**
+	 * - add potential new nodes once per update
+	 */
+	if (signal->potential_count == SIGNAL_NUM_SAMPLES) {
 		update_pre_signal(scope_history->scope,
 						  wrapper);
 	}

@@ -76,6 +76,10 @@ void clean_scope(Scope* scope,
 
 				wrapper->solution->clean_inputs(scope,
 												it->first);
+				// temp
+				if (scope->id != -1) {
+					cout << "removed unaccessible" << endl;
+				}
 
 				switch (it->second->type) {
 				case NODE_TYPE_ACTION:
@@ -369,6 +373,11 @@ void clean_scope(Scope* scope,
 				if (original_obs_node->next_node == branch_obs_node->next_node
 						&& experiment_endpoints.find(original_obs_node) == experiment_endpoints.end()
 						&& experiment_endpoints.find(branch_obs_node) == experiment_endpoints.end()) {
+					// temp
+					if (scope->id != -1) {
+						cout << "removed useless branch node" << endl;
+					}
+
 					ObsNode* merge_obs_node = (ObsNode*)original_obs_node->next_node;
 
 					wrapper->solution->replace_obs_node(scope,
@@ -439,6 +448,11 @@ void clean_scope(Scope* scope,
 						&& curr_obs_node->next_node->type == NODE_TYPE_OBS
 						&& curr_obs_node->next_node->ancestor_ids.size() == 1
 						&& experiment_endpoints.find(curr_obs_node->next_node) == experiment_endpoints.end()) {
+					// temp
+					if (scope->id != -1) {
+						cout << "removed duplicate obs" << endl;
+					}
+
 					ObsNode* next_obs_node = (ObsNode*)curr_obs_node->next_node;
 
 					wrapper->solution->replace_obs_node(scope,

@@ -64,6 +64,8 @@ public:
 	std::vector<double> improvement_history;
 	std::vector<std::string> change_history;
 
+	int num_experiments;
+
 	Solution();
 	Solution(Solution* original);
 	~Solution();
