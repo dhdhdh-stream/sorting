@@ -10,8 +10,9 @@ class AbstractNode;
 class Network;
 class SolutionWrapper;
 
-const int EVAL_EXPERIMENT_STATE_RAMP = 0;
-const int EVAL_EXPERIMENT_STATE_MEASURE = 1;
+const int EVAL_EXPERIMENT_STATE_REFINE = 0;
+const int EVAL_EXPERIMENT_STATE_RAMP = 1;
+const int EVAL_EXPERIMENT_STATE_MEASURE = 2;
 
 const int MEASURE_STATUS_N_A = 0;
 const int MEASURE_STATUS_SUCCESS = 1;
@@ -31,6 +32,11 @@ public:
 
 	std::vector<Network*> new_networks;
 
+	std::vector<std::vector<double>> existing_obs_histories;
+	std::vector<double> existing_true_histories;
+	std::vector<std::vector<double>> new_obs_histories;
+	std::vector<double> new_true_histories;
+
 	std::vector<double> existing_scores;
 	std::vector<double> new_scores;
 
@@ -46,7 +52,7 @@ public:
 	double global_improvement;
 	double score_standard_deviation;
 
-	EvalExperiment();
+	EvalExperiment(SolutionWrapper* wrapper);
 	~EvalExperiment();
 
 	void experiment_check_activate(AbstractNode* experiment_node,
@@ -60,11 +66,33 @@ public:
 	void set_action(int action,
 					SolutionWrapper* wrapper);
 	void experiment_exit_step(SolutionWrapper* wrapper);
-
 	void backprop(double target_val,
 				  EvalExperimentHistory* history,
 				  SolutionWrapper* wrapper,
 				  std::set<Scope*>& updated_scopes);
+
+	void refine_check_activate(SolutionWrapper* wrapper);
+	void refine_step(std::vector<double>& obs,
+					 int& action,
+					 bool& is_next,
+					 bool& fetch_action,
+					 SolutionWrapper* wrapper);
+	void refine_exit_step(SolutionWrapper* wrapper);
+	void refine_backprop(double target_val,
+						 EvalExperimentHistory* history,
+						 SolutionWrapper* wrapper);
+
+	void ramp_check_activate(SolutionWrapper* wrapper);
+	void ramp_step(std::vector<double>& obs,
+				   int& action,
+				   bool& is_next,
+				   bool& fetch_action,
+				   SolutionWrapper* wrapper);
+	void ramp_exit_step(SolutionWrapper* wrapper);
+	void ramp_backprop(double target_val,
+					   EvalExperimentHistory* history,
+					   SolutionWrapper* wrapper,
+					   std::set<Scope*>& updated_scopes);
 
 	void add(SolutionWrapper* wrapper);
 };

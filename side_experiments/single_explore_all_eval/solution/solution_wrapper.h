@@ -24,12 +24,14 @@ class Scope;
 class ScopeHistory;
 class Solution;
 
+const int DAMAGE_STATE_REFINE = 0;
+const int DAMAGE_STATE_RAMP = 1;
+
 class SolutionWrapper {
 public:
 	Solution* solution;
 
 	ExploreExperiment* curr_explore_experiment;
-	OuterExperiment* curr_outer_experiment;
 
 	int eval_iter;
 
@@ -45,9 +47,10 @@ public:
 
 	int num_actions;
 
+	int damage_state;
+
 	ExploreExperimentHistory* explore_experiment_history;
 	std::map<EvalExperiment*, EvalExperimentHistory*> eval_experiment_histories;
-	OuterExperimentHistory* outer_experiment_history;
 
 	Problem* problem;
 

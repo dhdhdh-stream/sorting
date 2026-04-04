@@ -11,13 +11,12 @@
 
 using namespace std;
 
-EvalExperiment::EvalExperiment() {
+EvalExperiment::EvalExperiment(SolutionWrapper* wrapper) {
 	this->best_new_scope = NULL;
 
-	this->curr_ramp = 0;
-	this->measure_status = MEASURE_STATUS_N_A;
+	this->starting_iter = wrapper->eval_iter;
 
-	this->state = EVAL_EXPERIMENT_STATE_RAMP;
+	this->state = EVAL_EXPERIMENT_STATE_REFINE;
 	this->state_iter = 0;
 }
 
@@ -34,11 +33,28 @@ EvalExperiment::~EvalExperiment() {
 EvalExperimentHistory::EvalExperimentHistory(EvalExperiment* experiment) {
 	this->experiment = experiment;
 
-	uniform_int_distribution<int> on_distribution(0, EXPERIMENT_NUM_GEARS);
-	if (experiment->curr_ramp >= on_distribution(generator)) {
-		this->is_on = true;
-	} else {
-		this->is_on = false;
+	switch (experiment->state) {
+	case EVAL_EXPERIMENT_STATE_REFINE:
+		{
+			uniform_int_distribution<int> on_distribution(0, 9);
+			if (on_distribution(generator) == 0) {
+				this->is_on = true;
+			} else {
+				this->is_on = false;
+			}
+		}
+		break;
+	case EVAL_EXPERIMENT_STATE_RAMP:
+	case EVAL_EXPERIMENT_STATE_MEASURE:
+		{
+			uniform_int_distribution<int> on_distribution(0, EXPERIMENT_NUM_GEARS);
+			if (experiment->curr_ramp >= on_distribution(generator)) {
+				this->is_on = true;
+			} else {
+				this->is_on = false;
+			}
+		}
+		break;
 	}
 
 	this->hit_branch = false;

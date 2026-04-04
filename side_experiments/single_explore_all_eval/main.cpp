@@ -15,6 +15,20 @@
 // - with 10 percent filter every 10, not worse, but slower?
 //   - every 40 faster
 
+// - maybe have Markov component and algorithmic component
+//   - Markov component decides what the goal should be, what algorithmic component/signal to use
+// - or have different semi-related problems that can use same scopes
+//   - can then optimize on one problem, and check that it improves another
+
+// - maybe model things differently
+//   - not repeatedly tackling the same problem again and again with a single score function...
+//   - ...but have choice between multiple problems
+//     - each with its own score function
+//     - need to choose problems and optimize for them
+// - then, need to create problems/score functions
+
+// TODO: maybe 33% chance allow 1 crazy explore per run
+
 #include <chrono>
 #include <iostream>
 #include <map>

@@ -21,7 +21,7 @@ using namespace std;
 #if defined(MDEBUG) && MDEBUG
 const int EXPLORE_ITERS = 10;
 #else
-const int EXPLORE_ITERS = 200;
+const int EXPLORE_ITERS = 100;
 #endif /* MDEBUG */
 
 void ExploreExperiment::explore_check_activate(SolutionWrapper* wrapper) {

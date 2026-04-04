@@ -22,6 +22,23 @@
 
 // - can also split between explore, train new, and eval
 
+// - probably just not worth
+//   - solution is always changing, so keeping updated is significant cost
+//     - relearning everytime might be cheaper
+//   - much easier to make mistakes
+//     - not properly taking into account branches, and giving wrong predictions/averages
+
+// - maybe come up with reasons to try things?
+//   - but probably not worth either
+//     - not to track, then update as things change
+
+// - maybe try things that don't have a lot of risk?
+//   - would be difficult to learn and update
+//     - especially when running many experiments at once
+
+// - for example, something that's safe here is moving left, then moving right
+//   - but that's meaningless, hmm...
+
 #include <chrono>
 #include <iostream>
 #include <map>

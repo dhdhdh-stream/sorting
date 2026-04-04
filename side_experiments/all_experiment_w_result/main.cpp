@@ -60,6 +60,21 @@
 //     - ...but maybe doing so doesn't help since going to later
 //     - or doing so does help and is improvement
 
+// - it takes 4000 samples on a single path to know how good that path is
+//   - now want to judge arbitrary path
+//     - potentially across all locations
+//   - is this realistic?
+//   - also, what about the exit?
+
+// - also, maybe more realistic with world model?
+//   - can localize, so can move off path easier
+// - with current setup, difficult to try things in general
+
+// - ultimately, nothing can truly be guaranteed to be safe
+//   - e.g., early flagging something while returning to path...
+//     - ...it could be that later solution uses flagging that as a start to a huge section
+//       - by early flagging, that section won't even be taken
+
 #include <chrono>
 #include <iostream>
 #include <map>
