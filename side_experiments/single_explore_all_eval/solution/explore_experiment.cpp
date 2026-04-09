@@ -13,11 +13,14 @@ using namespace std;
 ExploreExperiment::ExploreExperiment(Scope* scope_context,
 									 AbstractNode* node_context,
 									 bool is_branch,
-									 AbstractNode* exit_next_node) {
+									 AbstractNode* exit_next_node,
+									 bool is_damage) {
 	this->scope_context = scope_context;
 	this->node_context = node_context;
 	this->is_branch = is_branch;
 	this->exit_next_node = exit_next_node;
+
+	this->is_damage = is_damage;
 
 	this->node_context->experiment = this;
 
@@ -35,10 +38,6 @@ ExploreExperiment::ExploreExperiment(Scope* scope_context,
 ExploreExperiment::~ExploreExperiment() {
 	if (this->existing_true_network != NULL) {
 		delete this->existing_true_network;
-	}
-
-	for (int n_index = 0; n_index < (int)this->new_networks.size(); n_index++) {
-		delete this->new_networks[n_index];
 	}
 
 	if (this->curr_new_scope != NULL) {

@@ -28,6 +28,7 @@ void EvalExperiment::add(SolutionWrapper* wrapper) {
 	ss << "this->scope_context->id: " << this->scope_context->id << "; ";
 	ss << "this->node_context->id: " << this->node_context->id << "; ";
 	ss << "this->is_branch: " << this->is_branch << "; ";
+	ss << "this->is_damage: " << this->is_damage << "; ";
 	ss << "new explore path:";
 	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
 		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
@@ -54,14 +55,22 @@ void EvalExperiment::add(SolutionWrapper* wrapper) {
 	ss << "this->global_improvement: " << this->global_improvement << "; ";
 	ss << "this->score_standard_deviation: " << this->score_standard_deviation << "; ";
 
-	double sum_vals = 0.0;
-	for (int h_index = 0; h_index < (int)wrapper->score_histories.size(); h_index++) {
-		sum_vals += wrapper->score_histories[h_index];
+	double clean_sum_vals = 0.0;
+	for (int h_index = 0; h_index < (int)wrapper->clean_score_histories.size(); h_index++) {
+		clean_sum_vals += wrapper->clean_score_histories[h_index];
 	}
-	double val_average = sum_vals / (double)wrapper->score_histories.size();
-	wrapper->solution->curr_score = val_average;
+	double clean_val_average = clean_sum_vals / (double)wrapper->clean_score_histories.size();
+	wrapper->solution->clean_improvement_history.push_back(clean_val_average);
 
-	wrapper->solution->improvement_history.push_back(val_average);
+	double damage_sum_vals = 0.0;
+	for (int h_index = 0; h_index < (int)wrapper->damage_score_histories.size(); h_index++) {
+		damage_sum_vals += wrapper->damage_score_histories[h_index];
+	}
+	double damage_val_average = damage_sum_vals / (double)wrapper->damage_score_histories.size();
+	wrapper->solution->damage_improvement_history.push_back(damage_val_average);
+
+	wrapper->solution->curr_score = clean_val_average;
+
 	wrapper->solution->change_history.push_back(ss.str());
 
 	cout << ss.str() << endl;

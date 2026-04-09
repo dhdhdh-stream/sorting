@@ -42,11 +42,6 @@ const int RAMP_EPOCH_NUM_ITERS = 4000;
 const int MEASURE_STEP_NUM_ITERS = 4000;
 #endif /* MDEBUG */
 
-const double BRANCH_MIN_RATIO = 0.1;
-/**
- * - needs to be large not just for impact, but to offset noise
- */
-
 const double FAIL_T_SCORE = 0.674;
 const double SUCCESS_T_SCORE = 2.326;
 

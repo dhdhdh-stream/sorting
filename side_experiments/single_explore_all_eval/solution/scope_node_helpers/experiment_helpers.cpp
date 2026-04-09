@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "abstract_experiment.h"
+#include "damage.h"
 #include "globals.h"
 #include "problem.h"
 #include "scope.h"
@@ -40,5 +41,20 @@ void ScopeNode::experiment_exit_step(SolutionWrapper* wrapper) {
 			this,
 			false,
 			wrapper);
+	} else {
+		if (this->parent->id != -1 && wrapper->is_damage) {
+			uniform_int_distribution<int> damage_distribution(0, 49);
+			if (damage_distribution(generator) == 0) {
+				ScopeNodeHistory* history = (ScopeNodeHistory*)wrapper->scope_histories[this->id];
+
+				history->damage = new Damage(this,
+											 false,
+											 wrapper);
+				history->damage->experiment_check_activate(
+					this,
+					false,
+					wrapper);
+			}
+		}
 	}
 }

@@ -14,9 +14,10 @@ using namespace std;
 EvalExperiment::EvalExperiment(SolutionWrapper* wrapper) {
 	this->best_new_scope = NULL;
 
-	this->starting_iter = wrapper->eval_iter;
+	this->curr_ramp = 0;
+	this->measure_status = MEASURE_STATUS_N_A;
 
-	this->state = EVAL_EXPERIMENT_STATE_REFINE;
+	this->state = EVAL_EXPERIMENT_STATE_RAMP;
 	this->state_iter = 0;
 }
 
@@ -34,16 +35,6 @@ EvalExperimentHistory::EvalExperimentHistory(EvalExperiment* experiment) {
 	this->experiment = experiment;
 
 	switch (experiment->state) {
-	case EVAL_EXPERIMENT_STATE_REFINE:
-		{
-			uniform_int_distribution<int> on_distribution(0, 9);
-			if (on_distribution(generator) == 0) {
-				this->is_on = true;
-			} else {
-				this->is_on = false;
-			}
-		}
-		break;
 	case EVAL_EXPERIMENT_STATE_RAMP:
 	case EVAL_EXPERIMENT_STATE_MEASURE:
 		{

@@ -4,6 +4,7 @@
 
 #include "abstract_experiment.h"
 #include "constants.h"
+#include "damage.h"
 #include "globals.h"
 #include "scope.h"
 #include "solution.h"
@@ -93,8 +94,14 @@ void ScopeNode::save_for_display(ofstream& output_file) {
 
 ScopeNodeHistory::ScopeNodeHistory(ScopeNode* node) {
 	this->node = node;
+
+	this->damage = NULL;
 }
 
 ScopeNodeHistory::~ScopeNodeHistory() {
 	delete this->scope_history;
+
+	if (this->damage != NULL) {
+		delete this->damage;
+	}
 }

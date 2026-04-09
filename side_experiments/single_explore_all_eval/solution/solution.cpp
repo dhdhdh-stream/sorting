@@ -69,7 +69,8 @@ Solution::Solution(Solution* original) {
 	this->train_new_last_scores = original->train_new_last_scores;
 	this->ramp_last_scores = original->ramp_last_scores;
 
-	this->improvement_history = original->improvement_history;
+	this->clean_improvement_history = original->clean_improvement_history;
+	this->damage_improvement_history = original->damage_improvement_history;
 	this->change_history = original->change_history;
 
 	this->num_experiments = original->num_experiments;
@@ -218,9 +219,13 @@ void Solution::load(ifstream& input_file) {
 	getline(input_file, history_size_line);
 	int history_size = stoi(history_size_line);
 	for (int h_index = 0; h_index < history_size; h_index++) {
-		string improvement_line;
-		getline(input_file, improvement_line);
-		this->improvement_history.push_back(stod(improvement_line));
+		string clean_improvement_line;
+		getline(input_file, clean_improvement_line);
+		this->clean_improvement_history.push_back(stod(clean_improvement_line));
+
+		string damage_improvement_line;
+		getline(input_file, damage_improvement_line);
+		this->damage_improvement_history.push_back(stod(damage_improvement_line));
 
 		string change_line;
 		getline(input_file, change_line);
@@ -346,9 +351,10 @@ void Solution::save(ofstream& output_file) {
 		output_file << *it << endl;
 	}
 
-	output_file << this->improvement_history.size() << endl;
-	for (int h_index = 0; h_index < (int)this->improvement_history.size(); h_index++) {
-		output_file << this->improvement_history[h_index] << endl;
+	output_file << this->clean_improvement_history.size() << endl;
+	for (int h_index = 0; h_index < (int)this->clean_improvement_history.size(); h_index++) {
+		output_file << this->clean_improvement_history[h_index] << endl;
+		output_file << this->damage_improvement_history[h_index] << endl;
 		output_file << this->change_history[h_index] << endl;
 	}
 

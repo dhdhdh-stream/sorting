@@ -43,6 +43,7 @@ public:
 class StartNodeHistory : public AbstractNodeHistory {
 public:
 	StartNodeHistory(StartNode* node);
+	~StartNodeHistory();
 };
 
 #endif /* START_NODE_H */

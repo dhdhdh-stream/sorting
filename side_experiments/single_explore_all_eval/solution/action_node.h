@@ -50,6 +50,7 @@ public:
 class ActionNodeHistory : public AbstractNodeHistory {
 public:
 	ActionNodeHistory(ActionNode* node);
+	~ActionNodeHistory();
 };
 
 #endif /* ACTION_NODE_H */

@@ -5,6 +5,7 @@
 #include <vector>
 
 class AbstractExperiment;
+class Damage;
 class Scope;
 class ScopeHistory;
 class Solution;
@@ -57,6 +58,8 @@ class AbstractNodeHistory {
 public:
 	AbstractNode* node;
 	int index;
+
+	Damage* damage;
 
 	virtual ~AbstractNodeHistory() {};
 };

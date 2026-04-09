@@ -24,9 +24,6 @@ class Scope;
 class ScopeHistory;
 class Solution;
 
-const int DAMAGE_STATE_REFINE = 0;
-const int DAMAGE_STATE_RAMP = 1;
-
 class SolutionWrapper {
 public:
 	Solution* solution;
@@ -35,8 +32,10 @@ public:
 
 	int eval_iter;
 
-	std::vector<double> score_histories;
-	int history_index;
+	std::vector<double> clean_score_histories;
+	int clean_history_index;
+	std::vector<double> damage_score_histories;
+	int damage_history_index;
 
 	/**
 	 * - run variables
@@ -47,7 +46,7 @@ public:
 
 	int num_actions;
 
-	int damage_state;
+	bool is_damage;
 
 	ExploreExperimentHistory* explore_experiment_history;
 	std::map<EvalExperiment*, EvalExperimentHistory*> eval_experiment_histories;

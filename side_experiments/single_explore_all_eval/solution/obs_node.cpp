@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "abstract_experiment.h"
+#include "damage.h"
 #include "globals.h"
 #include "network.h"
 #include "scope.h"
@@ -67,4 +68,12 @@ void ObsNode::save_for_display(ofstream& output_file) {
 
 ObsNodeHistory::ObsNodeHistory(ObsNode* node) {
 	this->node = node;
+
+	this->damage = NULL;
+}
+
+ObsNodeHistory::~ObsNodeHistory() {
+	if (this->damage != NULL) {
+		delete this->damage;
+	}
 }

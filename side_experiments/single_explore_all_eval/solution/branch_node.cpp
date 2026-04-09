@@ -4,6 +4,7 @@
 
 #include "abstract_experiment.h"
 #include "constants.h"
+#include "damage.h"
 #include "globals.h"
 #include "network.h"
 #include "scope.h"
@@ -102,4 +103,12 @@ void BranchNode::save_for_display(ofstream& output_file) {
 
 BranchNodeHistory::BranchNodeHistory(BranchNode* node) {
 	this->node = node;
+
+	this->damage = NULL;
+}
+
+BranchNodeHistory::~BranchNodeHistory() {
+	if (this->damage != NULL) {
+		delete this->damage;
+	}
 }

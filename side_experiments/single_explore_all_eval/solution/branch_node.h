@@ -57,6 +57,7 @@ public:
 	bool is_branch;
 
 	BranchNodeHistory(BranchNode* node);
+	~BranchNodeHistory();
 };
 
 #endif /* BRANCH_NODE_H */

@@ -61,7 +61,8 @@ public:
 	std::list<double> train_new_last_scores;
 	std::list<double> ramp_last_scores;
 
-	std::vector<double> improvement_history;
+	std::vector<double> clean_improvement_history;
+	std::vector<double> damage_improvement_history;
 	std::vector<std::string> change_history;
 
 	int num_experiments;

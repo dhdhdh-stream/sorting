@@ -2,6 +2,8 @@
 
 #include "abstract_experiment.h"
 #include "constants.h"
+#include "damage.h"
+#include "globals.h"
 #include "network.h"
 #include "scope.h"
 #include "solution_helpers.h"
@@ -51,5 +53,18 @@ void BranchNode::experiment_step(vector<double>& obs,
 			this,
 			is_branch,
 			wrapper);
+	} else {
+		if (this->parent->id != -1 && wrapper->is_damage) {
+			uniform_int_distribution<int> damage_distribution(0, 49);
+			if (damage_distribution(generator) == 0) {
+				history->damage = new Damage(this,
+											 is_branch,
+											 wrapper);
+				history->damage->experiment_check_activate(
+					this,
+					is_branch,
+					wrapper);
+			}
+		}
 	}
 }

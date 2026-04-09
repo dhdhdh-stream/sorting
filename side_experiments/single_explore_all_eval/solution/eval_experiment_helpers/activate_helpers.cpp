@@ -20,9 +20,6 @@ void EvalExperiment::experiment_check_activate(
 		SolutionWrapper* wrapper) {
 	if (is_branch == this->is_branch) {
 		switch (this->state) {
-		case EVAL_EXPERIMENT_STATE_REFINE:
-			refine_check_activate(wrapper);
-			break;
 		case EVAL_EXPERIMENT_STATE_RAMP:
 		case EVAL_EXPERIMENT_STATE_MEASURE:
 			ramp_check_activate(wrapper);
@@ -37,13 +34,6 @@ void EvalExperiment::experiment_step(vector<double>& obs,
 									 bool& fetch_action,
 									 SolutionWrapper* wrapper) {
 	switch (this->state) {
-	case EVAL_EXPERIMENT_STATE_REFINE:
-		refine_step(obs,
-					action,
-					is_next,
-					fetch_action,
-					wrapper);
-		break;
 	case EVAL_EXPERIMENT_STATE_RAMP:
 	case EVAL_EXPERIMENT_STATE_MEASURE:
 		ramp_step(obs,
@@ -62,9 +52,6 @@ void EvalExperiment::set_action(int action,
 
 void EvalExperiment::experiment_exit_step(SolutionWrapper* wrapper) {
 	switch (this->state) {
-	case EVAL_EXPERIMENT_STATE_REFINE:
-		refine_exit_step(wrapper);
-		break;
 	case EVAL_EXPERIMENT_STATE_RAMP:
 	case EVAL_EXPERIMENT_STATE_MEASURE:
 		ramp_exit_step(wrapper);
@@ -77,11 +64,6 @@ void EvalExperiment::backprop(double target_val,
 							  SolutionWrapper* wrapper,
 							  set<Scope*>& updated_scopes) {
 	switch (this->state) {
-	case EVAL_EXPERIMENT_STATE_REFINE:
-		refine_backprop(target_val,
-						history,
-						wrapper);
-		break;
 	case EVAL_EXPERIMENT_STATE_RAMP:
 	case EVAL_EXPERIMENT_STATE_MEASURE:
 		ramp_backprop(target_val,

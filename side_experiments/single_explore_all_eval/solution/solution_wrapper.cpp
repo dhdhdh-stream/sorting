@@ -14,7 +14,8 @@ SolutionWrapper::SolutionWrapper(ProblemType* problem_type) {
 
 	this->eval_iter = 0;
 
-	this->history_index = 0;
+	this->clean_history_index = 0;
+	this->damage_history_index = 0;
 
 	this->explore_experiment_history = NULL;
 
@@ -35,7 +36,8 @@ SolutionWrapper::SolutionWrapper(std::string path,
 
 	this->eval_iter = 0;
 
-	this->history_index = 0;
+	this->clean_history_index = 0;
+	this->damage_history_index = 0;
 
 	this->explore_experiment_history = NULL;
 

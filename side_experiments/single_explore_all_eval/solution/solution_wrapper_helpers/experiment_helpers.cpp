@@ -32,11 +32,13 @@ void SolutionWrapper::experiment_init() {
 
 	if (this->curr_explore_experiment != NULL) {
 		this->explore_experiment_history = new ExploreExperimentHistory(this->curr_explore_experiment);
+
+		this->is_damage = this->curr_explore_experiment->is_damage;
 	} else {
 		this->eval_iter++;
 
-		uniform_int_distribution<int> damage_type_distribution(0, 1);
-		this->damage_state = damage_type_distribution(generator);
+		uniform_int_distribution<int> is_damage_distribution(0, 1);
+		this->is_damage = is_damage_distribution(generator) == 0;
 	}
 
 	ScopeHistory* scope_history = new ScopeHistory(this->solution->scopes[0]);
@@ -91,14 +93,27 @@ void SolutionWrapper::set_action(int action) {
 
 void SolutionWrapper::experiment_end(double result) {
 	if (this->curr_explore_experiment == NULL) {
-		if (this->score_histories.size() < HISTORIES_NUM_SAVE) {
-			this->score_histories.push_back(result);
-		} else {
-			this->score_histories[this->history_index] = result;
+		if (this->is_damage) {
+			if (this->damage_score_histories.size() < HISTORIES_NUM_SAVE) {
+				this->damage_score_histories.push_back(result);
+			} else {
+				this->damage_score_histories[this->damage_history_index] = result;
 
-			this->history_index++;
-			if (this->history_index >= HISTORIES_NUM_SAVE) {
-				this->history_index = 0;
+				this->damage_history_index++;
+				if (this->damage_history_index >= HISTORIES_NUM_SAVE) {
+					this->damage_history_index = 0;
+				}
+			}
+		} else {
+			if (this->clean_score_histories.size() < HISTORIES_NUM_SAVE) {
+				this->clean_score_histories.push_back(result);
+			} else {
+				this->clean_score_histories[this->clean_history_index] = result;
+
+				this->clean_history_index++;
+				if (this->clean_history_index >= HISTORIES_NUM_SAVE) {
+					this->clean_history_index = 0;
+				}
 			}
 		}
 
@@ -120,11 +135,11 @@ void SolutionWrapper::experiment_end(double result) {
 			this->solution->timestamp++;
 			switch (this->solution->state) {
 			case SOLUTION_STATE_NON_OUTER:
-				if ((int)this->solution->improvement_history.size() >= STUCK_NUM_ITERS) {
-					double prev_val = this->solution->improvement_history[this->solution->improvement_history.size() - STUCK_NUM_ITERS];
+				if ((int)this->solution->clean_improvement_history.size() >= STUCK_NUM_ITERS) {
+					double prev_val = this->solution->clean_improvement_history[this->solution->clean_improvement_history.size() - STUCK_NUM_ITERS];
 					bool improved = false;
 					for (int h_index = 0; h_index < STUCK_NUM_ITERS-1; h_index++) {
-						if (this->solution->improvement_history[this->solution->improvement_history.size() - 1 - h_index] > prev_val) {
+						if (this->solution->clean_improvement_history[this->solution->clean_improvement_history.size() - 1 - h_index] > prev_val) {
 							improved = true;
 							break;
 						}

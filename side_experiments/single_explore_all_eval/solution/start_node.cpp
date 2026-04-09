@@ -1,6 +1,7 @@
 #include "start_node.h"
 
 #include "abstract_experiment.h"
+#include "damage.h"
 #include "scope.h"
 
 using namespace std;
@@ -45,4 +46,12 @@ void StartNode::save_for_display(ofstream& output_file) {
 
 StartNodeHistory::StartNodeHistory(StartNode* node) {
 	this->node = node;
+
+	this->damage = NULL;
+}
+
+StartNodeHistory::~StartNodeHistory() {
+	if (this->damage != NULL) {
+		delete this->damage;
+	}
 }

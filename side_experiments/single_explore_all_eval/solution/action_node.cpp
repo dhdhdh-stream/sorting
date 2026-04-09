@@ -4,6 +4,7 @@
 
 #include "abstract_experiment.h"
 #include "constants.h"
+#include "damage.h"
 #include "scope.h"
 
 using namespace std;
@@ -73,4 +74,12 @@ void ActionNode::save_for_display(ofstream& output_file) {
 
 ActionNodeHistory::ActionNodeHistory(ActionNode* node) {
 	this->node = node;
+
+	this->damage = NULL;
+}
+
+ActionNodeHistory::~ActionNodeHistory() {
+	if (this->damage != NULL) {
+		delete this->damage;
+	}
 }

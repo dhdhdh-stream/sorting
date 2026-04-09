@@ -15,6 +15,8 @@ const int EXPLORE_EXPERIMENT_STATE_TRAIN_NEW = 2;
 
 class ExploreExperiment : public AbstractExperiment {
 public:
+	bool is_damage;
+
 	int state;
 	int state_iter;
 
@@ -44,12 +46,11 @@ public:
 
 	int total_count;
 
-	std::vector<Network*> new_networks;
-
 	ExploreExperiment(Scope* scope_context,
 					  AbstractNode* node_context,
 					  bool is_branch,
-					  AbstractNode* exit_next_node);
+					  AbstractNode* exit_next_node,
+					  bool is_damage);
 	~ExploreExperiment();
 
 	void experiment_check_activate(AbstractNode* experiment_node,

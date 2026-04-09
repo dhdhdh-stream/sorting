@@ -52,6 +52,7 @@ public:
 class ObsNodeHistory : public AbstractNodeHistory {
 public:
 	ObsNodeHistory(ObsNode* node);
+	~ObsNodeHistory();
 };
 
 #endif /* OBS_NODE_H */
