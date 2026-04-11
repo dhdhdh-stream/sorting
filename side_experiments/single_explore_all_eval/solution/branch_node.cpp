@@ -29,6 +29,8 @@ BranchNode::~BranchNode() {
 }
 
 void BranchNode::save(ofstream& output_file) {
+	output_file << this->is_damage << endl;
+
 	output_file << this->networks.size() << endl;
 	for (int n_index = 0; n_index < (int)this->networks.size(); n_index++) {
 		this->networks[n_index]->save(output_file);
@@ -45,6 +47,10 @@ void BranchNode::save(ofstream& output_file) {
 
 void BranchNode::load(ifstream& input_file,
 					  Solution* parent_solution) {
+	string is_damage_line;
+	getline(input_file, is_damage_line);
+	this->is_damage = stoi(is_damage_line);
+
 	string num_networks_line;
 	getline(input_file, num_networks_line);
 	int num_networks = stoi(num_networks_line);
@@ -86,6 +92,8 @@ void BranchNode::link(Solution* parent_solution) {
 
 void BranchNode::copy_from(BranchNode* original,
 						   Solution* parent_solution) {
+	this->is_damage = original->is_damage;
+
 	for (int n_index = 0; n_index < (int)original->networks.size(); n_index++) {
 		this->networks.push_back(new Network(original->networks[n_index]));
 	}

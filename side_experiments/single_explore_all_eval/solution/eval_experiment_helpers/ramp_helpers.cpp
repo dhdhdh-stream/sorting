@@ -12,9 +12,11 @@
 using namespace std;
 
 void EvalExperiment::ramp_check_activate(SolutionWrapper* wrapper) {
-	EvalExperimentState* new_experiment_state = new EvalExperimentState(this);
-	new_experiment_state->step_index = 0;
-	wrapper->experiment_context.back() = new_experiment_state;
+	if (!this->is_damage || wrapper->is_damage) {
+		EvalExperimentState* new_experiment_state = new EvalExperimentState(this);
+		new_experiment_state->step_index = 0;
+		wrapper->experiment_context.back() = new_experiment_state;
+	}
 }
 
 void EvalExperiment::ramp_step(vector<double>& obs,
@@ -35,7 +37,8 @@ void EvalExperiment::ramp_step(vector<double>& obs,
 			history = it->second;
 		}
 
-		if (wrapper->curr_explore_experiment == NULL) {
+		if (wrapper->curr_explore_experiment == NULL
+				&& this->is_damage == wrapper->is_damage) {
 			bool is_branch = true;
 			for (int n_index = 0; n_index < (int)this->new_networks.size(); n_index++) {
 				this->new_networks[n_index]->activate(obs);

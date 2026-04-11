@@ -15,6 +15,8 @@ class SolutionWrapper;
 class BranchNodeHistory;
 class BranchNode : public AbstractNode {
 public:
+	bool is_damage;
+
 	std::vector<Network*> networks;
 
 	int original_next_node_id;

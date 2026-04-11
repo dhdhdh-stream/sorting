@@ -33,7 +33,7 @@ void SolutionWrapper::experiment_init() {
 	if (this->curr_explore_experiment != NULL) {
 		this->explore_experiment_history = new ExploreExperimentHistory(this->curr_explore_experiment);
 
-		this->is_damage = this->curr_explore_experiment->is_damage;
+		this->is_damage = true;
 	} else {
 		this->eval_iter++;
 

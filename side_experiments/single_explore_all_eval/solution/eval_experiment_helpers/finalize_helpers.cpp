@@ -357,6 +357,7 @@ void EvalExperiment::add(SolutionWrapper* wrapper) {
 	}
 	new_branch_node->ancestor_ids.push_back(this->node_context->id);
 
+	new_branch_node->is_damage = this->is_damage;
 	new_branch_node->networks = this->new_networks;
 	this->new_networks.clear();
 
