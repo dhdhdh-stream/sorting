@@ -27,7 +27,7 @@
 //     - need to choose problems and optimize for them
 // - then, need to create problems/score functions
 
-// TODO: maybe 33% chance allow 1 crazy explore per run
+// TODO: try having branches specifically for explore
 
 #include <chrono>
 #include <iostream>

@@ -175,12 +175,13 @@ void create_experiment(ScopeHistory* scope_history,
 		}
 		AbstractNode* exit_next_node = possible_exits[random_index];
 
+		uniform_int_distribution<int> is_damage_distribution(0, 1);
 		ExploreExperiment* new_experiment = new ExploreExperiment(
 			explore_node->parent,
 			explore_node,
 			explore_is_branch,
 			exit_next_node,
-			wrapper->is_damage);
+			is_damage_distribution(generator) == 0);
 		wrapper->curr_explore_experiment = new_experiment;
 
 		wrapper->solution->num_experiments++;

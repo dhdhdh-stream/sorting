@@ -1,5 +1,7 @@
 #include "damage.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
@@ -17,6 +19,8 @@ using namespace std;
 Damage::Damage(AbstractNode* node_context,
 			   bool is_branch,
 			   SolutionWrapper* wrapper) {
+	this->new_scope = NULL;
+
 	vector<AbstractNode*> possible_exits;
 
 	AbstractNode* starting_node;
@@ -135,7 +139,7 @@ Damage::Damage(AbstractNode* node_context,
 			break;
 		case NODE_TYPE_OBS:
 			{
-				ObsNode* obs_node = (ObsNode*)this->node_context;
+				ObsNode* obs_node = (ObsNode*)node_context;
 				if (this->exit_next_node == obs_node->next_node) {
 					exit_is_next = true;
 				} else {
