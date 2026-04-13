@@ -33,8 +33,10 @@ public:
 
 	std::vector<Network*> new_networks;
 
-	std::vector<double> existing_scores;
-	std::vector<double> new_scores;
+	std::vector<double> clean_existing_scores;
+	std::vector<double> clean_new_scores;
+	std::vector<double> damage_existing_scores;
+	std::vector<double> damage_new_scores;
 
 	int curr_ramp;
 	/**
@@ -44,9 +46,10 @@ public:
 
 	int starting_iter;
 
-	double local_improvement;
-	double global_improvement;
-	double score_standard_deviation;
+	double clean_local_improvement;
+	double clean_global_improvement;
+	double damage_local_improvement;
+	double damage_global_improvement;
 
 	EvalExperiment(SolutionWrapper* wrapper);
 	~EvalExperiment();

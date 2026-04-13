@@ -1,5 +1,7 @@
 #include "eval_experiment.h"
 
+#include <iostream>
+
 #include "abstract_node.h"
 #include "constants.h"
 #include "globals.h"
@@ -12,11 +14,9 @@
 using namespace std;
 
 void EvalExperiment::ramp_check_activate(SolutionWrapper* wrapper) {
-	if (!this->is_damage || wrapper->is_damage) {
-		EvalExperimentState* new_experiment_state = new EvalExperimentState(this);
-		new_experiment_state->step_index = 0;
-		wrapper->experiment_context.back() = new_experiment_state;
-	}
+	EvalExperimentState* new_experiment_state = new EvalExperimentState(this);
+	new_experiment_state->step_index = 0;
+	wrapper->experiment_context.back() = new_experiment_state;
 }
 
 void EvalExperiment::ramp_step(vector<double>& obs,
@@ -37,8 +37,7 @@ void EvalExperiment::ramp_step(vector<double>& obs,
 			history = it->second;
 		}
 
-		if (wrapper->curr_explore_experiment == NULL
-				&& this->is_damage == wrapper->is_damage) {
+		if (wrapper->curr_explore_experiment == NULL) {
 			bool is_branch = true;
 			for (int n_index = 0; n_index < (int)this->new_networks.size(); n_index++) {
 				this->new_networks[n_index]->activate(obs);
@@ -143,13 +142,21 @@ void EvalExperiment::ramp_backprop(double target_val,
 								   set<Scope*>& updated_scopes) {
 	if (history->is_on) {
 		if (history->hit_branch) {
-			this->new_scores.push_back(target_val);
+			if (wrapper->is_damage) {
+				this->damage_new_scores.push_back(target_val);
+			} else {
+				this->clean_new_scores.push_back(target_val);
+			}
 
 			this->state_iter++;
 		}
 	} else {
 		if (history->hit_branch) {
-			this->existing_scores.push_back(target_val);
+			if (wrapper->is_damage) {
+				this->damage_existing_scores.push_back(target_val);
+			} else {
+				this->clean_existing_scores.push_back(target_val);
+			}
 
 			this->state_iter++;
 		}
@@ -158,31 +165,50 @@ void EvalExperiment::ramp_backprop(double target_val,
 	switch (this->state) {
 	case EVAL_EXPERIMENT_STATE_RAMP:
 		if (this->state_iter >= RAMP_EPOCH_NUM_ITERS) {
-			double existing_sum_vals = 0.0;
-			for (int h_index = 0; h_index < (int)this->existing_scores.size(); h_index++) {
-				existing_sum_vals += this->existing_scores[h_index];
+			double clean_existing_sum_vals = 0.0;
+			for (int h_index = 0; h_index < (int)this->clean_existing_scores.size(); h_index++) {
+				clean_existing_sum_vals += this->clean_existing_scores[h_index];
 			}
-			double existing_score_average = existing_sum_vals / (double)this->existing_scores.size();
-			double new_sum_vals = 0.0;
-			for (int h_index = 0; h_index < (int)this->new_scores.size(); h_index++) {
-				new_sum_vals += this->new_scores[h_index];
+			double clean_existing_score_average = clean_existing_sum_vals / (double)this->clean_existing_scores.size();
+			double clean_new_sum_vals = 0.0;
+			for (int h_index = 0; h_index < (int)this->clean_new_scores.size(); h_index++) {
+				clean_new_sum_vals += this->clean_new_scores[h_index];
 			}
-			double new_score_average = new_sum_vals / (double)this->new_scores.size();
+			double clean_new_score_average = clean_new_sum_vals / (double)this->clean_new_scores.size();
 
-			// // temp
-			// cout << "this->curr_ramp: " << this->curr_ramp << endl;
-			// cout << "existing_score_average: " << existing_score_average << endl;
-			// cout << "new_score_average: " << new_score_average << endl;
+			double damage_existing_sum_vals = 0.0;
+			for (int h_index = 0; h_index < (int)this->damage_existing_scores.size(); h_index++) {
+				damage_existing_sum_vals += this->damage_existing_scores[h_index];
+			}
+			double damage_existing_score_average = damage_existing_sum_vals / (double)this->damage_existing_scores.size();
+			double damage_new_sum_vals = 0.0;
+			for (int h_index = 0; h_index < (int)this->damage_new_scores.size(); h_index++) {
+				damage_new_sum_vals += this->damage_new_scores[h_index];
+			}
+			double damage_new_score_average = damage_new_sum_vals / (double)this->damage_new_scores.size();
 
-			this->existing_scores.clear();
-			this->new_scores.clear();
+			// temp
+			cout << "this->curr_ramp: " << this->curr_ramp << endl;
+			cout << "clean_existing_score_average: " << clean_existing_score_average << endl;
+			cout << "clean_new_score_average: " << clean_new_score_average << endl;
+			cout << "damage_existing_score_average: " << damage_existing_score_average << endl;
+			cout << "damage_new_score_average: " << damage_new_score_average << endl;
+
+			this->clean_existing_scores.clear();
+			this->clean_new_scores.clear();
+			this->damage_existing_scores.clear();
+			this->damage_new_scores.clear();
 
 			this->state_iter = 0;
 
 			#if defined(MDEBUG) && MDEBUG
-			if ((this->measure_status != MEASURE_STATUS_FAIL && new_score_average >= existing_score_average) || rand()%3 != 0) {
+			if ((this->measure_status != MEASURE_STATUS_FAIL
+					&& clean_new_score_average >= clean_existing_score_average
+					&& damage_new_score_average >= damage_existing_score_average) || rand()%3 != 0) {
 			#else
-			if (this->measure_status != MEASURE_STATUS_FAIL && new_score_average >= existing_score_average) {
+			if (this->measure_status != MEASURE_STATUS_FAIL
+					&& clean_new_score_average >= clean_existing_score_average
+					&& damage_new_score_average >= damage_existing_score_average) {
 			#endif /* MDEBUG */
 				this->curr_ramp++;
 
@@ -209,69 +235,99 @@ void EvalExperiment::ramp_backprop(double target_val,
 		break;
 	case EVAL_EXPERIMENT_STATE_MEASURE:
 		if (this->state_iter >= MEASURE_STEP_NUM_ITERS) {
-			double existing_sum_vals = 0.0;
-			for (int h_index = 0; h_index < (int)this->existing_scores.size(); h_index++) {
-				existing_sum_vals += this->existing_scores[h_index];
+			double clean_existing_sum_vals = 0.0;
+			for (int h_index = 0; h_index < (int)this->clean_existing_scores.size(); h_index++) {
+				clean_existing_sum_vals += this->clean_existing_scores[h_index];
 			}
-			double existing_score_average = existing_sum_vals / (double)this->existing_scores.size();
-			double new_sum_vals = 0.0;
-			for (int h_index = 0; h_index < (int)this->new_scores.size(); h_index++) {
-				new_sum_vals += this->new_scores[h_index];
+			double clean_existing_score_average = clean_existing_sum_vals / (double)this->clean_existing_scores.size();
+			double clean_new_sum_vals = 0.0;
+			for (int h_index = 0; h_index < (int)this->clean_new_scores.size(); h_index++) {
+				clean_new_sum_vals += this->clean_new_scores[h_index];
 			}
-			double new_score_average = new_sum_vals / (double)this->new_scores.size();
+			double clean_new_score_average = clean_new_sum_vals / (double)this->clean_new_scores.size();
 
-			double sum_variance = 0.0;
-			for (int h_index = 0; h_index < (int)this->new_scores.size(); h_index++) {
-				sum_variance += (this->new_scores[h_index] - new_score_average) * (this->new_scores[h_index] - new_score_average);
+			double damage_existing_sum_vals = 0.0;
+			for (int h_index = 0; h_index < (int)this->damage_existing_scores.size(); h_index++) {
+				damage_existing_sum_vals += this->damage_existing_scores[h_index];
 			}
-			this->score_standard_deviation = sqrt(sum_variance / (double)this->new_scores.size());
+			double damage_existing_score_average = damage_existing_sum_vals / (double)this->damage_existing_scores.size();
+			double damage_new_sum_vals = 0.0;
+			for (int h_index = 0; h_index < (int)this->damage_new_scores.size(); h_index++) {
+				damage_new_sum_vals += this->damage_new_scores[h_index];
+			}
+			double damage_new_score_average = damage_new_sum_vals / (double)this->damage_new_scores.size();
 
 			int total_iters = wrapper->eval_iter - this->starting_iter;
 			if (total_iters < 0) {
 				total_iters += numeric_limits<int>::max();
 			}
-			double average_hits_per_run = ((double)this->existing_scores.size() + (double)this->new_scores.size()) / (double)total_iters;
+			double clean_average_hits_per_run = ((double)this->clean_existing_scores.size() + (double)this->clean_new_scores.size()) / (double)total_iters;
+			double damage_average_hits_per_run = ((double)this->damage_existing_scores.size() + (double)this->damage_new_scores.size()) / (double)total_iters;
 
-			this->local_improvement = new_score_average - existing_score_average;
-			this->global_improvement = average_hits_per_run * this->local_improvement;
-			double t_score = this->local_improvement
-				/ (this->score_standard_deviation / sqrt((double)this->new_scores.size()));
+			this->clean_local_improvement = clean_new_score_average - clean_existing_score_average;
+			this->clean_global_improvement = clean_average_hits_per_run * this->clean_local_improvement;
+			this->damage_local_improvement = damage_new_score_average - damage_existing_score_average;
+			this->damage_global_improvement = damage_average_hits_per_run * this->damage_local_improvement;
 
-			// // temp
-			// cout << "new_score_average: " << new_score_average << endl;
-			// cout << "this->new_scores.size(): " << this->new_scores.size() << endl;
-			// cout << "existing_score_average: " << existing_score_average << endl;
-			// cout << "this->local_improvement: " << this->local_improvement << endl;
-			// cout << "this->global_improvement: " << this->global_improvement << endl;
-			// cout << "t_score: " << t_score << endl;
+			// temp
+			cout << "this->clean_local_improvement: " << this->clean_local_improvement << endl;
+			cout << "this->clean_global_improvement: " << this->clean_global_improvement << endl;
+			cout << "this->damage_local_improvement: " << this->damage_local_improvement << endl;
+			cout << "this->damage_global_improvement: " << this->damage_global_improvement << endl;
 
 			#if defined(MDEBUG) && MDEBUG
-			if (t_score >= SUCCESS_T_SCORE || rand()%3 == 0) {
+			if ((clean_new_score_average >= clean_existing_score_average
+					&& damage_new_score_average >= damage_existing_score_average) || rand()%3 == 0) {
 			#else
-			if (t_score >= SUCCESS_T_SCORE) {
+			if (clean_new_score_average >= clean_existing_score_average
+					&& damage_new_score_average >= damage_existing_score_average) {
 			#endif /* MDEBUG */
 				bool is_success = false;
-				if (wrapper->solution->ramp_last_scores.size() >= MIN_NUM_LAST_TRACK) {
+
+				if (wrapper->solution->clean_ramp_last_scores.size() >= MIN_NUM_LAST_TRACK) {
 					int num_better_than = 0;
-					for (list<double>::iterator it = wrapper->solution->ramp_last_scores.begin();
-							it != wrapper->solution->ramp_last_scores.end(); it++) {
-						if (this->global_improvement >= *it) {
+					for (list<double>::iterator it = wrapper->solution->clean_ramp_last_scores.begin();
+							it != wrapper->solution->clean_ramp_last_scores.end(); it++) {
+						if (this->clean_global_improvement >= *it) {
 							num_better_than++;
 						}
 					}
 
-					double target_better_than = LAST_BETTER_THAN_RATIO * (double)wrapper->solution->ramp_last_scores.size();
+					double target_better_than = LAST_BETTER_THAN_RATIO * (double)wrapper->solution->clean_ramp_last_scores.size();
 
 					if (num_better_than >= target_better_than) {
 						is_success = true;
 					}
 
-					if (wrapper->solution->ramp_last_scores.size() >= NUM_LAST_TRACK) {
-						wrapper->solution->ramp_last_scores.pop_front();
+					if (wrapper->solution->clean_ramp_last_scores.size() >= NUM_LAST_TRACK) {
+						wrapper->solution->clean_ramp_last_scores.pop_front();
 					}
-					wrapper->solution->ramp_last_scores.push_back(this->global_improvement);
+					wrapper->solution->clean_ramp_last_scores.push_back(this->clean_global_improvement);
 				} else {
-					wrapper->solution->ramp_last_scores.push_back(this->global_improvement);
+					wrapper->solution->clean_ramp_last_scores.push_back(this->clean_global_improvement);
+				}
+
+				if (wrapper->solution->damage_ramp_last_scores.size() >= MIN_NUM_LAST_TRACK) {
+					int num_better_than = 0;
+					for (list<double>::iterator it = wrapper->solution->damage_ramp_last_scores.begin();
+							it != wrapper->solution->damage_ramp_last_scores.end(); it++) {
+						if (this->damage_global_improvement >= *it) {
+							num_better_than++;
+						}
+					}
+
+					double target_better_than = LAST_BETTER_THAN_RATIO * (double)wrapper->solution->damage_ramp_last_scores.size();
+
+					if (num_better_than >= target_better_than) {
+						is_success = true;
+					}
+
+					if (wrapper->solution->damage_ramp_last_scores.size() >= NUM_LAST_TRACK) {
+						wrapper->solution->damage_ramp_last_scores.pop_front();
+					}
+					wrapper->solution->damage_ramp_last_scores.push_back(this->damage_global_improvement);
+				} else {
+					wrapper->solution->damage_ramp_last_scores.push_back(this->damage_global_improvement);
 				}
 
 				#if defined(MDEBUG) && MDEBUG
@@ -279,8 +335,10 @@ void EvalExperiment::ramp_backprop(double target_val,
 				#else
 				if (is_success) {
 				#endif /* MDEBUG */
-					this->existing_scores.clear();
-					this->new_scores.clear();
+					this->clean_existing_scores.clear();
+					this->clean_new_scores.clear();
+					this->damage_existing_scores.clear();
+					this->damage_new_scores.clear();
 
 					this->measure_status = MEASURE_STATUS_SUCCESS;
 
@@ -289,8 +347,10 @@ void EvalExperiment::ramp_backprop(double target_val,
 
 					this->curr_ramp++;
 				} else {
-					this->existing_scores.clear();
-					this->new_scores.clear();
+					this->clean_existing_scores.clear();
+					this->clean_new_scores.clear();
+					this->damage_existing_scores.clear();
+					this->damage_new_scores.clear();
 
 					this->measure_status = MEASURE_STATUS_FAIL;
 
@@ -299,13 +359,11 @@ void EvalExperiment::ramp_backprop(double target_val,
 
 					this->curr_ramp--;
 				}
-			#if defined(MDEBUG) && MDEBUG
-			} else if (t_score < FAIL_T_SCORE && rand()%2 == 0) {
-			#else
-			} else if (t_score < FAIL_T_SCORE) {
-			#endif /* MDEBUG */
-				this->existing_scores.clear();
-				this->new_scores.clear();
+			} else {
+				this->clean_existing_scores.clear();
+				this->clean_new_scores.clear();
+				this->damage_existing_scores.clear();
+				this->damage_new_scores.clear();
 
 				this->measure_status = MEASURE_STATUS_FAIL;
 
@@ -313,8 +371,6 @@ void EvalExperiment::ramp_backprop(double target_val,
 				this->state_iter = 0;
 
 				this->curr_ramp--;
-			} else {
-				this->state_iter = 0;
 			}
 		}
 		break;

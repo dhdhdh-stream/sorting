@@ -51,9 +51,10 @@ void EvalExperiment::add(SolutionWrapper* wrapper) {
 
 	ss << "this->new_networks.size(): " << this->new_networks.size() << "; ";
 
-	ss << "this->local_improvement: " << this->local_improvement << "; ";
-	ss << "this->global_improvement: " << this->global_improvement << "; ";
-	ss << "this->score_standard_deviation: " << this->score_standard_deviation << "; ";
+	ss << "this->clean_local_improvement: " << this->clean_local_improvement << "; ";
+	ss << "this->clean_global_improvement: " << this->clean_global_improvement << "; ";
+	ss << "this->damage_local_improvement: " << this->damage_local_improvement << "; ";
+	ss << "this->damage_global_improvement: " << this->damage_global_improvement << "; ";
 
 	double clean_sum_vals = 0.0;
 	for (int h_index = 0; h_index < (int)wrapper->clean_score_histories.size(); h_index++) {
@@ -357,7 +358,6 @@ void EvalExperiment::add(SolutionWrapper* wrapper) {
 	}
 	new_branch_node->ancestor_ids.push_back(this->node_context->id);
 
-	new_branch_node->is_damage = this->is_damage;
 	new_branch_node->networks = this->new_networks;
 	this->new_networks.clear();
 

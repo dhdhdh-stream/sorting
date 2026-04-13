@@ -58,8 +58,10 @@ public:
 	 *   - as solution becomes fractured, becomes dominated by noise
 	 *   - if experiment has good local, but poor global, will add anyways
 	 */
-	std::list<double> train_new_last_scores;
-	std::list<double> ramp_last_scores;
+	std::list<double> clean_train_new_last_scores;
+	std::list<double> damage_train_new_last_scores;
+	std::list<double> clean_ramp_last_scores;
+	std::list<double> damage_ramp_last_scores;
 
 	std::vector<double> clean_improvement_history;
 	std::vector<double> damage_improvement_history;

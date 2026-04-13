@@ -1,3 +1,9 @@
+/**
+ * - don't have paths specifically for explore
+ *   - i.e., don't separately optimize for explore and eval
+ *     - can easily destroy progress for each other
+ */
+
 #ifndef BRANCH_NODE_H
 #define BRANCH_NODE_H
 
@@ -15,8 +21,6 @@ class SolutionWrapper;
 class BranchNodeHistory;
 class BranchNode : public AbstractNode {
 public:
-	bool is_damage;
-
 	std::vector<Network*> networks;
 
 	int original_next_node_id;

@@ -143,27 +143,52 @@ void ExploreExperiment::train_new_backprop(
 
 			bool is_success = false;
 			if (local_improvement > 0.0) {
-				if (wrapper->solution->train_new_last_scores.size() >= MIN_NUM_LAST_TRACK) {
-					int num_better_than = 0;
-					for (list<double>::iterator it = wrapper->solution->train_new_last_scores.begin();
-							it != wrapper->solution->train_new_last_scores.end(); it++) {
-						if (global_improvement >= *it) {
-							num_better_than++;
+				if (this->is_damage) {
+					if (wrapper->solution->damage_train_new_last_scores.size() >= MIN_NUM_LAST_TRACK) {
+						int num_better_than = 0;
+						for (list<double>::iterator it = wrapper->solution->damage_train_new_last_scores.begin();
+								it != wrapper->solution->damage_train_new_last_scores.end(); it++) {
+							if (global_improvement >= *it) {
+								num_better_than++;
+							}
 						}
-					}
 
-					double target_better_than = LAST_BETTER_THAN_RATIO * (double)wrapper->solution->train_new_last_scores.size();
+						double target_better_than = LAST_BETTER_THAN_RATIO * (double)wrapper->solution->damage_train_new_last_scores.size();
 
-					if (num_better_than >= target_better_than) {
-						is_success = true;
-					}
+						if (num_better_than >= target_better_than) {
+							is_success = true;
+						}
 
-					if (wrapper->solution->train_new_last_scores.size() >= NUM_LAST_TRACK) {
-						wrapper->solution->train_new_last_scores.pop_front();
+						if (wrapper->solution->damage_train_new_last_scores.size() >= NUM_LAST_TRACK) {
+							wrapper->solution->damage_train_new_last_scores.pop_front();
+						}
+						wrapper->solution->damage_train_new_last_scores.push_back(global_improvement);
+					} else {
+						wrapper->solution->damage_train_new_last_scores.push_back(global_improvement);
 					}
-					wrapper->solution->train_new_last_scores.push_back(global_improvement);
 				} else {
-					wrapper->solution->train_new_last_scores.push_back(global_improvement);
+					if (wrapper->solution->clean_train_new_last_scores.size() >= MIN_NUM_LAST_TRACK) {
+						int num_better_than = 0;
+						for (list<double>::iterator it = wrapper->solution->clean_train_new_last_scores.begin();
+								it != wrapper->solution->clean_train_new_last_scores.end(); it++) {
+							if (global_improvement >= *it) {
+								num_better_than++;
+							}
+						}
+
+						double target_better_than = LAST_BETTER_THAN_RATIO * (double)wrapper->solution->clean_train_new_last_scores.size();
+
+						if (num_better_than >= target_better_than) {
+							is_success = true;
+						}
+
+						if (wrapper->solution->clean_train_new_last_scores.size() >= NUM_LAST_TRACK) {
+							wrapper->solution->clean_train_new_last_scores.pop_front();
+						}
+						wrapper->solution->clean_train_new_last_scores.push_back(global_improvement);
+					} else {
+						wrapper->solution->clean_train_new_last_scores.push_back(global_improvement);
+					}
 				}
 			}
 
