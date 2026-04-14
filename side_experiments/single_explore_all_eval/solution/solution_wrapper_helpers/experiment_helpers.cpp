@@ -33,12 +33,14 @@ void SolutionWrapper::experiment_init() {
 	if (this->curr_explore_experiment != NULL) {
 		this->explore_experiment_history = new ExploreExperimentHistory(this->curr_explore_experiment);
 
-		this->is_damage = this->curr_explore_experiment->is_damage;
+		// this->is_damage = this->curr_explore_experiment->is_damage;
+		this->is_damage = false;
 	} else {
 		this->eval_iter++;
 
 		uniform_int_distribution<int> is_damage_distribution(0, 1);
-		this->is_damage = is_damage_distribution(generator) == 0;
+		// this->is_damage = is_damage_distribution(generator) == 0;
+		this->is_damage = false;
 	}
 
 	ScopeHistory* scope_history = new ScopeHistory(this->solution->scopes[0]);

@@ -313,6 +313,15 @@ void create_new_scope(AbstractNode* potential_start_node,
 
 						branch_it->second->ancestor_ids.push_back(new_branch_node->id);
 					}
+
+					map<AbstractNode*, AbstractNode*>::iterator branch_end_node_it = node_mappings
+						.find(original_branch_node->branch_end_node);
+					if (branch_end_node_it == node_mappings.end()) {
+						throw invalid_argument("branch_end_node_it == node_mappings.end()");
+					} else {
+						new_branch_node->branch_end_node_id = branch_end_node_it->second->id;
+						new_branch_node->branch_end_node = branch_end_node_it->second;
+					}
 				}
 				break;
 			case NODE_TYPE_OBS:

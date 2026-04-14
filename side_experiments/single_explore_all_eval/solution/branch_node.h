@@ -28,6 +28,9 @@ public:
 	int branch_next_node_id;
 	AbstractNode* branch_next_node;
 
+	int branch_end_node_id;
+	AbstractNode* branch_end_node;
+
 	BranchNode();
 	~BranchNode();
 

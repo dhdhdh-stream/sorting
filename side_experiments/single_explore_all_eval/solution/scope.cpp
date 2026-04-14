@@ -122,12 +122,7 @@ void Scope::random_activate(vector<AbstractNode*>& path) {
 		case NODE_TYPE_BRANCH:
 			{
 				BranchNode* node = (BranchNode*)curr_node;
-				uniform_int_distribution<int> distribution(0, 1);
-				if (distribution(generator) == 0) {
-					curr_node = node->branch_next_node;
-				} else {
-					curr_node = node->original_next_node;
-				}
+				curr_node = node->branch_end_node;
 			}
 			break;
 		case NODE_TYPE_OBS:

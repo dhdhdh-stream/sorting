@@ -361,6 +361,9 @@ void EvalExperiment::add(SolutionWrapper* wrapper) {
 	new_branch_node->networks = this->new_networks;
 	this->new_networks.clear();
 
+	new_branch_node->branch_end_node_id = exit_node_id;
+	new_branch_node->branch_end_node = exit_node;
+
 	for (int n_index = 0; n_index < (int)new_nodes.size(); n_index++) {
 		int next_node_id;
 		AbstractNode* next_node;
