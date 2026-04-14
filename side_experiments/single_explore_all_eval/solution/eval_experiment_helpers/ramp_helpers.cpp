@@ -176,23 +176,23 @@ void EvalExperiment::ramp_backprop(double target_val,
 			}
 			double clean_new_score_average = clean_new_sum_vals / (double)this->clean_new_scores.size();
 
-			double damage_existing_sum_vals = 0.0;
-			for (int h_index = 0; h_index < (int)this->damage_existing_scores.size(); h_index++) {
-				damage_existing_sum_vals += this->damage_existing_scores[h_index];
-			}
-			double damage_existing_score_average = damage_existing_sum_vals / (double)this->damage_existing_scores.size();
-			double damage_new_sum_vals = 0.0;
-			for (int h_index = 0; h_index < (int)this->damage_new_scores.size(); h_index++) {
-				damage_new_sum_vals += this->damage_new_scores[h_index];
-			}
-			double damage_new_score_average = damage_new_sum_vals / (double)this->damage_new_scores.size();
+			// double damage_existing_sum_vals = 0.0;
+			// for (int h_index = 0; h_index < (int)this->damage_existing_scores.size(); h_index++) {
+			// 	damage_existing_sum_vals += this->damage_existing_scores[h_index];
+			// }
+			// double damage_existing_score_average = damage_existing_sum_vals / (double)this->damage_existing_scores.size();
+			// double damage_new_sum_vals = 0.0;
+			// for (int h_index = 0; h_index < (int)this->damage_new_scores.size(); h_index++) {
+			// 	damage_new_sum_vals += this->damage_new_scores[h_index];
+			// }
+			// double damage_new_score_average = damage_new_sum_vals / (double)this->damage_new_scores.size();
 
-			// temp
-			cout << "this->curr_ramp: " << this->curr_ramp << endl;
-			cout << "clean_existing_score_average: " << clean_existing_score_average << endl;
-			cout << "clean_new_score_average: " << clean_new_score_average << endl;
-			cout << "damage_existing_score_average: " << damage_existing_score_average << endl;
-			cout << "damage_new_score_average: " << damage_new_score_average << endl;
+			// // temp
+			// cout << "this->curr_ramp: " << this->curr_ramp << endl;
+			// cout << "clean_existing_score_average: " << clean_existing_score_average << endl;
+			// cout << "clean_new_score_average: " << clean_new_score_average << endl;
+			// cout << "damage_existing_score_average: " << damage_existing_score_average << endl;
+			// cout << "damage_new_score_average: " << damage_new_score_average << endl;
 
 			this->clean_existing_scores.clear();
 			this->clean_new_scores.clear();
@@ -206,9 +206,11 @@ void EvalExperiment::ramp_backprop(double target_val,
 					&& clean_new_score_average >= clean_existing_score_average
 					&& damage_new_score_average >= damage_existing_score_average) || rand()%3 != 0) {
 			#else
+			// if (this->measure_status != MEASURE_STATUS_FAIL
+			// 		&& clean_new_score_average >= clean_existing_score_average
+			// 		&& damage_new_score_average >= damage_existing_score_average) {
 			if (this->measure_status != MEASURE_STATUS_FAIL
-					&& clean_new_score_average >= clean_existing_score_average
-					&& damage_new_score_average >= damage_existing_score_average) {
+					&& clean_new_score_average >= clean_existing_score_average) {
 			#endif /* MDEBUG */
 				this->curr_ramp++;
 
@@ -269,18 +271,19 @@ void EvalExperiment::ramp_backprop(double target_val,
 			this->damage_local_improvement = damage_new_score_average - damage_existing_score_average;
 			this->damage_global_improvement = damage_average_hits_per_run * this->damage_local_improvement;
 
-			// temp
-			cout << "this->clean_local_improvement: " << this->clean_local_improvement << endl;
-			cout << "this->clean_global_improvement: " << this->clean_global_improvement << endl;
-			cout << "this->damage_local_improvement: " << this->damage_local_improvement << endl;
-			cout << "this->damage_global_improvement: " << this->damage_global_improvement << endl;
+			// // temp
+			// cout << "this->clean_local_improvement: " << this->clean_local_improvement << endl;
+			// cout << "this->clean_global_improvement: " << this->clean_global_improvement << endl;
+			// cout << "this->damage_local_improvement: " << this->damage_local_improvement << endl;
+			// cout << "this->damage_global_improvement: " << this->damage_global_improvement << endl;
 
 			#if defined(MDEBUG) && MDEBUG
 			if ((clean_new_score_average >= clean_existing_score_average
 					&& damage_new_score_average >= damage_existing_score_average) || rand()%3 == 0) {
 			#else
-			if (clean_new_score_average >= clean_existing_score_average
-					&& damage_new_score_average >= damage_existing_score_average) {
+			// if (clean_new_score_average >= clean_existing_score_average
+			// 		&& damage_new_score_average >= damage_existing_score_average) {
+				if (clean_new_score_average >= clean_existing_score_average) {
 			#endif /* MDEBUG */
 				bool is_success = false;
 
@@ -307,28 +310,28 @@ void EvalExperiment::ramp_backprop(double target_val,
 					wrapper->solution->clean_ramp_last_scores.push_back(this->clean_global_improvement);
 				}
 
-				if (wrapper->solution->damage_ramp_last_scores.size() >= MIN_NUM_LAST_TRACK) {
-					int num_better_than = 0;
-					for (list<double>::iterator it = wrapper->solution->damage_ramp_last_scores.begin();
-							it != wrapper->solution->damage_ramp_last_scores.end(); it++) {
-						if (this->damage_global_improvement >= *it) {
-							num_better_than++;
-						}
-					}
+				// if (wrapper->solution->damage_ramp_last_scores.size() >= MIN_NUM_LAST_TRACK) {
+				// 	int num_better_than = 0;
+				// 	for (list<double>::iterator it = wrapper->solution->damage_ramp_last_scores.begin();
+				// 			it != wrapper->solution->damage_ramp_last_scores.end(); it++) {
+				// 		if (this->damage_global_improvement >= *it) {
+				// 			num_better_than++;
+				// 		}
+				// 	}
 
-					double target_better_than = LAST_BETTER_THAN_RATIO * (double)wrapper->solution->damage_ramp_last_scores.size();
+				// 	double target_better_than = LAST_BETTER_THAN_RATIO * (double)wrapper->solution->damage_ramp_last_scores.size();
 
-					if (num_better_than >= target_better_than) {
-						is_success = true;
-					}
+				// 	if (num_better_than >= target_better_than) {
+				// 		is_success = true;
+				// 	}
 
-					if (wrapper->solution->damage_ramp_last_scores.size() >= NUM_LAST_TRACK) {
-						wrapper->solution->damage_ramp_last_scores.pop_front();
-					}
-					wrapper->solution->damage_ramp_last_scores.push_back(this->damage_global_improvement);
-				} else {
-					wrapper->solution->damage_ramp_last_scores.push_back(this->damage_global_improvement);
-				}
+				// 	if (wrapper->solution->damage_ramp_last_scores.size() >= NUM_LAST_TRACK) {
+				// 		wrapper->solution->damage_ramp_last_scores.pop_front();
+				// 	}
+				// 	wrapper->solution->damage_ramp_last_scores.push_back(this->damage_global_improvement);
+				// } else {
+				// 	wrapper->solution->damage_ramp_last_scores.push_back(this->damage_global_improvement);
+				// }
 
 				#if defined(MDEBUG) && MDEBUG
 				if (is_success || rand()%3 != 0) {

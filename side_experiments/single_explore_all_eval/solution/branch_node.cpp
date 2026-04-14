@@ -88,6 +88,8 @@ void BranchNode::link(Solution* parent_solution) {
 	} else {
 		this->branch_next_node = this->parent->nodes[this->branch_next_node_id];
 	}
+
+	this->branch_end_node = this->parent->nodes[this->branch_end_node_id];
 }
 
 void BranchNode::copy_from(BranchNode* original,

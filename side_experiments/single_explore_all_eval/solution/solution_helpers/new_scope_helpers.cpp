@@ -317,6 +317,10 @@ void create_new_scope(AbstractNode* potential_start_node,
 					map<AbstractNode*, AbstractNode*>::iterator branch_end_node_it = node_mappings
 						.find(original_branch_node->branch_end_node);
 					if (branch_end_node_it == node_mappings.end()) {
+						cout << "potential_start_node->parent->id: " << potential_start_node->parent->id << endl;
+						cout << "potential_start_node->id: " << potential_start_node->id << endl;
+						cout << "potential_end_node->id: " << potential_end_node->id << endl;
+						cout << "original_branch_node->id: " << original_branch_node->id << endl;
 						throw invalid_argument("branch_end_node_it == node_mappings.end()");
 					} else {
 						new_branch_node->branch_end_node_id = branch_end_node_it->second->id;

@@ -69,11 +69,12 @@ void Scope::random_exit_activate(AbstractNode* starting_node,
 				possible_exits.push_back(curr_node);
 
 				uniform_int_distribution<int> distribution(0, 1);
-				if (distribution(generator) == 0) {
-					curr_node = node->branch_next_node;
-				} else {
-					curr_node = node->original_next_node;
-				}
+				// if (distribution(generator) == 0) {
+				// 	curr_node = node->branch_next_node;
+				// } else {
+				// 	curr_node = node->original_next_node;
+				// }
+				curr_node = node->branch_end_node;
 			}
 			break;
 		case NODE_TYPE_OBS:
@@ -122,7 +123,12 @@ void Scope::random_activate(vector<AbstractNode*>& path) {
 		case NODE_TYPE_BRANCH:
 			{
 				BranchNode* node = (BranchNode*)curr_node;
-				curr_node = node->branch_end_node;
+				uniform_int_distribution<int> distribution(0, 1);
+				if (distribution(generator) == 0) {
+					curr_node = node->branch_next_node;
+				} else {
+					curr_node = node->original_next_node;
+				}
 			}
 			break;
 		case NODE_TYPE_OBS:

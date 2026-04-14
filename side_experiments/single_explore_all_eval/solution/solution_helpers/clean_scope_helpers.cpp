@@ -345,6 +345,17 @@ void clean_scope(Scope* scope) {
 
 			new_obs_node->ancestor_ids = it->second->ancestor_ids;
 			it->second->ancestor_ids = {new_obs_node->id};
+
+			for (map<int, AbstractNode*>::iterator i_it = scope->nodes.begin();
+					i_it != scope->nodes.end(); i_it++) {
+				if (i_it->second->type == NODE_TYPE_BRANCH) {
+					BranchNode* branch_node = (BranchNode*)i_it->second;
+					if (branch_node->branch_end_node == it->second) {
+						branch_node->branch_end_node_id = new_obs_node->id;
+						branch_node->branch_end_node = new_obs_node;
+					}
+				}
+			}
 		}
 	}
 
