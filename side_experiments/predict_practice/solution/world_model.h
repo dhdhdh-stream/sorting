@@ -11,6 +11,8 @@ public:
 	std::vector<std::vector<bool>> revealed;
 
 	WorldModel();
+
+	void print();
 };
 
 void update_world_model(SolutionWrapper* wrapper);

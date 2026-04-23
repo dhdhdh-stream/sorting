@@ -55,14 +55,14 @@ void clean_pre_signal_helper(double& existing_sum_misguess,
 		curr_signal->backprop_helper(index);
 	}
 
-	// // temp
-	// double train_curr_sum_misguess = 0.0;
-	// for (int h_index = 0; h_index < num_train_samples; h_index++) {
-	// 	double val = curr_signal->activate_helper(h_index);
-	// 	train_curr_sum_misguess += (curr_signal->target_val_histories[h_index] - val)
-	// 		* (curr_signal->target_val_histories[h_index] - val);
-	// }
-	// cout << "train_curr_sum_misguess: " << train_curr_sum_misguess << endl;
+	// temp
+	double train_curr_sum_misguess = 0.0;
+	for (int h_index = 0; h_index < num_train_samples; h_index++) {
+		double val = curr_signal->activate_helper(h_index);
+		train_curr_sum_misguess += (curr_signal->target_val_histories[h_index] - val)
+			* (curr_signal->target_val_histories[h_index] - val);
+	}
+	cout << "train_curr_sum_misguess: " << train_curr_sum_misguess << endl;
 
 	vector<double> predicted_scores;
 
@@ -78,8 +78,8 @@ void clean_pre_signal_helper(double& existing_sum_misguess,
 
 	double curr_sum_misguess = existing_curr_sum_misguess;
 
-	// // temp
-	// cout << "clear " << node_index << " " << curr_sum_misguess << endl;
+	// temp
+	cout << "clear " << node_index << " " << curr_sum_misguess << endl;
 
 	if (curr_sum_misguess < existing_sum_misguess) {
 		existing_sum_misguess = curr_sum_misguess;
@@ -94,7 +94,7 @@ void clean_pre_signal_helper(double& existing_sum_misguess,
 void update_signal(Solution* solution,
 				   SolutionWrapper* wrapper) {
 	// temp
-	cout << "update_pre_signal" << endl;
+	cout << "update_signal" << endl;
 
 	Signal* signal = solution->signal;
 
@@ -154,20 +154,20 @@ void update_signal(Solution* solution,
 		remaining_vals[h_index] = signal->target_val_histories[h_index] - val;
 	}
 
-	// // temp
-	// double train_sum_misguess = 0.0;
-	// for (int h_index = 0; h_index < num_train_samples; h_index++) {
-	// 	train_sum_misguess += remaining_vals[h_index] * remaining_vals[h_index];
-	// }
-	// cout << "train_sum_misguess: " << train_sum_misguess << endl;
+	// temp
+	double train_sum_misguess = 0.0;
+	for (int h_index = 0; h_index < num_train_samples; h_index++) {
+		train_sum_misguess += remaining_vals[h_index] * remaining_vals[h_index];
+	}
+	cout << "train_sum_misguess: " << train_sum_misguess << endl;
 
 	double existing_sum_misguess = 0.0;
 	for (int h_index = num_train_samples; h_index < SIGNAL_NUM_SAMPLES; h_index++) {
 		existing_sum_misguess += remaining_vals[h_index] * remaining_vals[h_index];
 	}
 
-	// // temp
-	// cout << "existing_sum_misguess: " << existing_sum_misguess << endl;
+	// temp
+	cout << "existing_sum_misguess: " << existing_sum_misguess << endl;
 
 	Signal* best_signal = NULL;
 	double best_sum_misguess = numeric_limits<double>::max();
@@ -302,14 +302,14 @@ void update_signal(Solution* solution,
 			curr_signal->backprop_helper(index);
 		}
 
-		// // temp
-		// double train_curr_sum_misguess = 0.0;
-		// for (int h_index = 0; h_index < num_train_samples; h_index++) {
-		// 	double val = curr_signal->activate_helper(h_index);
-		// 	train_curr_sum_misguess += (curr_signal->target_val_histories[h_index] - val)
-		// 		* (curr_signal->target_val_histories[h_index] - val);
-		// }
-		// cout << "train_curr_sum_misguess: " << train_curr_sum_misguess << endl;
+		// temp
+		double train_curr_sum_misguess = 0.0;
+		for (int h_index = 0; h_index < num_train_samples; h_index++) {
+			double val = curr_signal->activate_helper(h_index);
+			train_curr_sum_misguess += (curr_signal->target_val_histories[h_index] - val)
+				* (curr_signal->target_val_histories[h_index] - val);
+		}
+		cout << "train_curr_sum_misguess: " << train_curr_sum_misguess << endl;
 
 		vector<double> predicted_scores;
 
@@ -323,7 +323,7 @@ void update_signal(Solution* solution,
 				* (curr_signal->target_val_histories[h_index] - val);
 		}
 
-		// cout << "curr_sum_misguess: " << curr_sum_misguess << endl;
+		cout << "curr_sum_misguess: " << curr_sum_misguess << endl;
 
 		if (curr_sum_misguess < existing_sum_misguess && curr_sum_misguess < best_sum_misguess) {
 			if (best_signal != NULL) {

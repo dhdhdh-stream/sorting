@@ -23,9 +23,9 @@ class Solution;
 class WorldModel;
 
 #if defined(MDEBUG) && MDEBUG
-const int SIGNAL_NUM_SAMPLES = 500;
+const int SIGNAL_NUM_SAMPLES = 200;
 #else
-const int SIGNAL_NUM_SAMPLES = 50000;
+const int SIGNAL_NUM_SAMPLES = 5000;
 #endif /* MDEBUG */
 
 const int POTENTIAL_NUM_TRIES = 10;

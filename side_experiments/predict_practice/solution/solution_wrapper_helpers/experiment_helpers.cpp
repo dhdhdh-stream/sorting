@@ -91,6 +91,8 @@ void SolutionWrapper::set_action(int action) {
 }
 
 void SolutionWrapper::experiment_end(double result) {
+	update_world_model(this);
+
 	if (this->curr_explore_experiment == NULL) {
 		if (this->score_histories.size() < HISTORIES_NUM_SAVE) {
 			this->score_histories.push_back(result);

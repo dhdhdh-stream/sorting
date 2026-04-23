@@ -15,7 +15,7 @@ using namespace std;
 #if defined(MDEBUG) && MDEBUG
 const int TRAIN_MIN_SAMPLES = 200;
 #else
-const int TRAIN_MIN_SAMPLES = 20000;
+const int TRAIN_MIN_SAMPLES = 1000;
 #endif /* MDEBUG */
 const int ITERS_PER_SAMPLE = 10;
 

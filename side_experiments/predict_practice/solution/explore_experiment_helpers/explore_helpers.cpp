@@ -11,18 +11,20 @@
 #include "problem.h"
 #include "scope.h"
 #include "scope_node.h"
+#include "signal.h"
 #include "signal_helpers.h"
 #include "solution.h"
 #include "solution_helpers.h"
 #include "solution_wrapper.h"
 #include "start_node.h"
+#include "world_model.h"
 
 using namespace std;
 
 #if defined(MDEBUG) && MDEBUG
 const int EXPLORE_ITERS = 10;
 #else
-const int EXPLORE_ITERS = 100;
+const int EXPLORE_ITERS = 200;
 #endif /* MDEBUG */
 
 void ExploreExperiment::explore_check_activate(SolutionWrapper* wrapper) {
@@ -202,6 +204,8 @@ void ExploreExperiment::explore_set_action(int action,
 	this->curr_actions[experiment_state->step_index] = action;
 
 	experiment_state->step_index++;
+
+	update_world_model(wrapper);
 }
 
 void ExploreExperiment::explore_exit_step(SolutionWrapper* wrapper) {
@@ -214,6 +218,8 @@ void ExploreExperiment::explore_exit_step(SolutionWrapper* wrapper) {
 	wrapper->experiment_context.pop_back();
 
 	experiment_state->step_index++;
+
+	update_world_model(wrapper);
 }
 
 void ExploreExperiment::explore_backprop(double target_val,
@@ -226,6 +232,15 @@ void ExploreExperiment::explore_backprop(double target_val,
 	if (history->existing_predicted_trues.size() != 0) {
 		update_signals_helper(target_val,
 							  wrapper);
+
+		// temp
+		if (this->state_iter < 4) {
+			wrapper->world_model->print();
+			cout << "target_val: " << target_val << endl;
+			double predicted = wrapper->solution->signal->activate(wrapper->world_model);
+			cout << "predicted: " << predicted << endl;
+			cout << endl;
+		}
 
 		double curr_surprise = target_val - history->existing_predicted_trues[0];
 

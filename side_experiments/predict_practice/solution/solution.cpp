@@ -68,6 +68,8 @@ Solution::Solution(Solution* original) {
 
 	this->outer_root_scope_ids = original->outer_root_scope_ids;
 
+	this->signal->copy_from(original->signal);
+
 	set_signal_potential_inputs(this);
 
 	this->train_new_last_scores = original->train_new_last_scores;
@@ -204,6 +206,8 @@ void Solution::load(ifstream& input_file) {
 		getline(input_file, scope_id_line);
 		this->outer_root_scope_ids.push_back(stoi(scope_id_line));
 	}
+
+	this->signal->load(input_file);
 
 	set_signal_potential_inputs(this);
 
@@ -344,6 +348,8 @@ void Solution::save(ofstream& output_file) {
 	for (int r_index = 0; r_index < (int)this->outer_root_scope_ids.size(); r_index++) {
 		output_file << this->outer_root_scope_ids[r_index] << endl;
 	}
+
+	this->signal->save(output_file);
 
 	output_file << this->train_new_last_scores.size() << endl;
 	for (list<double>::iterator it = this->train_new_last_scores.begin();

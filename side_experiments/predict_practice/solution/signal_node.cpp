@@ -1,5 +1,7 @@
 #include "signal_node.h"
 
+#include <iostream>
+
 #include "constants.h"
 #include "layer.h"
 #include "solution.h"

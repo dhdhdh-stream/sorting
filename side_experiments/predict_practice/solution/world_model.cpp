@@ -1,5 +1,7 @@
 #include "world_model.h"
 
+#include <iostream>
+
 #include "minesweeper.h"
 #include "solution_wrapper.h"
 
@@ -11,6 +13,21 @@ const int HEIGHT = 9;
 WorldModel::WorldModel() {
 	this->world = vector<vector<int>>(WIDTH, vector<int>(HEIGHT, 0));
 	this->revealed = vector<vector<bool>>(WIDTH, vector<bool>(HEIGHT, false));
+}
+
+void WorldModel::print() {
+	for (int y_index = HEIGHT-1; y_index >= 0; y_index--) {
+		for (int x_index = 0; x_index < WIDTH; x_index++) {
+			if (this->revealed[x_index][y_index]) {
+				cout << this->world[x_index][y_index];
+			} else {
+				cout << "-";
+			}
+
+			cout << " ";
+		}
+		cout << endl;
+	}
 }
 
 void update_world_model(SolutionWrapper* wrapper) {
