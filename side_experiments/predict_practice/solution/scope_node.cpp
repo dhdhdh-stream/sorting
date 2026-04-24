@@ -12,14 +12,6 @@ using namespace std;
 
 ScopeNode::ScopeNode() {
 	this->type = NODE_TYPE_SCOPE;
-
-	this->experiment = NULL;
-}
-
-ScopeNode::~ScopeNode() {
-	if (this->experiment != NULL) {
-		delete this->experiment;
-	}
 }
 
 void ScopeNode::save(ofstream& output_file) {
@@ -70,19 +62,6 @@ void ScopeNode::link(Solution* parent_solution) {
 	} else {
 		this->next_node = this->parent->nodes[this->next_node_id];
 	}
-}
-
-void ScopeNode::copy_from(ScopeNode* original,
-						  Solution* parent_solution) {
-	if (original->scope->is_outer) {
-		this->scope = parent_solution->outer_scopes[original->scope->id];
-	} else {
-		this->scope = parent_solution->scopes[original->scope->id];
-	}
-
-	this->next_node_id = original->next_node_id;
-
-	this->ancestor_ids = original->ancestor_ids;
 }
 
 void ScopeNode::save_for_display(ofstream& output_file) {

@@ -5,8 +5,8 @@
 #include <random>
 
 #include "globals.h"
-#include "minesweeper.h"
 #include "scope.h"
+#include "simple.h"
 #include "solution.h"
 #include "solution_wrapper.h"
 
@@ -24,7 +24,7 @@ int main(int argc, char* argv[]) {
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
 
-	ProblemType* problem_type = new TypeMinesweeper();
+	ProblemType* problem_type = new TypeSimple();
 
 	string filename;
 	SolutionWrapper* solution_wrapper;
@@ -41,9 +41,8 @@ int main(int argc, char* argv[]) {
 	int max_num_actions = 0;
 
 	auto start_time = chrono::high_resolution_clock::now();
-	for (int i_index = 0; i_index < 2000; i_index++) {
+	for (int i_index = 0; i_index < 4000; i_index++) {
 		Problem* problem = problem_type->get_problem();
-		solution_wrapper->problem = problem;
 
 		solution_wrapper->init();
 
@@ -71,7 +70,7 @@ int main(int argc, char* argv[]) {
 		delete problem;
 	}
 
-	cout << "average score: " << sum_vals/2000 << endl;
+	cout << "average score: " << sum_vals/4000 << endl;
 	cout << "max_num_actions: " << max_num_actions << endl;
 
 	auto curr_time = chrono::high_resolution_clock::now();

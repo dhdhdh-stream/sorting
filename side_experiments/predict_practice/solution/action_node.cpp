@@ -10,14 +10,6 @@ using namespace std;
 
 ActionNode::ActionNode() {
 	this->type = NODE_TYPE_ACTION;
-
-	this->experiment = NULL;
-}
-
-ActionNode::~ActionNode() {
-	if (this->experiment != NULL) {
-		delete this->experiment;
-	}
 }
 
 void ActionNode::save(ofstream& output_file) {
@@ -56,14 +48,6 @@ void ActionNode::link(Solution* parent_solution) {
 	} else {
 		this->next_node = this->parent->nodes[this->next_node_id];
 	}
-}
-
-void ActionNode::copy_from(ActionNode* original) {
-	this->action = original->action;
-
-	this->next_node_id = original->next_node_id;
-
-	this->ancestor_ids = original->ancestor_ids;
 }
 
 void ActionNode::save_for_display(ofstream& output_file) {

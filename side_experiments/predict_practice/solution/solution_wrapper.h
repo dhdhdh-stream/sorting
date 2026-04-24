@@ -8,31 +8,21 @@
 #include <vector>
 
 class AbstractExperiment;
-class AbstractExperimentHistory;
 class AbstractExperimentState;
 class AbstractNode;
-class BranchNode;
-class EvalExperiment;
-class EvalExperimentHistory;
-class ExploreExperiment;
-class ExploreExperimentHistory;
+class Experiment;
+class ExperimentHistory;
 class Problem;
 class ProblemType;
 class Scope;
 class ScopeHistory;
 class Solution;
-class WorldModel;
 
 class SolutionWrapper {
 public:
 	Solution* solution;
 
-	ExploreExperiment* curr_explore_experiment;
-
-	int eval_iter;
-
-	std::vector<double> score_histories;
-	int history_index;
+	int iter;
 
 	/**
 	 * - run variables
@@ -41,14 +31,24 @@ public:
 	std::vector<AbstractNode*> node_context;
 	std::vector<AbstractExperimentState*> experiment_context;
 
-	WorldModel* world_model;
-
 	int num_actions;
 
-	ExploreExperimentHistory* explore_experiment_history;
-	std::map<EvalExperiment*, EvalExperimentHistory*> eval_experiment_histories;
+	std::map<Experiment*, ExperimentHistory*> experiment_histories;
+	/**
+	 * - use identical ramp in result
+	 *   - but never explore
+	 */
 
 	Problem* problem;
+	/**
+	 * - for debugging
+	 */
+
+	std::vector<ScopeHistory*> result_scope_histories;
+	std::vector<AbstractNode*> result_node_context;
+	std::vector<AbstractExperimentState*> result_experiment_context;
+
+	int result_num_actions;
 
 	#if defined(MDEBUG) && MDEBUG
 	int run_index;

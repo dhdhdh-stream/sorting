@@ -7,78 +7,17 @@
 #include "branch_node.h"
 #include "constants.h"
 #include "globals.h"
+#include "helpers.h"
 #include "obs_node.h"
 #include "problem.h"
 #include "scope.h"
 #include "scope_node.h"
-#include "signal.h"
-#include "signal_helpers.h"
-#include "solution_helpers.h"
 #include "start_node.h"
 
 using namespace std;
 
-#if defined(MDEBUG) && MDEBUG
-const int INIT_MEASURE_ITERS = 10;
-#else
-const int INIT_MEASURE_ITERS = 4000;
-#endif /* MDEBUG */
-
 Solution::Solution() {
-	this->signal = new Signal();
-}
-
-Solution::Solution(Solution* original) {
-	this->timestamp = original->timestamp;
-	this->curr_score = original->curr_score;
-
-	this->state = original->state;
-
-	for (int s_index = 0; s_index < (int)original->scopes.size(); s_index++) {
-		Scope* scope = new Scope();
-		scope->is_outer = false;
-		scope->id = s_index;
-		this->scopes.push_back(scope);
-	}
-
-	for (int s_index = 0; s_index < (int)original->outer_scopes.size(); s_index++) {
-		Scope* scope = new Scope();
-		scope->is_outer = true;
-		scope->id = s_index;
-		this->outer_scopes.push_back(scope);
-	}
-
-	for (int s_index = 0; s_index < (int)original->scopes.size(); s_index++) {
-		this->scopes[s_index]->copy_from(original->scopes[s_index],
-										 this);
-	}
-
-	for (int s_index = 0; s_index < (int)original->outer_scopes.size(); s_index++) {
-		this->outer_scopes[s_index]->copy_from(original->outer_scopes[s_index],
-											   this);
-	}
-
-	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
-		this->scopes[s_index]->link(this);
-	}
-
-	for (int s_index = 0; s_index < (int)this->outer_scopes.size(); s_index++) {
-		this->outer_scopes[s_index]->link(this);
-	}
-
-	this->outer_root_scope_ids = original->outer_root_scope_ids;
-
-	this->signal->copy_from(original->signal);
-
-	set_signal_potential_inputs(this);
-
-	this->train_new_last_scores = original->train_new_last_scores;
-	this->ramp_last_scores = original->ramp_last_scores;
-
-	this->improvement_history = original->improvement_history;
-	this->change_history = original->change_history;
-
-	this->num_experiments = original->num_experiments;
+	this->score_index = 0;
 }
 
 Solution::~Solution() {
@@ -89,60 +28,6 @@ Solution::~Solution() {
 	for (int s_index = 0; s_index < (int)this->outer_scopes.size(); s_index++) {
 		delete this->outer_scopes[s_index];
 	}
-
-	delete this->signal;
-}
-
-void Solution::init(ProblemType* problem_type) {
-	double sum_score = 0.0;
-	for (int iter_index = 0; iter_index < INIT_MEASURE_ITERS; iter_index++) {
-		Problem* problem = problem_type->get_problem();
-		sum_score += problem->score_result();
-		delete problem;
-	}
-
-	this->timestamp = 0;
-	this->curr_score = sum_score / INIT_MEASURE_ITERS;
-
-	this->state = SOLUTION_STATE_NON_OUTER;
-
-	/**
-	 * - even though scopes[0] will not be reused, still good to start with:
-	 *   - if artificially add empty scopes, may be difficult to extend from
-	 *     - and will then junk up explore
-	 *   - new scopes will be created from the reusable portions anyways
-	 */
-
-	Scope* new_scope = new Scope();
-	new_scope->is_outer = false;
-	new_scope->id = this->scopes.size();
-	new_scope->node_counter = 0;
-	this->scopes.push_back(new_scope);
-
-	StartNode* start_node = new StartNode();
-	start_node->parent = new_scope;
-	start_node->id = new_scope->node_counter;
-	new_scope->node_counter++;
-	new_scope->nodes[start_node->id] = start_node;
-
-	ObsNode* end_node = new ObsNode();
-	end_node->parent = new_scope;
-	end_node->id = new_scope->node_counter;
-	new_scope->node_counter++;
-	new_scope->nodes[end_node->id] = end_node;
-
-	start_node->next_node_id = end_node->id;
-	start_node->next_node = end_node;
-
-	end_node->ancestor_ids.push_back(start_node->id);
-
-	end_node->next_node_id = -1;
-	end_node->next_node = NULL;
-
-	this->signal->output_constant = this->curr_score;
-	set_signal_potential_inputs(this);
-
-	this->num_experiments = 0;
 }
 
 void Solution::load(ifstream& input_file) {
@@ -207,10 +92,6 @@ void Solution::load(ifstream& input_file) {
 		this->outer_root_scope_ids.push_back(stoi(scope_id_line));
 	}
 
-	this->signal->load(input_file);
-
-	set_signal_potential_inputs(this);
-
 	string num_train_new_last_scores_line;
 	getline(input_file, num_train_new_last_scores_line);
 	int num_train_new_last_scores = stoi(num_train_new_last_scores_line);
@@ -241,10 +122,6 @@ void Solution::load(ifstream& input_file) {
 		getline(input_file, change_line);
 		this->change_history.push_back(change_line);
 	}
-
-	string num_experiments_line;
-	getline(input_file, num_experiments_line);
-	this->num_experiments = stoi(num_experiments_line);
 }
 
 void Solution::clean_scopes() {
@@ -303,12 +180,18 @@ void Solution::clean_scopes() {
 }
 
 void Solution::merge_outer() {
+	/**
+	 * - clear experiments
+	 */
 	for (int s_index = 0; s_index < (int)this->scopes.size(); s_index++) {
 		for (map<int, AbstractNode*>::iterator it = this->scopes[s_index]->nodes.begin();
 				it != this->scopes[s_index]->nodes.end(); it++) {
-			if (it->second->experiment != NULL) {
-				delete it->second->experiment;
-				it->second->experiment = NULL;
+			if (it->second->type == NODE_TYPE_OBS) {
+				ObsNode* obs_node = (ObsNode*)it->second;
+				if (obs_node->experiment != NULL) {
+					delete obs_node->experiment;
+					obs_node->experiment = NULL;
+				}
 			}
 		}
 	}
@@ -328,6 +211,9 @@ void Solution::merge_outer() {
 }
 
 void Solution::save(ofstream& output_file) {
+	/**
+	 * TODO: swap endl to '\n' to avoid flushing
+	 */
 	output_file << this->timestamp << endl;
 	output_file << this->curr_score << endl;
 
@@ -349,8 +235,6 @@ void Solution::save(ofstream& output_file) {
 		output_file << this->outer_root_scope_ids[r_index] << endl;
 	}
 
-	this->signal->save(output_file);
-
 	output_file << this->train_new_last_scores.size() << endl;
 	for (list<double>::iterator it = this->train_new_last_scores.begin();
 			it != this->train_new_last_scores.end(); it++) {
@@ -368,8 +252,6 @@ void Solution::save(ofstream& output_file) {
 		output_file << this->improvement_history[h_index] << endl;
 		output_file << this->change_history[h_index] << endl;
 	}
-
-	output_file << this->num_experiments << endl;
 }
 
 void Solution::save_for_display(ofstream& output_file) {

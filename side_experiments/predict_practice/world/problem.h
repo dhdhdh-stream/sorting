@@ -1,8 +1,6 @@
 #ifndef PROBLEM_H
 #define PROBLEM_H
 
-#include <vector>
-
 class Problem {
 public:
 	virtual ~Problem() {};
@@ -13,6 +11,8 @@ public:
 
 	virtual Problem* copy_and_reset() = 0;
 	virtual Problem* copy_snapshot() = 0;
+
+	virtual Problem* create_simulate() = 0;
 
 	virtual void print() = 0;
 };

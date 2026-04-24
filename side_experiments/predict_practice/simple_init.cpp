@@ -8,10 +8,10 @@
 #include "abstract_experiment.h"
 #include "constants.h"
 #include "globals.h"
-#include "minesweeper.h"
+#include "helpers.h"
 #include "scope.h"
+#include "simple.h"
 #include "solution.h"
-#include "solution_helpers.h"
 #include "solution_wrapper.h"
 
 using namespace std;
@@ -35,12 +35,13 @@ int main(int argc, char* argv[]) {
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
 
-	ProblemType* problem_type = new TypeMinesweeper();
+	ProblemType* problem_type = new TypeSimple();
 
 	SolutionWrapper* solution_wrapper = new SolutionWrapper(problem_type);
 
 	solution_wrapper->save("saves/", filename);
 
+	delete problem_type;
 	delete solution_wrapper;
 
 	cout << "Done" << endl;

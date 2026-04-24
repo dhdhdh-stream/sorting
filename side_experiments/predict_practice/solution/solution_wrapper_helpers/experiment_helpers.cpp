@@ -3,42 +3,31 @@
 #include <iostream>
 
 #include "constants.h"
-#include "eval_experiment.h"
-#include "explore_experiment.h"
+#include "experiment.h"
 #include "globals.h"
-#include "problem.h"
+#include "helpers.h"
 #include "scope.h"
 #include "scope_node.h"
-#include "signal_helpers.h"
 #include "solution.h"
-#include "solution_helpers.h"
 #include "utilities.h"
-#include "world_model.h"
 
 using namespace std;
 
-const int STUCK_NUM_ITERS = 10;
-
+const int NON_OUTER_ITERS = 20;
 const int OUTER_ITERS = 8;
 
-const int TARGET_NODES_PER_EVAL = 10;
+const int TARGET_NODES_PER_EVAL = 5;
 
 void SolutionWrapper::experiment_init() {
-	this->num_actions = 1;
+	this->iter++;
 
-	this->world_model = new WorldModel();
+	this->num_actions = 1;
 
 	#if defined(MDEBUG) && MDEBUG
 	this->run_index++;
 	this->starting_run_seed = this->run_index;
 	this->curr_run_seed = xorshift(this->starting_run_seed);
 	#endif /* MDEBUG */
-
-	if (this->curr_explore_experiment != NULL) {
-		this->explore_experiment_history = new ExploreExperimentHistory(this->curr_explore_experiment);
-	} else {
-		this->eval_iter++;
-	}
 
 	ScopeHistory* scope_history = new ScopeHistory(this->solution->scopes[0]);
 	this->scope_histories.push_back(scope_history);
@@ -77,6 +66,7 @@ tuple<bool,bool,int> SolutionWrapper::experiment_step(vector<double> obs) {
 			this->node_context.back()->experiment_step(obs,
 													   action,
 													   is_next,
+													   is_done,
 													   this);
 		}
 	}
@@ -91,101 +81,91 @@ void SolutionWrapper::set_action(int action) {
 }
 
 void SolutionWrapper::experiment_end(double result) {
-	update_world_model(this);
-
-	if (this->curr_explore_experiment == NULL) {
-		if (this->score_histories.size() < HISTORIES_NUM_SAVE) {
-			this->score_histories.push_back(result);
-		} else {
-			this->score_histories[this->history_index] = result;
-
-			this->history_index++;
-			if (this->history_index >= HISTORIES_NUM_SAVE) {
-				this->history_index = 0;
-			}
-		}
-
-		set<Scope*> updated_scopes;
-		for (map<EvalExperiment*, EvalExperimentHistory*>::iterator it = this->eval_experiment_histories.begin();
-				it != this->eval_experiment_histories.end(); it++) {
-			it->first->backprop(result,
-								it->second,
-								this,
-								updated_scopes);
-		}
-
-		if (updated_scopes.size() > 0) {
-			for (set<Scope*>::iterator it = updated_scopes.begin();
-					it != updated_scopes.end(); it++) {
-				clean_scope(*it,
-							this);
-			}
-
-			this->solution->timestamp++;
-			switch (this->solution->state) {
-			case SOLUTION_STATE_NON_OUTER:
-				if ((int)this->solution->improvement_history.size() >= STUCK_NUM_ITERS) {
-					double prev_val = this->solution->improvement_history[this->solution->improvement_history.size() - STUCK_NUM_ITERS];
-					bool improved = false;
-					for (int h_index = 0; h_index < STUCK_NUM_ITERS-1; h_index++) {
-						if (this->solution->improvement_history[this->solution->improvement_history.size() - 1 - h_index] > prev_val) {
-							improved = true;
-							break;
-						}
-					}
-
-					if (!improved) {
-						this->solution->timestamp = -1;
-					}
-				}
+	while (true) {
+		if (this->node_context.back() == NULL
+				&& this->experiment_context.back() == NULL) {
+			if (this->scope_histories.size() == 1) {
 				break;
-			case SOLUTION_STATE_OUTER:
-				if (this->solution->timestamp >= OUTER_ITERS) {
-					this->solution->state = SOLUTION_STATE_NON_OUTER;
-					this->solution->timestamp = 0;
-
-					this->solution->merge_outer();
+			} else {
+				if (this->experiment_context[this->experiment_context.size() - 2] != NULL) {
+					AbstractExperiment* experiment = this->experiment_context[this->experiment_context.size() - 2]->experiment;
+					experiment->experiment_exit_step(this);
+				} else {
+					ScopeNode* scope_node = (ScopeNode*)this->node_context[this->node_context.size() - 2];
+					scope_node->experiment_exit_step(this);
 				}
-				break;
 			}
+		} else if (this->experiment_context.back() != NULL) {
+			delete this->experiment_context.back();
+			this->experiment_context.back() = NULL;
 		} else {
-			int node_count = 0;
-			int eval_count = 0;
-			count_eval_helper(this->scope_histories[0],
-							  node_count,
-							  eval_count);
-
-			int target_count = (node_count + (TARGET_NODES_PER_EVAL-1)) / TARGET_NODES_PER_EVAL;
-			if (eval_count < target_count) {
-				// cout << "node_count: " << node_count << endl;
-				// cout << "eval_count: " << eval_count << endl;
-				// cout << "target_count: " << target_count << endl;
-
-				create_experiment(this->scope_histories[0],
-								  this);
-			}
+			this->node_context.back() = NULL;
 		}
-	} else {
-		this->explore_experiment_history->experiment->backprop(
-			result,
-			this);
-
-		delete this->explore_experiment_history;
-		this->explore_experiment_history = NULL;
 	}
 
-	for (map<EvalExperiment*, EvalExperimentHistory*>::iterator it = this->eval_experiment_histories.begin();
-			it != this->eval_experiment_histories.end(); it++) {
+	if (this->solution->score_histories.size() < HISTORIES_NUM_SAVE) {
+		this->solution->score_histories.push_back(result);
+	} else {
+		this->solution->score_histories[this->solution->score_index] = result;
+		this->solution->score_index++;
+		if (this->solution->score_index >= HISTORIES_NUM_SAVE) {
+			this->solution->score_index = 0;
+		}
+	}
+
+	set<Scope*> updated_scopes;
+	for (map<Experiment*, ExperimentHistory*>::iterator it = this->experiment_histories.begin();
+			it != this->experiment_histories.end(); it++) {
+		it->first->backprop(result,
+							it->second,
+							this,
+							updated_scopes);
 		delete it->second;
 	}
-	this->eval_experiment_histories.clear();
+	this->experiment_histories.clear();
+
+	if (updated_scopes.size() > 0) {
+		for (set<Scope*>::iterator it = updated_scopes.begin();
+				it != updated_scopes.end(); it++) {
+			clean_scope(*it);
+		}
+
+		// switch (this->solution->state) {
+		// case SOLUTION_STATE_NON_OUTER:
+		// 	if (this->solution->timestamp >= NON_OUTER_ITERS) {
+		// 		this->solution->timestamp = -1;
+		// 	}
+		// 	break;
+		// case SOLUTION_STATE_OUTER:
+		// 	if (this->solution->timestamp >= OUTER_ITERS) {
+		// 		this->solution->state = SOLUTION_STATE_NON_OUTER;
+		// 		this->solution->timestamp = 0;
+
+		// 		this->solution->merge_outer();
+		// 	}
+		// 	break;
+		// }
+	} else {
+		int node_count = 0;
+		int eval_count = 0;
+		count_eval_helper(this->scope_histories[0],
+						  node_count,
+						  eval_count);
+
+		int target_count = (node_count + (TARGET_NODES_PER_EVAL-1)) / TARGET_NODES_PER_EVAL;
+		if (eval_count < target_count) {
+			// cout << "node_count: " << node_count << endl;
+			// cout << "eval_count: " << eval_count << endl;
+			// cout << "target_count: " << target_count << endl;
+
+			create_experiment(this->scope_histories[0],
+							  this);
+		}
+	}
 
 	delete this->scope_histories[0];
 
 	this->scope_histories.clear();
 	this->node_context.clear();
 	this->experiment_context.clear();
-
-	delete this->world_model;
-	this->world_model = NULL;
 }

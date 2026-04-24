@@ -9,11 +9,12 @@
 #include "branch_node.h"
 #include "constants.h"
 #include "globals.h"
-#include "minesweeper.h"
+#include "helpers.h"
+#include "obs_node.h"
 #include "scope.h"
 #include "scope_node.h"
+#include "simple.h"
 #include "solution.h"
-#include "solution_helpers.h"
 #include "solution_wrapper.h"
 
 using namespace std;
@@ -37,7 +38,7 @@ int main(int argc, char* argv[]) {
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
 
-	ProblemType* problem_type = new TypeMinesweeper();
+	ProblemType* problem_type = new TypeSimple();
 
 	SolutionWrapper* solution_wrapper = new SolutionWrapper(
 		path, filename);
@@ -85,8 +86,7 @@ int main(int argc, char* argv[]) {
 
 			delete problem;
 
-			int ending_timestamp = solution_wrapper->solution->timestamp;
-			if (ending_timestamp != starting_timestamp) {
+			if (solution_wrapper->solution->timestamp != starting_timestamp) {
 				break;
 			}
 		}

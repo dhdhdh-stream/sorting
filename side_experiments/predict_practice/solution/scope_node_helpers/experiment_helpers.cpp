@@ -14,11 +14,11 @@ using namespace std;
 void ScopeNode::experiment_step(vector<double>& obs,
 								int& action,
 								bool& is_next,
+								bool& is_done,
 								SolutionWrapper* wrapper) {
 	ScopeHistory* scope_history = wrapper->scope_histories.back();
 
 	ScopeNodeHistory* history = new ScopeNodeHistory(this);
-	history->index = (int)scope_history->node_histories.size();
 	scope_history->node_histories[this->id] = history;
 
 	ScopeHistory* inner_scope_history = new ScopeHistory(this->scope);
@@ -34,11 +34,4 @@ void ScopeNode::experiment_exit_step(SolutionWrapper* wrapper) {
 	wrapper->experiment_context.pop_back();
 
 	wrapper->node_context.back() = this->next_node;
-
-	if (this->experiment != NULL) {
-		this->experiment->experiment_check_activate(
-			this,
-			false,
-			wrapper);
-	}
 }

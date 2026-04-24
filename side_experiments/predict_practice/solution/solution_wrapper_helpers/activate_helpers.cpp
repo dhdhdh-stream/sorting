@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-#include "problem.h"
+#include "helpers.h"
 #include "scope.h"
 #include "scope_node.h"
 #include "solution.h"
@@ -49,8 +49,20 @@ pair<bool,int> SolutionWrapper::step(vector<double> obs) {
 }
 
 void SolutionWrapper::end() {
-	delete this->scope_histories[0];
+	while (true) {
+		if (this->node_context.back() == NULL) {
+			if (this->scope_histories.size() == 1) {
+				break;
+			} else {
+				ScopeNode* scope_node = (ScopeNode*)this->node_context[this->node_context.size() - 2];
+				scope_node->exit_step(this);
+			}
+		} else {
+			this->node_context.back() = NULL;
+		}
+	}
 
+	delete this->scope_histories[0];
 	this->scope_histories.clear();
 	this->node_context.clear();
 }

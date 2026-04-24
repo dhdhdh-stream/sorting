@@ -15,7 +15,7 @@ class SolutionWrapper;
 class BranchNodeHistory;
 class BranchNode : public AbstractNode {
 public:
-	Network* network;
+	std::vector<Network*> networks;
 
 	int original_next_node_id;
 	AbstractNode* original_next_node;
@@ -33,22 +33,24 @@ public:
 	void experiment_step(std::vector<double>& obs,
 						 int& action,
 						 bool& is_next,
+						 bool& is_done,
 						 SolutionWrapper* wrapper);
+
+	void result_step(std::vector<double>& obs,
+					 int& action,
+					 bool& is_next,
+					 SolutionWrapper* wrapper);
 
 	void save(std::ofstream& output_file);
 	void load(std::ifstream& input_file,
 			  Solution* parent_solution);
 	void link(Solution* parent_solution);
-
-	void copy_from(BranchNode* original,
-				   Solution* parent_solution);
-
 	void save_for_display(std::ofstream& output_file);
 };
 
 class BranchNodeHistory : public AbstractNodeHistory {
 public:
-	double val;
+	bool is_branch;
 
 	BranchNodeHistory(BranchNode* node);
 };

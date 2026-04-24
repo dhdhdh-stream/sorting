@@ -2,26 +2,20 @@
 
 #include <iostream>
 
-#include "globals.h"
+#include "abstract_experiment.h"
 #include "helpers.h"
 #include "network.h"
 #include "problem.h"
 #include "scope.h"
-#include "solution.h"
 #include "solution_wrapper.h"
 #include "utilities.h"
 
 using namespace std;
 
-void BranchNode::step(vector<double>& obs,
-					  int& action,
-					  bool& is_next,
-					  SolutionWrapper* wrapper) {
-	ScopeHistory* scope_history = wrapper->scope_histories.back();
-
-	BranchNodeHistory* history = new BranchNodeHistory(this);
-	scope_history->node_histories[this->id] = history;
-
+void BranchNode::result_step(vector<double>& obs,
+							 int& action,
+							 bool& is_next,
+							 SolutionWrapper* wrapper) {
 	bool is_branch = true;
 	for (int n_index = 0; n_index < (int)this->networks.size(); n_index++) {
 		this->networks[n_index]->activate(obs);
@@ -40,11 +34,9 @@ void BranchNode::step(vector<double>& obs,
 	wrapper->curr_run_seed = xorshift(wrapper->curr_run_seed);
 	#endif /* MDEBUG */
 
-	history->is_branch = is_branch;
-
 	if (is_branch) {
-		wrapper->node_context.back() = this->branch_next_node;
+		wrapper->result_node_context.back() = this->branch_next_node;
 	} else {
-		wrapper->node_context.back() = this->original_next_node;
+		wrapper->result_node_context.back() = this->original_next_node;
 	}
 }

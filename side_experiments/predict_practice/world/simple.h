@@ -13,6 +13,7 @@ const int SIMPLE_ACTION_LEFT = 3;
 class Simple : public Problem {
 public:
 	std::vector<std::vector<int>> world;
+	std::vector<std::vector<bool>> revealed;
 	std::vector<std::vector<bool>> hit;
 	int current_x;
 	int current_y;
@@ -27,6 +28,8 @@ public:
 
 	Problem* copy_and_reset();
 	Problem* copy_snapshot();
+
+	Problem* create_simulate();
 
 	void print();
 

@@ -9,13 +9,15 @@
 #include "branch_node.h"
 #include "constants.h"
 #include "globals.h"
-#include "minesweeper.h"
+#include "helpers.h"
+#include "obs_node.h"
 #include "problem.h"
 #include "scope.h"
 #include "scope_node.h"
+#include "simple.h"
 #include "solution.h"
-#include "solution_helpers.h"
 #include "solution_wrapper.h"
+#include "start_node.h"
 #include "utilities.h"
 
 using namespace std;
@@ -32,7 +34,7 @@ int main(int argc, char* argv[]) {
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
 
-	ProblemType* problem_type = new TypeMinesweeper();
+	ProblemType* problem_type = new TypeSimple();
 
 	string filename;
 	SolutionWrapper* solution_wrapper;
@@ -83,8 +85,7 @@ int main(int argc, char* argv[]) {
 
 			delete problem;
 
-			int ending_timestamp = solution_wrapper->solution->timestamp;
-			if (ending_timestamp != starting_timestamp) {
+			if (solution_wrapper->solution->timestamp != starting_timestamp) {
 				break;
 			}
 		}
@@ -92,15 +93,6 @@ int main(int argc, char* argv[]) {
 		solution_wrapper->save("saves/", filename);
 
 		solution_wrapper->save_for_display("../", "display.txt");
-
-		#if defined(MDEBUG) && MDEBUG
-		if (rand()%4 == 0) {
-			delete solution_wrapper;
-			solution_wrapper = new SolutionWrapper(
-				"saves/",
-				filename);
-		}
-		#endif /* MDEBUG */
 	}
 
 	solution_wrapper->clean_scopes();

@@ -20,24 +20,20 @@
 #include <fstream>
 #include <list>
 #include <map>
+#include <utility>
 #include <vector>
 
 class AbstractExperiment;
 class AbstractNode;
 class Problem;
-class ProblemType;
 class Scope;
 class ScopeHistory;
-class Signal;
 
 const int SOLUTION_STATE_NON_OUTER = 0;
 const int SOLUTION_STATE_OUTER = 1;
 
 class Solution {
 public:
-	/**
-	 * - -1 if done
-	 */
 	int timestamp;
 	double curr_score;
 
@@ -46,10 +42,10 @@ public:
 	std::vector<Scope*> scopes;
 
 	std::vector<Scope*> outer_scopes;
-
 	std::vector<int> outer_root_scope_ids;
 
-	Signal* signal;
+	std::vector<double> score_histories;
+	int score_index;
 
 	/**
 	 * - even if experiment safe to add, doesn't mean should
@@ -67,13 +63,9 @@ public:
 	std::vector<double> improvement_history;
 	std::vector<std::string> change_history;
 
-	int num_experiments;
-
 	Solution();
-	Solution(Solution* original);
 	~Solution();
 
-	void init(ProblemType* problem_type);
 	void load(std::ifstream& input_file);
 
 	void clean_scopes();

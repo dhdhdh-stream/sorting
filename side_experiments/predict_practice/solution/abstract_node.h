@@ -4,9 +4,7 @@
 #include <fstream>
 #include <vector>
 
-class AbstractExperiment;
 class Scope;
-class ScopeHistory;
 class Solution;
 class SolutionWrapper;
 
@@ -28,8 +26,6 @@ public:
 	 * - if both paths of BranchNode point to same node, add twice
 	 */
 
-	AbstractExperiment* experiment;
-
 	virtual ~AbstractNode() {};
 
 	virtual void step(std::vector<double>& obs,
@@ -40,7 +36,13 @@ public:
 	virtual void experiment_step(std::vector<double>& obs,
 								 int& action,
 								 bool& is_next,
+								 bool& is_done,
 								 SolutionWrapper* wrapper) = 0;
+
+	virtual void result_step(std::vector<double>& obs,
+							 int& action,
+							 bool& is_next,
+							 SolutionWrapper* wrapper) = 0;
 
 	virtual void save(std::ofstream& output_file) = 0;
 	virtual void link(Solution* parent_solution) = 0;
@@ -50,7 +52,6 @@ public:
 class AbstractNodeHistory {
 public:
 	AbstractNode* node;
-	int index;
 
 	virtual ~AbstractNodeHistory() {};
 };

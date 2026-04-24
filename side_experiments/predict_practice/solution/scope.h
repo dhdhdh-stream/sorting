@@ -3,14 +3,12 @@
 
 #include <fstream>
 #include <map>
+#include <utility>
 #include <vector>
 
+class AbstractExperiment;
 class AbstractNode;
 class AbstractNodeHistory;
-class Factor;
-class Network;
-class Problem;
-class Signal;
 class Solution;
 class SolutionWrapper;
 
@@ -27,12 +25,6 @@ public:
 	 */
 
 	std::vector<Scope*> child_scopes;
-	/**
-	 * - main goal of reusing scopes is generalization
-	 *   - want to use the same scopes as often as possible
-	 *     - so for outer, only add if used
-	 * - if goal is for explore to cover large distance, also have create_new_scope()
-	 */
 
 	Scope();
 	~Scope();
@@ -45,9 +37,6 @@ public:
 	void load(std::ifstream& input_file,
 			  Solution* parent_solution);
 	void link(Solution* parent_solution);
-
-	void copy_from(Scope* original,
-				   Solution* parent_solution);
 
 	void save_for_display(std::ofstream& output_file);
 };

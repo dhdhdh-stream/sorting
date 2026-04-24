@@ -1,5 +1,5 @@
-#ifndef SOLUTION_HELPERS_H
-#define SOLUTION_HELPERS_H
+#ifndef HELPERS_H
+#define HELPERS_H
 
 #include <map>
 #include <utility>
@@ -8,6 +8,7 @@
 class AbstractNode;
 class BranchExperiment;
 class Network;
+class ObsNode;
 class Problem;
 class Scope;
 class ScopeHistory;
@@ -24,14 +25,17 @@ void create_experiment(ScopeHistory* scope_history,
 void create_new_scope(AbstractNode* potential_start_node,
 					  AbstractNode* potential_end_node,
 					  Scope*& new_scope);
-Scope* create_new_scope(Scope* scope_context,
-						SolutionWrapper* wrapper);
-Scope* outer_create_new_scope(SolutionWrapper* wrapper);
-void recursive_add_child(Scope* curr_parent,
-						 SolutionWrapper* wrapper,
-						 Scope* new_scope);
+void create_new_scope(Scope* scope_context,
+					  SolutionWrapper* wrapper,
+					  Scope*& new_scope,
+					  Scope*& parent_scope);
+void outer_create_new_scope(Scope* scope_context,
+							SolutionWrapper* wrapper,
+							Scope*& new_scope,
+							Scope*& parent_scope);
 
-void clean_scope(Scope* scope,
-				 SolutionWrapper* wrapper);
+void clean_scope(Scope* scope);
 
-#endif /* SOLUTION_HELPERS_H */
+double simulate_helper(SolutionWrapper* wrapper);
+
+#endif /* HELPERS_H */

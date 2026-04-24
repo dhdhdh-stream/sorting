@@ -7,14 +7,6 @@ using namespace std;
 
 StartNode::StartNode() {
 	this->type = NODE_TYPE_START;
-
-	this->experiment = NULL;
-}
-
-StartNode::~StartNode() {
-	if (this->experiment != NULL) {
-		delete this->experiment;
-	}
 }
 
 void StartNode::save(ofstream& output_file) {
@@ -35,14 +27,6 @@ void StartNode::link(Solution* parent_solution) {
 	}
 }
 
-void StartNode::copy_from(StartNode* original) {
-	this->next_node_id = original->next_node_id;
-}
-
 void StartNode::save_for_display(ofstream& output_file) {
 	output_file << this->next_node_id << endl;
-}
-
-StartNodeHistory::StartNodeHistory(StartNode* node) {
-	this->node = node;
 }

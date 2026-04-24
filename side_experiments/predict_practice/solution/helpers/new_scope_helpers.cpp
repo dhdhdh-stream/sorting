@@ -1,20 +1,24 @@
-#include "solution_helpers.h"
+#include "helpers.h"
 
 #include <iostream>
 
 #include "action_node.h"
 #include "branch_node.h"
-#include "constants.h"
 #include "globals.h"
 #include "network.h"
 #include "obs_node.h"
 #include "scope.h"
 #include "scope_node.h"
+#include "start_node.h"
 #include "solution.h"
 #include "solution_wrapper.h"
-#include "start_node.h"
 
 using namespace std;
+
+const int NEW_SCOPE_MIN_NODES = 20;
+
+const int NEW_SCOPE_MIN_NUM_NODES = 3;
+const int CREATE_NEW_SCOPE_NUM_TRIES = 50;
 
 const double OUTER_PATH_MIN_RATIO = 0.2;
 /**
@@ -41,51 +45,43 @@ void children_helper(AbstractNode* curr_node,
 	case NODE_TYPE_ACTION:
 		{
 			ActionNode* action_node = (ActionNode*)curr_node;
-			if (action_node->next_node != NULL) {
-				set<AbstractNode*>::iterator it = children.find(action_node->next_node);
-				if (it == children.end()) {
-					children.insert(action_node->next_node);
+			set<AbstractNode*>::iterator it = children.find(action_node->next_node);
+			if (it == children.end()) {
+				children.insert(action_node->next_node);
 
-					children_helper(action_node->next_node,
-									children);
-				}
+				children_helper(action_node->next_node,
+								children);
 			}
 		}
 		break;
 	case NODE_TYPE_SCOPE:
 		{
 			ScopeNode* scope_node = (ScopeNode*)curr_node;
-			if (scope_node->next_node != NULL) {
-				set<AbstractNode*>::iterator it = children.find(scope_node->next_node);
-				if (it == children.end()) {
-					children.insert(scope_node->next_node);
+			set<AbstractNode*>::iterator it = children.find(scope_node->next_node);
+			if (it == children.end()) {
+				children.insert(scope_node->next_node);
 
-					children_helper(scope_node->next_node,
-									children);
-				}
+				children_helper(scope_node->next_node,
+								children);
 			}
 		}
 		break;
 	case NODE_TYPE_BRANCH:
 		{
 			BranchNode* branch_node = (BranchNode*)curr_node;
-			if (branch_node->original_next_node != NULL) {
-				set<AbstractNode*>::iterator original_it = children.find(branch_node->original_next_node);
-				if (original_it == children.end()) {
-					children.insert(branch_node->original_next_node);
+			set<AbstractNode*>::iterator original_it = children.find(branch_node->original_next_node);
+			if (original_it == children.end()) {
+				children.insert(branch_node->original_next_node);
 
-					children_helper(branch_node->original_next_node,
-									children);
-				}
+				children_helper(branch_node->original_next_node,
+								children);
 			}
-			if (branch_node->branch_next_node != NULL) {
-				set<AbstractNode*>::iterator branch_it = children.find(branch_node->branch_next_node);
-				if (branch_it == children.end()) {
-					children.insert(branch_node->branch_next_node);
+			set<AbstractNode*>::iterator branch_it = children.find(branch_node->branch_next_node);
+			if (branch_it == children.end()) {
+				children.insert(branch_node->branch_next_node);
 
-					children_helper(branch_node->branch_next_node,
-									children);
-				}
+				children_helper(branch_node->branch_next_node,
+								children);
 			}
 		}
 		break;
@@ -108,8 +104,7 @@ void children_helper(AbstractNode* curr_node,
 
 void create_new_scope(AbstractNode* potential_start_node,
 					  AbstractNode* potential_end_node,
-					  Scope*& new_scope,
-					  SolutionWrapper* wrapper) {
+					  Scope*& new_scope) {
 	set<AbstractNode*> children;
 	children_helper(potential_start_node,
 					children);
@@ -284,7 +279,9 @@ void create_new_scope(AbstractNode* potential_start_node,
 					BranchNode* original_branch_node = (BranchNode*)node_it->first;
 					BranchNode* new_branch_node = (BranchNode*)node_mappings[original_branch_node];
 
-					new_branch_node->network = new Network(original_branch_node->network);
+					for (int n_index = 0; n_index < (int)original_branch_node->networks.size(); n_index++) {
+						new_branch_node->networks.push_back(new Network(original_branch_node->networks[n_index]));
+					}
 
 					map<AbstractNode*, AbstractNode*>::iterator original_it = node_mappings
 						.find(original_branch_node->original_next_node);
@@ -340,45 +337,54 @@ void create_new_scope(AbstractNode* potential_start_node,
 		Scope* parent_scope = potential_start_node->parent;
 		new_scope->child_scopes = parent_scope->child_scopes;
 
-		clean_scope(new_scope,
-					wrapper);
+		clean_scope(new_scope);
 	} else {
 		new_scope = NULL;
 	}
 }
 
-Scope* create_new_scope(Scope* scope_context,
-						SolutionWrapper* wrapper) {
-	if (scope_context->nodes.size() < NEW_SCOPE_MIN_NODES) {
-		return NULL;
+void create_new_scope(Scope* scope_context,
+					  SolutionWrapper* wrapper,
+					  Scope*& new_scope,
+					  Scope*& parent_scope) {
+	parent_scope = scope_context;
+
+	if (parent_scope->nodes.size() < NEW_SCOPE_MIN_NODES) {
+		new_scope = NULL;
+		return;
 	}
 
-	uniform_int_distribution<int> node_distribution(1, scope_context->nodes.size()-1);
+	uniform_int_distribution<int> node_distribution(1, parent_scope->nodes.size()-1);
 	for (int t_index = 0; t_index < CREATE_NEW_SCOPE_NUM_TRIES; t_index++) {
-		AbstractNode* potential_start_node = next(scope_context->nodes.begin(), node_distribution(generator))->second;
-		AbstractNode* potential_end_node = next(scope_context->nodes.begin(), node_distribution(generator))->second;
+		AbstractNode* potential_start_node = next(parent_scope->nodes.begin(), node_distribution(generator))->second;
+		AbstractNode* potential_end_node = next(parent_scope->nodes.begin(), node_distribution(generator))->second;
 
 		Scope* potential_new_scope = NULL;
 		create_new_scope(potential_start_node,
 						 potential_end_node,
-						 potential_new_scope,
-						 wrapper);
+						 potential_new_scope);
 
 		if (potential_new_scope != NULL) {
-			return potential_new_scope;
+			new_scope = potential_new_scope;
+			return;
 		}
 	}
 
-	return NULL;
+	new_scope = NULL;
+	return;
 }
 
-Scope* outer_create_new_scope(SolutionWrapper* wrapper) {
+void outer_create_new_scope(Scope* scope_context,
+							SolutionWrapper* wrapper,
+							Scope*& new_scope,
+							Scope*& parent_scope) {
 	while (true) {
 		uniform_int_distribution<int> outer_distribution(0, wrapper->solution->outer_root_scope_ids.size()-1);
 		int scope_id = wrapper->solution->outer_root_scope_ids[outer_distribution(generator)];
-		Scope* parent_scope = wrapper->solution->outer_scopes[scope_id];
+		parent_scope = wrapper->solution->outer_scopes[scope_id];
 
 		if (parent_scope->nodes.size() < NEW_SCOPE_MIN_NODES) {
+			new_scope = NULL;
 			continue;
 		}
 
@@ -398,40 +404,12 @@ Scope* outer_create_new_scope(SolutionWrapper* wrapper) {
 			Scope* potential_new_scope = NULL;
 			create_new_scope(potential_start_node,
 							 potential_end_node,
-							 potential_new_scope,
-							 wrapper);
+							 potential_new_scope);
 
 			if (potential_new_scope != NULL) {
-				return potential_new_scope;
+				new_scope = potential_new_scope;
+				return;
 			}
-		}
-	}
-
-	return NULL;	// unreachable
-}
-
-void recursive_add_child(Scope* curr_parent,
-						 SolutionWrapper* wrapper,
-						 Scope* new_scope) {
-	curr_parent->child_scopes.push_back(new_scope);
-
-	for (int s_index = 0; s_index < (int)wrapper->solution->scopes.size(); s_index++) {
-		bool is_needed = false;
-		bool is_added = false;
-		for (int c_index = 0; c_index < (int)wrapper->solution->scopes[s_index]->child_scopes.size(); c_index++) {
-			if (wrapper->solution->scopes[s_index]->child_scopes[c_index] == curr_parent) {
-				is_needed = true;
-			}
-
-			if (wrapper->solution->scopes[s_index]->child_scopes[c_index] == new_scope) {
-				is_added = true;
-			}
-		}
-
-		if (is_needed && !is_added) {
-			recursive_add_child(wrapper->solution->scopes[s_index],
-								wrapper,
-								new_scope);
 		}
 	}
 }

@@ -7,8 +7,10 @@
 
 using namespace std;
 
-Network::Network(int input_size,
-				 int size) {
+const double NETWORK_TARGET_MAX_UPDATE = 0.01;
+const int EPOCH_SIZE = 20;
+
+Network::Network(int input_size) {
 	this->input = new Layer(LINEAR_LAYER);
 	for (int i_index = 0; i_index < input_size; i_index++) {
 		this->input->acti_vals.push_back(0.0);
@@ -16,47 +18,26 @@ Network::Network(int input_size,
 	}
 
 	this->hidden_1 = new Layer(LEAKY_LAYER);
-	if (size == NETWORK_SIZE_SMALL) {
-		for (int h_index = 0; h_index < 10; h_index++) {
-			this->hidden_1->acti_vals.push_back(0.0);
-			this->hidden_1->errors.push_back(0.0);
-		}
-	} else {
-		for (int h_index = 0; h_index < 20; h_index++) {
-			this->hidden_1->acti_vals.push_back(0.0);
-			this->hidden_1->errors.push_back(0.0);
-		}
+	for (int h_index = 0; h_index < 10; h_index++) {
+		this->hidden_1->acti_vals.push_back(0.0);
+		this->hidden_1->errors.push_back(0.0);
 	}
 	this->hidden_1->input_layers.push_back(this->input);
 	this->hidden_1->update_structure();
 
 	this->hidden_2 = new Layer(LEAKY_LAYER);
-	if (size == NETWORK_SIZE_SMALL) {
-		for (int h_index = 0; h_index < 4; h_index++) {
-			this->hidden_2->acti_vals.push_back(0.0);
-			this->hidden_2->errors.push_back(0.0);
-		}
-	} else {
-		for (int h_index = 0; h_index < 8; h_index++) {
-			this->hidden_2->acti_vals.push_back(0.0);
-			this->hidden_2->errors.push_back(0.0);
-		}
+	for (int h_index = 0; h_index < 4; h_index++) {
+		this->hidden_2->acti_vals.push_back(0.0);
+		this->hidden_2->errors.push_back(0.0);
 	}
 	this->hidden_2->input_layers.push_back(this->input);
 	this->hidden_2->input_layers.push_back(this->hidden_1);
 	this->hidden_2->update_structure();
 
 	this->hidden_3 = new Layer(LEAKY_LAYER);
-	if (size == NETWORK_SIZE_SMALL) {
-		for (int h_index = 0; h_index < 1; h_index++) {
-			this->hidden_3->acti_vals.push_back(0.0);
-			this->hidden_3->errors.push_back(0.0);
-		}
-	} else {
-		for (int h_index = 0; h_index < 2; h_index++) {
-			this->hidden_3->acti_vals.push_back(0.0);
-			this->hidden_3->errors.push_back(0.0);
-		}
+	for (int h_index = 0; h_index < 1; h_index++) {
+		this->hidden_3->acti_vals.push_back(0.0);
+		this->hidden_3->errors.push_back(0.0);
 	}
 	this->hidden_3->input_layers.push_back(this->input);
 	this->hidden_3->input_layers.push_back(this->hidden_1);
@@ -223,7 +204,7 @@ void Network::backprop(double error) {
 	this->hidden_1->backprop();
 
 	this->epoch_iter++;
-	if (this->epoch_iter == NETWORK_EPOCH_SIZE) {
+	if (this->epoch_iter == EPOCH_SIZE) {
 		double hidden_1_max_update = 0.0;
 		this->hidden_1->get_max_update(hidden_1_max_update);
 		this->hidden_1_average_max_update = 0.999*this->hidden_1_average_max_update+0.001*hidden_1_max_update;

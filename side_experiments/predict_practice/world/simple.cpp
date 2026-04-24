@@ -24,7 +24,9 @@ Simple::Simple() {
 			this->world[x_index][y_index] = type_distribution(generator);
 		}
 	}
+	this->world[STARTING_X][STARTING_Y] = TYPE_EMPTY;
 
+	this->revealed = vector<vector<bool>>(WIDTH, vector<bool>(HEIGHT, false));
 	this->hit = vector<vector<bool>>(WIDTH, vector<bool>(HEIGHT, false));
 
 	this->current_x = STARTING_X;
@@ -112,6 +114,18 @@ void Simple::perform_action(int action) {
 		if (this->world[this->current_x][this->current_y] == TYPE_MINE) {
 			this->hit_mine = true;
 		}
+		for (int x_index = -1; x_index <= 1; x_index++) {
+			for (int y_index = -1; y_index <= 1; y_index++) {
+				int x_coord = this->current_x + x_index;
+				int y_coord = this->current_y + y_index;
+				if (x_coord >= 0
+						&& x_coord < WIDTH
+						&& y_coord >= 0
+						&& y_coord < HEIGHT) {
+					this->revealed[x_coord][y_coord] = true;
+				}
+			}
+		}
 	}
 }
 
@@ -144,6 +158,29 @@ Problem* Simple::copy_snapshot() {
 	Simple* new_problem = new Simple();
 
 	new_problem->world = this->world;
+	new_problem->revealed = this->revealed;
+	new_problem->hit = this->hit;
+	new_problem->current_x = this->current_x;
+	new_problem->current_y = this->current_y;
+	new_problem->hit_mine = this->hit_mine;
+
+	return new_problem;
+}
+
+Problem* Simple::create_simulate() {
+	Simple* new_problem = new Simple();
+
+	uniform_int_distribution<int> type_distribution(0, 2);
+	for (int x_index = 0; x_index < WIDTH; x_index++) {
+		for (int y_index = 0; y_index < HEIGHT; y_index++) {
+			if (this->revealed[x_index][y_index]) {
+				new_problem->world[x_index][y_index] = this->world[x_index][y_index];
+			} else {
+				new_problem->world[x_index][y_index] = type_distribution(generator);
+			}
+		}
+	}
+	new_problem->revealed = this->revealed;
 	new_problem->hit = this->hit;
 	new_problem->current_x = this->current_x;
 	new_problem->current_y = this->current_y;

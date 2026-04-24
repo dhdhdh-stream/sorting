@@ -3,8 +3,10 @@
 #include <iostream>
 
 #include "abstract_experiment.h"
+#include "constants.h"
+#include "experiment.h"
 #include "globals.h"
-#include "network.h"
+#include "problem.h"
 #include "scope.h"
 
 using namespace std;
@@ -52,13 +54,6 @@ void ObsNode::link(Solution* parent_solution) {
 	} else {
 		this->next_node = this->parent->nodes[this->next_node_id];
 	}
-}
-
-void ObsNode::copy_from(ObsNode* original,
-						Solution* parent_solution) {
-	this->next_node_id = original->next_node_id;
-
-	this->ancestor_ids = original->ancestor_ids;
 }
 
 void ObsNode::save_for_display(ofstream& output_file) {

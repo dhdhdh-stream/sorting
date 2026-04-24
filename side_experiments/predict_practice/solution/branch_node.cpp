@@ -6,6 +6,7 @@
 #include "constants.h"
 #include "globals.h"
 #include "network.h"
+#include "obs_node.h"
 #include "scope.h"
 #include "solution.h"
 
@@ -13,20 +14,19 @@ using namespace std;
 
 BranchNode::BranchNode() {
 	this->type = NODE_TYPE_BRANCH;
-
-	this->experiment = NULL;
 }
 
 BranchNode::~BranchNode() {
-	delete this->network;
-
-	if (this->experiment != NULL) {
-		delete this->experiment;
+	for (int n_index = 0; n_index < (int)this->networks.size(); n_index++) {
+		delete this->networks[n_index];
 	}
 }
 
 void BranchNode::save(ofstream& output_file) {
-	this->network->save(output_file);
+	output_file << this->networks.size() << endl;
+	for (int n_index = 0; n_index < (int)this->networks.size(); n_index++) {
+		this->networks[n_index]->save(output_file);
+	}
 
 	output_file << this->original_next_node_id << endl;
 	output_file << this->branch_next_node_id << endl;
@@ -39,7 +39,12 @@ void BranchNode::save(ofstream& output_file) {
 
 void BranchNode::load(ifstream& input_file,
 					  Solution* parent_solution) {
-	this->network = new Network(input_file);
+	string num_networks_line;
+	getline(input_file, num_networks_line);
+	int num_networks = stoi(num_networks_line);
+	for (int n_index = 0; n_index < num_networks; n_index++) {
+		this->networks.push_back(new Network(input_file));
+	}
 
 	string original_next_node_id_line;
 	getline(input_file, original_next_node_id_line);
@@ -71,16 +76,6 @@ void BranchNode::link(Solution* parent_solution) {
 	} else {
 		this->branch_next_node = this->parent->nodes[this->branch_next_node_id];
 	}
-}
-
-void BranchNode::copy_from(BranchNode* original,
-						   Solution* parent_solution) {
-	this->network = new Network(original->network);
-
-	this->original_next_node_id = original->original_next_node_id;
-	this->branch_next_node_id = original->branch_next_node_id;
-
-	this->ancestor_ids = original->ancestor_ids;
 }
 
 void BranchNode::save_for_display(ofstream& output_file) {

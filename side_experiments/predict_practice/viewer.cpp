@@ -6,10 +6,10 @@
 
 #include "abstract_node.h"
 #include "globals.h"
-#include "minesweeper.h"
+#include "helpers.h"
 #include "scope.h"
+#include "simple.h"
 #include "solution.h"
-#include "solution_helpers.h"
 #include "solution_wrapper.h"
 
 using namespace std;
@@ -26,7 +26,7 @@ int main(int argc, char* argv[]) {
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
 
-	ProblemType* problem_type = new TypeMinesweeper();
+	ProblemType* problem_type = new TypeSimple();
 
 	string filename;
 	SolutionWrapper* solution_wrapper;
@@ -41,7 +41,6 @@ int main(int argc, char* argv[]) {
 
 	{
 		Problem* problem = problem_type->get_problem();
-		solution_wrapper->problem = problem;
 
 		solution_wrapper->init();
 

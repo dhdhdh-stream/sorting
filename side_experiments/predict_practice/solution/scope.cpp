@@ -2,16 +2,15 @@
 
 #include <algorithm>
 #include <iostream>
-#include <sstream>
 
+#include "abstract_experiment.h"
 #include "action_node.h"
 #include "branch_node.h"
 #include "globals.h"
-#include "network.h"
 #include "obs_node.h"
 #include "scope_node.h"
-#include "signal.h"
 #include "solution.h"
+#include "solution_wrapper.h"
 #include "start_node.h"
 
 using namespace std;
@@ -36,15 +35,6 @@ void Scope::random_exit_activate(AbstractNode* starting_node,
 		}
 
 		switch (curr_node->type) {
-		case NODE_TYPE_START:
-			{
-				StartNode* node = (StartNode*)curr_node;
-
-				possible_exits.push_back(curr_node);
-
-				curr_node = node->next_node;
-			}
-			break;
 		case NODE_TYPE_ACTION:
 			{
 				ActionNode* node = (ActionNode*)curr_node;
@@ -252,80 +242,6 @@ void Scope::link(Solution* parent_solution) {
 	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
 			it != this->nodes.end(); it++) {
 		it->second->link(parent_solution);
-	}
-}
-
-void Scope::copy_from(Scope* original,
-					  Solution* parent_solution) {
-	this->node_counter = original->node_counter;
-
-	for (map<int, AbstractNode*>::iterator it = original->nodes.begin();
-			it != original->nodes.end(); it++) {
-		switch (it->second->type) {
-		case NODE_TYPE_START:
-			{
-				StartNode* original_start_node = (StartNode*)it->second;
-				StartNode* start_node = new StartNode();
-				start_node->parent = this;
-				start_node->id = it->first;
-				start_node->copy_from(original_start_node);
-				this->nodes[it->first] = start_node;
-			}
-			break;
-		case NODE_TYPE_ACTION:
-			{
-				ActionNode* original_action_node = (ActionNode*)it->second;
-				ActionNode* action_node = new ActionNode();
-				action_node->parent = this;
-				action_node->id = it->first;
-				action_node->copy_from(original_action_node);
-				this->nodes[it->first] = action_node;
-			}
-			break;
-		case NODE_TYPE_SCOPE:
-			{
-				ScopeNode* original_scope_node = (ScopeNode*)it->second;
-				ScopeNode* scope_node = new ScopeNode();
-				scope_node->parent = this;
-				scope_node->id = it->first;
-				scope_node->copy_from(original_scope_node,
-									  parent_solution);
-				this->nodes[it->first] = scope_node;
-			}
-			break;
-		case NODE_TYPE_BRANCH:
-			{
-				BranchNode* original_branch_node = (BranchNode*)it->second;
-				BranchNode* branch_node = new BranchNode();
-				branch_node->parent = this;
-				branch_node->id = it->first;
-				branch_node->copy_from(original_branch_node,
-									   parent_solution);
-				this->nodes[it->first] = branch_node;
-			}
-			break;
-		case NODE_TYPE_OBS:
-			{
-				ObsNode* original_obs_node = (ObsNode*)it->second;
-				ObsNode* obs_node = new ObsNode();
-				obs_node->parent = this;
-				obs_node->id = it->first;
-				obs_node->copy_from(original_obs_node,
-									parent_solution);
-				this->nodes[it->first] = obs_node;
-			}
-			break;
-		}
-	}
-
-	for (int c_index = 0; c_index < (int)original->child_scopes.size(); c_index++) {
-		if (original->child_scopes[c_index]->is_outer) {
-			this->child_scopes.push_back(parent_solution->outer_scopes[
-				original->child_scopes[c_index]->id]);
-		} else {
-			this->child_scopes.push_back(parent_solution->scopes[
-				original->child_scopes[c_index]->id]);
-		}
 	}
 }
 
