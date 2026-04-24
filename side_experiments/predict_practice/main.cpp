@@ -78,7 +78,6 @@ int main(int argc, char* argv[]) {
 			}
 
 			double target_val = problem->score_result();
-			target_val -= 0.0001 * solution_wrapper->num_actions;
 
 			solution_wrapper->experiment_end(target_val);
 
