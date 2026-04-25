@@ -173,12 +173,6 @@ void Experiment::ramp_backprop(double target_val,
 				}
 				double new_score_average = new_sum_vals / (double)this->new_scores.size();
 
-				double sum_variance = 0.0;
-				for (int h_index = 0; h_index < (int)this->new_scores.size(); h_index++) {
-					sum_variance += (this->new_scores[h_index] - new_score_average) * (this->new_scores[h_index] - new_score_average);
-				}
-				double score_standard_deviation = sqrt(sum_variance / (double)this->new_scores.size());
-
 				int total_iters = wrapper->iter - this->starting_iter;
 				if (total_iters < 0) {
 					total_iters += numeric_limits<int>::max();
@@ -187,8 +181,6 @@ void Experiment::ramp_backprop(double target_val,
 
 				this->local_improvement = new_score_average - existing_score_average;
 				this->global_improvement = average_hits_per_run * this->local_improvement;
-				double t_score = this->local_improvement
-					/ (score_standard_deviation / sqrt((double)this->new_scores.size()));
 
 				// // temp
 				// cout << "new_score_average: " << new_score_average << endl;
@@ -196,12 +188,11 @@ void Experiment::ramp_backprop(double target_val,
 				// cout << "existing_score_average: " << existing_score_average << endl;
 				// cout << "this->local_improvement: " << this->local_improvement << endl;
 				// cout << "this->global_improvement: " << this->global_improvement << endl;
-				// cout << "t_score: " << t_score << endl;
 
 				#if defined(MDEBUG) && MDEBUG
-				if (t_score >= SUCCESS_T_SCORE || rand()%3 == 0) {
+				if (this->local_improvement > 0.0 || rand()%3 == 0) {
 				#else
-				if (t_score >= SUCCESS_T_SCORE) {
+				if (this->local_improvement > 0.0) {
 				#endif /* MDEBUG */
 					bool is_success = false;
 					if (wrapper->solution->ramp_last_scores.size() >= MIN_NUM_LAST_TRACK) {
@@ -252,20 +243,6 @@ void Experiment::ramp_backprop(double target_val,
 
 						this->curr_ramp--;
 					}
-				#if defined(MDEBUG) && MDEBUG
-				} else if (t_score < FAIL_T_SCORE && rand()%2 == 0) {
-				#else
-				} else if (t_score < FAIL_T_SCORE) {
-				#endif /* MDEBUG */
-					this->existing_scores.clear();
-					this->new_scores.clear();
-
-					this->measure_status = MEASURE_STATUS_FAIL;
-
-					this->state = EXPERIMENT_STATE_RAMP;
-					this->state_iter = 0;
-
-					this->curr_ramp--;
 				} else {
 					this->state_iter = 0;
 				}

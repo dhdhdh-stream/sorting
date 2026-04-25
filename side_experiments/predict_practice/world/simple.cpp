@@ -33,6 +33,23 @@ Simple::Simple() {
 	this->current_y = STARTING_Y;
 
 	this->hit_mine = false;
+
+	this->hit[this->current_x][this->current_y] = true;
+	if (this->world[this->current_x][this->current_y] == TYPE_MINE) {
+		this->hit_mine = true;
+	}
+	for (int x_index = -1; x_index <= 1; x_index++) {
+		for (int y_index = -1; y_index <= 1; y_index++) {
+			int x_coord = this->current_x + x_index;
+			int y_coord = this->current_y + y_index;
+			if (x_coord >= 0
+					&& x_coord < WIDTH
+					&& y_coord >= 0
+					&& y_coord < HEIGHT) {
+				this->revealed[x_coord][y_coord] = true;
+			}
+		}
+	}
 }
 
 double Simple::get_observation_helper(int x, int y) {
@@ -192,7 +209,11 @@ Problem* Simple::create_simulate() {
 void Simple::print() {
 	for (int y_index = HEIGHT-1; y_index >= 0; y_index--) {
 		for (int x_index = 0; x_index < WIDTH; x_index++) {
-			cout << get_observation_helper(x_index, y_index);
+			if (this->revealed[x_index][y_index]) {
+				cout << get_observation_helper(x_index, y_index);
+			} else {
+				cout << "-";
+			}
 
 			if (x_index == this->current_x
 					&& y_index == this->current_y) {
