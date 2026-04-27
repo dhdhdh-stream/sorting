@@ -12,29 +12,21 @@ const int WORLD_SIZE = 10;
 const double WEIGHT_DISCOUNT = 0.7;
 
 WorldModel::WorldModel() {
-	this->location_networks = vector<vector<Network*>>(2);
-	for (int a_index = 0; a_index < 2; a_index++) {
-		this->location_networks[a_index] = vector<Network*>(5);
-		for (int i_index = 0; i_index < 5; i_index++) {
-			this->location_networks[a_index][i_index] = new Network(10);
-		}
+	this->location_networks = vector<Network*>(5);
+	for (int i_index = 0; i_index < 5; i_index++) {
+		this->location_networks[i_index] = new Network(12);
 	}
 
 	this->state_networks = vector<Network*>(5);
 	for (int i_index = 0; i_index < 5; i_index++) {
 		this->state_networks[i_index] = new Network(10);
 	}
-
-	this->predict_networks = vector<Network*>(5);
-	for (int i_index = 0; i_index < 5; i_index++) {
-		this->predict_networks[i_index] = new Network(5);
-	}
 }
 
 WorldModelInstance::WorldModelInstance(WorldModel* world_model) {
 	this->world_model = world_model;
 
-	this->states = vector<double>(WORLD_SIZE, 0.0);
+	this->states = vector<double>(WORLD_SIZE, 4.5);
 	this->location = 0;
 }
 
@@ -69,23 +61,23 @@ void WorldModelInstance::train_init(vector<double>& obs) {
 	this->state_input_histories.push_back(state_input);
 	this->state_location_history.push_back(this->location);
 
-	vector<double> predict_identity_input;
-	for (int i_index = -2; i_index <= 2; i_index++) {
-		int index = this->location + i_index;
-		if (index < 0) {
-			index += WORLD_SIZE;
-		}
-		if (index >= WORLD_SIZE) {
-			index -= WORLD_SIZE;
-		}
-		predict_identity_input.push_back(this->states[index]);
-	}
+	// vector<double> predict_identity_input;
+	// for (int i_index = -2; i_index <= 2; i_index++) {
+	// 	int index = this->location + i_index;
+	// 	if (index < 0) {
+	// 		index += WORLD_SIZE;
+	// 	}
+	// 	if (index >= WORLD_SIZE) {
+	// 		index -= WORLD_SIZE;
+	// 	}
+	// 	predict_identity_input.push_back(this->states[index]);
+	// }
 
-	this->predict_identity_target_histories.push_back(obs);
+	// this->predict_identity_target_histories.push_back(obs);
 
-	this->predict_identity_input_histories.push_back(predict_identity_input);
+	// this->predict_identity_input_histories.push_back(predict_identity_input);
 
-	this->predict_identity_location_history.push_back(this->location);
+	// this->predict_identity_location_history.push_back(this->location);
 }
 
 void WorldModelInstance::train_step(int action,
@@ -94,6 +86,13 @@ void WorldModelInstance::train_step(int action,
 	this->action_history.push_back(action);
 
 	vector<double> location_input;
+	for (int a_index = 0; a_index < 2; a_index++) {
+		if (action == a_index) {
+			location_input.push_back(1.0);
+		} else {
+			location_input.push_back(0.0);
+		}
+	}
 	for (int i_index = -2; i_index <= 2; i_index++) {
 		int index = this->location + i_index;
 		if (index < 0) {
@@ -107,6 +106,11 @@ void WorldModelInstance::train_step(int action,
 	location_input.insert(location_input.end(), obs.begin(), obs.end());
 	this->location_input_histories.push_back(location_input);
 
+	/**
+	 * - same issue as damage in solution
+	 *   - cannot make representative decisions with damage
+	 *   - but cannot experiment without damage
+	 */
 	uniform_int_distribution<int> uncertainty_distribution(0, 9);
 	if (add_uncertainty
 			&& uncertainty_distribution(generator) == 0) {
@@ -119,13 +123,13 @@ void WorldModelInstance::train_step(int action,
 		double min_misguess;
 		int best_location;
 		{
-			Network* network = this->world_model->location_networks[action][0];
+			Network* network = this->world_model->location_networks[0];
 			network->activate(location_input);
 			min_misguess = network->output->acti_vals[0];
 			best_location = 0;
 		}
 		for (int i_index = 1; i_index < 5; i_index++) {
-			Network* network = this->world_model->location_networks[action][i_index];
+			Network* network = this->world_model->location_networks[i_index];
 			network->activate(location_input);
 			if (network->output->acti_vals[0] < min_misguess) {
 				min_misguess = network->output->acti_vals[0];
@@ -191,85 +195,79 @@ void WorldModelInstance::train_step(int action,
 	this->state_input_histories.push_back(state_input);
 	this->state_location_history.push_back(this->location);
 
-	vector<double> predict_identity_input;
-	for (int i_index = -2; i_index <= 2; i_index++) {
-		int index = this->location + i_index;
-		if (index < 0) {
-			index += WORLD_SIZE;
-		}
-		if (index >= WORLD_SIZE) {
-			index -= WORLD_SIZE;
-		}
-		predict_identity_input.push_back(this->states[index]);
-	}
+	// vector<double> predict_identity_input;
+	// for (int i_index = -2; i_index <= 2; i_index++) {
+	// 	int index = this->location + i_index;
+	// 	if (index < 0) {
+	// 		index += WORLD_SIZE;
+	// 	}
+	// 	if (index >= WORLD_SIZE) {
+	// 		index -= WORLD_SIZE;
+	// 	}
+	// 	predict_identity_input.push_back(this->states[index]);
+	// }
 
-	this->predict_identity_target_histories.push_back(obs);
+	// this->predict_identity_target_histories.push_back(obs);
 
-	this->predict_identity_input_histories.push_back(predict_identity_input);
+	// this->predict_identity_input_histories.push_back(predict_identity_input);
 
-	this->predict_identity_location_history.push_back(this->location);
+	// this->predict_identity_location_history.push_back(this->location);
 }
 
 void WorldModelInstance::train_backprop() {
-	vector<double> errors(WORLD_SIZE, 0.0);
+	vector<double> errors(WORLD_SIZE, 4.5);
 
 	{
-		for (int i_index = 0; i_index < 5; i_index++) {
-			Network* network = this->world_model->predict_networks[i_index];
-			network->activate(this->predict_identity_input_histories.back());
-			double predicted = network->output->acti_vals[0];
+		// for (int i_index = 0; i_index < 5; i_index++) {
+		// 	double predicted = this->predict_identity_input_histories.back()[i_index];
 
-			double error = this->predict_identity_target_histories.back()[i_index] - predicted;
-			network->backprop(error);
+		// 	double error = this->predict_identity_target_histories.back()[i_index] - predicted;
 
-			for (int ii_index = 0; ii_index < 5; ii_index++) {
-				int index = this->predict_identity_location_history.back() + ii_index-2;
-				if (index < 0) {
-					index += WORLD_SIZE;
-				}
-				if (index >= WORLD_SIZE) {
-					index -= WORLD_SIZE;
-				}
+		// 	int index = this->predict_identity_location_history.back() + i_index-2;
+		// 	if (index < 0) {
+		// 		index += WORLD_SIZE;
+		// 	}
+		// 	if (index >= WORLD_SIZE) {
+		// 		index -= WORLD_SIZE;
+		// 	}
 
-				errors[index] += network->input->errors[ii_index];
-				network->input->errors[ii_index] = 0.0;
-			}
-		}
+		// 	errors[index] += error;
+		// }
 
-		this->predict_identity_target_histories.pop_back();
-		this->predict_identity_input_histories.pop_back();
-		this->predict_identity_location_history.pop_back();
+		// this->predict_identity_target_histories.pop_back();
+		// this->predict_identity_input_histories.pop_back();
+		// this->predict_identity_location_history.pop_back();
 
-		for (int i_index = 0; i_index < 5; i_index++) {
-			int index = this->state_location_history.back() + i_index-2;
-			if (index < 0) {
-				index += WORLD_SIZE;
-			}
-			if (index >= WORLD_SIZE) {
-				index -= WORLD_SIZE;
-			}
+		// for (int i_index = 0; i_index < 5; i_index++) {
+		// 	int index = this->state_location_history.back() + i_index-2;
+		// 	if (index < 0) {
+		// 		index += WORLD_SIZE;
+		// 	}
+		// 	if (index >= WORLD_SIZE) {
+		// 		index -= WORLD_SIZE;
+		// 	}
 
-			Network* network = this->world_model->state_networks[i_index];
-			network->activate(this->state_input_histories.back());
+		// 	Network* network = this->world_model->state_networks[i_index];
+		// 	network->activate(this->state_input_histories.back());
 
-			double error = errors[index];
-			errors[index] = 0.0;
+		// 	double error = errors[index];
+		// 	errors[index] = 0.0;
 
-			network->backprop(error);
+		// 	network->backprop(error);
 
-			for (int ii_index = 0; ii_index < 5; ii_index++) {
-				int index = this->state_location_history.back() + ii_index-2;
-				if (index < 0) {
-					index += WORLD_SIZE;
-				}
-				if (index >= WORLD_SIZE) {
-					index -= WORLD_SIZE;
-				}
+		// 	for (int ii_index = 0; ii_index < 5; ii_index++) {
+		// 		int index = this->state_location_history.back() + ii_index-2;
+		// 		if (index < 0) {
+		// 			index += WORLD_SIZE;
+		// 		}
+		// 		if (index >= WORLD_SIZE) {
+		// 			index -= WORLD_SIZE;
+		// 		}
 
-				errors[index] += network->input->errors[ii_index];
-				network->input->errors[ii_index] = 0.0;
-			}
-		}
+		// 		errors[index] += network->input->errors[ii_index];
+		// 		network->input->errors[ii_index] = 0.0;
+		// 	}
+		// }
 
 		this->state_input_histories.pop_back();
 		this->state_location_history.pop_back();
@@ -279,37 +277,32 @@ void WorldModelInstance::train_backprop() {
 	while (true) {
 		double curr_sum_misguess = 0.0;
 		for (int i_index = 0; i_index < 5; i_index++) {
-			Network* network = this->world_model->predict_networks[i_index];
-			network->activate(this->predict_input_histories.back());
-			double predicted = network->output->acti_vals[0];
+			double predicted = this->predict_input_histories.back()[i_index];
 
 			curr_sum_misguess += (this->predict_target_histories.back()[i_index] - predicted)
 				* (this->predict_target_histories.back()[i_index] - predicted);
 			double error = this->predict_target_histories.back()[i_index] - predicted;
-			network->backprop(error);
 
-			for (int ii_index = 0; ii_index < 5; ii_index++) {
-				int index = this->predict_location_history.back() + ii_index-2;
-				if (index < 0) {
-					index += WORLD_SIZE;
-				}
-				if (index >= WORLD_SIZE) {
-					index -= WORLD_SIZE;
-				}
-
-				errors[index] += network->input->errors[ii_index];
-				network->input->errors[ii_index] = 0.0;
+			int index = this->predict_location_history.back() + i_index-2;
+			if (index < 0) {
+				index += WORLD_SIZE;
 			}
+			if (index >= WORLD_SIZE) {
+				index -= WORLD_SIZE;
+			}
+
+			errors[index] += error;
 		}
 
-		curr_weighted_misguess = (1.0 - WEIGHT_DISCOUNT) * curr_sum_misguess + WEIGHT_DISCOUNT * curr_weighted_misguess;
+		// curr_weighted_misguess = (1.0 - WEIGHT_DISCOUNT) * curr_sum_misguess + WEIGHT_DISCOUNT * curr_weighted_misguess;
+		curr_weighted_misguess = curr_sum_misguess;
 
 		this->predict_target_histories.pop_back();
 		this->predict_input_histories.pop_back();
 		this->predict_location_history.pop_back();
 
 		{
-			Network* network = this->world_model->location_networks[this->action_history.back()][this->rel_location_history.back()];
+			Network* network = this->world_model->location_networks[this->rel_location_history.back()];
 			network->activate(this->location_input_histories.back());
 
 			double error = curr_weighted_misguess - network->output->acti_vals[0];
@@ -320,31 +313,25 @@ void WorldModelInstance::train_backprop() {
 		this->location_input_histories.pop_back();
 		this->rel_location_history.pop_back();
 
-		for (int i_index = 0; i_index < 5; i_index++) {
-			Network* network = this->world_model->predict_networks[i_index];
-			network->activate(this->predict_identity_input_histories.back());
-			double predicted = network->output->acti_vals[0];
+		// for (int i_index = 0; i_index < 5; i_index++) {
+		// 	double predicted = this->predict_identity_input_histories.back()[i_index];
 
-			double error = this->predict_identity_target_histories.back()[i_index] - predicted;
-			network->backprop(error);
+		// 	double error = this->predict_identity_target_histories.back()[i_index] - predicted;
 
-			for (int ii_index = 0; ii_index < 5; ii_index++) {
-				int index = this->predict_identity_location_history.back() + ii_index-2;
-				if (index < 0) {
-					index += WORLD_SIZE;
-				}
-				if (index >= WORLD_SIZE) {
-					index -= WORLD_SIZE;
-				}
+		// 	int index = this->predict_identity_location_history.back() + i_index-2;
+		// 	if (index < 0) {
+		// 		index += WORLD_SIZE;
+		// 	}
+		// 	if (index >= WORLD_SIZE) {
+		// 		index -= WORLD_SIZE;
+		// 	}
 
-				errors[index] += network->input->errors[ii_index];
-				network->input->errors[ii_index] = 0.0;
-			}
-		}
+		// 	errors[index] += error;
+		// }
 
-		this->predict_identity_target_histories.pop_back();
-		this->predict_identity_input_histories.pop_back();
-		this->predict_identity_location_history.pop_back();
+		// this->predict_identity_target_histories.pop_back();
+		// this->predict_identity_input_histories.pop_back();
+		// this->predict_identity_location_history.pop_back();
 
 		for (int i_index = 0; i_index < 5; i_index++) {
 			int index = this->state_location_history.back() + i_index-2;
@@ -419,6 +406,13 @@ void WorldModelInstance::debug_init(vector<double>& obs) {
 void WorldModelInstance::debug_step(int action,
 									vector<double>& obs) {
 	vector<double> location_input;
+	for (int a_index = 0; a_index < 2; a_index++) {
+		if (action == a_index) {
+			location_input.push_back(1.0);
+		} else {
+			location_input.push_back(0.0);
+		}
+	}
 	for (int i_index = -2; i_index <= 2; i_index++) {
 		int index = this->location + i_index;
 		if (index < 0) {
@@ -434,18 +428,22 @@ void WorldModelInstance::debug_step(int action,
 	double min_misguess;
 	int best_location;
 	{
-		Network* network = this->world_model->location_networks[action][0];
+		Network* network = this->world_model->location_networks[0];
 		network->activate(location_input);
 		min_misguess = network->output->acti_vals[0];
 		best_location = 0;
+
+		cout << "0: " << network->output->acti_vals[0] << endl;
 	}
 	for (int i_index = 1; i_index < 5; i_index++) {
-		Network* network = this->world_model->location_networks[action][i_index];
+		Network* network = this->world_model->location_networks[i_index];
 		network->activate(location_input);
 		if (network->output->acti_vals[0] < min_misguess) {
 			min_misguess = network->output->acti_vals[0];
 			best_location = i_index;
 		}
+
+		cout << i_index << ": " << network->output->acti_vals[0] << endl;
 	}
 	this->location += best_location-2;
 
@@ -461,7 +459,7 @@ void WorldModelInstance::debug_step(int action,
 
 	cout << "this->location: " << this->location << endl;
 
-	vector<double> predict_input;
+	cout << "predicted:";
 	for (int i_index = -2; i_index <= 2; i_index++) {
 		int index = this->location + i_index;
 		if (index < 0) {
@@ -470,66 +468,9 @@ void WorldModelInstance::debug_step(int action,
 		if (index >= WORLD_SIZE) {
 			index -= WORLD_SIZE;
 		}
-		predict_input.push_back(this->states[index]);
-	}
-
-	cout << "predicted:";
-	for (int i_index = 0; i_index < 5; i_index++) {
-		Network* network = this->world_model->predict_networks[i_index];
-		network->activate(predict_input);
-		double predicted = network->output->acti_vals[0];
-
-		cout << " " << predicted;
+		cout << " " << this->states[index];
 	}
 	cout << endl;
-
-	{
-		vector<double> predict_left_input;
-		for (int i_index = -3; i_index <= 1; i_index++) {
-			int index = this->location + i_index;
-			if (index < 0) {
-				index += WORLD_SIZE;
-			}
-			if (index >= WORLD_SIZE) {
-				index -= WORLD_SIZE;
-			}
-			predict_left_input.push_back(this->states[index]);
-		}
-
-		cout << "predict left:";
-		for (int i_index = 0; i_index < 5; i_index++) {
-			Network* network = this->world_model->predict_networks[i_index];
-			network->activate(predict_left_input);
-			double predicted = network->output->acti_vals[0];
-
-			cout << " " << predicted;
-		}
-		cout << endl;
-	}
-
-	{
-		vector<double> predict_right_input;
-		for (int i_index = -1; i_index <= 3; i_index++) {
-			int index = this->location + i_index;
-			if (index < 0) {
-				index += WORLD_SIZE;
-			}
-			if (index >= WORLD_SIZE) {
-				index -= WORLD_SIZE;
-			}
-			predict_right_input.push_back(this->states[index]);
-		}
-
-		cout << "predict right:";
-		for (int i_index = 0; i_index < 5; i_index++) {
-			Network* network = this->world_model->predict_networks[i_index];
-			network->activate(predict_right_input);
-			double predicted = network->output->acti_vals[0];
-
-			cout << " " << predicted;
-		}
-		cout << endl;
-	}
 
 	cout << "obs:";
 	for (int i_index = 0; i_index < 5; i_index++) {

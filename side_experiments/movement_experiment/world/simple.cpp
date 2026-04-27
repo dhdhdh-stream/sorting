@@ -46,15 +46,15 @@ void Simple::perform_action(int action) {
 		break;
 	}
 
-	// uniform_int_distribution<int> uncertainty_distribution(0, 9);
-	// switch (uncertainty_distribution(generator)) {
-	// case 0:
-	// 	this->current_index--;
-	// 	break;
-	// case 1:
-	// 	this->current_index++;
-	// 	break;
-	// }
+	uniform_int_distribution<int> uncertainty_distribution(0, 9);
+	switch (uncertainty_distribution(generator)) {
+	case 0:
+		this->current_index--;
+		break;
+	case 1:
+		this->current_index++;
+		break;
+	}
 
 	if (this->current_index < 0) {
 		this->current_index += WORLD_SIZE;

@@ -7,9 +7,8 @@ class Network;
 
 class WorldModel {
 public:
-	std::vector<std::vector<Network*>> location_networks;
+	std::vector<Network*> location_networks;
 	std::vector<Network*> state_networks;
-	std::vector<Network*> predict_networks;
 
 	/**
 	 * TODO:
@@ -31,9 +30,9 @@ public:
 	std::vector<std::vector<double>> state_input_histories;
 	std::vector<int> state_location_history;
 
-	std::vector<std::vector<double>> predict_identity_target_histories;
-	std::vector<std::vector<double>> predict_identity_input_histories;
-	std::vector<int> predict_identity_location_history;
+	// std::vector<std::vector<double>> predict_identity_target_histories;
+	// std::vector<std::vector<double>> predict_identity_input_histories;
+	// std::vector<int> predict_identity_location_history;
 
 	std::vector<int> action_history;
 	std::vector<std::vector<double>> location_input_histories;

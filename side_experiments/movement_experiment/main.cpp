@@ -1,5 +1,5 @@
-// TODO: extremely simple predict network
-// TODO: predict location change
+// - doesn't easily, automatically converge
+//   - so probably doesn't make sense
 
 #include <chrono>
 #include <iostream>
