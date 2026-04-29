@@ -168,10 +168,10 @@ void EvalExperiment::ramp_backprop(double target_val,
 			}
 			double new_score_average = new_sum_vals / (double)this->new_scores.size();
 
-			// temp
-			cout << "this->curr_ramp: " << this->curr_ramp << endl;
-			cout << "existing_score_average: " << existing_score_average << endl;
-			cout << "new_score_average: " << new_score_average << endl;
+			// // temp
+			// cout << "this->curr_ramp: " << this->curr_ramp << endl;
+			// cout << "existing_score_average: " << existing_score_average << endl;
+			// cout << "new_score_average: " << new_score_average << endl;
 
 			this->existing_scores.clear();
 			this->new_scores.clear();
@@ -230,9 +230,9 @@ void EvalExperiment::ramp_backprop(double target_val,
 			this->local_improvement = new_score_average - existing_score_average;
 			this->global_improvement = average_hits_per_run * this->local_improvement;
 
-			// temp
-			cout << "this->local_improvement: " << this->local_improvement << endl;
-			cout << "this->global_improvement: " << this->global_improvement << endl;
+			// // temp
+			// cout << "this->local_improvement: " << this->local_improvement << endl;
+			// cout << "this->global_improvement: " << this->global_improvement << endl;
 
 			#if defined(MDEBUG) && MDEBUG
 			if (new_score_average >= existing_score_average || rand()%3 == 0) {

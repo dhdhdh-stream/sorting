@@ -39,4 +39,6 @@ void clean_scope(Scope* scope);
 
 bool simulate_helper(SolutionWrapper* wrapper);
 
+double measure_helper(SolutionWrapper* solution_wrapper);
+
 #endif /* SOLUTION_HELPERS_H */

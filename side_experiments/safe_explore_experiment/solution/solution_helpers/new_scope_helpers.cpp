@@ -261,7 +261,8 @@ void create_new_scope(AbstractNode* potential_start_node,
 					if (original_action_node->branch_node != NULL) {
 						map<AbstractNode*, AbstractNode*>::iterator it = node_mappings
 							.find(original_action_node->branch_node);
-						if (it == node_mappings.end()) {
+						if (it == node_mappings.end()
+								|| it->second->type != NODE_TYPE_BRANCH) {
 							is_dangerous = true;
 						} else {
 							new_action_node->branch_node_id = it->second->id;

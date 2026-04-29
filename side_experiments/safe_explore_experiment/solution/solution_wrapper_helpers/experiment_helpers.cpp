@@ -99,6 +99,28 @@ void SolutionWrapper::experiment_end(double result) {
 			}
 		}
 
+		int node_count = 0;
+		int eval_count = 0;
+		count_eval_helper(this->scope_histories[0],
+						  node_count,
+						  eval_count);
+
+		int target_count = (node_count + (TARGET_NODES_PER_EVAL-1)) / TARGET_NODES_PER_EVAL;
+		if (eval_count < target_count) {
+			// cout << "node_count: " << node_count << endl;
+			// cout << "eval_count: " << eval_count << endl;
+			// cout << "target_count: " << target_count << endl;
+
+			create_experiment(this->scope_histories[0],
+							  this);
+		}
+
+		delete this->scope_histories[0];
+
+		this->scope_histories.clear();
+		this->node_context.clear();
+		this->experiment_context.clear();
+
 		set<Scope*> updated_scopes;
 		for (map<EvalExperiment*, EvalExperimentHistory*>::iterator it = this->eval_experiment_histories.begin();
 				it != this->eval_experiment_histories.end(); it++) {
@@ -141,24 +163,14 @@ void SolutionWrapper::experiment_end(double result) {
 			// 	}
 			// 	break;
 			// }
-		} else {
-			int node_count = 0;
-			int eval_count = 0;
-			count_eval_helper(this->scope_histories[0],
-							  node_count,
-							  eval_count);
-
-			int target_count = (node_count + (TARGET_NODES_PER_EVAL-1)) / TARGET_NODES_PER_EVAL;
-			if (eval_count < target_count) {
-				// cout << "node_count: " << node_count << endl;
-				// cout << "eval_count: " << eval_count << endl;
-				// cout << "target_count: " << target_count << endl;
-
-				create_experiment(this->scope_histories[0],
-								  this);
-			}
 		}
 	} else {
+		delete this->scope_histories[0];
+
+		this->scope_histories.clear();
+		this->node_context.clear();
+		this->experiment_context.clear();
+
 		this->explore_experiment_history->experiment->backprop(
 			result,
 			this);
@@ -172,10 +184,4 @@ void SolutionWrapper::experiment_end(double result) {
 		delete it->second;
 	}
 	this->eval_experiment_histories.clear();
-
-	delete this->scope_histories[0];
-
-	this->scope_histories.clear();
-	this->node_context.clear();
-	this->experiment_context.clear();
 }

@@ -20,51 +20,7 @@
 using namespace std;
 
 void EvalExperiment::add(SolutionWrapper* wrapper) {
-	stringstream ss;
-	ss << get_time() << "; ";
-	ss << "timestamp: " << wrapper->solution->timestamp << "; ";
-	ss << "num_experiments: " << wrapper->solution->num_experiments << "; ";
-	ss << "Experiment" << "; ";
-	ss << "this->scope_context->id: " << this->scope_context->id << "; ";
-	ss << "this->node_context->id: " << this->node_context->id << "; ";
-	ss << "this->is_branch: " << this->is_branch << "; ";
-	ss << "new explore path:";
-	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
-		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
-			ss << " " << this->best_actions[s_index];
-		} else {
-			if (this->best_scopes[s_index]->is_outer) {
-				ss << " O" << this->best_scopes[s_index]->id;
-			} else {
-				ss << " E" << this->best_scopes[s_index]->id;
-			}
-		}
-	}
-	ss << "; ";
-
-	if (this->exit_next_node == NULL) {
-		ss << "this->exit_next_node->id: " << -1 << "; ";
-	} else {
-		ss << "this->exit_next_node->id: " << this->exit_next_node->id << "; ";
-	}
-
-	ss << "this->new_networks.size(): " << this->new_networks.size() << "; ";
-
-	ss << "this->local_improvement: " << this->local_improvement << "; ";
-	ss << "this->global_improvement: " << this->global_improvement << "; ";
-
-	double sum_vals = 0.0;
-	for (int h_index = 0; h_index < (int)wrapper->score_histories.size(); h_index++) {
-		sum_vals += wrapper->score_histories[h_index];
-	}
-	double val_average = sum_vals / (double)wrapper->score_histories.size();
-	wrapper->solution->improvement_history.push_back(val_average);
-
-	wrapper->solution->curr_score = val_average;
-
-	wrapper->solution->change_history.push_back(ss.str());
-
-	cout << ss.str() << endl;
+	
 
 	if (this->best_new_scope != NULL) {
 		wrapper->solution->scopes.push_back(this->best_new_scope);
@@ -393,4 +349,51 @@ void EvalExperiment::add(SolutionWrapper* wrapper) {
 			}
 		}
 	}
+
+	stringstream ss;
+	ss << get_time() << "; ";
+	ss << "timestamp: " << wrapper->solution->timestamp << "; ";
+	ss << "num_experiments: " << wrapper->solution->num_experiments << "; ";
+	ss << "Experiment" << "; ";
+	ss << "this->scope_context->id: " << this->scope_context->id << "; ";
+	ss << "this->node_context->id: " << this->node_context->id << "; ";
+	ss << "this->is_branch: " << this->is_branch << "; ";
+	ss << "new explore path:";
+	for (int s_index = 0; s_index < (int)this->best_step_types.size(); s_index++) {
+		if (this->best_step_types[s_index] == STEP_TYPE_ACTION) {
+			ss << " " << this->best_actions[s_index];
+		} else {
+			if (this->best_scopes[s_index]->is_outer) {
+				ss << " O" << this->best_scopes[s_index]->id;
+			} else {
+				ss << " E" << this->best_scopes[s_index]->id;
+			}
+		}
+	}
+	ss << "; ";
+
+	if (this->exit_next_node == NULL) {
+		ss << "this->exit_next_node->id: " << -1 << "; ";
+	} else {
+		ss << "this->exit_next_node->id: " << this->exit_next_node->id << "; ";
+	}
+
+	ss << "this->local_improvement: " << this->local_improvement << "; ";
+	ss << "this->global_improvement: " << this->global_improvement << "; ";
+
+	double clean_average_score = measure_helper(wrapper);
+	ss << "clean_average_score: " << clean_average_score << "; ";
+
+	double sum_vals = 0.0;
+	for (int h_index = 0; h_index < (int)wrapper->score_histories.size(); h_index++) {
+		sum_vals += wrapper->score_histories[h_index];
+	}
+	double val_average = sum_vals / (double)wrapper->score_histories.size();
+	wrapper->solution->improvement_history.push_back(val_average);
+
+	wrapper->solution->curr_score = val_average;
+
+	wrapper->solution->change_history.push_back(ss.str());
+
+	cout << ss.str() << endl;
 }

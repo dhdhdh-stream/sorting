@@ -10,6 +10,12 @@ class Network;
 class SolutionWrapper;
 
 const int EXPLORE_EXPERIMENT_STATE_TRAIN_EXISTING = 0;
+/**
+ * - simply always retrain existing_network
+ *   - solution is always changing, so keeping an overall existing_network updated significant cost
+ *   - also much easier to make mistakes
+ *     - in case branches not properly taken into account
+ */
 const int EXPLORE_EXPERIMENT_STATE_EXPLORE = 1;
 const int EXPLORE_EXPERIMENT_STATE_TRAIN_NEW = 2;
 

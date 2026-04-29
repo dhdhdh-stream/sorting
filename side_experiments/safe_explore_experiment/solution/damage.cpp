@@ -339,16 +339,67 @@ void Damage::result_step(vector<double>& obs,
 						 bool& is_next,
 						 bool& fetch_action,
 						 SolutionWrapper* wrapper) {
-	// do nothing
+	DamageState* experiment_state = (DamageState*)wrapper->result_experiment_context.back();
+	if (experiment_state->step_index >= (int)this->step_types.size()) {
+		wrapper->result_node_context.back() = this->exit_next_node;
+
+		delete experiment_state;
+		wrapper->result_experiment_context.back() = NULL;
+	} else {
+		if (this->step_types[experiment_state->step_index] == STEP_TYPE_ACTION) {
+			if (this->actions[experiment_state->step_index] == -1) {
+				is_next = true;
+				fetch_action = true;
+
+				wrapper->result_num_actions++;
+			} else {
+				action = this->actions[experiment_state->step_index];
+				is_next = true;
+
+				wrapper->result_num_actions++;
+
+				experiment_state->step_index++;
+			}
+		} else {
+			ScopeHistory* inner_scope_history = new ScopeHistory(this->scopes[experiment_state->step_index]);
+			wrapper->result_scope_histories.push_back(inner_scope_history);
+			wrapper->result_node_context.push_back(this->scopes[experiment_state->step_index]->nodes[0]);
+			wrapper->result_experiment_context.push_back(NULL);
+		}
+	}
 }
 
 void Damage::result_set_action(int action,
 							   SolutionWrapper* wrapper) {
-	// do nothing
+	DamageState* experiment_state = (DamageState*)wrapper->result_experiment_context.back();
+
+	if (this->is_dangerous) {
+		this->actions[experiment_state->step_index] = action;
+	} else {
+		uniform_int_distribution<int> action_distribution(0, 6);
+		while (true) {
+			int potential_action = action_distribution(generator);
+			if (potential_action != 4
+					&& potential_action != 5) {
+				this->actions[experiment_state->step_index] = potential_action;
+				break;
+			}
+		}
+	}
+
+	experiment_state->step_index++;
 }
 
 void Damage::result_exit_step(SolutionWrapper* wrapper) {
-	// do nothing
+	DamageState* experiment_state = (DamageState*)wrapper->result_experiment_context.back();
+
+	delete wrapper->result_scope_histories.back();
+
+	wrapper->result_scope_histories.pop_back();
+	wrapper->result_node_context.pop_back();
+	wrapper->result_experiment_context.pop_back();
+
+	experiment_state->step_index++;
 }
 
 DamageState::DamageState(Damage* damage) {
