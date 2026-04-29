@@ -20,6 +20,12 @@ const int STEP_TYPE_SCOPE = 1;
  */
 const int RAW_ACTION_WEIGHT = 10;
 
+/**
+ * - temp
+ */
+const double PROTECT_SCORE_NORM = 1.45;
+const double MIN_PROTECT = 0.8;
+
 #if defined(MDEBUG) && MDEBUG
 const int HISTORIES_NUM_SAVE = 100;
 #else

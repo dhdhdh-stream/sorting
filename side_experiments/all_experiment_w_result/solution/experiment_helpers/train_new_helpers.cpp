@@ -44,7 +44,15 @@ void Experiment::train_new_check_activate(
 		double next_clean_result = clean_result_helper(wrapper);
 		double diff = next_clean_result - wrapper->prev_clean_result;
 		this->new_target_val_histories.push_back(diff);
-		wrapper->prev_clean_result = next_clean_result;
+
+		double existing_norm_score = wrapper->prev_clean_result - PROTECT_SCORE_NORM;
+		double new_norm_score = next_clean_result - PROTECT_SCORE_NORM;
+		if (new_norm_score / existing_norm_score >= MIN_PROTECT) {
+			wrapper->prev_clean_result = next_clean_result;
+		} else {
+			delete new_experiment_state;
+			wrapper->experiment_context.back() = NULL;
+		}
 	}
 }
 

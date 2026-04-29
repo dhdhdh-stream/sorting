@@ -137,7 +137,42 @@ void Experiment::explore_check_activate(
 
 		double next_clean_result = clean_result_helper(wrapper);
 		this->curr_surprise = next_clean_result - wrapper->prev_clean_result;
-		wrapper->prev_clean_result = next_clean_result;
+
+		double existing_norm_score = wrapper->prev_clean_result - PROTECT_SCORE_NORM;
+		double new_norm_score = next_clean_result - PROTECT_SCORE_NORM;
+		if (new_norm_score / existing_norm_score >= MIN_PROTECT) {
+			wrapper->prev_clean_result = next_clean_result;
+		} else {
+			delete new_experiment_state;
+			wrapper->experiment_context.back() = NULL;
+
+			#if defined(MDEBUG) && MDEBUG
+			if (true) {
+			#else
+			if (this->curr_surprise > this->best_surprise) {
+			#endif /* MDEBUG */
+				this->best_surprise = this->curr_surprise;
+				if (this->best_new_scope != NULL) {
+					delete this->best_new_scope;
+				}
+				this->best_new_scope = this->curr_new_scope;
+				this->curr_new_scope = NULL;
+				this->best_step_types = this->curr_step_types;
+				this->best_actions = this->curr_actions;
+				this->best_scopes = this->curr_scopes;
+				this->best_exit_next_node = this->curr_exit_next_node;
+			}
+
+			if (this->curr_new_scope != NULL) {
+				delete this->curr_new_scope;
+				this->curr_new_scope = NULL;
+			}
+			this->curr_step_types.clear();
+			this->curr_actions.clear();
+			this->curr_scopes.clear();
+
+			this->state_iter++;
+		}
 	}
 }
 
