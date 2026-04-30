@@ -56,19 +56,19 @@ void ExploreExperiment::train_new_step(vector<double>& obs,
 		history->existing_predicted_trues.push_back(
 			this->existing_true_network->output->acti_vals[0]);
 
-		if (this->best_is_dangerous) {
-			bool hit_mine = simulate_helper(wrapper);
+		double next_clean_result = clean_result_helper(wrapper);
 
-			if (hit_mine) {
-				history->hit_mine.push_back(true);
+		if (next_clean_result - wrapper->prev_clean_result < PROTECT_MAX_DAMAGE) {
+			history->hit_mine.push_back(true);
 
-				delete experiment_state;
-				wrapper->experiment_context.back() = NULL;
+			delete experiment_state;
+			wrapper->experiment_context.back() = NULL;
 
-				return;
-			} else {
-				history->hit_mine.push_back(false);
-			}
+			return;
+		} else {
+			wrapper->prev_clean_result = next_clean_result;
+
+			history->hit_mine.push_back(false);
 		}
 	}
 
@@ -114,12 +114,8 @@ void ExploreExperiment::train_new_backprop(
 	ExploreExperimentHistory* history = (ExploreExperimentHistory*)wrapper->explore_experiment_history;
 	if (history->existing_predicted_trues.size() > 0) {
 		for (int i_index = 0; i_index < (int)history->existing_predicted_trues.size(); i_index++) {
-			if (this->best_is_dangerous) {
-				if (history->hit_mine[i_index]) {
-					this->new_true_histories.push_back(0.0 - history->existing_predicted_trues[i_index]);
-				} else {
-					this->new_true_histories.push_back(target_val - history->existing_predicted_trues[i_index]);
-				}
+			if (history->hit_mine[i_index]) {
+				this->new_true_histories.push_back(0.0 - history->existing_predicted_trues[i_index]);
 			} else {
 				this->new_true_histories.push_back(target_val - history->existing_predicted_trues[i_index]);
 			}

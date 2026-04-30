@@ -19,9 +19,6 @@ public:
 	int next_node_id;
 	AbstractNode* next_node;
 
-	int branch_node_id;
-	AbstractNode* branch_node;
-
 	ActionNode();
 	~ActionNode();
 

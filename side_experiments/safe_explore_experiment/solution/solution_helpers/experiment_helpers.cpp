@@ -165,38 +165,15 @@ void create_experiment(ScopeHistory* scope_history,
 			starting_node,
 			possible_exits);
 
-		AbstractNode* exit_next_node;
+		geometric_distribution<int> exit_distribution(0.1);
+		int random_index;
 		while (true) {
-			geometric_distribution<int> exit_distribution(0.1);
-			int random_index;
-			while (true) {
-				random_index = exit_distribution(generator);
-				if (random_index < (int)possible_exits.size()) {
-					break;
-				}
-			}
-			exit_next_node = possible_exits[random_index];
-
-			set<AbstractNode*> children;
-			gather_all_children_helper(exit_next_node,
-									   children);
-
-			bool exit_dangerous = false;
-			for (set<AbstractNode*>::iterator it = children.begin();
-					it != children.end(); it++) {
-				if ((*it)->type == NODE_TYPE_ACTION) {
-					ActionNode* action_node = (ActionNode*)(*it);
-					if (action_node->branch_node != NULL) {
-						if (children.find(action_node->branch_node) == children.end()) {
-							exit_dangerous = true;
-						}
-					}
-				}
-			}
-			if (!exit_dangerous) {
+			random_index = exit_distribution(generator);
+			if (random_index < (int)possible_exits.size()) {
 				break;
 			}
 		}
+		AbstractNode* exit_next_node = possible_exits[random_index];
 
 		ExploreExperiment* new_experiment = new ExploreExperiment(
 			explore_node->parent,

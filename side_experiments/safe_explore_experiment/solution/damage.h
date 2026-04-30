@@ -7,7 +7,6 @@
 
 class Damage : public AbstractExperiment {
 public:
-	bool is_dangerous;
 	Scope* new_scope;
 	std::vector<int> step_types;
 	std::vector<int> actions;

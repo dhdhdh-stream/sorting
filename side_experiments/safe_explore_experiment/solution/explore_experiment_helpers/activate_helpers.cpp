@@ -138,19 +138,7 @@ void ExploreExperiment::result_set_action(int action,
 										  SolutionWrapper* wrapper) {
 	ExploreExperimentState* experiment_state = (ExploreExperimentState*)wrapper->result_experiment_context.back();
 
-	if (this->curr_is_dangerous) {
-		this->curr_actions[experiment_state->step_index] = action;
-	} else {
-		uniform_int_distribution<int> action_distribution(0, 6);
-		while (true) {
-			int potential_action = action_distribution(generator);
-			if (potential_action != 4
-					&& potential_action != 5) {
-				this->curr_actions[experiment_state->step_index] = potential_action;
-				break;
-			}
-		}
-	}
+	this->curr_actions[experiment_state->step_index] = action;
 
 	experiment_state->step_index++;
 }

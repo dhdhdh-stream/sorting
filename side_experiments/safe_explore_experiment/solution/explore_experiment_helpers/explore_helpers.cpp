@@ -30,142 +30,125 @@ void ExploreExperiment::explore_check_activate(SolutionWrapper* wrapper) {
 	this->num_instances_until_target--;
 	if (history->existing_predicted_trues.size() == 0
 			&& this->num_instances_until_target <= 0) {
-		uniform_int_distribution<int> is_dangerous_distribution(0, 1);
-		if (is_dangerous_distribution(generator) == 0) {
-			this->curr_is_dangerous = true;
-
-			uniform_int_distribution<int> num_steps_distribution(1, 5);
-			int new_num_steps = num_steps_distribution(generator);
-			for (int s_index = 0; s_index < new_num_steps; s_index++) {
-				this->curr_step_types.push_back(STEP_TYPE_ACTION);
-
-				this->curr_actions.push_back(-1);
-
-				this->curr_scopes.push_back(NULL);
-			}
+		uniform_int_distribution<int> new_scope_distribution(0, 3);
+		if (wrapper->solution->state == SOLUTION_STATE_OUTER) {
+			this->curr_new_scope = outer_create_new_scope(wrapper);
+		} else if (new_scope_distribution(generator) == 0) {
+			this->curr_new_scope = create_new_scope(this->node_context->parent,
+													wrapper);
+		}
+		if (this->curr_new_scope != NULL) {
+			this->curr_step_types.push_back(STEP_TYPE_SCOPE);
+			this->curr_actions.push_back(-1);
+			this->curr_scopes.push_back(this->curr_new_scope);
 		} else {
-			this->curr_is_dangerous = false;
-
-			uniform_int_distribution<int> new_scope_distribution(0, 3);
-			if (wrapper->solution->state == SOLUTION_STATE_OUTER) {
-				this->curr_new_scope = outer_create_new_scope(wrapper);
-			} else if (new_scope_distribution(generator) == 0) {
-				this->curr_new_scope = create_new_scope(this->node_context->parent,
-														wrapper);
-			}
-			if (this->curr_new_scope != NULL) {
-				this->curr_step_types.push_back(STEP_TYPE_SCOPE);
-				this->curr_actions.push_back(-1);
-				this->curr_scopes.push_back(this->curr_new_scope);
-			} else {
-				bool exit_is_next;
-				switch (this->node_context->type) {
-				case NODE_TYPE_START:
-					{
-						StartNode* start_node = (StartNode*)this->node_context;
-						if (this->exit_next_node == start_node->next_node) {
-							exit_is_next = true;
-						} else {
-							exit_is_next = false;
-						}
-					}
-					break;
-				case NODE_TYPE_ACTION:
-					{
-						ActionNode* action_node = (ActionNode*)this->node_context;
-						if (this->exit_next_node == action_node->next_node) {
-							exit_is_next = true;
-						} else {
-							exit_is_next = false;
-						}
-					}
-					break;
-				case NODE_TYPE_SCOPE:
-					{
-						ScopeNode* scope_node = (ScopeNode*)this->node_context;
-						if (this->exit_next_node == scope_node->next_node) {
-							exit_is_next = true;
-						} else {
-							exit_is_next = false;
-						}
-					}
-					break;
-				case NODE_TYPE_BRANCH:
-					{
-						BranchNode* branch_node = (BranchNode*)this->node_context;
-						if (this->is_branch) {
-							if (this->exit_next_node == branch_node->branch_next_node) {
-								exit_is_next = true;
-							} else {
-								exit_is_next = false;
-							}
-						} else {
-							if (this->exit_next_node == branch_node->original_next_node) {
-								exit_is_next = true;
-							} else {
-								exit_is_next = false;
-							}
-						}
-					}
-					break;
-				case NODE_TYPE_OBS:
-					{
-						ObsNode* obs_node = (ObsNode*)this->node_context;
-						if (this->exit_next_node == obs_node->next_node) {
-							exit_is_next = true;
-						} else {
-							exit_is_next = false;
-						}
-					}
-					break;
-				}
-
-				int new_num_steps;
-				geometric_distribution<int> geo_distribution(0.3);
-				/**
-				 * - num_steps less than exit length on average to reduce solution size
-				 */
-				if (exit_is_next) {
-					new_num_steps = 1 + geo_distribution(generator);
-				} else {
-					new_num_steps = geo_distribution(generator);
-				}
-
-				vector<int> possible_child_indexes;
-				for (int c_index = 0; c_index < (int)this->node_context->parent->child_scopes.size(); c_index++) {
-					if (this->node_context->parent->child_scopes[c_index]->nodes.size() > 1) {
-						possible_child_indexes.push_back(c_index);
-					}
-				}
-				uniform_int_distribution<int> child_index_distribution(0, possible_child_indexes.size()-1);
-				for (int s_index = 0; s_index < new_num_steps; s_index++) {
-					bool is_scope = false;
-					if (possible_child_indexes.size() > 0) {
-						if (possible_child_indexes.size() <= RAW_ACTION_WEIGHT) {
-							uniform_int_distribution<int> scope_distribution(0, possible_child_indexes.size() + RAW_ACTION_WEIGHT - 1);
-							if (scope_distribution(generator) < (int)possible_child_indexes.size()) {
-								is_scope = true;
-							}
-						} else {
-							uniform_int_distribution<int> scope_distribution(0, 1);
-							if (scope_distribution(generator) == 0) {
-								is_scope = true;
-							}
-						}
-					}
-					if (is_scope) {
-						this->curr_step_types.push_back(STEP_TYPE_SCOPE);
-						this->curr_actions.push_back(-1);
-
-						int child_index = possible_child_indexes[child_index_distribution(generator)];
-						this->curr_scopes.push_back(this->node_context->parent->child_scopes[child_index]);
+			bool exit_is_next;
+			switch (this->node_context->type) {
+			case NODE_TYPE_START:
+				{
+					StartNode* start_node = (StartNode*)this->node_context;
+					if (this->exit_next_node == start_node->next_node) {
+						exit_is_next = true;
 					} else {
-						this->curr_step_types.push_back(STEP_TYPE_ACTION);
-
-						this->curr_actions.push_back(-1);
-
-						this->curr_scopes.push_back(NULL);
+						exit_is_next = false;
 					}
+				}
+				break;
+			case NODE_TYPE_ACTION:
+				{
+					ActionNode* action_node = (ActionNode*)this->node_context;
+					if (this->exit_next_node == action_node->next_node) {
+						exit_is_next = true;
+					} else {
+						exit_is_next = false;
+					}
+				}
+				break;
+			case NODE_TYPE_SCOPE:
+				{
+					ScopeNode* scope_node = (ScopeNode*)this->node_context;
+					if (this->exit_next_node == scope_node->next_node) {
+						exit_is_next = true;
+					} else {
+						exit_is_next = false;
+					}
+				}
+				break;
+			case NODE_TYPE_BRANCH:
+				{
+					BranchNode* branch_node = (BranchNode*)this->node_context;
+					if (this->is_branch) {
+						if (this->exit_next_node == branch_node->branch_next_node) {
+							exit_is_next = true;
+						} else {
+							exit_is_next = false;
+						}
+					} else {
+						if (this->exit_next_node == branch_node->original_next_node) {
+							exit_is_next = true;
+						} else {
+							exit_is_next = false;
+						}
+					}
+				}
+				break;
+			case NODE_TYPE_OBS:
+				{
+					ObsNode* obs_node = (ObsNode*)this->node_context;
+					if (this->exit_next_node == obs_node->next_node) {
+						exit_is_next = true;
+					} else {
+						exit_is_next = false;
+					}
+				}
+				break;
+			}
+
+			int new_num_steps;
+			geometric_distribution<int> geo_distribution(0.3);
+			/**
+			 * - num_steps less than exit length on average to reduce solution size
+			 */
+			if (exit_is_next) {
+				new_num_steps = 1 + geo_distribution(generator);
+			} else {
+				new_num_steps = geo_distribution(generator);
+			}
+
+			vector<int> possible_child_indexes;
+			for (int c_index = 0; c_index < (int)this->node_context->parent->child_scopes.size(); c_index++) {
+				if (this->node_context->parent->child_scopes[c_index]->nodes.size() > 1) {
+					possible_child_indexes.push_back(c_index);
+				}
+			}
+			uniform_int_distribution<int> child_index_distribution(0, possible_child_indexes.size()-1);
+			for (int s_index = 0; s_index < new_num_steps; s_index++) {
+				bool is_scope = false;
+				if (possible_child_indexes.size() > 0) {
+					if (possible_child_indexes.size() <= RAW_ACTION_WEIGHT) {
+						uniform_int_distribution<int> scope_distribution(0, possible_child_indexes.size() + RAW_ACTION_WEIGHT - 1);
+						if (scope_distribution(generator) < (int)possible_child_indexes.size()) {
+							is_scope = true;
+						}
+					} else {
+						uniform_int_distribution<int> scope_distribution(0, 1);
+						if (scope_distribution(generator) == 0) {
+							is_scope = true;
+						}
+					}
+				}
+				if (is_scope) {
+					this->curr_step_types.push_back(STEP_TYPE_SCOPE);
+					this->curr_actions.push_back(-1);
+
+					int child_index = possible_child_indexes[child_index_distribution(generator)];
+					this->curr_scopes.push_back(this->node_context->parent->child_scopes[child_index]);
+				} else {
+					this->curr_step_types.push_back(STEP_TYPE_ACTION);
+
+					this->curr_actions.push_back(-1);
+
+					this->curr_scopes.push_back(NULL);
 				}
 			}
 		}
@@ -190,19 +173,19 @@ void ExploreExperiment::explore_step(vector<double>& obs,
 		history->existing_predicted_trues.push_back(
 			this->existing_true_network->output->acti_vals[0]);
 
-		if (this->curr_is_dangerous) {
-			bool hit_mine = simulate_helper(wrapper);
+		double next_clean_result = clean_result_helper(wrapper);
 
-			if (hit_mine) {
-				history->hit_mine.push_back(true);
+		if (next_clean_result - wrapper->prev_clean_result < PROTECT_MAX_DAMAGE) {
+			history->hit_mine.push_back(true);
 
-				delete experiment_state;
-				wrapper->experiment_context.back() = NULL;
+			delete experiment_state;
+			wrapper->experiment_context.back() = NULL;
 
-				return;
-			} else {
-				history->hit_mine.push_back(false);
-			}
+			return;
+		} else {
+			wrapper->prev_clean_result = next_clean_result;
+
+			history->hit_mine.push_back(false);
 		}
 	}
 
@@ -230,19 +213,7 @@ void ExploreExperiment::explore_set_action(int action,
 										   SolutionWrapper* wrapper) {
 	ExploreExperimentState* experiment_state = (ExploreExperimentState*)wrapper->experiment_context.back();
 
-	if (this->curr_is_dangerous) {
-		this->curr_actions[experiment_state->step_index] = action;
-	} else {
-		uniform_int_distribution<int> action_distribution(0, 6);
-		while (true) {
-			int potential_action = action_distribution(generator);
-			if (potential_action != 4
-					&& potential_action != 5) {
-				this->curr_actions[experiment_state->step_index] = potential_action;
-				break;
-			}
-		}
-	}
+	this->curr_actions[experiment_state->step_index] = action;
 
 	experiment_state->step_index++;
 }
@@ -268,12 +239,8 @@ void ExploreExperiment::explore_backprop(double target_val,
 
 	if (history->existing_predicted_trues.size() != 0) {
 		double curr_surprise;
-		if (this->curr_is_dangerous) {
-			if (history->hit_mine[0]) {
-				curr_surprise = 0.0 - history->existing_predicted_trues[0];
-			} else {
-				curr_surprise = target_val - history->existing_predicted_trues[0];
-			}
+		if (history->hit_mine[0]) {
+			curr_surprise = 0.0 - history->existing_predicted_trues[0];
 		} else {
 			curr_surprise = target_val - history->existing_predicted_trues[0];
 		}
@@ -284,7 +251,6 @@ void ExploreExperiment::explore_backprop(double target_val,
 		if (curr_surprise > this->best_surprise) {
 		#endif /* MDEBUG */
 			this->best_surprise = curr_surprise;
-			this->best_is_dangerous = this->curr_is_dangerous;
 			if (this->best_new_scope != NULL) {
 				delete this->best_new_scope;
 			}

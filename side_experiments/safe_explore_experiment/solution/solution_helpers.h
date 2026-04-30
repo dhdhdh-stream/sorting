@@ -22,9 +22,6 @@ void count_eval_helper(ScopeHistory* scope_history,
 void create_experiment(ScopeHistory* scope_history,
 					   SolutionWrapper* wrapper);
 
-void gather_all_children_helper(AbstractNode* curr_node,
-								std::set<AbstractNode*>& children);
-
 void create_new_scope(AbstractNode* potential_start_node,
 					  AbstractNode* potential_end_node,
 					  Scope*& new_scope);
@@ -37,7 +34,7 @@ void recursive_add_child(Scope* curr_parent,
 
 void clean_scope(Scope* scope);
 
-bool simulate_helper(SolutionWrapper* wrapper);
+double clean_result_helper(SolutionWrapper* wrapper);
 
 double measure_helper(SolutionWrapper* solution_wrapper);
 

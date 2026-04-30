@@ -339,15 +339,6 @@ void EvalExperiment::add(SolutionWrapper* wrapper) {
 		}
 
 		next_node->ancestor_ids.push_back(new_nodes[n_index]->id);
-
-		if (new_nodes[n_index]->type == NODE_TYPE_ACTION) {
-			ActionNode* action_node = (ActionNode*)new_nodes[n_index];
-			if (action_node->action == 4
-					|| action_node->action == 5) {
-				action_node->branch_node_id = new_branch_node->id;
-				action_node->branch_node = new_branch_node;
-			}
-		}
 	}
 
 	stringstream ss;

@@ -47,6 +47,8 @@ public:
 
 	Problem* problem;
 
+	double prev_clean_result;
+
 	std::vector<ScopeHistory*> result_scope_histories;
 	std::vector<AbstractNode*> result_node_context;
 	std::vector<AbstractExperimentState*> result_experiment_context;

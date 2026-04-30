@@ -235,7 +235,6 @@ void create_new_scope(AbstractNode* potential_start_node,
 
 		starting_node->next_node->ancestor_ids.push_back(starting_node->id);
 
-		bool is_dangerous = false;
 		for (map<AbstractNode*, AbstractNode*>::iterator node_it = node_mappings.begin();
 				node_it != node_mappings.end(); node_it++) {
 			switch (node_it->first->type) {
@@ -256,18 +255,6 @@ void create_new_scope(AbstractNode* potential_start_node,
 						new_action_node->next_node = it->second;
 
 						it->second->ancestor_ids.push_back(new_action_node->id);
-					}
-
-					if (original_action_node->branch_node != NULL) {
-						map<AbstractNode*, AbstractNode*>::iterator it = node_mappings
-							.find(original_action_node->branch_node);
-						if (it == node_mappings.end()
-								|| it->second->type != NODE_TYPE_BRANCH) {
-							is_dangerous = true;
-						} else {
-							new_action_node->branch_node_id = it->second->id;
-							new_action_node->branch_node = it->second;
-						}
 					}
 				}
 				break;
@@ -368,11 +355,6 @@ void create_new_scope(AbstractNode* potential_start_node,
 		new_scope->child_scopes = parent_scope->child_scopes;
 
 		clean_scope(new_scope);
-
-		if (is_dangerous) {
-			delete new_scope;
-			new_scope = NULL;
-		}
 	} else {
 		new_scope = NULL;
 	}

@@ -28,6 +28,8 @@ const int RAW_ACTION_WEIGHT = 8;
 const int STEP_TYPE_ACTION = 0;
 const int STEP_TYPE_SCOPE = 1;
 
+const double PROTECT_MAX_DAMAGE = -0.1;
+
 const int NEW_SCOPE_MIN_NODES = 10;
 
 #if defined(MDEBUG) && MDEBUG
@@ -41,9 +43,6 @@ const int MEASURE_GEAR = 4;
 const int RAMP_EPOCH_NUM_ITERS = 4000;
 const int MEASURE_STEP_NUM_ITERS = 8000;
 #endif /* MDEBUG */
-
-const double FAIL_T_SCORE = 0.674;
-const double SUCCESS_T_SCORE = 2.326;
 
 #if defined(MDEBUG) && MDEBUG
 const int NUM_LAST_TRACK = 4;

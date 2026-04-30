@@ -28,14 +28,12 @@ public:
 	double average_instances_per_run;
 	int num_instances_until_target;
 
-	bool curr_is_dangerous;
 	Scope* curr_new_scope;
 	std::vector<int> curr_step_types;
 	std::vector<int> curr_actions;
 	std::vector<Scope*> curr_scopes;
 
 	double best_surprise;
-	bool best_is_dangerous;
 	Scope* best_new_scope;
 	std::vector<int> best_step_types;
 	std::vector<int> best_actions;

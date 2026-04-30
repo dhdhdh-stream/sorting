@@ -12,9 +12,6 @@ using namespace std;
 ActionNode::ActionNode() {
 	this->type = NODE_TYPE_ACTION;
 
-	this->branch_node_id = -1;
-	this->branch_node = NULL;
-
 	this->experiment = NULL;
 }
 
@@ -28,8 +25,6 @@ void ActionNode::save(ofstream& output_file) {
 	output_file << this->action << endl;
 
 	output_file << this->next_node_id << endl;
-
-	output_file << this->branch_node_id << endl;
 
 	output_file << this->ancestor_ids.size() << endl;
 	for (int a_index = 0; a_index < (int)this->ancestor_ids.size(); a_index++) {
@@ -45,10 +40,6 @@ void ActionNode::load(ifstream& input_file) {
 	string next_node_id_line;
 	getline(input_file, next_node_id_line);
 	this->next_node_id = stoi(next_node_id_line);
-
-	string branch_node_id_line;
-	getline(input_file, branch_node_id_line);
-	this->branch_node_id = stoi(branch_node_id_line);
 
 	string num_ancestors_line;
 	getline(input_file, num_ancestors_line);
@@ -66,20 +57,12 @@ void ActionNode::link(Solution* parent_solution) {
 	} else {
 		this->next_node = this->parent->nodes[this->next_node_id];
 	}
-
-	if (this->branch_node_id == -1) {
-		this->branch_node = NULL;
-	} else {
-		this->branch_node = this->parent->nodes[this->branch_node_id];
-	}
 }
 
 void ActionNode::copy_from(ActionNode* original) {
 	this->action = original->action;
 
 	this->next_node_id = original->next_node_id;
-
-	this->branch_node_id = original->branch_node_id;
 
 	this->ancestor_ids = original->ancestor_ids;
 }
