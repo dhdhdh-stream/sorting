@@ -23,35 +23,35 @@ Simple::Simple() {
 
 void Simple::perform_action(int action) {
 	switch (action) {
-	case ACTION_UP:
+	case SIMPLE_ACTION_UP:
 		if (this->current_y < (int)MAP.size()-1) {
 			if (MAP[this->current_y+1][this->current_x] != SPOT_TYPE_BLOCKED) {
 				this->current_y++;
 			}
 		}
 		break;
-	case ACTION_RIGHT:
+	case SIMPLE_ACTION_RIGHT:
 		if (this->current_x < (int)MAP[this->current_y].size()-1) {
 			if (MAP[this->current_y][this->current_x+1] != SPOT_TYPE_BLOCKED) {
 				this->current_x++;
 			}
 		}
 		break;
-	case ACTION_DOWN:
+	case SIMPLE_ACTION_DOWN:
 		if (this->current_y > 0) {
 			if (MAP[this->current_y-1][this->current_x] != SPOT_TYPE_BLOCKED) {
 				this->current_y--;
 			}
 		}
 		break;
-	case ACTION_LEFT:
+	case SIMPLE_ACTION_LEFT:
 		if (this->current_x > 0) {
 			if (MAP[this->current_y][this->current_x-1] != SPOT_TYPE_BLOCKED) {
 				this->current_x--;
 			}
 		}
 		break;
-	case ACTION_CLICK:
+	case SIMPLE_ACTION_CLICK:
 		if (this->current_x == 3
 				&& this->current_y == 0) {
 			this->hit_target = true;

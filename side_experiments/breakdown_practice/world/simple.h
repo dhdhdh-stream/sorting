@@ -15,11 +15,11 @@
 
 #include "problem.h"
 
-const int ACTION_UP = 0;
-const int ACTION_RIGHT = 1;
-const int ACTION_DOWN = 2;
-const int ACTION_LEFT = 3;
-const int ACTION_CLICK = 4;
+const int SIMPLE_ACTION_UP = 0;
+const int SIMPLE_ACTION_RIGHT = 1;
+const int SIMPLE_ACTION_DOWN = 2;
+const int SIMPLE_ACTION_LEFT = 3;
+const int SIMPLE_ACTION_CLICK = 4;
 
 class Simple : public Problem {
 public:

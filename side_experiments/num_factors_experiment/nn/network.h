@@ -26,6 +26,10 @@ public:
 	void activate(std::vector<double>& input_vals);
 	void backprop(double error);
 
+	// temp
+	void update();
+	void update(double target_max_update);
+
 	void save(std::ofstream& output_file);
 };
 

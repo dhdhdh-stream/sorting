@@ -1,8 +1,7 @@
-// - shifting 1 is not the same as full independence
-//   - but testing full independence requires exponential tries
-//   - so maybe not a big deal?
-//     - as long as keep in mind limitation
-//       - I mean, actions are going to be context dependent anyways?
+// - actions may not be able to jump one at a time, but able to jump sections
+
+// - maybe go for biggest breaks
+//   - then recurse inwards
 
 #include <chrono>
 #include <iostream>
@@ -11,7 +10,7 @@
 #include <random>
 
 #include "breakdown_helpers.h"
-#include "simple.h"
+#include "multi_level.h"
 
 using namespace std;
 
@@ -27,42 +26,36 @@ int main(int argc, char* argv[]) {
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
 
-	ProblemType* problem_type = new TypeSimple();
-
-	// vector<int> initial_solution{
-	// 	SIMPLE_ACTION_LEFT,
-	// 	SIMPLE_ACTION_RIGHT,
-	// 	SIMPLE_ACTION_RIGHT,
-
-	// 	SIMPLE_ACTION_DOWN,
-	// 	SIMPLE_ACTION_DOWN,
-	// 	SIMPLE_ACTION_DOWN,
-
-	// 	SIMPLE_ACTION_CLICK,
-	// };
+	ProblemType* problem_type = new TypeMultiLevel();
 
 	vector<int> initial_solution{
-		SIMPLE_ACTION_DOWN,
-		SIMPLE_ACTION_LEFT,
-		SIMPLE_ACTION_UP,
-		SIMPLE_ACTION_RIGHT,
-		SIMPLE_ACTION_DOWN,
-		SIMPLE_ACTION_RIGHT,
+		MULTI_LEVEL_ACTION_DOWN,
+		MULTI_LEVEL_ACTION_DOWN,
+		MULTI_LEVEL_ACTION_DOWN,
+		MULTI_LEVEL_ACTION_LEFT,
+		MULTI_LEVEL_ACTION_UP,
+		MULTI_LEVEL_ACTION_CLICK,
 
-		SIMPLE_ACTION_DOWN,
-		SIMPLE_ACTION_LEFT,
-		SIMPLE_ACTION_DOWN,
-		SIMPLE_ACTION_RIGHT,
-		SIMPLE_ACTION_DOWN,
+		MULTI_LEVEL_ACTION_RIGHT,
+		MULTI_LEVEL_ACTION_RIGHT,
+		MULTI_LEVEL_ACTION_LEFT,
+		MULTI_LEVEL_ACTION_UP,
+		MULTI_LEVEL_ACTION_UP,
+		
+		MULTI_LEVEL_ACTION_UP,
+		MULTI_LEVEL_ACTION_UP,
+		MULTI_LEVEL_ACTION_LEFT,
+		MULTI_LEVEL_ACTION_UP,
+		MULTI_LEVEL_ACTION_RIGHT,
+		MULTI_LEVEL_ACTION_RIGHT,
+		MULTI_LEVEL_ACTION_CLICK,
 
-		SIMPLE_ACTION_UP,
-		SIMPLE_ACTION_DOWN,
-		SIMPLE_ACTION_DOWN,
-		SIMPLE_ACTION_DOWN,
-		SIMPLE_ACTION_CLICK,
-
-		SIMPLE_ACTION_UP,
-		SIMPLE_ACTION_RIGHT
+		MULTI_LEVEL_ACTION_DOWN,
+		MULTI_LEVEL_ACTION_DOWN,
+		MULTI_LEVEL_ACTION_RIGHT,
+		MULTI_LEVEL_ACTION_LEFT,
+		MULTI_LEVEL_ACTION_DOWN,
+		MULTI_LEVEL_ACTION_DOWN,
 	};
 
 	{
