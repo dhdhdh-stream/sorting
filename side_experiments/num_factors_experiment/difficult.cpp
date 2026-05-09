@@ -1,34 +1,12 @@
-// - before squashing, first train everything, including context
-// - next, train squashed
-//   - using only linear
-// - finally, retrain context
-//   - perhaps with constant
-
-// - but is this even worth?
-
-// - actually, with context, what's even the point in exploring?
-//   - is it just to confirm?
-//     - since context can create decision making without exploring
-
-// - so it's like:
-//   - breakdown, create dimensions/math equations
-//     - ideally, goes all the way to capturing factors that determine when things are good vs. bad
-//   - create decision making purely off of math equations
-//   - verify that reality matches
-//     - if reality doesn't match, add to math equation
-
-// - looking for ways to get from a particular combination of dimensions to target
-
-// - perhaps start with zero factors
-//   - if something doesn't add up:
-//     - first, for each spot, train directly against score without state
-//     - then, add up scores, and train with final network to initially handle non-linearities
-//     - then, adjust each spot to work with final network
-//     - then, train to include state
-
-// - at every stage, need to let things settle before training further
-
-// - context has to depend on context
+/**
+ * - difficult to solve anything difficult
+ *   - maybe just rely on signals?
+ * 
+ * - so guesswork on what might work
+ * - on explore, commit whatever, but on return, really look for signals
+ * 
+ * TODO: practice returning/saving
+ */
 
 #include <chrono>
 #include <iostream>
@@ -59,7 +37,7 @@ int main(int argc, char* argv[]) {
 	vector<vector<vector<double>>> contexts;
 	vector<double> target_vals;
 
-	geometric_distribution<int> num_actions_distribution(0.2);
+	geometric_distribution<int> num_actions_distribution(0.1);
 	uniform_int_distribution<int> action_distribution(0, 3);
 	uniform_int_distribution<int> context_distribution(0, 9);
 	for (int i_index = 0; i_index < NUM_SAMPLES; i_index++) {
@@ -69,7 +47,8 @@ int main(int argc, char* argv[]) {
 		vector<vector<double>> curr_contexts;
 		for (int a_index = 0; a_index < num_actions; a_index++) {
 			curr_sequence.push_back(action_distribution(generator));
-			if (context_distribution(generator) == 0) {
+			// if (context_distribution(generator) == 0) {
+			if (false) {
 				curr_contexts.push_back(vector<double>{1.0});
 			} else {
 				curr_contexts.push_back(vector<double>{0.0});
@@ -85,19 +64,27 @@ int main(int argc, char* argv[]) {
 				if (curr_contexts[a_index][0] == 1.0) {
 					sum_distance++;
 				} else {
-					sum_distance--;
+					// sum_distance--;
+
+					if (sum_distance > 0) {
+						sum_distance--;
+					}
 				}
 				break;
 			case 1:
 				if (curr_contexts[a_index][0] == 1.0) {
-					sum_distance--;
+					// sum_distance--;
+
+					if (sum_distance > 0) {
+						sum_distance--;
+					}
 				} else {
 					sum_distance++;
 				}
 				break;
 			}
 		}
-		if (sum_distance >= 1) {
+		if (sum_distance == 1) {
 			target_vals.push_back(1.0);
 		} else {
 			target_vals.push_back(0.0);

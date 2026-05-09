@@ -3,6 +3,10 @@
 // - maybe go for biggest breaks
 //   - then recurse inwards
 
+// - bake changes inwards?
+//   - and simply include outer context?
+//     - each layer only use immediate outer layer?
+
 #include <chrono>
 #include <iostream>
 #include <map>

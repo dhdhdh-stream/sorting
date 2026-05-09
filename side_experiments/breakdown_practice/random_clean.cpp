@@ -8,7 +8,8 @@
 #include <thread>
 #include <random>
 
-#include "simple.h"
+#include "multi_level.h"
+// #include "simple.h"
 
 using namespace std;
 
@@ -24,30 +25,61 @@ int main(int argc, char* argv[]) {
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
 
-	ProblemType* problem_type = new TypeSimple();
+	// ProblemType* problem_type = new TypeSimple();
+	ProblemType* problem_type = new TypeMultiLevel();
+
+	// vector<int> curr_solution{
+	// 	ACTION_DOWN,
+	// 	ACTION_LEFT,
+	// 	ACTION_UP,
+	// 	ACTION_RIGHT,
+	// 	ACTION_DOWN,
+	// 	ACTION_RIGHT,
+
+	// 	ACTION_DOWN,
+	// 	ACTION_LEFT,
+	// 	ACTION_DOWN,
+	// 	ACTION_RIGHT,
+	// 	ACTION_DOWN,
+
+	// 	ACTION_UP,
+	// 	ACTION_DOWN,
+	// 	ACTION_DOWN,
+	// 	ACTION_DOWN,
+	// 	ACTION_CLICK,
+
+	// 	ACTION_UP,
+	// 	ACTION_RIGHT
+	// };
 
 	vector<int> curr_solution{
-		ACTION_DOWN,
-		ACTION_LEFT,
-		ACTION_UP,
-		ACTION_RIGHT,
-		ACTION_DOWN,
-		ACTION_RIGHT,
+		MULTI_LEVEL_ACTION_DOWN,
+		MULTI_LEVEL_ACTION_DOWN,
+		MULTI_LEVEL_ACTION_DOWN,
+		MULTI_LEVEL_ACTION_LEFT,
+		MULTI_LEVEL_ACTION_UP,
+		MULTI_LEVEL_ACTION_CLICK,
 
-		ACTION_DOWN,
-		ACTION_LEFT,
-		ACTION_DOWN,
-		ACTION_RIGHT,
-		ACTION_DOWN,
+		MULTI_LEVEL_ACTION_RIGHT,
+		MULTI_LEVEL_ACTION_RIGHT,
+		MULTI_LEVEL_ACTION_LEFT,
+		MULTI_LEVEL_ACTION_UP,
+		MULTI_LEVEL_ACTION_UP,
+		
+		MULTI_LEVEL_ACTION_UP,
+		MULTI_LEVEL_ACTION_UP,
+		MULTI_LEVEL_ACTION_LEFT,
+		MULTI_LEVEL_ACTION_UP,
+		MULTI_LEVEL_ACTION_RIGHT,
+		MULTI_LEVEL_ACTION_RIGHT,
+		MULTI_LEVEL_ACTION_CLICK,
 
-		ACTION_UP,
-		ACTION_DOWN,
-		ACTION_DOWN,
-		ACTION_DOWN,
-		ACTION_CLICK,
-
-		ACTION_UP,
-		ACTION_RIGHT
+		MULTI_LEVEL_ACTION_DOWN,
+		MULTI_LEVEL_ACTION_DOWN,
+		MULTI_LEVEL_ACTION_RIGHT,
+		MULTI_LEVEL_ACTION_LEFT,
+		MULTI_LEVEL_ACTION_DOWN,
+		MULTI_LEVEL_ACTION_DOWN,
 	};
 
 	while (true) {

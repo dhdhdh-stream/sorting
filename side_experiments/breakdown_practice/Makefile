@@ -13,7 +13,7 @@ HEADERS = ${SOURCES:.cpp=.h}
 OBJECTS = ${HEADERS:.h=.o}
 DEPENDS = ${OBJECTS:.o=.d}
 
-all: split multi_level_breakdown seq_shift
+all: split multi_level_breakdown seq_shift random_clean
 
 split: ${OBJECTS} split.o
 	${CXX} ${CXXFLAGS} ${OBJECTS} split.o -o split ${LIBS}
@@ -24,10 +24,14 @@ multi_level_breakdown: ${OBJECTS} multi_level_breakdown.o
 seq_shift: ${OBJECTS} seq_shift.o
 	${CXX} ${CXXFLAGS} ${OBJECTS} seq_shift.o -o seq_shift ${LIBS}
 
--include ${DEPENDS} split.d multi_level_breakdown.d seq_shift.d
+random_clean: ${OBJECTS} random_clean.o
+	${CXX} ${CXXFLAGS} ${OBJECTS} random_clean.o -o random_clean ${LIBS}
+
+-include ${DEPENDS} split.d multi_level_breakdown.d seq_shift.d random_clean.d
 
 clean:
 	rm -f ${OBJECTS} ${DEPENDS} \
 	split.o split.d split \
 	multi_level_breakdown.o multi_level_breakdown.d multi_level_breakdown \
-	seq_shift.o seq_shift.d seq_shift
+	seq_shift.o seq_shift.d seq_shift \
+	random_clean.o random_clean.d random_clean

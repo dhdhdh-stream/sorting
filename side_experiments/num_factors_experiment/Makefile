@@ -11,21 +11,25 @@ HEADERS = ${SOURCES:.cpp=.h}
 OBJECTS = ${HEADERS:.h=.o}
 DEPENDS = ${OBJECTS:.o=.d}
 
-all: non_linear sum_then_analyze w_context
+all: multi_stable_step multi_wo_final multi_stable_2d difficult
 
-non_linear: ${OBJECTS} non_linear.o
-	${CXX} ${CXXFLAGS} ${OBJECTS} non_linear.o -o non_linear ${LIBS}
+multi_stable_step: ${OBJECTS} multi_stable_step.o
+	${CXX} ${CXXFLAGS} ${OBJECTS} multi_stable_step.o -o multi_stable_step ${LIBS}
 
-sum_then_analyze: ${OBJECTS} sum_then_analyze.o
-	${CXX} ${CXXFLAGS} ${OBJECTS} sum_then_analyze.o -o sum_then_analyze ${LIBS}
+multi_wo_final: ${OBJECTS} multi_wo_final.o
+	${CXX} ${CXXFLAGS} ${OBJECTS} multi_wo_final.o -o multi_wo_final ${LIBS}
 
-w_context: ${OBJECTS} w_context.o
-	${CXX} ${CXXFLAGS} ${OBJECTS} w_context.o -o w_context ${LIBS}
+multi_stable_2d: ${OBJECTS} multi_stable_2d.o
+	${CXX} ${CXXFLAGS} ${OBJECTS} multi_stable_2d.o -o multi_stable_2d ${LIBS}
 
--include ${DEPENDS} non_linear.d sum_then_analyze.d w_context.d
+difficult: ${OBJECTS} difficult.o
+	${CXX} ${CXXFLAGS} ${OBJECTS} difficult.o -o difficult ${LIBS}
+
+-include ${DEPENDS} multi_stable_step.d multi_wo_final.d multi_stable_2d.d difficult.d
 
 clean:
 	rm -f ${OBJECTS} ${DEPENDS} \
-	non_linear.o non_linear.d non_linear \
-	sum_then_analyze.o sum_then_analyze.d sum_then_analyze \
-	w_context.o w_context.d w_context
+	multi_stable_step.o multi_stable_step.d multi_stable_step \
+	multi_wo_final.o multi_wo_final.d multi_wo_final \
+	multi_stable_2d.o multi_stable_2d.d multi_stable_2d \
+	difficult.o difficult.d difficult
