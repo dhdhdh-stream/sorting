@@ -7,6 +7,8 @@
 
 class Network {
 public:
+	int type;
+
 	Layer* input;
 
 	Layer* hidden_1;
@@ -18,13 +20,15 @@ public:
 	double hidden_2_average_max_update;
 	double output_average_max_update;
 
-	Network(int input_size);
+	Network(int type,
+			int input_size,
+			int output_size);
 	Network(Network* original);
 	Network(std::ifstream& input_file);
 	~Network();
 
 	void activate(std::vector<double>& input_vals);
-	void backprop(double error);
+	void backprop(std::vector<double>& errors);
 
 	// temp
 	void update();

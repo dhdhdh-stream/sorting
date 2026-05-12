@@ -11,25 +11,25 @@ HEADERS = ${SOURCES:.cpp=.h}
 OBJECTS = ${HEADERS:.h=.o}
 DEPENDS = ${OBJECTS:.o=.d}
 
-all: multi_stable_step multi_wo_final multi_stable_2d difficult
+all: phase_out phase_out_add_factor phase_out_p2 low_sample
 
-multi_stable_step: ${OBJECTS} multi_stable_step.o
-	${CXX} ${CXXFLAGS} ${OBJECTS} multi_stable_step.o -o multi_stable_step ${LIBS}
+phase_out: ${OBJECTS} phase_out.o
+	${CXX} ${CXXFLAGS} ${OBJECTS} phase_out.o -o phase_out ${LIBS}
 
-multi_wo_final: ${OBJECTS} multi_wo_final.o
-	${CXX} ${CXXFLAGS} ${OBJECTS} multi_wo_final.o -o multi_wo_final ${LIBS}
+phase_out_add_factor: ${OBJECTS} phase_out_add_factor.o
+	${CXX} ${CXXFLAGS} ${OBJECTS} phase_out_add_factor.o -o phase_out_add_factor ${LIBS}
 
-multi_stable_2d: ${OBJECTS} multi_stable_2d.o
-	${CXX} ${CXXFLAGS} ${OBJECTS} multi_stable_2d.o -o multi_stable_2d ${LIBS}
+phase_out_p2: ${OBJECTS} phase_out_p2.o
+	${CXX} ${CXXFLAGS} ${OBJECTS} phase_out_p2.o -o phase_out_p2 ${LIBS}
 
-difficult: ${OBJECTS} difficult.o
-	${CXX} ${CXXFLAGS} ${OBJECTS} difficult.o -o difficult ${LIBS}
+low_sample: ${OBJECTS} low_sample.o
+	${CXX} ${CXXFLAGS} ${OBJECTS} low_sample.o -o low_sample ${LIBS}
 
--include ${DEPENDS} multi_stable_step.d multi_wo_final.d multi_stable_2d.d difficult.d
+-include ${DEPENDS} phase_out.d phase_out_add_factor.d phase_out_p2.d low_sample.d
 
 clean:
 	rm -f ${OBJECTS} ${DEPENDS} \
-	multi_stable_step.o multi_stable_step.d multi_stable_step \
-	multi_wo_final.o multi_wo_final.d multi_wo_final \
-	multi_stable_2d.o multi_stable_2d.d multi_stable_2d \
-	difficult.o difficult.d difficult
+	phase_out.o phase_out.d phase_out \
+	phase_out_add_factor.o phase_out_add_factor.d phase_out_add_factor \
+	phase_out_p2.o phase_out_p2.d phase_out_p2 \
+	low_sample.o low_sample.d low_sample
