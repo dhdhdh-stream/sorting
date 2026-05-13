@@ -11,25 +11,25 @@ HEADERS = ${SOURCES:.cpp=.h}
 OBJECTS = ${HEADERS:.h=.o}
 DEPENDS = ${OBJECTS:.o=.d}
 
-all: phase_out phase_out_add_factor phase_out_p2 low_sample
+all: no_self_dependency plasticity slow_no_self_dependency normalize_state
 
-phase_out: ${OBJECTS} phase_out.o
-	${CXX} ${CXXFLAGS} ${OBJECTS} phase_out.o -o phase_out ${LIBS}
+no_self_dependency: ${OBJECTS} no_self_dependency.o
+	${CXX} ${CXXFLAGS} ${OBJECTS} no_self_dependency.o -o no_self_dependency ${LIBS}
 
-phase_out_add_factor: ${OBJECTS} phase_out_add_factor.o
-	${CXX} ${CXXFLAGS} ${OBJECTS} phase_out_add_factor.o -o phase_out_add_factor ${LIBS}
+plasticity: ${OBJECTS} plasticity.o
+	${CXX} ${CXXFLAGS} ${OBJECTS} plasticity.o -o plasticity ${LIBS}
 
-phase_out_p2: ${OBJECTS} phase_out_p2.o
-	${CXX} ${CXXFLAGS} ${OBJECTS} phase_out_p2.o -o phase_out_p2 ${LIBS}
+slow_no_self_dependency: ${OBJECTS} slow_no_self_dependency.o
+	${CXX} ${CXXFLAGS} ${OBJECTS} slow_no_self_dependency.o -o slow_no_self_dependency ${LIBS}
 
-low_sample: ${OBJECTS} low_sample.o
-	${CXX} ${CXXFLAGS} ${OBJECTS} low_sample.o -o low_sample ${LIBS}
+normalize_state: ${OBJECTS} normalize_state.o
+	${CXX} ${CXXFLAGS} ${OBJECTS} normalize_state.o -o normalize_state ${LIBS}
 
--include ${DEPENDS} phase_out.d phase_out_add_factor.d phase_out_p2.d low_sample.d
+-include ${DEPENDS} no_self_dependency.d plasticity.d slow_no_self_dependency.d normalize_state.d
 
 clean:
 	rm -f ${OBJECTS} ${DEPENDS} \
-	phase_out.o phase_out.d phase_out \
-	phase_out_add_factor.o phase_out_add_factor.d phase_out_add_factor \
-	phase_out_p2.o phase_out_p2.d phase_out_p2 \
-	low_sample.o low_sample.d low_sample
+	no_self_dependency.o no_self_dependency.d no_self_dependency \
+	plasticity.o plasticity.d plasticity \
+	slow_no_self_dependency.o slow_no_self_dependency.d slow_no_self_dependency \
+	normalize_state.o normalize_state.d normalize_state

@@ -22,7 +22,8 @@ Network::Network(int type,
 	}
 
 	this->hidden_1 = new Layer(this->type);
-	for (int h_index = 0; h_index < 8; h_index++) {
+	// for (int h_index = 0; h_index < 8; h_index++) {
+	for (int h_index = 0; h_index < 16; h_index++) {
 		this->hidden_1->acti_vals.push_back(0.0);
 		this->hidden_1->errors.push_back(0.0);
 	}
@@ -30,7 +31,8 @@ Network::Network(int type,
 	this->hidden_1->update_structure();
 
 	this->hidden_2 = new Layer(this->type);
-	for (int h_index = 0; h_index < 4; h_index++) {
+	// for (int h_index = 0; h_index < 4; h_index++) {
+	for (int h_index = 0; h_index < 8; h_index++) {
 		this->hidden_2->acti_vals.push_back(0.0);
 		this->hidden_2->errors.push_back(0.0);
 	}
@@ -217,6 +219,46 @@ void Network::backprop(vector<double>& errors) {
 
 	// 	this->epoch_iter = 0;
 	// }
+}
+
+void Network::activate(vector<double>& input_vals,
+					   NetworkHistory* history) {
+	for (int i_index = 0; i_index < (int)input_vals.size(); i_index++) {
+		this->input->acti_vals[i_index] = input_vals[i_index];
+	}
+	this->hidden_1->activate();
+	this->hidden_2->activate();
+	this->output->activate();
+
+	for (int i_index = 0; i_index < (int)this->input->acti_vals.size(); i_index++) {
+		history->input_history.push_back(this->input->acti_vals[i_index]);
+	}
+	for (int h_index = 0; h_index < (int)this->hidden_1->acti_vals.size(); h_index++) {
+		history->hidden_1_history.push_back(this->hidden_1->acti_vals[h_index]);
+	}
+	for (int h_index = 0; h_index < (int)this->hidden_2->acti_vals.size(); h_index++) {
+		history->hidden_2_history.push_back(this->hidden_2->acti_vals[h_index]);
+	}
+}
+
+void Network::backprop(vector<double>& errors,
+					   NetworkHistory* history) {
+	for (int i_index = 0; i_index < (int)this->input->acti_vals.size(); i_index++) {
+		this->input->acti_vals[i_index] = history->input_history[i_index];
+	}
+	for (int h_index = 0; h_index < (int)this->hidden_1->acti_vals.size(); h_index++) {
+		this->hidden_1->acti_vals[h_index] = history->hidden_1_history[h_index];
+	}
+	for (int h_index = 0; h_index < (int)this->hidden_2->acti_vals.size(); h_index++) {
+		this->hidden_2->acti_vals[h_index] = history->hidden_2_history[h_index];
+	}
+
+	for (int o_index = 0; o_index < (int)errors.size(); o_index++) {
+		this->output->errors[o_index] = errors[o_index];
+	}
+	this->output->backprop();
+	this->hidden_2->backprop();
+	this->hidden_1->backprop();
 }
 
 void Network::update() {

@@ -5,6 +5,7 @@
 
 #include "layer.h"
 
+class NetworkHistory;
 class Network {
 public:
 	int type;
@@ -30,11 +31,23 @@ public:
 	void activate(std::vector<double>& input_vals);
 	void backprop(std::vector<double>& errors);
 
+	void activate(std::vector<double>& input_vals,
+				  NetworkHistory* history);
+	void backprop(std::vector<double>& errors,
+				  NetworkHistory* history);
+
 	// temp
 	void update();
 	void update(double target_max_update);
 
 	void save(std::ofstream& output_file);
+};
+
+class NetworkHistory {
+public:
+	std::vector<double> input_history;
+	std::vector<double> hidden_1_history;
+	std::vector<double> hidden_2_history;
 };
 
 #endif /* NETWORK_H */
