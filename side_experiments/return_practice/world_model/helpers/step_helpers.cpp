@@ -20,10 +20,11 @@ void explore_obs_step(std::vector<double>& obs,
 	vector<double> starting_state = run.state;
 
 	for (int n_index = 0; n_index < (int)world_model->obs_networks.size(); n_index++) {
-		vector<double> inputs = obs;
+		vector<double> inputs;
 		for (int i_index = 0; i_index < (int)world_model->obs_network_inputs[n_index].size(); i_index++) {
 			inputs.push_back(starting_state[world_model->obs_network_inputs[n_index][i_index]]);
 		}
+		inputs.insert(inputs.end(), obs.begin(), obs.end());
 		world_model->obs_networks[n_index]->activate(inputs);
 		for (int o_index = 0; o_index < (int)world_model->obs_network_outputs[n_index].size(); o_index++) {
 			run.state[world_model->obs_network_outputs[n_index][o_index]]
@@ -88,10 +89,11 @@ void explore_action_step(Run& run,
 	}
 
 	for (int n_index = 0; n_index < (int)world_model->action_networks.size(); n_index++) {
-		vector<double> inputs = partial_inputs;
+		vector<double> inputs;
 		for (int i_index = 0; i_index < (int)world_model->action_network_inputs[n_index].size(); i_index++) {
 			inputs.push_back(starting_state[world_model->action_network_inputs[n_index][i_index]]);
 		}
+		inputs.insert(inputs.end(), partial_inputs.begin(), partial_inputs.end());
 		world_model->action_networks[n_index]->activate(inputs);
 		for (int o_index = 0; o_index < (int)world_model->action_network_outputs[n_index].size(); o_index++) {
 			run.state[world_model->action_network_outputs[n_index][o_index]]

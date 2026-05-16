@@ -5,23 +5,26 @@
 
 #include "layer.h"
 
+const double NETWORK_TARGET_MAX_UPDATE = 0.01;
+const int NETWORK_EPOCH_SIZE = 20;
+
 class NetworkHistory;
 class Network {
 public:
-	int type;
-
 	Layer* input;
 
 	Layer* hidden_1;
 	Layer* hidden_2;
 	Layer* output;
 
+	/**
+	 * - for init
+	 */
 	double hidden_1_average_max_update;
 	double hidden_2_average_max_update;
 	double output_average_max_update;
 
-	Network(int type,
-			int input_size,
+	Network(int input_size,
 			int output_size);
 	Network(Network* original);
 	Network(std::ifstream& input_file);
@@ -34,6 +37,11 @@ public:
 				  NetworkHistory* history);
 	void backprop(std::vector<double>& errors,
 				  NetworkHistory* history);
+
+	/**
+	 * - for init
+	 */
+	void update();
 
 	void get_max_update(double& max_update);
 	void update_weights(double learning_rate);

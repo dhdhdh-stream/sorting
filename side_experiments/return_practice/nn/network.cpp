@@ -7,18 +7,15 @@
 
 using namespace std;
 
-Network::Network(int type,
-				 int input_size,
+Network::Network(int input_size,
 				 int output_size) {
-	this->type = type;
-
 	this->input = new Layer(LINEAR_LAYER);
 	for (int i_index = 0; i_index < input_size; i_index++) {
 		this->input->acti_vals.push_back(0.0);
 		this->input->errors.push_back(0.0);
 	}
 
-	this->hidden_1 = new Layer(this->type);
+	this->hidden_1 = new Layer(LEAKY_LAYER);
 	for (int h_index = 0; h_index < 8; h_index++) {
 		this->hidden_1->acti_vals.push_back(0.0);
 		this->hidden_1->errors.push_back(0.0);
@@ -26,7 +23,7 @@ Network::Network(int type,
 	this->hidden_1->input_layers.push_back(this->input);
 	this->hidden_1->update_structure();
 
-	this->hidden_2 = new Layer(this->type);
+	this->hidden_2 = new Layer(LEAKY_LAYER);
 	for (int h_index = 0; h_index < 4; h_index++) {
 		this->hidden_2->acti_vals.push_back(0.0);
 		this->hidden_2->errors.push_back(0.0);
@@ -50,15 +47,13 @@ Network::Network(int type,
 }
 
 Network::Network(Network* original) {
-	this->type = original->type;
-
 	this->input = new Layer(LINEAR_LAYER);
 	for (int i_index = 0; i_index < (int)original->input->acti_vals.size(); i_index++) {
 		this->input->acti_vals.push_back(0.0);
 		this->input->errors.push_back(0.0);
 	}
 
-	this->hidden_1 = new Layer(this->type);
+	this->hidden_1 = new Layer(LEAKY_LAYER);
 	for (int i_index = 0; i_index < (int)original->hidden_1->acti_vals.size(); i_index++) {
 		this->hidden_1->acti_vals.push_back(0.0);
 		this->hidden_1->errors.push_back(0.0);
@@ -67,7 +62,7 @@ Network::Network(Network* original) {
 	this->hidden_1->update_structure();
 	this->hidden_1->copy_weights_from(original->hidden_1);
 
-	this->hidden_2 = new Layer(this->type);
+	this->hidden_2 = new Layer(LEAKY_LAYER);
 	for (int i_index = 0; i_index < (int)original->hidden_2->acti_vals.size(); i_index++) {
 		this->hidden_2->acti_vals.push_back(0.0);
 		this->hidden_2->errors.push_back(0.0);
@@ -93,10 +88,6 @@ Network::Network(Network* original) {
 }
 
 Network::Network(ifstream& input_file) {
-	string type_line;
-	getline(input_file, type_line);
-	this->type = stoi(type_line);
-
 	this->input = new Layer(LINEAR_LAYER);
 	string input_size_line;
 	getline(input_file, input_size_line);
@@ -106,7 +97,7 @@ Network::Network(ifstream& input_file) {
 		this->input->errors.push_back(0.0);
 	}
 
-	this->hidden_1 = new Layer(this->type);
+	this->hidden_1 = new Layer(LEAKY_LAYER);
 	string hidden_1_size_line;
 	getline(input_file, hidden_1_size_line);
 	int hidden_1_size = stoi(hidden_1_size_line);
@@ -117,7 +108,7 @@ Network::Network(ifstream& input_file) {
 	this->hidden_1->input_layers.push_back(this->input);
 	this->hidden_1->update_structure();
 
-	this->hidden_2 = new Layer(this->type);
+	this->hidden_2 = new Layer(LEAKY_LAYER);
 	string hidden_2_size_line;
 	getline(input_file, hidden_2_size_line);
 	int hidden_2_size = stoi(hidden_2_size_line);
@@ -215,6 +206,41 @@ void Network::backprop(vector<double>& errors,
 	this->hidden_1->backprop();
 }
 
+void Network::update() {
+	double hidden_1_max_update = 0.0;
+	this->hidden_1->get_max_update(hidden_1_max_update);
+	this->hidden_1_average_max_update = 0.999*this->hidden_1_average_max_update+0.001*hidden_1_max_update;
+	if (hidden_1_max_update > 0.0) {
+		double hidden_1_learning_rate = (0.3*NETWORK_TARGET_MAX_UPDATE)/this->hidden_1_average_max_update;
+		if (hidden_1_learning_rate*hidden_1_max_update > NETWORK_TARGET_MAX_UPDATE) {
+			hidden_1_learning_rate = NETWORK_TARGET_MAX_UPDATE/hidden_1_max_update;
+		}
+		this->hidden_1->update_weights(hidden_1_learning_rate);
+	}
+
+	double hidden_2_max_update = 0.0;
+	this->hidden_2->get_max_update(hidden_2_max_update);
+	this->hidden_2_average_max_update = 0.999*this->hidden_2_average_max_update+0.001*hidden_2_max_update;
+	if (hidden_2_max_update > 0.0) {
+		double hidden_2_learning_rate = (0.3*NETWORK_TARGET_MAX_UPDATE)/this->hidden_2_average_max_update;
+		if (hidden_2_learning_rate*hidden_2_max_update > NETWORK_TARGET_MAX_UPDATE) {
+			hidden_2_learning_rate = NETWORK_TARGET_MAX_UPDATE/hidden_2_max_update;
+		}
+		this->hidden_2->update_weights(hidden_2_learning_rate);
+	}
+
+	double output_max_update = 0.0;
+	this->output->get_max_update(output_max_update);
+	this->output_average_max_update = 0.999*this->output_average_max_update+0.001*output_max_update;
+	if (output_max_update > 0.0) {
+		double output_learning_rate = (0.3*NETWORK_TARGET_MAX_UPDATE)/this->output_average_max_update;
+		if (output_learning_rate*output_max_update > NETWORK_TARGET_MAX_UPDATE) {
+			output_learning_rate = NETWORK_TARGET_MAX_UPDATE/output_max_update;
+		}
+		this->output->update_weights(output_learning_rate);
+	}
+}
+
 void Network::get_max_update(double& max_update) {
 	this->hidden_1->get_max_update(max_update);
 	this->hidden_2->get_max_update(max_update);
@@ -228,8 +254,6 @@ void Network::update_weights(double learning_rate) {
 }
 
 void Network::save(ofstream& output_file) {
-	output_file << this->type << endl;
-
 	output_file << this->input->acti_vals.size() << endl;
 	output_file << this->hidden_1->acti_vals.size() << endl;
 	output_file << this->hidden_2->acti_vals.size() << endl;

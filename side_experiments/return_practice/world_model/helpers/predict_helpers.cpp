@@ -27,10 +27,11 @@ double predict_helper(vector<double>& existing_state,
 		}
 
 		for (int n_index = 0; n_index < (int)world_model->action_networks.size(); n_index++) {
-			vector<double> inputs = partial_inputs;
+			vector<double> inputs;
 			for (int i_index = 0; i_index < (int)world_model->action_network_inputs[n_index].size(); i_index++) {
 				inputs.push_back(starting_state[world_model->action_network_inputs[n_index][i_index]]);
 			}
+			inputs.insert(inputs.end(), partial_inputs.begin(), partial_inputs.end());
 			world_model->action_networks[n_index]->activate(inputs);
 			for (int o_index = 0; o_index < (int)world_model->action_network_outputs[n_index].size(); o_index++) {
 				state[world_model->action_network_outputs[n_index][o_index]]
