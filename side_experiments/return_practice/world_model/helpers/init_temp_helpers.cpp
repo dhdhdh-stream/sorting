@@ -1,5 +1,7 @@
 #include "world_model_helpers.h"
 
+#include <iostream>
+
 #include "globals.h"
 #include "network.h"
 
@@ -22,6 +24,9 @@ void init_temp_helper(vector<vector<double>>& init_obs_inputs,
 					  vector<Network*>& temp_action_networks,
 					  vector<double>& temp_action_network_means,
 					  vector<double>& temp_action_network_diffs) {
+	// temp
+	cout << "init_temp_helper" << endl;
+
 	uniform_int_distribution<int> sample_distribution(0, init_obs_inputs.size()-1);
 	for (int n_index = 0; n_index < NUM_TEMP_NETWORKS; n_index++) {
 		Network* obs_network = new Network(init_obs_inputs[0].size(), 1);
@@ -97,4 +102,35 @@ void init_temp_helper(vector<vector<double>>& init_obs_inputs,
 			init_target_vals[h_index] -= temp_action_vals[h_index];
 		}
 	}
+
+	// // temp
+	// for (int h_index = 0; h_index < 20; h_index++) {
+	// 	cout << h_index << endl;
+
+	// 	temp_obs_networks[0]->activate(init_obs_inputs[h_index]);
+	// 	cout << "temp_obs_networks[0]->output->acti_vals[0]: " << temp_obs_networks[0]->output->acti_vals[0] << endl;
+
+	// 	temp_obs_networks[1]->activate(init_obs_inputs[h_index]);
+	// 	cout << "temp_obs_networks[1]->output->acti_vals[0]: " << temp_obs_networks[1]->output->acti_vals[0] << endl;
+
+	// 	temp_action_networks[0]->activate(init_action_inputs[h_index]);
+	// 	cout << "temp_action_networks[0]->output->acti_vals[0]: " << temp_action_networks[0]->output->acti_vals[0] << endl;
+
+	// 	temp_action_networks[1]->activate(init_action_inputs[h_index]);
+	// 	cout << "temp_action_networks[1]->output->acti_vals[0]: " << temp_action_networks[1]->output->acti_vals[0] << endl;
+
+	// 	cout << "init_target_vals[h_index]: " << init_target_vals[h_index] << endl;
+
+	// 	cout << endl;
+	// }
+
+	// // temp
+	// cout << "temp_obs_network_means[0]: " << temp_obs_network_means[0] << endl;
+	// cout << "temp_obs_network_means[1]: " << temp_obs_network_means[1] << endl;
+	// cout << "temp_obs_network_diffs[0]: " << temp_obs_network_diffs[0] << endl;
+	// cout << "temp_obs_network_diffs[1]: " << temp_obs_network_diffs[1] << endl;
+	// cout << "temp_action_network_means[0]: " << temp_action_network_means[0] << endl;
+	// cout << "temp_action_network_means[1]: " << temp_action_network_means[1] << endl;
+	// cout << "temp_action_network_diffs[0]: " << temp_action_network_diffs[0] << endl;
+	// cout << "temp_action_network_diffs[1]: " << temp_action_network_diffs[1] << endl;
 }

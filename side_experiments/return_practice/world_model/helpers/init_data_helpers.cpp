@@ -1,5 +1,7 @@
 #include "world_model_helpers.h"
 
+#include <iostream>
+
 #include "globals.h"
 #include "network.h"
 #include "world_model.h"
@@ -13,6 +15,9 @@ void init_data_helper(vector<vector<double>>& init_obs_inputs,
 					  vector<vector<double>>& init_action_inputs,
 					  vector<double>& init_target_vals,
 					  WorldModelWrapper* wrapper) {
+	// temp
+	cout << "init_data_helper" << endl;
+
 	WorldModel* world_model = wrapper->world_model;
 
 	uniform_int_distribution<int> sample_distribution(0, wrapper->sample_obs.size()-1);

@@ -21,7 +21,7 @@ void init_run(Run& run,
 	geometric_distribution<int> num_actions_distribution(0.3);
 	uniform_int_distribution<int> action_distribution(0, wrapper->num_actions-1);
 	for (int try_index = 0; try_index < INIT_NUM_TRIES; try_index++) {
-		int num_commit_actions = num_actions_distribution(generator);
+		int num_commit_actions = 1 + num_actions_distribution(generator);
 		vector<int> potential_commit;
 		for (int a_index = 0; a_index < num_commit_actions; a_index++) {
 			potential_commit.push_back(action_distribution(generator));

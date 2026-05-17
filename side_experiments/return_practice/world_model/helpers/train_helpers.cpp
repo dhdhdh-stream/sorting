@@ -1,11 +1,16 @@
 #include "world_model_helpers.h"
 
+#include <iostream>
+
 #include "world_model.h"
 #include "world_model_wrapper.h"
 
 using namespace std;
 
 void train_helper(WorldModelWrapper* wrapper) {
+	// temp
+	cout << "train_helper" << endl;
+
 	vector<vector<double>> init_obs_inputs;
 	vector<vector<double>> init_action_inputs;
 	vector<double> init_target_vals;
@@ -56,4 +61,7 @@ void train_helper(WorldModelWrapper* wrapper) {
 
 	delete wrapper->world_model;
 	wrapper->world_model = potential_world_model;
+
+	// temp
+	cout << "train_helper done" << endl;
 }

@@ -1,5 +1,7 @@
 #include "world_model_helpers.h"
 
+#include <iostream>
+
 #include "globals.h"
 #include "network.h"
 #include "problem.h"
@@ -8,7 +10,11 @@
 
 using namespace std;
 
+#if defined(MDEBUG) && MDEBUG
+const int NUM_PREDICTS_PER_STEP = 2;
+#else
 const int NUM_PREDICTS_PER_STEP = 50;
+#endif /* MDEBUG */
 
 void explore_obs_step(std::vector<double>& obs,
 					  Run& run,
@@ -45,6 +51,8 @@ void explore_action_step(Run& run,
 		double best_predicted = predict_helper(run.state,
 											   run.curr_return,
 											   wrapper);
+		// // temp
+		// cout << "best_predicted: " << best_predicted << endl;
 
 		geometric_distribution<int> num_actions_distribution(0.1);
 		uniform_int_distribution<int> action_distribution(0, wrapper->num_actions-1);
@@ -58,6 +66,9 @@ void explore_action_step(Run& run,
 														potential_return,
 														wrapper);
 			if (potential_predicted > best_predicted) {
+				// // temp
+				// cout << "potential_predicted: " << potential_predicted << endl;
+
 				best_return = potential_return;
 				best_predicted = potential_predicted;
 			}
@@ -71,6 +82,13 @@ void explore_action_step(Run& run,
 		next_action = best_return[0];
 		best_return.erase(best_return.begin());
 		run.curr_return = best_return;
+
+		// // temp
+		// cout << "best_return:";
+		// for (int a_index = 0; a_index < (int)best_return.size(); a_index++) {
+		// 	cout << " " << best_return[a_index];
+		// }
+		// cout << endl;
 	}
 
 	run.action_histories.push_back(next_action);

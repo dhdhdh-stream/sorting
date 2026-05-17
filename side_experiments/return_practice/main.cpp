@@ -1,3 +1,5 @@
+// TODO: handle infinite continuation
+
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -67,6 +69,8 @@ int main(int argc, char* argv[]) {
 		}
 
 		double target_val = problem->score_result();
+		// temp
+		cout << "target_val: " << target_val << endl;
 
 		wrapper->sample_obs.push_back(run.obs_histories);
 		wrapper->sample_actions.push_back(run.action_histories);
