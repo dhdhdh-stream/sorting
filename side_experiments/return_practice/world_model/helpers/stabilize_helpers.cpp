@@ -347,6 +347,95 @@ void stabilize_action_final_helper(Network* temp_action_network,
 	for (int i_index = 0; i_index < (int)new_final_network->input->errors.size(); i_index++) {
 		new_final_network->input->errors[i_index] = 0.0;
 	}
+
+	// // temp
+	// for (int iter_index = 0; iter_index < 20; iter_index++) {
+	// 	cout << iter_index << endl;
+
+	// 	int sample_index = sample_distribution(generator);
+
+	// 	uniform_int_distribution<int> include_obs_distribution(
+	// 		0, wrapper->sample_obs[sample_index].size()-1);
+	// 	int include_obs_index = include_obs_distribution(generator);
+
+	// 	vector<double> state(world_model->num_states, 0.0);
+	// 	double new_state = 0.0;
+
+	// 	for (int step_index = 0; step_index < (int)wrapper->sample_obs[sample_index].size(); step_index++) {
+	// 		if (step_index <= include_obs_index) {
+	// 			vector<double> starting_state = state;
+
+	// 			for (int n_index = 0; n_index < (int)world_model->obs_networks.size(); n_index++) {
+	// 				vector<double> inputs;
+	// 				for (int i_index = 0; i_index < (int)world_model->obs_network_inputs[n_index].size(); i_index++) {
+	// 					inputs.push_back(starting_state[world_model->obs_network_inputs[n_index][i_index]]);
+	// 				}
+	// 				inputs.insert(inputs.end(), wrapper->sample_obs[sample_index][step_index].begin(),
+	// 					wrapper->sample_obs[sample_index][step_index].end());
+	// 				world_model->obs_networks[n_index]->activate(inputs);
+	// 				for (int o_index = 0; o_index < (int)world_model->obs_network_outputs[n_index].size(); o_index++) {
+	// 					state[world_model->obs_network_outputs[n_index][o_index]]
+	// 						+= world_model->obs_networks[n_index]->output->acti_vals[o_index];
+	// 				}
+	// 			}
+	// 		}
+
+	// 		if (step_index < (int)wrapper->sample_actions[sample_index].size()) {
+	// 			int action = wrapper->sample_actions[sample_index][step_index];
+
+	// 			vector<double> starting_state = state;
+
+	// 			vector<double> partial_inputs;
+	// 			for (int a_index = 0; a_index < wrapper->num_actions; a_index++) {
+	// 				if (action == a_index) {
+	// 					partial_inputs.push_back(1.0);
+	// 				} else {
+	// 					partial_inputs.push_back(0.0);
+	// 				}
+	// 			}
+
+	// 			for (int n_index = 0; n_index < (int)world_model->action_networks.size(); n_index++) {
+	// 				vector<double> inputs;
+	// 				for (int i_index = 0; i_index < (int)world_model->action_network_inputs[n_index].size(); i_index++) {
+	// 					inputs.push_back(starting_state[world_model->action_network_inputs[n_index][i_index]]);
+	// 				}
+	// 				inputs.insert(inputs.end(), partial_inputs.begin(), partial_inputs.end());
+	// 				world_model->action_networks[n_index]->activate(inputs);
+	// 				for (int o_index = 0; o_index < (int)world_model->action_network_outputs[n_index].size(); o_index++) {
+	// 					state[world_model->action_network_outputs[n_index][o_index]]
+	// 						+= world_model->action_networks[n_index]->output->acti_vals[o_index];
+	// 				}
+	// 			}
+
+	// 			vector<double> temp_inputs;
+	// 			temp_inputs.insert(temp_inputs.end(), starting_state.begin(), starting_state.end());
+	// 			temp_inputs.insert(temp_inputs.end(), partial_inputs.begin(), partial_inputs.end());
+	// 			temp_action_network->activate(temp_inputs);
+	// 			double normalized = (temp_action_network->output->acti_vals[0]
+	// 				- temp_action_network_mean) / temp_action_network_diff;
+	// 			new_state += normalized;
+	// 		}
+	// 	}
+
+	// 	double sum_score = 0.0;
+	// 	for (int n_index = 0; n_index < (int)world_model->final_networks.size(); n_index++) {
+	// 		vector<double> inputs;
+	// 		for (int i_index = 0; i_index < (int)world_model->final_network_inputs[n_index].size(); i_index++) {
+	// 			inputs.push_back(state[world_model->final_network_inputs[n_index][i_index]]);
+	// 		}
+	// 		world_model->final_networks[n_index]->activate(inputs);
+	// 		sum_score += world_model->final_networks[n_index]->output->acti_vals[0];
+	// 	}
+
+	// 	vector<double> new_final_inputs;
+	// 	new_final_inputs.insert(new_final_inputs.end(), state.begin(), state.end());
+	// 	new_final_inputs.push_back(new_state);
+	// 	new_final_network->activate(new_final_inputs);
+	// 	sum_score += new_final_network->output->acti_vals[0];
+
+	// 	cout << "sum_score: " << sum_score << endl;
+	// 	cout << "wrapper->sample_target_vals[sample_index]: " << wrapper->sample_target_vals[sample_index] << endl;
+	// }
 }
 
 void stabilize_obs_state_helper(Network* temp_obs_network,

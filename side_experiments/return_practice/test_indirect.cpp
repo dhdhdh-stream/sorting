@@ -64,6 +64,8 @@ int main(int argc, char* argv[]) {
 		run_obs.push_back(obs);
 
 		double target_val = problem->score_result();
+		// // temp
+		// cout << "target_val: " << target_val << endl;
 
 		wrapper->sample_obs.push_back(run_obs);
 		wrapper->sample_actions.push_back(run_actions);

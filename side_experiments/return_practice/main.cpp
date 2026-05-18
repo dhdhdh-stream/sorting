@@ -19,6 +19,10 @@
 
 // TODO: retrain branch networks on train as well
 
+// TODO: impossible to negate own value
+// - maybe add forget?
+// - or simply allow referring self
+
 #include <chrono>
 #include <iostream>
 #include <map>

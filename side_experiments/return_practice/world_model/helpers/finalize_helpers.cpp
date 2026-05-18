@@ -281,4 +281,77 @@ void finalize_helper(WorldModel* potential_world_model,
 	// 	cout << "sum_score: " << sum_score << endl;
 	// 	cout << "wrapper->sample_target_vals[sample_index]: " << wrapper->sample_target_vals[sample_index] << endl;
 	// }
+
+	// temp
+	double sum_misguess = 0.0;
+	for (int h_index = 0; h_index < (int)wrapper->sample_obs.size(); h_index++) {
+		uniform_int_distribution<int> include_obs_distribution(
+			0, wrapper->sample_obs[h_index].size()-1);
+		int include_obs_index = include_obs_distribution(generator);
+
+		vector<double> state(potential_world_model->num_states, 0.0);
+
+		for (int step_index = 0; step_index < (int)wrapper->sample_obs[h_index].size(); step_index++) {
+			if (step_index <= include_obs_index) {
+				vector<double> starting_state = state;
+
+				for (int n_index = 0; n_index < (int)potential_world_model->obs_networks.size(); n_index++) {
+					vector<double> inputs;
+					for (int i_index = 0; i_index < (int)potential_world_model->obs_network_inputs[n_index].size(); i_index++) {
+						inputs.push_back(starting_state[potential_world_model->obs_network_inputs[n_index][i_index]]);
+					}
+					inputs.insert(inputs.end(), wrapper->sample_obs[h_index][step_index].begin(),
+						wrapper->sample_obs[h_index][step_index].end());
+					potential_world_model->obs_networks[n_index]->activate(inputs);
+					for (int o_index = 0; o_index < (int)potential_world_model->obs_network_outputs[n_index].size(); o_index++) {
+						state[potential_world_model->obs_network_outputs[n_index][o_index]]
+							+= potential_world_model->obs_networks[n_index]->output->acti_vals[o_index];
+					}
+				}
+			}
+
+			if (step_index < (int)wrapper->sample_actions[h_index].size()) {
+				int action = wrapper->sample_actions[h_index][step_index];
+
+				vector<double> starting_state = state;
+
+				vector<double> partial_inputs;
+				for (int a_index = 0; a_index < wrapper->num_actions; a_index++) {
+					if (action == a_index) {
+						partial_inputs.push_back(1.0);
+					} else {
+						partial_inputs.push_back(0.0);
+					}
+				}
+
+				for (int n_index = 0; n_index < (int)potential_world_model->action_networks.size(); n_index++) {
+					vector<double> inputs;
+					for (int i_index = 0; i_index < (int)potential_world_model->action_network_inputs[n_index].size(); i_index++) {
+						inputs.push_back(starting_state[potential_world_model->action_network_inputs[n_index][i_index]]);
+					}
+					inputs.insert(inputs.end(), partial_inputs.begin(), partial_inputs.end());
+					potential_world_model->action_networks[n_index]->activate(inputs);
+					for (int o_index = 0; o_index < (int)potential_world_model->action_network_outputs[n_index].size(); o_index++) {
+						state[potential_world_model->action_network_outputs[n_index][o_index]]
+							+= potential_world_model->action_networks[n_index]->output->acti_vals[o_index];
+					}
+				}
+			}
+		}
+
+		double sum_score = 0.0;
+		for (int n_index = 0; n_index < (int)potential_world_model->final_networks.size(); n_index++) {
+			vector<double> inputs;
+			for (int i_index = 0; i_index < (int)potential_world_model->final_network_inputs[n_index].size(); i_index++) {
+				inputs.push_back(state[potential_world_model->final_network_inputs[n_index][i_index]]);
+			}
+			potential_world_model->final_networks[n_index]->activate(inputs);
+			sum_score += potential_world_model->final_networks[n_index]->output->acti_vals[0];
+		}
+
+		sum_misguess += (wrapper->sample_target_vals[h_index] - sum_score)
+			* (wrapper->sample_target_vals[h_index] - sum_score);
+	}
+	double misguess_average = sum_misguess / (double)wrapper->sample_obs.size();
+	cout << "misguess_average: " << misguess_average << endl;
 }

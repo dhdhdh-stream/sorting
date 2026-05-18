@@ -175,4 +175,20 @@ void init_temp_helper(vector<vector<double>>& init_inputs,
 		sum_diffs += abs(temp_network_mean - temp_vals[h_index]);
 	}
 	temp_network_diff = sum_diffs / (double)init_inputs.size();
+
+	// // temp
+	// for (int h_index = 0; h_index < 20; h_index++) {
+	// 	cout << h_index << endl;
+
+	// 	temp_network->activate(init_inputs[h_index]);
+	// 	cout << "temp_network->output->acti_vals[0]: " << temp_network->output->acti_vals[0] << endl;
+
+	// 	cout << "init_target_vals[h_index]: " << init_target_vals[h_index] << endl;
+
+	// 	cout << endl;
+	// }
+
+	// // temp
+	// cout << "temp_network_mean: " << temp_network_mean << endl;
+	// cout << "temp_network_diff: " << temp_network_diff << endl;
 }
