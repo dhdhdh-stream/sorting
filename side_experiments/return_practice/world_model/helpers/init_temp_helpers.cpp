@@ -134,3 +134,45 @@ void init_temp_helper(vector<vector<double>>& init_obs_inputs,
 	// cout << "temp_action_network_diffs[0]: " << temp_action_network_diffs[0] << endl;
 	// cout << "temp_action_network_diffs[1]: " << temp_action_network_diffs[1] << endl;
 }
+
+void init_temp_helper(vector<vector<double>>& init_inputs,
+					  vector<double>& init_target_vals,
+					  Network*& temp_network,
+					  double& temp_network_mean,
+					  double& temp_network_diff) {
+	// temp
+	cout << "init_temp_helper" << endl;
+
+	temp_network = new Network(init_inputs[0].size(), 1);
+
+	uniform_int_distribution<int> sample_distribution(0, init_inputs.size()-1);
+	for (int iter_index = 0; iter_index < INIT_TEMP_TRAIN_ITERS; iter_index++) {
+		int index = sample_distribution(generator);
+		temp_network->activate(init_inputs[index]);
+
+		vector<double> errors{init_target_vals[index]/2.0 - temp_network->output->acti_vals[0]};
+		temp_network->backprop(errors);
+
+		if ((iter_index + 1)%NETWORK_EPOCH_SIZE == 0) {
+			temp_network->update();
+		}
+	}
+
+	vector<double> temp_vals(init_inputs.size());
+	for (int h_index = 0; h_index < (int)init_inputs.size(); h_index++) {
+		temp_network->activate(init_inputs[h_index]);
+		temp_vals[h_index] = temp_network->output->acti_vals[0];
+	}
+
+	double sum_vals = 0.0;
+	for (int h_index = 0; h_index < (int)init_inputs.size(); h_index++) {
+		sum_vals += temp_vals[h_index];
+	}
+	temp_network_mean = sum_vals / (double)init_inputs.size();
+
+	double sum_diffs = 0.0;
+	for (int h_index = 0; h_index < (int)init_inputs.size(); h_index++) {
+		sum_diffs += abs(temp_network_mean - temp_vals[h_index]);
+	}
+	temp_network_diff = sum_diffs / (double)init_inputs.size();
+}

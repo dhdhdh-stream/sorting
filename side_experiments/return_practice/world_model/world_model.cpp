@@ -11,6 +11,7 @@ WorldModel::WorldModel() {
 
 WorldModel::WorldModel(WorldModel* original) {
 	this->num_states = original->num_states;
+	this->state_dependencies = original->state_dependencies;
 
 	this->obs_network_inputs = original->obs_network_inputs;
 	this->obs_network_outputs = original->obs_network_outputs;
@@ -48,6 +49,12 @@ WorldModel::~WorldModel() {
 
 void WorldModel::save(ofstream& output_file) {
 	output_file << this->num_states << endl;
+	for (int s_index = 0; s_index < (int)this->state_dependencies.size(); s_index++) {
+		output_file << this->state_dependencies[s_index].size() << endl;
+		for (int d_index = 0; d_index < (int)this->state_dependencies[s_index].size(); d_index++) {
+			output_file << this->state_dependencies[s_index][d_index] << endl;
+		}
+	}
 
 	output_file << this->obs_networks.size() << endl;
 	for (int n_index = 0; n_index < (int)this->obs_networks.size(); n_index++) {
@@ -96,6 +103,19 @@ void WorldModel::load(ifstream& input_file) {
 	string num_state_line;
 	getline(input_file, num_state_line);
 	this->num_states = stoi(num_state_line);
+
+	for (int s_index = 0; s_index < this->num_states; s_index++) {
+		string num_dependencies_line;
+		getline(input_file, num_dependencies_line);
+		int num_dependencies = stoi(num_dependencies_line);
+		vector<int> curr_dependencies;
+		for (int d_index = 0; d_index < num_dependencies; d_index++) {
+			string dependency_line;
+			getline(input_file, dependency_line);
+			curr_dependencies.push_back(stoi(dependency_line));
+		}
+		this->state_dependencies.push_back(curr_dependencies);
+	}
 
 	string num_obs_networks_line;
 	getline(input_file, num_obs_networks_line);

@@ -1,5 +1,24 @@
 // TODO: handle infinite continuation
 
+// - branch node uses state
+//   - state values constantly changing, but branch node decision making won't
+//     - so how branch node behaves will change...
+//       - ...but changes will be taken into account by predict
+//         - so shouldn't be too damaging?
+
+// - to create secondary factors, use error gradient as target val
+
+// - when creating a branch/experiment:
+//   - create entirely using existing samples
+//   - once created, essentially commit solution to it
+//   - if actually bad, hope that another change fixes it
+//     - or can remove, but save samples
+
+// TODO: dual option backprop
+// - then try changing inputs
+
+// TODO: retrain branch networks on train as well
+
 #include <chrono>
 #include <iostream>
 #include <map>

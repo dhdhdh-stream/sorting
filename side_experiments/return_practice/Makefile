@@ -15,13 +15,17 @@ HEADERS = ${SOURCES:.cpp=.h}
 OBJECTS = ${HEADERS:.h=.o}
 DEPENDS = ${OBJECTS:.o=.d}
 
-all: main
+all: main test_indirect
 
 main: ${OBJECTS} main.o
 	${CXX} ${CXXFLAGS} ${OBJECTS} main.o -o main ${LIBS}
 
--include ${DEPENDS} main.d
+test_indirect: ${OBJECTS} test_indirect.o
+	${CXX} ${CXXFLAGS} ${OBJECTS} test_indirect.o -o test_indirect ${LIBS}
+
+-include ${DEPENDS} main.d test_indirect.d
 
 clean:
 	rm -f ${OBJECTS} ${DEPENDS} \
-	main.o main.d main
+	main.o main.d main \
+	test_indirect.o test_indirect.d test_indirect

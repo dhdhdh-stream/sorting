@@ -166,6 +166,15 @@ void Network::backprop(vector<double>& errors) {
 	this->hidden_1->backprop();
 }
 
+void Network::backprop_through(vector<double>& errors) {
+	for (int o_index = 0; o_index < (int)errors.size(); o_index++) {
+		this->output->errors[o_index] = errors[o_index];
+	}
+	this->output->backprop_through();
+	this->hidden_2->backprop_through();
+	this->hidden_1->backprop_through();
+}
+
 void Network::activate(vector<double>& input_vals,
 					   NetworkHistory* history) {
 	for (int i_index = 0; i_index < (int)input_vals.size(); i_index++) {
@@ -204,6 +213,26 @@ void Network::backprop(vector<double>& errors,
 	this->output->backprop();
 	this->hidden_2->backprop();
 	this->hidden_1->backprop();
+}
+
+void Network::backprop_through(vector<double>& errors,
+							   NetworkHistory* history) {
+	for (int i_index = 0; i_index < (int)this->input->acti_vals.size(); i_index++) {
+		this->input->acti_vals[i_index] = history->input_history[i_index];
+	}
+	for (int h_index = 0; h_index < (int)this->hidden_1->acti_vals.size(); h_index++) {
+		this->hidden_1->acti_vals[h_index] = history->hidden_1_history[h_index];
+	}
+	for (int h_index = 0; h_index < (int)this->hidden_2->acti_vals.size(); h_index++) {
+		this->hidden_2->acti_vals[h_index] = history->hidden_2_history[h_index];
+	}
+
+	for (int o_index = 0; o_index < (int)errors.size(); o_index++) {
+		this->output->errors[o_index] = errors[o_index];
+	}
+	this->output->backprop_through();
+	this->hidden_2->backprop_through();
+	this->hidden_1->backprop_through();
 }
 
 void Network::update() {
