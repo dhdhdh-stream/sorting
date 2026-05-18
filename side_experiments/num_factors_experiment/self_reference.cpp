@@ -1,10 +1,3 @@
-/**
- * - works really well
- *   - but what if need count?
- * 
- * TODO: compare against direct again
- */
-
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -78,8 +71,8 @@ int main(int argc, char* argv[]) {
 		}
 	}
 
-	Network* context_one_network = new Network(LEAKY_LAYER, 4, 2);
-	Network* context_two_network = new Network(LEAKY_LAYER, 2, 2);
+	Network* context_one_network = new Network(LEAKY_LAYER, 6, 2);
+	Network* context_two_network = new Network(LEAKY_LAYER, 4, 2);
 	Network* network = new Network(LEAKY_LAYER, 2, 1);
 
 	uniform_int_distribution<int> sequence_distribution(0, NUM_SAMPLES-1);
@@ -181,7 +174,9 @@ int main(int argc, char* argv[]) {
 						state_one[0] += ratio * 0.75;
 						state_one[1] -= ratio * 0.25;
 
-						vector<double> inputs = state_two;
+						vector<double> inputs;
+						inputs.insert(inputs.end(), state_one.begin(), state_one.end());
+						inputs.insert(inputs.end(), state_two.begin(), state_two.end());
 						for (int s_index = 0; s_index < 2; s_index++) {
 							if (action == s_index) {
 								inputs.push_back(1.0);
@@ -204,7 +199,9 @@ int main(int argc, char* argv[]) {
 						state_one[0] -= ratio * 0.25;
 						state_one[1] += ratio * 0.75;
 
-						vector<double> inputs = state_two;
+						vector<double> inputs;
+						inputs.insert(inputs.end(), state_one.begin(), state_one.end());
+						inputs.insert(inputs.end(), state_two.begin(), state_two.end());
 						for (int s_index = 0; s_index < 2; s_index++) {
 							if (action == s_index) {
 								inputs.push_back(1.0);
@@ -248,6 +245,10 @@ int main(int argc, char* argv[]) {
 				context_one_network->backprop(errors_one,
 											  network_histories[h_index]);
 				for (int s_index = 0; s_index < 2; s_index++) {
+					errors_one[s_index] += context_one_network->input->errors[s_index];
+					context_one_network->input->errors[s_index] = 0.0;
+				}
+				for (int s_index = 2; s_index < 4; s_index++) {
 					context_one_network->input->errors[s_index] = 0.0;
 				}
 				break;
@@ -257,7 +258,6 @@ int main(int argc, char* argv[]) {
 		if (iter_index % 20 == 0) {
 			context_one_network->update();
 			network->update();
-			// network->update(0.002);
 		}
 	}
 	for (int iter_index = 0; iter_index < 100000; iter_index++) {
@@ -279,7 +279,9 @@ int main(int argc, char* argv[]) {
 				case 0:
 				case 1:
 					{
-						vector<double> inputs = state_two;
+						vector<double> inputs;
+						inputs.insert(inputs.end(), state_one.begin(), state_one.end());
+						inputs.insert(inputs.end(), state_two.begin(), state_two.end());
 						for (int s_index = 0; s_index < 2; s_index++) {
 							if (action == s_index) {
 								inputs.push_back(1.0);
@@ -318,6 +320,10 @@ int main(int argc, char* argv[]) {
 				context_one_network->backprop(errors_one,
 											  network_histories[h_index]);
 				for (int s_index = 0; s_index < 2; s_index++) {
+					errors_one[s_index] += context_one_network->input->errors[s_index];
+					context_one_network->input->errors[s_index] = 0.0;
+				}
+				for (int s_index = 2; s_index < 4; s_index++) {
 					context_one_network->input->errors[s_index] = 0.0;
 				}
 				break;
@@ -327,7 +333,6 @@ int main(int argc, char* argv[]) {
 		if (iter_index % 20 == 0) {
 			context_one_network->update();
 			network->update();
-			// network->update(0.002);
 		}
 	}
 	for (int iter_index = 0; iter_index < 100000; iter_index++) {
@@ -352,7 +357,9 @@ int main(int argc, char* argv[]) {
 						state_two[0] -= 0.25;
 						state_two[1] -= 0.25;
 
-						vector<double> inputs = state_two;
+						vector<double> inputs;
+						inputs.insert(inputs.end(), state_one.begin(), state_one.end());
+						inputs.insert(inputs.end(), state_two.begin(), state_two.end());
 						for (int s_index = 0; s_index < 2; s_index++) {
 							if (action == s_index) {
 								inputs.push_back(1.0);
@@ -399,6 +406,10 @@ int main(int argc, char* argv[]) {
 				context_one_network->backprop(errors_one,
 											  network_histories[h_index]);
 				for (int s_index = 0; s_index < 2; s_index++) {
+					errors_one[s_index] += context_one_network->input->errors[s_index];
+					context_one_network->input->errors[s_index] = 0.0;
+				}
+				for (int s_index = 2; s_index < 4; s_index++) {
 					context_one_network->input->errors[s_index] = 0.0;
 				}
 				break;
@@ -408,7 +419,6 @@ int main(int argc, char* argv[]) {
 		if (iter_index % 20 == 0) {
 			context_one_network->update();
 			network->update();
-			// network->update(0.002);
 		}
 	}
 	for (int iter_index = 0; iter_index < 200000; iter_index++) {
@@ -434,7 +444,9 @@ int main(int argc, char* argv[]) {
 						state_two[0] -= ratio * 0.25;
 						state_two[1] -= ratio * 0.25;
 
-						vector<double> inputs = state_two;
+						vector<double> inputs;
+						inputs.insert(inputs.end(), state_one.begin(), state_one.end());
+						inputs.insert(inputs.end(), state_two.begin(), state_two.end());
 						for (int s_index = 0; s_index < 2; s_index++) {
 							if (action == s_index) {
 								inputs.push_back(1.0);
@@ -454,10 +466,7 @@ int main(int argc, char* argv[]) {
 					break;
 				case 2:
 					{
-						state_two[0] += ratio * 0.75;
-						state_two[1] -= ratio * 0.25;
-
-						vector<double> inputs;
+						vector<double> inputs = state_two;
 						for (int s_index = 2; s_index < 4; s_index++) {
 							if (action == s_index) {
 								inputs.push_back(1.0);
@@ -473,15 +482,14 @@ int main(int argc, char* argv[]) {
 						for (int s_index = 0; s_index < 2; s_index++) {
 							state_two[s_index] += context_two_network->output->acti_vals[s_index];
 						}
+
+						state_two[0] += ratio * 0.75;
+						state_two[1] -= ratio * 0.25;
 					}
 					break;
 				case 3:
 					{
-						double ratio = 1.0 - iter_index / 200000.0;
-						state_two[0] -= ratio * 0.25;
-						state_two[1] += ratio * 0.75;
-
-						vector<double> inputs;
+						vector<double> inputs = state_two;
 						for (int s_index = 2; s_index < 4; s_index++) {
 							if (action == s_index) {
 								inputs.push_back(1.0);
@@ -497,6 +505,9 @@ int main(int argc, char* argv[]) {
 						for (int s_index = 0; s_index < 2; s_index++) {
 							state_two[s_index] += context_two_network->output->acti_vals[s_index];
 						}
+
+						state_two[0] -= ratio * 0.25;
+						state_two[1] += ratio * 0.75;
 					}
 					break;
 				}
@@ -521,23 +532,29 @@ int main(int argc, char* argv[]) {
 				context_one_network->backprop(errors_one,
 											  network_histories[h_index]);
 				for (int s_index = 0; s_index < 2; s_index++) {
-					errors_two[s_index] += context_one_network->input->errors[s_index];
+					errors_one[s_index] += context_one_network->input->errors[s_index];
 					context_one_network->input->errors[s_index] = 0.0;
+				}
+				for (int s_index = 0; s_index < 2; s_index++) {
+					errors_two[s_index] += context_one_network->input->errors[2 + s_index];
+					context_one_network->input->errors[2 + s_index] = 0.0;
 				}
 				break;
 			case 1:
 				context_two_network->backprop(errors_two,
 											  network_histories[h_index]);
+				for (int s_index = 0; s_index < 2; s_index++) {
+					errors_two[s_index] += context_two_network->input->errors[s_index];
+					context_two_network->input->errors[s_index] = 0.0;
+				}
 				break;
 			}
 		}
 
 		if (iter_index % 20 == 0) {
 			context_one_network->update();
-			// context_one_network->update(0.002);
 			context_two_network->update();
 			network->update();
-			// network->update(0.002);
 		}
 	}
 	for (int iter_index = 0; iter_index < 100000; iter_index++) {
@@ -559,7 +576,9 @@ int main(int argc, char* argv[]) {
 				case 0:
 				case 1:
 					{
-						vector<double> inputs = state_two;
+						vector<double> inputs;
+						inputs.insert(inputs.end(), state_one.begin(), state_one.end());
+						inputs.insert(inputs.end(), state_two.begin(), state_two.end());
 						for (int s_index = 0; s_index < 2; s_index++) {
 							if (action == s_index) {
 								inputs.push_back(1.0);
@@ -580,7 +599,7 @@ int main(int argc, char* argv[]) {
 				case 2:
 				case 3:
 					{
-						vector<double> inputs;
+						vector<double> inputs = state_two;
 						for (int s_index = 2; s_index < 4; s_index++) {
 							if (action == s_index) {
 								inputs.push_back(1.0);
@@ -620,23 +639,29 @@ int main(int argc, char* argv[]) {
 				context_one_network->backprop(errors_one,
 											  network_histories[h_index]);
 				for (int s_index = 0; s_index < 2; s_index++) {
-					errors_two[s_index] += context_one_network->input->errors[s_index];
+					errors_one[s_index] += context_one_network->input->errors[s_index];
 					context_one_network->input->errors[s_index] = 0.0;
+				}
+				for (int s_index = 0; s_index < 2; s_index++) {
+					errors_two[s_index] += context_one_network->input->errors[2 + s_index];
+					context_one_network->input->errors[2 + s_index] = 0.0;
 				}
 				break;
 			case 1:
 				context_two_network->backprop(errors_two,
 											  network_histories[h_index]);
+				for (int s_index = 0; s_index < 2; s_index++) {
+					errors_two[s_index] += context_two_network->input->errors[s_index];
+					context_two_network->input->errors[s_index] = 0.0;
+				}
 				break;
 			}
 		}
 
 		if (iter_index % 20 == 0) {
 			context_one_network->update();
-			// context_one_network->update(0.002);
 			context_two_network->update();
 			network->update();
-			// network->update(0.002);
 		}
 	}
 
@@ -656,7 +681,9 @@ int main(int argc, char* argv[]) {
 			case 0:
 			case 1:
 				{
-					vector<double> inputs = state_two;
+					vector<double> inputs;
+					inputs.insert(inputs.end(), state_one.begin(), state_one.end());
+						inputs.insert(inputs.end(), state_two.begin(), state_two.end());
 					for (int s_index = 0; s_index < 2; s_index++) {
 						if (action == s_index) {
 							inputs.push_back(1.0);
@@ -674,7 +701,7 @@ int main(int argc, char* argv[]) {
 			case 2:
 			case 3:
 				{
-					vector<double> inputs;
+					vector<double> inputs = state_two;
 					for (int s_index = 2; s_index < 4; s_index++) {
 						if (action == s_index) {
 							inputs.push_back(1.0);
@@ -710,7 +737,9 @@ int main(int argc, char* argv[]) {
 			case 0:
 			case 1:
 				{
-					vector<double> inputs = state_two;
+					vector<double> inputs;
+					inputs.insert(inputs.end(), state_one.begin(), state_one.end());
+						inputs.insert(inputs.end(), state_two.begin(), state_two.end());
 					for (int s_index = 0; s_index < 2; s_index++) {
 						if (action == s_index) {
 							inputs.push_back(1.0);
@@ -727,7 +756,7 @@ int main(int argc, char* argv[]) {
 			case 2:
 			case 3:
 				{
-					vector<double> inputs;
+					vector<double> inputs = state_two;
 					for (int s_index = 2; s_index < 4; s_index++) {
 						if (action == s_index) {
 							inputs.push_back(1.0);

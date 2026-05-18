@@ -494,7 +494,8 @@ void ramp_action_final_helper(Network* temp_action_network,
 	// temp
 	cout << "ramp_helper" << endl;
 
-	Network* new_action_network = new Network(potential_world_model->num_states + wrapper->num_actions, 1);
+	// Network* new_action_network = new Network(potential_world_model->num_states + wrapper->num_actions, 1);
+	Network* new_action_network = new Network(potential_world_model->num_states + 1 + wrapper->num_actions, 1);
 
 	uniform_int_distribution<int> sample_distribution(0, wrapper->sample_obs.size()-1);
 	for (int iter_index = 0; iter_index < RAMP_TRAIN_ITERS; iter_index++) {
@@ -578,6 +579,7 @@ void ramp_action_final_helper(Network* temp_action_network,
 				new_state += ratio * normalized;
 
 				vector<double> new_inputs = starting_state;
+				new_inputs.push_back(new_state);
 				new_inputs.insert(new_inputs.end(), partial_inputs.begin(), partial_inputs.end());
 				NetworkHistory* network_history = new NetworkHistory();
 				new_action_network->activate(new_inputs,
@@ -652,6 +654,8 @@ void ramp_action_final_helper(Network* temp_action_network,
 					state_errors[i_index] += new_action_network->input->errors[i_index];
 					new_action_network->input->errors[i_index] = 0.0;
 				}
+				new_state_error += new_action_network->input->errors[state_errors.size()];
+				new_action_network->input->errors[state_errors.size()] = 0.0;
 			}
 
 			if (step_index <= include_obs_index) {
@@ -773,6 +777,7 @@ void ramp_action_final_helper(Network* temp_action_network,
 	// 			}
 
 	// 			vector<double> new_inputs = starting_state;
+	// 			new_inputs.push_back(new_state);
 	// 			new_inputs.insert(new_inputs.end(), partial_inputs.begin(), partial_inputs.end());
 	// 			new_action_network->activate(new_inputs);
 	// 			new_state += new_action_network->output->acti_vals[0];
@@ -864,6 +869,7 @@ void ramp_action_final_helper(Network* temp_action_network,
 				}
 
 				vector<double> new_inputs = starting_state;
+				new_inputs.push_back(new_state);
 				new_inputs.insert(new_inputs.end(), partial_inputs.begin(), partial_inputs.end());
 				new_action_network->activate(new_inputs);
 				new_state += new_action_network->output->acti_vals[0];
@@ -898,6 +904,7 @@ void ramp_action_final_helper(Network* temp_action_network,
 	for (int i_index = 0; i_index < potential_world_model->num_states; i_index++) {
 		new_network_inputs.push_back(i_index);
 	}
+	new_network_inputs.push_back(potential_world_model->num_states);
 	vector<int> new_network_outputs{potential_world_model->num_states};
 
 	potential_world_model->num_states++;
@@ -927,7 +934,8 @@ void ramp_obs_state_helper(Network* temp_obs_network,
 	// temp
 	cout << "ramp_helper" << endl;
 
-	Network* new_obs_network = new Network(wrapper->num_obs, 1);
+	// Network* new_obs_network = new Network(wrapper->num_obs, 1);
+	Network* new_obs_network = new Network(1 + wrapper->num_obs, 1);
 
 	vector<int> dependencies = potential_world_model->state_dependencies[state_index];
 
@@ -992,7 +1000,11 @@ void ramp_obs_state_helper(Network* temp_obs_network,
 				new_existing_obs_network_histories.push_back(new_existing_network_history);
 				state[state_index] += new_obs_existing_network->output->acti_vals[0];
 
-				vector<double> new_inputs = wrapper->sample_obs[sample_index][step_index];
+				// vector<double> new_inputs = wrapper->sample_obs[sample_index][step_index];
+				vector<double> new_inputs;
+				new_inputs.push_back(new_state);
+				new_inputs.insert(new_inputs.end(), wrapper->sample_obs[sample_index][step_index].begin(),
+					wrapper->sample_obs[sample_index][step_index].end());
 				NetworkHistory* network_history = new NetworkHistory();
 				new_obs_network->activate(new_inputs,
 										  network_history);
@@ -1123,6 +1135,8 @@ void ramp_obs_state_helper(Network* temp_obs_network,
 				new_obs_network->backprop(new_errors,
 										  new_obs_network_histories[step_index]);
 				delete new_obs_network_histories[step_index];
+				new_state_error += new_obs_network->input->errors[0];
+				new_obs_network->input->errors[0] = 0.0;
 
 				vector<double> new_existing_errors{starting_errors[state_index]};
 				new_obs_existing_network->backprop(new_existing_errors,
@@ -1176,7 +1190,8 @@ void ramp_obs_state_helper(Network* temp_obs_network,
 
 	delete temp_obs_network;
 
-	vector<int> new_network_inputs;
+	// vector<int> new_network_inputs;
+	vector<int> new_network_inputs{potential_world_model->num_states};
 	vector<int> new_network_outputs{potential_world_model->num_states};
 	potential_world_model->obs_network_inputs.push_back(new_network_inputs);
 	potential_world_model->obs_network_outputs.push_back(new_network_outputs);
