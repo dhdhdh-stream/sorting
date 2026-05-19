@@ -1,3 +1,12 @@
+// - maybe have data that only lasts a small distance?
+//   - is this just scopes?
+//     - but how can you scope random actions?
+
+// - try stabilizing with temporary?
+//   - and hope single state ramp ends up working?
+
+// TODO: adjust error by sequence length?
+
 #include <chrono>
 #include <iostream>
 #include <map>
