@@ -9,6 +9,13 @@ class Network;
 class WorldModel;
 class WorldModelWrapper;
 
+void obs_helper(std::vector<double>& obs,
+				std::vector<double>& state,
+				WorldModelWrapper* wrapper);
+void action_helper(int action,
+				   std::vector<double>& state,
+				   WorldModelWrapper* wrapper);
+
 double predict_helper(std::vector<double>& existing_state,
 					  std::vector<int>& potential_return,
 					  WorldModelWrapper* wrapper);

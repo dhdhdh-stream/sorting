@@ -3,11 +3,13 @@ CXXFLAGS = -g -std=c++17 -Wall -Werror -MMD \
 		   `pkg-config --cflags eigen3` \
 		   -DMDEBUG=0 \
 		   -Inn \
+		   -Isolution \
 		   -Iutils \
 		   -Iworld \
 		   -Iworld_model
 LIBS = -pthread
 SOURCES := $(shell find nn -name '*.cpp') \
+		   $(shell find solution -name '*.cpp') \
 		   $(shell find utils -name '*.cpp') \
 		   $(shell find world -name '*.cpp') \
 		   $(shell find world_model -name '*.cpp')
