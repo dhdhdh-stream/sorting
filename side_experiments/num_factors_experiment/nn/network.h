@@ -30,11 +30,14 @@ public:
 
 	void activate(std::vector<double>& input_vals);
 	void backprop(std::vector<double>& errors);
+	void backprop_through(std::vector<double>& errors);
 
 	void activate(std::vector<double>& input_vals,
 				  NetworkHistory* history);
 	void backprop(std::vector<double>& errors,
 				  NetworkHistory* history);
+	void backprop_through(std::vector<double>& errors,
+						  NetworkHistory* history);
 
 	// temp
 	void update();

@@ -32,6 +32,7 @@ public:
 
 	void activate();
 	void backprop();
+	void backprop_through();
 	void get_max_update(double& max_update_size);
 	void update_weights(double learning_rate);
 

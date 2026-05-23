@@ -7,6 +7,11 @@
 
 // TODO: adjust error by sequence length?
 
+// - doesn't make sense for final network states to self-reference?
+//   - but indirect states need to self-reference for reset?
+//     - maybe depends
+//       - maybe don't indirect on self-reference
+
 #include <chrono>
 #include <iostream>
 #include <map>
