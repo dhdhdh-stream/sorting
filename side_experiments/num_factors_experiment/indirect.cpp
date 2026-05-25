@@ -1,5 +1,15 @@
 // - slow and not even reliable?
 
+// TODO: reuse temp network as final
+// TODO: add forget
+
+// TODO: try not using solution, but single predict from start?
+
+// - maybe staying fixated on one path is not bad
+//   - gives extra samples to help figure out obs
+
+// - for simplicity, normalize target vals, not network outputs
+
 #include <chrono>
 #include <iostream>
 #include <map>

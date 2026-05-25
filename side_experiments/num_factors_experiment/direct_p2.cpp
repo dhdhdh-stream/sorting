@@ -1,5 +1,23 @@
 // can sometimes work
 
+// 0.131629
+// 0.126829
+// 0.115968
+// 0.12157
+// 0.108593
+// 0.104842
+// 0.127582
+// 0.0754915
+// 0.0647511
+// 0.0638345
+// 0.102935
+// 0.0711192
+// 0.118554
+// 0.1165
+// 0.126123
+
+// naive is 0.1476
+
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -75,6 +93,15 @@ int main(int argc, char* argv[]) {
 			target_vals.push_back(0.0);
 		}
 	}
+
+	// // temp
+	// int num_1s = 0;
+	// for (int h_index = 0; h_index < (int)target_vals.size(); h_index++) {
+	// 	if (target_vals[h_index] == 1.0) {
+	// 		num_1s++;
+	// 	}
+	// }
+	// cout << "num_1s: " << num_1s << endl;
 
 	Network* final_network = new Network(LEAKY_LAYER, 4, 1);
 	Network* state_one_network = new Network(LEAKY_LAYER, 4, 4);

@@ -9,7 +9,6 @@ class Network;
 class WorldModel {
 public:
 	int num_states;
-	std::vector<std::vector<int>> state_dependencies;
 
 	std::vector<std::vector<int>> obs_network_inputs;
 	std::vector<std::vector<int>> obs_network_outputs;

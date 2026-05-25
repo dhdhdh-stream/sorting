@@ -14,9 +14,13 @@ public:
 
 	WorldModel* world_model;
 
-	std::vector<std::vector<std::vector<double>>> sample_obs;
-	std::vector<std::vector<int>> sample_actions;
-	std::vector<double> sample_target_vals;
+	std::vector<std::vector<std::vector<double>>> old_sample_obs;
+	std::vector<std::vector<int>> old_sample_actions;
+	std::vector<double> old_sample_target_vals;
+
+	std::vector<std::vector<std::vector<double>>> new_sample_obs;
+	std::vector<std::vector<int>> new_sample_actions;
+	std::vector<double> new_sample_target_vals;
 
 	WorldModelWrapper(ProblemType* problem_type);
 	WorldModelWrapper(std::string path,
