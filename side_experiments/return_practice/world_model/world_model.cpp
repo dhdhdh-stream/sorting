@@ -6,6 +6,8 @@ using namespace std;
 
 WorldModel::WorldModel() {
 	this->num_states = 0;
+
+	this->epoch_iter = 0;
 	this->average_max_update = 0.0;
 }
 
@@ -29,6 +31,7 @@ WorldModel::WorldModel(WorldModel* original) {
 		this->final_networks.push_back(new Network(original->final_networks[n_index]));
 	}
 
+	this->epoch_iter = 0;
 	this->average_max_update = original->average_max_update;
 }
 

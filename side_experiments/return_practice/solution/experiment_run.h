@@ -9,11 +9,11 @@ class AbstractNodeHistory;
 class Experiment;
 class ExperimentHistory;
 class ExperimentState;
-class WorldModelWrapper;
+class Wrapper;
 
 class ExperimentRun {
 public:
-	WorldModelWrapper* wrapper;
+	Wrapper* wrapper;
 
 	AbstractNode* node_context;
 	ExperimentState* experiment_context;
@@ -26,6 +26,8 @@ public:
 
 	std::vector<std::vector<double>> obs_histories;
 	std::vector<int> action_histories;
+
+	~ExperimentRun();
 };
 
 #endif /* EXPERIMENT_RUN_H */

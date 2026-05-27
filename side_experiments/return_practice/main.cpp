@@ -5,10 +5,10 @@
 #include <random>
 
 #include "constants.h"
-#include "run.h"
 #include "simple.h"
+#include "solution.h"
 #include "world_model_helpers.h"
-#include "world_model_wrapper.h"
+#include "wrapper.h"
 
 using namespace std;
 
@@ -27,61 +27,60 @@ int main(int argc, char* argv[]) {
 	ProblemType* problem_type = new TypeSimple();
 
 	string filename;
-	WorldModelWrapper* wrapper;
+	Wrapper* wrapper;
 	if (argc > 1) {
 		filename = argv[1];
-		wrapper = new WorldModelWrapper(
-			"saves/",
-			filename);
+		wrapper = new Wrapper("saves/",
+							  filename);
 	} else {
 		filename = "main.txt";
-		wrapper = new WorldModelWrapper(problem_type);
+		wrapper = new Wrapper(problem_type);
+
+		init_helper(problem_type,
+					wrapper);
+
+		train_helper(wrapper);
 	}
 
-	int iter_index = 0;
 	while (true) {
-		Problem* problem = problem_type->get_problem();
-
-		Run run;
-		init_run(run,
-				 wrapper);
+		int starting_timestamp = wrapper->solution->timestamp;
 
 		while (true) {
-			vector<double> obs = problem->get_observations();
-			explore_obs_step(obs,
-							 run,
-							 wrapper);
+			Problem* problem = problem_type->get_problem();
 
-			int next_action;
-			bool is_done = false;
-			explore_action_step(run,
-								next_action,
-								is_done,
-								wrapper);
+			ExperimentRun* run = new ExperimentRun();
 
-			if (is_done) {
+			wrapper->experiment_init(run);
+
+			while (true) {
+				vector<double> obs = problem->get_observations();
+
+				pair<bool,int> next = wrapper->experiment_step(obs,
+															   run);
+				if (next.first) {
+					break;
+				} else {
+					problem->perform_action(next.second);
+				}
+			}
+
+			double target_val = problem->score_result();
+
+			wrapper->experiment_end(target_val,
+									run);
+
+			delete run;
+
+			delete problem;
+
+			if (wrapper->solution->timestamp != starting_timestamp) {
 				break;
-			} else {
-				problem->perform_action(next_action);
 			}
 		}
 
-		double target_val = problem->score_result();
-		// temp
-		cout << "target_val: " << target_val << endl;
+		wrapper->save("saves/", filename);
 
-		wrapper->new_sample_obs.push_back(run.obs_histories);
-		wrapper->new_sample_actions.push_back(run.action_histories);
-		wrapper->new_sample_target_vals.push_back(target_val);
-
-		delete problem;
-
-		iter_index++;
-		if (iter_index % SAMPLES_PER_TRAIN == 0) {
-			train_helper(wrapper);
-
-			wrapper->save("saves/", filename);
-		}
+		wrapper->save_for_display("../", "display.txt");
 	}
 
 	delete problem_type;

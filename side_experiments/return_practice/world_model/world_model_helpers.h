@@ -3,35 +3,26 @@
 
 #include <vector>
 
-#include "run.h"
-
 class Network;
+class ProblemType;
 class WorldModel;
-class WorldModelWrapper;
+class Wrapper;
 
 void obs_helper(std::vector<double>& obs,
 				std::vector<double>& state,
-				WorldModelWrapper* wrapper);
+				Wrapper* wrapper);
 void action_helper(int action,
 				   std::vector<double>& state,
-				   WorldModelWrapper* wrapper);
+				   Wrapper* wrapper);
 
-double predict_helper(std::vector<double>& existing_state,
-					  std::vector<int>& potential_return,
-					  WorldModelWrapper* wrapper);
+void init_helper(ProblemType* problem_type,
+				 Wrapper* wrapper);
 
-void init_run(Run& run,
-			  WorldModelWrapper* wrapper);
+void update_world_model_helper(std::vector<std::vector<double>>& obs,
+							   std::vector<int>& actions,
+							   double target_val,
+							   Wrapper* wrapper);
 
-void explore_obs_step(std::vector<double>& obs,
-					  Run& run,
-					  WorldModelWrapper* wrapper);
-
-void explore_action_step(Run& run,
-						 int& next_action,
-						 bool& is_done,
-						 WorldModelWrapper* wrapper);
-
-void train_helper(WorldModelWrapper* wrapper);
+void train_helper(Wrapper* wrapper);
 
 #endif /* WORLD_MODEL_HELPERS_H */

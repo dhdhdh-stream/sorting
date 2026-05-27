@@ -7,18 +7,18 @@ using namespace std;
 void ActionNode::experiment_step(vector<double>& obs,
 								 int& action,
 								 bool& is_next,
-								 ExperimentRun& run) {
+								 ExperimentRun* run) {
 	ActionNodeHistory* history = new ActionNodeHistory(this);
-	run.node_histories[this->id] = history;
+	run->node_histories[this->id] = history;
 
-	run.action_histories.push_back(this->action);
+	run->action_histories.push_back(this->action);
 
 	action_helper(this->action,
-				  run.state,
-				  run.wrapper);
+				  run->state,
+				  run->wrapper);
 
 	action = this->action;
 	is_next = true;
 
-	run.node_context = this->next_node;
+	run->node_context = this->next_node;
 }

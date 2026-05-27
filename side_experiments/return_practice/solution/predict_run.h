@@ -1,16 +1,18 @@
 #ifndef PREDICT_RUN_H
 #define PREDICT_RUN_H
 
+#include <map>
 #include <vector>
 
 class AbstractNode;
 class Experiment;
 class ExperimentHistory;
-class WorldModelWrapper;
+class ExperimentState;
+class Wrapper;
 
 class PredictRun {
 public:
-	WorldModelWrapper* wrapper;
+	Wrapper* wrapper;
 
 	AbstractNode* node_context;
 	ExperimentState* experiment_context;
@@ -18,6 +20,8 @@ public:
 	std::vector<double> state;
 
 	std::map<Experiment*, ExperimentHistory*> experiment_histories;
+
+	~PredictRun();
 };
 
 #endif /* PREDICT_RUN_H */

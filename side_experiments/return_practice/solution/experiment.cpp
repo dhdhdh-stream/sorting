@@ -2,10 +2,26 @@
 
 #include "constants.h"
 #include "globals.h"
+#include "network.h"
 
 using namespace std;
 
+Experiment::Experiment() {
+	this->curr_ramp = 0;
+	this->measure_status = MEASURE_STATUS_N_A;
 
+	this->state = EXPERIMENT_STATE_RAMP;
+	this->state_iter = 0;
+}
+
+Experiment::~Experiment() {
+	if (this->original_network != NULL) {
+		delete this->original_network;
+	}
+	if (this->branch_network != NULL) {
+		delete this->branch_network;
+	}
+}
 
 ExperimentHistory::ExperimentHistory(Experiment* experiment) {
 	uniform_int_distribution<int> on_distribution(0, EXPERIMENT_NUM_GEARS);

@@ -21,6 +21,7 @@ public:
 	std::vector<std::vector<int>> final_network_inputs;
 	std::vector<Network*> final_networks;
 
+	int epoch_iter;
 	double average_max_update;
 
 	WorldModel();

@@ -4,12 +4,15 @@
 const double MIN_WEIGHT = 0.00001;
 const double MIN_STANDARD_DEVIATION = 0.00001;
 
-/**
- * - when there's correlation, weights can get strange values(?)
- */
-const double REGRESSION_WEIGHT_LIMIT = 100000.0;
+const int SAMPLES_PER_TRAIN = 4000;
 
-const int SAMPLES_PER_TRAIN = 200;
+#if defined(MDEBUG) && MDEBUG
+const int SCORE_HISTORIES_NUM_SAVE = 100;
+#else
+const int SCORE_HISTORIES_NUM_SAVE = 4000;
+#endif /* MDEBUG */
+
+const int STATE_HISTORY_NUM_SAVE = 4000;
 
 const int NUM_LAST_TRACK = 10;
 #if defined(MDEBUG) && MDEBUG

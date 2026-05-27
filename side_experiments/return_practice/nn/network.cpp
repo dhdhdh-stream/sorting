@@ -282,6 +282,17 @@ void Network::update_weights(double learning_rate) {
 	this->output->update_weights(learning_rate);
 }
 
+void Network::add_inputs(int num_add) {
+	for (int i_index = 0; i_index < num_add; i_index++) {
+		this->input->acti_vals.push_back(0.0);
+		this->input->errors.push_back(0.0);
+	}
+
+	this->hidden_1->update_structure();
+	this->hidden_2->update_structure();
+	this->output->update_structure();
+}
+
 void Network::save(ofstream& output_file) {
 	output_file << this->input->acti_vals.size() << endl;
 	output_file << this->hidden_1->acti_vals.size() << endl;

@@ -6,10 +6,13 @@
 #ifndef ABSTRACT_NODE_H
 #define ABSTRACT_NODE_H
 
+#include <fstream>
+
 #include "experiment_run.h"
 #include "predict_run.h"
 
 class Experiment;
+class Solution;
 
 const int NODE_TYPE_OBS = 0;
 const int NODE_TYPE_ACTION = 1;
@@ -21,13 +24,23 @@ public:
 
 	int id;
 
+	std::vector<int> ancestor_ids;
+	/**
+	 * - if both paths of BranchNode point to same node, add twice
+	 */
+
 	virtual ~AbstractNode() {};
 
 	virtual void experiment_step(std::vector<double>& obs,
 								 int& action,
 								 bool& is_next,
-								 ExperimentRun& run) = 0;
-	virtual void predict_step(PredictRun& run) = 0;
+								 ExperimentRun* run) = 0;
+	virtual void predict_step(PredictRun* run) = 0;
+
+	virtual void save(std::ofstream& output_file,
+					  Wrapper* wrapper) = 0;
+	virtual void link(Wrapper* wrapper) = 0;
+	virtual void save_for_display(std::ofstream& output_file) = 0;
 };
 
 class AbstractNodeHistory {

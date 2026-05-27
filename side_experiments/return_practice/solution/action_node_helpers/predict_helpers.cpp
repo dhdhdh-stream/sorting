@@ -4,10 +4,10 @@
 
 using namespace std;
 
-void ActionNode::predict_step(PredictRun& run) {
+void ActionNode::predict_step(PredictRun* run) {
 	action_helper(this->action,
-				  run.state,
-				  run.wrapper);
+				  run->state,
+				  run->wrapper);
 
-	run.node_context = this->next_node;
+	run->node_context = this->next_node;
 }

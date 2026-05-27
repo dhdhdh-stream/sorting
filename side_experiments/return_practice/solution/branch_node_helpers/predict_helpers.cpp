@@ -5,22 +5,18 @@
 
 using namespace std;
 
-void BranchNode::predict_step(PredictRun& run) {
-	vector<double> inputs(this->input_indexes.size());
-	for (int i_index = 0; i_index < (int)this->input_indexes.size(); i_index++) {
-		inputs[i_index] = run.state[this->input_indexes[i_index]];
-	}
-	this->original_network->activate(inputs);
-	this->branch_network->activate(inputs);
+void BranchNode::predict_step(PredictRun* run) {
+	this->original_network->activate(run->state);
+	this->branch_network->activate(run->state);
 
 	if (this->branch_network->output->acti_vals[0] >= this->original_network->output->acti_vals[0]) {
-		run.node_context = this->branch_next_node;
+		run->node_context = this->branch_next_node;
 
 		if (this->branch_experiment != NULL) {
 			this->branch_experiment->predict_activate(run);
 		}
 	} else {
-		run.node_context = this->original_next_node;
+		run->node_context = this->original_next_node;
 
 		if (this->original_experiment != NULL) {
 			this->original_experiment->predict_activate(run);

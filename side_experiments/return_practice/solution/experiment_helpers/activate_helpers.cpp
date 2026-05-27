@@ -1,27 +1,31 @@
 #include "experiment.h"
 
+#include <iostream>
+#include <limits>
+
+#include "branch_node.h"
+#include "constants.h"
 #include "network.h"
+#include "obs_node.h"
+#include "solution.h"
 #include "world_model_helpers.h"
+#include "wrapper.h"
 
 using namespace std;
 
-void Experiment::experiment_activate(ExperimentRun& run) {
+void Experiment::experiment_activate(ExperimentRun* run) {
 	ExperimentHistory* history;
 	map<Experiment*, ExperimentHistory*>::iterator it =
-		run.experiment_histories.find(this);
-	if (it == run.experiment_histories.end()) {
+		run->experiment_histories.find(this);
+	if (it == run->experiment_histories.end()) {
 		history = new ExperimentHistory(this);
-		run.experiment_histories[this] = history;
+		run->experiment_histories[this] = history;
 	} else {
 		history = it->second;
 	}
 
-	vector<double> inputs(this->input_indexes.size());
-	for (int i_index = 0; i_index < (int)this->input_indexes.size(); i_index++) {
-		inputs[i_index] = run.state[this->input_indexes[i_index]];
-	}
-	this->original_network->activate(inputs);
-	this->branch_network->activate(inputs);
+	this->original_network->activate(run->state);
+	this->branch_network->activate(run->state);
 
 	if (this->branch_network->output->acti_vals[0] >= this->original_network->output->acti_vals[0]) {
 		history->hit_branch = true;
@@ -29,7 +33,7 @@ void Experiment::experiment_activate(ExperimentRun& run) {
 		if (history->is_on) {
 			ExperimentState* new_experiment_state = new ExperimentState(this);
 			new_experiment_state->step_index = 0;
-			run.experiment_context = new_experiment_state;
+			run->experiment_context = new_experiment_state;
 		}
 	}
 }
@@ -37,64 +41,254 @@ void Experiment::experiment_activate(ExperimentRun& run) {
 void Experiment::experiment_step(vector<double>& obs,
 								 int& action,
 								 bool& is_next,
-								 ExperimentRun& run) {
-	if (run.experiment_context->step_index >= (int)this->actions.size()) {
-		run.node_context = this->exit_next_node;
+								 ExperimentRun* run) {
+	if (run->experiment_context->step_index >= (int)this->actions.size()) {
+		run->node_context = this->exit_next_node;
 
-		delete run.experiment_context;
-		run.experiment_context = NULL;
+		delete run->experiment_context;
+		run->experiment_context = NULL;
 	} else {
-		run.action_histories.push_back(this->actions[run.experiment_context->step_index]);
+		run->action_histories.push_back(this->actions[run->experiment_context->step_index]);
 
-		action_helper(this->actions[run.experiment_context->step_index],
-					  run.state,
-					  run.wrapper);
+		action_helper(this->actions[run->experiment_context->step_index],
+					  run->state,
+					  run->wrapper);
 
-		action = this->actions[run.experiment_context->step_index];
+		action = this->actions[run->experiment_context->step_index];
 		is_next = true;
 
-		run.experiment_context->step_index++;
+		run->experiment_context->step_index++;
 	}
 }
 
-void Experiment::predict_activate(PredictRun& run) {
+void Experiment::predict_activate(PredictRun* run) {
 	ExperimentHistory* history;
 	map<Experiment*, ExperimentHistory*>::iterator it =
-		run.experiment_histories.find(this);
-	if (it == run.experiment_histories.end()) {
+		run->experiment_histories.find(this);
+	if (it == run->experiment_histories.end()) {
 		history = new ExperimentHistory(this);
-		run.experiment_histories[this] = history;
+		run->experiment_histories[this] = history;
 	} else {
 		history = it->second;
 	}
 
 	if (history->is_on) {
-		vector<double> inputs(this->input_indexes.size());
-		for (int i_index = 0; i_index < (int)this->input_indexes.size(); i_index++) {
-			inputs[i_index] = run.state[this->input_indexes[i_index]];
-		}
-		this->original_network->activate(inputs);
-		this->branch_network->activate(inputs);
+		this->original_network->activate(run->state);
+		this->branch_network->activate(run->state);
 
 		if (this->branch_network->output->acti_vals[0] >= this->original_network->output->acti_vals[0]) {
 			ExperimentState* new_experiment_state = new ExperimentState(this);
 			new_experiment_state->step_index = 0;
-			run.experiment_context = new_experiment_state;
+			run->experiment_context = new_experiment_state;
 		}
 	}
 }
 
-void Experiment::predict_step(PredictRun& run) {
-	if (run.experiment_context->step_index >= (int)this->actions.size()) {
-		run.node_context = this->exit_next_node;
+void Experiment::predict_step(PredictRun* run) {
+	if (run->experiment_context->step_index >= (int)this->actions.size()) {
+		run->node_context = this->exit_next_node;
 
-		delete run.experiment_context;
-		run.experiment_context = NULL;
+		delete run->experiment_context;
+		run->experiment_context = NULL;
 	} else {
-		action_helper(this->actions[run.experiment_context->step_index],
-					  run.state,
-					  run.wrapper);
+		action_helper(this->actions[run->experiment_context->step_index],
+					  run->state,
+					  run->wrapper);
 
-		run.experiment_context->step_index++;
+		run->experiment_context->step_index++;
+	}
+}
+
+void Experiment::backprop(double target_val,
+						  ExperimentHistory* history,
+						  Wrapper* wrapper) {
+	if (history->is_on) {
+		if (history->hit_branch) {
+			this->new_sum_scores += target_val;
+			this->new_count++;
+
+			this->state_iter++;
+		}
+	} else {
+		if (history->hit_branch) {
+			this->existing_sum_scores += target_val;
+			this->existing_count++;
+
+			this->state_iter++;
+		}
+	}
+
+	switch (this->state) {
+	case EXPERIMENT_STATE_RAMP:
+		if (this->state_iter >= RAMP_EPOCH_NUM_ITERS) {
+			double existing_score_average = this->existing_sum_scores / (double)this->existing_count;
+			double new_score_average = this->new_sum_scores / (double)this->new_count;
+
+			// // temp
+			// cout << "this->curr_ramp: " << this->curr_ramp << endl;
+			// cout << "existing_score_average: " << existing_score_average << endl;
+			// cout << "new_score_average: " << new_score_average << endl;
+
+			this->existing_sum_scores = 0.0;
+			this->existing_count = 0;
+			this->new_sum_scores = 0.0;
+			this->new_count = 0;
+
+			this->state_iter = 0;
+
+			#if defined(MDEBUG) && MDEBUG
+			if ((this->measure_status != MEASURE_STATUS_FAIL && new_score_average > existing_score_average) || rand()%3 != 0) {
+			#else
+			if (this->measure_status != MEASURE_STATUS_FAIL && new_score_average > existing_score_average) {
+			#endif /* MDEBUG */
+				this->curr_ramp++;
+
+				if (this->curr_ramp == MEASURE_GEAR
+						&& this->measure_status == MEASURE_STATUS_N_A) {
+					this->starting_iter = wrapper->iter;
+
+					this->state = EXPERIMENT_STATE_MEASURE;
+				} else if (this->curr_ramp == EXPERIMENT_NUM_GEARS) {
+					add(wrapper);
+
+					switch (this->node_context->type) {
+					case NODE_TYPE_OBS:
+						{
+							ObsNode* obs_node = (ObsNode*)this->node_context;
+							obs_node->experiment = NULL;
+						}
+						break;
+					case NODE_TYPE_BRANCH:
+						{
+							BranchNode* branch_node = (BranchNode*)this->node_context;
+							if (this->is_branch) {
+								branch_node->branch_experiment = NULL;
+							} else {
+								branch_node->original_experiment = NULL;
+							}
+						}
+						break;
+					}
+					delete this;
+				}
+			} else {
+				this->curr_ramp--;
+				if (this->curr_ramp < 0) {
+					switch (this->node_context->type) {
+					case NODE_TYPE_OBS:
+						{
+							ObsNode* obs_node = (ObsNode*)this->node_context;
+							obs_node->experiment = NULL;
+						}
+						break;
+					case NODE_TYPE_BRANCH:
+						{
+							BranchNode* branch_node = (BranchNode*)this->node_context;
+							if (this->is_branch) {
+								branch_node->branch_experiment = NULL;
+							} else {
+								branch_node->original_experiment = NULL;
+							}
+						}
+						break;
+					}
+					delete this;
+				}
+			}
+		}
+		break;
+	case EXPERIMENT_STATE_MEASURE:
+		if (this->state_iter >= MEASURE_STEP_NUM_ITERS) {
+			double existing_score_average = this->existing_sum_scores / (double)this->existing_count;
+			double new_score_average = this->new_sum_scores / (double)this->new_count;
+
+			int total_iters = wrapper->iter - this->starting_iter;
+			if (total_iters < 0) {
+				total_iters += numeric_limits<int>::max();
+			}
+			double average_hits_per_run = (2.0 * (double)this->new_count) / (double)total_iters;
+
+			this->local_improvement = new_score_average - existing_score_average;
+			this->global_improvement = average_hits_per_run * this->local_improvement;
+
+			// // temp
+			// cout << "new_score_average: " << new_score_average << endl;
+			// cout << "existing_score_average: " << existing_score_average << endl;
+			// cout << "this->local_improvement: " << this->local_improvement << endl;
+			// cout << "this->global_improvement: " << this->global_improvement << endl;
+
+			#if defined(MDEBUG) && MDEBUG
+			if (this->global_improvement > 0.0 || rand()%3 == 0) {
+			#else
+			if (this->global_improvement > 0.0) {
+			#endif /* MDEBUG */
+				bool is_success = false;
+				if (wrapper->solution->ramp_last_scores.size() >= MIN_NUM_LAST_TRACK) {
+					int num_better_than = 0;
+					for (list<double>::iterator it = wrapper->solution->ramp_last_scores.begin();
+							it != wrapper->solution->ramp_last_scores.end(); it++) {
+						if (this->global_improvement >= *it) {
+							num_better_than++;
+						}
+					}
+
+					double target_better_than = LAST_BETTER_THAN_RATIO * (double)wrapper->solution->ramp_last_scores.size();
+
+					if (num_better_than >= target_better_than) {
+						is_success = true;
+					}
+
+					if (wrapper->solution->ramp_last_scores.size() >= NUM_LAST_TRACK) {
+						wrapper->solution->ramp_last_scores.pop_front();
+					}
+					wrapper->solution->ramp_last_scores.push_back(this->global_improvement);
+				} else {
+					wrapper->solution->ramp_last_scores.push_back(this->global_improvement);
+				}
+
+				#if defined(MDEBUG) && MDEBUG
+				if (is_success || rand()%3 != 0) {
+				#else
+				if (is_success) {
+				#endif /* MDEBUG */
+					this->existing_sum_scores = 0.0;
+					this->existing_count = 0;
+					this->new_sum_scores = 0.0;
+					this->new_count = 0;
+
+					this->measure_status = MEASURE_STATUS_SUCCESS;
+
+					this->state = EXPERIMENT_STATE_RAMP;
+					this->state_iter = 0;
+
+					this->curr_ramp++;
+				} else {
+					this->existing_sum_scores = 0.0;
+					this->existing_count = 0;
+					this->new_sum_scores = 0.0;
+					this->new_count = 0;
+
+					this->measure_status = MEASURE_STATUS_FAIL;
+
+					this->state = EXPERIMENT_STATE_RAMP;
+					this->state_iter = 0;
+
+					this->curr_ramp--;
+				}
+			} else {
+				this->existing_sum_scores = 0.0;
+				this->existing_count = 0;
+				this->new_sum_scores = 0.0;
+				this->new_count = 0;
+
+				this->measure_status = MEASURE_STATUS_FAIL;
+
+				this->state = EXPERIMENT_STATE_RAMP;
+				this->state_iter = 0;
+
+				this->curr_ramp--;
+			}
+		}
+		break;
 	}
 }

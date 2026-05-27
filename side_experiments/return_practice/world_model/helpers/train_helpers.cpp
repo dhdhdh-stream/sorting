@@ -4,201 +4,34 @@
 
 #include "globals.h"
 #include "network.h"
+#include "solution.h"
 #include "world_model.h"
-#include "world_model_wrapper.h"
+#include "wrapper.h"
 
 using namespace std;
 
 const int NUM_EXISTING_STATES = 8;
-const int NUM_NEW_STATES = 4;
+const int NUM_NEW_STATES = 2;
 
 #if defined(MDEBUG) && MDEBUG
-const int UPDATE_ITERS = 30;
-const int INIT_TRAIN_ITERS = 30;
 const int TRAIN_ITERS = 30;
+const int EVAL_ITERS = 10;
 #else
-const int UPDATE_ITERS = 100000;
-const int INIT_TRAIN_ITERS = 150000;
-const int TRAIN_ITERS = 150000;
+const int TRAIN_ITERS = 300000;
+const int EVAL_ITERS = 4000;
 #endif /* MDEBUG */
 
 const double VERIFICATION_RATIO = 0.2;
 
-const int TRAIN_TRY_ITERS = 10;
+const int TRAIN_TRY_ITERS = 4;
 
-void train_iter_helper(vector<vector<double>>& sample_obs,
-					   vector<int>& sample_actions,
-					   double sample_target_val,
-					   int include_obs_index,
-					   WorldModel* world_model,
-					   WorldModelWrapper* wrapper) {
-	vector<double> state(world_model->num_states, 0.0);
+const double SAMPLE_SAVE_RATIO = 0.1;
 
-	vector<vector<NetworkHistory*>> obs_network_histories;
-	vector<vector<NetworkHistory*>> action_network_histories;
-
-	for (int step_index = 0; step_index < (int)sample_obs.size(); step_index++) {
-		if (step_index <= include_obs_index) {
-			vector<double> starting_state = state;
-
-			vector<NetworkHistory*> step_obs_network_histories;
-			for (int n_index = 0; n_index < (int)world_model->obs_networks.size(); n_index++) {
-				vector<double> inputs;
-				for (int i_index = 0; i_index < (int)world_model->obs_network_inputs[n_index].size(); i_index++) {
-					inputs.push_back(starting_state[world_model->obs_network_inputs[n_index][i_index]]);
-				}
-				inputs.insert(inputs.end(), sample_obs[step_index].begin(),
-					sample_obs[step_index].end());
-				NetworkHistory* network_history = new NetworkHistory();
-				world_model->obs_networks[n_index]->activate(inputs,
-															 network_history);
-				step_obs_network_histories.push_back(network_history);
-				for (int o_index = 0; o_index < (int)world_model->obs_network_outputs[n_index].size(); o_index++) {
-					state[world_model->obs_network_outputs[n_index][o_index]]
-						+= world_model->obs_networks[n_index]->output->acti_vals[o_index];
-				}
-			}
-			obs_network_histories.push_back(step_obs_network_histories);
-		}
-
-		if (step_index < (int)sample_actions.size()) {
-			int action = sample_actions[step_index];
-
-			vector<double> starting_state = state;
-
-			vector<double> partial_inputs;
-			for (int a_index = 0; a_index < wrapper->num_actions; a_index++) {
-				if (action == a_index) {
-					partial_inputs.push_back(1.0);
-				} else {
-					partial_inputs.push_back(0.0);
-				}
-			}
-
-			vector<NetworkHistory*> step_action_network_histories;
-			for (int n_index = 0; n_index < (int)world_model->action_networks.size(); n_index++) {
-				vector<double> inputs;
-				for (int i_index = 0; i_index < (int)world_model->action_network_inputs[n_index].size(); i_index++) {
-					inputs.push_back(starting_state[world_model->action_network_inputs[n_index][i_index]]);
-				}
-				inputs.insert(inputs.end(), partial_inputs.begin(), partial_inputs.end());
-				NetworkHistory* network_history = new NetworkHistory();
-				world_model->action_networks[n_index]->activate(inputs,
-																network_history);
-				step_action_network_histories.push_back(network_history);
-				for (int o_index = 0; o_index < (int)world_model->action_network_outputs[n_index].size(); o_index++) {
-					state[world_model->action_network_outputs[n_index][o_index]]
-						+= world_model->action_networks[n_index]->output->acti_vals[o_index];
-				}
-			}
-			action_network_histories.push_back(step_action_network_histories);
-		}
-	}
-
-	double sum_score = 0.0;
-	for (int n_index = 0; n_index < (int)world_model->final_networks.size(); n_index++) {
-		vector<double> inputs;
-		for (int i_index = 0; i_index < (int)world_model->final_network_inputs[n_index].size(); i_index++) {
-			inputs.push_back(state[world_model->final_network_inputs[n_index][i_index]]);
-		}
-		world_model->final_networks[n_index]->activate(inputs);
-		sum_score += world_model->final_networks[n_index]->output->acti_vals[0];
-	}
-
-	vector<double> final_errors{sample_target_val - sum_score};
-
-	vector<double> state_errors(world_model->num_states, 0.0);
-
-	for (int n_index = 0; n_index < (int)world_model->final_networks.size(); n_index++) {
-		world_model->final_networks[n_index]->backprop(final_errors);
-		for (int i_index = 0; i_index < (int)world_model->final_network_inputs[n_index].size(); i_index++) {
-			state_errors[world_model->final_network_inputs[n_index][i_index]]
-				+= world_model->final_networks[n_index]->input->errors[i_index];
-			world_model->final_networks[n_index]->input->errors[i_index] = 0.0;
-		}
-	}
-
-	for (int step_index = (int)sample_obs.size()-1; step_index >= 0; step_index--) {
-		if (step_index < (int)sample_actions.size()) {
-			vector<double> starting_errors = state_errors;
-
-			for (int n_index = 0; n_index < (int)world_model->action_networks.size(); n_index++) {
-				vector<double> errors;
-				for (int o_index = 0; o_index < (int)world_model->action_network_outputs[n_index].size(); o_index++) {
-					errors.push_back(starting_errors[world_model->action_network_outputs[n_index][o_index]]);
-				}
-				world_model->action_networks[n_index]->backprop(errors,
-																action_network_histories[step_index][n_index]);
-				delete action_network_histories[step_index][n_index];
-				for (int i_index = 0; i_index < (int)world_model->action_network_inputs[n_index].size(); i_index++) {
-					state_errors[world_model->action_network_inputs[n_index][i_index]]
-						+= world_model->action_networks[n_index]->input->errors[i_index];
-					world_model->action_networks[n_index]->input->errors[i_index] = 0.0;
-				}
-			}
-		}
-
-		if (step_index <= include_obs_index) {
-			vector<double> starting_errors = state_errors;
-
-			for (int n_index = 0; n_index < (int)world_model->obs_networks.size(); n_index++) {
-				vector<double> errors;
-				for (int o_index = 0; o_index < (int)world_model->obs_network_outputs[n_index].size(); o_index++) {
-					errors.push_back(starting_errors[world_model->obs_network_outputs[n_index][o_index]]);
-				}
-				world_model->obs_networks[n_index]->backprop(errors,
-															 obs_network_histories[step_index][n_index]);
-				delete obs_network_histories[step_index][n_index];
-				for (int i_index = 0; i_index < (int)world_model->obs_network_inputs[n_index].size(); i_index++) {
-					state_errors[world_model->obs_network_inputs[n_index][i_index]]
-						+= world_model->obs_networks[n_index]->input->errors[i_index];
-					world_model->obs_networks[n_index]->input->errors[i_index] = 0.0;
-				}
-			}
-		}
-	}
-}
-
-void update_helper(WorldModel* world_model) {
-	double max_update = 0.0;
-	for (int n_index = 0; n_index < (int)world_model->obs_networks.size(); n_index++) {
-		world_model->obs_networks[n_index]->get_max_update(max_update);
-	}
-	for (int n_index = 0; n_index < (int)world_model->action_networks.size(); n_index++) {
-		world_model->action_networks[n_index]->get_max_update(max_update);
-	}
-	for (int n_index = 0; n_index < (int)world_model->final_networks.size(); n_index++) {
-		world_model->final_networks[n_index]->get_max_update(max_update);
-	}
-
-	world_model->average_max_update += 0.999*world_model->average_max_update + 0.001*max_update;
-
-	if (max_update > 0.0) {
-		double learning_rate = (0.3*NETWORK_TARGET_MAX_UPDATE) / world_model->average_max_update;
-		if (learning_rate*max_update > NETWORK_TARGET_MAX_UPDATE) {
-			learning_rate = NETWORK_TARGET_MAX_UPDATE/max_update;
-		}
-
-		for (int n_index = 0; n_index < (int)world_model->obs_networks.size(); n_index++) {
-			world_model->obs_networks[n_index]->update_weights(learning_rate);
-		}
-		for (int n_index = 0; n_index < (int)world_model->action_networks.size(); n_index++) {
-			world_model->action_networks[n_index]->update_weights(learning_rate);
-		}
-		for (int n_index = 0; n_index < (int)world_model->final_networks.size(); n_index++) {
-			world_model->final_networks[n_index]->update_weights(learning_rate);
-		}
-	}
-}
-
-void init_train_helper(vector<vector<vector<double>>>& train_obs,
-					   vector<vector<int>>& train_actions,
-					   vector<double>& train_target_vals,
-					   WorldModel* potential_world_model,
-					   WorldModelWrapper* wrapper) {
-	// temp
-	cout << "init_train_helper" << endl;
-
+void train_helper(vector<vector<vector<double>>>& train_obs,
+				  vector<vector<int>>& train_actions,
+				  vector<double>& train_target_vals,
+				  WorldModel* potential_world_model,
+				  Wrapper* wrapper) {
 	vector<int> new_obs_existing_inputs;
 	{
 		vector<int> remaining_indexes;
@@ -262,7 +95,7 @@ void init_train_helper(vector<vector<vector<double>>>& train_obs,
 	Network* new_final_network = new Network(NUM_NEW_STATES + new_final_existing_inputs.size(), 1);
 
 	uniform_int_distribution<int> sample_distribution(0, train_obs.size()-1);
-	for (int iter_index = 0; iter_index < INIT_TRAIN_ITERS; iter_index++) {
+	for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
 		int sample_index = sample_distribution(generator);
 
 		uniform_int_distribution<int> include_obs_distribution(
@@ -458,62 +291,78 @@ void init_train_helper(vector<vector<vector<double>>>& train_obs,
 	potential_world_model->final_networks.push_back(new_final_network);
 }
 
-void train_helper(WorldModelWrapper* wrapper) {
-	// temp
-	cout << "train_helper" << endl;
+double eval_helper(vector<vector<double>>& sample_obs,
+				   vector<int>& sample_actions,
+				   double sample_target_val,
+				   int include_obs_index,
+				   WorldModel* world_model,
+				   Wrapper* wrapper) {
+	vector<double> state(world_model->num_states, 0.0);
 
-	for (int iter_index = 0; iter_index < UPDATE_ITERS; iter_index++) {
-		vector<vector<double>> sample_obs;
-		vector<int> sample_actions;
-		double sample_target_val;
-		if (wrapper->new_sample_obs.size() >= wrapper->old_sample_obs.size()) {
-			uniform_int_distribution<int> is_old_distribution(
-				0, wrapper->old_sample_obs.size() + wrapper->new_sample_obs.size() - 1);
-			if (is_old_distribution(generator) < (int)wrapper->old_sample_obs.size()) {
-				uniform_int_distribution<int> old_distribution(0, wrapper->old_sample_obs.size()-1);
-				int index = old_distribution(generator);
-				sample_obs = wrapper->old_sample_obs[index];
-				sample_actions = wrapper->old_sample_actions[index];
-				sample_target_val = wrapper->old_sample_target_vals[index];
-			} else {
-				uniform_int_distribution<int> new_distribution(0, wrapper->new_sample_obs.size()-1);
-				int index = new_distribution(generator);
-				sample_obs = wrapper->new_sample_obs[index];
-				sample_actions = wrapper->new_sample_actions[index];
-				sample_target_val = wrapper->new_sample_target_vals[index];
-			}
-		} else {
-			uniform_int_distribution<int> is_old_distribution(0, 1);
-			if (is_old_distribution(generator) == 0) {
-				uniform_int_distribution<int> old_distribution(0, wrapper->old_sample_obs.size()-1);
-				int index = old_distribution(generator);
-				sample_obs = wrapper->old_sample_obs[index];
-				sample_actions = wrapper->old_sample_actions[index];
-				sample_target_val = wrapper->old_sample_target_vals[index];
-			} else {
-				uniform_int_distribution<int> new_distribution(0, wrapper->new_sample_obs.size()-1);
-				int index = new_distribution(generator);
-				sample_obs = wrapper->new_sample_obs[index];
-				sample_actions = wrapper->new_sample_actions[index];
-				sample_target_val = wrapper->new_sample_target_vals[index];
+	for (int step_index = 0; step_index < (int)sample_obs.size(); step_index++) {
+		if (step_index <= include_obs_index) {
+			vector<double> starting_state = state;
+
+			for (int n_index = 0; n_index < (int)world_model->obs_networks.size(); n_index++) {
+				vector<double> inputs;
+				for (int i_index = 0; i_index < (int)world_model->obs_network_inputs[n_index].size(); i_index++) {
+					inputs.push_back(starting_state[world_model->obs_network_inputs[n_index][i_index]]);
+				}
+				inputs.insert(inputs.end(), sample_obs[step_index].begin(),
+					sample_obs[step_index].end());
+				world_model->obs_networks[n_index]->activate(inputs);
+				for (int o_index = 0; o_index < (int)world_model->obs_network_outputs[n_index].size(); o_index++) {
+					state[world_model->obs_network_outputs[n_index][o_index]]
+						+= world_model->obs_networks[n_index]->output->acti_vals[o_index];
+				}
 			}
 		}
 
-		uniform_int_distribution<int> include_obs_distribution(
-			0, sample_obs.size()-1);
-		int include_obs_index = include_obs_distribution(generator);
+		if (step_index < (int)sample_actions.size()) {
+			int action = sample_actions[step_index];
 
-		train_iter_helper(sample_obs,
-						  sample_actions,
-						  sample_target_val,
-						  include_obs_index,
-						  wrapper->world_model,
-						  wrapper);
+			vector<double> starting_state = state;
 
-		if ((iter_index + 1)%NETWORK_EPOCH_SIZE == 0) {
-			update_helper(wrapper->world_model);
+			vector<double> partial_inputs;
+			for (int a_index = 0; a_index < wrapper->num_actions; a_index++) {
+				if (action == a_index) {
+					partial_inputs.push_back(1.0);
+				} else {
+					partial_inputs.push_back(0.0);
+				}
+			}
+
+			for (int n_index = 0; n_index < (int)world_model->action_networks.size(); n_index++) {
+				vector<double> inputs;
+				for (int i_index = 0; i_index < (int)world_model->action_network_inputs[n_index].size(); i_index++) {
+					inputs.push_back(starting_state[world_model->action_network_inputs[n_index][i_index]]);
+				}
+				inputs.insert(inputs.end(), partial_inputs.begin(), partial_inputs.end());
+				world_model->action_networks[n_index]->activate(inputs);
+				for (int o_index = 0; o_index < (int)world_model->action_network_outputs[n_index].size(); o_index++) {
+					state[world_model->action_network_outputs[n_index][o_index]]
+						+= world_model->action_networks[n_index]->output->acti_vals[o_index];
+				}
+			}
 		}
 	}
+
+	double sum_score = 0.0;
+	for (int n_index = 0; n_index < (int)world_model->final_networks.size(); n_index++) {
+		vector<double> inputs;
+		for (int i_index = 0; i_index < (int)world_model->final_network_inputs[n_index].size(); i_index++) {
+			inputs.push_back(state[world_model->final_network_inputs[n_index][i_index]]);
+		}
+		world_model->final_networks[n_index]->activate(inputs);
+		sum_score += world_model->final_networks[n_index]->output->acti_vals[0];
+	}
+
+	return sum_score;
+}
+
+void train_helper(Wrapper* wrapper) {
+	// temp
+	cout << "train_helper" << endl;
 
 	for (int try_index = 0; try_index < TRAIN_TRY_ITERS; try_index++) {
 		vector<vector<vector<double>>> train_obs;
@@ -525,24 +374,130 @@ void train_helper(WorldModelWrapper* wrapper) {
 
 		int num_new_verification = VERIFICATION_RATIO * (double)wrapper->new_sample_obs.size();
 		int num_new_train = (int)wrapper->new_sample_obs.size() - num_new_verification;
+		{
+			vector<int> remaining_indexes(wrapper->new_sample_obs.size());
+			for (int i_index = 0; i_index < (int)wrapper->new_sample_obs.size(); i_index++) {
+				remaining_indexes[i_index] = i_index;
+			}
 
+			for (int i_index = 0; i_index < num_new_train; i_index++) {
+				uniform_int_distribution<int> distribution(0, remaining_indexes.size()-1);
+				int index = distribution(generator);
+				train_obs.push_back(wrapper->new_sample_obs[remaining_indexes[index]]);
+				train_actions.push_back(wrapper->new_sample_actions[remaining_indexes[index]]);
+				train_target_vals.push_back(wrapper->new_sample_target_vals[remaining_indexes[index]]);
 
+				remaining_indexes.erase(remaining_indexes.begin() + index);
+			}
+			for (int i_index = 0; i_index < (int)remaining_indexes.size(); i_index++) {
+				verification_obs.push_back(wrapper->new_sample_obs[remaining_indexes[i_index]]);
+				verification_actions.push_back(wrapper->new_sample_actions[remaining_indexes[i_index]]);
+				verification_target_vals.push_back(wrapper->new_sample_target_vals[remaining_indexes[i_index]]);
+			}
+		}
 
 		int num_old_verification;
 		int num_old_train;
 		if (wrapper->new_sample_obs.size() >= wrapper->old_sample_obs.size()) {
-
+			num_old_verification = VERIFICATION_RATIO * (double)wrapper->old_sample_obs.size();
+			num_old_train = (int)wrapper->old_sample_obs.size() - num_old_verification;
 		} else {
+			num_old_verification = num_new_verification;
+			num_old_train = num_new_train;
+		}
+		{
+			vector<int> remaining_indexes(wrapper->old_sample_obs.size());
+			for (int i_index = 0; i_index < (int)wrapper->old_sample_obs.size(); i_index++) {
+				remaining_indexes[i_index] = i_index;
+			}
 
+			for (int i_index = 0; i_index < num_old_train; i_index++) {
+				uniform_int_distribution<int> distribution(0, remaining_indexes.size()-1);
+				int index = distribution(generator);
+				train_obs.push_back(wrapper->old_sample_obs[remaining_indexes[index]]);
+				train_actions.push_back(wrapper->old_sample_actions[remaining_indexes[index]]);
+				train_target_vals.push_back(wrapper->old_sample_target_vals[remaining_indexes[index]]);
+
+				remaining_indexes.erase(remaining_indexes.begin() + index);
+			}
+			for (int i_index = 0; i_index < num_old_verification; i_index++) {
+				uniform_int_distribution<int> distribution(0, remaining_indexes.size()-1);
+				int index = distribution(generator);
+				verification_obs.push_back(wrapper->old_sample_obs[remaining_indexes[index]]);
+				verification_actions.push_back(wrapper->old_sample_actions[remaining_indexes[index]]);
+				verification_target_vals.push_back(wrapper->old_sample_target_vals[remaining_indexes[index]]);
+
+				remaining_indexes.erase(remaining_indexes.begin() + index);
+			}
 		}
 
 		WorldModel* potential_world_model = new WorldModel(wrapper->world_model);
 
+		train_helper(train_obs,
+					 train_actions,
+					 train_target_vals,
+					 potential_world_model,
+					 wrapper);
 
+		double existing_sum_misguess = 0.0;
+		double new_sum_misguess = 0.0;
+		uniform_int_distribution<int> verification_sample_distribution(0, verification_obs.size()-1);
+		for (int iter_index = 0; iter_index < EVAL_ITERS; iter_index++) {
+			int verification_sample_index = verification_sample_distribution(generator);
 
-		delete wrapper->world_model;
-		wrapper->world_model = potential_world_model;
+			vector<vector<double>> sample_obs = verification_obs[verification_sample_index];
+			vector<int> sample_actions = verification_actions[verification_sample_index];
+			double sample_target_val = verification_target_vals[verification_sample_index];
+
+			uniform_int_distribution<int> include_obs_distribution(
+				0, sample_obs.size()-1);
+			int include_obs_index = include_obs_distribution(generator);
+
+			double existing_predicted = eval_helper(sample_obs,
+													sample_actions,
+													sample_target_val,
+													include_obs_index,
+													wrapper->world_model,
+													wrapper);
+			existing_sum_misguess += (sample_target_val - existing_predicted)
+				* (sample_target_val - existing_predicted);
+
+			double new_predicted = eval_helper(sample_obs,
+											   sample_actions,
+											   sample_target_val,
+											   include_obs_index,
+											   potential_world_model,
+											   wrapper);
+			new_sum_misguess += (sample_target_val - new_predicted)
+				* (sample_target_val - new_predicted);
+		}
+
+		if (new_sum_misguess < existing_sum_misguess) {
+			delete wrapper->world_model;
+			wrapper->world_model = potential_world_model;
+
+			wrapper->solution->pad_new_state(NUM_NEW_STATES);
+		} else {
+			delete potential_world_model;
+		}
 	}
+
+	int num_save = SAMPLE_SAVE_RATIO * (double)wrapper->new_sample_obs.size();
+	for (int i_index = 0; i_index < num_save; i_index++) {
+		uniform_int_distribution<int> distribution(0, wrapper->new_sample_obs.size()-1);
+		int index = distribution(generator);
+
+		wrapper->old_sample_obs.push_back(wrapper->new_sample_obs[index]);
+		wrapper->new_sample_obs.erase(wrapper->new_sample_obs.begin() + index);
+		wrapper->old_sample_actions.push_back(wrapper->new_sample_actions[index]);
+		wrapper->new_sample_actions.erase(wrapper->new_sample_actions.begin() + index);
+		wrapper->old_sample_target_vals.push_back(wrapper->new_sample_target_vals[index]);
+		wrapper->new_sample_target_vals.erase(wrapper->new_sample_target_vals.begin() + index);
+	}
+
+	wrapper->new_sample_obs.clear();
+	wrapper->new_sample_actions.clear();
+	wrapper->new_sample_target_vals.clear();
 
 	// temp
 	cout << "train_helper done" << endl;

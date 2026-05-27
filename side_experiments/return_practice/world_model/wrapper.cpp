@@ -1,19 +1,39 @@
-#include "world_model_wrapper.h"
+#include "wrapper.h"
 
+#include "obs_node.h"
 #include "problem.h"
+#include "solution.h"
 #include "world_model.h"
 
 using namespace std;
 
-WorldModelWrapper::WorldModelWrapper(ProblemType* problem_type) {
+Wrapper::Wrapper(ProblemType* problem_type) {
 	this->num_obs = problem_type->num_obs();
 	this->num_actions = problem_type->num_possible_actions();
 
 	this->world_model = new WorldModel();
+
+	this->solution = new Solution();
+
+	this->solution->timestamp = 0;
+	this->solution->curr_score = 0.0;
+
+	this->solution->node_counter = 0;
+
+	ObsNode* start_node = new ObsNode();
+	start_node->id = this->solution->node_counter;
+	this->solution->node_counter++;
+	this->solution->nodes[start_node->id] = start_node;
+	start_node->next_node_id = -1;
+	start_node->next_node = NULL;
+
+	this->solution->score_index = 0;
+
+	this->iter = 0;
 }
 
-WorldModelWrapper::WorldModelWrapper(std::string path,
-									 std::string name) {
+Wrapper::Wrapper(std::string path,
+				 std::string name) {
 	ifstream input_file;
 	input_file.open(path + name);
 
@@ -27,6 +47,10 @@ WorldModelWrapper::WorldModelWrapper(std::string path,
 
 	this->world_model = new WorldModel();
 	this->world_model->load(input_file);
+
+	this->solution = new Solution();
+	this->solution->load(input_file,
+						 this);
 
 	string num_old_samples_line;
 	getline(input_file, num_old_samples_line);
@@ -99,14 +123,17 @@ WorldModelWrapper::WorldModelWrapper(std::string path,
 	}
 
 	input_file.close();
+
+	this->iter = 0;
 }
 
-WorldModelWrapper::~WorldModelWrapper() {
+Wrapper::~Wrapper() {
 	delete this->world_model;
+	delete this->solution;
 }
 
-void WorldModelWrapper::save(string path,
-							 string name) {
+void Wrapper::save(string path,
+				   string name) {
 	ofstream output_file;
 	output_file.open(path + "temp_" + name);
 
@@ -114,6 +141,8 @@ void WorldModelWrapper::save(string path,
 	output_file << this->num_actions << endl;
 
 	this->world_model->save(output_file);
+	this->solution->save(output_file,
+						 this);
 
 	output_file << this->old_sample_obs.size() << endl;
 	for (int s_index = 0; s_index < (int)this->old_sample_obs.size(); s_index++) {
@@ -148,6 +177,20 @@ void WorldModelWrapper::save(string path,
 
 		output_file << this->new_sample_target_vals[s_index] << endl;
 	}
+
+	output_file.close();
+
+	string oldname = path + "temp_" + name;
+	string newname = path + name;
+	rename(oldname.c_str(), newname.c_str());
+}
+
+void Wrapper::save_for_display(string path,
+							   string name) {
+	ofstream output_file;
+	output_file.open(path + "temp_" + name);
+
+	this->solution->save_for_display(output_file);
 
 	output_file.close();
 

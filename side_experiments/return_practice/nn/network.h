@@ -41,13 +41,12 @@ public:
 	void backprop_through(std::vector<double>& errors,
 						  NetworkHistory* history);
 
-	/**
-	 * - for init
-	 */
 	void update();
 
 	void get_max_update(double& max_update);
 	void update_weights(double learning_rate);
+
+	void add_inputs(int num_add);
 
 	void save(std::ofstream& output_file);
 };
