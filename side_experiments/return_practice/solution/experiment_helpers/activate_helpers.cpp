@@ -188,6 +188,7 @@ void Experiment::backprop(double target_val,
 			cout << "existing_score_average: " << existing_score_average << endl;
 			cout << "new_score_average: " << new_score_average << endl;
 
+			this->total_count = 0;
 			this->existing_sum_scores = 0.0;
 			this->existing_count = 0;
 			this->new_sum_scores = 0.0;
@@ -276,6 +277,7 @@ void Experiment::backprop(double target_val,
 			// cout << "this->local_improvement: " << this->local_improvement << endl;
 			// cout << "this->global_improvement: " << this->global_improvement << endl;
 
+			this->total_count = 0;
 			this->existing_sum_scores = 0.0;
 			this->existing_count = 0;
 			this->new_sum_scores = 0.0;

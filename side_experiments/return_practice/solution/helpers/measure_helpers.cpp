@@ -1,41 +1,19 @@
-#include <chrono>
-#include <iostream>
-#include <map>
-#include <thread>
-#include <random>
+#include "solution_helpers.h"
 
-#include "globals.h"
 #include "run.h"
 #include "test_indirect.h"
 #include "wrapper.h"
 
 using namespace std;
 
-int seed;
-
-default_random_engine generator;
-
+#if defined(MDEBUG) && MDEBUG
+const int MEASURE_NUM_ITERS = 40;
+#else
 const int MEASURE_NUM_ITERS = 4000;
+#endif /* MDEBUG */
 
-int main(int argc, char* argv[]) {
-	cout << "Starting..." << endl;
-
-	seed = (unsigned)time(NULL);
-	srand(seed);
-	generator.seed(seed);
-	cout << "Seed: " << seed << endl;
-
+double measure_helper(Wrapper* wrapper) {
 	ProblemType* problem_type = new TypeTestIndirect();
-
-	string filename;
-	Wrapper* wrapper;
-	if (argc > 1) {
-		filename = argv[1];
-	} else {
-		filename = "main.txt";
-	}
-	wrapper = new Wrapper("saves/",
-						  filename);
 
 	double sum_scores = 0.0;
 	for (int iter_index = 0; iter_index < MEASURE_NUM_ITERS; iter_index++) {
@@ -66,10 +44,8 @@ int main(int argc, char* argv[]) {
 	}
 
 	double score_average = sum_scores / MEASURE_NUM_ITERS;
-	cout << "score_average: " << score_average << endl;
 
 	delete problem_type;
-	delete wrapper;
 
-	cout << "Done" << endl;
+	return score_average;
 }

@@ -7,9 +7,8 @@
 #include "constants.h"
 #include "experiment_run.h"
 #include "globals.h"
-// #include "simple.h"
-#include "simple_branch.h"
 #include "solution.h"
+#include "test_indirect.h"
 #include "world_model.h"
 #include "world_model_helpers.h"
 #include "wrapper.h"
@@ -28,7 +27,7 @@ int main(int argc, char* argv[]) {
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
 
-	ProblemType* problem_type = new TypeSimpleBranch();
+	ProblemType* problem_type = new TypeTestIndirect();
 
 	string filename;
 	Wrapper* wrapper;

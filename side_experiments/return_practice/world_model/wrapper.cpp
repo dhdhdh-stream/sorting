@@ -49,13 +49,6 @@ Wrapper::Wrapper(std::string path,
 	getline(input_file, num_actions_line);
 	this->num_actions = stoi(num_actions_line);
 
-	this->world_model = new WorldModel();
-	this->world_model->load(input_file);
-
-	this->solution = new Solution();
-	this->solution->load(input_file,
-						 this);
-
 	string num_old_samples_line;
 	getline(input_file, num_old_samples_line);
 	int num_old_samples = stoi(num_old_samples_line);
@@ -126,6 +119,13 @@ Wrapper::Wrapper(std::string path,
 		this->new_sample_target_vals.push_back(stod(target_val_line));
 	}
 
+	this->world_model = new WorldModel();
+	this->world_model->load(input_file);
+
+	this->solution = new Solution();
+	this->solution->load(input_file,
+						 this);
+
 	input_file.close();
 
 	this->iter = 0;
@@ -147,10 +147,6 @@ void Wrapper::save(string path,
 
 	output_file << this->num_obs << endl;
 	output_file << this->num_actions << endl;
-
-	this->world_model->save(output_file);
-	this->solution->save(output_file,
-						 this);
 
 	output_file << this->old_sample_obs.size() << endl;
 	for (int s_index = 0; s_index < (int)this->old_sample_obs.size(); s_index++) {
@@ -185,6 +181,10 @@ void Wrapper::save(string path,
 
 		output_file << this->new_sample_target_vals[s_index] << endl;
 	}
+
+	this->world_model->save(output_file);
+	this->solution->save(output_file,
+						 this);
 
 	output_file.close();
 

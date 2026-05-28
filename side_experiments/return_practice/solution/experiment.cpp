@@ -12,6 +12,7 @@ Experiment::Experiment() {
 	this->curr_ramp = 0;
 	this->measure_status = MEASURE_STATUS_N_A;
 
+	this->total_count = 0;
 	this->existing_sum_scores = 0.0;
 	this->existing_count = 0;
 	this->new_sum_scores = 0.0;

@@ -15,9 +15,6 @@ public:
 	int num_obs;
 	int num_actions;
 
-	WorldModel* world_model;
-	Solution* solution;
-
 	std::vector<std::vector<std::vector<double>>> old_sample_obs;
 	std::vector<std::vector<int>> old_sample_actions;
 	std::vector<double> old_sample_target_vals;
@@ -25,6 +22,9 @@ public:
 	std::vector<std::vector<std::vector<double>>> new_sample_obs;
 	std::vector<std::vector<int>> new_sample_actions;
 	std::vector<double> new_sample_target_vals;
+
+	WorldModel* world_model;
+	Solution* solution;
 
 	int iter;
 

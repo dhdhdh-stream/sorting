@@ -7,8 +7,8 @@
 using namespace std;
 
 TestIndirect::TestIndirect() {
-	uniform_int_distribution<int> context_distribution(0, 9);
-	// uniform_int_distribution<int> context_distribution(0, 4);
+	// uniform_int_distribution<int> context_distribution(0, 9);
+	uniform_int_distribution<int> context_distribution(0, 4);
 	if (context_distribution(generator) == 0) {
 		this->curr_context = 1;
 	} else {
@@ -43,8 +43,8 @@ void TestIndirect::perform_action(int action) {
 		break;
 	}
 
-	uniform_int_distribution<int> context_distribution(0, 9);
-	// uniform_int_distribution<int> context_distribution(0, 4);
+	// uniform_int_distribution<int> context_distribution(0, 9);
+	uniform_int_distribution<int> context_distribution(0, 4);
 	if (context_distribution(generator) == 0) {
 		this->curr_context = 1;
 	} else {

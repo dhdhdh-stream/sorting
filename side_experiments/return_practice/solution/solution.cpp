@@ -472,6 +472,11 @@ void Solution::load(ifstream& input_file,
 		}
 	}
 
+	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
+			it != this->nodes.end(); it++) {
+		it->second->link(wrapper);
+	}
+
 	string num_train_new_last_scores_line;
 	getline(input_file, num_train_new_last_scores_line);
 	int num_train_new_last_scores = stoi(num_train_new_last_scores_line);
