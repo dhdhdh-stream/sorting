@@ -4,7 +4,7 @@
 const double MIN_WEIGHT = 0.00001;
 const double MIN_STANDARD_DEVIATION = 0.00001;
 
-const int SAMPLES_PER_TRAIN = 4000;
+const int SAMPLES_PER_TRAIN = 10000;
 
 #if defined(MDEBUG) && MDEBUG
 const int SCORE_HISTORIES_NUM_SAVE = 100;

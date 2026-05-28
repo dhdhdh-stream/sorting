@@ -71,24 +71,13 @@ void Wrapper::experiment_end(double result,
 							  result,
 							  this);
 
-	// this->new_sample_obs.push_back(run->obs_histories);
-	// this->new_sample_actions.push_back(run->action_histories);
-	// this->new_sample_target_vals.push_back(result);
-	// if (this->new_sample_obs.size() >= SAMPLES_PER_TRAIN) {
-	// 	// temp
-	// 	cout << "this->iter: " << this->iter << endl;
-	// 	train_helper(this);
-	// }
-	// temp
-	if (this->world_model->num_states < 20) {
-		this->new_sample_obs.push_back(run->obs_histories);
-		this->new_sample_actions.push_back(run->action_histories);
-		this->new_sample_target_vals.push_back(result);
-		if (this->new_sample_obs.size() >= SAMPLES_PER_TRAIN) {
-			// temp
-			cout << "this->iter: " << this->iter << endl;
-			train_helper(this);
-		}
+	this->new_sample_obs.push_back(run->obs_histories);
+	this->new_sample_actions.push_back(run->action_histories);
+	this->new_sample_target_vals.push_back(result);
+	if (this->new_sample_obs.size() >= SAMPLES_PER_TRAIN) {
+		// temp
+		cout << "this->iter: " << this->iter << endl;
+		train_helper(this);
 	}
 
 	update_solution_helper(run,
@@ -96,8 +85,13 @@ void Wrapper::experiment_end(double result,
 
 	// temp
 	if (this->iter % 2000 == 0) {
-		double curr_score = measure_helper(this);
-		cout << "curr_score: " << curr_score << endl;
+		double score_average;
+		double misguess_average;
+		measure_helper(this,
+					   score_average,
+					   misguess_average);
+		cout << "score_average: " << score_average << endl;
+		cout << "misguess_average: " << misguess_average << endl;
 	}
 
 	if (this->solution->score_histories.size() < SCORE_HISTORIES_NUM_SAVE) {

@@ -13,6 +13,8 @@ void create_experiment(ExperimentRun* run,
 void update_solution_helper(ExperimentRun* run,
 							double target_val);
 
-double measure_helper(Wrapper* wrapper);
+void measure_helper(Wrapper* wrapper,
+					double& score_average,
+					double& misguess_average);
 
 #endif /* SOLUTION_HELPERS_H */

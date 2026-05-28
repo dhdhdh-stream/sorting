@@ -441,8 +441,8 @@ void train_helper(Wrapper* wrapper) {
 					 potential_world_model,
 					 wrapper);
 
-		double existing_sum_misguess = 0.0;
-		double new_sum_misguess = 0.0;
+		vector<double> existing_misguess(EVAL_ITERS);
+		vector<double> new_misguess(EVAL_ITERS);
 		uniform_int_distribution<int> verification_sample_distribution(0, verification_obs.size()-1);
 		for (int iter_index = 0; iter_index < EVAL_ITERS; iter_index++) {
 			int verification_sample_index = verification_sample_distribution(generator);
@@ -461,7 +461,7 @@ void train_helper(Wrapper* wrapper) {
 													include_obs_index,
 													wrapper->world_model,
 													wrapper);
-			existing_sum_misguess += (sample_target_val - existing_predicted)
+			existing_misguess[iter_index] = (sample_target_val - existing_predicted)
 				* (sample_target_val - existing_predicted);
 
 			double new_predicted = eval_helper(sample_obs,
@@ -470,18 +470,48 @@ void train_helper(Wrapper* wrapper) {
 											   include_obs_index,
 											   potential_world_model,
 											   wrapper);
-			new_sum_misguess += (sample_target_val - new_predicted)
+			new_misguess[iter_index] = (sample_target_val - new_predicted)
 				* (sample_target_val - new_predicted);
 		}
+
+		double existing_sum_misguess = 0.0;
+		for (int iter_index = 0; iter_index < EVAL_ITERS; iter_index++) {
+			existing_sum_misguess += existing_misguess[iter_index];
+		}
+		double existing_misguess_average = existing_sum_misguess / EVAL_ITERS;
+
+		double existing_misguess_sum_variance = 0.0;
+		for (int iter_index = 0; iter_index < EVAL_ITERS; iter_index++) {
+			existing_misguess_sum_variance += (existing_misguess[iter_index] - existing_misguess_average)
+				* (existing_misguess[iter_index] - existing_misguess_average);
+		}
+		double existing_misguess_variance = existing_misguess_sum_variance / EVAL_ITERS;
+
+		double new_sum_misguess = 0.0;
+		for (int iter_index = 0; iter_index < EVAL_ITERS; iter_index++) {
+			new_sum_misguess += new_misguess[iter_index];
+		}
+		double new_misguess_average = new_sum_misguess / EVAL_ITERS;
+
+		double new_misguess_sum_variance = 0.0;
+		for (int iter_index = 0; iter_index < EVAL_ITERS; iter_index++) {
+			new_misguess_sum_variance += (new_misguess[iter_index] - new_misguess_average)
+				* (new_misguess[iter_index] - new_misguess_average);
+		}
+		double new_misguess_variance = new_misguess_sum_variance / EVAL_ITERS;
+
+		double denom = sqrt(existing_misguess_variance + new_misguess_variance) / sqrt(EVAL_ITERS);
+		double t_score = (existing_sum_misguess - new_sum_misguess) / denom;
 
 		// temp
 		cout << "existing_sum_misguess: " << existing_sum_misguess << endl;
 		cout << "new_sum_misguess: " << new_sum_misguess << endl;
+		cout << "t_score: " << t_score << endl;
 
 		#if defined(MDEBUG) && MDEBUG
-		if (new_sum_misguess < existing_sum_misguess || rand()%2 == 0) {
+		if (t_score >= 2.326 || rand()%2 == 0) {
 		#else
-		if (new_sum_misguess < existing_sum_misguess) {
+		if (t_score >= 2.326) {
 		#endif /* MDEBUG */
 			cout << "add state" << endl;
 
