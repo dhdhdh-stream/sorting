@@ -5,6 +5,8 @@
 #include <random>
 
 #include "constants.h"
+#include "experiment_run.h"
+#include "globals.h"
 // #include "simple.h"
 #include "simple_branch.h"
 #include "solution.h"

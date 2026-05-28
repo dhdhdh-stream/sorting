@@ -5,6 +5,7 @@
 #include "abstract_node.h"
 #include "constants.h"
 #include "experiment.h"
+#include "experiment_run.h"
 #include "solution.h"
 #include "solution_helpers.h"
 #include "utilities.h"
@@ -50,13 +51,11 @@ pair<bool,int> Wrapper::experiment_step(vector<double> obs,
 			is_done = true;
 		} else if (run->experiment_context != NULL) {
 			Experiment* experiment = run->experiment_context->experiment;
-			experiment->experiment_step(obs,
-										action,
+			experiment->experiment_step(action,
 										is_next,
 										run);
 		} else {
-			run->node_context->experiment_step(obs,
-											   action,
+			run->node_context->experiment_step(action,
 											   is_next,
 											   run);
 		}

@@ -17,13 +17,17 @@ HEADERS = ${SOURCES:.cpp=.h}
 OBJECTS = ${HEADERS:.h=.o}
 DEPENDS = ${OBJECTS:.o=.d}
 
-all: main
+all: main measure
 
 main: ${OBJECTS} main.o
 	${CXX} ${CXXFLAGS} ${OBJECTS} main.o -o main ${LIBS}
 
--include ${DEPENDS} main.d
+measure: ${OBJECTS} measure.o
+	${CXX} ${CXXFLAGS} ${OBJECTS} measure.o -o measure ${LIBS}
+
+-include ${DEPENDS} main.d measure.d
 
 clean:
 	rm -f ${OBJECTS} ${DEPENDS} \
-	main.o main.d main
+	main.o main.d main \
+	measure.o measure.d measure

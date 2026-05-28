@@ -17,8 +17,10 @@ public:
 
 	ActionNode();
 
-	void experiment_step(std::vector<double>& obs,
-						 int& action,
+	void step(int& action,
+			  bool& is_next,
+			  Run* run);
+	void experiment_step(int& action,
 						 bool& is_next,
 						 ExperimentRun* run);
 	void predict_step(PredictRun* run);

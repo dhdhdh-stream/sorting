@@ -4,9 +4,9 @@
 #include <fstream>
 #include <vector>
 
-#include "experiment_run.h"
-
+class ExperimentRun;
 class ProblemType;
+class Run;
 class Solution;
 class WorldModel;
 
@@ -38,6 +38,10 @@ public:
 	Wrapper(std::string path,
 			std::string name);
 	~Wrapper();
+
+	void init(Run* run);
+	std::pair<bool,int> step(std::vector<double> obs,
+							 Run* run);
 
 	void experiment_init(ExperimentRun* run);
 	std::pair<bool,int> experiment_step(std::vector<double> obs,

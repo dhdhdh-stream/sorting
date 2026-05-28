@@ -1,11 +1,11 @@
 #include "action_node.h"
 
+#include "experiment_run.h"
 #include "world_model_helpers.h"
 
 using namespace std;
 
-void ActionNode::experiment_step(vector<double>& obs,
-								 int& action,
+void ActionNode::experiment_step(int& action,
 								 bool& is_next,
 								 ExperimentRun* run) {
 	ActionNodeHistory* history = new ActionNodeHistory(this);

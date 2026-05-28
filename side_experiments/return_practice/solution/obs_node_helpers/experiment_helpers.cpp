@@ -2,12 +2,12 @@
 
 #include "constants.h"
 #include "experiment.h"
+#include "experiment_run.h"
 #include "world_model_helpers.h"
 
 using namespace std;
 
-void ObsNode::experiment_step(vector<double>& obs,
-							  int& action,
+void ObsNode::experiment_step(int& action,
 							  bool& is_next,
 							  ExperimentRun* run) {
 	ObsNodeHistory* history = new ObsNodeHistory(this);

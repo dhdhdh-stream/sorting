@@ -3,6 +3,7 @@
 #include "branch_node.h"
 #include "constants.h"
 #include "experiment.h"
+#include "experiment_run.h"
 #include "globals.h"
 #include "obs_node.h"
 

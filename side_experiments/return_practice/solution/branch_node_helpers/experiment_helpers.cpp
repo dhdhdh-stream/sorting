@@ -4,20 +4,20 @@
 
 #include "constants.h"
 #include "experiment.h"
+#include "experiment_run.h"
 #include "network.h"
 #include "utilities.h"
 #include "wrapper.h"
 
 using namespace std;
 
-void BranchNode::experiment_step(vector<double>& obs,
-								 int& action,
+void BranchNode::experiment_step(int& action,
 								 bool& is_next,
 								 ExperimentRun* run) {
 	BranchNodeHistory* history = new BranchNodeHistory(this);
 	run->node_histories[this->id] = history;
 
-	history->obs = obs;
+	history->state = run->state;
 
 	this->original_network->activate(run->state);
 	this->branch_network->activate(run->state);

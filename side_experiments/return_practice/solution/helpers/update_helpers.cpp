@@ -1,6 +1,7 @@
 #include "solution_helpers.h"
 
 #include "branch_node.h"
+#include "experiment_run.h"
 #include "network.h"
 #include "obs_node.h"
 #include "solution.h"
@@ -26,7 +27,7 @@ void update_solution_helper(ExperimentRun* run,
 				if (branch_node_history->is_branch) {
 					branch_node->branch_sum_instances++;
 
-					branch_node->branch_network->activate(branch_node_history->obs);
+					branch_node->branch_network->activate(branch_node_history->state);
 					vector<double> errors{target_val - branch_node->branch_network->output->acti_vals[0]};
 					branch_node->branch_network->backprop(errors);
 
@@ -39,7 +40,7 @@ void update_solution_helper(ExperimentRun* run,
 				} else {
 					branch_node->original_sum_instances++;
 
-					branch_node->original_network->activate(branch_node_history->obs);
+					branch_node->original_network->activate(branch_node_history->state);
 					vector<double> errors{target_val - branch_node->original_network->output->acti_vals[0]};
 					branch_node->original_network->backprop(errors);
 

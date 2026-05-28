@@ -1,18 +1,14 @@
-/**
- * - ActionNode always followed by ObsNode
- * - BranchNodes always preceded by ObsNode
- */
-
 #ifndef ABSTRACT_NODE_H
 #define ABSTRACT_NODE_H
 
 #include <fstream>
 
-#include "experiment_run.h"
-#include "predict_run.h"
-
 class Experiment;
+class ExperimentRun;
+class PredictRun;
+class Run;
 class Solution;
+class Wrapper;
 
 const int NODE_TYPE_OBS = 0;
 const int NODE_TYPE_ACTION = 1;
@@ -31,8 +27,10 @@ public:
 
 	virtual ~AbstractNode() {};
 
-	virtual void experiment_step(std::vector<double>& obs,
-								 int& action,
+	virtual void step(int& action,
+					  bool& is_next,
+					  Run* run) = 0;
+	virtual void experiment_step(int& action,
 								 bool& is_next,
 								 ExperimentRun* run) = 0;
 	virtual void predict_step(PredictRun* run) = 0;

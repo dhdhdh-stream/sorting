@@ -32,13 +32,13 @@ const int EXPERIMENT_NUM_GEARS = 5;
 const int MEASURE_GEAR = 2;
 const int RAMP_EPOCH_NUM_ITERS = 40;
 const int MEASURE_STEP_NUM_ITERS = 40;
+const int TOTAL_MAX_ITERS = 1000;
 #else
 const int EXPERIMENT_NUM_GEARS = 9;
 const int MEASURE_GEAR = 4;
-// const int RAMP_EPOCH_NUM_ITERS = 2000;
-// const int MEASURE_STEP_NUM_ITERS = 2000;
-const int RAMP_EPOCH_NUM_ITERS = 200;
-const int MEASURE_STEP_NUM_ITERS = 200;
+const int RAMP_EPOCH_NUM_ITERS = 2000;
+const int MEASURE_STEP_NUM_ITERS = 2000;
+const int TOTAL_MAX_ITERS = 100000;
 #endif /* MDEBUG */
 
 #endif /* CONSTANTS_H */

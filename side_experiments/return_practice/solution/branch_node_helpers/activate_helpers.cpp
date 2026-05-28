@@ -1,14 +1,19 @@
 #include "branch_node.h"
 
+#include <iostream>
+
+#include "constants.h"
 #include "experiment.h"
 #include "network.h"
-#include "predict_run.h"
+#include "run.h"
 #include "utilities.h"
 #include "wrapper.h"
 
 using namespace std;
 
-void BranchNode::predict_step(PredictRun* run) {
+void BranchNode::step(int& action,
+					  bool& is_next,
+					  Run* run) {
 	this->original_network->activate(run->state);
 	this->branch_network->activate(run->state);
 
@@ -30,15 +35,7 @@ void BranchNode::predict_step(PredictRun* run) {
 
 	if (is_branch) {
 		run->node_context = this->branch_next_node;
-
-		if (this->branch_experiment != NULL) {
-			this->branch_experiment->predict_activate(run);
-		}
 	} else {
 		run->node_context = this->original_next_node;
-
-		if (this->original_experiment != NULL) {
-			this->original_experiment->predict_activate(run);
-		}
 	}
 }

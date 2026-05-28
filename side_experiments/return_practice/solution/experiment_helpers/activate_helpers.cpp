@@ -1,5 +1,3 @@
-// TODO: track iters in general, since can get stuck otherwise
-
 #include "experiment.h"
 
 #include <iostream>
@@ -7,8 +5,10 @@
 
 #include "branch_node.h"
 #include "constants.h"
+#include "experiment_run.h"
 #include "network.h"
 #include "obs_node.h"
+#include "predict_run.h"
 #include "solution.h"
 #include "utilities.h"
 #include "world_model_helpers.h"
@@ -57,8 +57,7 @@ void Experiment::experiment_activate(ExperimentRun* run) {
 	}
 }
 
-void Experiment::experiment_step(vector<double>& obs,
-								 int& action,
+void Experiment::experiment_step(int& action,
 								 bool& is_next,
 								 ExperimentRun* run) {
 	if (run->experiment_context->step_index >= (int)this->actions.size()) {
@@ -137,6 +136,31 @@ void Experiment::predict_step(PredictRun* run) {
 void Experiment::backprop(double target_val,
 						  ExperimentHistory* history,
 						  Wrapper* wrapper) {
+	this->total_count++;
+	if (this->total_count >= TOTAL_MAX_ITERS) {
+		switch (this->node_context->type) {
+		case NODE_TYPE_OBS:
+			{
+				ObsNode* obs_node = (ObsNode*)this->node_context;
+				obs_node->experiment = NULL;
+			}
+			break;
+		case NODE_TYPE_BRANCH:
+			{
+				BranchNode* branch_node = (BranchNode*)this->node_context;
+				if (this->is_branch) {
+					branch_node->branch_experiment = NULL;
+				} else {
+					branch_node->original_experiment = NULL;
+				}
+			}
+			break;
+		}
+		delete this;
+
+		return;
+	}
+
 	if (history->is_on) {
 		if (history->hit_branch) {
 			this->new_sum_scores += target_val;

@@ -1,6 +1,7 @@
 #include "obs_node.h"
 
 #include "experiment.h"
+#include "predict_run.h"
 
 using namespace std;
 

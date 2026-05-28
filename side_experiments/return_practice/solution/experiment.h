@@ -3,11 +3,10 @@
 
 #include <vector>
 
-#include "experiment_run.h"
-#include "predict_run.h"
-
 class AbstractNode;
+class ExperimentRun;
 class Network;
+class PredictRun;
 class Wrapper;
 
 double predict_helper(AbstractNode* node_context,
@@ -46,6 +45,7 @@ public:
 
 	int starting_iter;
 
+	int total_count;
 	double existing_sum_scores;
 	int existing_count;
 	double new_sum_scores;
@@ -64,8 +64,7 @@ public:
 	~Experiment();
 
 	void experiment_activate(ExperimentRun* run);
-	void experiment_step(std::vector<double>& obs,
-						 int& action,
+	void experiment_step(int& action,
 						 bool& is_next,
 						 ExperimentRun* run);
 
