@@ -30,6 +30,10 @@ Wrapper::Wrapper(ProblemType* problem_type) {
 	this->solution->score_index = 0;
 
 	this->iter = 0;
+
+	#if defined(MDEBUG) && MDEBUG
+	this->run_index = 0;
+	#endif /* MDEBUG */
 }
 
 Wrapper::Wrapper(std::string path,
@@ -125,6 +129,10 @@ Wrapper::Wrapper(std::string path,
 	input_file.close();
 
 	this->iter = 0;
+
+	#if defined(MDEBUG) && MDEBUG
+	this->run_index = 0;
+	#endif /* MDEBUG */
 }
 
 Wrapper::~Wrapper() {

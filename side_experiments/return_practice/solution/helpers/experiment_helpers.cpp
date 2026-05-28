@@ -1,6 +1,7 @@
 #include "solution_helpers.h"
 
 #include "branch_node.h"
+#include "constants.h"
 #include "experiment.h"
 #include "globals.h"
 #include "obs_node.h"
@@ -17,9 +18,11 @@ void count_eval_helper(ExperimentRun* run,
 		case NODE_TYPE_OBS:
 			{
 				ObsNode* obs_node = (ObsNode*)node;
-				node_count++;
-				if (obs_node->experiment != NULL) {
-					eval_count++;
+				if (obs_node->state_history.size() >= EXPERIMENT_MIN_NUM_STATE_HISTORY) {
+					node_count++;
+					if (obs_node->experiment != NULL) {
+						eval_count++;
+					}
 				}
 			}
 			break;
@@ -27,14 +30,19 @@ void count_eval_helper(ExperimentRun* run,
 			{
 				BranchNodeHistory* branch_node_history = (BranchNodeHistory*)h_it->second;
 				BranchNode* branch_node = (BranchNode*)branch_node_history->node;
-				node_count++;
 				if (branch_node_history->is_branch) {
-					if (branch_node->branch_experiment != NULL) {
-						eval_count++;
+					if (branch_node->branch_state_history.size() >= EXPERIMENT_MIN_NUM_STATE_HISTORY) {
+						node_count++;
+						if (branch_node->branch_experiment != NULL) {
+							eval_count++;
+						}
 					}
 				} else {
-					if (branch_node->original_experiment != NULL) {
-						eval_count++;
+					if (branch_node->original_state_history.size() >= EXPERIMENT_MIN_NUM_STATE_HISTORY) {
+						node_count++;
+						if (branch_node->original_experiment != NULL) {
+							eval_count++;
+						}
 					}
 				}
 			}
@@ -54,12 +62,14 @@ void gather_helper(ExperimentRun* run,
 		case NODE_TYPE_OBS:
 			{
 				ObsNode* obs_node = (ObsNode*)node;
-				if (obs_node->experiment == NULL) {
-					uniform_int_distribution<int> select_distribution(0, node_count);
-					node_count++;
-					if (select_distribution(generator) == 0) {
-						explore_node = obs_node;
-						explore_is_branch = false;
+				if (obs_node->state_history.size() >= EXPERIMENT_MIN_NUM_STATE_HISTORY) {
+					if (obs_node->experiment == NULL) {
+						uniform_int_distribution<int> select_distribution(0, node_count);
+						node_count++;
+						if (select_distribution(generator) == 0) {
+							explore_node = obs_node;
+							explore_is_branch = false;
+						}
 					}
 				}
 			}
@@ -69,21 +79,25 @@ void gather_helper(ExperimentRun* run,
 				BranchNodeHistory* branch_node_history = (BranchNodeHistory*)h_it->second;
 				BranchNode* branch_node = (BranchNode*)branch_node_history->node;
 				if (branch_node_history->is_branch) {
-					if (branch_node->branch_experiment == NULL) {
-						uniform_int_distribution<int> select_distribution(0, node_count);
-						node_count++;
-						if (select_distribution(generator) == 0) {
-							explore_node = branch_node;
-							explore_is_branch = true;
+					if (branch_node->branch_state_history.size() >= EXPERIMENT_MIN_NUM_STATE_HISTORY) {
+						if (branch_node->branch_experiment == NULL) {
+							uniform_int_distribution<int> select_distribution(0, node_count);
+							node_count++;
+							if (select_distribution(generator) == 0) {
+								explore_node = branch_node;
+								explore_is_branch = true;
+							}
 						}
 					}
 				} else {
-					if (branch_node->original_experiment == NULL) {
-						uniform_int_distribution<int> select_distribution(0, node_count);
-						node_count++;
-						if (select_distribution(generator) == 0) {
-							explore_node = branch_node;
-							explore_is_branch = false;
+					if (branch_node->original_state_history.size() >= EXPERIMENT_MIN_NUM_STATE_HISTORY) {
+						if (branch_node->original_experiment == NULL) {
+							uniform_int_distribution<int> select_distribution(0, node_count);
+							node_count++;
+							if (select_distribution(generator) == 0) {
+								explore_node = branch_node;
+								explore_is_branch = false;
+							}
 						}
 					}
 				}

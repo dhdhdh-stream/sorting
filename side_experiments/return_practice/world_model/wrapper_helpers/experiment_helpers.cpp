@@ -1,10 +1,13 @@
 #include "wrapper.h"
 
+#include <iostream>
+
 #include "abstract_node.h"
 #include "constants.h"
 #include "experiment.h"
 #include "solution.h"
 #include "solution_helpers.h"
+#include "utilities.h"
 #include "world_model.h"
 #include "world_model_helpers.h"
 
@@ -21,6 +24,12 @@ void Wrapper::experiment_init(ExperimentRun* run) {
 	run->state = vector<double>(this->world_model->num_states, 0.0);
 
 	this->iter++;
+
+	#if defined(MDEBUG) && MDEBUG
+	this->run_index++;
+	this->starting_run_seed = this->run_index;
+	this->curr_run_seed = xorshift(this->starting_run_seed);
+	#endif /* MDEBUG */
 }
 
 pair<bool,int> Wrapper::experiment_step(vector<double> obs,
@@ -67,6 +76,8 @@ void Wrapper::experiment_end(double result,
 	this->new_sample_actions.push_back(run->action_histories);
 	this->new_sample_target_vals.push_back(result);
 	if (this->new_sample_obs.size() >= SAMPLES_PER_TRAIN) {
+		// temp
+		cout << "this->iter: " << this->iter << endl;
 		train_helper(this);
 	}
 

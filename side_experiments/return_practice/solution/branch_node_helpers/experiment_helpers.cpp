@@ -1,8 +1,12 @@
 #include "branch_node.h"
 
+#include <iostream>
+
 #include "constants.h"
 #include "experiment.h"
 #include "network.h"
+#include "utilities.h"
+#include "wrapper.h"
 
 using namespace std;
 
@@ -18,7 +22,23 @@ void BranchNode::experiment_step(vector<double>& obs,
 	this->original_network->activate(run->state);
 	this->branch_network->activate(run->state);
 
+	bool is_branch;
 	if (this->branch_network->output->acti_vals[0] >= this->original_network->output->acti_vals[0]) {
+		is_branch = true;
+	} else {
+		is_branch = false;
+	}
+
+	#if defined(MDEBUG) && MDEBUG
+	if (run->wrapper->curr_run_seed%2 == 0) {
+		is_branch = true;
+	} else {
+		is_branch = false;
+	}
+	run->wrapper->curr_run_seed = xorshift(run->wrapper->curr_run_seed);
+	#endif /* MDEBUG */
+
+	if (is_branch) {
 		if (this->branch_state_history.size() < STATE_HISTORY_NUM_SAVE) {
 			this->branch_state_history.push_back(run->state);
 		} else {

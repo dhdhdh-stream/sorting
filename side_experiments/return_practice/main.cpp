@@ -5,8 +5,10 @@
 #include <random>
 
 #include "constants.h"
-#include "simple.h"
+// #include "simple.h"
+#include "simple_branch.h"
 #include "solution.h"
+#include "world_model.h"
 #include "world_model_helpers.h"
 #include "wrapper.h"
 
@@ -24,7 +26,7 @@ int main(int argc, char* argv[]) {
 	generator.seed(seed);
 	cout << "Seed: " << seed << endl;
 
-	ProblemType* problem_type = new TypeSimple();
+	ProblemType* problem_type = new TypeSimpleBranch();
 
 	string filename;
 	Wrapper* wrapper;
@@ -43,6 +45,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	while (true) {
+		int starting_num_states = wrapper->world_model->num_states;
 		int starting_timestamp = wrapper->solution->timestamp;
 
 		while (true) {
@@ -73,7 +76,8 @@ int main(int argc, char* argv[]) {
 
 			delete problem;
 
-			if (wrapper->solution->timestamp != starting_timestamp) {
+			if (wrapper->world_model->num_states != starting_num_states
+					|| wrapper->solution->timestamp != starting_timestamp) {
 				break;
 			}
 		}

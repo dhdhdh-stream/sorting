@@ -1,5 +1,7 @@
 #include "experiment.h"
 
+#include <iostream>
+
 #include "branch_node.h"
 #include "constants.h"
 #include "globals.h"
@@ -32,6 +34,9 @@ const int NUM_EXPLORE = 500;
 void init_experiment_helper(AbstractNode* node_context,
 							bool is_branch,
 							Wrapper* wrapper) {
+	// temp
+	cout << "init_experiment_helper" << endl;
+
 	uniform_int_distribution<int> train_distribution(0, TRAIN_NUM_SAMPLES-1);
 
 	vector<vector<double>> existing_state;
@@ -78,6 +83,12 @@ void init_experiment_helper(AbstractNode* node_context,
 		}
 	}
 
+	// // temp
+	// for (int h_index = 0; h_index < 10; h_index++) {
+	// 	cout << h_index << endl;
+	// 	cout << "existing_predicted[h_index]: " << existing_predicted[h_index] << endl;
+	// }
+
 	Network* existing_network = new Network(existing_state[0].size(),
 											1);
 	for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
@@ -85,7 +96,19 @@ void init_experiment_helper(AbstractNode* node_context,
 		existing_network->activate(existing_state[index]);
 		vector<double> errors{existing_predicted[index] - existing_network->output->acti_vals[0]};
 		existing_network->backprop(errors);
+
+		if ((iter_index + 1)%NETWORK_EPOCH_SIZE == 0) {
+			existing_network->update();
+		}
 	}
+
+	// // temp
+	// for (int h_index = 0; h_index < 10; h_index++) {
+	// 	cout << h_index << endl;
+	// 	existing_network->activate(existing_state[h_index]);
+	// 	cout << "existing_network->output->acti_vals[0]: " << existing_network->output->acti_vals[0] << endl;
+	// 	cout << "existing_predicted[h_index]: " << existing_predicted[h_index] << endl;
+	// }
 
 	vector<int> best_actions;
 	AbstractNode* best_exit_next_node;
@@ -171,6 +194,24 @@ void init_experiment_helper(AbstractNode* node_context,
 										  starting_state,
 										  wrapper);
 
+		// // temp
+		// if (e_index < 10) {
+		// 	cout << e_index << endl;
+		// 	cout << "actions:";
+		// 	for (int a_index = 0; a_index < (int)curr_actions.size(); a_index++) {
+		// 		cout << " " << curr_actions[a_index];
+		// 	}
+		// 	cout << endl;
+		// 	if (curr_exit_next_node == NULL) {
+		// 		cout << "curr_exit_next_node->id: -1" << endl;
+		// 	} else {
+		// 		cout << "curr_exit_next_node->id: " << curr_exit_next_node->id << endl;
+		// 	}
+		// 	cout << "existing_predicted: " << existing_predicted << endl;
+		// 	cout << "predicted: " << predicted << endl;
+		// 	cout << endl;
+		// }
+
 		double curr_surprise = predicted - existing_predicted;
 		if (curr_surprise > best_surprise) {
 			best_actions = curr_actions;
@@ -230,6 +271,10 @@ void init_experiment_helper(AbstractNode* node_context,
 		new_network->activate(new_state[index]);
 		vector<double> errors{new_predicted[index] - new_network->output->acti_vals[0]};
 		new_network->backprop(errors);
+
+		if ((iter_index + 1)%NETWORK_EPOCH_SIZE == 0) {
+			new_network->update();
+		}
 	}
 
 	double sum_vals = 0.0;
@@ -239,6 +284,14 @@ void init_experiment_helper(AbstractNode* node_context,
 		if (new_network->output->acti_vals[0] > existing_network->output->acti_vals[0]) {
 			sum_vals += new_predicted[h_index] - existing_network->output->acti_vals[0];
 		}
+
+		// // temp
+		// if (h_index < 10) {
+		// 	cout << h_index << endl;
+		// 	cout << "existing_network->output->acti_vals[0]: " << existing_network->output->acti_vals[0] << endl;
+		// 	cout << "new_network->output->acti_vals[0]: " << new_network->output->acti_vals[0] << endl;
+		// 	cout << "new_predicted[h_index]: " << new_predicted[h_index] << endl;
+		// }
 	}
 	double local_improvement = sum_vals / (double)new_state.size();
 
@@ -287,6 +340,9 @@ void init_experiment_helper(AbstractNode* node_context,
 		} else {
 			wrapper->solution->train_new_last_scores.push_back(global_improvement);
 		}
+
+		// temp
+		is_success = true;
 	}
 
 	#if defined(MDEBUG) && MDEBUG
@@ -294,6 +350,9 @@ void init_experiment_helper(AbstractNode* node_context,
 	#else
 	if (is_success) {
 	#endif /* MDEBUG */
+		// temp
+		cout << "experiment" << endl;
+
 		Experiment* experiment = new Experiment();
 
 		experiment->node_context = node_context;

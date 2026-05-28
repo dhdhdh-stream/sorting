@@ -13,6 +13,11 @@ const int SCORE_HISTORIES_NUM_SAVE = 4000;
 #endif /* MDEBUG */
 
 const int STATE_HISTORY_NUM_SAVE = 4000;
+#if defined(MDEBUG) && MDEBUG
+const int EXPERIMENT_MIN_NUM_STATE_HISTORY = 10;
+#else
+const int EXPERIMENT_MIN_NUM_STATE_HISTORY = 1000;
+#endif /* MDEBUG */
 
 const int NUM_LAST_TRACK = 10;
 #if defined(MDEBUG) && MDEBUG
@@ -30,8 +35,10 @@ const int MEASURE_STEP_NUM_ITERS = 40;
 #else
 const int EXPERIMENT_NUM_GEARS = 9;
 const int MEASURE_GEAR = 4;
-const int RAMP_EPOCH_NUM_ITERS = 4000;
-const int MEASURE_STEP_NUM_ITERS = 4000;
+// const int RAMP_EPOCH_NUM_ITERS = 2000;
+// const int MEASURE_STEP_NUM_ITERS = 2000;
+const int RAMP_EPOCH_NUM_ITERS = 200;
+const int MEASURE_STEP_NUM_ITERS = 200;
 #endif /* MDEBUG */
 
 #endif /* CONSTANTS_H */

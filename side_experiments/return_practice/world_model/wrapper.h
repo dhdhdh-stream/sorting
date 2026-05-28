@@ -28,6 +28,12 @@ public:
 
 	int iter;
 
+	#if defined(MDEBUG) && MDEBUG
+	int run_index;
+	unsigned long starting_run_seed;
+	unsigned long curr_run_seed;
+	#endif /* MDEBUG */
+
 	Wrapper(ProblemType* problem_type);
 	Wrapper(std::string path,
 			std::string name);

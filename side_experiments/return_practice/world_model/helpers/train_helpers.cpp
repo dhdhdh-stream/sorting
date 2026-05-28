@@ -23,7 +23,7 @@ const int EVAL_ITERS = 4000;
 
 const double VERIFICATION_RATIO = 0.2;
 
-const int TRAIN_TRY_ITERS = 4;
+const int TRAIN_TRY_ITERS = 2;
 
 const double SAMPLE_SAVE_RATIO = 0.1;
 
@@ -365,6 +365,8 @@ void train_helper(Wrapper* wrapper) {
 	cout << "train_helper" << endl;
 
 	for (int try_index = 0; try_index < TRAIN_TRY_ITERS; try_index++) {
+		cout << "try_index: " << try_index << endl;
+
 		vector<vector<vector<double>>> train_obs;
 		vector<vector<int>> train_actions;
 		vector<double> train_target_vals;
@@ -472,7 +474,17 @@ void train_helper(Wrapper* wrapper) {
 				* (sample_target_val - new_predicted);
 		}
 
+		// temp
+		cout << "existing_sum_misguess: " << existing_sum_misguess << endl;
+		cout << "new_sum_misguess: " << new_sum_misguess << endl;
+
+		#if defined(MDEBUG) && MDEBUG
+		if (new_sum_misguess < existing_sum_misguess || rand()%2 == 0) {
+		#else
 		if (new_sum_misguess < existing_sum_misguess) {
+		#endif /* MDEBUG */
+			cout << "add state" << endl;
+
 			delete wrapper->world_model;
 			wrapper->world_model = potential_world_model;
 

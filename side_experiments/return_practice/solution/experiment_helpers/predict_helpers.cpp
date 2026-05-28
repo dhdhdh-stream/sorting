@@ -5,6 +5,7 @@
 #include "network.h"
 #include "obs_node.h"
 #include "predict_run.h"
+#include "utilities.h"
 #include "world_model.h"
 #include "world_model_helpers.h"
 #include "wrapper.h"
@@ -15,6 +16,12 @@ double predict_helper(AbstractNode* node_context,
 					  bool is_branch,
 					  vector<double>& starting_state,
 					  Wrapper* wrapper) {
+	#if defined(MDEBUG) && MDEBUG
+	wrapper->run_index++;
+	wrapper->starting_run_seed = wrapper->run_index;
+	wrapper->curr_run_seed = xorshift(wrapper->starting_run_seed);
+	#endif /* MDEBUG */
+
 	PredictRun* run = new PredictRun();
 	run->wrapper = wrapper;
 	switch (node_context->type) {
@@ -81,6 +88,12 @@ double predict_helper(vector<int>& actions,
 					  AbstractNode* exit_next_node,
 					  vector<double>& starting_state,
 					  Wrapper* wrapper) {
+	#if defined(MDEBUG) && MDEBUG
+	wrapper->run_index++;
+	wrapper->starting_run_seed = wrapper->run_index;
+	wrapper->curr_run_seed = xorshift(wrapper->starting_run_seed);
+	#endif /* MDEBUG */
+
 	PredictRun* run = new PredictRun();
 	run->wrapper = wrapper;
 	run->node_context = exit_next_node;

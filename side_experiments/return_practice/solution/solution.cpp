@@ -73,20 +73,48 @@ void Solution::random_exit_activate(AbstractNode* starting_node,
 void Solution::pad_new_state(int num_add) {
 	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
 			it != this->nodes.end(); it++) {
-		if (it->second->type == NODE_TYPE_BRANCH) {
-			BranchNode* branch_node = (BranchNode*)it->second;
+		switch (it->second->type) {
+		case NODE_TYPE_OBS:
+			{
+				ObsNode* obs_node = (ObsNode*)it->second;
 
-			branch_node->original_network->add_inputs(num_add);
-			branch_node->branch_network->add_inputs(num_add);
+				for (int h_index = 0; h_index < (int)obs_node->state_history.size(); h_index++) {
+					obs_node->state_history[h_index].insert(
+						obs_node->state_history[h_index].end(), num_add, 0.0);
+				}
 
-			for (int h_index = 0; h_index < (int)branch_node->original_state_history.size(); h_index++) {
-				branch_node->original_state_history[h_index].insert(
-					branch_node->original_state_history[h_index].end(), num_add, 0.0);
+				if (obs_node->experiment != NULL) {
+					obs_node->experiment->original_network->add_inputs(num_add);
+					obs_node->experiment->branch_network->add_inputs(num_add);
+				}
 			}
-			for (int h_index = 0; h_index < (int)branch_node->branch_state_history.size(); h_index++) {
-				branch_node->branch_state_history[h_index].insert(
-					branch_node->branch_state_history[h_index].end(), num_add, 0.0);
+			break;
+		case NODE_TYPE_BRANCH:
+			{
+				BranchNode* branch_node = (BranchNode*)it->second;
+
+				branch_node->original_network->add_inputs(num_add);
+				branch_node->branch_network->add_inputs(num_add);
+
+				for (int h_index = 0; h_index < (int)branch_node->original_state_history.size(); h_index++) {
+					branch_node->original_state_history[h_index].insert(
+						branch_node->original_state_history[h_index].end(), num_add, 0.0);
+				}
+				for (int h_index = 0; h_index < (int)branch_node->branch_state_history.size(); h_index++) {
+					branch_node->branch_state_history[h_index].insert(
+						branch_node->branch_state_history[h_index].end(), num_add, 0.0);
+				}
+
+				if (branch_node->original_experiment != NULL) {
+					branch_node->original_experiment->original_network->add_inputs(num_add);
+					branch_node->original_experiment->branch_network->add_inputs(num_add);
+				}
+				if (branch_node->branch_experiment != NULL) {
+					branch_node->branch_experiment->original_network->add_inputs(num_add);
+					branch_node->branch_experiment->branch_network->add_inputs(num_add);
+				}
 			}
+			break;
 		}
 	}
 }

@@ -1,3 +1,5 @@
+// TODO: track iters in general, since can get stuck otherwise
+
 #include "experiment.h"
 
 #include <iostream>
@@ -8,6 +10,7 @@
 #include "network.h"
 #include "obs_node.h"
 #include "solution.h"
+#include "utilities.h"
 #include "world_model_helpers.h"
 #include "wrapper.h"
 
@@ -27,7 +30,23 @@ void Experiment::experiment_activate(ExperimentRun* run) {
 	this->original_network->activate(run->state);
 	this->branch_network->activate(run->state);
 
+	bool is_branch;
 	if (this->branch_network->output->acti_vals[0] >= this->original_network->output->acti_vals[0]) {
+		is_branch = true;
+	} else {
+		is_branch = false;
+	}
+
+	#if defined(MDEBUG) && MDEBUG
+	if (run->wrapper->curr_run_seed%2 == 0) {
+		is_branch = true;
+	} else {
+		is_branch = false;
+	}
+	run->wrapper->curr_run_seed = xorshift(run->wrapper->curr_run_seed);
+	#endif /* MDEBUG */
+
+	if (is_branch) {
 		history->hit_branch = true;
 
 		if (history->is_on) {
@@ -76,7 +95,23 @@ void Experiment::predict_activate(PredictRun* run) {
 		this->original_network->activate(run->state);
 		this->branch_network->activate(run->state);
 
+		bool is_branch;
 		if (this->branch_network->output->acti_vals[0] >= this->original_network->output->acti_vals[0]) {
+			is_branch = true;
+		} else {
+			is_branch = false;
+		}
+
+		#if defined(MDEBUG) && MDEBUG
+		if (run->wrapper->curr_run_seed%2 == 0) {
+			is_branch = true;
+		} else {
+			is_branch = false;
+		}
+		run->wrapper->curr_run_seed = xorshift(run->wrapper->curr_run_seed);
+		#endif /* MDEBUG */
+
+		if (is_branch) {
 			ExperimentState* new_experiment_state = new ExperimentState(this);
 			new_experiment_state->step_index = 0;
 			run->experiment_context = new_experiment_state;
@@ -124,10 +159,10 @@ void Experiment::backprop(double target_val,
 			double existing_score_average = this->existing_sum_scores / (double)this->existing_count;
 			double new_score_average = this->new_sum_scores / (double)this->new_count;
 
-			// // temp
-			// cout << "this->curr_ramp: " << this->curr_ramp << endl;
-			// cout << "existing_score_average: " << existing_score_average << endl;
-			// cout << "new_score_average: " << new_score_average << endl;
+			// temp
+			cout << "this->curr_ramp: " << this->curr_ramp << endl;
+			cout << "existing_score_average: " << existing_score_average << endl;
+			cout << "new_score_average: " << new_score_average << endl;
 
 			this->existing_sum_scores = 0.0;
 			this->existing_count = 0;
@@ -217,12 +252,17 @@ void Experiment::backprop(double target_val,
 			// cout << "this->local_improvement: " << this->local_improvement << endl;
 			// cout << "this->global_improvement: " << this->global_improvement << endl;
 
+			this->existing_sum_scores = 0.0;
+			this->existing_count = 0;
+			this->new_sum_scores = 0.0;
+			this->new_count = 0;
+
+			bool is_success = false;
 			#if defined(MDEBUG) && MDEBUG
 			if (this->global_improvement > 0.0 || rand()%3 == 0) {
 			#else
 			if (this->global_improvement > 0.0) {
 			#endif /* MDEBUG */
-				bool is_success = false;
 				if (wrapper->solution->ramp_last_scores.size() >= MIN_NUM_LAST_TRACK) {
 					int num_better_than = 0;
 					for (list<double>::iterator it = wrapper->solution->ramp_last_scores.begin();
@@ -246,41 +286,22 @@ void Experiment::backprop(double target_val,
 					wrapper->solution->ramp_last_scores.push_back(this->global_improvement);
 				}
 
-				#if defined(MDEBUG) && MDEBUG
-				if (is_success || rand()%3 != 0) {
-				#else
-				if (is_success) {
-				#endif /* MDEBUG */
-					this->existing_sum_scores = 0.0;
-					this->existing_count = 0;
-					this->new_sum_scores = 0.0;
-					this->new_count = 0;
+				// temp
+				is_success = true;
+			}
 
-					this->measure_status = MEASURE_STATUS_SUCCESS;
+			#if defined(MDEBUG) && MDEBUG
+			if (is_success || rand()%3 != 0) {
+			#else
+			if (is_success) {
+			#endif /* MDEBUG */
+				this->measure_status = MEASURE_STATUS_SUCCESS;
 
-					this->state = EXPERIMENT_STATE_RAMP;
-					this->state_iter = 0;
+				this->state = EXPERIMENT_STATE_RAMP;
+				this->state_iter = 0;
 
-					this->curr_ramp++;
-				} else {
-					this->existing_sum_scores = 0.0;
-					this->existing_count = 0;
-					this->new_sum_scores = 0.0;
-					this->new_count = 0;
-
-					this->measure_status = MEASURE_STATUS_FAIL;
-
-					this->state = EXPERIMENT_STATE_RAMP;
-					this->state_iter = 0;
-
-					this->curr_ramp--;
-				}
+				this->curr_ramp++;
 			} else {
-				this->existing_sum_scores = 0.0;
-				this->existing_count = 0;
-				this->new_sum_scores = 0.0;
-				this->new_count = 0;
-
 				this->measure_status = MEASURE_STATUS_FAIL;
 
 				this->state = EXPERIMENT_STATE_RAMP;

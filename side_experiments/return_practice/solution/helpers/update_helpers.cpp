@@ -47,7 +47,7 @@ void update_solution_helper(ExperimentRun* run,
 					if (branch_node->original_network_epoch_iter >= NETWORK_EPOCH_SIZE) {
 						branch_node->original_network->update();
 
-						branch_node->original_network = 0;
+						branch_node->original_network_epoch_iter = 0;
 					}
 				}
 			}
