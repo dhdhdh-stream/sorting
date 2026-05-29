@@ -500,13 +500,15 @@ void train_helper(Wrapper* wrapper) {
 		}
 		double new_misguess_variance = new_misguess_sum_variance / EVAL_ITERS;
 
-		double denom = sqrt(existing_misguess_variance + new_misguess_variance) / sqrt(EVAL_ITERS);
-		double t_score = (existing_sum_misguess - new_sum_misguess) / denom;
+		double denom = sqrt((existing_misguess_variance + new_misguess_variance) / EVAL_ITERS);
+		double t_score = (existing_misguess_average - new_misguess_average) / denom;
 
-		// temp
-		cout << "existing_sum_misguess: " << existing_sum_misguess << endl;
-		cout << "new_sum_misguess: " << new_sum_misguess << endl;
-		cout << "t_score: " << t_score << endl;
+		// // temp
+		// cout << "existing_misguess_average: " << existing_misguess_average << endl;
+		// cout << "existing_misguess_variance: " << existing_misguess_variance << endl;
+		// cout << "new_misguess_average: " << new_misguess_average << endl;
+		// cout << "new_misguess_variance: " << new_misguess_variance << endl;
+		// cout << "t_score: " << t_score << endl;
 
 		#if defined(MDEBUG) && MDEBUG
 		if (t_score >= 2.326 || rand()%2 == 0) {
