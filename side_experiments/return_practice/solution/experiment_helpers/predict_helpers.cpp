@@ -57,8 +57,7 @@ double predict_helper(AbstractNode* node_context,
 		}
 
 		if (run->experiment_context != NULL) {
-			Experiment* experiment = run->experiment_context->experiment;
-			experiment->predict_step(run);
+			run->experiment_context->experiment->predict_step(run);
 		} else {
 			run->node_context->predict_step(run);
 		}
@@ -113,8 +112,7 @@ double predict_helper(vector<int>& actions,
 		}
 
 		if (run->experiment_context != NULL) {
-			Experiment* experiment = run->experiment_context->experiment;
-			experiment->predict_step(run);
+			run->experiment_context->experiment->predict_step(run);
 		} else {
 			run->node_context->predict_step(run);
 		}

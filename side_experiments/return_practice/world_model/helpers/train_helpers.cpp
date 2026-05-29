@@ -23,10 +23,6 @@ const int EVAL_ITERS = 4000;
 
 const double VERIFICATION_RATIO = 0.2;
 
-const int TRAIN_TRY_ITERS = 2;
-
-const double SAMPLE_SAVE_RATIO = 0.1;
-
 void train_helper(vector<vector<vector<double>>>& train_obs,
 				  vector<vector<int>>& train_actions,
 				  vector<double>& train_target_vals,
@@ -364,184 +360,132 @@ void train_helper(Wrapper* wrapper) {
 	// temp
 	cout << "train_helper" << endl;
 
-	for (int try_index = 0; try_index < TRAIN_TRY_ITERS; try_index++) {
-		cout << "try_index: " << try_index << endl;
+	vector<vector<vector<double>>> train_obs;
+	vector<vector<int>> train_actions;
+	vector<double> train_target_vals;
+	vector<vector<vector<double>>> verification_obs;
+	vector<vector<int>> verification_actions;
+	vector<double> verification_target_vals;
 
-		vector<vector<vector<double>>> train_obs;
-		vector<vector<int>> train_actions;
-		vector<double> train_target_vals;
-		vector<vector<vector<double>>> verification_obs;
-		vector<vector<int>> verification_actions;
-		vector<double> verification_target_vals;
-
-		int num_new_verification = VERIFICATION_RATIO * (double)wrapper->new_sample_obs.size();
-		int num_new_train = (int)wrapper->new_sample_obs.size() - num_new_verification;
-		{
-			vector<int> remaining_indexes(wrapper->new_sample_obs.size());
-			for (int i_index = 0; i_index < (int)wrapper->new_sample_obs.size(); i_index++) {
-				remaining_indexes[i_index] = i_index;
-			}
-
-			for (int i_index = 0; i_index < num_new_train; i_index++) {
-				uniform_int_distribution<int> distribution(0, remaining_indexes.size()-1);
-				int index = distribution(generator);
-				train_obs.push_back(wrapper->new_sample_obs[remaining_indexes[index]]);
-				train_actions.push_back(wrapper->new_sample_actions[remaining_indexes[index]]);
-				train_target_vals.push_back(wrapper->new_sample_target_vals[remaining_indexes[index]]);
-
-				remaining_indexes.erase(remaining_indexes.begin() + index);
-			}
-			for (int i_index = 0; i_index < (int)remaining_indexes.size(); i_index++) {
-				verification_obs.push_back(wrapper->new_sample_obs[remaining_indexes[i_index]]);
-				verification_actions.push_back(wrapper->new_sample_actions[remaining_indexes[i_index]]);
-				verification_target_vals.push_back(wrapper->new_sample_target_vals[remaining_indexes[i_index]]);
-			}
+	int num_verification = VERIFICATION_RATIO * (double)wrapper->sample_obs.size();
+	int num_train = (int)wrapper->sample_obs.size() - num_verification;
+	{
+		vector<int> remaining_indexes(wrapper->sample_obs.size());
+		for (int i_index = 0; i_index < (int)wrapper->sample_obs.size(); i_index++) {
+			remaining_indexes[i_index] = i_index;
 		}
 
-		int num_old_verification;
-		int num_old_train;
-		if (wrapper->new_sample_obs.size() >= wrapper->old_sample_obs.size()) {
-			num_old_verification = VERIFICATION_RATIO * (double)wrapper->old_sample_obs.size();
-			num_old_train = (int)wrapper->old_sample_obs.size() - num_old_verification;
-		} else {
-			num_old_verification = num_new_verification;
-			num_old_train = num_new_train;
+		for (int i_index = 0; i_index < num_train; i_index++) {
+			uniform_int_distribution<int> distribution(0, remaining_indexes.size()-1);
+			int index = distribution(generator);
+			train_obs.push_back(wrapper->sample_obs[remaining_indexes[index]]);
+			train_actions.push_back(wrapper->sample_actions[remaining_indexes[index]]);
+			train_target_vals.push_back(wrapper->sample_target_vals[remaining_indexes[index]]);
+
+			remaining_indexes.erase(remaining_indexes.begin() + index);
 		}
-		{
-			vector<int> remaining_indexes(wrapper->old_sample_obs.size());
-			for (int i_index = 0; i_index < (int)wrapper->old_sample_obs.size(); i_index++) {
-				remaining_indexes[i_index] = i_index;
-			}
-
-			for (int i_index = 0; i_index < num_old_train; i_index++) {
-				uniform_int_distribution<int> distribution(0, remaining_indexes.size()-1);
-				int index = distribution(generator);
-				train_obs.push_back(wrapper->old_sample_obs[remaining_indexes[index]]);
-				train_actions.push_back(wrapper->old_sample_actions[remaining_indexes[index]]);
-				train_target_vals.push_back(wrapper->old_sample_target_vals[remaining_indexes[index]]);
-
-				remaining_indexes.erase(remaining_indexes.begin() + index);
-			}
-			for (int i_index = 0; i_index < num_old_verification; i_index++) {
-				uniform_int_distribution<int> distribution(0, remaining_indexes.size()-1);
-				int index = distribution(generator);
-				verification_obs.push_back(wrapper->old_sample_obs[remaining_indexes[index]]);
-				verification_actions.push_back(wrapper->old_sample_actions[remaining_indexes[index]]);
-				verification_target_vals.push_back(wrapper->old_sample_target_vals[remaining_indexes[index]]);
-
-				remaining_indexes.erase(remaining_indexes.begin() + index);
-			}
-		}
-
-		WorldModel* potential_world_model = new WorldModel(wrapper->world_model);
-
-		train_helper(train_obs,
-					 train_actions,
-					 train_target_vals,
-					 potential_world_model,
-					 wrapper);
-
-		vector<double> existing_misguess(EVAL_ITERS);
-		vector<double> new_misguess(EVAL_ITERS);
-		uniform_int_distribution<int> verification_sample_distribution(0, verification_obs.size()-1);
-		for (int iter_index = 0; iter_index < EVAL_ITERS; iter_index++) {
-			int verification_sample_index = verification_sample_distribution(generator);
-
-			vector<vector<double>> sample_obs = verification_obs[verification_sample_index];
-			vector<int> sample_actions = verification_actions[verification_sample_index];
-			double sample_target_val = verification_target_vals[verification_sample_index];
-
-			uniform_int_distribution<int> include_obs_distribution(
-				0, sample_obs.size()-1);
-			int include_obs_index = include_obs_distribution(generator);
-
-			double existing_predicted = eval_helper(sample_obs,
-													sample_actions,
-													sample_target_val,
-													include_obs_index,
-													wrapper->world_model,
-													wrapper);
-			existing_misguess[iter_index] = (sample_target_val - existing_predicted)
-				* (sample_target_val - existing_predicted);
-
-			double new_predicted = eval_helper(sample_obs,
-											   sample_actions,
-											   sample_target_val,
-											   include_obs_index,
-											   potential_world_model,
-											   wrapper);
-			new_misguess[iter_index] = (sample_target_val - new_predicted)
-				* (sample_target_val - new_predicted);
-		}
-
-		double existing_sum_misguess = 0.0;
-		for (int iter_index = 0; iter_index < EVAL_ITERS; iter_index++) {
-			existing_sum_misguess += existing_misguess[iter_index];
-		}
-		double existing_misguess_average = existing_sum_misguess / EVAL_ITERS;
-
-		double existing_misguess_sum_variance = 0.0;
-		for (int iter_index = 0; iter_index < EVAL_ITERS; iter_index++) {
-			existing_misguess_sum_variance += (existing_misguess[iter_index] - existing_misguess_average)
-				* (existing_misguess[iter_index] - existing_misguess_average);
-		}
-		double existing_misguess_variance = existing_misguess_sum_variance / EVAL_ITERS;
-
-		double new_sum_misguess = 0.0;
-		for (int iter_index = 0; iter_index < EVAL_ITERS; iter_index++) {
-			new_sum_misguess += new_misguess[iter_index];
-		}
-		double new_misguess_average = new_sum_misguess / EVAL_ITERS;
-
-		double new_misguess_sum_variance = 0.0;
-		for (int iter_index = 0; iter_index < EVAL_ITERS; iter_index++) {
-			new_misguess_sum_variance += (new_misguess[iter_index] - new_misguess_average)
-				* (new_misguess[iter_index] - new_misguess_average);
-		}
-		double new_misguess_variance = new_misguess_sum_variance / EVAL_ITERS;
-
-		double denom = sqrt((existing_misguess_variance + new_misguess_variance) / EVAL_ITERS);
-		double t_score = (existing_misguess_average - new_misguess_average) / denom;
-
-		// // temp
-		// cout << "existing_misguess_average: " << existing_misguess_average << endl;
-		// cout << "existing_misguess_variance: " << existing_misguess_variance << endl;
-		// cout << "new_misguess_average: " << new_misguess_average << endl;
-		// cout << "new_misguess_variance: " << new_misguess_variance << endl;
-		// cout << "t_score: " << t_score << endl;
-
-		#if defined(MDEBUG) && MDEBUG
-		if (t_score >= 2.326 || rand()%2 == 0) {
-		#else
-		if (t_score >= 2.326) {
-		#endif /* MDEBUG */
-			cout << "add state" << endl;
-
-			delete wrapper->world_model;
-			wrapper->world_model = potential_world_model;
-
-			wrapper->solution->pad_new_state(NUM_NEW_STATES);
-		} else {
-			delete potential_world_model;
+		for (int i_index = 0; i_index < (int)remaining_indexes.size(); i_index++) {
+			verification_obs.push_back(wrapper->sample_obs[remaining_indexes[i_index]]);
+			verification_actions.push_back(wrapper->sample_actions[remaining_indexes[i_index]]);
+			verification_target_vals.push_back(wrapper->sample_target_vals[remaining_indexes[i_index]]);
 		}
 	}
 
-	int num_save = SAMPLE_SAVE_RATIO * (double)wrapper->new_sample_obs.size();
-	for (int i_index = 0; i_index < num_save; i_index++) {
-		uniform_int_distribution<int> distribution(0, wrapper->new_sample_obs.size()-1);
-		int index = distribution(generator);
+	WorldModel* potential_world_model = new WorldModel(wrapper->world_model);
 
-		wrapper->old_sample_obs.push_back(wrapper->new_sample_obs[index]);
-		wrapper->new_sample_obs.erase(wrapper->new_sample_obs.begin() + index);
-		wrapper->old_sample_actions.push_back(wrapper->new_sample_actions[index]);
-		wrapper->new_sample_actions.erase(wrapper->new_sample_actions.begin() + index);
-		wrapper->old_sample_target_vals.push_back(wrapper->new_sample_target_vals[index]);
-		wrapper->new_sample_target_vals.erase(wrapper->new_sample_target_vals.begin() + index);
+	train_helper(train_obs,
+				 train_actions,
+				 train_target_vals,
+				 potential_world_model,
+				 wrapper);
+
+	vector<double> existing_misguess(EVAL_ITERS);
+	vector<double> new_misguess(EVAL_ITERS);
+	uniform_int_distribution<int> verification_sample_distribution(0, verification_obs.size()-1);
+	for (int iter_index = 0; iter_index < EVAL_ITERS; iter_index++) {
+		int verification_sample_index = verification_sample_distribution(generator);
+
+		vector<vector<double>> sample_obs = verification_obs[verification_sample_index];
+		vector<int> sample_actions = verification_actions[verification_sample_index];
+		double sample_target_val = verification_target_vals[verification_sample_index];
+
+		uniform_int_distribution<int> include_obs_distribution(
+			0, sample_obs.size()-1);
+		int include_obs_index = include_obs_distribution(generator);
+
+		double existing_predicted = eval_helper(sample_obs,
+												sample_actions,
+												sample_target_val,
+												include_obs_index,
+												wrapper->world_model,
+												wrapper);
+		existing_misguess[iter_index] = (sample_target_val - existing_predicted)
+			* (sample_target_val - existing_predicted);
+
+		double new_predicted = eval_helper(sample_obs,
+										   sample_actions,
+										   sample_target_val,
+										   include_obs_index,
+										   potential_world_model,
+										   wrapper);
+		new_misguess[iter_index] = (sample_target_val - new_predicted)
+			* (sample_target_val - new_predicted);
 	}
 
-	wrapper->new_sample_obs.clear();
-	wrapper->new_sample_actions.clear();
-	wrapper->new_sample_target_vals.clear();
+	double existing_sum_misguess = 0.0;
+	for (int iter_index = 0; iter_index < EVAL_ITERS; iter_index++) {
+		existing_sum_misguess += existing_misguess[iter_index];
+	}
+	double existing_misguess_average = existing_sum_misguess / EVAL_ITERS;
+
+	double existing_misguess_sum_variance = 0.0;
+	for (int iter_index = 0; iter_index < EVAL_ITERS; iter_index++) {
+		existing_misguess_sum_variance += (existing_misguess[iter_index] - existing_misguess_average)
+			* (existing_misguess[iter_index] - existing_misguess_average);
+	}
+	double existing_misguess_variance = existing_misguess_sum_variance / EVAL_ITERS;
+
+	double new_sum_misguess = 0.0;
+	for (int iter_index = 0; iter_index < EVAL_ITERS; iter_index++) {
+		new_sum_misguess += new_misguess[iter_index];
+	}
+	double new_misguess_average = new_sum_misguess / EVAL_ITERS;
+
+	double new_misguess_sum_variance = 0.0;
+	for (int iter_index = 0; iter_index < EVAL_ITERS; iter_index++) {
+		new_misguess_sum_variance += (new_misguess[iter_index] - new_misguess_average)
+			* (new_misguess[iter_index] - new_misguess_average);
+	}
+	double new_misguess_variance = new_misguess_sum_variance / EVAL_ITERS;
+
+	double denom = sqrt((existing_misguess_variance + new_misguess_variance) / EVAL_ITERS);
+	double t_score = (existing_misguess_average - new_misguess_average) / denom;
+
+	// // temp
+	// cout << "existing_misguess_average: " << existing_misguess_average << endl;
+	// cout << "existing_misguess_variance: " << existing_misguess_variance << endl;
+	// cout << "new_misguess_average: " << new_misguess_average << endl;
+	// cout << "new_misguess_variance: " << new_misguess_variance << endl;
+	// cout << "t_score: " << t_score << endl;
+
+	#if defined(MDEBUG) && MDEBUG
+	if (t_score >= 2.326 || rand()%2 == 0) {
+	#else
+	if (t_score >= 2.326) {
+	#endif /* MDEBUG */
+		cout << "add state" << endl;
+
+		delete wrapper->world_model;
+		wrapper->world_model = potential_world_model;
+
+		wrapper->solution->pad_new_state(NUM_NEW_STATES);
+	} else {
+		delete potential_world_model;
+	}
+
+	wrapper->sample_obs.clear();
+	wrapper->sample_actions.clear();
+	wrapper->sample_target_vals.clear();
 
 	// temp
 	cout << "train_helper done" << endl;

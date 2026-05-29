@@ -30,9 +30,9 @@ void init_helper(ProblemType* problem_type,
 			curr_obs.push_back(problem->get_observations());
 		}
 
-		wrapper->new_sample_obs.push_back(curr_obs);
-		wrapper->new_sample_actions.push_back(curr_actions);
-		wrapper->new_sample_target_vals.push_back(problem->score_result());
+		wrapper->sample_obs.push_back(curr_obs);
+		wrapper->sample_actions.push_back(curr_actions);
+		wrapper->sample_target_vals.push_back(problem->score_result());
 
 		delete problem;
 	}

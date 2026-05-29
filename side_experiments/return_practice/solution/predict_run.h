@@ -4,6 +4,7 @@
 #include <map>
 #include <vector>
 
+class AbstractExperimentState;
 class AbstractNode;
 class Experiment;
 class ExperimentHistory;
@@ -15,7 +16,7 @@ public:
 	Wrapper* wrapper;
 
 	AbstractNode* node_context;
-	ExperimentState* experiment_context;
+	AbstractExperimentState* experiment_context;
 
 	std::vector<double> state;
 

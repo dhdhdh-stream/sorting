@@ -49,76 +49,6 @@ Wrapper::Wrapper(std::string path,
 	getline(input_file, num_actions_line);
 	this->num_actions = stoi(num_actions_line);
 
-	string num_old_samples_line;
-	getline(input_file, num_old_samples_line);
-	int num_old_samples = stoi(num_old_samples_line);
-	for (int s_index = 0; s_index < num_old_samples; s_index++) {
-		string obs_num_steps_line;
-		getline(input_file, obs_num_steps_line);
-		int obs_num_steps = stoi(obs_num_steps_line);
-		vector<vector<double>> run_obs;
-		for (int a_index = 0; a_index < obs_num_steps; a_index++) {
-			vector<double> step_obs;
-			for (int o_index = 0; o_index < this->num_obs; o_index++) {
-				string obs_line;
-				getline(input_file, obs_line);
-				step_obs.push_back(stod(obs_line));
-			}
-			run_obs.push_back(step_obs);
-		}
-		this->old_sample_obs.push_back(run_obs);
-
-		string action_num_steps_line;
-		getline(input_file, action_num_steps_line);
-		int action_num_steps = stoi(action_num_steps_line);
-		vector<int> run_actions;
-		for (int a_index = 0; a_index < action_num_steps; a_index++) {
-			string action_line;
-			getline(input_file, action_line);
-			run_actions.push_back(stoi(action_line));
-		}
-		this->old_sample_actions.push_back(run_actions);
-
-		string target_val_line;
-		getline(input_file, target_val_line);
-		this->old_sample_target_vals.push_back(stod(target_val_line));
-	}
-
-	string num_new_samples_line;
-	getline(input_file, num_new_samples_line);
-	int num_new_samples = stoi(num_new_samples_line);
-	for (int s_index = 0; s_index < num_new_samples; s_index++) {
-		string obs_num_steps_line;
-		getline(input_file, obs_num_steps_line);
-		int obs_num_steps = stoi(obs_num_steps_line);
-		vector<vector<double>> run_obs;
-		for (int a_index = 0; a_index < obs_num_steps; a_index++) {
-			vector<double> step_obs;
-			for (int o_index = 0; o_index < this->num_obs; o_index++) {
-				string obs_line;
-				getline(input_file, obs_line);
-				step_obs.push_back(stod(obs_line));
-			}
-			run_obs.push_back(step_obs);
-		}
-		this->new_sample_obs.push_back(run_obs);
-
-		string action_num_steps_line;
-		getline(input_file, action_num_steps_line);
-		int action_num_steps = stoi(action_num_steps_line);
-		vector<int> run_actions;
-		for (int a_index = 0; a_index < action_num_steps; a_index++) {
-			string action_line;
-			getline(input_file, action_line);
-			run_actions.push_back(stoi(action_line));
-		}
-		this->new_sample_actions.push_back(run_actions);
-
-		string target_val_line;
-		getline(input_file, target_val_line);
-		this->new_sample_target_vals.push_back(stod(target_val_line));
-	}
-
 	this->world_model = new WorldModel();
 	this->world_model->load(input_file);
 
@@ -147,40 +77,6 @@ void Wrapper::save(string path,
 
 	output_file << this->num_obs << endl;
 	output_file << this->num_actions << endl;
-
-	output_file << this->old_sample_obs.size() << endl;
-	for (int s_index = 0; s_index < (int)this->old_sample_obs.size(); s_index++) {
-		output_file << this->old_sample_obs[s_index].size() << endl;
-		for (int a_index = 0; a_index < (int)this->old_sample_obs[s_index].size(); a_index++) {
-			for (int o_index = 0; o_index < this->num_obs; o_index++) {
-				output_file << this->old_sample_obs[s_index][a_index][o_index] << endl;
-			}
-		}
-
-		output_file << this->old_sample_actions[s_index].size() << endl;
-		for (int a_index = 0; a_index < (int)this->old_sample_actions[s_index].size(); a_index++) {
-			output_file << this->old_sample_actions[s_index][a_index] << endl;
-		}
-
-		output_file << this->old_sample_target_vals[s_index] << endl;
-	}
-
-	output_file << this->new_sample_obs.size() << endl;
-	for (int s_index = 0; s_index < (int)this->new_sample_obs.size(); s_index++) {
-		output_file << this->new_sample_obs[s_index].size() << endl;
-		for (int a_index = 0; a_index < (int)this->new_sample_obs[s_index].size(); a_index++) {
-			for (int o_index = 0; o_index < this->num_obs; o_index++) {
-				output_file << this->new_sample_obs[s_index][a_index][o_index] << endl;
-			}
-		}
-
-		output_file << this->new_sample_actions[s_index].size() << endl;
-		for (int a_index = 0; a_index < (int)this->new_sample_actions[s_index].size(); a_index++) {
-			output_file << this->new_sample_actions[s_index][a_index] << endl;
-		}
-
-		output_file << this->new_sample_target_vals[s_index] << endl;
-	}
 
 	this->world_model->save(output_file);
 	this->solution->save(output_file,

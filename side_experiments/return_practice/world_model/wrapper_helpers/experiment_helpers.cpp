@@ -4,8 +4,10 @@
 
 #include "abstract_node.h"
 #include "constants.h"
+#include "crazy.h"
 #include "experiment.h"
 #include "experiment_run.h"
+#include "globals.h"
 #include "solution.h"
 #include "solution_helpers.h"
 #include "utilities.h"
@@ -50,10 +52,10 @@ pair<bool,int> Wrapper::experiment_step(vector<double> obs,
 			is_next = true;
 			is_done = true;
 		} else if (run->experiment_context != NULL) {
-			Experiment* experiment = run->experiment_context->experiment;
-			experiment->experiment_step(action,
-										is_next,
-										run);
+			run->experiment_context->experiment->experiment_step(
+				action,
+				is_next,
+				run);
 		} else {
 			run->node_context->experiment_step(action,
 											   is_next,
@@ -66,15 +68,30 @@ pair<bool,int> Wrapper::experiment_step(vector<double> obs,
 
 void Wrapper::experiment_end(double result,
 							 ExperimentRun* run) {
+	if (this->crazy != NULL) {
+		delete this->crazy;
+		this->crazy = NULL;
+	} else {
+		if (this->solution->score_histories.size() < SCORE_HISTORIES_NUM_SAVE) {
+			this->solution->score_histories.push_back(result);
+		} else {
+			this->solution->score_histories[this->solution->score_index] = result;
+			this->solution->score_index++;
+			if (this->solution->score_index >= SCORE_HISTORIES_NUM_SAVE) {
+				this->solution->score_index = 0;
+			}
+		}
+	}
+
 	update_world_model_helper(run->obs_histories,
 							  run->action_histories,
 							  result,
 							  this);
 
-	this->new_sample_obs.push_back(run->obs_histories);
-	this->new_sample_actions.push_back(run->action_histories);
-	this->new_sample_target_vals.push_back(result);
-	if (this->new_sample_obs.size() >= SAMPLES_PER_TRAIN) {
+	this->sample_obs.push_back(run->obs_histories);
+	this->sample_actions.push_back(run->action_histories);
+	this->sample_target_vals.push_back(result);
+	if (this->sample_obs.size() >= SAMPLES_PER_TRAIN) {
 		// temp
 		cout << "this->iter: " << this->iter << endl;
 		train_helper(this);
@@ -94,16 +111,6 @@ void Wrapper::experiment_end(double result,
 		cout << "misguess_average: " << misguess_average << endl;
 	}
 
-	if (this->solution->score_histories.size() < SCORE_HISTORIES_NUM_SAVE) {
-		this->solution->score_histories.push_back(result);
-	} else {
-		this->solution->score_histories[this->solution->score_index] = result;
-		this->solution->score_index++;
-		if (this->solution->score_index >= SCORE_HISTORIES_NUM_SAVE) {
-			this->solution->score_index = 0;
-		}
-	}
-
 	int node_count = 0;
 	int eval_count = 0;
 	count_eval_helper(run,
@@ -121,5 +128,11 @@ void Wrapper::experiment_end(double result,
 		it->first->backprop(result,
 							it->second,
 							this);
+	}
+
+	uniform_int_distribution<int> crazy_distribution(0, 4);
+	if (crazy_distribution(generator) == 0) {
+		create_crazy(run,
+					 this);
 	}
 }

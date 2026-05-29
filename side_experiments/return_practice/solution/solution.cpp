@@ -84,8 +84,9 @@ void Solution::pad_new_state(int num_add) {
 				}
 
 				if (obs_node->experiment != NULL) {
-					obs_node->experiment->original_network->add_inputs(num_add);
-					obs_node->experiment->branch_network->add_inputs(num_add);
+					Experiment* experiment = (Experiment*)obs_node->experiment;
+					experiment->original_network->add_inputs(num_add);
+					experiment->branch_network->add_inputs(num_add);
 				}
 			}
 			break;
@@ -106,12 +107,14 @@ void Solution::pad_new_state(int num_add) {
 				}
 
 				if (branch_node->original_experiment != NULL) {
-					branch_node->original_experiment->original_network->add_inputs(num_add);
-					branch_node->original_experiment->branch_network->add_inputs(num_add);
+					Experiment* experiment = (Experiment*)branch_node->original_experiment;
+					experiment->original_network->add_inputs(num_add);
+					experiment->branch_network->add_inputs(num_add);
 				}
 				if (branch_node->branch_experiment != NULL) {
-					branch_node->branch_experiment->original_network->add_inputs(num_add);
-					branch_node->branch_experiment->branch_network->add_inputs(num_add);
+					Experiment* experiment = (Experiment*)branch_node->branch_experiment;
+					experiment->original_network->add_inputs(num_add);
+					experiment->branch_network->add_inputs(num_add);
 				}
 			}
 			break;
@@ -128,8 +131,9 @@ void Solution::clean() {
 			{
 				ObsNode* obs_node = (ObsNode*)it->second;
 				if (obs_node->experiment != NULL) {
-					if (obs_node->experiment->exit_next_node != NULL) {
-						experiment_endpoints.insert(obs_node->experiment->exit_next_node);
+					Experiment* experiment = (Experiment*)obs_node->experiment;
+					if (experiment->exit_next_node != NULL) {
+						experiment_endpoints.insert(experiment->exit_next_node);
 					}
 				}
 			}
@@ -138,13 +142,15 @@ void Solution::clean() {
 			{
 				BranchNode* branch_node = (BranchNode*)it->second;
 				if (branch_node->original_experiment != NULL) {
-					if (branch_node->original_experiment->exit_next_node != NULL) {
-						experiment_endpoints.insert(branch_node->original_experiment->exit_next_node);
+					Experiment* experiment = (Experiment*)branch_node->original_experiment;
+					if (experiment->exit_next_node != NULL) {
+						experiment_endpoints.insert(experiment->exit_next_node);
 					}
 				}
 				if (branch_node->branch_experiment != NULL) {
-					if (branch_node->branch_experiment->exit_next_node != NULL) {
-						experiment_endpoints.insert(branch_node->branch_experiment->exit_next_node);
+					Experiment* experiment = (Experiment*)branch_node->branch_experiment;
+					if (experiment->exit_next_node != NULL) {
+						experiment_endpoints.insert(experiment->exit_next_node);
 					}
 				}
 			}

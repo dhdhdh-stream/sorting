@@ -60,22 +60,23 @@ void Experiment::experiment_activate(ExperimentRun* run) {
 void Experiment::experiment_step(int& action,
 								 bool& is_next,
 								 ExperimentRun* run) {
-	if (run->experiment_context->step_index >= (int)this->actions.size()) {
+	ExperimentState* state = (ExperimentState*)run->experiment_context;
+	if (state->step_index >= (int)this->actions.size()) {
 		run->node_context = this->exit_next_node;
 
 		delete run->experiment_context;
 		run->experiment_context = NULL;
 	} else {
-		run->action_histories.push_back(this->actions[run->experiment_context->step_index]);
+		run->action_histories.push_back(this->actions[state->step_index]);
 
-		action_helper(this->actions[run->experiment_context->step_index],
+		action_helper(this->actions[state->step_index],
 					  run->state,
 					  run->wrapper);
 
-		action = this->actions[run->experiment_context->step_index];
+		action = this->actions[state->step_index];
 		is_next = true;
 
-		run->experiment_context->step_index++;
+		state->step_index++;
 	}
 }
 
@@ -119,17 +120,18 @@ void Experiment::predict_activate(PredictRun* run) {
 }
 
 void Experiment::predict_step(PredictRun* run) {
-	if (run->experiment_context->step_index >= (int)this->actions.size()) {
+	ExperimentState* state = (ExperimentState*)run->experiment_context;
+	if (state->step_index >= (int)this->actions.size()) {
 		run->node_context = this->exit_next_node;
 
 		delete run->experiment_context;
 		run->experiment_context = NULL;
 	} else {
-		action_helper(this->actions[run->experiment_context->step_index],
+		action_helper(this->actions[state->step_index],
 					  run->state,
 					  run->wrapper);
 
-		run->experiment_context->step_index++;
+		state->step_index++;
 	}
 }
 

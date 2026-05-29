@@ -6,7 +6,7 @@
 
 #include "abstract_node.h"
 
-class Experiment;
+class AbstractExperiment;
 
 class ObsNode : public AbstractNode {
 public:
@@ -18,7 +18,7 @@ public:
 
 	double average_instances_per_run;
 
-	Experiment* experiment;
+	AbstractExperiment* experiment;
 
 	int sum_instances;
 

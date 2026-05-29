@@ -5,7 +5,7 @@
 
 #include "abstract_node.h"
 
-class Experiment;
+class AbstractExperiment;
 class Network;
 class Wrapper;
 
@@ -33,8 +33,8 @@ public:
 	double original_average_instances_per_run;
 	double branch_average_instances_per_run;
 
-	Experiment* original_experiment;
-	Experiment* branch_experiment;
+	AbstractExperiment* original_experiment;
+	AbstractExperiment* branch_experiment;
 
 	int original_sum_instances;
 	int branch_sum_instances;

@@ -3,6 +3,8 @@
 
 #include <vector>
 
+#include "abstract_experiment.h"
+
 class AbstractNode;
 class ExperimentRun;
 class Network;
@@ -29,7 +31,7 @@ const int MEASURE_STATUS_SUCCESS = 1;
 const int MEASURE_STATUS_FAIL = 2;
 
 class ExperimentHistory;
-class Experiment {
+class Experiment : public AbstractExperiment {
 public:
 	AbstractNode* node_context;
 	bool is_branch;
@@ -87,10 +89,8 @@ public:
 	ExperimentHistory(Experiment* experiment);
 };
 
-class ExperimentState {
+class ExperimentState : public AbstractExperimentState {
 public:
-	Experiment* experiment;
-
 	int step_index;
 
 	ExperimentState(Experiment* experiment);

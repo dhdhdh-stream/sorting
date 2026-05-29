@@ -4,6 +4,7 @@
 #include <fstream>
 #include <vector>
 
+class Crazy;
 class ExperimentRun;
 class ProblemType;
 class Run;
@@ -15,18 +16,16 @@ public:
 	int num_obs;
 	int num_actions;
 
-	std::vector<std::vector<std::vector<double>>> old_sample_obs;
-	std::vector<std::vector<int>> old_sample_actions;
-	std::vector<double> old_sample_target_vals;
-
-	std::vector<std::vector<std::vector<double>>> new_sample_obs;
-	std::vector<std::vector<int>> new_sample_actions;
-	std::vector<double> new_sample_target_vals;
-
 	WorldModel* world_model;
 	Solution* solution;
 
 	int iter;
+
+	Crazy* crazy;
+
+	std::vector<std::vector<std::vector<double>>> sample_obs;
+	std::vector<std::vector<int>> sample_actions;
+	std::vector<double> sample_target_vals;
 
 	#if defined(MDEBUG) && MDEBUG
 	int run_index;
