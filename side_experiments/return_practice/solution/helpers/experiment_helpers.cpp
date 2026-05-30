@@ -267,5 +267,6 @@ void create_crazy(ExperimentRun* run,
 		}
 
 		wrapper->crazy = crazy;
+		wrapper->hit_crazy = false;
 	}
 }

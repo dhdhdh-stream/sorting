@@ -31,6 +31,8 @@ Wrapper::Wrapper(ProblemType* problem_type) {
 
 	this->iter = 0;
 
+	this->crazy = NULL;
+
 	#if defined(MDEBUG) && MDEBUG
 	this->run_index = 0;
 	#endif /* MDEBUG */
@@ -59,6 +61,8 @@ Wrapper::Wrapper(std::string path,
 	input_file.close();
 
 	this->iter = 0;
+
+	this->crazy = NULL;
 
 	#if defined(MDEBUG) && MDEBUG
 	this->run_index = 0;

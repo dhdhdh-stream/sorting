@@ -6,6 +6,7 @@
 #include "experiment_run.h"
 #include "obs_node.h"
 #include "world_model_helpers.h"
+#include "wrapper.h"
 
 using namespace std;
 
@@ -31,6 +32,8 @@ Crazy::~Crazy() {
 }
 
 void Crazy::experiment_activate(ExperimentRun* run) {
+	run->wrapper->hit_crazy = true;
+
 	CrazyState* new_experiment_state = new CrazyState(this);
 	new_experiment_state->step_index = 0;
 	run->experiment_context = new_experiment_state;

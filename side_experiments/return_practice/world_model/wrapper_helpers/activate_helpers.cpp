@@ -3,6 +3,7 @@
 #include "abstract_node.h"
 #include "run.h"
 #include "solution.h"
+#include "utilities.h"
 #include "world_model.h"
 #include "world_model_helpers.h"
 

@@ -71,6 +71,14 @@ void Wrapper::experiment_end(double result,
 	if (this->crazy != NULL) {
 		delete this->crazy;
 		this->crazy = NULL;
+
+		// if (this->hit_crazy) {
+		// 	cout << "crazy actions:";
+		// 	for (int a_index = 0; a_index < (int)run->action_histories.size(); a_index++) {
+		// 		cout << " " << run->action_histories[a_index];
+		// 	}
+		// 	cout << endl;
+		// }
 	} else {
 		if (this->solution->score_histories.size() < SCORE_HISTORIES_NUM_SAVE) {
 			this->solution->score_histories.push_back(result);
@@ -107,8 +115,12 @@ void Wrapper::experiment_end(double result,
 		measure_helper(this,
 					   score_average,
 					   misguess_average);
+		cout << endl;
 		cout << "score_average: " << score_average << endl;
 		cout << "misguess_average: " << misguess_average << endl;
+		cout << "this->world_model->num_states: " << this->world_model->num_states << endl;
+		measure_test(this);
+		cout << endl;
 	}
 
 	int node_count = 0;

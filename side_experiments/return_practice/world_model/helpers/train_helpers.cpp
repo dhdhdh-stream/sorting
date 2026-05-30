@@ -461,17 +461,19 @@ void train_helper(Wrapper* wrapper) {
 	double denom = sqrt((existing_misguess_variance + new_misguess_variance) / EVAL_ITERS);
 	double t_score = (existing_misguess_average - new_misguess_average) / denom;
 
-	// // temp
-	// cout << "existing_misguess_average: " << existing_misguess_average << endl;
-	// cout << "existing_misguess_variance: " << existing_misguess_variance << endl;
-	// cout << "new_misguess_average: " << new_misguess_average << endl;
-	// cout << "new_misguess_variance: " << new_misguess_variance << endl;
-	// cout << "t_score: " << t_score << endl;
+	// temp
+	cout << "existing_misguess_average: " << existing_misguess_average << endl;
+	cout << "existing_misguess_variance: " << existing_misguess_variance << endl;
+	cout << "new_misguess_average: " << new_misguess_average << endl;
+	cout << "new_misguess_variance: " << new_misguess_variance << endl;
+	cout << "t_score: " << t_score << endl;
 
 	#if defined(MDEBUG) && MDEBUG
-	if (t_score >= 2.326 || rand()%2 == 0) {
+	// if (t_score >= 2.326 || rand()%2 == 0) {
+	if (t_score >= 1.645 || rand()%2 == 0) {
 	#else
-	if (t_score >= 2.326) {
+	// if (t_score >= 2.326) {
+	if (t_score >= 1.645) {
 	#endif /* MDEBUG */
 		cout << "add state" << endl;
 

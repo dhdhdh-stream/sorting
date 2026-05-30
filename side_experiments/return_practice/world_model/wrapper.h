@@ -22,6 +22,7 @@ public:
 	int iter;
 
 	Crazy* crazy;
+	bool hit_crazy;
 
 	std::vector<std::vector<std::vector<double>>> sample_obs;
 	std::vector<std::vector<int>> sample_actions;
