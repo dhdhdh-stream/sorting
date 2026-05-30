@@ -287,6 +287,58 @@ void force_sequence_helper(Wrapper* wrapper) {
 	// 	delete problem;
 	// }
 
+	cout << "no_state_update_world_model_helper" << endl;
+	for (int iter_index = 0; iter_index < 10000; iter_index++) {
+		{
+			Problem* problem = problem_type->get_problem();
+
+			vector<vector<double>> curr_obs;
+			vector<int> curr_actions;
+
+			curr_obs.push_back(problem->get_observations());
+
+			for (int a_index = 0; a_index < (int)FORCE_ACTIONS_R4.size(); a_index++) {
+				problem->perform_action(FORCE_ACTIONS_R4[a_index]);
+				curr_actions.push_back(FORCE_ACTIONS_R4[a_index]);
+
+				curr_obs.push_back(problem->get_observations());
+			}
+
+			no_state_update_world_model_helper(curr_obs,
+											   curr_actions,
+											   problem->score_result(),
+											   wrapper);
+
+			delete problem;
+		}
+
+		{
+			Problem* problem = problem_type->get_problem();
+
+			vector<vector<double>> curr_obs;
+			vector<int> curr_actions;
+
+			curr_obs.push_back(problem->get_observations());
+
+			int num_actions = num_actions_distribution(generator);
+			for (int a_index = 0; a_index < num_actions; a_index++) {
+				int action = action_distribution(generator);
+
+				problem->perform_action(action);
+				curr_actions.push_back(action);
+
+				curr_obs.push_back(problem->get_observations());
+			}
+
+			no_state_update_world_model_helper(curr_obs,
+											   curr_actions,
+											   problem->score_result(),
+											   wrapper);
+
+			delete problem;
+		}
+	}
+
 	cout << "wrapper->world_model->average_max_update: " << wrapper->world_model->average_max_update << endl;
 
 	measure_test(wrapper);
@@ -348,7 +400,7 @@ void force_sequence_helper(Wrapper* wrapper) {
 
 	measure_test(wrapper);
 
-	for (int iter_index = 0; iter_index < 10000; iter_index++) {
+	for (int iter_index = 0; iter_index < 100000; iter_index++) {
 		Problem* problem = problem_type->get_problem();
 
 		vector<vector<double>> curr_obs;
@@ -370,6 +422,10 @@ void force_sequence_helper(Wrapper* wrapper) {
 								  curr_actions,
 								  problem->score_result(),
 								  wrapper);
+		// no_state_update_world_model_helper(curr_obs,
+		// 								   curr_actions,
+		// 								   problem->score_result(),
+		// 								   wrapper);
 
 		delete problem;
 	}
@@ -377,6 +433,79 @@ void force_sequence_helper(Wrapper* wrapper) {
 	cout << "wrapper->world_model->average_max_update: " << wrapper->world_model->average_max_update << endl;
 
 	measure_test(wrapper);
+
+	cout << "no_state_update_world_model_helper" << endl;
+	for (int iter_index = 0; iter_index < 20000; iter_index++) {
+		{
+			Problem* problem = problem_type->get_problem();
+
+			vector<vector<double>> curr_obs;
+			vector<int> curr_actions;
+
+			curr_obs.push_back(problem->get_observations());
+
+			for (int a_index = 0; a_index < (int)FORCE_ACTIONS_R4.size(); a_index++) {
+				problem->perform_action(FORCE_ACTIONS_R4[a_index]);
+				curr_actions.push_back(FORCE_ACTIONS_R4[a_index]);
+
+				curr_obs.push_back(problem->get_observations());
+			}
+
+			no_state_update_world_model_helper(curr_obs,
+											   curr_actions,
+											   problem->score_result(),
+											   wrapper);
+
+			delete problem;
+		}
+
+		{
+			Problem* problem = problem_type->get_problem();
+
+			vector<vector<double>> curr_obs;
+			vector<int> curr_actions;
+
+			curr_obs.push_back(problem->get_observations());
+
+			int num_actions = num_actions_distribution(generator);
+			for (int a_index = 0; a_index < num_actions; a_index++) {
+				int action = action_distribution(generator);
+
+				problem->perform_action(action);
+				curr_actions.push_back(action);
+
+				curr_obs.push_back(problem->get_observations());
+			}
+
+			no_state_update_world_model_helper(curr_obs,
+											   curr_actions,
+											   problem->score_result(),
+											   wrapper);
+
+			delete problem;
+		}
+	}
+
+	measure_test(wrapper);
+
+	delete problem_type;
+}
+
+void large_random(Wrapper* wrapper) {
+	ProblemType* problem_type = new TypeTestIndirect();
+
+	geometric_distribution<int> num_actions_distribution(0.1);
+	uniform_int_distribution<int> action_distribution(0, wrapper->num_actions-1);
+
+	for (int epoch_index = 0; epoch_index < 20; epoch_index++) {
+		init_helper(problem_type,
+					wrapper);
+		train_helper(wrapper);
+
+		cout << "wrapper->world_model->num_states: " << wrapper->world_model->num_states << endl;
+
+		measure_test(wrapper);
+	}
 
 	delete problem_type;
 }
