@@ -25,4 +25,6 @@ void update_world_model_helper(std::vector<std::vector<double>>& obs,
 
 void train_helper(Wrapper* wrapper);
 
+void force_sequence_helper(Wrapper* wrapper);
+
 #endif /* WORLD_MODEL_HELPERS_H */

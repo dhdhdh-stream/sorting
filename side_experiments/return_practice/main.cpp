@@ -39,54 +39,57 @@ int main(int argc, char* argv[]) {
 		filename = "main.txt";
 		wrapper = new Wrapper(problem_type);
 
-		init_helper(problem_type,
-					wrapper);
+		// init_helper(problem_type,
+		// 			wrapper);
 
-		train_helper(wrapper);
+		// train_helper(wrapper);
+
+		// temp
+		force_sequence_helper(wrapper);
 	}
 
-	while (true) {
-		int starting_num_states = wrapper->world_model->num_states;
-		int starting_timestamp = wrapper->solution->timestamp;
+	// while (true) {
+	// 	int starting_num_states = wrapper->world_model->num_states;
+	// 	int starting_timestamp = wrapper->solution->timestamp;
 
-		while (true) {
-			Problem* problem = problem_type->get_problem();
+	// 	while (true) {
+	// 		Problem* problem = problem_type->get_problem();
 
-			ExperimentRun* run = new ExperimentRun();
+	// 		ExperimentRun* run = new ExperimentRun();
 
-			wrapper->experiment_init(run);
+	// 		wrapper->experiment_init(run);
 
-			while (true) {
-				vector<double> obs = problem->get_observations();
+	// 		while (true) {
+	// 			vector<double> obs = problem->get_observations();
 
-				pair<bool,int> next = wrapper->experiment_step(obs,
-															   run);
-				if (next.first) {
-					break;
-				} else {
-					problem->perform_action(next.second);
-				}
-			}
+	// 			pair<bool,int> next = wrapper->experiment_step(obs,
+	// 														   run);
+	// 			if (next.first) {
+	// 				break;
+	// 			} else {
+	// 				problem->perform_action(next.second);
+	// 			}
+	// 		}
 
-			double target_val = problem->score_result();
+	// 		double target_val = problem->score_result();
 
-			wrapper->experiment_end(target_val,
-									run);
+	// 		wrapper->experiment_end(target_val,
+	// 								run);
 
-			delete run;
+	// 		delete run;
 
-			delete problem;
+	// 		delete problem;
 
-			if (wrapper->world_model->num_states != starting_num_states
-					|| wrapper->solution->timestamp != starting_timestamp) {
-				break;
-			}
-		}
+	// 		if (wrapper->world_model->num_states != starting_num_states
+	// 				|| wrapper->solution->timestamp != starting_timestamp) {
+	// 			break;
+	// 		}
+	// 	}
 
-		wrapper->save("saves/", filename);
+	// 	wrapper->save("saves/", filename);
 
-		wrapper->save_for_display("../", "display.txt");
-	}
+	// 	wrapper->save_for_display("../", "display.txt");
+	// }
 
 	delete problem_type;
 	delete wrapper;

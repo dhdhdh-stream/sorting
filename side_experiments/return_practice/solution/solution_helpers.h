@@ -18,5 +18,6 @@ void update_solution_helper(ExperimentRun* run,
 void measure_helper(Wrapper* wrapper,
 					double& score_average,
 					double& misguess_average);
+void measure_test(Wrapper* wrapper);
 
 #endif /* SOLUTION_HELPERS_H */
