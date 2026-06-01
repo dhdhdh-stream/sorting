@@ -15,13 +15,17 @@ HEADERS = ${SOURCES:.cpp=.h}
 OBJECTS = ${HEADERS:.h=.o}
 DEPENDS = ${OBJECTS:.o=.d}
 
-all: main
+all: main focus_sequence
 
 main: ${OBJECTS} main.o
 	${CXX} ${CXXFLAGS} ${OBJECTS} main.o -o main ${LIBS}
 
--include ${DEPENDS} main.d
+focus_sequence: ${OBJECTS} focus_sequence.o
+	${CXX} ${CXXFLAGS} ${OBJECTS} focus_sequence.o -o focus_sequence ${LIBS}
+
+-include ${DEPENDS} main.d focus_sequence.d
 
 clean:
 	rm -f ${OBJECTS} ${DEPENDS} \
-	main.o main.d main
+	main.o main.d main \
+	focus_sequence.o focus_sequence.d focus_sequence

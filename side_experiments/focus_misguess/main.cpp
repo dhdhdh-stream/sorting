@@ -14,6 +14,12 @@ int seed;
 
 default_random_engine generator;
 
+#if defined(MDEBUG) && MDEBUG
+const int SAMPLES_PER_EPOCH = 40;
+#else
+const int SAMPLES_PER_EPOCH = 20000;
+#endif /* MDEBUG */
+
 int main(int argc, char* argv[]) {
 	cout << "Starting..." << endl;
 
@@ -29,7 +35,7 @@ int main(int argc, char* argv[]) {
 	geometric_distribution<int> num_actions_distribution(0.1);
 	uniform_int_distribution<int> action_distribution(0, wrapper->num_actions-1);
 	for (int epoch_index = 0; epoch_index < 20; epoch_index++) {
-		for (int sample_index = 0; sample_index < 20000; sample_index++) {
+		for (int sample_index = 0; sample_index < SAMPLES_PER_EPOCH; sample_index++) {
 			Problem* problem = problem_type->get_problem();
 
 			vector<vector<double>> curr_obs;

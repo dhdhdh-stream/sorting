@@ -17,7 +17,8 @@ void eval_world_model_helper(vector<vector<double>>& obs,
 	WorldModel* world_model = wrapper->world_model;
 
 	uniform_int_distribution<int> include_obs_distribution(0, obs.size()-1);
-	int include_obs_index = include_obs_distribution(generator);
+	// int include_obs_index = include_obs_distribution(generator);
+	int include_obs_index = obs.size()-1;
 
 	vector<double> state(world_model->num_states, 0.0);
 
