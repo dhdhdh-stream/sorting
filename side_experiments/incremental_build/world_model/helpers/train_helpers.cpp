@@ -169,15 +169,26 @@ void train_helper(Wrapper* wrapper) {
 						  wrapper);
 	}
 
+	// temp
+	double sum_error = 0.0;
 	uniform_int_distribution<int> train_sample_distribution(0, train_obs.size()-1);
 	for (int iter_index = 0; iter_index < UPDATE_ITERS; iter_index++) {
 		int train_sample_index = train_sample_distribution(generator);
 
+		double error;
 		update_world_model_helper(train_obs[train_sample_index],
 								  train_actions[train_sample_index],
 								  train_target_vals[train_sample_index],
+								  error,
 								  potential_world_model,
 								  wrapper);
+
+		sum_error += error;
+
+		if ((iter_index + 1) % 10000 == 0) {
+			cout << iter_index << ": " << sum_error << endl;
+			sum_error = 0.0;
+		}
 	}
 
 	vector<double> existing_misguess(verification_obs.size());
@@ -266,6 +277,7 @@ void train_helper(Wrapper* wrapper) {
 	wrapper->sample_target_vals.clear();
 
 	measure_test(wrapper);
+	cout << "wrapper->world_model->num_states: " << wrapper->world_model->num_states << endl;
 
 	// temp
 	cout << "train_helper done" << endl;

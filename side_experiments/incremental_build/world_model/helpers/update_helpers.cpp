@@ -12,6 +12,7 @@ using namespace std;
 void update_world_model_helper(vector<vector<double>>& obs,
 							   vector<int>& actions,
 							   double target_val,
+							   double& error,
 							   WorldModel* world_model,
 							   Wrapper* wrapper) {
 	uniform_int_distribution<int> include_obs_distribution(0, obs.size()-1);
@@ -84,6 +85,8 @@ void update_world_model_helper(vector<vector<double>>& obs,
 	world_model->score_network->activate(state);
 
 	vector<double> score_errors{target_val - world_model->score_network->output->acti_vals[0]};
+
+	error = abs(target_val - world_model->score_network->output->acti_vals[0]);
 
 	vector<double> state_errors(world_model->num_states);
 
@@ -160,6 +163,14 @@ void update_world_model_helper(vector<vector<double>>& obs,
 			}
 			world_model->score_network->update_weights(learning_rate);
 		}
+
+		// for (int n_index = 0; n_index < (int)world_model->obs_networks.size(); n_index++) {
+		// 	world_model->obs_networks[n_index]->update();
+		// }
+		// for (int n_index = 0; n_index < (int)world_model->action_networks.size(); n_index++) {
+		// 	world_model->action_networks[n_index]->update();
+		// }
+		// world_model->score_network->update();
 
 		world_model->epoch_iter = 0;
 	}

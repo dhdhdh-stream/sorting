@@ -16,6 +16,7 @@ void action_helper(int action,
 void update_world_model_helper(std::vector<std::vector<double>>& obs,
 							   std::vector<int>& actions,
 							   double target_val,
+							   double& error,
 							   WorldModel* world_model,
 							   Wrapper* wrapper);
 

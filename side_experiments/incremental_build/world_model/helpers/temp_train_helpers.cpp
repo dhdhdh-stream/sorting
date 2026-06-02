@@ -208,7 +208,7 @@ void temp_train_helper(vector<vector<vector<double>>>& train_obs,
 			temp_final_network->update();
 		}
 
-		if (iter_index % 1000 == 0) {
+		if ((iter_index + 1) % 10000 == 0) {
 			cout << iter_index << ": " << sum_error << endl;
 			sum_error = 0.0;
 		}

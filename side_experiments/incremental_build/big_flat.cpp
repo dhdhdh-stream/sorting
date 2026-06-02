@@ -48,7 +48,7 @@ int main(int argc, char* argv[]) {
 	wrapper->world_model->obs_network_outputs.push_back(new_network_input_output);
 	wrapper->world_model->obs_networks.push_back(new_obs_network);
 
-	Network* new_action_network = new Network(NUM_STATE + wrapper->num_obs, NUM_STATE);
+	Network* new_action_network = new Network(NUM_STATE + wrapper->num_actions, NUM_STATE);
 	wrapper->world_model->action_network_inputs.push_back(new_network_input_output);
 	wrapper->world_model->action_network_outputs.push_back(new_network_input_output);
 	wrapper->world_model->action_networks.push_back(new_action_network);
@@ -78,13 +78,14 @@ int main(int argc, char* argv[]) {
 				curr_obs.push_back(problem->get_observations());
 			}
 
-			// double error;
+			double error;
 			update_world_model_helper(curr_obs,
 									  curr_actions,
 									  problem->score_result(),
+									  error,
 									  wrapper->world_model,
 									  wrapper);
-			// sum_error += error;
+			sum_error += error;
 
 			delete problem;
 		}
