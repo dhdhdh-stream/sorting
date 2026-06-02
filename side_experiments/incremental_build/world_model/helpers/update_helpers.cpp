@@ -12,9 +12,8 @@ using namespace std;
 void update_world_model_helper(vector<vector<double>>& obs,
 							   vector<int>& actions,
 							   double target_val,
+							   WorldModel* world_model,
 							   Wrapper* wrapper) {
-	WorldModel* world_model = wrapper->world_model;
-
 	uniform_int_distribution<int> include_obs_distribution(0, obs.size()-1);
 	// int include_obs_index = include_obs_distribution(generator);
 	int include_obs_index = obs.size()-1;
@@ -82,48 +81,16 @@ void update_world_model_helper(vector<vector<double>>& obs,
 		}
 	}
 
-	double sum_score = 0.0;
-	for (int n_index = 0; n_index < (int)world_model->score_networks.size(); n_index++) {
-		vector<double> inputs;
-		for (int i_index = 0; i_index < (int)world_model->score_network_inputs[n_index].size(); i_index++) {
-			inputs.push_back(state[world_model->score_network_inputs[n_index][i_index]]);
-		}
-		world_model->score_networks[n_index]->activate(inputs);
-		sum_score += world_model->score_networks[n_index]->output->acti_vals[0];
-	}
+	world_model->score_network->activate(state);
 
-	double sum_misguess = 0.0;
-	for (int n_index = 0; n_index < (int)world_model->misguess_networks.size(); n_index++) {
-		vector<double> inputs;
-		for (int i_index = 0; i_index < (int)world_model->misguess_network_inputs[n_index].size(); i_index++) {
-			inputs.push_back(state[world_model->misguess_network_inputs[n_index][i_index]]);
-		}
-		world_model->misguess_networks[n_index]->activate(inputs);
-		sum_misguess += world_model->misguess_networks[n_index]->output->acti_vals[0];
-	}
+	vector<double> score_errors{target_val - world_model->score_network->output->acti_vals[0]};
 
-	vector<double> score_errors{target_val - sum_score};
-	double misguess = abs(target_val - sum_score);
-	vector<double> misguess_errors{misguess - sum_misguess};
+	vector<double> state_errors(world_model->num_states);
 
-	vector<double> state_errors(world_model->num_states, 0.0);
-
-	for (int n_index = 0; n_index < (int)world_model->score_networks.size(); n_index++) {
-		world_model->score_networks[n_index]->backprop(score_errors);
-		for (int i_index = 0; i_index < (int)world_model->score_network_inputs[n_index].size(); i_index++) {
-			state_errors[world_model->score_network_inputs[n_index][i_index]]
-				+= world_model->score_networks[n_index]->input->errors[i_index];
-			world_model->score_networks[n_index]->input->errors[i_index] = 0.0;
-		}
-	}
-
-	for (int n_index = 0; n_index < (int)world_model->misguess_networks.size(); n_index++) {
-		world_model->misguess_networks[n_index]->backprop(misguess_errors);
-		for (int i_index = 0; i_index < (int)world_model->misguess_network_inputs[n_index].size(); i_index++) {
-			state_errors[world_model->misguess_network_inputs[n_index][i_index]]
-				+= world_model->misguess_networks[n_index]->input->errors[i_index];
-			world_model->misguess_networks[n_index]->input->errors[i_index] = 0.0;
-		}
+	world_model->score_network->backprop(score_errors);
+	for (int i_index = 0; i_index < world_model->num_states; i_index++) {
+		state_errors[i_index] = world_model->score_network->input->errors[i_index];
+		world_model->score_network->input->errors[i_index] = 0.0;
 	}
 
 	for (int step_index = (int)obs.size()-1; step_index >= 0; step_index--) {
@@ -175,12 +142,7 @@ void update_world_model_helper(vector<vector<double>>& obs,
 		for (int n_index = 0; n_index < (int)world_model->action_networks.size(); n_index++) {
 			world_model->action_networks[n_index]->get_max_update(max_update);
 		}
-		for (int n_index = 0; n_index < (int)world_model->score_networks.size(); n_index++) {
-			world_model->score_networks[n_index]->get_max_update(max_update);
-		}
-		for (int n_index = 0; n_index < (int)world_model->misguess_networks.size(); n_index++) {
-			world_model->misguess_networks[n_index]->get_max_update(max_update);
-		}
+		world_model->score_network->get_max_update(max_update);
 
 		world_model->average_max_update = 0.999*world_model->average_max_update + 0.001*max_update;
 
@@ -196,12 +158,7 @@ void update_world_model_helper(vector<vector<double>>& obs,
 			for (int n_index = 0; n_index < (int)world_model->action_networks.size(); n_index++) {
 				world_model->action_networks[n_index]->update_weights(learning_rate);
 			}
-			for (int n_index = 0; n_index < (int)world_model->score_networks.size(); n_index++) {
-				world_model->score_networks[n_index]->update_weights(learning_rate);
-			}
-			for (int n_index = 0; n_index < (int)world_model->misguess_networks.size(); n_index++) {
-				world_model->misguess_networks[n_index]->update_weights(learning_rate);
-			}
+			world_model->score_network->update_weights(learning_rate);
 		}
 
 		world_model->epoch_iter = 0;

@@ -17,7 +17,7 @@ default_random_engine generator;
 #if defined(MDEBUG) && MDEBUG
 const int SAMPLES_PER_EPOCH = 40;
 #else
-const int SAMPLES_PER_EPOCH = 20000;
+const int SAMPLES_PER_EPOCH = 10000;
 #endif /* MDEBUG */
 
 int main(int argc, char* argv[]) {
@@ -34,7 +34,7 @@ int main(int argc, char* argv[]) {
 
 	geometric_distribution<int> num_actions_distribution(0.1);
 	uniform_int_distribution<int> action_distribution(0, wrapper->num_actions-1);
-	for (int epoch_index = 0; epoch_index < 20; epoch_index++) {
+	for (int epoch_index = 0; epoch_index < 100; epoch_index++) {
 		for (int sample_index = 0; sample_index < SAMPLES_PER_EPOCH; sample_index++) {
 			Problem* problem = problem_type->get_problem();
 
@@ -53,19 +53,9 @@ int main(int argc, char* argv[]) {
 				curr_obs.push_back(problem->get_observations());
 			}
 
-			double predicted_score;
-			double predicted_misguess;
-			eval_world_model_helper(curr_obs,
-									curr_actions,
-									predicted_score,
-									predicted_misguess,
-									wrapper);
-
 			wrapper->sample_obs.push_back(curr_obs);
 			wrapper->sample_actions.push_back(curr_actions);
 			wrapper->sample_target_vals.push_back(problem->score_result());
-			wrapper->sample_predicted_scores.push_back(predicted_score);
-			wrapper->sample_predicted_misguesses.push_back(predicted_misguess);
 
 			delete problem;
 		}

@@ -43,6 +43,8 @@ public:
 	void update();
 	void update(double target_max_update);
 
+	void add_inputs(int num_add);
+
 	void save(std::ofstream& output_file);
 };
 

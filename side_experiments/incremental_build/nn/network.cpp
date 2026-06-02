@@ -288,6 +288,16 @@ void Network::add_inputs(int num_add) {
 		this->input->errors.push_back(0.0);
 	}
 
+	for (int h_index = 0; h_index < (num_add + 1) / 2; h_index++) {
+		this->hidden_1->acti_vals.push_back(0.0);
+		this->hidden_1->errors.push_back(0.0);
+	}
+
+	while (this->hidden_2->acti_vals.size() * 2 < this->hidden_1->acti_vals.size()) {
+		this->hidden_2->acti_vals.push_back(0.0);
+		this->hidden_2->errors.push_back(0.0);
+	}
+
 	this->hidden_1->update_structure();
 	this->hidden_2->update_structure();
 	this->output->update_structure();

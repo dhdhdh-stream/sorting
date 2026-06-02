@@ -18,10 +18,7 @@ public:
 	std::vector<std::vector<int>> action_network_outputs;
 	std::vector<Network*> action_networks;
 
-	std::vector<std::vector<int>> score_network_inputs;
-	std::vector<Network*> score_networks;
-	std::vector<std::vector<int>> misguess_network_inputs;
-	std::vector<Network*> misguess_networks;
+	Network* score_network;
 
 	int epoch_iter;
 	double average_max_update;

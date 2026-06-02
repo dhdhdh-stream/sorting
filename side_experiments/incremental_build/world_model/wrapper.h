@@ -16,8 +16,6 @@ public:
 	std::vector<std::vector<std::vector<double>>> sample_obs;
 	std::vector<std::vector<int>> sample_actions;
 	std::vector<double> sample_target_vals;
-	std::vector<double> sample_predicted_scores;
-	std::vector<double> sample_predicted_misguesses;
 
 	Wrapper(ProblemType* problem_type);
 	~Wrapper();
