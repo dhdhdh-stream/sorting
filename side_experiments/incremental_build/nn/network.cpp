@@ -16,7 +16,8 @@ Network::Network(int input_size,
 	}
 
 	this->hidden_1 = new Layer(LEAKY_LAYER);
-	for (int h_index = 0; h_index < 8; h_index++) {
+	// for (int h_index = 0; h_index < 8; h_index++) {
+	for (int h_index = 0; h_index < 40; h_index++) {
 		this->hidden_1->acti_vals.push_back(0.0);
 		this->hidden_1->errors.push_back(0.0);
 	}
@@ -24,7 +25,8 @@ Network::Network(int input_size,
 	this->hidden_1->update_structure();
 
 	this->hidden_2 = new Layer(LEAKY_LAYER);
-	for (int h_index = 0; h_index < 4; h_index++) {
+	// for (int h_index = 0; h_index < 4; h_index++) {
+	for (int h_index = 0; h_index < 20; h_index++) {
 		this->hidden_2->acti_vals.push_back(0.0);
 		this->hidden_2->errors.push_back(0.0);
 	}
