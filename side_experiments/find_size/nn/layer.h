@@ -26,6 +26,9 @@ public:
 	Layer(int type);
 
 	void update_structure();
+	/**
+	 * - update from front
+	 */
 
 	void copy_weights_from(Layer* original);
 	void load_weights_from(std::ifstream& input_file);

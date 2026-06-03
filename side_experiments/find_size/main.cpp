@@ -106,6 +106,13 @@ int main(int argc, char* argv[]) {
 		double large_denom = sqrt((large->misguess_variance_average + curr->misguess_variance_average) / 10000.0);
 		double large_t_score = (curr->misguess_average - large->misguess_average) / large_denom;
 
+		cout << "small_t_score: " << small_t_score << endl;
+		cout << "large_t_score: " << large_t_score << endl;
+
+		cout << "curr->num_states: " << curr->num_states << endl;
+
+		cout << endl;
+
 		if (small_t_score >= 1.645) {
 			delete curr;
 			curr = small;
