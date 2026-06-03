@@ -47,6 +47,9 @@ public:
 	void update_weights(double learning_rate);
 
 	void add_inputs(int num_add);
+	void remove_inputs(int num_remove);
+	void add_outputs(int num_add);
+	void remove_outputs(int num_remove);
 
 	void save(std::ofstream& output_file);
 };

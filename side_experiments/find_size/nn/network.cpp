@@ -16,8 +16,7 @@ Network::Network(int input_size,
 	}
 
 	this->hidden_1 = new Layer(LEAKY_LAYER);
-	// for (int h_index = 0; h_index < 8; h_index++) {
-	for (int h_index = 0; h_index < 40; h_index++) {
+	for (int h_index = 0; h_index < 4; h_index++) {
 		this->hidden_1->acti_vals.push_back(0.0);
 		this->hidden_1->errors.push_back(0.0);
 	}
@@ -25,8 +24,7 @@ Network::Network(int input_size,
 	this->hidden_1->update_structure();
 
 	this->hidden_2 = new Layer(LEAKY_LAYER);
-	// for (int h_index = 0; h_index < 4; h_index++) {
-	for (int h_index = 0; h_index < 20; h_index++) {
+	for (int h_index = 0; h_index < 2; h_index++) {
 		this->hidden_2->acti_vals.push_back(0.0);
 		this->hidden_2->errors.push_back(0.0);
 	}
@@ -290,18 +288,57 @@ void Network::add_inputs(int num_add) {
 		this->input->errors.push_back(0.0);
 	}
 
-	for (int h_index = 0; h_index < (num_add + 1) / 2; h_index++) {
+	for (int h_index = 0; h_index < 2 * num_add; h_index++) {
 		this->hidden_1->acti_vals.push_back(0.0);
 		this->hidden_1->errors.push_back(0.0);
 	}
 
-	while (this->hidden_2->acti_vals.size() * 2 < this->hidden_1->acti_vals.size()) {
+	for (int h_index = 0; h_index < num_add; h_index++) {
 		this->hidden_2->acti_vals.push_back(0.0);
 		this->hidden_2->errors.push_back(0.0);
 	}
 
 	this->hidden_1->update_structure();
 	this->hidden_2->update_structure();
+	this->output->update_structure();
+}
+
+void Network::remove_inputs(int num_remove) {
+	for (int i_index = 0; i_index < num_remove; i_index++) {
+		this->input->acti_vals.pop_back();
+		this->input->errors.pop_back();
+	}
+
+	for (int h_index = 0; h_index < 2 * num_remove; h_index++) {
+		this->hidden_1->acti_vals.pop_back();
+		this->hidden_1->errors.pop_back();
+	}
+
+	for (int h_index = 0; h_index < num_remove; h_index++) {
+		this->hidden_2->acti_vals.pop_back();
+		this->hidden_2->errors.pop_back();
+	}
+
+	this->hidden_1->update_structure();
+	this->hidden_2->update_structure();
+	this->output->update_structure();
+}
+
+void Network::add_outputs(int num_add) {
+	for (int o_index = 0; o_index < num_add; o_index++) {
+		this->output->acti_vals.push_back(0.0);
+		this->output->errors.push_back(0.0);
+	}
+
+	this->output->update_structure();
+}
+
+void Network::remove_outputs(int num_remove) {
+	for (int o_index = 0; o_index < num_remove; o_index++) {
+		this->output->acti_vals.pop_back();
+		this->output->errors.pop_back();
+	}
+
 	this->output->update_structure();
 }
 
