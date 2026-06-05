@@ -24,7 +24,7 @@ void Wrapper::experiment_init(ExperimentRun* run) {
 	run->node_context = this->solution->nodes[0];
 	run->experiment_context = NULL;
 
-	run->state = vector<double>(this->world_model->num_states, 0.0);
+	run->state = vector<double>(this->curr_model->num_states, 0.0);
 
 	this->iter++;
 
@@ -42,6 +42,11 @@ pair<bool,int> Wrapper::experiment_step(vector<double> obs,
 	obs_helper(obs,
 			   run->state,
 			   this);
+
+	if (run->experiment_context == NULL
+			&& run->node_context != NULL) {
+		run->node_context->experiment_step_start(run);
+	}
 
 	int action;
 	bool is_next = false;
@@ -79,6 +84,24 @@ void Wrapper::experiment_end(double result,
 		// 	}
 		// 	cout << endl;
 		// }
+
+		if (this->sample_obs.size() < SAMPLES_NUM_SAVE) {
+			this->sample_obs.push_back(run->obs_histories);
+			this->sample_actions.push_back(run->action_histories);
+			this->sample_target_vals.push_back(result);
+		} else {
+			this->sample_obs[this->sample_index] = run->obs_histories;
+			this->sample_actions[this->sample_index] = run->action_histories;
+			this->sample_target_vals[this->sample_index] = result;
+		}
+		this->sample_index++;
+		if (this->sample_index >= SAMPLES_NUM_SAVE) {
+			check_state_size_helper(this);
+
+			this->sample_index = 0;
+		}
+
+		update_world_model_helper(this);
 	} else {
 		if (this->solution->score_histories.size() < SCORE_HISTORIES_NUM_SAVE) {
 			this->solution->score_histories.push_back(result);
@@ -89,20 +112,6 @@ void Wrapper::experiment_end(double result,
 				this->solution->score_index = 0;
 			}
 		}
-	}
-
-	update_world_model_helper(run->obs_histories,
-							  run->action_histories,
-							  result,
-							  this);
-
-	this->sample_obs.push_back(run->obs_histories);
-	this->sample_actions.push_back(run->action_histories);
-	this->sample_target_vals.push_back(result);
-	if (this->sample_obs.size() >= SAMPLES_PER_TRAIN) {
-		// temp
-		cout << "this->iter: " << this->iter << endl;
-		train_helper(this);
 	}
 
 	update_solution_helper(run,
@@ -118,7 +127,7 @@ void Wrapper::experiment_end(double result,
 		cout << endl;
 		cout << "score_average: " << score_average << endl;
 		cout << "misguess_average: " << misguess_average << endl;
-		cout << "this->world_model->num_states: " << this->world_model->num_states << endl;
+		cout << "this->curr_model->num_states: " << this->curr_model->num_states << endl;
 		measure_test(this);
 		cout << endl;
 	}

@@ -1,4 +1,4 @@
-#include "network.h"
+#include "state_network.h"
 
 #include <iostream>
 
@@ -7,8 +7,8 @@
 
 using namespace std;
 
-Network::Network(int input_size,
-				 int output_size) {
+StateNetwork::StateNetwork(int input_size,
+						   int output_size) {
 	this->input = new Layer(LINEAR_LAYER);
 	for (int i_index = 0; i_index < input_size; i_index++) {
 		this->input->acti_vals.push_back(0.0);
@@ -40,13 +40,9 @@ Network::Network(int input_size,
 	this->output->input_layers.push_back(this->hidden_1);
 	this->output->input_layers.push_back(this->hidden_2);
 	this->output->update_structure();
-
-	this->hidden_1_average_max_update = 0.0;
-	this->hidden_2_average_max_update = 0.0;
-	this->output_average_max_update = 0.0;
 }
 
-Network::Network(Network* original) {
+StateNetwork::StateNetwork(StateNetwork* original) {
 	this->input = new Layer(LINEAR_LAYER);
 	for (int i_index = 0; i_index < (int)original->input->acti_vals.size(); i_index++) {
 		this->input->acti_vals.push_back(0.0);
@@ -81,13 +77,9 @@ Network::Network(Network* original) {
 	this->output->input_layers.push_back(this->hidden_2);
 	this->output->update_structure();
 	this->output->copy_weights_from(original->output);
-
-	this->hidden_1_average_max_update = 0.0;
-	this->hidden_2_average_max_update = 0.0;
-	this->output_average_max_update = 0.0;
 }
 
-Network::Network(ifstream& input_file) {
+StateNetwork::StateNetwork(ifstream& input_file) {
 	this->input = new Layer(LINEAR_LAYER);
 	string input_size_line;
 	getline(input_file, input_size_line);
@@ -135,20 +127,16 @@ Network::Network(ifstream& input_file) {
 	this->hidden_1->load_weights_from(input_file);
 	this->hidden_2->load_weights_from(input_file);
 	this->output->load_weights_from(input_file);
-
-	this->hidden_1_average_max_update = 0.0;
-	this->hidden_2_average_max_update = 0.0;
-	this->output_average_max_update = 0.0;
 }
 
-Network::~Network() {
+StateNetwork::~StateNetwork() {
 	delete this->input;
 	delete this->hidden_1;
 	delete this->hidden_2;
 	delete this->output;
 }
 
-void Network::activate(vector<double>& input_vals) {
+void StateNetwork::activate(vector<double>& input_vals) {
 	for (int i_index = 0; i_index < (int)input_vals.size(); i_index++) {
 		this->input->acti_vals[i_index] = input_vals[i_index];
 	}
@@ -157,7 +145,7 @@ void Network::activate(vector<double>& input_vals) {
 	this->output->activate();
 }
 
-void Network::backprop(vector<double>& errors) {
+void StateNetwork::backprop(vector<double>& errors) {
 	for (int o_index = 0; o_index < (int)errors.size(); o_index++) {
 		this->output->errors[o_index] = errors[o_index];
 	}
@@ -166,17 +154,8 @@ void Network::backprop(vector<double>& errors) {
 	this->hidden_1->backprop();
 }
 
-void Network::backprop_through(vector<double>& errors) {
-	for (int o_index = 0; o_index < (int)errors.size(); o_index++) {
-		this->output->errors[o_index] = errors[o_index];
-	}
-	this->output->backprop_through();
-	this->hidden_2->backprop_through();
-	this->hidden_1->backprop_through();
-}
-
-void Network::activate(vector<double>& input_vals,
-					   NetworkHistory* history) {
+void StateNetwork::activate(vector<double>& input_vals,
+							StateNetworkHistory* history) {
 	for (int i_index = 0; i_index < (int)input_vals.size(); i_index++) {
 		this->input->acti_vals[i_index] = input_vals[i_index];
 	}
@@ -195,8 +174,8 @@ void Network::activate(vector<double>& input_vals,
 	}
 }
 
-void Network::backprop(vector<double>& errors,
-					   NetworkHistory* history) {
+void StateNetwork::backprop(vector<double>& errors,
+							StateNetworkHistory* history) {
 	for (int i_index = 0; i_index < (int)this->input->acti_vals.size(); i_index++) {
 		this->input->acti_vals[i_index] = history->input_history[i_index];
 	}
@@ -215,77 +194,32 @@ void Network::backprop(vector<double>& errors,
 	this->hidden_1->backprop();
 }
 
-void Network::backprop_through(vector<double>& errors,
-							   NetworkHistory* history) {
-	for (int i_index = 0; i_index < (int)this->input->acti_vals.size(); i_index++) {
-		this->input->acti_vals[i_index] = history->input_history[i_index];
-	}
-	for (int h_index = 0; h_index < (int)this->hidden_1->acti_vals.size(); h_index++) {
-		this->hidden_1->acti_vals[h_index] = history->hidden_1_history[h_index];
-	}
-	for (int h_index = 0; h_index < (int)this->hidden_2->acti_vals.size(); h_index++) {
-		this->hidden_2->acti_vals[h_index] = history->hidden_2_history[h_index];
-	}
-
-	for (int o_index = 0; o_index < (int)errors.size(); o_index++) {
-		this->output->errors[o_index] = errors[o_index];
-	}
-	this->output->backprop_through();
-	this->hidden_2->backprop_through();
-	this->hidden_1->backprop_through();
-}
-
-void Network::update() {
-	double hidden_1_max_update = 0.0;
-	this->hidden_1->get_max_update(hidden_1_max_update);
-	this->hidden_1_average_max_update = 0.999*this->hidden_1_average_max_update+0.001*hidden_1_max_update;
-	if (hidden_1_max_update > 0.0) {
-		double hidden_1_learning_rate = (0.3*NETWORK_TARGET_MAX_UPDATE)/this->hidden_1_average_max_update;
-		if (hidden_1_learning_rate*hidden_1_max_update > NETWORK_TARGET_MAX_UPDATE) {
-			hidden_1_learning_rate = NETWORK_TARGET_MAX_UPDATE/hidden_1_max_update;
-		}
-		this->hidden_1->update_weights(hidden_1_learning_rate);
-	}
-
-	double hidden_2_max_update = 0.0;
-	this->hidden_2->get_max_update(hidden_2_max_update);
-	this->hidden_2_average_max_update = 0.999*this->hidden_2_average_max_update+0.001*hidden_2_max_update;
-	if (hidden_2_max_update > 0.0) {
-		double hidden_2_learning_rate = (0.3*NETWORK_TARGET_MAX_UPDATE)/this->hidden_2_average_max_update;
-		if (hidden_2_learning_rate*hidden_2_max_update > NETWORK_TARGET_MAX_UPDATE) {
-			hidden_2_learning_rate = NETWORK_TARGET_MAX_UPDATE/hidden_2_max_update;
-		}
-		this->hidden_2->update_weights(hidden_2_learning_rate);
-	}
-
-	double output_max_update = 0.0;
-	this->output->get_max_update(output_max_update);
-	this->output_average_max_update = 0.999*this->output_average_max_update+0.001*output_max_update;
-	if (output_max_update > 0.0) {
-		double output_learning_rate = (0.3*NETWORK_TARGET_MAX_UPDATE)/this->output_average_max_update;
-		if (output_learning_rate*output_max_update > NETWORK_TARGET_MAX_UPDATE) {
-			output_learning_rate = NETWORK_TARGET_MAX_UPDATE/output_max_update;
-		}
-		this->output->update_weights(output_learning_rate);
-	}
-}
-
-void Network::get_max_update(double& max_update) {
+void StateNetwork::get_max_update(double& max_update) {
 	this->hidden_1->get_max_update(max_update);
 	this->hidden_2->get_max_update(max_update);
 	this->output->get_max_update(max_update);
 }
 
-void Network::update_weights(double learning_rate) {
+void StateNetwork::update_weights(double learning_rate) {
 	this->hidden_1->update_weights(learning_rate);
 	this->hidden_2->update_weights(learning_rate);
 	this->output->update_weights(learning_rate);
 }
 
-void Network::add_inputs(int num_add) {
+void StateNetwork::add_inputs(int num_add) {
 	for (int i_index = 0; i_index < num_add; i_index++) {
-		this->input->acti_vals.push_back(0.0);
-		this->input->errors.push_back(0.0);
+		this->input->acti_vals.insert(this->input->acti_vals.begin(), 0.0);
+		this->input->errors.insert(this->input->errors.begin(), 0.0);
+	}
+
+	for (int h_index = 0; h_index < 2 * num_add; h_index++) {
+		this->hidden_1->acti_vals.insert(this->hidden_1->acti_vals.begin(), 0.0);
+		this->hidden_1->errors.insert(this->hidden_1->errors.begin(), 0.0);
+	}
+
+	for (int h_index = 0; h_index < num_add; h_index++) {
+		this->hidden_2->acti_vals.insert(this->hidden_2->acti_vals.begin(), 0.0);
+		this->hidden_2->errors.insert(this->hidden_2->errors.begin(), 0.0);
 	}
 
 	this->hidden_1->update_structure();
@@ -293,7 +227,46 @@ void Network::add_inputs(int num_add) {
 	this->output->update_structure();
 }
 
-void Network::save(ofstream& output_file) {
+void StateNetwork::remove_inputs(int num_remove) {
+	for (int i_index = 0; i_index < num_remove; i_index++) {
+		this->input->acti_vals.erase(this->input->acti_vals.begin());
+		this->input->errors.erase(this->input->errors.begin());
+	}
+
+	for (int h_index = 0; h_index < 2 * num_remove; h_index++) {
+		this->hidden_1->acti_vals.erase(this->hidden_1->acti_vals.begin());
+		this->hidden_1->errors.erase(this->hidden_1->errors.begin());
+	}
+
+	for (int h_index = 0; h_index < num_remove; h_index++) {
+		this->hidden_2->acti_vals.erase(this->hidden_2->acti_vals.begin());
+		this->hidden_2->errors.erase(this->hidden_2->errors.begin());
+	}
+
+	this->hidden_1->update_structure();
+	this->hidden_2->update_structure();
+	this->output->update_structure();
+}
+
+void StateNetwork::add_outputs(int num_add) {
+	for (int o_index = 0; o_index < num_add; o_index++) {
+		this->output->acti_vals.insert(this->output->acti_vals.begin(), 0.0);
+		this->output->errors.insert(this->output->errors.begin(), 0.0);
+	}
+
+	this->output->update_structure();
+}
+
+void StateNetwork::remove_outputs(int num_remove) {
+	for (int o_index = 0; o_index < num_remove; o_index++) {
+		this->output->acti_vals.erase(this->output->acti_vals.begin());
+		this->output->errors.erase(this->output->errors.begin());
+	}
+
+	this->output->update_structure();
+}
+
+void StateNetwork::save(ofstream& output_file) {
 	output_file << this->input->acti_vals.size() << endl;
 	output_file << this->hidden_1->acti_vals.size() << endl;
 	output_file << this->hidden_2->acti_vals.size() << endl;

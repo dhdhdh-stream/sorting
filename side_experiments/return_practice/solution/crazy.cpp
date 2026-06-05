@@ -2,9 +2,10 @@
 
 #include <iostream>
 
+#include "action_node.h"
 #include "branch_node.h"
 #include "experiment_run.h"
-#include "obs_node.h"
+#include "start_node.h"
 #include "world_model_helpers.h"
 #include "wrapper.h"
 
@@ -12,10 +13,16 @@ using namespace std;
 
 Crazy::~Crazy() {
 	switch (this->node_context->type) {
-	case NODE_TYPE_OBS:
+	case NODE_TYPE_START:
 		{
-			ObsNode* obs_node = (ObsNode*)this->node_context;
-			obs_node->experiment = NULL;
+			StartNode* start_node = (StartNode*)this->node_context;
+			start_node->experiment = NULL;
+		}
+		break;
+	case NODE_TYPE_ACTION:
+		{
+			ActionNode* action_node = (ActionNode*)this->node_context;
+			action_node->experiment = NULL;
 		}
 		break;
 	case NODE_TYPE_BRANCH:
@@ -60,14 +67,6 @@ void Crazy::experiment_step(int& action,
 
 		state->step_index++;
 	}
-}
-
-void Crazy::predict_activate(PredictRun* run) {
-	// do nothing
-}
-
-void Crazy::predict_step(PredictRun* run) {
-	// do nothing
 }
 
 CrazyState::CrazyState(Crazy* experiment) {

@@ -5,8 +5,9 @@
 
 #include "action_node.h"
 #include "branch_node.h"
-#include "obs_node.h"
 #include "solution.h"
+#include "start_node.h"
+#include "start_node.h"
 #include "utilities.h"
 #include "wrapper.h"
 
@@ -57,101 +58,44 @@ void Experiment::add(Wrapper* wrapper) {
 		new_nodes.push_back(new_action_node);
 	}
 
-	ObsNode* new_ending_node = NULL;
-
-	int exit_node_id;
-	AbstractNode* exit_node;
-	if (this->exit_next_node == NULL) {
-		new_ending_node = new ObsNode();
-		new_ending_node->id = wrapper->solution->node_counter;
-		wrapper->solution->node_counter++;
-
-		for (map<int, AbstractNode*>::iterator it = wrapper->solution->nodes.begin();
-				it != wrapper->solution->nodes.end(); it++) {
-			if (it->second->type == NODE_TYPE_OBS) {
-				ObsNode* obs_node = (ObsNode*)it->second;
-				if (obs_node->next_node == NULL) {
-					obs_node->next_node_id = new_ending_node->id;
-					obs_node->next_node = new_ending_node;
-
-					new_ending_node->ancestor_ids.push_back(obs_node->id);
-
-					break;
-				}
-			}
-		}
-
-		wrapper->solution->nodes[new_ending_node->id] = new_ending_node;
-
-		new_ending_node->next_node_id = -1;
-		new_ending_node->next_node = NULL;
-
-		exit_node_id = new_ending_node->id;
-		exit_node = new_ending_node;
-	} else {
-		exit_node_id = this->exit_next_node->id;
-		exit_node = this->exit_next_node;
-	}
-
 	BranchNode* new_branch_node = new BranchNode();
 	new_branch_node->id = wrapper->solution->node_counter;
 	wrapper->solution->node_counter++;
 	wrapper->solution->nodes[new_branch_node->id] = new_branch_node;
 
 	switch (this->node_context->type) {
-	case NODE_TYPE_OBS:
+	case NODE_TYPE_START:
 		{
-			ObsNode* obs_node = (ObsNode*)this->node_context;
+			StartNode* start_node = (StartNode*)this->node_context;
 
-			if (obs_node->next_node == NULL) {
-				if (new_ending_node != NULL) {
-					new_ending_node->ancestor_ids.push_back(new_branch_node->id);
-
-					new_branch_node->original_next_node_id = new_ending_node->id;
-					new_branch_node->original_next_node = new_ending_node;
-				} else {
-					new_ending_node = new ObsNode();
-					new_ending_node->id = wrapper->solution->node_counter;
-					wrapper->solution->node_counter++;
-
-					for (map<int, AbstractNode*>::iterator it = wrapper->solution->nodes.begin();
-							it != wrapper->solution->nodes.end(); it++) {
-						if (it->second->type == NODE_TYPE_OBS) {
-							ObsNode* p_obs_node = (ObsNode*)it->second;
-							if (p_obs_node->next_node == NULL) {
-								p_obs_node->next_node_id = new_ending_node->id;
-								p_obs_node->next_node = new_ending_node;
-
-								new_ending_node->ancestor_ids.push_back(p_obs_node->id);
-
-								break;
-							}
-						}
-					}
-
-					wrapper->solution->nodes[new_ending_node->id] = new_ending_node;
-
-					new_ending_node->next_node_id = -1;
-					new_ending_node->next_node = NULL;
-
-					new_ending_node->ancestor_ids.push_back(new_branch_node->id);
-
-					new_branch_node->original_next_node_id = new_ending_node->id;
-					new_branch_node->original_next_node = new_ending_node;
+			for (int a_index = 0; a_index < (int)start_node->next_node->ancestor_ids.size(); a_index++) {
+				if (start_node->next_node->ancestor_ids[a_index] == start_node->id) {
+					start_node->next_node->ancestor_ids.erase(
+						start_node->next_node->ancestor_ids.begin() + a_index);
+					break;
 				}
-			} else {
-				for (int a_index = 0; a_index < (int)obs_node->next_node->ancestor_ids.size(); a_index++) {
-					if (obs_node->next_node->ancestor_ids[a_index] == obs_node->id) {
-						obs_node->next_node->ancestor_ids.erase(
-							obs_node->next_node->ancestor_ids.begin() + a_index);
-						break;
-					}
-				}
-				obs_node->next_node->ancestor_ids.push_back(new_branch_node->id);
-
-				new_branch_node->original_next_node_id = obs_node->next_node_id;
-				new_branch_node->original_next_node = obs_node->next_node;
 			}
+			start_node->next_node->ancestor_ids.push_back(new_branch_node->id);
+
+			new_branch_node->original_next_node_id = start_node->next_node_id;
+			new_branch_node->original_next_node = start_node->next_node;
+		}
+		break;
+	case NODE_TYPE_ACTION:
+		{
+			ActionNode* action_node = (ActionNode*)this->node_context;
+
+			for (int a_index = 0; a_index < (int)action_node->next_node->ancestor_ids.size(); a_index++) {
+				if (action_node->next_node->ancestor_ids[a_index] == action_node->id) {
+					action_node->next_node->ancestor_ids.erase(
+						action_node->next_node->ancestor_ids.begin() + a_index);
+					break;
+				}
+			}
+			action_node->next_node->ancestor_ids.push_back(new_branch_node->id);
+
+			new_branch_node->original_next_node_id = action_node->next_node_id;
+			new_branch_node->original_next_node = action_node->next_node;
 		}
 		break;
 	case NODE_TYPE_BRANCH:
@@ -188,10 +132,10 @@ void Experiment::add(Wrapper* wrapper) {
 	}
 
 	if (this->actions.size() == 0) {
-		exit_node->ancestor_ids.push_back(new_branch_node->id);
+		this->exit_next_node->ancestor_ids.push_back(new_branch_node->id);
 
-		new_branch_node->branch_next_node_id = exit_node_id;
-		new_branch_node->branch_next_node = exit_node;
+		new_branch_node->branch_next_node_id = this->exit_next_node->id;
+		new_branch_node->branch_next_node = this->exit_next_node;
 	} else {
 		new_nodes[0]->ancestor_ids.push_back(new_branch_node->id);
 
@@ -200,12 +144,20 @@ void Experiment::add(Wrapper* wrapper) {
 	}
 
 	switch (this->node_context->type) {
-	case NODE_TYPE_OBS:
+	case NODE_TYPE_START:
 		{
-			ObsNode* obs_node = (ObsNode*)this->node_context;
+			StartNode* start_node = (StartNode*)this->node_context;
 
-			obs_node->next_node_id = new_branch_node->id;
-			obs_node->next_node = new_branch_node;
+			start_node->next_node_id = new_branch_node->id;
+			start_node->next_node = new_branch_node;
+		}
+		break;
+	case NODE_TYPE_ACTION:
+		{
+			ActionNode* action_node = (ActionNode*)this->node_context;
+
+			action_node->next_node_id = new_branch_node->id;
+			action_node->next_node = new_branch_node;
 		}
 		break;
 	case NODE_TYPE_BRANCH:
@@ -233,8 +185,8 @@ void Experiment::add(Wrapper* wrapper) {
 		int next_node_id;
 		AbstractNode* next_node;
 		if (n_index == (int)new_nodes.size()-1) {
-			next_node_id = exit_node_id;
-			next_node = exit_node;
+			next_node_id = this->exit_next_node->id;
+			next_node = this->exit_next_node;
 		} else {
 			next_node_id = new_nodes[n_index+1]->id;
 			next_node = new_nodes[n_index+1];
@@ -245,8 +197,6 @@ void Experiment::add(Wrapper* wrapper) {
 
 		next_node->ancestor_ids.push_back(new_nodes[n_index]->id);
 	}
-
-	wrapper->solution->clean();
 
 	wrapper->solution->timestamp++;
 }

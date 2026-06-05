@@ -3,11 +3,12 @@
 #include <set>
 
 #include "action_node.h"
+#include "branch_network.h"
 #include "branch_node.h"
+#include "end_node.h"
 #include "experiment.h"
 #include "globals.h"
-#include "network.h"
-#include "obs_node.h"
+#include "start_node.h"
 
 using namespace std;
 
@@ -31,15 +32,6 @@ void Solution::random_exit_activate(AbstractNode* starting_node,
 		}
 
 		switch (curr_node->type) {
-		case NODE_TYPE_OBS:
-			{
-				ObsNode* node = (ObsNode*)curr_node;
-
-				possible_exits.push_back(curr_node);
-
-				curr_node = node->next_node;
-			}
-			break;
 		case NODE_TYPE_ACTION:
 			{
 				ActionNode* node = (ActionNode*)curr_node;
@@ -63,30 +55,33 @@ void Solution::random_exit_activate(AbstractNode* starting_node,
 				}
 			}
 			break;
-		
+		case NODE_TYPE_END:
+			possible_exits.push_back(curr_node);
+			curr_node = NULL;
+			break;
 		}
 	}
-
-	possible_exits.push_back(NULL);
 }
 
 void Solution::pad_new_state(int num_add) {
 	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
 			it != this->nodes.end(); it++) {
 		switch (it->second->type) {
-		case NODE_TYPE_OBS:
+		case NODE_TYPE_START:
 			{
-				ObsNode* obs_node = (ObsNode*)it->second;
-
-				for (int h_index = 0; h_index < (int)obs_node->state_history.size(); h_index++) {
-					obs_node->state_history[h_index].insert(
-						obs_node->state_history[h_index].end(), num_add, 0.0);
+				StartNode* start_node = (StartNode*)it->second;
+				if (start_node->experiment != NULL) {
+					Experiment* experiment = (Experiment*)start_node->experiment;
+					experiment->pad_new_state(num_add);
 				}
-
-				if (obs_node->experiment != NULL) {
-					Experiment* experiment = (Experiment*)obs_node->experiment;
-					experiment->original_network->add_inputs(num_add);
-					experiment->branch_network->add_inputs(num_add);
+			}
+			break;
+		case NODE_TYPE_ACTION:
+			{
+				ActionNode* action_node = (ActionNode*)it->second;
+				if (action_node->experiment != NULL) {
+					Experiment* experiment = (Experiment*)action_node->experiment;
+					experiment->pad_new_state(num_add);
 				}
 			}
 			break;
@@ -97,289 +92,15 @@ void Solution::pad_new_state(int num_add) {
 				branch_node->original_network->add_inputs(num_add);
 				branch_node->branch_network->add_inputs(num_add);
 
-				for (int h_index = 0; h_index < (int)branch_node->original_state_history.size(); h_index++) {
-					branch_node->original_state_history[h_index].insert(
-						branch_node->original_state_history[h_index].end(), num_add, 0.0);
-				}
-				for (int h_index = 0; h_index < (int)branch_node->branch_state_history.size(); h_index++) {
-					branch_node->branch_state_history[h_index].insert(
-						branch_node->branch_state_history[h_index].end(), num_add, 0.0);
-				}
-
 				if (branch_node->original_experiment != NULL) {
 					Experiment* experiment = (Experiment*)branch_node->original_experiment;
-					experiment->original_network->add_inputs(num_add);
-					experiment->branch_network->add_inputs(num_add);
+					experiment->pad_new_state(num_add);
 				}
 				if (branch_node->branch_experiment != NULL) {
 					Experiment* experiment = (Experiment*)branch_node->branch_experiment;
-					experiment->original_network->add_inputs(num_add);
-					experiment->branch_network->add_inputs(num_add);
+					experiment->pad_new_state(num_add);
 				}
 			}
-			break;
-		}
-	}
-}
-
-void Solution::clean() {
-	set<AbstractNode*> experiment_endpoints;
-	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
-			it != this->nodes.end(); it++) {
-		switch (it->second->type) {
-		case NODE_TYPE_OBS:
-			{
-				ObsNode* obs_node = (ObsNode*)it->second;
-				if (obs_node->experiment != NULL) {
-					Experiment* experiment = (Experiment*)obs_node->experiment;
-					if (experiment->exit_next_node != NULL) {
-						experiment_endpoints.insert(experiment->exit_next_node);
-					}
-				}
-			}
-			break;
-		case NODE_TYPE_BRANCH:
-			{
-				BranchNode* branch_node = (BranchNode*)it->second;
-				if (branch_node->original_experiment != NULL) {
-					Experiment* experiment = (Experiment*)branch_node->original_experiment;
-					if (experiment->exit_next_node != NULL) {
-						experiment_endpoints.insert(experiment->exit_next_node);
-					}
-				}
-				if (branch_node->branch_experiment != NULL) {
-					Experiment* experiment = (Experiment*)branch_node->branch_experiment;
-					if (experiment->exit_next_node != NULL) {
-						experiment_endpoints.insert(experiment->exit_next_node);
-					}
-				}
-			}
-			break;
-		}
-	}
-
-	/**
-	 * - add needed ObsNodes
-	 */
-	vector<pair<AbstractNode*,bool>> obs_node_needed;
-	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
-			it != this->nodes.end(); it++) {
-		switch (it->second->type) {
-		case NODE_TYPE_ACTION:
-			{
-				ActionNode* action_node = (ActionNode*)it->second;
-
-				if (action_node->next_node->type != NODE_TYPE_OBS
-						|| action_node->next_node->ancestor_ids.size() > 1) {
-					obs_node_needed.push_back({action_node, false});
-				}
-			}
-			break;
-		case NODE_TYPE_BRANCH:
-			{
-				BranchNode* branch_node = (BranchNode*)it->second;
-
-				if (branch_node->original_next_node->type != NODE_TYPE_OBS
-						|| branch_node->original_next_node->ancestor_ids.size() > 1) {
-					obs_node_needed.push_back({branch_node, false});
-				}
-				if (branch_node->branch_next_node->type != NODE_TYPE_OBS
-						|| branch_node->branch_next_node->ancestor_ids.size() > 1) {
-					obs_node_needed.push_back({branch_node, true});
-				}
-			}
-			break;
-		}
-	}
-	for (int n_index = 0; n_index < (int)obs_node_needed.size(); n_index++) {
-		ObsNode* new_obs_node = new ObsNode();
-		new_obs_node->id = this->node_counter;
-		this->node_counter++;
-		this->nodes[new_obs_node->id] = new_obs_node;
-
-		switch (obs_node_needed[n_index].first->type) {
-		case NODE_TYPE_ACTION:
-			{
-				ActionNode* action_node = (ActionNode*)obs_node_needed[n_index].first;
-
-				for (int a_index = 0; a_index < (int)action_node->next_node->ancestor_ids.size(); a_index++) {
-					if (action_node->next_node->ancestor_ids[a_index] == action_node->id) {
-						action_node->next_node->ancestor_ids.erase(
-							action_node->next_node->ancestor_ids.begin() + a_index);
-						break;
-					}
-				}
-				action_node->next_node->ancestor_ids.push_back(new_obs_node->id);
-
-				new_obs_node->next_node_id = action_node->next_node_id;
-				new_obs_node->next_node = action_node->next_node;
-
-				action_node->next_node_id = new_obs_node->id;
-				action_node->next_node = new_obs_node;
-
-				new_obs_node->ancestor_ids.push_back(action_node->id);
-			}
-			break;
-		case NODE_TYPE_BRANCH:
-			{
-				BranchNode* branch_node = (BranchNode*)obs_node_needed[n_index].first;
-
-				if (obs_node_needed[n_index].second) {
-					for (int a_index = 0; a_index < (int)branch_node->branch_next_node->ancestor_ids.size(); a_index++) {
-						if (branch_node->branch_next_node->ancestor_ids[a_index] == branch_node->id) {
-							branch_node->branch_next_node->ancestor_ids.erase(
-								branch_node->branch_next_node->ancestor_ids.begin() + a_index);
-							break;
-						}
-					}
-					branch_node->branch_next_node->ancestor_ids.push_back(new_obs_node->id);
-
-					new_obs_node->next_node_id = branch_node->branch_next_node_id;
-					new_obs_node->next_node = branch_node->branch_next_node;
-
-					branch_node->branch_next_node_id = new_obs_node->id;
-					branch_node->branch_next_node = new_obs_node;
-				} else {
-					for (int a_index = 0; a_index < (int)branch_node->original_next_node->ancestor_ids.size(); a_index++) {
-						if (branch_node->original_next_node->ancestor_ids[a_index] == branch_node->id) {
-							branch_node->original_next_node->ancestor_ids.erase(
-								branch_node->original_next_node->ancestor_ids.begin() + a_index);
-							break;
-						}
-					}
-					branch_node->original_next_node->ancestor_ids.push_back(new_obs_node->id);
-
-					new_obs_node->next_node_id = branch_node->original_next_node_id;
-					new_obs_node->next_node = branch_node->original_next_node;
-
-					branch_node->original_next_node_id = new_obs_node->id;
-					branch_node->original_next_node = new_obs_node;
-				}
-
-				new_obs_node->ancestor_ids.push_back(branch_node->id);
-			}
-			break;
-		}
-	}
-	for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
-			it != this->nodes.end(); it++) {
-		if (it->second->ancestor_ids.size() > 1 && it->second->type != NODE_TYPE_OBS) {
-			ObsNode* new_obs_node = new ObsNode();
-			new_obs_node->id = this->node_counter;
-			this->node_counter++;
-			this->nodes[new_obs_node->id] = new_obs_node;
-
-			new_obs_node->next_node_id = it->first;
-			new_obs_node->next_node = it->second;
-
-			for (int a_index = 0; a_index < (int)it->second->ancestor_ids.size(); a_index++) {
-				ObsNode* obs_node = (ObsNode*)this->nodes[it->second->ancestor_ids[a_index]];
-				obs_node->next_node_id = new_obs_node->id;
-				obs_node->next_node = new_obs_node;
-			}
-
-			new_obs_node->ancestor_ids = it->second->ancestor_ids;
-			it->second->ancestor_ids = {new_obs_node->id};
-		}
-	}
-
-	/**
-	 * - remove useless BranchNodes
-	 */
-	#if defined(MDEBUG) && MDEBUG
-	#else
-	while (true) {
-		bool removed_node = false;
-
-		for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
-				it != this->nodes.end(); it++) {
-			if (it->second->type == NODE_TYPE_BRANCH
-					&& experiment_endpoints.find(it->second) == experiment_endpoints.end()) {
-				BranchNode* branch_node = (BranchNode*)it->second;
-				ObsNode* original_obs_node = (ObsNode*)branch_node->original_next_node;
-				ObsNode* branch_obs_node = (ObsNode*)branch_node->branch_next_node;
-				if (original_obs_node->next_node == branch_obs_node->next_node
-						&& experiment_endpoints.find(original_obs_node) == experiment_endpoints.end()
-						&& experiment_endpoints.find(branch_obs_node) == experiment_endpoints.end()) {
-					ObsNode* merge_obs_node = (ObsNode*)original_obs_node->next_node;
-
-					for (int a_index = 0; a_index < (int)merge_obs_node->ancestor_ids.size(); a_index++) {
-						if (merge_obs_node->ancestor_ids[a_index] == original_obs_node->id) {
-							merge_obs_node->ancestor_ids.erase(merge_obs_node->ancestor_ids.begin() + a_index);
-							break;
-						}
-					}
-
-					for (int a_index = 0; a_index < (int)merge_obs_node->ancestor_ids.size(); a_index++) {
-						if (merge_obs_node->ancestor_ids[a_index] == branch_obs_node->id) {
-							merge_obs_node->ancestor_ids.erase(merge_obs_node->ancestor_ids.begin() + a_index);
-							break;
-						}
-					}
-
-					ObsNode* previous_obs_node = (ObsNode*)this->nodes[branch_node->ancestor_ids[0]];
-					previous_obs_node->next_node_id = merge_obs_node->id;
-					previous_obs_node->next_node = merge_obs_node;
-					merge_obs_node->ancestor_ids.push_back(previous_obs_node->id);
-
-					this->nodes.erase(original_obs_node->id);
-					delete original_obs_node;
-					this->nodes.erase(branch_obs_node->id);
-					delete branch_obs_node;
-					this->nodes.erase(branch_node->id);
-					delete branch_node;
-
-					removed_node = true;
-					break;
-				}
-			}
-		}
-
-		if (!removed_node) {
-			break;
-		}
-	}
-	#endif /* MDEBUG */
-
-	/**
-	 * - remove duplicate ObsNodes
-	 */
-	while (true) {
-		bool removed_node = false;
-
-		for (map<int, AbstractNode*>::iterator it = this->nodes.begin();
-				it != this->nodes.end(); it++) {
-			if (it->second->type == NODE_TYPE_OBS) {
-				ObsNode* curr_obs_node = (ObsNode*)it->second;
-				if (curr_obs_node->next_node != NULL
-						&& curr_obs_node->next_node->type == NODE_TYPE_OBS
-						&& curr_obs_node->next_node->ancestor_ids.size() == 1
-						&& experiment_endpoints.find(curr_obs_node->next_node) == experiment_endpoints.end()) {
-					ObsNode* next_obs_node = (ObsNode*)curr_obs_node->next_node;
-
-					if (next_obs_node->next_node != NULL) {
-						for (int a_index = 0; a_index < (int)next_obs_node->next_node->ancestor_ids.size(); a_index++) {
-							if (next_obs_node->next_node->ancestor_ids[a_index] == next_obs_node->id) {
-								next_obs_node->next_node->ancestor_ids.erase(
-									next_obs_node->next_node->ancestor_ids.begin() + a_index);
-								break;
-							}
-						}
-						next_obs_node->next_node->ancestor_ids.push_back(curr_obs_node->id);
-					}
-					curr_obs_node->next_node_id = next_obs_node->next_node_id;
-					curr_obs_node->next_node = next_obs_node->next_node;
-
-					this->nodes.erase(next_obs_node->id);
-					delete next_obs_node;
-
-					removed_node = true;
-					break;
-				}
-			}
-		}
-
-		if (!removed_node) {
 			break;
 		}
 	}
@@ -449,13 +170,13 @@ void Solution::load(ifstream& input_file,
 		getline(input_file, type_line);
 		int type = stoi(type_line);
 		switch (type) {
-		case NODE_TYPE_OBS:
+		case NODE_TYPE_START:
 			{
-				ObsNode* obs_node = new ObsNode();
-				obs_node->id = id;
-				obs_node->load(input_file,
-							   wrapper);
-				this->nodes[obs_node->id] = obs_node;
+				StartNode* start_node = new StartNode();
+				start_node->id = id;
+				start_node->load(input_file,
+								 wrapper);
+				this->nodes[start_node->id] = start_node;
 			}
 			break;
 		case NODE_TYPE_ACTION:
@@ -473,6 +194,15 @@ void Solution::load(ifstream& input_file,
 				branch_node->load(input_file,
 								  wrapper);
 				this->nodes[branch_node->id] = branch_node;
+			}
+			break;
+		case NODE_TYPE_END:
+			{
+				EndNode* end_node = new EndNode();
+				end_node->id = id;
+				end_node->load(input_file,
+							   wrapper);
+				this->nodes[end_node->id] = end_node;
 			}
 			break;
 		}

@@ -23,9 +23,6 @@ public:
 	void experiment_step(int& action,
 						 bool& is_next,
 						 ExperimentRun* run);
-
-	void predict_activate(PredictRun* run);
-	void predict_step(PredictRun* run);
 };
 
 class CrazyState : public AbstractExperimentState {

@@ -1,25 +1,16 @@
-#ifndef ACTION_NODE_H
-#define ACTION_NODE_H
+#ifndef END_NODE_H
+#define END_NODE_H
 
+#include <fstream>
 #include <vector>
 
 #include "abstract_node.h"
 
 class AbstractExperiment;
-class Experiment;
-class WorldModelWrapper;
-class Wrapper;
 
-class ActionNode : public AbstractNode {
+class EndNode : public AbstractNode {
 public:
-	int action;
-
-	int next_node_id;
-	AbstractNode* next_node;
-
-	AbstractExperiment* experiment;
-
-	ActionNode();
+	EndNode();
 
 	void step(int& action,
 			  bool& is_next,
@@ -32,14 +23,15 @@ public:
 
 	void save(std::ofstream& output_file,
 			  Wrapper* wrapper);
-	void load(std::ifstream& input_file);
+	void load(std::ifstream& input_file,
+			  Wrapper* wrapper);
 	void link(Wrapper* wrapper);
 	void save_for_display(std::ofstream& output_file);
 };
 
-class ActionNodeHistory : public AbstractNodeHistory {
+class EndNodeHistory : public AbstractNodeHistory {
 public:
-	ActionNodeHistory(ActionNode* node);
+	EndNodeHistory(EndNode* node);
 };
 
-#endif /* ACTION_NODE_H */
+#endif /* END_NODE_H */

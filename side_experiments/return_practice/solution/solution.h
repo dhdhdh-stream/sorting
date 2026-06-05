@@ -34,8 +34,6 @@ public:
 
 	void pad_new_state(int num_add);
 
-	void clean();
-
 	void save(std::ofstream& output_file,
 			  Wrapper* wrapper);
 	void load(std::ifstream& input_file,

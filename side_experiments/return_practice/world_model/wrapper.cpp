@@ -1,8 +1,9 @@
 #include "wrapper.h"
 
-#include "obs_node.h"
+#include "end_node.h"
 #include "problem.h"
 #include "solution.h"
+#include "start_node.h"
 #include "world_model.h"
 
 using namespace std;
@@ -11,7 +12,10 @@ Wrapper::Wrapper(ProblemType* problem_type) {
 	this->num_obs = problem_type->num_obs();
 	this->num_actions = problem_type->num_possible_actions();
 
-	this->world_model = new WorldModel();
+	this->curr_model = new WorldModel(this->num_obs,
+									  this->num_actions);
+	this->large_model = new WorldModel(this->curr_model);
+	this->large_model->add_states();
 
 	this->solution = new Solution();
 
@@ -20,12 +24,20 @@ Wrapper::Wrapper(ProblemType* problem_type) {
 
 	this->solution->node_counter = 0;
 
-	ObsNode* start_node = new ObsNode();
+	StartNode* start_node = new StartNode();
 	start_node->id = this->solution->node_counter;
 	this->solution->node_counter++;
 	this->solution->nodes[start_node->id] = start_node;
-	start_node->next_node_id = -1;
-	start_node->next_node = NULL;
+
+	EndNode* end_node = new EndNode();
+	end_node->id = this->solution->node_counter;
+	this->solution->node_counter++;
+	this->solution->nodes[end_node->id] = end_node;
+
+	start_node->next_node_id = end_node->id;
+	start_node->next_node = end_node;
+
+	end_node->ancestor_ids.push_back(start_node->id);
 
 	this->solution->score_index = 0;
 
@@ -51,8 +63,8 @@ Wrapper::Wrapper(std::string path,
 	getline(input_file, num_actions_line);
 	this->num_actions = stoi(num_actions_line);
 
-	this->world_model = new WorldModel();
-	this->world_model->load(input_file);
+	this->curr_model = new WorldModel(input_file);
+	this->large_model = new WorldModel(input_file);
 
 	this->solution = new Solution();
 	this->solution->load(input_file,
@@ -70,7 +82,9 @@ Wrapper::Wrapper(std::string path,
 }
 
 Wrapper::~Wrapper() {
-	delete this->world_model;
+	delete this->curr_model;
+	delete this->large_model;
+
 	delete this->solution;
 }
 
@@ -82,7 +96,9 @@ void Wrapper::save(string path,
 	output_file << this->num_obs << endl;
 	output_file << this->num_actions << endl;
 
-	this->world_model->save(output_file);
+	this->curr_model->save(output_file);
+	this->large_model->save(output_file);
+
 	this->solution->save(output_file,
 						 this);
 

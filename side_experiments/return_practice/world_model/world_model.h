@@ -4,32 +4,37 @@
 #include <fstream>
 #include <vector>
 
-class Network;
+class StateNetwork;
 
 class WorldModel {
 public:
 	int num_states;
 
-	std::vector<std::vector<int>> obs_network_inputs;
-	std::vector<std::vector<int>> obs_network_outputs;
-	std::vector<Network*> obs_networks;
-
-	std::vector<std::vector<int>> action_network_inputs;
-	std::vector<std::vector<int>> action_network_outputs;
-	std::vector<Network*> action_networks;
-
-	std::vector<std::vector<int>> final_network_inputs;
-	std::vector<Network*> final_networks;
-
+	StateNetwork* obs_network;
+	StateNetwork* action_network;
+	StateNetwork* final_network;
 	int epoch_iter;
 	double average_max_update;
 
-	WorldModel();
+	double misguess_average;
+	double misguess_variance_average;
+
+	StateNetwork* predict_network;
+	/**
+	 * - predict roughly the impact of 1 action and 1 obs update
+	 */
+	int predict_epoch_iter;
+	double predict_average_max_update;
+
+	WorldModel(int num_obs,
+			   int num_actions);
 	WorldModel(WorldModel* original);
+	WorldModel(std::ifstream& input_file);
 	~WorldModel();
 
+	void add_states();
+
 	void save(std::ofstream& output_file);
-	void load(std::ifstream& input_file);
 };
 
 #endif /* WORLD_MODEL_H */

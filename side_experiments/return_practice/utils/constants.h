@@ -4,19 +4,18 @@
 const double MIN_WEIGHT = 0.00001;
 const double MIN_STANDARD_DEVIATION = 0.00001;
 
-const int SAMPLES_PER_TRAIN = 10000;
+const double NETWORK_TARGET_MAX_UPDATE = 0.01;
+const int NETWORK_EPOCH_SIZE = 20;
+
+const int STARTING_NUM_STATE = 4;
+const int NUM_STATE_CHANGE = 4;
+
+const int SAMPLES_NUM_SAVE = 10000;
 
 #if defined(MDEBUG) && MDEBUG
 const int SCORE_HISTORIES_NUM_SAVE = 100;
 #else
 const int SCORE_HISTORIES_NUM_SAVE = 4000;
-#endif /* MDEBUG */
-
-const int STATE_HISTORY_NUM_SAVE = 4000;
-#if defined(MDEBUG) && MDEBUG
-const int EXPERIMENT_MIN_NUM_STATE_HISTORY = 10;
-#else
-const int EXPERIMENT_MIN_NUM_STATE_HISTORY = 1000;
 #endif /* MDEBUG */
 
 const int NUM_LAST_TRACK = 10;

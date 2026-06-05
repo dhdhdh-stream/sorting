@@ -5,17 +5,19 @@
 
 class Experiment;
 class ExperimentRun;
-class PredictRun;
 class Run;
 class Solution;
 class Wrapper;
 
-const int NODE_TYPE_OBS = 0;
+const int NODE_TYPE_START = 0;
 const int NODE_TYPE_ACTION = 1;
 const int NODE_TYPE_BRANCH = 2;
+const int NODE_TYPE_END = 3;
 
 class AbstractNode {
 public:
+	std::vector<Experiment*> exit_experiments;
+
 	int type;
 
 	int id;
@@ -30,10 +32,11 @@ public:
 	virtual void step(int& action,
 					  bool& is_next,
 					  Run* run) = 0;
+
 	virtual void experiment_step(int& action,
 								 bool& is_next,
 								 ExperimentRun* run) = 0;
-	virtual void predict_step(PredictRun* run) = 0;
+	virtual void experiment_step_start(ExperimentRun* run) = 0;
 
 	virtual void save(std::ofstream& output_file,
 					  Wrapper* wrapper) = 0;
@@ -44,6 +47,8 @@ public:
 class AbstractNodeHistory {
 public:
 	AbstractNode* node;
+
+	int index;
 
 	virtual ~AbstractNodeHistory() {};
 };

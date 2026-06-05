@@ -16,7 +16,9 @@ public:
 	int num_obs;
 	int num_actions;
 
-	WorldModel* world_model;
+	WorldModel* curr_model;
+	WorldModel* large_model;
+
 	Solution* solution;
 
 	int iter;
@@ -27,6 +29,7 @@ public:
 	std::vector<std::vector<std::vector<double>>> sample_obs;
 	std::vector<std::vector<int>> sample_actions;
 	std::vector<double> sample_target_vals;
+	int sample_index;
 
 	#if defined(MDEBUG) && MDEBUG
 	int run_index;

@@ -2,9 +2,9 @@
 
 #include <iostream>
 
+#include "branch_network.h"
 #include "constants.h"
 #include "experiment.h"
-#include "network.h"
 #include "run.h"
 #include "utilities.h"
 #include "wrapper.h"

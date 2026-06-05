@@ -1,5 +1,5 @@
-#ifndef OBS_NODE_H
-#define OBS_NODE_H
+#ifndef START_NODE_H
+#define START_NODE_H
 
 #include <fstream>
 #include <vector>
@@ -8,30 +8,24 @@
 
 class AbstractExperiment;
 
-class ObsNode : public AbstractNode {
+class StartNode : public AbstractNode {
 public:
 	int next_node_id;
 	AbstractNode* next_node;
 
-	std::vector<std::vector<double>> state_history;
-	int state_history_index;
-
-	double average_instances_per_run;
-
 	AbstractExperiment* experiment;
 
-	int sum_instances;
-
-	ObsNode();
-	~ObsNode();
+	StartNode();
+	~StartNode();
 
 	void step(int& action,
 			  bool& is_next,
 			  Run* run);
+
 	void experiment_step(int& action,
 						 bool& is_next,
 						 ExperimentRun* run);
-	void predict_step(PredictRun* run);
+	void experiment_step_start(ExperimentRun* run);
 
 	void save(std::ofstream& output_file,
 			  Wrapper* wrapper);
@@ -41,9 +35,9 @@ public:
 	void save_for_display(std::ofstream& output_file);
 };
 
-class ObsNodeHistory : public AbstractNodeHistory {
+class StartNodeHistory : public AbstractNodeHistory {
 public:
-	ObsNodeHistory(ObsNode* node);
+	StartNodeHistory(StartNode* node);
 };
 
-#endif /* OBS_NODE_H */
+#endif /* START_NODE_H */

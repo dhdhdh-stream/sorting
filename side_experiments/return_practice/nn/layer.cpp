@@ -16,36 +16,57 @@ Layer::Layer(int type) {
 
 void Layer::update_structure() {
 	uniform_real_distribution<double> distribution(-0.01, 0.01);
+
+	if (this->acti_vals.size() > this->weights.size()) {
+		while (this->weights.size() < this->acti_vals.size()) {
+			this->weights.insert(this->weights.begin(), vector<vector<double>>());
+		}
+		while (this->constants.size() < this->acti_vals.size()) {
+			this->constants.insert(this->constants.begin(), 0.0);
+		}
+		while (this->weight_updates.size() < this->acti_vals.size()) {
+			this->weight_updates.insert(this->weight_updates.begin(), vector<vector<double>>());
+		}
+		while (this->constant_updates.size() < this->acti_vals.size()) {
+			this->constant_updates.insert(this->constant_updates.begin(), 0.0);
+		}
+	} else if (this->acti_vals.size() < this->weights.size()) {
+		int num_remove = this->weights.size() - this->acti_vals.size();
+		this->weights.erase(this->weights.begin(), this->weights.begin() + num_remove);
+		this->constants.erase(this->constants.begin(), this->constants.begin() + num_remove);
+		this->weight_updates.erase(this->weight_updates.begin(), this->weight_updates.begin() + num_remove);
+		this->constant_updates.erase(this->constant_updates.begin(), this->constant_updates.begin() + num_remove);
+	}
+
 	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
-		if ((int)this->weights.size() < n_index+1) {
-			this->weights.push_back(vector<vector<double>>());
+		if (this->input_layers.size() > this->weights[n_index].size()) {
+			while (this->weights[n_index].size() < this->input_layers.size()) {
+				this->weights[n_index].insert(this->weights[n_index].begin(), vector<double>());
+			}
+			while (this->weight_updates[n_index].size() < this->input_layers.size()) {
+				this->weight_updates[n_index].insert(this->weight_updates[n_index].begin(), vector<double>());
+			}
+		} else if (this->input_layers.size() < this->weights[n_index].size()) {
+			int num_remove = this->weights[n_index].size() - this->input_layers.size();
+			this->weights[n_index].erase(this->weights[n_index].begin(), this->weights[n_index].begin() + num_remove);
+			this->weight_updates[n_index].erase(this->weight_updates[n_index].begin(), this->weight_updates[n_index].begin() + num_remove);
 		}
-		if ((int)this->constants.size() < n_index+1) {
-			this->constants.push_back(0.0);
-		}
-		if ((int)this->weight_updates.size() < n_index+1) {
-			this->weight_updates.push_back(vector<vector<double>>());
-		}
-		if ((int)this->constant_updates.size() < n_index+1) {
-			this->constant_updates.push_back(0.0);
-		}
+	}
 
+	for (int n_index = 0; n_index < (int)this->acti_vals.size(); n_index++) {
 		for (int l_index = 0; l_index < (int)this->input_layers.size(); l_index++) {
-			if ((int)this->weights[n_index].size() < l_index+1) {
-				this->weights[n_index].push_back(vector<double>());
-			}
-			if ((int)this->weight_updates[n_index].size() < l_index+1) {
-				this->weight_updates[n_index].push_back(vector<double>());
-			}
-
 			int layer_size = (int)this->input_layers[l_index]->acti_vals.size();
-			for (int ln_index = 0; ln_index < layer_size; ln_index++) {
-				if ((int)this->weights[n_index][l_index].size() < ln_index+1) {
-					this->weights[n_index][l_index].push_back(distribution(generator));
+			if (layer_size > (int)this->weights[n_index][l_index].size()) {
+				while ((int)this->weights[n_index][l_index].size() < layer_size) {
+					this->weights[n_index][l_index].insert(this->weights[n_index][l_index].begin(), distribution(generator));
 				}
-				if ((int)this->weight_updates[n_index][l_index].size() < ln_index+1) {
-					this->weight_updates[n_index][l_index].push_back(0.0);
+				while ((int)this->weight_updates[n_index][l_index].size() < layer_size) {
+					this->weight_updates[n_index][l_index].insert(this->weight_updates[n_index][l_index].begin(), 0.0);
 				}
+			} else if (layer_size < (int)this->weights[n_index][l_index].size()) {
+				int num_remove = (int)this->weights[n_index][l_index].size() - layer_size;
+				this->weights[n_index][l_index].erase(this->weights[n_index][l_index].begin(), this->weights[n_index][l_index].begin() + num_remove);
+				this->weight_updates[n_index][l_index].erase(this->weight_updates[n_index][l_index].begin(), this->weight_updates[n_index][l_index].begin() + num_remove);
 			}
 		}
 	}

@@ -2,8 +2,8 @@
 
 #include <iostream>
 
-#include "network.h"
 #include "run.h"
+#include "state_network.h"
 #include "test_indirect.h"
 #include "world_model.h"
 #include "world_model_helpers.h"
@@ -46,16 +46,10 @@ void measure_helper(Wrapper* wrapper,
 		double target_val = problem->score_result();
 		sum_scores += target_val;
 
-		double sum_score = 0.0;
-		for (int n_index = 0; n_index < (int)wrapper->world_model->final_networks.size(); n_index++) {
-			vector<double> inputs;
-			for (int i_index = 0; i_index < (int)wrapper->world_model->final_network_inputs[n_index].size(); i_index++) {
-				inputs.push_back(run->state[wrapper->world_model->final_network_inputs[n_index][i_index]]);
-			}
-			wrapper->world_model->final_networks[n_index]->activate(inputs);
-			sum_score += wrapper->world_model->final_networks[n_index]->output->acti_vals[0];
-		}
-		sum_misguess += (target_val - sum_score) * (target_val - sum_score);
+		wrapper->curr_model->final_network->activate(run->state);
+		double predicted = wrapper->curr_model->final_network->output->acti_vals[0];
+
+		sum_misguess += (target_val - predicted) * (target_val - predicted);
 
 		delete run;
 
@@ -116,7 +110,7 @@ vector<int> TEST_ACTIONS_R7{0, 1, 0};
 
 void measure_test(Wrapper* wrapper) {
 	{
-		vector<double> state(wrapper->world_model->num_states, 0.0);
+		vector<double> state(wrapper->curr_model->num_states, 0.0);
 		for (int a_index = 0; a_index < (int)TEST_ACTIONS_R1.size(); a_index++) {
 			obs_helper(TEST_OBS_R1[a_index],
 					   state,
@@ -131,21 +125,14 @@ void measure_test(Wrapper* wrapper) {
 				   state,
 				   wrapper);
 
-		double sum_score = 0.0;
-		for (int n_index = 0; n_index < (int)wrapper->world_model->final_networks.size(); n_index++) {
-			vector<double> inputs;
-			for (int i_index = 0; i_index < (int)wrapper->world_model->final_network_inputs[n_index].size(); i_index++) {
-				inputs.push_back(state[wrapper->world_model->final_network_inputs[n_index][i_index]]);
-			}
-			wrapper->world_model->final_networks[n_index]->activate(inputs);
-			sum_score += wrapper->world_model->final_networks[n_index]->output->acti_vals[0];
-		}
+		wrapper->curr_model->final_network->activate(state);
+		double predicted = wrapper->curr_model->final_network->output->acti_vals[0];
 
-		cout << "R1 predicted: " << sum_score << endl;
+		cout << "R1 predicted: " << predicted << endl;
 	}
 
 	{
-		vector<double> state(wrapper->world_model->num_states, 0.0);
+		vector<double> state(wrapper->curr_model->num_states, 0.0);
 		for (int a_index = 0; a_index < (int)TEST_ACTIONS_R2.size(); a_index++) {
 			obs_helper(TEST_OBS_R2[a_index],
 					   state,
@@ -160,21 +147,14 @@ void measure_test(Wrapper* wrapper) {
 				   state,
 				   wrapper);
 
-		double sum_score = 0.0;
-		for (int n_index = 0; n_index < (int)wrapper->world_model->final_networks.size(); n_index++) {
-			vector<double> inputs;
-			for (int i_index = 0; i_index < (int)wrapper->world_model->final_network_inputs[n_index].size(); i_index++) {
-				inputs.push_back(state[wrapper->world_model->final_network_inputs[n_index][i_index]]);
-			}
-			wrapper->world_model->final_networks[n_index]->activate(inputs);
-			sum_score += wrapper->world_model->final_networks[n_index]->output->acti_vals[0];
-		}
+		wrapper->curr_model->final_network->activate(state);
+		double predicted = wrapper->curr_model->final_network->output->acti_vals[0];
 
-		cout << "R2 predicted: " << sum_score << endl;
+		cout << "R2 predicted: " << predicted << endl;
 	}
 
 	{
-		vector<double> state(wrapper->world_model->num_states, 0.0);
+		vector<double> state(wrapper->curr_model->num_states, 0.0);
 		for (int a_index = 0; a_index < (int)TEST_ACTIONS_R3.size(); a_index++) {
 			obs_helper(TEST_OBS_R3[a_index],
 					   state,
@@ -189,21 +169,14 @@ void measure_test(Wrapper* wrapper) {
 				   state,
 				   wrapper);
 
-		double sum_score = 0.0;
-		for (int n_index = 0; n_index < (int)wrapper->world_model->final_networks.size(); n_index++) {
-			vector<double> inputs;
-			for (int i_index = 0; i_index < (int)wrapper->world_model->final_network_inputs[n_index].size(); i_index++) {
-				inputs.push_back(state[wrapper->world_model->final_network_inputs[n_index][i_index]]);
-			}
-			wrapper->world_model->final_networks[n_index]->activate(inputs);
-			sum_score += wrapper->world_model->final_networks[n_index]->output->acti_vals[0];
-		}
+		wrapper->curr_model->final_network->activate(state);
+		double predicted = wrapper->curr_model->final_network->output->acti_vals[0];
 
-		cout << "R3 predicted: " << sum_score << endl;
+		cout << "R3 predicted: " << predicted << endl;
 	}
 
 	{
-		vector<double> state(wrapper->world_model->num_states, 0.0);
+		vector<double> state(wrapper->curr_model->num_states, 0.0);
 		for (int a_index = 0; a_index < (int)TEST_ACTIONS_R4.size(); a_index++) {
 			obs_helper(TEST_OBS_R4[a_index],
 					   state,
@@ -218,21 +191,14 @@ void measure_test(Wrapper* wrapper) {
 				   state,
 				   wrapper);
 
-		double sum_score = 0.0;
-		for (int n_index = 0; n_index < (int)wrapper->world_model->final_networks.size(); n_index++) {
-			vector<double> inputs;
-			for (int i_index = 0; i_index < (int)wrapper->world_model->final_network_inputs[n_index].size(); i_index++) {
-				inputs.push_back(state[wrapper->world_model->final_network_inputs[n_index][i_index]]);
-			}
-			wrapper->world_model->final_networks[n_index]->activate(inputs);
-			sum_score += wrapper->world_model->final_networks[n_index]->output->acti_vals[0];
-		}
+		wrapper->curr_model->final_network->activate(state);
+		double predicted = wrapper->curr_model->final_network->output->acti_vals[0];
 
-		cout << "R4 predicted: " << sum_score << endl;
+		cout << "R4 predicted: " << predicted << endl;
 	}
 
 	{
-		vector<double> state(wrapper->world_model->num_states, 0.0);
+		vector<double> state(wrapper->curr_model->num_states, 0.0);
 		for (int a_index = 0; a_index < (int)TEST_ACTIONS_R5.size(); a_index++) {
 			obs_helper(TEST_OBS_R5[a_index],
 					   state,
@@ -247,21 +213,14 @@ void measure_test(Wrapper* wrapper) {
 				   state,
 				   wrapper);
 
-		double sum_score = 0.0;
-		for (int n_index = 0; n_index < (int)wrapper->world_model->final_networks.size(); n_index++) {
-			vector<double> inputs;
-			for (int i_index = 0; i_index < (int)wrapper->world_model->final_network_inputs[n_index].size(); i_index++) {
-				inputs.push_back(state[wrapper->world_model->final_network_inputs[n_index][i_index]]);
-			}
-			wrapper->world_model->final_networks[n_index]->activate(inputs);
-			sum_score += wrapper->world_model->final_networks[n_index]->output->acti_vals[0];
-		}
+		wrapper->curr_model->final_network->activate(state);
+		double predicted = wrapper->curr_model->final_network->output->acti_vals[0];
 
-		cout << "R5 predicted: " << sum_score << endl;
+		cout << "R5 predicted: " << predicted << endl;
 	}
 
 	{
-		vector<double> state(wrapper->world_model->num_states, 0.0);
+		vector<double> state(wrapper->curr_model->num_states, 0.0);
 		for (int a_index = 0; a_index < (int)TEST_ACTIONS_R6.size(); a_index++) {
 			obs_helper(TEST_OBS_R6[a_index],
 					   state,
@@ -276,21 +235,14 @@ void measure_test(Wrapper* wrapper) {
 				   state,
 				   wrapper);
 
-		double sum_score = 0.0;
-		for (int n_index = 0; n_index < (int)wrapper->world_model->final_networks.size(); n_index++) {
-			vector<double> inputs;
-			for (int i_index = 0; i_index < (int)wrapper->world_model->final_network_inputs[n_index].size(); i_index++) {
-				inputs.push_back(state[wrapper->world_model->final_network_inputs[n_index][i_index]]);
-			}
-			wrapper->world_model->final_networks[n_index]->activate(inputs);
-			sum_score += wrapper->world_model->final_networks[n_index]->output->acti_vals[0];
-		}
+		wrapper->curr_model->final_network->activate(state);
+		double predicted = wrapper->curr_model->final_network->output->acti_vals[0];
 
-		cout << "R6 predicted: " << sum_score << endl;
+		cout << "R6 predicted: " << predicted << endl;
 	}
 
 	{
-		vector<double> state(wrapper->world_model->num_states, 0.0);
+		vector<double> state(wrapper->curr_model->num_states, 0.0);
 		for (int a_index = 0; a_index < (int)TEST_ACTIONS_R7.size(); a_index++) {
 			obs_helper(TEST_OBS_R7[a_index],
 					   state,
@@ -305,16 +257,9 @@ void measure_test(Wrapper* wrapper) {
 				   state,
 				   wrapper);
 
-		double sum_score = 0.0;
-		for (int n_index = 0; n_index < (int)wrapper->world_model->final_networks.size(); n_index++) {
-			vector<double> inputs;
-			for (int i_index = 0; i_index < (int)wrapper->world_model->final_network_inputs[n_index].size(); i_index++) {
-				inputs.push_back(state[wrapper->world_model->final_network_inputs[n_index][i_index]]);
-			}
-			wrapper->world_model->final_networks[n_index]->activate(inputs);
-			sum_score += wrapper->world_model->final_networks[n_index]->output->acti_vals[0];
-		}
+		wrapper->curr_model->final_network->activate(state);
+		double predicted = wrapper->curr_model->final_network->output->acti_vals[0];
 
-		cout << "R7 predicted: " << sum_score << endl;
+		cout << "R7 predicted: " << predicted << endl;
 	}
 }
