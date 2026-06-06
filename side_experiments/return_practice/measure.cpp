@@ -6,9 +6,9 @@
 
 #include "globals.h"
 #include "run.h"
+#include "solution_helpers.h"
 #include "test_indirect.h"
 #include "world_model.h"
-#include "solution_helpers.h"
 #include "wrapper.h"
 
 using namespace std;
