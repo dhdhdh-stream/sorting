@@ -59,6 +59,8 @@ public:
 	 */
 	int measure_status;
 
+	double predicted_local_improvement;
+	double predicted_global_improvement;
 	double local_improvement;
 	double global_improvement;
 

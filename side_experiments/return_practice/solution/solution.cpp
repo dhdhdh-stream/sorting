@@ -13,7 +13,7 @@
 using namespace std;
 
 Solution::Solution() {
-	// do nothing
+	this->score_index = 0;
 }
 
 Solution::~Solution() {

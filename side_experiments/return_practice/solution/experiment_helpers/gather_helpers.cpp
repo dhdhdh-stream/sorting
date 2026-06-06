@@ -85,6 +85,14 @@ void Experiment::gather_backprop(double target_val,
 			this->original_network->backprop(error);
 		}
 
+		// // temp
+		// for (int h_index = 0; h_index < 10; h_index++) {
+		// 	cout << h_index << endl;
+		// 	this->original_network->activate(this->start_state_history[h_index]);
+		// 	cout << "this->original_network->output->acti_vals[0]: " << this->original_network->output->acti_vals[0] << endl;
+		// 	cout << "this->start_target_val_history[h_index]: " << this->start_target_val_history[h_index] << endl;
+		// }
+
 		BranchNetwork* end_network = new BranchNetwork(this->end_state_history[0].size());
 		for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
 			int index = end_distribution(generator);
@@ -92,6 +100,14 @@ void Experiment::gather_backprop(double target_val,
 			double error = this->end_target_val_history[index] - end_network->output->acti_vals[0];
 			end_network->backprop(error);
 		}
+
+		// // temp
+		// for (int h_index = 0; h_index < 10; h_index++) {
+		// 	cout << h_index << endl;
+		// 	end_network->activate(this->end_state_history[h_index]);
+		// 	cout << "end_network->output->acti_vals[0]: " << end_network->output->acti_vals[0] << endl;
+		// 	cout << "this->end_target_val_history[h_index]: " << this->end_target_val_history[h_index] << endl;
+		// }
 
 		bool exit_in_place;
 		switch (this->node_context->type) {
@@ -138,9 +154,27 @@ void Experiment::gather_backprop(double target_val,
 		vector<int> best_actions;
 		double best_surprise = numeric_limits<double>::lowest();
 		for (int e_index = 0; e_index < NUM_EXPLORE; e_index++) {
+			// // temp
+			// if (e_index < 10) {
+			// 	cout << e_index << endl;
+			// }
+
 			vector<double> state = this->start_state_history[start_distribution(generator)];
+			// // temp
+			// if (e_index < 10) {
+			// 	cout << "start state:";
+			// 	for (int s_index = 0; s_index < (int)state.size(); s_index++) {
+			// 		cout << " " << state[s_index];
+			// 	}
+			// 	cout << endl;
+			// }
+
 			this->original_network->activate(state);
 			double existing_predicted = this->original_network->output->acti_vals[0];
+			// // temp
+			// if (e_index < 10) {
+			// 	cout << "existing_predicted: " << existing_predicted << endl;
+			// }
 
 			int new_num_steps;
 			geometric_distribution<int> geo_distribution(0.3);
@@ -155,15 +189,35 @@ void Experiment::gather_backprop(double target_val,
 			for (int s_index = 0; s_index < new_num_steps; s_index++) {
 				curr_actions.push_back(action_distribution(generator));
 			}
+			// // temp
+			// if (e_index < 10) {
+			// 	cout << "curr_actions:";
+			// 	for (int a_index = 0; a_index < (int)curr_actions.size(); a_index++) {
+			// 		cout << " " << curr_actions[a_index];
+			// 	}
+			// 	cout << endl;
+			// }
 
 			for (int a_index = 0; a_index < (int)curr_actions.size(); a_index++) {
 				predict_helper(curr_actions[a_index],
 							   state,
 							   wrapper);
 			}
+			// // temp
+			// if (e_index < 10) {
+			// 	cout << "end state:";
+			// 	for (int s_index = 0; s_index < (int)state.size(); s_index++) {
+			// 		cout << " " << state[s_index];
+			// 	}
+			// 	cout << endl;
+			// }
 
 			end_network->activate(state);
 			double predicted = end_network->output->acti_vals[0];
+			// // temp
+			// if (e_index < 10) {
+			// 	cout << "predicted: " << predicted << endl;
+			// }
 
 			double curr_surprise = predicted - existing_predicted;
 			if (curr_surprise > best_surprise) {
@@ -171,6 +225,14 @@ void Experiment::gather_backprop(double target_val,
 				best_surprise = curr_surprise;
 			}
 		}
+
+		// temp
+		cout << "best_actions:";
+		for (int a_index = 0; a_index < (int)best_actions.size(); a_index++) {
+			cout << " " << best_actions[a_index];
+		}
+		cout << endl;
+		cout << "best_surprise: " << best_surprise << endl;
 
 		vector<double> new_predicted(this->start_state_history.size());
 		for (int h_index = 0; h_index < (int)this->start_state_history.size(); h_index++) {
@@ -184,15 +246,29 @@ void Experiment::gather_backprop(double target_val,
 			new_predicted[h_index] = end_network->output->acti_vals[0];
 		}
 
+		// // temp
+		// for (int h_index = 0; h_index < 10; h_index++) {
+		// 	cout << h_index << endl;
+		// 	cout << "new_predicted[h_index]: " << new_predicted[h_index] << endl;
+		// }
+
 		delete end_network;
 
-		this->branch_network = new BranchNetwork(this->start_state_history.size());
+		this->branch_network = new BranchNetwork(this->start_state_history[0].size());
 		for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
 			int index = start_distribution(generator);
 			this->branch_network->activate(this->start_state_history[index]);
 			double error = new_predicted[index] - this->branch_network->output->acti_vals[0];
 			this->branch_network->backprop(error);
 		}
+
+		// // temp
+		// for (int h_index = 0; h_index < 10; h_index++) {
+		// 	cout << h_index << endl;
+		// 	this->branch_network->activate(this->start_state_history[h_index]);
+		// 	cout << "this->branch_network->output->acti_vals[0]: " << this->branch_network->output->acti_vals[0] << endl;
+		// 	cout << "new_predicted[h_index]: " << new_predicted[h_index] << endl;
+		// }
 
 		double sum_vals = 0.0;
 		for (int h_index = 0; h_index < (int)this->start_state_history.size(); h_index++) {
@@ -201,8 +277,15 @@ void Experiment::gather_backprop(double target_val,
 			if (this->branch_network->output->acti_vals[0] > this->original_network->output->acti_vals[0]) {
 				sum_vals += new_predicted[h_index] - this->original_network->output->acti_vals[0];
 			}
+
+			// // temp
+			// if (h_index < 10) {
+			// 	cout << "this->original_network->output->acti_vals[0]: " << this->original_network->output->acti_vals[0] << endl;
+			// 	cout << "this->branch_network->output->acti_vals[0]: " << this->branch_network->output->acti_vals[0] << endl;
+			// 	cout << "new_predicted[h_index]: " << new_predicted[h_index] << endl;
+			// }
 		}
-		double local_improvement = sum_vals / (double)this->start_state_history.size();
+		this->predicted_local_improvement = sum_vals / (double)this->start_state_history.size();
 
 		int total_iters = wrapper->iter - this->starting_iter;
 		if (total_iters < 0) {
@@ -210,11 +293,11 @@ void Experiment::gather_backprop(double target_val,
 		}
 		double average_instances_per_run = (double)this->start_state_history.size() / (double)total_iters;
 
-		double global_improvement = average_instances_per_run * local_improvement;
+		this->predicted_global_improvement = average_instances_per_run * this->predicted_local_improvement;
 
 		// temp
-		cout << "local_improvement: " << local_improvement << endl;
-		cout << "global_improvement: " << global_improvement << endl;
+		cout << "this->predicted_local_improvement: " << this->predicted_local_improvement << endl;
+		cout << "this->predicted_global_improvement: " << this->predicted_global_improvement << endl;
 
 		bool is_success = false;
 		if (local_improvement > 0.0) {

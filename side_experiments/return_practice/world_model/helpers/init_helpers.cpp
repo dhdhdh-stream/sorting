@@ -52,7 +52,8 @@ void init_helper(ProblemType* problem_type,
 			wrapper->sample_target_vals[wrapper->sample_index] = target_val;
 		}
 		wrapper->sample_index++;
-		if (wrapper->sample_index >= SAMPLES_NUM_SAVE) {
+		// if (wrapper->sample_index >= SAMPLES_NUM_SAVE) {
+		if (wrapper->sample_index % 1000 == 0) {
 			check_state_size_helper(wrapper);
 
 			wrapper->sample_index = 0;
@@ -63,7 +64,8 @@ void init_helper(ProblemType* problem_type,
 		delete problem;
 
 		// temp
-		if ((iter_index + 1) % 1000 == 0) {
+		// if ((iter_index + 1) % 1000 == 0) {
+		if ((iter_index + 1) % 100 == 0) {
 			cout << iter_index << endl;
 
 			cout << "wrapper->curr_model->misguess_average: " << wrapper->curr_model->misguess_average << endl;

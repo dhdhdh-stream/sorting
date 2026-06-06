@@ -16,7 +16,8 @@ const int UPDATE_MIN_SAMPLE_SIZE = 10;
 const int ITERS_PER_UPDATE = 2;
 #else
 const int UPDATE_MIN_SAMPLE_SIZE = 1000;
-const int ITERS_PER_UPDATE = 100;
+// const int ITERS_PER_UPDATE = 100;
+const int ITERS_PER_UPDATE = 1000;
 #endif /* MDEBUG */
 
 const int STATE_SIZE_HISTORY_NUM_SAVE = 3;

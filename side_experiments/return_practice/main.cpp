@@ -8,6 +8,7 @@
 #include "experiment_run.h"
 #include "globals.h"
 #include "solution.h"
+#include "solution_helpers.h"
 #include "test_indirect.h"
 #include "world_model.h"
 #include "world_model_helpers.h"
@@ -41,6 +42,8 @@ int main(int argc, char* argv[]) {
 
 		init_helper(problem_type,
 					wrapper);
+
+		wrapper->save("saves/", filename);
 	}
 
 	while (true) {

@@ -30,6 +30,8 @@ void Experiment::add(Wrapper* wrapper) {
 		ss << "this->exit_next_node->id: " << this->exit_next_node->id << "; ";
 	}
 
+	ss << "this->predicted_local_improvement: " << this->predicted_local_improvement << "; ";
+	ss << "this->predicted_global_improvement: " << this->predicted_global_improvement << "; ";
 	ss << "this->local_improvement: " << this->local_improvement << "; ";
 	ss << "this->global_improvement: " << this->global_improvement << "; ";
 

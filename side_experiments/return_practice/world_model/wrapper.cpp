@@ -68,8 +68,6 @@ Wrapper::Wrapper(ProblemType* problem_type) {
 
 	end_node->ancestor_ids.push_back(action_nodes.back()->id);
 
-	this->solution->score_index = 0;
-
 	this->iter = 0;
 
 	this->crazy = NULL;

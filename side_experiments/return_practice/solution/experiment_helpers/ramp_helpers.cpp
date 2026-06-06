@@ -138,6 +138,8 @@ void Experiment::ramp_backprop(double target_val,
 
 			// temp
 			cout << "this->curr_ramp: " << this->curr_ramp << endl;
+			cout << "this->predicted_local_improvement: " << this->predicted_local_improvement << endl;
+			cout << "this->predicted_global_improvement: " << this->predicted_global_improvement << endl;
 			cout << "existing_score_average: " << existing_score_average << endl;
 			cout << "new_score_average: " << new_score_average << endl;
 

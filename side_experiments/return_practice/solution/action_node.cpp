@@ -7,6 +7,8 @@ using namespace std;
 
 ActionNode::ActionNode() {
 	this->type = NODE_TYPE_ACTION;
+
+	this->experiment = NULL;
 }
 
 void ActionNode::save(ofstream& output_file,
