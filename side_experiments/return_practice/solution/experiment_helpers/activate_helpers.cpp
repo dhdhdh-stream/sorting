@@ -19,11 +19,11 @@ using namespace std;
 void Experiment::experiment_activate(ExperimentRun* run) {
 	switch (this->state) {
 	case EXPERIMENT_STATE_GATHER:
-
+		gather_activate(run);
 		break;
 	case EXPERIMENT_STATE_RAMP:
 	case EXPERIMENT_STATE_MEASURE:
-
+		ramp_activate(run);
 		break;
 	}
 }
@@ -43,5 +43,17 @@ void Experiment::experiment_exit(ExperimentRun* run) {
 void Experiment::backprop(double target_val,
 						  ExperimentHistory* history,
 						  Wrapper* wrapper) {
-	
+	switch (this->state) {
+	case EXPERIMENT_STATE_GATHER:
+		gather_backprop(target_val,
+						history,
+						wrapper);
+		break;
+	case EXPERIMENT_STATE_RAMP:
+	case EXPERIMENT_STATE_MEASURE:
+		ramp_backprop(target_val,
+					  history,
+					  wrapper);
+		break;
+	}
 }

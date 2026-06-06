@@ -84,24 +84,6 @@ void Wrapper::experiment_end(double result,
 		// 	}
 		// 	cout << endl;
 		// }
-
-		if (this->sample_obs.size() < SAMPLES_NUM_SAVE) {
-			this->sample_obs.push_back(run->obs_histories);
-			this->sample_actions.push_back(run->action_histories);
-			this->sample_target_vals.push_back(result);
-		} else {
-			this->sample_obs[this->sample_index] = run->obs_histories;
-			this->sample_actions[this->sample_index] = run->action_histories;
-			this->sample_target_vals[this->sample_index] = result;
-		}
-		this->sample_index++;
-		if (this->sample_index >= SAMPLES_NUM_SAVE) {
-			check_state_size_helper(this);
-
-			this->sample_index = 0;
-		}
-
-		update_world_model_helper(this);
 	} else {
 		if (this->solution->score_histories.size() < SCORE_HISTORIES_NUM_SAVE) {
 			this->solution->score_histories.push_back(result);
@@ -112,36 +94,62 @@ void Wrapper::experiment_end(double result,
 				this->solution->score_index = 0;
 			}
 		}
+
+		// int node_count = 0;
+		// int eval_count = 0;
+		// count_eval_helper(run,
+		// 				  node_count,
+		// 				  eval_count);
+
+		// int target_count = (node_count + (TARGET_NODES_PER_EVAL-1)) / TARGET_NODES_PER_EVAL;
+		// if (eval_count < target_count) {
+		// 	// temp
+		// 	cout << "node_count: " << node_count << endl;
+		// 	cout << "eval_count: " << eval_count << endl;
+		// 	cout << "target_count: " << target_count << endl;
+		// 	create_experiment(run,
+		// 					  this);
+		// }
 	}
+
+	if (this->sample_obs.size() < SAMPLES_NUM_SAVE) {
+		this->sample_obs.push_back(run->obs_histories);
+		this->sample_actions.push_back(run->action_histories);
+		this->sample_target_vals.push_back(result);
+	} else {
+		this->sample_obs[this->sample_index] = run->obs_histories;
+		this->sample_actions[this->sample_index] = run->action_histories;
+		this->sample_target_vals[this->sample_index] = result;
+	}
+	this->sample_index++;
+	if (this->sample_index >= SAMPLES_NUM_SAVE) {
+		check_state_size_helper(this);
+
+		this->sample_index = 0;
+	}
+
+	update_world_model_helper(this);
 
 	update_solution_helper(run,
 						   result);
 
 	// temp
-	if (this->iter % 2000 == 0) {
-		double score_average;
-		double misguess_average;
-		measure_helper(this,
-					   score_average,
-					   misguess_average);
-		cout << endl;
-		cout << "score_average: " << score_average << endl;
-		cout << "misguess_average: " << misguess_average << endl;
+	if (this->iter % 1000 == 0) {
+		cout << this->iter << endl;
+		// double score_average;
+		// double misguess_average;
+		// measure_helper(this,
+		// 			   score_average,
+		// 			   misguess_average);
+		// cout << endl;
+		// cout << "score_average: " << score_average << endl;
+		// cout << "misguess_average: " << misguess_average << endl;
+		// cout << "this->curr_model->num_states: " << this->curr_model->num_states << endl;
+		cout << "this->curr_model->misguess_average: " << this->curr_model->misguess_average << endl;
+		cout << "this->large_model->misguess_average: " << this->large_model->misguess_average << endl;
 		cout << "this->curr_model->num_states: " << this->curr_model->num_states << endl;
 		measure_test(this);
 		cout << endl;
-	}
-
-	int node_count = 0;
-	int eval_count = 0;
-	count_eval_helper(run,
-					  node_count,
-					  eval_count);
-
-	int target_count = (node_count + (TARGET_NODES_PER_EVAL-1)) / TARGET_NODES_PER_EVAL;
-	if (eval_count < target_count) {
-		create_experiment(run,
-						  this);
 	}
 
 	for (map<Experiment*, ExperimentHistory*>::iterator it = run->experiment_histories.begin();

@@ -13,11 +13,13 @@ using namespace std;
 
 #if defined(MDEBUG) && MDEBUG
 const int UPDATE_MIN_SAMPLE_SIZE = 10;
+const int ITERS_PER_UPDATE = 2;
 #else
 const int UPDATE_MIN_SAMPLE_SIZE = 1000;
+const int ITERS_PER_UPDATE = 100;
 #endif /* MDEBUG */
 
-const int ITERS_PER_UPDATE = 5;
+const int STATE_SIZE_HISTORY_NUM_SAVE = 3;
 
 void predict_update_helper(vector<double>& start_state,
 						   vector<int>& actions,
@@ -92,21 +94,23 @@ void true_update_helper(vector<vector<double>>& obs,
 						double target_val,
 						WorldModel* world_model,
 						Wrapper* wrapper) {
-	int predict_start_index;
-	int predict_end_index;
-	uniform_int_distribution<int> from_start_distribution(0, 1);
-	if (from_start_distribution(generator) == 0) {
-		uniform_int_distribution<int> start_index_distribution(0, actions.size()-1);
-		predict_start_index = start_index_distribution(generator);
+	int predict_start_index = -1;
+	int predict_end_index = -1;
+	if (actions.size() > 0) {
+		uniform_int_distribution<int> from_start_distribution(0, 1);
+		if (from_start_distribution(generator) == 0) {
+			uniform_int_distribution<int> start_index_distribution(0, actions.size()-1);
+			predict_start_index = start_index_distribution(generator);
 
-		uniform_int_distribution<int> end_index_distribution(predict_start_index+1, obs.size()-1);
-		predict_end_index = end_index_distribution(generator);
-	} else {
-		uniform_int_distribution<int> end_index_distribution(1, obs.size()-1);
-		predict_end_index = end_index_distribution(generator);
+			uniform_int_distribution<int> end_index_distribution(predict_start_index+1, obs.size()-1);
+			predict_end_index = end_index_distribution(generator);
+		} else {
+			uniform_int_distribution<int> end_index_distribution(1, obs.size()-1);
+			predict_end_index = end_index_distribution(generator);
 
-		uniform_int_distribution<int> start_index_distribution(0, predict_end_index-1);
-		predict_start_index = start_index_distribution(generator);
+			uniform_int_distribution<int> start_index_distribution(0, predict_end_index-1);
+			predict_start_index = start_index_distribution(generator);
+		}
 	}
 
 	vector<double> predict_start_state;
@@ -244,14 +248,16 @@ void true_update_helper(vector<vector<double>>& obs,
 		world_model->epoch_iter = 0;
 	}
 
-	vector<int> predict_actions = vector<int>(actions.begin() + predict_start_index,
-		actions.begin() + predict_end_index + 1);
+	if (actions.size() > 0) {
+		vector<int> predict_actions = vector<int>(actions.begin() + predict_start_index,
+			actions.begin() + predict_end_index);
 
-	predict_update_helper(predict_start_state,
-						  predict_actions,
-						  predict_end_state,
-						  world_model,
-						  wrapper);
+		predict_update_helper(predict_start_state,
+							  predict_actions,
+							  predict_end_state,
+							  world_model,
+							  wrapper);
+	}
 }
 
 void update_world_model_helper(Wrapper* wrapper) {
@@ -279,16 +285,48 @@ void update_world_model_helper(Wrapper* wrapper) {
 }
 
 void check_state_size_helper(Wrapper* wrapper) {
-	double denom = sqrt((wrapper->large_model->misguess_variance_average + wrapper->curr_model->misguess_variance_average) / 10000.0);
-	double t_score = (wrapper->curr_model->misguess_average - wrapper->large_model->misguess_average) / denom;
+	wrapper->curr_misguess_average_history.push_back(wrapper->curr_model->misguess_average);
+	wrapper->curr_misguess_variance_average_history.push_back(wrapper->curr_model->misguess_variance_average);
+	wrapper->large_misguess_average_history.push_back(wrapper->large_model->misguess_average);
+	wrapper->large_misguess_variance_average_history.push_back(wrapper->large_model->misguess_variance_average);
+	if (wrapper->curr_misguess_average_history.size() > STATE_SIZE_HISTORY_NUM_SAVE) {
+		wrapper->curr_misguess_average_history.erase(wrapper->curr_misguess_average_history.begin());
+		wrapper->curr_misguess_variance_average_history.erase(wrapper->curr_misguess_variance_average_history.begin());
+		wrapper->large_misguess_average_history.erase(wrapper->large_misguess_average_history.begin());
+		wrapper->large_misguess_variance_average_history.erase(wrapper->large_misguess_variance_average_history.begin());
+	}
 
-	if (t_score >= 2.326) {
-		delete wrapper->curr_model;
-		wrapper->curr_model = wrapper->large_model;
+	if (wrapper->curr_misguess_average_history.size() >= STATE_SIZE_HISTORY_NUM_SAVE) {
+		bool should_increase = true;
+		for (int i_index = 0; i_index < STATE_SIZE_HISTORY_NUM_SAVE; i_index++) {
+			for (int j_index = 0; j_index < STATE_SIZE_HISTORY_NUM_SAVE; j_index++) {
+				double denom = sqrt((wrapper->large_misguess_variance_average_history[j_index]
+					+ wrapper->curr_misguess_variance_average_history[i_index]) / 10000.0);
+				double t_score = (wrapper->curr_misguess_average_history[i_index]
+					- wrapper->large_misguess_average_history[j_index]) / denom;
 
-		wrapper->large_model = new WorldModel(wrapper->curr_model);
-		wrapper->large_model->add_states();
+				// temp
+				cout << i_index<< " " << j_index << ": " << t_score << endl;
 
-		wrapper->solution->pad_new_state(NUM_STATE_CHANGE);
+				if (t_score < 2.326) {
+					should_increase = false;
+				}
+			}
+		}
+
+		if (should_increase) {
+			delete wrapper->curr_model;
+			wrapper->curr_model = wrapper->large_model;
+
+			wrapper->large_model = new WorldModel(wrapper->curr_model);
+			wrapper->large_model->add_states();
+
+			wrapper->solution->pad_new_state(NUM_STATE_CHANGE);
+
+			wrapper->curr_misguess_average_history.clear();
+			wrapper->curr_misguess_variance_average_history.clear();
+			wrapper->large_misguess_average_history.clear();
+			wrapper->large_misguess_variance_average_history.clear();
+		}
 	}
 }

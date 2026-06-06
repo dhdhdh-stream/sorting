@@ -17,7 +17,11 @@ public:
 	int num_actions;
 
 	WorldModel* curr_model;
+	std::vector<double> curr_misguess_average_history;
+	std::vector<double> curr_misguess_variance_average_history;
 	WorldModel* large_model;
+	std::vector<double> large_misguess_average_history;
+	std::vector<double> large_misguess_variance_average_history;
 
 	Solution* solution;
 

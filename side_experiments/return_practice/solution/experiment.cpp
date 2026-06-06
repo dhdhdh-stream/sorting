@@ -61,11 +61,21 @@ void Experiment::pad_new_state(int num_add) {
 }
 
 ExperimentHistory::ExperimentHistory(Experiment* experiment) {
-	uniform_int_distribution<int> on_distribution(0, EXPERIMENT_NUM_GEARS);
-	if (experiment->curr_ramp >= on_distribution(generator)) {
-		this->is_on = true;
-	} else {
+	switch (experiment->state) {
+	case EXPERIMENT_STATE_GATHER:
 		this->is_on = false;
+		break;
+	case EXPERIMENT_STATE_RAMP:
+	case EXPERIMENT_STATE_MEASURE:
+		{
+			uniform_int_distribution<int> on_distribution(0, EXPERIMENT_NUM_GEARS);
+			if (experiment->curr_ramp >= on_distribution(generator)) {
+				this->is_on = true;
+			} else {
+				this->is_on = false;
+			}
+		}
+		break;
 	}
 
 	this->hit_branch = false;

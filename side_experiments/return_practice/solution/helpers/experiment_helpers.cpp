@@ -1,5 +1,7 @@
 #include "solution_helpers.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
@@ -176,6 +178,9 @@ void create_experiment(ExperimentRun* run,
 													explore_is_branch,
 													exit_next_node,
 													wrapper);
+
+		// temp
+		cout << "new_experiment" << endl;
 
 		switch (explore_node->type) {
 		case NODE_TYPE_START:

@@ -1,8 +1,11 @@
 #include "world_model_helpers.h"
 
+#include <iostream>
+
 #include "constants.h"
 #include "globals.h"
 #include "problem.h"
+#include "solution_helpers.h"
 #include "world_model.h"
 #include "wrapper.h"
 
@@ -11,7 +14,8 @@ using namespace std;
 #if defined(MDEBUG) && MDEBUG
 const int INIT_ITERS = 100;
 #else
-const int INIT_ITERS = 1000000;
+// const int INIT_ITERS = 10000;
+const int INIT_ITERS = 1000;
 #endif /* MDEBUG */
 
 void init_helper(ProblemType* problem_type,
@@ -57,5 +61,16 @@ void init_helper(ProblemType* problem_type,
 		update_world_model_helper(wrapper);
 
 		delete problem;
+
+		// temp
+		if ((iter_index + 1) % 1000 == 0) {
+			cout << iter_index << endl;
+
+			cout << "wrapper->curr_model->misguess_average: " << wrapper->curr_model->misguess_average << endl;
+			cout << "wrapper->large_model->misguess_average: " << wrapper->large_model->misguess_average << endl;
+			cout << "wrapper->curr_model->num_states: " << wrapper->curr_model->num_states << endl;
+			measure_test(wrapper);
+			cout << endl;
+		}
 	}
 }

@@ -7,7 +7,7 @@ using namespace std;
 
 WorldModel::WorldModel(int num_obs,
 					   int num_actions) {
-	this->num_states = 0;
+	this->num_states = STARTING_NUM_STATE;
 
 	this->obs_network = new StateNetwork(STARTING_NUM_STATE + num_obs, STARTING_NUM_STATE);
 	this->action_network = new StateNetwork(STARTING_NUM_STATE + num_actions, STARTING_NUM_STATE);
@@ -16,6 +16,9 @@ WorldModel::WorldModel(int num_obs,
 
 	this->epoch_iter = 0;
 	this->average_max_update = 0.0;
+
+	this->misguess_average = 0.0;
+	this->misguess_variance_average = 0.0;
 
 	this->predict_network = new StateNetwork(STARTING_NUM_STATE + num_actions, STARTING_NUM_STATE);
 
@@ -33,6 +36,9 @@ WorldModel::WorldModel(WorldModel* original) {
 
 	this->epoch_iter = 0;
 	this->average_max_update = original->average_max_update;
+
+	this->misguess_average = original->misguess_average;
+	this->misguess_variance_average = original->misguess_variance_average;
 
 	this->predict_network = new StateNetwork(original->predict_network);
 
@@ -55,6 +61,14 @@ WorldModel::WorldModel(ifstream& input_file) {
 	string average_max_update_line;
 	getline(input_file, average_max_update_line);
 	this->average_max_update = stod(average_max_update_line);
+
+	string misguess_average_line;
+	getline(input_file, misguess_average_line);
+	this->misguess_average = stod(misguess_average_line);
+
+	string misguess_variance_average_line;
+	getline(input_file, misguess_variance_average_line);
+	this->misguess_variance_average = stod(misguess_variance_average_line);
 
 	this->predict_network = new StateNetwork(input_file);
 
@@ -97,6 +111,9 @@ void WorldModel::save(ofstream& output_file) {
 	this->final_network->save(output_file);
 
 	output_file << this->average_max_update << endl;
+
+	output_file << this->misguess_average << endl;
+	output_file << this->misguess_variance_average << endl;
 
 	this->predict_network->save(output_file);
 

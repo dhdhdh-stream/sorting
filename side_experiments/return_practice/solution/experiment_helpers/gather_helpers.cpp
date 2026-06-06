@@ -1,5 +1,7 @@
 #include "experiment.h"
 
+#include <iostream>
+
 #include "action_node.h"
 #include "branch_node.h"
 #include "constants.h"
@@ -16,7 +18,7 @@ using namespace std;
 #if defined(MDEBUG) && MDEBUG
 const int GATHER_NUM_SAMPLES = 40;
 #else
-const int GATHER_NUM_SAMPLES = 4000;
+const int GATHER_NUM_SAMPLES = 1000;
 #endif /* MDEBUG */
 
 #if defined(MDEBUG) && MDEBUG
@@ -209,6 +211,10 @@ void Experiment::gather_backprop(double target_val,
 		double average_instances_per_run = (double)this->start_state_history.size() / (double)total_iters;
 
 		double global_improvement = average_instances_per_run * local_improvement;
+
+		// temp
+		cout << "local_improvement: " << local_improvement << endl;
+		cout << "global_improvement: " << global_improvement << endl;
 
 		bool is_success = false;
 		if (local_improvement > 0.0) {
