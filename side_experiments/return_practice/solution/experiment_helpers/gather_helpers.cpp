@@ -1,3 +1,6 @@
+// TODO: should maybe predict until end
+// - current exit may not have enough diversity to train good network
+
 #include "experiment.h"
 
 #include <iostream>
@@ -107,13 +110,13 @@ void Experiment::gather_backprop(double target_val,
 			end_network->backprop(error);
 		}
 
-		// // temp
-		// for (int h_index = 0; h_index < 10; h_index++) {
-		// 	cout << h_index << endl;
-		// 	end_network->activate(this->end_state_history[h_index]);
-		// 	cout << "end_network->output->acti_vals[0]: " << end_network->output->acti_vals[0] << endl;
-		// 	cout << "this->end_target_val_history[h_index]: " << this->end_target_val_history[h_index] << endl;
-		// }
+		// temp
+		for (int h_index = 0; h_index < 20; h_index++) {
+			cout << h_index << endl;
+			end_network->activate(this->end_state_history[h_index]);
+			cout << "end_network->output->acti_vals[0]: " << end_network->output->acti_vals[0] << endl;
+			cout << "this->end_target_val_history[h_index]: " << this->end_target_val_history[h_index] << endl;
+		}
 
 		bool exit_in_place;
 		switch (this->node_context->type) {

@@ -52,6 +52,13 @@ void predict_helper(int action,
 					Wrapper* wrapper) {
 	WorldModel* world_model = wrapper->curr_model;
 
+	// // temp
+	// cout << "pre state:";
+	// for (int s_index = 0; s_index < (int)state.size(); s_index++) {
+	// 	cout << " " << state[s_index];
+	// }
+	// cout << endl;
+
 	// vector<double> partial_inputs;
 	// for (int a_index = 0; a_index < wrapper->num_actions; a_index++) {
 	// 	if (action == a_index) {
@@ -87,6 +94,13 @@ void predict_helper(int action,
 			state[o_index] += world_model->action_network->output->acti_vals[o_index];
 		}
 	}
+
+	// // temp
+	// cout << "post state:";
+	// for (int s_index = 0; s_index < (int)state.size(); s_index++) {
+	// 	cout << " " << state[s_index];
+	// }
+	// cout << endl;
 
 	{
 		vector<double> obs;

@@ -14,8 +14,8 @@ using namespace std;
 #if defined(MDEBUG) && MDEBUG
 const int INIT_ITERS = 100;
 #else
-const int INIT_ITERS = 10000;
-// const int INIT_ITERS = 1000;
+// const int INIT_ITERS = 10000;
+const int INIT_ITERS = 1000;
 #endif /* MDEBUG */
 
 void init_helper(ProblemType* problem_type,

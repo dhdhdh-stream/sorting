@@ -67,6 +67,13 @@ int main(int argc, char* argv[]) {
 	for (int a_index = 0; a_index < num_actions; a_index++) {
 		vector<double> start_state = state;
 
+		// // temp
+		// cout << "start_state:";
+		// for (int s_index = 0; s_index < (int)start_state.size(); s_index++) {
+		// 	cout << " " << start_state[s_index];
+		// }
+		// cout << endl;
+
 		int action = action_distribution(generator);
 		cout << "action: " << action << endl;
 
@@ -81,6 +88,32 @@ int main(int argc, char* argv[]) {
 		// 	cout << " " << state[s_index];
 		// }
 		// cout << endl;
+
+		{
+			vector<double> obs_0{0.0};
+			vector<double> state_0 = state;
+			obs_helper(obs_0,
+					   state_0,
+					   wrapper);
+			cout << "0 state:";
+			for (int s_index = 0; s_index < (int)state_0.size(); s_index++) {
+				cout << " " << state_0[s_index];
+			}
+			cout << endl;
+		}
+
+		{
+			vector<double> obs_1{1.0};
+			vector<double> state_1 = state;
+			obs_helper(obs_1,
+					   state_1,
+					   wrapper);
+			cout << "1 state:";
+			for (int s_index = 0; s_index < (int)state_1.size(); s_index++) {
+				cout << " " << state_1[s_index];
+			}
+			cout << endl;
+		}
 
 		vector<double> obs = problem->get_observations();
 		cout << "obs:";
@@ -97,32 +130,6 @@ int main(int argc, char* argv[]) {
 		// 	cout << " " << state[s_index];
 		// }
 		// cout << endl;
-
-		{
-			vector<double> obs_0{0.0};
-			vector<double> state_0 = start_state;
-			obs_helper(obs_0,
-					   state_0,
-					   wrapper);
-			cout << "0 state:";
-			for (int s_index = 0; s_index < (int)state_0.size(); s_index++) {
-				cout << " " << state_0[s_index];
-			}
-			cout << endl;
-		}
-
-		{
-			vector<double> obs_1{1.0};
-			vector<double> state_1 = start_state;
-			obs_helper(obs_1,
-					   state_1,
-					   wrapper);
-			cout << "1 state:";
-			for (int s_index = 0; s_index < (int)state_1.size(); s_index++) {
-				cout << " " << state_1[s_index];
-			}
-			cout << endl;
-		}
 
 		// vector<double> predicted_state = start_state;
 		// predict_helper(action,
