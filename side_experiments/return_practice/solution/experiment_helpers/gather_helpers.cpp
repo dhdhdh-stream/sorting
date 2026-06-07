@@ -33,6 +33,12 @@ const int NUM_EXPLORE = 5;
 const int NUM_EXPLORE = 1000;
 #endif /* MDEBUG */
 
+#if defined(MDEBUG) && MDEBUG
+const int NUM_SIMULATE = 40;
+#else
+const int NUM_SIMULATE = 4000;
+#endif /* MDEBUG */
+
 void Experiment::gather_activate(ExperimentRun* run) {
 	map<Experiment*, ExperimentHistory*>::iterator it =
 		run->experiment_histories.find(this);
@@ -234,16 +240,30 @@ void Experiment::gather_backprop(double target_val,
 		cout << endl;
 		cout << "best_surprise: " << best_surprise << endl;
 
-		vector<double> new_predicted(this->start_state_history.size());
-		for (int h_index = 0; h_index < (int)this->start_state_history.size(); h_index++) {
-			vector<double> state = this->start_state_history[h_index];
+		// vector<double> new_predicted(this->start_state_history.size());
+		// for (int h_index = 0; h_index < (int)this->start_state_history.size(); h_index++) {
+		// 	vector<double> state = this->start_state_history[h_index];
+		// 	for (int a_index = 0; a_index < (int)best_actions.size(); a_index++) {
+		// 		predict_helper(best_actions[a_index],
+		// 					   state,
+		// 					   wrapper);
+		// 	}
+		// 	end_network->activate(state);
+		// 	new_predicted[h_index] = end_network->output->acti_vals[0];
+		// }
+
+		vector<vector<double>> train_new_state(NUM_SIMULATE);
+		vector<double> train_new_predicted(NUM_SIMULATE);
+		for (int iter_index = 0; iter_index < NUM_SIMULATE; iter_index++) {
+			vector<double> state = this->start_state_history[start_distribution(generator)];
+			train_new_state[iter_index] = state;
 			for (int a_index = 0; a_index < (int)best_actions.size(); a_index++) {
 				predict_helper(best_actions[a_index],
 							   state,
 							   wrapper);
 			}
 			end_network->activate(state);
-			new_predicted[h_index] = end_network->output->acti_vals[0];
+			train_new_predicted[iter_index] = end_network->output->acti_vals[0];
 		}
 
 		// // temp
@@ -255,10 +275,19 @@ void Experiment::gather_backprop(double target_val,
 		delete end_network;
 
 		this->branch_network = new BranchNetwork(this->start_state_history[0].size());
+
+		// for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
+		// 	int index = start_distribution(generator);
+		// 	this->branch_network->activate(this->start_state_history[index]);
+		// 	double error = new_predicted[index] - this->branch_network->output->acti_vals[0];
+		// 	this->branch_network->backprop(error);
+		// }
+
+		uniform_int_distribution<int> train_new_distribution(0, NUM_SIMULATE-1);
 		for (int iter_index = 0; iter_index < TRAIN_ITERS; iter_index++) {
-			int index = start_distribution(generator);
-			this->branch_network->activate(this->start_state_history[index]);
-			double error = new_predicted[index] - this->branch_network->output->acti_vals[0];
+			int index = train_new_distribution(generator);
+			this->branch_network->activate(train_new_state[index]);
+			double error = train_new_predicted[index] - this->branch_network->output->acti_vals[0];
 			this->branch_network->backprop(error);
 		}
 
@@ -270,12 +299,29 @@ void Experiment::gather_backprop(double target_val,
 		// 	cout << "new_predicted[h_index]: " << new_predicted[h_index] << endl;
 		// }
 
+		// double sum_vals = 0.0;
+		// for (int h_index = 0; h_index < (int)this->start_state_history.size(); h_index++) {
+		// 	this->original_network->activate(this->start_state_history[h_index]);
+		// 	this->branch_network->activate(this->start_state_history[h_index]);
+		// 	if (this->branch_network->output->acti_vals[0] > this->original_network->output->acti_vals[0]) {
+		// 		sum_vals += new_predicted[h_index] - this->original_network->output->acti_vals[0];
+		// 	}
+
+		// 	// // temp
+		// 	// if (h_index < 10) {
+		// 	// 	cout << "this->original_network->output->acti_vals[0]: " << this->original_network->output->acti_vals[0] << endl;
+		// 	// 	cout << "this->branch_network->output->acti_vals[0]: " << this->branch_network->output->acti_vals[0] << endl;
+		// 	// 	cout << "new_predicted[h_index]: " << new_predicted[h_index] << endl;
+		// 	// }
+		// }
+		// this->predicted_local_improvement = sum_vals / (double)this->start_state_history.size();
+
 		double sum_vals = 0.0;
-		for (int h_index = 0; h_index < (int)this->start_state_history.size(); h_index++) {
-			this->original_network->activate(this->start_state_history[h_index]);
-			this->branch_network->activate(this->start_state_history[h_index]);
+		for (int h_index = 0; h_index < (int)train_new_state.size(); h_index++) {
+			this->original_network->activate(train_new_state[h_index]);
+			this->branch_network->activate(train_new_state[h_index]);
 			if (this->branch_network->output->acti_vals[0] > this->original_network->output->acti_vals[0]) {
-				sum_vals += new_predicted[h_index] - this->original_network->output->acti_vals[0];
+				sum_vals += train_new_predicted[h_index] - this->original_network->output->acti_vals[0];
 			}
 
 			// // temp
@@ -285,7 +331,7 @@ void Experiment::gather_backprop(double target_val,
 			// 	cout << "new_predicted[h_index]: " << new_predicted[h_index] << endl;
 			// }
 		}
-		this->predicted_local_improvement = sum_vals / (double)this->start_state_history.size();
+		this->predicted_local_improvement = sum_vals / (double)train_new_state.size();
 
 		int total_iters = wrapper->iter - this->starting_iter;
 		if (total_iters < 0) {
