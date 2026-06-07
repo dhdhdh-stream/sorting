@@ -65,22 +65,22 @@ int main(int argc, char* argv[]) {
 
 	int num_actions = num_actions_distribution(generator);
 	for (int a_index = 0; a_index < num_actions; a_index++) {
+		vector<double> start_state = state;
+
 		int action = action_distribution(generator);
 		cout << "action: " << action << endl;
 
 		problem->perform_action(action);
 
-		vector<double> predicted_state = state;
-
 		action_helper(action,
 					  state,
 					  wrapper);
 
-		cout << "state:";
-		for (int s_index = 0; s_index < (int)state.size(); s_index++) {
-			cout << " " << state[s_index];
-		}
-		cout << endl;
+		// cout << "state:";
+		// for (int s_index = 0; s_index < (int)state.size(); s_index++) {
+		// 	cout << " " << state[s_index];
+		// }
+		// cout << endl;
 
 		vector<double> obs = problem->get_observations();
 		cout << "obs:";
@@ -92,20 +92,101 @@ int main(int argc, char* argv[]) {
 				   state,
 				   wrapper);
 
-		cout << "state:";
-		for (int s_index = 0; s_index < (int)state.size(); s_index++) {
-			cout << " " << state[s_index];
-		}
-		cout << endl;
+		// cout << "state:";
+		// for (int s_index = 0; s_index < (int)state.size(); s_index++) {
+		// 	cout << " " << state[s_index];
+		// }
+		// cout << endl;
 
-		predict_helper(action,
-					   predicted_state,
+		{
+			vector<double> obs_0{0.0};
+			vector<double> state_0 = start_state;
+			obs_helper(obs_0,
+					   state_0,
 					   wrapper);
-
-		cout << "predicted_state:";
-		for (int s_index = 0; s_index < (int)predicted_state.size(); s_index++) {
-			cout << " " << predicted_state[s_index];
+			cout << "0 state:";
+			for (int s_index = 0; s_index < (int)state_0.size(); s_index++) {
+				cout << " " << state_0[s_index];
+			}
+			cout << endl;
 		}
+
+		{
+			vector<double> obs_1{1.0};
+			vector<double> state_1 = start_state;
+			obs_helper(obs_1,
+					   state_1,
+					   wrapper);
+			cout << "1 state:";
+			for (int s_index = 0; s_index < (int)state_1.size(); s_index++) {
+				cout << " " << state_1[s_index];
+			}
+			cout << endl;
+		}
+
+		// vector<double> predicted_state = start_state;
+		// predict_helper(action,
+		// 			   predicted_state,
+		// 			   wrapper);
+
+		// cout << "predicted_state:";
+		// for (int s_index = 0; s_index < (int)predicted_state.size(); s_index++) {
+		// 	cout << " " << predicted_state[s_index];
+		// }
+		// cout << endl;
+
+		{
+			vector<double> predicted_state = start_state;
+			predict_helper(0,
+						   predicted_state,
+						   wrapper);
+
+			cout << "0 predicted_state:";
+			for (int s_index = 0; s_index < (int)predicted_state.size(); s_index++) {
+				cout << " " << predicted_state[s_index];
+			}
+			cout << endl;
+		}
+
+		{
+			vector<double> predicted_state = start_state;
+			predict_helper(1,
+						   predicted_state,
+						   wrapper);
+
+			cout << "1 predicted_state:";
+			for (int s_index = 0; s_index < (int)predicted_state.size(); s_index++) {
+				cout << " " << predicted_state[s_index];
+			}
+			cout << endl;
+		}
+
+		{
+			vector<double> predicted_state = start_state;
+			predict_helper(2,
+						   predicted_state,
+						   wrapper);
+
+			cout << "2 predicted_state:";
+			for (int s_index = 0; s_index < (int)predicted_state.size(); s_index++) {
+				cout << " " << predicted_state[s_index];
+			}
+			cout << endl;
+		}
+
+		{
+			vector<double> predicted_state = start_state;
+			predict_helper(3,
+						   predicted_state,
+						   wrapper);
+
+			cout << "3 predicted_state:";
+			for (int s_index = 0; s_index < (int)predicted_state.size(); s_index++) {
+				cout << " " << predicted_state[s_index];
+			}
+			cout << endl;
+		}
+
 		cout << endl;
 	}
 

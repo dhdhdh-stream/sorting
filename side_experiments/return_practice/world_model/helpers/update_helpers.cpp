@@ -56,9 +56,12 @@ void predict_update_helper(vector<double>& start_state,
 	}
 
 	vector<double> state_errors(world_model->num_states);
+	double curr_sum_misguess = 0.0;
 	for (int i_index = 0; i_index < world_model->num_states; i_index++) {
 		state_errors[i_index] = end_state[i_index] - state[i_index];
+		curr_sum_misguess += (end_state[i_index] - state[i_index]) * (end_state[i_index] - state[i_index]);
 	}
+	world_model->predict_misguess_average = 0.9999*world_model->predict_misguess_average + 0.0001*curr_sum_misguess;
 
 	for (int step_index = (int)actions.size()-1; step_index >= 0; step_index--) {
 		world_model->predict_network->backprop(state_errors,
